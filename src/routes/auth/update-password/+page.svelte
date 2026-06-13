@@ -45,7 +45,8 @@
 	.password-page {
 		display: grid;
 		place-items: center;
-		min-height: 55vh;
+		min-height: 100svh;
+		padding: $app-gap-md $app-gap-sm;
 	}
 
 	.password-card {

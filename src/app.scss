@@ -123,6 +123,11 @@ p {
 	padding-bottom: 2rem;
 }
 
+.app-main--guest {
+	max-width: none;
+	padding: 0;
+}
+
 /* ---- Utility ---- */
 button {
 	cursor: pointer;

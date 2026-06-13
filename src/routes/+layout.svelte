@@ -84,23 +84,18 @@
 	/>
 </svelte:head>
 
-<header class="app-header">
-	<span class="logo">🥤 Smoothie Mixer</span>
-	<div class="auth-status">
-		{#if data.authUser}
+{#if data.authUser}
+	<header class="app-header">
+		<span class="logo">🥤 Smoothie Mixer</span>
+		<div class="auth-status">
 			<form method="POST" action="/auth/logout">
 				<button type="submit">Sign out</button>
 			</form>
-		{:else}
-			<a href="/auth">Sign in</a>
-		{/if}
-	</div>
-</header>
-
-{#if data.authUser}
+		</div>
+	</header>
 	<TabNavigation />
 {/if}
 
-<main class="app-main">
+<main class="app-main" class:app-main--guest={!data.authUser}>
 	{@render children()}
 </main>

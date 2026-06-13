@@ -87,6 +87,11 @@ $color-ink-black: #111;
 // general UI components. Specialized displays like nutrition labels can override.
 $app-font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
 
+// Rounded display stack for high-impact guest-page headings and brand moments.
+// Keep body copy and dense application controls on the default app font stack.
+$app-display-font-family: "Avenir Next", "Segoe UI Variable Display", "Trebuchet MS",
+	system-ui, sans-serif;
+
 // Maximum width for page-level content containers.
 $app-max-width: 600px;
 
@@ -259,6 +264,24 @@ $app-popover-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
 
 // Prompt shadow. Applied to smaller inline prompt cards.
 $app-prompt-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.13);
+
+// Soft guest-card elevation. Used on landing and authentication surfaces where
+// a wider, more diffused shadow feels calmer than a modal or app-panel shadow.
+$app-guest-card-shadow:
+	0 1.4rem 4rem rgb(79 72 66 / 10%),
+	0 0.2rem 0.8rem rgb(79 72 66 / 6%);
+
+// Guest-card corner radius. Shared by the public landing and authentication
+// cards so the two steps read as one continuous entry flow.
+$app-guest-card-radius: 1.35rem;
+
+// Translucent guest-card surface. Used only over decorative landing artwork so
+// the card remains readable while retaining a small amount of visual depth.
+$app-guest-surface: rgb(245 238 229 / 94%);
+
+// Restrained mango elevation used only for the primary guest-page action.
+$app-highlight-shadow: 0 0.35rem 1rem rgb(217 154 36 / 16%);
+$app-highlight-shadow-hover: 0 0.5rem 1.2rem rgb(217 154 36 / 22%);
 
 // Custom-food ring shadow. Applied around user-created ingredient cards.
 $app-custom-ring-shadow: 0 0 0 2px rgba(123, 95, 163, 0.12);

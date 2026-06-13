@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { onMount } from "svelte";
+	import FloatingFruitBackground from "$lib/components/app/FloatingFruitBackground.svelte";
 	import type { SubmitFunction } from "@sveltejs/kit";
 	import type { ActionData, PageData } from "./$types";
 
@@ -15,6 +16,7 @@
 	let providerError = $state("");
 	let email = $state("");
 	let isSubmitting = $state(false);
+	let authCard = $state<HTMLDivElement>();
 
 	const preventDuplicateSubmit: SubmitFunction = () => {
 		if (isSubmitting) return () => {};
@@ -47,12 +49,15 @@
 </script>
 
 <section class="auth-page">
-	<div class="auth-card">
+	<FloatingFruitBackground focusElement={authCard} />
+	<div class="auth-card" bind:this={authCard}>
 		<div class="auth-card__header">
-			<h2>Sign in</h2>
+			<a class="auth-brand" href="/">Smoothie Mixer</a>
+			<p class="auth-eyebrow">Your smoothie space</p>
+			<h1>Welcome back.</h1>
 			<p>
-				Use email or Google to sync your fridge, saved drinks, and custom
-				ingredients.
+				Sign in to pick up your fridge, saved drinks, and nutrition goals right
+				where you left them.
 			</p>
 		</div>
 
@@ -72,6 +77,25 @@
 		{#if form?.success}
 			<p class="auth-success" role="status">{form.success}</p>
 		{/if}
+
+		<form
+			class="google-form"
+			method="POST"
+			action="?/google"
+			use:enhance={preventDuplicateSubmit}
+		>
+			<input type="hidden" name="next" value={form?.next ?? data.next} />
+			<button class="google-button" type="submit" disabled={isSubmitting}>
+				<span aria-hidden="true">G</span>
+				{isSubmitting ? "Opening Google…" : "Continue with Google"}
+			</button>
+		</form>
+
+		<div class="auth-divider" aria-hidden="true">
+			<span></span>
+			<em>or use email</em>
+			<span></span>
+		</div>
 
 		<form class="email-form" method="POST" use:enhance={preventDuplicateSubmit}>
 			<input type="hidden" name="next" value={form?.next ?? data.next} />
@@ -126,23 +150,10 @@
 			</button>
 		</form>
 
-		<div class="auth-divider" aria-hidden="true">
-			<span></span>
-			<em>or</em>
-			<span></span>
-		</div>
-
-		<form method="POST" action="?/google" use:enhance={preventDuplicateSubmit}>
-			<input type="hidden" name="next" value={form?.next ?? data.next} />
-			<button class="google-button" type="submit" disabled={isSubmitting}>
-				<span aria-hidden="true">G</span>
-				{isSubmitting ? "Opening Google…" : "Continue with Google"}
-			</button>
-		</form>
-
 		<p class="auth-note">
-			Your data saves to your account. This browser only keeps a local cache for
-			the signed-in user.
+			<span aria-hidden="true">●</span>
+			Your data is tied to your account. This device only keeps a private local
+			cache while you are signed in.
 		</p>
 	</div>
 </section>
@@ -151,30 +162,54 @@
 	@use "../../styles/variables" as *;
 
 	.auth-page {
+		position: relative;
+		isolation: isolate;
 		display: grid;
 		place-items: center;
-		min-height: 55vh;
+		min-height: 100svh;
+		overflow: hidden;
+		padding: clamp($app-gap-md, 5vw, 3rem) $app-gap-sm;
+		background:
+			radial-gradient(circle at 50% 44%, rgb(239 211 194 / 18%), transparent 38%),
+			$app-bg;
 	}
 
 	.auth-card {
+		position: relative;
+		z-index: 1;
 		display: grid;
-		gap: $app-gap-md;
-		width: min(100%, 26rem);
-		padding: $app-gap-md;
-		background: $app-section-bg;
+		gap: 1.15rem;
+		width: min(100%, 28rem);
+		padding: clamp(1.25rem, 4vw, 1.75rem);
+		background: $app-guest-surface;
 		border: $app-border;
-		border-radius: $app-card-radius;
-		box-shadow: $app-box-shadow;
+		border-radius: $app-guest-card-radius;
+		box-shadow: $app-guest-card-shadow;
+		backdrop-filter: blur(0.35rem);
+
+		&::before {
+			position: absolute;
+			top: -1px;
+			left: 12%;
+			width: 28%;
+			height: 3px;
+			background: $app-highlight;
+			border-radius: 0 0 $app-radius-pill $app-radius-pill;
+			content: "";
+		}
 	}
 
 	.auth-card__header {
 		display: grid;
-		gap: 0.25rem;
+		gap: 0.5rem;
 
-		h2 {
+		h1 {
 			color: $app-primary;
-			font-size: $app-font-size-xl;
-			font-weight: 800;
+			font-family: $app-display-font-family;
+			font-size: clamp(1.85rem, 7vw, 2.35rem);
+			font-weight: 750;
+			letter-spacing: -0.04em;
+			line-height: 1.05;
 		}
 
 		p {
@@ -182,6 +217,36 @@
 			font-size: $app-font-size-md;
 			line-height: 1.4;
 		}
+	}
+
+	.auth-brand {
+		width: fit-content;
+		color: $app-muted;
+		font-size: $app-font-size-sm;
+		font-weight: 800;
+		letter-spacing: 0.02em;
+		text-decoration: none;
+
+		&::before {
+			margin-right: 0.35rem;
+			content: "←";
+		}
+
+		&:hover {
+			color: $app-primary;
+		}
+	}
+
+	.auth-eyebrow {
+		width: fit-content;
+		padding: 0.2rem 0.55rem;
+		color: $app-primary !important;
+		background: $app-accent;
+		border-radius: $app-radius-pill;
+		font-size: $app-font-size-xs !important;
+		font-weight: 900;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
 	}
 
 	.email-form {
@@ -198,14 +263,25 @@
 
 		input {
 			width: 100%;
-			height: $app-control-height;
+			height: calc($app-control-height + 0.6rem);
 			padding: 0 0.75rem;
 			color: $app-primary;
-			background: $app-bg;
+			background: rgb(252 249 244 / 84%);
 			border: $app-border;
 			border-radius: $app-radius;
 			font-size: $app-font-size-md;
 			box-sizing: border-box;
+			transition:
+				border-color 0.15s ease,
+				box-shadow 0.15s ease,
+				background 0.15s ease;
+
+			&:focus {
+				background: $app-bg;
+				border-color: $app-primary;
+				box-shadow: 0 0 0 3px rgb(183 200 227 / 35%);
+				outline: none;
+			}
 		}
 	}
 
@@ -223,8 +299,12 @@
 		background: transparent;
 		font-size: $app-font-size-sm;
 		font-weight: 800;
-		text-decoration: underline;
+		text-decoration: none;
 		text-underline-offset: 0.2rem;
+
+		&:hover {
+			text-decoration: underline;
+		}
 	}
 
 	.email-button,
@@ -234,9 +314,8 @@
 		justify-content: center;
 		gap: $app-gap-sm;
 		width: 100%;
-		padding: 0.6rem 0.85rem;
-		color: $app-btn-text;
-		background: $app-btn-bg;
+		min-height: 2.65rem;
+		padding: 0.65rem 0.85rem;
 		border-radius: $app-radius-pill;
 		font-weight: 900;
 
@@ -250,14 +329,33 @@
 		}
 	}
 
+	.email-button {
+		color: $app-highlight-text;
+		background: $app-highlight;
+
+		&:hover {
+			background: $app-highlight-hover;
+		}
+	}
+
 	.google-button {
+		color: $app-primary;
+		background: $app-bg;
+		border: $app-border;
+		box-shadow: $app-card-shadow;
+
+		&:hover {
+			background: white;
+			border-color: $app-primary;
+		}
+
 		span {
 			display: grid;
 			place-items: center;
 			width: 1.35rem;
 			height: 1.35rem;
-			color: $app-primary;
-			background: $app-btn-text;
+				color: white;
+			background: $app-primary;
 			border-radius: $app-radius-pill;
 			font-weight: 900;
 		}
@@ -265,10 +363,11 @@
 
 	.email-button--secondary {
 		color: $app-primary;
-		background: $app-accent;
+		background: transparent;
+		border: $app-border;
 
 		&:hover {
-			background: $app-success-bg;
+			background: $app-accent;
 		}
 	}
 
@@ -314,12 +413,26 @@
 	}
 
 	.auth-note {
+		display: flex;
+		gap: 0.5rem;
+		align-items: flex-start;
 		color: $app-muted;
-		font-size: $app-font-size-sm;
+		font-size: $app-font-size-xs;
 		line-height: 1.35;
+
+		span {
+			color: $app-success-bg;
+			font-size: 0.85rem;
+			line-height: 1;
+		}
 	}
 
 	@media (max-width: $app-breakpoint-xs) {
+		.auth-card {
+			gap: 1rem;
+			padding: 1.15rem;
+		}
+
 		.email-form__actions {
 			grid-template-columns: 1fr;
 		}
