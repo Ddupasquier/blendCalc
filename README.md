@@ -6,7 +6,7 @@ Mix and match ingredients for making well-balanced smoothies.
 
 - 🔍 Search ingredients via the [FoodData Central API](https://fdc.nal.usda.gov/)
 - 🧪 Live nutrition totals (calories, protein, carbs, fat, fiber, sugar)
-- 🧊 Keep fridge, shopping list, mix progress, and goal settings in `localStorage`
+- 🔐 Save fridge, shopping list, custom foods, saved drinks, and mix settings to a Supabase account
 - 📱 Mobile-first responsive UI
 - 🚦 Rate-limit friendly: search results cached for 24 hours in `localStorage`
 
@@ -41,6 +41,9 @@ https://smoothie-mixer.vercel.app/auth/callback
 http://localhost:5173/auth/callback
 ```
 
+See [`docs/authentication.md`](docs/authentication.md) for the complete Supabase,
+Google, Vercel, security, and verification checklist.
+
 ### 3. Run the dev server
 
 ```bash
@@ -61,6 +64,8 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | `npm test` | Run unit tests (Vitest) |
 | `npm run test:watch` | Watch-mode tests |
 | `npm run check` | TypeScript + Svelte type-check |
+| `npm run check:auth` | Validate auth environment and endpoint health |
+| `npm run db:lint` | Run Supabase database linting |
 
 ---
 

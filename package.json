@@ -3,12 +3,19 @@
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
+	"overrides": {
+		"esbuild": "^0.28.1",
+		"@sveltejs/kit": {
+			"cookie": "^0.7.2"
+		}
+	},
 	"scripts": {
 		"dev": "vite dev --host localhost --port 5173 --strictPort",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:auth": "node scripts/check_auth_config.mjs",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"audit:fdc-vitals": "node scripts/audit_fdc_vitals.mjs",
 		"compare:fdc": "node scripts/compare_fdc_products.mjs",
@@ -23,11 +30,12 @@
 		"db:new": "supabase migration new",
 		"db:push": "supabase db push",
 		"db:types": "mkdir -p src/lib/types && supabase gen types typescript --linked > src/lib/types/database.types.ts",
-		"db:push:dry": "supabase db push --dry-run"
+		"db:push:dry": "supabase db push --dry-run",
+		"db:lint": "supabase db lint --linked"
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-auto": "^7.0.1",
-		"@sveltejs/kit": "^2.57.0",
+		"@sveltejs/adapter-vercel": "^6.3.3",
+		"@sveltejs/kit": "^2.65.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/svelte": "^5.3.1",
@@ -35,7 +43,7 @@
 		"@types/ws": "^8.18.1",
 		"jsdom": "^29.1.1",
 		"sass": "^1.100.0",
-		"supabase": "^2.105.0",
+		"supabase": "^2.106.0",
 		"svelte": "^5.55.2",
 		"svelte-check": "^4.4.6",
 		"typescript": "^6.0.2",
@@ -43,11 +51,13 @@
 		"vitest": "^4.1.7"
 	},
 	"dependencies": {
-		"@supabase/ssr": "^0.10.3",
-		"@supabase/supabase-js": "^2.107.0",
+		"@supabase/ssr": "^0.12.0",
+		"@supabase/supabase-js": "^2.108.1",
 		"@vercel/speed-insights": "^2.0.0",
+		"bufferutil": "^4.1.0",
 		"dotenv": "^17.4.2",
 		"node-fetch": "^3.3.2",
+		"utf-8-validate": "^6.0.6",
 		"ws": "^8.21.0"
 	}
 }

@@ -7,6 +7,19 @@ const getSafeNextPath = (value: string | null) => {
 };
 
 export const load: PageServerLoad = async ({ locals, url }) => {
+	const code = url.searchParams.get("code");
+	if (code) {
+		console.warn("[auth] OAuth code returned to the site root; recovering callback", {
+			origin: url.origin,
+		});
+		const callbackUrl = new URL("/auth/callback", url);
+		for (const key of ["code", "error", "error_code", "error_description"]) {
+			const value = url.searchParams.get(key);
+			if (value) callbackUrl.searchParams.set(key, value);
+		}
+		throw redirect(303, `${callbackUrl.pathname}${callbackUrl.search}`);
+	}
+
 	const { user } = await locals.safeGetSession();
 
 	if (user) {

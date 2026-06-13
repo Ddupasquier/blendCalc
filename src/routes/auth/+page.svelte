@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { enhance } from "$app/forms";
 	import { onMount } from "svelte";
+	import type { SubmitFunction } from "@sveltejs/kit";
 	import type { ActionData, PageData } from "./$types";
 
 	let {
@@ -12,11 +14,24 @@
 
 	let providerError = $state("");
 	let email = $state("");
+	let isSubmitting = $state(false);
+
+	const preventDuplicateSubmit: SubmitFunction = () => {
+		if (isSubmitting) return () => {};
+		isSubmitting = true;
+
+		return async ({ update }) => {
+			await update();
+			isSubmitting = false;
+		};
+	};
 
 	const authErrorMessages: Record<string, string> = {
 		callback_exchange: "The returned sign-in code could not be verified.",
 		missing_code: "The sign-in provider did not return a login code.",
 		provider: "Google rejected or cancelled the sign-in request.",
+		recovery_session: "That password reset link is invalid or has expired.",
+		wrong_origin: "Sign in returned to a different app address. Start sign in again from this page.",
 	};
 
 	$effect(() => {
@@ -58,7 +73,7 @@
 			<p class="auth-success" role="status">{form.success}</p>
 		{/if}
 
-		<form class="email-form" method="POST">
+		<form class="email-form" method="POST" use:enhance={preventDuplicateSubmit}>
 			<input type="hidden" name="next" value={form?.next ?? data.next} />
 			<label>
 				<span>Email</span>
@@ -77,9 +92,9 @@
 					type="password"
 					name="password"
 					autocomplete="current-password"
-					placeholder="At least 6 characters"
+					placeholder="At least 8 characters"
 					required
-					minlength="6"
+					minlength="8"
 				/>
 			</label>
 			<div class="email-form__actions">
@@ -87,17 +102,28 @@
 					class="email-button"
 					type="submit"
 					formaction="?/emailSignIn"
+					disabled={isSubmitting}
 				>
-					Sign in
+					{isSubmitting ? "Working…" : "Sign in"}
 				</button>
 				<button
 					class="email-button email-button--secondary"
 					type="submit"
 					formaction="?/emailSignUp"
+					disabled={isSubmitting}
 				>
 					Create account
 				</button>
 			</div>
+			<button
+				class="password-reset-button"
+				type="submit"
+				formaction="?/requestPasswordReset"
+				formnovalidate
+				disabled={isSubmitting}
+			>
+				Forgot your password?
+			</button>
 		</form>
 
 		<div class="auth-divider" aria-hidden="true">
@@ -106,11 +132,11 @@
 			<span></span>
 		</div>
 
-		<form method="POST" action="?/google">
+		<form method="POST" action="?/google" use:enhance={preventDuplicateSubmit}>
 			<input type="hidden" name="next" value={form?.next ?? data.next} />
-			<button class="google-button" type="submit">
+			<button class="google-button" type="submit" disabled={isSubmitting}>
 				<span aria-hidden="true">G</span>
-				Continue with Google
+				{isSubmitting ? "Opening Google…" : "Continue with Google"}
 			</button>
 		</form>
 
@@ -190,6 +216,17 @@
 		margin-top: 0.2rem;
 	}
 
+	.password-reset-button {
+		justify-self: center;
+		padding: 0.2rem;
+		color: $app-primary;
+		background: transparent;
+		font-size: $app-font-size-sm;
+		font-weight: 800;
+		text-decoration: underline;
+		text-underline-offset: 0.2rem;
+	}
+
 	.email-button,
 	.google-button {
 		display: inline-flex;
@@ -205,6 +242,11 @@
 
 		&:hover {
 			background: $app-btn-bg-hover;
+		}
+
+		&:disabled {
+			cursor: wait;
+			opacity: 0.65;
 		}
 	}
 

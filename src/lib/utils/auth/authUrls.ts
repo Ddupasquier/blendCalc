@@ -1,9 +1,5 @@
 import { env } from "$env/dynamic/public";
 
-const getFirstForwardedValue = (value: string | null) => {
-	return value?.split(",")[0]?.trim() ?? "";
-};
-
 const normalizeConfiguredOrigin = (value: string | undefined) => {
 	if (!value) return "";
 
@@ -16,28 +12,46 @@ const normalizeConfiguredOrigin = (value: string | undefined) => {
 	}
 };
 
+export const isLocalOrigin = (origin: string) => {
+	try {
+		const { hostname } = new URL(origin);
+		return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+	} catch {
+		return false;
+	}
+};
+
 export const getRequestOrigin = (request: Request, fallbackUrl: URL) => {
+	void request;
+	if (isLocalOrigin(fallbackUrl.origin)) return fallbackUrl.origin;
+
 	const configuredOrigin = normalizeConfiguredOrigin(env.PUBLIC_SITE_URL);
 	if (configuredOrigin) return configuredOrigin;
 
-	const forwardedHost = getFirstForwardedValue(
-		request.headers.get("x-forwarded-host"),
+	throw new Error(
+		"PUBLIC_SITE_URL must be configured for hosted authentication requests.",
 	);
-	if (!forwardedHost) return fallbackUrl.origin;
+};
 
-	const forwardedProtocol = getFirstForwardedValue(
-		request.headers.get("x-forwarded-proto"),
-	);
-	const protocol = forwardedProtocol === "http" ? "http" : "https";
-	return `${protocol}://${forwardedHost}`;
+export const getCanonicalAuthPageUrl = (
+	request: Request,
+	fallbackUrl: URL,
+	next: string,
+) => {
+	const canonicalOrigin = getRequestOrigin(request, fallbackUrl);
+	if (canonicalOrigin === fallbackUrl.origin) return null;
+
+	const url = new URL("/auth", canonicalOrigin);
+	url.searchParams.set("next", next);
+	return url.toString();
 };
 
 export const getAuthCallbackUrl = (
 	request: Request,
 	fallbackUrl: URL,
-	next: string,
 ) => {
-	const callbackUrl = new URL("/auth/callback", getRequestOrigin(request, fallbackUrl));
-	callbackUrl.searchParams.set("next", next);
-	return callbackUrl.toString();
+	return new URL(
+		"/auth/callback",
+		getRequestOrigin(request, fallbackUrl),
+	).toString();
 };
