@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dev } from "$app/environment";
 	import favicon from "$lib/assets/favicon.svg";
 	import "../app.scss";
 	import TabNavigation from "$lib/components/app/TabNavigation.svelte";
@@ -9,7 +10,19 @@
 	import type { LayoutData } from "./$types";
 	import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
 
-	injectSpeedInsights();
+	if (!dev) {
+		injectSpeedInsights({
+			debug: false,
+			scriptSrc: "/_vercel/speed-insights/script.js",
+			endpoint: "/_vercel/speed-insights/vitals",
+			beforeSend: (event) => {
+				const url = new URL(event.url);
+				url.search = "";
+				url.hash = "";
+				return { ...event, url: url.toString() };
+			},
+		});
+	}
 
 	let {
 		children,
