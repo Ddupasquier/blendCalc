@@ -98,6 +98,49 @@ p {
 	border: 0;
 }
 
+.auth-status .profile-link {
+	width: 2rem;
+	height: 2rem;
+	min-height: 2rem;
+	overflow: hidden;
+	padding: 0;
+	border: 2px solid rgb(252 249 244 / 72%);
+	border-radius: 50%;
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	svg {
+		width: 62%;
+		fill: none;
+		stroke: currentColor;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		stroke-width: 1.8;
+	}
+}
+
+.auth-status .moderation-link {
+	width: 2rem;
+	height: 2rem;
+	min-height: 2rem;
+	padding: 0;
+	color: $app-primary;
+	background: $app-highlight;
+
+	svg {
+		width: 62%;
+		fill: none;
+		stroke: currentColor;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		stroke-width: 1.8;
+	}
+}
+
 @media (max-width: $app-breakpoint-xs) {
 	.app-header {
 		padding: 0.55rem 0.65rem;
@@ -112,6 +155,20 @@ p {
 		min-height: 1.75rem;
 		padding: 0.28rem 0.55rem;
 		font-size: $app-font-size-xs;
+	}
+
+	.auth-status .profile-link {
+		width: 1.85rem;
+		height: 1.85rem;
+		min-height: 1.85rem;
+		padding: 0;
+	}
+
+	.auth-status .moderation-link {
+		width: 1.85rem;
+		height: 1.85rem;
+		min-height: 1.85rem;
+		padding: 0;
 	}
 }
 

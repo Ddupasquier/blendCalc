@@ -36,6 +36,7 @@
 	};
 
 	const authErrorMessages: Record<string, string> = {
+		account_blocked: "This account has been blocked. Contact support if you believe this is a mistake.",
 		callback_exchange: "The returned sign-in code could not be verified.",
 		missing_code: "The sign-in provider did not return a login code.",
 		provider: "Google rejected or cancelled the sign-in request.",

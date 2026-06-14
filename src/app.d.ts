@@ -1,9 +1,13 @@
 import type { Session, SupabaseClient, User } from "@supabase/supabase-js";
 import type { Database } from "$lib/types/database.types";
+import type { AppRole } from "$lib/utils/moderation/moderation";
 
 type AuthUser = {
 	id: string;
-	email: string | null;
+	displayName: string;
+	avatarUrl: string | null;
+	avatarAltText: string | null;
+	role: AppRole | null;
 };
 
 declare global {

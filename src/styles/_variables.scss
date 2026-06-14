@@ -208,6 +208,10 @@ $app-custom-strong: $color-lavender-smoothie-dark;
 // and states where nutritional totals are meaningfully over target.
 $app-danger-bg: $color-strawberry-cream;
 
+// Destructive action fill. Reserved for irreversible moderation or deletion
+// controls that require stronger contrast than a soft danger panel.
+$app-danger-action: $color-cinnamon-clay;
+
 // Success/on-target background. Applied to successful add/save feedback and
 // close-to-goal badges.
 $app-success-bg: $color-pistachio-cream;

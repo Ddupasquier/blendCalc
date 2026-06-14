@@ -31,7 +31,8 @@
 		"db:push": "supabase db push",
 		"db:types": "mkdir -p src/lib/types && supabase gen types typescript --linked > src/lib/types/database.types.ts",
 		"db:push:dry": "supabase db push --dry-run",
-		"db:lint": "supabase db lint --linked"
+		"db:lint": "supabase db lint --linked",
+		"moderate": "node scripts/moderate_user.mjs"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-vercel": "^6.3.3",

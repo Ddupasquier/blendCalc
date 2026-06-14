@@ -1,0 +1,429 @@
+import { createHash } from "node:crypto";
+import { error, fail, redirect } from "@sveltejs/kit";
+import type { User } from "@supabase/supabase-js";
+import type { Actions, PageServerLoad } from "./$types";
+import {
+	getModerationEmailConfigurationError,
+	sendAccountBlockedEmail,
+	type ModerationReason,
+} from "$lib/server/email/moderationEmail.server";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import {
+	canModerateTargetRole,
+	getUserAppRole,
+	type AppRole,
+} from "$lib/utils/moderation/moderation";
+import { PROFILE_AVATAR_BUCKET } from "$lib/utils/profile/profile";
+
+const PERMANENT_BAN_DURATION = "876000h";
+const MODERATION_PAGE_SIZE = 100;
+const MODERATION_MAX_PAGES = 100;
+const ALLOWED_REASONS = new Set<ModerationReason>([
+	"profile_image_policy_violation",
+	"harassment_or_abuse",
+	"fraud_or_spam",
+	"terms_violation",
+]);
+
+const requireModerator = async (locals: App.Locals) => {
+	const { user } = await locals.safeGetSession();
+	if (!user) throw redirect(303, "/auth?next=%2Fmoderation");
+
+	const role = await getUserAppRole(locals.supabase, user.id);
+	if (!role) throw error(403, "You do not have access to moderation tools.");
+
+	return { user, role };
+};
+
+const getReason = (formData: FormData) => {
+	const reason = String(formData.get("reason") ?? "") as ModerationReason;
+	return ALLOWED_REASONS.has(reason) ? reason : null;
+};
+
+const hashEmail = (email: string) => {
+	return createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+};
+
+const listAuthUsers = async () => {
+	const admin = getSupabaseAdminClient();
+	const users: User[] = [];
+
+	for (let page = 1; page <= MODERATION_MAX_PAGES; page += 1) {
+		const { data, error: listError } = await admin.auth.admin.listUsers({
+			page,
+			perPage: MODERATION_PAGE_SIZE,
+		});
+
+		if (listError) throw error(502, "User accounts could not be loaded.");
+
+		users.push(...data.users);
+		if (data.users.length < MODERATION_PAGE_SIZE) break;
+	}
+
+	return { admin, users };
+};
+
+const matchesSearch = (
+	user: {
+		id: string;
+		displayName: string;
+		email: string;
+		role: AppRole | null;
+		status: string;
+	},
+	query: string,
+) => {
+	if (!query) return true;
+
+	const searchableValues = [
+		user.displayName,
+		user.email,
+		user.id,
+		user.role ?? "user",
+		user.status,
+	];
+
+	return searchableValues.some((value) => value.toLocaleLowerCase().includes(query));
+};
+
+const getTargetContext = async (
+	actorUserId: string,
+	actorRole: AppRole,
+	targetUserId: string,
+) => {
+	if (!targetUserId || targetUserId === actorUserId) {
+		throw error(400, "You cannot moderate your own account.");
+	}
+
+	const admin = getSupabaseAdminClient();
+	const [
+		{ data: targetAuth, error: targetAuthError },
+		{ data: roleRecord },
+		{ data: profile },
+	] =
+		await Promise.all([
+			admin.auth.admin.getUserById(targetUserId),
+			admin
+				.from("app_role_assignments")
+				.select("role")
+				.eq("user_id", targetUserId)
+				.maybeSingle(),
+			admin
+				.from("profiles")
+				.select("display_name")
+				.eq("user_id", targetUserId)
+				.maybeSingle(),
+		]);
+
+	if (targetAuthError || !targetAuth.user) {
+		throw error(404, "That account no longer exists.");
+	}
+
+	const targetRole = (roleRecord?.role as AppRole | undefined) ?? null;
+	if (!canModerateTargetRole(actorRole, targetRole)) {
+		throw error(403, "Your role cannot moderate that account.");
+	}
+
+	return {
+		admin,
+		targetUser: targetAuth.user,
+		displayName: profile?.display_name ?? "Smoothie Mixer user",
+	};
+};
+
+export const load: PageServerLoad = async ({ locals, url }) => {
+	const { user: viewer, role } = await requireModerator(locals);
+	const query = url.searchParams.get("q")?.trim().toLocaleLowerCase() ?? "";
+	const { admin, users: authUsers } = await listAuthUsers();
+	const userIds = authUsers.map((user) => user.id);
+	const userIdBatches = Array.from(
+		{ length: Math.ceil(userIds.length / MODERATION_PAGE_SIZE) },
+		(_, index) =>
+			userIds.slice(
+				index * MODERATION_PAGE_SIZE,
+				(index + 1) * MODERATION_PAGE_SIZE,
+			),
+	);
+	const relatedRecordBatches = await Promise.all(
+		userIdBatches.map(async (batch) => {
+			const [profileResult, moderationResult, roleResult] = await Promise.all([
+				admin
+					.from("profiles")
+					.select("user_id, display_name, avatar_path, avatar_moderation_status")
+					.in("user_id", batch),
+				admin
+					.from("account_moderation")
+					.select("user_id, status, public_reason, updated_at")
+					.in("user_id", batch),
+				admin
+					.from("app_role_assignments")
+					.select("user_id, role")
+					.in("user_id", batch),
+			]);
+
+			if (profileResult.error || moderationResult.error || roleResult.error) {
+				throw error(502, "Account details could not be loaded.");
+			}
+
+			return {
+				profiles: profileResult.data,
+				moderation: moderationResult.data,
+				roles: roleResult.data,
+			};
+		}),
+	);
+	const profiles = relatedRecordBatches.flatMap((batch) => batch.profiles);
+	const moderation = relatedRecordBatches.flatMap((batch) => batch.moderation);
+	const roles = relatedRecordBatches.flatMap((batch) => batch.roles);
+
+	const profileByUserId = new Map((profiles ?? []).map((profile) => [profile.user_id, profile]));
+	const moderationByUserId = new Map(
+		(moderation ?? []).map((record) => [record.user_id, record]),
+	);
+	const roleByUserId = new Map((roles ?? []).map((record) => [record.user_id, record.role]));
+	const avatarPaths = (profiles ?? [])
+		.map((profile) => profile.avatar_path)
+		.filter((path): path is string => Boolean(path));
+	const signedAvatarByPath = new Map<string, string>();
+
+	if (avatarPaths.length > 0) {
+		const { data: signedAvatars } = await admin.storage
+			.from(PROFILE_AVATAR_BUCKET)
+			.createSignedUrls(avatarPaths, 10 * 60);
+		for (const avatar of signedAvatars ?? []) {
+			if (avatar.path && avatar.signedUrl) {
+				signedAvatarByPath.set(avatar.path, avatar.signedUrl);
+			}
+		}
+	}
+
+	const users = authUsers.map((user) => {
+		const profile = profileByUserId.get(user.id);
+		const moderationRecord = moderationByUserId.get(user.id);
+		const userRole = (roleByUserId.get(user.id) as AppRole | undefined) ?? null;
+
+		return {
+			id: user.id,
+			displayName: profile?.display_name ?? "Unnamed account",
+			email: user.email ?? "No email available",
+			createdAt: user.created_at,
+			role: userRole,
+			status: moderationRecord?.status ?? "active",
+			publicReason: moderationRecord?.public_reason ?? null,
+			avatarModerationStatus: profile?.avatar_moderation_status ?? "none",
+			avatarUrl: profile?.avatar_path
+				? signedAvatarByPath.get(profile.avatar_path) ?? null
+				: null,
+		};
+	});
+
+	return {
+		viewerRole: role,
+		viewerUserId: viewer.id,
+		query: url.searchParams.get("q")?.trim() ?? "",
+		resultCount: users.filter((user) => matchesSearch(user, query)).length,
+		totalCount: users.length,
+		users: users.filter((user) => matchesSearch(user, query)),
+	};
+};
+
+export const actions: Actions = {
+	ban: async ({ locals, request }) => {
+		const { user: actor, role: actorRole } = await requireModerator(locals);
+		const formData = await request.formData();
+		const targetUserId = String(formData.get("targetUserId") ?? "");
+		const reason = getReason(formData);
+
+		if (!reason) return fail(400, { moderationError: "Choose a valid block reason." });
+
+		const { admin, targetUser, displayName } = await getTargetContext(
+			actor.id,
+			actorRole,
+			targetUserId,
+		);
+		const emailConfigurationError = getModerationEmailConfigurationError();
+		if (emailConfigurationError) {
+			return fail(503, {
+				moderationError:
+					"Account not blocked. Configure the moderation email service before blocking users.",
+			});
+		}
+		if (!targetUser.email) {
+			return fail(400, {
+				moderationError:
+					"Account not blocked because it has no email address for the required notice.",
+			});
+		}
+
+		const { error: authBanError } = await admin.auth.admin.updateUserById(targetUserId, {
+			ban_duration: PERMANENT_BAN_DURATION,
+		});
+
+		if (authBanError) {
+			return fail(502, { moderationError: "Supabase Auth did not block that account." });
+		}
+
+		const publicReason = "This account was blocked for violating the community rules.";
+		const { error: moderationError } = await admin.from("account_moderation").upsert({
+			user_id: targetUserId,
+			status: "banned",
+			public_reason: publicReason,
+			expires_at: null,
+			moderated_by: actor.id,
+		});
+
+		if (moderationError) {
+			return fail(500, {
+				moderationError: "The login was blocked, but the moderation record could not be saved.",
+			});
+		}
+
+		if (targetUser.email) {
+			const { error: blocklistError } = await admin.from("blocked_signup_emails").upsert({
+				email_hash: hashEmail(targetUser.email),
+				source_user_id: targetUserId,
+				blocked_by: actor.id,
+				reason,
+				expires_at: null,
+			});
+
+			if (blocklistError) {
+				return fail(500, {
+					moderationError:
+						"The account was blocked, but its email could not be added to the signup blocklist.",
+				});
+			}
+		}
+
+		const { data: moderationAction, error: actionError } = await admin
+			.from("moderation_actions")
+			.insert({
+				target_user_id: targetUserId,
+				actor_user_id: actor.id,
+				action: "ban",
+				reason_code: reason,
+			})
+			.select("id")
+			.single();
+
+		if (actionError || !moderationAction) {
+			return fail(500, {
+				moderationError:
+					"The account was blocked, but the moderation audit record could not be saved.",
+			});
+		}
+
+		if (reason === "profile_image_policy_violation") {
+			await admin
+				.from("profiles")
+				.update({ avatar_moderation_status: "rejected" })
+				.eq("user_id", targetUserId);
+		}
+
+		const recipientEmailHash = hashEmail(targetUser.email);
+		const { data: delivery, error: deliveryInsertError } = await admin
+			.from("moderation_email_deliveries")
+			.insert({
+				moderation_action_id: moderationAction.id,
+				target_user_id: targetUserId,
+				recipient_email_hash: recipientEmailHash,
+				template: "account_blocked",
+				provider: "resend",
+				status: "pending",
+			})
+			.select("id")
+			.single();
+
+		if (deliveryInsertError || !delivery) {
+			return {
+				moderationWarning:
+					"Account blocked, but the notification email could not be queued for delivery.",
+			};
+		}
+
+		const emailResult = await sendAccountBlockedEmail({
+			email: targetUser.email,
+			displayName,
+			moderationActionId: moderationAction.id,
+			reason,
+		});
+		const attemptedAt = new Date().toISOString();
+
+		if (emailResult.status === "failed") {
+			await admin
+				.from("moderation_email_deliveries")
+				.update({
+					status: "failed",
+					error_code: emailResult.errorCode.slice(0, 120),
+					error_message: emailResult.errorMessage.slice(0, 1000),
+					attempted_at: attemptedAt,
+				})
+				.eq("id", delivery.id);
+
+			return {
+				moderationWarning:
+					"Account blocked, but the notification email failed. Check the delivery ledger before retrying.",
+			};
+		}
+
+		const { error: deliveryUpdateError } = await admin
+			.from("moderation_email_deliveries")
+			.update({
+				status: "sent",
+				provider_message_id: emailResult.providerMessageId,
+				attempted_at: attemptedAt,
+				sent_at: attemptedAt,
+			})
+			.eq("id", delivery.id);
+
+		if (deliveryUpdateError) {
+			return {
+				moderationWarning:
+					"Account blocked and the email provider accepted the notice, but the delivery ledger could not be updated.",
+			};
+		}
+
+		return {
+			moderationSuccess: "Account blocked and notification email accepted for delivery.",
+		};
+	},
+	unban: async ({ locals, request }) => {
+		const { user: actor, role: actorRole } = await requireModerator(locals);
+		const formData = await request.formData();
+		const targetUserId = String(formData.get("targetUserId") ?? "");
+		const { admin } = await getTargetContext(actor.id, actorRole, targetUserId);
+		const { error: authError } = await admin.auth.admin.updateUserById(targetUserId, {
+			ban_duration: "none",
+		});
+
+		if (authError) {
+			return fail(502, { moderationError: "Supabase Auth did not restore that account." });
+		}
+
+		const { error: moderationError } = await admin.from("account_moderation").upsert({
+			user_id: targetUserId,
+			status: "active",
+			public_reason: null,
+			expires_at: null,
+			moderated_by: actor.id,
+		});
+
+		if (moderationError) {
+			return fail(500, {
+				moderationError: "The login was restored, but the moderation record could not be saved.",
+			});
+		}
+
+		await Promise.all([
+			admin.from("blocked_signup_emails").delete().eq("source_user_id", targetUserId),
+			admin.from("moderation_actions").insert({
+				target_user_id: targetUserId,
+				actor_user_id: actor.id,
+				action: "unban",
+				reason_code: "moderator_reversal",
+			}),
+		]);
+
+		return { moderationSuccess: "Account access restored." };
+	},
+};

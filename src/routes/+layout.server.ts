@@ -1,6 +1,9 @@
 import { redirect } from "@sveltejs/kit";
 import type { LayoutServerLoad } from "./$types";
 import { getPasswordUpgradeNext } from "$lib/utils/auth/passwordUpgrade";
+import { getSignedAvatarUrl, getUserProfile } from "$lib/utils/profile/profile";
+import { getDefaultDisplayName } from "$lib/utils/profile/profileValidation";
+import { getUserAppRole } from "$lib/utils/moderation/moderation";
 
 const PUBLIC_PATHS = new Set(["/", "/auth"]);
 
@@ -26,12 +29,19 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		);
 	}
 
+	if (!user) return { authUser: null };
+
+	const profile = await getUserProfile(locals.supabase, user.id);
+	const avatarUrl = await getSignedAvatarUrl(locals.supabase, profile?.avatar_path);
+	const role = await getUserAppRole(locals.supabase, user.id);
+
 	return {
-		authUser: user
-			? {
-					id: user.id,
-					email: user.email ?? null,
-				}
-			: null,
+		authUser: {
+			id: user.id,
+			displayName: profile?.display_name ?? getDefaultDisplayName(user.email),
+			avatarUrl,
+			avatarAltText: profile?.avatar_alt_text ?? null,
+			role,
+		},
 	};
 };

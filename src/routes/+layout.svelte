@@ -88,6 +88,30 @@
 	<header class="app-header">
 		<span class="logo">🥤 Smoothie Mixer</span>
 		<div class="auth-status">
+			{#if data.authUser.role}
+				<a class="moderation-link" href="/moderation" aria-label="Open moderation tools">
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M12 3 5 6v5c0 4.4 2.8 8.3 7 10 4.2-1.7 7-5.6 7-10V6l-7-3Z" />
+						<path d="m9 12 2 2 4-5" />
+					</svg>
+				</a>
+			{/if}
+			<a
+				class="profile-link"
+				href="/profile"
+				aria-label={`Open profile for ${data.authUser.displayName}`}
+			>
+				{#if data.authUser.avatarUrl}
+					<img
+						src={data.authUser.avatarUrl}
+						alt={data.authUser.avatarAltText ?? ""}
+					/>
+				{:else}
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" />
+					</svg>
+				{/if}
+			</a>
 			<form method="POST" action="/auth/logout">
 				<button type="submit">Sign out</button>
 			</form>
