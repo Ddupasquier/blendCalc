@@ -380,6 +380,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_tutorial_preferences: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          do_not_show_again: boolean
+          last_seen_at: string
+          remind_after: string | null
+          tutorial_version: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          do_not_show_again?: boolean
+          last_seen_at?: string
+          remind_after?: string | null
+          tutorial_version?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          do_not_show_again?: boolean
+          last_seen_at?: string
+          remind_after?: string | null
+          tutorial_version?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

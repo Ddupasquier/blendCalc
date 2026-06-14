@@ -125,7 +125,8 @@ p {
 	}
 }
 
-.auth-status .moderation-link {
+.auth-status .moderation-link,
+.auth-status .tutorial-link {
 	width: 2rem;
 	height: 2rem;
 	min-height: 2rem;
@@ -141,6 +142,11 @@ p {
 		stroke-linejoin: round;
 		stroke-width: 1.8;
 	}
+}
+
+.auth-status .tutorial-link {
+	color: $app-primary;
+	background: $app-accent;
 }
 
 @media (max-width: $app-breakpoint-xs) {
@@ -166,7 +172,8 @@ p {
 		padding: 0;
 	}
 
-	.auth-status .moderation-link {
+	.auth-status .moderation-link,
+	.auth-status .tutorial-link {
 		width: 1.85rem;
 		height: 1.85rem;
 		min-height: 1.85rem;

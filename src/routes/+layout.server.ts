@@ -4,6 +4,10 @@ import { getPasswordUpgradeNext } from "$lib/utils/auth/passwordUpgrade";
 import { getSignedAvatarUrl, getUserProfile } from "$lib/utils/profile/profile";
 import { getDefaultDisplayName } from "$lib/utils/profile/profileValidation";
 import { getUserAppRole } from "$lib/utils/moderation/moderation";
+import {
+	getTutorialPreference,
+	shouldAutomaticallyShowTutorial,
+} from "$lib/utils/tutorial/tutorial";
 
 const PUBLIC_PATHS = new Set(["/", "/auth"]);
 
@@ -31,9 +35,12 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 
 	if (!user) return { authUser: null };
 
-	const profile = await getUserProfile(locals.supabase, user.id);
+	const [profile, role, tutorialPreference] = await Promise.all([
+		getUserProfile(locals.supabase, user.id),
+		getUserAppRole(locals.supabase, user.id),
+		getTutorialPreference(locals.supabase, user.id),
+	]);
 	const avatarUrl = await getSignedAvatarUrl(locals.supabase, profile?.avatar_path);
-	const role = await getUserAppRole(locals.supabase, user.id);
 
 	return {
 		authUser: {
@@ -44,6 +51,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			avatarUrl,
 			avatarAltText: profile?.avatar_alt_text ?? null,
 			role,
+			showTutorial: shouldAutomaticallyShowTutorial(tutorialPreference),
 		},
 	};
 };

@@ -4,10 +4,12 @@
 	import "../app.scss";
 	import DailyWelcome from "$lib/components/app/DailyWelcome.svelte";
 	import TabNavigation from "$lib/components/app/TabNavigation.svelte";
+	import TutorialOverlay from "$lib/components/app/TutorialOverlay.svelte";
 	import {
 		clearLegacyAppStorage,
 		setActiveStorageUserId,
 	} from "$lib/utils/storage/storageScope";
+	import { saveTutorialChoice } from "$lib/utils/tutorial/tutorial";
 	import type { LayoutData } from "./$types";
 	import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
 
@@ -32,6 +34,25 @@
 		children: import("svelte").Snippet;
 		data: LayoutData;
 	} = $props();
+
+	let tutorialOpen = $state(false);
+	let tutorialUserId = $state<string | null>(null);
+
+	const recordTutorialChoice = async (choice: "later" | "never") => {
+		if (!data.authUser) return false;
+
+		const saved = await saveTutorialChoice(data.authUser.id, choice);
+		if (saved) tutorialOpen = false;
+		return saved;
+	};
+
+	$effect(() => {
+		const nextUserId = data.authUser?.id ?? null;
+		if (nextUserId === tutorialUserId) return;
+
+		tutorialUserId = nextUserId;
+		tutorialOpen = data.authUser?.showTutorial ?? false;
+	});
 
 	$effect.pre(() => {
 		setActiveStorageUserId(data.authUser?.id ?? null);
@@ -97,6 +118,18 @@
 					</svg>
 				</a>
 			{/if}
+			<button
+				class="tutorial-link"
+				type="button"
+				aria-label="Open app tutorial"
+				title="App tutorial"
+				onclick={() => (tutorialOpen = true)}
+			>
+				<svg viewBox="0 0 24 24" aria-hidden="true">
+					<circle cx="12" cy="12" r="9" />
+					<path d="M12 10v6M12 7.5h.01" />
+				</svg>
+			</button>
 			<a
 				class="profile-link"
 				href="/profile"
@@ -119,9 +152,16 @@
 		</div>
 	</header>
 	<TabNavigation />
-	<DailyWelcome
-		userId={data.authUser.id}
-		name={data.authUser.welcomeName}
+	{#if !tutorialOpen}
+		<DailyWelcome
+			userId={data.authUser.id}
+			name={data.authUser.welcomeName}
+		/>
+	{/if}
+	<TutorialOverlay
+		open={tutorialOpen}
+		onRemindLater={() => recordTutorialChoice("later")}
+		onDontShowAgain={() => recordTutorialChoice("never")}
 	/>
 {/if}
 
