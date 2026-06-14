@@ -141,7 +141,7 @@
 			max-width: 100%;
 			padding: 0.16rem 0.55rem;
 			font-size: $app-font-size-sm;
-			line-height: 1.2;
+			line-height: $app-button-line-height;
 			overflow-wrap: anywhere;
 		}
 

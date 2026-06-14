@@ -237,7 +237,7 @@
 		border: $app-border-strong;
 		border-radius: 0;
 		margin: 0 auto;
-		font-family: "Arial Narrow", Arial, sans-serif;
+		font-family: $app-font-family-data;
 		color: $nutrition-label-text;
 		box-shadow: none;
 		padding: 0.7rem 1.1rem 1.1rem 1.1rem;
@@ -290,7 +290,7 @@
 		color: $app-btn-text;
 		background: $app-custom-strong;
 		border-radius: $app-radius-pill;
-		font-family: Arial, sans-serif;
+		font-family: $app-font-family-data;
 		font-size: 0.64rem;
 		font-weight: 900;
 		text-transform: uppercase;
@@ -396,7 +396,7 @@
 		min-height: 1.3rem;
 		margin: 0.2rem 0;
 		color: $app-primary;
-		font-family: Arial, sans-serif;
+		font-family: $app-font-family-data;
 		font-size: 0.86rem;
 		font-weight: 800;
 		animation: nf-feedback-pop 0.18s ease-out;
@@ -419,7 +419,9 @@
 		border: none;
 		border-radius: $nutrition-label-button-radius;
 		font-size: 1rem;
-		font-weight: 700;
+		font-family: $app-button-font-family;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
 		padding: 0.45em 1.1em;
 		cursor: pointer;
 		transition: background 0.15s;

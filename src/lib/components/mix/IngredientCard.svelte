@@ -260,6 +260,11 @@
 		font-size: $app-font-size-sm;
 	}
 
+	input {
+		font-family: $app-font-family-data;
+		font-variant-numeric: tabular-nums;
+	}
+
 	.ingredient-card__details {
 		min-width: 0;
 		overflow: hidden;
@@ -275,7 +280,8 @@
 		background: transparent;
 		cursor: pointer;
 		font-size: $app-font-size-xs;
-		font-weight: 800;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
 	}
 
 	.ingredient-card__chevron {
@@ -321,8 +327,10 @@
 		background: $app-bg;
 		border: $app-border;
 		border-radius: $app-radius-pill;
+		font-family: $app-font-family-data;
 		font-size: $app-font-size-xs;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.ingredient-card__grams strong {

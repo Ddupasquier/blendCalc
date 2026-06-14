@@ -136,7 +136,7 @@
 		gap: $app-gap-sm;
 		align-items: center;
 
-		a {
+		 a {
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
@@ -146,7 +146,9 @@
 			background: $app-btn-bg;
 			border-radius: $app-radius;
 			font-size: $app-font-size-sm;
-			font-weight: 800;
+			font-family: $app-button-font-family;
+			font-weight: $app-button-font-weight;
+			line-height: $app-button-line-height;
 			text-decoration: none;
 
 			&:hover {

@@ -167,7 +167,8 @@
 			border: $app-border;
 			border-radius: $app-radius-sm;
 			font-size: $app-font-size-sm;
-			font-weight: 700;
+			font-weight: $app-button-font-weight;
+			line-height: $app-button-line-height;
 
 			&:hover,
 			&:focus-visible {
@@ -183,6 +184,7 @@
 				flex: 0 0 auto;
 				color: $app-muted;
 				font-size: $app-font-size-xs;
+				font-weight: $app-font-weight-medium;
 			}
 		}
 	}

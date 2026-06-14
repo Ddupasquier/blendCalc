@@ -98,7 +98,7 @@
 		}
 
 		h1 {
-			font-family: $app-display-font-family;
+			font-family: $app-font-family-display;
 			font-size: $app-font-size-xl;
 		}
 
@@ -120,7 +120,8 @@
 			color: $app-btn-text;
 			background: $app-btn-bg;
 			border-radius: $app-radius-pill;
-			font-weight: 900;
+			font-weight: $app-button-font-weight;
+			line-height: $app-button-line-height;
 		}
 	}
 

@@ -107,6 +107,7 @@
 
     .result-category {
         font-size: $app-font-size-sm;
+        font-weight: $app-font-weight-regular;
         color: $app-muted;
     }
 

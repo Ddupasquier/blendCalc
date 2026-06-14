@@ -141,7 +141,7 @@
 	}
 
 	header h1 {
-		font-family: $app-display-font-family;
+		font-family: $app-font-family-display;
 		font-size: clamp(1.8rem, 7vw, 2.4rem);
 	}
 
@@ -198,7 +198,9 @@
 		min-width: 0;
 		padding-inline: $app-gap-sm;
 		border-radius: $app-radius-sm;
-		font-weight: 800;
+		font-family: $app-button-font-family;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
 		text-decoration: none;
 	}
 

@@ -83,8 +83,7 @@
 		background: $app-bg;
 		border: $app-border;
 		border-radius: $app-radius;
-		font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-		sans-serif;
+		font-family: $app-font-family-interface;
 	}
 
 	.confidence-details--compact {
@@ -179,7 +178,7 @@
 			overflow: hidden;
 			color: $app-primary;
 			font-size: 0.74rem;
-			font-weight: 750;
+			font-weight: $app-font-weight-semibold;
 			text-overflow: ellipsis;
 			white-space: nowrap;
 		}

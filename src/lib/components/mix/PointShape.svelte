@@ -405,14 +405,17 @@
 
 	.point-shape__label {
 		fill: $app-primary;
+		font-family: $app-font-family-interface;
 		font-size: 0.8rem;
 		font-weight: 700;
 	}
 
 	.point-shape__value-label {
 		fill: $app-muted;
+		font-family: $app-font-family-data;
 		font-size: 0.62rem;
 		font-weight: 800;
+		font-variant-numeric: tabular-nums;
 		letter-spacing: 0.01em;
 	}
 

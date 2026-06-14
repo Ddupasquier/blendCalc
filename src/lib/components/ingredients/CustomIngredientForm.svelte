@@ -398,7 +398,8 @@
 		color: $app-btn-text;
 		background: $app-btn-bg;
 		border-radius: $app-radius-pill;
-		font-weight: 800;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
 
 		&:hover {
 			background: $app-btn-bg-hover;

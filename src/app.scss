@@ -18,7 +18,7 @@ body {
 }
 
 body {
-	font-family: $app-font-family;
+	font-family: $app-font-family-interface;
 	background: $app-bg;
 	color: $app-primary;
 	font-size: $app-font-size-base;
@@ -59,8 +59,9 @@ p {
 	flex: 0 1 auto;
 	min-width: 0;
 	overflow: hidden;
+	font-family: $app-font-family-display;
 	font-size: clamp(1rem, 4.5vw, 1.2rem);
-	font-weight: 800;
+	font-weight: $app-font-weight-bold;
 	letter-spacing: 0.01em;
 	text-wrap: balance;
 	white-space: nowrap;
@@ -89,8 +90,9 @@ p {
 	background: $app-bg;
 	border-radius: $app-radius-pill;
 	font-size: $app-font-size-sm;
-	font-weight: 800;
-	line-height: 1;
+	font-family: $app-button-font-family;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
 	text-decoration: none;
 }
 
@@ -188,8 +190,10 @@ p {
 /* ---- Utility ---- */
 button {
 	cursor: pointer;
-	font-family: inherit;
+	font-family: $app-button-font-family;
 	font-size: $app-font-size-md;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
 	border: none;
 	border-radius: $app-radius-sm;
 	padding: $app-gap-sm 0.85rem;
@@ -203,8 +207,9 @@ button:active {
 }
 
 input,
-select {
-	font-family: inherit;
+select,
+textarea {
+	font-family: $app-font-family-interface;
 	font-size: $app-font-size-md;
 }
 

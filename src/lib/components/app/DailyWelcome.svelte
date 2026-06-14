@@ -79,7 +79,7 @@
 		animation: welcome-enter 180ms ease-out both;
 
 		strong {
-			font-family: $app-display-font-family;
+			font-family: $app-font-family-display;
 			font-size: $app-font-size-xl;
 			line-height: 1.2;
 			overflow-wrap: anywhere;
@@ -93,7 +93,7 @@
 
 	.daily-welcome__eyebrow {
 		font-size: $app-font-size-sm;
-		font-weight: 750;
+		font-weight: $app-font-weight-semibold;
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
 	}

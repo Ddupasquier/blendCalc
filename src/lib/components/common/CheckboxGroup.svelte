@@ -56,8 +56,9 @@
         border-radius: $app-radius-pill;
         box-shadow: $app-card-shadow;
         font-size: $app-font-size-md;
-        font-weight: 750;
-        line-height: 1;
+        font-family: $app-button-font-family;
+        font-weight: $app-button-font-weight;
+        line-height: $app-button-line-height;
         cursor: pointer;
         transition:
             background 0.15s,

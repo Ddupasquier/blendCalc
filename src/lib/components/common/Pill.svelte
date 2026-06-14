@@ -51,11 +51,12 @@
         border-radius: $app-radius-pill;
         padding: 0.22rem 0.62rem;
         font-size: $app-font-size-md;
-        font-weight: 550;
+        font-family: $app-button-font-family;
+        font-weight: $app-button-font-weight;
         border: 1px solid $app-accent;
         box-shadow: $app-pill-shadow;
         margin-bottom: 0.1rem;
-        line-height: 1.2;
+        line-height: $app-button-line-height;
         cursor: pointer;
         transition: background 0.15s;
     }

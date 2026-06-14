@@ -204,7 +204,8 @@
 
 	button {
 		border-radius: $app-radius-pill;
-		font-weight: 800;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
 		padding: 0.55rem 1rem;
 	}
 

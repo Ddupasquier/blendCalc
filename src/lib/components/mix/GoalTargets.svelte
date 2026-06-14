@@ -139,7 +139,8 @@
 			background: $app-btn-bg;
 			border-radius: $app-radius-sm;
 			font-size: $app-font-size-sm;
-			font-weight: 800;
+			font-weight: $app-button-font-weight;
+			line-height: $app-button-line-height;
 
 			&:hover:not(:disabled) {
 				background: $app-btn-bg-hover;
@@ -190,7 +191,9 @@
 			background: $app-bg;
 			border: $app-border;
 			border-radius: $app-radius-sm;
+			font-family: $app-font-family-data;
 			font-size: $app-font-size-md;
+			font-variant-numeric: tabular-nums;
 		}
 
 		.goal-unit {
@@ -204,8 +207,10 @@
 			grid-row: 1;
 			align-self: start;
 			color: $app-muted;
+			font-family: $app-font-family-data;
 			font-size: $app-font-size-xs;
-			font-weight: 600;
+			font-weight: $app-font-weight-medium;
+			font-variant-numeric: tabular-nums;
 			line-height: 1.2;
 			text-align: right;
 			white-space: nowrap;

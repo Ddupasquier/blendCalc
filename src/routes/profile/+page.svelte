@@ -163,7 +163,7 @@
 		gap: $app-gap-xs;
 
 		h1 {
-			font-family: $app-display-font-family;
+			font-family: $app-font-family-display;
 			font-size: clamp(1.65rem, 6vw, 2.2rem);
 			letter-spacing: -0.035em;
 		}
@@ -357,7 +357,9 @@
 	.primary-action,
 	.secondary-action {
 		width: fit-content;
-		font-weight: 900;
+		font-family: $app-button-font-family;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
 	}
 
 	.primary-action {

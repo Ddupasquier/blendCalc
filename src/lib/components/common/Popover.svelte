@@ -55,7 +55,8 @@
 		border: $app-warning-border;
 		border-radius: $app-radius-pill;
 		font-size: $app-font-size-sm;
-		font-weight: 800;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
 	}
 
 	.popover__panel {
@@ -85,6 +86,7 @@
 		color: $app-btn-text;
 		border-radius: $app-radius-pill;
 		font-size: $app-font-size-sm;
-		font-weight: 700;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
 	}
 </style>

@@ -83,14 +83,33 @@ $color-ink-black: #111;
 
 // App layout
 // -----------------------------------------------------------------------------
-// Default app font stack. Use for the app shell, form controls, body copy, and
-// general UI components. Specialized displays like nutrition labels can override.
-$app-font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+// Interface font. Use for body copy, navigation, forms, buttons, labels, helper
+// text, cards, and the majority of the application UI.
+$app-font-family-interface: "Segoe UI Variable Text", "Segoe UI", system-ui,
+	-apple-system, sans-serif;
 
-// Rounded display stack for high-impact guest-page headings and brand moments.
-// Keep body copy and dense application controls on the default app font stack.
-$app-display-font-family: "Avenir Next", "Segoe UI Variable Display", "Trebuchet MS",
+// Display font. Use sparingly for large page headings, landing/auth headlines,
+// profile/moderation titles, and short brand moments that need more personality.
+$app-font-family-display: "Avenir Next", "Segoe UI Variable Display", "Trebuchet MS",
 	system-ui, sans-serif;
+
+// Data font. Use for nutrition facts, graph values, measurements, and compact
+// numeric readouts where narrow forms and clearly aligned figures improve scanning.
+$app-font-family-data: "Arial Narrow", "Aptos Narrow", Arial, sans-serif;
+
+// Standard typography weights. Components should use these roles rather than
+// introducing one-off numeric weights that make the interface feel inconsistent.
+$app-font-weight-regular: 400;
+$app-font-weight-medium: 600;
+$app-font-weight-semibold: 700;
+$app-font-weight-bold: 800;
+$app-font-weight-heavy: 900;
+
+// Shared interactive-control typography. All buttons and button-like links use
+// the interface font, a consistent bold weight, and the same compact line height.
+$app-button-font-family: $app-font-family-interface;
+$app-button-font-weight: $app-font-weight-bold;
+$app-button-line-height: 1.1;
 
 // Maximum width for page-level content containers.
 $app-max-width: 600px;

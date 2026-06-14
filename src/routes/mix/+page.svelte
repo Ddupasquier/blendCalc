@@ -841,7 +841,8 @@
             color: $app-btn-text;
             border-radius: $app-radius;
             font-size: $app-font-size-sm;
-            font-weight: 800;
+            font-weight: $app-button-font-weight;
+            line-height: $app-button-line-height;
             padding: 0.38rem 0.65rem;
 
             &:hover {

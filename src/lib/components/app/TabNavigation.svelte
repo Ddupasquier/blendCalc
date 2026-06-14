@@ -51,11 +51,12 @@
       border: none;
       color: $app-primary;
       font-size: $app-font-size-md;
-      font-weight: 750;
+      font-family: $app-button-font-family;
+      font-weight: $app-button-font-weight;
       padding: 0.45rem 1.1rem;
       border-radius: $app-radius-pill;
       cursor: pointer;
-      line-height: 1;
+      line-height: $app-button-line-height;
       transition:
         background 0.13s,
         color 0.13s;

@@ -94,9 +94,9 @@
 
 	h1 {
 		color: $app-primary;
-		font-family: $app-display-font-family;
+		font-family: $app-font-family-display;
 		font-size: clamp(2rem, 7vw, 2.75rem);
-		font-weight: 750;
+		font-weight: $app-font-weight-bold;
 		letter-spacing: -0.045em;
 		line-height: 1.02;
 	}
@@ -151,7 +151,9 @@
 		color: $app-highlight-text;
 		background: $app-highlight;
 		border-radius: $app-radius-pill;
-		font-weight: 900;
+		font-family: $app-button-font-family;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
 		text-decoration: none;
 		box-shadow: $app-highlight-shadow;
 		transition:

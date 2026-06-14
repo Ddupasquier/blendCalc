@@ -254,9 +254,9 @@
 
 		h1 {
 			color: $app-primary;
-			font-family: $app-display-font-family;
+			font-family: $app-font-family-display;
 			font-size: clamp(1.85rem, 7vw, 2.35rem);
-			font-weight: 750;
+			font-weight: $app-font-weight-bold;
 			letter-spacing: -0.04em;
 			line-height: 1.05;
 		}
@@ -347,7 +347,8 @@
 		color: $app-primary;
 		background: transparent;
 		font-size: $app-font-size-sm;
-		font-weight: 800;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
 		text-decoration: none;
 		text-underline-offset: 0.2rem;
 
@@ -366,7 +367,9 @@
 		min-height: 2.65rem;
 		padding: 0.65rem 0.85rem;
 		border-radius: $app-radius-pill;
-		font-weight: 900;
+		font-family: $app-button-font-family;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
 
 		&:hover {
 			background: $app-btn-bg-hover;
