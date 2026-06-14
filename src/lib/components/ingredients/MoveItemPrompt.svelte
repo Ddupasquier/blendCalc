@@ -1,20 +1,31 @@
 <script lang="ts">
-    let { message, onConfirm, onCancel, busy = false } = $props<{
+    let {
+        message,
+        onConfirm,
+        onCancel,
+        busy = false,
+    } = $props<{
         message: string;
         onConfirm: () => void;
         onCancel: () => void;
-		busy?: boolean;
+        busy?: boolean;
     }>();
 </script>
 
 <div class="prompt-modal move-prompt">
     <div class="prompt-title">{message}</div>
     <div class="prompt-actions">
-        <button class="prompt-btn confirm" type="button" onclick={onConfirm} disabled={busy}
-            >{busy ? "Moving…" : "Move"}</button
+        <button
+            class="prompt-btn confirm"
+            type="button"
+            onclick={onConfirm}
+            disabled={busy}>{busy ? "Moving…" : "Move"}</button
         >
-        <button class="prompt-btn" type="button" onclick={onCancel} disabled={busy}
-            >Cancel</button
+        <button
+            class="prompt-btn"
+            type="button"
+            onclick={onCancel}
+            disabled={busy}>Cancel</button
         >
     </div>
 </div>
@@ -23,8 +34,8 @@
     @use "../../../styles/variables" as *;
     .move-prompt {
         background: $app-section-bg;
-        border-radius: $app-card-radius;
-        box-shadow: $app-prompt-shadow;
+        border: $app-border;
+        border-radius: $app-radius;
         padding: 2em 2.2em 1.5em 2.2em;
         min-width: 320px;
         max-width: 90vw;
@@ -69,10 +80,10 @@
                     outline: $app-focus-outline;
                 }
 
-				&:disabled {
-					cursor: wait;
-					opacity: 0.65;
-				}
+                &:disabled {
+                    cursor: wait;
+                    opacity: 0.65;
+                }
             }
         }
     }
