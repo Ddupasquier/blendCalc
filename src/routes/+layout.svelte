@@ -2,6 +2,7 @@
 	import { dev } from "$app/environment";
 	import favicon from "$lib/assets/favicon.svg";
 	import "../app.scss";
+	import DailyWelcome from "$lib/components/app/DailyWelcome.svelte";
 	import TabNavigation from "$lib/components/app/TabNavigation.svelte";
 	import {
 		clearLegacyAppStorage,
@@ -118,6 +119,10 @@
 		</div>
 	</header>
 	<TabNavigation />
+	<DailyWelcome
+		userId={data.authUser.id}
+		name={data.authUser.welcomeName}
+	/>
 {/if}
 
 <main class="app-main" class:app-main--guest={!data.authUser}>

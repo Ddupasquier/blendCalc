@@ -5,6 +5,7 @@ import type { AppRole } from "$lib/utils/moderation/moderation";
 type AuthUser = {
 	id: string;
 	displayName: string;
+	welcomeName: string;
 	avatarUrl: string | null;
 	avatarAltText: string | null;
 	role: AppRole | null;

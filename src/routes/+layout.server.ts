@@ -39,6 +39,8 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		authUser: {
 			id: user.id,
 			displayName: profile?.display_name ?? getDefaultDisplayName(user.email),
+			welcomeName:
+				profile?.display_name ?? user.email ?? getDefaultDisplayName(user.email),
 			avatarUrl,
 			avatarAltText: profile?.avatar_alt_text ?? null,
 			role,
