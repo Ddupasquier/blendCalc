@@ -19,6 +19,7 @@ const config = {
 				'base-uri': ['self'],
 				'connect-src': [
 					'self',
+					'https://api.nal.usda.gov',
 					'https://*.supabase.co',
 					'wss://*.supabase.co',
 					'https://vitals.vercel-insights.com'

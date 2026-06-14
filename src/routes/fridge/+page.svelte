@@ -182,6 +182,8 @@
     }
 
     .ingredient-search-panel {
+        display: grid;
+        gap: $app-gap-md;
         padding: $app-gap-sm;
         margin-bottom: $app-gap-md;
         background: $app-section-bg;
@@ -191,8 +193,6 @@
     }
 
     .section-heading {
-        margin-bottom: $app-gap-sm;
-
         h3 {
             margin-bottom: 0.1rem;
             color: $app-primary;
@@ -207,7 +207,7 @@
     }
 
     .nutrition-preview {
-        margin-top: $app-gap-md;
+        min-width: 0;
     }
 
     .ingredient-lists-grid {
