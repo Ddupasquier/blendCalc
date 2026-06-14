@@ -4,8 +4,9 @@ import {
 } from "../../../defaults/mixDefaults";
 import type { ServingMeasureUnit } from "../../../defaults/servingMeasureDefaults";
 import {
+	addFoodsToSmoothieList,
+	cacheSmoothieListLocally,
 	readSmoothieList,
-	writeSmoothieList,
 } from "$lib/utils/storage/smoothieLists";
 import { compactFood } from "$lib/utils/food/foodRecords";
 import {
@@ -14,6 +15,7 @@ import {
 	saveCloudSavedDrinkWithResult,
 	saveCloudMixPreferences,
 	writeCloudSavedDrinks,
+	reconcileCloudSmoothieList,
 } from "$lib/utils/storage/supabaseData";
 import type { FdcFood } from "$lib/utils/food/types";
 import { cacheClearAll } from "$lib/cache";
@@ -288,16 +290,34 @@ export const deleteSavedDrink = async (id: string) => {
 	return true;
 };
 
-export const restoreSavedDrinkToMix = (drink: SavedDrink) => {
+export const restoreSavedDrinkToMix = async (drink: SavedDrink) => {
 	const normalizedDrink = normalizeDrink(drink);
-	const fridge = readSmoothieList(MIX_STORAGE_KEYS.fridge);
-	const knownFoodIds = new Set(fridge.map((food) => food.fdcId));
-	const missingFoods = normalizedDrink.foods.filter(
-		(food) => !knownFoodIds.has(food.fdcId),
+	const cachedFridge = readSmoothieList(MIX_STORAGE_KEYS.fridge);
+	const cachedShopping = readSmoothieList(MIX_STORAGE_KEYS.shoppingList);
+	const [fridge, shopping] = await Promise.all([
+		reconcileCloudSmoothieList(MIX_STORAGE_KEYS.fridge, cachedFridge),
+		reconcileCloudSmoothieList(
+			MIX_STORAGE_KEYS.shoppingList,
+			cachedShopping,
+		),
+	]);
+
+	cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, fridge);
+	cacheSmoothieListLocally(MIX_STORAGE_KEYS.shoppingList, shopping);
+
+	const fridgeIds = new Set(fridge.map((food) => food.fdcId));
+	const shoppingIds = new Set(shopping.map((food) => food.fdcId));
+	const foodsMissingFromBothLists = normalizedDrink.foods.filter(
+		(food) =>
+			!fridgeIds.has(food.fdcId) && !shoppingIds.has(food.fdcId),
 	);
 
-	if (missingFoods.length > 0) {
-		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [...fridge, ...missingFoods]);
+	if (foodsMissingFromBothLists.length > 0) {
+		const result = await addFoodsToSmoothieList(
+			MIX_STORAGE_KEYS.shoppingList,
+			foodsMissingFromBothLists,
+		);
+		if (result === "error") return false;
 	}
 
 	const mixState = {
@@ -338,4 +358,5 @@ export const restoreSavedDrinkToMix = (drink: SavedDrink) => {
 		nutrientGoals: normalizedDrink.nutrientGoals,
 		mixState,
 	});
+	return true;
 };

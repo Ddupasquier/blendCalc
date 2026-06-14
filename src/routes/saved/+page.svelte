@@ -26,7 +26,9 @@
     let page = $state(1);
 	let drinkPendingDelete = $state<SavedDrink | null>(null);
 	let deletingDrinkId = $state<string | null>(null);
+	let loadingDrinkId = $state<string | null>(null);
     let deleteError = $state("");
+	let loadError = $state("");
 	let loadingDrinks = $state(true);
 
     const sortOptions = [
@@ -80,9 +82,22 @@
         }).format(new Date(timestamp));
     };
 
-    const loadDrink = (drink: SavedDrink) => {
-        restoreSavedDrinkToMix(drink);
-        goto("/mix");
+    const loadDrink = async (drink: SavedDrink) => {
+		if (loadingDrinkId || deletingDrinkId) return;
+		loadError = "";
+		loadingDrinkId = drink.id;
+
+		try {
+			const restored = await restoreSavedDrinkToMix(drink);
+			if (!restored) {
+				loadError =
+					"This drink could not be loaded because its missing ingredients could not be added to your shopping list.";
+				return;
+			}
+			await goto("/mix");
+		} finally {
+			loadingDrinkId = null;
+		}
     };
 
     const removeDrink = async () => {
@@ -157,6 +172,9 @@
 	{#if deleteError}
 		<p class="saved-action-error" role="alert">{deleteError}</p>
 	{/if}
+	{#if loadError}
+		<p class="saved-action-error" role="alert">{loadError}</p>
+	{/if}
 
     {#if loadingDrinks && drinks.length === 0}
 		<section class="saved-empty" aria-busy="true">
@@ -210,13 +228,17 @@
                         {/if}
                     </div>
                     <div class="saved-card__actions">
-                        <button type="button" onclick={() => loadDrink(drink)}>
-                            Load
+                        <button
+							type="button"
+							disabled={loadingDrinkId !== null || deletingDrinkId !== null}
+							onclick={() => void loadDrink(drink)}
+						>
+                            {loadingDrinkId === drink.id ? "Loading…" : "Load"}
                         </button>
                         <button
                             class="saved-card__delete"
                             type="button"
-							disabled={deletingDrinkId !== null}
+							disabled={deletingDrinkId !== null || loadingDrinkId !== null}
 							onclick={() => {
 								deleteError = "";
 								drinkPendingDelete = drink;

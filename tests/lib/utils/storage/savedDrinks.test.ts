@@ -5,6 +5,8 @@ const cloudData = vi.hoisted(() => ({
 	saveCloudSavedDrink: vi.fn(),
 	saveCloudSavedDrinkWithResult: vi.fn(),
 	saveCloudMixPreferences: vi.fn(),
+	reconcileCloudSmoothieList: vi.fn(),
+	writeCloudSmoothieList: vi.fn(),
 	writeCloudSavedDrinks: vi.fn(),
 }));
 
@@ -23,6 +25,10 @@ import {
 } from "$lib/utils/storage/savedDrinks";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 import { LEGACY_SODIUM_NUTRIENT_ID } from "$lib/utils/mix/nutrientMappings";
+import {
+	cacheSmoothieListLocally,
+	readSmoothieList,
+} from "$lib/utils/storage/smoothieLists";
 
 const food = {
 	fdcId: 1,
@@ -35,6 +41,10 @@ describe("saved drinks", () => {
 		localStorage.clear();
 		vi.clearAllMocks();
 		cloudData.deleteCloudSavedDrink.mockResolvedValue(true);
+		cloudData.reconcileCloudSmoothieList.mockImplementation(
+			async (_key: string, localFoods: FdcFood[]) => localFoods,
+		);
+		cloudData.writeCloudSmoothieList.mockResolvedValue(true);
 	});
 
 	it("saves drink snapshots", () => {
@@ -55,7 +65,7 @@ describe("saved drinks", () => {
 		});
 	});
 
-	it("restores a saved drink to mix state", () => {
+	it("restores a saved drink to mix state", async () => {
 		const drink = addSavedDrink({
 			name: "High fiber",
 			foods: [food],
@@ -67,7 +77,7 @@ describe("saved drinks", () => {
 			servingUnits: { 1: "g" },
 		});
 
-		restoreSavedDrinkToMix(drink);
+		await restoreSavedDrinkToMix(drink);
 
 		expect(JSON.parse(localStorage.getItem(MIX_STORAGE_KEYS.mixState) ?? "{}"))
 			.toMatchObject({
@@ -79,6 +89,30 @@ describe("saved drinks", () => {
 			name: "High fiber",
 			isDirty: false,
 		});
+	});
+
+	it("adds saved ingredients missing from the fridge to the shopping list", async () => {
+		const kale = { ...food, fdcId: 2, description: "Kale, raw" };
+		cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, [food]);
+		const drink = addSavedDrink({
+			name: "Green smoothie",
+			foods: [food, kale],
+			selected: [1008],
+			options: [{ id: 1008, label: "Calories" }],
+			nutrientGoals: { 1008: 350 },
+			servingGrams: { 1: 100, 2: 100 },
+			servingQuantities: { 1: 100, 2: 100 },
+			servingUnits: { 1: "g", 2: "g" },
+		});
+
+		expect(await restoreSavedDrinkToMix(drink)).toBe(true);
+
+		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)).toEqual([food]);
+		expect(readSmoothieList(MIX_STORAGE_KEYS.shoppingList)).toEqual([kale]);
+		expect(cloudData.writeCloudSmoothieList).toHaveBeenCalledWith(
+			MIX_STORAGE_KEYS.shoppingList,
+			[kale],
+		);
 	});
 
 	it("overwrites an existing saved drink without creating a duplicate", () => {
@@ -130,7 +164,7 @@ describe("saved drinks", () => {
 		expect(hasSavedDrinkName("Low sugar")).toBe(false);
 	});
 
-	it("clears the loaded saved drink context", () => {
+	it("clears the loaded saved drink context", async () => {
 		const drink = addSavedDrink({
 			name: "Draft",
 			foods: [food],
@@ -142,7 +176,7 @@ describe("saved drinks", () => {
 			servingUnits: { 1: "g" },
 		});
 
-		restoreSavedDrinkToMix(drink);
+		await restoreSavedDrinkToMix(drink);
 		clearLoadedSavedDrink();
 
 		expect(readLoadedSavedDrink()).toBeNull();
@@ -209,7 +243,7 @@ describe("saved drinks", () => {
 		});
 	});
 
-	it("restores the nutrient selection belonging to each saved mix", () => {
+	it("restores the nutrient selection belonging to each saved mix", async () => {
 		const sodiumMix = addSavedDrink({
 			name: "Low sodium",
 			foods: [food],
@@ -231,11 +265,11 @@ describe("saved drinks", () => {
 			servingUnits: { 1: "g" },
 		});
 
-		restoreSavedDrinkToMix(sodiumMix);
+		await restoreSavedDrinkToMix(sodiumMix);
 		expect(JSON.parse(localStorage.getItem(MIX_STORAGE_KEYS.mixState) ?? "{}"))
 			.toMatchObject({ selected: [NUTRIENT_IDS.SODIUM] });
 
-		restoreSavedDrinkToMix(potassiumMix);
+		await restoreSavedDrinkToMix(potassiumMix);
 		expect(JSON.parse(localStorage.getItem(MIX_STORAGE_KEYS.mixState) ?? "{}"))
 			.toMatchObject({ selected: [NUTRIENT_IDS.POTASSIUM] });
 	});

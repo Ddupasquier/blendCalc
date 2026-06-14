@@ -114,6 +114,26 @@ export const addFoodToSmoothieList = async (
 	return "added";
 };
 
+export const addFoodsToSmoothieList = async (
+	key: SmoothieListKey,
+	foods: FdcFood[],
+): Promise<SmoothieListMutationResult> => {
+	const list = readSmoothieList(key);
+	const existingIds = new Set(list.map((item) => item.fdcId));
+	const additions = uniqueFoodsById(foods)
+		.filter((food) => !existingIds.has(food.fdcId))
+		.map(compactFood);
+
+	if (additions.length === 0) return "duplicate";
+
+	const saved = await writeCloudSmoothieList(key, additions);
+	if (!saved) return "error";
+
+	cacheSmoothieListLocally(key, [...list, ...additions]);
+	dispatchListsChanged();
+	return "added";
+};
+
 export const removeFoodFromSmoothieList = async (
 	key: SmoothieListKey,
 	foodId: number,
