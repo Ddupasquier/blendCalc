@@ -9,6 +9,7 @@ import {
 } from "$lib/utils/storage/supabaseData";
 import { getScopedStorageKey } from "$lib/utils/storage/storageScope";
 import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
+import { normalizeCustomFoodName } from "$lib/utils/food/customFoodNames";
 
 export const CUSTOM_FOODS_STORAGE_KEY = "smoothie-custom-foods";
 export const CUSTOM_FOODS_CHANGED_EVENT = "smoothie-custom-foods-changed";
@@ -30,6 +31,8 @@ export type CustomFoodInput = {
 	volumeUnit?: ServingMeasureUnit;
 	nutrition: CustomFoodNutritionInput;
 };
+
+export type CustomFoodSaveResult = "saved" | "duplicate" | "error";
 
 const CUSTOM_NUTRIENT_META = [
 	{
@@ -182,9 +185,23 @@ export const writeCustomFoods = (foods: FdcFood[]) => {
 	dispatchCustomFoodsChanged();
 };
 
-export const saveCustomFood = (food: FdcFood) => {
+export const saveCustomFood = async (
+	food: FdcFood,
+): Promise<CustomFoodSaveResult> => {
 	const foods = readCustomFoods();
+	const normalizedName = normalizeCustomFoodName(food.description);
+	if (
+		foods.some(
+			(item) => normalizeCustomFoodName(item.description) === normalizedName,
+		)
+	) {
+		return "duplicate";
+	}
+
 	const foodRecord = compactFood(food);
+	const cloudResult = await saveCloudCustomFood(foodRecord);
+	if (cloudResult !== "saved") return cloudResult;
+
 	const nextFoods = [
 		foodRecord,
 		...foods.filter((item) => item.fdcId !== food.fdcId),
@@ -193,8 +210,8 @@ export const saveCustomFood = (food: FdcFood) => {
 		getScopedStorageKey(CUSTOM_FOODS_STORAGE_KEY),
 		JSON.stringify(uniqueFoodsById(nextFoods).map(compactFood)),
 	);
-	void saveCloudCustomFood(foodRecord);
 	dispatchCustomFoodsChanged();
+	return "saved";
 };
 
 export const searchCustomFoods = (query: string) => {

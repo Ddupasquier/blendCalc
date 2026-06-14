@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import type { ActionData, PageData } from "./$types";
 
 	let {
@@ -14,6 +15,14 @@
 		displayName: form?.profileValues?.displayName ?? data.profile?.display_name ?? "",
 		bio: form?.profileValues?.bio ?? data.profile?.bio ?? "",
 	});
+	let profilePending = $state(false);
+	let avatarPending = $state(false);
+	const enhanceProfile = createPendingSubmit(
+		(pending) => (profilePending = pending),
+	);
+	const enhanceAvatar = createPendingSubmit(
+		(pending) => (avatarPending = pending),
+	);
 </script>
 
 <svelte:head>
@@ -56,7 +65,7 @@
 			<p class="form-message form-message--success" role="status">{form.profileSuccess}</p>
 		{/if}
 
-		<form method="POST" action="?/saveProfile" use:enhance>
+		<form method="POST" action="?/saveProfile" use:enhance={enhanceProfile} aria-busy={profilePending}>
 			<label for="profile-display-name">Preferred name</label>
 			<input
 				id="profile-display-name"
@@ -66,6 +75,7 @@
 				autocomplete="name"
 				placeholder="What should we call you?"
 				required
+				disabled={profilePending}
 			/>
 			<small>This can be your first name, nickname, or any name you prefer. Your email is not shown.</small>
 
@@ -76,9 +86,12 @@
 				maxlength="300"
 				rows="4"
 				placeholder="A short note about you"
+				disabled={profilePending}
 			>{profileValues.bio}</textarea>
 
-			<button class="primary-action" type="submit">Save profile</button>
+			<button class="primary-action" type="submit" disabled={profilePending}>
+				{profilePending ? "Saving profile…" : "Save profile"}
+			</button>
 		</form>
 	</section>
 
@@ -94,7 +107,7 @@
 			<p class="form-message form-message--success" role="status">{form.avatarSuccess}</p>
 		{/if}
 
-		<form method="POST" action="?/uploadAvatar" enctype="multipart/form-data" use:enhance>
+		<form method="POST" action="?/uploadAvatar" enctype="multipart/form-data" use:enhance={enhanceAvatar} aria-busy={avatarPending}>
 			<label for="profile-avatar">Choose image</label>
 			<input
 				id="profile-avatar"
@@ -102,6 +115,7 @@
 				type="file"
 				accept="image/jpeg,image/png,image/webp"
 				required
+				disabled={avatarPending}
 			/>
 
 			<label for="profile-avatar-alt">Image description</label>
@@ -111,6 +125,7 @@
 				maxlength="160"
 				value={data.profile?.avatar_alt_text ?? ""}
 				placeholder="Example: Dylan smiling"
+				disabled={avatarPending}
 			/>
 
 			<fieldset class="avatar-policy">
@@ -127,22 +142,24 @@
 					</ul>
 				</details>
 				<label class="check-row">
-					<input type="checkbox" name="avatarPolicyAccepted" required />
+					<input type="checkbox" name="avatarPolicyAccepted" required disabled={avatarPending} />
 					<span>I confirm this image follows the profile image rules. My agreement and upload details will be recorded.</span>
 				</label>
 				{#if data.requireHumanFace}
 					<label class="check-row">
-						<input type="checkbox" name="avatarHasHumanFace" required />
+						<input type="checkbox" name="avatarHasHumanFace" required disabled={avatarPending} />
 						<span>I confirm this image contains a recognizable human face.</span>
 					</label>
 				{/if}
 			</fieldset>
 
 			<div class="form-actions">
-				<button class="primary-action" type="submit">Upload image</button>
+				<button class="primary-action" type="submit" disabled={avatarPending}>
+					{avatarPending ? "Saving image…" : "Upload image"}
+				</button>
 				{#if data.profile?.avatar_path}
-					<button class="secondary-action" type="submit" formaction="?/removeAvatar" formnovalidate>
-						Remove image
+					<button class="secondary-action" type="submit" formaction="?/removeAvatar" formnovalidate disabled={avatarPending}>
+						{avatarPending ? "Working…" : "Remove image"}
 					</button>
 				{/if}
 			</div>

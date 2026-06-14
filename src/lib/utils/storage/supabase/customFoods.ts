@@ -1,7 +1,10 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/foodRecords";
 import type { FdcFood } from "$lib/utils/food/types";
+import { normalizeCustomFoodName } from "$lib/utils/food/customFoodNames";
 import { getCurrentUserId, toJson } from "./shared";
+
+export type CloudCustomFoodWriteResult = "saved" | "duplicate" | "error";
 
 export const readCloudCustomFoods = async () => {
 	const userId = await getCurrentUserId();
@@ -39,22 +42,27 @@ export const writeCloudCustomFoods = async (foods: FdcFood[]) => {
 	return !error;
 };
 
-export const saveCloudCustomFood = async (food: FdcFood) => {
+export const saveCloudCustomFood = async (
+	food: FdcFood,
+): Promise<CloudCustomFoodWriteResult> => {
 	const userId = await getCurrentUserId();
-	if (!userId) return false;
+	if (!userId) return "error";
 	const supabase = getSupabaseBrowserClient();
-	if (!supabase) return false;
+	if (!supabase) return "error";
 
 	const { error } = await supabase.from("custom_foods").upsert(
 		{
 			user_id: userId,
 			fdc_id: food.fdcId,
+			name_key: normalizeCustomFoodName(food.description),
 			food: toJson(compactFood(food)),
 		},
 		{ onConflict: "user_id,fdc_id" },
 	);
 
-	return !error;
+	if (!error) return "saved";
+	if (error.code === "23505") return "duplicate";
+	return "error";
 };
 
 export const reconcileCloudCustomFoods = async (localFoods: FdcFood[]) => {

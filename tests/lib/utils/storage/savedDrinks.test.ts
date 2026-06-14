@@ -1,8 +1,19 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const cloudData = vi.hoisted(() => ({
+	deleteCloudSavedDrink: vi.fn(),
+	saveCloudSavedDrink: vi.fn(),
+	saveCloudSavedDrinkWithResult: vi.fn(),
+	saveCloudMixPreferences: vi.fn(),
+	writeCloudSavedDrinks: vi.fn(),
+}));
+
+vi.mock("$lib/utils/storage/supabaseData", () => cloudData);
 import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
 import {
 	addSavedDrink,
 	clearLoadedSavedDrink,
+	deleteSavedDrink,
 	hasSavedDrinkName,
 	readLoadedSavedDrink,
 	readSavedDrinks,
@@ -22,6 +33,8 @@ const food = {
 describe("saved drinks", () => {
 	beforeEach(() => {
 		localStorage.clear();
+		vi.clearAllMocks();
+		cloudData.deleteCloudSavedDrink.mockResolvedValue(true);
 	});
 
 	it("saves drink snapshots", () => {
@@ -133,6 +146,39 @@ describe("saved drinks", () => {
 		clearLoadedSavedDrink();
 
 		expect(readLoadedSavedDrink()).toBeNull();
+	});
+
+	it("keeps a saved drink cached when the database delete fails", async () => {
+		const drink = addSavedDrink({
+			name: "Keep me",
+			foods: [food],
+			selected: [1008],
+			options: [{ id: 1008, label: "Calories" }],
+			nutrientGoals: { 1008: 350 },
+			servingGrams: { 1: 100 },
+			servingQuantities: { 1: 100 },
+			servingUnits: { 1: "g" },
+		});
+		cloudData.deleteCloudSavedDrink.mockResolvedValue(false);
+
+		expect(await deleteSavedDrink(drink.id)).toBe(false);
+		expect(readSavedDrinks()).toHaveLength(1);
+	});
+
+	it("removes a saved drink only after the database confirms deletion", async () => {
+		const drink = addSavedDrink({
+			name: "Delete me",
+			foods: [food],
+			selected: [1008],
+			options: [{ id: 1008, label: "Calories" }],
+			nutrientGoals: { 1008: 350 },
+			servingGrams: { 1: 100 },
+			servingQuantities: { 1: 100 },
+			servingUnits: { 1: "g" },
+		});
+
+		expect(await deleteSavedDrink(drink.id)).toBe(true);
+		expect(readSavedDrinks()).toEqual([]);
 	});
 
 	it("migrates legacy saved Sodium data away from saturated fat", () => {

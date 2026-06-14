@@ -9,6 +9,7 @@
 	import SelectedIngredientsPanel from "$lib/components/mix/SelectedIngredientsPanel.svelte";
 	import SmartWarnings from "$lib/components/mix/SmartWarnings.svelte";
 	import TextInputDialog from "$lib/components/common/TextInputDialog.svelte";
+	import ConfirmationDialog from "$lib/components/common/ConfirmationDialog.svelte";
     import {
         getNutrientGoalWarnings,
         type SmartWarning,
@@ -87,7 +88,10 @@
 	import { vitalNutrients } from "../../variables/vitalNutrients";
 	import { ALL_NUTRIENTS } from "../../variables/allNutrients";
 
+	type ResetAction = "goals" | "ingredients" | "all";
+
     let selected = $state<(string | number)[]>(vitalNutrients.map((n) => n.id));
+	let pendingResetAction = $state<ResetAction | null>(null);
     let options = $state<NutrientOption[]>(getDefaultNutrientOptions());
     let fridgeItems = $state<FdcFood[]>([]);
     let shoppingItems = $state<FdcFood[]>([]);
@@ -175,6 +179,25 @@
         selectedFoods.length > 0 &&
             (!loadedSavedDrink || loadedSavedDrink.isDirty),
     );
+	const hasCustomGoals = $derived.by(() => {
+		const goalIds = new Set([
+			...Object.keys(DEFAULT_NUTRIENT_GOALS),
+			...Object.keys(nutrientGoals),
+		]);
+		return [...goalIds].some(
+			(id) => nutrientGoals[Number(id)] !== DEFAULT_NUTRIENT_GOALS[Number(id)],
+		);
+	});
+	const hasCustomNutrientSelection = $derived.by(() => {
+		const defaultIds = vitalNutrients.map((nutrient) => String(nutrient.id));
+		return (
+			selected.length !== defaultIds.length ||
+			selected.some((id, index) => String(id) !== defaultIds[index])
+		);
+	});
+	const hasResettableMixState = $derived(
+		hasCustomGoals || hasCustomNutrientSelection || selectedFoodIds.length > 0,
+	);
     const nutrientProgress = $derived(
         getNutrientProgress(
             selectedNutrients,
@@ -425,6 +448,35 @@
         saveMixState();
     };
 
+	const resetDialogContent = $derived.by(() => {
+		if (pendingResetAction === "goals") {
+			return {
+				title: "Reset nutrition goals?",
+				description: "Replace your current goal values with the app defaults?",
+				confirmLabel: "Reset goals",
+			};
+		}
+		if (pendingResetAction === "ingredients") {
+			return {
+				title: "Clear selected ingredients?",
+				description: "Remove every selected ingredient and its entered amount from this draft?",
+				confirmLabel: "Clear ingredients",
+			};
+		}
+		return {
+			title: "Reset the entire mix?",
+			description: "Restore default nutrients and goals, and remove all selected ingredients?",
+			confirmLabel: "Reset all",
+		};
+	});
+
+	const confirmReset = () => {
+		if (pendingResetAction === "goals") resetGoals();
+		if (pendingResetAction === "ingredients") clearIngredients();
+		if (pendingResetAction === "all") resetMix();
+		pendingResetAction = null;
+	};
+
     const getCurrentSavedDrinkInput = (name: string): SavedDrinkInput => {
         return {
             name,
@@ -628,6 +680,15 @@
 </script>
 
 <div class="mix-page">
+	<ConfirmationDialog
+		open={pendingResetAction !== null}
+		title={resetDialogContent.title}
+		description={resetDialogContent.description}
+		confirmLabel={resetDialogContent.confirmLabel}
+		danger
+		onConfirm={confirmReset}
+		onCancel={() => (pendingResetAction = null)}
+	/>
     <header class="mix-header">
         <div>
             {#if loadedSavedDrink}
@@ -659,11 +720,11 @@
                 disabled={!canSaveCurrentMix}
             >{loadedSavedDrink ? "Save Changes" : "Save"}</button
             >
-            <button type="button" onclick={resetGoals}>Reset Goals</button>
-            <button type="button" onclick={clearIngredients}
+            <button type="button" onclick={() => (pendingResetAction = "goals")} disabled={!hasCustomGoals}>Reset Goals</button>
+            <button type="button" onclick={() => (pendingResetAction = "ingredients")} disabled={selectedFoodIds.length === 0}
                 >Clear Ingredients</button
             >
-            <button type="button" onclick={resetMix}>Reset All</button>
+            <button type="button" onclick={() => (pendingResetAction = "all")} disabled={!hasResettableMixState}>Reset All</button>
         </div>
     </header>
 

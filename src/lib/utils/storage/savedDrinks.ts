@@ -277,12 +277,15 @@ export const saveExistingSavedDrink = async (
 	return { ok: true, drink: updatedDrink };
 };
 
-export const deleteSavedDrink = (id: string) => {
+export const deleteSavedDrink = async (id: string) => {
+	const deleted = await deleteCloudSavedDrink(id);
+	if (!deleted) return false;
+
 	writeSavedDrinks(readSavedDrinks().filter((drink) => drink.id !== id), {
 		syncCloud: false,
 	});
 	if (readLoadedSavedDrink()?.id === id) clearLoadedSavedDrink();
-	void deleteCloudSavedDrink(id);
+	return true;
 };
 
 export const restoreSavedDrinkToMix = (drink: SavedDrink) => {

@@ -1,5 +1,14 @@
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("$lib/utils/food/customFoods", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("$lib/utils/food/customFoods")>();
+	return {
+		...actual,
+		saveCustomFood: vi.fn().mockResolvedValue("saved"),
+	};
+});
+
 import CustomIngredientForm from "$lib/components/ingredients/CustomIngredientForm.svelte";
 
 describe("CustomIngredientForm", () => {
@@ -50,7 +59,7 @@ describe("CustomIngredientForm", () => {
 			screen.getByRole("button", { name: /save custom ingredient/i }),
 		);
 
-		expect(onCreate).toHaveBeenCalledOnce();
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
 		expect(onCreate.mock.calls[0][0]).toMatchObject({
 			description: "Chocolate cookies",
 			customFood: true,

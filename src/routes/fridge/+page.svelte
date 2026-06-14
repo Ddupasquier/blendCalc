@@ -37,6 +37,8 @@
     let sourceFilter = $state("all");
     let onHandPage = $state(1);
     let shoppingPage = $state(1);
+	let removingItem = $state<string | null>(null);
+	let listActionError = $state("");
 
     const sourceFilterOptions = [
         { value: "all", label: "All sources" },
@@ -103,13 +105,36 @@
         selectedFood = food;
     };
 
-    const removeFromList = (key: SmoothieListKey, foodId: number) => {
-        removeFoodFromSmoothieList(key, foodId);
-        if (selectedFood?.fdcId === foodId) {
-            selectedFood = null;
-        }
-        loadLists();
+    const getItemActionKey = (key: SmoothieListKey, foodId: number) => {
+		return `${key}:${foodId}`;
+	};
+
+    const removeFromList = async (key: SmoothieListKey, foodId: number) => {
+		const actionKey = getItemActionKey(key, foodId);
+		if (removingItem) return;
+
+		removingItem = actionKey;
+		listActionError = "";
+		try {
+			const result = await removeFoodFromSmoothieList(key, foodId);
+			if (result === "error") {
+				listActionError = "That ingredient could not be removed. Try again.";
+				return;
+			}
+			if (selectedFood?.fdcId === foodId) selectedFood = null;
+			await loadLists();
+		} finally {
+			removingItem = null;
+		}
     };
+
+	const getDisabledIndices = (key: SmoothieListKey, items: FdcFood[]) => {
+		return items
+			.map((item, index) =>
+				removingItem === getItemActionKey(key, item.fdcId) ? index : -1,
+			)
+			.filter((index) => index >= 0);
+	};
 
     const getActiveIndices = (items: FdcFood[]) => {
         if (!selectedFood) return [];
@@ -198,6 +223,9 @@
     {/if}
 
     <div class="ingredient-lists-grid">
+		{#if listActionError}
+			<p class="list-action-error" role="alert">{listActionError}</p>
+		{/if}
         <section class="fridge-section">
             <h3>On Hand <span>{filteredOnHand.length}</span></h3>
             <div class="fridge-container" aria-label="On Hand ingredients">
@@ -208,6 +236,10 @@
                         customIndices={pagedOnHand
                             .map((food, i) => (food.customFood ? i : -1))
                             .filter((i) => i !== -1)}
+						disabledIndices={getDisabledIndices(
+							MIX_STORAGE_KEYS.fridge,
+							pagedOnHand,
+						)}
                         onSelect={(idx) => handleSelect(pagedOnHand[idx])}
                         onRemove={(idx) =>
                             removeFromList(
@@ -240,6 +272,10 @@
                         customIndices={pagedShoppingList
                             .map((food, i) => (food.customFood ? i : -1))
                             .filter((i) => i !== -1)}
+						disabledIndices={getDisabledIndices(
+							MIX_STORAGE_KEYS.shoppingList,
+							pagedShoppingList,
+						)}
                         onSelect={(idx) => handleSelect(pagedShoppingList[idx])}
                         onRemove={(idx) =>
                             removeFromList(
@@ -324,6 +360,17 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: $app-gap-md;
     }
+
+	.list-action-error {
+		grid-column: 1 / -1;
+		padding: $app-gap-sm;
+		color: $app-warning-strong;
+		background: $app-warning-bg;
+		border: $app-warning-border;
+		border-radius: $app-radius;
+		font-size: $app-font-size-sm;
+		font-weight: 800;
+	}
 
     .ingredient-list-controls {
         margin-bottom: $app-gap-md;

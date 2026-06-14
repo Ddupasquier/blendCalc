@@ -85,10 +85,13 @@
 		onCancel: () => void;
 	}>(null);
 	let feedbackMessage = $state("");
+	let feedbackError = $state(false);
+	let pendingAction = $state<"fridge" | "shopping" | "move" | null>(null);
 	let feedbackTimer: ReturnType<typeof setTimeout> | null = null;
 
-	const showFeedback = (message: string) => {
+	const showFeedback = (message: string, isError = false) => {
 		feedbackMessage = message;
+		feedbackError = isError;
 		if (feedbackTimer) clearTimeout(feedbackTimer);
 		feedbackTimer = setTimeout(() => {
 			feedbackMessage = "";
@@ -100,53 +103,108 @@
 		if (feedbackTimer) clearTimeout(feedbackTimer);
 	});
 
-	const handleAddToFridge = () => {
+	const moveFood = async (
+		from: typeof MIX_STORAGE_KEYS.fridge | typeof MIX_STORAGE_KEYS.shoppingList,
+		to: typeof MIX_STORAGE_KEYS.fridge | typeof MIX_STORAGE_KEYS.shoppingList,
+		successMessage: string,
+	) => {
+		if (!food || pendingAction) return;
+		pendingAction = "move";
+		try {
+			const addResult = await addFoodToSmoothieList(to, food);
+			if (addResult === "error") {
+				showFeedback("The item could not be moved. Try again.", true);
+				return;
+			}
+
+			const removeResult = await removeFoodFromSmoothieList(from, food.fdcId);
+			if (removeResult === "error") {
+				showFeedback(
+					"Added to the new list, but the old copy could not be removed.",
+					true,
+				);
+				return;
+			}
+			showFeedback(successMessage);
+			movePrompt = null;
+		} finally {
+			pendingAction = null;
+		}
+	};
+
+	const handleAddToFridge = async () => {
 		if (!food) return;
 		const shoppingList = readSmoothieList(MIX_STORAGE_KEYS.shoppingList);
 		if (shoppingList.some((item) => item.fdcId === food.fdcId)) {
 			movePrompt = {
 				message:
 					"This item is already in your shopping list. Move it to your fridge?",
-				onConfirm: () => {
-					removeFoodFromSmoothieList(
+				onConfirm: () =>
+					void moveFood(
 						MIX_STORAGE_KEYS.shoppingList,
-						food.fdcId,
-					);
-					addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food);
-					showFeedback("Moved to fridge.");
-					movePrompt = null;
-				},
+						MIX_STORAGE_KEYS.fridge,
+						"Moved to fridge.",
+					),
 				onCancel: () => {
 					movePrompt = null;
 				},
 			};
 			return;
 		}
-		const added = addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food);
-		showFeedback(added ? "Added to fridge." : "Already in fridge.");
+		if (pendingAction) return;
+		pendingAction = "fridge";
+		try {
+			const result = await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food);
+			showFeedback(
+				result === "added"
+					? "Added to fridge."
+					: result === "duplicate"
+						? "Already in fridge."
+						: "Could not add to fridge. Try again.",
+				result === "error",
+			);
+		} finally {
+			pendingAction = null;
+		}
 	};
 
-	const handleAddToShopping = () => {
+	const handleAddToShopping = async () => {
 		if (!food) return;
 		const fridgeList = readSmoothieList(MIX_STORAGE_KEYS.fridge);
 		if (fridgeList.some((item) => item.fdcId === food.fdcId)) {
 			movePrompt = {
 				message:
 					"This item is already in your fridge. Move it to your shopping list?",
-				onConfirm: () => {
-					removeFoodFromSmoothieList(MIX_STORAGE_KEYS.fridge, food.fdcId);
-					addFoodToSmoothieList(MIX_STORAGE_KEYS.shoppingList, food);
-					showFeedback("Moved to shopping list.");
-					movePrompt = null;
-				},
+				onConfirm: () =>
+					void moveFood(
+						MIX_STORAGE_KEYS.fridge,
+						MIX_STORAGE_KEYS.shoppingList,
+						"Moved to shopping list.",
+					),
 				onCancel: () => {
 					movePrompt = null;
 				},
 			};
 			return;
 		}
-		const added = addFoodToSmoothieList(MIX_STORAGE_KEYS.shoppingList, food);
-		showFeedback(added ? "Added to shopping list." : "Already in shopping list.");
+		if (pendingAction) return;
+		pendingAction = "shopping";
+		try {
+			const result = await addFoodToSmoothieList(
+				MIX_STORAGE_KEYS.shoppingList,
+				food,
+			);
+			showFeedback(
+				result === "added"
+					? "Added to shopping list."
+					: result === "duplicate"
+						? "Already in shopping list."
+						: "Could not add to shopping list. Try again.",
+				result === "error",
+			);
+		} finally {
+			pendingAction = null;
+		}
 	};
 </script>
 
@@ -205,22 +263,23 @@
 	</div>
 
 	<div class="nf-actions">
-		<button class="nf-btn" onclick={handleAddToFridge} disabled={!food}
-			>Add to Fridge</button
+		<button class="nf-btn" onclick={handleAddToFridge} disabled={!food || pendingAction !== null}
+			>{pendingAction === "fridge" ? "Adding…" : "Add to Fridge"}</button
 		>
-		<button class="nf-btn" onclick={handleAddToShopping} disabled={!food}
-			>Add to Shopping List</button
+		<button class="nf-btn" onclick={handleAddToShopping} disabled={!food || pendingAction !== null}
+			>{pendingAction === "shopping" ? "Adding…" : "Add to Shopping List"}</button
 		>
 	</div>
 	{#if feedbackMessage}
-		<div class="nf-feedback" role="status" aria-live="polite">
-			<span>✓</span>
+		<div class="nf-feedback" class:nf-feedback--error={feedbackError} role={feedbackError ? "alert" : "status"} aria-live="polite">
+			<span>{feedbackError ? "!" : "✓"}</span>
 			{feedbackMessage}
 		</div>
 	{/if}
 	{#if movePrompt}
 		<MoveItemPrompt
 			message={movePrompt.message}
+			busy={pendingAction === "move"}
 			onConfirm={movePrompt.onConfirm}
 			onCancel={movePrompt.onCancel}
 		/>

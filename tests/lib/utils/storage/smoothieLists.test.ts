@@ -41,6 +41,8 @@ describe("smoothie lists", () => {
 	beforeEach(() => {
 		localStorage.clear();
 		vi.clearAllMocks();
+		cloudData.upsertCloudSmoothieListItem.mockResolvedValue(true);
+		cloudData.removeCloudSmoothieListItem.mockResolvedValue(true);
 	});
 
 	it("stores compact food records with serving metadata", () => {
@@ -62,8 +64,8 @@ describe("smoothie lists", () => {
 		});
 	});
 
-	it("adds one list item without rewriting the whole cloud list", () => {
-		expect(addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food)).toBe(true);
+	it("adds one list item without rewriting the whole cloud list", async () => {
+		expect(await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food)).toBe("added");
 
 		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)).toHaveLength(1);
 		expect(cloudData.upsertCloudSmoothieListItem).toHaveBeenCalledWith(
@@ -73,12 +75,12 @@ describe("smoothie lists", () => {
 		expect(cloudData.writeCloudSmoothieList).not.toHaveBeenCalled();
 	});
 
-	it("removes one list item without rewriting the whole cloud list", () => {
+	it("removes one list item without rewriting the whole cloud list", async () => {
 		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food]);
 		vi.clearAllMocks();
 
-		expect(removeFoodFromSmoothieList(MIX_STORAGE_KEYS.fridge, food.fdcId)).toBe(
-			true,
+		expect(await removeFoodFromSmoothieList(MIX_STORAGE_KEYS.fridge, food.fdcId)).toBe(
+			"removed",
 		);
 
 		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)).toHaveLength(0);
@@ -87,6 +89,23 @@ describe("smoothie lists", () => {
 			food.fdcId,
 		);
 		expect(cloudData.writeCloudSmoothieList).not.toHaveBeenCalled();
+	});
+
+	it("does not update the cache when adding to the database fails", async () => {
+		cloudData.upsertCloudSmoothieListItem.mockResolvedValue(false);
+
+		expect(await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food)).toBe("error");
+		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)).toEqual([]);
+	});
+
+	it("does not update the cache when removing from the database fails", async () => {
+		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food]);
+		cloudData.removeCloudSmoothieListItem.mockResolvedValue(false);
+
+		expect(await removeFoodFromSmoothieList(MIX_STORAGE_KEYS.fridge, food.fdcId)).toBe(
+			"error",
+		);
+		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)).toHaveLength(1);
 	});
 
 	it("preserves selected cached foods when the cloud list is temporarily stale", () => {

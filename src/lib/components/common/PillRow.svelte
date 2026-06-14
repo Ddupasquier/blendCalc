@@ -6,12 +6,14 @@
         onSelect,
         activeIndices = [],
         customIndices = [],
+		disabledIndices = [],
     } = $props<{
         pills: string[];
         onRemove: (idx: number) => void;
         onSelect?: (idx: number) => void;
         activeIndices?: number[];
         customIndices?: number[];
+		disabledIndices?: number[];
     }>();
 
     type ArrangedPill = {
@@ -53,6 +55,7 @@
             onSelect={() => onSelect && onSelect(pill.index)}
             active={pill.active}
             custom={pill.custom}
+			disabled={disabledIndices.includes(pill.index)}
         />
     {/each}
 </div>

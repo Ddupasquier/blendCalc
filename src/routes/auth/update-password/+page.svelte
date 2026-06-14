@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { enhance } from "$app/forms";
 	import PasswordRequirements from "$lib/components/auth/PasswordRequirements.svelte";
 	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
+	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import type { ActionData, PageData } from "./$types";
 
 	let {
@@ -12,10 +14,14 @@
 	} = $props();
 	let password = $state("");
 	let passwordConfirmation = $state("");
+	let isSubmitting = $state(false);
+	const preventDuplicateSubmit = createPendingSubmit(
+		(pending) => (isSubmitting = pending),
+	);
 </script>
 
 <section class="password-page">
-	<form class="password-card" method="POST">
+	<form class="password-card" method="POST" use:enhance={preventDuplicateSubmit} aria-busy={isSubmitting}>
 		<input type="hidden" name="next" value={form?.next ?? data.next} />
 		<header>
 			<p class="password-eyebrow">
@@ -42,6 +48,7 @@
 				aria-describedby="password-requirements"
 				minlength={PASSWORD_MIN_LENGTH}
 				required
+				disabled={isSubmitting}
 				bind:value={password}
 			/>
 		</label>
@@ -53,6 +60,7 @@
 				autocomplete="new-password"
 				minlength={PASSWORD_MIN_LENGTH}
 				required
+				disabled={isSubmitting}
 				bind:value={passwordConfirmation}
 			/>
 		</label>
@@ -61,7 +69,9 @@
 			email={data.email}
 			confirmation={passwordConfirmation}
 		/>
-		<button type="submit">Update password</button>
+		<button type="submit" disabled={isSubmitting}>
+			{isSubmitting ? "Updating password…" : "Update password"}
+		</button>
 	</form>
 </section>
 

@@ -15,6 +15,13 @@ export type SmoothieListKey =
 	| typeof MIX_STORAGE_KEYS.fridge
 	| typeof MIX_STORAGE_KEYS.shoppingList;
 
+export type SmoothieListMutationResult =
+	| "added"
+	| "duplicate"
+	| "removed"
+	| "missing"
+	| "error";
+
 const dispatchListsChanged = () => {
 	window.dispatchEvent(new CustomEvent(SMOOTHIE_LISTS_CHANGED_EVENT));
 };
@@ -87,26 +94,39 @@ export const writeSmoothieList = (key: SmoothieListKey, list: FdcFood[]) => {
 	}
 };
 
-export const addFoodToSmoothieList = (key: SmoothieListKey, food: FdcFood) => {
+export const addFoodToSmoothieList = async (
+	key: SmoothieListKey,
+	food: FdcFood,
+): Promise<SmoothieListMutationResult> => {
 	const list = readSmoothieList(key);
 	if (list.some((item) => item.fdcId === food.fdcId)) {
-		return false;
+		return "duplicate";
 	}
 
 	const foodRecord = compactFood(food);
+	const saved = await upsertCloudSmoothieListItem(key, foodRecord);
+	if (!saved) return "error";
+
 	const nextList = [...list, foodRecord];
 
 	cacheSmoothieListLocally(key, nextList);
-	void upsertCloudSmoothieListItem(key, foodRecord);
 	dispatchListsChanged();
-	return true;
+	return "added";
 };
 
-export const removeFoodFromSmoothieList = (key: SmoothieListKey, foodId: number) => {
-	const list = readSmoothieList(key).filter((item) => item.fdcId !== foodId);
+export const removeFoodFromSmoothieList = async (
+	key: SmoothieListKey,
+	foodId: number,
+): Promise<SmoothieListMutationResult> => {
+	const currentList = readSmoothieList(key);
+	if (!currentList.some((item) => item.fdcId === foodId)) return "missing";
+
+	const removed = await removeCloudSmoothieListItem(key, foodId);
+	if (!removed) return "error";
+
+	const list = currentList.filter((item) => item.fdcId !== foodId);
 
 	cacheSmoothieListLocally(key, list);
-	void removeCloudSmoothieListItem(key, foodId);
 	dispatchListsChanged();
-	return true;
+	return "removed";
 };

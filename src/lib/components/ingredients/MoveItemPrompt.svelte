@@ -1,18 +1,19 @@
 <script lang="ts">
-    let { message, onConfirm, onCancel } = $props<{
+    let { message, onConfirm, onCancel, busy = false } = $props<{
         message: string;
         onConfirm: () => void;
         onCancel: () => void;
+		busy?: boolean;
     }>();
 </script>
 
 <div class="prompt-modal move-prompt">
     <div class="prompt-title">{message}</div>
     <div class="prompt-actions">
-        <button class="prompt-btn confirm" type="button" onclick={onConfirm}
-            >Move</button
+        <button class="prompt-btn confirm" type="button" onclick={onConfirm} disabled={busy}
+            >{busy ? "Moving…" : "Move"}</button
         >
-        <button class="prompt-btn" type="button" onclick={onCancel}
+        <button class="prompt-btn" type="button" onclick={onCancel} disabled={busy}
             >Cancel</button
         >
     </div>
@@ -67,6 +68,11 @@
                 &:focus {
                     outline: $app-focus-outline;
                 }
+
+				&:disabled {
+					cursor: wait;
+					opacity: 0.65;
+				}
             }
         }
     }

@@ -21,6 +21,7 @@ describe("custom foods", () => {
 	beforeEach(() => {
 		localStorage.removeItem(CUSTOM_FOODS_STORAGE_KEY);
 		vi.clearAllMocks();
+		cloudData.saveCloudCustomFood.mockResolvedValue("saved");
 	});
 
 	it("converts nutrition facts per serving into per-100g nutrients", () => {
@@ -67,7 +68,7 @@ describe("custom foods", () => {
 		expect(food.customDensityConfidence).toBe("known");
 	});
 
-	it("persists and searches custom foods", () => {
+	it("persists and searches custom foods", async () => {
 		const food = createCustomFood({
 			name: "Homemade protein crunch",
 			servingWeightGrams: 50,
@@ -81,7 +82,7 @@ describe("custom foods", () => {
 			},
 		});
 
-		saveCustomFood(food);
+		await saveCustomFood(food);
 
 		expect(readCustomFoods()).toHaveLength(1);
 		expect(searchCustomFoods("protein crunch")[0]?.description).toBe(
@@ -89,7 +90,7 @@ describe("custom foods", () => {
 		);
 	});
 
-	it("saves one custom food without rewriting the whole cloud list", () => {
+	it("saves one custom food without rewriting the whole cloud list", async () => {
 		const food = createCustomFood({
 			name: "Single row custom food",
 			servingWeightGrams: 40,
@@ -103,11 +104,41 @@ describe("custom foods", () => {
 			},
 		});
 
-		saveCustomFood(food);
+		expect(await saveCustomFood(food)).toBe("saved");
 
 		expect(cloudData.saveCloudCustomFood).toHaveBeenCalledWith(
 			expect.objectContaining({ fdcId: food.fdcId }),
 		);
 		expect(cloudData.writeCloudCustomFoods).not.toHaveBeenCalled();
+	});
+
+	it("rejects duplicate custom ingredient names before another cloud write", async () => {
+		const firstFood = createCustomFood({
+			name: "Homemade granola",
+			servingWeightGrams: 40,
+			nutrition: { calories: 160, fat: 4, carbs: 28, fiber: 3, sugar: 8, protein: 5 },
+		});
+		const duplicateFood = createCustomFood({
+			name: "  homemade   GRANOLA ",
+			servingWeightGrams: 50,
+			nutrition: { calories: 190, fat: 5, carbs: 30, fiber: 4, sugar: 9, protein: 6 },
+		});
+
+		expect(await saveCustomFood(firstFood)).toBe("saved");
+		expect(await saveCustomFood(duplicateFood)).toBe("duplicate");
+		expect(readCustomFoods()).toHaveLength(1);
+		expect(cloudData.saveCloudCustomFood).toHaveBeenCalledTimes(1);
+	});
+
+	it("does not cache a custom ingredient when the database write fails", async () => {
+		cloudData.saveCloudCustomFood.mockResolvedValue("error");
+		const food = createCustomFood({
+			name: "Unavailable custom food",
+			servingWeightGrams: 30,
+			nutrition: { calories: 80, fat: 1, carbs: 15, fiber: 1, sugar: 4, protein: 3 },
+		});
+
+		expect(await saveCustomFood(food)).toBe("error");
+		expect(readCustomFoods()).toEqual([]);
 	});
 });

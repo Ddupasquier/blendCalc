@@ -126,6 +126,7 @@ export type Database = {
           fdc_id: number
           food: Json
           id: string
+          name_key: string | null
           updated_at: string
           user_id: string
         }
@@ -134,6 +135,7 @@ export type Database = {
           fdc_id: number
           food: Json
           id?: string
+          name_key?: string | null
           updated_at?: string
           user_id: string
         }
@@ -142,6 +144,7 @@ export type Database = {
           fdc_id?: number
           food?: Json
           id?: string
+          name_key?: string | null
           updated_at?: string
           user_id?: string
         }

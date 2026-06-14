@@ -1,8 +1,27 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import type { SubmitFunction } from "@sveltejs/kit";
 	import type { ActionData, PageData } from "./$types";
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let pendingTargetUserId = $state<string | null>(null);
+	let searching = $state(false);
+
+	const enhanceModerationAction: SubmitFunction = ({ formData, cancel }) => {
+		if (pendingTargetUserId) {
+			cancel();
+			return;
+		}
+
+		pendingTargetUserId = String(formData.get("targetUserId") ?? "");
+		return async ({ update }) => {
+			try {
+				await update();
+			} finally {
+				pendingTargetUserId = null;
+			}
+		};
+	};
 </script>
 
 <svelte:head>
@@ -22,7 +41,7 @@
 			<h2 id="account-search-title">Find an account</h2>
 			<p>Search by preferred name, email address, user ID, role, or status.</p>
 		</div>
-		<form method="GET" role="search">
+		<form method="GET" role="search" onsubmit={() => (searching = true)}>
 			<label for="moderation-search">Account search</label>
 			<div class="search-controls">
 				<input
@@ -32,8 +51,11 @@
 					value={data.query}
 					placeholder="Name, email, user ID..."
 					autocomplete="off"
+					disabled={searching}
 				/>
-				<button class="search-action" type="submit">Search</button>
+				<button class="search-action" type="submit" disabled={searching}>
+					{searching ? "Searching…" : "Search"}
+				</button>
 				{#if data.query}
 					<a class="clear-search" href="/moderation">Clear</a>
 				{/if}
@@ -90,16 +112,18 @@
 				</div>
 
 				{#if user.status === "banned"}
-					<form method="POST" action="?/unban" use:enhance>
+					<form method="POST" action="?/unban" use:enhance={enhanceModerationAction} aria-busy={pendingTargetUserId === user.id}>
 						<input type="hidden" name="targetUserId" value={user.id} />
-						<button class="secondary-action" type="submit">Restore access</button>
+						<button class="secondary-action" type="submit" disabled={pendingTargetUserId !== null}>
+							{pendingTargetUserId === user.id ? "Restoring…" : "Restore access"}
+						</button>
 					</form>
 				{:else if user.id !== data.viewerUserId && user.role !== "admin" && !(data.viewerRole === "moderator" && user.role)}
-					<form method="POST" action="?/ban" use:enhance>
+					<form method="POST" action="?/ban" use:enhance={enhanceModerationAction} aria-busy={pendingTargetUserId === user.id}>
 						<input type="hidden" name="targetUserId" value={user.id} />
 						<label>
 							<span>Reason</span>
-							<select name="reason" required>
+							<select name="reason" required disabled={pendingTargetUserId !== null}>
 								<option value="profile_image_policy_violation">Profile image violation</option>
 								<option value="harassment_or_abuse">Harassment or abuse</option>
 								<option value="fraud_or_spam">Fraud or spam</option>
@@ -107,7 +131,9 @@
 							</select>
 							<small>This reason and its plain-language explanation will be emailed to the user.</small>
 						</label>
-						<button class="danger-action" type="submit">Block account</button>
+						<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
+							{pendingTargetUserId === user.id ? "Blocking…" : "Block account"}
+						</button>
 					</form>
 				{/if}
 			</article>

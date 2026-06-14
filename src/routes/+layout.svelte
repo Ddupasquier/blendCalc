@@ -37,6 +37,7 @@
 
 	let tutorialOpen = $state(false);
 	let tutorialUserId = $state<string | null>(null);
+	let signingOut = $state(false);
 
 	const recordTutorialChoice = async (choice: "later" | "never") => {
 		if (!data.authUser) return false;
@@ -146,8 +147,10 @@
 					</svg>
 				{/if}
 			</a>
-			<form method="POST" action="/auth/logout">
-				<button type="submit">Sign out</button>
+			<form method="POST" action="/auth/logout" onsubmit={() => (signingOut = true)}>
+				<button type="submit" disabled={signingOut}>
+					{signingOut ? "Signing out…" : "Sign out"}
+				</button>
 			</form>
 		</div>
 	</header>

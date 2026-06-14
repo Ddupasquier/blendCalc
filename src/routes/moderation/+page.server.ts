@@ -241,6 +241,17 @@ export const actions: Actions = {
 			actorRole,
 			targetUserId,
 		);
+		const { data: currentModeration, error: moderationLookupError } = await admin
+			.from("account_moderation")
+			.select("status")
+			.eq("user_id", targetUserId)
+			.maybeSingle();
+		if (moderationLookupError) {
+			return fail(500, { moderationError: "The account status could not be checked." });
+		}
+		if (currentModeration?.status === "banned") {
+			return { moderationWarning: "That account is already blocked." };
+		}
 		const emailConfigurationError = getModerationEmailConfigurationError();
 		if (emailConfigurationError) {
 			return fail(503, {
@@ -392,6 +403,17 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const targetUserId = String(formData.get("targetUserId") ?? "");
 		const { admin } = await getTargetContext(actor.id, actorRole, targetUserId);
+		const { data: currentModeration, error: moderationLookupError } = await admin
+			.from("account_moderation")
+			.select("status")
+			.eq("user_id", targetUserId)
+			.maybeSingle();
+		if (moderationLookupError) {
+			return fail(500, { moderationError: "The account status could not be checked." });
+		}
+		if (!currentModeration || currentModeration.status !== "banned") {
+			return { moderationWarning: "That account already has access." };
+		}
 		const { error: authError } = await admin.auth.admin.updateUserById(targetUserId, {
 			ban_duration: "none",
 		});

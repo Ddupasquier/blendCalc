@@ -27,6 +27,7 @@
 	let volumeUnit = $state<ServingMeasureUnit>("tbsp");
 	let error = $state("");
 	let savedMessage = $state("");
+	let saving = $state(false);
 
 	let nutrition = $state<CustomFoodNutritionInput>({
 		calories: 0,
@@ -64,7 +65,8 @@
 		};
 	};
 
-	const handleSubmit = () => {
+	const handleSubmit = async () => {
+		if (saving) return;
 		error = "";
 		savedMessage = "";
 
@@ -83,6 +85,16 @@
 			return;
 		}
 
+		if (nutrition.fiber > nutrition.carbs) {
+			error = "Dietary fiber cannot be greater than total carbohydrates.";
+			return;
+		}
+
+		if (nutrition.sugar > nutrition.carbs) {
+			error = "Total sugars cannot be greater than total carbohydrates.";
+			return;
+		}
+
 		const food = createCustomFood({
 			name,
 			servingLabel,
@@ -92,10 +104,24 @@
 			nutrition,
 		});
 
-		saveCustomFood(food);
-		onCreate(food);
-		savedMessage = `${food.description} saved as a custom ingredient.`;
-		resetForm();
+		saving = true;
+		try {
+			const result = await saveCustomFood(food);
+			if (result === "duplicate") {
+				error = "You already have a custom ingredient with this name.";
+				return;
+		}
+			if (result === "error") {
+				error = "This ingredient could not be saved. Check your connection and try again.";
+				return;
+		}
+
+			onCreate(food);
+			savedMessage = `${food.description} saved as a custom ingredient.`;
+			resetForm();
+		} finally {
+			saving = false;
+		}
 	};
 </script>
 
@@ -105,7 +131,7 @@
 		<small>Use this when the app does not have the food you need.</small>
 	</summary>
 
-	<div class="custom-ingredient__body">
+	<fieldset class="custom-ingredient__body" disabled={saving} aria-busy={saving}>
 		<div class="custom-ingredient__grid">
 			<label class="custom-ingredient__wide">
 				<span>Ingredient name</span>
@@ -114,6 +140,8 @@
 					name="custom-ingredient-name"
 					type="text"
 					placeholder="Oreos, homemade smoothie base..."
+					maxlength="120"
+					required
 					bind:value={name}
 				/>
 			</label>
@@ -125,6 +153,7 @@
 					name="custom-ingredient-serving-label"
 					type="text"
 					placeholder="3 cookies, 1 scoop..."
+					maxlength="80"
 					bind:value={servingLabel}
 				/>
 			</label>
@@ -280,8 +309,10 @@
 			<p class="custom-ingredient__success" role="status">{savedMessage}</p>
 		{/if}
 
-		<button type="button" onclick={handleSubmit}>Save custom ingredient</button>
-	</div>
+		<button type="button" onclick={handleSubmit} disabled={saving}>
+			{saving ? "Saving ingredient…" : "Save custom ingredient"}
+		</button>
+	</fieldset>
 </details>
 
 <style lang="scss">
@@ -313,6 +344,9 @@
 		display: grid;
 		gap: $app-gap-md;
 		margin-top: $app-gap-md;
+		padding: 0;
+		border: 0;
+		min-inline-size: 0;
 	}
 
 	.custom-ingredient__grid,

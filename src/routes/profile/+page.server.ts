@@ -59,6 +59,17 @@ export const actions: Actions = {
 			return fail(400, { profileError: validationError, profileValues: values });
 		}
 
+		const existingProfile = await getUserProfile(locals.supabase, user.id);
+		if (
+			existingProfile?.display_name === values.displayName &&
+			(existingProfile.bio ?? null) === values.bio
+		) {
+			return {
+				profileSuccess: "Your profile already has these details.",
+				profileValues: values,
+			};
+		}
+
 		const { error } = await locals.supabase.from("profiles").upsert(
 			{
 				user_id: user.id,
@@ -120,6 +131,29 @@ export const actions: Actions = {
 		const existingProfile = await getUserProfile(locals.supabase, user.id);
 		const avatarPath = `${user.id}/avatar-${randomUUID()}.${getAvatarExtension(avatar.type)}`;
 		const fileSha256 = createHash("sha256").update(bytes).digest("hex");
+
+		if (existingProfile?.avatar_path) {
+			const { data: existingAcceptance, error: acceptanceLookupError } =
+				await locals.supabase
+					.from("profile_image_policy_acceptances")
+					.select("id")
+					.eq("user_id", user.id)
+					.eq("avatar_path", existingProfile.avatar_path)
+					.eq("file_sha256", fileSha256)
+					.maybeSingle();
+
+			if (acceptanceLookupError) {
+				return fail(500, {
+					avatarError: "The current profile image could not be checked. Try again.",
+				});
+			}
+			if (existingAcceptance) {
+				return fail(409, {
+					avatarError: "That image is already your profile image.",
+				});
+			}
+		}
+
 		const { error: uploadError } = await locals.supabase.storage
 			.from(PROFILE_AVATAR_BUCKET)
 			.upload(avatarPath, bytes, {

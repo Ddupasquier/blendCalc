@@ -4,7 +4,7 @@
 	import FloatingFruitBackground from "$lib/components/app/FloatingFruitBackground.svelte";
 	import PasswordRequirements from "$lib/components/auth/PasswordRequirements.svelte";
 	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
-	import type { SubmitFunction } from "@sveltejs/kit";
+	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import type { ActionData, PageData } from "./$types";
 
 	type AuthMode = "signIn" | "signUp";
@@ -25,15 +25,9 @@
 	let isSubmitting = $state(false);
 	let authCard = $state<HTMLDivElement>();
 
-	const preventDuplicateSubmit: SubmitFunction = () => {
-		if (isSubmitting) return () => {};
-		isSubmitting = true;
-
-		return async ({ update }) => {
-			await update();
-			isSubmitting = false;
-		};
-	};
+	const preventDuplicateSubmit = createPendingSubmit(
+		(pending) => (isSubmitting = pending),
+	);
 
 	const authErrorMessages: Record<string, string> = {
 		account_blocked: "This account has been blocked. Contact support if you believe this is a mistake.",

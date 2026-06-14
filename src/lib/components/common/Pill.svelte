@@ -5,12 +5,14 @@
         onSelect,
         active = false,
         custom = false,
+		disabled = false,
     } = $props<{
         label: string;
         onRemove: () => void;
         onSelect?: () => void;
         active?: boolean;
         custom?: boolean;
+		disabled?: boolean;
     }>();
 </script>
 
@@ -19,10 +21,11 @@
     class:custom
     role="button"
     tabindex="0"
-    onclick={onSelect}
+    onclick={() => !disabled && onSelect?.()}
+	aria-disabled={disabled}
     onkeydown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
-            onSelect && onSelect();
+            if (!disabled) onSelect?.();
         }
     }}
 >
@@ -33,10 +36,11 @@
     <button
         class="pill-remove"
         aria-label="Remove"
+		disabled={disabled}
         tabindex="-1"
         onclick={(e) => {
             e.stopPropagation();
-            onRemove();
+			if (!disabled) onRemove();
         }}>&times;</button
     >
 </span>
@@ -99,6 +103,10 @@
     .pill:active {
         background: $app-primary;
     }
+	.pill[aria-disabled="true"] {
+		cursor: wait;
+		opacity: 0.65;
+	}
     .pill-remove {
         background: none;
         border: none;

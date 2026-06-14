@@ -2,6 +2,7 @@
     import { goto } from "$app/navigation";
     import ListControls from "$lib/components/common/ListControls.svelte";
     import Pagination from "$lib/components/common/Pagination.svelte";
+	import ConfirmationDialog from "$lib/components/common/ConfirmationDialog.svelte";
     import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
     import {
         clampPage,
@@ -23,6 +24,10 @@
     let query = $state("");
     let sort = $state("newest");
     let page = $state(1);
+	let drinkPendingDelete = $state<SavedDrink | null>(null);
+	let deletingDrinkId = $state<string | null>(null);
+    let deleteError = $state("");
+	let loadingDrinks = $state(true);
 
     const sortOptions = [
         { value: "newest", label: "Newest first" },
@@ -55,12 +60,16 @@
     );
 
     const loadSavedDrinks = async () => {
-        const localDrinks = readSavedDrinks();
-        drinks = localDrinks;
+		try {
+			const localDrinks = readSavedDrinks();
+			drinks = localDrinks;
 
-        const nextDrinks = await reconcileCloudSavedDrinks(localDrinks);
-        drinks = nextDrinks;
-        cacheSavedDrinksLocally(nextDrinks);
+			const nextDrinks = await reconcileCloudSavedDrinks(localDrinks);
+			drinks = nextDrinks;
+			cacheSavedDrinksLocally(nextDrinks);
+		} finally {
+			loadingDrinks = false;
+		}
     };
 
     const formatDate = (timestamp: number) => {
@@ -76,9 +85,22 @@
         goto("/mix");
     };
 
-    const removeDrink = (drinkId: string) => {
-        deleteSavedDrink(drinkId);
-        loadSavedDrinks();
+    const removeDrink = async () => {
+		if (!drinkPendingDelete || deletingDrinkId) return;
+
+		deletingDrinkId = drinkPendingDelete.id;
+		deleteError = "";
+		try {
+			const deleted = await deleteSavedDrink(drinkPendingDelete.id);
+			if (!deleted) {
+				deleteError = "That drink could not be deleted. Try again.";
+				return;
+			}
+			drinkPendingDelete = null;
+			await loadSavedDrinks();
+		} finally {
+			deletingDrinkId = null;
+		}
     };
 
     const updateQuery = (value: string) => {
@@ -114,12 +136,34 @@
 </script>
 
 <div class="saved-page">
+	<ConfirmationDialog
+		open={drinkPendingDelete !== null}
+		title="Delete saved drink?"
+		description={drinkPendingDelete
+			? `Delete “${drinkPendingDelete.name}”? This cannot be undone.`
+			: "Delete this saved drink?"}
+		confirmLabel="Delete"
+		busy={deletingDrinkId !== null}
+		danger
+		onConfirm={() => void removeDrink()}
+		onCancel={() => {
+			if (!deletingDrinkId) drinkPendingDelete = null;
+		}}
+	/>
     <header class="saved-header">
         <h2>Saved Drinks</h2>
         <p>Load a saved smoothie back into Mix when you want to make it again.</p>
     </header>
+	{#if deleteError}
+		<p class="saved-action-error" role="alert">{deleteError}</p>
+	{/if}
 
-    {#if drinks.length > 0}
+    {#if loadingDrinks && drinks.length === 0}
+		<section class="saved-empty" aria-busy="true">
+			<h3>Loading saved drinks…</h3>
+			<p>Checking your account for saved mixes.</p>
+		</section>
+    {:else if drinks.length > 0}
         <ListControls
             id="saved-drinks-search"
             {query}
@@ -172,7 +216,11 @@
                         <button
                             class="saved-card__delete"
                             type="button"
-                            onclick={() => removeDrink(drink.id)}
+							disabled={deletingDrinkId !== null}
+							onclick={() => {
+								deleteError = "";
+								drinkPendingDelete = drink;
+							}}
                         >
                             Delete
                         </button>
@@ -228,6 +276,17 @@
             font-size: $app-font-size-md;
         }
     }
+
+	.saved-action-error {
+		margin-bottom: $app-gap-sm;
+		padding: $app-gap-sm;
+		color: $app-warning-strong;
+		background: $app-warning-bg;
+		border: $app-warning-border;
+		border-radius: $app-radius;
+		font-size: $app-font-size-sm;
+		font-weight: 800;
+	}
 
     .saved-grid {
         display: grid;

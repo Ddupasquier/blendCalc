@@ -22,6 +22,11 @@ const moderationMigration = readFileSync(
 	"utf8",
 );
 
+const actionValidationMigration = readFileSync(
+	resolve("supabase/migrations/20260614070000_action_validation_constraints.sql"),
+	"utf8",
+);
+
 const userTables = [
 	"user_food_list_items",
 	"custom_foods",
@@ -128,5 +133,15 @@ describe("Supabase moderation isolation", () => {
 		expect(moderationMigration).toContain(
 			"grant execute on function public.reject_blocked_signup(jsonb) to supabase_auth_admin;",
 		);
+	});
+});
+
+describe("Supabase action validation", () => {
+	it("enforces unique normalized custom-food names per user", () => {
+		expect(actionValidationMigration).toContain(
+			"on public.custom_foods (user_id, name_key)",
+		);
+		expect(actionValidationMigration).toContain("where name_key is not null");
+		expect(actionValidationMigration).toContain("row_number() over");
 	});
 });
