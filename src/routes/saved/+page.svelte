@@ -1,5 +1,13 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import ListControls from "$lib/components/common/ListControls.svelte";
+    import Pagination from "$lib/components/common/Pagination.svelte";
+    import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
+    import {
+        clampPage,
+        filterItemsByQuery,
+        paginateItems,
+    } from "$lib/utils/list/listNavigation";
     import {
         cacheSavedDrinksLocally,
         deleteSavedDrink,
@@ -12,6 +20,39 @@
     import { onMount } from "svelte";
 
     let drinks = $state<SavedDrink[]>([]);
+    let query = $state("");
+    let sort = $state("newest");
+    let page = $state(1);
+
+    const sortOptions = [
+        { value: "newest", label: "Newest first" },
+        { value: "oldest", label: "Oldest first" },
+        { value: "name", label: "Name A–Z" },
+    ];
+
+    const filteredDrinks = $derived.by(() => {
+        const matchingDrinks = filterItemsByQuery(
+            drinks,
+            query,
+            (drink) =>
+                [drink.name, ...drink.foods.map((food) => food.description)].join(
+                    " ",
+                ),
+        );
+
+        return [...matchingDrinks].sort((first, second) => {
+            if (sort === "oldest") return first.createdAt - second.createdAt;
+            if (sort === "name") return first.name.localeCompare(second.name);
+            return second.createdAt - first.createdAt;
+        });
+    });
+    const pagedDrinks = $derived(
+        paginateItems(
+            filteredDrinks,
+            page,
+            LIST_PAGE_SIZES.savedDrinks,
+        ),
+    );
 
     const loadSavedDrinks = async () => {
         const localDrinks = readSavedDrinks();
@@ -40,6 +81,24 @@
         loadSavedDrinks();
     };
 
+    const updateQuery = (value: string) => {
+        query = value;
+        page = 1;
+    };
+
+    const updateSort = (value: string) => {
+        sort = value;
+        page = 1;
+    };
+
+    $effect(() => {
+        page = clampPage(
+            page,
+            filteredDrinks.length,
+            LIST_PAGE_SIZES.savedDrinks,
+        );
+    });
+
     onMount(() => {
         loadSavedDrinks();
         window.addEventListener("storage", loadSavedDrinks);
@@ -61,8 +120,24 @@
     </header>
 
     {#if drinks.length > 0}
+        <ListControls
+            id="saved-drinks-search"
+            {query}
+            onQueryChange={updateQuery}
+            placeholder="Search drink names or ingredients…"
+            label="Find saved drinks"
+            totalCount={drinks.length}
+            visibleCount={filteredDrinks.length}
+            itemLabel="drinks"
+            filterLabel="Sort"
+            filterValue={sort}
+            filterOptions={sortOptions}
+            onFilterChange={updateSort}
+        />
+
+        {#if pagedDrinks.length > 0}
         <div class="saved-grid">
-            {#each drinks as drink}
+            {#each pagedDrinks as drink (drink.id)}
                 <article class="saved-card">
                     <div>
                         <h3>{drink.name}</h3>
@@ -105,6 +180,20 @@
                 </article>
             {/each}
         </div>
+        <Pagination
+            {page}
+            pageSize={LIST_PAGE_SIZES.savedDrinks}
+            totalItems={filteredDrinks.length}
+            onPageChange={(nextPage) => (page = nextPage)}
+            label="Saved drinks"
+        />
+        {:else}
+            <section class="saved-empty saved-empty--filtered">
+                <h3>No saved drinks match.</h3>
+                <p>Try a different drink name or ingredient.</p>
+                <button type="button" onclick={() => updateQuery("")}>Clear search</button>
+            </section>
+        {/if}
     {:else}
         <section class="saved-empty">
             <h3>No saved drinks yet.</h3>
@@ -143,6 +232,7 @@
     .saved-grid {
         display: grid;
         gap: $app-gap-sm;
+        margin-top: $app-gap-sm;
     }
 
     .saved-card,
@@ -274,5 +364,9 @@
             font-weight: $app-button-font-weight;
             line-height: $app-button-line-height;
         }
+    }
+
+    .saved-empty--filtered {
+        margin-top: $app-gap-sm;
     }
 </style>

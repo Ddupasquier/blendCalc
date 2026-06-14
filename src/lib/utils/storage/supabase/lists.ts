@@ -3,7 +3,12 @@ import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/foodRecords";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { SmoothieListKey } from "$lib/utils/storage/smoothieLists";
-import { getCurrentUserId, toJson } from "./shared";
+import {
+	CLOUD_CURSOR_PAGE_SIZE,
+	getCurrentUserId,
+	readAllCursorPages,
+	toJson,
+} from "./shared";
 
 type CloudListType = "fridge" | "shopping";
 
@@ -17,15 +22,25 @@ export const readCloudSmoothieList = async (key: SmoothieListKey) => {
 	const supabase = getSupabaseBrowserClient();
 	if (!supabase) return null;
 
-	const { data, error } = await supabase
-		.from("user_food_list_items")
-		.select("food")
-		.eq("user_id", userId)
-		.eq("list_type", getCloudListType(key))
-		.order("created_at", { ascending: true });
+	const rows = await readAllCursorPages(async (cursorId) => {
+		let query = supabase
+			.from("user_food_list_items")
+			.select("id, food")
+			.eq("user_id", userId)
+			.eq("list_type", getCloudListType(key))
+			.order("id", { ascending: true })
+			.limit(CLOUD_CURSOR_PAGE_SIZE);
 
-	if (error) return null;
-	return data.map((row) => compactFood(row.food as unknown as FdcFood));
+		if (cursorId) query = query.gt("id", cursorId);
+		return await query;
+	});
+
+	if (!rows) return null;
+	return rows
+		.map((row) => compactFood(row.food as unknown as FdcFood))
+		.sort((first, second) =>
+			first.description.localeCompare(second.description),
+		);
 };
 
 export const writeCloudSmoothieList = async (

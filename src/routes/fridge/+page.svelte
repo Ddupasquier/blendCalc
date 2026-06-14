@@ -2,8 +2,16 @@
     import IngredientSearch from "$lib/components/ingredients/IngredientSearch.svelte";
     import CustomIngredientForm from "$lib/components/ingredients/CustomIngredientForm.svelte";
     import NutritionPanel from "$lib/components/ingredients/NutritionPanel.svelte";
+    import ListControls from "$lib/components/common/ListControls.svelte";
+    import Pagination from "$lib/components/common/Pagination.svelte";
     import PillRow from "$lib/components/common/PillRow.svelte";
+    import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
     import type { FdcFood } from "$lib/utils/food/types";
+    import {
+        clampPage,
+        filterItemsByQuery,
+        paginateItems,
+    } from "$lib/utils/list/listNavigation";
     import {
         cacheCustomFoodsLocally,
         readCustomFoods,
@@ -25,6 +33,48 @@
     let onHand = $state<FdcFood[]>([]);
     let shoppingList = $state<FdcFood[]>([]);
     let selectedFood = $state<FdcFood | null>(null);
+    let listQuery = $state("");
+    let sourceFilter = $state("all");
+    let onHandPage = $state(1);
+    let shoppingPage = $state(1);
+
+    const sourceFilterOptions = [
+        { value: "all", label: "All sources" },
+        { value: "custom", label: "Custom only" },
+        { value: "fdc", label: "USDA only" },
+    ];
+
+    const filterFoods = (foods: FdcFood[]) => {
+        return filterItemsByQuery(
+            foods.filter((food) => {
+                if (sourceFilter === "custom") return food.customFood === true;
+                if (sourceFilter === "fdc") return food.customFood !== true;
+                return true;
+            }),
+            listQuery,
+            (food) =>
+                [food.description, food.brandOwner, food.foodCategory]
+                    .filter(Boolean)
+                    .join(" "),
+        );
+    };
+
+    const filteredOnHand = $derived.by(() => filterFoods(onHand));
+    const filteredShoppingList = $derived.by(() => filterFoods(shoppingList));
+    const pagedOnHand = $derived(
+        paginateItems(
+            filteredOnHand,
+            onHandPage,
+            LIST_PAGE_SIZES.ingredientPills,
+        ),
+    );
+    const pagedShoppingList = $derived(
+        paginateItems(
+            filteredShoppingList,
+            shoppingPage,
+            LIST_PAGE_SIZES.ingredientPills,
+        ),
+    );
 
     const loadLists = async () => {
         const localFridge = readSmoothieList(MIX_STORAGE_KEYS.fridge);
@@ -53,12 +103,9 @@
         selectedFood = food;
     };
 
-    const removeFromLocalStorageByIndex = (key: SmoothieListKey, idx: number) => {
-        const list = readSmoothieList(key);
-        const food = list[idx];
-        if (!food) return;
-        removeFoodFromSmoothieList(key, food.fdcId);
-        if (selectedFood?.fdcId === food.fdcId) {
+    const removeFromList = (key: SmoothieListKey, foodId: number) => {
+        removeFoodFromSmoothieList(key, foodId);
+        if (selectedFood?.fdcId === foodId) {
             selectedFood = null;
         }
         loadLists();
@@ -69,6 +116,31 @@
         const index = items.findIndex((item) => item.fdcId === selectedFood?.fdcId);
         return index === -1 ? [] : [index];
     };
+
+    const updateListQuery = (value: string) => {
+        listQuery = value;
+        onHandPage = 1;
+        shoppingPage = 1;
+    };
+
+    const updateSourceFilter = (value: string) => {
+        sourceFilter = value;
+        onHandPage = 1;
+        shoppingPage = 1;
+    };
+
+    $effect(() => {
+        onHandPage = clampPage(
+            onHandPage,
+            filteredOnHand.length,
+            LIST_PAGE_SIZES.ingredientPills,
+        );
+        shoppingPage = clampPage(
+            shoppingPage,
+            filteredShoppingList.length,
+            LIST_PAGE_SIZES.ingredientPills,
+        );
+    });
 
     onMount(() => {
         loadLists();
@@ -106,24 +178,52 @@
         {/if}
     </section>
 
+    {#if onHand.length > 0 || shoppingList.length > 0}
+        <div class="ingredient-list-controls">
+            <ListControls
+                id="ingredient-lists-search"
+                query={listQuery}
+                onQueryChange={updateListQuery}
+                placeholder="Search your fridge and shopping list…"
+                label="Find saved ingredients"
+                totalCount={onHand.length + shoppingList.length}
+                visibleCount={filteredOnHand.length + filteredShoppingList.length}
+                itemLabel="ingredients"
+                filterLabel="Source"
+                filterValue={sourceFilter}
+                filterOptions={sourceFilterOptions}
+                onFilterChange={updateSourceFilter}
+            />
+        </div>
+    {/if}
+
     <div class="ingredient-lists-grid">
         <section class="fridge-section">
-            <h3>On Hand</h3>
+            <h3>On Hand <span>{filteredOnHand.length}</span></h3>
             <div class="fridge-container" aria-label="On Hand ingredients">
-                {#if onHand.length > 0}
+                {#if pagedOnHand.length > 0}
                     <PillRow
-                        pills={onHand.map((item) => item.description)}
-                        activeIndices={getActiveIndices(onHand)}
-                        customIndices={onHand
+                        pills={pagedOnHand.map((item) => item.description)}
+                        activeIndices={getActiveIndices(pagedOnHand)}
+                        customIndices={pagedOnHand
                             .map((food, i) => (food.customFood ? i : -1))
                             .filter((i) => i !== -1)}
-                        onSelect={(idx) => handleSelect(onHand[idx])}
+                        onSelect={(idx) => handleSelect(pagedOnHand[idx])}
                         onRemove={(idx) =>
-                            removeFromLocalStorageByIndex(
+                            removeFromList(
                                 MIX_STORAGE_KEYS.fridge,
-                                idx,
+                                pagedOnHand[idx].fdcId,
                             )}
                     />
+                    <Pagination
+                        page={onHandPage}
+                        pageSize={LIST_PAGE_SIZES.ingredientPills}
+                        totalItems={filteredOnHand.length}
+                        onPageChange={(page) => (onHandPage = page)}
+                        label="On Hand ingredients"
+                    />
+                {:else if onHand.length > 0}
+                    <p class="placeholder">No On Hand ingredients match these filters.</p>
                 {:else}
                     <p class="placeholder">No ingredients on hand yet.</p>
                 {/if}
@@ -131,22 +231,31 @@
         </section>
 
         <section class="fridge-section">
-            <h3>Shopping List</h3>
+            <h3>Shopping List <span>{filteredShoppingList.length}</span></h3>
             <div class="fridge-container" aria-label="Shopping List ingredients">
-                {#if shoppingList.length > 0}
+                {#if pagedShoppingList.length > 0}
                     <PillRow
-                        pills={shoppingList.map((item) => item.description)}
-                        activeIndices={getActiveIndices(shoppingList)}
-                        customIndices={shoppingList
+                        pills={pagedShoppingList.map((item) => item.description)}
+                        activeIndices={getActiveIndices(pagedShoppingList)}
+                        customIndices={pagedShoppingList
                             .map((food, i) => (food.customFood ? i : -1))
                             .filter((i) => i !== -1)}
-                        onSelect={(idx) => handleSelect(shoppingList[idx])}
+                        onSelect={(idx) => handleSelect(pagedShoppingList[idx])}
                         onRemove={(idx) =>
-                            removeFromLocalStorageByIndex(
+                            removeFromList(
                                 MIX_STORAGE_KEYS.shoppingList,
-                                idx,
+                                pagedShoppingList[idx].fdcId,
                             )}
                     />
+                    <Pagination
+                        page={shoppingPage}
+                        pageSize={LIST_PAGE_SIZES.ingredientPills}
+                        totalItems={filteredShoppingList.length}
+                        onPageChange={(page) => (shoppingPage = page)}
+                        label="Shopping List ingredients"
+                    />
+                {:else if shoppingList.length > 0}
+                    <p class="placeholder">No shopping-list ingredients match these filters.</p>
                 {:else}
                     <p class="placeholder">No items in shopping list yet.</p>
                 {/if}
@@ -216,14 +325,29 @@
         gap: $app-gap-md;
     }
 
+    .ingredient-list-controls {
+        margin-bottom: $app-gap-md;
+    }
+
     .fridge-section {
         margin-bottom: $app-gap-lg;
 
         h3 {
+            display: flex;
+            align-items: center;
+            gap: $app-gap-xs;
             margin-bottom: $app-gap-sm;
             color: $app-primary;
             font-size: $app-font-size-lg;
             font-weight: 800;
+
+            span {
+                padding: 0.08rem 0.4rem;
+                color: $app-muted;
+                background: $app-accent;
+                border-radius: $app-radius-pill;
+                font-size: $app-font-size-xs;
+            }
         }
 
         .fridge-container {
@@ -233,9 +357,11 @@
             min-height: 48px;
             margin-bottom: $app-gap-sm;
             box-shadow: $app-card-shadow;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
+            display: block;
+
+            :global(.pill-row) {
+                margin-top: 0;
+            }
         }
 
         .placeholder {

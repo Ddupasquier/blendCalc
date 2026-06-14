@@ -41,13 +41,14 @@ export const searchFoods = async (query: string): Promise<FdcFood[]> => {
 	const trimmed = query.trim();
 	if (!trimmed) return [];
 
-	const cacheKey = `search_${trimmed.toLowerCase()}_all`;
+	const cacheKey = `search_${trimmed.toLowerCase()}_50`;
 	const cached = cacheGet<FdcFood[]>(cacheKey);
 	if (cached) return cached;
 
 	const url = buildUrl("/foods/search", {
 		query: trimmed,
 		dataType: "Foundation,SR Legacy",
+		pageSize: "50",
 	});
 
 	const res = await fetch(url);

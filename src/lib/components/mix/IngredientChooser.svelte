@@ -1,6 +1,14 @@
 <script lang="ts">
 	import PillRow from "$lib/components/common/PillRow.svelte";
+	import ListControls from "$lib/components/common/ListControls.svelte";
+	import Pagination from "$lib/components/common/Pagination.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
+	import {
+		clampPage,
+		filterItemsByQuery,
+		paginateItems,
+	} from "$lib/utils/list/listNavigation";
+	import { LIST_PAGE_SIZES } from "../../../defaults/listDefaults";
 
 	let {
 		fridgeItems,
@@ -13,6 +21,56 @@
 		selectedFoodIds: number[];
 		onToggleFood: (foodId: number) => void;
 	} = $props();
+
+	let query = $state("");
+	let filter = $state("all");
+	let fridgePage = $state(1);
+	let shoppingPage = $state(1);
+
+	const filterOptions = [
+		{ value: "all", label: "All ingredients" },
+		{ value: "selected", label: "Selected only" },
+		{ value: "custom", label: "Custom only" },
+	];
+
+	const filterFoods = (foods: FdcFood[]) => {
+		return filterItemsByQuery(
+			foods.filter((food) => {
+				if (filter === "selected") {
+					return selectedFoodIds.includes(food.fdcId);
+				}
+				if (filter === "custom") return food.customFood === true;
+				return true;
+			}),
+			query,
+			(food) =>
+				[food.description, food.brandOwner, food.foodCategory]
+					.filter(Boolean)
+					.join(" "),
+		).sort((first, second) => {
+			const firstSelected = selectedFoodIds.includes(first.fdcId);
+			const secondSelected = selectedFoodIds.includes(second.fdcId);
+			if (firstSelected !== secondSelected) return firstSelected ? -1 : 1;
+			return first.description.localeCompare(second.description);
+		});
+	};
+
+	const filteredFridgeItems = $derived.by(() => filterFoods(fridgeItems));
+	const filteredShoppingItems = $derived.by(() => filterFoods(shoppingItems));
+	const pagedFridgeItems = $derived(
+		paginateItems(
+			filteredFridgeItems,
+			fridgePage,
+			LIST_PAGE_SIZES.mixChooser,
+		),
+	);
+	const pagedShoppingItems = $derived(
+		paginateItems(
+			filteredShoppingItems,
+			shoppingPage,
+			LIST_PAGE_SIZES.mixChooser,
+		),
+	);
 
 	const getActiveIndices = (items: FdcFood[]) => {
 		return items
@@ -27,6 +85,31 @@
 			.map((food, index) => (food.customFood ? index : -1))
 			.filter((index) => index !== -1);
 	};
+
+	const updateQuery = (value: string) => {
+		query = value;
+		fridgePage = 1;
+		shoppingPage = 1;
+	};
+
+	const updateFilter = (value: string) => {
+		filter = value;
+		fridgePage = 1;
+		shoppingPage = 1;
+	};
+
+	$effect(() => {
+		fridgePage = clampPage(
+			fridgePage,
+			filteredFridgeItems.length,
+			LIST_PAGE_SIZES.mixChooser,
+		);
+		shoppingPage = clampPage(
+			shoppingPage,
+			filteredShoppingItems.length,
+			LIST_PAGE_SIZES.mixChooser,
+		);
+	});
 </script>
 
 <section class="setup-card setup-card--ingredients">
@@ -34,32 +117,64 @@
 		<h4>Choose Ingredients</h4>
 		<p>Select items from your fridge or shopping list.</p>
 	</div>
+	<ListControls
+		id="mix-ingredient-search"
+		{query}
+		onQueryChange={updateQuery}
+		placeholder="Find an ingredient to add or remove…"
+		label="Find ingredients"
+		totalCount={fridgeItems.length + shoppingItems.length}
+		visibleCount={filteredFridgeItems.length + filteredShoppingItems.length}
+		itemLabel="ingredients"
+		filterLabel="Show"
+		filterValue={filter}
+		filterOptions={filterOptions}
+		onFilterChange={updateFilter}
+	/>
 	<div class="ingredient-lists" aria-label="Smoothie ingredients">
 		<section class="ingredient-list">
-			<h5>Fridge</h5>
-			{#if fridgeItems.length > 0}
+			<h5>Fridge <span>{filteredFridgeItems.length}</span></h5>
+			{#if pagedFridgeItems.length > 0}
 				<PillRow
-					pills={fridgeItems.map((food) => food.description)}
-					onRemove={(index) => onToggleFood(fridgeItems[index].fdcId)}
-					onSelect={(index) => onToggleFood(fridgeItems[index].fdcId)}
-					activeIndices={getActiveIndices(fridgeItems)}
-					customIndices={getCustomIndices(fridgeItems)}
+					pills={pagedFridgeItems.map((food) => food.description)}
+					onRemove={(index) => onToggleFood(pagedFridgeItems[index].fdcId)}
+					onSelect={(index) => onToggleFood(pagedFridgeItems[index].fdcId)}
+					activeIndices={getActiveIndices(pagedFridgeItems)}
+					customIndices={getCustomIndices(pagedFridgeItems)}
 				/>
+				<Pagination
+					page={fridgePage}
+					pageSize={LIST_PAGE_SIZES.mixChooser}
+					totalItems={filteredFridgeItems.length}
+					onPageChange={(page) => (fridgePage = page)}
+					label="Mix fridge ingredients"
+				/>
+			{:else if fridgeItems.length > 0}
+				<p>No fridge ingredients match these filters.</p>
 			{:else}
 				<p>No fridge items yet.</p>
 			{/if}
 		</section>
 
 		<section class="ingredient-list">
-			<h5>Shopping List</h5>
-			{#if shoppingItems.length > 0}
+			<h5>Shopping List <span>{filteredShoppingItems.length}</span></h5>
+			{#if pagedShoppingItems.length > 0}
 				<PillRow
-					pills={shoppingItems.map((food) => food.description)}
-					onRemove={(index) => onToggleFood(shoppingItems[index].fdcId)}
-					onSelect={(index) => onToggleFood(shoppingItems[index].fdcId)}
-					activeIndices={getActiveIndices(shoppingItems)}
-					customIndices={getCustomIndices(shoppingItems)}
+					pills={pagedShoppingItems.map((food) => food.description)}
+					onRemove={(index) => onToggleFood(pagedShoppingItems[index].fdcId)}
+					onSelect={(index) => onToggleFood(pagedShoppingItems[index].fdcId)}
+					activeIndices={getActiveIndices(pagedShoppingItems)}
+					customIndices={getCustomIndices(pagedShoppingItems)}
 				/>
+				<Pagination
+					page={shoppingPage}
+					pageSize={LIST_PAGE_SIZES.mixChooser}
+					totalItems={filteredShoppingItems.length}
+					onPageChange={(page) => (shoppingPage = page)}
+					label="Mix shopping-list ingredients"
+				/>
+			{:else if shoppingItems.length > 0}
+				<p>No shopping-list ingredients match these filters.</p>
 			{:else}
 				<p>No shopping list items yet.</p>
 			{/if}
@@ -97,6 +212,10 @@
 		}
 	}
 
+	:global(.list-controls) {
+		margin-bottom: $app-gap-sm;
+	}
+
 	.ingredient-lists {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
@@ -105,17 +224,15 @@
 
 	.ingredient-list {
 		min-width: 0;
-		max-height: 13rem;
-		overflow: auto;
 		padding: 0;
 		background: $app-section-bg;
 		border: $app-border;
 		border-radius: $app-card-radius;
 
 		h5 {
-			position: sticky;
-			top: 0;
-			z-index: 2;
+			display: flex;
+			align-items: center;
+			gap: $app-gap-xs;
 			margin: 0 0 0.35rem;
 			padding: 0.45rem;
 			color: $app-primary;
@@ -123,6 +240,14 @@
 			border-bottom: $app-border;
 			font-size: $app-font-size-sm;
 			font-weight: 800;
+
+			span {
+				padding: 0.06rem 0.35rem;
+				color: $app-muted;
+				background: $app-accent;
+				border-radius: $app-radius-pill;
+				font-size: $app-font-size-xs;
+			}
 		}
 
 		p {

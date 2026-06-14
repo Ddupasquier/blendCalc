@@ -6,6 +6,30 @@ export type CloudMixPreferences = {
 	mixState?: Record<string, unknown>;
 };
 
+export const CLOUD_CURSOR_PAGE_SIZE = 500;
+
+type CursorPage<Row> = {
+	data: Row[] | null;
+	error: unknown;
+};
+
+export const readAllCursorPages = async <Row extends { id: string }>(
+	readPage: (cursorId: string | null) => Promise<CursorPage<Row>>,
+) => {
+	const rows: Row[] = [];
+	let cursorId: string | null = null;
+
+	while (true) {
+		const { data, error } = await readPage(cursorId);
+		if (error || !data) return null;
+
+		rows.push(...data);
+		if (data.length < CLOUD_CURSOR_PAGE_SIZE) return rows;
+
+		cursorId = data[data.length - 1].id;
+	}
+};
+
 export const getCurrentUserId = async () => {
 	const supabase = getSupabaseBrowserClient();
 	if (!supabase) return null;

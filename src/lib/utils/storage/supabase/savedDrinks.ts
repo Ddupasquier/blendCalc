@@ -1,6 +1,11 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import type { SavedDrink } from "$lib/utils/storage/savedDrinks";
-import { getCurrentUserId, toJson } from "./shared";
+import {
+	CLOUD_CURSOR_PAGE_SIZE,
+	getCurrentUserId,
+	readAllCursorPages,
+	toJson,
+} from "./shared";
 
 export type CloudSavedDrinkWriteResult = "saved" | "duplicate" | "error";
 
@@ -10,21 +15,29 @@ export const readCloudSavedDrinks = async () => {
 	const supabase = getSupabaseBrowserClient();
 	if (!supabase) return null;
 
-	const { data, error } = await supabase
-		.from("saved_drinks")
-		.select("id, drink, created_at")
-		.eq("user_id", userId)
-		.order("created_at", { ascending: false });
+	const rows = await readAllCursorPages(async (cursorId) => {
+		let query = supabase
+			.from("saved_drinks")
+			.select("id, drink, created_at")
+			.eq("user_id", userId)
+			.order("id", { ascending: true })
+			.limit(CLOUD_CURSOR_PAGE_SIZE);
 
-	if (error) return null;
+		if (cursorId) query = query.gt("id", cursorId);
+		return await query;
+	});
 
-	return data.map((row) => ({
-		...(row.drink as unknown as SavedDrink),
-		id: row.id,
-		createdAt:
-			(row.drink as unknown as SavedDrink).createdAt ??
-			new Date(row.created_at).getTime(),
-	}));
+	if (!rows) return null;
+
+	return rows
+		.map((row) => ({
+			...(row.drink as unknown as SavedDrink),
+			id: row.id,
+			createdAt:
+				(row.drink as unknown as SavedDrink).createdAt ??
+				new Date(row.created_at).getTime(),
+		}))
+		.sort((first, second) => second.createdAt - first.createdAt);
 };
 
 export const writeCloudSavedDrinks = async (drinks: SavedDrink[]) => {
