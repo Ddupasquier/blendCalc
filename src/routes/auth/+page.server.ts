@@ -9,14 +9,26 @@ import {
 	getSafeAuthNextPath,
 	storeAuthFlowContext,
 } from "$lib/utils/auth/authFlow";
+import {
+	getPasswordValidationMessage,
+	isPasswordPolicyCompliant,
+	PASSWORD_POLICY_VERSION,
+} from "$lib/utils/auth/passwordPolicy";
+import {
+	clearPasswordUpgrade,
+	requirePasswordUpgrade,
+} from "$lib/utils/auth/passwordUpgrade";
 
 const getEmailAuthFields = async (request: Request) => {
 	const formData = await request.formData();
 	const email = String(formData.get("email") ?? "").trim().toLowerCase();
 	const password = String(formData.get("password") ?? "");
+	const passwordConfirmation = String(
+		formData.get("passwordConfirmation") ?? "",
+	);
 	const next = getSafeAuthNextPath(formData.get("next"));
 
-	return { email, password, next };
+	return { email, password, passwordConfirmation, next };
 };
 
 const getEmailField = async (request: Request) => {
@@ -27,11 +39,16 @@ const getEmailField = async (request: Request) => {
 	};
 };
 
-const getEmailAuthValidationError = (email: string, password: string) => {
+const getEmailValidationError = (email: string) => {
 	if (!email) return "Enter your email address.";
 	if (!email.includes("@")) return "Enter a valid email address.";
+	return "";
+};
+
+const getEmailSignInValidationError = (email: string, password: string) => {
+	const emailError = getEmailValidationError(email);
+	if (emailError) return emailError;
 	if (!password) return "Enter your password.";
-	if (password.length < 8) return "Password must be at least 8 characters.";
 	return "";
 };
 
@@ -66,20 +83,21 @@ export const load: PageServerLoad = async ({ locals, request, url }) => {
 };
 
 export const actions: Actions = {
-	emailSignIn: async ({ locals, request, url }) => {
+	emailSignIn: async ({ locals, request, url, cookies }) => {
 		const { email, password, next } = await getEmailAuthFields(request);
 		redirectToCanonicalAuthPage(request, url, next);
-		const validationError = getEmailAuthValidationError(email, password);
+		const validationError = getEmailSignInValidationError(email, password);
 
 		if (validationError) {
 			return fail(400, {
 				message: validationError,
 				email,
 				next,
+				mode: "signIn" as const,
 			});
 		}
 
-		const { error } = await locals.supabase.auth.signInWithPassword({
+		const { data, error } = await locals.supabase.auth.signInWithPassword({
 			email,
 			password,
 		});
@@ -89,21 +107,50 @@ export const actions: Actions = {
 				message: "Email or password was not accepted.",
 				email,
 				next,
+				mode: "signIn" as const,
 			});
+		}
+
+		if (!isPasswordPolicyCompliant(password, email)) {
+			requirePasswordUpgrade(cookies, next, url.protocol === "https:");
+			throw redirect(
+				303,
+				`/auth/update-password?reason=policy&next=${encodeURIComponent(next)}`,
+			);
+		}
+
+		clearPasswordUpgrade(cookies);
+		if (data.user?.user_metadata.password_policy_version !== PASSWORD_POLICY_VERSION) {
+			const { error: metadataError } = await locals.supabase.auth.updateUser({
+				data: {
+					...data.user?.user_metadata,
+					password_policy_version: PASSWORD_POLICY_VERSION,
+				},
+			});
+			if (metadataError) {
+				console.warn("[auth] Unable to record password policy version", {
+					code: metadataError.code,
+					status: metadataError.status,
+				});
+			}
 		}
 
 		throw redirect(303, next);
 	},
 	emailSignUp: async ({ locals, request, url, cookies }) => {
-		const { email, password, next } = await getEmailAuthFields(request);
+		const { email, password, passwordConfirmation, next } =
+			await getEmailAuthFields(request);
 		redirectToCanonicalAuthPage(request, url, next);
-		const validationError = getEmailAuthValidationError(email, password);
+		const validationError =
+			getEmailValidationError(email) ||
+			getPasswordValidationMessage(password, passwordConfirmation, email);
 
 		if (validationError) {
 			return fail(400, {
 				message: validationError,
 				email,
 				next,
+				mode: "signUp" as const,
 			});
 		}
 
@@ -114,6 +161,9 @@ export const actions: Actions = {
 			email,
 			password,
 			options: {
+				data: {
+					password_policy_version: PASSWORD_POLICY_VERSION,
+				},
 				emailRedirectTo: redirectTo,
 			},
 		});
@@ -126,9 +176,13 @@ export const actions: Actions = {
 				status: error.status,
 			});
 			return fail(400, {
-				message: "Unable to create that account. Try again in a moment.",
+				message:
+					error.code === "weak_password"
+						? "That password was rejected as too weak. Choose a longer, unique passphrase."
+						: "Unable to create that account. Try again in a moment.",
 				email,
 				next,
+				mode: "signUp" as const,
 			});
 		}
 
@@ -142,6 +196,7 @@ export const actions: Actions = {
 				"Account created. Check your email to confirm it, then come back and sign in.",
 			email,
 			next,
+			mode: "signIn" as const,
 		};
 	},
 	requestPasswordReset: async ({ locals, request, url, cookies }) => {

@@ -1,38 +1,67 @@
 import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
+import { getSafeAuthNextPath } from "$lib/utils/auth/authFlow";
+import {
+	getPasswordValidationMessage,
+	PASSWORD_POLICY_VERSION,
+} from "$lib/utils/auth/passwordPolicy";
+import { clearPasswordUpgrade } from "$lib/utils/auth/passwordUpgrade";
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	const { user } = await locals.safeGetSession();
 	if (!user) throw redirect(303, "/auth?error=recovery_session");
-	return {};
+	return {
+		email: user.email ?? "",
+		next: getSafeAuthNextPath(url.searchParams.get("next")),
+		reason: url.searchParams.get("reason") === "policy" ? "policy" : "recovery",
+	};
 };
 
 export const actions: Actions = {
-	default: async ({ locals, request }) => {
+	default: async ({ locals, request, cookies }) => {
 		const formData = await request.formData();
 		const password = String(formData.get("password") ?? "");
 		const confirmation = String(formData.get("passwordConfirmation") ?? "");
+		const next = getSafeAuthNextPath(formData.get("next"));
+		const { user } = await locals.safeGetSession();
+		if (!user) throw redirect(303, "/auth?error=recovery_session");
 
-		if (password.length < 8) {
+		const validationError = getPasswordValidationMessage(
+			password,
+			confirmation,
+			user.email ?? "",
+		);
+		if (validationError) {
 			return fail(400, {
-				message: "Password must be at least 8 characters.",
+				message: validationError,
+				next,
 			});
 		}
-		if (password !== confirmation) {
-			return fail(400, { message: "Passwords do not match." });
-		}
 
-		const { error } = await locals.supabase.auth.updateUser({ password });
+		const { error } = await locals.supabase.auth.updateUser({
+			password,
+			data: {
+				...user.user_metadata,
+				password_policy_version: PASSWORD_POLICY_VERSION,
+			},
+		});
 		if (error) {
 			console.warn("[auth] Password update failed", {
 				code: error.code,
 				status: error.status,
 			});
 			return fail(400, {
-				message: "Unable to update your password. Request a new reset link.",
+				message:
+					error.code === "same_password"
+						? "Choose a password that is different from your current password."
+						: error.code === "weak_password"
+							? "That password was rejected as too weak. Choose a longer, unique passphrase."
+							: "Unable to update your password. Request a new reset link.",
+				next,
 			});
 		}
 
-		throw redirect(303, "/fridge");
+		clearPasswordUpgrade(cookies);
+		throw redirect(303, next);
 	},
 };

@@ -1,14 +1,32 @@
 <script lang="ts">
-	import type { ActionData } from "./$types";
+	import PasswordRequirements from "$lib/components/auth/PasswordRequirements.svelte";
+	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
+	import type { ActionData, PageData } from "./$types";
 
-	let { form }: { form: ActionData } = $props();
+	let {
+		data,
+		form,
+	}: {
+		data: PageData;
+		form: ActionData;
+	} = $props();
+	let password = $state("");
+	let passwordConfirmation = $state("");
 </script>
 
 <section class="password-page">
 	<form class="password-card" method="POST">
+		<input type="hidden" name="next" value={form?.next ?? data.next} />
 		<header>
-			<h2>Choose a new password</h2>
-			<p>Use at least 8 characters and do not reuse an important password.</p>
+			<p class="password-eyebrow">
+				{data.reason === "policy" ? "Security update" : "Password recovery"}
+			</p>
+			<h1>Choose a new password.</h1>
+			<p>
+				{data.reason === "policy"
+					? "Your existing password no longer meets the app’s security standard. Update it once to continue."
+					: "Set a new password for your account."}
+			</p>
 		</header>
 
 		{#if form?.message}
@@ -21,8 +39,10 @@
 				type="password"
 				name="password"
 				autocomplete="new-password"
-				minlength="8"
+				aria-describedby="password-requirements"
+				minlength={PASSWORD_MIN_LENGTH}
 				required
+				bind:value={password}
 			/>
 		</label>
 		<label>
@@ -31,10 +51,16 @@
 				type="password"
 				name="passwordConfirmation"
 				autocomplete="new-password"
-				minlength="8"
+				minlength={PASSWORD_MIN_LENGTH}
 				required
+				bind:value={passwordConfirmation}
 			/>
 		</label>
+		<PasswordRequirements
+			{password}
+			email={data.email}
+			confirmation={passwordConfirmation}
+		/>
 		<button type="submit">Update password</button>
 	</form>
 </section>
@@ -65,10 +91,15 @@
 			gap: $app-gap-xs;
 		}
 
-		h2,
+		h1,
 		label span {
 			color: $app-primary;
 			font-weight: 800;
+		}
+
+		h1 {
+			font-family: $app-display-font-family;
+			font-size: $app-font-size-xl;
 		}
 
 		p {
@@ -91,6 +122,18 @@
 			border-radius: $app-radius-pill;
 			font-weight: 900;
 		}
+	}
+
+	.password-eyebrow {
+		width: fit-content;
+		padding: 0.18rem 0.5rem;
+		color: $app-primary !important;
+		background: $app-accent;
+		border-radius: $app-radius-pill;
+		font-size: $app-font-size-xs;
+		font-weight: 900;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
 	}
 
 	.password-error {

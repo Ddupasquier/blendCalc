@@ -2,8 +2,12 @@
 	import { enhance } from "$app/forms";
 	import { onMount } from "svelte";
 	import FloatingFruitBackground from "$lib/components/app/FloatingFruitBackground.svelte";
+	import PasswordRequirements from "$lib/components/auth/PasswordRequirements.svelte";
+	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
 	import type { SubmitFunction } from "@sveltejs/kit";
 	import type { ActionData, PageData } from "./$types";
+
+	type AuthMode = "signIn" | "signUp";
 
 	let {
 		data,
@@ -15,6 +19,9 @@
 
 	let providerError = $state("");
 	let email = $state("");
+	let password = $state("");
+	let passwordConfirmation = $state("");
+	let authMode = $state<AuthMode>("signIn");
 	let isSubmitting = $state(false);
 	let authCard = $state<HTMLDivElement>();
 
@@ -40,7 +47,16 @@
 		if (form?.email !== undefined) {
 			email = form.email;
 		}
+		if (form?.mode === "signUp" || form?.mode === "signIn") {
+			authMode = form.mode;
+		}
 	});
+
+	const switchAuthMode = (mode: AuthMode) => {
+		authMode = mode;
+		password = "";
+		passwordConfirmation = "";
+	};
 
 	onMount(() => {
 		const params = new URLSearchParams(window.location.hash.slice(1));
@@ -54,10 +70,11 @@
 		<div class="auth-card__header">
 			<a class="auth-brand" href="/">Smoothie Mixer</a>
 			<p class="auth-eyebrow">Your smoothie space</p>
-			<h1>Welcome back.</h1>
+			<h1>{authMode === "signUp" ? "Create your account." : "Welcome back."}</h1>
 			<p>
-				Sign in to pick up your fridge, saved drinks, and nutrition goals right
-				where you left them.
+				{authMode === "signUp"
+					? "Save your ingredients, drinks, and nutrition goals securely to your account."
+					: "Sign in to pick up your fridge, saved drinks, and nutrition goals right where you left them."}
 			</p>
 		</div>
 
@@ -97,7 +114,12 @@
 			<span></span>
 		</div>
 
-		<form class="email-form" method="POST" use:enhance={preventDuplicateSubmit}>
+		<form
+			class="email-form"
+			method="POST"
+			action={authMode === "signUp" ? "?/emailSignUp" : "?/emailSignIn"}
+			use:enhance={preventDuplicateSubmit}
+		>
 			<input type="hidden" name="next" value={form?.next ?? data.next} />
 			<label>
 				<span>Email</span>
@@ -115,39 +137,65 @@
 				<input
 					type="password"
 					name="password"
-					autocomplete="current-password"
-					placeholder="At least 8 characters"
+					autocomplete={authMode === "signUp" ? "new-password" : "current-password"}
+					placeholder={authMode === "signUp" ? "Use a long passphrase" : "Your password"}
+					aria-describedby={authMode === "signUp" ? "password-requirements" : undefined}
 					required
-					minlength="8"
+					minlength={authMode === "signUp" ? PASSWORD_MIN_LENGTH : undefined}
+					bind:value={password}
 				/>
 			</label>
+			{#if authMode === "signUp"}
+				<label>
+					<span>Confirm password</span>
+					<input
+						type="password"
+						name="passwordConfirmation"
+						autocomplete="new-password"
+						placeholder="Enter it again"
+						required
+						minlength={PASSWORD_MIN_LENGTH}
+						bind:value={passwordConfirmation}
+					/>
+				</label>
+				<PasswordRequirements
+					{password}
+					{email}
+					confirmation={passwordConfirmation}
+				/>
+			{/if}
 			<div class="email-form__actions">
 				<button
 					class="email-button"
 					type="submit"
-					formaction="?/emailSignIn"
 					disabled={isSubmitting}
 				>
-					{isSubmitting ? "Working…" : "Sign in"}
+					{isSubmitting
+						? "Working…"
+						: authMode === "signUp"
+							? "Create account"
+							: "Sign in"}
 				</button>
 				<button
 					class="email-button email-button--secondary"
-					type="submit"
-					formaction="?/emailSignUp"
+					type="button"
+					onclick={() => switchAuthMode(authMode === "signUp" ? "signIn" : "signUp")}
 					disabled={isSubmitting}
 				>
-					Create account
+					{authMode === "signUp" ? "Back to sign in" : "Create account"}
 				</button>
 			</div>
-			<button
-				class="password-reset-button"
-				type="submit"
-				formaction="?/requestPasswordReset"
-				formnovalidate
-				disabled={isSubmitting}
-			>
-				Forgot your password?
-			</button>
+			{#if authMode === "signIn"}
+				<button
+					class="password-reset-button"
+					type="submit"
+					formaction="?/requestPasswordReset"
+					formnovalidate
+					disabled={isSubmitting}
+				>
+					Forgot your password?
+				</button>
+			{/if}
 		</form>
 
 		<p class="auth-note">

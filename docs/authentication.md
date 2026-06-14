@@ -49,8 +49,13 @@ and secret. In Google Cloud, configure:
 Configure these in Supabase before public launch:
 
 - Require email confirmation for password accounts.
-- Set the minimum password length to at least 8 characters.
+- Set the minimum password length to **15 characters** so hosted Auth matches
+  the application policy in `src/lib/utils/auth/passwordPolicy.ts`.
+- Do not add uppercase, lowercase, number, or symbol composition requirements.
+  The app accepts long passphrases, spaces, Unicode, and password-manager values.
 - Enable leaked-password protection when the project plan supports it.
+- Enable secure password changes. Recently authenticated users and password
+  recovery sessions can update directly; older sessions must reauthenticate.
 - Before enabling Cloudflare Turnstile or hCaptcha, add its browser widget and
   pass the resulting token to Supabase sign-up and recovery calls.
 - Review Auth rate limits; lower them if automated abuse appears.
@@ -90,3 +95,7 @@ Manually verify both localhost and production:
 4. Opening two tabs and clicking Google sign-in quickly does not create two
    submissions; the button should become disabled immediately.
 5. Authenticated pages return `Cache-Control: private, no-store`.
+6. New password accounts reject short, common, email-derived, and mismatched
+   passwords with an actionable message.
+7. An existing account with a legacy password can sign in, is immediately sent
+   to `/auth/update-password`, and cannot continue until the update succeeds.
