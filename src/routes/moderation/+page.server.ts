@@ -14,6 +14,12 @@ import {
 	type AppRole,
 } from "$lib/utils/moderation/moderation";
 import { PROFILE_AVATAR_BUCKET } from "$lib/utils/profile/profile";
+import {
+	approveCommunityProductSubmission,
+	listPendingProductSubmissions,
+	rejectProductSubmission,
+} from "$lib/server/products/catalog.server";
+import type { FdcFood } from "$lib/utils/food/types";
 
 const PERMANENT_BAN_DURATION = "876000h";
 const MODERATION_PAGE_SIZE = 100;
@@ -217,6 +223,26 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		};
 	});
 
+	const productSubmissions = (await listPendingProductSubmissions()).map(
+		(submission) => {
+			const food = submission.food as unknown as FdcFood;
+			return {
+				id: submission.id,
+				barcode: submission.barcode,
+				productName: submission.product_name,
+				brandOwner: submission.brand_owner,
+				matchedSource: submission.matched_source,
+				matchedReference: submission.matched_reference,
+				createdAt: submission.created_at,
+				nutrients: (food.foodNutrients ?? []).map((nutrient) => ({
+					name: nutrient.nutrientName,
+					value: nutrient.value,
+					unit: nutrient.unitName,
+				})),
+			};
+		},
+	);
+
 	return {
 		viewerRole: role,
 		viewerUserId: viewer.id,
@@ -224,10 +250,48 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		resultCount: users.filter((user) => matchesSearch(user, query)).length,
 		totalCount: users.length,
 		users: users.filter((user) => matchesSearch(user, query)),
+		productSubmissions,
 	};
 };
 
 export const actions: Actions = {
+	approveProduct: async ({ locals, request }) => {
+		const { user } = await requireModerator(locals);
+		const formData = await request.formData();
+		const submissionId = String(formData.get("submissionId") ?? "");
+		if (!submissionId) {
+			return fail(400, { productReviewError: "Choose a product submission." });
+		}
+
+		try {
+			await approveCommunityProductSubmission(submissionId, user.id);
+			return { productReviewSuccess: "Product approved for shared search." };
+		} catch {
+			return fail(500, {
+				productReviewError: "The product could not be approved.",
+			});
+		}
+	},
+	rejectProduct: async ({ locals, request }) => {
+		const { user } = await requireModerator(locals);
+		const formData = await request.formData();
+		const submissionId = String(formData.get("submissionId") ?? "");
+		const reviewNote = String(formData.get("reviewNote") ?? "").trim();
+		if (!submissionId || !reviewNote) {
+			return fail(400, {
+				productReviewError: "Add a short rejection reason.",
+			});
+		}
+
+		try {
+			await rejectProductSubmission(submissionId, user.id, reviewNote);
+			return { productReviewSuccess: "Product submission rejected." };
+		} catch {
+			return fail(500, {
+				productReviewError: "The product could not be rejected.",
+			});
+		}
+	},
 	ban: async ({ locals, request }) => {
 		const { user: actor, role: actorRole } = await requireModerator(locals);
 		const formData = await request.formData();

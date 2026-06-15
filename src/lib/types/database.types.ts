@@ -356,6 +356,166 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_product_revisions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          food: Json
+          id: string
+          revision_number: number
+          shared_product_id: string
+          source: string
+          source_reference: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          food: Json
+          id?: string
+          revision_number: number
+          shared_product_id: string
+          source: string
+          source_reference?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          food?: Json
+          id?: string
+          revision_number?: number
+          shared_product_id?: string
+          source?: string
+          source_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_product_revisions_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_product_submissions: {
+        Row: {
+          barcode: string
+          brand_owner: string | null
+          consent_to_share: boolean
+          created_at: string
+          food: Json
+          id: string
+          matched_reference: string | null
+          matched_source: string | null
+          product_name: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_by: string
+          updated_at: string
+          validation_report: Json
+          verification_status: string
+        }
+        Insert: {
+          barcode: string
+          brand_owner?: string | null
+          consent_to_share: boolean
+          created_at?: string
+          food: Json
+          id?: string
+          matched_reference?: string | null
+          matched_source?: string | null
+          product_name: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by: string
+          updated_at?: string
+          validation_report?: Json
+          verification_status?: string
+        }
+        Update: {
+          barcode?: string
+          brand_owner?: string | null
+          consent_to_share?: boolean
+          created_at?: string
+          food?: Json
+          id?: string
+          matched_reference?: string | null
+          matched_source?: string | null
+          product_name?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by?: string
+          updated_at?: string
+          validation_report?: Json
+          verification_status?: string
+        }
+        Relationships: []
+      }
+      shared_products: {
+        Row: {
+          approved_by: string | null
+          approved_submission_id: string | null
+          barcode: string
+          brand_owner: string | null
+          confidence: string
+          created_at: string
+          food: Json
+          id: string
+          product_name: string
+          search_text: string
+          source: string
+          source_reference: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_by?: string | null
+          approved_submission_id?: string | null
+          barcode: string
+          brand_owner?: string | null
+          confidence: string
+          created_at?: string
+          food: Json
+          id?: string
+          product_name: string
+          search_text: string
+          source: string
+          source_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_by?: string | null
+          approved_submission_id?: string | null
+          barcode?: string
+          brand_owner?: string | null
+          confidence?: string
+          created_at?: string
+          food?: Json
+          id?: string
+          product_name?: string
+          search_text?: string
+          source?: string
+          source_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_products_approved_submission_id_fkey"
+            columns: ["approved_submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_food_list_items: {
         Row: {
           created_at: string
@@ -424,7 +584,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      publish_shared_product_submission: {
+        Args: {
+          p_approved_by?: string
+          p_brand_owner: string
+          p_confidence: string
+          p_food: Json
+          p_product_name: string
+          p_source: string
+          p_source_reference: string
+          p_submission_id: string
+        }
+        Returns: string
+      }
       reject_blocked_signup: { Args: { event: Json }; Returns: Json }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       [_ in never]: never

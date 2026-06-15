@@ -6,6 +6,7 @@
 		searchCustomFoods,
 	} from "$lib/utils/food/customFoods";
 	import { compareFoodQuality } from "$lib/utils/food/foodQuality";
+	import { searchSharedProducts } from "$lib/utils/products/catalog";
 	import { createEventDispatcher, onMount } from "svelte";
 	import PillRow from "../common/PillRow.svelte";
 	import SearchDropdown from "./SearchDropdown.svelte";
@@ -19,11 +20,15 @@
 	let debounceTimer: ReturnType<typeof setTimeout>;
 	const dispatch = createEventDispatcher();
 
-	const mergeResults = (customResults: FdcFood[], apiResults: FdcFood[]) => {
+	const mergeResults = (...resultGroups: FdcFood[][]) => {
 		const seen = new Set<number>();
-		return [...customResults, ...apiResults].filter((food) => {
+		const seenBarcodes = new Set<string>();
+		return resultGroups.flat().filter((food) => {
 			if (seen.has(food.fdcId)) return false;
+			const barcode = food.barcode ?? food.gtinUpc;
+			if (barcode && seenBarcodes.has(barcode)) return false;
 			seen.add(food.fdcId);
+			if (barcode) seenBarcodes.add(barcode);
 			return true;
 		});
 	};
@@ -96,14 +101,25 @@
 			loading = true;
 			const customResults = searchCustomFoods(searchString);
 			try {
-				results = mergeResults(customResults, await searchFoods(searchString));
+				const [sharedSearch, apiSearch] = await Promise.allSettled([
+					searchSharedProducts(searchString),
+					searchFoods(searchString),
+				]);
+				const sharedResults = sharedSearch.status === "fulfilled"
+					? sharedSearch.value
+					: [];
+				const apiResults = apiSearch.status === "fulfilled"
+					? apiSearch.value
+					: [];
+				results = mergeResults(customResults, sharedResults, apiResults);
 				dispatch("results", { results, query: searchString });
-			} catch (e) {
-				error = e instanceof FdcConfigurationError
-					? e.message
-					: "Food search failed. Try again in a moment.";
-				results = customResults;
-				dispatch("results", { results, query: searchString });
+
+				if (sharedSearch.status === "rejected" && apiSearch.status === "rejected") {
+					const apiError = apiSearch.reason;
+					error = apiError instanceof FdcConfigurationError
+						? apiError.message
+						: "Online food search failed. Your saved foods are still available.";
+				}
 			} finally {
 				loading = false;
 			}

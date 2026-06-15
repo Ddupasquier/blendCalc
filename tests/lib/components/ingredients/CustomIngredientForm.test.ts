@@ -9,6 +9,17 @@ vi.mock("$lib/utils/food/customFoods", async (importOriginal) => {
 	};
 });
 
+const { submitSharedProduct } = vi.hoisted(() => ({
+	submitSharedProduct: vi.fn().mockResolvedValue({
+		status: "pending",
+		message: "Waiting for review.",
+	}),
+}));
+
+vi.mock("$lib/utils/products/catalog", () => ({
+	submitSharedProduct,
+}));
+
 import CustomIngredientForm from "$lib/components/ingredients/CustomIngredientForm.svelte";
 
 describe("CustomIngredientForm", () => {
@@ -99,5 +110,29 @@ describe("CustomIngredientForm", () => {
 		await fireEvent.click(screen.getByLabelText(/allow volume measurements/i));
 		expect(screen.getByLabelText(/volume in this serving/i)).toBeInTheDocument();
 		expect(screen.getByText(/2 tbsp weighs 32g/i)).toBeInTheDocument();
+	});
+
+	it("shares a barcoded label only after explicit consent", async () => {
+		const onCreate = vi.fn();
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await fireEvent.click(screen.getByText("Enter label details"));
+		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
+			target: { value: "New packaged food" },
+		});
+		await fireEvent.input(screen.getByLabelText(/upc \/ ean barcode/i), {
+			target: { value: "4006381333931" },
+		});
+
+		expect(submitSharedProduct).not.toHaveBeenCalled();
+		await fireEvent.click(
+			screen.getByLabelText(/help other users find this product/i),
+		);
+		await fireEvent.click(
+			screen.getByRole("button", { name: /save custom ingredient/i }),
+		);
+
+		await waitFor(() => expect(submitSharedProduct).toHaveBeenCalledOnce());
+		expect(screen.getByText("Waiting for review.")).toBeInTheDocument();
 	});
 });

@@ -6,9 +6,10 @@ The custom ingredient form supports UPC-A, UPC-E, EAN-8, EAN-13, and GTIN-14 pac
 
 1. The browser uses `BarcodeDetector` when the API is available.
 2. Other supported browsers fall back to `@zxing/browser`.
-3. Open Food Facts is queried first for packaged-label data.
-4. USDA FoodData Central branded foods are used as a fallback.
-5. Imported nutrition stays in the form until the user reviews and saves it.
+3. The private Smoothie Mixer verified catalog is checked first.
+4. USDA FoodData Central branded foods are checked next.
+5. Open Food Facts is used as the final live lookup source.
+6. Imported nutrition stays in the form until the user reviews and saves it.
 
 Camera access requires HTTPS outside local development. Users can always type the barcode and nutrition label manually.
 
@@ -18,6 +19,10 @@ Camera access requires HTTPS outside local development. Users can always type th
 - USDA branded records may use a different serving than the current package label.
 - The UI identifies the source and requires review before saving.
 - Barcode and custom-food name uniqueness are enforced per user, not globally.
+- Eligible user-entered labels can be submitted to the shared catalog only through an explicit opt-in.
+- Open Food Facts records remain live source lookups and are not copied into the shared catalog.
+
+See [`shared-product-catalog.md`](shared-product-catalog.md) for verification, moderation, licensing, and deployment details.
 
 ## Future native app
 

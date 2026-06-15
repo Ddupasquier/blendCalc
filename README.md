@@ -5,6 +5,7 @@ Mix and match ingredients for making well-balanced smoothies.
 ## Features
 
 - 🔍 Search ingredients via the [FoodData Central API](https://fdc.nal.usda.gov/)
+- 🧾 Scan packaged foods and reuse approved products through a moderated shared catalog
 - 🧪 Live nutrition totals (calories, protein, carbs, fat, fiber, sugar)
 - 🔐 Save fridge, shopping list, custom foods, saved drinks, and mix settings to a Supabase account
 - 📱 Mobile-first responsive UI
@@ -78,6 +79,9 @@ npm test
 ```
 
 Tests run entirely offline using mocked fetch — no API key required.
+
+See [`docs/shared-product-catalog.md`](docs/shared-product-catalog.md) for the
+barcode verification and shared-product moderation model.
 
 To compare live FDC product data while debugging nutrient mappings:
 

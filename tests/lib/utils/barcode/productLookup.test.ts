@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	mapFdcBarcodeFood,
 	mapOpenFoodFactsProduct,
+	mapSharedCatalogFood,
 } from "$lib/utils/barcode/productLookup";
 import { NUTRIENT_IDS } from "$lib/utils/food/types";
 
@@ -108,5 +109,24 @@ describe("barcode product mapping", () => {
 			expect.objectContaining({ nutrientId: NUTRIENT_IDS.SODIUM, value: 300 }),
 			expect.objectContaining({ nutrientId: NUTRIENT_IDS.VITAMIN_C, value: 10 }),
 		]);
+	});
+
+	it("marks approved catalog records as shared products", () => {
+		const draft = mapSharedCatalogFood(
+			{
+				fdcId: -10,
+				description: "Community cereal",
+				barcode: "04006381333931",
+				sharedProductId: "product-id",
+				foodNutrients: [],
+			},
+			"4006381333931",
+		);
+
+		expect(draft).toMatchObject({
+			source: "shared-catalog",
+			sourceLabel: "Smoothie Mixer verified catalog",
+			sourceReference: "product-id",
+		});
 	});
 });

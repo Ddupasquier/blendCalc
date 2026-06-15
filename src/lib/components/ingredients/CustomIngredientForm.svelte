@@ -13,6 +13,7 @@
 	import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 	import { lookupBarcodeProduct } from "$lib/utils/barcode/productLookup";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
+	import { submitSharedProduct } from "$lib/utils/products/catalog";
 
 	let {
 		onCreate,
@@ -40,7 +41,13 @@
 	let barcode = $state("");
 	let barcodeSource = $state<FdcFood["barcodeSource"]>("manual");
 	let barcodeMessage = $state("");
+	let shareWithCatalog = $state(false);
+	let catalogMessage = $state("");
 	let detailsElement: HTMLDetailsElement;
+	let hasValidBarcode = $derived(Boolean(normalizeBarcode(barcode)));
+	let canShareWithCatalog = $derived(
+		hasValidBarcode && barcodeSource !== "open-food-facts" && barcodeSource !== "community",
+	);
 
 	let nutrition = $state<CustomFoodNutritionInput>({
 		calories: 0,
@@ -84,6 +91,7 @@
 		barcode = "";
 		barcodeSource = "manual";
 		barcodeMessage = "";
+		shareWithCatalog = false;
 		nutrition = {
 			calories: 0,
 			fat: 0,
@@ -115,7 +123,9 @@
 				volumeQuantity = lookup.draft.volumeEquivalent?.quantity ?? null;
 				volumeUnit = lookup.draft.volumeEquivalent?.unit ?? "tbsp";
 				barcode = lookup.draft.barcode;
-				barcodeSource = lookup.draft.source;
+				barcodeSource = lookup.draft.source === "shared-catalog"
+					? "community"
+					: lookup.draft.source;
 				const nutrientSummary = additionalNutrients.length > 0
 					? ` ${additionalNutrients.length} additional reported nutrients were included.`
 					: " No additional vitamin or mineral values were reported by this source.";
@@ -140,6 +150,7 @@
 		if (saving) return;
 		error = "";
 		savedMessage = "";
+		catalogMessage = "";
 
 		if (!name.trim()) {
 			error = "Add a name for this ingredient.";
@@ -202,10 +213,19 @@
 			if (result === "error") {
 				error = "This ingredient could not be saved. Check your connection and try again.";
 				return;
-		}
+			}
 
 			onCreate(food);
 			savedMessage = `${food.description} saved as a custom ingredient.`;
+			if (shareWithCatalog && normalizedBarcode) {
+				try {
+					const submission = await submitSharedProduct(food);
+					catalogMessage = submission.message;
+				} catch {
+					catalogMessage =
+						"The ingredient was saved privately, but catalog review could not be started. You can try again later.";
+				}
+			}
 			resetForm();
 		} finally {
 			saving = false;
@@ -309,6 +329,29 @@
 
 		{#if barcodeMessage}
 			<p class="custom-ingredient__barcode-message" role="status">{barcodeMessage}</p>
+		{/if}
+
+		{#if canShareWithCatalog}
+			<label class="custom-ingredient__share-toggle">
+				<input
+					id="custom-ingredient-share-product"
+					name="custom-ingredient-share-product"
+					type="checkbox"
+					bind:checked={shareWithCatalog}
+				/>
+				<span>
+					<strong>Help other users find this product</strong>
+					<small>
+						Submit the barcode and nutrition label for verification. Your account
+						information is not added to the public product.
+					</small>
+				</span>
+			</label>
+		{:else if hasValidBarcode && barcodeSource === "open-food-facts"}
+			<p class="custom-ingredient__barcode-message">
+				This product is already available through Open Food Facts, so no catalog
+				submission is needed.
+			</p>
 		{/if}
 
 		<section class="custom-ingredient__volume">
@@ -483,6 +526,9 @@
 		{#if savedMessage}
 			<p class="custom-ingredient__success" role="status">{savedMessage}</p>
 		{/if}
+		{#if catalogMessage}
+			<p class="custom-ingredient__catalog-message" role="status">{catalogMessage}</p>
+		{/if}
 
 		<button type="button" onclick={handleSubmit} disabled={saving}>
 			{saving ? "Saving ingredient…" : "Save custom ingredient"}
@@ -630,7 +676,8 @@
 		}
 	}
 
-	.custom-ingredient__volume-toggle {
+	.custom-ingredient__volume-toggle,
+	.custom-ingredient__share-toggle {
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr);
 		align-items: start;
@@ -708,6 +755,7 @@
 
 	.custom-ingredient__error,
 	.custom-ingredient__success,
+	.custom-ingredient__catalog-message,
 	.custom-ingredient__barcode-message {
 		font-size: 0.84rem;
 		font-weight: 800;
@@ -726,6 +774,13 @@
 
 	.custom-ingredient__success {
 		color: $app-primary;
+	}
+
+	.custom-ingredient__catalog-message {
+		padding: $app-gap-sm;
+		color: $app-primary;
+		background: $app-success-bg;
+		border-radius: $app-radius;
 	}
 
 	button {

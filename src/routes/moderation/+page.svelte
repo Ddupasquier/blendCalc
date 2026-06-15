@@ -13,7 +13,9 @@
 			return;
 		}
 
-		pendingTargetUserId = String(formData.get("targetUserId") ?? "");
+		pendingTargetUserId = String(
+			formData.get("targetUserId") ?? formData.get("submissionId") ?? "",
+		);
 		return async ({ update }) => {
 			try {
 				await update();
@@ -77,6 +79,72 @@
 	{:else if form?.moderationSuccess}
 		<p class="message message--success" role="status">{form.moderationSuccess}</p>
 	{/if}
+
+	<section class="product-review" aria-labelledby="product-review-title">
+		<div>
+			<p class="eyebrow">Shared catalog</p>
+			<h2 id="product-review-title">Product submissions</h2>
+			<p>Review products that could not be automatically verified through USDA.</p>
+		</div>
+
+		{#if form?.productReviewError}
+			<p class="message message--error" role="alert">{form.productReviewError}</p>
+		{:else if form?.productReviewSuccess}
+			<p class="message message--success" role="status">{form.productReviewSuccess}</p>
+		{/if}
+
+		<div class="product-review__list">
+			{#each data.productSubmissions as submission (submission.id)}
+				<article class="product-card">
+					<header>
+						<div>
+							<strong>{submission.productName}</strong>
+							{#if submission.brandOwner}<span>{submission.brandOwner}</span>{/if}
+						</div>
+						<span class="status">pending</span>
+					</header>
+					<dl>
+						<div><dt>Barcode</dt><dd>{submission.barcode}</dd></div>
+						<div>
+							<dt>Outside match</dt>
+							<dd>{submission.matchedSource ?? "None"}</dd>
+						</div>
+					</dl>
+					<details>
+						<summary>Review {submission.nutrients.length} nutrition values</summary>
+						<ul>
+							{#each submission.nutrients as nutrient}
+								<li>
+									<span>{nutrient.name}</span>
+									<strong>{nutrient.value} {nutrient.unit}</strong>
+								</li>
+							{/each}
+						</ul>
+					</details>
+					<div class="product-card__actions">
+						<form method="POST" action="?/approveProduct" use:enhance={enhanceModerationAction}>
+							<input type="hidden" name="submissionId" value={submission.id} />
+							<button type="submit" disabled={pendingTargetUserId !== null}>
+								{pendingTargetUserId === submission.id ? "Approving…" : "Approve"}
+							</button>
+						</form>
+						<form method="POST" action="?/rejectProduct" use:enhance={enhanceModerationAction}>
+							<input type="hidden" name="submissionId" value={submission.id} />
+							<label>
+								<span>Rejection reason</span>
+								<input name="reviewNote" maxlength="1000" required placeholder="What needs correction?" />
+							</label>
+							<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
+								{pendingTargetUserId === submission.id ? "Rejecting…" : "Reject"}
+							</button>
+						</form>
+					</div>
+				</article>
+			{:else}
+				<p class="empty-results">No products are waiting for review.</p>
+			{/each}
+		</div>
+	</section>
 
 	<section class="account-list" aria-label="User accounts">
 		{#each data.users as user (user.id)}
@@ -153,6 +221,8 @@
 	.account-list,
 	header,
 	.account-search,
+	.product-review,
+	.product-review__list,
 	.account-details,
 	form,
 	label {
@@ -186,6 +256,7 @@
 	}
 
 	.account-search,
+	.product-review,
 	.empty-results {
 		padding: $app-gap-md;
 		background: $app-section-bg;
@@ -193,8 +264,79 @@
 		border-radius: $app-card-radius;
 	}
 
+	.product-review h2,
 	.account-search h2 {
 		font-size: $app-font-size-lg;
+	}
+
+	.product-review {
+		padding: $app-gap-md;
+		background: $app-section-bg;
+		border: $app-border;
+		border-radius: $app-card-radius;
+	}
+
+	.product-card {
+		display: grid;
+		gap: $app-gap-sm;
+		min-width: 0;
+		padding: $app-gap-md;
+		background: $app-bg;
+		border: $app-border;
+		border-radius: $app-radius;
+
+		header,
+		dl > div,
+		li {
+			display: flex;
+			justify-content: space-between;
+			gap: $app-gap-sm;
+		}
+
+		header > div {
+			display: grid;
+			min-width: 0;
+		}
+
+		dl {
+			display: grid;
+			gap: $app-gap-xs;
+			margin: 0;
+		}
+
+		dt {
+			font-weight: 800;
+		}
+
+		dd {
+			min-width: 0;
+			margin: 0;
+			overflow-wrap: anywhere;
+		}
+
+		ul {
+			display: grid;
+			gap: $app-gap-xs;
+			max-height: 16rem;
+			margin: $app-gap-sm 0 0;
+			padding: 0;
+			overflow: auto;
+			list-style: none;
+		}
+	}
+
+	.product-card__actions {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		gap: $app-gap-sm;
+		align-items: end;
+
+		form:last-child {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			gap: $app-gap-xs;
+			align-items: end;
+		}
 	}
 
 	.account-search label {
@@ -386,6 +528,11 @@
 		.avatar {
 			width: 3.5rem;
 			height: 3.5rem;
+		}
+
+		.product-card__actions,
+		.product-card__actions form:last-child {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>

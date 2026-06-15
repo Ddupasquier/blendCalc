@@ -22,7 +22,9 @@ export interface FdcFood {
     gtinUpc?: string;
     customFood?: boolean;
     barcode?: string;
-    barcodeSource?: "open-food-facts" | "usda" | "manual";
+    barcodeSource?: "open-food-facts" | "usda" | "manual" | "community";
+    sharedProductId?: string;
+    sharedProductConfidence?: "source-verified" | "moderator-reviewed";
     customServingLabel?: string;
     customServingWeightGrams?: number;
     customDensityGramsPerMilliliter?: number;

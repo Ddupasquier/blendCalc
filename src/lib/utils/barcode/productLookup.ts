@@ -1,5 +1,4 @@
-import { cacheGet, cacheSet } from "$lib/cache";
-import { getBarcodeLookupCandidates, normalizeBarcode } from "$lib/utils/barcode/barcode";
+import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
 	getOpenFoodFactsValue,
 	mapOpenFoodFactsAdditionalNutrients,
@@ -9,12 +8,11 @@ import {
 	type BarcodeVolumeEquivalent,
 } from "$lib/utils/barcode/servingVolume";
 import type { CustomFoodNutritionInput } from "$lib/utils/food/customFoods";
-import { searchBrandedFoodByBarcode } from "$lib/utils/food/fdc";
 import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
 
-type OpenFoodFactsNutriments = Record<string, number | string | undefined>;
+export type OpenFoodFactsNutriments = Record<string, number | string | undefined>;
 
-type OpenFoodFactsProduct = {
+export type OpenFoodFactsProduct = {
 	code?: string;
 	product_name?: string;
 	generic_name?: string;
@@ -25,7 +23,7 @@ type OpenFoodFactsProduct = {
 	nutriments?: OpenFoodFactsNutriments;
 };
 
-type OpenFoodFactsResponse = {
+export type OpenFoodFactsResponse = {
 	status: number;
 	product?: OpenFoodFactsProduct;
 };
@@ -39,8 +37,9 @@ export type BarcodeProductDraft = {
 	nutrition: CustomFoodNutritionInput;
 	additionalNutrients: FdcNutrient[];
 	volumeEquivalent?: BarcodeVolumeEquivalent;
-	source: "open-food-facts" | "usda";
+	source: "open-food-facts" | "usda" | "shared-catalog";
 	sourceLabel: string;
+	sourceReference?: string;
 };
 
 export type BarcodeLookupResult =
@@ -48,7 +47,6 @@ export type BarcodeLookupResult =
 	| { status: "not-found"; barcode: string }
 	| { status: "error"; barcode: string; message: string };
 
-const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v2/product";
 const CORE_NUTRIENT_IDS = new Set<number>([
 	NUTRIENT_IDS.CALORIES,
 	NUTRIENT_IDS.FAT,
@@ -178,6 +176,7 @@ export const mapOpenFoodFactsProduct = (
 		},
 		source: "open-food-facts",
 		sourceLabel: "Open Food Facts",
+		sourceReference: canonicalBarcode,
 	};
 };
 
@@ -227,25 +226,23 @@ export const mapFdcBarcodeFood = (
 		},
 		source: "usda",
 		sourceLabel: "USDA FoodData Central",
+		sourceReference: String(food.fdcId),
 	};
 };
 
-const lookupOpenFoodFacts = async (barcode: string) => {
-	for (const candidate of getBarcodeLookupCandidates(barcode)) {
-		const response = await fetch(
-			`${OPEN_FOOD_FACTS_URL}/${encodeURIComponent(candidate)}.json?fields=code,product_name,generic_name,brands,serving_size,serving_quantity,serving_quantity_unit,nutriments`,
-		);
-		if (!response.ok) {
-			if (response.status === 404) continue;
-			throw new Error(`Open Food Facts lookup failed with ${response.status}.`);
-		}
+export const mapSharedCatalogFood = (
+	food: FdcFood,
+	barcode: string,
+): BarcodeProductDraft | null => {
+	const draft = mapFdcBarcodeFood(food, barcode);
+	if (!draft) return null;
 
-		const data: OpenFoodFactsResponse = await response.json();
-		if (data.status !== 1 || !data.product) continue;
-		const draft = mapOpenFoodFactsProduct(data.product, barcode);
-		if (draft) return draft;
-	}
-	return null;
+	return {
+		...draft,
+		source: "shared-catalog",
+		sourceLabel: "Smoothie Mixer verified catalog",
+		sourceReference: food.sharedProductId,
+	};
 };
 
 export const lookupBarcodeProduct = async (
@@ -260,42 +257,21 @@ export const lookupBarcodeProduct = async (
 		};
 	}
 
-	const cacheKey = `barcode_product_v2_${canonicalBarcode}`;
-	const cached = cacheGet<BarcodeProductDraft | false>(cacheKey);
-	if (cached !== null) {
-		return cached
-			? { status: "found", draft: cached }
-			: { status: "not-found", barcode: canonicalBarcode };
-	}
-
-	let openFoodFactsFailed = false;
 	try {
-		const openFoodFactsDraft = await lookupOpenFoodFacts(barcode);
-		if (openFoodFactsDraft) {
-			cacheSet(cacheKey, openFoodFactsDraft);
-			return { status: "found", draft: openFoodFactsDraft };
+		const response = await fetch(
+			`/api/products/barcode/${encodeURIComponent(canonicalBarcode)}`,
+			{ headers: { accept: "application/json" } },
+		);
+		if (response.status === 404) {
+			return { status: "not-found", barcode: canonicalBarcode };
 		}
+		if (!response.ok) throw new Error("Barcode lookup failed.");
+		return await response.json() as BarcodeLookupResult;
 	} catch {
-		openFoodFactsFailed = true;
+		return {
+			status: "error",
+			barcode: canonicalBarcode,
+			message: "Product lookup is temporarily unavailable. You can still enter the label manually.",
+		};
 	}
-
-	try {
-		const fdcFood = await searchBrandedFoodByBarcode(barcode);
-		const fdcDraft = fdcFood ? mapFdcBarcodeFood(fdcFood, barcode) : null;
-		if (fdcDraft) {
-			cacheSet(cacheKey, fdcDraft);
-			return { status: "found", draft: fdcDraft };
-		}
-	} catch {
-		if (openFoodFactsFailed) {
-			return {
-				status: "error",
-				barcode: canonicalBarcode,
-				message: "Product lookup is temporarily unavailable. You can still enter the label manually.",
-			};
-		}
-	}
-
-	cacheSet(cacheKey, false, 60 * 60 * 1000);
-	return { status: "not-found", barcode: canonicalBarcode };
 };
