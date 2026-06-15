@@ -208,14 +208,6 @@
 		border-radius: $app-radius;
 	}
 
-	.barcode-scanner__cancel {
-		justify-self: end;
-		padding: 0.6rem 1rem;
-		color: $app-primary;
-		background: $app-accent;
-		border-radius: $app-radius-pill;
-	}
-
 	@media (max-width: $app-breakpoint-sm) {
 		.barcode-scanner-backdrop {
 			padding: $app-gap-sm;
@@ -223,10 +215,6 @@
 
 		.barcode-scanner {
 			padding: $app-gap-sm;
-		}
-
-		.barcode-scanner__cancel {
-			width: 100%;
 		}
 	}
 </style>
