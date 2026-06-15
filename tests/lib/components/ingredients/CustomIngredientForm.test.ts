@@ -19,6 +19,7 @@ vi.mock("$lib/utils/food/customFoods", async (importOriginal) => {
 
 const smoothieListMocks = vi.hoisted(() => ({
 	addFoodToSmoothieList: vi.fn().mockResolvedValue("added"),
+	removeFoodFromSmoothieList: vi.fn().mockResolvedValue("removed"),
 }));
 
 vi.mock("$lib/utils/storage/smoothieLists", async (importOriginal) => {
@@ -27,6 +28,7 @@ vi.mock("$lib/utils/storage/smoothieLists", async (importOriginal) => {
 	return {
 		...actual,
 		addFoodToSmoothieList: smoothieListMocks.addFoodToSmoothieList,
+		removeFoodFromSmoothieList: smoothieListMocks.removeFoodFromSmoothieList,
 	};
 });
 
@@ -57,6 +59,7 @@ describe("CustomIngredientForm", () => {
 		customFoodMocks.findCustomFoodByBarcode.mockReturnValue(null);
 		customFoodMocks.findCustomFoodByName.mockReturnValue(null);
 		smoothieListMocks.addFoodToSmoothieList.mockResolvedValue("added");
+		smoothieListMocks.removeFoodFromSmoothieList.mockResolvedValue("removed");
 		submitSharedProduct.mockResolvedValue({
 			status: "pending",
 			message: "Waiting for review.",
@@ -134,6 +137,10 @@ describe("CustomIngredientForm", () => {
 			expect.objectContaining({ description: "Chocolate cookies" }),
 		);
 		expect(screen.getByText(/saved and added to on hand/i)).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: /open mix/i })).toHaveAttribute(
+			"href",
+			"/mix",
+		);
 		expect(screen.getByText("Enter label details").closest("details")).not.toHaveAttribute(
 			"open",
 		);
@@ -163,6 +170,66 @@ describe("CustomIngredientForm", () => {
 		expect(smoothieListMocks.addFoodToSmoothieList).toHaveBeenCalledWith(
 			MIX_STORAGE_KEYS.shoppingList,
 			expect.objectContaining({ description: "Shelf stable snack" }),
+		);
+	});
+
+	it("can move the last saved ingredient from on hand to shopping", async () => {
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
+			target: { value: "Moveable snack" },
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: /save \+ add/i }),
+		);
+		await waitFor(() =>
+			expect(screen.getByText(/saved and added to on hand/i)).toBeInTheDocument(),
+		);
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: /move to shopping/i }),
+		);
+
+		await waitFor(() =>
+			expect(
+				screen.getByText(/moveable snack moved to shopping list/i),
+			).toBeInTheDocument(),
+		);
+		expect(smoothieListMocks.addFoodToSmoothieList).toHaveBeenLastCalledWith(
+			MIX_STORAGE_KEYS.shoppingList,
+			expect.objectContaining({ description: "Moveable snack" }),
+		);
+		expect(smoothieListMocks.removeFoodFromSmoothieList).toHaveBeenCalledWith(
+			MIX_STORAGE_KEYS.fridge,
+			expect.any(Number),
+		);
+	});
+
+	it("can undo the last list add while keeping the custom ingredient saved", async () => {
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
+			target: { value: "Undo snack" },
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: /save \+ add/i }),
+		);
+		await waitFor(() =>
+			expect(screen.getByText(/saved and added to on hand/i)).toBeInTheDocument(),
+		);
+
+		await fireEvent.click(screen.getByRole("button", { name: /^undo$/i }));
+
+		await waitFor(() =>
+			expect(
+				screen.getByText(/custom ingredient is still saved/i),
+			).toBeInTheDocument(),
+		);
+		expect(smoothieListMocks.removeFoodFromSmoothieList).toHaveBeenCalledWith(
+			MIX_STORAGE_KEYS.fridge,
+			expect.any(Number),
 		);
 	});
 

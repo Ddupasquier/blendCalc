@@ -12,6 +12,7 @@
 	} from "$lib/utils/food/customFoods";
 	import {
 		addFoodToSmoothieList,
+		removeFoodFromSmoothieList,
 		type SmoothieListKey,
 	} from "$lib/utils/storage/smoothieLists";
 	import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
@@ -24,8 +25,10 @@
 
 	let {
 		onCreate,
+		closeManualSignal = 0,
 	}: {
 		onCreate: (food: FdcFood) => void;
+		closeManualSignal?: number;
 	} = $props();
 
 	const volumeOptions = SERVING_MEASURE_OPTIONS.filter(
@@ -50,6 +53,7 @@
 	let barcodeMessage = $state("");
 	let shareWithCatalog = $state(false);
 	let catalogMessage = $state("");
+	let outcomeAction = $state<"move" | "undo" | null>(null);
 	let frontPhoto = $state<File | null>(null);
 	let nutritionPhoto = $state<File | null>(null);
 	let barcodePhoto = $state<File | null>(null);
@@ -57,7 +61,14 @@
 	let saveDestination = $state<SmoothieListKey | "custom-only">(
 		MIX_STORAGE_KEYS.fridge,
 	);
+	let lastOutcome = $state<null | {
+		food: FdcFood;
+		destination: SmoothieListKey | "custom-only";
+		addedToList: boolean;
+		message: string;
+	}>(null);
 	let labelDetailsElement: HTMLDetailsElement;
+	let lastCloseManualSignal = $state<number | null>(null);
 	let hasValidBarcode = $derived(Boolean(normalizeBarcode(barcode)));
 	let canShareWithCatalog = $derived(
 		hasValidBarcode && barcodeSource !== "open-food-facts" && barcodeSource !== "community",
@@ -129,18 +140,48 @@
 		return "Custom Ingredients";
 	};
 
+	const getListDestinationLabel = (destination: SmoothieListKey) => {
+		return destination === MIX_STORAGE_KEYS.fridge ? "On Hand" : "Shopping List";
+	};
+
+	const setOutcome = (
+		food: FdcFood,
+		destination: SmoothieListKey | "custom-only",
+		addedToList: boolean,
+		message: string,
+	) => {
+		savedMessage = message;
+		lastOutcome = {
+			food,
+			destination,
+			addedToList,
+			message,
+		};
+	};
+
 	const collapseManualEntry = () => {
 		if (labelDetailsElement) labelDetailsElement.open = false;
 	};
+
+	$effect(() => {
+		if (lastCloseManualSignal === null) {
+			lastCloseManualSignal = closeManualSignal;
+			return;
+		}
+		if (closeManualSignal === lastCloseManualSignal) return;
+		lastCloseManualSignal = closeManualSignal;
+		collapseManualEntry();
+	});
 
 	const useIngredient = async (food: FdcFood, alreadySaved = false) => {
 		onCreate(food);
 		const destinationLabel = getDestinationLabel();
 
 		if (saveDestination === "custom-only") {
-			savedMessage = alreadySaved
+			const message = alreadySaved
 				? `${food.description} is already saved. Showing your existing ingredient.`
 				: `${food.description} saved as a custom ingredient.`;
+			setOutcome(food, "custom-only", false, message);
 			collapseManualEntry();
 			return true;
 		}
@@ -151,14 +192,79 @@
 			return false;
 		}
 
-		savedMessage =
+		const message =
 			listResult === "duplicate"
 				? `${food.description} is already in ${destinationLabel}.`
 				: alreadySaved
 					? `${food.description} is already saved and is now in ${destinationLabel}.`
 					: `${food.description} saved and added to ${destinationLabel}.`;
+		setOutcome(food, saveDestination, true, message);
 		collapseManualEntry();
 		return true;
+	};
+
+	const moveLastOutcome = async (destination: SmoothieListKey) => {
+		if (
+			!lastOutcome ||
+			!lastOutcome.addedToList ||
+			lastOutcome.destination === "custom-only" ||
+			outcomeAction
+		) {
+			return;
+		}
+
+		outcomeAction = "move";
+		error = "";
+		try {
+			const addResult = await addFoodToSmoothieList(destination, lastOutcome.food);
+			if (addResult === "error") {
+				error = `Could not move ${lastOutcome.food.description}. Try again.`;
+				return;
+			}
+
+			const removeResult = await removeFoodFromSmoothieList(
+				lastOutcome.destination,
+				lastOutcome.food.fdcId,
+			);
+			if (removeResult === "error") {
+				error = `${lastOutcome.food.description} was added to ${getListDestinationLabel(destination)}, but the old copy could not be removed.`;
+				return;
+			}
+
+			const message = `${lastOutcome.food.description} moved to ${getListDestinationLabel(destination)}.`;
+			setOutcome(lastOutcome.food, destination, true, message);
+		} finally {
+			outcomeAction = null;
+		}
+	};
+
+	const undoLastOutcomeAdd = async () => {
+		if (
+			!lastOutcome ||
+			!lastOutcome.addedToList ||
+			lastOutcome.destination === "custom-only" ||
+			outcomeAction
+		) {
+			return;
+		}
+
+		outcomeAction = "undo";
+		error = "";
+		try {
+			const removeResult = await removeFoodFromSmoothieList(
+				lastOutcome.destination,
+				lastOutcome.food.fdcId,
+			);
+			if (removeResult === "error") {
+				error = `Could not undo adding ${lastOutcome.food.description}. Try again.`;
+				return;
+			}
+
+			const message = `${lastOutcome.food.description} removed from ${getListDestinationLabel(lastOutcome.destination)}. The custom ingredient is still saved.`;
+			setOutcome(lastOutcome.food, "custom-only", false, message);
+		} finally {
+			outcomeAction = null;
+		}
 	};
 
 	const handleBarcodeDetected = async (result: BarcodeScanResult) => {
@@ -212,6 +318,7 @@
 		error = "";
 		savedMessage = "";
 		catalogMessage = "";
+		lastOutcome = null;
 
 		if (!name.trim()) {
 			error = "Add a name for this ingredient.";
@@ -698,7 +805,56 @@
 		{#if error}
 			<p class="custom-ingredient__error" role="alert">{error}</p>
 		{/if}
-		{#if savedMessage}
+		{#if lastOutcome}
+			<section
+				class="custom-ingredient__outcome"
+				role="status"
+				aria-live="polite"
+			>
+				<div>
+					<strong>{lastOutcome.message}</strong>
+					<small>
+						{#if lastOutcome.addedToList && lastOutcome.destination !== "custom-only"}
+							Next: use it in Mix, move it, or undo the list add.
+						{:else}
+							Next: preview the nutrition or open Mix when you are ready.
+						{/if}
+					</small>
+				</div>
+				<div class="custom-ingredient__outcome-actions">
+					<a href="/mix">Open Mix</a>
+					{#if lastOutcome.addedToList && lastOutcome.destination === MIX_STORAGE_KEYS.fridge}
+						<button
+							type="button"
+							class="custom-ingredient__secondary-action"
+							onclick={() => moveLastOutcome(MIX_STORAGE_KEYS.shoppingList)}
+							disabled={outcomeAction !== null}
+						>
+							{outcomeAction === "move" ? "Moving…" : "Move to Shopping"}
+						</button>
+					{:else if lastOutcome.addedToList && lastOutcome.destination === MIX_STORAGE_KEYS.shoppingList}
+						<button
+							type="button"
+							class="custom-ingredient__secondary-action"
+							onclick={() => moveLastOutcome(MIX_STORAGE_KEYS.fridge)}
+							disabled={outcomeAction !== null}
+						>
+							{outcomeAction === "move" ? "Moving…" : "Move to On Hand"}
+						</button>
+					{/if}
+					{#if lastOutcome.addedToList}
+						<button
+							type="button"
+							class="custom-ingredient__secondary-action"
+							onclick={undoLastOutcomeAdd}
+							disabled={outcomeAction !== null}
+						>
+							{outcomeAction === "undo" ? "Undoing…" : "Undo"}
+						</button>
+					{/if}
+				</div>
+			</section>
+		{:else if savedMessage}
 			<p class="custom-ingredient__success" role="status">{savedMessage}</p>
 		{/if}
 		{#if catalogMessage}
@@ -1092,6 +1248,63 @@
 		}
 	}
 
+	.custom-ingredient__outcome {
+		display: grid;
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+		color: $app-primary;
+		background: $app-success-bg;
+		border: $app-border;
+		border-radius: $app-radius;
+
+		div:first-child {
+			display: grid;
+			gap: 0.15rem;
+		}
+
+		strong {
+			font-size: $app-font-size-sm;
+			font-weight: $app-font-weight-bold;
+			line-height: 1.35;
+		}
+
+		small {
+			color: $app-muted;
+			font-size: $app-font-size-sm;
+			font-weight: $app-font-weight-medium;
+			line-height: 1.4;
+		}
+	}
+
+	.custom-ingredient__outcome-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: $app-gap-xs;
+
+		a,
+		button {
+			width: fit-content;
+			min-height: 2.15rem;
+			padding: 0.42rem 0.7rem;
+			border-radius: $app-radius-pill;
+			font-family: $app-button-font-family;
+			font-size: $app-font-size-sm;
+			font-weight: $app-button-font-weight;
+			line-height: $app-button-line-height;
+			text-decoration: none;
+		}
+
+		a {
+			color: $app-highlight-text;
+			background: $app-highlight;
+		}
+	}
+
+	.custom-ingredient__secondary-action {
+		color: $app-primary;
+		background: $app-accent;
+	}
+
 	.custom-ingredient__error,
 	.custom-ingredient__success,
 	.custom-ingredient__catalog-message,
@@ -1159,6 +1372,17 @@
 
 		.custom-ingredient__imported-nutrients ul {
 			grid-template-columns: 1fr;
+		}
+
+		.custom-ingredient__outcome-actions {
+			display: grid;
+			grid-template-columns: 1fr;
+
+			a,
+			button {
+				width: 100%;
+				text-align: center;
+			}
 		}
 
 		button {

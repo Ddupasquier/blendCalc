@@ -126,7 +126,10 @@ export const addFoodToSmoothieList = async (
 		return "duplicate";
 	}
 
-	const foodRecord = compactFood(food);
+	const foodRecord = compactFood({
+		...food,
+		listAddedAt: food.listAddedAt ?? Date.now(),
+	});
 	const saved = await upsertCloudSmoothieListItem(key, foodRecord);
 	if (!saved) return "error";
 
@@ -144,13 +147,19 @@ export const addFoodsToSmoothieList = async (
 	const list = readSmoothieList(key);
 	const existingIds = new Set(list.map((item) => item.fdcId));
 	const existingIdentityKeys = new Set(list.map(getFoodIdentityKey));
+	const addedAt = Date.now();
 	const additions = uniqueFoodsById(foods)
 		.filter(
 			(food) =>
 				!existingIds.has(food.fdcId) &&
 				!existingIdentityKeys.has(getFoodIdentityKey(food)),
 		)
-		.map(compactFood);
+		.map((food) =>
+			compactFood({
+				...food,
+				listAddedAt: food.listAddedAt ?? addedAt,
+			}),
+		);
 
 	if (additions.length === 0) return "duplicate";
 

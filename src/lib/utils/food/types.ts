@@ -48,6 +48,8 @@ export interface FdcFood {
         | "moderator-reviewed"
         | "corroborated"
         | "imported";
+    /** Timestamp for when this food was added to the current user list. */
+    listAddedAt?: number;
     customServingLabel?: string;
     customServingWeightGrams?: number;
     customDensityGramsPerMilliliter?: number;

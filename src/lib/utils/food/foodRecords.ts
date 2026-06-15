@@ -16,6 +16,7 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		barcodeSource: food.barcodeSource,
 		sharedProductId: food.sharedProductId,
 		sharedProductConfidence: food.sharedProductConfidence,
+		listAddedAt: food.listAddedAt,
 		customServingLabel: food.customServingLabel,
 		customServingWeightGrams: food.customServingWeightGrams,
 		customDensityGramsPerMilliliter: food.customDensityGramsPerMilliliter,

@@ -1,4 +1,11 @@
 export type PaginationItem = number | "ellipsis";
+export type FoodListSort = "recent" | "name-asc" | "name-desc";
+
+export const FOOD_LIST_SORT_OPTIONS = [
+	{ value: "recent", label: "Newest first" },
+	{ value: "name-asc", label: "Name A–Z" },
+	{ value: "name-desc", label: "Name Z–A" },
+] as const;
 
 export const normalizeListQuery = (query: string) => {
 	return query.trim().toLocaleLowerCase();
@@ -39,6 +46,31 @@ export const paginateItems = <Item>(
 	const safePage = clampPage(page, items.length, pageSize);
 	const startIndex = (safePage - 1) * pageSize;
 	return items.slice(startIndex, startIndex + pageSize);
+};
+
+export const sortFoodListItems = <Item>(
+	items: Item[],
+	sort: FoodListSort,
+	getName: (item: Item) => string,
+	getAddedAt: (item: Item) => number | undefined,
+) => {
+	return [...items].sort((first, second) => {
+		if (sort === "name-asc") {
+			return getName(first).localeCompare(getName(second));
+		}
+
+		if (sort === "name-desc") {
+			return getName(second).localeCompare(getName(first));
+		}
+
+		const firstAddedAt = getAddedAt(first);
+		const secondAddedAt = getAddedAt(second);
+		if (firstAddedAt !== undefined || secondAddedAt !== undefined) {
+			return (secondAddedAt ?? 0) - (firstAddedAt ?? 0);
+		}
+
+		return items.indexOf(second) - items.indexOf(first);
+	});
 };
 
 export const getPaginationItems = (

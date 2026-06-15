@@ -5,12 +5,16 @@
     import ListControls from "$lib/components/common/ListControls.svelte";
     import Pagination from "$lib/components/common/Pagination.svelte";
     import PillRow from "$lib/components/common/PillRow.svelte";
+    import SortSelect from "$lib/components/common/SortSelect.svelte";
     import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
     import type { FdcFood } from "$lib/utils/food/types";
     import {
         clampPage,
+        FOOD_LIST_SORT_OPTIONS,
         filterItemsByQuery,
         paginateItems,
+        sortFoodListItems,
+        type FoodListSort,
     } from "$lib/utils/list/listNavigation";
     import {
         cacheCustomFoodsLocally,
@@ -27,14 +31,17 @@
         reconcileCloudCustomFoods,
         reconcileCloudSmoothieList,
     } from "$lib/utils/storage/supabaseData";
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { MIX_STORAGE_KEYS } from "../../defaults/mixDefaults";
 
     let onHand = $state<FdcFood[]>([]);
     let shoppingList = $state<FdcFood[]>([]);
     let selectedFood = $state<FdcFood | null>(null);
+    let closeManualSignal = $state(0);
+    let nutritionPreviewElement = $state<HTMLDivElement | null>(null);
     let listQuery = $state("");
     let sourceFilter = $state("all");
+    let listSort = $state<FoodListSort>("recent");
     let onHandPage = $state(1);
     let shoppingPage = $state(1);
 	let removingItem = $state<string | null>(null);
@@ -47,7 +54,7 @@
     ];
 
     const filterFoods = (foods: FdcFood[]) => {
-        return filterItemsByQuery(
+        const filteredFoods = filterItemsByQuery(
             foods.filter((food) => {
                 if (sourceFilter === "custom") return food.customFood === true;
                 if (sourceFilter === "fdc") return food.customFood !== true;
@@ -58,6 +65,13 @@
                 [food.description, food.brandOwner, food.foodCategory]
                     .filter(Boolean)
                     .join(" "),
+        );
+
+        return sortFoodListItems(
+            filteredFoods,
+            listSort,
+            (food) => food.description,
+            (food) => food.listAddedAt,
         );
     };
 
@@ -101,8 +115,27 @@
         cacheCustomFoodsLocally(nextCustomFoods);
     };
 
+    const closeManualEntry = () => {
+        closeManualSignal += 1;
+    };
+
+    const scrollToNutritionPreview = async () => {
+        await tick();
+        nutritionPreviewElement?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        });
+        nutritionPreviewElement?.focus({ preventScroll: true });
+    };
+
     const handleSelect = (food: FdcFood) => {
         selectedFood = food;
+    };
+
+    const handleSearchSelect = async (food: FdcFood) => {
+        closeManualEntry();
+        selectedFood = food;
+        await scrollToNutritionPreview();
     };
 
     const getItemActionKey = (key: SmoothieListKey, foodId: number) => {
@@ -154,6 +187,12 @@
         shoppingPage = 1;
     };
 
+    const updateListSort = (value: string) => {
+        listSort = value as FoodListSort;
+        onHandPage = 1;
+        shoppingPage = 1;
+    };
+
     $effect(() => {
         onHandPage = clampPage(
             onHandPage,
@@ -194,10 +233,20 @@
             <h3 id="ingredient-search-title">Find Ingredients</h3>
             <p>Pick a result to preview nutrition and add it to a list.</p>
         </div>
-        <IngredientSearch onSelect={handleSelect} />
-        <CustomIngredientForm onCreate={handleSelect} />
+        <IngredientSearch
+            onSelect={handleSearchSelect}
+            onSearchFocus={closeManualEntry}
+        />
+        <CustomIngredientForm
+            onCreate={handleSelect}
+            closeManualSignal={closeManualSignal}
+        />
         {#if selectedFood}
-            <div class="nutrition-preview">
+            <div
+                class="nutrition-preview"
+                bind:this={nutritionPreviewElement}
+                tabindex="-1"
+            >
                 <NutritionPanel food={selectedFood} />
             </div>
         {/if}
@@ -219,6 +268,12 @@
                 filterOptions={sourceFilterOptions}
                 onFilterChange={updateSourceFilter}
             />
+            <SortSelect
+                id="ingredient-lists-sort"
+                value={listSort}
+                options={FOOD_LIST_SORT_OPTIONS}
+                onChange={updateListSort}
+            />
         </div>
     {/if}
 
@@ -236,10 +291,11 @@
                         customIndices={pagedOnHand
                             .map((food, i) => (food.customFood ? i : -1))
                             .filter((i) => i !== -1)}
-						disabledIndices={getDisabledIndices(
+                        disabledIndices={getDisabledIndices(
 							MIX_STORAGE_KEYS.fridge,
 							pagedOnHand,
 						)}
+                        preserveOrder
                         onSelect={(idx) => handleSelect(pagedOnHand[idx])}
                         onRemove={(idx) =>
                             removeFromList(
@@ -272,10 +328,11 @@
                         customIndices={pagedShoppingList
                             .map((food, i) => (food.customFood ? i : -1))
                             .filter((i) => i !== -1)}
-						disabledIndices={getDisabledIndices(
+                        disabledIndices={getDisabledIndices(
 							MIX_STORAGE_KEYS.shoppingList,
 							pagedShoppingList,
 						)}
+                        preserveOrder
                         onSelect={(idx) => handleSelect(pagedShoppingList[idx])}
                         onRemove={(idx) =>
                             removeFromList(
@@ -353,6 +410,15 @@
 
     .nutrition-preview {
         min-width: 0;
+
+        &:focus {
+            outline: none;
+        }
+
+        &:focus-visible {
+            outline: $app-focus-outline;
+            outline-offset: $app-gap-xs;
+        }
     }
 
     .ingredient-lists-grid {
@@ -373,6 +439,10 @@
 	}
 
     .ingredient-list-controls {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(10rem, auto);
+        align-items: end;
+        gap: $app-gap-sm;
         margin-bottom: $app-gap-md;
     }
 
@@ -424,6 +494,10 @@
         }
 
         .ingredient-lists-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ingredient-list-controls {
             grid-template-columns: 1fr;
         }
     }

@@ -2,11 +2,15 @@
 	import PillRow from "$lib/components/common/PillRow.svelte";
 	import ListControls from "$lib/components/common/ListControls.svelte";
 	import Pagination from "$lib/components/common/Pagination.svelte";
+	import SortSelect from "$lib/components/common/SortSelect.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import {
 		clampPage,
+		FOOD_LIST_SORT_OPTIONS,
 		filterItemsByQuery,
 		paginateItems,
+		sortFoodListItems,
+		type FoodListSort,
 	} from "$lib/utils/list/listNavigation";
 	import { LIST_PAGE_SIZES } from "../../../defaults/listDefaults";
 
@@ -24,6 +28,7 @@
 
 	let query = $state("");
 	let filter = $state("all");
+	let sort = $state<FoodListSort>("recent");
 	let fridgePage = $state(1);
 	let shoppingPage = $state(1);
 
@@ -34,7 +39,7 @@
 	];
 
 	const filterFoods = (foods: FdcFood[]) => {
-		return filterItemsByQuery(
+		const filteredFoods = filterItemsByQuery(
 			foods.filter((food) => {
 				if (filter === "selected") {
 					return selectedFoodIds.includes(food.fdcId);
@@ -47,12 +52,14 @@
 				[food.description, food.brandOwner, food.foodCategory]
 					.filter(Boolean)
 					.join(" "),
-		).sort((first, second) => {
-			const firstSelected = selectedFoodIds.includes(first.fdcId);
-			const secondSelected = selectedFoodIds.includes(second.fdcId);
-			if (firstSelected !== secondSelected) return firstSelected ? -1 : 1;
-			return first.description.localeCompare(second.description);
-		});
+		);
+
+		return sortFoodListItems(
+			filteredFoods,
+			sort,
+			(food) => food.description,
+			(food) => food.listAddedAt,
+		);
 	};
 
 	const filteredFridgeItems = $derived.by(() => filterFoods(fridgeItems));
@@ -98,6 +105,12 @@
 		shoppingPage = 1;
 	};
 
+	const updateSort = (value: string) => {
+		sort = value as FoodListSort;
+		fridgePage = 1;
+		shoppingPage = 1;
+	};
+
 	$effect(() => {
 		fridgePage = clampPage(
 			fridgePage,
@@ -117,20 +130,28 @@
 		<h4>Choose Ingredients</h4>
 		<p>Select items from your fridge or shopping list.</p>
 	</div>
-	<ListControls
-		id="mix-ingredient-search"
-		{query}
-		onQueryChange={updateQuery}
-		placeholder="Find an ingredient to add or remove…"
-		label="Find ingredients"
-		totalCount={fridgeItems.length + shoppingItems.length}
-		visibleCount={filteredFridgeItems.length + filteredShoppingItems.length}
-		itemLabel="ingredients"
-		filterLabel="Show"
-		filterValue={filter}
-		filterOptions={filterOptions}
-		onFilterChange={updateFilter}
-	/>
+	<div class="ingredient-list-controls">
+		<ListControls
+			id="mix-ingredient-search"
+			{query}
+			onQueryChange={updateQuery}
+			placeholder="Find an ingredient to add or remove…"
+			label="Find ingredients"
+			totalCount={fridgeItems.length + shoppingItems.length}
+			visibleCount={filteredFridgeItems.length + filteredShoppingItems.length}
+			itemLabel="ingredients"
+			filterLabel="Show"
+			filterValue={filter}
+			filterOptions={filterOptions}
+			onFilterChange={updateFilter}
+		/>
+		<SortSelect
+			id="mix-ingredient-sort"
+			value={sort}
+			options={FOOD_LIST_SORT_OPTIONS}
+			onChange={updateSort}
+		/>
+	</div>
 	<div class="ingredient-lists" aria-label="Smoothie ingredients">
 		<section class="ingredient-list">
 			<h5>Fridge <span>{filteredFridgeItems.length}</span></h5>
@@ -141,6 +162,7 @@
 					onSelect={(index) => onToggleFood(pagedFridgeItems[index].fdcId)}
 					activeIndices={getActiveIndices(pagedFridgeItems)}
 					customIndices={getCustomIndices(pagedFridgeItems)}
+					preserveOrder
 				/>
 				<Pagination
 					page={fridgePage}
@@ -165,6 +187,7 @@
 					onSelect={(index) => onToggleFood(pagedShoppingItems[index].fdcId)}
 					activeIndices={getActiveIndices(pagedShoppingItems)}
 					customIndices={getCustomIndices(pagedShoppingItems)}
+					preserveOrder
 				/>
 				<Pagination
 					page={shoppingPage}
@@ -212,7 +235,11 @@
 		}
 	}
 
-	:global(.list-controls) {
+	.ingredient-list-controls {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(10rem, auto);
+		align-items: end;
+		gap: $app-gap-sm;
 		margin-bottom: $app-gap-sm;
 	}
 
@@ -283,6 +310,10 @@
 
 		.section-heading {
 			display: grid;
+		}
+
+		.ingredient-list-controls {
+			grid-template-columns: 1fr;
 		}
 	}
 </style>

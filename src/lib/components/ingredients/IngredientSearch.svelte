@@ -11,7 +11,13 @@
 	import PillRow from "../common/PillRow.svelte";
 	import SearchDropdown from "./SearchDropdown.svelte";
 
-	let { onSelect }: { onSelect: (food: FdcFood) => void } = $props();
+	let {
+		onSelect,
+		onSearchFocus = () => {},
+	}: {
+		onSelect: (food: FdcFood) => void;
+		onSearchFocus?: () => void;
+	} = $props();
 	let query = $state("");
 	let pills = $state<string[]>([]);
 	let results = $state<FdcFood[]>([]);
@@ -127,6 +133,7 @@
 	};
 
 	const handleInput = () => {
+		onSearchFocus();
 		triggerSearch();
 	};
 
@@ -172,6 +179,7 @@
 			class="search-input"
 			placeholder="Type and press Enter or Space to add…"
 			bind:value={query}
+			onfocus={onSearchFocus}
 			oninput={handleInput}
 			onkeydown={(e) => {
 				if ((e.key === "Enter" || e.key === " ") && query.trim()) {

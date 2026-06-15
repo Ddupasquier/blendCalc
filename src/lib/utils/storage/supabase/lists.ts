@@ -27,7 +27,7 @@ export const readCloudSmoothieList = async (key: SmoothieListKey) => {
 	const rows = await readAllCursorPages(async (cursorId) => {
 		let query = supabase
 			.from("user_food_list_items")
-			.select("id, food")
+			.select("id, food, created_at")
 			.eq("user_id", userId)
 			.eq("list_type", getCloudListType(key))
 			.order("id", { ascending: true })
@@ -44,15 +44,16 @@ export const readCloudSmoothieList = async (key: SmoothieListKey) => {
 		rows.map((row) => row.id),
 	);
 	return rows
-		.map((row) =>
-			hydrateFoodWithNormalizedNutrients(
-				row.food as unknown as FdcFood,
+		.map((row) => {
+			const food = row.food as unknown as FdcFood;
+			return hydrateFoodWithNormalizedNutrients(
+				{
+					...food,
+					listAddedAt: food.listAddedAt ?? new Date(row.created_at).getTime(),
+				},
 				normalizedRows?.get(row.id),
-			),
-		)
-		.sort((first, second) =>
-			first.description.localeCompare(second.description),
-		);
+			);
+		});
 };
 
 export const writeCloudSmoothieList = async (
