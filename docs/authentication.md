@@ -1,8 +1,10 @@
 # Authentication and deployment checklist
 
 The app uses Supabase Auth with server-side PKCE cookies. Authentication must
-start and finish on the same origin. Hosted requests are canonicalized through
-`PUBLIC_SITE_URL`; localhost remains local.
+start and finish on the same origin. Production uses `PUBLIC_SITE_URL`, Vercel
+previews use the exact `VERCEL_URL` or `VERCEL_BRANCH_URL` supplied by Vercel,
+and localhost remains local. Unrecognized hosted origins fall back to the
+canonical production origin.
 
 ## Environment variables
 
@@ -22,9 +24,10 @@ PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
 PUBLIC_SITE_URL=https://smoothie-mixer.vercel.app
 ```
 
-Using the production origin for Preview intentionally sends authentication to
-the canonical production deployment. Do not put a Supabase service-role key in
-any public environment variable or browser code.
+In Vercel project settings, keep **Automatically expose System Environment
+Variables** enabled so Preview deployments receive `VERCEL_URL` and
+`VERCEL_BRANCH_URL`. Do not put a Supabase service-role key in any public
+environment variable or browser code.
 
 ## Supabase dashboard
 
@@ -33,8 +36,11 @@ In **Authentication → URL Configuration**:
 - Site URL: `https://smoothie-mixer.vercel.app`
 - Redirect URL: `https://smoothie-mixer.vercel.app/auth/callback`
 - Redirect URL: `http://localhost:5173/auth/callback`
+- Preview Redirect URL: `https://*-<vercel-account-slug>.vercel.app/auth/callback`
 
-Use exact callback URLs. Do not use a broad production wildcard.
+Keep exact callback URLs for production and localhost. Restrict the Preview
+wildcard to this project's Vercel account suffix rather than allowing every
+`vercel.app` deployment.
 
 In **Authentication → Sign In / Providers → Google**, use the Google client ID
 and secret. In Google Cloud, configure:

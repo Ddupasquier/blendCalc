@@ -4,7 +4,14 @@ const publicEnvironment = vi.hoisted(() => ({
 	PUBLIC_SITE_URL: "",
 }));
 
+const privateEnvironment = vi.hoisted(() => ({
+	VERCEL_URL: "",
+	VERCEL_BRANCH_URL: "",
+	VERCEL_PROJECT_PRODUCTION_URL: "",
+}));
+
 vi.mock("$env/dynamic/public", () => ({ env: publicEnvironment }));
+vi.mock("$env/dynamic/private", () => ({ env: privateEnvironment }));
 
 import {
 	getAuthCallbackUrl,
@@ -15,6 +22,9 @@ import {
 describe("authentication URLs", () => {
 	beforeEach(() => {
 		publicEnvironment.PUBLIC_SITE_URL = "";
+		privateEnvironment.VERCEL_URL = "";
+		privateEnvironment.VERCEL_BRANCH_URL = "";
+		privateEnvironment.VERCEL_PROJECT_PRODUCTION_URL = "";
 	});
 
 	it("uses the configured production site URL for hosted requests", () => {
@@ -54,6 +64,46 @@ describe("authentication URLs", () => {
 
 		expect(getAuthCallbackUrl(request, new URL(request.url))).toBe(
 			"http://localhost:5173/auth/callback",
+		);
+	});
+
+	it("keeps authentication on the exact Vercel preview deployment", () => {
+		publicEnvironment.PUBLIC_SITE_URL = "https://smoothie-mixer.vercel.app";
+		privateEnvironment.VERCEL_URL =
+			"smoothie-mixer-preview-hash-dylan-dupasquiers-projects.vercel.app";
+		const request = new Request(
+			"https://smoothie-mixer-preview-hash-dylan-dupasquiers-projects.vercel.app/auth",
+		);
+
+		expect(getAuthCallbackUrl(request, new URL(request.url))).toBe(
+			"https://smoothie-mixer-preview-hash-dylan-dupasquiers-projects.vercel.app/auth/callback",
+		);
+		expect(
+			getCanonicalAuthPageUrl(request, new URL(request.url), "/fridge"),
+		).toBeNull();
+	});
+
+	it("keeps authentication on the Vercel branch preview alias", () => {
+		publicEnvironment.PUBLIC_SITE_URL = "https://smoothie-mixer.vercel.app";
+		privateEnvironment.VERCEL_BRANCH_URL =
+			"smoothie-mixer-git-feature-dylan-dupasquiers-projects.vercel.app";
+		const request = new Request(
+			"https://smoothie-mixer-git-feature-dylan-dupasquiers-projects.vercel.app/auth",
+		);
+
+		expect(getRequestOrigin(request, new URL(request.url))).toBe(
+			"https://smoothie-mixer-git-feature-dylan-dupasquiers-projects.vercel.app",
+		);
+	});
+
+	it("does not trust an unrelated Vercel deployment host", () => {
+		publicEnvironment.PUBLIC_SITE_URL = "https://smoothie-mixer.vercel.app";
+		privateEnvironment.VERCEL_URL =
+			"smoothie-mixer-preview-hash-dylan-dupasquiers-projects.vercel.app";
+		const request = new Request("https://attacker-project.vercel.app/auth");
+
+		expect(getRequestOrigin(request, new URL(request.url))).toBe(
+			"https://smoothie-mixer.vercel.app",
 		);
 	});
 
