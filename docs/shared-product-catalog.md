@@ -97,3 +97,19 @@ Current automatic checks reject:
 These checks identify malformed data; they do not prove that a manually entered label is
 truthful. Human review and complete image evidence remain required when USDA cannot verify
 the barcode.
+
+## QA moderation fixtures
+
+Create clearly marked pending submissions without calling outside product APIs:
+
+```sh
+npm run catalog:qa-seed -- moderator@example.com
+```
+
+This creates one complete-but-questionable submission and one submission with missing
+evidence. QA fixtures display review flags and cannot be approved, so use the Reject
+action to exercise the moderation flow safely. Remove leftover fixtures with:
+
+```sh
+npm run catalog:qa-clean -- moderator@example.com
+```

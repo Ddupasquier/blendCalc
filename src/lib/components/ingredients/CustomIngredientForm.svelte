@@ -46,7 +46,8 @@
 	let frontPhoto = $state<File | null>(null);
 	let nutritionPhoto = $state<File | null>(null);
 	let barcodePhoto = $state<File | null>(null);
-	let detailsElement: HTMLDetailsElement;
+	let customIngredientDetails: HTMLDetailsElement;
+	let labelDetailsElement: HTMLDetailsElement;
 	let hasValidBarcode = $derived(Boolean(normalizeBarcode(barcode)));
 	let canShareWithCatalog = $derived(
 		hasValidBarcode && barcodeSource !== "open-food-facts" && barcodeSource !== "community",
@@ -117,7 +118,8 @@
 		error = "";
 		barcodeMessage = "Looking up this product…";
 		barcode = result.canonicalValue;
-		detailsElement.open = true;
+		customIngredientDetails.open = true;
+		labelDetailsElement.open = true;
 
 		try {
 			const lookup = await lookupBarcodeProduct(result.value);
@@ -254,12 +256,16 @@
 	};
 </script>
 
-<section class="custom-ingredient">
-	<div class="custom-ingredient__intro">
-		<div>
+<details class="custom-ingredient" bind:this={customIngredientDetails}>
+	<summary class="custom-ingredient__toggle">
+		<span>
 			<strong>Add custom ingredient</strong>
 			<small>Scan a package or enter its nutrition label yourself.</small>
-		</div>
+		</span>
+		<span class="custom-ingredient__chevron" aria-hidden="true">⌄</span>
+	</summary>
+
+	<div class="custom-ingredient__content">
 		<button
 			class="custom-ingredient__scan"
 			type="button"
@@ -268,9 +274,8 @@
 		>
 			{lookingUpBarcode ? "Looking up…" : "Scan barcode"}
 		</button>
-	</div>
 
-	<details bind:this={detailsElement}>
+	<details bind:this={labelDetailsElement}>
 		<summary>
 			<span>Enter label details</span>
 			<small>Use this when scanning is unavailable or the product is not found.</small>
@@ -602,7 +607,8 @@
 		</button>
 	</fieldset>
 	</details>
-</section>
+	</div>
+</details>
 
 {#if scannerOpen}
 	<BarcodeScannerDialog
@@ -616,23 +622,27 @@
 	@use "../../../styles/variables" as *;
 
 	.custom-ingredient {
-		display: grid;
-		gap: $app-gap-sm;
 		padding: $app-gap-sm;
 		background: $app-bg;
 		border: $app-border;
 		border-radius: $app-card-radius;
 	}
 
-	.custom-ingredient__intro {
+	.custom-ingredient__toggle {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: $app-gap-sm;
+		list-style: none;
 
-		div {
+		&::-webkit-details-marker {
+			display: none;
+		}
+
+		> span:first-child {
 			display: grid;
 			gap: 0.1rem;
+			min-width: 0;
 		}
 
 		strong {
@@ -645,8 +655,27 @@
 		}
 	}
 
-	.custom-ingredient__scan {
+	.custom-ingredient__chevron {
 		flex: 0 0 auto;
+		font-size: $app-font-size-lg;
+		line-height: 1;
+		transition: transform 180ms ease;
+	}
+
+	.custom-ingredient[open] .custom-ingredient__chevron {
+		transform: rotate(180deg);
+	}
+
+	.custom-ingredient__content {
+		display: grid;
+		gap: $app-gap-sm;
+		margin-top: $app-gap-sm;
+		padding-top: $app-gap-sm;
+		border-top: $app-border;
+	}
+
+	.custom-ingredient__scan {
+		justify-self: start;
 		padding: 0.55rem 0.8rem;
 		color: $app-highlight-text;
 		background: $app-highlight;
@@ -878,11 +907,6 @@
 	}
 
 	@media (max-width: $app-breakpoint-sm) {
-		.custom-ingredient__intro {
-			align-items: stretch;
-			flex-direction: column;
-		}
-
 		.custom-ingredient__scan {
 			width: 100%;
 		}

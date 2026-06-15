@@ -22,6 +22,11 @@ vi.mock("$lib/utils/products/catalog", () => ({
 
 import CustomIngredientForm from "$lib/components/ingredients/CustomIngredientForm.svelte";
 
+const openManualForm = async () => {
+	await fireEvent.click(screen.getByText("Add custom ingredient"));
+	await fireEvent.click(screen.getByText("Enter label details"));
+};
+
 describe("CustomIngredientForm", () => {
 	beforeEach(() => {
 		localStorage.clear();
@@ -35,7 +40,7 @@ describe("CustomIngredientForm", () => {
 			},
 		});
 
-		await fireEvent.click(screen.getByText("Enter label details"));
+		await openManualForm();
 		await fireEvent.click(
 			screen.getByRole("button", { name: /save custom ingredient/i }),
 		);
@@ -53,7 +58,7 @@ describe("CustomIngredientForm", () => {
 			},
 		});
 
-		await fireEvent.click(screen.getByText("Enter label details"));
+		await openManualForm();
 		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
 			target: { value: "Chocolate cookies" },
 		});
@@ -84,7 +89,7 @@ describe("CustomIngredientForm", () => {
 		const onCreate = vi.fn();
 		render(CustomIngredientForm, { props: { onCreate } });
 
-		await fireEvent.click(screen.getByText("Enter label details"));
+		await openManualForm();
 		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
 			target: { value: "Packaged snack" },
 		});
@@ -105,7 +110,7 @@ describe("CustomIngredientForm", () => {
 	it("keeps volume conversion off until the user enables it", async () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
-		await fireEvent.click(screen.getByText("Enter label details"));
+		await openManualForm();
 		expect(screen.queryByLabelText(/volume in this serving/i)).not.toBeInTheDocument();
 
 		await fireEvent.click(screen.getByLabelText(/allow volume measurements/i));
@@ -117,7 +122,7 @@ describe("CustomIngredientForm", () => {
 		const onCreate = vi.fn();
 		render(CustomIngredientForm, { props: { onCreate } });
 
-		await fireEvent.click(screen.getByText("Enter label details"));
+		await openManualForm();
 		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
 			target: { value: "New packaged food" },
 		});
@@ -152,7 +157,7 @@ describe("CustomIngredientForm", () => {
 	it("requires package evidence before sharing an unknown product", async () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
-		await fireEvent.click(screen.getByText("Enter label details"));
+		await openManualForm();
 		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
 			target: { value: "Unknown packaged food" },
 		});
@@ -170,5 +175,27 @@ describe("CustomIngredientForm", () => {
 			"Add front package, nutrition label, and barcode photos",
 		);
 		expect(submitSharedProduct).not.toHaveBeenCalled();
+	});
+
+	it("can be closed and reopened without clearing unfinished input", async () => {
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		const toggle = screen.getByText("Add custom ingredient");
+		const panel = toggle.closest("details");
+		expect(panel).not.toHaveAttribute("open");
+
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
+			target: { value: "Unfinished ingredient" },
+		});
+		expect(panel).toHaveAttribute("open");
+
+		await fireEvent.click(toggle);
+		expect(panel).not.toHaveAttribute("open");
+
+		await fireEvent.click(toggle);
+		expect(screen.getByLabelText(/ingredient name/i)).toHaveValue(
+			"Unfinished ingredient",
+		);
 	});
 });

@@ -227,10 +227,18 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		(submission) => {
 			const food = submission.food as unknown as FdcFood;
 			const validationReport = submission.validation_report as {
+				valid?: boolean;
+				issues?: unknown;
 				evidenceComplete?: boolean;
 				conflictCount?: number;
 				externalLookupFailed?: boolean;
+				qaSeed?: boolean;
 			};
+			const validationIssues = Array.isArray(validationReport.issues)
+				? validationReport.issues.filter(
+						(issue): issue is string => typeof issue === "string" && Boolean(issue.trim()),
+					)
+				: [];
 			return {
 				id: submission.id,
 				barcode: submission.barcode,
@@ -247,6 +255,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				].filter((item) => Boolean(item.url)),
 				conflictCount: validationReport.conflictCount ?? 0,
 				externalLookupFailed: validationReport.externalLookupFailed ?? false,
+				validationIssues,
+				isQaFixture: validationReport.qaSeed === true,
 				nutrients: (food.foodNutrients ?? []).map((nutrient) => ({
 					name: nutrient.nutrientName,
 					value: nutrient.value,

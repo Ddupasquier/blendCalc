@@ -101,7 +101,10 @@
 							<strong>{submission.productName}</strong>
 							{#if submission.brandOwner}<span>{submission.brandOwner}</span>{/if}
 						</div>
-						<span class="status">pending</span>
+						<div class="product-card__statuses">
+							{#if submission.isQaFixture}<span class="status status--qa">QA fixture</span>{/if}
+							<span class="status">pending</span>
+						</div>
 					</header>
 					<dl>
 						<div><dt>Barcode</dt><dd>{submission.barcode}</dd></div>
@@ -115,6 +118,19 @@
 					{#if submission.externalLookupFailed}
 						<p class="product-card__notice">
 							An outside source could not be checked. Review the label carefully.
+						</p>
+					{/if}
+					{#if submission.validationIssues.length > 0}
+						<div class="product-card__notice product-card__notice--danger">
+							<strong>Review flags</strong>
+							<ul>
+								{#each submission.validationIssues as issue}<li>{issue}</li>{/each}
+							</ul>
+						</div>
+					{/if}
+					{#if submission.isQaFixture}
+						<p class="product-card__notice">
+							This is a test submission. Use Reject to exercise moderation without publishing fake data.
 						</p>
 					{/if}
 					{#if submission.evidence.length > 0}
@@ -145,7 +161,10 @@
 					<div class="product-card__actions">
 						<form method="POST" action="?/approveProduct" use:enhance={enhanceModerationAction}>
 							<input type="hidden" name="submissionId" value={submission.id} />
-							<button type="submit" disabled={pendingTargetUserId !== null || !submission.evidenceComplete}>
+							<button
+								type="submit"
+								disabled={pendingTargetUserId !== null || !submission.evidenceComplete || submission.isQaFixture}
+							>
 								{pendingTargetUserId === submission.id ? "Approving…" : "Approve"}
 							</button>
 						</form>
@@ -360,6 +379,27 @@
 		}
 	}
 
+	.product-card__statuses {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: $app-gap-xs;
+
+		.status {
+			padding: 0.2rem 0.45rem;
+			background: $app-accent;
+			border-radius: $app-radius-pill;
+			font-size: $app-font-size-xs;
+			font-weight: 800;
+			text-transform: capitalize;
+		}
+
+		.status--qa {
+			color: $app-warning-strong;
+			background: $app-warning-bg;
+		}
+	}
+
 	.product-card__evidence {
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -393,6 +433,13 @@
 		border-radius: $app-radius;
 		font-size: $app-font-size-sm;
 		font-weight: 700;
+	}
+
+	.product-card__notice ul {
+		display: grid;
+		gap: $app-gap-xs;
+		margin: $app-gap-xs 0 0;
+		padding-left: $app-gap-md;
 	}
 
 	.product-card__notice--danger {
