@@ -226,6 +226,16 @@ export const findCustomFoodByBarcode = (barcode: string) => {
 	);
 };
 
+export const findCustomFoodByName = (name: string) => {
+	const normalizedName = normalizeCustomFoodName(name);
+	if (!normalizedName) return null;
+	return (
+		readCustomFoods().find(
+			(food) => normalizeCustomFoodName(food.description) === normalizedName,
+		) ?? null
+	);
+};
+
 export const cacheCustomFoodsLocally = (foods: FdcFood[]) => {
 	try {
 		localStorage.setItem(

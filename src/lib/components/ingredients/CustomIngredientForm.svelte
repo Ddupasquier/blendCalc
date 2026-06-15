@@ -6,15 +6,21 @@
 	import {
 		createCustomFood,
 		findCustomFoodByBarcode,
+		findCustomFoodByName,
 		saveCustomFood,
 		type CustomFoodNutritionInput,
 	} from "$lib/utils/food/customFoods";
+	import {
+		addFoodToSmoothieList,
+		type SmoothieListKey,
+	} from "$lib/utils/storage/smoothieLists";
 	import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
 	import BarcodeScannerDialog from "$lib/components/ingredients/BarcodeScannerDialog.svelte";
 	import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 	import { lookupBarcodeProduct } from "$lib/utils/barcode/productLookup";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 	import { submitSharedProduct } from "$lib/utils/products/catalog";
+	import { MIX_STORAGE_KEYS } from "../../../defaults/mixDefaults";
 
 	let {
 		onCreate,
@@ -48,6 +54,9 @@
 	let nutritionPhoto = $state<File | null>(null);
 	let barcodePhoto = $state<File | null>(null);
 	let reportedNutrientIds = $state<number[]>([]);
+	let saveDestination = $state<SmoothieListKey | "custom-only">(
+		MIX_STORAGE_KEYS.fridge,
+	);
 	let labelDetailsElement: HTMLDetailsElement;
 	let hasValidBarcode = $derived(Boolean(normalizeBarcode(barcode)));
 	let canShareWithCatalog = $derived(
@@ -112,6 +121,44 @@
 			sugar: 0,
 			protein: 0,
 		};
+	};
+
+	const getDestinationLabel = () => {
+		if (saveDestination === MIX_STORAGE_KEYS.fridge) return "On Hand";
+		if (saveDestination === MIX_STORAGE_KEYS.shoppingList) return "Shopping List";
+		return "Custom Ingredients";
+	};
+
+	const collapseManualEntry = () => {
+		if (labelDetailsElement) labelDetailsElement.open = false;
+	};
+
+	const useIngredient = async (food: FdcFood, alreadySaved = false) => {
+		onCreate(food);
+		const destinationLabel = getDestinationLabel();
+
+		if (saveDestination === "custom-only") {
+			savedMessage = alreadySaved
+				? `${food.description} is already saved. Showing your existing ingredient.`
+				: `${food.description} saved as a custom ingredient.`;
+			collapseManualEntry();
+			return true;
+		}
+
+		const listResult = await addFoodToSmoothieList(saveDestination, food);
+		if (listResult === "error") {
+			error = `${food.description} was saved, but could not be added to ${destinationLabel}. Try adding it again.`;
+			return false;
+		}
+
+		savedMessage =
+			listResult === "duplicate"
+				? `${food.description} is already in ${destinationLabel}.`
+				: alreadySaved
+					? `${food.description} is already saved and is now in ${destinationLabel}.`
+					: `${food.description} saved and added to ${destinationLabel}.`;
+		collapseManualEntry();
+		return true;
 	};
 
 	const handleBarcodeDetected = async (result: BarcodeScanResult) => {
@@ -226,7 +273,13 @@
 		try {
 			const result = await saveCustomFood(food);
 			if (result === "duplicate-name") {
-				error = "You already have a custom ingredient with this name.";
+				const existingFood = findCustomFoodByName(name);
+				if (existingFood) {
+					await useIngredient(existingFood, true);
+					resetForm();
+					return;
+				}
+				error = "This ingredient is already saved to your account. Refresh and try again.";
 				return;
 			}
 			if (result === "duplicate-barcode") {
@@ -234,8 +287,7 @@
 					? findCustomFoodByBarcode(normalizedBarcode)
 					: null;
 				if (existingFood) {
-					onCreate(existingFood);
-					savedMessage = `${existingFood.description} is already saved. Showing your existing ingredient.`;
+					await useIngredient(existingFood, true);
 					resetForm();
 					return;
 				}
@@ -247,10 +299,10 @@
 				return;
 			}
 
-			onCreate(food);
-			savedMessage = `${food.description} saved as a custom ingredient.`;
+			const addedToDestination = await useIngredient(food);
 			if (
 				normalizedBarcode &&
+				addedToDestination &&
 				(shareWithCatalog || barcodeSource === "open-food-facts")
 			) {
 				try {
@@ -626,6 +678,23 @@
 			</details>
 		{/if}
 
+		<label class="custom-ingredient__destination">
+			<span>Add after saving</span>
+			<select
+				id="custom-ingredient-save-destination"
+				name="custom-ingredient-save-destination"
+				bind:value={saveDestination}
+			>
+				<option value={MIX_STORAGE_KEYS.fridge}>On Hand</option>
+				<option value={MIX_STORAGE_KEYS.shoppingList}>Shopping List</option>
+				<option value="custom-only">Save only</option>
+			</select>
+			<small>
+				Choose where this ingredient should go next so you do not have to scroll
+				back through the nutrition panel.
+			</small>
+		</label>
+
 		{#if error}
 			<p class="custom-ingredient__error" role="alert">{error}</p>
 		{/if}
@@ -637,7 +706,7 @@
 		{/if}
 
 		<button type="button" onclick={handleSubmit} disabled={saving}>
-			{saving ? "Saving ingredient…" : "Save custom ingredient"}
+			{saving ? "Saving ingredient…" : `Save + add to ${getDestinationLabel()}`}
 		</button>
 	</fieldset>
 		</details>
@@ -995,6 +1064,30 @@
 		p {
 			color: $app-muted;
 			font-size: $app-font-size-sm;
+			line-height: 1.4;
+		}
+	}
+
+	.custom-ingredient__destination {
+		display: grid;
+		gap: $app-gap-xs;
+		padding: $app-gap-sm;
+		color: $app-primary;
+		background:
+			linear-gradient(135deg, color-mix(in srgb, $app-highlight 12%, transparent), transparent 70%),
+			$app-section-bg;
+		border: $app-border;
+		border-radius: $app-radius;
+
+		span {
+			font-size: $app-font-size-sm;
+			font-weight: $app-font-weight-bold;
+		}
+
+		small {
+			color: $app-muted;
+			font-size: $app-font-size-sm;
+			font-weight: $app-font-weight-medium;
 			line-height: 1.4;
 		}
 	}

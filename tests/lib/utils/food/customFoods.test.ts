@@ -11,6 +11,7 @@ import {
 	CUSTOM_FOODS_STORAGE_KEY,
 	createCustomFood,
 	findCustomFoodByBarcode,
+	findCustomFoodByName,
 	readCustomFoods,
 	saveCustomFood,
 	searchCustomFoods,
@@ -139,6 +140,20 @@ describe("custom foods", () => {
 		expect(await saveCustomFood(duplicateFood)).toBe("duplicate-name");
 		expect(readCustomFoods()).toHaveLength(1);
 		expect(cloudData.saveCloudCustomFood).toHaveBeenCalledTimes(1);
+	});
+
+	it("finds existing custom foods by normalized name", async () => {
+		const food = createCustomFood({
+			name: "Honey Greek Yogurt",
+			servingWeightGrams: 170,
+			nutrition: { calories: 140, fat: 2, carbs: 18, fiber: 0, sugar: 14, protein: 15 },
+		});
+
+		await saveCustomFood(food);
+
+		expect(findCustomFoodByName("  honey   greek   yogurt ")?.fdcId).toBe(
+			food.fdcId,
+		);
 	});
 
 	it("rejects duplicate packaged-food barcodes before another cloud write", async () => {

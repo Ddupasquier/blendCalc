@@ -1,11 +1,32 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const customFoodMocks = vi.hoisted(() => ({
+	saveCustomFood: vi.fn().mockResolvedValue("saved"),
+	findCustomFoodByBarcode: vi.fn().mockReturnValue(null),
+	findCustomFoodByName: vi.fn().mockReturnValue(null),
+}));
+
 vi.mock("$lib/utils/food/customFoods", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("$lib/utils/food/customFoods")>();
 	return {
 		...actual,
-		saveCustomFood: vi.fn().mockResolvedValue("saved"),
+		saveCustomFood: customFoodMocks.saveCustomFood,
+		findCustomFoodByBarcode: customFoodMocks.findCustomFoodByBarcode,
+		findCustomFoodByName: customFoodMocks.findCustomFoodByName,
+	};
+});
+
+const smoothieListMocks = vi.hoisted(() => ({
+	addFoodToSmoothieList: vi.fn().mockResolvedValue("added"),
+}));
+
+vi.mock("$lib/utils/storage/smoothieLists", async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import("$lib/utils/storage/smoothieLists")>();
+	return {
+		...actual,
+		addFoodToSmoothieList: smoothieListMocks.addFoodToSmoothieList,
 	};
 });
 
@@ -21,6 +42,8 @@ vi.mock("$lib/utils/products/catalog", () => ({
 }));
 
 import CustomIngredientForm from "$lib/components/ingredients/CustomIngredientForm.svelte";
+import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
+import { createCustomFood } from "$lib/utils/food/customFoods";
 
 const openManualForm = async () => {
 	await fireEvent.click(screen.getByText("Enter label details"));
@@ -30,6 +53,14 @@ describe("CustomIngredientForm", () => {
 	beforeEach(() => {
 		localStorage.clear();
 		vi.clearAllMocks();
+		customFoodMocks.saveCustomFood.mockResolvedValue("saved");
+		customFoodMocks.findCustomFoodByBarcode.mockReturnValue(null);
+		customFoodMocks.findCustomFoodByName.mockReturnValue(null);
+		smoothieListMocks.addFoodToSmoothieList.mockResolvedValue("added");
+		submitSharedProduct.mockResolvedValue({
+			status: "pending",
+			message: "Waiting for review.",
+		});
 	});
 
 	it("requires an ingredient name before saving", async () => {
@@ -41,7 +72,7 @@ describe("CustomIngredientForm", () => {
 
 		await openManualForm();
 		await fireEvent.click(
-			screen.getByRole("button", { name: /save custom ingredient/i }),
+			screen.getByRole("button", { name: /save \+ add/i }),
 		);
 
 		expect(screen.getByRole("alert")).toHaveTextContent(
@@ -88,7 +119,7 @@ describe("CustomIngredientForm", () => {
 		});
 
 		await fireEvent.click(
-			screen.getByRole("button", { name: /save custom ingredient/i }),
+			screen.getByRole("button", { name: /save \+ add/i }),
 		);
 
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
@@ -98,6 +129,41 @@ describe("CustomIngredientForm", () => {
 			customServingLabel: "3 cookies",
 			customServingWeightGrams: 34,
 		});
+		expect(smoothieListMocks.addFoodToSmoothieList).toHaveBeenCalledWith(
+			MIX_STORAGE_KEYS.fridge,
+			expect.objectContaining({ description: "Chocolate cookies" }),
+		);
+		expect(screen.getByText(/saved and added to on hand/i)).toBeInTheDocument();
+		expect(screen.getByText("Enter label details").closest("details")).not.toHaveAttribute(
+			"open",
+		);
+	});
+
+	it("can add a saved custom ingredient directly to the shopping list", async () => {
+		const onCreate = vi.fn();
+		render(CustomIngredientForm, {
+			props: {
+				onCreate,
+			},
+		});
+
+		await openManualForm();
+		await fireEvent.change(
+			screen.getByRole("combobox", { name: /add after saving/i }),
+			{ target: { value: MIX_STORAGE_KEYS.shoppingList } },
+		);
+		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
+			target: { value: "Shelf stable snack" },
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: /save \+ add to shopping list/i }),
+		);
+
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+		expect(smoothieListMocks.addFoodToSmoothieList).toHaveBeenCalledWith(
+			MIX_STORAGE_KEYS.shoppingList,
+			expect.objectContaining({ description: "Shelf stable snack" }),
+		);
 	});
 
 	it("normalizes a manually entered barcode before saving", async () => {
@@ -112,7 +178,7 @@ describe("CustomIngredientForm", () => {
 			target: { value: "4006381333931" },
 		});
 		await fireEvent.click(
-			screen.getByRole("button", { name: /save custom ingredient/i }),
+			screen.getByRole("button", { name: /save \+ add/i }),
 		);
 
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
@@ -162,7 +228,7 @@ describe("CustomIngredientForm", () => {
 			});
 		}
 		await fireEvent.click(
-			screen.getByRole("button", { name: /save custom ingredient/i }),
+			screen.getByRole("button", { name: /save \+ add/i }),
 		);
 
 		await waitFor(() => expect(submitSharedProduct).toHaveBeenCalledOnce());
@@ -183,13 +249,52 @@ describe("CustomIngredientForm", () => {
 			screen.getByLabelText(/help other users find this product/i),
 		);
 		await fireEvent.click(
-			screen.getByRole("button", { name: /save custom ingredient/i }),
+			screen.getByRole("button", { name: /save \+ add/i }),
 		);
 
 		expect(screen.getByRole("alert")).toHaveTextContent(
 			"Add front package, nutrition label, and barcode photos",
 		);
 		expect(submitSharedProduct).not.toHaveBeenCalled();
+	});
+
+	it("uses an existing custom ingredient instead of failing duplicate names", async () => {
+		const existingFood = createCustomFood({
+			name: "Honey greek yogurt",
+			servingWeightGrams: 170,
+			nutrition: {
+				calories: 140,
+				fat: 2,
+				carbs: 18,
+				fiber: 0,
+				sugar: 14,
+				protein: 15,
+			},
+		});
+		const onCreate = vi.fn();
+		customFoodMocks.saveCustomFood.mockResolvedValue("duplicate-name");
+		customFoodMocks.findCustomFoodByName.mockReturnValue(existingFood);
+
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
+			target: { value: "Honey greek yogurt" },
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: /save \+ add/i }),
+		);
+
+		await waitFor(() => expect(onCreate).toHaveBeenCalledWith(existingFood));
+		expect(smoothieListMocks.addFoodToSmoothieList).toHaveBeenCalledWith(
+			MIX_STORAGE_KEYS.fridge,
+			existingFood,
+		);
+		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+		expect(screen.getByText(/already saved and is now in on hand/i)).toBeInTheDocument();
+		expect(screen.getByText("Enter label details").closest("details")).not.toHaveAttribute(
+			"open",
+		);
 	});
 
 	it("can be closed and reopened without clearing unfinished input", async () => {
