@@ -8,7 +8,7 @@
 		saveCustomFood,
 		type CustomFoodNutritionInput,
 	} from "$lib/utils/food/customFoods";
-	import type { FdcFood } from "$lib/utils/food/types";
+	import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
 	import BarcodeScannerDialog from "$lib/components/ingredients/BarcodeScannerDialog.svelte";
 	import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 	import { lookupBarcodeProduct } from "$lib/utils/barcode/productLookup";
@@ -30,6 +30,8 @@
 	let servingWeightGrams = $state(30);
 	let volumeQuantity = $state<number | null>(null);
 	let volumeUnit = $state<ServingMeasureUnit>("tbsp");
+	let useVolumeEquivalent = $state(false);
+	let additionalNutrients = $state<FdcNutrient[]>([]);
 	let error = $state("");
 	let savedMessage = $state("");
 	let saving = $state(false);
@@ -60,6 +62,16 @@
 		};
 	};
 
+	const formatNutrientValue = (nutrient: FdcNutrient) => {
+		const value = nutrient.value < 1
+			? nutrient.value.toLocaleString(undefined, { maximumFractionDigits: 3 })
+			: nutrient.value.toLocaleString(undefined, { maximumFractionDigits: 1 });
+		const unit = nutrient.unitName.toUpperCase() === "UG"
+			? "µg"
+			: nutrient.unitName.toLowerCase();
+		return `${value} ${unit}`;
+	};
+
 	const resetForm = () => {
 		name = "";
 		brandOwner = "";
@@ -67,6 +79,8 @@
 		servingWeightGrams = 30;
 		volumeQuantity = null;
 		volumeUnit = "tbsp";
+		useVolumeEquivalent = false;
+		additionalNutrients = [];
 		barcode = "";
 		barcodeSource = "manual";
 		barcodeMessage = "";
@@ -96,9 +110,19 @@
 				servingLabel = lookup.draft.servingLabel;
 				servingWeightGrams = lookup.draft.servingWeightGrams;
 				nutrition = { ...lookup.draft.nutrition };
+				additionalNutrients = [...lookup.draft.additionalNutrients];
+				useVolumeEquivalent = Boolean(lookup.draft.volumeEquivalent);
+				volumeQuantity = lookup.draft.volumeEquivalent?.quantity ?? null;
+				volumeUnit = lookup.draft.volumeEquivalent?.unit ?? "tbsp";
 				barcode = lookup.draft.barcode;
 				barcodeSource = lookup.draft.source;
-				barcodeMessage = `Label data imported from ${lookup.draft.sourceLabel}. Review it before saving.`;
+				const nutrientSummary = additionalNutrients.length > 0
+					? ` ${additionalNutrients.length} additional reported nutrients were included.`
+					: " No additional vitamin or mineral values were reported by this source.";
+				const volumeSummary = lookup.draft.volumeEquivalent
+					? " The package's volume-to-weight serving was also included."
+					: "";
+				barcodeMessage = `Label data imported from ${lookup.draft.sourceLabel}.${nutrientSummary}${volumeSummary} Review it before saving.`;
 				return;
 			}
 
@@ -127,8 +151,11 @@
 			return;
 		}
 
-		if (volumeQuantity !== null && volumeQuantity <= 0) {
-			error = "Volume equivalent must be greater than 0 or left blank.";
+		if (
+			useVolumeEquivalent &&
+			(volumeQuantity === null || volumeQuantity <= 0)
+		) {
+			error = "Volume amount must be greater than 0 when volume measurements are enabled.";
 			return;
 		}
 
@@ -153,11 +180,12 @@
 			brandOwner,
 			servingLabel,
 			servingWeightGrams,
-			volumeQuantity: volumeQuantity ?? undefined,
-			volumeUnit: volumeQuantity ? volumeUnit : undefined,
+			volumeQuantity: useVolumeEquivalent ? volumeQuantity ?? undefined : undefined,
+			volumeUnit: useVolumeEquivalent ? volumeUnit : undefined,
 			barcode: normalizedBarcode ?? undefined,
 			barcodeSource: normalizedBarcode ? barcodeSource : undefined,
 			nutrition,
+			additionalNutrients,
 		});
 
 		saving = true;
@@ -284,16 +312,27 @@
 		{/if}
 
 		<section class="custom-ingredient__volume">
-			<div>
-				<strong>Optional volume equivalent</strong>
-				<p>
-					Add this if you want cups, tbsp, tsp, ml, or fl oz to convert using
-					your exact ingredient density.
-				</p>
-			</div>
-			<div class="custom-ingredient__grid">
+			<label class="custom-ingredient__volume-toggle">
+				<input
+					id="custom-ingredient-use-volume"
+					name="custom-ingredient-use-volume"
+					type="checkbox"
+					bind:checked={useVolumeEquivalent}
+				/>
+				<span>
+					<strong>Allow volume measurements</strong>
+					<small>
+						Turn this on only when you know how much a volume of this specific
+						ingredient weighs—for example, 2 tbsp weighs 32g. This lets the app
+						convert cups, tablespoons, teaspoons, milliliters, and fluid ounces
+						without assuming every food has the same density.
+					</small>
+				</span>
+			</label>
+			{#if useVolumeEquivalent}
+			<div class="custom-ingredient__grid custom-ingredient__volume-fields">
 				<label>
-					<span>Volume amount</span>
+					<span>Volume in this serving</span>
 					<input
 						id="custom-ingredient-volume-amount"
 						name="custom-ingredient-volume-amount"
@@ -318,6 +357,12 @@
 					</select>
 				</label>
 			</div>
+			<p class="custom-ingredient__volume-note">
+				This records <strong>{volumeQuantity || "the entered volume"}</strong>
+				as weighing <strong>{servingWeightGrams}g</strong>. Leave it off if the
+				package does not provide both values.
+			</p>
+			{/if}
 		</section>
 
 		<section class="custom-ingredient__nutrition">
@@ -410,6 +455,27 @@
 				</label>
 			</div>
 		</section>
+
+		{#if additionalNutrients.length > 0}
+			<details class="custom-ingredient__imported-nutrients">
+				<summary>
+					<span>Additional nutrients imported ({additionalNutrients.length})</span>
+					<small>Vitamins, minerals, and other values reported by the source.</small>
+				</summary>
+				<ul>
+					{#each additionalNutrients as nutrient (nutrient.nutrientId)}
+						<li>
+							<span>{nutrient.nutrientName}</span>
+							<strong>{formatNutrientValue(nutrient)}</strong>
+						</li>
+					{/each}
+				</ul>
+				<p>
+					Values are per serving. Nutrients not reported by the source are left
+					missing rather than counted as zero.
+				</p>
+			</details>
+		{/if}
 
 		{#if error}
 			<p class="custom-ingredient__error" role="alert">{error}</p>
@@ -564,6 +630,82 @@
 		}
 	}
 
+	.custom-ingredient__volume-toggle {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		align-items: start;
+		gap: $app-gap-sm;
+		color: $app-primary;
+
+		input {
+			width: 1.1rem;
+			height: 1.1rem;
+			margin-top: 0.1rem;
+			accent-color: $app-highlight;
+		}
+
+		span {
+			display: grid;
+			gap: 0.2rem;
+		}
+
+		small {
+			color: $app-muted;
+			font-size: 0.8rem;
+			font-weight: 600;
+			line-height: 1.4;
+		}
+	}
+
+	.custom-ingredient__volume-note {
+		padding: $app-gap-sm;
+		background: $app-section-bg;
+		border-radius: $app-radius;
+	}
+
+	.custom-ingredient__imported-nutrients {
+		padding: $app-gap-sm;
+		background: $app-section-bg;
+		border: $app-border;
+		border-radius: $app-radius;
+
+		ul {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 0.35rem $app-gap-md;
+			margin: $app-gap-sm 0;
+			padding: 0;
+			list-style: none;
+		}
+
+		li {
+			display: flex;
+			justify-content: space-between;
+			gap: $app-gap-sm;
+			min-width: 0;
+			color: $app-muted;
+			font-size: $app-font-size-sm;
+
+			span {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+
+			strong {
+				flex: 0 0 auto;
+				color: $app-primary;
+				font-size: inherit;
+			}
+		}
+
+		p {
+			color: $app-muted;
+			font-size: $app-font-size-sm;
+			line-height: 1.4;
+		}
+	}
+
 	.custom-ingredient__error,
 	.custom-ingredient__success,
 	.custom-ingredient__barcode-message {
@@ -613,6 +755,10 @@
 
 		.custom-ingredient__grid,
 		.custom-ingredient__nutrition-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.custom-ingredient__imported-nutrients ul {
 			grid-template-columns: 1fr;
 		}
 

@@ -33,6 +33,7 @@ export type CustomFoodInput = {
 	barcode?: string;
 	barcodeSource?: FdcFood["barcodeSource"];
 	nutrition: CustomFoodNutritionInput;
+	additionalNutrients?: FdcNutrient[];
 };
 
 export type CustomFoodSaveResult =
@@ -105,14 +106,39 @@ const getPer100GramValue = (valuePerServing: number, servingWeightGrams: number)
 const createNutrients = (
 	nutrition: CustomFoodNutritionInput,
 	servingWeightGrams: number,
+	additionalNutrients: FdcNutrient[] = [],
 ): FdcNutrient[] => {
-	return CUSTOM_NUTRIENT_META.map((meta) => ({
+	const coreNutrients = CUSTOM_NUTRIENT_META.map((meta) => ({
 		nutrientId: meta.nutrientId,
 		nutrientName: meta.nutrientName,
 		nutrientNumber: meta.nutrientNumber,
 		unitName: meta.unitName,
 		value: getPer100GramValue(nutrition[meta.key], servingWeightGrams),
 	}));
+	const coreNutrientIds = new Set<number>(
+		coreNutrients.map((nutrient) => nutrient.nutrientId),
+	);
+	const seenAdditionalIds = new Set<number>();
+	const normalizedAdditionalNutrients = additionalNutrients.flatMap((nutrient) => {
+		const nutrientId = Number(nutrient.nutrientId);
+		if (
+			!Number.isFinite(nutrientId) ||
+			coreNutrientIds.has(nutrientId) ||
+			seenAdditionalIds.has(nutrientId)
+		) {
+			return [];
+		}
+		seenAdditionalIds.add(nutrientId);
+		return [{
+			nutrientId,
+			nutrientName: nutrient.nutrientName,
+			nutrientNumber: String(nutrient.nutrientNumber ?? ""),
+			unitName: nutrient.unitName,
+			value: getPer100GramValue(nutrient.value, servingWeightGrams),
+		}];
+	});
+
+	return [...coreNutrients, ...normalizedAdditionalNutrients];
 };
 
 const getVolumeMilliliters = (
@@ -159,7 +185,11 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		customDensityLabel: density ? "custom serving" : undefined,
 		customDensityVariancePercent: density ? 0 : undefined,
 		customDensityConfidence: density ? "known" : undefined,
-		foodNutrients: createNutrients(input.nutrition, servingWeightGrams),
+		foodNutrients: createNutrients(
+			input.nutrition,
+			servingWeightGrams,
+			input.additionalNutrients,
+		),
 	};
 };
 

@@ -89,4 +89,15 @@ describe("CustomIngredientForm", () => {
 			barcodeSource: "manual",
 		});
 	});
+
+	it("keeps volume conversion off until the user enables it", async () => {
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await fireEvent.click(screen.getByText("Enter label details"));
+		expect(screen.queryByLabelText(/volume in this serving/i)).not.toBeInTheDocument();
+
+		await fireEvent.click(screen.getByLabelText(/allow volume measurements/i));
+		expect(screen.getByLabelText(/volume in this serving/i)).toBeInTheDocument();
+		expect(screen.getByText(/2 tbsp weighs 32g/i)).toBeInTheDocument();
+	});
 });

@@ -8,7 +8,21 @@
 
 import { cacheGet, cacheSet } from "$lib/cache";
 import { getBarcodeLookupCandidates, normalizeBarcode } from "$lib/utils/barcode/barcode";
-import type { FdcFood, FdcSearchResponse } from "$lib/utils/food/types";
+import type { FdcFood, FdcNutrient, FdcSearchResponse } from "$lib/utils/food/types";
+
+type FdcDetailNutrient = {
+	amount?: number;
+	nutrient?: {
+		id?: number;
+		name?: string;
+		number?: string;
+		unitName?: string;
+	};
+};
+
+type FdcFoodResponse = Omit<FdcFood, "foodNutrients"> & {
+	foodNutrients?: Array<FdcNutrient | FdcDetailNutrient>;
+};
 
 const BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 export const FDC_CONFIGURATION_MESSAGE =
@@ -38,6 +52,37 @@ const buildUrl = (path: string, params: Record<string, string> = {}): string => 
 	return url.toString();
 };
 
+const normalizeFoodNutrient = (
+	nutrient: FdcNutrient | FdcDetailNutrient,
+): FdcNutrient | null => {
+	if ("nutrientId" in nutrient) {
+		return {
+			nutrientId: Number(nutrient.nutrientId),
+			nutrientName: nutrient.nutrientName,
+			nutrientNumber: String(nutrient.nutrientNumber ?? ""),
+			unitName: nutrient.unitName,
+			value: Number(nutrient.value) || 0,
+		};
+	}
+
+	if (!nutrient.nutrient?.id) return null;
+	return {
+		nutrientId: nutrient.nutrient.id,
+		nutrientName: nutrient.nutrient.name ?? "Unknown nutrient",
+		nutrientNumber: String(nutrient.nutrient.number ?? ""),
+		unitName: nutrient.nutrient.unitName ?? "",
+		value: Number(nutrient.amount) || 0,
+	};
+};
+
+export const normalizeFdcFood = (food: FdcFoodResponse): FdcFood => ({
+	...food,
+	foodNutrients: (food.foodNutrients ?? []).flatMap((nutrient) => {
+		const normalized = normalizeFoodNutrient(nutrient);
+		return normalized ? [normalized] : [];
+	}),
+});
+
 export const searchFoods = async (query: string): Promise<FdcFood[]> => {
 	const trimmed = query.trim();
 	if (!trimmed) return [];
@@ -65,7 +110,7 @@ export const searchFoods = async (query: string): Promise<FdcFood[]> => {
 };
 
 export const getFoodById = async (fdcId: number): Promise<FdcFood> => {
-	const cacheKey = `food_${fdcId}`;
+	const cacheKey = `food_v2_${fdcId}`;
 	const cached = cacheGet<FdcFood>(cacheKey);
 	if (cached) return cached;
 
@@ -75,7 +120,7 @@ export const getFoodById = async (fdcId: number): Promise<FdcFood> => {
 		throw new Error(`FDC food fetch failed: ${res.status} ${res.statusText}`);
 	}
 
-	const food: FdcFood = await res.json();
+	const food = normalizeFdcFood(await res.json());
 	cacheSet(cacheKey, food);
 	return food;
 };
@@ -86,7 +131,7 @@ export const searchBrandedFoodByBarcode = async (
 	const canonicalBarcode = normalizeBarcode(barcode);
 	if (!canonicalBarcode) return null;
 
-	const cacheKey = `barcode_fdc_${canonicalBarcode}`;
+	const cacheKey = `barcode_fdc_v2_${canonicalBarcode}`;
 	const cached = cacheGet<FdcFood | false>(cacheKey);
 	if (cached !== null) return cached || null;
 
@@ -108,8 +153,15 @@ export const searchBrandedFoodByBarcode = async (
 			(food) => food.gtinUpc && normalizeBarcode(food.gtinUpc) === canonicalBarcode,
 		);
 		if (match) {
-			cacheSet(cacheKey, match);
-			return match;
+			try {
+				const detailedFood = await getFoodById(match.fdcId);
+				cacheSet(cacheKey, detailedFood);
+				return detailedFood;
+			} catch {
+				const normalizedMatch = normalizeFdcFood(match);
+				cacheSet(cacheKey, normalizedMatch);
+				return normalizedMatch;
+			}
 		}
 	}
 

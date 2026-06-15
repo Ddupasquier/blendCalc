@@ -1,8 +1,16 @@
 import { cacheGet, cacheSet } from "$lib/cache";
 import { getBarcodeLookupCandidates, normalizeBarcode } from "$lib/utils/barcode/barcode";
+import {
+	getOpenFoodFactsValue,
+	mapOpenFoodFactsAdditionalNutrients,
+} from "$lib/utils/barcode/barcodeNutrients";
+import {
+	parseVolumeEquivalent,
+	type BarcodeVolumeEquivalent,
+} from "$lib/utils/barcode/servingVolume";
 import type { CustomFoodNutritionInput } from "$lib/utils/food/customFoods";
 import { searchBrandedFoodByBarcode } from "$lib/utils/food/fdc";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
+import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
 
 type OpenFoodFactsNutriments = Record<string, number | string | undefined>;
 
@@ -29,6 +37,8 @@ export type BarcodeProductDraft = {
 	servingLabel: string;
 	servingWeightGrams: number;
 	nutrition: CustomFoodNutritionInput;
+	additionalNutrients: FdcNutrient[];
+	volumeEquivalent?: BarcodeVolumeEquivalent;
 	source: "open-food-facts" | "usda";
 	sourceLabel: string;
 };
@@ -39,6 +49,16 @@ export type BarcodeLookupResult =
 	| { status: "error"; barcode: string; message: string };
 
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v2/product";
+const CORE_NUTRIENT_IDS = new Set<number>([
+	NUTRIENT_IDS.CALORIES,
+	NUTRIENT_IDS.FAT,
+	NUTRIENT_IDS.CARBS,
+	NUTRIENT_IDS.FIBER,
+	NUTRIENT_IDS.SUGAR,
+	NUTRIENT_IDS.PROTEIN,
+]);
+const isGramUnit = (unit?: string) =>
+	["g", "grm", "gram", "grams"].includes(unit?.trim().toLowerCase() ?? "");
 
 const toNumber = (value: unknown) => {
 	const numberValue = typeof value === "string" ? Number.parseFloat(value) : Number(value);
@@ -49,28 +69,40 @@ const parseServingBasis = (product: OpenFoodFactsProduct) => {
 	const servingQuantity = toNumber(product.serving_quantity);
 	const servingMatch = product.serving_size?.match(/([0-9]+(?:\.[0-9]+)?)\s*g\b/i);
 	if (servingMatch) {
-		return { servingWeightGrams: toNumber(servingMatch[1]), useServingValues: true };
+		return {
+			servingWeightGrams: toNumber(servingMatch[1]),
+			useServingValues: true,
+			hasExactGramWeight: true,
+		};
 	}
 	if (
 		servingQuantity > 0 &&
-		product.serving_quantity_unit?.trim().toLowerCase() === "g"
+		isGramUnit(product.serving_quantity_unit)
 	) {
-		return { servingWeightGrams: servingQuantity, useServingValues: true };
+		return {
+			servingWeightGrams: servingQuantity,
+			useServingValues: true,
+			hasExactGramWeight: true,
+		};
 	}
-	return { servingWeightGrams: 100, useServingValues: false };
+	return {
+		servingWeightGrams: 100,
+		useServingValues: false,
+		hasExactGramWeight: false,
+	};
 };
 
 const getOpenFoodFactsNutrient = (
 	nutriments: OpenFoodFactsNutriments,
-	key: string,
+	keys: string[],
 	servingWeightGrams: number,
 	useServingValues: boolean,
-) => {
-	const perServingValue = nutriments[`${key}_serving`];
-	const perServing = toNumber(perServingValue);
-	if (useServingValues && (perServing > 0 || perServingValue === 0)) return perServing;
-	return (toNumber(nutriments[`${key}_100g`]) * servingWeightGrams) / 100;
-};
+) => getOpenFoodFactsValue(
+	nutriments,
+	keys,
+	servingWeightGrams,
+	useServingValues,
+)?.value ?? 0;
 
 export const mapOpenFoodFactsProduct = (
 	product: OpenFoodFactsProduct,
@@ -80,16 +112,17 @@ export const mapOpenFoodFactsProduct = (
 	const name = product.product_name?.trim() || product.generic_name?.trim();
 	if (!canonicalBarcode || !name || !product.nutriments) return null;
 
-	const { servingWeightGrams, useServingValues } = parseServingBasis(product);
+	const { servingWeightGrams, useServingValues, hasExactGramWeight } =
+		parseServingBasis(product);
 	const energyKcal = getOpenFoodFactsNutrient(
 		product.nutriments,
-		"energy-kcal",
+		["energy-kcal"],
 		servingWeightGrams,
 		useServingValues,
 	);
 	const energyKilojoules = getOpenFoodFactsNutrient(
 		product.nutriments,
-		"energy-kj",
+		["energy-kj"],
 		servingWeightGrams,
 		useServingValues,
 	);
@@ -101,35 +134,44 @@ export const mapOpenFoodFactsProduct = (
 		servingLabel:
 			(useServingValues && product.serving_size?.trim()) || `${servingWeightGrams} g`,
 		servingWeightGrams,
+		additionalNutrients: mapOpenFoodFactsAdditionalNutrients(
+			product.nutriments,
+			servingWeightGrams,
+			useServingValues,
+		),
+		volumeEquivalent: hasExactGramWeight
+			? parseVolumeEquivalent(product.serving_size)
+				?? undefined
+			: undefined,
 		nutrition: {
 			calories: energyKcal || energyKilojoules / 4.184,
 			fat: getOpenFoodFactsNutrient(
 				product.nutriments,
-				"fat",
+				["fat"],
 				servingWeightGrams,
 				useServingValues,
 			),
 			carbs: getOpenFoodFactsNutrient(
 				product.nutriments,
-				"carbohydrates",
+				["carbohydrates", "carbohydrates-total"],
 				servingWeightGrams,
 				useServingValues,
 			),
 			fiber: getOpenFoodFactsNutrient(
 				product.nutriments,
-				"fiber",
+				["fiber"],
 				servingWeightGrams,
 				useServingValues,
 			),
 			sugar: getOpenFoodFactsNutrient(
 				product.nutriments,
-				"sugars",
+				["sugars"],
 				servingWeightGrams,
 				useServingValues,
 			),
 			protein: getOpenFoodFactsNutrient(
 				product.nutriments,
-				"proteins",
+				["proteins", "protein"],
 				servingWeightGrams,
 				useServingValues,
 			),
@@ -150,9 +192,11 @@ export const mapFdcBarcodeFood = (
 	if (!canonicalBarcode || !food.description) return null;
 
 	const servingWeightGrams =
-		food.servingSize && food.servingSizeUnit?.toLowerCase() === "g"
+		food.servingSize && isGramUnit(food.servingSizeUnit)
 			? food.servingSize
 			: 100;
+	const hasExactGramWeight =
+		Boolean(food.servingSize) && isGramUnit(food.servingSizeUnit);
 	const servingScale = servingWeightGrams / 100;
 	const perServing = (nutrientId: number) =>
 		getFdcNutrientValue(food, nutrientId) * servingScale;
@@ -161,8 +205,18 @@ export const mapFdcBarcodeFood = (
 		barcode: canonicalBarcode,
 		name: food.description,
 		brandOwner: food.brandOwner ?? "",
-		servingLabel: food.householdServingFullText || `${servingWeightGrams} g`,
+		servingLabel:
+			(hasExactGramWeight && food.householdServingFullText) || `${servingWeightGrams} g`,
 		servingWeightGrams,
+		additionalNutrients: food.foodNutrients
+			.filter((nutrient) => !CORE_NUTRIENT_IDS.has(nutrient.nutrientId))
+			.map((nutrient) => ({
+				...nutrient,
+				value: toNumber(nutrient.value) * servingScale,
+			})),
+		volumeEquivalent: hasExactGramWeight
+			? parseVolumeEquivalent(food.householdServingFullText) ?? undefined
+			: undefined,
 		nutrition: {
 			calories: perServing(NUTRIENT_IDS.CALORIES),
 			fat: perServing(NUTRIENT_IDS.FAT),
@@ -206,7 +260,7 @@ export const lookupBarcodeProduct = async (
 		};
 	}
 
-	const cacheKey = `barcode_product_${canonicalBarcode}`;
+	const cacheKey = `barcode_product_v2_${canonicalBarcode}`;
 	const cached = cacheGet<BarcodeProductDraft | false>(cacheKey);
 	if (cached !== null) {
 		return cached

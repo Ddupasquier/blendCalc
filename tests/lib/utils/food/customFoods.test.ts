@@ -37,6 +37,15 @@ describe("custom foods", () => {
 				sugar: 14,
 				protein: 1,
 			},
+			additionalNutrients: [
+				{
+					nutrientId: NUTRIENT_IDS.SODIUM,
+					nutrientName: "Sodium, Na",
+					nutrientNumber: "307",
+					unitName: "MG",
+					value: 135,
+				},
+			],
 		});
 
 		expect(food.customFood).toBe(true);
@@ -46,6 +55,7 @@ describe("custom foods", () => {
 			470.59,
 		);
 		expect(getFdcNutrientValue(food, NUTRIENT_IDS.SUGAR)).toBeCloseTo(41.18);
+		expect(getFdcNutrientValue(food, NUTRIENT_IDS.SODIUM)).toBeCloseTo(397.06);
 	});
 
 	it("stores custom density when a volume equivalent is provided", () => {
