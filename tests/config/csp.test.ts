@@ -7,4 +7,10 @@ describe("content security policy", () => {
 
 		expect(configSource).toContain("'https://api.nal.usda.gov'");
 	});
+
+	it("allows packaged-food lookups from Open Food Facts", () => {
+		const configSource = readFileSync("svelte.config.js", "utf8");
+
+		expect(configSource).toContain("'https://world.openfoodfacts.org'");
+	});
 });

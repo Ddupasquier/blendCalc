@@ -125,8 +125,29 @@ describe("custom foods", () => {
 		});
 
 		expect(await saveCustomFood(firstFood)).toBe("saved");
-		expect(await saveCustomFood(duplicateFood)).toBe("duplicate");
+		expect(await saveCustomFood(duplicateFood)).toBe("duplicate-name");
 		expect(readCustomFoods()).toHaveLength(1);
+		expect(cloudData.saveCloudCustomFood).toHaveBeenCalledTimes(1);
+	});
+
+	it("rejects duplicate packaged-food barcodes before another cloud write", async () => {
+		const firstFood = createCustomFood({
+			name: "First scanned food",
+			servingWeightGrams: 30,
+			barcode: "00400638133393",
+			barcodeSource: "open-food-facts",
+			nutrition: { calories: 100, fat: 2, carbs: 18, fiber: 1, sugar: 6, protein: 3 },
+		});
+		const duplicateFood = createCustomFood({
+			name: "Same package, different name",
+			servingWeightGrams: 30,
+			barcode: "00400638133393",
+			barcodeSource: "manual",
+			nutrition: { calories: 100, fat: 2, carbs: 18, fiber: 1, sugar: 6, protein: 3 },
+		});
+
+		expect(await saveCustomFood(firstFood)).toBe("saved");
+		expect(await saveCustomFood(duplicateFood)).toBe("duplicate-barcode");
 		expect(cloudData.saveCloudCustomFood).toHaveBeenCalledTimes(1);
 	});
 

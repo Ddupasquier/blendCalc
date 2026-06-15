@@ -23,7 +23,7 @@ describe("CustomIngredientForm", () => {
 			},
 		});
 
-		await fireEvent.click(screen.getByText("Add custom ingredient"));
+		await fireEvent.click(screen.getByText("Enter label details"));
 		await fireEvent.click(
 			screen.getByRole("button", { name: /save custom ingredient/i }),
 		);
@@ -41,7 +41,7 @@ describe("CustomIngredientForm", () => {
 			},
 		});
 
-		await fireEvent.click(screen.getByText("Add custom ingredient"));
+		await fireEvent.click(screen.getByText("Enter label details"));
 		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
 			target: { value: "Chocolate cookies" },
 		});
@@ -65,6 +65,28 @@ describe("CustomIngredientForm", () => {
 			customFood: true,
 			customServingLabel: "3 cookies",
 			customServingWeightGrams: 34,
+		});
+	});
+
+	it("normalizes a manually entered barcode before saving", async () => {
+		const onCreate = vi.fn();
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await fireEvent.click(screen.getByText("Enter label details"));
+		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
+			target: { value: "Packaged snack" },
+		});
+		await fireEvent.input(screen.getByLabelText(/upc \/ ean barcode/i), {
+			target: { value: "4006381333931" },
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: /save custom ingredient/i }),
+		);
+
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+		expect(onCreate.mock.calls[0][0]).toMatchObject({
+			barcode: "04006381333931",
+			barcodeSource: "manual",
 		});
 	});
 });

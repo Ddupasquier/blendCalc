@@ -122,6 +122,7 @@ export type Database = {
       }
       custom_foods: {
         Row: {
+          barcode: string | null
           created_at: string
           fdc_id: number
           food: Json
@@ -131,6 +132,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          barcode?: string | null
           created_at?: string
           fdc_id: number
           food: Json
@@ -140,6 +142,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          barcode?: string | null
           created_at?: string
           fdc_id?: number
           food?: Json

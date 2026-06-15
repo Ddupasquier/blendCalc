@@ -9,6 +9,10 @@
 		type CustomFoodNutritionInput,
 	} from "$lib/utils/food/customFoods";
 	import type { FdcFood } from "$lib/utils/food/types";
+	import BarcodeScannerDialog from "$lib/components/ingredients/BarcodeScannerDialog.svelte";
+	import { normalizeBarcode } from "$lib/utils/barcode/barcode";
+	import { lookupBarcodeProduct } from "$lib/utils/barcode/productLookup";
+	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 
 	let {
 		onCreate,
@@ -21,6 +25,7 @@
 	);
 
 	let name = $state("");
+	let brandOwner = $state("");
 	let servingLabel = $state("");
 	let servingWeightGrams = $state(30);
 	let volumeQuantity = $state<number | null>(null);
@@ -28,6 +33,12 @@
 	let error = $state("");
 	let savedMessage = $state("");
 	let saving = $state(false);
+	let lookingUpBarcode = $state(false);
+	let scannerOpen = $state(false);
+	let barcode = $state("");
+	let barcodeSource = $state<FdcFood["barcodeSource"]>("manual");
+	let barcodeMessage = $state("");
+	let detailsElement: HTMLDetailsElement;
 
 	let nutrition = $state<CustomFoodNutritionInput>({
 		calories: 0,
@@ -51,10 +62,14 @@
 
 	const resetForm = () => {
 		name = "";
+		brandOwner = "";
 		servingLabel = "";
 		servingWeightGrams = 30;
 		volumeQuantity = null;
 		volumeUnit = "tbsp";
+		barcode = "";
+		barcodeSource = "manual";
+		barcodeMessage = "";
 		nutrition = {
 			calories: 0,
 			fat: 0,
@@ -63,6 +78,38 @@
 			sugar: 0,
 			protein: 0,
 		};
+	};
+
+	const handleBarcodeDetected = async (result: BarcodeScanResult) => {
+		scannerOpen = false;
+		lookingUpBarcode = true;
+		error = "";
+		barcodeMessage = "Looking up this product…";
+		barcode = result.canonicalValue;
+		detailsElement.open = true;
+
+		try {
+			const lookup = await lookupBarcodeProduct(result.value);
+			if (lookup.status === "found") {
+				name = lookup.draft.name;
+				brandOwner = lookup.draft.brandOwner;
+				servingLabel = lookup.draft.servingLabel;
+				servingWeightGrams = lookup.draft.servingWeightGrams;
+				nutrition = { ...lookup.draft.nutrition };
+				barcode = lookup.draft.barcode;
+				barcodeSource = lookup.draft.source;
+				barcodeMessage = `Label data imported from ${lookup.draft.sourceLabel}. Review it before saving.`;
+				return;
+			}
+
+			barcodeSource = "manual";
+			barcodeMessage =
+				lookup.status === "not-found"
+					? "No matching product was found. The barcode is filled in so you can enter the label manually."
+					: lookup.message;
+		} finally {
+			lookingUpBarcode = false;
+		}
 	};
 
 	const handleSubmit = async () => {
@@ -95,22 +142,35 @@
 			return;
 		}
 
+		const normalizedBarcode = barcode.trim() ? normalizeBarcode(barcode) : null;
+		if (barcode.trim() && !normalizedBarcode) {
+			error = "Enter a valid 8, 12, 13, or 14 digit UPC/EAN barcode.";
+			return;
+		}
+
 		const food = createCustomFood({
 			name,
+			brandOwner,
 			servingLabel,
 			servingWeightGrams,
 			volumeQuantity: volumeQuantity ?? undefined,
 			volumeUnit: volumeQuantity ? volumeUnit : undefined,
+			barcode: normalizedBarcode ?? undefined,
+			barcodeSource: normalizedBarcode ? barcodeSource : undefined,
 			nutrition,
 		});
 
 		saving = true;
 		try {
 			const result = await saveCustomFood(food);
-			if (result === "duplicate") {
+			if (result === "duplicate-name") {
 				error = "You already have a custom ingredient with this name.";
 				return;
-		}
+			}
+			if (result === "duplicate-barcode") {
+				error = "An ingredient with this barcode is already in your custom foods.";
+				return;
+			}
 			if (result === "error") {
 				error = "This ingredient could not be saved. Check your connection and try again.";
 				return;
@@ -125,13 +185,33 @@
 	};
 </script>
 
-<details class="custom-ingredient">
-	<summary>
-		<span>Add custom ingredient</span>
-		<small>Use this when the app does not have the food you need.</small>
-	</summary>
+<section class="custom-ingredient">
+	<div class="custom-ingredient__intro">
+		<div>
+			<strong>Add custom ingredient</strong>
+			<small>Scan a package or enter its nutrition label yourself.</small>
+		</div>
+		<button
+			class="custom-ingredient__scan"
+			type="button"
+			onclick={() => (scannerOpen = true)}
+			disabled={saving || lookingUpBarcode}
+		>
+			{lookingUpBarcode ? "Looking up…" : "Scan barcode"}
+		</button>
+	</div>
 
-	<fieldset class="custom-ingredient__body" disabled={saving} aria-busy={saving}>
+	<details bind:this={detailsElement}>
+		<summary>
+			<span>Enter label details</span>
+			<small>Use this when scanning is unavailable or the product is not found.</small>
+		</summary>
+
+	<fieldset
+		class="custom-ingredient__body"
+		disabled={saving || lookingUpBarcode}
+		aria-busy={saving || lookingUpBarcode}
+	>
 		<div class="custom-ingredient__grid">
 			<label class="custom-ingredient__wide">
 				<span>Ingredient name</span>
@@ -143,6 +223,31 @@
 					maxlength="120"
 					required
 					bind:value={name}
+				/>
+			</label>
+
+			<label>
+				<span>Brand (optional)</span>
+				<input
+					id="custom-ingredient-brand"
+					name="custom-ingredient-brand"
+					type="text"
+					placeholder="Brand name"
+					maxlength="120"
+					bind:value={brandOwner}
+				/>
+			</label>
+
+			<label>
+				<span>UPC / EAN barcode (optional)</span>
+				<input
+					id="custom-ingredient-barcode"
+					name="custom-ingredient-barcode"
+					type="text"
+					inputmode="numeric"
+					placeholder="Scan or enter the digits"
+					maxlength="18"
+					bind:value={barcode}
 				/>
 			</label>
 
@@ -173,6 +278,10 @@
 				</div>
 			</label>
 		</div>
+
+		{#if barcodeMessage}
+			<p class="custom-ingredient__barcode-message" role="status">{barcodeMessage}</p>
+		{/if}
 
 		<section class="custom-ingredient__volume">
 			<div>
@@ -313,16 +422,60 @@
 			{saving ? "Saving ingredient…" : "Save custom ingredient"}
 		</button>
 	</fieldset>
-</details>
+	</details>
+</section>
+
+{#if scannerOpen}
+	<BarcodeScannerDialog
+		open={scannerOpen}
+		onDetected={handleBarcodeDetected}
+		onClose={() => (scannerOpen = false)}
+	/>
+{/if}
 
 <style lang="scss">
 	@use "../../../styles/variables" as *;
 
 	.custom-ingredient {
+		display: grid;
+		gap: $app-gap-sm;
 		padding: $app-gap-sm;
 		background: $app-bg;
 		border: $app-border;
 		border-radius: $app-card-radius;
+	}
+
+	.custom-ingredient__intro {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: $app-gap-sm;
+
+		div {
+			display: grid;
+			gap: 0.1rem;
+		}
+
+		strong {
+			color: $app-primary;
+		}
+
+		small {
+			color: $app-muted;
+			font-size: $app-font-size-sm;
+		}
+	}
+
+	.custom-ingredient__scan {
+		flex: 0 0 auto;
+		padding: 0.55rem 0.8rem;
+		color: $app-highlight-text;
+		background: $app-highlight;
+		border-radius: $app-radius-pill;
+
+		&:hover:not(:disabled) {
+			background: $app-highlight-hover;
+		}
 	}
 
 	summary {
@@ -412,9 +565,17 @@
 	}
 
 	.custom-ingredient__error,
-	.custom-ingredient__success {
+	.custom-ingredient__success,
+	.custom-ingredient__barcode-message {
 		font-size: 0.84rem;
 		font-weight: 800;
+	}
+
+	.custom-ingredient__barcode-message {
+		padding: $app-gap-sm;
+		color: $app-primary;
+		background: $app-accent;
+		border-radius: $app-radius;
 	}
 
 	.custom-ingredient__error {
@@ -441,6 +602,15 @@
 	}
 
 	@media (max-width: $app-breakpoint-sm) {
+		.custom-ingredient__intro {
+			align-items: stretch;
+			flex-direction: column;
+		}
+
+		.custom-ingredient__scan {
+			width: 100%;
+		}
+
 		.custom-ingredient__grid,
 		.custom-ingredient__nutrition-grid {
 			grid-template-columns: 1fr;

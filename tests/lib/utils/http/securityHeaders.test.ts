@@ -13,12 +13,13 @@ describe("security response headers", () => {
 		expect(response.headers.get("x-frame-options")).toBe("DENY");
 	});
 
-	it("always prevents MIME sniffing and sensitive browser capabilities", () => {
+	it("allows first-party camera use while blocking unrelated sensitive capabilities", () => {
 		const response = new Response();
 		applySecurityHeaders(response, new URL("http://localhost:5173/"), false);
 
 		expect(response.headers.get("x-content-type-options")).toBe("nosniff");
-		expect(response.headers.get("permissions-policy")).toContain("camera=()");
+		expect(response.headers.get("permissions-policy")).toContain("camera=(self)");
+		expect(response.headers.get("permissions-policy")).toContain("microphone=()");
 		expect(response.headers.has("strict-transport-security")).toBe(false);
 	});
 

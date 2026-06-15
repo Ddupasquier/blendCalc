@@ -20,6 +20,7 @@ const config = {
 				'connect-src': [
 					'self',
 					'https://api.nal.usda.gov',
+					'https://world.openfoodfacts.org',
 					'https://*.supabase.co',
 					'wss://*.supabase.co',
 					'https://vitals.vercel-insights.com'

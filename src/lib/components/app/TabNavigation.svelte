@@ -64,7 +64,6 @@
       &.active {
         background: $app-primary;
         color: $app-btn-text;
-        box-shadow: inset 0 -0.18rem 4px $app-highlight;
       }
 
       &:focus {

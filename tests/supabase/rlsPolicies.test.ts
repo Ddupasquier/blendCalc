@@ -27,6 +27,11 @@ const actionValidationMigration = readFileSync(
 	"utf8",
 );
 
+const barcodeMigration = readFileSync(
+	resolve("supabase/migrations/20260614080000_custom_food_barcodes.sql"),
+	"utf8",
+);
+
 const userTables = [
 	"user_food_list_items",
 	"custom_foods",
@@ -143,5 +148,13 @@ describe("Supabase action validation", () => {
 		);
 		expect(actionValidationMigration).toContain("where name_key is not null");
 		expect(actionValidationMigration).toContain("row_number() over");
+	});
+
+	it("enforces unique normalized barcodes per user", () => {
+		expect(barcodeMigration).toContain("custom_foods_barcode_format");
+		expect(barcodeMigration).toContain(
+			"on public.custom_foods (user_id, barcode)",
+		);
+		expect(barcodeMigration).toContain("where barcode is not null");
 	});
 });

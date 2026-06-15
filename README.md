@@ -14,6 +14,8 @@ Mix and match ingredients for making well-balanced smoothies.
 
 ## Getting started
 
+This project uses Node.js 24. With `nvm`, run `nvm use` from the repository root.
+
 ### 1. Install dependencies
 
 ```bash

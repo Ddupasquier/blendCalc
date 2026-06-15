@@ -25,14 +25,21 @@ export type CustomFoodNutritionInput = {
 
 export type CustomFoodInput = {
 	name: string;
+	brandOwner?: string;
 	servingLabel?: string;
 	servingWeightGrams: number;
 	volumeQuantity?: number;
 	volumeUnit?: ServingMeasureUnit;
+	barcode?: string;
+	barcodeSource?: FdcFood["barcodeSource"];
 	nutrition: CustomFoodNutritionInput;
 };
 
-export type CustomFoodSaveResult = "saved" | "duplicate" | "error";
+export type CustomFoodSaveResult =
+	| "saved"
+	| "duplicate-name"
+	| "duplicate-barcode"
+	| "error";
 
 const CUSTOM_NUTRIENT_META = [
 	{
@@ -138,11 +145,14 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 	return {
 		fdcId: createCustomFoodId(),
 		description: input.name.trim(),
+		brandOwner: input.brandOwner?.trim() || undefined,
 		foodCategory: "Custom Ingredient",
 		dataType: "Custom",
 		servingSize: servingWeightGrams,
 		servingSizeUnit: "g",
 		customFood: true,
+		barcode: input.barcode,
+		barcodeSource: input.barcodeSource,
 		customServingLabel: input.servingLabel?.trim() || undefined,
 		customServingWeightGrams: servingWeightGrams,
 		customDensityGramsPerMilliliter: density ?? undefined,
@@ -195,7 +205,10 @@ export const saveCustomFood = async (
 			(item) => normalizeCustomFoodName(item.description) === normalizedName,
 		)
 	) {
-		return "duplicate";
+		return "duplicate-name";
+	}
+	if (food.barcode && foods.some((item) => item.barcode === food.barcode)) {
+		return "duplicate-barcode";
 	}
 
 	const foodRecord = compactFood(food);
@@ -228,6 +241,7 @@ export const searchCustomFoods = (query: string) => {
 			food.brandOwner,
 			food.foodCategory,
 			food.customServingLabel,
+			food.barcode,
 		]
 			.filter(Boolean)
 			.join(" ")

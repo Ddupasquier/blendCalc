@@ -7,6 +7,7 @@
  */
 
 import { cacheGet, cacheSet } from "$lib/cache";
+import { getBarcodeLookupCandidates, normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { FdcFood, FdcSearchResponse } from "$lib/utils/food/types";
 
 const BASE_URL = "https://api.nal.usda.gov/fdc/v1";
@@ -77,4 +78,41 @@ export const getFoodById = async (fdcId: number): Promise<FdcFood> => {
 	const food: FdcFood = await res.json();
 	cacheSet(cacheKey, food);
 	return food;
+};
+
+export const searchBrandedFoodByBarcode = async (
+	barcode: string,
+): Promise<FdcFood | null> => {
+	const canonicalBarcode = normalizeBarcode(barcode);
+	if (!canonicalBarcode) return null;
+
+	const cacheKey = `barcode_fdc_${canonicalBarcode}`;
+	const cached = cacheGet<FdcFood | false>(cacheKey);
+	if (cached !== null) return cached || null;
+
+	for (const candidate of getBarcodeLookupCandidates(barcode)) {
+		const url = buildUrl("/foods/search", {
+			query: candidate,
+			dataType: "Branded",
+			pageSize: "25",
+		});
+		const response = await fetch(url);
+		if (!response.ok) {
+			throw new Error(
+				`FDC barcode search failed: ${response.status} ${response.statusText}`,
+			);
+		}
+
+		const data: FdcSearchResponse = await response.json();
+		const match = (data.foods ?? []).find(
+			(food) => food.gtinUpc && normalizeBarcode(food.gtinUpc) === canonicalBarcode,
+		);
+		if (match) {
+			cacheSet(cacheKey, match);
+			return match;
+		}
+	}
+
+	cacheSet(cacheKey, false, 60 * 60 * 1000);
+	return null;
 };

@@ -4,7 +4,11 @@ import type { FdcFood } from "$lib/utils/food/types";
 import { normalizeCustomFoodName } from "$lib/utils/food/customFoodNames";
 import { getCurrentUserId, toJson } from "./shared";
 
-export type CloudCustomFoodWriteResult = "saved" | "duplicate" | "error";
+export type CloudCustomFoodWriteResult =
+	| "saved"
+	| "duplicate-name"
+	| "duplicate-barcode"
+	| "error";
 
 export const readCloudCustomFoods = async () => {
 	const userId = await getCurrentUserId();
@@ -34,6 +38,8 @@ export const writeCloudCustomFoods = async (foods: FdcFood[]) => {
 		uniqueFoodsById(foods).map((food) => ({
 			user_id: userId,
 			fdc_id: food.fdcId,
+			name_key: normalizeCustomFoodName(food.description),
+			barcode: food.barcode ?? null,
 			food: toJson(compactFood(food)),
 		})),
 		{ onConflict: "user_id,fdc_id" },
@@ -49,19 +55,35 @@ export const saveCloudCustomFood = async (
 	if (!userId) return "error";
 	const supabase = getSupabaseBrowserClient();
 	if (!supabase) return "error";
+	if (food.barcode) {
+		const { data, error: barcodeLookupError } = await supabase
+			.from("custom_foods")
+			.select("id")
+			.eq("user_id", userId)
+			.eq("barcode", food.barcode)
+			.maybeSingle();
+		if (barcodeLookupError) return "error";
+		if (data) return "duplicate-barcode";
+	}
 
 	const { error } = await supabase.from("custom_foods").upsert(
 		{
 			user_id: userId,
 			fdc_id: food.fdcId,
 			name_key: normalizeCustomFoodName(food.description),
+			barcode: food.barcode ?? null,
 			food: toJson(compactFood(food)),
 		},
 		{ onConflict: "user_id,fdc_id" },
 	);
 
 	if (!error) return "saved";
-	if (error.code === "23505") return "duplicate";
+	if (error.code === "23505") {
+		const errorText = `${error.message} ${error.details ?? ""}`;
+		return errorText.includes("custom_foods_user_barcode_unique")
+			? "duplicate-barcode"
+			: "duplicate-name";
+	}
 	return "error";
 };
 

@@ -18,7 +18,11 @@ export interface FdcFood {
     dataType?: string;
     servingSize?: number;
     servingSizeUnit?: string;
+    householdServingFullText?: string;
+    gtinUpc?: string;
     customFood?: boolean;
+    barcode?: string;
+    barcodeSource?: "open-food-facts" | "usda" | "manual";
     customServingLabel?: string;
     customServingWeightGrams?: number;
     customDensityGramsPerMilliliter?: number;
