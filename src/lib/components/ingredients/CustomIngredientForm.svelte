@@ -46,7 +46,6 @@
 	let frontPhoto = $state<File | null>(null);
 	let nutritionPhoto = $state<File | null>(null);
 	let barcodePhoto = $state<File | null>(null);
-	let customIngredientDetails: HTMLDetailsElement;
 	let labelDetailsElement: HTMLDetailsElement;
 	let hasValidBarcode = $derived(Boolean(normalizeBarcode(barcode)));
 	let canShareWithCatalog = $derived(
@@ -118,7 +117,6 @@
 		error = "";
 		barcodeMessage = "Looking up this product…";
 		barcode = result.canonicalValue;
-		customIngredientDetails.open = true;
 		labelDetailsElement.open = true;
 
 		try {
@@ -256,30 +254,48 @@
 	};
 </script>
 
-<details class="custom-ingredient" bind:this={customIngredientDetails}>
-	<summary class="custom-ingredient__toggle">
-		<span>
-			<strong>Add custom ingredient</strong>
-			<small>Scan a package or enter its nutrition label yourself.</small>
-		</span>
-		<span class="custom-ingredient__chevron" aria-hidden="true">⌄</span>
-	</summary>
+<section class="custom-ingredient" aria-labelledby="custom-ingredient-title">
+	<header class="custom-ingredient__intro">
+		<h2 id="custom-ingredient-title">Add custom ingredient</h2>
+		<p>Choose the fastest option for the package or food you have.</p>
+	</header>
 
-	<div class="custom-ingredient__content">
-		<button
-			class="custom-ingredient__scan"
-			type="button"
-			onclick={() => (scannerOpen = true)}
-			disabled={saving || lookingUpBarcode}
+	<div class="custom-ingredient__options">
+		<section class="custom-ingredient__scan-option" aria-labelledby="barcode-option-title">
+			<div class="custom-ingredient__option-copy">
+				<span class="custom-ingredient__eyebrow">Quick add</span>
+				<h3 id="barcode-option-title">Scan a package barcode</h3>
+				<p>Use your camera to find the product and fill its label details automatically.</p>
+			</div>
+			<button
+				class="custom-ingredient__scan"
+				type="button"
+				onclick={() => (scannerOpen = true)}
+				disabled={saving || lookingUpBarcode}
+			>
+				<svg viewBox="0 0 36 24" aria-hidden="true">
+					<path d="M2 3v18M6 3v18M10 3v18M15 3v18M18 3v18M23 3v18M28 3v18M31 3v18M34 3v18" />
+				</svg>
+				<span>{lookingUpBarcode ? "Looking up product…" : "Scan barcode"}</span>
+			</button>
+		</section>
+
+		<div class="custom-ingredient__divider" aria-hidden="true"><span>or</span></div>
+
+		<details
+			class="custom-ingredient__manual"
+			bind:this={labelDetailsElement}
 		>
-			{lookingUpBarcode ? "Looking up…" : "Scan barcode"}
-		</button>
-
-	<details bind:this={labelDetailsElement}>
-		<summary>
-			<span>Enter label details</span>
-			<small>Use this when scanning is unavailable or the product is not found.</small>
-		</summary>
+			<summary class="custom-ingredient__manual-toggle">
+				<span class="custom-ingredient__option-copy">
+					<span class="custom-ingredient__eyebrow">Manual entry</span>
+					<strong>Enter label details</strong>
+					<small>Use this when scanning is unavailable or the product is not found.</small>
+				</span>
+				<svg class="custom-ingredient__manual-chevron" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="m6 9 6 6 6-6" />
+				</svg>
+			</summary>
 
 	<fieldset
 		class="custom-ingredient__body"
@@ -606,9 +622,9 @@
 			{saving ? "Saving ingredient…" : "Save custom ingredient"}
 		</button>
 	</fieldset>
-	</details>
+		</details>
 	</div>
-</details>
+</section>
 
 {#if scannerOpen}
 	<BarcodeScannerDialog
@@ -622,91 +638,195 @@
 	@use "../../../styles/variables" as *;
 
 	.custom-ingredient {
-		padding: $app-gap-sm;
+		display: grid;
+		gap: $app-gap-md;
+		padding: $app-gap-md;
 		background: $app-bg;
+		border: $app-border;
+		border-radius: $app-card-radius;
+		box-shadow: $app-card-shadow;
+	}
+
+	.custom-ingredient__intro {
+		display: grid;
+		gap: $app-gap-xs;
+
+		h2 {
+			color: $app-primary;
+			font-family: $app-font-family-display;
+			font-size: $app-font-size-xl;
+		}
+
+		p {
+			color: $app-muted;
+			font-size: $app-font-size-md;
+		}
+	}
+
+	.custom-ingredient__options {
+		display: grid;
+		gap: $app-gap-sm;
+	}
+
+	.custom-ingredient__scan-option {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+		gap: $app-gap-md;
+		padding: $app-gap-md;
+		background:
+			linear-gradient(135deg, color-mix(in srgb, $app-highlight 20%, transparent), transparent 58%),
+			$app-section-bg;
+		border: 2px solid $app-highlight;
+		border-radius: $app-card-radius;
+		box-shadow: $app-highlight-shadow;
+	}
+
+	.custom-ingredient__option-copy {
+		display: grid;
+		gap: 0.15rem;
+		min-width: 0;
+
+		h3,
+		strong {
+			color: $app-primary;
+			font-family: $app-font-family-display;
+			font-size: $app-font-size-lg;
+			font-weight: $app-font-weight-bold;
+		}
+
+		p,
+		small {
+			color: $app-muted;
+			font-size: $app-font-size-sm;
+			font-weight: $app-font-weight-medium;
+			line-height: 1.4;
+		}
+	}
+
+	.custom-ingredient__eyebrow {
+		color: $app-warning-strong;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-bold;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.custom-ingredient__scan {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: $app-gap-sm;
+		width: 11.5rem;
+		min-height: 3rem;
+		padding: 0.65rem 0.9rem;
+		color: $app-highlight-text;
+		background: $app-highlight;
+		border: 1.5px solid $app-highlight-hover;
+		border-radius: $app-radius;
+		box-shadow: $app-highlight-shadow;
+
+		svg {
+			width: 2rem;
+			height: 1.35rem;
+			fill: none;
+			stroke: currentColor;
+			stroke-width: 1.8;
+		}
+
+		&:hover:not(:disabled) {
+			background: $app-highlight-hover;
+			box-shadow: $app-highlight-shadow-hover;
+		}
+	}
+
+	.custom-ingredient__divider {
+		display: grid;
+		grid-template-columns: 1fr auto 1fr;
+		align-items: center;
+		gap: $app-gap-sm;
+		color: $app-primary;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-bold;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+
+		&::before,
+		&::after {
+			content: "";
+			height: 1px;
+			background: $color-orchid-mist;
+		}
+	}
+
+	.custom-ingredient__manual {
+		overflow: hidden;
+		background: $app-section-bg;
 		border: $app-border;
 		border-radius: $app-card-radius;
 	}
 
-	.custom-ingredient__toggle {
+	.custom-ingredient__manual-toggle {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: $app-gap-sm;
+		gap: $app-gap-md;
+		padding: $app-gap-md;
+		cursor: pointer;
 		list-style: none;
 
 		&::-webkit-details-marker {
 			display: none;
 		}
 
-		> span:first-child {
-			display: grid;
-			gap: 0.1rem;
-			min-width: 0;
+		&:hover {
+			background: color-mix(in srgb, $app-accent 18%, transparent);
 		}
 
-		strong {
-			color: $app-primary;
-		}
-
-		small {
-			color: $app-muted;
-			font-size: $app-font-size-sm;
+		&:focus-visible {
+			outline: $app-focus-outline;
+			outline-offset: -3px;
 		}
 	}
 
-	.custom-ingredient__chevron {
+	.custom-ingredient__manual-chevron {
+		width: 1.5rem;
+		height: 1.5rem;
 		flex: 0 0 auto;
-		font-size: $app-font-size-lg;
-		line-height: 1;
+		fill: none;
+		stroke: $app-primary;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		stroke-width: 2.25;
 		transition: transform 180ms ease;
 	}
 
-	.custom-ingredient[open] .custom-ingredient__chevron {
+	.custom-ingredient__manual[open] .custom-ingredient__manual-chevron {
 		transform: rotate(180deg);
 	}
 
-	.custom-ingredient__content {
-		display: grid;
-		gap: $app-gap-sm;
-		margin-top: $app-gap-sm;
-		padding-top: $app-gap-sm;
-		border-top: $app-border;
-	}
-
-	.custom-ingredient__scan {
-		justify-self: start;
-		padding: 0.55rem 0.8rem;
-		color: $app-highlight-text;
-		background: $app-highlight;
-		border-radius: $app-radius-pill;
-
-		&:hover:not(:disabled) {
-			background: $app-highlight-hover;
-		}
-	}
-
-	summary {
+	.custom-ingredient__imported-nutrients summary {
 		display: grid;
 		gap: 0.1rem;
 		color: $app-primary;
 		cursor: pointer;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 		list-style-position: inside;
 
 		small {
 			color: $app-muted;
-			font-size: 0.78rem;
-			font-weight: 600;
+			font-size: $app-font-size-sm;
+			font-weight: $app-font-weight-medium;
 		}
 	}
 
 	.custom-ingredient__body {
 		display: grid;
 		gap: $app-gap-md;
-		margin-top: $app-gap-md;
-		padding: 0;
+		margin: 0;
+		padding: $app-gap-md;
 		border: 0;
+		border-top: $app-border;
 		min-inline-size: 0;
 	}
 
@@ -907,6 +1027,16 @@
 	}
 
 	@media (max-width: $app-breakpoint-sm) {
+		.custom-ingredient {
+			padding: $app-gap-sm;
+		}
+
+		.custom-ingredient__scan-option {
+			grid-template-columns: 1fr;
+			gap: $app-gap-sm;
+			padding: $app-gap-sm;
+		}
+
 		.custom-ingredient__scan {
 			width: 100%;
 		}

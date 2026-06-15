@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
+	import CloseButton from "$lib/components/common/CloseButton.svelte";
 
 	let {
 		buttonLabel = "Details",
@@ -25,16 +26,19 @@
 	</button>
 
 	{#if open}
-		<div class="popover__panel" role="dialog">
+		<div class="popover__panel" role="dialog" aria-label={title || buttonLabel}>
+			<CloseButton
+				class="popover__close"
+				size="small"
+				label={`Close ${title || buttonLabel}`}
+				onclick={() => (open = false)}
+			/>
 			{#if title}
 				<h5>{title}</h5>
 			{/if}
 			{#if children}
 				{@render children()}
 			{/if}
-			<button class="popover__close" type="button" onclick={() => (open = false)}>
-				Close
-			</button>
 		</div>
 	{/if}
 </div>
@@ -65,12 +69,18 @@
 		top: calc(100% + 0.4rem);
 		z-index: 20;
 		width: min(20rem, 82vw);
-		padding: $app-gap-sm;
+		padding: calc(1.75rem + 2 * $app-gap-xs) $app-gap-sm $app-gap-sm;
 		background: $app-section-bg;
 		border: $app-border;
 		border-radius: $app-card-radius;
 		box-shadow: $app-popover-shadow;
 		color: $app-primary;
+	}
+
+	:global(.popover__close) {
+		position: absolute;
+		top: $app-gap-xs;
+		right: $app-gap-xs;
 	}
 
 	h5 {
@@ -79,14 +89,4 @@
 		font-weight: 800;
 	}
 
-	.popover__close {
-		margin-top: $app-gap-sm;
-		padding: 0.35rem 0.7rem;
-		background: $app-btn-bg;
-		color: $app-btn-text;
-		border-radius: $app-radius-pill;
-		font-size: $app-font-size-sm;
-		font-weight: $app-button-font-weight;
-		line-height: $app-button-line-height;
-	}
 </style>

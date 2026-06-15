@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import CloseButton from "$lib/components/common/CloseButton.svelte";
 	import {
 		isNativeBarcodePlatform,
 		scanNativeBarcode,
 		startWebBarcodeScanner,
 	} from "$lib/utils/barcode/scanner";
-	import type { BarcodeScanResult, BarcodeScannerStop } from "$lib/utils/barcode/types";
+	import type {
+		BarcodeScanResult,
+		BarcodeScannerStop,
+	} from "$lib/utils/barcode/types";
 
 	let {
 		open,
@@ -51,7 +55,8 @@
 					},
 				});
 			} catch {
-				error = "Barcode scanning could not start. Enter the barcode manually instead.";
+				error =
+					"Barcode scanning could not start. Enter the barcode manually instead.";
 			} finally {
 				starting = false;
 			}
@@ -83,16 +88,25 @@
 			<header>
 				<div>
 					<h2 id="barcode-scanner-title">Scan a package barcode</h2>
-					<p id="barcode-scanner-help">Hold the barcode steady inside the camera view.</p>
+					<p id="barcode-scanner-help">
+						Hold the barcode steady inside the camera view.
+					</p>
 				</div>
-				<button type="button" aria-label="Close barcode scanner" onclick={close}>×</button>
+				<CloseButton label="Close barcode scanner" onclick={close} />
 			</header>
 
 			<div class="barcode-scanner__camera">
-				<video bind:this={video} muted playsinline aria-label="Live camera preview"></video>
+				<video
+					bind:this={video}
+					muted
+					playsinline
+					aria-label="Live camera preview"
+				></video>
 				<div class="barcode-scanner__target" aria-hidden="true"></div>
 				{#if starting}
-					<p class="barcode-scanner__status" role="status">Starting camera…</p>
+					<p class="barcode-scanner__status" role="status">
+						Starting camera…
+					</p>
 				{/if}
 			</div>
 
@@ -100,7 +114,7 @@
 				<p class="barcode-scanner__error" role="alert">{error}</p>
 			{/if}
 
-			<button class="barcode-scanner__cancel" type="button" onclick={close}>Cancel</button>
+			<!-- <button class="barcode-scanner__cancel" type="button" onclick={close}>Cancel</button> -->
 		</div>
 	</div>
 {/if}
@@ -145,15 +159,6 @@
 			color: $app-muted;
 			font-size: $app-font-size-md;
 			line-height: 1.4;
-		}
-
-		header button {
-			width: 2rem;
-			height: 2rem;
-			color: $app-primary;
-			background: $app-accent;
-			border-radius: 50%;
-			font-size: 1.2rem;
 		}
 	}
 

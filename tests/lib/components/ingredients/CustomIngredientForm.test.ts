@@ -23,7 +23,6 @@ vi.mock("$lib/utils/products/catalog", () => ({
 import CustomIngredientForm from "$lib/components/ingredients/CustomIngredientForm.svelte";
 
 const openManualForm = async () => {
-	await fireEvent.click(screen.getByText("Add custom ingredient"));
 	await fireEvent.click(screen.getByText("Enter label details"));
 };
 
@@ -48,6 +47,22 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByRole("alert")).toHaveTextContent(
 			"Add a name for this ingredient.",
 		);
+	});
+
+	it("keeps barcode scanning visible while manual entry starts collapsed", () => {
+		render(CustomIngredientForm, {
+			props: {
+				onCreate: vi.fn(),
+			},
+		});
+
+		expect(
+			screen.getByRole("button", { name: /scan barcode/i }),
+		).toBeVisible();
+		expect(screen.getByText("Enter label details").closest("details")).not.toHaveAttribute(
+			"open",
+		);
+		expect(screen.queryByLabelText(/ingredient name/i)).not.toBeVisible();
 	});
 
 	it("creates a custom ingredient from label nutrition values", async () => {
@@ -180,7 +195,7 @@ describe("CustomIngredientForm", () => {
 	it("can be closed and reopened without clearing unfinished input", async () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
-		const toggle = screen.getByText("Add custom ingredient");
+		const toggle = screen.getByText("Enter label details");
 		const panel = toggle.closest("details");
 		expect(panel).not.toHaveAttribute("open");
 
