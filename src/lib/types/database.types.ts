@@ -153,6 +153,126 @@ export type Database = {
         }
         Relationships: []
       }
+      food_nutrients: {
+        Row: {
+          amount_per_100g: number
+          confidence: string
+          created_at: string
+          custom_food_id: string | null
+          id: number
+          nutrient_id: number
+          owner_user_id: string | null
+          shared_product_id: string | null
+          shared_product_observation_id: string | null
+          shared_product_revision_id: string | null
+          shared_product_submission_id: string | null
+          source: string
+          source_observation_id: string | null
+          source_reference: string | null
+          unit_name: string
+          updated_at: string
+          user_food_list_item_id: string | null
+          value_origin: string
+        }
+        Insert: {
+          amount_per_100g: number
+          confidence: string
+          created_at?: string
+          custom_food_id?: string | null
+          id?: never
+          nutrient_id: number
+          owner_user_id?: string | null
+          shared_product_id?: string | null
+          shared_product_observation_id?: string | null
+          shared_product_revision_id?: string | null
+          shared_product_submission_id?: string | null
+          source: string
+          source_observation_id?: string | null
+          source_reference?: string | null
+          unit_name: string
+          updated_at?: string
+          user_food_list_item_id?: string | null
+          value_origin: string
+        }
+        Update: {
+          amount_per_100g?: number
+          confidence?: string
+          created_at?: string
+          custom_food_id?: string | null
+          id?: never
+          nutrient_id?: number
+          owner_user_id?: string | null
+          shared_product_id?: string | null
+          shared_product_observation_id?: string | null
+          shared_product_revision_id?: string | null
+          shared_product_submission_id?: string | null
+          source?: string
+          source_observation_id?: string | null
+          source_reference?: string | null
+          unit_name?: string
+          updated_at?: string
+          user_food_list_item_id?: string | null
+          value_origin?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_nutrients_custom_food_id_fkey"
+            columns: ["custom_food_id"]
+            isOneToOne: false
+            referencedRelation: "custom_foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_nutrients_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "food_nutrients_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_nutrients_shared_product_observation_id_fkey"
+            columns: ["shared_product_observation_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_nutrients_shared_product_revision_id_fkey"
+            columns: ["shared_product_revision_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_revisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_nutrients_shared_product_submission_id_fkey"
+            columns: ["shared_product_submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_nutrients_source_observation_id_fkey"
+            columns: ["source_observation_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_nutrients_user_food_list_item_id_fkey"
+            columns: ["user_food_list_item_id"]
+            isOneToOne: false
+            referencedRelation: "user_food_list_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mix_preferences: {
         Row: {
           created_at: string
@@ -262,6 +382,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      nutrient_definitions: {
+        Row: {
+          created_at: string
+          default_unit_name: string
+          nutrient_id: number
+          nutrient_name: string
+          nutrient_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_unit_name: string
+          nutrient_id: number
+          nutrient_name: string
+          nutrient_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_unit_name?: string
+          nutrient_id?: number
+          nutrient_name?: string
+          nutrient_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       product_api_cache: {
         Row: {
@@ -806,6 +953,22 @@ export type Database = {
         Returns: string
       }
       reject_blocked_signup: { Args: { event: Json }; Returns: Json }
+      replace_food_nutrients: {
+        Args: {
+          p_custom_food_id: string
+          p_default_confidence: string
+          p_default_source: string
+          p_default_source_reference: string
+          p_food: Json
+          p_owner_user_id: string
+          p_shared_product_id: string
+          p_shared_product_observation_id: string
+          p_shared_product_revision_id: string
+          p_shared_product_submission_id: string
+          p_user_food_list_item_id: string
+        }
+        Returns: undefined
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }

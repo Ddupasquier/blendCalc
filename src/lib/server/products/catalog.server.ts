@@ -3,9 +3,14 @@ import type { Database, Json } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import { compactFood } from "$lib/utils/food/foodRecords";
+import {
+	hydrateFoodWithNormalizedNutrients,
+	type NormalizedNutrientRow,
+} from "$lib/utils/food/normalizedNutrients";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
 import { toJson } from "$lib/utils/storage/supabase/shared";
+import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
 	buildModeratorReviewedCatalogBundle,
@@ -96,12 +101,18 @@ const enrichCatalogFood = (
 		food: Json;
 		confidence: string;
 	},
-) => ({
-	...(row.food as unknown as FdcFood),
-	sharedProductId: row.id,
-	sharedProductConfidence: row.confidence as FdcFood["sharedProductConfidence"],
-	customFood: false,
-});
+	nutrientRows?: NormalizedNutrientRow[],
+) =>
+	hydrateFoodWithNormalizedNutrients(
+		{
+			...(row.food as unknown as FdcFood),
+			sharedProductId: row.id,
+			sharedProductConfidence:
+				row.confidence as FdcFood["sharedProductConfidence"],
+			customFood: false,
+		},
+		nutrientRows,
+	);
 
 export const getSharedProductByBarcode = async (
 	supabase: SupabaseClient<Database>,
@@ -117,7 +128,13 @@ export const getSharedProductByBarcode = async (
 		.eq("status", "active")
 		.maybeSingle();
 	if (error) throw error;
-	return data ? enrichCatalogFood(data) : null;
+	if (!data) return null;
+	const normalizedRows = await readNormalizedNutrientsByParent(
+		supabase,
+		"shared_product_id",
+		[data.id],
+	);
+	return enrichCatalogFood(data, normalizedRows?.get(data.id));
 };
 
 export const searchApprovedSharedProducts = async (
@@ -143,7 +160,13 @@ export const searchApprovedSharedProducts = async (
 
 	const { data, error } = await request;
 	if (error) throw error;
-	return (data ?? []).map(enrichCatalogFood);
+	const rows = data ?? [];
+	const normalizedRows = await readNormalizedNutrientsByParent(
+		supabase,
+		"shared_product_id",
+		rows.map((row) => row.id),
+	);
+	return rows.map((row) => enrichCatalogFood(row, normalizedRows?.get(row.id)));
 };
 
 const publishSubmission = async (input: {

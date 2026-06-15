@@ -1,8 +1,10 @@
 import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/foodRecords";
+import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/normalizedNutrients";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { SmoothieListKey } from "$lib/utils/storage/smoothieLists";
+import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
 import {
 	CLOUD_CURSOR_PAGE_SIZE,
 	getCurrentUserId,
@@ -36,8 +38,18 @@ export const readCloudSmoothieList = async (key: SmoothieListKey) => {
 	});
 
 	if (!rows) return null;
+	const normalizedRows = await readNormalizedNutrientsByParent(
+		supabase,
+		"user_food_list_item_id",
+		rows.map((row) => row.id),
+	);
 	return rows
-		.map((row) => compactFood(row.food as unknown as FdcFood))
+		.map((row) =>
+			hydrateFoodWithNormalizedNutrients(
+				row.food as unknown as FdcFood,
+				normalizedRows?.get(row.id),
+			),
+		)
 		.sort((first, second) =>
 			first.description.localeCompare(second.description),
 		);

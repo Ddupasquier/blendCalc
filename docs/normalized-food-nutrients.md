@@ -50,6 +50,27 @@ deletes its nutrient rows through foreign-key cascades.
 
 The migration also backfills all existing food snapshots.
 
+## Application reads
+
+The application hydrates the existing `FdcFood.foodNutrients` contract from the
+normalized tables for:
+
+- fridge and shopping-list items
+- saved custom foods
+- active shared catalog products returned by barcode lookup or search
+
+Reads are batched by parent ID and nutrient definitions are fetched once per
+batch. Existing graph, nutrition-total, warning, and nutrient-detail code then
+uses the hydrated values without needing a second data model.
+
+The embedded `food` JSON remains the automatic fallback when normalized rows are
+empty or unavailable. This permits a safe deployment order: application code can
+ship before the migration, and older or incomplete records remain readable.
+
+Saved drinks intentionally retain their embedded recipe snapshots. Loading a
+saved drink continues to reproduce what the user saved rather than silently
+changing historical recipe nutrition when catalog data changes.
+
 ## Access control
 
 - Users can read normalized rows owned by their account.
@@ -105,5 +126,5 @@ npm run db:push
 npm run db:types
 ```
 
-Application reads can move from JSON to normalized queries incrementally. There
-is no required all-at-once migration.
+Run `db:types` after `db:push`; the checked-in database types include the new
+tables so this branch can compile before the remote migration is applied.

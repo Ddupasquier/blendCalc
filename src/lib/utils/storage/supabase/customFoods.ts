@@ -1,7 +1,9 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/foodRecords";
+import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/normalizedNutrients";
 import type { FdcFood } from "$lib/utils/food/types";
 import { normalizeCustomFoodName } from "$lib/utils/food/customFoodNames";
+import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
 import { getCurrentUserId, toJson } from "./shared";
 
 export type CloudCustomFoodWriteResult =
@@ -18,12 +20,22 @@ export const readCloudCustomFoods = async () => {
 
 	const { data, error } = await supabase
 		.from("custom_foods")
-		.select("food")
+		.select("id, food")
 		.eq("user_id", userId)
 		.order("created_at", { ascending: false });
 
 	if (error) return null;
-	return data.map((row) => compactFood(row.food as unknown as FdcFood));
+	const normalizedRows = await readNormalizedNutrientsByParent(
+		supabase,
+		"custom_food_id",
+		data.map((row) => row.id),
+	);
+	return data.map((row) =>
+		hydrateFoodWithNormalizedNutrients(
+			row.food as unknown as FdcFood,
+			normalizedRows?.get(row.id),
+		),
+	);
 };
 
 export const writeCloudCustomFoods = async (foods: FdcFood[]) => {

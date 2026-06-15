@@ -31,6 +31,10 @@ export const compactFood = (food: FdcFood): FdcFood => {
 			nutrientNumber: nutrient.nutrientNumber,
 			unitName: nutrient.unitName,
 			value: nutrient.value,
+			valueOrigin: nutrient.valueOrigin,
+			source: nutrient.source,
+			sourceReference: nutrient.sourceReference,
+			confidence: nutrient.confidence,
 		})),
 	};
 };

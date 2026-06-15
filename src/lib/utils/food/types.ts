@@ -5,6 +5,23 @@ export interface FdcNutrient {
     nutrientNumber: string;
     unitName: string;
     value: number;
+    valueOrigin?: "reported" | "derived";
+    source?:
+        | "usda"
+        | "open-food-facts"
+        | "user-label"
+        | "manufacturer"
+        | "gs1"
+        | "community-reviewed"
+        | "unknown";
+    sourceReference?: string;
+    confidence?:
+        | "source-verified"
+        | "moderator-reviewed"
+        | "corroborated"
+        | "user-reported"
+        | "imported"
+        | "unknown";
 }
 
 /** A food item returned from the FDC search endpoint */
