@@ -83,6 +83,10 @@ Tests run entirely offline using mocked fetch — no API key required.
 See [`docs/shared-product-catalog.md`](docs/shared-product-catalog.md) for the
 barcode verification and shared-product moderation model.
 
+See [`docs/normalized-food-nutrients.md`](docs/normalized-food-nutrients.md) for
+the normalized nutrient query model, provenance fields, synchronization, and
+deployment steps.
+
 To compare live FDC product data while debugging nutrient mappings:
 
 ```bash
