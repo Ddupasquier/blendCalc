@@ -12,7 +12,10 @@
 			This starter keeps authentication, deployment, and app structure in place.
 			Replace this page with your product-specific experience.
 		</p>
-		<a href={`/auth?next=${encodeURIComponent(data.next)}`}>Sign in to continue →</a>
+		<a href={`/auth?next=${encodeURIComponent(data.next)}`}>
+			Sign in to continue
+			<span aria-hidden="true">→</span>
+		</a>
 	</div>
 </section>
 
@@ -47,6 +50,9 @@
 	}
 
 	a {
+		display: inline-flex;
+		gap: 0.5rem;
+		align-items: center;
 		width: fit-content;
 		padding: 0.7rem 1.1rem;
 		color: $app-highlight-text;

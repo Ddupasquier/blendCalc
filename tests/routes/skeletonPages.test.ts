@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import LandingPage from "../../src/routes/+page.svelte";
-import StarterPage from "../../src/routes/fridge/+page.svelte";
+import StarterWorkspacePage from "../../src/routes/workspace/+page.svelte";
 
 describe("skeleton pages", () => {
 	it("renders the starter landing page with auth link", () => {
@@ -9,20 +9,20 @@ describe("skeleton pages", () => {
 			props: {
 				data: {
 					authUser: null,
-					next: "/fridge",
+					next: "/workspace",
 				},
 			},
 		});
 
 		expect(screen.getByText("Blank app skeleton")).toBeInTheDocument();
-		expect(screen.getByRole("link", { name: "Sign in to continue →" })).toHaveAttribute(
+		expect(screen.getByRole("link", { name: "Sign in to continue" })).toHaveAttribute(
 			"href",
-			"/auth?next=%2Ffridge",
+			"/auth?next=%2Fworkspace",
 		);
 	});
 
 	it("renders a protected starter workspace placeholder", () => {
-		render(StarterPage);
+		render(StarterWorkspacePage);
 
 		expect(screen.getByText("Starter workspace")).toBeInTheDocument();
 		expect(

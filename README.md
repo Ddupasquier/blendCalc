@@ -2,6 +2,8 @@
 
 This repository is now a blank SvelteKit starter with Supabase auth plumbing and Vercel adapter configuration.
 
+After sign-in, the default protected landing page is `/workspace`.
+
 ## What stays in the skeleton
 
 - SvelteKit app structure
