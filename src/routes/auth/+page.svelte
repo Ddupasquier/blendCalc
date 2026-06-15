@@ -63,13 +63,13 @@
 	<FloatingFruitBackground focusElement={authCard} />
 	<div class="auth-card" bind:this={authCard}>
 		<div class="auth-card__header">
-			<a class="auth-brand" href="/">Smoothie Mixer</a>
-			<p class="auth-eyebrow">Your smoothie space</p>
+			<a class="auth-brand" href="/">Starter App</a>
+			<p class="auth-eyebrow">Starter authentication</p>
 			<h1>{authMode === "signUp" ? "Create your account." : "Welcome back."}</h1>
 			<p>
 				{authMode === "signUp"
-					? "Save your ingredients, drinks, and nutrition goals securely to your account."
-					: "Sign in to pick up your fridge, saved drinks, and nutrition goals right where you left them."}
+					? "Create an account to start with Supabase-backed authentication."
+					: "Sign in to access your protected app routes."}
 			</p>
 		</div>
 
