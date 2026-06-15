@@ -34,6 +34,7 @@ export type CustomFoodInput = {
 	barcodeSource?: FdcFood["barcodeSource"];
 	nutrition: CustomFoodNutritionInput;
 	additionalNutrients?: FdcNutrient[];
+	reportedNutrientIds?: number[];
 };
 
 export type CustomFoodSaveResult =
@@ -168,6 +169,12 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 			? servingWeightGrams / volumeMilliliters
 			: null;
 
+	const foodNutrients = createNutrients(
+		input.nutrition,
+		servingWeightGrams,
+		input.additionalNutrients,
+	);
+
 	return {
 		fdcId: createCustomFoodId(),
 		description: input.name.trim(),
@@ -185,11 +192,10 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		customDensityLabel: density ? "custom serving" : undefined,
 		customDensityVariancePercent: density ? 0 : undefined,
 		customDensityConfidence: density ? "known" : undefined,
-		foodNutrients: createNutrients(
-			input.nutrition,
-			servingWeightGrams,
-			input.additionalNutrients,
-		),
+		foodNutrients,
+		reportedNutrientIds: input.reportedNutrientIds
+			? [...new Set(input.reportedNutrientIds)]
+			: foodNutrients.map((nutrient) => nutrient.nutrientId),
 	};
 };
 

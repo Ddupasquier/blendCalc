@@ -43,10 +43,16 @@
 	let barcodeMessage = $state("");
 	let shareWithCatalog = $state(false);
 	let catalogMessage = $state("");
+	let frontPhoto = $state<File | null>(null);
+	let nutritionPhoto = $state<File | null>(null);
+	let barcodePhoto = $state<File | null>(null);
 	let detailsElement: HTMLDetailsElement;
 	let hasValidBarcode = $derived(Boolean(normalizeBarcode(barcode)));
 	let canShareWithCatalog = $derived(
 		hasValidBarcode && barcodeSource !== "open-food-facts" && barcodeSource !== "community",
+	);
+	let requiresCatalogEvidence = $derived(
+		shareWithCatalog && barcodeSource === "manual",
 	);
 
 	let nutrition = $state<CustomFoodNutritionInput>({
@@ -92,6 +98,9 @@
 		barcodeSource = "manual";
 		barcodeMessage = "";
 		shareWithCatalog = false;
+		frontPhoto = null;
+		nutritionPhoto = null;
+		barcodePhoto = null;
 		nutrition = {
 			calories: 0,
 			fat: 0,
@@ -186,6 +195,14 @@
 			return;
 		}
 
+		if (
+			requiresCatalogEvidence &&
+			(!frontPhoto || !nutritionPhoto || !barcodePhoto)
+		) {
+			error = "Add front package, nutrition label, and barcode photos before sharing this product.";
+			return;
+		}
+
 		const food = createCustomFood({
 			name,
 			brandOwner,
@@ -219,7 +236,11 @@
 			savedMessage = `${food.description} saved as a custom ingredient.`;
 			if (shareWithCatalog && normalizedBarcode) {
 				try {
-					const submission = await submitSharedProduct(food);
+					const submission = await submitSharedProduct(food, {
+						frontPhoto,
+						nutritionPhoto,
+						barcodePhoto,
+					});
 					catalogMessage = submission.message;
 				} catch {
 					catalogMessage =
@@ -347,6 +368,52 @@
 					</small>
 				</span>
 			</label>
+			{#if requiresCatalogEvidence}
+				<section class="custom-ingredient__evidence" aria-labelledby="product-evidence-title">
+					<div>
+						<strong id="product-evidence-title">Photos for catalog review</strong>
+						<p>
+							These private photos let a moderator confirm the package, nutrition
+							facts, and barcode before other users can find the product.
+						</p>
+					</div>
+					<div class="custom-ingredient__grid">
+						<label>
+							<span>Front of package</span>
+							<input
+								id="custom-product-front-photo"
+								name="custom-product-front-photo"
+								type="file"
+								accept="image/jpeg,image/png,image/webp"
+								required
+								onchange={(event) => (frontPhoto = event.currentTarget.files?.[0] ?? null)}
+							/>
+						</label>
+						<label>
+							<span>Nutrition facts label</span>
+							<input
+								id="custom-product-nutrition-photo"
+								name="custom-product-nutrition-photo"
+								type="file"
+								accept="image/jpeg,image/png,image/webp"
+								required
+								onchange={(event) => (nutritionPhoto = event.currentTarget.files?.[0] ?? null)}
+							/>
+						</label>
+						<label class="custom-ingredient__wide">
+							<span>Barcode</span>
+							<input
+								id="custom-product-barcode-photo"
+								name="custom-product-barcode-photo"
+								type="file"
+								accept="image/jpeg,image/png,image/webp"
+								required
+								onchange={(event) => (barcodePhoto = event.currentTarget.files?.[0] ?? null)}
+							/>
+						</label>
+					</div>
+				</section>
+			{/if}
 		{:else if hasValidBarcode && barcodeSource === "open-food-facts"}
 			<p class="custom-ingredient__barcode-message">
 				This product is already available through Open Food Facts, so no catalog
@@ -658,7 +725,8 @@
 	}
 
 	.custom-ingredient__volume,
-	.custom-ingredient__nutrition {
+	.custom-ingredient__nutrition,
+	.custom-ingredient__evidence {
 		display: grid;
 		gap: $app-gap-sm;
 		padding-top: $app-gap-sm;
@@ -673,6 +741,17 @@
 			color: $app-muted;
 			font-size: 0.8rem;
 			line-height: 1.35;
+		}
+	}
+
+	.custom-ingredient__evidence > div:first-child {
+		display: grid;
+		gap: $app-gap-xs;
+
+		p {
+			color: $app-muted;
+			font-size: $app-font-size-sm;
+			line-height: 1.4;
 		}
 	}
 

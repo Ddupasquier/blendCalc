@@ -107,11 +107,15 @@ describe("saved drinks", () => {
 
 		expect(await restoreSavedDrinkToMix(drink)).toBe(true);
 
-		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)).toEqual([food]);
-		expect(readSmoothieList(MIX_STORAGE_KEYS.shoppingList)).toEqual([kale]);
+		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)).toEqual([
+			expect.objectContaining(food),
+		]);
+		expect(readSmoothieList(MIX_STORAGE_KEYS.shoppingList)).toEqual([
+			expect.objectContaining(kale),
+		]);
 		expect(cloudData.writeCloudSmoothieList).toHaveBeenCalledWith(
 			MIX_STORAGE_KEYS.shoppingList,
-			[kale],
+			[expect.objectContaining(kale)],
 		);
 	});
 

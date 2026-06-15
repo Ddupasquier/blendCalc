@@ -114,7 +114,7 @@ src/
 │   │   └── smoothie.svelte.ts # Active smoothie state + saved smoothies
 │   ├── cache.ts               # localStorage TTL cache
 │   └── utils/
-│       ├── fdc.ts             # FoodData Central API client (cached)
+│       ├── fdc.ts             # Browser client for the server-side FDC search route
 │       ├── fdcNutrients.ts    # FDC nutrient ID/name fallbacks
 │       ├── servingAmount.ts   # Weight/volume to grams conversion
 │       └── types.ts           # Shared TypeScript types
@@ -127,7 +127,7 @@ src/
 
 ## API rate limits
 
-The FDC API allows **3,600 requests/hour** with a free API key. This app mitigates usage by:
+The FDC API allows **1000 requests/hour** with a free API key. This app mitigates usage by:
 
 - Debouncing search input (500 ms)
 - Caching every search result and food detail for **24 hours** in `localStorage`

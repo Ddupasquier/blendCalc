@@ -8,6 +8,13 @@ export type SharedProductSubmissionStatus =
 export type SharedProductSubmissionResult = {
 	status: SharedProductSubmissionStatus;
 	message: string;
+	evidenceAccepted?: boolean;
+};
+
+export type SharedProductEvidence = {
+	frontPhoto?: File | null;
+	nutritionPhoto?: File | null;
+	barcodePhoto?: File | null;
 };
 
 export const searchSharedProducts = async (query: string): Promise<FdcFood[]> => {
@@ -25,18 +32,28 @@ export const searchSharedProducts = async (query: string): Promise<FdcFood[]> =>
 
 export const submitSharedProduct = async (
 	food: FdcFood,
+	evidence: SharedProductEvidence = {},
 ): Promise<SharedProductSubmissionResult> => {
+	const formData = new FormData();
+	formData.set("food", JSON.stringify(food));
+	formData.set("consentToShare", "true");
+	if (evidence.frontPhoto) formData.set("frontPhoto", evidence.frontPhoto);
+	if (evidence.nutritionPhoto) {
+		formData.set("nutritionPhoto", evidence.nutritionPhoto);
+	}
+	if (evidence.barcodePhoto) formData.set("barcodePhoto", evidence.barcodePhoto);
+
 	const response = await fetch("/api/products/submissions", {
 		method: "POST",
-		headers: {
-			accept: "application/json",
-			"content-type": "application/json",
-		},
-		body: JSON.stringify({ food, consentToShare: true }),
+		headers: { accept: "application/json" },
+		body: formData,
 	});
 
 	if (!response.ok) {
-		throw new Error("The product could not be submitted for catalog review.");
+		const body = await response.json().catch(() => null) as { message?: string } | null;
+		throw new Error(
+			body?.message ?? "The product could not be submitted for catalog review.",
+		);
 	}
 
 	return await response.json() as SharedProductSubmissionResult;

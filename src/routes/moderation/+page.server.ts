@@ -226,6 +226,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const productSubmissions = (await listPendingProductSubmissions()).map(
 		(submission) => {
 			const food = submission.food as unknown as FdcFood;
+			const validationReport = submission.validation_report as {
+				evidenceComplete?: boolean;
+				conflictCount?: number;
+				externalLookupFailed?: boolean;
+			};
 			return {
 				id: submission.id,
 				barcode: submission.barcode,
@@ -234,6 +239,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				matchedSource: submission.matched_source,
 				matchedReference: submission.matched_reference,
 				createdAt: submission.created_at,
+				evidenceComplete: submission.evidence_complete,
+				evidence: [
+					{ key: "front", label: "Front of package", url: submission.evidenceUrls.front },
+					{ key: "nutrition", label: "Nutrition facts", url: submission.evidenceUrls.nutrition },
+					{ key: "barcode", label: "Barcode", url: submission.evidenceUrls.barcode },
+				].filter((item) => Boolean(item.url)),
+				conflictCount: validationReport.conflictCount ?? 0,
+				externalLookupFailed: validationReport.externalLookupFailed ?? false,
 				nutrients: (food.foodNutrients ?? []).map((nutrient) => ({
 					name: nutrient.nutrientName,
 					value: nutrient.value,

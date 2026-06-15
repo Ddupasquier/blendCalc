@@ -7,11 +7,22 @@ import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
 import { toJson } from "$lib/utils/storage/supabase/shared";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createCatalogFoodFromDraft } from "./catalogFood.server";
+import {
+	buildModeratorReviewedCatalogBundle,
+	buildUsdaVerifiedCatalogBundle,
+	type CatalogConflict,
+	type CatalogFieldProvenance,
+	type CatalogObservation,
+} from "./catalogVerification.server";
 import {
 	lookupOpenFoodFactsBarcodeProduct,
 	lookupUsdaBarcodeProduct,
 } from "./externalProduct.server";
+import {
+	createProductEvidenceSignedUrls,
+	hasCompleteProductEvidence,
+	type ProductEvidencePaths,
+} from "./productEvidence.server";
 
 type CatalogSource = "usda" | "community-reviewed";
 type CatalogConfidence = "source-verified" | "moderator-reviewed";
@@ -22,6 +33,23 @@ type ValidationReport = {
 	usdaMatch?: boolean;
 	openFoodFactsMatch?: boolean;
 	externalLookupFailed?: boolean;
+	evidenceComplete?: boolean;
+	conflictCount?: number;
+};
+
+type PendingProductSubmission = {
+	id: string;
+	submitted_by: string;
+	barcode: string;
+	product_name: string;
+	brand_owner: string | null;
+	food: Json;
+	matched_source: string | null;
+	matched_reference: string | null;
+	validation_report: Json;
+	evidence_paths: Json;
+	evidence_complete: boolean;
+	created_at: string;
 };
 
 const getNutrientValue = (food: FdcFood, nutrientId: number) =>
@@ -127,6 +155,9 @@ const publishSubmission = async (input: {
 	sourceReference?: string;
 	confidence: CatalogConfidence;
 	approvedBy?: string;
+	observations: CatalogObservation[];
+	provenance: CatalogFieldProvenance[];
+	conflicts: CatalogConflict[];
 }) => {
 	const admin = getSupabaseAdminClient();
 	const { data, error } = await admin.rpc("publish_shared_product_submission", {
@@ -137,6 +168,9 @@ const publishSubmission = async (input: {
 		p_source: input.source,
 		p_source_reference: input.sourceReference ?? "",
 		p_confidence: input.confidence,
+		p_observations: toJson(input.observations),
+		p_provenance: toJson(input.provenance),
+		p_conflicts: toJson(input.conflicts),
 		...(input.approvedBy ? { p_approved_by: input.approvedBy } : {}),
 	});
 	if (error) throw error;
@@ -158,6 +192,7 @@ const findExistingPendingSubmission = async (barcode: string) => {
 export const submitProductForCatalog = async (
 	userId: string,
 	food: FdcFood,
+	evidencePaths: ProductEvidencePaths = {},
 ): Promise<SharedProductSubmissionResult> => {
 	const validation = validateSharedProductFood(food);
 	if (!validation.valid || !validation.barcode) {
@@ -176,6 +211,7 @@ export const submitProductForCatalog = async (
 		return {
 			status: "already-available",
 			message: "This product is already available to everyone.",
+			evidenceAccepted: false,
 		};
 	}
 
@@ -184,6 +220,7 @@ export const submitProductForCatalog = async (
 		return {
 			status: "pending",
 			message: "This product is already waiting for review.",
+			evidenceAccepted: false,
 		};
 	}
 
@@ -217,8 +254,21 @@ export const submitProductForCatalog = async (
 		return {
 			status: "already-available",
 			message: "This barcode is already available through Open Food Facts.",
+			evidenceAccepted: false,
 		};
 	}
+
+	const evidenceComplete = hasCompleteProductEvidence(evidencePaths);
+	if (!usdaDraft && !evidenceComplete) {
+		throw new Error(
+			"Unknown products need front package, nutrition label, and barcode photos for verification.",
+		);
+	}
+	const verificationBundle = usdaDraft
+		? buildUsdaVerifiedCatalogBundle(food, usdaDraft)
+		: null;
+	report.evidenceComplete = evidenceComplete;
+	report.conflictCount = verificationBundle?.conflicts.length ?? 0;
 
 	const { data: submission, error: submissionError } = await admin
 		.from("shared_product_submissions")
@@ -237,6 +287,8 @@ export const submitProductForCatalog = async (
 					: null,
 			matched_reference: matchedDraft?.sourceReference ?? null,
 			validation_report: toJson(report),
+			evidence_paths: toJson(evidencePaths),
+			evidence_complete: evidenceComplete,
 		})
 		.select("id")
 		.single();
@@ -245,33 +297,44 @@ export const submitProductForCatalog = async (
 			return {
 				status: "pending",
 				message: "This product is already waiting for review.",
+				evidenceAccepted: false,
 			};
 		}
 		throw submissionError ?? new Error("Product submission could not be saved.");
 	}
 
 	if (usdaDraft) {
-		const catalogFood = createCatalogFoodFromDraft(usdaDraft);
-		await publishSubmission({
-			submissionId: submission.id,
-			food: catalogFood,
-			productName: usdaDraft.name,
-			brandOwner: usdaDraft.brandOwner,
-			source: "usda",
-			sourceReference: usdaDraft.sourceReference,
-			confidence: "source-verified",
-		});
+		if (!verificationBundle) {
+			throw new Error("USDA verification could not be prepared.");
+		}
+		try {
+			await publishSubmission({
+				submissionId: submission.id,
+				food: verificationBundle.canonicalFood,
+				productName: usdaDraft.name,
+				brandOwner: usdaDraft.brandOwner,
+				source: "usda",
+				sourceReference: usdaDraft.sourceReference,
+				confidence: "source-verified",
+				observations: verificationBundle.observations,
+				provenance: verificationBundle.provenance,
+				conflicts: verificationBundle.conflicts,
+			});
+		} catch (publishError) {
+			await admin.from("shared_product_submissions").delete().eq("id", submission.id);
+			throw publishError;
+		}
 		return {
 			status: "approved",
 			message: "USDA verified this product, so it is now available to everyone.",
+			evidenceAccepted: true,
 		};
 	}
 
 	return {
 		status: "pending",
-		message: openFoodFactsDraft
-			? "The barcode matched an outside source and is waiting for a catalog review."
-			: "The product is saved privately and is waiting for a catalog review.",
+		message: "The product is saved privately and is waiting for a label review.",
+		evidenceAccepted: true,
 	};
 };
 
@@ -280,13 +343,18 @@ export const listPendingProductSubmissions = async () => {
 	const { data, error } = await admin
 		.from("shared_product_submissions")
 		.select(
-			"id, submitted_by, barcode, product_name, brand_owner, food, matched_source, matched_reference, validation_report, created_at",
+			"id, submitted_by, barcode, product_name, brand_owner, food, matched_source, matched_reference, validation_report, evidence_paths, evidence_complete, created_at",
 		)
 		.eq("status", "pending")
 		.order("created_at", { ascending: true })
 		.limit(100);
 	if (error) throw error;
-	return data ?? [];
+	return Promise.all(((data ?? []) as PendingProductSubmission[]).map(async (submission) => ({
+		...submission,
+		evidenceUrls: await createProductEvidenceSignedUrls(
+			submission.evidence_paths as ProductEvidencePaths,
+		),
+	})));
 };
 
 export const approveCommunityProductSubmission = async (
@@ -296,12 +364,15 @@ export const approveCommunityProductSubmission = async (
 	const admin = getSupabaseAdminClient();
 	const { data: submission, error } = await admin
 		.from("shared_product_submissions")
-		.select("id, product_name, brand_owner, food, status")
+		.select("id, product_name, brand_owner, food, status, evidence_complete")
 		.eq("id", submissionId)
 		.single();
 	if (error || !submission) throw error ?? new Error("Submission not found.");
 	if (submission.status !== "pending") {
 		throw new Error("This product submission has already been reviewed.");
+	}
+	if (!submission.evidence_complete) {
+		throw new Error("Complete label evidence is required before approval.");
 	}
 
 	const food = compactFood(submission.food as unknown as FdcFood);
@@ -311,14 +382,18 @@ export const approveCommunityProductSubmission = async (
 	food.barcodeSource = "community";
 	food.sharedProductConfidence = "moderator-reviewed";
 
+	const verificationBundle = buildModeratorReviewedCatalogBundle(food);
 	return publishSubmission({
 		submissionId,
-		food,
+		food: verificationBundle.canonicalFood,
 		productName: submission.product_name,
 		brandOwner: submission.brand_owner ?? undefined,
 		source: "community-reviewed",
 		confidence: "moderator-reviewed",
 		approvedBy: moderatorId,
+		observations: verificationBundle.observations,
+		provenance: verificationBundle.provenance,
+		conflicts: verificationBundle.conflicts,
 	});
 };
 

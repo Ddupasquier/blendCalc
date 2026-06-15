@@ -1,4 +1,3 @@
-import { env } from "$env/dynamic/private";
 import {
 	getBarcodeLookupCandidates,
 	normalizeBarcode,
@@ -9,10 +8,9 @@ import {
 	type BarcodeProductDraft,
 	type OpenFoodFactsResponse,
 } from "$lib/utils/barcode/productLookup";
-import { normalizeFdcFood } from "$lib/utils/food/fdc";
 import type { FdcFood, FdcSearchResponse } from "$lib/utils/food/types";
+import { getUsdaFoodById, searchUsdaBrandedFoods } from "./usdaCache.server";
 
-const FDC_BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v2/product";
 const OPEN_FOOD_FACTS_FIELDS = [
 	"code",
@@ -27,21 +25,6 @@ const OPEN_FOOD_FACTS_FIELDS = [
 const PRODUCT_LOOKUP_USER_AGENT =
 	"SmoothieMixer/1.0 (https://smoothie-mixer.vercel.app)";
 
-const getFdcApiKey = () =>
-	env.FDC_API_KEY?.trim() || env.VITE_FDC_API_KEY?.trim() || null;
-
-const buildFdcUrl = (path: string, params: Record<string, string> = {}) => {
-	const apiKey = getFdcApiKey();
-	if (!apiKey) return null;
-
-	const url = new URL(`${FDC_BASE_URL}${path}`);
-	url.searchParams.set("api_key", apiKey);
-	for (const [key, value] of Object.entries(params)) {
-		url.searchParams.set(key, value);
-	}
-	return url;
-};
-
 export const lookupUsdaBarcodeProduct = async (
 	barcode: string,
 ): Promise<BarcodeProductDraft | null> => {
@@ -49,35 +32,17 @@ export const lookupUsdaBarcodeProduct = async (
 	if (!canonicalBarcode) return null;
 
 	for (const candidate of getBarcodeLookupCandidates(barcode)) {
-		const searchUrl = buildFdcUrl("/foods/search", {
-			query: candidate,
-			dataType: "Branded",
-			pageSize: "25",
-		});
-		if (!searchUrl) return null;
-
-		const searchResponse = await fetch(searchUrl, {
-			headers: { accept: "application/json" },
-		});
-		if (!searchResponse.ok) {
-			throw new Error(`USDA barcode search failed with ${searchResponse.status}.`);
-		}
-
-		const searchData = await searchResponse.json() as FdcSearchResponse;
+		const searchData: FdcSearchResponse = await searchUsdaBrandedFoods(candidate);
 		const match = (searchData.foods ?? []).find(
 			(food) => food.gtinUpc && normalizeBarcode(food.gtinUpc) === canonicalBarcode,
 		);
 		if (!match) continue;
 
-		let food: FdcFood = normalizeFdcFood(match);
-		const detailUrl = buildFdcUrl(`/food/${match.fdcId}`);
-		if (detailUrl) {
-			const detailResponse = await fetch(detailUrl, {
-				headers: { accept: "application/json" },
-			});
-			if (detailResponse.ok) {
-				food = normalizeFdcFood(await detailResponse.json());
-			}
+		let food: FdcFood;
+		try {
+			food = await getUsdaFoodById(match.fdcId);
+		} catch {
+			food = match;
 		}
 
 		return mapFdcBarcodeFood(food, canonicalBarcode);

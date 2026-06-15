@@ -54,6 +54,13 @@ describe("barcode product mapping", () => {
 				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CALCIUM, value: 36, unitName: "MG" }),
 			]),
 		);
+		expect(draft?.reportedNutrientIds).toEqual(
+			expect.arrayContaining([
+				NUTRIENT_IDS.CALORIES,
+				NUTRIENT_IDS.SODIUM,
+				NUTRIENT_IDS.CALCIUM,
+			]),
+		);
 	});
 
 	it("does not infer density from a volume-only serving", () => {
@@ -109,6 +116,7 @@ describe("barcode product mapping", () => {
 			expect.objectContaining({ nutrientId: NUTRIENT_IDS.SODIUM, value: 300 }),
 			expect.objectContaining({ nutrientId: NUTRIENT_IDS.VITAMIN_C, value: 10 }),
 		]);
+		expect(draft?.reportedNutrientIds).toContain(NUTRIENT_IDS.VITAMIN_C);
 	});
 
 	it("marks approved catalog records as shared products", () => {

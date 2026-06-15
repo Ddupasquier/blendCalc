@@ -263,6 +263,39 @@ export type Database = {
           },
         ]
       }
+      product_api_cache: {
+        Row: {
+          cache_key: string
+          etag: string | null
+          expires_at: string
+          fetched_at: string
+          provider: string
+          request_kind: string
+          response: Json
+          status_code: number
+        }
+        Insert: {
+          cache_key: string
+          etag?: string | null
+          expires_at: string
+          fetched_at?: string
+          provider: string
+          request_kind: string
+          response: Json
+          status_code: number
+        }
+        Update: {
+          cache_key?: string
+          etag?: string | null
+          expires_at?: string
+          fetched_at?: string
+          provider?: string
+          request_kind?: string
+          response?: Json
+          status_code?: number
+        }
+        Relationships: []
+      }
       profile_image_policy_acceptances: {
         Row: {
           accepted_at: string
@@ -356,6 +389,166 @@ export type Database = {
         }
         Relationships: []
       }
+      shared_product_conflicts: {
+        Row: {
+          barcode: string
+          created_at: string
+          field_path: string
+          id: string
+          observed_values: Json
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          shared_product_id: string
+          status: string
+        }
+        Insert: {
+          barcode: string
+          created_at?: string
+          field_path: string
+          id?: string
+          observed_values: Json
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          shared_product_id: string
+          status?: string
+        }
+        Update: {
+          barcode?: string
+          created_at?: string
+          field_path?: string
+          id?: string
+          observed_values?: Json
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          shared_product_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_product_conflicts_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_product_field_provenance: {
+        Row: {
+          confidence: string
+          created_at: string
+          field_path: string
+          id: string
+          normalized_value: Json
+          observation_id: string
+          selected: boolean
+          shared_product_id: string
+          source_value: Json
+          verification_method: string
+        }
+        Insert: {
+          confidence: string
+          created_at?: string
+          field_path: string
+          id?: string
+          normalized_value: Json
+          observation_id: string
+          selected?: boolean
+          shared_product_id: string
+          source_value: Json
+          verification_method: string
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          field_path?: string
+          id?: string
+          normalized_value?: Json
+          observation_id?: string
+          selected?: boolean
+          shared_product_id?: string
+          source_value?: Json
+          verification_method?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_product_field_provenance_observation_id_fkey"
+            columns: ["observation_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_product_field_provenance_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shared_product_observations: {
+        Row: {
+          barcode: string
+          content_hash: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          normalized_food: Json | null
+          observed_at: string
+          raw_payload: Json
+          source: string
+          source_license: string
+          source_reference: string | null
+          submission_id: string | null
+          submitted_by: string | null
+        }
+        Insert: {
+          barcode: string
+          content_hash: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          normalized_food?: Json | null
+          observed_at?: string
+          raw_payload: Json
+          source: string
+          source_license: string
+          source_reference?: string | null
+          submission_id?: string | null
+          submitted_by?: string | null
+        }
+        Update: {
+          barcode?: string
+          content_hash?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          normalized_food?: Json | null
+          observed_at?: string
+          raw_payload?: Json
+          source?: string
+          source_license?: string
+          source_reference?: string | null
+          submission_id?: string | null
+          submitted_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_product_observations_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_product_revisions: {
         Row: {
           created_at: string
@@ -403,6 +596,8 @@ export type Database = {
           brand_owner: string | null
           consent_to_share: boolean
           created_at: string
+          evidence_complete: boolean
+          evidence_paths: Json
           food: Json
           id: string
           matched_reference: string | null
@@ -422,6 +617,8 @@ export type Database = {
           brand_owner?: string | null
           consent_to_share: boolean
           created_at?: string
+          evidence_complete?: boolean
+          evidence_paths?: Json
           food: Json
           id?: string
           matched_reference?: string | null
@@ -441,6 +638,8 @@ export type Database = {
           brand_owner?: string | null
           consent_to_share?: boolean
           created_at?: string
+          evidence_complete?: boolean
+          evidence_paths?: Json
           food?: Json
           id?: string
           matched_reference?: string | null
@@ -463,10 +662,12 @@ export type Database = {
           approved_submission_id: string | null
           barcode: string
           brand_owner: string | null
+          canonical_provenance: Json
           confidence: string
           created_at: string
           food: Json
           id: string
+          last_verified_at: string | null
           product_name: string
           search_text: string
           source: string
@@ -479,10 +680,12 @@ export type Database = {
           approved_submission_id?: string | null
           barcode: string
           brand_owner?: string | null
+          canonical_provenance?: Json
           confidence: string
           created_at?: string
           food: Json
           id?: string
+          last_verified_at?: string | null
           product_name: string
           search_text: string
           source: string
@@ -495,10 +698,12 @@ export type Database = {
           approved_submission_id?: string | null
           barcode?: string
           brand_owner?: string | null
+          canonical_provenance?: Json
           confidence?: string
           created_at?: string
           food?: Json
           id?: string
+          last_verified_at?: string | null
           product_name?: string
           search_text?: string
           source?: string
@@ -589,8 +794,11 @@ export type Database = {
           p_approved_by?: string
           p_brand_owner: string
           p_confidence: string
+          p_conflicts?: Json
           p_food: Json
+          p_observations?: Json
           p_product_name: string
+          p_provenance?: Json
           p_source: string
           p_source_reference: string
           p_submission_id: string

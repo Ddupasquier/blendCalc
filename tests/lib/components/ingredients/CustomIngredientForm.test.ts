@@ -25,6 +25,7 @@ import CustomIngredientForm from "$lib/components/ingredients/CustomIngredientFo
 describe("CustomIngredientForm", () => {
 	beforeEach(() => {
 		localStorage.clear();
+		vi.clearAllMocks();
 	});
 
 	it("requires an ingredient name before saving", async () => {
@@ -128,11 +129,46 @@ describe("CustomIngredientForm", () => {
 		await fireEvent.click(
 			screen.getByLabelText(/help other users find this product/i),
 		);
+		const photo = new File([new Uint8Array([0xff, 0xd8, 0xff])], "label.jpg", {
+			type: "image/jpeg",
+		});
+		for (const label of [
+			/front of package/i,
+			/nutrition facts label/i,
+			/^barcode$/i,
+		]) {
+			await fireEvent.change(screen.getByLabelText(label), {
+				target: { files: [photo] },
+			});
+		}
 		await fireEvent.click(
 			screen.getByRole("button", { name: /save custom ingredient/i }),
 		);
 
 		await waitFor(() => expect(submitSharedProduct).toHaveBeenCalledOnce());
 		expect(screen.getByText("Waiting for review.")).toBeInTheDocument();
+	});
+
+	it("requires package evidence before sharing an unknown product", async () => {
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await fireEvent.click(screen.getByText("Enter label details"));
+		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
+			target: { value: "Unknown packaged food" },
+		});
+		await fireEvent.input(screen.getByLabelText(/upc \/ ean barcode/i), {
+			target: { value: "4006381333931" },
+		});
+		await fireEvent.click(
+			screen.getByLabelText(/help other users find this product/i),
+		);
+		await fireEvent.click(
+			screen.getByRole("button", { name: /save custom ingredient/i }),
+		);
+
+		expect(screen.getByRole("alert")).toHaveTextContent(
+			"Add front package, nutrition label, and barcode photos",
+		);
+		expect(submitSharedProduct).not.toHaveBeenCalled();
 	});
 });

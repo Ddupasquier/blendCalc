@@ -28,10 +28,12 @@ export const createCatalogFoodFromDraft = (
 		barcodeSource: draft.source === "usda" ? "usda" : "community",
 		nutrition: draft.nutrition,
 		additionalNutrients: draft.additionalNutrients,
+		reportedNutrientIds: draft.reportedNutrientIds,
 	});
 
 	return {
 		...food,
+		reportedNutrientIds: [...draft.reportedNutrientIds],
 		fdcId: getCatalogFoodId(draft),
 		dataType: "Shared Product",
 		foodCategory: "Verified Packaged Food",

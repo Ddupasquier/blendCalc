@@ -84,7 +84,7 @@
 		<div>
 			<p class="eyebrow">Shared catalog</p>
 			<h2 id="product-review-title">Product submissions</h2>
-			<p>Review products that could not be automatically verified through USDA.</p>
+			<p>Compare the entered values with the package photos before publishing them.</p>
 		</div>
 
 		{#if form?.productReviewError}
@@ -106,10 +106,31 @@
 					<dl>
 						<div><dt>Barcode</dt><dd>{submission.barcode}</dd></div>
 						<div>
-							<dt>Outside match</dt>
-							<dd>{submission.matchedSource ?? "None"}</dd>
+							<dt>Source match</dt>
+							<dd>{submission.matchedSource ?? "No verified source"}</dd>
 						</div>
+						<div><dt>Evidence</dt><dd>{submission.evidenceComplete ? "Complete" : "Incomplete"}</dd></div>
+						<div><dt>Detected conflicts</dt><dd>{submission.conflictCount}</dd></div>
 					</dl>
+					{#if submission.externalLookupFailed}
+						<p class="product-card__notice">
+							An outside source could not be checked. Review the label carefully.
+						</p>
+					{/if}
+					{#if submission.evidence.length > 0}
+						<div class="product-card__evidence" aria-label="Private product evidence">
+							{#each submission.evidence as evidence (evidence.key)}
+								<a href={evidence.url} target="_blank" rel="noreferrer">
+									<img src={evidence.url} alt={evidence.label} />
+									<span>{evidence.label}</span>
+								</a>
+							{/each}
+						</div>
+					{:else}
+						<p class="product-card__notice product-card__notice--danger">
+							This older submission has no label evidence and cannot be approved.
+						</p>
+					{/if}
 					<details>
 						<summary>Review {submission.nutrients.length} nutrition values</summary>
 						<ul>
@@ -124,7 +145,7 @@
 					<div class="product-card__actions">
 						<form method="POST" action="?/approveProduct" use:enhance={enhanceModerationAction}>
 							<input type="hidden" name="submissionId" value={submission.id} />
-							<button type="submit" disabled={pendingTargetUserId !== null}>
+							<button type="submit" disabled={pendingTargetUserId !== null || !submission.evidenceComplete}>
 								{pendingTargetUserId === submission.id ? "Approving…" : "Approve"}
 							</button>
 						</form>
@@ -339,6 +360,45 @@
 		}
 	}
 
+	.product-card__evidence {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: $app-gap-sm;
+
+		a {
+			display: grid;
+			gap: $app-gap-xs;
+			min-width: 0;
+			color: $app-primary;
+			font-size: $app-font-size-sm;
+			font-weight: 800;
+			text-decoration: none;
+		}
+
+		img {
+			width: 100%;
+			aspect-ratio: 4 / 3;
+			object-fit: cover;
+			background: $app-section-bg;
+			border: $app-border;
+			border-radius: $app-radius;
+		}
+	}
+
+	.product-card__notice {
+		padding: $app-gap-sm;
+		color: $app-warning-strong;
+		background: $app-warning-bg;
+		border: $app-warning-border;
+		border-radius: $app-radius;
+		font-size: $app-font-size-sm;
+		font-weight: 700;
+	}
+
+	.product-card__notice--danger {
+		color: $app-warning-strong;
+	}
+
 	.account-search label {
 		font-weight: 800;
 	}
@@ -512,6 +572,10 @@
 	}
 
 	@media (max-width: $app-breakpoint-xs) {
+		.product-card__evidence {
+			grid-template-columns: 1fr;
+		}
+
 		.search-controls {
 			grid-template-columns: minmax(0, 1fr) auto;
 

@@ -36,6 +36,7 @@ export type BarcodeProductDraft = {
 	servingWeightGrams: number;
 	nutrition: CustomFoodNutritionInput;
 	additionalNutrients: FdcNutrient[];
+	reportedNutrientIds: number[];
 	volumeEquivalent?: BarcodeVolumeEquivalent;
 	source: "open-food-facts" | "usda" | "shared-catalog";
 	sourceLabel: string;
@@ -102,6 +103,32 @@ const getOpenFoodFactsNutrient = (
 	useServingValues,
 )?.value ?? 0;
 
+const getOpenFoodFactsReportedNutrientIds = (
+	nutriments: OpenFoodFactsNutriments,
+	servingWeightGrams: number,
+	useServingValues: boolean,
+) => {
+	const candidates: Array<[number, string[]]> = [
+		[NUTRIENT_IDS.CALORIES, ["energy-kcal", "energy-kj"]],
+		[NUTRIENT_IDS.FAT, ["fat"]],
+		[NUTRIENT_IDS.CARBS, ["carbohydrates", "carbohydrates-total"]],
+		[NUTRIENT_IDS.FIBER, ["fiber"]],
+		[NUTRIENT_IDS.SUGAR, ["sugars"]],
+		[NUTRIENT_IDS.PROTEIN, ["proteins", "protein"]],
+	];
+	const reported = candidates.flatMap(([nutrientId, keys]) =>
+		getOpenFoodFactsValue(
+			nutriments,
+			keys,
+			servingWeightGrams,
+			useServingValues,
+		)
+			? [nutrientId]
+			: [],
+	);
+	return reported;
+};
+
 export const mapOpenFoodFactsProduct = (
 	product: OpenFoodFactsProduct,
 	barcode: string,
@@ -125,6 +152,12 @@ export const mapOpenFoodFactsProduct = (
 		useServingValues,
 	);
 
+	const additionalNutrients = mapOpenFoodFactsAdditionalNutrients(
+		product.nutriments,
+		servingWeightGrams,
+		useServingValues,
+	);
+
 	return {
 		barcode: canonicalBarcode,
 		name,
@@ -132,11 +165,17 @@ export const mapOpenFoodFactsProduct = (
 		servingLabel:
 			(useServingValues && product.serving_size?.trim()) || `${servingWeightGrams} g`,
 		servingWeightGrams,
-		additionalNutrients: mapOpenFoodFactsAdditionalNutrients(
-			product.nutriments,
-			servingWeightGrams,
-			useServingValues,
-		),
+		additionalNutrients,
+		reportedNutrientIds: [
+			...new Set([
+				...getOpenFoodFactsReportedNutrientIds(
+					product.nutriments,
+					servingWeightGrams,
+					useServingValues,
+				),
+				...additionalNutrients.map((nutrient) => nutrient.nutrientId),
+			]),
+		],
 		volumeEquivalent: hasExactGramWeight
 			? parseVolumeEquivalent(product.serving_size)
 				?? undefined
@@ -213,6 +252,12 @@ export const mapFdcBarcodeFood = (
 				...nutrient,
 				value: toNumber(nutrient.value) * servingScale,
 			})),
+		reportedNutrientIds: [
+			...new Set(
+				food.reportedNutrientIds ??
+					food.foodNutrients.map((nutrient) => nutrient.nutrientId),
+			),
+		],
 		volumeEquivalent: hasExactGramWeight
 			? parseVolumeEquivalent(food.householdServingFullText) ?? undefined
 			: undefined,

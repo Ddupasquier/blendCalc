@@ -14,6 +14,8 @@ export interface FdcFood {
     brandOwner?: string;
     foodCategory?: string;
     foodNutrients: FdcNutrient[];
+    /** Nutrient IDs explicitly reported by the source. Missing IDs are unknown, not zero. */
+    reportedNutrientIds?: number[];
     // Branded food fields (optional)
     dataType?: string;
     servingSize?: number;
@@ -24,7 +26,7 @@ export interface FdcFood {
     barcode?: string;
     barcodeSource?: "open-food-facts" | "usda" | "manual" | "community";
     sharedProductId?: string;
-    sharedProductConfidence?: "source-verified" | "moderator-reviewed";
+    sharedProductConfidence?: "source-verified" | "moderator-reviewed" | "corroborated";
     customServingLabel?: string;
     customServingWeightGrams?: number;
     customDensityGramsPerMilliliter?: number;
