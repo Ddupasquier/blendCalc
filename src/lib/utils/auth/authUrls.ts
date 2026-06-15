@@ -36,15 +36,44 @@ export const isCurrentVercelDeploymentOrigin = (origin: string) => {
 	return getVercelDeploymentOrigins().includes(origin);
 };
 
+const getForwardedRequestOrigin = (request: Request, fallbackUrl: URL) => {
+	const forwardedHost = request.headers
+		.get("x-forwarded-host")
+		?.split(",")[0]
+		?.trim();
+	if (!forwardedHost) return "";
+
+	const forwardedProtocol = request.headers
+		.get("x-forwarded-proto")
+		?.split(",")[0]
+		?.trim();
+	const protocol = forwardedProtocol || fallbackUrl.protocol.replace(":", "");
+	return normalizeConfiguredOrigin(`${protocol}://${forwardedHost}`);
+};
+
+export const getExternalRequestOrigin = (
+	request: Request,
+	fallbackUrl: URL,
+) => {
+	return getForwardedRequestOrigin(request, fallbackUrl) || fallbackUrl.origin;
+};
+
 export const getRequestOrigin = (request: Request, fallbackUrl: URL) => {
-	void request;
-	if (isLocalOrigin(fallbackUrl.origin)) return fallbackUrl.origin;
+	const forwardedOrigin = getExternalRequestOrigin(request, fallbackUrl);
+	const requestOrigins = [forwardedOrigin, fallbackUrl.origin].filter(Boolean);
+	const localOrigin = requestOrigins.find(isLocalOrigin);
+	if (localOrigin) return localOrigin;
 
 	const configuredOrigin = normalizeConfiguredOrigin(env.PUBLIC_SITE_URL);
-	if (fallbackUrl.origin === configuredOrigin) return fallbackUrl.origin;
-	if (isCurrentVercelDeploymentOrigin(fallbackUrl.origin)) {
-		return fallbackUrl.origin;
-	}
+	const vercelRequestOrigin = requestOrigins.find(
+		isCurrentVercelDeploymentOrigin,
+	);
+	if (vercelRequestOrigin) return vercelRequestOrigin;
+
+	const configuredRequestOrigin = requestOrigins.find(
+		(origin) => origin === configuredOrigin,
+	);
+	if (configuredRequestOrigin) return configuredRequestOrigin;
 	if (configuredOrigin) return configuredOrigin;
 
 	throw new Error(
@@ -58,7 +87,9 @@ export const getCanonicalAuthPageUrl = (
 	next: string,
 ) => {
 	const canonicalOrigin = getRequestOrigin(request, fallbackUrl);
-	if (canonicalOrigin === fallbackUrl.origin) return null;
+	if (canonicalOrigin === getExternalRequestOrigin(request, fallbackUrl)) {
+		return null;
+	}
 
 	const url = new URL("/auth", canonicalOrigin);
 	url.searchParams.set("next", next);

@@ -16,6 +16,7 @@ vi.mock("$env/dynamic/private", () => ({ env: privateEnvironment }));
 import {
 	getAuthCallbackUrl,
 	getCanonicalAuthPageUrl,
+	getExternalRequestOrigin,
 	getRequestOrigin,
 } from "$lib/utils/auth/authUrls";
 
@@ -81,6 +82,45 @@ describe("authentication URLs", () => {
 		expect(
 			getCanonicalAuthPageUrl(request, new URL(request.url), "/fridge"),
 		).toBeNull();
+	});
+
+	it("uses Vercel's forwarded preview host when the framework URL is canonical", () => {
+		publicEnvironment.PUBLIC_SITE_URL = "https://smoothie-mixer.vercel.app";
+		privateEnvironment.VERCEL_URL =
+			"smoothie-mixer-git-feature-ba-f74008-dylan-dupasquiers-projects.vercel.app";
+		const request = new Request("https://smoothie-mixer.vercel.app/auth", {
+			headers: {
+				"x-forwarded-host":
+					"smoothie-mixer-git-feature-ba-f74008-dylan-dupasquiers-projects.vercel.app",
+				"x-forwarded-proto": "https",
+			},
+		});
+
+		expect(getAuthCallbackUrl(request, new URL(request.url))).toBe(
+			"https://smoothie-mixer-git-feature-ba-f74008-dylan-dupasquiers-projects.vercel.app/auth/callback",
+		);
+		expect(getExternalRequestOrigin(request, new URL(request.url))).toBe(
+			"https://smoothie-mixer-git-feature-ba-f74008-dylan-dupasquiers-projects.vercel.app",
+		);
+		expect(
+			getCanonicalAuthPageUrl(request, new URL(request.url), "/fridge"),
+		).toBeNull();
+	});
+
+	it("ignores an untrusted forwarded host", () => {
+		publicEnvironment.PUBLIC_SITE_URL = "https://smoothie-mixer.vercel.app";
+		privateEnvironment.VERCEL_URL =
+			"smoothie-mixer-git-feature-ba-f74008-dylan-dupasquiers-projects.vercel.app";
+		const request = new Request("https://smoothie-mixer.vercel.app/auth", {
+			headers: {
+				"x-forwarded-host": "attacker-project.vercel.app",
+				"x-forwarded-proto": "https",
+			},
+		});
+
+		expect(getAuthCallbackUrl(request, new URL(request.url))).toBe(
+			"https://smoothie-mixer.vercel.app/auth/callback",
+		);
 	});
 
 	it("keeps authentication on the Vercel branch preview alias", () => {

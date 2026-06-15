@@ -5,8 +5,9 @@ import {
 	getAuthCallbackFailureUrl,
 	getSafeAuthNextPath,
 } from "$lib/utils/auth/authFlow";
+import { getRequestOrigin } from "$lib/utils/auth/authUrls";
 
-export const GET: RequestHandler = async ({ locals, url, cookies }) => {
+export const GET: RequestHandler = async ({ locals, request, url, cookies }) => {
 	const code = url.searchParams.get("code");
 	const flowContext = consumeAuthFlowContext(cookies);
 	const next = flowContext.flowId
@@ -14,12 +15,13 @@ export const GET: RequestHandler = async ({ locals, url, cookies }) => {
 		: getSafeAuthNextPath(url.searchParams.get("next"));
 	const { origin: expectedOrigin, flowId } = flowContext;
 	const providerError = url.searchParams.get("error_description");
+	const actualOrigin = getRequestOrigin(request, url);
 
-	if (expectedOrigin && expectedOrigin !== url.origin) {
+	if (expectedOrigin && expectedOrigin !== actualOrigin) {
 		console.warn("[auth] OAuth callback returned to the wrong origin", {
 			flowId,
 			expectedOrigin,
-			actualOrigin: url.origin,
+			actualOrigin,
 		});
 		throw redirect(303, getAuthCallbackFailureUrl("wrong_origin", next));
 	}
@@ -33,7 +35,7 @@ export const GET: RequestHandler = async ({ locals, url, cookies }) => {
 
 		console.warn("[auth] OAuth code exchange failed", {
 			flowId,
-			origin: url.origin,
+			origin: actualOrigin,
 			expectedOrigin,
 			hadFlowCookie: Boolean(expectedOrigin),
 			message: error.message,
@@ -47,7 +49,7 @@ export const GET: RequestHandler = async ({ locals, url, cookies }) => {
 	const errorCode = providerError ? "provider" : "missing_code";
 	console.warn("[auth] OAuth callback did not include a code", {
 		flowId,
-		origin: url.origin,
+		origin: actualOrigin,
 		errorCode,
 		providerError: providerError ?? null,
 	});
