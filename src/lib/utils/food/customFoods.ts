@@ -7,6 +7,7 @@ import {
 	saveCloudCustomFood,
 	writeCloudCustomFoods,
 } from "$lib/utils/storage/supabaseData";
+import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { getScopedStorageKey } from "$lib/utils/storage/storageScope";
 import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
 import { normalizeCustomFoodName } from "$lib/utils/food/customFoodNames";
@@ -209,6 +210,22 @@ export const readCustomFoods = () => {
 	}
 };
 
+const getBarcodeComparisonKey = (barcode: string) => {
+	const digits = cleanBarcode(barcode);
+	if (!digits) return null;
+	return normalizeBarcode(digits) ?? digits.padStart(14, "0");
+};
+
+export const findCustomFoodByBarcode = (barcode: string) => {
+	const normalizedBarcode = getBarcodeComparisonKey(barcode);
+	if (!normalizedBarcode) return null;
+	return (
+		readCustomFoods().find(
+			(food) => getBarcodeComparisonKey(food.barcode ?? food.gtinUpc ?? "") === normalizedBarcode,
+		) ?? null
+	);
+};
+
 export const cacheCustomFoodsLocally = (foods: FdcFood[]) => {
 	try {
 		localStorage.setItem(
@@ -243,7 +260,7 @@ export const saveCustomFood = async (
 	) {
 		return "duplicate-name";
 	}
-	if (food.barcode && foods.some((item) => item.barcode === food.barcode)) {
+	if (food.barcode && findCustomFoodByBarcode(food.barcode)) {
 		return "duplicate-barcode";
 	}
 

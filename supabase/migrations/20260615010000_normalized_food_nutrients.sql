@@ -447,6 +447,7 @@ begin
 		when 'shared_product_revisions' then
 			v_confidence := case new.source
 				when 'usda' then 'source-verified'
+				when 'open-food-facts' then 'imported'
 				else 'moderator-reviewed'
 			end;
 
@@ -677,7 +678,11 @@ select public.replace_food_nutrients(
 	null,
 	revision.source,
 	revision.source_reference,
-	case revision.source when 'usda' then 'source-verified' else 'moderator-reviewed' end
+	case revision.source
+		when 'usda' then 'source-verified'
+		when 'open-food-facts' then 'imported'
+		else 'moderator-reviewed'
+	end
 )
 from public.shared_product_revisions revision;
 

@@ -13,6 +13,7 @@ import { toJson } from "$lib/utils/storage/supabase/shared";
 import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+	buildOpenFoodFactsCatalogBundle,
 	buildModeratorReviewedCatalogBundle,
 	buildUsdaVerifiedCatalogBundle,
 	type CatalogConflict,
@@ -29,8 +30,12 @@ import {
 	type ProductEvidencePaths,
 } from "./productEvidence.server";
 
-type CatalogSource = "usda" | "community-reviewed";
-type CatalogConfidence = "source-verified" | "moderator-reviewed";
+type CatalogSource = "usda" | "open-food-facts" | "community-reviewed";
+type CatalogConfidence =
+	| "source-verified"
+	| "moderator-reviewed"
+	| "corroborated"
+	| "imported";
 
 type ValidationReport = {
 	valid: boolean;
@@ -273,23 +278,18 @@ export const submitProductForCatalog = async (
 		externalLookupFailed,
 	};
 	const matchedDraft = usdaDraft ?? openFoodFactsDraft;
-	if (openFoodFactsDraft && !usdaDraft) {
-		return {
-			status: "already-available",
-			message: "This barcode is already available through Open Food Facts.",
-			evidenceAccepted: false,
-		};
-	}
 
 	const evidenceComplete = hasCompleteProductEvidence(evidencePaths);
-	if (!usdaDraft && !evidenceComplete) {
+	if (!matchedDraft && !evidenceComplete) {
 		throw new Error(
 			"Unknown products need front package, nutrition label, and barcode photos for verification.",
 		);
 	}
 	const verificationBundle = usdaDraft
 		? buildUsdaVerifiedCatalogBundle(food, usdaDraft)
-		: null;
+		: openFoodFactsDraft
+			? buildOpenFoodFactsCatalogBundle(food, openFoodFactsDraft)
+			: null;
 	report.evidenceComplete = evidenceComplete;
 	report.conflictCount = verificationBundle?.conflicts.length ?? 0;
 
@@ -326,19 +326,20 @@ export const submitProductForCatalog = async (
 		throw submissionError ?? new Error("Product submission could not be saved.");
 	}
 
-	if (usdaDraft) {
+	if (matchedDraft) {
 		if (!verificationBundle) {
-			throw new Error("USDA verification could not be prepared.");
+			throw new Error("Product verification could not be prepared.");
 		}
+		const source = usdaDraft ? "usda" : "open-food-facts";
 		try {
 			await publishSubmission({
 				submissionId: submission.id,
 				food: verificationBundle.canonicalFood,
-				productName: usdaDraft.name,
-				brandOwner: usdaDraft.brandOwner,
-				source: "usda",
-				sourceReference: usdaDraft.sourceReference,
-				confidence: "source-verified",
+				productName: matchedDraft.name,
+				brandOwner: matchedDraft.brandOwner,
+				source,
+				sourceReference: matchedDraft.sourceReference,
+				confidence: usdaDraft ? "source-verified" : "imported",
 				observations: verificationBundle.observations,
 				provenance: verificationBundle.provenance,
 				conflicts: verificationBundle.conflicts,
@@ -349,7 +350,9 @@ export const submitProductForCatalog = async (
 		}
 		return {
 			status: "approved",
-			message: "USDA verified this product, so it is now available to everyone.",
+			message: usdaDraft
+				? "USDA verified this product, so it is now available to everyone."
+				: "Open Food Facts matched this barcode, so it is now available in shared search.",
 			evidenceAccepted: true,
 		};
 	}

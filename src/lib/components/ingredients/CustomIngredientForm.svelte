@@ -5,6 +5,7 @@
 	} from "../../../defaults/servingMeasureDefaults";
 	import {
 		createCustomFood,
+		findCustomFoodByBarcode,
 		saveCustomFood,
 		type CustomFoodNutritionInput,
 	} from "$lib/utils/food/customFoods";
@@ -46,6 +47,7 @@
 	let frontPhoto = $state<File | null>(null);
 	let nutritionPhoto = $state<File | null>(null);
 	let barcodePhoto = $state<File | null>(null);
+	let reportedNutrientIds = $state<number[]>([]);
 	let labelDetailsElement: HTMLDetailsElement;
 	let hasValidBarcode = $derived(Boolean(normalizeBarcode(barcode)));
 	let canShareWithCatalog = $derived(
@@ -101,6 +103,7 @@
 		frontPhoto = null;
 		nutritionPhoto = null;
 		barcodePhoto = null;
+		reportedNutrientIds = [];
 		nutrition = {
 			calories: 0,
 			fat: 0,
@@ -135,6 +138,7 @@
 				barcodeSource = lookup.draft.source === "shared-catalog"
 					? "community"
 					: lookup.draft.source;
+				reportedNutrientIds = [...lookup.draft.reportedNutrientIds];
 				const nutrientSummary = additionalNutrients.length > 0
 					? ` ${additionalNutrients.length} additional reported nutrients were included.`
 					: " No additional vitamin or mineral values were reported by this source.";
@@ -146,6 +150,7 @@
 			}
 
 			barcodeSource = "manual";
+			reportedNutrientIds = [];
 			barcodeMessage =
 				lookup.status === "not-found"
 					? "No matching product was found. The barcode is filled in so you can enter the label manually."
@@ -214,6 +219,7 @@
 			barcodeSource: normalizedBarcode ? barcodeSource : undefined,
 			nutrition,
 			additionalNutrients,
+			reportedNutrientIds,
 		});
 
 		saving = true;
@@ -224,7 +230,16 @@
 				return;
 			}
 			if (result === "duplicate-barcode") {
-				error = "An ingredient with this barcode is already in your custom foods.";
+				const existingFood = normalizedBarcode
+					? findCustomFoodByBarcode(normalizedBarcode)
+					: null;
+				if (existingFood) {
+					onCreate(existingFood);
+					savedMessage = `${existingFood.description} is already saved. Showing your existing ingredient.`;
+					resetForm();
+					return;
+				}
+				error = "An ingredient with this barcode is already saved to your account.";
 				return;
 			}
 			if (result === "error") {
@@ -234,7 +249,10 @@
 
 			onCreate(food);
 			savedMessage = `${food.description} saved as a custom ingredient.`;
-			if (shareWithCatalog && normalizedBarcode) {
+			if (
+				normalizedBarcode &&
+				(shareWithCatalog || barcodeSource === "open-food-facts")
+			) {
 				try {
 					const submission = await submitSharedProduct(food, {
 						frontPhoto,
@@ -437,8 +455,8 @@
 			{/if}
 		{:else if hasValidBarcode && barcodeSource === "open-food-facts"}
 			<p class="custom-ingredient__barcode-message">
-				This product is already available through Open Food Facts, so no catalog
-				submission is needed.
+				This product was found through Open Food Facts. Saving it also makes it
+				available in shared search for other users.
 			</p>
 		{/if}
 

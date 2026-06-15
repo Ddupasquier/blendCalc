@@ -43,7 +43,11 @@ export interface FdcFood {
     barcode?: string;
     barcodeSource?: "open-food-facts" | "usda" | "manual" | "community";
     sharedProductId?: string;
-    sharedProductConfidence?: "source-verified" | "moderator-reviewed" | "corroborated";
+    sharedProductConfidence?:
+        | "source-verified"
+        | "moderator-reviewed"
+        | "corroborated"
+        | "imported";
     customServingLabel?: string;
     customServingWeightGrams?: number;
     customDensityGramsPerMilliliter?: number;

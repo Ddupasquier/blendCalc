@@ -75,6 +75,32 @@ describe("smoothie lists", () => {
 		expect(cloudData.writeCloudSmoothieList).not.toHaveBeenCalled();
 	});
 
+	it("treats matching barcodes as duplicate list items across different IDs", async () => {
+		const scannedFood = {
+			...food,
+			fdcId: -100,
+			barcode: "00012345678905",
+			gtinUpc: "00012345678905",
+			description: "Honey greek yogurt",
+		} satisfies FdcFood;
+		const sharedCatalogFood = {
+			...scannedFood,
+			fdcId: -200,
+			customFood: false,
+			dataType: "Shared Product",
+		} satisfies FdcFood;
+
+		expect(await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, scannedFood)).toBe(
+			"added",
+		);
+		expect(
+			await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, sharedCatalogFood),
+		).toBe("duplicate");
+
+		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)).toHaveLength(1);
+		expect(cloudData.upsertCloudSmoothieListItem).toHaveBeenCalledTimes(1);
+	});
+
 	it("removes one list item without rewriting the whole cloud list", async () => {
 		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food]);
 		vi.clearAllMocks();

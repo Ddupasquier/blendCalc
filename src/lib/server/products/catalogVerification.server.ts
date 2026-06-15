@@ -7,6 +7,7 @@ import { createCatalogFoodFromDraft } from "./catalogFood.server";
 
 export type CatalogObservationSource =
 	| "usda"
+	| "open-food-facts"
 	| "user-label"
 	| "manufacturer"
 	| "gs1";
@@ -28,7 +29,11 @@ export type CatalogFieldProvenance = {
 	observationKey: string;
 	sourceValue: Json;
 	normalizedValue: Json;
-	confidence: "source-verified" | "moderator-reviewed" | "corroborated";
+	confidence:
+		| "source-verified"
+		| "moderator-reviewed"
+		| "corroborated"
+		| "imported";
 	verificationMethod: "exact-barcode" | "label-review" | "cross-source";
 };
 
@@ -154,6 +159,7 @@ const getNumericConflictSeverity = (left: number, right: number) => {
 const findFoodConflicts = (
 	userFood: FdcFood,
 	sourceFood: FdcFood,
+	sourceKey: "usda" | "open-food-facts" = "usda",
 ): CatalogConflict[] => {
 	const conflicts: CatalogConflict[] = [];
 	const userBrand = normalizeText(userFood.brandOwner);
@@ -163,7 +169,7 @@ const findFoodConflicts = (
 			fieldPath: "brandOwner",
 			observedValues: [
 				toJson({ source: "user-label", value: userFood.brandOwner }),
-				toJson({ source: "usda", value: sourceFood.brandOwner }),
+				toJson({ source: sourceKey, value: sourceFood.brandOwner }),
 			],
 			severity: "medium",
 		});
@@ -178,7 +184,7 @@ const findFoodConflicts = (
 				fieldPath: "servingWeightGrams",
 				observedValues: [
 					toJson({ source: "user-label", value: userServing }),
-					toJson({ source: "usda", value: sourceServing }),
+					toJson({ source: sourceKey, value: sourceServing }),
 				],
 				severity,
 			});
@@ -199,7 +205,7 @@ const findFoodConflicts = (
 				fieldPath: `nutrient:${nutrientId}`,
 				observedValues: [
 					toJson({ source: "user-label", ...userNutrient }),
-					toJson({ source: "usda", ...sourceNutrient }),
+					toJson({ source: sourceKey, ...sourceNutrient }),
 				],
 				severity: "high",
 			});
@@ -211,7 +217,7 @@ const findFoodConflicts = (
 			fieldPath: `nutrient:${nutrientId}`,
 			observedValues: [
 				toJson({ source: "user-label", ...userNutrient }),
-				toJson({ source: "usda", ...sourceNutrient }),
+				toJson({ source: sourceKey, ...sourceNutrient }),
 			],
 			severity,
 		});
@@ -255,6 +261,45 @@ export const buildUsdaVerifiedCatalogBundle = (
 			"exact-barcode",
 		),
 		conflicts: findFoodConflicts(userFood, usdaFood),
+	};
+};
+
+export const buildOpenFoodFactsCatalogBundle = (
+	userFood: FdcFood,
+	openFoodFactsDraft: BarcodeProductDraft,
+): CatalogVerificationBundle => {
+	const openFoodFactsFood = preserveFoodMetadata(
+		createCatalogFoodFromDraft(openFoodFactsDraft),
+	);
+	const userObservation = createObservation({
+		key: "user-label",
+		source: "user-label",
+		sourceLicense: "submitted-with-consent",
+		food: preserveFoodMetadata(userFood),
+	});
+	const openFoodFactsObservation = createObservation({
+		key: "open-food-facts",
+		source: "open-food-facts",
+		sourceReference: openFoodFactsDraft.sourceReference,
+		sourceLicense: "ODbL-1.0",
+		food: openFoodFactsFood,
+		rawPayload: openFoodFactsDraft,
+	});
+
+	return {
+		canonicalFood: openFoodFactsFood,
+		observations: [userObservation, openFoodFactsObservation],
+		provenance: addFoodProvenance(
+			openFoodFactsFood,
+			"open-food-facts",
+			"imported",
+			"exact-barcode",
+		),
+		conflicts: findFoodConflicts(
+			userFood,
+			openFoodFactsFood,
+			"open-food-facts",
+		),
 	};
 };
 

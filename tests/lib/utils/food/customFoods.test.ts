@@ -10,6 +10,7 @@ vi.mock("$lib/utils/storage/supabaseData", () => cloudData);
 import {
 	CUSTOM_FOODS_STORAGE_KEY,
 	createCustomFood,
+	findCustomFoodByBarcode,
 	readCustomFoods,
 	saveCustomFood,
 	searchCustomFoods,
@@ -158,6 +159,9 @@ describe("custom foods", () => {
 
 		expect(await saveCustomFood(firstFood)).toBe("saved");
 		expect(await saveCustomFood(duplicateFood)).toBe("duplicate-barcode");
+		expect(findCustomFoodByBarcode("400638133393")?.description).toBe(
+			"First scanned food",
+		);
 		expect(cloudData.saveCloudCustomFood).toHaveBeenCalledTimes(1);
 	});
 

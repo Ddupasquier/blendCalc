@@ -1,5 +1,6 @@
 import { MIX_STORAGE_KEYS } from "../../../defaults/mixDefaults";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/foodRecords";
+import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
 	removeCloudSmoothieListItem,
 	upsertCloudSmoothieListItem,
@@ -34,6 +35,27 @@ const isQuotaExceededError = (error: unknown) => {
 	);
 };
 
+const getFoodIdentityKey = (food: FdcFood) => {
+	const barcode = food.barcode ?? food.gtinUpc;
+	if (barcode) {
+		const digits = cleanBarcode(barcode);
+		if (digits) {
+			return `barcode:${normalizeBarcode(digits) ?? digits.padStart(14, "0")}`;
+		}
+	}
+	return `fdc:${food.fdcId}`;
+};
+
+const uniqueFoodsByListIdentity = (foods: FdcFood[]) => {
+	const seen = new Set<string>();
+	return foods.filter((food) => {
+		const identityKey = getFoodIdentityKey(food);
+		if (seen.has(identityKey)) return false;
+		seen.add(identityKey);
+		return true;
+	});
+};
+
 export const readSmoothieList = (key: SmoothieListKey) => {
 	try {
 		const raw = localStorage.getItem(getScopedStorageKey(key));
@@ -48,7 +70,7 @@ export const cacheSmoothieListLocally = (key: SmoothieListKey, list: FdcFood[]) 
 	try {
 		localStorage.setItem(
 			getScopedStorageKey(key),
-			JSON.stringify(uniqueFoodsById(list).map(compactFood)),
+			JSON.stringify(uniqueFoodsByListIdentity(uniqueFoodsById(list)).map(compactFood)),
 		);
 	} catch {
 		// ignore cache write failures; localStorage is only a fallback cache here
@@ -65,11 +87,11 @@ export const preserveSelectedListItems = (
 		selectedFoodIdSet.has(food.fdcId),
 	);
 
-	return uniqueFoodsById([...syncedList, ...selectedCachedFoods]);
+	return uniqueFoodsByListIdentity(uniqueFoodsById([...syncedList, ...selectedCachedFoods]));
 };
 
 export const writeSmoothieList = (key: SmoothieListKey, list: FdcFood[]) => {
-	const compactList = uniqueFoodsById(list).map(compactFood);
+	const compactList = uniqueFoodsByListIdentity(uniqueFoodsById(list)).map(compactFood);
 
 	try {
 		localStorage.setItem(getScopedStorageKey(key), JSON.stringify(compactList));
@@ -99,7 +121,8 @@ export const addFoodToSmoothieList = async (
 	food: FdcFood,
 ): Promise<SmoothieListMutationResult> => {
 	const list = readSmoothieList(key);
-	if (list.some((item) => item.fdcId === food.fdcId)) {
+	const foodIdentityKey = getFoodIdentityKey(food);
+	if (list.some((item) => getFoodIdentityKey(item) === foodIdentityKey)) {
 		return "duplicate";
 	}
 
@@ -120,8 +143,13 @@ export const addFoodsToSmoothieList = async (
 ): Promise<SmoothieListMutationResult> => {
 	const list = readSmoothieList(key);
 	const existingIds = new Set(list.map((item) => item.fdcId));
+	const existingIdentityKeys = new Set(list.map(getFoodIdentityKey));
 	const additions = uniqueFoodsById(foods)
-		.filter((food) => !existingIds.has(food.fdcId))
+		.filter(
+			(food) =>
+				!existingIds.has(food.fdcId) &&
+				!existingIdentityKeys.has(getFoodIdentityKey(food)),
+		)
 		.map(compactFood);
 
 	if (additions.length === 0) return "duplicate";

@@ -25,7 +25,11 @@ export const createCatalogFoodFromDraft = (
 		volumeQuantity: draft.volumeEquivalent?.quantity,
 		volumeUnit: draft.volumeEquivalent?.unit,
 		barcode: draft.barcode,
-		barcodeSource: draft.source === "usda" ? "usda" : "community",
+		barcodeSource: draft.source === "open-food-facts"
+			? "open-food-facts"
+			: draft.source === "usda"
+				? "usda"
+				: "community",
 		nutrition: draft.nutrition,
 		additionalNutrients: draft.additionalNutrients,
 		reportedNutrientIds: draft.reportedNutrientIds,
@@ -41,6 +45,10 @@ export const createCatalogFoodFromDraft = (
 		gtinUpc: draft.barcode,
 		sharedProductId,
 		sharedProductConfidence:
-			draft.source === "usda" ? "source-verified" : "moderator-reviewed",
+			draft.source === "usda"
+				? "source-verified"
+				: draft.source === "open-food-facts"
+					? "imported"
+					: "moderator-reviewed",
 	};
 };
