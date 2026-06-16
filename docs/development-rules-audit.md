@@ -21,9 +21,11 @@ These are the working rules gathered from prior product and implementation decis
 11. Show loading or busy states for actions with network or camera latency.
 12. Keep authentication secure and predictable across localhost, previews, and production.
 13. Keep files and folders maintainable, clean, and beautiful. Structure should make the UI location and domain purpose obvious.
-14. Use the branch gate. Big feature changes and additions get their own branch from `staging`, merge into `staging` first, and only move from `staging` to `main` after the staging preview is approved.
+14. Use the branch gate. Every new feature, major addition, and big change gets its own branch from `staging`, merges into `staging` first, and only moves from `staging` to `main` after the staging preview is approved.
 15. Treat bypassing staging as a process problem. If a change is headed to `main` without going through `staging`, stop and call that out before merging.
-16. Verify meaningful changes with `npm run check`, focused tests, and builds when scope warrants it.
+16. Do not automatically add changes to `staging`. Work should stay on the active feature branch or working tree until explicitly approved for staging.
+17. Do not auto commit. Show the diff and get explicit approval before committing or pushing changes.
+18. Verify meaningful changes with `npm run check`, focused tests, and builds when scope warrants it.
 
 ## Audit Summary
 
