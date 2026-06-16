@@ -948,6 +948,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_food_preferences: {
+        Row: {
+          allergens: string[]
+          created_at: string
+          default_smoothie_serving_grams: number | null
+          dietary_restrictions: string[]
+          food_preferences: string[]
+          ingredients_to_avoid: string[]
+          prioritized_nutrient_ids: number[]
+          sensitive_acknowledged_at: string | null
+          unit_system: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allergens?: string[]
+          created_at?: string
+          default_smoothie_serving_grams?: number | null
+          dietary_restrictions?: string[]
+          food_preferences?: string[]
+          ingredients_to_avoid?: string[]
+          prioritized_nutrient_ids?: number[]
+          sensitive_acknowledged_at?: string | null
+          unit_system?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allergens?: string[]
+          created_at?: string
+          default_smoothie_serving_grams?: number | null
+          dietary_restrictions?: string[]
+          food_preferences?: string[]
+          ingredients_to_avoid?: string[]
+          prioritized_nutrient_ids?: number[]
+          sensitive_acknowledged_at?: string | null
+          unit_system?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_tutorial_preferences: {
         Row: {
           completed_at: string | null
@@ -990,6 +1032,8 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      food_metadata_search_text: { Args: { p_food: Json }; Returns: string }
+      jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
       publish_shared_product_submission: {
         Args: {
           p_approved_by?: string

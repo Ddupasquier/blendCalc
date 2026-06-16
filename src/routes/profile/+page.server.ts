@@ -67,23 +67,41 @@ const getFoodPreferenceFormValues = (
 	};
 };
 
+const isMissingFoodPreferencesTableError = (
+	error: { code?: string; message?: string } | null | undefined,
+) => {
+	const message = error?.message?.toLowerCase() ?? "";
+
+	return (
+		error?.code === "42P01" ||
+		error?.code === "PGRST205" ||
+		message.includes("user_food_preferences") ||
+		message.includes("could not find the table")
+	);
+};
+
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = await getAuthenticatedUser(locals);
 	const profile = await getUserProfile(locals.supabase, user.id);
 	const avatarUrl = await getSignedAvatarUrl(locals.supabase, profile?.avatar_path);
-	const { data: foodPreferences, error: foodPreferencesError } =
-		await locals.supabase
-			.from("user_food_preferences")
-			.select("*")
-			.eq("user_id", user.id)
-			.maybeSingle();
+	const {
+		data: foodPreferences,
+		error: foodPreferencesError,
+	} = await locals.supabase
+		.from("user_food_preferences")
+		.select("*")
+		.eq("user_id", user.id)
+		.maybeSingle();
+	const foodPreferencesUnavailable =
+		isMissingFoodPreferencesTableError(foodPreferencesError);
 
-	if (foodPreferencesError) throw foodPreferencesError;
+	if (foodPreferencesError && !foodPreferencesUnavailable) throw foodPreferencesError;
 
 	return {
 		profile,
 		avatarUrl,
-		foodPreferences,
+		foodPreferences: foodPreferencesUnavailable ? null : foodPreferences,
+		foodPreferencesUnavailable,
 		priorityNutrientOptions: vitalNutrients,
 		defaultDisplayName: getDefaultDisplayName(user.id),
 		avatarPolicyItems: PROFILE_AVATAR_POLICY_ITEMS,
@@ -167,13 +185,24 @@ export const actions: Actions = {
 		);
 
 		if (error) {
+			if (isMissingFoodPreferencesTableError(error)) {
+				return fail(503, {
+					foodPreferencesError:
+						"Food preference storage is waiting on the latest database migration. Try again after migrations are applied.",
+					foodPreferenceValues: values,
+				});
+			}
+
 			return fail(500, {
 				foodPreferencesError: "Food preferences could not be saved. Try again.",
 				foodPreferenceValues: values,
 			});
 		}
 
-		return { foodPreferencesSuccess: "Food preferences saved." };
+		return {
+			foodPreferencesSuccess: "Food preferences saved.",
+			foodPreferenceValues: values,
+		};
 	},
 	uploadAvatar: async ({ locals, request }) => {
 		const user = await getAuthenticatedUser(locals);
@@ -273,6 +302,7 @@ export const actions: Actions = {
 		const { error: profileError } = await locals.supabase.from("profiles").upsert(
 			{
 				user_id: user.id,
+				display_name: existingProfile?.display_name ?? getDefaultDisplayName(user.id),
 				avatar_path: avatarPath,
 				avatar_alt_text: altText,
 				avatar_moderation_status: "self_attested",

@@ -55,10 +55,53 @@
 				data.foodPreferences?.default_smoothie_serving_grams,
 				storedServingUnit,
 			),
+		sensitiveAcknowledged:
+			form?.foodPreferenceValues?.sensitiveAcknowledged ??
+			Boolean(data.foodPreferences?.sensitive_acknowledged_at),
 	});
+	const priorityNutrientLabels = $derived(
+		foodPreferenceValues.prioritizedNutrientIds
+			.map((nutrientId) =>
+				data.priorityNutrientOptions.find((nutrient) => nutrient.id === nutrientId),
+			)
+			.filter((nutrient) => nutrient !== undefined)
+			.map((nutrient) => nutrient.label),
+	);
+	const savedPreferenceSummary = $derived([
+		foodPreferenceValues.unitSystem
+			? {
+					label: "Units",
+					value: foodPreferenceValues.unitSystem === "us" ? "US units" : "Metric",
+				}
+			: null,
+		foodPreferenceValues.defaultSmoothieServingSize
+			? {
+					label: "Serving",
+					value: `${foodPreferenceValues.defaultSmoothieServingSize}${foodPreferenceValues.defaultSmoothieServingUnit}`,
+				}
+			: null,
+		foodPreferenceValues.foodPreferences
+			? { label: "Preferences", value: foodPreferenceValues.foodPreferences }
+			: null,
+		foodPreferenceValues.allergens
+			? { label: "Allergens", value: foodPreferenceValues.allergens }
+			: null,
+		foodPreferenceValues.dietaryRestrictions
+			? { label: "Restrictions", value: foodPreferenceValues.dietaryRestrictions }
+			: null,
+		foodPreferenceValues.ingredientsToAvoid
+			? { label: "Avoid", value: foodPreferenceValues.ingredientsToAvoid }
+			: null,
+		priorityNutrientLabels.length
+			? { label: "Priority nutrients", value: priorityNutrientLabels.join(", ") }
+			: null,
+	].filter((item) => item !== null));
 	let profilePending = $state(false);
 	let avatarPending = $state(false);
 	let foodPreferencesPending = $state(false);
+	const foodPreferencesDisabled = $derived(
+		foodPreferencesPending || data.foodPreferencesUnavailable,
+	);
 	const enhanceProfile = createPendingSubmit(
 		(pending) => (profilePending = pending),
 	);
@@ -229,6 +272,24 @@
 		{:else if form?.foodPreferencesSuccess}
 			<p class="form-message form-message--success" role="status">{form.foodPreferencesSuccess}</p>
 		{/if}
+		{#if data.foodPreferencesUnavailable}
+			<p class="form-message form-message--warning" role="status">
+				Food preference storage is waiting on the latest database migration. Profile details and images still work.
+			</p>
+		{/if}
+		{#if savedPreferenceSummary.length}
+			<div class="saved-preferences" aria-label="Saved food preferences">
+				<strong>Saved settings</strong>
+				<div class="saved-preferences__grid">
+					{#each savedPreferenceSummary as item}
+						<div class="saved-preferences__item">
+							<span>{item.label}</span>
+							<p>{item.value}</p>
+						</div>
+					{/each}
+				</div>
+			</div>
+		{/if}
 
 		<form
 			method="POST"
@@ -242,7 +303,7 @@
 					<select
 						name="unitSystem"
 						value={foodPreferenceValues.unitSystem}
-						disabled={foodPreferencesPending}
+						disabled={foodPreferencesDisabled}
 					>
 						<option value="">No preference</option>
 						<option value="metric">Metric</option>
@@ -260,12 +321,12 @@
 							step="0.1"
 							value={foodPreferenceValues.defaultSmoothieServingSize}
 							placeholder="Optional"
-							disabled={foodPreferencesPending}
+							disabled={foodPreferencesDisabled}
 						/>
 						<select
 							name="defaultSmoothieServingUnit"
 							value={foodPreferenceValues.defaultSmoothieServingUnit}
-							disabled={foodPreferencesPending}
+							disabled={foodPreferencesDisabled}
 						>
 							<option value="g">g</option>
 							<option value="oz">oz</option>
@@ -280,7 +341,7 @@
 				name="foodPreferences"
 				value={foodPreferenceValues.foodPreferences}
 				placeholder="Example: tart, creamy, low sweetness"
-				disabled={foodPreferencesPending}
+				disabled={foodPreferencesDisabled}
 			/>
 			<small>Separate items with commas.</small>
 
@@ -290,7 +351,7 @@
 				name="allergens"
 				value={foodPreferenceValues.allergens}
 				placeholder="Example: peanuts, dairy, shellfish"
-				disabled={foodPreferencesPending}
+				disabled={foodPreferencesDisabled}
 			/>
 
 			<label for="profile-dietary-restrictions">Dietary restrictions</label>
@@ -299,7 +360,7 @@
 				name="dietaryRestrictions"
 				value={foodPreferenceValues.dietaryRestrictions}
 				placeholder="Example: vegan, gluten-free, kosher"
-				disabled={foodPreferencesPending}
+				disabled={foodPreferencesDisabled}
 			/>
 
 			<label for="profile-ingredients-to-avoid">Ingredients to avoid</label>
@@ -308,7 +369,7 @@
 				name="ingredientsToAvoid"
 				value={foodPreferenceValues.ingredientsToAvoid}
 				placeholder="Example: sucralose, banana, soy lecithin"
-				disabled={foodPreferencesPending}
+				disabled={foodPreferencesDisabled}
 			/>
 
 			<fieldset class="nutrient-priorities">
@@ -321,7 +382,7 @@
 								name="prioritizedNutrientIds"
 								value={nutrient.id}
 								checked={foodPreferenceValues.prioritizedNutrientIds.includes(nutrient.id)}
-								disabled={foodPreferencesPending}
+								disabled={foodPreferencesDisabled}
 							/>
 							<span>{nutrient.label}</span>
 						</label>
@@ -333,12 +394,13 @@
 				<input
 					type="checkbox"
 					name="sensitiveAcknowledged"
-					disabled={foodPreferencesPending}
+					checked={foodPreferenceValues.sensitiveAcknowledged}
+					disabled={foodPreferencesDisabled}
 				/>
 				<span>I understand these optional preferences may affect food warnings and suggestions.</span>
 			</label>
 
-			<button class="primary-action" type="submit" disabled={foodPreferencesPending}>
+			<button class="primary-action" type="submit" disabled={foodPreferencesDisabled}>
 				{foodPreferencesPending ? "Saving preferences…" : "Save food preferences"}
 			</button>
 		</form>
@@ -428,6 +490,51 @@
 		border: $app-warning-border;
 		border-radius: $app-radius-sm;
 		font-size: $app-font-size-sm;
+	}
+
+	.saved-preferences {
+		display: grid;
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+		background: $app-bg;
+		border: $app-border;
+		border-radius: $app-radius-sm;
+
+		> strong {
+			color: $app-primary;
+			font-size: $app-font-size-md;
+		}
+	}
+
+	.saved-preferences__grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: $app-gap-xs;
+	}
+
+	.saved-preferences__item {
+		min-width: 0;
+		padding: $app-gap-xs;
+		background: $app-section-bg;
+		border: $app-border;
+		border-radius: $app-radius-sm;
+
+		span {
+			display: block;
+			margin-bottom: 0.1rem;
+			color: $app-muted;
+			font-size: $app-font-size-xs;
+			font-weight: 900;
+			letter-spacing: 0.05em;
+			text-transform: uppercase;
+		}
+
+		p {
+			color: $app-primary;
+			font-size: $app-font-size-sm;
+			font-weight: 800;
+			overflow-wrap: anywhere;
+		}
 	}
 
 	.preference-grid {
@@ -628,9 +735,16 @@
 		background: $app-success-bg;
 	}
 
+	.form-message--warning {
+		color: $app-warning-text;
+		background: $app-warning-bg;
+		border: $app-warning-border;
+	}
+
 	@media (max-width: $app-breakpoint-xs) {
 		.preference-grid,
-		.priority-options {
+		.priority-options,
+		.saved-preferences__grid {
 			grid-template-columns: 1fr;
 		}
 
