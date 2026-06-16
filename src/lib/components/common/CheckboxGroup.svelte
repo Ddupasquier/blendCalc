@@ -77,13 +77,42 @@
     }
 
     input {
+        position: relative;
+        display: inline-grid;
+        flex: 0 0 auto;
+        place-content: center;
         width: 0.85rem;
         height: 0.85rem;
         margin: 0;
-        accent-color: $app-primary;
+        appearance: none;
+        color: $app-primary;
+        background: $app-section-bg;
+        border: 1.5px solid currentColor;
+        border-radius: 0.22rem;
+        transition:
+            background 0.15s,
+            border-color 0.15s,
+            color 0.15s;
+
+        &::before {
+            content: "";
+            width: 0.28rem;
+            height: 0.5rem;
+            border: solid currentColor;
+            border-width: 0 0.14rem 0.14rem 0;
+            transform: rotate(45deg) scale(0);
+            transform-origin: center;
+            transition: transform 0.12s ease;
+        }
+
+        &:checked::before {
+            transform: rotate(45deg) scale(1);
+        }
 
         .selected & {
-            accent-color: $app-btn-text;
+            color: $app-primary;
+            background: $app-btn-text;
+            border-color: $app-btn-text;
         }
     }
 </style>
