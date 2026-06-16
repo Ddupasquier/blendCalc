@@ -1,4 +1,8 @@
-import { submitProductForCatalog } from "$lib/server/products/catalog.server";
+import {
+	assertCanSubmitSharedProduct,
+	ProductSubmissionBlockedError,
+	submitProductForCatalog,
+} from "$lib/server/products/catalog.server";
 import {
 	deleteProductEvidence,
 	uploadProductEvidence,
@@ -12,6 +16,15 @@ import type { RequestHandler } from "./$types";
 export const POST: RequestHandler = async ({ locals, request }) => {
 	const { user } = await locals.safeGetSession();
 	if (!user) throw error(401, "Sign in to share products.");
+
+	try {
+		await assertCanSubmitSharedProduct(user.id);
+	} catch (submissionError) {
+		if (submissionError instanceof ProductSubmissionBlockedError) {
+			throw error(submissionError.status, submissionError.message);
+		}
+		throw submissionError;
+	}
 
 	const formData = await request.formData();
 	const foodValue = formData.get("food");
@@ -43,6 +56,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		return json(result, { status: 201 });
 	} catch (submissionError) {
 		await deleteProductEvidence(evidencePaths);
+		if (submissionError instanceof ProductSubmissionBlockedError) {
+			throw error(submissionError.status, submissionError.message);
+		}
 		const message = submissionError instanceof Error
 			? submissionError.message
 			: "The product could not be submitted.";
