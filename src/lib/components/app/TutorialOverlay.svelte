@@ -238,7 +238,6 @@
 		background: $app-section-bg;
 		border: $app-border;
 		border-radius: $app-guest-card-radius;
-		box-shadow: $app-modal-shadow;
 	}
 
 	.tutorial:focus-visible {
@@ -308,7 +307,6 @@
 		color: $app-primary;
 		background: $app-highlight;
 		border-radius: 50%;
-		box-shadow: $app-highlight-shadow;
 
 		svg {
 			width: 58%;
@@ -357,7 +355,6 @@
 		display: grid;
 		gap: $app-gap-sm;
 		border-top: $app-border;
-		box-shadow: 0 -0.4rem 1rem rgb(79 72 66 / 5%);
 	}
 
 	.tutorial__navigation,

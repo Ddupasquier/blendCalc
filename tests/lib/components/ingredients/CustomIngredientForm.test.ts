@@ -48,7 +48,7 @@ import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
 import { createCustomFood } from "$lib/utils/food/customFoods";
 
 const openManualForm = async () => {
-	await fireEvent.click(screen.getByText("Enter label details"));
+	await fireEvent.click(screen.getByText("Add manually"));
 };
 
 describe("CustomIngredientForm", () => {
@@ -93,7 +93,7 @@ describe("CustomIngredientForm", () => {
 		expect(
 			screen.getByRole("button", { name: /scan barcode/i }),
 		).toBeVisible();
-		expect(screen.getByText("Enter label details").closest("details")).not.toHaveAttribute(
+		expect(screen.getByText("Add manually").closest("details")).not.toHaveAttribute(
 			"open",
 		);
 		expect(screen.queryByLabelText(/ingredient name/i)).not.toBeVisible();
@@ -141,7 +141,7 @@ describe("CustomIngredientForm", () => {
 			"href",
 			"/mix",
 		);
-		expect(screen.getByText("Enter label details").closest("details")).not.toHaveAttribute(
+		expect(screen.getByText("Add manually").closest("details")).not.toHaveAttribute(
 			"open",
 		);
 	});
@@ -359,7 +359,7 @@ describe("CustomIngredientForm", () => {
 		);
 		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 		expect(screen.getByText(/already saved and is now in on hand/i)).toBeInTheDocument();
-		expect(screen.getByText("Enter label details").closest("details")).not.toHaveAttribute(
+		expect(screen.getByText("Add manually").closest("details")).not.toHaveAttribute(
 			"open",
 		);
 	});
@@ -367,7 +367,7 @@ describe("CustomIngredientForm", () => {
 	it("can be closed and reopened without clearing unfinished input", async () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
-		const toggle = screen.getByText("Enter label details");
+		const toggle = screen.getByText("Add manually");
 		const panel = toggle.closest("details");
 		expect(panel).not.toHaveAttribute("open");
 

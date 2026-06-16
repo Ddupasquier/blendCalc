@@ -43,7 +43,6 @@
 		border: $app-border;
 		border-radius: $app-card-radius;
 		overflow: hidden;
-		box-shadow: $app-card-shadow;
 
 		h3 {
 			display: flex;

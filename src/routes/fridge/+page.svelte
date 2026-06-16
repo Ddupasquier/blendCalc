@@ -1,5 +1,6 @@
 <script lang="ts">
     import IngredientSearch from "$lib/components/ingredients/IngredientSearch.svelte";
+    import BarcodeScanButton from "$lib/components/ingredients/BarcodeScanButton.svelte";
     import CustomIngredientForm from "$lib/components/ingredients/CustomIngredientForm.svelte";
     import NutritionPanel from "$lib/components/ingredients/NutritionPanel.svelte";
     import FoodListSection from "$lib/components/common/FoodListSection.svelte";
@@ -41,6 +42,8 @@
     let shoppingList = $state<FdcFood[]>([]);
     let selectedFood = $state<FdcFood | null>(null);
     let closeManualSignal = $state(0);
+    let scanSignal = $state(0);
+    let barcodeLookupBusy = $state(false);
     let nutritionPreviewElement = $state<HTMLDivElement | null>(null);
     let listQuery = $state("");
     let sourceFilter = $state("all");
@@ -125,6 +128,11 @@
         closeManualSignal += 1;
     };
 
+    const startBarcodeScan = () => {
+        closeManualEntry();
+        scanSignal += 1;
+    };
+
     const scrollToNutritionPreview = async () => {
         await tick();
         nutritionPreviewElement?.scrollIntoView({
@@ -136,6 +144,11 @@
 
     const handleSelect = (food: FdcFood) => {
         selectedFood = food;
+    };
+
+    const handleCreate = async (food: FdcFood) => {
+        selectedFood = food;
+        await scrollToNutritionPreview();
     };
 
     const handleSearchSelect = async (food: FdcFood) => {
@@ -287,16 +300,25 @@
 
     <section class="ingredient-search-panel" aria-labelledby="ingredient-search-title">
         <div class="section-heading">
-            <h3 id="ingredient-search-title">Find Ingredients</h3>
-            <p>Pick a result to preview nutrition and add it to a list.</p>
+            <div>
+                <h3 id="ingredient-search-title">Find Ingredients</h3>
+                <p>Pick a result to add it to a list.</p>
+            </div>
+            <BarcodeScanButton
+                scanning={barcodeLookupBusy}
+                onclick={startBarcodeScan}
+            />
         </div>
         <IngredientSearch
             onSelect={handleSearchSelect}
             onSearchFocus={closeManualEntry}
         />
         <CustomIngredientForm
-            onCreate={handleSelect}
+            onCreate={handleCreate}
             closeManualSignal={closeManualSignal}
+            {scanSignal}
+            showScanButton={false}
+            onLookupStateChange={(busy) => (barcodeLookupBusy = busy)}
         />
         {#if selectedFood}
             <div
@@ -465,16 +487,20 @@
 
     .ingredient-search-panel {
         display: grid;
-        gap: $app-gap-md;
-        padding: $app-gap-sm;
+        gap: $app-gap-sm;
+        padding: $app-gap-md;
         margin-bottom: $app-gap-md;
         background: $app-section-bg;
         border: $app-border;
         border-radius: $app-card-radius;
-        box-shadow: $app-box-shadow;
     }
 
     .section-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: $app-gap-sm;
+
         h3 {
             margin-bottom: 0.1rem;
             color: $app-primary;
@@ -537,6 +563,10 @@
 
         .ingredient-list-controls {
             grid-template-columns: 1fr;
+        }
+
+        .section-heading {
+            align-items: start;
         }
     }
 </style>

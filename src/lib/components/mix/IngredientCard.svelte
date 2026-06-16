@@ -154,12 +154,10 @@
 		background: $app-section-bg;
 		border: $app-border;
 		border-radius: $app-card-radius;
-		box-shadow: $app-card-shadow;
 	}
 
 	.ingredient-card--custom {
 		border-color: $app-custom-strong;
-		box-shadow: $app-custom-ring-shadow;
 	}
 
 	.ingredient-card__header {

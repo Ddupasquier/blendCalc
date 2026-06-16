@@ -117,7 +117,6 @@
 		background: $app-bg;
 		border: $app-border;
 		border-radius: $app-card-radius;
-		box-shadow: $app-shadow;
 
 		label {
 			display: block;
@@ -194,7 +193,6 @@
 			position: static;
 			width: 100%;
 			margin-top: $app-gap-xs;
-			box-shadow: none;
 		}
 
 		.nutrient-picker__results {

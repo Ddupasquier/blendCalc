@@ -299,7 +299,6 @@
 		margin: 0 auto;
 		font-family: $app-font-family-data;
 		color: $nutrition-label-text;
-		box-shadow: none;
 		padding: 0.7rem 1.1rem 1.1rem 1.1rem;
 		overflow: hidden;
 	}

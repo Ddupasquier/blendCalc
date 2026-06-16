@@ -79,7 +79,6 @@
         font-family: $app-button-font-family;
         font-weight: $app-button-font-weight;
         border: 1px solid $app-accent;
-        box-shadow: $app-pill-shadow;
         margin-bottom: 0.1rem;
         line-height: $app-button-line-height;
         cursor: pointer;

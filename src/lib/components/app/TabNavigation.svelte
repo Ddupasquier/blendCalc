@@ -40,7 +40,6 @@
     gap: 0.35rem;
     background: $app-bg;
     border-bottom: $app-border;
-    box-shadow: $app-card-shadow;
     padding: 0.35rem 0.55rem;
     margin-bottom: $app-gap-md;
     justify-content: center;

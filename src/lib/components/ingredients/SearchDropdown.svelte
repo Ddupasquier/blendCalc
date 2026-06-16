@@ -104,7 +104,6 @@
         border: $app-border;
         border-radius: $app-radius;
         overflow: hidden;
-        box-shadow: $app-card-shadow;
         background: $app-bg;
         max-height: 280px;
         overflow-y: auto;
@@ -134,10 +133,6 @@
     .result-btn:focus-visible {
         background: $app-accent;
         outline: none;
-    }
-
-    .result-btn--custom {
-        box-shadow: inset 0.28rem 0 0 $app-custom-strong;
     }
 
     .result-name {
