@@ -12,8 +12,11 @@ The shared catalog lets one verified packaged product become searchable for ever
 6. Unknown labels require front-package, nutrition-label, and barcode photos.
 7. Unknown labels stay pending until a moderator approves or rejects them.
 8. Approved products appear in ingredient text search and are checked before outside barcode services.
+9. Accounts with 5 rejected shared-product submissions in 30 days are paused from sharing products for 30 days.
 
 Submitting is optional. A failed catalog submission never rolls back the user's private ingredient.
+Submission pauses only affect shared catalog submissions. Users can still save private
+custom foods, use their fridge, and build mixes.
 
 ## Source policy
 
@@ -55,6 +58,7 @@ Migrations:
 
 - `supabase/migrations/20260614190000_shared_product_catalog.sql`
 - `supabase/migrations/20260614200000_catalog_provenance_cache_and_evidence.sql`
+- `supabase/migrations/20260615230000_product_submission_rejection_blocks.sql`
 
 - Authenticated users can read only active `shared_products` and their own submissions.
 - Browser clients cannot insert, update, approve, reject, or delete shared catalog rows.
@@ -82,6 +86,9 @@ three evidence photos against the entered serving and nutrient values before app
 
 - **Approve:** publishes the submitted label as `community-reviewed` and appends a revision.
 - **Reject:** retains the private user ingredient, records the review note, and does not publish a shared product.
+- **Submission pause:** 5 rejected submissions in 30 days blocks new shared-catalog
+  submissions for 30 days. This prevents repeated bad catalog entries without blocking
+  private food tracking.
 
 ## Verification rules
 

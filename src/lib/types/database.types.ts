@@ -443,6 +443,56 @@ export type Database = {
         }
         Relationships: []
       }
+      product_submission_blocks: {
+        Row: {
+          blocked_until: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          reason: string
+          rejection_count: number
+          source_submission_id: string | null
+          user_id: string
+          window_ended_at: string
+          window_started_at: string
+        }
+        Insert: {
+          blocked_until: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          reason?: string
+          rejection_count: number
+          source_submission_id?: string | null
+          user_id: string
+          window_ended_at: string
+          window_started_at: string
+        }
+        Update: {
+          blocked_until?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          reason?: string
+          rejection_count?: number
+          source_submission_id?: string | null
+          user_id?: string
+          window_ended_at?: string
+          window_started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_submission_blocks_source_submission_id_fkey"
+            columns: ["source_submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_image_policy_acceptances: {
         Row: {
           accepted_at: string

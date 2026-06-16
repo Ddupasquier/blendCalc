@@ -21,7 +21,11 @@ These are the working rules gathered from prior product and implementation decis
 11. Show loading or busy states for actions with network or camera latency.
 12. Keep authentication secure and predictable across localhost, previews, and production.
 13. Keep files and folders maintainable, clean, and beautiful. Structure should make the UI location and domain purpose obvious.
-14. Verify meaningful changes with `npm run check`, focused tests, and builds when scope warrants it.
+14. Use the branch gate. Every new feature, major addition, and big change gets its own branch from `staging`, merges into `staging` first, and only moves from `staging` to `main` after the staging preview is approved.
+15. Treat bypassing staging as a process problem. If a change is headed to `main` without going through `staging`, stop and call that out before merging.
+16. Do not automatically add changes to `staging`. Work should stay on the active feature branch or working tree until explicitly approved for staging.
+17. Do not auto commit. Show the diff and get explicit approval before committing or pushing changes.
+18. Verify meaningful changes with `npm run check`, focused tests, and builds when scope warrants it.
 
 ## Audit Summary
 
@@ -39,6 +43,7 @@ These are the working rules gathered from prior product and implementation decis
 | Action validation | Partial | Validation and constraints exist, but duplicate prevention and pending states are not yet consistently centralized. |
 | Auth predictability | Mostly pass | Redirect flow was hardened and documented. Preview/production/local auth still deserves regression tests. |
 | File/folder structure | Partial | Folder names are much better than before. Some files are still too large and mix behavior, markup, and styling. |
+| Branch workflow | Pass | `staging` exists as the integration gate before `main`; new major work should branch from and return to `staging`. |
 | Verification | Mostly pass | Scripts exist for check/build/tests/database checks. Audit branch has not changed app code yet. |
 
 ## Findings
@@ -246,4 +251,3 @@ rg -n "#[0-9a-fA-F]{3,8}|rgb\\(|rgba\\(" src --glob '*.svelte' --glob '*.ts' --g
 rg -n "(padding|margin|gap|font-size|font-weight|border-radius): [0-9]" src --glob '*.svelte' --glob '*.scss' --glob '!src/styles/_variables.scss'
 wc -l src/routes/fridge/+page.svelte src/routes/mix/+page.svelte src/routes/saved/+page.svelte src/routes/moderation/+page.svelte src/routes/auth/+page.svelte src/lib/components/ingredients/CustomIngredientForm.svelte src/lib/components/ingredients/NutritionPanel.svelte src/lib/components/mix/PointShape.svelte src/lib/components/mix/NutrientAdjustmentSuggestions.svelte src/lib/components/mix/IngredientCard.svelte src/lib/components/ingredients/IngredientSearch.svelte
 ```
-
