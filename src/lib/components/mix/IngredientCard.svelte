@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Popover from "$lib/components/common/Popover.svelte";
+	import CustomBadge from "$lib/components/common/CustomBadge.svelte";
 	import type { NutrientChip } from "$lib/utils/mix/mixUi";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import { slide } from "svelte/transition";
@@ -36,7 +37,7 @@
 
 	let nutrientsOpen = $state(false);
 
-	const getDisplayName = (name: string, maxLength = 34): string => {
+	const getDisplayName = (name: string, maxLength = 30): string => {
 		if (name.length <= maxLength) return name;
 
 		return `${name.slice(0, maxLength - 1).trimEnd()}…`;
@@ -49,7 +50,7 @@
 			<div class="ingredient-card__badges">
 				<span class="ingredient-card__source">{sourceLabel}</span>
 				{#if food.customFood}
-					<span class="ingredient-card__custom-badge">Custom</span>
+					<CustomBadge />
 				{/if}
 			</div>
 			<h5 title={food.description} aria-label={food.description}>
@@ -174,12 +175,18 @@
 		}
 
 		h5 {
+			display: -webkit-box;
 			margin: 0.08rem 0 0;
 			color: $app-primary;
 			font-size: $app-font-size-md;
 			font-weight: 800;
 			line-height: 1.2;
-			overflow-wrap: anywhere;
+			overflow: hidden;
+			-webkit-box-orient: vertical;
+			-webkit-line-clamp: 2;
+			line-clamp: 2;
+			overflow-wrap: normal;
+			word-break: normal;
 		}
 	}
 
@@ -189,8 +196,7 @@
 		gap: 0.22rem;
 	}
 
-	.ingredient-card__source,
-	.ingredient-card__custom-badge {
+	.ingredient-card__source {
 		display: inline-flex;
 		width: fit-content;
 		padding: 0.1rem 0.4rem;
@@ -202,12 +208,6 @@
 		font-weight: 800;
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
-	}
-
-	.ingredient-card__custom-badge {
-		color: $app-btn-text;
-		background: $app-custom-strong;
-		border-color: $app-custom-strong;
 	}
 
 	.ingredient-card__remove {

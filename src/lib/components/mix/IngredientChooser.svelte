@@ -1,8 +1,11 @@
 <script lang="ts">
 	import PillRow from "$lib/components/common/PillRow.svelte";
+	import FoodListSection from "$lib/components/common/FoodListSection.svelte";
 	import ListControls from "$lib/components/common/ListControls.svelte";
 	import Pagination from "$lib/components/common/Pagination.svelte";
 	import SortSelect from "$lib/components/common/SortSelect.svelte";
+	import TextInputDialog from "$lib/components/common/TextInputDialog.svelte";
+	import { MIX_STORAGE_KEYS } from "../../../defaults/mixDefaults";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import {
 		clampPage,
@@ -12,6 +15,10 @@
 		sortFoodListItems,
 		type FoodListSort,
 	} from "$lib/utils/list/listNavigation";
+	import {
+		renameFoodInSmoothieList,
+		type SmoothieListKey,
+	} from "$lib/utils/storage/smoothieLists";
 	import { LIST_PAGE_SIZES } from "../../../defaults/listDefaults";
 
 	let {
@@ -31,6 +38,9 @@
 	let sort = $state<FoodListSort>("recent");
 	let fridgePage = $state(1);
 	let shoppingPage = $state(1);
+	let renamingItem = $state<{ key: SmoothieListKey; food: FdcFood } | null>(null);
+	let renameBusy = $state(false);
+	let renameError = $state("");
 
 	const filterOptions = [
 		{ value: "all", label: "All ingredients" },
@@ -111,6 +121,49 @@
 		shoppingPage = 1;
 	};
 
+	const openRenameDialog = (key: SmoothieListKey, food: FdcFood) => {
+		renamingItem = { key, food };
+		renameError = "";
+	};
+
+	const closeRenameDialog = () => {
+		if (renameBusy) return;
+		renamingItem = null;
+		renameError = "";
+	};
+
+	const renameListItem = async (name: string) => {
+		if (!renamingItem || renameBusy) return;
+
+		renameBusy = true;
+		renameError = "";
+		const { key, food } = renamingItem;
+
+		try {
+			const result = await renameFoodInSmoothieList(key, food.fdcId, name);
+			if (result === "invalid") {
+				renameError = "Enter a name for this ingredient.";
+				return;
+			}
+			if (result === "duplicate") {
+				renameError = "Another ingredient in this list already uses that name.";
+				return;
+			}
+			if (result === "error") {
+				renameError = "That ingredient could not be renamed. Try again.";
+				return;
+			}
+			if (result === "missing") {
+				renameError = "That ingredient is no longer in this list.";
+				return;
+			}
+
+			renamingItem = null;
+		} finally {
+			renameBusy = false;
+		}
+	};
+
 	$effect(() => {
 		fridgePage = clampPage(
 			fridgePage,
@@ -153,12 +206,21 @@
 		/>
 	</div>
 	<div class="ingredient-lists" aria-label="Smoothie ingredients">
-		<section class="ingredient-list">
-			<h5>Fridge <span>{filteredFridgeItems.length}</span></h5>
+		<FoodListSection
+			title="Fridge"
+			count={filteredFridgeItems.length}
+			ariaLabel="Mix fridge ingredients"
+			hasItems={pagedFridgeItems.length > 0}
+			placeholder={fridgeItems.length > 0
+				? "No fridge ingredients match these filters."
+				: "No fridge items yet."}
+		>
 			{#if pagedFridgeItems.length > 0}
 				<PillRow
 					pills={pagedFridgeItems.map((food) => food.description)}
 					onRemove={(index) => onToggleFood(pagedFridgeItems[index].fdcId)}
+					onRename={(index) =>
+						openRenameDialog(MIX_STORAGE_KEYS.fridge, pagedFridgeItems[index])}
 					onSelect={(index) => onToggleFood(pagedFridgeItems[index].fdcId)}
 					activeIndices={getActiveIndices(pagedFridgeItems)}
 					customIndices={getCustomIndices(pagedFridgeItems)}
@@ -171,19 +233,27 @@
 					onPageChange={(page) => (fridgePage = page)}
 					label="Mix fridge ingredients"
 				/>
-			{:else if fridgeItems.length > 0}
-				<p>No fridge ingredients match these filters.</p>
-			{:else}
-				<p>No fridge items yet.</p>
 			{/if}
-		</section>
+		</FoodListSection>
 
-		<section class="ingredient-list">
-			<h5>Shopping List <span>{filteredShoppingItems.length}</span></h5>
+		<FoodListSection
+			title="Shopping List"
+			count={filteredShoppingItems.length}
+			ariaLabel="Mix shopping-list ingredients"
+			hasItems={pagedShoppingItems.length > 0}
+			placeholder={shoppingItems.length > 0
+				? "No shopping-list ingredients match these filters."
+				: "No shopping list items yet."}
+		>
 			{#if pagedShoppingItems.length > 0}
 				<PillRow
 					pills={pagedShoppingItems.map((food) => food.description)}
 					onRemove={(index) => onToggleFood(pagedShoppingItems[index].fdcId)}
+					onRename={(index) =>
+						openRenameDialog(
+							MIX_STORAGE_KEYS.shoppingList,
+							pagedShoppingItems[index],
+						)}
 					onSelect={(index) => onToggleFood(pagedShoppingItems[index].fdcId)}
 					activeIndices={getActiveIndices(pagedShoppingItems)}
 					customIndices={getCustomIndices(pagedShoppingItems)}
@@ -196,13 +266,23 @@
 					onPageChange={(page) => (shoppingPage = page)}
 					label="Mix shopping-list ingredients"
 				/>
-			{:else if shoppingItems.length > 0}
-				<p>No shopping-list ingredients match these filters.</p>
-			{:else}
-				<p>No shopping list items yet.</p>
 			{/if}
-		</section>
+		</FoodListSection>
 	</div>
+
+	<TextInputDialog
+		open={renamingItem !== null}
+		title="Rename ingredient"
+		description="This only changes the name in your own fridge or shopping list."
+		label="Ingredient name"
+		initialValue={renamingItem?.food.description ?? ""}
+		error={renameError}
+		busy={renameBusy}
+		confirmLabel={renameBusy ? "Saving…" : "Save name"}
+		onConfirm={renameListItem}
+		onValueChange={() => (renameError = "")}
+		onCancel={closeRenameDialog}
+	/>
 </section>
 
 <style lang="scss">
@@ -247,60 +327,6 @@
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: $app-gap-sm;
-	}
-
-	.ingredient-list {
-		min-width: 0;
-		padding: 0;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-card-radius;
-
-		h5 {
-			display: flex;
-			align-items: center;
-			gap: $app-gap-xs;
-			margin: 0 0 0.35rem;
-			padding: 0.45rem;
-			color: $app-primary;
-			background: $app-section-bg;
-			border-bottom: $app-border;
-			font-size: $app-font-size-sm;
-			font-weight: 800;
-
-			span {
-				padding: 0.06rem 0.35rem;
-				color: $app-muted;
-				background: $app-accent;
-				border-radius: $app-radius-pill;
-				font-size: $app-font-size-xs;
-			}
-		}
-
-		p {
-			padding: 0 0.45rem 0.45rem;
-			color: $app-muted;
-			font-size: $app-font-size-sm;
-		}
-
-		:global(.pill-row) {
-			gap: 0.3rem;
-			margin: 0;
-			padding: 0 0.45rem 0.45rem;
-		}
-
-		:global(.pill) {
-			max-width: 100%;
-			padding: 0.16rem 0.55rem;
-			font-size: $app-font-size-sm;
-			line-height: $app-button-line-height;
-			overflow-wrap: anywhere;
-		}
-
-		:global(.pill-remove) {
-			flex-shrink: 0;
-			font-size: 1rem;
-		}
 	}
 
 	@media (max-width: $app-breakpoint-md) {

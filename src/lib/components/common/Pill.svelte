@@ -1,7 +1,10 @@
 <script lang="ts">
+	import CustomBadge from "./CustomBadge.svelte";
+
     let {
         label,
         onRemove,
+		onRename,
         onSelect,
         active = false,
         custom = false,
@@ -9,6 +12,7 @@
     } = $props<{
         label: string;
         onRemove: () => void;
+		onRename?: () => void;
         onSelect?: () => void;
         active?: boolean;
         custom?: boolean;
@@ -29,15 +33,29 @@
         }
     }}
 >
-    {label}
+    <span class="pill-label" title={label}>{label}</span>
     {#if custom}
-        <span class="pill-custom-marker">Custom</span>
+        <CustomBadge />
     {/if}
+	{#if onRename}
+		<button
+			class="pill-action pill-rename"
+			aria-label={`Rename ${label}`}
+			disabled={disabled}
+			tabindex="-1"
+			type="button"
+			onclick={(e) => {
+				e.stopPropagation();
+				if (!disabled) onRename();
+			}}
+		>✎</button>
+	{/if}
     <button
-        class="pill-remove"
-        aria-label="Remove"
+        class="pill-action pill-remove"
+        aria-label={`Remove ${label}`}
 		disabled={disabled}
         tabindex="-1"
+		type="button"
         onclick={(e) => {
             e.stopPropagation();
 			if (!disabled) onRemove();
@@ -48,8 +66,11 @@
 <style lang="scss">
     @use "../../../styles/variables" as *;
     .pill {
-        display: inline-flex;
+        display: inline-grid;
+		grid-template-columns: minmax(0, 1fr) repeat(3, auto);
         align-items: center;
+		gap: 0.28rem;
+		max-width: 100%;
         background: $app-accent;
         color: $app-primary;
         border-radius: $app-radius-pill;
@@ -64,12 +85,24 @@
         cursor: pointer;
         transition: background 0.15s;
     }
+
+	.pill-label {
+		display: -webkit-box;
+		min-width: 0;
+		overflow: hidden;
+		line-height: 1.15;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		overflow-wrap: anywhere;
+	}
+
     .pill.active {
         background: $app-primary;
         color: $app-btn-text;
         border-color: $app-primary;
 
-        .pill-remove {
+        .pill-action {
             color: $app-btn-text;
         }
     }
@@ -78,24 +111,18 @@
         border-color: $app-custom-strong;
     }
 
-    .pill-custom-marker {
-        margin-left: 0.35rem;
-        padding: 0.04rem 0.32rem;
-        color: $app-btn-text;
-        background: $app-custom-strong;
-        border-radius: $app-radius-pill;
-        font-size: $app-font-size-xs;
-        font-weight: 800;
-        line-height: 1.2;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
     .pill.custom.active {
         background: $app-custom-strong;
         color: $app-btn-text;
         border-color: $app-custom-strong;
 
-        .pill-remove {
+		:global(.custom-badge) {
+			color: $app-custom-strong;
+			background: $app-btn-text;
+			border-color: $app-btn-text;
+		}
+
+        .pill-action {
             color: $app-btn-text;
         }
     }
@@ -107,12 +134,11 @@
 		cursor: wait;
 		opacity: 0.65;
 	}
-    .pill-remove {
+    .pill-action {
         background: none;
         border: none;
         color: $app-primary;
         font-size: 1rem;
-        margin-left: 0.25rem;
         cursor: pointer;
         padding: 0 0.1rem;
         line-height: 1;
@@ -120,4 +146,8 @@
             outline: $app-focus-outline;
         }
     }
+
+	.pill-rename {
+		font-size: 0.9rem;
+	}
 </style>

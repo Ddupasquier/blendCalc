@@ -3,6 +3,7 @@
     let {
         pills,
         onRemove,
+		onRename,
         onSelect,
         activeIndices = [],
         customIndices = [],
@@ -11,6 +12,7 @@
     } = $props<{
         pills: string[];
         onRemove: (idx: number) => void;
+		onRename?: (idx: number) => void;
         onSelect?: (idx: number) => void;
         activeIndices?: number[];
         customIndices?: number[];
@@ -58,6 +60,7 @@
         <Pill
             label={pill.label}
             onRemove={() => onRemove(pill.index)}
+			onRename={onRename ? () => onRename(pill.index) : undefined}
             onSelect={() => onSelect && onSelect(pill.index)}
             active={pill.active}
             custom={pill.custom}

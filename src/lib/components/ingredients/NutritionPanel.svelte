@@ -1,6 +1,7 @@
 <script lang="ts">
 	import MoveItemPrompt from "$lib/components/ingredients/MoveItemPrompt.svelte";
 	import NutritionConfidenceDetails from "$lib/components/ingredients/NutritionConfidenceDetails.svelte";
+	import CustomBadge from "$lib/components/common/CustomBadge.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import { getFoodQuality } from "$lib/utils/food/foodQuality";
 	import {
@@ -217,7 +218,7 @@
 		<div class="nf-food-row">
 			<div class="nf-food">{food.description}</div>
 			{#if food.customFood}
-				<span class="nf-custom-badge">Custom</span>
+				<CustomBadge />
 			{/if}
 		</div>
 	{/if}
@@ -342,18 +343,6 @@
 		font-weight: 600;
 		color: $nutrition-label-muted;
 		overflow-wrap: anywhere;
-	}
-	.nf-custom-badge {
-		width: fit-content;
-		padding: 0.08rem 0.4rem;
-		color: $app-btn-text;
-		background: $app-custom-strong;
-		border-radius: $app-radius-pill;
-		font-family: $app-font-family-data;
-		font-size: 0.64rem;
-		font-weight: 900;
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
 	}
 	.nf-thick-divider {
 		border-bottom: $app-border-thick;

@@ -21,6 +21,9 @@ export type SmoothieListMutationResult =
 	| "duplicate"
 	| "removed"
 	| "missing"
+	| "renamed"
+	| "unchanged"
+	| "invalid"
 	| "error";
 
 const dispatchListsChanged = () => {
@@ -186,4 +189,51 @@ export const removeFoodFromSmoothieList = async (
 	cacheSmoothieListLocally(key, list);
 	dispatchListsChanged();
 	return "removed";
+};
+
+export const renameFoodInSmoothieList = async (
+	key: SmoothieListKey,
+	foodId: number,
+	nextDescription: string,
+): Promise<SmoothieListMutationResult> => {
+	const trimmedDescription = nextDescription.trim().replace(/\s+/g, " ");
+	if (!trimmedDescription) return "invalid";
+
+	const currentList = readSmoothieList(key);
+	const itemIndex = currentList.findIndex((item) => item.fdcId === foodId);
+	if (itemIndex === -1) return "missing";
+
+	const currentItem = currentList[itemIndex];
+	if (
+		currentItem.description.trim().toLowerCase() ===
+		trimmedDescription.toLowerCase()
+	) {
+		return "unchanged";
+	}
+
+	if (
+		currentList.some(
+			(item) =>
+				item.fdcId !== foodId &&
+				item.description.trim().toLowerCase() ===
+					trimmedDescription.toLowerCase(),
+		)
+	) {
+		return "duplicate";
+	}
+
+	const renamedFood = compactFood({
+		...currentItem,
+		description: trimmedDescription,
+	});
+	const saved = await upsertCloudSmoothieListItem(key, renamedFood);
+	if (!saved) return "error";
+
+	const nextList = currentList.map((item, index) =>
+		index === itemIndex ? renamedFood : item,
+	);
+
+	cacheSmoothieListLocally(key, nextList);
+	dispatchListsChanged();
+	return "renamed";
 };

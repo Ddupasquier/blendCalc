@@ -2,6 +2,7 @@
     import { goto } from "$app/navigation";
     import ListControls from "$lib/components/common/ListControls.svelte";
     import Pagination from "$lib/components/common/Pagination.svelte";
+	import CustomBadge from "$lib/components/common/CustomBadge.svelte";
 	import ConfirmationDialog from "$lib/components/common/ConfirmationDialog.svelte";
     import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
     import {
@@ -219,7 +220,12 @@
                                         class="saved-card__ingredient-pill"
                                         class:saved-card__ingredient-pill--custom={food.customFood}
                                     >
-                                        {food.description}
+                                        <span class="saved-card__ingredient-name" title={food.description}>
+                                            {food.description}
+                                        </span>
+                                        {#if food.customFood}
+                                            <CustomBadge />
+                                        {/if}
                                     </span>
                                 {/each}
                             </div>
@@ -367,6 +373,10 @@
     }
 
     .saved-card__ingredient-pill {
+        display: inline-grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.28rem;
         max-width: 100%;
         padding: 0.2rem 0.5rem;
         color: $app-primary;
@@ -376,27 +386,21 @@
         font-size: $app-font-size-sm;
         font-weight: 700;
         line-height: 1.25;
+    }
+
+    .saved-card__ingredient-name {
+        display: -webkit-box;
+        min-width: 0;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
         overflow-wrap: anywhere;
     }
 
     .saved-card__ingredient-pill--custom {
         background: $app-custom-bg;
         border-color: $app-custom-strong;
-
-        &::after {
-            content: "Custom";
-            display: inline-block;
-            margin-left: 0.35rem;
-            padding: 0.04rem 0.32rem;
-            color: $app-btn-text;
-            background: $app-custom-strong;
-            border-radius: $app-radius-pill;
-            font-size: $app-font-size-xs;
-            font-weight: 900;
-            line-height: 1.2;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-        }
     }
 
     .saved-card__actions {

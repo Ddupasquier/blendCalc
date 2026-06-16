@@ -13,6 +13,7 @@ import {
 	preserveSelectedListItems,
 	readSmoothieList,
 	removeFoodFromSmoothieList,
+	renameFoodInSmoothieList,
 	writeSmoothieList,
 } from "$lib/utils/storage/smoothieLists";
 import type { FdcFood } from "$lib/utils/food/types";
@@ -115,6 +116,75 @@ describe("smoothie lists", () => {
 			food.fdcId,
 		);
 		expect(cloudData.writeCloudSmoothieList).not.toHaveBeenCalled();
+	});
+
+	it("renames one list item without changing the source food ID", async () => {
+		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food]);
+		vi.clearAllMocks();
+		cloudData.upsertCloudSmoothieListItem.mockResolvedValue(true);
+
+		expect(
+			await renameFoodInSmoothieList(
+				MIX_STORAGE_KEYS.fridge,
+				food.fdcId,
+				"  Cooking oil  ",
+			),
+		).toBe("renamed");
+
+		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)[0]).toMatchObject({
+			fdcId: food.fdcId,
+			description: "Cooking oil",
+		});
+		expect(cloudData.upsertCloudSmoothieListItem).toHaveBeenCalledWith(
+			MIX_STORAGE_KEYS.fridge,
+			expect.objectContaining({
+				fdcId: food.fdcId,
+				description: "Cooking oil",
+			}),
+		);
+	});
+
+	it("rejects blank list item names", async () => {
+		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food]);
+
+		expect(
+			await renameFoodInSmoothieList(MIX_STORAGE_KEYS.fridge, food.fdcId, "   "),
+		).toBe("invalid");
+		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)[0].description).toBe(
+			"Olive oil",
+		);
+	});
+
+	it("rejects duplicate display names in the same list", async () => {
+		const kale = { ...food, fdcId: 2, description: "Kale, raw" };
+		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food, kale]);
+
+		expect(
+			await renameFoodInSmoothieList(
+				MIX_STORAGE_KEYS.fridge,
+				kale.fdcId,
+				" olive oil ",
+			),
+		).toBe("duplicate");
+		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)[1].description).toBe(
+			"Kale, raw",
+		);
+	});
+
+	it("keeps the cached name when database rename fails", async () => {
+		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food]);
+		cloudData.upsertCloudSmoothieListItem.mockResolvedValue(false);
+
+		expect(
+			await renameFoodInSmoothieList(
+				MIX_STORAGE_KEYS.fridge,
+				food.fdcId,
+				"Cooking oil",
+			),
+		).toBe("error");
+		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)[0].description).toBe(
+			"Olive oil",
+		);
 	});
 
 	it("does not update the cache when adding to the database fails", async () => {

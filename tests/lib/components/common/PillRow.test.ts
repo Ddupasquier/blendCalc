@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
 import PillRow from "$lib/components/common/PillRow.svelte";
@@ -31,5 +31,34 @@ describe("PillRow", () => {
 		});
 
 		expect(getPillLabels()).toEqual(["Kale, raw", "Apple", "Banana"]);
+	});
+
+	it("renders custom ingredients with a badge", () => {
+		render(PillRow, {
+			props: {
+				pills: ["User yogurt"],
+				customIndices: [0],
+				onRemove: vi.fn(),
+			},
+		});
+
+		expect(screen.getByText("Custom")).toBeInTheDocument();
+	});
+
+	it("calls rename with the original pill index", async () => {
+		const onRename = vi.fn();
+		render(PillRow, {
+			props: {
+				pills: ["Long ingredient name", "Egg"],
+				onRemove: vi.fn(),
+				onRename,
+			},
+		});
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Rename Long ingredient name" }),
+		);
+
+		expect(onRename).toHaveBeenCalledWith(0);
 	});
 });

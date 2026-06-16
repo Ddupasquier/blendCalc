@@ -2,10 +2,12 @@
     import IngredientSearch from "$lib/components/ingredients/IngredientSearch.svelte";
     import CustomIngredientForm from "$lib/components/ingredients/CustomIngredientForm.svelte";
     import NutritionPanel from "$lib/components/ingredients/NutritionPanel.svelte";
+    import FoodListSection from "$lib/components/common/FoodListSection.svelte";
     import ListControls from "$lib/components/common/ListControls.svelte";
     import Pagination from "$lib/components/common/Pagination.svelte";
     import PillRow from "$lib/components/common/PillRow.svelte";
     import SortSelect from "$lib/components/common/SortSelect.svelte";
+    import TextInputDialog from "$lib/components/common/TextInputDialog.svelte";
     import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
     import type { FdcFood } from "$lib/utils/food/types";
     import {
@@ -24,6 +26,7 @@
         cacheSmoothieListLocally,
         readSmoothieList,
         removeFoodFromSmoothieList,
+        renameFoodInSmoothieList,
         SMOOTHIE_LISTS_CHANGED_EVENT,
         type SmoothieListKey,
     } from "$lib/utils/storage/smoothieLists";
@@ -45,6 +48,9 @@
     let onHandPage = $state(1);
     let shoppingPage = $state(1);
 	let removingItem = $state<string | null>(null);
+	let renamingItem = $state<{ key: SmoothieListKey; food: FdcFood } | null>(null);
+	let renameBusy = $state(false);
+	let renameError = $state("");
 	let listActionError = $state("");
 
     const sourceFilterOptions = [
@@ -160,6 +166,57 @@
 			removingItem = null;
 		}
     };
+
+	const openRenameDialog = (key: SmoothieListKey, food: FdcFood) => {
+		renamingItem = { key, food };
+		renameError = "";
+	};
+
+	const closeRenameDialog = () => {
+		if (renameBusy) return;
+		renamingItem = null;
+		renameError = "";
+	};
+
+	const renameListItem = async (name: string) => {
+		if (!renamingItem || renameBusy) return;
+
+		renameBusy = true;
+		renameError = "";
+		const { key, food } = renamingItem;
+
+		try {
+			const result = await renameFoodInSmoothieList(key, food.fdcId, name);
+			if (result === "invalid") {
+				renameError = "Enter a name for this ingredient.";
+				return;
+			}
+			if (result === "duplicate") {
+				renameError = "Another ingredient in this list already uses that name.";
+				return;
+			}
+			if (result === "error") {
+				renameError = "That ingredient could not be renamed. Try again.";
+				return;
+			}
+			if (result === "missing") {
+				renameError = "That ingredient is no longer in this list.";
+				await loadLists();
+				return;
+			}
+
+			if (selectedFood?.fdcId === food.fdcId) {
+				selectedFood = {
+					...selectedFood,
+					description: name.trim().replace(/\s+/g, " "),
+				};
+			}
+			renamingItem = null;
+			await loadLists();
+		} finally {
+			renameBusy = false;
+		}
+	};
 
 	const getDisabledIndices = (key: SmoothieListKey, items: FdcFood[]) => {
 		return items
@@ -281,80 +338,103 @@
 		{#if listActionError}
 			<p class="list-action-error" role="alert">{listActionError}</p>
 		{/if}
-        <section class="fridge-section">
-            <h3>On Hand <span>{filteredOnHand.length}</span></h3>
-            <div class="fridge-container" aria-label="On Hand ingredients">
-                {#if pagedOnHand.length > 0}
-                    <PillRow
-                        pills={pagedOnHand.map((item) => item.description)}
-                        activeIndices={getActiveIndices(pagedOnHand)}
-                        customIndices={pagedOnHand
-                            .map((food, i) => (food.customFood ? i : -1))
-                            .filter((i) => i !== -1)}
-                        disabledIndices={getDisabledIndices(
-							MIX_STORAGE_KEYS.fridge,
-							pagedOnHand,
-						)}
-                        preserveOrder
-                        onSelect={(idx) => handleSelect(pagedOnHand[idx])}
-                        onRemove={(idx) =>
-                            removeFromList(
-                                MIX_STORAGE_KEYS.fridge,
-                                pagedOnHand[idx].fdcId,
-                            )}
-                    />
-                    <Pagination
-                        page={onHandPage}
-                        pageSize={LIST_PAGE_SIZES.ingredientPills}
-                        totalItems={filteredOnHand.length}
-                        onPageChange={(page) => (onHandPage = page)}
-                        label="On Hand ingredients"
-                    />
-                {:else if onHand.length > 0}
-                    <p class="placeholder">No On Hand ingredients match these filters.</p>
-                {:else}
-                    <p class="placeholder">No ingredients on hand yet.</p>
-                {/if}
-            </div>
-        </section>
+        <FoodListSection
+            title="On Hand"
+            count={filteredOnHand.length}
+            ariaLabel="On Hand ingredients"
+            hasItems={pagedOnHand.length > 0}
+            placeholder={onHand.length > 0
+                ? "No On Hand ingredients match these filters."
+                : "No ingredients on hand yet."}
+        >
+            {#if pagedOnHand.length > 0}
+                <PillRow
+                    pills={pagedOnHand.map((item) => item.description)}
+                    activeIndices={getActiveIndices(pagedOnHand)}
+                    customIndices={pagedOnHand
+                        .map((food, i) => (food.customFood ? i : -1))
+                        .filter((i) => i !== -1)}
+                    disabledIndices={getDisabledIndices(
+                        MIX_STORAGE_KEYS.fridge,
+                        pagedOnHand,
+                    )}
+                    preserveOrder
+                    onSelect={(idx) => handleSelect(pagedOnHand[idx])}
+                    onRename={(idx) =>
+                        openRenameDialog(MIX_STORAGE_KEYS.fridge, pagedOnHand[idx])}
+                    onRemove={(idx) =>
+                        removeFromList(
+                            MIX_STORAGE_KEYS.fridge,
+                            pagedOnHand[idx].fdcId,
+                        )}
+                />
+                <Pagination
+                    page={onHandPage}
+                    pageSize={LIST_PAGE_SIZES.ingredientPills}
+                    totalItems={filteredOnHand.length}
+                    onPageChange={(page) => (onHandPage = page)}
+                    label="On Hand ingredients"
+                />
+            {/if}
+        </FoodListSection>
 
-        <section class="fridge-section">
-            <h3>Shopping List <span>{filteredShoppingList.length}</span></h3>
-            <div class="fridge-container" aria-label="Shopping List ingredients">
-                {#if pagedShoppingList.length > 0}
-                    <PillRow
-                        pills={pagedShoppingList.map((item) => item.description)}
-                        activeIndices={getActiveIndices(pagedShoppingList)}
-                        customIndices={pagedShoppingList
-                            .map((food, i) => (food.customFood ? i : -1))
-                            .filter((i) => i !== -1)}
-                        disabledIndices={getDisabledIndices(
-							MIX_STORAGE_KEYS.shoppingList,
-							pagedShoppingList,
-						)}
-                        preserveOrder
-                        onSelect={(idx) => handleSelect(pagedShoppingList[idx])}
-                        onRemove={(idx) =>
-                            removeFromList(
-                                MIX_STORAGE_KEYS.shoppingList,
-                                pagedShoppingList[idx].fdcId,
-                            )}
-                    />
-                    <Pagination
-                        page={shoppingPage}
-                        pageSize={LIST_PAGE_SIZES.ingredientPills}
-                        totalItems={filteredShoppingList.length}
-                        onPageChange={(page) => (shoppingPage = page)}
-                        label="Shopping List ingredients"
-                    />
-                {:else if shoppingList.length > 0}
-                    <p class="placeholder">No shopping-list ingredients match these filters.</p>
-                {:else}
-                    <p class="placeholder">No items in shopping list yet.</p>
-                {/if}
-            </div>
-        </section>
+        <FoodListSection
+            title="Shopping List"
+            count={filteredShoppingList.length}
+            ariaLabel="Shopping List ingredients"
+            hasItems={pagedShoppingList.length > 0}
+            placeholder={shoppingList.length > 0
+                ? "No shopping-list ingredients match these filters."
+                : "No items in shopping list yet."}
+        >
+            {#if pagedShoppingList.length > 0}
+                <PillRow
+                    pills={pagedShoppingList.map((item) => item.description)}
+                    activeIndices={getActiveIndices(pagedShoppingList)}
+                    customIndices={pagedShoppingList
+                        .map((food, i) => (food.customFood ? i : -1))
+                        .filter((i) => i !== -1)}
+                    disabledIndices={getDisabledIndices(
+                        MIX_STORAGE_KEYS.shoppingList,
+                        pagedShoppingList,
+                    )}
+                    preserveOrder
+                    onSelect={(idx) => handleSelect(pagedShoppingList[idx])}
+                    onRename={(idx) =>
+                        openRenameDialog(
+                            MIX_STORAGE_KEYS.shoppingList,
+                            pagedShoppingList[idx],
+                        )}
+                    onRemove={(idx) =>
+                        removeFromList(
+                            MIX_STORAGE_KEYS.shoppingList,
+                            pagedShoppingList[idx].fdcId,
+                        )}
+                />
+                <Pagination
+                    page={shoppingPage}
+                    pageSize={LIST_PAGE_SIZES.ingredientPills}
+                    totalItems={filteredShoppingList.length}
+                    onPageChange={(page) => (shoppingPage = page)}
+                    label="Shopping List ingredients"
+                />
+            {/if}
+        </FoodListSection>
     </div>
+
+    <TextInputDialog
+        open={renamingItem !== null}
+        title="Rename ingredient"
+        description="This only changes the name in your own fridge or shopping list."
+        label="Ingredient name"
+        initialValue={renamingItem?.food.description ?? ""}
+        error={renameError}
+        busy={renameBusy}
+        confirmLabel={renameBusy ? "Saving…" : "Save name"}
+        onConfirm={renameListItem}
+        onValueChange={() => (renameError = "")}
+        onCancel={closeRenameDialog}
+    />
 </div>
 
 <style lang="scss">
@@ -444,48 +524,6 @@
         align-items: end;
         gap: $app-gap-sm;
         margin-bottom: $app-gap-md;
-    }
-
-    .fridge-section {
-        margin-bottom: $app-gap-lg;
-
-        h3 {
-            display: flex;
-            align-items: center;
-            gap: $app-gap-xs;
-            margin-bottom: $app-gap-sm;
-            color: $app-primary;
-            font-size: $app-font-size-lg;
-            font-weight: 800;
-
-            span {
-                padding: 0.08rem 0.4rem;
-                color: $app-muted;
-                background: $app-accent;
-                border-radius: $app-radius-pill;
-                font-size: $app-font-size-xs;
-            }
-        }
-
-        .fridge-container {
-            background: $app-bg;
-            border-radius: $app-card-radius;
-            padding: $app-gap-sm;
-            min-height: 48px;
-            margin-bottom: $app-gap-sm;
-            box-shadow: $app-card-shadow;
-            display: block;
-
-            :global(.pill-row) {
-                margin-top: 0;
-            }
-        }
-
-        .placeholder {
-            color: $app-muted;
-            font-size: $app-font-size-sm;
-            margin: 0.2rem 0;
-        }
     }
 
     @media (max-width: $app-breakpoint-lg) {
