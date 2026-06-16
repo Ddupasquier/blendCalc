@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import {
+		getJoinedPreferenceList,
+		getServingSizeDisplayValue,
+		type DefaultServingUnit,
+	} from "$lib/utils/profile/foodPreferences";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import type { ActionData, PageData } from "./$types";
 
@@ -18,13 +23,50 @@
 			data.defaultDisplayName,
 		bio: form?.profileValues?.bio ?? data.profile?.bio ?? "",
 	});
+	const storedServingUnit = $derived<DefaultServingUnit>(
+		data.foodPreferences?.unit_system === "us" ? "oz" : "g",
+	);
+	const foodPreferenceValues = $derived({
+		unitSystem:
+			form?.foodPreferenceValues?.unitSystem ??
+			data.foodPreferences?.unit_system ??
+			"",
+		foodPreferences:
+			form?.foodPreferenceValues?.foodPreferences?.join(", ") ??
+			getJoinedPreferenceList(data.foodPreferences?.food_preferences),
+		allergens:
+			form?.foodPreferenceValues?.allergens?.join(", ") ??
+			getJoinedPreferenceList(data.foodPreferences?.allergens),
+		dietaryRestrictions:
+			form?.foodPreferenceValues?.dietaryRestrictions?.join(", ") ??
+			getJoinedPreferenceList(data.foodPreferences?.dietary_restrictions),
+		ingredientsToAvoid:
+			form?.foodPreferenceValues?.ingredientsToAvoid?.join(", ") ??
+			getJoinedPreferenceList(data.foodPreferences?.ingredients_to_avoid),
+		prioritizedNutrientIds:
+			form?.foodPreferenceValues?.prioritizedNutrientIds ??
+			data.foodPreferences?.prioritized_nutrient_ids ??
+			[],
+		defaultSmoothieServingUnit:
+			form?.foodPreferenceValues?.defaultSmoothieServingUnit ?? storedServingUnit,
+		defaultSmoothieServingSize:
+			form?.foodPreferenceValues?.defaultSmoothieServingSize ??
+			getServingSizeDisplayValue(
+				data.foodPreferences?.default_smoothie_serving_grams,
+				storedServingUnit,
+			),
+	});
 	let profilePending = $state(false);
 	let avatarPending = $state(false);
+	let foodPreferencesPending = $state(false);
 	const enhanceProfile = createPendingSubmit(
 		(pending) => (profilePending = pending),
 	);
 	const enhanceAvatar = createPendingSubmit(
 		(pending) => (avatarPending = pending),
+	);
+	const enhanceFoodPreferences = createPendingSubmit(
+		(pending) => (foodPreferencesPending = pending),
 	);
 </script>
 
@@ -167,6 +209,140 @@
 			</div>
 		</form>
 	</section>
+
+	<section class="profile-card">
+		<div class="profile-card__heading">
+			<h2>Food preferences</h2>
+			<p>Optional settings for safer suggestions and smoother mix planning.</p>
+		</div>
+
+		<div class="sensitive-notice">
+			<strong>Optional, but important.</strong>
+			<span>
+				Allergens, restrictions, avoid lists, and nutrient priorities can be health-related.
+				If you save them, the app treats them as important warnings.
+			</span>
+		</div>
+
+		{#if form?.foodPreferencesError}
+			<p class="form-message form-message--error" role="alert">{form.foodPreferencesError}</p>
+		{:else if form?.foodPreferencesSuccess}
+			<p class="form-message form-message--success" role="status">{form.foodPreferencesSuccess}</p>
+		{/if}
+
+		<form
+			method="POST"
+			action="?/saveFoodPreferences"
+			use:enhance={enhanceFoodPreferences}
+			aria-busy={foodPreferencesPending}
+		>
+			<div class="preference-grid">
+				<label>
+					<span>Preferred units</span>
+					<select
+						name="unitSystem"
+						value={foodPreferenceValues.unitSystem}
+						disabled={foodPreferencesPending}
+					>
+						<option value="">No preference</option>
+						<option value="metric">Metric</option>
+						<option value="us">US units</option>
+					</select>
+				</label>
+
+				<label>
+					<span>Default smoothie serving size</span>
+					<div class="inline-fields">
+						<input
+							name="defaultSmoothieServingSize"
+							type="number"
+							min="0"
+							step="0.1"
+							value={foodPreferenceValues.defaultSmoothieServingSize}
+							placeholder="Optional"
+							disabled={foodPreferencesPending}
+						/>
+						<select
+							name="defaultSmoothieServingUnit"
+							value={foodPreferenceValues.defaultSmoothieServingUnit}
+							disabled={foodPreferencesPending}
+						>
+							<option value="g">g</option>
+							<option value="oz">oz</option>
+						</select>
+					</div>
+				</label>
+			</div>
+
+			<label for="profile-food-preferences">Food preferences</label>
+			<input
+				id="profile-food-preferences"
+				name="foodPreferences"
+				value={foodPreferenceValues.foodPreferences}
+				placeholder="Example: tart, creamy, low sweetness"
+				disabled={foodPreferencesPending}
+			/>
+			<small>Separate items with commas.</small>
+
+			<label for="profile-allergens">Allergens</label>
+			<input
+				id="profile-allergens"
+				name="allergens"
+				value={foodPreferenceValues.allergens}
+				placeholder="Example: peanuts, dairy, shellfish"
+				disabled={foodPreferencesPending}
+			/>
+
+			<label for="profile-dietary-restrictions">Dietary restrictions</label>
+			<input
+				id="profile-dietary-restrictions"
+				name="dietaryRestrictions"
+				value={foodPreferenceValues.dietaryRestrictions}
+				placeholder="Example: vegan, gluten-free, kosher"
+				disabled={foodPreferencesPending}
+			/>
+
+			<label for="profile-ingredients-to-avoid">Ingredients to avoid</label>
+			<input
+				id="profile-ingredients-to-avoid"
+				name="ingredientsToAvoid"
+				value={foodPreferenceValues.ingredientsToAvoid}
+				placeholder="Example: sucralose, banana, soy lecithin"
+				disabled={foodPreferencesPending}
+			/>
+
+			<fieldset class="nutrient-priorities">
+				<legend>Preferred nutrients</legend>
+				<div class="priority-options">
+					{#each data.priorityNutrientOptions as nutrient}
+						<label class="check-row">
+							<input
+								type="checkbox"
+								name="prioritizedNutrientIds"
+								value={nutrient.id}
+								checked={foodPreferenceValues.prioritizedNutrientIds.includes(nutrient.id)}
+								disabled={foodPreferencesPending}
+							/>
+							<span>{nutrient.label}</span>
+						</label>
+					{/each}
+				</div>
+			</fieldset>
+
+			<label class="check-row">
+				<input
+					type="checkbox"
+					name="sensitiveAcknowledged"
+					disabled={foodPreferencesPending}
+				/>
+				<span>I understand these optional preferences may affect food warnings and suggestions.</span>
+			</label>
+
+			<button class="primary-action" type="submit" disabled={foodPreferencesPending}>
+				{foodPreferencesPending ? "Saving preferences…" : "Save food preferences"}
+			</button>
+		</form>
+	</section>
 </div>
 
 <style lang="scss">
@@ -222,7 +398,8 @@
 		}
 
 		input:not([type="checkbox"]),
-		textarea {
+		textarea,
+		select {
 			width: 100%;
 			padding: 0.65rem 0.75rem;
 			color: $app-primary;
@@ -240,6 +417,48 @@
 			color: $app-muted;
 			font-size: $app-font-size-sm;
 		}
+	}
+
+	.sensitive-notice {
+		display: grid;
+		gap: $app-gap-xs;
+		padding: $app-gap-sm;
+		color: $app-warning-text;
+		background: $app-warning-bg;
+		border: $app-warning-border;
+		border-radius: $app-radius-sm;
+		font-size: $app-font-size-sm;
+	}
+
+	.preference-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: $app-gap-sm;
+
+		label {
+			display: grid;
+			gap: $app-gap-xs;
+		}
+	}
+
+	.inline-fields {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 5rem;
+		gap: $app-gap-xs;
+	}
+
+	.nutrient-priorities {
+		display: grid;
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+		border: $app-border;
+		border-radius: $app-radius-sm;
+	}
+
+	.priority-options {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: $app-gap-xs $app-gap-sm;
 	}
 
 	.profile-card--identity {
@@ -410,6 +629,11 @@
 	}
 
 	@media (max-width: $app-breakpoint-xs) {
+		.preference-grid,
+		.priority-options {
+			grid-template-columns: 1fr;
+		}
+
 		.form-actions button {
 			flex: 1 1 100%;
 			width: 100%;

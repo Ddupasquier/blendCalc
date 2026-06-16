@@ -542,7 +542,7 @@ export type Database = {
           avatar_policy_acknowledged_at?: string | null
           bio?: string | null
           created_at?: string
-          display_name?: string | null
+          display_name: string
           updated_at?: string
           user_id: string
         }
@@ -553,7 +553,7 @@ export type Database = {
           avatar_policy_acknowledged_at?: string | null
           bio?: string | null
           created_at?: string
-          display_name?: string | null
+          display_name?: string
           updated_at?: string
           user_id?: string
         }
@@ -986,6 +986,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      default_profile_display_name: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
       publish_shared_product_submission: {
         Args: {
           p_approved_by?: string

@@ -39,6 +39,13 @@ export interface FdcFood {
     servingSizeUnit?: string;
     householdServingFullText?: string;
     gtinUpc?: string;
+    ingredients?: string;
+    ingredientList?: string[];
+    allergens?: string[];
+    traces?: string[];
+    dietaryTags?: string[];
+    labels?: string[];
+    categories?: string[];
     customFood?: boolean;
     barcode?: string;
     barcodeSource?: "open-food-facts" | "usda" | "manual" | "community";

@@ -30,6 +30,13 @@ export const createCatalogFoodFromDraft = (
 			: draft.source === "usda"
 				? "usda"
 				: "community",
+		ingredients: draft.ingredients,
+		ingredientList: draft.ingredientList,
+		allergens: draft.allergens,
+		traces: draft.traces,
+		dietaryTags: draft.dietaryTags,
+		labels: draft.labels,
+		categories: draft.categories,
 		nutrition: draft.nutrition,
 		additionalNutrients: draft.additionalNutrients,
 		reportedNutrientIds: draft.reportedNutrientIds,

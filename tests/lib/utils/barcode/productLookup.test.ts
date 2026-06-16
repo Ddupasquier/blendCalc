@@ -80,12 +80,38 @@ describe("barcode product mapping", () => {
 		expect(draft?.volumeEquivalent).toBeUndefined();
 	});
 
+	it("keeps Open Food Facts ingredient and allergen metadata", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Test yogurt",
+				ingredients_text_en: "Cultured milk, honey, pectin",
+				allergens_tags: ["en:milk"],
+				traces: "tree nuts",
+				labels_tags: ["en:gluten-free"],
+				categories_tags: ["en:yogurts"],
+				nutriments: { "energy-kcal_100g": 100 },
+			},
+			"049000042566",
+		);
+
+		expect(draft).toMatchObject({
+			ingredients: "Cultured milk, honey, pectin",
+			ingredientList: ["Cultured milk", "honey", "pectin"],
+			allergens: ["milk"],
+			traces: ["tree nuts"],
+			dietaryTags: ["gluten free"],
+			categories: ["yogurts"],
+		});
+	});
+
 	it("converts USDA per-100g branded values to the serving", () => {
 		const draft = mapFdcBarcodeFood(
 			{
 				fdcId: 123,
 				description: "Test snack",
 				brandOwner: "Example Brand",
+				ingredients: "Corn, sunflower oil, salt",
+				allergens: ["corn"],
 				servingSize: 50,
 				servingSizeUnit: "g",
 				householdServingFullText: "2 tbsp",
@@ -117,6 +143,8 @@ describe("barcode product mapping", () => {
 			expect.objectContaining({ nutrientId: NUTRIENT_IDS.VITAMIN_C, value: 10 }),
 		]);
 		expect(draft?.reportedNutrientIds).toContain(NUTRIENT_IDS.VITAMIN_C);
+		expect(draft?.ingredientList).toEqual(["Corn", "sunflower oil", "salt"]);
+		expect(draft?.allergens).toEqual(["corn"]);
 	});
 
 	it("marks approved catalog records as shared products", () => {
