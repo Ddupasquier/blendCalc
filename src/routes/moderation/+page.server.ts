@@ -14,6 +14,7 @@ import {
 	type AppRole,
 } from "$lib/utils/moderation/moderation";
 import { PROFILE_AVATAR_BUCKET } from "$lib/utils/profile/profile";
+import { getDefaultDisplayName } from "$lib/utils/profile/profileValidation";
 import {
 	approveCommunityProductSubmission,
 	listPendingProductSubmissions,
@@ -133,7 +134,7 @@ const getTargetContext = async (
 	return {
 		admin,
 		targetUser: targetAuth.user,
-		displayName: profile?.display_name ?? "Smoothie Mixer user",
+		displayName: profile?.display_name ?? getDefaultDisplayName(targetAuth.user.id),
 	};
 };
 
@@ -210,7 +211,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 		return {
 			id: user.id,
-			displayName: profile?.display_name ?? "Unnamed account",
+			displayName: profile?.display_name ?? getDefaultDisplayName(user.id),
 			email: user.email ?? "No email available",
 			createdAt: user.created_at,
 			role: userRole,
