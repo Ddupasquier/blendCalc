@@ -57,7 +57,6 @@
 		background: $app-bg;
 		border: $app-border;
 		border-radius: $app-card-radius;
-		box-shadow: $app-card-shadow;
 	}
 
 	.mix-empty-state__intro {

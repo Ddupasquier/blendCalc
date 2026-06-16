@@ -168,16 +168,17 @@
 </script>
 
 <div class="search-wrap">
-	<label class="search-label" for="ingredient-search"
-		>Search ingredients</label
-	>
+	<label class="search-label" for="ingredient-search">Search ingredients</label>
 	<div class="search-row">
+		<svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+			<path d="m21 21-4.3-4.3m1.3-5.2a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
+		</svg>
 		<input
 			id="ingredient-search"
 			name="ingredient-search"
 			type="search"
 			class="search-input"
-			placeholder="Type and press Enter or Space to add…"
+			placeholder="Search ingredients..."
 			bind:value={query}
 			onfocus={onSearchFocus}
 			oninput={handleInput}
@@ -209,43 +210,59 @@
 	.search-wrap {
 		position: relative;
 		display: grid;
-		gap: $app-gap-sm;
+		gap: $app-gap-xs;
 	}
 
 	.search-label {
-		display: block;
-		color: $app-primary;
-		font-size: $app-font-size-md;
-		font-weight: 800;
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
 	}
 
 	.search-row {
-		display: flex;
+		position: relative;
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
 		align-items: center;
-		gap: $app-gap-sm;
+		gap: $app-gap-xs;
+		min-height: 2.8rem;
+		padding: 0 $app-gap-sm;
+		background: $app-section-bg;
+		border: 1px solid transparent;
+		border-radius: $app-card-radius;
+		transition: border-color 0.15s ease;
+
+		&:focus-within {
+			border-color: $color-orchid-mist;
+		}
+	}
+
+	.search-icon {
+		width: 1rem;
+		height: 1rem;
+		fill: none;
+		stroke: $app-muted;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		stroke-width: 2;
 	}
 
 	.search-input {
-		flex: 1;
 		min-width: 0;
-		height: $app-control-height;
-		padding: 0 0.75rem;
+		height: 100%;
+		padding: 0;
 		color: $app-primary;
-		background: $app-bg;
-		border: $app-border;
-		border-radius: $app-radius;
+		background: transparent;
+		border: 0;
+		border-radius: 0;
 		outline: none;
-		transition:
-			border-color 0.15s ease,
-			box-shadow 0.15s ease;
+		font-size: $app-font-size-md;
 
 		&::placeholder {
 			color: $app-muted;
-		}
-
-		&:focus {
-			border-color: $app-primary;
-			box-shadow: 0 0 0 3px rgba(79, 72, 66, 0.1);
 		}
 	}
 

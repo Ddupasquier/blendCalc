@@ -931,7 +931,6 @@
         background: $app-section-bg;
         border: $app-border;
         border-radius: $app-card-radius;
-        box-shadow: $app-box-shadow;
     }
 
     .mix-builder {
@@ -956,7 +955,6 @@
         width: 100%;
         background: $app-section-bg;
         border-radius: $app-card-radius;
-        box-shadow: $app-card-shadow;
     }
 
     @media (max-width: $app-breakpoint-md) {

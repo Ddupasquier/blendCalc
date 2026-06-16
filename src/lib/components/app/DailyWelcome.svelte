@@ -73,7 +73,6 @@
 		background: $app-section-bg;
 		border: $app-border;
 		border-radius: $app-card-radius;
-		box-shadow: 0 0.8rem 2rem rgb(79 72 66 / 18%);
 		cursor: pointer;
 		pointer-events: auto;
 		animation: welcome-enter 180ms ease-out both;

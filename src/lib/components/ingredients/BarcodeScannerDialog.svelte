@@ -140,7 +140,6 @@
 		background: $app-section-bg;
 		border: $app-border;
 		border-radius: $app-card-radius;
-		box-shadow: $app-modal-shadow;
 
 		header {
 			display: flex;
@@ -186,7 +185,6 @@
 		border: 3px solid $app-highlight;
 		border-radius: $app-radius;
 		transform: translate(-50%, -50%);
-		box-shadow: 0 0 0 100vmax rgb(0 0 0 / 32%);
 	}
 
 	.barcode-scanner__status {

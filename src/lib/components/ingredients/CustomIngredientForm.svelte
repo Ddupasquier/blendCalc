@@ -16,6 +16,7 @@
 		type SmoothieListKey,
 	} from "$lib/utils/storage/smoothieLists";
 	import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+	import BarcodeScanButton from "$lib/components/ingredients/BarcodeScanButton.svelte";
 	import BarcodeScannerDialog from "$lib/components/ingredients/BarcodeScannerDialog.svelte";
 	import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 	import { lookupBarcodeProduct } from "$lib/utils/barcode/productLookup";
@@ -26,9 +27,15 @@
 	let {
 		onCreate,
 		closeManualSignal = 0,
+		scanSignal = 0,
+		showScanButton = true,
+		onLookupStateChange = () => {},
 	}: {
-		onCreate: (food: FdcFood) => void;
+		onCreate: (food: FdcFood) => void | Promise<void>;
 		closeManualSignal?: number;
+		scanSignal?: number;
+		showScanButton?: boolean;
+		onLookupStateChange?: (lookingUp: boolean) => void;
 	} = $props();
 
 	const volumeOptions = SERVING_MEASURE_OPTIONS.filter(
@@ -68,7 +75,11 @@
 		message: string;
 	}>(null);
 	let labelDetailsElement: HTMLDetailsElement;
+	let manualBodyElement = $state<HTMLFieldSetElement | null>(null);
+	let ingredientNameInput = $state<HTMLInputElement | null>(null);
+	let saveDestinationSelect = $state<HTMLSelectElement | null>(null);
 	let lastCloseManualSignal = $state<number | null>(null);
+	let lastScanSignal = $state<number | null>(null);
 	let hasValidBarcode = $derived(Boolean(normalizeBarcode(barcode)));
 	let canShareWithCatalog = $derived(
 		hasValidBarcode && barcodeSource !== "open-food-facts" && barcodeSource !== "community",
@@ -163,6 +174,20 @@
 		if (labelDetailsElement) labelDetailsElement.open = false;
 	};
 
+	const scrollToManualReview = async (
+		focusTarget: "name" | "destination" = "destination",
+	) => {
+		await new Promise((resolve) => requestAnimationFrame(resolve));
+		const target =
+			focusTarget === "name" ? ingredientNameInput : saveDestinationSelect;
+		(target ?? manualBodyElement)?.scrollIntoView({
+			behavior: "smooth",
+			block: "center",
+		});
+		await new Promise((resolve) => requestAnimationFrame(resolve));
+		target?.focus({ preventScroll: true });
+	};
+
 	$effect(() => {
 		if (lastCloseManualSignal === null) {
 			lastCloseManualSignal = closeManualSignal;
@@ -173,11 +198,25 @@
 		collapseManualEntry();
 	});
 
+	$effect(() => {
+		if (lastScanSignal === null) {
+			lastScanSignal = scanSignal;
+			return;
+		}
+		if (scanSignal === lastScanSignal) return;
+		lastScanSignal = scanSignal;
+		scannerOpen = true;
+	});
+
+	$effect(() => {
+		onLookupStateChange(lookingUpBarcode);
+	});
+
 	const useIngredient = async (food: FdcFood, alreadySaved = false) => {
-		onCreate(food);
 		const destinationLabel = getDestinationLabel();
 
 		if (saveDestination === "custom-only") {
+			await onCreate(food);
 			const message = alreadySaved
 				? `${food.description} is already saved. Showing your existing ingredient.`
 				: `${food.description} saved as a custom ingredient.`;
@@ -198,6 +237,7 @@
 				: alreadySaved
 					? `${food.description} is already saved and is now in ${destinationLabel}.`
 					: `${food.description} saved and added to ${destinationLabel}.`;
+		await onCreate(food);
 		setOutcome(food, saveDestination, true, message);
 		collapseManualEntry();
 		return true;
@@ -274,10 +314,12 @@
 		barcodeMessage = "Looking up this product…";
 		barcode = result.canonicalValue;
 		labelDetailsElement.open = true;
+		let nextFocusTarget: "name" | "destination" = "name";
 
 		try {
 			const lookup = await lookupBarcodeProduct(result.value);
 			if (lookup.status === "found") {
+				nextFocusTarget = "destination";
 				name = lookup.draft.name;
 				brandOwner = lookup.draft.brandOwner;
 				servingLabel = lookup.draft.servingLabel;
@@ -310,6 +352,7 @@
 					: lookup.message;
 		} finally {
 			lookingUpBarcode = false;
+			await scrollToManualReview(nextFocusTarget);
 		}
 	};
 
@@ -431,50 +474,35 @@
 	};
 </script>
 
-<section class="custom-ingredient" aria-labelledby="custom-ingredient-title">
-	<header class="custom-ingredient__intro">
-		<h2 id="custom-ingredient-title">Add custom ingredient</h2>
-		<p>Choose the fastest option for the package or food you have.</p>
-	</header>
-
+<section class="custom-ingredient" aria-label="Add custom ingredient">
 	<div class="custom-ingredient__options">
-		<section class="custom-ingredient__scan-option" aria-labelledby="barcode-option-title">
-			<div class="custom-ingredient__option-copy">
-				<span class="custom-ingredient__eyebrow">Quick add</span>
-				<h3 id="barcode-option-title">Scan a package barcode</h3>
-				<p>Use your camera to find the product and fill its label details automatically.</p>
-			</div>
-			<button
-				class="custom-ingredient__scan"
-				type="button"
-				onclick={() => (scannerOpen = true)}
-				disabled={saving || lookingUpBarcode}
+		{#if showScanButton}
+			<section
+				class="custom-ingredient__scan-option"
+				aria-label="Scan a package barcode"
 			>
-				<svg viewBox="0 0 36 24" aria-hidden="true">
-					<path d="M2 3v18M6 3v18M10 3v18M15 3v18M18 3v18M23 3v18M28 3v18M31 3v18M34 3v18" />
-				</svg>
-				<span>{lookingUpBarcode ? "Looking up product…" : "Scan barcode"}</span>
-			</button>
-		</section>
-
-		<div class="custom-ingredient__divider" aria-hidden="true"><span>or</span></div>
+				<BarcodeScanButton
+					scanning={lookingUpBarcode}
+					disabled={saving}
+					onclick={() => (scannerOpen = true)}
+				/>
+				<small>Scan a barcode for fastest entry</small>
+			</section>
+		{/if}
 
 		<details
 			class="custom-ingredient__manual"
 			bind:this={labelDetailsElement}
 		>
 			<summary class="custom-ingredient__manual-toggle">
-				<span class="custom-ingredient__option-copy">
-					<span class="custom-ingredient__eyebrow">Manual entry</span>
-					<strong>Enter label details</strong>
-					<small>Use this when scanning is unavailable or the product is not found.</small>
-				</span>
+				<span>Add manually</span>
 				<svg class="custom-ingredient__manual-chevron" viewBox="0 0 24 24" aria-hidden="true">
 					<path d="m6 9 6 6 6-6" />
 				</svg>
 			</summary>
 
 	<fieldset
+		bind:this={manualBodyElement}
 		class="custom-ingredient__body"
 		disabled={saving || lookingUpBarcode}
 		aria-busy={saving || lookingUpBarcode}
@@ -483,6 +511,7 @@
 			<label class="custom-ingredient__wide">
 				<span>Ingredient name</span>
 				<input
+					bind:this={ingredientNameInput}
 					id="custom-ingredient-name"
 					name="custom-ingredient-name"
 					type="text"
@@ -788,6 +817,7 @@
 		<label class="custom-ingredient__destination">
 			<span>Add after saving</span>
 			<select
+				bind:this={saveDestinationSelect}
 				id="custom-ingredient-save-destination"
 				name="custom-ingredient-save-destination"
 				bind:value={saveDestination}
@@ -882,162 +912,68 @@
 
 	.custom-ingredient {
 		display: grid;
-		gap: $app-gap-md;
-		padding: $app-gap-md;
-		background: $app-bg;
-		border: $app-border;
-		border-radius: $app-card-radius;
-		box-shadow: $app-card-shadow;
-	}
-
-	.custom-ingredient__intro {
-		display: grid;
 		gap: $app-gap-xs;
-
-		h2 {
-			color: $app-primary;
-			font-family: $app-font-family-display;
-			font-size: $app-font-size-xl;
-		}
-
-		p {
-			color: $app-muted;
-			font-size: $app-font-size-md;
-		}
 	}
 
 	.custom-ingredient__options {
 		display: grid;
-		gap: $app-gap-sm;
+		gap: $app-gap-xs;
 	}
 
 	.custom-ingredient__scan-option {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
-		align-items: center;
-		gap: $app-gap-md;
-		padding: $app-gap-md;
-		background:
-			linear-gradient(135deg, color-mix(in srgb, $app-highlight 20%, transparent), transparent 58%),
-			$app-section-bg;
-		border: 2px solid $app-highlight;
-		border-radius: $app-card-radius;
-		box-shadow: $app-highlight-shadow;
-	}
+		justify-items: end;
+		gap: $app-gap-xs;
 
-	.custom-ingredient__option-copy {
-		display: grid;
-		gap: 0.15rem;
-		min-width: 0;
-
-		h3,
-		strong {
-			color: $app-primary;
-			font-family: $app-font-family-display;
-			font-size: $app-font-size-lg;
-			font-weight: $app-font-weight-bold;
-		}
-
-		p,
 		small {
 			color: $app-muted;
-			font-size: $app-font-size-sm;
+			font-size: $app-font-size-xs;
 			font-weight: $app-font-weight-medium;
-			line-height: 1.4;
-		}
-	}
-
-	.custom-ingredient__eyebrow {
-		color: $app-warning-strong;
-		font-size: $app-font-size-xs;
-		font-weight: $app-font-weight-bold;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-	}
-
-	.custom-ingredient__scan {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: $app-gap-sm;
-		width: 11.5rem;
-		min-height: 3rem;
-		padding: 0.65rem 0.9rem;
-		color: $app-highlight-text;
-		background: $app-highlight;
-		border: 1.5px solid $app-highlight-hover;
-		border-radius: $app-radius;
-		box-shadow: $app-highlight-shadow;
-
-		svg {
-			width: 2rem;
-			height: 1.35rem;
-			fill: none;
-			stroke: currentColor;
-			stroke-width: 1.8;
-		}
-
-		&:hover:not(:disabled) {
-			background: $app-highlight-hover;
-			box-shadow: $app-highlight-shadow-hover;
-		}
-	}
-
-	.custom-ingredient__divider {
-		display: grid;
-		grid-template-columns: 1fr auto 1fr;
-		align-items: center;
-		gap: $app-gap-sm;
-		color: $app-primary;
-		font-size: $app-font-size-xs;
-		font-weight: $app-font-weight-bold;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-
-		&::before,
-		&::after {
-			content: "";
-			height: 1px;
-			background: $color-orchid-mist;
 		}
 	}
 
 	.custom-ingredient__manual {
 		overflow: hidden;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-card-radius;
+		background: transparent;
+		border: 0;
+		border-top: $app-border;
+		border-radius: 0;
 	}
 
 	.custom-ingredient__manual-toggle {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: $app-gap-md;
-		padding: $app-gap-md;
+		gap: $app-gap-sm;
+		padding: $app-gap-sm 0 0;
+		color: $app-muted;
 		cursor: pointer;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-bold;
+		letter-spacing: 0.08em;
 		list-style: none;
+		text-transform: uppercase;
 
 		&::-webkit-details-marker {
 			display: none;
 		}
 
 		&:hover {
-			background: color-mix(in srgb, $app-accent 18%, transparent);
+			color: $app-primary;
 		}
 
 		&:focus-visible {
 			outline: $app-focus-outline;
-			outline-offset: -3px;
+			outline-offset: $app-gap-xs;
 		}
 	}
 
 	.custom-ingredient__manual-chevron {
-		width: 1.5rem;
-		height: 1.5rem;
+		width: 0.9rem;
+		height: 0.9rem;
 		flex: 0 0 auto;
 		fill: none;
-		stroke: $app-primary;
+		stroke: currentColor;
 		stroke-linecap: round;
 		stroke-linejoin: round;
 		stroke-width: 2.25;
@@ -1067,9 +1003,9 @@
 		display: grid;
 		gap: $app-gap-md;
 		margin: 0;
-		padding: $app-gap-md;
+		padding: $app-gap-md 0 0;
 		border: 0;
-		border-top: $app-border;
+		border-top: 0;
 		min-inline-size: 0;
 	}
 
@@ -1359,10 +1295,6 @@
 			grid-template-columns: 1fr;
 			gap: $app-gap-sm;
 			padding: $app-gap-sm;
-		}
-
-		.custom-ingredient__scan {
-			width: 100%;
 		}
 
 		.custom-ingredient__grid,

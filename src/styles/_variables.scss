@@ -69,6 +69,11 @@ $color-mango-gold: #f4b942;
 // controls so the emphasis remains consistent without introducing another hue.
 $color-mango-gold-dark: #d99a24;
 
+// Warm laser red accent. Use sparingly for active scanner lasers, tiny scanning
+// indicators, and momentary motion accents that need to read as energetic
+// without clashing with the softer danger/warning palette.
+$color-guava-laser: #e45f55;
+
 // User-created ingredient fill. Use only for custom foods entered manually by
 // the user so they are visually distinct from API-sourced ingredients.
 $color-lavender-smoothie: #cbb8e8;
@@ -212,6 +217,10 @@ $app-highlight: $color-mango-gold;
 // Interactive state for high-priority highlighted controls.
 $app-highlight-hover: $color-mango-gold-dark;
 
+// Active scanning accent. Applied to the animated barcode laser only; avoid
+// using it for static error states so scanning remains visually distinct.
+$app-scan-laser: $color-guava-laser;
+
 // Readable foreground for content placed on the mango highlight.
 $app-highlight-text: $color-dark-taupe;
 
@@ -257,7 +266,6 @@ $app-warning-strong: $color-cinnamon-clay;
 
 // Default soft elevation. Applied to larger panels/cards that need separation
 // from the page without feeling heavy.
-$app-box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
 
 // Header elevation. Applied to the sticky app header.
 $app-header-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);

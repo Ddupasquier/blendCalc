@@ -54,7 +54,6 @@
         background: $app-section-bg;
         border: $app-border;
         border-radius: $app-radius-pill;
-        box-shadow: $app-card-shadow;
         font-size: $app-font-size-md;
         font-family: $app-button-font-family;
         font-weight: $app-button-font-weight;
@@ -63,8 +62,7 @@
         transition:
             background 0.15s,
             border-color 0.15s,
-            color 0.15s,
-            box-shadow 0.15s;
+            color 0.15s;
 
         &:hover {
             border-color: $app-accent;
@@ -75,7 +73,6 @@
             color: $app-btn-text;
             background: $app-primary;
             border-color: $app-primary;
-            box-shadow: $app-box-shadow;
         }
     }
 

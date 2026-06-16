@@ -227,7 +227,6 @@
 		background: $app-guest-surface;
 		border: $app-border;
 		border-radius: $app-guest-card-radius;
-		box-shadow: $app-guest-card-shadow;
 		backdrop-filter: blur(0.35rem);
 
 		&::before {
@@ -316,13 +315,11 @@
 			box-sizing: border-box;
 			transition:
 				border-color 0.15s ease,
-				box-shadow 0.15s ease,
 				background 0.15s ease;
 
 			&:focus {
 				background: $app-bg;
 				border-color: $app-primary;
-				box-shadow: 0 0 0 3px rgb(183 200 227 / 35%);
 				outline: none;
 			}
 		}
@@ -388,7 +385,6 @@
 		color: $app-primary;
 		background: $app-bg;
 		border: $app-border;
-		box-shadow: $app-card-shadow;
 
 		&:hover {
 			background: white;

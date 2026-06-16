@@ -60,7 +60,6 @@
 		background: $app-guest-surface;
 		border: $app-border;
 		border-radius: $app-guest-card-radius;
-		box-shadow: $app-guest-card-shadow;
 		backdrop-filter: blur(0.35rem);
 
 		&::before {
@@ -155,15 +154,12 @@
 		font-weight: $app-button-font-weight;
 		line-height: $app-button-line-height;
 		text-decoration: none;
-		box-shadow: $app-highlight-shadow;
 		transition:
 			background 0.15s ease,
-			transform 0.15s ease,
-			box-shadow 0.15s ease;
+			transform 0.15s ease;
 
 		&:hover {
 			background: $app-highlight-hover;
-			box-shadow: $app-highlight-shadow-hover;
 			transform: translateY(-1px);
 		}
 
