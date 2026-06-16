@@ -12,7 +12,10 @@
 	} = $props();
 
 	const profileValues = $derived({
-		displayName: form?.profileValues?.displayName ?? data.profile?.display_name ?? "",
+		displayName:
+			form?.profileValues?.displayName ??
+			data.profile?.display_name ??
+			data.defaultDisplayName,
 		bio: form?.profileValues?.bio ?? data.profile?.bio ?? "",
 	});
 	let profilePending = $state(false);
@@ -74,10 +77,9 @@
 				maxlength="80"
 				autocomplete="name"
 				placeholder="What should we call you?"
-				required
 				disabled={profilePending}
 			/>
-			<small>This can be your first name, nickname, or any name you prefer. Your email is not shown.</small>
+			<small>Use the assigned name or change it to a preferred name. Your email is not shown.</small>
 
 			<label for="profile-bio">Bio</label>
 			<textarea

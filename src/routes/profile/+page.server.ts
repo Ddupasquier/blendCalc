@@ -43,7 +43,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return {
 		profile,
 		avatarUrl,
-		defaultDisplayName: getDefaultDisplayName(user.email),
+		defaultDisplayName: getDefaultDisplayName(user.id),
 		avatarPolicyItems: PROFILE_AVATAR_POLICY_ITEMS,
 		requireHumanFace: PROFILE_AVATAR_REQUIRE_HUMAN_FACE,
 	};
@@ -53,6 +53,7 @@ export const actions: Actions = {
 	saveProfile: async ({ locals, request }) => {
 		const user = await getAuthenticatedUser(locals);
 		const values = getProfileFormValues(await request.formData());
+		const displayName = values.displayName ?? getDefaultDisplayName(user.id);
 		const validationError = getProfileValidationError(values);
 
 		if (validationError) {
@@ -61,19 +62,19 @@ export const actions: Actions = {
 
 		const existingProfile = await getUserProfile(locals.supabase, user.id);
 		if (
-			existingProfile?.display_name === values.displayName &&
+			existingProfile?.display_name === displayName &&
 			(existingProfile.bio ?? null) === values.bio
 		) {
 			return {
 				profileSuccess: "Your profile already has these details.",
-				profileValues: values,
+				profileValues: { ...values, displayName },
 			};
 		}
 
 		const { error } = await locals.supabase.from("profiles").upsert(
 			{
 				user_id: user.id,
-				display_name: values.displayName,
+				display_name: displayName,
 				bio: values.bio,
 			},
 			{ onConflict: "user_id" },
@@ -82,7 +83,7 @@ export const actions: Actions = {
 		if (error) {
 			return fail(500, {
 				profileError: "Profile changes could not be saved. Try again.",
-				profileValues: values,
+				profileValues: { ...values, displayName },
 			});
 		}
 

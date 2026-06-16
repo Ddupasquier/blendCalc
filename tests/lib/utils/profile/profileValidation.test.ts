@@ -13,11 +13,14 @@ describe("profile validation", () => {
 		expect(normalizeOptionalProfileText("  Dylan  ")).toBe("Dylan");
 	});
 
-	it("creates a private display fallback from the email prefix", () => {
-		expect(getDefaultDisplayName("Dylan.Example+test@example.com")).toBe(
-			"Dylan.Example+test",
+	it("creates a private generated display fallback", () => {
+		const generatedName = getDefaultDisplayName(
+			"414a6998-992f-4f08-9192-012d4e000000",
 		);
-		expect(getDefaultDisplayName(null)).toBe("Smoothie user");
+
+		expect(generatedName).toMatch(/^User\d{14}$/);
+		expect(generatedName).not.toContain("414a");
+		expect(getDefaultDisplayName(null)).toMatch(/^User\d{14}$/);
 	});
 
 	it("accepts valid optional profile values", () => {
@@ -29,10 +32,10 @@ describe("profile validation", () => {
 		).toBe("");
 	});
 
-	it("requires a preferred name when profile details are saved", () => {
+	it("allows blank preferred names because the app assigns a default", () => {
 		expect(
 			getProfileValidationError({ displayName: null, bio: null }),
-		).toContain("preferred name");
+		).toBe("");
 	});
 
 	it("checks image signatures instead of trusting MIME alone", () => {

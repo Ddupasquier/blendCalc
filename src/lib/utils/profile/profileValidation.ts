@@ -2,6 +2,8 @@ export const PROFILE_DISPLAY_NAME_MAX_LENGTH = 80;
 export const PROFILE_BIO_MAX_LENGTH = 300;
 export const PROFILE_AVATAR_ALT_TEXT_MAX_LENGTH = 160;
 export const PROFILE_AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+export const DEFAULT_DISPLAY_NAME_PREFIX = "User";
+export const DEFAULT_DISPLAY_NAME_DIGITS = 14;
 
 export const PROFILE_AVATAR_TYPES = [
 	"image/jpeg",
@@ -16,8 +18,27 @@ export const normalizeOptionalProfileText = (value: FormDataEntryValue | null) =
 	return normalized || null;
 };
 
-export const getDefaultDisplayName = (email: string | null | undefined) => {
-	return (email?.split("@")[0] ?? "").trim().slice(0, PROFILE_DISPLAY_NAME_MAX_LENGTH) || "Smoothie user";
+const getDisplayNameHashDigits = (value: string) => {
+	let hash = 0x811c9dc5;
+	for (const character of value) {
+		hash ^= character.charCodeAt(0);
+		hash = Math.imul(hash, 0x01000193);
+	}
+
+	return Math.abs(hash >>> 0).toString();
+};
+
+export const getDefaultDisplayName = (userId: string | null | undefined) => {
+	const source = String(userId ?? "").trim();
+	const fallbackSource = source || "smoothie-user";
+	const hashDigits = `${getDisplayNameHashDigits(fallbackSource)}${getDisplayNameHashDigits(
+		[...fallbackSource].reverse().join(""),
+	)}`;
+	const digits = hashDigits
+		.slice(0, DEFAULT_DISPLAY_NAME_DIGITS)
+		.padEnd(DEFAULT_DISPLAY_NAME_DIGITS, "0");
+
+	return `${DEFAULT_DISPLAY_NAME_PREFIX}${digits}`;
 };
 
 export const getProfileValidationError = ({
@@ -27,8 +48,7 @@ export const getProfileValidationError = ({
 	displayName: string | null;
 	bio: string | null;
 }) => {
-	if (!displayName) return "Enter your preferred name before saving your profile.";
-	if (displayName.length > PROFILE_DISPLAY_NAME_MAX_LENGTH) {
+	if (displayName && displayName.length > PROFILE_DISPLAY_NAME_MAX_LENGTH) {
 		return `Display name must be ${PROFILE_DISPLAY_NAME_MAX_LENGTH} characters or fewer.`;
 	}
 	if (bio && bio.length > PROFILE_BIO_MAX_LENGTH) {
