@@ -30,6 +30,14 @@ import {
 	parsePrioritizedNutrientIds,
 	type FoodPreferenceFormValues,
 } from "$lib/utils/profile/foodPreferences";
+import {
+	getFoodPreferenceProfile,
+	isMissingFoodPreferencesTableError,
+} from "$lib/utils/profile/foodPreferenceProfile";
+import {
+	getFoodPreferenceOptionSets,
+	isMissingFoodPreferenceOptionCatalogError,
+} from "$lib/utils/profile/foodPreferenceOptions";
 import { vitalNutrients } from "../../variables/vitalNutrients";
 
 const getAuthenticatedUser = async (locals: App.Locals) => {
@@ -67,17 +75,11 @@ const getFoodPreferenceFormValues = (
 	};
 };
 
-const isMissingFoodPreferencesTableError = (
+const isMissingCompatibilitySyncFunctionError = (
 	error: { code?: string; message?: string } | null | undefined,
 ) => {
 	const message = error?.message?.toLowerCase() ?? "";
-
-	return (
-		error?.code === "42P01" ||
-		error?.code === "PGRST205" ||
-		message.includes("user_food_preferences") ||
-		message.includes("could not find the table")
-	);
+	return error?.code === "42883" || message.includes("sync_user_compatibility_rules");
 };
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -96,12 +98,31 @@ export const load: PageServerLoad = async ({ locals }) => {
 		isMissingFoodPreferencesTableError(foodPreferencesError);
 
 	if (foodPreferencesError && !foodPreferencesUnavailable) throw foodPreferencesError;
+	const {
+		data: foodPreferenceOptions,
+		error: foodPreferenceOptionsError,
+	} = await locals.supabase
+		.from("food_preference_option_catalog")
+		.select("category, label, normalized_value, source_values, tag_id, usage_count")
+		.order("usage_count", { ascending: false })
+		.order("label", { ascending: true });
+	const foodPreferenceOptionsUnavailable =
+		isMissingFoodPreferenceOptionCatalogError(foodPreferenceOptionsError);
+
+	if (foodPreferenceOptionsError && !foodPreferenceOptionsUnavailable) {
+		throw foodPreferenceOptionsError;
+	}
 
 	return {
 		profile,
 		avatarUrl,
-		foodPreferences: foodPreferencesUnavailable ? null : foodPreferences,
+		foodPreferences: foodPreferencesUnavailable
+			? null
+			: getFoodPreferenceProfile(foodPreferences),
 		foodPreferencesUnavailable,
+		foodPreferenceOptions: foodPreferenceOptionsUnavailable
+			? getFoodPreferenceOptionSets([])
+			: getFoodPreferenceOptionSets(foodPreferenceOptions),
 		priorityNutrientOptions: vitalNutrients,
 		defaultDisplayName: getDefaultDisplayName(user.id),
 		avatarPolicyItems: PROFILE_AVATAR_POLICY_ITEMS,
@@ -199,9 +220,41 @@ export const actions: Actions = {
 			});
 		}
 
+		const { error: compatibilityRuleError } = await locals.supabase.rpc(
+			"sync_user_compatibility_rules",
+			{
+				p_user_id: user.id,
+				p_food_preferences: values.foodPreferences,
+				p_allergens: values.allergens,
+				p_dietary_restrictions: values.dietaryRestrictions,
+				p_ingredients_to_avoid: values.ingredientsToAvoid,
+			},
+		);
+
+		if (
+			compatibilityRuleError &&
+			!isMissingCompatibilitySyncFunctionError(compatibilityRuleError)
+		) {
+			return fail(500, {
+				foodPreferencesError:
+					"Food preferences saved, but compatibility rules could not be synchronized. Try again.",
+				foodPreferenceValues: values,
+			});
+		}
+
 		return {
 			foodPreferencesSuccess: "Food preferences saved.",
 			foodPreferenceValues: values,
+			savedFoodPreferencesProfile: {
+				unitSystem: values.unitSystem,
+				dislikes: values.foodPreferences,
+				allergens: values.allergens,
+				dietaryRestrictions: values.dietaryRestrictions,
+				ingredientsToAvoid: values.ingredientsToAvoid,
+				prioritizedNutrientIds: values.prioritizedNutrientIds,
+				defaultSmoothieServingGrams,
+				sensitiveAcknowledgedAt,
+			},
 		};
 	},
 	uploadAvatar: async ({ locals, request }) => {

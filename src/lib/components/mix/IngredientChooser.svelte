@@ -5,8 +5,10 @@
 	import Pagination from "$lib/components/common/Pagination.svelte";
 	import SortSelect from "$lib/components/common/SortSelect.svelte";
 	import TextInputDialog from "$lib/components/common/TextInputDialog.svelte";
+	import { userFoodPreferences } from "$lib/stores/userFoodPreferences";
 	import { MIX_STORAGE_KEYS } from "../../../defaults/mixDefaults";
 	import type { FdcFood } from "$lib/utils/food/types";
+	import { getFoodWarningLabel } from "$lib/utils/profile/foodPreferenceWarnings";
 	import {
 		clampPage,
 		FOOD_LIST_SORT_OPTIONS,
@@ -101,6 +103,10 @@
 		return items
 			.map((food, index) => (food.customFood ? index : -1))
 			.filter((index) => index !== -1);
+	};
+	const getFoodLabel = (food: FdcFood) => {
+		const warningLabel = getFoodWarningLabel(food, $userFoodPreferences);
+		return warningLabel ? `${warningLabel} ${food.description}` : food.description;
 	};
 
 	const updateQuery = (value: string) => {
@@ -217,7 +223,7 @@
 		>
 			{#if pagedFridgeItems.length > 0}
 				<PillRow
-					pills={pagedFridgeItems.map((food) => food.description)}
+					pills={pagedFridgeItems.map((food) => getFoodLabel(food))}
 					onRemove={(index) => onToggleFood(pagedFridgeItems[index].fdcId)}
 					onRename={(index) =>
 						openRenameDialog(MIX_STORAGE_KEYS.fridge, pagedFridgeItems[index])}
@@ -247,7 +253,7 @@
 		>
 			{#if pagedShoppingItems.length > 0}
 				<PillRow
-					pills={pagedShoppingItems.map((food) => food.description)}
+					pills={pagedShoppingItems.map((food) => getFoodLabel(food))}
 					onRemove={(index) => onToggleFood(pagedShoppingItems[index].fdcId)}
 					onRename={(index) =>
 						openRenameDialog(

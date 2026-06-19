@@ -10,7 +10,9 @@
 	import SmartWarnings from "$lib/components/mix/SmartWarnings.svelte";
 	import TextInputDialog from "$lib/components/common/TextInputDialog.svelte";
 	import ConfirmationDialog from "$lib/components/common/ConfirmationDialog.svelte";
+	import { userFoodPreferences } from "$lib/stores/userFoodPreferences";
     import {
+		getFoodPreferenceSmartWarnings,
         getNutrientGoalWarnings,
         type SmartWarning,
     } from "$lib/utils/mix/smartWarnings";
@@ -35,7 +37,7 @@
         type LoadedSavedDrink,
         type SavedDrinkInput,
     } from "$lib/utils/storage/savedDrinks";
-    import {
+	import {
 		formatChartNumber,
 		getDefaultNutrientOptions,
 		getEstimatedVolumeWarnings,
@@ -321,6 +323,7 @@
             { includeUnderTargets: selectedFoods.length > 0 },
         ).map((warning) => withOverageDetails(warning, nutrientOverages)),
         ...getEstimatedVolumeWarnings(selectedFoods, getServingConversion),
+		...getFoodPreferenceSmartWarnings(selectedFoods, $userFoodPreferences),
     ]);
     const maxNutrientProgress = $derived(
         nutrientProgress.reduce((max, progress) => Math.max(max, progress), 0),

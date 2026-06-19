@@ -1,6 +1,10 @@
 import { redirect } from "@sveltejs/kit";
 import type { LayoutServerLoad } from "./$types";
 import { getPasswordUpgradeNext } from "$lib/utils/auth/passwordUpgrade";
+import {
+	getFoodPreferenceProfile,
+	isMissingFoodPreferencesTableError,
+} from "$lib/utils/profile/foodPreferenceProfile";
 import { getSignedAvatarUrl, getUserProfile } from "$lib/utils/profile/profile";
 import { getDefaultDisplayName } from "$lib/utils/profile/profileValidation";
 import { getUserAppRole } from "$lib/utils/moderation/moderation";
@@ -35,12 +39,24 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 
 	if (!user) return { authUser: null };
 
-	const [profile, role, tutorialPreference] = await Promise.all([
+	const [profile, role, tutorialPreference, foodPreferencesResult] = await Promise.all([
 		getUserProfile(locals.supabase, user.id),
 		getUserAppRole(locals.supabase, user.id),
 		getTutorialPreference(locals.supabase, user.id),
+		locals.supabase
+			.from("user_food_preferences")
+			.select("*")
+			.eq("user_id", user.id)
+			.maybeSingle(),
 	]);
 	const avatarUrl = await getSignedAvatarUrl(locals.supabase, profile?.avatar_path);
+	const foodPreferencesError = foodPreferencesResult.error;
+	if (
+		foodPreferencesError &&
+		!isMissingFoodPreferencesTableError(foodPreferencesError)
+	) {
+		throw foodPreferencesError;
+	}
 
 	return {
 		authUser: {
@@ -52,5 +68,6 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			role,
 			showTutorial: shouldAutomaticallyShowTutorial(tutorialPreference),
 		},
+		foodPreferences: getFoodPreferenceProfile(foodPreferencesResult.data),
 	};
 };

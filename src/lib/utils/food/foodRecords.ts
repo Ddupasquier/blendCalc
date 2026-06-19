@@ -30,6 +30,7 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		customDensityLabel: food.customDensityLabel,
 		customDensityVariancePercent: food.customDensityVariancePercent,
 		customDensityConfidence: food.customDensityConfidence,
+		compatibilitySummary: food.compatibilitySummary,
 		reportedNutrientIds: food.reportedNutrientIds
 			? [...food.reportedNutrientIds]
 			: food.foodNutrients.map((nutrient) => nutrient.nutrientId),

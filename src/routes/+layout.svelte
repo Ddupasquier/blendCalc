@@ -5,6 +5,7 @@
 	import DailyWelcome from "$lib/components/app/DailyWelcome.svelte";
 	import TabNavigation from "$lib/components/app/TabNavigation.svelte";
 	import TutorialOverlay from "$lib/components/app/TutorialOverlay.svelte";
+	import { userFoodPreferences } from "$lib/stores/userFoodPreferences";
 	import {
 		clearLegacyAppStorage,
 		setActiveStorageUserId,
@@ -57,6 +58,7 @@
 
 	$effect.pre(() => {
 		setActiveStorageUserId(data.authUser?.id ?? null);
+		userFoodPreferences.set(data.foodPreferences ?? null);
 
 		if (data.authUser) {
 			clearLegacyAppStorage();

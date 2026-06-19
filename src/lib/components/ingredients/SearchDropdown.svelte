@@ -4,6 +4,8 @@
     import { LIST_PAGE_SIZES } from "../../../defaults/listDefaults";
     import { getFoodQuality } from "$lib/utils/food/foodQuality";
     import type { FdcFood } from "$lib/utils/food/types";
+    import { userFoodPreferences } from "$lib/stores/userFoodPreferences";
+    import { getFoodPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
     import {
         clampPage,
         paginateItems,
@@ -37,6 +39,7 @@
         <ul class="results-list" aria-label="Search results">
             {#each pagedResults as food (food.fdcId)}
                 {@const quality = getFoodQuality(food)}
+                {@const preferenceWarnings = food.preferenceWarnings ?? getFoodPreferenceWarnings(food, $userFoodPreferences)}
                 <li class="result-item">
                     <button
                         class="result-btn"
@@ -68,6 +71,15 @@
                                 </span>
                             {/if}
                         </span>
+                        {#if preferenceWarnings.length > 0}
+                            <span
+                                class="result-warning"
+                                class:result-warning--potential={!preferenceWarnings.some((warning) => warning.level === "warning")}
+                            >
+                                {preferenceWarnings.some((warning) => warning.level === "warning") ? "⚠" : "?"}
+                                {preferenceWarnings.map((warning) => warning.reason).join(" ")}
+                            </span>
+                        {/if}
                     </button>
                     {#if quality.label === "Partial" || quality.label === "Limited"}
                         <NutritionConfidenceDetails {quality} compact />
@@ -175,5 +187,18 @@
         color: $app-btn-text;
         background: $app-custom-strong;
         border-color: $app-custom-strong;
+    }
+
+    .result-warning {
+        display: block;
+        margin-top: 0.2rem;
+        color: $app-warning-strong;
+        font-size: $app-font-size-xs;
+        font-weight: 700;
+        line-height: 1.35;
+    }
+
+    .result-warning--potential {
+        color: $app-muted;
     }
 </style>

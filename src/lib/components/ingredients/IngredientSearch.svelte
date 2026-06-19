@@ -6,6 +6,8 @@
 		searchCustomFoods,
 	} from "$lib/utils/food/customFoods";
 	import { compareFoodQuality } from "$lib/utils/food/foodQuality";
+	import { userFoodPreferences } from "$lib/stores/userFoodPreferences";
+	import { getFoodDownrankScore } from "$lib/utils/profile/foodPreferenceWarnings";
 	import { searchSharedProducts } from "$lib/utils/products/catalog";
 	import { createEventDispatcher, onMount } from "svelte";
 	import PillRow from "../common/PillRow.svelte";
@@ -41,6 +43,9 @@
 
 	const sortByQualityThenName = (items: FdcFood[]) => {
 		return items.sort((a, b) => {
+			const preferencePenalty = getFoodDownrankScore(a, $userFoodPreferences) -
+				getFoodDownrankScore(b, $userFoodPreferences);
+			if (preferencePenalty !== 0) return preferencePenalty;
 			const qualitySort = compareFoodQuality(a, b);
 			if (qualitySort !== 0) return qualitySort;
 			return a.description.localeCompare(b.description);

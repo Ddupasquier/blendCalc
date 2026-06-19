@@ -36,6 +36,8 @@
         reconcileCloudSmoothieList,
     } from "$lib/utils/storage/supabaseData";
     import { onMount, tick } from "svelte";
+    import { userFoodPreferences } from "$lib/stores/userFoodPreferences";
+    import { getFoodWarningLabel } from "$lib/utils/profile/foodPreferenceWarnings";
     import { MIX_STORAGE_KEYS } from "../../defaults/mixDefaults";
 
     let onHand = $state<FdcFood[]>([]);
@@ -244,6 +246,10 @@
         const index = items.findIndex((item) => item.fdcId === selectedFood?.fdcId);
         return index === -1 ? [] : [index];
     };
+    const getFoodLabel = (food: FdcFood) => {
+        const warningLabel = getFoodWarningLabel(food, $userFoodPreferences);
+        return warningLabel ? `${warningLabel} ${food.description}` : food.description;
+    };
 
     const updateListQuery = (value: string) => {
         listQuery = value;
@@ -371,7 +377,7 @@
         >
             {#if pagedOnHand.length > 0}
                 <PillRow
-                    pills={pagedOnHand.map((item) => item.description)}
+                    pills={pagedOnHand.map((item) => getFoodLabel(item))}
                     activeIndices={getActiveIndices(pagedOnHand)}
                     customIndices={pagedOnHand
                         .map((food, i) => (food.customFood ? i : -1))
@@ -411,7 +417,7 @@
         >
             {#if pagedShoppingList.length > 0}
                 <PillRow
-                    pills={pagedShoppingList.map((item) => item.description)}
+                    pills={pagedShoppingList.map((item) => getFoodLabel(item))}
                     activeIndices={getActiveIndices(pagedShoppingList)}
                     customIndices={pagedShoppingList
                         .map((food, i) => (food.customFood ? i : -1))
@@ -526,6 +532,7 @@
             outline-offset: $app-gap-xs;
         }
     }
+
 
     .ingredient-lists-grid {
         display: grid;

@@ -1,8 +1,10 @@
 <script lang="ts">
 	import Popover from "$lib/components/common/Popover.svelte";
 	import CustomBadge from "$lib/components/common/CustomBadge.svelte";
+	import { userFoodPreferences } from "$lib/stores/userFoodPreferences";
 	import type { NutrientChip } from "$lib/utils/mix/mixUi";
 	import type { FdcFood } from "$lib/utils/food/types";
+	import { getFoodPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
 	import { slide } from "svelte/transition";
 	import {
 		SERVING_MEASURE_OPTIONS,
@@ -36,6 +38,9 @@
 	} = $props();
 
 	let nutrientsOpen = $state(false);
+	const preferenceWarnings = $derived(
+		getFoodPreferenceWarnings(food, $userFoodPreferences),
+	);
 
 	const getDisplayName = (name: string, maxLength = 30): string => {
 		if (name.length <= maxLength) return name;
@@ -111,6 +116,20 @@
 			</Popover>
 		{/if}
 	</div>
+
+	{#if preferenceWarnings.length > 0}
+		<div
+			class="ingredient-card__warning"
+			class:ingredient-card__warning--potential={!preferenceWarnings.some((item) => item.level === "warning")}
+		>
+			<strong>
+				{preferenceWarnings.some((item) => item.level === "warning")
+					? "Potential conflict"
+					: "Possible conflict"}
+			</strong>
+			<p>{preferenceWarnings.map((item) => item.reason).join(" ")}</p>
+		</div>
+	{/if}
 
 	{#if nutrientChips.length > 0}
 		<div class="ingredient-card__details">
@@ -335,6 +354,26 @@
 		color: $app-primary;
 		font-size: $app-font-size-sm;
 		white-space: nowrap;
+	}
+
+	.ingredient-card__warning {
+		display: grid;
+		gap: 0.16rem;
+		padding: 0.45rem 0.55rem;
+		color: $app-warning-strong;
+		background: $app-warning-bg;
+		border: $app-warning-border;
+		border-radius: $app-radius-sm;
+
+		p {
+			color: $app-primary;
+			font-size: $app-font-size-xs;
+			line-height: 1.35;
+		}
+	}
+
+	.ingredient-card__warning--potential {
+		color: $app-primary;
 	}
 
 	.ingredient-card__chips {
