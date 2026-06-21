@@ -4,12 +4,16 @@ Mix and match ingredients for making well-balanced smoothies.
 
 ## Features
 
-- 🔍 Search ingredients via the [FoodData Central API](https://fdc.nal.usda.gov/)
-- 🧾 Scan packaged foods and reuse approved products through a moderated shared catalog
-- 🧪 Live nutrition totals (calories, protein, carbs, fat, fiber, sugar)
-- 🔐 Save fridge, shopping list, custom foods, saved drinks, and mix settings to a Supabase account
-- 📱 Mobile-first responsive UI
-- 🚦 Rate-limit friendly: search results cached for 24 hours in `localStorage`
+- 🔐 Account-gated smoothie workspace with Google and email/password sign-in
+- 🔍 Ingredient search across FoodData Central, saved custom foods, and the shared product catalog
+- 🧾 Barcode scanning for packaged foods with reusable product data and moderation fallback
+- 🧪 Live nutrient goals, ingredient amounts, radar chart feedback, warnings, and suggestions
+- 🧊 Account-backed On Hand and Shopping List ingredient management
+- 🥤 Saved drinks with load, overwrite, save-as-new, and per-user name validation
+- 👤 Optional profile details, avatar policy confirmation, food preferences, allergens, and dietary restrictions
+- 🛡️ Admin moderation for users, profile images, and shared product submissions
+- 📱 Mobile-first responsive UI with pagination, filtering, sorting, and large-list handling
+- 🚦 Rate-limit friendly API usage with cache layers and Supabase-backed product reuse
 
 ---
 
@@ -23,16 +27,24 @@ This project uses Node.js 24. With `nvm`, run `nvm use` from the repository root
 npm install
 ```
 
-### 2. Configure your API key
+### 2. Configure environment variables
 
-Copy the example env file and add your free [FDC API key](https://fdc.nal.usda.gov/api-guide.html):
+Copy the example env file:
 
 ```bash
 cp .env.example .env
-# then edit .env and replace "your_api_key_here"
 ```
 
-> Your `.env` is listed in `.gitignore` — it will never be committed.
+Then add the values needed for your environment:
+
+- `VITE_FDC_API_KEY`: free [FoodData Central API key](https://fdc.nal.usda.gov/api-guide.html)
+- `PUBLIC_SUPABASE_URL`: Supabase project URL
+- `PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase publishable browser key
+- `PUBLIC_SITE_URL`: production origin, for example `https://smoothie-mixer.vercel.app`
+- `SUPABASE_SERVICE_ROLE_KEY`: server-only admin key for protected server work, moderation, and scripts
+- `RESEND_API_KEY`, `MODERATION_EMAIL_FROM`, `MODERATION_SUPPORT_EMAIL`: optional moderation email delivery
+
+> `.env` and `.env.moderation.local` are listed in `.gitignore` and must not be committed.
 
 For production authentication, set `PUBLIC_SITE_URL` in the hosting environment
 to the deployed origin, for example `https://smoothie-mixer.vercel.app`. In
@@ -68,7 +80,20 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | `npm run test:watch` | Watch-mode tests |
 | `npm run check` | TypeScript + Svelte type-check |
 | `npm run check:auth` | Validate auth environment and endpoint health |
+| `npm run audit:fdc-vitals` | Audit FDC output for vital nutrient coverage |
+| `npm run audit:fdc-allergens` | Sample FoodData Central allergen-related fields |
+| `npm run audit:usda-branded-allergens` | Sample USDA branded allergen-related fields |
+| `npm run audit:off-allergens` | Sample Open Food Facts allergen/restriction fields |
+| `npm run seed:food-preferences` | Store observed food preference metadata in Supabase |
+| `npm run discover:fdc-nutrients` | Generate the expanded FDC nutrient catalog |
+| `npm run compare:fdc -- "a" "b"` | Compare live FDC output for two product searches |
+| `npm run db:push:dry` | Preview pending Supabase migrations |
+| `npm run db:push` | Push pending Supabase migrations |
 | `npm run db:lint` | Run Supabase database linting |
+| `npm run db:types` | Regenerate Supabase TypeScript database types |
+| `npm run catalog:qa-seed` | Seed a fake product submission for moderation testing |
+| `npm run catalog:qa-clean` | Remove fake product submission fixtures |
+| `npm run moderate -- ...` | Run moderation CLI role/block helpers |
 
 ---
 
@@ -86,6 +111,9 @@ barcode verification and shared-product moderation model.
 See [`docs/normalized-food-nutrients.md`](docs/normalized-food-nutrients.md) for
 the normalized nutrient query model, provenance fields, synchronization, and
 deployment steps.
+
+See [`docs/ui-functionality.md`](docs/ui-functionality.md) for the complete UI
+feature and functionality preservation brief used for large UI refactors.
 
 To compare live FDC product data while debugging nutrient mappings:
 
@@ -106,25 +134,35 @@ catalog at `src/variables/fdcNutrients.generated.ts`. Pass food queries or optio
 
 ```
 src/
-├── app.css                    # Global mobile-first styles
+├── app.scss                   # Global mobile-first styles
 ├── app.html                   # HTML shell
 ├── lib/
 │   ├── components/
-│   │   ├── IngredientCard.svelte
-│   │   ├── IngredientSearch.svelte
-│   │   ├── PointShape.svelte
-│   │   └── NutritionPanel.svelte
-│   ├── stores/
-│   │   └── smoothie.svelte.ts # Active smoothie state + saved smoothies
-│   ├── cache.ts               # localStorage TTL cache
+│   │   ├── app/               # App shell, nav, tutorial, welcome, landing animation
+│   │   ├── auth/              # Password requirement UI
+│   │   ├── common/            # Reusable buttons, dialogs, pills, lists, pagination
+│   │   ├── ingredients/       # Search, barcode scan, custom entry, nutrition facts
+│   │   ├── mix/               # Goals, graph, selected ingredients, warnings, suggestions
+│   │   └── profile/           # Food preference pickers
+│   ├── server/                # Server-only catalog, email, evidence, and API helpers
+│   ├── supabase/              # Browser/server Supabase clients
+│   ├── types/                 # Generated Supabase database types
 │   └── utils/
-│       ├── fdc.ts             # Browser client for the server-side FDC search route
-│       ├── fdcNutrients.ts    # FDC nutrient ID/name fallbacks
-│       ├── servingAmount.ts   # Weight/volume to grams conversion
-│       └── types.ts           # Shared TypeScript types
+│       ├── auth/              # Auth redirects, password policy, password upgrades
+│       ├── barcode/           # Barcode parsing, lookup, nutrients, scanner adapters
+│       ├── food/              # FDC, custom foods, compatibility, normalized nutrients
+│       ├── mix/               # Mix state, calculations, chart metrics, suggestions
+│       ├── profile/           # Profile validation, food preferences, warnings
+│       └── storage/           # Account-scoped local cache + Supabase sync helpers
 └── routes/
     ├── +layout.svelte
-    └── +page.svelte           # Main smoothie builder UI
+    ├── +page.svelte           # Auth-gated landing page
+    ├── auth/                  # Sign in, callback, logout, password update
+    ├── fridge/                # Ingredients, barcode scan, On Hand, Shopping List
+    ├── mix/                   # Smoothie builder
+    ├── moderation/            # Admin moderation tools
+    ├── profile/               # Profile, avatar, food preferences
+    └── saved/                 # Saved drinks
 ```
 
 ---
@@ -134,5 +172,8 @@ src/
 The FDC API allows **1000 requests/hour** with a free API key. This app mitigates usage by:
 
 - Debouncing search input (500 ms)
-- Caching every search result and food detail for **24 hours** in `localStorage`
-- Only fetching from the API when the cache doesn't have a fresh result
+- Reusing approved shared catalog products before users need to create duplicates
+- Caching USDA search responses in Supabase for **12 hours**
+- Caching USDA barcode/detail responses in Supabase for **30 days**
+- Keeping only account-scoped browser cache for signed-in users
+- Only fetching from external APIs when neither the shared catalog nor cache has a fresh result
