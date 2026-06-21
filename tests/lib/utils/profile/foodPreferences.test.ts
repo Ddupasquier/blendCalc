@@ -25,10 +25,8 @@ describe("food preference helpers", () => {
 		expect(
 			getFoodPreferencesValidationError({
 				unitSystem: null,
-				foodPreferences: [],
 				allergens: ["peanuts"],
 				dietaryRestrictions: [],
-				ingredientsToAvoid: [],
 				prioritizedNutrientIds: [],
 				defaultSmoothieServingSize: "",
 				defaultSmoothieServingUnit: "g",

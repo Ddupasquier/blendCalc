@@ -30,6 +30,14 @@ import {
 	parsePrioritizedNutrientIds,
 	type FoodPreferenceFormValues,
 } from "$lib/utils/profile/foodPreferences";
+import {
+	getFoodPreferenceProfile,
+	isMissingFoodPreferencesTableError,
+} from "$lib/utils/profile/foodPreferenceProfile";
+import {
+	getFoodPreferenceOptionSets,
+	isMissingFoodPreferenceOptionCatalogError,
+} from "$lib/utils/profile/foodPreferenceOptions";
 import { vitalNutrients } from "../../variables/vitalNutrients";
 
 const getAuthenticatedUser = async (locals: App.Locals) => {
@@ -50,10 +58,8 @@ const getFoodPreferenceFormValues = (
 ): FoodPreferenceFormValues => {
 	return {
 		unitSystem: normalizeUnitSystem(formData.get("unitSystem")),
-		foodPreferences: parsePreferenceList(formData.get("foodPreferences")),
 		allergens: parsePreferenceList(formData.get("allergens")),
 		dietaryRestrictions: parsePreferenceList(formData.get("dietaryRestrictions")),
-		ingredientsToAvoid: parsePreferenceList(formData.get("ingredientsToAvoid"), 50),
 		prioritizedNutrientIds: parsePrioritizedNutrientIds(
 			formData.getAll("prioritizedNutrientIds"),
 		),
@@ -65,19 +71,6 @@ const getFoodPreferenceFormValues = (
 		),
 		sensitiveAcknowledged: formData.get("sensitiveAcknowledged") === "on",
 	};
-};
-
-const isMissingFoodPreferencesTableError = (
-	error: { code?: string; message?: string } | null | undefined,
-) => {
-	const message = error?.message?.toLowerCase() ?? "";
-
-	return (
-		error?.code === "42P01" ||
-		error?.code === "PGRST205" ||
-		message.includes("user_food_preferences") ||
-		message.includes("could not find the table")
-	);
 };
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -96,12 +89,31 @@ export const load: PageServerLoad = async ({ locals }) => {
 		isMissingFoodPreferencesTableError(foodPreferencesError);
 
 	if (foodPreferencesError && !foodPreferencesUnavailable) throw foodPreferencesError;
+	const {
+		data: foodPreferenceOptions,
+		error: foodPreferenceOptionsError,
+	} = await locals.supabase
+		.from("food_preference_option_catalog")
+		.select("category, label, normalized_value, source_values, tag_id, usage_count")
+		.order("usage_count", { ascending: false })
+		.order("label", { ascending: true });
+	const foodPreferenceOptionsUnavailable =
+		isMissingFoodPreferenceOptionCatalogError(foodPreferenceOptionsError);
+
+	if (foodPreferenceOptionsError && !foodPreferenceOptionsUnavailable) {
+		throw foodPreferenceOptionsError;
+	}
 
 	return {
 		profile,
 		avatarUrl,
-		foodPreferences: foodPreferencesUnavailable ? null : foodPreferences,
+		foodPreferences: foodPreferencesUnavailable
+			? null
+			: getFoodPreferenceProfile(foodPreferences),
 		foodPreferencesUnavailable,
+		foodPreferenceOptions: getFoodPreferenceOptionSets(
+			foodPreferenceOptionsUnavailable ? [] : foodPreferenceOptions,
+		),
 		priorityNutrientOptions: vitalNutrients,
 		defaultDisplayName: getDefaultDisplayName(user.id),
 		avatarPolicyItems: PROFILE_AVATAR_POLICY_ITEMS,
@@ -173,10 +185,8 @@ export const actions: Actions = {
 			{
 				user_id: user.id,
 				unit_system: values.unitSystem,
-				food_preferences: values.foodPreferences,
 				allergens: values.allergens,
 				dietary_restrictions: values.dietaryRestrictions,
-				ingredients_to_avoid: values.ingredientsToAvoid,
 				prioritized_nutrient_ids: values.prioritizedNutrientIds,
 				default_smoothie_serving_grams: defaultSmoothieServingGrams,
 				sensitive_acknowledged_at: sensitiveAcknowledgedAt,
@@ -194,13 +204,13 @@ export const actions: Actions = {
 			}
 
 			return fail(500, {
-				foodPreferencesError: "Food preferences could not be saved. Try again.",
+				foodPreferencesError: "Food settings could not be saved. Try again.",
 				foodPreferenceValues: values,
 			});
 		}
 
 		return {
-			foodPreferencesSuccess: "Food preferences saved.",
+			foodPreferencesSuccess: "Food settings saved.",
 			foodPreferenceValues: values,
 		};
 	},

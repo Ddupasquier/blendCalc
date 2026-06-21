@@ -1,5 +1,4 @@
 export const FOOD_PREFERENCE_MAX_ITEMS = 30;
-export const INGREDIENTS_TO_AVOID_MAX_ITEMS = 50;
 export const FOOD_PREFERENCE_MAX_LENGTH = 60;
 export const DEFAULT_SERVING_SIZE_MAX_GRAMS = 5000;
 export const OUNCE_TO_GRAMS = 28.349523125;
@@ -13,10 +12,8 @@ export type DefaultServingUnit = (typeof DEFAULT_SERVING_UNITS)[number];
 
 export type FoodPreferenceFormValues = {
 	unitSystem: FoodPreferenceUnitSystem | null;
-	foodPreferences: string[];
 	allergens: string[];
 	dietaryRestrictions: string[];
-	ingredientsToAvoid: string[];
 	prioritizedNutrientIds: number[];
 	defaultSmoothieServingSize: string;
 	defaultSmoothieServingUnit: DefaultServingUnit;
@@ -94,10 +91,8 @@ export const getServingSizeDisplayValue = (
 export const hasFoodPreferenceValues = (values: FoodPreferenceFormValues) =>
 	Boolean(
 		values.unitSystem ||
-			values.foodPreferences.length ||
 			values.allergens.length ||
 			values.dietaryRestrictions.length ||
-			values.ingredientsToAvoid.length ||
 			values.prioritizedNutrientIds.length ||
 			values.defaultSmoothieServingSize.trim(),
 	);
@@ -108,18 +103,10 @@ const getLongPreferenceItem = (values: string[]) =>
 export const getFoodPreferencesValidationError = (
 	values: FoodPreferenceFormValues,
 ) => {
-	const preferenceGroups = [
-		values.foodPreferences,
-		values.allergens,
-		values.dietaryRestrictions,
-		values.ingredientsToAvoid,
-	];
+	const preferenceGroups = [values.allergens, values.dietaryRestrictions];
 	const longItem = preferenceGroups.map(getLongPreferenceItem).find(Boolean);
 	if (longItem) {
 		return `Preference entries must be ${FOOD_PREFERENCE_MAX_LENGTH} characters or fewer. Shorten “${longItem}”.`;
-	}
-	if (values.ingredientsToAvoid.length > INGREDIENTS_TO_AVOID_MAX_ITEMS) {
-		return `Ingredients to avoid can include up to ${INGREDIENTS_TO_AVOID_MAX_ITEMS} items.`;
 	}
 	if (!hasFoodPreferenceValues(values)) return "";
 	if (!values.sensitiveAcknowledged) {

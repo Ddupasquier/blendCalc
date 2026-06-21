@@ -6,6 +6,8 @@
 		searchCustomFoods,
 	} from "$lib/utils/food/customFoods";
 	import { compareFoodQuality } from "$lib/utils/food/foodQuality";
+	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
+	import { getFoodDownrankScore } from "$lib/utils/profile/foodPreferenceWarnings";
 	import { searchSharedProducts } from "$lib/utils/products/catalog";
 	import { createEventDispatcher, onMount } from "svelte";
 	import PillRow from "../common/PillRow.svelte";
@@ -25,6 +27,7 @@
 	let error = $state("");
 	let debounceTimer: ReturnType<typeof setTimeout>;
 	const dispatch = createEventDispatcher();
+	const foodPreferenceContext = getFoodPreferenceContext();
 
 	const mergeResults = (...resultGroups: FdcFood[][]) => {
 		const seen = new Set<number>();
@@ -41,6 +44,10 @@
 
 	const sortByQualityThenName = (items: FdcFood[]) => {
 		return items.sort((a, b) => {
+			const preferencePenalty =
+				getFoodDownrankScore(a, foodPreferenceContext.current) -
+				getFoodDownrankScore(b, foodPreferenceContext.current);
+			if (preferencePenalty !== 0) return preferencePenalty;
 			const qualitySort = compareFoodQuality(a, b);
 			if (qualitySort !== 0) return qualitySort;
 			return a.description.localeCompare(b.description);

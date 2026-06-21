@@ -5,15 +5,17 @@
         onRemove,
 		onRename,
         onSelect,
+		removable = true,
         activeIndices = [],
         customIndices = [],
 		disabledIndices = [],
 		preserveOrder = false,
     } = $props<{
         pills: string[];
-        onRemove: (idx: number) => void;
+        onRemove?: (idx: number) => void;
 		onRename?: (idx: number) => void;
         onSelect?: (idx: number) => void;
+		removable?: boolean;
         activeIndices?: number[];
         customIndices?: number[];
 		disabledIndices?: number[];
@@ -59,9 +61,10 @@
     {#each arrangedPills as pill (`${pill.index}-${pill.label}`)}
         <Pill
             label={pill.label}
-            onRemove={() => onRemove(pill.index)}
+			onRemove={onRemove ? () => onRemove(pill.index) : undefined}
 			onRename={onRename ? () => onRename(pill.index) : undefined}
             onSelect={() => onSelect && onSelect(pill.index)}
+			{removable}
             active={pill.active}
             custom={pill.custom}
 			disabled={disabledIndices.includes(pill.index)}

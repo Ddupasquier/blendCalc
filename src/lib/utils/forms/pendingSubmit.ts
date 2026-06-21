@@ -1,7 +1,8 @@
-import type { SubmitFunction } from "@sveltejs/kit";
+import type { ActionResult, SubmitFunction } from "@sveltejs/kit";
 
 export const createPendingSubmit = (
 	setPending: (pending: boolean) => void,
+	onComplete?: (result: ActionResult) => void | Promise<void>,
 ): SubmitFunction => {
 	let pending = false;
 
@@ -14,9 +15,10 @@ export const createPendingSubmit = (
 		pending = true;
 		setPending(true);
 
-		return async ({ update }) => {
+		return async ({ result, update }) => {
 			try {
 				await update();
+				await onComplete?.(result);
 			} finally {
 				pending = false;
 				setPending(false);
