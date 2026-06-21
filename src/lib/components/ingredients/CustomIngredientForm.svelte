@@ -65,6 +65,13 @@
 	let nutritionPhoto = $state<File | null>(null);
 	let barcodePhoto = $state<File | null>(null);
 	let reportedNutrientIds = $state<number[]>([]);
+	let ingredients = $state("");
+	let ingredientList = $state<string[]>([]);
+	let allergens = $state<string[]>([]);
+	let traces = $state<string[]>([]);
+	let dietaryTags = $state<string[]>([]);
+	let labels = $state<string[]>([]);
+	let categories = $state<string[]>([]);
 	let saveDestination = $state<SmoothieListKey | "custom-only">(
 		MIX_STORAGE_KEYS.fridge,
 	);
@@ -135,6 +142,13 @@
 		nutritionPhoto = null;
 		barcodePhoto = null;
 		reportedNutrientIds = [];
+		ingredients = "";
+		ingredientList = [];
+		allergens = [];
+		traces = [];
+		dietaryTags = [];
+		labels = [];
+		categories = [];
 		nutrition = {
 			calories: 0,
 			fat: 0,
@@ -334,6 +348,13 @@
 					? "community"
 					: lookup.draft.source;
 				reportedNutrientIds = [...lookup.draft.reportedNutrientIds];
+				ingredients = lookup.draft.ingredients ?? "";
+				ingredientList = [...(lookup.draft.ingredientList ?? [])];
+				allergens = [...(lookup.draft.allergens ?? [])];
+				traces = [...(lookup.draft.traces ?? [])];
+				dietaryTags = [...(lookup.draft.dietaryTags ?? [])];
+				labels = [...(lookup.draft.labels ?? [])];
+				categories = [...(lookup.draft.categories ?? [])];
 				const nutrientSummary = additionalNutrients.length > 0
 					? ` ${additionalNutrients.length} additional reported nutrients were included.`
 					: " No additional vitamin or mineral values were reported by this source.";
@@ -346,6 +367,13 @@
 
 			barcodeSource = "manual";
 			reportedNutrientIds = [];
+			ingredients = "";
+			ingredientList = [];
+			allergens = [];
+			traces = [];
+			dietaryTags = [];
+			labels = [];
+			categories = [];
 			barcodeMessage =
 				lookup.status === "not-found"
 					? "No matching product was found. The barcode is filled in so you can enter the label manually."
@@ -414,6 +442,13 @@
 			volumeUnit: useVolumeEquivalent ? volumeUnit : undefined,
 			barcode: normalizedBarcode ?? undefined,
 			barcodeSource: normalizedBarcode ? barcodeSource : undefined,
+			ingredients,
+			ingredientList,
+			allergens,
+			traces,
+			dietaryTags,
+			labels,
+			categories,
 			nutrition,
 			additionalNutrients,
 			reportedNutrientIds,

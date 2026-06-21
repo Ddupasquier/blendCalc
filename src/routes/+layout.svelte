@@ -5,6 +5,8 @@
 	import DailyWelcome from "$lib/components/app/DailyWelcome.svelte";
 	import TabNavigation from "$lib/components/app/TabNavigation.svelte";
 	import TutorialOverlay from "$lib/components/app/TutorialOverlay.svelte";
+	import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
+	import { setFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import {
 		clearLegacyAppStorage,
 		setActiveStorageUserId,
@@ -38,6 +40,10 @@
 	let tutorialOpen = $state(false);
 	let tutorialUserId = $state<string | null>(null);
 	let signingOut = $state(false);
+	let foodPreferenceContext: { current: FoodPreferenceProfile | null } = $state({
+		current: null,
+	});
+	setFoodPreferenceContext(foodPreferenceContext);
 
 	const recordTutorialChoice = async (choice: "later" | "never") => {
 		if (!data.authUser) return false;
@@ -57,6 +63,7 @@
 
 	$effect.pre(() => {
 		setActiveStorageUserId(data.authUser?.id ?? null);
+		foodPreferenceContext.current = data.foodPreferences ?? null;
 
 		if (data.authUser) {
 			clearLegacyAppStorage();

@@ -542,7 +542,7 @@ export type Database = {
           avatar_policy_acknowledged_at?: string | null
           bio?: string | null
           created_at?: string
-          display_name?: string | null
+          display_name: string
           updated_at?: string
           user_id: string
         }
@@ -553,7 +553,7 @@ export type Database = {
           avatar_policy_acknowledged_at?: string | null
           bio?: string | null
           created_at?: string
-          display_name?: string | null
+          display_name?: string
           updated_at?: string
           user_id?: string
         }
@@ -853,12 +853,158 @@ export type Database = {
         }
         Relationships: []
       }
+      compatibility_tags: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          label: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          label: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          label?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      food_preference_option_catalog: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          label: string
+          normalized_value: string
+          source_type: string
+          source_values: string[]
+          tag_id: string | null
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          label: string
+          normalized_value: string
+          source_type: string
+          source_values?: string[]
+          tag_id?: string | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          label?: string
+          normalized_value?: string
+          source_type?: string
+          source_values?: string[]
+          tag_id?: string | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_preference_option_catalog_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "compatibility_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_compatibility_facts: {
+        Row: {
+          confidence: string
+          created_at: string
+          fact_type: string
+          id: string
+          shared_product_id: string | null
+          shared_product_observation_id: string | null
+          shared_product_submission_id: string | null
+          source_text: string | null
+          source_type: string
+          tag_id: string
+          updated_at: string
+        }
+        Insert: {
+          confidence: string
+          created_at?: string
+          fact_type: string
+          id?: string
+          shared_product_id?: string | null
+          shared_product_observation_id?: string | null
+          shared_product_submission_id?: string | null
+          source_text?: string | null
+          source_type: string
+          tag_id: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          fact_type?: string
+          id?: string
+          shared_product_id?: string | null
+          shared_product_observation_id?: string | null
+          shared_product_submission_id?: string | null
+          source_text?: string | null
+          source_type?: string
+          tag_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_compatibility_facts_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_compatibility_facts_shared_product_observation_id_fkey"
+            columns: ["shared_product_observation_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_compatibility_facts_shared_product_submission_id_fkey"
+            columns: ["shared_product_submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_compatibility_facts_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "compatibility_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_products: {
         Row: {
           approved_by: string | null
           approved_submission_id: string | null
           barcode: string
           brand_owner: string | null
+          compatibility_summary: Json
           canonical_provenance: Json
           confidence: string
           created_at: string
@@ -877,6 +1023,7 @@ export type Database = {
           approved_submission_id?: string | null
           barcode: string
           brand_owner?: string | null
+          compatibility_summary?: Json
           canonical_provenance?: Json
           confidence: string
           created_at?: string
@@ -895,6 +1042,7 @@ export type Database = {
           approved_submission_id?: string | null
           barcode?: string
           brand_owner?: string | null
+          compatibility_summary?: Json
           canonical_provenance?: Json
           confidence?: string
           created_at?: string
@@ -914,6 +1062,53 @@ export type Database = {
             columns: ["approved_submission_id"]
             isOneToOne: false
             referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_compatibility_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          normalized_value: string
+          raw_value: string
+          rule_type: string
+          severity: string
+          tag_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          normalized_value: string
+          raw_value: string
+          rule_type: string
+          severity: string
+          tag_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          normalized_value?: string
+          raw_value?: string
+          rule_type?: string
+          severity?: string
+          tag_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_compatibility_rules_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "compatibility_tags"
             referencedColumns: ["id"]
           },
         ]
@@ -943,6 +1138,42 @@ export type Database = {
           food?: Json
           id?: string
           list_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_food_preferences: {
+        Row: {
+          allergens: string[]
+          created_at: string
+          default_smoothie_serving_grams: number | null
+          dietary_restrictions: string[]
+          prioritized_nutrient_ids: number[]
+          sensitive_acknowledged_at: string | null
+          unit_system: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allergens?: string[]
+          created_at?: string
+          default_smoothie_serving_grams?: number | null
+          dietary_restrictions?: string[]
+          prioritized_nutrient_ids?: number[]
+          sensitive_acknowledged_at?: string | null
+          unit_system?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allergens?: string[]
+          created_at?: string
+          default_smoothie_serving_grams?: number | null
+          dietary_restrictions?: string[]
+          prioritized_nutrient_ids?: number[]
+          sensitive_acknowledged_at?: string | null
+          unit_system?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -986,6 +1217,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      compatibility_normalize_text: { Args: { p_value: string }; Returns: string }
+      default_profile_display_name: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
+      food_metadata_search_text: { Args: { p_food: Json }; Returns: string }
+      jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
       publish_shared_product_submission: {
         Args: {
           p_approved_by?: string
@@ -1019,8 +1257,28 @@ export type Database = {
         }
         Returns: undefined
       }
+      rebuild_shared_product_compatibility_summary: {
+        Args: { p_shared_product_id: string }
+        Returns: undefined
+      }
+      rebuild_food_preference_option_catalog: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      sync_food_preference_option_catalog: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      sync_user_compatibility_rules: {
+        Args: {
+          p_allergens?: string[]
+          p_dietary_restrictions?: string[]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

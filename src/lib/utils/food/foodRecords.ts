@@ -11,6 +11,13 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		servingSizeUnit: food.servingSizeUnit,
 		householdServingFullText: food.householdServingFullText,
 		gtinUpc: food.gtinUpc,
+		ingredients: food.ingredients,
+		ingredientList: food.ingredientList,
+		allergens: food.allergens,
+		traces: food.traces,
+		dietaryTags: food.dietaryTags,
+		labels: food.labels,
+		categories: food.categories,
 		customFood: food.customFood,
 		barcode: food.barcode,
 		barcodeSource: food.barcodeSource,
@@ -23,6 +30,7 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		customDensityLabel: food.customDensityLabel,
 		customDensityVariancePercent: food.customDensityVariancePercent,
 		customDensityConfidence: food.customDensityConfidence,
+		compatibilitySummary: food.compatibilitySummary,
 		reportedNutrientIds: food.reportedNutrientIds
 			? [...food.reportedNutrientIds]
 			: food.foodNutrients.map((nutrient) => nutrient.nutrientId),

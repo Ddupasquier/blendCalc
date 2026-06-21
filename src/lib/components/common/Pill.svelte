@@ -6,14 +6,16 @@
         onRemove,
 		onRename,
         onSelect,
+		removable = true,
         active = false,
         custom = false,
 		disabled = false,
     } = $props<{
         label: string;
-        onRemove: () => void;
+        onRemove?: () => void;
 		onRename?: () => void;
         onSelect?: () => void;
+		removable?: boolean;
         active?: boolean;
         custom?: boolean;
 		disabled?: boolean;
@@ -50,17 +52,19 @@
 			}}
 		>✎</button>
 	{/if}
-    <button
-        class="pill-action pill-remove"
-        aria-label={`Remove ${label}`}
-		disabled={disabled}
-        tabindex="-1"
-		type="button"
-        onclick={(e) => {
-            e.stopPropagation();
-			if (!disabled) onRemove();
-        }}>&times;</button
-    >
+	{#if removable && onRemove}
+		<button
+			class="pill-action pill-remove"
+			aria-label={`Remove ${label}`}
+			disabled={disabled}
+			tabindex="-1"
+			type="button"
+			onclick={(e) => {
+				e.stopPropagation();
+				if (!disabled) onRemove();
+			}}>&times;</button
+		>
+	{/if}
 </span>
 
 <style lang="scss">

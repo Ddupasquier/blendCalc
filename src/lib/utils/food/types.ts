@@ -1,3 +1,6 @@
+import type { FoodPreferenceWarning } from "$lib/utils/profile/foodPreferenceWarnings";
+import type { FoodCompatibilitySummary } from "$lib/utils/food/compatibility";
+
 /** A single food nutrient returned by the FDC API */
 export interface FdcNutrient {
     nutrientId: number;
@@ -39,6 +42,13 @@ export interface FdcFood {
     servingSizeUnit?: string;
     householdServingFullText?: string;
     gtinUpc?: string;
+    ingredients?: string;
+    ingredientList?: string[];
+    allergens?: string[];
+    traces?: string[];
+    dietaryTags?: string[];
+    labels?: string[];
+    categories?: string[];
     customFood?: boolean;
     barcode?: string;
     barcodeSource?: "open-food-facts" | "usda" | "manual" | "community";
@@ -56,6 +66,8 @@ export interface FdcFood {
     customDensityLabel?: string;
     customDensityVariancePercent?: number;
     customDensityConfidence?: "known" | "estimated" | "rough";
+    compatibilitySummary?: FoodCompatibilitySummary;
+    preferenceWarnings?: FoodPreferenceWarning[];
 }
 
 /** The FDC foods/search response envelope */

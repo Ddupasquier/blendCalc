@@ -33,6 +33,13 @@ export type CustomFoodInput = {
 	volumeUnit?: ServingMeasureUnit;
 	barcode?: string;
 	barcodeSource?: FdcFood["barcodeSource"];
+	ingredients?: string;
+	ingredientList?: string[];
+	allergens?: string[];
+	traces?: string[];
+	dietaryTags?: string[];
+	labels?: string[];
+	categories?: string[];
 	nutrition: CustomFoodNutritionInput;
 	additionalNutrients?: FdcNutrient[];
 	reportedNutrientIds?: number[];
@@ -184,6 +191,13 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		dataType: "Custom",
 		servingSize: servingWeightGrams,
 		servingSizeUnit: "g",
+		ingredients: input.ingredients?.trim() || undefined,
+		ingredientList: input.ingredientList,
+		allergens: input.allergens,
+		traces: input.traces,
+		dietaryTags: input.dietaryTags,
+		labels: input.labels,
+		categories: input.categories,
 		customFood: true,
 		barcode: input.barcode,
 		barcodeSource: input.barcodeSource,
@@ -304,6 +318,13 @@ export const searchCustomFoods = (query: string) => {
 			food.brandOwner,
 			food.foodCategory,
 			food.customServingLabel,
+			food.ingredients,
+			...(food.ingredientList ?? []),
+			...(food.allergens ?? []),
+			...(food.traces ?? []),
+			...(food.dietaryTags ?? []),
+			...(food.labels ?? []),
+			...(food.categories ?? []),
 			food.barcode,
 		]
 			.filter(Boolean)

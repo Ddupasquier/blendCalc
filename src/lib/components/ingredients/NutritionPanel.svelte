@@ -4,6 +4,8 @@
 	import CustomBadge from "$lib/components/common/CustomBadge.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import { getFoodQuality } from "$lib/utils/food/foodQuality";
+	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
+	import { getFoodPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
 	import {
 		addFoodToSmoothieList,
 		readSmoothieList,
@@ -21,10 +23,14 @@
 	}
 
 	let { food }: Props = $props();
+	const foodPreferenceContext = getFoodPreferenceContext();
 
 	import { vitalNutrients } from "../../../variables/vitalNutrients";
 
 	const foodQuality = $derived(food ? getFoodQuality(food) : null);
+	const preferenceWarnings = $derived(
+		food ? getFoodPreferenceWarnings(food, foodPreferenceContext.current) : [],
+	);
 	const vitalRows = $derived(
 		food
 			? vitalNutrients.map((vn) => {
@@ -225,6 +231,20 @@
 	{#if foodQuality && (foodQuality.label === "Partial" || foodQuality.label === "Limited")}
 		<NutritionConfidenceDetails quality={foodQuality} />
 	{/if}
+	{#if preferenceWarnings.length > 0}
+		<div class="nf-warning-panel">
+			<strong>
+				{preferenceWarnings.some((warning) => warning.level === "warning")
+					? "Potential conflict"
+					: "Possible conflict"}
+			</strong>
+			<ul>
+				{#each preferenceWarnings as warning}
+					<li>{warning.reason}</li>
+				{/each}
+			</ul>
+		</div>
+	{/if}
 	<div class="nf-thick-divider"></div>
 	<div class="nf-columns">
 		<ul class="nf-list vital-list" bind:this={vitalListRef}>
@@ -310,6 +330,25 @@
 		border-bottom: $app-border-highlight;
 		padding-bottom: 0.18rem;
 		margin-bottom: 0.1rem;
+	}
+
+	.nf-warning-panel {
+		display: grid;
+		gap: 0.3rem;
+		margin: 0.55rem 0 0.7rem;
+		padding: 0.55rem 0.7rem;
+		color: $app-warning-strong;
+		background: $app-warning-bg;
+		border: $app-warning-border;
+		font-family: $app-font-family-interface;
+
+		ul {
+			margin: 0;
+			padding-left: 1rem;
+			color: $nutrition-label-text;
+			font-size: $app-font-size-sm;
+			line-height: 1.35;
+		}
 	}
 	.nf-title {
 		font-size: 2.1rem;

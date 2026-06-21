@@ -1,6 +1,12 @@
 <script lang="ts">
-	const barcodeBars = [2, 2, 6, 1, 9, 3, 14, 1, 17, 2, 21, 1, 24, 3, 29, 1, 32, 2, 36, 1, 39, 3, 44, 2];
-	const barcodeBarIndexes = Array.from({ length: barcodeBars.length / 2 }, (_, index) => index);
+	const barcodeBars = [
+		2, 2, 6, 1, 9, 3, 14, 1, 17, 2, 21, 1, 24, 3, 29, 1, 32, 2, 36, 1, 39,
+		3, 44, 2,
+	];
+	const barcodeBarIndexes = Array.from(
+		{ length: barcodeBars.length / 2 },
+		(_, index) => index,
+	);
 
 	let {
 		scanning = false,
@@ -22,13 +28,30 @@
 	aria-label={scanning ? "Scanning barcode" : "Scan barcode"}
 	{onclick}
 >
-	<span class="barcode-scanner" class:barcode-scanner--active={scanning} aria-hidden="true">
+	<span
+		class="barcode-scanner"
+		class:barcode-scanner--active={scanning}
+		aria-hidden="true"
+	>
 		{#if scanning}
-			<span class="barcode-scanner__bracket barcode-scanner__bracket--top-left"></span>
-			<span class="barcode-scanner__bracket barcode-scanner__bracket--top-right"></span>
-			<span class="barcode-scanner__bracket barcode-scanner__bracket--bottom-left"></span>
-			<span class="barcode-scanner__bracket barcode-scanner__bracket--bottom-right"></span>
-			<svg class="barcode-scanner__bars" viewBox="0 0 48 28" width="48" height="28">
+			<span
+				class="barcode-scanner__bracket barcode-scanner__bracket--top-left"
+			></span>
+			<span
+				class="barcode-scanner__bracket barcode-scanner__bracket--top-right"
+			></span>
+			<span
+				class="barcode-scanner__bracket barcode-scanner__bracket--bottom-left"
+			></span>
+			<span
+				class="barcode-scanner__bracket barcode-scanner__bracket--bottom-right"
+			></span>
+			<svg
+				class="barcode-scanner__bars"
+				viewBox="0 0 48 28"
+				width="48"
+				height="28"
+			>
 				{#each barcodeBarIndexes as index}
 					<rect
 						x={barcodeBars[index * 2]}
@@ -42,7 +65,12 @@
 			<span class="barcode-scanner__glow"></span>
 			<span class="barcode-scanner__laser"></span>
 		{:else}
-			<svg class="barcode-scanner__idle-bars" viewBox="0 0 18 14" width="18" height="14">
+			<svg
+				class="barcode-scanner__idle-bars"
+				viewBox="0 0 18 14"
+				width="18"
+				height="14"
+			>
 				<rect x="0" y="0" width="2" height="14" />
 				<rect x="3.5" y="0" width="1" height="14" />
 				<rect x="6" y="0" width="2.5" height="14" />
@@ -125,7 +153,11 @@
 		width: 3.5rem;
 		height: 2.25rem;
 		color: rgb(255 255 255 / 22%);
-		background-color: color-mix(in srgb, $app-primary 86%, $app-highlight 14%);
+		background-color: color-mix(
+			in srgb,
+			$app-primary 86%,
+			$app-highlight 14%
+		);
 	}
 
 	.barcode-scan-button--loading span:last-child {

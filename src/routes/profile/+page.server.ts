@@ -21,6 +21,24 @@ import {
 	PROFILE_AVATAR_ALT_TEXT_MAX_LENGTH,
 	PROFILE_AVATAR_MAX_BYTES,
 } from "$lib/utils/profile/profileValidation";
+import {
+	getFoodPreferencesValidationError,
+	getServingSizeGrams,
+	normalizeServingUnit,
+	normalizeUnitSystem,
+	parsePreferenceList,
+	parsePrioritizedNutrientIds,
+	type FoodPreferenceFormValues,
+} from "$lib/utils/profile/foodPreferences";
+import {
+	getFoodPreferenceProfile,
+	isMissingFoodPreferencesTableError,
+} from "$lib/utils/profile/foodPreferenceProfile";
+import {
+	getFoodPreferenceOptionSets,
+	isMissingFoodPreferenceOptionCatalogError,
+} from "$lib/utils/profile/foodPreferenceOptions";
+import { vitalNutrients } from "../../variables/vitalNutrients";
 
 const getAuthenticatedUser = async (locals: App.Locals) => {
 	const { user } = await locals.safeGetSession();
@@ -35,14 +53,68 @@ const getProfileFormValues = (formData: FormData) => {
 	};
 };
 
+const getFoodPreferenceFormValues = (
+	formData: FormData,
+): FoodPreferenceFormValues => {
+	return {
+		unitSystem: normalizeUnitSystem(formData.get("unitSystem")),
+		allergens: parsePreferenceList(formData.get("allergens")),
+		dietaryRestrictions: parsePreferenceList(formData.get("dietaryRestrictions")),
+		prioritizedNutrientIds: parsePrioritizedNutrientIds(
+			formData.getAll("prioritizedNutrientIds"),
+		),
+		defaultSmoothieServingSize: String(
+			formData.get("defaultSmoothieServingSize") ?? "",
+		).trim(),
+		defaultSmoothieServingUnit: normalizeServingUnit(
+			formData.get("defaultSmoothieServingUnit"),
+		),
+		sensitiveAcknowledged: formData.get("sensitiveAcknowledged") === "on",
+	};
+};
+
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = await getAuthenticatedUser(locals);
 	const profile = await getUserProfile(locals.supabase, user.id);
 	const avatarUrl = await getSignedAvatarUrl(locals.supabase, profile?.avatar_path);
+	const {
+		data: foodPreferences,
+		error: foodPreferencesError,
+	} = await locals.supabase
+		.from("user_food_preferences")
+		.select("*")
+		.eq("user_id", user.id)
+		.maybeSingle();
+	const foodPreferencesUnavailable =
+		isMissingFoodPreferencesTableError(foodPreferencesError);
+
+	if (foodPreferencesError && !foodPreferencesUnavailable) throw foodPreferencesError;
+	const {
+		data: foodPreferenceOptions,
+		error: foodPreferenceOptionsError,
+	} = await locals.supabase
+		.from("food_preference_option_catalog")
+		.select("category, label, normalized_value, source_values, tag_id, usage_count")
+		.order("usage_count", { ascending: false })
+		.order("label", { ascending: true });
+	const foodPreferenceOptionsUnavailable =
+		isMissingFoodPreferenceOptionCatalogError(foodPreferenceOptionsError);
+
+	if (foodPreferenceOptionsError && !foodPreferenceOptionsUnavailable) {
+		throw foodPreferenceOptionsError;
+	}
 
 	return {
 		profile,
 		avatarUrl,
+		foodPreferences: foodPreferencesUnavailable
+			? null
+			: getFoodPreferenceProfile(foodPreferences),
+		foodPreferencesUnavailable,
+		foodPreferenceOptions: getFoodPreferenceOptionSets(
+			foodPreferenceOptionsUnavailable ? [] : foodPreferenceOptions,
+		),
+		priorityNutrientOptions: vitalNutrients,
 		defaultDisplayName: getDefaultDisplayName(user.id),
 		avatarPolicyItems: PROFILE_AVATAR_POLICY_ITEMS,
 		requireHumanFace: PROFILE_AVATAR_REQUIRE_HUMAN_FACE,
@@ -88,6 +160,59 @@ export const actions: Actions = {
 		}
 
 		return { profileSuccess: "Profile saved." };
+	},
+	saveFoodPreferences: async ({ locals, request }) => {
+		const user = await getAuthenticatedUser(locals);
+		const values = getFoodPreferenceFormValues(await request.formData());
+		const validationError = getFoodPreferencesValidationError(values);
+
+		if (validationError) {
+			return fail(400, {
+				foodPreferencesError: validationError,
+				foodPreferenceValues: values,
+			});
+		}
+
+		const defaultSmoothieServingGrams = getServingSizeGrams(
+			values.defaultSmoothieServingSize,
+			values.defaultSmoothieServingUnit,
+		);
+		const sensitiveAcknowledgedAt = values.sensitiveAcknowledged
+			? new Date().toISOString()
+			: null;
+
+		const { error } = await locals.supabase.from("user_food_preferences").upsert(
+			{
+				user_id: user.id,
+				unit_system: values.unitSystem,
+				allergens: values.allergens,
+				dietary_restrictions: values.dietaryRestrictions,
+				prioritized_nutrient_ids: values.prioritizedNutrientIds,
+				default_smoothie_serving_grams: defaultSmoothieServingGrams,
+				sensitive_acknowledged_at: sensitiveAcknowledgedAt,
+			},
+			{ onConflict: "user_id" },
+		);
+
+		if (error) {
+			if (isMissingFoodPreferencesTableError(error)) {
+				return fail(503, {
+					foodPreferencesError:
+						"Food preference storage is waiting on the latest database migration. Try again after migrations are applied.",
+					foodPreferenceValues: values,
+				});
+			}
+
+			return fail(500, {
+				foodPreferencesError: "Food settings could not be saved. Try again.",
+				foodPreferenceValues: values,
+			});
+		}
+
+		return {
+			foodPreferencesSuccess: "Food settings saved.",
+			foodPreferenceValues: values,
+		};
 	},
 	uploadAvatar: async ({ locals, request }) => {
 		const user = await getAuthenticatedUser(locals);
@@ -187,6 +312,7 @@ export const actions: Actions = {
 		const { error: profileError } = await locals.supabase.from("profiles").upsert(
 			{
 				user_id: user.id,
+				display_name: existingProfile?.display_name ?? getDefaultDisplayName(user.id),
 				avatar_path: avatarPath,
 				avatar_alt_text: altText,
 				avatar_moderation_status: "self_attested",

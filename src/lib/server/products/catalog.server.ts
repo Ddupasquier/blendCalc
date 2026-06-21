@@ -3,6 +3,7 @@ import type { Database, Json } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import { compactFood } from "$lib/utils/food/foodRecords";
+import type { FoodCompatibilitySummary } from "$lib/utils/food/compatibility";
 import {
 	hydrateFoodWithNormalizedNutrients,
 	type NormalizedNutrientRow,
@@ -137,6 +138,7 @@ export const validateSharedProductFood = (food: FdcFood) => {
 
 const enrichCatalogFood = (
 	row: {
+		compatibility_summary?: Json;
 		id: string;
 		food: Json;
 		confidence: string;
@@ -146,6 +148,8 @@ const enrichCatalogFood = (
 	hydrateFoodWithNormalizedNutrients(
 		{
 			...(row.food as unknown as FdcFood),
+			compatibilitySummary:
+				(row.compatibility_summary as FoodCompatibilitySummary | null) ?? undefined,
 			sharedProductId: row.id,
 			sharedProductConfidence:
 				row.confidence as FdcFood["sharedProductConfidence"],
@@ -163,7 +167,7 @@ export const getSharedProductByBarcode = async (
 
 	const { data, error } = await supabase
 		.from("shared_products")
-		.select("id, food, confidence")
+		.select("id, food, confidence, compatibility_summary")
 		.eq("barcode", canonicalBarcode)
 		.eq("status", "active")
 		.maybeSingle();
@@ -191,7 +195,7 @@ export const searchApprovedSharedProducts = async (
 
 	let request = supabase
 		.from("shared_products")
-		.select("id, food, confidence")
+		.select("id, food, confidence, compatibility_summary")
 		.eq("status", "active")
 		.limit(30);
 	for (const term of terms.slice(0, 6)) {

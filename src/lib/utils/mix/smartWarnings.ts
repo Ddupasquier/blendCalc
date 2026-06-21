@@ -1,3 +1,7 @@
+import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
+import { getFoodPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
+
 export type SmartWarningTone = "danger" | "warning" | "info";
 
 export type SmartWarning = {
@@ -70,5 +74,28 @@ export const getNutrientGoalWarnings = (
 		}
 
 		return [];
+	});
+};
+
+export const getFoodPreferenceSmartWarnings = (
+	foods: FdcFood[],
+	profile: FoodPreferenceProfile | null | undefined,
+): SmartWarning[] => {
+	if (!profile) return [];
+
+	return foods.flatMap((food) => {
+		const warnings = getFoodPreferenceWarnings(food, profile);
+		if (warnings.length === 0) return [];
+
+		const hasWarning = warnings.some((warning) => warning.level === "warning");
+		return [
+			{
+				id: `food-preference-${food.fdcId}`,
+				tone: hasWarning ? "warning" : "info",
+				symbol: hasWarning ? "!" : "?",
+				title: food.description,
+				message: warnings.map((warning) => warning.reason).join(" "),
+			},
+		];
 	});
 };

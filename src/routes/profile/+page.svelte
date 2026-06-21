@@ -1,5 +1,11 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import { invalidateAll } from "$app/navigation";
+	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker.svelte";
+	import {
+		getServingSizeDisplayValue,
+		type DefaultServingUnit,
+	} from "$lib/utils/profile/foodPreferences";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import type { ActionData, PageData } from "./$types";
 
@@ -18,13 +24,260 @@
 			data.defaultDisplayName,
 		bio: form?.profileValues?.bio ?? data.profile?.bio ?? "",
 	});
+	const storedServingUnit = $derived<DefaultServingUnit>(
+		data.foodPreferences?.unitSystem === "us" ? "oz" : "g",
+	);
+	const incomingFoodPreferenceValues = $derived({
+		unitSystem:
+			form?.foodPreferenceValues?.unitSystem ??
+			data.foodPreferences?.unitSystem ??
+			"",
+		allergens:
+			form?.foodPreferenceValues?.allergens ??
+			data.foodPreferences?.allergens ??
+			[],
+		dietaryRestrictions:
+			form?.foodPreferenceValues?.dietaryRestrictions ??
+			data.foodPreferences?.dietaryRestrictions ??
+			[],
+		prioritizedNutrientIds:
+			form?.foodPreferenceValues?.prioritizedNutrientIds ??
+			data.foodPreferences?.prioritizedNutrientIds ??
+			[],
+		defaultSmoothieServingUnit:
+			form?.foodPreferenceValues?.defaultSmoothieServingUnit ?? storedServingUnit,
+		defaultSmoothieServingSize:
+			form?.foodPreferenceValues?.defaultSmoothieServingSize ??
+			getServingSizeDisplayValue(
+				data.foodPreferences?.defaultSmoothieServingGrams,
+				storedServingUnit,
+			),
+		sensitiveAcknowledged:
+			form?.foodPreferenceValues?.sensitiveAcknowledged ??
+			Boolean(data.foodPreferences?.sensitiveAcknowledgedAt),
+	});
+	const normalizePreferenceValue = (value: string) =>
+		value.toLocaleLowerCase().trim().replace(/\s+/g, " ");
+	const uniquePreferenceValues = (values: string[]) => {
+		const seen = new Set<string>();
+		return values.filter((value) => {
+			const key = normalizePreferenceValue(value);
+			if (!key || seen.has(key)) return false;
+			seen.add(key);
+			return true;
+		});
+	};
+	const getOptionRows = (optionLabels: string[], selectedValues: string[]) =>
+		uniquePreferenceValues([...optionLabels, ...selectedValues]);
+
+	let allergens = $state<string[]>([]);
+	let dietaryRestrictions = $state<string[]>([]);
+	let lastPreferenceSeed = "";
+	const preferenceSeed = $derived(
+		JSON.stringify({
+			allergens: incomingFoodPreferenceValues.allergens,
+			dietaryRestrictions: incomingFoodPreferenceValues.dietaryRestrictions,
+		}),
+	);
+
+	$effect(() => {
+		const seed = preferenceSeed;
+		if (seed === lastPreferenceSeed) return;
+		lastPreferenceSeed = seed;
+		allergens = [...incomingFoodPreferenceValues.allergens];
+		dietaryRestrictions = [...incomingFoodPreferenceValues.dietaryRestrictions];
+	});
+
+	type PreferenceGroupKey = "allergens" | "dietaryRestrictions";
+
+	const preferenceGroupMeta: Record<
+		PreferenceGroupKey,
+		{ title: string; helper: string; searchLabel: string; selectLabel: string }
+	> = {
+		allergens: {
+			title: "Allergens",
+			helper: "Adds warnings when metadata suggests a conflict.",
+			searchLabel: "Type your own allergen",
+			selectLabel: "Common allergens",
+		},
+		dietaryRestrictions: {
+			title: "Dietary restrictions",
+			helper: "Warns on possible conflicts. It never prevents adding an item.",
+			searchLabel: "Type your own restriction",
+			selectLabel: "Common restrictions",
+		},
+	};
+	let preferenceSearch = $state<Record<PreferenceGroupKey, string>>({
+		allergens: "",
+		dietaryRestrictions: "",
+	});
+	let preferenceSelect = $state<Record<PreferenceGroupKey, string>>({
+		allergens: "",
+		dietaryRestrictions: "",
+	});
+
+	const readPreferenceGroup = (group: PreferenceGroupKey) => {
+		switch (group) {
+			case "allergens":
+				return allergens;
+			case "dietaryRestrictions":
+				return dietaryRestrictions;
+		}
+	};
+
+	const writePreferenceGroup = (group: PreferenceGroupKey, nextValues: string[]) => {
+		const uniqueValues = uniquePreferenceValues(nextValues);
+		switch (group) {
+			case "allergens":
+				allergens = uniqueValues;
+				return;
+			case "dietaryRestrictions":
+				dietaryRestrictions = uniqueValues;
+				return;
+		}
+	};
+
+	const removePreferenceValue = (group: PreferenceGroupKey, value: string) => {
+		const valueKey = normalizePreferenceValue(value);
+		writePreferenceGroup(
+			group,
+			readPreferenceGroup(group).filter(
+				(item) => normalizePreferenceValue(item) !== valueKey,
+			),
+		);
+	};
+
+	const setPreferenceSearch = (group: PreferenceGroupKey, value: string) => {
+		preferenceSearch = {
+			...preferenceSearch,
+			[group]: value,
+		};
+	};
+
+	const getPreferenceSearch = (group: PreferenceGroupKey) =>
+		preferenceSearch[group] ?? "";
+
+	const getOptionPool = (group: PreferenceGroupKey) => {
+		switch (group) {
+			case "allergens":
+				return allergenOptions;
+			case "dietaryRestrictions":
+				return restrictionOptions;
+		}
+	};
+
+	const getFilteredOptions = (group: PreferenceGroupKey) => {
+		const query = normalizePreferenceValue(getPreferenceSearch(group));
+		return getAvailableOptions(group).filter((option) => {
+			if (!query) return true;
+			return normalizePreferenceValue(option).includes(query);
+		});
+	};
+
+	const getAvailableOptions = (group: PreferenceGroupKey) => {
+		const selected = new Set(readPreferenceGroup(group).map(normalizePreferenceValue));
+		return getOptionPool(group).filter(
+			(option) => !selected.has(normalizePreferenceValue(option)),
+		);
+	};
+
+	const addPreferenceValue = (group: PreferenceGroupKey, value: string) => {
+		const cleanedValue = value.trim().replace(/\s+/g, " ");
+		if (!cleanedValue) {
+			return;
+		}
+		const existingValues = readPreferenceGroup(group);
+		if (
+			existingValues.some(
+				(item) =>
+					normalizePreferenceValue(item) === normalizePreferenceValue(cleanedValue),
+			)
+		) {
+			return;
+		}
+		writePreferenceGroup(group, [...existingValues, cleanedValue]);
+		setPreferenceSearch(group, "");
+		preferenceSelect = {
+			...preferenceSelect,
+			[group]: "",
+		};
+	};
+
+	const setPreferenceSelect = (group: PreferenceGroupKey, value: string) => {
+		preferenceSelect = {
+			...preferenceSelect,
+			[group]: value,
+		};
+	};
+
+	const getPreferenceSelect = (group: PreferenceGroupKey) =>
+		preferenceSelect[group] ?? "";
+
+	const priorityNutrientLabels = $derived(
+		incomingFoodPreferenceValues.prioritizedNutrientIds
+			.map((nutrientId) =>
+				data.priorityNutrientOptions.find((nutrient) => nutrient.id === nutrientId),
+			)
+			.filter((nutrient) => nutrient !== undefined)
+			.map((nutrient) => nutrient.label),
+	);
+	const suggestedAllergenLabels = $derived(
+		data.foodPreferenceOptions.allergens.map((option) => option.label),
+	);
+	const suggestedRestrictionLabels = $derived(
+		data.foodPreferenceOptions.dietaryRestrictions.map((option) => option.label),
+	);
+	const allergenOptions = $derived(
+		getOptionRows(suggestedAllergenLabels, allergens),
+	);
+	const restrictionOptions = $derived(
+		getOptionRows(suggestedRestrictionLabels, dietaryRestrictions),
+	);
+	const savedPreferenceSummary = $derived([
+		incomingFoodPreferenceValues.unitSystem
+			? {
+					label: "Units",
+					value: incomingFoodPreferenceValues.unitSystem === "us" ? "US units" : "Metric",
+				}
+			: null,
+		incomingFoodPreferenceValues.defaultSmoothieServingSize
+			? {
+					label: "Serving",
+					value: `${incomingFoodPreferenceValues.defaultSmoothieServingSize}${incomingFoodPreferenceValues.defaultSmoothieServingUnit}`,
+				}
+			: null,
+		incomingFoodPreferenceValues.allergens.length
+			? { label: "Allergens", value: incomingFoodPreferenceValues.allergens.join(", ") }
+			: null,
+		incomingFoodPreferenceValues.dietaryRestrictions.length
+			? {
+					label: "Dietary restrictions",
+					value: incomingFoodPreferenceValues.dietaryRestrictions.join(", "),
+				}
+			: null,
+		priorityNutrientLabels.length
+			? { label: "Priority nutrients", value: priorityNutrientLabels.join(", ") }
+			: null,
+	].filter((item) => item !== null));
 	let profilePending = $state(false);
 	let avatarPending = $state(false);
+	let foodPreferencesPending = $state(false);
+	const foodPreferencesDisabled = $derived(
+		foodPreferencesPending || data.foodPreferencesUnavailable,
+	);
 	const enhanceProfile = createPendingSubmit(
 		(pending) => (profilePending = pending),
 	);
 	const enhanceAvatar = createPendingSubmit(
 		(pending) => (avatarPending = pending),
+	);
+	const enhanceFoodPreferences = createPendingSubmit(
+		(pending) => (foodPreferencesPending = pending),
+		async (result) => {
+			if (result.type !== "success") return;
+			if (!result.data?.foodPreferencesSuccess) return;
+			await invalidateAll();
+		},
 	);
 </script>
 
@@ -167,6 +420,171 @@
 			</div>
 		</form>
 	</section>
+
+	<section class="profile-card">
+		<div class="profile-card__heading">
+			<h2>Food safety &amp; dietary restrictions</h2>
+			<p>Optional settings for safer suggestions and smoother mix planning.</p>
+		</div>
+
+		<div class="sensitive-notice">
+			<strong>Optional, but important.</strong>
+			<span>
+				Allergens, dietary restrictions, and nutrient priorities can be
+				health-related. If you save them, the app treats them as important
+				warnings.
+			</span>
+		</div>
+
+		{#if form?.foodPreferencesError}
+			<p class="form-message form-message--error" role="alert">{form.foodPreferencesError}</p>
+		{:else if form?.foodPreferencesSuccess}
+			<p class="form-message form-message--success" role="status">{form.foodPreferencesSuccess}</p>
+		{/if}
+		{#if data.foodPreferencesUnavailable}
+			<p class="form-message form-message--warning" role="status">
+				Food preference storage is waiting on the latest database migration. Profile details and images still work.
+			</p>
+		{/if}
+		{#if savedPreferenceSummary.length}
+			<div class="saved-preferences" aria-label="Saved food preferences">
+				<strong>Saved settings</strong>
+				<div class="saved-preferences__grid">
+					{#each savedPreferenceSummary as item}
+						<div class="saved-preferences__item">
+							<span>{item.label}</span>
+							<p>{item.value}</p>
+						</div>
+					{/each}
+				</div>
+			</div>
+		{/if}
+
+		<form
+			method="POST"
+			action="?/saveFoodPreferences"
+			use:enhance={enhanceFoodPreferences}
+			aria-busy={foodPreferencesPending}
+		>
+			<div class="preference-grid">
+				<label>
+					<span>Preferred units</span>
+					<select
+						name="unitSystem"
+						value={incomingFoodPreferenceValues.unitSystem}
+						disabled={foodPreferencesDisabled}
+					>
+						<option value="">No preference</option>
+						<option value="metric">Metric</option>
+						<option value="us">US units</option>
+					</select>
+				</label>
+
+				<label>
+					<span>Default smoothie serving size</span>
+					<div class="inline-fields">
+						<input
+							name="defaultSmoothieServingSize"
+							type="number"
+							min="0"
+							step="0.1"
+							value={incomingFoodPreferenceValues.defaultSmoothieServingSize}
+							placeholder="Optional"
+							disabled={foodPreferencesDisabled}
+						/>
+						<select
+							name="defaultSmoothieServingUnit"
+							value={incomingFoodPreferenceValues.defaultSmoothieServingUnit}
+							disabled={foodPreferencesDisabled}
+						>
+							<option value="g">g</option>
+							<option value="oz">oz</option>
+						</select>
+					</div>
+				</label>
+			</div>
+
+			<input type="hidden" name="allergens" value={allergens.join(", ")} />
+			<input
+				type="hidden"
+				name="dietaryRestrictions"
+				value={dietaryRestrictions.join(", ")}
+			/>
+
+			<div class="preference-editor-grid">
+				<FoodPreferencePicker
+					title={preferenceGroupMeta.allergens.title}
+					helper={preferenceGroupMeta.allergens.helper}
+					searchLabel={preferenceGroupMeta.allergens.searchLabel}
+					selectLabel={preferenceGroupMeta.allergens.selectLabel}
+					selectedValues={allergens}
+					selectValue={getPreferenceSelect("allergens")}
+					searchValue={getPreferenceSearch("allergens")}
+					availableOptions={getAvailableOptions("allergens")}
+					filteredOptions={getFilteredOptions("allergens")}
+					disabled={foodPreferencesDisabled}
+					emptyLabel="No allergens saved."
+					onAdd={(value) => addPreferenceValue("allergens", value)}
+					onRemove={(value) => removePreferenceValue("allergens", value)}
+					onSearchChange={(value) => setPreferenceSearch("allergens", value)}
+					onSelectChange={(value) => setPreferenceSelect("allergens", value)}
+				/>
+
+				<FoodPreferencePicker
+					title={preferenceGroupMeta.dietaryRestrictions.title}
+					helper={preferenceGroupMeta.dietaryRestrictions.helper}
+					searchLabel={preferenceGroupMeta.dietaryRestrictions.searchLabel}
+					selectLabel={preferenceGroupMeta.dietaryRestrictions.selectLabel}
+					selectedValues={dietaryRestrictions}
+					selectValue={getPreferenceSelect("dietaryRestrictions")}
+					searchValue={getPreferenceSearch("dietaryRestrictions")}
+					availableOptions={getAvailableOptions("dietaryRestrictions")}
+					filteredOptions={getFilteredOptions("dietaryRestrictions")}
+					disabled={foodPreferencesDisabled}
+					emptyLabel="No restrictions saved."
+					onAdd={(value) => addPreferenceValue("dietaryRestrictions", value)}
+					onRemove={(value) =>
+						removePreferenceValue("dietaryRestrictions", value)}
+					onSearchChange={(value) =>
+						setPreferenceSearch("dietaryRestrictions", value)}
+					onSelectChange={(value) =>
+						setPreferenceSelect("dietaryRestrictions", value)}
+				/>
+			</div>
+
+			<fieldset class="nutrient-priorities">
+				<legend>Preferred nutrients</legend>
+				<div class="priority-options">
+					{#each data.priorityNutrientOptions as nutrient}
+						<label class="check-row">
+							<input
+								type="checkbox"
+								name="prioritizedNutrientIds"
+								value={nutrient.id}
+								checked={incomingFoodPreferenceValues.prioritizedNutrientIds.includes(nutrient.id)}
+								disabled={foodPreferencesDisabled}
+							/>
+							<span>{nutrient.label}</span>
+						</label>
+					{/each}
+				</div>
+			</fieldset>
+
+			<label class="check-row">
+				<input
+					type="checkbox"
+					name="sensitiveAcknowledged"
+					checked={incomingFoodPreferenceValues.sensitiveAcknowledged}
+					disabled={foodPreferencesDisabled}
+				/>
+				<span>I understand these optional preferences may affect warnings and suggestion ranking.</span>
+			</label>
+
+			<button class="primary-action" type="submit" disabled={foodPreferencesDisabled}>
+				{foodPreferencesPending ? "Saving preferences…" : "Save food preferences"}
+			</button>
+		</form>
+	</section>
 </div>
 
 <style lang="scss">
@@ -222,7 +640,8 @@
 		}
 
 		input:not([type="checkbox"]),
-		textarea {
+		textarea,
+		select {
 			width: 100%;
 			padding: 0.65rem 0.75rem;
 			color: $app-primary;
@@ -240,6 +659,99 @@
 			color: $app-muted;
 			font-size: $app-font-size-sm;
 		}
+	}
+
+	.sensitive-notice {
+		display: grid;
+		gap: $app-gap-xs;
+		padding: $app-gap-sm;
+		color: $app-warning-text;
+		background: $app-warning-bg;
+		border: $app-warning-border;
+		border-radius: $app-radius-sm;
+		font-size: $app-font-size-sm;
+	}
+
+	.saved-preferences {
+		display: grid;
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+		background: $app-bg;
+		border: $app-border;
+		border-radius: $app-radius-sm;
+
+		> strong {
+			color: $app-primary;
+			font-size: $app-font-size-md;
+		}
+	}
+
+	.saved-preferences__grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: $app-gap-xs;
+	}
+
+	.saved-preferences__item {
+		min-width: 0;
+		padding: $app-gap-xs;
+		background: $app-section-bg;
+		border: $app-border;
+		border-radius: $app-radius-sm;
+
+		span {
+			display: block;
+			margin-bottom: 0.1rem;
+			color: $app-muted;
+			font-size: $app-font-size-xs;
+			font-weight: 900;
+			letter-spacing: 0.05em;
+			text-transform: uppercase;
+		}
+
+		p {
+			color: $app-primary;
+			font-size: $app-font-size-sm;
+			font-weight: 800;
+			overflow-wrap: anywhere;
+		}
+	}
+
+	.preference-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: $app-gap-sm;
+
+		label {
+			display: grid;
+			gap: $app-gap-xs;
+		}
+	}
+
+	.inline-fields {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 5rem;
+		gap: $app-gap-xs;
+	}
+
+	.preference-editor-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: $app-gap-sm;
+	}
+
+	.nutrient-priorities {
+		display: grid;
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+		border: $app-border;
+		border-radius: $app-radius-sm;
+	}
+
+	.priority-options {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: $app-gap-xs $app-gap-sm;
 	}
 
 	.profile-card--identity {
@@ -409,7 +921,20 @@
 		background: $app-success-bg;
 	}
 
+	.form-message--warning {
+		color: $app-warning-text;
+		background: $app-warning-bg;
+		border: $app-warning-border;
+	}
+
 	@media (max-width: $app-breakpoint-xs) {
+		.preference-grid,
+		.preference-editor-grid,
+		.priority-options,
+		.saved-preferences__grid {
+			grid-template-columns: 1fr;
+		}
+
 		.form-actions button {
 			flex: 1 1 100%;
 			width: 100%;

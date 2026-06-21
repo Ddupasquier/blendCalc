@@ -17,6 +17,16 @@ export type OpenFoodFactsProduct = {
 	product_name?: string;
 	generic_name?: string;
 	brands?: string;
+	ingredients_text?: string;
+	ingredients_text_en?: string;
+	allergens?: string;
+	allergens_tags?: string[];
+	traces?: string;
+	traces_tags?: string[];
+	labels?: string;
+	labels_tags?: string[];
+	categories?: string;
+	categories_tags?: string[];
 	serving_size?: string;
 	serving_quantity?: number | string;
 	serving_quantity_unit?: string;
@@ -37,6 +47,13 @@ export type BarcodeProductDraft = {
 	nutrition: CustomFoodNutritionInput;
 	additionalNutrients: FdcNutrient[];
 	reportedNutrientIds: number[];
+	ingredients?: string;
+	ingredientList?: string[];
+	allergens?: string[];
+	traces?: string[];
+	dietaryTags?: string[];
+	labels?: string[];
+	categories?: string[];
 	volumeEquivalent?: BarcodeVolumeEquivalent;
 	source: "open-food-facts" | "usda" | "shared-catalog";
 	sourceLabel: string;
@@ -63,6 +80,69 @@ const toNumber = (value: unknown) => {
 	const numberValue = typeof value === "string" ? Number.parseFloat(value) : Number(value);
 	return Number.isFinite(numberValue) ? Math.max(0, numberValue) : 0;
 };
+
+const cleanTag = (value: string) =>
+	value
+		.replace(/^[a-z]{2}:/i, "")
+		.replace(/-/g, " ")
+		.trim();
+
+const uniqueCleanValues = (values: Array<string | undefined>) => {
+	const seen = new Set<string>();
+	return values.flatMap((value) => {
+		const cleaned = cleanTag(value ?? "");
+		if (!cleaned) return [];
+		const key = cleaned.toLocaleLowerCase();
+		if (seen.has(key)) return [];
+		seen.add(key);
+		return [cleaned];
+	});
+};
+
+const splitDelimitedValues = (value?: string) =>
+	uniqueCleanValues((value ?? "").split(/[;,]/));
+
+const splitIngredientList = (value?: string) =>
+	uniqueCleanValues((value ?? "").split(/,(?![^(]*\))/));
+
+const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
+	const ingredients =
+		product.ingredients_text_en?.trim() || product.ingredients_text?.trim();
+
+	return {
+		ingredients: ingredients || undefined,
+		ingredientList: splitIngredientList(ingredients),
+		allergens: uniqueCleanValues([
+			...splitDelimitedValues(product.allergens),
+			...(product.allergens_tags ?? []),
+		]),
+		traces: uniqueCleanValues([
+			...splitDelimitedValues(product.traces),
+			...(product.traces_tags ?? []),
+		]),
+		dietaryTags: uniqueCleanValues(product.labels_tags ?? []),
+		labels: uniqueCleanValues([
+			...splitDelimitedValues(product.labels),
+			...(product.labels_tags ?? []),
+		]),
+		categories: uniqueCleanValues([
+			...splitDelimitedValues(product.categories),
+			...(product.categories_tags ?? []),
+		]),
+	};
+};
+
+const parseFdcMetadata = (food: FdcFood) => ({
+	ingredients: food.ingredients?.trim() || undefined,
+	ingredientList: food.ingredientList?.length
+		? uniqueCleanValues(food.ingredientList)
+		: splitIngredientList(food.ingredients),
+	allergens: uniqueCleanValues(food.allergens ?? []),
+	traces: uniqueCleanValues(food.traces ?? []),
+	dietaryTags: uniqueCleanValues(food.dietaryTags ?? []),
+	labels: uniqueCleanValues(food.labels ?? []),
+	categories: uniqueCleanValues(food.categories ?? []),
+});
 
 const parseServingBasis = (product: OpenFoodFactsProduct) => {
 	const servingQuantity = toNumber(product.serving_quantity);
@@ -157,6 +237,7 @@ export const mapOpenFoodFactsProduct = (
 		servingWeightGrams,
 		useServingValues,
 	);
+	const metadata = parseOpenFoodFactsMetadata(product);
 
 	return {
 		barcode: canonicalBarcode,
@@ -176,6 +257,7 @@ export const mapOpenFoodFactsProduct = (
 				...additionalNutrients.map((nutrient) => nutrient.nutrientId),
 			]),
 		],
+		...metadata,
 		volumeEquivalent: hasExactGramWeight
 			? parseVolumeEquivalent(product.serving_size)
 				?? undefined
@@ -238,6 +320,7 @@ export const mapFdcBarcodeFood = (
 	const servingScale = servingWeightGrams / 100;
 	const perServing = (nutrientId: number) =>
 		getFdcNutrientValue(food, nutrientId) * servingScale;
+	const metadata = parseFdcMetadata(food);
 
 	return {
 		barcode: canonicalBarcode,
@@ -258,6 +341,7 @@ export const mapFdcBarcodeFood = (
 					food.foodNutrients.map((nutrient) => nutrient.nutrientId),
 			),
 		],
+		...metadata,
 		volumeEquivalent: hasExactGramWeight
 			? parseVolumeEquivalent(food.householdServingFullText) ?? undefined
 			: undefined,
