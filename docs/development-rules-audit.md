@@ -28,6 +28,7 @@ These are the working rules gathered from prior product and implementation decis
 18. Verify meaningful changes with `npm run check`, focused tests, and builds when scope warrants it.
 19. For the full mobile UI rebuild, use `mobile-ui-rebuild` as the temporary integration branch. Major rebuild sections branch from `mobile-ui-rebuild`, merge back into `mobile-ui-rebuild` only after approval and checks, and do not move to `staging` until the full rebuild is approved.
 20. During the mobile UI rebuild, protected components require explicit written approval before alteration. The graph and barcode scanner are currently protected.
+21. Ask for Figma screenshots before building or substantially changing any new UI element during the mobile UI rebuild. Match provided screenshots before inventing layout details.
 
 ## Audit Summary
 

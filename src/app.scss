@@ -39,153 +39,16 @@ p {
 	line-height: 1.4;
 }
 
-/* ---- Header ---- */
-.app-header {
-	position: sticky;
-	top: 0;
-	z-index: 100;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: $app-gap-sm;
-	min-width: 0;
-	padding: 0.65rem 0.85rem;
-	background: $app-primary;
-	color: $app-btn-text;
-}
-
-.app-header .logo {
-	flex: 0 1 auto;
-	min-width: 0;
-	overflow: hidden;
-	font-family: $app-font-family-display;
-	font-size: clamp(1rem, 4.5vw, 1.2rem);
-	font-weight: $app-font-weight-bold;
-	letter-spacing: 0.01em;
-	text-wrap: balance;
-	white-space: nowrap;
-}
-
-.auth-status {
-	display: inline-flex;
-	align-items: center;
-	justify-content: flex-end;
-	flex: 1 1 auto;
-	gap: 0.4rem;
-	min-width: 0;
-	font-size: $app-font-size-sm;
-	font-weight: 700;
-}
-
-.auth-status a,
-.auth-status button {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	flex: 0 0 auto;
-	min-height: 1.85rem;
-	padding: 0.3rem 0.65rem;
-	color: $app-primary;
-	background: $app-bg;
-	border-radius: $app-radius-pill;
-	font-size: $app-font-size-sm;
-	font-family: $app-button-font-family;
-	font-weight: $app-button-font-weight;
-	line-height: $app-button-line-height;
-	text-decoration: none;
-}
-
-.auth-status button {
-	border: 0;
-}
-
-.auth-status .profile-link {
-	width: 2rem;
-	height: 2rem;
-	min-height: 2rem;
-	overflow: hidden;
-	padding: 0;
-	border: 2px solid rgb(252 249 244 / 72%);
-	border-radius: 50%;
-
-	img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-	}
-
-	svg {
-		width: 62%;
-		fill: none;
-		stroke: currentColor;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-		stroke-width: 1.8;
-	}
-}
-
-.auth-status .moderation-link,
-.auth-status .tutorial-link {
-	width: 2rem;
-	height: 2rem;
-	min-height: 2rem;
-	padding: 0;
-	color: $app-primary;
-	background: $app-highlight;
-
-	svg {
-		width: 62%;
-		fill: none;
-		stroke: currentColor;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-		stroke-width: 1.8;
-	}
-}
-
-.auth-status .tutorial-link {
-	color: $app-primary;
-	background: $app-accent;
-}
-
-@media (max-width: $app-breakpoint-xs) {
-	.app-header {
-		padding: 0.55rem 0.65rem;
-	}
-
-	.app-header .logo {
-		font-size: 1rem;
-	}
-
-	.auth-status a,
-	.auth-status button {
-		min-height: 1.75rem;
-		padding: 0.28rem 0.55rem;
-		font-size: $app-font-size-xs;
-	}
-
-	.auth-status .profile-link {
-		width: 1.85rem;
-		height: 1.85rem;
-		min-height: 1.85rem;
-		padding: 0;
-	}
-
-	.auth-status .moderation-link,
-	.auth-status .tutorial-link {
-		width: 1.85rem;
-		height: 1.85rem;
-		min-height: 1.85rem;
-		padding: 0;
-	}
-}
-
 /* ---- Main content ---- */
 .app-main {
 	max-width: $app-max-width;
 	margin: 0 auto;
 	padding: $app-gap-md $app-gap-sm;
 	padding-bottom: 2rem;
+}
+
+.app-main--authed {
+	padding-bottom: calc(5.25rem + env(safe-area-inset-bottom));
 }
 
 .app-main--guest {

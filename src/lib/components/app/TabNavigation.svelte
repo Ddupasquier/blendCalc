@@ -1,88 +1,111 @@
 <script lang="ts">
-  import { page } from "$app/stores";
-  import { goto } from "$app/navigation";
+	import { page } from "$app/state";
 
-  const tabData = [
-    { label: "Ingredients", slug: "/fridge" },
-    { label: "Mix", slug: "/mix" },
-    { label: "Saved", slug: "/saved" },
-  ];
+	const tabData = [
+		{
+			label: "Ingredients",
+			slug: "/fridge",
+			iconPath:
+				"M6.5 13.5C6.5 8.5 10.5 5 17 5c.2 6.5-3.3 10.5-8.3 10.5H6.5v-2Zm0 0C5.3 15 5 16.8 5 19",
+		},
+		{
+			label: "Mix",
+			slug: "/mix",
+			iconPath: "M13 2 5 13h6l-1 9 9-13h-6l1-7Z",
+		},
+		{
+			label: "Saved",
+			slug: "/saved",
+			iconPath: "M7 4.5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16l-5-3-5 3v-16Z",
+		},
+	];
 
-  const isActive = (slug: string) => {
-    return $page.url.pathname === slug;
-  };
-
-  const selectTab = (slug: string) => {
-    goto(slug);
-  };
+	const isActive = (slug: string) => page.url.pathname === slug;
 </script>
 
 <nav class="tab-nav" aria-label="Main navigation">
-  {#each tabData as tab}
-    <button
-      class="tab-btn {isActive(tab.slug) ? 'active' : ''}"
-      aria-current={isActive(tab.slug) ? "page" : undefined}
-      onclick={() => selectTab(tab.slug)}
-      type="button"
-    >
-      {tab.label}
-    </button>
-  {/each}
+	{#each tabData as tab}
+		<a
+			class="tab-btn"
+			class:active={isActive(tab.slug)}
+			aria-current={isActive(tab.slug) ? "page" : undefined}
+			href={tab.slug}
+		>
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<path d={tab.iconPath} />
+			</svg>
+			<span>{tab.label}</span>
+		</a>
+	{/each}
 </nav>
 
 <style lang="scss">
-  @use "../../../styles/variables" as *;
-  .tab-nav {
-    position: sticky;
-    top: 3.05rem;
-    z-index: 90;
-    display: flex;
-    gap: 0.35rem;
-    background: $app-bg;
-    border-bottom: $app-border;
-    padding: 0.35rem 0.55rem;
-    margin-bottom: $app-gap-md;
-    justify-content: center;
+	@use "../../../styles/variables" as *;
 
-    .tab-btn {
-      min-width: 0;
-      background: none;
-      border: none;
-      color: $app-primary;
-      font-size: $app-font-size-md;
-      font-family: $app-button-font-family;
-      font-weight: $app-button-font-weight;
-      padding: 0.45rem 1.1rem;
-      border-radius: $app-radius-pill;
-      cursor: pointer;
-      line-height: $app-button-line-height;
-      transition:
-        background 0.13s,
-        color 0.13s;
+	.tab-nav {
+		position: fixed;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		z-index: 90;
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		align-items: center;
+		padding: 0.72rem max(1rem, env(safe-area-inset-right))
+			calc(0.72rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+		background: $app-bg;
+		border-top: $app-border;
+	}
 
-      &.active {
-        background: $app-primary;
-        color: $app-btn-text;
-      }
+	.tab-btn {
+		display: grid;
+		place-items: center;
+		gap: 0.22rem;
+		min-width: 0;
+		color: color-mix(in srgb, $app-muted 72%, $color-blueberry-milk);
+		font-family: $app-button-font-family;
+		font-size: $app-font-size-sm;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
+		text-align: center;
+		text-decoration: none;
+		transition:
+			color 0.16s ease,
+			transform 0.16s ease;
 
-      &:focus {
-        outline: $app-focus-outline;
-      }
-    }
-  }
+		svg {
+			width: 1.35rem;
+			height: 1.35rem;
+			fill: none;
+			stroke: currentColor;
+			stroke-linecap: round;
+			stroke-linejoin: round;
+			stroke-width: 1.85;
+		}
 
-  @media (max-width: $app-breakpoint-xs) {
-    .tab-nav {
-      top: 2.85rem;
-      gap: 0.25rem;
-      padding: 0.3rem 0.45rem;
-      margin-bottom: $app-gap-sm;
+		span {
+			overflow: hidden;
+			max-width: 100%;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
 
-      .tab-btn {
-        flex: 1 1 0;
-        padding: 0.45rem 0.4rem;
-        font-size: $app-font-size-sm;
-      }
-    }
-  }
+		&.active {
+			color: color-mix(in srgb, $app-success-bg 42%, #29955f);
+			transform: translateY(-0.08rem);
+		}
+
+		&:focus-visible {
+			outline: $app-focus-outline;
+			outline-offset: 2px;
+		}
+	}
+
+	@media (min-width: $app-breakpoint-md) {
+		.tab-nav {
+			left: 50%;
+			width: min($app-max-width, 100%);
+			transform: translateX(-50%);
+		}
+	}
 </style>
