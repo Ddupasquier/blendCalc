@@ -1,0 +1,168 @@
+<script lang="ts">
+	import type { Snippet } from "svelte";
+
+	let {
+		type = "button",
+		variant = "primary",
+		size = "medium",
+		fullWidth = false,
+		busy = false,
+		disabled = false,
+		ariaLabel,
+		onclick,
+		children,
+		leading,
+		trailing,
+	}: {
+		type?: "button" | "submit" | "reset";
+		variant?: "primary" | "secondary" | "highlight" | "danger" | "ghost";
+		size?: "small" | "medium" | "large";
+		fullWidth?: boolean;
+		busy?: boolean;
+		disabled?: boolean;
+		ariaLabel?: string;
+		onclick?: (event: MouseEvent) => void;
+		children?: Snippet;
+		leading?: Snippet;
+		trailing?: Snippet;
+	} = $props();
+</script>
+
+<button
+	{type}
+	class="action-button"
+	class:action-button--full={fullWidth}
+	class:action-button--busy={busy}
+	data-variant={variant}
+	data-size={size}
+	aria-label={ariaLabel}
+	aria-busy={busy}
+	disabled={disabled || busy}
+	{onclick}
+>
+	{#if leading}
+		<span class="action-button__icon" aria-hidden="true">{@render leading()}</span>
+	{/if}
+	<span class="action-button__label">
+		{#if children}
+			{@render children()}
+		{/if}
+	</span>
+	{#if trailing}
+		<span class="action-button__icon" aria-hidden="true">{@render trailing()}</span>
+	{/if}
+</button>
+
+<style lang="scss">
+	@use "../../../styles/variables" as *;
+
+	.action-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: $app-gap-xs;
+		min-width: 0;
+		min-height: $app-control-height;
+		color: $app-btn-text;
+		background: $app-btn-bg;
+		border: 1.5px solid transparent;
+		border-radius: $app-radius-pill;
+		font-family: $app-button-font-family;
+		font-size: $app-font-size-md;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
+		text-align: center;
+		text-decoration: none;
+		transition:
+			background 0.16s ease,
+			border-color 0.16s ease,
+			color 0.16s ease,
+			opacity 0.16s ease,
+			transform 0.1s ease;
+	}
+
+	.action-button--full {
+		width: 100%;
+	}
+
+	.action-button[data-size="small"] {
+		min-height: $app-control-height-sm;
+		padding: 0.38rem 0.72rem;
+		font-size: $app-font-size-sm;
+	}
+
+	.action-button[data-size="medium"] {
+		padding: 0.52rem 0.95rem;
+	}
+
+	.action-button[data-size="large"] {
+		min-height: 2.55rem;
+		padding: 0.68rem 1.15rem;
+		font-size: $app-font-size-lg;
+	}
+
+	.action-button[data-variant="primary"] {
+		color: $app-btn-text;
+		background: $app-btn-bg;
+
+		&:hover:not(:disabled) {
+			background: $app-btn-bg-hover;
+		}
+	}
+
+	.action-button[data-variant="secondary"] {
+		color: $app-primary;
+		background: $app-accent;
+		border-color: $app-accent;
+	}
+
+	.action-button[data-variant="highlight"] {
+		color: $app-highlight-text;
+		background: $app-highlight;
+
+		&:hover:not(:disabled) {
+			background: $app-highlight-hover;
+		}
+	}
+
+	.action-button[data-variant="danger"] {
+		color: $app-btn-text;
+		background: $app-danger-action;
+	}
+
+	.action-button[data-variant="ghost"] {
+		color: $app-primary;
+		background: transparent;
+		border-color: $color-orchid-mist;
+	}
+
+	.action-button:focus-visible {
+		outline: $app-focus-outline;
+		outline-offset: 2px;
+	}
+
+	.action-button:active:not(:disabled) {
+		transform: scale(0.98);
+	}
+
+	.action-button:disabled,
+	.action-button--busy {
+		cursor: not-allowed;
+		opacity: 0.65;
+	}
+
+	.action-button__label {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.action-button__icon {
+		display: inline-grid;
+		flex: 0 0 auto;
+		place-items: center;
+		width: 1em;
+		height: 1em;
+	}
+</style>

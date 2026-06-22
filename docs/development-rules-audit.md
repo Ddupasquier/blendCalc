@@ -26,6 +26,8 @@ These are the working rules gathered from prior product and implementation decis
 16. Do not automatically add changes to `staging`. Work should stay on the active feature branch or working tree until explicitly approved for staging.
 17. Do not auto commit. Show the diff and get explicit approval before committing or pushing changes.
 18. Verify meaningful changes with `npm run check`, focused tests, and builds when scope warrants it.
+19. For the full mobile UI rebuild, use `mobile-ui-rebuild` as the temporary integration branch. Major rebuild sections branch from `mobile-ui-rebuild`, merge back into `mobile-ui-rebuild` only after approval and checks, and do not move to `staging` until the full rebuild is approved.
+20. During the mobile UI rebuild, protected components require explicit written approval before alteration. The graph and barcode scanner are currently protected.
 
 ## Audit Summary
 
