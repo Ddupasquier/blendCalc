@@ -43,7 +43,6 @@
     } from "$lib/utils/food/customFoods";
     import {
         addFoodToSmoothieList,
-        cacheSmoothieListLocally,
         readSmoothieList,
         removeFoodFromSmoothieList,
         renameFoodInSmoothieList,
@@ -52,7 +51,7 @@
     } from "$lib/utils/storage/smoothieLists";
     import {
         reconcileCloudCustomFoods,
-        reconcileCloudSmoothieList,
+        readCloudSmoothieListPage,
     } from "$lib/utils/storage/supabaseData";
     import { onMount, tick } from "svelte";
     import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
@@ -72,6 +71,10 @@
     let filtersOpen = $state(false);
     let onHandVisibleCount = $state<number>(LIST_PAGE_SIZES.ingredientPills);
     let shoppingVisibleCount = $state<number>(LIST_PAGE_SIZES.ingredientPills);
+    let onHandTotalCount = $state(0);
+    let shoppingListTotalCount = $state(0);
+    let loadingMoreList = $state<SmoothieListKey | null>(null);
+    let ingredientListElement = $state<HTMLUListElement | null>(null);
     let selectedListItemIds = $state<Record<SmoothieListKey, number[]>>({
         [MIX_STORAGE_KEYS.fridge]: [],
         [MIX_STORAGE_KEYS.shoppingList]: [],
@@ -126,33 +129,83 @@
     const activeRawList = $derived.by(() =>
         activeList === MIX_STORAGE_KEYS.fridge ? onHand : shoppingList,
     );
+    const activeTotalCount = $derived.by(() =>
+        activeList === MIX_STORAGE_KEYS.fridge
+            ? onHandTotalCount
+            : shoppingListTotalCount,
+    );
     const selectedActiveItemIds = $derived.by(
         () => selectedListItemIds[activeList] ?? [],
     );
     const canRevealMoreActiveItems = $derived(
-        activeVisibleList.length < activeFilteredList.length,
+        activeVisibleList.length < activeFilteredList.length ||
+            activeRawList.length < activeTotalCount,
     );
 
+    const readLocalListPage = (
+        key: SmoothieListKey,
+        offset: number,
+        limit: number,
+    ) => {
+        const foods = filterFoods(readSmoothieList(key));
+        return {
+            foods: foods.slice(offset, offset + limit),
+            totalCount: foods.length,
+        };
+    };
+
+    const setListPage = (
+        key: SmoothieListKey,
+        foods: FdcFood[],
+        totalCount: number,
+        reset: boolean,
+    ) => {
+        if (key === MIX_STORAGE_KEYS.fridge) {
+            onHand = reset ? foods : [...onHand, ...foods];
+            onHandTotalCount = totalCount;
+            onHandVisibleCount = Math.max(
+                LIST_PAGE_SIZES.ingredientPills,
+                onHand.length,
+            );
+            return;
+        }
+
+        shoppingList = reset ? foods : [...shoppingList, ...foods];
+        shoppingListTotalCount = totalCount;
+        shoppingVisibleCount = Math.max(
+            LIST_PAGE_SIZES.ingredientPills,
+            shoppingList.length,
+        );
+    };
+
+    const loadListPage = async (key: SmoothieListKey, reset = false) => {
+        const currentOffset = reset
+            ? 0
+            : key === MIX_STORAGE_KEYS.fridge
+                ? onHand.length
+                : shoppingList.length;
+        const pageSize = LIST_PAGE_SIZES.ingredientPills;
+        const cloudPage = await readCloudSmoothieListPage(key, {
+            limit: pageSize,
+            offset: currentOffset,
+            query: listQuery,
+            sort: listSort,
+            sourceFilter,
+        });
+        const page =
+            cloudPage ?? readLocalListPage(key, currentOffset, pageSize);
+
+        setListPage(key, page.foods, page.totalCount, reset);
+    };
+
     const loadLists = async () => {
-        const localFridge = readSmoothieList(MIX_STORAGE_KEYS.fridge);
-        const localShoppingList = readSmoothieList(MIX_STORAGE_KEYS.shoppingList);
-
-        onHand = localFridge;
-        shoppingList = localShoppingList;
-
-        const [nextFridge, nextShoppingList, nextCustomFoods] = await Promise.all([
-            reconcileCloudSmoothieList(MIX_STORAGE_KEYS.fridge, localFridge),
-            reconcileCloudSmoothieList(
-                MIX_STORAGE_KEYS.shoppingList,
-                localShoppingList,
-            ),
+        resetVisibleCounts();
+        const [nextCustomFoods] = await Promise.all([
             reconcileCloudCustomFoods(readCustomFoods()),
+            loadListPage(MIX_STORAGE_KEYS.fridge, true),
+            loadListPage(MIX_STORAGE_KEYS.shoppingList, true),
         ]);
 
-        onHand = nextFridge;
-        shoppingList = nextShoppingList;
-        cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, nextFridge);
-        cacheSmoothieListLocally(MIX_STORAGE_KEYS.shoppingList, nextShoppingList);
         cacheCustomFoodsLocally(nextCustomFoods);
     };
 
@@ -244,7 +297,7 @@
 		const { key, food } = renamingItem;
 
 		try {
-			const result = await renameFoodInSmoothieList(key, food.fdcId, name);
+			const result = await renameFoodInSmoothieList(key, food.fdcId, name, food);
 			if (result === "invalid") {
 				renameError = "Enter a name for this ingredient.";
 				return;
@@ -393,26 +446,43 @@
         activeList = key;
     };
 
+    const resetActiveListScroll = async () => {
+        await tick();
+        ingredientListElement?.scrollTo({ top: 0, behavior: "instant" });
+    };
+
     const resetVisibleCounts = () => {
         onHandVisibleCount = LIST_PAGE_SIZES.ingredientPills;
         shoppingVisibleCount = LIST_PAGE_SIZES.ingredientPills;
+        void resetActiveListScroll();
     };
 
-    const revealMoreActiveItems = () => {
-        if (!canRevealMoreActiveItems) return;
+    const revealMoreActiveItems = async () => {
+        if (!canRevealMoreActiveItems || loadingMoreList) return;
+        loadingMoreList = activeList;
 
-        if (activeList === MIX_STORAGE_KEYS.fridge) {
-            onHandVisibleCount = Math.min(
-                filteredOnHand.length,
-                onHandVisibleCount + LIST_PAGE_SIZES.ingredientPills,
+        try {
+            const currentRawLength = activeRawList.length;
+            if (currentRawLength < activeTotalCount) {
+                await loadListPage(activeList, false);
+                return;
+            }
+
+            if (activeList === MIX_STORAGE_KEYS.fridge) {
+                onHandVisibleCount = Math.min(
+                    filteredOnHand.length,
+                    onHandVisibleCount + LIST_PAGE_SIZES.ingredientPills,
+                );
+                return;
+            }
+
+            shoppingVisibleCount = Math.min(
+                filteredShoppingList.length,
+                shoppingVisibleCount + LIST_PAGE_SIZES.ingredientPills,
             );
-            return;
+        } finally {
+            loadingMoreList = null;
         }
-
-        shoppingVisibleCount = Math.min(
-            filteredShoppingList.length,
-            shoppingVisibleCount + LIST_PAGE_SIZES.ingredientPills,
-        );
     };
 
     const handleActiveListScroll = (event: Event) => {
@@ -425,42 +495,26 @@
             listElement.clientHeight;
 
         if (distanceFromBottom <= LIST_REVEAL_BUFFER_PX) {
-            revealMoreActiveItems();
+            void revealMoreActiveItems();
         }
-    };
-
-    const revealMoreOnIntersect = (node: HTMLElement) => {
-        if (typeof IntersectionObserver === "undefined") return;
-
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry?.isIntersecting) revealMoreActiveItems();
-            },
-            { rootMargin: "12rem 0px" },
-        );
-
-        observer.observe(node);
-
-        return {
-            destroy() {
-                observer.disconnect();
-            },
-        };
     };
 
     const updateListQuery = (value: string) => {
         listQuery = value;
         resetVisibleCounts();
+        void loadLists();
     };
 
     const updateSourceFilter = (value: string) => {
         sourceFilter = value;
         resetVisibleCounts();
+        void loadLists();
     };
 
     const updateListSort = (value: string) => {
         listSort = value as FoodListSort;
         resetVisibleCounts();
+        void loadLists();
     };
 
     $effect(() => {
@@ -497,6 +551,7 @@
     });
 
     onMount(() => {
+        resetVisibleCounts();
         loadLists();
         window.addEventListener("storage", loadLists);
         window.addEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, loadLists);
@@ -598,8 +653,8 @@
         <h2 id="saved-ingredients-title" class="sr-only">Saved ingredients</h2>
         <IngredientListTabs
             {activeList}
-            fridgeCount={filteredOnHand.length}
-            shoppingListCount={filteredShoppingList.length}
+            fridgeCount={onHandTotalCount}
+            shoppingListCount={shoppingListTotalCount}
             onSelect={selectList}
         />
 
@@ -623,6 +678,7 @@
                 <ul
                     class="ingredient-card-list"
                     aria-label={`${getIngredientListLabel(activeList)} ingredients`}
+                    bind:this={ingredientListElement}
                     onscroll={handleActiveListScroll}
                 >
                     {#each activeVisibleList as food (food.fdcId)}
@@ -652,11 +708,16 @@
                         <li
                             class="ingredient-card-list__sentinel"
                             aria-hidden="true"
-                            use:revealMoreOnIntersect
                         ></li>
                         <li class="ingredient-card-list__load-more">
-                            <button type="button" onclick={revealMoreActiveItems}>
-                                Load more {getIngredientListLabel(activeList).toLowerCase()} items
+                            <button
+                                type="button"
+                                disabled={loadingMoreList !== null}
+                                onclick={() => void revealMoreActiveItems()}
+                            >
+                                {loadingMoreList
+                                    ? "Loading…"
+                                    : `Load more ${getIngredientListLabel(activeList).toLowerCase()} items`}
                             </button>
                         </li>
                     {/if}
@@ -870,10 +931,12 @@
         gap: $app-vertical-stack-gap;
         min-height: 0;
         padding-top: 0;
+        overflow: hidden;
     }
 
     .saved-ingredients__body {
         grid-row: -2 / -1;
+        height: 100%;
         min-height: 0;
         overflow: hidden;
     }
@@ -883,12 +946,14 @@
         align-content: start;
         gap: $app-vertical-stack-gap;
         height: 100%;
+        max-height: 100%;
         min-height: 0;
         margin: 0;
         padding: 0 0 $app-gap-sm;
         overflow-y: auto;
         overscroll-behavior: contain;
         scrollbar-gutter: stable;
+        -webkit-overflow-scrolling: touch;
         list-style: none;
     }
 

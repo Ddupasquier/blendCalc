@@ -179,9 +179,11 @@ export const removeFoodFromSmoothieList = async (
 	foodId: number,
 ): Promise<SmoothieListMutationResult> => {
 	const currentList = readSmoothieList(key);
-	if (!currentList.some((item) => item.fdcId === foodId)) return "missing";
 
 	const removed = await removeCloudSmoothieListItem(key, foodId);
+	if (!removed && !currentList.some((item) => item.fdcId === foodId)) {
+		return "missing";
+	}
 	if (!removed) return "error";
 
 	const list = currentList.filter((item) => item.fdcId !== foodId);
@@ -195,15 +197,17 @@ export const renameFoodInSmoothieList = async (
 	key: SmoothieListKey,
 	foodId: number,
 	nextDescription: string,
+	loadedFood?: FdcFood,
 ): Promise<SmoothieListMutationResult> => {
 	const trimmedDescription = nextDescription.trim().replace(/\s+/g, " ");
 	if (!trimmedDescription) return "invalid";
 
 	const currentList = readSmoothieList(key);
 	const itemIndex = currentList.findIndex((item) => item.fdcId === foodId);
-	if (itemIndex === -1) return "missing";
+	if (itemIndex === -1 && !loadedFood) return "missing";
 
-	const currentItem = currentList[itemIndex];
+	const currentItem = currentList[itemIndex] ?? loadedFood;
+	if (!currentItem) return "missing";
 	if (
 		currentItem.description.trim().toLowerCase() ===
 		trimmedDescription.toLowerCase()
@@ -233,7 +237,10 @@ export const renameFoodInSmoothieList = async (
 		index === itemIndex ? renamedFood : item,
 	);
 
-	cacheSmoothieListLocally(key, nextList);
+	cacheSmoothieListLocally(
+		key,
+		itemIndex === -1 ? [...currentList, renamedFood] : nextList,
+	);
 	dispatchListsChanged();
 	return "renamed";
 };
