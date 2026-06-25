@@ -1,0 +1,75 @@
+<script lang="ts">
+	let {
+		selectedCount,
+		moveTargetLabel,
+		moving = false,
+		onSelectAll,
+		onClear,
+		onMove,
+	}: {
+		selectedCount: number;
+		moveTargetLabel: string;
+		moving?: boolean;
+		onSelectAll: () => void;
+		onClear: () => void;
+		onMove: () => void;
+	} = $props();
+</script>
+
+<div class="ingredient-bulk-actions" class:ingredient-bulk-actions--active={selectedCount > 0}>
+	{#if selectedCount > 0}
+		<button type="button" onclick={onClear}>Uncheck all</button>
+		<button
+			class="ingredient-bulk-actions__move"
+			type="button"
+			onclick={onMove}
+			disabled={moving}
+		>
+			Move {selectedCount} checked → {moveTargetLabel}
+		</button>
+	{:else}
+		<button type="button" onclick={onSelectAll}>Check all</button>
+	{/if}
+</div>
+
+<style lang="scss">
+	@use "../../../styles/variables" as *;
+
+	.ingredient-bulk-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: $app-horizontal-control-gap;
+		min-height: 0;
+	}
+
+	button {
+		min-height: $app-rebuild-control-height-sm;
+		padding: 0.45rem 0.75rem;
+		color: $color-figma-ink;
+		background: $color-figma-card;
+		border: 1px solid $color-figma-border;
+		border-radius: $app-rebuild-radius-pill;
+		font-family: $app-button-font-family;
+		font-size: $app-font-size-sm;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
+	}
+
+	.ingredient-bulk-actions__move {
+		color: $color-figma-card;
+		background: $color-figma-green;
+		border-color: transparent;
+	}
+
+	button:disabled {
+		cursor: not-allowed;
+		opacity: 0.55;
+	}
+
+	@media (max-width: $app-breakpoint-xs) {
+		.ingredient-bulk-actions__move {
+			width: 100%;
+		}
+	}
+</style>

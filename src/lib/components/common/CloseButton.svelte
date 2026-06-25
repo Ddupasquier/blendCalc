@@ -1,4 +1,6 @@
 <script lang="ts">
+	import X from "$lib/assets/icons/X.svelte";
+
 	let {
 		label = "Close",
 		size = "medium",
@@ -22,9 +24,7 @@
 	{disabled}
 	{onclick}
 >
-	<svg viewBox="0 0 24 24" aria-hidden="true">
-		<path d="M6 6l12 12M18 6L6 18" />
-	</svg>
+	<X class="close-button__icon" />
 </button>
 
 <style lang="scss">
@@ -49,13 +49,9 @@
 			opacity: 0.55;
 		}
 
-		svg {
+		:global(.close-button__icon) {
 			width: 52%;
 			height: 52%;
-			fill: none;
-			stroke: currentColor;
-			stroke-linecap: round;
-			stroke-width: 2.4;
 		}
 	}
 

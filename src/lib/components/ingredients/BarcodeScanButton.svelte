@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Barcode from "$lib/assets/icons/Barcode.svelte";
+
 	const barcodeBars = [
 		2, 2, 6, 1, 9, 3, 14, 1, 17, 2, 21, 1, 24, 3, 29, 1, 32, 2, 36, 1, 39,
 		3, 44, 2,
@@ -11,10 +13,12 @@
 	let {
 		scanning = false,
 		disabled = false,
+		compact = false,
 		onclick,
 	}: {
 		scanning?: boolean;
 		disabled?: boolean;
+		compact?: boolean;
 		onclick: () => void;
 	} = $props();
 </script>
@@ -22,6 +26,7 @@
 <button
 	class="barcode-scan-button"
 	class:barcode-scan-button--loading={scanning}
+	class:barcode-scan-button--compact={compact}
 	type="button"
 	disabled={disabled || scanning}
 	aria-busy={scanning}
@@ -65,22 +70,10 @@
 			<span class="barcode-scanner__glow"></span>
 			<span class="barcode-scanner__laser"></span>
 		{:else}
-			<svg
-				class="barcode-scanner__idle-bars"
-				viewBox="0 0 18 14"
-				width="18"
-				height="14"
-			>
-				<rect x="0" y="0" width="2" height="14" />
-				<rect x="3.5" y="0" width="1" height="14" />
-				<rect x="6" y="0" width="2.5" height="14" />
-				<rect x="9.5" y="0" width="1" height="14" />
-				<rect x="12" y="0" width="2" height="14" />
-				<rect x="15.5" y="0" width="2.5" height="14" />
-			</svg>
+			<Barcode class="barcode-scanner__idle-bars" />
 		{/if}
 	</span>
-	<span>{scanning ? "Scanning..." : "Scan"}</span>
+	<span class="barcode-scan-button__label">{scanning ? "Scanning..." : "Scan"}</span>
 </button>
 
 <style lang="scss">
@@ -91,14 +84,15 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+		box-sizing: border-box;
 		gap: $app-gap-xs;
 		width: auto;
-		min-height: 2.35rem;
-		padding: 0.48rem 0.74rem;
-		color: $app-highlight-text;
-		background-color: $app-highlight;
+		min-height: $app-rebuild-control-height;
+		padding: $app-rebuild-scan-button-padding-y $app-rebuild-scan-button-padding-x;
+		color: $color-figma-card;
+		background-color: $color-figma-green;
 		border: 0;
-		border-radius: $app-radius-pill;
+		border-radius: $app-rebuild-radius;
 		transition:
 			background-color 0.28s ease,
 			color 0.28s ease,
@@ -106,14 +100,14 @@
 			padding 0.24s ease,
 			border-radius 0.24s ease;
 
-		span:last-child {
+		.barcode-scan-button__label {
 			position: relative;
 			z-index: 1;
 			white-space: nowrap;
 		}
 
 		&:hover:not(:disabled) {
-			background-color: $app-highlight-hover;
+			background-color: color-mix(in srgb, $color-figma-green 88%, $color-figma-ink);
 		}
 
 		&:disabled {
@@ -123,11 +117,33 @@
 	}
 
 	.barcode-scan-button--loading {
-		min-height: 3.3rem;
-		padding: 0.5rem 0.75rem;
+		min-height: $app-rebuild-scan-button-loading-height;
+		padding: $app-rebuild-scan-button-loading-padding-y $app-rebuild-scan-button-loading-padding-x;
 		color: $app-scan-laser;
-		background-color: $app-primary;
-		border-radius: $app-radius;
+		background-color: color-mix(in srgb, $color-figma-green 58%, $color-figma-ink);
+		border-radius: $app-rebuild-radius;
+	}
+
+	.barcode-scan-button--compact {
+		width: $app-rebuild-control-height;
+		height: $app-rebuild-control-height;
+		min-height: $app-rebuild-control-height;
+		padding: 0;
+		flex-shrink: 0;
+
+		.barcode-scan-button__label {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip: rect(0 0 0 0);
+			white-space: nowrap;
+		}
+	}
+
+	.barcode-scan-button--compact.barcode-scan-button--loading {
+		width: $app-rebuild-scan-button-loading-width;
+		height: $app-rebuild-scan-button-loading-height;
 	}
 
 	.barcode-scanner {
@@ -137,8 +153,8 @@
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		width: 1.125rem;
-		height: 1rem;
+		width: $app-rebuild-scan-icon-width;
+		height: $app-rebuild-scan-icon-height;
 		overflow: hidden;
 		border-radius: 0.5rem;
 		background-color: transparent;
@@ -150,22 +166,18 @@
 	}
 
 	.barcode-scanner--active {
-		width: 3.5rem;
-		height: 2.25rem;
-		color: rgb(255 255 255 / 22%);
-		background-color: color-mix(
-			in srgb,
-			$app-primary 86%,
-			$app-highlight 14%
-		);
+		width: $app-rebuild-scan-icon-active-width;
+		height: $app-rebuild-scan-icon-active-height;
+		color: color-mix(in srgb, $color-figma-card 22%, transparent);
+		background-color: color-mix(in srgb, $color-figma-ink 84%, $color-figma-green);
 	}
 
-	.barcode-scan-button--loading span:last-child {
+	.barcode-scan-button--loading .barcode-scan-button__label {
 		color: $app-scan-laser;
 		transition: color 0.28s ease;
 	}
 
-	.barcode-scanner__idle-bars {
+	:global(.barcode-scanner__idle-bars) {
 		display: block;
 		fill: currentColor;
 	}
@@ -173,8 +185,8 @@
 	.barcode-scanner__bracket {
 		position: absolute;
 		z-index: 2;
-		width: 0.375rem;
-		height: 0.375rem;
+		width: $app-rebuild-scan-bracket-size;
+		height: $app-rebuild-scan-bracket-size;
 		border-color: $app-scan-laser;
 		border-style: solid;
 		opacity: 0;
@@ -209,7 +221,7 @@
 		position: absolute;
 		top: 0.25rem;
 		display: block;
-		color: #fff;
+		color: $color-figma-card;
 		opacity: 0;
 		animation: scanner-detail-fade-in 0.22s ease forwards;
 	}

@@ -1,22 +1,24 @@
 <script lang="ts">
 	import { page } from "$app/state";
+	import Bolt from "$lib/assets/icons/Bolt.svelte";
+	import Bookmark from "$lib/assets/icons/Bookmark.svelte";
+	import Leaf from "$lib/assets/icons/Leaf.svelte";
 
 	const tabData = [
 		{
 			label: "Ingredients",
 			slug: "/fridge",
-			iconPath:
-				"M6.5 13.5C6.5 8.5 10.5 5 17 5c.2 6.5-3.3 10.5-8.3 10.5H6.5v-2Zm0 0C5.3 15 5 16.8 5 19",
+			icon: "leaf",
 		},
 		{
 			label: "Mix",
 			slug: "/mix",
-			iconPath: "M13 2 5 13h6l-1 9 9-13h-6l1-7Z",
+			icon: "bolt",
 		},
 		{
 			label: "Saved",
 			slug: "/saved",
-			iconPath: "M7 4.5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16l-5-3-5 3v-16Z",
+			icon: "bookmark",
 		},
 	];
 
@@ -24,19 +26,25 @@
 </script>
 
 <nav class="tab-nav" aria-label="Main navigation">
-	{#each tabData as tab}
-		<a
-			class="tab-btn"
-			class:active={isActive(tab.slug)}
-			aria-current={isActive(tab.slug) ? "page" : undefined}
-			href={tab.slug}
-		>
-			<svg viewBox="0 0 24 24" aria-hidden="true">
-				<path d={tab.iconPath} />
-			</svg>
-			<span>{tab.label}</span>
-		</a>
-	{/each}
+	<div class="tab-nav__inner">
+		{#each tabData as tab}
+			<a
+				class="tab-btn"
+				class:active={isActive(tab.slug)}
+				aria-current={isActive(tab.slug) ? "page" : undefined}
+				href={tab.slug}
+			>
+				{#if tab.icon === "leaf"}
+					<Leaf class="tab-btn__icon" />
+				{:else if tab.icon === "bolt"}
+					<Bolt class="tab-btn__icon" />
+				{:else}
+					<Bookmark class="tab-btn__icon" />
+				{/if}
+				<span>{tab.label}</span>
+			</a>
+		{/each}
+	</div>
 </nav>
 
 <style lang="scss">
@@ -44,25 +52,34 @@
 
 	.tab-nav {
 		position: fixed;
-		right: 0;
 		bottom: 0;
 		left: 0;
 		z-index: 90;
+		width: 100%;
+		min-height: $app-shell-nav-height;
+		background: $color-figma-card;
+		border-top: 1px solid $color-figma-border;
+	}
+
+	.tab-nav__inner {
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 		align-items: center;
-		padding: 0.72rem max(1rem, env(safe-area-inset-right))
-			calc(0.72rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
-		background: $app-bg;
-		border-top: $app-border;
+		width: min(100%, $app-mobile-shell-width);
+		min-height: $app-shell-nav-height;
+		margin: 0 auto;
+		padding: $app-gap-sm max($app-shell-padding-x, env(safe-area-inset-right))
+			calc($app-gap-sm + env(safe-area-inset-bottom))
+			max($app-shell-padding-x, env(safe-area-inset-left));
+		box-sizing: border-box;
 	}
 
 	.tab-btn {
 		display: grid;
 		place-items: center;
-		gap: 0.22rem;
+		gap: $app-gap-xs;
 		min-width: 0;
-		color: color-mix(in srgb, $app-muted 72%, $color-blueberry-milk);
+		color: $color-figma-muted;
 		font-family: $app-button-font-family;
 		font-size: $app-font-size-sm;
 		font-weight: $app-button-font-weight;
@@ -73,14 +90,9 @@
 			color 0.16s ease,
 			transform 0.16s ease;
 
-		svg {
-			width: 1.35rem;
-			height: 1.35rem;
-			fill: none;
-			stroke: currentColor;
-			stroke-linecap: round;
-			stroke-linejoin: round;
-			stroke-width: 1.85;
+		:global(.tab-btn__icon) {
+			width: $app-gap-lg;
+			height: $app-gap-lg;
 		}
 
 		span {
@@ -91,7 +103,7 @@
 		}
 
 		&.active {
-			color: color-mix(in srgb, $app-success-bg 42%, #29955f);
+			color: $color-figma-green;
 			transform: translateY(-0.08rem);
 		}
 
@@ -102,10 +114,8 @@
 	}
 
 	@media (min-width: $app-breakpoint-md) {
-		.tab-nav {
-			left: 50%;
-			width: min($app-max-width, 100%);
-			transform: translateX(-50%);
+		.tab-nav__inner {
+			padding-inline: $app-shell-padding-x;
 		}
 	}
 </style>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { invalidateAll } from "$app/navigation";
+	import User from "$lib/assets/icons/User.svelte";
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker.svelte";
 	import {
 		getServingSizeDisplayValue,
@@ -298,9 +299,7 @@
 			{#if data.avatarUrl}
 				<img src={data.avatarUrl} alt={data.profile?.avatar_alt_text ?? "Your profile"} />
 			{:else}
-				<svg viewBox="0 0 24 24" aria-hidden="true">
-					<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" />
-				</svg>
+				<User class="avatar-preview__icon" />
 			{/if}
 		</div>
 		<div>
@@ -791,13 +790,8 @@
 			object-fit: cover;
 		}
 
-		svg {
+		:global(.avatar-preview__icon) {
 			width: 55%;
-			fill: none;
-			stroke: currentColor;
-			stroke-linecap: round;
-			stroke-linejoin: round;
-			stroke-width: 1.8;
 		}
 	}
 

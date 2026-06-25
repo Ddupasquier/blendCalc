@@ -9,3 +9,5 @@ export const LIST_PAGE_SIZES = {
 export const LIST_SEARCH_THRESHOLDS = {
 	selectedIngredients: 7,
 } as const;
+
+export const LIST_REVEAL_BUFFER_PX = 96;

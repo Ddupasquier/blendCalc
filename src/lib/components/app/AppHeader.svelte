@@ -22,28 +22,30 @@
 </script>
 
 <header class="app-header">
-	<a class="app-header__brand" href="/fridge" aria-label="Open Smoothie Mixer ingredients">
-		<span class="app-header__mark" aria-hidden="true">🥤</span>
-		<span class="app-header__title">Smoothie Mixer</span>
-	</a>
+	<div class="app-header__inner">
+		<a class="app-header__brand" href="/fridge" aria-label="Open Smoothie Mixer ingredients">
+			<span class="app-header__mark" aria-hidden="true">🥤</span>
+			<span class="app-header__title">Smoothie Mixer</span>
+		</a>
 
-	<a
-		class="app-header__profile"
-		class:app-header__profile--moderator={role}
-		href="/profile"
-		aria-label={`Open profile for ${displayName}`}
-		title={displayName}
-	>
-		{#if role}
-			<span class="app-header__crown" aria-label="Moderator account" title="Moderator account">♛</span>
-		{/if}
+		<a
+			class="app-header__profile"
+			class:app-header__profile--moderator={role}
+			href="/profile"
+			aria-label={`Open profile for ${displayName}`}
+			title={displayName}
+		>
+			{#if role}
+				<span class="app-header__crown" aria-label="Moderator account" title="Moderator account">♛</span>
+			{/if}
 
-		{#if avatarUrl}
-			<img src={avatarUrl} alt={avatarAltText ?? ""} />
-		{:else}
-			<span class="app-header__initials" aria-hidden="true">{initials}</span>
-		{/if}
-	</a>
+			{#if avatarUrl}
+				<img src={avatarUrl} alt={avatarAltText ?? ""} />
+			{:else}
+				<span class="app-header__initials" aria-hidden="true">{initials}</span>
+			{/if}
+		</a>
+	</div>
 </header>
 
 <style lang="scss">
@@ -53,16 +55,25 @@
 		position: sticky;
 		top: 0;
 		z-index: 100;
+		width: 100%;
+		min-height: $app-shell-header-height;
+		color: $color-figma-ink;
+		background: $color-figma-card;
+		border-bottom: 1px solid $color-figma-border;
+	}
+
+	.app-header__inner {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: $app-gap-md;
+		width: min(100%, $app-mobile-shell-width);
+		min-height: $app-shell-header-height;
 		min-width: 0;
-		padding: 0.85rem max(1rem, env(safe-area-inset-right)) 0.85rem
-			max(1rem, env(safe-area-inset-left));
-		color: $app-primary;
-		background: $app-bg;
-		border-bottom: $app-border;
+		margin: 0 auto;
+		padding: $app-gap-sm max($app-shell-padding-x, env(safe-area-inset-right))
+			$app-gap-sm max($app-shell-padding-x, env(safe-area-inset-left));
+		box-sizing: border-box;
 	}
 
 	.app-header__brand {
@@ -76,14 +87,14 @@
 
 	.app-header__mark {
 		flex: 0 0 auto;
-		font-size: 1.15rem;
+		font-size: $app-font-size-xl;
 		line-height: 1;
 	}
 
 	.app-header__title {
 		min-width: 0;
 		font-family: $app-font-family-display;
-		font-size: clamp(1.05rem, 4vw, 1.25rem);
+		font-size: $app-font-size-xl;
 		font-weight: $app-font-weight-bold;
 		letter-spacing: -0.02em;
 		line-height: 1.1;
@@ -94,17 +105,17 @@
 		display: inline-grid;
 		place-items: center;
 		flex: 0 0 auto;
-		width: 2.55rem;
-		height: 2.55rem;
-		color: $color-lavender-smoothie-dark;
-		background: color-mix(in srgb, $app-success-bg 58%, $app-bg);
+		width: $app-rebuild-food-icon-size;
+		height: $app-rebuild-food-icon-size;
+		color: $color-figma-green;
+		background: $color-figma-green-soft;
 		border: 0;
 		border-radius: 50%;
 		text-decoration: none;
 	}
 
 	.app-header__profile--moderator {
-		background: color-mix(in srgb, $app-success-bg 62%, $app-bg);
+		background: $color-figma-green-soft;
 	}
 
 	.app-header__profile img {
@@ -122,15 +133,15 @@
 
 	.app-header__crown {
 		position: absolute;
-		top: -0.35rem;
-		right: -0.25rem;
+		top: -$app-gap-xs;
+		right: -$app-gap-xs;
 		display: inline-grid;
 		place-items: center;
 		width: 1rem;
 		height: 1rem;
 		color: $app-highlight-text;
 		background: $app-highlight;
-		border: 1px solid $app-bg;
+		border: 1px solid $color-figma-card;
 		border-radius: 50%;
 		font-size: 0.62rem;
 		font-weight: $app-font-weight-bold;
@@ -144,8 +155,8 @@
 	}
 
 	@media (min-width: $app-breakpoint-md) {
-		.app-header {
-			padding-inline: max(1.25rem, calc((100vw - $app-max-width) / 2));
+		.app-header__inner {
+			padding-inline: $app-shell-padding-x;
 		}
 	}
 </style>

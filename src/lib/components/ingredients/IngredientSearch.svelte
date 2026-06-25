@@ -9,6 +9,7 @@
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import { getFoodDownrankScore } from "$lib/utils/profile/foodPreferenceWarnings";
 	import { searchSharedProducts } from "$lib/utils/products/catalog";
+	import Search from "$lib/assets/icons/Search.svelte";
 	import { createEventDispatcher, onMount } from "svelte";
 	import PillRow from "../common/PillRow.svelte";
 	import SearchDropdown from "./SearchDropdown.svelte";
@@ -177,9 +178,7 @@
 <div class="search-wrap">
 	<label class="search-label" for="ingredient-search">Search ingredients</label>
 	<div class="search-row">
-		<svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
-			<path d="m21 21-4.3-4.3m1.3-5.2a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
-		</svg>
+		<Search class="search-icon" />
 		<input
 			id="ingredient-search"
 			name="ingredient-search"
@@ -218,6 +217,7 @@
 		position: relative;
 		display: grid;
 		gap: $app-gap-xs;
+		min-width: 0;
 	}
 
 	.search-label {
@@ -235,33 +235,33 @@
 		grid-template-columns: auto minmax(0, 1fr) auto;
 		align-items: center;
 		gap: $app-gap-xs;
-		min-height: 2.8rem;
-		padding: 0 $app-gap-sm;
-		background: $app-section-bg;
+		height: $app-rebuild-control-height;
+		min-height: $app-rebuild-control-height;
+		padding: 0 $app-rebuild-control-padding-x;
+		background: $color-figma-control-surface;
 		border: 1px solid transparent;
-		border-radius: $app-card-radius;
-		transition: border-color 0.15s ease;
+		border-radius: $app-rebuild-radius;
+		transition:
+			background-color 0.15s ease,
+			border-color 0.15s ease;
 
 		&:focus-within {
-			border-color: $color-orchid-mist;
+			background: $color-figma-card;
+			border-color: $color-figma-green;
 		}
 	}
 
-	.search-icon {
+	:global(.search-icon) {
 		width: 1rem;
 		height: 1rem;
-		fill: none;
-		stroke: $app-muted;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-		stroke-width: 2;
+		stroke: $color-figma-muted;
 	}
 
 	.search-input {
 		min-width: 0;
 		height: 100%;
 		padding: 0;
-		color: $app-primary;
+		color: $color-figma-ink;
 		background: transparent;
 		border: 0;
 		border-radius: 0;
@@ -269,7 +269,7 @@
 		font-size: $app-font-size-md;
 
 		&::placeholder {
-			color: $app-muted;
+			color: $color-figma-muted;
 		}
 	}
 
@@ -290,7 +290,8 @@
 		background: $app-warning-bg;
 		border: $app-warning-border;
 		border-radius: $app-radius-sm;
+		margin-top: $app-gap-xs;
 		font-size: $app-font-size-sm;
-		font-weight: 800;
+		font-weight: $app-font-weight-heavy;
 	}
 </style>

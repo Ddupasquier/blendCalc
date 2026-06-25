@@ -107,81 +107,92 @@
 
     .results-summary {
         margin-bottom: $app-gap-xs;
-        color: $app-muted;
+        color: $color-figma-muted;
         font-size: $app-font-size-sm;
         font-weight: $app-font-weight-semibold;
     }
 
     .results-list {
-        list-style: none;
-        border: $app-border;
-        border-radius: $app-radius;
-        overflow: hidden;
-        background: $app-bg;
-        max-height: 280px;
+        display: grid;
+        gap: $app-gap-sm;
+        max-height: $app-rebuild-search-results-max-height;
         overflow-y: auto;
+        list-style: none;
     }
 
     .result-item {
-        border-bottom: $app-border;
-    }
-
-    .result-item:last-child {
-        border-bottom: 0;
+        min-width: 0;
     }
 
     .result-btn {
+        display: grid;
         width: 100%;
+        min-width: 0;
+        padding: $app-rebuild-search-result-padding-y $app-rebuild-search-result-padding-x;
         text-align: left;
-        background: transparent;
-        border-radius: 0;
-        padding: 0.55rem 0.7rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.1rem;
-        border: 0;
+        background: $color-figma-card;
+        border: 1px solid transparent;
+        border-radius: $app-rebuild-radius;
+        gap: calc($app-gap-xs / 3);
+        transition:
+            border-color 0.16s ease,
+            background-color 0.16s ease,
+            transform 0.16s ease;
     }
 
     .result-btn:hover,
     .result-btn:focus-visible {
-        background: $app-accent;
+        background: color-mix(in srgb, $color-figma-green-soft 48%, $color-figma-card);
+        border-color: color-mix(in srgb, $color-figma-green 45%, transparent);
         outline: none;
     }
 
     .result-name {
+        overflow: hidden;
+        min-width: 0;
+        color: $color-figma-ink;
+        font-family: $app-font-family-display;
         font-size: $app-font-size-md;
-        font-weight: 800;
-        color: $app-primary;
+        font-weight: $app-font-weight-bold;
+        line-height: 1.18;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .result-category {
+        overflow: hidden;
+        color: $color-figma-muted;
         font-size: $app-font-size-sm;
         font-weight: $app-font-weight-regular;
-        color: $app-muted;
+        line-height: 1.25;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .result-badges {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.25rem;
-        margin-top: 0.18rem;
+        gap: calc($app-gap-xs / 1.5);
+        margin-top: calc($app-gap-xs / 1.6);
     }
 
     .result-badge {
         width: fit-content;
-        padding: 0.12rem 0.36rem;
-        color: $app-primary;
-        background: $app-accent;
-        border: $app-border;
+        padding: $app-rebuild-badge-padding-y $app-rebuild-badge-padding-x;
+        color: color-mix(in srgb, $color-figma-sky 86%, $color-figma-ink);
+        background: color-mix(in srgb, $color-figma-sky 18%, $color-figma-card);
+        border: 0;
         border-radius: $app-radius-pill;
         font-size: $app-font-size-xs;
-        font-weight: 700;
+        font-weight: $app-font-weight-bold;
         line-height: 1.2;
+        text-transform: uppercase;
     }
 
     .result-badge--muted {
-        color: $app-muted;
-        background: $app-section-bg;
+        color: $color-figma-muted;
+        background: $color-figma-canvas;
+        text-transform: none;
     }
 
     .result-badge--custom {
@@ -192,14 +203,14 @@
 
     .result-warning {
         display: block;
-        margin-top: 0.2rem;
+        margin-top: calc($app-gap-xs / 2);
         color: $app-warning-strong;
         font-size: $app-font-size-xs;
-        font-weight: 700;
+        font-weight: $app-font-weight-semibold;
         line-height: 1.35;
     }
 
     .result-warning--potential {
-        color: $app-muted;
+        color: $color-figma-muted;
     }
 </style>

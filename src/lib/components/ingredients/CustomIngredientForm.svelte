@@ -18,6 +18,11 @@
 	import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
 	import BarcodeScanButton from "$lib/components/ingredients/BarcodeScanButton.svelte";
 	import BarcodeScannerDialog from "$lib/components/ingredients/BarcodeScannerDialog.svelte";
+	import CustomIngredientOutcome, {
+		type CustomIngredientOutcomeState,
+	} from "$lib/components/ingredients/CustomIngredientOutcome.svelte";
+	import ImportedNutrients from "$lib/components/ingredients/ImportedNutrients.svelte";
+	import ManualEntryToggle from "$lib/components/ingredients/ManualEntryToggle.svelte";
 	import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 	import { lookupBarcodeProduct } from "$lib/utils/barcode/productLookup";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
@@ -75,12 +80,7 @@
 	let saveDestination = $state<SmoothieListKey | "custom-only">(
 		MIX_STORAGE_KEYS.fridge,
 	);
-	let lastOutcome = $state<null | {
-		food: FdcFood;
-		destination: SmoothieListKey | "custom-only";
-		addedToList: boolean;
-		message: string;
-	}>(null);
+	let lastOutcome = $state<CustomIngredientOutcomeState | null>(null);
 	let labelDetailsElement: HTMLDetailsElement;
 	let manualBodyElement = $state<HTMLFieldSetElement | null>(null);
 	let ingredientNameInput = $state<HTMLInputElement | null>(null);
@@ -113,16 +113,6 @@
 			...nutrition,
 			[key]: Number.isFinite(numericValue) ? Math.max(0, numericValue) : 0,
 		};
-	};
-
-	const formatNutrientValue = (nutrient: FdcNutrient) => {
-		const value = nutrient.value < 1
-			? nutrient.value.toLocaleString(undefined, { maximumFractionDigits: 3 })
-			: nutrient.value.toLocaleString(undefined, { maximumFractionDigits: 1 });
-		const unit = nutrient.unitName.toUpperCase() === "UG"
-			? "µg"
-			: nutrient.unitName.toLowerCase();
-		return `${value} ${unit}`;
 	};
 
 	const resetForm = () => {
@@ -160,13 +150,13 @@
 	};
 
 	const getDestinationLabel = () => {
-		if (saveDestination === MIX_STORAGE_KEYS.fridge) return "On Hand";
+		if (saveDestination === MIX_STORAGE_KEYS.fridge) return "Fridge";
 		if (saveDestination === MIX_STORAGE_KEYS.shoppingList) return "Shopping List";
 		return "Custom Ingredients";
 	};
 
 	const getListDestinationLabel = (destination: SmoothieListKey) => {
-		return destination === MIX_STORAGE_KEYS.fridge ? "On Hand" : "Shopping List";
+		return destination === MIX_STORAGE_KEYS.fridge ? "Fridge" : "Shopping List";
 	};
 
 	const setOutcome = (
@@ -530,10 +520,7 @@
 			bind:this={labelDetailsElement}
 		>
 			<summary class="custom-ingredient__manual-toggle">
-				<span>Add manually</span>
-				<svg class="custom-ingredient__manual-chevron" viewBox="0 0 24 24" aria-hidden="true">
-					<path d="m6 9 6 6 6-6" />
-				</svg>
+				<ManualEntryToggle />
 			</summary>
 
 	<fieldset
@@ -829,24 +816,7 @@
 		</section>
 
 		{#if additionalNutrients.length > 0}
-			<details class="custom-ingredient__imported-nutrients">
-				<summary>
-					<span>Additional nutrients imported ({additionalNutrients.length})</span>
-					<small>Vitamins, minerals, and other values reported by the source.</small>
-				</summary>
-				<ul>
-					{#each additionalNutrients as nutrient (nutrient.nutrientId)}
-						<li>
-							<span>{nutrient.nutrientName}</span>
-							<strong>{formatNutrientValue(nutrient)}</strong>
-						</li>
-					{/each}
-				</ul>
-				<p>
-					Values are per serving. Nutrients not reported by the source are left
-					missing rather than counted as zero.
-				</p>
-			</details>
+			<ImportedNutrients nutrients={additionalNutrients} />
 		{/if}
 
 		<label class="custom-ingredient__destination">
@@ -857,7 +827,7 @@
 				name="custom-ingredient-save-destination"
 				bind:value={saveDestination}
 			>
-				<option value={MIX_STORAGE_KEYS.fridge}>On Hand</option>
+				<option value={MIX_STORAGE_KEYS.fridge}>Fridge</option>
 				<option value={MIX_STORAGE_KEYS.shoppingList}>Shopping List</option>
 				<option value="custom-only">Save only</option>
 			</select>
@@ -871,54 +841,13 @@
 			<p class="custom-ingredient__error" role="alert">{error}</p>
 		{/if}
 		{#if lastOutcome}
-			<section
-				class="custom-ingredient__outcome"
-				role="status"
-				aria-live="polite"
-			>
-				<div>
-					<strong>{lastOutcome.message}</strong>
-					<small>
-						{#if lastOutcome.addedToList && lastOutcome.destination !== "custom-only"}
-							Next: use it in Mix, move it, or undo the list add.
-						{:else}
-							Next: preview the nutrition or open Mix when you are ready.
-						{/if}
-					</small>
-				</div>
-				<div class="custom-ingredient__outcome-actions">
-					<a href="/mix">Open Mix</a>
-					{#if lastOutcome.addedToList && lastOutcome.destination === MIX_STORAGE_KEYS.fridge}
-						<button
-							type="button"
-							class="custom-ingredient__secondary-action"
-							onclick={() => moveLastOutcome(MIX_STORAGE_KEYS.shoppingList)}
-							disabled={outcomeAction !== null}
-						>
-							{outcomeAction === "move" ? "Moving…" : "Move to Shopping"}
-						</button>
-					{:else if lastOutcome.addedToList && lastOutcome.destination === MIX_STORAGE_KEYS.shoppingList}
-						<button
-							type="button"
-							class="custom-ingredient__secondary-action"
-							onclick={() => moveLastOutcome(MIX_STORAGE_KEYS.fridge)}
-							disabled={outcomeAction !== null}
-						>
-							{outcomeAction === "move" ? "Moving…" : "Move to On Hand"}
-						</button>
-					{/if}
-					{#if lastOutcome.addedToList}
-						<button
-							type="button"
-							class="custom-ingredient__secondary-action"
-							onclick={undoLastOutcomeAdd}
-							disabled={outcomeAction !== null}
-						>
-							{outcomeAction === "undo" ? "Undoing…" : "Undo"}
-						</button>
-					{/if}
-				</div>
-			</section>
+			<CustomIngredientOutcome
+				outcome={lastOutcome}
+				action={outcomeAction}
+				onMoveToShopping={() => moveLastOutcome(MIX_STORAGE_KEYS.shoppingList)}
+				onMoveToFridge={() => moveLastOutcome(MIX_STORAGE_KEYS.fridge)}
+				onUndo={undoLastOutcomeAdd}
+			/>
 		{:else if savedMessage}
 			<p class="custom-ingredient__success" role="status">{savedMessage}</p>
 		{/if}
@@ -961,7 +890,7 @@
 		gap: $app-gap-xs;
 
 		small {
-			color: $app-muted;
+			color: $color-figma-muted;
 			font-size: $app-font-size-xs;
 			font-weight: $app-font-weight-medium;
 		}
@@ -971,30 +900,29 @@
 		overflow: hidden;
 		background: transparent;
 		border: 0;
-		border-top: $app-border;
 		border-radius: 0;
 	}
 
 	.custom-ingredient__manual-toggle {
-		display: flex;
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
 		align-items: center;
-		justify-content: space-between;
 		gap: $app-gap-sm;
-		padding: $app-gap-sm 0 0;
-		color: $app-muted;
+		min-height: 3.55rem;
+		padding: 0.65rem 0.85rem;
+		color: $color-figma-ink;
+		background: color-mix(in srgb, $color-figma-card 74%, $color-figma-canvas);
+		border-radius: 1rem;
 		cursor: pointer;
-		font-size: $app-font-size-xs;
-		font-weight: $app-font-weight-bold;
-		letter-spacing: 0.08em;
 		list-style: none;
-		text-transform: uppercase;
+		transition: background-color 160ms ease;
 
 		&::-webkit-details-marker {
 			display: none;
 		}
 
 		&:hover {
-			color: $app-primary;
+			background: $color-figma-card;
 		}
 
 		&:focus-visible {
@@ -1003,44 +931,15 @@
 		}
 	}
 
-	.custom-ingredient__manual-chevron {
-		width: 0.9rem;
-		height: 0.9rem;
-		flex: 0 0 auto;
-		fill: none;
-		stroke: currentColor;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-		stroke-width: 2.25;
-		transition: transform 180ms ease;
-	}
-
-	.custom-ingredient__manual[open] .custom-ingredient__manual-chevron {
-		transform: rotate(180deg);
-	}
-
-	.custom-ingredient__imported-nutrients summary {
-		display: grid;
-		gap: 0.1rem;
-		color: $app-primary;
-		cursor: pointer;
-		font-weight: $app-font-weight-bold;
-		list-style-position: inside;
-
-		small {
-			color: $app-muted;
-			font-size: $app-font-size-sm;
-			font-weight: $app-font-weight-medium;
-		}
-	}
-
 	.custom-ingredient__body {
 		display: grid;
 		gap: $app-gap-md;
 		margin: 0;
-		padding: $app-gap-md 0 0;
+		padding: $app-gap-md;
+		background: $color-figma-card;
 		border: 0;
 		border-top: 0;
+		border-radius: 1rem;
 		min-inline-size: 0;
 	}
 
@@ -1059,7 +958,7 @@
 		display: grid;
 		gap: 0.22rem;
 		min-width: 0;
-		color: $app-muted;
+		color: $color-figma-muted;
 		font-size: 0.76rem;
 		font-weight: 800;
 	}
@@ -1068,11 +967,17 @@
 	select {
 		width: 100%;
 		min-width: 0;
-		padding: 0.5rem 0.6rem;
-		color: $app-primary;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-radius;
+		min-height: 2.65rem;
+		padding: 0.6rem 0.8rem;
+		color: $color-figma-ink;
+		background: color-mix(in srgb, $color-figma-card 52%, $color-figma-canvas);
+		border: 1px solid transparent;
+		border-radius: 1rem;
+
+		&:focus {
+			border-color: color-mix(in srgb, $color-figma-green 38%, transparent);
+			outline: none;
+		}
 	}
 
 	.custom-ingredient__inline-input {
@@ -1152,49 +1057,6 @@
 		border-radius: $app-radius;
 	}
 
-	.custom-ingredient__imported-nutrients {
-		padding: $app-gap-sm;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-radius;
-
-		ul {
-			display: grid;
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-			gap: 0.35rem $app-gap-md;
-			margin: $app-gap-sm 0;
-			padding: 0;
-			list-style: none;
-		}
-
-		li {
-			display: flex;
-			justify-content: space-between;
-			gap: $app-gap-sm;
-			min-width: 0;
-			color: $app-muted;
-			font-size: $app-font-size-sm;
-
-			span {
-				overflow: hidden;
-				text-overflow: ellipsis;
-				white-space: nowrap;
-			}
-
-			strong {
-				flex: 0 0 auto;
-				color: $app-primary;
-				font-size: inherit;
-			}
-		}
-
-		p {
-			color: $app-muted;
-			font-size: $app-font-size-sm;
-			line-height: 1.4;
-		}
-	}
-
 	.custom-ingredient__destination {
 		display: grid;
 		gap: $app-gap-xs;
@@ -1217,63 +1079,6 @@
 			font-weight: $app-font-weight-medium;
 			line-height: 1.4;
 		}
-	}
-
-	.custom-ingredient__outcome {
-		display: grid;
-		gap: $app-gap-sm;
-		padding: $app-gap-sm;
-		color: $app-primary;
-		background: $app-success-bg;
-		border: $app-border;
-		border-radius: $app-radius;
-
-		div:first-child {
-			display: grid;
-			gap: 0.15rem;
-		}
-
-		strong {
-			font-size: $app-font-size-sm;
-			font-weight: $app-font-weight-bold;
-			line-height: 1.35;
-		}
-
-		small {
-			color: $app-muted;
-			font-size: $app-font-size-sm;
-			font-weight: $app-font-weight-medium;
-			line-height: 1.4;
-		}
-	}
-
-	.custom-ingredient__outcome-actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: $app-gap-xs;
-
-		a,
-		button {
-			width: fit-content;
-			min-height: 2.15rem;
-			padding: 0.42rem 0.7rem;
-			border-radius: $app-radius-pill;
-			font-family: $app-button-font-family;
-			font-size: $app-font-size-sm;
-			font-weight: $app-button-font-weight;
-			line-height: $app-button-line-height;
-			text-decoration: none;
-		}
-
-		a {
-			color: $app-highlight-text;
-			background: $app-highlight;
-		}
-	}
-
-	.custom-ingredient__secondary-action {
-		color: $app-primary;
-		background: $app-accent;
 	}
 
 	.custom-ingredient__error,
@@ -1310,14 +1115,14 @@
 		justify-self: end;
 		width: fit-content;
 		padding: 0.55rem 0.9rem;
-		color: $app-btn-text;
-		background: $app-btn-bg;
+		color: $color-figma-card;
+		background: $color-figma-green;
 		border-radius: $app-radius-pill;
 		font-weight: $app-button-font-weight;
 		line-height: $app-button-line-height;
 
 		&:hover {
-			background: $app-btn-bg-hover;
+			background: color-mix(in srgb, $color-figma-green 88%, $color-figma-ink);
 		}
 	}
 
@@ -1335,21 +1140,6 @@
 		.custom-ingredient__grid,
 		.custom-ingredient__nutrition-grid {
 			grid-template-columns: 1fr;
-		}
-
-		.custom-ingredient__imported-nutrients ul {
-			grid-template-columns: 1fr;
-		}
-
-		.custom-ingredient__outcome-actions {
-			display: grid;
-			grid-template-columns: 1fr;
-
-			a,
-			button {
-				width: 100%;
-				text-align: center;
-			}
 		}
 
 		button {

@@ -48,7 +48,7 @@ import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
 import { createCustomFood } from "$lib/utils/food/customFoods";
 
 const openManualForm = async () => {
-	await fireEvent.click(screen.getByText("Add manually"));
+	await fireEvent.click(screen.getByText("Enter manually"));
 };
 
 describe("CustomIngredientForm", () => {
@@ -93,7 +93,7 @@ describe("CustomIngredientForm", () => {
 		expect(
 			screen.getByRole("button", { name: /scan barcode/i }),
 		).toBeVisible();
-		expect(screen.getByText("Add manually").closest("details")).not.toHaveAttribute(
+		expect(screen.getByText("Enter manually").closest("details")).not.toHaveAttribute(
 			"open",
 		);
 		expect(screen.queryByLabelText(/ingredient name/i)).not.toBeVisible();
@@ -136,12 +136,12 @@ describe("CustomIngredientForm", () => {
 			MIX_STORAGE_KEYS.fridge,
 			expect.objectContaining({ description: "Chocolate cookies" }),
 		);
-		expect(screen.getByText(/saved and added to on hand/i)).toBeInTheDocument();
+		expect(screen.getByText(/saved and added to Fridge/i)).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: /open mix/i })).toHaveAttribute(
 			"href",
 			"/mix",
 		);
-		expect(screen.getByText("Add manually").closest("details")).not.toHaveAttribute(
+		expect(screen.getByText("Enter manually").closest("details")).not.toHaveAttribute(
 			"open",
 		);
 	});
@@ -173,7 +173,7 @@ describe("CustomIngredientForm", () => {
 		);
 	});
 
-	it("can move the last saved ingredient from on hand to shopping", async () => {
+	it("can move the last saved ingredient from Fridge to shopping", async () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
 		await openManualForm();
@@ -184,7 +184,7 @@ describe("CustomIngredientForm", () => {
 			screen.getByRole("button", { name: /save \+ add/i }),
 		);
 		await waitFor(() =>
-			expect(screen.getByText(/saved and added to on hand/i)).toBeInTheDocument(),
+			expect(screen.getByText(/saved and added to Fridge/i)).toBeInTheDocument(),
 		);
 
 		await fireEvent.click(
@@ -217,7 +217,7 @@ describe("CustomIngredientForm", () => {
 			screen.getByRole("button", { name: /save \+ add/i }),
 		);
 		await waitFor(() =>
-			expect(screen.getByText(/saved and added to on hand/i)).toBeInTheDocument(),
+			expect(screen.getByText(/saved and added to Fridge/i)).toBeInTheDocument(),
 		);
 
 		await fireEvent.click(screen.getByRole("button", { name: /^undo$/i }));
@@ -358,8 +358,8 @@ describe("CustomIngredientForm", () => {
 			existingFood,
 		);
 		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-		expect(screen.getByText(/already saved and is now in on hand/i)).toBeInTheDocument();
-		expect(screen.getByText("Add manually").closest("details")).not.toHaveAttribute(
+		expect(screen.getByText(/already saved and is now in Fridge/i)).toBeInTheDocument();
+		expect(screen.getByText("Enter manually").closest("details")).not.toHaveAttribute(
 			"open",
 		);
 	});
@@ -367,7 +367,7 @@ describe("CustomIngredientForm", () => {
 	it("can be closed and reopened without clearing unfinished input", async () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
-		const toggle = screen.getByText("Add manually");
+		const toggle = screen.getByText("Enter manually");
 		const panel = toggle.closest("details");
 		expect(panel).not.toHaveAttribute("open");
 

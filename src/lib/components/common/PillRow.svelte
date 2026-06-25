@@ -57,20 +57,22 @@
     const arrangedPills = $derived(arrangePills(pills, activeIndices, customIndices, preserveOrder));
 </script>
 
-<div class="pill-row">
-    {#each arrangedPills as pill (`${pill.index}-${pill.label}`)}
-        <Pill
-            label={pill.label}
-			onRemove={onRemove ? () => onRemove(pill.index) : undefined}
-			onRename={onRename ? () => onRename(pill.index) : undefined}
-            onSelect={() => onSelect && onSelect(pill.index)}
-			{removable}
-            active={pill.active}
-            custom={pill.custom}
-			disabled={disabledIndices.includes(pill.index)}
-        />
-    {/each}
-</div>
+{#if arrangedPills.length > 0}
+	<div class="pill-row">
+		{#each arrangedPills as pill (`${pill.index}-${pill.label}`)}
+			<Pill
+				label={pill.label}
+				onRemove={onRemove ? () => onRemove(pill.index) : undefined}
+				onRename={onRename ? () => onRename(pill.index) : undefined}
+				onSelect={() => onSelect && onSelect(pill.index)}
+				{removable}
+				active={pill.active}
+				custom={pill.custom}
+				disabled={disabledIndices.includes(pill.index)}
+			/>
+		{/each}
+	</div>
+{/if}
 
 <style lang="scss">
     @use "../../../styles/variables" as *;

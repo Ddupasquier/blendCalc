@@ -86,17 +86,65 @@ $color-lavender-smoothie-dark: #7b5fa3;
 // borders and text where the design should mimic a printed food label.
 $color-ink-black: #111;
 
+// Figma rebuild surface canvas. Use for the mobile app shell behind white cards,
+// search rows, list views, and other rebuilt screens that should feel cleaner
+// and cooler than the legacy cream surfaces.
+$color-figma-canvas: #f8f8fb;
+
+// Figma rebuild card surface. Use for mobile list cards, headers, nav bars,
+// sheets, and high-clarity grouped content in the UI rebuild.
+$color-figma-card: #ffffff;
+
+// Figma rebuild foreground. Use for high-contrast text on rebuilt mobile views.
+$color-figma-ink: #1a1a2e;
+
+// Figma rebuild quiet text. Use for subtitles, metadata, inactive navigation,
+// and helper text in rebuilt mobile screens.
+$color-figma-muted: #8b8fa8;
+
+// Figma rebuild primary green. Use for active navigation, scanner CTAs,
+// positive actions, and selected/verified state in rebuilt mobile flows.
+$color-figma-green: #57a773;
+
+// Figma rebuild subtle green fill. Use behind active/positive icon buttons and
+// badge backgrounds that need the green hue without full CTA strength.
+$color-figma-green-soft: #e8f5ee;
+
+// Figma rebuild border. Use for subtle dividers and card outlines in rebuilt
+// screens where the legacy orchid border is too decorative.
+$color-figma-border: rgba(0, 0, 0, 0.08);
+
+// Figma rebuild outer preview frame. Use only behind the fixed-width mobile app
+// shell on larger screens so desktop previews resemble a phone frame.
+$color-figma-browser-frame: #c4c9d3;
+
+// Figma rebuild pale input/surface fill. Use for search inputs, inactive
+// segmented controls, and quiet grouped rows inside rebuilt mobile screens.
+$color-figma-soft-surface: #f8f7f5;
+
+// Figma rebuild control fill. Use for search fields and quiet icon buttons that
+// need the cooler, low-contrast Figma input treatment instead of cream panels.
+$color-figma-control-surface: #e9e9ed;
+
+// Figma rebuild blue utility accent. Use for manual-entry affordances and
+// low-priority informational icons in rebuilt ingredients flows.
+$color-figma-sky: #55a6c8;
+
+// Figma rebuild destructive accent. Use for remove actions and delete icons in
+// rebuilt mobile sheets/cards.
+$color-figma-red: #d84242;
+
 // App layout
 // -----------------------------------------------------------------------------
 // Interface font. Use for body copy, navigation, forms, buttons, labels, helper
 // text, cards, and the majority of the application UI.
-$app-font-family-interface: "Segoe UI Variable Text", "Segoe UI", system-ui,
-	-apple-system, sans-serif;
+$app-font-family-interface: "DM Sans", "Segoe UI Variable Text", "Segoe UI",
+	system-ui, -apple-system, sans-serif;
 
 // Display font. Use sparingly for large page headings, landing/auth headlines,
 // profile/moderation titles, and short brand moments that need more personality.
-$app-font-family-display: "Avenir Next", "Segoe UI Variable Display", "Trebuchet MS",
-	system-ui, sans-serif;
+$app-font-family-display: "Plus Jakarta Sans", "Avenir Next",
+	"Segoe UI Variable Display", "Trebuchet MS", system-ui, sans-serif;
 
 // Data font. Use for nutrition facts, graph values, measurements, and compact
 // numeric readouts where narrow forms and clearly aligned figures improve scanning.
@@ -119,6 +167,119 @@ $app-button-line-height: 1.1;
 // Maximum width for page-level content containers.
 $app-max-width: 600px;
 
+// Figma rebuild content width. Use for rebuilt mobile-first screens, header,
+// bottom nav, and fixed actions so the app can fill the viewport while content
+// stays readable instead of stretching edge-to-edge on larger screens.
+$app-mobile-shell-width: 520px;
+
+// Figma mobile shell header height. Use for the authenticated top app bar.
+$app-shell-header-height: 4rem;
+
+// Figma mobile shell bottom navigation height. Use for fixed nav offsets,
+// bottom sheets, and authenticated page bottom padding.
+$app-shell-nav-height: 4.85rem;
+
+// Figma mobile shell horizontal content padding. Use for rebuilt page gutters.
+$app-shell-padding-x: 1rem;
+
+// Figma mobile shell top page padding. Use between the app header and page title.
+$app-shell-padding-y: 1.2rem;
+
+// Figma rebuild standard control height. Use for search rows, icon buttons,
+// segmented controls, and compact primary actions.
+$app-rebuild-control-height: 2.95rem;
+
+// Figma rebuild standard horizontal padding inside search/input controls.
+$app-rebuild-control-padding-x: 0.85rem;
+
+// Figma rebuild icon size inside square utility controls such as filters.
+$app-rebuild-control-icon-size: 1.2rem;
+
+// Figma rebuild compact action height. Use for small bulk buttons and chips.
+$app-rebuild-control-height-sm: 2.15rem;
+
+// Figma rebuild rounded-card radius. Use for ingredient cards, search controls,
+// manual-entry rows, sheets, and other rebuilt mobile containers.
+$app-rebuild-radius: 1rem;
+
+// Figma rebuild larger sheet/card radius. Use for bottom sheets and large
+// grouped sections with softened corners.
+$app-rebuild-radius-lg: 1.35rem;
+
+// Figma rebuild pill radius. Use when controls should be fully rounded.
+$app-rebuild-radius-pill: 999px;
+
+// Figma rebuild ingredient card minimum height.
+$app-rebuild-ingredient-card-height: 5.25rem;
+
+// Figma rebuild search result max height before internal scrolling starts.
+$app-rebuild-search-results-max-height: 22rem;
+
+// Figma rebuild search result card padding.
+$app-rebuild-search-result-padding-y: 0.9rem;
+$app-rebuild-search-result-padding-x: 1rem;
+
+// Figma rebuild compact badge padding.
+$app-rebuild-badge-padding-y: 0.12rem;
+$app-rebuild-badge-padding-x: 0.42rem;
+
+// Figma rebuild food icon size inside ingredient rows.
+$app-rebuild-food-icon-size: 2.45rem;
+
+// Figma rebuild round action icon size for overflow/remove buttons.
+$app-rebuild-action-icon-size: 2.2rem;
+
+// Figma rebuild floating add button size.
+$app-rebuild-fab-size: 3.6rem;
+
+// Figma rebuild modal/sheet overlay. Use behind action sheets and dialogs.
+$app-rebuild-overlay-bg: rgba(0, 0, 0, 0.38);
+
+// Figma rebuild scanner overlay. Use only for full-screen camera scanning.
+$app-rebuild-scanner-overlay-bg: rgba(0, 0, 0, 0.72);
+
+// Figma rebuild scanner dark surface. Use behind full-screen barcode camera UI.
+$app-rebuild-scanner-bg: #080909;
+
+// Full-screen barcode scanner back button size.
+$app-rebuild-scanner-back-size: 2.7rem;
+
+// Full-screen barcode scanner target frame dimensions.
+$app-rebuild-scanner-target-width: 66%;
+$app-rebuild-scanner-target-max-width: 16rem;
+$app-rebuild-scanner-target-height: 8.7rem;
+
+// Full-screen barcode scanner target corner dimensions.
+$app-rebuild-scanner-target-corner-long: 3rem;
+$app-rebuild-scanner-target-corner-short: 2.3rem;
+$app-rebuild-scanner-target-corner-thickness: 0.18rem;
+
+// Full-screen barcode scanner status placement below the target frame.
+$app-rebuild-scanner-status-offset: 5.6rem;
+
+// Compact barcode scan button padding in its resting state.
+$app-rebuild-scan-button-padding-y: 0.48rem;
+$app-rebuild-scan-button-padding-x: 0.82rem;
+
+// Compact barcode scan button padding while barcode lookup is loading.
+$app-rebuild-scan-button-loading-padding-y: 0.5rem;
+$app-rebuild-scan-button-loading-padding-x: 0.75rem;
+
+// Expanded barcode scan button size while barcode lookup is loading.
+$app-rebuild-scan-button-loading-width: 5.5rem;
+$app-rebuild-scan-button-loading-height: 3.3rem;
+
+// Resting barcode icon dimensions inside the scan button.
+$app-rebuild-scan-icon-width: 1.125rem;
+$app-rebuild-scan-icon-height: 1rem;
+
+// Expanded barcode animation frame dimensions inside the scan button.
+$app-rebuild-scan-icon-active-width: 3.5rem;
+$app-rebuild-scan-icon-active-height: 2.25rem;
+
+// Small corner bracket size used by the compact barcode animation.
+$app-rebuild-scan-bracket-size: 0.375rem;
+
 // Extra-small phone breakpoint. Use for the tightest layouts where dense
 // components like nutrition labels need to stack or shrink aggressively.
 $app-breakpoint-xs: 420px;
@@ -138,8 +299,18 @@ $app-breakpoint-lg: 760px;
 // Large spacing token for major vertical separation between unrelated sections.
 $app-gap-lg: 1.5rem;
 
+// Standard vertical spacing between stacked UI sections/components. Use between
+// search rows, manual-entry rows, tabs, bulk actions, cards, and sibling blocks
+// that need consistent rhythm across screens.
+$app-vertical-stack-gap: .75rem;
+
+// Standard horizontal spacing between sibling controls in the same row. Keep in
+// sync with the vertical stack gap unless a component has a documented compact
+// reason to use a smaller token.
+$app-horizontal-control-gap: $app-vertical-stack-gap;
+
 // Medium spacing token for card interiors and related section gaps.
-$app-gap-md: 1.1rem;
+$app-gap-md: $app-vertical-stack-gap;
 
 // Small spacing token for dense controls, pills, compact rows, and helper text.
 $app-gap-sm: 0.5rem;

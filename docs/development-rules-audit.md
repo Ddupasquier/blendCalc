@@ -21,14 +21,15 @@ These are the working rules gathered from prior product and implementation decis
 11. Show loading or busy states for actions with network or camera latency.
 12. Keep authentication secure and predictable across localhost, previews, and production.
 13. Keep files and folders maintainable, clean, and beautiful. Structure should make the UI location and domain purpose obvious.
-14. Use the branch gate. Every new feature, major addition, and big change gets its own branch from `staging`, merges into `staging` first, and only moves from `staging` to `main` after the staging preview is approved.
-15. Treat bypassing staging as a process problem. If a change is headed to `main` without going through `staging`, stop and call that out before merging.
-16. Do not automatically add changes to `staging`. Work should stay on the active feature branch or working tree until explicitly approved for staging.
-17. Do not auto commit. Show the diff and get explicit approval before committing or pushing changes.
-18. Verify meaningful changes with `npm run check`, focused tests, and builds when scope warrants it.
-19. For the full mobile UI rebuild, use `mobile-ui-rebuild` as the temporary integration branch. Major rebuild sections branch from `mobile-ui-rebuild`, merge back into `mobile-ui-rebuild` only after approval and checks, and do not move to `staging` until the full rebuild is approved.
-20. During the mobile UI rebuild, protected components require explicit written approval before alteration. The graph and barcode scanner are currently protected.
-21. Ask for Figma screenshots before building or substantially changing any new UI element during the mobile UI rebuild. Match provided screenshots before inventing layout details.
+14. Extract reusable components and utilities whenever practical. Repeated UI, repeated functions, long route files, oversized component styles, and duplicated business logic are maintenance problems. Views should orchestrate; components should render focused UI; utilities should hold reusable calculations, formatting, filtering, sorting, validation, and storage helpers.
+15. Use the branch gate. Every new feature, major addition, and big change gets its own branch from `staging`, merges into `staging` first, and only moves from `staging` to `main` after the staging preview is approved.
+16. Treat bypassing staging as a process problem. If a change is headed to `main` without going through `staging`, stop and call that out before merging.
+17. Do not automatically add changes to `staging`. Work should stay on the active feature branch or working tree until explicitly approved for staging.
+18. Do not auto commit. Show the diff and get explicit approval before committing or pushing changes.
+19. Verify meaningful changes with `npm run check`, focused tests, and builds when scope warrants it.
+20. For the full mobile UI rebuild, use `mobile-ui-rebuild` as the temporary integration branch. Major rebuild sections branch from `mobile-ui-rebuild`, merge back into `mobile-ui-rebuild` only after approval and checks, and do not move to `staging` until the full rebuild is approved.
+21. During the mobile UI rebuild, protected components require explicit written approval before alteration. The graph and barcode scanner are currently protected.
+22. Ask for Figma screenshots before implementing any new UI element or materially changing an existing UI element during the mobile UI rebuild. Do not move forward with implementation until the relevant screenshots, states, or explicit visual direction are provided. Match provided screenshots before inventing layout details.
 
 ## Audit Summary
 
