@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-06-28T04:42:14.451Z",
+  "querySource": "supabase-api-observation-tables",
+  "queries": [
+    "whole milk",
+    "2 percent milk",
+    "greek yogurt"
+  ],
+  "endpoints": {
+    "foodDataCentral": [
+      "https://api.nal.usda.gov/fdc/v1/foods/search",
+      "https://api.nal.usda.gov/fdc/v1/food/{fdcId}"
+    ],
+    "openFoodFacts": [
+      "https://world.openfoodfacts.org/cgi/search.pl",
+      "https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
+    ]
+  },
+  "sampleCounts": {
+    "foodDataCentralSearch": 3,
+    "foodDataCentralDetail": 6,
+    "openFoodFactsSearch": 3,
+    "openFoodFactsProduct": 6
+  }
+}

@@ -84,7 +84,10 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | `npm run audit:fdc-allergens` | Sample FoodData Central allergen-related fields |
 | `npm run audit:usda-branded-allergens` | Sample USDA branded allergen-related fields |
 | `npm run audit:off-allergens` | Sample Open Food Facts allergen/restriction fields |
-| `npm run seed:food-preferences` | Store observed food preference metadata in Supabase |
+| `npm run seed:food-preferences` | Store cross-source observed food preference metadata in Supabase |
+| `npm run seed:food-categories` | Store cross-source observed custom-food category metadata in Supabase |
+| `npm run seed:manual-entry-nutrients` | Store cross-source manual-entry nutrient grouping observations in Supabase |
+| `npm run generate:api-structures` | Generate docs-only reference types from observed external API payloads |
 | `npm run discover:fdc-nutrients` | Generate the expanded FDC nutrient catalog |
 | `npm run compare:fdc -- "a" "b"` | Compare live FDC output for two product searches |
 | `npm run db:push:dry` | Preview pending Supabase migrations |
@@ -115,6 +118,11 @@ deployment steps.
 See [`docs/ui-functionality.md`](docs/ui-functionality.md) for the complete UI
 feature and functionality preservation brief used for large UI refactors.
 
+See [`docs/api-structures/README.md`](docs/api-structures/README.md) for the
+generated external API payload reference files. These files document observed
+FoodData Central and Open Food Facts response shapes only; do not import them
+from runtime app code.
+
 To compare live FDC product data while debugging nutrient mappings:
 
 ```bash
@@ -127,6 +135,12 @@ npm run discover:fdc-nutrients
 deduplicated nutrient report in `scripts/output/` and refreshes the application
 catalog at `src/variables/fdcNutrients.generated.ts`. Pass food queries or options such as `--pages=1`,
 `--page-size=25`, and `--min-occurrences=3` to narrow the audit.
+
+`generate:api-structures` samples observed query terms from Supabase API
+observation tables, calls the external food APIs the app currently uses, and
+writes docs-only reference types under `docs/api-structures/`. Use it when
+auditing vendor payloads or checking whether an API exposes additional fields
+worth storing canonically in Supabase.
 
 ---
 
@@ -163,6 +177,8 @@ src/
     ├── moderation/            # Admin moderation tools
     ├── profile/               # Profile, avatar, food preferences
     └── saved/                 # Saved drinks
+docs/
+└── api-structures/            # Generated reference-only vendor API shapes
 ```
 
 ---

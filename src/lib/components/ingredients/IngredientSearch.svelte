@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from "$app/environment";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import { FdcConfigurationError, searchFoods } from "$lib/utils/food/fdc";
 	import {
@@ -26,6 +27,7 @@
 	let results = $state<FdcFood[]>([]);
 	let loading = $state(false);
 	let error = $state("");
+	let searchReady = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout>;
 	const dispatch = createEventDispatcher();
 	const foodPreferenceContext = getFoodPreferenceContext();
@@ -103,6 +105,7 @@
 	});
 
 	const triggerSearch = () => {
+		if (!browser || !searchReady) return;
 		clearTimeout(debounceTimer);
 		error = "";
 		const allTerms = [...pills, query.trim()].filter(Boolean);
@@ -147,7 +150,7 @@
 
 	$effect(() => {
 		pills;
-		triggerSearch();
+		if (searchReady) triggerSearch();
 	});
 
 	const select = (food: FdcFood) => {
@@ -157,6 +160,9 @@
 	};
 
 	onMount(() => {
+		searchReady = true;
+		triggerSearch();
+
 		const refreshCustomResults = () => {
 			const searchString = [...pills, query.trim()].filter(Boolean).join(" ");
 			if (!searchString) return;
@@ -166,6 +172,8 @@
 		window.addEventListener(CUSTOM_FOODS_CHANGED_EVENT, refreshCustomResults);
 		window.addEventListener("storage", refreshCustomResults);
 		return () => {
+			searchReady = false;
+			clearTimeout(debounceTimer);
 			window.removeEventListener(
 				CUSTOM_FOODS_CHANGED_EVENT,
 				refreshCustomResults,
@@ -177,7 +185,7 @@
 
 <div class="search-wrap">
 	<label class="search-label" for="ingredient-search">Search ingredients</label>
-	<div class="search-row">
+	<div class="search-row" aria-busy={loading}>
 		<Search class="search-icon" />
 		<input
 			id="ingredient-search"
@@ -197,7 +205,9 @@
 			}}
 		/>
 		{#if loading}
-			<span class="spinner" aria-label="Searching…">⏳</span>
+			<span class="spinner" role="status" aria-live="polite">
+				<span class="sr-only">Searching…</span>
+			</span>
 		{/if}
 	</div>
 	<PillRow
@@ -218,6 +228,17 @@
 		display: grid;
 		gap: $app-gap-xs;
 		min-width: 0;
+	}
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 
 	.search-label {
@@ -274,11 +295,15 @@
 	}
 
 	.spinner {
-		font-size: $app-font-size-lg;
-		animation: spin 1s linear infinite;
+		width: 0.9rem;
+		height: 0.9rem;
+		border: 2px solid color-mix(in srgb, $color-figma-muted 28%, transparent);
+		border-top-color: $color-figma-green;
+		border-radius: $app-rebuild-radius-pill;
+		animation: ingredient-search-spin 700ms linear infinite;
 	}
 
-	@keyframes spin {
+	@keyframes ingredient-search-spin {
 		to {
 			transform: rotate(360deg);
 		}

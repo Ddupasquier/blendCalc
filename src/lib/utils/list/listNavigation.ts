@@ -1,9 +1,10 @@
 export type PaginationItem = number | "ellipsis";
-export type FoodListSort = "recent" | "name-asc" | "name-desc";
+export type FoodListSort = "recent" | "oldest" | "name-asc" | "name-desc";
 
 export const FOOD_LIST_SORT_OPTIONS = [
 	{ value: "recent", label: "Newest first" },
-	{ value: "name-asc", label: "Name A–Z" },
+	{ value: "oldest", label: "Oldest first" },
+	{ value: "name-asc", label: "A → Z" },
 	{ value: "name-desc", label: "Name Z–A" },
 ] as const;
 
@@ -66,6 +67,13 @@ export const sortFoodListItems = <Item>(
 		const firstAddedAt = getAddedAt(first);
 		const secondAddedAt = getAddedAt(second);
 		if (firstAddedAt !== undefined || secondAddedAt !== undefined) {
+			if (sort === "oldest") {
+				return (
+					(firstAddedAt ?? Number.MAX_SAFE_INTEGER) -
+					(secondAddedAt ?? Number.MAX_SAFE_INTEGER)
+				);
+			}
+
 			return (secondAddedAt ?? 0) - (firstAddedAt ?? 0);
 		}
 

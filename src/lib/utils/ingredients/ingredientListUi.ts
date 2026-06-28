@@ -12,8 +12,9 @@ export type IngredientActionItem = {
 
 export const INGREDIENT_SOURCE_FILTER_OPTIONS = [
 	{ value: "all", label: "All sources" },
-	{ value: "custom", label: "Custom only" },
-	{ value: "fdc", label: "USDA only" },
+	{ value: "fdc", label: "USDA FDC" },
+	{ value: "shared", label: "Shared & verified" },
+	{ value: "custom", label: "Custom" },
 ];
 
 export const getIngredientActionKey = (key: SmoothieListKey, foodId: number) =>

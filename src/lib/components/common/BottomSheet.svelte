@@ -1,0 +1,161 @@
+<script lang="ts">
+	import { fade, fly } from "svelte/transition";
+	import { cubicOut } from "svelte/easing";
+	import type { Snippet } from "svelte";
+
+	let {
+		open,
+		title,
+		titleId = "bottom-sheet-title",
+		label = title,
+		aboveNav = true,
+		fill = false,
+		children,
+		onClose,
+	}: {
+		open: boolean;
+		title?: string;
+		titleId?: string;
+		label?: string;
+		aboveNav?: boolean;
+		fill?: boolean;
+		children: Snippet;
+		onClose: () => void;
+	} = $props();
+
+	const handleKeydown = (event: KeyboardEvent) => {
+		if (open && event.key === "Escape") {
+			onClose();
+		}
+	};
+</script>
+
+<svelte:window onkeydown={handleKeydown} />
+
+{#if open}
+	<div
+		class="bottom-sheet-backdrop"
+		role="presentation"
+		onclick={onClose}
+		transition:fade={{ duration: 180 }}
+	></div>
+	<div
+		class="bottom-sheet"
+		class:bottom-sheet--above-nav={aboveNav}
+		class:bottom-sheet--fill={fill}
+		role="dialog"
+		aria-modal="true"
+		aria-label={title ? undefined : label}
+		aria-labelledby={title ? titleId : undefined}
+		transition:fly={{ y: "100%", duration: 260, easing: cubicOut }}
+	>
+		<button class="bottom-sheet__dismiss" type="button" aria-label="Close sheet" onclick={onClose}>
+			<span aria-hidden="true"></span>
+		</button>
+		{#if title}
+			<h2 id={titleId}>{title}</h2>
+		{/if}
+		<div class="bottom-sheet__content">
+			{@render children()}
+		</div>
+	</div>
+{/if}
+
+<style lang="scss">
+	@use "../../../styles/variables" as *;
+
+	.bottom-sheet-backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: 110;
+		background: $app-rebuild-overlay-bg;
+	}
+
+	.bottom-sheet {
+		--bottom-sheet-bottom-offset: 0rem;
+
+		position: fixed;
+		right: max(0rem, calc((100vw - $app-mobile-shell-width) / 2));
+		bottom: var(--bottom-sheet-bottom-offset);
+		left: max(0rem, calc((100vw - $app-mobile-shell-width) / 2));
+		z-index: 111;
+		display: flex;
+		flex-direction: column;
+		gap: $app-gap-md;
+		width: min(100%, $app-mobile-shell-width);
+		max-height: min(
+			$app-bottom-sheet-max-height,
+			calc(100dvh - var(--bottom-sheet-bottom-offset) - $app-gap-md)
+		);
+		padding: $app-gap-sm $app-shell-padding-x $app-gap-md;
+		margin: 0 auto;
+		overflow: hidden;
+		background: $color-figma-card;
+		border-radius: $app-rebuild-radius-lg $app-rebuild-radius-lg 0 0;
+
+		h2 {
+			margin: 0;
+			overflow: hidden;
+			color: $color-figma-muted;
+			font-size: $app-font-size-md;
+			font-weight: $app-font-weight-bold;
+			line-height: 1.2;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+	}
+
+	.bottom-sheet--above-nav {
+		--bottom-sheet-bottom-offset: calc(
+			$app-shell-nav-height + env(safe-area-inset-bottom)
+		);
+	}
+
+	.bottom-sheet--fill {
+		height: min(
+			$app-bottom-sheet-max-height,
+			calc(100dvh - var(--bottom-sheet-bottom-offset) - $app-gap-md)
+		);
+	}
+
+	.bottom-sheet__dismiss {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		align-self: center;
+		flex: 0 0 auto;
+		width: 4rem;
+		height: 1.25rem;
+		padding: 0;
+		background: transparent;
+		border: 0;
+		border-radius: $app-radius-pill;
+		cursor: pointer;
+
+		span {
+			display: block;
+			width: 2.25rem;
+			height: calc($app-gap-xs - 0.05rem);
+			margin: 0 auto;
+			background: color-mix(in srgb, $color-figma-muted 24%, transparent);
+			border-radius: $app-radius-pill;
+		}
+
+		&:focus-visible {
+			outline: $app-focus-outline;
+			outline-offset: 0;
+		}
+	}
+
+	.bottom-sheet__content {
+		display: grid;
+		flex: 1 1 auto;
+		gap: $app-gap-md;
+		min-width: 0;
+		min-height: 0;
+		padding-bottom: max($app-gap-md, env(safe-area-inset-bottom));
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		-webkit-overflow-scrolling: touch;
+	}
+</style>

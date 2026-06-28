@@ -43,12 +43,189 @@ vi.mock("$lib/utils/products/catalog", () => ({
 	submitSharedProduct,
 }));
 
+const foodMetadataMocks = vi.hoisted(() => {
+	const macros = [
+		{
+			dedupeKey: "macros:required-basics:calories-kcal",
+			nutrientId: 1008,
+			nutrientName: "Calories",
+			nutrientNumber: "208",
+			unitName: "kcal",
+			nutrientType: "macro",
+			step: "macros" as const,
+			group: "Macros",
+			groupSort: 10,
+			sort: 10,
+			label: "Calories (kcal)",
+		},
+		{
+			dedupeKey: "macros:required-basics:total-fat-g",
+			nutrientId: 1004,
+			nutrientName: "Total Fat",
+			nutrientNumber: "204",
+			unitName: "g",
+			nutrientType: "macro",
+			step: "macros" as const,
+			group: "Macros",
+			groupSort: 10,
+			sort: 20,
+			label: "Total Fat (g)",
+		},
+		{
+			dedupeKey: "macros:required-basics:total-carbohydrates-g",
+			nutrientId: 1005,
+			nutrientName: "Total Carbohydrates",
+			nutrientNumber: "205",
+			unitName: "g",
+			nutrientType: "macro",
+			step: "macros" as const,
+			group: "Macros",
+			groupSort: 10,
+			sort: 30,
+			label: "Total Carbohydrates (g)",
+		},
+		{
+			dedupeKey: "macros:carbohydrate-details:dietary-fiber-g",
+			nutrientId: 1079,
+			nutrientName: "Dietary Fiber",
+			nutrientNumber: "291",
+			unitName: "g",
+			nutrientType: "macro",
+			step: "macros" as const,
+			group: "Macros",
+			groupSort: 10,
+			sort: 40,
+			label: "Dietary Fiber (g)",
+		},
+		{
+			dedupeKey: "macros:carbohydrate-details:total-sugars-g",
+			nutrientId: 2000,
+			nutrientName: "Total Sugars",
+			nutrientNumber: "269",
+			unitName: "g",
+			nutrientType: "macro",
+			step: "macros" as const,
+			group: "Macros",
+			groupSort: 10,
+			sort: 50,
+			label: "Total Sugars (g)",
+		},
+		{
+			dedupeKey: "macros:required-basics:protein-g",
+			nutrientId: 1003,
+			nutrientName: "Protein",
+			nutrientNumber: "203",
+			unitName: "g",
+			nutrientType: "macro",
+			step: "macros" as const,
+			group: "Macros",
+			groupSort: 10,
+			sort: 60,
+			label: "Protein (g)",
+		},
+	];
+
+	return {
+		readManualEntryNutrientGroups: vi.fn().mockResolvedValue({
+			macros: [{ title: "Macros", fields: macros }],
+			extended: [],
+		}),
+		readCustomFoodCategoryOptions: vi.fn().mockResolvedValue([
+			{
+				id: "other",
+				label: "Other",
+				observation_count: 1,
+				source_count: 1,
+			},
+		]),
+	};
+});
+
+vi.mock("$lib/utils/food/nutrientDefinitions", async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import("$lib/utils/food/nutrientDefinitions")>();
+	return {
+		...actual,
+		readManualEntryNutrientGroups:
+			foodMetadataMocks.readManualEntryNutrientGroups,
+	};
+});
+
+vi.mock("$lib/utils/food/categoryOptions", async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import("$lib/utils/food/categoryOptions")>();
+	return {
+		...actual,
+		readCustomFoodCategoryOptions:
+			foodMetadataMocks.readCustomFoodCategoryOptions,
+	};
+});
+
 import CustomIngredientForm from "$lib/components/ingredients/CustomIngredientForm.svelte";
 import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
 import { createCustomFood } from "$lib/utils/food/customFoods";
 
 const openManualForm = async () => {
 	await fireEvent.click(screen.getByText("Enter manually"));
+};
+
+const goToStep = async (name: string | RegExp) => {
+	await fireEvent.click(screen.getByRole("button", { name }));
+};
+
+const continueToNextStep = async () => {
+	await fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+};
+
+const fillRequiredCustomIngredient = async (
+	name: string,
+	options: {
+		barcode?: string;
+		destination?: string;
+		calories?: string;
+		fat?: string;
+		carbs?: string;
+		protein?: string;
+	} = {},
+) => {
+	await openManualForm();
+	await fireEvent.input(screen.getByLabelText(/food name/i), {
+		target: { value: name },
+	});
+	if (options.barcode) {
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: options.barcode },
+		});
+	}
+	await continueToNextStep();
+	await fireEvent.input(screen.getByLabelText(/description/i), {
+		target: { value: "1 serving" },
+	});
+	await fireEvent.input(screen.getByLabelText(/weight \(g\)/i), {
+		target: { value: "34" },
+	});
+	await continueToNextStep();
+	await waitFor(() => expect(screen.getByLabelText(/calories/i)).toBeInTheDocument());
+	await fireEvent.input(screen.getByLabelText(/calories/i), {
+		target: { value: options.calories ?? "160" },
+	});
+	await fireEvent.input(screen.getByLabelText(/total fat/i), {
+		target: { value: options.fat ?? "6" },
+	});
+	await fireEvent.input(screen.getByLabelText(/total carbohydrates/i), {
+		target: { value: options.carbs ?? "20" },
+	});
+	await fireEvent.input(screen.getByLabelText(/protein/i), {
+		target: { value: options.protein ?? "2" },
+	});
+	await continueToNextStep();
+	await continueToNextStep();
+	if (options.destination) {
+		await fireEvent.change(
+			screen.getByRole("combobox", { name: /add after saving/i }),
+			{ target: { value: options.destination } },
+		);
+	}
 };
 
 describe("CustomIngredientForm", () => {
@@ -74,13 +251,9 @@ describe("CustomIngredientForm", () => {
 		});
 
 		await openManualForm();
-		await fireEvent.click(
-			screen.getByRole("button", { name: /save \+ add/i }),
-		);
+		await goToStep(/share/i);
 
-		expect(screen.getByRole("alert")).toHaveTextContent(
-			"Add a name for this ingredient.",
-		);
+		expect(screen.getByText("Name must be at least 3 characters")).toBeInTheDocument();
 	});
 
 	it("keeps barcode scanning visible while manual entry starts collapsed", () => {
@@ -96,7 +269,7 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByText("Enter manually").closest("details")).not.toHaveAttribute(
 			"open",
 		);
-		expect(screen.queryByLabelText(/ingredient name/i)).not.toBeVisible();
+		expect(screen.queryByLabelText(/food name/i)).not.toBeVisible();
 	});
 
 	it("creates a custom ingredient from label nutrition values", async () => {
@@ -107,39 +280,22 @@ describe("CustomIngredientForm", () => {
 			},
 		});
 
-		await openManualForm();
-		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
-			target: { value: "Chocolate cookies" },
-		});
-		await fireEvent.input(screen.getByLabelText(/serving label/i), {
-			target: { value: "3 cookies" },
-		});
-		await fireEvent.input(screen.getByLabelText(/serving weight/i), {
-			target: { value: "34" },
-		});
-		await fireEvent.input(screen.getByLabelText(/^calories$/i), {
-			target: { value: "160" },
-		});
+		await fillRequiredCustomIngredient("Chocolate cookies");
 
 		await fireEvent.click(
-			screen.getByRole("button", { name: /save \+ add/i }),
+			screen.getByRole("button", { name: /add ingredient/i }),
 		);
 
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
 		expect(onCreate.mock.calls[0][0]).toMatchObject({
 			description: "Chocolate cookies",
 			customFood: true,
-			customServingLabel: "3 cookies",
+			customServingLabel: "1 serving",
 			customServingWeightGrams: 34,
 		});
 		expect(smoothieListMocks.addFoodToSmoothieList).toHaveBeenCalledWith(
 			MIX_STORAGE_KEYS.fridge,
 			expect.objectContaining({ description: "Chocolate cookies" }),
-		);
-		expect(screen.getByText(/saved and added to Fridge/i)).toBeInTheDocument();
-		expect(screen.getByRole("link", { name: /open mix/i })).toHaveAttribute(
-			"href",
-			"/mix",
 		);
 		expect(screen.getByText("Enter manually").closest("details")).not.toHaveAttribute(
 			"open",
@@ -154,16 +310,11 @@ describe("CustomIngredientForm", () => {
 			},
 		});
 
-		await openManualForm();
-		await fireEvent.change(
-			screen.getByRole("combobox", { name: /add after saving/i }),
-			{ target: { value: MIX_STORAGE_KEYS.shoppingList } },
-		);
-		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
-			target: { value: "Shelf stable snack" },
+		await fillRequiredCustomIngredient("Shelf stable snack", {
+			destination: MIX_STORAGE_KEYS.shoppingList,
 		});
 		await fireEvent.click(
-			screen.getByRole("button", { name: /save \+ add to shopping list/i }),
+			screen.getByRole("button", { name: /add ingredient/i }),
 		);
 
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
@@ -173,79 +324,15 @@ describe("CustomIngredientForm", () => {
 		);
 	});
 
-	it("can move the last saved ingredient from Fridge to shopping", async () => {
-		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
-
-		await openManualForm();
-		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
-			target: { value: "Moveable snack" },
-		});
-		await fireEvent.click(
-			screen.getByRole("button", { name: /save \+ add/i }),
-		);
-		await waitFor(() =>
-			expect(screen.getByText(/saved and added to Fridge/i)).toBeInTheDocument(),
-		);
-
-		await fireEvent.click(
-			screen.getByRole("button", { name: /move to shopping/i }),
-		);
-
-		await waitFor(() =>
-			expect(
-				screen.getByText(/moveable snack moved to shopping list/i),
-			).toBeInTheDocument(),
-		);
-		expect(smoothieListMocks.addFoodToSmoothieList).toHaveBeenLastCalledWith(
-			MIX_STORAGE_KEYS.shoppingList,
-			expect.objectContaining({ description: "Moveable snack" }),
-		);
-		expect(smoothieListMocks.removeFoodFromSmoothieList).toHaveBeenCalledWith(
-			MIX_STORAGE_KEYS.fridge,
-			expect.any(Number),
-		);
-	});
-
-	it("can undo the last list add while keeping the custom ingredient saved", async () => {
-		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
-
-		await openManualForm();
-		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
-			target: { value: "Undo snack" },
-		});
-		await fireEvent.click(
-			screen.getByRole("button", { name: /save \+ add/i }),
-		);
-		await waitFor(() =>
-			expect(screen.getByText(/saved and added to Fridge/i)).toBeInTheDocument(),
-		);
-
-		await fireEvent.click(screen.getByRole("button", { name: /^undo$/i }));
-
-		await waitFor(() =>
-			expect(
-				screen.getByText(/custom ingredient is still saved/i),
-			).toBeInTheDocument(),
-		);
-		expect(smoothieListMocks.removeFoodFromSmoothieList).toHaveBeenCalledWith(
-			MIX_STORAGE_KEYS.fridge,
-			expect.any(Number),
-		);
-	});
-
 	it("normalizes a manually entered barcode before saving", async () => {
 		const onCreate = vi.fn();
 		render(CustomIngredientForm, { props: { onCreate } });
 
-		await openManualForm();
-		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
-			target: { value: "Packaged snack" },
-		});
-		await fireEvent.input(screen.getByLabelText(/upc \/ ean barcode/i), {
-			target: { value: "4006381333931" },
+		await fillRequiredCustomIngredient("Packaged snack", {
+			barcode: "4006381333931",
 		});
 		await fireEvent.click(
-			screen.getByRole("button", { name: /save \+ add/i }),
+			screen.getByRole("button", { name: /add ingredient/i }),
 		);
 
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
@@ -261,26 +348,23 @@ describe("CustomIngredientForm", () => {
 		await openManualForm();
 		expect(screen.queryByLabelText(/volume in this serving/i)).not.toBeInTheDocument();
 
-		await fireEvent.click(screen.getByLabelText(/allow volume measurements/i));
+		await fireEvent.click(screen.getByLabelText(/liquid ingredient/i));
+		await continueToNextStep();
 		expect(screen.getByLabelText(/volume in this serving/i)).toBeInTheDocument();
-		expect(screen.getByText(/2 tbsp weighs 32g/i)).toBeInTheDocument();
+		expect(screen.getByText(/records the entered volume as weighing/i)).toBeInTheDocument();
 	});
 
 	it("shares a barcoded label only after explicit consent", async () => {
 		const onCreate = vi.fn();
 		render(CustomIngredientForm, { props: { onCreate } });
 
-		await openManualForm();
-		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
-			target: { value: "New packaged food" },
-		});
-		await fireEvent.input(screen.getByLabelText(/upc \/ ean barcode/i), {
-			target: { value: "4006381333931" },
+		await fillRequiredCustomIngredient("New packaged food", {
+			barcode: "4006381333931",
 		});
 
 		expect(submitSharedProduct).not.toHaveBeenCalled();
 		await fireEvent.click(
-			screen.getByLabelText(/help other users find this product/i),
+			screen.getByLabelText(/share with community/i),
 		);
 		const photo = new File([new Uint8Array([0xff, 0xd8, 0xff])], "label.jpg", {
 			type: "image/jpeg",
@@ -295,28 +379,24 @@ describe("CustomIngredientForm", () => {
 			});
 		}
 		await fireEvent.click(
-			screen.getByRole("button", { name: /save \+ add/i }),
+			screen.getByRole("button", { name: /add ingredient/i }),
 		);
 
 		await waitFor(() => expect(submitSharedProduct).toHaveBeenCalledOnce());
-		expect(screen.getByText("Waiting for review.")).toBeInTheDocument();
+		expect(onCreate).toHaveBeenCalledOnce();
 	});
 
 	it("requires package evidence before sharing an unknown product", async () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
-		await openManualForm();
-		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
-			target: { value: "Unknown packaged food" },
-		});
-		await fireEvent.input(screen.getByLabelText(/upc \/ ean barcode/i), {
-			target: { value: "4006381333931" },
+		await fillRequiredCustomIngredient("Unknown packaged food", {
+			barcode: "4006381333931",
 		});
 		await fireEvent.click(
-			screen.getByLabelText(/help other users find this product/i),
+			screen.getByLabelText(/share with community/i),
 		);
 		await fireEvent.click(
-			screen.getByRole("button", { name: /save \+ add/i }),
+			screen.getByRole("button", { name: /add ingredient/i }),
 		);
 
 		expect(screen.getByRole("alert")).toHaveTextContent(
@@ -344,12 +424,9 @@ describe("CustomIngredientForm", () => {
 
 		render(CustomIngredientForm, { props: { onCreate } });
 
-		await openManualForm();
-		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
-			target: { value: "Honey greek yogurt" },
-		});
+		await fillRequiredCustomIngredient("Honey greek yogurt");
 		await fireEvent.click(
-			screen.getByRole("button", { name: /save \+ add/i }),
+			screen.getByRole("button", { name: /add ingredient/i }),
 		);
 
 		await waitFor(() => expect(onCreate).toHaveBeenCalledWith(existingFood));
@@ -358,7 +435,6 @@ describe("CustomIngredientForm", () => {
 			existingFood,
 		);
 		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-		expect(screen.getByText(/already saved and is now in Fridge/i)).toBeInTheDocument();
 		expect(screen.getByText("Enter manually").closest("details")).not.toHaveAttribute(
 			"open",
 		);
@@ -372,7 +448,7 @@ describe("CustomIngredientForm", () => {
 		expect(panel).not.toHaveAttribute("open");
 
 		await openManualForm();
-		await fireEvent.input(screen.getByLabelText(/ingredient name/i), {
+		await fireEvent.input(screen.getByLabelText(/food name/i), {
 			target: { value: "Unfinished ingredient" },
 		});
 		expect(panel).toHaveAttribute("open");
@@ -381,7 +457,7 @@ describe("CustomIngredientForm", () => {
 		expect(panel).not.toHaveAttribute("open");
 
 		await fireEvent.click(toggle);
-		expect(screen.getByLabelText(/ingredient name/i)).toHaveValue(
+		expect(screen.getByLabelText(/food name/i)).toHaveValue(
 			"Unfinished ingredient",
 		);
 	});

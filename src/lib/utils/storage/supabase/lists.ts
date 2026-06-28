@@ -18,7 +18,7 @@ const getCloudListType = (key: SmoothieListKey): CloudListType => {
 	return key === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping";
 };
 
-type CloudListSort = "recent" | "name-asc" | "name-desc";
+type CloudListSort = "recent" | "oldest" | "name-asc" | "name-desc";
 
 type CloudSmoothieListPageOptions = {
 	limit: number;
@@ -30,6 +30,8 @@ type CloudSmoothieListPageOptions = {
 
 type CloudListQuery = {
 	eq: (column: string, value: string) => CloudListQuery;
+	is: (column: string, value: null) => CloudListQuery;
+	not: (column: string, operator: string, value: null) => CloudListQuery;
 	or: (filters: string) => CloudListQuery;
 	order: (column: string, options: { ascending: boolean }) => CloudListQuery;
 };
@@ -55,10 +57,15 @@ const applyFoodSearchFilters = <Query extends CloudListQuery>(
 		nextQuery = nextQuery.eq("food->>customFood", "true");
 	}
 
+	if (options.sourceFilter === "shared") {
+		nextQuery = nextQuery.not("food->>sharedProductId", "is", null);
+	}
+
 	if (options.sourceFilter === "fdc") {
 		nextQuery = nextQuery.or(
 			"food->>customFood.is.null,food->>customFood.eq.false",
 		);
+		nextQuery = nextQuery.is("food->>sharedProductId", null);
 	}
 
 	return nextQuery as Query;
@@ -74,6 +81,12 @@ const applyFoodSort = <Query extends CloudListQuery>(
 
 	if (sort === "name-desc") {
 		return query.order("food->>description", { ascending: false }) as Query;
+	}
+
+	if (sort === "oldest") {
+		return query
+			.order("created_at", { ascending: true })
+			.order("id", { ascending: true }) as Query;
 	}
 
 	return query

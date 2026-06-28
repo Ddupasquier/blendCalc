@@ -179,6 +179,10 @@ $app-shell-header-height: 4rem;
 // bottom sheets, and authenticated page bottom padding.
 $app-shell-nav-height: 4.85rem;
 
+// Maximum visible bottom sheet height. Sheets should shrink to their content
+// until this cap, then scroll internally without hiding the drag handle.
+$app-bottom-sheet-max-height: 80dvh;
+
 // Figma mobile shell horizontal content padding. Use for rebuilt page gutters.
 $app-shell-padding-x: 1rem;
 
@@ -341,19 +345,23 @@ $app-control-height-sm: 2rem;
 $app-font-size-base: 16px;
 
 // Extra-small text. Use for tiny badges, compact metadata, and microcopy.
-$app-font-size-xs: 0.68rem;
+$app-font-size-xs: 0.76rem;
 
 // Small text. Use for helper copy, captions, badges, and compact labels.
-$app-font-size-sm: 0.78rem;
+$app-font-size-sm: 0.88rem;
 
 // Default compact UI text. Use for buttons, pills, form labels, and dense rows.
-$app-font-size-md: 0.86rem;
+$app-font-size-md: 1rem;
+
+// Compact uppercase label spacing. Use for section labels inside mobile sheets,
+// badges, and dense metadata labels.
+$app-letter-spacing-label: 0.04em;
 
 // Section heading text. Use for card headings and compact panel titles.
-$app-font-size-lg: 0.95rem;
+$app-font-size-lg: 1.08rem;
 
 // Page/subsection title text. Use for modal titles and prominent card headers.
-$app-font-size-xl: 1.15rem;
+$app-font-size-xl: 1.25rem;
 
 // App color roles
 // -----------------------------------------------------------------------------
@@ -490,6 +498,9 @@ $app-custom-ring-shadow: 0 0 0 2px rgba(123, 95, 163, 0.12);
 
 // Focus outline. Applied to keyboard-focused buttons and interactive chips.
 $app-focus-outline: 2px solid $app-primary;
+
+// Focus outline offset. Keeps keyboard focus visible without shifting layout.
+$app-focus-outline-offset: 2px;
 
 // Nutrition label heavy outer border. Keep intentionally high-contrast.
 $app-border-strong: 3.5px solid $color-ink-black;

@@ -87,10 +87,11 @@
 		<button
 			type="button"
 			aria-label={`Remove ${food.description}`}
+			aria-busy={removing}
 			disabled={removing}
 			onclick={onRemove}
 		>
-			×
+			{removing ? "…" : "×"}
 		</button>
 	</div>
 </article>

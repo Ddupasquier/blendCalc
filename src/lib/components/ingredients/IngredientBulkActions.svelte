@@ -18,17 +18,20 @@
 
 <div class="ingredient-bulk-actions" class:ingredient-bulk-actions--active={selectedCount > 0}>
 	{#if selectedCount > 0}
-		<button type="button" onclick={onClear}>Uncheck all</button>
+		<button type="button" disabled={moving} onclick={onClear}>Uncheck all</button>
 		<button
 			class="ingredient-bulk-actions__move"
 			type="button"
+			aria-busy={moving}
 			onclick={onMove}
 			disabled={moving}
 		>
-			Move {selectedCount} checked → {moveTargetLabel}
+			{moving
+				? "Moving…"
+				: `Move ${selectedCount} checked → ${moveTargetLabel}`}
 		</button>
 	{:else}
-		<button type="button" onclick={onSelectAll}>Check all</button>
+		<button type="button" disabled={moving} onclick={onSelectAll}>Check all</button>
 	{/if}
 </div>
 

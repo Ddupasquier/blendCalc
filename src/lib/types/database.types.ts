@@ -120,6 +120,132 @@ export type Database = {
         }
         Relationships: []
       }
+      compatibility_tags: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          label: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          label: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          label?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      custom_food_category_observations: {
+        Row: {
+          category_id: string
+          created_at: string
+          first_seen_at: string
+          id: number
+          label: string
+          last_seen_at: string
+          normalized_value: string
+          observation_count: number
+          query: string
+          source: string
+          source_field: string
+          source_payload: Json
+          source_reference: string | null
+          source_value: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          first_seen_at?: string
+          id?: never
+          label: string
+          last_seen_at?: string
+          normalized_value: string
+          observation_count?: number
+          query: string
+          source: string
+          source_field: string
+          source_payload?: Json
+          source_reference?: string | null
+          source_value: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          first_seen_at?: string
+          id?: never
+          label?: string
+          last_seen_at?: string
+          normalized_value?: string
+          observation_count?: number
+          query?: string
+          source?: string
+          source_field?: string
+          source_payload?: Json
+          source_reference?: string | null
+          source_value?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      custom_food_category_options: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          first_seen_at: string
+          id: string
+          label: string
+          last_seen_at: string
+          normalized_value: string
+          observation_count: number
+          source_count: number
+          sources: string[]
+          updated_at: string
+          verification_status: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          first_seen_at?: string
+          id: string
+          label: string
+          last_seen_at?: string
+          normalized_value: string
+          observation_count?: number
+          source_count?: number
+          sources?: string[]
+          updated_at?: string
+          verification_status?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          first_seen_at?: string
+          id?: string
+          label?: string
+          last_seen_at?: string
+          normalized_value?: string
+          observation_count?: number
+          source_count?: number
+          sources?: string[]
+          updated_at?: string
+          verification_status?: string
+        }
+        Relationships: []
+      }
       custom_foods: {
         Row: {
           barcode: string | null
@@ -273,6 +399,110 @@ export type Database = {
           },
         ]
       }
+      food_preference_api_observations: {
+        Row: {
+          brand_owner: string | null
+          category: string
+          fact_type: string
+          first_seen_at: string
+          id: string
+          label: string
+          last_seen_at: string
+          matched_name: string | null
+          normalized_value: string
+          observation_count: number
+          query: string
+          source: string
+          source_field: string
+          source_payload: Json
+          source_reference: string | null
+          source_value: string
+        }
+        Insert: {
+          brand_owner?: string | null
+          category: string
+          fact_type: string
+          first_seen_at?: string
+          id?: string
+          label: string
+          last_seen_at?: string
+          matched_name?: string | null
+          normalized_value: string
+          observation_count?: number
+          query: string
+          source: string
+          source_field: string
+          source_payload?: Json
+          source_reference?: string | null
+          source_value: string
+        }
+        Update: {
+          brand_owner?: string | null
+          category?: string
+          fact_type?: string
+          first_seen_at?: string
+          id?: string
+          label?: string
+          last_seen_at?: string
+          matched_name?: string | null
+          normalized_value?: string
+          observation_count?: number
+          query?: string
+          source?: string
+          source_field?: string
+          source_payload?: Json
+          source_reference?: string | null
+          source_value?: string
+        }
+        Relationships: []
+      }
+      food_preference_option_catalog: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          label: string
+          normalized_value: string
+          source_type: string
+          source_values: string[]
+          tag_id: string | null
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          label: string
+          normalized_value: string
+          source_type: string
+          source_values?: string[]
+          tag_id?: string | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          label?: string
+          normalized_value?: string
+          source_type?: string
+          source_values?: string[]
+          tag_id?: string | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_preference_option_catalog_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "compatibility_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mix_preferences: {
         Row: {
           created_at: string
@@ -410,6 +640,203 @@ export type Database = {
         }
         Relationships: []
       }
+      nutrient_manual_entry_fields: {
+        Row: {
+          created_at: string
+          dedupe_key: string
+          display_label: string | null
+          enabled: boolean
+          group_id: string
+          last_observed_at: string | null
+          nutrient_id: number
+          nutrient_type: string
+          observation_count: number
+          sort_order: number
+          source_count: number
+          sources: string[]
+          updated_at: string
+          verification_status: string
+        }
+        Insert: {
+          created_at?: string
+          dedupe_key: string
+          display_label?: string | null
+          enabled?: boolean
+          group_id: string
+          last_observed_at?: string | null
+          nutrient_id: number
+          nutrient_type: string
+          observation_count?: number
+          sort_order: number
+          source_count?: number
+          sources?: string[]
+          updated_at?: string
+          verification_status?: string
+        }
+        Update: {
+          created_at?: string
+          dedupe_key?: string
+          display_label?: string | null
+          enabled?: boolean
+          group_id?: string
+          last_observed_at?: string | null
+          nutrient_id?: number
+          nutrient_type?: string
+          observation_count?: number
+          sort_order?: number
+          source_count?: number
+          sources?: string[]
+          updated_at?: string
+          verification_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_manual_entry_fields_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_manual_entry_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nutrient_manual_entry_fields_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: true
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+        ]
+      }
+      nutrient_manual_entry_groups: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          entry_step: string
+          id: string
+          last_observed_at: string | null
+          observation_count: number
+          sort_order: number
+          source_count: number
+          sources: string[]
+          title: string
+          updated_at: string
+          verification_status: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          entry_step: string
+          id: string
+          last_observed_at?: string | null
+          observation_count?: number
+          sort_order: number
+          source_count?: number
+          sources?: string[]
+          title: string
+          updated_at?: string
+          verification_status?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          entry_step?: string
+          id?: string
+          last_observed_at?: string | null
+          observation_count?: number
+          sort_order?: number
+          source_count?: number
+          sources?: string[]
+          title?: string
+          updated_at?: string
+          verification_status?: string
+        }
+        Relationships: []
+      }
+      nutrient_manual_entry_observations: {
+        Row: {
+          classification_method: string
+          created_at: string
+          dedupe_key: string
+          display_label: string
+          entry_step: string
+          field_sort_order: number
+          group_id: string
+          group_sort_order: number
+          group_title: string
+          id: string
+          nutrient_id: number
+          nutrient_name: string
+          nutrient_number: string | null
+          nutrient_type: string
+          observed_at: string
+          query: string
+          source: string
+          source_data_type: string | null
+          source_food_name: string | null
+          source_payload: Json
+          source_reference: string
+          unit_name: string
+          updated_at: string
+        }
+        Insert: {
+          classification_method: string
+          created_at?: string
+          dedupe_key: string
+          display_label: string
+          entry_step: string
+          field_sort_order: number
+          group_id: string
+          group_sort_order: number
+          group_title: string
+          id?: string
+          nutrient_id: number
+          nutrient_name: string
+          nutrient_number?: string | null
+          nutrient_type: string
+          observed_at?: string
+          query: string
+          source: string
+          source_data_type?: string | null
+          source_food_name?: string | null
+          source_payload?: Json
+          source_reference: string
+          unit_name: string
+          updated_at?: string
+        }
+        Update: {
+          classification_method?: string
+          created_at?: string
+          dedupe_key?: string
+          display_label?: string
+          entry_step?: string
+          field_sort_order?: number
+          group_id?: string
+          group_sort_order?: number
+          group_title?: string
+          id?: string
+          nutrient_id?: number
+          nutrient_name?: string
+          nutrient_number?: string | null
+          nutrient_type?: string
+          observed_at?: string
+          query?: string
+          source?: string
+          source_data_type?: string | null
+          source_food_name?: string | null
+          source_payload?: Json
+          source_reference?: string
+          unit_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_manual_entry_observations_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+        ]
+      }
       product_api_cache: {
         Row: {
           cache_key: string
@@ -442,6 +869,77 @@ export type Database = {
           status_code?: number
         }
         Relationships: []
+      }
+      product_compatibility_facts: {
+        Row: {
+          confidence: string
+          created_at: string
+          fact_type: string
+          id: string
+          shared_product_id: string | null
+          shared_product_observation_id: string | null
+          shared_product_submission_id: string | null
+          source_text: string | null
+          source_type: string
+          tag_id: string
+          updated_at: string
+        }
+        Insert: {
+          confidence: string
+          created_at?: string
+          fact_type: string
+          id?: string
+          shared_product_id?: string | null
+          shared_product_observation_id?: string | null
+          shared_product_submission_id?: string | null
+          source_text?: string | null
+          source_type: string
+          tag_id: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          fact_type?: string
+          id?: string
+          shared_product_id?: string | null
+          shared_product_observation_id?: string | null
+          shared_product_submission_id?: string | null
+          source_text?: string | null
+          source_type?: string
+          tag_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_compatibility_facts_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_compatibility_facts_shared_product_observation_id_fkey"
+            columns: ["shared_product_observation_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_compatibility_facts_shared_product_submission_id_fkey"
+            columns: ["shared_product_submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_compatibility_facts_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "compatibility_tags"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_submission_blocks: {
         Row: {
@@ -853,159 +1351,14 @@ export type Database = {
         }
         Relationships: []
       }
-      compatibility_tags: {
-        Row: {
-          category: string
-          created_at: string
-          id: string
-          label: string
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          category: string
-          created_at?: string
-          id?: string
-          label: string
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          id?: string
-          label?: string
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      food_preference_option_catalog: {
-        Row: {
-          category: string
-          created_at: string
-          id: string
-          label: string
-          normalized_value: string
-          source_type: string
-          source_values: string[]
-          tag_id: string | null
-          updated_at: string
-          usage_count: number
-        }
-        Insert: {
-          category: string
-          created_at?: string
-          id?: string
-          label: string
-          normalized_value: string
-          source_type: string
-          source_values?: string[]
-          tag_id?: string | null
-          updated_at?: string
-          usage_count?: number
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          id?: string
-          label?: string
-          normalized_value?: string
-          source_type?: string
-          source_values?: string[]
-          tag_id?: string | null
-          updated_at?: string
-          usage_count?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "food_preference_option_catalog_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "compatibility_tags"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      product_compatibility_facts: {
-        Row: {
-          confidence: string
-          created_at: string
-          fact_type: string
-          id: string
-          shared_product_id: string | null
-          shared_product_observation_id: string | null
-          shared_product_submission_id: string | null
-          source_text: string | null
-          source_type: string
-          tag_id: string
-          updated_at: string
-        }
-        Insert: {
-          confidence: string
-          created_at?: string
-          fact_type: string
-          id?: string
-          shared_product_id?: string | null
-          shared_product_observation_id?: string | null
-          shared_product_submission_id?: string | null
-          source_text?: string | null
-          source_type: string
-          tag_id: string
-          updated_at?: string
-        }
-        Update: {
-          confidence?: string
-          created_at?: string
-          fact_type?: string
-          id?: string
-          shared_product_id?: string | null
-          shared_product_observation_id?: string | null
-          shared_product_submission_id?: string | null
-          source_text?: string | null
-          source_type?: string
-          tag_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "product_compatibility_facts_shared_product_id_fkey"
-            columns: ["shared_product_id"]
-            isOneToOne: false
-            referencedRelation: "shared_products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_compatibility_facts_shared_product_observation_id_fkey"
-            columns: ["shared_product_observation_id"]
-            isOneToOne: false
-            referencedRelation: "shared_product_observations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_compatibility_facts_shared_product_submission_id_fkey"
-            columns: ["shared_product_submission_id"]
-            isOneToOne: false
-            referencedRelation: "shared_product_submissions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_compatibility_facts_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "compatibility_tags"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       shared_products: {
         Row: {
           approved_by: string | null
           approved_submission_id: string | null
           barcode: string
           brand_owner: string | null
-          compatibility_summary: Json
           canonical_provenance: Json
+          compatibility_summary: Json
           confidence: string
           created_at: string
           food: Json
@@ -1023,8 +1376,8 @@ export type Database = {
           approved_submission_id?: string | null
           barcode: string
           brand_owner?: string | null
-          compatibility_summary?: Json
           canonical_provenance?: Json
+          compatibility_summary?: Json
           confidence: string
           created_at?: string
           food: Json
@@ -1042,8 +1395,8 @@ export type Database = {
           approved_submission_id?: string | null
           barcode?: string
           brand_owner?: string | null
-          compatibility_summary?: Json
           canonical_provenance?: Json
+          compatibility_summary?: Json
           confidence?: string
           created_at?: string
           food?: Json
@@ -1217,10 +1570,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      compatibility_normalize_text: { Args: { p_value: string }; Returns: string }
+      compatibility_normalize_text: {
+        Args: { p_value: string }
+        Returns: string
+      }
       default_profile_display_name: {
         Args: { p_user_id: string }
         Returns: string
+      }
+      extract_product_compatibility_facts: {
+        Args: {
+          p_food?: Json
+          p_parent_source?: string
+          p_shared_product_id?: string
+          p_shared_product_observation_id?: string
+          p_shared_product_submission_id?: string
+        }
+        Returns: undefined
       }
       food_metadata_search_text: { Args: { p_food: Json }; Returns: string }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
@@ -1240,6 +1606,15 @@ export type Database = {
         }
         Returns: string
       }
+      rebuild_custom_food_category_options: { Args: never; Returns: undefined }
+      rebuild_food_preference_option_catalog: {
+        Args: never
+        Returns: undefined
+      }
+      rebuild_shared_product_compatibility_summary: {
+        Args: { p_shared_product_id: string }
+        Returns: undefined
+      }
       reject_blocked_signup: { Args: { event: Json }; Returns: Json }
       replace_food_nutrients: {
         Args: {
@@ -1257,20 +1632,9 @@ export type Database = {
         }
         Returns: undefined
       }
-      rebuild_shared_product_compatibility_summary: {
-        Args: { p_shared_product_id: string }
-        Returns: undefined
-      }
-      rebuild_food_preference_option_catalog: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
-      sync_food_preference_option_catalog: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      sync_nutrient_manual_entry_fields: { Args: never; Returns: undefined }
       sync_user_compatibility_rules: {
         Args: {
           p_allergens?: string[]

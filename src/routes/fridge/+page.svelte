@@ -2,15 +2,15 @@
     import Sliders from "$lib/assets/icons/Sliders.svelte";
     import IngredientSearch from "$lib/components/ingredients/IngredientSearch.svelte";
     import BarcodeScanButton from "$lib/components/ingredients/BarcodeScanButton.svelte";
-    import CustomIngredientForm from "$lib/components/ingredients/CustomIngredientForm.svelte";
     import IngredientActionSheet from "$lib/components/ingredients/IngredientActionSheet.svelte";
     import IngredientBulkActions from "$lib/components/ingredients/IngredientBulkActions.svelte";
     import IngredientEmptyState from "$lib/components/ingredients/IngredientEmptyState.svelte";
+    import IngredientFilterSheet from "$lib/components/ingredients/IngredientFilterSheet.svelte";
     import IngredientListTabs from "$lib/components/ingredients/IngredientListTabs.svelte";
+    import ManualEntryLauncher from "$lib/components/ingredients/ManualEntryLauncher.svelte";
+    import ManualEntrySheet from "$lib/components/ingredients/ManualEntrySheet.svelte";
     import NutritionPanel from "$lib/components/ingredients/NutritionPanel.svelte";
     import SavedIngredientCard from "$lib/components/ingredients/SavedIngredientCard.svelte";
-    import ListControls from "$lib/components/common/ListControls.svelte";
-    import SortSelect from "$lib/components/common/SortSelect.svelte";
     import TextInputDialog from "$lib/components/common/TextInputDialog.svelte";
     import {
         LIST_PAGE_SIZES,
@@ -60,7 +60,6 @@
     let onHand = $state<FdcFood[]>([]);
     let shoppingList = $state<FdcFood[]>([]);
     let selectedFood = $state<FdcFood | null>(null);
-    let closeManualSignal = $state(0);
     let scanSignal = $state(0);
     let barcodeLookupBusy = $state(false);
     let nutritionPreviewElement = $state<HTMLDivElement | null>(null);
@@ -68,13 +67,17 @@
     let sourceFilter = $state("all");
     let listSort = $state<FoodListSort>("recent");
     let activeList = $state<SmoothieListKey>(MIX_STORAGE_KEYS.fridge);
-    let filtersOpen = $state(false);
+    let activeSheet = $state<"manual-entry" | "filters" | null>(null);
     let onHandVisibleCount = $state<number>(LIST_PAGE_SIZES.ingredientPills);
     let shoppingVisibleCount = $state<number>(LIST_PAGE_SIZES.ingredientPills);
     let onHandTotalCount = $state(0);
     let shoppingListTotalCount = $state(0);
+    let listLoading = $state(true);
+    let listLoadingError = $state("");
+    let listLoadRequestId = 0;
     let loadingMoreList = $state<SmoothieListKey | null>(null);
     let ingredientListElement = $state<HTMLUListElement | null>(null);
+    let ingredientListSentinel = $state<HTMLLIElement | null>(null);
     let selectedListItemIds = $state<Record<SmoothieListKey, number[]>>({
         [MIX_STORAGE_KEYS.fridge]: [],
         [MIX_STORAGE_KEYS.shoppingList]: [],
@@ -111,8 +114,8 @@
         );
     };
 
-    const filteredOnHand = $derived.by(() => filterFoods(onHand));
-    const filteredShoppingList = $derived.by(() => filterFoods(shoppingList));
+    const filteredOnHand = $derived(onHand);
+    const filteredShoppingList = $derived(shoppingList);
     const activeFilteredList = $derived.by(() =>
         activeList === MIX_STORAGE_KEYS.fridge
             ? filteredOnHand
@@ -163,22 +166,24 @@
         if (key === MIX_STORAGE_KEYS.fridge) {
             onHand = reset ? foods : [...onHand, ...foods];
             onHandTotalCount = totalCount;
-            onHandVisibleCount = Math.max(
-                LIST_PAGE_SIZES.ingredientPills,
-                onHand.length,
-            );
+            onHandVisibleCount = reset
+                ? LIST_PAGE_SIZES.ingredientPills
+                : Math.max(onHandVisibleCount, onHand.length);
             return;
         }
 
         shoppingList = reset ? foods : [...shoppingList, ...foods];
         shoppingListTotalCount = totalCount;
-        shoppingVisibleCount = Math.max(
-            LIST_PAGE_SIZES.ingredientPills,
-            shoppingList.length,
-        );
+        shoppingVisibleCount = reset
+            ? LIST_PAGE_SIZES.ingredientPills
+            : Math.max(shoppingVisibleCount, shoppingList.length);
     };
 
-    const loadListPage = async (key: SmoothieListKey, reset = false) => {
+    const loadListPage = async (
+        key: SmoothieListKey,
+        reset = false,
+        requestId = listLoadRequestId,
+    ) => {
         const currentOffset = reset
             ? 0
             : key === MIX_STORAGE_KEYS.fridge
@@ -195,40 +200,51 @@
         const page =
             cloudPage ?? readLocalListPage(key, currentOffset, pageSize);
 
+        if (requestId !== listLoadRequestId) return;
         setListPage(key, page.foods, page.totalCount, reset);
     };
 
     const loadLists = async () => {
+        const requestId = ++listLoadRequestId;
+        listLoading = true;
+        listLoadingError = "";
         resetVisibleCounts();
-        const [nextCustomFoods] = await Promise.all([
-            reconcileCloudCustomFoods(readCustomFoods()),
-            loadListPage(MIX_STORAGE_KEYS.fridge, true),
-            loadListPage(MIX_STORAGE_KEYS.shoppingList, true),
-        ]);
+        try {
+            const [nextCustomFoods] = await Promise.all([
+                reconcileCloudCustomFoods(readCustomFoods()),
+                loadListPage(MIX_STORAGE_KEYS.fridge, true, requestId),
+                loadListPage(MIX_STORAGE_KEYS.shoppingList, true, requestId),
+            ]);
 
-        cacheCustomFoodsLocally(nextCustomFoods);
+            if (requestId !== listLoadRequestId) return;
+            cacheCustomFoodsLocally(nextCustomFoods);
+        } catch {
+            if (requestId === listLoadRequestId) {
+                listLoadingError =
+                    "Saved ingredients could not be loaded. Try again.";
+            }
+        } finally {
+            if (requestId === listLoadRequestId) {
+                listLoading = false;
+            }
+        }
     };
 
-    const closeManualEntry = () => {
-        closeManualSignal += 1;
+    const closeIngredientSheet = () => {
+        activeSheet = null;
     };
 
     const startBarcodeScan = () => {
-        closeManualEntry();
+        activeSheet = "manual-entry";
         scanSignal += 1;
     };
 
-    const openManualEntry = async () => {
-        await tick();
-        const manualDetails = document.querySelector<HTMLDetailsElement>(
-            ".custom-ingredient__manual",
-        );
-        if (!manualDetails) return;
-        manualDetails.open = true;
-        manualDetails.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-        });
+    const openManualEntry = () => {
+        activeSheet = "manual-entry";
+    };
+
+    const toggleFilters = () => {
+        activeSheet = activeSheet === "filters" ? null : "filters";
     };
 
     const scrollToNutritionPreview = async () => {
@@ -245,12 +261,13 @@
     };
 
     const handleCreate = async (food: FdcFood) => {
+        closeIngredientSheet();
         selectedFood = food;
         await scrollToNutritionPreview();
     };
 
     const handleSearchSelect = async (food: FdcFood) => {
-        closeManualEntry();
+        closeIngredientSheet();
         selectedFood = food;
         await scrollToNutritionPreview();
     };
@@ -499,20 +516,27 @@
         }
     };
 
-    const updateListQuery = (value: string) => {
-        listQuery = value;
-        resetVisibleCounts();
-        void loadLists();
-    };
+    const applyListFilters = ({
+        query,
+        filterValue,
+        sortValue,
+    }: {
+        query: string;
+        filterValue: string;
+        sortValue: string;
+    }) => {
+        const nextSort = sortValue as FoodListSort;
+        const unchanged =
+            listQuery === query &&
+            sourceFilter === filterValue &&
+            listSort === nextSort;
 
-    const updateSourceFilter = (value: string) => {
-        sourceFilter = value;
-        resetVisibleCounts();
-        void loadLists();
-    };
+        listQuery = query;
+        sourceFilter = filterValue;
+        listSort = nextSort;
+        activeSheet = null;
 
-    const updateListSort = (value: string) => {
-        listSort = value as FoodListSort;
+        if (unchanged) return;
         resetVisibleCounts();
         void loadLists();
     };
@@ -550,6 +574,27 @@
         }
     });
 
+    $effect(() => {
+        const listElement = ingredientListElement;
+        const sentinel = ingredientListSentinel;
+        if (!listElement || !sentinel) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries.some((entry) => entry.isIntersecting)) {
+                    void revealMoreActiveItems();
+                }
+            },
+            {
+                root: listElement,
+                rootMargin: `${LIST_REVEAL_BUFFER_PX}px 0px`,
+            },
+        );
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    });
+
     onMount(() => {
         resetVisibleCounts();
         loadLists();
@@ -577,7 +622,7 @@
             <div class="search-toolbar__input">
                 <IngredientSearch
                     onSelect={handleSearchSelect}
-                    onSearchFocus={closeManualEntry}
+                    onSearchFocus={closeIngredientSheet}
                 />
             </div>
             <BarcodeScanButton
@@ -587,49 +632,18 @@
             />
             <button
                 class="filter-button"
-                class:filter-button--active={filtersOpen}
+                class:filter-button--active={activeSheet === "filters"}
                 type="button"
-                aria-expanded={filtersOpen}
-                aria-controls="ingredient-list-filters"
-                onclick={() => (filtersOpen = !filtersOpen)}
+                aria-expanded={activeSheet === "filters"}
+                aria-controls="ingredient-filter-sheet-title"
+                onclick={toggleFilters}
             >
                 <span class="sr-only">Filter saved ingredients</span>
                 <Sliders class="filter-button__icon" />
             </button>
         </div>
 
-        <CustomIngredientForm
-            onCreate={handleCreate}
-            closeManualSignal={closeManualSignal}
-            {scanSignal}
-            showScanButton={false}
-            onLookupStateChange={(busy) => (barcodeLookupBusy = busy)}
-        />
-
-        {#if filtersOpen && (onHand.length > 0 || shoppingList.length > 0)}
-            <div id="ingredient-list-filters" class="ingredient-list-controls">
-                <ListControls
-                    id="ingredient-lists-search"
-                    query={listQuery}
-                    onQueryChange={updateListQuery}
-                    placeholder="Find a saved ingredient…"
-                    label="Find saved ingredients"
-                    totalCount={onHand.length + shoppingList.length}
-                    visibleCount={filteredOnHand.length + filteredShoppingList.length}
-                    itemLabel="ingredients"
-                    filterLabel="Source"
-                    filterValue={sourceFilter}
-                    filterOptions={INGREDIENT_SOURCE_FILTER_OPTIONS}
-                    onFilterChange={updateSourceFilter}
-                />
-                <SortSelect
-                    id="ingredient-lists-sort"
-                    value={listSort}
-                    options={FOOD_LIST_SORT_OPTIONS}
-                    onChange={updateListSort}
-                />
-            </div>
-        {/if}
+        <ManualEntryLauncher onSelect={openManualEntry} />
 
         {#if selectedFood}
             <div
@@ -649,7 +663,11 @@
         {/if}
     </section>
 
-    <section class="saved-ingredients" aria-labelledby="saved-ingredients-title">
+    <section
+        class="saved-ingredients"
+        aria-labelledby="saved-ingredients-title"
+        aria-busy={listLoading}
+    >
         <h2 id="saved-ingredients-title" class="sr-only">Saved ingredients</h2>
         <IngredientListTabs
             {activeList}
@@ -660,6 +678,16 @@
 
         {#if listActionError}
             <p class="list-action-error" role="alert">{listActionError}</p>
+        {/if}
+
+        {#if listLoadingError}
+            <p class="list-action-error" role="alert">{listLoadingError}</p>
+        {/if}
+
+        {#if listLoading}
+            <p class="saved-ingredients__loading" role="status" aria-live="polite">
+                Loading saved ingredients…
+            </p>
         {/if}
 
         {#if activeVisibleList.length > 0}
@@ -678,6 +706,7 @@
                 <ul
                     class="ingredient-card-list"
                     aria-label={`${getIngredientListLabel(activeList)} ingredients`}
+                    aria-busy={listLoading || loadingMoreList === activeList}
                     bind:this={ingredientListElement}
                     onscroll={handleActiveListScroll}
                 >
@@ -706,6 +735,7 @@
                     {/each}
                     {#if canRevealMoreActiveItems}
                         <li
+                            bind:this={ingredientListSentinel}
                             class="ingredient-card-list__sentinel"
                             aria-hidden="true"
                         ></li>
@@ -722,6 +752,14 @@
                         </li>
                     {/if}
                 </ul>
+            {:else if listLoading}
+                <div
+                    class="ingredient-list-loading"
+                    role="status"
+                    aria-live="polite"
+                >
+                    Loading {getIngredientListLabel(activeList).toLowerCase()} ingredients…
+                </div>
             {:else}
                 <IngredientEmptyState
                     {activeList}
@@ -744,6 +782,26 @@
         onRename={renameFromActionSheet}
         onMove={moveFromActionSheet}
         onRemove={removeFromActionSheet}
+    />
+
+    <ManualEntrySheet
+        open={activeSheet === "manual-entry"}
+        {scanSignal}
+        onClose={closeIngredientSheet}
+        onCreate={handleCreate}
+        onLookupStateChange={(busy) => (barcodeLookupBusy = busy)}
+    />
+
+	<IngredientFilterSheet
+		open={activeSheet === "filters"}
+		query={listQuery}
+		filterValue={sourceFilter}
+		filterOptions={INGREDIENT_SOURCE_FILTER_OPTIONS}
+        sortValue={listSort}
+        sortOptions={FOOD_LIST_SORT_OPTIONS}
+        loading={listLoading}
+        onApply={applyListFilters}
+        onClose={closeIngredientSheet}
     />
 
     <button
@@ -795,14 +853,14 @@
         grid-template-rows: auto auto minmax(0, 1fr);
         row-gap: $app-vertical-stack-gap;
         width: 100%;
-        max-width: $app-mobile-shell-width;
+        max-width: $app-max-width;
         height: calc(
             100dvh - $app-shell-header-height - $app-shell-nav-height -
                 env(safe-area-inset-bottom)
         );
         min-height: 0;
         margin: 0 auto;
-        padding: $app-shell-padding-y $app-shell-padding-x $app-vertical-stack-gap;
+        padding: $app-shell-padding-y $app-shell-padding-x 0;
         box-sizing: border-box;
         overflow: hidden;
         background: $color-figma-canvas;
@@ -949,7 +1007,7 @@
         max-height: 100%;
         min-height: 0;
         margin: 0;
-        padding: 0 0 $app-gap-sm;
+        padding: 0 0 $app-vertical-stack-gap;
         overflow-y: auto;
         overscroll-behavior: contain;
         scrollbar-gutter: stable;
@@ -980,6 +1038,27 @@
         }
     }
 
+	.saved-ingredients__loading {
+		margin: 0;
+		color: $color-figma-muted;
+		font-size: $app-font-size-sm;
+		font-weight: $app-font-weight-bold;
+		line-height: 1.3;
+	}
+
+	.ingredient-list-loading {
+		display: grid;
+		place-items: center;
+		min-height: 12rem;
+		padding: $app-gap-lg;
+		color: $color-figma-muted;
+		background: $color-figma-card;
+		border-radius: $app-rebuild-radius;
+		font-size: $app-font-size-md;
+		font-weight: $app-font-weight-bold;
+		text-align: center;
+	}
+
 	.list-action-error {
 		padding: $app-gap-sm;
 		color: $app-warning-strong;
@@ -989,17 +1068,6 @@
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
 	}
-
-    .ingredient-list-controls {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(10rem, auto);
-        align-items: end;
-        gap: $app-gap-sm;
-        padding: $app-gap-sm;
-        background: $color-figma-card;
-        border: 1px solid $color-figma-border;
-        border-radius: $app-rebuild-radius;
-    }
 
     .add-ingredient-fab {
         position: fixed;
@@ -1017,12 +1085,6 @@
         font-size: 2rem;
         font-weight: $app-font-weight-medium;
         line-height: 1;
-    }
-
-    @media (max-width: $app-breakpoint-lg) {
-        .ingredient-list-controls {
-            grid-template-columns: 1fr;
-        }
     }
 
     @media (max-width: $app-breakpoint-xs) {
