@@ -310,7 +310,7 @@
 	}
 
 	.search-error {
-		padding: 0.45rem 0.6rem;
+		padding: $app-rebuild-control-padding-y-sm $app-rebuild-control-padding-x-sm;
 		color: $app-warning-strong;
 		background: $app-warning-bg;
 		border: $app-warning-border;

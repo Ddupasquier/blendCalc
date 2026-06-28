@@ -10,6 +10,8 @@
 		label = title,
 		aboveNav = true,
 		fill = false,
+		comfortable = false,
+		titleStyle = "compact",
 		children,
 		onClose,
 	}: {
@@ -19,6 +21,8 @@
 		label?: string;
 		aboveNav?: boolean;
 		fill?: boolean;
+		comfortable?: boolean;
+		titleStyle?: "compact" | "prominent";
 		children: Snippet;
 		onClose: () => void;
 	} = $props();
@@ -35,6 +39,7 @@
 {#if open}
 	<div
 		class="bottom-sheet-backdrop"
+		class:bottom-sheet-backdrop--above-nav={aboveNav}
 		role="presentation"
 		onclick={onClose}
 		transition:fade={{ duration: 180 }}
@@ -43,6 +48,8 @@
 		class="bottom-sheet"
 		class:bottom-sheet--above-nav={aboveNav}
 		class:bottom-sheet--fill={fill}
+		class:bottom-sheet--comfortable={comfortable}
+		class:bottom-sheet--prominent-title={titleStyle === "prominent"}
 		role="dialog"
 		aria-modal="true"
 		aria-label={title ? undefined : label}
@@ -69,6 +76,10 @@
 		inset: 0;
 		z-index: 110;
 		background: $app-rebuild-overlay-bg;
+	}
+
+	.bottom-sheet-backdrop--above-nav {
+		bottom: calc($app-shell-nav-height + env(safe-area-inset-bottom));
 	}
 
 	.bottom-sheet {
@@ -105,6 +116,13 @@
 		}
 	}
 
+	.bottom-sheet--prominent-title {
+		h2 {
+			color: $color-figma-ink;
+			font-size: $app-font-size-xl;
+		}
+	}
+
 	.bottom-sheet--above-nav {
 		--bottom-sheet-bottom-offset: calc(
 			$app-shell-nav-height + env(safe-area-inset-bottom)
@@ -114,6 +132,13 @@
 	.bottom-sheet--fill {
 		height: min(
 			$app-bottom-sheet-max-height,
+			calc(100dvh - var(--bottom-sheet-bottom-offset) - $app-gap-md)
+		);
+	}
+
+	.bottom-sheet--comfortable {
+		min-height: min(
+			$app-bottom-sheet-comfortable-min-height,
 			calc(100dvh - var(--bottom-sheet-bottom-offset) - $app-gap-md)
 		);
 	}

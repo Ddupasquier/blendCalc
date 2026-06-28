@@ -1253,7 +1253,7 @@
 		align-items: center;
 		justify-content: space-between;
 		width: 100%;
-		padding: 0.85rem 1rem;
+		padding: $app-rebuild-card-padding-sm $app-rebuild-card-padding;
 		list-style: none;
 		cursor: pointer;
 
@@ -1333,7 +1333,7 @@
 		}
 
 		small {
-			padding: 0.08rem 0.35rem;
+			padding: $app-rebuild-badge-padding-y $app-rebuild-badge-padding-x;
 			color: $color-figma-muted;
 			background: $color-figma-control-surface;
 			border-radius: $app-rebuild-radius-pill;
@@ -1403,7 +1403,7 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: $app-gap-md;
-		padding: 1rem;
+		padding: $app-rebuild-card-padding;
 		background: $color-figma-soft-surface;
 		border-radius: $app-rebuild-radius;
 		text-transform: none;
@@ -1435,7 +1435,7 @@
 	.custom-ingredient__summary {
 		display: grid;
 		gap: $app-gap-md;
-		padding: 1rem;
+		padding: $app-rebuild-card-padding;
 		background: $color-figma-soft-surface;
 		border-radius: $app-rebuild-radius;
 	}
@@ -1480,7 +1480,7 @@
 			display: grid;
 			justify-items: center;
 			gap: $app-gap-xs;
-			padding: 0.65rem 0.45rem;
+			padding: $app-gap-sm;
 			background: $color-figma-card;
 			border-radius: $app-rebuild-radius;
 		}
@@ -1525,7 +1525,7 @@
 	.custom-ingredient__evidence {
 		display: grid;
 		gap: $app-vertical-stack-gap;
-		padding: 1rem;
+		padding: $app-rebuild-card-padding;
 		background: $color-figma-soft-surface;
 		border-radius: $app-rebuild-radius;
 
@@ -1542,7 +1542,7 @@
 	.custom-ingredient__catalog-message,
 	.custom-ingredient__status {
 		margin: 0;
-		padding: 0.8rem 0.95rem;
+		padding: $app-rebuild-status-padding-y $app-rebuild-status-padding-x;
 		border-radius: $app-rebuild-radius;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;

@@ -37,7 +37,7 @@
 		display: flex;
 		align-items: center;
 		gap: $app-gap-sm;
-		padding: 0.8rem 0.95rem;
+		padding: $app-rebuild-status-padding-y $app-rebuild-status-padding-x;
 		color: $color-figma-ink;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-medium;

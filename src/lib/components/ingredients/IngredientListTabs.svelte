@@ -66,7 +66,7 @@
 		display: inline-block;
 		min-width: 1.3rem;
 		margin-left: calc($app-gap-xs / 1.7);
-		padding: 0.08rem 0.35rem;
+		padding: $app-rebuild-badge-padding-y $app-rebuild-badge-padding-x;
 		color: inherit;
 		background: color-mix(in srgb, $color-figma-muted 12%, transparent);
 		border-radius: $app-rebuild-radius-pill;

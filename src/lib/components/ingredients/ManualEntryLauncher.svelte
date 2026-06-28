@@ -27,12 +27,12 @@
 		gap: $app-gap-sm;
 		min-height: 3.55rem;
 		width: 100%;
-		padding: 0.65rem 0.85rem;
+		padding: $app-rebuild-card-padding-sm $app-rebuild-control-padding-x;
 		color: $color-figma-ink;
 		text-align: left;
 		background: color-mix(in srgb, $color-figma-card 74%, $color-figma-canvas);
 		border: 0;
-		border-radius: 1rem;
+		border-radius: $app-rebuild-radius;
 		transition:
 			background-color 160ms ease,
 			transform 160ms ease;

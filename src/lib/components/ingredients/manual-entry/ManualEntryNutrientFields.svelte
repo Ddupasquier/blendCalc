@@ -188,7 +188,7 @@
 		}
 
 		small {
-			padding: 0.08rem 0.35rem;
+			padding: $app-rebuild-badge-padding-y $app-rebuild-badge-padding-x;
 			color: $color-figma-muted;
 			background: $color-figma-control-surface;
 			border-radius: $app-rebuild-radius-pill;

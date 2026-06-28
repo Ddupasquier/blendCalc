@@ -84,7 +84,7 @@
 
 		div:first-child {
 			display: grid;
-			gap: 0.15rem;
+			gap: $app-gap-xs;
 		}
 
 		strong {
@@ -110,7 +110,7 @@
 		button {
 			width: fit-content;
 			min-height: 2.15rem;
-			padding: 0.42rem 0.7rem;
+			padding: $app-rebuild-control-padding-y-sm $app-rebuild-control-padding-x-sm;
 			border-radius: $app-radius-pill;
 			font-family: $app-button-font-family;
 			font-size: $app-font-size-sm;

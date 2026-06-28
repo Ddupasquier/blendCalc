@@ -77,9 +77,9 @@
 
 	.confidence-details {
 		display: grid;
-		gap: 0.45rem;
-		margin: 0.45rem 0;
-		padding: 0.55rem;
+		gap: $app-gap-sm;
+		margin: $app-gap-sm 0;
+		padding: $app-gap-sm;
 		background: $app-bg;
 		border: $app-border;
 		border-radius: $app-radius;
@@ -87,14 +87,14 @@
 	}
 
 	.confidence-details--compact {
-		margin: 0 0.75rem 0.65rem;
-		padding: 0.45rem;
+		margin: 0 $app-gap-md $app-gap-sm;
+		padding: $app-rebuild-control-padding-y-sm;
 	}
 
 	.confidence-details__toggle {
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto;
-		gap: 0.5rem;
+		gap: $app-gap-sm;
 		align-items: center;
 		width: 100%;
 		padding: 0;
@@ -130,7 +130,7 @@
 
 	.confidence-details__header {
 		display: grid;
-		gap: 0.1rem;
+		gap: $app-gap-xs;
 
 		strong {
 			color: $app-primary;
@@ -159,16 +159,16 @@
 
 	ul {
 		display: grid;
-		gap: 0.3rem;
+		gap: $app-gap-xs;
 		list-style: none;
 	}
 
 	.confidence-detail {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
-		gap: 0.1rem 0.45rem;
+		gap: $app-gap-xs $app-gap-sm;
 		align-items: center;
-		padding: 0.35rem 0.4rem;
+		padding: $app-gap-xs $app-rebuild-control-padding-y-sm;
 		background: $app-section-bg;
 		border: $app-border;
 		border-radius: $app-radius-sm;

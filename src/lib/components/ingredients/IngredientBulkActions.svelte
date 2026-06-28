@@ -48,7 +48,7 @@
 
 	button {
 		min-height: $app-rebuild-control-height-sm;
-		padding: 0.45rem 0.75rem;
+		padding: $app-rebuild-control-padding-y-sm $app-rebuild-control-padding-x-sm;
 		color: $color-figma-ink;
 		background: $color-figma-card;
 		border: 1px solid $color-figma-border;

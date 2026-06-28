@@ -147,8 +147,8 @@
 	.saved-ingredient-card__bulk-toggle {
 		display: inline-grid;
 		place-items: center;
-		width: calc($app-rebuild-action-icon-size - 0.45rem);
-		height: calc($app-rebuild-action-icon-size - 0.45rem);
+		width: calc($app-rebuild-action-icon-size - $app-gap-sm);
+		height: calc($app-rebuild-action-icon-size - $app-gap-sm);
 		color: $color-figma-card;
 		background: transparent;
 		border: 2px solid
@@ -223,7 +223,7 @@
 		display: inline-flex;
 		align-items: center;
 		max-width: 8rem;
-		padding: 0.08rem 0.36rem;
+		padding: $app-rebuild-badge-padding-y $app-rebuild-badge-padding-x;
 		overflow: hidden;
 		border-radius: $app-radius-pill;
 		font-size: 0.58rem;

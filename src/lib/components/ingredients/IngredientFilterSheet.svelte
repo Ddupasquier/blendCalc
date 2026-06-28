@@ -65,6 +65,8 @@
 	title="Filter & Sort"
 	titleId="ingredient-filter-sheet-title"
 	label="Filter saved ingredients"
+	comfortable
+	titleStyle="prominent"
 	onClose={onClose}
 >
 	<div class="ingredient-filter-sheet">
@@ -108,7 +110,7 @@
 			</p>
 		{/if}
 
-		<ActionButton fullWidth busy={loading} onclick={applyFilters}>
+		<ActionButton fullWidth variant="success" busy={loading} onclick={applyFilters}>
 			Apply
 		</ActionButton>
 	</div>

@@ -870,7 +870,7 @@
         margin-bottom: 0;
 
         h1 {
-            margin: 0 0 0.35rem;
+            margin: 0 0 $app-gap-xs;
             color: $color-figma-ink;
             font-family: $app-font-family-display;
             font-size: clamp(1.75rem, 7vw, 2.1rem);
@@ -955,7 +955,7 @@
 
     .nutrition-preview {
         min-width: 0;
-        padding-top: 0.35rem;
+        padding-top: $app-gap-xs;
 
         &:focus {
             outline: none;
@@ -970,7 +970,7 @@
     .nutrition-preview__back {
         width: fit-content;
         margin-bottom: $app-gap-sm;
-        padding: 0.55rem 0.8rem;
+        padding: $app-rebuild-control-padding-y-sm $app-rebuild-control-padding-x-sm;
         color: $color-figma-ink;
         background: $color-figma-card;
         border: 0;
@@ -1026,7 +1026,7 @@
 
         button {
             min-height: $app-rebuild-control-height-sm;
-            padding: 0.45rem 0.9rem;
+            padding: $app-rebuild-control-padding-y-sm $app-rebuild-control-padding-x;
             color: $color-figma-green;
             background: $color-figma-green-soft;
             border: 0;

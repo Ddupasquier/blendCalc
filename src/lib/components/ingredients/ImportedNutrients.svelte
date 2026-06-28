@@ -51,7 +51,7 @@
 
 	summary {
 		display: grid;
-		gap: 0.1rem;
+		gap: $app-gap-xs;
 		color: $app-primary;
 		cursor: pointer;
 		font-weight: $app-font-weight-bold;
@@ -67,7 +67,7 @@
 	ul {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.35rem $app-gap-md;
+		gap: $app-gap-sm $app-gap-md;
 		margin: $app-gap-sm 0;
 		padding: 0;
 		list-style: none;

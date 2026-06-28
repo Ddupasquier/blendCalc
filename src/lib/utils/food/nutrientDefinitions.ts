@@ -41,13 +41,13 @@ type ManualEntryGroupRecord = Pick<
 
 type ManualEntryFieldRecord = Pick<
 	Database["public"]["Tables"]["nutrient_manual_entry_fields"]["Row"],
-	| "dedupe_key"
 	| "nutrient_id"
 	| "nutrient_type"
 	| "group_id"
 	| "display_label"
 	| "sort_order"
 > & {
+	dedupe_key?: string | null;
 	nutrient_definitions: NutrientDefinitionRecord | null;
 	nutrient_manual_entry_groups: ManualEntryGroupRecord | null;
 };
@@ -83,6 +83,7 @@ const CORE_NUTRIENT_PRIORITY = new Map<number, number>([
 const normalizeDedupePart = (value: string) =>
 	value
 		.toLowerCase()
+		.replace(/\([^)]*\)/g, " ")
 		.replace(/[^a-z0-9]+/g, " ")
 		.replace(/\btotal\b/g, "")
 		.replace(/\s+/g, " ")
@@ -125,15 +126,24 @@ const toManualEntryNutrientDefinition = (
 	const label =
 		record.display_label ??
 		formatNutrientDefinitionLabel(nutrientDefinition.nutrient_name, unitName);
+	const step = group.entry_step;
+	const groupTitle = group.title;
 	return {
-		dedupeKey: record.dedupe_key,
+		dedupeKey:
+			record.dedupe_key ??
+			buildFallbackDedupeKey({
+				step,
+				group: groupTitle,
+				label,
+				unitName,
+			}),
 		nutrientId: nutrientDefinition.nutrient_id,
 		nutrientName: nutrientDefinition.nutrient_name,
 		nutrientNumber: nutrientDefinition.nutrient_number ?? "",
 		unitName,
 		nutrientType: record.nutrient_type,
-		step: group.entry_step,
-		group: group.title,
+		step,
+		group: groupTitle,
 		groupSort: group.sort_order,
 		sort: record.sort_order,
 		label,
@@ -223,13 +233,18 @@ export const readManualEntryNutrientGroups = async (
 	const { data, error } = await supabase
 		.from("nutrient_manual_entry_fields")
 		.select(
-			"dedupe_key, nutrient_id, nutrient_type, group_id, display_label, sort_order, nutrient_definitions(nutrient_id, nutrient_name, nutrient_number, default_unit_name), nutrient_manual_entry_groups!inner(id, entry_step, title, sort_order)",
+			"nutrient_id, nutrient_type, group_id, display_label, sort_order, nutrient_definitions(nutrient_id, nutrient_name, nutrient_number, default_unit_name), nutrient_manual_entry_groups!inner(id, entry_step, title, sort_order)",
 		)
 		.eq("enabled", true)
 		.eq("nutrient_manual_entry_groups.enabled", true)
 		.order("sort_order", { ascending: true });
 
-	if (error) return null;
+	if (error) {
+		if (import.meta.env.DEV) {
+			console.error("Unable to load manual entry nutrient groups", error);
+		}
+		return null;
+	}
 
 	const definitions = (data as ManualEntryFieldRecord[])
 		.map(toManualEntryNutrientDefinition)

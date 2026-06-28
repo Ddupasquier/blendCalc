@@ -15,7 +15,7 @@
 		trailing,
 	}: {
 		type?: "button" | "submit" | "reset";
-		variant?: "primary" | "secondary" | "highlight" | "danger" | "ghost";
+		variant?: "primary" | "secondary" | "highlight" | "success" | "danger" | "ghost";
 		size?: "small" | "medium" | "large";
 		fullWidth?: boolean;
 		busy?: boolean;
@@ -123,6 +123,11 @@
 		&:hover:not(:disabled) {
 			background: $app-highlight-hover;
 		}
+	}
+
+	.action-button[data-variant="success"] {
+		color: $color-figma-card;
+		background: $color-figma-green;
 	}
 
 	.action-button[data-variant="danger"] {

@@ -183,6 +183,10 @@ $app-shell-nav-height: 4.85rem;
 // until this cap, then scroll internally without hiding the drag handle.
 $app-bottom-sheet-max-height: 80dvh;
 
+// Minimum height for short bottom sheets that should still read as anchored UI,
+// such as filters/actions, instead of looking like a floating dialog.
+$app-bottom-sheet-comfortable-min-height: 23rem;
+
 // Figma mobile shell horizontal content padding. Use for rebuilt page gutters.
 $app-shell-padding-x: 1rem;
 
@@ -195,6 +199,12 @@ $app-rebuild-control-height: 2.95rem;
 
 // Figma rebuild standard horizontal padding inside search/input controls.
 $app-rebuild-control-padding-x: 0.85rem;
+
+// Figma rebuild compact vertical padding for pill buttons and status controls.
+$app-rebuild-control-padding-y-sm: 0.45rem;
+
+// Figma rebuild compact horizontal padding for pill buttons and status controls.
+$app-rebuild-control-padding-x-sm: 0.75rem;
 
 // Figma rebuild icon size inside square utility controls such as filters.
 $app-rebuild-control-icon-size: 1.2rem;
@@ -226,6 +236,16 @@ $app-rebuild-search-result-padding-x: 1rem;
 // Figma rebuild compact badge padding.
 $app-rebuild-badge-padding-y: 0.12rem;
 $app-rebuild-badge-padding-x: 0.42rem;
+
+// Figma rebuild compact card/action row padding.
+$app-rebuild-card-padding-sm: 0.85rem;
+
+// Figma rebuild standard grouped-card padding.
+$app-rebuild-card-padding: 1rem;
+
+// Figma rebuild full-width status message padding.
+$app-rebuild-status-padding-y: 0.8rem;
+$app-rebuild-status-padding-x: 0.95rem;
 
 // Figma rebuild food icon size inside ingredient rows.
 $app-rebuild-food-icon-size: 2.45rem;

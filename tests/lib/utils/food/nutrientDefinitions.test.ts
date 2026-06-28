@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	dedupeManualEntryNutrients,
 	groupManualEntryNutrients,
 	type ManualEntryNutrientDefinition,
 } from "$lib/utils/food/nutrientDefinitions";
@@ -50,5 +51,25 @@ describe("manual entry nutrient definitions", () => {
 			"Protein (g)",
 		]);
 		expect(groups.macros[0].fields[0].nutrientId).toBe(1008);
+	});
+
+	it("builds stable dedupe keys when older database rows do not include one", () => {
+		const [definition] = dedupeManualEntryNutrients([
+			makeDefinition({
+				dedupeKey: "",
+				nutrientId: 1093,
+				nutrientName: "Sodium, Na",
+				nutrientNumber: "307",
+				unitName: "mg",
+				nutrientType: "mineral",
+				step: "extended",
+				group: "Minerals",
+				groupSort: 20,
+				sort: 10,
+				label: "Sodium, Na (mg)",
+			}),
+		]);
+
+		expect(definition.dedupeKey).toBe("extended:minerals:sodium na:mg");
 	});
 });
