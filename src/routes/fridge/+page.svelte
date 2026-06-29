@@ -1,6 +1,10 @@
 <script lang="ts">
     import Sliders from "$lib/assets/icons/Sliders.svelte";
-    import SlideInView from "$lib/components/common/SlideInView.svelte";
+    import RightSheet from "$lib/components/common/RightSheet.svelte";
+    import ViewBody from "$lib/components/common/view/ViewBody.svelte";
+    import ViewFrame from "$lib/components/common/view/ViewFrame.svelte";
+    import ViewHeader from "$lib/components/common/view/ViewHeader.svelte";
+    import ViewTop from "$lib/components/common/view/ViewTop.svelte";
     import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
     import IngredientActionSheet from "$lib/components/ingredients/sheets/IngredientActionSheet.svelte";
     import IngredientBulkActions from "$lib/components/ingredients/list/IngredientBulkActions.svelte";
@@ -11,7 +15,7 @@
     import IngredientSearchView from "$lib/components/ingredients/search/IngredientSearchView.svelte";
     import ManualEntryLauncher from "$lib/components/ingredients/manual-entry/ManualEntryLauncher.svelte";
     import ManualEntrySheet from "$lib/components/ingredients/sheets/ManualEntrySheet.svelte";
-    import NutritionPanel from "$lib/components/ingredients/nutrition/NutritionPanel.svelte";
+    import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView.svelte";
     import SavedIngredientCard from "$lib/components/ingredients/list/SavedIngredientCard.svelte";
     import TextInputDialog from "$lib/components/common/TextInputDialog.svelte";
     import {
@@ -64,7 +68,6 @@
     let selectedFood = $state<FdcFood | null>(null);
     let scanSignal = $state(0);
     let barcodeLookupBusy = $state(false);
-    let nutritionPreviewElement = $state<HTMLDivElement | null>(null);
     let listQuery = $state("");
     let sourceFilter = $state("all");
     let listSort = $state<FoodListSort>("recent");
@@ -261,30 +264,23 @@
         searchViewOpen = false;
     };
 
-    const scrollToNutritionPreview = async () => {
-        await tick();
-        nutritionPreviewElement?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-        });
-        nutritionPreviewElement?.focus({ preventScroll: true });
-    };
-
     const handleSelect = (food: FdcFood) => {
         selectedFood = food;
     };
 
-    const handleCreate = async (food: FdcFood) => {
+    const handleCreate = (food: FdcFood) => {
         closeIngredientSheet();
         selectedFood = food;
-        await scrollToNutritionPreview();
     };
 
-    const handleSearchSelect = async (food: FdcFood) => {
+    const handleSearchSelect = (food: FdcFood) => {
         searchViewOpen = false;
         closeIngredientSheet();
         selectedFood = food;
-        await scrollToNutritionPreview();
+    };
+
+    const closeNutritionDetail = () => {
+        selectedFood = null;
     };
 
     const removeFromList = async (key: SmoothieListKey, foodId: number) => {
@@ -625,234 +621,232 @@
 
 </script>
 
-<div class="ingredients-page">
-    <header class="ingredients-header">
-        <h1>Ingredients</h1>
-        <p>Search foods, add them to your fridge, and track shopping needs.</p>
-    </header>
-
-    <section class="ingredient-search-panel" aria-labelledby="ingredient-search-title">
-        <h2 id="ingredient-search-title" class="sr-only">Find Ingredients</h2>
-        <div class="search-toolbar">
-            <div class="search-toolbar__input">
-                <IngredientSearchTrigger onOpen={openSearchView} />
-            </div>
-            <BarcodeScanButton
-                scanning={barcodeLookupBusy}
-                compact
-                onclick={startBarcodeScan}
-            />
-            <button
-                class="filter-button"
-                class:filter-button--active={activeSheet === "filters"}
-                type="button"
-                aria-expanded={activeSheet === "filters"}
-                aria-controls="ingredient-filter-sheet-title"
-                onclick={toggleFilters}
-            >
-                <span class="sr-only">Filter saved ingredients</span>
-                <Sliders class="filter-button__icon" />
-            </button>
-        </div>
-
-        <ManualEntryLauncher onSelect={openManualEntry} />
-
-        {#if selectedFood}
-            <div
-                class="nutrition-preview"
-                bind:this={nutritionPreviewElement}
-                tabindex="-1"
-            >
-                <button
-                    class="nutrition-preview__back"
-                    type="button"
-                    onclick={() => (selectedFood = null)}
-                >
-                    ← Back to ingredients
-                </button>
-                <NutritionPanel food={selectedFood} />
-            </div>
-        {/if}
-    </section>
-
-    <SlideInView
-        open={searchViewOpen}
-        labelledby="ingredient-search-view-title"
-        onClose={closeSearchView}
-    >
-        <IngredientSearchView
-            scanning={barcodeLookupBusy}
-            filtersActive={activeSheet === "filters"}
-            onSelect={handleSearchSelect}
-            onScan={startBarcodeScan}
-            onFilter={toggleFilters}
-        />
-    </SlideInView>
-
-    <section
-        class="saved-ingredients"
-        aria-labelledby="saved-ingredients-title"
-        aria-busy={listLoading}
-    >
-        <h2 id="saved-ingredients-title" class="sr-only">Saved ingredients</h2>
-        <IngredientListTabs
-            {activeList}
-            fridgeCount={onHandTotalCount}
-            shoppingListCount={shoppingListTotalCount}
-            onSelect={selectList}
+<ViewFrame appShell className="ingredients-page">
+    <ViewTop>
+        <ViewHeader
+            title="Ingredients"
+            subtitle="Search foods, add them to your fridge, and track shopping needs."
         />
 
-        {#if listActionError}
-            <p class="list-action-error" role="alert">{listActionError}</p>
-        {/if}
-
-        {#if listLoadingError}
-            <p class="list-action-error" role="alert">{listLoadingError}</p>
-        {/if}
-
-        {#if listLoading}
-            <p class="saved-ingredients__loading" role="status" aria-live="polite">
-                Loading saved ingredients…
-            </p>
-        {/if}
-
-        {#if activeVisibleList.length > 0}
-            <IngredientBulkActions
-                selectedCount={selectedActiveItemIds.length}
-                moveTargetLabel={getIngredientListLabel(getOppositeIngredientListKey(activeList))}
-                moving={movingItem !== null}
-                onSelectAll={selectAllActiveItems}
-                onClear={clearActiveSelection}
-                onMove={moveSelectedItems}
-            />
-        {/if}
-
-        <div class="saved-ingredients__body">
-            {#if activeVisibleList.length > 0}
-                <ul
-                    class="ingredient-card-list"
-                    aria-label={`${getIngredientListLabel(activeList)} ingredients`}
-                    aria-busy={listLoading || loadingMoreList === activeList}
-                    bind:this={ingredientListElement}
-                    onscroll={handleActiveListScroll}
-                >
-                    {#each activeVisibleList as food (food.fdcId)}
-                        {@const kcal = getFoodCalories(food)}
-                        {@const warning = getPrimaryFoodWarning(food, foodPreferenceContext.current)}
-                        {@const isChecked = isBulkSelected(activeList, food.fdcId)}
-                        <li>
-                            <SavedIngredientCard
-                                {food}
-                                active={selectedFood?.fdcId === food.fdcId}
-                                checked={isChecked}
-                                removing={removingItem ===
-                                    getIngredientActionKey(activeList, food.fdcId)}
-                                {kcal}
-                                icon={getFoodIcon(food)}
-                                category={getFoodDisplayCategory(food)}
-                                {warning}
-                                sourceLabel={getFoodSourceLabel(food)}
-                                onToggle={() => toggleBulkSelection(activeList, food.fdcId)}
-                                onPreview={() => handleSelect(food)}
-                                onActions={() => openActionSheet(activeList, food)}
-                                onRemove={() => removeFromList(activeList, food.fdcId)}
-                            />
-                        </li>
-                    {/each}
-                    {#if canRevealMoreActiveItems}
-                        <li
-                            bind:this={ingredientListSentinel}
-                            class="ingredient-card-list__sentinel"
-                            aria-hidden="true"
-                        ></li>
-                        <li class="ingredient-card-list__load-more">
-                            <button
-                                type="button"
-                                disabled={loadingMoreList !== null}
-                                onclick={() => void revealMoreActiveItems()}
-                            >
-                                {loadingMoreList
-                                    ? "Loading…"
-                                    : `Load more ${getIngredientListLabel(activeList).toLowerCase()} items`}
-                            </button>
-                        </li>
-                    {/if}
-                </ul>
-            {:else if listLoading}
-                <div
-                    class="ingredient-list-loading"
-                    role="status"
-                    aria-live="polite"
-                >
-                    Loading {getIngredientListLabel(activeList).toLowerCase()} ingredients…
+        <section class="ingredient-search-panel" aria-labelledby="ingredient-search-title">
+            <h2 id="ingredient-search-title" class="sr-only">Find Ingredients</h2>
+            <div class="search-toolbar">
+                <div class="search-toolbar__input">
+                    <IngredientSearchTrigger onOpen={openSearchView} />
                 </div>
-            {:else}
-                <IngredientEmptyState
-                    {activeList}
-                    hasItems={activeRawList.length > 0}
+                <BarcodeScanButton
+                    scanning={barcodeLookupBusy}
+                    compact
+                    onclick={startBarcodeScan}
+                />
+                <button
+                    class="filter-button"
+                    class:filter-button--active={activeSheet === "filters"}
+                    type="button"
+                    aria-expanded={activeSheet === "filters"}
+                    aria-controls="ingredient-filter-sheet-title"
+                    onclick={toggleFilters}
+                >
+                    <span class="sr-only">Filter saved ingredients</span>
+                    <Sliders class="filter-button__icon" />
+                </button>
+            </div>
+
+            <ManualEntryLauncher onSelect={openManualEntry} />
+
+        </section>
+    </ViewTop>
+
+    <ViewBody>
+        <section
+            class="saved-ingredients"
+            aria-labelledby="saved-ingredients-title"
+            aria-busy={listLoading}
+        >
+            <h2 id="saved-ingredients-title" class="sr-only">Saved ingredients</h2>
+            <IngredientListTabs
+                {activeList}
+                fridgeCount={onHandTotalCount}
+                shoppingListCount={shoppingListTotalCount}
+                onSelect={selectList}
+            />
+
+            {#if listActionError}
+                <p class="list-action-error" role="alert">{listActionError}</p>
+            {/if}
+
+            {#if listLoadingError}
+                <p class="list-action-error" role="alert">{listLoadingError}</p>
+            {/if}
+
+            {#if listLoading}
+                <p class="saved-ingredients__loading" role="status" aria-live="polite">
+                    Loading saved ingredients…
+                </p>
+            {/if}
+
+            {#if activeVisibleList.length > 0}
+                <IngredientBulkActions
+                    selectedCount={selectedActiveItemIds.length}
+                    moveTargetLabel={getIngredientListLabel(getOppositeIngredientListKey(activeList))}
+                    moving={movingItem !== null}
+                    onSelectAll={selectAllActiveItems}
+                    onClear={clearActiveSelection}
+                    onMove={moveSelectedItems}
                 />
             {/if}
-        </div>
-    </section>
 
-    <IngredientActionSheet
-        open={actionSheetItem !== null}
-        title={actionSheetItem?.food.description ?? ""}
-        moveLabel={actionSheetItem ? getIngredientMoveLabel(actionSheetItem.key) : ""}
-        removeLabel={actionSheetItem
-            ? `Remove from ${getIngredientListLabel(actionSheetItem.key)}`
-            : ""}
-        moving={movingItem !== null}
-        removing={removingItem !== null}
-        onClose={closeActionSheet}
-        onRename={renameFromActionSheet}
-        onMove={moveFromActionSheet}
-        onRemove={removeFromActionSheet}
+            <div class="saved-ingredients__body">
+                {#if activeVisibleList.length > 0}
+                    <ul
+                        class="ingredient-card-list"
+                        aria-label={`${getIngredientListLabel(activeList)} ingredients`}
+                        aria-busy={listLoading || loadingMoreList === activeList}
+                        bind:this={ingredientListElement}
+                        onscroll={handleActiveListScroll}
+                    >
+                        {#each activeVisibleList as food (food.fdcId)}
+                            {@const kcal = getFoodCalories(food)}
+                            {@const warning = getPrimaryFoodWarning(food, foodPreferenceContext.current)}
+                            {@const isChecked = isBulkSelected(activeList, food.fdcId)}
+                            <li>
+                                <SavedIngredientCard
+                                    {food}
+                                    active={selectedFood?.fdcId === food.fdcId}
+                                    checked={isChecked}
+                                    removing={removingItem ===
+                                        getIngredientActionKey(activeList, food.fdcId)}
+                                    {kcal}
+                                    icon={getFoodIcon(food)}
+                                    category={getFoodDisplayCategory(food)}
+                                    {warning}
+                                    sourceLabel={getFoodSourceLabel(food)}
+                                    onToggle={() => toggleBulkSelection(activeList, food.fdcId)}
+                                    onPreview={() => handleSelect(food)}
+                                    onActions={() => openActionSheet(activeList, food)}
+                                    onRemove={() => removeFromList(activeList, food.fdcId)}
+                                />
+                            </li>
+                        {/each}
+                        {#if canRevealMoreActiveItems}
+                            <li
+                                bind:this={ingredientListSentinel}
+                                class="ingredient-card-list__sentinel"
+                                aria-hidden="true"
+                            ></li>
+                            <li class="ingredient-card-list__load-more">
+                                <button
+                                    type="button"
+                                    disabled={loadingMoreList !== null}
+                                    onclick={() => void revealMoreActiveItems()}
+                                >
+                                    {loadingMoreList
+                                        ? "Loading…"
+                                        : `Load more ${getIngredientListLabel(activeList).toLowerCase()} items`}
+                                </button>
+                            </li>
+                        {/if}
+                    </ul>
+                {:else if listLoading}
+                    <div
+                        class="ingredient-list-loading"
+                        role="status"
+                        aria-live="polite"
+                    >
+                        Loading {getIngredientListLabel(activeList).toLowerCase()} ingredients…
+                    </div>
+                {:else}
+                    <IngredientEmptyState
+                        {activeList}
+                        hasItems={activeRawList.length > 0}
+                    />
+                {/if}
+            </div>
+        </section>
+    </ViewBody>
+</ViewFrame>
+
+<IngredientActionSheet
+    open={actionSheetItem !== null}
+    title={actionSheetItem?.food.description ?? ""}
+    moveLabel={actionSheetItem ? getIngredientMoveLabel(actionSheetItem.key) : ""}
+    removeLabel={actionSheetItem
+        ? `Remove from ${getIngredientListLabel(actionSheetItem.key)}`
+        : ""}
+    moving={movingItem !== null}
+    removing={removingItem !== null}
+    onClose={closeActionSheet}
+    onRename={renameFromActionSheet}
+    onMove={moveFromActionSheet}
+    onRemove={removeFromActionSheet}
+/>
+
+<ManualEntrySheet
+    open={activeSheet === "manual-entry"}
+    {scanSignal}
+    onClose={closeIngredientSheet}
+    onCreate={handleCreate}
+    onLookupStateChange={(busy) => (barcodeLookupBusy = busy)}
+/>
+
+<IngredientFilterSheet
+    open={activeSheet === "filters"}
+    query={listQuery}
+    filterValue={sourceFilter}
+    filterOptions={INGREDIENT_SOURCE_FILTER_OPTIONS}
+    sortValue={listSort}
+    sortOptions={FOOD_LIST_SORT_OPTIONS}
+    loading={listLoading}
+    onApply={applyListFilters}
+    onClose={closeIngredientSheet}
+/>
+
+<button
+    class="add-ingredient-fab"
+    type="button"
+    aria-label="Add ingredient manually"
+    onclick={openManualEntry}
+>
+    +
+</button>
+
+<TextInputDialog
+    open={renamingItem !== null}
+    title="Rename ingredient"
+    description="This only changes the display label in your lists. Original data is preserved."
+    label="Ingredient name"
+    initialValue={renamingItem?.food.description ?? ""}
+    error={renameError}
+    busy={renameBusy}
+    confirmLabel={renameBusy ? "Saving…" : "Save name"}
+    onConfirm={renameListItem}
+    onValueChange={() => (renameError = "")}
+    onCancel={closeRenameDialog}
+/>
+
+<RightSheet
+    open={searchViewOpen}
+    labelledby="ingredient-search-view-title"
+    onClose={closeSearchView}
+>
+    <IngredientSearchView
+        scanning={barcodeLookupBusy}
+        filtersActive={activeSheet === "filters"}
+        onSelect={handleSearchSelect}
+        onScan={startBarcodeScan}
+        onFilter={toggleFilters}
     />
+</RightSheet>
 
-    <ManualEntrySheet
-        open={activeSheet === "manual-entry"}
-        {scanSignal}
-        onClose={closeIngredientSheet}
-        onCreate={handleCreate}
-        onLookupStateChange={(busy) => (barcodeLookupBusy = busy)}
-    />
-
-	<IngredientFilterSheet
-		open={activeSheet === "filters"}
-		query={listQuery}
-		filterValue={sourceFilter}
-		filterOptions={INGREDIENT_SOURCE_FILTER_OPTIONS}
-        sortValue={listSort}
-        sortOptions={FOOD_LIST_SORT_OPTIONS}
-        loading={listLoading}
-        onApply={applyListFilters}
-        onClose={closeIngredientSheet}
-    />
-
-    <button
-        class="add-ingredient-fab"
-        type="button"
-        aria-label="Add ingredient manually"
-        onclick={openManualEntry}
-    >
-        +
-    </button>
-
-    <TextInputDialog
-        open={renamingItem !== null}
-        title="Rename ingredient"
-        description="This only changes the display label in your lists. Original data is preserved."
-        label="Ingredient name"
-        initialValue={renamingItem?.food.description ?? ""}
-        error={renameError}
-        busy={renameBusy}
-        confirmLabel={renameBusy ? "Saving…" : "Save name"}
-        onConfirm={renameListItem}
-        onValueChange={() => (renameError = "")}
-        onCancel={closeRenameDialog}
-    />
-</div>
+<RightSheet
+    open={selectedFood !== null}
+    labelledby="nutrition-detail-view-title"
+    onClose={closeNutritionDetail}
+>
+    {#if selectedFood}
+        <NutritionDetailView food={selectedFood} onClose={closeNutritionDetail} />
+    {/if}
+</RightSheet>
 
 <style lang="scss">
     @use "../../styles/variables" as *;
@@ -872,46 +866,6 @@
         min-height: 0;
         padding-bottom: 0;
         overflow: hidden;
-    }
-
-    .ingredients-page {
-        display: grid;
-        grid-template-rows: auto auto minmax(0, 1fr);
-        row-gap: $app-vertical-stack-gap;
-        width: 100%;
-        max-width: $ingredient-shell-max-width;
-        height: calc(
-            100dvh - $ingredient-shell-header-height - $ingredient-shell-nav-height -
-                env(safe-area-inset-bottom)
-        );
-        min-height: 0;
-        margin: 0 auto;
-        padding: $ingredient-shell-padding-y $ingredient-shell-padding-x 0;
-        box-sizing: border-box;
-        overflow: hidden;
-        background: $ingredient-surface-page;
-    }
-
-    .ingredients-header {
-        margin-bottom: 0;
-
-        h1 {
-            margin: 0 0 $app-gap-xs;
-            color: $ingredient-text-primary;
-            font-family: $app-font-family-display;
-            font-size: clamp(1.75rem, 7vw, 2.1rem);
-            font-weight: $app-font-weight-heavy;
-            letter-spacing: -0.05em;
-            line-height: 0.98;
-        }
-
-        p {
-            max-width: 24rem;
-            color: $ingredient-text-muted;
-            font-size: $app-font-size-md;
-            font-weight: $app-font-weight-medium;
-            line-height: 1.35;
-        }
     }
 
     .ingredient-search-panel {
@@ -977,34 +931,6 @@
             outline: $app-focus-outline;
             outline-offset: $app-gap-xs;
         }
-    }
-
-    .nutrition-preview {
-        min-width: 0;
-        padding-top: $app-gap-xs;
-
-        &:focus {
-            outline: none;
-        }
-
-        &:focus-visible {
-            outline: $app-focus-outline;
-            outline-offset: $app-gap-xs;
-        }
-    }
-
-    .nutrition-preview__back {
-        width: fit-content;
-        margin-bottom: $app-gap-sm;
-        padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x-compact;
-        color: $ingredient-text-primary;
-        background: $ingredient-surface-card;
-        border: 0;
-        border-radius: $app-radius-pill;
-        font-family: $app-button-font-family;
-        font-size: $app-font-size-sm;
-        font-weight: $app-button-font-weight;
-        line-height: $app-button-line-height;
     }
 
     .saved-ingredients {
@@ -1114,10 +1040,6 @@
     }
 
     @media (max-width: $app-breakpoint-xs) {
-        .ingredients-page {
-            padding-inline: $app-gap-sm;
-        }
-
         .search-toolbar {
             gap: $app-horizontal-control-gap;
         }

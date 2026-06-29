@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import ArrowLeft from "$lib/assets/icons/ArrowLeft.svelte";
 	import {
 		SERVING_MEASURE_OPTIONS,
 		type ServingMeasureUnit,
@@ -824,17 +825,19 @@
 				disabled={saving || lookingUpBarcode}
 				aria-busy={saving || lookingUpBarcode}
 			>
-				<header class="custom-ingredient__header">
-					<button
-						type="button"
-						class="custom-ingredient__back"
-						aria-label="Back"
-						onclick={goBack}
-					>
-						←
-					</button>
-					<h2>Enter Manually</h2>
-				</header>
+				{#if inline}
+					<header class="custom-ingredient__header">
+						<button
+							type="button"
+							class="custom-ingredient__back"
+							aria-label="Back"
+							onclick={goBack}
+						>
+							<ArrowLeft size={20} strokeWidth={2.4} />
+						</button>
+						<h2>Enter Manually</h2>
+					</header>
+				{/if}
 
 				<ManualEntryStepTabs
 					steps={manualEntrySteps}
@@ -1301,7 +1304,6 @@
 		background: transparent;
 		border: 0;
 		border-radius: $ingredient-radius-pill;
-		font-size: 1.45rem;
 		cursor: pointer;
 	}
 
@@ -1550,14 +1552,14 @@
 	}
 
 	.custom-ingredient__error {
-		color: $color-cinnamon-clay;
-		background: color-mix(in srgb, $color-strawberry-cream 60%, white);
+		color: $ingredient-status-error-text;
+		background: $ingredient-status-error-bg;
 	}
 
 	.custom-ingredient__success,
 	.custom-ingredient__catalog-message {
-		color: $color-dark-taupe;
-		background: $color-pistachio-cream;
+		color: $ingredient-status-success-text;
+		background: $ingredient-status-success-bg;
 	}
 
 	.custom-ingredient__status {

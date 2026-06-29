@@ -1,5 +1,9 @@
 <script lang="ts">
 	import Sliders from "$lib/assets/icons/Sliders.svelte";
+	import ViewBody from "$lib/components/common/view/ViewBody.svelte";
+	import ViewFrame from "$lib/components/common/view/ViewFrame.svelte";
+	import ViewHeader from "$lib/components/common/view/ViewHeader.svelte";
+	import ViewTop from "$lib/components/common/view/ViewTop.svelte";
 	import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import IngredientSearch from "./IngredientSearch.svelte";
@@ -19,61 +23,54 @@
 	} = $props();
 </script>
 
-<div class="ingredient-search-view">
-	<header class="ingredient-search-view__header">
-		<h1 id="ingredient-search-view-title">Ingredients</h1>
-		<p>Search foods, add them to your fridge, and track shopping needs.</p>
-	</header>
+<ViewFrame className="ingredient-search-view">
+	<ViewTop>
+		<ViewHeader
+			title="Ingredients"
+			titleId="ingredient-search-view-title"
+			subtitle="Search foods, add them to your fridge, and track shopping needs."
+		/>
+	</ViewTop>
 
-	<IngredientSearch autofocus {onSelect} onSearchFocus={() => {}}>
-		{#snippet actions()}
-			<BarcodeScanButton scanning={scanning} compact onclick={onScan} />
-			<button
-				class="ingredient-search-view__filter"
-				class:ingredient-search-view__filter--active={filtersActive}
-				type="button"
-				aria-label="Filter saved ingredients"
-				aria-expanded={filtersActive}
-				aria-controls="ingredient-filter-sheet-title"
-				onclick={onFilter}
-			>
-				<Sliders class="ingredient-search-view__filter-icon" />
-			</button>
-		{/snippet}
-	</IngredientSearch>
-</div>
+	<ViewBody>
+		<IngredientSearch autofocus {onSelect} onSearchFocus={() => {}}>
+			{#snippet actions()}
+				<BarcodeScanButton scanning={scanning} compact onclick={onScan} />
+				<button
+					class="ingredient-search-view__filter"
+					class:ingredient-search-view__filter--active={filtersActive}
+					type="button"
+					aria-label="Filter saved ingredients"
+					aria-expanded={filtersActive}
+					aria-controls="ingredient-filter-sheet-title"
+					onclick={onFilter}
+				>
+					<Sliders class="ingredient-search-view__filter-icon" />
+				</button>
+			{/snippet}
+		</IngredientSearch>
+	</ViewBody>
+</ViewFrame>
 
 <style lang="scss">
 	@use "../../../../styles/variables" as *;
 
-	.ingredient-search-view {
+	:global(.ingredient-search-view .search-wrap) {
 		display: grid;
-		align-content: start;
-		gap: $app-vertical-stack-gap;
-		min-height: 100%;
+		grid-template-rows: auto auto auto minmax(0, 1fr);
+		height: 100%;
+		min-height: 0;
+		align-content: stretch;
 	}
 
-	.ingredient-search-view__header {
-		h1 {
-			margin: 0 0 $app-gap-xs;
-			color: $ingredient-text-primary;
-			font-family: $app-font-family-display;
-			font-size: clamp(1.75rem, 7vw, 2.1rem);
-			font-weight: $app-font-weight-heavy;
-			letter-spacing: -0.05em;
-			line-height: 0.98;
-		}
-
-		p {
-			max-width: 24rem;
-			color: $ingredient-text-muted;
-			font-size: $app-font-size-md;
-			font-weight: $app-font-weight-medium;
-			line-height: 1.35;
-		}
+	:global(.ingredient-search-view .results-panel) {
+		min-height: 0;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		padding-bottom: $app-vertical-stack-gap;
 	}
 
-	.ingredient-search-view :global(.barcode-scan-button--compact) {
+	:global(.ingredient-search-view .barcode-scan-button--compact) {
 		width: $ingredient-control-height;
 		height: $ingredient-control-height;
 		min-height: $ingredient-control-height;

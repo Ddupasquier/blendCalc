@@ -41,21 +41,21 @@
 		color: $ingredient-text-primary;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-medium;
-		background: color-mix(in srgb, $color-strawberry-cream 55%, white);
+		background: $ingredient-status-error-bg;
 		border-radius: $ingredient-radius-pill;
 	}
 
 	.manual-entry-validation__item--warning {
-		background: color-mix(in srgb, $color-mango-gold 35%, white);
+		background: $ingredient-status-warning-bg;
 	}
 
 	span {
-		color: $color-guava-laser;
+		color: $ingredient-status-error-icon;
 		font-size: $app-font-size-md;
 		line-height: 1;
 	}
 
 	.manual-entry-validation__item--warning span {
-		color: $color-mango-gold-dark;
+		color: $ingredient-status-warning-icon;
 	}
 </style>

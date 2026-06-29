@@ -65,7 +65,6 @@
 	{title}
 	titleId="text-input-dialog-title"
 	label={title}
-	titleStyle="prominent"
 	onClose={onCancel}
 >
 	<div class="text-input-sheet">

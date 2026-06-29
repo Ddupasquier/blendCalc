@@ -191,6 +191,18 @@ $app-bottom-sheet-min-height: 56dvh;
 // such as filters/actions, instead of looking like a floating dialog.
 $app-bottom-sheet-comfortable-min-height: 23rem;
 
+// Clickable drag-handle area at the top of reusable bottom sheets.
+$app-bottom-sheet-handle-height: 1.25rem;
+
+// Visible drag-handle width at the top of reusable bottom sheets.
+$app-bottom-sheet-handle-width: 2.25rem;
+
+// Visible drag-handle thickness at the top of reusable bottom sheets.
+$app-bottom-sheet-handle-thickness: 0.22rem;
+
+// Back-arrow tap target in reusable bottom sheet headers.
+$app-bottom-sheet-back-size: 2rem;
+
 // Figma mobile shell horizontal content padding. Use for rebuilt page gutters.
 $app-shell-padding-x: 1rem;
 
@@ -319,6 +331,9 @@ $app-shell-surface-panel: $color-figma-card;
 $app-shell-text-primary: $color-figma-ink;
 $app-shell-text-muted: $color-figma-muted;
 $app-shell-overlay-bg: $app-rebuild-overlay-bg;
+$app-sheet-backdrop-z-index: 110;
+$app-sheet-panel-z-index: 111;
+$app-right-sheet-z-index: 80;
 $app-sheet-radius: $app-rebuild-radius-lg;
 
 // Ingredient route semantic tokens
@@ -534,6 +549,17 @@ $app-danger-action: $color-cinnamon-clay;
 // Success/on-target background. Applied to successful add/save feedback and
 // close-to-goal badges.
 $app-success-bg: $color-pistachio-cream;
+
+// Ingredient status tokens. Applied to manual-entry validation and ingredient
+// flow feedback so components do not consume raw palette or app-wide status
+// primitives directly.
+$ingredient-status-error-bg: color-mix(in srgb, $app-danger-bg 60%, white);
+$ingredient-status-error-text: $app-danger-action;
+$ingredient-status-error-icon: $app-scan-laser;
+$ingredient-status-warning-bg: color-mix(in srgb, $app-highlight 35%, white);
+$ingredient-status-warning-icon: $app-highlight-hover;
+$ingredient-status-success-bg: $app-success-bg;
+$ingredient-status-success-text: $app-primary;
 
 // Warning/estimate background. Applied to caution panels, estimate badges,
 // popover triggers, and non-critical warning surfaces.
