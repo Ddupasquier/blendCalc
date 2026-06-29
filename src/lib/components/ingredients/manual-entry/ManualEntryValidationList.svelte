@@ -1,4 +1,6 @@
 <script lang="ts">
+	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
+
 	export type ManualEntryValidationItem = {
 		message: string;
 		tone: "error" | "warning";
@@ -15,7 +17,9 @@
 	<ul class="manual-entry-validation" aria-label="Manual entry validation">
 		{#each items as item}
 			<li class:manual-entry-validation__item--warning={item.tone === "warning"}>
-				<span aria-hidden="true">⚠</span>
+				<span class="manual-entry-validation__icon" aria-hidden="true">
+					<WarningTriangle size={16} />
+				</span>
 				{item.message}
 			</li>
 		{/each}
@@ -49,13 +53,12 @@
 		background: $ingredient-status-warning-bg;
 	}
 
-	span {
+	.manual-entry-validation__icon {
 		color: $ingredient-status-error-icon;
-		font-size: $app-font-size-md;
-		line-height: 1;
+		flex: 0 0 auto;
 	}
 
-	.manual-entry-validation__item--warning span {
+	.manual-entry-validation__item--warning .manual-entry-validation__icon {
 		color: $ingredient-status-warning-icon;
 	}
 </style>

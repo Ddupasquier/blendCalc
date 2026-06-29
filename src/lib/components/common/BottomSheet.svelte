@@ -96,7 +96,9 @@
 	}
 
 	.bottom-sheet__handle {
-		align-self: center;
+		justify-self: center;
+		display: grid;
+		place-items: center;
 		width: 4rem;
 		height: $app-bottom-sheet-handle-height;
 		padding: 0;

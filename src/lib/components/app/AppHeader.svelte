@@ -1,4 +1,7 @@
 <script lang="ts">
+	import Crown from "$lib/assets/icons/Crown.svelte";
+	import SmoothieCup from "$lib/assets/icons/SmoothieCup.svelte";
+
 	let {
 		displayName,
 		avatarUrl = null,
@@ -24,7 +27,9 @@
 <header class="app-header">
 	<div class="app-header__inner">
 		<a class="app-header__brand" href="/fridge" aria-label="Open Smoothie Mixer ingredients">
-			<span class="app-header__mark" aria-hidden="true">🥤</span>
+			<span class="app-header__mark" aria-hidden="true">
+				<SmoothieCup size={22} />
+			</span>
 			<span class="app-header__title">Smoothie Mixer</span>
 		</a>
 
@@ -36,7 +41,9 @@
 			title={displayName}
 		>
 			{#if role}
-				<span class="app-header__crown" aria-label="Moderator account" title="Moderator account">♛</span>
+				<span class="app-header__crown" aria-label="Moderator account" title="Moderator account">
+					<Crown size={12} />
+				</span>
 			{/if}
 
 			{#if avatarUrl}
@@ -86,6 +93,8 @@
 	}
 
 	.app-header__mark {
+		display: inline-grid;
+		place-items: center;
 		flex: 0 0 auto;
 		font-size: $app-font-size-xl;
 		line-height: 1;

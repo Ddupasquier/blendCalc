@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Leaf from "$lib/assets/icons/Leaf.svelte";
+	import ShoppingBag from "$lib/assets/icons/ShoppingBag.svelte";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 	import { getIngredientListLabel } from "$lib/utils/ingredients/ingredientListUi";
 	import type { SmoothieListKey } from "$lib/utils/storage/smoothieLists";
@@ -11,7 +13,6 @@
 		hasItems: boolean;
 	} = $props();
 
-	const icon = $derived(activeList === MIX_STORAGE_KEYS.fridge ? "🥬" : "🛒");
 	const title = $derived(
 		activeList === MIX_STORAGE_KEYS.fridge
 			? "Your fridge is empty"
@@ -29,7 +30,13 @@
 </script>
 
 <div class="ingredient-empty-state">
-	<span aria-hidden="true">{icon}</span>
+	<span aria-hidden="true">
+		{#if activeList === MIX_STORAGE_KEYS.fridge}
+			<Leaf size={30} strokeWidth={2.2} />
+		{:else}
+			<ShoppingBag size={30} strokeWidth={2.2} />
+		{/if}
+	</span>
 	<h2>{title}</h2>
 	<p>{message}</p>
 </div>

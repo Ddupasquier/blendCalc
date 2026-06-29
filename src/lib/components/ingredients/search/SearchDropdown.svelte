@@ -1,10 +1,11 @@
 <script lang="ts">
+    import FoodSymbol from "$lib/assets/icons/FoodSymbol.svelte";
+    import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
     import { getFoodQuality } from "$lib/utils/food/foodQuality";
     import type { FdcFood } from "$lib/utils/food/types";
     import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
     import {
         getFoodDisplayCategory,
-        getFoodIcon,
         getFoodSourceLabel,
         getPrimaryFoodWarning,
     } from "$lib/utils/ingredients/ingredientListUi";
@@ -54,8 +55,8 @@
                         onmouseenter={() => onActivate(index)}
                         onclick={() => onSelect(food)}
                     >
-                        <span class="result-icon" aria-hidden="true">
-                            {getFoodIcon(food)}
+                        <span class="result-icon">
+                            <FoodSymbol {food} />
                         </span>
                         <span class="result-copy">
                             <span class="result-name">{formatName(food.description)}</span>
@@ -69,7 +70,8 @@
                                 </span>
                                 {#if primaryWarning}
                                     <span class="result-warning">
-                                        ⚠ {primaryWarning}
+                                        <WarningTriangle size={10} strokeWidth={2.7} />
+                                        {primaryWarning}
                                     </span>
                                 {/if}
                             </span>

@@ -64,49 +64,6 @@ const DEFAULT_QUERIES = [
 	"baby food",
 ];
 
-const GROUPS = {
-	"required-basics": {
-		entryStep: "macros",
-		title: "Required basics",
-		groupSortOrder: 10,
-	},
-	"carbohydrate-details": {
-		entryStep: "macros",
-		title: "Carbohydrate details",
-		groupSortOrder: 20,
-	},
-	"fat-details": {
-		entryStep: "macros",
-		title: "Fat details",
-		groupSortOrder: 30,
-	},
-	"mineral-details": {
-		entryStep: "macros",
-		title: "Mineral details",
-		groupSortOrder: 40,
-	},
-	vitamins: {
-		entryStep: "extended",
-		title: "Vitamins",
-		groupSortOrder: 10,
-	},
-	minerals: {
-		entryStep: "extended",
-		title: "Minerals",
-		groupSortOrder: 20,
-	},
-	"amino-acids": {
-		entryStep: "extended",
-		title: "Amino Acids",
-		groupSortOrder: 30,
-	},
-	"other-nutrients": {
-		entryStep: "extended",
-		title: "Other Nutrients",
-		groupSortOrder: 90,
-	},
-};
-
 const parsePositiveInteger = (value, fallback, label) => {
 	const parsed = Number.parseInt(value ?? "", 10);
 	if (Number.isInteger(parsed) && parsed > 0) return parsed;
@@ -409,6 +366,39 @@ const classifyNutrient = ({ nutrientName, unitName }) => {
 	};
 };
 
+const toGroupTitle = (groupId) => {
+	if (groupId === "amino-acids") return "Amino Acids";
+	return titleCase(groupId.replace(/-/g, " "));
+};
+
+const getGroupSortOrder = (groupId, nutrientType) => {
+	if (groupId === "required-basics") return 10;
+	if (groupId === "carbohydrate-details") return 20;
+	if (groupId === "fat-details") return 30;
+	if (groupId === "mineral-details") return 40;
+	if (nutrientType === "vitamin") return 10;
+	if (nutrientType === "mineral") return 20;
+	if (nutrientType === "amino_acid") return 30;
+	return 90;
+};
+
+const getManualEntryGroup = (classification) => {
+	const entryStep = ["vitamin", "amino_acid"].includes(classification.nutrientType)
+		|| (classification.nutrientType === "mineral" && classification.groupId !== "mineral-details")
+		|| classification.groupId === "other-nutrients"
+		? "extended"
+		: "macros";
+
+	return {
+		entryStep,
+		title: toGroupTitle(classification.groupId),
+		groupSortOrder: getGroupSortOrder(
+			classification.groupId,
+			classification.nutrientType,
+		),
+	};
+};
+
 const buildSearchUrl = ({ query, pageNumber, pageSize, dataTypes }) => {
 	const url = new URL(`${BASE_URL}/foods/search`);
 	url.searchParams.set("api_key", FDC_API_KEY);
@@ -561,8 +551,7 @@ const collectFdcObservations = (pages) => {
 					continue;
 				}
 
-				const group = GROUPS[classification.groupId];
-				if (!group) continue;
+				const group = getManualEntryGroup(classification);
 
 				nutrientDefinitions.set(nutrientId, {
 					nutrient_id: nutrientId,
@@ -636,8 +625,7 @@ const collectOpenFoodFactsObservations = ({ pages, nutrientDefinitions, observat
 				});
 				if (!classification) continue;
 
-				const group = GROUPS[classification.groupId];
-				if (!group) continue;
+				const group = getManualEntryGroup(classification);
 
 				const sourceReference = `${code}:${rawKey}`;
 				observations.set(`open-food-facts:${page.query}:${sourceReference}`, withManualEntryDedupeKey({

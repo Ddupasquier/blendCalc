@@ -40,18 +40,6 @@ export const getFoodCalories = (food: FdcFood) => {
 	return Math.round(calories);
 };
 
-export const getFoodIcon = (food: FdcFood) => {
-	const text = [food.description, food.foodCategory].join(" ").toLowerCase();
-	if (text.includes("strawberry") || text.includes("berry")) return "🍓";
-	if (text.includes("banana")) return "🍌";
-	if (text.includes("mango")) return "🥭";
-	if (text.includes("spinach") || text.includes("kale")) return "🥬";
-	if (text.includes("milk") || text.includes("yogurt")) return "🥛";
-	if (text.includes("beef") || text.includes("protein")) return "💪";
-	if (text.includes("seed") || text.includes("nut")) return "🌰";
-	return "🥤";
-};
-
 export const getFoodDisplayCategory = (food: FdcFood) => {
 	if (food.foodCategory) return food.foodCategory;
 	if (food.brandOwner) return food.brandOwner;

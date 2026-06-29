@@ -1,4 +1,9 @@
 <script lang="ts">
+	import Check from "$lib/assets/icons/Check.svelte";
+	import DotsHorizontal from "$lib/assets/icons/DotsHorizontal.svelte";
+	import FoodSymbol from "$lib/assets/icons/FoodSymbol.svelte";
+	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
+	import X from "$lib/assets/icons/X.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
 
 	let {
@@ -7,7 +12,6 @@
 		checked = false,
 		removing = false,
 		kcal = null,
-		icon,
 		category,
 		warning = null,
 		sourceLabel,
@@ -21,7 +25,6 @@
 		checked?: boolean;
 		removing?: boolean;
 		kcal?: number | null;
-		icon: string;
 		category: string;
 		warning?: string | null;
 		sourceLabel: string;
@@ -45,7 +48,7 @@
 		aria-label={`${checked ? "Uncheck" : "Check"} ${food.description}`}
 		onclick={onToggle}
 	>
-		{#if checked}✓{/if}
+		{#if checked}<Check size={14} strokeWidth={3} />{/if}
 	</button>
 	<button
 		class="saved-ingredient-card__select"
@@ -53,9 +56,9 @@
 		aria-label={`Preview ${food.description}`}
 		onclick={onPreview}
 	>
-		<span class="saved-ingredient-card__icon" aria-hidden="true"
-			>{icon}</span
-		>
+		<span class="saved-ingredient-card__icon">
+			<FoodSymbol {food} />
+		</span>
 		<span class="saved-ingredient-card__copy">
 			<span class="saved-ingredient-card__meta">
 				<span
@@ -65,7 +68,10 @@
 					{sourceLabel}
 				</span>
 				{#if warning}
-					<span class="warning-badge">⚠ {warning}</span>
+					<span class="warning-badge">
+						<WarningTriangle size={10} strokeWidth={2.7} />
+						{warning}
+					</span>
 				{/if}
 			</span>
 			<strong title={food.description}>{food.description}</strong>
@@ -82,7 +88,7 @@
 		<button
 			type="button"
 			aria-label={`Open actions for ${food.description}`}
-			onclick={onActions}>•••</button
+			onclick={onActions}><DotsHorizontal size={16} /></button
 		>
 		<button
 			type="button"
@@ -91,7 +97,11 @@
 			disabled={removing}
 			onclick={onRemove}
 		>
-			{removing ? "…" : "×"}
+			{#if removing}
+				…
+			{:else}
+				<X size={16} strokeWidth={2.7} />
+			{/if}
 		</button>
 	</div>
 </article>
@@ -222,6 +232,7 @@
 	.warning-badge {
 		display: inline-flex;
 		align-items: center;
+		gap: calc($app-gap-xs / 2);
 		max-width: 8rem;
 		padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
 		overflow: hidden;

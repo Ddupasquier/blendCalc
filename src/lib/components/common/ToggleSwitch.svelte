@@ -5,12 +5,14 @@
 		checked = $bindable(false),
 		disabled = false,
 		ariaLabel,
+		onChange,
 	}: {
 		id: string;
 		name?: string;
 		checked?: boolean;
 		disabled?: boolean;
 		ariaLabel: string;
+		onChange?: (checked: boolean) => void;
 	} = $props();
 </script>
 
@@ -24,6 +26,7 @@
 		aria-label={ariaLabel}
 		bind:checked
 		{disabled}
+		onchange={(event) => onChange?.(event.currentTarget.checked)}
 	/>
 	<span class="toggle-switch__track" aria-hidden="true">
 		<span class="toggle-switch__thumb"></span>

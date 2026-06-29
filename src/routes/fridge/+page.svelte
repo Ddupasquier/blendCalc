@@ -27,7 +27,6 @@
         areFoodIdsEqual,
         getFoodCalories,
         getFoodDisplayCategory,
-        getFoodIcon,
         getFoodSourceLabel,
         getIngredientActionKey,
         getIngredientListLabel,
@@ -717,7 +716,6 @@
                                     removing={removingItem ===
                                         getIngredientActionKey(activeList, food.fdcId)}
                                     {kcal}
-                                    icon={getFoodIcon(food)}
                                     category={getFoodDisplayCategory(food)}
                                     {warning}
                                     sourceLabel={getFoodSourceLabel(food)}

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Check from "$lib/assets/icons/Check.svelte";
+	import X from "$lib/assets/icons/X.svelte";
 	import MoveItemPrompt from "$lib/components/ingredients/nutrition/MoveItemPrompt.svelte";
 	import NutritionConfidenceDetails from "$lib/components/ingredients/nutrition/NutritionConfidenceDetails.svelte";
 	import CustomBadge from "$lib/components/common/CustomBadge.svelte";
@@ -293,7 +295,13 @@
 	</div>
 	{#if feedbackMessage}
 		<div class="nf-feedback" class:nf-feedback--error={feedbackError} role={feedbackError ? "alert" : "status"} aria-live="polite">
-			<span>{feedbackError ? "!" : "✓"}</span>
+			<span>
+				{#if feedbackError}
+					<X size={14} strokeWidth={2.8} />
+				{:else}
+					<Check size={14} strokeWidth={2.8} />
+				{/if}
+			</span>
 			{feedbackMessage}
 		</div>
 	{/if}

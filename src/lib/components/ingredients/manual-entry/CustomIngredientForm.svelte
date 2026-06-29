@@ -20,11 +20,12 @@
 	import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
 	import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog.svelte";
-	import CustomIngredientOutcome, {
-		type CustomIngredientOutcomeState,
-	} from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
+	import type { CustomIngredientOutcomeState } from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
 	import ManualEntryToggle from "$lib/components/ingredients/manual-entry/ManualEntryToggle.svelte";
-	import ManualEntryNutrientFields from "$lib/components/ingredients/manual-entry/ManualEntryNutrientFields.svelte";
+	import IdentityStep from "$lib/components/ingredients/manual-entry/steps/IdentityStep.svelte";
+	import NutrientStep from "$lib/components/ingredients/manual-entry/steps/NutrientStep.svelte";
+	import ServingsStep from "$lib/components/ingredients/manual-entry/steps/ServingsStep.svelte";
+	import ShareStep from "$lib/components/ingredients/manual-entry/steps/ShareStep.svelte";
 	import {
 		readCustomFoodCategoryOptions,
 		type CustomFoodCategoryOption,
@@ -35,10 +36,7 @@
 		type ManualEntryNutrientGroupsByStep,
 	} from "$lib/utils/food/nutrientDefinitions";
 	import ManualEntryStepTabs from "$lib/components/ingredients/manual-entry/ManualEntryStepTabs.svelte";
-	import ManualEntryValidationList, {
-		type ManualEntryValidationItem,
-	} from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
-	import ToggleSwitch from "$lib/components/common/ToggleSwitch.svelte";
+	import type { ManualEntryValidationItem } from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
 	import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 	import { lookupBarcodeProduct } from "$lib/utils/barcode/productLookup";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
@@ -846,360 +844,100 @@
 				/>
 
 				{#if activeStep === "identity"}
-					<div class="custom-ingredient__step">
-						<label>
-							<span>Food name <em>*</em></span>
-							<input
-								bind:this={ingredientNameInput}
-								id="custom-ingredient-name"
-								name="custom-ingredient-name"
-								type="text"
-								placeholder="e.g. Almond Flour Protein Bar"
-								maxlength="120"
-								aria-required="true"
-								bind:value={name}
-							/>
-						</label>
-
-						<label>
-							<span>Brand <small>optional</small></span>
-							<input
-								id="custom-ingredient-brand"
-								name="custom-ingredient-brand"
-								type="text"
-								placeholder="e.g. KIND"
-								maxlength="120"
-								bind:value={brandOwner}
-							/>
-						</label>
-
-						<label>
-							<span>Category <em>*</em></span>
-							<select
-								id="custom-ingredient-category"
-								name="custom-ingredient-category"
-								bind:value={category}
-								disabled={loadingCategoryOptions || visibleCategoryOptions.length === 0}
-								aria-busy={loadingCategoryOptions}
-							>
-								{#if loadingCategoryOptions}
-									<option value="">Loading categories…</option>
-								{:else if visibleCategoryOptions.length === 0}
-									<option value="">Categories unavailable</option>
-								{:else}
-									{#each visibleCategoryOptions as option}
-										<option value={option}>{option}</option>
-									{/each}
-								{/if}
-							</select>
-							{#if categoryOptionsError}
-								<small>{categoryOptionsError}</small>
-							{/if}
-						</label>
-
-						<label>
-							<span>UPC / Barcode <small>optional</small></span>
-							<input
-								id="custom-ingredient-barcode"
-								name="custom-ingredient-barcode"
-								type="text"
-								inputmode="numeric"
-								placeholder="12-digit number"
-								maxlength="18"
-								bind:value={barcode}
-							/>
-						</label>
-
-						<label class="custom-ingredient__switch">
-							<span>
-								<strong>Liquid ingredient</strong>
-								<small>Affects volume unit conversion warnings</small>
-							</span>
-							<ToggleSwitch
-								id="custom-ingredient-use-volume"
-								name="custom-ingredient-use-volume"
-								ariaLabel="Allow volume measurements"
-								bind:checked={useVolumeEquivalent}
-							/>
-						</label>
-
-						<button type="button" class="custom-ingredient__primary" onclick={goNext}>
-							Continue
-						</button>
-					</div>
+					<IdentityStep
+						{name}
+						{brandOwner}
+						{category}
+						{barcode}
+						{visibleCategoryOptions}
+						{loadingCategoryOptions}
+						{categoryOptionsError}
+						{useVolumeEquivalent}
+						onNameChange={(value) => (name = value)}
+						onBrandChange={(value) => (brandOwner = value)}
+						onCategoryChange={(value) => (category = value)}
+						onBarcodeChange={(value) => (barcode = value)}
+						onUseVolumeChange={(value) => (useVolumeEquivalent = value)}
+						onNameInput={(element) => (ingredientNameInput = element)}
+						onNext={goNext}
+					/>
 				{:else if activeStep === "servings"}
-					<div class="custom-ingredient__step">
-						<p class="custom-ingredient__helper">
-							All nutrition values are stored per 100g. Serving sizes let users see
-							scaled values.
-						</p>
-
-						<section class="custom-ingredient__card" aria-label="Primary serving">
-							<h3>Primary serving <em>*</em></h3>
-							<label>
-								<span>Description <em>*</em></span>
-								<input
-									id="custom-ingredient-serving-label"
-									name="custom-ingredient-serving-label"
-									type="text"
-									placeholder="e.g. 1 cup, 1 bar, 2 tbsp"
-									maxlength="80"
-									bind:value={servingLabel}
-								/>
-							</label>
-							<label>
-								<span>Weight (g) <em>*</em></span>
-								<input
-									id="custom-ingredient-serving-weight"
-									name="custom-ingredient-serving-weight"
-									type="number"
-									min="0.1"
-									step="any"
-									placeholder="e.g. 240"
-									bind:value={servingWeightGrams}
-								/>
-							</label>
-
-							{#if useVolumeEquivalent}
-								<div class="custom-ingredient__inline-grid">
-									<label>
-										<span>Volume in this serving</span>
-										<input
-											id="custom-ingredient-volume-amount"
-											name="custom-ingredient-volume-amount"
-											type="number"
-											min="0"
-											step="any"
-											placeholder="2"
-											bind:value={volumeQuantity}
-										/>
-									</label>
-
-									<label>
-										<span>Volume unit</span>
-										<select
-											id="custom-ingredient-volume-unit"
-											name="custom-ingredient-volume-unit"
-											bind:value={volumeUnit}
-										>
-											{#each volumeOptions as option}
-												<option value={option.value}>{option.label}</option>
-											{/each}
-										</select>
-									</label>
-								</div>
-								<p class="custom-ingredient__helper">
-									This records the entered volume as weighing
-									<strong>{servingWeightGrams}g</strong>. Leave it off if the package
-									does not provide both values.
-								</p>
-							{/if}
-						</section>
-
-						<button type="button" class="custom-ingredient__add-serving">
-							+ Add another serving size
-						</button>
-
-						<div class="custom-ingredient__actions">
-							<button type="button" class="custom-ingredient__secondary" onclick={goBack}>
-								Back
-							</button>
-							<button type="button" class="custom-ingredient__primary" onclick={goNext}>
-								Continue
-							</button>
-						</div>
-					</div>
+					<ServingsStep
+						{servingLabel}
+						{servingWeightGrams}
+						{useVolumeEquivalent}
+						{volumeQuantity}
+						{volumeUnit}
+						volumeOptions={volumeOptions.map((option) => ({
+							value: option.value,
+							label: option.label,
+						}))}
+						onServingLabelChange={(value) => (servingLabel = value)}
+						onServingWeightChange={(value) =>
+							(servingWeightGrams = Number.isFinite(value) ? value : 0)}
+						onVolumeQuantityChange={(value) => (volumeQuantity = value)}
+						onVolumeUnitChange={(value) => (volumeUnit = value)}
+						onBack={goBack}
+						onNext={goNext}
+					/>
 				{:else if activeStep === "macros"}
-					<div class="custom-ingredient__step">
-						<p class="custom-ingredient__helper">
-							Enter values from the nutrition label for the serving above. The app
-							stores normalized per-100g values. Fields marked <em>*</em> are required.
-						</p>
-
-						<ManualEntryNutrientFields
-							groups={manualEntryNutrientGroups.macros}
-							loading={loadingManualEntryNutrients}
-							error={manualEntryNutrientError}
-							getValue={getManualNutrientValue}
-							onValueChange={setManualNutrientValue}
-							isRequired={isRequiredManualNutrient}
-						/>
-
-						<div class="custom-ingredient__actions">
-							<button type="button" class="custom-ingredient__secondary" onclick={goBack}>
-								Back
-							</button>
-							<button type="button" class="custom-ingredient__primary" onclick={goNext}>
-								Continue
-							</button>
-						</div>
-					</div>
+					<NutrientStep
+						groups={manualEntryNutrientGroups.macros}
+						loading={loadingManualEntryNutrients}
+						error={manualEntryNutrientError}
+						helper="Enter values from the nutrition label for the serving above. The app stores normalized per-100g values. Fields marked * are required."
+						getValue={getManualNutrientValue}
+						onValueChange={setManualNutrientValue}
+						isRequired={isRequiredManualNutrient}
+						onBack={goBack}
+						onNext={goNext}
+					/>
 				{:else if activeStep === "extended"}
-					<div class="custom-ingredient__step">
-						<p class="custom-ingredient__helper">
-							All fields on this step are optional. Fill what you know.
-						</p>
-
-						<ManualEntryNutrientFields
-							groups={manualEntryNutrientGroups.extended}
-							loading={loadingManualEntryNutrients}
-							error={manualEntryNutrientError}
-							accordion
-							defaultOpenFirst={false}
-							getValue={getManualNutrientValue}
-							onValueChange={setManualNutrientValue}
-							isRequired={isRequiredManualNutrient}
-						/>
-
-						<div class="custom-ingredient__actions">
-							<button type="button" class="custom-ingredient__secondary" onclick={goBack}>
-								Back
-							</button>
-							<button type="button" class="custom-ingredient__primary" onclick={goNext}>
-								Continue
-							</button>
-						</div>
-					</div>
+					<NutrientStep
+						groups={manualEntryNutrientGroups.extended}
+						loading={loadingManualEntryNutrients}
+						error={manualEntryNutrientError}
+						helper="All fields on this step are optional. Fill what you know."
+						accordion
+						defaultOpenFirst={false}
+						getValue={getManualNutrientValue}
+						onValueChange={setManualNutrientValue}
+						isRequired={isRequiredManualNutrient}
+						onBack={goBack}
+						onNext={goNext}
+					/>
 				{:else}
-					<div class="custom-ingredient__step">
-						<section class="custom-ingredient__summary" aria-label="Ingredient summary">
-							<div>
-								<strong>{normalizedName || "Unnamed ingredient"}</strong>
-								<span>{activeCategory}</span>
-							</div>
-							<div class="custom-ingredient__macro-row">
-								<span><strong>{nutrition.calories.toFixed(1)}kcal</strong><small>Cal</small></span>
-								<span><strong>{nutrition.protein.toFixed(1)}g</strong><small>Prot</small></span>
-								<span><strong>{nutrition.fat.toFixed(1)}g</strong><small>Fat</small></span>
-								<span><strong>{nutrition.carbs.toFixed(1)}g</strong><small>Carbs</small></span>
-							</div>
-							<p>{getSaveAdditionalNutrients().length} optional nutrients filled</p>
-						</section>
-
-						<ManualEntryValidationList items={customIngredientValidationItems} />
-
-						{#if barcodeMessage}
-							<p class="custom-ingredient__status" role="status">{barcodeMessage}</p>
-						{/if}
-
-						{#if hasValidBarcode && barcodeSource === "open-food-facts"}
-							<p class="custom-ingredient__status">
-								This product was found through Open Food Facts. Saving it also makes it
-								available in shared search for other users.
-							</p>
-						{/if}
-
-						<label
-							class="custom-ingredient__share-toggle"
-							class:custom-ingredient__share-toggle--disabled={!canShareWithCatalog}
-						>
-							<span>
-								<strong>Share with community</strong>
-								<small>
-									{canShareWithCatalog
-										? "Make this ingredient available to other users. All submissions are reviewed for accuracy."
-										: "Add a valid UPC or barcode if you want to submit this ingredient for shared search."}
-								</small>
-							</span>
-							<ToggleSwitch
-								id="custom-ingredient-share-product"
-								name="custom-ingredient-share-product"
-								ariaLabel="Share with community"
-								disabled={!canShareWithCatalog}
-								bind:checked={shareWithCatalog}
-							/>
-						</label>
-						{#if requiresCatalogEvidence}
-							<section class="custom-ingredient__evidence" aria-labelledby="product-evidence-title">
-								<div>
-									<strong id="product-evidence-title">Photos for catalog review</strong>
-									<p>
-										These private photos let a moderator confirm the package, nutrition
-										facts, and barcode before other users can find the product.
-									</p>
-								</div>
-								<label>
-									<span>Front of package</span>
-									<input
-										id="custom-product-front-photo"
-										name="custom-product-front-photo"
-										type="file"
-										accept="image/jpeg,image/png,image/webp"
-										aria-required="true"
-										onchange={(event) => (frontPhoto = event.currentTarget.files?.[0] ?? null)}
-									/>
-								</label>
-								<label>
-									<span>Nutrition facts label</span>
-									<input
-										id="custom-product-nutrition-photo"
-										name="custom-product-nutrition-photo"
-										type="file"
-										accept="image/jpeg,image/png,image/webp"
-										aria-required="true"
-										onchange={(event) => (nutritionPhoto = event.currentTarget.files?.[0] ?? null)}
-									/>
-								</label>
-								<label>
-									<span>Barcode</span>
-									<input
-										id="custom-product-barcode-photo"
-										name="custom-product-barcode-photo"
-										type="file"
-										accept="image/jpeg,image/png,image/webp"
-										aria-required="true"
-										onchange={(event) => (barcodePhoto = event.currentTarget.files?.[0] ?? null)}
-									/>
-								</label>
-							</section>
-						{/if}
-
-						<label class="custom-ingredient__destination">
-							<span>Add after saving</span>
-							<select
-								bind:this={saveDestinationSelect}
-								id="custom-ingredient-save-destination"
-								name="custom-ingredient-save-destination"
-								bind:value={saveDestination}
-							>
-								<option value={MIX_STORAGE_KEYS.fridge}>Fridge</option>
-								<option value={MIX_STORAGE_KEYS.shoppingList}>Shopping List</option>
-								<option value="custom-only">Save only</option>
-							</select>
-						</label>
-
-						{#if error}
-							<p class="custom-ingredient__error" role="alert">{error}</p>
-						{/if}
-						{#if lastOutcome}
-							<CustomIngredientOutcome
-								outcome={lastOutcome}
-								action={outcomeAction}
-								onMoveToShopping={() => moveLastOutcome(MIX_STORAGE_KEYS.shoppingList)}
-								onMoveToFridge={() => moveLastOutcome(MIX_STORAGE_KEYS.fridge)}
-								onUndo={undoLastOutcomeAdd}
-							/>
-						{:else if savedMessage}
-							<p class="custom-ingredient__success" role="status">{savedMessage}</p>
-						{/if}
-						{#if catalogMessage}
-							<p class="custom-ingredient__catalog-message" role="status">{catalogMessage}</p>
-						{/if}
-
-						<div class="custom-ingredient__actions">
-							<button type="button" class="custom-ingredient__secondary" onclick={goBack}>
-								Back
-							</button>
-							<button
-								type="button"
-								class="custom-ingredient__primary"
-								onclick={handleSubmit}
-								disabled={saving}
-							>
-								{saving ? "Saving…" : "Add Ingredient"}
-							</button>
-						</div>
-					</div>
+					<ShareStep
+						{normalizedName}
+						{activeCategory}
+						{nutrition}
+						optionalNutrientCount={getSaveAdditionalNutrients().length}
+						validationItems={customIngredientValidationItems}
+						{barcodeMessage}
+						{hasValidBarcode}
+						{barcodeSource}
+						{canShareWithCatalog}
+						{shareWithCatalog}
+						{requiresCatalogEvidence}
+						{saveDestination}
+						{error}
+						{lastOutcome}
+						{outcomeAction}
+						{savedMessage}
+						{catalogMessage}
+						{saving}
+						onShareChange={(checked) => (shareWithCatalog = checked)}
+						onFrontPhotoChange={(file) => (frontPhoto = file)}
+						onNutritionPhotoChange={(file) => (nutritionPhoto = file)}
+						onBarcodePhotoChange={(file) => (barcodePhoto = file)}
+						onSaveDestinationChange={(destination) => (saveDestination = destination)}
+						onSaveDestinationInput={(element) => (saveDestinationSelect = element)}
+						onMoveToShopping={() => moveLastOutcome(MIX_STORAGE_KEYS.shoppingList)}
+						onMoveToFridge={() => moveLastOutcome(MIX_STORAGE_KEYS.fridge)}
+						onUndo={undoLastOutcomeAdd}
+						onBack={goBack}
+						onSubmit={handleSubmit}
+					/>
 				{/if}
 			</fieldset>
 		</details>
@@ -1222,8 +960,7 @@
 		gap: $app-vertical-stack-gap;
 	}
 
-	.custom-ingredient__options,
-	.custom-ingredient__step {
+	.custom-ingredient__options {
 		display: grid;
 		gap: $app-vertical-stack-gap;
 	}
@@ -1307,47 +1044,54 @@
 		cursor: pointer;
 	}
 
-	label,
-	.custom-ingredient__card,
-	.custom-ingredient__summary,
-	.custom-ingredient__share-toggle,
-	.custom-ingredient__evidence {
+	:global(.custom-ingredient__step) {
+		display: grid;
+		gap: $app-vertical-stack-gap;
+	}
+
+	:global(.custom-ingredient__field),
+	:global(.custom-ingredient__card),
+	:global(.custom-ingredient__summary),
+	:global(.custom-ingredient__share-toggle),
+	:global(.custom-ingredient__evidence) {
 		min-width: 0;
 	}
 
-	label {
+	:global(.custom-ingredient__field) {
 		display: grid;
 		gap: $app-gap-sm;
 		color: $ingredient-text-muted;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
 		text-transform: uppercase;
-
-		span {
-			display: inline-flex;
-			align-items: center;
-			gap: $app-gap-xs;
-			letter-spacing: 0.01em;
-		}
-
-		em {
-			color: $ingredient-accent-danger;
-			font-style: normal;
-		}
-
-		small {
-			padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
-			color: $ingredient-text-muted;
-			background: $ingredient-surface-control;
-			border-radius: $ingredient-radius-pill;
-			font-size: $app-font-size-xs;
-			font-weight: $app-font-weight-medium;
-			text-transform: none;
-		}
 	}
 
-	input,
-	select {
+	:global(.custom-ingredient__field span) {
+		display: inline-flex;
+		align-items: center;
+		gap: $app-gap-xs;
+		letter-spacing: 0.01em;
+	}
+
+	:global(.custom-ingredient__field em),
+	:global(.custom-ingredient__card em) {
+		color: $ingredient-accent-danger;
+		font-style: normal;
+	}
+
+	:global(.custom-ingredient__field small) {
+		padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
+		color: $ingredient-text-muted;
+		background: $ingredient-surface-control;
+		border-radius: $ingredient-radius-pill;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-medium;
+		text-transform: none;
+	}
+
+	:global(.custom-ingredient__field input),
+	:global(.custom-ingredient__field select),
+	:global(.custom-ingredient__destination select) {
 		width: 100%;
 		min-width: 0;
 		min-height: $ingredient-control-height;
@@ -1362,7 +1106,8 @@
 		text-transform: none;
 	}
 
-	select {
+	:global(.custom-ingredient__field select),
+	:global(.custom-ingredient__destination select) {
 		appearance: none;
 		padding-right: 2.7rem;
 		background-color: $ingredient-surface-soft;
@@ -1378,21 +1123,21 @@
 			0.34rem 0.34rem;
 	}
 
-	input::placeholder {
+	:global(.custom-ingredient__field input::placeholder) {
 		color: $ingredient-text-muted;
 	}
 
-	input[type="number"] {
+	:global(.custom-ingredient__field input[type="number"]) {
 		appearance: textfield;
 	}
 
-	input[type="number"]::-webkit-inner-spin-button,
-	input[type="number"]::-webkit-outer-spin-button {
+	:global(.custom-ingredient__field input[type="number"]::-webkit-inner-spin-button),
+	:global(.custom-ingredient__field input[type="number"]::-webkit-outer-spin-button) {
 		margin: 0;
 		appearance: none;
 	}
 
-	.custom-ingredient__helper {
+	:global(.custom-ingredient__helper) {
 		margin: 0;
 		color: $ingredient-text-muted;
 		font-size: $app-font-size-sm;
@@ -1400,8 +1145,8 @@
 		line-height: 1.35;
 	}
 
-	.custom-ingredient__switch,
-	.custom-ingredient__share-toggle {
+	:global(.custom-ingredient__switch),
+	:global(.custom-ingredient__share-toggle) {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -1410,32 +1155,35 @@
 		background: $ingredient-surface-soft;
 		border-radius: $ingredient-radius-card;
 		text-transform: none;
-
-		span {
-			display: grid;
-			gap: $app-gap-xs;
-		}
-
-		strong {
-			color: $ingredient-text-primary;
-			font-size: $app-font-size-md;
-			font-weight: $app-font-weight-bold;
-		}
-
-		small {
-			padding: 0;
-			background: transparent;
-			color: $ingredient-text-muted;
-			line-height: 1.25;
-		}
 	}
 
-	.custom-ingredient__share-toggle--disabled {
+	:global(.custom-ingredient__switch span),
+	:global(.custom-ingredient__share-toggle span) {
+		display: grid;
+		gap: $app-gap-xs;
+	}
+
+	:global(.custom-ingredient__switch strong),
+	:global(.custom-ingredient__share-toggle strong) {
+		color: $ingredient-text-primary;
+		font-size: $app-font-size-md;
+		font-weight: $app-font-weight-bold;
+	}
+
+	:global(.custom-ingredient__switch small),
+	:global(.custom-ingredient__share-toggle small) {
+		padding: 0;
+		background: transparent;
+		color: $ingredient-text-muted;
+		line-height: 1.25;
+	}
+
+	:global(.custom-ingredient__share-toggle--disabled) {
 		opacity: 0.78;
 	}
 
-	.custom-ingredient__card,
-	.custom-ingredient__summary {
+	:global(.custom-ingredient__card),
+	:global(.custom-ingredient__summary) {
 		display: grid;
 		gap: $app-gap-md;
 		padding: $ingredient-card-padding;
@@ -1443,26 +1191,21 @@
 		border-radius: $ingredient-radius-card;
 	}
 
-	.custom-ingredient__card h3,
-	.custom-ingredient__summary strong {
+	:global(.custom-ingredient__card h3),
+	:global(.custom-ingredient__summary strong) {
 		margin: 0;
 		color: $ingredient-text-primary;
 		font-size: $app-font-size-lg;
 		font-weight: $app-font-weight-bold;
 	}
 
-	.custom-ingredient__card em {
-		color: $ingredient-accent-danger;
-		font-style: normal;
-	}
-
-	.custom-ingredient__inline-grid {
+	:global(.custom-ingredient__inline-grid) {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: $app-horizontal-control-gap;
 	}
 
-	.custom-ingredient__add-serving {
+	:global(.custom-ingredient__add-serving) {
 		min-height: $ingredient-control-height;
 		color: $ingredient-accent-primary;
 		background: transparent;
@@ -1474,76 +1217,76 @@
 		cursor: pointer;
 	}
 
-	.custom-ingredient__macro-row {
+	:global(.custom-ingredient__macro-row) {
 		display: grid;
 		grid-template-columns: repeat(4, minmax(0, 1fr));
 		gap: $app-gap-sm;
-
-		span {
-			display: grid;
-			justify-items: center;
-			gap: $app-gap-xs;
-			padding: $app-gap-sm;
-			background: $ingredient-surface-card;
-			border-radius: $ingredient-radius-card;
-		}
-
-		strong {
-			font-size: $app-font-size-md;
-			line-height: 1;
-		}
-
-		small {
-			color: $ingredient-text-muted;
-			font-size: $app-font-size-xs;
-			font-weight: $app-font-weight-medium;
-		}
 	}
 
-	.custom-ingredient__summary > div:first-child {
+	:global(.custom-ingredient__macro-row span) {
+		display: grid;
+		justify-items: center;
+		gap: $app-gap-xs;
+		padding: $app-gap-sm;
+		background: $ingredient-surface-card;
+		border-radius: $ingredient-radius-card;
+	}
+
+	:global(.custom-ingredient__macro-row strong) {
+		font-size: $app-font-size-md;
+		line-height: 1;
+	}
+
+	:global(.custom-ingredient__macro-row small) {
+		color: $ingredient-text-muted;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-medium;
+	}
+
+	:global(.custom-ingredient__summary > div:first-child) {
 		display: grid;
 		gap: $app-gap-xs;
-
-		span {
-			width: fit-content;
-			padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
-			color: $ingredient-text-primary;
-			background: $ingredient-surface-card;
-			border-radius: $ingredient-radius-pill;
-			font-size: $app-font-size-xs;
-		}
 	}
 
-	.custom-ingredient__summary p {
+	:global(.custom-ingredient__summary > div:first-child span) {
+		width: fit-content;
+		padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
+		color: $ingredient-text-primary;
+		background: $ingredient-surface-card;
+		border-radius: $ingredient-radius-pill;
+		font-size: $app-font-size-xs;
+	}
+
+	:global(.custom-ingredient__summary p) {
 		margin: 0;
 		color: $ingredient-text-muted;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-medium;
 	}
 
-	.custom-ingredient__destination {
+	:global(.custom-ingredient__destination) {
 		text-transform: none;
 	}
 
-	.custom-ingredient__evidence {
+	:global(.custom-ingredient__evidence) {
 		display: grid;
 		gap: $app-vertical-stack-gap;
 		padding: $ingredient-card-padding;
 		background: $ingredient-surface-soft;
 		border-radius: $ingredient-radius-card;
-
-		p {
-			margin: $app-gap-xs 0 0;
-			color: $ingredient-text-muted;
-			font-size: $app-font-size-sm;
-			line-height: 1.35;
-		}
 	}
 
-	.custom-ingredient__error,
-	.custom-ingredient__success,
-	.custom-ingredient__catalog-message,
-	.custom-ingredient__status {
+	:global(.custom-ingredient__evidence p) {
+		margin: $app-gap-xs 0 0;
+		color: $ingredient-text-muted;
+		font-size: $app-font-size-sm;
+		line-height: 1.35;
+	}
+
+	:global(.custom-ingredient__error),
+	:global(.custom-ingredient__success),
+	:global(.custom-ingredient__catalog-message),
+	:global(.custom-ingredient__status) {
 		margin: 0;
 		padding: $ingredient-status-padding-y $ingredient-status-padding-x;
 		border-radius: $ingredient-radius-card;
@@ -1551,31 +1294,31 @@
 		font-weight: $app-font-weight-bold;
 	}
 
-	.custom-ingredient__error {
+	:global(.custom-ingredient__error) {
 		color: $ingredient-status-error-text;
 		background: $ingredient-status-error-bg;
 	}
 
-	.custom-ingredient__success,
-	.custom-ingredient__catalog-message {
+	:global(.custom-ingredient__success),
+	:global(.custom-ingredient__catalog-message) {
 		color: $ingredient-status-success-text;
 		background: $ingredient-status-success-bg;
 	}
 
-	.custom-ingredient__status {
+	:global(.custom-ingredient__status) {
 		color: $ingredient-text-muted;
 		background: $ingredient-surface-soft;
 	}
 
-	.custom-ingredient__actions {
+	:global(.custom-ingredient__actions) {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: $app-horizontal-control-gap;
 		margin-top: $app-gap-sm;
 	}
 
-	.custom-ingredient__primary,
-	.custom-ingredient__secondary {
+	:global(.custom-ingredient__primary),
+	:global(.custom-ingredient__secondary) {
 		min-height: $ingredient-control-height;
 		border-radius: $ingredient-radius-card;
 		font-family: $app-button-font-family;
@@ -1584,27 +1327,27 @@
 		cursor: pointer;
 	}
 
-	.custom-ingredient__primary {
+	:global(.custom-ingredient__primary) {
 		color: $ingredient-surface-card;
 		background: $ingredient-accent-primary;
 		border: 1px solid $ingredient-accent-primary;
 	}
 
-	.custom-ingredient__secondary {
+	:global(.custom-ingredient__secondary) {
 		color: $ingredient-text-primary;
 		background: $ingredient-surface-card;
 		border: 1px solid $ingredient-border-subtle;
 	}
 
-	.custom-ingredient__primary:disabled,
-	.custom-ingredient__secondary:disabled {
+	:global(.custom-ingredient__primary:disabled),
+	:global(.custom-ingredient__secondary:disabled) {
 		cursor: not-allowed;
 		opacity: 0.6;
 	}
 
 	@media (max-width: $app-breakpoint-xs) {
-		.custom-ingredient__inline-grid,
-		.custom-ingredient__actions {
+		:global(.custom-ingredient__inline-grid),
+		:global(.custom-ingredient__actions) {
 			grid-template-columns: 1fr;
 		}
 	}
