@@ -47,6 +47,14 @@ This document tracks manual QA items that need user verification after feature, 
 - [ ] Confirm `Space`, `Backspace`, and old pill-style behavior are not treated as custom shortcuts.
 - [ ] Confirm search still works by clicking/tapping a result on mobile.
 
+### Manual Entry Extended Nutrients
+
+- [ ] **Branch:** `ui-rebuild/ingredients`
+- [ ] **Files:** `src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte`, `src/lib/components/ingredients/manual-entry/ManualEntryNutrientFields.svelte`
+- [ ] Open manual entry, continue to the Extended step, and confirm every nutrient group, including Vitamins, starts collapsed.
+- [ ] Confirm tapping each nutrient group opens and closes only that group without losing entered nutrient values.
+- [ ] Confirm the Macros step still keeps its first nutrient group open by default.
+
 ## Cleared QA
 
 No user-verified QA items have been cleared yet.

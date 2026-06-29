@@ -9,6 +9,7 @@
 		loading = false,
 		error = "",
 		accordion = true,
+		defaultOpenFirst = true,
 		getValue,
 		onValueChange,
 		isRequired = () => false,
@@ -17,6 +18,7 @@
 		loading?: boolean;
 		error?: string;
 		accordion?: boolean;
+		defaultOpenFirst?: boolean;
 		getValue: (field: ManualEntryNutrientDefinition) => number;
 		onValueChange: (field: ManualEntryNutrientDefinition, value: string) => void;
 		isRequired?: (field: ManualEntryNutrientDefinition) => boolean;
@@ -49,7 +51,7 @@
 	<div class="manual-nutrients">
 		{#each groups as group, index}
 			{#if accordion}
-				<details class="manual-nutrients__group" open={index === 0}>
+				<details class="manual-nutrients__group" open={defaultOpenFirst && index === 0}>
 					<summary>{group.title}</summary>
 					<div class="manual-nutrients__fields">
 						{#each group.fields as field (field.dedupeKey || field.nutrientId)}

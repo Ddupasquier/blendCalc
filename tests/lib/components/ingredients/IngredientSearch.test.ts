@@ -85,10 +85,59 @@ describe("IngredientSearch", () => {
 		);
 
 		await fireEvent.keyDown(searchInput, { key: "ArrowDown" });
+		expect(screen.getByRole("option", { name: /banana, raw/i })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
 		await fireEvent.keyDown(searchInput, { key: "Enter" });
 
 		expect(onSelect).toHaveBeenCalledWith(
 			expect.objectContaining({ fdcId: 102 }),
+		);
+	});
+
+	it("wraps keyboard navigation upward without using old shortcut keys", async () => {
+		const onSelect = vi.fn();
+		vi.mocked(searchFoods).mockResolvedValueOnce([
+			makeFood(201, "Apricot, raw"),
+			makeFood(202, "Cherry, raw"),
+			makeFood(203, "Tomato, raw"),
+		]);
+
+		render(IngredientSearch, {
+			props: {
+				onSelect,
+				onSearchFocus: vi.fn(),
+			},
+		});
+
+		const searchInput = screen.getByRole("combobox", {
+			name: /search ingredients/i,
+		});
+
+		await fireEvent.input(searchInput, { target: { value: "raw" } });
+
+		await waitFor(
+			() => {
+				expect(screen.getByText("Apricot, raw")).toBeInTheDocument();
+				expect(screen.getByText("↵ view nutrition")).toBeInTheDocument();
+			},
+			{ timeout: 2000 },
+		);
+
+		await fireEvent.keyDown(searchInput, { key: "ArrowUp" });
+		expect(screen.getByRole("option", { name: /tomato, raw/i })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
+
+		await fireEvent.keyDown(searchInput, { key: " " });
+		await fireEvent.keyDown(searchInput, { key: "Backspace" });
+		expect(onSelect).not.toHaveBeenCalled();
+
+		await fireEvent.keyDown(searchInput, { key: "Enter" });
+		expect(onSelect).toHaveBeenCalledWith(
+			expect.objectContaining({ fdcId: 203 }),
 		);
 	});
 });

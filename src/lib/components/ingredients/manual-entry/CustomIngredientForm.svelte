@@ -1042,6 +1042,7 @@
 							loading={loadingManualEntryNutrients}
 							error={manualEntryNutrientError}
 							accordion
+							defaultOpenFirst={false}
 							getValue={getManualNutrientValue}
 							onValueChange={setManualNutrientValue}
 							isRequired={isRequiredManualNutrient}
