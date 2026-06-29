@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { MIX_STORAGE_KEYS } from "../../../defaults/mixDefaults";
+	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 	import { getIngredientListLabel } from "$lib/utils/ingredients/ingredientListUi";
 	import type { SmoothieListKey } from "$lib/utils/storage/smoothieLists";
 
@@ -35,15 +35,15 @@
 </div>
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.ingredient-empty-state {
 		display: grid;
 		justify-items: center;
 		gap: $app-gap-sm;
 		min-height: 42vh;
-		padding: calc($app-shell-header-height) $app-gap-md;
-		color: $color-figma-muted;
+		padding: calc($ingredient-shell-header-height) $app-gap-md;
+		color: $ingredient-text-muted;
 		text-align: center;
 	}
 
@@ -52,14 +52,14 @@
 		place-items: center;
 		width: 4rem;
 		height: 4rem;
-		background: $color-figma-green-soft;
-		border-radius: $app-rebuild-radius;
+		background: $ingredient-surface-positive;
+		border-radius: $ingredient-radius-card;
 		font-size: 2rem;
 	}
 
 	h2 {
 		margin: 0;
-		color: $color-figma-ink;
+		color: $ingredient-text-primary;
 		font-size: $app-font-size-xl;
 		font-weight: $app-font-weight-heavy;
 	}

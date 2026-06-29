@@ -21,16 +21,16 @@
 <ChevronDown class="manual-entry-toggle__chevron" />
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.manual-entry-toggle__icon {
 		display: inline-grid;
 		place-items: center;
-		width: $app-rebuild-food-icon-size;
-		height: $app-rebuild-food-icon-size;
-		color: $color-figma-sky;
-		background: color-mix(in srgb, $color-figma-sky 11%, $color-figma-card);
-		border-radius: $app-rebuild-radius;
+		width: $ingredient-food-icon-size;
+		height: $ingredient-food-icon-size;
+		color: $ingredient-accent-info;
+		background: color-mix(in srgb, $ingredient-accent-info 11%, $ingredient-surface-card);
+		border-radius: $ingredient-radius-card;
 
 		:global(.manual-entry-toggle__pencil) {
 			width: $app-gap-md;
@@ -51,13 +51,13 @@
 		}
 
 		strong {
-			color: $color-figma-ink;
+			color: $ingredient-text-primary;
 			font-size: $app-font-size-lg;
 			font-weight: $app-font-weight-bold;
 		}
 
 		small {
-			color: $color-figma-muted;
+			color: $ingredient-text-muted;
 			font-size: $app-font-size-sm;
 			font-weight: $app-font-weight-medium;
 		}

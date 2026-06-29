@@ -77,7 +77,7 @@
 </button>
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.barcode-scan-button {
 		position: relative;
@@ -87,12 +87,12 @@
 		box-sizing: border-box;
 		gap: $app-gap-xs;
 		width: auto;
-		min-height: $app-rebuild-control-height;
-		padding: $app-rebuild-scan-button-padding-y $app-rebuild-scan-button-padding-x;
-		color: $color-figma-card;
-		background-color: $color-figma-green;
+		min-height: $ingredient-control-height;
+		padding: $ingredient-scan-button-padding-y $ingredient-scan-button-padding-x;
+		color: $ingredient-surface-card;
+		background-color: $ingredient-accent-primary;
 		border: 0;
-		border-radius: $app-rebuild-radius;
+		border-radius: $ingredient-radius-card;
 		transition:
 			background-color 0.28s ease,
 			color 0.28s ease,
@@ -107,7 +107,11 @@
 		}
 
 		&:hover:not(:disabled) {
-			background-color: color-mix(in srgb, $color-figma-green 88%, $color-figma-ink);
+			background-color: color-mix(
+				in srgb,
+				$ingredient-accent-primary 88%,
+				$ingredient-text-primary
+			);
 		}
 
 		&:disabled {
@@ -117,17 +121,22 @@
 	}
 
 	.barcode-scan-button--loading {
-		min-height: $app-rebuild-scan-button-loading-height;
-		padding: $app-rebuild-scan-button-loading-padding-y $app-rebuild-scan-button-loading-padding-x;
+		min-height: $ingredient-scan-button-loading-height;
+		padding: $ingredient-scan-button-loading-padding-y
+			$ingredient-scan-button-loading-padding-x;
 		color: $app-scan-laser;
-		background-color: color-mix(in srgb, $color-figma-green 58%, $color-figma-ink);
-		border-radius: $app-rebuild-radius;
+		background-color: color-mix(
+			in srgb,
+			$ingredient-accent-primary 58%,
+			$ingredient-text-primary
+		);
+		border-radius: $ingredient-radius-card;
 	}
 
 	.barcode-scan-button--compact {
-		width: $app-rebuild-control-height;
-		height: $app-rebuild-control-height;
-		min-height: $app-rebuild-control-height;
+		width: $ingredient-control-height;
+		height: $ingredient-control-height;
+		min-height: $ingredient-control-height;
 		padding: 0;
 		flex-shrink: 0;
 
@@ -142,8 +151,8 @@
 	}
 
 	.barcode-scan-button--compact.barcode-scan-button--loading {
-		width: $app-rebuild-scan-button-loading-width;
-		height: $app-rebuild-scan-button-loading-height;
+		width: $ingredient-scan-button-loading-width;
+		height: $ingredient-scan-button-loading-height;
 	}
 
 	.barcode-scanner {
@@ -153,8 +162,8 @@
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		width: $app-rebuild-scan-icon-width;
-		height: $app-rebuild-scan-icon-height;
+		width: $ingredient-scan-icon-width;
+		height: $ingredient-scan-icon-height;
 		overflow: hidden;
 		border-radius: 0.5rem;
 		background-color: transparent;
@@ -166,10 +175,14 @@
 	}
 
 	.barcode-scanner--active {
-		width: $app-rebuild-scan-icon-active-width;
-		height: $app-rebuild-scan-icon-active-height;
-		color: color-mix(in srgb, $color-figma-card 22%, transparent);
-		background-color: color-mix(in srgb, $color-figma-ink 84%, $color-figma-green);
+		width: $ingredient-scan-icon-active-width;
+		height: $ingredient-scan-icon-active-height;
+		color: color-mix(in srgb, $ingredient-surface-card 22%, transparent);
+		background-color: color-mix(
+			in srgb,
+			$ingredient-text-primary 84%,
+			$ingredient-accent-primary
+		);
 	}
 
 	.barcode-scan-button--loading .barcode-scan-button__label {
@@ -185,8 +198,8 @@
 	.barcode-scanner__bracket {
 		position: absolute;
 		z-index: 2;
-		width: $app-rebuild-scan-bracket-size;
-		height: $app-rebuild-scan-bracket-size;
+		width: $ingredient-scan-bracket-size;
+		height: $ingredient-scan-bracket-size;
 		border-color: $app-scan-laser;
 		border-style: solid;
 		opacity: 0;
@@ -221,7 +234,7 @@
 		position: absolute;
 		top: 0.25rem;
 		display: block;
-		color: $color-figma-card;
+		color: $ingredient-surface-card;
 		opacity: 0;
 		animation: scanner-detail-fade-in 0.22s ease forwards;
 	}

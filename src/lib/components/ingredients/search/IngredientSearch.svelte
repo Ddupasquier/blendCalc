@@ -11,23 +11,29 @@
 	import { getFoodDownrankScore } from "$lib/utils/profile/foodPreferenceWarnings";
 	import { searchSharedProducts } from "$lib/utils/products/catalog";
 	import Search from "$lib/assets/icons/Search.svelte";
-	import { createEventDispatcher, onMount } from "svelte";
-	import PillRow from "../common/PillRow.svelte";
+	import X from "$lib/assets/icons/X.svelte";
+	import type { Snippet } from "svelte";
+	import { createEventDispatcher, onMount, tick } from "svelte";
 	import SearchDropdown from "./SearchDropdown.svelte";
 
 	let {
 		onSelect,
 		onSearchFocus = () => {},
+		autofocus = false,
+		actions,
 	}: {
 		onSelect: (food: FdcFood) => void;
 		onSearchFocus?: () => void;
+		autofocus?: boolean;
+		actions?: Snippet;
 	} = $props();
 	let query = $state("");
-	let pills = $state<string[]>([]);
 	let results = $state<FdcFood[]>([]);
 	let loading = $state(false);
 	let error = $state("");
 	let searchReady = $state(false);
+	let activeResultIndex = $state(-1);
+	let searchInputElement = $state<HTMLInputElement | null>(null);
 	let debounceTimer: ReturnType<typeof setTimeout>;
 	const dispatch = createEventDispatcher();
 	const foodPreferenceContext = getFoodPreferenceContext();
@@ -58,8 +64,9 @@
 	};
 
 	const sortedResults = $derived(() => {
-		const allTerms = [...pills, query.trim()]
-			.map((s) => s.toLowerCase())
+		const allTerms = query.trim()
+			.toLowerCase()
+			.split(/\s+/)
 			.filter(Boolean);
 		if (allTerms.length === 0)
 			return sortByQualityThenName([...results]);
@@ -108,10 +115,10 @@
 		if (!browser || !searchReady) return;
 		clearTimeout(debounceTimer);
 		error = "";
-		const allTerms = [...pills, query.trim()].filter(Boolean);
-		const searchString = allTerms.join(" ");
+		const searchString = query.trim();
 		if (!searchString) {
 			results = [];
+			activeResultIndex = -1;
 			return;
 		}
 		debounceTimer = setTimeout(async () => {
@@ -129,6 +136,7 @@
 					? apiSearch.value
 					: [];
 				results = mergeResults(customResults, sharedResults, apiResults);
+				activeResultIndex = results.length > 0 ? 0 : -1;
 				dispatch("results", { results, query: searchString });
 
 				if (sharedSearch.status === "rejected" && apiSearch.status === "rejected") {
@@ -145,26 +153,87 @@
 
 	const handleInput = () => {
 		onSearchFocus();
+		activeResultIndex = -1;
 		triggerSearch();
 	};
 
+	const clearSearch = () => {
+		query = "";
+		results = [];
+		error = "";
+		activeResultIndex = -1;
+	};
+
+	const hasActiveSearch = $derived(
+		query.trim().length > 0 || results.length > 0,
+	);
+
 	$effect(() => {
-		pills;
-		if (searchReady) triggerSearch();
+		const resultCount = sortedResults().length;
+		if (resultCount === 0) {
+			activeResultIndex = -1;
+		} else if (activeResultIndex >= resultCount) {
+			activeResultIndex = resultCount - 1;
+		}
 	});
 
 	const select = (food: FdcFood) => {
 		onSelect(food);
 		query = "";
 		results = [];
+		activeResultIndex = -1;
+	};
+
+	const selectActiveResult = () => {
+		const visibleResults = sortedResults();
+		if (visibleResults.length === 0) return false;
+		const nextIndex = activeResultIndex >= 0 ? activeResultIndex : 0;
+		select(visibleResults[nextIndex]);
+		return true;
+	};
+
+	const moveActiveResult = (direction: 1 | -1) => {
+		const visibleResults = sortedResults();
+		if (visibleResults.length === 0) return;
+		const currentIndex = activeResultIndex >= 0
+			? activeResultIndex
+			: direction === 1
+				? -1
+				: 0;
+		activeResultIndex =
+			(currentIndex + direction + visibleResults.length) % visibleResults.length;
+	};
+
+	const handleSearchKeydown = (event: KeyboardEvent) => {
+		if (event.key === "ArrowDown") {
+			event.preventDefault();
+			moveActiveResult(1);
+			return;
+		}
+
+		if (event.key === "ArrowUp") {
+			event.preventDefault();
+			moveActiveResult(-1);
+			return;
+		}
+
+		if (event.key === "Enter") {
+			if (selectActiveResult()) {
+				event.preventDefault();
+			}
+			return;
+		}
 	};
 
 	onMount(() => {
 		searchReady = true;
 		triggerSearch();
+		if (autofocus) {
+			void tick().then(() => searchInputElement?.focus());
+		}
 
 		const refreshCustomResults = () => {
-			const searchString = [...pills, query.trim()].filter(Boolean).join(" ");
+			const searchString = query.trim();
 			if (!searchString) return;
 			results = mergeResults(searchCustomFoods(searchString), results);
 		};
@@ -185,43 +254,70 @@
 
 <div class="search-wrap">
 	<label class="search-label" for="ingredient-search">Search ingredients</label>
-	<div class="search-row" aria-busy={loading}>
+	<div
+		class="search-row"
+		class:search-row--active={hasActiveSearch}
+		class:search-row--with-actions={Boolean(actions)}
+		aria-busy={loading}
+	>
 		<Search class="search-icon" />
 		<input
+			bind:this={searchInputElement}
 			id="ingredient-search"
 			name="ingredient-search"
 			type="search"
+			role="combobox"
 			class="search-input"
 			placeholder="Search ingredients..."
 			bind:value={query}
 			onfocus={onSearchFocus}
 			oninput={handleInput}
-			onkeydown={(e) => {
-				if ((e.key === "Enter" || e.key === " ") && query.trim()) {
-					pills = [...pills, query.trim()];
-					query = "";
-					e.preventDefault();
-				}
-			}}
+			aria-autocomplete="list"
+			aria-controls="ingredient-search-results"
+			aria-expanded={sortedResults().length > 0}
+			aria-activedescendant={activeResultIndex >= 0
+				&& sortedResults()[activeResultIndex]
+				? `ingredient-search-result-${sortedResults()[activeResultIndex].fdcId}`
+				: undefined}
+			onkeydown={handleSearchKeydown}
 		/>
 		{#if loading}
 			<span class="spinner" role="status" aria-live="polite">
 				<span class="sr-only">Searching…</span>
 			</span>
+		{:else if query}
+			<button
+				class="search-clear"
+				type="button"
+				aria-label="Clear ingredient search"
+				onclick={clearSearch}
+			>
+				<X size={16} strokeWidth={2.2} />
+			</button>
+		{/if}
+		{#if actions}
+			{@render actions()}
 		{/if}
 	</div>
-	<PillRow
-		{pills}
-		onRemove={(idx) => (pills = pills.filter((_, i) => i !== idx))}
-	/>
+	{#if sortedResults().length > 0}
+		<p class="search-hints" aria-hidden="true">
+			<span>↑↓ choose result</span>
+			<span>↵ view nutrition</span>
+		</p>
+	{/if}
 	{#if error}
 		<p class="search-error" role="alert">{error}</p>
 	{/if}
-	<SearchDropdown results={sortedResults()} onSelect={select} />
+	<SearchDropdown
+		results={sortedResults()}
+		{activeResultIndex}
+		onSelect={select}
+		onActivate={(index) => (activeResultIndex = index)}
+	/>
 </div>
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.search-wrap {
 		position: relative;
@@ -256,33 +352,42 @@
 		grid-template-columns: auto minmax(0, 1fr) auto;
 		align-items: center;
 		gap: $app-gap-xs;
-		height: $app-rebuild-control-height;
-		min-height: $app-rebuild-control-height;
-		padding: 0 $app-rebuild-control-padding-x;
-		background: $color-figma-control-surface;
+		height: $ingredient-control-height;
+		min-height: $ingredient-control-height;
+		padding: 0 $ingredient-control-padding-x;
+		background: $ingredient-surface-control;
 		border: 1px solid transparent;
-		border-radius: $app-rebuild-radius;
+		border-radius: $ingredient-radius-control;
 		transition:
 			background-color 0.15s ease,
 			border-color 0.15s ease;
 
 		&:focus-within {
-			background: $color-figma-card;
-			border-color: $color-figma-green;
+			background: $ingredient-surface-positive;
+			border-color: $ingredient-accent-primary;
 		}
+	}
+
+	.search-row--with-actions {
+		grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+	}
+
+	.search-row--active {
+		background: $ingredient-surface-positive;
+		border-color: color-mix(in srgb, $ingredient-accent-primary 42%, transparent);
 	}
 
 	:global(.search-icon) {
 		width: 1rem;
 		height: 1rem;
-		stroke: $color-figma-muted;
+		stroke: $ingredient-text-muted;
 	}
 
 	.search-input {
 		min-width: 0;
 		height: 100%;
 		padding: 0;
-		color: $color-figma-ink;
+		color: $ingredient-text-primary;
 		background: transparent;
 		border: 0;
 		border-radius: 0;
@@ -290,17 +395,53 @@
 		font-size: $app-font-size-md;
 
 		&::placeholder {
-			color: $color-figma-muted;
+			color: $ingredient-text-muted;
 		}
 	}
 
 	.spinner {
 		width: 0.9rem;
 		height: 0.9rem;
-		border: 2px solid color-mix(in srgb, $color-figma-muted 28%, transparent);
-		border-top-color: $color-figma-green;
-		border-radius: $app-rebuild-radius-pill;
+		border: 2px solid color-mix(in srgb, $ingredient-text-muted 28%, transparent);
+		border-top-color: $ingredient-accent-primary;
+		border-radius: $ingredient-radius-pill;
 		animation: ingredient-search-spin 700ms linear infinite;
+	}
+
+	.search-clear {
+		display: inline-grid;
+		place-items: center;
+		width: 1.6rem;
+		height: 1.6rem;
+		padding: 0;
+		color: $ingredient-text-muted;
+		background: transparent;
+		border: 0;
+		border-radius: $ingredient-radius-pill;
+
+		&:hover,
+		&:focus-visible {
+			color: $ingredient-text-primary;
+			background: color-mix(in srgb, $ingredient-surface-card 68%, transparent);
+			outline: none;
+		}
+	}
+
+	.search-hints {
+		display: flex;
+		flex-wrap: wrap;
+		gap: $app-gap-xs $app-gap-sm;
+		margin: 0;
+		color: $ingredient-text-muted;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-semibold;
+		line-height: 1.25;
+
+		span + span::before {
+			content: "·";
+			margin-right: $app-gap-sm;
+			color: color-mix(in srgb, $ingredient-text-muted 62%, transparent);
+		}
 	}
 
 	@keyframes ingredient-search-spin {
@@ -310,7 +451,7 @@
 	}
 
 	.search-error {
-		padding: $app-rebuild-control-padding-y-sm $app-rebuild-control-padding-x-sm;
+		padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x-compact;
 		color: $app-warning-strong;
 		background: $app-warning-bg;
 		border: $app-warning-border;

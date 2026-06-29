@@ -62,7 +62,7 @@
 </BottomSheet>
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.ingredient-action-sheet__actions {
 		display: grid;

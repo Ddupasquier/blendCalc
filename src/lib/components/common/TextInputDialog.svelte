@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
+	import ActionButton from "$lib/components/common/ActionButton.svelte";
+	import BottomSheet from "$lib/components/common/BottomSheet.svelte";
 
 	let {
 		open = false,
@@ -58,178 +60,137 @@
 	};
 </script>
 
-{#if open}
-	<div class="dialog-backdrop" role="presentation">
-		<div
-			class="dialog"
-			role="dialog"
-			aria-modal="true"
-			aria-labelledby="text-input-dialog-title"
-		>
-			<header>
-				<h3 id="text-input-dialog-title">{title}</h3>
-				{#if description}
-					<p>{description}</p>
-				{/if}
-			</header>
+<BottomSheet
+	{open}
+	{title}
+	titleId="text-input-dialog-title"
+	label={title}
+	titleStyle="prominent"
+	onClose={onCancel}
+>
+	<div class="text-input-sheet">
+		{#if description}
+			<p class="text-input-sheet__description">{description}</p>
+		{/if}
 
-			{#if children}
-				<div class="dialog-content">
-					{@render children()}
-				</div>
-			{/if}
-
-			<label>
-				<span>{label}</span>
-				<input
-					id="text-input-dialog-value"
-					name="text-input-dialog-value"
-					type="text"
-					bind:value
-					{placeholder}
-					disabled={busy}
-					aria-invalid={error ? "true" : undefined}
-					aria-describedby={error ? "text-input-dialog-error" : undefined}
-					oninput={() => onValueChange?.(value)}
-					onkeydown={(event) => {
-						if (event.key === "Enter") confirm();
-						if (event.key === "Escape") onCancel();
-					}}
-				/>
-				{#if error}
-					<span id="text-input-dialog-error" class="dialog-error" role="alert">
-						{error}
-					</span>
-				{/if}
-			</label>
-
-			<div class="dialog-actions">
-				<button class="dialog-cancel" type="button" onclick={onCancel} disabled={busy}>
-					{cancelLabel}
-				</button>
-				{#if secondaryConfirmLabel && onSecondaryConfirm}
-					<button
-						class="dialog-secondary-confirm"
-						type="button"
-						onclick={secondaryConfirm}
-						disabled={busy}
-					>
-						{secondaryConfirmLabel}
-					</button>
-				{/if}
-				<button class="dialog-confirm" type="button" onclick={confirm} disabled={busy}>
-					{confirmLabel}
-				</button>
+		{#if children}
+			<div class="text-input-sheet__content">
+				{@render children()}
 			</div>
+		{/if}
+
+		<label class="text-input-sheet__field">
+			<span>{label}</span>
+			<input
+				id="text-input-dialog-value"
+				name="text-input-dialog-value"
+				type="text"
+				bind:value
+				{placeholder}
+				disabled={busy}
+				aria-invalid={error ? "true" : undefined}
+				aria-describedby={error ? "text-input-dialog-error" : undefined}
+				oninput={() => onValueChange?.(value)}
+				onkeydown={(event) => {
+					if (event.key === "Enter") confirm();
+					if (event.key === "Escape") onCancel();
+				}}
+			/>
+			{#if error}
+				<span id="text-input-dialog-error" class="text-input-sheet__error" role="alert">
+					{error}
+				</span>
+			{/if}
+		</label>
+
+		<div
+			class="text-input-sheet__actions"
+			class:text-input-sheet__actions--triple={secondaryConfirmLabel && onSecondaryConfirm}
+		>
+			<ActionButton variant="ghost" fullWidth disabled={busy} onclick={onCancel}>
+				{cancelLabel}
+			</ActionButton>
+			{#if secondaryConfirmLabel && onSecondaryConfirm}
+				<ActionButton
+					variant="secondary"
+					fullWidth
+					disabled={busy}
+					onclick={secondaryConfirm}
+				>
+					{secondaryConfirmLabel}
+				</ActionButton>
+			{/if}
+			<ActionButton variant="success" fullWidth busy={busy} onclick={confirm}>
+				{confirmLabel}
+			</ActionButton>
 		</div>
 	</div>
-{/if}
+</BottomSheet>
 
 <style lang="scss">
 	@use "../../../styles/variables" as *;
 
-	.dialog-backdrop {
-		position: fixed;
-		inset: 0;
-		z-index: 100;
+	.text-input-sheet {
 		display: grid;
-		place-items: center;
-		padding: $app-padding;
-		background: $app-overlay-bg;
-		backdrop-filter: blur(2px);
+		gap: $app-gap-md;
 	}
 
-	.dialog {
-		width: min(26rem, 100%);
-		padding: $app-gap-md;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-card-radius;
-	}
-
-	header {
-		margin-bottom: $app-gap-md;
-
-		h3 {
-			margin-bottom: 0.25rem;
-			color: $app-primary;
-			font-size: $app-font-size-xl;
-			font-weight: 800;
-		}
-
-		p {
-			color: $app-muted;
-			font-size: $app-font-size-md;
-			line-height: 1.4;
-		}
-	}
-
-	.dialog-content {
-		margin-bottom: $app-gap-md;
-	}
-
-	label {
-		display: grid;
-		gap: 0.35rem;
-		color: $app-primary;
+	.text-input-sheet__description {
+		margin: 0;
+		color: $color-figma-muted;
 		font-size: $app-font-size-md;
-		font-weight: 800;
+		line-height: 1.35;
+	}
+
+	.text-input-sheet__content {
+		display: grid;
+		gap: $app-gap-sm;
+	}
+
+	.text-input-sheet__field {
+		display: grid;
+		gap: $app-gap-xs;
+		color: $color-figma-ink;
+		font-size: $app-font-size-md;
+		font-weight: $app-font-weight-bold;
 	}
 
 	input {
 		width: 100%;
-		height: 2.45rem;
-		padding: 0 0.75rem;
-		color: $app-primary;
-		background: $app-bg;
-		border: $app-border;
-		border-radius: $app-radius;
+		min-height: $app-rebuild-control-height;
+		padding: 0 $app-rebuild-control-padding-x;
+		color: $color-figma-ink;
+		background: $color-figma-soft-surface;
+		border: 1px solid transparent;
+		border-radius: $app-rebuild-radius-pill;
 		font-size: $app-font-size-lg;
 		box-sizing: border-box;
-	}
 
-	.dialog-error {
-		color: $app-warning-strong;
-		font-size: $app-font-size-sm;
-		font-weight: 800;
-	}
-
-	.dialog-actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: 0.55rem;
-		margin-top: $app-gap-md;
-	}
-
-	button {
-		border-radius: $app-radius-pill;
-		font-weight: $app-button-font-weight;
-		line-height: $app-button-line-height;
-		padding: 0.55rem 1rem;
-	}
-
-	.dialog-cancel {
-		color: $app-primary;
-		background: $app-accent;
-	}
-
-	.dialog-secondary-confirm {
-		color: $app-primary;
-		background: $app-success-bg;
-	}
-
-	.dialog-confirm {
-		color: $app-btn-text;
-		background: $app-btn-bg;
-
-		&:hover {
-			background: $app-btn-bg-hover;
+		&:focus {
+			outline: none;
+			border-color: $color-figma-green;
 		}
 	}
 
+	.text-input-sheet__error {
+		color: $color-figma-red;
+		font-size: $app-font-size-sm;
+		font-weight: $app-font-weight-bold;
+	}
+
+	.text-input-sheet__actions {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: $app-horizontal-control-gap;
+	}
+
+	.text-input-sheet__actions--triple {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
 	@media (max-width: $app-breakpoint-xs) {
-		.dialog-actions {
-			display: grid;
+		.text-input-sheet__actions,
+		.text-input-sheet__actions--triple {
 			grid-template-columns: 1fr;
 		}
 	}

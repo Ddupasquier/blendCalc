@@ -39,14 +39,15 @@
 {#if open}
 	<div
 		class="bottom-sheet-backdrop"
-		class:bottom-sheet-backdrop--above-nav={aboveNav}
+		class:bottom-sheet-backdrop--full-viewport={!aboveNav}
 		role="presentation"
 		onclick={onClose}
 		transition:fade={{ duration: 180 }}
 	></div>
+
 	<div
 		class="bottom-sheet"
-		class:bottom-sheet--above-nav={aboveNav}
+		class:bottom-sheet--full-viewport={!aboveNav}
 		class:bottom-sheet--fill={fill}
 		class:bottom-sheet--comfortable={comfortable}
 		class:bottom-sheet--prominent-title={titleStyle === "prominent"}
@@ -54,6 +55,9 @@
 		aria-modal="true"
 		aria-label={title ? undefined : label}
 		aria-labelledby={title ? titleId : undefined}
+		tabindex="-1"
+		onclick={(event) => event.stopPropagation()}
+		onkeydown={(event) => event.stopPropagation()}
 		transition:fly={{ y: "100%", duration: 260, easing: cubicOut }}
 	>
 		<button class="bottom-sheet__dismiss" type="button" aria-label="Close sheet" onclick={onClose}>
@@ -71,43 +75,68 @@
 <style lang="scss">
 	@use "../../../styles/variables" as *;
 
-	.bottom-sheet-backdrop {
-		position: fixed;
-		inset: 0;
-		z-index: 110;
-		background: $app-rebuild-overlay-bg;
+	.bottom-sheet-backdrop,
+	.bottom-sheet {
+		--bottom-sheet-top-offset: #{$app-shell-header-height};
+		--bottom-sheet-bottom-offset: calc(
+			#{$app-shell-nav-height} + env(safe-area-inset-bottom)
+		);
+		--bottom-sheet-shell-side: max(
+			0rem,
+			calc((100vw - #{$app-shell-content-max-width}) / 2)
+		);
 	}
 
-	.bottom-sheet-backdrop--above-nav {
-		bottom: calc($app-shell-nav-height + env(safe-area-inset-bottom));
+	.bottom-sheet-backdrop {
+		position: fixed;
+		top: var(--bottom-sheet-top-offset);
+		right: 0;
+		bottom: var(--bottom-sheet-bottom-offset);
+		left: 0;
+		z-index: 110;
+		padding: 0;
+		background: $app-shell-overlay-bg;
+	}
+
+	.bottom-sheet-backdrop--full-viewport,
+	.bottom-sheet--full-viewport {
+		--bottom-sheet-bottom-offset: 0rem;
 	}
 
 	.bottom-sheet {
-		--bottom-sheet-bottom-offset: 0rem;
-
 		position: fixed;
-		right: max(0rem, calc((100vw - $app-mobile-shell-width) / 2));
+		right: var(--bottom-sheet-shell-side);
 		bottom: var(--bottom-sheet-bottom-offset);
-		left: max(0rem, calc((100vw - $app-mobile-shell-width) / 2));
+		left: var(--bottom-sheet-shell-side);
 		z-index: 111;
 		display: flex;
 		flex-direction: column;
 		gap: $app-gap-md;
-		width: min(100%, $app-mobile-shell-width);
+		width: auto;
+		min-height: min(
+			$app-bottom-sheet-min-height,
+			calc(
+				100dvh - var(--bottom-sheet-top-offset) -
+					var(--bottom-sheet-bottom-offset)
+			)
+		);
 		max-height: min(
 			$app-bottom-sheet-max-height,
-			calc(100dvh - var(--bottom-sheet-bottom-offset) - $app-gap-md)
+			calc(
+				100dvh - var(--bottom-sheet-top-offset) -
+					var(--bottom-sheet-bottom-offset)
+			)
 		);
 		padding: $app-gap-sm $app-shell-padding-x $app-gap-md;
-		margin: 0 auto;
+		margin: 0;
 		overflow: hidden;
-		background: $color-figma-card;
-		border-radius: $app-rebuild-radius-lg $app-rebuild-radius-lg 0 0;
+		background: $app-shell-surface-panel;
+		border-radius: $app-sheet-radius $app-sheet-radius 0 0;
 
 		h2 {
 			margin: 0;
 			overflow: hidden;
-			color: $color-figma-muted;
+			color: $app-shell-text-muted;
 			font-size: $app-font-size-md;
 			font-weight: $app-font-weight-bold;
 			line-height: 1.2;
@@ -118,28 +147,28 @@
 
 	.bottom-sheet--prominent-title {
 		h2 {
-			color: $color-figma-ink;
+			color: $app-shell-text-primary;
 			font-size: $app-font-size-xl;
 		}
-	}
-
-	.bottom-sheet--above-nav {
-		--bottom-sheet-bottom-offset: calc(
-			$app-shell-nav-height + env(safe-area-inset-bottom)
-		);
 	}
 
 	.bottom-sheet--fill {
 		height: min(
 			$app-bottom-sheet-max-height,
-			calc(100dvh - var(--bottom-sheet-bottom-offset) - $app-gap-md)
+			calc(
+				100dvh - var(--bottom-sheet-top-offset) -
+					var(--bottom-sheet-bottom-offset)
+			)
 		);
 	}
 
 	.bottom-sheet--comfortable {
 		min-height: min(
 			$app-bottom-sheet-comfortable-min-height,
-			calc(100dvh - var(--bottom-sheet-bottom-offset) - $app-gap-md)
+			calc(
+				100dvh - var(--bottom-sheet-top-offset) -
+					var(--bottom-sheet-bottom-offset)
+			)
 		);
 	}
 
@@ -162,7 +191,7 @@
 			width: 2.25rem;
 			height: calc($app-gap-xs - 0.05rem);
 			margin: 0 auto;
-			background: color-mix(in srgb, $color-figma-muted 24%, transparent);
+			background: color-mix(in srgb, $app-shell-text-muted 24%, transparent);
 			border-radius: $app-radius-pill;
 		}
 
@@ -174,11 +203,14 @@
 
 	.bottom-sheet__content {
 		display: grid;
+		align-content: start;
+		align-items: start;
 		flex: 1 1 auto;
 		gap: $app-gap-md;
+		grid-auto-rows: max-content;
 		min-width: 0;
 		min-height: 0;
-		padding-bottom: max($app-gap-md, env(safe-area-inset-bottom));
+		padding-bottom: $app-gap-md;
 		overflow-y: auto;
 		overscroll-behavior: contain;
 		-webkit-overflow-scrolling: touch;

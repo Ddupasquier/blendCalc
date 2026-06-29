@@ -10,7 +10,7 @@ These are the working rules gathered from prior product and implementation decis
 
 1. Build mobile-first. Every screen and component should work on narrow phones before wider layouts.
 2. Keep the user flow simple. Barcode scanning, search, manual entry, fridge, shopping, mix, and saved drinks should feel like a guided flow instead of disconnected tasks.
-3. Use design tokens. Colors, spacing, font sizes, font weights, radii, and breakpoints should come from SCSS variables wherever practical.
+3. Use design tokens. Colors, spacing, font sizes, font weights, radii, and breakpoints should come from SCSS variables wherever practical. Component styles should consume readable semantic tokens for their domain or shared primitive (`$ingredient-*`, `$app-shell-*`, etc.) instead of raw source/provenance tokens such as `$color-figma-*` or `$app-rebuild-*`; keep those low-level aliases centralized in `src/styles/_variables.scss`.
 4. Do not use box shadows. Use borders, spacing, and background contrast instead.
 5. Keep the visual style calm, polished, and not overstimulating. Accent colors should be rare and intentional.
 6. Make important actions obvious. Barcode scan, save, add, and confirm actions should be easy to find without overwhelming the screen.
@@ -42,6 +42,7 @@ These are the working rules gathered from prior product and implementation decis
 32. API structure references must come from observed API responses. Do not write imagined vendor schemas by hand. The generator should use previously observed Supabase query data or explicit script arguments, then hit every external API source the app currently uses for that data domain.
 33. Follow best practices across the full stack, especially backend and database design. Do not guess at schema, indexing, query, RLS, or data-flow decisions. For sorting, filtering, pagination, and shared reference data, prefer indexed database queries or focused views that keep the UI thin. Use RPC only when the behavior is complex, transactional, security-sensitive, or meaningfully reusable. Keep backend ownership clear, documented, and maintainable.
 34. Ingredient manipulation controls should use toggles, buttons, action sheets, or explicit forms instead of raw checkboxes. If a setting behaves like on/off state, use the shared toggle component.
+35. Maintain `docs/qa-tasks.md` for manual QA. Every feature, component, UI, data-flow, or behavior change that needs user verification must add concrete QA notes before handoff. Do not mark QA items complete or move them to cleared until the user explicitly verifies them.
 
 ## Audit Summary
 

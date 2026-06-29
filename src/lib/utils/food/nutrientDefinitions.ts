@@ -46,8 +46,8 @@ type ManualEntryFieldRecord = Pick<
 	| "group_id"
 	| "display_label"
 	| "sort_order"
+	| "dedupe_key"
 > & {
-	dedupe_key?: string | null;
 	nutrient_definitions: NutrientDefinitionRecord | null;
 	nutrient_manual_entry_groups: ManualEntryGroupRecord | null;
 };
@@ -233,7 +233,7 @@ export const readManualEntryNutrientGroups = async (
 	const { data, error } = await supabase
 		.from("nutrient_manual_entry_fields")
 		.select(
-			"nutrient_id, nutrient_type, group_id, display_label, sort_order, nutrient_definitions(nutrient_id, nutrient_name, nutrient_number, default_unit_name), nutrient_manual_entry_groups!inner(id, entry_step, title, sort_order)",
+			"nutrient_id, nutrient_type, group_id, display_label, sort_order, dedupe_key, nutrient_definitions(nutrient_id, nutrient_name, nutrient_number, default_unit_name), nutrient_manual_entry_groups!inner(id, entry_step, title, sort_order)",
 		)
 		.eq("enabled", true)
 		.eq("nutrient_manual_entry_groups.enabled", true)

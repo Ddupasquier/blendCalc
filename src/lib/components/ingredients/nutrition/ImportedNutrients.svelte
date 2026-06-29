@@ -40,7 +40,7 @@
 </details>
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.imported-nutrients {
 		padding: $app-gap-sm;

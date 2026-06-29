@@ -37,12 +37,12 @@
 		display: flex;
 		align-items: center;
 		gap: $app-gap-sm;
-		padding: $app-rebuild-status-padding-y $app-rebuild-status-padding-x;
-		color: $color-figma-ink;
+		padding: $ingredient-status-padding-y $ingredient-status-padding-x;
+		color: $ingredient-text-primary;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-medium;
 		background: color-mix(in srgb, $color-strawberry-cream 55%, white);
-		border-radius: $app-rebuild-radius-pill;
+		border-radius: $ingredient-radius-pill;
 	}
 
 	.manual-entry-validation__item--warning {

@@ -51,7 +51,7 @@
 		gap: $app-gap-xs;
 		align-items: center;
 		padding: 0;
-		color: $color-figma-muted;
+		color: $ingredient-text-muted;
 		font-family: $app-font-family-interface;
 		font-size: $app-font-size-xs;
 		font-weight: $app-font-weight-medium;
@@ -64,18 +64,18 @@
 		display: block;
 		width: 100%;
 		height: 0.22rem;
-		border-radius: $app-rebuild-radius-pill;
-		background: $color-figma-control-surface;
+		border-radius: $ingredient-radius-pill;
+		background: $ingredient-surface-control;
 		transition:
 			background-color 160ms ease,
 			opacity 160ms ease;
 	}
 
 	.manual-entry-tabs__step--active span {
-		background: $color-figma-green;
+		background: $ingredient-accent-primary;
 	}
 
 	.manual-entry-tabs__step--current {
-		color: $color-figma-green;
+		color: $ingredient-accent-primary;
 	}
 </style>

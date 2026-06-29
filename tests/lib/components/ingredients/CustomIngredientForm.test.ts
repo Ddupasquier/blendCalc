@@ -161,7 +161,7 @@ vi.mock("$lib/utils/food/categoryOptions", async (importOriginal) => {
 	};
 });
 
-import CustomIngredientForm from "$lib/components/ingredients/CustomIngredientForm.svelte";
+import CustomIngredientForm from "$lib/components/ingredients/manual-entry/CustomIngredientForm.svelte";
 import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
 import { createCustomFood } from "$lib/utils/food/customFoods";
 

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-import CustomIngredientOutcome from "$lib/components/ingredients/CustomIngredientOutcome.svelte";
+import CustomIngredientOutcome from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
 import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
 import { createCustomFood } from "$lib/utils/food/customFoods";
 

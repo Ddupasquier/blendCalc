@@ -130,12 +130,12 @@
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			min-height: $app-rebuild-control-height;
-			padding: 0 $app-rebuild-control-padding-x;
+			min-height: $ingredient-control-height;
+			padding: 0 $ingredient-control-padding-x;
 			margin: 0 0 $app-gap-md;
-			color: $color-figma-ink;
-			background: $color-figma-green-soft;
-			border-radius: $app-rebuild-radius-pill;
+			color: $ingredient-text-primary;
+			background: $ingredient-surface-positive;
+			border-radius: $ingredient-radius-pill;
 			font-family: $app-font-family-interface;
 			font-size: $app-font-size-md;
 			font-weight: $app-font-weight-bold;
@@ -149,7 +149,7 @@
 
 		summary::after {
 			content: "⌄";
-			color: $color-figma-muted;
+			color: $ingredient-text-muted;
 			font-size: $app-font-size-md;
 			line-height: 1;
 			transform: rotate(180deg);
@@ -170,7 +170,7 @@
 	label {
 		display: grid;
 		gap: $app-gap-sm;
-		color: $color-figma-muted;
+		color: $ingredient-text-muted;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
 		text-transform: uppercase;
@@ -183,15 +183,15 @@
 		}
 
 		em {
-			color: $color-figma-red;
+			color: $ingredient-accent-danger;
 			font-style: normal;
 		}
 
 		small {
-			padding: $app-rebuild-badge-padding-y $app-rebuild-badge-padding-x;
-			color: $color-figma-muted;
-			background: $color-figma-control-surface;
-			border-radius: $app-rebuild-radius-pill;
+			padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
+			color: $ingredient-text-muted;
+			background: $ingredient-surface-control;
+			border-radius: $ingredient-radius-pill;
 			font-size: $app-font-size-xs;
 			font-weight: $app-font-weight-medium;
 			text-transform: none;
@@ -201,12 +201,12 @@
 	input {
 		width: 100%;
 		min-width: 0;
-		min-height: $app-rebuild-control-height;
-		padding: 0 $app-rebuild-control-padding-x;
-		color: $color-figma-ink;
-		background: $color-figma-soft-surface;
+		min-height: $ingredient-control-height;
+		padding: 0 $ingredient-control-padding-x;
+		color: $ingredient-text-primary;
+		background: $ingredient-surface-soft;
 		border: 0;
-		border-radius: $app-rebuild-radius-pill;
+		border-radius: $ingredient-radius-pill;
 		font: inherit;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-medium;
@@ -216,15 +216,15 @@
 	.manual-nutrients__status {
 		margin: 0;
 		padding: $app-gap-md;
-		color: $color-figma-muted;
-		background: $color-figma-soft-surface;
-		border-radius: $app-rebuild-radius-lg;
+		color: $ingredient-text-muted;
+		background: $ingredient-surface-soft;
+		border-radius: $ingredient-radius-sheet;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-semibold;
 	}
 
 	.manual-nutrients__status--error {
-		color: $color-figma-red;
+		color: $ingredient-accent-danger;
 		background: $app-danger-bg;
 	}
 </style>

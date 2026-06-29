@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { FdcFood } from "$lib/utils/food/types";
 
 vi.mock("$lib/utils/food/fdc", () => ({
 	FdcConfigurationError: class FdcConfigurationError extends Error {},
@@ -18,7 +19,16 @@ vi.mock("$lib/utils/products/catalog", () => ({
 	searchSharedProducts: vi.fn().mockResolvedValue([]),
 }));
 
-import IngredientSearch from "$lib/components/ingredients/IngredientSearch.svelte";
+import IngredientSearch from "$lib/components/ingredients/search/IngredientSearch.svelte";
+import { searchFoods } from "$lib/utils/food/fdc";
+
+const makeFood = (fdcId: number, description: string): FdcFood => ({
+	fdcId,
+	description,
+	foodCategory: "Fruit",
+	foodNutrients: [],
+	dataType: "SR Legacy",
+});
 
 describe("IngredientSearch", () => {
 	beforeEach(() => {
@@ -35,7 +45,7 @@ describe("IngredientSearch", () => {
 			},
 		});
 
-		const searchInput = screen.getByRole("searchbox", {
+		const searchInput = screen.getByRole("combobox", {
 			name: /search ingredients/i,
 		});
 
@@ -43,5 +53,42 @@ describe("IngredientSearch", () => {
 		await fireEvent.input(searchInput, { target: { value: "banana" } });
 
 		expect(onSearchFocus).toHaveBeenCalledTimes(2);
+	});
+
+	it("uses arrow keys and Enter to select a visible result", async () => {
+		const onSelect = vi.fn();
+		vi.mocked(searchFoods).mockResolvedValueOnce([
+			makeFood(101, "Apple, raw"),
+			makeFood(102, "Banana, raw"),
+		]);
+
+		render(IngredientSearch, {
+			props: {
+				onSelect,
+				onSearchFocus: vi.fn(),
+			},
+		});
+
+		const searchInput = screen.getByRole("combobox", {
+			name: /search ingredients/i,
+		});
+
+		await fireEvent.input(searchInput, { target: { value: "raw" } });
+
+		await waitFor(
+			() => {
+				expect(screen.getByText("Apple, raw")).toBeInTheDocument();
+				expect(screen.getByText("↑↓ choose result")).toBeInTheDocument();
+				expect(screen.queryByText(/backspace|⌫/i)).not.toBeInTheDocument();
+			},
+			{ timeout: 2000 },
+		);
+
+		await fireEvent.keyDown(searchInput, { key: "ArrowDown" });
+		await fireEvent.keyDown(searchInput, { key: "Enter" });
+
+		expect(onSelect).toHaveBeenCalledWith(
+			expect.objectContaining({ fdcId: 102 }),
+		);
 	});
 });

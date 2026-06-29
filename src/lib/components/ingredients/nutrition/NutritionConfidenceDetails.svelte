@@ -73,7 +73,7 @@
 {/if}
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.confidence-details {
 		display: grid;
@@ -88,7 +88,7 @@
 
 	.confidence-details--compact {
 		margin: 0 $app-gap-md $app-gap-sm;
-		padding: $app-rebuild-control-padding-y-sm;
+		padding: $ingredient-control-padding-y-compact;
 	}
 
 	.confidence-details__toggle {
@@ -168,7 +168,7 @@
 		grid-template-columns: minmax(0, 1fr) auto;
 		gap: $app-gap-xs $app-gap-sm;
 		align-items: center;
-		padding: $app-gap-xs $app-rebuild-control-padding-y-sm;
+		padding: $app-gap-xs $ingredient-control-padding-y-compact;
 		background: $app-section-bg;
 		border: $app-border;
 		border-radius: $app-radius-sm;

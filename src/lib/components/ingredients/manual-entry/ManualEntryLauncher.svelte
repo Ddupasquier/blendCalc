@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ManualEntryToggle from "$lib/components/ingredients/ManualEntryToggle.svelte";
+	import ManualEntryToggle from "$lib/components/ingredients/manual-entry/ManualEntryToggle.svelte";
 
 	let {
 		onSelect,
@@ -18,7 +18,7 @@
 </button>
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.manual-entry-launcher {
 		display: grid;
@@ -27,18 +27,18 @@
 		gap: $app-gap-sm;
 		min-height: 3.55rem;
 		width: 100%;
-		padding: $app-rebuild-card-padding-sm $app-rebuild-control-padding-x;
-		color: $color-figma-ink;
+		padding: $ingredient-card-padding-compact $ingredient-control-padding-x;
+		color: $ingredient-text-primary;
 		text-align: left;
-		background: color-mix(in srgb, $color-figma-card 74%, $color-figma-canvas);
+		background: color-mix(in srgb, $ingredient-surface-card 74%, $ingredient-surface-page);
 		border: 0;
-		border-radius: $app-rebuild-radius;
+		border-radius: $ingredient-radius-card;
 		transition:
 			background-color 160ms ease,
 			transform 160ms ease;
 
 		&:hover {
-			background: $color-figma-card;
+			background: $ingredient-surface-card;
 		}
 
 		&:active {

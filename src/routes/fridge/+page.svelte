@@ -1,16 +1,18 @@
 <script lang="ts">
     import Sliders from "$lib/assets/icons/Sliders.svelte";
-    import IngredientSearch from "$lib/components/ingredients/IngredientSearch.svelte";
-    import BarcodeScanButton from "$lib/components/ingredients/BarcodeScanButton.svelte";
-    import IngredientActionSheet from "$lib/components/ingredients/IngredientActionSheet.svelte";
-    import IngredientBulkActions from "$lib/components/ingredients/IngredientBulkActions.svelte";
-    import IngredientEmptyState from "$lib/components/ingredients/IngredientEmptyState.svelte";
-    import IngredientFilterSheet from "$lib/components/ingredients/IngredientFilterSheet.svelte";
-    import IngredientListTabs from "$lib/components/ingredients/IngredientListTabs.svelte";
-    import ManualEntryLauncher from "$lib/components/ingredients/ManualEntryLauncher.svelte";
-    import ManualEntrySheet from "$lib/components/ingredients/ManualEntrySheet.svelte";
-    import NutritionPanel from "$lib/components/ingredients/NutritionPanel.svelte";
-    import SavedIngredientCard from "$lib/components/ingredients/SavedIngredientCard.svelte";
+    import SlideInView from "$lib/components/common/SlideInView.svelte";
+    import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
+    import IngredientActionSheet from "$lib/components/ingredients/sheets/IngredientActionSheet.svelte";
+    import IngredientBulkActions from "$lib/components/ingredients/list/IngredientBulkActions.svelte";
+    import IngredientEmptyState from "$lib/components/ingredients/list/IngredientEmptyState.svelte";
+    import IngredientFilterSheet from "$lib/components/ingredients/sheets/IngredientFilterSheet.svelte";
+    import IngredientListTabs from "$lib/components/ingredients/list/IngredientListTabs.svelte";
+    import IngredientSearchTrigger from "$lib/components/ingredients/search/IngredientSearchTrigger.svelte";
+    import IngredientSearchView from "$lib/components/ingredients/search/IngredientSearchView.svelte";
+    import ManualEntryLauncher from "$lib/components/ingredients/manual-entry/ManualEntryLauncher.svelte";
+    import ManualEntrySheet from "$lib/components/ingredients/sheets/ManualEntrySheet.svelte";
+    import NutritionPanel from "$lib/components/ingredients/nutrition/NutritionPanel.svelte";
+    import SavedIngredientCard from "$lib/components/ingredients/list/SavedIngredientCard.svelte";
     import TextInputDialog from "$lib/components/common/TextInputDialog.svelte";
     import {
         LIST_PAGE_SIZES,
@@ -68,6 +70,7 @@
     let listSort = $state<FoodListSort>("recent");
     let activeList = $state<SmoothieListKey>(MIX_STORAGE_KEYS.fridge);
     let activeSheet = $state<"manual-entry" | "filters" | null>(null);
+    let searchViewOpen = $state(false);
     let onHandVisibleCount = $state<number>(LIST_PAGE_SIZES.ingredientPills);
     let shoppingVisibleCount = $state<number>(LIST_PAGE_SIZES.ingredientPills);
     let onHandTotalCount = $state(0);
@@ -235,6 +238,7 @@
     };
 
     const startBarcodeScan = () => {
+        searchViewOpen = false;
         activeSheet = "manual-entry";
         scanSignal += 1;
     };
@@ -244,7 +248,17 @@
     };
 
     const toggleFilters = () => {
+        searchViewOpen = false;
         activeSheet = activeSheet === "filters" ? null : "filters";
+    };
+
+    const openSearchView = () => {
+        activeSheet = null;
+        searchViewOpen = true;
+    };
+
+    const closeSearchView = () => {
+        searchViewOpen = false;
     };
 
     const scrollToNutritionPreview = async () => {
@@ -267,6 +281,7 @@
     };
 
     const handleSearchSelect = async (food: FdcFood) => {
+        searchViewOpen = false;
         closeIngredientSheet();
         selectedFood = food;
         await scrollToNutritionPreview();
@@ -620,10 +635,7 @@
         <h2 id="ingredient-search-title" class="sr-only">Find Ingredients</h2>
         <div class="search-toolbar">
             <div class="search-toolbar__input">
-                <IngredientSearch
-                    onSelect={handleSearchSelect}
-                    onSearchFocus={closeIngredientSheet}
-                />
+                <IngredientSearchTrigger onOpen={openSearchView} />
             </div>
             <BarcodeScanButton
                 scanning={barcodeLookupBusy}
@@ -662,6 +674,20 @@
             </div>
         {/if}
     </section>
+
+    <SlideInView
+        open={searchViewOpen}
+        labelledby="ingredient-search-view-title"
+        onClose={closeSearchView}
+    >
+        <IngredientSearchView
+            scanning={barcodeLookupBusy}
+            filtersActive={activeSheet === "filters"}
+            onSelect={handleSearchSelect}
+            onScan={startBarcodeScan}
+            onFilter={toggleFilters}
+        />
+    </SlideInView>
 
     <section
         class="saved-ingredients"
@@ -853,17 +879,17 @@
         grid-template-rows: auto auto minmax(0, 1fr);
         row-gap: $app-vertical-stack-gap;
         width: 100%;
-        max-width: $app-max-width;
+        max-width: $ingredient-shell-max-width;
         height: calc(
-            100dvh - $app-shell-header-height - $app-shell-nav-height -
+            100dvh - $ingredient-shell-header-height - $ingredient-shell-nav-height -
                 env(safe-area-inset-bottom)
         );
         min-height: 0;
         margin: 0 auto;
-        padding: $app-shell-padding-y $app-shell-padding-x 0;
+        padding: $ingredient-shell-padding-y $ingredient-shell-padding-x 0;
         box-sizing: border-box;
         overflow: hidden;
-        background: $color-figma-canvas;
+        background: $ingredient-surface-page;
     }
 
     .ingredients-header {
@@ -871,7 +897,7 @@
 
         h1 {
             margin: 0 0 $app-gap-xs;
-            color: $color-figma-ink;
+            color: $ingredient-text-primary;
             font-family: $app-font-family-display;
             font-size: clamp(1.75rem, 7vw, 2.1rem);
             font-weight: $app-font-weight-heavy;
@@ -881,7 +907,7 @@
 
         p {
             max-width: 24rem;
-            color: $color-figma-muted;
+            color: $ingredient-text-muted;
             font-size: $app-font-size-md;
             font-weight: $app-font-weight-medium;
             line-height: 1.35;
@@ -901,8 +927,8 @@
 
     .search-toolbar {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) $app-rebuild-control-height $app-rebuild-control-height;
-        align-items: stretch;
+        grid-template-columns: minmax(0, 1fr) $ingredient-control-height $ingredient-control-height;
+        align-items: start;
         gap: $app-horizontal-control-gap;
     }
 
@@ -911,36 +937,36 @@
     }
 
     .search-toolbar :global(.barcode-scan-button--compact) {
-        align-self: stretch;
-        width: $app-rebuild-control-height;
-        height: $app-rebuild-control-height;
-        min-height: $app-rebuild-control-height;
+        align-self: start;
+        width: $ingredient-control-height;
+        height: $ingredient-control-height;
+        min-height: $ingredient-control-height;
     }
 
     .filter-button {
         display: inline-grid;
         place-items: center;
-        align-self: stretch;
-        width: $app-rebuild-control-height;
-        height: $app-rebuild-control-height;
-        color: $color-figma-muted;
-        background: $color-figma-control-surface;
+        align-self: start;
+        width: $ingredient-control-height;
+        height: $ingredient-control-height;
+        color: $ingredient-text-muted;
+        background: $ingredient-surface-control;
         border: 0;
-        border-radius: $app-rebuild-radius;
+        border-radius: $ingredient-radius-control;
         transition:
             color 160ms ease,
             background-color 160ms ease,
             transform 160ms ease;
 
         :global(.filter-button__icon) {
-            width: $app-rebuild-control-icon-size;
-            height: $app-rebuild-control-icon-size;
+            width: $ingredient-control-icon-size;
+            height: $ingredient-control-icon-size;
         }
 
         &:hover,
         &--active {
-            color: $color-figma-green;
-            background: $color-figma-green-soft;
+            color: $ingredient-accent-primary;
+            background: $ingredient-surface-positive;
         }
 
         &:active {
@@ -970,9 +996,9 @@
     .nutrition-preview__back {
         width: fit-content;
         margin-bottom: $app-gap-sm;
-        padding: $app-rebuild-control-padding-y-sm $app-rebuild-control-padding-x-sm;
-        color: $color-figma-ink;
-        background: $color-figma-card;
+        padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x-compact;
+        color: $ingredient-text-primary;
+        background: $ingredient-surface-card;
         border: 0;
         border-radius: $app-radius-pill;
         font-family: $app-button-font-family;
@@ -1025,12 +1051,12 @@
         padding: $app-gap-xs 0 $app-gap-sm;
 
         button {
-            min-height: $app-rebuild-control-height-sm;
-            padding: $app-rebuild-control-padding-y-sm $app-rebuild-control-padding-x;
-            color: $color-figma-green;
-            background: $color-figma-green-soft;
+            min-height: $ingredient-control-height-compact;
+            padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x;
+            color: $ingredient-accent-primary;
+            background: $ingredient-surface-positive;
             border: 0;
-            border-radius: $app-rebuild-radius-pill;
+            border-radius: $ingredient-radius-pill;
             font-family: $app-button-font-family;
             font-size: $app-font-size-sm;
             font-weight: $app-button-font-weight;
@@ -1040,7 +1066,7 @@
 
 	.saved-ingredients__loading {
 		margin: 0;
-		color: $color-figma-muted;
+		color: $ingredient-text-muted;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
 		line-height: 1.3;
@@ -1051,9 +1077,9 @@
 		place-items: center;
 		min-height: 12rem;
 		padding: $app-gap-lg;
-		color: $color-figma-muted;
-		background: $color-figma-card;
-		border-radius: $app-rebuild-radius;
+		color: $ingredient-text-muted;
+		background: $ingredient-surface-card;
+		border-radius: $ingredient-radius-card;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-bold;
 		text-align: center;
@@ -1071,17 +1097,17 @@
 
     .add-ingredient-fab {
         position: fixed;
-        right: max($app-shell-padding-x, calc((100vw - $app-mobile-shell-width) / 2 + $app-shell-padding-x));
-        bottom: calc($app-shell-nav-height + $app-gap-md);
+        right: max($ingredient-shell-padding-x, calc((100vw - $ingredient-shell-max-width) / 2 + $ingredient-shell-padding-x));
+        bottom: calc($ingredient-shell-nav-height + $app-gap-md);
         z-index: 12;
         display: inline-grid;
         place-items: center;
-        width: $app-rebuild-fab-size;
-        height: $app-rebuild-fab-size;
-        color: $color-figma-card;
-        background: $color-figma-green;
+        width: $ingredient-fab-size;
+        height: $ingredient-fab-size;
+        color: $ingredient-surface-card;
+        background: $ingredient-accent-primary;
         border: 0;
-        border-radius: $app-rebuild-radius;
+        border-radius: $ingredient-radius-card;
         font-size: 2rem;
         font-weight: $app-font-weight-medium;
         line-height: 1;
@@ -1097,8 +1123,8 @@
         }
 
         .filter-button {
-            width: $app-rebuild-control-height;
-            height: $app-rebuild-control-height;
+            width: $ingredient-control-height;
+            height: $ingredient-control-height;
         }
     }
 </style>

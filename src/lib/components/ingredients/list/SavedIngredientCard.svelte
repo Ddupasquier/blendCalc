@@ -97,18 +97,18 @@
 </article>
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.saved-ingredient-card {
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto;
 		align-items: center;
 		gap: $app-gap-xs;
-		min-height: $app-rebuild-ingredient-card-height;
+		min-height: $ingredient-card-min-height;
 		padding: $app-gap-sm;
-		background: $color-figma-card;
+		background: $ingredient-surface-card;
 		border: 1px solid transparent;
-		border-radius: $app-rebuild-radius;
+		border-radius: $ingredient-radius-card;
 		transition:
 			border-color 160ms ease,
 			background-color 160ms ease,
@@ -116,13 +116,13 @@
 	}
 
 	.saved-ingredient-card--active {
-		border-color: $color-figma-green;
-		background: $color-figma-card;
+		border-color: $ingredient-accent-primary;
+		background: $ingredient-surface-card;
 	}
 
 	.saved-ingredient-card--custom {
 		border-color: color-mix(in srgb, $app-custom-strong 45%, transparent);
-		background: color-mix(in srgb, $app-custom-bg 18%, $color-figma-card);
+		background: color-mix(in srgb, $app-custom-bg 18%, $ingredient-surface-card);
 	}
 
 	.saved-ingredient-card--checked {
@@ -138,7 +138,7 @@
 	.saved-ingredient-card__actions button {
 		flex: 0 0 auto;
 		border: 0;
-		border-radius: $app-rebuild-radius-pill;
+		border-radius: $ingredient-radius-pill;
 		font-family: $app-button-font-family;
 		font-weight: $app-button-font-weight;
 		line-height: $app-button-line-height;
@@ -147,18 +147,18 @@
 	.saved-ingredient-card__bulk-toggle {
 		display: inline-grid;
 		place-items: center;
-		width: calc($app-rebuild-action-icon-size - $app-gap-sm);
-		height: calc($app-rebuild-action-icon-size - $app-gap-sm);
-		color: $color-figma-card;
+		width: calc($ingredient-action-icon-size - $app-gap-sm);
+		height: calc($ingredient-action-icon-size - $app-gap-sm);
+		color: $ingredient-surface-card;
 		background: transparent;
 		border: 2px solid
-			color-mix(in srgb, $color-figma-muted 42%, transparent);
+			color-mix(in srgb, $ingredient-text-muted 42%, transparent);
 		font-size: $app-font-size-sm;
 	}
 
 	.saved-ingredient-card__bulk-toggle[aria-pressed="true"] {
-		background: $color-figma-green;
-		border-color: $color-figma-green;
+		background: $ingredient-accent-primary;
+		border-color: $ingredient-accent-primary;
 	}
 
 	.saved-ingredient-card__select {
@@ -177,10 +177,10 @@
 	.saved-ingredient-card__icon {
 		display: inline-grid;
 		place-items: center;
-		width: $app-rebuild-food-icon-size;
-		height: $app-rebuild-food-icon-size;
-		background: $color-figma-green-soft;
-		border-radius: $app-rebuild-radius-pill;
+		width: $ingredient-food-icon-size;
+		height: $ingredient-food-icon-size;
+		background: $ingredient-surface-positive;
+		border-radius: $ingredient-radius-pill;
 		font-size: 1.2rem;
 	}
 
@@ -191,7 +191,7 @@
 
 		strong {
 			overflow: hidden;
-			color: $color-figma-ink;
+			color: $ingredient-text-primary;
 			font-size: $app-font-size-md;
 			font-weight: $app-font-weight-heavy;
 			line-height: 1.08;
@@ -201,7 +201,7 @@
 
 		small {
 			overflow: hidden;
-			color: $color-figma-muted;
+			color: $ingredient-text-muted;
 			font-size: $app-font-size-sm;
 			font-weight: $app-font-weight-medium;
 			line-height: 1.15;
@@ -223,7 +223,7 @@
 		display: inline-flex;
 		align-items: center;
 		max-width: 8rem;
-		padding: $app-rebuild-badge-padding-y $app-rebuild-badge-padding-x;
+		padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
 		overflow: hidden;
 		border-radius: $app-radius-pill;
 		font-size: 0.58rem;
@@ -234,14 +234,14 @@
 	}
 
 	.source-badge {
-		color: color-mix(in srgb, $color-figma-sky 72%, $color-figma-ink);
-		background: color-mix(in srgb, $color-figma-sky 18%, $color-figma-card);
+		color: color-mix(in srgb, $ingredient-accent-info 72%, $ingredient-text-primary);
+		background: color-mix(in srgb, $ingredient-accent-info 18%, $ingredient-surface-card);
 		text-transform: uppercase;
 	}
 
 	.source-badge--custom {
 		color: $app-custom-strong;
-		background: color-mix(in srgb, $app-custom-bg 55%, $color-figma-card);
+		background: color-mix(in srgb, $app-custom-bg 55%, $ingredient-surface-card);
 	}
 
 	.warning-badge {
@@ -255,7 +255,7 @@
 		display: grid;
 		justify-items: end;
 		min-width: 2.65rem;
-		color: $color-figma-green;
+		color: $ingredient-accent-primary;
 
 		strong {
 			font-size: $app-font-size-md;
@@ -264,7 +264,7 @@
 		}
 
 		small {
-			color: $color-figma-muted;
+			color: $ingredient-text-muted;
 			font-size: $app-font-size-xs;
 			font-weight: $app-font-weight-medium;
 			line-height: 1;
@@ -279,10 +279,10 @@
 		button {
 			display: inline-grid;
 			place-items: center;
-			width: $app-rebuild-action-icon-size;
-			height: $app-rebuild-action-icon-size;
-			color: $color-figma-muted;
-			background: $color-figma-soft-surface;
+			width: $ingredient-action-icon-size;
+			height: $ingredient-action-icon-size;
+			color: $ingredient-text-muted;
+			background: $ingredient-surface-soft;
 			font-size: $app-font-size-sm;
 		}
 

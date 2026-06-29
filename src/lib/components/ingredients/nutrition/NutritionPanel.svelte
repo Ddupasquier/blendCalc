@@ -1,6 +1,6 @@
 <script lang="ts">
-	import MoveItemPrompt from "$lib/components/ingredients/MoveItemPrompt.svelte";
-	import NutritionConfidenceDetails from "$lib/components/ingredients/NutritionConfidenceDetails.svelte";
+	import MoveItemPrompt from "$lib/components/ingredients/nutrition/MoveItemPrompt.svelte";
+	import NutritionConfidenceDetails from "$lib/components/ingredients/nutrition/NutritionConfidenceDetails.svelte";
 	import CustomBadge from "$lib/components/common/CustomBadge.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import { getFoodQuality } from "$lib/utils/food/foodQuality";
@@ -16,7 +16,7 @@
 		isFdcNutrientMatch,
 	} from "$lib/utils/food/fdcNutrients";
 	import { onDestroy, onMount } from "svelte";
-	import { MIX_STORAGE_KEYS } from "../../../defaults/mixDefaults";
+	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 
 	interface Props {
 		food?: FdcFood;
@@ -25,7 +25,7 @@
 	let { food }: Props = $props();
 	const foodPreferenceContext = getFoodPreferenceContext();
 
-	import { vitalNutrients } from "../../../variables/vitalNutrients";
+	import { vitalNutrients } from "../../../../variables/vitalNutrients";
 
 	const foodQuality = $derived(food ? getFoodQuality(food) : null);
 	const preferenceWarnings = $derived(
@@ -308,7 +308,7 @@
 </section>
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.nf-label {
 		width: 100%;

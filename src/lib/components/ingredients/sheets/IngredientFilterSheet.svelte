@@ -65,7 +65,6 @@
 	title="Filter & Sort"
 	titleId="ingredient-filter-sheet-title"
 	label="Filter saved ingredients"
-	comfortable
 	titleStyle="prominent"
 	onClose={onClose}
 >
@@ -117,7 +116,7 @@
 </BottomSheet>
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.ingredient-filter-sheet {
 		display: grid;
@@ -130,7 +129,7 @@
 
 		h3 {
 			margin: 0;
-			color: $color-figma-muted;
+			color: $ingredient-text-muted;
 			font-size: $app-font-size-sm;
 			font-weight: $app-font-weight-bold;
 			line-height: 1;
@@ -146,12 +145,12 @@
 	}
 
 	.filter-chip {
-		min-height: $app-rebuild-control-height-sm;
+		min-height: $ingredient-control-height-compact;
 		padding: 0 $app-gap-md;
-		color: $color-figma-ink;
-		background: $color-figma-soft-surface;
+		color: $ingredient-text-primary;
+		background: $ingredient-surface-soft;
 		border: 0;
-		border-radius: $app-rebuild-radius-pill;
+		border-radius: $ingredient-radius-pill;
 		font: inherit;
 		font-size: $app-font-size-base;
 		font-weight: $app-font-weight-bold;
@@ -159,8 +158,8 @@
 	}
 
 	.filter-chip--active {
-		color: $color-figma-card;
-		background: $color-figma-green;
+		color: $ingredient-surface-card;
+		background: $ingredient-accent-primary;
 	}
 
 	.filter-chip:focus-visible {
@@ -170,7 +169,7 @@
 
 	.ingredient-filter-sheet__status {
 		margin: 0;
-		color: $color-figma-muted;
+		color: $ingredient-text-muted;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
 	}

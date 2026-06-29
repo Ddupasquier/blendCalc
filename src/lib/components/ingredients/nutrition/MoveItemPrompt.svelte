@@ -31,7 +31,7 @@
 </div>
 
 <style lang="scss">
-    @use "../../../styles/variables" as *;
+    @use "../../../../styles/variables" as *;
     .move-prompt {
         background: $app-section-bg;
         border: $app-border;

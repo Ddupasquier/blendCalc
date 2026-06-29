@@ -127,7 +127,7 @@
 {/if}
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.barcode-scanner-backdrop {
 		position: fixed;
@@ -136,18 +136,18 @@
 		display: grid;
 		place-items: stretch center;
 		padding: 0;
-		background: $app-rebuild-scanner-overlay-bg;
+		background: $ingredient-scanner-overlay-bg;
 	}
 
 	.barcode-scanner {
 		display: grid;
 		grid-template-rows: auto minmax(0, 1fr) auto;
 		gap: $app-gap-md;
-		width: min(100%, $app-mobile-shell-width);
+		width: min(100%, $ingredient-shell-max-width);
 		min-height: 100vh;
-		padding: calc($app-shell-padding-y + env(safe-area-inset-top)) $app-shell-padding-x
-			calc($app-shell-padding-y + env(safe-area-inset-bottom));
-		background: $app-rebuild-scanner-bg;
+		padding: calc($ingredient-shell-padding-y + env(safe-area-inset-top))
+			$ingredient-shell-padding-x calc($ingredient-shell-padding-y + env(safe-area-inset-bottom));
+		background: $ingredient-scanner-bg;
 		border: 0;
 		border-radius: 0;
 
@@ -159,14 +159,14 @@
 		}
 
 		h2 {
-			color: $color-figma-card;
+			color: $ingredient-surface-card;
 			font-family: $app-font-family-display;
 			font-size: $app-font-size-xl;
 			font-weight: $app-font-weight-heavy;
 		}
 
 		p {
-			color: color-mix(in srgb, $color-figma-card 52%, transparent);
+			color: color-mix(in srgb, $ingredient-surface-card 52%, transparent);
 			font-size: $app-font-size-md;
 			line-height: 1.4;
 		}
@@ -175,13 +175,13 @@
 	.barcode-scanner__back {
 		display: inline-grid;
 		place-items: center;
-		width: $app-rebuild-scanner-back-size;
-		height: $app-rebuild-scanner-back-size;
+		width: $ingredient-scanner-back-size;
+		height: $ingredient-scanner-back-size;
 		padding: 0;
-		color: $color-figma-card;
-		background: color-mix(in srgb, $color-figma-card 10%, transparent);
+		color: $ingredient-surface-card;
+		background: color-mix(in srgb, $ingredient-surface-card 10%, transparent);
 		border: 0;
-		border-radius: $app-rebuild-radius-pill;
+		border-radius: $ingredient-radius-pill;
 		font-size: 1.45rem;
 		line-height: 1;
 	}
@@ -195,7 +195,7 @@
 		position: relative;
 		min-height: 100%;
 		overflow: hidden;
-		background: $app-rebuild-scanner-bg;
+		background: $ingredient-scanner-bg;
 		border-radius: 0;
 
 		video {
@@ -210,46 +210,46 @@
 	.barcode-scanner__target {
 		position: absolute;
 		inset: 50% auto auto 50%;
-		width: min($app-rebuild-scanner-target-width, $app-rebuild-scanner-target-max-width);
-		height: $app-rebuild-scanner-target-height;
-		border-radius: $app-rebuild-radius;
+		width: min($ingredient-scanner-target-width, $ingredient-scanner-target-max-width);
+		height: $ingredient-scanner-target-height;
+		border-radius: $ingredient-radius-card;
 		background:
-			linear-gradient($color-figma-green, $color-figma-green) top left /
-				$app-rebuild-scanner-target-corner-long $app-rebuild-scanner-target-corner-thickness no-repeat,
-			linear-gradient($color-figma-green, $color-figma-green) top left /
-				$app-rebuild-scanner-target-corner-thickness $app-rebuild-scanner-target-corner-short no-repeat,
-			linear-gradient($color-figma-green, $color-figma-green) top right /
-				$app-rebuild-scanner-target-corner-long $app-rebuild-scanner-target-corner-thickness no-repeat,
-			linear-gradient($color-figma-green, $color-figma-green) top right /
-				$app-rebuild-scanner-target-corner-thickness $app-rebuild-scanner-target-corner-short no-repeat,
-			linear-gradient($color-figma-green, $color-figma-green) bottom left /
-				$app-rebuild-scanner-target-corner-long $app-rebuild-scanner-target-corner-thickness no-repeat,
-			linear-gradient($color-figma-green, $color-figma-green) bottom left /
-				$app-rebuild-scanner-target-corner-thickness $app-rebuild-scanner-target-corner-short no-repeat,
-			linear-gradient($color-figma-green, $color-figma-green) bottom right /
-				$app-rebuild-scanner-target-corner-long $app-rebuild-scanner-target-corner-thickness no-repeat,
-			linear-gradient($color-figma-green, $color-figma-green) bottom right /
-				$app-rebuild-scanner-target-corner-thickness $app-rebuild-scanner-target-corner-short no-repeat,
-			color-mix(in srgb, $color-figma-green 6%, transparent);
+			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) top left /
+				$ingredient-scanner-target-corner-long $ingredient-scanner-target-corner-thickness no-repeat,
+			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) top left /
+				$ingredient-scanner-target-corner-thickness $ingredient-scanner-target-corner-short no-repeat,
+			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) top right /
+				$ingredient-scanner-target-corner-long $ingredient-scanner-target-corner-thickness no-repeat,
+			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) top right /
+				$ingredient-scanner-target-corner-thickness $ingredient-scanner-target-corner-short no-repeat,
+			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) bottom left /
+				$ingredient-scanner-target-corner-long $ingredient-scanner-target-corner-thickness no-repeat,
+			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) bottom left /
+				$ingredient-scanner-target-corner-thickness $ingredient-scanner-target-corner-short no-repeat,
+			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) bottom right /
+				$ingredient-scanner-target-corner-long $ingredient-scanner-target-corner-thickness no-repeat,
+			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) bottom right /
+				$ingredient-scanner-target-corner-thickness $ingredient-scanner-target-corner-short no-repeat,
+			color-mix(in srgb, $ingredient-accent-primary 6%, transparent);
 		transform: translate(-50%, -50%);
 	}
 
 	.barcode-scanner__status,
 	.barcode-scanner__hint {
 		position: absolute;
-		inset: calc(50% + $app-rebuild-scanner-status-offset) 50% auto auto;
+		inset: calc(50% + $ingredient-scanner-status-offset) 50% auto auto;
 		width: max-content;
 		max-width: 80%;
-		color: color-mix(in srgb, $color-figma-card 58%, transparent) !important;
+		color: color-mix(in srgb, $ingredient-surface-card 58%, transparent) !important;
 		text-align: center;
 		transform: translateX(50%);
 	}
 
 	.barcode-scanner__status {
 		padding: 0.55rem 0.85rem;
-		color: $color-figma-green !important;
-		background: rgba($color-figma-card, 0.08);
-		border-radius: $app-rebuild-radius-pill;
+		color: $ingredient-accent-primary !important;
+		background: rgba($ingredient-surface-card, 0.08);
+		border-radius: $ingredient-radius-pill;
 		font-weight: $app-font-weight-bold;
 	}
 
@@ -263,8 +263,8 @@
 
 	@media (max-width: $app-breakpoint-sm) {
 		.barcode-scanner {
-			padding: calc($app-shell-padding-x + env(safe-area-inset-top)) $app-shell-padding-x
-				calc($app-shell-padding-x + env(safe-area-inset-bottom));
+			padding: calc($ingredient-shell-padding-x + env(safe-area-inset-top))
+				$ingredient-shell-padding-x calc($ingredient-shell-padding-x + env(safe-area-inset-bottom));
 		}
 	}
 </style>

@@ -36,7 +36,7 @@
 </div>
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.ingredient-bulk-actions {
 		display: flex;
@@ -47,12 +47,12 @@
 	}
 
 	button {
-		min-height: $app-rebuild-control-height-sm;
-		padding: $app-rebuild-control-padding-y-sm $app-rebuild-control-padding-x-sm;
-		color: $color-figma-ink;
-		background: $color-figma-card;
-		border: 1px solid $color-figma-border;
-		border-radius: $app-rebuild-radius-pill;
+		min-height: $ingredient-control-height-compact;
+		padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x-compact;
+		color: $ingredient-text-primary;
+		background: $ingredient-surface-card;
+		border: 1px solid $ingredient-border-subtle;
+		border-radius: $ingredient-radius-pill;
 		font-family: $app-button-font-family;
 		font-size: $app-font-size-sm;
 		font-weight: $app-button-font-weight;
@@ -60,8 +60,8 @@
 	}
 
 	.ingredient-bulk-actions__move {
-		color: $color-figma-card;
-		background: $color-figma-green;
+		color: $ingredient-surface-card;
+		background: $ingredient-accent-primary;
 		border-color: transparent;
 	}
 

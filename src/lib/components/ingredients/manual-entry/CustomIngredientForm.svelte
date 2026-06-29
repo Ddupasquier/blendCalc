@@ -3,7 +3,7 @@
 	import {
 		SERVING_MEASURE_OPTIONS,
 		type ServingMeasureUnit,
-	} from "../../../defaults/servingMeasureDefaults";
+	} from "../../../../defaults/servingMeasureDefaults";
 	import {
 		createCustomFood,
 		findCustomFoodByBarcode,
@@ -17,12 +17,12 @@
 		type SmoothieListKey,
 	} from "$lib/utils/storage/smoothieLists";
 	import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
-	import BarcodeScanButton from "$lib/components/ingredients/BarcodeScanButton.svelte";
-	import BarcodeScannerDialog from "$lib/components/ingredients/BarcodeScannerDialog.svelte";
+	import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
+	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog.svelte";
 	import CustomIngredientOutcome, {
 		type CustomIngredientOutcomeState,
-	} from "$lib/components/ingredients/CustomIngredientOutcome.svelte";
-	import ManualEntryToggle from "$lib/components/ingredients/ManualEntryToggle.svelte";
+	} from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
+	import ManualEntryToggle from "$lib/components/ingredients/manual-entry/ManualEntryToggle.svelte";
 	import ManualEntryNutrientFields from "$lib/components/ingredients/manual-entry/ManualEntryNutrientFields.svelte";
 	import {
 		readCustomFoodCategoryOptions,
@@ -42,7 +42,7 @@
 	import { lookupBarcodeProduct } from "$lib/utils/barcode/productLookup";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 	import { submitSharedProduct } from "$lib/utils/products/catalog";
-	import { MIX_STORAGE_KEYS } from "../../../defaults/mixDefaults";
+	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 
 	type ManualEntryStepId = "identity" | "servings" | "macros" | "extended" | "share";
 	type CoreNutritionKey = keyof CustomFoodNutritionInput;
@@ -1211,7 +1211,7 @@
 {/if}
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.custom-ingredient {
 		display: grid;
@@ -1230,7 +1230,7 @@
 		gap: $app-gap-xs;
 
 		small {
-			color: $color-figma-muted;
+			color: $ingredient-text-muted;
 			font-size: $app-font-size-xs;
 			font-weight: $app-font-weight-medium;
 		}
@@ -1253,7 +1253,7 @@
 		align-items: center;
 		justify-content: space-between;
 		width: 100%;
-		padding: $app-rebuild-card-padding-sm $app-rebuild-card-padding;
+		padding: $ingredient-card-padding-compact $ingredient-card-padding;
 		list-style: none;
 		cursor: pointer;
 
@@ -1283,7 +1283,7 @@
 
 		h2 {
 			margin: 0;
-			color: $color-figma-ink;
+			color: $ingredient-text-primary;
 			font-family: $app-font-family-interface;
 			font-size: 1.15rem;
 			font-weight: $app-font-weight-bold;
@@ -1296,10 +1296,10 @@
 		width: 2rem;
 		height: 2rem;
 		padding: 0;
-		color: $color-figma-ink;
+		color: $ingredient-text-primary;
 		background: transparent;
 		border: 0;
-		border-radius: $app-rebuild-radius-pill;
+		border-radius: $ingredient-radius-pill;
 		font-size: 1.45rem;
 		cursor: pointer;
 	}
@@ -1315,7 +1315,7 @@
 	label {
 		display: grid;
 		gap: $app-gap-sm;
-		color: $color-figma-muted;
+		color: $ingredient-text-muted;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
 		text-transform: uppercase;
@@ -1328,15 +1328,15 @@
 		}
 
 		em {
-			color: $color-figma-red;
+			color: $ingredient-accent-danger;
 			font-style: normal;
 		}
 
 		small {
-			padding: $app-rebuild-badge-padding-y $app-rebuild-badge-padding-x;
-			color: $color-figma-muted;
-			background: $color-figma-control-surface;
-			border-radius: $app-rebuild-radius-pill;
+			padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
+			color: $ingredient-text-muted;
+			background: $ingredient-surface-control;
+			border-radius: $ingredient-radius-pill;
 			font-size: $app-font-size-xs;
 			font-weight: $app-font-weight-medium;
 			text-transform: none;
@@ -1347,12 +1347,12 @@
 	select {
 		width: 100%;
 		min-width: 0;
-		min-height: $app-rebuild-control-height;
-		padding: 0 $app-rebuild-control-padding-x;
-		color: $color-figma-ink;
-		background: $color-figma-soft-surface;
+		min-height: $ingredient-control-height;
+		padding: 0 $ingredient-control-padding-x;
+		color: $ingredient-text-primary;
+		background: $ingredient-surface-soft;
 		border: 0;
-		border-radius: $app-rebuild-radius-pill;
+		border-radius: $ingredient-radius-pill;
 		font: inherit;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-medium;
@@ -1362,10 +1362,10 @@
 	select {
 		appearance: none;
 		padding-right: 2.7rem;
-		background-color: $color-figma-soft-surface;
+		background-color: $ingredient-surface-soft;
 		background-image:
-			linear-gradient(45deg, transparent 50%, $color-figma-muted 50%),
-			linear-gradient(135deg, $color-figma-muted 50%, transparent 50%);
+			linear-gradient(45deg, transparent 50%, $ingredient-text-muted 50%),
+			linear-gradient(135deg, $ingredient-text-muted 50%, transparent 50%);
 		background-position:
 			calc(100% - 1.35rem) 52%,
 			calc(100% - 1.05rem) 52%;
@@ -1376,7 +1376,7 @@
 	}
 
 	input::placeholder {
-		color: $color-figma-muted;
+		color: $ingredient-text-muted;
 	}
 
 	input[type="number"] {
@@ -1391,7 +1391,7 @@
 
 	.custom-ingredient__helper {
 		margin: 0;
-		color: $color-figma-muted;
+		color: $ingredient-text-muted;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-medium;
 		line-height: 1.35;
@@ -1403,9 +1403,9 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: $app-gap-md;
-		padding: $app-rebuild-card-padding;
-		background: $color-figma-soft-surface;
-		border-radius: $app-rebuild-radius;
+		padding: $ingredient-card-padding;
+		background: $ingredient-surface-soft;
+		border-radius: $ingredient-radius-card;
 		text-transform: none;
 
 		span {
@@ -1414,7 +1414,7 @@
 		}
 
 		strong {
-			color: $color-figma-ink;
+			color: $ingredient-text-primary;
 			font-size: $app-font-size-md;
 			font-weight: $app-font-weight-bold;
 		}
@@ -1422,7 +1422,7 @@
 		small {
 			padding: 0;
 			background: transparent;
-			color: $color-figma-muted;
+			color: $ingredient-text-muted;
 			line-height: 1.25;
 		}
 	}
@@ -1435,21 +1435,21 @@
 	.custom-ingredient__summary {
 		display: grid;
 		gap: $app-gap-md;
-		padding: $app-rebuild-card-padding;
-		background: $color-figma-soft-surface;
-		border-radius: $app-rebuild-radius;
+		padding: $ingredient-card-padding;
+		background: $ingredient-surface-soft;
+		border-radius: $ingredient-radius-card;
 	}
 
 	.custom-ingredient__card h3,
 	.custom-ingredient__summary strong {
 		margin: 0;
-		color: $color-figma-ink;
+		color: $ingredient-text-primary;
 		font-size: $app-font-size-lg;
 		font-weight: $app-font-weight-bold;
 	}
 
 	.custom-ingredient__card em {
-		color: $color-figma-red;
+		color: $ingredient-accent-danger;
 		font-style: normal;
 	}
 
@@ -1460,11 +1460,11 @@
 	}
 
 	.custom-ingredient__add-serving {
-		min-height: $app-rebuild-control-height;
-		color: $color-figma-green;
+		min-height: $ingredient-control-height;
+		color: $ingredient-accent-primary;
 		background: transparent;
-		border: 0.12rem dashed color-mix(in srgb, $color-figma-green 45%, white);
-		border-radius: $app-rebuild-radius;
+		border: 0.12rem dashed color-mix(in srgb, $ingredient-accent-primary 45%, white);
+		border-radius: $ingredient-radius-card;
 		font-family: $app-button-font-family;
 		font-size: $app-font-size-lg;
 		font-weight: $app-button-font-weight;
@@ -1481,8 +1481,8 @@
 			justify-items: center;
 			gap: $app-gap-xs;
 			padding: $app-gap-sm;
-			background: $color-figma-card;
-			border-radius: $app-rebuild-radius;
+			background: $ingredient-surface-card;
+			border-radius: $ingredient-radius-card;
 		}
 
 		strong {
@@ -1491,7 +1491,7 @@
 		}
 
 		small {
-			color: $color-figma-muted;
+			color: $ingredient-text-muted;
 			font-size: $app-font-size-xs;
 			font-weight: $app-font-weight-medium;
 		}
@@ -1503,17 +1503,17 @@
 
 		span {
 			width: fit-content;
-			padding: $app-rebuild-badge-padding-y $app-rebuild-badge-padding-x;
-			color: $color-figma-ink;
-			background: $color-figma-card;
-			border-radius: $app-rebuild-radius-pill;
+			padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
+			color: $ingredient-text-primary;
+			background: $ingredient-surface-card;
+			border-radius: $ingredient-radius-pill;
 			font-size: $app-font-size-xs;
 		}
 	}
 
 	.custom-ingredient__summary p {
 		margin: 0;
-		color: $color-figma-muted;
+		color: $ingredient-text-muted;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-medium;
 	}
@@ -1525,13 +1525,13 @@
 	.custom-ingredient__evidence {
 		display: grid;
 		gap: $app-vertical-stack-gap;
-		padding: $app-rebuild-card-padding;
-		background: $color-figma-soft-surface;
-		border-radius: $app-rebuild-radius;
+		padding: $ingredient-card-padding;
+		background: $ingredient-surface-soft;
+		border-radius: $ingredient-radius-card;
 
 		p {
 			margin: $app-gap-xs 0 0;
-			color: $color-figma-muted;
+			color: $ingredient-text-muted;
 			font-size: $app-font-size-sm;
 			line-height: 1.35;
 		}
@@ -1542,8 +1542,8 @@
 	.custom-ingredient__catalog-message,
 	.custom-ingredient__status {
 		margin: 0;
-		padding: $app-rebuild-status-padding-y $app-rebuild-status-padding-x;
-		border-radius: $app-rebuild-radius;
+		padding: $ingredient-status-padding-y $ingredient-status-padding-x;
+		border-radius: $ingredient-radius-card;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
 	}
@@ -1560,8 +1560,8 @@
 	}
 
 	.custom-ingredient__status {
-		color: $color-figma-muted;
-		background: $color-figma-soft-surface;
+		color: $ingredient-text-muted;
+		background: $ingredient-surface-soft;
 	}
 
 	.custom-ingredient__actions {
@@ -1573,8 +1573,8 @@
 
 	.custom-ingredient__primary,
 	.custom-ingredient__secondary {
-		min-height: $app-rebuild-control-height;
-		border-radius: $app-rebuild-radius;
+		min-height: $ingredient-control-height;
+		border-radius: $ingredient-radius-card;
 		font-family: $app-button-font-family;
 		font-size: $app-font-size-md;
 		font-weight: $app-button-font-weight;
@@ -1582,15 +1582,15 @@
 	}
 
 	.custom-ingredient__primary {
-		color: $color-figma-card;
-		background: $color-figma-green;
-		border: 1px solid $color-figma-green;
+		color: $ingredient-surface-card;
+		background: $ingredient-accent-primary;
+		border: 1px solid $ingredient-accent-primary;
 	}
 
 	.custom-ingredient__secondary {
-		color: $color-figma-ink;
-		background: $color-figma-card;
-		border: 1px solid $color-figma-border;
+		color: $ingredient-text-primary;
+		background: $ingredient-surface-card;
+		border: 1px solid $ingredient-border-subtle;
 	}
 
 	.custom-ingredient__primary:disabled,

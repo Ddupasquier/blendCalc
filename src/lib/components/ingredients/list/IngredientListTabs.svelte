@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { MIX_STORAGE_KEYS } from "../../../defaults/mixDefaults";
+	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 	import type { SmoothieListKey } from "$lib/utils/storage/smoothieLists";
 
 	let {
@@ -37,22 +37,22 @@
 </div>
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.ingredient-list-tabs {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		padding: $app-gap-xs;
-		background: $color-figma-control-surface;
-		border-radius: $app-rebuild-radius-lg;
+		background: $ingredient-surface-control;
+		border-radius: $ingredient-radius-sheet;
 	}
 
 	button {
-		min-height: $app-rebuild-control-height;
-		color: $color-figma-muted;
+		min-height: $ingredient-control-height;
+		color: $ingredient-text-muted;
 		background: transparent;
 		border: 0;
-		border-radius: $app-rebuild-radius-pill;
+		border-radius: $ingredient-radius-pill;
 		font-family: $app-button-font-family;
 		font-size: $app-font-size-md;
 		font-weight: $app-button-font-weight;
@@ -66,15 +66,15 @@
 		display: inline-block;
 		min-width: 1.3rem;
 		margin-left: calc($app-gap-xs / 1.7);
-		padding: $app-rebuild-badge-padding-y $app-rebuild-badge-padding-x;
+		padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
 		color: inherit;
-		background: color-mix(in srgb, $color-figma-muted 12%, transparent);
-		border-radius: $app-rebuild-radius-pill;
+		background: color-mix(in srgb, $ingredient-text-muted 12%, transparent);
+		border-radius: $ingredient-radius-pill;
 		font-size: $app-font-size-xs;
 	}
 
 	.ingredient-list-tabs__button--active {
-		color: $color-figma-ink;
-		background: $color-figma-card;
+		color: $ingredient-text-primary;
+		background: $ingredient-surface-card;
 	}
 </style>

@@ -183,6 +183,10 @@ $app-shell-nav-height: 4.85rem;
 // until this cap, then scroll internally without hiding the drag handle.
 $app-bottom-sheet-max-height: 80dvh;
 
+// Default minimum height for reusable bottom sheets. Keeps short sheets
+// anchored above the bottom nav and intentional without forcing long content to overflow.
+$app-bottom-sheet-min-height: 56dvh;
+
 // Minimum height for short bottom sheets that should still read as anchored UI,
 // such as filters/actions, instead of looking like a floating dialog.
 $app-bottom-sheet-comfortable-min-height: 23rem;
@@ -303,6 +307,94 @@ $app-rebuild-scan-icon-active-height: 2.25rem;
 
 // Small corner bracket size used by the compact barcode animation.
 $app-rebuild-scan-bracket-size: 0.375rem;
+
+// Rebuilt app shell semantic tokens
+// -----------------------------------------------------------------------------
+// Shared primitives such as bottom sheets and slide-in panels should consume these
+// app-shell names instead of low-level Figma/source tokens. Feature-specific
+// components can add their own domain aliases below.
+$app-shell-content-max-width: $app-mobile-shell-width;
+$app-shell-surface-page: $color-figma-canvas;
+$app-shell-surface-panel: $color-figma-card;
+$app-shell-text-primary: $color-figma-ink;
+$app-shell-text-muted: $color-figma-muted;
+$app-shell-overlay-bg: $app-rebuild-overlay-bg;
+$app-sheet-radius: $app-rebuild-radius-lg;
+
+// Ingredient route semantic tokens
+// -----------------------------------------------------------------------------
+// These aliases are the preferred tokens for rebuilt ingredient-route UI. Keep
+// source/provenance tokens such as `$color-figma-*` and `$app-rebuild-*` here in
+// variables, then consume readable domain names from feature components.
+$ingredient-shell-max-width: $app-mobile-shell-width;
+$ingredient-shell-padding-x: $app-shell-padding-x;
+$ingredient-shell-padding-y: $app-shell-padding-y;
+$ingredient-shell-header-height: $app-shell-header-height;
+$ingredient-shell-nav-height: $app-shell-nav-height;
+
+$ingredient-surface-page: $color-figma-canvas;
+$ingredient-surface-card: $color-figma-card;
+$ingredient-surface-control: $color-figma-control-surface;
+$ingredient-surface-soft: $color-figma-soft-surface;
+$ingredient-surface-positive: $color-figma-green-soft;
+$ingredient-overlay-bg: $app-rebuild-overlay-bg;
+$ingredient-scanner-overlay-bg: $app-rebuild-scanner-overlay-bg;
+$ingredient-scanner-bg: $app-rebuild-scanner-bg;
+
+$ingredient-text-primary: $color-figma-ink;
+$ingredient-text-muted: $color-figma-muted;
+$ingredient-accent-primary: $color-figma-green;
+$ingredient-accent-info: $color-figma-sky;
+$ingredient-accent-danger: $color-figma-red;
+$ingredient-border-subtle: $color-figma-border;
+
+$ingredient-control-height: $app-rebuild-control-height;
+$ingredient-control-height-compact: $app-rebuild-control-height-sm;
+$ingredient-control-padding-x: $app-rebuild-control-padding-x;
+$ingredient-control-padding-y-compact: $app-rebuild-control-padding-y-sm;
+$ingredient-control-padding-x-compact: $app-rebuild-control-padding-x-sm;
+$ingredient-control-icon-size: $app-rebuild-control-icon-size;
+
+$ingredient-radius-card: $app-rebuild-radius;
+$ingredient-radius-control: $app-rebuild-radius;
+$ingredient-radius-sheet: $app-rebuild-radius-lg;
+$ingredient-radius-pill: $app-rebuild-radius-pill;
+
+$ingredient-card-min-height: $app-rebuild-ingredient-card-height;
+$ingredient-card-padding: $app-rebuild-card-padding;
+$ingredient-card-padding-compact: $app-rebuild-card-padding-sm;
+$ingredient-search-results-max-height: $app-rebuild-search-results-max-height;
+$ingredient-search-result-padding-y: $app-rebuild-search-result-padding-y;
+$ingredient-search-result-padding-x: $app-rebuild-search-result-padding-x;
+$ingredient-badge-padding-y: $app-rebuild-badge-padding-y;
+$ingredient-badge-padding-x: $app-rebuild-badge-padding-x;
+$ingredient-status-padding-y: $app-rebuild-status-padding-y;
+$ingredient-status-padding-x: $app-rebuild-status-padding-x;
+
+$ingredient-food-icon-size: $app-rebuild-food-icon-size;
+$ingredient-action-icon-size: $app-rebuild-action-icon-size;
+$ingredient-fab-size: $app-rebuild-fab-size;
+
+$ingredient-scanner-back-size: $app-rebuild-scanner-back-size;
+$ingredient-scanner-target-width: $app-rebuild-scanner-target-width;
+$ingredient-scanner-target-max-width: $app-rebuild-scanner-target-max-width;
+$ingredient-scanner-target-height: $app-rebuild-scanner-target-height;
+$ingredient-scanner-target-corner-long: $app-rebuild-scanner-target-corner-long;
+$ingredient-scanner-target-corner-short: $app-rebuild-scanner-target-corner-short;
+$ingredient-scanner-target-corner-thickness: $app-rebuild-scanner-target-corner-thickness;
+$ingredient-scanner-status-offset: $app-rebuild-scanner-status-offset;
+
+$ingredient-scan-button-padding-y: $app-rebuild-scan-button-padding-y;
+$ingredient-scan-button-padding-x: $app-rebuild-scan-button-padding-x;
+$ingredient-scan-button-loading-padding-y: $app-rebuild-scan-button-loading-padding-y;
+$ingredient-scan-button-loading-padding-x: $app-rebuild-scan-button-loading-padding-x;
+$ingredient-scan-button-loading-width: $app-rebuild-scan-button-loading-width;
+$ingredient-scan-button-loading-height: $app-rebuild-scan-button-loading-height;
+$ingredient-scan-icon-width: $app-rebuild-scan-icon-width;
+$ingredient-scan-icon-height: $app-rebuild-scan-icon-height;
+$ingredient-scan-icon-active-width: $app-rebuild-scan-icon-active-width;
+$ingredient-scan-icon-active-height: $app-rebuild-scan-icon-active-height;
+$ingredient-scan-bracket-size: $app-rebuild-scan-bracket-size;
 
 // Extra-small phone breakpoint. Use for the tightest layouts where dense
 // components like nutrition labels need to stack or shrink aggressively.

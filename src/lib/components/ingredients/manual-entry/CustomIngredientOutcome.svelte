@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { MIX_STORAGE_KEYS } from "../../../defaults/mixDefaults";
+	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import type { SmoothieListKey } from "$lib/utils/storage/smoothieLists";
 
@@ -71,7 +71,7 @@
 </section>
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
+	@use "../../../../styles/variables" as *;
 
 	.custom-ingredient-outcome {
 		display: grid;
@@ -110,7 +110,7 @@
 		button {
 			width: fit-content;
 			min-height: 2.15rem;
-			padding: $app-rebuild-control-padding-y-sm $app-rebuild-control-padding-x-sm;
+			padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x-compact;
 			border-radius: $app-radius-pill;
 			font-family: $app-button-font-family;
 			font-size: $app-font-size-sm;
