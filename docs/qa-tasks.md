@@ -42,6 +42,18 @@ Follow the [QA process rule](./development-rules-audit.md#rule-qa-process) and [
 - [ ] **Unknown barcode check:** Enter a valid-format barcode that does not exist in available sources; verify the helper says no source match was found and that the user can still save or share with package photos.
 - [ ] **Submission behavior:** Complete the manual entry and save; verify the saved custom ingredient keeps `barcodeSource: manual` behavior and does not import source nutrition unless the user used barcode scan/import.
 
+### DB-Backed Nutrient Relationship Validation
+
+- [ ] **Branch:** `ui-rebuild/ingredients`
+- [ ] **Rule references:** [DB-backed nutrient validation](./development-rules-audit.md#rule-db-backed-nutrient-validation), [Backend best practices](./development-rules-audit.md#rule-backend-best-practices), [No hardcoded reference data](./development-rules-audit.md#rule-no-hardcoded-reference-data), [QA link rule](./development-rules-audit.md#rule-qa-links)
+- [ ] **Code references:** [`supabase/migrations/20260629200000_nutrient_relationship_rules.sql`](../supabase/migrations/20260629200000_nutrient_relationship_rules.sql), [`src/lib/utils/food/nutrientRelationshipRules.ts`](../src/lib/utils/food/nutrientRelationshipRules.ts), [`src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte`](../src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte), [`src/lib/server/products/catalog.server.ts`](../src/lib/server/products/catalog.server.ts), [`tests/lib/utils/food/nutrientRelationshipRules.test.ts`](../tests/lib/utils/food/nutrientRelationshipRules.test.ts), [`tests/lib/components/ingredients/CustomIngredientForm.test.ts`](../tests/lib/components/ingredients/CustomIngredientForm.test.ts), [`tests/lib/server/products/catalog.test.ts`](../tests/lib/server/products/catalog.test.ts)
+- [ ] **Database setup:** Apply `supabase/migrations/20260629200000_nutrient_relationship_rules.sql` with `npm run db:push` before testing against Supabase-backed UI data.
+- [ ] **Manual entry total sugars check:** Open `/fridge` while signed in, tap `Enter manually`, fill Identity and Servings with valid values, go to `Macros`, enter `Total Carbohydrates (g) = 10` and `Total Sugars (g) = 12`, then go to `Share`; verify the form shows and blocks on `Total sugars cannot exceed total carbohydrates.`
+- [ ] **Manual entry added sugars check:** In the same manual entry flow, enter `Total Sugars (g) = 6` and `Sugars, added (g) = 9`, then go to `Share`; verify the form shows and blocks on `Added sugars cannot exceed total sugars.`
+- [ ] **Correction path:** Correct the child nutrient value so it is less than or equal to the parent value, continue to `Share`, and verify the blocking warning disappears without clearing other manual entry values.
+- [ ] **Backend catalog guard:** Share a barcoded custom ingredient with impossible nutrient relationships and verify the private custom food can still save, but shared catalog submission returns a failure instead of creating an invalid shared product.
+- [ ] **Loading/failure state:** Temporarily test with missing relationship-rule rows if practical; verify manual entry shows `Nutrition validation rules could not be loaded. Try again in a moment.` and blocks submission rather than silently using UI fallback constants.
+
 ### Ingredients Route Component Boundary Follow-Up
 
 - [ ] **Branch:** `ui-rebuild/ingredients`

@@ -36,12 +36,18 @@
 		type ManualEntryNutrientDefinition,
 		type ManualEntryNutrientGroupsByStep,
 	} from "$lib/utils/food/nutrientDefinitions";
+	import {
+		readNutrientRelationshipRules,
+		validateNutrientRelationshipRules,
+		type NutrientRelationshipRule,
+	} from "$lib/utils/food/nutrientRelationshipRules";
 	import ManualEntryStepTabs from "$lib/components/ingredients/manual-entry/ManualEntryStepTabs.svelte";
 	import type { ManualEntryValidationItem } from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
 	import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 	import { lookupBarcodeProduct } from "$lib/utils/barcode/productLookup";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 	import { submitSharedProduct } from "$lib/utils/products/catalog";
+	import { getSupabaseBrowserClient } from "$lib/supabase/client";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 
 	type ManualEntryStepId = "identity" | "servings" | "macros" | "extended" | "share";
@@ -70,6 +76,9 @@
 		[NUTRIENT_IDS.SUGAR]: "sugar",
 		[NUTRIENT_IDS.PROTEIN]: "protein",
 	};
+	const coreNutritionEntries = Object.entries(coreNutritionKeysByNutrientId).map(
+		([nutrientId, key]) => [Number(nutrientId), key] as [number, CoreNutritionKey],
+	);
 	const requiredManualNutrientIds = new Set<number>([
 		NUTRIENT_IDS.CALORIES,
 		NUTRIENT_IDS.FAT,
@@ -117,6 +126,9 @@
 	let categoryOptionsError = $state("");
 	let loadingManualEntryNutrients = $state(false);
 	let manualEntryNutrientError = $state("");
+	let nutrientRelationshipRules = $state<NutrientRelationshipRule[]>([]);
+	let loadingNutrientRelationshipRules = $state(false);
+	let nutrientRelationshipRuleError = $state("");
 	let error = $state("");
 	let savedMessage = $state("");
 	let saving = $state(false);
@@ -201,8 +213,27 @@
 			loadingCategoryOptions = false;
 		};
 
+		const loadNutrientRelationshipRules = async () => {
+			loadingNutrientRelationshipRules = true;
+			nutrientRelationshipRuleError = "";
+			const rules = await readNutrientRelationshipRules(getSupabaseBrowserClient());
+
+			if (cancelled) return;
+
+			if (!rules?.length) {
+				nutrientRelationshipRules = [];
+				nutrientRelationshipRuleError =
+					"Nutrition validation rules could not be loaded. Try again in a moment.";
+			} else {
+				nutrientRelationshipRules = rules;
+			}
+
+			loadingNutrientRelationshipRules = false;
+		};
+
 		void loadManualEntryNutrients();
 		void loadCategoryOptions();
+		void loadNutrientRelationshipRules();
 
 		return () => {
 			cancelled = true;
@@ -243,6 +274,26 @@
 			volumeQuantity: useVolumeEquivalent ? volumeQuantity ?? undefined : undefined,
 			volumeUnit: useVolumeEquivalent ? volumeUnit : undefined,
 		}),
+	);
+	const getManualNutrientValuesById = () => {
+		const values = new Map<number, number>();
+		for (const [nutrientId, key] of coreNutritionEntries) {
+			values.set(nutrientId, nutrition[key]);
+		}
+		for (const nutrient of additionalNutrients) {
+			values.set(nutrient.nutrientId, nutrient.value);
+		}
+		return values;
+	};
+	const nutrientRelationshipValidationItems = $derived<StepValidationItem[]>(
+		validateNutrientRelationshipRules(
+			getManualNutrientValuesById(),
+			nutrientRelationshipRules,
+		).map((issue) => ({
+			message: issue.message,
+			tone: issue.severity,
+			step: "macros",
+		})),
 	);
 	const customIngredientValidationItems = $derived<StepValidationItem[]>(
 		[
@@ -290,20 +341,14 @@
 						step: "identity",
 					}
 				: null,
-			nutrition.fiber > nutrition.carbs
+			nutrientRelationshipRuleError
 				? {
-						message: "Dietary fiber cannot be greater than total carbohydrates",
+						message: nutrientRelationshipRuleError,
 						tone: "error",
 						step: "macros",
 					}
 				: null,
-			nutrition.sugar > nutrition.carbs
-				? {
-						message: "Total sugars cannot be greater than total carbohydrates",
-						tone: "error",
-						step: "macros",
-					}
-				: null,
+			...nutrientRelationshipValidationItems,
 		].filter(Boolean) as StepValidationItem[],
 	);
 	const blockingValidation = $derived(
@@ -747,6 +792,12 @@
 		catalogMessage = "";
 		lastOutcome = null;
 
+		if (loadingNutrientRelationshipRules) {
+			error = "Nutrition validation rules are still loading. Try again in a moment.";
+			activeStep = "macros";
+			return;
+		}
+
 		if (blockingValidation) {
 			error = blockingValidation.message;
 			activeStep = blockingValidation.step;
@@ -973,6 +1024,9 @@
 						loading={loadingManualEntryNutrients}
 						error={manualEntryNutrientError}
 						helper="Enter values from the nutrition label for the serving above. The app stores normalized per-100g values. Fields marked * are required."
+						validationItems={customIngredientValidationItems.filter(
+							(item) => item.step === "macros",
+						)}
 						getValue={getManualNutrientValue}
 						onValueChange={setManualNutrientValue}
 						isRequired={isRequiredManualNutrient}

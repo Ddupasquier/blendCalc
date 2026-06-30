@@ -59,6 +59,41 @@ vi.mock("$lib/utils/barcode/productLookup", async (importOriginal) => {
 	};
 });
 
+const nutrientRelationshipMocks = vi.hoisted(() => ({
+	readNutrientRelationshipRules: vi.fn().mockResolvedValue([
+		{
+			id: "total-sugars-lte-carbs",
+			parentNutrientId: 1005,
+			childNutrientId: 2000,
+			relationship: "child_must_not_exceed_parent",
+			severity: "error",
+			message: "Total sugars cannot exceed total carbohydrates.",
+			requiresParent: true,
+			tolerance: 0,
+		},
+		{
+			id: "added-sugars-lte-total-sugars",
+			parentNutrientId: 2000,
+			childNutrientId: 1235,
+			relationship: "child_must_not_exceed_parent",
+			severity: "error",
+			message: "Added sugars cannot exceed total sugars.",
+			requiresParent: true,
+			tolerance: 0,
+		},
+	]),
+}));
+
+vi.mock("$lib/utils/food/nutrientRelationshipRules", async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import("$lib/utils/food/nutrientRelationshipRules")>();
+	return {
+		...actual,
+		readNutrientRelationshipRules:
+			nutrientRelationshipMocks.readNutrientRelationshipRules,
+	};
+});
+
 const foodMetadataMocks = vi.hoisted(() => {
 	const macros = [
 		{
@@ -125,6 +160,19 @@ const foodMetadataMocks = vi.hoisted(() => {
 			groupSort: 10,
 			sort: 50,
 			label: "Total Sugars (g)",
+		},
+		{
+			dedupeKey: "macros:carbohydrate-details:added-sugars-g",
+			nutrientId: 1235,
+			nutrientName: "Sugars, added",
+			nutrientNumber: "539",
+			unitName: "g",
+			nutrientType: "macro",
+			step: "macros" as const,
+			group: "Macros",
+			groupSort: 10,
+			sort: 55,
+			label: "Sugars, added (g)",
 		},
 		{
 			dedupeKey: "macros:required-basics:protein-g",
@@ -265,6 +313,28 @@ describe("CustomIngredientForm", () => {
 			status: "not-found",
 			barcode: "04006381333931",
 		});
+		nutrientRelationshipMocks.readNutrientRelationshipRules.mockResolvedValue([
+			{
+				id: "total-sugars-lte-carbs",
+				parentNutrientId: 1005,
+				childNutrientId: 2000,
+				relationship: "child_must_not_exceed_parent",
+				severity: "error",
+				message: "Total sugars cannot exceed total carbohydrates.",
+				requiresParent: true,
+				tolerance: 0,
+			},
+			{
+				id: "added-sugars-lte-total-sugars",
+				parentNutrientId: 2000,
+				childNutrientId: 1235,
+				relationship: "child_must_not_exceed_parent",
+				severity: "error",
+				message: "Added sugars cannot exceed total sugars.",
+				requiresParent: true,
+				tolerance: 0,
+			},
+		]);
 	});
 
 	it("requires an ingredient name before saving", async () => {
@@ -469,6 +539,39 @@ describe("CustomIngredientForm", () => {
 
 		expect(
 			screen.getByText(/volume amount is required when volume measurements are enabled/i),
+		).toBeInTheDocument();
+	});
+
+	it("blocks impossible nutrient relationships from DB-backed rules", async () => {
+		const onCreate = vi.fn();
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await fillRequiredCustomIngredient("Too sweet label", {
+			carbs: "20",
+		});
+		await goToStep(/macros/i);
+		await fireEvent.input(screen.getByLabelText(/^total sugars/i), {
+			target: { value: "6" },
+		});
+		await fireEvent.input(screen.getByLabelText(/sugars, added/i), {
+			target: { value: "9" },
+		});
+		await fireEvent.click(screen.getByRole("button", { name: "Share" }));
+		await waitFor(() =>
+			expect(screen.getByLabelText(/share with community/i)).toBeInTheDocument(),
+		);
+
+		expect(
+			screen.getByText("Added sugars cannot exceed total sugars."),
+		).toBeInTheDocument();
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+
+		expect(onCreate).not.toHaveBeenCalled();
+		expect(
+			screen.getByText("Added sugars cannot exceed total sugars."),
 		).toBeInTheDocument();
 	});
 

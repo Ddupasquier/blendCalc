@@ -837,6 +837,81 @@ export type Database = {
           },
         ]
       }
+      nutrient_relationship_rules: {
+        Row: {
+          child_nutrient_id: number
+          created_at: string
+          enabled: boolean
+          id: string
+          message: string
+          observation_count: number
+          parent_nutrient_id: number
+          provenance: Json
+          relationship: string
+          requires_parent: boolean
+          severity: string
+          sort_order: number
+          source: string
+          source_count: number
+          sources: string[]
+          tolerance: number
+          updated_at: string
+        }
+        Insert: {
+          child_nutrient_id: number
+          created_at?: string
+          enabled?: boolean
+          id: string
+          message: string
+          observation_count?: number
+          parent_nutrient_id: number
+          provenance?: Json
+          relationship: string
+          requires_parent?: boolean
+          severity?: string
+          sort_order: number
+          source: string
+          source_count?: number
+          sources?: string[]
+          tolerance?: number
+          updated_at?: string
+        }
+        Update: {
+          child_nutrient_id?: number
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          message?: string
+          observation_count?: number
+          parent_nutrient_id?: number
+          provenance?: Json
+          relationship?: string
+          requires_parent?: boolean
+          severity?: string
+          sort_order?: number
+          source?: string
+          source_count?: number
+          sources?: string[]
+          tolerance?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_relationship_rules_child_nutrient_id_fkey"
+            columns: ["child_nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "nutrient_relationship_rules_parent_nutrient_id_fkey"
+            columns: ["parent_nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+        ]
+      }
       product_api_cache: {
         Row: {
           cache_key: string

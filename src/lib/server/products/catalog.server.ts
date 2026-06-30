@@ -8,7 +8,13 @@ import {
 	hydrateFoodWithNormalizedNutrients,
 	type NormalizedNutrientRow,
 } from "$lib/utils/food/normalizedNutrients";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
+import {
+	createNutrientValueMapFromFood,
+	readNutrientRelationshipRules,
+	validateNutrientRelationshipRules,
+	type NutrientRelationshipRule,
+} from "$lib/utils/food/nutrientRelationshipRules";
+import type { FdcFood } from "$lib/utils/food/types";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
 import { toJson } from "$lib/utils/storage/supabase/shared";
 import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
@@ -98,10 +104,10 @@ const formatBlockDate = (value: string) =>
 		timeZone: "UTC",
 	}).format(new Date(value));
 
-const getNutrientValue = (food: FdcFood, nutrientId: number) =>
-	food.foodNutrients.find((nutrient) => nutrient.nutrientId === nutrientId)?.value;
-
-export const validateSharedProductFood = (food: FdcFood) => {
+export const validateSharedProductFood = (
+	food: FdcFood,
+	nutrientRelationshipRules: NutrientRelationshipRule[] = [],
+) => {
 	const issues: string[] = [];
 	const barcode = normalizeBarcode(food.barcode ?? food.gtinUpc ?? "");
 	if (!barcode) issues.push("A valid GTIN barcode is required.");
@@ -123,15 +129,12 @@ export const validateSharedProductFood = (food: FdcFood) => {
 		}
 	}
 
-	const carbs = getNutrientValue(food, NUTRIENT_IDS.CARBS);
-	const fiber = getNutrientValue(food, NUTRIENT_IDS.FIBER);
-	const sugar = getNutrientValue(food, NUTRIENT_IDS.SUGAR);
-	if (carbs !== undefined && fiber !== undefined && fiber > carbs) {
-		issues.push("Dietary fiber cannot exceed total carbohydrates.");
-	}
-	if (carbs !== undefined && sugar !== undefined && sugar > carbs) {
-		issues.push("Total sugars cannot exceed total carbohydrates.");
-	}
+	issues.push(
+		...validateNutrientRelationshipRules(
+			createNutrientValueMapFromFood(food),
+			nutrientRelationshipRules,
+		).map((issue) => issue.message),
+	);
 
 	return { barcode, issues, valid: issues.length === 0 };
 };
@@ -333,12 +336,16 @@ export const submitProductForCatalog = async (
 ): Promise<SharedProductSubmissionResult> => {
 	await assertCanSubmitSharedProduct(userId);
 
-	const validation = validateSharedProductFood(food);
+	const admin = getSupabaseAdminClient();
+	const nutrientRelationshipRules = await readNutrientRelationshipRules(admin);
+	if (!nutrientRelationshipRules?.length) {
+		throw new Error("Nutrition validation rules are not configured.");
+	}
+	const validation = validateSharedProductFood(food, nutrientRelationshipRules);
 	if (!validation.valid || !validation.barcode) {
 		throw new Error(validation.issues.join(" "));
 	}
 
-	const admin = getSupabaseAdminClient();
 	const { data: existingProduct, error: productLookupError } = await admin
 		.from("shared_products")
 		.select("id")
