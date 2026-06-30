@@ -23,9 +23,8 @@ Smoothie Notes
 * Share with community should be a toggle
 * Let’s make the ingredient cards look like figma
 * Just make fridge and shopping lists infinite scroll. The Load function is obviously not working well and it seems like we’re fetching all of the information in the beginning anyways. My intention was to not have to fetch ALL info from the start. But if it’s not gonna be too heavy then fuck it, right?
-* Name change to blendCalc
-* General shape for components that require roundover in 1rem. Make sure this is refelcted in the scss variables.
 * On further views, what I think we should do is basically start from scratch. Make all new components if we don’t have reusable ones that we’re currently using. The whole view should just be build from the ground up. Trying to repurpose existing components has been a hassle. We make the new component and THEN plug in the functionality from the old components. Create UI > Audit if current flow works with new UI > If current available data works for new UI then plug in existing data points and functionality to new components > Test > Delete old components
+* I love the functionality of the inpput in manual entry for volume serving. I like that it has a placeholder and doesn't just default to zero which requires user to delete the zero. Let's make a reusable input component that duplicates this behavior and spread it throughout the app where aplicable.
 
 END GAME:- Do a full accessibility audit
 - Fully update and beef up readme, but remove shit that is just purely overexplaining

@@ -19,6 +19,7 @@ const makeDefinition = (
 	groupSort: 10,
 	sort: 10,
 	label: "Calories (kcal)",
+	requiredForManualEntry: false,
 	...override,
 });
 
@@ -71,5 +72,26 @@ describe("manual entry nutrient definitions", () => {
 		]);
 
 		expect(definition.dedupeKey).toBe("extended:minerals:sodium na:mg");
+	});
+
+	it("preserves DB-backed required manual-entry flags", () => {
+		const groups = groupManualEntryNutrients([
+			makeDefinition({
+				dedupeKey: "macros:required-basics:sodium-mg",
+				nutrientId: 1093,
+				nutrientName: "Sodium",
+				nutrientNumber: "307",
+				unitName: "mg",
+				nutrientType: "mineral",
+				sort: 50,
+				label: "Sodium (mg)",
+				requiredForManualEntry: true,
+			}),
+		]);
+
+		expect(groups.macros[0].fields[0]).toMatchObject({
+			label: "Sodium (mg)",
+			requiredForManualEntry: true,
+		});
 	});
 });

@@ -89,6 +89,17 @@ Follow the [QA process rule](./development-rules-audit.md#rule-qa-process) and [
 - [ ] **Manual category source:** Open `/fridge` → `Enter manually` → `Identity`; verify the `Category` dropdown is populated, sorted A-Z, and contains API-observed categories.
 - [ ] **Failure state:** Temporarily test with a missing/empty category or nutrient result set if practical; verify the UI shows a useful loading/error message instead of silently rendering stale hardcoded options.
 
+### Manual Entry Required Sodium
+
+- [ ] **Branch:** `ui-rebuild/ingredients`
+- [ ] **Rule references:** [No hardcoded reference data](./development-rules-audit.md#rule-no-hardcoded-reference-data), [Backend best practices](./development-rules-audit.md#rule-backend-best-practices), [DB-backed nutrient validation](./development-rules-audit.md#rule-db-backed-nutrient-validation), [DB validation first](./development-rules-audit.md#rule-db-validation-first), [QA link rule](./development-rules-audit.md#rule-qa-links)
+- [ ] **Code references:** [`supabase/migrations/20260629210000_manual_entry_required_nutrients.sql`](../supabase/migrations/20260629210000_manual_entry_required_nutrients.sql), [`scripts/seed_manual_entry_nutrients.mjs`](../scripts/seed_manual_entry_nutrients.mjs), [`src/lib/utils/food/nutrientDefinitions.ts`](../src/lib/utils/food/nutrientDefinitions.ts), [`src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte`](../src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte), [`src/lib/components/ingredients/manual-entry/ManualEntryNutrientFields.svelte`](../src/lib/components/ingredients/manual-entry/ManualEntryNutrientFields.svelte), [`docs/supabase-schema.md`](./supabase-schema.md)
+- [ ] **Database setup:** Apply `supabase/migrations/20260629210000_manual_entry_required_nutrients.sql` with `npm run db:push`; if manual nutrient observations are stale, rerun `npm run seed:manual-entry-nutrients`.
+- [ ] **Required basics render:** Open `/fridge` while signed in → tap `Enter manually` → fill Identity and Servings → go to `Macros`; verify `Sodium (mg)` appears in the `Required basics` group with a required `*` marker.
+- [ ] **Sodium blocks save:** Fill calories, total fat, total carbohydrates, and protein, leave sodium blank or `0`, continue to `Share`, tap `Add Ingredient`, and verify the form blocks save with `Sodium is required`.
+- [ ] **Sodium correction path:** Return to `Macros`, enter a positive sodium value, continue to `Share`, and verify `Sodium is required` clears without losing other entered values.
+- [ ] **DB-driven failure guard:** Temporarily test with missing/empty manual-entry nutrient rows if practical; verify the form blocks save with a nutrient metadata loading/error message instead of silently using a client fallback list.
+
 ### Backend List Filtering and Sorting Support
 
 - [ ] **Branch:** `ui-rebuild/ingredients`

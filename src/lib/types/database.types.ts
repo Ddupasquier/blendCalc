@@ -651,6 +651,7 @@ export type Database = {
           nutrient_id: number
           nutrient_type: string
           observation_count: number
+          required_for_manual_entry: boolean
           sort_order: number
           source_count: number
           sources: string[]
@@ -667,6 +668,7 @@ export type Database = {
           nutrient_id: number
           nutrient_type: string
           observation_count?: number
+          required_for_manual_entry?: boolean
           sort_order: number
           source_count?: number
           sources?: string[]
@@ -683,6 +685,7 @@ export type Database = {
           nutrient_id?: number
           nutrient_type?: string
           observation_count?: number
+          required_for_manual_entry?: boolean
           sort_order?: number
           source_count?: number
           sources?: string[]
@@ -699,6 +702,69 @@ export type Database = {
           },
           {
             foreignKeyName: "nutrient_manual_entry_fields_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: true
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+        ]
+      }
+      nutrient_manual_entry_required_nutrients: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          field_sort_order: number
+          group_id: string
+          nutrient_id: number
+          observation_count: number
+          provenance: Json
+          reason: string
+          requirement_key: string
+          source: string
+          source_count: number
+          sources: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          field_sort_order: number
+          group_id: string
+          nutrient_id: number
+          observation_count?: number
+          provenance?: Json
+          reason: string
+          requirement_key: string
+          source: string
+          source_count?: number
+          sources?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          field_sort_order?: number
+          group_id?: string
+          nutrient_id?: number
+          observation_count?: number
+          provenance?: Json
+          reason?: string
+          requirement_key?: string
+          source?: string
+          source_count?: number
+          sources?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_manual_entry_required_nutrients_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_manual_entry_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nutrient_manual_entry_required_nutrients_nutrient_id_fkey"
             columns: ["nutrient_id"]
             isOneToOne: true
             referencedRelation: "nutrient_definitions"
@@ -1705,6 +1771,18 @@ export type Database = {
           p_shared_product_submission_id: string
           p_user_food_list_item_id: string
         }
+        Returns: undefined
+      }
+      refresh_nutrient_manual_entry_required_flags: {
+        Args: never
+        Returns: undefined
+      }
+      refresh_nutrient_manual_entry_required_flags_trigger: {
+        Args: never
+        Returns: undefined
+      }
+      set_nutrient_manual_entry_field_required_flag: {
+        Args: never
         Returns: undefined
       }
       show_limit: { Args: never; Returns: number }

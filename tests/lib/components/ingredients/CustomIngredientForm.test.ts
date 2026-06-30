@@ -108,6 +108,7 @@ const foodMetadataMocks = vi.hoisted(() => {
 			groupSort: 10,
 			sort: 10,
 			label: "Calories (kcal)",
+			requiredForManualEntry: true,
 		},
 		{
 			dedupeKey: "macros:required-basics:total-fat-g",
@@ -121,6 +122,7 @@ const foodMetadataMocks = vi.hoisted(() => {
 			groupSort: 10,
 			sort: 20,
 			label: "Total Fat (g)",
+			requiredForManualEntry: true,
 		},
 		{
 			dedupeKey: "macros:required-basics:total-carbohydrates-g",
@@ -134,6 +136,7 @@ const foodMetadataMocks = vi.hoisted(() => {
 			groupSort: 10,
 			sort: 30,
 			label: "Total Carbohydrates (g)",
+			requiredForManualEntry: true,
 		},
 		{
 			dedupeKey: "macros:carbohydrate-details:dietary-fiber-g",
@@ -147,6 +150,7 @@ const foodMetadataMocks = vi.hoisted(() => {
 			groupSort: 10,
 			sort: 40,
 			label: "Dietary Fiber (g)",
+			requiredForManualEntry: false,
 		},
 		{
 			dedupeKey: "macros:carbohydrate-details:total-sugars-g",
@@ -160,6 +164,7 @@ const foodMetadataMocks = vi.hoisted(() => {
 			groupSort: 10,
 			sort: 50,
 			label: "Total Sugars (g)",
+			requiredForManualEntry: false,
 		},
 		{
 			dedupeKey: "macros:carbohydrate-details:added-sugars-g",
@@ -173,6 +178,7 @@ const foodMetadataMocks = vi.hoisted(() => {
 			groupSort: 10,
 			sort: 55,
 			label: "Sugars, added (g)",
+			requiredForManualEntry: false,
 		},
 		{
 			dedupeKey: "macros:required-basics:protein-g",
@@ -186,6 +192,21 @@ const foodMetadataMocks = vi.hoisted(() => {
 			groupSort: 10,
 			sort: 60,
 			label: "Protein (g)",
+			requiredForManualEntry: true,
+		},
+		{
+			dedupeKey: "macros:required-basics:sodium-mg",
+			nutrientId: 1093,
+			nutrientName: "Sodium",
+			nutrientNumber: "307",
+			unitName: "mg",
+			nutrientType: "mineral",
+			step: "macros" as const,
+			group: "Macros",
+			groupSort: 10,
+			sort: 70,
+			label: "Sodium (mg)",
+			requiredForManualEntry: true,
 		},
 	];
 
@@ -251,6 +272,7 @@ const fillRequiredCustomIngredient = async (
 		fat?: string;
 		carbs?: string;
 		protein?: string;
+		sodium?: string;
 	} = {},
 ) => {
 	await openManualForm();
@@ -289,6 +311,9 @@ const fillRequiredCustomIngredient = async (
 	});
 	await fireEvent.input(screen.getByLabelText(/protein/i), {
 		target: { value: options.protein ?? "2" },
+	});
+	await fireEvent.input(screen.getByLabelText(/sodium/i), {
+		target: { value: options.sodium ?? "120" },
 	});
 	await continueToNextStep();
 	await continueToNextStep();
@@ -398,6 +423,24 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByText("Enter manually").closest("details")).not.toHaveAttribute(
 			"open",
 		);
+	});
+
+	it("requires DB-backed sodium before saving manual nutrition", async () => {
+		const onCreate = vi.fn();
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await fillRequiredCustomIngredient("Unsalted test label", {
+			sodium: "0",
+		});
+
+		expect(screen.getByText("Sodium is required")).toBeInTheDocument();
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+
+		expect(onCreate).not.toHaveBeenCalled();
+		expect(screen.getByText("Sodium is required")).toBeInTheDocument();
 	});
 
 	it("requires choosing a real category instead of the placeholder", async () => {

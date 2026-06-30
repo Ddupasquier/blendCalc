@@ -17,6 +17,7 @@ export type ManualEntryNutrientDefinition = {
 	groupSort: number;
 	sort: number;
 	label: string;
+	requiredForManualEntry: boolean;
 };
 
 export type ManualEntryNutrientGroup = {
@@ -45,6 +46,7 @@ type ManualEntryFieldRecord = Pick<
 	| "nutrient_type"
 	| "group_id"
 	| "display_label"
+	| "required_for_manual_entry"
 	| "sort_order"
 	| "dedupe_key"
 > & {
@@ -147,6 +149,7 @@ const toManualEntryNutrientDefinition = (
 		groupSort: group.sort_order,
 		sort: record.sort_order,
 		label,
+		requiredForManualEntry: record.required_for_manual_entry,
 	};
 };
 
@@ -233,7 +236,7 @@ export const readManualEntryNutrientGroups = async (
 	const { data, error } = await supabase
 		.from("nutrient_manual_entry_fields")
 		.select(
-			"nutrient_id, nutrient_type, group_id, display_label, sort_order, dedupe_key, nutrient_definitions(nutrient_id, nutrient_name, nutrient_number, default_unit_name), nutrient_manual_entry_groups!inner(id, entry_step, title, sort_order)",
+			"nutrient_id, nutrient_type, group_id, display_label, required_for_manual_entry, sort_order, dedupe_key, nutrient_definitions(nutrient_id, nutrient_name, nutrient_number, default_unit_name), nutrient_manual_entry_groups!inner(id, entry_step, title, sort_order)",
 		)
 		.eq("enabled", true)
 		.eq("nutrient_manual_entry_groups.enabled", true)

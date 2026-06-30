@@ -82,12 +82,6 @@
 	const coreNutritionEntries = Object.entries(coreNutritionKeysByNutrientId).map(
 		([nutrientId, key]) => [Number(nutrientId), key] as [number, CoreNutritionKey],
 	);
-	const requiredManualNutrientIds = new Set<number>([
-		NUTRIENT_IDS.CALORIES,
-		NUTRIENT_IDS.FAT,
-		NUTRIENT_IDS.CARBS,
-		NUTRIENT_IDS.PROTEIN,
-	]);
 
 	let {
 		onCreate,
@@ -273,9 +267,6 @@
 	const requiresCatalogEvidence = $derived(
 		shareWithCatalog && barcodeSource === "manual",
 	);
-	const hasMacro = $derived(
-		nutrition.protein > 0 || nutrition.fat > 0 || nutrition.carbs > 0,
-	);
 	const resolvedServingLabel = $derived(
 		buildCustomServingLabel({
 			servingLabel,
@@ -303,65 +294,6 @@
 			tone: issue.severity,
 			step: "macros",
 		})),
-	);
-	const customIngredientValidationItems = $derived<StepValidationItem[]>(
-		[
-			normalizedName.length < 3
-				? {
-						message: "Name must be at least 3 characters",
-						tone: "error",
-						step: "identity",
-					}
-				: null,
-			!Number.isFinite(servingWeightGrams) || servingWeightGrams <= 0
-				? {
-						message: "Serving weight is required",
-						tone: "error",
-						step: "servings",
-					}
-				: null,
-			useVolumeEquivalent &&
-			(volumeQuantity === null || !Number.isFinite(volumeQuantity) || volumeQuantity <= 0)
-				? {
-						message:
-							"Volume amount is required when volume measurements are enabled",
-						tone: "error",
-						step: "servings",
-					}
-				: null,
-			nutrition.calories <= 0
-				? {
-						message: "Calories are required",
-						tone: "warning",
-						step: "macros",
-					}
-				: null,
-			!hasMacro
-				? {
-						message: "At least one macro (protein, fat, or carbs) is required",
-						tone: "error",
-						step: "macros",
-					}
-				: null,
-			!activeCategory
-				? {
-						message: "Food categories are still loading. Try again in a moment.",
-						tone: "error",
-						step: "identity",
-					}
-				: null,
-			nutrientRelationshipRuleError
-				? {
-						message: nutrientRelationshipRuleError,
-						tone: "error",
-						step: "macros",
-					}
-				: null,
-			...nutrientRelationshipValidationItems,
-		].filter(Boolean) as StepValidationItem[],
-	);
-	const blockingValidation = $derived(
-		customIngredientValidationItems.find((item) => item.tone === "error") ?? null,
 	);
 
 	const getBarcodeReferenceKey = (normalizedBarcode: string) =>
@@ -593,7 +525,115 @@
 	};
 
 	const isRequiredManualNutrient = (field: ManualEntryNutrientDefinition) =>
-		requiredManualNutrientIds.has(field.nutrientId);
+		field.requiredForManualEntry;
+
+	const stripUnitFromNutrientLabel = (label: string) =>
+		label.replace(/\s*\([^)]*\)\s*$/u, "").trim();
+
+	const manualEntryNutrientFields = $derived(
+		[
+			...manualEntryNutrientGroups.macros.flatMap((group) => group.fields),
+			...manualEntryNutrientGroups.extended.flatMap((group) => group.fields),
+		],
+	);
+	const requiredManualEntryNutrientFields = $derived(
+		manualEntryNutrientFields.filter((field) => field.requiredForManualEntry),
+	);
+	const requiredManualNutrientValidationItems = $derived<StepValidationItem[]>(
+		requiredManualEntryNutrientFields
+			.filter((field) => {
+				const value = getManualNutrientValue(field);
+				return !Number.isFinite(value) || value <= 0;
+			})
+			.map((field) => ({
+				message: `${stripUnitFromNutrientLabel(field.label)} is required`,
+				tone: "error",
+				step: field.step,
+			})),
+	);
+	const manualEntryNutrientAvailabilityItems = $derived<StepValidationItem[]>(
+		[
+			loadingManualEntryNutrients
+				? {
+						message: "Nutrient fields are still loading. Try again in a moment.",
+						tone: "error",
+						step: "macros",
+					}
+				: null,
+			manualEntryNutrientError
+				? {
+						message: manualEntryNutrientError,
+						tone: "error",
+						step: "macros",
+					}
+				: null,
+			!loadingManualEntryNutrients &&
+			!manualEntryNutrientError &&
+			requiredManualEntryNutrientFields.length === 0
+				? {
+						message:
+							"Required nutrient fields are unavailable. Try again after nutrient metadata loads.",
+						tone: "error",
+						step: "macros",
+					}
+				: null,
+		].filter(Boolean) as StepValidationItem[],
+	);
+	const customIngredientValidationItems = $derived<StepValidationItem[]>(
+		[
+			normalizedName.length < 3
+				? {
+						message: "Name must be at least 3 characters",
+						tone: "error",
+						step: "identity",
+					}
+				: null,
+			!Number.isFinite(servingWeightGrams) || servingWeightGrams <= 0
+				? {
+						message: "Serving weight is required",
+						tone: "error",
+						step: "servings",
+					}
+				: null,
+			useVolumeEquivalent &&
+			(volumeQuantity === null || !Number.isFinite(volumeQuantity) || volumeQuantity <= 0)
+				? {
+						message:
+							"Volume amount is required when volume measurements are enabled",
+						tone: "error",
+						step: "servings",
+					}
+				: null,
+			!activeCategory
+				? {
+						message: "Food categories are still loading. Try again in a moment.",
+						tone: "error",
+						step: "identity",
+					}
+				: null,
+			loadingNutrientRelationshipRules
+				? {
+						message:
+							"Nutrition validation rules are still loading. Try again in a moment.",
+						tone: "error",
+						step: "macros",
+					}
+				: null,
+			nutrientRelationshipRuleError
+				? {
+						message: nutrientRelationshipRuleError,
+						tone: "error",
+						step: "macros",
+					}
+				: null,
+			...manualEntryNutrientAvailabilityItems,
+			...requiredManualNutrientValidationItems,
+			...nutrientRelationshipValidationItems,
+		].filter(Boolean) as StepValidationItem[],
+	);
+	const blockingValidation = $derived(
+		customIngredientValidationItems.find((item) => item.tone === "error") ?? null,
+	);
 
 	const getSaveAdditionalNutrients = () => additionalNutrients;
 

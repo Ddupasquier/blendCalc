@@ -108,7 +108,8 @@ Notes:
 | `nutrient_definitions` | `nutrient_id` | Shared reference | Canonical nutrient names, numbers, and default units | Referenced by every nutrient table |
 | `food_nutrients` | `id` | Shared or user-owned depending on parent | Normalized nutrient values per 100g for list items, custom foods, shared products, submissions, revisions, and observations | Exactly one parent id; `nutrient_id → nutrient_definitions.nutrient_id` |
 | `nutrient_manual_entry_groups` | `id` | Shared reference | DB-backed manual-entry UI groups such as macros, vitamins, minerals, amino acids | Fed by observations |
-| `nutrient_manual_entry_fields` | `dedupe_key` | Shared reference | DB-backed manual-entry fields for nutrients | `nutrient_id → nutrient_definitions`, `group_id → nutrient_manual_entry_groups` |
+| `nutrient_manual_entry_fields` | `dedupe_key` | Shared reference | DB-backed manual-entry fields for nutrients, including whether a field is required | `nutrient_id → nutrient_definitions`, `group_id → nutrient_manual_entry_groups` |
+| `nutrient_manual_entry_required_nutrients` | `nutrient_id` | Shared validation reference | DB-backed list of required manual-entry nutrients such as calories, macros, and sodium | `nutrient_id → nutrient_definitions`, `group_id → nutrient_manual_entry_groups` |
 | `nutrient_manual_entry_observations` | `id` | Shared reference/provenance | Source API observations used to build manual-entry groups and fields | `nutrient_id → nutrient_definitions` |
 | `nutrient_relationship_rules` | `id` | Shared validation reference | DB-backed nutrient math/relationship rules, such as child nutrients not exceeding parent nutrients | `parent_nutrient_id` and `child_nutrient_id → nutrient_definitions` |
 
@@ -149,8 +150,12 @@ Columns:
   `enabled`, `source_count`, `observation_count`, `verification_status`,
   `sources`, `last_observed_at`, timestamps.
 - `nutrient_manual_entry_fields`: `dedupe_key`, `nutrient_id`, `group_id`,
-  `nutrient_type`, `display_label`, `sort_order`, `enabled`, `source_count`,
-  `observation_count`, `verification_status`, `sources`, `last_observed_at`,
+  `nutrient_type`, `display_label`, `required_for_manual_entry`, `sort_order`,
+  `enabled`, `source_count`, `observation_count`, `verification_status`,
+  `sources`, `last_observed_at`, timestamps.
+- `nutrient_manual_entry_required_nutrients`: `nutrient_id`,
+  `requirement_key`, `group_id`, `field_sort_order`, `reason`, `source`,
+  `source_count`, `observation_count`, `sources`, `provenance`, `enabled`,
   timestamps.
 - `nutrient_manual_entry_observations`: source/query/reference fields,
   nutrient/group/field classification, source payload, and timestamps.
@@ -158,6 +163,9 @@ Columns:
 Notes:
 - Seeded by `scripts/seed_manual_entry_nutrients.mjs`.
 - Groups/fields should render from these tables only.
+- Required status should render from `nutrient_manual_entry_required_nutrients`
+  via `nutrient_manual_entry_fields.required_for_manual_entry`; do not maintain
+  a separate UI-only required nutrient list.
 - Observations preserve API provenance; groups/fields are the app-ready lookup.
 
 ### `nutrient_relationship_rules`

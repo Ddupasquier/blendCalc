@@ -290,6 +290,16 @@ const classifyNutrient = ({ nutrientName, unitName }) => {
 		};
 	}
 
+	if (matchAny(name, [/\bsodium\b/])) {
+		return {
+			groupId: "required-basics",
+			nutrientType: "mineral",
+			fieldSortOrder: 50,
+			displayLabel: formatDisplayLabel("Sodium", unitName),
+			classificationMethod: "fdc-name-required-basic",
+		};
+	}
+
 	if (matchAny(name, [/\bfiber\b/, /\bsugars?\b/, /\bstarch\b/])) {
 		const order = matchAny(name, [/\bfiber\b/])
 			? 10
@@ -334,8 +344,8 @@ const classifyNutrient = ({ nutrientName, unitName }) => {
 		};
 	}
 
-	if (matchAny(name, [/\bcalcium\b/, /\biron\b/, /\bpotassium\b/, /\bphosphorus\b/, /\bmagnesium\b/, /\bzinc\b/, /\bselenium\b/, /\bcopper\b/, /\bmanganese\b/, /\biodine\b/, /\bsodium\b/, /\bfluoride\b/, /\bchromium\b/, /\bmolybdenum\b/, /\bchloride\b/, /\bash\b/])) {
-		const groupId = matchAny(name, [/\bsodium\b/, /\bash\b/])
+	if (matchAny(name, [/\bcalcium\b/, /\biron\b/, /\bpotassium\b/, /\bphosphorus\b/, /\bmagnesium\b/, /\bzinc\b/, /\bselenium\b/, /\bcopper\b/, /\bmanganese\b/, /\biodine\b/, /\bfluoride\b/, /\bchromium\b/, /\bmolybdenum\b/, /\bchloride\b/, /\bash\b/])) {
+		const groupId = matchAny(name, [/\bash\b/])
 			? "mineral-details"
 			: "minerals";
 		return {
