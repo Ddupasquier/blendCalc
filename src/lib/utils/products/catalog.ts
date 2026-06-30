@@ -17,6 +17,10 @@ export type SharedProductEvidence = {
 	barcodePhoto?: File | null;
 };
 
+export type SharedProductSubmissionContext = {
+	reviewFlags?: string[];
+};
+
 export const searchSharedProducts = async (query: string): Promise<FdcFood[]> => {
 	const trimmed = query.trim();
 	if (trimmed.length < 2) return [];
@@ -33,10 +37,14 @@ export const searchSharedProducts = async (query: string): Promise<FdcFood[]> =>
 export const submitSharedProduct = async (
 	food: FdcFood,
 	evidence: SharedProductEvidence = {},
+	context: SharedProductSubmissionContext = {},
 ): Promise<SharedProductSubmissionResult> => {
 	const formData = new FormData();
 	formData.set("food", JSON.stringify(food));
 	formData.set("consentToShare", "true");
+	if (context.reviewFlags?.length) {
+		formData.set("reviewFlags", JSON.stringify(context.reviewFlags));
+	}
 	if (evidence.frontPhoto) formData.set("frontPhoto", evidence.frontPhoto);
 	if (evidence.nutritionPhoto) {
 		formData.set("nutritionPhoto", evidence.nutritionPhoto);

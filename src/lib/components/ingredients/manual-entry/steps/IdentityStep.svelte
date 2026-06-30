@@ -1,4 +1,6 @@
 <script lang="ts">
+	import BarcodeAutofillSuggestion from "$lib/components/ingredients/manual-entry/BarcodeAutofillSuggestion.svelte";
+
 	let {
 		name,
 		brandOwner,
@@ -9,11 +11,14 @@
 		categoryOptionsError,
 		barcodeMessage,
 		checkingBarcodeReference,
+		barcodeSuggestion = null,
 		onNameChange,
 		onBrandChange,
 		onCategoryChange,
 		onBarcodeChange,
 		onBarcodeBlur,
+		onApplyBarcodeSuggestion,
+		onKeepManualBarcodeEntry,
 		onNameInput,
 		onNext,
 	}: {
@@ -26,11 +31,18 @@
 		categoryOptionsError: string;
 		barcodeMessage: string;
 		checkingBarcodeReference: boolean;
+		barcodeSuggestion: {
+			name: string;
+			brandOwner?: string;
+			sourceLabel: string;
+		} | null;
 		onNameChange: (value: string) => void;
 		onBrandChange: (value: string) => void;
 		onCategoryChange: (value: string) => void;
 		onBarcodeChange: (value: string) => void;
 		onBarcodeBlur: () => void | Promise<void>;
+		onApplyBarcodeSuggestion: () => void;
+		onKeepManualBarcodeEntry: () => void;
 		onNameInput?: (element: HTMLInputElement) => void;
 		onNext: () => void | Promise<void>;
 	} = $props();
@@ -117,6 +129,15 @@
 			<small class="custom-ingredient__field-status" role="status">
 				{barcodeMessage}
 			</small>
+		{/if}
+		{#if barcodeSuggestion}
+			<BarcodeAutofillSuggestion
+				name={barcodeSuggestion.name}
+				brandOwner={barcodeSuggestion.brandOwner}
+				sourceLabel={barcodeSuggestion.sourceLabel}
+				onApply={onApplyBarcodeSuggestion}
+				onKeepManual={onKeepManualBarcodeEntry}
+			/>
 		{/if}
 	</label>
 

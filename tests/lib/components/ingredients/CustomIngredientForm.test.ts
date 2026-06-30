@@ -494,6 +494,116 @@ describe("CustomIngredientForm", () => {
 		});
 	});
 
+	it("offers optional autofill from a matched manual barcode", async () => {
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft: {
+				barcode: "04006381333931",
+				name: "Source tomato product",
+				brandOwner: "Source brand",
+				servingLabel: "100g serving",
+				servingWeightGrams: 100,
+				nutrition: {
+					calories: 18,
+					fat: 0.2,
+					carbs: 3.9,
+					fiber: 1.2,
+					sugar: 2.6,
+					protein: 0.9,
+				},
+				additionalNutrients: [],
+				reportedNutrientIds: [1008, 1004, 1005, 1003],
+				source: "usda",
+				sourceLabel: "USDA FDC",
+				sourceReference: "12345",
+			},
+		});
+
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/food name/i), {
+			target: { value: "Typed tomato label" },
+		});
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: "4006381333931" },
+		});
+
+		await waitFor(() =>
+			expect(screen.getByRole("button", { name: /autofill/i })).toBeInTheDocument(),
+		);
+
+		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
+
+		expect(screen.getByLabelText(/food name/i)).toHaveValue("Source tomato product");
+		expect(screen.getByLabelText(/brand/i)).toHaveValue("Source brand");
+		expect(screen.getByText(/autofilled from USDA FDC/i)).toBeInTheDocument();
+	});
+
+	it("passes a moderator review flag when shared manual barcode data ignores a source match", async () => {
+		const onCreate = vi.fn();
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft: {
+				barcode: "04006381333931",
+				name: "Reference tomato product",
+				brandOwner: "Reference brand",
+				servingLabel: "100g serving",
+				servingWeightGrams: 100,
+				nutrition: {
+					calories: 18,
+					fat: 0.2,
+					carbs: 3.9,
+					fiber: 1.2,
+					sugar: 2.6,
+					protein: 0.9,
+				},
+				additionalNutrients: [],
+				reportedNutrientIds: [1008, 1004, 1005, 1003],
+				source: "usda",
+				sourceLabel: "USDA FDC",
+				sourceReference: "12345",
+			},
+		});
+
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await fillRequiredCustomIngredient("Typed tomato label", {
+			barcode: "4006381333931",
+			calories: "120",
+			fat: "3",
+			carbs: "14",
+			protein: "8",
+		});
+		await fireEvent.click(screen.getByLabelText(/share with community/i));
+		const photo = new File([new Uint8Array([0xff, 0xd8, 0xff])], "label.jpg", {
+			type: "image/jpeg",
+		});
+		for (const label of [
+			/front of package/i,
+			/nutrition facts label/i,
+			/^barcode$/i,
+		]) {
+			await fireEvent.change(screen.getByLabelText(label), {
+				target: { files: [photo] },
+			});
+		}
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+
+		await waitFor(() => expect(submitSharedProduct).toHaveBeenCalledOnce());
+		expect(submitSharedProduct.mock.calls[0][2]).toMatchObject({
+			reviewFlags: [
+				expect.stringContaining(
+					"User chose to share manually entered product data instead of autofilling from USDA FDC",
+				),
+			],
+		});
+		expect(onCreate).toHaveBeenCalledOnce();
+	});
+
 	it("keeps volume conversion off until the user enables it", async () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 

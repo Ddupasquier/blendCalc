@@ -38,6 +38,22 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	if (!food || !consentToShare) {
 		throw error(400, "Product data and sharing consent are required.");
 	}
+	const reviewFlagsValue = formData.get("reviewFlags");
+	let reviewFlags: string[] = [];
+	if (reviewFlagsValue) {
+		try {
+			const parsedFlags = JSON.parse(String(reviewFlagsValue));
+			reviewFlags = Array.isArray(parsedFlags)
+				? parsedFlags
+						.filter((flag): flag is string => typeof flag === "string")
+						.map((flag) => flag.trim())
+						.filter(Boolean)
+						.slice(0, 10)
+				: [];
+		} catch {
+			throw error(400, "Review flag data is invalid.");
+		}
+	}
 
 	const evidenceFiles = Object.fromEntries(
 		(["front", "nutrition", "barcode"] as const).flatMap((role) => {
@@ -49,7 +65,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
 	try {
 		evidencePaths = await uploadProductEvidence(user.id, evidenceFiles);
-		const result = await submitProductForCatalog(user.id, food, evidencePaths);
+		const result = await submitProductForCatalog(user.id, food, evidencePaths, {
+			reviewFlags,
+		});
 		if (result.evidenceAccepted !== true) {
 			await deleteProductEvidence(evidencePaths);
 		}

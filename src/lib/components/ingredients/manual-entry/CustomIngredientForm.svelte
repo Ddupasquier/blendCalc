@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onDestroy, onMount } from "svelte";
 	import ArrowLeft from "$lib/assets/icons/ArrowLeft.svelte";
 	import {
 		SERVING_MEASURE_OPTIONS,
@@ -44,7 +44,10 @@
 	import ManualEntryStepTabs from "$lib/components/ingredients/manual-entry/ManualEntryStepTabs.svelte";
 	import type { ManualEntryValidationItem } from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
 	import { normalizeBarcode } from "$lib/utils/barcode/barcode";
-	import { lookupBarcodeProduct } from "$lib/utils/barcode/productLookup";
+	import {
+		lookupBarcodeProduct,
+		type BarcodeProductDraft,
+	} from "$lib/utils/barcode/productLookup";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 	import { submitSharedProduct } from "$lib/utils/products/catalog";
 	import { getSupabaseBrowserClient } from "$lib/supabase/client";
@@ -135,6 +138,9 @@
 	let lookingUpBarcode = $state(false);
 	let checkingBarcodeReference = $state(false);
 	let checkedBarcodeReferenceKey = $state("");
+	let barcodeReferenceDraft = $state<BarcodeProductDraft | null>(null);
+	let barcodeReferenceAcceptedBarcode = $state("");
+	let barcodeLookupDebounce = $state<ReturnType<typeof setTimeout> | null>(null);
 	let scannerOpen = $state(false);
 	let barcode = $state("");
 	let barcodeSource = $state<FdcFood["barcodeSource"]>("manual");
@@ -358,6 +364,12 @@
 	const getBarcodeReferenceKey = (normalizedBarcode: string) =>
 		`${normalizedBarcode}:${normalizedName.toLocaleLowerCase()}`;
 
+	const clearBarcodeLookupDebounce = () => {
+		if (!barcodeLookupDebounce) return;
+		clearTimeout(barcodeLookupDebounce);
+		barcodeLookupDebounce = null;
+	};
+
 	const namesLookDifferent = (enteredName: string, sourceName: string) => {
 		const normalizeName = (value: string) =>
 			value
@@ -370,23 +382,23 @@
 		return !entered.includes(source) && !source.includes(entered);
 	};
 
-	const setManualBarcode = (value: string) => {
-		barcode = value;
-		barcodeSource = "manual";
-		checkedBarcodeReferenceKey = "";
-		if (!lookingUpBarcode) barcodeMessage = "";
-	};
-
 	const checkManualBarcodeReference = async () => {
+		clearBarcodeLookupDebounce();
 		const trimmedBarcode = barcode.trim();
 		if (!trimmedBarcode) {
 			checkedBarcodeReferenceKey = "";
+			barcodeReferenceDraft = null;
+			barcodeReferenceAcceptedBarcode = "";
 			if (!lookingUpBarcode) barcodeMessage = "";
 			return;
 		}
 
 		const normalizedBarcode = normalizeBarcode(trimmedBarcode);
-		if (!normalizedBarcode) return;
+		if (!normalizedBarcode) {
+			barcodeReferenceDraft = null;
+			barcodeReferenceAcceptedBarcode = "";
+			return;
+		}
 
 		const referenceKey = getBarcodeReferenceKey(normalizedBarcode);
 		if (checkedBarcodeReferenceKey === referenceKey || checkingBarcodeReference) return;
@@ -399,13 +411,16 @@
 			barcodeSource = "manual";
 
 			if (lookup.status === "found") {
+				barcodeReferenceDraft = lookup.draft;
 				const mismatchCopy = namesLookDifferent(normalizedName, lookup.draft.name)
 					? ` Lookup found “${lookup.draft.name}”, so reviewers can compare it with your typed label if you share this product.`
 					: " Reviewers can use this source reference if you share this product.";
-				barcodeMessage = `Barcode matched ${lookup.draft.sourceLabel}.${mismatchCopy}`;
+				barcodeMessage = `Barcode matched ${lookup.draft.sourceLabel}.${mismatchCopy} Autofill is available, but optional.`;
 				return;
 			}
 
+			barcodeReferenceDraft = null;
+			barcodeReferenceAcceptedBarcode = "";
 			barcodeMessage =
 				lookup.status === "not-found"
 					? "No source match found for this barcode yet. You can still save it; shared submissions will rely on label photos."
@@ -414,6 +429,94 @@
 			checkingBarcodeReference = false;
 		}
 	};
+
+	const scheduleManualBarcodeReferenceCheck = () => {
+		clearBarcodeLookupDebounce();
+		const normalizedBarcode = normalizeBarcode(barcode.trim());
+		if (!normalizedBarcode) return;
+		barcodeLookupDebounce = setTimeout(() => {
+			void checkManualBarcodeReference();
+		}, 650);
+	};
+
+	const setManualBarcode = (value: string) => {
+		barcode = value;
+		barcodeSource = "manual";
+		checkedBarcodeReferenceKey = "";
+		barcodeReferenceDraft = null;
+		barcodeReferenceAcceptedBarcode = "";
+		if (!lookingUpBarcode) barcodeMessage = "";
+		scheduleManualBarcodeReferenceCheck();
+	};
+
+	const applyBarcodeProductDraft = (draft: BarcodeProductDraft) => {
+		name = draft.name;
+		brandOwner = draft.brandOwner;
+		category = draft.categories?.[0] ?? defaultCategory;
+		servingLabel = draft.servingLabel;
+		servingWeightGrams = draft.servingWeightGrams;
+		nutrition = { ...draft.nutrition };
+		additionalNutrients = [...draft.additionalNutrients];
+		useVolumeEquivalent = Boolean(draft.volumeEquivalent);
+		volumeQuantity = draft.volumeEquivalent?.quantity ?? null;
+		volumeUnit = draft.volumeEquivalent?.unit ?? "tbsp";
+		barcode = draft.barcode;
+		barcodeSource = draft.source === "shared-catalog" ? "community" : draft.source;
+		barcodeReferenceAcceptedBarcode = draft.barcode;
+		reportedNutrientIds = [...draft.reportedNutrientIds];
+		ingredients = draft.ingredients ?? "";
+		ingredientList = [...(draft.ingredientList ?? [])];
+		allergens = [...(draft.allergens ?? [])];
+		traces = [...(draft.traces ?? [])];
+		dietaryTags = [...(draft.dietaryTags ?? [])];
+		labels = [...(draft.labels ?? [])];
+		categories = [...(draft.categories ?? [])];
+		checkedBarcodeReferenceKey = getBarcodeReferenceKey(draft.barcode);
+	};
+
+	const applyBarcodeReferenceSuggestion = () => {
+		const draft = barcodeReferenceDraft;
+		if (!draft) return;
+		applyBarcodeProductDraft(draft);
+		const nutrientSummary = additionalNutrients.length > 0
+			? ` ${additionalNutrients.length} additional reported nutrients were included.`
+			: " No additional vitamin or mineral values were reported by this source.";
+		const volumeSummary = draft.volumeEquivalent
+			? " The package's volume-to-weight serving was also included."
+			: "";
+		barcodeReferenceDraft = null;
+		barcodeMessage = `Autofilled from ${draft.sourceLabel}.${nutrientSummary}${volumeSummary} Review it before saving.`;
+	};
+
+	const keepManualBarcodeEntry = () => {
+		if (!barcodeReferenceDraft) return;
+		barcodeReferenceAcceptedBarcode = "";
+		barcodeSource = "manual";
+		barcodeMessage = `Keeping your manually entered label. Reviewers will see that ${barcodeReferenceDraft.sourceLabel} has source data for this barcode if you share this product.`;
+	};
+
+	const getBarcodeReferenceReviewFlags = () => {
+		const normalizedBarcode = normalizeBarcode(barcode);
+		if (
+			!shareWithCatalog ||
+			!normalizedBarcode ||
+			!barcodeReferenceDraft ||
+			barcodeReferenceDraft.barcode !== normalizedBarcode ||
+			barcodeReferenceAcceptedBarcode === normalizedBarcode ||
+			barcodeSource !== "manual"
+		) {
+			return [];
+		}
+
+		const sourceReference = barcodeReferenceDraft.sourceReference
+			? ` Reference: ${barcodeReferenceDraft.sourceReference}.`
+			: "";
+		return [
+			`User chose to share manually entered product data instead of autofilling from ${barcodeReferenceDraft.sourceLabel}. Source product: “${barcodeReferenceDraft.name}”.${sourceReference} Compare user-entered data against active source/API data before approval.`,
+		];
+	};
+
+	onDestroy(clearBarcodeLookupDebounce);
 
 	const setNutritionValue = (
 		key: keyof CustomFoodNutritionInput,
@@ -501,13 +604,16 @@
 		volumeQuantity = null;
 		volumeUnit = "tbsp";
 		useVolumeEquivalent = false;
-			additionalNutrients = [];
-			barcode = "";
-			barcodeSource = "manual";
-			barcodeMessage = "";
-			checkingBarcodeReference = false;
-			checkedBarcodeReferenceKey = "";
-			shareWithCatalog = false;
+		additionalNutrients = [];
+		barcode = "";
+		barcodeSource = "manual";
+		barcodeMessage = "";
+		checkingBarcodeReference = false;
+		checkedBarcodeReferenceKey = "";
+		barcodeReferenceDraft = null;
+		barcodeReferenceAcceptedBarcode = "";
+		clearBarcodeLookupDebounce();
+		shareWithCatalog = false;
 		frontPhoto = null;
 		nutritionPhoto = null;
 		barcodePhoto = null;
@@ -725,6 +831,8 @@
 		error = "";
 		barcodeMessage = "Looking up this product…";
 		barcode = result.canonicalValue;
+		barcodeReferenceDraft = null;
+		barcodeReferenceAcceptedBarcode = "";
 		activeStep = "share";
 		if (labelDetailsElement) labelDetailsElement.open = true;
 		let nextFocusTarget: "name" | "destination" = "name";
@@ -733,28 +841,8 @@
 			const lookup = await lookupBarcodeProduct(result.value);
 			if (lookup.status === "found") {
 				nextFocusTarget = "destination";
-				name = lookup.draft.name;
-				brandOwner = lookup.draft.brandOwner;
-				category = lookup.draft.categories?.[0] ?? defaultCategory;
-				servingLabel = lookup.draft.servingLabel;
-				servingWeightGrams = lookup.draft.servingWeightGrams;
-				nutrition = { ...lookup.draft.nutrition };
-				additionalNutrients = [...lookup.draft.additionalNutrients];
-				useVolumeEquivalent = Boolean(lookup.draft.volumeEquivalent);
-				volumeQuantity = lookup.draft.volumeEquivalent?.quantity ?? null;
-				volumeUnit = lookup.draft.volumeEquivalent?.unit ?? "tbsp";
-				barcode = lookup.draft.barcode;
-				barcodeSource = lookup.draft.source === "shared-catalog"
-					? "community"
-					: lookup.draft.source;
-				reportedNutrientIds = [...lookup.draft.reportedNutrientIds];
-				ingredients = lookup.draft.ingredients ?? "";
-				ingredientList = [...(lookup.draft.ingredientList ?? [])];
-				allergens = [...(lookup.draft.allergens ?? [])];
-				traces = [...(lookup.draft.traces ?? [])];
-				dietaryTags = [...(lookup.draft.dietaryTags ?? [])];
-				labels = [...(lookup.draft.labels ?? [])];
-				categories = [...(lookup.draft.categories ?? [])];
+				barcodeReferenceDraft = lookup.draft;
+				applyBarcodeProductDraft(lookup.draft);
 				const nutrientSummary = additionalNutrients.length > 0
 					? ` ${additionalNutrients.length} additional reported nutrients were included.`
 					: " No additional vitamin or mineral values were reported by this source.";
@@ -767,6 +855,8 @@
 
 			activeStep = "identity";
 			barcodeSource = "manual";
+			barcodeReferenceDraft = null;
+			barcodeReferenceAcceptedBarcode = "";
 			reportedNutrientIds = [];
 			ingredients = "";
 			ingredientList = [];
@@ -904,11 +994,15 @@
 				(shareWithCatalog || barcodeSource === "open-food-facts")
 			) {
 				try {
-					const submission = await submitSharedProduct(food, {
-						frontPhoto,
-						nutritionPhoto,
-						barcodePhoto,
-					});
+					const submission = await submitSharedProduct(
+						food,
+						{
+							frontPhoto,
+							nutritionPhoto,
+							barcodePhoto,
+						},
+						{ reviewFlags: getBarcodeReferenceReviewFlags() },
+					);
 					catalogMessage = submission.message;
 				} catch {
 					catalogMessage =
@@ -986,17 +1080,26 @@
 						{barcode}
 						{visibleCategoryOptions}
 						{loadingCategoryOptions}
-						{categoryOptionsError}
-						{barcodeMessage}
-						{checkingBarcodeReference}
-						onNameChange={(value) => (name = value)}
-						onBrandChange={(value) => (brandOwner = value)}
-						onCategoryChange={(value) => (category = value)}
-						onBarcodeChange={setManualBarcode}
-						onBarcodeBlur={checkManualBarcodeReference}
-						onNameInput={(element) => (ingredientNameInput = element)}
-						onNext={goNext}
-					/>
+							{categoryOptionsError}
+							{barcodeMessage}
+							{checkingBarcodeReference}
+							barcodeSuggestion={barcodeReferenceDraft
+								? {
+										name: barcodeReferenceDraft.name,
+										brandOwner: barcodeReferenceDraft.brandOwner,
+										sourceLabel: barcodeReferenceDraft.sourceLabel,
+									}
+								: null}
+							onNameChange={(value) => (name = value)}
+							onBrandChange={(value) => (brandOwner = value)}
+							onCategoryChange={(value) => (category = value)}
+							onBarcodeChange={setManualBarcode}
+							onBarcodeBlur={checkManualBarcodeReference}
+							onApplyBarcodeSuggestion={applyBarcodeReferenceSuggestion}
+							onKeepManualBarcodeEntry={keepManualBarcodeEntry}
+							onNameInput={(element) => (ingredientNameInput = element)}
+							onNext={goNext}
+						/>
 				{:else if activeStep === "servings"}
 					<ServingsStep
 						{servingLabel}

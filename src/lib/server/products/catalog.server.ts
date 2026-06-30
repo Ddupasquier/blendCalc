@@ -54,6 +54,10 @@ type ValidationReport = {
 	conflictCount?: number;
 };
 
+type ProductSubmissionContext = {
+	reviewFlags?: string[];
+};
+
 type PendingProductSubmission = {
 	id: string;
 	submitted_by: string;
@@ -103,6 +107,16 @@ const formatBlockDate = (value: string) =>
 		year: "numeric",
 		timeZone: "UTC",
 	}).format(new Date(value));
+
+const sanitizeReviewFlags = (reviewFlags: string[] = []) =>
+	Array.from(
+		new Set(
+			reviewFlags
+				.map((flag) => flag.trim())
+				.filter(Boolean)
+				.map((flag) => flag.slice(0, 1000)),
+		),
+	).slice(0, 10);
 
 export const validateSharedProductFood = (
 	food: FdcFood,
@@ -333,6 +347,7 @@ export const submitProductForCatalog = async (
 	userId: string,
 	food: FdcFood,
 	evidencePaths: ProductEvidencePaths = {},
+	context: ProductSubmissionContext = {},
 ): Promise<SharedProductSubmissionResult> => {
 	await assertCanSubmitSharedProduct(userId);
 
@@ -388,9 +403,11 @@ export const submitProductForCatalog = async (
 		}
 	}
 
+	const reviewFlags = sanitizeReviewFlags(context.reviewFlags);
+	const needsSourceComparisonReview = reviewFlags.length > 0;
 	const report: ValidationReport = {
 		valid: true,
-		issues: [],
+		issues: reviewFlags,
 		usdaMatch: Boolean(usdaDraft),
 		openFoodFactsMatch: Boolean(openFoodFactsDraft),
 		externalLookupFailed,
@@ -401,6 +418,11 @@ export const submitProductForCatalog = async (
 	if (!matchedDraft && !evidenceComplete) {
 		throw new Error(
 			"Unknown products need front package, nutrition label, and barcode photos for verification.",
+		);
+	}
+	if (needsSourceComparisonReview && !evidenceComplete) {
+		throw new Error(
+			"Source comparison reviews need front package, nutrition label, and barcode photos for verification.",
 		);
 	}
 	const verificationBundle = usdaDraft
@@ -420,7 +442,9 @@ export const submitProductForCatalog = async (
 			brand_owner: food.brandOwner?.trim() || null,
 			food: toJson(compactFood(food)),
 			consent_to_share: true,
-			verification_status: usdaDraft ? "source_verified" : "manual_review",
+			verification_status: usdaDraft && !needsSourceComparisonReview
+				? "source_verified"
+				: "manual_review",
 			matched_source: matchedDraft?.source === "open-food-facts"
 				? "open-food-facts"
 				: matchedDraft?.source === "usda"
@@ -444,7 +468,7 @@ export const submitProductForCatalog = async (
 		throw submissionError ?? new Error("Product submission could not be saved.");
 	}
 
-	if (matchedDraft) {
+	if (matchedDraft && !needsSourceComparisonReview) {
 		if (!verificationBundle) {
 			throw new Error("Product verification could not be prepared.");
 		}
@@ -477,7 +501,9 @@ export const submitProductForCatalog = async (
 
 	return {
 		status: "pending",
-		message: "The product is saved privately and is waiting for a label review.",
+		message: needsSourceComparisonReview
+			? "The product is saved privately and is waiting for a source comparison review."
+			: "The product is saved privately and is waiting for a label review.",
 		evidenceAccepted: true,
 	};
 };
