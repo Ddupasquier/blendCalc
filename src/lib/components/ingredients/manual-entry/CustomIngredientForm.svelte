@@ -213,7 +213,6 @@
 					"Food categories are not available yet. Run the category seed script after database migrations.";
 			} else {
 				categoryOptions = options;
-				if (!category) category = options[0].label;
 			}
 
 			loadingCategoryOptions = false;
@@ -260,8 +259,12 @@
 			? [category, ...categoryOptionLabels]
 			: categoryOptionLabels,
 	);
-	const defaultCategory = $derived(categoryOptions[0]?.label ?? "");
-	const activeCategory = $derived(category || categories[0] || defaultCategory);
+	const categoryPlaceholder = $derived(
+		categoryOptionLabels.length > 0
+			? `Example: ${categoryOptionLabels.slice(0, 3).join(", ")}`
+			: "Choose a category",
+	);
+	const activeCategory = $derived(category || categories[0] || "");
 	const normalizedName = $derived(name.trim());
 	const hasValidBarcode = $derived(Boolean(normalizeBarcode(barcode)));
 	const canShareWithCatalog = $derived(
@@ -452,7 +455,7 @@
 	const applyBarcodeProductDraft = (draft: BarcodeProductDraft) => {
 		name = draft.name;
 		brandOwner = draft.brandOwner;
-		category = draft.categories?.[0] ?? defaultCategory;
+		category = draft.categories?.[0] ?? "";
 		servingLabel = draft.servingLabel;
 		servingWeightGrams = draft.servingWeightGrams;
 		nutrition = { ...draft.nutrition };
@@ -598,7 +601,7 @@
 		activeStep = "identity";
 		name = "";
 		brandOwner = "";
-		category = defaultCategory;
+		category = "";
 		servingLabel = "";
 		servingWeightGrams = 30;
 		volumeQuantity = null;
@@ -1078,28 +1081,29 @@
 						{brandOwner}
 						{category}
 						{barcode}
+						{categoryPlaceholder}
 						{visibleCategoryOptions}
 						{loadingCategoryOptions}
-							{categoryOptionsError}
-							{barcodeMessage}
-							{checkingBarcodeReference}
-							barcodeSuggestion={barcodeReferenceDraft
-								? {
-										name: barcodeReferenceDraft.name,
-										brandOwner: barcodeReferenceDraft.brandOwner,
-										sourceLabel: barcodeReferenceDraft.sourceLabel,
-									}
-								: null}
-							onNameChange={(value) => (name = value)}
-							onBrandChange={(value) => (brandOwner = value)}
-							onCategoryChange={(value) => (category = value)}
-							onBarcodeChange={setManualBarcode}
-							onBarcodeBlur={checkManualBarcodeReference}
-							onApplyBarcodeSuggestion={applyBarcodeReferenceSuggestion}
-							onKeepManualBarcodeEntry={keepManualBarcodeEntry}
-							onNameInput={(element) => (ingredientNameInput = element)}
-							onNext={goNext}
-						/>
+						{categoryOptionsError}
+						{barcodeMessage}
+						{checkingBarcodeReference}
+						barcodeSuggestion={barcodeReferenceDraft
+							? {
+									name: barcodeReferenceDraft.name,
+									brandOwner: barcodeReferenceDraft.brandOwner,
+									sourceLabel: barcodeReferenceDraft.sourceLabel,
+								}
+							: null}
+						onNameChange={(value) => (name = value)}
+						onBrandChange={(value) => (brandOwner = value)}
+						onCategoryChange={(value) => (category = value)}
+						onBarcodeChange={setManualBarcode}
+						onBarcodeBlur={checkManualBarcodeReference}
+						onApplyBarcodeSuggestion={applyBarcodeReferenceSuggestion}
+						onKeepManualBarcodeEntry={keepManualBarcodeEntry}
+						onNameInput={(element) => (ingredientNameInput = element)}
+						onNext={goNext}
+					/>
 				{:else if activeStep === "servings"}
 					<ServingsStep
 						{servingLabel}

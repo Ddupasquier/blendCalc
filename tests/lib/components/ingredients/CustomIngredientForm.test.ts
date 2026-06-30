@@ -257,6 +257,10 @@ const fillRequiredCustomIngredient = async (
 	await fireEvent.input(screen.getByLabelText(/food name/i), {
 		target: { value: name },
 	});
+	await waitFor(() => expect(screen.getByLabelText(/category/i)).not.toBeDisabled());
+	await fireEvent.change(screen.getByLabelText(/category/i), {
+		target: { value: "Other" },
+	});
 	if (options.barcode) {
 		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
 			target: { value: options.barcode },
@@ -394,6 +398,19 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByText("Enter manually").closest("details")).not.toHaveAttribute(
 			"open",
 		);
+	});
+
+	it("requires choosing a real category instead of the placeholder", async () => {
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openManualForm();
+		await waitFor(() => expect(screen.getByLabelText(/category/i)).not.toBeDisabled());
+		const categorySelect = screen.getByLabelText(/category/i) as HTMLSelectElement;
+		expect(categorySelect.value).toBe("");
+		expect(screen.getByRole("option", { name: /example: other/i })).toBeDisabled();
+
+		await fireEvent.change(categorySelect, { target: { value: "Other" } });
+		expect(categorySelect.value).toBe("Other");
 	});
 
 	it("can add a saved custom ingredient directly to the shopping list", async () => {

@@ -6,6 +6,7 @@
 		brandOwner,
 		category,
 		barcode,
+		categoryPlaceholder,
 		visibleCategoryOptions,
 		loadingCategoryOptions,
 		categoryOptionsError,
@@ -26,6 +27,7 @@
 		brandOwner: string;
 		category: string;
 		barcode: string;
+		categoryPlaceholder: string;
 		visibleCategoryOptions: string[];
 		loadingCategoryOptions: boolean;
 		categoryOptionsError: string;
@@ -55,6 +57,42 @@
 </script>
 
 <div class="custom-ingredient__step">
+	<label class="custom-ingredient__field">
+		<span>UPC / Barcode <small>optional</small></span>
+		<input
+			id="custom-ingredient-barcode"
+			name="custom-ingredient-barcode"
+			type="text"
+			inputmode="numeric"
+			placeholder="Recommended for packaged foods"
+			maxlength="18"
+			value={barcode}
+			oninput={(event) => onBarcodeChange(event.currentTarget.value)}
+			onblur={onBarcodeBlur}
+		/>
+		<small>
+			We’ll check trusted sources and offer autofill if existing data is available.
+		</small>
+		{#if checkingBarcodeReference}
+			<small class="custom-ingredient__field-status" role="status">
+				Checking barcode sources…
+			</small>
+		{:else if barcodeMessage}
+			<small class="custom-ingredient__field-status" role="status">
+				{barcodeMessage}
+			</small>
+		{/if}
+		{#if barcodeSuggestion}
+			<BarcodeAutofillSuggestion
+				name={barcodeSuggestion.name}
+				brandOwner={barcodeSuggestion.brandOwner}
+				sourceLabel={barcodeSuggestion.sourceLabel}
+				onApply={onApplyBarcodeSuggestion}
+				onKeepManual={onKeepManualBarcodeEntry}
+			/>
+		{/if}
+	</label>
+
 	<label class="custom-ingredient__field">
 		<span>Food name <em>*</em></span>
 		<input
@@ -98,6 +136,7 @@
 			{:else if visibleCategoryOptions.length === 0}
 				<option value="">Categories unavailable</option>
 			{:else}
+				<option value="" disabled>{categoryPlaceholder}</option>
 				{#each visibleCategoryOptions as option}
 					<option value={option}>{option}</option>
 				{/each}
@@ -105,39 +144,6 @@
 		</select>
 		{#if categoryOptionsError}
 			<small>{categoryOptionsError}</small>
-		{/if}
-	</label>
-
-	<label class="custom-ingredient__field">
-		<span>UPC / Barcode <small>optional</small></span>
-		<input
-			id="custom-ingredient-barcode"
-			name="custom-ingredient-barcode"
-			type="text"
-			inputmode="numeric"
-			placeholder="12-digit number"
-			maxlength="18"
-			value={barcode}
-			oninput={(event) => onBarcodeChange(event.currentTarget.value)}
-			onblur={onBarcodeBlur}
-		/>
-		{#if checkingBarcodeReference}
-			<small class="custom-ingredient__field-status" role="status">
-				Checking barcode sources…
-			</small>
-		{:else if barcodeMessage}
-			<small class="custom-ingredient__field-status" role="status">
-				{barcodeMessage}
-			</small>
-		{/if}
-		{#if barcodeSuggestion}
-			<BarcodeAutofillSuggestion
-				name={barcodeSuggestion.name}
-				brandOwner={barcodeSuggestion.brandOwner}
-				sourceLabel={barcodeSuggestion.sourceLabel}
-				onApply={onApplyBarcodeSuggestion}
-				onKeepManual={onKeepManualBarcodeEntry}
-			/>
 		{/if}
 	</label>
 
