@@ -9,6 +9,7 @@ vi.mock("$lib/utils/storage/supabaseData", () => cloudData);
 
 import {
 	CUSTOM_FOODS_STORAGE_KEY,
+	buildCustomServingLabel,
 	createCustomFood,
 	findCustomFoodByBarcode,
 	findCustomFoodByName,
@@ -78,6 +79,28 @@ describe("custom foods", () => {
 
 		expect(food.customDensityGramsPerMilliliter).toBeCloseTo(1.0208);
 		expect(food.customDensityConfidence).toBe("known");
+		expect(food.customServingLabel).toBe("1 cup");
+	});
+
+	it("generates a serving label when the user leaves it blank", () => {
+		expect(
+			buildCustomServingLabel({
+				servingWeightGrams: 34,
+			}),
+		).toBe("34g serving");
+		expect(
+			buildCustomServingLabel({
+				servingLabel: "  3 cookies  ",
+				servingWeightGrams: 34,
+			}),
+		).toBe("3 cookies");
+		expect(
+			buildCustomServingLabel({
+				servingWeightGrams: 245,
+				volumeQuantity: 1.5,
+				volumeUnit: "cup",
+			}),
+		).toBe("1.5 cup");
 	});
 
 	it("persists and searches custom foods", async () => {

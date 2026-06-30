@@ -1,5 +1,6 @@
 import {
 	DEFAULT_MILLILITERS_PER_VOLUME_MEASURE,
+	SERVING_MEASURE_OPTIONS,
 	type ServingMeasureUnit,
 } from "../../../defaults/servingMeasureDefaults";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/foodRecords";
@@ -166,6 +167,36 @@ const getVolumeMilliliters = (
 	);
 };
 
+const formatServingNumber = (value: number) => {
+	if (!Number.isFinite(value)) return "0";
+	return String(Number(value.toFixed(2)));
+};
+
+const getServingUnitDisplay = (unit: ServingMeasureUnit) => {
+	const option = SERVING_MEASURE_OPTIONS.find((item) => item.value === unit);
+	const abbreviatedLabel = option?.label.match(/\(([^)]+)\)/)?.[1];
+	return abbreviatedLabel ?? option?.value ?? unit;
+};
+
+export const buildCustomServingLabel = ({
+	servingLabel,
+	servingWeightGrams,
+	volumeQuantity,
+	volumeUnit,
+}: {
+	servingLabel?: string;
+	servingWeightGrams: number;
+	volumeQuantity?: number;
+	volumeUnit?: ServingMeasureUnit;
+}) => {
+	const trimmedLabel = servingLabel?.trim();
+	if (trimmedLabel) return trimmedLabel;
+	if (volumeQuantity && volumeQuantity > 0 && volumeUnit) {
+		return `${formatServingNumber(volumeQuantity)} ${getServingUnitDisplay(volumeUnit)}`;
+	}
+	return `${formatServingNumber(servingWeightGrams)}g serving`;
+};
+
 export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 	const servingWeightGrams = Math.max(0.1, input.servingWeightGrams);
 	const volumeMilliliters = getVolumeMilliliters(
@@ -201,7 +232,12 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		customFood: true,
 		barcode: input.barcode,
 		barcodeSource: input.barcodeSource,
-		customServingLabel: input.servingLabel?.trim() || undefined,
+		customServingLabel: buildCustomServingLabel({
+			servingLabel: input.servingLabel,
+			servingWeightGrams,
+			volumeQuantity: input.volumeQuantity,
+			volumeUnit: input.volumeUnit,
+		}),
 		customServingWeightGrams: servingWeightGrams,
 		customDensityGramsPerMilliliter: density ?? undefined,
 		customDensityLabel: density ? "custom serving" : undefined,

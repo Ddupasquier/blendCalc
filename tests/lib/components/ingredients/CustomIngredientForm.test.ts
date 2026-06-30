@@ -43,6 +43,22 @@ vi.mock("$lib/utils/products/catalog", () => ({
 	submitSharedProduct,
 }));
 
+const barcodeLookupMocks = vi.hoisted(() => ({
+	lookupBarcodeProduct: vi.fn().mockResolvedValue({
+		status: "not-found",
+		barcode: "04006381333931",
+	}),
+}));
+
+vi.mock("$lib/utils/barcode/productLookup", async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import("$lib/utils/barcode/productLookup")>();
+	return {
+		...actual,
+		lookupBarcodeProduct: barcodeLookupMocks.lookupBarcodeProduct,
+	};
+});
+
 const foodMetadataMocks = vi.hoisted(() => {
 	const macros = [
 		{
@@ -182,6 +198,7 @@ const fillRequiredCustomIngredient = async (
 	options: {
 		barcode?: string;
 		destination?: string;
+		servingLabel?: string;
 		calories?: string;
 		fat?: string;
 		carbs?: string;
@@ -198,9 +215,12 @@ const fillRequiredCustomIngredient = async (
 		});
 	}
 	await continueToNextStep();
-	await fireEvent.input(screen.getByLabelText(/description/i), {
-		target: { value: "1 serving" },
-	});
+	await waitFor(() => expect(screen.getByLabelText(/weight \(g\)/i)).toBeInTheDocument());
+	if (options.servingLabel) {
+		await fireEvent.input(screen.getByLabelText(/serving label/i), {
+			target: { value: options.servingLabel },
+		});
+	}
 	await fireEvent.input(screen.getByLabelText(/weight \(g\)/i), {
 		target: { value: "34" },
 	});
@@ -240,6 +260,10 @@ describe("CustomIngredientForm", () => {
 		submitSharedProduct.mockResolvedValue({
 			status: "pending",
 			message: "Waiting for review.",
+		});
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "not-found",
+			barcode: "04006381333931",
 		});
 	});
 
@@ -290,7 +314,7 @@ describe("CustomIngredientForm", () => {
 		expect(onCreate.mock.calls[0][0]).toMatchObject({
 			description: "Chocolate cookies",
 			customFood: true,
-			customServingLabel: "1 serving",
+			customServingLabel: "34g serving",
 			customServingWeightGrams: 34,
 		});
 		expect(smoothieListMocks.addFoodToSmoothieList).toHaveBeenCalledWith(
@@ -342,16 +366,110 @@ describe("CustomIngredientForm", () => {
 		});
 	});
 
+	it("checks a manually entered barcode without overwriting the typed label", async () => {
+		const onCreate = vi.fn();
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft: {
+				barcode: "04006381333931",
+				name: "Reference tomato product",
+				brandOwner: "Reference brand",
+				servingLabel: "100g serving",
+				servingWeightGrams: 100,
+				nutrition: {
+					calories: 18,
+					fat: 0.2,
+					carbs: 3.9,
+					fiber: 1.2,
+					sugar: 2.6,
+					protein: 0.9,
+				},
+				additionalNutrients: [],
+				reportedNutrientIds: [1008, 1004, 1005, 1003],
+				source: "usda",
+				sourceLabel: "USDA FDC",
+				sourceReference: "12345",
+			},
+		});
+
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await fillRequiredCustomIngredient("Typed tomato label", {
+			barcode: "4006381333931",
+			calories: "120",
+			fat: "3",
+			carbs: "14",
+			protein: "8",
+		});
+
+		expect(barcodeLookupMocks.lookupBarcodeProduct).toHaveBeenCalledWith(
+			"04006381333931",
+		);
+		expect(
+			screen.getByText(/barcode matched USDA FDC/i),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(/reviewers can compare it with your typed label/i),
+		).toBeInTheDocument();
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+		expect(onCreate.mock.calls[0][0]).toMatchObject({
+			description: "Typed tomato label",
+			barcode: "04006381333931",
+			barcodeSource: "manual",
+		});
+	});
+
 	it("keeps volume conversion off until the user enables it", async () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
 		await openManualForm();
 		expect(screen.queryByLabelText(/volume in this serving/i)).not.toBeInTheDocument();
 
-		await fireEvent.click(screen.getByLabelText(/liquid ingredient/i));
 		await continueToNextStep();
+		expect(screen.queryByLabelText(/volume in this serving/i)).not.toBeInTheDocument();
+
+		await fireEvent.click(screen.getByLabelText(/label includes volume/i));
 		expect(screen.getByLabelText(/volume in this serving/i)).toBeInTheDocument();
 		expect(screen.getByText(/records the entered volume as weighing/i)).toBeInTheDocument();
+	});
+
+	it("requires volume amount only when volume measurements are enabled", async () => {
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/food name/i), {
+			target: { value: "Liquid yogurt" },
+		});
+		await continueToNextStep();
+		await fireEvent.click(screen.getByLabelText(/label includes volume/i));
+		await fireEvent.input(screen.getByLabelText(/weight \(g\)/i), {
+			target: { value: "245" },
+		});
+		await continueToNextStep();
+		await waitFor(() => expect(screen.getByLabelText(/calories/i)).toBeInTheDocument());
+		await fireEvent.input(screen.getByLabelText(/calories/i), {
+			target: { value: "140" },
+		});
+		await fireEvent.input(screen.getByLabelText(/total fat/i), {
+			target: { value: "4" },
+		});
+		await fireEvent.input(screen.getByLabelText(/total carbohydrates/i), {
+			target: { value: "8" },
+		});
+		await fireEvent.input(screen.getByLabelText(/protein/i), {
+			target: { value: "18" },
+		});
+		await continueToNextStep();
+		await continueToNextStep();
+
+		expect(
+			screen.getByText(/volume amount is required when volume measurements are enabled/i),
+		).toBeInTheDocument();
 	});
 
 	it("shares a barcoded label only after explicit consent", async () => {

@@ -6,6 +6,7 @@
 		type ServingMeasureUnit,
 	} from "../../../../defaults/servingMeasureDefaults";
 	import {
+		buildCustomServingLabel,
 		createCustomFood,
 		findCustomFoodByBarcode,
 		findCustomFoodByName,
@@ -120,6 +121,8 @@
 	let savedMessage = $state("");
 	let saving = $state(false);
 	let lookingUpBarcode = $state(false);
+	let checkingBarcodeReference = $state(false);
+	let checkedBarcodeReferenceKey = $state("");
 	let scannerOpen = $state(false);
 	let barcode = $state("");
 	let barcodeSource = $state<FdcFood["barcodeSource"]>("manual");
@@ -233,6 +236,14 @@
 	const hasMacro = $derived(
 		nutrition.protein > 0 || nutrition.fat > 0 || nutrition.carbs > 0,
 	);
+	const resolvedServingLabel = $derived(
+		buildCustomServingLabel({
+			servingLabel,
+			servingWeightGrams,
+			volumeQuantity: useVolumeEquivalent ? volumeQuantity ?? undefined : undefined,
+			volumeUnit: useVolumeEquivalent ? volumeUnit : undefined,
+		}),
+	);
 	const customIngredientValidationItems = $derived<StepValidationItem[]>(
 		[
 			normalizedName.length < 3
@@ -242,9 +253,18 @@
 						step: "identity",
 					}
 				: null,
-			!servingLabel.trim() || !Number.isFinite(servingWeightGrams) || servingWeightGrams <= 0
+			!Number.isFinite(servingWeightGrams) || servingWeightGrams <= 0
 				? {
-						message: "At least one serving size is required",
+						message: "Serving weight is required",
+						tone: "error",
+						step: "servings",
+					}
+				: null,
+			useVolumeEquivalent &&
+			(volumeQuantity === null || !Number.isFinite(volumeQuantity) || volumeQuantity <= 0)
+				? {
+						message:
+							"Volume amount is required when volume measurements are enabled",
 						tone: "error",
 						step: "servings",
 					}
@@ -289,6 +309,66 @@
 	const blockingValidation = $derived(
 		customIngredientValidationItems.find((item) => item.tone === "error") ?? null,
 	);
+
+	const getBarcodeReferenceKey = (normalizedBarcode: string) =>
+		`${normalizedBarcode}:${normalizedName.toLocaleLowerCase()}`;
+
+	const namesLookDifferent = (enteredName: string, sourceName: string) => {
+		const normalizeName = (value: string) =>
+			value
+				.toLocaleLowerCase()
+				.replace(/[^a-z0-9]+/g, " ")
+				.trim();
+		const entered = normalizeName(enteredName);
+		const source = normalizeName(sourceName);
+		if (!entered || !source) return false;
+		return !entered.includes(source) && !source.includes(entered);
+	};
+
+	const setManualBarcode = (value: string) => {
+		barcode = value;
+		barcodeSource = "manual";
+		checkedBarcodeReferenceKey = "";
+		if (!lookingUpBarcode) barcodeMessage = "";
+	};
+
+	const checkManualBarcodeReference = async () => {
+		const trimmedBarcode = barcode.trim();
+		if (!trimmedBarcode) {
+			checkedBarcodeReferenceKey = "";
+			if (!lookingUpBarcode) barcodeMessage = "";
+			return;
+		}
+
+		const normalizedBarcode = normalizeBarcode(trimmedBarcode);
+		if (!normalizedBarcode) return;
+
+		const referenceKey = getBarcodeReferenceKey(normalizedBarcode);
+		if (checkedBarcodeReferenceKey === referenceKey || checkingBarcodeReference) return;
+
+		checkingBarcodeReference = true;
+		barcodeMessage = "Checking barcode against available product sources…";
+		try {
+			const lookup = await lookupBarcodeProduct(normalizedBarcode);
+			checkedBarcodeReferenceKey = referenceKey;
+			barcodeSource = "manual";
+
+			if (lookup.status === "found") {
+				const mismatchCopy = namesLookDifferent(normalizedName, lookup.draft.name)
+					? ` Lookup found “${lookup.draft.name}”, so reviewers can compare it with your typed label if you share this product.`
+					: " Reviewers can use this source reference if you share this product.";
+				barcodeMessage = `Barcode matched ${lookup.draft.sourceLabel}.${mismatchCopy}`;
+				return;
+			}
+
+			barcodeMessage =
+				lookup.status === "not-found"
+					? "No source match found for this barcode yet. You can still save it; shared submissions will rely on label photos."
+					: lookup.message;
+		} finally {
+			checkingBarcodeReference = false;
+		}
+	};
 
 	const setNutritionValue = (
 		key: keyof CustomFoodNutritionInput,
@@ -376,11 +456,13 @@
 		volumeQuantity = null;
 		volumeUnit = "tbsp";
 		useVolumeEquivalent = false;
-		additionalNutrients = [];
-		barcode = "";
-		barcodeSource = "manual";
-		barcodeMessage = "";
-		shareWithCatalog = false;
+			additionalNutrients = [];
+			barcode = "";
+			barcodeSource = "manual";
+			barcodeMessage = "";
+			checkingBarcodeReference = false;
+			checkedBarcodeReferenceKey = "";
+			shareWithCatalog = false;
 		frontPhoto = null;
 		nutritionPhoto = null;
 		barcodePhoto = null;
@@ -416,7 +498,8 @@
 		activeStep = step as ManualEntryStepId;
 	};
 
-	const goNext = () => {
+	const goNext = async () => {
+		if (activeStep === "identity") await checkManualBarcodeReference();
 		const nextStep = manualEntrySteps[activeStepIndex + 1];
 		if (nextStep) activeStep = nextStep.id;
 	};
@@ -485,7 +568,7 @@
 	});
 
 	$effect(() => {
-		onLookupStateChange(lookingUpBarcode);
+		onLookupStateChange(lookingUpBarcode || checkingBarcodeReference);
 	});
 
 	$effect(() => {
@@ -691,6 +774,7 @@
 			activeStep = "identity";
 			return;
 		}
+		if (normalizedBarcode) await checkManualBarcodeReference();
 
 		if (
 			requiresCatalogEvidence &&
@@ -709,7 +793,7 @@
 		const food = createCustomFood({
 			name,
 			brandOwner,
-			servingLabel,
+			servingLabel: resolvedServingLabel,
 			servingWeightGrams,
 			volumeQuantity: useVolumeEquivalent ? volumeQuantity ?? undefined : undefined,
 			volumeUnit: useVolumeEquivalent ? volumeUnit : undefined,
@@ -796,7 +880,7 @@
 			>
 				<BarcodeScanButton
 					scanning={lookingUpBarcode}
-					disabled={saving}
+					disabled={saving || checkingBarcodeReference}
 					onclick={() => (scannerOpen = true)}
 				/>
 				<small>Scan a barcode for fastest entry</small>
@@ -852,18 +936,20 @@
 						{visibleCategoryOptions}
 						{loadingCategoryOptions}
 						{categoryOptionsError}
-						{useVolumeEquivalent}
+						{barcodeMessage}
+						{checkingBarcodeReference}
 						onNameChange={(value) => (name = value)}
 						onBrandChange={(value) => (brandOwner = value)}
 						onCategoryChange={(value) => (category = value)}
-						onBarcodeChange={(value) => (barcode = value)}
-						onUseVolumeChange={(value) => (useVolumeEquivalent = value)}
+						onBarcodeChange={setManualBarcode}
+						onBarcodeBlur={checkManualBarcodeReference}
 						onNameInput={(element) => (ingredientNameInput = element)}
 						onNext={goNext}
 					/>
 				{:else if activeStep === "servings"}
 					<ServingsStep
 						{servingLabel}
+						{resolvedServingLabel}
 						{servingWeightGrams}
 						{useVolumeEquivalent}
 						{volumeQuantity}
@@ -875,6 +961,7 @@
 						onServingLabelChange={(value) => (servingLabel = value)}
 						onServingWeightChange={(value) =>
 							(servingWeightGrams = Number.isFinite(value) ? value : 0)}
+						onUseVolumeChange={(value) => (useVolumeEquivalent = value)}
 						onVolumeQuantityChange={(value) => (volumeQuantity = value)}
 						onVolumeUnitChange={(value) => (volumeUnit = value)}
 						onBack={goBack}
@@ -1089,6 +1176,15 @@
 		text-transform: none;
 	}
 
+	:global(.custom-ingredient__field-status) {
+		display: block;
+		padding: $ingredient-status-padding-y $ingredient-status-padding-x;
+		background: $ingredient-surface-soft;
+		border-radius: $ingredient-radius-card;
+		font-size: $app-font-size-sm;
+		line-height: 1.35;
+	}
+
 	:global(.custom-ingredient__field input),
 	:global(.custom-ingredient__field select),
 	:global(.custom-ingredient__destination select) {
@@ -1203,6 +1299,18 @@
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: $app-horizontal-control-gap;
+	}
+
+	:global(.custom-ingredient__optional-details) {
+		display: grid;
+		gap: $app-gap-md;
+	}
+
+	:global(.custom-ingredient__optional-details summary) {
+		color: $ingredient-text-primary;
+		font-size: $app-font-size-md;
+		font-weight: $app-font-weight-bold;
+		cursor: pointer;
 	}
 
 	:global(.custom-ingredient__add-serving) {

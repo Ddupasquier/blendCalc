@@ -1,6 +1,4 @@
 <script lang="ts">
-	import ToggleSwitch from "$lib/components/common/ToggleSwitch.svelte";
-
 	let {
 		name,
 		brandOwner,
@@ -9,12 +7,13 @@
 		visibleCategoryOptions,
 		loadingCategoryOptions,
 		categoryOptionsError,
-		useVolumeEquivalent,
+		barcodeMessage,
+		checkingBarcodeReference,
 		onNameChange,
 		onBrandChange,
 		onCategoryChange,
 		onBarcodeChange,
-		onUseVolumeChange,
+		onBarcodeBlur,
 		onNameInput,
 		onNext,
 	}: {
@@ -25,14 +24,15 @@
 		visibleCategoryOptions: string[];
 		loadingCategoryOptions: boolean;
 		categoryOptionsError: string;
-		useVolumeEquivalent: boolean;
+		barcodeMessage: string;
+		checkingBarcodeReference: boolean;
 		onNameChange: (value: string) => void;
 		onBrandChange: (value: string) => void;
 		onCategoryChange: (value: string) => void;
 		onBarcodeChange: (value: string) => void;
-		onUseVolumeChange: (value: boolean) => void;
+		onBarcodeBlur: () => void | Promise<void>;
 		onNameInput?: (element: HTMLInputElement) => void;
-		onNext: () => void;
+		onNext: () => void | Promise<void>;
 	} = $props();
 
 	let nameInput = $state<HTMLInputElement | null>(null);
@@ -107,24 +107,26 @@
 			maxlength="18"
 			value={barcode}
 			oninput={(event) => onBarcodeChange(event.currentTarget.value)}
+			onblur={onBarcodeBlur}
 		/>
+		{#if checkingBarcodeReference}
+			<small class="custom-ingredient__field-status" role="status">
+				Checking barcode sources…
+			</small>
+		{:else if barcodeMessage}
+			<small class="custom-ingredient__field-status" role="status">
+				{barcodeMessage}
+			</small>
+		{/if}
 	</label>
 
-	<label class="custom-ingredient__switch">
-		<span>
-			<strong>Liquid ingredient</strong>
-			<small>Affects volume unit conversion warnings</small>
-		</span>
-		<ToggleSwitch
-			id="custom-ingredient-use-volume"
-			name="custom-ingredient-use-volume"
-			ariaLabel="Allow volume measurements"
-			checked={useVolumeEquivalent}
-			onChange={onUseVolumeChange}
-		/>
-	</label>
-
-	<button type="button" class="custom-ingredient__primary" onclick={onNext}>
-		Continue
+	<button
+		type="button"
+		class="custom-ingredient__primary"
+		disabled={checkingBarcodeReference}
+		aria-busy={checkingBarcodeReference}
+		onclick={onNext}
+	>
+		{checkingBarcodeReference ? "Checking…" : "Continue"}
 	</button>
 </div>

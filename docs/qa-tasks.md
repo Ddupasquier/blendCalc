@@ -22,13 +22,25 @@ Follow the [QA process rule](./development-rules-audit.md#rule-qa-process) and [
 - [ ] **Branch:** `ui-rebuild/ingredients`
 - [ ] **Rule references:** [Component boundaries](./development-rules-audit.md#rule-component-boundaries), [Reusable components](./development-rules-audit.md#rule-reusable-components), [UI refactor components](./development-rules-audit.md#rule-ui-refactor-new-components), [QA link rule](./development-rules-audit.md#rule-qa-links)
 - [ ] **Code references:** [`src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte`](../src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte), [`src/lib/components/ingredients/manual-entry/steps/IdentityStep.svelte`](../src/lib/components/ingredients/manual-entry/steps/IdentityStep.svelte), [`src/lib/components/ingredients/manual-entry/steps/ServingsStep.svelte`](../src/lib/components/ingredients/manual-entry/steps/ServingsStep.svelte), [`src/lib/components/ingredients/manual-entry/steps/NutrientStep.svelte`](../src/lib/components/ingredients/manual-entry/steps/NutrientStep.svelte), [`src/lib/components/ingredients/manual-entry/steps/ShareStep.svelte`](../src/lib/components/ingredients/manual-entry/steps/ShareStep.svelte)
-- [ ] **Route/setup:** Open `/fridge` while signed in, then tap `Enter manually`.
-- [ ] **Identity step:** Enter a food name, brand, category, optional UPC/barcode, and toggle `Liquid ingredient`; verify values persist when moving away and back.
-- [ ] **Servings step:** Add a serving description and serving weight, then add/remove an extra serving size; verify validation still requires at least one valid serving.
+- [x] **Route/setup:** Open `/fridge` while signed in, then tap `Enter manually`.
+- [x] **Identity step:** Enter a food name, brand, category, and optional UPC/barcode; verify values persist when moving away and back.
+- [ ] **Servings step:** Leave `Optional display label` collapsed, enter only `Weight (g)`, continue through save, and verify the saved ingredient uses an auto-generated serving label like `34g serving`.
+- [ ] **Servings volume rule:** In the Servings step, toggle `Label includes volume`, leave `Volume in this serving` blank, and verify the Share step blocks saving with `Volume amount is required when volume measurements are enabled`; then enter volume amount/unit and verify saving can proceed.
 - [ ] **Macros step:** Enter required macro values and optional macro details; verify values persist when moving between tabs.
 - [ ] **Extended step:** Open and close nutrient accordions, enter an optional nutrient value, switch tabs, and return; verify entered values remain.
 - [ ] **Share step:** Toggle `Share with community`, choose an add destination, submit, and verify the existing custom ingredient save/list placement behavior still works.
 - [ ] **Follow-up refactor check:** Confirm `CustomIngredientForm.svelte` is treated as remaining refactor debt until logic/style ownership is split further; it should not grow with new feature logic.
+
+### Manual Barcode Cross-Check
+
+- [ ] **Branch:** `ui-rebuild/ingredients`
+- [ ] **Rule references:** [No hardcoded reference data](./development-rules-audit.md#rule-no-hardcoded-reference-data), [Cross-reference APIs](./development-rules-audit.md#rule-cross-reference-apis), [Loading states](./development-rules-audit.md#rule-loading-states), [QA link rule](./development-rules-audit.md#rule-qa-links)
+- [ ] **Code references:** [`src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte`](../src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte), [`src/lib/components/ingredients/manual-entry/steps/IdentityStep.svelte`](../src/lib/components/ingredients/manual-entry/steps/IdentityStep.svelte), [`src/lib/utils/barcode/productLookup.ts`](../src/lib/utils/barcode/productLookup.ts), [`src/routes/api/products/barcode/[barcode]/+server.ts`](../src/routes/api/products/barcode/[barcode]/+server.ts)
+- [ ] **Route/setup:** Open `/fridge` while signed in, then tap `Enter manually`.
+- [ ] **Matched barcode check:** On the Identity step, enter a food name and a real UPC/EAN barcode that exists in USDA/Open Food Facts/shared catalog; blur the barcode field or tap `Continue`; verify a neutral helper message says the barcode matched a source and does not overwrite the typed name, brand, category, servings, or nutrition values.
+- [ ] **Mismatched label hint:** Enter a food name that clearly differs from the product found by the barcode; verify the helper says reviewers can compare the source result with the typed label instead of accusing or blocking the user.
+- [ ] **Unknown barcode check:** Enter a valid-format barcode that does not exist in available sources; verify the helper says no source match was found and that the user can still save or share with package photos.
+- [ ] **Submission behavior:** Complete the manual entry and save; verify the saved custom ingredient keeps `barcodeSource: manual` behavior and does not import source nutrition unless the user used barcode scan/import.
 
 ### Ingredients Route Component Boundary Follow-Up
 
