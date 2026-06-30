@@ -17,6 +17,16 @@ Follow the [QA process rule](./development-rules-audit.md#rule-qa-process) and [
 
 ## Active QA
 
+### Supabase Schema Documentation
+
+- [ ] **Branch:** `ui-rebuild/ingredients`
+- [ ] **Rule references:** [Backend best practices](./development-rules-audit.md#rule-backend-best-practices), [DB validation first](./development-rules-audit.md#rule-db-validation-first), [QA links](./development-rules-audit.md#rule-qa-links)
+- [ ] **Code references:** [`docs/supabase-schema.md`](./supabase-schema.md), [`README.md`](../README.md), [`supabase/migrations/`](../supabase/migrations), [`src/lib/types/database.types.ts`](../src/lib/types/database.types.ts)
+- [ ] **Docs review:** Open `docs/supabase-schema.md` and verify every current public table is listed in one of the schema groups.
+- [ ] **Relationship review:** Spot-check `profiles`, `user_food_list_items`, `food_nutrients`, `shared_product_submissions`, `shared_products`, `compatibility_tags`, `food_preference_option_catalog`, and `nutrient_relationship_rules`; verify the documented owner scope and key relationships match the migrations.
+- [ ] **README review:** Open `README.md` and verify the Supabase schema doc is linked from the docs section.
+- [ ] **Future-change guard:** When adding a migration, verify this QA item catches whether the schema doc and generated DB types need updating.
+
 ### Manual Entry Component Split
 
 - [ ] **Branch:** `ui-rebuild/ingredients`
@@ -126,13 +136,14 @@ Follow the [QA process rule](./development-rules-audit.md#rule-qa-process) and [
 ### Ingredient SCSS Token Audit
 
 - [ ] **Branch:** `ui-rebuild/ingredients`
-- [ ] **Rule references:** [Design tokens](./development-rules-audit.md#rule-design-tokens), [Reusable components](./development-rules-audit.md#rule-reusable-components), [QA process](./development-rules-audit.md#rule-qa-process)
+- [ ] **Rule references:** [Design tokens](./development-rules-audit.md#rule-design-tokens), [Reusable components](./development-rules-audit.md#rule-reusable-components), [QA process](./development-rules-audit.md#rule-qa-process), [QA link rule](./development-rules-audit.md#rule-qa-links)
 - [ ] **Code references:** [`src/styles/_variables.scss`](../src/styles/_variables.scss), [`src/routes/fridge/+page.svelte`](../src/routes/fridge/+page.svelte), [`src/lib/components/ingredients/`](../src/lib/components/ingredients/), [`src/lib/components/common/BottomSheet.svelte`](../src/lib/components/common/BottomSheet.svelte), [`src/lib/components/common/RightSheet.svelte`](../src/lib/components/common/RightSheet.svelte)
-- [ ] Verify the ingredients page still matches the current rebuild direction after token renaming: header/content width, search row, manual entry row, tabs, ingredient cards, action buttons, bottom sheet, and active search view.
-- [ ] Open filters, manual entry, barcode scan, ingredient edit, and search active view; confirm spacing, colors, radii, and typography did not regress.
-- [ ] In manual entry, trigger validation errors/warnings and saved/catalog status messages; confirm the status colors still read correctly after moving status styling to ingredient semantic tokens.
-- [ ] Confirm the token cleanup did not alter data behavior: list loading, search result selection, add-to-fridge/shopping, manual entry submission, and barcode lookup still work as before.
-- [ ] Confirm future ingredient-route styles use `$ingredient-*` tokens and shared shell primitives use `$app-shell-*` tokens instead of raw `$color-figma-*` or `$app-rebuild-*` values.
+- [ ] **Regression target:** Unused SCSS variables were removed from `src/styles/_variables.scss`; no visual or behavior changes are intended.
+- [ ] **Reproduce:** Open `/fridge` while signed in; confirm header/content width, search trigger row, barcode scan button, filter button, manual-entry launcher, fridge/shopping tabs, bulk actions, ingredient cards, and floating add button still match the current UI direction.
+- [ ] **Sheet check:** Open filter/sort, manual entry, ingredient actions, rename ingredient, and barcode scan flows; confirm spacing, colors, radii, typography, overlay behavior, and bottom/right-sheet positioning did not regress.
+- [ ] **Manual entry feedback:** In manual entry, trigger validation errors/warnings plus saved/catalog status messages; confirm status colors remain readable after token cleanup.
+- [ ] **Data behavior:** Confirm list loading, search result selection, add-to-fridge/shopping, manual entry submission, barcode lookup, and sort/filter behavior still work as before.
+- [ ] **Future-change guard:** Ingredient-route styles should use `$ingredient-*` tokens; shared shell primitives should use `$app-shell-*` tokens; do not reintroduce dead source/provenance tokens or unused shadow/elevation variables.
 
 ### Ingredient Search Active View
 

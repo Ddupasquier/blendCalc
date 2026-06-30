@@ -8,7 +8,7 @@ Mix and match ingredients for making well-balanced smoothies.
 - 🔍 Ingredient search across FoodData Central, saved custom foods, and the shared product catalog
 - 🧾 Barcode scanning for packaged foods with reusable product data and moderation fallback
 - 🧪 Live nutrient goals, ingredient amounts, radar chart feedback, warnings, and suggestions
-- 🧊 Account-backed On Hand and Shopping List ingredient management
+- 🧊 Account-backed Fridge and Shopping List ingredient management
 - 🥤 Saved drinks with load, overwrite, save-as-new, and per-user name validation
 - 👤 Optional profile details, avatar policy confirmation, food preferences, allergens, and dietary restrictions
 - 🛡️ Admin moderation for users, profile images, and shared product submissions
@@ -115,6 +115,10 @@ See [`docs/normalized-food-nutrients.md`](docs/normalized-food-nutrients.md) for
 the normalized nutrient query model, provenance fields, synchronization, and
 deployment steps.
 
+See [`docs/supabase-schema.md`](docs/supabase-schema.md) for a plain table map
+of the current Supabase schema, ownership boundaries, relationships, storage
+buckets, and schema update checklist.
+
 See [`docs/ui-functionality.md`](docs/ui-functionality.md) for the complete UI
 feature and functionality preservation brief used for large UI refactors.
 
@@ -172,7 +176,7 @@ src/
     ├── +layout.svelte
     ├── +page.svelte           # Auth-gated landing page
     ├── auth/                  # Sign in, callback, logout, password update
-    ├── fridge/                # Ingredients, barcode scan, On Hand, Shopping List
+    ├── fridge/                # Ingredients, barcode scan, Fridge, Shopping List
     ├── mix/                   # Smoothie builder
     ├── moderation/            # Admin moderation tools
     ├── profile/               # Profile, avatar, food preferences

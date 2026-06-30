@@ -114,10 +114,6 @@ $color-figma-green-soft: #e8f5ee;
 // screens where the legacy orchid border is too decorative.
 $color-figma-border: rgba(0, 0, 0, 0.08);
 
-// Figma rebuild outer preview frame. Use only behind the fixed-width mobile app
-// shell on larger screens so desktop previews resemble a phone frame.
-$color-figma-browser-frame: #c4c9d3;
-
 // Figma rebuild pale input/surface fill. Use for search inputs, inactive
 // segmented controls, and quiet grouped rows inside rebuilt mobile screens.
 $color-figma-soft-surface: #f8f7f5;
@@ -242,13 +238,6 @@ $app-rebuild-radius-pill: 999px;
 // Figma rebuild ingredient card minimum height.
 $app-rebuild-ingredient-card-height: 5.25rem;
 
-// Figma rebuild search result max height before internal scrolling starts.
-$app-rebuild-search-results-max-height: 22rem;
-
-// Figma rebuild search result card padding.
-$app-rebuild-search-result-padding-y: 0.9rem;
-$app-rebuild-search-result-padding-x: 1rem;
-
 // Figma rebuild compact badge padding.
 $app-rebuild-badge-padding-y: 0.12rem;
 $app-rebuild-badge-padding-x: 0.42rem;
@@ -352,7 +341,6 @@ $ingredient-surface-card: $color-figma-card;
 $ingredient-surface-control: $color-figma-control-surface;
 $ingredient-surface-soft: $color-figma-soft-surface;
 $ingredient-surface-positive: $color-figma-green-soft;
-$ingredient-overlay-bg: $app-rebuild-overlay-bg;
 $ingredient-scanner-overlay-bg: $app-rebuild-scanner-overlay-bg;
 $ingredient-scanner-bg: $app-rebuild-scanner-bg;
 
@@ -378,9 +366,6 @@ $ingredient-radius-pill: $app-rebuild-radius-pill;
 $ingredient-card-min-height: $app-rebuild-ingredient-card-height;
 $ingredient-card-padding: $app-rebuild-card-padding;
 $ingredient-card-padding-compact: $app-rebuild-card-padding-sm;
-$ingredient-search-results-max-height: $app-rebuild-search-results-max-height;
-$ingredient-search-result-padding-y: $app-rebuild-search-result-padding-y;
-$ingredient-search-result-padding-x: $app-rebuild-search-result-padding-x;
 $ingredient-badge-padding-y: $app-rebuild-badge-padding-y;
 $ingredient-badge-padding-x: $app-rebuild-badge-padding-x;
 $ingredient-status-padding-y: $app-rebuild-status-padding-y;
@@ -422,10 +407,6 @@ $app-breakpoint-sm: 520px;
 // Standard mobile/tablet breakpoint. Use for main app sections that switch from
 // multi-column to single-column layouts on most phones.
 $app-breakpoint-md: 680px;
-
-// Wide mobile/tablet breakpoint. Use for page-level grids that need more room
-// before collapsing, such as ingredient list columns.
-$app-breakpoint-lg: 760px;
 
 // Large spacing token for major vertical separation between unrelated sections.
 $app-gap-lg: 1.5rem;
@@ -581,43 +562,12 @@ $app-warning-text: $app-primary;
 // and highlighted warning words.
 $app-warning-strong: $color-cinnamon-clay;
 
-// Default soft elevation. Applied to larger panels/cards that need separation
-// from the page without feeling heavy.
-
-// Header elevation. Applied to the sticky app header.
-$app-header-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-
 // Card radius for larger surfaces like saved drinks, mix panels, graph panels,
 // and ingredient cards.
 $app-card-radius: 12px;
 
-// Standard floating-surface shadow. Use for temporary overlays such as popovers,
-// menus, and dialogs that need to appear above the surrounding page content.
-$app-shadow: 0 0.4rem 1.2rem rgb(79 72 66 / 16%);
-
-// Card shadow for compact repeated cards and smaller surfaces.
-$app-card-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.04);
-
-// Very subtle pill shadow. Applied to chips and pills that need minimal lift.
-$app-pill-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-
 // Modal overlay background. Applied behind dialogs/popups to dim app content.
 $app-overlay-bg: rgba(26, 58, 90, 0.28);
-
-// Modal shadow. Applied to centered dialogs and blocking confirmation surfaces.
-$app-modal-shadow: 0 16px 42px rgba(0, 0, 0, 0.18);
-
-// Popover shadow. Applied to small floating explanation panels.
-$app-popover-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
-
-// Prompt shadow. Applied to smaller inline prompt cards.
-$app-prompt-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.13);
-
-// Soft guest-card elevation. Used on landing and authentication surfaces where
-// a wider, more diffused shadow feels calmer than a modal or app-panel shadow.
-$app-guest-card-shadow:
-	0 1.4rem 4rem rgb(79 72 66 / 10%),
-	0 0.2rem 0.8rem rgb(79 72 66 / 6%);
 
 // Guest-card corner radius. Shared by the public landing and authentication
 // cards so the two steps read as one continuous entry flow.
@@ -626,13 +576,6 @@ $app-guest-card-radius: 1.35rem;
 // Translucent guest-card surface. Used only over decorative landing artwork so
 // the card remains readable while retaining a small amount of visual depth.
 $app-guest-surface: rgb(245 238 229 / 94%);
-
-// Restrained mango elevation used only for the primary guest-page action.
-$app-highlight-shadow: 0 0.35rem 1rem rgb(217 154 36 / 16%);
-$app-highlight-shadow-hover: 0 0.5rem 1.2rem rgb(217 154 36 / 22%);
-
-// Custom-food ring shadow. Applied around user-created ingredient cards.
-$app-custom-ring-shadow: 0 0 0 2px rgba(123, 95, 163, 0.12);
 
 // Focus outline. Applied to keyboard-focused buttons and interactive chips.
 $app-focus-outline: 2px solid $app-primary;
