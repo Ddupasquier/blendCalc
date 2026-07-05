@@ -11,17 +11,18 @@
 		findCustomFoodByBarcode,
 		findCustomFoodByName,
 		saveCustomFood,
-		type CustomFoodNutritionInput,
 	} from "$lib/utils/food/customFoods";
 	import {
 		addFoodToSmoothieList,
 		removeFoodFromSmoothieList,
 		type SmoothieListKey,
 	} from "$lib/utils/storage/smoothieLists";
-	import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
+	import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
 	import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog.svelte";
+	import WarningPopup from "$lib/components/common/feedback/WarningPopup.svelte";
 	import type { CustomIngredientOutcomeState } from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
+	import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 	import ManualEntryToggle from "$lib/components/ingredients/manual-entry/ManualEntryToggle.svelte";
 	import IdentityStep from "$lib/components/ingredients/manual-entry/steps/IdentityStep.svelte";
 	import NutrientStep from "$lib/components/ingredients/manual-entry/steps/NutrientStep.svelte";
@@ -54,9 +55,14 @@
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 
 	type ManualEntryStepId = "identity" | "servings" | "macros" | "extended" | "share";
-	type CoreNutritionKey = keyof CustomFoodNutritionInput;
+	type NutrientValueState = Record<number, number>;
 	type StepValidationItem = ManualEntryValidationItem & {
 		step: ManualEntryStepId;
+	};
+	type ManualEntrySummaryItem = {
+		label: string;
+		value: number;
+		unitName: string;
 	};
 
 	const manualEntrySteps: { id: ManualEntryStepId; label: string }[] = [
@@ -71,17 +77,6 @@
 		macros: [],
 		extended: [],
 	};
-	const coreNutritionKeysByNutrientId: Partial<Record<number, CoreNutritionKey>> = {
-		[NUTRIENT_IDS.CALORIES]: "calories",
-		[NUTRIENT_IDS.FAT]: "fat",
-		[NUTRIENT_IDS.CARBS]: "carbs",
-		[NUTRIENT_IDS.FIBER]: "fiber",
-		[NUTRIENT_IDS.SUGAR]: "sugar",
-		[NUTRIENT_IDS.PROTEIN]: "protein",
-	};
-	const coreNutritionEntries = Object.entries(coreNutritionKeysByNutrientId).map(
-		([nutrientId, key]) => [Number(nutrientId), key] as [number, CoreNutritionKey],
-	);
 
 	let {
 		onCreate,
@@ -92,7 +87,7 @@
 		inline = true,
 		onLookupStateChange = () => {},
 	}: {
-		onCreate: (food: FdcFood) => void | Promise<void>;
+		onCreate: ManualEntryCreateHandler;
 		onClose?: () => void;
 		closeManualSignal?: number;
 		scanSignal?: number;
@@ -114,7 +109,9 @@
 	let volumeQuantity = $state<number | null>(null);
 	let volumeUnit = $state<ServingMeasureUnit>("tbsp");
 	let useVolumeEquivalent = $state(false);
-	let additionalNutrients = $state<FdcNutrient[]>([]);
+	let manualNutrientValues = $state<NutrientValueState>({});
+	let manualTouchedNutrientIds = $state<Record<number, true>>({});
+	let importedNutrients = $state<FdcNutrient[]>([]);
 	let manualEntryNutrientGroups = $state<ManualEntryNutrientGroupsByStep>(
 		emptyManualEntryNutrientGroups,
 	);
@@ -157,6 +154,9 @@
 		MIX_STORAGE_KEYS.fridge,
 	);
 	let lastOutcome = $state<CustomIngredientOutcomeState | null>(null);
+	let stepWarningMessage = $state("");
+	let stepWarningStep = $state<ManualEntryStepId | null>(null);
+	let stepWarningTimer = $state<ReturnType<typeof setTimeout> | null>(null);
 	let labelDetailsElement = $state<HTMLDetailsElement | null>(null);
 	let manualBodyElement = $state<HTMLFieldSetElement | null>(null);
 	let ingredientNameInput = $state<HTMLInputElement | null>(null);
@@ -164,14 +164,6 @@
 	let lastCloseManualSignal = $state<number | null>(null);
 	let lastScanSignal = $state<number | null>(null);
 
-	let nutrition = $state<CustomFoodNutritionInput>({
-		calories: 0,
-		fat: 0,
-		carbs: 0,
-		fiber: 0,
-		sugar: 0,
-		protein: 0,
-	});
 
 	onMount(() => {
 		let cancelled = false;
@@ -275,13 +267,15 @@
 			volumeUnit: useVolumeEquivalent ? volumeUnit : undefined,
 		}),
 	);
+	const getNutrientValue = (nutrientId: number) =>
+		manualNutrientValues[nutrientId] ?? 0;
 	const getManualNutrientValuesById = () => {
 		const values = new Map<number, number>();
-		for (const [nutrientId, key] of coreNutritionEntries) {
-			values.set(nutrientId, nutrition[key]);
-		}
-		for (const nutrient of additionalNutrients) {
-			values.set(nutrient.nutrientId, nutrient.value);
+		for (const [nutrientId, value] of Object.entries(manualNutrientValues)) {
+			const numericId = Number(nutrientId);
+			if (Number.isFinite(numericId) && Number.isFinite(value)) {
+				values.set(numericId, value);
+			}
 		}
 		return values;
 	};
@@ -390,8 +384,14 @@
 		category = draft.categories?.[0] ?? "";
 		servingLabel = draft.servingLabel;
 		servingWeightGrams = draft.servingWeightGrams;
-		nutrition = { ...draft.nutrition };
-		additionalNutrients = [...draft.additionalNutrients];
+		importedNutrients = [...draft.nutrients];
+		manualNutrientValues = Object.fromEntries(
+			draft.nutrients.map((nutrient) => [
+				nutrient.nutrientId,
+				Number.isFinite(nutrient.value) ? Math.max(0, nutrient.value) : 0,
+			]),
+		);
+		manualTouchedNutrientIds = {};
 		useVolumeEquivalent = Boolean(draft.volumeEquivalent);
 		volumeQuantity = draft.volumeEquivalent?.quantity ?? null;
 		volumeUnit = draft.volumeEquivalent?.unit ?? "tbsp";
@@ -413,8 +413,9 @@
 		const draft = barcodeReferenceDraft;
 		if (!draft) return;
 		applyBarcodeProductDraft(draft);
-		const nutrientSummary = additionalNutrients.length > 0
-			? ` ${additionalNutrients.length} additional reported nutrients were included.`
+		const optionalNutrientCount = getOptionalNutrientCount();
+		const nutrientSummary = optionalNutrientCount > 0
+			? ` ${optionalNutrientCount} additional reported nutrients were included.`
 			: " No additional vitamin or mineral values were reported by this source.";
 		const volumeSummary = draft.volumeEquivalent
 			? " The package's volume-to-weight serving was also included."
@@ -451,27 +452,12 @@
 		];
 	};
 
-	onDestroy(clearBarcodeLookupDebounce);
+	onDestroy(() => {
+		clearBarcodeLookupDebounce();
+		if (stepWarningTimer) clearTimeout(stepWarningTimer);
+	});
 
-	const setNutritionValue = (
-		key: keyof CustomFoodNutritionInput,
-		value: string,
-	) => {
-		const numericValue = Number(value);
-		nutrition = {
-			...nutrition,
-			[key]: Number.isFinite(numericValue) ? Math.max(0, numericValue) : 0,
-		};
-	};
-
-	const getAdditionalNutrientValue = (nutrientId: number) => {
-		return (
-			additionalNutrients.find((nutrient) => nutrient.nutrientId === nutrientId)
-				?.value ?? 0
-		);
-	};
-
-	const setAdditionalNutrientValue = (
+	const setManualNutrientValue = (
 		field: ManualEntryNutrientDefinition,
 		value: string,
 	) => {
@@ -479,50 +465,18 @@
 		const nextValue = Number.isFinite(numericValue)
 			? Math.max(0, numericValue)
 			: 0;
-		const withoutCurrent = additionalNutrients.filter(
-			(nutrient) => nutrient.nutrientId !== field.nutrientId,
-		);
-
-		if (nextValue <= 0) {
-			additionalNutrients = withoutCurrent;
-			return;
-		}
-
-		additionalNutrients = [
-			...withoutCurrent,
-			{
-				nutrientId: field.nutrientId,
-				nutrientName: field.nutrientName,
-				nutrientNumber: field.nutrientNumber,
-				unitName: field.unitName,
-				value: nextValue,
-				valueOrigin: "reported",
-				source: "user-label",
-				confidence: "user-reported",
-			},
-		];
+		manualNutrientValues = {
+			...manualNutrientValues,
+			[field.nutrientId]: nextValue,
+		};
+		manualTouchedNutrientIds = {
+			...manualTouchedNutrientIds,
+			[field.nutrientId]: true,
+		};
 	};
 
-	const getCoreNutritionKey = (nutrientId: number) =>
-		coreNutritionKeysByNutrientId[nutrientId] ?? null;
-
-	const getManualNutrientValue = (field: ManualEntryNutrientDefinition) => {
-		const coreKey = getCoreNutritionKey(field.nutrientId);
-		return coreKey ? nutrition[coreKey] : getAdditionalNutrientValue(field.nutrientId);
-	};
-
-	const setManualNutrientValue = (
-		field: ManualEntryNutrientDefinition,
-		value: string,
-	) => {
-		const coreKey = getCoreNutritionKey(field.nutrientId);
-		if (coreKey) {
-			setNutritionValue(coreKey, value);
-			return;
-		}
-
-		setAdditionalNutrientValue(field, value);
-	};
+	const getManualNutrientValue = (field: ManualEntryNutrientDefinition) =>
+		getNutrientValue(field.nutrientId);
 
 	const isRequiredManualNutrient = (field: ManualEntryNutrientDefinition) =>
 		field.requiredForManualEntry;
@@ -635,10 +589,107 @@
 		customIngredientValidationItems.find((item) => item.tone === "error") ?? null,
 	);
 
-	const getSaveAdditionalNutrients = () => additionalNutrients;
+	const clearStepWarning = () => {
+		stepWarningMessage = "";
+		stepWarningStep = null;
+		if (stepWarningTimer) {
+			clearTimeout(stepWarningTimer);
+			stepWarningTimer = null;
+		}
+	};
+
+	const showStepWarning = (message: string, step: ManualEntryStepId) => {
+		clearStepWarning();
+		stepWarningMessage = message;
+		stepWarningStep = step;
+		stepWarningTimer = setTimeout(() => {
+			stepWarningMessage = "";
+			stepWarningStep = null;
+			stepWarningTimer = null;
+		}, 3200);
+	};
+
+	const getFirstBlockingValidationThroughStep = (
+		targetStep: ManualEntryStepId,
+	) => {
+		const targetIndex = manualEntrySteps.findIndex((step) => step.id === targetStep);
+		const stepsToValidate = new Set(
+			manualEntrySteps
+				.slice(0, Math.max(0, targetIndex))
+				.map((step) => step.id),
+		);
+
+		return (
+			customIngredientValidationItems.find(
+				(item) => item.tone === "error" && stepsToValidate.has(item.step),
+			) ?? null
+		);
+	};
+
+	const getSaveNutrients = () => {
+		const nutrientsById = new Map<number, FdcNutrient>();
+
+		for (const nutrient of importedNutrients) {
+			const nutrientId = Number(nutrient.nutrientId);
+			if (!Number.isFinite(nutrientId)) continue;
+			nutrientsById.set(nutrientId, {
+				...nutrient,
+				nutrientId,
+				value: Number.isFinite(nutrient.value) ? Math.max(0, nutrient.value) : 0,
+			});
+		}
+
+		for (const field of manualEntryNutrientFields) {
+			const value = getManualNutrientValue(field);
+			const existing = nutrientsById.get(field.nutrientId);
+			const wasEdited = Boolean(manualTouchedNutrientIds[field.nutrientId]);
+			const shouldPersistManualValue =
+				wasEdited || !existing || field.requiredForManualEntry || value > 0;
+
+			if (!shouldPersistManualValue || !Number.isFinite(value)) continue;
+			if (value <= 0 && !field.requiredForManualEntry) continue;
+
+			const keepImportedMetadata = Boolean(existing && !wasEdited);
+
+			nutrientsById.set(field.nutrientId, {
+				nutrientId: field.nutrientId,
+				nutrientName: field.nutrientName,
+				nutrientNumber: field.nutrientNumber,
+				unitName: field.unitName,
+				value,
+				valueOrigin: "reported",
+				source: keepImportedMetadata ? existing?.source : "user-label",
+				sourceReference: keepImportedMetadata
+					? existing?.sourceReference
+					: undefined,
+				confidence: keepImportedMetadata
+					? existing?.confidence
+					: "user-reported",
+			});
+		}
+
+		return [...nutrientsById.values()];
+	};
+
+	const getOptionalNutrientCount = () => {
+		const requiredIds = new Set(
+			requiredManualEntryNutrientFields.map((field) => field.nutrientId),
+		);
+		return getSaveNutrients().filter(
+			(nutrient) => !requiredIds.has(nutrient.nutrientId),
+		).length;
+	};
+
+	const getSummaryItems = (): ManualEntrySummaryItem[] =>
+		requiredManualEntryNutrientFields.slice(0, 4).map((field) => ({
+			label: stripUnitFromNutrientLabel(field.label),
+			value: getManualNutrientValue(field),
+			unitName: field.unitName,
+		}));
 
 	const resetForm = () => {
 		activeStep = "identity";
+		clearStepWarning();
 		name = "";
 		brandOwner = "";
 		category = "";
@@ -647,7 +698,9 @@
 		volumeQuantity = null;
 		volumeUnit = "tbsp";
 		useVolumeEquivalent = false;
-		additionalNutrients = [];
+		manualNutrientValues = {};
+		manualTouchedNutrientIds = {};
+		importedNutrients = [];
 		barcode = "";
 		barcodeSource = "manual";
 		barcodeMessage = "";
@@ -668,14 +721,6 @@
 		dietaryTags = [];
 		labels = [];
 		categories = [];
-		nutrition = {
-			calories: 0,
-			fat: 0,
-			carbs: 0,
-			fiber: 0,
-			sugar: 0,
-			protein: 0,
-		};
 	};
 
 	const getDestinationLabel = () => {
@@ -688,17 +733,53 @@
 		return destination === MIX_STORAGE_KEYS.fridge ? "Fridge" : "Shopping List";
 	};
 
-	const goToStep = (step: string) => {
-		activeStep = step as ManualEntryStepId;
+	const goToStep = async (step: string) => {
+		const targetStep = step as ManualEntryStepId;
+		const targetIndex = manualEntrySteps.findIndex(
+			(manualStep) => manualStep.id === targetStep,
+		);
+		if (targetIndex < 0) return;
+
+		if (targetIndex <= activeStepIndex) {
+			clearStepWarning();
+			activeStep = targetStep;
+			return;
+		}
+
+		if (activeStep === "identity") await checkManualBarcodeReference();
+
+		const blockingStepValidation =
+			getFirstBlockingValidationThroughStep(targetStep);
+		if (blockingStepValidation) {
+			activeStep = blockingStepValidation.step;
+			showStepWarning(blockingStepValidation.message, blockingStepValidation.step);
+			return;
+		}
+
+		clearStepWarning();
+		activeStep = targetStep;
 	};
 
 	const goNext = async () => {
 		if (activeStep === "identity") await checkManualBarcodeReference();
+		const blockingStepValidation =
+			getFirstBlockingValidationThroughStep(
+				manualEntrySteps[activeStepIndex + 1]?.id ?? activeStep,
+			);
+		if (blockingStepValidation) {
+			showStepWarning(blockingStepValidation.message, blockingStepValidation.step);
+			return;
+		}
+
 		const nextStep = manualEntrySteps[activeStepIndex + 1];
-		if (nextStep) activeStep = nextStep.id;
+		if (nextStep) {
+			clearStepWarning();
+			activeStep = nextStep.id;
+		}
 	};
 
 	const goBack = () => {
+		clearStepWarning();
 		const previousStep = manualEntrySteps[activeStepIndex - 1];
 		if (previousStep) {
 			activeStep = previousStep.id;
@@ -775,7 +856,11 @@
 		const destinationLabel = getDestinationLabel();
 
 		if (saveDestination === "custom-only") {
-			await onCreate(food);
+			await onCreate(food, {
+				destination: "custom-only",
+				addedToList: false,
+				source: "manual-entry",
+			});
 			const message = alreadySaved
 				? `${food.description} is already saved. Showing your existing ingredient.`
 				: `${food.description} saved as a custom ingredient.`;
@@ -797,7 +882,11 @@
 				: alreadySaved
 					? `${food.description} is already saved and is now in ${destinationLabel}.`
 					: `${food.description} saved and added to ${destinationLabel}.`;
-		await onCreate(food);
+		await onCreate(food, {
+			destination: saveDestination,
+			addedToList: true,
+			source: "manual-entry",
+		});
 		setOutcome(food, saveDestination, true, message);
 		collapseManualEntry();
 		onClose?.();
@@ -886,8 +975,9 @@
 				nextFocusTarget = "destination";
 				barcodeReferenceDraft = lookup.draft;
 				applyBarcodeProductDraft(lookup.draft);
-				const nutrientSummary = additionalNutrients.length > 0
-					? ` ${additionalNutrients.length} additional reported nutrients were included.`
+				const optionalNutrientCount = getOptionalNutrientCount();
+				const nutrientSummary = optionalNutrientCount > 0
+					? ` ${optionalNutrientCount} additional reported nutrients were included.`
 					: " No additional vitamin or mineral values were reported by this source.";
 				const volumeSummary = lookup.draft.volumeEquivalent
 					? " The package's volume-to-weight serving was also included."
@@ -937,12 +1027,6 @@
 			return;
 		}
 
-		if (nutrition.calories <= 0) {
-			error = "Calories are required.";
-			activeStep = "macros";
-			return;
-		}
-
 		if (
 			useVolumeEquivalent &&
 			(volumeQuantity === null || volumeQuantity <= 0)
@@ -969,7 +1053,7 @@
 			return;
 		}
 
-		const saveAdditionalNutrients = getSaveAdditionalNutrients();
+		const saveNutrients = getSaveNutrients();
 		const saveCategories = [
 			activeCategory,
 			...categories.filter((item) => item !== activeCategory),
@@ -990,12 +1074,11 @@
 			dietaryTags,
 			labels,
 			categories: saveCategories,
-			nutrition,
-			additionalNutrients: saveAdditionalNutrients,
+			nutrients: saveNutrients,
 			reportedNutrientIds: [
 				...new Set([
 					...reportedNutrientIds,
-					...saveAdditionalNutrients.map((nutrient) => nutrient.nutrientId),
+					...saveNutrients.map((nutrient) => nutrient.nutrientId),
 				]),
 			],
 		});
@@ -1115,6 +1198,11 @@
 					onSelect={goToStep}
 				/>
 
+				<WarningPopup
+					open={Boolean(stepWarningMessage && stepWarningStep === activeStep)}
+					message={stepWarningMessage}
+				/>
+
 				{#if activeStep === "identity"}
 					<IdentityStep
 						{name}
@@ -1198,8 +1286,8 @@
 					<ShareStep
 						{normalizedName}
 						{activeCategory}
-						{nutrition}
-						optionalNutrientCount={getSaveAdditionalNutrients().length}
+						summaryNutrients={getSummaryItems()}
+						optionalNutrientCount={getOptionalNutrientCount()}
 						validationItems={customIngredientValidationItems}
 						{barcodeMessage}
 						{hasValidBarcode}

@@ -1,6 +1,5 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import type { Database } from "$lib/types/database.types";
-import { NUTRIENT_IDS } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type ManualEntryNutrientStep = "macros" | "extended";
@@ -72,15 +71,6 @@ const toDisplayUnit = (unitName: string) => {
 	const normalizedUnit = unitName.trim().toUpperCase();
 	return UNIT_LABELS[normalizedUnit] ?? normalizedUnit.toLowerCase();
 };
-
-const CORE_NUTRIENT_PRIORITY = new Map<number, number>([
-	[NUTRIENT_IDS.CALORIES, 0],
-	[NUTRIENT_IDS.FAT, 0],
-	[NUTRIENT_IDS.CARBS, 0],
-	[NUTRIENT_IDS.PROTEIN, 0],
-	[NUTRIENT_IDS.FIBER, 0],
-	[NUTRIENT_IDS.SUGAR, 0],
-]);
 
 const normalizeDedupePart = (value: string) =>
 	value
@@ -162,11 +152,9 @@ const preferDefinition = (
 	left: ManualEntryNutrientDefinition,
 	right: ManualEntryNutrientDefinition,
 ) => {
-	const leftCorePriority = CORE_NUTRIENT_PRIORITY.get(left.nutrientId) ?? 1;
-	const rightCorePriority = CORE_NUTRIENT_PRIORITY.get(right.nutrientId) ?? 1;
 	return (
-		leftCorePriority - rightCorePriority ||
 		left.sort - right.sort ||
+		left.groupSort - right.groupSort ||
 		left.nutrientName.localeCompare(right.nutrientName) ||
 		left.nutrientId - right.nutrientId
 	);

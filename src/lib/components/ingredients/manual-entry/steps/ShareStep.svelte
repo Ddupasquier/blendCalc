@@ -6,15 +6,20 @@
 	import ManualEntryValidationList, {
 		type ManualEntryValidationItem,
 	} from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
-	import type { CustomFoodNutritionInput } from "$lib/utils/food/customFoods";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import type { SmoothieListKey } from "$lib/utils/storage/smoothieLists";
 	import { MIX_STORAGE_KEYS } from "../../../../../defaults/mixDefaults";
 
+	type SummaryNutrient = {
+		label: string;
+		value: number;
+		unitName: string;
+	};
+
 	let {
 		normalizedName,
 		activeCategory,
-		nutrition,
+		summaryNutrients,
 		optionalNutrientCount,
 		validationItems,
 		barcodeMessage,
@@ -44,7 +49,7 @@
 	}: {
 		normalizedName: string;
 		activeCategory: string;
-		nutrition: CustomFoodNutritionInput;
+		summaryNutrients: SummaryNutrient[];
 		optionalNutrientCount: number;
 		validationItems: ManualEntryValidationItem[];
 		barcodeMessage: string;
@@ -78,6 +83,9 @@
 	$effect(() => {
 		if (saveDestinationSelect) onSaveDestinationInput?.(saveDestinationSelect);
 	});
+
+	const formatUnit = (unitName: string) =>
+		unitName.trim().toLowerCase() === "kcal" ? "kcal" : unitName.trim().toLowerCase();
 </script>
 
 <div class="custom-ingredient__step">
@@ -87,10 +95,12 @@
 			<span>{activeCategory}</span>
 		</div>
 		<div class="custom-ingredient__macro-row">
-			<span><strong>{nutrition.calories.toFixed(1)}kcal</strong><small>Cal</small></span>
-			<span><strong>{nutrition.protein.toFixed(1)}g</strong><small>Prot</small></span>
-			<span><strong>{nutrition.fat.toFixed(1)}g</strong><small>Fat</small></span>
-			<span><strong>{nutrition.carbs.toFixed(1)}g</strong><small>Carbs</small></span>
+			{#each summaryNutrients as nutrient}
+				<span>
+					<strong>{nutrient.value.toFixed(1)}{formatUnit(nutrient.unitName)}</strong>
+					<small>{nutrient.label}</small>
+				</span>
+			{/each}
 		</div>
 		<p>{optionalNutrientCount} optional nutrients filled</p>
 	</section>

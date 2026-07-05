@@ -249,6 +249,69 @@ vi.mock("$lib/utils/food/categoryOptions", async (importOriginal) => {
 import CustomIngredientForm from "$lib/components/ingredients/manual-entry/CustomIngredientForm.svelte";
 import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
 import { createCustomFood } from "$lib/utils/food/customFoods";
+import type { FdcNutrient } from "$lib/utils/food/types";
+
+type TestNutrition = {
+	calories: number;
+	fat: number;
+	carbs: number;
+	fiber: number;
+	sugar: number;
+	protein: number;
+	sodium?: number;
+};
+
+const makeTestNutrients = (nutrition: TestNutrition): FdcNutrient[] => [
+	{
+		nutrientId: 1008,
+		nutrientName: "Calories",
+		nutrientNumber: "208",
+		unitName: "kcal",
+		value: nutrition.calories,
+	},
+	{
+		nutrientId: 1004,
+		nutrientName: "Total Fat",
+		nutrientNumber: "204",
+		unitName: "g",
+		value: nutrition.fat,
+	},
+	{
+		nutrientId: 1005,
+		nutrientName: "Total Carbohydrates",
+		nutrientNumber: "205",
+		unitName: "g",
+		value: nutrition.carbs,
+	},
+	{
+		nutrientId: 1079,
+		nutrientName: "Dietary Fiber",
+		nutrientNumber: "291",
+		unitName: "g",
+		value: nutrition.fiber,
+	},
+	{
+		nutrientId: 2000,
+		nutrientName: "Total Sugars",
+		nutrientNumber: "269",
+		unitName: "g",
+		value: nutrition.sugar,
+	},
+	{
+		nutrientId: 1003,
+		nutrientName: "Protein",
+		nutrientNumber: "203",
+		unitName: "g",
+		value: nutrition.protein,
+	},
+	{
+		nutrientId: 1093,
+		nutrientName: "Sodium",
+		nutrientNumber: "307",
+		unitName: "mg",
+		value: nutrition.sodium ?? 100,
+	},
+];
 
 const openManualForm = async () => {
 	await fireEvent.click(screen.getByText("Enter manually"));
@@ -260,6 +323,16 @@ const goToStep = async (name: string | RegExp) => {
 
 const continueToNextStep = async () => {
 	await fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+};
+
+const fillIdentityStep = async (name = "Test ingredient") => {
+	await fireEvent.input(screen.getByLabelText(/food name/i), {
+		target: { value: name },
+	});
+	await waitFor(() => expect(screen.getByLabelText(/category/i)).not.toBeDisabled());
+	await fireEvent.change(screen.getByLabelText(/category/i), {
+		target: { value: "Other" },
+	});
 };
 
 const fillRequiredCustomIngredient = async (
@@ -433,14 +506,8 @@ describe("CustomIngredientForm", () => {
 			sodium: "0",
 		});
 
-		expect(screen.getByText("Sodium is required")).toBeInTheDocument();
-
-		await fireEvent.click(
-			screen.getByRole("button", { name: /add ingredient/i }),
-		);
-
+		expect(screen.getAllByText("Sodium is required").length).toBeGreaterThan(0);
 		expect(onCreate).not.toHaveBeenCalled();
-		expect(screen.getByText("Sodium is required")).toBeInTheDocument();
 	});
 
 	it("requires choosing a real category instead of the placeholder", async () => {
@@ -506,15 +573,15 @@ describe("CustomIngredientForm", () => {
 				brandOwner: "Reference brand",
 				servingLabel: "100g serving",
 				servingWeightGrams: 100,
-				nutrition: {
+				nutrients: makeTestNutrients({
 					calories: 18,
 					fat: 0.2,
 					carbs: 3.9,
 					fiber: 1.2,
 					sugar: 2.6,
 					protein: 0.9,
-				},
-				additionalNutrients: [],
+					sodium: 5,
+				}),
 				reportedNutrientIds: [1008, 1004, 1005, 1003],
 				source: "usda",
 				sourceLabel: "USDA FDC",
@@ -563,15 +630,15 @@ describe("CustomIngredientForm", () => {
 				brandOwner: "Source brand",
 				servingLabel: "100g serving",
 				servingWeightGrams: 100,
-				nutrition: {
+				nutrients: makeTestNutrients({
 					calories: 18,
 					fat: 0.2,
 					carbs: 3.9,
 					fiber: 1.2,
 					sugar: 2.6,
 					protein: 0.9,
-				},
-				additionalNutrients: [],
+					sodium: 5,
+				}),
 				reportedNutrientIds: [1008, 1004, 1005, 1003],
 				source: "usda",
 				sourceLabel: "USDA FDC",
@@ -610,15 +677,15 @@ describe("CustomIngredientForm", () => {
 				brandOwner: "Reference brand",
 				servingLabel: "100g serving",
 				servingWeightGrams: 100,
-				nutrition: {
+				nutrients: makeTestNutrients({
 					calories: 18,
 					fat: 0.2,
 					carbs: 3.9,
 					fiber: 1.2,
 					sugar: 2.6,
 					protein: 0.9,
-				},
-				additionalNutrients: [],
+					sodium: 5,
+				}),
 				reportedNutrientIds: [1008, 1004, 1005, 1003],
 				source: "usda",
 				sourceLabel: "USDA FDC",
@@ -670,6 +737,7 @@ describe("CustomIngredientForm", () => {
 		await openManualForm();
 		expect(screen.queryByLabelText(/volume in this serving/i)).not.toBeInTheDocument();
 
+		await fillIdentityStep("Volume test food");
 		await continueToNextStep();
 		expect(screen.queryByLabelText(/volume in this serving/i)).not.toBeInTheDocument();
 
@@ -678,38 +746,22 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByText(/records the entered volume as weighing/i)).toBeInTheDocument();
 	});
 
-	it("requires volume amount only when volume measurements are enabled", async () => {
+	it("requires volume amount before leaving servings when volume measurements are enabled", async () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
 		await openManualForm();
-		await fireEvent.input(screen.getByLabelText(/food name/i), {
-			target: { value: "Liquid yogurt" },
-		});
+		await fillIdentityStep("Liquid yogurt");
 		await continueToNextStep();
 		await fireEvent.click(screen.getByLabelText(/label includes volume/i));
 		await fireEvent.input(screen.getByLabelText(/weight \(g\)/i), {
 			target: { value: "245" },
 		});
 		await continueToNextStep();
-		await waitFor(() => expect(screen.getByLabelText(/calories/i)).toBeInTheDocument());
-		await fireEvent.input(screen.getByLabelText(/calories/i), {
-			target: { value: "140" },
-		});
-		await fireEvent.input(screen.getByLabelText(/total fat/i), {
-			target: { value: "4" },
-		});
-		await fireEvent.input(screen.getByLabelText(/total carbohydrates/i), {
-			target: { value: "8" },
-		});
-		await fireEvent.input(screen.getByLabelText(/protein/i), {
-			target: { value: "18" },
-		});
-		await continueToNextStep();
-		await continueToNextStep();
 
 		expect(
 			screen.getByText(/volume amount is required when volume measurements are enabled/i),
 		).toBeInTheDocument();
+		expect(screen.getByLabelText(/volume in this serving/i)).toBeInTheDocument();
 	});
 
 	it("blocks impossible nutrient relationships from DB-backed rules", async () => {
@@ -727,22 +779,36 @@ describe("CustomIngredientForm", () => {
 			target: { value: "9" },
 		});
 		await fireEvent.click(screen.getByRole("button", { name: "Share" }));
-		await waitFor(() =>
-			expect(screen.getByLabelText(/share with community/i)).toBeInTheDocument(),
-		);
-
-		expect(
-			screen.getByText("Added sugars cannot exceed total sugars."),
-		).toBeInTheDocument();
-
-		await fireEvent.click(
-			screen.getByRole("button", { name: /add ingredient/i }),
-		);
 
 		expect(onCreate).not.toHaveBeenCalled();
 		expect(
-			screen.getByText("Added sugars cannot exceed total sugars."),
-		).toBeInTheDocument();
+			screen.getAllByText("Added sugars cannot exceed total sugars.").length,
+		).toBeGreaterThan(0);
+	});
+
+	it("blocks forward step navigation until the current step required fields are valid", async () => {
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openManualForm();
+		await continueToNextStep();
+
+		expect(screen.getByText("Name must be at least 3 characters")).toBeInTheDocument();
+		expect(screen.getByLabelText(/food name/i)).toBeInTheDocument();
+
+		await fillIdentityStep("Step guard food");
+		await continueToNextStep();
+		await waitFor(() => expect(screen.getByLabelText(/weight \(g\)/i)).toBeInTheDocument());
+
+		await fireEvent.input(screen.getByLabelText(/weight \(g\)/i), {
+			target: { value: "0" },
+		});
+		await continueToNextStep();
+
+		expect(screen.getByText("Serving weight is required")).toBeInTheDocument();
+		expect(screen.getByLabelText(/weight \(g\)/i)).toBeInTheDocument();
+
+		await fireEvent.click(screen.getAllByRole("button", { name: /back/i }).at(-1)!);
+		expect(screen.getByLabelText(/food name/i)).toBeInTheDocument();
 	});
 
 	it("shares a barcoded label only after explicit consent", async () => {
@@ -800,14 +866,14 @@ describe("CustomIngredientForm", () => {
 		const existingFood = createCustomFood({
 			name: "Honey greek yogurt",
 			servingWeightGrams: 170,
-			nutrition: {
+			nutrients: makeTestNutrients({
 				calories: 140,
 				fat: 2,
 				carbs: 18,
 				fiber: 0,
 				sugar: 14,
 				protein: 15,
-			},
+			}),
 		});
 		const onCreate = vi.fn();
 		customFoodMocks.saveCustomFood.mockResolvedValue("duplicate-name");
@@ -820,7 +886,13 @@ describe("CustomIngredientForm", () => {
 			screen.getByRole("button", { name: /add ingredient/i }),
 		);
 
-		await waitFor(() => expect(onCreate).toHaveBeenCalledWith(existingFood));
+		await waitFor(() =>
+			expect(onCreate).toHaveBeenCalledWith(existingFood, {
+				addedToList: true,
+				destination: MIX_STORAGE_KEYS.fridge,
+				source: "manual-entry",
+			}),
+		);
 		expect(smoothieListMocks.addFoodToSmoothieList).toHaveBeenCalledWith(
 			MIX_STORAGE_KEYS.fridge,
 			existingFood,

@@ -42,6 +42,19 @@ Follow the [QA process rule](./development-rules-audit.md#rule-qa-process) and [
 - [ ] **Share step:** Toggle `Share with community`, choose an add destination, submit, and verify the existing custom ingredient save/list placement behavior still works.
 - [ ] **Follow-up refactor check:** Confirm `CustomIngredientForm.svelte` is treated as remaining refactor debt until logic/style ownership is split further; it should not grow with new feature logic.
 
+### Manual Entry Step Validation Warning
+
+- [ ] **Branch:** `ui-rebuild/ingredients`
+- [ ] **Rule references:** [Reusable components](./development-rules-audit.md#rule-reusable-components), [Component boundaries](./development-rules-audit.md#rule-component-boundaries), [Bottom-sheet flows](./development-rules-audit.md#rule-bottom-sheet-flows), [QA links](./development-rules-audit.md#rule-qa-links)
+- [ ] **Code references:** [`src/lib/components/common/feedback/WarningPopup.svelte`](../src/lib/components/common/feedback/WarningPopup.svelte), [`src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte`](../src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte), [`src/lib/components/ingredients/manual-entry/steps/IdentityStep.svelte`](../src/lib/components/ingredients/manual-entry/steps/IdentityStep.svelte), [`src/lib/components/ingredients/manual-entry/steps/ServingsStep.svelte`](../src/lib/components/ingredients/manual-entry/steps/ServingsStep.svelte), [`src/lib/components/ingredients/manual-entry/steps/NutrientStep.svelte`](../src/lib/components/ingredients/manual-entry/steps/NutrientStep.svelte), [`tests/lib/components/ingredients/CustomIngredientForm.test.ts`](../tests/lib/components/ingredients/CustomIngredientForm.test.ts)
+- [ ] **Route/setup:** Open `/fridge` while signed in, then tap `Enter manually`.
+- [ ] **Identity required-field block:** On the `Identity` step, leave `Food name` empty and click `Continue`; verify a compact warning appears inside the manual-entry sheet, the active step stays `Identity`, and the sheet does not jump to `Servings`.
+- [ ] **Servings required-field block:** Fill valid identity fields, click `Continue`, set `Weight (g)` to `0` or blank, and click `Continue`; verify the warning says serving weight is required, the active step stays `Servings`, and existing identity values are preserved.
+- [ ] **Macros required-field block:** Fill valid identity and serving fields, click into `Macros`, leave any required nutrient such as `Sodium (mg)` blank or `0`, and click `Continue`; verify the warning appears and the active step stays `Macros`.
+- [ ] **Forward tab skip block:** From an incomplete `Identity`, `Servings`, or `Macros` step, tap a later step tab such as `Share`; verify the form redirects to the first invalid step and shows that step’s warning instead of skipping ahead.
+- [ ] **Backward navigation remains open:** From `Servings` or `Macros`, click `Back` or a previous step tab with invalid current-step data; verify backward movement still works and no stale warning remains on the previous step.
+- [ ] **Correction path:** Fill the missing required field after a warning, click `Continue`, and verify the warning clears and the next step opens without losing prior form data.
+
 ### Manual Barcode Cross-Check
 
 - [ ] **Branch:** `ui-rebuild/ingredients`
@@ -177,12 +190,14 @@ Follow the [QA process rule](./development-rules-audit.md#rule-qa-process) and [
 
 - [ ] **Branch:** `ui-rebuild/ingredients`
 - [ ] **Rule references:** [Right-sheet flows](./development-rules-audit.md#rule-right-sheet-flows), [UI refactor components](./development-rules-audit.md#rule-ui-refactor-new-components), [QA process](./development-rules-audit.md#rule-qa-process)
-- [ ] **Code references:** [`src/routes/fridge/+page.svelte`](../src/routes/fridge/+page.svelte), [`src/lib/components/ingredients/nutrition/NutritionDetailView.svelte`](../src/lib/components/ingredients/nutrition/NutritionDetailView.svelte), [`src/lib/components/ingredients/nutrition/NutritionPanel.svelte`](../src/lib/components/ingredients/nutrition/NutritionPanel.svelte), [`src/lib/components/common/RightSheet.svelte`](../src/lib/components/common/RightSheet.svelte)
+- [ ] **Code references:** [`src/routes/fridge/+page.svelte`](../src/routes/fridge/+page.svelte), [`src/lib/components/ingredients/nutrition/NutritionDetailView.svelte`](../src/lib/components/ingredients/nutrition/NutritionDetailView.svelte), [`src/lib/components/ingredients/nutrition/NutritionPanel.svelte`](../src/lib/components/ingredients/nutrition/NutritionPanel.svelte), [`src/lib/components/ingredients/sheets/ManualEntrySheet.svelte`](../src/lib/components/ingredients/sheets/ManualEntrySheet.svelte), [`src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte`](../src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte), [`src/lib/components/ingredients/manual-entry/types.ts`](../src/lib/components/ingredients/manual-entry/types.ts), [`src/lib/components/common/RightSheet.svelte`](../src/lib/components/common/RightSheet.svelte)
 - [ ] From active search, select a result and confirm nutrition facts open in a right-side detail view instead of inline on the ingredients page.
 - [ ] From a fridge/shopping ingredient card, open nutrition details and confirm the same right-side detail view is used.
 - [ ] Confirm the detail view header shows a back button, ingredient name, and viewing amount row above the nutrition facts label.
 - [ ] Confirm the back button and `Escape` close the detail view without changing list data.
 - [ ] Use the Add to Fridge and Shopping List controls from the detail view and confirm the existing duplicate/move/list refresh behavior still works.
+- [ ] Open `/fridge`, tap `Enter manually`, complete a valid custom ingredient, choose `Fridge` or `Shopping List` on the Share step, submit, and verify the nutrition detail view opens without showing redundant `Add to Fridge` or `Add to Shopping List` buttons because the selected destination was already handled.
+- [ ] Repeat manual entry with destination `Custom Ingredients` only and verify the nutrition detail view still shows `Add to Fridge` and `Add to Shopping List` controls.
 - [ ] Confirm the main ingredients view no longer shows an inline nutrition facts preview above the fridge/shopping list.
 
 ### Right Sheet Reusable Shell

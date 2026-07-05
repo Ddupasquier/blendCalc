@@ -15,6 +15,7 @@
     import IngredientSearchView from "$lib/components/ingredients/search/IngredientSearchView.svelte";
     import ManualEntryLauncher from "$lib/components/ingredients/manual-entry/ManualEntryLauncher.svelte";
     import ManualEntrySheet from "$lib/components/ingredients/sheets/ManualEntrySheet.svelte";
+    import type { ManualEntryCreateContext } from "$lib/components/ingredients/manual-entry/types";
     import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView.svelte";
     import SavedIngredientCard from "$lib/components/ingredients/list/SavedIngredientCard.svelte";
     import TextInputDialog from "$lib/components/common/TextInputDialog.svelte";
@@ -65,6 +66,7 @@
     let onHand = $state<FdcFood[]>([]);
     let shoppingList = $state<FdcFood[]>([]);
     let selectedFood = $state<FdcFood | null>(null);
+    let selectedFoodShowListActions = $state(true);
     let scanSignal = $state(0);
     let barcodeLookupBusy = $state(false);
     let listQuery = $state("");
@@ -265,21 +267,28 @@
 
     const handleSelect = (food: FdcFood) => {
         selectedFood = food;
+        selectedFoodShowListActions = true;
     };
 
-    const handleCreate = (food: FdcFood) => {
+    const handleCreate = (
+        food: FdcFood,
+        context: ManualEntryCreateContext,
+    ) => {
         closeIngredientSheet();
         selectedFood = food;
+        selectedFoodShowListActions = !context.addedToList;
     };
 
     const handleSearchSelect = (food: FdcFood) => {
         searchViewOpen = false;
         closeIngredientSheet();
         selectedFood = food;
+        selectedFoodShowListActions = true;
     };
 
     const closeNutritionDetail = () => {
         selectedFood = null;
+        selectedFoodShowListActions = true;
     };
 
     const removeFromList = async (key: SmoothieListKey, foodId: number) => {
@@ -842,7 +851,11 @@
     onClose={closeNutritionDetail}
 >
     {#if selectedFood}
-        <NutritionDetailView food={selectedFood} onClose={closeNutritionDetail} />
+        <NutritionDetailView
+            food={selectedFood}
+            showListActions={selectedFoodShowListActions}
+            onClose={closeNutritionDetail}
+        />
     {/if}
 </RightSheet>
 

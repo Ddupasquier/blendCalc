@@ -17,8 +17,66 @@ import {
 	saveCustomFood,
 	searchCustomFoods,
 } from "$lib/utils/food/customFoods";
-import { NUTRIENT_IDS } from "$lib/utils/food/types";
+import { NUTRIENT_IDS, type FdcNutrient } from "$lib/utils/food/types";
 import { getFdcNutrientValue } from "$lib/utils/food/fdcNutrients";
+
+type TestNutrition = {
+	calories: number;
+	fat: number;
+	carbs: number;
+	fiber: number;
+	sugar: number;
+	protein: number;
+};
+
+const makeTestNutrients = (
+	nutrition: TestNutrition,
+	additionalNutrients: FdcNutrient[] = [],
+): FdcNutrient[] => [
+	{
+		nutrientId: NUTRIENT_IDS.CALORIES,
+		nutrientName: "Energy",
+		nutrientNumber: "208",
+		unitName: "KCAL",
+		value: nutrition.calories,
+	},
+	{
+		nutrientId: NUTRIENT_IDS.FAT,
+		nutrientName: "Total lipid (fat)",
+		nutrientNumber: "204",
+		unitName: "G",
+		value: nutrition.fat,
+	},
+	{
+		nutrientId: NUTRIENT_IDS.CARBS,
+		nutrientName: "Carbohydrate, by difference",
+		nutrientNumber: "205",
+		unitName: "G",
+		value: nutrition.carbs,
+	},
+	{
+		nutrientId: NUTRIENT_IDS.FIBER,
+		nutrientName: "Fiber, total dietary",
+		nutrientNumber: "291",
+		unitName: "G",
+		value: nutrition.fiber,
+	},
+	{
+		nutrientId: NUTRIENT_IDS.SUGAR,
+		nutrientName: "Total Sugars",
+		nutrientNumber: "269",
+		unitName: "G",
+		value: nutrition.sugar,
+	},
+	{
+		nutrientId: NUTRIENT_IDS.PROTEIN,
+		nutrientName: "Protein",
+		nutrientNumber: "203",
+		unitName: "G",
+		value: nutrition.protein,
+	},
+	...additionalNutrients,
+];
 
 describe("custom foods", () => {
 	beforeEach(() => {
@@ -32,15 +90,14 @@ describe("custom foods", () => {
 			name: "Oreos",
 			servingLabel: "3 cookies",
 			servingWeightGrams: 34,
-			nutrition: {
+			nutrients: makeTestNutrients({
 				calories: 160,
 				fat: 7,
 				carbs: 25,
 				fiber: 1,
 				sugar: 14,
 				protein: 1,
-			},
-			additionalNutrients: [
+			}, [
 				{
 					nutrientId: NUTRIENT_IDS.SODIUM,
 					nutrientName: "Sodium, Na",
@@ -48,7 +105,7 @@ describe("custom foods", () => {
 					unitName: "MG",
 					value: 135,
 				},
-			],
+			]),
 		});
 
 		expect(food.customFood).toBe(true);
@@ -67,14 +124,14 @@ describe("custom foods", () => {
 			servingWeightGrams: 245,
 			volumeQuantity: 1,
 			volumeUnit: "cup",
-			nutrition: {
+			nutrients: makeTestNutrients({
 				calories: 140,
 				fat: 4,
 				carbs: 8,
 				fiber: 0,
 				sugar: 7,
 				protein: 18,
-			},
+			}),
 		});
 
 		expect(food.customDensityGramsPerMilliliter).toBeCloseTo(1.0208);
@@ -107,14 +164,14 @@ describe("custom foods", () => {
 		const food = createCustomFood({
 			name: "Homemade protein crunch",
 			servingWeightGrams: 50,
-			nutrition: {
+			nutrients: makeTestNutrients({
 				calories: 200,
 				fat: 4,
 				carbs: 18,
 				fiber: 3,
 				sugar: 6,
 				protein: 20,
-			},
+			}),
 		});
 
 		await saveCustomFood(food);
@@ -129,14 +186,14 @@ describe("custom foods", () => {
 		const food = createCustomFood({
 			name: "Single row custom food",
 			servingWeightGrams: 40,
-			nutrition: {
+			nutrients: makeTestNutrients({
 				calories: 100,
 				fat: 1,
 				carbs: 20,
 				fiber: 2,
 				sugar: 6,
 				protein: 4,
-			},
+			}),
 		});
 
 		expect(await saveCustomFood(food)).toBe("saved");
@@ -151,12 +208,12 @@ describe("custom foods", () => {
 		const firstFood = createCustomFood({
 			name: "Homemade granola",
 			servingWeightGrams: 40,
-			nutrition: { calories: 160, fat: 4, carbs: 28, fiber: 3, sugar: 8, protein: 5 },
+			nutrients: makeTestNutrients({ calories: 160, fat: 4, carbs: 28, fiber: 3, sugar: 8, protein: 5 }),
 		});
 		const duplicateFood = createCustomFood({
 			name: "  homemade   GRANOLA ",
 			servingWeightGrams: 50,
-			nutrition: { calories: 190, fat: 5, carbs: 30, fiber: 4, sugar: 9, protein: 6 },
+			nutrients: makeTestNutrients({ calories: 190, fat: 5, carbs: 30, fiber: 4, sugar: 9, protein: 6 }),
 		});
 
 		expect(await saveCustomFood(firstFood)).toBe("saved");
@@ -169,7 +226,7 @@ describe("custom foods", () => {
 		const food = createCustomFood({
 			name: "Honey Greek Yogurt",
 			servingWeightGrams: 170,
-			nutrition: { calories: 140, fat: 2, carbs: 18, fiber: 0, sugar: 14, protein: 15 },
+			nutrients: makeTestNutrients({ calories: 140, fat: 2, carbs: 18, fiber: 0, sugar: 14, protein: 15 }),
 		});
 
 		await saveCustomFood(food);
@@ -185,14 +242,14 @@ describe("custom foods", () => {
 			servingWeightGrams: 30,
 			barcode: "00400638133393",
 			barcodeSource: "open-food-facts",
-			nutrition: { calories: 100, fat: 2, carbs: 18, fiber: 1, sugar: 6, protein: 3 },
+			nutrients: makeTestNutrients({ calories: 100, fat: 2, carbs: 18, fiber: 1, sugar: 6, protein: 3 }),
 		});
 		const duplicateFood = createCustomFood({
 			name: "Same package, different name",
 			servingWeightGrams: 30,
 			barcode: "00400638133393",
 			barcodeSource: "manual",
-			nutrition: { calories: 100, fat: 2, carbs: 18, fiber: 1, sugar: 6, protein: 3 },
+			nutrients: makeTestNutrients({ calories: 100, fat: 2, carbs: 18, fiber: 1, sugar: 6, protein: 3 }),
 		});
 
 		expect(await saveCustomFood(firstFood)).toBe("saved");
@@ -208,7 +265,7 @@ describe("custom foods", () => {
 		const food = createCustomFood({
 			name: "Unavailable custom food",
 			servingWeightGrams: 30,
-			nutrition: { calories: 80, fat: 1, carbs: 15, fiber: 1, sugar: 4, protein: 3 },
+			nutrients: makeTestNutrients({ calories: 80, fat: 1, carbs: 15, fiber: 1, sugar: 4, protein: 3 }),
 		});
 
 		expect(await saveCustomFood(food)).toBe("error");

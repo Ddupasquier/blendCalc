@@ -8,14 +8,14 @@ import { createCustomFood } from "$lib/utils/food/customFoods";
 const outcomeFood = createCustomFood({
 	name: "Moveable snack",
 	servingWeightGrams: 34,
-	nutrition: {
-		calories: 160,
-		fat: 6,
-		carbs: 20,
-		fiber: 2,
-		sugar: 8,
-		protein: 2,
-	},
+	nutrients: [
+		{ nutrientId: 1008, nutrientName: "Energy", nutrientNumber: "208", unitName: "KCAL", value: 160 },
+		{ nutrientId: 1004, nutrientName: "Total lipid (fat)", nutrientNumber: "204", unitName: "G", value: 6 },
+		{ nutrientId: 1005, nutrientName: "Carbohydrate, by difference", nutrientNumber: "205", unitName: "G", value: 20 },
+		{ nutrientId: 1079, nutrientName: "Fiber, total dietary", nutrientNumber: "291", unitName: "G", value: 2 },
+		{ nutrientId: 2000, nutrientName: "Total Sugars", nutrientNumber: "269", unitName: "G", value: 8 },
+		{ nutrientId: 1003, nutrientName: "Protein", nutrientNumber: "203", unitName: "G", value: 2 },
+	],
 });
 
 describe("CustomIngredientOutcome", () => {

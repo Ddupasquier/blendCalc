@@ -37,17 +37,19 @@ describe("barcode product mapping", () => {
 			name: "Test cereal",
 			brandOwner: "Example Brand",
 			servingWeightGrams: 30,
-			nutrition: {
-				calories: 150,
-				fat: 3,
-				carbs: 18,
-				fiber: 2.4,
-				sugar: 6,
-				protein: 3.6,
-			},
 		});
+		expect(draft?.nutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CALORIES, value: 150 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.FAT, value: 3 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CARBS, value: 18 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.FIBER, value: 2.4 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.SUGAR, value: 6 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.PROTEIN, value: 3.6 }),
+			]),
+		);
 		expect(draft?.volumeEquivalent).toEqual({ quantity: 2, unit: "tbsp" });
-		expect(draft?.additionalNutrients).toEqual(
+		expect(draft?.nutrients).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({ nutrientId: 1258, value: 1.2, unitName: "G" }),
 				expect.objectContaining({ nutrientId: NUTRIENT_IDS.SODIUM, value: 150, unitName: "MG" }),
@@ -129,19 +131,23 @@ describe("barcode product mapping", () => {
 			"4006381333931",
 		);
 
-		expect(draft?.nutrition).toEqual({
-			calories: 200,
-			fat: 6,
-			carbs: 25,
-			fiber: 3,
-			sugar: 10,
-			protein: 5,
-		});
+		expect(draft?.nutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CALORIES, value: 200 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.FAT, value: 6 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CARBS, value: 25 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.FIBER, value: 3 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.SUGAR, value: 10 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.PROTEIN, value: 5 }),
+			]),
+		);
 		expect(draft?.volumeEquivalent).toEqual({ quantity: 2, unit: "tbsp" });
-		expect(draft?.additionalNutrients).toEqual([
-			expect.objectContaining({ nutrientId: NUTRIENT_IDS.SODIUM, value: 300 }),
-			expect.objectContaining({ nutrientId: NUTRIENT_IDS.VITAMIN_C, value: 10 }),
-		]);
+		expect(draft?.nutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.SODIUM, value: 300 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.VITAMIN_C, value: 10 }),
+			]),
+		);
 		expect(draft?.reportedNutrientIds).toContain(NUTRIENT_IDS.VITAMIN_C);
 		expect(draft?.ingredientList).toEqual(["Corn", "sunflower oil", "salt"]);
 		expect(draft?.allergens).toEqual(["corn"]);

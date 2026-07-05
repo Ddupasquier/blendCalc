@@ -37,8 +37,7 @@ export const createCatalogFoodFromDraft = (
 		dietaryTags: draft.dietaryTags,
 		labels: draft.labels,
 		categories: draft.categories,
-		nutrition: draft.nutrition,
-		additionalNutrients: draft.additionalNutrients,
+		nutrients: draft.nutrients,
 		reportedNutrientIds: draft.reportedNutrientIds,
 	});
 

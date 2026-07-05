@@ -9,9 +9,11 @@
 	let {
 		food,
 		onClose,
+		showListActions = true,
 	}: {
 		food: FdcFood;
 		onClose: () => void;
+		showListActions?: boolean;
 	} = $props();
 </script>
 
@@ -44,7 +46,7 @@
 
 	<ViewBody scroll>
 		<div class="nutrition-detail-view__panel">
-			<NutritionPanel {food} />
+			<NutritionPanel {food} {showListActions} />
 		</div>
 	</ViewBody>
 </ViewFrame>

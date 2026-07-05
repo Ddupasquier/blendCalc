@@ -10,20 +10,11 @@ import {
 } from "$lib/utils/storage/supabaseData";
 import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { getScopedStorageKey } from "$lib/utils/storage/storageScope";
-import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
+import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
 import { normalizeCustomFoodName } from "$lib/utils/food/customFoodNames";
 
 export const CUSTOM_FOODS_STORAGE_KEY = "smoothie-custom-foods";
 export const CUSTOM_FOODS_CHANGED_EVENT = "smoothie-custom-foods-changed";
-
-export type CustomFoodNutritionInput = {
-	calories: number;
-	fat: number;
-	carbs: number;
-	fiber: number;
-	sugar: number;
-	protein: number;
-};
 
 export type CustomFoodInput = {
 	name: string;
@@ -41,8 +32,7 @@ export type CustomFoodInput = {
 	dietaryTags?: string[];
 	labels?: string[];
 	categories?: string[];
-	nutrition: CustomFoodNutritionInput;
-	additionalNutrients?: FdcNutrient[];
+	nutrients: FdcNutrient[];
 	reportedNutrientIds?: number[];
 };
 
@@ -51,51 +41,6 @@ export type CustomFoodSaveResult =
 	| "duplicate-name"
 	| "duplicate-barcode"
 	| "error";
-
-const CUSTOM_NUTRIENT_META = [
-	{
-		key: "calories",
-		nutrientId: NUTRIENT_IDS.CALORIES,
-		nutrientName: "Energy",
-		nutrientNumber: "208",
-		unitName: "KCAL",
-	},
-	{
-		key: "fat",
-		nutrientId: NUTRIENT_IDS.FAT,
-		nutrientName: "Total Fat",
-		nutrientNumber: "204",
-		unitName: "G",
-	},
-	{
-		key: "carbs",
-		nutrientId: NUTRIENT_IDS.CARBS,
-		nutrientName: "Total Carbohydrate",
-		nutrientNumber: "205",
-		unitName: "G",
-	},
-	{
-		key: "fiber",
-		nutrientId: NUTRIENT_IDS.FIBER,
-		nutrientName: "Dietary Fiber",
-		nutrientNumber: "291",
-		unitName: "G",
-	},
-	{
-		key: "sugar",
-		nutrientId: NUTRIENT_IDS.SUGAR,
-		nutrientName: "Total Sugars",
-		nutrientNumber: "269",
-		unitName: "G",
-	},
-	{
-		key: "protein",
-		nutrientId: NUTRIENT_IDS.PROTEIN,
-		nutrientName: "Protein",
-		nutrientNumber: "203",
-		unitName: "G",
-	},
-] as const;
 
 const dispatchCustomFoodsChanged = () => {
 	window.dispatchEvent(new CustomEvent(CUSTOM_FOODS_CHANGED_EVENT));
@@ -114,41 +59,31 @@ const getPer100GramValue = (valuePerServing: number, servingWeightGrams: number)
 };
 
 const createNutrients = (
-	nutrition: CustomFoodNutritionInput,
+	nutrients: FdcNutrient[],
 	servingWeightGrams: number,
-	additionalNutrients: FdcNutrient[] = [],
 ): FdcNutrient[] => {
-	const coreNutrients = CUSTOM_NUTRIENT_META.map((meta) => ({
-		nutrientId: meta.nutrientId,
-		nutrientName: meta.nutrientName,
-		nutrientNumber: meta.nutrientNumber,
-		unitName: meta.unitName,
-		value: getPer100GramValue(nutrition[meta.key], servingWeightGrams),
-	}));
-	const coreNutrientIds = new Set<number>(
-		coreNutrients.map((nutrient) => nutrient.nutrientId),
-	);
-	const seenAdditionalIds = new Set<number>();
-	const normalizedAdditionalNutrients = additionalNutrients.flatMap((nutrient) => {
+	const seenIds = new Set<number>();
+	return nutrients.flatMap((nutrient) => {
 		const nutrientId = Number(nutrient.nutrientId);
 		if (
 			!Number.isFinite(nutrientId) ||
-			coreNutrientIds.has(nutrientId) ||
-			seenAdditionalIds.has(nutrientId)
+			seenIds.has(nutrientId)
 		) {
 			return [];
 		}
-		seenAdditionalIds.add(nutrientId);
+		seenIds.add(nutrientId);
 		return [{
 			nutrientId,
 			nutrientName: nutrient.nutrientName,
 			nutrientNumber: String(nutrient.nutrientNumber ?? ""),
 			unitName: nutrient.unitName,
 			value: getPer100GramValue(nutrient.value, servingWeightGrams),
+			valueOrigin: nutrient.valueOrigin,
+			source: nutrient.source,
+			sourceReference: nutrient.sourceReference,
+			confidence: nutrient.confidence,
 		}];
 	});
-
-	return [...coreNutrients, ...normalizedAdditionalNutrients];
 };
 
 const getVolumeMilliliters = (
@@ -208,11 +143,7 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 			? servingWeightGrams / volumeMilliliters
 			: null;
 
-	const foodNutrients = createNutrients(
-		input.nutrition,
-		servingWeightGrams,
-		input.additionalNutrients,
-	);
+	const foodNutrients = createNutrients(input.nutrients, servingWeightGrams);
 
 	return {
 		fdcId: createCustomFoodId(),

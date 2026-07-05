@@ -22,9 +22,10 @@
 
 	interface Props {
 		food?: FdcFood;
+		showListActions?: boolean;
 	}
 
-	let { food }: Props = $props();
+	let { food, showListActions = true }: Props = $props();
 	const foodPreferenceContext = getFoodPreferenceContext();
 
 	import { vitalNutrients } from "../../../../variables/vitalNutrients";
@@ -285,14 +286,16 @@
 		</div>
 	</div>
 
-	<div class="nf-actions">
-		<button class="nf-btn" onclick={handleAddToFridge} disabled={!food || pendingAction !== null}
-			>{pendingAction === "fridge" ? "Adding…" : "Add to Fridge"}</button
-		>
-		<button class="nf-btn" onclick={handleAddToShopping} disabled={!food || pendingAction !== null}
-			>{pendingAction === "shopping" ? "Adding…" : "Add to Shopping List"}</button
-		>
-	</div>
+	{#if showListActions}
+		<div class="nf-actions">
+			<button class="nf-btn" onclick={handleAddToFridge} disabled={!food || pendingAction !== null}
+				>{pendingAction === "fridge" ? "Adding…" : "Add to Fridge"}</button
+			>
+			<button class="nf-btn" onclick={handleAddToShopping} disabled={!food || pendingAction !== null}
+				>{pendingAction === "shopping" ? "Adding…" : "Add to Shopping List"}</button
+			>
+		</div>
+	{/if}
 	{#if feedbackMessage}
 		<div class="nf-feedback" class:nf-feedback--error={feedbackError} role={feedbackError ? "alert" : "status"} aria-live="polite">
 			<span>

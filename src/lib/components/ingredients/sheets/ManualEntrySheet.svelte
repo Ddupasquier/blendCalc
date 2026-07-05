@@ -1,7 +1,7 @@
 <script lang="ts">
 	import BottomSheet from "$lib/components/common/BottomSheet.svelte";
 	import CustomIngredientForm from "$lib/components/ingredients/manual-entry/CustomIngredientForm.svelte";
-	import type { FdcFood } from "$lib/utils/food/types";
+	import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 
 	let {
 		open,
@@ -13,7 +13,7 @@
 		open: boolean;
 		scanSignal?: number;
 		onClose: () => void;
-		onCreate: (food: FdcFood) => void | Promise<void>;
+		onCreate: ManualEntryCreateHandler;
 		onLookupStateChange?: (lookingUp: boolean) => void;
 	} = $props();
 </script>

@@ -7,7 +7,6 @@ import {
 	parseVolumeEquivalent,
 	type BarcodeVolumeEquivalent,
 } from "$lib/utils/barcode/servingVolume";
-import type { CustomFoodNutritionInput } from "$lib/utils/food/customFoods";
 import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
 
 export type OpenFoodFactsNutriments = Record<string, number | string | undefined>;
@@ -44,8 +43,7 @@ export type BarcodeProductDraft = {
 	brandOwner: string;
 	servingLabel: string;
 	servingWeightGrams: number;
-	nutrition: CustomFoodNutritionInput;
-	additionalNutrients: FdcNutrient[];
+	nutrients: FdcNutrient[];
 	reportedNutrientIds: number[];
 	ingredients?: string;
 	ingredientList?: string[];
@@ -65,14 +63,59 @@ export type BarcodeLookupResult =
 	| { status: "not-found"; barcode: string }
 	| { status: "error"; barcode: string; message: string };
 
-const CORE_NUTRIENT_IDS = new Set<number>([
-	NUTRIENT_IDS.CALORIES,
-	NUTRIENT_IDS.FAT,
-	NUTRIENT_IDS.CARBS,
-	NUTRIENT_IDS.FIBER,
-	NUTRIENT_IDS.SUGAR,
-	NUTRIENT_IDS.PROTEIN,
-]);
+type CoreNutritionKey = "calories" | "fat" | "carbs" | "fiber" | "sugar" | "protein";
+type CoreNutritionValues = Record<CoreNutritionKey, number>;
+
+const coreNutrientDefinitions: Array<{
+	key: CoreNutritionKey;
+	nutrientId: number;
+	nutrientName: string;
+	nutrientNumber: string;
+	unitName: string;
+}> = [
+	{
+		key: "calories",
+		nutrientId: NUTRIENT_IDS.CALORIES,
+		nutrientName: "Energy",
+		nutrientNumber: "208",
+		unitName: "KCAL",
+	},
+	{
+		key: "fat",
+		nutrientId: NUTRIENT_IDS.FAT,
+		nutrientName: "Total lipid (fat)",
+		nutrientNumber: "204",
+		unitName: "G",
+	},
+	{
+		key: "carbs",
+		nutrientId: NUTRIENT_IDS.CARBS,
+		nutrientName: "Carbohydrate, by difference",
+		nutrientNumber: "205",
+		unitName: "G",
+	},
+	{
+		key: "fiber",
+		nutrientId: NUTRIENT_IDS.FIBER,
+		nutrientName: "Fiber, total dietary",
+		nutrientNumber: "291",
+		unitName: "G",
+	},
+	{
+		key: "sugar",
+		nutrientId: NUTRIENT_IDS.SUGAR,
+		nutrientName: "Total Sugars",
+		nutrientNumber: "269",
+		unitName: "G",
+	},
+	{
+		key: "protein",
+		nutrientId: NUTRIENT_IDS.PROTEIN,
+		nutrientName: "Protein",
+		nutrientNumber: "203",
+		unitName: "G",
+	},
+];
 const isGramUnit = (unit?: string) =>
 	["g", "grm", "gram", "grams"].includes(unit?.trim().toLowerCase() ?? "");
 
@@ -80,6 +123,28 @@ const toNumber = (value: unknown) => {
 	const numberValue = typeof value === "string" ? Number.parseFloat(value) : Number(value);
 	return Number.isFinite(numberValue) ? Math.max(0, numberValue) : 0;
 };
+
+const nutritionToNutrients = (
+	nutrition: CoreNutritionValues,
+	source: FdcNutrient["source"],
+	confidence: FdcNutrient["confidence"],
+	sourceReference?: string,
+): FdcNutrient[] =>
+	coreNutrientDefinitions.flatMap((definition) => {
+		const value = toNumber(nutrition[definition.key]);
+		if (value <= 0) return [];
+		return [{
+			nutrientId: definition.nutrientId,
+			nutrientName: definition.nutrientName,
+			nutrientNumber: definition.nutrientNumber,
+			unitName: definition.unitName,
+			value,
+			valueOrigin: "reported",
+			source,
+			sourceReference,
+			confidence,
+		}];
+	});
 
 const cleanTag = (value: string) =>
 	value
@@ -232,12 +297,61 @@ export const mapOpenFoodFactsProduct = (
 		useServingValues,
 	);
 
-	const additionalNutrients = mapOpenFoodFactsAdditionalNutrients(
+	const observedNutrients = mapOpenFoodFactsAdditionalNutrients(
 		product.nutriments,
 		servingWeightGrams,
 		useServingValues,
 	);
 	const metadata = parseOpenFoodFactsMetadata(product);
+
+	const nutrition = {
+		calories: energyKcal || energyKilojoules / 4.184,
+		fat: getOpenFoodFactsNutrient(
+			product.nutriments,
+			["fat"],
+			servingWeightGrams,
+			useServingValues,
+		),
+		carbs: getOpenFoodFactsNutrient(
+			product.nutriments,
+			["carbohydrates", "carbohydrates-total"],
+			servingWeightGrams,
+			useServingValues,
+		),
+		fiber: getOpenFoodFactsNutrient(
+			product.nutriments,
+			["fiber"],
+			servingWeightGrams,
+			useServingValues,
+		),
+		sugar: getOpenFoodFactsNutrient(
+			product.nutriments,
+			["sugars"],
+			servingWeightGrams,
+			useServingValues,
+		),
+		protein: getOpenFoodFactsNutrient(
+			product.nutriments,
+			["proteins", "protein"],
+			servingWeightGrams,
+			useServingValues,
+		),
+	};
+	const nutrients = [
+		...nutritionToNutrients(
+			nutrition,
+			"open-food-facts",
+			"imported",
+			canonicalBarcode,
+		),
+		...observedNutrients.map((nutrient) => ({
+			...nutrient,
+			valueOrigin: nutrient.valueOrigin ?? "reported",
+			source: nutrient.source ?? "open-food-facts",
+			sourceReference: nutrient.sourceReference ?? canonicalBarcode,
+			confidence: nutrient.confidence ?? "imported",
+		})),
+	];
 
 	return {
 		barcode: canonicalBarcode,
@@ -246,7 +360,7 @@ export const mapOpenFoodFactsProduct = (
 		servingLabel:
 			(useServingValues && product.serving_size?.trim()) || `${servingWeightGrams} g`,
 		servingWeightGrams,
-		additionalNutrients,
+		nutrients,
 		reportedNutrientIds: [
 			...new Set([
 				...getOpenFoodFactsReportedNutrientIds(
@@ -254,7 +368,7 @@ export const mapOpenFoodFactsProduct = (
 					servingWeightGrams,
 					useServingValues,
 				),
-				...additionalNutrients.map((nutrient) => nutrient.nutrientId),
+				...observedNutrients.map((nutrient) => nutrient.nutrientId),
 			]),
 		],
 		...metadata,
@@ -262,47 +376,11 @@ export const mapOpenFoodFactsProduct = (
 			? parseVolumeEquivalent(product.serving_size)
 				?? undefined
 			: undefined,
-		nutrition: {
-			calories: energyKcal || energyKilojoules / 4.184,
-			fat: getOpenFoodFactsNutrient(
-				product.nutriments,
-				["fat"],
-				servingWeightGrams,
-				useServingValues,
-			),
-			carbs: getOpenFoodFactsNutrient(
-				product.nutriments,
-				["carbohydrates", "carbohydrates-total"],
-				servingWeightGrams,
-				useServingValues,
-			),
-			fiber: getOpenFoodFactsNutrient(
-				product.nutriments,
-				["fiber"],
-				servingWeightGrams,
-				useServingValues,
-			),
-			sugar: getOpenFoodFactsNutrient(
-				product.nutriments,
-				["sugars"],
-				servingWeightGrams,
-				useServingValues,
-			),
-			protein: getOpenFoodFactsNutrient(
-				product.nutriments,
-				["proteins", "protein"],
-				servingWeightGrams,
-				useServingValues,
-			),
-		},
 		source: "open-food-facts",
 		sourceLabel: "Open Food Facts",
 		sourceReference: canonicalBarcode,
 	};
 };
-
-const getFdcNutrientValue = (food: FdcFood, nutrientId: number) =>
-	toNumber(food.foodNutrients.find((nutrient) => nutrient.nutrientId === nutrientId)?.value);
 
 export const mapFdcBarcodeFood = (
 	food: FdcFood,
@@ -318,9 +396,11 @@ export const mapFdcBarcodeFood = (
 	const hasExactGramWeight =
 		Boolean(food.servingSize) && isGramUnit(food.servingSizeUnit);
 	const servingScale = servingWeightGrams / 100;
-	const perServing = (nutrientId: number) =>
-		getFdcNutrientValue(food, nutrientId) * servingScale;
 	const metadata = parseFdcMetadata(food);
+	const nutrients = food.foodNutrients.map((nutrient) => ({
+		...nutrient,
+		value: toNumber(nutrient.value) * servingScale,
+	}));
 
 	return {
 		barcode: canonicalBarcode,
@@ -329,12 +409,7 @@ export const mapFdcBarcodeFood = (
 		servingLabel:
 			(hasExactGramWeight && food.householdServingFullText) || `${servingWeightGrams} g`,
 		servingWeightGrams,
-		additionalNutrients: food.foodNutrients
-			.filter((nutrient) => !CORE_NUTRIENT_IDS.has(nutrient.nutrientId))
-			.map((nutrient) => ({
-				...nutrient,
-				value: toNumber(nutrient.value) * servingScale,
-			})),
+		nutrients,
 		reportedNutrientIds: [
 			...new Set(
 				food.reportedNutrientIds ??
@@ -345,14 +420,6 @@ export const mapFdcBarcodeFood = (
 		volumeEquivalent: hasExactGramWeight
 			? parseVolumeEquivalent(food.householdServingFullText) ?? undefined
 			: undefined,
-		nutrition: {
-			calories: perServing(NUTRIENT_IDS.CALORIES),
-			fat: perServing(NUTRIENT_IDS.FAT),
-			carbs: perServing(NUTRIENT_IDS.CARBS),
-			fiber: perServing(NUTRIENT_IDS.FIBER),
-			sugar: perServing(NUTRIENT_IDS.SUGAR),
-			protein: perServing(NUTRIENT_IDS.PROTEIN),
-		},
 		source: "usda",
 		sourceLabel: "USDA FoodData Central",
 		sourceReference: String(food.fdcId),
