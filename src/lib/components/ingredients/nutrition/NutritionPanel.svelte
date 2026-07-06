@@ -24,6 +24,10 @@
 		getNutritionBasisLabel,
 		scalePer100gValue,
 	} from "$lib/utils/food/nutrients/nutritionDisplay";
+	import {
+		getIngredientMembershipLabel,
+		type IngredientListMembership,
+	} from "$lib/utils/ingredients/ingredientListUi";
 	import { onDestroy, onMount } from "svelte";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 	import { vitalNutrients } from "../../../../variables/vitalNutrients";
@@ -32,15 +36,19 @@
 		food?: FdcFood;
 		showListActions?: boolean;
 		viewingGrams?: number;
+		listMembership?: IngredientListMembership;
 	}
 
 	let {
 		food,
 		showListActions = true,
 		viewingGrams = DEFAULT_NUTRITION_VIEWING_GRAMS,
+		listMembership = { inFridge: false, inShoppingList: false },
 	}: Props = $props();
 	const foodPreferenceContext = getFoodPreferenceContext();
 
+	const membershipLabel = $derived(getIngredientMembershipLabel(listMembership));
+	const isAlreadySaved = $derived(Boolean(membershipLabel));
 	const foodQuality = $derived(food ? getFoodQuality(food) : null);
 	const preferenceWarnings = $derived(
 		food ? getFoodPreferenceWarnings(food, foodPreferenceContext.current) : [],
@@ -299,7 +307,12 @@
 		</div>
 	</div>
 
-	{#if showListActions}
+	{#if showListActions && isAlreadySaved}
+		<p class="nf-list-status" role="status">
+			<Check size={15} strokeWidth={2.8} />
+			{membershipLabel}
+		</p>
+	{:else if showListActions}
 		<div class="nf-actions">
 			<RoundedActionButton
 				fullWidth
@@ -361,22 +374,23 @@
 		margin: 0 auto;
 		font-family: $app-font-family-data;
 		color: $nutrition-label-text;
-		padding: 0.7rem 1.1rem 1.1rem 1.1rem;
+		padding: $nutrition-label-padding-y $nutrition-label-padding-x
+			$nutrition-label-padding-bottom;
 		overflow: hidden;
 	}
 	.nf-heading {
 		display: grid;
-		gap: calc($app-gap-xs / 2);
+		gap: $app-gap-2xs;
 		border-bottom: $app-border-highlight;
-		padding-bottom: 0.18rem;
-		margin-bottom: 0.1rem;
+		padding-bottom: $nutrition-label-list-row-padding-y;
+		margin-bottom: $nutrition-label-gap-micro;
 	}
 
 	.nf-warning-panel {
 		display: grid;
-		gap: 0.3rem;
-		margin: 0.55rem 0 0.7rem;
-		padding: 0.55rem 0.7rem;
+		gap: $nutrition-label-gap-tight;
+		margin: $app-gap-sm 0 $app-vertical-stack-gap;
+		padding: $app-gap-sm $app-vertical-stack-gap;
 		color: $app-warning-strong;
 		background: $app-warning-bg;
 		border: $app-warning-border;
@@ -384,7 +398,7 @@
 
 		ul {
 			margin: 0;
-			padding-left: 1rem;
+			padding-left: $nutrition-label-column-gap;
 			color: $nutrition-label-text;
 			font-size: $app-font-size-sm;
 			line-height: 1.35;
@@ -412,8 +426,8 @@
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
-		gap: 0.35rem;
-		margin-bottom: 0.2rem;
+		gap: $app-gap-xs;
+		margin-bottom: $app-gap-2xs;
 	}
 	.nf-food {
 		min-width: 0;
@@ -424,18 +438,18 @@
 	}
 	.nf-thick-divider {
 		border-bottom: $app-border-thick;
-		margin: 0.2rem 0 0.3rem 0;
+		margin: $app-gap-2xs 0 $app-gap-xs;
 	}
 	.nf-divider {
 		border-bottom: $app-border-divider;
-		margin: 0.1rem 0 0.1rem 0;
+		margin: $app-gap-micro 0;
 	}
 	.nf-columns {
 		display: flex;
 		flex-direction: row;
-		gap: 1.1rem;
+		gap: $nutrition-label-column-gap;
 		align-items: stretch;
-		margin-bottom: 0.2rem;
+		margin-bottom: $app-gap-2xs;
 		min-height: 120px;
 		min-width: 0;
 	}
@@ -443,14 +457,14 @@
 		flex: 0 0 220px;
 		margin: 0;
 		padding: 0;
-		padding-right: 1.1rem;
+		padding-right: $nutrition-label-column-gap;
 		min-width: 180px;
 		max-width: 220px;
 	}
 	.nf-scroll-wrap {
 		flex: 1 1 0;
 		min-width: 0;
-		padding-left: 1.1rem;
+		padding-left: $nutrition-label-column-gap;
 		overflow-y: auto;
 		overflow-x: hidden;
 		max-height: 100%;
@@ -467,8 +481,9 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
-		gap: 0.45rem;
-		padding: 0.13rem 0.1rem 0.13rem 0.1rem;
+		gap: $app-gap-sm;
+		padding: $nutrition-label-list-row-padding-y
+			$nutrition-label-list-row-padding-x;
 		font-size: 1.01rem;
 		font-weight: 600;
 		background: none;
@@ -505,7 +520,7 @@
 		font-weight: 400;
 		color: $nutrition-label-muted;
 		font-size: 0.82em;
-		margin-left: 0.13em;
+		margin-left: $nutrition-label-list-row-padding-y;
 		text-transform: uppercase;
 	}
 	.nf-actions {
@@ -514,13 +529,33 @@
 		gap: $app-horizontal-control-gap;
 		margin: 0;
 	}
+
+	.nf-list-status {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: $app-gap-xs;
+		min-height: $ingredient-control-height;
+		margin: 0;
+		padding: $app-gap-sm $app-gap-md;
+		color: $ingredient-accent-primary;
+		background: $ingredient-surface-positive;
+		border: 1px solid
+			color-mix(in srgb, $ingredient-accent-primary 35%, transparent);
+		border-radius: $ingredient-radius-control;
+		font-family: $app-button-font-family;
+		font-size: $app-font-size-md;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
+		text-align: center;
+	}
 	.nf-feedback {
 		display: flex;
 		align-items: center;
 		justify-content: flex-end;
-		gap: 0.35rem;
-		min-height: 1.3rem;
-		margin: 0.2rem 0;
+		gap: $app-gap-xs;
+		min-height: $nutrition-label-list-status-size;
+		margin: $app-gap-2xs 0;
 		color: $app-primary;
 		font-family: $app-font-family-data;
 		font-size: 0.86rem;
@@ -530,8 +565,8 @@
 		span {
 			display: inline-grid;
 			place-items: center;
-			width: 1.05rem;
-			height: 1.05rem;
+			width: $nutrition-label-list-status-icon-size;
+			height: $nutrition-label-list-status-icon-size;
 			color: $app-primary;
 			background: $app-success-bg;
 			border-radius: $app-radius-pill;
@@ -541,11 +576,13 @@
 	}
 	@media (max-width: $app-breakpoint-xs) {
 		.nf-label {
-			padding: 0.65rem 0.85rem 0.95rem;
+			padding: $nutrition-label-padding-y-mobile
+				$nutrition-label-padding-x-mobile
+				$nutrition-label-padding-bottom-mobile;
 		}
 
 		.nf-heading {
-			gap: 0.5rem;
+			gap: $app-gap-sm;
 		}
 
 		.nf-title {
@@ -560,7 +597,7 @@
 		.nf-columns {
 			display: grid;
 			grid-template-columns: 1fr;
-			gap: 0.55rem;
+			gap: $app-gap-sm;
 			min-height: 0;
 		}
 
@@ -574,8 +611,8 @@
 
 		.nf-scroll-wrap {
 			width: 100%;
-			max-height: 9.5rem !important;
-			padding-top: 0.55rem;
+			max-height: $nutrition-label-scroll-max-height-mobile !important;
+			padding-top: $app-gap-sm;
 			padding-left: 0;
 			border-top: $app-border-strong;
 			border-left: 0;
@@ -599,7 +636,7 @@
 		.nf-actions {
 			display: grid;
 			grid-template-columns: repeat(2, minmax(0, 1fr));
-			gap: 0.55rem;
+			gap: $app-gap-sm;
 		}
 
 	}

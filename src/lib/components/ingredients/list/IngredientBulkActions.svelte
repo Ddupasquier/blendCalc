@@ -40,6 +40,7 @@
 
 	.ingredient-bulk-actions {
 		display: flex;
+		flex: 0 0 auto;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: $app-horizontal-control-gap;

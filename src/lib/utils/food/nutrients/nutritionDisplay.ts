@@ -1,15 +1,29 @@
 export const DEFAULT_NUTRITION_VIEWING_GRAMS = 100;
 export const MIN_NUTRITION_VIEWING_GRAMS = 25;
 export const MAX_NUTRITION_VIEWING_GRAMS = 1000;
-export const NUTRITION_VIEWING_GRAM_STEP = 25;
+export const NUTRITION_VIEWING_GRAM_STEP = 5;
 
 export const clampNutritionViewingGrams = (grams: number): number => {
 	if (!Number.isFinite(grams)) return DEFAULT_NUTRITION_VIEWING_GRAMS;
+	const steppedGrams =
+		Math.round(grams / NUTRITION_VIEWING_GRAM_STEP) *
+		NUTRITION_VIEWING_GRAM_STEP;
 	return Math.min(
 		MAX_NUTRITION_VIEWING_GRAMS,
-		Math.max(MIN_NUTRITION_VIEWING_GRAMS, Math.round(grams)),
+		Math.max(MIN_NUTRITION_VIEWING_GRAMS, steppedGrams),
 	);
 };
+
+export const stepNutritionViewingGrams = (
+	currentGrams: number,
+	direction: "increase" | "decrease",
+): number =>
+	clampNutritionViewingGrams(
+		currentGrams +
+			(direction === "increase"
+				? NUTRITION_VIEWING_GRAM_STEP
+				: -NUTRITION_VIEWING_GRAM_STEP),
+	);
 
 export const scalePer100gValue = (
 	valuePer100g: number | null | undefined,

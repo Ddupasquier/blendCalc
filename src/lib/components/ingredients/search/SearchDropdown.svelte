@@ -214,7 +214,7 @@
     .result-copy {
         display: grid;
         min-width: 0;
-        gap: calc($app-gap-xs / 2);
+        gap: $app-gap-2xs;
     }
 
     .result-name {
@@ -242,7 +242,7 @@
     .result-badges {
         display: flex;
         flex-wrap: wrap;
-        gap: calc($app-gap-xs / 1.5);
+        gap: $app-gap-inline-compact;
         margin-top: 0;
     }
 

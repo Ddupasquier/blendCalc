@@ -79,7 +79,7 @@
 	}
 
 	:global(.ingredient-search-view__back) {
-		margin-top: 0.05rem;
+		margin-top: 0;
 	}
 
 	:global(.ingredient-search-view .search-wrap) {

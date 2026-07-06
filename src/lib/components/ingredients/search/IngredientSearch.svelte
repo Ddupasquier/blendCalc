@@ -465,7 +465,7 @@
 	.search-status-actions {
 		display: inline-flex;
 		align-items: center;
-		gap: calc($app-gap-xs / 1.5);
+		gap: $app-gap-inline-compact;
 		min-width: 0;
 	}
 

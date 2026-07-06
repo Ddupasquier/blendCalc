@@ -6,7 +6,9 @@ import {
 	getNutritionBasisLabel,
 	MAX_NUTRITION_VIEWING_GRAMS,
 	MIN_NUTRITION_VIEWING_GRAMS,
+	NUTRITION_VIEWING_GRAM_STEP,
 	scalePer100gValue,
+	stepNutritionViewingGrams,
 } from "$lib/utils/food/nutrients/nutritionDisplay";
 
 describe("nutrition display helpers", () => {
@@ -15,6 +17,13 @@ describe("nutrition display helpers", () => {
 		expect(clampNutritionViewingGrams(100)).toBe(100);
 		expect(clampNutritionViewingGrams(5000)).toBe(MAX_NUTRITION_VIEWING_GRAMS);
 		expect(clampNutritionViewingGrams(Number.NaN)).toBe(100);
+	});
+
+	it("uses 5g increments for nutrition detail viewing controls", () => {
+		expect(NUTRITION_VIEWING_GRAM_STEP).toBe(5);
+		expect(clampNutritionViewingGrams(103)).toBe(105);
+		expect(stepNutritionViewingGrams(100, "increase")).toBe(105);
+		expect(stepNutritionViewingGrams(100, "decrease")).toBe(95);
 	});
 
 	it("scales per-100g nutrient values for the selected viewing amount", () => {

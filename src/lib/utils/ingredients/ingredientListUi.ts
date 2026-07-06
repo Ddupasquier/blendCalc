@@ -10,6 +10,11 @@ export type IngredientActionItem = {
 	food: FdcFood;
 };
 
+export type IngredientListMembership = {
+	inFridge: boolean;
+	inShoppingList: boolean;
+};
+
 export const INGREDIENT_SOURCE_FILTER_OPTIONS = [
 	{ value: "all", label: "All sources" },
 	{ value: "fdc", label: "USDA FDC" },
@@ -27,6 +32,17 @@ export const getOppositeIngredientListKey = (key: SmoothieListKey) =>
 
 export const getIngredientListLabel = (key: SmoothieListKey) =>
 	key === MIX_STORAGE_KEYS.fridge ? "Fridge" : "Shopping List";
+
+export const getIngredientMembershipLabel = (
+	membership: IngredientListMembership,
+) => {
+	if (membership.inFridge && membership.inShoppingList) {
+		return "Already in Fridge and Shopping List";
+	}
+	if (membership.inFridge) return "Already in Fridge";
+	if (membership.inShoppingList) return "Already in Shopping List";
+	return "";
+};
 
 export const getIngredientMoveLabel = (key: SmoothieListKey) =>
 	key === MIX_STORAGE_KEYS.fridge ? "Move to Shopping List" : "Move to Fridge";

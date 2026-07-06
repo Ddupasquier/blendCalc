@@ -1478,18 +1478,18 @@
 	:global(.custom-ingredient__field select),
 	:global(.custom-ingredient__destination select) {
 		appearance: none;
-		padding-right: 2.7rem;
+		padding-right: $ingredient-select-chevron-padding-right;
 		background-color: $ingredient-surface-soft;
 		background-image:
 			linear-gradient(45deg, transparent 50%, $ingredient-text-muted 50%),
 			linear-gradient(135deg, $ingredient-text-muted 50%, transparent 50%);
 		background-position:
-			calc(100% - 1.35rem) 52%,
-			calc(100% - 1.05rem) 52%;
+			calc(100% - $ingredient-select-chevron-position-left) 52%,
+			calc(100% - $ingredient-select-chevron-position-right) 52%;
 		background-repeat: no-repeat;
 		background-size:
-			0.34rem 0.34rem,
-			0.34rem 0.34rem;
+			$ingredient-select-chevron-size $ingredient-select-chevron-size,
+			$ingredient-select-chevron-size $ingredient-select-chevron-size;
 	}
 
 	:global(.custom-ingredient__field input::placeholder) {

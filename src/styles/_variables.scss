@@ -431,6 +431,30 @@ $app-gap-sm: 0.5rem;
 // items where the standard small gap creates unnecessary visual separation.
 $app-gap-xs: 0.3rem;
 
+// Micro spacing token for tightly bound text/icon pairs inside one control.
+$app-gap-micro: calc($app-gap-xs / 5);
+
+// Tight spacing token for small icon/label pairs, badge internals, and compact
+// metadata rows that need less separation than `$app-gap-xs`.
+$app-gap-2xs: calc($app-gap-xs / 2);
+
+// Compact inline spacing token for helper/meta rows where `$app-gap-xs` is a
+// little too wide but micro spacing is too tight.
+$app-gap-inline-compact: calc($app-gap-xs / 1.5);
+
+// Badge-adjacent spacing token for count badges and source metadata chips.
+$app-gap-badge-inline: calc($app-gap-xs / 1.7);
+
+$ingredient-list-loading-min-height: 12rem;
+$ingredient-list-sentinel-min-height: $app-gap-micro;
+
+$ingredient-select-chevron-padding-right: calc($app-vertical-stack-gap * 3.6);
+$ingredient-select-chevron-position-left: calc($ingredient-select-chevron-padding-right / 2);
+$ingredient-select-chevron-position-right: calc(
+	$ingredient-select-chevron-padding-right / 2.57
+);
+$ingredient-select-chevron-size: $app-gap-xs;
+
 // Standard page/card padding for primary app sections.
 $app-padding: 1.5rem;
 
@@ -612,6 +636,28 @@ $nutrition-label-hover: #444;
 
 // Nutrition label button radius. Keep small to preserve printed-label styling.
 $nutrition-label-button-radius: 3px;
+
+// Nutrition label outer padding. Keep tokenized because the printed-label UI is
+// dense, but still needs consistent component-owned spacing values.
+$nutrition-label-padding-y: $app-vertical-stack-gap;
+$nutrition-label-padding-x: calc($app-vertical-stack-gap * 1.45);
+$nutrition-label-padding-bottom: calc($app-vertical-stack-gap * 1.45);
+$nutrition-label-padding-y-mobile: calc($app-vertical-stack-gap * 0.87);
+$nutrition-label-padding-x-mobile: calc($app-vertical-stack-gap * 1.13);
+$nutrition-label-padding-bottom-mobile: calc($app-vertical-stack-gap * 1.27);
+
+// Nutrition label internal spacing. These are intentionally tighter than the
+// app section rhythm because printed nutrition labels have dense information.
+$nutrition-label-gap-micro: $app-gap-micro;
+$nutrition-label-gap-tight: $app-gap-xs;
+$nutrition-label-gap-compact: $app-gap-sm;
+$nutrition-label-gap-section: $app-vertical-stack-gap;
+$nutrition-label-column-gap: calc($app-vertical-stack-gap * 1.45);
+$nutrition-label-list-row-padding-y: calc($app-gap-xs / 2.3);
+$nutrition-label-list-row-padding-x: calc($app-gap-xs / 3);
+$nutrition-label-list-status-size: calc($app-control-height-sm * 0.65);
+$nutrition-label-list-status-icon-size: calc($app-control-height-sm * 0.53);
+$nutrition-label-scroll-max-height-mobile: 9.5rem;
 
 // Primary button background. Applied to main actions such as Save, Load, Add,
 // confirmation, and other commitment buttons.

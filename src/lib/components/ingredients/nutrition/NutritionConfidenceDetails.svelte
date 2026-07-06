@@ -143,7 +143,7 @@
 
 	.confidence-details__header {
 		display: grid;
-		gap: 0.1rem;
+		gap: $app-gap-micro;
 		min-width: 0;
 
 		strong {
@@ -184,7 +184,7 @@
 	.confidence-detail {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
-		gap: 0.15rem $app-gap-sm;
+		gap: $app-gap-2xs $app-gap-sm;
 		align-items: center;
 		padding: $app-gap-sm $ingredient-control-padding-x-compact;
 		background: $ingredient-surface-soft;

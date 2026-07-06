@@ -196,7 +196,7 @@
 
 	.saved-ingredient-card__copy {
 		display: grid;
-		gap: calc($app-gap-xs / 5);
+		gap: $app-gap-micro;
 		min-width: 0;
 
 		strong {
@@ -224,7 +224,7 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: calc($app-gap-xs / 1.7);
+		gap: $app-gap-badge-inline;
 		min-width: 0;
 	}
 
@@ -232,7 +232,7 @@
 	.warning-badge {
 		display: inline-flex;
 		align-items: center;
-		gap: calc($app-gap-xs / 2);
+		gap: $app-gap-2xs;
 		max-width: 8rem;
 		padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
 		overflow: hidden;

@@ -2,4 +2,4 @@
 // Public re-exports for convenience
 export * from './utils/food/types';
 export * from './cache';
-export * from './utils/food/fdc';
+export * from './utils/food/sources/fdc';

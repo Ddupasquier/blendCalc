@@ -13,18 +13,22 @@
 		MAX_NUTRITION_VIEWING_GRAMS,
 		MIN_NUTRITION_VIEWING_GRAMS,
 		NUTRITION_VIEWING_GRAM_STEP,
+		stepNutritionViewingGrams,
 	} from "$lib/utils/food/nutrients/nutritionDisplay";
 	import type { FdcFood } from "$lib/utils/food/types";
+	import type { IngredientListMembership } from "$lib/utils/ingredients/ingredientListUi";
 	import NutritionPanel from "./NutritionPanel.svelte";
 
 	let {
 		food,
 		onClose,
 		showListActions = true,
+		listMembership = { inFridge: false, inShoppingList: false },
 	}: {
 		food: FdcFood;
 		onClose: () => void;
 		showListActions?: boolean;
+		listMembership?: IngredientListMembership;
 	} = $props();
 
 	let viewingGrams = $state(DEFAULT_NUTRITION_VIEWING_GRAMS);
@@ -41,17 +45,11 @@
 	});
 
 	const decreaseViewingAmount = () => {
-		viewingGrams = Math.max(
-			MIN_NUTRITION_VIEWING_GRAMS,
-			viewingGrams - NUTRITION_VIEWING_GRAM_STEP,
-		);
+		viewingGrams = stepNutritionViewingGrams(viewingGrams, "decrease");
 	};
 
 	const increaseViewingAmount = () => {
-		viewingGrams = Math.min(
-			MAX_NUTRITION_VIEWING_GRAMS,
-			viewingGrams + NUTRITION_VIEWING_GRAM_STEP,
-		);
+		viewingGrams = stepNutritionViewingGrams(viewingGrams, "increase");
 	};
 </script>
 
@@ -99,7 +97,7 @@
 
 	<ViewBody scroll>
 		<div class="nutrition-detail-view__panel">
-			<NutritionPanel {food} {showListActions} {viewingGrams} />
+			<NutritionPanel {food} {showListActions} {viewingGrams} {listMembership} />
 		</div>
 	</ViewBody>
 </ViewFrame>

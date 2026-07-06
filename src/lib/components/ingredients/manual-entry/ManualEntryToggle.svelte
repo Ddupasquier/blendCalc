@@ -40,7 +40,7 @@
 
 	.manual-entry-toggle__copy {
 		display: grid;
-		gap: calc($app-gap-xs / 5);
+		gap: $app-gap-micro;
 		min-width: 0;
 
 		strong,

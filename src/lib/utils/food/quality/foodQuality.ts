@@ -1,5 +1,5 @@
-import { resolveFdcNutrient, type FdcNutrientSource } from "./fdcNutrients";
-import { NUTRIENT_IDS, type FdcFood } from "./types";
+import { resolveFdcNutrient, type FdcNutrientSource } from "$lib/utils/food/nutrients/fdcNutrients";
+import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 
 const VITAL_NUTRIENTS = [
 	{ id: NUTRIENT_IDS.CALORIES, label: "Calories" },

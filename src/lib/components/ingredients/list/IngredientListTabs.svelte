@@ -65,7 +65,7 @@
 	span {
 		display: inline-block;
 		min-width: 1.3rem;
-		margin-left: calc($app-gap-xs / 1.7);
+		margin-left: $app-gap-badge-inline;
 		padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
 		color: inherit;
 		background: color-mix(in srgb, $ingredient-text-muted 12%, transparent);

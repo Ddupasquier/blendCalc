@@ -1,9 +1,10 @@
 <script lang="ts">
+    import { goto } from "$app/navigation";
+    import { page } from "$app/state";
     import Sliders from "$lib/assets/icons/Sliders.svelte";
     import Plus from "$lib/assets/icons/Plus.svelte";
     import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
     import IconControlButton from "$lib/components/common/buttons/IconControlButton.svelte";
-    import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
     import RightSheet from "$lib/components/common/sheets/RightSheet.svelte";
     import ViewBody from "$lib/components/common/view/ViewBody.svelte";
     import ViewFrame from "$lib/components/common/view/ViewFrame.svelte";
@@ -11,36 +12,36 @@
     import ViewTop from "$lib/components/common/view/ViewTop.svelte";
     import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
     import IngredientActionSheet from "$lib/components/ingredients/sheets/IngredientActionSheet.svelte";
-    import IngredientBulkActions from "$lib/components/ingredients/list/IngredientBulkActions.svelte";
-    import IngredientEmptyState from "$lib/components/ingredients/list/IngredientEmptyState.svelte";
     import IngredientFilterSheet from "$lib/components/ingredients/sheets/IngredientFilterSheet.svelte";
-    import IngredientListTabs from "$lib/components/ingredients/list/IngredientListTabs.svelte";
     import IngredientSearchTrigger from "$lib/components/ingredients/search/IngredientSearchTrigger.svelte";
     import IngredientSearchView from "$lib/components/ingredients/search/IngredientSearchView.svelte";
     import ManualEntryLauncher from "$lib/components/ingredients/manual-entry/ManualEntryLauncher.svelte";
     import ManualEntrySheet from "$lib/components/ingredients/sheets/ManualEntrySheet.svelte";
     import type { ManualEntryCreateContext } from "$lib/components/ingredients/manual-entry/types";
     import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView.svelte";
-    import SavedIngredientCard from "$lib/components/ingredients/list/SavedIngredientCard.svelte";
+    import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList.svelte";
+    import SavedIngredientListLayout from "$lib/components/ingredients/list/SavedIngredientListLayout.svelte";
     import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog.svelte";
-    import {
-        LIST_PAGE_SIZES,
-        LIST_REVEAL_BUFFER_PX,
-    } from "../../defaults/listDefaults";
+    import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
     import type { FdcFood } from "$lib/utils/food/types";
     import {
         areFoodIdsEqual,
-        getFoodCalories,
-        getFoodDisplayCategory,
-        getFoodSourceLabel,
         getIngredientActionKey,
         getIngredientListLabel,
         getIngredientMoveLabel,
         getOppositeIngredientListKey,
-        getPrimaryFoodWarning,
         INGREDIENT_SOURCE_FILTER_OPTIONS,
+        type IngredientListMembership,
         type IngredientActionItem,
     } from "$lib/utils/ingredients/ingredientListUi";
+    import {
+        buildIngredientRouteHref,
+        findIngredientRouteFood,
+        getIngredientRouteState,
+        INGREDIENT_ROUTE_SHEETS,
+        INGREDIENT_ROUTE_VIEWS,
+        type IngredientRoutePatch,
+    } from "$lib/utils/ingredients/ingredientRouteState";
     import {
         FOOD_LIST_SORT_OPTIONS,
         filterItemsByQuery,
@@ -63,7 +64,7 @@
         reconcileCloudCustomFoods,
         readCloudSmoothieListPage,
     } from "$lib/utils/storage/supabase";
-    import { onMount, tick } from "svelte";
+    import { onMount } from "svelte";
     import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
     import { MIX_STORAGE_KEYS } from "../../defaults/mixDefaults";
 
@@ -88,8 +89,7 @@
     let listLoadingError = $state("");
     let listLoadRequestId = 0;
     let loadingMoreList = $state<SmoothieListKey | null>(null);
-    let ingredientListElement = $state<HTMLUListElement | null>(null);
-    let ingredientListSentinel = $state<HTMLLIElement | null>(null);
+    let listViewResetKey = $state(0);
     let selectedListItemIds = $state<Record<SmoothieListKey, number[]>>({
         [MIX_STORAGE_KEYS.fridge]: [],
         [MIX_STORAGE_KEYS.shoppingList]: [],
@@ -100,9 +100,35 @@
 	let renamingItem = $state<{ key: SmoothieListKey; food: FdcFood } | null>(null);
 	let renameBusy = $state(false);
 	let renameError = $state("");
-	let listActionError = $state("");
+    let listActionError = $state("");
     const foodPreferenceContext = getFoodPreferenceContext();
+    const ingredientRouteState = $derived(getIngredientRouteState(page.url));
 
+    const navigateIngredientRoute = (
+        patch: IngredientRoutePatch,
+        { replaceState = false }: { replaceState?: boolean } = {},
+    ) => {
+        const href = buildIngredientRouteHref(page.url, patch);
+        const currentHref = `${page.url.pathname}${page.url.search}${page.url.hash}`;
+        if (href === currentHref) return Promise.resolve();
+        return goto(href, {
+            replaceState,
+            noScroll: true,
+            keepFocus: true,
+        });
+    };
+
+    const closeRoutedPopin = (replaceState = true) =>
+        navigateIngredientRoute(
+            {
+                view: null,
+                sheet: null,
+                foodId: null,
+                listKey: null,
+                showListActions: true,
+            },
+            { replaceState },
+        );
 
     const filterFoods = (foods: FdcFood[]) => {
         const filteredFoods = filterItemsByQuery(
@@ -152,6 +178,23 @@
     const selectedActiveItemIds = $derived.by(
         () => selectedListItemIds[activeList] ?? [],
     );
+    const selectedFoodListMembership = $derived.by<IngredientListMembership>(() => {
+        const foodId = selectedFood?.fdcId;
+        if (!foodId) return { inFridge: false, inShoppingList: false };
+
+        const inFridge =
+            onHand.some((food) => food.fdcId === foodId) ||
+            readSmoothieList(MIX_STORAGE_KEYS.fridge).some(
+                (food) => food.fdcId === foodId,
+            );
+        const inShoppingList =
+            shoppingList.some((food) => food.fdcId === foodId) ||
+            readSmoothieList(MIX_STORAGE_KEYS.shoppingList).some(
+                (food) => food.fdcId === foodId,
+            );
+
+        return { inFridge, inShoppingList };
+    });
     const canRevealMoreActiveItems = $derived(
         activeVisibleList.length < activeFilteredList.length ||
             activeRawList.length < activeTotalCount,
@@ -242,53 +285,114 @@
         }
     };
 
+    const getRouteFood = () =>
+        findIngredientRouteFood(
+            ingredientRouteState.foodId,
+            ingredientRouteState.listKey,
+            onHand,
+            shoppingList,
+            readCustomFoods(),
+        );
+
     const closeIngredientSheet = () => {
         activeSheet = null;
+        void closeRoutedPopin();
     };
 
     const startBarcodeScan = () => {
         searchViewOpen = false;
         activeSheet = "manual-entry";
         scanSignal += 1;
+        void navigateIngredientRoute({
+            view: null,
+            sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+            foodId: null,
+            listKey: null,
+        });
     };
 
     const openManualEntry = () => {
         activeSheet = "manual-entry";
+        void navigateIngredientRoute({
+            view: null,
+            sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+            foodId: null,
+            listKey: null,
+        });
     };
 
     const toggleFilters = () => {
         searchViewOpen = false;
-        activeSheet = activeSheet === "filters" ? null : "filters";
+        const nextSheet = activeSheet === "filters" ? null : "filters";
+        activeSheet = nextSheet;
+        if (nextSheet) {
+            void navigateIngredientRoute({
+                view: null,
+                sheet: INGREDIENT_ROUTE_SHEETS.filters,
+                foodId: null,
+                listKey: null,
+            });
+            return;
+        }
+        void closeRoutedPopin();
     };
 
     const openSearchView = () => {
         activeSheet = null;
         searchViewOpen = true;
+        void navigateIngredientRoute({
+            view: INGREDIENT_ROUTE_VIEWS.search,
+            sheet: null,
+            foodId: null,
+            listKey: null,
+        });
     };
 
     const closeSearchView = () => {
         searchViewOpen = false;
+        void closeRoutedPopin();
     };
 
-    const handleSelect = (food: FdcFood) => {
+    const handleSelect = (food: FdcFood, listKey: SmoothieListKey | null = null) => {
         selectedFood = food;
         selectedFoodShowListActions = true;
+        void navigateIngredientRoute({
+            view: INGREDIENT_ROUTE_VIEWS.nutrition,
+            sheet: null,
+            foodId: food.fdcId,
+            listKey,
+            showListActions: true,
+        });
     };
 
     const handleCreate = (
         food: FdcFood,
         context: ManualEntryCreateContext,
     ) => {
-        closeIngredientSheet();
+        activeSheet = null;
         selectedFood = food;
         selectedFoodShowListActions = !context.addedToList;
+        void navigateIngredientRoute({
+            view: INGREDIENT_ROUTE_VIEWS.nutrition,
+            sheet: null,
+            foodId: food.fdcId,
+            listKey: null,
+            showListActions: !context.addedToList,
+        });
     };
 
     const handleSearchSelect = (food: FdcFood) => {
         searchViewOpen = false;
-        closeIngredientSheet();
+        activeSheet = null;
         selectedFood = food;
         selectedFoodShowListActions = true;
+        void navigateIngredientRoute({
+            view: INGREDIENT_ROUTE_VIEWS.nutrition,
+            sheet: null,
+            foodId: food.fdcId,
+            listKey: null,
+            showListActions: true,
+        });
     };
 
     const addSearchResultToFridge = async (food: FdcFood) => {
@@ -311,6 +415,7 @@
     const closeNutritionDetail = () => {
         selectedFood = null;
         selectedFoodShowListActions = true;
+        void closeRoutedPopin();
     };
 
     const removeFromList = async (key: SmoothieListKey, foodId: number) => {
@@ -325,7 +430,10 @@
 				listActionError = "That ingredient could not be removed. Try again.";
 				return;
 			}
-			if (selectedFood?.fdcId === foodId) selectedFood = null;
+			if (selectedFood?.fdcId === foodId) {
+                selectedFood = null;
+                void closeRoutedPopin();
+            }
 			setSelectedIds(
 				key,
 				(selectedListItemIds[key] ?? []).filter((id) => id !== foodId),
@@ -339,12 +447,19 @@
 	const openRenameDialog = (key: SmoothieListKey, food: FdcFood) => {
 		renamingItem = { key, food };
 		renameError = "";
+        void navigateIngredientRoute({
+            view: null,
+            sheet: INGREDIENT_ROUTE_SHEETS.renameIngredient,
+            foodId: food.fdcId,
+            listKey: key,
+        });
 	};
 
 	const closeRenameDialog = () => {
 		if (renameBusy) return;
 		renamingItem = null;
 		renameError = "";
+        void closeRoutedPopin();
 	};
 
 	const renameListItem = async (name: string) => {
@@ -381,14 +496,12 @@
 				};
 			}
 			renamingItem = null;
+            void closeRoutedPopin();
 			await loadLists();
 		} finally {
 			renameBusy = false;
 		}
 	};
-
-    const isBulkSelected = (key: SmoothieListKey, foodId: number) =>
-        (selectedListItemIds[key] ?? []).includes(foodId);
 
     const setSelectedIds = (key: SmoothieListKey, foodIds: number[]) => {
         selectedListItemIds = {
@@ -443,7 +556,10 @@
                 return;
             }
 
-            if (selectedFood?.fdcId === food.fdcId) selectedFood = null;
+            if (selectedFood?.fdcId === food.fdcId) {
+                selectedFood = null;
+                void closeRoutedPopin();
+            }
             setSelectedIds(
                 sourceKey,
                 (selectedListItemIds[sourceKey] ?? []).filter(
@@ -473,11 +589,18 @@
 
     const openActionSheet = (key: SmoothieListKey, food: FdcFood) => {
         actionSheetItem = { key, food };
+        void navigateIngredientRoute({
+            view: null,
+            sheet: INGREDIENT_ROUTE_SHEETS.ingredientActions,
+            foodId: food.fdcId,
+            listKey: key,
+        });
     };
 
     const closeActionSheet = () => {
         if (movingItem || removingItem) return;
         actionSheetItem = null;
+        void closeRoutedPopin();
     };
 
     const renameFromActionSheet = () => {
@@ -490,6 +613,7 @@
         if (!actionSheetItem) return;
         const currentItem = actionSheetItem;
         actionSheetItem = null;
+        void closeRoutedPopin();
         await moveFoodBetweenLists(currentItem.key, currentItem.food);
     };
 
@@ -497,22 +621,20 @@
         if (!actionSheetItem) return;
         const currentItem = actionSheetItem;
         actionSheetItem = null;
+        void closeRoutedPopin();
         await removeFromList(currentItem.key, currentItem.food.fdcId);
     };
 
     const selectList = (key: SmoothieListKey) => {
+        if (activeList === key) return;
         activeList = key;
-    };
-
-    const resetActiveListScroll = async () => {
-        await tick();
-        ingredientListElement?.scrollTo({ top: 0, behavior: "instant" });
+        listViewResetKey += 1;
     };
 
     const resetVisibleCounts = () => {
         onHandVisibleCount = LIST_PAGE_SIZES.ingredientPills;
         shoppingVisibleCount = LIST_PAGE_SIZES.ingredientPills;
-        void resetActiveListScroll();
+        listViewResetKey += 1;
     };
 
     const revealMoreActiveItems = async () => {
@@ -543,20 +665,6 @@
         }
     };
 
-    const handleActiveListScroll = (event: Event) => {
-        const listElement = event.currentTarget;
-        if (!(listElement instanceof HTMLElement)) return;
-
-        const distanceFromBottom =
-            listElement.scrollHeight -
-            listElement.scrollTop -
-            listElement.clientHeight;
-
-        if (distanceFromBottom <= LIST_REVEAL_BUFFER_PX) {
-            void revealMoreActiveItems();
-        }
-    };
-
     const applyListFilters = ({
         query,
         filterValue,
@@ -576,11 +684,62 @@
         sourceFilter = filterValue;
         listSort = nextSort;
         activeSheet = null;
+        void closeRoutedPopin();
 
         if (unchanged) return;
         resetVisibleCounts();
         void loadLists();
     };
+
+    $effect(() => {
+        const routeState = ingredientRouteState;
+        const routeFood = getRouteFood();
+
+        searchViewOpen = routeState.view === INGREDIENT_ROUTE_VIEWS.search;
+
+        activeSheet =
+            routeState.sheet === INGREDIENT_ROUTE_SHEETS.manualEntry ||
+            routeState.sheet === INGREDIENT_ROUTE_SHEETS.filters
+                ? routeState.sheet
+                : null;
+
+        if (routeState.view === INGREDIENT_ROUTE_VIEWS.nutrition) {
+            const nextFood =
+                selectedFood?.fdcId === routeState.foodId ? selectedFood : routeFood;
+            selectedFood = nextFood;
+            selectedFoodShowListActions = routeState.showListActions;
+        } else {
+            selectedFood = null;
+            selectedFoodShowListActions = true;
+        }
+
+        if (
+            routeState.sheet === INGREDIENT_ROUTE_SHEETS.ingredientActions &&
+            routeState.listKey &&
+            routeFood
+        ) {
+            actionSheetItem = { key: routeState.listKey, food: routeFood };
+        } else if (routeState.sheet !== INGREDIENT_ROUTE_SHEETS.renameIngredient) {
+            actionSheetItem = null;
+        }
+
+        if (
+            routeState.sheet === INGREDIENT_ROUTE_SHEETS.renameIngredient &&
+            routeState.listKey &&
+            routeFood
+        ) {
+            const isSameRenameItem =
+                renamingItem?.key === routeState.listKey &&
+                renamingItem.food.fdcId === routeFood.fdcId;
+            if (!isSameRenameItem) {
+                renamingItem = { key: routeState.listKey, food: routeFood };
+                renameError = "";
+            }
+            actionSheetItem = null;
+        } else if (!renameBusy) {
+            renamingItem = null;
+        }
+    });
 
     $effect(() => {
         onHandVisibleCount = Math.min(
@@ -613,27 +772,6 @@
                 [MIX_STORAGE_KEYS.shoppingList]: nextShoppingIds,
             };
         }
-    });
-
-    $effect(() => {
-        const listElement = ingredientListElement;
-        const sentinel = ingredientListSentinel;
-        if (!listElement || !sentinel) return;
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries.some((entry) => entry.isIntersecting)) {
-                    void revealMoreActiveItems();
-                }
-            },
-            {
-                root: listElement,
-                rootMargin: `${LIST_REVEAL_BUFFER_PX}px 0px`,
-            },
-        );
-
-        observer.observe(sentinel);
-        return () => observer.disconnect();
     });
 
     onMount(() => {
@@ -687,110 +825,38 @@
     </ViewTop>
 
     <ViewBody>
-        <section
-            class="saved-ingredients"
-            aria-labelledby="saved-ingredients-title"
-            aria-busy={listLoading}
+        <SavedIngredientListLayout
+            {activeList}
+            fridgeCount={onHandTotalCount}
+            shoppingListCount={shoppingListTotalCount}
+            {listLoading}
+            {listActionError}
+            {listLoadingError}
+            onSelectList={selectList}
         >
-            <h2 id="saved-ingredients-title" class="sr-only">Saved ingredients</h2>
-            <IngredientListTabs
+            <SavedIngredientList
                 {activeList}
-                fridgeCount={onHandTotalCount}
-                shoppingListCount={shoppingListTotalCount}
-                onSelect={selectList}
+                foods={activeVisibleList}
+                activeRawCount={activeRawList.length}
+                {listLoading}
+                {loadingMoreList}
+                canRevealMore={canRevealMoreActiveItems}
+                selectedFoodId={selectedFood?.fdcId ?? null}
+                selectedIds={selectedActiveItemIds}
+                {removingItem}
+                moving={movingItem !== null}
+                preferenceProfile={foodPreferenceContext.current}
+                resetKey={listViewResetKey}
+                onSelectAll={selectAllActiveItems}
+                onClearSelection={clearActiveSelection}
+                onMoveSelection={moveSelectedItems}
+                onToggle={(foodId) => toggleBulkSelection(activeList, foodId)}
+                onPreview={(food) => handleSelect(food)}
+                onActions={(food) => openActionSheet(activeList, food)}
+                onRemove={(foodId) => removeFromList(activeList, foodId)}
+                onRevealMore={revealMoreActiveItems}
             />
-
-            {#if listActionError}
-                <p class="list-action-error" role="alert">{listActionError}</p>
-            {/if}
-
-            {#if listLoadingError}
-                <p class="list-action-error" role="alert">{listLoadingError}</p>
-            {/if}
-
-            {#if listLoading}
-                <p class="saved-ingredients__loading" role="status" aria-live="polite">
-                    Loading saved ingredients…
-                </p>
-            {/if}
-
-            {#if activeVisibleList.length > 0}
-                <IngredientBulkActions
-                    selectedCount={selectedActiveItemIds.length}
-                    moveTargetLabel={getIngredientListLabel(getOppositeIngredientListKey(activeList))}
-                    moving={movingItem !== null}
-                    onSelectAll={selectAllActiveItems}
-                    onClear={clearActiveSelection}
-                    onMove={moveSelectedItems}
-                />
-            {/if}
-
-            <div class="saved-ingredients__body">
-                {#if activeVisibleList.length > 0}
-                    <ul
-                        class="ingredient-card-list"
-                        aria-label={`${getIngredientListLabel(activeList)} ingredients`}
-                        aria-busy={listLoading || loadingMoreList === activeList}
-                        bind:this={ingredientListElement}
-                        onscroll={handleActiveListScroll}
-                    >
-                        {#each activeVisibleList as food (food.fdcId)}
-                            {@const kcal = getFoodCalories(food)}
-                            {@const warning = getPrimaryFoodWarning(food, foodPreferenceContext.current)}
-                            {@const isChecked = isBulkSelected(activeList, food.fdcId)}
-                            <li>
-                                <SavedIngredientCard
-                                    {food}
-                                    active={selectedFood?.fdcId === food.fdcId}
-                                    checked={isChecked}
-                                    removing={removingItem ===
-                                        getIngredientActionKey(activeList, food.fdcId)}
-                                    {kcal}
-                                    category={getFoodDisplayCategory(food)}
-                                    {warning}
-                                    sourceLabel={getFoodSourceLabel(food)}
-                                    onToggle={() => toggleBulkSelection(activeList, food.fdcId)}
-                                    onPreview={() => handleSelect(food)}
-                                    onActions={() => openActionSheet(activeList, food)}
-                                    onRemove={() => removeFromList(activeList, food.fdcId)}
-                                />
-                            </li>
-                        {/each}
-                        {#if canRevealMoreActiveItems}
-                            <li
-                                bind:this={ingredientListSentinel}
-                                class="ingredient-card-list__sentinel"
-                                aria-hidden="true"
-                            ></li>
-                            <li class="ingredient-card-list__load-more">
-                                <RoundedActionButton
-                                    variant="soft"
-                                    disabled={loadingMoreList !== null}
-                                    onclick={() => void revealMoreActiveItems()}
-                                >
-                                    {loadingMoreList
-                                        ? "Loading…"
-                                        : `Load more ${getIngredientListLabel(activeList).toLowerCase()} items`}
-                                </RoundedActionButton>
-                            </li>
-                        {/if}
-                    </ul>
-                {:else if listLoading}
-                    <div
-                        class="ingredient-list-loading"
-                        role="status"
-                        aria-live="polite"
-                    >
-                        Loading {getIngredientListLabel(activeList).toLowerCase()} ingredients…
-                    </div>
-                {:else}
-                    <IngredientEmptyState
-                        {activeList}
-                        hasItems={activeRawList.length > 0}
-                    />
-                {/if}
-            </div>
-        </section>
+        </SavedIngredientListLayout>
     </ViewBody>
 </ViewFrame>
 
@@ -880,6 +946,7 @@
         <NutritionDetailView
             food={selectedFood}
             showListActions={selectedFoodShowListActions}
+            listMembership={selectedFoodListMembership}
             onClose={closeNutritionDetail}
         />
     {/if}
@@ -938,87 +1005,15 @@
         height: $ingredient-control-icon-size;
     }
 
-    .saved-ingredients {
-        position: relative;
-        z-index: 1;
-        display: grid;
-        grid-template-rows: auto auto auto minmax(0, 1fr);
-        gap: $app-vertical-stack-gap;
-        min-height: 0;
-        padding-top: 0;
-        overflow: hidden;
-    }
-
-    .saved-ingredients__body {
-        grid-row: -2 / -1;
-        height: 100%;
-        min-height: 0;
-        overflow: hidden;
-    }
-
-    .ingredient-card-list {
-        display: grid;
-        align-content: start;
-        gap: $app-vertical-stack-gap;
-        height: 100%;
-        max-height: 100%;
-        min-height: 0;
-        margin: 0;
-        padding: 0 0 $app-vertical-stack-gap;
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        scrollbar-gutter: stable;
-        -webkit-overflow-scrolling: touch;
-        list-style: none;
-    }
-
-    .ingredient-card-list__sentinel {
-        min-height: 1px;
-    }
-
-	.ingredient-card-list__load-more {
-		display: grid;
-		place-items: center;
-		padding: $app-gap-xs 0 $app-gap-sm;
+	.add-ingredient-fab {
+		position: fixed;
+		right: max(
+			$ingredient-shell-padding-x,
+			calc((100vw - $ingredient-shell-max-width) / 2 + $ingredient-shell-padding-x)
+		);
+		bottom: calc($ingredient-shell-nav-height + $app-gap-md);
+		z-index: 12;
 	}
-
-	.saved-ingredients__loading {
-		margin: 0;
-		color: $ingredient-text-muted;
-		font-size: $app-font-size-sm;
-		font-weight: $app-font-weight-bold;
-		line-height: 1.3;
-	}
-
-	.ingredient-list-loading {
-		display: grid;
-		place-items: center;
-		min-height: 12rem;
-		padding: $app-gap-lg;
-		color: $ingredient-text-muted;
-		background: $ingredient-surface-card;
-		border-radius: $ingredient-radius-card;
-		font-size: $app-font-size-md;
-		font-weight: $app-font-weight-bold;
-		text-align: center;
-	}
-
-	.list-action-error {
-		padding: $app-gap-sm;
-		color: $app-warning-strong;
-		background: $app-warning-bg;
-		border: $app-warning-border;
-		border-radius: $app-radius;
-		font-size: $app-font-size-sm;
-		font-weight: $app-font-weight-bold;
-	}
-
-	    .add-ingredient-fab {
-	        position: fixed;
-	        right: max($ingredient-shell-padding-x, calc((100vw - $ingredient-shell-max-width) / 2 + $ingredient-shell-padding-x));
-	        bottom: calc($ingredient-shell-nav-height + $app-gap-md);
-	        z-index: 12;
-	    }
 
 	@media (max-width: $app-breakpoint-xs) {
 		.search-toolbar {

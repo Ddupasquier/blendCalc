@@ -32,10 +32,10 @@
         background: $app-section-bg;
         border: $app-border;
         border-radius: $app-radius;
-        padding: 2em 2.2em 1.5em 2.2em;
+        padding: $app-gap-lg;
         min-width: 320px;
         max-width: 90vw;
-        margin: 1.2rem 0;
+        margin: $app-vertical-stack-gap 0;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -43,15 +43,15 @@
         .prompt-title {
             font-size: 1.13em;
             font-weight: 600;
-            margin-bottom: 0.7em;
+            margin-bottom: $app-vertical-stack-gap;
             color: $app-primary;
             text-align: center;
         }
 
         .prompt-actions {
             display: flex;
-            gap: 1.2em;
-            margin-top: 1.2em;
+            gap: $app-horizontal-control-gap;
+            margin-top: $app-vertical-stack-gap;
         }
     }
 </style>
