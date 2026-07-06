@@ -47,6 +47,7 @@
 				autocomplete="new-password"
 				aria-describedby="password-requirements"
 				minlength={PASSWORD_MIN_LENGTH}
+				placeholder="Use a long passphrase"
 				required
 				disabled={isSubmitting}
 				bind:value={password}
@@ -59,6 +60,7 @@
 				name="passwordConfirmation"
 				autocomplete="new-password"
 				minlength={PASSWORD_MIN_LENGTH}
+				placeholder="Enter it again"
 				required
 				disabled={isSubmitting}
 				bind:value={passwordConfirmation}

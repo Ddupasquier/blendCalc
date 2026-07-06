@@ -65,7 +65,7 @@ export type BarcodeLookupResult =
 	| { status: "error"; barcode: string; message: string };
 
 type CoreNutritionKey = "calories" | "fat" | "carbs" | "fiber" | "sugar" | "protein";
-type CoreNutritionValues = Record<CoreNutritionKey, number>;
+type CoreNutritionValues = Record<CoreNutritionKey, number | null>;
 
 const coreNutrientDefinitions: Array<{
 	key: CoreNutritionKey;
@@ -132,14 +132,14 @@ const nutritionToNutrients = (
 	sourceReference?: string,
 ): FdcNutrient[] =>
 	coreNutrientDefinitions.flatMap((definition) => {
-		const value = toNumber(nutrition[definition.key]);
-		if (value <= 0) return [];
+		const value = nutrition[definition.key];
+		if (value === null || !Number.isFinite(value)) return [];
 		return [{
 			nutrientId: definition.nutrientId,
 			nutrientName: definition.nutrientName,
 			nutrientNumber: definition.nutrientNumber,
 			unitName: definition.unitName,
-			value,
+			value: Math.max(0, value),
 			valueOrigin: "reported",
 			source,
 			sourceReference,
@@ -247,7 +247,7 @@ const getOpenFoodFactsNutrient = (
 	keys,
 	servingWeightGrams,
 	useServingValues,
-)?.value ?? 0;
+)?.value ?? null;
 
 const getOpenFoodFactsReportedNutrientIds = (
 	nutriments: OpenFoodFactsNutriments,
@@ -306,7 +306,7 @@ export const mapOpenFoodFactsProduct = (
 	const metadata = parseOpenFoodFactsMetadata(product);
 
 	const nutrition = {
-		calories: energyKcal || energyKilojoules / 4.184,
+		calories: energyKcal ?? (energyKilojoules === null ? null : energyKilojoules / 4.184),
 		fat: getOpenFoodFactsNutrient(
 			product.nutriments,
 			["fat"],

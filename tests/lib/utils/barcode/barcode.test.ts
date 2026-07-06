@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	cleanBarcode,
+	getBarcodeInputValidationMessage,
 	getBarcodeLookupCandidates,
 	hasValidGtinCheckDigit,
 	normalizeBarcode,
@@ -22,5 +23,18 @@ describe("barcode normalization", () => {
 		expect(getBarcodeLookupCandidates("4006381333931")).toEqual(
 			expect.arrayContaining(["4006381333931", "04006381333931"]),
 		);
+	});
+
+	it("explains incomplete and invalid manually typed barcodes", () => {
+		expect(getBarcodeInputValidationMessage("12345")).toMatch(
+			/barcode is incomplete/i,
+		);
+		expect(getBarcodeInputValidationMessage("123456789012345")).toMatch(
+			/barcode is too long/i,
+		);
+		expect(getBarcodeInputValidationMessage("4006381333932")).toMatch(
+			/check digit/i,
+		);
+		expect(getBarcodeInputValidationMessage("4006381333931")).toBe("");
 	});
 });

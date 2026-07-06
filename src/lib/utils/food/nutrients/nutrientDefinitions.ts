@@ -53,6 +53,22 @@ type ManualEntryFieldRecord = Pick<
 	nutrient_manual_entry_groups: ManualEntryGroupRecord | null;
 };
 
+type RawManualEntryFieldRecord = Pick<
+	Database["public"]["Tables"]["nutrient_manual_entry_fields"]["Row"],
+	| "nutrient_id"
+	| "nutrient_type"
+	| "group_id"
+	| "display_label"
+	| "required_for_manual_entry"
+	| "sort_order"
+	| "dedupe_key"
+>;
+
+type RequiredManualEntryNutrientRecord = Pick<
+	Database["public"]["Tables"]["nutrient_manual_entry_required_nutrients"]["Row"],
+	"nutrient_id" | "group_id" | "field_sort_order"
+>;
+
 const EMPTY_GROUPS: ManualEntryNutrientGroupsByStep = {
 	macros: [],
 	extended: [],
@@ -221,23 +237,104 @@ export const readManualEntryNutrientGroups = async (
 ): Promise<ManualEntryNutrientGroupsByStep | null> => {
 	if (!supabase) return null;
 
-	const { data, error } = await supabase
-		.from("nutrient_manual_entry_fields")
-		.select(
-			"nutrient_id, nutrient_type, group_id, display_label, required_for_manual_entry, sort_order, dedupe_key, nutrient_definitions(nutrient_id, nutrient_name, nutrient_number, default_unit_name), nutrient_manual_entry_groups!inner(id, entry_step, title, sort_order)",
-		)
-		.eq("enabled", true)
-		.eq("nutrient_manual_entry_groups.enabled", true)
-		.order("sort_order", { ascending: true });
+	const [
+		{ data: fields, error: fieldsError },
+		{ data: requiredNutrients, error: requiredNutrientsError },
+	] = await Promise.all([
+		supabase
+			.from("nutrient_manual_entry_fields")
+			.select(
+				"nutrient_id, nutrient_type, group_id, display_label, required_for_manual_entry, sort_order, dedupe_key",
+			)
+			.eq("enabled", true)
+			.order("sort_order", { ascending: true }),
+		supabase
+			.from("nutrient_manual_entry_required_nutrients")
+			.select("nutrient_id, group_id, field_sort_order")
+			.eq("enabled", true)
+			.order("field_sort_order", { ascending: true }),
+	]);
 
-	if (error) {
+	if (fieldsError || requiredNutrientsError) {
 		if (import.meta.env.DEV) {
-			console.error("Unable to load manual entry nutrient groups", error);
+			console.error("Unable to load manual entry nutrient fields", {
+				fieldsError,
+				requiredNutrientsError,
+			});
 		}
 		return null;
 	}
 
-	const definitions = (data as ManualEntryFieldRecord[])
+	const rawFields = (fields ?? []) as RawManualEntryFieldRecord[];
+	if (rawFields.length === 0) return EMPTY_GROUPS;
+	const requiredRows =
+		(requiredNutrients ?? []) as RequiredManualEntryNutrientRecord[];
+	const requiredRowsByNutrientId = new Map(
+		requiredRows.map((row) => [row.nutrient_id, row]),
+	);
+	const requiredGroupIds = requiredRows.map((row) => row.group_id);
+
+	const groupIds = [
+		...new Set([
+			...rawFields.map((field) => field.group_id),
+			...requiredGroupIds,
+		]),
+	];
+	const nutrientIds = [...new Set(rawFields.map((field) => field.nutrient_id))];
+
+	const [
+		{ data: groups, error: groupsError },
+		{ data: nutrients, error: nutrientsError },
+	] = await Promise.all([
+		supabase
+			.from("nutrient_manual_entry_groups")
+			.select("id, entry_step, title, sort_order")
+			.in("id", groupIds)
+			.eq("enabled", true),
+		supabase
+			.from("nutrient_definitions")
+			.select("nutrient_id, nutrient_name, nutrient_number, default_unit_name")
+			.in("nutrient_id", nutrientIds),
+	]);
+
+	if (groupsError || nutrientsError) {
+		if (import.meta.env.DEV) {
+			console.error("Unable to load manual entry nutrient metadata", {
+				groupsError,
+				nutrientsError,
+			});
+		}
+		return null;
+	}
+
+	const groupsById = new Map(
+		((groups ?? []) as ManualEntryGroupRecord[]).map((group) => [
+			group.id,
+			group,
+		]),
+	);
+	const nutrientsById = new Map(
+		((nutrients ?? []) as NutrientDefinitionRecord[]).map((nutrient) => [
+			nutrient.nutrient_id,
+			nutrient,
+		]),
+	);
+
+	const definitions = rawFields
+		.map(
+			(field): ManualEntryFieldRecord => {
+				const requiredRow = requiredRowsByNutrientId.get(field.nutrient_id);
+				return {
+					...field,
+					group_id: requiredRow?.group_id ?? field.group_id,
+					sort_order: requiredRow?.field_sort_order ?? field.sort_order,
+					required_for_manual_entry: Boolean(requiredRow),
+					nutrient_definitions: nutrientsById.get(field.nutrient_id) ?? null,
+					nutrient_manual_entry_groups:
+						groupsById.get(requiredRow?.group_id ?? field.group_id) ?? null,
+				};
+			},
+		)
 		.map(toManualEntryNutrientDefinition)
 		.filter((definition): definition is ManualEntryNutrientDefinition => Boolean(definition));
 

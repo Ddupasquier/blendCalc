@@ -25,7 +25,7 @@
 	}: {
 		servingLabel: string;
 		resolvedServingLabel: string;
-		servingWeightGrams: number;
+		servingWeightGrams: number | null;
 		useVolumeEquivalent: boolean;
 		volumeQuantity: number | null;
 		volumeUnit: ServingMeasureUnit;
@@ -38,6 +38,17 @@
 		onBack: () => void;
 		onNext: () => void;
 	} = $props();
+
+	const servingWeightDisplay = $derived(
+		Number.isFinite(servingWeightGrams) && (servingWeightGrams ?? 0) > 0
+			? servingWeightGrams
+			: "",
+	);
+	const servingWeightCopy = $derived(
+		Number.isFinite(servingWeightGrams) && (servingWeightGrams ?? 0) > 0
+			? `${servingWeightGrams}g`
+			: "the entered gram weight",
+	);
 </script>
 
 <div class="custom-ingredient__step">
@@ -55,8 +66,9 @@
 				type="number"
 				min="0.1"
 				step="any"
-				placeholder="e.g. 240"
-				value={servingWeightGrams}
+				placeholder="e.g. 30"
+				value={servingWeightDisplay}
+				onfocus={(event) => event.currentTarget.select()}
 				oninput={(event) => onServingWeightChange(event.currentTarget.valueAsNumber)}
 			/>
 		</label>
@@ -87,6 +99,7 @@
 						step="any"
 						placeholder="2"
 						value={volumeQuantity ?? ""}
+						onfocus={(event) => event.currentTarget.select()}
 						oninput={(event) => onVolumeQuantityChange(Number.isFinite(event.currentTarget.valueAsNumber) ? event.currentTarget.valueAsNumber : null)}
 					/>
 				</label>
@@ -107,7 +120,7 @@
 			</div>
 			<p class="custom-ingredient__helper">
 				This records the entered volume as weighing
-				<strong>{servingWeightGrams}g</strong>. Turn off volume measurements if the package
+				<strong>{servingWeightCopy}</strong>. Turn off volume measurements if the package
 				does not provide both values.
 			</p>
 		{/if}

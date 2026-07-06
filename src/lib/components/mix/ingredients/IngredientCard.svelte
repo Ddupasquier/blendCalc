@@ -82,8 +82,10 @@
 				type="number"
 				min="0"
 				step="any"
+				placeholder="Amount"
 				value={quantity}
 				aria-label={`Quantity for ${food.description}`}
+				onfocus={(event) => event.currentTarget.select()}
 				oninput={(event) =>
 					onServingChange(food, event.currentTarget.value, unit)}
 			/>

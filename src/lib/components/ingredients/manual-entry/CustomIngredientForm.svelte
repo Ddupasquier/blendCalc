@@ -44,11 +44,15 @@
 	} from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 	import ManualEntryStepTabs from "$lib/components/ingredients/manual-entry/ManualEntryStepTabs.svelte";
 	import type { ManualEntryValidationItem } from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
-	import { normalizeBarcode } from "$lib/utils/barcode/barcode";
+	import {
+		getBarcodeInputValidationMessage,
+		normalizeBarcode,
+	} from "$lib/utils/barcode/barcode";
 	import {
 		lookupBarcodeProduct,
 		type BarcodeProductDraft,
 	} from "$lib/utils/barcode/productLookup";
+	import { barcodeDraftHasEntryChanges } from "$lib/utils/barcode/barcodeDraftComparison";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 	import { submitSharedProduct } from "$lib/utils/products/catalog";
 	import { getSupabaseBrowserClient } from "$lib/supabase/client";
@@ -58,6 +62,7 @@
 	type NutrientValueState = Record<number, number>;
 	type StepValidationItem = ManualEntryValidationItem & {
 		step: ManualEntryStepId;
+		showImmediately?: boolean;
 	};
 	type ManualEntrySummaryItem = {
 		label: string;
@@ -77,6 +82,8 @@
 		macros: [],
 		extended: [],
 	};
+	const volumeAmountRequiredMessage =
+		"Enter a volume amount or turn off Label includes volume.";
 
 	let {
 		onCreate,
@@ -105,7 +112,7 @@
 	let brandOwner = $state("");
 	let category = $state("");
 	let servingLabel = $state("");
-	let servingWeightGrams = $state(30);
+	let servingWeightGrams = $state<number | null>(null);
 	let volumeQuantity = $state<number | null>(null);
 	let volumeUnit = $state<ServingMeasureUnit>("tbsp");
 	let useVolumeEquivalent = $state(false);
@@ -130,6 +137,7 @@
 	let checkingBarcodeReference = $state(false);
 	let checkedBarcodeReferenceKey = $state("");
 	let barcodeReferenceDraft = $state<BarcodeProductDraft | null>(null);
+	let barcodeReferenceSourceDraft = $state<BarcodeProductDraft | null>(null);
 	let barcodeReferenceAcceptedBarcode = $state("");
 	let barcodeLookupDebounce = $state<ReturnType<typeof setTimeout> | null>(null);
 	let scannerOpen = $state(false);
@@ -157,6 +165,7 @@
 	let stepWarningMessage = $state("");
 	let stepWarningStep = $state<ManualEntryStepId | null>(null);
 	let stepWarningTimer = $state<ReturnType<typeof setTimeout> | null>(null);
+	let validationAttemptedSteps = $state<Partial<Record<ManualEntryStepId, boolean>>>({});
 	let labelDetailsElement = $state<HTMLDetailsElement | null>(null);
 	let manualBodyElement = $state<HTMLFieldSetElement | null>(null);
 	let ingredientNameInput = $state<HTMLInputElement | null>(null);
@@ -178,7 +187,7 @@
 			if (!groups) {
 				manualEntryNutrientGroups = emptyManualEntryNutrientGroups;
 				manualEntryNutrientError =
-					"Nutrient fields could not be loaded. Try again in a moment.";
+					"Nutrition fields could not load. Refresh and try again before continuing.";
 			} else {
 				manualEntryNutrientGroups = groups;
 			}
@@ -252,23 +261,23 @@
 	);
 	const activeCategory = $derived(category || categories[0] || "");
 	const normalizedName = $derived(name.trim());
+	const barcodeValidationMessage = $derived(
+		getBarcodeInputValidationMessage(barcode),
+	);
 	const hasValidBarcode = $derived(Boolean(normalizeBarcode(barcode)));
-	const canShareWithCatalog = $derived(
-		hasValidBarcode && barcodeSource !== "open-food-facts" && barcodeSource !== "community",
-	);
-	const requiresCatalogEvidence = $derived(
-		shareWithCatalog && barcodeSource === "manual",
-	);
 	const resolvedServingLabel = $derived(
 		buildCustomServingLabel({
 			servingLabel,
-			servingWeightGrams,
+			servingWeightGrams:
+				Number.isFinite(servingWeightGrams) && (servingWeightGrams ?? 0) > 0
+					? servingWeightGrams ?? 0
+					: 0,
 			volumeQuantity: useVolumeEquivalent ? volumeQuantity ?? undefined : undefined,
 			volumeUnit: useVolumeEquivalent ? volumeUnit : undefined,
 		}),
 	);
 	const getNutrientValue = (nutrientId: number) =>
-		manualNutrientValues[nutrientId] ?? 0;
+		manualNutrientValues[nutrientId] ?? null;
 	const getManualNutrientValuesById = () => {
 		const values = new Map<number, number>();
 		for (const [nutrientId, value] of Object.entries(manualNutrientValues)) {
@@ -317,6 +326,7 @@
 		if (!trimmedBarcode) {
 			checkedBarcodeReferenceKey = "";
 			barcodeReferenceDraft = null;
+			barcodeReferenceSourceDraft = null;
 			barcodeReferenceAcceptedBarcode = "";
 			if (!lookingUpBarcode) barcodeMessage = "";
 			return;
@@ -325,6 +335,7 @@
 		const normalizedBarcode = normalizeBarcode(trimmedBarcode);
 		if (!normalizedBarcode) {
 			barcodeReferenceDraft = null;
+			barcodeReferenceSourceDraft = null;
 			barcodeReferenceAcceptedBarcode = "";
 			return;
 		}
@@ -341,6 +352,7 @@
 
 			if (lookup.status === "found") {
 				barcodeReferenceDraft = lookup.draft;
+				barcodeReferenceSourceDraft = lookup.draft;
 				const mismatchCopy = namesLookDifferent(normalizedName, lookup.draft.name)
 					? ` Lookup found “${lookup.draft.name}”, so reviewers can compare it with your typed label if you share this product.`
 					: " Reviewers can use this source reference if you share this product.";
@@ -349,6 +361,7 @@
 			}
 
 			barcodeReferenceDraft = null;
+			barcodeReferenceSourceDraft = null;
 			barcodeReferenceAcceptedBarcode = "";
 			barcodeMessage =
 				lookup.status === "not-found"
@@ -373,6 +386,7 @@
 		barcodeSource = "manual";
 		checkedBarcodeReferenceKey = "";
 		barcodeReferenceDraft = null;
+		barcodeReferenceSourceDraft = null;
 		barcodeReferenceAcceptedBarcode = "";
 		if (!lookingUpBarcode) barcodeMessage = "";
 		scheduleManualBarcodeReferenceCheck();
@@ -397,6 +411,7 @@
 		volumeUnit = draft.volumeEquivalent?.unit ?? "tbsp";
 		barcode = draft.barcode;
 		barcodeSource = draft.source === "shared-catalog" ? "community" : draft.source;
+		barcodeReferenceSourceDraft = draft;
 		barcodeReferenceAcceptedBarcode = draft.barcode;
 		reportedNutrientIds = [...draft.reportedNutrientIds];
 		ingredients = draft.ingredients ?? "";
@@ -433,22 +448,39 @@
 
 	const getBarcodeReferenceReviewFlags = () => {
 		const normalizedBarcode = normalizeBarcode(barcode);
+		const sourceDraft = barcodeReferenceSourceDraft;
 		if (
 			!shareWithCatalog ||
 			!normalizedBarcode ||
-			!barcodeReferenceDraft ||
-			barcodeReferenceDraft.barcode !== normalizedBarcode ||
-			barcodeReferenceAcceptedBarcode === normalizedBarcode ||
-			barcodeSource !== "manual"
+			!sourceDraft ||
+			sourceDraft.barcode !== normalizedBarcode
 		) {
 			return [];
 		}
 
-		const sourceReference = barcodeReferenceDraft.sourceReference
-			? ` Reference: ${barcodeReferenceDraft.sourceReference}.`
+		const hasChanges = barcodeDraftHasEntryChanges(
+			sourceDraft,
+			currentBarcodeReferenceEntry,
+		);
+		if (!hasChanges) return [];
+
+		const sourceReference = sourceDraft.sourceReference
+			? ` Reference: ${sourceDraft.sourceReference}.`
 			: "";
+		if (sourceDraft.source === "shared-catalog") {
+			return [
+				`User submitted changes for an existing blendCalc catalog product. Source product: “${sourceDraft.name}”.${sourceReference} Compare user-entered data against active source/API data before approval.`,
+			];
+		}
+
+		if (
+			barcodeSource !== "manual" &&
+			barcodeReferenceAcceptedBarcode === normalizedBarcode
+		) {
+			return [];
+		}
 		return [
-			`User chose to share manually entered product data instead of autofilling from ${barcodeReferenceDraft.sourceLabel}. Source product: “${barcodeReferenceDraft.name}”.${sourceReference} Compare user-entered data against active source/API data before approval.`,
+			`User chose to share manually entered product data instead of autofilling from ${sourceDraft.sourceLabel}. Source product: “${sourceDraft.name}”.${sourceReference} Compare user-entered data against active source/API data before approval.`,
 		];
 	};
 
@@ -461,10 +493,22 @@
 		field: ManualEntryNutrientDefinition,
 		value: string,
 	) => {
+		if (value.trim() === "") {
+			const { [field.nutrientId]: _removedValue, ...nextValues } =
+				manualNutrientValues;
+			const { [field.nutrientId]: _removedTouched, ...nextTouched } =
+				manualTouchedNutrientIds;
+			manualNutrientValues = nextValues;
+			manualTouchedNutrientIds = nextTouched;
+			return;
+		}
+
 		const numericValue = Number(value);
 		const nextValue = Number.isFinite(numericValue)
 			? Math.max(0, numericValue)
-			: 0;
+			: null;
+		if (nextValue === null) return;
+
 		manualNutrientValues = {
 			...manualNutrientValues,
 			[field.nutrientId]: nextValue,
@@ -497,7 +541,7 @@
 		requiredManualEntryNutrientFields
 			.filter((field) => {
 				const value = getManualNutrientValue(field);
-				return !Number.isFinite(value) || value <= 0;
+				return value === null || !Number.isFinite(value);
 			})
 			.map((field) => ({
 				message: `${stripUnitFromNutrientLabel(field.label)} is required`,
@@ -512,6 +556,7 @@
 						message: "Nutrient fields are still loading. Try again in a moment.",
 						tone: "error",
 						step: "macros",
+						showImmediately: true,
 					}
 				: null,
 			manualEntryNutrientError
@@ -519,6 +564,7 @@
 						message: manualEntryNutrientError,
 						tone: "error",
 						step: "macros",
+						showImmediately: true,
 					}
 				: null,
 			!loadingManualEntryNutrients &&
@@ -529,6 +575,7 @@
 							"Required nutrient fields are unavailable. Try again after nutrient metadata loads.",
 						tone: "error",
 						step: "macros",
+						showImmediately: true,
 					}
 				: null,
 		].filter(Boolean) as StepValidationItem[],
@@ -542,7 +589,7 @@
 						step: "identity",
 					}
 				: null,
-			!Number.isFinite(servingWeightGrams) || servingWeightGrams <= 0
+			!Number.isFinite(servingWeightGrams) || (servingWeightGrams ?? 0) <= 0
 				? {
 						message: "Serving weight is required",
 						tone: "error",
@@ -552,15 +599,18 @@
 			useVolumeEquivalent &&
 			(volumeQuantity === null || !Number.isFinite(volumeQuantity) || volumeQuantity <= 0)
 				? {
-						message:
-							"Volume amount is required when volume measurements are enabled",
+						message: volumeAmountRequiredMessage,
 						tone: "error",
 						step: "servings",
 					}
 				: null,
 			!activeCategory
 				? {
-						message: "Food categories are still loading. Try again in a moment.",
+						message: loadingCategoryOptions
+							? "Food categories are still loading. Try again in a moment."
+							: categoryOptionsError || visibleCategoryOptions.length === 0
+								? "Food categories are unavailable. Try again after categories finish syncing."
+								: "Please select a category for this ingredient.",
 						tone: "error",
 						step: "identity",
 					}
@@ -571,6 +621,7 @@
 							"Nutrition validation rules are still loading. Try again in a moment.",
 						tone: "error",
 						step: "macros",
+						showImmediately: true,
 					}
 				: null,
 			nutrientRelationshipRuleError
@@ -578,6 +629,7 @@
 						message: nutrientRelationshipRuleError,
 						tone: "error",
 						step: "macros",
+						showImmediately: true,
 					}
 				: null,
 			...manualEntryNutrientAvailabilityItems,
@@ -588,6 +640,42 @@
 	const blockingValidation = $derived(
 		customIngredientValidationItems.find((item) => item.tone === "error") ?? null,
 	);
+	const hideMacroUnavailableStatus = $derived(
+		Boolean(manualEntryNutrientError) ||
+			(!loadingManualEntryNutrients &&
+				!manualEntryNutrientError &&
+				requiredManualEntryNutrientFields.length === 0),
+	);
+	const getVisibleValidationItems = (items: StepValidationItem[]) =>
+		items.filter(
+			(item) =>
+				!(
+					stepWarningStep === item.step &&
+					stepWarningMessage &&
+					item.message === stepWarningMessage
+				),
+		);
+	const getAttemptedValidationItems = (items: StepValidationItem[]) =>
+		getVisibleValidationItems(items).filter(
+			(item) => item.showImmediately || validationAttemptedSteps[item.step],
+		);
+
+	const markValidationAttemptedThroughStep = (targetStep: ManualEntryStepId) => {
+		const targetIndex = manualEntrySteps.findIndex((step) => step.id === targetStep);
+		const nextAttemptedSteps = { ...validationAttemptedSteps };
+
+		for (const step of manualEntrySteps.slice(0, Math.max(0, targetIndex))) {
+			nextAttemptedSteps[step.id] = true;
+		}
+
+		validationAttemptedSteps = nextAttemptedSteps;
+	};
+
+	const markAllValidationAttempted = () => {
+		validationAttemptedSteps = Object.fromEntries(
+			manualEntrySteps.map((step) => [step.id, true]),
+		) as Partial<Record<ManualEntryStepId, boolean>>;
+	};
 
 	const clearStepWarning = () => {
 		stepWarningMessage = "";
@@ -608,6 +696,15 @@
 			stepWarningTimer = null;
 		}, 3200);
 	};
+
+	$effect(() => {
+		if (!stepWarningMessage || !stepWarningStep) return;
+		const warningStillApplies = customIngredientValidationItems.some(
+			(item) =>
+				item.step === stepWarningStep && item.message === stepWarningMessage,
+		);
+		if (!warningStillApplies) clearStepWarning();
+	});
 
 	const getFirstBlockingValidationThroughStep = (
 		targetStep: ManualEntryStepId,
@@ -644,10 +741,13 @@
 			const existing = nutrientsById.get(field.nutrientId);
 			const wasEdited = Boolean(manualTouchedNutrientIds[field.nutrientId]);
 			const shouldPersistManualValue =
-				wasEdited || !existing || field.requiredForManualEntry || value > 0;
+				wasEdited ||
+				!existing ||
+				field.requiredForManualEntry ||
+				(value !== null && value > 0);
 
 			if (!shouldPersistManualValue || !Number.isFinite(value)) continue;
-			if (value <= 0 && !field.requiredForManualEntry) continue;
+			if (value <= 0 && !field.requiredForManualEntry && !wasEdited) continue;
 
 			const keepImportedMetadata = Boolean(existing && !wasEdited);
 
@@ -671,6 +771,64 @@
 		return [...nutrientsById.values()];
 	};
 
+	const currentBarcodeReferenceEntry = $derived({
+		name: normalizedName,
+		brandOwner,
+		category: activeCategory,
+		servingLabel,
+		servingWeightGrams,
+		volumeEquivalent:
+			useVolumeEquivalent && volumeQuantity
+				? {
+						quantity: volumeQuantity,
+						unit: volumeUnit,
+					}
+				: null,
+		nutrients: getSaveNutrients(),
+		ingredients,
+		ingredientList,
+		allergens,
+		traces,
+		dietaryTags,
+		labels,
+		categories,
+	});
+	const hasSharedCatalogBarcodeReference = $derived(
+		barcodeReferenceSourceDraft?.source === "shared-catalog" &&
+			normalizeBarcode(barcode) === barcodeReferenceSourceDraft.barcode,
+	);
+	const barcodeReferenceHasChanges = $derived(
+		barcodeDraftHasEntryChanges(
+			barcodeReferenceSourceDraft,
+			currentBarcodeReferenceEntry,
+		),
+	);
+	const sharedCatalogMatchIsUnchanged = $derived(
+		Boolean(hasSharedCatalogBarcodeReference && !barcodeReferenceHasChanges),
+	);
+	const canShareWithCatalog = $derived(
+		hasValidBarcode &&
+			barcodeSource !== "open-food-facts" &&
+			!sharedCatalogMatchIsUnchanged,
+	);
+	const requiresCatalogEvidence = $derived(
+		shareWithCatalog &&
+			(barcodeSource === "manual" ||
+				Boolean(hasSharedCatalogBarcodeReference && barcodeReferenceHasChanges)),
+	);
+	const shareUnavailableMessage = $derived(
+		sharedCatalogMatchIsUnchanged
+			? "This barcode already exists in blendCalc with matching data, so it cannot be shared again. You can still save it to your own profile."
+			: "",
+	);
+	const shareHelpMessage = $derived(
+		hasSharedCatalogBarcodeReference && barcodeReferenceHasChanges
+			? "Submit your edits for moderator review. Your private ingredient can still be saved now."
+			: canShareWithCatalog
+				? "Make this ingredient available to other users. All submissions are reviewed for accuracy."
+				: "Add a valid UPC or barcode if you want to submit this ingredient for shared search.",
+	);
+
 	const getOptionalNutrientCount = () => {
 		const requiredIds = new Set(
 			requiredManualEntryNutrientFields.map((field) => field.nutrientId),
@@ -683,7 +841,7 @@
 	const getSummaryItems = (): ManualEntrySummaryItem[] =>
 		requiredManualEntryNutrientFields.slice(0, 4).map((field) => ({
 			label: stripUnitFromNutrientLabel(field.label),
-			value: getManualNutrientValue(field),
+			value: getManualNutrientValue(field) ?? 0,
 			unitName: field.unitName,
 		}));
 
@@ -694,20 +852,22 @@
 		brandOwner = "";
 		category = "";
 		servingLabel = "";
-		servingWeightGrams = 30;
+		servingWeightGrams = null;
 		volumeQuantity = null;
 		volumeUnit = "tbsp";
 		useVolumeEquivalent = false;
 		manualNutrientValues = {};
 		manualTouchedNutrientIds = {};
+		validationAttemptedSteps = {};
 		importedNutrients = [];
 		barcode = "";
 		barcodeSource = "manual";
 		barcodeMessage = "";
 		checkingBarcodeReference = false;
-		checkedBarcodeReferenceKey = "";
-		barcodeReferenceDraft = null;
-		barcodeReferenceAcceptedBarcode = "";
+			checkedBarcodeReferenceKey = "";
+			barcodeReferenceDraft = null;
+			barcodeReferenceSourceDraft = null;
+			barcodeReferenceAcceptedBarcode = "";
 		clearBarcodeLookupDebounce();
 		shareWithCatalog = false;
 		frontPhoto = null;
@@ -748,6 +908,7 @@
 
 		if (activeStep === "identity") await checkManualBarcodeReference();
 
+		markValidationAttemptedThroughStep(targetStep);
 		const blockingStepValidation =
 			getFirstBlockingValidationThroughStep(targetStep);
 		if (blockingStepValidation) {
@@ -762,10 +923,10 @@
 
 	const goNext = async () => {
 		if (activeStep === "identity") await checkManualBarcodeReference();
+		const targetStep = manualEntrySteps[activeStepIndex + 1]?.id ?? activeStep;
+		markValidationAttemptedThroughStep(targetStep);
 		const blockingStepValidation =
-			getFirstBlockingValidationThroughStep(
-				manualEntrySteps[activeStepIndex + 1]?.id ?? activeStep,
-			);
+			getFirstBlockingValidationThroughStep(targetStep);
 		if (blockingStepValidation) {
 			showStepWarning(blockingStepValidation.message, blockingStepValidation.step);
 			return;
@@ -1016,14 +1177,18 @@
 		lastOutcome = null;
 
 		if (loadingNutrientRelationshipRules) {
+			markValidationAttemptedThroughStep("share");
 			error = "Nutrition validation rules are still loading. Try again in a moment.";
 			activeStep = "macros";
+			showStepWarning(error, "macros");
 			return;
 		}
 
 		if (blockingValidation) {
+			markAllValidationAttempted();
 			error = blockingValidation.message;
 			activeStep = blockingValidation.step;
+			showStepWarning(blockingValidation.message, blockingValidation.step);
 			return;
 		}
 
@@ -1031,15 +1196,19 @@
 			useVolumeEquivalent &&
 			(volumeQuantity === null || volumeQuantity <= 0)
 		) {
-			error = "Volume amount must be greater than 0 when volume measurements are enabled.";
+			markValidationAttemptedThroughStep("share");
+			error = volumeAmountRequiredMessage;
 			activeStep = "servings";
+			showStepWarning(error, "servings");
 			return;
 		}
 
 		const normalizedBarcode = barcode.trim() ? normalizeBarcode(barcode) : null;
 		if (barcode.trim() && !normalizedBarcode) {
+			markValidationAttemptedThroughStep("share");
 			error = "Enter a valid 8, 12, 13, or 14 digit UPC/EAN barcode.";
 			activeStep = "identity";
+			showStepWarning(error, "identity");
 			return;
 		}
 		if (normalizedBarcode) await checkManualBarcodeReference();
@@ -1048,8 +1217,10 @@
 			requiresCatalogEvidence &&
 			(!frontPhoto || !nutritionPhoto || !barcodePhoto)
 		) {
+			markAllValidationAttempted();
 			error = "Add front package, nutrition label, and barcode photos before sharing this product.";
 			activeStep = "share";
+			showStepWarning(error, "share");
 			return;
 		}
 
@@ -1062,7 +1233,7 @@
 			name,
 			brandOwner,
 			servingLabel: resolvedServingLabel,
-			servingWeightGrams,
+			servingWeightGrams: servingWeightGrams ?? 0,
 			volumeQuantity: useVolumeEquivalent ? volumeQuantity ?? undefined : undefined,
 			volumeUnit: useVolumeEquivalent ? volumeUnit : undefined,
 			barcode: normalizedBarcode ?? undefined,
@@ -1211,6 +1382,7 @@
 						{loadingCategoryOptions}
 						{categoryOptionsError}
 						{barcodeMessage}
+						{barcodeValidationMessage}
 						{checkingBarcodeReference}
 						barcodeSuggestion={barcodeReferenceDraft
 							? {
@@ -1243,7 +1415,7 @@
 						}))}
 						onServingLabelChange={(value) => (servingLabel = value)}
 						onServingWeightChange={(value) =>
-							(servingWeightGrams = Number.isFinite(value) ? value : 0)}
+							(servingWeightGrams = Number.isFinite(value) ? value : null)}
 						onUseVolumeChange={(value) => (useVolumeEquivalent = value)}
 						onVolumeQuantityChange={(value) => (volumeQuantity = value)}
 						onVolumeUnitChange={(value) => (volumeUnit = value)}
@@ -1256,8 +1428,11 @@
 						loading={loadingManualEntryNutrients}
 						error={manualEntryNutrientError}
 						helper="Enter values from the nutrition label for the serving above. The app stores normalized per-100g values. Fields marked * are required."
-						validationItems={customIngredientValidationItems.filter(
-							(item) => item.step === "macros",
+						hideUnavailableStatus={hideMacroUnavailableStatus}
+						validationItems={getAttemptedValidationItems(
+							customIngredientValidationItems.filter(
+								(item) => item.step === "macros",
+							),
 						)}
 						getValue={getManualNutrientValue}
 						onValueChange={setManualNutrientValue}
@@ -1285,11 +1460,13 @@
 						{activeCategory}
 						summaryNutrients={getSummaryItems()}
 						optionalNutrientCount={getOptionalNutrientCount()}
-						validationItems={customIngredientValidationItems}
+						validationItems={getAttemptedValidationItems(customIngredientValidationItems)}
 						{barcodeMessage}
 						{hasValidBarcode}
 						{barcodeSource}
 						{canShareWithCatalog}
+						{shareUnavailableMessage}
+						{shareHelpMessage}
 						{shareWithCatalog}
 						{requiresCatalogEvidence}
 						{saveDestination}
@@ -1449,6 +1626,7 @@
 		text-transform: none;
 	}
 
+	:global(.custom-ingredient__field-info),
 	:global(.custom-ingredient__field-status) {
 		display: block;
 		padding: $ingredient-status-padding-y $ingredient-status-padding-x;

@@ -59,7 +59,9 @@
 					type="number"
 					min="0"
 					step="any"
+					placeholder={`Target ${nutrient.unit}`}
 					value={nutrientGoals[Number(nutrient.id)] ?? getGoal(nutrient)}
+					onfocus={(event) => event.currentTarget.select()}
 					oninput={(event) =>
 						onUpdateGoal(nutrient.id, event.currentTarget.value)}
 				/>

@@ -19,7 +19,7 @@
 		error?: string;
 		accordion?: boolean;
 		defaultOpenFirst?: boolean;
-		getValue: (field: ManualEntryNutrientDefinition) => number;
+		getValue: (field: ManualEntryNutrientDefinition) => number | null;
 		onValueChange: (field: ManualEntryNutrientDefinition, value: string) => void;
 		isRequired?: (field: ManualEntryNutrientDefinition) => boolean;
 	} = $props();
@@ -33,6 +33,14 @@
 
 	const getInputId = (field: ManualEntryNutrientDefinition) =>
 		`manual-entry-nutrient-${toDomSafeId(field.dedupeKey || field.nutrientId)}`;
+
+	const isOptionalGroup = (group: ManualEntryNutrientGroup) =>
+		group.fields.every((field) => !isRequired(field));
+
+	const getInputValue = (field: ManualEntryNutrientDefinition) => {
+		const value = getValue(field);
+		return Number.isFinite(value) ? value : "";
+	};
 </script>
 
 {#if loading}
@@ -52,7 +60,14 @@
 		{#each groups as group, index}
 			{#if accordion}
 				<details class="manual-nutrients__group" open={defaultOpenFirst && index === 0}>
-					<summary>{group.title}</summary>
+					<summary>
+						<span class="manual-nutrients__group-title">
+							{group.title}
+							{#if isOptionalGroup(group)}
+								<small>optional</small>
+							{/if}
+						</span>
+					</summary>
 					<div class="manual-nutrients__fields">
 						{#each group.fields as field (field.dedupeKey || field.nutrientId)}
 							<label for={getInputId(field)}>
@@ -60,8 +75,6 @@
 									{field.label}
 									{#if isRequired(field)}
 										<em>*</em>
-									{:else}
-										<small>optional</small>
 									{/if}
 								</span>
 								<input
@@ -70,8 +83,10 @@
 									type="number"
 									min="0"
 									step="any"
+									placeholder="0"
 									aria-required={isRequired(field)}
-									value={getValue(field)}
+									value={getInputValue(field)}
+									onfocus={(event) => event.currentTarget.select()}
 									oninput={(event) => onValueChange(field, event.currentTarget.value)}
 								/>
 							</label>
@@ -81,7 +96,14 @@
 			{:else}
 				<section class="manual-nutrients__group manual-nutrients__group--static">
 					{#if groups.length > 1}
-						<h3>{group.title}</h3>
+						<h3>
+							<span class="manual-nutrients__group-title">
+								{group.title}
+								{#if isOptionalGroup(group)}
+									<small>optional</small>
+								{/if}
+							</span>
+						</h3>
 					{/if}
 					<div class="manual-nutrients__fields">
 						{#each group.fields as field (field.dedupeKey || field.nutrientId)}
@@ -90,8 +112,6 @@
 									{field.label}
 									{#if isRequired(field)}
 										<em>*</em>
-									{:else}
-										<small>optional</small>
 									{/if}
 								</span>
 								<input
@@ -100,8 +120,10 @@
 									type="number"
 									min="0"
 									step="any"
+									placeholder="0"
 									aria-required={isRequired(field)}
-									value={getValue(field)}
+									value={getInputValue(field)}
+									onfocus={(event) => event.currentTarget.select()}
 									oninput={(event) => onValueChange(field, event.currentTarget.value)}
 								/>
 							</label>
@@ -163,6 +185,22 @@
 		}
 	}
 
+	.manual-nutrients__group-title {
+		display: inline-flex;
+		align-items: center;
+		gap: $app-gap-xs;
+
+		small {
+			padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
+			color: $ingredient-text-muted;
+			background: $ingredient-surface-control;
+			border-radius: $ingredient-radius-pill;
+			font-size: $app-font-size-xs;
+			font-weight: $app-font-weight-medium;
+			text-transform: none;
+		}
+	}
+
 	.manual-nutrients__group--static {
 		h3 {
 			cursor: default;
@@ -187,16 +225,6 @@
 		em {
 			color: $ingredient-accent-danger;
 			font-style: normal;
-		}
-
-		small {
-			padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
-			color: $ingredient-text-muted;
-			background: $ingredient-surface-control;
-			border-radius: $ingredient-radius-pill;
-			font-size: $app-font-size-xs;
-			font-weight: $app-font-weight-medium;
-			text-transform: none;
 		}
 	}
 

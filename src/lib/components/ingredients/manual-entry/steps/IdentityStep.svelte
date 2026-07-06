@@ -11,6 +11,7 @@
 		loadingCategoryOptions,
 		categoryOptionsError,
 		barcodeMessage,
+		barcodeValidationMessage,
 		checkingBarcodeReference,
 		barcodeSuggestion = null,
 		onNameChange,
@@ -32,6 +33,7 @@
 		loadingCategoryOptions: boolean;
 		categoryOptionsError: string;
 		barcodeMessage: string;
+		barcodeValidationMessage: string;
 		checkingBarcodeReference: boolean;
 		barcodeSuggestion: {
 			name: string;
@@ -70,12 +72,16 @@
 			oninput={(event) => onBarcodeChange(event.currentTarget.value)}
 			onblur={onBarcodeBlur}
 		/>
-		<small>
+		<small class="custom-ingredient__field-info">
 			We’ll check trusted sources and offer autofill if existing data is available.
 		</small>
 		{#if checkingBarcodeReference}
 			<small class="custom-ingredient__field-status" role="status">
 				Checking barcode sources…
+			</small>
+		{:else if barcodeValidationMessage}
+			<small class="custom-ingredient__field-status" role="status">
+				{barcodeValidationMessage}
 			</small>
 		{:else if barcodeMessage}
 			<small class="custom-ingredient__field-status" role="status">

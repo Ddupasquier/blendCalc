@@ -65,6 +65,38 @@ describe("barcode product mapping", () => {
 		);
 	});
 
+	it("keeps Open Food Facts core nutrients when the source reports zero", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Zero macro drink",
+				serving_size: "100 g",
+				nutriments: {
+					"energy-kcal_100g": 50,
+					fat_100g: 0,
+					carbohydrates_100g: 13,
+					sugars_100g: 0,
+					proteins_100g: 0,
+				},
+			},
+			"4006381333931",
+		);
+
+		expect(draft?.nutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.FAT, value: 0 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.SUGAR, value: 0 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.PROTEIN, value: 0 }),
+			]),
+		);
+		expect(draft?.reportedNutrientIds).toEqual(
+			expect.arrayContaining([
+				NUTRIENT_IDS.FAT,
+				NUTRIENT_IDS.SUGAR,
+				NUTRIENT_IDS.PROTEIN,
+			]),
+		);
+	});
+
 	it("does not infer density from a volume-only serving", () => {
 		const draft = mapOpenFoodFactsProduct(
 			{

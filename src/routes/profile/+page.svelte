@@ -491,6 +491,7 @@
 							value={incomingFoodPreferenceValues.defaultSmoothieServingSize}
 							placeholder="Optional"
 							disabled={foodPreferencesDisabled}
+							onfocus={(event) => event.currentTarget.select()}
 						/>
 						<select
 							name="defaultSmoothieServingUnit"

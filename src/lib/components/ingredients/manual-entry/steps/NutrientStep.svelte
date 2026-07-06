@@ -16,6 +16,7 @@
 		validationItems = [],
 		accordion = true,
 		defaultOpenFirst = true,
+		hideUnavailableStatus = false,
 		getValue,
 		onValueChange,
 		isRequired,
@@ -29,7 +30,8 @@
 		validationItems?: ManualEntryValidationItem[];
 		accordion?: boolean;
 		defaultOpenFirst?: boolean;
-		getValue: (field: ManualEntryNutrientDefinition) => number;
+		hideUnavailableStatus?: boolean;
+		getValue: (field: ManualEntryNutrientDefinition) => number | null;
 		onValueChange: (field: ManualEntryNutrientDefinition, value: string) => void;
 		isRequired: (field: ManualEntryNutrientDefinition) => boolean;
 		onBack: () => void;
@@ -42,16 +44,18 @@
 
 	<ManualEntryValidationList items={validationItems} />
 
-	<ManualEntryNutrientFields
-		{groups}
-		{loading}
-		{error}
-		{accordion}
-		{defaultOpenFirst}
-		{getValue}
-		onValueChange={onValueChange}
-		{isRequired}
-	/>
+	{#if !hideUnavailableStatus || loading || groups.length > 0}
+		<ManualEntryNutrientFields
+			{groups}
+			{loading}
+			error={hideUnavailableStatus ? "" : error}
+			{accordion}
+			{defaultOpenFirst}
+			{getValue}
+			onValueChange={onValueChange}
+			{isRequired}
+		/>
+	{/if}
 
 	<div class="custom-ingredient__actions">
 		<button type="button" class="custom-ingredient__secondary" onclick={onBack}>

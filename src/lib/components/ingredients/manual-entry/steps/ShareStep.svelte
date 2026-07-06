@@ -26,6 +26,8 @@
 		hasValidBarcode,
 		barcodeSource,
 		canShareWithCatalog,
+		shareUnavailableMessage,
+		shareHelpMessage,
 		shareWithCatalog,
 		requiresCatalogEvidence,
 		saveDestination,
@@ -56,6 +58,8 @@
 		hasValidBarcode: boolean;
 		barcodeSource: FdcFood["barcodeSource"];
 		canShareWithCatalog: boolean;
+		shareUnavailableMessage: string;
+		shareHelpMessage: string;
 		shareWithCatalog: boolean;
 		requiresCatalogEvidence: boolean;
 		saveDestination: SmoothieListKey | "custom-only";
@@ -118,27 +122,27 @@
 		</p>
 	{/if}
 
-	<label
-		class="custom-ingredient__share-toggle"
-		class:custom-ingredient__share-toggle--disabled={!canShareWithCatalog}
-	>
-		<span>
-			<strong>Share with community</strong>
-			<small>
-				{canShareWithCatalog
-					? "Make this ingredient available to other users. All submissions are reviewed for accuracy."
-					: "Add a valid UPC or barcode if you want to submit this ingredient for shared search."}
-			</small>
-		</span>
-		<ToggleSwitch
-			id="custom-ingredient-share-product"
-			name="custom-ingredient-share-product"
-			ariaLabel="Share with community"
-			disabled={!canShareWithCatalog}
-			checked={shareWithCatalog}
-			onChange={onShareChange}
-		/>
-	</label>
+	{#if shareUnavailableMessage}
+		<p class="custom-ingredient__status" role="status">{shareUnavailableMessage}</p>
+	{:else}
+		<label
+			class="custom-ingredient__share-toggle"
+			class:custom-ingredient__share-toggle--disabled={!canShareWithCatalog}
+		>
+			<span>
+				<strong>Share with community</strong>
+				<small>{shareHelpMessage}</small>
+			</span>
+			<ToggleSwitch
+				id="custom-ingredient-share-product"
+				name="custom-ingredient-share-product"
+				ariaLabel="Share with community"
+				disabled={!canShareWithCatalog}
+				checked={shareWithCatalog}
+				onChange={onShareChange}
+			/>
+		</label>
+	{/if}
 
 	{#if requiresCatalogEvidence}
 		<section class="custom-ingredient__evidence" aria-labelledby="product-evidence-title">

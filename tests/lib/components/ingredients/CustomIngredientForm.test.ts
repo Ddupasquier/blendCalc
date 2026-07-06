@@ -345,7 +345,7 @@ const fillRequiredCustomIngredient = async (
 		fat?: string;
 		carbs?: string;
 		protein?: string;
-		sodium?: string;
+		sodium?: string | null;
 	} = {},
 ) => {
 	await openManualForm();
@@ -385,9 +385,11 @@ const fillRequiredCustomIngredient = async (
 	await fireEvent.input(screen.getByLabelText(/protein/i), {
 		target: { value: options.protein ?? "2" },
 	});
-	await fireEvent.input(screen.getByLabelText(/sodium/i), {
-		target: { value: options.sodium ?? "120" },
-	});
+	if (options.sodium !== null) {
+		await fireEvent.input(screen.getByLabelText(/sodium/i), {
+			target: { value: options.sodium ?? "120" },
+		});
+	}
 	await continueToNextStep();
 	await continueToNextStep();
 	if (options.destination) {
@@ -498,16 +500,40 @@ describe("CustomIngredientForm", () => {
 		);
 	});
 
-	it("requires DB-backed sodium before saving manual nutrition", async () => {
+	it("requires DB-backed sodium before saving manual nutrition when blank", async () => {
 		const onCreate = vi.fn();
 		render(CustomIngredientForm, { props: { onCreate } });
 
 		await fillRequiredCustomIngredient("Unsalted test label", {
-			sodium: "0",
+			sodium: null,
 		});
 
 		expect(screen.getAllByText("Sodium is required").length).toBeGreaterThan(0);
 		expect(onCreate).not.toHaveBeenCalled();
+	});
+
+	it("accepts typed zero values for required manual nutrients", async () => {
+		const onCreate = vi.fn();
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await fillRequiredCustomIngredient("Zero fat label", {
+			fat: "0",
+			protein: "0",
+			sodium: "0",
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+		const savedNutrients = onCreate.mock.calls[0][0].foodNutrients;
+		expect(savedNutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ nutrientId: 1004, value: 0 }),
+				expect.objectContaining({ nutrientId: 1003, value: 0 }),
+				expect.objectContaining({ nutrientId: 1093, value: 0 }),
+			]),
+		);
 	});
 
 	it("requires choosing a real category instead of the placeholder", async () => {
@@ -561,6 +587,20 @@ describe("CustomIngredientForm", () => {
 			barcode: "04006381333931",
 			barcodeSource: "manual",
 		});
+	});
+
+	it("shows an incomplete barcode warning before lookup", async () => {
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openManualForm();
+		const barcodeInput = screen.getByLabelText(/upc \/ barcode/i);
+		await fireEvent.input(barcodeInput, {
+			target: { value: "12345" },
+		});
+		await fireEvent.blur(barcodeInput);
+
+		expect(screen.getByText(/barcode is incomplete/i)).toBeInTheDocument();
+		expect(barcodeLookupMocks.lookupBarcodeProduct).not.toHaveBeenCalled();
 	});
 
 	it("checks a manually entered barcode without overwriting the typed label", async () => {
@@ -667,6 +707,158 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByText(/autofilled from USDA FDC/i)).toBeInTheDocument();
 	});
 
+	it("does not offer community sharing when an autofilled catalog product is unchanged", async () => {
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft: {
+				barcode: "00021130462506",
+				name: "Strawberry Jelly, Strawberry",
+				brandOwner: "Safeway, Inc.",
+				servingLabel: "50g serving",
+				servingWeightGrams: 50,
+				nutrients: makeTestNutrients({
+					calories: 50,
+					fat: 0,
+					carbs: 13,
+					fiber: 0,
+					sugar: 9,
+					protein: 0,
+					sodium: 0,
+				}),
+				reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
+				categories: ["Jams"],
+				source: "shared-catalog",
+				sourceLabel: "blendCalc verified catalog",
+				sourceReference: "shared-product-1",
+			},
+		});
+
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: "00021130462506" },
+		});
+		await waitFor(() =>
+			expect(screen.getByRole("button", { name: /autofill/i })).toBeInTheDocument(),
+		);
+		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
+		await fireEvent.click(screen.getByRole("button", { name: /^share$/i }));
+
+		expect(
+			screen.getByText(/already exists in blendCalc with matching data/i),
+		).toBeInTheDocument();
+		expect(screen.queryByLabelText(/share with community/i)).not.toBeInTheDocument();
+	});
+
+	it("allows community sharing when a catalog product is autofilled and edited", async () => {
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft: {
+				barcode: "00021130462506",
+				name: "Strawberry Jelly, Strawberry",
+				brandOwner: "Safeway, Inc.",
+				servingLabel: "50g serving",
+				servingWeightGrams: 50,
+				nutrients: makeTestNutrients({
+					calories: 50,
+					fat: 0,
+					carbs: 13,
+					fiber: 0,
+					sugar: 9,
+					protein: 0,
+					sodium: 0,
+				}),
+				reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
+				categories: ["Jams"],
+				source: "shared-catalog",
+				sourceLabel: "blendCalc verified catalog",
+				sourceReference: "shared-product-1",
+			},
+		});
+
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: "00021130462506" },
+		});
+		await waitFor(() =>
+			expect(screen.getByRole("button", { name: /autofill/i })).toBeInTheDocument(),
+		);
+		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
+		await fireEvent.input(screen.getByLabelText(/food name/i), {
+			target: { value: "Strawberry Jelly, Strawberry updated" },
+		});
+		await fireEvent.click(screen.getByRole("button", { name: /^share$/i }));
+
+		const shareToggle = screen.getByLabelText(/share with community/i);
+		expect(shareToggle).not.toBeDisabled();
+		await fireEvent.click(shareToggle);
+		expect(screen.getByText(/photos for catalog review/i)).toBeInTheDocument();
+	});
+
+	it("clears required nutrient warnings when barcode autofill fills reported zero values", async () => {
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft: {
+				barcode: "04006381333931",
+				name: "Zero macro source product",
+				brandOwner: "Source brand",
+				servingLabel: "100g serving",
+				servingWeightGrams: 100,
+				nutrients: makeTestNutrients({
+					calories: 50,
+					fat: 0,
+					carbs: 13,
+					fiber: 0,
+					sugar: 0,
+					protein: 0,
+					sodium: 0,
+				}),
+				reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
+				categories: ["Other"],
+				source: "usda",
+				sourceLabel: "USDA FDC",
+				sourceReference: "12345",
+			},
+		});
+
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openManualForm();
+		await fillIdentityStep("Typed zero macro label");
+		await continueToNextStep();
+		await fireEvent.input(screen.getByLabelText(/weight \(g\)/i), {
+			target: { value: "100" },
+		});
+		await continueToNextStep();
+		await continueToNextStep();
+
+		expect(screen.getAllByText("Total Fat is required").length).toBeGreaterThan(0);
+		expect(screen.getAllByText("Protein is required").length).toBeGreaterThan(0);
+		expect(screen.getAllByText(/sodium.*is required/i).length).toBeGreaterThan(0);
+
+		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: "4006381333931" },
+		});
+		await waitFor(() =>
+			expect(screen.getByRole("button", { name: /autofill/i })).toBeInTheDocument(),
+		);
+		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
+		await fireEvent.click(screen.getByRole("button", { name: /macros/i }));
+
+		await waitFor(() => {
+			expect(screen.queryByText("Total Fat is required")).not.toBeInTheDocument();
+			expect(screen.queryByText("Protein is required")).not.toBeInTheDocument();
+			expect(screen.queryByText(/sodium.*is required/i)).not.toBeInTheDocument();
+		});
+		expect(screen.getByLabelText(/total fat/i)).toHaveValue(0);
+		expect(screen.getByLabelText(/protein/i)).toHaveValue(0);
+		expect(screen.getByLabelText(/sodium/i)).toHaveValue(0);
+	});
+
 	it("passes a moderator review flag when shared manual barcode data ignores a source match", async () => {
 		const onCreate = vi.fn();
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
@@ -746,7 +938,7 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByText(/records the entered volume as weighing/i)).toBeInTheDocument();
 	});
 
-	it("requires volume amount before leaving servings when volume measurements are enabled", async () => {
+	it("requires volume amount before leaving servings when label includes volume", async () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
 		await openManualForm();
@@ -759,7 +951,7 @@ describe("CustomIngredientForm", () => {
 		await continueToNextStep();
 
 		expect(
-			screen.getByText(/volume amount is required when volume measurements are enabled/i),
+			screen.getByText(/enter a volume amount or turn off label includes volume/i),
 		).toBeInTheDocument();
 		expect(screen.getByLabelText(/volume in this serving/i)).toBeInTheDocument();
 	});

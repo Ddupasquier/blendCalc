@@ -85,7 +85,7 @@
 				name="text-input-dialog-value"
 				type="text"
 				bind:value
-				{placeholder}
+				placeholder={placeholder || label}
 				disabled={busy}
 				aria-invalid={error ? "true" : undefined}
 				aria-describedby={error ? "text-input-dialog-error" : undefined}
