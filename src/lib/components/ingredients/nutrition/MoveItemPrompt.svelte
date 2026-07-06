@@ -1,4 +1,6 @@
 <script lang="ts">
+    import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+
     let {
         message,
         onConfirm,
@@ -15,18 +17,12 @@
 <div class="prompt-modal move-prompt">
     <div class="prompt-title">{message}</div>
     <div class="prompt-actions">
-        <button
-            class="prompt-btn confirm"
-            type="button"
-            onclick={onConfirm}
-            disabled={busy}>{busy ? "Moving…" : "Move"}</button
-        >
-        <button
-            class="prompt-btn"
-            type="button"
-            onclick={onCancel}
-            disabled={busy}>Cancel</button
-        >
+        <RoundedActionButton variant="primary" busy={busy} onclick={onConfirm}>
+            {busy ? "Moving…" : "Move"}
+        </RoundedActionButton>
+        <RoundedActionButton variant="quiet" disabled={busy} onclick={onCancel}>
+            Cancel
+        </RoundedActionButton>
     </div>
 </div>
 
@@ -56,35 +52,6 @@
             display: flex;
             gap: 1.2em;
             margin-top: 1.2em;
-
-            .prompt-btn {
-                background: $app-accent;
-                color: $app-primary;
-                border: 1px solid $app-accent;
-                border-radius: $app-radius-pill;
-                padding: 0.5em 1.3em;
-                font-size: 1em;
-                font-family: $app-button-font-family;
-                font-weight: $app-button-font-weight;
-                line-height: $app-button-line-height;
-                cursor: pointer;
-                transition: background 0.13s;
-
-                &.confirm {
-                    background: $app-primary;
-                    color: $app-btn-text;
-                    border: 1px solid $app-primary;
-                }
-
-                &:focus {
-                    outline: $app-focus-outline;
-                }
-
-                &:disabled {
-                    cursor: wait;
-                    opacity: 0.65;
-                }
-            }
         }
     }
 </style>

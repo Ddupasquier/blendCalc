@@ -1,5 +1,5 @@
 <script lang="ts">
-	import PillRow from "$lib/components/common/PillRow.svelte";
+	import PillRow from "$lib/components/common/display/PillRow.svelte";
 
 	type Props = {
 		availableOptions: string[];

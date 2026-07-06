@@ -1,5 +1,5 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
-import type { SavedDrink } from "$lib/utils/storage/savedDrinks";
+import type { SavedDrink } from "$lib/utils/storage/client/savedDrinks";
 import {
 	CLOUD_CURSOR_PAGE_SIZE,
 	getCurrentUserId,

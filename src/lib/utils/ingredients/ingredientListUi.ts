@@ -1,9 +1,9 @@
 import { MIX_STORAGE_KEYS } from "../../../defaults/mixDefaults";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
-import { getFdcNutrientValue } from "$lib/utils/food/fdcNutrients";
+import { getFdcNutrientValue } from "$lib/utils/food/nutrients/fdcNutrients";
 import { getFoodPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
 import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
-import type { SmoothieListKey } from "$lib/utils/storage/smoothieLists";
+import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 
 export type IngredientActionItem = {
 	key: SmoothieListKey;

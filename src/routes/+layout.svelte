@@ -6,12 +6,19 @@
 	import DailyWelcome from "$lib/components/app/DailyWelcome.svelte";
 	import TabNavigation from "$lib/components/app/TabNavigation.svelte";
 	import TutorialOverlay from "$lib/components/app/TutorialOverlay.svelte";
+	import {
+		APP_DESCRIPTION,
+		APP_NAME,
+		APP_NUTRITION_PREVIEW_ALT,
+		APP_OG_IMAGE_URL,
+		APP_PRODUCTION_ORIGIN,
+	} from "$lib/config/brand";
 	import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 	import { setFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import {
 		clearLegacyAppStorage,
 		setActiveStorageUserId,
-	} from "$lib/utils/storage/storageScope";
+	} from "$lib/utils/storage/client/storageScope";
 	import { saveTutorialChoice } from "$lib/utils/tutorial/tutorial";
 	import type { LayoutData } from "./$types";
 	import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
@@ -72,46 +79,34 @@
 </script>
 
 <svelte:head>
-	<title>Smoothie Mixer</title>
+	<title>{APP_NAME}</title>
 	<meta
 		name="description"
-		content="Build, compare, and save smoothie recipes with nutrition goals, ingredient amounts, custom foods, and visual nutrient tracking."
+		content={APP_DESCRIPTION}
 	/>
 	<meta name="theme-color" content="#5f564f" />
 	<link rel="icon" href={favicon} />
-	<link rel="canonical" href="https://smoothie-mixer.vercel.app/" />
+	<link rel="canonical" href={`${APP_PRODUCTION_ORIGIN}/`} />
 	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://smoothie-mixer.vercel.app/" />
-	<meta property="og:title" content="Smoothie Mixer" />
+	<meta property="og:url" content={`${APP_PRODUCTION_ORIGIN}/`} />
+	<meta property="og:title" content={APP_NAME} />
 	<meta
 		property="og:description"
-		content="Build, compare, and save smoothie recipes with nutrition goals, ingredient amounts, custom foods, and visual nutrient tracking."
+		content={APP_DESCRIPTION}
 	/>
-	<meta
-		property="og:image"
-		content="https://smoothie-mixer.vercel.app/og-image.png"
-	/>
+	<meta property="og:image" content={APP_OG_IMAGE_URL} />
 	<meta property="og:image:type" content="image/png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
-	<meta
-		property="og:image:alt"
-		content="Smoothie Mixer nutrition graph preview"
-	/>
+	<meta property="og:image:alt" content={APP_NUTRITION_PREVIEW_ALT} />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Smoothie Mixer" />
+	<meta name="twitter:title" content={APP_NAME} />
 	<meta
 		name="twitter:description"
-		content="Build, compare, and save smoothie recipes with nutrition goals, ingredient amounts, custom foods, and visual nutrient tracking."
+		content={APP_DESCRIPTION}
 	/>
-	<meta
-		name="twitter:image"
-		content="https://smoothie-mixer.vercel.app/og-image.png"
-	/>
-	<meta
-		name="twitter:image:alt"
-		content="Smoothie Mixer nutrition graph preview"
-	/>
+	<meta name="twitter:image" content={APP_OG_IMAGE_URL} />
+	<meta name="twitter:image:alt" content={APP_NUTRITION_PREVIEW_ALT} />
 </svelte:head>
 
 {#if data.authUser}

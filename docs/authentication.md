@@ -21,7 +21,7 @@ Vercel Production and Preview environments:
 ```text
 PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
-PUBLIC_SITE_URL=https://smoothie-mixer.vercel.app
+PUBLIC_SITE_URL=https://blendcalc.vercel.app
 ```
 
 In Vercel project settings, keep **Automatically expose System Environment
@@ -33,8 +33,8 @@ environment variable or browser code.
 
 In **Authentication → URL Configuration**:
 
-- Site URL: `https://smoothie-mixer.vercel.app`
-- Redirect URL: `https://smoothie-mixer.vercel.app/auth/callback`
+- Site URL: `https://blendcalc.vercel.app`
+- Redirect URL: `https://blendcalc.vercel.app/auth/callback`
 - Redirect URL: `http://localhost:5173/auth/callback`
 - Preview Redirect URL: `https://*-<vercel-account-slug>.vercel.app/auth/callback`
 
@@ -46,7 +46,7 @@ In **Authentication → Sign In / Providers → Google**, use the Google client 
 and secret. In Google Cloud, configure:
 
 - JavaScript origin: `http://localhost:5173`
-- JavaScript origin: `https://smoothie-mixer.vercel.app`
+- JavaScript origin: `https://blendcalc.vercel.app`
 - Redirect URI: the Supabase callback displayed in the Google provider panel,
   such as `https://YOUR_PROJECT.supabase.co/auth/v1/callback`
 

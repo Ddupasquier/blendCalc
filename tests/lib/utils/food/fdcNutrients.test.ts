@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	findFdcNutrient,
 	getFdcNutrientValue,
-} from "$lib/utils/food/fdcNutrients";
+} from "$lib/utils/food/nutrients/fdcNutrients";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 
 const sunflowerOilSearchResult = {

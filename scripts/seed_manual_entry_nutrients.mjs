@@ -451,7 +451,7 @@ const fetchOpenFoodFactsPage = async (query) => {
 	const response = await fetch(url, {
 		headers: {
 			accept: "application/json",
-			"user-agent": "SmoothieMixer/1.0 (manual nutrient observation seed)",
+			"user-agent": "blendCalc/1.0 (manual nutrient observation seed)",
 		},
 	});
 	if (!response.ok) {

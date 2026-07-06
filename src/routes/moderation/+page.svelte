@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import type { SubmitFunction } from "@sveltejs/kit";
+	import { APP_NAME } from "$lib/config/brand";
 	import type { ActionData, PageData } from "./$types";
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -27,7 +28,7 @@
 </script>
 
 <svelte:head>
-	<title>Moderation · Smoothie Mixer</title>
+	<title>Moderation · {APP_NAME}</title>
 	<meta name="robots" content="noindex,nofollow" />
 </svelte:head>
 

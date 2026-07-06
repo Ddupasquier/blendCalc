@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import CustomIngredientOutcome from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
 import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
-import { createCustomFood } from "$lib/utils/food/customFoods";
+import { createCustomFood } from "$lib/utils/food/custom/customFoods";
 
 const outcomeFood = createCustomFood({
 	name: "Moveable snack",

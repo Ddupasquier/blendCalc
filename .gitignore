@@ -21,6 +21,11 @@ Thumbs.db
 # Generated API audit output
 /scripts/output/
 
+# Local QA task tracker and screenshot references
+/docs/qa-tasks.md
+/docs/QA/qa-tasks.md
+/docs/QA/assets/
+
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*

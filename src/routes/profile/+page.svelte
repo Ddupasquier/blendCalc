@@ -3,6 +3,7 @@
 	import { invalidateAll } from "$app/navigation";
 	import User from "$lib/assets/icons/User.svelte";
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker.svelte";
+	import { APP_NAME } from "$lib/config/brand";
 	import {
 		getServingSizeDisplayValue,
 		type DefaultServingUnit,
@@ -283,8 +284,8 @@
 </script>
 
 <svelte:head>
-	<title>Profile · Smoothie Mixer</title>
-	<meta name="description" content="Manage your optional Smoothie Mixer profile details." />
+	<title>Profile · {APP_NAME}</title>
+	<meta name="description" content={`Manage your optional ${APP_NAME} profile details.`} />
 </svelte:head>
 
 <div class="profile-page">

@@ -1,33 +1,33 @@
 <script lang="ts">
-	import GoalTargets from "$lib/components/mix/GoalTargets.svelte";
-	import IngredientChooser from "$lib/components/mix/IngredientChooser.svelte";
-	import MixEmptyState from "$lib/components/mix/MixEmptyState.svelte";
-	import NutrientAdjustmentSuggestions from "$lib/components/mix/NutrientAdjustmentSuggestions.svelte";
-	import NutrientSelector from "$lib/components/mix/NutrientSelector.svelte";
-	import PointShape from "$lib/components/mix/PointShape.svelte";
-	import SaveGoalReview from "$lib/components/mix/SaveGoalReview.svelte";
-	import SelectedIngredientsPanel from "$lib/components/mix/SelectedIngredientsPanel.svelte";
-	import SmartWarnings from "$lib/components/mix/SmartWarnings.svelte";
-	import TextInputDialog from "$lib/components/common/TextInputDialog.svelte";
-	import ConfirmationDialog from "$lib/components/common/ConfirmationDialog.svelte";
+	import GoalTargets from "$lib/components/mix/controls/GoalTargets.svelte";
+	import IngredientChooser from "$lib/components/mix/ingredients/IngredientChooser.svelte";
+	import MixEmptyState from "$lib/components/mix/states/MixEmptyState.svelte";
+	import NutrientAdjustmentSuggestions from "$lib/components/mix/insights/NutrientAdjustmentSuggestions.svelte";
+	import NutrientSelector from "$lib/components/mix/controls/NutrientSelector.svelte";
+	import PointShape from "$lib/components/mix/insights/PointShape.svelte";
+	import SaveGoalReview from "$lib/components/mix/save/SaveGoalReview.svelte";
+	import SelectedIngredientsPanel from "$lib/components/mix/ingredients/SelectedIngredientsPanel.svelte";
+	import SmartWarnings from "$lib/components/mix/insights/SmartWarnings.svelte";
+	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog.svelte";
+	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog.svelte";
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
     import {
 		getFoodPreferenceSmartWarnings,
         getNutrientGoalWarnings,
         type SmartWarning,
-    } from "$lib/utils/mix/smartWarnings";
+    } from "$lib/utils/mix/warnings/smartWarnings";
     import {
         cacheSmoothieListLocally,
 		preserveSelectedListItems,
         readSmoothieList,
         SMOOTHIE_LISTS_CHANGED_EVENT,
-    } from "$lib/utils/storage/smoothieLists";
+    } from "$lib/utils/storage/client/smoothieLists";
     import {
         readCloudMixPreferences,
         reconcileCloudSmoothieList,
         saveCloudMixPreferences,
-    } from "$lib/utils/storage/supabaseData";
-    import IngredientContributionBreakdown from "$lib/components/mix/IngredientContributionBreakdown.svelte";
+    } from "$lib/utils/storage/supabase";
+    import IngredientContributionBreakdown from "$lib/components/mix/insights/IngredientContributionBreakdown.svelte";
     import {
         clearLoadedSavedDrink,
         readLoadedSavedDrink,
@@ -36,7 +36,7 @@
         writeLoadedSavedDrink,
         type LoadedSavedDrink,
         type SavedDrinkInput,
-    } from "$lib/utils/storage/savedDrinks";
+    } from "$lib/utils/storage/client/savedDrinks";
 	import {
 		formatChartNumber,
 		getDefaultNutrientOptions,
@@ -46,7 +46,7 @@
 		type NutrientOption,
 		type SaveGoalDiff,
 		withOverageDetails,
-	} from "$lib/utils/mix/mixUi";
+	} from "$lib/utils/mix/ui/mixUi";
 	import {
 		getDefaultMixState,
 		getEmptyServingState,
@@ -63,7 +63,7 @@
 		writeStoredRawMixState,
 		writeStoredNutrientGoals,
 		type MixStateSnapshot,
-	} from "$lib/utils/mix/mixState";
+	} from "$lib/utils/mix/state/mixState";
     import {
         getChartColors,
         getChartValues,
@@ -77,7 +77,7 @@
         getPointColors,
         getNutrientProgress,
         getNutrientTotal as calculateNutrientTotal,
-    } from "$lib/utils/mix/mixCalculations";
+    } from "$lib/utils/mix/calculations";
     import type { FdcFood } from "$lib/utils/food/types";
     import { onMount } from "svelte";
     import {

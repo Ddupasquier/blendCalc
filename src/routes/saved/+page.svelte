@@ -1,9 +1,9 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import ListControls from "$lib/components/common/ListControls.svelte";
-    import Pagination from "$lib/components/common/Pagination.svelte";
-	import CustomBadge from "$lib/components/common/CustomBadge.svelte";
-	import ConfirmationDialog from "$lib/components/common/ConfirmationDialog.svelte";
+    import ListControls from "$lib/components/common/lists/ListControls.svelte";
+    import Pagination from "$lib/components/common/lists/Pagination.svelte";
+	import CustomBadge from "$lib/components/common/display/CustomBadge.svelte";
+	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog.svelte";
     import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
     import {
         clampPage,
@@ -17,8 +17,8 @@
         restoreSavedDrinkToMix,
         SAVED_DRINKS_CHANGED_EVENT,
         type SavedDrink,
-    } from "$lib/utils/storage/savedDrinks";
-    import { reconcileCloudSavedDrinks } from "$lib/utils/storage/supabaseData";
+    } from "$lib/utils/storage/client/savedDrinks";
+    import { reconcileCloudSavedDrinks } from "$lib/utils/storage/supabase";
     import { onMount } from "svelte";
 
     let drinks = $state<SavedDrink[]>([]);

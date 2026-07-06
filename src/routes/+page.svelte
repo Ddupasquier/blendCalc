@@ -1,5 +1,6 @@
 <script lang="ts">
 	import FloatingFruitBackground from "$lib/components/app/FloatingFruitBackground.svelte";
+	import { APP_NAME } from "$lib/config/brand";
 	import type { PageData } from "./$types";
 
 	let { data }: { data: PageData } = $props();
@@ -10,7 +11,7 @@
 	<FloatingFruitBackground focusElement={landingCard} />
 	<div class="landing-card" bind:this={landingCard}>
 		<div class="landing-copy">
-			<p class="landing-eyebrow">Smoothie Mixer</p>
+			<p class="landing-eyebrow">{APP_NAME}</p>
 			<h1>Build a smoothie that fits your goals.</h1>
 			<p class="landing-intro">
 				Choose your ingredients, set what matters to you, and see the balance
@@ -18,7 +19,7 @@
 			</p>
 		</div>
 
-		<ul class="landing-benefits" aria-label="What Smoothie Mixer helps with">
+		<ul class="landing-benefits" aria-label={`What ${APP_NAME} helps with`}>
 			<li><span aria-hidden="true">✓</span> Track the nutrients you care about</li>
 			<li><span aria-hidden="true">✓</span> Adjust amounts with live feedback</li>
 			<li><span aria-hidden="true">✓</span> Save mixes for next time</li>

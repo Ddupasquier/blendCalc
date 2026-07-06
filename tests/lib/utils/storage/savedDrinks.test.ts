@@ -10,7 +10,7 @@ const cloudData = vi.hoisted(() => ({
 	writeCloudSavedDrinks: vi.fn(),
 }));
 
-vi.mock("$lib/utils/storage/supabaseData", () => cloudData);
+vi.mock("$lib/utils/storage/supabase", () => cloudData);
 import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
 import {
 	addSavedDrink,
@@ -22,13 +22,13 @@ import {
 	restoreSavedDrinkToMix,
 	SAVED_DRINKS_STORAGE_KEY,
 	updateSavedDrink,
-} from "$lib/utils/storage/savedDrinks";
+} from "$lib/utils/storage/client/savedDrinks";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
-import { LEGACY_SODIUM_NUTRIENT_ID } from "$lib/utils/mix/nutrientMappings";
+import { LEGACY_SODIUM_NUTRIENT_ID } from "$lib/utils/mix/nutrients/nutrientMappings";
 import {
 	cacheSmoothieListLocally,
 	readSmoothieList,
-} from "$lib/utils/storage/smoothieLists";
+} from "$lib/utils/storage/client/smoothieLists";
 
 const food = {
 	fdcId: 1,

@@ -3,7 +3,7 @@ import {
 	getDailyWelcomeStorageKey,
 	getLocalDateKey,
 	shouldShowDailyWelcome,
-} from "$lib/utils/storage/dailyWelcome";
+} from "$lib/utils/storage/client/dailyWelcome";
 
 describe("daily welcome storage", () => {
 	beforeEach(() => {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Crown from "$lib/assets/icons/Crown.svelte";
 	import SmoothieCup from "$lib/assets/icons/SmoothieCup.svelte";
+	import { APP_NAME } from "$lib/config/brand";
 
 	let {
 		displayName,
@@ -26,11 +27,11 @@
 
 <header class="app-header">
 	<div class="app-header__inner">
-		<a class="app-header__brand" href="/fridge" aria-label="Open Smoothie Mixer ingredients">
+		<a class="app-header__brand" href="/fridge" aria-label={`Open ${APP_NAME} ingredients`}>
 			<span class="app-header__mark" aria-hidden="true">
 				<SmoothieCup size={22} />
 			</span>
-			<span class="app-header__title">Smoothie Mixer</span>
+			<span class="app-header__title">{APP_NAME}</span>
 		</a>
 
 		<a

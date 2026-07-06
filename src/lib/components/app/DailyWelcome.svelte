@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { shouldShowDailyWelcome } from "$lib/utils/storage/dailyWelcome";
+	import { shouldShowDailyWelcome } from "$lib/utils/storage/client/dailyWelcome";
 
 	const WELCOME_DURATION_MS = 4_000;
 

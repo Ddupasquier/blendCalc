@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import NutrientAdjustmentSuggestions from "$lib/components/mix/NutrientAdjustmentSuggestions.svelte";
+import NutrientAdjustmentSuggestions from "$lib/components/mix/insights/NutrientAdjustmentSuggestions.svelte";
 import type {
 	NutrientFoodSuggestion,
 	NutrientReductionSuggestion,
-} from "$lib/utils/mix/mixCalculations";
+} from "$lib/utils/mix/calculations";
 import type { FdcFood } from "$lib/utils/food/types";
 
 const banana: FdcFood = {

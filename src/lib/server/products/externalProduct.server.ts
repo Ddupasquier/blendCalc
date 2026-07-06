@@ -9,6 +9,7 @@ import {
 	type OpenFoodFactsResponse,
 } from "$lib/utils/barcode/productLookup";
 import type { FdcFood, FdcSearchResponse } from "$lib/utils/food/types";
+import { APP_USER_AGENT } from "$lib/config/brand";
 import { getUsdaFoodById, searchUsdaBrandedFoods } from "./usdaCache.server";
 
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v2/product";
@@ -32,8 +33,7 @@ const OPEN_FOOD_FACTS_FIELDS = [
 	"serving_quantity_unit",
 	"nutriments",
 ].join(",");
-const PRODUCT_LOOKUP_USER_AGENT =
-	"SmoothieMixer/1.0 (https://smoothie-mixer.vercel.app)";
+const PRODUCT_LOOKUP_USER_AGENT = APP_USER_AGENT;
 
 export const lookupUsdaBarcodeProduct = async (
 	barcode: string,

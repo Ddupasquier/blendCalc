@@ -9,7 +9,7 @@ import {
 	getNutrientProgress,
 	getNutrientReductionSuggestions,
 	getNutrientTotal,
-} from "$lib/utils/mix/mixCalculations";
+} from "$lib/utils/mix/calculations";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 
 const sunflowerOil = {

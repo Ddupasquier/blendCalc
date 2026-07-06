@@ -3,6 +3,7 @@
 	import { onMount } from "svelte";
 	import FloatingFruitBackground from "$lib/components/app/FloatingFruitBackground.svelte";
 	import PasswordRequirements from "$lib/components/auth/PasswordRequirements.svelte";
+	import { APP_NAME } from "$lib/config/brand";
 	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import type { ActionData, PageData } from "./$types";
@@ -63,7 +64,7 @@
 	<FloatingFruitBackground focusElement={authCard} />
 	<div class="auth-card" bind:this={authCard}>
 		<div class="auth-card__header">
-			<a class="auth-brand" href="/">Smoothie Mixer</a>
+			<a class="auth-brand" href="/">{APP_NAME}</a>
 			<p class="auth-eyebrow">Your smoothie space</p>
 			<h1>{authMode === "signUp" ? "Create your account." : "Welcome back."}</h1>
 			<p>

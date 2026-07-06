@@ -210,7 +210,7 @@ const fetchOpenFoodFactsSamples = async (queries) => {
 			{
 				headers: {
 					accept: "application/json",
-					"user-agent": "SmoothieMixer/1.0 (API structure reference generator)",
+					"user-agent": "blendCalc/1.0 (API structure reference generator)",
 				},
 			},
 			`Open Food Facts search for "${query}"`,
@@ -230,7 +230,7 @@ const fetchOpenFoodFactsSamples = async (queries) => {
 					{
 						headers: {
 							accept: "application/json",
-							"user-agent": "SmoothieMixer/1.0 (API structure reference generator)",
+							"user-agent": "blendCalc/1.0 (API structure reference generator)",
 						},
 					},
 					`Open Food Facts product ${productCode}`,
@@ -391,7 +391,7 @@ const writeReadme = async () => {
 		"README.md",
 		`# API Structures
 
-This folder contains generated reference files that describe the external food API payloads observed by Smoothie Mixer scripts.
+This folder contains generated reference files that describe the external food API payloads observed by blendCalc scripts.
 
 These files are documentation only. Do not import them from app code.
 

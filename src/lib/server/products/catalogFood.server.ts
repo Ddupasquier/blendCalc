@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import { createCustomFood } from "$lib/utils/food/customFoods";
+import { createCustomFood } from "$lib/utils/food/custom/customFoods";
 import type { FdcFood } from "$lib/utils/food/types";
 
 const getCatalogFoodId = (draft: BarcodeProductDraft) => {

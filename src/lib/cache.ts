@@ -1,6 +1,6 @@
 /**
  * Lightweight localStorage cache with TTL support.
- * Uses a prefix to namespace smoothie-mixer entries.
+ * Uses a prefix to namespace blendCalc entries.
  */
 
 const PREFIX = 'sm_cache_';

@@ -47,7 +47,7 @@ const searchTopProduct = async (query) => {
 	const response = await fetch(buildSearchUrl(query), {
 		headers: {
 			accept: "application/json",
-			"user-agent": "SmoothieMixer/1.0 (audit script)",
+			"user-agent": "blendCalc/1.0 (audit script)",
 		},
 	});
 	if (!response.ok) {

@@ -167,7 +167,7 @@ describe("barcode product mapping", () => {
 
 		expect(draft).toMatchObject({
 			source: "shared-catalog",
-			sourceLabel: "Smoothie Mixer verified catalog",
+			sourceLabel: "blendCalc verified catalog",
 			sourceReference: "product-id",
 		});
 	});

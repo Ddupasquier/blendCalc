@@ -1,5 +1,5 @@
 import type { FoodPreferenceWarning } from "$lib/utils/profile/foodPreferenceWarnings";
-import type { FoodCompatibilitySummary } from "$lib/utils/food/compatibility";
+import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
 
 /** A single food nutrient returned by the FDC API */
 export interface FdcNutrient {

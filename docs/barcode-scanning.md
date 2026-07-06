@@ -6,7 +6,7 @@ The custom ingredient form supports UPC-A, UPC-E, EAN-8, EAN-13, and GTIN-14 pac
 
 1. The browser uses `BarcodeDetector` when the API is available.
 2. Other supported browsers fall back to `@zxing/browser`.
-3. The private Smoothie Mixer verified catalog is checked first.
+3. The private blendCalc verified catalog is checked first.
 4. USDA FoodData Central branded foods are checked next through the server-side cache.
 5. Open Food Facts is used as the final live lookup source.
 6. Imported nutrition stays in the form until the user reviews and saves it.

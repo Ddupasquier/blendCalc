@@ -332,7 +332,7 @@ const collectOpenFoodFacts = async (query) => {
 		{
 			headers: {
 				accept: "application/json",
-				"user-agent": "SmoothieMixer/1.0 (food preference observation seed)",
+				"user-agent": "blendCalc/1.0 (food preference observation seed)",
 			},
 		},
 		`Open Food Facts search for "${query}"`,

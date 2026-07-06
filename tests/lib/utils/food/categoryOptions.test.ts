@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { readCustomFoodCategoryOptions } from "$lib/utils/food/categoryOptions";
+import { readCustomFoodCategoryOptions } from "$lib/utils/food/nutrients/categoryOptions";
 
 const createSupabaseMock = (data: unknown[]) => {
 	const query = {

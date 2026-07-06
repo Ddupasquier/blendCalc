@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getNutrientGoalWarnings } from "$lib/utils/mix/smartWarnings";
+import { getNutrientGoalWarnings } from "$lib/utils/mix/warnings/smartWarnings";
 
 describe("smart warnings", () => {
 	it("reports nutrients over goal", () => {

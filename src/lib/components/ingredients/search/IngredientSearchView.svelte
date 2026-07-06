@@ -1,5 +1,7 @@
 <script lang="ts">
+	import BackButton from "$lib/components/common/buttons/BackButton.svelte";
 	import Sliders from "$lib/assets/icons/Sliders.svelte";
+	import IconControlButton from "$lib/components/common/buttons/IconControlButton.svelte";
 	import ViewBody from "$lib/components/common/view/ViewBody.svelte";
 	import ViewFrame from "$lib/components/common/view/ViewFrame.svelte";
 	import ViewHeader from "$lib/components/common/view/ViewHeader.svelte";
@@ -12,41 +14,55 @@
 		scanning = false,
 		filtersActive = false,
 		onSelect,
+		onAdd,
+		addingFoodId = null,
 		onScan,
 		onFilter,
+		onClose,
 	}: {
 		scanning?: boolean;
 		filtersActive?: boolean;
 		onSelect: (food: FdcFood) => void;
+		onAdd: (food: FdcFood) => void | Promise<void>;
+		addingFoodId?: number | null;
 		onScan: () => void;
 		onFilter: () => void;
+		onClose: () => void;
 	} = $props();
 </script>
 
 <ViewFrame className="ingredient-search-view">
 	<ViewTop>
-		<ViewHeader
-			title="Ingredients"
-			titleId="ingredient-search-view-title"
-			subtitle="Search foods, add them to your fridge, and track shopping needs."
-		/>
+		<div class="ingredient-search-view__header">
+			<BackButton
+				class="ingredient-search-view__back"
+				label="Back to ingredients"
+				variant="ghost"
+				size="small"
+				onclick={onClose}
+			/>
+			<ViewHeader
+				title="Ingredients"
+				titleId="ingredient-search-view-title"
+				subtitle="Search foods, add them to your fridge, and track shopping needs."
+			/>
+		</div>
 	</ViewTop>
 
 	<ViewBody>
-		<IngredientSearch autofocus {onSelect} onSearchFocus={() => {}}>
+		<IngredientSearch autofocus {onSelect} {onAdd} {addingFoodId} onSearchFocus={() => {}}>
 			{#snippet actions()}
 				<BarcodeScanButton scanning={scanning} compact onclick={onScan} />
-				<button
+				<IconControlButton
 					class="ingredient-search-view__filter"
-					class:ingredient-search-view__filter--active={filtersActive}
-					type="button"
-					aria-label="Filter saved ingredients"
+					label="Filter saved ingredients"
+					active={filtersActive}
 					aria-expanded={filtersActive}
 					aria-controls="ingredient-filter-sheet-title"
 					onclick={onFilter}
 				>
 					<Sliders class="ingredient-search-view__filter-icon" />
-				</button>
+				</IconControlButton>
 			{/snippet}
 		</IngredientSearch>
 	</ViewBody>
@@ -54,6 +70,17 @@
 
 <style lang="scss">
 	@use "../../../../styles/variables" as *;
+
+	.ingredient-search-view__header {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr);
+		align-items: start;
+		gap: $app-gap-sm;
+	}
+
+	:global(.ingredient-search-view__back) {
+		margin-top: 0.05rem;
+	}
 
 	:global(.ingredient-search-view .search-wrap) {
 		display: grid;
@@ -74,36 +101,6 @@
 		width: $ingredient-control-height;
 		height: $ingredient-control-height;
 		min-height: $ingredient-control-height;
-	}
-
-	.ingredient-search-view__filter {
-		display: inline-grid;
-		place-items: center;
-		width: $ingredient-control-height;
-		height: $ingredient-control-height;
-		color: $ingredient-text-muted;
-		background: $ingredient-surface-control;
-		border: 0;
-		border-radius: $ingredient-radius-control;
-		transition:
-			color 160ms ease,
-			background-color 160ms ease,
-			transform 160ms ease;
-
-		&:hover,
-		&--active {
-			color: $ingredient-accent-primary;
-			background: $ingredient-surface-positive;
-		}
-
-		&:active {
-			transform: scale(0.97);
-		}
-
-		&:focus-visible {
-			outline: $app-focus-outline;
-			outline-offset: $app-gap-xs;
-		}
 	}
 
 	:global(.ingredient-search-view__filter-icon) {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ToggleSwitch from "$lib/components/common/ToggleSwitch.svelte";
+	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch.svelte";
 	import type { ServingMeasureUnit } from "../../../../../defaults/servingMeasureDefaults";
 
 	type VolumeOption = {

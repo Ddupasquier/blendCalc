@@ -1,5 +1,5 @@
 import type { FdcFood } from "$lib/utils/food/types";
-import type { FoodCompatibilityFact } from "$lib/utils/food/compatibility";
+import type { FoodCompatibilityFact } from "$lib/utils/food/quality/compatibility";
 import type { FoodPreferenceProfile } from "./foodPreferenceProfile";
 
 export type FoodPreferenceWarningLevel = "warning" | "potential";

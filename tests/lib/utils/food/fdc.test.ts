@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeFdcFood } from "$lib/utils/food/fdc";
+import { normalizeFdcFood } from "$lib/utils/food/sources/fdc";
 
 describe("FoodData Central normalization", () => {
 	it("normalizes full food-detail nutrient records", () => {

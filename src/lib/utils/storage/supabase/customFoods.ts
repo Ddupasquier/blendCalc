@@ -1,8 +1,8 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
-import { compactFood, uniqueFoodsById } from "$lib/utils/food/foodRecords";
-import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/normalizedNutrients";
+import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
+import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import type { FdcFood } from "$lib/utils/food/types";
-import { normalizeCustomFoodName } from "$lib/utils/food/customFoodNames";
+import { normalizeCustomFoodName } from "$lib/utils/food/custom/customFoodNames";
 import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
 import { getCurrentUserId, toJson } from "./shared";
 

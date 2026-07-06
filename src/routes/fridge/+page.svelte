@@ -1,6 +1,10 @@
 <script lang="ts">
     import Sliders from "$lib/assets/icons/Sliders.svelte";
-    import RightSheet from "$lib/components/common/RightSheet.svelte";
+    import Plus from "$lib/assets/icons/Plus.svelte";
+    import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+    import IconControlButton from "$lib/components/common/buttons/IconControlButton.svelte";
+    import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+    import RightSheet from "$lib/components/common/sheets/RightSheet.svelte";
     import ViewBody from "$lib/components/common/view/ViewBody.svelte";
     import ViewFrame from "$lib/components/common/view/ViewFrame.svelte";
     import ViewHeader from "$lib/components/common/view/ViewHeader.svelte";
@@ -18,7 +22,7 @@
     import type { ManualEntryCreateContext } from "$lib/components/ingredients/manual-entry/types";
     import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView.svelte";
     import SavedIngredientCard from "$lib/components/ingredients/list/SavedIngredientCard.svelte";
-    import TextInputDialog from "$lib/components/common/TextInputDialog.svelte";
+    import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog.svelte";
     import {
         LIST_PAGE_SIZES,
         LIST_REVEAL_BUFFER_PX,
@@ -46,7 +50,7 @@
     import {
         cacheCustomFoodsLocally,
         readCustomFoods,
-    } from "$lib/utils/food/customFoods";
+    } from "$lib/utils/food/custom/customFoods";
     import {
         addFoodToSmoothieList,
         readSmoothieList,
@@ -54,11 +58,11 @@
         renameFoodInSmoothieList,
         SMOOTHIE_LISTS_CHANGED_EVENT,
         type SmoothieListKey,
-    } from "$lib/utils/storage/smoothieLists";
+    } from "$lib/utils/storage/client/smoothieLists";
     import {
         reconcileCloudCustomFoods,
         readCloudSmoothieListPage,
-    } from "$lib/utils/storage/supabaseData";
+    } from "$lib/utils/storage/supabase";
     import { onMount, tick } from "svelte";
     import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
     import { MIX_STORAGE_KEYS } from "../../defaults/mixDefaults";
@@ -75,6 +79,7 @@
     let activeList = $state<SmoothieListKey>(MIX_STORAGE_KEYS.fridge);
     let activeSheet = $state<"manual-entry" | "filters" | null>(null);
     let searchViewOpen = $state(false);
+    let searchAddFoodId = $state<number | null>(null);
     let onHandVisibleCount = $state<number>(LIST_PAGE_SIZES.ingredientPills);
     let shoppingVisibleCount = $state<number>(LIST_PAGE_SIZES.ingredientPills);
     let onHandTotalCount = $state(0);
@@ -284,6 +289,23 @@
         closeIngredientSheet();
         selectedFood = food;
         selectedFoodShowListActions = true;
+    };
+
+    const addSearchResultToFridge = async (food: FdcFood) => {
+        if (searchAddFoodId !== null) return;
+
+        searchAddFoodId = food.fdcId;
+        listActionError = "";
+        try {
+            const result = await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food);
+            if (result === "error") {
+                listActionError = `${food.description} could not be added to fridge. Try again.`;
+                return;
+            }
+            await loadLists();
+        } finally {
+            searchAddFoodId = null;
+        }
     };
 
     const closeNutritionDetail = () => {
@@ -647,17 +669,16 @@
                     compact
                     onclick={startBarcodeScan}
                 />
-                <button
+                <IconControlButton
                     class="filter-button"
-                    class:filter-button--active={activeSheet === "filters"}
-                    type="button"
+                    label="Filter saved ingredients"
+                    active={activeSheet === "filters"}
                     aria-expanded={activeSheet === "filters"}
                     aria-controls="ingredient-filter-sheet-title"
                     onclick={toggleFilters}
                 >
-                    <span class="sr-only">Filter saved ingredients</span>
                     <Sliders class="filter-button__icon" />
-                </button>
+                </IconControlButton>
             </div>
 
             <ManualEntryLauncher onSelect={openManualEntry} />
@@ -742,15 +763,15 @@
                                 aria-hidden="true"
                             ></li>
                             <li class="ingredient-card-list__load-more">
-                                <button
-                                    type="button"
+                                <RoundedActionButton
+                                    variant="soft"
                                     disabled={loadingMoreList !== null}
                                     onclick={() => void revealMoreActiveItems()}
                                 >
                                     {loadingMoreList
                                         ? "Loading…"
                                         : `Load more ${getIngredientListLabel(activeList).toLowerCase()} items`}
-                                </button>
+                                </RoundedActionButton>
                             </li>
                         {/if}
                     </ul>
@@ -808,14 +829,16 @@
     onClose={closeIngredientSheet}
 />
 
-<button
-    class="add-ingredient-fab"
-    type="button"
-    aria-label="Add ingredient manually"
-    onclick={openManualEntry}
->
-    +
-</button>
+<div class="add-ingredient-fab">
+    <CircleIconButton
+        label="Add ingredient manually"
+        variant="primary"
+        size="fab"
+        onclick={openManualEntry}
+    >
+        <Plus size={28} strokeWidth={2.4} />
+    </CircleIconButton>
+</div>
 
 <TextInputDialog
     open={renamingItem !== null}
@@ -840,8 +863,11 @@
         scanning={barcodeLookupBusy}
         filtersActive={activeSheet === "filters"}
         onSelect={handleSearchSelect}
+        onAdd={addSearchResultToFridge}
+        addingFoodId={searchAddFoodId}
         onScan={startBarcodeScan}
         onFilter={toggleFilters}
+        onClose={closeSearchView}
     />
 </RightSheet>
 
@@ -893,7 +919,7 @@
     .search-toolbar {
         display: grid;
         grid-template-columns: minmax(0, 1fr) $ingredient-control-height $ingredient-control-height;
-        align-items: start;
+        align-items: center;
         gap: $app-horizontal-control-gap;
     }
 
@@ -902,46 +928,14 @@
     }
 
     .search-toolbar :global(.barcode-scan-button--compact) {
-        align-self: start;
         width: $ingredient-control-height;
         height: $ingredient-control-height;
         min-height: $ingredient-control-height;
     }
 
-    .filter-button {
-        display: inline-grid;
-        place-items: center;
-        align-self: start;
-        width: $ingredient-control-height;
-        height: $ingredient-control-height;
-        color: $ingredient-text-muted;
-        background: $ingredient-surface-control;
-        border: 0;
-        border-radius: $ingredient-radius-control;
-        transition:
-            color 160ms ease,
-            background-color 160ms ease,
-            transform 160ms ease;
-
-        :global(.filter-button__icon) {
-            width: $ingredient-control-icon-size;
-            height: $ingredient-control-icon-size;
-        }
-
-        &:hover,
-        &--active {
-            color: $ingredient-accent-primary;
-            background: $ingredient-surface-positive;
-        }
-
-        &:active {
-            transform: scale(0.97);
-        }
-
-        &:focus-visible {
-            outline: $app-focus-outline;
-            outline-offset: $app-gap-xs;
-        }
+    :global(.filter-button__icon) {
+        width: $ingredient-control-icon-size;
+        height: $ingredient-control-icon-size;
     }
 
     .saved-ingredients {
@@ -982,24 +976,11 @@
         min-height: 1px;
     }
 
-    .ingredient-card-list__load-more {
-        display: grid;
-        place-items: center;
-        padding: $app-gap-xs 0 $app-gap-sm;
-
-        button {
-            min-height: $ingredient-control-height-compact;
-            padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x;
-            color: $ingredient-accent-primary;
-            background: $ingredient-surface-positive;
-            border: 0;
-            border-radius: $ingredient-radius-pill;
-            font-family: $app-button-font-family;
-            font-size: $app-font-size-sm;
-            font-weight: $app-button-font-weight;
-            line-height: $app-button-line-height;
-        }
-    }
+	.ingredient-card-list__load-more {
+		display: grid;
+		place-items: center;
+		padding: $app-gap-xs 0 $app-gap-sm;
+	}
 
 	.saved-ingredients__loading {
 		margin: 0;
@@ -1032,32 +1013,16 @@
 		font-weight: $app-font-weight-bold;
 	}
 
-    .add-ingredient-fab {
-        position: fixed;
-        right: max($ingredient-shell-padding-x, calc((100vw - $ingredient-shell-max-width) / 2 + $ingredient-shell-padding-x));
-        bottom: calc($ingredient-shell-nav-height + $app-gap-md);
-        z-index: 12;
-        display: inline-grid;
-        place-items: center;
-        width: $ingredient-fab-size;
-        height: $ingredient-fab-size;
-        color: $ingredient-surface-card;
-        background: $ingredient-accent-primary;
-        border: 0;
-        border-radius: $ingredient-radius-card;
-        font-size: 2rem;
-        font-weight: $app-font-weight-medium;
-        line-height: 1;
-    }
+	    .add-ingredient-fab {
+	        position: fixed;
+	        right: max($ingredient-shell-padding-x, calc((100vw - $ingredient-shell-max-width) / 2 + $ingredient-shell-padding-x));
+	        bottom: calc($ingredient-shell-nav-height + $app-gap-md);
+	        z-index: 12;
+	    }
 
-    @media (max-width: $app-breakpoint-xs) {
-        .search-toolbar {
-            gap: $app-horizontal-control-gap;
-        }
-
-        .filter-button {
-            width: $ingredient-control-height;
-            height: $ingredient-control-height;
-        }
-    }
+	@media (max-width: $app-breakpoint-xs) {
+		.search-toolbar {
+			gap: $app-horizontal-control-gap;
+		}
+	}
 </style>

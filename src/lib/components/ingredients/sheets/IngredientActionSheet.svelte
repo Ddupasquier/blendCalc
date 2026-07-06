@@ -2,8 +2,8 @@
 	import MoveList from "$lib/assets/icons/MoveList.svelte";
 	import Pencil from "$lib/assets/icons/Pencil.svelte";
 	import Trash from "$lib/assets/icons/Trash.svelte";
-	import BottomSheet from "$lib/components/common/BottomSheet.svelte";
-	import BottomSheetAction from "$lib/components/common/BottomSheetAction.svelte";
+	import BottomSheet from "$lib/components/common/sheets/BottomSheet.svelte";
+	import BottomSheetAction from "$lib/components/common/sheets/BottomSheetAction.svelte";
 
 	let {
 		open,

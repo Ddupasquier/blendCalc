@@ -8,6 +8,7 @@ import {
 	type BarcodeVolumeEquivalent,
 } from "$lib/utils/barcode/servingVolume";
 import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
+import { APP_VERIFIED_CATALOG_LABEL } from "$lib/config/brand";
 
 export type OpenFoodFactsNutriments = Record<string, number | string | undefined>;
 
@@ -436,7 +437,7 @@ export const mapSharedCatalogFood = (
 	return {
 		...draft,
 		source: "shared-catalog",
-		sourceLabel: "Smoothie Mixer verified catalog",
+		sourceLabel: APP_VERIFIED_CATALOG_LABEL,
 		sourceReference: food.sharedProductId,
 	};
 };

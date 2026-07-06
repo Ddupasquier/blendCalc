@@ -1,8 +1,19 @@
 <script lang="ts">
-	import ArrowLeft from "$lib/assets/icons/ArrowLeft.svelte";
+	import Link from "$lib/assets/icons/Link.svelte";
+	import Minus from "$lib/assets/icons/Minus.svelte";
+	import Plus from "$lib/assets/icons/Plus.svelte";
+	import BackButton from "$lib/components/common/buttons/BackButton.svelte";
+	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
 	import ViewBody from "$lib/components/common/view/ViewBody.svelte";
 	import ViewFrame from "$lib/components/common/view/ViewFrame.svelte";
 	import ViewTop from "$lib/components/common/view/ViewTop.svelte";
+	import {
+		DEFAULT_NUTRITION_VIEWING_GRAMS,
+		formatViewingGrams,
+		MAX_NUTRITION_VIEWING_GRAMS,
+		MIN_NUTRITION_VIEWING_GRAMS,
+		NUTRITION_VIEWING_GRAM_STEP,
+	} from "$lib/utils/food/nutrients/nutritionDisplay";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import NutritionPanel from "./NutritionPanel.svelte";
 
@@ -15,38 +26,80 @@
 		onClose: () => void;
 		showListActions?: boolean;
 	} = $props();
+
+	let viewingGrams = $state(DEFAULT_NUTRITION_VIEWING_GRAMS);
+	let currentFoodId = $state<number | null>(null);
+
+	$effect(() => {
+		if (currentFoodId === null) {
+			currentFoodId = food.fdcId;
+			return;
+		}
+		if (food.fdcId === currentFoodId) return;
+		currentFoodId = food.fdcId;
+		viewingGrams = DEFAULT_NUTRITION_VIEWING_GRAMS;
+	});
+
+	const decreaseViewingAmount = () => {
+		viewingGrams = Math.max(
+			MIN_NUTRITION_VIEWING_GRAMS,
+			viewingGrams - NUTRITION_VIEWING_GRAM_STEP,
+		);
+	};
+
+	const increaseViewingAmount = () => {
+		viewingGrams = Math.min(
+			MAX_NUTRITION_VIEWING_GRAMS,
+			viewingGrams + NUTRITION_VIEWING_GRAM_STEP,
+		);
+	};
 </script>
 
 <ViewFrame className="nutrition-detail-view">
 	<ViewTop>
 		<header class="nutrition-detail-view__header">
-			<button
+			<BackButton
 				class="nutrition-detail-view__back"
-				type="button"
-				aria-label="Back to ingredients"
+				label="Back to ingredients"
+				variant="soft"
+				size="control"
 				onclick={onClose}
-			>
-				<ArrowLeft size={20} strokeWidth={2.4} />
-			</button>
+			/>
 			<h1 id="nutrition-detail-view-title">{food.description}</h1>
 			<span class="nutrition-detail-view__source" aria-label="Linked source" title="Linked source">
-				↔
+				<Link size={16} strokeWidth={2.2} />
 			</span>
 		</header>
 
 		<section class="nutrition-detail-view__amount" aria-label="Viewing amount">
 			<h2>Viewing Amount</h2>
 			<div class="nutrition-detail-view__amount-controls">
-				<span aria-hidden="true">−</span>
-				<strong>100g</strong>
-				<span aria-hidden="true">+</span>
+				<CircleIconButton
+					label={`Decrease viewing amount by ${NUTRITION_VIEWING_GRAM_STEP}g`}
+					variant="soft"
+					size="small"
+					disabled={viewingGrams <= MIN_NUTRITION_VIEWING_GRAMS}
+					onclick={decreaseViewingAmount}
+				>
+					<Minus size={18} strokeWidth={2.6} />
+				</CircleIconButton>
+				<strong aria-live="polite">{formatViewingGrams(viewingGrams)}</strong>
+				<CircleIconButton
+					label={`Increase viewing amount by ${NUTRITION_VIEWING_GRAM_STEP}g`}
+					variant="primary"
+					size="small"
+					disabled={viewingGrams >= MAX_NUTRITION_VIEWING_GRAMS}
+					onclick={increaseViewingAmount}
+				>
+					<Plus size={18} strokeWidth={2.6} />
+				</CircleIconButton>
 			</div>
 		</section>
 	</ViewTop>
 
 	<ViewBody scroll>
 		<div class="nutrition-detail-view__panel">
-			<NutritionPanel {food} {showListActions} />
+			<NutritionPanel {food} {showListActions} {viewingGrams} />
 		</div>
 	</ViewBody>
 </ViewFrame>
@@ -62,24 +115,6 @@
 		min-height: $ingredient-control-height;
 	}
 
-	.nutrition-detail-view__back {
-		display: inline-grid;
-		place-items: center;
-		width: $ingredient-control-height;
-		height: $ingredient-control-height;
-		padding: 0;
-		color: $ingredient-text-primary;
-		background: $ingredient-surface-control;
-		border: 0;
-		border-radius: $app-radius-pill;
-		cursor: pointer;
-
-		&:focus-visible {
-			outline: $app-focus-outline;
-			outline-offset: $app-focus-outline-offset;
-		}
-	}
-
 	h1 {
 		margin: 0;
 		overflow: hidden;
@@ -93,9 +128,9 @@
 	}
 
 	.nutrition-detail-view__source {
+		display: inline-grid;
+		place-items: center;
 		color: $ingredient-accent-info;
-		font-size: $app-font-size-md;
-		font-weight: $app-font-weight-bold;
 	}
 
 	.nutrition-detail-view__amount {
@@ -123,19 +158,6 @@
 		align-items: center;
 		gap: $app-gap-md;
 		color: $ingredient-text-primary;
-
-		span {
-			display: inline-grid;
-			place-items: center;
-			width: 2rem;
-			height: 2rem;
-			color: $ingredient-accent-primary;
-			background: $ingredient-surface-positive;
-			border-radius: $app-radius-pill;
-			font-size: $app-font-size-lg;
-			font-weight: $app-font-weight-bold;
-			line-height: 1;
-		}
 
 		strong {
 			font-size: $app-font-size-md;

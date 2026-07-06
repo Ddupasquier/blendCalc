@@ -2,18 +2,18 @@ import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import type { Database, Json } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import { compactFood } from "$lib/utils/food/foodRecords";
-import type { FoodCompatibilitySummary } from "$lib/utils/food/compatibility";
+import { compactFood } from "$lib/utils/food/records/foodRecords";
+import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
 import {
 	hydrateFoodWithNormalizedNutrients,
 	type NormalizedNutrientRow,
-} from "$lib/utils/food/normalizedNutrients";
+} from "$lib/utils/food/nutrients/normalizedNutrients";
 import {
 	createNutrientValueMapFromFood,
 	readNutrientRelationshipRules,
 	validateNutrientRelationshipRules,
 	type NutrientRelationshipRule,
-} from "$lib/utils/food/nutrientRelationshipRules";
+} from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
 import { toJson } from "$lib/utils/storage/supabase/shared";

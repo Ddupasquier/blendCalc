@@ -362,5 +362,5 @@ When schema changes:
 5. Update this document with table purpose, owner scope, key columns, and
    relationships.
 6. Add or update focused tests for migration expectations when practical.
-7. Add a QA item in `docs/qa-tasks.md` if the change affects user-visible data,
+7. Add a local-only QA item in `docs/QA/qa-tasks.md` if the change affects user-visible data,
    moderation behavior, or data-entry flow.

@@ -1,15 +1,16 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import type { FdcFood } from "$lib/utils/food/types";
-	import { FdcConfigurationError, searchFoods } from "$lib/utils/food/fdc";
+	import { FdcConfigurationError, searchFoods } from "$lib/utils/food/sources/fdc";
 	import {
 		CUSTOM_FOODS_CHANGED_EVENT,
 		searchCustomFoods,
-	} from "$lib/utils/food/customFoods";
-	import { compareFoodQuality } from "$lib/utils/food/foodQuality";
+	} from "$lib/utils/food/custom/customFoods";
+	import { compareFoodQuality } from "$lib/utils/food/quality/foodQuality";
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import { getFoodDownrankScore } from "$lib/utils/profile/foodPreferenceWarnings";
 	import { searchSharedProducts } from "$lib/utils/products/catalog";
+	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
 	import Search from "$lib/assets/icons/Search.svelte";
 	import X from "$lib/assets/icons/X.svelte";
 	import type { Snippet } from "svelte";
@@ -18,11 +19,15 @@
 
 	let {
 		onSelect,
+		onAdd = () => {},
+		addingFoodId = null,
 		onSearchFocus = () => {},
 		autofocus = false,
 		actions,
 	}: {
 		onSelect: (food: FdcFood) => void;
+		onAdd?: (food: FdcFood) => void | Promise<void>;
+		addingFoodId?: number | null;
 		onSearchFocus?: () => void;
 		autofocus?: boolean;
 		actions?: Snippet;
@@ -33,6 +38,7 @@
 	let error = $state("");
 	let searchReady = $state(false);
 	let activeResultIndex = $state(-1);
+	let searchWrapElement = $state<HTMLDivElement | null>(null);
 	let searchInputElement = $state<HTMLInputElement | null>(null);
 	let debounceTimer: ReturnType<typeof setTimeout>;
 	const dispatch = createEventDispatcher();
@@ -136,7 +142,7 @@
 					? apiSearch.value
 					: [];
 				results = mergeResults(customResults, sharedResults, apiResults);
-				activeResultIndex = results.length > 0 ? 0 : -1;
+				activeResultIndex = -1;
 				dispatch("results", { results, query: searchString });
 
 				if (sharedSearch.status === "rejected" && apiSearch.status === "rejected") {
@@ -158,6 +164,7 @@
 	};
 
 	const clearSearch = () => {
+		clearTimeout(debounceTimer);
 		query = "";
 		results = [];
 		error = "";
@@ -205,6 +212,7 @@
 	};
 
 	const handleSearchKeydown = (event: KeyboardEvent) => {
+		if (event.defaultPrevented) return;
 		if (event.key === "ArrowDown") {
 			event.preventDefault();
 			moveActiveResult(1);
@@ -225,6 +233,20 @@
 		}
 	};
 
+	const handleWindowKeydown = (event: KeyboardEvent) => {
+		if (!searchWrapElement) return;
+		const target = event.target instanceof Node ? event.target : null;
+		const activeElement = document.activeElement;
+		const eventStartedInSearch = target
+			? searchWrapElement.contains(target)
+			: false;
+		const focusIsInSearch = activeElement
+			? searchWrapElement.contains(activeElement)
+			: false;
+		if (!eventStartedInSearch && !focusIsInSearch) return;
+		handleSearchKeydown(event);
+	};
+
 	onMount(() => {
 		searchReady = true;
 		triggerSearch();
@@ -240,6 +262,7 @@
 
 		window.addEventListener(CUSTOM_FOODS_CHANGED_EVENT, refreshCustomResults);
 		window.addEventListener("storage", refreshCustomResults);
+		window.addEventListener("keydown", handleWindowKeydown);
 		return () => {
 			searchReady = false;
 			clearTimeout(debounceTimer);
@@ -248,55 +271,64 @@
 				refreshCustomResults,
 			);
 			window.removeEventListener("storage", refreshCustomResults);
+			window.removeEventListener("keydown", handleWindowKeydown);
 		};
 	});
 </script>
 
-<div class="search-wrap">
+<div bind:this={searchWrapElement} class="search-wrap">
 	<label class="search-label" for="ingredient-search">Search ingredients</label>
-	<div
-		class="search-row"
-		class:search-row--active={hasActiveSearch}
-		class:search-row--with-actions={Boolean(actions)}
-		aria-busy={loading}
-	>
-		<Search class="search-icon" />
-		<input
-			bind:this={searchInputElement}
-			id="ingredient-search"
-			name="ingredient-search"
-			type="search"
-			role="combobox"
-			class="search-input"
-			placeholder="Search ingredients..."
-			bind:value={query}
-			onfocus={onSearchFocus}
-			oninput={handleInput}
-			aria-autocomplete="list"
-			aria-controls="ingredient-search-results"
-			aria-expanded={sortedResults().length > 0}
-			aria-activedescendant={activeResultIndex >= 0
-				&& sortedResults()[activeResultIndex]
-				? `ingredient-search-result-${sortedResults()[activeResultIndex].fdcId}`
-				: undefined}
-			onkeydown={handleSearchKeydown}
-		/>
-		{#if loading}
-			<span class="spinner" role="status" aria-live="polite">
-				<span class="sr-only">Searching…</span>
-			</span>
-		{:else if query}
-			<button
-				class="search-clear"
-				type="button"
-				aria-label="Clear ingredient search"
-				onclick={clearSearch}
-			>
-				<X size={16} strokeWidth={2.2} />
-			</button>
-		{/if}
+	<div class="search-toolbar" class:search-toolbar--with-actions={Boolean(actions)}>
+		<div
+			class="search-row"
+			class:search-row--active={hasActiveSearch}
+			aria-busy={loading}
+		>
+			<Search class="search-icon" />
+			<input
+				bind:this={searchInputElement}
+				id="ingredient-search"
+				name="ingredient-search"
+				type="search"
+				role="combobox"
+				class="search-input"
+				placeholder="Search ingredients..."
+				bind:value={query}
+				onfocus={onSearchFocus}
+				oninput={handleInput}
+				aria-autocomplete="list"
+				aria-controls="ingredient-search-results"
+				aria-expanded={sortedResults().length > 0}
+				aria-activedescendant={activeResultIndex >= 0
+					&& sortedResults()[activeResultIndex]
+					? `ingredient-search-result-${sortedResults()[activeResultIndex].fdcId}`
+					: undefined}
+			/>
+			{#if loading || query}
+				<span class="search-status-actions">
+					{#if loading}
+						<span class="spinner" role="status" aria-live="polite">
+							<span class="sr-only">Searching…</span>
+						</span>
+					{/if}
+					{#if query}
+						<CircleIconButton
+							class="search-clear"
+							label="Clear ingredient search"
+							variant="ghost"
+							size="tiny"
+							onclick={clearSearch}
+						>
+							<X size={16} strokeWidth={2.2} />
+						</CircleIconButton>
+					{/if}
+				</span>
+			{/if}
+		</div>
 		{#if actions}
-			{@render actions()}
+			<div class="search-actions">
+				{@render actions()}
+			</div>
 		{/if}
 	</div>
 	{#if sortedResults().length > 0}
@@ -311,7 +343,9 @@
 	<SearchDropdown
 		results={sortedResults()}
 		{activeResultIndex}
+		{addingFoodId}
 		onSelect={select}
+		{onAdd}
 		onActivate={(index) => (activeResultIndex = index)}
 	/>
 </div>
@@ -322,7 +356,26 @@
 	.search-wrap {
 		position: relative;
 		display: grid;
-		gap: $app-gap-xs;
+		gap: $app-horizontal-control-gap;
+		min-width: 0;
+	}
+
+	.search-toolbar {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		align-items: center;
+		gap: $app-horizontal-control-gap;
+		min-width: 0;
+	}
+
+	.search-toolbar--with-actions {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+
+	.search-actions {
+		display: inline-flex;
+		align-items: center;
+		gap: $app-horizontal-control-gap;
 		min-width: 0;
 	}
 
@@ -368,10 +421,6 @@
 		}
 	}
 
-	.search-row--with-actions {
-		grid-template-columns: auto minmax(0, 1fr) auto auto auto;
-	}
-
 	.search-row--active {
 		background: $ingredient-surface-positive;
 		border-color: color-mix(in srgb, $ingredient-accent-primary 42%, transparent);
@@ -397,6 +446,11 @@
 		&::placeholder {
 			color: $ingredient-text-muted;
 		}
+
+		&::-webkit-search-cancel-button,
+		&::-webkit-search-decoration {
+			appearance: none;
+		}
 	}
 
 	.spinner {
@@ -408,23 +462,11 @@
 		animation: ingredient-search-spin 700ms linear infinite;
 	}
 
-	.search-clear {
-		display: inline-grid;
-		place-items: center;
-		width: 1.6rem;
-		height: 1.6rem;
-		padding: 0;
-		color: $ingredient-text-muted;
-		background: transparent;
-		border: 0;
-		border-radius: $ingredient-radius-pill;
-
-		&:hover,
-		&:focus-visible {
-			color: $ingredient-text-primary;
-			background: color-mix(in srgb, $ingredient-surface-card 68%, transparent);
-			outline: none;
-		}
+	.search-status-actions {
+		display: inline-flex;
+		align-items: center;
+		gap: calc($app-gap-xs / 1.5);
+		min-width: 0;
 	}
 
 	.search-hints {

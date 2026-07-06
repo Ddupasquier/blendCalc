@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import TextInputDialog from "$lib/components/common/TextInputDialog.svelte";
+import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog.svelte";
 
 describe("TextInputDialog", () => {
 	it("does not render when closed", () => {

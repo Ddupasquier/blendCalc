@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const componentPath = resolve(
 	process.cwd(),
-	"src/lib/components/common/BottomSheet.svelte",
+	"src/lib/components/common/sheets/BottomSheet.svelte",
 );
 
 describe("BottomSheet shared chrome", () => {

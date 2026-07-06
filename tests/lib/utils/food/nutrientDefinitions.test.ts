@@ -3,7 +3,7 @@ import {
 	dedupeManualEntryNutrients,
 	groupManualEntryNutrients,
 	type ManualEntryNutrientDefinition,
-} from "$lib/utils/food/nutrientDefinitions";
+} from "$lib/utils/food/nutrients/nutrientDefinitions";
 
 const makeDefinition = (
 	override: Partial<ManualEntryNutrientDefinition>,

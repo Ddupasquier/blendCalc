@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ToggleSwitch from "$lib/components/common/ToggleSwitch.svelte";
+	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch.svelte";
 	import CustomIngredientOutcome, {
 		type CustomIngredientOutcomeState,
 	} from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
@@ -7,7 +7,7 @@
 		type ManualEntryValidationItem,
 	} from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
-	import type { SmoothieListKey } from "$lib/utils/storage/smoothieLists";
+	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import { MIX_STORAGE_KEYS } from "../../../../../defaults/mixDefaults";
 
 	type SummaryNutrient = {

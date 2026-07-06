@@ -3,7 +3,7 @@ import {
 	createNutrientValueMapFromFood,
 	validateNutrientRelationshipRules,
 	type NutrientRelationshipRule,
-} from "$lib/utils/food/nutrientRelationshipRules";
+} from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 
 const rules: NutrientRelationshipRule[] = [

@@ -31,7 +31,7 @@ The implementation uses Resend from server code. Before enabling it:
 
 ```dotenv
 RESEND_API_KEY=re_...
-MODERATION_EMAIL_FROM="Smoothie Mixer <moderation@updates.example.com>"
+MODERATION_EMAIL_FROM="blendCalc <moderation@updates.example.com>"
 MODERATION_SUPPORT_EMAIL=support@example.com
 ```
 

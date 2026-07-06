@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { env } from "$env/dynamic/private";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
-import { normalizeFdcFood } from "$lib/utils/food/fdc";
+import { normalizeFdcFood } from "$lib/utils/food/sources/fdc";
 import type { FdcFood, FdcSearchResponse } from "$lib/utils/food/types";
 import { toJson } from "$lib/utils/storage/supabase/shared";
 

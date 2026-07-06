@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { searchNutrientCatalog } from "$lib/utils/mix/nutrientSearch";
+import { searchNutrientCatalog } from "$lib/utils/mix/nutrients/nutrientSearch";
 import { ALL_NUTRIENTS } from "../../../../src/variables/allNutrients";
 
 describe("nutrient catalog search", () => {

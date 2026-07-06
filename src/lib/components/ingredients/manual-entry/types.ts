@@ -1,5 +1,5 @@
 import type { FdcFood } from "$lib/utils/food/types";
-import type { SmoothieListKey } from "$lib/utils/storage/smoothieLists";
+import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 
 export type ManualEntryCreateContext = {
 	destination: SmoothieListKey | "custom-only";

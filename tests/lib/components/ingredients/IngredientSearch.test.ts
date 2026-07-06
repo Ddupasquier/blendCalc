@@ -2,13 +2,13 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FdcFood } from "$lib/utils/food/types";
 
-vi.mock("$lib/utils/food/fdc", () => ({
+vi.mock("$lib/utils/food/sources/fdc", () => ({
 	FdcConfigurationError: class FdcConfigurationError extends Error {},
 	searchFoods: vi.fn().mockResolvedValue([]),
 }));
 
-vi.mock("$lib/utils/food/customFoods", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("$lib/utils/food/customFoods")>();
+vi.mock("$lib/utils/food/custom/customFoods", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("$lib/utils/food/custom/customFoods")>();
 	return {
 		...actual,
 		searchCustomFoods: vi.fn().mockReturnValue([]),
@@ -20,7 +20,7 @@ vi.mock("$lib/utils/products/catalog", () => ({
 }));
 
 import IngredientSearch from "$lib/components/ingredients/search/IngredientSearch.svelte";
-import { searchFoods } from "$lib/utils/food/fdc";
+import { searchFoods } from "$lib/utils/food/sources/fdc";
 
 const makeFood = (fdcId: number, description: string): FdcFood => ({
 	fdcId,
@@ -84,6 +84,15 @@ describe("IngredientSearch", () => {
 			{ timeout: 2000 },
 		);
 
+		expect(screen.getByRole("option", { name: /apple, raw/i })).toHaveAttribute(
+			"aria-selected",
+			"false",
+		);
+		await fireEvent.keyDown(searchInput, { key: "ArrowDown" });
+		expect(screen.getByRole("option", { name: /apple, raw/i })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
 		await fireEvent.keyDown(searchInput, { key: "ArrowDown" });
 		expect(screen.getByRole("option", { name: /banana, raw/i })).toHaveAttribute(
 			"aria-selected",
@@ -139,5 +148,41 @@ describe("IngredientSearch", () => {
 		expect(onSelect).toHaveBeenCalledWith(
 			expect.objectContaining({ fdcId: 203 }),
 		);
+	});
+
+	it("uses the result plus button for adding without opening nutrition", async () => {
+		const onSelect = vi.fn();
+		const onAdd = vi.fn();
+		vi.mocked(searchFoods).mockResolvedValueOnce([
+			makeFood(301, "Spinach, raw"),
+		]);
+
+		render(IngredientSearch, {
+			props: {
+				onSelect,
+				onAdd,
+				onSearchFocus: vi.fn(),
+			},
+		});
+
+		const searchInput = screen.getByRole("combobox", {
+			name: /search ingredients/i,
+		});
+
+		await fireEvent.input(searchInput, { target: { value: "spinach" } });
+
+		await waitFor(
+			() => {
+				expect(screen.getByText("Spinach, raw")).toBeInTheDocument();
+			},
+			{ timeout: 2000 },
+		);
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add spinach, raw to fridge/i }),
+		);
+
+		expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ fdcId: 301 }));
+		expect(onSelect).not.toHaveBeenCalled();
 	});
 });

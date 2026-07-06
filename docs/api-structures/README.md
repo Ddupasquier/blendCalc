@@ -1,6 +1,6 @@
 # API Structures
 
-This folder contains generated reference files that describe the external food API payloads observed by Smoothie Mixer scripts.
+This folder contains generated reference files that describe the external food API payloads observed by blendCalc scripts.
 
 These files are documentation only. Do not import them from app code.
 

@@ -3,7 +3,7 @@ import {
 	hydrateFoodWithNormalizedNutrients,
 	normalizedRowsToNutrients,
 	type NormalizedNutrientRow,
-} from "$lib/utils/food/normalizedNutrients";
+} from "$lib/utils/food/nutrients/normalizedNutrients";
 import type { FdcFood } from "$lib/utils/food/types";
 
 const fallbackFood = {

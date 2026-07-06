@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateSharedProductFood } from "$lib/server/products/catalog.server";
-import type { NutrientRelationshipRule } from "$lib/utils/food/nutrientRelationshipRules";
+import type { NutrientRelationshipRule } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 
 const createFood = (overrides: Partial<FdcFood> = {}): FdcFood => ({

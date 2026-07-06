@@ -1,5 +1,5 @@
 import type { Database } from "$lib/types/database.types";
-import type { NormalizedNutrientRow } from "$lib/utils/food/normalizedNutrients";
+import type { NormalizedNutrientRow } from "$lib/utils/food/nutrients/normalizedNutrients";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type NormalizedNutrientParentColumn =

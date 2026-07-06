@@ -9,7 +9,7 @@ removed, hidden, or made harder to reach without an explicit product decision.
 
 ## Product Summary
 
-Smoothie Mixer is an authenticated, mobile-first smoothie planning app. Users:
+blendCalc is an authenticated, mobile-first smoothie planning app. Users:
 
 1. Find or create ingredients.
 2. Add ingredients to On Hand or Shopping List.

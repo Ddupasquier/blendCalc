@@ -2,7 +2,7 @@
 	import type {
 		ManualEntryNutrientDefinition,
 		ManualEntryNutrientGroup,
-	} from "$lib/utils/food/nutrientDefinitions";
+	} from "$lib/utils/food/nutrients/nutrientDefinitions";
 
 	let {
 		groups,

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Json } from "$lib/types/database.types";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import { compactFood } from "$lib/utils/food/foodRecords";
+import { compactFood } from "$lib/utils/food/records/foodRecords";
 import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
 import { createCatalogFoodFromDraft } from "./catalogFood.server";
 

@@ -7,8 +7,8 @@ const customFoodMocks = vi.hoisted(() => ({
 	findCustomFoodByName: vi.fn().mockReturnValue(null),
 }));
 
-vi.mock("$lib/utils/food/customFoods", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("$lib/utils/food/customFoods")>();
+vi.mock("$lib/utils/food/custom/customFoods", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("$lib/utils/food/custom/customFoods")>();
 	return {
 		...actual,
 		saveCustomFood: customFoodMocks.saveCustomFood,
@@ -22,9 +22,9 @@ const smoothieListMocks = vi.hoisted(() => ({
 	removeFoodFromSmoothieList: vi.fn().mockResolvedValue("removed"),
 }));
 
-vi.mock("$lib/utils/storage/smoothieLists", async (importOriginal) => {
+vi.mock("$lib/utils/storage/client/smoothieLists", async (importOriginal) => {
 	const actual =
-		await importOriginal<typeof import("$lib/utils/storage/smoothieLists")>();
+		await importOriginal<typeof import("$lib/utils/storage/client/smoothieLists")>();
 	return {
 		...actual,
 		addFoodToSmoothieList: smoothieListMocks.addFoodToSmoothieList,
@@ -84,9 +84,9 @@ const nutrientRelationshipMocks = vi.hoisted(() => ({
 	]),
 }));
 
-vi.mock("$lib/utils/food/nutrientRelationshipRules", async (importOriginal) => {
+vi.mock("$lib/utils/food/nutrients/nutrientRelationshipRules", async (importOriginal) => {
 	const actual =
-		await importOriginal<typeof import("$lib/utils/food/nutrientRelationshipRules")>();
+		await importOriginal<typeof import("$lib/utils/food/nutrients/nutrientRelationshipRules")>();
 	return {
 		...actual,
 		readNutrientRelationshipRules:
@@ -226,9 +226,9 @@ const foodMetadataMocks = vi.hoisted(() => {
 	};
 });
 
-vi.mock("$lib/utils/food/nutrientDefinitions", async (importOriginal) => {
+vi.mock("$lib/utils/food/nutrients/nutrientDefinitions", async (importOriginal) => {
 	const actual =
-		await importOriginal<typeof import("$lib/utils/food/nutrientDefinitions")>();
+		await importOriginal<typeof import("$lib/utils/food/nutrients/nutrientDefinitions")>();
 	return {
 		...actual,
 		readManualEntryNutrientGroups:
@@ -236,9 +236,9 @@ vi.mock("$lib/utils/food/nutrientDefinitions", async (importOriginal) => {
 	};
 });
 
-vi.mock("$lib/utils/food/categoryOptions", async (importOriginal) => {
+vi.mock("$lib/utils/food/nutrients/categoryOptions", async (importOriginal) => {
 	const actual =
-		await importOriginal<typeof import("$lib/utils/food/categoryOptions")>();
+		await importOriginal<typeof import("$lib/utils/food/nutrients/categoryOptions")>();
 	return {
 		...actual,
 		readCustomFoodCategoryOptions:
@@ -248,7 +248,7 @@ vi.mock("$lib/utils/food/categoryOptions", async (importOriginal) => {
 
 import CustomIngredientForm from "$lib/components/ingredients/manual-entry/CustomIngredientForm.svelte";
 import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
-import { createCustomFood } from "$lib/utils/food/customFoods";
+import { createCustomFood } from "$lib/utils/food/custom/customFoods";
 import type { FdcNutrient } from "$lib/utils/food/types";
 
 type TestNutrition = {

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import ActionButton from "$lib/components/common/ActionButton.svelte";
-	import BottomSheet from "$lib/components/common/BottomSheet.svelte";
+	import ActionButton from "$lib/components/common/buttons/ActionButton.svelte";
+	import BottomSheet from "$lib/components/common/sheets/BottomSheet.svelte";
 
 	type ListFilterOption = {
 		value: string;

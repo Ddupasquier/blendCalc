@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getFoodQuality } from "$lib/utils/food/foodQuality";
+import { getFoodQuality } from "$lib/utils/food/quality/foodQuality";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 
 const completeFood = {

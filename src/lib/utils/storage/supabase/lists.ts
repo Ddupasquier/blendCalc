@@ -1,9 +1,9 @@
 import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
-import { compactFood, uniqueFoodsById } from "$lib/utils/food/foodRecords";
-import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/normalizedNutrients";
+import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
+import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import type { FdcFood } from "$lib/utils/food/types";
-import type { SmoothieListKey } from "$lib/utils/storage/smoothieLists";
+import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
 import {
 	CLOUD_CURSOR_PAGE_SIZE,

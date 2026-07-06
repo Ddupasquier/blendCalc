@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte";
-	import ArrowLeft from "$lib/assets/icons/ArrowLeft.svelte";
+	import BackButton from "$lib/components/common/buttons/BackButton.svelte";
 	import {
 		SERVING_MEASURE_OPTIONS,
 		type ServingMeasureUnit,
@@ -11,12 +11,12 @@
 		findCustomFoodByBarcode,
 		findCustomFoodByName,
 		saveCustomFood,
-	} from "$lib/utils/food/customFoods";
+	} from "$lib/utils/food/custom/customFoods";
 	import {
 		addFoodToSmoothieList,
 		removeFoodFromSmoothieList,
 		type SmoothieListKey,
-	} from "$lib/utils/storage/smoothieLists";
+	} from "$lib/utils/storage/client/smoothieLists";
 	import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
 	import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog.svelte";
@@ -31,17 +31,17 @@
 	import {
 		readCustomFoodCategoryOptions,
 		type CustomFoodCategoryOption,
-	} from "$lib/utils/food/categoryOptions";
+	} from "$lib/utils/food/nutrients/categoryOptions";
 	import {
 		readManualEntryNutrientGroups,
 		type ManualEntryNutrientDefinition,
 		type ManualEntryNutrientGroupsByStep,
-	} from "$lib/utils/food/nutrientDefinitions";
+	} from "$lib/utils/food/nutrients/nutrientDefinitions";
 	import {
 		readNutrientRelationshipRules,
 		validateNutrientRelationshipRules,
 		type NutrientRelationshipRule,
-	} from "$lib/utils/food/nutrientRelationshipRules";
+	} from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 	import ManualEntryStepTabs from "$lib/components/ingredients/manual-entry/ManualEntryStepTabs.svelte";
 	import type { ManualEntryValidationItem } from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
 	import { normalizeBarcode } from "$lib/utils/barcode/barcode";
@@ -1180,14 +1180,11 @@
 			>
 				{#if inline}
 					<header class="custom-ingredient__header">
-						<button
-							type="button"
+						<BackButton
 							class="custom-ingredient__back"
-							aria-label="Back"
+							label="Back"
 							onclick={goBack}
-						>
-							<ArrowLeft size={20} strokeWidth={2.4} />
-						</button>
+						/>
 						<h2>Enter Manually</h2>
 					</header>
 				{/if}
@@ -1405,19 +1402,6 @@
 			font-size: 1.15rem;
 			font-weight: $app-font-weight-bold;
 		}
-	}
-
-	.custom-ingredient__back {
-		display: inline-grid;
-		place-items: center;
-		width: 2rem;
-		height: 2rem;
-		padding: 0;
-		color: $ingredient-text-primary;
-		background: transparent;
-		border: 0;
-		border-radius: $ingredient-radius-pill;
-		cursor: pointer;
 	}
 
 	:global(.custom-ingredient__step) {

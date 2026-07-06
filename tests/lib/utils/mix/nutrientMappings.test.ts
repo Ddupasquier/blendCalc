@@ -5,7 +5,7 @@ import {
 	migrateLegacyNutrientGoals,
 	migrateLegacyNutrientIds,
 	migrateLegacyNutrientOptions,
-} from "$lib/utils/mix/nutrientMappings";
+} from "$lib/utils/mix/nutrients/nutrientMappings";
 import { ALL_NUTRIENTS } from "../../../../src/variables/allNutrients";
 import { DEFAULT_NUTRIENT_GOALS } from "../../../../src/defaults/mixDefaults";
 

@@ -1,5 +1,7 @@
 <script lang="ts">
-	import type { FoodQuality } from "$lib/utils/food/foodQuality";
+	import ChevronDown from "$lib/assets/icons/ChevronDown.svelte";
+	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
+	import type { FoodQuality } from "$lib/utils/food/quality/foodQuality";
 
 	let {
 		quality,
@@ -42,7 +44,9 @@
 			aria-expanded={isOpen}
 			onclick={() => (isOpen = !isOpen)}
 		>
-			<span class="confidence-details__indicator" aria-hidden="true">!</span>
+			<span class="confidence-details__indicator" aria-hidden="true">
+				<WarningTriangle size={12} strokeWidth={2.6} />
+			</span>
 			<span class="confidence-details__header">
 				<strong>{quality.label} nutrition data</strong>
 				<span>
@@ -54,7 +58,7 @@
 				class:confidence-details__chevron--open={isOpen}
 				aria-hidden="true"
 			>
-				⌄
+				<ChevronDown size={14} strokeWidth={2.4} />
 			</span>
 		</button>
 
@@ -77,40 +81,51 @@
 
 	.confidence-details {
 		display: grid;
-		gap: $app-gap-sm;
-		margin: $app-gap-sm 0;
-		padding: $app-gap-sm;
-		background: $app-bg;
-		border: $app-border;
-		border-radius: $app-radius;
+		gap: $app-gap-xs;
+		margin: $app-gap-sm 0 $app-gap-md;
+		padding: $app-gap-xs;
+		background: color-mix(
+			in srgb,
+			$ingredient-status-warning-bg 24%,
+			$nutrition-label-bg
+		);
+		border: 1.5px solid
+			color-mix(in srgb, $app-warning-border-color 48%, $ingredient-border-subtle);
+		border-radius: $ingredient-radius-control;
 		font-family: $app-font-family-interface;
 	}
 
 	.confidence-details--compact {
 		margin: 0 $app-gap-md $app-gap-sm;
-		padding: $ingredient-control-padding-y-compact;
+		padding: $app-gap-xs;
 	}
 
 	.confidence-details__toggle {
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto;
-		gap: $app-gap-sm;
+		gap: $app-gap-xs;
 		align-items: center;
 		width: 100%;
-		padding: 0;
+		padding: $app-gap-xs $app-gap-xs $app-gap-sm;
 		color: inherit;
 		text-align: left;
 		background: transparent;
 		border: 0;
-		border-radius: 0;
+		border-radius: calc($ingredient-radius-control - 0.25rem);
+		cursor: pointer;
 
 		&:hover,
 		&:focus-visible {
-			background: transparent;
-			outline: none;
+			background: color-mix(
+				in srgb,
+				$ingredient-status-warning-bg 28%,
+				transparent
+			);
+			outline: $app-focus-outline;
+			outline-offset: $app-focus-outline-offset;
 
 			.confidence-details__header strong {
-				text-decoration: underline;
+				text-decoration: none;
 			}
 		}
 	}
@@ -118,37 +133,38 @@
 	.confidence-details__indicator {
 		display: grid;
 		place-items: center;
-		width: 1.2rem;
-		height: 1.2rem;
-		color: $app-warning-strong;
-		background: $app-danger-bg;
+		width: 1.35rem;
+		height: 1.35rem;
+		color: $app-danger-action;
+		background: $ingredient-status-error-bg;
 		border-radius: $app-radius-pill;
-		font-size: 0.75rem;
-		font-weight: 900;
 		line-height: 1;
 	}
 
 	.confidence-details__header {
 		display: grid;
-		gap: $app-gap-xs;
+		gap: 0.1rem;
+		min-width: 0;
 
 		strong {
-			color: $app-primary;
-			font-size: 0.78rem;
-			font-weight: 800;
+			color: $ingredient-text-primary;
+			font-size: $app-font-size-sm;
+			font-weight: $app-font-weight-bold;
+			line-height: 1.1;
 		}
 
 		span {
-			color: $app-muted;
-			font-size: 0.7rem;
-			font-weight: 700;
+			color: $ingredient-text-muted;
+			font-size: $app-font-size-xs;
+			font-weight: $app-font-weight-semibold;
+			line-height: 1.15;
 		}
 	}
 
 	.confidence-details__chevron {
-		color: $app-primary;
-		font-size: 1rem;
-		font-weight: 900;
+		display: grid;
+		place-items: center;
+		color: $ingredient-text-primary;
 		line-height: 1;
 		transition: transform 160ms ease;
 	}
@@ -161,40 +177,47 @@
 		display: grid;
 		gap: $app-gap-xs;
 		list-style: none;
+		margin: 0;
+		padding: 0;
 	}
 
 	.confidence-detail {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
-		gap: $app-gap-xs $app-gap-sm;
+		gap: 0.15rem $app-gap-sm;
 		align-items: center;
-		padding: $app-gap-xs $ingredient-control-padding-y-compact;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-radius-sm;
+		padding: $app-gap-sm $ingredient-control-padding-x-compact;
+		background: $ingredient-surface-soft;
+		border: 1.5px solid
+			color-mix(in srgb, $app-warning-border-color 42%, $ingredient-border-subtle);
+		border-radius: calc($ingredient-radius-control - 0.35rem);
 
 		span {
 			min-width: 0;
 			overflow: hidden;
-			color: $app-primary;
-			font-size: 0.74rem;
+			color: $ingredient-text-primary;
+			font-size: $app-font-size-xs;
 			font-weight: $app-font-weight-semibold;
+			line-height: 1.2;
 			text-overflow: ellipsis;
 			white-space: nowrap;
 		}
 
 		strong {
+			color: $ingredient-text-primary;
 			font-size: 0.68rem;
-			font-weight: 900;
+			font-weight: $app-font-weight-heavy;
+			letter-spacing: $app-letter-spacing-label;
+			line-height: 1.1;
 			text-transform: uppercase;
 		}
 
 		small {
 			grid-column: 1 / -1;
-			color: $app-muted;
-			font-size: 0.68rem;
-			font-weight: 600;
-			line-height: 1.25;
+			color: $ingredient-text-muted;
+			font-size: $app-font-size-xs;
+			font-weight: $app-font-weight-medium;
+			line-height: 1.3;
 		}
 	}
 

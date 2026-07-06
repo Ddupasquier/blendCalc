@@ -1,4 +1,4 @@
-# smoothie-mixer
+# blendCalc
 
 Mix and match ingredients for making well-balanced smoothies.
 
@@ -40,19 +40,19 @@ Then add the values needed for your environment:
 - `VITE_FDC_API_KEY`: free [FoodData Central API key](https://fdc.nal.usda.gov/api-guide.html)
 - `PUBLIC_SUPABASE_URL`: Supabase project URL
 - `PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase publishable browser key
-- `PUBLIC_SITE_URL`: production origin, for example `https://smoothie-mixer.vercel.app`
+- `PUBLIC_SITE_URL`: production origin, for example `https://blendcalc.vercel.app`
 - `SUPABASE_SERVICE_ROLE_KEY`: server-only admin key for protected server work, moderation, and scripts
 - `RESEND_API_KEY`, `MODERATION_EMAIL_FROM`, `MODERATION_SUPPORT_EMAIL`: optional moderation email delivery
 
 > `.env` and `.env.moderation.local` are listed in `.gitignore` and must not be committed.
 
 For production authentication, set `PUBLIC_SITE_URL` in the hosting environment
-to the deployed origin, for example `https://smoothie-mixer.vercel.app`. In
+to the deployed origin, for example `https://blendcalc.vercel.app`. In
 Supabase **Authentication → URL Configuration**, set the Site URL to that same
 production origin and add both callback URLs to the redirect allow list:
 
 ```text
-https://smoothie-mixer.vercel.app/auth/callback
+https://blendcalc.vercel.app/auth/callback
 http://localhost:5173/auth/callback
 ```
 
