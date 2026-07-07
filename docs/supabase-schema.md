@@ -207,6 +207,9 @@ Columns: `id`, `submitted_by`, `barcode`, `product_name`, `brand_owner`,
 
 Notes:
 - Public sharing requires `consent_to_share = true`.
+- `status` can be `pending`, `approved`, `rejected`, or `auto_declined`.
+- `auto_declined` means server validation blocked a bad share attempt before it
+  reached normal moderation; it should not count as a human rejection.
 - `validation_report` carries barcode/source comparison and nutrient validation
   results for moderation.
 

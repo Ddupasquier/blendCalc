@@ -16,6 +16,10 @@ import {
 } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
+import {
+	compareCatalogSubmissionToExistingProduct,
+	type CatalogSubmissionComparison,
+} from "$lib/utils/products/catalogSubmissionComparison";
 import { toJson } from "$lib/utils/storage/supabase/shared";
 import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -52,6 +56,9 @@ type ValidationReport = {
 	externalLookupFailed?: boolean;
 	evidenceComplete?: boolean;
 	conflictCount?: number;
+	existingCatalogMatch?: boolean;
+	existingCatalogAction?: "already_available" | "update_review" | "auto_declined";
+	existingCatalogComparison?: CatalogSubmissionComparison;
 };
 
 type ProductSubmissionContext = {
@@ -273,6 +280,45 @@ const findExistingPendingSubmission = async (barcode: string) => {
 	return data;
 };
 
+const recordAutoDeclinedCatalogSubmission = async (input: {
+	userId: string;
+	barcode: string;
+	food: FdcFood;
+	comparison: CatalogSubmissionComparison;
+}) => {
+	const admin = getSupabaseAdminClient();
+	const now = new Date().toISOString();
+	const report: ValidationReport = {
+		valid: false,
+		issues: input.comparison.severeDifferences.length
+			? input.comparison.severeDifferences
+			: input.comparison.issues,
+		existingCatalogMatch: true,
+		existingCatalogAction: "auto_declined",
+		existingCatalogComparison: input.comparison,
+		evidenceComplete: false,
+	};
+
+	const { error } = await admin
+		.from("shared_product_submissions")
+		.insert({
+			submitted_by: input.userId,
+			barcode: input.barcode,
+			product_name: input.food.description.trim(),
+			brand_owner: input.food.brandOwner?.trim() || null,
+			food: toJson(compactFood(input.food)),
+			consent_to_share: true,
+			status: "auto_declined",
+			verification_status: "manual_review",
+			validation_report: toJson(report),
+			evidence_paths: toJson({}),
+			evidence_complete: false,
+			reviewed_at: now,
+			review_note: "Machine blocked: submitted product data is wildly different from the active catalog product for this barcode.",
+		});
+	if (error) throw error;
+};
+
 export const getActiveProductSubmissionBlock = async (userId: string) => {
 	const admin = getSupabaseAdminClient();
 	const now = new Date().toISOString();
@@ -361,17 +407,27 @@ export const submitProductForCatalog = async (
 		throw new Error(validation.issues.join(" "));
 	}
 
-	const { data: existingProduct, error: productLookupError } = await admin
-		.from("shared_products")
-		.select("id")
-		.eq("barcode", validation.barcode)
-		.eq("status", "active")
-		.maybeSingle();
-	if (productLookupError) throw productLookupError;
-	if (existingProduct) {
+	const existingCatalogFood = await getSharedProductByBarcode(admin, validation.barcode);
+	const existingCatalogComparison = existingCatalogFood
+		? compareCatalogSubmissionToExistingProduct(food, existingCatalogFood)
+		: null;
+	if (existingCatalogComparison?.matchesExisting) {
 		return {
 			status: "already-available",
 			message: "This product is already available to everyone.",
+			evidenceAccepted: false,
+		};
+	}
+	if (existingCatalogComparison?.shouldAutoDecline) {
+		await recordAutoDeclinedCatalogSubmission({
+			userId,
+			barcode: validation.barcode,
+			food,
+			comparison: existingCatalogComparison,
+		});
+		return {
+			status: "already-available",
+			message: "This barcode already has a verified catalog item. Your private ingredient was saved, but it was not sent for shared review.",
 			evidenceAccepted: false,
 		};
 	}
@@ -393,17 +449,23 @@ export const submitProductForCatalog = async (
 	} catch {
 		externalLookupFailed = true;
 	}
-	if (!usdaDraft) {
-		try {
-			openFoodFactsDraft = await lookupOpenFoodFactsBarcodeProduct(
-				validation.barcode,
-			);
-		} catch {
-			externalLookupFailed = true;
-		}
+	try {
+		openFoodFactsDraft = await lookupOpenFoodFactsBarcodeProduct(
+			validation.barcode,
+		);
+	} catch {
+		externalLookupFailed = true;
 	}
 
-	const reviewFlags = sanitizeReviewFlags(context.reviewFlags);
+	const reviewFlags = sanitizeReviewFlags([
+		...(context.reviewFlags ?? []),
+		...(existingCatalogComparison
+			? [
+					"Barcode exists in the active shared catalog, but the submitted label data differs. Review as a catalog update request.",
+					...existingCatalogComparison.issues,
+				]
+			: []),
+	]);
 	const needsSourceComparisonReview = reviewFlags.length > 0;
 	const report: ValidationReport = {
 		valid: true,
@@ -411,6 +473,9 @@ export const submitProductForCatalog = async (
 		usdaMatch: Boolean(usdaDraft),
 		openFoodFactsMatch: Boolean(openFoodFactsDraft),
 		externalLookupFailed,
+		existingCatalogMatch: Boolean(existingCatalogComparison),
+		existingCatalogAction: existingCatalogComparison ? "update_review" : undefined,
+		existingCatalogComparison: existingCatalogComparison ?? undefined,
 	};
 	const matchedDraft = usdaDraft ?? openFoodFactsDraft;
 

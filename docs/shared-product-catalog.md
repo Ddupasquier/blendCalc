@@ -90,6 +90,67 @@ three evidence photos against the entered serving and nutrient values before app
   submissions for 30 days. This prevents repeated bad catalog entries without blocking
   private food tracking.
 
+## Submit and moderation improvement plan
+
+The current schema already gives us useful pieces: private custom foods, shared
+product submissions, approved shared products, observations, field provenance,
+conflicts, validation reports, evidence photos, and rejection blocks. New
+catalog features should use those pieces first.
+
+### Intake outcomes
+
+When a user tries to share a barcoded manual entry, route it into one of these
+clear outcomes:
+
+1. **Private save only:** no valid barcode, no consent, or the user chooses not to share.
+2. **Already in catalog:** barcode exists and submitted data matches the active shared product. Tell the user it already exists; do not create a duplicate submission.
+3. **Catalog update request:** barcode exists, but the user’s data has meaningful differences. Let the user submit evidence, send it to moderation, and keep their private ingredient unchanged.
+4. **Trusted source auto-accept:** barcode has a trusted source match and submitted data matches closely enough. Publish without human review and keep source provenance.
+5. **Human review:** unknown label, source disagreement, missing confidence, or user chose to keep their own data over a source match. Require package, nutrition label, and barcode evidence.
+6. **Silent machine block:** barcode/source match is wildly different from the submitted data. Save the private ingredient if valid, but do not create a normal moderation item.
+
+### Suggested checks
+
+- **Barcode:** valid GTIN format, duplicate active product, duplicate pending submission, trusted-source match, and source mismatch.
+- **Identity:** product name similarity, brand similarity, category similarity, and ingredient list similarity.
+- **Serving:** positive serving weight, unit consistency, and volume/weight consistency when both are present.
+- **Nutrients:** required nutrients present, typed `0` accepted as real data, no negative values, child nutrients not greater than parent nutrients, and extreme values flagged.
+- **Evidence:** front package, nutrition label, and barcode photos required for unknown labels, catalog update requests, and source disagreement.
+- **User history:** repeated human rejections pause sharing, but silent machine blocks should be tracked separately unless we explicitly decide they should count.
+
+### Auto-accept candidates
+
+- Exact trusted barcode source match with no material conflicts.
+- Existing shared product match with no changes.
+- Missing optional nutrients filled from a trusted source without changing user-entered required label data.
+
+### Auto-block candidates
+
+These should not show as normal moderation rows unless we intentionally want
+moderators to audit them:
+
+- Barcode belongs to an existing catalog product, but the submitted name/brand/category is clearly unrelated.
+- Barcode has a trusted source match, but the submitted nutrients are wildly outside the source range.
+- Submission appears to reuse a barcode for a different product.
+- Required evidence is absent after the flow already told the user it is required.
+
+### Schema note
+
+Normal `rejected` submissions count toward the 5-rejection sharing pause.
+Silent machine blocks use `shared_product_submissions.status = 'auto_declined'`
+and do not count as normal moderator rejections. That keeps spam protection
+useful without punishing honest users who hit a machine guardrail while saving a
+private ingredient.
+
+Current server behavior compares new barcoded submissions against an active
+shared product before deciding the outcome:
+
+- matching catalog data returns `already-available` and does not create a new
+  submission;
+- meaningful differences become a pending catalog update request with evidence;
+- wildly unrelated data is stored as `auto_declined` for audit and never appears
+  in the normal moderation queue.
+
 ## Verification rules
 
 Current automatic checks reject:
