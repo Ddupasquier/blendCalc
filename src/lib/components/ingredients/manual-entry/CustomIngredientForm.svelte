@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte";
-	import BackButton from "$lib/components/common/buttons/BackButton.svelte";
 	import {
 		SERVING_MEASURE_OPTIONS,
 		type ServingMeasureUnit,
@@ -18,32 +17,34 @@
 		type SmoothieListKey,
 	} from "$lib/utils/storage/client/smoothieLists";
 	import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
-	import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog.svelte";
-	import WarningPopup from "$lib/components/common/feedback/WarningPopup.svelte";
 	import type { CustomIngredientOutcomeState } from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
 	import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
-	import ManualEntryToggle from "$lib/components/ingredients/manual-entry/ManualEntryToggle.svelte";
+	import {
+		emptyManualEntryNutrientGroups,
+		manualEntrySteps,
+		volumeAmountRequiredMessage,
+		type ManualEntryStepId,
+		type ManualEntrySummaryItem,
+		type NutrientValueState,
+		type StepValidationItem,
+	} from "$lib/components/ingredients/manual-entry/formTypes";
+	import ManualEntryFormShell from "$lib/components/ingredients/manual-entry/ManualEntryFormShell.svelte";
+	import ManualEntryScanOption from "$lib/components/ingredients/manual-entry/ManualEntryScanOption.svelte";
 	import IdentityStep from "$lib/components/ingredients/manual-entry/steps/IdentityStep.svelte";
 	import NutrientStep from "$lib/components/ingredients/manual-entry/steps/NutrientStep.svelte";
 	import ServingsStep from "$lib/components/ingredients/manual-entry/steps/ServingsStep.svelte";
 	import ShareStep from "$lib/components/ingredients/manual-entry/steps/ShareStep.svelte";
+	import type { CustomFoodCategoryOption } from "$lib/utils/food/nutrients/categoryOptions";
 	import {
-		readCustomFoodCategoryOptions,
-		type CustomFoodCategoryOption,
-	} from "$lib/utils/food/nutrients/categoryOptions";
-	import {
-		readManualEntryNutrientGroups,
 		type ManualEntryNutrientDefinition,
 		type ManualEntryNutrientGroupsByStep,
 	} from "$lib/utils/food/nutrients/nutrientDefinitions";
+	import { loadManualEntryReferenceData } from "$lib/utils/food/nutrients/manualEntryReferenceData";
 	import {
-		readNutrientRelationshipRules,
 		validateNutrientRelationshipRules,
 		type NutrientRelationshipRule,
 	} from "$lib/utils/food/nutrients/nutrientRelationshipRules";
-	import ManualEntryStepTabs from "$lib/components/ingredients/manual-entry/ManualEntryStepTabs.svelte";
-	import type { ManualEntryValidationItem } from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
 	import {
 		getBarcodeInputValidationMessage,
 		normalizeBarcode,
@@ -55,35 +56,7 @@
 	import { barcodeDraftHasEntryChanges } from "$lib/utils/barcode/barcodeDraftComparison";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 	import { submitSharedProduct } from "$lib/utils/products/catalog";
-	import { getSupabaseBrowserClient } from "$lib/supabase/client";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
-
-	type ManualEntryStepId = "identity" | "servings" | "macros" | "extended" | "share";
-	type NutrientValueState = Record<number, number>;
-	type StepValidationItem = ManualEntryValidationItem & {
-		step: ManualEntryStepId;
-		showImmediately?: boolean;
-	};
-	type ManualEntrySummaryItem = {
-		label: string;
-		value: number;
-		unitName: string;
-	};
-
-	const manualEntrySteps: { id: ManualEntryStepId; label: string }[] = [
-		{ id: "identity", label: "Identity" },
-		{ id: "servings", label: "Servings" },
-		{ id: "macros", label: "Macros" },
-		{ id: "extended", label: "Extended" },
-		{ id: "share", label: "Share" },
-	];
-
-	const emptyManualEntryNutrientGroups: ManualEntryNutrientGroupsByStep = {
-		macros: [],
-		extended: [],
-	};
-	const volumeAmountRequiredMessage =
-		"Enter a volume amount or turn off Label includes volume.";
 
 	let {
 		onCreate,
@@ -177,63 +150,28 @@
 	onMount(() => {
 		let cancelled = false;
 
-		const loadManualEntryNutrients = async () => {
-			loadingManualEntryNutrients = true;
-			manualEntryNutrientError = "";
-			const groups = await readManualEntryNutrientGroups();
+		loadingManualEntryNutrients = true;
+		loadingCategoryOptions = true;
+		loadingNutrientRelationshipRules = true;
+		manualEntryNutrientError = "";
+		categoryOptionsError = "";
+		nutrientRelationshipRuleError = "";
 
+		void loadManualEntryReferenceData().then((referenceData) => {
 			if (cancelled) return;
 
-			if (!groups) {
-				manualEntryNutrientGroups = emptyManualEntryNutrientGroups;
-				manualEntryNutrientError =
-					"Nutrition fields could not load. Refresh and try again before continuing.";
-			} else {
-				manualEntryNutrientGroups = groups;
-			}
-
+			manualEntryNutrientGroups =
+				referenceData.nutrientGroups ?? emptyManualEntryNutrientGroups;
+			manualEntryNutrientError = referenceData.nutrientGroupError;
+			categoryOptions = referenceData.categoryOptions;
+			categoryOptionsError = referenceData.categoryOptionsError;
+			nutrientRelationshipRules = referenceData.nutrientRelationshipRules;
+			nutrientRelationshipRuleError =
+				referenceData.nutrientRelationshipRuleError;
 			loadingManualEntryNutrients = false;
-		};
-
-		const loadCategoryOptions = async () => {
-			loadingCategoryOptions = true;
-			categoryOptionsError = "";
-			const options = await readCustomFoodCategoryOptions();
-
-			if (cancelled) return;
-
-			if (!options?.length) {
-				categoryOptions = [];
-				categoryOptionsError =
-					"Food categories are not available yet. Run the category seed script after database migrations.";
-			} else {
-				categoryOptions = options;
-			}
-
 			loadingCategoryOptions = false;
-		};
-
-		const loadNutrientRelationshipRules = async () => {
-			loadingNutrientRelationshipRules = true;
-			nutrientRelationshipRuleError = "";
-			const rules = await readNutrientRelationshipRules(getSupabaseBrowserClient());
-
-			if (cancelled) return;
-
-			if (!rules?.length) {
-				nutrientRelationshipRules = [];
-				nutrientRelationshipRuleError =
-					"Nutrition validation rules could not be loaded. Try again in a moment.";
-			} else {
-				nutrientRelationshipRules = rules;
-			}
-
 			loadingNutrientRelationshipRules = false;
-		};
-
-		void loadManualEntryNutrients();
-		void loadCategoryOptions();
-		void loadNutrientRelationshipRules();
+		});
 
 		return () => {
 			cancelled = true;
@@ -1316,181 +1254,145 @@
 <section class="custom-ingredient" aria-label="Add custom ingredient">
 	<div class="custom-ingredient__options">
 		{#if showScanButton}
-			<section
-				class="custom-ingredient__scan-option"
-				aria-label="Scan a package barcode"
-			>
-				<BarcodeScanButton
-					scanning={lookingUpBarcode}
-					disabled={saving || checkingBarcodeReference}
-					onclick={() => (scannerOpen = true)}
-				/>
-				<small>Scan a barcode for fastest entry</small>
-			</section>
+			<ManualEntryScanOption
+				scanning={lookingUpBarcode}
+				disabled={saving || checkingBarcodeReference}
+				onScan={() => (scannerOpen = true)}
+			/>
 		{/if}
 
-		<details
-			class="custom-ingredient__manual"
-			class:custom-ingredient__manual--sheet={!inline}
-			open={!inline}
-			bind:this={labelDetailsElement}
+		<ManualEntryFormShell
+			{inline}
+			{activeStep}
+			steps={manualEntrySteps}
+			{saving}
+			{lookingUpBarcode}
+			{stepWarningMessage}
+			{stepWarningStep}
+			onBack={goBack}
+			onSelectStep={goToStep}
+			onDetailsElement={(element) => (labelDetailsElement = element)}
+			onBodyElement={(element) => (manualBodyElement = element)}
 		>
-			<summary
-				class="custom-ingredient__manual-toggle"
-				class:custom-ingredient__manual-toggle--sheet-hidden={!inline}
-				aria-hidden={!inline}
-			>
-				<ManualEntryToggle />
-			</summary>
-
-			<fieldset
-				bind:this={manualBodyElement}
-				class="custom-ingredient__body"
-				disabled={saving || lookingUpBarcode}
-				aria-busy={saving || lookingUpBarcode}
-			>
-				{#if inline}
-					<header class="custom-ingredient__header">
-						<BackButton
-							class="custom-ingredient__back"
-							label="Back"
-							onclick={goBack}
-						/>
-						<h2>Enter Manually</h2>
-					</header>
-				{/if}
-
-				<ManualEntryStepTabs
-					steps={manualEntrySteps}
-					{activeStep}
-					onSelect={goToStep}
+			{#if activeStep === "identity"}
+				<IdentityStep
+					{name}
+					{brandOwner}
+					{category}
+					{barcode}
+					{categoryPlaceholder}
+					{visibleCategoryOptions}
+					{loadingCategoryOptions}
+					{categoryOptionsError}
+					{barcodeMessage}
+					{barcodeValidationMessage}
+					{checkingBarcodeReference}
+					barcodeSuggestion={barcodeReferenceDraft
+						? {
+								name: barcodeReferenceDraft.name,
+								brandOwner: barcodeReferenceDraft.brandOwner,
+								sourceLabel: barcodeReferenceDraft.sourceLabel,
+							}
+						: null}
+					onNameChange={(value) => (name = value)}
+					onBrandChange={(value) => (brandOwner = value)}
+					onCategoryChange={(value) => (category = value)}
+					onBarcodeChange={setManualBarcode}
+					onBarcodeBlur={checkManualBarcodeReference}
+					onApplyBarcodeSuggestion={applyBarcodeReferenceSuggestion}
+					onKeepManualBarcodeEntry={keepManualBarcodeEntry}
+					onNameInput={(element) => (ingredientNameInput = element)}
+					onNext={goNext}
 				/>
-
-				<WarningPopup
-					open={Boolean(stepWarningMessage && stepWarningStep === activeStep)}
-					message={stepWarningMessage}
+			{:else if activeStep === "servings"}
+				<ServingsStep
+					{servingLabel}
+					{resolvedServingLabel}
+					{servingWeightGrams}
+					{useVolumeEquivalent}
+					{volumeQuantity}
+					{volumeUnit}
+					volumeOptions={volumeOptions.map((option) => ({
+						value: option.value,
+						label: option.label,
+					}))}
+					onServingLabelChange={(value) => (servingLabel = value)}
+					onServingWeightChange={(value) =>
+						(servingWeightGrams = Number.isFinite(value) ? value : null)}
+					onUseVolumeChange={(value) => (useVolumeEquivalent = value)}
+					onVolumeQuantityChange={(value) => (volumeQuantity = value)}
+					onVolumeUnitChange={(value) => (volumeUnit = value)}
+					onBack={goBack}
+					onNext={goNext}
 				/>
-
-				{#if activeStep === "identity"}
-					<IdentityStep
-						{name}
-						{brandOwner}
-						{category}
-						{barcode}
-						{categoryPlaceholder}
-						{visibleCategoryOptions}
-						{loadingCategoryOptions}
-						{categoryOptionsError}
-						{barcodeMessage}
-						{barcodeValidationMessage}
-						{checkingBarcodeReference}
-						barcodeSuggestion={barcodeReferenceDraft
-							? {
-									name: barcodeReferenceDraft.name,
-									brandOwner: barcodeReferenceDraft.brandOwner,
-									sourceLabel: barcodeReferenceDraft.sourceLabel,
-								}
-							: null}
-						onNameChange={(value) => (name = value)}
-						onBrandChange={(value) => (brandOwner = value)}
-						onCategoryChange={(value) => (category = value)}
-						onBarcodeChange={setManualBarcode}
-						onBarcodeBlur={checkManualBarcodeReference}
-						onApplyBarcodeSuggestion={applyBarcodeReferenceSuggestion}
-						onKeepManualBarcodeEntry={keepManualBarcodeEntry}
-						onNameInput={(element) => (ingredientNameInput = element)}
-						onNext={goNext}
-					/>
-				{:else if activeStep === "servings"}
-					<ServingsStep
-						{servingLabel}
-						{resolvedServingLabel}
-						{servingWeightGrams}
-						{useVolumeEquivalent}
-						{volumeQuantity}
-						{volumeUnit}
-						volumeOptions={volumeOptions.map((option) => ({
-							value: option.value,
-							label: option.label,
-						}))}
-						onServingLabelChange={(value) => (servingLabel = value)}
-						onServingWeightChange={(value) =>
-							(servingWeightGrams = Number.isFinite(value) ? value : null)}
-						onUseVolumeChange={(value) => (useVolumeEquivalent = value)}
-						onVolumeQuantityChange={(value) => (volumeQuantity = value)}
-						onVolumeUnitChange={(value) => (volumeUnit = value)}
-						onBack={goBack}
-						onNext={goNext}
-					/>
-				{:else if activeStep === "macros"}
-					<NutrientStep
-						groups={manualEntryNutrientGroups.macros}
-						loading={loadingManualEntryNutrients}
-						error={manualEntryNutrientError}
-						helper="Enter values from the nutrition label for the serving above. The app stores normalized per-100g values. Fields marked * are required."
-						hideUnavailableStatus={hideMacroUnavailableStatus}
-						validationItems={getAttemptedValidationItems(
-							customIngredientValidationItems.filter(
-								(item) => item.step === "macros",
-							),
-						)}
-						getValue={getManualNutrientValue}
-						onValueChange={setManualNutrientValue}
-						isRequired={isRequiredManualNutrient}
-						onBack={goBack}
-						onNext={goNext}
-					/>
-				{:else if activeStep === "extended"}
-					<NutrientStep
-						groups={manualEntryNutrientGroups.extended}
-						loading={loadingManualEntryNutrients}
-						error={manualEntryNutrientError}
-						helper="All fields on this step are optional. Fill what you know."
-						accordion
-						defaultOpenFirst={false}
-						getValue={getManualNutrientValue}
-						onValueChange={setManualNutrientValue}
-						isRequired={isRequiredManualNutrient}
-						onBack={goBack}
-						onNext={goNext}
-					/>
-				{:else}
-					<ShareStep
-						{normalizedName}
-						{activeCategory}
-						summaryNutrients={getSummaryItems()}
-						optionalNutrientCount={getOptionalNutrientCount()}
-						validationItems={getAttemptedValidationItems(customIngredientValidationItems)}
-						{barcodeMessage}
-						{hasValidBarcode}
-						{barcodeSource}
-						{canShareWithCatalog}
-						{shareUnavailableMessage}
-						{shareHelpMessage}
-						{shareWithCatalog}
-						{requiresCatalogEvidence}
-						{saveDestination}
-						{error}
-						{lastOutcome}
-						{outcomeAction}
-						{savedMessage}
-						{catalogMessage}
-						{saving}
-						onShareChange={(checked) => (shareWithCatalog = checked)}
-						onFrontPhotoChange={(file) => (frontPhoto = file)}
-						onNutritionPhotoChange={(file) => (nutritionPhoto = file)}
-						onBarcodePhotoChange={(file) => (barcodePhoto = file)}
-						onSaveDestinationChange={(destination) => (saveDestination = destination)}
-						onSaveDestinationInput={(element) => (saveDestinationSelect = element)}
-						onMoveToShopping={() => moveLastOutcome(MIX_STORAGE_KEYS.shoppingList)}
-						onMoveToFridge={() => moveLastOutcome(MIX_STORAGE_KEYS.fridge)}
-						onUndo={undoLastOutcomeAdd}
-						onBack={goBack}
-						onSubmit={handleSubmit}
-					/>
-				{/if}
-			</fieldset>
-		</details>
+			{:else if activeStep === "macros"}
+				<NutrientStep
+					groups={manualEntryNutrientGroups.macros}
+					loading={loadingManualEntryNutrients}
+					error={manualEntryNutrientError}
+					helper="Enter values from the nutrition label for the serving above. The app stores normalized per-100g values. Fields marked * are required."
+					hideUnavailableStatus={hideMacroUnavailableStatus}
+					validationItems={getAttemptedValidationItems(
+						customIngredientValidationItems.filter(
+							(item) => item.step === "macros",
+						),
+					)}
+					getValue={getManualNutrientValue}
+					onValueChange={setManualNutrientValue}
+					isRequired={isRequiredManualNutrient}
+					onBack={goBack}
+					onNext={goNext}
+				/>
+			{:else if activeStep === "extended"}
+				<NutrientStep
+					groups={manualEntryNutrientGroups.extended}
+					loading={loadingManualEntryNutrients}
+					error={manualEntryNutrientError}
+					helper="All fields on this step are optional. Fill what you know."
+					accordion
+					defaultOpenFirst={false}
+					getValue={getManualNutrientValue}
+					onValueChange={setManualNutrientValue}
+					isRequired={isRequiredManualNutrient}
+					onBack={goBack}
+					onNext={goNext}
+				/>
+			{:else}
+				<ShareStep
+					{normalizedName}
+					{activeCategory}
+					summaryNutrients={getSummaryItems()}
+					optionalNutrientCount={getOptionalNutrientCount()}
+					validationItems={getAttemptedValidationItems(customIngredientValidationItems)}
+					{barcodeMessage}
+					{hasValidBarcode}
+					{barcodeSource}
+					{canShareWithCatalog}
+					{shareUnavailableMessage}
+					{shareHelpMessage}
+					{shareWithCatalog}
+					{requiresCatalogEvidence}
+					{saveDestination}
+					{error}
+					{lastOutcome}
+					{outcomeAction}
+					{savedMessage}
+					{catalogMessage}
+					{saving}
+					onShareChange={(checked) => (shareWithCatalog = checked)}
+					onFrontPhotoChange={(file) => (frontPhoto = file)}
+					onNutritionPhotoChange={(file) => (nutritionPhoto = file)}
+					onBarcodePhotoChange={(file) => (barcodePhoto = file)}
+					onSaveDestinationChange={(destination) => (saveDestination = destination)}
+					onSaveDestinationInput={(element) => (saveDestinationSelect = element)}
+					onMoveToShopping={() => moveLastOutcome(MIX_STORAGE_KEYS.shoppingList)}
+					onMoveToFridge={() => moveLastOutcome(MIX_STORAGE_KEYS.fridge)}
+					onUndo={undoLastOutcomeAdd}
+					onBack={goBack}
+					onSubmit={handleSubmit}
+				/>
+			{/if}
+		</ManualEntryFormShell>
 	</div>
 </section>
 
@@ -1513,72 +1415,6 @@
 	.custom-ingredient__options {
 		display: grid;
 		gap: $app-vertical-stack-gap;
-	}
-
-	.custom-ingredient__scan-option {
-		display: grid;
-		justify-items: end;
-		gap: $app-gap-xs;
-
-		small {
-			color: $ingredient-text-muted;
-			font-size: $app-font-size-xs;
-			font-weight: $app-font-weight-medium;
-		}
-	}
-
-	.custom-ingredient__manual {
-		overflow: hidden;
-		background: transparent;
-		border: 0;
-		border-radius: 0;
-	}
-
-	.custom-ingredient__manual--sheet {
-		display: block;
-		overflow: visible;
-	}
-
-	.custom-ingredient__manual-toggle {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		width: 100%;
-		padding: $ingredient-card-padding-compact $ingredient-card-padding;
-		list-style: none;
-		cursor: pointer;
-
-		&::-webkit-details-marker {
-			display: none;
-		}
-	}
-
-	.custom-ingredient__manual-toggle--sheet-hidden {
-		display: none;
-	}
-
-	.custom-ingredient__body {
-		display: grid;
-		gap: $app-vertical-stack-gap;
-		min-width: 0;
-		padding: 0;
-		margin: 0;
-		background: transparent;
-		border: 0;
-	}
-
-	.custom-ingredient__header {
-		display: flex;
-		align-items: center;
-		gap: $app-gap-sm;
-
-		h2 {
-			margin: 0;
-			color: $ingredient-text-primary;
-			font-family: $app-font-family-interface;
-			font-size: 1.15rem;
-			font-weight: $app-font-weight-bold;
-		}
 	}
 
 	:global(.custom-ingredient__step) {
