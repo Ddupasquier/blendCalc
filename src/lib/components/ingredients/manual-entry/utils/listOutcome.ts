@@ -32,6 +32,19 @@ export type ManualEntryDestinationResult =
 			error: string;
 		};
 
+export type ManualEntryOutcomeAction = "move" | "undo";
+
+export const canChangeManualEntryOutcome = (
+	lastOutcome: CustomIngredientOutcomeState | null,
+	outcomeAction: ManualEntryOutcomeAction | null,
+) =>
+	Boolean(
+		lastOutcome &&
+			lastOutcome.addedToList &&
+			lastOutcome.destination !== "custom-only" &&
+			!outcomeAction,
+	);
+
 export const addManualEntryFoodToDestination = async ({
 	food,
 	saveDestination,
@@ -158,3 +171,19 @@ export const undoManualEntryOutcomeAdd = async (
 		message: `${lastOutcome.food.description} removed from ${getListDestinationLabel(lastOutcome.destination)}. The custom ingredient is still saved.`,
 	};
 };
+
+export const runManualEntryOutcomeAction = async (
+	params:
+		| {
+				action: "move";
+				lastOutcome: CustomIngredientOutcomeState;
+				destination: SmoothieListKey;
+		  }
+		| {
+				action: "undo";
+				lastOutcome: CustomIngredientOutcomeState;
+		  },
+) =>
+	params.action === "move"
+		? moveManualEntryOutcome(params.lastOutcome, params.destination)
+		: undoManualEntryOutcomeAdd(params.lastOutcome);

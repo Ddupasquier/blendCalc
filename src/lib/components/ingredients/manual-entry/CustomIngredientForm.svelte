@@ -5,12 +5,7 @@
 		SERVING_MEASURE_OPTIONS,
 		type ServingMeasureUnit,
 	} from "../../../../defaults/servingMeasureDefaults";
-	import {
-		buildCustomServingLabel,
-		findCustomFoodByBarcode,
-		findCustomFoodByName,
-		saveCustomFood,
-	} from "$lib/utils/food/custom/customFoods";
+	import { buildCustomServingLabel } from "$lib/utils/food/custom/customFoods";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog.svelte";
@@ -43,7 +38,6 @@
 		normalizeBarcode,
 	} from "$lib/utils/barcode/barcode";
 	import {
-		lookupBarcodeProduct,
 		type BarcodeProductDraft,
 	} from "$lib/utils/barcode/productLookup";
 	import { barcodeDraftHasEntryChanges } from "$lib/utils/barcode/barcodeDraftComparison";
@@ -57,8 +51,10 @@
 	} from "$lib/components/ingredients/manual-entry/utils/barcodeFlow";
 	import {
 		addManualEntryFoodToDestination,
-		moveManualEntryOutcome,
-		undoManualEntryOutcomeAdd,
+		canChangeManualEntryOutcome,
+		runManualEntryOutcomeAction,
+		type ManualEntryDestinationResult,
+		type ManualEntryOutcomeAction,
 	} from "$lib/components/ingredients/manual-entry/utils/listOutcome";
 	import {
 		getManualEntryNutrientFields,
@@ -87,9 +83,14 @@
 		buildManualEntrySaveNutrients,
 		createManualEntryCustomFood,
 	} from "$lib/components/ingredients/manual-entry/utils/customFoodPayload";
+	import {
+		getInitialSaveDestination,
+		getManualEntryFormResetState,
+	} from "$lib/components/ingredients/manual-entry/utils/formState";
+	import { resolveManualEntryBarcodeScan } from "$lib/components/ingredients/manual-entry/utils/barcodeScanFlow";
+	import { saveManualEntryCustomFood } from "$lib/components/ingredients/manual-entry/utils/submitFlow";
 	import { getManualEntrySubmitState } from "$lib/components/ingredients/manual-entry/utils/submitValidation";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
-	import { submitSharedProduct } from "$lib/utils/products/catalog";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 
 	let {
@@ -153,7 +154,7 @@
 	let barcodeMessage = $state("");
 	let shareWithCatalog = $state(false);
 	let catalogMessage = $state("");
-	let outcomeAction = $state<"move" | "undo" | null>(null);
+	let outcomeAction = $state<ManualEntryOutcomeAction | null>(null);
 	let frontPhoto = $state<File | null>(null);
 	let nutritionPhoto = $state<File | null>(null);
 	let barcodePhoto = $state<File | null>(null);
@@ -166,7 +167,7 @@
 	let labels = $state<string[]>([]);
 	let categories = $state<string[]>([]);
 	let saveDestination = $state<SmoothieListKey | "custom-only">(
-		MIX_STORAGE_KEYS.fridge,
+		getInitialSaveDestination(),
 	);
 	let lastOutcome = $state<CustomIngredientOutcomeState | null>(null);
 	let stepWarningMessage = $state("");
@@ -337,30 +338,32 @@
 
 	const applyBarcodeProductDraft = (draft: BarcodeProductDraft) => {
 		const draftState = getBarcodeDraftState(draft);
-		name = draftState.name;
-		brandOwner = draftState.brandOwner;
-		category = draftState.category;
-		servingLabel = draftState.servingLabel;
-		servingWeightGrams = draftState.servingWeightGrams;
-		importedNutrients = draftState.importedNutrients;
-		manualNutrientValues = draftState.manualNutrientValues;
+		({
+			name,
+			brandOwner,
+			category,
+			servingLabel,
+			servingWeightGrams,
+			importedNutrients,
+			manualNutrientValues,
+			useVolumeEquivalent,
+			volumeQuantity,
+			volumeUnit,
+			barcode,
+			barcodeSource,
+			reportedNutrientIds,
+			ingredients,
+			ingredientList,
+			allergens,
+			traces,
+			dietaryTags,
+			labels,
+			categories,
+			checkedBarcodeReferenceKey,
+		} = draftState);
 		manualTouchedNutrientIds = {};
-		useVolumeEquivalent = draftState.useVolumeEquivalent;
-		volumeQuantity = draftState.volumeQuantity;
-		volumeUnit = draftState.volumeUnit;
-		barcode = draftState.barcode;
-		barcodeSource = draftState.barcodeSource;
 		barcodeReferenceSourceDraft = draft;
 		barcodeReferenceAcceptedBarcode = draftState.barcode;
-		reportedNutrientIds = draftState.reportedNutrientIds;
-		ingredients = draftState.ingredients;
-		ingredientList = draftState.ingredientList;
-		allergens = draftState.allergens;
-		traces = draftState.traces;
-		dietaryTags = draftState.dietaryTags;
-		labels = draftState.labels;
-		categories = draftState.categories;
-		checkedBarcodeReferenceKey = draftState.checkedBarcodeReferenceKey;
 	};
 
 	const applyBarcodeReferenceSuggestion = () => {
@@ -592,41 +595,43 @@
 		});
 
 	const resetForm = () => {
-		activeStep = "identity";
 		clearStepWarning();
-		name = "";
-		brandOwner = "";
-		category = "";
-		servingLabel = "";
-		servingWeightGrams = null;
-		volumeQuantity = null;
-		volumeUnit = "tbsp";
-		useVolumeEquivalent = false;
-		manualNutrientValues = {};
-		manualTouchedNutrientIds = {};
-		validationAttemptedSteps = {};
-		importedNutrients = [];
-		barcode = "";
-		barcodeSource = "manual";
-		barcodeMessage = "";
-		checkingBarcodeReference = false;
-		checkedBarcodeReferenceKey = "";
-		barcodeReferenceDraft = null;
-		barcodeReferenceSourceDraft = null;
-		barcodeReferenceAcceptedBarcode = "";
 		clearBarcodeLookupDebounce();
-		shareWithCatalog = false;
-		frontPhoto = null;
-		nutritionPhoto = null;
-		barcodePhoto = null;
-		reportedNutrientIds = [];
-		ingredients = "";
-		ingredientList = [];
-		allergens = [];
-		traces = [];
-		dietaryTags = [];
-		labels = [];
-		categories = [];
+		({
+			activeStep,
+			name,
+			brandOwner,
+			category,
+			servingLabel,
+			servingWeightGrams,
+			volumeQuantity,
+			volumeUnit,
+			useVolumeEquivalent,
+			manualNutrientValues,
+			manualTouchedNutrientIds,
+			validationAttemptedSteps,
+			importedNutrients,
+			barcode,
+			barcodeSource,
+			barcodeMessage,
+			checkingBarcodeReference,
+			checkedBarcodeReferenceKey,
+			barcodeReferenceDraft,
+			barcodeReferenceSourceDraft,
+			barcodeReferenceAcceptedBarcode,
+			shareWithCatalog,
+			frontPhoto,
+			nutritionPhoto,
+			barcodePhoto,
+			reportedNutrientIds,
+			ingredients,
+			ingredientList,
+			allergens,
+			traces,
+			dietaryTags,
+			labels,
+			categories,
+		} = getManualEntryFormResetState());
 	};
 
 	const goToStep = async (step: string) => {
@@ -700,6 +705,16 @@
 		};
 	};
 
+	const applyDestinationResult = (result: ManualEntryDestinationResult) => {
+		if (!result.ok) {
+			error = result.error;
+			return false;
+		}
+
+		setOutcome(result.food, result.destination, result.addedToList, result.message);
+		return true;
+	};
+
 	const collapseManualEntry = () => {
 		if (labelDetailsElement) labelDetailsElement.open = false;
 	};
@@ -756,64 +771,59 @@
 			alreadySaved,
 			onCreate,
 		});
-		if (!result.ok) {
-			error = result.error;
+		if (!applyDestinationResult(result)) {
 			return false;
 		}
 
-		setOutcome(result.food, result.destination, result.addedToList, result.message);
 		collapseManualEntry();
 		onClose?.();
 		return true;
 	};
 
-	const moveLastOutcome = async (destination: SmoothieListKey) => {
+	const runLastOutcomeAction = async (
+		action: ManualEntryOutcomeAction,
+		destination?: SmoothieListKey,
+	) => {
+		const currentOutcome = lastOutcome;
 		if (
-			!lastOutcome ||
-			!lastOutcome.addedToList ||
-			lastOutcome.destination === "custom-only" ||
-			outcomeAction
+			!currentOutcome ||
+			!canChangeManualEntryOutcome(currentOutcome, outcomeAction)
 		) {
 			return;
 		}
+		if (action === "move" && !destination) {
+			return;
+		}
 
-		outcomeAction = "move";
+		outcomeAction = action;
 		error = "";
 		try {
-			const result = await moveManualEntryOutcome(lastOutcome, destination);
-			if (!result.ok) {
-				error = result.error;
+			if (action === "move") {
+				const moveDestination = destination;
+				if (!moveDestination) return;
+				const result = await runManualEntryOutcomeAction({
+					action,
+					lastOutcome: currentOutcome,
+					destination: moveDestination,
+				});
+				applyDestinationResult(result);
 				return;
 			}
-			setOutcome(result.food, result.destination, result.addedToList, result.message);
+
+			const result = await runManualEntryOutcomeAction({
+				action,
+				lastOutcome: currentOutcome,
+			});
+			applyDestinationResult(result);
 		} finally {
 			outcomeAction = null;
 		}
 	};
 
-	const undoLastOutcomeAdd = async () => {
-		if (
-			!lastOutcome ||
-			!lastOutcome.addedToList ||
-			lastOutcome.destination === "custom-only" ||
-			outcomeAction
-		) {
-			return;
-		}
+	const moveLastOutcome = (destination: SmoothieListKey) =>
+		runLastOutcomeAction("move", destination);
 
-		outcomeAction = "undo";
-		error = "";
-		try {
-			const result = await undoManualEntryOutcomeAdd(lastOutcome);
-			if (!result.ok) {
-				error = result.error;
-				return;
-			}
-			setOutcome(result.food, result.destination, result.addedToList, result.message);
-		} finally {
-			outcomeAction = null;
-		}
-	};
+	const undoLastOutcomeAdd = () => runLastOutcomeAction("undo");
 
 	const handleBarcodeDetected = async (result: BarcodeScanResult) => {
 		scannerOpen = false;
@@ -828,17 +838,16 @@
 		let nextFocusTarget: "name" | "destination" = "name";
 
 		try {
-			const lookup = await lookupBarcodeProduct(result.value);
-			if (lookup.status === "found") {
-				nextFocusTarget = "destination";
-				barcodeReferenceDraft = lookup.draft;
-				applyBarcodeProductDraft(lookup.draft);
-				const optionalNutrientCount = getOptionalNutrientCount();
-				barcodeMessage = getBarcodeImportMessage(
-					lookup.draft,
-					optionalNutrientCount,
-					"scan",
-				);
+			const outcome = await resolveManualEntryBarcodeScan({
+				result,
+				getOptionalNutrientCount,
+			});
+			nextFocusTarget = outcome.focusTarget;
+			barcodeMessage = outcome.message;
+
+			if (outcome.status === "found") {
+				barcodeReferenceDraft = outcome.draft;
+				applyBarcodeProductDraft(outcome.draft);
 				return;
 			}
 
@@ -854,10 +863,6 @@
 			dietaryTags = [];
 			labels = [];
 			categories = [];
-			barcodeMessage =
-				lookup.status === "not-found"
-					? "No matching product was found. The barcode is filled in so you can enter the label manually."
-					: lookup.message;
 		} finally {
 			lookingUpBarcode = false;
 			await scrollToManualReview(nextFocusTarget);
@@ -925,57 +930,28 @@
 
 		saving = true;
 		try {
-			const result = await saveCustomFood(food);
-			if (result === "duplicate-name") {
-				const existingFood = findCustomFoodByName(name);
-				if (existingFood) {
-					await useIngredient(existingFood, true);
-					resetForm();
-					return;
-				}
-				error = "This ingredient is already saved to your account. Refresh and try again.";
-				return;
-			}
-			if (result === "duplicate-barcode") {
-				const existingFood = normalizedBarcode
-					? findCustomFoodByBarcode(normalizedBarcode)
-					: null;
-				if (existingFood) {
-					await useIngredient(existingFood, true);
-					resetForm();
-					return;
-				}
-				error = "An ingredient with this barcode is already saved to your account.";
-				return;
-			}
-			if (result === "error") {
-				error = "This ingredient could not be saved. Check your connection and try again.";
+			const result = await saveManualEntryCustomFood({
+				food,
+				name,
+				normalizedBarcode,
+				shareWithCatalog,
+				barcodeSource,
+				photos: {
+					frontPhoto,
+					nutritionPhoto,
+					barcodePhoto,
+				},
+				reviewFlags: getBarcodeReferenceReviewFlags(),
+				useIngredient,
+			});
+
+			if (result.status === "error") {
+				error = result.error;
 				return;
 			}
 
-			const addedToDestination = await useIngredient(food);
-			if (
-				normalizedBarcode &&
-				addedToDestination &&
-				(shareWithCatalog || barcodeSource === "open-food-facts")
-			) {
-				try {
-					const submission = await submitSharedProduct(
-						food,
-						{
-							frontPhoto,
-							nutritionPhoto,
-							barcodePhoto,
-						},
-						{ reviewFlags: getBarcodeReferenceReviewFlags() },
-					);
-					catalogMessage = submission.message;
-				} catch {
-					catalogMessage =
-						"The ingredient was saved privately, but catalog review could not be started. You can try again later.";
-				}
-			}
-			resetForm();
+			catalogMessage = result.catalogMessage;
+			if (result.resetForm) resetForm();
 		} finally {
 			saving = false;
 		}
