@@ -1,0 +1,104 @@
+import { normalizeBarcode } from "$lib/utils/barcode/barcode";
+import type {
+	ManualEntryStepId,
+	StepValidationItem,
+} from "$lib/components/ingredients/manual-entry/formTypes";
+
+export type ManualEntrySubmitBlock = {
+	message: string;
+	step: ManualEntryStepId;
+	mark: "all" | "through-share";
+};
+
+export const getManualEntrySubmitState = ({
+	loadingNutrientRelationshipRules,
+	blockingValidation,
+	useVolumeEquivalent,
+	volumeQuantity,
+	volumeAmountRequiredMessage,
+	barcode,
+	requiresCatalogEvidence,
+	frontPhoto,
+	nutritionPhoto,
+	barcodePhoto,
+}: {
+	loadingNutrientRelationshipRules: boolean;
+	blockingValidation: StepValidationItem | null;
+	useVolumeEquivalent: boolean;
+	volumeQuantity: number | null;
+	volumeAmountRequiredMessage: string;
+	barcode: string;
+	requiresCatalogEvidence: boolean;
+	frontPhoto: File | null;
+	nutritionPhoto: File | null;
+	barcodePhoto: File | null;
+}): {
+	block: ManualEntrySubmitBlock | null;
+	normalizedBarcode: string | null;
+} => {
+	const normalizedBarcode = barcode.trim() ? normalizeBarcode(barcode) : null;
+
+	if (loadingNutrientRelationshipRules) {
+		return {
+			normalizedBarcode,
+			block: {
+				message: "Nutrition validation rules are still loading. Try again in a moment.",
+				step: "macros",
+				mark: "through-share",
+			},
+		};
+	}
+
+	if (blockingValidation) {
+		return {
+			normalizedBarcode,
+			block: {
+				message: blockingValidation.message,
+				step: blockingValidation.step,
+				mark: "all",
+			},
+		};
+	}
+
+	if (
+		useVolumeEquivalent &&
+		(volumeQuantity === null || volumeQuantity <= 0)
+	) {
+		return {
+			normalizedBarcode,
+			block: {
+				message: volumeAmountRequiredMessage,
+				step: "servings",
+				mark: "through-share",
+			},
+		};
+	}
+
+	if (barcode.trim() && !normalizedBarcode) {
+		return {
+			normalizedBarcode,
+			block: {
+				message: "Enter a valid 8, 12, 13, or 14 digit UPC/EAN barcode.",
+				step: "identity",
+				mark: "through-share",
+			},
+		};
+	}
+
+	if (
+		requiresCatalogEvidence &&
+		(!frontPhoto || !nutritionPhoto || !barcodePhoto)
+	) {
+		return {
+			normalizedBarcode,
+			block: {
+				message:
+					"Add front package, nutrition label, and barcode photos before sharing this product.",
+				step: "share",
+				mark: "all",
+			},
+		};
+	}
+
+	return { block: null, normalizedBarcode };
+};

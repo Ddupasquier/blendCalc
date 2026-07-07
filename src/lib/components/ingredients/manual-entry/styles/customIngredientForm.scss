@@ -1,0 +1,341 @@
+@use "../../../../../styles/variables" as *;
+
+.custom-ingredient {
+	display: grid;
+	gap: $app-vertical-stack-gap;
+}
+
+.custom-ingredient__options {
+	display: grid;
+	gap: $app-vertical-stack-gap;
+}
+
+.custom-ingredient__step {
+	display: grid;
+	gap: $app-vertical-stack-gap;
+}
+
+.custom-ingredient__field,
+.custom-ingredient__card,
+.custom-ingredient__summary,
+.custom-ingredient__share-toggle,
+.custom-ingredient__evidence {
+	min-width: 0;
+}
+
+.custom-ingredient__field {
+	display: grid;
+	gap: $app-gap-sm;
+	color: $ingredient-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	text-transform: uppercase;
+}
+
+.custom-ingredient__field span {
+	display: inline-flex;
+	align-items: center;
+	gap: $app-gap-xs;
+	letter-spacing: 0.01em;
+}
+
+.custom-ingredient__field em,
+.custom-ingredient__card em {
+	color: $ingredient-accent-danger;
+	font-style: normal;
+}
+
+.custom-ingredient__field small {
+	padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
+	color: $ingredient-text-muted;
+	background: $ingredient-surface-control;
+	border-radius: $ingredient-radius-pill;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+	text-transform: none;
+}
+
+.custom-ingredient__field-info,
+.custom-ingredient__field-status {
+	display: block;
+	padding: $ingredient-status-padding-y $ingredient-status-padding-x;
+	background: $ingredient-surface-soft;
+	border-radius: $ingredient-radius-card;
+	font-size: $app-font-size-sm;
+	line-height: 1.35;
+}
+
+.custom-ingredient__field input,
+.custom-ingredient__field select,
+.custom-ingredient__destination select {
+	width: 100%;
+	min-width: 0;
+	min-height: $ingredient-control-height;
+	padding: 0 $ingredient-control-padding-x;
+	color: $ingredient-text-primary;
+	background: $ingredient-surface-soft;
+	border: 0;
+	border-radius: $ingredient-radius-pill;
+	font: inherit;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-medium;
+	text-transform: none;
+}
+
+.custom-ingredient__field select,
+.custom-ingredient__destination select {
+	appearance: none;
+	padding-right: $ingredient-select-chevron-padding-right;
+	background-color: $ingredient-surface-soft;
+	background-image:
+		linear-gradient(45deg, transparent 50%, $ingredient-text-muted 50%),
+		linear-gradient(135deg, $ingredient-text-muted 50%, transparent 50%);
+	background-position:
+		calc(100% - $ingredient-select-chevron-position-left) 52%,
+		calc(100% - $ingredient-select-chevron-position-right) 52%;
+	background-repeat: no-repeat;
+	background-size:
+		$ingredient-select-chevron-size $ingredient-select-chevron-size,
+		$ingredient-select-chevron-size $ingredient-select-chevron-size;
+}
+
+.custom-ingredient__field input::placeholder {
+	color: $ingredient-text-muted;
+}
+
+.custom-ingredient__field input[type="number"] {
+	appearance: textfield;
+}
+
+.custom-ingredient__field input[type="number"]::-webkit-inner-spin-button,
+.custom-ingredient__field input[type="number"]::-webkit-outer-spin-button {
+	margin: 0;
+	appearance: none;
+}
+
+.custom-ingredient__helper {
+	margin: 0;
+	color: $ingredient-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: 1.35;
+}
+
+.custom-ingredient__switch,
+.custom-ingredient__share-toggle {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-md;
+	padding: $ingredient-card-padding;
+	background: $ingredient-surface-soft;
+	border-radius: $ingredient-radius-card;
+	text-transform: none;
+}
+
+.custom-ingredient__switch span,
+.custom-ingredient__share-toggle span {
+	display: grid;
+	gap: $app-gap-xs;
+}
+
+.custom-ingredient__switch strong,
+.custom-ingredient__share-toggle strong {
+	color: $ingredient-text-primary;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-bold;
+}
+
+.custom-ingredient__switch small,
+.custom-ingredient__share-toggle small {
+	padding: 0;
+	background: transparent;
+	color: $ingredient-text-muted;
+	line-height: 1.25;
+}
+
+.custom-ingredient__share-toggle--disabled {
+	opacity: 0.78;
+}
+
+.custom-ingredient__card,
+.custom-ingredient__summary {
+	display: grid;
+	gap: $app-gap-md;
+	padding: $ingredient-card-padding;
+	background: $ingredient-surface-soft;
+	border-radius: $ingredient-radius-card;
+}
+
+.custom-ingredient__card h3,
+.custom-ingredient__summary strong {
+	margin: 0;
+	color: $ingredient-text-primary;
+	font-size: $app-font-size-lg;
+	font-weight: $app-font-weight-bold;
+}
+
+.custom-ingredient__inline-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $app-horizontal-control-gap;
+}
+
+.custom-ingredient__optional-details {
+	display: grid;
+	gap: $app-gap-md;
+}
+
+.custom-ingredient__optional-details summary {
+	color: $ingredient-text-primary;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-bold;
+	cursor: pointer;
+}
+
+.custom-ingredient__add-serving {
+	min-height: $ingredient-control-height;
+	color: $ingredient-accent-primary;
+	background: transparent;
+	border: 0.12rem dashed color-mix(in srgb, $ingredient-accent-primary 45%, white);
+	border-radius: $ingredient-radius-card;
+	font-family: $app-button-font-family;
+	font-size: $app-font-size-lg;
+	font-weight: $app-button-font-weight;
+	cursor: pointer;
+}
+
+.custom-ingredient__macro-row {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: $app-gap-sm;
+}
+
+.custom-ingredient__macro-row span {
+	display: grid;
+	justify-items: center;
+	gap: $app-gap-xs;
+	padding: $app-gap-sm;
+	background: $ingredient-surface-card;
+	border-radius: $ingredient-radius-card;
+}
+
+.custom-ingredient__macro-row strong {
+	font-size: $app-font-size-md;
+	line-height: 1;
+}
+
+.custom-ingredient__macro-row small {
+	color: $ingredient-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+}
+
+.custom-ingredient__summary > div:first-child {
+	display: grid;
+	gap: $app-gap-xs;
+}
+
+.custom-ingredient__summary > div:first-child span {
+	width: fit-content;
+	padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
+	color: $ingredient-text-primary;
+	background: $ingredient-surface-card;
+	border-radius: $ingredient-radius-pill;
+	font-size: $app-font-size-xs;
+}
+
+.custom-ingredient__summary p {
+	margin: 0;
+	color: $ingredient-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+}
+
+.custom-ingredient__destination {
+	text-transform: none;
+}
+
+.custom-ingredient__evidence {
+	display: grid;
+	gap: $app-vertical-stack-gap;
+	padding: $ingredient-card-padding;
+	background: $ingredient-surface-soft;
+	border-radius: $ingredient-radius-card;
+}
+
+.custom-ingredient__evidence p {
+	margin: $app-gap-xs 0 0;
+	color: $ingredient-text-muted;
+	font-size: $app-font-size-sm;
+	line-height: 1.35;
+}
+
+.custom-ingredient__error,
+.custom-ingredient__success,
+.custom-ingredient__catalog-message,
+.custom-ingredient__status {
+	margin: 0;
+	padding: $ingredient-status-padding-y $ingredient-status-padding-x;
+	border-radius: $ingredient-radius-card;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+}
+
+.custom-ingredient__error {
+	color: $ingredient-status-error-text;
+	background: $ingredient-status-error-bg;
+}
+
+.custom-ingredient__success,
+.custom-ingredient__catalog-message {
+	color: $ingredient-status-success-text;
+	background: $ingredient-status-success-bg;
+}
+
+.custom-ingredient__status {
+	color: $ingredient-text-muted;
+	background: $ingredient-surface-soft;
+}
+
+.custom-ingredient__actions {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $app-horizontal-control-gap;
+	margin-top: $app-gap-sm;
+}
+
+.custom-ingredient__primary,
+.custom-ingredient__secondary {
+	min-height: $ingredient-control-height;
+	border-radius: $ingredient-radius-card;
+	font-family: $app-button-font-family;
+	font-size: $app-font-size-md;
+	font-weight: $app-button-font-weight;
+	cursor: pointer;
+}
+
+.custom-ingredient__primary {
+	color: $ingredient-surface-card;
+	background: $ingredient-accent-primary;
+	border: 1px solid $ingredient-accent-primary;
+}
+
+.custom-ingredient__secondary {
+	color: $ingredient-text-primary;
+	background: $ingredient-surface-card;
+	border: 1px solid $ingredient-border-subtle;
+}
+
+.custom-ingredient__primary:disabled,
+.custom-ingredient__secondary:disabled {
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.custom-ingredient__inline-grid,
+	.custom-ingredient__actions {
+		grid-template-columns: 1fr;
+	}
+}
