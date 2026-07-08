@@ -33,6 +33,7 @@ Copy the example env file:
 
 ```bash
 cp .env.example .env
+cp .env.moderation.example .env.moderation.local
 ```
 
 Then add the values needed for your environment:
@@ -42,9 +43,13 @@ Then add the values needed for your environment:
 - `PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase publishable browser key
 - `PUBLIC_SITE_URL`: production origin, for example `https://blendcalc.vercel.app`
 - `SUPABASE_SERVICE_ROLE_KEY`: server-only admin key for protected server work, moderation, and scripts
+- `SUPABASE_PROJECT_ID`: Supabase project ref for local admin scripts
+- `SUPABASE_DB_PASSWORD`: remote Postgres database password for `npm run db:push:auto`
 - `RESEND_API_KEY`, `MODERATION_EMAIL_FROM`, `MODERATION_SUPPORT_EMAIL`: optional moderation email delivery
 
-> `.env` and `.env.moderation.local` are listed in `.gitignore` and must not be committed.
+Use `.env` for normal app/runtime values. Use `.env.moderation.local` for local admin scripts and database pushes.
+
+> `.env` and `.env.moderation.local` are listed in `.gitignore` and must not be committed. Keep `.env.example` and `.env.moderation.example` as placeholders only.
 
 For production authentication, set `PUBLIC_SITE_URL` in the hosting environment
 to the deployed origin, for example `https://blendcalc.vercel.app`. In
@@ -93,7 +98,8 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | `npm run discover:fdc-nutrients` | Generate the expanded FDC nutrient catalog |
 | `npm run compare:fdc -- "a" "b"` | Compare live FDC output for two product searches |
 | `npm run db:push:dry` | Preview pending Supabase migrations |
-| `npm run db:push` | Push pending Supabase migrations |
+| `npm run db:push` | Push pending Supabase migrations with the Supabase CLI prompt |
+| `npm run db:push:auto` | Push pending Supabase migrations using `SUPABASE_DB_PASSWORD` from `.env.moderation.local` or macOS Keychain |
 | `npm run db:lint` | Run Supabase database linting |
 | `npm run db:types` | Regenerate Supabase TypeScript database types |
 | `npm run catalog:qa-seed` | Seed a fake product submission for moderation testing |

@@ -13,7 +13,7 @@
 
 ```sh
 npm run db:push:dry
-npm run db:push
+npm run db:push:auto
 npm run db:types
 ```
 
@@ -41,12 +41,22 @@ Each attempt is appended to `moderation_email_deliveries` using only a SHA-256 h
 
 An email outage does not reverse an account block. The moderation page instead reports a warning, and the failed attempt remains in the delivery ledger for review. Apply `20260614040000_moderation_email_deliveries.sql` before deploying the email-enabled application code.
 
-For local moderation commands, create an ignored `.env.moderation.local`:
+For local moderation commands and database pushes, create an ignored `.env.moderation.local`:
 
 ```dotenv
 PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_PROJECT_ID=YOUR_PROJECT_REF
 SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVER_ONLY_SERVICE_ROLE_KEY
+SUPABASE_DB_PASSWORD=YOUR_REMOTE_POSTGRES_DATABASE_PASSWORD
 ```
+
+Start from the tracked template:
+
+```sh
+cp .env.moderation.example .env.moderation.local
+```
+
+`SUPABASE_DB_PASSWORD` is the remote Postgres database password used by `npm run db:push:auto`. It is not your Supabase dashboard login password and not an API key. If you do not know it, reset it in Supabase’s Database settings, then paste the new value into `.env.moderation.local`.
 
 Bootstrap the first admin from the terminal:
 

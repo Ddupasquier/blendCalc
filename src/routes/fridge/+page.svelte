@@ -597,14 +597,6 @@
         actionSheetItem = null;
     };
 
-    const moveFromActionSheet = async () => {
-        if (!actionSheetItem) return;
-        const currentItem = actionSheetItem;
-        actionSheetItem = null;
-        void closeRoutedPopin();
-        await moveFoodBetweenLists(currentItem.key, currentItem.food);
-    };
-
     const removeFromActionSheet = async () => {
         if (!actionSheetItem) return;
         const currentItem = actionSheetItem;
@@ -814,12 +806,14 @@
                 selectedFoodId={selectedFood?.fdcId ?? null}
                 selectedIds={selectedActiveItemIds}
                 {removingItem}
+                {movingItem}
                 moving={movingItem !== null}
                 preferenceProfile={foodPreferenceContext.current}
                 resetKey={listViewResetKey}
                 onSelectAll={selectAllActiveItems}
                 onClearSelection={clearActiveSelection}
                 onMoveSelection={moveSelectedItems}
+                onMoveItem={(food) => moveFoodBetweenLists(activeList, food)}
                 onToggle={(foodId) => toggleBulkSelection(activeList, foodId)}
                 onPreview={(food) => handleSelect(food)}
                 onActions={(food) => openActionSheet(activeList, food)}
@@ -842,7 +836,6 @@
     listMembership={selectedFoodListMembership}
     listQuery={listQuery}
     listSort={listSort}
-    {movingItem}
     {removingItem}
     {renameBusy}
     {renameError}
@@ -863,7 +856,6 @@
     onCreateManualIngredient={handleCreate}
     onFilterFromSearch={toggleFilters}
     onLookupStateChange={(busy) => (barcodeLookupBusy = busy)}
-    onMoveFromActionSheet={moveFromActionSheet}
     onRemoveFromActionSheet={removeFromActionSheet}
     onRenameFromActionSheet={renameFromActionSheet}
     onRenameListItem={renameListItem}

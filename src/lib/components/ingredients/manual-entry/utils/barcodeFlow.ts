@@ -183,7 +183,7 @@ export const getBarcodeDraftState = (
 ): ManualEntryBarcodeDraftState => ({
 	name: draft.name,
 	brandOwner: draft.brandOwner,
-	category: draft.resolvedCategory ?? draft.categories?.[0] ?? "",
+	category: draft.resolvedCategory ?? "",
 	servingLabel: draft.servingLabel,
 	servingWeightGrams: draft.servingWeightGrams,
 	importedNutrients: [...draft.nutrients],
@@ -213,6 +213,32 @@ export const getBarcodeDraftState = (
 	],
 	checkedBarcodeReferenceKey: getBarcodeReferenceKey(draft.barcode, draft.name),
 });
+
+export const getBarcodeCategoryWarningMessage = ({
+	barcode,
+	sourceDraft,
+	selectedCategory,
+}: {
+	barcode: string;
+	sourceDraft: BarcodeProductDraft | null;
+	selectedCategory: string;
+}) => {
+	const normalizedBarcode = normalizeBarcode(barcode);
+	if (
+		!normalizedBarcode ||
+		!sourceDraft ||
+		sourceDraft.barcode !== normalizedBarcode ||
+		selectedCategory.trim()
+	) {
+		return "";
+	}
+
+	if (sourceDraft.resolvedCategory || sourceDraft.categoryResolution) {
+		return "";
+	}
+
+	return "Barcode found, but blendCalc does not have a trusted category for it yet. Please select a category for this ingredient.";
+};
 
 export const getBarcodeImportMessage = (
 	draft: BarcodeProductDraft,

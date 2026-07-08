@@ -8,6 +8,7 @@
 		size = "small",
 		busy = false,
 		disabled = false,
+		pressed = undefined,
 		class: className = "",
 		onclick,
 		onfocus,
@@ -15,10 +16,11 @@
 	}: {
 		type?: "button" | "submit" | "reset";
 		label: string;
-		variant?: "primary" | "soft" | "ghost";
+		variant?: "primary" | "soft" | "ghost" | "outline";
 		size?: "tiny" | "small" | "control" | "fab";
 		busy?: boolean;
 		disabled?: boolean;
+		pressed?: boolean;
 		class?: string;
 		onclick?: (event: MouseEvent) => void;
 		onfocus?: (event: FocusEvent) => void;
@@ -33,6 +35,7 @@
 	data-size={size}
 	aria-label={label}
 	aria-busy={busy}
+	aria-pressed={pressed}
 	disabled={disabled || busy}
 	{onclick}
 	{onfocus}
@@ -52,7 +55,7 @@
 		place-items: center;
 		flex: 0 0 auto;
 		padding: 0;
-		border: 0;
+		border: 1px solid transparent;
 		border-radius: $ingredient-radius-pill;
 		font-family: $app-button-font-family;
 		font-size: $app-font-size-md;
@@ -131,6 +134,19 @@
 		&:focus-visible {
 			color: $ingredient-text-primary;
 			background: color-mix(in srgb, $ingredient-surface-card 68%, transparent);
+		}
+	}
+
+	.circle-icon-button[data-variant="outline"] {
+		color: $ingredient-text-muted;
+		background: transparent;
+		border-color: color-mix(in srgb, $ingredient-text-muted 42%, transparent);
+
+		&:hover:not(:disabled),
+		&:focus-visible {
+			color: $ingredient-accent-primary;
+			border-color: $ingredient-accent-primary;
+			background: $ingredient-surface-positive;
 		}
 	}
 </style>

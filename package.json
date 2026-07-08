@@ -40,6 +40,7 @@
 		"db:link": "supabase link --project-ref wbqsnipoiqjzppjuawpn",
 		"db:new": "supabase migration new",
 		"db:push": "supabase db push",
+		"db:push:auto": "node scripts/push_supabase_db.mjs",
 		"db:types": "mkdir -p src/lib/types && supabase gen types typescript --linked > src/lib/types/database.types.ts",
 		"db:push:dry": "supabase db push --dry-run",
 		"db:lint": "supabase db lint --linked",

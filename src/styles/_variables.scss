@@ -375,6 +375,7 @@ $ingredient-status-padding-y: $app-rebuild-status-padding-y;
 $ingredient-status-padding-x: $app-rebuild-status-padding-x;
 
 $ingredient-food-icon-size: $app-rebuild-food-icon-size;
+$ingredient-food-icon-font-size: $ingredient-control-icon-size;
 $ingredient-action-icon-size: $app-rebuild-action-icon-size;
 $ingredient-fab-size: $app-rebuild-fab-size;
 
@@ -574,6 +575,7 @@ $ingredient-status-error-bg: color-mix(in srgb, $app-danger-bg 60%, white);
 $ingredient-status-error-text: $app-danger-action;
 $ingredient-status-error-icon: $app-scan-laser;
 $ingredient-status-warning-bg: color-mix(in srgb, $app-highlight 35%, white);
+$ingredient-status-warning-text: $color-cinnamon-clay;
 $ingredient-status-warning-icon: $app-highlight-hover;
 $ingredient-status-success-bg: $app-success-bg;
 $ingredient-status-success-text: $app-primary;

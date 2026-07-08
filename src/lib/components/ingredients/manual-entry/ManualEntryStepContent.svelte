@@ -35,6 +35,7 @@
 		visibleCategoryOptions,
 		loadingCategoryOptions,
 		categoryOptionsError,
+		categoryWarningMessage,
 		barcodeMessage,
 		barcodeValidationMessage,
 		checkingBarcodeReference,
@@ -108,6 +109,7 @@
 		visibleCategoryOptions: string[];
 		loadingCategoryOptions: boolean;
 		categoryOptionsError: string;
+		categoryWarningMessage: string;
 		barcodeMessage: string;
 		barcodeValidationMessage: string;
 		checkingBarcodeReference: boolean;
@@ -193,6 +195,7 @@
 		{visibleCategoryOptions}
 		{loadingCategoryOptions}
 		{categoryOptionsError}
+		{categoryWarningMessage}
 		{barcodeMessage}
 		{barcodeValidationMessage}
 		{checkingBarcodeReference}

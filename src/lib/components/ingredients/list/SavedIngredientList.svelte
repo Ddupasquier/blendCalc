@@ -3,16 +3,17 @@
 	import type { FdcFood } from "$lib/utils/food/types";
 	import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 	import {
-		getFoodCalories,
 		getFoodDisplayCategory,
 		getFoodSourceLabel,
 		getIngredientActionKey,
 		getIngredientListLabel,
+		getIngredientMoveLabel,
 		getOppositeIngredientListKey,
 		getPrimaryFoodWarning,
 	} from "$lib/utils/ingredients/ingredientListUi";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import { LIST_REVEAL_BUFFER_PX } from "../../../../defaults/listDefaults";
+	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 	import IngredientBulkActions from "./IngredientBulkActions.svelte";
 	import IngredientEmptyState from "./IngredientEmptyState.svelte";
 	import SavedIngredientCard from "./SavedIngredientCard.svelte";
@@ -27,12 +28,14 @@
 		selectedFoodId = null,
 		selectedIds = [],
 		removingItem = null,
+		movingItem = null,
 		moving = false,
 		preferenceProfile = null,
 		resetKey = 0,
 		onSelectAll,
 		onClearSelection,
 		onMoveSelection,
+		onMoveItem,
 		onToggle,
 		onPreview,
 		onActions,
@@ -48,12 +51,14 @@
 		selectedFoodId?: number | null;
 		selectedIds?: number[];
 		removingItem?: string | null;
+		movingItem?: string | null;
 		moving?: boolean;
 		preferenceProfile?: FoodPreferenceProfile | null;
 		resetKey?: number;
 		onSelectAll: () => void;
 		onClearSelection: () => void;
 		onMoveSelection: () => void;
+		onMoveItem: (food: FdcFood) => void | Promise<void>;
 		onToggle: (foodId: number) => void;
 		onPreview: (food: FdcFood) => void;
 		onActions: (food: FdcFood) => void;
@@ -158,7 +163,7 @@
 					onscroll={handleListScroll}
 				>
 					{#each foods as food (food.fdcId)}
-						{@const kcal = getFoodCalories(food)}
+						{@const actionKey = getIngredientActionKey(activeList, food.fdcId)}
 						{@const warning = getPrimaryFoodWarning(food, preferenceProfile)}
 						{@const isChecked = selectedIdSet.has(food.fdcId)}
 						<li>
@@ -166,13 +171,18 @@
 								{food}
 								active={selectedFoodId === food.fdcId}
 								checked={isChecked}
-								removing={removingItem === getIngredientActionKey(activeList, food.fdcId)}
-								{kcal}
+								moving={movingItem === actionKey}
+								removing={removingItem === actionKey}
+								moveDirection={activeList === MIX_STORAGE_KEYS.fridge
+									? "left"
+									: "right"}
+								moveLabel={getIngredientMoveLabel(activeList)}
 								category={getFoodDisplayCategory(food)}
 								{warning}
 								sourceLabel={getFoodSourceLabel(food)}
 								onToggle={() => onToggle(food.fdcId)}
 								onPreview={() => onPreview(food)}
+								onMove={() => onMoveItem(food)}
 								onActions={() => onActions(food)}
 								onRemove={() => onRemove(food.fdcId)}
 							/>

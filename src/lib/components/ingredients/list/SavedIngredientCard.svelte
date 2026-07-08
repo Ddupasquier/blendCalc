@@ -1,5 +1,8 @@
 <script lang="ts">
+	import ArrowLeft from "$lib/assets/icons/ArrowLeft.svelte";
+	import ChevronRight from "$lib/assets/icons/ChevronRight.svelte";
 	import FoodSymbol from "$lib/assets/icons/FoodSymbol.svelte";
+	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
 	import IngredientBulkToggle from "$lib/components/ingredients/list/IngredientBulkToggle.svelte";
 	import IngredientCardActions from "$lib/components/ingredients/list/IngredientCardActions.svelte";
 	import IngredientCardBadges from "$lib/components/ingredients/list/IngredientCardBadges.svelte";
@@ -9,26 +12,32 @@
 		food,
 		active = false,
 		checked = false,
+		moving = false,
 		removing = false,
-		kcal = null,
+		moveDirection,
+		moveLabel,
 		category,
 		warning = null,
 		sourceLabel,
 		onToggle,
 		onPreview,
+		onMove,
 		onActions,
 		onRemove,
 	}: {
 		food: FdcFood;
 		active?: boolean;
 		checked?: boolean;
+		moving?: boolean;
 		removing?: boolean;
-		kcal?: number | null;
+		moveDirection: "left" | "right";
+		moveLabel: string;
 		category: string;
 		warning?: string | null;
 		sourceLabel: string;
 		onToggle: () => void;
 		onPreview: () => void;
+		onMove: () => void;
 		onActions: () => void;
 		onRemove: () => void;
 	} = $props();
@@ -63,13 +72,23 @@
 			<strong title={food.description}>{food.description}</strong>
 			<small>{category}</small>
 		</span>
-		{#if kcal !== null}
-			<span class="saved-ingredient-card__kcal">
-				<strong>{kcal}</strong>
-				<small>kcal/100g</small>
-			</span>
-		{/if}
 	</button>
+	<span class="saved-ingredient-card__move-action">
+		<CircleIconButton
+			label={`${moveLabel}: ${food.description}`}
+			variant="primary"
+			size="small"
+			busy={moving}
+			disabled={moving}
+			onclick={onMove}
+		>
+			{#if moveDirection === "left"}
+				<ArrowLeft size={17} strokeWidth={2.5} />
+			{:else}
+				<ChevronRight size={17} strokeWidth={2.5} />
+			{/if}
+		</CircleIconButton>
+	</span>
 	<IngredientCardActions
 		description={food.description}
 		{removing}
@@ -83,7 +102,7 @@
 
 	.saved-ingredient-card {
 		display: grid;
-		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-columns: auto minmax(0, 1fr) auto auto;
 		align-items: center;
 		gap: $app-gap-xs;
 		min-height: $ingredient-card-min-height;
@@ -116,9 +135,9 @@
 		}
 	}
 
-		.saved-ingredient-card__select {
+	.saved-ingredient-card__select {
 		display: grid;
-		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-columns: auto minmax(0, 1fr);
 		align-items: center;
 		gap: $app-gap-sm;
 		min-width: 0;
@@ -136,7 +155,7 @@
 		height: $ingredient-food-icon-size;
 		background: $ingredient-surface-positive;
 		border-radius: $ingredient-radius-pill;
-		font-size: 1.2rem;
+		font-size: $ingredient-food-icon-font-size;
 	}
 
 	.saved-ingredient-card__copy {
@@ -165,42 +184,18 @@
 		}
 	}
 
-	.saved-ingredient-card__kcal {
-		display: grid;
-		justify-items: end;
-		min-width: 2.65rem;
-		color: $ingredient-accent-primary;
-
-		strong {
-			font-size: $app-font-size-md;
-			font-weight: $app-font-weight-heavy;
-			line-height: 1;
-		}
-
-		small {
-			color: $ingredient-text-muted;
-			font-size: $app-font-size-xs;
-			font-weight: $app-font-weight-medium;
-			line-height: 1;
-		}
+	.saved-ingredient-card__move-action {
+		display: inline-grid;
+		place-items: center;
 	}
 
-		@media (max-width: $app-breakpoint-xs) {
+	@media (max-width: $app-breakpoint-xs) {
 		.saved-ingredient-card {
-			grid-template-columns: auto minmax(0, 1fr);
+			grid-template-columns: auto minmax(0, 1fr) auto auto;
 		}
 
-		.saved-ingredient-card__select {
-			grid-template-columns: auto minmax(0, 1fr);
-		}
-
-		.saved-ingredient-card__kcal {
+		.saved-ingredient-card__icon {
 			display: none;
 		}
-
-			:global(.ingredient-card-actions) {
-				grid-column: 2;
-				justify-content: end;
-			}
-		}
-	</style>
+	}
+</style>

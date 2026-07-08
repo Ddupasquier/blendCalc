@@ -10,6 +10,7 @@
 		visibleCategoryOptions,
 		loadingCategoryOptions,
 		categoryOptionsError,
+		categoryWarningMessage,
 		barcodeMessage,
 		barcodeValidationMessage,
 		checkingBarcodeReference,
@@ -32,6 +33,7 @@
 		visibleCategoryOptions: string[];
 		loadingCategoryOptions: boolean;
 		categoryOptionsError: string;
+		categoryWarningMessage: string;
 		barcodeMessage: string;
 		barcodeValidationMessage: string;
 		checkingBarcodeReference: boolean;
@@ -150,6 +152,14 @@
 		</select>
 		{#if categoryOptionsError}
 			<small>{categoryOptionsError}</small>
+		{/if}
+		{#if categoryWarningMessage}
+			<small
+				class="custom-ingredient__field-status custom-ingredient__field-status--warning"
+				role="status"
+			>
+				{categoryWarningMessage}
+			</small>
 		{/if}
 	</label>
 

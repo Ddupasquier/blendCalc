@@ -8,13 +8,10 @@
 	import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView.svelte";
 	import type { ManualEntryCreateContext } from "$lib/components/ingredients/manual-entry/types";
 	import type { FdcFood } from "$lib/utils/food/types";
-	import type {
-		IngredientActionItem,
-		IngredientListMembership,
-	} from "$lib/utils/ingredients/ingredientListUi";
 	import {
 		getIngredientListLabel,
-		getIngredientMoveLabel,
+		type IngredientActionItem,
+		type IngredientListMembership,
 	} from "$lib/utils/ingredients/ingredientListUi";
 	import type { FoodListSort } from "$lib/utils/list/listNavigation";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
@@ -34,7 +31,6 @@
 		listMembership,
 		listQuery,
 		listSort,
-		movingItem,
 		removingItem,
 		renameBusy,
 		renameError,
@@ -55,7 +51,6 @@
 		onCreateManualIngredient,
 		onFilterFromSearch,
 		onLookupStateChange,
-		onMoveFromActionSheet,
 		onRemoveFromActionSheet,
 		onRenameFromActionSheet,
 		onRenameListItem,
@@ -72,7 +67,6 @@
 		listMembership: IngredientListMembership;
 		listQuery: string;
 		listSort: FoodListSort;
-		movingItem: string | null;
 		removingItem: string | null;
 		renameBusy: boolean;
 		renameError: string;
@@ -100,7 +94,6 @@
 		) => void;
 		onFilterFromSearch: () => void;
 		onLookupStateChange: (busy: boolean) => void;
-		onMoveFromActionSheet: () => void | Promise<void>;
 		onRemoveFromActionSheet: () => void | Promise<void>;
 		onRenameFromActionSheet: () => void;
 		onRenameListItem: (name: string) => void | Promise<void>;
@@ -113,15 +106,12 @@
 <IngredientActionSheet
 	open={actionSheetItem !== null}
 	title={actionSheetItem?.food.description ?? ""}
-	moveLabel={actionSheetItem ? getIngredientMoveLabel(actionSheetItem.key) : ""}
 	removeLabel={actionSheetItem
 		? `Remove from ${getIngredientListLabel(actionSheetItem.key)}`
 		: ""}
-	moving={movingItem !== null}
 	removing={removingItem !== null}
 	onClose={onCloseActionSheet}
 	onRename={onRenameFromActionSheet}
-	onMove={onMoveFromActionSheet}
 	onRemove={onRemoveFromActionSheet}
 />
 

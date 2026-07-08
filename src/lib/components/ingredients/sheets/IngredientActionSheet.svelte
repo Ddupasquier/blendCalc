@@ -1,5 +1,4 @@
 <script lang="ts">
-	import MoveList from "$lib/assets/icons/MoveList.svelte";
 	import Pencil from "$lib/assets/icons/Pencil.svelte";
 	import Trash from "$lib/assets/icons/Trash.svelte";
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet.svelte";
@@ -8,24 +7,18 @@
 	let {
 		open,
 		title,
-		moveLabel,
 		removeLabel,
-		moving = false,
 		removing = false,
 		onClose,
 		onRename,
-		onMove,
 		onRemove,
 	}: {
 		open: boolean;
 		title: string;
-		moveLabel: string;
 		removeLabel: string;
-		moving?: boolean;
 		removing?: boolean;
 		onClose: () => void;
 		onRename: () => void;
-		onMove: () => void;
 		onRemove: () => void;
 	} = $props();
 </script>
@@ -41,11 +34,6 @@
 		<BottomSheetAction label="Rename" onSelect={onRename}>
 			{#snippet icon()}
 				<Pencil />
-			{/snippet}
-		</BottomSheetAction>
-		<BottomSheetAction label={moveLabel} variant="move" disabled={moving} onSelect={onMove}>
-			{#snippet icon()}
-				<MoveList />
 			{/snippet}
 		</BottomSheetAction>
 		<BottomSheetAction

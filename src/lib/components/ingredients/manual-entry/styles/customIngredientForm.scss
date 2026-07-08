@@ -65,6 +65,11 @@
 	line-height: 1.35;
 }
 
+.custom-ingredient__field-status--warning {
+	color: $ingredient-status-warning-text;
+	background: $ingredient-status-warning-bg;
+}
+
 .custom-ingredient__field input,
 .custom-ingredient__field select,
 .custom-ingredient__destination select {

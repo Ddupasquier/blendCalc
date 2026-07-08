@@ -42,6 +42,7 @@
 	} from "$lib/utils/barcode/productLookup";
 	import { barcodeDraftHasEntryChanges } from "$lib/utils/barcode/barcodeDraftComparison";
 	import {
+		getBarcodeCategoryWarningMessage,
 		getBarcodeDraftState,
 		getBarcodeImportMessage,
 		getBarcodeReferenceReviewFlags as buildBarcodeReferenceReviewFlags,
@@ -226,12 +227,19 @@
 			? `Example: ${categoryOptionLabels.slice(0, 3).join(", ")}`
 			: "Choose a category",
 	);
-	const activeCategory = $derived(category || categories[0] || "");
+	const activeCategory = $derived(category);
 	const normalizedName = $derived(name.trim());
 	const barcodeValidationMessage = $derived(
 		getBarcodeInputValidationMessage(barcode),
 	);
 	const hasValidBarcode = $derived(Boolean(normalizeBarcode(barcode)));
+	const categoryWarningMessage = $derived(
+		getBarcodeCategoryWarningMessage({
+			barcode,
+			sourceDraft: barcodeReferenceSourceDraft,
+			selectedCategory: category,
+		}),
+	);
 	const resolvedServingLabel = $derived(
 		buildCustomServingLabel({
 			servingLabel,
@@ -991,6 +999,7 @@
 				{visibleCategoryOptions}
 				{loadingCategoryOptions}
 				{categoryOptionsError}
+				{categoryWarningMessage}
 				{barcodeMessage}
 				{barcodeValidationMessage}
 				{checkingBarcodeReference}
