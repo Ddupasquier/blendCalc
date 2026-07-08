@@ -2,12 +2,19 @@
 // Usage:
 //   npm run seed:food-categories -- --dry-run
 //   npm run seed:food-categories
+//   npm run seed:food-categories:deep
+//   npm run seed:food-categories -- --rebuild-mappings-only
 //   npm run seed:food-categories -- "whole milk" "peanut butter"
 
 import { config } from "dotenv";
 import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
+import {
+	normalizeFoodCategoryValue,
+	toFoodCategoryId,
+	toFoodCategoryLabel,
+} from "../src/lib/utils/food/categories/categoryNormalization.js";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -16,6 +23,8 @@ const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const fdcApiKey = process.env.VITE_FDC_API_KEY;
 const dryRun = process.argv.includes("--dry-run");
+const deepSweep = process.argv.includes("--deep");
+const rebuildMappingsOnly = process.argv.includes("--rebuild-mappings-only");
 const explicitQueries = process.argv
 	.slice(2)
 	.filter((argument) => !argument.startsWith("--"));
@@ -26,6 +35,7 @@ const REQUEST_DELAY_MS = 140;
 const PAGE_SIZE = 12;
 const FDC_BRANDED_DETAIL_SIZE = 8;
 const MAX_CATEGORY_LENGTH = 80;
+const SUPABASE_PAGE_SIZE = 1000;
 
 const DEFAULT_QUERIES = [
 	"whole milk",
@@ -70,42 +80,186 @@ const DEFAULT_QUERIES = [
 	"protein shake",
 ];
 
-const queries = explicitQueries.length > 0 ? explicitQueries : DEFAULT_QUERIES;
+const DEEP_SWEEP_QUERIES = [
+	...DEFAULT_QUERIES,
+	"strawberry jelly",
+	"grape jelly",
+	"jam",
+	"jelly",
+	"fruit preserves",
+	"marmalade",
+	"apple sauce",
+	"canned peaches",
+	"frozen berries",
+	"frozen spinach",
+	"baby spinach",
+	"romaine lettuce",
+	"carrots",
+	"celery",
+	"cucumber",
+	"tomatoes",
+	"cherry tomatoes",
+	"avocado",
+	"sweet potato",
+	"butternut squash",
+	"pineapple",
+	"peaches",
+	"apples",
+	"pears",
+	"grapes",
+	"watermelon",
+	"coconut water",
+	"lemon juice",
+	"lime juice",
+	"cranberry juice",
+	"protein powder",
+	"collagen peptides",
+	"casein protein",
+	"soy protein",
+	"plant protein",
+	"cottage cheese",
+	"cream cheese",
+	"cheddar cheese",
+	"mozzarella",
+	"eggs",
+	"egg whites",
+	"butter",
+	"heavy cream",
+	"half and half",
+	"coconut milk",
+	"soy milk",
+	"cashew milk",
+	"rice milk",
+	"kefir",
+	"frozen yogurt",
+	"ice cream",
+	"oats",
+	"rolled oats",
+	"instant oatmeal",
+	"quinoa",
+	"brown rice",
+	"white rice",
+	"pasta",
+	"rice cakes",
+	"crackers",
+	"pretzels",
+	"bagels",
+	"english muffins",
+	"tortillas",
+	"pita bread",
+	"muffins",
+	"pancakes",
+	"waffles",
+	"maple syrup",
+	"agave syrup",
+	"molasses",
+	"sugar",
+	"brown sugar",
+	"stevia",
+	"splenda",
+	"cocoa powder",
+	"dark chocolate",
+	"milk chocolate",
+	"chocolate chips",
+	"almonds",
+	"walnuts",
+	"pecans",
+	"cashews",
+	"pistachios",
+	"sunflower seeds",
+	"pumpkin seeds",
+	"flax seeds",
+	"sesame seeds",
+	"hemp seeds",
+	"trail mix",
+	"dried cranberries",
+	"raisins",
+	"dates",
+	"figs",
+	"beef jerky",
+	"turkey slices",
+	"ham",
+	"bacon",
+	"sausage",
+	"hot dogs",
+	"chicken nuggets",
+	"plant based nuggets",
+	"tofu scramble",
+	"tempeh",
+	"edamame",
+	"hummus",
+	"black beans",
+	"kidney beans",
+	"chickpeas",
+	"refried beans",
+	"lentils",
+	"split peas",
+	"chili",
+	"tomato soup",
+	"chicken broth",
+	"beef broth",
+	"vegetable broth",
+	"bone broth",
+	"curry sauce",
+	"tomato sauce",
+	"pesto",
+	"soy sauce",
+	"teriyaki sauce",
+	"hot sauce",
+	"mustard",
+	"ketchup",
+	"mayonnaise",
+	"bbq sauce",
+	"salad dressing",
+	"caesar dressing",
+	"vinaigrette",
+	"pickles",
+	"olives",
+	"sauerkraut",
+	"kimchi",
+	"frozen pizza",
+	"macaroni and cheese",
+	"frozen burrito",
+	"energy drink",
+	"sports drink",
+	"sparkling water",
+	"kombucha",
+	"green tea",
+	"black tea",
+	"espresso",
+	"canned tuna",
+	"canned salmon",
+	"sardines",
+	"cod",
+	"tilapia",
+	"turkey breast",
+	"pork tenderloin",
+	"steak",
+	"lamb",
+	"meatballs",
+	"veggie burger",
+	"black bean burger",
+	"nut free granola",
+];
+
+const queries = [
+	...new Set(explicitQueries.length > 0 ? explicitQueries : deepSweep ? DEEP_SWEEP_QUERIES : DEFAULT_QUERIES),
+];
 
 const sleep = (milliseconds) =>
 	new Promise((resolve) => {
 		setTimeout(resolve, milliseconds);
 	});
 
-const normalizeValue = (value) =>
-	String(value ?? "")
-		.toLocaleLowerCase()
-		.trim()
-		.replace(/^[a-z]{2}:/i, "")
-		.replace(/&/g, " and ")
-		.replace(/-/g, " ")
-		.replace(/[^a-z0-9]+/g, " ")
-		.replace(/\s+/g, " ")
-		.trim();
-
-const toTitleCase = (value) =>
-	normalizeValue(value)
-		.split(" ")
-		.filter(Boolean)
-		.map((part) => `${part.charAt(0).toLocaleUpperCase()}${part.slice(1)}`)
-		.join(" ");
-
-const toCategoryId = (value) => normalizeValue(value).replace(/\s+/g, "-");
-
 const cleanSourceCategory = (value) => {
-	const normalized = normalizeValue(value);
+	const normalized = normalizeFoodCategoryValue(value);
 	if (!normalized) return null;
 	if (normalized.length > MAX_CATEGORY_LENGTH) return null;
 	if (/^\d+$/.test(normalized)) return null;
 	if (["foods", "food", "products", "product"].includes(normalized)) return null;
 	return {
-		category_id: toCategoryId(normalized),
-		label: toTitleCase(normalized),
+		category_id: toFoodCategoryId(normalized),
+		label: toFoodCategoryLabel(normalized),
 		normalized_value: normalized,
 		source_value: String(value ?? "").trim(),
 	};
@@ -157,6 +311,37 @@ const fetchJson = async (url, options = {}, label = "API request") => {
 	return await response.json();
 };
 
+const createSupabaseClient = () => {
+	if (!supabaseUrl || !serviceRoleKey) {
+		throw new Error(
+			"Add PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to .env.moderation.local.",
+		);
+	}
+
+	return createClient(supabaseUrl, serviceRoleKey, {
+		auth: {
+			autoRefreshToken: false,
+			detectSessionInUrl: false,
+			persistSession: false,
+		},
+		realtime: {
+			transport: WebSocket,
+		},
+	});
+};
+
+const fetchAllRows = async (buildQuery) => {
+	const rows = [];
+	for (let from = 0; ; from += SUPABASE_PAGE_SIZE) {
+		const { data, error } = await buildQuery()
+			.range(from, from + SUPABASE_PAGE_SIZE - 1);
+		if (error) throw error;
+		rows.push(...(data ?? []));
+		if (!data || data.length < SUPABASE_PAGE_SIZE) break;
+	}
+	return rows;
+};
+
 const buildFdcSearchUrl = ({ query, dataType, pageSize = PAGE_SIZE }) => {
 	const url = new URL(`${FDC_URL}/foods/search`);
 	url.searchParams.set("api_key", fdcApiKey);
@@ -177,10 +362,13 @@ const collectOpenFoodFactsCategories = async (query) => {
 		"code",
 		"product_name",
 		"brands",
-		"categories",
-		"categories_tags",
-		"main_category",
-	].join(",");
+			"categories",
+			"categories_tags",
+			"categories_hierarchy",
+			"main_category",
+			"food_groups",
+			"food_groups_tags",
+		].join(",");
 	const url = new URL(OPEN_FOOD_FACTS_URL);
 	url.searchParams.set("search_terms", query);
 	url.searchParams.set("search_simple", "1");
@@ -207,7 +395,10 @@ const collectOpenFoodFactsCategories = async (query) => {
 			brands: product.brands ?? null,
 			categories: product.categories ?? null,
 			categories_tags: product.categories_tags ?? [],
+			categories_hierarchy: product.categories_hierarchy ?? [],
 			main_category: product.main_category ?? null,
+			food_groups: product.food_groups ?? null,
+			food_groups_tags: product.food_groups_tags ?? [],
 		};
 
 		for (const value of splitDelimitedValues(product.categories)) {
@@ -232,6 +423,17 @@ const collectOpenFoodFactsCategories = async (query) => {
 			});
 		}
 
+		for (const value of product.categories_hierarchy ?? []) {
+			addCategoryObservation({
+				source: "open-food-facts",
+				query,
+				source_field: "categories_hierarchy",
+				source_value: value,
+				source_reference: sourceReference,
+				source_payload: sourcePayload,
+			});
+		}
+
 		if (product.main_category) {
 			addCategoryObservation({
 				source: "open-food-facts",
@@ -242,7 +444,81 @@ const collectOpenFoodFactsCategories = async (query) => {
 				source_payload: sourcePayload,
 			});
 		}
+
+		if (product.food_groups) {
+			addCategoryObservation({
+				source: "open-food-facts",
+				query,
+				source_field: "food_groups",
+				source_value: product.food_groups,
+				source_reference: sourceReference,
+				source_payload: sourcePayload,
+			});
+		}
+
+		for (const value of product.food_groups_tags ?? []) {
+			addCategoryObservation({
+				source: "open-food-facts",
+				query,
+				source_field: "food_groups_tags",
+				source_value: value,
+				source_reference: sourceReference,
+				source_payload: sourcePayload,
+			});
+		}
 	}
+};
+
+const listUnique = (values) => [...new Set(values.filter(Boolean))].sort();
+
+const groupObservationsForMappings = (observationRows, options) => {
+	const optionByNormalizedValue = new Map(
+		options.map((option) => [option.normalized_value, option]),
+	);
+	const grouped = new Map();
+
+	for (const observation of observationRows) {
+		const option = optionByNormalizedValue.get(observation.normalized_value);
+		if (!option) continue;
+		const existing = grouped.get(observation.normalized_value) ?? {
+			source_normalized_value: observation.normalized_value,
+			source_value: observation.source_value,
+			source_values: [],
+			source_fields: [],
+			sources: [],
+			category_option_id: option.id,
+			category_option_label: option.label,
+			confidence: "exact",
+			match_reason: "exact_api_observation",
+			source_count: 0,
+			observation_count: 0,
+			first_seen_at: observation.first_seen_at,
+			last_seen_at: observation.last_seen_at,
+		};
+
+		existing.source_values.push(observation.source_value);
+		existing.source_fields.push(observation.source_field);
+		existing.sources.push(observation.source);
+		existing.observation_count += observation.observation_count ?? 1;
+		if (observation.first_seen_at < existing.first_seen_at) {
+			existing.first_seen_at = observation.first_seen_at;
+		}
+		if (observation.last_seen_at > existing.last_seen_at) {
+			existing.last_seen_at = observation.last_seen_at;
+		}
+		grouped.set(observation.normalized_value, existing);
+	}
+
+	return [...grouped.values()].map((mapping) => {
+		const sources = listUnique(mapping.sources);
+		return {
+			...mapping,
+			source_values: listUnique(mapping.source_values),
+			source_fields: listUnique(mapping.source_fields),
+			sources,
+			source_count: sources.length,
+		};
+	});
 };
 
 const collectFdcCategories = async (query) => {
@@ -346,22 +622,7 @@ const collectFdcBrandedDetailCategories = async (query) => {
 };
 
 const upsertCategoryObservations = async () => {
-	if (!supabaseUrl || !serviceRoleKey) {
-		throw new Error(
-			"Add PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to .env.moderation.local.",
-		);
-	}
-
-	const supabase = createClient(supabaseUrl, serviceRoleKey, {
-		auth: {
-			autoRefreshToken: false,
-			detectSessionInUrl: false,
-			persistSession: false,
-		},
-		realtime: {
-			transport: WebSocket,
-		},
-	});
+	const supabase = createSupabaseClient();
 	const timestamp = new Date().toISOString();
 	const rows = [...observations.values()].map((observation) => ({
 		...observation,
@@ -382,62 +643,122 @@ const upsertCategoryObservations = async () => {
 
 	const { error } = await supabase.rpc("rebuild_custom_food_category_options");
 	if (error) throw error;
+
+	const mappingCount = await rebuildCategoryMappings(supabase);
+
+	return {
+		observations: rows.length,
+		mappings: mappingCount,
+	};
 };
 
-for (const [index, query] of queries.entries()) {
-	console.log(`[${index + 1}/${queries.length}] ${query}`);
-	try {
-		await collectOpenFoodFactsCategories(query);
-	} catch (error) {
-		console.warn(error instanceof Error ? error.message : error);
-	}
-	await sleep(REQUEST_DELAY_MS);
-	try {
-		await collectFdcCategories(query);
-	} catch (error) {
-		console.warn(error instanceof Error ? error.message : error);
-	}
-	await sleep(REQUEST_DELAY_MS);
-	try {
-		await collectFdcBrandedDetailCategories(query);
-	} catch (error) {
-		console.warn(error instanceof Error ? error.message : error);
-	}
-	await sleep(REQUEST_DELAY_MS);
-}
+const rebuildCategoryMappings = async (supabase = createSupabaseClient()) => {
+	const { error } = await supabase.rpc("rebuild_custom_food_category_options");
+	if (error) throw error;
 
-const categories = [...observations.values()].reduce((summary, observation) => {
-	const existing = summary.get(observation.category_id);
-	if (existing) {
-		existing.observations += observation.observation_count;
-		existing.sources.add(observation.source);
-		return summary;
+	const [optionRows, observationRows] = await Promise.all([
+		fetchAllRows(() =>
+			supabase
+				.from("custom_food_category_options")
+				.select("id, label, normalized_value")
+				.eq("enabled", true)
+				.order("normalized_value", { ascending: true }),
+		),
+		fetchAllRows(() =>
+			supabase
+				.from("custom_food_category_observations")
+				.select(
+					"source, source_field, source_value, normalized_value, observation_count, first_seen_at, last_seen_at",
+				)
+				.order("normalized_value", { ascending: true }),
+		),
+	]);
+
+	const mappingRows = groupObservationsForMappings(
+		observationRows,
+		optionRows,
+	);
+
+	const { error: deleteMappingsError } = await supabase
+		.from("custom_food_category_mappings")
+		.delete()
+		.neq("source_normalized_value", "");
+	if (deleteMappingsError) throw deleteMappingsError;
+
+	for (let index = 0; index < mappingRows.length; index += 500) {
+		const chunk = mappingRows.slice(index, index + 500);
+		const { error: mappingError } = await supabase
+			.from("custom_food_category_mappings")
+			.upsert(chunk, {
+				onConflict: "source_normalized_value",
+			});
+		if (mappingError) throw mappingError;
 	}
-	summary.set(observation.category_id, {
-		label: observation.label,
-		observations: observation.observation_count,
-		sources: new Set([observation.source]),
-	});
-	return summary;
-}, new Map());
 
-console.log(
-	`Collected ${observations.size} category observations for ${categories.size} category options.`,
-);
-console.table(
-	[...categories.values()]
-		.sort((first, second) => second.observations - first.observations)
-		.slice(0, 20)
-		.map((category) => ({
-			label: category.label,
-			observations: category.observations,
-			sources: category.sources.size,
-		})),
-);
+	return mappingRows.length;
+};
 
-if (dryRun) {
-	console.log("Dry run complete. No database rows were written.");
+if (rebuildMappingsOnly) {
+	const mappingCount = await rebuildCategoryMappings();
+	console.log(`Rebuilt ${mappingCount} category mappings from stored API observations.`);
 } else {
-	await upsertCategoryObservations();
-	console.log("Seeded custom food category observations and rebuilt options.");
+	for (const [index, query] of queries.entries()) {
+		console.log(`[${index + 1}/${queries.length}] ${query}`);
+		try {
+			await collectOpenFoodFactsCategories(query);
+		} catch (error) {
+			console.warn(error instanceof Error ? error.message : error);
+		}
+		await sleep(REQUEST_DELAY_MS);
+		try {
+			await collectFdcCategories(query);
+		} catch (error) {
+			console.warn(error instanceof Error ? error.message : error);
+		}
+		await sleep(REQUEST_DELAY_MS);
+		try {
+			await collectFdcBrandedDetailCategories(query);
+		} catch (error) {
+			console.warn(error instanceof Error ? error.message : error);
+		}
+		await sleep(REQUEST_DELAY_MS);
+	}
+
+	const categories = [...observations.values()].reduce((summary, observation) => {
+		const existing = summary.get(observation.category_id);
+		if (existing) {
+			existing.observations += observation.observation_count;
+			existing.sources.add(observation.source);
+			return summary;
+		}
+		summary.set(observation.category_id, {
+			label: observation.label,
+			observations: observation.observation_count,
+			sources: new Set([observation.source]),
+		});
+		return summary;
+	}, new Map());
+
+	console.log(
+		`Collected ${observations.size} category observations for ${categories.size} category options.`,
+	);
+	console.table(
+		[...categories.values()]
+			.sort((first, second) => second.observations - first.observations)
+			.slice(0, 20)
+			.map((category) => ({
+				label: category.label,
+				observations: category.observations,
+				sources: category.sources.size,
+			})),
+	);
+
+	if (dryRun) {
+		console.log("Dry run complete. No database rows were written.");
+	} else {
+		const seedResult = await upsertCategoryObservations();
+		console.log(
+			`Seeded ${seedResult.observations} category observations, rebuilt options, and wrote ${seedResult.mappings} category mappings.`,
+		);
+	}
 }

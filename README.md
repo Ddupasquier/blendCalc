@@ -86,6 +86,8 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | `npm run audit:off-allergens` | Sample Open Food Facts allergen/restriction fields |
 | `npm run seed:food-preferences` | Store cross-source observed food preference metadata in Supabase |
 | `npm run seed:food-categories` | Store cross-source observed custom-food category metadata in Supabase |
+| `npm run seed:food-categories:deep` | Run the broader category API sweep and rebuild category mappings |
+| `npm run seed:food-categories:rebuild` | Rebuild category mappings from already-stored API observations |
 | `npm run seed:manual-entry-nutrients` | Store cross-source manual-entry nutrient grouping observations in Supabase |
 | `npm run generate:api-structures` | Generate docs-only reference types from observed external API payloads |
 | `npm run discover:fdc-nutrients` | Generate the expanded FDC nutrient catalog |

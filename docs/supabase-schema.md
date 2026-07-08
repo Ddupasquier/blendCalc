@@ -289,6 +289,7 @@ Notes:
 | --- | --- | --- | --- | --- |
 | `custom_food_category_options` | `id` | Shared reference | DB-backed dropdown options for manual custom-food categories | Built from observations |
 | `custom_food_category_observations` | `id` | Shared reference/provenance | External API category observations used to build options | No direct user ownership |
+| `custom_food_category_mappings` | `source_normalized_value` | Shared reference/provenance | Maps raw observed API category strings to clean app category options for barcode/manual-entry autofill | `category_option_id → custom_food_category_options.id` |
 
 ### `custom_food_category_options`
 
@@ -299,6 +300,7 @@ Columns: `id`, `label`, `normalized_value`, `sources`, `source_count`,
 Notes:
 - UI category dropdowns should sort by `label`.
 - Seeded by `scripts/seed_custom_food_categories.mjs`.
+- The dropdown renders these app-ready options, not raw source payload strings.
 
 ### `custom_food_category_observations`
 
@@ -310,6 +312,26 @@ Columns: `id`, `category_id`, `label`, `normalized_value`, `source`, `query`,
 Notes:
 - Source values come from `fdc-search`, `fdc-branded-detail`, and
   `open-food-facts`.
+- Observations preserve raw API source category data, including Open Food Facts
+  categories, category tags, category hierarchy, and food groups when available.
+
+### `custom_food_category_mappings`
+
+Columns: `source_normalized_value`, `source_value`, `source_values`,
+`source_fields`, `sources`, `category_option_id`, `category_option_label`,
+`confidence`, `match_reason`, `source_count`, `observation_count`,
+`first_seen_at`, `last_seen_at`, `created_at`, `updated_at`.
+
+Notes:
+- Barcode/manual-entry autofill should use this table to pick the visible app
+  category.
+- Raw API category values remain stored in `custom_food_category_observations`
+  and on product payloads for proof and moderation.
+- Seeded by `scripts/seed_custom_food_categories.mjs`; use
+  `npm run seed:food-categories:deep` for a broader API sample.
+- Use `npm run seed:food-categories:rebuild` when observations already exist
+  and only mappings need to be refreshed.
+- Do not map category autofill by taking the first raw API category value.
 
 ## Moderation and Access Control
 

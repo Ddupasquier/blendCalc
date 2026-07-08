@@ -150,6 +150,9 @@ const normalizeName = (value: string) =>
 		.replace(/[^a-z0-9]+/g, " ")
 		.trim();
 
+const isStringValue = (value: string | undefined): value is string =>
+	Boolean(value);
+
 export const namesLookDifferent = (enteredName: string, sourceName: string) => {
 	const entered = normalizeName(enteredName);
 	const source = normalizeName(sourceName);
@@ -180,7 +183,7 @@ export const getBarcodeDraftState = (
 ): ManualEntryBarcodeDraftState => ({
 	name: draft.name,
 	brandOwner: draft.brandOwner,
-	category: draft.categories?.[0] ?? "",
+	category: draft.resolvedCategory ?? draft.categories?.[0] ?? "",
 	servingLabel: draft.servingLabel,
 	servingWeightGrams: draft.servingWeightGrams,
 	importedNutrients: [...draft.nutrients],
@@ -202,7 +205,12 @@ export const getBarcodeDraftState = (
 	traces: [...(draft.traces ?? [])],
 	dietaryTags: [...(draft.dietaryTags ?? [])],
 	labels: [...(draft.labels ?? [])],
-	categories: [...(draft.categories ?? [])],
+	categories: [
+		...new Set([
+			draft.resolvedCategory,
+			...(draft.categories ?? []),
+		].filter(isStringValue)),
+	],
 	checkedBarcodeReferenceKey: getBarcodeReferenceKey(draft.barcode, draft.name),
 });
 

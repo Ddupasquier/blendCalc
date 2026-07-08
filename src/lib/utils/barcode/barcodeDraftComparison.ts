@@ -22,6 +22,9 @@ export type BarcodeProductDraftComparisonEntry = {
 const normalizeText = (value: string | undefined | null) =>
 	(value ?? "").trim().toLocaleLowerCase();
 
+const isStringValue = (value: string | undefined): value is string =>
+	Boolean(value);
+
 const normalizeTextList = (values: string[] | undefined) =>
 	[...new Set((values ?? []).map(normalizeText).filter(Boolean))].sort();
 
@@ -85,7 +88,13 @@ export const barcodeDraftMatchesEntry = (
 			normalizeTextList(entry.dietaryTags),
 		) &&
 		listsMatch(normalizeTextList(draft.labels), normalizeTextList(entry.labels)) &&
-		listsMatch(normalizeTextList(draft.categories), entryCategories) &&
+		listsMatch(
+			normalizeTextList([
+				draft.resolvedCategory,
+				...(draft.categories ?? []),
+			].filter(isStringValue)),
+			entryCategories,
+		) &&
 		nutrientsMatch(draft.nutrients, entry.nutrients);
 };
 

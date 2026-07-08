@@ -27,6 +27,9 @@ export type OpenFoodFactsProduct = {
 	labels_tags?: string[];
 	categories?: string;
 	categories_tags?: string[];
+	categories_hierarchy?: string[];
+	food_groups?: string;
+	food_groups_tags?: string[];
 	serving_size?: string;
 	serving_quantity?: number | string;
 	serving_quantity_unit?: string;
@@ -53,6 +56,13 @@ export type BarcodeProductDraft = {
 	dietaryTags?: string[];
 	labels?: string[];
 	categories?: string[];
+	resolvedCategory?: string;
+	categoryResolution?: {
+		categoryOptionId: string;
+		label: string;
+		sourceValue: string;
+		confidence: string;
+	};
 	volumeEquivalent?: BarcodeVolumeEquivalent;
 	source: "open-food-facts" | "usda" | "shared-catalog";
 	sourceLabel: string;
@@ -192,8 +202,11 @@ const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
 			...(product.labels_tags ?? []),
 		]),
 		categories: uniqueCleanValues([
-			...splitDelimitedValues(product.categories),
+			...splitDelimitedValues(product.food_groups),
+			...(product.food_groups_tags ?? []),
+			...(product.categories_hierarchy ?? []),
 			...(product.categories_tags ?? []),
+			...splitDelimitedValues(product.categories),
 		]),
 	};
 };

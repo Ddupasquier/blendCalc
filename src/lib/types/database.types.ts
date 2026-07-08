@@ -201,6 +201,68 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_food_category_mappings: {
+        Row: {
+          category_option_id: string
+          category_option_label: string
+          confidence: string
+          created_at: string
+          first_seen_at: string
+          last_seen_at: string
+          match_reason: string
+          observation_count: number
+          source_count: number
+          source_fields: string[]
+          source_normalized_value: string
+          source_value: string
+          source_values: string[]
+          sources: string[]
+          updated_at: string
+        }
+        Insert: {
+          category_option_id: string
+          category_option_label: string
+          confidence?: string
+          created_at?: string
+          first_seen_at?: string
+          last_seen_at?: string
+          match_reason: string
+          observation_count?: number
+          source_count?: number
+          source_fields?: string[]
+          source_normalized_value: string
+          source_value: string
+          source_values?: string[]
+          sources?: string[]
+          updated_at?: string
+        }
+        Update: {
+          category_option_id?: string
+          category_option_label?: string
+          confidence?: string
+          created_at?: string
+          first_seen_at?: string
+          last_seen_at?: string
+          match_reason?: string
+          observation_count?: number
+          source_count?: number
+          source_fields?: string[]
+          source_normalized_value?: string
+          source_value?: string
+          source_values?: string[]
+          sources?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_food_category_mappings_category_option_id_fkey"
+            columns: ["category_option_id"]
+            isOneToOne: false
+            referencedRelation: "custom_food_category_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_food_category_options: {
         Row: {
           created_at: string

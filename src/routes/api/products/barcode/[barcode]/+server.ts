@@ -1,6 +1,7 @@
 import {
 	getSharedProductByBarcode,
 } from "$lib/server/products/catalog.server";
+import { resolveBarcodeDraftCategory } from "$lib/server/products/categoryMapping.server";
 import { lookupExternalBarcodeProduct } from "$lib/server/products/externalProduct.server";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { mapSharedCatalogFood } from "$lib/utils/barcode/productLookup";
@@ -17,10 +18,18 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 	const sharedFood = await getSharedProductByBarcode(locals.supabase, barcode);
 	if (sharedFood) {
 		const draft = mapSharedCatalogFood(sharedFood, barcode);
-		if (draft) return json({ status: "found", draft });
+		if (draft) {
+			return json({
+				status: "found",
+				draft: await resolveBarcodeDraftCategory(locals.supabase, draft),
+			});
+		}
 	}
 
 	const draft = await lookupExternalBarcodeProduct(barcode);
 	if (!draft) throw error(404, "Product not found.");
-	return json({ status: "found", draft });
+	return json({
+		status: "found",
+		draft: await resolveBarcodeDraftCategory(locals.supabase, draft),
+	});
 };

@@ -123,6 +123,9 @@ describe("barcode product mapping", () => {
 				traces: "tree nuts",
 				labels_tags: ["en:gluten-free"],
 				categories_tags: ["en:yogurts"],
+				categories_hierarchy: ["en:dairy-products", "en:yogurts"],
+				food_groups: "en:milk-and-yogurt",
+				food_groups_tags: ["en:dairy-desserts"],
 				nutriments: { "energy-kcal_100g": 100 },
 			},
 			"049000042566",
@@ -134,7 +137,7 @@ describe("barcode product mapping", () => {
 			allergens: ["milk"],
 			traces: ["tree nuts"],
 			dietaryTags: ["gluten free"],
-			categories: ["yogurts"],
+			categories: ["milk and yogurt", "dairy desserts", "dairy products", "yogurts"],
 		});
 	});
 
