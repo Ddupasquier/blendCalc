@@ -368,6 +368,9 @@ $ingredient-card-padding: $app-rebuild-card-padding;
 $ingredient-card-padding-compact: $app-rebuild-card-padding-sm;
 $ingredient-badge-padding-y: $app-rebuild-badge-padding-y;
 $ingredient-badge-padding-x: $app-rebuild-badge-padding-x;
+$ingredient-badge-font-size: 0.58rem;
+$ingredient-badge-max-width: 8rem;
+$ingredient-badge-line-height: 1.1;
 $ingredient-status-padding-y: $app-rebuild-status-padding-y;
 $ingredient-status-padding-x: $app-rebuild-status-padding-x;
 
@@ -394,7 +397,16 @@ $ingredient-scan-icon-width: $app-rebuild-scan-icon-width;
 $ingredient-scan-icon-height: $app-rebuild-scan-icon-height;
 $ingredient-scan-icon-active-width: $app-rebuild-scan-icon-active-width;
 $ingredient-scan-icon-active-height: $app-rebuild-scan-icon-active-height;
+$ingredient-scan-icon-radius: calc($ingredient-radius-card / 2);
 $ingredient-scan-bracket-size: $app-rebuild-scan-bracket-size;
+$ingredient-scan-bracket-inset: 0.2rem;
+$ingredient-scan-bracket-border-width: 1.5px;
+$ingredient-scan-bars-top: 0.25rem;
+$ingredient-scan-glow-height: 0.6rem;
+$ingredient-scan-laser-height: 2px;
+$ingredient-scan-laser-low-top: 1.75rem;
+$ingredient-scan-glow-start-top: -0.2rem;
+$ingredient-scan-glow-low-top: 1.3rem;
 
 // Extra-small phone breakpoint. Use for the tightest layouts where dense
 // components like nutrition labels need to stack or shrink aggressively.
@@ -658,6 +670,23 @@ $nutrition-label-list-row-padding-x: calc($app-gap-xs / 3);
 $nutrition-label-list-status-size: calc($app-control-height-sm * 0.65);
 $nutrition-label-list-status-icon-size: calc($app-control-height-sm * 0.53);
 $nutrition-label-scroll-max-height-mobile: 9.5rem;
+$nutrition-label-title-font-size: 2.1rem;
+$nutrition-label-title-font-size-mobile: clamp(1.75rem, 10vw, 2.1rem);
+$nutrition-label-title-line-height: 1.1;
+$nutrition-label-basis-line-height: 1.15;
+$nutrition-label-warning-line-height: 1.35;
+$nutrition-label-food-font-size: $app-font-size-md;
+$nutrition-label-row-font-size: $app-font-size-md;
+$nutrition-label-row-font-size-mobile: $app-font-size-sm;
+$nutrition-label-highlight-font-size: $app-font-size-lg;
+$nutrition-label-highlight-font-size-mobile: $app-font-size-md;
+$nutrition-label-unit-font-size: 0.82em;
+$nutrition-label-main-column-width: 13.75rem;
+$nutrition-label-main-column-min-width: 11.25rem;
+$nutrition-label-columns-min-height: 7.5rem;
+$nutrition-label-feedback-font-size: $app-font-size-sm;
+$nutrition-label-feedback-icon-font-size: $app-font-size-xs;
+$nutrition-label-feedback-pop-offset: $app-gap-xs;
 
 // Primary button background. Applied to main actions such as Save, Load, Add,
 // confirmation, and other commitment buttons.

@@ -1,34 +1,22 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { page } from "$app/state";
-    import Sliders from "$lib/assets/icons/Sliders.svelte";
-    import Plus from "$lib/assets/icons/Plus.svelte";
-    import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
-    import IconControlButton from "$lib/components/common/buttons/IconControlButton.svelte";
-    import RightSheet from "$lib/components/common/sheets/RightSheet.svelte";
     import ViewBody from "$lib/components/common/view/ViewBody.svelte";
     import ViewFrame from "$lib/components/common/view/ViewFrame.svelte";
     import ViewHeader from "$lib/components/common/view/ViewHeader.svelte";
     import ViewTop from "$lib/components/common/view/ViewTop.svelte";
-    import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
-    import IngredientActionSheet from "$lib/components/ingredients/sheets/IngredientActionSheet.svelte";
-    import IngredientFilterSheet from "$lib/components/ingredients/sheets/IngredientFilterSheet.svelte";
-    import IngredientSearchTrigger from "$lib/components/ingredients/search/IngredientSearchTrigger.svelte";
-    import IngredientSearchView from "$lib/components/ingredients/search/IngredientSearchView.svelte";
-    import ManualEntryLauncher from "$lib/components/ingredients/manual-entry/ManualEntryLauncher.svelte";
-    import ManualEntrySheet from "$lib/components/ingredients/sheets/ManualEntrySheet.svelte";
     import type { ManualEntryCreateContext } from "$lib/components/ingredients/manual-entry/types";
-    import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView.svelte";
+    import IngredientsFloatingAddButton from "$lib/components/ingredients/page/IngredientsFloatingAddButton.svelte";
+    import IngredientsSearchPanel from "$lib/components/ingredients/page/IngredientsSearchPanel.svelte";
+    import IngredientRoutePopins from "$lib/components/ingredients/page/IngredientRoutePopins.svelte";
     import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList.svelte";
     import SavedIngredientListLayout from "$lib/components/ingredients/list/SavedIngredientListLayout.svelte";
-    import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog.svelte";
     import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
     import type { FdcFood } from "$lib/utils/food/types";
     import {
         areFoodIdsEqual,
         getIngredientActionKey,
         getIngredientListLabel,
-        getIngredientMoveLabel,
         getOppositeIngredientListKey,
         INGREDIENT_SOURCE_FILTER_OPTIONS,
         type IngredientListMembership,
@@ -796,32 +784,14 @@
             subtitle="Search foods, add them to your fridge, and track shopping needs."
         />
 
-        <section class="ingredient-search-panel" aria-labelledby="ingredient-search-title">
-            <h2 id="ingredient-search-title" class="sr-only">Find Ingredients</h2>
-            <div class="search-toolbar">
-                <div class="search-toolbar__input">
-                    <IngredientSearchTrigger onOpen={openSearchView} />
-                </div>
-                <BarcodeScanButton
-                    scanning={barcodeLookupBusy}
-                    compact
-                    onclick={startBarcodeScan}
-                />
-                <IconControlButton
-                    class="filter-button"
-                    label="Filter saved ingredients"
-                    active={activeSheet === "filters"}
-                    aria-expanded={activeSheet === "filters"}
-                    aria-controls="ingredient-filter-sheet-title"
-                    onclick={toggleFilters}
-                >
-                    <Sliders class="filter-button__icon" />
-                </IconControlButton>
-            </div>
-
-            <ManualEntryLauncher onSelect={openManualEntry} />
-
-        </section>
+        <IngredientsSearchPanel
+            {barcodeLookupBusy}
+            filtersActive={activeSheet === "filters"}
+            onOpenSearch={openSearchView}
+            onScan={startBarcodeScan}
+            onToggleFilters={toggleFilters}
+            onOpenManualEntry={openManualEntry}
+        />
     </ViewTop>
 
     <ViewBody>
@@ -860,164 +830,54 @@
     </ViewBody>
 </ViewFrame>
 
-<IngredientActionSheet
-    open={actionSheetItem !== null}
-    title={actionSheetItem?.food.description ?? ""}
-    moveLabel={actionSheetItem ? getIngredientMoveLabel(actionSheetItem.key) : ""}
-    removeLabel={actionSheetItem
-        ? `Remove from ${getIngredientListLabel(actionSheetItem.key)}`
-        : ""}
-    moving={movingItem !== null}
-    removing={removingItem !== null}
-    onClose={closeActionSheet}
-    onRename={renameFromActionSheet}
-    onMove={moveFromActionSheet}
-    onRemove={removeFromActionSheet}
-/>
+<IngredientsFloatingAddButton onClick={openManualEntry} />
 
-<ManualEntrySheet
-    open={activeSheet === "manual-entry"}
-    {scanSignal}
-    onClose={closeIngredientSheet}
-    onCreate={handleCreate}
-    onLookupStateChange={(busy) => (barcodeLookupBusy = busy)}
-/>
-
-<IngredientFilterSheet
-    open={activeSheet === "filters"}
-    query={listQuery}
-    filterValue={sourceFilter}
+<IngredientRoutePopins
+    {activeSheet}
+    {actionSheetItem}
+    {barcodeLookupBusy}
     filterOptions={INGREDIENT_SOURCE_FILTER_OPTIONS}
-    sortValue={listSort}
+    filterValue={sourceFilter}
+    {listLoading}
+    listMembership={selectedFoodListMembership}
+    listQuery={listQuery}
+    listSort={listSort}
+    {movingItem}
+    {removingItem}
+    {renameBusy}
+    {renameError}
+    {renamingItem}
+    {scanSignal}
+    {searchAddFoodId}
+    {searchViewOpen}
+    {selectedFood}
+    {selectedFoodShowListActions}
     sortOptions={FOOD_LIST_SORT_OPTIONS}
-    loading={listLoading}
-    onApply={applyListFilters}
-    onClose={closeIngredientSheet}
+    onAddSearchResult={addSearchResultToFridge}
+    onApplyFilters={applyListFilters}
+    onCloseActionSheet={closeActionSheet}
+    onCloseIngredientSheet={closeIngredientSheet}
+    onCloseNutrition={closeNutritionDetail}
+    onCloseRename={closeRenameDialog}
+    onCloseSearch={closeSearchView}
+    onCreateManualIngredient={handleCreate}
+    onFilterFromSearch={toggleFilters}
+    onLookupStateChange={(busy) => (barcodeLookupBusy = busy)}
+    onMoveFromActionSheet={moveFromActionSheet}
+    onRemoveFromActionSheet={removeFromActionSheet}
+    onRenameFromActionSheet={renameFromActionSheet}
+    onRenameListItem={renameListItem}
+    onRenameValueChange={() => (renameError = "")}
+    onScan={startBarcodeScan}
+    onSearchSelect={handleSearchSelect}
 />
-
-<div class="add-ingredient-fab">
-    <CircleIconButton
-        label="Add ingredient manually"
-        variant="primary"
-        size="fab"
-        onclick={openManualEntry}
-    >
-        <Plus size={28} strokeWidth={2.4} />
-    </CircleIconButton>
-</div>
-
-<TextInputDialog
-    open={renamingItem !== null}
-    title="Rename ingredient"
-    description="This only changes the display label in your lists. Original data is preserved."
-    label="Ingredient name"
-    initialValue={renamingItem?.food.description ?? ""}
-    error={renameError}
-    busy={renameBusy}
-    confirmLabel={renameBusy ? "Saving…" : "Save name"}
-    onConfirm={renameListItem}
-    onValueChange={() => (renameError = "")}
-    onCancel={closeRenameDialog}
-/>
-
-<RightSheet
-    open={searchViewOpen}
-    labelledby="ingredient-search-view-title"
-    onClose={closeSearchView}
->
-    <IngredientSearchView
-        scanning={barcodeLookupBusy}
-        filtersActive={activeSheet === "filters"}
-        onSelect={handleSearchSelect}
-        onAdd={addSearchResultToFridge}
-        addingFoodId={searchAddFoodId}
-        onScan={startBarcodeScan}
-        onFilter={toggleFilters}
-        onClose={closeSearchView}
-    />
-</RightSheet>
-
-<RightSheet
-    open={selectedFood !== null}
-    labelledby="nutrition-detail-view-title"
-    onClose={closeNutritionDetail}
->
-    {#if selectedFood}
-        <NutritionDetailView
-            food={selectedFood}
-            showListActions={selectedFoodShowListActions}
-            listMembership={selectedFoodListMembership}
-            onClose={closeNutritionDetail}
-        />
-    {/if}
-</RightSheet>
 
 <style lang="scss">
     @use "../../styles/variables" as *;
-
-    .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-    }
 
     :global(.app-main--authed:has(.ingredients-page)) {
         min-height: 0;
         padding-bottom: 0;
         overflow: hidden;
     }
-
-    .ingredient-search-panel {
-        position: relative;
-        z-index: 2;
-        display: grid;
-        gap: $app-vertical-stack-gap;
-        min-height: 0;
-        margin-bottom: 0;
-        background: transparent;
-        border: 0;
-    }
-
-    .search-toolbar {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) $ingredient-control-height $ingredient-control-height;
-        align-items: center;
-        gap: $app-horizontal-control-gap;
-    }
-
-    .search-toolbar__input {
-        min-width: 0;
-    }
-
-    .search-toolbar :global(.barcode-scan-button--compact) {
-        width: $ingredient-control-height;
-        height: $ingredient-control-height;
-        min-height: $ingredient-control-height;
-    }
-
-    :global(.filter-button__icon) {
-        width: $ingredient-control-icon-size;
-        height: $ingredient-control-icon-size;
-    }
-
-	.add-ingredient-fab {
-		position: fixed;
-		right: max(
-			$ingredient-shell-padding-x,
-			calc((100vw - $ingredient-shell-max-width) / 2 + $ingredient-shell-padding-x)
-		);
-		bottom: calc($ingredient-shell-nav-height + $app-gap-md);
-		z-index: 12;
-	}
-
-	@media (max-width: $app-breakpoint-xs) {
-		.search-toolbar {
-			gap: $app-horizontal-control-gap;
-		}
-	}
 </style>

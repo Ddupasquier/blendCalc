@@ -1,9 +1,8 @@
 <script lang="ts">
-	import Check from "$lib/assets/icons/Check.svelte";
-	import DotsHorizontal from "$lib/assets/icons/DotsHorizontal.svelte";
 	import FoodSymbol from "$lib/assets/icons/FoodSymbol.svelte";
-	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
-	import X from "$lib/assets/icons/X.svelte";
+	import IngredientBulkToggle from "$lib/components/ingredients/list/IngredientBulkToggle.svelte";
+	import IngredientCardActions from "$lib/components/ingredients/list/IngredientCardActions.svelte";
+	import IngredientCardBadges from "$lib/components/ingredients/list/IngredientCardBadges.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
 
 	let {
@@ -41,15 +40,11 @@
 	class:saved-ingredient-card--checked={checked}
 	class:saved-ingredient-card--custom={food.customFood}
 >
-	<button
-		class="saved-ingredient-card__bulk-toggle"
-		type="button"
-		aria-pressed={checked}
-		aria-label={`${checked ? "Uncheck" : "Check"} ${food.description}`}
-		onclick={onToggle}
-	>
-		{#if checked}<Check size={14} strokeWidth={3} />{/if}
-	</button>
+	<IngredientBulkToggle
+		{checked}
+		label={`${checked ? "Uncheck" : "Check"} ${food.description}`}
+		{onToggle}
+	/>
 	<button
 		class="saved-ingredient-card__select"
 		type="button"
@@ -60,20 +55,11 @@
 			<FoodSymbol {food} />
 		</span>
 		<span class="saved-ingredient-card__copy">
-			<span class="saved-ingredient-card__meta">
-				<span
-					class="source-badge"
-					class:source-badge--custom={food.customFood}
-				>
-					{sourceLabel}
-				</span>
-				{#if warning}
-					<span class="warning-badge">
-						<WarningTriangle size={10} strokeWidth={2.7} />
-						{warning}
-					</span>
-				{/if}
-			</span>
+			<IngredientCardBadges
+				custom={food.customFood}
+				{sourceLabel}
+				{warning}
+			/>
 			<strong title={food.description}>{food.description}</strong>
 			<small>{category}</small>
 		</span>
@@ -84,26 +70,12 @@
 			</span>
 		{/if}
 	</button>
-	<div class="saved-ingredient-card__actions">
-		<button
-			type="button"
-			aria-label={`Open actions for ${food.description}`}
-			onclick={onActions}><DotsHorizontal size={16} /></button
-		>
-		<button
-			type="button"
-			aria-label={`Remove ${food.description}`}
-			aria-busy={removing}
-			disabled={removing}
-			onclick={onRemove}
-		>
-			{#if removing}
-				…
-			{:else}
-				<X size={16} strokeWidth={2.7} />
-			{/if}
-		</button>
-	</div>
+	<IngredientCardActions
+		description={food.description}
+		{removing}
+		{onActions}
+		{onRemove}
+	/>
 </article>
 
 <style lang="scss">
@@ -144,34 +116,7 @@
 		}
 	}
 
-	.saved-ingredient-card__bulk-toggle,
-	.saved-ingredient-card__actions button {
-		flex: 0 0 auto;
-		border: 0;
-		border-radius: $ingredient-radius-pill;
-		font-family: $app-button-font-family;
-		font-weight: $app-button-font-weight;
-		line-height: $app-button-line-height;
-	}
-
-	.saved-ingredient-card__bulk-toggle {
-		display: inline-grid;
-		place-items: center;
-		width: calc($ingredient-action-icon-size - $app-gap-sm);
-		height: calc($ingredient-action-icon-size - $app-gap-sm);
-		color: $ingredient-surface-card;
-		background: transparent;
-		border: 2px solid
-			color-mix(in srgb, $ingredient-text-muted 42%, transparent);
-		font-size: $app-font-size-sm;
-	}
-
-	.saved-ingredient-card__bulk-toggle[aria-pressed="true"] {
-		background: $ingredient-accent-primary;
-		border-color: $ingredient-accent-primary;
-	}
-
-	.saved-ingredient-card__select {
+		.saved-ingredient-card__select {
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto;
 		align-items: center;
@@ -220,48 +165,6 @@
 		}
 	}
 
-	.saved-ingredient-card__meta {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: $app-gap-badge-inline;
-		min-width: 0;
-	}
-
-	.source-badge,
-	.warning-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: $app-gap-2xs;
-		max-width: 8rem;
-		padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
-		overflow: hidden;
-		border-radius: $app-radius-pill;
-		font-size: 0.58rem;
-		font-weight: $app-font-weight-heavy;
-		line-height: 1.1;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.source-badge {
-		color: color-mix(in srgb, $ingredient-accent-info 72%, $ingredient-text-primary);
-		background: color-mix(in srgb, $ingredient-accent-info 18%, $ingredient-surface-card);
-		text-transform: uppercase;
-	}
-
-	.source-badge--custom {
-		color: $app-custom-strong;
-		background: color-mix(in srgb, $app-custom-bg 55%, $ingredient-surface-card);
-	}
-
-	.warning-badge {
-		color: $app-warning-strong;
-		background: color-mix(in srgb, $app-highlight 22%, $app-warning-bg);
-		border: 1px solid
-			color-mix(in srgb, $app-highlight 70%, $app-warning-border-color);
-	}
-
 	.saved-ingredient-card__kcal {
 		display: grid;
 		justify-items: end;
@@ -282,28 +185,7 @@
 		}
 	}
 
-	.saved-ingredient-card__actions {
-		display: flex;
-		align-items: center;
-		gap: $app-gap-xs;
-
-		button {
-			display: inline-grid;
-			place-items: center;
-			width: $ingredient-action-icon-size;
-			height: $ingredient-action-icon-size;
-			color: $ingredient-text-muted;
-			background: $ingredient-surface-soft;
-			font-size: $app-font-size-sm;
-		}
-
-		button:disabled {
-			cursor: not-allowed;
-			opacity: 0.55;
-		}
-	}
-
-	@media (max-width: $app-breakpoint-xs) {
+		@media (max-width: $app-breakpoint-xs) {
 		.saved-ingredient-card {
 			grid-template-columns: auto minmax(0, 1fr);
 		}
@@ -316,16 +198,9 @@
 			display: none;
 		}
 
-		.saved-ingredient-card__actions {
-			grid-column: 2;
-			justify-content: end;
+			:global(.ingredient-card-actions) {
+				grid-column: 2;
+				justify-content: end;
+			}
 		}
-	}
-
-	button {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		text-align: center;
-	}
-</style>
+	</style>

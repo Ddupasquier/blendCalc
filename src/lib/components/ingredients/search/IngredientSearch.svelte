@@ -6,9 +6,11 @@
 		CUSTOM_FOODS_CHANGED_EVENT,
 		searchCustomFoods,
 	} from "$lib/utils/food/custom/customFoods";
-	import { compareFoodQuality } from "$lib/utils/food/quality/foodQuality";
+	import {
+		mergeIngredientSearchResults,
+		sortIngredientSearchResults,
+	} from "$lib/utils/ingredients/ingredientSearchResults";
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
-	import { getFoodDownrankScore } from "$lib/utils/profile/foodPreferenceWarnings";
 	import { searchSharedProducts } from "$lib/utils/products/catalog";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
 	import Search from "$lib/assets/icons/Search.svelte";
@@ -44,78 +46,13 @@
 	const dispatch = createEventDispatcher();
 	const foodPreferenceContext = getFoodPreferenceContext();
 
-	const mergeResults = (...resultGroups: FdcFood[][]) => {
-		const seen = new Set<number>();
-		const seenBarcodes = new Set<string>();
-		return resultGroups.flat().filter((food) => {
-			if (seen.has(food.fdcId)) return false;
-			const barcode = food.barcode ?? food.gtinUpc;
-			if (barcode && seenBarcodes.has(barcode)) return false;
-			seen.add(food.fdcId);
-			if (barcode) seenBarcodes.add(barcode);
-			return true;
-		});
-	};
-
-	const sortByQualityThenName = (items: FdcFood[]) => {
-		return items.sort((a, b) => {
-			const preferencePenalty =
-				getFoodDownrankScore(a, foodPreferenceContext.current) -
-				getFoodDownrankScore(b, foodPreferenceContext.current);
-			if (preferencePenalty !== 0) return preferencePenalty;
-			const qualitySort = compareFoodQuality(a, b);
-			if (qualitySort !== 0) return qualitySort;
-			return a.description.localeCompare(b.description);
-		});
-	};
-
-	const sortedResults = $derived(() => {
-		const allTerms = query.trim()
-			.toLowerCase()
-			.split(/\s+/)
-			.filter(Boolean);
-		if (allTerms.length === 0)
-			return sortByQualityThenName([...results]);
-		if (allTerms.length === 1) {
-			const startsWith: FdcFood[] = [];
-			const contains: FdcFood[] = [];
-			const rest: FdcFood[] = [];
-			for (const food of results) {
-				const desc = food.description.toLowerCase();
-				if (desc.startsWith(allTerms[0])) {
-					startsWith.push(food);
-				} else if (desc.includes(allTerms[0])) {
-					contains.push(food);
-				} else {
-					rest.push(food);
-				}
-			}
-			sortByQualityThenName(startsWith);
-			sortByQualityThenName(contains);
-			sortByQualityThenName(rest);
-			return [...startsWith, ...contains, ...rest];
-		}
-		const allParts: FdcFood[] = [];
-		const firstPart: FdcFood[] = [];
-		const rest: FdcFood[] = [];
-		for (const food of results) {
-			const desc = food.description.toLowerCase();
-			const containsAll = allTerms.every((p) => desc.includes(p));
-			if (containsAll) {
-				if (desc.startsWith(allTerms[0])) {
-					firstPart.push(food);
-				} else {
-					allParts.push(food);
-				}
-			} else {
-				rest.push(food);
-			}
-		}
-		sortByQualityThenName(firstPart);
-		sortByQualityThenName(allParts);
-		sortByQualityThenName(rest);
-		return [...firstPart, ...allParts, ...rest];
-	});
+	const sortedResults = $derived(() =>
+		sortIngredientSearchResults(
+			results,
+			query,
+			foodPreferenceContext.current,
+		),
+	);
 
 	const triggerSearch = () => {
 		if (!browser || !searchReady) return;
@@ -141,7 +78,11 @@
 				const apiResults = apiSearch.status === "fulfilled"
 					? apiSearch.value
 					: [];
-				results = mergeResults(customResults, sharedResults, apiResults);
+					results = mergeIngredientSearchResults(
+						customResults,
+						sharedResults,
+						apiResults,
+					);
 				activeResultIndex = -1;
 				dispatch("results", { results, query: searchString });
 
@@ -257,7 +198,10 @@
 		const refreshCustomResults = () => {
 			const searchString = query.trim();
 			if (!searchString) return;
-			results = mergeResults(searchCustomFoods(searchString), results);
+				results = mergeIngredientSearchResults(
+					searchCustomFoods(searchString),
+					results,
+				);
 		};
 
 		window.addEventListener(CUSTOM_FOODS_CHANGED_EVENT, refreshCustomResults);
