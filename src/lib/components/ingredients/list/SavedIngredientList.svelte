@@ -4,13 +4,16 @@
 	import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 	import {
 		getFoodDisplayCategory,
-		getFoodSourceLabel,
 		getIngredientActionKey,
 		getIngredientListLabel,
 		getIngredientMoveLabel,
 		getOppositeIngredientListKey,
 		getPrimaryFoodWarning,
 	} from "$lib/utils/ingredients/ingredientListUi";
+	import {
+		getIngredientSourceBadgeLabel,
+		type IngredientSourceOption,
+	} from "$lib/utils/ingredients/ingredientSourceOptions";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import { LIST_REVEAL_BUFFER_PX } from "../../../../defaults/listDefaults";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
@@ -21,6 +24,7 @@
 	let {
 		activeList,
 		foods,
+		sourceOptions = [],
 		activeRawCount = 0,
 		listLoading = false,
 		loadingMoreList = null,
@@ -44,6 +48,7 @@
 	}: {
 		activeList: SmoothieListKey;
 		foods: FdcFood[];
+		sourceOptions?: IngredientSourceOption[];
 		activeRawCount?: number;
 		listLoading?: boolean;
 		loadingMoreList?: SmoothieListKey | null;
@@ -179,7 +184,7 @@
 								moveLabel={getIngredientMoveLabel(activeList)}
 								category={getFoodDisplayCategory(food)}
 								{warning}
-								sourceLabel={getFoodSourceLabel(food)}
+								sourceLabel={getIngredientSourceBadgeLabel(food, sourceOptions)}
 								onToggle={() => onToggle(food.fdcId)}
 								onPreview={() => onPreview(food)}
 								onMove={() => onMoveItem(food)}

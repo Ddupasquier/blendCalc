@@ -1,4 +1,5 @@
 <script lang="ts">
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
 	import BarcodeAutofillSuggestion from "$lib/components/ingredients/manual-entry/BarcodeAutofillSuggestion.svelte";
 
 	let {
@@ -163,13 +164,7 @@
 		{/if}
 	</label>
 
-	<button
-		type="button"
-		class="custom-ingredient__primary"
-		disabled={checkingBarcodeReference}
-		aria-busy={checkingBarcodeReference}
-		onclick={onNext}
-	>
+	<RoundedActionButton fullWidth busy={checkingBarcodeReference} onclick={onNext}>
 		{checkingBarcodeReference ? "Checking…" : "Continue"}
-	</button>
+	</RoundedActionButton>
 </div>

@@ -1,14 +1,7 @@
 <script lang="ts">
+	import PillButton from "$lib/components/common/buttons/PillButton.svelte";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
-	import type { FdcFood } from "$lib/utils/food/types";
-	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
-
-	export type CustomIngredientOutcomeState = {
-		food: FdcFood;
-		destination: SmoothieListKey | "custom-only";
-		addedToList: boolean;
-		message: string;
-	};
+	import type { CustomIngredientOutcomeState } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
 		outcome,
@@ -39,33 +32,26 @@
 	<div class="custom-ingredient-outcome__actions">
 		<a href="/mix">Open Mix</a>
 		{#if outcome.addedToList && outcome.destination === MIX_STORAGE_KEYS.fridge}
-			<button
-				type="button"
-				class="secondary-action"
+			<PillButton
+				variant="neutral"
 				onclick={onMoveToShopping}
 				disabled={action !== null}
 			>
 				{action === "move" ? "Moving…" : "Move to Shopping"}
-			</button>
+			</PillButton>
 		{:else if outcome.addedToList && outcome.destination === MIX_STORAGE_KEYS.shoppingList}
-			<button
-				type="button"
-				class="secondary-action"
+			<PillButton
+				variant="neutral"
 				onclick={onMoveToFridge}
 				disabled={action !== null}
 			>
 				{action === "move" ? "Moving…" : "Move to Fridge"}
-			</button>
+			</PillButton>
 		{/if}
 		{#if outcome.addedToList}
-			<button
-				type="button"
-				class="secondary-action"
-				onclick={onUndo}
-				disabled={action !== null}
-			>
+			<PillButton variant="neutral" onclick={onUndo} disabled={action !== null}>
 				{action === "undo" ? "Undoing…" : "Undo"}
-			</button>
+			</PillButton>
 		{/if}
 	</div>
 </section>
@@ -106,8 +92,7 @@
 		flex-wrap: wrap;
 		gap: $app-gap-xs;
 
-		a,
-		button {
+		a {
 			width: fit-content;
 			min-height: 2.15rem;
 			padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x-compact;
@@ -125,18 +110,12 @@
 		}
 	}
 
-	.secondary-action {
-		color: $app-primary;
-		background: $app-accent;
-	}
-
 	@media (max-width: $app-breakpoint-sm) {
 		.custom-ingredient-outcome__actions {
 			display: grid;
 			grid-template-columns: 1fr;
 
-			a,
-			button {
+			a {
 				width: 100%;
 				text-align: center;
 			}

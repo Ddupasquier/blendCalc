@@ -1,12 +1,11 @@
 <script lang="ts">
 	import Plus from "$lib/assets/icons/Plus.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+	import type { IngredientsFloatingAddButtonProps } from "$lib/components/ingredients/page/types";
 
 	let {
 		onClick,
-	}: {
-		onClick: () => void;
-	} = $props();
+	}: IngredientsFloatingAddButtonProps = $props();
 </script>
 
 <div class="add-ingredient-fab">

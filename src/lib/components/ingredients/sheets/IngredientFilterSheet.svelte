@@ -1,16 +1,8 @@
 <script lang="ts">
 	import ActionButton from "$lib/components/common/buttons/ActionButton.svelte";
+	import PillButton from "$lib/components/common/buttons/PillButton.svelte";
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet.svelte";
-
-	type ListFilterOption = {
-		value: string;
-		label: string;
-	};
-
-	type SortOption = {
-		value: string;
-		label: string;
-	};
+	import type { IngredientFilterSheetProps } from "$lib/components/ingredients/sheets/types";
 
 	let {
 		open,
@@ -22,21 +14,7 @@
 		loading = false,
 		onApply,
 		onClose,
-	}: {
-		open: boolean;
-		query: string;
-		filterValue: string;
-		filterOptions: ListFilterOption[];
-		sortValue: string;
-		sortOptions: readonly SortOption[];
-		loading?: boolean;
-		onApply: (filters: {
-			query: string;
-			filterValue: string;
-			sortValue: string;
-		}) => void;
-		onClose: () => void;
-	} = $props();
+	}: IngredientFilterSheetProps = $props();
 
 	let draftFilterValue = $state("");
 	let draftSortValue = $state("");
@@ -72,15 +50,13 @@
 			<h3 id="filter-source-heading">Source</h3>
 			<div class="ingredient-filter-sheet__chips" role="group" aria-labelledby="filter-source-heading">
 				{#each filterOptions as option (option.value)}
-					<button
-						class="filter-chip"
-						class:filter-chip--active={draftFilterValue === option.value}
-						type="button"
-						aria-pressed={draftFilterValue === option.value}
+					<PillButton
+						variant={draftFilterValue === option.value ? "primary" : "neutral"}
+						pressed={draftFilterValue === option.value}
 						onclick={() => (draftFilterValue = option.value)}
 					>
 						{option.label}
-					</button>
+					</PillButton>
 				{/each}
 			</div>
 		</section>
@@ -89,15 +65,13 @@
 			<h3 id="filter-sort-heading">Sort</h3>
 			<div class="ingredient-filter-sheet__chips" role="group" aria-labelledby="filter-sort-heading">
 				{#each visibleSortOptions as option (option.value)}
-					<button
-						class="filter-chip"
-						class:filter-chip--active={draftSortValue === option.value}
-						type="button"
-						aria-pressed={draftSortValue === option.value}
+					<PillButton
+						variant={draftSortValue === option.value ? "primary" : "neutral"}
+						pressed={draftSortValue === option.value}
 						onclick={() => (draftSortValue = option.value)}
 					>
 						{option.label}
-					</button>
+					</PillButton>
 				{/each}
 			</div>
 		</section>
@@ -141,29 +115,6 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: $app-horizontal-control-gap;
-	}
-
-	.filter-chip {
-		min-height: $ingredient-control-height-compact;
-		padding: 0 $app-gap-md;
-		color: $ingredient-text-primary;
-		background: $ingredient-surface-soft;
-		border: 0;
-		border-radius: $ingredient-radius-pill;
-		font: inherit;
-		font-size: $app-font-size-base;
-		font-weight: $app-font-weight-bold;
-		line-height: 1;
-	}
-
-	.filter-chip--active {
-		color: $ingredient-surface-card;
-		background: $ingredient-accent-primary;
-	}
-
-	.filter-chip:focus-visible {
-		outline: $app-focus-outline;
-		outline-offset: $app-focus-outline-offset;
 	}
 
 	.ingredient-filter-sheet__status {

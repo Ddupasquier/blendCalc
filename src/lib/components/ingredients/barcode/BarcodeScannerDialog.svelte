@@ -182,7 +182,7 @@
 		background: color-mix(in srgb, $ingredient-surface-card 10%, transparent);
 		border: 0;
 		border-radius: $ingredient-radius-pill;
-		font-size: 1.45rem;
+		font-size: $ingredient-scanner-dialog-title-font-size;
 		line-height: 1;
 	}
 
@@ -202,7 +202,7 @@
 			display: block;
 			width: 100%;
 			height: 100%;
-			min-height: calc(100vh - 8rem);
+			min-height: $ingredient-scanner-camera-min-height;
 			object-fit: cover;
 		}
 	}
@@ -246,7 +246,7 @@
 	}
 
 	.barcode-scanner__status {
-		padding: 0.55rem 0.85rem;
+		padding: $ingredient-scanner-status-padding-y $ingredient-scanner-status-padding-x;
 		color: $ingredient-accent-primary !important;
 		background: rgba($ingredient-surface-card, 0.08);
 		border-radius: $ingredient-radius-pill;

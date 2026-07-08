@@ -1,10 +1,6 @@
 <script lang="ts">
 	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
-
-	export type ManualEntryValidationItem = {
-		message: string;
-		tone: "error" | "warning";
-	};
+	import type { ManualEntryValidationItem } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
 		items,

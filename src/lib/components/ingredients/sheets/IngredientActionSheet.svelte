@@ -3,6 +3,7 @@
 	import Trash from "$lib/assets/icons/Trash.svelte";
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet.svelte";
 	import BottomSheetAction from "$lib/components/common/sheets/BottomSheetAction.svelte";
+	import type { IngredientActionSheetProps } from "$lib/components/ingredients/sheets/types";
 
 	let {
 		open,
@@ -12,15 +13,7 @@
 		onClose,
 		onRename,
 		onRemove,
-	}: {
-		open: boolean;
-		title: string;
-		removeLabel: string;
-		removing?: boolean;
-		onClose: () => void;
-		onRename: () => void;
-		onRemove: () => void;
-	} = $props();
+	}: IngredientActionSheetProps = $props();
 </script>
 
 <BottomSheet

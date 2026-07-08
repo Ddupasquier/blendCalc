@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ArrowLeft from "$lib/assets/icons/ArrowLeft.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+	import type { BackButtonProps } from "./types";
 
 	let {
 		label = "Back",
@@ -8,13 +9,7 @@
 		size = "small",
 		class: className = "",
 		onclick,
-	}: {
-		label?: string;
-		variant?: "primary" | "soft" | "ghost";
-		size?: "tiny" | "small" | "control" | "fab";
-		class?: string;
-		onclick?: (event: MouseEvent) => void;
-	} = $props();
+	}: BackButtonProps = $props();
 </script>
 
 <CircleIconButton

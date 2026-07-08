@@ -1,4 +1,6 @@
 <script lang="ts">
+	import PillButton from "$lib/components/common/buttons/PillButton.svelte";
+
 	let {
 		selectedCount,
 		moveTargetLabel,
@@ -18,20 +20,14 @@
 
 <div class="ingredient-bulk-actions" class:ingredient-bulk-actions--active={selectedCount > 0}>
 	{#if selectedCount > 0}
-		<button type="button" disabled={moving} onclick={onClear}>Uncheck all</button>
-		<button
-			class="ingredient-bulk-actions__move"
-			type="button"
-			aria-busy={moving}
-			onclick={onMove}
-			disabled={moving}
-		>
+		<PillButton disabled={moving} onclick={onClear}>Uncheck all</PillButton>
+		<PillButton variant="primary" busy={moving} onclick={onMove}>
 			{moving
 				? "Moving…"
 				: `Move ${selectedCount} checked → ${moveTargetLabel}`}
-		</button>
+		</PillButton>
 	{:else}
-		<button type="button" disabled={moving} onclick={onSelectAll}>Check all</button>
+		<PillButton disabled={moving} onclick={onSelectAll}>Check all</PillButton>
 	{/if}
 </div>
 
@@ -47,32 +43,8 @@
 		min-height: 0;
 	}
 
-	button {
-		min-height: $ingredient-control-height-compact;
-		padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x-compact;
-		color: $ingredient-text-primary;
-		background: $ingredient-surface-card;
-		border: 1px solid $ingredient-border-subtle;
-		border-radius: $ingredient-radius-pill;
-		font-family: $app-button-font-family;
-		font-size: $app-font-size-sm;
-		font-weight: $app-button-font-weight;
-		line-height: $app-button-line-height;
-	}
-
-	.ingredient-bulk-actions__move {
-		color: $ingredient-surface-card;
-		background: $ingredient-accent-primary;
-		border-color: transparent;
-	}
-
-	button:disabled {
-		cursor: not-allowed;
-		opacity: 0.55;
-	}
-
 	@media (max-width: $app-breakpoint-xs) {
-		.ingredient-bulk-actions__move {
+		.ingredient-bulk-actions :global(.pill-button[data-variant="primary"]) {
 			width: 100%;
 		}
 	}

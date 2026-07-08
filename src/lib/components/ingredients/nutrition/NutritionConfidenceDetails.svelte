@@ -133,8 +133,8 @@
 	.confidence-details__indicator {
 		display: grid;
 		place-items: center;
-		width: 1.35rem;
-		height: 1.35rem;
+		width: $ingredient-nutrition-confidence-icon-size;
+		height: $ingredient-nutrition-confidence-icon-size;
 		color: $app-danger-action;
 		background: $ingredient-status-error-bg;
 		border-radius: $app-radius-pill;
@@ -205,7 +205,7 @@
 
 		strong {
 			color: $ingredient-text-primary;
-			font-size: 0.68rem;
+			font-size: $ingredient-nutrition-confidence-tag-font-size;
 			font-weight: $app-font-weight-heavy;
 			letter-spacing: $app-letter-spacing-label;
 			line-height: 1.1;

@@ -1,13 +1,11 @@
 <script lang="ts">
 	import Search from "$lib/assets/icons/Search.svelte";
+	import type { IngredientSearchTriggerProps } from "$lib/components/ingredients/search/types";
 
 	let {
 		label = "Search ingredients...",
 		onOpen,
-	}: {
-		label?: string;
-		onOpen: () => void;
-	} = $props();
+	}: IngredientSearchTriggerProps = $props();
 </script>
 
 <button

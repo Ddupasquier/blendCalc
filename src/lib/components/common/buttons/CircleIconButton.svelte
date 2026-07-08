@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
+	import type { CircleIconButtonProps } from "./types";
 
 	let {
 		type = "button",
@@ -13,19 +13,7 @@
 		onclick,
 		onfocus,
 		children,
-	}: {
-		type?: "button" | "submit" | "reset";
-		label: string;
-		variant?: "primary" | "soft" | "ghost" | "outline";
-		size?: "tiny" | "small" | "control" | "fab";
-		busy?: boolean;
-		disabled?: boolean;
-		pressed?: boolean;
-		class?: string;
-		onclick?: (event: MouseEvent) => void;
-		onfocus?: (event: FocusEvent) => void;
-		children?: Snippet;
-	} = $props();
+	}: CircleIconButtonProps = $props();
 </script>
 
 <button
@@ -83,8 +71,8 @@
 	}
 
 	.circle-icon-button[data-size="tiny"] {
-		width: 1.6rem;
-		height: 1.6rem;
+		width: $app-circle-button-size-tiny;
+		height: $app-circle-button-size-tiny;
 	}
 
 	.circle-icon-button[data-size="small"] {

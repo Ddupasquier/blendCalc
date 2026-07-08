@@ -9,6 +9,10 @@
     import IngredientsFloatingAddButton from "$lib/components/ingredients/page/IngredientsFloatingAddButton.svelte";
     import IngredientsSearchPanel from "$lib/components/ingredients/page/IngredientsSearchPanel.svelte";
     import IngredientRoutePopins from "$lib/components/ingredients/page/IngredientRoutePopins.svelte";
+    import type {
+        IngredientRouteNavigationOptions,
+    } from "$lib/components/ingredients/page/types";
+    import type { IngredientFilterApplyPayload } from "$lib/components/ingredients/sheets/types";
     import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList.svelte";
     import SavedIngredientListLayout from "$lib/components/ingredients/list/SavedIngredientListLayout.svelte";
     import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
@@ -18,10 +22,14 @@
         getIngredientActionKey,
         getIngredientListLabel,
         getOppositeIngredientListKey,
-        INGREDIENT_SOURCE_FILTER_OPTIONS,
         type IngredientListMembership,
         type IngredientActionItem,
     } from "$lib/utils/ingredients/ingredientListUi";
+    import {
+        getIngredientSourceFilterOptions,
+        readIngredientSourceOptions,
+        type IngredientSourceOption,
+    } from "$lib/utils/ingredients/ingredientSourceOptions";
     import {
         buildIngredientRouteHref,
         findIngredientRouteFood,
@@ -32,10 +40,9 @@
     } from "$lib/utils/ingredients/ingredientRouteState";
     import {
         FOOD_LIST_SORT_OPTIONS,
-        filterItemsByQuery,
-        sortFoodListItems,
         type FoodListSort,
     } from "$lib/utils/list/listNavigation";
+    import { readLocalIngredientListPage } from "$lib/utils/ingredients/ingredientListFiltering";
     import {
         cacheCustomFoodsLocally,
         readCustomFoods,
@@ -75,6 +82,8 @@
     let shoppingListTotalCount = $state(0);
     let listLoading = $state(true);
     let listLoadingError = $state("");
+    let sourceOptions = $state<IngredientSourceOption[]>([]);
+    let sourceOptionsError = $state("");
     let listLoadRequestId = 0;
     let loadingMoreList = $state<SmoothieListKey | null>(null);
     let listViewResetKey = $state(0);
@@ -94,7 +103,7 @@
 
     const navigateIngredientRoute = (
         patch: IngredientRoutePatch,
-        { replaceState = false }: { replaceState?: boolean } = {},
+        { replaceState = false }: IngredientRouteNavigationOptions = {},
     ) => {
         const href = buildIngredientRouteHref(page.url, patch);
         const currentHref = `${page.url.pathname}${page.url.search}${page.url.hash}`;
@@ -118,30 +127,11 @@
             { replaceState },
         );
 
-    const filterFoods = (foods: FdcFood[]) => {
-        const filteredFoods = filterItemsByQuery(
-            foods.filter((food) => {
-                if (sourceFilter === "custom") return food.customFood === true;
-                if (sourceFilter === "fdc") return food.customFood !== true;
-                return true;
-            }),
-            listQuery,
-            (food) =>
-                [food.description, food.brandOwner, food.foodCategory]
-                    .filter(Boolean)
-                    .join(" "),
-        );
-
-        return sortFoodListItems(
-            filteredFoods,
-            listSort,
-            (food) => food.description,
-            (food) => food.listAddedAt,
-        );
-    };
-
     const filteredOnHand = $derived(onHand);
     const filteredShoppingList = $derived(shoppingList);
+    const sourceFilterOptions = $derived(
+        getIngredientSourceFilterOptions(sourceOptions),
+    );
     const activeFilteredList = $derived.by(() =>
         activeList === MIX_STORAGE_KEYS.fridge
             ? filteredOnHand
@@ -188,18 +178,6 @@
             activeRawList.length < activeTotalCount,
     );
 
-    const readLocalListPage = (
-        key: SmoothieListKey,
-        offset: number,
-        limit: number,
-    ) => {
-        const foods = filterFoods(readSmoothieList(key));
-        return {
-            foods: foods.slice(offset, offset + limit),
-            totalCount: foods.length,
-        };
-    };
-
     const setListPage = (
         key: SmoothieListKey,
         foods: FdcFood[],
@@ -241,7 +219,12 @@
             sourceFilter,
         });
         const page =
-            cloudPage ?? readLocalListPage(key, currentOffset, pageSize);
+            cloudPage ??
+            readLocalIngredientListPage(key, currentOffset, pageSize, {
+                query: listQuery,
+                sourceFilter,
+                sort: listSort,
+            });
 
         if (requestId !== listLoadRequestId) return;
         setListPage(key, page.foods, page.totalCount, reset);
@@ -271,6 +254,18 @@
                 listLoading = false;
             }
         }
+    };
+
+    const loadSourceOptions = async () => {
+        const options = await readIngredientSourceOptions();
+        if (!options?.length) {
+            sourceOptions = [];
+            sourceOptionsError =
+                "Ingredient source filters could not load. Try again after refreshing.";
+            return;
+        }
+        sourceOptions = options;
+        sourceOptionsError = "";
     };
 
     const getRouteFood = () =>
@@ -649,11 +644,7 @@
         query,
         filterValue,
         sortValue,
-    }: {
-        query: string;
-        filterValue: string;
-        sortValue: string;
-    }) => {
+    }: IngredientFilterApplyPayload) => {
         const nextSort = sortValue as FoodListSort;
         const unchanged =
             listQuery === query &&
@@ -756,6 +747,7 @@
 
     onMount(() => {
         resetVisibleCounts();
+        void loadSourceOptions();
         loadLists();
         window.addEventListener("storage", loadLists);
         window.addEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, loadLists);
@@ -793,12 +785,13 @@
             shoppingListCount={shoppingListTotalCount}
             {listLoading}
             {listActionError}
-            {listLoadingError}
+            listLoadingError={listLoadingError || sourceOptionsError}
             onSelectList={selectList}
         >
             <SavedIngredientList
                 {activeList}
                 foods={activeVisibleList}
+                {sourceOptions}
                 activeRawCount={activeRawList.length}
                 {listLoading}
                 {loadingMoreList}
@@ -830,7 +823,7 @@
     {activeSheet}
     {actionSheetItem}
     {barcodeLookupBusy}
-    filterOptions={INGREDIENT_SOURCE_FILTER_OPTIONS}
+    filterOptions={sourceFilterOptions}
     filterValue={sourceFilter}
     {listLoading}
     listMembership={selectedFoodListMembership}
@@ -843,6 +836,7 @@
     {scanSignal}
     {searchAddFoodId}
     {searchViewOpen}
+    {sourceOptions}
     {selectedFood}
     {selectedFoodShowListActions}
     sortOptions={FOOD_LIST_SORT_OPTIONS}

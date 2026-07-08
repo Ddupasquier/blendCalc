@@ -1,17 +1,17 @@
 <script lang="ts">
-	type Step = {
-		id: string;
-		label: string;
-	};
+	import type {
+		ManualEntryStep,
+		ManualEntryStepId,
+	} from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
 		steps,
 		activeStep,
 		onSelect,
 	}: {
-		steps: Step[];
-		activeStep: string;
-		onSelect: (step: string) => void;
+		steps: ManualEntryStep[];
+		activeStep: ManualEntryStepId;
+		onSelect: (step: ManualEntryStepId) => void;
 	} = $props();
 
 	const activeIndex = $derived(

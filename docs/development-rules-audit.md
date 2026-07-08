@@ -4,6 +4,24 @@ Date: 2026-06-15
 Branch: `audit-development-rules`  
 Baseline: `main` after merging `compact-ingredient-scan-ui`
 
+## Navigation
+
+Markdown cannot provide a true sticky sidebar in every editor, so this document
+uses a clickable navigation block instead.
+
+- [Development Rules](#development-rules)
+- [Core Engineering Rules](#rule-best-practices)
+- [Design Tokens And Spacing](#rule-design-tokens)
+- [Reusable Components And Buttons](#rule-reusable-components)
+- [Component And Route Boundaries](#rule-component-boundaries)
+- [Manual Entry Modularization](#rule-manual-entry-modularization)
+- [Database And API-Driven Data](#rule-no-hardcoded-reference-data)
+- [Backend And Validation](#rule-backend-best-practices)
+- [Sheets, Views, And URL State](#rule-bottom-sheet-flows)
+- [QA Process](#rule-qa-process)
+- [Audit Summary](#audit-summary)
+- [Findings](#findings)
+
 ## Development Rules
 
 These are the working rules gathered from prior product and implementation decisions.
@@ -40,6 +58,7 @@ These are the working rules gathered from prior product and implementation decis
 16b. <a id="rule-route-page-boundaries"></a>Route pages should not own reusable visual sections, sheet collections, dense card markup, or specialized display widgets. Keep route files focused on route state, data loading, and high-level orchestration; move feature chrome, pop-ins, repeated card pieces, search result sorting, and nutrition-label rendering into named components or utilities.
 16c. <a id="rule-refactor-findings"></a>When refactoring exposes a repeatable process or architecture issue, add it to these development rules instead of fixing only the current file. Do not create duplicate rule sets elsewhere; update this source of truth and link QA items back here.
 16d. <a id="rule-style-file-boundaries"></a>Keep small component styles local, but move large or noisy component/page styles into paired SCSS files when they make the Svelte file hard to scan. Use clear tandem naming such as `Component.svelte` plus `styles/component.scss`, keep style files near the component domain, and continue using shared SCSS variables for spacing, colors, radii, and typography.
+16e. <a id="rule-type-file-boundaries"></a>Keep reusable and feature-specific TypeScript types out of Svelte component and route files. Components and pages should import named types from nearby `types.ts`, `formTypes.ts`, or domain utility files instead of declaring local `type` or `interface` blocks. Tiny one-use prop literals are acceptable only when they are simpler than a named type, but repeated option shapes, handler contracts, state shapes, sheet props, and route data contracts must be centralized.
 17. Use the branch gate. Every new feature, major addition, and big change gets its own branch from `staging`, merges into `staging` first, and only moves from `staging` to `main` after the staging preview is approved.
 18. Treat bypassing staging as a process problem. If a change is headed to `main` without going through `staging`, stop and call that out before merging.
 19. Do not automatically add changes to `staging`. Work should stay on the active feature branch or working tree until explicitly approved for staging.

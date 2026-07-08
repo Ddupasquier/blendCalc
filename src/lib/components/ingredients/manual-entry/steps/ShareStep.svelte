@@ -1,20 +1,16 @@
 <script lang="ts">
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch.svelte";
-	import CustomIngredientOutcome, {
-		type CustomIngredientOutcomeState,
-	} from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
-	import ManualEntryValidationList, {
-		type ManualEntryValidationItem,
-	} from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
+	import CustomIngredientOutcome from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
+	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
+	import type {
+		CustomIngredientOutcomeState,
+		ManualEntrySummaryItem,
+		ManualEntryValidationItem,
+	} from "$lib/components/ingredients/manual-entry/formTypes";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import { MIX_STORAGE_KEYS } from "../../../../../defaults/mixDefaults";
-
-	type SummaryNutrient = {
-		label: string;
-		value: number;
-		unitName: string;
-	};
 
 	let {
 		normalizedName,
@@ -51,7 +47,7 @@
 	}: {
 		normalizedName: string;
 		activeCategory: string;
-		summaryNutrients: SummaryNutrient[];
+		summaryNutrients: ManualEntrySummaryItem[];
 		optionalNutrientCount: number;
 		validationItems: ManualEntryValidationItem[];
 		barcodeMessage: string;
@@ -224,16 +220,11 @@
 	{/if}
 
 	<div class="custom-ingredient__actions">
-		<button type="button" class="custom-ingredient__secondary" onclick={onBack}>
+		<RoundedActionButton variant="neutral" onclick={onBack}>
 			Back
-		</button>
-		<button
-			type="button"
-			class="custom-ingredient__primary"
-			onclick={onSubmit}
-			disabled={saving}
-		>
+		</RoundedActionButton>
+		<RoundedActionButton onclick={onSubmit} disabled={saving}>
 			{saving ? "Saving…" : "Add Ingredient"}
-		</button>
+		</RoundedActionButton>
 	</div>
 </div>

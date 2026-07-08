@@ -1,17 +1,14 @@
 <script lang="ts">
+	import PillButton from "$lib/components/common/buttons/PillButton.svelte";
+	import type { BarcodeAutofillSuggestionProps } from "$lib/components/ingredients/manual-entry/formTypes";
+
 	let {
 		name,
 		brandOwner,
 		sourceLabel,
 		onApply,
 		onKeepManual,
-	}: {
-		name: string;
-		brandOwner?: string;
-		sourceLabel: string;
-		onApply: () => void;
-		onKeepManual: () => void;
-	} = $props();
+	}: BarcodeAutofillSuggestionProps = $props();
 </script>
 
 <div class="barcode-suggestion" role="status">
@@ -25,20 +22,12 @@
 		</span>
 	</div>
 	<div class="barcode-suggestion__actions">
-		<button
-			type="button"
-			class="barcode-suggestion__action barcode-suggestion__action--primary"
-			onclick={onApply}
-		>
+		<PillButton variant="primary" onclick={onApply}>
 			Autofill
-		</button>
-		<button
-			type="button"
-			class="barcode-suggestion__action"
-			onclick={onKeepManual}
-		>
+		</PillButton>
+		<PillButton onclick={onKeepManual}>
 			Keep mine
-		</button>
+		</PillButton>
 	</div>
 </div>
 
@@ -75,22 +64,5 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: $app-gap-xs;
-	}
-
-	.barcode-suggestion__action {
-		min-height: $ingredient-control-height-compact;
-		padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x;
-		border: 0;
-		border-radius: $ingredient-radius-pill;
-		background: $ingredient-surface-control;
-		color: $ingredient-text-primary;
-		font: inherit;
-		font-weight: $app-font-weight-bold;
-		cursor: pointer;
-	}
-
-	.barcode-suggestion__action--primary {
-		background: $ingredient-accent-primary;
-		color: $app-btn-text;
 	}
 </style>

@@ -198,18 +198,6 @@
 	cursor: pointer;
 }
 
-.custom-ingredient__add-serving {
-	min-height: $ingredient-control-height;
-	color: $ingredient-accent-primary;
-	background: transparent;
-	border: 0.12rem dashed color-mix(in srgb, $ingredient-accent-primary 45%, white);
-	border-radius: $ingredient-radius-card;
-	font-family: $app-button-font-family;
-	font-size: $app-font-size-lg;
-	font-weight: $app-button-font-weight;
-	cursor: pointer;
-}
-
 .custom-ingredient__macro-row {
 	display: grid;
 	grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -308,34 +296,6 @@
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: $app-horizontal-control-gap;
 	margin-top: $app-gap-sm;
-}
-
-.custom-ingredient__primary,
-.custom-ingredient__secondary {
-	min-height: $ingredient-control-height;
-	border-radius: $ingredient-radius-card;
-	font-family: $app-button-font-family;
-	font-size: $app-font-size-md;
-	font-weight: $app-button-font-weight;
-	cursor: pointer;
-}
-
-.custom-ingredient__primary {
-	color: $ingredient-surface-card;
-	background: $ingredient-accent-primary;
-	border: 1px solid $ingredient-accent-primary;
-}
-
-.custom-ingredient__secondary {
-	color: $ingredient-text-primary;
-	background: $ingredient-surface-card;
-	border: 1px solid $ingredient-border-subtle;
-}
-
-.custom-ingredient__primary:disabled,
-.custom-ingredient__secondary:disabled {
-	cursor: not-allowed;
-	opacity: 0.6;
 }
 
 @media (max-width: $app-breakpoint-xs) {

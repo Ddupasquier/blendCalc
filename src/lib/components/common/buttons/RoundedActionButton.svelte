@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
+	import type { RoundedActionButtonProps } from "$lib/components/common/buttons/types";
 
 	let {
 		type = "button",
@@ -10,16 +10,7 @@
 		ariaLabel,
 		onclick,
 		children,
-	}: {
-		type?: "button" | "submit" | "reset";
-		variant?: "primary" | "outline" | "quiet" | "soft";
-		fullWidth?: boolean;
-		busy?: boolean;
-		disabled?: boolean;
-		ariaLabel?: string;
-		onclick?: (event: MouseEvent) => void;
-		children?: Snippet;
-	} = $props();
+	}: RoundedActionButtonProps = $props();
 </script>
 
 <button
@@ -120,5 +111,18 @@
 		color: $ingredient-accent-primary;
 		background: $ingredient-surface-positive;
 		border-color: $ingredient-surface-positive;
+	}
+
+	.rounded-action-button[data-variant="neutral"] {
+		color: $ingredient-text-primary;
+		background: $ingredient-surface-card;
+		border-color: $ingredient-border-subtle;
+	}
+
+	.rounded-action-button[data-variant="dashed"] {
+		color: $ingredient-accent-primary;
+		background: transparent;
+		border-style: dashed;
+		border-color: color-mix(in srgb, $ingredient-accent-primary 45%, white);
 	}
 </style>

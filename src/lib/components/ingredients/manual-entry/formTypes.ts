@@ -1,5 +1,7 @@
-import type { ManualEntryValidationItem } from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
+import type { ServingMeasureUnit } from "../../../../defaults/servingMeasureDefaults";
+import type { FdcFood } from "$lib/utils/food/types";
 import type { ManualEntryNutrientGroupsByStep } from "$lib/utils/food/nutrients/nutrientDefinitions";
+import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 
 export type ManualEntryStepId =
 	| "identity"
@@ -9,6 +11,11 @@ export type ManualEntryStepId =
 	| "share";
 
 export type NutrientValueState = Record<number, number>;
+
+export type ManualEntryValidationItem = {
+	message: string;
+	tone: "error" | "warning";
+};
 
 export type StepValidationItem = ManualEntryValidationItem & {
 	step: ManualEntryStepId;
@@ -21,9 +28,35 @@ export type ManualEntrySummaryItem = {
 	unitName: string;
 };
 
+export type ManualEntryBarcodeSuggestion = {
+	name: string;
+	brandOwner: string;
+	sourceLabel: string;
+} | null;
+
+export type BarcodeAutofillSuggestionProps = {
+	name: string;
+	brandOwner?: string;
+	sourceLabel: string;
+	onApply: () => void;
+	onKeepManual: () => void;
+};
+
 export type ManualEntryStep = {
 	id: ManualEntryStepId;
 	label: string;
+};
+
+export type ManualEntryVolumeOption = {
+	value: ServingMeasureUnit;
+	label: string;
+};
+
+export type CustomIngredientOutcomeState = {
+	food: FdcFood;
+	destination: SmoothieListKey | "custom-only";
+	addedToList: boolean;
+	message: string;
 };
 
 export const manualEntrySteps: ManualEntryStep[] = [

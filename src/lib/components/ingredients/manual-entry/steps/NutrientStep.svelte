@@ -1,7 +1,7 @@
 <script lang="ts">
-	import ManualEntryValidationList, {
-		type ManualEntryValidationItem,
-	} from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
+	import type { ManualEntryValidationItem } from "$lib/components/ingredients/manual-entry/formTypes";
 	import ManualEntryNutrientFields from "$lib/components/ingredients/manual-entry/ManualEntryNutrientFields.svelte";
 	import type {
 		ManualEntryNutrientDefinition,
@@ -58,11 +58,11 @@
 	{/if}
 
 	<div class="custom-ingredient__actions">
-		<button type="button" class="custom-ingredient__secondary" onclick={onBack}>
+		<RoundedActionButton variant="neutral" onclick={onBack}>
 			Back
-		</button>
-		<button type="button" class="custom-ingredient__primary" onclick={onNext}>
+		</RoundedActionButton>
+		<RoundedActionButton onclick={onNext}>
 			Continue
-		</button>
+		</RoundedActionButton>
 	</div>
 </div>

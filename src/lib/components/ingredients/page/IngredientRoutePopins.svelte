@@ -6,20 +6,8 @@
 	import ManualEntrySheet from "$lib/components/ingredients/sheets/ManualEntrySheet.svelte";
 	import IngredientSearchView from "$lib/components/ingredients/search/IngredientSearchView.svelte";
 	import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView.svelte";
-	import type { ManualEntryCreateContext } from "$lib/components/ingredients/manual-entry/types";
-	import type { FdcFood } from "$lib/utils/food/types";
-	import {
-		getIngredientListLabel,
-		type IngredientActionItem,
-		type IngredientListMembership,
-	} from "$lib/utils/ingredients/ingredientListUi";
-	import type { FoodListSort } from "$lib/utils/list/listNavigation";
-	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
-
-	type ActiveSheet = "manual-entry" | "filters" | null;
-	type RenameItem = { key: SmoothieListKey; food: FdcFood } | null;
-	type FilterOption = { label: string; value: string };
-	type SortOption = { label: string; value: FoodListSort | string };
+	import { getIngredientListLabel } from "$lib/utils/ingredients/ingredientListUi";
+	import type { IngredientRoutePopinsProps } from "$lib/components/ingredients/page/types";
 
 	let {
 		activeSheet,
@@ -38,6 +26,7 @@
 		scanSignal,
 		searchAddFoodId,
 		searchViewOpen,
+		sourceOptions,
 		selectedFood,
 		selectedFoodShowListActions,
 		sortOptions,
@@ -57,50 +46,7 @@
 		onRenameValueChange,
 		onScan,
 		onSearchSelect,
-	}: {
-		activeSheet: ActiveSheet;
-		actionSheetItem: IngredientActionItem | null;
-		barcodeLookupBusy: boolean;
-		filterOptions: readonly FilterOption[];
-		filterValue: string;
-		listLoading: boolean;
-		listMembership: IngredientListMembership;
-		listQuery: string;
-		listSort: FoodListSort;
-		removingItem: string | null;
-		renameBusy: boolean;
-		renameError: string;
-		renamingItem: RenameItem;
-		scanSignal: number;
-		searchAddFoodId: number | null;
-		searchViewOpen: boolean;
-		selectedFood: FdcFood | null;
-		selectedFoodShowListActions: boolean;
-		sortOptions: readonly SortOption[];
-		onAddSearchResult: (food: FdcFood) => void | Promise<void>;
-		onApplyFilters: (filters: {
-			query: string;
-			filterValue: string;
-			sortValue: string;
-		}) => void;
-		onCloseActionSheet: () => void;
-		onCloseIngredientSheet: () => void;
-		onCloseNutrition: () => void;
-		onCloseRename: () => void;
-		onCloseSearch: () => void;
-		onCreateManualIngredient: (
-			food: FdcFood,
-			context: ManualEntryCreateContext,
-		) => void;
-		onFilterFromSearch: () => void;
-		onLookupStateChange: (busy: boolean) => void;
-		onRemoveFromActionSheet: () => void | Promise<void>;
-		onRenameFromActionSheet: () => void;
-		onRenameListItem: (name: string) => void | Promise<void>;
-		onRenameValueChange: () => void;
-		onScan: () => void;
-		onSearchSelect: (food: FdcFood) => void;
-	} = $props();
+	}: IngredientRoutePopinsProps = $props();
 </script>
 
 <IngredientActionSheet
@@ -160,6 +106,7 @@
 		onSelect={onSearchSelect}
 		onAdd={onAddSearchResult}
 		addingFoodId={searchAddFoodId}
+		{sourceOptions}
 		onScan={onScan}
 		onFilter={onFilterFromSearch}
 		onClose={onCloseSearch}

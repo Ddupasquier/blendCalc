@@ -33,15 +33,15 @@
         border: $app-border;
         border-radius: $app-radius;
         padding: $app-gap-lg;
-        min-width: 320px;
-        max-width: 90vw;
+        min-width: $ingredient-nutrition-move-prompt-min-width;
+        max-width: $ingredient-nutrition-move-prompt-max-width;
         margin: $app-vertical-stack-gap 0;
         display: flex;
         flex-direction: column;
         align-items: center;
 
         .prompt-title {
-            font-size: 1.13em;
+            font-size: $ingredient-nutrition-move-prompt-title-font-size;
             font-weight: 600;
             margin-bottom: $app-vertical-stack-gap;
             color: $app-primary;

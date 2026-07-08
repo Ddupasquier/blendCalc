@@ -1,5 +1,6 @@
 <script lang="ts">
 	import X from "$lib/assets/icons/X.svelte";
+	import type { CloseButtonProps } from "./types";
 
 	let {
 		label = "Close",
@@ -7,13 +8,7 @@
 		disabled = false,
 		onclick,
 		class: className = "",
-	}: {
-		label?: string;
-		size?: "small" | "medium";
-		disabled?: boolean;
-		onclick?: (event: MouseEvent) => void;
-		class?: string;
-	} = $props();
+	}: CloseButtonProps = $props();
 </script>
 
 <button
@@ -37,7 +32,7 @@
 		padding: 0;
 		color: $app-primary;
 		background: $app-accent;
-		border-radius: 50%;
+		border-radius: $app-radius-circle;
 
 		&:focus-visible {
 			outline: $app-focus-outline;
@@ -50,18 +45,18 @@
 		}
 
 		:global(.close-button__icon) {
-			width: 52%;
-			height: 52%;
+			width: $app-close-button-icon-scale;
+			height: $app-close-button-icon-scale;
 		}
 	}
 
 	.close-button--small {
-		width: 1.75rem;
-		height: 1.75rem;
+		width: $app-close-button-size-sm;
+		height: $app-close-button-size-sm;
 	}
 
 	.close-button--medium {
-		width: 2.15rem;
-		height: 2.15rem;
+		width: $app-close-button-size-md;
+		height: $app-close-button-size-md;
 	}
 </style>

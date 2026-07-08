@@ -48,7 +48,7 @@
 		display: grid;
 		justify-items: center;
 		gap: $app-gap-sm;
-		min-height: 42vh;
+		min-height: $ingredient-empty-state-min-height;
 		padding: calc($ingredient-shell-header-height) $app-gap-md;
 		color: $ingredient-text-muted;
 		text-align: center;
@@ -57,11 +57,11 @@
 	span {
 		display: inline-grid;
 		place-items: center;
-		width: 4rem;
-		height: 4rem;
+		width: $ingredient-empty-state-icon-size;
+		height: $ingredient-empty-state-icon-size;
 		background: $ingredient-surface-positive;
 		border-radius: $ingredient-radius-card;
-		font-size: 2rem;
+		font-size: $ingredient-empty-state-icon-font-size;
 	}
 
 	h2 {
@@ -72,7 +72,7 @@
 	}
 
 	p {
-		max-width: 22rem;
+		max-width: $ingredient-empty-state-copy-max-width;
 		line-height: 1.4;
 	}
 </style>

@@ -8,8 +8,9 @@
 		ManualEntryNutrientDefinition,
 		ManualEntryNutrientGroupsByStep,
 	} from "$lib/utils/food/nutrients/nutrientDefinitions";
-	import type { CustomIngredientOutcomeState } from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
 	import type {
+		CustomIngredientOutcomeState,
+		ManualEntryBarcodeSuggestion,
 		ManualEntryStepId,
 		ManualEntrySummaryItem,
 		StepValidationItem,
@@ -18,12 +19,6 @@
 	import NutrientStep from "$lib/components/ingredients/manual-entry/steps/NutrientStep.svelte";
 	import ServingsStep from "$lib/components/ingredients/manual-entry/steps/ServingsStep.svelte";
 	import ShareStep from "$lib/components/ingredients/manual-entry/steps/ShareStep.svelte";
-
-	type BarcodeSuggestion = {
-		name: string;
-		brandOwner: string;
-		sourceLabel: string;
-	} | null;
 
 	let {
 		activeStep,
@@ -113,7 +108,7 @@
 		barcodeMessage: string;
 		barcodeValidationMessage: string;
 		checkingBarcodeReference: boolean;
-		barcodeSuggestion: BarcodeSuggestion;
+		barcodeSuggestion: ManualEntryBarcodeSuggestion;
 		servingLabel: string;
 		resolvedServingLabel: string;
 		servingWeightGrams: number | null;

@@ -2,32 +2,28 @@
     import FoodSymbol from "$lib/assets/icons/FoodSymbol.svelte";
     import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
     import { getFoodQuality } from "$lib/utils/food/quality/foodQuality";
-    import type { FdcFood } from "$lib/utils/food/types";
     import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
     import {
         getFoodDisplayCategory,
-        getFoodSourceLabel,
         getPrimaryFoodWarning,
     } from "$lib/utils/ingredients/ingredientListUi";
+    import {
+        getIngredientSourceBadgeLabel,
+    } from "$lib/utils/ingredients/ingredientSourceOptions";
     import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
     import ChevronRight from "$lib/assets/icons/ChevronRight.svelte";
     import Plus from "$lib/assets/icons/Plus.svelte";
+    import type { SearchDropdownProps } from "$lib/components/ingredients/search/types";
 
     let {
         results,
         activeResultIndex = -1,
         addingFoodId = null,
+        sourceOptions = [],
         onSelect,
         onAdd = () => {},
         onActivate = () => {},
-    } = $props<{
-        results: FdcFood[];
-        activeResultIndex?: number;
-        addingFoodId?: number | null;
-        onSelect: (food: FdcFood) => void;
-        onAdd?: (food: FdcFood) => void | Promise<void>;
-        onActivate?: (index: number) => void;
-    }>();
+    }: SearchDropdownProps = $props();
     const foodPreferenceContext = getFoodPreferenceContext();
 
     const formatName = (desc: string): string => {
@@ -77,7 +73,7 @@
                                         class="result-badge"
                                         class:result-badge--custom={food.customFood}
                                     >
-                                        {getFoodSourceLabel(food)}
+                                        {getIngredientSourceBadgeLabel(food, sourceOptions)}
                                     </span>
                                     {#if primaryWarning}
                                         <span class="result-warning">
@@ -202,8 +198,8 @@
     .result-icon {
         display: inline-grid;
         place-items: center;
-        width: 2.7rem;
-        height: 2.7rem;
+        width: $ingredient-search-result-icon-size;
+        height: $ingredient-search-result-icon-size;
         flex: 0 0 auto;
         background: color-mix(in srgb, $ingredient-surface-card 74%, transparent);
         border-radius: $ingredient-radius-pill;

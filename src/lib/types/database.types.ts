@@ -147,60 +147,6 @@ export type Database = {
         }
         Relationships: []
       }
-      custom_food_category_observations: {
-        Row: {
-          category_id: string
-          created_at: string
-          first_seen_at: string
-          id: number
-          label: string
-          last_seen_at: string
-          normalized_value: string
-          observation_count: number
-          query: string
-          source: string
-          source_field: string
-          source_payload: Json
-          source_reference: string | null
-          source_value: string
-          updated_at: string
-        }
-        Insert: {
-          category_id: string
-          created_at?: string
-          first_seen_at?: string
-          id?: never
-          label: string
-          last_seen_at?: string
-          normalized_value: string
-          observation_count?: number
-          query: string
-          source: string
-          source_field: string
-          source_payload?: Json
-          source_reference?: string | null
-          source_value: string
-          updated_at?: string
-        }
-        Update: {
-          category_id?: string
-          created_at?: string
-          first_seen_at?: string
-          id?: never
-          label?: string
-          last_seen_at?: string
-          normalized_value?: string
-          observation_count?: number
-          query?: string
-          source?: string
-          source_field?: string
-          source_payload?: Json
-          source_reference?: string | null
-          source_value?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       custom_food_category_mappings: {
         Row: {
           category_option_id: string
@@ -262,6 +208,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      custom_food_category_observations: {
+        Row: {
+          category_id: string
+          created_at: string
+          first_seen_at: string
+          id: number
+          label: string
+          last_seen_at: string
+          normalized_value: string
+          observation_count: number
+          query: string
+          source: string
+          source_field: string
+          source_payload: Json
+          source_reference: string | null
+          source_value: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          first_seen_at?: string
+          id?: never
+          label: string
+          last_seen_at?: string
+          normalized_value: string
+          observation_count?: number
+          query: string
+          source: string
+          source_field: string
+          source_payload?: Json
+          source_reference?: string | null
+          source_value: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          first_seen_at?: string
+          id?: never
+          label?: string
+          last_seen_at?: string
+          normalized_value?: string
+          observation_count?: number
+          query?: string
+          source?: string
+          source_field?: string
+          source_payload?: Json
+          source_reference?: string | null
+          source_value?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       custom_food_category_options: {
         Row: {
@@ -565,6 +565,42 @@ export type Database = {
           },
         ]
       }
+      ingredient_source_options: {
+        Row: {
+          badge_enabled: boolean
+          badge_label: string | null
+          created_at: string
+          description: string
+          display_order: number
+          filter_enabled: boolean
+          filter_label: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          badge_enabled?: boolean
+          badge_label?: string | null
+          created_at?: string
+          description?: string
+          display_order: number
+          filter_enabled?: boolean
+          filter_label: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          badge_enabled?: boolean
+          badge_label?: string | null
+          created_at?: string
+          description?: string
+          display_order?: number
+          filter_enabled?: boolean
+          filter_label?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       mix_preferences: {
         Row: {
           created_at: string
@@ -771,69 +807,6 @@ export type Database = {
           },
         ]
       }
-      nutrient_manual_entry_required_nutrients: {
-        Row: {
-          created_at: string
-          enabled: boolean
-          field_sort_order: number
-          group_id: string
-          nutrient_id: number
-          observation_count: number
-          provenance: Json
-          reason: string
-          requirement_key: string
-          source: string
-          source_count: number
-          sources: string[]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          enabled?: boolean
-          field_sort_order: number
-          group_id: string
-          nutrient_id: number
-          observation_count?: number
-          provenance?: Json
-          reason: string
-          requirement_key: string
-          source: string
-          source_count?: number
-          sources?: string[]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          enabled?: boolean
-          field_sort_order?: number
-          group_id?: string
-          nutrient_id?: number
-          observation_count?: number
-          provenance?: Json
-          reason?: string
-          requirement_key?: string
-          source?: string
-          source_count?: number
-          sources?: string[]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "nutrient_manual_entry_required_nutrients_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "nutrient_manual_entry_groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "nutrient_manual_entry_required_nutrients_nutrient_id_fkey"
-            columns: ["nutrient_id"]
-            isOneToOne: true
-            referencedRelation: "nutrient_definitions"
-            referencedColumns: ["nutrient_id"]
-          },
-        ]
-      }
       nutrient_manual_entry_groups: {
         Row: {
           created_at: string
@@ -960,6 +933,69 @@ export type Database = {
             foreignKeyName: "nutrient_manual_entry_observations_nutrient_id_fkey"
             columns: ["nutrient_id"]
             isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+        ]
+      }
+      nutrient_manual_entry_required_nutrients: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          field_sort_order: number
+          group_id: string
+          nutrient_id: number
+          observation_count: number
+          provenance: Json
+          reason: string
+          requirement_key: string
+          source: string
+          source_count: number
+          sources: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          field_sort_order: number
+          group_id: string
+          nutrient_id: number
+          observation_count?: number
+          provenance?: Json
+          reason: string
+          requirement_key: string
+          source: string
+          source_count?: number
+          sources?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          field_sort_order?: number
+          group_id?: string
+          nutrient_id?: number
+          observation_count?: number
+          provenance?: Json
+          reason?: string
+          requirement_key?: string
+          source?: string
+          source_count?: number
+          sources?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_manual_entry_required_nutrients_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_manual_entry_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nutrient_manual_entry_required_nutrients_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: true
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
           },
@@ -1818,6 +1854,10 @@ export type Database = {
         Args: { p_shared_product_id: string }
         Returns: undefined
       }
+      refresh_nutrient_manual_entry_required_flags: {
+        Args: never
+        Returns: undefined
+      }
       reject_blocked_signup: { Args: { event: Json }; Returns: Json }
       replace_food_nutrients: {
         Args: {
@@ -1833,18 +1873,6 @@ export type Database = {
           p_shared_product_submission_id: string
           p_user_food_list_item_id: string
         }
-        Returns: undefined
-      }
-      refresh_nutrient_manual_entry_required_flags: {
-        Args: never
-        Returns: undefined
-      }
-      refresh_nutrient_manual_entry_required_flags_trigger: {
-        Args: never
-        Returns: undefined
-      }
-      set_nutrient_manual_entry_field_required_flag: {
-        Args: never
         Returns: undefined
       }
       show_limit: { Args: never; Returns: number }

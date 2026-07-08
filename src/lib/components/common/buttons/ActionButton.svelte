@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
+	import type { ActionButtonProps } from "./types";
 
 	let {
 		type = "button",
@@ -13,19 +13,7 @@
 		children,
 		leading,
 		trailing,
-	}: {
-		type?: "button" | "submit" | "reset";
-		variant?: "primary" | "secondary" | "highlight" | "success" | "danger" | "ghost";
-		size?: "small" | "medium" | "large";
-		fullWidth?: boolean;
-		busy?: boolean;
-		disabled?: boolean;
-		ariaLabel?: string;
-		onclick?: (event: MouseEvent) => void;
-		children?: Snippet;
-		leading?: Snippet;
-		trailing?: Snippet;
-	} = $props();
+	}: ActionButtonProps = $props();
 </script>
 
 <button
@@ -87,17 +75,17 @@
 
 	.action-button[data-size="small"] {
 		min-height: $app-control-height-sm;
-		padding: 0.38rem 0.72rem;
+		padding: $app-action-button-padding-y-sm $app-action-button-padding-x-sm;
 		font-size: $app-font-size-sm;
 	}
 
 	.action-button[data-size="medium"] {
-		padding: 0.52rem 0.95rem;
+		padding: $app-action-button-padding-y-md $app-action-button-padding-x-md;
 	}
 
 	.action-button[data-size="large"] {
-		min-height: 2.55rem;
-		padding: 0.68rem 1.15rem;
+		min-height: $app-action-button-height-lg;
+		padding: $app-action-button-padding-y-lg $app-action-button-padding-x-lg;
 		font-size: $app-font-size-lg;
 	}
 

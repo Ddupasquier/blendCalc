@@ -1,11 +1,8 @@
 <script lang="ts">
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch.svelte";
 	import type { ServingMeasureUnit } from "../../../../../defaults/servingMeasureDefaults";
-
-	type VolumeOption = {
-		value: ServingMeasureUnit;
-		label: string;
-	};
+	import type { ManualEntryVolumeOption } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
 		servingLabel,
@@ -29,7 +26,7 @@
 		useVolumeEquivalent: boolean;
 		volumeQuantity: number | null;
 		volumeUnit: ServingMeasureUnit;
-		volumeOptions: VolumeOption[];
+		volumeOptions: ManualEntryVolumeOption[];
 		onServingLabelChange: (value: string) => void;
 		onServingWeightChange: (value: number) => void;
 		onUseVolumeChange: (value: boolean) => void;
@@ -147,16 +144,16 @@
 		</details>
 	</section>
 
-	<button type="button" class="custom-ingredient__add-serving">
+	<RoundedActionButton fullWidth variant="dashed">
 		+ Add another serving size
-	</button>
+	</RoundedActionButton>
 
 	<div class="custom-ingredient__actions">
-		<button type="button" class="custom-ingredient__secondary" onclick={onBack}>
+		<RoundedActionButton variant="neutral" onclick={onBack}>
 			Back
-		</button>
-		<button type="button" class="custom-ingredient__primary" onclick={onNext}>
+		</RoundedActionButton>
+		<RoundedActionButton onclick={onNext}>
 			Continue
-		</button>
+		</RoundedActionButton>
 	</div>
 </div>

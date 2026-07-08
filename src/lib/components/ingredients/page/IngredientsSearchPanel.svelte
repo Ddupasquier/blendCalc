@@ -4,6 +4,7 @@
 	import IconControlButton from "$lib/components/common/buttons/IconControlButton.svelte";
 	import IngredientSearchTrigger from "$lib/components/ingredients/search/IngredientSearchTrigger.svelte";
 	import ManualEntryLauncher from "$lib/components/ingredients/manual-entry/ManualEntryLauncher.svelte";
+	import type { IngredientsSearchPanelProps } from "$lib/components/ingredients/page/types";
 
 	let {
 		barcodeLookupBusy = false,
@@ -12,14 +13,7 @@
 		onScan,
 		onToggleFilters,
 		onOpenManualEntry,
-	}: {
-		barcodeLookupBusy?: boolean;
-		filtersActive?: boolean;
-		onOpenSearch: () => void;
-		onScan: () => void;
-		onToggleFilters: () => void;
-		onOpenManualEntry: () => void;
-	} = $props();
+	}: IngredientsSearchPanelProps = $props();
 </script>
 
 <section class="ingredient-search-panel" aria-labelledby="ingredient-search-title">

@@ -9,9 +9,9 @@
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog.svelte";
-	import type { CustomIngredientOutcomeState } from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
 	import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 	import {
+		type CustomIngredientOutcomeState,
 		emptyManualEntryNutrientGroups,
 		manualEntrySteps,
 		volumeAmountRequiredMessage,

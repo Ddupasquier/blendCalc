@@ -15,13 +15,6 @@ export type IngredientListMembership = {
 	inShoppingList: boolean;
 };
 
-export const INGREDIENT_SOURCE_FILTER_OPTIONS = [
-	{ value: "all", label: "All sources" },
-	{ value: "fdc", label: "USDA FDC" },
-	{ value: "shared", label: "Shared & verified" },
-	{ value: "custom", label: "Custom" },
-];
-
 export const getIngredientActionKey = (key: SmoothieListKey, foodId: number) =>
 	`${key}:${foodId}`;
 
@@ -71,10 +64,4 @@ export const getPrimaryFoodWarning = (
 	if (warnings.length === 0) return null;
 	const warning = warnings.find((item) => item.level === "warning") ?? warnings[0];
 	return warning.reason.split(":").at(0) ?? warning.label;
-};
-
-export const getFoodSourceLabel = (food: FdcFood) => {
-	if (food.customFood) return "Custom";
-	if (food.sharedProductId) return "Shared";
-	return "FDC";
 };

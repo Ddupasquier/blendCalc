@@ -7,7 +7,7 @@
 	import ViewHeader from "$lib/components/common/view/ViewHeader.svelte";
 	import ViewTop from "$lib/components/common/view/ViewTop.svelte";
 	import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
-	import type { FdcFood } from "$lib/utils/food/types";
+	import type { IngredientSearchViewProps } from "$lib/components/ingredients/search/types";
 	import IngredientSearch from "./IngredientSearch.svelte";
 
 	let {
@@ -16,19 +16,11 @@
 		onSelect,
 		onAdd,
 		addingFoodId = null,
+		sourceOptions = [],
 		onScan,
 		onFilter,
 		onClose,
-	}: {
-		scanning?: boolean;
-		filtersActive?: boolean;
-		onSelect: (food: FdcFood) => void;
-		onAdd: (food: FdcFood) => void | Promise<void>;
-		addingFoodId?: number | null;
-		onScan: () => void;
-		onFilter: () => void;
-		onClose: () => void;
-	} = $props();
+	}: IngredientSearchViewProps = $props();
 </script>
 
 <ViewFrame className="ingredient-search-view">
@@ -50,7 +42,14 @@
 	</ViewTop>
 
 	<ViewBody>
-		<IngredientSearch autofocus {onSelect} {onAdd} {addingFoodId} onSearchFocus={() => {}}>
+		<IngredientSearch
+			autofocus
+			{onSelect}
+			{onAdd}
+			{addingFoodId}
+			{sourceOptions}
+			onSearchFocus={() => {}}
+		>
 			{#snippet actions()}
 				<BarcodeScanButton scanning={scanning} compact onclick={onScan} />
 				<IconControlButton

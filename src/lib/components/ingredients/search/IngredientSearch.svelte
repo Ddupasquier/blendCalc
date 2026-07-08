@@ -15,8 +15,8 @@
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
 	import Search from "$lib/assets/icons/Search.svelte";
 	import X from "$lib/assets/icons/X.svelte";
-	import type { Snippet } from "svelte";
 	import { createEventDispatcher, onMount, tick } from "svelte";
+	import type { IngredientSearchProps } from "$lib/components/ingredients/search/types";
 	import SearchDropdown from "./SearchDropdown.svelte";
 
 	let {
@@ -25,15 +25,9 @@
 		addingFoodId = null,
 		onSearchFocus = () => {},
 		autofocus = false,
+		sourceOptions = [],
 		actions,
-	}: {
-		onSelect: (food: FdcFood) => void;
-		onAdd?: (food: FdcFood) => void | Promise<void>;
-		addingFoodId?: number | null;
-		onSearchFocus?: () => void;
-		autofocus?: boolean;
-		actions?: Snippet;
-	} = $props();
+	}: IngredientSearchProps = $props();
 	let query = $state("");
 	let results = $state<FdcFood[]>([]);
 	let loading = $state(false);
@@ -288,6 +282,7 @@
 		results={sortedResults()}
 		{activeResultIndex}
 		{addingFoodId}
+		{sourceOptions}
 		onSelect={select}
 		{onAdd}
 		onActivate={(index) => (activeResultIndex = index)}

@@ -1,4 +1,4 @@
-import type { CustomIngredientOutcomeState } from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
+import type { CustomIngredientOutcomeState } from "$lib/components/ingredients/manual-entry/formTypes";
 import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 import type { FdcFood } from "$lib/utils/food/types";
 import {

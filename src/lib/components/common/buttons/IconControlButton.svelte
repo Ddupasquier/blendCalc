@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
+	import type { IconControlButtonProps } from "./types";
 
 	let {
 		type = "button",
@@ -12,18 +12,7 @@
 		"aria-controls": ariaControls = undefined,
 		onclick,
 		children,
-	}: {
-		type?: "button" | "submit" | "reset";
-		label: string;
-		active?: boolean;
-		busy?: boolean;
-		disabled?: boolean;
-		class?: string;
-		"aria-expanded"?: boolean | "true" | "false";
-		"aria-controls"?: string;
-		onclick?: (event: MouseEvent) => void;
-		children?: Snippet;
-	} = $props();
+	}: IconControlButtonProps = $props();
 </script>
 
 <button

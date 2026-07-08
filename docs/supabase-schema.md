@@ -66,6 +66,7 @@ Notes:
 | `user_food_list_items` | `id` | Many rows per auth user | User fridge and shopping-list items | `user_id → auth.users.id` |
 | `custom_foods` | `id` | Many rows per auth user | User-created custom foods and barcode/manual-entry payloads | `user_id → auth.users.id` |
 | `saved_drinks` | `id` | Many rows per auth user | Saved smoothie recipes/mixes | `user_id → auth.users.id` |
+| `ingredient_source_options` | `value` | Shared reference | DB-backed source filter and badge labels for ingredient list/search UI | No direct user ownership |
 
 ### `user_food_list_items`
 
@@ -100,6 +101,20 @@ Columns: `id`, `user_id`, `name`, `drink`, `created_at`, `updated_at`.
 Notes:
 - Drink names are unique per user.
 - `drink` is JSON because saved mix composition has app-specific structure.
+
+### `ingredient_source_options`
+
+Stores app-ready source labels for ingredient filtering and badges.
+
+Columns: `value`, `filter_label`, `badge_label`, `display_order`,
+`filter_enabled`, `badge_enabled`, `description`, `created_at`, `updated_at`.
+
+Notes:
+- This is UI configuration for app source states such as USDA FDC, shared
+  catalog, and custom foods.
+- Components render filter labels and source badges from this table instead of
+  hardcoded component constants.
+- Indexed by display order, filter-enabled rows, and badge-enabled rows.
 
 ## Nutrient Definitions, Values, and Validation
 
