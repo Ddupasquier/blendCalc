@@ -2,7 +2,7 @@ import type { ServingMeasureUnit } from "../../../../../defaults/servingMeasureD
 import type { NutrientValueState } from "$lib/components/ingredients/manual-entry/formTypes";
 import { createCustomFood } from "$lib/utils/food/custom/customFoods";
 import type { ManualEntryNutrientDefinition } from "$lib/utils/food/nutrients/nutrientDefinitions";
-import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
 import { buildSaveNutrients } from "$lib/components/ingredients/manual-entry/utils/nutrientValues";
 
 export type ManualEntryCustomFoodPayload = {
@@ -23,6 +23,7 @@ export type ManualEntryCustomFoodPayload = {
 	labels: string[];
 	activeCategory: string;
 	categories: string[];
+	image?: FoodImageAsset;
 	reportedNutrientIds: number[];
 	importedNutrients: FdcNutrient[];
 	manualEntryNutrientFields: ManualEntryNutrientDefinition[];
@@ -81,6 +82,7 @@ export const createManualEntryCustomFood = (
 		dietaryTags: payload.dietaryTags,
 		labels: payload.labels,
 		categories: buildManualEntrySaveCategories(payload),
+		image: payload.image,
 		nutrients: saveNutrients,
 		reportedNutrientIds: [
 			...new Set([

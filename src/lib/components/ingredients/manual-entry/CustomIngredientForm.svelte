@@ -7,7 +7,7 @@
 	} from "../../../../defaults/servingMeasureDefaults";
 	import { buildCustomServingLabel } from "$lib/utils/food/custom/customFoods";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
-	import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+	import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog.svelte";
 	import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 	import {
@@ -167,6 +167,7 @@
 	let dietaryTags = $state<string[]>([]);
 	let labels = $state<string[]>([]);
 	let categories = $state<string[]>([]);
+	let image = $state<FoodImageAsset | undefined>(undefined);
 	let saveDestination = $state<SmoothieListKey | "custom-only">(
 		getInitialSaveDestination(),
 	);
@@ -367,6 +368,7 @@
 			dietaryTags,
 			labels,
 			categories,
+			image,
 			checkedBarcodeReferenceKey,
 		} = draftState);
 		manualTouchedNutrientIds = {};
@@ -639,6 +641,7 @@
 			dietaryTags,
 			labels,
 			categories,
+			image,
 		} = getManualEntryFormResetState());
 	};
 
@@ -929,6 +932,7 @@
 			labels,
 			activeCategory,
 			categories,
+			image,
 			reportedNutrientIds,
 			importedNutrients,
 			manualEntryNutrientFields,

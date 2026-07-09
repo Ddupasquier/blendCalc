@@ -341,6 +341,74 @@ export type Database = {
         }
         Relationships: []
       }
+      food_image_assets: {
+        Row: {
+          attribution_text: string | null
+          barcode: string | null
+          confidence: string
+          created_at: string
+          fetched_at: string
+          id: string
+          image_role: string
+          image_url: string
+          license_name: string
+          license_url: string | null
+          shared_product_id: string | null
+          source: string
+          source_reference: string | null
+          status: string
+          storage_path: string | null
+          thumbnail_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          attribution_text?: string | null
+          barcode?: string | null
+          confidence?: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          image_role: string
+          image_url: string
+          license_name: string
+          license_url?: string | null
+          shared_product_id?: string | null
+          source: string
+          source_reference?: string | null
+          status?: string
+          storage_path?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attribution_text?: string | null
+          barcode?: string | null
+          confidence?: string
+          created_at?: string
+          fetched_at?: string
+          id?: string
+          image_role?: string
+          image_url?: string
+          license_name?: string
+          license_url?: string | null
+          shared_product_id?: string | null
+          source?: string
+          source_reference?: string | null
+          status?: string
+          storage_path?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_image_assets_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_nutrients: {
         Row: {
           amount_per_100g: number

@@ -157,7 +157,9 @@ Data to preserve from scanned products when available:
 - Traces/may-contain metadata.
 - Labels, categories, and dietary tags.
 - Source/provenance and confidence.
-- Product images/evidence when needed for moderation.
+- Source-backed product image metadata when available, including license and
+  attribution, rendered only after it is stored in Supabase.
+- Product evidence photos when needed for moderation.
 
 ### Manual Custom Ingredient Entry
 
@@ -669,6 +671,8 @@ Preserve:
 - Shared product search in ingredient search.
 - Product submissions when data is missing or needs verification.
 - Product evidence/photo upload for moderation.
+- Source-backed product image metadata for user-facing ingredient cards and
+  detail views.
 - Source/provenance fields.
 - Nutrient completeness tracking.
 - Normalized nutrient storage.
@@ -697,6 +701,8 @@ Data to retain from APIs when available:
 - Dietary tags.
 - Source IDs and URLs.
 - Confidence/provenance.
+- Product image URLs only when source terms allow storage/rendering, with
+  license and attribution retained in the database.
 
 ## Food Preference and Compatibility Data
 

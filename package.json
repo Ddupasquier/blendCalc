@@ -29,6 +29,7 @@
 		"seed:food-categories:deep": "node scripts/seed_custom_food_categories.mjs --deep",
 		"seed:food-categories:rebuild": "node scripts/seed_custom_food_categories.mjs --rebuild-mappings-only",
 		"generate:api-structures": "node scripts/generate_api_structures.mjs",
+		"backfill:food-images": "node scripts/backfill_food_images.mjs",
 		"compare:fdc": "node scripts/compare_fdc_products.mjs",
 		"discover:fdc-nutrients": "node scripts/discover_fdc_nutrients.mjs",
 		"test": "vitest run",

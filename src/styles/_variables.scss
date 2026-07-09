@@ -384,6 +384,9 @@ $ingredient-nutrition-confidence-tag-font-size: 0.68rem;
 $ingredient-nutrition-move-prompt-min-width: 20rem;
 $ingredient-nutrition-move-prompt-max-width: 90vw;
 $ingredient-nutrition-move-prompt-title-font-size: 1.13em;
+$ingredient-nutrition-product-image-min-height: 8rem;
+$ingredient-nutrition-product-image-max-height: 14rem;
+$ingredient-nutrition-product-image-max-width: 18rem;
 $ingredient-scanner-dialog-title-font-size: 1.45rem;
 $ingredient-scanner-camera-min-height: calc(100vh - 8rem);
 $ingredient-scanner-status-padding-y: 0.55rem;
@@ -472,6 +475,8 @@ $app-gap-inline-compact: calc($app-gap-xs / 1.5);
 
 // Badge-adjacent spacing token for count badges and source metadata chips.
 $app-gap-badge-inline: calc($app-gap-xs / 1.7);
+
+$ingredient-food-image-content-size: 118%;
 
 $ingredient-list-loading-min-height: 12rem;
 $ingredient-list-sentinel-min-height: $app-gap-micro;

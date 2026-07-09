@@ -4,6 +4,7 @@ import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecord
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import { hydrateFoodsWithCachedImages } from "./foodImages";
 import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
 import {
 	CLOUD_CURSOR_PAGE_SIZE,
@@ -132,10 +133,11 @@ export const readCloudSmoothieListPage = async (
 			normalizedRows?.get(row.id),
 		);
 	});
+	const foodsWithImages = await hydrateFoodsWithCachedImages(supabase, foods);
 
 	return {
-		foods,
-		totalCount: count ?? foods.length,
+		foods: foodsWithImages,
+		totalCount: count ?? foodsWithImages.length,
 	};
 };
 
@@ -164,17 +166,17 @@ export const readCloudSmoothieList = async (key: SmoothieListKey) => {
 		"user_food_list_item_id",
 		rows.map((row) => row.id),
 	);
-	return rows
-		.map((row) => {
-			const food = row.food as unknown as FdcFood;
-			return hydrateFoodWithNormalizedNutrients(
-				{
-					...food,
-					listAddedAt: food.listAddedAt ?? new Date(row.created_at).getTime(),
-				},
-				normalizedRows?.get(row.id),
-			);
-		});
+	const foods = rows.map((row) => {
+		const food = row.food as unknown as FdcFood;
+		return hydrateFoodWithNormalizedNutrients(
+			{
+				...food,
+				listAddedAt: food.listAddedAt ?? new Date(row.created_at).getTime(),
+			},
+			normalizedRows?.get(row.id),
+		);
+	});
+	return await hydrateFoodsWithCachedImages(supabase, foods);
 };
 
 export const writeCloudSmoothieList = async (

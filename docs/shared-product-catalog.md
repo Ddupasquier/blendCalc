@@ -21,7 +21,7 @@ custom foods, use their fridge, and build mixes.
 ## Source policy
 
 - **USDA FoodData Central:** exact barcode matches may auto-publish. USDA data is CC0/public domain.
-- **Open Food Facts:** used for live barcode lookup with attribution. Its ODbL records are not copied into this independently managed shared catalog. If a barcode already exists there, no duplicate catalog submission is created.
+- **Open Food Facts:** used for live barcode lookup with attribution. Its ODbL records are not copied into this independently managed shared catalog. Package image metadata may be stored in `food_image_assets` with source, license, attribution, and confidence so the UI can render source-backed images without treating the full record as shared catalog data.
 - **User-entered labels:** may be published only after moderator review.
 
 ## Provenance and merging
@@ -47,8 +47,9 @@ expiration timestamps. The browser never receives the USDA API key. Cached USDA 
 rate-limit pressure but is not treated as permanently current.
 
 Open Food Facts is queried live and is not copied into `shared_products` or the API cache.
-Its ODbL database terms require a deliberate share-alike and attribution decision before
-building a derived database from its records.
+Allowed package image metadata is stored separately in `food_image_assets` with attribution.
+Its ODbL database terms still require a deliberate share-alike and attribution decision before
+building a broader derived database from its records.
 
 Keep source handling explicit. Do not merge Open Food Facts payloads into `shared_products` unless the entire downstream database licensing and attribution model is intentionally changed.
 

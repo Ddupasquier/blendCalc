@@ -20,6 +20,29 @@ const spinach: FdcFood = {
 };
 
 describe("NutritionDetailView", () => {
+	it("shows a source-backed product image when available", () => {
+		render(NutritionDetailView, {
+			props: {
+				food: {
+					...spinach,
+					image: {
+						source: "open-food-facts",
+						sourceReference: "00000000000000",
+						role: "front",
+						imageUrl: "https://example.com/spinach-front.jpg",
+						licenseName: "Example license",
+						confidence: "imported",
+					},
+				},
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(screen.getByRole("img", { name: /spinach, raw package image/i }))
+			.toHaveAttribute("src", "https://example.com/spinach-front.jpg");
+	});
+
 	it("steps viewing amount in 5g increments", async () => {
 		render(NutritionDetailView, {
 			props: {

@@ -1,7 +1,7 @@
 import type { ServingMeasureUnit } from "../../../../../defaults/servingMeasureDefaults";
 import { MIX_STORAGE_KEYS } from "../../../../../defaults/mixDefaults";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
-import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
 import type {
 	ManualEntryStepId,
 	NutrientValueState,
@@ -43,6 +43,7 @@ export type ManualEntryFormResetState = {
 	dietaryTags: string[];
 	labels: string[];
 	categories: string[];
+	image?: FoodImageAsset;
 };
 
 export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
@@ -79,6 +80,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	dietaryTags: [],
 	labels: [],
 	categories: [],
+	image: undefined,
 });
 
 export const getInitialSaveDestination = (): SmoothieListKey | "custom-only" =>

@@ -3,6 +3,7 @@ import {
 } from "$lib/server/products/catalog.server";
 import { resolveBarcodeDraftCategory } from "$lib/server/products/categoryMapping.server";
 import { lookupExternalBarcodeProduct } from "$lib/server/products/externalProduct.server";
+import { persistFoodImageAsset } from "$lib/server/products/foodImages.server";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { mapSharedCatalogFood } from "$lib/utils/barcode/productLookup";
 import { error, json } from "@sveltejs/kit";
@@ -19,6 +20,11 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 	if (sharedFood) {
 		const draft = mapSharedCatalogFood(sharedFood, barcode);
 		if (draft) {
+			await persistFoodImageAsset({
+				image: draft.image,
+				barcode,
+				sharedProductId: sharedFood.sharedProductId,
+			});
 			return json({
 				status: "found",
 				draft: await resolveBarcodeDraftCategory(locals.supabase, draft),
@@ -28,6 +34,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 
 	const draft = await lookupExternalBarcodeProduct(barcode);
 	if (!draft) throw error(404, "Product not found.");
+	await persistFoodImageAsset({ image: draft.image, barcode });
 	return json({
 		status: "found",
 		draft: await resolveBarcodeDraftCategory(locals.supabase, draft),

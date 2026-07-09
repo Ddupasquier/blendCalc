@@ -222,6 +222,12 @@ const foodMetadataMocks = vi.hoisted(() => {
 				observation_count: 1,
 				source_count: 1,
 			},
+			{
+				id: "jams",
+				label: "Jams",
+				observation_count: 1,
+				source_count: 1,
+			},
 		]),
 	};
 });
@@ -727,6 +733,7 @@ describe("CustomIngredientForm", () => {
 				}),
 				reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
 				categories: ["Jams"],
+				resolvedCategory: "Jams",
 				source: "shared-catalog",
 				sourceLabel: "blendCalc verified catalog",
 				sourceReference: "shared-product-1",
@@ -771,6 +778,7 @@ describe("CustomIngredientForm", () => {
 				}),
 				reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
 				categories: ["Jams"],
+				resolvedCategory: "Jams",
 				source: "shared-catalog",
 				sourceLabel: "blendCalc verified catalog",
 				sourceReference: "shared-product-1",
@@ -818,6 +826,7 @@ describe("CustomIngredientForm", () => {
 				}),
 				reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
 				categories: ["Other"],
+				resolvedCategory: "Other",
 				source: "usda",
 				sourceLabel: "USDA FDC",
 				sourceReference: "12345",

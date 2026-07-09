@@ -207,6 +207,7 @@ Notes:
 | `shared_product_observations` | `id` | Shared evidence/provenance | API, user-label, manufacturer, or GS1 observations for a barcode | Optional submission/user links |
 | `shared_product_field_provenance` | `id` | Shared evidence/provenance | Which observation supplied each canonical shared product field | `shared_product_id`, `observation_id` |
 | `shared_product_conflicts` | `id` | Shared moderation/provenance | Open/resolved conflicts between observed values | `shared_product_id → shared_products.id` |
+| `food_image_assets` | `id` | Shared image reference | Source-backed product/ingredient image metadata rendered by ingredient UI | Optional `shared_product_id → shared_products.id`, optional barcode |
 | `product_api_cache` | `(provider, cache_key)` | Server cache | External API response cache for searches, barcode lookup, and food detail | No user ownership |
 | `product_submission_blocks` | `id` | One auth user per block event | Temporary submission block after repeated rejected submissions | `user_id → auth.users.id`, optional source submission |
 
@@ -247,6 +248,27 @@ Notes:
 `shared_product_conflicts` hold the evidence trail behind shared catalog data.
 `product_api_cache` reduces external API load and should be written/read by
 server code only.
+
+### `food_image_assets`
+
+Stores reusable image metadata for ingredients and packaged products. This table
+does not replace private moderation evidence; it only stores source-backed or
+approved image records that the app can safely render.
+
+Columns: `id`, `barcode`, `shared_product_id`, `source`, `source_reference`,
+`image_role`, `image_url`, `thumbnail_url`, `storage_path`, `license_name`,
+`license_url`, `attribution_text`, `confidence`, `status`, `fetched_at`,
+`created_at`, `updated_at`.
+
+Notes:
+- Open Food Facts package images are stored here with source, license, and
+  attribution before UI cards render them.
+- Existing barcode-backed foods can be backfilled with `npm run
+  backfill:food-images`, which stores image metadata instead of repeatedly
+  calling external APIs from the UI.
+- Users can read active rows, but only service-role/server code can write rows.
+- Indexed lookup paths cover active barcode images, shared-product images,
+  generic images, and source/reference deduping.
 
 Storage bucket:
 - `product-submission-evidence`: private product evidence images, scoped under

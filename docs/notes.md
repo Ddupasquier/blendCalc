@@ -10,8 +10,12 @@ Smoothie Notes
 	- Any suggestions from the AI?
 - Also, where is all the api code? This stuff should be readily accessible and easy to find. What apis and stuff are we making fetches to? Separate those different calls by api name specifically.
 - Sometimes I have to refresh page so tab label can be accurate to which tab I’m on
-￼
-- Find a way to add photos to ingredients. Is there an API we can use for this?
+- Can we add a filter to the ingredient images to make them look less... real? But still recognizable.
+￼- Can we do a quick pull for existing ingredients in the DB to add respective images? Just so I can test the new feature. I haven't added any personal photos of products, but the API should have images for products that have barcodes, yeah?
+- Ingredient photos now have a first DB-backed path: barcode lookups can store
+  Open Food Facts package image metadata in `food_image_assets` with license and
+  attribution. Future work: add broader generic image sources only if their
+  license terms fit the app.
 - For wider screens, we should figure out some breakpoints so the UI can be less long. If a user is managing their stuff on a desktop, they should get a desktop experience.
 * Finish your othre tasks before this. If we find information that should be in the DB then we need to go ahead and write it to the DB. Run like 200 examples and then save EVERYHTING that we legally can just add to our own information bank.
 * Run a full audit over all of the available APIs. You can do this using an existing script OR you can make a new one. From the output of those scripts, tell me if there is additional information we should be storing in our DB. I don't want to be sleeping on information that I didn't know was available that we could be leveraging in this app.

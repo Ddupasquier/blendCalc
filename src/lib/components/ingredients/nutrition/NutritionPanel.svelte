@@ -1,6 +1,7 @@
 <script lang="ts">
 	import NutritionFactsLabel from "$lib/components/ingredients/nutrition/NutritionFactsLabel.svelte";
 	import NutritionListActions from "$lib/components/ingredients/nutrition/NutritionListActions.svelte";
+	import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import {
 		DEFAULT_NUTRITION_VIEWING_GRAMS,
@@ -21,6 +22,7 @@
 </script>
 
 <section class="nutrition-panel">
+	<ProductImagePanel {food} />
 	<NutritionFactsLabel {food} {viewingGrams} />
 	<NutritionListActions {food} {showListActions} {listMembership} />
 </section>

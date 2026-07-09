@@ -201,6 +201,7 @@
         width: $ingredient-search-result-icon-size;
         height: $ingredient-search-result-icon-size;
         flex: 0 0 auto;
+        overflow: hidden;
         background: color-mix(in srgb, $ingredient-surface-card 74%, transparent);
         border-radius: $ingredient-radius-pill;
         font-size: $app-font-size-xl;

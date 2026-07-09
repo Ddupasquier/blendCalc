@@ -7,7 +7,13 @@ import {
 	parseVolumeEquivalent,
 	type BarcodeVolumeEquivalent,
 } from "$lib/utils/barcode/servingVolume";
-import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
+import {
+	NUTRIENT_IDS,
+	type FdcFood,
+	type FdcNutrient,
+	type FoodImageAsset,
+} from "$lib/utils/food/types";
+import { OPEN_FOOD_FACTS_IMAGE_LICENSE } from "$lib/utils/food/images/foodImages";
 import { APP_VERIFIED_CATALOG_LABEL } from "$lib/config/brand";
 
 export type OpenFoodFactsNutriments = Record<string, number | string | undefined>;
@@ -30,6 +36,12 @@ export type OpenFoodFactsProduct = {
 	categories_hierarchy?: string[];
 	food_groups?: string;
 	food_groups_tags?: string[];
+	image_front_url?: string;
+	image_front_small_url?: string;
+	image_front_thumb_url?: string;
+	image_url?: string;
+	image_small_url?: string;
+	image_thumb_url?: string;
 	serving_size?: string;
 	serving_quantity?: number | string;
 	serving_quantity_unit?: string;
@@ -63,6 +75,7 @@ export type BarcodeProductDraft = {
 		sourceValue: string;
 		confidence: string;
 	};
+	image?: FoodImageAsset;
 	volumeEquivalent?: BarcodeVolumeEquivalent;
 	source: "open-food-facts" | "usda" | "shared-catalog";
 	sourceLabel: string;
@@ -211,6 +224,32 @@ const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
 	};
 };
 
+const parseOpenFoodFactsImage = (
+	product: OpenFoodFactsProduct,
+	barcode: string,
+): FoodImageAsset | undefined => {
+	const imageUrl = product.image_front_url || product.image_url;
+	if (!imageUrl) return undefined;
+
+	return {
+		source: "open-food-facts",
+		sourceReference: barcode,
+		role: "front",
+		imageUrl,
+		thumbnailUrl:
+			product.image_front_small_url ||
+			product.image_front_thumb_url ||
+			product.image_small_url ||
+			product.image_thumb_url ||
+			imageUrl,
+		licenseName: OPEN_FOOD_FACTS_IMAGE_LICENSE.name,
+		licenseUrl: OPEN_FOOD_FACTS_IMAGE_LICENSE.url,
+		attributionText: OPEN_FOOD_FACTS_IMAGE_LICENSE.attribution,
+		confidence: "imported",
+		fetchedAt: new Date().toISOString(),
+	};
+};
+
 const parseFdcMetadata = (food: FdcFood) => ({
 	ingredients: food.ingredients?.trim() || undefined,
 	ingredientList: food.ingredientList?.length
@@ -317,6 +356,7 @@ export const mapOpenFoodFactsProduct = (
 		useServingValues,
 	);
 	const metadata = parseOpenFoodFactsMetadata(product);
+	const image = parseOpenFoodFactsImage(product, canonicalBarcode);
 
 	const nutrition = {
 		calories: energyKcal ?? (energyKilojoules === null ? null : energyKilojoules / 4.184),
@@ -386,6 +426,7 @@ export const mapOpenFoodFactsProduct = (
 			]),
 		],
 		...metadata,
+		image,
 		volumeEquivalent: hasExactGramWeight
 			? parseVolumeEquivalent(product.serving_size)
 				?? undefined
@@ -431,6 +472,7 @@ export const mapFdcBarcodeFood = (
 			),
 		],
 		...metadata,
+		image: food.image,
 		volumeEquivalent: hasExactGramWeight
 			? parseVolumeEquivalent(food.householdServingFullText) ?? undefined
 			: undefined,

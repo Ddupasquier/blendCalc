@@ -7,6 +7,7 @@ Mix and match ingredients for making well-balanced smoothies.
 - 🔐 Account-gated smoothie workspace with Google and email/password sign-in
 - 🔍 Ingredient search across FoodData Central, saved custom foods, and the shared product catalog
 - 🧾 Barcode scanning for packaged foods with reusable product data and moderation fallback
+- 🖼️ Source-backed product images stored with license and attribution metadata before UI rendering
 - 🧪 Live nutrient goals, ingredient amounts, radar chart feedback, warnings, and suggestions
 - 🧊 Account-backed Fridge and Shopping List ingredient management
 - 🥤 Saved drinks with load, overwrite, save-as-new, and per-user name validation
@@ -95,6 +96,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | `npm run seed:food-categories:rebuild` | Rebuild category mappings from already-stored API observations |
 | `npm run seed:manual-entry-nutrients` | Store cross-source manual-entry nutrient grouping observations in Supabase |
 | `npm run generate:api-structures` | Generate docs-only reference types from observed external API payloads |
+| `npm run backfill:food-images` | Backfill DB-backed product image metadata for existing barcode foods |
 | `npm run discover:fdc-nutrients` | Generate the expanded FDC nutrient catalog |
 | `npm run compare:fdc -- "a" "b"` | Compare live FDC output for two product searches |
 | `npm run db:push:dry` | Preview pending Supabase migrations |

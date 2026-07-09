@@ -153,6 +153,7 @@
 		place-items: center;
 		width: $ingredient-food-icon-size;
 		height: $ingredient-food-icon-size;
+		overflow: hidden;
 		background: $ingredient-surface-positive;
 		border-radius: $ingredient-radius-pill;
 		font-size: $ingredient-food-icon-font-size;

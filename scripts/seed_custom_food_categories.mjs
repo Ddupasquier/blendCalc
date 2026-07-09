@@ -31,7 +31,10 @@ const explicitQueries = process.argv
 
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/cgi/search.pl";
 const FDC_URL = "https://api.nal.usda.gov/fdc/v1";
-const REQUEST_DELAY_MS = 140;
+const REQUEST_DELAY_MS = 250;
+const TEMPORARY_ERROR_RETRY_DELAYS_MS = [500, 1500, 3000];
+const RATE_LIMIT_RETRY_DELAYS_MS = [5000, 15000, 30000];
+const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
 const PAGE_SIZE = 12;
 const FDC_BRANDED_DETAIL_SIZE = 8;
 const MAX_CATEGORY_LENGTH = 80;
@@ -251,6 +254,26 @@ const sleep = (milliseconds) =>
 		setTimeout(resolve, milliseconds);
 	});
 
+const parseRetryAfterHeader = (value) => {
+	if (!value) return null;
+	const seconds = Number(value);
+	if (Number.isFinite(seconds) && seconds >= 0) {
+		return seconds * 1000;
+	}
+
+	const retryAt = Date.parse(value);
+	if (Number.isFinite(retryAt)) {
+		return Math.max(retryAt - Date.now(), 0);
+	}
+
+	return null;
+};
+
+const getRetryDelays = (status) =>
+	status === 429
+		? RATE_LIMIT_RETRY_DELAYS_MS
+		: TEMPORARY_ERROR_RETRY_DELAYS_MS;
+
 const cleanSourceCategory = (value) => {
 	const normalized = normalizeFoodCategoryValue(value);
 	if (!normalized) return null;
@@ -304,11 +327,48 @@ const addCategoryObservation = (category) => {
 };
 
 const fetchJson = async (url, options = {}, label = "API request") => {
-	const response = await fetch(url, options);
-	if (!response.ok) {
-		throw new Error(`${label} failed: ${response.status} ${response.statusText}`);
+	for (
+		let attempt = 0;
+		attempt <= RATE_LIMIT_RETRY_DELAYS_MS.length;
+		attempt += 1
+	) {
+		let response;
+		try {
+			response = await fetch(url, options);
+		} catch (error) {
+			if (attempt === TEMPORARY_ERROR_RETRY_DELAYS_MS.length) {
+				throw error;
+			}
+
+			const delay = TEMPORARY_ERROR_RETRY_DELAYS_MS[attempt];
+			const message = error instanceof Error ? error.message : String(error);
+			console.warn(`${label} failed: ${message}; retrying in ${delay}ms`);
+			await sleep(delay);
+			continue;
+		}
+
+		if (response.ok) {
+			return await response.json();
+		}
+
+		const message = `${label} failed: ${response.status} ${response.statusText}`;
+		const retryDelays = getRetryDelays(response.status);
+		if (
+			!RETRYABLE_STATUS_CODES.has(response.status) ||
+			attempt === retryDelays.length
+		) {
+			throw new Error(message);
+		}
+
+		const retryAfterDelay = parseRetryAfterHeader(
+			response.headers.get("retry-after"),
+		);
+		const delay = retryAfterDelay ?? retryDelays[attempt];
+		console.warn(`${message}; retrying in ${delay}ms`);
+		await sleep(delay);
 	}
-	return await response.json();
+
+	throw new Error(`${label} failed after retries`);
 };
 
 const createSupabaseClient = () => {

@@ -10,7 +10,7 @@ import {
 } from "$lib/utils/storage/supabase";
 import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
-import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
 import { normalizeCustomFoodName } from "$lib/utils/food/custom/customFoodNames";
 
 export const CUSTOM_FOODS_STORAGE_KEY = "smoothie-custom-foods";
@@ -32,6 +32,7 @@ export type CustomFoodInput = {
 	dietaryTags?: string[];
 	labels?: string[];
 	categories?: string[];
+	image?: FoodImageAsset;
 	nutrients: FdcNutrient[];
 	reportedNutrientIds?: number[];
 };
@@ -160,6 +161,7 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		dietaryTags: input.dietaryTags,
 		labels: input.labels,
 		categories: input.categories,
+		image: input.image,
 		customFood: true,
 		barcode: input.barcode,
 		barcodeSource: input.barcodeSource,

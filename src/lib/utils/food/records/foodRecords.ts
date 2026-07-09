@@ -18,6 +18,7 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		dietaryTags: food.dietaryTags,
 		labels: food.labels,
 		categories: food.categories,
+		image: food.image,
 		customFood: food.customFood,
 		barcode: food.barcode,
 		barcodeSource: food.barcodeSource,

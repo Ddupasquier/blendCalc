@@ -27,6 +27,19 @@ export interface FdcNutrient {
         | "unknown";
 }
 
+export interface FoodImageAsset {
+    source: "open-food-facts" | "wikimedia-commons" | "community-reviewed";
+    sourceReference?: string;
+    role: "front" | "nutrition" | "barcode" | "ingredient" | "generic";
+    imageUrl: string;
+    thumbnailUrl?: string;
+    licenseName: string;
+    licenseUrl?: string;
+    attributionText?: string;
+    confidence: "source-verified" | "moderator-reviewed" | "imported";
+    fetchedAt?: string;
+}
+
 /** A food item returned from the FDC search endpoint */
 export interface FdcFood {
     fdcId: number;
@@ -49,6 +62,7 @@ export interface FdcFood {
     dietaryTags?: string[];
     labels?: string[];
     categories?: string[];
+    image?: FoodImageAsset;
     customFood?: boolean;
     barcode?: string;
     barcodeSource?: "open-food-facts" | "usda" | "manual" | "community";

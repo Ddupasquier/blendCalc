@@ -141,6 +141,32 @@ describe("barcode product mapping", () => {
 		});
 	});
 
+	it("keeps Open Food Facts package image metadata with attribution", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Test jelly",
+				brands: "Example Brand",
+				image_front_url: "https://images.openfoodfacts.org/images/products/000/211/304/62506/front_en.3.400.jpg",
+				image_front_small_url: "https://images.openfoodfacts.org/images/products/000/211/304/62506/front_en.3.200.jpg",
+				nutriments: { "energy-kcal_100g": 50 },
+			},
+			"00021130462506",
+		);
+
+		expect(draft?.image).toMatchObject({
+			source: "open-food-facts",
+			sourceReference: "00021130462506",
+			role: "front",
+			imageUrl: "https://images.openfoodfacts.org/images/products/000/211/304/62506/front_en.3.400.jpg",
+			thumbnailUrl: "https://images.openfoodfacts.org/images/products/000/211/304/62506/front_en.3.200.jpg",
+			licenseName: "Creative Commons Attribution-ShareAlike",
+			licenseUrl: "https://world.openfoodfacts.org/terms-of-use",
+			attributionText: "Open Food Facts contributors",
+			confidence: "imported",
+		});
+		expect(draft?.image?.fetchedAt).toBeTruthy();
+	});
+
 	it("converts USDA per-100g branded values to the serving", () => {
 		const draft = mapFdcBarcodeFood(
 			{
