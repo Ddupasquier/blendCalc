@@ -184,3 +184,62 @@ export const publishModeratedFoodImageAsset = async ({
 		fetchedAt: now,
 	} satisfies FoodImageAsset;
 };
+
+export const updateFoodImageAssetPlacement = async ({
+	source,
+	sourceReference,
+	role,
+	moderatorId,
+	crop,
+}: {
+	source: FoodImageAsset["source"];
+	sourceReference: string;
+	role: FoodImageAsset["role"];
+	moderatorId: string;
+	crop: FoodImageCropValues;
+}) => {
+	const admin = getSupabaseAdminClient();
+	const now = new Date().toISOString();
+	const payload = {
+		...normalizeCrop({
+			...crop,
+			cropSource: "moderator",
+		}),
+		approved_by: moderatorId,
+		approved_at: now,
+	};
+
+	const { data, error } = await admin
+		.from("food_image_assets")
+		.update(payload)
+		.eq("source", source)
+		.eq("source_reference", sourceReference)
+		.eq("image_role", role)
+		.eq("status", "active")
+		.select(
+			"source, source_reference, image_role, image_url, thumbnail_url, storage_path, license_name, license_url, attribution_text, confidence, crop_x, crop_y, crop_zoom, crop_source, approved_by, approved_at, fetched_at",
+		)
+		.maybeSingle();
+	if (error) throw error;
+	if (!data) return null;
+
+	return {
+		source: data.source as FoodImageAsset["source"],
+		sourceReference: data.source_reference ?? undefined,
+		role: data.image_role as FoodImageAsset["role"],
+		imageUrl: data.image_url,
+		thumbnailUrl: data.thumbnail_url ?? undefined,
+		storagePath: data.storage_path ?? undefined,
+		licenseName: data.license_name,
+		licenseUrl: data.license_url ?? undefined,
+		attributionText: data.attribution_text ?? undefined,
+		confidence: data.confidence as FoodImageAsset["confidence"],
+		cropX: data.crop_x,
+		cropY: data.crop_y,
+		cropZoom: data.crop_zoom,
+		cropSource: data.crop_source as FoodImageAsset["cropSource"],
+		approvedBy: data.approved_by ?? undefined,
+		approvedAt: data.approved_at ?? undefined,
+		fetchedAt: data.fetched_at,
+	} satisfies FoodImageAsset;
+};

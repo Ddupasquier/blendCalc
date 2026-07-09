@@ -4,9 +4,11 @@ import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 
 const VIEW_PARAM = "view";
 const SHEET_PARAM = "sheet";
+const MODAL_PARAM = "modal";
 const FOOD_PARAM = "food";
 const LIST_PARAM = "list";
 const ACTIONS_PARAM = "actions";
+const FRIDGE_ROUTE_SEGMENT = "fridge";
 const LIST_ROUTE_SLUGS = {
 	fridge: "fridge",
 	shoppingList: "shopping-list",
@@ -21,7 +23,12 @@ export const INGREDIENT_ROUTE_SHEETS = {
 	manualEntry: "manual-entry",
 	filters: "filters",
 	ingredientActions: "ingredient-actions",
+	imagePlacement: "image-placement",
 	renameIngredient: "rename-ingredient",
+} as const;
+
+export const INGREDIENT_ROUTE_MODALS = {
+	barcodeScanner: "barcode-scanner",
 } as const;
 
 export type IngredientRouteView =
@@ -30,9 +37,13 @@ export type IngredientRouteView =
 export type IngredientRouteSheet =
 	(typeof INGREDIENT_ROUTE_SHEETS)[keyof typeof INGREDIENT_ROUTE_SHEETS];
 
+export type IngredientRouteModal =
+	(typeof INGREDIENT_ROUTE_MODALS)[keyof typeof INGREDIENT_ROUTE_MODALS];
+
 export type IngredientRouteState = {
 	view: IngredientRouteView | null;
 	sheet: IngredientRouteSheet | null;
+	modal: IngredientRouteModal | null;
 	foodId: number | null;
 	listKey: SmoothieListKey | null;
 	showListActions: boolean;
@@ -41,6 +52,7 @@ export type IngredientRouteState = {
 export type IngredientRoutePatch = Partial<{
 	view: IngredientRouteView | null;
 	sheet: IngredientRouteSheet | null;
+	modal: IngredientRouteModal | null;
 	foodId: number | null;
 	listKey: SmoothieListKey | null;
 	showListActions: boolean;
@@ -48,6 +60,7 @@ export type IngredientRoutePatch = Partial<{
 
 const routeViews = new Set<string>(Object.values(INGREDIENT_ROUTE_VIEWS));
 const routeSheets = new Set<string>(Object.values(INGREDIENT_ROUTE_SHEETS));
+const routeModals = new Set<string>(Object.values(INGREDIENT_ROUTE_MODALS));
 
 export const isIngredientListKey = (
 	value: string | null,
@@ -79,31 +92,148 @@ const parseFoodId = (value: string | null) => {
 	return Number.isFinite(foodId) ? foodId : null;
 };
 
-const setOrDelete = (
-	params: URLSearchParams,
-	key: string,
-	value: string | number | null | undefined,
-) => {
-	if (value === null || value === undefined || value === "") {
-		params.delete(key);
-		return;
+const getDecodedPathSegments = (pathname: string) =>
+	pathname
+		.split("/")
+		.filter(Boolean)
+		.map((segment) => decodeURIComponent(segment));
+
+const getIngredientRouteBasePath = (pathname: string) => {
+	const segments = getDecodedPathSegments(pathname);
+	const fridgeIndex = segments.indexOf(FRIDGE_ROUTE_SEGMENT);
+	if (fridgeIndex === -1) return `/${FRIDGE_ROUTE_SEGMENT}`;
+	return `/${segments.slice(0, fridgeIndex + 1).join("/")}`;
+};
+
+const getIngredientRoutePathSegments = (pathname: string) => {
+	const segments = getDecodedPathSegments(pathname);
+	const fridgeIndex = segments.indexOf(FRIDGE_ROUTE_SEGMENT);
+	if (fridgeIndex === -1) return [];
+	return segments.slice(fridgeIndex + 1);
+};
+
+const getPathRouteState = (url: URL): IngredientRouteState | null => {
+	const [routeSlug, secondSegment, thirdSegment] = getIngredientRoutePathSegments(
+		url.pathname,
+	);
+
+	if (!routeSlug) return null;
+
+	if (routeSlug === INGREDIENT_ROUTE_VIEWS.search) {
+		return {
+			view: INGREDIENT_ROUTE_VIEWS.search,
+			sheet: null,
+			modal: null,
+			foodId: null,
+			listKey: null,
+			showListActions: true,
+		};
 	}
-	params.set(key, String(value));
+
+	if (routeSlug === INGREDIENT_ROUTE_VIEWS.nutrition) {
+		return {
+			view: INGREDIENT_ROUTE_VIEWS.nutrition,
+			sheet: null,
+			modal: null,
+			foodId: parseFoodId(secondSegment ?? null),
+			listKey: null,
+			showListActions: url.searchParams.get(ACTIONS_PARAM) !== "hide",
+		};
+	}
+
+	if (routeSlug === INGREDIENT_ROUTE_SHEETS.manualEntry) {
+		return {
+			view: null,
+			sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+			modal:
+				secondSegment === INGREDIENT_ROUTE_MODALS.barcodeScanner
+					? INGREDIENT_ROUTE_MODALS.barcodeScanner
+					: null,
+			foodId: null,
+			listKey: null,
+			showListActions: true,
+		};
+	}
+
+	if (routeSlug === INGREDIENT_ROUTE_SHEETS.filters) {
+		return {
+			view: null,
+			sheet: INGREDIENT_ROUTE_SHEETS.filters,
+			modal: null,
+			foodId: null,
+			listKey: null,
+			showListActions: true,
+		};
+	}
+
+	if (routeSlug === INGREDIENT_ROUTE_MODALS.barcodeScanner) {
+		return {
+			view: null,
+			sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+			modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
+			foodId: null,
+			listKey: null,
+			showListActions: true,
+		};
+	}
+
+	if (routeSlug === "actions") {
+		return {
+			view: null,
+			sheet: INGREDIENT_ROUTE_SHEETS.ingredientActions,
+			modal: null,
+			foodId: parseFoodId(thirdSegment ?? null),
+			listKey: getListKeyFromRouteSlug(secondSegment ?? null),
+			showListActions: true,
+		};
+	}
+
+	if (routeSlug === "rename") {
+		return {
+			view: null,
+			sheet: INGREDIENT_ROUTE_SHEETS.renameIngredient,
+			modal: null,
+			foodId: parseFoodId(thirdSegment ?? null),
+			listKey: getListKeyFromRouteSlug(secondSegment ?? null),
+			showListActions: true,
+		};
+	}
+
+	if (routeSlug === INGREDIENT_ROUTE_SHEETS.imagePlacement) {
+		return {
+			view: null,
+			sheet: INGREDIENT_ROUTE_SHEETS.imagePlacement,
+			modal: null,
+			foodId: parseFoodId(thirdSegment ?? null),
+			listKey: getListKeyFromRouteSlug(secondSegment ?? null),
+			showListActions: true,
+		};
+	}
+
+	return null;
 };
 
 export const getIngredientRouteState = (url: URL): IngredientRouteState => {
+	const pathState = getPathRouteState(url);
+	if (pathState) return pathState;
+
 	const viewParam = url.searchParams.get(VIEW_PARAM);
 	const sheetParam = url.searchParams.get(SHEET_PARAM);
+	const modalParam = url.searchParams.get(MODAL_PARAM);
 	const view = routeViews.has(viewParam ?? "")
 		? (viewParam as IngredientRouteView)
 		: null;
 	const sheet = routeSheets.has(sheetParam ?? "")
 		? (sheetParam as IngredientRouteSheet)
 		: null;
+	const modal = routeModals.has(modalParam ?? "")
+		? (modalParam as IngredientRouteModal)
+		: null;
 
 	return {
 		view,
 		sheet: view ? null : sheet,
+		modal,
 		foodId: parseFoodId(url.searchParams.get(FOOD_PARAM)),
 		listKey: getListKeyFromRouteSlug(url.searchParams.get(LIST_PARAM)),
 		showListActions: url.searchParams.get(ACTIONS_PARAM) !== "hide",
@@ -115,10 +245,18 @@ export const buildIngredientRouteHref = (
 	patch: IngredientRoutePatch = {},
 ) => {
 	const nextUrl = new URL(url);
+	const basePath = getIngredientRouteBasePath(url.pathname);
 	const params = nextUrl.searchParams;
 	const current = getIngredientRouteState(url);
 	const nextView = patch.view !== undefined ? patch.view : current.view;
 	const nextSheet = patch.sheet !== undefined ? patch.sheet : current.sheet;
+	const routeModeChanged = patch.view !== undefined || patch.sheet !== undefined;
+	const nextModal =
+		patch.modal !== undefined
+			? patch.modal
+			: routeModeChanged
+				? null
+				: current.modal;
 	const nextFoodId = patch.foodId !== undefined ? patch.foodId : current.foodId;
 	const nextListKey = patch.listKey !== undefined ? patch.listKey : current.listKey;
 	const nextShowListActions =
@@ -128,25 +266,39 @@ export const buildIngredientRouteHref = (
 
 	params.delete(VIEW_PARAM);
 	params.delete(SHEET_PARAM);
+	params.delete(MODAL_PARAM);
 	params.delete(FOOD_PARAM);
 	params.delete(LIST_PARAM);
 	params.delete(ACTIONS_PARAM);
 
 	if (nextView) {
-		params.set(VIEW_PARAM, nextView);
+		nextUrl.pathname =
+			nextView === INGREDIENT_ROUTE_VIEWS.search
+				? `${basePath}/${INGREDIENT_ROUTE_VIEWS.search}`
+				: `${basePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}`;
 		if (nextView === INGREDIENT_ROUTE_VIEWS.nutrition) {
-			setOrDelete(params, FOOD_PARAM, nextFoodId);
 			if (!nextShowListActions) params.set(ACTIONS_PARAM, "hide");
 		}
 	} else if (nextSheet) {
-		params.set(SHEET_PARAM, nextSheet);
-		if (
-			nextSheet === INGREDIENT_ROUTE_SHEETS.ingredientActions ||
-			nextSheet === INGREDIENT_ROUTE_SHEETS.renameIngredient
-		) {
-			setOrDelete(params, FOOD_PARAM, nextFoodId);
-			setOrDelete(params, LIST_PARAM, getRouteSlugFromListKey(nextListKey));
+		const listSlug = getRouteSlugFromListKey(nextListKey);
+		if (nextModal === INGREDIENT_ROUTE_MODALS.barcodeScanner) {
+			nextUrl.pathname = `${basePath}/${INGREDIENT_ROUTE_SHEETS.manualEntry}/${INGREDIENT_ROUTE_MODALS.barcodeScanner}`;
+		} else if (nextSheet === INGREDIENT_ROUTE_SHEETS.manualEntry) {
+			nextUrl.pathname = `${basePath}/${INGREDIENT_ROUTE_SHEETS.manualEntry}`;
+		} else if (nextSheet === INGREDIENT_ROUTE_SHEETS.filters) {
+			nextUrl.pathname = `${basePath}/${INGREDIENT_ROUTE_SHEETS.filters}`;
+		} else if (nextSheet === INGREDIENT_ROUTE_SHEETS.ingredientActions) {
+			nextUrl.pathname = `${basePath}/actions/${listSlug ?? ""}/${nextFoodId ?? ""}`;
+		} else if (nextSheet === INGREDIENT_ROUTE_SHEETS.renameIngredient) {
+			nextUrl.pathname = `${basePath}/rename/${listSlug ?? ""}/${nextFoodId ?? ""}`;
+		} else if (nextSheet === INGREDIENT_ROUTE_SHEETS.imagePlacement) {
+			nextUrl.pathname = `${basePath}/${INGREDIENT_ROUTE_SHEETS.imagePlacement}/${listSlug ?? ""}/${nextFoodId ?? ""}`;
 		}
+	} else {
+		nextUrl.pathname =
+			nextModal === INGREDIENT_ROUTE_MODALS.barcodeScanner
+				? `${basePath}/${INGREDIENT_ROUTE_SHEETS.manualEntry}/${INGREDIENT_ROUTE_MODALS.barcodeScanner}`
+				: basePath;
 	}
 
 	const query = params.toString();

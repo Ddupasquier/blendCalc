@@ -15,21 +15,17 @@
 		NUTRITION_VIEWING_GRAM_STEP,
 		stepNutritionViewingGrams,
 	} from "$lib/utils/food/nutrients/nutritionDisplay";
-	import type { FdcFood } from "$lib/utils/food/types";
-	import type { IngredientListMembership } from "$lib/utils/ingredients/ingredientListUi";
 	import NutritionPanel from "./NutritionPanel.svelte";
+	import type { NutritionDetailViewProps } from "./types";
 
 	let {
 		food,
 		onClose,
 		showListActions = true,
 		listMembership = { inFridge: false, inShoppingList: false },
-	}: {
-		food: FdcFood;
-		onClose: () => void;
-		showListActions?: boolean;
-		listMembership?: IngredientListMembership;
-	} = $props();
+		canAdjustImagePlacement = false,
+		onImagePlacementSave,
+	}: NutritionDetailViewProps = $props();
 
 	let viewingGrams = $state(DEFAULT_NUTRITION_VIEWING_GRAMS);
 	let currentFoodId = $state<number | null>(null);
@@ -97,7 +93,14 @@
 
 	<ViewBody scroll>
 		<div class="nutrition-detail-view__panel">
-			<NutritionPanel {food} {showListActions} {viewingGrams} {listMembership} />
+			<NutritionPanel
+				{food}
+				{showListActions}
+				{viewingGrams}
+				{listMembership}
+				{canAdjustImagePlacement}
+				{onImagePlacementSave}
+			/>
 		</div>
 	</ViewBody>
 </ViewFrame>

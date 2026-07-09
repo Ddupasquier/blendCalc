@@ -476,6 +476,24 @@ describe("CustomIngredientForm", () => {
 		expect(screen.queryByLabelText(/food name/i)).not.toBeVisible();
 	});
 
+	it("only offers real list destinations after saving", async () => {
+		render(CustomIngredientForm, {
+			props: {
+				onCreate: vi.fn(),
+			},
+		});
+
+		await fillRequiredCustomIngredient("List destination snack");
+
+		expect(screen.getByRole("option", { name: "Fridge" })).toBeInTheDocument();
+		expect(
+			screen.getByRole("option", { name: "Shopping List" }),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByRole("option", { name: /save only/i }),
+		).not.toBeInTheDocument();
+	});
+
 	it("creates a custom ingredient from label nutrition values", async () => {
 		const onCreate = vi.fn();
 		render(CustomIngredientForm, {

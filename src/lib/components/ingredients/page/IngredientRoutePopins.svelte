@@ -3,6 +3,7 @@
 	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog.svelte";
 	import IngredientActionSheet from "$lib/components/ingredients/sheets/IngredientActionSheet.svelte";
 	import IngredientFilterSheet from "$lib/components/ingredients/sheets/IngredientFilterSheet.svelte";
+	import IngredientImagePlacementSheet from "$lib/components/ingredients/sheets/IngredientImagePlacementSheet.svelte";
 	import ManualEntrySheet from "$lib/components/ingredients/sheets/ManualEntrySheet.svelte";
 	import IngredientSearchView from "$lib/components/ingredients/search/IngredientSearchView.svelte";
 	import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView.svelte";
@@ -17,6 +18,7 @@
 		filterValue,
 		listLoading,
 		listMembership,
+		imagePlacementItem,
 		listQuery,
 		listSort,
 		removingItem,
@@ -30,22 +32,27 @@
 		selectedFood,
 		selectedFoodShowListActions,
 		sortOptions,
+		canAdjustImagePlacement,
 		onAddSearchResult,
 		onApplyFilters,
 		onCloseActionSheet,
+		onCloseImagePlacement,
 		onCloseIngredientSheet,
+		onCloseBarcodeScanner,
 		onCloseNutrition,
 		onCloseRename,
 		onCloseSearch,
 		onCreateManualIngredient,
 		onFilterFromSearch,
 		onLookupStateChange,
+		onAdjustImagePlacementFromActionSheet,
 		onRemoveFromActionSheet,
 		onRenameFromActionSheet,
 		onRenameListItem,
 		onRenameValueChange,
 		onScan,
 		onSearchSelect,
+		onImagePlacementSave,
 	}: IngredientRoutePopinsProps = $props();
 </script>
 
@@ -56,15 +63,26 @@
 		? `Remove from ${getIngredientListLabel(actionSheetItem.key)}`
 		: ""}
 	removing={removingItem !== null}
+	canAdjustImagePlacement={canAdjustImagePlacement && Boolean(actionSheetItem?.food.image?.sourceReference)}
 	onClose={onCloseActionSheet}
+	onAdjustImagePlacement={onAdjustImagePlacementFromActionSheet}
 	onRename={onRenameFromActionSheet}
 	onRemove={onRemoveFromActionSheet}
+/>
+
+<IngredientImagePlacementSheet
+	open={imagePlacementItem !== null}
+	food={imagePlacementItem?.food ?? null}
+	{canAdjustImagePlacement}
+	onClose={onCloseImagePlacement}
+	{onImagePlacementSave}
 />
 
 <ManualEntrySheet
 	open={activeSheet === "manual-entry"}
 	{scanSignal}
 	onClose={onCloseIngredientSheet}
+	onScannerClose={onCloseBarcodeScanner}
 	onCreate={onCreateManualIngredient}
 	onLookupStateChange={onLookupStateChange}
 />
@@ -123,6 +141,8 @@
 			food={selectedFood}
 			showListActions={selectedFoodShowListActions}
 			listMembership={listMembership}
+			{canAdjustImagePlacement}
+			{onImagePlacementSave}
 			onClose={onCloseNutrition}
 		/>
 	{/if}

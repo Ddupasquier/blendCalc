@@ -7,6 +7,7 @@
 		open,
 		scanSignal = 0,
 		onClose,
+		onScannerClose,
 		onCreate,
 		onLookupStateChange = () => {},
 	}: ManualEntrySheetProps = $props();
@@ -24,6 +25,7 @@
 		{onCreate}
 		{scanSignal}
 		{onClose}
+		{onScannerClose}
 		inline={false}
 		showScanButton={false}
 		{onLookupStateChange}

@@ -74,7 +74,7 @@
 		imageCropX: number;
 		imageCropY: number;
 		imageCropZoom: number;
-		saveDestination: SmoothieListKey | "custom-only";
+		saveDestination: SmoothieListKey;
 		error: string;
 		lastOutcome: CustomIngredientOutcomeState | null;
 		outcomeAction: "move" | "undo" | null;
@@ -88,7 +88,7 @@
 		onImageCropZoomChange: (value: number) => void;
 		onNutritionPhotoChange: (file: File | null) => void;
 		onBarcodePhotoChange: (file: File | null) => void;
-		onSaveDestinationChange: (destination: SmoothieListKey | "custom-only") => void;
+		onSaveDestinationChange: (destination: SmoothieListKey) => void;
 		onMoveToShopping: () => void | Promise<void>;
 		onMoveToFridge: () => void | Promise<void>;
 		onUndo: () => void | Promise<void>;
@@ -228,11 +228,10 @@
 			name="custom-ingredient-save-destination"
 			value={saveDestination}
 			onchange={(event) =>
-				onSaveDestinationChange(event.currentTarget.value as SmoothieListKey | "custom-only")}
+				onSaveDestinationChange(event.currentTarget.value as SmoothieListKey)}
 		>
 			<option value={MIX_STORAGE_KEYS.fridge}>Fridge</option>
 			<option value={MIX_STORAGE_KEYS.shoppingList}>Shopping List</option>
-			<option value="custom-only">Save only</option>
 		</select>
 	</label>
 

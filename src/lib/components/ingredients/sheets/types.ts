@@ -1,4 +1,6 @@
 import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
+import type { ImagePlacementSaveHandler } from "$lib/components/ingredients/nutrition/types";
+import type { FdcFood } from "$lib/utils/food/types";
 import type { FoodListSort } from "$lib/utils/list/listNavigation";
 
 export type IngredientFilterOption = {
@@ -33,6 +35,7 @@ export type ManualEntrySheetProps = {
 	open: boolean;
 	scanSignal?: number;
 	onClose: () => void;
+	onScannerClose?: () => void;
 	onCreate: ManualEntryCreateHandler;
 	onLookupStateChange?: (lookingUp: boolean) => void;
 };
@@ -42,7 +45,17 @@ export type IngredientActionSheetProps = {
 	title: string;
 	removeLabel: string;
 	removing?: boolean;
+	canAdjustImagePlacement?: boolean;
 	onClose: () => void;
+	onAdjustImagePlacement?: () => void;
 	onRename: () => void;
 	onRemove: () => void;
+};
+
+export type IngredientImagePlacementSheetProps = {
+	open: boolean;
+	food: FdcFood | null;
+	canAdjustImagePlacement: boolean;
+	onClose: () => void;
+	onImagePlacementSave: ImagePlacementSaveHandler;
 };

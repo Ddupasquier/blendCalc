@@ -16,7 +16,7 @@
     import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList.svelte";
     import SavedIngredientListLayout from "$lib/components/ingredients/list/SavedIngredientListLayout.svelte";
     import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
-    import type { FdcFood } from "$lib/utils/food/types";
+    import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
     import {
         areFoodIdsEqual,
         getIngredientActionKey,
@@ -34,6 +34,7 @@
         buildIngredientRouteHref,
         findIngredientRouteFood,
         getIngredientRouteState,
+        INGREDIENT_ROUTE_MODALS,
         INGREDIENT_ROUTE_SHEETS,
         INGREDIENT_ROUTE_VIEWS,
         type IngredientRoutePatch,
@@ -68,6 +69,7 @@
     let selectedFood = $state<FdcFood | null>(null);
     let selectedFoodShowListActions = $state(true);
     let scanSignal = $state(0);
+    let barcodeScannerRouteOpen = $state(false);
     let barcodeLookupBusy = $state(false);
     let listQuery = $state("");
     let sourceFilter = $state("all");
@@ -92,6 +94,7 @@
         [MIX_STORAGE_KEYS.shoppingList]: [],
     });
     let actionSheetItem = $state<IngredientActionItem | null>(null);
+    let imagePlacementItem = $state<IngredientActionItem | null>(null);
     let movingItem = $state<string | null>(null);
 	let removingItem = $state<string | null>(null);
 	let renamingItem = $state<{ key: SmoothieListKey; food: FdcFood } | null>(null);
@@ -176,6 +179,10 @@
     const canRevealMoreActiveItems = $derived(
         activeVisibleList.length < activeFilteredList.length ||
             activeRawList.length < activeTotalCount,
+    );
+    const canAdjustImagePlacement = $derived(
+        page.data.authUser?.role === "admin" ||
+            page.data.authUser?.role === "moderator",
     );
 
     const setListPage = (
@@ -285,10 +292,23 @@
     const startBarcodeScan = () => {
         searchViewOpen = false;
         activeSheet = "manual-entry";
+        barcodeScannerRouteOpen = true;
         scanSignal += 1;
         void navigateIngredientRoute({
             view: null,
             sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+            modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
+            foodId: null,
+            listKey: null,
+        });
+    };
+
+    const closeBarcodeScanner = () => {
+        barcodeScannerRouteOpen = false;
+        void navigateIngredientRoute({
+            view: null,
+            sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+            modal: null,
             foodId: null,
             listKey: null,
         });
@@ -393,6 +413,48 @@
         } finally {
             searchAddFoodId = null;
         }
+    };
+
+    const updateFoodImageInList = (
+        foods: FdcFood[],
+        foodId: number,
+        image: FoodImageAsset,
+    ) =>
+        foods.map((food) =>
+            food.fdcId === foodId
+                ? {
+                        ...food,
+                        image,
+                    }
+                : food,
+        );
+
+    const withUpdatedImage = (food: FdcFood, image: FoodImageAsset) => ({
+        ...food,
+        image,
+    });
+
+    const handleImagePlacementSave = (image: FoodImageAsset, foodId?: number) => {
+        const targetFoodId = foodId ?? selectedFood?.fdcId;
+        if (!targetFoodId) return;
+
+        if (selectedFood?.fdcId === targetFoodId) {
+            selectedFood = withUpdatedImage(selectedFood, image);
+        }
+        if (imagePlacementItem?.food.fdcId === targetFoodId) {
+            imagePlacementItem = {
+                ...imagePlacementItem,
+                food: withUpdatedImage(imagePlacementItem.food, image),
+            };
+        }
+        if (actionSheetItem?.food.fdcId === targetFoodId) {
+            actionSheetItem = {
+                ...actionSheetItem,
+                food: withUpdatedImage(actionSheetItem.food, image),
+            };
+        }
+        onHand = updateFoodImageInList(onHand, targetFoodId, image);
+        shoppingList = updateFoodImageInList(shoppingList, targetFoodId, image);
     };
 
     const closeNutritionDetail = () => {
@@ -586,6 +648,24 @@
         void closeRoutedPopin();
     };
 
+    const openImagePlacementFromActionSheet = () => {
+        if (!actionSheetItem) return;
+        const currentItem = actionSheetItem;
+        imagePlacementItem = currentItem;
+        actionSheetItem = null;
+        void navigateIngredientRoute({
+            view: null,
+            sheet: INGREDIENT_ROUTE_SHEETS.imagePlacement,
+            foodId: currentItem.food.fdcId,
+            listKey: currentItem.key,
+        });
+    };
+
+    const closeImagePlacementSheet = () => {
+        imagePlacementItem = null;
+        void closeRoutedPopin();
+    };
+
     const renameFromActionSheet = () => {
         if (!actionSheetItem) return;
         openRenameDialog(actionSheetItem.key, actionSheetItem.food);
@@ -674,6 +754,15 @@
                 ? routeState.sheet
                 : null;
 
+        if (routeState.modal === INGREDIENT_ROUTE_MODALS.barcodeScanner) {
+            if (!barcodeScannerRouteOpen) {
+                barcodeScannerRouteOpen = true;
+                scanSignal += 1;
+            }
+        } else {
+            barcodeScannerRouteOpen = false;
+        }
+
         if (routeState.view === INGREDIENT_ROUTE_VIEWS.nutrition) {
             const nextFood =
                 selectedFood?.fdcId === routeState.foodId ? selectedFood : routeFood;
@@ -690,8 +779,22 @@
             routeFood
         ) {
             actionSheetItem = { key: routeState.listKey, food: routeFood };
-        } else if (routeState.sheet !== INGREDIENT_ROUTE_SHEETS.renameIngredient) {
+        } else if (
+            routeState.sheet !== INGREDIENT_ROUTE_SHEETS.renameIngredient &&
+            routeState.sheet !== INGREDIENT_ROUTE_SHEETS.imagePlacement
+        ) {
             actionSheetItem = null;
+        }
+
+        if (
+            routeState.sheet === INGREDIENT_ROUTE_SHEETS.imagePlacement &&
+            routeState.listKey &&
+            routeFood
+        ) {
+            imagePlacementItem = { key: routeState.listKey, food: routeFood };
+            actionSheetItem = null;
+        } else {
+            imagePlacementItem = null;
         }
 
         if (
@@ -827,6 +930,7 @@
     filterValue={sourceFilter}
     {listLoading}
     listMembership={selectedFoodListMembership}
+    {imagePlacementItem}
     listQuery={listQuery}
     listSort={listSort}
     {removingItem}
@@ -840,22 +944,27 @@
     {selectedFood}
     {selectedFoodShowListActions}
     sortOptions={FOOD_LIST_SORT_OPTIONS}
+    {canAdjustImagePlacement}
     onAddSearchResult={addSearchResultToFridge}
     onApplyFilters={applyListFilters}
     onCloseActionSheet={closeActionSheet}
+    onCloseImagePlacement={closeImagePlacementSheet}
     onCloseIngredientSheet={closeIngredientSheet}
     onCloseNutrition={closeNutritionDetail}
     onCloseRename={closeRenameDialog}
     onCloseSearch={closeSearchView}
+    onCloseBarcodeScanner={closeBarcodeScanner}
     onCreateManualIngredient={handleCreate}
     onFilterFromSearch={toggleFilters}
     onLookupStateChange={(busy) => (barcodeLookupBusy = busy)}
+    onAdjustImagePlacementFromActionSheet={openImagePlacementFromActionSheet}
     onRemoveFromActionSheet={removeFromActionSheet}
     onRenameFromActionSheet={renameFromActionSheet}
     onRenameListItem={renameListItem}
     onRenameValueChange={() => (renameError = "")}
     onScan={startBarcodeScan}
     onSearchSelect={handleSearchSelect}
+    onImagePlacementSave={handleImagePlacementSave}
 />
 
 <style lang="scss">

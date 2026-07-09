@@ -2,27 +2,23 @@
 	import NutritionFactsLabel from "$lib/components/ingredients/nutrition/NutritionFactsLabel.svelte";
 	import NutritionListActions from "$lib/components/ingredients/nutrition/NutritionListActions.svelte";
 	import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel.svelte";
-	import type { FdcFood } from "$lib/utils/food/types";
 	import {
 		DEFAULT_NUTRITION_VIEWING_GRAMS,
 	} from "$lib/utils/food/nutrients/nutritionDisplay";
-	import type { IngredientListMembership } from "$lib/utils/ingredients/ingredientListUi";
+	import type { NutritionPanelProps } from "./types";
 
 	let {
 		food,
 		showListActions = true,
 		viewingGrams = DEFAULT_NUTRITION_VIEWING_GRAMS,
 		listMembership = { inFridge: false, inShoppingList: false },
-	}: {
-		food?: FdcFood;
-		showListActions?: boolean;
-		viewingGrams?: number;
-		listMembership?: IngredientListMembership;
-	} = $props();
+		canAdjustImagePlacement = false,
+		onImagePlacementSave,
+	}: NutritionPanelProps = $props();
 </script>
 
 <section class="nutrition-panel">
-	<ProductImagePanel {food} />
+	<ProductImagePanel {food} {canAdjustImagePlacement} {onImagePlacementSave} />
 	<NutritionFactsLabel {food} {viewingGrams} />
 	<NutritionListActions {food} {showListActions} {listMembership} />
 </section>

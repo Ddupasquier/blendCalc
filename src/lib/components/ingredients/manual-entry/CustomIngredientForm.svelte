@@ -102,6 +102,8 @@
 		scanSignal = 0,
 		showScanButton = true,
 		inline = true,
+		onScannerOpen,
+		onScannerClose,
 		onLookupStateChange = () => {},
 	}: {
 		onCreate: ManualEntryCreateHandler;
@@ -110,6 +112,8 @@
 		scanSignal?: number;
 		showScanButton?: boolean;
 		inline?: boolean;
+		onScannerOpen?: () => void;
+		onScannerClose?: () => void;
 		onLookupStateChange?: (lookingUp: boolean) => void;
 	} = $props();
 
@@ -172,9 +176,7 @@
 	let labels = $state<string[]>([]);
 	let categories = $state<string[]>([]);
 	let image = $state<FoodImageAsset | undefined>(undefined);
-	let saveDestination = $state<SmoothieListKey | "custom-only">(
-		getInitialSaveDestination(),
-	);
+	let saveDestination = $state<SmoothieListKey>(getInitialSaveDestination());
 	let lastOutcome = $state<CustomIngredientOutcomeState | null>(null);
 	let stepWarningMessage = $state("");
 	let stepWarningStep = $state<ManualEntryStepId | null>(null);
@@ -347,6 +349,16 @@
 		barcodeReferenceAcceptedBarcode = "";
 		if (!lookingUpBarcode) barcodeMessage = "";
 		scheduleManualBarcodeReferenceCheck();
+	};
+
+	const openBarcodeScanner = () => {
+		scannerOpen = true;
+		onScannerOpen?.();
+	};
+
+	const closeBarcodeScanner = () => {
+		scannerOpen = false;
+		onScannerClose?.();
 	};
 
 	const applyBarcodeProductDraft = (draft: BarcodeProductDraft) => {
@@ -735,7 +747,7 @@
 
 	const setOutcome = (
 		food: FdcFood,
-		destination: SmoothieListKey | "custom-only",
+		destination: SmoothieListKey,
 		addedToList: boolean,
 		message: string,
 	) => {
@@ -869,7 +881,7 @@
 	const undoLastOutcomeAdd = () => runLastOutcomeAction("undo");
 
 	const handleBarcodeDetected = async (result: BarcodeScanResult) => {
-		scannerOpen = false;
+		closeBarcodeScanner();
 		lookingUpBarcode = true;
 		error = "";
 		barcodeMessage = "Looking up this product…";
@@ -1013,7 +1025,7 @@
 			<ManualEntryScanOption
 				scanning={lookingUpBarcode}
 				disabled={saving || checkingBarcodeReference}
-				onScan={() => (scannerOpen = true)}
+				onScan={openBarcodeScanner}
 			/>
 		{/if}
 
@@ -1132,6 +1144,6 @@
 	<BarcodeScannerDialog
 		open={scannerOpen}
 		onDetected={handleBarcodeDetected}
-		onClose={() => (scannerOpen = false)}
+		onClose={closeBarcodeScanner}
 	/>
 {/if}

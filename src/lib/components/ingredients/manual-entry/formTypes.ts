@@ -54,7 +54,7 @@ export type ManualEntryVolumeOption = {
 
 export type CustomIngredientOutcomeState = {
 	food: FdcFood;
-	destination: SmoothieListKey | "custom-only";
+	destination: SmoothieListKey;
 	addedToList: boolean;
 	message: string;
 };

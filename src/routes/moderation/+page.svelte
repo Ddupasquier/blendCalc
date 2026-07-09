@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import type { SubmitFunction } from "@sveltejs/kit";
+	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor.svelte";
+	import type { ImagePlacementValue } from "$lib/components/common/images/types";
 	import { APP_NAME } from "$lib/config/brand";
 	import type { ActionData, PageData } from "./$types";
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let pendingTargetUserId = $state<string | null>(null);
 	let searching = $state(false);
-	let imageCropBySubmission = $state<
-		Record<string, { cropX: number; cropY: number; cropZoom: number }>
-	>({});
+	let imageCropBySubmission = $state<Record<string, ImagePlacementValue>>({});
 
 	const getImageCrop = (
 		submission: PageData["productSubmissions"][number],
@@ -17,24 +17,12 @@
 
 	const setImageCrop = (
 		submission: PageData["productSubmissions"][number],
-		key: "cropX" | "cropY" | "cropZoom",
-		value: number,
+		value: ImagePlacementValue,
 	) => {
-		const current = getImageCrop(submission);
 		imageCropBySubmission = {
 			...imageCropBySubmission,
-			[submission.id]: {
-				...current,
-				[key]: value,
-			},
+			[submission.id]: value,
 		};
-	};
-
-	const getImageCropStyle = (
-		submission: PageData["productSubmissions"][number],
-	) => {
-		const crop = getImageCrop(submission);
-		return `--moderation-image-focus-x: ${crop.cropX}%; --moderation-image-focus-y: ${crop.cropY}%; --moderation-image-zoom: ${crop.cropZoom};`;
 	};
 
 	const enhanceModerationAction: SubmitFunction = ({ formData, cancel }) => {
@@ -178,63 +166,14 @@
 						</p>
 					{/if}
 					{#if submission.frontEvidenceUrl}
-						<section class="product-card__image-crop" aria-label="Public image crop preview">
-							<div>
-								<strong>Public image preview</strong>
-								<p>Adjust what appears in ingredient cards before approving.</p>
-							</div>
-							<div class="product-card__image-previews">
-								<div class="product-card__card-preview">
-									<img
-										src={submission.frontEvidenceUrl}
-										alt="Card icon preview"
-										style={getImageCropStyle(submission)}
-									/>
-								</div>
-								<figure class="product-card__nutrition-preview">
-									<img src={submission.frontEvidenceUrl} alt="Nutrition page product preview" />
-									<figcaption>Nutrition page shows the full image.</figcaption>
-								</figure>
-							</div>
-							<div class="product-card__crop-controls">
-								<label>
-									<span>Horizontal focus</span>
-									<input
-										type="range"
-										min="0"
-										max="100"
-										step="1"
-										value={getImageCrop(submission).cropX}
-										oninput={(event) =>
-											setImageCrop(submission, "cropX", Number(event.currentTarget.value))}
-									/>
-								</label>
-								<label>
-									<span>Vertical focus</span>
-									<input
-										type="range"
-										min="0"
-										max="100"
-										step="1"
-										value={getImageCrop(submission).cropY}
-										oninput={(event) =>
-											setImageCrop(submission, "cropY", Number(event.currentTarget.value))}
-									/>
-								</label>
-								<label>
-									<span>Zoom</span>
-									<input
-										type="range"
-										min="1"
-										max="4"
-										step="0.05"
-										value={getImageCrop(submission).cropZoom}
-										oninput={(event) =>
-											setImageCrop(submission, "cropZoom", Number(event.currentTarget.value))}
-									/>
-								</label>
-							</div>
-						</section>
+						<ImagePlacementEditor
+							imageUrl={submission.frontEvidenceUrl}
+							alt="Product image preview"
+							title="Public image preview"
+							description="Adjust what appears in ingredient cards before approving."
+							value={getImageCrop(submission)}
+							onChange={(value) => setImageCrop(submission, value)}
+						/>
 					{/if}
 					<details>
 						<summary>Review {submission.nutrients.length} nutrition values</summary>
@@ -515,85 +454,6 @@
 			border: $app-border;
 			border-radius: $app-radius;
 		}
-	}
-
-	.product-card__image-crop {
-		display: grid;
-		gap: $app-gap-sm;
-		padding: $app-gap-sm;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-radius;
-	}
-
-	.product-card__image-crop p {
-		margin: $app-gap-xs 0 0;
-		color: $app-muted;
-		font-size: $app-font-size-sm;
-	}
-
-	.product-card__image-previews {
-		display: grid;
-		grid-template-columns: auto minmax(0, 1fr);
-		gap: $app-gap-sm;
-		align-items: center;
-	}
-
-	.product-card__card-preview {
-		width: $ingredient-food-icon-size;
-		height: $ingredient-food-icon-size;
-		overflow: hidden;
-		background: $app-bg;
-		border: $app-border;
-		border-radius: $app-radius-circle;
-	}
-
-	.product-card__card-preview img {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		object-position: var(--moderation-image-focus-x, 50%) var(--moderation-image-focus-y, 50%);
-		transform: scale(var(--moderation-image-zoom, 1));
-	}
-
-	.product-card__nutrition-preview {
-		display: grid;
-		gap: $app-gap-xs;
-		min-width: 0;
-		margin: 0;
-	}
-
-	.product-card__nutrition-preview img {
-		width: 100%;
-		max-height: $ingredient-nutrition-product-image-max-height;
-		object-fit: contain;
-		background: $app-bg;
-		border: $app-border;
-		border-radius: $app-radius;
-	}
-
-	.product-card__nutrition-preview figcaption {
-		color: $app-muted;
-		font-size: $app-font-size-xs;
-		font-weight: 700;
-	}
-
-	.product-card__crop-controls {
-		display: grid;
-		gap: $app-gap-xs;
-	}
-
-	.product-card__crop-controls label {
-		display: grid;
-		gap: $app-gap-xs;
-		color: $app-muted;
-		font-size: $app-font-size-sm;
-		font-weight: 800;
-	}
-
-	.product-card__crop-controls input {
-		width: 100%;
-		accent-color: $app-primary;
 	}
 
 	.product-card__notice {

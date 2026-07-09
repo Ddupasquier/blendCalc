@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Pencil from "$lib/assets/icons/Pencil.svelte";
+	import Sliders from "$lib/assets/icons/Sliders.svelte";
 	import Trash from "$lib/assets/icons/Trash.svelte";
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet.svelte";
 	import BottomSheetAction from "$lib/components/common/sheets/BottomSheetAction.svelte";
@@ -10,7 +11,9 @@
 		title,
 		removeLabel,
 		removing = false,
+		canAdjustImagePlacement = false,
 		onClose,
+		onAdjustImagePlacement,
 		onRename,
 		onRemove,
 	}: IngredientActionSheetProps = $props();
@@ -24,6 +27,13 @@
 	onClose={onClose}
 >
 	<div class="ingredient-action-sheet__actions">
+		{#if canAdjustImagePlacement && onAdjustImagePlacement}
+			<BottomSheetAction label="Adjust image placement" onSelect={onAdjustImagePlacement}>
+				{#snippet icon()}
+					<Sliders />
+				{/snippet}
+			</BottomSheetAction>
+		{/if}
 		<BottomSheetAction label="Rename" onSelect={onRename}>
 			{#snippet icon()}
 				<Pencil />

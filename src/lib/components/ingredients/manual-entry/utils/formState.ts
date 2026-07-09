@@ -89,5 +89,4 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	image: undefined,
 });
 
-export const getInitialSaveDestination = (): SmoothieListKey | "custom-only" =>
-	MIX_STORAGE_KEYS.fridge;
+export const getInitialSaveDestination = (): SmoothieListKey => MIX_STORAGE_KEYS.fridge;

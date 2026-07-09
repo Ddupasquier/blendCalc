@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from "svelte";
-	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor.svelte";
 	import type { ProductImageEvidenceInputProps } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
@@ -32,9 +32,6 @@
 	});
 
 	const previewUrl = $derived(trustedImageUrl || objectUrl);
-	const imageStyle = $derived(
-		`--product-image-focus-x: ${cropX}%; --product-image-focus-y: ${cropY}%; --product-image-zoom: ${cropZoom};`,
-	);
 </script>
 
 <section class="custom-ingredient__image-review" aria-labelledby="product-image-title">
@@ -54,9 +51,27 @@
 	</div>
 
 	{#if previewUrl}
-		<div class="custom-ingredient__image-preview" aria-label="Product image preview">
-			<img src={previewUrl} alt="Product package preview" style={imageStyle} />
-		</div>
+		<ImagePlacementEditor
+			imageUrl={previewUrl}
+			alt="Product package preview"
+			title="Card image preview"
+			description={trustedImageUrl
+				? "Trusted images use the saved placement."
+				: "Adjust how the package image appears in ingredient cards."}
+			mode="card-only"
+			editable={!trustedImageUrl && Boolean(objectUrl)}
+			value={{ cropX, cropY, cropZoom }}
+			onChange={(value) => {
+				onCropXChange(value.cropX);
+				onCropYChange(value.cropY);
+				onCropZoomChange(value.cropZoom);
+			}}
+			onReset={() => {
+				onCropXChange(50);
+				onCropYChange(50);
+				onCropZoomChange(1);
+			}}
+		/>
 	{/if}
 
 	{#if !trustedImageUrl}
@@ -71,53 +86,5 @@
 				onchange={(event) => onFrontPhotoChange(event.currentTarget.files?.[0] ?? null)}
 			/>
 		</label>
-
-		{#if objectUrl}
-			<div class="custom-ingredient__crop-controls">
-				<label>
-					<span>Horizontal focus</span>
-					<input
-						type="range"
-						min="0"
-						max="100"
-						step="1"
-						value={cropX}
-						oninput={(event) => onCropXChange(Number(event.currentTarget.value))}
-					/>
-				</label>
-				<label>
-					<span>Vertical focus</span>
-					<input
-						type="range"
-						min="0"
-						max="100"
-						step="1"
-						value={cropY}
-						oninput={(event) => onCropYChange(Number(event.currentTarget.value))}
-					/>
-				</label>
-				<label>
-					<span>Zoom</span>
-					<input
-						type="range"
-						min="1"
-						max="4"
-						step="0.05"
-						value={cropZoom}
-						oninput={(event) => onCropZoomChange(Number(event.currentTarget.value))}
-					/>
-				</label>
-				<RoundedActionButton
-					variant="neutral"
-					onclick={() => {
-						onCropXChange(50);
-						onCropYChange(50);
-						onCropZoomChange(1);
-					}}
-				>
-					Reset image crop
-				</RoundedActionButton>
-			</div>
-		{/if}
 	{/if}
 </section>

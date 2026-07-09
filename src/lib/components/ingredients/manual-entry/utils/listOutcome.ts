@@ -9,11 +9,11 @@ import {
 import { MIX_STORAGE_KEYS } from "../../../../../defaults/mixDefaults";
 
 export const getDestinationLabel = (
-	destination: SmoothieListKey | "custom-only",
+	destination: SmoothieListKey,
 ) => {
 	if (destination === MIX_STORAGE_KEYS.fridge) return "Fridge";
 	if (destination === MIX_STORAGE_KEYS.shoppingList) return "Shopping List";
-	return "Custom Ingredients";
+	return "Selected list";
 };
 
 export const getListDestinationLabel = (destination: SmoothieListKey) =>
@@ -23,7 +23,7 @@ export type ManualEntryDestinationResult =
 	| {
 			ok: true;
 			food: FdcFood;
-			destination: SmoothieListKey | "custom-only";
+			destination: SmoothieListKey;
 			addedToList: boolean;
 			message: string;
 		}
@@ -41,7 +41,6 @@ export const canChangeManualEntryOutcome = (
 	Boolean(
 		lastOutcome &&
 			lastOutcome.addedToList &&
-			lastOutcome.destination !== "custom-only" &&
 			!outcomeAction,
 	);
 
@@ -52,28 +51,11 @@ export const addManualEntryFoodToDestination = async ({
 	onCreate,
 }: {
 	food: FdcFood;
-	saveDestination: SmoothieListKey | "custom-only";
+	saveDestination: SmoothieListKey;
 	alreadySaved: boolean;
 	onCreate: ManualEntryCreateHandler;
 }): Promise<ManualEntryDestinationResult> => {
 	const destinationLabel = getDestinationLabel(saveDestination);
-
-	if (saveDestination === "custom-only") {
-		await onCreate(food, {
-			destination: "custom-only",
-			addedToList: false,
-			source: "manual-entry",
-		});
-		return {
-			ok: true,
-			food,
-			destination: "custom-only",
-			addedToList: false,
-			message: alreadySaved
-				? `${food.description} is already saved. Showing your existing ingredient.`
-				: `${food.description} saved as a custom ingredient.`,
-		};
-	}
 
 	const listResult = await addFoodToSmoothieList(saveDestination, food);
 	if (listResult === "error") {
@@ -115,13 +97,6 @@ export const moveManualEntryOutcome = async (
 		};
 	}
 
-	if (lastOutcome.destination === "custom-only") {
-		return {
-			ok: false,
-			error: `${lastOutcome.food.description} is not currently in a list.`,
-		};
-	}
-
 	const removeResult = await removeFoodFromSmoothieList(
 		lastOutcome.destination,
 		lastOutcome.food.fdcId,
@@ -145,13 +120,6 @@ export const moveManualEntryOutcome = async (
 export const undoManualEntryOutcomeAdd = async (
 	lastOutcome: CustomIngredientOutcomeState,
 ): Promise<ManualEntryDestinationResult> => {
-	if (lastOutcome.destination === "custom-only") {
-		return {
-			ok: false,
-			error: `${lastOutcome.food.description} is not currently in a list.`,
-		};
-	}
-
 	const removeResult = await removeFoodFromSmoothieList(
 		lastOutcome.destination,
 		lastOutcome.food.fdcId,
@@ -166,9 +134,9 @@ export const undoManualEntryOutcomeAdd = async (
 	return {
 		ok: true,
 		food: lastOutcome.food,
-		destination: "custom-only",
+		destination: lastOutcome.destination,
 		addedToList: false,
-		message: `${lastOutcome.food.description} removed from ${getListDestinationLabel(lastOutcome.destination)}. The custom ingredient is still saved.`,
+		message: `${lastOutcome.food.description} removed from ${getListDestinationLabel(lastOutcome.destination)}.`,
 	};
 };
 

@@ -4,25 +4,15 @@
 		getFoodImageAltText,
 		pickFoodImageUrl,
 	} from "$lib/utils/food/images/foodImages";
+	import { getImagePlacementCssVars } from "$lib/components/common/images/imagePlacementStyle";
+	import { getFoodSymbolCatalogItem } from "$lib/utils/food/symbols/foodSymbolCatalog";
 
 	let {
 		food,
 		class: className = "",
 	}: FoodSymbolProps = $props();
 
-	const getSymbol = (value: string) => {
-		if (value.includes("strawberry") || value.includes("berry")) return "🍓";
-		if (value.includes("banana")) return "🍌";
-		if (value.includes("mango")) return "🥭";
-		if (value.includes("spinach") || value.includes("kale")) return "🥬";
-		if (value.includes("milk") || value.includes("yogurt")) return "🥛";
-		if (value.includes("beef") || value.includes("protein")) return "💪";
-		if (value.includes("seed") || value.includes("nut")) return "🌰";
-		return "🥤";
-	};
-
-	const text = $derived([food.description, food.foodCategory].join(" ").toLowerCase());
-	const symbol = $derived(getSymbol(text));
+	const symbolItem = $derived(getFoodSymbolCatalogItem(food));
 	const imageUrl = $derived(pickFoodImageUrl(food.image));
 	const imageAlt = $derived(
 		getFoodImageAltText({
@@ -31,7 +21,14 @@
 		}),
 	);
 	const imageStyle = $derived(
-		`--food-symbol-focus-x: ${food.image?.cropX ?? 50}%; --food-symbol-focus-y: ${food.image?.cropY ?? 50}%; --food-symbol-zoom: ${food.image?.cropZoom ?? 1};`,
+		getImagePlacementCssVars(
+			{
+				cropX: food.image?.cropX,
+				cropY: food.image?.cropY,
+				cropZoom: food.image?.cropZoom,
+			},
+			"food-symbol",
+		),
 	);
 	let imageFailed = $state(false);
 	let lastImageUrl = $state("");
@@ -55,7 +52,9 @@
 		onerror={() => (imageFailed = true)}
 	/>
 {:else}
-	<span class={className} aria-hidden="true">{symbol}</span>
+	<span class={className} aria-hidden="true" title={symbolItem.label}>
+		{symbolItem.symbol}
+	</span>
 {/if}
 
 <style lang="scss">
@@ -67,6 +66,11 @@
 		height: $ingredient-food-image-content-size;
 		object-fit: cover;
 		object-position: var(--food-symbol-focus-x, 50%) var(--food-symbol-focus-y, 50%);
-		transform: scale(var(--food-symbol-zoom, 1));
+		transform: translate(
+				var(--food-symbol-translate-x, 0%),
+				var(--food-symbol-translate-y, 0%)
+			)
+			scale(var(--food-symbol-zoom, 1));
+		transform-origin: center;
 	}
 </style>

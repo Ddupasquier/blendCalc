@@ -2,7 +2,7 @@ import type { FdcFood } from "$lib/utils/food/types";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 
 export type ManualEntryCreateContext = {
-	destination: SmoothieListKey | "custom-only";
+	destination: SmoothieListKey;
 	addedToList: boolean;
 	source: "manual-entry";
 };

@@ -22,7 +22,7 @@
 	<div>
 		<strong>{outcome.message}</strong>
 		<small>
-			{#if outcome.addedToList && outcome.destination !== "custom-only"}
+			{#if outcome.addedToList}
 				Next: use it in Mix, move it, or undo the list add.
 			{:else}
 				Next: preview the nutrition or open Mix when you are ready.

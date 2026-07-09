@@ -24,7 +24,7 @@ Thumbs.db
 
 # Local QA task tracker and screenshot references
 /docs/qa-tasks.md
-/docs/QA/qa-tasks.md
+/docs/QA/*.md
 /docs/QA/assets/
 
 # Vite

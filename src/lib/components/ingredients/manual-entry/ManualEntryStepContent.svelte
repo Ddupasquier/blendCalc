@@ -147,7 +147,7 @@
 		imageCropX: number;
 		imageCropY: number;
 		imageCropZoom: number;
-		saveDestination: SmoothieListKey | "custom-only";
+		saveDestination: SmoothieListKey;
 		error: string;
 		lastOutcome: CustomIngredientOutcomeState | null;
 		outcomeAction: "move" | "undo" | null;
@@ -185,9 +185,7 @@
 		onImageCropZoomChange: (value: number) => void;
 		onNutritionPhotoChange: (file: File | null) => void;
 		onBarcodePhotoChange: (file: File | null) => void;
-		onSaveDestinationChange: (
-			destination: SmoothieListKey | "custom-only",
-		) => void;
+		onSaveDestinationChange: (destination: SmoothieListKey) => void;
 		onSaveDestinationInput: (element: HTMLSelectElement | null) => void;
 		onMoveToShopping: () => void;
 		onMoveToFridge: () => void;
