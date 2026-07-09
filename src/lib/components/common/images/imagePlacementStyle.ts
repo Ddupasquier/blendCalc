@@ -12,8 +12,8 @@ export const getImagePlacementCssVars = (
 	const cropX = clamp(value.cropX ?? 50, 0, 100, 50);
 	const cropY = clamp(value.cropY ?? 50, 0, 100, 50);
 	const cropZoom = clamp(value.cropZoom ?? 1, 1, 4, 1);
-	const translateX = (50 - cropX) * (cropZoom - 1);
-	const translateY = (50 - cropY) * (cropZoom - 1);
+	const translateX = 50 - cropX;
+	const translateY = 50 - cropY;
 
 	return [
 		`--${prefix}-focus-x: ${cropX}%`,

@@ -19,6 +19,7 @@ uses a clickable navigation block instead.
 - [Source-Backed Food Images](#rule-source-backed-food-images)
 - [Backend And Validation](#rule-backend-best-practices)
 - [Sheets, Views, And URL State](#rule-bottom-sheet-flows)
+- [Privileged Actions](#rule-privileged-action-badges)
 - [QA Process](#rule-qa-process)
 - [Audit Summary](#audit-summary)
 - [Findings](#findings)
@@ -93,6 +94,7 @@ These are the working rules gathered from prior product and implementation decis
 43. <a id="rule-view-primitives"></a>Full-height app views and sheet views must use shared view layout primitives (`ViewFrame`, `ViewTop`, `ViewBody`, `ViewFooter`, `ViewHeader`) instead of hand-rolled page grids. Keep always-visible controls in `ViewTop`, place only the intended scroll region in `ViewBody`, and avoid competing nested scroll containers unless a component explicitly owns a sub-scroll area.
 44. <a id="rule-sheet-base"></a>Sheet-style overlays must share implementation through `SheetBase`, with thin semantic wrappers for placement-specific behavior (`BottomSheet`, `RightSheet`, and future variants). Do not duplicate Escape handling, backdrop handling, slide transitions, shell bounds, z-index, or scroll containment in individual feature components.
 45. <a id="rule-icon-components"></a>All app UI icons must be reusable Svelte components under `src/lib/assets/icons` or a clearly named nested icon folder. Avoid raw emoji, one-off inline SVG, and ad hoc glyph spans in rendered UI unless the symbol is user-facing text content rather than an icon.
+45a. <a id="rule-privileged-action-badges"></a>Admin-only and moderator-only actions must show the shared crown badge on the action itself. Use the reusable privileged-action badge and shared button/action primitives; do not hardcode crown glyphs, duplicate badge styling, or hide privileged actions behind unmarked generic buttons.
 46. <a id="rule-qa-links"></a>QA tasks must include exact reproduction steps, exact code references, and links to the relevant development rules. Do not create duplicate rule sets inside QA docs; reference this document as the source of truth.
 47. <a id="rule-qa-screenshot-assets"></a>If a QA task depends on a specific screenshot reference, copy that screenshot into local-only `docs/QA/assets/` and link to that asset from the QA task. Screenshot-backed QA items must include both the clickable asset reference and the code references being verified. QA screenshots are working QA artifacts, not source-controlled product assets.
 48. <a id="rule-db-backed-nutrient-validation"></a>Nutrient relationship validation must be database-backed and enforced on both client and server paths. Rules like child nutrients not exceeding parent nutrients, required source nutrients, and label consistency checks should live in focused Supabase tables with provenance and indexes, then be consumed through shared utilities. Do not add UI-only constants for nutrient math or allow shared/catalog submissions to bypass the same rule set.

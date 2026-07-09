@@ -43,7 +43,7 @@
 		>
 			{#if role}
 				<span class="app-header__crown" aria-label="Moderator account" title="Moderator account">
-					<Crown size={12} />
+					<Crown size="var(--app-header-crown-icon-size)" />
 				</span>
 			{/if}
 
@@ -142,18 +142,19 @@
 	}
 
 	.app-header__crown {
+		--app-header-crown-icon-size: #{$app-privileged-badge-icon-size};
+
 		position: absolute;
-		top: -$app-gap-xs;
-		right: -$app-gap-xs;
+		top: calc($app-privileged-badge-size / -3);
+		right: calc($app-privileged-badge-size / -3);
 		display: inline-grid;
 		place-items: center;
-		width: 1rem;
-		height: 1rem;
-		color: $app-highlight-text;
-		background: $app-highlight;
-		border: 1px solid $color-figma-card;
+		width: $app-privileged-badge-size;
+		height: $app-privileged-badge-size;
+		color: $app-privileged-badge-text;
+		background: $app-privileged-badge-bg;
+		border: 1px solid $app-privileged-badge-border;
 		border-radius: 50%;
-		font-size: 0.62rem;
 		font-weight: $app-font-weight-bold;
 		line-height: 1;
 	}

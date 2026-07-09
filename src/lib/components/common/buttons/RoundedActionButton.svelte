@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
 	import type { RoundedActionButtonProps } from "$lib/components/common/buttons/types";
 
 	let {
@@ -7,6 +8,7 @@
 		fullWidth = false,
 		busy = false,
 		disabled = false,
+		privileged = false,
 		ariaLabel,
 		onclick,
 		children,
@@ -23,6 +25,9 @@
 	disabled={disabled || busy}
 	{onclick}
 >
+	{#if privileged}
+		<PrivilegedActionBadge />
+	{/if}
 	{#if children}
 		{@render children()}
 	{/if}
@@ -35,6 +40,7 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+		gap: $app-gap-xs;
 		min-width: 0;
 		min-height: $ingredient-control-height;
 		padding: 0 $ingredient-control-padding-x;

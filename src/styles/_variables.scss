@@ -586,6 +586,15 @@ $app-scan-laser: $color-guava-laser;
 // Readable foreground for content placed on the mango highlight.
 $app-highlight-text: $color-dark-taupe;
 
+// Privileged action badge. Applied to admin/moderator-only action markers.
+$app-privileged-badge-bg: $app-highlight;
+$app-privileged-badge-text: $app-highlight-text;
+$app-privileged-badge-border: $color-figma-card;
+$app-privileged-badge-size: 1.42rem;
+$app-privileged-badge-icon-size: 1rem;
+$app-privileged-action-badge-size: 1.72rem;
+$app-privileged-action-badge-icon-size: 1.18rem;
+
 // Custom ingredient background. Applied to manually added/user-created foods in
 // pills, result badges, ingredient cards, and saved drink ingredient chips.
 $app-custom-bg: $color-lavender-smoothie;

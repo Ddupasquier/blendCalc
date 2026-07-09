@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import type { SubmitFunction } from "@sveltejs/kit";
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor.svelte";
 	import type { ImagePlacementValue } from "$lib/components/common/images/types";
 	import { APP_NAME } from "$lib/config/brand";
@@ -172,6 +173,7 @@
 							title="Public image preview"
 							description="Adjust what appears in ingredient cards before approving."
 							value={getImageCrop(submission)}
+							privileged
 							onChange={(value) => setImageCrop(submission, value)}
 						/>
 					{/if}
@@ -196,7 +198,8 @@
 								type="submit"
 								disabled={pendingTargetUserId !== null || !submission.evidenceComplete || submission.isQaFixture}
 							>
-								{pendingTargetUserId === submission.id ? "Approving…" : "Approve"}
+								<PrivilegedActionBadge />
+								<span>{pendingTargetUserId === submission.id ? "Approving…" : "Approve"}</span>
 							</button>
 						</form>
 						<form method="POST" action="?/rejectProduct" use:enhance={enhanceModerationAction}>
@@ -206,7 +209,8 @@
 								<input name="reviewNote" maxlength="1000" required placeholder="What needs correction?" />
 							</label>
 							<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
-								{pendingTargetUserId === submission.id ? "Rejecting…" : "Reject"}
+								<PrivilegedActionBadge />
+								<span>{pendingTargetUserId === submission.id ? "Rejecting…" : "Reject"}</span>
 							</button>
 						</form>
 					</div>
@@ -254,7 +258,8 @@
 					<form method="POST" action="?/unban" use:enhance={enhanceModerationAction} aria-busy={pendingTargetUserId === user.id}>
 						<input type="hidden" name="targetUserId" value={user.id} />
 						<button class="secondary-action" type="submit" disabled={pendingTargetUserId !== null}>
-							{pendingTargetUserId === user.id ? "Restoring…" : "Restore access"}
+							<PrivilegedActionBadge />
+							<span>{pendingTargetUserId === user.id ? "Restoring…" : "Restore access"}</span>
 						</button>
 					</form>
 				{:else if user.id !== data.viewerUserId && user.role !== "admin" && !(data.viewerRole === "moderator" && user.role)}
@@ -271,7 +276,8 @@
 							<small>This reason and its plain-language explanation will be emailed to the user.</small>
 						</label>
 						<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
-							{pendingTargetUserId === user.id ? "Blocking…" : "Block account"}
+							<PrivilegedActionBadge />
+							<span>{pendingTargetUserId === user.id ? "Blocking…" : "Block account"}</span>
 						</button>
 					</form>
 				{/if}
@@ -408,6 +414,14 @@
 			gap: $app-gap-xs;
 			align-items: end;
 		}
+	}
+
+	.product-card__actions button,
+	.account-card form button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: $app-gap-xs;
 	}
 
 	.product-card__statuses {

@@ -3,14 +3,15 @@ import { describe, expect, it } from "vitest";
 import { getImagePlacementCssVars } from "$lib/components/common/images/imagePlacementStyle";
 
 describe("getImagePlacementCssVars", () => {
-	it("adds horizontal movement when crop is off-center and zoomed", () => {
+	it("moves horizontally and vertically even without extra zoom", () => {
 		const style = getImagePlacementCssVars(
-			{ cropX: 25, cropY: 50, cropZoom: 2 },
+			{ cropX: 25, cropY: 75, cropZoom: 1 },
 			"image-placement",
 		);
 
 		expect(style).toContain("--image-placement-translate-x: 25%");
-		expect(style).toContain("--image-placement-translate-y: 0%");
+		expect(style).toContain("--image-placement-translate-y: -25%");
+		expect(style).toContain("--image-placement-zoom: 1");
 	});
 
 	it("keeps centered images still when crop is centered", () => {

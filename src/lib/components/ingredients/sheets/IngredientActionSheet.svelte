@@ -28,7 +28,11 @@
 >
 	<div class="ingredient-action-sheet__actions">
 		{#if canAdjustImagePlacement && onAdjustImagePlacement}
-			<BottomSheetAction label="Adjust image placement" onSelect={onAdjustImagePlacement}>
+			<BottomSheetAction
+				label="Adjust image placement"
+				privileged
+				onSelect={onAdjustImagePlacement}
+			>
 				{#snippet icon()}
 					<Sliders />
 				{/snippet}

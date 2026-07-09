@@ -1,16 +1,19 @@
 <script lang="ts">
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
 	import type { Snippet } from "svelte";
 
 	let {
 		label,
 		variant = "default",
 		disabled = false,
+		privileged = false,
 		icon,
 		onSelect,
 	}: {
 		label: string;
 		variant?: "default" | "move" | "danger";
 		disabled?: boolean;
+		privileged?: boolean;
 		icon?: Snippet;
 		onSelect: () => void;
 	} = $props();
@@ -29,7 +32,12 @@
 			{@render icon()}
 		{/if}
 	</span>
-	<span>{label}</span>
+	<span class="bottom-sheet-action__label">
+		<span>{label}</span>
+		{#if privileged}
+			<PrivilegedActionBadge />
+		{/if}
+	</span>
 </button>
 
 <style lang="scss">
@@ -84,5 +92,12 @@
 			width: 1.1rem;
 			height: 1.1rem;
 		}
+	}
+
+	.bottom-sheet-action__label {
+		display: inline-flex;
+		align-items: center;
+		gap: $app-gap-xs;
+		min-width: 0;
 	}
 </style>

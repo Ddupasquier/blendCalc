@@ -107,6 +107,7 @@ export type RoundedActionButtonProps = {
 	fullWidth?: boolean;
 	busy?: boolean;
 	disabled?: boolean;
+	privileged?: boolean;
 	ariaLabel?: string;
 	onclick?: ButtonClickHandler;
 	children?: Snippet;

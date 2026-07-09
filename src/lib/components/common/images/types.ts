@@ -14,6 +14,7 @@ export type ImagePlacementEditorProps = {
 	description?: string;
 	mode?: ImagePlacementEditorMode;
 	editable?: boolean;
+	privileged?: boolean;
 	onChange?: (value: ImagePlacementValue) => void;
 	onReset?: () => void;
 };

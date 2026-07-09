@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
 	import ImagePlacementCardPreview from "$lib/components/common/images/ImagePlacementCardPreview.svelte";
 	import type {
@@ -14,6 +15,7 @@
 		description = "Adjust how the image appears in ingredient cards.",
 		mode = "card-and-full",
 		editable = true,
+		privileged = false,
 		onChange,
 		onReset,
 	}: ImagePlacementEditorProps = $props();
@@ -28,7 +30,12 @@
 
 <section class="image-placement-editor" aria-label={title}>
 	<div class="image-placement-editor__copy">
-		<strong>{title}</strong>
+		<strong class="image-placement-editor__title">
+			<span>{title}</span>
+			{#if privileged}
+				<PrivilegedActionBadge />
+			{/if}
+		</strong>
 		{#if description}
 			<p>{description}</p>
 		{/if}
@@ -84,7 +91,7 @@
 				/>
 			</label>
 			{#if onReset}
-				<RoundedActionButton variant="neutral" onclick={onReset}>
+				<RoundedActionButton variant="neutral" {privileged} onclick={onReset}>
 					Reset image placement
 				</RoundedActionButton>
 			{/if}
@@ -109,6 +116,13 @@
 		color: $ingredient-text-muted;
 		font-size: $app-font-size-sm;
 		line-height: 1.35;
+	}
+
+	.image-placement-editor__title {
+		display: inline-flex;
+		align-items: center;
+		gap: $app-gap-xs;
+		min-width: 0;
 	}
 
 	.image-placement-editor__previews {

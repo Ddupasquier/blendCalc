@@ -123,6 +123,7 @@
 					description="Adjust how this image appears in ingredient cards. The nutrition page keeps showing the full image."
 					mode="card-only"
 					value={draftPlacement}
+					privileged
 					onChange={(value) => {
 						draftPlacement = value;
 						placementMessage = "";
@@ -135,6 +136,7 @@
 					fullWidth
 					busy={savingPlacement}
 					disabled={!hasPlacementChanges}
+					privileged
 					onclick={savePlacement}
 				>
 					Save image placement
