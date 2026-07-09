@@ -106,6 +106,8 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | `npm run db:types` | Regenerate Supabase TypeScript database types |
 | `npm run catalog:qa-seed` | Seed a fake product submission for moderation testing |
 | `npm run catalog:qa-clean` | Remove fake product submission fixtures |
+| `npm run catalog:qa-image-seed` | Seed fake product image submissions for moderation testing |
+| `npm run catalog:qa-image-clean` | Remove fake image moderation fixtures that were not approved |
 | `npm run moderate -- ...` | Run moderation CLI role/block helpers |
 
 ---

@@ -40,6 +40,11 @@ import {
 	hasCompleteProductEvidence,
 	type ProductEvidencePaths,
 } from "./productEvidence.server";
+import {
+	persistFoodImageAsset,
+	publishModeratedFoodImageAsset,
+	type FoodImageCropValues,
+} from "./foodImages.server";
 
 type CatalogSource = "usda" | "open-food-facts" | "community-reviewed";
 type CatalogConfidence =
@@ -59,10 +64,12 @@ type ValidationReport = {
 	existingCatalogMatch?: boolean;
 	existingCatalogAction?: "already_available" | "update_review" | "auto_declined";
 	existingCatalogComparison?: CatalogSubmissionComparison;
+	imageCrop?: FoodImageCropValues | null;
 };
 
 type ProductSubmissionContext = {
 	reviewFlags?: string[];
+	frontImageCrop?: FoodImageCropValues | null;
 };
 
 type PendingProductSubmission = {
@@ -476,10 +483,21 @@ export const submitProductForCatalog = async (
 		existingCatalogMatch: Boolean(existingCatalogComparison),
 		existingCatalogAction: existingCatalogComparison ? "update_review" : undefined,
 		existingCatalogComparison: existingCatalogComparison ?? undefined,
+		imageCrop: context.frontImageCrop ?? null,
 	};
 	const matchedDraft = usdaDraft ?? openFoodFactsDraft;
+	const hasSourceMatchedImageEvidence = Boolean(
+		matchedDraft &&
+			!needsSourceComparisonReview &&
+			!food.image?.imageUrl &&
+			evidencePaths.front,
+	);
 
-	const evidenceComplete = hasCompleteProductEvidence(evidencePaths);
+	const evidenceComplete = hasSourceMatchedImageEvidence
+		? true
+		: food.image?.imageUrl
+			? Boolean(evidencePaths.nutrition && evidencePaths.barcode)
+			: hasCompleteProductEvidence(evidencePaths);
 	if (!matchedDraft && !evidenceComplete) {
 		throw new Error(
 			"Unknown products need front package, nutrition label, and barcode photos for verification.",
@@ -533,13 +551,13 @@ export const submitProductForCatalog = async (
 		throw submissionError ?? new Error("Product submission could not be saved.");
 	}
 
-	if (matchedDraft && !needsSourceComparisonReview) {
+	if (matchedDraft && !needsSourceComparisonReview && !hasSourceMatchedImageEvidence) {
 		if (!verificationBundle) {
 			throw new Error("Product verification could not be prepared.");
 		}
 		const source = usdaDraft ? "usda" : "open-food-facts";
 		try {
-			await publishSubmission({
+			const sharedProductId = await publishSubmission({
 				submissionId: submission.id,
 				food: verificationBundle.canonicalFood,
 				productName: matchedDraft.name,
@@ -550,6 +568,11 @@ export const submitProductForCatalog = async (
 				observations: verificationBundle.observations,
 				provenance: verificationBundle.provenance,
 				conflicts: verificationBundle.conflicts,
+			});
+			await persistFoodImageAsset({
+				image: matchedDraft.image,
+				barcode: validation.barcode,
+				sharedProductId,
 			});
 		} catch (publishError) {
 			await admin.from("shared_product_submissions").delete().eq("id", submission.id);
@@ -566,9 +589,11 @@ export const submitProductForCatalog = async (
 
 	return {
 		status: "pending",
-		message: needsSourceComparisonReview
-			? "The product is saved privately and is waiting for a source comparison review."
-			: "The product is saved privately and is waiting for a label review.",
+		message: hasSourceMatchedImageEvidence
+			? "The ingredient was saved privately. The product image is waiting for moderator review before it can be shared."
+			: needsSourceComparisonReview
+				? "The product is saved privately and is waiting for a source comparison review."
+				: "The product is saved privately and is waiting for a label review.",
 		evidenceAccepted: true,
 	};
 };
@@ -595,11 +620,12 @@ export const listPendingProductSubmissions = async () => {
 export const approveCommunityProductSubmission = async (
 	submissionId: string,
 	moderatorId: string,
+	imageCrop?: FoodImageCropValues,
 ) => {
 	const admin = getSupabaseAdminClient();
 	const { data: submission, error } = await admin
 		.from("shared_product_submissions")
-		.select("id, product_name, brand_owner, food, status, evidence_complete")
+		.select("id, barcode, product_name, brand_owner, food, status, evidence_complete, evidence_paths, validation_report")
 		.eq("id", submissionId)
 		.single();
 	if (error || !submission) throw error ?? new Error("Submission not found.");
@@ -618,7 +644,7 @@ export const approveCommunityProductSubmission = async (
 	food.sharedProductConfidence = "moderator-reviewed";
 
 	const verificationBundle = buildModeratorReviewedCatalogBundle(food);
-	return publishSubmission({
+	const sharedProductId = await publishSubmission({
 		submissionId,
 		food: verificationBundle.canonicalFood,
 		productName: submission.product_name,
@@ -630,6 +656,22 @@ export const approveCommunityProductSubmission = async (
 		provenance: verificationBundle.provenance,
 		conflicts: verificationBundle.conflicts,
 	});
+	const evidencePaths = submission.evidence_paths as ProductEvidencePaths;
+	const validationReport = submission.validation_report as ValidationReport;
+	if (evidencePaths.front) {
+		await publishModeratedFoodImageAsset({
+			barcode: submission.barcode,
+			sharedProductId,
+			evidencePath: evidencePaths.front,
+			moderatorId,
+			crop: {
+				...validationReport.imageCrop,
+				...imageCrop,
+				cropSource: "moderator",
+			},
+		});
+	}
+	return sharedProductId;
 };
 
 export const rejectProductSubmission = async (

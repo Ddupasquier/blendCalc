@@ -10,6 +10,11 @@ export type ManualEntrySharedProductPhotos = {
 	frontPhoto: File | null;
 	nutritionPhoto: File | null;
 	barcodePhoto: File | null;
+	frontImageCrop: {
+		cropX: number;
+		cropY: number;
+		cropZoom: number;
+	} | null;
 };
 
 export type ManualEntrySubmitFlowResult =
@@ -28,6 +33,7 @@ export const saveManualEntryCustomFood = async ({
 	name,
 	normalizedBarcode,
 	shareWithCatalog,
+	submitForCatalog = false,
 	barcodeSource,
 	photos,
 	reviewFlags,
@@ -37,6 +43,7 @@ export const saveManualEntryCustomFood = async ({
 	name: string;
 	normalizedBarcode: string | null;
 	shareWithCatalog: boolean;
+	submitForCatalog?: boolean;
 	barcodeSource: FdcFood["barcodeSource"];
 	photos: ManualEntrySharedProductPhotos;
 	reviewFlags: string[];
@@ -87,7 +94,7 @@ export const saveManualEntryCustomFood = async ({
 	if (
 		normalizedBarcode &&
 		addedToDestination &&
-		(shareWithCatalog || barcodeSource === "open-food-facts")
+		(shareWithCatalog || barcodeSource === "open-food-facts" || submitForCatalog)
 	) {
 		try {
 			const submission = await submitSharedProduct(food, photos, { reviewFlags });

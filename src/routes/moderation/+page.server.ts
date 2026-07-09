@@ -234,6 +234,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				conflictCount?: number;
 				externalLookupFailed?: boolean;
 				qaSeed?: boolean;
+				imageCrop?: {
+					cropX?: number;
+					cropY?: number;
+					cropZoom?: number;
+				} | null;
 			};
 			const validationIssues = Array.isArray(validationReport.issues)
 				? validationReport.issues.filter(
@@ -254,6 +259,12 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 					{ key: "nutrition", label: "Nutrition facts", url: submission.evidenceUrls.nutrition },
 					{ key: "barcode", label: "Barcode", url: submission.evidenceUrls.barcode },
 				].filter((item) => Boolean(item.url)),
+				frontEvidenceUrl: submission.evidenceUrls.front ?? null,
+				imageCrop: {
+					cropX: validationReport.imageCrop?.cropX ?? 50,
+					cropY: validationReport.imageCrop?.cropY ?? 50,
+					cropZoom: validationReport.imageCrop?.cropZoom ?? 1,
+				},
 				conflictCount: validationReport.conflictCount ?? 0,
 				externalLookupFailed: validationReport.externalLookupFailed ?? false,
 				validationIssues,
@@ -283,12 +294,17 @@ export const actions: Actions = {
 		const { user } = await requireModerator(locals);
 		const formData = await request.formData();
 		const submissionId = String(formData.get("submissionId") ?? "");
+		const imageCrop = {
+			cropX: Number(formData.get("imageCropX") ?? 50),
+			cropY: Number(formData.get("imageCropY") ?? 50),
+			cropZoom: Number(formData.get("imageCropZoom") ?? 1),
+		};
 		if (!submissionId) {
 			return fail(400, { productReviewError: "Choose a product submission." });
 		}
 
 		try {
-			await approveCommunityProductSubmission(submissionId, user.id);
+			await approveCommunityProductSubmission(submissionId, user.id, imageCrop);
 			return { productReviewSuccess: "Product approved for shared search." };
 		} catch {
 			return fail(500, {

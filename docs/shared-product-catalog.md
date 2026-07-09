@@ -48,6 +48,9 @@ rate-limit pressure but is not treated as permanently current.
 
 Open Food Facts is queried live and is not copied into `shared_products` or the API cache.
 Allowed package image metadata is stored separately in `food_image_assets` with attribution.
+Trusted DB/API product images are used first. User-uploaded product photos stay in
+private evidence storage until a moderator approves them, then a public
+`community-reviewed` image asset is created with the moderator's crop values.
 Its ODbL database terms still require a deliberate share-alike and attribution decision before
 building a broader derived database from its records.
 
@@ -70,6 +73,8 @@ Migrations:
 - Public product rows do not contain submitter IDs or email addresses.
 - Evidence images are private, short-lived signed URLs are created only for moderators,
   and evidence paths never appear in public product rows.
+- Approved public product images live in `food-image-assets`; private evidence
+  paths are never exposed through public ingredient data.
 - API cache, source observations, provenance, and conflict tables are service-role only.
 
 Apply and regenerate types:
@@ -86,6 +91,9 @@ Pending product submissions appear on `/moderation` for moderators and admins. R
 three evidence photos against the entered serving and nutrient values before approval.
 
 - **Approve:** publishes the submitted label as `community-reviewed` and appends a revision.
+- **Approve image:** if the submission has a front-package image, the moderator can
+  adjust the card crop. Approval copies that image into public product image
+  storage and records it in `food_image_assets`.
 - **Reject:** retains the private user ingredient, records the review note, and does not publish a shared product.
 - **Submission pause:** 5 rejected submissions in 30 days blocks new shared-catalog
   submissions for 30 days. This prevents repeated bad catalog entries without blocking
@@ -181,4 +189,19 @@ action to exercise the moderation flow safely. Remove leftover fixtures with:
 
 ```sh
 npm run catalog:qa-clean -- moderator@example.com
+```
+
+Create fake image-review submissions for the moderated product image flow:
+
+```sh
+npm run catalog:qa-image-seed -- moderator@example.com
+```
+
+This creates one image-addition fixture and one image-adjustment fixture with private
+front-package, nutrition-label, and barcode evidence. These fixtures are approvable so
+the public image-publish path can be tested; reject them if you only need to check the
+moderation UI. Remove unapproved leftovers with:
+
+```sh
+npm run catalog:qa-image-clean -- moderator@example.com
 ```

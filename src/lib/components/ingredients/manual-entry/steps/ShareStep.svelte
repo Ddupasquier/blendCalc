@@ -3,6 +3,7 @@
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch.svelte";
 	import CustomIngredientOutcome from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
 	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
+	import ProductImageEvidenceInput from "$lib/components/ingredients/manual-entry/ProductImageEvidenceInput.svelte";
 	import type {
 		CustomIngredientOutcomeState,
 		ManualEntrySummaryItem,
@@ -26,6 +27,12 @@
 		shareHelpMessage,
 		shareWithCatalog,
 		requiresCatalogEvidence,
+		showOptionalProductImageUpload,
+		trustedProductImageUrl,
+		frontPhoto,
+		imageCropX,
+		imageCropY,
+		imageCropZoom,
 		saveDestination,
 		error,
 		lastOutcome,
@@ -35,6 +42,9 @@
 		saving,
 		onShareChange,
 		onFrontPhotoChange,
+		onImageCropXChange,
+		onImageCropYChange,
+		onImageCropZoomChange,
 		onNutritionPhotoChange,
 		onBarcodePhotoChange,
 		onSaveDestinationChange,
@@ -58,6 +68,12 @@
 		shareHelpMessage: string;
 		shareWithCatalog: boolean;
 		requiresCatalogEvidence: boolean;
+		showOptionalProductImageUpload: boolean;
+		trustedProductImageUrl: string;
+		frontPhoto: File | null;
+		imageCropX: number;
+		imageCropY: number;
+		imageCropZoom: number;
 		saveDestination: SmoothieListKey | "custom-only";
 		error: string;
 		lastOutcome: CustomIngredientOutcomeState | null;
@@ -67,6 +83,9 @@
 		saving: boolean;
 		onShareChange: (checked: boolean) => void;
 		onFrontPhotoChange: (file: File | null) => void;
+		onImageCropXChange: (value: number) => void;
+		onImageCropYChange: (value: number) => void;
+		onImageCropZoomChange: (value: number) => void;
 		onNutritionPhotoChange: (file: File | null) => void;
 		onBarcodePhotoChange: (file: File | null) => void;
 		onSaveDestinationChange: (destination: SmoothieListKey | "custom-only") => void;
@@ -149,17 +168,18 @@
 					and barcode before other users can find the product.
 				</p>
 			</div>
-			<label class="custom-ingredient__field">
-				<span>Front of package</span>
-				<input
-					id="custom-product-front-photo"
-					name="custom-product-front-photo"
-					type="file"
-					accept="image/jpeg,image/png,image/webp"
-					aria-required="true"
-					onchange={(event) => onFrontPhotoChange(event.currentTarget.files?.[0] ?? null)}
-				/>
-			</label>
+			<ProductImageEvidenceInput
+				trustedImageUrl={trustedProductImageUrl}
+				{frontPhoto}
+				cropX={imageCropX}
+				cropY={imageCropY}
+				cropZoom={imageCropZoom}
+				required
+				onFrontPhotoChange={onFrontPhotoChange}
+				onCropXChange={onImageCropXChange}
+				onCropYChange={onImageCropYChange}
+				onCropZoomChange={onImageCropZoomChange}
+			/>
 			<label class="custom-ingredient__field">
 				<span>Nutrition facts label</span>
 				<input
@@ -182,6 +202,21 @@
 					onchange={(event) => onBarcodePhotoChange(event.currentTarget.files?.[0] ?? null)}
 				/>
 			</label>
+		</section>
+	{:else if showOptionalProductImageUpload}
+		<section class="custom-ingredient__evidence" aria-labelledby="product-image-title">
+			<ProductImageEvidenceInput
+				trustedImageUrl={trustedProductImageUrl}
+				{frontPhoto}
+				cropX={imageCropX}
+				cropY={imageCropY}
+				cropZoom={imageCropZoom}
+				description="No trusted DB/API product image was found for this barcode. You can add a front package photo now; it stays private until a moderator approves it."
+				onFrontPhotoChange={onFrontPhotoChange}
+				onCropXChange={onImageCropXChange}
+				onCropYChange={onImageCropYChange}
+				onCropZoomChange={onImageCropZoomChange}
+			/>
 		</section>
 	{/if}
 

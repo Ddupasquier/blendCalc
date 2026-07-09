@@ -59,6 +59,20 @@ export type CustomIngredientOutcomeState = {
 	message: string;
 };
 
+export type ProductImageEvidenceInputProps = {
+	trustedImageUrl?: string;
+	frontPhoto: File | null;
+	cropX: number;
+	cropY: number;
+	cropZoom: number;
+	required?: boolean;
+	description?: string;
+	onFrontPhotoChange: (file: File | null) => void;
+	onCropXChange: (value: number) => void;
+	onCropYChange: (value: number) => void;
+	onCropZoomChange: (value: number) => void;
+};
+
 export const manualEntrySteps: ManualEntryStep[] = [
 	{ id: "identity", label: "Identity" },
 	{ id: "servings", label: "Servings" },

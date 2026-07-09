@@ -30,6 +30,9 @@
 			role: food.image?.role,
 		}),
 	);
+	const imageStyle = $derived(
+		`--food-symbol-focus-x: ${food.image?.cropX ?? 50}%; --food-symbol-focus-y: ${food.image?.cropY ?? 50}%; --food-symbol-zoom: ${food.image?.cropZoom ?? 1};`,
+	);
 	let imageFailed = $state(false);
 	let lastImageUrl = $state("");
 
@@ -46,6 +49,7 @@
 		class={`food-symbol__image ${className}`.trim()}
 		src={imageUrl}
 		alt={imageAlt}
+		style={imageStyle}
 		loading="lazy"
 		decoding="async"
 		onerror={() => (imageFailed = true)}
@@ -62,5 +66,7 @@
 		width: $ingredient-food-image-content-size;
 		height: $ingredient-food-image-content-size;
 		object-fit: cover;
+		object-position: var(--food-symbol-focus-x, 50%) var(--food-symbol-focus-y, 50%);
+		transform: scale(var(--food-symbol-zoom, 1));
 	}
 </style>

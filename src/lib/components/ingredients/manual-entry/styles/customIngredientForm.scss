@@ -19,7 +19,8 @@
 .custom-ingredient__card,
 .custom-ingredient__summary,
 .custom-ingredient__share-toggle,
-.custom-ingredient__evidence {
+.custom-ingredient__evidence,
+.custom-ingredient__image-review {
 	min-width: 0;
 }
 
@@ -257,11 +258,58 @@
 	border-radius: $ingredient-radius-card;
 }
 
+.custom-ingredient__image-review {
+	display: grid;
+	gap: $app-gap-md;
+	padding: $ingredient-card-padding;
+	background: $ingredient-surface-card;
+	border: $app-border-divider;
+	border-radius: $ingredient-radius-card;
+}
+
+.custom-ingredient__image-review p,
 .custom-ingredient__evidence p {
 	margin: $app-gap-xs 0 0;
 	color: $ingredient-text-muted;
 	font-size: $app-font-size-sm;
 	line-height: 1.35;
+}
+
+.custom-ingredient__image-preview {
+	display: grid;
+	place-items: center;
+	justify-self: start;
+	width: $ingredient-food-icon-size;
+	height: $ingredient-food-icon-size;
+	overflow: hidden;
+	background: $ingredient-surface-soft;
+	border-radius: $app-radius-circle;
+}
+
+.custom-ingredient__image-preview img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: var(--product-image-focus-x, 50%) var(--product-image-focus-y, 50%);
+	transform: scale(var(--product-image-zoom, 1));
+}
+
+.custom-ingredient__crop-controls {
+	display: grid;
+	gap: $app-gap-md;
+}
+
+.custom-ingredient__crop-controls label {
+	display: grid;
+	gap: $app-gap-xs;
+	color: $ingredient-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+}
+
+.custom-ingredient__crop-controls input[type="range"] {
+	width: 100%;
+	accent-color: $ingredient-accent-primary;
 }
 
 .custom-ingredient__error,

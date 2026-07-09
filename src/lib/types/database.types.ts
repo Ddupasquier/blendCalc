@@ -343,10 +343,16 @@ export type Database = {
       }
       food_image_assets: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           attribution_text: string | null
           barcode: string | null
           confidence: string
           created_at: string
+          crop_source: string
+          crop_x: number
+          crop_y: number
+          crop_zoom: number
           fetched_at: string
           id: string
           image_role: string
@@ -362,10 +368,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           attribution_text?: string | null
           barcode?: string | null
           confidence?: string
           created_at?: string
+          crop_source?: string
+          crop_x?: number
+          crop_y?: number
+          crop_zoom?: number
           fetched_at?: string
           id?: string
           image_role: string
@@ -381,10 +393,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           attribution_text?: string | null
           barcode?: string | null
           confidence?: string
           created_at?: string
+          crop_source?: string
+          crop_x?: number
+          crop_y?: number
+          crop_zoom?: number
           fetched_at?: string
           id?: string
           image_role?: string

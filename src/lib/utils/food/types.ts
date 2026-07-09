@@ -33,10 +33,17 @@ export interface FoodImageAsset {
     role: "front" | "nutrition" | "barcode" | "ingredient" | "generic";
     imageUrl: string;
     thumbnailUrl?: string;
+    storagePath?: string;
     licenseName: string;
     licenseUrl?: string;
     attributionText?: string;
     confidence: "source-verified" | "moderator-reviewed" | "imported";
+    cropX?: number;
+    cropY?: number;
+    cropZoom?: number;
+    cropSource?: "auto" | "user" | "moderator";
+    approvedBy?: string;
+    approvedAt?: string;
     fetchedAt?: string;
 }
 

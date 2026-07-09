@@ -257,8 +257,9 @@ approved image records that the app can safely render.
 
 Columns: `id`, `barcode`, `shared_product_id`, `source`, `source_reference`,
 `image_role`, `image_url`, `thumbnail_url`, `storage_path`, `license_name`,
-`license_url`, `attribution_text`, `confidence`, `status`, `fetched_at`,
-`created_at`, `updated_at`.
+`license_url`, `attribution_text`, `confidence`, `crop_x`, `crop_y`,
+`crop_zoom`, `crop_source`, `approved_by`, `approved_at`, `status`,
+`fetched_at`, `created_at`, `updated_at`.
 
 Notes:
 - Open Food Facts package images are stored here with source, license, and
@@ -269,10 +270,17 @@ Notes:
 - Users can read active rows, but only service-role/server code can write rows.
 - Indexed lookup paths cover active barcode images, shared-product images,
   generic images, and source/reference deduping.
+- Card thumbnails use `crop_x`, `crop_y`, and `crop_zoom`; nutrition detail
+  views use the full image.
+- Community images stay private until a moderator approves them. Approval writes
+  a `community-reviewed` image row with `moderator-reviewed` confidence and
+  approval metadata.
 
 Storage bucket:
 - `product-submission-evidence`: private product evidence images, scoped under
   the submitting user id.
+- `food-image-assets`: public approved/source-backed product image files. Do not
+  store private evidence here until moderation approves it.
 
 ## Compatibility, Allergens, and Dietary Restrictions
 

@@ -61,12 +61,35 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			return value instanceof File && value.size > 0 ? [[role, value]] : [];
 		}),
 	) as ProductEvidenceFiles;
+	const frontImageCropValue = formData.get("frontImageCrop");
+	let frontImageCrop: {
+		cropX: number;
+		cropY: number;
+		cropZoom: number;
+	} | null = null;
+	if (frontImageCropValue) {
+		try {
+			const parsedCrop = JSON.parse(String(frontImageCropValue)) as {
+				cropX?: unknown;
+				cropY?: unknown;
+				cropZoom?: unknown;
+			};
+			frontImageCrop = {
+				cropX: Number(parsedCrop.cropX),
+				cropY: Number(parsedCrop.cropY),
+				cropZoom: Number(parsedCrop.cropZoom),
+			};
+		} catch {
+			throw error(400, "Product image crop data is invalid.");
+		}
+	}
 	let evidencePaths: ProductEvidencePaths = {};
 
 	try {
 		evidencePaths = await uploadProductEvidence(user.id, evidenceFiles);
 		const result = await submitProductForCatalog(user.id, food, evidencePaths, {
 			reviewFlags,
+			frontImageCrop,
 		});
 		if (result.evidenceAccepted !== true) {
 			await deleteProductEvidence(evidencePaths);

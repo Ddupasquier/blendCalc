@@ -92,6 +92,7 @@
 	import { saveManualEntryCustomFood } from "$lib/components/ingredients/manual-entry/utils/submitFlow";
 	import { getManualEntrySubmitState } from "$lib/components/ingredients/manual-entry/utils/submitValidation";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
+	import { pickFoodFullImageUrl } from "$lib/utils/food/images/foodImages";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 
 	let {
@@ -157,6 +158,9 @@
 	let catalogMessage = $state("");
 	let outcomeAction = $state<ManualEntryOutcomeAction | null>(null);
 	let frontPhoto = $state<File | null>(null);
+	let imageCropX = $state(50);
+	let imageCropY = $state(50);
+	let imageCropZoom = $state(1);
 	let nutritionPhoto = $state<File | null>(null);
 	let barcodePhoto = $state<File | null>(null);
 	let reportedNutrientIds = $state<number[]>([]);
@@ -396,15 +400,21 @@
 		barcodeMessage = getKeepManualBarcodeMessage(barcodeReferenceDraft);
 	};
 
-	const getBarcodeReferenceReviewFlags = () =>
-		buildBarcodeReferenceReviewFlags({
+	const getBarcodeReferenceReviewFlags = () => [
+		...buildBarcodeReferenceReviewFlags({
 			shareWithCatalog,
 			barcode,
 			sourceDraft: barcodeReferenceSourceDraft,
 			currentEntry: currentBarcodeReferenceEntry,
 			barcodeSource,
 			barcodeReferenceAcceptedBarcode,
-		});
+		}),
+		...(shouldSubmitOptionalProductImageReview
+			? [
+					"User provided an optional product image because no trusted DB/API image exists for this barcode. Review the package image and crop before publishing it.",
+				]
+			: []),
+	];
 
 	onDestroy(() => {
 		clearBarcodeLookupDebounce();
@@ -582,6 +592,25 @@
 			(barcodeSource === "manual" ||
 				Boolean(hasSharedCatalogBarcodeReference && barcodeReferenceHasChanges)),
 	);
+	const trustedProductImageUrl = $derived(pickFoodFullImageUrl(image));
+	const hasTrustedProductImage = $derived(Boolean(trustedProductImageUrl));
+	const hasAcceptedSourceBarcode = $derived.by(() => {
+		const normalizedBarcode = normalizeBarcode(barcode);
+		return Boolean(
+			normalizedBarcode &&
+				barcodeReferenceAcceptedBarcode === normalizedBarcode &&
+				barcodeReferenceSourceDraft?.barcode === normalizedBarcode,
+		);
+	});
+	const showOptionalProductImageUpload = $derived(
+		hasValidBarcode &&
+			hasAcceptedSourceBarcode &&
+			!hasTrustedProductImage &&
+			(barcodeSource === "open-food-facts" || barcodeSource === "usda"),
+	);
+	const shouldSubmitOptionalProductImageReview = $derived(
+		showOptionalProductImageUpload && Boolean(frontPhoto),
+	);
 	const shareUnavailableMessage = $derived(
 		sharedCatalogMatchIsUnchanged
 			? "This barcode already exists in blendCalc with matching data, so it cannot be shared again. You can still save it to your own profile."
@@ -631,6 +660,9 @@
 			barcodeReferenceAcceptedBarcode,
 			shareWithCatalog,
 			frontPhoto,
+			imageCropX,
+			imageCropY,
+			imageCropZoom,
 			nutritionPhoto,
 			barcodePhoto,
 			reportedNutrientIds,
@@ -895,6 +927,7 @@
 			volumeAmountRequiredMessage,
 			barcode,
 			requiresCatalogEvidence,
+			hasTrustedProductImage,
 			frontPhoto,
 			nutritionPhoto,
 			barcodePhoto,
@@ -947,9 +980,13 @@
 				name,
 				normalizedBarcode,
 				shareWithCatalog,
+				submitForCatalog: shouldSubmitOptionalProductImageReview,
 				barcodeSource,
 				photos: {
 					frontPhoto,
+					frontImageCrop: frontPhoto
+						? { cropX: imageCropX, cropY: imageCropY, cropZoom: imageCropZoom }
+						: null,
 					nutritionPhoto,
 					barcodePhoto,
 				},
@@ -1040,6 +1077,12 @@
 				{shareHelpMessage}
 				{shareWithCatalog}
 				{requiresCatalogEvidence}
+				{showOptionalProductImageUpload}
+				{trustedProductImageUrl}
+				{frontPhoto}
+				{imageCropX}
+				{imageCropY}
+				{imageCropZoom}
 				{saveDestination}
 				{error}
 				{lastOutcome}
@@ -1067,6 +1110,9 @@
 				onVolumeUnitChange={(value) => (volumeUnit = value)}
 				onShareChange={(checked) => (shareWithCatalog = checked)}
 				onFrontPhotoChange={(file) => (frontPhoto = file)}
+				onImageCropXChange={(value) => (imageCropX = value)}
+				onImageCropYChange={(value) => (imageCropY = value)}
+				onImageCropZoomChange={(value) => (imageCropZoom = value)}
 				onNutritionPhotoChange={(file) => (nutritionPhoto = file)}
 				onBarcodePhotoChange={(file) => (barcodePhoto = file)}
 				onSaveDestinationChange={(destination) => (saveDestination = destination)}

@@ -58,6 +58,12 @@
 		shareHelpMessage,
 		shareWithCatalog,
 		requiresCatalogEvidence,
+		showOptionalProductImageUpload,
+		trustedProductImageUrl,
+		frontPhoto,
+		imageCropX,
+		imageCropY,
+		imageCropZoom,
 		saveDestination,
 		error,
 		lastOutcome,
@@ -84,6 +90,9 @@
 		onVolumeUnitChange,
 		onShareChange,
 		onFrontPhotoChange,
+		onImageCropXChange,
+		onImageCropYChange,
+		onImageCropZoomChange,
 		onNutritionPhotoChange,
 		onBarcodePhotoChange,
 		onSaveDestinationChange,
@@ -132,6 +141,12 @@
 		shareHelpMessage: string;
 		shareWithCatalog: boolean;
 		requiresCatalogEvidence: boolean;
+		showOptionalProductImageUpload: boolean;
+		trustedProductImageUrl: string;
+		frontPhoto: File | null;
+		imageCropX: number;
+		imageCropY: number;
+		imageCropZoom: number;
 		saveDestination: SmoothieListKey | "custom-only";
 		error: string;
 		lastOutcome: CustomIngredientOutcomeState | null;
@@ -165,6 +180,9 @@
 		onVolumeUnitChange: (value: ServingMeasureUnit) => void;
 		onShareChange: (checked: boolean) => void;
 		onFrontPhotoChange: (file: File | null) => void;
+		onImageCropXChange: (value: number) => void;
+		onImageCropYChange: (value: number) => void;
+		onImageCropZoomChange: (value: number) => void;
 		onNutritionPhotoChange: (file: File | null) => void;
 		onBarcodePhotoChange: (file: File | null) => void;
 		onSaveDestinationChange: (
@@ -267,6 +285,12 @@
 		{shareHelpMessage}
 		{shareWithCatalog}
 		{requiresCatalogEvidence}
+		{showOptionalProductImageUpload}
+		{trustedProductImageUrl}
+		{frontPhoto}
+		{imageCropX}
+		{imageCropY}
+		{imageCropZoom}
 		{saveDestination}
 		{error}
 		{lastOutcome}
@@ -276,6 +300,9 @@
 		{saving}
 		onShareChange={onShareChange}
 		onFrontPhotoChange={onFrontPhotoChange}
+		onImageCropXChange={onImageCropXChange}
+		onImageCropYChange={onImageCropYChange}
+		onImageCropZoomChange={onImageCropZoomChange}
 		onNutritionPhotoChange={onNutritionPhotoChange}
 		onBarcodePhotoChange={onBarcodePhotoChange}
 		onSaveDestinationChange={onSaveDestinationChange}

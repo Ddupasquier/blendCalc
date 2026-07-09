@@ -15,6 +15,11 @@ export type SharedProductEvidence = {
 	frontPhoto?: File | null;
 	nutritionPhoto?: File | null;
 	barcodePhoto?: File | null;
+	frontImageCrop?: {
+		cropX: number;
+		cropY: number;
+		cropZoom: number;
+	} | null;
 };
 
 export type SharedProductSubmissionContext = {
@@ -46,6 +51,9 @@ export const submitSharedProduct = async (
 		formData.set("reviewFlags", JSON.stringify(context.reviewFlags));
 	}
 	if (evidence.frontPhoto) formData.set("frontPhoto", evidence.frontPhoto);
+	if (evidence.frontImageCrop) {
+		formData.set("frontImageCrop", JSON.stringify(evidence.frontImageCrop));
+	}
 	if (evidence.nutritionPhoto) {
 		formData.set("nutritionPhoto", evidence.nutritionPhoto);
 	}

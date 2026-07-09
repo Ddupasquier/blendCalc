@@ -33,6 +33,9 @@ export type ManualEntryFormResetState = {
 	barcodeReferenceAcceptedBarcode: string;
 	shareWithCatalog: boolean;
 	frontPhoto: File | null;
+	imageCropX: number;
+	imageCropY: number;
+	imageCropZoom: number;
 	nutritionPhoto: File | null;
 	barcodePhoto: File | null;
 	reportedNutrientIds: number[];
@@ -70,6 +73,9 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	barcodeReferenceAcceptedBarcode: "",
 	shareWithCatalog: false,
 	frontPhoto: null,
+	imageCropX: 50,
+	imageCropY: 50,
+	imageCropZoom: 1,
 	nutritionPhoto: null,
 	barcodePhoto: null,
 	reportedNutrientIds: [],

@@ -47,6 +47,8 @@
 		"db:lint": "supabase db lint --linked",
 		"catalog:qa-seed": "node scripts/seed_catalog_submission.mjs seed",
 		"catalog:qa-clean": "node scripts/seed_catalog_submission.mjs cleanup",
+		"catalog:qa-image-seed": "node scripts/seed_image_moderation_submission.mjs seed",
+		"catalog:qa-image-clean": "node scripts/seed_image_moderation_submission.mjs cleanup",
 		"moderate": "node scripts/moderate_user.mjs",
 		"seed:manual-entry-nutrients": "node scripts/seed_manual_entry_nutrients.mjs"
 	},

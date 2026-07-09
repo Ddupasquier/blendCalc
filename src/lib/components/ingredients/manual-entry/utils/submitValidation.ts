@@ -18,6 +18,7 @@ export const getManualEntrySubmitState = ({
 	volumeAmountRequiredMessage,
 	barcode,
 	requiresCatalogEvidence,
+	hasTrustedProductImage,
 	frontPhoto,
 	nutritionPhoto,
 	barcodePhoto,
@@ -29,6 +30,7 @@ export const getManualEntrySubmitState = ({
 	volumeAmountRequiredMessage: string;
 	barcode: string;
 	requiresCatalogEvidence: boolean;
+	hasTrustedProductImage: boolean;
 	frontPhoto: File | null;
 	nutritionPhoto: File | null;
 	barcodePhoto: File | null;
@@ -87,13 +89,14 @@ export const getManualEntrySubmitState = ({
 
 	if (
 		requiresCatalogEvidence &&
-		(!frontPhoto || !nutritionPhoto || !barcodePhoto)
+		((!hasTrustedProductImage && !frontPhoto) || !nutritionPhoto || !barcodePhoto)
 	) {
 		return {
 			normalizedBarcode,
 			block: {
-				message:
-					"Add front package, nutrition label, and barcode photos before sharing this product.",
+				message: hasTrustedProductImage
+					? "Add nutrition label and barcode photos before sharing this product."
+					: "Add front package, nutrition label, and barcode photos before sharing this product.",
 				step: "share",
 				mark: "all",
 			},
