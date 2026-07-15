@@ -34,6 +34,7 @@
 		removingItem = null,
 		movingItem = null,
 		moving = false,
+		revealPaused = false,
 		preferenceProfile = null,
 		resetKey = 0,
 		onSelectAll,
@@ -58,6 +59,7 @@
 		removingItem?: string | null;
 		movingItem?: string | null;
 		moving?: boolean;
+		revealPaused?: boolean;
 		preferenceProfile?: FoodPreferenceProfile | null;
 		resetKey?: number;
 		onSelectAll: () => void;
@@ -83,7 +85,7 @@
 	);
 
 	const requestMoreItems = () => {
-		if (!canRevealMore || loadingMoreList) return;
+		if (revealPaused || !canRevealMore || loadingMoreList) return;
 		void onRevealMore();
 	};
 
@@ -122,7 +124,13 @@
 	$effect(() => {
 		const root = listElement;
 		const sentinel = sentinelElement;
-		if (!root || !sentinel || !canRevealMore || loadingMoreList) return;
+		if (
+			revealPaused ||
+			!root ||
+			!sentinel ||
+			!canRevealMore ||
+			loadingMoreList
+		) return;
 
 		const observer = new IntersectionObserver(
 			(entries) => {

@@ -1,5 +1,8 @@
 <script lang="ts">
-    import { goto } from "$app/navigation";
+    import {
+        pushState,
+        replaceState as replaceNavigationState,
+    } from "$app/navigation";
     import { page } from "$app/state";
     import ViewBody from "$lib/components/common/view/ViewBody.svelte";
     import ViewFrame from "$lib/components/common/view/ViewFrame.svelte";
@@ -110,12 +113,15 @@
     ) => {
         const href = buildIngredientRouteHref(page.url, patch);
         const currentHref = `${page.url.pathname}${page.url.search}${page.url.hash}`;
-        if (href === currentHref) return Promise.resolve();
-        return goto(href, {
-            replaceState,
-            noScroll: true,
-            keepFocus: true,
-        });
+        if (href === currentHref) return;
+
+        const nextPageState = { ...page.state };
+        if (replaceState) {
+            replaceNavigationState(href, nextPageState);
+            return;
+        }
+
+        pushState(href, nextPageState);
     };
 
     const closeRoutedPopin = (replaceState = true) =>
@@ -183,6 +189,14 @@
     const canAdjustImagePlacement = $derived(
         page.data.authUser?.role === "admin" ||
             page.data.authUser?.role === "moderator",
+    );
+    const ingredientOverlayOpen = $derived(
+        activeSheet !== null ||
+            actionSheetItem !== null ||
+            imagePlacementItem !== null ||
+            renamingItem !== null ||
+            searchViewOpen ||
+            selectedFood !== null,
     );
 
     const setListPage = (
@@ -904,6 +918,7 @@
                 {removingItem}
                 {movingItem}
                 moving={movingItem !== null}
+                revealPaused={ingredientOverlayOpen}
                 preferenceProfile={foodPreferenceContext.current}
                 resetKey={listViewResetKey}
                 onSelectAll={selectAllActiveItems}
