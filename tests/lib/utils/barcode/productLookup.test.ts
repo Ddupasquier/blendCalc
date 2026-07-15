@@ -173,6 +173,7 @@ describe("barcode product mapping", () => {
 				fdcId: 123,
 				description: "Test snack",
 				brandOwner: "Example Brand",
+				foodCategory: "Chips, Pretzels & Snacks",
 				ingredients: "Corn, sunflower oil, salt",
 				allergens: ["corn"],
 				servingSize: 50,
@@ -212,6 +213,7 @@ describe("barcode product mapping", () => {
 		expect(draft?.reportedNutrientIds).toContain(NUTRIENT_IDS.VITAMIN_C);
 		expect(draft?.ingredientList).toEqual(["Corn", "sunflower oil", "salt"]);
 		expect(draft?.allergens).toEqual(["corn"]);
+		expect(draft?.categories).toContain("Chips, Pretzels & Snacks");
 	});
 
 	it("marks approved catalog records as shared products", () => {
@@ -221,15 +223,23 @@ describe("barcode product mapping", () => {
 				description: "Community cereal",
 				barcode: "04006381333931",
 				sharedProductId: "product-id",
+				categoryOptionId: "breakfast-cereals",
+				foodCategory: "Breakfast Cereals",
+				categories: ["Breakfast Cereals", "Cereals"],
 				foodNutrients: [],
 			},
 			"4006381333931",
 		);
 
-		expect(draft).toMatchObject({
+			expect(draft).toMatchObject({
 			source: "shared-catalog",
 			sourceLabel: "blendCalc verified catalog",
 			sourceReference: "product-id",
+			resolvedCategory: "Breakfast Cereals",
+			categoryResolution: {
+				categoryOptionId: "breakfast-cereals",
+				label: "Breakfast Cereals",
+			},
 		});
 	});
 });

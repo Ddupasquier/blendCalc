@@ -4,6 +4,7 @@ import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import { compactFood } from "$lib/utils/food/records/foodRecords";
 import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
 import { createCatalogFoodFromDraft } from "./catalogFood.server";
+import type { ResolvedFoodCategory } from "./categoryMapping.server";
 
 export type CatalogObservationSource =
 	| "usda"
@@ -234,8 +235,11 @@ const preserveFoodMetadata = (food: FdcFood): FdcFood => ({
 export const buildUsdaVerifiedCatalogBundle = (
 	userFood: FdcFood,
 	usdaDraft: BarcodeProductDraft,
+	category: ResolvedFoodCategory,
 ): CatalogVerificationBundle => {
-	const usdaFood = preserveFoodMetadata(createCatalogFoodFromDraft(usdaDraft));
+	const usdaFood = preserveFoodMetadata(
+		createCatalogFoodFromDraft(usdaDraft, category),
+	);
 	const userObservation = createObservation({
 		key: "user-label",
 		source: "user-label",
@@ -267,9 +271,10 @@ export const buildUsdaVerifiedCatalogBundle = (
 export const buildOpenFoodFactsCatalogBundle = (
 	userFood: FdcFood,
 	openFoodFactsDraft: BarcodeProductDraft,
+	category: ResolvedFoodCategory,
 ): CatalogVerificationBundle => {
 	const openFoodFactsFood = preserveFoodMetadata(
-		createCatalogFoodFromDraft(openFoodFactsDraft),
+		createCatalogFoodFromDraft(openFoodFactsDraft, category),
 	);
 	const userObservation = createObservation({
 		key: "user-label",

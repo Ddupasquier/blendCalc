@@ -93,6 +93,7 @@
 		<WarningPopup
 			open={Boolean(stepWarningMessage && stepWarningStep === activeStep)}
 			message={stepWarningMessage}
+			tone="error"
 		/>
 
 		{@render children()}

@@ -14,6 +14,7 @@ import {
 	type FoodImageAsset,
 } from "$lib/utils/food/types";
 import { OPEN_FOOD_FACTS_IMAGE_LICENSE } from "$lib/utils/food/images/foodImages";
+import { normalizeFoodCategoryValue } from "$lib/utils/food/categories/categoryNormalization.js";
 import { APP_VERIFIED_CATALOG_LABEL } from "$lib/config/brand";
 
 export type OpenFoodFactsNutriments = Record<string, number | string | undefined>;
@@ -259,7 +260,11 @@ const parseFdcMetadata = (food: FdcFood) => ({
 	traces: uniqueCleanValues(food.traces ?? []),
 	dietaryTags: uniqueCleanValues(food.dietaryTags ?? []),
 	labels: uniqueCleanValues(food.labels ?? []),
-	categories: uniqueCleanValues(food.categories ?? []),
+	categories: uniqueCleanValues([
+		...(food.categories ?? []),
+		food.foodCategory,
+		food.brandedFoodCategory,
+	]),
 });
 
 const parseServingBasis = (product: OpenFoodFactsProduct) => {
@@ -494,6 +499,16 @@ export const mapSharedCatalogFood = (
 		source: "shared-catalog",
 		sourceLabel: APP_VERIFIED_CATALOG_LABEL,
 		sourceReference: food.sharedProductId,
+		resolvedCategory: food.foodCategory,
+		categoryResolution:
+			food.categoryOptionId && food.foodCategory
+				? {
+						categoryOptionId: food.categoryOptionId,
+						label: food.foodCategory,
+						sourceValue: normalizeFoodCategoryValue(food.foodCategory),
+						confidence: "exact",
+					}
+				: undefined,
 	};
 };
 

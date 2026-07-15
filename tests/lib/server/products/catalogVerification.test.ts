@@ -57,14 +57,24 @@ const createUsdaDraft = (): BarcodeProductDraft => ({
 	sourceReference: "12345",
 });
 
+const cerealCategory = {
+	categoryOptionId: "breakfast-cereals",
+	label: "Breakfast Cereals",
+	sourceValue: "breakfast cereals",
+	confidence: "exact",
+};
+
 describe("catalog verification", () => {
 	it("uses exact-barcode USDA data as canonical and records disagreements", () => {
 		const bundle = buildUsdaVerifiedCatalogBundle(
 			createUserFood(),
 			createUsdaDraft(),
+			cerealCategory,
 		);
 
 		expect(bundle.canonicalFood.description).toBe("USDA cereal");
+		expect(bundle.canonicalFood.foodCategory).toBe("Breakfast Cereals");
+		expect(bundle.canonicalFood.categories).toContain("Breakfast Cereals");
 		expect(bundle.observations.map((item) => item.source)).toEqual([
 			"user-label",
 			"usda",

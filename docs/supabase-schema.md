@@ -216,7 +216,7 @@ Notes:
 Stores user-submitted products before/after moderation.
 
 Columns: `id`, `submitted_by`, `barcode`, `product_name`, `brand_owner`,
-`food`, `consent_to_share`, `status`, `verification_status`,
+`category_option_id`, `food`, `consent_to_share`, `status`, `verification_status`,
 `matched_source`, `matched_reference`, `validation_report`, `evidence_paths`,
 `evidence_complete`, `reviewed_by`, `reviewed_at`, `review_note`,
 `created_at`, `updated_at`.
@@ -228,19 +228,26 @@ Notes:
   reached normal moderation; it should not count as a human rejection.
 - `validation_report` carries barcode/source comparison and nutrient validation
   results for moderation.
+- `category_option_id` points to the canonical DB-backed app category selected
+  or resolved before submission. Raw API categories remain inside `food` for
+  source proof and future remapping.
 
 ### `shared_products`
 
 Approved catalog product.
 
 Columns: `id`, `barcode`, `product_name`, `brand_owner`, `search_text`,
-`food`, `source`, `source_reference`, `confidence`, `status`,
+`category_option_id`, `food`, `source`, `source_reference`, `confidence`, `status`,
 `approved_submission_id`, `approved_by`, `last_verified_at`,
 `canonical_provenance`, `compatibility_summary`, `created_at`, `updated_at`.
 
 Notes:
 - Search uses indexed `search_text`.
 - Compatibility summaries are rebuilt from compatibility facts.
+- `category_option_id` is inherited from the approved submission. A database
+  trigger blocks publication when no enabled canonical category can be resolved.
+- `shared_product_revisions.category_option_id` copies the published product
+  category so historical revisions retain the category used at publication.
 
 ### Product evidence and cache tables
 
@@ -346,6 +353,8 @@ Notes:
 - UI category dropdowns should sort by `label`.
 - Seeded by `scripts/seed_custom_food_categories.mjs`.
 - The dropdown renders these app-ready options, not raw source payload strings.
+- `shared_product_submissions`, `shared_products`, and
+  `shared_product_revisions` reference this table through `category_option_id`.
 
 ### `custom_food_category_observations`
 
@@ -377,6 +386,10 @@ Notes:
 - Use `npm run seed:food-categories:rebuild` when observations already exist
   and only mappings need to be refreshed.
 - Do not map category autofill by taking the first raw API category value.
+- `resolve_custom_food_category_option(text[])` performs reusable DB-side
+  category resolution using enabled options and observed mappings.
+- `npm run backfill:shared-product-categories` checks USDA FoodData Central and
+  Open Food Facts, records category provenance, and repairs legacy catalog rows.
 
 ## Moderation and Access Control
 
@@ -412,6 +425,8 @@ Notes:
 | `rebuild_food_preference_option_catalog` | Rebuilds allergen/dietary/ingredient option catalog from product facts |
 | `sync_nutrient_manual_entry_fields` | Rebuilds manual-entry nutrient groups/fields from observations |
 | `rebuild_custom_food_category_options` | Rebuilds manual custom-food category options from observations |
+| `normalize_food_category_value` | Normalizes category text for option and mapping lookup |
+| `resolve_custom_food_category_option` | Resolves raw API category values to one enabled canonical category option |
 | `reject_blocked_signup` | Supabase Auth hook for hashed email signup blocks |
 
 ## Storage Buckets

@@ -32,6 +32,14 @@ import {
 	type CatalogObservation,
 } from "./catalogVerification.server";
 import {
+	applyCanonicalFoodCategory,
+	readFoodCategoryOption,
+	readFoodCategoryOptions,
+	resolveBarcodeDraftCategory,
+	resolveFoodCategoryOption,
+	type ResolvedFoodCategory,
+} from "./categoryMapping.server";
+import {
 	lookupOpenFoodFactsBarcodeProduct,
 	lookupUsdaBarcodeProduct,
 } from "./externalProduct.server";
@@ -78,6 +86,7 @@ type PendingProductSubmission = {
 	barcode: string;
 	product_name: string;
 	brand_owner: string | null;
+	category_option_id: string | null;
 	food: Json;
 	matched_source: string | null;
 	matched_reference: string | null;
@@ -169,16 +178,28 @@ export const validateSharedProductFood = (
 
 const enrichCatalogFood = (
 	row: {
+		category_option_id?: string | null;
 		compatibility_summary?: Json;
 		id: string;
 		food: Json;
 		confidence: string;
 	},
 	nutrientRows?: NormalizedNutrientRow[],
+	category?: ResolvedFoodCategory,
 ) =>
 	hydrateFoodWithNormalizedNutrients(
-		{
+		category ? applyCanonicalFoodCategory({
 			...(row.food as unknown as FdcFood),
+			categoryOptionId: row.category_option_id ?? undefined,
+			compatibilitySummary:
+				(row.compatibility_summary as FoodCompatibilitySummary | null) ?? undefined,
+			sharedProductId: row.id,
+			sharedProductConfidence:
+				row.confidence as FdcFood["sharedProductConfidence"],
+			customFood: false,
+		}, category) : {
+			...(row.food as unknown as FdcFood),
+			categoryOptionId: row.category_option_id ?? undefined,
 			compatibilitySummary:
 				(row.compatibility_summary as FoodCompatibilitySummary | null) ?? undefined,
 			sharedProductId: row.id,
@@ -198,18 +219,19 @@ export const getSharedProductByBarcode = async (
 
 	const { data, error } = await supabase
 		.from("shared_products")
-		.select("id, food, confidence, compatibility_summary")
+		.select("id, food, confidence, compatibility_summary, category_option_id")
 		.eq("barcode", canonicalBarcode)
 		.eq("status", "active")
 		.maybeSingle();
 	if (error) throw error;
 	if (!data) return null;
+	const category = await readFoodCategoryOption(supabase, data.category_option_id);
 	const normalizedRows = await readNormalizedNutrientsByParent(
 		supabase,
 		"shared_product_id",
 		[data.id],
 	);
-	return enrichCatalogFood(data, normalizedRows?.get(data.id));
+	return enrichCatalogFood(data, normalizedRows?.get(data.id), category ?? undefined);
 };
 
 export const searchApprovedSharedProducts = async (
@@ -226,7 +248,7 @@ export const searchApprovedSharedProducts = async (
 
 	let request = supabase
 		.from("shared_products")
-		.select("id, food, confidence, compatibility_summary")
+		.select("id, food, confidence, compatibility_summary, category_option_id")
 		.eq("status", "active")
 		.limit(30);
 	for (const term of terms.slice(0, 6)) {
@@ -241,7 +263,18 @@ export const searchApprovedSharedProducts = async (
 		"shared_product_id",
 		rows.map((row) => row.id),
 	);
-	return rows.map((row) => enrichCatalogFood(row, normalizedRows?.get(row.id)));
+	const categories = await readFoodCategoryOptions(
+		supabase,
+		rows.map((row) => row.category_option_id),
+	);
+	return rows.map((row) =>
+		enrichCatalogFood(
+			row,
+			normalizedRows?.get(row.id),
+			row.category_option_id
+				? categories.get(row.category_option_id)
+				: undefined,
+		));
 };
 
 const publishSubmission = async (input: {
@@ -291,6 +324,7 @@ const recordAutoDeclinedCatalogSubmission = async (input: {
 	userId: string;
 	barcode: string;
 	food: FdcFood;
+	categoryOptionId: string;
 	comparison: CatalogSubmissionComparison;
 }) => {
 	const admin = getSupabaseAdminClient();
@@ -311,6 +345,7 @@ const recordAutoDeclinedCatalogSubmission = async (input: {
 		.insert({
 			submitted_by: input.userId,
 			barcode: input.barcode,
+			category_option_id: input.categoryOptionId,
 			product_name: input.food.description.trim(),
 			brand_owner: input.food.brandOwner?.trim() || null,
 			food: toJson(compactFood(input.food)),
@@ -413,10 +448,18 @@ export const submitProductForCatalog = async (
 	if (!validation.valid || !validation.barcode) {
 		throw new Error(validation.issues.join(" "));
 	}
+	const selectedCategory = await resolveFoodCategoryOption(
+		admin,
+		food.categories ?? [],
+	);
+	if (!selectedCategory) {
+		throw new Error("Please select a valid category for this ingredient.");
+	}
+	const submissionFood = applyCanonicalFoodCategory(food, selectedCategory);
 
 	const existingCatalogFood = await getSharedProductByBarcode(admin, validation.barcode);
 	const existingCatalogComparison = existingCatalogFood
-		? compareCatalogSubmissionToExistingProduct(food, existingCatalogFood)
+		? compareCatalogSubmissionToExistingProduct(submissionFood, existingCatalogFood)
 		: null;
 	if (existingCatalogComparison?.matchesExisting) {
 		return {
@@ -429,7 +472,8 @@ export const submitProductForCatalog = async (
 		await recordAutoDeclinedCatalogSubmission({
 			userId,
 			barcode: validation.barcode,
-			food,
+			food: submissionFood,
+			categoryOptionId: selectedCategory.categoryOptionId,
 			comparison: existingCatalogComparison,
 		});
 		return {
@@ -452,14 +496,18 @@ export const submitProductForCatalog = async (
 	let openFoodFactsDraft: BarcodeProductDraft | null = null;
 	let externalLookupFailed = false;
 	try {
-		usdaDraft = await lookupUsdaBarcodeProduct(validation.barcode);
+		const draft = await lookupUsdaBarcodeProduct(validation.barcode);
+		usdaDraft = draft
+			? await resolveBarcodeDraftCategory(admin, draft)
+			: null;
 	} catch {
 		externalLookupFailed = true;
 	}
 	try {
-		openFoodFactsDraft = await lookupOpenFoodFactsBarcodeProduct(
-			validation.barcode,
-		);
+		const draft = await lookupOpenFoodFactsBarcodeProduct(validation.barcode);
+		openFoodFactsDraft = draft
+			? await resolveBarcodeDraftCategory(admin, draft)
+			: null;
 	} catch {
 		externalLookupFailed = true;
 	}
@@ -486,16 +534,21 @@ export const submitProductForCatalog = async (
 		imageCrop: context.frontImageCrop ?? null,
 	};
 	const matchedDraft = usdaDraft ?? openFoodFactsDraft;
+	const canonicalCategory = matchedDraft?.categoryResolution ?? selectedCategory;
+	const canonicalSubmissionFood = applyCanonicalFoodCategory(
+		submissionFood,
+		canonicalCategory,
+	);
 	const hasSourceMatchedImageEvidence = Boolean(
 		matchedDraft &&
 			!needsSourceComparisonReview &&
-			!food.image?.imageUrl &&
+			!canonicalSubmissionFood.image?.imageUrl &&
 			evidencePaths.front,
 	);
 
 	const evidenceComplete = hasSourceMatchedImageEvidence
 		? true
-		: food.image?.imageUrl
+		: canonicalSubmissionFood.image?.imageUrl
 			? Boolean(evidencePaths.nutrition && evidencePaths.barcode)
 			: hasCompleteProductEvidence(evidencePaths);
 	if (!matchedDraft && !evidenceComplete) {
@@ -509,21 +562,30 @@ export const submitProductForCatalog = async (
 		);
 	}
 	const verificationBundle = usdaDraft
-		? buildUsdaVerifiedCatalogBundle(food, usdaDraft)
+		? buildUsdaVerifiedCatalogBundle(
+			canonicalSubmissionFood,
+			usdaDraft,
+			canonicalCategory,
+		)
 		: openFoodFactsDraft
-			? buildOpenFoodFactsCatalogBundle(food, openFoodFactsDraft)
+			? buildOpenFoodFactsCatalogBundle(
+				canonicalSubmissionFood,
+				openFoodFactsDraft,
+				canonicalCategory,
+			)
 			: null;
 	report.evidenceComplete = evidenceComplete;
 	report.conflictCount = verificationBundle?.conflicts.length ?? 0;
 
 	const { data: submission, error: submissionError } = await admin
 		.from("shared_product_submissions")
-		.insert({
-			submitted_by: userId,
-			barcode: validation.barcode,
-			product_name: food.description.trim(),
-			brand_owner: food.brandOwner?.trim() || null,
-			food: toJson(compactFood(food)),
+			.insert({
+				submitted_by: userId,
+				barcode: validation.barcode,
+				category_option_id: canonicalCategory.categoryOptionId,
+				product_name: canonicalSubmissionFood.description.trim(),
+				brand_owner: canonicalSubmissionFood.brandOwner?.trim() || null,
+				food: toJson(compactFood(canonicalSubmissionFood)),
 			consent_to_share: true,
 			verification_status: usdaDraft && !needsSourceComparisonReview
 				? "source_verified"
@@ -603,7 +665,7 @@ export const listPendingProductSubmissions = async () => {
 	const { data, error } = await admin
 		.from("shared_product_submissions")
 		.select(
-			"id, submitted_by, barcode, product_name, brand_owner, food, matched_source, matched_reference, validation_report, evidence_paths, evidence_complete, created_at",
+			"id, submitted_by, barcode, product_name, brand_owner, category_option_id, food, matched_source, matched_reference, validation_report, evidence_paths, evidence_complete, created_at",
 		)
 		.eq("status", "pending")
 		.order("created_at", { ascending: true })
@@ -625,7 +687,7 @@ export const approveCommunityProductSubmission = async (
 	const admin = getSupabaseAdminClient();
 	const { data: submission, error } = await admin
 		.from("shared_product_submissions")
-		.select("id, barcode, product_name, brand_owner, food, status, evidence_complete, evidence_paths, validation_report")
+		.select("id, barcode, product_name, brand_owner, category_option_id, food, status, evidence_complete, evidence_paths, validation_report")
 		.eq("id", submissionId)
 		.single();
 	if (error || !submission) throw error ?? new Error("Submission not found.");
@@ -636,10 +698,25 @@ export const approveCommunityProductSubmission = async (
 		throw new Error("Complete label evidence is required before approval.");
 	}
 
-	const food = compactFood(submission.food as unknown as FdcFood);
+	const submittedFood = compactFood(submission.food as unknown as FdcFood);
+	const category =
+		await readFoodCategoryOption(admin, submission.category_option_id)
+		?? await resolveFoodCategoryOption(admin, submittedFood.categories ?? []);
+	if (!category) {
+		throw new Error(
+			"Select a canonical food category before approving this product.",
+		);
+	}
+	if (submission.category_option_id !== category.categoryOptionId) {
+		const { error: categoryError } = await admin
+			.from("shared_product_submissions")
+			.update({ category_option_id: category.categoryOptionId })
+			.eq("id", submissionId);
+		if (categoryError) throw categoryError;
+	}
+	const food = applyCanonicalFoodCategory(submittedFood, category);
 	food.customFood = false;
 	food.dataType = "Shared Product";
-	food.foodCategory = "Verified Packaged Food";
 	food.barcodeSource = "community";
 	food.sharedProductConfidence = "moderator-reviewed";
 

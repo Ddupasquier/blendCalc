@@ -156,8 +156,8 @@
 		{/if}
 		{#if categoryWarningMessage}
 			<small
-				class="custom-ingredient__field-status custom-ingredient__field-status--warning"
-				role="status"
+				class="custom-ingredient__field-status custom-ingredient__field-status--error"
+				role="alert"
 			>
 				{categoryWarningMessage}
 			</small>

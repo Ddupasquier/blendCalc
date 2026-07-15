@@ -2,6 +2,11 @@ import { createHash } from "node:crypto";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import { createCustomFood } from "$lib/utils/food/custom/customFoods";
 import type { FdcFood } from "$lib/utils/food/types";
+import {
+	applyCanonicalFoodCategory,
+	mergeCanonicalFoodCategories,
+	type ResolvedFoodCategory,
+} from "./categoryMapping.server";
 
 const getCatalogFoodId = (draft: BarcodeProductDraft) => {
 	if (draft.source === "usda") {
@@ -15,6 +20,7 @@ const getCatalogFoodId = (draft: BarcodeProductDraft) => {
 
 export const createCatalogFoodFromDraft = (
 	draft: BarcodeProductDraft,
+	category: ResolvedFoodCategory,
 	sharedProductId?: string,
 ): FdcFood => {
 	const food = createCustomFood({
@@ -36,18 +42,17 @@ export const createCatalogFoodFromDraft = (
 		traces: draft.traces,
 		dietaryTags: draft.dietaryTags,
 		labels: draft.labels,
-		categories: draft.categories,
+		categories: mergeCanonicalFoodCategories(category.label, draft.categories),
 		image: draft.image,
 		nutrients: draft.nutrients,
 		reportedNutrientIds: draft.reportedNutrientIds,
 	});
 
-	return {
+	return applyCanonicalFoodCategory({
 		...food,
 		reportedNutrientIds: [...draft.reportedNutrientIds],
 		fdcId: getCatalogFoodId(draft),
 		dataType: "Shared Product",
-		foodCategory: "Verified Packaged Food",
 		customFood: false,
 		gtinUpc: draft.barcode,
 		sharedProductId,
@@ -57,5 +62,5 @@ export const createCatalogFoodFromDraft = (
 				: draft.source === "open-food-facts"
 					? "imported"
 					: "moderator-reviewed",
-	};
+	}, category);
 };

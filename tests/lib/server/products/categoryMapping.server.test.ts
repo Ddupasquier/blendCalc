@@ -17,33 +17,21 @@ const createDraft = (categories: string[]): BarcodeProductDraft => ({
 });
 
 const createSupabaseMock = () => ({
-	from: () => ({
-		select: () => ({
-			in: async () => ({
-				data: [
-					{
-						source_normalized_value: "sweets",
-						category_option_id: "sweets",
-						category_option_label: "Sweets",
-						confidence: "exact",
-						observation_count: 287,
-					},
-					{
-						source_normalized_value: "fruit and vegetable preserves",
-						category_option_id: "fruit-and-vegetable-preserves",
-						category_option_label: "Fruit And Vegetable Preserves",
-						confidence: "exact",
-						observation_count: 100,
-					},
-				],
-				error: null,
-			}),
-		}),
+	rpc: async () => ({
+		data: [
+			{
+				source_normalized_value: "fruit and vegetable preserves",
+				category_option_id: "fruit-and-vegetable-preserves",
+				category_option_label: "Fruit And Vegetable Preserves",
+				confidence: "exact",
+			},
+		],
+		error: null,
 	}),
 });
 
 describe("barcode category mapping", () => {
-	it("prefers the more specific later API category over a broader high-count category", async () => {
+	it("uses the category ranked by the database resolver", async () => {
 		const draft = await resolveBarcodeDraftCategory(
 			createSupabaseMock() as never,
 			createDraft(["Sweets", "Fruit and vegetable preserves"]),

@@ -14,6 +14,11 @@ The shared catalog lets one verified packaged product become searchable for ever
 8. Approved products appear in ingredient text search and are checked before outside barcode services.
 9. Accounts with 5 rejected shared-product submissions in 30 days are paused from sharing products for 30 days.
 
+Barcode autofill and publication use two category layers: raw category values
+from the source APIs remain on the food payload for provenance, while
+`category_option_id` points to the clean DB-backed category shown in the app.
+Publication is blocked if a canonical category cannot be resolved.
+
 Submitting is optional. A failed catalog submission never rolls back the user's private ingredient.
 Submission pauses only affect shared catalog submissions. Users can still save private
 custom foods, use their fridge, and build mixes.
@@ -34,6 +39,10 @@ product row.
 - Values from different sources are never averaged.
 - A secondary source may fill a nutrient only when the canonical source did not report it.
 - A reported zero is kept as zero. A missing nutrient remains unknown.
+- Canonical categories are resolved through database options and mappings; they
+  are not replaced with a generic packaged-food label during publication.
+- Raw USDA and Open Food Facts category values remain attached to the food
+  payload so mappings can improve without losing source information.
 - Material serving, brand, unit, or nutrient disagreements are recorded as conflicts for review.
 - Moderator-reviewed labels remain identified as community-reviewed rather than source-verified.
 
@@ -63,12 +72,16 @@ Migrations:
 - `supabase/migrations/20260614190000_shared_product_catalog.sql`
 - `supabase/migrations/20260614200000_catalog_provenance_cache_and_evidence.sql`
 - `supabase/migrations/20260615230000_product_submission_rejection_blocks.sql`
+- `supabase/migrations/20260715120000_shared_product_canonical_categories.sql`
 
 - Authenticated users can read only active `shared_products` and their own submissions.
 - Browser clients cannot insert, update, approve, reject, or delete shared catalog rows.
 - Server routes authenticate the user, then use the server-only Supabase admin client.
 - Publication happens through one transactional, service-role-only database function.
 - Product revisions are append-only and serialized per barcode.
+- Shared submissions, products, and revisions retain an indexed foreign key to
+  `custom_food_category_options`; database triggers prevent category loss while
+  publishing or creating revisions.
 - Only one pending moderation submission can exist for a barcode at a time.
 - Public product rows do not contain submitter IDs or email addresses.
 - Evidence images are private, short-lived signed URLs are created only for moderators,
@@ -84,6 +97,16 @@ npm run db:push:dry
 npm run db:push
 npm run db:types
 ```
+
+Repair legacy shared products after category mappings change:
+
+```sh
+npm run backfill:shared-product-categories
+```
+
+The backfill checks both USDA FoodData Central and Open Food Facts, keeps raw
+observations and source references, then stores the resolved canonical category
+on submissions, products, and revisions.
 
 ## Moderation
 

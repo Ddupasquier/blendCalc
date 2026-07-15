@@ -53,6 +53,7 @@ export interface FdcFood {
     description: string;
     brandOwner?: string;
     foodCategory?: string;
+    brandedFoodCategory?: string;
     foodNutrients: FdcNutrient[];
     /** Nutrient IDs explicitly reported by the source. Missing IDs are unknown, not zero. */
     reportedNutrientIds?: number[];
@@ -69,6 +70,7 @@ export interface FdcFood {
     dietaryTags?: string[];
     labels?: string[];
     categories?: string[];
+    categoryOptionId?: string;
     image?: FoodImageAsset;
     customFood?: boolean;
     barcode?: string;

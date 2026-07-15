@@ -985,9 +985,11 @@ describe("CustomIngredientForm", () => {
 		});
 		await continueToNextStep();
 
-		expect(
-			screen.getByText(/enter a volume amount or turn off label includes volume/i),
-		).toBeInTheDocument();
+		const warning = screen.getByText(
+			/enter a volume amount or turn off label includes volume/i,
+		);
+		expect(warning).toBeInTheDocument();
+		expect(warning.closest(".warning-popup")).toHaveClass("warning-popup--error");
 		expect(screen.getByLabelText(/volume in this serving/i)).toBeInTheDocument();
 	});
 

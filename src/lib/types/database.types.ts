@@ -1571,6 +1571,7 @@ export type Database = {
       }
       shared_product_revisions: {
         Row: {
+          category_option_id: string | null
           created_at: string
           created_by: string | null
           food: Json
@@ -1581,6 +1582,7 @@ export type Database = {
           source_reference: string | null
         }
         Insert: {
+          category_option_id?: string | null
           created_at?: string
           created_by?: string | null
           food: Json
@@ -1591,6 +1593,7 @@ export type Database = {
           source_reference?: string | null
         }
         Update: {
+          category_option_id?: string | null
           created_at?: string
           created_by?: string | null
           food?: Json
@@ -1601,6 +1604,13 @@ export type Database = {
           source_reference?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "shared_product_revisions_category_option_id_fkey"
+            columns: ["category_option_id"]
+            isOneToOne: false
+            referencedRelation: "custom_food_category_options"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shared_product_revisions_shared_product_id_fkey"
             columns: ["shared_product_id"]
@@ -1614,6 +1624,7 @@ export type Database = {
         Row: {
           barcode: string
           brand_owner: string | null
+          category_option_id: string | null
           consent_to_share: boolean
           created_at: string
           evidence_complete: boolean
@@ -1635,6 +1646,7 @@ export type Database = {
         Insert: {
           barcode: string
           brand_owner?: string | null
+          category_option_id?: string | null
           consent_to_share: boolean
           created_at?: string
           evidence_complete?: boolean
@@ -1656,6 +1668,7 @@ export type Database = {
         Update: {
           barcode?: string
           brand_owner?: string | null
+          category_option_id?: string | null
           consent_to_share?: boolean
           created_at?: string
           evidence_complete?: boolean
@@ -1674,7 +1687,15 @@ export type Database = {
           validation_report?: Json
           verification_status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "shared_product_submissions_category_option_id_fkey"
+            columns: ["category_option_id"]
+            isOneToOne: false
+            referencedRelation: "custom_food_category_options"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shared_products: {
         Row: {
@@ -1683,6 +1704,7 @@ export type Database = {
           barcode: string
           brand_owner: string | null
           canonical_provenance: Json
+          category_option_id: string | null
           compatibility_summary: Json
           confidence: string
           created_at: string
@@ -1702,6 +1724,7 @@ export type Database = {
           barcode: string
           brand_owner?: string | null
           canonical_provenance?: Json
+          category_option_id?: string | null
           compatibility_summary?: Json
           confidence: string
           created_at?: string
@@ -1721,6 +1744,7 @@ export type Database = {
           barcode?: string
           brand_owner?: string | null
           canonical_provenance?: Json
+          category_option_id?: string | null
           compatibility_summary?: Json
           confidence?: string
           created_at?: string
@@ -1740,6 +1764,13 @@ export type Database = {
             columns: ["approved_submission_id"]
             isOneToOne: false
             referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_products_category_option_id_fkey"
+            columns: ["category_option_id"]
+            isOneToOne: false
+            referencedRelation: "custom_food_category_options"
             referencedColumns: ["id"]
           },
         ]
@@ -1915,6 +1946,10 @@ export type Database = {
       }
       food_metadata_search_text: { Args: { p_food: Json }; Returns: string }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
+      normalize_food_category_value: {
+        Args: { p_value: string }
+        Returns: string
+      }
       publish_shared_product_submission: {
         Args: {
           p_approved_by?: string
@@ -1960,6 +1995,15 @@ export type Database = {
           p_user_food_list_item_id: string
         }
         Returns: undefined
+      }
+      resolve_custom_food_category_option: {
+        Args: { p_source_values: string[] }
+        Returns: {
+          category_option_id: string
+          category_option_label: string
+          confidence: string
+          source_normalized_value: string
+        }[]
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
