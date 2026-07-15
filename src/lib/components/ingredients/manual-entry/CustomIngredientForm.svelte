@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy, onMount } from "svelte";
+	import { onDestroy, onMount, tick } from "svelte";
 	import "./styles/customIngredientForm.scss";
 	import {
 		SERVING_MEASURE_OPTIONS,
@@ -392,7 +392,7 @@
 		barcodeReferenceAcceptedBarcode = draftState.barcode;
 	};
 
-	const applyBarcodeReferenceSuggestion = () => {
+	const applyBarcodeReferenceSuggestion = async () => {
 		const draft = barcodeReferenceDraft;
 		if (!draft) return;
 		applyBarcodeProductDraft(draft);
@@ -403,6 +403,25 @@
 			optionalNutrientCount,
 			"autofill",
 		);
+
+		await tick();
+		const result = resolveManualEntryStepSelection({
+			steps: manualEntrySteps,
+			activeStep: "identity",
+			targetStep: "share",
+			attemptedSteps: validationAttemptedSteps,
+			validationItems: customIngredientValidationItems,
+		});
+		if (!result) return;
+
+		validationAttemptedSteps = result.attemptedSteps;
+		activeStep = result.activeStep;
+		if (result.warning) {
+			showStepWarning(result.warning.message, result.warning.step);
+			return;
+		}
+
+		clearStepWarning();
 	};
 
 	const keepManualBarcodeEntry = () => {

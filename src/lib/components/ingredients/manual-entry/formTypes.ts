@@ -38,7 +38,7 @@ export type BarcodeAutofillSuggestionProps = {
 	name: string;
 	brandOwner?: string;
 	sourceLabel: string;
-	onApply: () => void;
+	onApply: () => void | Promise<void>;
 	onKeepManual: () => void;
 };
 

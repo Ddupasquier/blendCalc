@@ -27,6 +27,9 @@ Thumbs.db
 /docs/QA/*.md
 /docs/QA/assets/
 
+# Local AI recovery context
+/docs/AI/
+
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*

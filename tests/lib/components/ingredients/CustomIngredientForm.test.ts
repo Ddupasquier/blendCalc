@@ -647,6 +647,8 @@ describe("CustomIngredientForm", () => {
 					sodium: 5,
 				}),
 				reportedNutrientIds: [1008, 1004, 1005, 1003],
+				categories: ["Other"],
+				resolvedCategory: "Other",
 				source: "usda",
 				sourceLabel: "USDA FDC",
 				sourceReference: "12345",
@@ -704,6 +706,8 @@ describe("CustomIngredientForm", () => {
 					sodium: 5,
 				}),
 				reportedNutrientIds: [1008, 1004, 1005, 1003],
+				categories: ["Other"],
+				resolvedCategory: "Other",
 				source: "usda",
 				sourceLabel: "USDA FDC",
 				sourceReference: "12345",
@@ -726,6 +730,9 @@ describe("CustomIngredientForm", () => {
 
 		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
 
+		expect(screen.getByText("Share with community")).toBeInTheDocument();
+		expect(screen.getByLabelText(/share with community/i)).not.toBeChecked();
+		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
 		expect(screen.getByLabelText(/food name/i)).toHaveValue("Source tomato product");
 		expect(screen.getByLabelText(/brand/i)).toHaveValue("Source brand");
 		expect(screen.getByText(/autofilled from USDA FDC/i)).toBeInTheDocument();
@@ -813,6 +820,7 @@ describe("CustomIngredientForm", () => {
 			expect(screen.getByRole("button", { name: /autofill/i })).toBeInTheDocument(),
 		);
 		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
+		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
 		await fireEvent.input(screen.getByLabelText(/food name/i), {
 			target: { value: "Strawberry Jelly, Strawberry updated" },
 		});

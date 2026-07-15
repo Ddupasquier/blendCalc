@@ -48,7 +48,7 @@
 		onCategoryChange: (value: string) => void;
 		onBarcodeChange: (value: string) => void;
 		onBarcodeBlur: () => void | Promise<void>;
-		onApplyBarcodeSuggestion: () => void;
+		onApplyBarcodeSuggestion: () => void | Promise<void>;
 		onKeepManualBarcodeEntry: () => void;
 		onNameInput?: (element: HTMLInputElement) => void;
 		onNext: () => void | Promise<void>;
