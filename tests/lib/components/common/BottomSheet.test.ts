@@ -6,6 +6,10 @@ const componentPath = resolve(
 	process.cwd(),
 	"src/lib/components/common/sheets/BottomSheet.svelte",
 );
+const manualEntrySheetPath = resolve(
+	process.cwd(),
+	"src/lib/components/ingredients/sheets/ManualEntrySheet.svelte",
+);
 
 describe("BottomSheet shared chrome", () => {
 	it("keeps the drag handle horizontally centered", () => {
@@ -14,5 +18,14 @@ describe("BottomSheet shared chrome", () => {
 
 		expect(handleRule?.groups?.body).toContain("justify-self: center;");
 		expect(handleRule?.groups?.body).toContain("place-items: center;");
+	});
+
+	it("allows a flow to hide the shared back control", () => {
+		const source = readFileSync(componentPath, "utf8");
+		const manualEntrySource = readFileSync(manualEntrySheetPath, "utf8");
+
+		expect(source).toContain("showBack = true");
+		expect(source).toContain("{#if showBack}");
+		expect(manualEntrySource).toContain("showBack={false}");
 	});
 });

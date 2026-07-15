@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
-	import BackButton from "$lib/components/common/buttons/BackButton.svelte";
 	import WarningPopup from "$lib/components/common/feedback/WarningPopup.svelte";
 	import ManualEntryStepTabs from "$lib/components/ingredients/manual-entry/ManualEntryStepTabs.svelte";
 	import ManualEntryToggle from "$lib/components/ingredients/manual-entry/ManualEntryToggle.svelte";
@@ -18,7 +17,6 @@
 		stepWarningMessage = "",
 		stepWarningStep = null,
 		children,
-		onBack,
 		onSelectStep,
 		onDetailsElement = () => {},
 		onBodyElement = () => {},
@@ -31,7 +29,6 @@
 		stepWarningMessage?: string;
 		stepWarningStep?: ManualEntryStepId | null;
 		children: Snippet;
-		onBack: () => void;
 		onSelectStep: (step: ManualEntryStepId) => void;
 		onDetailsElement?: (element: HTMLDetailsElement | null) => void;
 		onBodyElement?: (element: HTMLFieldSetElement | null) => void;
@@ -75,11 +72,6 @@
 	>
 		{#if inline}
 			<header class="custom-ingredient__header">
-				<BackButton
-					class="custom-ingredient__back"
-					label="Back"
-					onclick={onBack}
-				/>
 				<h2>Enter Manually</h2>
 			</header>
 		{/if}

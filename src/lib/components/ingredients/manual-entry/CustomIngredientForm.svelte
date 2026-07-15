@@ -1056,8 +1056,7 @@
 			{lookingUpBarcode}
 			{stepWarningMessage}
 			{stepWarningStep}
-			onBack={goBack}
-			onSelectStep={goToStep}
+				onSelectStep={goToStep}
 			onDetailsElement={(element) => (labelDetailsElement = element)}
 			onBodyElement={(element) => (manualBodyElement = element)}
 		>

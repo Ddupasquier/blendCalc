@@ -9,6 +9,7 @@
 		titleId = "bottom-sheet-title",
 		label = title,
 		backLabel = "Back",
+		showBack = true,
 		aboveNav = true,
 		fill = false,
 		comfortable = false,
@@ -20,6 +21,7 @@
 		titleId?: string;
 		label?: string;
 		backLabel?: string;
+		showBack?: boolean;
 		aboveNav?: boolean;
 		fill?: boolean;
 		comfortable?: boolean;
@@ -46,8 +48,13 @@
 			<button class="bottom-sheet__handle" type="button" aria-label="Close sheet" onclick={onClose}>
 				<span aria-hidden="true"></span>
 			</button>
-			<div class="bottom-sheet__header">
-				<BackButton class="bottom-sheet__back" label={backLabel} onclick={onClose} />
+			<div
+				class="bottom-sheet__header"
+				class:bottom-sheet__header--without-back={!showBack}
+			>
+				{#if showBack}
+					<BackButton class="bottom-sheet__back" label={backLabel} onclick={onClose} />
+				{/if}
 				{#if title}
 					<h2 id={titleId}>{title}</h2>
 				{/if}
@@ -126,6 +133,10 @@
 		align-items: center;
 		gap: $app-gap-sm;
 		min-height: $app-bottom-sheet-back-size;
+	}
+
+	.bottom-sheet__header--without-back {
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	:global(.bottom-sheet__back) {

@@ -18,6 +18,7 @@
 	title="Enter Manually"
 	titleId="manual-entry-sheet-title"
 	label="Enter a custom ingredient manually"
+	showBack={false}
 	fill
 	onClose={onClose}
 >
