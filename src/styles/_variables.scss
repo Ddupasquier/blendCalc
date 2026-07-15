@@ -290,14 +290,6 @@ $app-rebuild-scanner-status-offset: 5.6rem;
 $app-rebuild-scan-button-padding-y: 0.48rem;
 $app-rebuild-scan-button-padding-x: 0.82rem;
 
-// Compact barcode scan button padding while barcode lookup is loading.
-$app-rebuild-scan-button-loading-padding-y: 0.5rem;
-$app-rebuild-scan-button-loading-padding-x: 0.75rem;
-
-// Expanded barcode scan button size while barcode lookup is loading.
-$app-rebuild-scan-button-loading-width: 5.5rem;
-$app-rebuild-scan-button-loading-height: 3.3rem;
-
 // Resting barcode icon dimensions inside the scan button.
 $app-rebuild-scan-icon-width: 1.125rem;
 $app-rebuild-scan-icon-height: 1rem;
@@ -408,10 +400,6 @@ $ingredient-scanner-status-offset: $app-rebuild-scanner-status-offset;
 
 $ingredient-scan-button-padding-y: $app-rebuild-scan-button-padding-y;
 $ingredient-scan-button-padding-x: $app-rebuild-scan-button-padding-x;
-$ingredient-scan-button-loading-padding-y: $app-rebuild-scan-button-loading-padding-y;
-$ingredient-scan-button-loading-padding-x: $app-rebuild-scan-button-loading-padding-x;
-$ingredient-scan-button-loading-width: $app-rebuild-scan-button-loading-width;
-$ingredient-scan-button-loading-height: $app-rebuild-scan-button-loading-height;
 $ingredient-scan-icon-width: $app-rebuild-scan-icon-width;
 $ingredient-scan-icon-height: $app-rebuild-scan-icon-height;
 $ingredient-scan-icon-active-width: $app-rebuild-scan-icon-active-width;

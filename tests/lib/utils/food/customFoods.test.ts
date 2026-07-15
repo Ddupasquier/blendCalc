@@ -134,7 +134,7 @@ describe("custom foods", () => {
 			}),
 		});
 
-		expect(food.customDensityGramsPerMilliliter).toBeCloseTo(1.0208);
+		expect(food.customDensityGramsPerMilliliter).toBeCloseTo(1.0356);
 		expect(food.customDensityConfidence).toBe("known");
 		expect(food.customServingLabel).toBe("1 cup");
 	});

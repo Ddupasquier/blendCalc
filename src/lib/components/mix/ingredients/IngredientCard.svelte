@@ -9,7 +9,7 @@
 	import {
 		SERVING_MEASURE_OPTIONS,
 		type ServingMeasureUnit,
-	} from "../../../../defaults/servingMeasureDefaults";
+	} from "$lib/utils/serving/servingMeasureCatalog";
 
 	let {
 		food,

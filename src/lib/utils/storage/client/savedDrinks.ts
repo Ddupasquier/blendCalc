@@ -2,7 +2,7 @@ import {
 	MIX_STORAGE_KEYS,
 	DEFAULT_SERVING_GRAMS,
 } from "../../../../defaults/mixDefaults";
-import type { ServingMeasureUnit } from "../../../../defaults/servingMeasureDefaults";
+import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 import {
 	addFoodsToSmoothieList,
 	cacheSmoothieListLocally,

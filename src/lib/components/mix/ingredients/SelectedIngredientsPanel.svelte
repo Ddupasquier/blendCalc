@@ -15,7 +15,7 @@
 		getServingGramsLabel,
 	} from "$lib/utils/mix/ui/mixUi";
 	import type { ServingConversion } from "$lib/utils/serving/servingAmount";
-	import type { ServingMeasureUnit } from "../../../../defaults/servingMeasureDefaults";
+	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 	import {
 		LIST_PAGE_SIZES,
 		LIST_SEARCH_THRESHOLDS,

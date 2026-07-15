@@ -1,4 +1,7 @@
-import type { ServingMeasureUnit } from "../../../../../defaults/servingMeasureDefaults";
+import {
+	getDefaultServingMeasureUnit,
+	type ServingMeasureUnit,
+} from "$lib/utils/serving/servingMeasureCatalog";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
 	barcodeDraftHasEntryChanges,
@@ -196,7 +199,10 @@ export const getBarcodeDraftState = (
 	),
 	useVolumeEquivalent: Boolean(draft.volumeEquivalent),
 	volumeQuantity: draft.volumeEquivalent?.quantity ?? null,
-	volumeUnit: draft.volumeEquivalent?.unit ?? "tbsp",
+	volumeUnit:
+		draft.volumeEquivalent?.unit ??
+		getDefaultServingMeasureUnit("volume") ??
+		"",
 	barcode: draft.barcode,
 	barcodeSource: draft.source === "shared-catalog" ? "community" : draft.source,
 	reportedNutrientIds: [...draft.reportedNutrientIds],

@@ -1,9 +1,8 @@
 <script lang="ts">
 	import {
 		type ServingMeasureUnit,
-	} from "../../../../defaults/servingMeasureDefaults";
+	} from "$lib/utils/serving/servingMeasureCatalog";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
-	import type { FdcFood } from "$lib/utils/food/types";
 	import type {
 		ManualEntryNutrientDefinition,
 		ManualEntryNutrientGroupsByStep,
@@ -51,8 +50,6 @@
 		activeCategory,
 		summaryNutrients,
 		optionalNutrientCount,
-		hasValidBarcode,
-		barcodeSource,
 		canShareWithCatalog,
 		shareUnavailableMessage,
 		shareHelpMessage,
@@ -134,8 +131,6 @@
 		activeCategory: string;
 		summaryNutrients: ManualEntrySummaryItem[];
 		optionalNutrientCount: number;
-		hasValidBarcode: boolean;
-		barcodeSource: FdcFood["barcodeSource"];
 		canShareWithCatalog: boolean;
 		shareUnavailableMessage: string;
 		shareHelpMessage: string;
@@ -276,8 +271,6 @@
 		{optionalNutrientCount}
 		validationItems={getAttemptedValidationItems(customIngredientValidationItems)}
 		{barcodeMessage}
-		{hasValidBarcode}
-		{barcodeSource}
 		{canShareWithCatalog}
 		{shareUnavailableMessage}
 		{shareHelpMessage}

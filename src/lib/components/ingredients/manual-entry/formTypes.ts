@@ -1,4 +1,4 @@
-import type { ServingMeasureUnit } from "../../../../defaults/servingMeasureDefaults";
+import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { ManualEntryNutrientGroupsByStep } from "$lib/utils/food/nutrients/nutrientDefinitions";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";

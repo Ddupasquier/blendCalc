@@ -5,7 +5,7 @@ import {
 import {
 	SERVING_MEASURE_ALIASES,
 	type ServingMeasureUnit,
-} from "../../../../defaults/servingMeasureDefaults";
+} from "$lib/utils/serving/servingMeasureCatalog";
 import { vitalNutrients } from "../../../../variables/vitalNutrients";
 import { getFoodNutrientAmount, type NutrientMeta } from "$lib/utils/mix/calculations";
 import type { ServingConversion } from "$lib/utils/serving/servingAmount";

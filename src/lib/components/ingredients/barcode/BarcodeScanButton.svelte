@@ -16,7 +16,6 @@
 
 <button
 	class="barcode-scan-button"
-	class:barcode-scan-button--loading={scanning}
 	class:barcode-scan-button--compact={compact}
 	type="button"
 	disabled={disabled || scanning}
@@ -24,7 +23,7 @@
 	aria-label={scanning ? "Scanning barcode" : "Scan barcode"}
 	{onclick}
 >
-	<BarcodeScannerIcon active={scanning} />
+	<BarcodeScannerIcon />
 	<span class="barcode-scan-button__label">{scanning ? "Scanning..." : "Scan"}</span>
 </button>
 
@@ -47,10 +46,7 @@
 		border-radius: $ingredient-radius-card;
 		transition:
 			background-color 0.28s ease,
-			color 0.28s ease,
-			min-height 0.24s ease,
-			padding 0.24s ease,
-			border-radius 0.24s ease;
+			color 0.28s ease;
 
 		.barcode-scan-button__label {
 			position: relative;
@@ -72,19 +68,6 @@
 		}
 	}
 
-	.barcode-scan-button--loading {
-		min-height: $ingredient-scan-button-loading-height;
-		padding: $ingredient-scan-button-loading-padding-y
-			$ingredient-scan-button-loading-padding-x;
-		color: $app-scan-laser;
-		background-color: color-mix(
-			in srgb,
-			$ingredient-accent-primary 58%,
-			$ingredient-text-primary
-		);
-		border-radius: $ingredient-radius-card;
-	}
-
 	.barcode-scan-button--compact {
 		width: $ingredient-control-height;
 		height: $ingredient-control-height;
@@ -102,19 +85,9 @@
 		}
 	}
 
-	.barcode-scan-button--compact.barcode-scan-button--loading {
-		width: $ingredient-scan-button-loading-width;
-		height: $ingredient-scan-button-loading-height;
+	@media (prefers-reduced-motion: reduce) {
+		.barcode-scan-button {
+			transition: none;
+		}
 	}
-
-		.barcode-scan-button--loading .barcode-scan-button__label {
-			color: $app-scan-laser;
-			transition: color 0.28s ease;
-		}
-
-		@media (prefers-reduced-motion: reduce) {
-			.barcode-scan-button {
-				transition: none;
-			}
-		}
-	</style>
+</style>

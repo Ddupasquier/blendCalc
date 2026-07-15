@@ -1,4 +1,4 @@
-import type { ServingMeasureUnit } from "../../../../../defaults/servingMeasureDefaults";
+import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 import type { NutrientValueState } from "$lib/components/ingredients/manual-entry/formTypes";
 import { createCustomFood } from "$lib/utils/food/custom/customFoods";
 import type { ManualEntryNutrientDefinition } from "$lib/utils/food/nutrients/nutrientDefinitions";

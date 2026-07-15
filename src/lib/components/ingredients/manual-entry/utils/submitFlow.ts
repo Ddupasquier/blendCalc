@@ -34,7 +34,6 @@ export const saveManualEntryCustomFood = async ({
 	normalizedBarcode,
 	shareWithCatalog,
 	submitForCatalog = false,
-	barcodeSource,
 	photos,
 	reviewFlags,
 	useIngredient,
@@ -44,7 +43,6 @@ export const saveManualEntryCustomFood = async ({
 	normalizedBarcode: string | null;
 	shareWithCatalog: boolean;
 	submitForCatalog?: boolean;
-	barcodeSource: FdcFood["barcodeSource"];
 	photos: ManualEntrySharedProductPhotos;
 	reviewFlags: string[];
 	useIngredient: (food: FdcFood, alreadySaved?: boolean) => Promise<boolean>;
@@ -94,7 +92,7 @@ export const saveManualEntryCustomFood = async ({
 	if (
 		normalizedBarcode &&
 		addedToDestination &&
-		(shareWithCatalog || barcodeSource === "open-food-facts" || submitForCatalog)
+		(shareWithCatalog || submitForCatalog)
 	) {
 		try {
 			const submission = await submitSharedProduct(food, photos, { reviewFlags });

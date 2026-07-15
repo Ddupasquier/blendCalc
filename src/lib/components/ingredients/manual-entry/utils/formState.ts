@@ -1,4 +1,7 @@
-import type { ServingMeasureUnit } from "../../../../../defaults/servingMeasureDefaults";
+import {
+	getDefaultServingMeasureUnit,
+	type ServingMeasureUnit,
+} from "$lib/utils/serving/servingMeasureCatalog";
 import { MIX_STORAGE_KEYS } from "../../../../../defaults/mixDefaults";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
@@ -57,7 +60,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	servingLabel: "",
 	servingWeightGrams: null,
 	volumeQuantity: null,
-	volumeUnit: "tbsp",
+	volumeUnit: getDefaultServingMeasureUnit("volume") ?? "",
 	useVolumeEquivalent: false,
 	manualNutrientValues: {},
 	manualTouchedNutrientIds: {},

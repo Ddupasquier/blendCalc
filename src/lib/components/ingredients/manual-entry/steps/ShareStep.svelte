@@ -9,7 +9,6 @@
 		ManualEntrySummaryItem,
 		ManualEntryValidationItem,
 	} from "$lib/components/ingredients/manual-entry/formTypes";
-	import type { FdcFood } from "$lib/utils/food/types";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import { MIX_STORAGE_KEYS } from "../../../../../defaults/mixDefaults";
 
@@ -20,8 +19,6 @@
 		optionalNutrientCount,
 		validationItems,
 		barcodeMessage,
-		hasValidBarcode,
-		barcodeSource,
 		canShareWithCatalog,
 		shareUnavailableMessage,
 		shareHelpMessage,
@@ -61,8 +58,6 @@
 		optionalNutrientCount: number;
 		validationItems: ManualEntryValidationItem[];
 		barcodeMessage: string;
-		hasValidBarcode: boolean;
-		barcodeSource: FdcFood["barcodeSource"];
 		canShareWithCatalog: boolean;
 		shareUnavailableMessage: string;
 		shareHelpMessage: string;
@@ -128,13 +123,6 @@
 
 	{#if barcodeMessage}
 		<p class="custom-ingredient__status" role="status">{barcodeMessage}</p>
-	{/if}
-
-	{#if hasValidBarcode && barcodeSource === "open-food-facts"}
-		<p class="custom-ingredient__status">
-			This product was found through Open Food Facts. Saving it also makes it available
-			in shared search for other users.
-		</p>
 	{/if}
 
 	{#if shareUnavailableMessage}

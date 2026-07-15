@@ -3,7 +3,7 @@ import {
 	DEFAULT_SERVING_GRAMS,
 	MIX_STORAGE_KEYS,
 } from "../../../../defaults/mixDefaults";
-import type { ServingMeasureUnit } from "../../../../defaults/servingMeasureDefaults";
+import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 import { ALL_NUTRIENTS } from "../../../../variables/allNutrients";
 import { vitalNutrients } from "../../../../variables/vitalNutrients";
 import type { FdcFood } from "$lib/utils/food/types";

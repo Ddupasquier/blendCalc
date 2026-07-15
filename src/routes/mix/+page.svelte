@@ -86,7 +86,7 @@
         MIX_STORAGE_KEYS,
     } from "../../defaults/mixDefaults";
     import { POINT_SHAPE_DEFAULTS } from "../../defaults/pointShapeDefaults";
-	import type { ServingMeasureUnit } from "../../defaults/servingMeasureDefaults";
+	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 	import { vitalNutrients } from "../../variables/vitalNutrients";
 	import { ALL_NUTRIENTS } from "../../variables/allNutrients";
 

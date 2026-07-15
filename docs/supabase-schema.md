@@ -197,6 +197,72 @@ Notes:
   browser-only.
 - Current rule type is `child_must_not_exceed_parent`.
 
+## Product Reference Data and Serving Measures
+
+These tables replace runtime nutrient, source, serving-unit, alias, and unit-conversion
+constants. The app loads them from Supabase and uses them when it interprets USDA FoodData
+Central and Open Food Facts products.
+
+| Table | Primary Key | Purpose | Key Relationships |
+| --- | --- | --- | --- |
+| `product_data_sources` | `key` | Canonical identity, display name, URLs, terms, and observation history for each external API, standards API, or internal catalog | Referenced by all source-specific mapping and serving tables |
+| `nutrient_source_mappings` | `(source_key, source_nutrient_key, source_unit_name)` | Maps a source API nutrient key and unit to the app's canonical nutrient | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id` |
+| `nutrient_unit_conversions` | `(source_key, nutrient_id, from_unit_name, to_unit_name)` | Stores source- and nutrient-specific conversion multipliers | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id` |
+| `serving_measure_units` | `key` | App-ready serving units, labels, dimensions, order, defaults, and conversion to grams or milliliters | `source_key → product_data_sources.key` |
+| `serving_measure_aliases` | `(unit_key, normalized_alias)` | Recognizes API and label spellings such as `tbsp`, `tablespoon`, and `tablespoons` | `unit_key → serving_measure_units.key`, `source_key → product_data_sources.key` |
+
+### `product_data_sources`
+
+Columns: `key`, `display_name`, `source_type`, `homepage_url`, `api_base_url`,
+`terms_url`, `attribution_text`, `enabled`, observation counts/timestamps,
+`provenance`, and timestamps.
+
+Notes:
+- Source names shown by barcode lookup come from this table. Runtime lookup code does not
+  invent vendor labels.
+- Source rows are maintained by the reference-data seed script, with API-observed provenance.
+
+### `nutrient_source_mappings`
+
+Columns: `source_key`, `source_nutrient_key`, `source_unit_name`,
+`source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `confidence`,
+`enabled`, observation counts/timestamps, `provenance`, and timestamps.
+
+Notes:
+- `nutrient_definitions` remains the canonical owner of nutrient names, numbers, and default
+  units. This table only explains how a source API field maps to that canonical row.
+- The lookup index starts with source and source nutrient key so barcode mapping does not scan
+  the full table.
+
+### `nutrient_unit_conversions`
+
+Columns: `source_key`, `nutrient_id`, `from_unit_name`, `to_unit_name`,
+`multiplier`, `conversion_method`, `confidence`, `observation_count`, `provenance`,
+and timestamps.
+
+Notes:
+- Conversion rows are source- and nutrient-specific because conversions such as vitamin IU
+  values cannot be safely treated as universal unit math.
+- The seed script stores standards-API or paired API-observation provenance with each multiplier.
+
+### `serving_measure_units` and `serving_measure_aliases`
+
+Unit columns: `key`, `display_label`, `short_label`, `dimension`, `base_unit_key`,
+`conversion_to_base`, `standards_code`, `display_order`, `is_default`, `enabled`,
+`source_key`, `source_reference`, `observed_at`, and timestamps.
+
+Alias columns: `unit_key`, `alias`, `normalized_alias`, `source_key`, observation
+counts/timestamps, and timestamps.
+
+Notes:
+- `serving_measure_units` has one enabled default per dimension and indexed display ordering.
+- Basic multiplication remains application code; available units, aliases, labels, enabled
+  state, and conversion factors are database-owned.
+- Authenticated users can read all five reference tables. Only service-role scripts can write
+  them.
+- Run `npm run seed:product-reference-data -- --sample-size=200` after the migration to sample
+  USDA FoodData Central, Open Food Facts, and the UCUM standards service and refresh these rows.
+
 ## Shared Product Catalog and Barcode Flow
 
 | Table | Primary Key | Owner Scope | Purpose | Key Relationships |

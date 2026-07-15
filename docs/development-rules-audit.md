@@ -262,6 +262,10 @@ Recommendation:
 - Continue showing confidence details, but keep them collapsed by default.
 - Normalize nutrients into Supabase for products that are reused.
 - Preserve source, source timestamp, barcode, serving basis, and quality flags.
+- Resolve external nutrient keys, vendor identity, source labels, serving units,
+  aliases, and nutrient-specific conversions through normalized DB reference
+  tables. Runtime barcode code may perform arithmetic, but it must not own those
+  source-derived definitions.
 
 ### 9. UI Flow Complexity
 

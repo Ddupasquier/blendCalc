@@ -2,7 +2,7 @@ import {
 	DEFAULT_MILLILITERS_PER_VOLUME_MEASURE,
 	SERVING_MEASURE_OPTIONS,
 	type ServingMeasureUnit,
-} from "../../../../defaults/servingMeasureDefaults";
+} from "$lib/utils/serving/servingMeasureCatalog";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
 import {
 	saveCloudCustomFood,
@@ -97,9 +97,7 @@ const getVolumeMilliliters = (
 
 	return (
 		Math.max(0, quantity) *
-		DEFAULT_MILLILITERS_PER_VOLUME_MEASURE[
-			unit as keyof typeof DEFAULT_MILLILITERS_PER_VOLUME_MEASURE
-		]
+		(DEFAULT_MILLILITERS_PER_VOLUME_MEASURE[unit] ?? 0)
 	);
 };
 

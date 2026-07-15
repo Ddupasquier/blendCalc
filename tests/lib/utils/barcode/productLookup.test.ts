@@ -5,6 +5,7 @@ import {
 	mapSharedCatalogFood,
 } from "$lib/utils/barcode/productLookup";
 import { NUTRIENT_IDS } from "$lib/utils/food/types";
+import { productReferenceDataFixture } from "../../../fixtures/referenceData";
 
 describe("barcode product mapping", () => {
 	it("converts Open Food Facts per-100g values to the label serving", () => {
@@ -30,6 +31,7 @@ describe("barcode product mapping", () => {
 				},
 			},
 			"4006381333931",
+			productReferenceDataFixture,
 		);
 
 		expect(draft).toMatchObject({
@@ -79,6 +81,7 @@ describe("barcode product mapping", () => {
 				},
 			},
 			"4006381333931",
+			productReferenceDataFixture,
 		);
 
 		expect(draft?.nutrients).toEqual(
@@ -97,6 +100,28 @@ describe("barcode product mapping", () => {
 		);
 	});
 
+	it("uses the DB-provided conversion for source-specific nutrient units", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Vitamin drink",
+				serving_size: "100 g",
+				nutriments: {
+					"energy-kcal_100g": 10,
+					"vitamin-d_100g": 40,
+					"vitamin-d_unit": "IU",
+				},
+			},
+			"4006381333931",
+			productReferenceDataFixture,
+		);
+
+		expect(draft?.nutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ nutrientId: 1114, unitName: "UG", value: 1 }),
+			]),
+		);
+	});
+
 	it("does not infer density from a volume-only serving", () => {
 		const draft = mapOpenFoodFactsProduct(
 			{
@@ -107,6 +132,7 @@ describe("barcode product mapping", () => {
 				nutriments: { "energy-kcal_100g": 1 },
 			},
 			"049000042566",
+			productReferenceDataFixture,
 		);
 
 		expect(draft?.servingWeightGrams).toBe(100);
@@ -129,6 +155,7 @@ describe("barcode product mapping", () => {
 				nutriments: { "energy-kcal_100g": 100 },
 			},
 			"049000042566",
+			productReferenceDataFixture,
 		);
 
 		expect(draft).toMatchObject({
@@ -151,6 +178,7 @@ describe("barcode product mapping", () => {
 				nutriments: { "energy-kcal_100g": 50 },
 			},
 			"00021130462506",
+			productReferenceDataFixture,
 		);
 
 		expect(draft?.image).toMatchObject({
@@ -191,6 +219,7 @@ describe("barcode product mapping", () => {
 				],
 			},
 			"4006381333931",
+			productReferenceDataFixture,
 		);
 
 		expect(draft?.nutrients).toEqual(
@@ -229,6 +258,7 @@ describe("barcode product mapping", () => {
 				foodNutrients: [],
 			},
 			"4006381333931",
+			productReferenceDataFixture,
 		);
 
 			expect(draft).toMatchObject({

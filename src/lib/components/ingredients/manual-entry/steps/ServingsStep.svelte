@@ -1,7 +1,7 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch.svelte";
-	import type { ServingMeasureUnit } from "../../../../../defaults/servingMeasureDefaults";
+	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 	import type { ManualEntryVolumeOption } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {

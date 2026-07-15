@@ -56,7 +56,7 @@ describe("serving amount conversion", () => {
 	it("converts milk cups using milk density", () => {
 		const conversion = convertServingAmount(1, "cup", twoPercentMilk);
 
-		expect(conversion.grams).toBeCloseTo(247.2);
+		expect(conversion.grams).toBeCloseTo(243.6858872);
 		expect(conversion.density?.label).toBe("milk");
 		expect(conversion.warning).toContain("milk density");
 	});
@@ -64,7 +64,7 @@ describe("serving amount conversion", () => {
 	it("uses a rough warning for unknown volume densities", () => {
 		const conversion = convertServingAmount(1, "cup", unknownFood);
 
-		expect(conversion.grams).toBeCloseTo(240);
+		expect(conversion.grams).toBeCloseTo(236.58824);
 		expect(conversion.density?.confidence).toBe("rough");
 		expect(conversion.warning).toContain("±50%");
 	});

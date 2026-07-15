@@ -11,6 +11,8 @@ import {
 import type { FdcFood, FdcSearchResponse } from "$lib/utils/food/types";
 import { APP_USER_AGENT } from "$lib/config/brand";
 import { getUsdaFoodById, searchUsdaBrandedFoods } from "./usdaCache.server";
+import { getProductReferenceData } from "./productReferenceData.server";
+import type { ProductReferenceData } from "$lib/utils/food/reference/productReferenceData";
 
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v2/product";
 const OPEN_FOOD_FACTS_FIELDS = [
@@ -46,6 +48,7 @@ const PRODUCT_LOOKUP_USER_AGENT = APP_USER_AGENT;
 
 export const lookupUsdaBarcodeProduct = async (
 	barcode: string,
+	referenceData?: ProductReferenceData,
 ): Promise<BarcodeProductDraft | null> => {
 	const canonicalBarcode = normalizeBarcode(barcode);
 	if (!canonicalBarcode) return null;
@@ -64,7 +67,11 @@ export const lookupUsdaBarcodeProduct = async (
 			food = match;
 		}
 
-		return mapFdcBarcodeFood(food, canonicalBarcode);
+		return mapFdcBarcodeFood(
+			food,
+			canonicalBarcode,
+			referenceData ?? await getProductReferenceData(),
+		);
 	}
 
 	return null;
@@ -72,6 +79,7 @@ export const lookupUsdaBarcodeProduct = async (
 
 export const lookupOpenFoodFactsBarcodeProduct = async (
 	barcode: string,
+	referenceData?: ProductReferenceData,
 ): Promise<BarcodeProductDraft | null> => {
 	const canonicalBarcode = normalizeBarcode(barcode);
 	if (!canonicalBarcode) return null;
@@ -96,7 +104,11 @@ export const lookupOpenFoodFactsBarcodeProduct = async (
 
 		const data = await response.json() as OpenFoodFactsResponse;
 		if (data.status !== 1 || !data.product) continue;
-		const draft = mapOpenFoodFactsProduct(data.product, canonicalBarcode);
+		const draft = mapOpenFoodFactsProduct(
+			data.product,
+			canonicalBarcode,
+			referenceData ?? await getProductReferenceData(),
+		);
 		if (draft) return draft;
 	}
 
@@ -106,16 +118,17 @@ export const lookupOpenFoodFactsBarcodeProduct = async (
 export const lookupExternalBarcodeProduct = async (
 	barcode: string,
 ): Promise<BarcodeProductDraft | null> => {
+	const referenceData = await getProductReferenceData();
 	let firstError: unknown;
 	try {
-		const usdaDraft = await lookupUsdaBarcodeProduct(barcode);
+		const usdaDraft = await lookupUsdaBarcodeProduct(barcode, referenceData);
 		if (usdaDraft) return usdaDraft;
 	} catch (error) {
 		firstError = error;
 	}
 
 	try {
-		return await lookupOpenFoodFactsBarcodeProduct(barcode);
+		return await lookupOpenFoodFactsBarcodeProduct(barcode, referenceData);
 	} catch (error) {
 		throw firstError ?? error;
 	}

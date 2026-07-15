@@ -51,7 +51,8 @@
 		"catalog:qa-image-seed": "node scripts/seed_image_moderation_submission.mjs seed",
 		"catalog:qa-image-clean": "node scripts/seed_image_moderation_submission.mjs cleanup",
 		"moderate": "node scripts/moderate_user.mjs",
-		"seed:manual-entry-nutrients": "node scripts/seed_manual_entry_nutrients.mjs"
+		"seed:manual-entry-nutrients": "node scripts/seed_manual_entry_nutrients.mjs",
+		"seed:product-reference-data": "node scripts/seed_product_reference_data.mjs"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-vercel": "^6.3.3",

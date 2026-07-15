@@ -20,6 +20,7 @@
 		setActiveStorageUserId,
 	} from "$lib/utils/storage/client/storageScope";
 	import { saveTutorialChoice } from "$lib/utils/tutorial/tutorial";
+	import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 	import type { LayoutData } from "./$types";
 	import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
 
@@ -51,6 +52,10 @@
 		current: null,
 	});
 	setFoodPreferenceContext(foodPreferenceContext);
+
+	$effect.pre(() => {
+		configureServingMeasureCatalog(data.servingMeasureCatalog);
+	});
 
 	const recordTutorialChoice = async (choice: "later" | "never") => {
 		if (!data.authUser) return false;

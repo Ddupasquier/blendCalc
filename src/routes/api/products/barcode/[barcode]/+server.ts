@@ -4,6 +4,7 @@ import {
 import { resolveBarcodeDraftCategory } from "$lib/server/products/categoryMapping.server";
 import { lookupExternalBarcodeProduct } from "$lib/server/products/externalProduct.server";
 import { persistFoodImageAsset } from "$lib/server/products/foodImages.server";
+import { getProductReferenceData } from "$lib/server/products/productReferenceData.server";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { mapSharedCatalogFood } from "$lib/utils/barcode/productLookup";
 import { error, json } from "@sveltejs/kit";
@@ -18,7 +19,11 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 
 	const sharedFood = await getSharedProductByBarcode(locals.supabase, barcode);
 	if (sharedFood) {
-		const draft = mapSharedCatalogFood(sharedFood, barcode);
+		const draft = mapSharedCatalogFood(
+			sharedFood,
+			barcode,
+			await getProductReferenceData(),
+		);
 		if (draft) {
 			await persistFoodImageAsset({
 				image: draft.image,

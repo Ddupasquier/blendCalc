@@ -3,8 +3,9 @@
 	import "./styles/customIngredientForm.scss";
 	import {
 		SERVING_MEASURE_OPTIONS,
+		getDefaultServingMeasureUnit,
 		type ServingMeasureUnit,
-	} from "../../../../defaults/servingMeasureDefaults";
+	} from "$lib/utils/serving/servingMeasureCatalog";
 	import { buildCustomServingLabel } from "$lib/utils/food/custom/customFoods";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
@@ -128,7 +129,9 @@
 	let servingLabel = $state("");
 	let servingWeightGrams = $state<number | null>(null);
 	let volumeQuantity = $state<number | null>(null);
-	let volumeUnit = $state<ServingMeasureUnit>("tbsp");
+	let volumeUnit = $state<ServingMeasureUnit>(
+		getDefaultServingMeasureUnit("volume") ?? "",
+	);
 	let useVolumeEquivalent = $state(false);
 	let manualNutrientValues = $state<NutrientValueState>({});
 	let manualTouchedNutrientIds = $state<Record<number, true>>({});
@@ -614,9 +617,7 @@
 		Boolean(hasSharedCatalogBarcodeReference && !barcodeReferenceHasChanges),
 	);
 	const canShareWithCatalog = $derived(
-		hasValidBarcode &&
-			barcodeSource !== "open-food-facts" &&
-			!sharedCatalogMatchIsUnchanged,
+		hasValidBarcode && !sharedCatalogMatchIsUnchanged,
 	);
 	const requiresCatalogEvidence = $derived(
 		shareWithCatalog &&
@@ -1012,7 +1013,6 @@
 				normalizedBarcode,
 				shareWithCatalog,
 				submitForCatalog: shouldSubmitOptionalProductImageReview,
-				barcodeSource,
 				photos: {
 					frontPhoto,
 					frontImageCrop: frontPhoto
@@ -1100,8 +1100,6 @@
 				{activeCategory}
 				summaryNutrients={getSummaryItems()}
 				optionalNutrientCount={getOptionalNutrientCount()}
-				{hasValidBarcode}
-				{barcodeSource}
 				{canShareWithCatalog}
 				{shareUnavailableMessage}
 				{shareHelpMessage}

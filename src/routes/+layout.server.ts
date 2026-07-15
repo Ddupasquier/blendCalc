@@ -12,6 +12,8 @@ import {
 	getTutorialPreference,
 	shouldAutomaticallyShowTutorial,
 } from "$lib/utils/tutorial/tutorial";
+import { readServingMeasureCatalog } from "$lib/utils/serving/servingMeasureData";
+import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 
 const PUBLIC_PATHS = new Set(["/", "/auth"]);
 
@@ -39,7 +41,13 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 
 	if (!user) return { authUser: null };
 
-	const [profile, role, tutorialPreference, foodPreferencesResult] = await Promise.all([
+	const [
+		profile,
+		role,
+		tutorialPreference,
+		foodPreferencesResult,
+		servingMeasureCatalog,
+	] = await Promise.all([
 		getUserProfile(locals.supabase, user.id),
 		getUserAppRole(locals.supabase, user.id),
 		getTutorialPreference(locals.supabase, user.id),
@@ -48,8 +56,10 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			.select("*")
 			.eq("user_id", user.id)
 			.maybeSingle(),
+		readServingMeasureCatalog(locals.supabase),
 	]);
 	const avatarUrl = await getSignedAvatarUrl(locals.supabase, profile?.avatar_path);
+	configureServingMeasureCatalog(servingMeasureCatalog);
 	const foodPreferencesError = foodPreferencesResult.error;
 	if (
 		foodPreferencesError &&
@@ -69,5 +79,6 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			showTutorial: shouldAutomaticallyShowTutorial(tutorialPreference),
 		},
 		foodPreferences: getFoodPreferenceProfile(foodPreferencesResult.data),
+		servingMeasureCatalog,
 	};
 };

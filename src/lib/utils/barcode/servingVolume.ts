@@ -1,20 +1,14 @@
-import type { ServingMeasureUnit } from "../../../defaults/servingMeasureDefaults";
+import {
+	SERVING_MEASURE_ALIAS_ENTRIES,
+	getServingMeasureOption,
+	normalizeServingMeasureAlias,
+	type ServingMeasureUnit,
+} from "$lib/utils/serving/servingMeasureCatalog";
 
 export type BarcodeVolumeEquivalent = {
 	quantity: number;
-	unit: Extract<ServingMeasureUnit, "ml" | "tsp" | "tbsp" | "cup" | "floz">;
+	unit: ServingMeasureUnit;
 };
-
-const VOLUME_UNITS: Array<{
-	unit: BarcodeVolumeEquivalent["unit"];
-	pattern: string;
-}> = [
-	{ unit: "floz", pattern: "(?:fl\\.?\\s*oz\\.?|fluid\\s+ounces?)" },
-	{ unit: "tbsp", pattern: "(?:tbsp\\.?|tablespoons?)" },
-	{ unit: "tsp", pattern: "(?:tsp\\.?|teaspoons?)" },
-	{ unit: "cup", pattern: "(?:cups?)" },
-	{ unit: "ml", pattern: "(?:ml|millilit(?:er|re)s?)" },
-];
 
 const parseQuantity = (value: string) => {
 	const normalized = value.trim();
@@ -31,18 +25,30 @@ export const parseVolumeEquivalent = (
 	label?: string,
 ): BarcodeVolumeEquivalent | null => {
 	if (!label) return null;
-	const quantityPattern = "(\\d+\\s+\\d+\\/\\d+|\\d+\\/\\d+|\\d+(?:\\.\\d+)?)";
+	const match = label.match(
+		/(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)\s*([a-zA-Z.\s]+)/,
+	);
+	if (!match) return null;
 
-	for (const definition of VOLUME_UNITS) {
-		const match = label.match(
-			new RegExp(`${quantityPattern}\\s*${definition.pattern}\\b`, "i"),
+	const quantity = parseQuantity(match[1]);
+	if (!Number.isFinite(quantity) || quantity <= 0) return null;
+	const normalizedUnitText = normalizeServingMeasureAlias(
+		match[2].replaceAll(".", ""),
+	);
+	const alias = [...SERVING_MEASURE_ALIAS_ENTRIES]
+		.sort(
+			(left, right) =>
+				normalizeServingMeasureAlias(right.alias).length -
+				normalizeServingMeasureAlias(left.alias).length,
+		)
+		.find((entry) =>
+			normalizedUnitText.startsWith(
+				normalizeServingMeasureAlias(entry.alias.replaceAll(".", "")),
+			),
 		);
-		if (!match) continue;
-		const quantity = parseQuantity(match[1]);
-		if (Number.isFinite(quantity) && quantity > 0) {
-			return { quantity, unit: definition.unit };
-		}
+	if (!alias || getServingMeasureOption(alias.unit)?.dimension !== "volume") {
+		return null;
 	}
 
-	return null;
+	return { quantity, unit: alias.unit };
 };

@@ -1162,6 +1162,132 @@ export type Database = {
           },
         ]
       }
+      nutrient_source_mappings: {
+        Row: {
+          confidence: number
+          created_at: string
+          enabled: boolean
+          first_observed_at: string | null
+          last_observed_at: string | null
+          mapping_method: string
+          nutrient_id: number
+          observation_count: number
+          priority: number
+          provenance: Json
+          source_key: string
+          source_nutrient_key: string
+          source_nutrient_name: string | null
+          source_unit_name: string
+          updated_at: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          enabled?: boolean
+          first_observed_at?: string | null
+          last_observed_at?: string | null
+          mapping_method: string
+          nutrient_id: number
+          observation_count?: number
+          priority?: number
+          provenance?: Json
+          source_key: string
+          source_nutrient_key: string
+          source_nutrient_name?: string | null
+          source_unit_name?: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          enabled?: boolean
+          first_observed_at?: string | null
+          last_observed_at?: string | null
+          mapping_method?: string
+          nutrient_id?: number
+          observation_count?: number
+          priority?: number
+          provenance?: Json
+          source_key?: string
+          source_nutrient_key?: string
+          source_nutrient_name?: string | null
+          source_unit_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_source_mappings_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "nutrient_source_mappings_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      nutrient_unit_conversions: {
+        Row: {
+          confidence: number
+          conversion_method: string
+          created_at: string
+          from_unit_name: string
+          multiplier: number
+          nutrient_id: number
+          observation_count: number
+          provenance: Json
+          source_key: string
+          to_unit_name: string
+          updated_at: string
+        }
+        Insert: {
+          confidence: number
+          conversion_method: string
+          created_at?: string
+          from_unit_name: string
+          multiplier: number
+          nutrient_id: number
+          observation_count?: number
+          provenance?: Json
+          source_key: string
+          to_unit_name: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          conversion_method?: string
+          created_at?: string
+          from_unit_name?: string
+          multiplier?: number
+          nutrient_id?: number
+          observation_count?: number
+          provenance?: Json
+          source_key?: string
+          to_unit_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_unit_conversions_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "nutrient_unit_conversions_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       product_api_cache: {
         Row: {
           cache_key: string
@@ -1265,6 +1391,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      product_data_sources: {
+        Row: {
+          api_base_url: string | null
+          attribution_text: string | null
+          created_at: string
+          display_name: string
+          enabled: boolean
+          first_observed_at: string | null
+          homepage_url: string | null
+          key: string
+          last_observed_at: string | null
+          observation_count: number
+          provenance: Json
+          source_type: string
+          terms_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_base_url?: string | null
+          attribution_text?: string | null
+          created_at?: string
+          display_name: string
+          enabled?: boolean
+          first_observed_at?: string | null
+          homepage_url?: string | null
+          key: string
+          last_observed_at?: string | null
+          observation_count?: number
+          provenance?: Json
+          source_type: string
+          terms_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_base_url?: string | null
+          attribution_text?: string | null
+          created_at?: string
+          display_name?: string
+          enabled?: boolean
+          first_observed_at?: string | null
+          homepage_url?: string | null
+          key?: string
+          last_observed_at?: string | null
+          observation_count?: number
+          provenance?: Json
+          source_type?: string
+          terms_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       product_submission_blocks: {
         Row: {
@@ -1408,6 +1585,119 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      serving_measure_aliases: {
+        Row: {
+          alias: string
+          created_at: string
+          first_observed_at: string | null
+          last_observed_at: string | null
+          normalized_alias: string
+          observation_count: number
+          source_key: string
+          unit_key: string
+          updated_at: string
+        }
+        Insert: {
+          alias: string
+          created_at?: string
+          first_observed_at?: string | null
+          last_observed_at?: string | null
+          normalized_alias: string
+          observation_count?: number
+          source_key: string
+          unit_key: string
+          updated_at?: string
+        }
+        Update: {
+          alias?: string
+          created_at?: string
+          first_observed_at?: string | null
+          last_observed_at?: string | null
+          normalized_alias?: string
+          observation_count?: number
+          source_key?: string
+          unit_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "serving_measure_aliases_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "serving_measure_aliases_unit_key_fkey"
+            columns: ["unit_key"]
+            isOneToOne: false
+            referencedRelation: "serving_measure_units"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      serving_measure_units: {
+        Row: {
+          base_unit_key: string
+          conversion_to_base: number
+          created_at: string
+          dimension: string
+          display_label: string
+          display_order: number
+          enabled: boolean
+          is_default: boolean
+          key: string
+          observed_at: string
+          short_label: string
+          source_key: string
+          source_reference: string
+          standards_code: string
+          updated_at: string
+        }
+        Insert: {
+          base_unit_key: string
+          conversion_to_base: number
+          created_at?: string
+          dimension: string
+          display_label: string
+          display_order: number
+          enabled?: boolean
+          is_default?: boolean
+          key: string
+          observed_at: string
+          short_label: string
+          source_key: string
+          source_reference: string
+          standards_code: string
+          updated_at?: string
+        }
+        Update: {
+          base_unit_key?: string
+          conversion_to_base?: number
+          created_at?: string
+          dimension?: string
+          display_label?: string
+          display_order?: number
+          enabled?: boolean
+          is_default?: boolean
+          key?: string
+          observed_at?: string
+          short_label?: string
+          source_key?: string
+          source_reference?: string
+          standards_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "serving_measure_units_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       shared_product_conflicts: {
         Row: {
