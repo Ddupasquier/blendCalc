@@ -38,6 +38,10 @@ export type ButtonClickHandler = (event: MouseEvent) => void;
 
 export type ButtonFocusHandler = (event: FocusEvent) => void;
 
+export type ButtonKeyboardHandler = (event: KeyboardEvent) => void;
+
+export type ButtonPointerHandler = (event: PointerEvent) => void;
+
 export type ActionButtonProps = {
 	type?: ButtonType;
 	variant?: ActionButtonVariant;
@@ -64,6 +68,22 @@ export type CircleIconButtonProps = {
 	"aria-describedby"?: string;
 	onclick?: ButtonClickHandler;
 	onfocus?: ButtonFocusHandler;
+	onkeydown?: ButtonKeyboardHandler;
+	onkeyup?: ButtonKeyboardHandler;
+	onpointerdown?: ButtonPointerHandler;
+	onpointerup?: ButtonPointerHandler;
+	onpointercancel?: ButtonPointerHandler;
+	onlostpointercapture?: ButtonPointerHandler;
+	oncontextmenu?: ButtonClickHandler;
+	children?: Snippet;
+};
+
+export type AcceleratingStepButtonProps = {
+	label: string;
+	variant?: CircleIconButtonVariant;
+	size?: CircleIconButtonSize;
+	disabled?: boolean;
+	onStep: (step: number) => void;
 	children?: Snippet;
 };
 

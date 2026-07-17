@@ -43,7 +43,7 @@ describe("NutritionDetailView", () => {
 			.toHaveAttribute("src", "https://example.com/spinach-front.jpg");
 	});
 
-	it("steps viewing amount in 5g increments", async () => {
+	it("steps viewing amount in 1g increments", async () => {
 		render(NutritionDetailView, {
 			props: {
 				food: spinach,
@@ -55,14 +55,28 @@ describe("NutritionDetailView", () => {
 		expect(screen.getByText("100g")).toBeInTheDocument();
 
 		await fireEvent.click(
-			screen.getByRole("button", { name: /increase viewing amount by 5g/i }),
+			screen.getByRole("button", { name: /increase viewing amount by 1g/i }),
 		);
-		expect(screen.getByText("105g")).toBeInTheDocument();
-		expect(screen.queryByText("125g")).not.toBeInTheDocument();
+		expect(screen.getByText("101g")).toBeInTheDocument();
 
 		await fireEvent.click(
-			screen.getByRole("button", { name: /decrease viewing amount by 5g/i }),
+			screen.getByRole("button", { name: /decrease viewing amount by 1g/i }),
 		);
 		expect(screen.getByText("100g")).toBeInTheDocument();
+	});
+
+	it("uses a compact back button with room for its focus outline", () => {
+		render(NutritionDetailView, {
+			props: {
+				food: spinach,
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(screen.getByRole("button", { name: "Back to ingredients" })).toHaveAttribute(
+			"data-size",
+			"small",
+		);
 	});
 });

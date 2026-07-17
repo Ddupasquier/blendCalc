@@ -3,7 +3,7 @@
 	import Minus from "$lib/assets/icons/Minus.svelte";
 	import Plus from "$lib/assets/icons/Plus.svelte";
 	import BackButton from "$lib/components/common/buttons/BackButton.svelte";
-	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+	import AcceleratingStepButton from "$lib/components/common/buttons/AcceleratingStepButton.svelte";
 	import ViewBody from "$lib/components/common/view/ViewBody.svelte";
 	import ViewFrame from "$lib/components/common/view/ViewFrame.svelte";
 	import ViewTop from "$lib/components/common/view/ViewTop.svelte";
@@ -40,12 +40,12 @@
 		viewingGrams = DEFAULT_NUTRITION_VIEWING_GRAMS;
 	});
 
-	const decreaseViewingAmount = () => {
-		viewingGrams = stepNutritionViewingGrams(viewingGrams, "decrease");
+	const decreaseViewingAmount = (step: number) => {
+		viewingGrams = stepNutritionViewingGrams(viewingGrams, "decrease", step);
 	};
 
-	const increaseViewingAmount = () => {
-		viewingGrams = stepNutritionViewingGrams(viewingGrams, "increase");
+	const increaseViewingAmount = (step: number) => {
+		viewingGrams = stepNutritionViewingGrams(viewingGrams, "increase", step);
 	};
 </script>
 
@@ -54,11 +54,11 @@
 		<header class="nutrition-detail-view__header">
 			<BackButton
 				class="nutrition-detail-view__back"
-				label="Back to ingredients"
-				variant="soft"
-				size="control"
-				onclick={onClose}
-			/>
+					label="Back to ingredients"
+					variant="soft"
+					size="small"
+					onclick={onClose}
+				/>
 			<h1 id="nutrition-detail-view-title">{food.description}</h1>
 			<span class="nutrition-detail-view__source" aria-label="Linked source" title="Linked source">
 				<Link size={16} strokeWidth={2.2} />
@@ -68,25 +68,25 @@
 		<section class="nutrition-detail-view__amount" aria-label="Viewing amount">
 			<h2>Viewing Amount</h2>
 			<div class="nutrition-detail-view__amount-controls">
-				<CircleIconButton
-					label={`Decrease viewing amount by ${NUTRITION_VIEWING_GRAM_STEP}g`}
+				<AcceleratingStepButton
+					label={`Decrease viewing amount by ${NUTRITION_VIEWING_GRAM_STEP}g; press and hold to accelerate`}
 					variant="soft"
 					size="small"
 					disabled={viewingGrams <= MIN_NUTRITION_VIEWING_GRAMS}
-					onclick={decreaseViewingAmount}
+					onStep={decreaseViewingAmount}
 				>
 					<Minus size={18} strokeWidth={2.6} />
-				</CircleIconButton>
+				</AcceleratingStepButton>
 				<strong aria-live="polite">{formatViewingGrams(viewingGrams)}</strong>
-				<CircleIconButton
-					label={`Increase viewing amount by ${NUTRITION_VIEWING_GRAM_STEP}g`}
+				<AcceleratingStepButton
+					label={`Increase viewing amount by ${NUTRITION_VIEWING_GRAM_STEP}g; press and hold to accelerate`}
 					variant="primary"
 					size="small"
 					disabled={viewingGrams >= MAX_NUTRITION_VIEWING_GRAMS}
-					onclick={increaseViewingAmount}
+					onStep={increaseViewingAmount}
 				>
 					<Plus size={18} strokeWidth={2.6} />
-				</CircleIconButton>
+				</AcceleratingStepButton>
 			</div>
 		</section>
 	</ViewTop>
@@ -114,6 +114,7 @@
 		align-items: center;
 		gap: $app-gap-sm;
 		min-height: $ingredient-control-height;
+		padding: $app-gap-xs;
 	}
 
 	h1 {

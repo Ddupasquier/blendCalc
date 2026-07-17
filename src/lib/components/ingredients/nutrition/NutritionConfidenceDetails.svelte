@@ -13,7 +13,6 @@
 	} = $props();
 
 	let isOpen = $state(false);
-	let hasInitializedOpenState = false;
 
 	const noteworthyDetails = $derived(
 		quality.details.filter(
@@ -26,12 +25,6 @@
 
 	const totalVitalCount = $derived(quality.completeCount + quality.missingCount);
 
-	$effect(() => {
-		if (hasInitializedOpenState) return;
-
-		isOpen = !compact;
-		hasInitializedOpenState = true;
-	});
 </script>
 
 {#if quality.needsDetails && noteworthyDetails.length > 0}

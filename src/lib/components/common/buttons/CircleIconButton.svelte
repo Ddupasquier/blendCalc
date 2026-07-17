@@ -13,6 +13,13 @@
 		"aria-describedby": ariaDescribedBy = undefined,
 		onclick,
 		onfocus,
+		onkeydown,
+		onkeyup,
+		onpointerdown,
+		onpointerup,
+		onpointercancel,
+		onlostpointercapture,
+		oncontextmenu,
 		children,
 	}: CircleIconButtonProps = $props();
 </script>
@@ -29,6 +36,13 @@
 	disabled={disabled || busy}
 	{onclick}
 	{onfocus}
+	{onkeydown}
+	{onkeyup}
+	{onpointerdown}
+	{onpointerup}
+	{onpointercancel}
+	{onlostpointercapture}
+	{oncontextmenu}
 >
 	{#if busy}
 		<span aria-hidden="true">…</span>
