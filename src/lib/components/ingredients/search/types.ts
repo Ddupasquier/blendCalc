@@ -35,9 +35,13 @@ export type SearchDropdownProps = {
 	results: FdcFood[];
 	activeResultIndex?: number;
 	addingFoodId?: number | null;
+	hasMoreResults?: boolean;
+	loadingMore?: boolean;
+	contentVersion?: string | number;
 	savedFoodIdentityKeys?: ReadonlySet<string>;
 	sourceOptions?: readonly IngredientSourceOption[];
 	onSelect: (food: FdcFood) => void;
 	onAdd?: (food: FdcFood) => void | Promise<void>;
 	onActivate?: (index: number) => void;
+	onLoadMore?: () => void | Promise<void>;
 };

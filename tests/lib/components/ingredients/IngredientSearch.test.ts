@@ -4,7 +4,12 @@ import type { FdcFood } from "$lib/utils/food/types";
 
 vi.mock("$lib/utils/food/sources/fdc", () => ({
 	FdcConfigurationError: class FdcConfigurationError extends Error {},
-	searchFoods: vi.fn().mockResolvedValue([]),
+	searchFoodPage: vi.fn().mockResolvedValue({
+		foods: [],
+		hasMore: false,
+		nextOffset: null,
+		total: 0,
+	}),
 }));
 
 vi.mock("$lib/utils/food/custom/customFoods", async (importOriginal) => {
@@ -20,7 +25,8 @@ vi.mock("$lib/utils/products/catalog", () => ({
 }));
 
 import IngredientSearch from "$lib/components/ingredients/search/IngredientSearch.svelte";
-import { searchFoods } from "$lib/utils/food/sources/fdc";
+import { searchFoodPage } from "$lib/utils/food/sources/fdc";
+import type { IngredientSearchPage } from "$lib/utils/ingredients/ingredientSearchPagination";
 
 const makeFood = (fdcId: number, description: string): FdcFood => ({
 	fdcId,
@@ -28,6 +34,16 @@ const makeFood = (fdcId: number, description: string): FdcFood => ({
 	foodCategory: "Fruit",
 	foodNutrients: [],
 	dataType: "SR Legacy",
+});
+
+const makePage = (
+	foods: FdcFood[],
+	options: Partial<Omit<IngredientSearchPage, "foods">> = {},
+): IngredientSearchPage => ({
+	foods,
+	hasMore: options.hasMore ?? false,
+	nextOffset: options.nextOffset ?? null,
+	total: options.total ?? foods.length,
 });
 
 describe("IngredientSearch", () => {
@@ -57,10 +73,10 @@ describe("IngredientSearch", () => {
 
 	it("uses arrow keys and Enter to select a visible result", async () => {
 		const onSelect = vi.fn();
-		vi.mocked(searchFoods).mockResolvedValueOnce([
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([
 			makeFood(101, "Apple, raw"),
 			makeFood(102, "Banana, raw"),
-		]);
+		]));
 
 		render(IngredientSearch, {
 			props: {
@@ -120,11 +136,11 @@ describe("IngredientSearch", () => {
 
 	it("wraps keyboard navigation upward without using old shortcut keys", async () => {
 		const onSelect = vi.fn();
-		vi.mocked(searchFoods).mockResolvedValueOnce([
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([
 			makeFood(201, "Apricot, raw"),
 			makeFood(202, "Cherry, raw"),
 			makeFood(203, "Tomato, raw"),
-		]);
+		]));
 
 		render(IngredientSearch, {
 			props: {
@@ -166,9 +182,9 @@ describe("IngredientSearch", () => {
 	it("uses the result plus button for adding without opening nutrition", async () => {
 		const onSelect = vi.fn();
 		const onAdd = vi.fn();
-		vi.mocked(searchFoods).mockResolvedValueOnce([
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([
 			makeFood(301, "Spinach, raw"),
-		]);
+		]));
 
 		render(IngredientSearch, {
 			props: {
@@ -200,9 +216,9 @@ describe("IngredientSearch", () => {
 	});
 
 	it("hides the add button when a result is already saved", async () => {
-		vi.mocked(searchFoods).mockResolvedValueOnce([
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([
 			makeFood(302, "Kale, raw"),
-		]);
+		]));
 
 		render(IngredientSearch, {
 			props: {
@@ -234,9 +250,9 @@ describe("IngredientSearch", () => {
 	});
 
 	it("waits for mobile text composition before searching", async () => {
-		vi.mocked(searchFoods).mockResolvedValueOnce([
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([
 			makeFood(401, "Kiwi fruit, raw"),
-		]);
+		]));
 
 		render(IngredientSearch, {
 			props: {
@@ -253,11 +269,71 @@ describe("IngredientSearch", () => {
 
 		await fireEvent.compositionStart(searchInput);
 		await fireEvent.input(searchInput, { target: { value: "kiwi" } });
-		expect(searchFoods).not.toHaveBeenCalled();
+		expect(searchFoodPage).not.toHaveBeenCalled();
 
 		await fireEvent.compositionEnd(searchInput);
-		await waitFor(() => expect(searchFoods).toHaveBeenCalledWith("kiwi"), {
-			timeout: 2000,
+		await waitFor(
+			() => expect(searchFoodPage).toHaveBeenCalledWith("kiwi", {
+				offset: 0,
+				limit: 8,
+			}),
+			{ timeout: 2000 },
+		);
+	});
+
+	it("loads another page near the bottom and offers return to top when complete", async () => {
+		vi.mocked(searchFoodPage)
+			.mockResolvedValueOnce(makePage(
+				[makeFood(501, "Tomato, roma"), makeFood(502, "Tomatoes, raw")],
+				{ hasMore: true, nextOffset: 2, total: 3 },
+			))
+			.mockResolvedValueOnce(makePage(
+				[makeFood(503, "Green tomatoes")],
+				{ total: 3 },
+			));
+
+		const { container } = render(IngredientSearch, {
+			props: {
+				onSelect: vi.fn(),
+				onSearchFocus: vi.fn(),
+			},
 		});
+		const searchInput = screen.getByRole("combobox", {
+			name: /search ingredients/i,
+		});
+		await fireEvent.input(searchInput, { target: { value: "tomato" } });
+		await waitFor(
+			() => expect(screen.getByText("Tomato, roma")).toBeInTheDocument(),
+			{ timeout: 2000 },
+		);
+		expect(
+			screen.getByRole("button", { name: "Load more search results" }),
+		).toBeVisible();
+
+		const resultsPanel = container.querySelector<HTMLElement>(".results-panel");
+		expect(resultsPanel).not.toBeNull();
+		const scrollTo = vi.fn();
+		Object.defineProperties(resultsPanel!, {
+			scrollHeight: { configurable: true, value: 600 },
+			scrollTop: { configurable: true, value: 500 },
+			clientHeight: { configurable: true, value: 100 },
+			scrollTo: { configurable: true, value: scrollTo },
+		});
+
+		await fireEvent.scroll(resultsPanel!);
+		await waitFor(() => {
+			expect(screen.getByText("Green tomatoes")).toBeInTheDocument();
+		});
+		expect(searchFoodPage).toHaveBeenNthCalledWith(2, "tomato", {
+			offset: 2,
+			limit: 8,
+		});
+
+		await fireEvent(window, new Event("resize"));
+		const returnButton = await screen.findByRole("button", {
+			name: "Return to top",
+		});
+		await fireEvent.click(returnButton);
+		expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
 	});
 });

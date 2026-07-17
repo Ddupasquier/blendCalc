@@ -100,6 +100,7 @@ export const rankIngredientSearchCandidates = (
 		.sort((left, right) =>
 			compareRelevance(left.food, right.food) ||
 			left.food.description.localeCompare(right.food.description) ||
+			left.food.fdcId - right.food.fdcId ||
 			left.originalIndex - right.originalIndex,
 		)
 		.map(({ food }) => food);

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+    import ScrollListReturnToTop from "$lib/components/common/navigation/ScrollListReturnToTop.svelte";
     import FoodSymbol from "$lib/assets/icons/FoodSymbol.svelte";
     import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
     import { getFoodQuality } from "$lib/utils/food/quality/foodQuality";
@@ -15,32 +17,90 @@
     import Plus from "$lib/assets/icons/Plus.svelte";
     import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
     import type { SearchDropdownProps } from "$lib/components/ingredients/search/types";
+    import { LIST_REVEAL_BUFFER_PX } from "../../../../defaults/listDefaults";
 
     let {
         results,
         activeResultIndex = -1,
         addingFoodId = null,
+        hasMoreResults = false,
+        loadingMore = false,
+        contentVersion = 0,
         savedFoodIdentityKeys = new Set<string>(),
         sourceOptions = [],
         onSelect,
         onAdd = () => {},
         onActivate = () => {},
+        onLoadMore = () => {},
     }: SearchDropdownProps = $props();
     const foodPreferenceContext = getFoodPreferenceContext();
+    let resultsPanelElement = $state<HTMLDivElement | null>(null);
+    let sentinelElement = $state<HTMLDivElement | null>(null);
 
     const formatName = (desc: string): string => {
         return desc.length > 60 ? desc.slice(0, 57) + "…" : desc;
     };
+
+    const requestMoreResults = () => {
+        if (!hasMoreResults || loadingMore) return;
+        void onLoadMore();
+    };
+
+    const handleResultsScroll = (event: Event) => {
+        const scrollElement = event.currentTarget;
+        if (!(scrollElement instanceof HTMLElement)) return;
+
+        const distanceFromBottom =
+            scrollElement.scrollHeight -
+            scrollElement.scrollTop -
+            scrollElement.clientHeight;
+        if (distanceFromBottom <= LIST_REVEAL_BUFFER_PX) {
+            requestMoreResults();
+        }
+    };
+
+    $effect(() => {
+        const root = resultsPanelElement;
+        const sentinel = sentinelElement;
+        if (
+            !root ||
+            !sentinel ||
+            !hasMoreResults ||
+            loadingMore ||
+            typeof IntersectionObserver === "undefined"
+        ) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries.some((entry) => entry.isIntersecting)) {
+                    requestMoreResults();
+                }
+            },
+            {
+                root,
+                rootMargin: `${LIST_REVEAL_BUFFER_PX}px 0px`,
+            },
+        );
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    });
 </script>
 
 {#if results.length > 0}
-    <div class="results-panel">
-        <p class="results-summary sr-only" aria-live="polite">{results.length} matches</p>
+    <div
+        bind:this={resultsPanelElement}
+        class="results-panel"
+        onscroll={handleResultsScroll}
+    >
+        <p class="results-summary sr-only" aria-live="polite">
+            {results.length} results loaded
+        </p>
         <div
             id="ingredient-search-results"
             class="results-list"
             role="grid"
             aria-label="Search results"
+            aria-busy={loadingMore}
         >
             {#each results as food, index (food.fdcId)}
                 {@const quality = getFoodQuality(food)}
@@ -60,62 +120,84 @@
                     aria-selected={activeResultIndex === index}
                     onmouseenter={() => onActivate(index)}
                 >
-                    <span class="result-main-cell" role="gridcell">
-                        <button
-                            class="result-main"
-                            type="button"
-                            aria-label={`View nutrition for ${food.description}${isSaved ? ", already in Fridge or Shopping List" : ""}`}
-                            onfocus={() => onActivate(index)}
-                            onclick={() => onSelect(food)}
-                        >
-                            <span class="result-icon">
-                                <FoodSymbol {food} />
-                            </span>
-                            <span class="result-copy">
-                                <span class="result-name">{formatName(food.description)}</span>
-                                <span class="result-category">{getFoodDisplayCategory(food)}</span>
-                                <span class="result-badges" aria-label={quality.title}>
-                                    <span
-                                        class="result-badge"
-                                        class:result-badge--custom={food.customFood}
-                                    >
-                                        {getIngredientSourceBadgeLabel(food, sourceOptions)}
-                                    </span>
-                                    {#if primaryWarning}
-                                        <span class="result-warning">
-                                            <WarningTriangle size={10} strokeWidth={2.7} />
-                                            {primaryWarning}
-                                        </span>
-                                    {/if}
-                                </span>
-                            </span>
-                        </button>
-                    </span>
-                    {#if !isSaved}
-                        <span class="result-add-cell" role="gridcell">
-                            <CircleIconButton
-                                class="result-add"
-                                label={`Add ${food.description} to fridge`}
-                                busy={isAdding}
-                                disabled={isAdding}
-                                variant="primary"
-                                size="small"
+                        <span class="result-main-cell" role="gridcell">
+                            <button
+                                class="result-main"
+                                type="button"
+                                aria-label={`View nutrition for ${food.description}${isSaved ? ", already in Fridge or Shopping List" : ""}`}
                                 onfocus={() => onActivate(index)}
-                                onclick={() => onAdd(food)}
+                                onclick={() => onSelect(food)}
                             >
-                                {#if isAdding}
-                                    …
-                                {:else}
-                                    <Plus size={17} strokeWidth={2.9} />
-                                {/if}
-                            </CircleIconButton>
+                                <span class="result-icon">
+                                    <FoodSymbol {food} />
+                                </span>
+                                <span class="result-copy">
+                                    <span class="result-name">{formatName(food.description)}</span>
+                                    <span class="result-category">{getFoodDisplayCategory(food)}</span>
+                                    <span class="result-badges" aria-label={quality.title}>
+                                        <span
+                                            class="result-badge"
+                                            class:result-badge--custom={food.customFood}
+                                        >
+                                            {getIngredientSourceBadgeLabel(food, sourceOptions)}
+                                        </span>
+                                        {#if primaryWarning}
+                                            <span class="result-warning">
+                                                <WarningTriangle size={10} strokeWidth={2.7} />
+                                                {primaryWarning}
+                                            </span>
+                                        {/if}
+                                    </span>
+                                </span>
+                            </button>
                         </span>
-                    {/if}
-                    <span class="result-open" role="gridcell" aria-hidden="true">
-                        <ChevronRight class="result-chevron" size={18} />
-                    </span>
+                        {#if !isSaved}
+                            <span class="result-add-cell" role="gridcell">
+                                <CircleIconButton
+                                    class="result-add"
+                                    label={`Add ${food.description} to fridge`}
+                                    busy={isAdding}
+                                    disabled={isAdding}
+                                    variant="primary"
+                                    size="small"
+                                    onfocus={() => onActivate(index)}
+                                    onclick={() => onAdd(food)}
+                                >
+                                    {#if isAdding}
+                                        …
+                                    {:else}
+                                        <Plus size={17} strokeWidth={2.9} />
+                                    {/if}
+                                </CircleIconButton>
+                            </span>
+                        {/if}
+                        <span class="result-open" role="gridcell" aria-hidden="true">
+                            <ChevronRight class="result-chevron" size={18} />
+                        </span>
                 </div>
             {/each}
+            {#if hasMoreResults}
+                <div
+                    bind:this={sentinelElement}
+                    class="search-results__sentinel"
+                    aria-hidden="true"
+                ></div>
+                <div class="search-results__load-more">
+                    <RoundedActionButton
+                        variant="soft"
+                        busy={loadingMore}
+                        onclick={requestMoreResults}
+                    >
+                        {loadingMore ? "Loading…" : "Load more search results"}
+                    </RoundedActionButton>
+                </div>
+            {/if}
+            <ScrollListReturnToTop
+                scrollContainer={resultsPanelElement}
+                hasMoreItems={hasMoreResults || loadingMore}
+                {contentVersion}
+                containerElement="div"
+            />
         </div>
     </div>
 {/if}
@@ -126,14 +208,30 @@
     .results-panel {
         min-width: 0;
         margin-top: $app-gap-sm;
+		overflow-anchor: none;
+		overscroll-behavior: contain;
+		scrollbar-gutter: stable;
+		-webkit-overflow-scrolling: touch;
     }
 
     .results-list {
         display: grid;
         gap: $app-vertical-stack-gap;
+		margin: 0;
+		padding: 0 0 $app-vertical-stack-gap;
         overflow: visible;
         list-style: none;
     }
+
+	.search-results__sentinel {
+		min-height: $ingredient-list-sentinel-min-height;
+	}
+
+	.search-results__load-more {
+		display: grid;
+		place-items: center;
+		padding: $app-gap-xs 0 $app-gap-sm;
+	}
 
     .result-item {
         min-width: 0;

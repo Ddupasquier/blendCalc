@@ -1,4 +1,9 @@
 import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import {
+	INGREDIENT_SEARCH_PAGE_SIZE,
+	type IngredientSearchPage,
+	type IngredientSearchPageOptions,
+} from "$lib/utils/ingredients/ingredientSearchPagination";
 
 type FdcDetailNutrient = {
 	amount?: number;
@@ -59,17 +64,45 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FdcFood => {
 	};
 };
 
-export const searchFoods = async (query: string): Promise<FdcFood[]> => {
+export const searchFoodPage = async (
+	query: string,
+	options: IngredientSearchPageOptions = {},
+): Promise<IngredientSearchPage> => {
 	const trimmed = query.trim();
-	if (!trimmed) return [];
+	if (!trimmed) {
+		return { foods: [], hasMore: false, nextOffset: null, total: 0 };
+	}
+	const offset = options.offset ?? 0;
+	const limit = options.limit ?? INGREDIENT_SEARCH_PAGE_SIZE;
+	const searchParams = new URLSearchParams({
+		q: trimmed,
+		offset: String(offset),
+		limit: String(limit),
+	});
 
 	const response = await fetch(
-		`/api/foods/search?q=${encodeURIComponent(trimmed)}`,
+		`/api/foods/search?${searchParams.toString()}`,
 		{ headers: { accept: "application/json" } },
 	);
 	if (!response.ok) {
 		throw new FdcConfigurationError();
 	}
-	const data = await response.json() as { foods?: FdcFood[] };
-	return data.foods ?? [];
+	const data = await response.json() as Partial<IngredientSearchPage>;
+	const foods = data.foods ?? [];
+	const nextOffset = typeof data.nextOffset === "number" &&
+		Number.isInteger(data.nextOffset)
+		? data.nextOffset
+		: null;
+	const total = typeof data.total === "number" && Number.isInteger(data.total)
+		? data.total
+		: foods.length;
+	return {
+		foods,
+		hasMore: data.hasMore === true,
+		nextOffset,
+		total,
+	};
 };
+
+export const searchFoods = async (query: string): Promise<FdcFood[]> =>
+	(await searchFoodPage(query)).foods;

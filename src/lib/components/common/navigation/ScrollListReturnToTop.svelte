@@ -7,6 +7,7 @@
 		scrollContainer,
 		hasMoreItems = false,
 		contentVersion = 0,
+		containerElement = "li",
 	}: ScrollListReturnToTopProps = $props();
 
 	let listOverflows = $state(false);
@@ -53,11 +54,11 @@
 </script>
 
 {#if listOverflows && !hasMoreItems}
-	<li class="scroll-list-return-to-top">
+	<svelte:element this={containerElement} class="scroll-list-return-to-top">
 		<RoundedActionButton variant="outline" onclick={returnToTop}>
 			Return to top
 		</RoundedActionButton>
-	</li>
+	</svelte:element>
 {/if}
 
 <style lang="scss">

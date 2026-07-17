@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import type { FdcFood } from "$lib/utils/food/types";
-	import { FdcConfigurationError, searchFoods } from "$lib/utils/food/sources/fdc";
+	import {
+		FdcConfigurationError,
+		searchFoodPage,
+	} from "$lib/utils/food/sources/fdc";
+	import { INGREDIENT_SEARCH_PAGE_SIZE } from "$lib/utils/ingredients/ingredientSearchPagination";
 	import {
 		CUSTOM_FOODS_CHANGED_EVENT,
 		searchCustomFoods,
@@ -26,6 +30,9 @@
 	let query = $state("");
 	let results = $state<FdcFood[]>([]);
 	let loading = $state(false);
+	let loadingMore = $state(false);
+	let hasMoreResults = $state(false);
+	let nextOffset = $state<number | null>(null);
 	let error = $state("");
 	let searchReady = $state(false);
 	let activeResultIndex = $state(-1);
@@ -33,13 +40,19 @@
 	let searchInputElement = $state<HTMLInputElement | null>(null);
 	let composing = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout>;
+	let searchRequestVersion = 0;
 	const dispatch = createEventDispatcher();
 	const sortedResults = () => results;
 
 	const triggerSearch = () => {
 		if (!browser || !searchReady) return;
 		clearTimeout(debounceTimer);
+		const requestVersion = ++searchRequestVersion;
 		error = "";
+		loading = false;
+		loadingMore = false;
+		hasMoreResults = false;
+		nextOffset = null;
 		const searchString = query.trim();
 		if (!searchString) {
 			results = [];
@@ -49,20 +62,70 @@
 		debounceTimer = setTimeout(async () => {
 			loading = true;
 			try {
-				results = await searchFoods(searchString);
+				const page = await searchFoodPage(searchString, {
+					offset: 0,
+					limit: INGREDIENT_SEARCH_PAGE_SIZE,
+				});
+				if (requestVersion !== searchRequestVersion) return;
+				results = page.foods;
+				hasMoreResults = page.hasMore;
+				nextOffset = page.nextOffset;
 				activeResultIndex = -1;
 				dispatch("results", { results, query: searchString });
 			} catch (searchError) {
+				if (requestVersion !== searchRequestVersion) return;
 				results = searchCustomFoods(searchString);
+				hasMoreResults = false;
+				nextOffset = null;
 				activeResultIndex = -1;
 				dispatch("results", { results, query: searchString });
 				error = searchError instanceof FdcConfigurationError
 					? searchError.message
 					: "Online food search failed. Your saved foods are still available.";
 			} finally {
-				loading = false;
+				if (requestVersion === searchRequestVersion) {
+					loading = false;
+				}
 			}
 		}, 500);
+	};
+
+	const loadMoreResults = async () => {
+		const searchString = query.trim();
+		const offset = nextOffset;
+		if (
+			!searchString ||
+			offset === null ||
+			!hasMoreResults ||
+			loading ||
+			loadingMore
+		) return;
+
+		const requestVersion = searchRequestVersion;
+		loadingMore = true;
+		error = "";
+		try {
+			const page = await searchFoodPage(searchString, {
+				offset,
+				limit: INGREDIENT_SEARCH_PAGE_SIZE,
+			});
+			if (
+				requestVersion !== searchRequestVersion ||
+				query.trim() !== searchString
+			) return;
+
+			results = [...results, ...page.foods];
+			hasMoreResults = page.hasMore;
+			nextOffset = page.nextOffset;
+			dispatch("results", { results, query: searchString });
+		} catch {
+			if (requestVersion !== searchRequestVersion) return;
+			error = "More search results could not be loaded. Try again.";
+		} finally {
+			if (requestVersion === searchRequestVersion) {
+				loadingMore = false;
+			}
+		}
 	};
 
 	const handleInput = (event: Event) => {
@@ -81,9 +144,14 @@
 
 	const clearSearch = () => {
 		clearTimeout(debounceTimer);
+		searchRequestVersion += 1;
 		query = "";
 		results = [];
 		error = "";
+		loading = false;
+		loadingMore = false;
+		hasMoreResults = false;
+		nextOffset = null;
 		activeResultIndex = -1;
 		void tick().then(() => searchInputElement?.focus({ preventScroll: true }));
 	};
@@ -102,9 +170,14 @@
 	});
 
 	const select = (food: FdcFood) => {
+		searchRequestVersion += 1;
 		onSelect(food);
 		query = "";
 		results = [];
+		loading = false;
+		loadingMore = false;
+		hasMoreResults = false;
+		nextOffset = null;
 		activeResultIndex = -1;
 	};
 
@@ -194,6 +267,7 @@
 		window.addEventListener("keydown", handleWindowKeydown);
 		return () => {
 			searchReady = false;
+			searchRequestVersion += 1;
 			clearTimeout(debounceTimer);
 			window.removeEventListener(
 				CUSTOM_FOODS_CHANGED_EVENT,
@@ -286,11 +360,15 @@
 		results={sortedResults()}
 		{activeResultIndex}
 		{addingFoodId}
+		{hasMoreResults}
+		{loadingMore}
+		contentVersion={`${query.trim()}:${results.length}`}
 		{savedFoodIdentityKeys}
 		{sourceOptions}
 		onSelect={select}
 		{onAdd}
 		onActivate={(index) => (activeResultIndex = index)}
+		onLoadMore={loadMoreResults}
 	/>
 </div>
 

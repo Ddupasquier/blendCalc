@@ -247,6 +247,7 @@ export const searchApprovedSharedProducts = async (
 		.from("shared_products")
 		.select("id, food, confidence, compatibility_summary, category_option_id")
 		.eq("status", "active")
+		.order("product_name", { ascending: true })
 		.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT);
 	for (const term of terms) {
 		request = request.ilike("search_text", `%${term}%`);

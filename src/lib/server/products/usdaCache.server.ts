@@ -14,7 +14,7 @@ const FDC_BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 const SEARCH_CACHE_MILLISECONDS = 12 * 60 * 60 * 1000;
 const BARCODE_CACHE_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
 const DETAIL_CACHE_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
-const SEARCH_RESULT_LIMIT = 50;
+const SEARCH_RESULT_LIMIT = 100;
 const PARTIAL_SEARCH_CANDIDATE_LIMIT = 100;
 
 type CacheRequestKind = "search" | "barcode-search" | "food-detail";

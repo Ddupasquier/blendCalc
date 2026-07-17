@@ -20,6 +20,7 @@ export const searchUserCustomFoods = async (
 		.from("custom_foods")
 		.select("id, food")
 		.eq("user_id", userId)
+		.order("name_key", { ascending: true })
 		.limit(CUSTOM_SEARCH_CANDIDATE_LIMIT);
 	for (const term of terms) {
 		request = request.ilike("search_text", `%${term}%`);

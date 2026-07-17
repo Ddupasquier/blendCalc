@@ -35,6 +35,9 @@ export const sortIngredientSearchResults = (
 
 		const qualitySort = compareFoodQuality(left, right);
 		if (qualitySort !== 0) return qualitySort;
-		return left.description.localeCompare(right.description);
+		return (
+			left.description.localeCompare(right.description) ||
+			left.fdcId - right.fdcId
+		);
 	});
 };

@@ -6,6 +6,11 @@ import {
 	sortIngredientSearchResults,
 } from "$lib/utils/ingredients/ingredientSearchResults";
 import {
+	INGREDIENT_SEARCH_MAX_PAGE_SIZE,
+	INGREDIENT_SEARCH_PAGE_SIZE,
+	paginateIngredientSearchResults,
+} from "$lib/utils/ingredients/ingredientSearchPagination";
+import {
 	getFoodPreferenceProfile,
 	isMissingFoodPreferencesTableError,
 } from "$lib/utils/profile/foodPreferenceProfile";
@@ -13,14 +18,31 @@ import { annotateFoodWithPreferenceWarnings } from "$lib/utils/profile/foodPrefe
 import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
-const SEARCH_RESULT_LIMIT = 50;
-
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const { user } = await locals.safeGetSession();
 	if (!user) throw error(401, "Sign in to search foods.");
 
 	const query = url.searchParams.get("q")?.trim() ?? "";
-	if (query.length < 2) return json({ foods: [] });
+	const offset = Number(url.searchParams.get("offset") ?? 0);
+	const limit = Number(
+		url.searchParams.get("limit") ?? INGREDIENT_SEARCH_PAGE_SIZE,
+	);
+	if (!Number.isInteger(offset) || offset < 0) {
+		throw error(400, "Search offset must be a non-negative whole number.");
+	}
+	if (
+		!Number.isInteger(limit) ||
+		limit < 1 ||
+		limit > INGREDIENT_SEARCH_MAX_PAGE_SIZE
+	) {
+		throw error(
+			400,
+			`Search limit must be between 1 and ${INGREDIENT_SEARCH_MAX_PAGE_SIZE}.`,
+		);
+	}
+	if (query.length < 2) {
+		return json({ foods: [], hasMore: false, nextOffset: null, total: 0 });
+	}
 	if (query.length > 120) throw error(400, "Search is too long.");
 
 	try {
@@ -51,9 +73,13 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			mergeIngredientSearchResults(...resultGroups),
 			query,
 			profile,
-		).slice(0, SEARCH_RESULT_LIMIT);
+		);
+		const page = paginateIngredientSearchResults(foods, offset, limit);
 		return json({
-			foods: foods.map((food) => annotateFoodWithPreferenceWarnings(food, profile)),
+			...page,
+			foods: page.foods.map((food) =>
+				annotateFoodWithPreferenceWarnings(food, profile)
+			),
 		});
 	} catch {
 		throw error(503, "Food search is temporarily unavailable.");
