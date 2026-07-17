@@ -199,6 +199,40 @@ describe("IngredientSearch", () => {
 		expect(onSelect).not.toHaveBeenCalled();
 	});
 
+	it("hides the add button when a result is already saved", async () => {
+		vi.mocked(searchFoods).mockResolvedValueOnce([
+			makeFood(302, "Kale, raw"),
+		]);
+
+		render(IngredientSearch, {
+			props: {
+				onSelect: vi.fn(),
+				onAdd: vi.fn(),
+				onSearchFocus: vi.fn(),
+				savedFoodIdentityKeys: new Set(["fdc:302"]),
+			},
+		});
+
+		const searchInput = screen.getByRole("combobox", {
+			name: /search ingredients/i,
+		});
+		await fireEvent.input(searchInput, { target: { value: "kale" } });
+
+		await waitFor(
+			() => expect(screen.getByText("Kale, raw")).toBeInTheDocument(),
+			{ timeout: 2000 },
+		);
+
+		expect(
+			screen.queryByRole("button", { name: /add kale, raw to fridge/i }),
+		).not.toBeInTheDocument();
+		expect(
+			screen.getByRole("button", {
+				name: /view nutrition for kale, raw, already in fridge or shopping list/i,
+			}),
+		).toBeInTheDocument();
+	});
+
 	it("waits for mobile text composition before searching", async () => {
 		vi.mocked(searchFoods).mockResolvedValueOnce([
 			makeFood(401, "Kiwi fruit, raw"),

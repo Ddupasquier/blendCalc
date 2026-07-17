@@ -11,6 +11,7 @@ export type IngredientSearchProps = {
 	onSelect: (food: FdcFood) => void;
 	onAdd?: (food: FdcFood) => void | Promise<void>;
 	addingFoodId?: number | null;
+	savedFoodIdentityKeys?: ReadonlySet<string>;
 	onSearchFocus?: () => void;
 	autofocus?: boolean;
 	sourceOptions?: readonly IngredientSourceOption[];
@@ -23,6 +24,7 @@ export type IngredientSearchViewProps = {
 	onSelect: (food: FdcFood) => void;
 	onAdd: (food: FdcFood) => void | Promise<void>;
 	addingFoodId?: number | null;
+	savedFoodIdentityKeys?: ReadonlySet<string>;
 	sourceOptions?: readonly IngredientSourceOption[];
 	onScan: () => void;
 	onFilter: () => void;
@@ -33,6 +35,7 @@ export type SearchDropdownProps = {
 	results: FdcFood[];
 	activeResultIndex?: number;
 	addingFoodId?: number | null;
+	savedFoodIdentityKeys?: ReadonlySet<string>;
 	sourceOptions?: readonly IngredientSourceOption[];
 	onSelect: (food: FdcFood) => void;
 	onAdd?: (food: FdcFood) => void | Promise<void>;

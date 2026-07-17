@@ -13,12 +13,14 @@
     import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
     import ChevronRight from "$lib/assets/icons/ChevronRight.svelte";
     import Plus from "$lib/assets/icons/Plus.svelte";
+    import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
     import type { SearchDropdownProps } from "$lib/components/ingredients/search/types";
 
     let {
         results,
         activeResultIndex = -1,
         addingFoodId = null,
+        savedFoodIdentityKeys = new Set<string>(),
         sourceOptions = [],
         onSelect,
         onAdd = () => {},
@@ -44,15 +46,17 @@
                 {@const quality = getFoodQuality(food)}
                 {@const primaryWarning = getPrimaryFoodWarning(food, foodPreferenceContext.current)}
                 {@const isAdding = addingFoodId === food.fdcId}
+                {@const isSaved = savedFoodIdentityKeys.has(getFoodIdentityKey(food))}
                 <div
                     id={`ingredient-search-result-${food.fdcId}`}
                     class="result-item result-card"
                     class:result-card--active={activeResultIndex === index}
                     class:result-card--custom={food.customFood}
                     class:result-card--warning={primaryWarning}
+                    class:result-card--saved={isSaved}
                     role="row"
                     tabindex="-1"
-                    aria-label={`${food.description}, ${getFoodDisplayCategory(food)}`}
+                    aria-label={`${food.description}, ${getFoodDisplayCategory(food)}${isSaved ? ", already in Fridge or Shopping List" : ""}`}
                     aria-selected={activeResultIndex === index}
                     onmouseenter={() => onActivate(index)}
                 >
@@ -60,7 +64,7 @@
                         <button
                             class="result-main"
                             type="button"
-                            aria-label={`View nutrition for ${food.description}`}
+                            aria-label={`View nutrition for ${food.description}${isSaved ? ", already in Fridge or Shopping List" : ""}`}
                             onfocus={() => onActivate(index)}
                             onclick={() => onSelect(food)}
                         >
@@ -87,24 +91,26 @@
                             </span>
                         </button>
                     </span>
-                    <span class="result-add-cell" role="gridcell">
-                        <CircleIconButton
-                            class="result-add"
-                            label={`Add ${food.description} to fridge`}
-                            busy={isAdding}
-                            disabled={isAdding}
-                            variant="primary"
-                            size="small"
-                            onfocus={() => onActivate(index)}
-                            onclick={() => onAdd(food)}
-                        >
-                            {#if isAdding}
-                                …
-                            {:else}
-                                <Plus size={17} strokeWidth={2.9} />
-                            {/if}
-                        </CircleIconButton>
-                    </span>
+                    {#if !isSaved}
+                        <span class="result-add-cell" role="gridcell">
+                            <CircleIconButton
+                                class="result-add"
+                                label={`Add ${food.description} to fridge`}
+                                busy={isAdding}
+                                disabled={isAdding}
+                                variant="primary"
+                                size="small"
+                                onfocus={() => onActivate(index)}
+                                onclick={() => onAdd(food)}
+                            >
+                                {#if isAdding}
+                                    …
+                                {:else}
+                                    <Plus size={17} strokeWidth={2.9} />
+                                {/if}
+                            </CircleIconButton>
+                        </span>
+                    {/if}
                     <span class="result-open" role="gridcell" aria-hidden="true">
                         <ChevronRight class="result-chevron" size={18} />
                     </span>
@@ -154,6 +160,10 @@
     .result-card--active {
         background: $ingredient-surface-card;
         border-color: $ingredient-accent-primary;
+    }
+
+    .result-card--saved {
+        grid-template-columns: minmax(0, 1fr) auto;
     }
 
     .result-main {

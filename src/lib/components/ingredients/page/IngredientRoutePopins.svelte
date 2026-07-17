@@ -27,6 +27,7 @@
 		renamingItem,
 		scanSignal,
 		searchAddFoodId,
+		savedFoodIdentityKeys,
 		searchViewOpen,
 		sourceOptions,
 		selectedFood,
@@ -124,6 +125,7 @@
 		onSelect={onSearchSelect}
 		onAdd={onAddSearchResult}
 		addingFoodId={searchAddFoodId}
+		{savedFoodIdentityKeys}
 		{sourceOptions}
 		onScan={onScan}
 		onFilter={onFilterFromSearch}

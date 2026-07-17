@@ -16,6 +16,7 @@
 		onSelect,
 		onAdd,
 		addingFoodId = null,
+		savedFoodIdentityKeys = new Set<string>(),
 		sourceOptions = [],
 		onScan,
 		onFilter,
@@ -47,6 +48,7 @@
 			{onSelect}
 			{onAdd}
 			{addingFoodId}
+			{savedFoodIdentityKeys}
 			{sourceOptions}
 			onSearchFocus={() => {}}
 		>

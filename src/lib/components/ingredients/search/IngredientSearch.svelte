@@ -23,6 +23,7 @@
 		onSelect,
 		onAdd = () => {},
 		addingFoodId = null,
+		savedFoodIdentityKeys = new Set<string>(),
 		onSearchFocus = () => {},
 		autofocus = false,
 		sourceOptions = [],
@@ -317,6 +318,7 @@
 		results={sortedResults()}
 		{activeResultIndex}
 		{addingFoodId}
+		{savedFoodIdentityKeys}
 		{sourceOptions}
 		onSelect={select}
 		{onAdd}

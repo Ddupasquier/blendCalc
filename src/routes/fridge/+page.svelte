@@ -20,6 +20,7 @@
     import SavedIngredientListLayout from "$lib/components/ingredients/list/SavedIngredientListLayout.svelte";
     import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
     import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
+    import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
     import {
         areFoodIdsEqual,
         getIngredientActionKey,
@@ -183,6 +184,16 @@
 
         return { inFridge, inShoppingList };
     });
+    const savedFoodIdentityKeys = $derived.by(() =>
+        new Set(
+            [
+                ...onHand,
+                ...shoppingList,
+                ...readSmoothieList(MIX_STORAGE_KEYS.fridge),
+                ...readSmoothieList(MIX_STORAGE_KEYS.shoppingList),
+            ].map(getFoodIdentityKey),
+        ),
+    );
     const canRevealMoreActiveItems = $derived(
         activeVisibleList.length < activeFilteredList.length ||
             activeRawList.length < activeTotalCount,
@@ -372,14 +383,15 @@
     };
 
     const handleSelect = (food: FdcFood, listKey: SmoothieListKey | null = null) => {
+        const showListActions = listKey === null;
         selectedFood = food;
-        selectedFoodShowListActions = true;
+        selectedFoodShowListActions = showListActions;
         void navigateIngredientRoute({
             view: INGREDIENT_ROUTE_VIEWS.nutrition,
             sheet: null,
             foodId: food.fdcId,
             listKey,
-            showListActions: true,
+            showListActions,
         });
     };
 
@@ -922,7 +934,7 @@
                 onMoveSelection={moveSelectedItems}
                 onMoveItem={(food) => moveFoodBetweenLists(activeList, food)}
                 onToggle={(foodId) => toggleBulkSelection(activeList, foodId)}
-                onPreview={(food) => handleSelect(food)}
+                onPreview={(food) => handleSelect(food, activeList)}
                 onActions={(food) => openActionSheet(activeList, food)}
                 onRemove={(foodId) => removeFromList(activeList, foodId)}
                 onRevealMore={revealMoreActiveItems}
@@ -950,6 +962,7 @@
     {renamingItem}
     {scanSignal}
     {searchAddFoodId}
+    {savedFoodIdentityKeys}
     {searchViewOpen}
     {sourceOptions}
     {selectedFood}

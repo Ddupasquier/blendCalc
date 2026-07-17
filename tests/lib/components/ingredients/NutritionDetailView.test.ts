@@ -79,4 +79,19 @@ describe("NutritionDetailView", () => {
 			"small",
 		);
 	});
+
+	it("hides redundant list status when opened from a saved list", () => {
+		render(NutritionDetailView, {
+			props: {
+				food: spinach,
+				onClose: vi.fn(),
+				showListActions: false,
+				listMembership: { inFridge: true, inShoppingList: false },
+			},
+		});
+
+		expect(screen.queryByText("Already in Fridge")).not.toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: "Add to Fridge" }))
+			.not.toBeInTheDocument();
+	});
 });

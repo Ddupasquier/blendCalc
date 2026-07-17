@@ -54,6 +54,7 @@ export type IngredientRoutePopinsProps = {
 	renamingItem: IngredientRouteRenameItem;
 	scanSignal: number;
 	searchAddFoodId: number | null;
+	savedFoodIdentityKeys: ReadonlySet<string>;
 	searchViewOpen: boolean;
 	sourceOptions: readonly IngredientSourceOption[];
 	selectedFood: FdcFood | null;
