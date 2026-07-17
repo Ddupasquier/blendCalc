@@ -134,6 +134,17 @@
 		return true;
 	};
 
+	const keepActiveResultVisible = async () => {
+		await tick();
+		const activeFood = sortedResults()[activeResultIndex];
+		if (!activeFood) return;
+
+		const activeOption = document.getElementById(
+			`ingredient-search-result-${activeFood.fdcId}`,
+		);
+		activeOption?.scrollIntoView?.({ block: "nearest" });
+	};
+
 	const moveActiveResult = (direction: 1 | -1) => {
 		const visibleResults = sortedResults();
 		if (visibleResults.length === 0) return;
@@ -144,6 +155,7 @@
 				: 0;
 		activeResultIndex =
 			(currentIndex + direction + visibleResults.length) % visibleResults.length;
+		void keepActiveResultVisible();
 	};
 
 	const handleSearchKeydown = (event: KeyboardEvent) => {
@@ -234,6 +246,7 @@
 				bind:value={query}
 				onfocus={onSearchFocus}
 				oninput={handleInput}
+				onkeydown={handleSearchKeydown}
 				aria-autocomplete="list"
 				aria-controls="ingredient-search-results"
 				aria-expanded={sortedResults().length > 0}

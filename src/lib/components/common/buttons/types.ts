@@ -12,7 +12,12 @@ export type ActionButtonVariant =
 
 export type ActionButtonSize = "small" | "medium" | "large";
 
-export type CircleIconButtonVariant = "primary" | "soft" | "ghost" | "outline";
+export type CircleIconButtonVariant =
+	| "primary"
+	| "soft"
+	| "ghost"
+	| "outline"
+	| "danger";
 
 export type CircleIconButtonSize = "tiny" | "small" | "control" | "fab";
 
@@ -55,6 +60,7 @@ export type CircleIconButtonProps = {
 	disabled?: boolean;
 	pressed?: boolean;
 	class?: string;
+	"aria-describedby"?: string;
 	onclick?: ButtonClickHandler;
 	onfocus?: ButtonFocusHandler;
 	children?: Snippet;

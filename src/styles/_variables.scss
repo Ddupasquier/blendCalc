@@ -371,7 +371,6 @@ $ingredient-empty-state-icon-size: 4rem;
 $ingredient-empty-state-icon-font-size: 2rem;
 $ingredient-empty-state-copy-max-width: 22rem;
 $ingredient-search-result-icon-size: 2.7rem;
-$ingredient-nutrition-confidence-icon-size: 1.35rem;
 $ingredient-nutrition-confidence-tag-font-size: 0.68rem;
 $ingredient-nutrition-move-prompt-min-width: 20rem;
 $ingredient-nutrition-move-prompt-max-width: 90vw;
@@ -582,6 +581,8 @@ $app-privileged-badge-size: 1.42rem;
 $app-privileged-badge-icon-size: 1rem;
 $app-privileged-action-badge-size: 1.72rem;
 $app-privileged-action-badge-icon-size: 1.18rem;
+$app-status-icon-badge-size: 1.35rem;
+$app-status-icon-badge-icon-size: 0.9rem;
 
 // Custom ingredient background. Applied to manually added/user-created foods in
 // pills, result badges, ingredient cards, and saved drink ingredient chips.

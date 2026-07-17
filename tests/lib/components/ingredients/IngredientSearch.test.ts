@@ -89,15 +89,28 @@ describe("IngredientSearch", () => {
 			"false",
 		);
 		await fireEvent.keyDown(searchInput, { key: "ArrowDown" });
-		expect(screen.getByRole("option", { name: /apple, raw/i })).toHaveAttribute(
+		const firstOption = screen.getByRole("option", { name: /apple, raw/i });
+		expect(firstOption).toHaveAttribute(
 			"aria-selected",
 			"true",
+		);
+		expect(firstOption.closest(".result-card")).toHaveClass(
+			"result-card--active",
+		);
+		expect(searchInput).toHaveAttribute(
+			"aria-activedescendant",
+			"ingredient-search-result-101",
 		);
 		await fireEvent.keyDown(searchInput, { key: "ArrowDown" });
-		expect(screen.getByRole("option", { name: /banana, raw/i })).toHaveAttribute(
+		const secondOption = screen.getByRole("option", { name: /banana, raw/i });
+		expect(secondOption).toHaveAttribute(
 			"aria-selected",
 			"true",
 		);
+		expect(secondOption.closest(".result-card")).toHaveClass(
+			"result-card--active",
+		);
+		expect(firstOption).toHaveAttribute("aria-selected", "false");
 		await fireEvent.keyDown(searchInput, { key: "Enter" });
 
 		expect(onSelect).toHaveBeenCalledWith(

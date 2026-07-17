@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Popover from "$lib/components/common/display/Popover.svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge.svelte";
+	import CloseButton from "$lib/components/common/buttons/CloseButton.svelte";
 	import type { NutrientChip } from "$lib/utils/mix/ui/mixUi";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
@@ -63,14 +64,12 @@
 				{getDisplayName(food.description)}
 			</h5>
 		</div>
-		<button
+		<CloseButton
 			class="ingredient-card__remove"
-			type="button"
-			aria-label={`Remove ${food.description}`}
+			size="small"
+			label={`Remove ${food.description}`}
 			onclick={() => onRemove(food.fdcId)}
-		>
-			×
-		</button>
+		/>
 	</header>
 
 	<div class="ingredient-card__controls">
@@ -230,24 +229,10 @@
 		letter-spacing: 0.04em;
 	}
 
-	.ingredient-card__remove {
+	:global(.ingredient-card__remove) {
 		position: absolute;
 		top: $app-gap-sm;
 		right: $app-gap-sm;
-		width: 1.75rem;
-		height: 1.75rem;
-		padding: 0;
-		color: $app-primary;
-		background: $app-accent;
-		border-radius: $app-radius-pill;
-		font-size: 1.1rem;
-		font-weight: 800;
-		line-height: 1;
-
-		&:hover {
-			background: $app-warning-bg;
-			color: $app-warning-strong;
-		}
 	}
 
 	.ingredient-card__controls {

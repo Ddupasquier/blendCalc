@@ -10,6 +10,7 @@
 		disabled = false,
 		pressed = undefined,
 		class: className = "",
+		"aria-describedby": ariaDescribedBy = undefined,
 		onclick,
 		onfocus,
 		children,
@@ -24,6 +25,7 @@
 	aria-label={label}
 	aria-busy={busy}
 	aria-pressed={pressed}
+	aria-describedby={ariaDescribedBy}
 	disabled={disabled || busy}
 	{onclick}
 	{onfocus}
@@ -136,5 +138,22 @@
 			border-color: $ingredient-accent-primary;
 			background: $ingredient-surface-positive;
 		}
+	}
+
+	.circle-icon-button[data-variant="danger"] {
+		color: $ingredient-surface-card;
+		background: $ingredient-accent-danger;
+
+		&:hover:not(:disabled) {
+			background: color-mix(
+				in srgb,
+				$ingredient-accent-danger 88%,
+				$ingredient-text-primary
+			);
+		}
+	}
+
+	.circle-icon-button :global(svg) {
+		display: block;
 	}
 </style>

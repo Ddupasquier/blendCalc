@@ -187,6 +187,7 @@
 	}
 
 	:global(.barcode-scanner__back-icon) {
+		display: block;
 		width: $app-gap-lg;
 		height: $app-gap-lg;
 	}

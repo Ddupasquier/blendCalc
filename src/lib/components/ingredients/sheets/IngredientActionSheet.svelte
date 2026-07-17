@@ -2,6 +2,7 @@
 	import Pencil from "$lib/assets/icons/Pencil.svelte";
 	import Sliders from "$lib/assets/icons/Sliders.svelte";
 	import Trash from "$lib/assets/icons/Trash.svelte";
+	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation.svelte";
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet.svelte";
 	import BottomSheetAction from "$lib/components/common/sheets/BottomSheetAction.svelte";
 	import type { IngredientActionSheetProps } from "$lib/components/ingredients/sheets/types";
@@ -43,16 +44,27 @@
 				<Pencil />
 			{/snippet}
 		</BottomSheetAction>
-		<BottomSheetAction
-			label={removeLabel}
-			variant="danger"
+		<TwoStepConfirmation
+			actionLabel={removeLabel}
+			confirmationLabel={`Tap again: ${removeLabel}`}
+			message="Tap delete again to confirm."
+			messageId="ingredient-action-delete-confirmation"
 			disabled={removing}
-			onSelect={onRemove}
+			onConfirm={onRemove}
 		>
-			{#snippet icon()}
-				<Trash />
+			{#snippet children({ activate, label })}
+				<BottomSheetAction
+					{label}
+					variant="danger"
+					disabled={removing}
+					onSelect={activate}
+				>
+					{#snippet icon()}
+						<Trash />
+					{/snippet}
+				</BottomSheetAction>
 			{/snippet}
-		</BottomSheetAction>
+		</TwoStepConfirmation>
 	</div>
 </BottomSheet>
 

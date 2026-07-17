@@ -35,4 +35,8 @@
 		border-radius: $ingredient-radius-pill;
 		line-height: 1;
 	}
+
+	.privileged-action-badge :global(svg) {
+		display: block;
+	}
 </style>

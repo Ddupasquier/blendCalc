@@ -161,21 +161,13 @@
         border-radius: $ingredient-radius-card;
         gap: $app-horizontal-control-gap;
         transition:
-            border-color 0.16s ease,
-            background-color 0.16s ease,
-            transform 0.16s ease;
-    }
-
-    .result-card--active,
-    .result-card:hover,
-    .result-card:focus-within {
-        background: color-mix(in srgb, $ingredient-surface-positive 84%, $ingredient-surface-card);
-        border-color: color-mix(in srgb, $ingredient-accent-primary 86%, $ingredient-text-primary);
+            border-color 160ms ease,
+            background-color 160ms ease;
     }
 
     .result-card--active {
-        outline: 0.12rem solid color-mix(in srgb, $ingredient-accent-primary 34%, transparent);
-        outline-offset: 0.12rem;
+        background: $ingredient-surface-card;
+        border-color: $ingredient-accent-primary;
     }
 
     .result-main {

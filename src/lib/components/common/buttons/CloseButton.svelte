@@ -45,6 +45,7 @@
 		}
 
 		:global(.close-button__icon) {
+			display: block;
 			width: $app-close-button-icon-scale;
 			height: $app-close-button-icon-scale;
 		}

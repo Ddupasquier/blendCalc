@@ -2,18 +2,17 @@
 	import DotsHorizontal from "$lib/assets/icons/DotsHorizontal.svelte";
 	import X from "$lib/assets/icons/X.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+	import type { IngredientCardActionsProps } from "./types";
 
 	let {
 		description,
 		removing = false,
+		removeArmed = false,
+		removeLabel = `Remove ${description}`,
+		removeMessageId = undefined,
 		onActions,
 		onRemove,
-	}: {
-		description: string;
-		removing?: boolean;
-		onActions: () => void;
-		onRemove: () => void;
-	} = $props();
+	}: IngredientCardActionsProps = $props();
 </script>
 
 <div class="ingredient-card-actions">
@@ -26,11 +25,12 @@
 		<DotsHorizontal size={16} />
 	</CircleIconButton>
 	<CircleIconButton
-		label={`Remove ${description}`}
-		variant="soft"
+		label={removeLabel}
+		variant={removeArmed ? "danger" : "soft"}
 		size="small"
 		busy={removing}
 		disabled={removing}
+		aria-describedby={removeArmed ? removeMessageId : undefined}
 		onclick={onRemove}
 	>
 		<X size={16} strokeWidth={2.7} />

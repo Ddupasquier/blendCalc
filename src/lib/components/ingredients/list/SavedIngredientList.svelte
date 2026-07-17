@@ -1,5 +1,6 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import ScrollListReturnToTop from "$lib/components/common/navigation/ScrollListReturnToTop.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 	import {
@@ -129,7 +130,8 @@
 			!root ||
 			!sentinel ||
 			!canRevealMore ||
-			loadingMoreList
+			loadingMoreList ||
+			typeof IntersectionObserver === "undefined"
 		) return;
 
 		const observer = new IntersectionObserver(
@@ -219,6 +221,11 @@
 							</RoundedActionButton>
 						</li>
 					{/if}
+					<ScrollListReturnToTop
+						scrollContainer={listElement}
+						hasMoreItems={canRevealMore || loadingMoreList !== null}
+						contentVersion={`${activeList}:${foods.length}:${resetKey}`}
+					/>
 				</ul>
 			{:else if listLoading}
 				<div

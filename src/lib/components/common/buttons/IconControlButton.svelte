@@ -71,4 +71,8 @@
 			opacity: 0.7;
 		}
 	}
+
+	.icon-control-button :global(svg) {
+		display: block;
+	}
 </style>

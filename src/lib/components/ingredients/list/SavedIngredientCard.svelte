@@ -2,6 +2,7 @@
 	import ArrowLeft from "$lib/assets/icons/ArrowLeft.svelte";
 	import ChevronRight from "$lib/assets/icons/ChevronRight.svelte";
 	import FoodSymbol from "$lib/assets/icons/FoodSymbol.svelte";
+	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
 	import IngredientBulkToggle from "$lib/components/ingredients/list/IngredientBulkToggle.svelte";
 	import IngredientCardActions from "$lib/components/ingredients/list/IngredientCardActions.svelte";
@@ -89,12 +90,26 @@
 			{/if}
 		</CircleIconButton>
 	</span>
-	<IngredientCardActions
-		description={food.description}
-		{removing}
-		{onActions}
-		{onRemove}
-	/>
+	<TwoStepConfirmation
+		actionLabel={`Remove ${food.description}`}
+		confirmationLabel={`Confirm deletion of ${food.description}`}
+		message="Tap delete again to confirm."
+		messageId={`saved-ingredient-delete-${food.fdcId}`}
+		disabled={removing}
+		onConfirm={onRemove}
+	>
+		{#snippet children({ armed, activate, label, messageId })}
+			<IngredientCardActions
+				description={food.description}
+				{removing}
+				removeArmed={armed}
+				removeLabel={label}
+				removeMessageId={messageId}
+				{onActions}
+				onRemove={activate}
+			/>
+		{/snippet}
+	</TwoStepConfirmation>
 </article>
 
 <style lang="scss">

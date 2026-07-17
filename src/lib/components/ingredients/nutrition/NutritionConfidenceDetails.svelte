@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ChevronDown from "$lib/assets/icons/ChevronDown.svelte";
 	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
+	import StatusIconBadge from "$lib/components/common/badges/StatusIconBadge.svelte";
 	import type { FoodQuality } from "$lib/utils/food/quality/foodQuality";
 
 	let {
@@ -44,9 +45,13 @@
 			aria-expanded={isOpen}
 			onclick={() => (isOpen = !isOpen)}
 		>
-			<span class="confidence-details__indicator" aria-hidden="true">
+			<StatusIconBadge
+				label="Incomplete nutrition data"
+				tone="error"
+				decorative
+			>
 				<WarningTriangle size={12} strokeWidth={2.6} />
-			</span>
+			</StatusIconBadge>
 			<span class="confidence-details__header">
 				<strong>{quality.label} nutrition data</strong>
 				<span>
@@ -128,17 +133,6 @@
 				text-decoration: none;
 			}
 		}
-	}
-
-	.confidence-details__indicator {
-		display: grid;
-		place-items: center;
-		width: $ingredient-nutrition-confidence-icon-size;
-		height: $ingredient-nutrition-confidence-icon-size;
-		color: $app-danger-action;
-		background: $ingredient-status-error-bg;
-		border-radius: $app-radius-pill;
-		line-height: 1;
 	}
 
 	.confidence-details__header {
