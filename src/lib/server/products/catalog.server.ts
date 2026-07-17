@@ -15,6 +15,7 @@ import {
 	type NutrientRelationshipRule,
 } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import type { FdcFood } from "$lib/utils/food/types";
+import { tokenizeIngredientSearchText } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
 import {
 	compareCatalogSubmissionToExistingProduct,
@@ -100,6 +101,7 @@ const PRODUCT_SUBMISSION_REJECTION_THRESHOLD = 5;
 const PRODUCT_SUBMISSION_REJECTION_WINDOW_DAYS = 30;
 const PRODUCT_SUBMISSION_BLOCK_DAYS = 30;
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT = 100;
 
 type ProductSubmissionBlock = {
 	blocked_until: string;
@@ -238,20 +240,15 @@ export const searchApprovedSharedProducts = async (
 	supabase: SupabaseClient<Database>,
 	query: string,
 ) => {
-	const terms = query
-		.trim()
-		.toLocaleLowerCase()
-		.split(/\s+/)
-		.map((term) => term.replace(/[%_]/g, ""))
-		.filter(Boolean);
+	const terms = tokenizeIngredientSearchText(query).slice(0, 6);
 	if (terms.length === 0) return [];
 
 	let request = supabase
 		.from("shared_products")
 		.select("id, food, confidence, compatibility_summary, category_option_id")
 		.eq("status", "active")
-		.limit(30);
-	for (const term of terms.slice(0, 6)) {
+		.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT);
+	for (const term of terms) {
 		request = request.ilike("search_text", `%${term}%`);
 	}
 

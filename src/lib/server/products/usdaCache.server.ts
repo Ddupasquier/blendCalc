@@ -3,12 +3,19 @@ import { env } from "$env/dynamic/private";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { normalizeFdcFood } from "$lib/utils/food/sources/fdc";
 import type { FdcFood, FdcSearchResponse } from "$lib/utils/food/types";
+import { rankIngredientSearchCandidates } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import { toJson } from "$lib/utils/storage/supabase/shared";
+import {
+	buildUsdaExactSearchQuery,
+	buildUsdaPartialSearchQuery,
+} from "$lib/server/products/usdaSearchQuery";
 
 const FDC_BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 const SEARCH_CACHE_MILLISECONDS = 12 * 60 * 60 * 1000;
 const BARCODE_CACHE_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
 const DETAIL_CACHE_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
+const SEARCH_RESULT_LIMIT = 50;
+const PARTIAL_SEARCH_CANDIDATE_LIMIT = 100;
 
 type CacheRequestKind = "search" | "barcode-search" | "food-detail";
 
@@ -99,19 +106,45 @@ const fetchUsdaJson = async <T>(input: {
 export const searchUsdaFoods = async (query: string): Promise<FdcFood[]> => {
 	const normalizedQuery = query.trim().replace(/\s+/g, " ");
 	if (!normalizedQuery) return [];
+	const exactQuery = buildUsdaExactSearchQuery(normalizedQuery);
+	const partialQuery = buildUsdaPartialSearchQuery(normalizedQuery);
+	if (!exactQuery || !partialQuery) return [];
 
-	const data = await fetchUsdaJson<FdcSearchResponse>({
+	const exactData = await fetchUsdaJson<FdcSearchResponse>({
 		path: "/foods/search",
 		params: {
-			query: normalizedQuery,
+			query: exactQuery,
 			dataType: "Foundation,SR Legacy",
-			pageSize: "50",
+			pageSize: String(SEARCH_RESULT_LIMIT),
 		},
 		requestKind: "search",
-		cacheValue: { query: normalizedQuery.toLocaleLowerCase(), pageSize: 50 },
+		cacheValue: { query: exactQuery, pageSize: SEARCH_RESULT_LIMIT },
 		ttlMilliseconds: SEARCH_CACHE_MILLISECONDS,
 	});
-	return (data.foods ?? []).map(normalizeFdcFood);
+	const exactFoods = (exactData.foods ?? []).map(normalizeFdcFood);
+	if (exactFoods.length > 0) {
+		return rankIngredientSearchCandidates(exactFoods, normalizedQuery)
+			.slice(0, SEARCH_RESULT_LIMIT);
+	}
+
+	const partialData = await fetchUsdaJson<FdcSearchResponse>({
+		path: "/foods/search",
+		params: {
+			query: partialQuery,
+			dataType: "Foundation,SR Legacy",
+			pageSize: String(PARTIAL_SEARCH_CANDIDATE_LIMIT),
+		},
+		requestKind: "search",
+		cacheValue: {
+			query: partialQuery,
+			pageSize: PARTIAL_SEARCH_CANDIDATE_LIMIT,
+		},
+		ttlMilliseconds: SEARCH_CACHE_MILLISECONDS,
+	});
+	return rankIngredientSearchCandidates(
+		(partialData.foods ?? []).map(normalizeFdcFood),
+		normalizedQuery,
+	).slice(0, SEARCH_RESULT_LIMIT);
 };
 
 export const searchUsdaBrandedFoods = async (query: string) =>

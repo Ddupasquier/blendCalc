@@ -316,6 +316,7 @@ export type Database = {
           food: Json
           id: string
           name_key: string | null
+          search_text: string
           updated_at: string
           user_id: string
         }
@@ -326,6 +327,7 @@ export type Database = {
           food: Json
           id?: string
           name_key?: string | null
+          search_text?: string
           updated_at?: string
           user_id: string
         }
@@ -336,6 +338,7 @@ export type Database = {
           food?: Json
           id?: string
           name_key?: string | null
+          search_text?: string
           updated_at?: string
           user_id?: string
         }

@@ -6,12 +6,6 @@
 		CUSTOM_FOODS_CHANGED_EVENT,
 		searchCustomFoods,
 	} from "$lib/utils/food/custom/customFoods";
-	import {
-		mergeIngredientSearchResults,
-		sortIngredientSearchResults,
-	} from "$lib/utils/ingredients/ingredientSearchResults";
-	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
-	import { searchSharedProducts } from "$lib/utils/products/catalog";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
 	import Search from "$lib/assets/icons/Search.svelte";
 	import X from "$lib/assets/icons/X.svelte";
@@ -40,15 +34,7 @@
 	let composing = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout>;
 	const dispatch = createEventDispatcher();
-	const foodPreferenceContext = getFoodPreferenceContext();
-
-	const sortedResults = $derived(() =>
-		sortIngredientSearchResults(
-			results,
-			query,
-			foodPreferenceContext.current,
-		),
-	);
+	const sortedResults = () => results;
 
 	const triggerSearch = () => {
 		if (!browser || !searchReady) return;
@@ -62,32 +48,17 @@
 		}
 		debounceTimer = setTimeout(async () => {
 			loading = true;
-			const customResults = searchCustomFoods(searchString);
 			try {
-				const [sharedSearch, apiSearch] = await Promise.allSettled([
-					searchSharedProducts(searchString),
-					searchFoods(searchString),
-				]);
-				const sharedResults = sharedSearch.status === "fulfilled"
-					? sharedSearch.value
-					: [];
-				const apiResults = apiSearch.status === "fulfilled"
-					? apiSearch.value
-					: [];
-					results = mergeIngredientSearchResults(
-						customResults,
-						sharedResults,
-						apiResults,
-					);
+				results = await searchFoods(searchString);
 				activeResultIndex = -1;
 				dispatch("results", { results, query: searchString });
-
-				if (sharedSearch.status === "rejected" && apiSearch.status === "rejected") {
-					const apiError = apiSearch.reason;
-					error = apiError instanceof FdcConfigurationError
-						? apiError.message
-						: "Online food search failed. Your saved foods are still available.";
-				}
+			} catch (searchError) {
+				results = searchCustomFoods(searchString);
+				activeResultIndex = -1;
+				dispatch("results", { results, query: searchString });
+				error = searchError instanceof FdcConfigurationError
+					? searchError.message
+					: "Online food search failed. Your saved foods are still available.";
 			} finally {
 				loading = false;
 			}
@@ -215,10 +186,7 @@
 		const refreshCustomResults = () => {
 			const searchString = query.trim();
 			if (!searchString) return;
-				results = mergeIngredientSearchResults(
-					searchCustomFoods(searchString),
-					results,
-				);
+			triggerSearch();
 		};
 
 		window.addEventListener(CUSTOM_FOODS_CHANGED_EVENT, refreshCustomResults);

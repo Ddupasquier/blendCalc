@@ -1,5 +1,6 @@
 import type { FdcFood } from "$lib/utils/food/types";
 import { compareFoodQuality } from "$lib/utils/food/quality/foodQuality";
+import { createIngredientSearchRelevanceComparator } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 import { getFoodDownrankScore } from "$lib/utils/profile/foodPreferenceWarnings";
 
@@ -17,77 +18,23 @@ export const mergeIngredientSearchResults = (...resultGroups: FdcFood[][]) => {
 	});
 };
 
-const sortByQualityThenName = (
-	items: FdcFood[],
-	preferenceProfile: FoodPreferenceProfile | null,
-) =>
-	items.sort((a, b) => {
-		const preferencePenalty =
-			getFoodDownrankScore(a, preferenceProfile) -
-			getFoodDownrankScore(b, preferenceProfile);
-		if (preferencePenalty !== 0) return preferencePenalty;
-		const qualitySort = compareFoodQuality(a, b);
-		if (qualitySort !== 0) return qualitySort;
-		return a.description.localeCompare(b.description);
-	});
-
 export const sortIngredientSearchResults = (
 	results: FdcFood[],
 	query: string,
 	preferenceProfile: FoodPreferenceProfile | null,
 ) => {
-	const allTerms = query
-		.trim()
-		.toLowerCase()
-		.split(/\s+/)
-		.filter(Boolean);
+	const compareRelevance = createIngredientSearchRelevanceComparator(query);
+	return [...results].sort((left, right) => {
+		const relevanceSort = compareRelevance(left, right);
+		if (relevanceSort !== 0) return relevanceSort;
 
-	if (allTerms.length === 0) {
-		return sortByQualityThenName([...results], preferenceProfile);
-	}
+		const preferencePenalty =
+			getFoodDownrankScore(left, preferenceProfile) -
+			getFoodDownrankScore(right, preferenceProfile);
+		if (preferencePenalty !== 0) return preferencePenalty;
 
-	if (allTerms.length === 1) {
-		const startsWith: FdcFood[] = [];
-		const contains: FdcFood[] = [];
-		const rest: FdcFood[] = [];
-
-		for (const food of results) {
-			const description = food.description.toLowerCase();
-			if (description.startsWith(allTerms[0])) {
-				startsWith.push(food);
-			} else if (description.includes(allTerms[0])) {
-				contains.push(food);
-			} else {
-				rest.push(food);
-			}
-		}
-
-		sortByQualityThenName(startsWith, preferenceProfile);
-		sortByQualityThenName(contains, preferenceProfile);
-		sortByQualityThenName(rest, preferenceProfile);
-		return [...startsWith, ...contains, ...rest];
-	}
-
-	const allParts: FdcFood[] = [];
-	const firstPart: FdcFood[] = [];
-	const rest: FdcFood[] = [];
-
-	for (const food of results) {
-		const description = food.description.toLowerCase();
-		const containsAll = allTerms.every((term) => description.includes(term));
-		if (containsAll) {
-			if (description.startsWith(allTerms[0])) {
-				firstPart.push(food);
-			} else {
-				allParts.push(food);
-			}
-		} else {
-			rest.push(food);
-		}
-	}
-
-	sortByQualityThenName(firstPart, preferenceProfile);
-	sortByQualityThenName(allParts, preferenceProfile);
-	sortByQualityThenName(rest, preferenceProfile);
-	return [...firstPart, ...allParts, ...rest];
+		const qualitySort = compareFoodQuality(left, right);
+		if (qualitySort !== 0) return qualitySort;
+		return left.description.localeCompare(right.description);
+	});
 };

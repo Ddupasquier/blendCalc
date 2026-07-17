@@ -91,11 +91,12 @@ Notes:
 Stores private user custom foods. Shared/public review happens through
 `shared_product_submissions`, not by making every custom food public.
 
-Columns: `id`, `user_id`, `fdc_id`, `barcode`, `name_key`, `food`,
-`created_at`, `updated_at`.
+Columns: `id`, `user_id`, `fdc_id`, `barcode`, `name_key`, `search_text`,
+`food`, `created_at`, `updated_at`.
 
 Notes:
 - Unique safeguards prevent duplicate custom names and duplicate user barcodes.
+- `search_text` is trigger-maintained and trigram-indexed for partial server search.
 - Normalized nutrients for a custom food live in `food_nutrients`.
 
 ### `saved_drinks`
