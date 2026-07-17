@@ -16,6 +16,7 @@
 
 	let armed = $state(false);
 	let confirmationTimer: ReturnType<typeof setTimeout> | null = null;
+	let armingEvent: Event | null = null;
 
 	const clearTimer = () => {
 		if (confirmationTimer === null) return;
@@ -26,18 +27,21 @@
 	const disarm = () => {
 		clearTimer();
 		armed = false;
+		armingEvent = null;
 	};
 
-	const activate = () => {
+	const activate = (event?: Event) => {
 		if (disabled) return;
 
 		if (armed) {
+			if (event && event === armingEvent) return;
 			disarm();
 			onConfirm();
 			return;
 		}
 
 		armed = true;
+		armingEvent = event ?? null;
 		clearTimer();
 		confirmationTimer = setTimeout(disarm, CONFIRMATION_WINDOW_MS);
 	};

@@ -1,7 +1,10 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
-	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import IngredientListTabs from "./IngredientListTabs.svelte";
+	import type { SavedIngredientListLayoutProps } from "$lib/components/ingredients/list/types";
+	import {
+		getSavedIngredientListTabId,
+		SAVED_INGREDIENT_LIST_PANEL_ID,
+	} from "$lib/components/ingredients/list/accessibilityIds";
 
 	let {
 		activeList,
@@ -12,16 +15,7 @@
 		listLoadingError = "",
 		onSelectList,
 		children,
-	}: {
-		activeList: SmoothieListKey;
-		fridgeCount: number;
-		shoppingListCount: number;
-		listLoading?: boolean;
-		listActionError?: string;
-		listLoadingError?: string;
-		onSelectList: (key: SmoothieListKey) => void;
-		children: Snippet;
-	} = $props();
+	}: SavedIngredientListLayoutProps = $props();
 </script>
 
 <section
@@ -51,24 +45,18 @@
 		</p>
 	{/if}
 
-	<div class="saved-ingredient-list-layout__body">
+	<div
+		id={SAVED_INGREDIENT_LIST_PANEL_ID}
+		class="saved-ingredient-list-layout__body"
+		role="tabpanel"
+		aria-labelledby={getSavedIngredientListTabId(activeList)}
+	>
 		{@render children()}
 	</div>
 </section>
 
 <style lang="scss">
 	@use "../../../../styles/variables" as *;
-
-	.sr-only {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		white-space: nowrap;
-		border: 0;
-	}
 
 	.saved-ingredient-list-layout {
 		position: relative;

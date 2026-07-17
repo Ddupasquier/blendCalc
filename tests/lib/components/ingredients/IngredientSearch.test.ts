@@ -84,12 +84,12 @@ describe("IngredientSearch", () => {
 			{ timeout: 2000 },
 		);
 
-		expect(screen.getByRole("option", { name: /apple, raw/i })).toHaveAttribute(
+		expect(screen.getByRole("row", { name: /apple, raw/i })).toHaveAttribute(
 			"aria-selected",
 			"false",
 		);
 		await fireEvent.keyDown(searchInput, { key: "ArrowDown" });
-		const firstOption = screen.getByRole("option", { name: /apple, raw/i });
+		const firstOption = screen.getByRole("row", { name: /apple, raw/i });
 		expect(firstOption).toHaveAttribute(
 			"aria-selected",
 			"true",
@@ -102,7 +102,7 @@ describe("IngredientSearch", () => {
 			"ingredient-search-result-101",
 		);
 		await fireEvent.keyDown(searchInput, { key: "ArrowDown" });
-		const secondOption = screen.getByRole("option", { name: /banana, raw/i });
+		const secondOption = screen.getByRole("row", { name: /banana, raw/i });
 		expect(secondOption).toHaveAttribute(
 			"aria-selected",
 			"true",
@@ -148,7 +148,7 @@ describe("IngredientSearch", () => {
 		);
 
 		await fireEvent.keyDown(searchInput, { key: "ArrowUp" });
-		expect(screen.getByRole("option", { name: /tomato, raw/i })).toHaveAttribute(
+		expect(screen.getByRole("row", { name: /tomato, raw/i })).toHaveAttribute(
 			"aria-selected",
 			"true",
 		);
@@ -197,5 +197,33 @@ describe("IngredientSearch", () => {
 
 		expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ fdcId: 301 }));
 		expect(onSelect).not.toHaveBeenCalled();
+	});
+
+	it("waits for mobile text composition before searching", async () => {
+		vi.mocked(searchFoods).mockResolvedValueOnce([
+			makeFood(401, "Kiwi fruit, raw"),
+		]);
+
+		render(IngredientSearch, {
+			props: {
+				onSelect: vi.fn(),
+				onSearchFocus: vi.fn(),
+			},
+		});
+
+		const searchInput = screen.getByRole("combobox", {
+			name: /search ingredients/i,
+		});
+		expect(searchInput).toHaveAttribute("inputmode", "search");
+		expect(searchInput).toHaveAttribute("enterkeyhint", "search");
+
+		await fireEvent.compositionStart(searchInput);
+		await fireEvent.input(searchInput, { target: { value: "kiwi" } });
+		expect(searchFoods).not.toHaveBeenCalled();
+
+		await fireEvent.compositionEnd(searchInput);
+		await waitFor(() => expect(searchFoods).toHaveBeenCalledWith("kiwi"), {
+			timeout: 2000,
+		});
 	});
 });

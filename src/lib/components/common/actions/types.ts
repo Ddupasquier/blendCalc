@@ -2,7 +2,7 @@ import type { Snippet } from "svelte";
 
 export type TwoStepConfirmationControl = {
 	armed: boolean;
-	activate: () => void;
+	activate: (event?: Event) => void;
 	label: string;
 	messageId: string;
 };

@@ -93,7 +93,7 @@
 	<TwoStepConfirmation
 		actionLabel={`Remove ${food.description}`}
 		confirmationLabel={`Confirm deletion of ${food.description}`}
-		message="Tap delete again to confirm."
+		message="Tap or click delete again to confirm."
 		messageId={`saved-ingredient-delete-${food.fdcId}`}
 		disabled={removing}
 		onConfirm={onRemove}

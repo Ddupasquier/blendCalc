@@ -1,7 +1,7 @@
 <script lang="ts">
 	import BackButton from "$lib/components/common/buttons/BackButton.svelte";
 	import SheetBase from "$lib/components/common/sheets/SheetBase.svelte";
-	import type { Snippet } from "svelte";
+	import type { BottomSheetProps } from "$lib/components/common/sheets/types";
 
 	let {
 		open,
@@ -15,19 +15,7 @@
 		comfortable = false,
 		children,
 		onClose,
-	}: {
-		open: boolean;
-		title?: string;
-		titleId?: string;
-		label?: string;
-		backLabel?: string;
-		showBack?: boolean;
-		aboveNav?: boolean;
-		fill?: boolean;
-		comfortable?: boolean;
-		children: Snippet;
-		onClose: () => void;
-	} = $props();
+	}: BottomSheetProps = $props();
 
 </script>
 

@@ -59,6 +59,7 @@
 		font-size: $app-font-size-md;
 		font-weight: $app-button-font-weight;
 		line-height: $app-button-line-height;
+		touch-action: manipulation;
 		cursor: pointer;
 
 		&:disabled {

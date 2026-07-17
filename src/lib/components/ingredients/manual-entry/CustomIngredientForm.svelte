@@ -8,6 +8,7 @@
 	} from "$lib/utils/serving/servingMeasureCatalog";
 	import { buildCustomServingLabel } from "$lib/utils/food/custom/customFoods";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+	import { getMotionSafeScrollBehavior } from "$lib/utils/accessibility/motion";
 	import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog.svelte";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog.svelte";
@@ -806,7 +807,7 @@
 		const target =
 			focusTarget === "name" ? ingredientNameInput : saveDestinationSelect;
 		(target ?? manualBodyElement)?.scrollIntoView({
-			behavior: "smooth",
+			behavior: getMotionSafeScrollBehavior(),
 			block: "center",
 		});
 		await new Promise((resolve) => requestAnimationFrame(resolve));

@@ -22,7 +22,9 @@ describe("IngredientActionSheet delete confirmation", () => {
 		);
 
 		expect(onRemove).not.toHaveBeenCalled();
-		expect(screen.getByText("Tap delete again to confirm.")).toBeVisible();
+		expect(
+			screen.getByText("Tap or click delete again to confirm."),
+		).toBeVisible();
 
 		await fireEvent.click(
 			screen.getByRole("button", {

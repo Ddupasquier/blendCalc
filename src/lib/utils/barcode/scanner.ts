@@ -34,14 +34,36 @@ const createResult = (
 	};
 };
 
-const getCameraErrorMessage = (error: unknown) => {
+export const getCameraErrorMessage = (error: unknown) => {
 	if (error instanceof DOMException && error.name === "NotAllowedError") {
 		return "Camera access was denied. Allow camera access or enter the barcode manually.";
 	}
 	if (error instanceof DOMException && error.name === "NotFoundError") {
 		return "No camera was found on this device.";
 	}
+	if (error instanceof DOMException && error.name === "NotReadableError") {
+		return "The camera is already in use by another app or browser tab. Close it there and try again.";
+	}
+	if (error instanceof DOMException && error.name === "OverconstrainedError") {
+		return "This camera does not support the requested scan mode. Enter the barcode manually.";
+	}
+	if (error instanceof DOMException && error.name === "SecurityError") {
+		return "This browser blocked camera access. Use a secure connection or enter the barcode manually.";
+	}
+	if (error instanceof DOMException && error.name === "AbortError") {
+		return "Camera startup was interrupted. Close other camera views and try again.";
+	}
 	return "The camera could not start. Enter the barcode manually or try again.";
+};
+
+export const getWebCameraSupportMessage = () => {
+	if (window.isSecureContext === false) {
+		return "Camera scanning requires a secure connection. Enter the barcode manually instead.";
+	}
+	if (!navigator.mediaDevices?.getUserMedia) {
+		return "Camera scanning is not supported by this browser. Enter the barcode manually instead.";
+	}
+	return null;
 };
 
 export const isNativeBarcodePlatform = async () => {
@@ -166,6 +188,12 @@ export const startWebBarcodeScanner = async (
 	video: HTMLVideoElement,
 	callbacks: BarcodeScannerCallbacks,
 ): Promise<BarcodeScannerStop> => {
+	const supportMessage = getWebCameraSupportMessage();
+	if (supportMessage) {
+		callbacks.onError(supportMessage);
+		return () => undefined;
+	}
+
 	try {
 		const nativeStop = await startNativeWebScanner(video, callbacks);
 		if (nativeStop) return nativeStop;

@@ -144,10 +144,6 @@
 		</details>
 	</section>
 
-	<RoundedActionButton fullWidth variant="dashed">
-		+ Add another serving size
-	</RoundedActionButton>
-
 	<div class="custom-ingredient__actions">
 		<RoundedActionButton variant="neutral" onclick={onBack}>
 			Back

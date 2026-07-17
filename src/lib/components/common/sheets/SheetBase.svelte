@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { cubicOut } from "svelte/easing";
 	import { fade, fly } from "svelte/transition";
-	import type { Snippet } from "svelte";
-
-	type SheetPlacement = "bottom" | "right";
+	import type { SheetBaseProps } from "$lib/components/common/sheets/types";
+	import {
+		manageDialogFocus,
+		trapDialogFocus,
+	} from "$lib/utils/accessibility/dialogFocus";
 
 	let {
 		open = false,
@@ -20,28 +22,29 @@
 		panelClass = "",
 		children,
 		onClose = () => {},
-	}: {
-		open?: boolean;
-		placement: SheetPlacement;
-		label?: string;
-		labelledby?: string;
-		modal?: boolean;
-		backdrop?: boolean;
-		closeOnBackdrop?: boolean;
-		aboveNav?: boolean;
-		fill?: boolean;
-		comfortable?: boolean;
-		className?: string;
-		panelClass?: string;
-		children: Snippet;
-		onClose?: () => void;
-	} = $props();
+	}: SheetBaseProps = $props();
+	let sheetElement = $state<HTMLDivElement | null>(null);
 
-	const handleKeydown = (event: KeyboardEvent) => {
-		if (open && event.key === "Escape") {
-			onClose();
-		}
+	const handleWindowKeydown = (event: KeyboardEvent) => {
+		if (!open || event.key !== "Escape" || event.defaultPrevented) return;
+		event.preventDefault();
+		onClose();
 	};
+
+	const handleDialogKeydown = (event: KeyboardEvent) => {
+		if (event.key === "Escape") {
+			event.preventDefault();
+			event.stopPropagation();
+			onClose();
+			return;
+		}
+		if (modal && sheetElement) trapDialogFocus(event, sheetElement);
+	};
+
+	$effect(() => {
+		if (!open || !sheetElement) return;
+		return manageDialogFocus(sheetElement);
+	});
 
 	const transitionOptions = $derived(
 		placement === "right"
@@ -50,7 +53,7 @@
 	);
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+<svelte:window onkeydown={handleWindowKeydown} />
 
 {#if open}
 	{#if backdrop}
@@ -64,6 +67,7 @@
 	{/if}
 
 	<div
+		bind:this={sheetElement}
 		class={[
 			"sheet-base",
 			`sheet-base--${placement}`,
@@ -75,12 +79,12 @@
 			.filter(Boolean)
 			.join(" ")}
 		role="dialog"
-		aria-modal={modal}
+		aria-modal={modal ? "true" : undefined}
 		aria-label={labelledby ? undefined : label}
 		aria-labelledby={labelledby}
 		tabindex="-1"
 		onclick={(event) => event.stopPropagation()}
-		onkeydown={(event) => event.stopPropagation()}
+		onkeydown={handleDialogKeydown}
 	>
 		<div
 			class={[
@@ -145,7 +149,7 @@
 	}
 
 	.sheet-base--right {
-		inset: $app-shell-header-height 0 $app-shell-nav-height;
+		inset: var(--sheet-top-offset) 0 var(--sheet-bottom-offset);
 		z-index: $app-right-sheet-z-index;
 		display: grid;
 		justify-items: center;
@@ -165,8 +169,16 @@
 		flex-direction: column;
 		width: 100%;
 		min-height: min(
+			$app-bottom-sheet-min-height-fallback,
+			calc(100vh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+		);
+		min-height: min(
 			$app-bottom-sheet-min-height,
 			calc(100dvh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+		);
+		max-height: min(
+			$app-bottom-sheet-max-height-fallback,
+			calc(100vh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
 		);
 		max-height: min(
 			$app-bottom-sheet-max-height,
@@ -179,12 +191,20 @@
 
 	.sheet-base--fill .sheet-base__panel--bottom {
 		height: min(
+			$app-bottom-sheet-max-height-fallback,
+			calc(100vh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+		);
+		height: min(
 			$app-bottom-sheet-max-height,
 			calc(100dvh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
 		);
 	}
 
 	.sheet-base--comfortable .sheet-base__panel--bottom {
+		min-height: min(
+			$app-bottom-sheet-comfortable-min-height,
+			calc(100vh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+		);
 		min-height: min(
 			$app-bottom-sheet-comfortable-min-height,
 			calc(100dvh - var(--sheet-top-offset) - var(--sheet-bottom-offset))

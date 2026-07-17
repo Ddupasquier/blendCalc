@@ -177,10 +177,12 @@ $app-shell-nav-height: 4.85rem;
 
 // Maximum visible bottom sheet height. Sheets should shrink to their content
 // until this cap, then scroll internally without hiding the drag handle.
+$app-bottom-sheet-max-height-fallback: 80vh;
 $app-bottom-sheet-max-height: 80dvh;
 
 // Default minimum height for reusable bottom sheets. Keeps short sheets
 // anchored above the bottom nav and intentional without forcing long content to overflow.
+$app-bottom-sheet-min-height-fallback: 56vh;
 $app-bottom-sheet-min-height: 56dvh;
 
 // Minimum height for short bottom sheets that should still read as anchored UI,
@@ -188,7 +190,7 @@ $app-bottom-sheet-min-height: 56dvh;
 $app-bottom-sheet-comfortable-min-height: 23rem;
 
 // Clickable drag-handle area at the top of reusable bottom sheets.
-$app-bottom-sheet-handle-height: 1.25rem;
+$app-bottom-sheet-handle-height: 1.5rem;
 
 // Visible drag-handle width at the top of reusable bottom sheets.
 $app-bottom-sheet-handle-width: 2.25rem;
@@ -270,8 +272,6 @@ $app-rebuild-scanner-overlay-bg: rgba(0, 0, 0, 0.72);
 // Figma rebuild scanner dark surface. Use behind full-screen barcode camera UI.
 $app-rebuild-scanner-bg: #080909;
 
-// Full-screen barcode scanner back button size.
-$app-rebuild-scanner-back-size: 2.7rem;
 
 // Full-screen barcode scanner target frame dimensions.
 $app-rebuild-scanner-target-width: 66%;
@@ -378,7 +378,6 @@ $ingredient-nutrition-move-prompt-title-font-size: 1.13em;
 $ingredient-nutrition-product-image-min-height: 8rem;
 $ingredient-nutrition-product-image-max-height: 14rem;
 $ingredient-nutrition-product-image-max-width: 18rem;
-$ingredient-scanner-dialog-title-font-size: 1.45rem;
 $ingredient-scanner-camera-min-height: calc(100vh - 8rem);
 $ingredient-scanner-status-padding-y: 0.55rem;
 $ingredient-scanner-status-padding-x: 0.85rem;
@@ -388,7 +387,6 @@ $ingredient-food-icon-font-size: $ingredient-control-icon-size;
 $ingredient-action-icon-size: $app-rebuild-action-icon-size;
 $ingredient-fab-size: $app-rebuild-fab-size;
 
-$ingredient-scanner-back-size: $app-rebuild-scanner-back-size;
 $ingredient-scanner-target-width: $app-rebuild-scanner-target-width;
 $ingredient-scanner-target-max-width: $app-rebuild-scanner-target-max-width;
 $ingredient-scanner-target-height: $app-rebuild-scanner-target-height;

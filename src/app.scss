@@ -17,7 +17,14 @@ body {
 	height: 100%;
 }
 
+html {
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+}
+
 body {
+	min-height: 100vh;
+	min-height: 100dvh;
 	font-family: $app-font-family-interface;
 	background: $color-figma-canvas;
 	color: $color-figma-ink;
@@ -44,6 +51,7 @@ p {
 	width: 100%;
 	max-width: none;
 	min-height: 100vh;
+	min-height: 100dvh;
 	margin: 0 auto;
 	padding: 0;
 	padding-bottom: 2rem;
@@ -52,6 +60,12 @@ p {
 
 .app-main--authed {
 	padding-bottom: calc($app-shell-nav-height + env(safe-area-inset-bottom));
+}
+
+.app-main--ingredients {
+	min-height: 0;
+	padding-bottom: 0;
+	overflow: hidden;
 }
 
 .app-main--guest {
@@ -72,6 +86,7 @@ button {
 	transition:
 		background 0.15s,
 		transform 0.1s;
+	touch-action: manipulation;
 }
 
 button:active {
@@ -87,4 +102,27 @@ textarea {
 
 a {
 	color: $app-primary;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		scroll-behavior: auto !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
 }

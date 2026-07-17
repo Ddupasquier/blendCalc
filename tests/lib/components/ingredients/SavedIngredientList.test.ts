@@ -91,7 +91,9 @@ describe("SavedIngredientList overlay behavior", () => {
 		);
 
 		expect(onRemove).not.toHaveBeenCalled();
-		expect(screen.getByText("Tap delete again to confirm.")).toBeVisible();
+		expect(
+			screen.getByText("Tap or click delete again to confirm."),
+		).toBeVisible();
 
 		await fireEvent.click(
 			screen.getByRole("button", {
@@ -102,7 +104,7 @@ describe("SavedIngredientList overlay behavior", () => {
 		expect(onRemove).toHaveBeenCalledOnce();
 		expect(onRemove).toHaveBeenCalledWith(1);
 		expect(
-			screen.queryByText("Tap delete again to confirm."),
+			screen.queryByText("Tap or click delete again to confirm."),
 		).not.toBeInTheDocument();
 	});
 

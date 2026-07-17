@@ -16,6 +16,7 @@ export type CircleIconButtonVariant =
 	| "primary"
 	| "soft"
 	| "ghost"
+	| "inverse"
 	| "outline"
 	| "danger";
 
@@ -89,7 +90,10 @@ export type CloseButtonProps = {
 
 export type BackButtonProps = {
 	label?: string;
-	variant?: Extract<CircleIconButtonVariant, "primary" | "soft" | "ghost">;
+	variant?: Extract<
+		CircleIconButtonVariant,
+		"primary" | "soft" | "ghost" | "inverse"
+	>;
 	size?: CircleIconButtonSize;
 	class?: string;
 	onclick?: ButtonClickHandler;
@@ -123,6 +127,8 @@ export type SegmentedControlOption = {
 	value: string;
 	label: string;
 	count?: number;
+	id?: string;
+	controlsId?: string;
 };
 
 export type SegmentedControlProps = {

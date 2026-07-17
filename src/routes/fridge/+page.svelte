@@ -977,13 +977,3 @@
     onSearchSelect={handleSearchSelect}
     onImagePlacementSave={handleImagePlacementSave}
 />
-
-<style lang="scss">
-    @use "../../styles/variables" as *;
-
-    :global(.app-main--authed:has(.ingredients-page)) {
-        min-height: 0;
-        padding-bottom: 0;
-        overflow: hidden;
-    }
-</style>

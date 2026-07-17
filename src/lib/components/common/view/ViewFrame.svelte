@@ -38,6 +38,10 @@
 		width: 100%;
 		max-width: $ingredient-shell-max-width;
 		height: calc(
+			100vh - $ingredient-shell-header-height - $ingredient-shell-nav-height -
+				env(safe-area-inset-bottom)
+		);
+		height: calc(
 			100dvh - $ingredient-shell-header-height - $ingredient-shell-nav-height -
 				env(safe-area-inset-bottom)
 		);

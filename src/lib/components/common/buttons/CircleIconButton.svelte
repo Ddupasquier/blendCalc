@@ -51,6 +51,7 @@
 		font-size: $app-font-size-md;
 		font-weight: $app-button-font-weight;
 		line-height: 1;
+		touch-action: manipulation;
 		transition:
 			background-color 160ms ease,
 			color 160ms ease,
@@ -124,6 +125,16 @@
 		&:focus-visible {
 			color: $ingredient-text-primary;
 			background: color-mix(in srgb, $ingredient-surface-card 68%, transparent);
+		}
+	}
+
+	.circle-icon-button[data-variant="inverse"] {
+		color: $ingredient-surface-card;
+		background: color-mix(in srgb, $ingredient-surface-card 10%, transparent);
+
+		&:hover:not(:disabled),
+		&:focus-visible {
+			background: color-mix(in srgb, $ingredient-surface-card 18%, transparent);
 		}
 	}
 

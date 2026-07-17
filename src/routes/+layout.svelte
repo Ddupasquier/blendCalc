@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
+	import { page } from "$app/state";
 	import favicon from "$lib/assets/favicon.svg";
 	import "../app.scss";
 	import AppHeader from "$lib/components/app/AppHeader.svelte";
@@ -51,6 +52,11 @@
 	let foodPreferenceContext: { current: FoodPreferenceProfile | null } = $state({
 		current: null,
 	});
+	const ingredientsRoute = $derived(
+		Boolean(data.authUser) &&
+			(page.url.pathname === "/fridge" ||
+				page.url.pathname.startsWith("/fridge/")),
+	);
 	setFoodPreferenceContext(foodPreferenceContext);
 
 	$effect.pre(() => {
@@ -135,6 +141,11 @@
 	/>
 {/if}
 
-<main class="app-main" class:app-main--guest={!data.authUser} class:app-main--authed={data.authUser}>
+<main
+	class="app-main"
+	class:app-main--guest={!data.authUser}
+	class:app-main--authed={data.authUser}
+	class:app-main--ingredients={ingredientsRoute}
+>
 	{@render children()}
 </main>

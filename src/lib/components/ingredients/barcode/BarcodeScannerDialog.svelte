@@ -1,27 +1,26 @@
 <script lang="ts">
-	import ArrowLeft from "$lib/assets/icons/ArrowLeft.svelte";
 	import { onMount } from "svelte";
+	import BackButton from "$lib/components/common/buttons/BackButton.svelte";
+	import type { BarcodeScannerDialogProps } from "$lib/components/ingredients/barcode/types";
 	import {
 		isNativeBarcodePlatform,
 		scanNativeBarcode,
 		startWebBarcodeScanner,
 	} from "$lib/utils/barcode/scanner";
-	import type {
-		BarcodeScanResult,
-		BarcodeScannerStop,
-	} from "$lib/utils/barcode/types";
+	import type { BarcodeScannerStop } from "$lib/utils/barcode/types";
+	import {
+		manageDialogFocus,
+		trapDialogFocus,
+	} from "$lib/utils/accessibility/dialogFocus";
 
 	let {
 		open,
 		onDetected,
 		onClose,
-	}: {
-		open: boolean;
-		onDetected: (result: BarcodeScanResult) => void;
-		onClose: () => void;
-	} = $props();
+	}: BarcodeScannerDialogProps = $props();
 
 	let video = $state<HTMLVideoElement>();
+	let dialogElement = $state<HTMLDivElement | null>(null);
 	let stopScanner: BarcodeScannerStop | null = null;
 	let error = $state("");
 	let starting = $state(true);
@@ -32,9 +31,22 @@
 		onClose();
 	};
 
+	const handleDialogKeydown = (event: KeyboardEvent) => {
+		if (event.key === "Escape") {
+			event.preventDefault();
+			event.stopPropagation();
+			close();
+			return;
+		}
+		if (dialogElement) trapDialogFocus(event, dialogElement);
+	};
+
 	onMount(() => {
 		if (!open) return;
 		let cancelled = false;
+		const stopFocusManagement = dialogElement
+			? manageDialogFocus(dialogElement)
+			: () => undefined;
 
 		const start = async () => {
 			try {
@@ -66,6 +78,7 @@
 		return () => {
 			cancelled = true;
 			stopScanner?.();
+			stopFocusManagement();
 		};
 	});
 </script>
@@ -79,21 +92,22 @@
 		}}
 	>
 		<div
+			bind:this={dialogElement}
 			class="barcode-scanner"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="barcode-scanner-title"
 			aria-describedby="barcode-scanner-help"
+			tabindex="-1"
+			onkeydown={handleDialogKeydown}
 		>
 			<header>
-				<button
-					class="barcode-scanner__back"
-					type="button"
-					aria-label="Close barcode scanner"
+				<BackButton
+					label="Close barcode scanner"
+					variant="inverse"
+					size="control"
 					onclick={close}
-				>
-					<ArrowLeft class="barcode-scanner__back-icon" />
-				</button>
+				/>
 				<div>
 					<h2 id="barcode-scanner-title">Scan Barcode</h2>
 					<p id="barcode-scanner-help">Align barcode within the frame.</p>
@@ -136,7 +150,9 @@
 		display: grid;
 		place-items: stretch center;
 		padding: 0;
+		overflow: hidden;
 		background: $ingredient-scanner-overlay-bg;
+		overscroll-behavior: contain;
 	}
 
 	.barcode-scanner {
@@ -145,6 +161,7 @@
 		gap: $app-gap-md;
 		width: min(100%, $ingredient-shell-max-width);
 		min-height: 100vh;
+		min-height: 100dvh;
 		padding: calc($ingredient-shell-padding-y + env(safe-area-inset-top))
 			$ingredient-shell-padding-x calc($ingredient-shell-padding-y + env(safe-area-inset-bottom));
 		background: $ingredient-scanner-bg;
@@ -170,26 +187,6 @@
 			font-size: $app-font-size-md;
 			line-height: 1.4;
 		}
-	}
-
-	.barcode-scanner__back {
-		display: inline-grid;
-		place-items: center;
-		width: $ingredient-scanner-back-size;
-		height: $ingredient-scanner-back-size;
-		padding: 0;
-		color: $ingredient-surface-card;
-		background: color-mix(in srgb, $ingredient-surface-card 10%, transparent);
-		border: 0;
-		border-radius: $ingredient-radius-pill;
-		font-size: $ingredient-scanner-dialog-title-font-size;
-		line-height: 1;
-	}
-
-	:global(.barcode-scanner__back-icon) {
-		display: block;
-		width: $app-gap-lg;
-		height: $app-gap-lg;
 	}
 
 	.barcode-scanner__camera {

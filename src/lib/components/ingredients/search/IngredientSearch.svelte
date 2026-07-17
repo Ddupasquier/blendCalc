@@ -36,6 +36,7 @@
 	let activeResultIndex = $state(-1);
 	let searchWrapElement = $state<HTMLDivElement | null>(null);
 	let searchInputElement = $state<HTMLInputElement | null>(null);
+	let composing = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout>;
 	const dispatch = createEventDispatcher();
 	const foodPreferenceContext = getFoodPreferenceContext();
@@ -92,7 +93,15 @@
 		}, 500);
 	};
 
-	const handleInput = () => {
+	const handleInput = (event: Event) => {
+		onSearchFocus();
+		activeResultIndex = -1;
+		if (composing || (event as InputEvent).isComposing) return;
+		triggerSearch();
+	};
+
+	const handleCompositionEnd = () => {
+		composing = false;
 		onSearchFocus();
 		activeResultIndex = -1;
 		triggerSearch();
@@ -104,6 +113,7 @@
 		results = [];
 		error = "";
 		activeResultIndex = -1;
+		void tick().then(() => searchInputElement?.focus({ preventScroll: true }));
 	};
 
 	const hasActiveSearch = $derived(
@@ -159,7 +169,7 @@
 	};
 
 	const handleSearchKeydown = (event: KeyboardEvent) => {
-		if (event.defaultPrevented) return;
+		if (event.defaultPrevented || event.isComposing || composing) return;
 		if (event.key === "ArrowDown") {
 			event.preventDefault();
 			moveActiveResult(1);
@@ -227,7 +237,10 @@
 </script>
 
 <div bind:this={searchWrapElement} class="search-wrap">
-	<label class="search-label" for="ingredient-search">Search ingredients</label>
+	<label class="sr-only" for="ingredient-search">Search ingredients</label>
+	<p id="ingredient-search-keyboard-help" class="sr-only">
+		Use the up and down arrow keys to choose a result, then press Enter to view it.
+	</p>
 	<div class="search-toolbar" class:search-toolbar--with-actions={Boolean(actions)}>
 		<div
 			class="search-row"
@@ -240,6 +253,11 @@
 				id="ingredient-search"
 				name="ingredient-search"
 				type="search"
+				inputmode="search"
+				enterkeyhint="search"
+				autocomplete="off"
+				autocapitalize="none"
+				spellcheck={false}
 				role="combobox"
 				class="search-input"
 				placeholder="Search ingredients..."
@@ -247,8 +265,12 @@
 				onfocus={onSearchFocus}
 				oninput={handleInput}
 				onkeydown={handleSearchKeydown}
+				oncompositionstart={() => (composing = true)}
+				oncompositionend={handleCompositionEnd}
 				aria-autocomplete="list"
+				aria-haspopup="grid"
 				aria-controls="ingredient-search-results"
+				aria-describedby="ingredient-search-keyboard-help"
 				aria-expanded={sortedResults().length > 0}
 				aria-activedescendant={activeResultIndex >= 0
 					&& sortedResults()[activeResultIndex]
@@ -329,26 +351,6 @@
 		align-items: center;
 		gap: $app-horizontal-control-gap;
 		min-width: 0;
-	}
-
-	.sr-only {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		padding: 0;
-		overflow: hidden;
-		clip: rect(0, 0, 0, 0);
-		white-space: nowrap;
-		border: 0;
-	}
-
-	.search-label {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-		white-space: nowrap;
 	}
 
 	.search-row {

@@ -1,18 +1,13 @@
 <script lang="ts">
 	import type {
-		ManualEntryStep,
-		ManualEntryStepId,
+		ManualEntryStepTabsProps,
 	} from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
 		steps,
 		activeStep,
 		onSelect,
-	}: {
-		steps: ManualEntryStep[];
-		activeStep: ManualEntryStepId;
-		onSelect: (step: ManualEntryStepId) => void;
-	} = $props();
+	}: ManualEntryStepTabsProps = $props();
 
 	const activeIndex = $derived(
 		Math.max(
@@ -26,6 +21,7 @@
 	{#each steps as step, index}
 		<button
 			type="button"
+			aria-current={step.id === activeStep ? "step" : undefined}
 			class:manual-entry-tabs__step--active={index <= activeIndex}
 			class:manual-entry-tabs__step--current={step.id === activeStep}
 			onclick={() => onSelect(step.id)}
@@ -58,6 +54,11 @@
 		background: transparent;
 		border: 0;
 		cursor: pointer;
+
+		&:focus-visible {
+			outline: $app-focus-outline;
+			outline-offset: $app-focus-outline-offset;
+		}
 	}
 
 	span {

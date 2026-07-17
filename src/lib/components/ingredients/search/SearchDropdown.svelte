@@ -33,31 +33,33 @@
 
 {#if results.length > 0}
     <div class="results-panel">
-        <p class="results-summary" aria-live="polite">{results.length} matches</p>
-        <ul
+        <p class="results-summary sr-only" aria-live="polite">{results.length} matches</p>
+        <div
             id="ingredient-search-results"
             class="results-list"
-            role="listbox"
+            role="grid"
             aria-label="Search results"
         >
             {#each results as food, index (food.fdcId)}
                 {@const quality = getFoodQuality(food)}
                 {@const primaryWarning = getPrimaryFoodWarning(food, foodPreferenceContext.current)}
                 {@const isAdding = addingFoodId === food.fdcId}
-                <li class="result-item" role="presentation">
-                    <article
-                        class="result-card"
-                        class:result-card--active={activeResultIndex === index}
-                        class:result-card--custom={food.customFood}
-                        class:result-card--warning={primaryWarning}
-                        onmouseenter={() => onActivate(index)}
-                    >
+                <div
+                    id={`ingredient-search-result-${food.fdcId}`}
+                    class="result-item result-card"
+                    class:result-card--active={activeResultIndex === index}
+                    class:result-card--custom={food.customFood}
+                    class:result-card--warning={primaryWarning}
+                    role="row"
+                    tabindex="-1"
+                    aria-label={`${food.description}, ${getFoodDisplayCategory(food)}`}
+                    aria-selected={activeResultIndex === index}
+                    onmouseenter={() => onActivate(index)}
+                >
+                    <span class="result-main-cell" role="gridcell">
                         <button
-                            id={`ingredient-search-result-${food.fdcId}`}
                             class="result-main"
                             type="button"
-                            role="option"
-                            aria-selected={activeResultIndex === index}
                             aria-label={`View nutrition for ${food.description}`}
                             onfocus={() => onActivate(index)}
                             onclick={() => onSelect(food)}
@@ -84,6 +86,8 @@
                                 </span>
                             </span>
                         </button>
+                    </span>
+                    <span class="result-add-cell" role="gridcell">
                         <CircleIconButton
                             class="result-add"
                             label={`Add ${food.description} to fridge`}
@@ -100,20 +104,13 @@
                                 <Plus size={17} strokeWidth={2.9} />
                             {/if}
                         </CircleIconButton>
-                        <CircleIconButton
-                            class="result-open"
-                            label={`View nutrition for ${food.description}`}
-                            variant="ghost"
-                            size="small"
-                            onfocus={() => onActivate(index)}
-                            onclick={() => onSelect(food)}
-                        >
-                            <ChevronRight class="result-chevron" size={18} />
-                        </CircleIconButton>
-                    </article>
-                </li>
+                    </span>
+                    <span class="result-open" role="gridcell" aria-hidden="true">
+                        <ChevronRight class="result-chevron" size={18} />
+                    </span>
+                </div>
             {/each}
-        </ul>
+        </div>
     </div>
 {/if}
 
@@ -123,17 +120,6 @@
     .results-panel {
         min-width: 0;
         margin-top: $app-gap-sm;
-    }
-
-    .results-summary {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
     }
 
     .results-list {
@@ -181,10 +167,30 @@
         text-align: left;
         background: transparent;
         border: 0;
+        width: 100%;
 
         &:focus-visible {
-            outline: none;
+            outline: $app-focus-outline;
+            outline-offset: $app-focus-outline-offset;
+            border-radius: $ingredient-radius-control;
         }
+    }
+
+    .result-main-cell {
+        min-width: 0;
+    }
+
+    .result-add-cell,
+    .result-open {
+        display: inline-grid;
+        place-items: center;
+    }
+
+    .result-open {
+        width: $ingredient-action-icon-size;
+        height: $ingredient-action-icon-size;
+        color: $ingredient-text-muted;
+        line-height: 1;
     }
 
     .result-icon {

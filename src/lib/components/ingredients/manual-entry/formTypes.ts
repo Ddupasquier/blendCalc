@@ -47,6 +47,12 @@ export type ManualEntryStep = {
 	label: string;
 };
 
+export type ManualEntryStepTabsProps = {
+	steps: ManualEntryStep[];
+	activeStep: ManualEntryStepId;
+	onSelect: (step: ManualEntryStepId) => void;
+};
+
 export type ManualEntryVolumeOption = {
 	value: ServingMeasureUnit;
 	label: string;

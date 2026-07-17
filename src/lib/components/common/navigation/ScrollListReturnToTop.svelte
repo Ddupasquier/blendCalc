@@ -1,6 +1,7 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
 	import type { ScrollListReturnToTopProps } from "$lib/components/common/navigation/types";
+	import { getMotionSafeScrollBehavior } from "$lib/utils/accessibility/motion";
 
 	let {
 		scrollContainer,
@@ -18,7 +19,10 @@
 	};
 
 	const returnToTop = () => {
-		scrollContainer?.scrollTo({ top: 0, behavior: "smooth" });
+		scrollContainer?.scrollTo({
+			top: 0,
+			behavior: getMotionSafeScrollBehavior(),
+		});
 	};
 
 	$effect(() => {

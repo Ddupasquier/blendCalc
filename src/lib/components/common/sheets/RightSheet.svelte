@@ -1,18 +1,13 @@
 <script lang="ts">
 	import SheetBase from "$lib/components/common/sheets/SheetBase.svelte";
-	import type { Snippet } from "svelte";
+	import type { RightSheetProps } from "$lib/components/common/sheets/types";
 
 	let {
 		open = false,
 		labelledby,
 		onClose = () => {},
 		children,
-	}: {
-		open?: boolean;
-		labelledby: string;
-		onClose?: () => void;
-		children: Snippet;
-	} = $props();
+	}: RightSheetProps = $props();
 </script>
 
 <SheetBase

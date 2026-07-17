@@ -47,7 +47,7 @@
 		<TwoStepConfirmation
 			actionLabel={removeLabel}
 			confirmationLabel={`Tap again: ${removeLabel}`}
-			message="Tap delete again to confirm."
+			message="Tap or click delete again to confirm."
 			messageId="ingredient-action-delete-confirmation"
 			disabled={removing}
 			onConfirm={onRemove}
