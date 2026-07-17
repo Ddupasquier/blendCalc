@@ -19,6 +19,7 @@ vi.mock("$lib/utils/food/custom/customFoods", async (importOriginal) => {
 
 const smoothieListMocks = vi.hoisted(() => ({
 	addFoodToSmoothieList: vi.fn().mockResolvedValue("added"),
+	moveFoodToSmoothieList: vi.fn().mockResolvedValue("moved"),
 	removeFoodFromSmoothieList: vi.fn().mockResolvedValue("removed"),
 }));
 
@@ -28,6 +29,7 @@ vi.mock("$lib/utils/storage/client/smoothieLists", async (importOriginal) => {
 	return {
 		...actual,
 		addFoodToSmoothieList: smoothieListMocks.addFoodToSmoothieList,
+		moveFoodToSmoothieList: smoothieListMocks.moveFoodToSmoothieList,
 		removeFoodFromSmoothieList: smoothieListMocks.removeFoodFromSmoothieList,
 	};
 });
@@ -414,6 +416,7 @@ describe("CustomIngredientForm", () => {
 		customFoodMocks.findCustomFoodByBarcode.mockReturnValue(null);
 		customFoodMocks.findCustomFoodByName.mockReturnValue(null);
 		smoothieListMocks.addFoodToSmoothieList.mockResolvedValue("added");
+		smoothieListMocks.moveFoodToSmoothieList.mockResolvedValue("moved");
 		smoothieListMocks.removeFoodFromSmoothieList.mockResolvedValue("removed");
 		submitSharedProduct.mockResolvedValue({
 			status: "pending",
@@ -593,6 +596,48 @@ describe("CustomIngredientForm", () => {
 			MIX_STORAGE_KEYS.shoppingList,
 			expect.objectContaining({ description: "Shelf stable snack" }),
 		);
+	});
+
+	it("asks before moving an existing fridge item to shopping", async () => {
+		const onCreate = vi.fn();
+		smoothieListMocks.addFoodToSmoothieList.mockResolvedValue(
+			"move-required:fridge",
+		);
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await fillRequiredCustomIngredient("Existing list snack", {
+			destination: MIX_STORAGE_KEYS.shoppingList,
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+
+		expect(await screen.findByText(/already in Fridge/i)).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Move" })).toBeInTheDocument();
+		expect(onCreate).not.toHaveBeenCalled();
+	});
+
+	it("moves a confirmed manual-entry item without leaving the old list copy", async () => {
+		const onCreate = vi.fn();
+		smoothieListMocks.addFoodToSmoothieList.mockResolvedValue(
+			"move-required:fridge",
+		);
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await fillRequiredCustomIngredient("Confirmed list move", {
+			destination: MIX_STORAGE_KEYS.shoppingList,
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+		await fireEvent.click(await screen.findByRole("button", { name: "Move" }));
+
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+		expect(smoothieListMocks.moveFoodToSmoothieList).toHaveBeenCalledWith(
+			MIX_STORAGE_KEYS.shoppingList,
+			expect.objectContaining({ description: "Confirmed list move" }),
+		);
+		expect(smoothieListMocks.removeFoodFromSmoothieList).not.toHaveBeenCalled();
 	});
 
 	it("normalizes a manually entered barcode before saving", async () => {

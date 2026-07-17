@@ -26,6 +26,9 @@ export type ManualEntrySubmitFlowResult =
 	| {
 			status: "error";
 			error: string;
+	  }
+	| {
+			status: "cancelled";
 	  };
 
 export const saveManualEntryCustomFood = async ({
@@ -52,7 +55,8 @@ export const saveManualEntryCustomFood = async ({
 	if (result === "duplicate-name") {
 		const existingFood = findCustomFoodByName(name);
 		if (existingFood) {
-			await useIngredient(existingFood, true);
+			const usedIngredient = await useIngredient(existingFood, true);
+			if (!usedIngredient) return { status: "cancelled" };
 			return { status: "complete", catalogMessage: "", resetForm: true };
 		}
 
@@ -68,7 +72,8 @@ export const saveManualEntryCustomFood = async ({
 			? findCustomFoodByBarcode(normalizedBarcode)
 			: null;
 		if (existingFood) {
-			await useIngredient(existingFood, true);
+			const usedIngredient = await useIngredient(existingFood, true);
+			if (!usedIngredient) return { status: "cancelled" };
 			return { status: "complete", catalogMessage: "", resetForm: true };
 		}
 
@@ -87,6 +92,7 @@ export const saveManualEntryCustomFood = async ({
 	}
 
 	const addedToDestination = await useIngredient(food);
+	if (!addedToDestination) return { status: "cancelled" };
 	let catalogMessage = "";
 
 	if (

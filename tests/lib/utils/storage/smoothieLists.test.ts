@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const cloudData = vi.hoisted(() => ({
+	placeCloudSmoothieListItem: vi.fn(),
 	removeCloudSmoothieListItem: vi.fn(),
 	upsertCloudSmoothieListItem: vi.fn(),
 	writeCloudSmoothieList: vi.fn(),
@@ -10,6 +11,7 @@ vi.mock("$lib/utils/storage/supabase", () => cloudData);
 
 import {
 	addFoodToSmoothieList,
+	moveFoodToSmoothieList,
 	preserveSelectedListItems,
 	readSmoothieList,
 	removeFoodFromSmoothieList,
@@ -42,6 +44,7 @@ describe("smoothie lists", () => {
 	beforeEach(() => {
 		localStorage.clear();
 		vi.clearAllMocks();
+		cloudData.placeCloudSmoothieListItem.mockResolvedValue("added");
 		cloudData.upsertCloudSmoothieListItem.mockResolvedValue(true);
 		cloudData.removeCloudSmoothieListItem.mockResolvedValue(true);
 	});
@@ -69,11 +72,42 @@ describe("smoothie lists", () => {
 		expect(await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food)).toBe("added");
 
 		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)).toHaveLength(1);
-		expect(cloudData.upsertCloudSmoothieListItem).toHaveBeenCalledWith(
+		expect(cloudData.placeCloudSmoothieListItem).toHaveBeenCalledWith(
 			MIX_STORAGE_KEYS.fridge,
 			expect.objectContaining({ fdcId: food.fdcId }),
 		);
 		expect(cloudData.writeCloudSmoothieList).not.toHaveBeenCalled();
+	});
+
+	it("requires confirmation instead of duplicating an item across both lists", async () => {
+		await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food);
+		cloudData.placeCloudSmoothieListItem.mockResolvedValueOnce(
+			"move-required:fridge",
+		);
+
+		expect(
+			await addFoodToSmoothieList(MIX_STORAGE_KEYS.shoppingList, food),
+		).toBe("move-required:fridge");
+		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)).toHaveLength(1);
+		expect(readSmoothieList(MIX_STORAGE_KEYS.shoppingList)).toHaveLength(0);
+	});
+
+	it("moves one identity between lists without leaving a duplicate", async () => {
+		await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food);
+		cloudData.placeCloudSmoothieListItem.mockResolvedValueOnce("moved");
+
+		expect(
+			await moveFoodToSmoothieList(MIX_STORAGE_KEYS.shoppingList, food),
+		).toBe("moved");
+		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)).toHaveLength(0);
+		expect(readSmoothieList(MIX_STORAGE_KEYS.shoppingList)).toEqual([
+			expect.objectContaining({ fdcId: food.fdcId }),
+		]);
+		expect(cloudData.placeCloudSmoothieListItem).toHaveBeenLastCalledWith(
+			MIX_STORAGE_KEYS.shoppingList,
+			expect.objectContaining({ fdcId: food.fdcId }),
+			true,
+		);
 	});
 
 	it("treats matching barcodes as duplicate list items across different IDs", async () => {
@@ -99,7 +133,7 @@ describe("smoothie lists", () => {
 		).toBe("duplicate");
 
 		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)).toHaveLength(1);
-		expect(cloudData.upsertCloudSmoothieListItem).toHaveBeenCalledTimes(1);
+		expect(cloudData.placeCloudSmoothieListItem).toHaveBeenCalledTimes(1);
 	});
 
 	it("removes one list item without rewriting the whole cloud list", async () => {
@@ -188,7 +222,7 @@ describe("smoothie lists", () => {
 	});
 
 	it("does not update the cache when adding to the database fails", async () => {
-		cloudData.upsertCloudSmoothieListItem.mockResolvedValue(false);
+		cloudData.placeCloudSmoothieListItem.mockResolvedValue("error");
 
 		expect(await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food)).toBe("error");
 		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)).toEqual([]);

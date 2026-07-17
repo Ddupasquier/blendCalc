@@ -82,7 +82,7 @@
 			disabled={moving}
 			onclick={onMove}
 		>
-			{#if moveDirection === "left"}
+			{#if moveDirection === "right"}
 				<ArrowLeft size={17} strokeWidth={2.5} />
 			{:else}
 				<ChevronRight size={17} strokeWidth={2.5} />

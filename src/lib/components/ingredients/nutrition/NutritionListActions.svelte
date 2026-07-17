@@ -11,8 +11,8 @@
 	} from "$lib/utils/ingredients/ingredientListUi";
 	import {
 		addFoodToSmoothieList,
+		moveFoodToSmoothieList,
 		readSmoothieList,
-		removeFoodFromSmoothieList,
 	} from "$lib/utils/storage/client/smoothieLists";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 
@@ -54,25 +54,15 @@
 	});
 
 	const moveFood = async (
-		from: typeof MIX_STORAGE_KEYS.fridge | typeof MIX_STORAGE_KEYS.shoppingList,
 		to: typeof MIX_STORAGE_KEYS.fridge | typeof MIX_STORAGE_KEYS.shoppingList,
 		successMessage: string,
 	) => {
 		if (!food || pendingAction) return;
 		pendingAction = "move";
 		try {
-			const addResult = await addFoodToSmoothieList(to, food);
-			if (addResult === "error") {
+			const moveResult = await moveFoodToSmoothieList(to, food);
+			if (moveResult === "error") {
 				showFeedback("The item could not be moved. Try again.", true);
-				return;
-			}
-
-			const removeResult = await removeFoodFromSmoothieList(from, food.fdcId);
-			if (removeResult === "error") {
-				showFeedback(
-					"Added to the new list, but the old copy could not be removed.",
-					true,
-				);
 				return;
 			}
 			showFeedback(successMessage);
@@ -91,7 +81,6 @@
 					"This item is already in your shopping list. Move it to your fridge?",
 				onConfirm: () =>
 					void moveFood(
-						MIX_STORAGE_KEYS.shoppingList,
 						MIX_STORAGE_KEYS.fridge,
 						"Moved to fridge.",
 					),
@@ -105,6 +94,21 @@
 		pendingAction = "fridge";
 		try {
 			const result = await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food);
+			if (result === "move-required:shopping") {
+				movePrompt = {
+					message:
+						"This item is already in your shopping list. Move it to your fridge?",
+					onConfirm: () =>
+						void moveFood(
+							MIX_STORAGE_KEYS.fridge,
+							"Moved to fridge.",
+						),
+					onCancel: () => {
+						movePrompt = null;
+					},
+				};
+				return;
+			}
 			showFeedback(
 				result === "added"
 					? "Added to fridge."
@@ -127,7 +131,6 @@
 					"This item is already in your fridge. Move it to your shopping list?",
 				onConfirm: () =>
 					void moveFood(
-						MIX_STORAGE_KEYS.fridge,
 						MIX_STORAGE_KEYS.shoppingList,
 						"Moved to shopping list.",
 					),
@@ -144,6 +147,21 @@
 				MIX_STORAGE_KEYS.shoppingList,
 				food,
 			);
+			if (result === "move-required:fridge") {
+				movePrompt = {
+					message:
+						"This item is already in your fridge. Move it to your shopping list?",
+					onConfirm: () =>
+						void moveFood(
+							MIX_STORAGE_KEYS.shoppingList,
+							"Moved to shopping list.",
+						),
+					onCancel: () => {
+						movePrompt = null;
+					},
+				};
+				return;
+			}
 			showFeedback(
 				result === "added"
 					? "Added to shopping list."

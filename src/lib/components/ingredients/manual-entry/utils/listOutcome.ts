@@ -3,6 +3,7 @@ import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manua
 import type { FdcFood } from "$lib/utils/food/types";
 import {
 	addFoodToSmoothieList,
+	moveFoodToSmoothieList,
 	removeFoodFromSmoothieList,
 	type SmoothieListKey,
 } from "$lib/utils/storage/client/smoothieLists";
@@ -30,6 +31,14 @@ export type ManualEntryDestinationResult =
 	| {
 			ok: false;
 			error: string;
+			moveRequired?: false;
+		}
+	| {
+			ok: false;
+			moveRequired: true;
+			food: FdcFood;
+			source: SmoothieListKey;
+			destination: SmoothieListKey;
 		};
 
 export type ManualEntryOutcomeAction = "move" | "undo";
@@ -49,15 +58,34 @@ export const addManualEntryFoodToDestination = async ({
 	saveDestination,
 	alreadySaved,
 	onCreate,
+	allowMove = false,
 }: {
 	food: FdcFood;
 	saveDestination: SmoothieListKey;
 	alreadySaved: boolean;
 	onCreate: ManualEntryCreateHandler;
+	allowMove?: boolean;
 }): Promise<ManualEntryDestinationResult> => {
 	const destinationLabel = getDestinationLabel(saveDestination);
 
-	const listResult = await addFoodToSmoothieList(saveDestination, food);
+	const listResult = allowMove
+		? await moveFoodToSmoothieList(saveDestination, food)
+		: await addFoodToSmoothieList(saveDestination, food);
+	if (
+		listResult === "move-required:fridge" ||
+		listResult === "move-required:shopping"
+	) {
+		return {
+			ok: false,
+			moveRequired: true,
+			food,
+			source:
+				listResult === "move-required:fridge"
+					? MIX_STORAGE_KEYS.fridge
+					: MIX_STORAGE_KEYS.shoppingList,
+			destination: saveDestination,
+		};
+	}
 	if (listResult === "error") {
 		return {
 			ok: false,
@@ -79,6 +107,8 @@ export const addManualEntryFoodToDestination = async ({
 		message:
 			listResult === "duplicate"
 				? `${food.description} is already in ${destinationLabel}.`
+				: listResult === "moved"
+					? `${food.description} moved to ${destinationLabel}.`
 				: alreadySaved
 					? `${food.description} is already saved and is now in ${destinationLabel}.`
 					: `${food.description} saved and added to ${destinationLabel}.`,
@@ -89,22 +119,11 @@ export const moveManualEntryOutcome = async (
 	lastOutcome: CustomIngredientOutcomeState,
 	destination: SmoothieListKey,
 ): Promise<ManualEntryDestinationResult> => {
-	const addResult = await addFoodToSmoothieList(destination, lastOutcome.food);
+	const addResult = await moveFoodToSmoothieList(destination, lastOutcome.food);
 	if (addResult === "error") {
 		return {
 			ok: false,
 			error: `Could not move ${lastOutcome.food.description}. Try again.`,
-		};
-	}
-
-	const removeResult = await removeFoodFromSmoothieList(
-		lastOutcome.destination,
-		lastOutcome.food.fdcId,
-	);
-	if (removeResult === "error") {
-		return {
-			ok: false,
-			error: `${lastOutcome.food.description} was added to ${getListDestinationLabel(destination)}, but the old copy could not be removed.`,
 		};
 	}
 

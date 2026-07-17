@@ -1,12 +1,16 @@
 import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
-import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
+	placeCloudSmoothieListItem,
 	removeCloudSmoothieListItem,
 	upsertCloudSmoothieListItem,
 	writeCloudSmoothieList,
 } from "$lib/utils/storage/supabase";
 import type { FdcFood } from "$lib/utils/food/types";
+import {
+	getFoodIdentityKey,
+	uniqueFoodsByIdentity,
+} from "$lib/utils/food/records/foodIdentity";
 import { cacheClearAll } from "$lib/cache";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
 
@@ -19,6 +23,9 @@ export type SmoothieListKey =
 export type SmoothieListMutationResult =
 	| "added"
 	| "duplicate"
+	| "moved"
+	| "move-required:fridge"
+	| "move-required:shopping"
 	| "removed"
 	| "missing"
 	| "renamed"
@@ -38,26 +45,10 @@ const isQuotaExceededError = (error: unknown) => {
 	);
 };
 
-const getFoodIdentityKey = (food: FdcFood) => {
-	const barcode = food.barcode ?? food.gtinUpc;
-	if (barcode) {
-		const digits = cleanBarcode(barcode);
-		if (digits) {
-			return `barcode:${normalizeBarcode(digits) ?? digits.padStart(14, "0")}`;
-		}
-	}
-	return `fdc:${food.fdcId}`;
-};
-
-const uniqueFoodsByListIdentity = (foods: FdcFood[]) => {
-	const seen = new Set<string>();
-	return foods.filter((food) => {
-		const identityKey = getFoodIdentityKey(food);
-		if (seen.has(identityKey)) return false;
-		seen.add(identityKey);
-		return true;
-	});
-};
+const getOppositeListKey = (key: SmoothieListKey): SmoothieListKey =>
+	key === MIX_STORAGE_KEYS.fridge
+		? MIX_STORAGE_KEYS.shoppingList
+		: MIX_STORAGE_KEYS.fridge;
 
 export const readSmoothieList = (key: SmoothieListKey) => {
 	try {
@@ -73,7 +64,7 @@ export const cacheSmoothieListLocally = (key: SmoothieListKey, list: FdcFood[]) 
 	try {
 		localStorage.setItem(
 			getScopedStorageKey(key),
-			JSON.stringify(uniqueFoodsByListIdentity(uniqueFoodsById(list)).map(compactFood)),
+			JSON.stringify(uniqueFoodsByIdentity(uniqueFoodsById(list)).map(compactFood)),
 		);
 	} catch {
 		// ignore cache write failures; localStorage is only a fallback cache here
@@ -90,11 +81,11 @@ export const preserveSelectedListItems = (
 		selectedFoodIdSet.has(food.fdcId),
 	);
 
-	return uniqueFoodsByListIdentity(uniqueFoodsById([...syncedList, ...selectedCachedFoods]));
+	return uniqueFoodsByIdentity(uniqueFoodsById([...syncedList, ...selectedCachedFoods]));
 };
 
 export const writeSmoothieList = (key: SmoothieListKey, list: FdcFood[]) => {
-	const compactList = uniqueFoodsByListIdentity(uniqueFoodsById(list)).map(compactFood);
+	const compactList = uniqueFoodsByIdentity(uniqueFoodsById(list)).map(compactFood);
 
 	try {
 		localStorage.setItem(getScopedStorageKey(key), JSON.stringify(compactList));
@@ -128,13 +119,15 @@ export const addFoodToSmoothieList = async (
 	if (list.some((item) => getFoodIdentityKey(item) === foodIdentityKey)) {
 		return "duplicate";
 	}
-
 	const foodRecord = compactFood({
 		...food,
 		listAddedAt: food.listAddedAt ?? Date.now(),
 	});
-	const saved = await upsertCloudSmoothieListItem(key, foodRecord);
-	if (!saved) return "error";
+	const placementResult = await placeCloudSmoothieListItem(key, foodRecord);
+	if (placementResult !== "added" && placementResult !== "duplicate") {
+		return placementResult;
+	}
+	if (placementResult === "duplicate") return "duplicate";
 
 	const nextList = [...list, foodRecord];
 
@@ -143,11 +136,40 @@ export const addFoodToSmoothieList = async (
 	return "added";
 };
 
+export const moveFoodToSmoothieList = async (
+	key: SmoothieListKey,
+	food: FdcFood,
+): Promise<SmoothieListMutationResult> => {
+	const foodRecord = compactFood({
+		...food,
+		listAddedAt: Date.now(),
+	});
+	const placementResult = await placeCloudSmoothieListItem(key, foodRecord, true);
+	if (placementResult === "error") return "error";
+
+	const foodIdentityKey = getFoodIdentityKey(foodRecord);
+	const targetList = readSmoothieList(key).filter(
+		(item) => getFoodIdentityKey(item) !== foodIdentityKey,
+	);
+	const sourceKey = getOppositeListKey(key);
+	const sourceList = readSmoothieList(sourceKey).filter(
+		(item) => getFoodIdentityKey(item) !== foodIdentityKey,
+	);
+
+	cacheSmoothieListLocally(key, [...targetList, foodRecord]);
+	cacheSmoothieListLocally(sourceKey, sourceList);
+	dispatchListsChanged();
+	return placementResult === "duplicate" ? "duplicate" : "moved";
+};
+
 export const addFoodsToSmoothieList = async (
 	key: SmoothieListKey,
 	foods: FdcFood[],
 ): Promise<SmoothieListMutationResult> => {
 	const list = readSmoothieList(key);
+	const oppositeIdentityKeys = new Set(
+		readSmoothieList(getOppositeListKey(key)).map(getFoodIdentityKey),
+	);
 	const existingIds = new Set(list.map((item) => item.fdcId));
 	const existingIdentityKeys = new Set(list.map(getFoodIdentityKey));
 	const addedAt = Date.now();
@@ -155,7 +177,14 @@ export const addFoodsToSmoothieList = async (
 		.filter(
 			(food) =>
 				!existingIds.has(food.fdcId) &&
-				!existingIdentityKeys.has(getFoodIdentityKey(food)),
+				!existingIdentityKeys.has(getFoodIdentityKey(food)) &&
+				!oppositeIdentityKeys.has(getFoodIdentityKey(food)),
+		)
+		.filter(
+			(food, index, items) =>
+				items.findIndex(
+					(candidate) => getFoodIdentityKey(candidate) === getFoodIdentityKey(food),
+				) === index,
 		)
 		.map((food) =>
 			compactFood({

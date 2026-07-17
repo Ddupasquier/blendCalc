@@ -1,6 +1,7 @@
 import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
+import { uniqueFoodsByIdentity } from "$lib/utils/food/records/foodIdentity";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
@@ -14,6 +15,14 @@ import {
 } from "./shared";
 
 type CloudListType = "fridge" | "shopping";
+
+export type CloudListPlacementResult =
+	| "added"
+	| "duplicate"
+	| "moved"
+	| "move-required:fridge"
+	| "move-required:shopping"
+	| "error";
 
 const getCloudListType = (key: SmoothieListKey): CloudListType => {
 	return key === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping";
@@ -192,7 +201,7 @@ export const writeCloudSmoothieList = async (
 	if (foods.length === 0) return true;
 
 	const { error } = await supabase.from("user_food_list_items").upsert(
-		uniqueFoodsById(foods).map((food) => ({
+			uniqueFoodsByIdentity(uniqueFoodsById(foods)).map((food) => ({
 			user_id: userId,
 			list_type: listType,
 			fdc_id: food.fdcId,
@@ -224,6 +233,37 @@ export const upsertCloudSmoothieListItem = async (
 	);
 
 	return !error;
+};
+
+export const placeCloudSmoothieListItem = async (
+	key: SmoothieListKey,
+	food: FdcFood,
+	allowMove = false,
+): Promise<CloudListPlacementResult> => {
+	const userId = await getCurrentUserId();
+	if (!userId) return "error";
+	const supabase = getSupabaseBrowserClient();
+	if (!supabase) return "error";
+
+	const { data, error } = await supabase.rpc("place_user_food_list_item", {
+		p_allow_move: allowMove,
+		p_fdc_id: food.fdcId,
+		p_food: toJson(compactFood(food)),
+		p_list_type: getCloudListType(key),
+	});
+
+	if (error) return "error";
+	if (
+		data === "added" ||
+		data === "duplicate" ||
+		data === "moved" ||
+		data === "move-required:fridge" ||
+		data === "move-required:shopping"
+	) {
+		return data;
+	}
+
+	return "error";
 };
 
 export const removeCloudSmoothieListItem = async (

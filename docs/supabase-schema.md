@@ -72,12 +72,18 @@ Notes:
 
 Stores the user's active ingredient lists.
 
-Columns: `id`, `user_id`, `list_type`, `fdc_id`, `food`, `created_at`,
-`updated_at`.
+Columns: `id`, `user_id`, `list_type`, `fdc_id`, `food`,
+`food_identity_key`, `created_at`, `updated_at`.
 
 Notes:
 - `list_type` is `fridge` or `shopping`.
 - `food` is the normalized ingredient payload used by app UI.
+- `food_identity_key` is generated from the normalized barcode when available,
+  otherwise from the FDC id.
+- `(user_id, food_identity_key)` is unique, so one ingredient cannot exist in
+  both Fridge and Shopping List for the same user.
+- `place_user_food_list_item` performs an atomic add or confirmed move and
+  reports when a move needs user confirmation.
 - Indexed for user/list sorting, pagination, source filtering, and text search.
 
 ### `custom_foods`
@@ -483,6 +489,8 @@ Notes:
 | `set_default_profile_display_name` | Trigger helper that fills missing profile display names |
 | `create_profile_for_new_auth_user` | Auth trigger helper that creates a profile row for new users |
 | `replace_food_nutrients` | Replaces normalized nutrient rows for exactly one food parent |
+| `food_list_item_identity_key` | Produces the canonical barcode-or-FDC identity used to prevent cross-list duplicates |
+| `place_user_food_list_item` | Atomically adds an ingredient, reports a required cross-list move, or completes a confirmed move |
 | `publish_shared_product_submission` | Publishes an approved submission into the shared catalog and revisions/evidence tables |
 | `compatibility_normalize_text` | Normalizes compatibility labels/values for matching |
 | `extract_product_compatibility_facts` | Extracts product compatibility facts from food/product JSON |

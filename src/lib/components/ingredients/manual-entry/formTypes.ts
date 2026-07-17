@@ -59,6 +59,13 @@ export type CustomIngredientOutcomeState = {
 	message: string;
 };
 
+export type ManualEntryListMovePromptState = {
+	food: FdcFood;
+	source: SmoothieListKey;
+	destination: SmoothieListKey;
+	resolve: (confirmed: boolean) => void;
+};
+
 export type ProductImageEvidenceInputProps = {
 	trustedImageUrl?: string;
 	frontPhoto: File | null;

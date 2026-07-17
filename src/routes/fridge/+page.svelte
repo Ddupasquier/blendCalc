@@ -53,6 +53,7 @@
     } from "$lib/utils/food/custom/customFoods";
     import {
         addFoodToSmoothieList,
+		moveFoodToSmoothieList,
         readSmoothieList,
         removeFoodFromSmoothieList,
         renameFoodInSmoothieList,
@@ -423,6 +424,10 @@
                 listActionError = `${food.description} could not be added to fridge. Try again.`;
                 return;
             }
+			if (result === "move-required:shopping") {
+				listActionError = `${food.description} is already in Shopping List. Open its nutrition view to move it to Fridge.`;
+				return;
+			}
             await loadLists();
         } finally {
             searchAddFoodId = null;
@@ -600,18 +605,9 @@
         listActionError = "";
 
         try {
-            const addResult = await addFoodToSmoothieList(targetKey, food);
-            if (addResult === "error") {
+            const moveResult = await moveFoodToSmoothieList(targetKey, food);
+			if (moveResult === "error") {
                 listActionError = `${food.description} could not be moved. Try again.`;
-                return;
-            }
-
-            const removeResult = await removeFoodFromSmoothieList(
-                sourceKey,
-                food.fdcId,
-            );
-            if (removeResult === "error") {
-                listActionError = `${food.description} was added to ${getIngredientListLabel(targetKey)}, but could not be removed from ${getIngredientListLabel(sourceKey)}.`;
                 return;
             }
 

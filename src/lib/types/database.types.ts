@@ -2117,6 +2117,7 @@ export type Database = {
           created_at: string
           fdc_id: number
           food: Json
+          food_identity_key: string | null
           id: string
           list_type: string
           updated_at: string
@@ -2126,6 +2127,7 @@ export type Database = {
           created_at?: string
           fdc_id: number
           food: Json
+          food_identity_key?: string | null
           id?: string
           list_type: string
           updated_at?: string
@@ -2135,6 +2137,7 @@ export type Database = {
           created_at?: string
           fdc_id?: number
           food?: Json
+          food_identity_key?: string | null
           id?: string
           list_type?: string
           updated_at?: string
@@ -2234,10 +2237,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      food_list_item_identity_key: {
+        Args: { p_fdc_id: number; p_food: Json }
+        Returns: string
+      }
       food_metadata_search_text: { Args: { p_food: Json }; Returns: string }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
       normalize_food_category_value: {
         Args: { p_value: string }
+        Returns: string
+      }
+      place_user_food_list_item: {
+        Args: {
+          p_allow_move?: boolean
+          p_fdc_id: number
+          p_food: Json
+          p_list_type: string
+        }
         Returns: string
       }
       publish_shared_product_submission: {

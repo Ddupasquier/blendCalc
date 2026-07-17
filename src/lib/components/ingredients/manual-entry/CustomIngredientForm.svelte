@@ -10,9 +10,11 @@
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog.svelte";
+	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog.svelte";
 	import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 	import {
-		type CustomIngredientOutcomeState,
+			type CustomIngredientOutcomeState,
+			type ManualEntryListMovePromptState,
 		emptyManualEntryNutrientGroups,
 		manualEntrySteps,
 		volumeAmountRequiredMessage,
@@ -54,6 +56,7 @@
 	import {
 		addManualEntryFoodToDestination,
 		canChangeManualEntryOutcome,
+		getDestinationLabel,
 		runManualEntryOutcomeAction,
 		type ManualEntryDestinationResult,
 		type ManualEntryOutcomeAction,
@@ -181,6 +184,7 @@
 	let image = $state<FoodImageAsset | undefined>(undefined);
 	let saveDestination = $state<SmoothieListKey>(getInitialSaveDestination());
 	let lastOutcome = $state<CustomIngredientOutcomeState | null>(null);
+	let listMovePrompt = $state<ManualEntryListMovePromptState | null>(null);
 	let stepWarningMessage = $state("");
 	let stepWarningStep = $state<ManualEntryStepId | null>(null);
 	let stepWarningTimer = $state<ReturnType<typeof setTimeout> | null>(null);
@@ -453,6 +457,7 @@
 	onDestroy(() => {
 		clearBarcodeLookupDebounce();
 		if (stepWarningTimer) clearTimeout(stepWarningTimer);
+		listMovePrompt?.resolve(false);
 	});
 
 	const setManualNutrientValue = (
@@ -782,7 +787,7 @@
 
 	const applyDestinationResult = (result: ManualEntryDestinationResult) => {
 		if (!result.ok) {
-			error = result.error;
+			if (!result.moveRequired) error = result.error;
 			return false;
 		}
 
@@ -839,13 +844,46 @@
 		}
 	});
 
+	const requestListMoveConfirmation = (
+		result: Extract<ManualEntryDestinationResult, { moveRequired: true }>,
+	) =>
+		new Promise<boolean>((resolve) => {
+			listMovePrompt = {
+				food: result.food,
+				source: result.source,
+				destination: result.destination,
+				resolve,
+			};
+		});
+
+	const resolveListMovePrompt = (confirmed: boolean) => {
+		const currentPrompt = listMovePrompt;
+		if (!currentPrompt) return;
+		listMovePrompt = null;
+		if (!confirmed) {
+			savedMessage = `${currentPrompt.food.description} remains in ${getDestinationLabel(currentPrompt.source)}.`;
+		}
+		currentPrompt.resolve(confirmed);
+	};
+
 	const useIngredient = async (food: FdcFood, alreadySaved = false) => {
-		const result = await addManualEntryFoodToDestination({
+		let result = await addManualEntryFoodToDestination({
 			food,
 			saveDestination,
 			alreadySaved,
 			onCreate,
 		});
+		if (!result.ok && result.moveRequired) {
+			const confirmed = await requestListMoveConfirmation(result);
+			if (!confirmed) return false;
+			result = await addManualEntryFoodToDestination({
+				food,
+				saveDestination,
+				alreadySaved,
+				onCreate,
+				allowMove: true,
+			});
+		}
 		if (!applyDestinationResult(result)) {
 			return false;
 		}
@@ -1025,10 +1063,11 @@
 				useIngredient,
 			});
 
-			if (result.status === "error") {
+				if (result.status === "error") {
 				error = result.error;
-				return;
-			}
+					return;
+				}
+				if (result.status === "cancelled") return;
 
 			catalogMessage = result.catalogMessage;
 			if (result.resetForm) resetForm();
@@ -1163,3 +1202,14 @@
 		onClose={closeBarcodeScanner}
 	/>
 {/if}
+
+<ConfirmationDialog
+	open={Boolean(listMovePrompt)}
+	title="Move ingredient?"
+	description={listMovePrompt
+		? `${listMovePrompt.food.description} is already in ${getDestinationLabel(listMovePrompt.source)}. Move it to ${getDestinationLabel(listMovePrompt.destination)}?`
+		: ""}
+	confirmLabel="Move"
+	onConfirm={() => resolveListMovePrompt(true)}
+	onCancel={() => resolveListMovePrompt(false)}
+/>
