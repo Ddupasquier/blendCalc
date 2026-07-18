@@ -35,6 +35,14 @@ Every published field records the observation that supplied it. Source observati
 selected field provenance, and disagreements are stored separately from the canonical
 product row.
 
+Source/API product names are normalized to readable title-style capitalization
+and use `&` instead of the standalone word `and` before publication so
+inconsistent vendor naming does not become app display names. Canonical food
+JSON stores `nameProvenance` as `source`, `barcode`, or
+`user`: source and barcode-assisted names use the shared formatter, while fully
+manual and personally renamed user-owned capitalization is preserved exactly. Raw API
+cache payloads, observations, revisions, and evidence remain unchanged.
+
 - Exact USDA barcode matches outrank user-entered values. When USDA returns
   duplicate records for one GTIN, select the newest active `Branded` record.
 - Generic USDA food searches prefer `Foundation`, then `SR Legacy`, then
@@ -71,21 +79,28 @@ backfills valid serving data from existing catalog and user food records.
 
 ## API caching
 
-USDA search, barcode search, and detail responses are cached server-side in Supabase with
-expiration timestamps. The browser never receives the USDA API key. Cached USDA data reduces
-rate-limit pressure but is not treated as permanently current. Barcode providers try the normal
-package code before padded equivalents, stop after the first exact usable match, and share an
-identical request that is already running instead of starting a duplicate call.
+USDA search, barcode search, and detail responses are cached server-side in
+Supabase with expiration timestamps. Open Food Facts barcode responses use the
+same server-only cache in a separate provider namespace. Open Food Facts cache
+rows remain raw ODbL provider data: they are not blended into USDA data or
+treated as independently owned canonical records. Cache expiration, attribution,
+and source identity remain explicit so broader reuse can continue to meet the
+provider's license and refresh requirements.
 
-Open Food Facts is queried live and is not copied into `shared_products` or the persistent API
-cache. Concurrent identical Open Food Facts requests are coalesced in server memory, and barcode
-variants stop after the first usable match.
+The browser never receives provider credentials. Cached data reduces rate-limit
+pressure but is not treated as permanently current. A recent expired row may be
+used only as a temporary outage fallback. ETags refresh unchanged records without
+downloading the body again. Cache failures do not block a successful live lookup.
+Barcode providers try the normal package code before padded equivalents, stop
+after the first exact usable match, and share an identical request that is already
+running instead of starting a duplicate call.
 Allowed package image metadata is stored separately in `food_image_assets` with attribution.
 Trusted DB/API product images are used first. User-uploaded product photos stay in
 private evidence storage until a moderator approves them, then a public
 `community-reviewed` image asset is created with the moderator's crop values.
-Its ODbL database terms still require a deliberate share-alike and attribution decision before
-building a broader derived database from its records.
+Its ODbL database terms still require attribution, provider separation, refresh
+planning, and a deliberate share-alike decision before building a broader derived
+database from its records.
 
 Keep source handling explicit. Do not merge Open Food Facts payloads into `shared_products` unless the entire downstream database licensing and attribution model is intentionally changed.
 
@@ -123,6 +138,7 @@ Migrations:
 - `supabase/migrations/20260614200000_catalog_provenance_cache_and_evidence.sql`
 - `supabase/migrations/20260615230000_product_submission_rejection_blocks.sql`
 - `supabase/migrations/20260715120000_shared_product_canonical_categories.sql`
+- `supabase/migrations/20260718000000_server_request_efficiency.sql`
 
 - Authenticated users can read only active `shared_products` and their own submissions.
 - Browser clients cannot insert, update, approve, reject, or delete shared catalog rows.

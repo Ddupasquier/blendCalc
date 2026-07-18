@@ -571,6 +571,7 @@
 				selectedFood = {
 					...selectedFood,
 					description: name.trim().replace(/\s+/g, " "),
+					nameProvenance: "user",
 				};
 			}
 			renamingItem = null;

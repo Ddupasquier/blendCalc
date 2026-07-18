@@ -33,6 +33,7 @@
 		"backfill:shared-product-categories": "node scripts/backfill_shared_product_categories.mjs",
 		"generate:api-structures": "node scripts/generate_api_structures.mjs",
 		"backfill:food-images": "node scripts/backfill_food_images.mjs",
+		"backfill:product-names": "node scripts/backfill_product_names.mjs",
 		"compare:fdc": "node scripts/compare_fdc_products.mjs",
 		"discover:fdc-nutrients": "node scripts/discover_fdc_nutrients.mjs",
 		"test": "vitest run",

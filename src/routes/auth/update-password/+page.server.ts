@@ -8,7 +8,7 @@ import {
 import { clearPasswordUpgrade } from "$lib/utils/auth/passwordUpgrade";
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 	if (!user) throw redirect(303, "/auth?error=recovery_session");
 	return {
 		email: user.email ?? "",
@@ -23,7 +23,7 @@ export const actions: Actions = {
 		const password = String(formData.get("password") ?? "");
 		const confirmation = String(formData.get("passwordConfirmation") ?? "");
 		const next = getSafeAuthNextPath(formData.get("next"));
-		const { user } = await locals.safeGetSession();
+		const user = await locals.getVerifiedUser();
 		if (!user) throw redirect(303, "/auth?error=recovery_session");
 
 		const validationError = getPasswordValidationMessage(

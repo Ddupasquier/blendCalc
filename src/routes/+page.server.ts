@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		throw redirect(303, `${callbackUrl.pathname}${callbackUrl.search}`);
 	}
 
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 
 	if (user) {
 		throw redirect(303, getSafeNextPath(url.searchParams.get("next")));

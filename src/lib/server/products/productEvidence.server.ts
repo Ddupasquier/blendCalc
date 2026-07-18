@@ -46,21 +46,36 @@ export const uploadProductEvidence = async (
 	const uploadId = randomUUID();
 	const paths: ProductEvidencePaths = {};
 
-	try {
-		for (const [role, file] of entries) {
-			const imageType = await validateEvidenceFile(file, role);
+	const validatedEntries = await Promise.all(
+		entries.map(async ([role, file]) => ({
+			role,
+			file,
+			imageType: await validateEvidenceFile(file, role),
+		})),
+	);
+	const uploadResults = await Promise.all(
+		validatedEntries.map(async ({ role, file, imageType }) => {
 			const path = `${userId}/${uploadId}/${role}.${getAvatarExtension(imageType)}`;
-			const { error } = await admin.storage
-				.from(PRODUCT_EVIDENCE_BUCKET)
-				.upload(path, file, { contentType: file.type, upsert: false });
-			if (error) throw error;
-			paths[role] = path;
-		}
-		return paths;
-	} catch (error) {
-		await deleteProductEvidence(paths);
-		throw error;
+			try {
+				const { error } = await admin.storage
+					.from(PRODUCT_EVIDENCE_BUCKET)
+					.upload(path, file, { contentType: file.type, upsert: false });
+				return { role, path, error };
+			} catch (error) {
+				return { role, path, error };
+			}
+		}),
+	);
+
+	for (const result of uploadResults) {
+		if (!result.error) paths[result.role] = result.path;
 	}
+	const failedUpload = uploadResults.find((result) => result.error);
+	if (failedUpload) {
+		await deleteProductEvidence(paths);
+		throw failedUpload.error;
+	}
+	return paths;
 };
 
 export const deleteProductEvidence = async (paths: ProductEvidencePaths) => {
@@ -73,20 +88,41 @@ export const deleteProductEvidence = async (paths: ProductEvidencePaths) => {
 
 export const createProductEvidenceSignedUrls = async (
 	paths: ProductEvidencePaths,
-) => {
-	const entries = Object.entries(paths).filter(
-		(entry): entry is [ProductEvidenceRole, string] => Boolean(entry[1]),
-	);
-	if (entries.length === 0) return {};
+): Promise<Partial<Record<ProductEvidenceRole, string | null>>> => {
+	return (await createProductEvidenceSignedUrlBatches([paths]))[0] ?? {};
+};
+
+export const createProductEvidenceSignedUrlBatches = async (
+	pathGroups: ProductEvidencePaths[],
+): Promise<Array<Partial<Record<ProductEvidenceRole, string | null>>>> => {
+	const uniquePaths = [
+		...new Set(
+			pathGroups.flatMap((paths) =>
+				Object.values(paths).filter((path): path is string => Boolean(path))
+			),
+		),
+	];
+	if (uniquePaths.length === 0) {
+		return pathGroups.map(() =>
+			({}) as Partial<Record<ProductEvidenceRole, string | null>>
+		);
+	}
+
 	const { data, error } = await getSupabaseAdminClient().storage
 		.from(PRODUCT_EVIDENCE_BUCKET)
-		.createSignedUrls(entries.map(([, path]) => path), 10 * 60);
+		.createSignedUrls(uniquePaths, 10 * 60);
 	if (error) throw error;
+	const signedUrlByPath = new Map(
+		(data ?? []).map((item) => [item.path, item.signedUrl ?? null]),
+	);
 
-	return Object.fromEntries(
-		entries.map(([role, path]) => [
-			role,
-			data?.find((item) => item.path === path)?.signedUrl ?? null,
-		]),
-	) as Partial<Record<ProductEvidenceRole, string | null>>;
+	return pathGroups.map((paths) =>
+		Object.fromEntries(
+			Object.entries(paths).flatMap(([role, path]) =>
+				path
+					? [[role, signedUrlByPath.get(path) ?? null]]
+					: [],
+			),
+		) as Partial<Record<ProductEvidenceRole, string | null>>
+	);
 };

@@ -8,17 +8,21 @@ import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 	if (!user) throw error(401, "Sign in to search shared products.");
 
 	const query = url.searchParams.get("q")?.trim() ?? "";
 	if (query.length < 2) return json({ foods: [] });
-	const foods = await searchApprovedSharedProducts(locals.supabase, query);
-	const foodPreferencesResult = await locals.supabase
-		.from("user_food_preferences")
-		.select("*")
-		.eq("user_id", user.id)
-		.maybeSingle();
+	const [foods, foodPreferencesResult] = await Promise.all([
+		searchApprovedSharedProducts(locals.supabase, query),
+		locals.supabase
+			.from("user_food_preferences")
+			.select(
+				"unit_system, allergens, dietary_restrictions, prioritized_nutrient_ids, default_smoothie_serving_grams, sensitive_acknowledged_at",
+			)
+			.eq("user_id", user.id)
+			.maybeSingle(),
+	]);
 	if (
 		foodPreferencesResult.error &&
 		!isMissingFoodPreferencesTableError(foodPreferencesResult.error)

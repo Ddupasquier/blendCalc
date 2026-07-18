@@ -24,7 +24,7 @@ const clamp = (value: unknown, min: number, max: number, fallback: number) => {
 };
 
 export const PATCH: RequestHandler = async ({ locals, request }) => {
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 	if (!user) throw kitError(401, "Sign in before updating image placement.");
 
 	const role = await getUserAppRole(locals.supabase, user.id);

@@ -12,8 +12,8 @@ import {
 	getTutorialPreference,
 	shouldAutomaticallyShowTutorial,
 } from "$lib/utils/tutorial/tutorial";
-import { readServingMeasureCatalog } from "$lib/utils/serving/servingMeasureData";
 import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
+import { getServingMeasureCatalog } from "$lib/server/serving/servingMeasureCatalog.server";
 
 const PUBLIC_PATHS = new Set(["/", "/auth"]);
 
@@ -22,7 +22,7 @@ const isPublicPath = (pathname: string) => {
 };
 
 export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 
 	if (!user && !isPublicPath(url.pathname)) {
 		throw redirect(
@@ -41,24 +41,33 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 
 	if (!user) return { authUser: null };
 
+	const profileWithAvatarPromise = getUserProfile(locals.supabase, user.id)
+		.then(async (profile) => ({
+			profile,
+			avatarUrl: await getSignedAvatarUrl(
+				locals.supabase,
+				profile?.avatar_path,
+			),
+		}));
 	const [
-		profile,
+		{ profile, avatarUrl },
 		role,
 		tutorialPreference,
 		foodPreferencesResult,
 		servingMeasureCatalog,
 	] = await Promise.all([
-		getUserProfile(locals.supabase, user.id),
+		profileWithAvatarPromise,
 		getUserAppRole(locals.supabase, user.id),
 		getTutorialPreference(locals.supabase, user.id),
 		locals.supabase
 			.from("user_food_preferences")
-			.select("*")
+			.select(
+				"unit_system, allergens, dietary_restrictions, prioritized_nutrient_ids, default_smoothie_serving_grams, sensitive_acknowledged_at",
+			)
 			.eq("user_id", user.id)
 			.maybeSingle(),
-		readServingMeasureCatalog(locals.supabase),
+		getServingMeasureCatalog(),
 	]);
-	const avatarUrl = await getSignedAvatarUrl(locals.supabase, profile?.avatar_path);
 	configureServingMeasureCatalog(servingMeasureCatalog);
 	const foodPreferencesError = foodPreferencesResult.error;
 	if (

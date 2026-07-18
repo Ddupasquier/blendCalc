@@ -8,6 +8,7 @@ import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 const createDraft = (overrides: Partial<BarcodeProductDraft> = {}): BarcodeProductDraft => ({
 	barcode: "00021130462506",
 	name: "Strawberry jelly, strawberry",
+	nameProvenance: "source",
 	brandOwner: "Safeway, Inc.",
 	servingLabel: "50 g",
 	servingWeightGrams: 50,

@@ -1,6 +1,8 @@
-import type { Session, SupabaseClient, User } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "$lib/types/database.types";
+import type { VerifiedAuthUser } from "$lib/utils/auth/types";
 import type { AppRole } from "$lib/utils/moderation/moderation";
+import type { RequestContext } from "@sveltejs/adapter-vercel";
 
 type AuthUser = {
 	id: string;
@@ -16,18 +18,16 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			supabase: SupabaseClient<Database>;
-			safeGetSession: () => Promise<{
-				session: Session | null;
-				user: User | null;
-			}>;
-			session: Session | null;
-			user: User | null;
+			getVerifiedUser: () => Promise<VerifiedAuthUser | null>;
+			user: VerifiedAuthUser | null;
 		}
 		interface PageData {
 			authUser: AuthUser | null;
 		}
 		// interface PageState {}
-		// interface Platform {}
+		interface Platform {
+			context?: RequestContext;
+		}
 	}
 }
 

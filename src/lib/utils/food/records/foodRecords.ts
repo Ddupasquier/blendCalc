@@ -1,9 +1,12 @@
 import type { FdcFood } from "$lib/utils/food/types";
+import { normalizeFoodProductName } from "$lib/utils/products/productNameFormatting.js";
 
 export const compactFood = (food: FdcFood): FdcFood => {
+	const normalizedFood = normalizeFoodProductName(food) as FdcFood;
 	return {
-		fdcId: food.fdcId,
-		description: food.description,
+		fdcId: normalizedFood.fdcId,
+		description: normalizedFood.description,
+		nameProvenance: normalizedFood.nameProvenance,
 		brandOwner: food.brandOwner,
 		foodCategory: food.foodCategory,
 		dataType: food.dataType,

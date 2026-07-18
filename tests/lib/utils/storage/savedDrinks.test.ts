@@ -32,7 +32,8 @@ import {
 
 const food = {
 	fdcId: 1,
-	description: "Bananas, raw",
+	description: "Bananas, Raw",
+	nameProvenance: "source",
 	foodNutrients: [],
 } satisfies FdcFood;
 
@@ -61,7 +62,7 @@ describe("saved drinks", () => {
 
 		expect(readSavedDrinks()[0]).toMatchObject({
 			name: "Post-workout",
-			foods: [{ fdcId: 1, description: "Bananas, raw" }],
+			foods: [{ fdcId: 1, description: "Bananas, Raw" }],
 		});
 	});
 
@@ -92,7 +93,7 @@ describe("saved drinks", () => {
 	});
 
 	it("adds saved ingredients missing from the fridge to the shopping list", async () => {
-		const kale = { ...food, fdcId: 2, description: "Kale, raw" };
+		const kale = { ...food, fdcId: 2, description: "Kale, Raw" };
 		cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, [food]);
 		const drink = addSavedDrink({
 			name: "Green smoothie",

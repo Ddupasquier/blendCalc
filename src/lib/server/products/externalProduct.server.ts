@@ -13,13 +13,11 @@ import type { ProductReferenceData } from "$lib/utils/food/reference/productRefe
 import { selectPreferredUsdaBarcodeFood } from "$lib/server/products/usdaFoodSelection";
 import {
 	createProductSourceRequestTrace,
-	recordProductSourceApiError,
-	recordProductSourceApiRequest,
 	recordProductSourceLookup,
 } from "$lib/server/products/sourceMetrics.server";
 import { summarizeBarcodeProductQuality } from "$lib/utils/food/sources/sourceQuality";
 import { findFirstBarcodeCandidateMatch } from "$lib/server/products/barcodeCandidateLookup";
-import { coalesceProductApiRequest } from "$lib/server/products/productApiRequests.server";
+import { fetchCachedProductApiJson } from "$lib/server/products/productApiRequests.server";
 
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v2/product";
 const OPEN_FOOD_FACTS_FIELDS = [
@@ -52,6 +50,9 @@ const OPEN_FOOD_FACTS_FIELDS = [
 	"nutriments",
 ].join(",");
 const PRODUCT_LOOKUP_USER_AGENT = APP_USER_AGENT;
+const OPEN_FOOD_FACTS_CACHE_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
+const OPEN_FOOD_FACTS_NOT_FOUND_CACHE_MILLISECONDS = 12 * 60 * 60 * 1000;
+const OPEN_FOOD_FACTS_STALE_FALLBACK_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
 
 export const lookupUsdaBarcodeProduct = async (
 	barcode: string,
@@ -139,33 +140,26 @@ export const lookupOpenFoodFactsBarcodeProduct = async (
 					`${OPEN_FOOD_FACTS_URL}/${encodeURIComponent(candidate)}.json`,
 				);
 				url.searchParams.set("fields", OPEN_FOOD_FACTS_FIELDS);
-				const data = await coalesceProductApiRequest(
-					`open-food-facts:barcode:${candidate}:${OPEN_FOOD_FACTS_FIELDS}`,
-					async () => {
-						recordProductSourceApiRequest(trace);
-						let response: Response;
-						try {
-							response = await fetch(url, {
-								headers: {
-									accept: "application/json",
-									"user-agent": PRODUCT_LOOKUP_USER_AGENT,
-								},
-							});
-						} catch (error) {
-							recordProductSourceApiError(trace);
-							throw error;
-						}
-						if (!response.ok) {
-							if (response.status === 404) return null;
-							recordProductSourceApiError(trace);
-							throw new Error(
-								`Open Food Facts lookup failed with ${response.status}.`,
-							);
-						}
-						return await response.json() as OpenFoodFactsResponse;
+				const data = await fetchCachedProductApiJson<
+					OpenFoodFactsResponse | null
+				>({
+					provider: "open-food-facts",
+					requestKind: "barcode-product",
+					cacheValue: { candidate, fields: OPEN_FOOD_FACTS_FIELDS },
+					url,
+					headers: {
+						accept: "application/json",
+						"user-agent": PRODUCT_LOOKUP_USER_AGENT,
 					},
+					ttlMilliseconds: OPEN_FOOD_FACTS_CACHE_MILLISECONDS,
+					notFoundTtlMilliseconds:
+						OPEN_FOOD_FACTS_NOT_FOUND_CACHE_MILLISECONDS,
+					staleIfErrorMilliseconds:
+						OPEN_FOOD_FACTS_STALE_FALLBACK_MILLISECONDS,
+					notFoundStatusCodes: [404],
+					notFoundValue: null,
 					trace,
-				);
+				});
 				if (!data || data.status !== 1 || !data.product) return null;
 				if (
 					normalizeBarcode(data.product.code ?? candidate) !== canonicalBarcode

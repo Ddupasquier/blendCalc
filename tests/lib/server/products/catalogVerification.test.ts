@@ -31,6 +31,7 @@ const createUserFood = (): FdcFood => ({
 const createUsdaDraft = (): BarcodeProductDraft => ({
 	barcode: "00012345678905",
 	name: "USDA cereal",
+	nameProvenance: "source",
 	brandOwner: "USDA Brand",
 	servingLabel: "30 g",
 	servingWeightGrams: 30,
@@ -72,7 +73,7 @@ describe("catalog verification", () => {
 			cerealCategory,
 		);
 
-		expect(bundle.canonicalFood.description).toBe("USDA cereal");
+		expect(bundle.canonicalFood.description).toBe("USDA Cereal");
 		expect(bundle.canonicalFood.foodCategory).toBe("Breakfast Cereals");
 		expect(bundle.canonicalFood.categories).toContain("Breakfast Cereals");
 		expect(bundle.observations.map((item) => item.source)).toEqual([

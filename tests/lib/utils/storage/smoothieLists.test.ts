@@ -54,7 +54,8 @@ describe("smoothie lists", () => {
 
 		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)[0]).toMatchObject({
 			fdcId: 1,
-			description: "Olive oil",
+			description: "Olive Oil",
+			nameProvenance: "source",
 			dataType: "Foundation",
 			servingSize: 1,
 			servingSizeUnit: "tbsp",
@@ -66,6 +67,33 @@ describe("smoothie lists", () => {
 				},
 			],
 		});
+	});
+
+	it("title-cases legacy API names when a saved list is read", () => {
+		localStorage.setItem(
+			MIX_STORAGE_KEYS.fridge,
+			JSON.stringify([{ ...food, description: "mustard greens, raw" }]),
+		);
+
+		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)[0]).toMatchObject({
+			description: "Mustard Greens, Raw",
+			nameProvenance: "source",
+		});
+	});
+
+	it("preserves user-owned capitalization when a saved list is read", () => {
+		localStorage.setItem(
+			MIX_STORAGE_KEYS.fridge,
+			JSON.stringify([{
+				...food,
+				description: "MY PERSONAL GREENS",
+				nameProvenance: "user",
+			}]),
+		);
+
+		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)[0].description).toBe(
+			"MY PERSONAL GREENS",
+		);
 	});
 
 	it("adds one list item without rewriting the whole cloud list", async () => {
@@ -185,7 +213,7 @@ describe("smoothie lists", () => {
 			await renameFoodInSmoothieList(MIX_STORAGE_KEYS.fridge, food.fdcId, "   "),
 		).toBe("invalid");
 		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)[0].description).toBe(
-			"Olive oil",
+			"Olive Oil",
 		);
 	});
 
@@ -201,7 +229,7 @@ describe("smoothie lists", () => {
 			),
 		).toBe("duplicate");
 		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)[1].description).toBe(
-			"Kale, raw",
+			"Kale, Raw",
 		);
 	});
 
@@ -217,7 +245,7 @@ describe("smoothie lists", () => {
 			),
 		).toBe("error");
 		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)[0].description).toBe(
-			"Olive oil",
+			"Olive Oil",
 		);
 	});
 

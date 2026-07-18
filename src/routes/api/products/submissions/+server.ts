@@ -14,7 +14,7 @@ import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = async ({ locals, request }) => {
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 	if (!user) throw error(401, "Sign in to share products.");
 
 	try {

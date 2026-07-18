@@ -70,7 +70,7 @@ const addNextToCallbackUrl = (callbackUrl: string, next: string) => {
 export const load: PageServerLoad = async ({ locals, request, url }) => {
 	const next = getSafeAuthNextPath(url.searchParams.get("next"));
 	redirectToCanonicalAuthPage(request, url, next);
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 
 	if (user) {
 		throw redirect(303, next);

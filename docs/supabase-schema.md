@@ -78,6 +78,10 @@ Columns: `id`, `user_id`, `list_type`, `fdc_id`, `food`,
 Notes:
 - `list_type` is `fridge` or `shopping`.
 - `food` is the normalized ingredient payload used by app UI.
+- `food.nameProvenance` records whether the display name is source-managed,
+  barcode-assisted, or explicitly user-owned. Source and barcode names use the
+  shared title-style formatter and replace standalone `and` with `&`; personal
+  renames keep the user's exact wording and casing.
 - `food_identity_key` is generated from the normalized barcode when available,
   otherwise from the FDC id.
 - `(user_id, food_identity_key)` is unique, so one ingredient cannot exist in
@@ -108,6 +112,9 @@ Notes:
 - Unique safeguards prevent duplicate custom names and duplicate user barcodes.
 - `search_text` is trigger-maintained and trigram-indexed for partial server search.
 - Normalized nutrients for a custom food live in `food_nutrients`.
+- The `food` JSON stores `nameProvenance`. Valid-barcode and autofilled names are
+  normalized before saving, including standalone `and` → `&`; barcode-free
+  private names and later personal renames preserve the user's exact wording.
 
 ### `saved_drinks`
 
@@ -401,7 +408,13 @@ Notes:
 `shared_product_observations`, `shared_product_field_provenance`, and
 `shared_product_conflicts` hold the evidence trail behind shared catalog data.
 `product_api_cache` reduces external API load and should be written/read by
-server code only.
+server code only. Its `(provider, cache_key)` primary key keeps each source in a
+separate namespace. `request_kind`, `status_code`, `response`, `fetched_at`,
+`expires_at`, and optional `etag` support positive/negative caching, conditional
+refreshes, and short stale-on-outage fallback without turning cached provider data
+into canonical blendCalc data. Provider and request-kind names use normalized
+kebab-case so a new integration can use the shared request boundary without a new
+provider-specific schema constraint.
 
 ### `food_image_assets`
 

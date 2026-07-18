@@ -36,7 +36,8 @@ describe("barcode product mapping", () => {
 
 		expect(draft).toMatchObject({
 			barcode: "04006381333931",
-			name: "Test cereal",
+			name: "Test Cereal",
+			nameProvenance: "source",
 			brandOwner: "Example Brand",
 			servingWeightGrams: 30,
 		});

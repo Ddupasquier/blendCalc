@@ -26,7 +26,9 @@ export const getTutorialPreference = async (
 ) => {
 	const { data, error } = await supabase
 		.from("user_tutorial_preferences")
-		.select("*")
+		.select(
+			"user_id, tutorial_version, do_not_show_again, remind_after, last_seen_at, completed_at, created_at, updated_at",
+		)
 		.eq("user_id", userId)
 		.maybeSingle();
 

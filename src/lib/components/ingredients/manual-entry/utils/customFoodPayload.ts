@@ -7,6 +7,7 @@ import { buildSaveNutrients } from "$lib/components/ingredients/manual-entry/uti
 
 export type ManualEntryCustomFoodPayload = {
 	name: string;
+	nameProvenance: NonNullable<FdcFood["nameProvenance"]>;
 	brandOwner: string;
 	servingLabel: string;
 	servingWeightGrams: number | null;
@@ -73,6 +74,7 @@ export const createManualEntryCustomFood = (
 
 	return createCustomFood({
 		name: payload.name,
+		nameProvenance: payload.nameProvenance,
 		brandOwner: payload.brandOwner,
 		servingLabel: payload.servingLabel,
 		servingWeightGrams: payload.servingWeightGrams ?? 0,

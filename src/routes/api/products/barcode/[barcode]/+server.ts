@@ -5,7 +5,7 @@ import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ locals, params }) => {
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 	if (!user) throw error(401, "Sign in to scan products.");
 
 	const barcode = normalizeBarcode(params.barcode);

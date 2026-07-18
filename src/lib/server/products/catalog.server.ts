@@ -48,7 +48,7 @@ import {
 	lookupUsdaBarcodeProduct,
 } from "./externalProduct.server";
 import {
-	createProductEvidenceSignedUrls,
+	createProductEvidenceSignedUrlBatches,
 	hasCompleteProductEvidence,
 	type ProductEvidencePaths,
 } from "./productEvidence.server";
@@ -228,8 +228,8 @@ export const getSharedProductByBarcode = async (
 		.maybeSingle();
 	if (error) throw error;
 	if (!data) return null;
-	const category = await readFoodCategoryOption(supabase, data.category_option_id);
-	const [normalizedRows, servingRows] = await Promise.all([
+	const [category, normalizedRows, servingRows] = await Promise.all([
+		readFoodCategoryOption(supabase, data.category_option_id),
 		readNormalizedNutrientsByParent(supabase, "shared_product_id", [data.id]),
 		readFoodServingsByParent(supabase, "shared_product_id", [data.id]),
 	]);
@@ -261,7 +261,7 @@ export const searchApprovedSharedProducts = async (
 	const { data, error } = await request;
 	if (error) throw error;
 	const rows = data ?? [];
-	const [normalizedRows, servingRows] = await Promise.all([
+	const [normalizedRows, servingRows, categories] = await Promise.all([
 		readNormalizedNutrientsByParent(
 			supabase,
 			"shared_product_id",
@@ -272,11 +272,11 @@ export const searchApprovedSharedProducts = async (
 			"shared_product_id",
 			rows.map((row) => row.id),
 		),
+		readFoodCategoryOptions(
+			supabase,
+			rows.map((row) => row.category_option_id),
+		),
 	]);
-	const categories = await readFoodCategoryOptions(
-		supabase,
-		rows.map((row) => row.category_option_id),
-	);
 	return rows.map((row) =>
 		enrichCatalogFood(
 			row,
@@ -705,12 +705,16 @@ export const listPendingProductSubmissions = async () => {
 		.order("created_at", { ascending: true })
 		.limit(100);
 	if (error) throw error;
-	return Promise.all(((data ?? []) as PendingProductSubmission[]).map(async (submission) => ({
-		...submission,
-		evidenceUrls: await createProductEvidenceSignedUrls(
-			submission.evidence_paths as ProductEvidencePaths,
+	const submissions = (data ?? []) as PendingProductSubmission[];
+	const signedUrlGroups = await createProductEvidenceSignedUrlBatches(
+		submissions.map(
+			(submission) => submission.evidence_paths as ProductEvidencePaths,
 		),
-	})));
+	);
+	return submissions.map((submission, index) => ({
+		...submission,
+		evidenceUrls: signedUrlGroups[index] ?? {},
+	}));
 };
 
 export const approveCommunityProductSubmission = async (

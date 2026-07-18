@@ -21,10 +21,12 @@ import {
 	rejectProductSubmission,
 } from "$lib/server/products/catalog.server";
 import type { FdcFood } from "$lib/utils/food/types";
+import { mapWithConcurrency } from "$lib/server/concurrency/mapWithConcurrency";
 
 const PERMANENT_BAN_DURATION = "876000h";
 const MODERATION_PAGE_SIZE = 100;
 const MODERATION_MAX_PAGES = 100;
+const MODERATION_DATABASE_BATCH_CONCURRENCY = 4;
 const ALLOWED_REASONS = new Set<ModerationReason>([
 	"profile_image_policy_violation",
 	"harassment_or_abuse",
@@ -33,7 +35,7 @@ const ALLOWED_REASONS = new Set<ModerationReason>([
 ]);
 
 const requireModerator = async (locals: App.Locals) => {
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 	if (!user) throw redirect(303, "/auth?next=%2Fmoderation");
 
 	const role = await getUserAppRole(locals.supabase, user.id);
@@ -141,7 +143,11 @@ const getTargetContext = async (
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const { user: viewer, role } = await requireModerator(locals);
 	const query = url.searchParams.get("q")?.trim().toLocaleLowerCase() ?? "";
-	const { admin, users: authUsers } = await listAuthUsers();
+	const [{ admin, users: authUsers }, pendingProductSubmissions] =
+		await Promise.all([
+			listAuthUsers(),
+			listPendingProductSubmissions(),
+		]);
 	const userIds = authUsers.map((user) => user.id);
 	const userIdBatches = Array.from(
 		{ length: Math.ceil(userIds.length / MODERATION_PAGE_SIZE) },
@@ -151,8 +157,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				(index + 1) * MODERATION_PAGE_SIZE,
 			),
 	);
-	const relatedRecordBatches = await Promise.all(
-		userIdBatches.map(async (batch) => {
+	const relatedRecordBatches = await mapWithConcurrency(
+		userIdBatches,
+		MODERATION_DATABASE_BATCH_CONCURRENCY,
+		async (batch) => {
 			const [profileResult, moderationResult, roleResult] = await Promise.all([
 				admin
 					.from("profiles")
@@ -177,7 +185,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				moderation: moderationResult.data,
 				roles: roleResult.data,
 			};
-		}),
+		},
 	);
 	const profiles = relatedRecordBatches.flatMap((batch) => batch.profiles);
 	const moderation = relatedRecordBatches.flatMap((batch) => batch.moderation);
@@ -224,7 +232,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		};
 	});
 
-	const productSubmissions = (await listPendingProductSubmissions()).map(
+	const productSubmissions = pendingProductSubmissions.map(
 		(submission) => {
 			const food = submission.food as unknown as FdcFood;
 			const validationReport = submission.validation_report as {

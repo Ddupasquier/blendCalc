@@ -85,6 +85,43 @@ describe("custom foods", () => {
 		cloudData.saveCloudCustomFood.mockResolvedValue("saved");
 	});
 
+	it("formats names entered with a valid barcode", () => {
+		const food = createCustomFood({
+			name: "STRAWBERRY JELLY, STRAWBERRY",
+			barcode: "00021130462506",
+			servingWeightGrams: 20,
+			nutrients: makeTestNutrients({
+				calories: 50,
+				fat: 0,
+				carbs: 13,
+				fiber: 0,
+				sugar: 9,
+				protein: 0,
+			}),
+		});
+
+		expect(food.description).toBe("Strawberry Jelly, Strawberry");
+		expect(food.nameProvenance).toBe("barcode");
+	});
+
+	it("preserves capitalization for a fully manual private item", () => {
+		const food = createCustomFood({
+			name: "MY PRIVATE TEST FOOD",
+			servingWeightGrams: 100,
+			nutrients: makeTestNutrients({
+				calories: 0,
+				fat: 0,
+				carbs: 0,
+				fiber: 0,
+				sugar: 0,
+				protein: 0,
+			}),
+		});
+
+		expect(food.description).toBe("MY PRIVATE TEST FOOD");
+		expect(food.nameProvenance).toBe("user");
+	});
+
 	it("converts nutrition facts per serving into per-100g nutrients", () => {
 		const food = createCustomFood({
 			name: "Oreos",

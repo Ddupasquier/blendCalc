@@ -1,4 +1,5 @@
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask.server";
 import type { ProductSourceQualitySummary } from "$lib/utils/food/sources/sourceQuality";
 
 export type ProductSourceLookupKind = "barcode" | "generic-search";
@@ -35,6 +36,19 @@ export const recordProductSourceCacheHit = (
 };
 
 export const recordProductSourceLookup = async (input: {
+	sourceKey: string;
+	sourceDataType?: string;
+	lookupKind: ProductSourceLookupKind;
+	outcome: ProductSourceLookupOutcome;
+	startedAt: number;
+	trace: ProductSourceRequestTrace;
+	quality?: ProductSourceQualitySummary;
+	exactBarcodeMatch?: boolean;
+}) => {
+	await completeServerBackgroundTask(writeProductSourceLookup(input));
+};
+
+const writeProductSourceLookup = async (input: {
 	sourceKey: string;
 	sourceDataType?: string;
 	lookupKind: ProductSourceLookupKind;

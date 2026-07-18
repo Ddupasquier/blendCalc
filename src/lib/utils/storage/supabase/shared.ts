@@ -34,13 +34,9 @@ export const getCurrentUserId = async () => {
 	const supabase = getSupabaseBrowserClient();
 	if (!supabase) return null;
 
-	const {
-		data: { user },
-		error,
-	} = await supabase.auth.getUser();
-
-	if (error || !user) return null;
-	return user.id;
+	const { data, error } = await supabase.auth.getClaims();
+	if (error || !data?.claims.sub) return null;
+	return data.claims.sub;
 };
 
 export const toJson = (value: unknown): Json => {

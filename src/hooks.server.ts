@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "$lib/supabase/server";
+import { readVerifiedAuthUser } from "$lib/server/auth/verifiedAuthUser.server";
 import { applySecurityHeaders } from "$lib/utils/http/securityHeaders";
 import { isActiveAccountBlock } from "$lib/utils/moderation/moderation";
 import { redirect, type Handle } from "@sveltejs/kit";
@@ -6,22 +7,13 @@ import { redirect, type Handle } from "@sveltejs/kit";
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.supabase = createSupabaseServerClient(event.cookies);
 
-	let authResult: ReturnType<App.Locals["safeGetSession"]> | null = null;
-	event.locals.safeGetSession = () => {
-		authResult ??= (async () => {
-			const {
-				data: { user },
-				error,
-			} = await event.locals.supabase.auth.getUser();
-
-			if (error || !user) return { session: null, user: null };
-			return { session: null, user };
-		})();
+	let authResult: ReturnType<App.Locals["getVerifiedUser"]> | null = null;
+	event.locals.getVerifiedUser = () => {
+		authResult ??= readVerifiedAuthUser(event.locals.supabase);
 		return authResult;
 	};
 
-	const { session, user } = await event.locals.safeGetSession();
-	event.locals.session = session;
+	const user = await event.locals.getVerifiedUser();
 	event.locals.user = user;
 
 	if (user) {

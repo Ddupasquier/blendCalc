@@ -23,23 +23,19 @@ const createSupabaseMock = (options?: { nutrientReadFails?: boolean }) => {
 									source: "usda",
 									source_reference: "123",
 									confidence: "source-verified",
+									nutrient_definitions: {
+										nutrient_id: 1003,
+										nutrient_name: "Protein",
+										nutrient_number: "203",
+										default_unit_name: "G",
+									},
 								},
 							],
 							error: null,
 						};
 				}
 
-				return {
-					data: [
-						{
-							nutrient_id: 1003,
-							nutrient_name: "Protein",
-							nutrient_number: "203",
-							default_unit_name: "G",
-						},
-					],
-					error: null,
-				};
+				return { data: [], error: null };
 			}),
 		})),
 	}));
@@ -64,7 +60,7 @@ describe("normalized nutrient Supabase reads", () => {
 			}),
 		]);
 		expect(mock.from).toHaveBeenCalledWith("food_nutrients");
-		expect(mock.from).toHaveBeenCalledWith("nutrient_definitions");
+		expect(mock.from).toHaveBeenCalledTimes(1);
 	});
 
 	it("returns null so callers can use JSON when normalized reads fail", async () => {

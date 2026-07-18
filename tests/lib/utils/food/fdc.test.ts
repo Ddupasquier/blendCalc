@@ -5,7 +5,7 @@ describe("FoodData Central normalization", () => {
 	it("normalizes full food-detail nutrient records", () => {
 		const food = normalizeFdcFood({
 			fdcId: 123,
-			description: "Detailed product",
+			description: "DETAILED PRODUCT",
 			foodNutrients: [
 				{
 					amount: 42,
@@ -19,6 +19,8 @@ describe("FoodData Central normalization", () => {
 			],
 		});
 
+		expect(food.description).toBe("Detailed Product");
+		expect(food.nameProvenance).toBe("source");
 		expect(food.foodNutrients).toEqual([
 			{
 				nutrientId: 1092,

@@ -25,6 +25,7 @@ export const createCatalogFoodFromDraft = (
 ): FdcFood => {
 	const food = createCustomFood({
 		name: draft.name,
+		nameProvenance: draft.nameProvenance,
 		brandOwner: draft.brandOwner,
 		servingLabel: draft.servingLabel,
 		servingWeightGrams: draft.servingWeightGrams,

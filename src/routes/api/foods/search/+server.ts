@@ -19,7 +19,7 @@ import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 	if (!user) throw error(401, "Sign in to search foods.");
 
 	const query = url.searchParams.get("q")?.trim() ?? "";
@@ -46,11 +46,22 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	if (query.length > 120) throw error(400, "Search is too long.");
 
 	try {
-		const foodPreferencesResult = await locals.supabase
+		const foodPreferencesPromise = locals.supabase
 			.from("user_food_preferences")
-			.select("*")
+			.select(
+				"unit_system, allergens, dietary_restrictions, prioritized_nutrient_ids, default_smoothie_serving_grams, sensitive_acknowledged_at",
+			)
 			.eq("user_id", user.id)
 			.maybeSingle();
+		const searchPromise = Promise.allSettled([
+			searchUserCustomFoods(locals.supabase, user.id, query),
+			searchApprovedSharedProducts(locals.supabase, query),
+			searchUsdaFoods(query),
+		]);
+		const [foodPreferencesResult, searchResults] = await Promise.all([
+			foodPreferencesPromise,
+			searchPromise,
+		]);
 		if (
 			foodPreferencesResult.error &&
 			!isMissingFoodPreferencesTableError(foodPreferencesResult.error)
@@ -58,11 +69,6 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			throw foodPreferencesResult.error;
 		}
 		const profile = getFoodPreferenceProfile(foodPreferencesResult.data);
-		const searchResults = await Promise.allSettled([
-			searchUserCustomFoods(locals.supabase, user.id, query),
-			searchApprovedSharedProducts(locals.supabase, query),
-			searchUsdaFoods(query),
-		]);
 		if (searchResults.every((result) => result.status === "rejected")) {
 			throw new Error("Every ingredient search source failed.");
 		}

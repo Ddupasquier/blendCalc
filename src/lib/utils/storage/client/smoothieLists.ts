@@ -258,6 +258,7 @@ export const renameFoodInSmoothieList = async (
 	const renamedFood = compactFood({
 		...currentItem,
 		description: trimmedDescription,
+		nameProvenance: "user",
 	});
 	const saved = await upsertCloudSmoothieListItem(key, renamedFood);
 	if (!saved) return "error";

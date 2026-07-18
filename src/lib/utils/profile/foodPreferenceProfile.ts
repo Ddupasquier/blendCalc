@@ -3,6 +3,16 @@ import type { Database } from "$lib/types/database.types";
 export type FoodPreferenceRecord =
 	Database["public"]["Tables"]["user_food_preferences"]["Row"];
 
+export type FoodPreferenceProfileSource = Pick<
+	FoodPreferenceRecord,
+	| "unit_system"
+	| "allergens"
+	| "dietary_restrictions"
+	| "prioritized_nutrient_ids"
+	| "default_smoothie_serving_grams"
+	| "sensitive_acknowledged_at"
+>;
+
 export type FoodPreferenceProfile = {
 	unitSystem: FoodPreferenceRecord["unit_system"];
 	allergens: string[];
@@ -13,7 +23,7 @@ export type FoodPreferenceProfile = {
 };
 
 export const getFoodPreferenceProfile = (
-	record: FoodPreferenceRecord | null | undefined,
+	record: FoodPreferenceProfileSource | null | undefined,
 ): FoodPreferenceProfile | null => {
 	if (!record) return null;
 

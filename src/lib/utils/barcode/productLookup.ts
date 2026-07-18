@@ -22,6 +22,7 @@ import {
 	getServingMeasureDimension,
 	parseServingAmount,
 } from "$lib/utils/serving/servingAmount";
+import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 
 export type { OpenFoodFactsNutriments } from "$lib/utils/barcode/barcodeNutrients";
 
@@ -63,6 +64,7 @@ export type OpenFoodFactsResponse = {
 export type BarcodeProductDraft = {
 	barcode: string;
 	name: string;
+	nameProvenance: NonNullable<FdcFood["nameProvenance"]>;
 	brandOwner: string;
 	servingLabel: string;
 	servingWeightGrams: number;
@@ -241,7 +243,8 @@ export const mapOpenFoodFactsProduct = (
 	referenceData: ProductReferenceData,
 ): BarcodeProductDraft | null => {
 	const canonicalBarcode = normalizeBarcode(barcode);
-	const name = product.product_name?.trim() || product.generic_name?.trim();
+	const sourceName = product.product_name?.trim() || product.generic_name?.trim();
+	const name = formatSourceProductName(sourceName);
 	if (!canonicalBarcode || !name || !product.nutriments) return null;
 
 	const { servingWeightGrams, useServingValues, hasExactGramWeight } =
@@ -260,6 +263,7 @@ export const mapOpenFoodFactsProduct = (
 	return {
 		barcode: canonicalBarcode,
 		name,
+		nameProvenance: "source",
 		brandOwner: product.brands?.trim() ?? "",
 		servingLabel:
 			(useServingValues && product.serving_size?.trim()) || `${servingWeightGrams} g`,
@@ -304,7 +308,10 @@ export const mapFdcBarcodeFood = (
 
 	return {
 		barcode: canonicalBarcode,
-		name: food.description,
+		name: food.nameProvenance === "user"
+			? food.description.trim().replace(/\s+/g, " ")
+			: formatSourceProductName(food.description),
+		nameProvenance: food.nameProvenance ?? "source",
 		brandOwner: food.brandOwner ?? "",
 		servingLabel:
 			(hasExactGramWeight && food.householdServingFullText) || `${servingWeightGrams} g`,

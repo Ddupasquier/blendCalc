@@ -66,22 +66,13 @@ export const persistFoodImageAsset = async ({
 		fetched_at: image.fetchedAt ?? new Date().toISOString(),
 	};
 
-	const { data, error } = await admin
+	const { error } = await admin
 		.from("food_image_assets")
-		.update(payload)
-		.eq("source", image.source)
-		.eq("source_reference", image.sourceReference)
-		.eq("image_role", image.role)
-		.select("id")
-		.maybeSingle();
+		.upsert(payload, {
+			onConflict: "source,source_reference,image_role",
+		});
 
 	if (error) throw error;
-	if (data) return;
-
-	const { error: insertError } = await admin
-		.from("food_image_assets")
-		.insert(payload);
-	if (insertError && insertError.code !== "23505") throw insertError;
 };
 
 export const publishModeratedFoodImageAsset = async ({
@@ -148,22 +139,12 @@ export const publishModeratedFoodImageAsset = async ({
 		fetched_at: now,
 	};
 
-	const { data: existingImage, error: updateError } = await admin
+	const { error: upsertError } = await admin
 		.from("food_image_assets")
-		.update(payload)
-		.eq("source", payload.source)
-		.eq("source_reference", payload.source_reference)
-		.eq("image_role", payload.image_role)
-		.select("id")
-		.maybeSingle();
-	if (updateError) throw updateError;
-
-	if (!existingImage) {
-		const { error: insertError } = await admin
-			.from("food_image_assets")
-			.insert(payload);
-		if (insertError && insertError.code !== "23505") throw insertError;
-	}
+		.upsert(payload, {
+			onConflict: "source,source_reference,image_role",
+		});
+	if (upsertError) throw upsertError;
 
 	return {
 		source: payload.source,

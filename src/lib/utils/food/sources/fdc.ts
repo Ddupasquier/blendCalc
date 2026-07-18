@@ -1,4 +1,5 @@
 import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 import {
 	INGREDIENT_SEARCH_PAGE_SIZE,
 	type IngredientSearchPage,
@@ -59,6 +60,8 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FdcFood => {
 	});
 	return {
 		...food,
+		description: formatSourceProductName(food.description),
+		nameProvenance: "source",
 		foodNutrients,
 		reportedNutrientIds: foodNutrients.map((nutrient) => nutrient.nutrientId),
 	};

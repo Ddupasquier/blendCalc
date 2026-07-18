@@ -17,6 +17,7 @@ import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types
 
 export type ManualEntryBarcodeDraftState = {
 	name: string;
+	nameProvenance: NonNullable<FdcFood["nameProvenance"]>;
 	brandOwner: string;
 	category: string;
 	servingLabel: string;
@@ -187,6 +188,7 @@ export const getBarcodeDraftState = (
 	draft: BarcodeProductDraft,
 ): ManualEntryBarcodeDraftState => ({
 	name: draft.name,
+	nameProvenance: draft.nameProvenance,
 	brandOwner: draft.brandOwner,
 	category: draft.resolvedCategory ?? "",
 	servingLabel: draft.servingLabel,

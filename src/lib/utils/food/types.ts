@@ -62,6 +62,7 @@ export interface FoodServing {
 export interface FdcFood {
     fdcId: number;
     description: string;
+    nameProvenance?: "source" | "barcode" | "user";
     brandOwner?: string;
     foodCategory?: string;
     brandedFoodCategory?: string;

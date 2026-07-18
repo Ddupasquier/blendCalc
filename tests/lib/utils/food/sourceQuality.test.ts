@@ -10,6 +10,7 @@ describe("product source quality", () => {
 		const draft: BarcodeProductDraft = {
 			barcode: "00021130462506",
 			name: "Strawberry jelly",
+			nameProvenance: "source",
 			brandOwner: "Safeway",
 			servingLabel: "1 tbsp (20 g)",
 			servingWeightGrams: 20,

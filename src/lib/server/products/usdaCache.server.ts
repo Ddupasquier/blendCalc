@@ -1,9 +1,6 @@
-import { createHash } from "node:crypto";
 import { env } from "$env/dynamic/private";
-import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { normalizeFdcFood } from "$lib/utils/food/sources/fdc";
 import type { FdcFood, FdcSearchResponse } from "$lib/utils/food/types";
-import { toJson } from "$lib/utils/storage/supabase/shared";
 import {
 	buildUsdaExactSearchQuery,
 	buildUsdaPartialSearchQuery,
@@ -13,19 +10,17 @@ import { getProductDataSource } from "$lib/utils/food/reference/productReference
 import { rankUsdaGenericFoods } from "$lib/server/products/usdaFoodSelection";
 import {
 	createProductSourceRequestTrace,
-	recordProductSourceApiError,
-	recordProductSourceApiRequest,
-	recordProductSourceCacheHit,
 	recordProductSourceLookup,
 	type ProductSourceRequestTrace,
 } from "$lib/server/products/sourceMetrics.server";
 import { summarizeUsdaFoodQuality } from "$lib/utils/food/sources/sourceQuality";
-import { coalesceProductApiRequest } from "$lib/server/products/productApiRequests.server";
+import { fetchCachedProductApiJson } from "$lib/server/products/productApiRequests.server";
 
 const FDC_BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 const SEARCH_CACHE_MILLISECONDS = 12 * 60 * 60 * 1000;
 const BARCODE_CACHE_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
 const DETAIL_CACHE_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
+const STALE_CACHE_FALLBACK_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
 const SEARCH_RESULT_LIMIT = 100;
 const PARTIAL_SEARCH_CANDIDATE_LIMIT = 100;
 const GENERIC_USDA_DATA_TYPES = "Foundation,SR Legacy,Survey (FNDDS)";
@@ -34,11 +29,6 @@ type CacheRequestKind = "search" | "barcode-search" | "food-detail";
 
 const getFdcApiKey = () =>
 	env.FDC_API_KEY?.trim() || env.VITE_FDC_API_KEY?.trim() || null;
-
-const getCacheKey = (kind: CacheRequestKind, value: unknown) =>
-	createHash("sha256")
-		.update(JSON.stringify({ kind, value }))
-		.digest("hex");
 
 const buildFdcUrl = (path: string, params: Record<string, string> = {}) => {
 	const apiKey = getFdcApiKey();
@@ -54,40 +44,6 @@ const buildFdcUrl = (path: string, params: Record<string, string> = {}) => {
 	return url;
 };
 
-const getCachedResponse = async <T>(cacheKey: string): Promise<T | null> => {
-	const admin = getSupabaseAdminClient();
-	const { data, error } = await admin
-		.from("product_api_cache")
-		.select("response, expires_at")
-		.eq("provider", "usda")
-		.eq("cache_key", cacheKey)
-		.gt("expires_at", new Date().toISOString())
-		.maybeSingle();
-	if (error) throw error;
-	return data?.response as T | null;
-};
-
-const cacheResponse = async (
-	cacheKey: string,
-	requestKind: CacheRequestKind,
-	statusCode: number,
-	response: unknown,
-	ttlMilliseconds: number,
-) => {
-	const admin = getSupabaseAdminClient();
-	const fetchedAt = new Date();
-	const { error } = await admin.from("product_api_cache").upsert({
-		provider: "usda",
-		cache_key: cacheKey,
-		request_kind: requestKind,
-		status_code: statusCode,
-		response: toJson(response),
-		fetched_at: fetchedAt.toISOString(),
-		expires_at: new Date(fetchedAt.getTime() + ttlMilliseconds).toISOString(),
-	});
-	if (error) throw error;
-};
-
 const fetchUsdaJson = async <T>(input: {
 	path: string;
 	params?: Record<string, string>;
@@ -96,38 +52,16 @@ const fetchUsdaJson = async <T>(input: {
 	ttlMilliseconds: number;
 	trace?: ProductSourceRequestTrace;
 }): Promise<T> => {
-	const cacheKey = getCacheKey(input.requestKind, input.cacheValue);
-	const cached = await getCachedResponse<T>(cacheKey);
-	if (cached) {
-		recordProductSourceCacheHit(input.trace);
-		return cached;
-	}
-
-	return coalesceProductApiRequest(`usda:${cacheKey}`, async () => {
-		recordProductSourceApiRequest(input.trace);
-		let response: Response;
-		try {
-			response = await fetch(buildFdcUrl(input.path, input.params), {
-				headers: { accept: "application/json" },
-			});
-		} catch (error) {
-			recordProductSourceApiError(input.trace);
-			throw error;
-		}
-		if (!response.ok) {
-			recordProductSourceApiError(input.trace);
-			throw new Error(`USDA request failed with ${response.status}.`);
-		}
-		const payload = await response.json() as T;
-		await cacheResponse(
-			cacheKey,
-			input.requestKind,
-			response.status,
-			payload,
-			input.ttlMilliseconds,
-		);
-		return payload;
-	}, input.trace);
+	return fetchCachedProductApiJson<T>({
+		provider: "usda",
+		requestKind: input.requestKind,
+		cacheValue: input.cacheValue,
+		url: buildFdcUrl(input.path, input.params),
+		headers: { accept: "application/json" },
+		ttlMilliseconds: input.ttlMilliseconds,
+		staleIfErrorMilliseconds: STALE_CACHE_FALLBACK_MILLISECONDS,
+		trace: input.trace,
+	});
 };
 
 const searchUsdaFoodsWithTrace = async (

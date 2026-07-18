@@ -16,6 +16,7 @@ import type { BarcodeShareValidationResult } from "$lib/utils/products/catalog";
 export type ManualEntryFormResetState = {
 	activeStep: ManualEntryStepId;
 	name: string;
+	nameProvenance: NonNullable<FdcFood["nameProvenance"]>;
 	brandOwner: string;
 	category: string;
 	servingLabel: string;
@@ -58,6 +59,7 @@ export type ManualEntryFormResetState = {
 export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	activeStep: "identity",
 	name: "",
+	nameProvenance: "user",
 	brandOwner: "",
 	category: "",
 	servingLabel: "",

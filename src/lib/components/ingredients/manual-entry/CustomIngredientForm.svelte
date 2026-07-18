@@ -133,6 +133,7 @@
 
 	let activeStep = $state<ManualEntryStepId>("identity");
 	let name = $state("");
+	let nameProvenance = $state<NonNullable<FdcFood["nameProvenance"]>>("user");
 	let brandOwner = $state("");
 	let category = $state("");
 	let servingLabel = $state("");
@@ -366,11 +367,13 @@
 
 	const setManualName = (value: string) => {
 		name = value;
+		nameProvenance = normalizeBarcode(barcode) ? "barcode" : "user";
 		clearBarcodeShareValidation();
 	};
 
 	const setManualBarcode = (value: string) => {
 		barcode = value;
+		nameProvenance = normalizeBarcode(value) ? "barcode" : "user";
 		clearBarcodeShareValidation();
 		barcodeSource = "manual";
 		checkedBarcodeReferenceKey = "";
@@ -396,6 +399,7 @@
 		const draftState = getBarcodeDraftState(draft);
 		({
 			name,
+			nameProvenance,
 			brandOwner,
 			category,
 			servingLabel,
@@ -777,6 +781,7 @@
 		({
 			activeStep,
 			name,
+			nameProvenance,
 			brandOwner,
 			category,
 			servingLabel,
@@ -1124,6 +1129,7 @@
 
 		const food = createManualEntryCustomFood({
 			name,
+			nameProvenance,
 			brandOwner,
 			servingLabel: resolvedServingLabel,
 			servingWeightGrams,

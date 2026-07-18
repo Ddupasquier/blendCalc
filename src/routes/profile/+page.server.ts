@@ -41,7 +41,7 @@ import {
 import { vitalNutrients } from "../../variables/vitalNutrients";
 
 const getAuthenticatedUser = async (locals: App.Locals) => {
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 	if (!user) throw redirect(303, "/auth?next=%2Fprofile");
 	return user;
 };
@@ -75,28 +75,39 @@ const getFoodPreferenceFormValues = (
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = await getAuthenticatedUser(locals);
-	const profile = await getUserProfile(locals.supabase, user.id);
-	const avatarUrl = await getSignedAvatarUrl(locals.supabase, profile?.avatar_path);
-	const {
-		data: foodPreferences,
-		error: foodPreferencesError,
-	} = await locals.supabase
-		.from("user_food_preferences")
-		.select("*")
-		.eq("user_id", user.id)
-		.maybeSingle();
+	const profileWithAvatarPromise = getUserProfile(locals.supabase, user.id)
+		.then(async (profile) => ({
+			profile,
+			avatarUrl: await getSignedAvatarUrl(
+				locals.supabase,
+				profile?.avatar_path,
+			),
+		}));
+	const [
+		{ profile, avatarUrl },
+		{ data: foodPreferences, error: foodPreferencesError },
+		{ data: foodPreferenceOptions, error: foodPreferenceOptionsError },
+	] = await Promise.all([
+		profileWithAvatarPromise,
+		locals.supabase
+			.from("user_food_preferences")
+			.select(
+				"unit_system, allergens, dietary_restrictions, prioritized_nutrient_ids, default_smoothie_serving_grams, sensitive_acknowledged_at",
+			)
+			.eq("user_id", user.id)
+			.maybeSingle(),
+		locals.supabase
+			.from("food_preference_option_catalog")
+			.select(
+				"category, label, normalized_value, source_values, tag_id, usage_count",
+			)
+			.order("usage_count", { ascending: false })
+			.order("label", { ascending: true }),
+	]);
 	const foodPreferencesUnavailable =
 		isMissingFoodPreferencesTableError(foodPreferencesError);
 
 	if (foodPreferencesError && !foodPreferencesUnavailable) throw foodPreferencesError;
-	const {
-		data: foodPreferenceOptions,
-		error: foodPreferenceOptionsError,
-	} = await locals.supabase
-		.from("food_preference_option_catalog")
-		.select("category, label, normalized_value, source_values, tag_id, usage_count")
-		.order("usage_count", { ascending: false })
-		.order("label", { ascending: true });
 	const foodPreferenceOptionsUnavailable =
 		isMissingFoodPreferenceOptionCatalogError(foodPreferenceOptionsError);
 

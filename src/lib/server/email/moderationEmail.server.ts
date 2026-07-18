@@ -1,5 +1,6 @@
 import { env } from "$env/dynamic/private";
 import { APP_NAME } from "$lib/config/brand";
+import { fetchWithExternalRequestPolicy } from "$lib/server/http/externalRequest.server";
 
 export type ModerationReason =
 	| "profile_image_policy_violation"
@@ -114,19 +115,21 @@ export const sendAccountBlockedEmail = async ({
 	const safeSupportText = escapeHtml(supportText);
 	let response: Response;
 	try {
-		response = await fetch("https://api.resend.com/emails", {
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${configuration.apiKey}`,
-				"Content-Type": "application/json",
-				"Idempotency-Key": `moderation-ban-${moderationActionId}`,
-			},
-			body: JSON.stringify({
-				from: configuration.from,
-				to: [email],
-				subject: `Your ${APP_NAME} account was blocked`,
-				text,
-				html: `
+		response = await fetchWithExternalRequestPolicy(
+			"https://api.resend.com/emails",
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${configuration.apiKey}`,
+					"Content-Type": "application/json",
+					"Idempotency-Key": `moderation-ban-${moderationActionId}`,
+				},
+				body: JSON.stringify({
+					from: configuration.from,
+					to: [email],
+					subject: `Your ${APP_NAME} account was blocked`,
+					text,
+					html: `
 					<div style="margin:0 auto;max-width:560px;padding:24px;font-family:Arial,sans-serif;color:#514a45;line-height:1.55">
 					<p>Hello ${safeName},</p>
 					<h1 style="font-size:24px;line-height:1.2">Your ${APP_NAME} account has been blocked</h1>
@@ -139,10 +142,13 @@ export const sendAccountBlockedEmail = async ({
 					<p style="margin-top:28px;color:#766f69">${APP_NAME} moderation</p>
 				</div>
 				`,
-				reply_to: configuration.supportEmail,
-				tags: [{ name: "category", value: "account_blocked" }],
-			}),
-		});
+					reply_to: configuration.supportEmail,
+					tags: [{ name: "category", value: "account_blocked" }],
+				}),
+				timeoutMilliseconds: 10_000,
+				maxAttempts: 2,
+			},
+		);
 	} catch (error) {
 		return {
 			status: "failed",

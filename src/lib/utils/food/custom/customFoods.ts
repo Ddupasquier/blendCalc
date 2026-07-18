@@ -12,12 +12,14 @@ import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
 import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
 import { normalizeCustomFoodName } from "$lib/utils/food/custom/customFoodNames";
+import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 
 export const CUSTOM_FOODS_STORAGE_KEY = "smoothie-custom-foods";
 export const CUSTOM_FOODS_CHANGED_EVENT = "smoothie-custom-foods-changed";
 
 export type CustomFoodInput = {
 	name: string;
+	nameProvenance?: NonNullable<FdcFood["nameProvenance"]>;
 	brandOwner?: string;
 	servingLabel?: string;
 	servingWeightGrams: number;
@@ -140,6 +142,11 @@ export const buildCustomServingLabel = ({
 
 export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 	const servingWeightGrams = Math.max(0.1, input.servingWeightGrams);
+	const nameProvenance = input.nameProvenance ??
+		(normalizeBarcode(input.barcode ?? "") ? "barcode" : "user");
+	const description = nameProvenance === "user"
+		? input.name.trim().replace(/\s+/g, " ")
+		: formatSourceProductName(input.name);
 	const volumeMilliliters = getVolumeMilliliters(
 		input.volumeQuantity,
 		input.volumeUnit,
@@ -174,7 +181,8 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 
 	return {
 		fdcId: createCustomFoodId(),
-		description: input.name.trim(),
+		description,
+		nameProvenance,
 		brandOwner: input.brandOwner?.trim() || undefined,
 		foodCategory: "Custom Ingredient",
 		dataType: "Custom",

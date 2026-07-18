@@ -662,8 +662,26 @@ describe("CustomIngredientForm", () => {
 
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
 		expect(onCreate.mock.calls[0][0]).toMatchObject({
+			description: "Packaged Snack",
+			nameProvenance: "barcode",
 			barcode: "04006381333931",
 			barcodeSource: "manual",
+		});
+	});
+
+	it("preserves the name casing for a barcode-free manual item", async () => {
+		const onCreate = vi.fn();
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await fillRequiredCustomIngredient("MY PRIVATE TEST FOOD");
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+		expect(onCreate.mock.calls[0][0]).toMatchObject({
+			description: "MY PRIVATE TEST FOOD",
+			nameProvenance: "user",
 		});
 	});
 
@@ -735,7 +753,8 @@ describe("CustomIngredientForm", () => {
 
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
 		expect(onCreate.mock.calls[0][0]).toMatchObject({
-			description: "Typed tomato label",
+			description: "Typed Tomato Label",
+			nameProvenance: "barcode",
 			barcode: "04006381333931",
 			barcodeSource: "manual",
 		});
@@ -744,10 +763,11 @@ describe("CustomIngredientForm", () => {
 	it("offers optional autofill from a matched manual barcode", async () => {
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
 			status: "found",
-			draft: {
-				barcode: "04006381333931",
-				name: "Source tomato product",
-				brandOwner: "Source brand",
+				draft: {
+					barcode: "04006381333931",
+					name: "Source tomato product",
+					nameProvenance: "source",
+					brandOwner: "Source brand",
 				servingLabel: "100g serving",
 				servingWeightGrams: 100,
 				nutrients: makeTestNutrients({
@@ -795,10 +815,11 @@ describe("CustomIngredientForm", () => {
 	it("does not offer community sharing when an autofilled catalog product is unchanged", async () => {
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
 			status: "found",
-			draft: {
-				barcode: "00021130462506",
-				name: "Strawberry Jelly, Strawberry",
-				brandOwner: "Safeway, Inc.",
+				draft: {
+					barcode: "00021130462506",
+					name: "Strawberry Jelly, Strawberry",
+					nameProvenance: "source",
+					brandOwner: "Safeway, Inc.",
 				servingLabel: "50g serving",
 				servingWeightGrams: 50,
 				nutrients: makeTestNutrients({
@@ -841,6 +862,7 @@ describe("CustomIngredientForm", () => {
 		const draft = {
 				barcode: "00021130462506",
 				name: "Strawberry Jelly, Strawberry",
+				nameProvenance: "source" as const,
 				brandOwner: "Safeway, Inc.",
 				servingLabel: "50g serving",
 				servingWeightGrams: 50,
@@ -898,6 +920,7 @@ describe("CustomIngredientForm", () => {
 		const draft = {
 			barcode: "00021130462506",
 			name: "Strawberry Jelly, Strawberry",
+			nameProvenance: "source" as const,
 			brandOwner: "Safeway, Inc.",
 			servingLabel: "50g serving",
 			servingWeightGrams: 50,
@@ -966,6 +989,7 @@ describe("CustomIngredientForm", () => {
 		const draft = {
 			barcode: "04006381333931",
 			name: "Reference tomato product",
+			nameProvenance: "source" as const,
 			brandOwner: "Reference brand",
 			servingLabel: "100g serving",
 			servingWeightGrams: 100,
@@ -1013,10 +1037,11 @@ describe("CustomIngredientForm", () => {
 	it("clears required nutrient warnings when barcode autofill fills reported zero values", async () => {
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
 			status: "found",
-			draft: {
-				barcode: "04006381333931",
-				name: "Zero macro source product",
-				brandOwner: "Source brand",
+				draft: {
+					barcode: "04006381333931",
+					name: "Zero macro source product",
+					nameProvenance: "source",
+					brandOwner: "Source brand",
 				servingLabel: "100g serving",
 				servingWeightGrams: 100,
 				nutrients: makeTestNutrients({
@@ -1076,10 +1101,11 @@ describe("CustomIngredientForm", () => {
 		const onCreate = vi.fn();
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
 			status: "found",
-			draft: {
-				barcode: "04006381333931",
-				name: "Reference tomato product",
-				brandOwner: "Reference brand",
+				draft: {
+					barcode: "04006381333931",
+					name: "Reference tomato product",
+					nameProvenance: "source",
+					brandOwner: "Reference brand",
 				servingLabel: "100g serving",
 				servingWeightGrams: 100,
 				nutrients: makeTestNutrients({
