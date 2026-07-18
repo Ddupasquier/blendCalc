@@ -1,4 +1,8 @@
 import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
+import {
+	productNamesAreUnrelated,
+	productNamesDiffer,
+} from "$lib/utils/products/productIdentity";
 
 type DifferenceSeverity = "low" | "medium" | "high";
 
@@ -11,6 +15,7 @@ type Difference = {
 export type CatalogSubmissionComparison = {
 	matchesExisting: boolean;
 	shouldAutoDecline: boolean;
+	hasBlockingIdentityMismatch: boolean;
 	changedFields: string[];
 	issues: string[];
 	severeDifferences: string[];
@@ -32,35 +37,6 @@ const normalizeText = (value?: string | null) =>
 		.toLocaleLowerCase()
 		.replace(/[^a-z0-9]+/g, " ")
 		.trim();
-
-const tokenize = (value?: string | null) =>
-	normalizeText(value)
-		.split(/\s+/)
-		.filter((token) => token.length > 1);
-
-const tokenOverlapScore = (left?: string | null, right?: string | null) => {
-	const leftTokens = new Set(tokenize(left));
-	const rightTokens = new Set(tokenize(right));
-	if (leftTokens.size === 0 || rightTokens.size === 0) return 0;
-	const shared = [...leftTokens].filter((token) => rightTokens.has(token)).length;
-	return shared / Math.min(leftTokens.size, rightTokens.size);
-};
-
-const textsDiffer = (left?: string | null, right?: string | null) => {
-	const normalizedLeft = normalizeText(left);
-	const normalizedRight = normalizeText(right);
-	return Boolean(normalizedLeft && normalizedRight && normalizedLeft !== normalizedRight);
-};
-
-const textsAreUnrelated = (left?: string | null, right?: string | null) => {
-	const normalizedLeft = normalizeText(left);
-	const normalizedRight = normalizeText(right);
-	if (!normalizedLeft || !normalizedRight) return false;
-	if (normalizedLeft.includes(normalizedRight) || normalizedRight.includes(normalizedLeft)) {
-		return false;
-	}
-	return tokenOverlapScore(normalizedLeft, normalizedRight) < 0.2;
-};
 
 const getComparableCategoryText = (food: FdcFood) =>
 	[
@@ -107,21 +83,27 @@ const getNutrientDifferenceSeverity = (
 const getDifferences = (submittedFood: FdcFood, existingFood: FdcFood) => {
 	const differences: Difference[] = [];
 
-	if (textsDiffer(submittedFood.description, existingFood.description)) {
+	if (productNamesDiffer(submittedFood.description, existingFood.description)) {
 		differences.push({
 			field: "productName",
 			message: "Product name differs from the active catalog item.",
-			severity: textsAreUnrelated(submittedFood.description, existingFood.description)
+			severity: productNamesAreUnrelated(
+				submittedFood.description,
+				existingFood.description,
+			)
 				? "high"
 				: "medium",
 		});
 	}
 
-	if (textsDiffer(submittedFood.brandOwner, existingFood.brandOwner)) {
+	if (productNamesDiffer(submittedFood.brandOwner, existingFood.brandOwner)) {
 		differences.push({
 			field: "brandOwner",
 			message: "Brand differs from the active catalog item.",
-			severity: textsAreUnrelated(submittedFood.brandOwner, existingFood.brandOwner)
+			severity: productNamesAreUnrelated(
+				submittedFood.brandOwner,
+				existingFood.brandOwner,
+			)
 				? "high"
 				: "medium",
 		});
@@ -129,11 +111,13 @@ const getDifferences = (submittedFood: FdcFood, existingFood: FdcFood) => {
 
 	const submittedCategory = getComparableCategoryText(submittedFood);
 	const existingCategory = getComparableCategoryText(existingFood);
-	if (textsDiffer(submittedCategory, existingCategory)) {
+	if (productNamesDiffer(submittedCategory, existingCategory)) {
 		differences.push({
 			field: "category",
 			message: "Category differs from the active catalog item.",
-			severity: textsAreUnrelated(submittedCategory, existingCategory) ? "high" : "low",
+			severity: productNamesAreUnrelated(submittedCategory, existingCategory)
+				? "high"
+				: "low",
 		});
 	}
 
@@ -175,7 +159,10 @@ export const compareCatalogSubmissionToExistingProduct = (
 		.map((difference) => difference.message);
 	const changedFields = [...new Set(differences.map((difference) => difference.field))];
 
-	const hasNameMismatch = differences.some((difference) =>
+	const hasNameMismatch = differences.some(
+		(difference) => difference.field === "productName",
+	);
+	const hasSevereNameMismatch = differences.some((difference) =>
 		difference.field === "productName" && difference.severity === "high"
 	);
 	const hasBrandMismatch = differences.some((difference) =>
@@ -189,13 +176,14 @@ export const compareCatalogSubmissionToExistingProduct = (
 	).length;
 
 	const shouldAutoDecline =
-		(hasNameMismatch && (hasBrandMismatch || hasCategoryMismatch)) ||
+		(hasSevereNameMismatch && (hasBrandMismatch || hasCategoryMismatch)) ||
 		(severeDifferences.length >= 2 && severeNutrientCount >= 1) ||
 		severeNutrientCount >= 4;
 
 	return {
 		matchesExisting: differences.length === 0,
 		shouldAutoDecline,
+		hasBlockingIdentityMismatch: hasNameMismatch,
 		changedFields,
 		issues: differences.map((difference) => difference.message),
 		severeDifferences,

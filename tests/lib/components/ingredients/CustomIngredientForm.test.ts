@@ -34,15 +34,20 @@ vi.mock("$lib/utils/storage/client/smoothieLists", async (importOriginal) => {
 	};
 });
 
-const { submitSharedProduct } = vi.hoisted(() => ({
+const { submitSharedProduct, validateBarcodeProductForSharing } = vi.hoisted(() => ({
 	submitSharedProduct: vi.fn().mockResolvedValue({
 		status: "pending",
 		message: "Waiting for review.",
+	}),
+	validateBarcodeProductForSharing: vi.fn().mockResolvedValue({
+		status: "not-found",
+		barcode: "04006381333931",
 	}),
 }));
 
 vi.mock("$lib/utils/products/catalog", () => ({
 	submitSharedProduct,
+	validateBarcodeProductForSharing,
 }));
 
 const barcodeLookupMocks = vi.hoisted(() => ({
@@ -421,6 +426,10 @@ describe("CustomIngredientForm", () => {
 		submitSharedProduct.mockResolvedValue({
 			status: "pending",
 			message: "Waiting for review.",
+		});
+		validateBarcodeProductForSharing.mockResolvedValue({
+			status: "not-found",
+			barcode: "04006381333931",
 		});
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
 			status: "not-found",
@@ -828,10 +837,8 @@ describe("CustomIngredientForm", () => {
 		expect(screen.queryByLabelText(/share with community/i)).not.toBeInTheDocument();
 	});
 
-	it("allows community sharing when a catalog product is autofilled and edited", async () => {
-		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
-			status: "found",
-			draft: {
+	it("allows community sharing when a non-name catalog field is edited", async () => {
+		const draft = {
 				barcode: "00021130462506",
 				name: "Strawberry Jelly, Strawberry",
 				brandOwner: "Safeway, Inc.",
@@ -852,7 +859,15 @@ describe("CustomIngredientForm", () => {
 				source: "shared-catalog",
 				sourceLabel: "blendCalc verified catalog",
 				sourceReference: "shared-product-1",
-			},
+		};
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft,
+		});
+		validateBarcodeProductForSharing.mockResolvedValue({
+			status: "matched",
+			barcode: draft.barcode,
+			draft,
 		});
 
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
@@ -866,15 +881,133 @@ describe("CustomIngredientForm", () => {
 		);
 		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
 		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
-		await fireEvent.input(screen.getByLabelText(/food name/i), {
-			target: { value: "Strawberry Jelly, Strawberry updated" },
+		await fireEvent.input(screen.getByLabelText(/brand/i), {
+			target: { value: "Safeway Updated" },
 		});
 		await fireEvent.click(screen.getByRole("button", { name: /^share$/i }));
 
 		const shareToggle = screen.getByLabelText(/share with community/i);
 		expect(shareToggle).not.toBeDisabled();
 		await fireEvent.click(shareToggle);
-		expect(screen.getByText(/photos for catalog review/i)).toBeInTheDocument();
+		await waitFor(() =>
+			expect(screen.getByText(/photos for catalog review/i)).toBeInTheDocument(),
+		);
+	});
+
+	it("blocks sharing when a verified barcode belongs to a different product name", async () => {
+		const draft = {
+			barcode: "00021130462506",
+			name: "Strawberry Jelly, Strawberry",
+			brandOwner: "Safeway, Inc.",
+			servingLabel: "50g serving",
+			servingWeightGrams: 50,
+			nutrients: makeTestNutrients({
+				calories: 50,
+				fat: 0,
+				carbs: 13,
+				fiber: 0,
+				sugar: 9,
+				protein: 0,
+				sodium: 0,
+			}),
+			reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
+			categories: ["Jams"],
+			resolvedCategory: "Jams",
+			source: "shared-catalog" as const,
+			sourceLabel: "blendCalc verified catalog",
+			sourceReference: "shared-product-1",
+		};
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft,
+		});
+		validateBarcodeProductForSharing.mockResolvedValue({
+			status: "name-mismatch",
+			barcode: draft.barcode,
+			draft,
+			message:
+				"This barcode belongs to “Strawberry Jelly, Strawberry”. Use the verified information to share it, or keep your current entry private.",
+		});
+
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: draft.barcode },
+		});
+		await waitFor(() =>
+			expect(screen.getByRole("button", { name: /autofill/i })).toBeInTheDocument(),
+		);
+		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
+		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
+		await fireEvent.input(screen.getByLabelText(/food name/i), {
+			target: { value: "Motor oil" },
+		});
+		await fireEvent.click(screen.getByRole("button", { name: /^share$/i }));
+		await fireEvent.click(screen.getByLabelText(/share with community/i));
+
+		await waitFor(() =>
+			expect(
+				screen.getByText(/product name does not match this barcode/i),
+			).toBeInTheDocument(),
+		);
+		expect(screen.queryByText(/photos for catalog review/i)).not.toBeInTheDocument();
+		expect(screen.getByLabelText(/share with community/i)).not.toBeChecked();
+
+		await fireEvent.click(screen.getByRole("button", { name: /keep private/i }));
+		expect(
+			screen.getByText(/current information will stay private/i),
+		).toBeInTheDocument();
+		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
+		expect(screen.getByLabelText(/food name/i)).toHaveValue("Motor oil");
+	});
+
+	it("replaces a mismatched name with verified barcode information", async () => {
+		const draft = {
+			barcode: "04006381333931",
+			name: "Reference tomato product",
+			brandOwner: "Reference brand",
+			servingLabel: "100g serving",
+			servingWeightGrams: 100,
+			nutrients: makeTestNutrients({
+				calories: 18,
+				fat: 0.2,
+				carbs: 3.9,
+				fiber: 1.2,
+				sugar: 2.6,
+				protein: 0.9,
+				sodium: 5,
+			}),
+			reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
+			categories: ["Other"],
+			resolvedCategory: "Other",
+			source: "usda" as const,
+			sourceLabel: "USDA FDC",
+			sourceReference: "12345",
+		};
+		validateBarcodeProductForSharing.mockResolvedValue({
+			status: "name-mismatch",
+			barcode: draft.barcode,
+			draft,
+			message: `This barcode belongs to “${draft.name}”.`,
+		});
+
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+		await fillRequiredCustomIngredient("Motor oil", {
+			barcode: "4006381333931",
+		});
+		await fireEvent.click(screen.getByLabelText(/share with community/i));
+		await waitFor(() =>
+			expect(
+				screen.getByRole("button", { name: /use verified information/i }),
+			).toBeInTheDocument(),
+		);
+		await fireEvent.click(
+			screen.getByRole("button", { name: /use verified information/i }),
+		);
+
+		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
+		expect(screen.getByLabelText(/food name/i)).toHaveValue(draft.name);
 	});
 
 	it("clears required nutrient warnings when barcode autofill fills reported zero values", async () => {

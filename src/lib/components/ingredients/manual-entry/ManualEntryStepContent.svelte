@@ -9,6 +9,7 @@
 	} from "$lib/utils/food/nutrients/nutrientDefinitions";
 	import type {
 		CustomIngredientOutcomeState,
+		ManualEntryBarcodeShareMismatch,
 		ManualEntryBarcodeSuggestion,
 		ManualEntryStepId,
 		ManualEntrySummaryItem,
@@ -54,6 +55,8 @@
 		shareUnavailableMessage,
 		shareHelpMessage,
 		shareWithCatalog,
+		barcodeShareMismatch,
+		validatingBarcodeShare,
 		requiresCatalogEvidence,
 		showOptionalProductImageUpload,
 		trustedProductImageUrl,
@@ -86,6 +89,8 @@
 		onVolumeQuantityChange,
 		onVolumeUnitChange,
 		onShareChange,
+		onApplyVerifiedBarcode,
+		onKeepBarcodePrivate,
 		onFrontPhotoChange,
 		onImageCropXChange,
 		onImageCropYChange,
@@ -135,6 +140,8 @@
 		shareUnavailableMessage: string;
 		shareHelpMessage: string;
 		shareWithCatalog: boolean;
+		barcodeShareMismatch: ManualEntryBarcodeShareMismatch;
+		validatingBarcodeShare: boolean;
 		requiresCatalogEvidence: boolean;
 		showOptionalProductImageUpload: boolean;
 		trustedProductImageUrl: string;
@@ -173,7 +180,9 @@
 		onUseVolumeChange: (value: boolean) => void;
 		onVolumeQuantityChange: (value: number | null) => void;
 		onVolumeUnitChange: (value: ServingMeasureUnit) => void;
-		onShareChange: (checked: boolean) => void;
+		onShareChange: (checked: boolean) => void | Promise<void>;
+		onApplyVerifiedBarcode: () => void | Promise<void>;
+		onKeepBarcodePrivate: () => void;
 		onFrontPhotoChange: (file: File | null) => void;
 		onImageCropXChange: (value: number) => void;
 		onImageCropYChange: (value: number) => void;
@@ -275,6 +284,8 @@
 		{shareUnavailableMessage}
 		{shareHelpMessage}
 		{shareWithCatalog}
+		{barcodeShareMismatch}
+		{validatingBarcodeShare}
 		{requiresCatalogEvidence}
 		{showOptionalProductImageUpload}
 		{trustedProductImageUrl}
@@ -290,6 +301,8 @@
 		{catalogMessage}
 		{saving}
 		onShareChange={onShareChange}
+		onApplyVerifiedBarcode={onApplyVerifiedBarcode}
+		onKeepBarcodePrivate={onKeepBarcodePrivate}
 		onFrontPhotoChange={onFrontPhotoChange}
 		onImageCropXChange={onImageCropXChange}
 		onImageCropYChange={onImageCropYChange}

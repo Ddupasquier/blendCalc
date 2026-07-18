@@ -4,8 +4,10 @@
 	import CustomIngredientOutcome from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
 	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
 	import ProductImageEvidenceInput from "$lib/components/ingredients/manual-entry/ProductImageEvidenceInput.svelte";
+	import BarcodeAutofillSuggestion from "$lib/components/ingredients/manual-entry/BarcodeAutofillSuggestion.svelte";
 	import type {
 		CustomIngredientOutcomeState,
+		ManualEntryBarcodeShareMismatch,
 		ManualEntrySummaryItem,
 		ManualEntryValidationItem,
 	} from "$lib/components/ingredients/manual-entry/formTypes";
@@ -23,6 +25,8 @@
 		shareUnavailableMessage,
 		shareHelpMessage,
 		shareWithCatalog,
+		barcodeShareMismatch,
+		validatingBarcodeShare,
 		requiresCatalogEvidence,
 		showOptionalProductImageUpload,
 		trustedProductImageUrl,
@@ -38,6 +42,8 @@
 		catalogMessage,
 		saving,
 		onShareChange,
+		onApplyVerifiedBarcode,
+		onKeepBarcodePrivate,
 		onFrontPhotoChange,
 		onImageCropXChange,
 		onImageCropYChange,
@@ -62,6 +68,8 @@
 		shareUnavailableMessage: string;
 		shareHelpMessage: string;
 		shareWithCatalog: boolean;
+		barcodeShareMismatch: ManualEntryBarcodeShareMismatch;
+		validatingBarcodeShare: boolean;
 		requiresCatalogEvidence: boolean;
 		showOptionalProductImageUpload: boolean;
 		trustedProductImageUrl: string;
@@ -77,6 +85,8 @@
 		catalogMessage: string;
 		saving: boolean;
 		onShareChange: (checked: boolean) => void;
+		onApplyVerifiedBarcode: () => void | Promise<void>;
+		onKeepBarcodePrivate: () => void;
 		onFrontPhotoChange: (file: File | null) => void;
 		onImageCropXChange: (value: number) => void;
 		onImageCropYChange: (value: number) => void;
@@ -125,22 +135,42 @@
 		<p class="custom-ingredient__status" role="status">{barcodeMessage}</p>
 	{/if}
 
+	{#if barcodeShareMismatch}
+		<BarcodeAutofillSuggestion
+			name={barcodeShareMismatch.name}
+			brandOwner={barcodeShareMismatch.brandOwner}
+			sourceLabel={barcodeShareMismatch.sourceLabel}
+			heading="Product name does not match this barcode"
+			description={barcodeShareMismatch.message}
+			applyLabel="Use verified information"
+			keepLabel="Keep private"
+			tone="error"
+			onApply={onApplyVerifiedBarcode}
+			onKeepManual={onKeepBarcodePrivate}
+		/>
+	{/if}
+
 	{#if shareUnavailableMessage}
 		<p class="custom-ingredient__status" role="status">{shareUnavailableMessage}</p>
 	{:else}
 		<label
 			class="custom-ingredient__share-toggle"
-			class:custom-ingredient__share-toggle--disabled={!canShareWithCatalog}
+			class:custom-ingredient__share-toggle--disabled={!canShareWithCatalog ||
+				validatingBarcodeShare}
 		>
 			<span>
 				<strong>Share with community</strong>
-				<small>{shareHelpMessage}</small>
+				<small>
+					{validatingBarcodeShare
+						? "Checking this barcode before sharing…"
+						: shareHelpMessage}
+				</small>
 			</span>
 			<ToggleSwitch
 				id="custom-ingredient-share-product"
 				name="custom-ingredient-share-product"
 				ariaLabel="Share with community"
-				disabled={!canShareWithCatalog}
+				disabled={!canShareWithCatalog || validatingBarcodeShare}
 				checked={shareWithCatalog}
 				onChange={onShareChange}
 			/>

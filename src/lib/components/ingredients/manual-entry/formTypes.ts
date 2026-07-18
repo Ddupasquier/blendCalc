@@ -34,10 +34,22 @@ export type ManualEntryBarcodeSuggestion = {
 	sourceLabel: string;
 } | null;
 
+export type ManualEntryBarcodeShareMismatch = {
+	name: string;
+	brandOwner: string;
+	sourceLabel: string;
+	message: string;
+} | null;
+
 export type BarcodeAutofillSuggestionProps = {
 	name: string;
 	brandOwner?: string;
 	sourceLabel: string;
+	heading?: string;
+	description?: string;
+	applyLabel?: string;
+	keepLabel?: string;
+	tone?: "default" | "error";
 	onApply: () => void | Promise<void>;
 	onKeepManual: () => void;
 };

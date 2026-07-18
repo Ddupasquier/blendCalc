@@ -54,16 +54,16 @@ describe("catalog submission comparison", () => {
 
 		expect(comparison.matchesExisting).toBe(true);
 		expect(comparison.shouldAutoDecline).toBe(false);
+		expect(comparison.hasBlockingIdentityMismatch).toBe(false);
 		expect(comparison.changedFields).toEqual([]);
 	});
 
-	it("allows reasonable same-barcode edits to go to moderation", () => {
+	it("allows same-barcode nutrient edits to go to moderation", () => {
 		const comparison = compareCatalogSubmissionToExistingProduct(
 			createFood({
-				description: "Strawberry jelly",
 				foodNutrients: createFood().foodNutrients.map((nutrient) =>
 					nutrient.nutrientId === NUTRIENT_IDS.CARBS
-						? { ...nutrient, value: 12 }
+						? { ...nutrient, value: 10 }
 						: nutrient
 				),
 			}),
@@ -72,6 +72,19 @@ describe("catalog submission comparison", () => {
 
 		expect(comparison.matchesExisting).toBe(false);
 		expect(comparison.shouldAutoDecline).toBe(false);
+		expect(comparison.hasBlockingIdentityMismatch).toBe(false);
+		expect(comparison.changedFields).toContain(`nutrient:${NUTRIENT_IDS.CARBS}`);
+	});
+
+	it("blocks a related but non-matching product name", () => {
+		const comparison = compareCatalogSubmissionToExistingProduct(
+			createFood({ description: "Strawberry jelly updated" }),
+			createFood(),
+		);
+
+		expect(comparison.matchesExisting).toBe(false);
+		expect(comparison.shouldAutoDecline).toBe(false);
+		expect(comparison.hasBlockingIdentityMismatch).toBe(true);
 		expect(comparison.changedFields).toContain("productName");
 	});
 
@@ -99,6 +112,19 @@ describe("catalog submission comparison", () => {
 
 		expect(comparison.matchesExisting).toBe(false);
 		expect(comparison.shouldAutoDecline).toBe(true);
+		expect(comparison.hasBlockingIdentityMismatch).toBe(true);
 		expect(comparison.severeDifferences.length).toBeGreaterThan(0);
+	});
+
+	it("blocks an unrelated product name even when the other values match", () => {
+		const comparison = compareCatalogSubmissionToExistingProduct(
+			createFood({ description: "Motor oil" }),
+			createFood(),
+		);
+
+		expect(comparison.matchesExisting).toBe(false);
+		expect(comparison.shouldAutoDecline).toBe(false);
+		expect(comparison.hasBlockingIdentityMismatch).toBe(true);
+		expect(comparison.changedFields).toContain("productName");
 	});
 });

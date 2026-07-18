@@ -32,6 +32,7 @@ import {
 	type CatalogFieldProvenance,
 	type CatalogObservation,
 } from "./catalogVerification.server";
+import { createCatalogFoodFromDraft } from "./catalogFood.server";
 import {
 	applyCanonicalFoodCategory,
 	readFoodCategoryOption,
@@ -466,6 +467,14 @@ export const submitProductForCatalog = async (
 			evidenceAccepted: false,
 		};
 	}
+	if (existingCatalogComparison?.hasBlockingIdentityMismatch) {
+		return {
+			status: "source-mismatch",
+			message:
+				"This barcode belongs to a different verified product. Your ingredient was saved privately, but it was not shared.",
+			evidenceAccepted: false,
+		};
+	}
 	if (existingCatalogComparison?.shouldAutoDecline) {
 		await recordAutoDeclinedCatalogSubmission({
 			userId,
@@ -537,6 +546,20 @@ export const submitProductForCatalog = async (
 		submissionFood,
 		canonicalCategory,
 	);
+	const sourceComparison = matchedDraft
+		? compareCatalogSubmissionToExistingProduct(
+				canonicalSubmissionFood,
+				createCatalogFoodFromDraft(matchedDraft, canonicalCategory),
+			)
+		: null;
+	if (sourceComparison?.hasBlockingIdentityMismatch) {
+		return {
+			status: "source-mismatch",
+			message:
+				`This barcode belongs to “${matchedDraft?.name}”. Your ingredient was saved privately, but it was not shared.`,
+			evidenceAccepted: false,
+		};
+	}
 	const hasSourceMatchedImageEvidence = Boolean(
 		matchedDraft &&
 			!needsSourceComparisonReview &&

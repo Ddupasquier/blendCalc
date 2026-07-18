@@ -98,6 +98,10 @@
 	import { getManualEntrySubmitState } from "$lib/components/ingredients/manual-entry/utils/submitValidation";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 	import { pickFoodFullImageUrl } from "$lib/utils/food/images/foodImages";
+	import {
+		type BarcodeShareValidationResult,
+		validateBarcodeProductForSharing,
+	} from "$lib/utils/products/catalog";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 
 	let {
@@ -160,6 +164,8 @@
 	let barcodeReferenceDraft = $state<BarcodeProductDraft | null>(null);
 	let barcodeReferenceSourceDraft = $state<BarcodeProductDraft | null>(null);
 	let barcodeReferenceAcceptedBarcode = $state("");
+	let barcodeShareValidation = $state<BarcodeShareValidationResult | null>(null);
+	let validatingBarcodeShare = $state(false);
 	let barcodeLookupDebounce = $state<ReturnType<typeof setTimeout> | null>(null);
 	let scannerOpen = $state(false);
 	let barcode = $state("");
@@ -351,8 +357,20 @@
 		}, 650);
 	};
 
+	const clearBarcodeShareValidation = () => {
+		barcodeShareValidation = null;
+		validatingBarcodeShare = false;
+		shareWithCatalog = false;
+	};
+
+	const setManualName = (value: string) => {
+		name = value;
+		clearBarcodeShareValidation();
+	};
+
 	const setManualBarcode = (value: string) => {
 		barcode = value;
+		clearBarcodeShareValidation();
 		barcodeSource = "manual";
 		checkedBarcodeReferenceKey = "";
 		barcodeReferenceDraft = null;
@@ -373,6 +391,7 @@
 	};
 
 	const applyBarcodeProductDraft = (draft: BarcodeProductDraft) => {
+		clearBarcodeShareValidation();
 		const draftState = getBarcodeDraftState(draft);
 		({
 			name,
@@ -437,6 +456,7 @@
 
 	const keepManualBarcodeEntry = () => {
 		if (!barcodeReferenceDraft) return;
+		clearBarcodeShareValidation();
 		barcodeReferenceAcceptedBarcode = "";
 		barcodeSource = "manual";
 		barcodeMessage = getKeepManualBarcodeMessage(barcodeReferenceDraft);
@@ -664,6 +684,80 @@
 				? "Make this ingredient available to other users. All submissions are reviewed for accuracy."
 				: "Add a valid UPC or barcode if you want to submit this ingredient for shared search.",
 	);
+	const barcodeShareMismatch = $derived.by(() => {
+		if (barcodeShareValidation?.status !== "name-mismatch") return null;
+		return {
+			name: barcodeShareValidation.draft.name,
+			brandOwner: barcodeShareValidation.draft.brandOwner,
+			sourceLabel: barcodeShareValidation.draft.sourceLabel,
+			message:
+				barcodeShareValidation.message ??
+				"Use the verified information to share this product, or keep your current entry private.",
+		};
+	});
+
+	const handleShareChange = async (checked: boolean) => {
+		if (!checked) {
+			shareWithCatalog = false;
+			barcodeShareValidation = null;
+			return;
+		}
+
+		const normalizedBarcode = normalizeBarcode(barcode);
+		if (!normalizedBarcode || !canShareWithCatalog) {
+			shareWithCatalog = false;
+			return;
+		}
+
+		shareWithCatalog = false;
+		barcodeShareValidation = null;
+		validatingBarcodeShare = true;
+		error = "";
+		try {
+			const validation = await validateBarcodeProductForSharing(
+				normalizedBarcode,
+				normalizedName,
+			);
+			barcodeShareValidation = validation;
+
+			if (validation.status === "name-mismatch") {
+				barcodeReferenceDraft = validation.draft;
+				barcodeReferenceSourceDraft = validation.draft;
+				return;
+			}
+
+			if (validation.status === "matched") {
+				barcodeReferenceSourceDraft = validation.draft;
+			}
+			shareWithCatalog = true;
+		} catch (validationError) {
+			error = validationError instanceof Error
+				? validationError.message
+				: "The barcode could not be verified for sharing. You can still save it privately.";
+		} finally {
+			validatingBarcodeShare = false;
+		}
+	};
+
+	const applyVerifiedBarcodeForSharing = async () => {
+		if (barcodeShareValidation?.status !== "name-mismatch") return;
+		const draft = barcodeShareValidation.draft;
+		barcodeReferenceDraft = draft;
+		await applyBarcodeReferenceSuggestion();
+		barcodeShareValidation = null;
+		shareWithCatalog = draft.source !== "shared-catalog" && activeStep === "share";
+	};
+
+	const keepMismatchedBarcodePrivate = () => {
+		if (barcodeShareValidation?.status !== "name-mismatch") return;
+		const verifiedName = barcodeShareValidation.draft.name;
+		barcodeReferenceDraft = null;
+		barcodeReferenceAcceptedBarcode = "";
+		barcodeSource = "manual";
+		shareWithCatalog = false;
+		barcodeShareValidation = null;
+		barcodeMessage = `This barcode matches “${verifiedName}”. Your current information will stay private and will not be shared.`;
+	};
 
 	const getOptionalNutrientCount = () =>
 		countOptionalNutrients(getSaveNutrients(), requiredManualEntryNutrientFields);
@@ -699,6 +793,8 @@
 			barcodeReferenceDraft,
 			barcodeReferenceSourceDraft,
 			barcodeReferenceAcceptedBarcode,
+			barcodeShareValidation,
+			validatingBarcodeShare,
 			shareWithCatalog,
 			frontPhoto,
 			imageCropX,
@@ -839,7 +935,9 @@
 	});
 
 	$effect(() => {
-		onLookupStateChange(lookingUpBarcode || checkingBarcodeReference);
+		onLookupStateChange(
+			lookingUpBarcode || checkingBarcodeReference || validatingBarcodeShare,
+		);
 	});
 
 	$effect(() => {
@@ -1148,6 +1246,8 @@
 				{shareUnavailableMessage}
 				{shareHelpMessage}
 				{shareWithCatalog}
+				{barcodeShareMismatch}
+				{validatingBarcodeShare}
 				{requiresCatalogEvidence}
 				{showOptionalProductImageUpload}
 				{trustedProductImageUrl}
@@ -1166,7 +1266,7 @@
 				getManualNutrientValue={getManualNutrientValue}
 				onValueChange={setManualNutrientValue}
 				isRequired={isRequiredManualNutrient}
-				onNameChange={(value) => (name = value)}
+				onNameChange={setManualName}
 				onBrandChange={(value) => (brandOwner = value)}
 				onCategoryChange={(value) => (category = value)}
 				onBarcodeChange={setManualBarcode}
@@ -1180,7 +1280,9 @@
 				onUseVolumeChange={(value) => (useVolumeEquivalent = value)}
 				onVolumeQuantityChange={(value) => (volumeQuantity = value)}
 				onVolumeUnitChange={(value) => (volumeUnit = value)}
-				onShareChange={(checked) => (shareWithCatalog = checked)}
+				onShareChange={handleShareChange}
+				onApplyVerifiedBarcode={applyVerifiedBarcodeForSharing}
+				onKeepBarcodePrivate={keepMismatchedBarcodePrivate}
 				onFrontPhotoChange={(file) => (frontPhoto = file)}
 				onImageCropXChange={(value) => (imageCropX = value)}
 				onImageCropYChange={(value) => (imageCropY = value)}

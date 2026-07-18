@@ -11,6 +11,7 @@ import type {
 } from "$lib/components/ingredients/manual-entry/formTypes";
 import type { ValidationAttemptState } from "$lib/components/ingredients/manual-entry/utils/validationItems";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
+import type { BarcodeShareValidationResult } from "$lib/utils/products/catalog";
 
 export type ManualEntryFormResetState = {
 	activeStep: ManualEntryStepId;
@@ -34,6 +35,8 @@ export type ManualEntryFormResetState = {
 	barcodeReferenceDraft: BarcodeProductDraft | null;
 	barcodeReferenceSourceDraft: BarcodeProductDraft | null;
 	barcodeReferenceAcceptedBarcode: string;
+	barcodeShareValidation: BarcodeShareValidationResult | null;
+	validatingBarcodeShare: boolean;
 	shareWithCatalog: boolean;
 	frontPhoto: File | null;
 	imageCropX: number;
@@ -74,6 +77,8 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	barcodeReferenceDraft: null,
 	barcodeReferenceSourceDraft: null,
 	barcodeReferenceAcceptedBarcode: "",
+	barcodeShareValidation: null,
+	validatingBarcodeShare: false,
 	shareWithCatalog: false,
 	frontPhoto: null,
 	imageCropX: 50,

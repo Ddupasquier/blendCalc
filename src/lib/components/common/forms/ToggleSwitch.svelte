@@ -2,7 +2,7 @@
 	let {
 		id,
 		name = id,
-		checked = $bindable(false),
+		checked = false,
 		disabled = false,
 		ariaLabel,
 		onChange,
@@ -24,9 +24,13 @@
 		type="checkbox"
 		role="switch"
 		aria-label={ariaLabel}
-		bind:checked
+		{checked}
 		{disabled}
-		onchange={(event) => onChange?.(event.currentTarget.checked)}
+		onchange={(event) => {
+			const nextChecked = event.currentTarget.checked;
+			event.currentTarget.checked = checked;
+			onChange?.(nextChecked);
+		}}
 	/>
 	<span class="toggle-switch__track" aria-hidden="true">
 		<span class="toggle-switch__thumb"></span>

@@ -6,27 +6,39 @@
 		name,
 		brandOwner,
 		sourceLabel,
+		heading = `Autofill available from ${sourceLabel}`,
+		description = "",
+		applyLabel = "Autofill",
+		keepLabel = "Keep mine",
+		tone = "default",
 		onApply,
 		onKeepManual,
 	}: BarcodeAutofillSuggestionProps = $props();
 </script>
 
-<div class="barcode-suggestion" role="status">
+<div
+	class="barcode-suggestion"
+	class:barcode-suggestion--error={tone === "error"}
+	role={tone === "error" ? "alert" : "status"}
+>
 	<div>
-		<strong>Autofill available from {sourceLabel}</strong>
+		<strong>{heading}</strong>
 		<span>
 			{name}
 			{#if brandOwner}
 				· {brandOwner}
 			{/if}
 		</span>
+		{#if description}
+			<p>{description}</p>
+		{/if}
 	</div>
 	<div class="barcode-suggestion__actions">
 		<PillButton variant="primary" onclick={onApply}>
-			Autofill
+			{applyLabel}
 		</PillButton>
 		<PillButton onclick={onKeepManual}>
-			Keep mine
+			{keepLabel}
 		</PillButton>
 	</div>
 </div>
@@ -57,6 +69,23 @@
 		span {
 			color: $ingredient-text-muted;
 			font-size: $app-font-size-sm;
+		}
+
+		p {
+			margin: $app-gap-xs 0 0;
+			font-size: $app-font-size-sm;
+			line-height: 1.35;
+		}
+	}
+
+	.barcode-suggestion--error {
+		border-color: $ingredient-status-error-text;
+		background: $ingredient-status-error-bg;
+		color: $ingredient-status-error-text;
+
+		span,
+		p {
+			color: inherit;
 		}
 	}
 

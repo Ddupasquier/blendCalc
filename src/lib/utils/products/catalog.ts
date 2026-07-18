@@ -1,9 +1,11 @@
 import type { FdcFood } from "$lib/utils/food/types";
+import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 
 export type SharedProductSubmissionStatus =
 	| "already-available"
 	| "approved"
-	| "pending";
+	| "pending"
+	| "source-mismatch";
 
 export type SharedProductSubmissionResult = {
 	status: SharedProductSubmissionStatus;
@@ -24,6 +26,45 @@ export type SharedProductEvidence = {
 
 export type SharedProductSubmissionContext = {
 	reviewFlags?: string[];
+};
+
+export type BarcodeShareValidationResult =
+	| {
+			status: "matched" | "name-mismatch";
+			barcode: string;
+			draft: BarcodeProductDraft;
+			message?: string;
+	  }
+	| {
+			status: "not-found";
+			barcode: string;
+	  };
+
+export const validateBarcodeProductForSharing = async (
+	barcode: string,
+	productName: string,
+): Promise<BarcodeShareValidationResult> => {
+	const response = await fetch(
+		`/api/products/barcode/${encodeURIComponent(barcode)}/share-validation`,
+		{
+			method: "POST",
+			headers: {
+				accept: "application/json",
+				"content-type": "application/json",
+			},
+			body: JSON.stringify({ productName }),
+		},
+	);
+	if (!response.ok) {
+		const body = await response.json().catch(() => null) as {
+			message?: string;
+		} | null;
+		throw new Error(
+			body?.message ??
+				"The barcode could not be verified for sharing. You can still save it privately.",
+		);
+	}
+	return await response.json() as BarcodeShareValidationResult;
 };
 
 export const searchSharedProducts = async (query: string): Promise<FdcFood[]> => {
