@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CenteredIcon from "$lib/components/common/icons/CenteredIcon.svelte";
 	import type { IconControlButtonProps } from "./types";
 
 	let {
@@ -26,9 +27,11 @@
 	disabled={disabled || busy}
 	{onclick}
 >
-	{#if children}
-		{@render children()}
-	{/if}
+	<CenteredIcon>
+		{#if children}
+			{@render children()}
+		{/if}
+	</CenteredIcon>
 </button>
 
 <style lang="scss">
@@ -72,7 +75,4 @@
 		}
 	}
 
-	.icon-control-button :global(svg) {
-		display: block;
-	}
 </style>

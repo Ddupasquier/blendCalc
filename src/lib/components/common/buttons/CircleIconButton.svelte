@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CenteredIcon from "$lib/components/common/icons/CenteredIcon.svelte";
 	import type { CircleIconButtonProps } from "./types";
 
 	let {
@@ -44,11 +45,13 @@
 	{onlostpointercapture}
 	{oncontextmenu}
 >
-	{#if busy}
-		<span aria-hidden="true">…</span>
-	{:else if children}
-		{@render children()}
-	{/if}
+	<CenteredIcon>
+		{#if busy}
+			<span aria-hidden="true">…</span>
+		{:else if children}
+			{@render children()}
+		{/if}
+	</CenteredIcon>
 </button>
 
 <style lang="scss">
@@ -178,7 +181,4 @@
 		}
 	}
 
-	.circle-icon-button :global(svg) {
-		display: block;
-	}
 </style>

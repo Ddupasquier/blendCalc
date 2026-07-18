@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Popover from "$lib/components/common/display/Popover.svelte";
+	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
 	import type { SmartWarning } from "$lib/utils/mix/warnings/smartWarnings";
 
 	let { warnings = [] }: { warnings?: SmartWarning[] } = $props();
@@ -11,9 +12,9 @@
 		<div class="smart-warnings__list">
 			{#each warnings as warning}
 				<article class={`smart-warning smart-warning--${warning.tone}`}>
-					<span class="smart-warning__symbol" aria-hidden="true">
+					<CircularIconFrame class="smart-warning__symbol" decorative>
 						{warning.symbol}
-					</span>
+					</CircularIconFrame>
 					<div class="smart-warning__body">
 						<strong>{warning.title}</strong>
 						<p>{warning.message}</p>
@@ -79,14 +80,11 @@
 		border-radius: $app-radius;
 	}
 
-	.smart-warning__symbol {
-		display: grid;
-		place-items: center;
-		width: 1.25rem;
-		height: 1.25rem;
-		border-radius: $app-radius-pill;
-		font-size: 0.68rem;
-		font-weight: 900;
+	:global(.smart-warning__symbol) {
+		--circular-icon-frame-size: #{$app-status-icon-badge-size};
+		--circular-icon-frame-icon-size: #{$app-font-size-xs};
+
+		font-weight: $app-font-weight-heavy;
 	}
 
 	.smart-warning__body {
@@ -96,27 +94,27 @@
 	.smart-warning--danger {
 		border-color: $app-danger-bg;
 
-		.smart-warning__symbol {
-			color: $app-primary;
-			background: $app-danger-bg;
+		:global(.smart-warning__symbol) {
+			--circular-icon-frame-color: #{$app-primary};
+			--circular-icon-frame-background: #{$app-danger-bg};
 		}
 	}
 
 	.smart-warning--warning {
 		border-color: $app-warning-bg;
 
-		.smart-warning__symbol {
-			color: $app-primary;
-			background: $app-warning-bg;
+		:global(.smart-warning__symbol) {
+			--circular-icon-frame-color: #{$app-primary};
+			--circular-icon-frame-background: #{$app-warning-bg};
 		}
 	}
 
 	.smart-warning--info {
 		border-color: $app-accent;
 
-		.smart-warning__symbol {
-			color: $app-primary;
-			background: $app-accent;
+		:global(.smart-warning__symbol) {
+			--circular-icon-frame-color: #{$app-primary};
+			--circular-icon-frame-background: #{$app-accent};
 		}
 	}
 

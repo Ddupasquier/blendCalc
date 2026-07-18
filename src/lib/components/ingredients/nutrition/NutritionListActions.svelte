@@ -2,6 +2,7 @@
 	import { onDestroy } from "svelte";
 	import Check from "$lib/assets/icons/Check.svelte";
 	import X from "$lib/assets/icons/X.svelte";
+	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
 	import MoveItemPrompt from "$lib/components/ingredients/nutrition/MoveItemPrompt.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
@@ -211,13 +212,13 @@
 		role={feedbackError ? "alert" : "status"}
 		aria-live="polite"
 	>
-		<span>
+		<CircularIconFrame class="nf-feedback__icon" decorative>
 			{#if feedbackError}
 				<X size={14} strokeWidth={2.8} />
 			{:else}
 				<Check size={14} strokeWidth={2.8} />
 			{/if}
-		</span>
+		</CircularIconFrame>
 		{feedbackMessage}
 	</div>
 {/if}
@@ -274,17 +275,17 @@
 		font-weight: $app-font-weight-bold;
 		animation: nf-feedback-pop 0.18s ease-out;
 
-		span {
-			display: inline-grid;
-			place-items: center;
-			width: $nutrition-label-list-status-icon-size;
-			height: $nutrition-label-list-status-icon-size;
-			color: $app-primary;
-			font-size: $nutrition-label-feedback-icon-font-size;
-			line-height: 1;
-			background: $app-success-bg;
-			border-radius: $app-radius-pill;
-		}
+	}
+
+	:global(.nf-feedback__icon) {
+		--circular-icon-frame-size: #{$nutrition-label-list-status-icon-size};
+		--circular-icon-frame-icon-size: #{$nutrition-label-feedback-icon-font-size};
+		--circular-icon-frame-color: #{$app-primary};
+		--circular-icon-frame-background: #{$app-success-bg};
+	}
+
+	.nf-feedback--error :global(.nf-feedback__icon) {
+		--circular-icon-frame-background: #{$app-danger-bg};
 	}
 
 	@media (max-width: $app-breakpoint-xs) {

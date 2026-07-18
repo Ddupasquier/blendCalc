@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { tick } from "svelte";
+	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
+	import TutorialStepIcon from "$lib/components/app/TutorialStepIcon.svelte";
 	import { tutorialSteps } from "../../../defaults/tutorialSteps";
 
 	let {
@@ -130,32 +132,9 @@
 			</header>
 
 			<div class="tutorial__body">
-				<div class="tutorial__illustration" aria-hidden="true">
-					{#if currentStep.icon === "ingredients"}
-						<svg viewBox="0 0 64 64">
-							<path d="M17 15h30l-3 37H20l-3-37Z" />
-							<path d="M14 15h36M25 15V9h14v6M25 25h14M25 33h14M25 41h9" />
-						</svg>
-					{:else if currentStep.icon === "goals"}
-						<svg viewBox="0 0 64 64">
-							<circle cx="32" cy="32" r="21" />
-							<circle cx="32" cy="32" r="12" />
-							<circle cx="32" cy="32" r="3" />
-							<path d="m32 32 18-18M43 14h7v7" />
-						</svg>
-					{:else if currentStep.icon === "graph"}
-						<svg viewBox="0 0 64 64">
-							<path d="m32 8 21 15-8 25H19l-8-25 21-15Z" />
-							<path d="m32 18 12 9-5 14H24l-5-14 13-9Z" />
-							<path d="M32 8v40M11 23l34 25M53 23 19 48" />
-						</svg>
-					{:else}
-						<svg viewBox="0 0 64 64">
-							<path d="M14 10h30l7 7v37H14V10Z" />
-							<path d="M23 10v15h20V10M22 54V36h20v18" />
-						</svg>
-					{/if}
-				</div>
+				<CircularIconFrame class="tutorial__illustration" decorative>
+					<TutorialStepIcon name={currentStep.icon} />
+				</CircularIconFrame>
 
 				<div class="tutorial__copy">
 					<h2 id="tutorial-title">{currentStep.title}</h2>
@@ -291,7 +270,7 @@
 
 	.tutorial__body {
 		display: grid;
-		grid-template-columns: 7rem minmax(0, 1fr);
+		grid-template-columns: $app-tutorial-illustration-size minmax(0, 1fr);
 		align-items: center;
 		gap: $app-gap-lg;
 		min-height: 0;
@@ -299,23 +278,11 @@
 		overflow-y: auto;
 	}
 
-	.tutorial__illustration {
-		display: grid;
-		place-items: center;
-		width: 7rem;
-		aspect-ratio: 1;
-		color: $app-primary;
-		background: $app-highlight;
-		border-radius: 50%;
-
-		svg {
-			width: 58%;
-			fill: none;
-			stroke: currentColor;
-			stroke-linecap: round;
-			stroke-linejoin: round;
-			stroke-width: 2.5;
-		}
+	:global(.tutorial__illustration) {
+		--circular-icon-frame-size: #{$app-tutorial-illustration-size};
+		--circular-icon-frame-icon-size: #{$app-tutorial-illustration-icon-size};
+		--circular-icon-frame-color: #{$app-primary};
+		--circular-icon-frame-background: #{$app-highlight};
 	}
 
 	.tutorial__copy {
@@ -410,8 +377,9 @@
 			padding: $app-gap-md;
 		}
 
-		.tutorial__illustration {
-			width: 5rem;
+		:global(.tutorial__illustration) {
+			--circular-icon-frame-size: #{$app-tutorial-illustration-size-mobile};
+			--circular-icon-frame-icon-size: #{$app-tutorial-illustration-icon-size-mobile};
 		}
 
 		.tutorial__choices {

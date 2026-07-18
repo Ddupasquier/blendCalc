@@ -1,4 +1,6 @@
 <script lang="ts">
+	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
+
 	const steps = [
 		{
 			title: "Search",
@@ -32,7 +34,9 @@
 	<ol class="mix-empty-state__steps">
 		{#each steps as step, index}
 			<li>
-				<span>{index + 1}</span>
+				<CircularIconFrame class="mix-empty-state__step-number" decorative>
+					{index + 1}
+				</CircularIconFrame>
 				<div>
 					<strong>{step.title}</strong>
 					<p>{step.text}</p>
@@ -103,15 +107,12 @@
 		border-radius: $app-radius;
 	}
 
-	span {
-		display: grid;
-		place-items: center;
-		width: 1.35rem;
-		height: 1.35rem;
-		color: $app-primary;
-		background: $app-accent;
-		border-radius: $app-radius-pill;
-		font-size: $app-font-size-xs;
+	:global(.mix-empty-state__step-number) {
+		--circular-icon-frame-size: #{$app-status-icon-badge-size};
+		--circular-icon-frame-icon-size: #{$app-font-size-xs};
+		--circular-icon-frame-color: #{$app-primary};
+		--circular-icon-frame-background: #{$app-accent};
+
 		font-weight: 900;
 	}
 

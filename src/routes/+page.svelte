@@ -1,5 +1,7 @@
 <script lang="ts">
+	import Check from "$lib/assets/icons/Check.svelte";
 	import FloatingFruitBackground from "$lib/components/app/FloatingFruitBackground.svelte";
+	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
 	import { APP_NAME } from "$lib/config/brand";
 	import type { PageData } from "./$types";
 
@@ -20,9 +22,9 @@
 		</div>
 
 		<ul class="landing-benefits" aria-label={`What ${APP_NAME} helps with`}>
-			<li><span aria-hidden="true">✓</span> Track the nutrients you care about</li>
-			<li><span aria-hidden="true">✓</span> Adjust amounts with live feedback</li>
-			<li><span aria-hidden="true">✓</span> Save mixes for next time</li>
+			<li><CircularIconFrame class="landing-benefit-icon" decorative><Check size="1em" /></CircularIconFrame> Track the nutrients you care about</li>
+			<li><CircularIconFrame class="landing-benefit-icon" decorative><Check size="1em" /></CircularIconFrame> Adjust amounts with live feedback</li>
+			<li><CircularIconFrame class="landing-benefit-icon" decorative><Check size="1em" /></CircularIconFrame> Save mixes for next time</li>
 		</ul>
 
 		<div class="landing-action">
@@ -122,15 +124,11 @@
 			font-weight: 700;
 		}
 
-		span {
-			display: grid;
-			place-items: center;
-			flex: 0 0 auto;
-			width: 1.25rem;
-			height: 1.25rem;
-			background: $app-success-bg;
-			border-radius: 50%;
-			font-size: $app-font-size-xs;
+
+		:global(.landing-benefit-icon) {
+			--circular-icon-frame-size: #{$app-status-icon-badge-size};
+			--circular-icon-frame-icon-size: #{$app-font-size-xs};
+			--circular-icon-frame-background: #{$app-success-bg};
 		}
 	}
 

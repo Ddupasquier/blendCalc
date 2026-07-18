@@ -1,6 +1,8 @@
 <script lang="ts">
-	import Crown from "$lib/assets/icons/Crown.svelte";
 	import SmoothieCup from "$lib/assets/icons/SmoothieCup.svelte";
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
+	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
+	import type { AppHeaderProps } from "$lib/components/app/types";
 	import { APP_NAME } from "$lib/config/brand";
 
 	let {
@@ -8,12 +10,7 @@
 		avatarUrl = null,
 		avatarAltText = null,
 		role = null,
-	}: {
-		displayName: string;
-		avatarUrl?: string | null;
-		avatarAltText?: string | null;
-		role?: string | null;
-	} = $props();
+	}: AppHeaderProps = $props();
 
 	const initials = $derived(
 		displayName
@@ -42,16 +39,20 @@
 			title={displayName}
 		>
 			{#if role}
-				<span class="app-header__crown" aria-label="Moderator account" title="Moderator account">
-					<Crown size="var(--app-header-crown-icon-size)" />
-				</span>
+				<PrivilegedActionBadge
+					class="app-header__crown"
+					variant="profile"
+					label="Moderator account"
+				/>
 			{/if}
 
-			{#if avatarUrl}
-				<img src={avatarUrl} alt={avatarAltText ?? ""} />
-			{:else}
-				<span class="app-header__initials" aria-hidden="true">{initials}</span>
-			{/if}
+			<CircularMediaFrame class="app-header__avatar">
+				{#if avatarUrl}
+					<img src={avatarUrl} alt={avatarAltText ?? ""} />
+				{:else}
+					<span class="app-header__initials" aria-hidden="true">{initials}</span>
+				{/if}
+			</CircularMediaFrame>
 		</a>
 	</div>
 </header>
@@ -117,21 +118,19 @@
 		flex: 0 0 auto;
 		width: $app-rebuild-food-icon-size;
 		height: $app-rebuild-food-icon-size;
-		color: $color-figma-green;
-		background: $color-figma-green-soft;
-		border: 0;
-		border-radius: 50%;
+		border-radius: $app-radius-circle;
 		text-decoration: none;
 	}
 
-	.app-header__profile--moderator {
-		background: $color-figma-green-soft;
+	:global(.app-header__avatar) {
+		--circular-media-frame-size: #{$app-rebuild-food-icon-size};
+		--circular-media-frame-color: #{$color-figma-green};
+		--circular-media-frame-background: #{$color-figma-green-soft};
 	}
 
-	.app-header__profile img {
+	:global(.app-header__avatar img) {
 		width: 100%;
 		height: 100%;
-		border-radius: inherit;
 		object-fit: cover;
 	}
 
@@ -141,22 +140,11 @@
 		line-height: 1;
 	}
 
-	.app-header__crown {
-		--app-header-crown-icon-size: #{$app-privileged-badge-icon-size};
-
+	:global(.app-header__crown) {
 		position: absolute;
 		top: calc($app-privileged-badge-size / -3);
 		right: calc($app-privileged-badge-size / -3);
-		display: inline-grid;
-		place-items: center;
-		width: $app-privileged-badge-size;
-		height: $app-privileged-badge-size;
-		color: $app-privileged-badge-text;
-		background: $app-privileged-badge-bg;
-		border: 1px solid $app-privileged-badge-border;
-		border-radius: 50%;
-		font-weight: $app-font-weight-bold;
-		line-height: 1;
+		z-index: 1;
 	}
 
 	.app-header__profile:focus-visible,

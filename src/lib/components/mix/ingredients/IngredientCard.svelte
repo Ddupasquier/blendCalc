@@ -1,5 +1,7 @@
 <script lang="ts">
+	import ChevronDown from "$lib/assets/icons/ChevronDown.svelte";
 	import Popover from "$lib/components/common/display/Popover.svelte";
+	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge.svelte";
 	import CloseButton from "$lib/components/common/buttons/CloseButton.svelte";
 	import type { NutrientChip } from "$lib/utils/mix/ui/mixUi";
@@ -142,11 +144,12 @@
 					onclick={() => (nutrientsOpen = !nutrientsOpen)}
 				>
 					Top nutrients
-					<span
-						class="ingredient-card__chevron"
-						class:ingredient-card__chevron--open={nutrientsOpen}
-						aria-hidden="true"></span
+					<CircularIconFrame
+						class={`ingredient-card__chevron ${nutrientsOpen ? "ingredient-card__chevron--open" : ""}`}
+						decorative
 					>
+						<ChevronDown size="1em" />
+					</CircularIconFrame>
 				</button>
 			{#if nutrientsOpen}
 				<div
@@ -289,27 +292,17 @@
 		line-height: $app-button-line-height;
 	}
 
-	.ingredient-card__chevron {
-		display: inline-grid;
-		place-items: center;
-		width: 1rem;
-		height: 1rem;
-		background: $app-accent;
-		border-radius: $app-radius-pill;
+	:global(.ingredient-card__chevron) {
+		--circular-icon-frame-size: #{$app-compact-chevron-frame-size};
+		--circular-icon-frame-icon-size: #{$app-compact-chevron-icon-size};
+		--circular-icon-frame-color: #{$app-primary};
+		--circular-icon-frame-background: #{$app-accent};
+
 		transition: transform 0.16s ease;
 		transform: rotate(-90deg);
-
-		&::before {
-			content: "";
-			width: 0.34rem;
-			height: 0.34rem;
-			border-right: 2px solid $app-primary;
-			border-bottom: 2px solid $app-primary;
-			transform: translateY(-0.08rem) rotate(45deg);
-		}
 	}
 
-	.ingredient-card__chevron--open {
+	:global(.ingredient-card__chevron--open) {
 		transform: rotate(0deg);
 	}
 

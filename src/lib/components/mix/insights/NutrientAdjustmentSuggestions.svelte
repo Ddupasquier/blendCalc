@@ -1,4 +1,6 @@
 <script lang="ts">
+	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
+	import StatusIconBadge from "$lib/components/common/badges/StatusIconBadge.svelte";
 	import type {
 		NutrientFoodSuggestion,
 		NutrientReductionSuggestion,
@@ -151,7 +153,13 @@
 			aria-expanded={isOpen}
 			onclick={() => (isOpen = !isOpen)}
 		>
-			<span class="nutrient-adjustments__alert" aria-hidden="true">!</span>
+			<StatusIconBadge
+				class="nutrient-adjustments__alert"
+				label="Suggested adjustments available"
+				decorative
+			>
+				<WarningTriangle size="1em" />
+			</StatusIconBadge>
 			<span class="nutrient-adjustments__copy">
 				<span class="nutrient-adjustments__title">Suggested Adjustments</span>
 				<span class="nutrient-adjustments__summary">
@@ -242,17 +250,9 @@
 		}
 	}
 
-	.nutrient-adjustments__alert {
-		display: inline-grid;
-		place-items: center;
-		width: 1.25rem;
-		height: 1.25rem;
-		color: $app-highlight-text;
-		background: $app-highlight;
-		border-radius: $app-radius-pill;
-		font-size: 0.8rem;
-		font-weight: 900;
-		line-height: 1;
+	:global(.nutrient-adjustments__alert) {
+		--circular-icon-frame-color: #{$app-highlight-text};
+		--circular-icon-frame-background: #{$app-highlight};
 	}
 
 	.nutrient-adjustments__copy {

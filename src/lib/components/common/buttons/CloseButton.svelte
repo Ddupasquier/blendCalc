@@ -1,5 +1,6 @@
 <script lang="ts">
 	import X from "$lib/assets/icons/X.svelte";
+	import CenteredIcon from "$lib/components/common/icons/CenteredIcon.svelte";
 	import type { CloseButtonProps } from "./types";
 
 	let {
@@ -19,7 +20,9 @@
 	{disabled}
 	{onclick}
 >
-	<X class="close-button__icon" />
+	<CenteredIcon>
+		<X class="close-button__icon" />
+	</CenteredIcon>
 </button>
 
 <style lang="scss">

@@ -2,6 +2,7 @@
 	import { enhance } from "$app/forms";
 	import { invalidateAll } from "$app/navigation";
 	import User from "$lib/assets/icons/User.svelte";
+	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker.svelte";
 	import { APP_NAME } from "$lib/config/brand";
 	import {
@@ -296,13 +297,13 @@
 	</header>
 
 	<section class="profile-card profile-card--identity">
-		<div class="avatar-preview" aria-label="Current profile image">
+		<CircularMediaFrame class="avatar-preview" label="Current profile image">
 			{#if data.avatarUrl}
 				<img src={data.avatarUrl} alt={data.profile?.avatar_alt_text ?? "Your profile"} />
 			{:else}
 				<User class="avatar-preview__icon" />
 			{/if}
-		</div>
+		</CircularMediaFrame>
 		<div>
 			<strong>{data.profile?.display_name ?? data.defaultDisplayName}</strong>
 			<span>Preferred name</span>
@@ -775,25 +776,20 @@
 		}
 	}
 
-	.avatar-preview {
-		display: grid;
-		place-items: center;
-		width: 4.5rem;
-		height: 4.5rem;
-		overflow: hidden;
-		color: $app-primary;
-		background: $app-accent;
-		border: $app-border;
-		border-radius: 50%;
+	:global(.avatar-preview) {
+		--circular-media-frame-size: #{$app-profile-avatar-size};
+		--circular-media-frame-color: #{$app-primary};
+		--circular-media-frame-background: #{$app-accent};
+		--circular-media-frame-border: #{$app-border};
 
-		img {
+		:global(img) {
 			width: 100%;
 			height: 100%;
 			object-fit: cover;
 		}
 
 		:global(.avatar-preview__icon) {
-			width: 55%;
+			width: $app-profile-avatar-icon-scale;
 		}
 	}
 

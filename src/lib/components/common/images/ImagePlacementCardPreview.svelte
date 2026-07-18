@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
 	import { getImagePlacementCssVars } from "$lib/components/common/images/imagePlacementStyle";
 	import type { ImagePlacementCardPreviewProps } from "$lib/components/common/images/types";
 
@@ -12,24 +13,19 @@
 	const imageStyle = $derived(getImagePlacementCssVars(value, "image-placement-preview"));
 </script>
 
-<div class="image-placement-card-preview" aria-label={ariaLabel}>
+<CircularMediaFrame class="image-placement-card-preview" label={ariaLabel}>
 	<img src={imageUrl} {alt} style={imageStyle} />
-</div>
+</CircularMediaFrame>
 
 <style lang="scss">
 	@use "../../../../styles/variables" as *;
 
-	.image-placement-card-preview {
-		display: inline-grid;
-		place-items: center;
-		width: $ingredient-food-icon-size;
-		height: $ingredient-food-icon-size;
-		overflow: hidden;
-		background: $ingredient-surface-positive;
-		border-radius: $ingredient-radius-pill;
+	:global(.image-placement-card-preview) {
+		--circular-media-frame-size: #{$ingredient-food-icon-size};
+		--circular-media-frame-background: #{$ingredient-surface-positive};
 	}
 
-	.image-placement-card-preview img {
+	:global(.image-placement-card-preview img) {
 		display: block;
 		width: $ingredient-food-image-content-size;
 		height: $ingredient-food-image-content-size;

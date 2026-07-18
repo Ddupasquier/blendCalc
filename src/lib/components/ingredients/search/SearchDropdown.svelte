@@ -13,6 +13,7 @@
         getIngredientSourceBadgeLabel,
     } from "$lib/utils/ingredients/ingredientSourceOptions";
     import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
     import ChevronRight from "$lib/assets/icons/ChevronRight.svelte";
     import Plus from "$lib/assets/icons/Plus.svelte";
     import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
@@ -128,9 +129,9 @@
                                 onfocus={() => onActivate(index)}
                                 onclick={() => onSelect(food)}
                             >
-                                <span class="result-icon">
+                                <CircularMediaFrame class="result-icon">
                                     <FoodSymbol {food} />
-                                </span>
+                                </CircularMediaFrame>
                                 <span class="result-copy">
                                     <span class="result-name">{formatName(food.description)}</span>
                                     <span class="result-category">{getFoodDisplayCategory(food)}</span>
@@ -301,18 +302,11 @@
         line-height: 1;
     }
 
-    .result-icon {
-        display: inline-grid;
-        place-items: center;
-        width: $ingredient-search-result-icon-size;
-        height: $ingredient-search-result-icon-size;
-        flex: 0 0 auto;
-        overflow: hidden;
-        background: color-mix(in srgb, $ingredient-surface-card 74%, transparent);
-        border-radius: $ingredient-radius-pill;
-        font-size: $app-font-size-xl;
-        line-height: 1;
-    }
+	:global(.result-icon) {
+		--circular-media-frame-size: #{$ingredient-search-result-icon-size};
+		--circular-media-frame-background: color-mix(in srgb, #{$ingredient-surface-card} 74%, transparent);
+		--circular-media-frame-font-size: #{$app-font-size-xl};
+	}
 
     .result-copy {
         display: grid;

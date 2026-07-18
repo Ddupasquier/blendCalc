@@ -19,6 +19,7 @@ describe("StatusIconBadge", () => {
 		const badge = screen.getByRole("img", { name: "Potential food conflict" });
 		expect(badge).toHaveClass("status-icon-badge");
 		expect(badge).toHaveAttribute("data-tone", "warning");
+		expect(badge.querySelector(".centered-icon")).toBeInTheDocument();
 		expect(badge.querySelector("svg")).toBeInTheDocument();
 	});
 });

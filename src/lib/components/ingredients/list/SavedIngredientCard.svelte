@@ -4,6 +4,7 @@
 	import FoodSymbol from "$lib/assets/icons/FoodSymbol.svelte";
 	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
 	import IngredientBulkToggle from "$lib/components/ingredients/list/IngredientBulkToggle.svelte";
 	import IngredientCardActions from "$lib/components/ingredients/list/IngredientCardActions.svelte";
 	import IngredientCardBadges from "$lib/components/ingredients/list/IngredientCardBadges.svelte";
@@ -61,9 +62,9 @@
 		aria-label={`Preview ${food.description}`}
 		onclick={onPreview}
 	>
-		<span class="saved-ingredient-card__icon">
+		<CircularMediaFrame class="saved-ingredient-card__icon">
 			<FoodSymbol {food} />
-		</span>
+		</CircularMediaFrame>
 		<span class="saved-ingredient-card__copy">
 			<IngredientCardBadges
 				custom={food.customFood}
@@ -163,15 +164,10 @@
 		border: 0;
 	}
 
-	.saved-ingredient-card__icon {
-		display: inline-grid;
-		place-items: center;
-		width: $ingredient-food-icon-size;
-		height: $ingredient-food-icon-size;
-		overflow: hidden;
-		background: $ingredient-surface-positive;
-		border-radius: $ingredient-radius-pill;
-		font-size: $ingredient-food-icon-font-size;
+	:global(.saved-ingredient-card__icon) {
+		--circular-media-frame-size: #{$ingredient-food-icon-size};
+		--circular-media-frame-background: #{$ingredient-surface-positive};
+		--circular-media-frame-font-size: #{$ingredient-food-icon-font-size};
 	}
 
 	.saved-ingredient-card__copy {
@@ -210,7 +206,7 @@
 			grid-template-columns: auto minmax(0, 1fr) auto auto;
 		}
 
-		.saved-ingredient-card__icon {
+		:global(.saved-ingredient-card__icon) {
 			display: none;
 		}
 	}

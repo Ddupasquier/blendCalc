@@ -1,3 +1,5 @@
+import type { Snippet } from "svelte";
+
 export type ImagePlacementValue = {
 	cropX: number;
 	cropY: number;
@@ -24,4 +26,10 @@ export type ImagePlacementCardPreviewProps = {
 	alt: string;
 	value: ImagePlacementValue;
 	ariaLabel?: string;
+};
+
+export type CircularMediaFrameProps = {
+	class?: string;
+	label?: string;
+	children?: Snippet;
 };
