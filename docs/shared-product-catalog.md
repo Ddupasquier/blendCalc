@@ -70,6 +70,22 @@ building a broader derived database from its records.
 
 Keep source handling explicit. Do not merge Open Food Facts payloads into `shared_products` unless the entire downstream database licensing and attribution model is intentionally changed.
 
+## Source quality monitoring
+
+External source usage is measured in privacy-safe daily aggregates. Runtime
+metrics separate logical lookups from real outbound requests and USDA cache
+hits, then track source errors, exact matches, nutrient depth, useful product
+metadata, and response time. They do not retain barcodes, search terms, users,
+or raw API responses.
+
+Use `npm run report:source-quality` to inspect normal traffic. Because Open Food
+Facts is normally called only after USDA misses, runtime match rates are not a
+fair head-to-head ranking. Run `npm run benchmark:source-quality -- --limit=10`
+and then `npm run report:source-quality -- --origin=benchmark` to send the same
+saved barcodes to both sources. Treat that coverage report as evidence about
+availability and fullness, not permission to replace USDA as the primary
+nutrition authority.
+
 ## Database security
 
 Migrations:

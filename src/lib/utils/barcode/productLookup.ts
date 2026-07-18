@@ -66,6 +66,7 @@ export type BarcodeProductDraft = {
 	brandOwner: string;
 	servingLabel: string;
 	servingWeightGrams: number;
+	hasSourceServing?: boolean;
 	nutrients: FdcNutrient[];
 	reportedNutrientIds: number[];
 	ingredients?: string;
@@ -263,6 +264,7 @@ export const mapOpenFoodFactsProduct = (
 		servingLabel:
 			(useServingValues && product.serving_size?.trim()) || `${servingWeightGrams} g`,
 		servingWeightGrams,
+		hasSourceServing: hasExactGramWeight,
 		nutrients,
 		reportedNutrientIds: [...new Set(nutrients.map((nutrient) => nutrient.nutrientId))],
 		...metadata,
@@ -307,6 +309,7 @@ export const mapFdcBarcodeFood = (
 		servingLabel:
 			(hasExactGramWeight && food.householdServingFullText) || `${servingWeightGrams} g`,
 		servingWeightGrams,
+		hasSourceServing: hasExactGramWeight,
 		nutrients,
 		reportedNutrientIds: [
 			...new Set(

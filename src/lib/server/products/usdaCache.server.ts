@@ -11,6 +11,15 @@ import {
 import { getProductReferenceData } from "$lib/server/products/productReferenceData.server";
 import { getProductDataSource } from "$lib/utils/food/reference/productReferenceData";
 import { rankUsdaGenericFoods } from "$lib/server/products/usdaFoodSelection";
+import {
+	createProductSourceRequestTrace,
+	recordProductSourceApiError,
+	recordProductSourceApiRequest,
+	recordProductSourceCacheHit,
+	recordProductSourceLookup,
+	type ProductSourceRequestTrace,
+} from "$lib/server/products/sourceMetrics.server";
+import { summarizeUsdaFoodQuality } from "$lib/utils/food/sources/sourceQuality";
 
 const FDC_BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 const SEARCH_CACHE_MILLISECONDS = 12 * 60 * 60 * 1000;
@@ -84,15 +93,27 @@ const fetchUsdaJson = async <T>(input: {
 	requestKind: CacheRequestKind;
 	cacheValue: unknown;
 	ttlMilliseconds: number;
+	trace?: ProductSourceRequestTrace;
 }): Promise<T> => {
 	const cacheKey = getCacheKey(input.requestKind, input.cacheValue);
 	const cached = await getCachedResponse<T>(cacheKey);
-	if (cached) return cached;
+	if (cached) {
+		recordProductSourceCacheHit(input.trace);
+		return cached;
+	}
 
-	const response = await fetch(buildFdcUrl(input.path, input.params), {
-		headers: { accept: "application/json" },
-	});
+	recordProductSourceApiRequest(input.trace);
+	let response: Response;
+	try {
+		response = await fetch(buildFdcUrl(input.path, input.params), {
+			headers: { accept: "application/json" },
+		});
+	} catch (error) {
+		recordProductSourceApiError(input.trace);
+		throw error;
+	}
 	if (!response.ok) {
+		recordProductSourceApiError(input.trace);
 		throw new Error(`USDA request failed with ${response.status}.`);
 	}
 	const payload = await response.json() as T;
@@ -106,7 +127,10 @@ const fetchUsdaJson = async <T>(input: {
 	return payload;
 };
 
-export const searchUsdaFoods = async (query: string): Promise<FdcFood[]> => {
+const searchUsdaFoodsWithTrace = async (
+	query: string,
+	trace: ProductSourceRequestTrace,
+): Promise<FdcFood[]> => {
 	const normalizedQuery = query.trim().replace(/\s+/g, " ");
 	if (!normalizedQuery) return [];
 	const exactQuery = buildUsdaExactSearchQuery(normalizedQuery);
@@ -139,6 +163,7 @@ export const searchUsdaFoods = async (query: string): Promise<FdcFood[]> => {
 			pageSize: SEARCH_RESULT_LIMIT,
 		},
 		ttlMilliseconds: SEARCH_CACHE_MILLISECONDS,
+		trace,
 	});
 	const exactFoods = addProvenance(
 		(exactData.foods ?? []).map(normalizeFdcFood),
@@ -162,6 +187,7 @@ export const searchUsdaFoods = async (query: string): Promise<FdcFood[]> => {
 			pageSize: PARTIAL_SEARCH_CANDIDATE_LIMIT,
 		},
 		ttlMilliseconds: SEARCH_CACHE_MILLISECONDS,
+		trace,
 	});
 	return rankUsdaGenericFoods(
 		addProvenance((partialData.foods ?? []).map(normalizeFdcFood)),
@@ -169,21 +195,61 @@ export const searchUsdaFoods = async (query: string): Promise<FdcFood[]> => {
 	).slice(0, SEARCH_RESULT_LIMIT);
 };
 
-export const searchUsdaBrandedFoods = async (query: string) =>
+export const searchUsdaFoods = async (query: string): Promise<FdcFood[]> => {
+	const normalizedQuery = query.trim().replace(/\s+/g, " ");
+	if (!normalizedQuery) return [];
+
+	const startedAt = Date.now();
+	const trace = createProductSourceRequestTrace();
+	try {
+		const foods = await searchUsdaFoodsWithTrace(normalizedQuery, trace);
+		const topFood = foods[0];
+		await recordProductSourceLookup({
+			sourceKey: "usda",
+			sourceDataType: topFood?.sourceDataType ?? topFood?.dataType ?? "Generic",
+			lookupKind: "generic-search",
+			outcome: topFood ? "matched" : "not-found",
+			startedAt,
+			trace,
+			quality: topFood ? summarizeUsdaFoodQuality(topFood) : undefined,
+		});
+		return foods;
+	} catch (error) {
+		await recordProductSourceLookup({
+			sourceKey: "usda",
+			sourceDataType: "Generic",
+			lookupKind: "generic-search",
+			outcome: "error",
+			startedAt,
+			trace,
+		});
+		throw error;
+	}
+};
+
+export const searchUsdaBrandedFoods = async (
+	query: string,
+	trace?: ProductSourceRequestTrace,
+) =>
 	fetchUsdaJson<FdcSearchResponse>({
 		path: "/foods/search",
 		params: { query, dataType: "Branded", pageSize: "50" },
 		requestKind: "barcode-search",
 		cacheValue: { query, dataType: "Branded", pageSize: 50 },
 		ttlMilliseconds: BARCODE_CACHE_MILLISECONDS,
+		trace,
 	});
 
-export const getUsdaFoodById = async (fdcId: number): Promise<FdcFood> => {
+export const getUsdaFoodById = async (
+	fdcId: number,
+	trace?: ProductSourceRequestTrace,
+): Promise<FdcFood> => {
 	const food = await fetchUsdaJson<FdcFood>({
 		path: `/food/${fdcId}`,
 		requestKind: "food-detail",
 		cacheValue: { fdcId },
 		ttlMilliseconds: DETAIL_CACHE_MILLISECONDS,
+		trace,
 	});
 	const normalizedFood = normalizeFdcFood(food);
 	const source = getProductDataSource(await getProductReferenceData(), "usda");

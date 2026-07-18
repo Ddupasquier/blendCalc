@@ -24,6 +24,8 @@
 		"audit:fdc-allergens": "node scripts/audit_fdc_allergen_fields.mjs",
 		"audit:usda-branded-allergens": "node scripts/audit_usda_branded_allergen_fields.mjs",
 		"audit:off-allergens": "node scripts/audit_openfoodfacts_allergen_fields.mjs",
+		"report:source-quality": "node scripts/report_product_source_quality.mjs",
+		"benchmark:source-quality": "node scripts/benchmark_product_sources.mjs",
 		"seed:food-preferences": "node scripts/seed_food_preference_api_observations.mjs",
 		"seed:food-categories": "node scripts/seed_custom_food_categories.mjs",
 		"seed:food-categories:deep": "node scripts/seed_custom_food_categories.mjs --deep",

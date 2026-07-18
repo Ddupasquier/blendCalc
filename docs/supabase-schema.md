@@ -223,6 +223,7 @@ Central and Open Food Facts products.
 | Table | Primary Key | Purpose | Key Relationships |
 | --- | --- | --- | --- |
 | `product_data_sources` | `key` | Canonical identity, display name, URLs, terms, and observation history for each external API, standards API, or internal catalog | Referenced by all source-specific mapping and serving tables |
+| `product_source_daily_metrics` | `(metric_date, source_key, source_data_type, lookup_kind, lookup_origin)` | Privacy-safe daily API usage, reliability, match, nutrient-depth, metadata-coverage, cache, and timing counters | `source_key → product_data_sources.key` |
 | `nutrient_source_mappings` | `(source_key, source_nutrient_key, source_unit_name)` | Maps a source API nutrient key and unit to the app's canonical nutrient | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id` |
 | `nutrient_unit_conversions` | `(source_key, nutrient_id, from_unit_name, to_unit_name)` | Stores source- and nutrient-specific conversion multipliers | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id` |
 | `serving_measure_units` | `key` | App-ready serving units, labels, dimensions, order, defaults, and conversion to grams or milliliters | `source_key → product_data_sources.key` |
@@ -238,6 +239,27 @@ Notes:
 - Source names shown by barcode lookup come from this table. Runtime lookup code does not
   invent vendor labels.
 - Source rows are maintained by the reference-data seed script, with API-observed provenance.
+
+### `product_source_daily_metrics`
+
+Columns: `metric_date`, `source_key`, `source_data_type`, `lookup_kind`,
+`lookup_origin`, lookup/API/cache/error/match counters, evaluated product and
+reported nutrient totals, brand/category/serving/ingredient/image coverage
+counters, response milliseconds, and timestamps.
+
+Notes:
+- Runtime lookups record daily counters through the service-role-only
+  `record_product_source_daily_metric` function, using one atomic upsert per
+  completed source attempt.
+- The table deliberately stores no barcode, search text, user id, or vendor
+  payload.
+- `runtime` rows explain real traffic and API/cache load. `benchmark` rows send
+  the same saved barcodes to each source for a fair coverage comparison.
+- Run `npm run report:source-quality` for runtime activity, or run `npm run
+  benchmark:source-quality -- --limit=10` followed by `npm run
+  report:source-quality -- --origin=benchmark` for a direct comparison.
+- The report's coverage index measures observed completeness and reliability;
+  it does not replace the source-authority policy.
 
 ### `nutrient_source_mappings`
 

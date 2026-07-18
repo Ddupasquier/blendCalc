@@ -1457,6 +1457,92 @@ export type Database = {
         }
         Relationships: []
       }
+      product_source_daily_metrics: {
+        Row: {
+          api_error_count: number
+          api_request_count: number
+          brand_present_count: number
+          cache_hit_count: number
+          category_present_count: number
+          completed_lookup_count: number
+          created_at: string
+          error_count: number
+          evaluated_product_count: number
+          exact_barcode_match_count: number
+          image_present_count: number
+          ingredients_present_count: number
+          lookup_count: number
+          lookup_kind: string
+          lookup_origin: string
+          match_count: number
+          metric_date: string
+          reported_nutrient_total: number
+          response_milliseconds_total: number
+          serving_present_count: number
+          source_data_type: string
+          source_key: string
+          updated_at: string
+        }
+        Insert: {
+          api_error_count?: number
+          api_request_count?: number
+          brand_present_count?: number
+          cache_hit_count?: number
+          category_present_count?: number
+          completed_lookup_count?: number
+          created_at?: string
+          error_count?: number
+          evaluated_product_count?: number
+          exact_barcode_match_count?: number
+          image_present_count?: number
+          ingredients_present_count?: number
+          lookup_count?: number
+          lookup_kind: string
+          lookup_origin?: string
+          match_count?: number
+          metric_date: string
+          reported_nutrient_total?: number
+          response_milliseconds_total?: number
+          serving_present_count?: number
+          source_data_type?: string
+          source_key: string
+          updated_at?: string
+        }
+        Update: {
+          api_error_count?: number
+          api_request_count?: number
+          brand_present_count?: number
+          cache_hit_count?: number
+          category_present_count?: number
+          completed_lookup_count?: number
+          created_at?: string
+          error_count?: number
+          evaluated_product_count?: number
+          exact_barcode_match_count?: number
+          image_present_count?: number
+          ingredients_present_count?: number
+          lookup_count?: number
+          lookup_kind?: string
+          lookup_origin?: string
+          match_count?: number
+          metric_date?: string
+          reported_nutrient_total?: number
+          response_milliseconds_total?: number
+          serving_present_count?: number
+          source_data_type?: string
+          source_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_source_daily_metrics_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       product_submission_blocks: {
         Row: {
           blocked_until: string
@@ -2294,6 +2380,31 @@ export type Database = {
       }
       rebuild_shared_product_compatibility_summary: {
         Args: { p_shared_product_id: string }
+        Returns: undefined
+      }
+      record_product_source_daily_metric: {
+        Args: {
+          p_api_error_count: number
+          p_api_request_count: number
+          p_brand_present_count: number
+          p_cache_hit_count: number
+          p_category_present_count: number
+          p_completed_lookup_count: number
+          p_error_count: number
+          p_evaluated_product_count: number
+          p_exact_barcode_match_count: number
+          p_image_present_count: number
+          p_ingredients_present_count: number
+          p_lookup_count: number
+          p_lookup_kind: string
+          p_lookup_origin: string
+          p_match_count: number
+          p_reported_nutrient_total: number
+          p_response_milliseconds_total: number
+          p_serving_present_count: number
+          p_source_data_type: string
+          p_source_key: string
+        }
         Returns: undefined
       }
       refresh_nutrient_manual_entry_required_flags: {
