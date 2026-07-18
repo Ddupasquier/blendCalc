@@ -20,8 +20,10 @@ describe("IngredientCardBadges", () => {
 			},
 		});
 
-		expect(screen.getByLabelText("Source: USDA")).toBeVisible();
-		expect(screen.getByLabelText("Review status: Verified")).toBeVisible();
+		expect(screen.getByLabelText("Source: USDA")).toHaveClass("text-badge");
+		expect(screen.getByLabelText("Review status: Verified")).toHaveClass(
+			"text-badge",
+		);
 
 		const warning = screen.getByRole("img", {
 			name: "Gluten-free may conflict. Open ingredient for details.",
