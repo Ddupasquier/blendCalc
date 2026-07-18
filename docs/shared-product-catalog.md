@@ -35,9 +35,14 @@ Every published field records the observation that supplied it. Source observati
 selected field provenance, and disagreements are stored separately from the canonical
 product row.
 
-- Exact USDA barcode matches outrank user-entered values.
+- Exact USDA barcode matches outrank user-entered values. When USDA returns
+  duplicate records for one GTIN, select the newest active `Branded` record.
+- Generic USDA food searches prefer `Foundation`, then `SR Legacy`, then
+  `Survey (FNDDS)` only after description relevance has been compared.
 - Values from different sources are never averaged.
-- A secondary source may fill a nutrient only when the canonical source did not report it.
+- Do not fill a missing packaged-label nutrient from a different or generic food
+  record. Open Food Facts remains a secondary barcode/package cross-check rather
+  than a replacement for an exact USDA record.
 - A reported zero is kept as zero. A missing nutrient remains unknown.
 - Canonical categories are resolved through database options and mappings; they
   are not replaced with a generic packaged-food label during publication.

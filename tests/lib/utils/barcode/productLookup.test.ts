@@ -202,6 +202,9 @@ describe("barcode product mapping", () => {
 				description: "Test snack",
 				brandOwner: "Example Brand",
 				foodCategory: "Chips, Pretzels & Snacks",
+				dataType: "Branded",
+				publishedDate: "2024-05-01",
+				modifiedDate: "2024-04-15",
 				ingredients: "Corn, sunflower oil, salt",
 				allergens: ["corn"],
 				servingSize: 50,
@@ -243,6 +246,12 @@ describe("barcode product mapping", () => {
 		expect(draft?.ingredientList).toEqual(["Corn", "sunflower oil", "salt"]);
 		expect(draft?.allergens).toEqual(["corn"]);
 		expect(draft?.categories).toContain("Chips, Pretzels & Snacks");
+		expect(draft).toMatchObject({
+			sourceKey: "usda",
+			sourceDataType: "Branded",
+			sourcePublishedDate: "2024-05-01",
+			sourceModifiedDate: "2024-04-15",
+		});
 	});
 
 	it("marks approved catalog records as shared products", () => {

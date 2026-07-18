@@ -8,11 +8,12 @@ import {
 	type BarcodeProductDraft,
 	type OpenFoodFactsResponse,
 } from "$lib/utils/barcode/productLookup";
-import type { FdcFood, FdcSearchResponse } from "$lib/utils/food/types";
+import type { FdcFood } from "$lib/utils/food/types";
 import { APP_USER_AGENT } from "$lib/config/brand";
 import { getUsdaFoodById, searchUsdaBrandedFoods } from "./usdaCache.server";
 import { getProductReferenceData } from "./productReferenceData.server";
 import type { ProductReferenceData } from "$lib/utils/food/reference/productReferenceData";
+import { selectPreferredUsdaBarcodeFood } from "$lib/server/products/usdaFoodSelection";
 
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v2/product";
 const OPEN_FOOD_FACTS_FIELDS = [
@@ -53,28 +54,37 @@ export const lookupUsdaBarcodeProduct = async (
 	const canonicalBarcode = normalizeBarcode(barcode);
 	if (!canonicalBarcode) return null;
 
-	for (const candidate of getBarcodeLookupCandidates(barcode)) {
-		const searchData: FdcSearchResponse = await searchUsdaBrandedFoods(candidate);
-		const match = (searchData.foods ?? []).find(
-			(food) => food.gtinUpc && normalizeBarcode(food.gtinUpc) === canonicalBarcode,
-		);
-		if (!match) continue;
+	const searchResults = await Promise.allSettled(
+		getBarcodeLookupCandidates(barcode).map((candidate) =>
+			searchUsdaBrandedFoods(candidate)
+		),
+	);
+	if (searchResults.every((result) => result.status === "rejected")) {
+		throw searchResults[0]?.status === "rejected"
+			? searchResults[0].reason
+			: new Error("USDA barcode lookup failed.");
+	}
+	const matches = searchResults.flatMap((result) =>
+		result.status === "fulfilled" ? result.value.foods ?? [] : []
+	);
+	const uniqueMatches = [...new Map(
+		matches.map((food) => [food.fdcId, food]),
+	).values()];
+	const match = selectPreferredUsdaBarcodeFood(uniqueMatches, canonicalBarcode);
+	if (!match) return null;
 
-		let food: FdcFood;
-		try {
-			food = await getUsdaFoodById(match.fdcId);
-		} catch {
-			food = match;
-		}
-
-		return mapFdcBarcodeFood(
-			food,
-			canonicalBarcode,
-			referenceData ?? await getProductReferenceData(),
-		);
+	let food: FdcFood;
+	try {
+		food = await getUsdaFoodById(match.fdcId);
+	} catch {
+		food = match;
 	}
 
-	return null;
+	return mapFdcBarcodeFood(
+		food,
+		canonicalBarcode,
+		referenceData ?? await getProductReferenceData(),
+	);
 };
 
 export const lookupOpenFoodFactsBarcodeProduct = async (

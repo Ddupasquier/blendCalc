@@ -25,6 +25,11 @@ export type CustomFoodInput = {
 	volumeUnit?: ServingMeasureUnit;
 	barcode?: string;
 	barcodeSource?: FdcFood["barcodeSource"];
+	sourceKey?: string;
+	sourceLabel?: string;
+	sourceDataType?: string;
+	sourcePublishedDate?: string;
+	sourceModifiedDate?: string;
 	ingredients?: string;
 	ingredientList?: string[];
 	allergens?: string[];
@@ -165,6 +170,11 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		customFood: true,
 		barcode: input.barcode,
 		barcodeSource: input.barcodeSource,
+		sourceKey: input.sourceKey,
+		sourceLabel: input.sourceLabel,
+		sourceDataType: input.sourceDataType,
+		sourcePublishedDate: input.sourcePublishedDate,
+		sourceModifiedDate: input.sourceModifiedDate,
 		customServingLabel: buildCustomServingLabel({
 			servingLabel: input.servingLabel,
 			servingWeightGrams,

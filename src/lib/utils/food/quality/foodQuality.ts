@@ -63,7 +63,7 @@ export const getFoodQuality = (food: FdcFood): FoodQuality => {
 		return {
 			label: "Complete",
 			symbol: "✅",
-			title: "All vital nutrients are present from exact FDC fields.",
+			title: "All vital nutrients are present from exact source fields.",
 			score,
 			completeCount,
 			missingCount,
@@ -132,7 +132,7 @@ const getNutrientQualityDetail = (
 			label,
 			source,
 			sourceLabel: "Missing",
-			detail: "Not found in this FDC result.",
+			detail: "Not reported in this source record.",
 		};
 	}
 
@@ -152,7 +152,7 @@ const getNutrientQualityDetail = (
 			label,
 			source,
 			sourceLabel: "Mapped",
-			detail: "Resolved from an alternate FDC nutrient field.",
+			detail: "Resolved from an alternate source nutrient field.",
 		};
 	}
 
@@ -161,6 +161,6 @@ const getNutrientQualityDetail = (
 		label,
 		source,
 		sourceLabel: "Exact",
-		detail: "Matched the expected FDC nutrient field.",
+		detail: "Matched the expected source nutrient field.",
 	};
 };

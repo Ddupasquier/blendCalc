@@ -62,5 +62,10 @@ export const createCatalogFoodFromDraft = (
 				: draft.source === "open-food-facts"
 					? "imported"
 					: "moderator-reviewed",
+		sourceKey: draft.sourceKey,
+		sourceLabel: draft.sourceLabel,
+		sourceDataType: draft.sourceDataType,
+		sourcePublishedDate: draft.sourcePublishedDate,
+		sourceModifiedDate: draft.sourceModifiedDate,
 	}, category);
 };

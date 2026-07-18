@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge.svelte";
+	import SourceAttribution from "$lib/components/common/display/SourceAttribution.svelte";
 	import NutritionConfidenceDetails from "$lib/components/ingredients/nutrition/NutritionConfidenceDetails.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import {
@@ -88,6 +89,12 @@
 				<CustomBadge />
 			{/if}
 		</div>
+	{/if}
+	{#if food?.sourceLabel}
+		<SourceAttribution
+			label={food.sourceLabel}
+			dataType={food.sourceDataType ?? food.dataType}
+		/>
 	{/if}
 	{#if foodQuality && (foodQuality.label === "Partial" || foodQuality.label === "Limited")}
 		<NutritionConfidenceDetails quality={foodQuality} />

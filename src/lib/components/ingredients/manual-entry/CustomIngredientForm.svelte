@@ -43,6 +43,7 @@
 	} from "$lib/utils/barcode/barcode";
 	import {
 		type BarcodeProductDraft,
+		getBarcodeProductSourceDisplayLabel,
 	} from "$lib/utils/barcode/productLookup";
 	import { barcodeDraftHasEntryChanges } from "$lib/utils/barcode/barcodeDraftComparison";
 	import {
@@ -689,7 +690,9 @@
 		return {
 			name: barcodeShareValidation.draft.name,
 			brandOwner: barcodeShareValidation.draft.brandOwner,
-			sourceLabel: barcodeShareValidation.draft.sourceLabel,
+			sourceLabel: getBarcodeProductSourceDisplayLabel(
+				barcodeShareValidation.draft,
+			),
 			message:
 				barcodeShareValidation.message ??
 				"Use the verified information to share this product, or keep your current entry private.",
@@ -1129,6 +1132,21 @@
 			volumeUnit,
 			barcode: normalizedBarcode,
 			barcodeSource,
+			sourceKey: barcodeSource !== "manual"
+				? barcodeReferenceSourceDraft?.sourceKey
+				: undefined,
+			sourceLabel: barcodeSource !== "manual"
+				? barcodeReferenceSourceDraft?.sourceLabel
+				: undefined,
+			sourceDataType: barcodeSource !== "manual"
+				? barcodeReferenceSourceDraft?.sourceDataType
+				: undefined,
+			sourcePublishedDate: barcodeSource !== "manual"
+				? barcodeReferenceSourceDraft?.sourcePublishedDate
+				: undefined,
+			sourceModifiedDate: barcodeSource !== "manual"
+				? barcodeReferenceSourceDraft?.sourceModifiedDate
+				: undefined,
 			ingredients,
 			ingredientList,
 			allergens,
@@ -1220,7 +1238,9 @@
 					? {
 							name: barcodeReferenceDraft.name,
 							brandOwner: barcodeReferenceDraft.brandOwner,
-							sourceLabel: barcodeReferenceDraft.sourceLabel,
+							sourceLabel: getBarcodeProductSourceDisplayLabel(
+								barcodeReferenceDraft,
+							),
 						}
 					: null}
 				{servingLabel}

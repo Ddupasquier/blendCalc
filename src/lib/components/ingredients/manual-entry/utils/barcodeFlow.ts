@@ -9,6 +9,7 @@ import {
 } from "$lib/utils/barcode/barcodeDraftComparison";
 import {
 	lookupBarcodeProduct,
+	getBarcodeProductSourceDisplayLabel,
 	type BarcodeProductDraft,
 	type BarcodeLookupResult,
 } from "$lib/utils/barcode/productLookup";
@@ -171,7 +172,7 @@ export const getBarcodeFoundMessage = (
 	const mismatchCopy = namesLookDifferent(enteredName, draft.name)
 		? ` Lookup found “${draft.name}”, so reviewers can compare it with your typed label if you share this product.`
 		: " Reviewers can use this source reference if you share this product.";
-	return `Barcode matched ${draft.sourceLabel}.${mismatchCopy} Autofill is available, but optional.`;
+	return `Barcode matched ${getBarcodeProductSourceDisplayLabel(draft)}.${mismatchCopy} Autofill is available, but optional.`;
 };
 
 export const getBarcodeLookupMessage = (
@@ -261,13 +262,13 @@ export const getBarcodeImportMessage = (
 		: "";
 	const prefix =
 		mode === "autofill"
-			? `Autofilled from ${draft.sourceLabel}.`
-			: `Label data imported from ${draft.sourceLabel}.`;
+			? `Autofilled from ${getBarcodeProductSourceDisplayLabel(draft)}.`
+			: `Label data imported from ${getBarcodeProductSourceDisplayLabel(draft)}.`;
 	return `${prefix}${nutrientSummary}${volumeSummary} Review it before saving.`;
 };
 
 export const getKeepManualBarcodeMessage = (draft: BarcodeProductDraft) =>
-	`Keeping your manually entered label. Reviewers will see that ${draft.sourceLabel} has source data for this barcode if you share this product.`;
+	`Keeping your manually entered label. Reviewers will see that ${getBarcodeProductSourceDisplayLabel(draft)} has source data for this barcode if you share this product.`;
 
 export const getBarcodeReferenceReviewFlags = ({
 	shareWithCatalog,
@@ -314,6 +315,6 @@ export const getBarcodeReferenceReviewFlags = ({
 	}
 
 	return [
-		`User chose to share manually entered product data instead of autofilling from ${sourceDraft.sourceLabel}. Source product: “${sourceDraft.name}”.${sourceReference} Compare user-entered data against active source/API data before approval.`,
+		`User chose to share manually entered product data instead of autofilling from ${getBarcodeProductSourceDisplayLabel(sourceDraft)}. Source product: “${sourceDraft.name}”.${sourceReference} Compare user-entered data against active source/API data before approval.`,
 	];
 };

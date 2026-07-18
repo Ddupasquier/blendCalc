@@ -87,12 +87,20 @@ export type BarcodeProductDraft = {
 	source: "open-food-facts" | "usda" | "shared-catalog";
 	sourceLabel: string;
 	sourceReference?: string;
+	sourceKey?: string;
+	sourceDataType?: string;
+	sourcePublishedDate?: string;
+	sourceModifiedDate?: string;
 };
 
 export type BarcodeLookupResult =
 	| { status: "found"; draft: BarcodeProductDraft }
 	| { status: "not-found"; barcode: string }
 	| { status: "error"; barcode: string; message: string };
+
+export const getBarcodeProductSourceDisplayLabel = (
+	draft: Pick<BarcodeProductDraft, "sourceLabel" | "sourceDataType">,
+) => [draft.sourceLabel, draft.sourceDataType].filter(Boolean).join(" · ");
 
 const toNumber = (value: unknown) => {
 	const numberValue = typeof value === "string" ? Number.parseFloat(value) : Number(value);
@@ -266,6 +274,7 @@ export const mapOpenFoodFactsProduct = (
 		source: "open-food-facts",
 		sourceLabel: source.displayName,
 		sourceReference: canonicalBarcode,
+		sourceKey: source.key,
 	};
 };
 
@@ -313,6 +322,11 @@ export const mapFdcBarcodeFood = (
 		source: "usda",
 		sourceLabel: getProductDataSource(referenceData, "usda").displayName,
 		sourceReference: String(food.fdcId),
+		sourceKey: "usda",
+		sourceDataType: food.sourceDataType ?? food.dataType,
+		sourcePublishedDate:
+			food.sourcePublishedDate ?? food.publishedDate ?? food.publicationDate,
+		sourceModifiedDate: food.sourceModifiedDate ?? food.modifiedDate,
 	};
 };
 
@@ -339,6 +353,10 @@ export const mapSharedCatalogFood = (
 						confidence: "exact",
 					}
 				: undefined,
+		sourceKey: "shared-catalog",
+		sourceDataType: food.sourceDataType,
+		sourcePublishedDate: food.sourcePublishedDate,
+		sourceModifiedDate: food.sourceModifiedDate,
 	};
 };
 

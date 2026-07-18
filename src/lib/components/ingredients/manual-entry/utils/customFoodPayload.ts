@@ -15,6 +15,11 @@ export type ManualEntryCustomFoodPayload = {
 	volumeUnit: ServingMeasureUnit;
 	barcode: string | null;
 	barcodeSource: FdcFood["barcodeSource"];
+	sourceKey?: string;
+	sourceLabel?: string;
+	sourceDataType?: string;
+	sourcePublishedDate?: string;
+	sourceModifiedDate?: string;
 	ingredients: string;
 	ingredientList: string[];
 	allergens: string[];
@@ -76,6 +81,15 @@ export const createManualEntryCustomFood = (
 		volumeUnit: payload.useVolumeEquivalent ? payload.volumeUnit : undefined,
 		barcode: payload.barcode ?? undefined,
 		barcodeSource: payload.barcode ? payload.barcodeSource : undefined,
+		sourceKey: payload.barcode ? payload.sourceKey : undefined,
+		sourceLabel: payload.barcode ? payload.sourceLabel : undefined,
+		sourceDataType: payload.barcode ? payload.sourceDataType : undefined,
+		sourcePublishedDate: payload.barcode
+			? payload.sourcePublishedDate
+			: undefined,
+		sourceModifiedDate: payload.barcode
+			? payload.sourceModifiedDate
+			: undefined,
 		ingredients: payload.ingredients,
 		ingredientList: payload.ingredientList,
 		allergens: payload.allergens,

@@ -127,7 +127,7 @@ Columns: `value`, `filter_label`, `badge_label`, `display_order`,
 `filter_enabled`, `badge_enabled`, `description`, `created_at`, `updated_at`.
 
 Notes:
-- This is UI configuration for app source states such as USDA FDC, shared
+- This is UI configuration for app source states such as USDA, shared
   catalog, and custom foods.
 - Components render filter labels and source badges from this table instead of
   hardcoded component constants.
@@ -326,6 +326,13 @@ Columns: `id`, `barcode`, `product_name`, `brand_owner`, `search_text`,
 
 Notes:
 - Search uses indexed `search_text`.
+- The `food` JSON preserves source identity separately from catalog status. For
+  USDA-backed products this includes `sourceKey`, the DB-provided `sourceLabel`,
+  `sourceDataType` (`Branded`, `Foundation`, `SR Legacy`, or `Survey (FNDDS)`),
+  and available source publication/modification dates.
+- USDA barcode products use exact normalized GTIN matches and keep the newest
+  active `Branded` record. Missing nutrient values remain missing; values from
+  unrelated USDA records are not blended into the product.
 - Compatibility summaries are rebuilt from compatibility facts.
 - `category_option_id` is inherited from the approved submission. A database
   trigger blocks publication when no enabled canonical category can be resolved.

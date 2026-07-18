@@ -94,4 +94,21 @@ describe("NutritionDetailView", () => {
 		expect(screen.queryByRole("button", { name: "Add to Fridge" }))
 			.not.toBeInTheDocument();
 	});
+
+	it("shows stored source identity and USDA subtype", () => {
+		render(NutritionDetailView, {
+			props: {
+				food: {
+					...spinach,
+					sourceLabel: "USDA FoodData Central",
+					sourceDataType: "SR Legacy",
+				},
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(screen.getByText("Source: USDA FoodData Central")).toBeInTheDocument();
+		expect(screen.getByText("SR Legacy")).toBeInTheDocument();
+	});
 });

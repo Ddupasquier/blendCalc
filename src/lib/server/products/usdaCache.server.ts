@@ -3,12 +3,14 @@ import { env } from "$env/dynamic/private";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { normalizeFdcFood } from "$lib/utils/food/sources/fdc";
 import type { FdcFood, FdcSearchResponse } from "$lib/utils/food/types";
-import { rankIngredientSearchCandidates } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import { toJson } from "$lib/utils/storage/supabase/shared";
 import {
 	buildUsdaExactSearchQuery,
 	buildUsdaPartialSearchQuery,
 } from "$lib/server/products/usdaSearchQuery";
+import { getProductReferenceData } from "$lib/server/products/productReferenceData.server";
+import { getProductDataSource } from "$lib/utils/food/reference/productReferenceData";
+import { rankUsdaGenericFoods } from "$lib/server/products/usdaFoodSelection";
 
 const FDC_BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 const SEARCH_CACHE_MILLISECONDS = 12 * 60 * 60 * 1000;
@@ -16,6 +18,7 @@ const BARCODE_CACHE_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
 const DETAIL_CACHE_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
 const SEARCH_RESULT_LIMIT = 100;
 const PARTIAL_SEARCH_CANDIDATE_LIMIT = 100;
+const GENERIC_USDA_DATA_TYPES = "Foundation,SR Legacy,Survey (FNDDS)";
 
 type CacheRequestKind = "search" | "barcode-search" | "food-detail";
 
@@ -109,21 +112,39 @@ export const searchUsdaFoods = async (query: string): Promise<FdcFood[]> => {
 	const exactQuery = buildUsdaExactSearchQuery(normalizedQuery);
 	const partialQuery = buildUsdaPartialSearchQuery(normalizedQuery);
 	if (!exactQuery || !partialQuery) return [];
+	const usdaSource = getProductDataSource(
+		await getProductReferenceData(),
+		"usda",
+	);
+	const addProvenance = (foods: FdcFood[]) => foods.map((food) => ({
+		...food,
+		sourceKey: usdaSource.key,
+		sourceLabel: usdaSource.displayName,
+		sourceDataType: food.dataType,
+		sourcePublishedDate: food.publishedDate ?? food.publicationDate,
+		sourceModifiedDate: food.modifiedDate,
+	}));
 
 	const exactData = await fetchUsdaJson<FdcSearchResponse>({
 		path: "/foods/search",
 		params: {
 			query: exactQuery,
-			dataType: "Foundation,SR Legacy",
+			dataType: GENERIC_USDA_DATA_TYPES,
 			pageSize: String(SEARCH_RESULT_LIMIT),
 		},
 		requestKind: "search",
-		cacheValue: { query: exactQuery, pageSize: SEARCH_RESULT_LIMIT },
+		cacheValue: {
+			query: exactQuery,
+			dataType: GENERIC_USDA_DATA_TYPES,
+			pageSize: SEARCH_RESULT_LIMIT,
+		},
 		ttlMilliseconds: SEARCH_CACHE_MILLISECONDS,
 	});
-	const exactFoods = (exactData.foods ?? []).map(normalizeFdcFood);
+	const exactFoods = addProvenance(
+		(exactData.foods ?? []).map(normalizeFdcFood),
+	);
 	if (exactFoods.length > 0) {
-		return rankIngredientSearchCandidates(exactFoods, normalizedQuery)
+		return rankUsdaGenericFoods(exactFoods, normalizedQuery)
 			.slice(0, SEARCH_RESULT_LIMIT);
 	}
 
@@ -131,18 +152,19 @@ export const searchUsdaFoods = async (query: string): Promise<FdcFood[]> => {
 		path: "/foods/search",
 		params: {
 			query: partialQuery,
-			dataType: "Foundation,SR Legacy",
+			dataType: GENERIC_USDA_DATA_TYPES,
 			pageSize: String(PARTIAL_SEARCH_CANDIDATE_LIMIT),
 		},
 		requestKind: "search",
 		cacheValue: {
 			query: partialQuery,
+			dataType: GENERIC_USDA_DATA_TYPES,
 			pageSize: PARTIAL_SEARCH_CANDIDATE_LIMIT,
 		},
 		ttlMilliseconds: SEARCH_CACHE_MILLISECONDS,
 	});
-	return rankIngredientSearchCandidates(
-		(partialData.foods ?? []).map(normalizeFdcFood),
+	return rankUsdaGenericFoods(
+		addProvenance((partialData.foods ?? []).map(normalizeFdcFood)),
 		normalizedQuery,
 	).slice(0, SEARCH_RESULT_LIMIT);
 };
@@ -150,9 +172,9 @@ export const searchUsdaFoods = async (query: string): Promise<FdcFood[]> => {
 export const searchUsdaBrandedFoods = async (query: string) =>
 	fetchUsdaJson<FdcSearchResponse>({
 		path: "/foods/search",
-		params: { query, dataType: "Branded", pageSize: "25" },
+		params: { query, dataType: "Branded", pageSize: "50" },
 		requestKind: "barcode-search",
-		cacheValue: { query, pageSize: 25 },
+		cacheValue: { query, dataType: "Branded", pageSize: 50 },
 		ttlMilliseconds: BARCODE_CACHE_MILLISECONDS,
 	});
 
@@ -163,5 +185,15 @@ export const getUsdaFoodById = async (fdcId: number): Promise<FdcFood> => {
 		cacheValue: { fdcId },
 		ttlMilliseconds: DETAIL_CACHE_MILLISECONDS,
 	});
-	return normalizeFdcFood(food);
+	const normalizedFood = normalizeFdcFood(food);
+	const source = getProductDataSource(await getProductReferenceData(), "usda");
+	return {
+		...normalizedFood,
+		sourceKey: source.key,
+		sourceLabel: source.displayName,
+		sourceDataType: normalizedFood.dataType,
+		sourcePublishedDate:
+			normalizedFood.publishedDate ?? normalizedFood.publicationDate,
+		sourceModifiedDate: normalizedFood.modifiedDate,
+	};
 };

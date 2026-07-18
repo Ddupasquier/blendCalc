@@ -59,6 +59,11 @@ export interface FdcFood {
     reportedNutrientIds?: number[];
     // Branded food fields (optional)
     dataType?: string;
+    publishedDate?: string;
+    publicationDate?: string;
+    modifiedDate?: string;
+    availableDate?: string;
+    discontinuedDate?: string;
     servingSize?: number;
     servingSizeUnit?: string;
     householdServingFullText?: string;
@@ -75,6 +80,11 @@ export interface FdcFood {
     customFood?: boolean;
     barcode?: string;
     barcodeSource?: "open-food-facts" | "usda" | "manual" | "community";
+    sourceKey?: string;
+    sourceLabel?: string;
+    sourceDataType?: string;
+    sourcePublishedDate?: string;
+    sourceModifiedDate?: string;
     sharedProductId?: string;
     sharedProductConfidence?:
         | "source-verified"
