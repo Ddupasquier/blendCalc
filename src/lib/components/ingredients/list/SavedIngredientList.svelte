@@ -11,9 +11,10 @@
 		getPrimaryFoodWarning,
 	} from "$lib/utils/ingredients/ingredientListUi";
 	import {
-		getIngredientSourceBadgeLabel,
-		type IngredientSourceOption,
-	} from "$lib/utils/ingredients/ingredientSourceOptions";
+		getIngredientSourceBadge,
+		getIngredientTrustBadge,
+		type IngredientProvenanceOption,
+	} from "$lib/utils/ingredients/ingredientProvenance";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 	import IngredientBulkActions from "./IngredientBulkActions.svelte";
@@ -23,7 +24,7 @@
 	let {
 		activeList,
 		foods,
-		sourceOptions = [],
+		provenanceOptions = [],
 		activeRawCount = 0,
 		listLoading = false,
 		loadingMoreList = null,
@@ -48,7 +49,7 @@
 	}: {
 		activeList: SmoothieListKey;
 		foods: FdcFood[];
-		sourceOptions?: IngredientSourceOption[];
+		provenanceOptions?: IngredientProvenanceOption[];
 		activeRawCount?: number;
 		listLoading?: boolean;
 		loadingMoreList?: SmoothieListKey | null;
@@ -149,7 +150,8 @@
 								moveLabel={getIngredientMoveLabel(activeList)}
 								category={getFoodDisplayCategory(food)}
 								{warning}
-								sourceLabel={getIngredientSourceBadgeLabel(food, sourceOptions)}
+								sourceBadge={getIngredientSourceBadge(food, provenanceOptions)}
+								trustBadge={getIngredientTrustBadge(food, provenanceOptions)}
 								onToggle={() => onToggle(food.fdcId)}
 								onPreview={() => onPreview(food)}
 								onMove={() => onMoveItem(food)}

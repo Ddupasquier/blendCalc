@@ -66,14 +66,14 @@ Notes:
 | `user_food_list_items` | `id` | Many rows per auth user | User fridge and shopping-list items | `user_id → auth.users.id` |
 | `custom_foods` | `id` | Many rows per auth user | User-created custom foods and barcode/manual-entry payloads | `user_id → auth.users.id` |
 | `saved_drinks` | `id` | Many rows per auth user | Saved smoothie recipes/mixes | `user_id → auth.users.id` |
-| `ingredient_source_options` | `value` | Shared reference | DB-backed source filter and badge labels for ingredient list/search UI | No direct user ownership |
+| `ingredient_provenance_options` | `(dimension, value)` | Shared reference | DB-backed source/trust filters and badge presentation for ingredient list/search UI | No direct user ownership |
 
 ### `user_food_list_items`
 
 Stores the user's active ingredient lists.
 
 Columns: `id`, `user_id`, `list_type`, `fdc_id`, `food`,
-`food_identity_key`, `created_at`, `updated_at`.
+`food_identity_key`, `source_key`, `trust_status`, `created_at`, `updated_at`.
 
 Notes:
 - `list_type` is `fridge` or `shopping`.
@@ -84,6 +84,9 @@ Notes:
   renames keep the user's exact wording and casing.
 - `food_identity_key` is generated from the normalized barcode when available,
   otherwise from the FDC id.
+- `source_key` and `trust_status` are generated from the stored food provenance.
+  They keep provider origin separate from review status and support indexed,
+  server-side filtering without repeatedly interpreting JSON in the UI.
 - `(user_id, food_identity_key)` is unique, so one ingredient cannot exist in
   both Fridge and Shopping List for the same user.
 - `place_user_food_list_item` performs an atomic add or confirmed move and
@@ -106,7 +109,8 @@ Stores private user custom foods. Shared/public review happens through
 `shared_product_submissions`, not by making every custom food public.
 
 Columns: `id`, `user_id`, `fdc_id`, `barcode`, `name_key`,
-`category_option_id`, `search_text`, `food`, `created_at`, `updated_at`.
+`category_option_id`, `search_text`, `source_key`, `trust_status`, `food`,
+`created_at`, `updated_at`.
 
 Notes:
 - Unique safeguards prevent duplicate custom names and duplicate user barcodes.
@@ -126,19 +130,20 @@ Notes:
 - Drink names are unique per user.
 - `drink` is JSON because saved mix composition has app-specific structure.
 
-### `ingredient_source_options`
+### `ingredient_provenance_options`
 
-Stores app-ready source labels for ingredient filtering and badges.
+Stores app-ready source and trust labels for ingredient filtering and badges.
 
-Columns: `value`, `filter_label`, `badge_label`, `display_order`,
-`filter_enabled`, `badge_enabled`, `description`, `created_at`, `updated_at`.
+Columns: `dimension`, `value`, `filter_label`, `badge_label`, `badge_tone`,
+`display_order`, `filter_enabled`, `badge_enabled`, `description`, `created_at`,
+`updated_at`.
 
 Notes:
-- This is UI configuration for app source states such as USDA, shared
-  catalog, and custom foods.
-- Components render filter labels and source badges from this table instead of
-  hardcoded component constants.
-- Indexed by display order, filter-enabled rows, and badge-enabled rows.
+- `dimension` separates record origin (`source`) from review confidence (`trust`).
+- Supporting APIs used only for images or unit conversion do not become a food's
+  primary source badge.
+- Components render filters and both badge dimensions from one reference read
+  instead of hardcoded component constants.
 
 ## Nutrient Definitions, Values, and Validation
 

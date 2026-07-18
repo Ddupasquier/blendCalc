@@ -13,6 +13,7 @@
 		CUSTOM_FOODS_CHANGED_EVENT,
 		searchCustomFoods,
 	} from "$lib/utils/food/custom/customFoods";
+	import { matchesIngredientProvenance } from "$lib/utils/ingredients/ingredientProvenance";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
 	import Search from "$lib/assets/icons/Search.svelte";
 	import X from "$lib/assets/icons/X.svelte";
@@ -27,7 +28,9 @@
 		savedFoodIdentityKeys = new Set<string>(),
 		onSearchFocus = () => {},
 		autofocus = false,
-		sourceOptions = [],
+		provenanceOptions = [],
+		sourceFilter = "all",
+		trustFilter = "any",
 		actions,
 	}: IngredientSearchProps = $props();
 	let query = $state("");
@@ -44,6 +47,7 @@
 	let composing = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout>;
 	let searchRequestVersion = 0;
+	let activeFilterSignature = "";
 	const dispatch = createEventDispatcher();
 	const sortedResults = () => results;
 
@@ -68,6 +72,8 @@
 				const page = await searchFoodPage(searchString, {
 					offset: 0,
 					limit: INGREDIENT_SEARCH_PAGE_SIZE,
+					sourceFilter,
+					trustFilter,
 				});
 				if (requestVersion !== searchRequestVersion) return;
 				results = page.foods;
@@ -77,7 +83,9 @@
 				dispatch("results", { results, query: searchString });
 			} catch (searchError) {
 				if (requestVersion !== searchRequestVersion) return;
-				results = searchCustomFoods(searchString);
+				results = searchCustomFoods(searchString).filter((food) =>
+					matchesIngredientProvenance(food, sourceFilter, trustFilter)
+				);
 				hasMoreResults = false;
 				nextOffset = null;
 				activeResultIndex = -1;
@@ -111,6 +119,8 @@
 			const page = await searchFoodPage(searchString, {
 				offset,
 				limit: INGREDIENT_SEARCH_LOAD_MORE_PAGE_SIZE,
+				sourceFilter,
+				trustFilter,
 			});
 			if (
 				requestVersion !== searchRequestVersion ||
@@ -170,6 +180,17 @@
 		} else if (activeResultIndex >= resultCount) {
 			activeResultIndex = resultCount - 1;
 		}
+	});
+
+	$effect(() => {
+		const filterSignature = `${sourceFilter}:${trustFilter}`;
+		if (!searchReady) {
+			activeFilterSignature = filterSignature;
+			return;
+		}
+		if (filterSignature === activeFilterSignature) return;
+		activeFilterSignature = filterSignature;
+		triggerSearch();
 	});
 
 	const select = (food: FdcFood) => {
@@ -367,7 +388,7 @@
 		{loadingMore}
 		contentVersion={`${query.trim()}:${results.length}`}
 		{savedFoodIdentityKeys}
-		{sourceOptions}
+		{provenanceOptions}
 		onSelect={select}
 		{onAdd}
 		onActivate={(index) => (activeResultIndex = index)}

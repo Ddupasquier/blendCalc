@@ -16,6 +16,7 @@ export type IngredientSortOption = {
 export type IngredientFilterApplyPayload = {
 	query: string;
 	filterValue: string;
+	trustValue: string;
 	sortValue: string;
 };
 
@@ -24,6 +25,8 @@ export type IngredientFilterSheetProps = {
 	query: string;
 	filterValue: string;
 	filterOptions: readonly IngredientFilterOption[];
+	trustValue: string;
+	trustOptions: readonly IngredientFilterOption[];
 	sortValue: FoodListSort | string;
 	sortOptions: readonly IngredientSortOption[];
 	loading?: boolean;

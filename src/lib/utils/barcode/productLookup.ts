@@ -347,11 +347,19 @@ export const mapSharedCatalogFood = (
 ): BarcodeProductDraft | null => {
 	const draft = mapFdcBarcodeFood(food, barcode, referenceData);
 	if (!draft) return null;
+	const sourceKey = food.sourceKey ?? (
+		food.barcodeSource === "usda"
+			? "usda"
+			: food.barcodeSource === "open-food-facts"
+				? "open-food-facts"
+				: "shared-catalog"
+	);
+	const source = getProductDataSource(referenceData, sourceKey);
 
 	return {
 		...draft,
 		source: "shared-catalog",
-		sourceLabel: getProductDataSource(referenceData, "shared-catalog").displayName,
+		sourceLabel: food.sourceLabel ?? source.displayName,
 		sourceReference: food.sharedProductId,
 		resolvedCategory: food.foodCategory,
 		categoryResolution:
@@ -363,7 +371,7 @@ export const mapSharedCatalogFood = (
 						confidence: "exact",
 					}
 				: undefined,
-		sourceKey: "shared-catalog",
+		sourceKey: source.key,
 		sourceDataType: food.sourceDataType,
 		sourcePublishedDate: food.sourcePublishedDate,
 		sourceModifiedDate: food.sourceModifiedDate,

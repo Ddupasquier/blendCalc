@@ -276,6 +276,8 @@ describe("IngredientSearch", () => {
 			() => expect(searchFoodPage).toHaveBeenCalledWith("kiwi", {
 				offset: 0,
 				limit: 15,
+				sourceFilter: "all",
+				trustFilter: "any",
 			}),
 			{ timeout: 2000 },
 		);
@@ -335,6 +337,8 @@ describe("IngredientSearch", () => {
 		expect(searchFoodPage).toHaveBeenNthCalledWith(2, "tomato", {
 			offset: 2,
 			limit: 15,
+			sourceFilter: "all",
+			trustFilter: "any",
 		});
 
 		const returnButton = await screen.findByRole("button", {

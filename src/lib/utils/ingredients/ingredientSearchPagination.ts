@@ -9,6 +9,8 @@ export const INGREDIENT_SEARCH_MAX_PAGE_SIZE = 50;
 export type IngredientSearchPageOptions = {
 	offset?: number;
 	limit?: number;
+	sourceFilter?: string;
+	trustFilter?: string;
 };
 
 export type IngredientSearchPage = {

@@ -30,10 +30,10 @@
         type IngredientActionItem,
     } from "$lib/utils/ingredients/ingredientListUi";
     import {
-        getIngredientSourceFilterOptions,
-        readIngredientSourceOptions,
-        type IngredientSourceOption,
-    } from "$lib/utils/ingredients/ingredientSourceOptions";
+        getIngredientFilterOptions,
+        readIngredientProvenanceOptions,
+        type IngredientProvenanceOption,
+    } from "$lib/utils/ingredients/ingredientProvenance";
     import {
         buildIngredientRouteHref,
         findIngredientRouteFood,
@@ -78,6 +78,7 @@
     let barcodeLookupBusy = $state(false);
     let listQuery = $state("");
     let sourceFilter = $state("all");
+    let trustFilter = $state("any");
     let listSort = $state<FoodListSort>("recent");
     let activeList = $state<SmoothieListKey>(MIX_STORAGE_KEYS.fridge);
     let activeSheet = $state<"manual-entry" | "filters" | null>(null);
@@ -89,8 +90,8 @@
     let shoppingListTotalCount = $state(0);
     let listLoading = $state(true);
     let listLoadingError = $state("");
-    let sourceOptions = $state<IngredientSourceOption[]>([]);
-    let sourceOptionsError = $state("");
+    let provenanceOptions = $state<IngredientProvenanceOption[]>([]);
+    let provenanceOptionsError = $state("");
     let listLoadRequestId = 0;
     let loadingMoreList = $state<SmoothieListKey | null>(null);
     let listViewResetKey = $state(0);
@@ -141,7 +142,10 @@
     const filteredOnHand = $derived(onHand);
     const filteredShoppingList = $derived(shoppingList);
     const sourceFilterOptions = $derived(
-        getIngredientSourceFilterOptions(sourceOptions),
+        getIngredientFilterOptions(provenanceOptions, "source"),
+    );
+    const trustFilterOptions = $derived(
+        getIngredientFilterOptions(provenanceOptions, "trust"),
     );
     const activeFilteredList = $derived.by(() =>
         activeList === MIX_STORAGE_KEYS.fridge
@@ -252,12 +256,14 @@
             query: listQuery,
             sort: listSort,
             sourceFilter,
+            trustFilter,
         });
         const page =
             cloudPage ??
             readLocalIngredientListPage(key, currentOffset, pageSize, {
                 query: listQuery,
                 sourceFilter,
+                trustFilter,
                 sort: listSort,
             });
 
@@ -291,16 +297,16 @@
         }
     };
 
-    const loadSourceOptions = async () => {
-        const options = await readIngredientSourceOptions();
+    const loadProvenanceOptions = async () => {
+        const options = await readIngredientProvenanceOptions();
         if (!options?.length) {
-            sourceOptions = [];
-            sourceOptionsError =
-                "Ingredient source filters could not load. Try again after refreshing.";
+            provenanceOptions = [];
+            provenanceOptionsError =
+                "Ingredient source and review filters could not load. Try again after refreshing.";
             return;
         }
-        sourceOptions = options;
-        sourceOptionsError = "";
+        provenanceOptions = options;
+        provenanceOptionsError = "";
     };
 
     const getRouteFood = () =>
@@ -748,16 +754,19 @@
     const applyListFilters = ({
         query,
         filterValue,
+        trustValue,
         sortValue,
     }: IngredientFilterApplyPayload) => {
         const nextSort = sortValue as FoodListSort;
         const unchanged =
             listQuery === query &&
             sourceFilter === filterValue &&
+            trustFilter === trustValue &&
             listSort === nextSort;
 
         listQuery = query;
         sourceFilter = filterValue;
+        trustFilter = trustValue;
         listSort = nextSort;
         activeSheet = null;
         void closeRoutedPopin();
@@ -875,7 +884,7 @@
 
     onMount(() => {
         resetVisibleCounts();
-        void loadSourceOptions();
+        void loadProvenanceOptions();
         loadLists();
         window.addEventListener("storage", loadLists);
         window.addEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, loadLists);
@@ -913,13 +922,13 @@
             shoppingListCount={shoppingListTotalCount}
             {listLoading}
             {listActionError}
-            listLoadingError={listLoadingError || sourceOptionsError}
+            listLoadingError={listLoadingError || provenanceOptionsError}
             onSelectList={selectList}
         >
             <SavedIngredientList
                 {activeList}
                 foods={activeVisibleList}
-                {sourceOptions}
+                {provenanceOptions}
                 activeRawCount={activeRawList.length}
                 {listLoading}
                 {loadingMoreList}
@@ -954,6 +963,8 @@
     {barcodeLookupBusy}
     filterOptions={sourceFilterOptions}
     filterValue={sourceFilter}
+    trustOptions={trustFilterOptions}
+    trustValue={trustFilter}
     {listLoading}
     listMembership={selectedFoodListMembership}
     {imagePlacementItem}
@@ -967,7 +978,7 @@
     {searchAddFoodId}
     {savedFoodIdentityKeys}
     {searchViewOpen}
-    {sourceOptions}
+    {provenanceOptions}
     {selectedFood}
     {selectedFoodShowListActions}
     sortOptions={FOOD_LIST_SORT_OPTIONS}

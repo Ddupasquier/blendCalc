@@ -8,6 +8,7 @@
 	import IngredientCardActions from "$lib/components/ingredients/list/IngredientCardActions.svelte";
 	import IngredientCardBadges from "$lib/components/ingredients/list/IngredientCardBadges.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
+	import type { IngredientBadgeDescriptor } from "$lib/utils/ingredients/ingredientProvenance";
 
 	let {
 		food,
@@ -19,7 +20,8 @@
 		moveLabel,
 		category,
 		warning = null,
-		sourceLabel,
+		sourceBadge,
+		trustBadge,
 		onToggle,
 		onPreview,
 		onMove,
@@ -35,7 +37,8 @@
 		moveLabel: string;
 		category: string;
 		warning?: string | null;
-		sourceLabel: string;
+		sourceBadge: IngredientBadgeDescriptor | null;
+		trustBadge: IngredientBadgeDescriptor | null;
 		onToggle: () => void;
 		onPreview: () => void;
 		onMove: () => void;
@@ -66,8 +69,8 @@
 		</CircularMediaFrame>
 		<span class="saved-ingredient-card__copy">
 			<IngredientCardBadges
-				custom={food.customFood}
-				{sourceLabel}
+				{sourceBadge}
+				{trustBadge}
 				{warning}
 			/>
 			<strong title={food.description}>{food.description}</strong>

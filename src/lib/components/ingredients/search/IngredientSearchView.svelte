@@ -17,7 +17,9 @@
 		onAdd,
 		addingFoodId = null,
 		savedFoodIdentityKeys = new Set<string>(),
-		sourceOptions = [],
+		provenanceOptions = [],
+		sourceFilter = "all",
+		trustFilter = "any",
 		onScan,
 		onFilter,
 		onClose,
@@ -49,14 +51,16 @@
 			{onAdd}
 			{addingFoodId}
 			{savedFoodIdentityKeys}
-			{sourceOptions}
+			{provenanceOptions}
+			{sourceFilter}
+			{trustFilter}
 			onSearchFocus={() => {}}
 		>
 			{#snippet actions()}
 				<BarcodeScanButton scanning={scanning} compact onclick={onScan} />
 				<IconControlButton
 					class="ingredient-search-view__filter"
-					label="Filter saved ingredients"
+					label="Filter ingredients"
 					active={filtersActive}
 					aria-expanded={filtersActive}
 					aria-controls="ingredient-filter-sheet-title"

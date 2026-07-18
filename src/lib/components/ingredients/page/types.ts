@@ -9,7 +9,7 @@ import type {
 	IngredientActionItem,
 	IngredientListMembership,
 } from "$lib/utils/ingredients/ingredientListUi";
-import type { IngredientSourceOption } from "$lib/utils/ingredients/ingredientSourceOptions";
+import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 import type { FoodListSort } from "$lib/utils/list/listNavigation";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 
@@ -43,6 +43,8 @@ export type IngredientRoutePopinsProps = {
 	barcodeLookupBusy: boolean;
 	filterOptions: readonly IngredientFilterOption[];
 	filterValue: string;
+	trustOptions: readonly IngredientFilterOption[];
+	trustValue: string;
 	listLoading: boolean;
 	listMembership: IngredientListMembership;
 	imagePlacementItem: IngredientActionItem | null;
@@ -56,7 +58,7 @@ export type IngredientRoutePopinsProps = {
 	searchAddFoodId: number | null;
 	savedFoodIdentityKeys: ReadonlySet<string>;
 	searchViewOpen: boolean;
-	sourceOptions: readonly IngredientSourceOption[];
+	provenanceOptions: readonly IngredientProvenanceOption[];
 	selectedFood: FdcFood | null;
 	selectedFoodShowListActions: boolean;
 	sortOptions: readonly IngredientSortOption[];

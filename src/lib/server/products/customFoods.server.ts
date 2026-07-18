@@ -2,6 +2,7 @@ import type { Database } from "$lib/types/database.types";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type { FdcFood } from "$lib/utils/food/types";
+import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredientProvenance";
 import { tokenizeIngredientSearchText } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
 import { readFoodServingsByParent } from "$lib/utils/storage/supabase/servings";
@@ -14,6 +15,7 @@ export const searchUserCustomFoods = async (
 	supabase: SupabaseClient<Database>,
 	userId: string,
 	query: string,
+	filters: IngredientProvenanceFilters = {},
 ) => {
 	const terms = tokenizeIngredientSearchText(query).slice(0, MAX_SEARCH_TERMS);
 	if (terms.length === 0) return [];
@@ -24,6 +26,12 @@ export const searchUserCustomFoods = async (
 		.eq("user_id", userId)
 		.order("name_key", { ascending: true })
 		.limit(CUSTOM_SEARCH_CANDIDATE_LIMIT);
+	if (filters.sourceFilter && filters.sourceFilter !== "all") {
+		request = request.eq("source_key", filters.sourceFilter);
+	}
+	if (filters.trustFilter && filters.trustFilter !== "any") {
+		request = request.eq("trust_status", filters.trustFilter);
+	}
 	for (const term of terms) {
 		request = request.ilike("search_text", `%${term}%`);
 	}

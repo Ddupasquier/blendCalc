@@ -1,5 +1,5 @@
 import type { FdcFood } from "$lib/utils/food/types";
-import { getFoodSourceValue } from "$lib/utils/ingredients/ingredientSourceOptions";
+import { matchesIngredientProvenance } from "$lib/utils/ingredients/ingredientProvenance";
 import {
 	filterItemsByQuery,
 	sortFoodListItems,
@@ -13,6 +13,7 @@ import {
 export type IngredientListFilterOptions = {
 	query: string;
 	sourceFilter: string;
+	trustFilter?: string;
 	sort: FoodListSort;
 };
 
@@ -25,12 +26,13 @@ export const filterIngredientFoods = (
 	foods: FdcFood[],
 	options: IngredientListFilterOptions,
 ) => {
-	const sourceFilteredFoods =
-		options.sourceFilter === "all"
-			? foods
-			: foods.filter(
-					(food) => getFoodSourceValue(food) === options.sourceFilter,
-				);
+	const sourceFilteredFoods = foods.filter((food) =>
+		matchesIngredientProvenance(
+			food,
+			options.sourceFilter,
+			options.trustFilter ?? "any",
+		)
+	);
 
 	const queryFilteredFoods = filterItemsByQuery(
 		sourceFilteredFoods,

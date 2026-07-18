@@ -1,22 +1,34 @@
 <script lang="ts">
 	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
 	import StatusIconBadge from "$lib/components/common/badges/StatusIconBadge.svelte";
+import type { IngredientCardBadgesProps } from "./types";
 
 	let {
-		custom = false,
-		sourceLabel,
+		sourceBadge,
+		trustBadge = null,
 		warning = null,
-	}: {
-		custom?: boolean;
-		sourceLabel: string;
-		warning?: string | null;
-	} = $props();
+	}: IngredientCardBadgesProps = $props();
 </script>
 
 <span class="ingredient-card-badges">
-	<span class="source-badge" class:source-badge--custom={custom}>
-		{sourceLabel}
-	</span>
+	{#if sourceBadge}
+		<span
+			class="ingredient-card-badge"
+			data-tone={sourceBadge.tone}
+			aria-label={`Source: ${sourceBadge.label}`}
+		>
+			{sourceBadge.label}
+		</span>
+	{/if}
+	{#if trustBadge}
+		<span
+			class="ingredient-card-badge"
+			data-tone={trustBadge.tone}
+			aria-label={`Review status: ${trustBadge.label}`}
+		>
+			{trustBadge.label}
+		</span>
+	{/if}
 	{#if warning}
 		<StatusIconBadge
 			label={`${warning}. Open ingredient for details.`}
@@ -39,7 +51,7 @@
 		min-width: 0;
 	}
 
-	.source-badge {
+	.ingredient-card-badge {
 		display: inline-flex;
 		align-items: center;
 		box-sizing: border-box;
@@ -58,9 +70,19 @@
 		border-radius: $app-radius-pill;
 	}
 
-	.source-badge--custom {
+	.ingredient-card-badge[data-tone="custom"] {
 		color: $app-custom-strong;
 		background: color-mix(in srgb, $app-custom-bg 55%, $ingredient-surface-card);
+	}
+
+	.ingredient-card-badge[data-tone="success"] {
+		color: $ingredient-accent-primary;
+		background: $ingredient-surface-positive;
+	}
+
+	.ingredient-card-badge[data-tone="neutral"] {
+		color: $ingredient-text-muted;
+		background: $ingredient-surface-control;
 	}
 
 </style>

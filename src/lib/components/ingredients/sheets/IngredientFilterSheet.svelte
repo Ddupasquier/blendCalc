@@ -9,6 +9,8 @@
 		query,
 		filterValue,
 		filterOptions,
+		trustValue,
+		trustOptions,
 		sortValue,
 		sortOptions,
 		loading = false,
@@ -17,6 +19,7 @@
 	}: IngredientFilterSheetProps = $props();
 
 	let draftFilterValue = $state("");
+	let draftTrustValue = $state("");
 	let draftSortValue = $state("");
 
 	const visibleSortOptions = $derived(
@@ -27,6 +30,7 @@
 		onApply({
 			query,
 			filterValue: draftFilterValue,
+			trustValue: draftTrustValue,
 			sortValue: draftSortValue,
 		});
 	};
@@ -34,6 +38,7 @@
 	$effect(() => {
 		if (!open) return;
 		draftFilterValue = filterValue;
+		draftTrustValue = trustValue;
 		draftSortValue = sortValue;
 	});
 </script>
@@ -54,6 +59,21 @@
 						variant={draftFilterValue === option.value ? "primary" : "neutral"}
 						pressed={draftFilterValue === option.value}
 						onclick={() => (draftFilterValue = option.value)}
+					>
+						{option.label}
+					</PillButton>
+				{/each}
+			</div>
+		</section>
+
+		<section class="ingredient-filter-sheet__section" aria-labelledby="filter-trust-heading">
+			<h3 id="filter-trust-heading">Review status</h3>
+			<div class="ingredient-filter-sheet__chips" role="group" aria-labelledby="filter-trust-heading">
+				{#each trustOptions as option (option.value)}
+					<PillButton
+						variant={draftTrustValue === option.value ? "primary" : "neutral"}
+						pressed={draftTrustValue === option.value}
+						onclick={() => (draftTrustValue = option.value)}
 					>
 						{option.label}
 					</PillButton>

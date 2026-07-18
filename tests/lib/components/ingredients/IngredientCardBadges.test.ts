@@ -6,10 +6,22 @@ describe("IngredientCardBadges", () => {
 	it("shows a compact warning symbol while preserving its accessible detail", () => {
 		render(IngredientCardBadges, {
 			props: {
-				sourceLabel: "FDC",
+				sourceBadge: {
+					dimension: "source",
+					label: "USDA",
+					tone: "info",
+				},
+				trustBadge: {
+					dimension: "trust",
+					label: "Verified",
+					tone: "success",
+				},
 				warning: "Gluten-free may conflict",
 			},
 		});
+
+		expect(screen.getByLabelText("Source: USDA")).toBeVisible();
+		expect(screen.getByLabelText("Review status: Verified")).toBeVisible();
 
 		const warning = screen.getByRole("img", {
 			name: "Gluten-free may conflict. Open ingredient for details.",

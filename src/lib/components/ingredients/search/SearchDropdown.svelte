@@ -1,16 +1,16 @@
 <script lang="ts">
     import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls.svelte";
     import FoodSymbol from "$lib/assets/icons/FoodSymbol.svelte";
-    import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
-    import { getFoodQuality } from "$lib/utils/food/quality/foodQuality";
+    import IngredientCardBadges from "$lib/components/ingredients/list/IngredientCardBadges.svelte";
     import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
     import {
         getFoodDisplayCategory,
         getPrimaryFoodWarning,
     } from "$lib/utils/ingredients/ingredientListUi";
     import {
-        getIngredientSourceBadgeLabel,
-    } from "$lib/utils/ingredients/ingredientSourceOptions";
+        getIngredientSourceBadge,
+        getIngredientTrustBadge,
+    } from "$lib/utils/ingredients/ingredientProvenance";
     import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
     import Chevron from "$lib/assets/icons/Chevron.svelte";
@@ -26,7 +26,7 @@
         loadingMore = false,
         contentVersion = 0,
         savedFoodIdentityKeys = new Set<string>(),
-        sourceOptions = [],
+        provenanceOptions = [],
         onSelect,
         onAdd = () => {},
         onActivate = () => {},
@@ -62,7 +62,6 @@
             aria-busy={loadingMore}
         >
             {#each results as food, index (food.fdcId)}
-                {@const quality = getFoodQuality(food)}
                 {@const primaryWarning = getPrimaryFoodWarning(food, foodPreferenceContext.current)}
                 {@const isAdding = addingFoodId === food.fdcId}
                 {@const isSaved = savedFoodIdentityKeys.has(getFoodIdentityKey(food))}
@@ -93,20 +92,11 @@
                                 <span class="result-copy">
                                     <span class="result-name">{formatName(food.description)}</span>
                                     <span class="result-category">{getFoodDisplayCategory(food)}</span>
-                                    <span class="result-badges" aria-label={quality.title}>
-                                        <span
-                                            class="result-badge"
-                                            class:result-badge--custom={food.customFood}
-                                        >
-                                            {getIngredientSourceBadgeLabel(food, sourceOptions)}
-                                        </span>
-                                        {#if primaryWarning}
-                                            <span class="result-warning">
-                                                <WarningTriangle size={10} strokeWidth={2.7} />
-                                                {primaryWarning}
-                                            </span>
-                                        {/if}
-                                    </span>
+                                    <IngredientCardBadges
+                                        sourceBadge={getIngredientSourceBadge(food, provenanceOptions)}
+                                        trustBadge={getIngredientTrustBadge(food, provenanceOptions)}
+                                        warning={primaryWarning}
+                                    />
                                 </span>
                             </button>
                         </span>
@@ -269,44 +259,6 @@
         line-height: 1.25;
         text-overflow: ellipsis;
         white-space: nowrap;
-    }
-
-    .result-badges {
-        display: flex;
-        flex-wrap: wrap;
-        gap: $app-gap-inline-compact;
-        margin-top: 0;
-    }
-
-    .result-badge {
-        width: fit-content;
-        padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
-        color: color-mix(in srgb, $ingredient-accent-info 86%, $ingredient-text-primary);
-        background: color-mix(in srgb, $ingredient-accent-info 18%, $ingredient-surface-card);
-        border: 0;
-        border-radius: $app-radius-pill;
-        font-size: $app-font-size-xs;
-        font-weight: $app-font-weight-bold;
-        line-height: 1.2;
-        text-transform: uppercase;
-    }
-
-    .result-badge--custom {
-        color: $app-btn-text;
-        background: $app-custom-strong;
-        border-color: $app-custom-strong;
-    }
-
-    .result-warning {
-        width: fit-content;
-        padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
-        color: $app-warning-strong;
-        background: $app-warning-bg;
-        border: $app-warning-border;
-        border-radius: $app-radius-pill;
-        font-size: $app-font-size-xs;
-        font-weight: $app-font-weight-bold;
-        line-height: 1.2;
     }
 
     :global(.result-chevron) {

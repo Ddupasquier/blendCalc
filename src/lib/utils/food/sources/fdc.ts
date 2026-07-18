@@ -81,6 +81,8 @@ export const searchFoodPage = async (
 		q: trimmed,
 		offset: String(offset),
 		limit: String(limit),
+		source: options.sourceFilter ?? "all",
+		trust: options.trustFilter ?? "any",
 	});
 
 	const response = await fetch(

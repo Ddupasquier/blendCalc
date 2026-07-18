@@ -1,6 +1,6 @@
 import type { Snippet } from "svelte";
 import type { FdcFood } from "$lib/utils/food/types";
-import type { IngredientSourceOption } from "$lib/utils/ingredients/ingredientSourceOptions";
+import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 
 export type IngredientSearchTriggerProps = {
 	label?: string;
@@ -14,7 +14,9 @@ export type IngredientSearchProps = {
 	savedFoodIdentityKeys?: ReadonlySet<string>;
 	onSearchFocus?: () => void;
 	autofocus?: boolean;
-	sourceOptions?: readonly IngredientSourceOption[];
+	provenanceOptions?: readonly IngredientProvenanceOption[];
+	sourceFilter?: string;
+	trustFilter?: string;
 	actions?: Snippet;
 };
 
@@ -25,7 +27,9 @@ export type IngredientSearchViewProps = {
 	onAdd: (food: FdcFood) => void | Promise<void>;
 	addingFoodId?: number | null;
 	savedFoodIdentityKeys?: ReadonlySet<string>;
-	sourceOptions?: readonly IngredientSourceOption[];
+	provenanceOptions?: readonly IngredientProvenanceOption[];
+	sourceFilter?: string;
+	trustFilter?: string;
 	onScan: () => void;
 	onFilter: () => void;
 	onClose: () => void;
@@ -39,7 +43,7 @@ export type SearchDropdownProps = {
 	loadingMore?: boolean;
 	contentVersion?: string | number;
 	savedFoodIdentityKeys?: ReadonlySet<string>;
-	sourceOptions?: readonly IngredientSourceOption[];
+	provenanceOptions?: readonly IngredientProvenanceOption[];
 	onSelect: (food: FdcFood) => void;
 	onAdd?: (food: FdcFood) => void | Promise<void>;
 	onActivate?: (index: number) => void;

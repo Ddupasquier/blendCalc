@@ -16,6 +16,8 @@
 		barcodeLookupBusy,
 		filterOptions,
 		filterValue,
+		trustOptions,
+		trustValue,
 		listLoading,
 		listMembership,
 		imagePlacementItem,
@@ -29,7 +31,7 @@
 		searchAddFoodId,
 		savedFoodIdentityKeys,
 		searchViewOpen,
-		sourceOptions,
+		provenanceOptions,
 		selectedFood,
 		selectedFoodShowListActions,
 		sortOptions,
@@ -93,6 +95,8 @@
 	query={listQuery}
 	{filterValue}
 	filterOptions={[...filterOptions]}
+	{trustValue}
+	trustOptions={[...trustOptions]}
 	sortValue={listSort}
 	sortOptions={[...sortOptions]}
 	loading={listLoading}
@@ -126,7 +130,9 @@
 		onAdd={onAddSearchResult}
 		addingFoodId={searchAddFoodId}
 		{savedFoodIdentityKeys}
-		{sourceOptions}
+		{provenanceOptions}
+		sourceFilter={filterValue}
+		trustFilter={trustValue}
 		onScan={onScan}
 		onFilter={onFilterFromSearch}
 		onClose={onCloseSearch}

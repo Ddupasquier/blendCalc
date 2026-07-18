@@ -318,6 +318,8 @@ export type Database = {
           id: string
           name_key: string | null
           search_text: string
+          source_key: string | null
+          trust_status: string | null
           updated_at: string
           user_id: string
         }
@@ -330,6 +332,8 @@ export type Database = {
           id?: string
           name_key?: string | null
           search_text?: string
+          source_key?: string | null
+          trust_status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -342,6 +346,8 @@ export type Database = {
           id?: string
           name_key?: string | null
           search_text?: string
+          source_key?: string | null
+          trust_status?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -781,12 +787,14 @@ export type Database = {
           },
         ]
       }
-      ingredient_source_options: {
+      ingredient_provenance_options: {
         Row: {
           badge_enabled: boolean
           badge_label: string | null
+          badge_tone: string
           created_at: string
           description: string
+          dimension: string
           display_order: number
           filter_enabled: boolean
           filter_label: string
@@ -796,8 +804,10 @@ export type Database = {
         Insert: {
           badge_enabled?: boolean
           badge_label?: string | null
+          badge_tone?: string
           created_at?: string
           description?: string
+          dimension: string
           display_order: number
           filter_enabled?: boolean
           filter_label: string
@@ -807,8 +817,10 @@ export type Database = {
         Update: {
           badge_enabled?: boolean
           badge_label?: string | null
+          badge_tone?: string
           created_at?: string
           description?: string
+          dimension?: string
           display_order?: number
           filter_enabled?: boolean
           filter_label?: string
@@ -2336,6 +2348,8 @@ export type Database = {
           food_identity_key: string | null
           id: string
           list_type: string
+          source_key: string | null
+          trust_status: string | null
           updated_at: string
           user_id: string
         }
@@ -2346,6 +2360,8 @@ export type Database = {
           food_identity_key?: string | null
           id?: string
           list_type: string
+          source_key?: string | null
+          trust_status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -2356,6 +2372,8 @@ export type Database = {
           food_identity_key?: string | null
           id?: string
           list_type?: string
+          source_key?: string | null
+          trust_status?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -2458,6 +2476,8 @@ export type Database = {
         Returns: string
       }
       food_metadata_search_text: { Args: { p_food: Json }; Returns: string }
+      food_source_key: { Args: { p_food: Json }; Returns: string }
+      food_trust_status: { Args: { p_food: Json }; Returns: string }
       is_valid_gtin: { Args: { p_value: string }; Returns: boolean }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
       normalize_food_category_value: {

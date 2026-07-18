@@ -15,6 +15,7 @@ import {
 	type NutrientRelationshipRule,
 } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import type { FdcFood } from "$lib/utils/food/types";
+import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredientProvenance";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import { tokenizeIngredientSearchText } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
@@ -244,6 +245,7 @@ export const getSharedProductByBarcode = async (
 export const searchApprovedSharedProducts = async (
 	supabase: SupabaseClient<Database>,
 	query: string,
+	filters: IngredientProvenanceFilters = {},
 ) => {
 	const terms = tokenizeIngredientSearchText(query).slice(0, 6);
 	if (terms.length === 0) return [];
@@ -254,6 +256,17 @@ export const searchApprovedSharedProducts = async (
 		.eq("status", "active")
 		.order("product_name", { ascending: true })
 		.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT);
+	if (filters.sourceFilter === "usda") request = request.eq("source", "usda");
+	if (filters.sourceFilter === "open-food-facts") {
+		request = request.eq("source", "open-food-facts");
+	}
+	if (filters.sourceFilter === "shared-catalog") {
+		request = request.eq("source", "community-reviewed");
+	}
+	if (filters.sourceFilter === "custom") return [];
+	if (filters.trustFilter && filters.trustFilter !== "any") {
+		request = request.eq("confidence", filters.trustFilter);
+	}
 	for (const term of terms) {
 		request = request.ilike("search_text", `%${term}%`);
 	}

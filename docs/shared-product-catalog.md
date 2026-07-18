@@ -104,6 +104,13 @@ database from its records.
 
 Keep source handling explicit. Do not merge Open Food Facts payloads into `shared_products` unless the entire downstream database licensing and attribution model is intentionally changed.
 
+Ingredient cards and filters keep two separate identities: the food record's
+origin (`usda`, `open-food-facts`, `shared-catalog`, or `custom`) and its current
+trust status (`source-verified`, `imported`, `corroborated`,
+`moderator-reviewed`, or `user-private`). Public catalog membership does not
+erase the original provider, and image/unit-support sources are shown only in
+their detailed provenance rather than as the primary food source.
+
 ## Source quality monitoring
 
 External source usage is measured in privacy-safe daily aggregates. Runtime

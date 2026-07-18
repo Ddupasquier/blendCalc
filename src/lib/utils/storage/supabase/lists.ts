@@ -38,6 +38,7 @@ type CloudSmoothieListPageOptions = {
 	query?: string;
 	sort?: CloudListSort;
 	sourceFilter?: string;
+	trustFilter?: string;
 };
 
 type CloudListQuery = {
@@ -65,19 +66,12 @@ const applyFoodSearchFilters = <Query extends CloudListQuery>(
 		);
 	}
 
-	if (options.sourceFilter === "custom") {
-		nextQuery = nextQuery.eq("food->>customFood", "true");
+	if (options.sourceFilter && options.sourceFilter !== "all") {
+		nextQuery = nextQuery.eq("source_key", options.sourceFilter);
 	}
 
-	if (options.sourceFilter === "shared") {
-		nextQuery = nextQuery.not("food->>sharedProductId", "is", null);
-	}
-
-	if (options.sourceFilter === "fdc") {
-		nextQuery = nextQuery.or(
-			"food->>customFood.is.null,food->>customFood.eq.false",
-		);
-		nextQuery = nextQuery.is("food->>sharedProductId", null);
+	if (options.trustFilter && options.trustFilter !== "any") {
+		nextQuery = nextQuery.eq("trust_status", options.trustFilter);
 	}
 
 	return nextQuery as Query;
