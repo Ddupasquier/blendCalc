@@ -75,35 +75,37 @@
 			</span>
 		</header>
 
-		<section class="nutrition-detail-view__amount" aria-label="Viewing amount">
-			<h2>Viewing Amount</h2>
-			<div class="nutrition-detail-view__amount-controls">
-				<AcceleratingStepButton
-					label={`Decrease viewing amount by ${NUTRITION_VIEWING_GRAM_STEP}g; press and hold to accelerate`}
-					variant="soft"
-					size="small"
-					disabled={viewingGrams <= MIN_NUTRITION_VIEWING_GRAMS}
-					onStep={decreaseViewingAmount}
-				>
-					<Minus size={18} strokeWidth={2.6} />
-				</AcceleratingStepButton>
-				<strong aria-live="polite">{formatViewingGrams(viewingGrams)}</strong>
-				<AcceleratingStepButton
-					label={`Increase viewing amount by ${NUTRITION_VIEWING_GRAM_STEP}g; press and hold to accelerate`}
-					variant="primary"
-					size="small"
-					disabled={viewingGrams >= MAX_NUTRITION_VIEWING_GRAMS}
-					onStep={increaseViewingAmount}
-				>
-					<Plus size={18} strokeWidth={2.6} />
-				</AcceleratingStepButton>
-			</div>
-		</section>
-		<NutritionServingSelect
-			{food}
-			{viewingGrams}
-			onSelect={(gramWeight) => (viewingGrams = gramWeight)}
-		/>
+		<div class="nutrition-detail-view__measurement-controls">
+			<section class="nutrition-detail-view__amount" aria-label="Viewing amount">
+				<h2>Viewing Amount</h2>
+				<div class="nutrition-detail-view__amount-controls">
+					<AcceleratingStepButton
+						label={`Decrease viewing amount by ${NUTRITION_VIEWING_GRAM_STEP}g; press and hold to accelerate`}
+						variant="soft"
+						size="small"
+						disabled={viewingGrams <= MIN_NUTRITION_VIEWING_GRAMS}
+						onStep={decreaseViewingAmount}
+					>
+						<Minus size={18} strokeWidth={2.6} />
+					</AcceleratingStepButton>
+					<strong aria-live="polite">{formatViewingGrams(viewingGrams)}</strong>
+					<AcceleratingStepButton
+						label={`Increase viewing amount by ${NUTRITION_VIEWING_GRAM_STEP}g; press and hold to accelerate`}
+						variant="primary"
+						size="small"
+						disabled={viewingGrams >= MAX_NUTRITION_VIEWING_GRAMS}
+						onStep={increaseViewingAmount}
+					>
+						<Plus size={18} strokeWidth={2.6} />
+					</AcceleratingStepButton>
+				</div>
+			</section>
+			<NutritionServingSelect
+				{food}
+				{viewingGrams}
+				onSelect={(gramWeight) => (viewingGrams = gramWeight)}
+			/>
+		</div>
 	</ViewTop>
 
 	<ViewBody scroll>
@@ -150,6 +152,11 @@
 		display: inline-grid;
 		place-items: center;
 		color: $ingredient-accent-info;
+	}
+
+	.nutrition-detail-view__measurement-controls {
+		display: grid;
+		gap: 0;
 	}
 
 	.nutrition-detail-view__amount {

@@ -57,8 +57,8 @@
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr);
 		align-items: center;
-		gap: $app-gap-md;
-		padding-block: $app-gap-sm;
+		gap: $app-vertical-stack-gap;
+		padding: $app-vertical-stack-gap 0;
 		border-bottom: $app-border-divider;
 
 		span {
@@ -73,7 +73,7 @@
 			width: 100%;
 			min-width: 0;
 			min-height: $ingredient-control-height;
-			padding-inline: $app-gap-sm;
+			padding: 0 $ingredient-control-padding-x;
 			color: $ingredient-text-primary;
 			font: inherit;
 			font-weight: $app-font-weight-semibold;
