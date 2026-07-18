@@ -348,6 +348,17 @@ const fillIdentityStep = async (name = "Test ingredient") => {
 	});
 };
 
+const openEmptyMacrosStep = async () => {
+	await openManualForm();
+	await fillIdentityStep();
+	await continueToNextStep();
+	await fireEvent.input(screen.getByLabelText(/weight \(g\)/i), {
+		target: { value: "34" },
+	});
+	await continueToNextStep();
+	await waitFor(() => expect(screen.getByLabelText(/calories/i)).toBeInTheDocument());
+};
+
 const fillRequiredCustomIngredient = async (
 	name: string,
 	options: {
@@ -472,6 +483,55 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByText("Name must be at least 3 characters")).toBeInTheDocument();
 	});
 
+	it("waits for Continue before showing required macro warnings", async () => {
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openEmptyMacrosStep();
+		expect(screen.queryByText("Calories is required")).not.toBeInTheDocument();
+		expect(screen.queryByText("Total Fat is required")).not.toBeInTheDocument();
+
+		await continueToNextStep();
+		expect(screen.getByText("Calories is required")).toBeInTheDocument();
+		expect(screen.getByText("Total Fat is required")).toBeInTheDocument();
+	});
+
+	it("treats forward progress-tab navigation as a validation attempt", async () => {
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openEmptyMacrosStep();
+		expect(screen.queryByText("Calories is required")).not.toBeInTheDocument();
+
+		await goToStep(/share/i);
+		expect(screen.getByText("Calories is required")).toBeInTheDocument();
+		expect(screen.getByText("Total Fat is required")).toBeInTheDocument();
+	});
+
+	it("requires a new forward attempt after a previously valid step changes", async () => {
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+
+		await openEmptyMacrosStep();
+		for (const [label, value] of [
+			[/calories/i, "50"],
+			[/total fat/i, "0"],
+			[/total carbohydrates/i, "13"],
+			[/protein/i, "0"],
+			[/sodium/i, "0"],
+		] as const) {
+			await fireEvent.input(screen.getByLabelText(label), {
+				target: { value },
+			});
+		}
+		await continueToNextStep();
+		await goToStep(/macros/i);
+		await fireEvent.input(screen.getByLabelText(/calories/i), {
+			target: { value: "" },
+		});
+
+		expect(screen.queryByText("Calories is required")).not.toBeInTheDocument();
+		await continueToNextStep();
+		expect(screen.getByText("Calories is required")).toBeInTheDocument();
+	});
+
 	it("keeps barcode scanning visible while manual entry starts collapsed", () => {
 		render(CustomIngredientForm, {
 			props: {
@@ -508,9 +568,11 @@ describe("CustomIngredientForm", () => {
 
 	it("creates a custom ingredient from label nutrition values", async () => {
 		const onCreate = vi.fn();
+		const onClose = vi.fn();
 		render(CustomIngredientForm, {
 			props: {
 				onCreate,
+				onClose,
 			},
 		});
 
@@ -534,6 +596,7 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByText("Enter manually").closest("details")).not.toHaveAttribute(
 			"open",
 		);
+		expect(onClose).not.toHaveBeenCalled();
 	});
 
 	it("requires DB-backed sodium before saving manual nutrition when blank", async () => {

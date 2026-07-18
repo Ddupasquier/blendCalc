@@ -6,6 +6,7 @@
 		manageDialogFocus,
 		trapDialogFocus,
 	} from "$lib/utils/accessibility/dialogFocus";
+	import { createBackdropDismissal } from "$lib/utils/accessibility/backdropDismissal";
 
 	let {
 		open = false,
@@ -41,6 +42,11 @@
 		if (modal && sheetElement) trapDialogFocus(event, sheetElement);
 	};
 
+	const backdropDismissal = createBackdropDismissal({
+		canDismiss: () => open && closeOnBackdrop,
+		onDismiss: () => onClose(),
+	});
+
 	$effect(() => {
 		if (!open || !sheetElement) return;
 		return manageDialogFocus(sheetElement);
@@ -53,7 +59,10 @@
 	);
 </script>
 
-<svelte:window onkeydown={handleWindowKeydown} />
+<svelte:window
+	onblur={backdropDismissal.handleWindowBlur}
+	onkeydown={handleWindowKeydown}
+/>
 
 {#if open}
 	{#if backdrop}
@@ -61,7 +70,9 @@
 			class="sheet-base__backdrop"
 			class:sheet-base__backdrop--full-viewport={!aboveNav}
 			role="presentation"
-			onclick={closeOnBackdrop ? onClose : undefined}
+			onpointercancel={backdropDismissal.handleBackdropPointerCancel}
+			onpointerdown={backdropDismissal.handleBackdropPointerDown}
+			onpointerup={backdropDismissal.handleBackdropPointerUp}
 			transition:fade={{ duration: 180 }}
 		></div>
 	{/if}
@@ -85,6 +96,7 @@
 		tabindex="-1"
 		onclick={(event) => event.stopPropagation()}
 		onkeydown={handleDialogKeydown}
+		onpointerdown={backdropDismissal.handleSheetPointerDown}
 	>
 		<div
 			class={[

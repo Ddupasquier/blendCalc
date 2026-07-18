@@ -7,7 +7,6 @@ import type {
 export type ManualEntrySubmitBlock = {
 	message: string;
 	step: ManualEntryStepId;
-	mark: "all" | "through-share";
 };
 
 export const getManualEntrySubmitState = ({
@@ -46,7 +45,6 @@ export const getManualEntrySubmitState = ({
 			block: {
 				message: "Nutrition validation rules are still loading. Try again in a moment.",
 				step: "macros",
-				mark: "through-share",
 			},
 		};
 	}
@@ -57,7 +55,6 @@ export const getManualEntrySubmitState = ({
 			block: {
 				message: blockingValidation.message,
 				step: blockingValidation.step,
-				mark: "all",
 			},
 		};
 	}
@@ -71,7 +68,6 @@ export const getManualEntrySubmitState = ({
 			block: {
 				message: volumeAmountRequiredMessage,
 				step: "servings",
-				mark: "through-share",
 			},
 		};
 	}
@@ -82,7 +78,6 @@ export const getManualEntrySubmitState = ({
 			block: {
 				message: "Enter a valid 8, 12, 13, or 14 digit UPC/EAN barcode.",
 				step: "identity",
-				mark: "through-share",
 			},
 		};
 	}
@@ -98,7 +93,6 @@ export const getManualEntrySubmitState = ({
 					? "Add nutrition label and barcode photos before sharing this product."
 					: "Add front package, nutrition label, and barcode photos before sharing this product.",
 				step: "share",
-				mark: "all",
 			},
 		};
 	}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet.svelte";
 	import CustomIngredientForm from "$lib/components/ingredients/manual-entry/CustomIngredientForm.svelte";
+	import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 	import type { ManualEntrySheetProps } from "$lib/components/ingredients/sheets/types";
 
 	let {
@@ -11,6 +12,11 @@
 		onCreate,
 		onLookupStateChange = () => {},
 	}: ManualEntrySheetProps = $props();
+
+	const handleCreate: ManualEntryCreateHandler = async (food, context) => {
+		onClose();
+		await onCreate(food, context);
+	};
 </script>
 
 <BottomSheet
@@ -23,7 +29,7 @@
 	onClose={onClose}
 >
 	<CustomIngredientForm
-		{onCreate}
+		onCreate={handleCreate}
 		{scanSignal}
 		{onClose}
 		{onScannerClose}

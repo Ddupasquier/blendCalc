@@ -10,6 +10,10 @@ const manualEntrySheetPath = resolve(
 	process.cwd(),
 	"src/lib/components/ingredients/sheets/ManualEntrySheet.svelte",
 );
+const manualEntryFormPath = resolve(
+	process.cwd(),
+	"src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte",
+);
 
 describe("BottomSheet shared chrome", () => {
 	it("keeps the drag handle horizontally centered", () => {
@@ -27,5 +31,23 @@ describe("BottomSheet shared chrome", () => {
 		expect(source).toContain("showBack = true");
 		expect(source).toContain("{#if showBack}");
 		expect(manualEntrySource).toContain("showBack={false}");
+	});
+
+	it("closes manual entry once before forwarding a successful creation", () => {
+		const manualEntrySource = readFileSync(manualEntrySheetPath, "utf8");
+		const manualEntryFormSource = readFileSync(manualEntryFormPath, "utf8");
+		const completionHandler = manualEntrySource.match(
+			/const handleCreate[\s\S]*?\n\t};/,
+		)?.[0];
+		const useIngredient = manualEntryFormSource.match(
+			/const useIngredient[\s\S]*?\n\t};/,
+		)?.[0];
+
+		expect(completionHandler).toContain("onClose();");
+		expect(completionHandler).toContain("await onCreate(food, context);");
+		expect(completionHandler?.indexOf("onClose();")).toBeLessThan(
+			completionHandler?.indexOf("await onCreate(food, context);") ?? -1,
+		);
+		expect(useIngredient).not.toContain("onClose?.()");
 	});
 });

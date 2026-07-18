@@ -5,7 +5,7 @@ import type {
 } from "$lib/components/ingredients/manual-entry/formTypes";
 import {
 	getFirstBlockingValidationThroughStep,
-	markValidationAttemptedThroughStep,
+	resolveForwardValidationAttemptState,
 	type ValidationAttemptState,
 } from "$lib/components/ingredients/manual-entry/utils/validationItems";
 
@@ -44,15 +44,16 @@ export const resolveManualEntryStepSelection = ({
 		};
 	}
 
-	const nextAttemptedSteps = markValidationAttemptedThroughStep({
-		steps,
-		attemptedSteps,
-		targetStep,
-	});
 	const warning = getFirstBlockingValidationThroughStep({
 		steps,
 		items: validationItems,
 		targetStep,
+	});
+	const nextAttemptedSteps = resolveForwardValidationAttemptState({
+		steps,
+		attemptedSteps,
+		targetStep,
+		warning,
 	});
 
 	return {
@@ -75,15 +76,16 @@ export const resolveManualEntryNextStep = ({
 }): ManualEntryStepNavigationResult => {
 	const activeStepIndex = Math.max(0, getStepIndex(steps, activeStep));
 	const targetStep = steps[activeStepIndex + 1]?.id ?? activeStep;
-	const nextAttemptedSteps = markValidationAttemptedThroughStep({
-		steps,
-		attemptedSteps,
-		targetStep,
-	});
 	const warning = getFirstBlockingValidationThroughStep({
 		steps,
 		items: validationItems,
 		targetStep,
+	});
+	const nextAttemptedSteps = resolveForwardValidationAttemptState({
+		steps,
+		attemptedSteps,
+		targetStep,
+		warning,
 	});
 
 	return {

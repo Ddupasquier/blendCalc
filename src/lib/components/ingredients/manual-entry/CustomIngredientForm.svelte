@@ -76,8 +76,7 @@
 		buildManualEntryValidationItems,
 		buildRequiredManualNutrientValidationItems,
 		getAttemptedValidationItems as getAttemptedManualEntryValidationItems,
-		markAllValidationAttempted as markAllManualEntryValidationAttempted,
-		markValidationAttemptedThroughStep as markManualEntryValidationAttemptedThroughStep,
+		markValidationAttemptedStep as markManualEntryValidationAttemptedStep,
 		warningStillApplies,
 		type ValidationAttemptState,
 	} from "$lib/components/ingredients/manual-entry/utils/validationItems";
@@ -563,18 +562,11 @@
 			stepWarningMessage,
 		});
 
-	const markValidationAttemptedThroughStep = (targetStep: ManualEntryStepId) => {
-		validationAttemptedSteps = markManualEntryValidationAttemptedThroughStep({
-			steps: manualEntrySteps,
+	const markValidationAttempted = (step: ManualEntryStepId) => {
+		validationAttemptedSteps = markManualEntryValidationAttemptedStep({
 			attemptedSteps: validationAttemptedSteps,
-			targetStep,
+			step,
 		});
-	};
-
-	const markAllValidationAttempted = () => {
-		validationAttemptedSteps = markAllManualEntryValidationAttempted(
-			manualEntrySteps,
-		);
 	};
 
 	const clearStepWarning = () => {
@@ -999,7 +991,6 @@
 		}
 
 		collapseManualEntry();
-		onClose?.();
 		return true;
 	};
 
@@ -1113,11 +1104,7 @@
 			barcodePhoto,
 		});
 		if (submitState.block) {
-			if (submitState.block.mark === "all") {
-				markAllValidationAttempted();
-			} else {
-				markValidationAttemptedThroughStep("share");
-			}
+			markValidationAttempted(submitState.block.step);
 			error = submitState.block.message;
 			activeStep = submitState.block.step;
 			showStepWarning(submitState.block.message, submitState.block.step);

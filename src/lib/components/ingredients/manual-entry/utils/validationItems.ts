@@ -189,27 +189,38 @@ export const getAttemptedValidationItems = ({
 		stepWarningMessage,
 	}).filter((item) => item.showImmediately || attemptedSteps[item.step]);
 
-export const markValidationAttemptedThroughStep = ({
+export const markValidationAttemptedStep = ({
+	attemptedSteps,
+	step,
+}: {
+	attemptedSteps: ValidationAttemptState;
+	step: ManualEntryStepId;
+}): ValidationAttemptState => ({
+	...attemptedSteps,
+	[step]: true,
+});
+
+export const resolveForwardValidationAttemptState = ({
 	steps,
 	attemptedSteps,
 	targetStep,
+	warning,
 }: {
 	steps: ManualEntryStep[];
 	attemptedSteps: ValidationAttemptState;
 	targetStep: ManualEntryStepId;
+	warning: StepValidationItem | null;
 }) => {
 	const targetIndex = steps.findIndex((step) => step.id === targetStep);
 	const nextAttemptedSteps = { ...attemptedSteps };
 
 	for (const step of steps.slice(0, Math.max(0, targetIndex))) {
-		nextAttemptedSteps[step.id] = true;
+		delete nextAttemptedSteps[step.id];
 	}
 
+	if (warning) nextAttemptedSteps[warning.step] = true;
 	return nextAttemptedSteps;
 };
-
-export const markAllValidationAttempted = (steps: ManualEntryStep[]) =>
-	Object.fromEntries(steps.map((step) => [step.id, true])) as ValidationAttemptState;
 
 export const getFirstBlockingValidationThroughStep = ({
 	steps,
