@@ -111,7 +111,7 @@
 				{food}
 				{showListActions}
 				{viewingGrams}
-				viewingServingLabel={viewingServing?.label}
+				{viewingServing}
 				{listMembership}
 				{canAdjustImagePlacement}
 				{onImagePlacementSave}

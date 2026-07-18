@@ -4,6 +4,7 @@ import {
 	getFoodServings,
 	getPrimaryFoodServing,
 } from "$lib/utils/food/servings/foodServings";
+import { formatNutritionServingSize } from "$lib/utils/food/servings/servingDisplay";
 import type { FdcFood } from "$lib/utils/food/types";
 
 const baseFood: FdcFood = {
@@ -37,5 +38,25 @@ describe("food servings", () => {
 			servingSizeUnit: "g",
 			hasSourceServing: false,
 		})).toEqual([]);
+	});
+
+	it("formats nutrition-label serving sizes with weight first", () => {
+		expect(formatNutritionServingSize({
+			label: "1/2 cup (125g)",
+			gramWeight: 125,
+			amount: 0.5,
+			unitKey: "cup",
+			isPrimary: true,
+		})).toBe("125g (1/2 cup)");
+		expect(formatNutritionServingSize({
+			label: "30 g serving",
+			gramWeight: 30,
+			isPrimary: true,
+		})).toBe("30g");
+		expect(formatNutritionServingSize({
+			label: "1 oz",
+			gramWeight: 28.35,
+			isPrimary: true,
+		})).toBe("28.35g (1 oz)");
 	});
 });

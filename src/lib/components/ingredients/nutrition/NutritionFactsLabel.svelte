@@ -3,7 +3,7 @@
 	import CustomBadge from "$lib/components/common/display/CustomBadge.svelte";
 	import SourceAttribution from "$lib/components/common/display/SourceAttribution.svelte";
 	import NutritionConfidenceDetails from "$lib/components/ingredients/nutrition/NutritionConfidenceDetails.svelte";
-	import type { FdcFood } from "$lib/utils/food/types";
+	import NutritionServingStatement from "$lib/components/ingredients/nutrition/NutritionServingStatement.svelte";
 	import {
 		getFdcNutrientValue,
 		isFdcNutrientMatch,
@@ -15,16 +15,16 @@
 	} from "$lib/utils/food/nutrients/nutritionDisplay";
 	import { getFoodQuality } from "$lib/utils/food/quality/foodQuality";
 	import { vitalNutrients } from "../../../../variables/vitalNutrients";
+	import type { NutritionFactsLabelProps } from "./types";
 
 	let {
 		food,
 		viewingGrams,
-		viewingServingLabel,
-	}: {
-		food?: FdcFood;
-		viewingGrams: number;
-		viewingServingLabel?: string;
-	} = $props();
+		viewingServing,
+	}: NutritionFactsLabelProps = $props();
+	const nutritionBasis = $derived(
+		viewingServing ? "Amount per serving" : getNutritionBasisLabel(viewingGrams),
+	);
 
 	const vitalIds = vitalNutrients.map((vn) => Number(vn.id));
 	const foodQuality = $derived(food ? getFoodQuality(food) : null);
@@ -82,7 +82,8 @@
 <div class="nf-label">
 	<div class="nf-heading">
 		<div class="nf-title">Nutrition Facts</div>
-		<div class="nf-basis">{getNutritionBasisLabel(viewingGrams, viewingServingLabel)}</div>
+		<NutritionServingStatement serving={viewingServing} />
+		<div class="nf-basis">{nutritionBasis}</div>
 	</div>
 	{#if food?.description}
 		<div class="nf-food-row">

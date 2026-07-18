@@ -1,4 +1,4 @@
-import type { FoodImageAsset, FdcFood } from "$lib/utils/food/types";
+import type { FoodImageAsset, FdcFood, FoodServing } from "$lib/utils/food/types";
 import type { IngredientListMembership } from "$lib/utils/ingredients/ingredientListUi";
 
 export type ImagePlacementSaveHandler = (
@@ -16,10 +16,20 @@ export type NutritionPanelProps = {
 	food?: FdcFood;
 	showListActions?: boolean;
 	viewingGrams?: number;
-	viewingServingLabel?: string;
+	viewingServing?: FoodServing | null;
 	listMembership?: IngredientListMembership;
 	canAdjustImagePlacement?: boolean;
 	onImagePlacementSave?: ImagePlacementSaveHandler;
+};
+
+export type NutritionFactsLabelProps = {
+	food?: FdcFood;
+	viewingGrams: number;
+	viewingServing?: FoodServing | null;
+};
+
+export type NutritionServingStatementProps = {
+	serving?: FoodServing | null;
 };
 
 export type NutritionPreferenceConflictProps = {

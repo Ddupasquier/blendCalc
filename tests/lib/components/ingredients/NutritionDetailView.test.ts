@@ -87,12 +87,15 @@ describe("NutritionDetailView", () => {
 		});
 
 		expect(screen.getByText("30g")).toBeInTheDocument();
-		expect(screen.getByText("Per 2 tbsp · 30g")).toBeInTheDocument();
+		expect(screen.getByText("Serving Size")).toBeInTheDocument();
+		expect(screen.getByText("30g (2 tbsp)")).toBeInTheDocument();
+		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
 		await fireEvent.change(screen.getByRole("combobox", { name: "Serving" }), {
 			target: { value: "standard-100g" },
 		});
 		expect(screen.getByText("100g")).toBeInTheDocument();
 		expect(screen.getByText("Per 100g food data")).toBeInTheDocument();
+		expect(screen.queryByText("Serving Size")).not.toBeInTheDocument();
 	});
 
 	it("uses a compact back button with room for its focus outline", () => {
