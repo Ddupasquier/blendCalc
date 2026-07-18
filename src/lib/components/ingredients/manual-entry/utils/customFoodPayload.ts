@@ -22,6 +22,7 @@ export type ManualEntryCustomFoodPayload = {
 	dietaryTags: string[];
 	labels: string[];
 	activeCategory: string;
+	categoryOptionId: string;
 	categories: string[];
 	image?: FoodImageAsset;
 	reportedNutrientIds: number[];
@@ -81,8 +82,9 @@ export const createManualEntryCustomFood = (
 		traces: payload.traces,
 		dietaryTags: payload.dietaryTags,
 		labels: payload.labels,
-		categories: buildManualEntrySaveCategories(payload),
-		image: payload.image,
+			categories: buildManualEntrySaveCategories(payload),
+			categoryOptionId: payload.categoryOptionId,
+			image: payload.image,
 		nutrients: saveNutrients,
 		reportedNutrientIds: [
 			...new Set([

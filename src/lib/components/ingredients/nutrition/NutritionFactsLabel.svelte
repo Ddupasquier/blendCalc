@@ -13,8 +13,6 @@
 		scalePer100gValue,
 	} from "$lib/utils/food/nutrients/nutritionDisplay";
 	import { getFoodQuality } from "$lib/utils/food/quality/foodQuality";
-	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
-	import { getFoodPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
 	import { vitalNutrients } from "../../../../variables/vitalNutrients";
 
 	let {
@@ -25,12 +23,8 @@
 		viewingGrams: number;
 	} = $props();
 
-	const foodPreferenceContext = getFoodPreferenceContext();
 	const vitalIds = vitalNutrients.map((vn) => Number(vn.id));
 	const foodQuality = $derived(food ? getFoodQuality(food) : null);
-	const preferenceWarnings = $derived(
-		food ? getFoodPreferenceWarnings(food, foodPreferenceContext.current) : [],
-	);
 	const vitalRows = $derived(
 		food
 			? vitalNutrients.map((vn) => {
@@ -98,20 +92,6 @@
 	{#if foodQuality && (foodQuality.label === "Partial" || foodQuality.label === "Limited")}
 		<NutritionConfidenceDetails quality={foodQuality} />
 	{/if}
-	{#if preferenceWarnings.length > 0}
-		<div class="nf-warning-panel">
-			<strong>
-				{preferenceWarnings.some((warning) => warning.level === "warning")
-					? "Potential conflict"
-					: "Possible conflict"}
-			</strong>
-			<ul>
-				{#each preferenceWarnings as warning}
-					<li>{warning.reason}</li>
-				{/each}
-			</ul>
-		</div>
-	{/if}
 	<div class="nf-thick-divider"></div>
 	<div class="nf-columns">
 		<ul class="nf-list vital-list" bind:this={vitalListRef}>
@@ -172,25 +152,6 @@
 		padding-bottom: $nutrition-label-list-row-padding-y;
 		margin-bottom: $nutrition-label-gap-micro;
 		border-bottom: $app-border-highlight;
-	}
-
-	.nf-warning-panel {
-		display: grid;
-		gap: $nutrition-label-gap-tight;
-		padding: $app-gap-sm $app-vertical-stack-gap;
-		margin: $app-gap-sm 0 $app-vertical-stack-gap;
-		color: $app-warning-strong;
-		font-family: $app-font-family-interface;
-		background: $app-warning-bg;
-		border: $app-warning-border;
-
-		ul {
-			margin: 0;
-			padding-left: $nutrition-label-column-gap;
-			color: $nutrition-label-text;
-			font-size: $app-font-size-sm;
-			line-height: $nutrition-label-warning-line-height;
-		}
 	}
 
 	.nf-title {

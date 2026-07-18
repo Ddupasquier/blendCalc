@@ -7,6 +7,12 @@ export type BasicIconProps = {
 	title?: string;
 };
 
+export type ChevronDirection = "up" | "right" | "down" | "left";
+
+export type ChevronProps = BasicIconProps & {
+	direction?: ChevronDirection;
+};
+
 export type FoodSymbolProps = {
 	food: Pick<FdcFood, "description" | "foodCategory" | "image"> &
 		Partial<Pick<FdcFood, "brandOwner" | "dataType" | "customFood">>;

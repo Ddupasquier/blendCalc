@@ -1,6 +1,5 @@
 <script lang="ts">
-    import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
-    import ScrollListReturnToTop from "$lib/components/common/navigation/ScrollListReturnToTop.svelte";
+    import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls.svelte";
     import FoodSymbol from "$lib/assets/icons/FoodSymbol.svelte";
     import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
     import { getFoodQuality } from "$lib/utils/food/quality/foodQuality";
@@ -14,11 +13,10 @@
     } from "$lib/utils/ingredients/ingredientSourceOptions";
     import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
-    import ChevronRight from "$lib/assets/icons/ChevronRight.svelte";
+    import Chevron from "$lib/assets/icons/Chevron.svelte";
     import Plus from "$lib/assets/icons/Plus.svelte";
     import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
     import type { SearchDropdownProps } from "$lib/components/ingredients/search/types";
-    import { LIST_REVEAL_BUFFER_PX } from "../../../../defaults/listDefaults";
 
     let {
         results,
@@ -36,7 +34,6 @@
     }: SearchDropdownProps = $props();
     const foodPreferenceContext = getFoodPreferenceContext();
     let resultsPanelElement = $state<HTMLDivElement | null>(null);
-    let sentinelElement = $state<HTMLDivElement | null>(null);
 
     const formatName = (desc: string): string => {
         return desc.length > 60 ? desc.slice(0, 57) + "…" : desc;
@@ -47,51 +44,12 @@
         void onLoadMore();
     };
 
-    const handleResultsScroll = (event: Event) => {
-        const scrollElement = event.currentTarget;
-        if (!(scrollElement instanceof HTMLElement)) return;
-
-        const distanceFromBottom =
-            scrollElement.scrollHeight -
-            scrollElement.scrollTop -
-            scrollElement.clientHeight;
-        if (distanceFromBottom <= LIST_REVEAL_BUFFER_PX) {
-            requestMoreResults();
-        }
-    };
-
-    $effect(() => {
-        const root = resultsPanelElement;
-        const sentinel = sentinelElement;
-        if (
-            !root ||
-            !sentinel ||
-            !hasMoreResults ||
-            loadingMore ||
-            typeof IntersectionObserver === "undefined"
-        ) return;
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries.some((entry) => entry.isIntersecting)) {
-                    requestMoreResults();
-                }
-            },
-            {
-                root,
-                rootMargin: `${LIST_REVEAL_BUFFER_PX}px 0px`,
-            },
-        );
-        observer.observe(sentinel);
-        return () => observer.disconnect();
-    });
 </script>
 
 {#if results.length > 0}
     <div
         bind:this={resultsPanelElement}
         class="results-panel"
-        onscroll={handleResultsScroll}
     >
         <p class="results-summary sr-only" aria-live="polite">
             {results.length} results loaded
@@ -173,31 +131,17 @@
                             </span>
                         {/if}
                         <span class="result-open" role="gridcell" aria-hidden="true">
-                            <ChevronRight class="result-chevron" size={18} />
+                            <Chevron class="result-chevron" direction="right" />
                         </span>
                 </div>
             {/each}
-            {#if hasMoreResults}
-                <div
-                    bind:this={sentinelElement}
-                    class="search-results__sentinel"
-                    aria-hidden="true"
-                ></div>
-                <div class="search-results__load-more">
-                    <RoundedActionButton
-                        variant="soft"
-                        busy={loadingMore}
-                        onclick={requestMoreResults}
-                    >
-                        {loadingMore ? "Loading…" : "Load more search results"}
-                    </RoundedActionButton>
-                </div>
-            {/if}
-            <ScrollListReturnToTop
+            <PaginatedListControls
                 scrollContainer={resultsPanelElement}
-                hasMoreItems={hasMoreResults || loadingMore}
+                hasMoreItems={hasMoreResults}
+                {loadingMore}
                 {contentVersion}
                 containerElement="div"
+                onLoadMore={requestMoreResults}
             />
         </div>
     </div>
@@ -223,16 +167,6 @@
         overflow: visible;
         list-style: none;
     }
-
-	.search-results__sentinel {
-		min-height: $ingredient-list-sentinel-min-height;
-	}
-
-	.search-results__load-more {
-		display: grid;
-		place-items: center;
-		padding: $app-gap-xs 0 $app-gap-sm;
-	}
 
     .result-item {
         min-width: 0;
@@ -299,6 +233,7 @@
         width: $ingredient-action-icon-size;
         height: $ingredient-action-icon-size;
         color: $ingredient-text-muted;
+		font-size: $ingredient-control-icon-size;
         line-height: 1;
     }
 

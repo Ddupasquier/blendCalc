@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Chevron from "$lib/assets/icons/Chevron.svelte";
 	import type {
 		ManualEntryNutrientDefinition,
 		ManualEntryNutrientGroup,
@@ -66,6 +67,9 @@
 							{#if isOptionalGroup(group)}
 								<small>optional</small>
 							{/if}
+						</span>
+						<span class="manual-nutrients__chevron" aria-hidden="true">
+							<Chevron direction="down" />
 						</span>
 					</summary>
 					<div class="manual-nutrients__fields">
@@ -171,16 +175,18 @@
 			display: none;
 		}
 
-		summary::after {
-			content: "⌄";
+		.manual-nutrients__chevron {
+			display: inline-grid;
+			place-items: center;
+			width: $ingredient-control-icon-size;
+			height: $ingredient-control-icon-size;
 			color: $ingredient-text-muted;
-			font-size: $app-font-size-md;
 			line-height: 1;
 			transform: rotate(180deg);
 			transition: transform 160ms ease;
 		}
 
-		&:not([open]) summary::after {
+		&:not([open]) .manual-nutrients__chevron {
 			transform: rotate(0deg);
 		}
 	}

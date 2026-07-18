@@ -24,6 +24,10 @@
 		min-width: 0;
 		min-height: 0;
 		line-height: 1;
+		transform: translate(
+			var(--centered-icon-optical-offset-x, 0),
+			var(--centered-icon-optical-offset-y, 0)
+		);
 	}
 
 	.centered-icon :global(svg),

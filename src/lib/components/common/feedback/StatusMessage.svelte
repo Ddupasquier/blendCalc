@@ -53,6 +53,7 @@
 		background: $app-bg;
 		border: $app-border;
 		border-radius: $app-radius;
+		font-family: $app-font-family-interface;
 		font-size: $app-font-size-sm;
 		line-height: 1.35;
 	}

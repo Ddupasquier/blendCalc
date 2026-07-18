@@ -139,6 +139,25 @@ describe("custom foods", () => {
 		expect(food.customServingLabel).toBe("1 cup");
 	});
 
+	it("preserves the selected canonical category identity", () => {
+		const food = createCustomFood({
+			name: "Category test food",
+			servingWeightGrams: 100,
+			categories: ["Fruit"],
+			categoryOptionId: "fruit",
+			nutrients: makeTestNutrients({
+				calories: 50,
+				fat: 0,
+				carbs: 12,
+				fiber: 2,
+				sugar: 8,
+				protein: 1,
+			}),
+		});
+
+		expect(food.categoryOptionId).toBe("fruit");
+	});
+
 	it("generates a serving label when the user leaves it blank", () => {
 		expect(
 			buildCustomServingLabel({

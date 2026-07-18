@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ArrowLeft from "$lib/assets/icons/ArrowLeft.svelte";
+	import Chevron from "$lib/assets/icons/Chevron.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
 	import type { BackButtonProps } from "./types";
 
@@ -19,5 +19,14 @@
 	{size}
 	{onclick}
 >
-	<ArrowLeft size={20} strokeWidth={2.4} />
+	<Chevron class="back-button__icon" direction="left" />
 </CircleIconButton>
+
+<style lang="scss">
+	@use "../../../../styles/variables" as *;
+
+	:global(.back-button__icon) {
+		width: $app-control-icon-size;
+		height: $app-control-icon-size;
+	}
+</style>

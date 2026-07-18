@@ -243,6 +243,9 @@
 			: "Choose a category",
 	);
 	const activeCategory = $derived(category);
+	const activeCategoryOptionId = $derived(
+		categoryOptions.find((option) => option.label === activeCategory)?.id ?? "",
+	);
 	const normalizedName = $derived(name.trim());
 	const barcodeValidationMessage = $derived(
 		getBarcodeInputValidationMessage(barcode),
@@ -1035,6 +1038,7 @@
 			dietaryTags,
 			labels,
 			activeCategory,
+			categoryOptionId: activeCategoryOptionId,
 			categories,
 			image,
 			reportedNutrientIds,

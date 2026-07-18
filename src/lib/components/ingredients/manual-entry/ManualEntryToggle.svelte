@@ -1,6 +1,7 @@
 <script lang="ts">
-	import ChevronDown from "$lib/assets/icons/ChevronDown.svelte";
+	import Chevron from "$lib/assets/icons/Chevron.svelte";
 	import Pencil from "$lib/assets/icons/Pencil.svelte";
+	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
 
 	let {
 		title = "Enter manually",
@@ -11,31 +12,28 @@
 	} = $props();
 </script>
 
-<span class="manual-entry-toggle__icon" aria-hidden="true">
-	<Pencil class="manual-entry-toggle__pencil" />
-</span>
+<CircularIconFrame class="manual-entry-toggle__icon" decorative>
+	<Pencil size="1em" />
+</CircularIconFrame>
 <span class="manual-entry-toggle__copy">
 	<strong>{title}</strong>
 	<small>{description}</small>
 </span>
-<ChevronDown class="manual-entry-toggle__chevron" />
+<Chevron class="manual-entry-toggle__chevron" direction="down" />
 
 <style lang="scss">
 	@use "../../../../styles/variables" as *;
 
-	.manual-entry-toggle__icon {
-		display: inline-grid;
-		place-items: center;
-		width: $ingredient-food-icon-size;
-		height: $ingredient-food-icon-size;
-		color: $ingredient-accent-info;
-		background: color-mix(in srgb, $ingredient-accent-info 11%, $ingredient-surface-card);
-		border-radius: $ingredient-radius-card;
-
-		:global(.manual-entry-toggle__pencil) {
-			width: $app-gap-md;
-			height: $app-gap-md;
-		}
+	:global(.manual-entry-toggle__icon) {
+		--circular-icon-frame-size: #{$ingredient-food-icon-size};
+		--circular-icon-frame-icon-size: #{$ingredient-control-icon-size};
+		--circular-icon-frame-color: #{$ingredient-accent-info};
+		--circular-icon-frame-background: color-mix(
+			in srgb,
+			#{$ingredient-accent-info} 11%,
+			#{$ingredient-surface-card}
+		);
+		--circular-icon-frame-border: 0;
 	}
 
 	.manual-entry-toggle__copy {
@@ -64,8 +62,8 @@
 	}
 
 	:global(.manual-entry-toggle__chevron) {
-		width: $app-gap-sm;
-		height: $app-gap-sm;
+		width: $ingredient-control-icon-size;
+		height: $ingredient-control-icon-size;
 		flex: 0 0 auto;
 		transition: transform 180ms ease;
 	}

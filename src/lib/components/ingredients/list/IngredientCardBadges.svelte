@@ -22,7 +22,7 @@
 			label={`${warning}. Open ingredient for details.`}
 			title={warning}
 		>
-			<WarningTriangle size="1em" strokeWidth={2.7} />
+			<WarningTriangle strokeWidth={2.7} />
 		</StatusIconBadge>
 	{/if}
 </span>

@@ -32,6 +32,7 @@ export type CustomFoodInput = {
 	dietaryTags?: string[];
 	labels?: string[];
 	categories?: string[];
+	categoryOptionId?: string;
 	image?: FoodImageAsset;
 	nutrients: FdcNutrient[];
 	reportedNutrientIds?: number[];
@@ -159,6 +160,7 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		dietaryTags: input.dietaryTags,
 		labels: input.labels,
 		categories: input.categories,
+		categoryOptionId: input.categoryOptionId,
 		image: input.image,
 		customFood: true,
 		barcode: input.barcode,

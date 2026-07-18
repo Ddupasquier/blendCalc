@@ -5,7 +5,10 @@
 		FdcConfigurationError,
 		searchFoodPage,
 	} from "$lib/utils/food/sources/fdc";
-	import { INGREDIENT_SEARCH_PAGE_SIZE } from "$lib/utils/ingredients/ingredientSearchPagination";
+	import {
+		INGREDIENT_SEARCH_LOAD_MORE_PAGE_SIZE,
+		INGREDIENT_SEARCH_PAGE_SIZE,
+	} from "$lib/utils/ingredients/ingredientSearchPagination";
 	import {
 		CUSTOM_FOODS_CHANGED_EVENT,
 		searchCustomFoods,
@@ -107,7 +110,7 @@
 		try {
 			const page = await searchFoodPage(searchString, {
 				offset,
-				limit: INGREDIENT_SEARCH_PAGE_SIZE,
+				limit: INGREDIENT_SEARCH_LOAD_MORE_PAGE_SIZE,
 			});
 			if (
 				requestVersion !== searchRequestVersion ||

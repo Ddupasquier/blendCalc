@@ -1,6 +1,5 @@
 <script lang="ts">
-	import ArrowLeft from "$lib/assets/icons/ArrowLeft.svelte";
-	import ChevronRight from "$lib/assets/icons/ChevronRight.svelte";
+	import Chevron from "$lib/assets/icons/Chevron.svelte";
 	import FoodSymbol from "$lib/assets/icons/FoodSymbol.svelte";
 	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
@@ -84,11 +83,7 @@
 			disabled={moving}
 			onclick={onMove}
 		>
-			{#if moveDirection === "right"}
-				<ArrowLeft size={17} strokeWidth={2.5} />
-			{:else}
-				<ChevronRight size={17} strokeWidth={2.5} />
-			{/if}
+			<Chevron direction={moveDirection === "right" ? "left" : "right"} />
 		</CircleIconButton>
 	</span>
 	<TwoStepConfirmation
@@ -199,6 +194,7 @@
 	.saved-ingredient-card__move-action {
 		display: inline-grid;
 		place-items: center;
+		font-size: $ingredient-control-icon-size;
 	}
 
 	@media (max-width: $app-breakpoint-xs) {

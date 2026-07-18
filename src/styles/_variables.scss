@@ -222,6 +222,7 @@ $app-rebuild-control-padding-x-sm: 0.75rem;
 
 // Figma rebuild icon size inside square utility controls such as filters.
 $app-rebuild-control-icon-size: 1.2rem;
+$app-control-icon-size: $app-rebuild-control-icon-size;
 
 // Figma rebuild compact action height. Use for small bulk buttons and chips.
 $app-rebuild-control-height-sm: 2.15rem;
@@ -348,7 +349,7 @@ $ingredient-control-height-compact: $app-rebuild-control-height-sm;
 $ingredient-control-padding-x: $app-rebuild-control-padding-x;
 $ingredient-control-padding-y-compact: $app-rebuild-control-padding-y-sm;
 $ingredient-control-padding-x-compact: $app-rebuild-control-padding-x-sm;
-$ingredient-control-icon-size: $app-rebuild-control-icon-size;
+$ingredient-control-icon-size: $app-control-icon-size;
 
 $ingredient-radius-card: $app-rebuild-radius;
 $ingredient-radius-control: $app-rebuild-radius;
@@ -572,15 +573,14 @@ $app-scan-laser: $color-guava-laser;
 $app-highlight-text: $color-dark-taupe;
 
 // Privileged action badge. Applied to admin/moderator-only action markers.
-$app-privileged-badge-bg: $app-highlight;
-$app-privileged-badge-text: $app-highlight-text;
-$app-privileged-badge-border: $color-figma-card;
+$app-privileged-badge-color: $app-highlight;
 $app-privileged-badge-size: 1.42rem;
 $app-privileged-badge-icon-size: 1rem;
 $app-privileged-action-badge-size: 1.72rem;
 $app-privileged-action-badge-icon-size: 1.18rem;
 $app-status-icon-badge-size: 1.35rem;
 $app-status-icon-badge-icon-size: 0.9rem;
+$app-status-icon-badge-optical-offset-y: -0.08em;
 $app-profile-avatar-size: 4.5rem;
 $app-profile-avatar-icon-scale: 55%;
 $app-compact-chevron-frame-size: 1rem;

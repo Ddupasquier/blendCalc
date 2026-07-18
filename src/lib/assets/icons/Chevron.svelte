@@ -1,13 +1,22 @@
 <script lang="ts">
+	import type { ChevronProps } from "$lib/assets/icons/types";
+
 	let {
 		class: className = "",
-		size = 16,
+		direction = "down",
+		size = "1em",
+		strokeWidth = 2.4,
 		title,
-	}: {
-		class?: string;
-		size?: number | string;
-		title?: string;
-	} = $props();
+	}: ChevronProps = $props();
+
+	const rotation = $derived(
+		{
+			down: 0,
+			left: 90,
+			up: 180,
+			right: -90,
+		}[direction],
+	);
 </script>
 
 <svg
@@ -15,9 +24,9 @@
 	width={size}
 	height={size}
 	viewBox="0 0 24 24"
-	fill="currentColor"
+	fill="none"
 	stroke="currentColor"
-	stroke-width="2"
+	stroke-width={strokeWidth}
 	stroke-linecap="round"
 	stroke-linejoin="round"
 	class={className}
@@ -27,6 +36,5 @@
 	{#if title}
 		<title>{title}</title>
 	{/if}
-	<path d="m3 8 4.5 4L12 5l4.5 7L21 8l-2 10H5L3 8Z" />
-	<path d="M5 18h14" />
+	<path d="m6 9 6 6 6-6" transform={`rotate(${rotation} 12 12)`} />
 </svg>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
+	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
 	import type { Snippet } from "svelte";
 
 	let {
@@ -27,11 +28,11 @@
 	{disabled}
 	onclick={onSelect}
 >
-	<span class="bottom-sheet-action__icon" aria-hidden="true">
+	<CircularIconFrame class="bottom-sheet-action__icon" decorative>
 		{#if icon}
 			{@render icon()}
 		{/if}
-	</span>
+	</CircularIconFrame>
 	<span class="bottom-sheet-action__label">
 		<span>{label}</span>
 		{#if privileged}
@@ -81,18 +82,16 @@
 		color: $color-figma-red;
 	}
 
-	.bottom-sheet-action__icon {
-		display: inline-grid;
-		place-items: center;
-		width: $app-rebuild-food-icon-size;
-		height: $app-rebuild-food-icon-size;
-		background: color-mix(in srgb, currentColor 12%, $color-figma-card);
-		border-radius: $app-radius;
-
-		:global(svg) {
-			width: 1.1rem;
-			height: 1.1rem;
-		}
+	:global(.bottom-sheet-action__icon) {
+		--circular-icon-frame-size: #{$app-rebuild-food-icon-size};
+		--circular-icon-frame-icon-size: #{$app-control-icon-size};
+		--circular-icon-frame-color: currentColor;
+		--circular-icon-frame-background: color-mix(
+			in srgb,
+			currentColor 12%,
+			#{$color-figma-card}
+		);
+		--circular-icon-frame-border: 0;
 	}
 
 	.bottom-sheet-action__label {

@@ -1,33 +1,13 @@
 <script lang="ts">
+	import Chevron from "$lib/assets/icons/Chevron.svelte";
+	import type { BasicIconProps } from "$lib/assets/icons/types";
+
 	let {
 		class: className = "",
 		size = 22,
 		strokeWidth = 2,
 		title,
-	}: {
-		class?: string;
-		size?: number | string;
-		strokeWidth?: number | string;
-		title?: string;
-	} = $props();
+	}: BasicIconProps = $props();
 </script>
 
-<svg
-	xmlns="http://www.w3.org/2000/svg"
-	width={size}
-	height={size}
-	viewBox="0 0 24 24"
-	fill="none"
-	stroke="currentColor"
-	stroke-width={strokeWidth}
-	stroke-linecap="round"
-	stroke-linejoin="round"
-	class={className}
-	role={title ? "img" : undefined}
-	aria-hidden={title ? undefined : "true"}
->
-	{#if title}
-		<title>{title}</title>
-	{/if}
-	<path d="m6 9 6 6 6-6" />
-</svg>
+<Chevron direction="down" class={className} {size} {strokeWidth} {title} />

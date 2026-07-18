@@ -243,7 +243,9 @@
             : key === MIX_STORAGE_KEYS.fridge
                 ? onHand.length
                 : shoppingList.length;
-        const pageSize = LIST_PAGE_SIZES.ingredientPills;
+        const pageSize = reset
+            ? LIST_PAGE_SIZES.ingredientPills
+            : LIST_PAGE_SIZES.ingredientLoadMore;
         const cloudPage = await readCloudSmoothieListPage(key, {
             limit: pageSize,
             offset: currentOffset,
@@ -728,14 +730,14 @@
             if (activeList === MIX_STORAGE_KEYS.fridge) {
                 onHandVisibleCount = Math.min(
                     filteredOnHand.length,
-                    onHandVisibleCount + LIST_PAGE_SIZES.ingredientPills,
+                    onHandVisibleCount + LIST_PAGE_SIZES.ingredientLoadMore,
                 );
                 return;
             }
 
             shoppingVisibleCount = Math.min(
                 filteredShoppingList.length,
-                shoppingVisibleCount + LIST_PAGE_SIZES.ingredientPills,
+                shoppingVisibleCount + LIST_PAGE_SIZES.ingredientLoadMore,
             );
         } finally {
             loadingMoreList = null;

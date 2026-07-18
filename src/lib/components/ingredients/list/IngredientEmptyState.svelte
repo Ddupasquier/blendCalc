@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Leaf from "$lib/assets/icons/Leaf.svelte";
 	import ShoppingBag from "$lib/assets/icons/ShoppingBag.svelte";
+	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 	import { getIngredientListLabel } from "$lib/utils/ingredients/ingredientListUi";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
@@ -30,13 +31,13 @@
 </script>
 
 <div class="ingredient-empty-state">
-	<span aria-hidden="true">
+	<CircularIconFrame class="ingredient-empty-state__icon" decorative>
 		{#if activeList === MIX_STORAGE_KEYS.fridge}
-			<Leaf size={30} strokeWidth={2.2} />
+			<Leaf size="1em" strokeWidth={2.2} />
 		{:else}
-			<ShoppingBag size={30} strokeWidth={2.2} />
+			<ShoppingBag size="1em" strokeWidth={2.2} />
 		{/if}
-	</span>
+	</CircularIconFrame>
 	<h2>{title}</h2>
 	<p>{message}</p>
 </div>
@@ -54,14 +55,11 @@
 		text-align: center;
 	}
 
-	span {
-		display: inline-grid;
-		place-items: center;
-		width: $ingredient-empty-state-icon-size;
-		height: $ingredient-empty-state-icon-size;
-		background: $ingredient-surface-positive;
-		border-radius: $ingredient-radius-card;
-		font-size: $ingredient-empty-state-icon-font-size;
+	:global(.ingredient-empty-state__icon) {
+		--circular-icon-frame-size: #{$ingredient-empty-state-icon-size};
+		--circular-icon-frame-icon-size: #{$ingredient-empty-state-icon-font-size};
+		--circular-icon-frame-background: #{$ingredient-surface-positive};
+		--circular-icon-frame-border: 0;
 	}
 
 	h2 {

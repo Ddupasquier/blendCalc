@@ -34,7 +34,7 @@ describe("SavedIngredientList overlay behavior", () => {
 			},
 		});
 
-	it("does not reveal more items while an overlay is open", async () => {
+	it("does not auto-load on scroll and disables loading while an overlay is open", async () => {
 		const onRevealMore = vi.fn();
 
 		render(SavedIngredientList, {
@@ -65,6 +65,9 @@ describe("SavedIngredientList overlay behavior", () => {
 		await fireEvent.scroll(list);
 
 		expect(onRevealMore).not.toHaveBeenCalled();
+		expect(
+			screen.getByRole("button", { name: "Load more" }),
+		).toBeDisabled();
 	});
 
 	it("requires two deliberate activations before removing an ingredient", async () => {
@@ -146,19 +149,41 @@ describe("SavedIngredientList overlay behavior", () => {
 		).not.toBeInTheDocument();
 	});
 
-	it("waits until all list items are revealed before showing the control", async () => {
-		renderList(MIX_STORAGE_KEYS.fridge, true);
+	it("shows both explicit controls without auto-loading an overflowing partial list", async () => {
+		const onRevealMore = vi.fn();
+		render(SavedIngredientList, {
+			props: {
+				activeList: MIX_STORAGE_KEYS.fridge,
+				foods: [food],
+				canRevealMore: true,
+				onSelectAll: vi.fn(),
+				onClearSelection: vi.fn(),
+				onMoveSelection: vi.fn(),
+				onMoveItem: vi.fn(),
+				onToggle: vi.fn(),
+				onPreview: vi.fn(),
+				onActions: vi.fn(),
+				onRemove: vi.fn(),
+				onRevealMore,
+			},
+		});
 		const list = screen.getByRole("list", { name: "Fridge ingredients" });
 
 		Object.defineProperties(list, {
 			scrollHeight: { configurable: true, value: 500 },
+			scrollTop: { configurable: true, value: 400 },
 			clientHeight: { configurable: true, value: 100 },
 		});
 
+		await fireEvent.scroll(list);
 		await fireEvent(window, new Event("resize"));
 
+		expect(onRevealMore).not.toHaveBeenCalled();
 		expect(
-			screen.queryByRole("button", { name: "Return to top" }),
-		).not.toBeInTheDocument();
+			screen.getByRole("button", { name: "Return to top" }),
+		).toBeVisible();
+
+		await fireEvent.click(screen.getByRole("button", { name: "Load more" }));
+		expect(onRevealMore).toHaveBeenCalledOnce();
 	});
 });

@@ -21,6 +21,10 @@ export type NutritionPanelProps = {
 	onImagePlacementSave?: ImagePlacementSaveHandler;
 };
 
+export type NutritionPreferenceConflictProps = {
+	food?: FdcFood;
+};
+
 export type NutritionDetailViewProps = {
 	food: FdcFood;
 	onClose: () => void;

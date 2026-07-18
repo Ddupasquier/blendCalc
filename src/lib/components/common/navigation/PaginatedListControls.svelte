@@ -1,14 +1,18 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
-	import type { ScrollListReturnToTopProps } from "$lib/components/common/navigation/types";
+	import type { PaginatedListControlsProps } from "$lib/components/common/navigation/types";
 	import { getMotionSafeScrollBehavior } from "$lib/utils/accessibility/motion";
 
 	let {
 		scrollContainer,
 		hasMoreItems = false,
+		loadingMore = false,
+		loadMoreDisabled = false,
+		loadMoreLabel = "Load more",
 		contentVersion = 0,
 		containerElement = "li",
-	}: ScrollListReturnToTopProps = $props();
+		onLoadMore = () => {},
+	}: PaginatedListControlsProps = $props();
 
 	let listOverflows = $state(false);
 
@@ -53,21 +57,53 @@
 	});
 </script>
 
-{#if listOverflows && !hasMoreItems}
-	<svelte:element this={containerElement} class="scroll-list-return-to-top">
-		<RoundedActionButton variant="outline" onclick={returnToTop}>
-			Return to top
-		</RoundedActionButton>
+{#if hasMoreItems || listOverflows}
+	<svelte:element
+		this={containerElement}
+		class="paginated-list-controls"
+		class:paginated-list-controls--paired={hasMoreItems && listOverflows}
+	>
+		{#if hasMoreItems}
+			<RoundedActionButton
+				variant="soft"
+				fullWidth
+				busy={loadingMore}
+				disabled={loadMoreDisabled}
+				onclick={() => void onLoadMore()}
+			>
+				{loadingMore ? "Loading…" : loadMoreLabel}
+			</RoundedActionButton>
+		{/if}
+
+		{#if listOverflows}
+			<RoundedActionButton
+				variant="outline"
+				fullWidth
+				onclick={returnToTop}
+			>
+				Return to top
+			</RoundedActionButton>
+		{/if}
 	</svelte:element>
 {/if}
 
 <style lang="scss">
 	@use "../../../../styles/variables" as *;
 
-	.scroll-list-return-to-top {
+	.paginated-list-controls {
 		display: grid;
-		place-items: center;
+		grid-template-columns: minmax(0, 1fr);
+		gap: $app-horizontal-control-gap;
 		min-width: 0;
-		padding: $app-gap-sm 0;
+	}
+
+	.paginated-list-controls--paired {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	@media (max-width: $app-breakpoint-xs) {
+		.paginated-list-controls--paired {
+			grid-template-columns: minmax(0, 1fr);
+		}
 	}
 </style>

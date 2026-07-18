@@ -2,6 +2,8 @@ import { LIST_PAGE_SIZES } from "../../../defaults/listDefaults";
 import type { FdcFood } from "$lib/utils/food/types";
 
 export const INGREDIENT_SEARCH_PAGE_SIZE = LIST_PAGE_SIZES.foodSearch;
+export const INGREDIENT_SEARCH_LOAD_MORE_PAGE_SIZE =
+	LIST_PAGE_SIZES.ingredientLoadMore;
 export const INGREDIENT_SEARCH_MAX_PAGE_SIZE = 50;
 
 export type IngredientSearchPageOptions = {

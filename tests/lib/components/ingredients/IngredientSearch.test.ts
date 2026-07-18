@@ -275,13 +275,13 @@ describe("IngredientSearch", () => {
 		await waitFor(
 			() => expect(searchFoodPage).toHaveBeenCalledWith("kiwi", {
 				offset: 0,
-				limit: 8,
+				limit: 15,
 			}),
 			{ timeout: 2000 },
 		);
 	});
 
-	it("loads another page near the bottom and offers return to top when complete", async () => {
+	it("loads another page only from the explicit control and offers return to top", async () => {
 		vi.mocked(searchFoodPage)
 			.mockResolvedValueOnce(makePage(
 				[makeFood(501, "Tomato, roma"), makeFood(502, "Tomatoes, raw")],
@@ -307,7 +307,7 @@ describe("IngredientSearch", () => {
 			{ timeout: 2000 },
 		);
 		expect(
-			screen.getByRole("button", { name: "Load more search results" }),
+			screen.getByRole("button", { name: "Load more" }),
 		).toBeVisible();
 
 		const resultsPanel = container.querySelector<HTMLElement>(".results-panel");
@@ -321,15 +321,22 @@ describe("IngredientSearch", () => {
 		});
 
 		await fireEvent.scroll(resultsPanel!);
+		expect(searchFoodPage).toHaveBeenCalledTimes(1);
+
+		await fireEvent(window, new Event("resize"));
+		expect(
+			screen.getByRole("button", { name: "Return to top" }),
+		).toBeVisible();
+
+		await fireEvent.click(screen.getByRole("button", { name: "Load more" }));
 		await waitFor(() => {
 			expect(screen.getByText("Green tomatoes")).toBeInTheDocument();
 		});
 		expect(searchFoodPage).toHaveBeenNthCalledWith(2, "tomato", {
 			offset: 2,
-			limit: 8,
+			limit: 15,
 		});
 
-		await fireEvent(window, new Event("resize"));
 		const returnButton = await screen.findByRole("button", {
 			name: "Return to top",
 		});

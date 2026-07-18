@@ -311,6 +311,7 @@ export type Database = {
       custom_foods: {
         Row: {
           barcode: string | null
+          category_option_id: string | null
           created_at: string
           fdc_id: number
           food: Json
@@ -322,6 +323,7 @@ export type Database = {
         }
         Insert: {
           barcode?: string | null
+          category_option_id?: string | null
           created_at?: string
           fdc_id: number
           food: Json
@@ -333,6 +335,7 @@ export type Database = {
         }
         Update: {
           barcode?: string | null
+          category_option_id?: string | null
           created_at?: string
           fdc_id?: number
           food?: Json
@@ -342,7 +345,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "custom_foods_category_option_id_fkey"
+            columns: ["category_option_id"]
+            isOneToOne: false
+            referencedRelation: "custom_food_category_options"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       food_image_assets: {
         Row: {
@@ -2245,6 +2256,7 @@ export type Database = {
         Returns: string
       }
       food_metadata_search_text: { Args: { p_food: Json }; Returns: string }
+      is_valid_gtin: { Args: { p_value: string }; Returns: boolean }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
       normalize_food_category_value: {
         Args: { p_value: string }
@@ -2314,6 +2326,11 @@ export type Database = {
           source_normalized_value: string
         }[]
       }
+      save_custom_food: {
+        Args: { p_fdc_id: number; p_food: Json }
+        Returns: string
+      }
+      save_custom_foods: { Args: { p_foods: Json }; Returns: boolean }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       sync_nutrient_manual_entry_fields: { Args: never; Returns: undefined }

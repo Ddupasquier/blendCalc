@@ -38,12 +38,14 @@
 		width: var(--circular-icon-frame-size, #{$app-status-icon-badge-size});
 		height: var(--circular-icon-frame-size, #{$app-status-icon-badge-size});
 		padding: 0;
+		overflow: hidden;
 		color: var(--circular-icon-frame-color, currentColor);
 		background: var(--circular-icon-frame-background, transparent);
 		border: var(--circular-icon-frame-border, 1px solid transparent);
 		border-radius: $app-radius-circle;
 		font-size: var(--circular-icon-frame-icon-size, #{$app-status-icon-badge-icon-size});
 		line-height: 1;
+		vertical-align: middle;
 	}
 
 	.circular-icon-frame :global(svg) {

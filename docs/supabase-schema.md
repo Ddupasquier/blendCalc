@@ -88,11 +88,21 @@ Notes:
 
 ### `custom_foods`
 
+Private custom ingredients are written through `save_custom_food` (or the bulk
+`save_custom_foods` recovery path), not through direct browser inserts or updates.
+The database derives the owner from the signed-in session, validates the food name,
+serving weight, canonical category, GTIN check digit, required nutrients, nutrient
+catalog membership, duplicate nutrients, nonnegative values, and active nutrient
+relationship rules in one transaction. A `category_option_id` foreign key records
+the canonical category separately from the preserved source/category strings in the
+food JSON. Direct authenticated inserts and updates are revoked so browser code
+cannot bypass this validation path.
+
 Stores private user custom foods. Shared/public review happens through
 `shared_product_submissions`, not by making every custom food public.
 
-Columns: `id`, `user_id`, `fdc_id`, `barcode`, `name_key`, `search_text`,
-`food`, `created_at`, `updated_at`.
+Columns: `id`, `user_id`, `fdc_id`, `barcode`, `name_key`,
+`category_option_id`, `search_text`, `food`, `created_at`, `updated_at`.
 
 Notes:
 - Unique safeguards prevent duplicate custom names and duplicate user barcodes.

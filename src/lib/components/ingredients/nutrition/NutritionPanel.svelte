@@ -1,6 +1,7 @@
 <script lang="ts">
 	import NutritionFactsLabel from "$lib/components/ingredients/nutrition/NutritionFactsLabel.svelte";
 	import NutritionListActions from "$lib/components/ingredients/nutrition/NutritionListActions.svelte";
+	import NutritionPreferenceConflict from "$lib/components/ingredients/nutrition/NutritionPreferenceConflict.svelte";
 	import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel.svelte";
 	import {
 		DEFAULT_NUTRITION_VIEWING_GRAMS,
@@ -19,6 +20,7 @@
 
 <section class="nutrition-panel">
 	<ProductImagePanel {food} {canAdjustImagePlacement} {onImagePlacementSave} />
+	<NutritionPreferenceConflict {food} />
 	<NutritionFactsLabel {food} {viewingGrams} />
 	<NutritionListActions {food} {showListActions} {listMembership} />
 </section>

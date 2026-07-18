@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ChevronDown from "$lib/assets/icons/ChevronDown.svelte";
+	import Chevron from "$lib/assets/icons/Chevron.svelte";
 	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
 	import StatusIconBadge from "$lib/components/common/badges/StatusIconBadge.svelte";
 	import type { FoodQuality } from "$lib/utils/food/quality/foodQuality";
@@ -56,7 +56,7 @@
 				class:confidence-details__chevron--open={isOpen}
 				aria-hidden="true"
 			>
-				<ChevronDown size={14} strokeWidth={2.4} />
+				<Chevron direction="down" />
 			</span>
 		</button>
 
@@ -151,6 +151,8 @@
 	.confidence-details__chevron {
 		display: grid;
 		place-items: center;
+		width: $ingredient-control-icon-size;
+		height: $ingredient-control-icon-size;
 		color: $ingredient-text-primary;
 		line-height: 1;
 		transition: transform 160ms ease;

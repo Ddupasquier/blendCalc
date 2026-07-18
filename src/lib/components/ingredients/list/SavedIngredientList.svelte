@@ -1,6 +1,5 @@
 <script lang="ts">
-	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
-	import ScrollListReturnToTop from "$lib/components/common/navigation/ScrollListReturnToTop.svelte";
+	import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 	import {
@@ -16,7 +15,6 @@
 		type IngredientSourceOption,
 	} from "$lib/utils/ingredients/ingredientSourceOptions";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
-	import { LIST_REVEAL_BUFFER_PX } from "../../../../defaults/listDefaults";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 	import IngredientBulkActions from "./IngredientBulkActions.svelte";
 	import IngredientEmptyState from "./IngredientEmptyState.svelte";
@@ -75,7 +73,6 @@
 	} = $props();
 
 	let listElement = $state<HTMLUListElement | null>(null);
-	let sentinelElement = $state<HTMLLIElement | null>(null);
 	let previousActiveList: SmoothieListKey | null = null;
 	let previousResetKey: number | null = null;
 
@@ -88,20 +85,6 @@
 	const requestMoreItems = () => {
 		if (revealPaused || !canRevealMore || loadingMoreList) return;
 		void onRevealMore();
-	};
-
-	const handleListScroll = (event: Event) => {
-		const scrollElement = event.currentTarget;
-		if (!(scrollElement instanceof HTMLElement)) return;
-
-		const distanceFromBottom =
-			scrollElement.scrollHeight -
-			scrollElement.scrollTop -
-			scrollElement.clientHeight;
-
-		if (distanceFromBottom <= LIST_REVEAL_BUFFER_PX) {
-			requestMoreItems();
-		}
 	};
 
 	$effect(() => {
@@ -122,33 +105,6 @@
 		});
 	});
 
-	$effect(() => {
-		const root = listElement;
-		const sentinel = sentinelElement;
-		if (
-			revealPaused ||
-			!root ||
-			!sentinel ||
-			!canRevealMore ||
-			loadingMoreList ||
-			typeof IntersectionObserver === "undefined"
-		) return;
-
-		const observer = new IntersectionObserver(
-			(entries) => {
-				if (entries.some((entry) => entry.isIntersecting)) {
-					requestMoreItems();
-				}
-			},
-			{
-				root,
-				rootMargin: `${LIST_REVEAL_BUFFER_PX}px 0px`,
-			},
-		);
-
-		observer.observe(sentinel);
-		return () => observer.disconnect();
-	});
 </script>
 
 <section
@@ -175,7 +131,6 @@
 					aria-label={`${getIngredientListLabel(activeList)} ingredients`}
 					aria-busy={listLoading || loadingMoreList === activeList}
 					bind:this={listElement}
-					onscroll={handleListScroll}
 				>
 					{#each foods as food (food.fdcId)}
 						{@const actionKey = getIngredientActionKey(activeList, food.fdcId)}
@@ -203,28 +158,13 @@
 							/>
 						</li>
 					{/each}
-					{#if canRevealMore}
-						<li
-							bind:this={sentinelElement}
-							class="saved-ingredient-list__sentinel"
-							aria-hidden="true"
-						></li>
-						<li class="saved-ingredient-list__load-more">
-							<RoundedActionButton
-								variant="soft"
-								disabled={loadingMoreList !== null}
-								onclick={requestMoreItems}
-							>
-								{loadingMoreList
-									? "Loading…"
-									: `Load more ${getIngredientListLabel(activeList).toLowerCase()} items`}
-							</RoundedActionButton>
-						</li>
-					{/if}
-					<ScrollListReturnToTop
+					<PaginatedListControls
 						scrollContainer={listElement}
-						hasMoreItems={canRevealMore || loadingMoreList !== null}
+						hasMoreItems={canRevealMore}
+						loadingMore={loadingMoreList !== null}
+						loadMoreDisabled={revealPaused}
 						contentVersion={`${activeList}:${foods.length}:${resetKey}`}
+						onLoadMore={requestMoreItems}
 					/>
 				</ul>
 			{:else if listLoading}
@@ -287,16 +227,6 @@
 
 	.saved-ingredient-list__cards > li {
 		min-width: 0;
-	}
-
-	.saved-ingredient-list__sentinel {
-		min-height: $ingredient-list-sentinel-min-height;
-	}
-
-	.saved-ingredient-list__load-more {
-		display: grid;
-		place-items: center;
-		padding: $app-gap-xs 0 $app-gap-sm;
 	}
 
 	.saved-ingredient-list__loading {

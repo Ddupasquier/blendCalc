@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import AppHeader from "$lib/components/app/AppHeader.svelte";
 
 describe("AppHeader", () => {
-	it("uses shared circular frames for the profile and moderator crown", () => {
+	it("uses a circular profile frame and standalone moderator crown", () => {
 		render(AppHeader, {
 			props: {
 				displayName: "QA Moderator",
@@ -17,7 +17,10 @@ describe("AppHeader", () => {
 		});
 
 		expect(profileLink.querySelector(".circular-media-frame")).toBeInTheDocument();
-		expect(profileLink.querySelector(".privileged-action-badge")).toBeInTheDocument();
+		const crown = profileLink.querySelector(".privileged-action-badge");
+		expect(crown).toBeInTheDocument();
+		expect(crown).not.toHaveClass("circular-icon-frame");
+		expect(crown?.querySelector("svg")).toHaveAttribute("fill", "currentColor");
 		expect(
 			profileLink.querySelectorAll(".centered-icon").length,
 		).toBeGreaterThanOrEqual(2);
