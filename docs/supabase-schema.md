@@ -228,6 +228,7 @@ Central and Open Food Facts products.
 | `nutrient_unit_conversions` | `(source_key, nutrient_id, from_unit_name, to_unit_name)` | Stores source- and nutrient-specific conversion multipliers | `source_key → product_data_sources.key`, `nutrient_id → nutrient_definitions.nutrient_id` |
 | `serving_measure_units` | `key` | App-ready serving units, labels, dimensions, order, defaults, and conversion to grams or milliliters | `source_key → product_data_sources.key` |
 | `serving_measure_aliases` | `(unit_key, normalized_alias)` | Recognizes API and label spellings such as `tbsp`, `tablespoon`, and `tablespoons` | `unit_key → serving_measure_units.key`, `source_key → product_data_sources.key` |
+| `food_servings` | `id` | Normalized reported serving sizes used by nutrition views and future mix conversions | Exactly one food parent; optional `unit_key → serving_measure_units.key` |
 
 ### `product_data_sources`
 
@@ -301,6 +302,32 @@ Notes:
   them.
 - Run `npm run seed:product-reference-data -- --sample-size=200` after the migration to sample
   USDA FoodData Central, Open Food Facts, and the UCUM standards service and refresh these rows.
+
+### `food_servings`
+
+Stores source-reported and user-entered serving sizes separately from each food's
+JSON snapshot.
+
+Columns: `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`,
+`shared_product_submission_id`, `shared_product_id`,
+`shared_product_revision_id`, `shared_product_observation_id`,
+`serving_order`, `label`, `gram_weight`, optional `amount` and `unit_key`,
+`is_primary`, `source`, `source_reference`, `confidence`, and timestamps.
+
+Notes:
+- A row points to exactly one food parent. Partial unique indexes enforce stable
+  order and no more than one primary serving per parent.
+- Parent-table triggers rebuild serving rows whenever food/source data changes.
+  This keeps list items, custom foods, submissions, products, revisions, and
+  observations synchronized without relying on browser writes.
+- The initial migration checks every existing parent row and backfills all
+  valid serving data already present. Foods without a trustworthy serving stay
+  empty; the migration does not invent a 100g package serving.
+- The nutrition view loads these rows, defaults to the primary source serving,
+  and still offers the normalized 100g basis. `gram_weight` and optional
+  amount/unit fields are the future mix conversion input.
+- Authenticated users may read their own serving rows and servings attached to
+  active shared products. Only server/service-role paths may write them.
 
 ## Shared Product Catalog and Barcode Flow
 
@@ -529,6 +556,7 @@ Notes:
 | `set_default_profile_display_name` | Trigger helper that fills missing profile display names |
 | `create_profile_for_new_auth_user` | Auth trigger helper that creates a profile row for new users |
 | `replace_food_nutrients` | Replaces normalized nutrient rows for exactly one food parent |
+| `replace_food_servings` | Replaces normalized serving rows for exactly one food parent; parent triggers call it after relevant writes |
 | `food_list_item_identity_key` | Produces the canonical barcode-or-FDC identity used to prevent cross-list duplicates |
 | `place_user_food_list_item` | Atomically adds an ingredient, reports a required cross-list move, or completes a confirmed move |
 | `publish_shared_product_submission` | Publishes an approved submission into the shared catalog and revisions/evidence tables |

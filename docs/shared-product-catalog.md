@@ -54,6 +54,21 @@ product row.
 This structure allows another source to be added later without losing which source supplied
 each value or silently replacing a trusted value.
 
+## Serving data
+
+Reported serving sizes are normalized into `food_servings` when products are
+saved, submitted, approved, revised, or observed. Each row keeps the readable
+label, gram weight, optional amount/unit pair, primary flag, source reference,
+and confidence. The product JSON remains a compatibility snapshot, but the
+normalized rows are what nutrition views load and what future mix conversions
+should consume.
+
+The nutrition view defaults to the primary reported serving when one exists and
+also offers a 100g standard view. Missing source serving data stays missing; a
+100g nutrition basis is not treated as proof that the package reports a 100g
+serving. Database triggers synchronize future writes, and the serving migration
+backfills valid serving data from existing catalog and user food records.
+
 ## API caching
 
 USDA search, barcode search, and detail responses are cached server-side in Supabase with

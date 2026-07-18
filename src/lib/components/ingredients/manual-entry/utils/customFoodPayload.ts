@@ -31,6 +31,7 @@ export type ManualEntryCustomFoodPayload = {
 	categories: string[];
 	image?: FoodImageAsset;
 	reportedNutrientIds: number[];
+	hasSourceServing?: boolean;
 	importedNutrients: FdcNutrient[];
 	manualEntryNutrientFields: ManualEntryNutrientDefinition[];
 	manualNutrientValues: NutrientValueState;
@@ -106,5 +107,6 @@ export const createManualEntryCustomFood = (
 				...saveNutrients.map((nutrient) => nutrient.nutrientId),
 			]),
 		],
+		hasSourceServing: payload.hasSourceServing,
 	});
 };

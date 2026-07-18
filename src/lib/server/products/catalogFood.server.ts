@@ -46,6 +46,7 @@ export const createCatalogFoodFromDraft = (
 		image: draft.image,
 		nutrients: draft.nutrients,
 		reportedNutrientIds: draft.reportedNutrientIds,
+		hasSourceServing: draft.hasSourceServing,
 	});
 
 	return applyCanonicalFoodCategory({

@@ -16,6 +16,7 @@ export type NutritionPanelProps = {
 	food?: FdcFood;
 	showListActions?: boolean;
 	viewingGrams?: number;
+	viewingServingLabel?: string;
 	listMembership?: IngredientListMembership;
 	canAdjustImagePlacement?: boolean;
 	onImagePlacementSave?: ImagePlacementSaveHandler;
@@ -32,4 +33,10 @@ export type NutritionDetailViewProps = {
 	listMembership?: IngredientListMembership;
 	canAdjustImagePlacement?: boolean;
 	onImagePlacementSave?: ImagePlacementSaveHandler;
+};
+
+export type NutritionServingSelectProps = {
+	food: FdcFood;
+	viewingGrams: number;
+	onSelect: (gramWeight: number) => void;
 };

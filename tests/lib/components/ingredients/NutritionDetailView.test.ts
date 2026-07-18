@@ -65,6 +65,36 @@ describe("NutritionDetailView", () => {
 		expect(screen.getByText("100g")).toBeInTheDocument();
 	});
 
+	it("uses a stored product serving and keeps 100g available", async () => {
+		render(NutritionDetailView, {
+			props: {
+				food: {
+					...spinach,
+					hasSourceServing: true,
+					foodServings: [{
+						label: "2 tbsp",
+						gramWeight: 30,
+						amount: 2,
+						unitKey: "tbsp",
+						isPrimary: true,
+						source: "usda",
+						confidence: "source-verified",
+					}],
+				},
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(screen.getByText("30g")).toBeInTheDocument();
+		expect(screen.getByText("Per 2 tbsp · 30g")).toBeInTheDocument();
+		await fireEvent.change(screen.getByRole("combobox", { name: "Serving" }), {
+			target: { value: "standard-100g" },
+		});
+		expect(screen.getByText("100g")).toBeInTheDocument();
+		expect(screen.getByText("Per 100g food data")).toBeInTheDocument();
+	});
+
 	it("uses a compact back button with room for its focus outline", () => {
 		render(NutritionDetailView, {
 			props: {

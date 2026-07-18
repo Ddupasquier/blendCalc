@@ -1,5 +1,5 @@
 export const DEFAULT_NUTRITION_VIEWING_GRAMS = 100;
-export const MIN_NUTRITION_VIEWING_GRAMS = 25;
+export const MIN_NUTRITION_VIEWING_GRAMS = 1;
 export const MAX_NUTRITION_VIEWING_GRAMS = 1000;
 export const NUTRITION_VIEWING_GRAM_STEP = 1;
 
@@ -40,7 +40,15 @@ export const formatNutritionAmount = (value: number): string => {
 export const formatViewingGrams = (grams: number): string =>
 	`${clampNutritionViewingGrams(grams)}g`;
 
-export const getNutritionBasisLabel = (grams: number): string =>
-	clampNutritionViewingGrams(grams) === DEFAULT_NUTRITION_VIEWING_GRAMS
+export const getNutritionBasisLabel = (
+	grams: number,
+	servingLabel?: string,
+): string => {
+	const cleanServingLabel = servingLabel?.trim();
+	if (cleanServingLabel) {
+		return `Per ${cleanServingLabel} · ${formatViewingGrams(grams)}`;
+	}
+	return clampNutritionViewingGrams(grams) === DEFAULT_NUTRITION_VIEWING_GRAMS
 		? "Per 100g food data"
 		: `Per ${formatViewingGrams(grams)} viewing amount`;
+};

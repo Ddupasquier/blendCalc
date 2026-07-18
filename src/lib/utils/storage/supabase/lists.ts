@@ -3,10 +3,12 @@ import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
 import { uniqueFoodsByIdentity } from "$lib/utils/food/records/foodIdentity";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
+import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 import { hydrateFoodsWithCachedImages } from "./foodImages";
 import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
+import { readFoodServingsByParent } from "./servings";
 import {
 	CLOUD_CURSOR_PAGE_SIZE,
 	getCurrentUserId,
@@ -127,19 +129,30 @@ export const readCloudSmoothieListPage = async (
 	const { data, count, error } = await query.range(offset, offset + limit - 1);
 	if (error || !data) return null;
 
-	const normalizedRows = await readNormalizedNutrientsByParent(
-		supabase,
-		"user_food_list_item_id",
-		data.map((row) => row.id),
-	);
+	const [normalizedRows, servingRows] = await Promise.all([
+		readNormalizedNutrientsByParent(
+			supabase,
+			"user_food_list_item_id",
+			data.map((row) => row.id),
+		),
+		readFoodServingsByParent(
+			supabase,
+			"user_food_list_item_id",
+			data.map((row) => row.id),
+		),
+	]);
 	const foods = data.map((row) => {
 		const food = row.food as unknown as FdcFood;
-		return hydrateFoodWithNormalizedNutrients(
+		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
 			{
 				...food,
 				listAddedAt: food.listAddedAt ?? new Date(row.created_at).getTime(),
 			},
 			normalizedRows?.get(row.id),
+		);
+		return hydrateFoodWithNormalizedServings(
+			foodWithNutrients,
+			servingRows?.get(row.id),
 		);
 	});
 	const foodsWithImages = await hydrateFoodsWithCachedImages(supabase, foods);
@@ -170,19 +183,30 @@ export const readCloudSmoothieList = async (key: SmoothieListKey) => {
 	});
 
 	if (!rows) return null;
-	const normalizedRows = await readNormalizedNutrientsByParent(
-		supabase,
-		"user_food_list_item_id",
-		rows.map((row) => row.id),
-	);
+	const [normalizedRows, servingRows] = await Promise.all([
+		readNormalizedNutrientsByParent(
+			supabase,
+			"user_food_list_item_id",
+			rows.map((row) => row.id),
+		),
+		readFoodServingsByParent(
+			supabase,
+			"user_food_list_item_id",
+			rows.map((row) => row.id),
+		),
+	]);
 	const foods = rows.map((row) => {
 		const food = row.food as unknown as FdcFood;
-		return hydrateFoodWithNormalizedNutrients(
+		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
 			{
 				...food,
 				listAddedAt: food.listAddedAt ?? new Date(row.created_at).getTime(),
 			},
 			normalizedRows?.get(row.id),
+		);
+		return hydrateFoodWithNormalizedServings(
+			foodWithNutrients,
+			servingRows?.get(row.id),
 		);
 	});
 	return await hydrateFoodsWithCachedImages(supabase, foods);

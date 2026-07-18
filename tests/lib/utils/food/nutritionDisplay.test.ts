@@ -44,5 +44,6 @@ describe("nutrition display helpers", () => {
 		expect(formatViewingGrams(125)).toBe("125g");
 		expect(getNutritionBasisLabel(100)).toBe("Per 100g food data");
 		expect(getNutritionBasisLabel(125)).toBe("Per 125g viewing amount");
+		expect(getNutritionBasisLabel(30, "2 tbsp")).toBe("Per 2 tbsp · 30g");
 	});
 });

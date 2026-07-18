@@ -15,6 +15,7 @@ import {
 	type NutrientRelationshipRule,
 } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import type { FdcFood } from "$lib/utils/food/types";
+import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import { tokenizeIngredientSearchText } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
 import {
@@ -23,6 +24,7 @@ import {
 } from "$lib/utils/products/catalogSubmissionComparison";
 import { toJson } from "$lib/utils/storage/supabase/shared";
 import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
+import { readFoodServingsByParent } from "$lib/utils/storage/supabase/servings";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
 	buildOpenFoodFactsCatalogBundle,
@@ -189,29 +191,27 @@ const enrichCatalogFood = (
 	},
 	nutrientRows?: NormalizedNutrientRow[],
 	category?: ResolvedFoodCategory,
-) =>
-	hydrateFoodWithNormalizedNutrients(
-		category ? applyCanonicalFoodCategory({
-			...(row.food as unknown as FdcFood),
-			categoryOptionId: row.category_option_id ?? undefined,
-			compatibilitySummary:
-				(row.compatibility_summary as FoodCompatibilitySummary | null) ?? undefined,
-			sharedProductId: row.id,
-			sharedProductConfidence:
-				row.confidence as FdcFood["sharedProductConfidence"],
-			customFood: false,
-		}, category) : {
-			...(row.food as unknown as FdcFood),
-			categoryOptionId: row.category_option_id ?? undefined,
-			compatibilitySummary:
-				(row.compatibility_summary as FoodCompatibilitySummary | null) ?? undefined,
-			sharedProductId: row.id,
-			sharedProductConfidence:
-				row.confidence as FdcFood["sharedProductConfidence"],
-			customFood: false,
-		},
+	servingRows?: Parameters<typeof hydrateFoodWithNormalizedServings>[1],
+) => {
+	const baseFood = {
+		...(row.food as unknown as FdcFood),
+		categoryOptionId: row.category_option_id ?? undefined,
+		compatibilitySummary:
+			(row.compatibility_summary as FoodCompatibilitySummary | null) ?? undefined,
+		sharedProductId: row.id,
+		sharedProductConfidence:
+			row.confidence as FdcFood["sharedProductConfidence"],
+		customFood: false,
+	};
+	const food = category
+		? applyCanonicalFoodCategory(baseFood, category)
+		: baseFood;
+	const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
+		food,
 		nutrientRows,
 	);
+	return hydrateFoodWithNormalizedServings(foodWithNutrients, servingRows);
+};
 
 export const getSharedProductByBarcode = async (
 	supabase: SupabaseClient<Database>,
@@ -229,12 +229,16 @@ export const getSharedProductByBarcode = async (
 	if (error) throw error;
 	if (!data) return null;
 	const category = await readFoodCategoryOption(supabase, data.category_option_id);
-	const normalizedRows = await readNormalizedNutrientsByParent(
-		supabase,
-		"shared_product_id",
-		[data.id],
+	const [normalizedRows, servingRows] = await Promise.all([
+		readNormalizedNutrientsByParent(supabase, "shared_product_id", [data.id]),
+		readFoodServingsByParent(supabase, "shared_product_id", [data.id]),
+	]);
+	return enrichCatalogFood(
+		data,
+		normalizedRows?.get(data.id),
+		category ?? undefined,
+		servingRows?.get(data.id),
 	);
-	return enrichCatalogFood(data, normalizedRows?.get(data.id), category ?? undefined);
 };
 
 export const searchApprovedSharedProducts = async (
@@ -257,11 +261,18 @@ export const searchApprovedSharedProducts = async (
 	const { data, error } = await request;
 	if (error) throw error;
 	const rows = data ?? [];
-	const normalizedRows = await readNormalizedNutrientsByParent(
-		supabase,
-		"shared_product_id",
-		rows.map((row) => row.id),
-	);
+	const [normalizedRows, servingRows] = await Promise.all([
+		readNormalizedNutrientsByParent(
+			supabase,
+			"shared_product_id",
+			rows.map((row) => row.id),
+		),
+		readFoodServingsByParent(
+			supabase,
+			"shared_product_id",
+			rows.map((row) => row.id),
+		),
+	]);
 	const categories = await readFoodCategoryOptions(
 		supabase,
 		rows.map((row) => row.category_option_id),
@@ -273,7 +284,9 @@ export const searchApprovedSharedProducts = async (
 			row.category_option_id
 				? categories.get(row.category_option_id)
 				: undefined,
-		));
+			servingRows?.get(row.id),
+		),
+	);
 };
 
 const publishSubmission = async (input: {

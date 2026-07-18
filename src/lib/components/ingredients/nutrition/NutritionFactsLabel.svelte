@@ -19,9 +19,11 @@
 	let {
 		food,
 		viewingGrams,
+		viewingServingLabel,
 	}: {
 		food?: FdcFood;
 		viewingGrams: number;
+		viewingServingLabel?: string;
 	} = $props();
 
 	const vitalIds = vitalNutrients.map((vn) => Number(vn.id));
@@ -80,7 +82,7 @@
 <div class="nf-label">
 	<div class="nf-heading">
 		<div class="nf-title">Nutrition Facts</div>
-		<div class="nf-basis">{getNutritionBasisLabel(viewingGrams)}</div>
+		<div class="nf-basis">{getNutritionBasisLabel(viewingGrams, viewingServingLabel)}</div>
 	</div>
 	{#if food?.description}
 		<div class="nf-food-row">

@@ -15,6 +15,8 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		servingSize: food.servingSize,
 		servingSizeUnit: food.servingSizeUnit,
 		householdServingFullText: food.householdServingFullText,
+		hasSourceServing: food.hasSourceServing,
+		foodServings: food.foodServings?.map((serving) => ({ ...serving })),
 		gtinUpc: food.gtinUpc,
 		ingredients: food.ingredients,
 		ingredientList: food.ingredientList,

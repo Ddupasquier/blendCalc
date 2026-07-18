@@ -1158,6 +1158,9 @@
 			categories,
 			image,
 			reportedNutrientIds,
+			hasSourceServing: barcodeSource === "manual"
+				? true
+				: barcodeReferenceSourceDraft?.hasSourceServing,
 			importedNutrients,
 			manualEntryNutrientFields,
 			manualNutrientValues,

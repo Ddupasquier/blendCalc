@@ -111,6 +111,14 @@ describe("custom foods", () => {
 		expect(food.customFood).toBe(true);
 		expect(food.servingSize).toBe(34);
 		expect(food.servingSizeUnit).toBe("g");
+		expect(food.foodServings).toEqual([
+			expect.objectContaining({
+				label: "3 cookies",
+				gramWeight: 34,
+				isPrimary: true,
+				source: "user-label",
+			}),
+		]);
 		expect(getFdcNutrientValue(food, NUTRIENT_IDS.CALORIES)).toBeCloseTo(
 			470.59,
 		);
@@ -137,6 +145,11 @@ describe("custom foods", () => {
 		expect(food.customDensityGramsPerMilliliter).toBeCloseTo(1.0356);
 		expect(food.customDensityConfidence).toBe("known");
 		expect(food.customServingLabel).toBe("1 cup");
+		expect(food.foodServings?.[0]).toMatchObject({
+			amount: 1,
+			unitKey: "cup",
+			gramWeight: 245,
+		});
 	});
 
 	it("preserves the selected canonical category identity", () => {

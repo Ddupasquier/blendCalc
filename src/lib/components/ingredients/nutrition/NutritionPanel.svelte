@@ -12,6 +12,7 @@
 		food,
 		showListActions = true,
 		viewingGrams = DEFAULT_NUTRITION_VIEWING_GRAMS,
+		viewingServingLabel,
 		listMembership = { inFridge: false, inShoppingList: false },
 		canAdjustImagePlacement = false,
 		onImagePlacementSave,
@@ -21,7 +22,7 @@
 <section class="nutrition-panel">
 	<ProductImagePanel {food} {canAdjustImagePlacement} {onImagePlacementSave} />
 	<NutritionPreferenceConflict {food} />
-	<NutritionFactsLabel {food} {viewingGrams} />
+	<NutritionFactsLabel {food} {viewingGrams} {viewingServingLabel} />
 	<NutritionListActions {food} {showListActions} {listMembership} />
 </section>
 

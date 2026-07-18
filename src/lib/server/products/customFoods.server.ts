@@ -1,8 +1,10 @@
 import type { Database } from "$lib/types/database.types";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
+import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type { FdcFood } from "$lib/utils/food/types";
 import { tokenizeIngredientSearchText } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
+import { readFoodServingsByParent } from "$lib/utils/storage/supabase/servings";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const CUSTOM_SEARCH_CANDIDATE_LIMIT = 100;
@@ -29,16 +31,27 @@ export const searchUserCustomFoods = async (
 	const { data, error } = await request;
 	if (error) throw error;
 	const rows = data ?? [];
-	const normalizedRows = await readNormalizedNutrientsByParent(
-		supabase,
-		"custom_food_id",
-		rows.map((row) => row.id),
-	);
+	const [normalizedRows, servingRows] = await Promise.all([
+		readNormalizedNutrientsByParent(
+			supabase,
+			"custom_food_id",
+			rows.map((row) => row.id),
+		),
+		readFoodServingsByParent(
+			supabase,
+			"custom_food_id",
+			rows.map((row) => row.id),
+		),
+	]);
 
-	return rows.map((row) =>
-		hydrateFoodWithNormalizedNutrients(
+	return rows.map((row) => {
+		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
 			row.food as unknown as FdcFood,
 			normalizedRows?.get(row.id),
-		),
-	);
+		);
+		return hydrateFoodWithNormalizedServings(
+			foodWithNutrients,
+			servingRows?.get(row.id),
+		);
+	});
 };

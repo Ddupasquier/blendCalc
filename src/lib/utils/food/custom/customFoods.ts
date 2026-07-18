@@ -41,6 +41,7 @@ export type CustomFoodInput = {
 	image?: FoodImageAsset;
 	nutrients: FdcNutrient[];
 	reportedNutrientIds?: number[];
+	hasSourceServing?: boolean;
 };
 
 export type CustomFoodSaveResult =
@@ -149,6 +150,27 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 			: null;
 
 	const foodNutrients = createNutrients(input.nutrients, servingWeightGrams);
+	const servingLabel = buildCustomServingLabel({
+		servingLabel: input.servingLabel,
+		servingWeightGrams,
+		volumeQuantity: input.volumeQuantity,
+		volumeUnit: input.volumeUnit,
+	});
+	const hasSourceServing = input.hasSourceServing ?? true;
+	const servingSource = input.barcodeSource === "usda"
+		? "usda"
+		: input.barcodeSource === "open-food-facts"
+			? "open-food-facts"
+			: input.barcodeSource === "community"
+				? "community-reviewed"
+				: "user-label";
+	const servingConfidence = servingSource === "usda"
+		? "source-verified"
+		: servingSource === "open-food-facts"
+			? "imported"
+			: servingSource === "community-reviewed"
+				? "moderator-reviewed"
+				: "user-reported";
 
 	return {
 		fdcId: createCustomFoodId(),
@@ -158,6 +180,19 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		dataType: "Custom",
 		servingSize: servingWeightGrams,
 		servingSizeUnit: "g",
+		hasSourceServing,
+		foodServings: hasSourceServing
+			? [{
+				label: servingLabel,
+				gramWeight: servingWeightGrams,
+				amount: input.volumeQuantity,
+				unitKey: input.volumeUnit,
+				isPrimary: true,
+				source: servingSource,
+				sourceReference: input.barcode,
+				confidence: servingConfidence,
+			}]
+			: [],
 		ingredients: input.ingredients?.trim() || undefined,
 		ingredientList: input.ingredientList,
 		allergens: input.allergens,
@@ -175,12 +210,7 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		sourceDataType: input.sourceDataType,
 		sourcePublishedDate: input.sourcePublishedDate,
 		sourceModifiedDate: input.sourceModifiedDate,
-		customServingLabel: buildCustomServingLabel({
-			servingLabel: input.servingLabel,
-			servingWeightGrams,
-			volumeQuantity: input.volumeQuantity,
-			volumeUnit: input.volumeUnit,
-		}),
+		customServingLabel: servingLabel,
 		customServingWeightGrams: servingWeightGrams,
 		customDensityGramsPerMilliliter: density ?? undefined,
 		customDensityLabel: density ? "custom serving" : undefined,

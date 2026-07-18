@@ -47,6 +47,17 @@ export interface FoodImageAsset {
     fetchedAt?: string;
 }
 
+export interface FoodServing {
+    label: string;
+    gramWeight: number;
+    amount?: number;
+    unitKey?: string;
+    isPrimary: boolean;
+    source?: FdcNutrient["source"];
+    sourceReference?: string;
+    confidence?: FdcNutrient["confidence"];
+}
+
 /** A food item returned from the FDC search endpoint */
 export interface FdcFood {
     fdcId: number;
@@ -67,6 +78,8 @@ export interface FdcFood {
     servingSize?: number;
     servingSizeUnit?: string;
     householdServingFullText?: string;
+    hasSourceServing?: boolean;
+    foodServings?: FoodServing[];
     gtinUpc?: string;
     ingredients?: string;
     ingredientList?: string[];

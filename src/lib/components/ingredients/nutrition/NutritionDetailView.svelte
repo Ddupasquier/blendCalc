@@ -16,7 +16,12 @@
 		stepNutritionViewingGrams,
 	} from "$lib/utils/food/nutrients/nutritionDisplay";
 	import NutritionPanel from "./NutritionPanel.svelte";
+	import NutritionServingSelect from "./NutritionServingSelect.svelte";
 	import type { NutritionDetailViewProps } from "./types";
+	import {
+		getFoodServingByGrams,
+		getPrimaryFoodServing,
+	} from "$lib/utils/food/servings/foodServings";
 
 	let {
 		food,
@@ -29,15 +34,19 @@
 
 	let viewingGrams = $state(DEFAULT_NUTRITION_VIEWING_GRAMS);
 	let currentFoodId = $state<number | null>(null);
+	const viewingServing = $derived(getFoodServingByGrams(food, viewingGrams));
 
 	$effect(() => {
 		if (currentFoodId === null) {
 			currentFoodId = food.fdcId;
+			viewingGrams =
+				getPrimaryFoodServing(food)?.gramWeight ?? DEFAULT_NUTRITION_VIEWING_GRAMS;
 			return;
 		}
 		if (food.fdcId === currentFoodId) return;
 		currentFoodId = food.fdcId;
-		viewingGrams = DEFAULT_NUTRITION_VIEWING_GRAMS;
+		viewingGrams =
+			getPrimaryFoodServing(food)?.gramWeight ?? DEFAULT_NUTRITION_VIEWING_GRAMS;
 	});
 
 	const decreaseViewingAmount = (step: number) => {
@@ -89,6 +98,11 @@
 				</AcceleratingStepButton>
 			</div>
 		</section>
+		<NutritionServingSelect
+			{food}
+			{viewingGrams}
+			onSelect={(gramWeight) => (viewingGrams = gramWeight)}
+		/>
 	</ViewTop>
 
 	<ViewBody scroll>
@@ -97,6 +111,7 @@
 				{food}
 				{showListActions}
 				{viewingGrams}
+				viewingServingLabel={viewingServing?.label}
 				{listMembership}
 				{canAdjustImagePlacement}
 				{onImagePlacementSave}

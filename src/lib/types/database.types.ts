@@ -665,6 +665,122 @@ export type Database = {
           },
         ]
       }
+      food_servings: {
+        Row: {
+          amount: number | null
+          confidence: string
+          created_at: string
+          custom_food_id: string | null
+          gram_weight: number
+          id: number
+          is_primary: boolean
+          label: string
+          owner_user_id: string | null
+          serving_order: number
+          shared_product_id: string | null
+          shared_product_observation_id: string | null
+          shared_product_revision_id: string | null
+          shared_product_submission_id: string | null
+          source: string
+          source_reference: string | null
+          unit_key: string | null
+          updated_at: string
+          user_food_list_item_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          confidence: string
+          created_at?: string
+          custom_food_id?: string | null
+          gram_weight: number
+          id?: never
+          is_primary?: boolean
+          label: string
+          owner_user_id?: string | null
+          serving_order: number
+          shared_product_id?: string | null
+          shared_product_observation_id?: string | null
+          shared_product_revision_id?: string | null
+          shared_product_submission_id?: string | null
+          source: string
+          source_reference?: string | null
+          unit_key?: string | null
+          updated_at?: string
+          user_food_list_item_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          confidence?: string
+          created_at?: string
+          custom_food_id?: string | null
+          gram_weight?: number
+          id?: never
+          is_primary?: boolean
+          label?: string
+          owner_user_id?: string | null
+          serving_order?: number
+          shared_product_id?: string | null
+          shared_product_observation_id?: string | null
+          shared_product_revision_id?: string | null
+          shared_product_submission_id?: string | null
+          source?: string
+          source_reference?: string | null
+          unit_key?: string | null
+          updated_at?: string
+          user_food_list_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_servings_custom_food_id_fkey"
+            columns: ["custom_food_id"]
+            isOneToOne: false
+            referencedRelation: "custom_foods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_servings_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_servings_shared_product_observation_id_fkey"
+            columns: ["shared_product_observation_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_servings_shared_product_revision_id_fkey"
+            columns: ["shared_product_revision_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_revisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_servings_shared_product_submission_id_fkey"
+            columns: ["shared_product_submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_servings_unit_key_fkey"
+            columns: ["unit_key"]
+            isOneToOne: false
+            referencedRelation: "serving_measure_units"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "food_servings_user_food_list_item_id_fkey"
+            columns: ["user_food_list_item_id"]
+            isOneToOne: false
+            referencedRelation: "user_food_list_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingredient_source_options: {
         Row: {
           badge_enabled: boolean
@@ -2413,6 +2529,22 @@ export type Database = {
       }
       reject_blocked_signup: { Args: { event: Json }; Returns: Json }
       replace_food_nutrients: {
+        Args: {
+          p_custom_food_id: string
+          p_default_confidence: string
+          p_default_source: string
+          p_default_source_reference: string
+          p_food: Json
+          p_owner_user_id: string
+          p_shared_product_id: string
+          p_shared_product_observation_id: string
+          p_shared_product_revision_id: string
+          p_shared_product_submission_id: string
+          p_user_food_list_item_id: string
+        }
+        Returns: undefined
+      }
+      replace_food_servings: {
         Args: {
           p_custom_food_id: string
           p_default_confidence: string
