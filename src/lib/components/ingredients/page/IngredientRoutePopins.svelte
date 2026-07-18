@@ -151,6 +151,7 @@
 			listMembership={listMembership}
 			{canAdjustImagePlacement}
 			{onImagePlacementSave}
+			{provenanceOptions}
 			onClose={onCloseNutrition}
 		/>
 	{/if}

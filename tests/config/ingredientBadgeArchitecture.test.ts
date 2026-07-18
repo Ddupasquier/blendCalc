@@ -4,11 +4,15 @@ import { describe, expect, it } from "vitest";
 describe("ingredient badge architecture", () => {
 	it("uses the shared centered text badge for source and review labels", () => {
 		const ingredientBadges = readFileSync(
-			"src/lib/components/ingredients/list/IngredientCardBadges.svelte",
+			"src/lib/components/ingredients/provenance/IngredientProvenanceBadges.svelte",
 			"utf8",
 		);
 		const textBadge = readFileSync(
 			"src/lib/components/common/badges/TextBadge.svelte",
+			"utf8",
+		);
+		const nutritionFactsLabel = readFileSync(
+			"src/lib/components/ingredients/nutrition/NutritionFactsLabel.svelte",
 			"utf8",
 		);
 
@@ -20,5 +24,9 @@ describe("ingredient badge architecture", () => {
 		expect(textBadge).toContain("place-items: center");
 		expect(textBadge).toContain("min-height: $app-text-badge-min-height");
 		expect(textBadge).toContain("text-align: center");
+		expect(nutritionFactsLabel).toContain(
+			'$lib/components/ingredients/provenance/IngredientProvenanceBadges.svelte',
+		);
+		expect(nutritionFactsLabel).not.toContain("CustomBadge");
 	});
 });

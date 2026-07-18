@@ -30,6 +30,7 @@
 		listMembership = { inFridge: false, inShoppingList: false },
 		canAdjustImagePlacement = false,
 		onImagePlacementSave,
+		provenanceOptions = [],
 	}: NutritionDetailViewProps = $props();
 
 	let viewingGrams = $state(DEFAULT_NUTRITION_VIEWING_GRAMS);
@@ -115,6 +116,7 @@
 				{listMembership}
 				{canAdjustImagePlacement}
 				{onImagePlacementSave}
+				{provenanceOptions}
 			/>
 		</div>
 	</ViewBody>

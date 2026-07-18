@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
+import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceData";
 
 const spinach: FdcFood = {
 	fdcId: 168462,
@@ -143,5 +144,31 @@ describe("NutritionDetailView", () => {
 
 		expect(screen.getByText("Source: USDA FoodData Central")).toBeInTheDocument();
 		expect(screen.getByText("SR Legacy")).toBeInTheDocument();
+	});
+
+	it("uses the same source and review badges as ingredient cards", () => {
+		render(NutritionDetailView, {
+			props: {
+				food: {
+					...spinach,
+					customFood: true,
+					sourceKey: "usda",
+					trustStatus: "source-verified",
+					sourceLabel: "USDA FoodData Central",
+					sourceDataType: "Branded",
+				},
+				provenanceOptions: ingredientProvenanceOptionsFixture,
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		const sourceBadge = screen.getByLabelText("Source: USDA");
+		expect(sourceBadge).toBeInTheDocument();
+		expect(screen.getByLabelText("Review status: Verified")).toBeInTheDocument();
+		expect(screen.queryByLabelText("Source: Custom")).not.toBeInTheDocument();
+		expect(screen.getByText("Source: USDA FoodData Central")).toBeInTheDocument();
+		expect(screen.getByText("Branded")).toBeInTheDocument();
+		expect(sourceBadge.closest(".nf-heading-badges")).toBeInTheDocument();
 	});
 });

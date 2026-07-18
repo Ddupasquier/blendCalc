@@ -22,7 +22,7 @@
 		gap: $app-gap-2xs;
 		margin: 0;
 		color: $app-muted;
-		font-size: $app-font-size-xs;
+		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-medium;
 		line-height: $app-button-line-height;
 	}

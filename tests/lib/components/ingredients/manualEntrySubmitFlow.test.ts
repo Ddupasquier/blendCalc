@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
 	findCustomFoodByBarcode: vi.fn(),
 	findCustomFoodByName: vi.fn(),
 	submitSharedProduct: vi.fn(),
+	notifySmoothieListsChanged: vi.fn(),
 }));
 
 vi.mock("$lib/utils/food/custom/customFoods", () => ({
@@ -15,6 +16,10 @@ vi.mock("$lib/utils/food/custom/customFoods", () => ({
 
 vi.mock("$lib/utils/products/catalog", () => ({
 	submitSharedProduct: mocks.submitSharedProduct,
+}));
+
+vi.mock("$lib/utils/storage/client/smoothieLists", () => ({
+	notifySmoothieListsChanged: mocks.notifySmoothieListsChanged,
 }));
 
 import { saveManualEntryCustomFood } from "$lib/components/ingredients/manual-entry/utils/submitFlow";
@@ -53,6 +58,7 @@ describe("manual entry catalog submission", () => {
 		});
 
 		expect(mocks.submitSharedProduct).not.toHaveBeenCalled();
+		expect(mocks.notifySmoothieListsChanged).not.toHaveBeenCalled();
 	});
 
 	it("submits only after the user explicitly enables sharing", async () => {
@@ -67,5 +73,6 @@ describe("manual entry catalog submission", () => {
 		});
 
 		expect(mocks.submitSharedProduct).toHaveBeenCalledOnce();
+		expect(mocks.notifySmoothieListsChanged).toHaveBeenCalledOnce();
 	});
 });

@@ -1,21 +1,21 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
-import IngredientCardBadges from "$lib/components/ingredients/list/IngredientCardBadges.svelte";
+import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges.svelte";
+import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceData";
 
-describe("IngredientCardBadges", () => {
-	it("shows a compact warning symbol while preserving its accessible detail", () => {
-		render(IngredientCardBadges, {
+describe("IngredientProvenanceBadges", () => {
+	it("shows database-backed provenance and compact warning detail", () => {
+		render(IngredientProvenanceBadges, {
 			props: {
-				sourceBadge: {
-					dimension: "source",
-					label: "USDA",
-					tone: "info",
+				food: {
+					fdcId: 1,
+					description: "Test food",
+					dataType: "Foundation",
+					foodNutrients: [],
+					sourceKey: "usda",
+					trustStatus: "source-verified",
 				},
-				trustBadge: {
-					dimension: "trust",
-					label: "Verified",
-					tone: "success",
-				},
+				provenanceOptions: ingredientProvenanceOptionsFixture,
 				warning: "Gluten-free may conflict",
 			},
 		});

@@ -16,13 +16,14 @@
 		listMembership = { inFridge: false, inShoppingList: false },
 		canAdjustImagePlacement = false,
 		onImagePlacementSave,
+		provenanceOptions = [],
 	}: NutritionPanelProps = $props();
 </script>
 
 <section class="nutrition-panel">
 	<ProductImagePanel {food} {canAdjustImagePlacement} {onImagePlacementSave} />
 	<NutritionPreferenceConflict {food} />
-	<NutritionFactsLabel {food} {viewingGrams} {viewingServing} />
+	<NutritionFactsLabel {food} {viewingGrams} {viewingServing} {provenanceOptions} />
 	<NutritionListActions {food} {showListActions} {listMembership} />
 </section>
 

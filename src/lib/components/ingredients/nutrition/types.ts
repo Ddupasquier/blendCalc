@@ -1,5 +1,6 @@
 import type { FoodImageAsset, FdcFood, FoodServing } from "$lib/utils/food/types";
 import type { IngredientListMembership } from "$lib/utils/ingredients/ingredientListUi";
+import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 
 export type ImagePlacementSaveHandler = (
 	image: FoodImageAsset,
@@ -20,12 +21,14 @@ export type NutritionPanelProps = {
 	listMembership?: IngredientListMembership;
 	canAdjustImagePlacement?: boolean;
 	onImagePlacementSave?: ImagePlacementSaveHandler;
+	provenanceOptions?: readonly IngredientProvenanceOption[];
 };
 
 export type NutritionFactsLabelProps = {
 	food?: FdcFood;
 	viewingGrams: number;
 	viewingServing?: FoodServing | null;
+	provenanceOptions?: readonly IngredientProvenanceOption[];
 };
 
 export type NutritionServingStatementProps = {
@@ -43,6 +46,7 @@ export type NutritionDetailViewProps = {
 	listMembership?: IngredientListMembership;
 	canAdjustImagePlacement?: boolean;
 	onImagePlacementSave?: ImagePlacementSaveHandler;
+	provenanceOptions?: readonly IngredientProvenanceOption[];
 };
 
 export type NutritionServingSelectProps = {

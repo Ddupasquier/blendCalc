@@ -1,4 +1,5 @@
 import type { ProductReferenceData } from "$lib/utils/food/reference/productReferenceData";
+import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 import type { ServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 import { NUTRIENT_IDS } from "$lib/utils/food/types";
 
@@ -84,3 +85,46 @@ export const productReferenceDataFixture: ProductReferenceData = {
 		multiplier: 0.025,
 	}],
 };
+
+export const ingredientProvenanceOptionsFixture: IngredientProvenanceOption[] = [
+	{
+		dimension: "source",
+		value: "usda",
+		filter_label: "USDA",
+		badge_label: "USDA",
+		badge_tone: "info",
+		display_order: 1,
+		filter_enabled: true,
+		badge_enabled: true,
+	},
+	{
+		dimension: "source",
+		value: "custom",
+		filter_label: "Custom",
+		badge_label: "Custom",
+		badge_tone: "custom",
+		display_order: 4,
+		filter_enabled: true,
+		badge_enabled: true,
+	},
+	{
+		dimension: "trust",
+		value: "source-verified",
+		filter_label: "Source verified",
+		badge_label: "Verified",
+		badge_tone: "success",
+		display_order: 1,
+		filter_enabled: true,
+		badge_enabled: true,
+	},
+	{
+		dimension: "trust",
+		value: "user-private",
+		filter_label: "Private",
+		badge_label: "Private",
+		badge_tone: "neutral",
+		display_order: 6,
+		filter_enabled: true,
+		badge_enabled: true,
+	},
+];

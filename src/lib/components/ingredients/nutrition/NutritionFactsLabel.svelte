@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import CustomBadge from "$lib/components/common/display/CustomBadge.svelte";
 	import SourceAttribution from "$lib/components/common/display/SourceAttribution.svelte";
 	import NutritionConfidenceDetails from "$lib/components/ingredients/nutrition/NutritionConfidenceDetails.svelte";
+	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges.svelte";
 	import NutritionServingStatement from "$lib/components/ingredients/nutrition/NutritionServingStatement.svelte";
 	import {
 		getFdcNutrientValue,
@@ -21,6 +21,7 @@
 		food,
 		viewingGrams,
 		viewingServing,
+		provenanceOptions = [],
 	}: NutritionFactsLabelProps = $props();
 	const nutritionBasis = $derived(
 		viewingServing ? "Amount per serving" : getNutritionBasisLabel(viewingGrams),
@@ -81,19 +82,30 @@
 
 <div class="nf-label">
 	<div class="nf-heading">
-		<div class="nf-title">Nutrition Facts</div>
+		<div class="nf-heading-top">
+			<div class="nf-title">Nutrition Facts</div>
+			{#if food}
+				<div class="nf-heading-badges">
+					<IngredientProvenanceBadges {food} {provenanceOptions} />
+				</div>
+			{/if}
+		</div>
 		<NutritionServingStatement serving={viewingServing} />
 		<div class="nf-basis">{nutritionBasis}</div>
 	</div>
 	{#if food?.description}
-		<div class="nf-food-row">
-			<div class="nf-food">{food.description}</div>
-			{#if food.customFood}
-				<CustomBadge />
+		<div class="nf-food-details">
+			<div class="nf-food-row">
+				<div class="nf-food">{food.description}</div>
+			</div>
+			{#if food.sourceLabel}
+				<SourceAttribution
+					label={food.sourceLabel}
+					dataType={food.sourceDataType ?? food.dataType}
+				/>
 			{/if}
 		</div>
-	{/if}
-	{#if food?.sourceLabel}
+	{:else if food?.sourceLabel}
 		<SourceAttribution
 			label={food.sourceLabel}
 			dataType={food.sourceDataType ?? food.dataType}
@@ -172,6 +184,24 @@
 		text-transform: uppercase;
 	}
 
+	.nf-heading-top {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: start;
+		gap: $app-gap-sm;
+	}
+
+	.nf-heading-badges {
+		display: flex;
+		justify-content: flex-end;
+		min-width: 0;
+	}
+
+	:global(.nf-heading-badges .ingredient-provenance-badges) {
+		justify-content: flex-end;
+		width: auto;
+	}
+
 	.nf-basis {
 		max-width: none;
 		padding-top: 0;
@@ -189,7 +219,11 @@
 		align-items: center;
 		flex-wrap: wrap;
 		gap: $app-gap-xs;
-		margin-bottom: $app-gap-2xs;
+	}
+
+	.nf-food-details {
+		display: grid;
+		gap: $app-gap-2xs;
 	}
 
 	.nf-food {
@@ -299,7 +333,7 @@
 		text-transform: uppercase;
 	}
 
-	@media (max-width: $app-breakpoint-xs) {
+	@media (max-width: $app-breakpoint-sm) {
 		.nf-label {
 			padding: $nutrition-label-padding-y-mobile
 				$nutrition-label-padding-x-mobile
@@ -314,9 +348,13 @@
 			font-size: $nutrition-label-title-font-size-mobile;
 		}
 
+		.nf-heading-top {
+			gap: $app-gap-xs;
+		}
+
 		.nf-basis {
 			max-width: none;
-			font-size: $app-font-size-xs;
+			font-size: $app-font-size-sm;
 		}
 
 		.nf-columns {

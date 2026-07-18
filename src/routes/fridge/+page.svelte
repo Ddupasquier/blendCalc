@@ -799,7 +799,8 @@
 
         if (routeState.view === INGREDIENT_ROUTE_VIEWS.nutrition) {
             const nextFood =
-                selectedFood?.fdcId === routeState.foodId ? selectedFood : routeFood;
+                routeFood ??
+                (selectedFood?.fdcId === routeState.foodId ? selectedFood : null);
             selectedFood = nextFood;
             selectedFoodShowListActions = routeState.showListActions;
         } else {

@@ -33,7 +33,8 @@ export type SmoothieListMutationResult =
 	| "invalid"
 	| "error";
 
-const dispatchListsChanged = () => {
+export const notifySmoothieListsChanged = () => {
+	if (typeof window === "undefined") return;
 	window.dispatchEvent(new CustomEvent(SMOOTHIE_LISTS_CHANGED_EVENT));
 };
 
@@ -90,7 +91,7 @@ export const writeSmoothieList = (key: SmoothieListKey, list: FdcFood[]) => {
 	try {
 		localStorage.setItem(getScopedStorageKey(key), JSON.stringify(compactList));
 		void writeCloudSmoothieList(key, compactList);
-		dispatchListsChanged();
+		notifySmoothieListsChanged();
 		return true;
 	} catch (error) {
 		if (!isQuotaExceededError(error)) {
@@ -102,7 +103,7 @@ export const writeSmoothieList = (key: SmoothieListKey, list: FdcFood[]) => {
 		try {
 			localStorage.setItem(getScopedStorageKey(key), JSON.stringify(compactList));
 			void writeCloudSmoothieList(key, compactList);
-			dispatchListsChanged();
+			notifySmoothieListsChanged();
 			return true;
 		} catch {
 			return false;
@@ -132,7 +133,7 @@ export const addFoodToSmoothieList = async (
 	const nextList = [...list, foodRecord];
 
 	cacheSmoothieListLocally(key, nextList);
-	dispatchListsChanged();
+	notifySmoothieListsChanged();
 	return "added";
 };
 
@@ -158,7 +159,7 @@ export const moveFoodToSmoothieList = async (
 
 	cacheSmoothieListLocally(key, [...targetList, foodRecord]);
 	cacheSmoothieListLocally(sourceKey, sourceList);
-	dispatchListsChanged();
+	notifySmoothieListsChanged();
 	return placementResult === "duplicate" ? "duplicate" : "moved";
 };
 
@@ -199,7 +200,7 @@ export const addFoodsToSmoothieList = async (
 	if (!saved) return "error";
 
 	cacheSmoothieListLocally(key, [...list, ...additions]);
-	dispatchListsChanged();
+	notifySmoothieListsChanged();
 	return "added";
 };
 
@@ -218,7 +219,7 @@ export const removeFoodFromSmoothieList = async (
 	const list = currentList.filter((item) => item.fdcId !== foodId);
 
 	cacheSmoothieListLocally(key, list);
-	dispatchListsChanged();
+	notifySmoothieListsChanged();
 	return "removed";
 };
 
@@ -271,6 +272,6 @@ export const renameFoodInSmoothieList = async (
 		key,
 		itemIndex === -1 ? [...currentList, renamedFood] : nextList,
 	);
-	dispatchListsChanged();
+	notifySmoothieListsChanged();
 	return "renamed";
 };

@@ -5,6 +5,7 @@ import {
 } from "$lib/utils/food/custom/customFoods";
 import type { FdcFood } from "$lib/utils/food/types";
 import { submitSharedProduct } from "$lib/utils/products/catalog";
+import { notifySmoothieListsChanged } from "$lib/utils/storage/client/smoothieLists";
 
 export type ManualEntrySharedProductPhotos = {
 	frontPhoto: File | null;
@@ -103,6 +104,7 @@ export const saveManualEntryCustomFood = async ({
 		try {
 			const submission = await submitSharedProduct(food, photos, { reviewFlags });
 			catalogMessage = submission.message;
+			notifySmoothieListsChanged();
 		} catch {
 			catalogMessage =
 				"The ingredient was saved privately, but catalog review could not be started. You can try again later.";

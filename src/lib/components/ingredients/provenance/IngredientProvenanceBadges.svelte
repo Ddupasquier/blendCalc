@@ -2,16 +2,27 @@
 	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
 	import StatusIconBadge from "$lib/components/common/badges/StatusIconBadge.svelte";
 	import TextBadge from "$lib/components/common/badges/TextBadge.svelte";
-	import type { IngredientCardBadgesProps } from "./types";
+	import {
+		getIngredientSourceBadge,
+		getIngredientTrustBadge,
+	} from "$lib/utils/ingredients/ingredientProvenance";
+	import type { IngredientProvenanceBadgesProps } from "./types";
 
 	let {
-		sourceBadge,
-		trustBadge = null,
+		food,
+		provenanceOptions = [],
 		warning = null,
-	}: IngredientCardBadgesProps = $props();
+	}: IngredientProvenanceBadgesProps = $props();
+
+	const sourceBadge = $derived(
+		getIngredientSourceBadge(food, provenanceOptions),
+	);
+	const trustBadge = $derived(
+		getIngredientTrustBadge(food, provenanceOptions),
+	);
 </script>
 
-<span class="ingredient-card-badges">
+<span class="ingredient-provenance-badges">
 	{#if sourceBadge}
 		<TextBadge
 			label={sourceBadge.label}
@@ -39,7 +50,7 @@
 <style lang="scss">
 	@use "../../../../styles/variables" as *;
 
-	.ingredient-card-badges {
+	.ingredient-provenance-badges {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
@@ -47,5 +58,4 @@
 		width: 100%;
 		min-width: 0;
 	}
-
 </style>

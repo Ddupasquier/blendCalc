@@ -1,12 +1,5 @@
 import type { Snippet } from "svelte";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
-import type { IngredientBadgeDescriptor } from "$lib/utils/ingredients/ingredientProvenance";
-
-export type IngredientCardBadgesProps = {
-	sourceBadge: IngredientBadgeDescriptor | null;
-	trustBadge?: IngredientBadgeDescriptor | null;
-	warning?: string | null;
-};
 
 export type IngredientCardActionsProps = {
 	description: string;

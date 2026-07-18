@@ -6,9 +6,9 @@
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
 	import IngredientBulkToggle from "$lib/components/ingredients/list/IngredientBulkToggle.svelte";
 	import IngredientCardActions from "$lib/components/ingredients/list/IngredientCardActions.svelte";
-	import IngredientCardBadges from "$lib/components/ingredients/list/IngredientCardBadges.svelte";
+	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
-	import type { IngredientBadgeDescriptor } from "$lib/utils/ingredients/ingredientProvenance";
+	import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 
 	let {
 		food,
@@ -20,8 +20,7 @@
 		moveLabel,
 		category,
 		warning = null,
-		sourceBadge,
-		trustBadge,
+		provenanceOptions = [],
 		onToggle,
 		onPreview,
 		onMove,
@@ -37,8 +36,7 @@
 		moveLabel: string;
 		category: string;
 		warning?: string | null;
-		sourceBadge: IngredientBadgeDescriptor | null;
-		trustBadge: IngredientBadgeDescriptor | null;
+		provenanceOptions?: readonly IngredientProvenanceOption[];
 		onToggle: () => void;
 		onPreview: () => void;
 		onMove: () => void;
@@ -68,9 +66,9 @@
 			<FoodSymbol {food} />
 		</CircularMediaFrame>
 		<span class="saved-ingredient-card__copy">
-			<IngredientCardBadges
-				{sourceBadge}
-				{trustBadge}
+			<IngredientProvenanceBadges
+				{food}
+				{provenanceOptions}
 				{warning}
 			/>
 			<strong title={food.description}>{food.description}</strong>

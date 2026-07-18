@@ -2348,8 +2348,10 @@ export type Database = {
           food_identity_key: string | null
           id: string
           list_type: string
-          source_key: string | null
-          trust_status: string | null
+          shared_product_id: string | null
+          shared_product_submission_id: string | null
+          source_key: string
+          trust_status: string
           updated_at: string
           user_id: string
         }
@@ -2360,8 +2362,10 @@ export type Database = {
           food_identity_key?: string | null
           id?: string
           list_type: string
-          source_key?: string | null
-          trust_status?: string | null
+          shared_product_id?: string | null
+          shared_product_submission_id?: string | null
+          source_key?: string
+          trust_status?: string
           updated_at?: string
           user_id: string
         }
@@ -2372,12 +2376,29 @@ export type Database = {
           food_identity_key?: string | null
           id?: string
           list_type?: string
-          source_key?: string | null
-          trust_status?: string | null
+          shared_product_id?: string | null
+          shared_product_submission_id?: string | null
+          source_key?: string
+          trust_status?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_food_list_items_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_food_list_items_shared_product_submission_id_fkey"
+            columns: ["shared_product_submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_food_preferences: {
         Row: {
@@ -2476,6 +2497,7 @@ export type Database = {
         Returns: string
       }
       food_metadata_search_text: { Args: { p_food: Json }; Returns: string }
+      food_normalized_barcode: { Args: { p_food: Json }; Returns: string }
       food_source_key: { Args: { p_food: Json }; Returns: string }
       food_trust_status: { Args: { p_food: Json }; Returns: string }
       is_valid_gtin: { Args: { p_value: string }; Returns: boolean }

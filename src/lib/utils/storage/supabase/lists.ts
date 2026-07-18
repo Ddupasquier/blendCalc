@@ -5,6 +5,7 @@ import { uniqueFoodsByIdentity } from "$lib/utils/food/records/foodIdentity";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type { FdcFood } from "$lib/utils/food/types";
+import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 import { hydrateFoodsWithCachedImages } from "./foodImages";
 import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
@@ -113,7 +114,10 @@ export const readCloudSmoothieListPage = async (
 	const offset = Math.max(0, options.offset ?? 0);
 	let query = supabase
 		.from("user_food_list_items")
-		.select("id, food, created_at", { count: "exact" })
+		.select(
+			"id, food, created_at, shared_product_id, shared_product_submission_id, source_key, trust_status",
+			{ count: "exact" },
+		)
 		.eq("user_id", userId)
 		.eq("list_type", getCloudListType(key));
 
@@ -123,12 +127,17 @@ export const readCloudSmoothieListPage = async (
 	const { data, count, error } = await query.range(offset, offset + limit - 1);
 	if (error || !data) return null;
 
-	const baseFoods = data.map((row) => ({
-		...(row.food as unknown as FdcFood),
-		listAddedAt:
-			(row.food as unknown as FdcFood).listAddedAt ??
-			new Date(row.created_at).getTime(),
-	}));
+	const baseFoods = data.map((row) =>
+		hydrateFoodWithCatalogState(
+			{
+				...(row.food as unknown as FdcFood),
+				listAddedAt:
+					(row.food as unknown as FdcFood).listAddedAt ??
+					new Date(row.created_at).getTime(),
+			},
+			row,
+		),
+	);
 	const [normalizedRows, servingRows, foodsWithImages] = await Promise.all([
 		readNormalizedNutrientsByParent(
 			supabase,
@@ -169,7 +178,9 @@ export const readCloudSmoothieList = async (key: SmoothieListKey) => {
 	const rows = await readAllCursorPages(async (cursorId) => {
 		let query = supabase
 			.from("user_food_list_items")
-			.select("id, food, created_at")
+			.select(
+				"id, food, created_at, shared_product_id, shared_product_submission_id, source_key, trust_status",
+			)
 			.eq("user_id", userId)
 			.eq("list_type", getCloudListType(key))
 			.order("id", { ascending: true })
@@ -180,12 +191,17 @@ export const readCloudSmoothieList = async (key: SmoothieListKey) => {
 	});
 
 	if (!rows) return null;
-	const baseFoods = rows.map((row) => ({
-		...(row.food as unknown as FdcFood),
-		listAddedAt:
-			(row.food as unknown as FdcFood).listAddedAt ??
-			new Date(row.created_at).getTime(),
-	}));
+	const baseFoods = rows.map((row) =>
+		hydrateFoodWithCatalogState(
+			{
+				...(row.food as unknown as FdcFood),
+				listAddedAt:
+					(row.food as unknown as FdcFood).listAddedAt ??
+					new Date(row.created_at).getTime(),
+			},
+			row,
+		),
+	);
 	const [normalizedRows, servingRows, foodsWithImages] = await Promise.all([
 		readNormalizedNutrientsByParent(
 			supabase,

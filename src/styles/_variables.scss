@@ -154,6 +154,16 @@ $app-font-weight-semibold: 700;
 $app-font-weight-bold: 800;
 $app-font-weight-heavy: 900;
 
+// Shared typography scale. Semantic component tokens should alias these sizes
+// instead of repeating equivalent raw values.
+$app-font-size-base: 16px;
+$app-font-size-xs: 0.76rem;
+$app-font-size-sm: 0.88rem;
+$app-font-size-md: 1rem;
+$app-font-size-lg: 1.08rem;
+$app-font-size-xl: 1.25rem;
+$app-letter-spacing-label: 0.04em;
+
 // Shared interactive-control typography. All buttons and button-like links use
 // the interface font, a consistent bold weight, and the same compact line height.
 $app-button-font-family: $app-font-family-interface;
@@ -244,10 +254,10 @@ $app-rebuild-ingredient-card-height: 5.25rem;
 // Figma rebuild compact badge padding.
 $app-rebuild-badge-padding-y: 0.12rem;
 $app-rebuild-badge-padding-x: 0.42rem;
-$app-text-badge-min-height: 1rem;
-$app-text-badge-padding-y: $app-rebuild-badge-padding-y;
-$app-text-badge-padding-x: $app-rebuild-badge-padding-x;
-$app-text-badge-font-size: 0.58rem;
+$app-text-badge-min-height: 1.25rem;
+$app-text-badge-padding-y: 0.16rem;
+$app-text-badge-padding-x: 0.48rem;
+$app-text-badge-font-size: $app-font-size-xs;
 $app-text-badge-max-width: 8rem;
 $app-text-badge-line-height: 1;
 
@@ -516,28 +526,6 @@ $app-close-button-size-sm: 1.75rem;
 $app-close-button-size-md: 2.15rem;
 $app-close-button-icon-scale: 52%;
 
-// Base body font size. Use on the root document/body only.
-$app-font-size-base: 16px;
-
-// Extra-small text. Use for tiny badges, compact metadata, and microcopy.
-$app-font-size-xs: 0.76rem;
-
-// Small text. Use for helper copy, captions, badges, and compact labels.
-$app-font-size-sm: 0.88rem;
-
-// Default compact UI text. Use for buttons, pills, form labels, and dense rows.
-$app-font-size-md: 1rem;
-
-// Compact uppercase label spacing. Use for section labels inside mobile sheets,
-// badges, and dense metadata labels.
-$app-letter-spacing-label: 0.04em;
-
-// Section heading text. Use for card headings and compact panel titles.
-$app-font-size-lg: 1.08rem;
-
-// Page/subsection title text. Use for modal titles and prominent card headers.
-$app-font-size-xl: 1.25rem;
-
 // App color roles
 // -----------------------------------------------------------------------------
 // Default app background. Applied to pages and light nested areas that need to
@@ -738,7 +726,7 @@ $nutrition-label-basis-line-height: 1.15;
 $nutrition-label-warning-line-height: 1.35;
 $nutrition-label-food-font-size: $app-font-size-md;
 $nutrition-label-row-font-size: $app-font-size-md;
-$nutrition-label-row-font-size-mobile: $app-font-size-sm;
+$nutrition-label-row-font-size-mobile: $app-font-size-md;
 $nutrition-label-highlight-font-size: $app-font-size-lg;
 $nutrition-label-highlight-font-size-mobile: $app-font-size-md;
 $nutrition-label-unit-font-size: 0.82em;

@@ -11,8 +11,6 @@
 		getPrimaryFoodWarning,
 	} from "$lib/utils/ingredients/ingredientListUi";
 	import {
-		getIngredientSourceBadge,
-		getIngredientTrustBadge,
 		type IngredientProvenanceOption,
 	} from "$lib/utils/ingredients/ingredientProvenance";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
@@ -49,7 +47,7 @@
 	}: {
 		activeList: SmoothieListKey;
 		foods: FdcFood[];
-		provenanceOptions?: IngredientProvenanceOption[];
+		provenanceOptions?: readonly IngredientProvenanceOption[];
 		activeRawCount?: number;
 		listLoading?: boolean;
 		loadingMoreList?: SmoothieListKey | null;
@@ -150,8 +148,7 @@
 								moveLabel={getIngredientMoveLabel(activeList)}
 								category={getFoodDisplayCategory(food)}
 								{warning}
-								sourceBadge={getIngredientSourceBadge(food, provenanceOptions)}
-								trustBadge={getIngredientTrustBadge(food, provenanceOptions)}
+								{provenanceOptions}
 								onToggle={() => onToggle(food.fdcId)}
 								onPreview={() => onPreview(food)}
 								onMove={() => onMoveItem(food)}

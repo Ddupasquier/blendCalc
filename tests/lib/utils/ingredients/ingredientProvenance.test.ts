@@ -38,6 +38,16 @@ const options: IngredientProvenanceOption[] = [
 		filter_enabled: true,
 		badge_enabled: true,
 	},
+	{
+		dimension: "trust",
+		value: "pending-review",
+		filter_label: "Pending review",
+		badge_label: "Pending",
+		badge_tone: "info",
+		display_order: 45,
+		filter_enabled: true,
+		badge_enabled: true,
+	},
 ];
 
 describe("ingredient provenance", () => {
@@ -62,6 +72,23 @@ describe("ingredient provenance", () => {
 				sharedProductConfidence: "moderator-reviewed",
 			})),
 		).toBe("moderator-reviewed");
+	});
+
+	it("prefers normalized catalog links over private JSON snapshots", () => {
+		const reviewedFood = food({
+			customFood: true,
+			sourceKey: "custom",
+			sharedProductId: "shared-product-id",
+		});
+		const pendingFood = food({
+			customFood: true,
+			sourceKey: "usda",
+			trustStatus: "pending-review",
+		});
+
+		expect(getFoodSourceKey(reviewedFood)).toBe("shared-catalog");
+		expect(getFoodTrustStatus(reviewedFood)).toBe("moderator-reviewed");
+		expect(getFoodTrustStatus(pendingFood)).toBe("pending-review");
 	});
 
 	it("filters source and trust independently", () => {

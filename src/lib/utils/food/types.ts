@@ -58,6 +58,14 @@ export interface FoodServing {
     confidence?: FdcNutrient["confidence"];
 }
 
+export type FoodTrustStatus =
+    | "source-verified"
+    | "imported"
+    | "corroborated"
+    | "moderator-reviewed"
+    | "pending-review"
+    | "user-private";
+
 /** A food item returned from the FDC search endpoint */
 export interface FdcFood {
     fdcId: number;
@@ -100,6 +108,8 @@ export interface FdcFood {
     sourcePublishedDate?: string;
     sourceModifiedDate?: string;
     sharedProductId?: string;
+    sharedProductSubmissionId?: string;
+    trustStatus?: FoodTrustStatus;
     sharedProductConfidence?:
         | "source-verified"
         | "moderator-reviewed"

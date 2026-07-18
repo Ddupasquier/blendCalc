@@ -1,16 +1,12 @@
 <script lang="ts">
     import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls.svelte";
     import FoodSymbol from "$lib/assets/icons/FoodSymbol.svelte";
-    import IngredientCardBadges from "$lib/components/ingredients/list/IngredientCardBadges.svelte";
+    import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges.svelte";
     import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
     import {
         getFoodDisplayCategory,
         getPrimaryFoodWarning,
     } from "$lib/utils/ingredients/ingredientListUi";
-    import {
-        getIngredientSourceBadge,
-        getIngredientTrustBadge,
-    } from "$lib/utils/ingredients/ingredientProvenance";
     import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
     import Chevron from "$lib/assets/icons/Chevron.svelte";
@@ -92,9 +88,9 @@
                                 <span class="result-copy">
                                     <span class="result-name">{formatName(food.description)}</span>
                                     <span class="result-category">{getFoodDisplayCategory(food)}</span>
-                                    <IngredientCardBadges
-                                        sourceBadge={getIngredientSourceBadge(food, provenanceOptions)}
-                                        trustBadge={getIngredientTrustBadge(food, provenanceOptions)}
+									<IngredientProvenanceBadges
+										{food}
+										{provenanceOptions}
                                         warning={primaryWarning}
                                     />
                                 </span>

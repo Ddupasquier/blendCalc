@@ -1,6 +1,6 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import type { Database } from "$lib/types/database.types";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FdcFood, FoodTrustStatus } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type IngredientProvenanceDimension = "source" | "trust";
@@ -9,12 +9,7 @@ export type IngredientSourceKey =
 	| "open-food-facts"
 	| "shared-catalog"
 	| "custom";
-export type IngredientTrustStatus =
-	| "source-verified"
-	| "imported"
-	| "corroborated"
-	| "moderator-reviewed"
-	| "user-private";
+export type IngredientTrustStatus = FoodTrustStatus;
 export type IngredientBadgeTone = "info" | "success" | "custom" | "neutral";
 
 export type IngredientProvenanceOption = Pick<
@@ -51,8 +46,14 @@ const TRUST_STATUSES = new Set<IngredientTrustStatus>([
 	"imported",
 	"corroborated",
 	"moderator-reviewed",
+	"pending-review",
 	"user-private",
 ]);
+
+export const isIngredientTrustStatus = (
+	value: string | null | undefined,
+): value is IngredientTrustStatus =>
+	Boolean(value && TRUST_STATUSES.has(value as IngredientTrustStatus));
 
 export const isIngredientSourceFilter = (value: string) =>
 	value === "all" || SOURCE_KEYS.has(value as IngredientSourceKey);
@@ -66,6 +67,9 @@ export const getFoodSourceKey = (food: FdcFood): IngredientSourceKey => {
 		: food.sourceKey === "community-reviewed" || food.sourceKey === "community"
 			? "shared-catalog"
 			: food.sourceKey;
+	if (food.sharedProductId && (!sourceKey || sourceKey === "custom")) {
+		return "shared-catalog";
+	}
 	if (sourceKey && SOURCE_KEYS.has(sourceKey as IngredientSourceKey)) {
 		return sourceKey as IngredientSourceKey;
 	}
@@ -79,13 +83,21 @@ export const getFoodSourceKey = (food: FdcFood): IngredientSourceKey => {
 };
 
 export const getFoodTrustStatus = (food: FdcFood): IngredientTrustStatus => {
-	if (food.customFood && !food.sharedProductId) return "user-private";
+	if (isIngredientTrustStatus(food.trustStatus)) return food.trustStatus;
 	if (
+		food.sharedProductId &&
 		food.sharedProductConfidence &&
 		TRUST_STATUSES.has(food.sharedProductConfidence as IngredientTrustStatus)
 	) {
 		return food.sharedProductConfidence as IngredientTrustStatus;
 	}
+	if (food.sharedProductId) {
+		const sourceKey = getFoodSourceKey(food);
+		if (sourceKey === "usda") return "source-verified";
+		if (sourceKey === "open-food-facts") return "imported";
+		return "moderator-reviewed";
+	}
+	if (food.customFood) return "user-private";
 
 	const sourceKey = getFoodSourceKey(food);
 	if (sourceKey === "usda") return "source-verified";

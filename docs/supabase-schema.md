@@ -63,7 +63,7 @@ Notes:
 
 | Table | Primary Key | Owner Scope | Purpose | Key Relationships |
 | --- | --- | --- | --- | --- |
-| `user_food_list_items` | `id` | Many rows per auth user | User fridge and shopping-list items | `user_id → auth.users.id` |
+| `user_food_list_items` | `id` | Many rows per auth user | User fridge and shopping-list items | `user_id → auth.users.id`, optional active shared product and pending submission |
 | `custom_foods` | `id` | Many rows per auth user | User-created custom foods and barcode/manual-entry payloads | `user_id → auth.users.id` |
 | `saved_drinks` | `id` | Many rows per auth user | Saved smoothie recipes/mixes | `user_id → auth.users.id` |
 | `ingredient_provenance_options` | `(dimension, value)` | Shared reference | DB-backed source/trust filters and badge presentation for ingredient list/search UI | No direct user ownership |
@@ -73,7 +73,8 @@ Notes:
 Stores the user's active ingredient lists.
 
 Columns: `id`, `user_id`, `list_type`, `fdc_id`, `food`,
-`food_identity_key`, `source_key`, `trust_status`, `created_at`, `updated_at`.
+`food_identity_key`, `shared_product_id`, `shared_product_submission_id`,
+`source_key`, `trust_status`, `created_at`, `updated_at`.
 
 Notes:
 - `list_type` is `fridge` or `shopping`.
@@ -84,9 +85,21 @@ Notes:
   renames keep the user's exact wording and casing.
 - `food_identity_key` is generated from the normalized barcode when available,
   otherwise from the FDC id.
-- `source_key` and `trust_status` are generated from the stored food provenance.
-  They keep provider origin separate from review status and support indexed,
-  server-side filtering without repeatedly interpreting JSON in the UI.
+- `shared_product_id` links the saved item to the active approved catalog
+  product for its normalized barcode. `shared_product_submission_id` links the
+  current user's pending catalog submission for that barcode.
+- A database trigger resolves both links and derives `source_key` and
+  `trust_status` from current catalog state. Product publication, retirement,
+  moderation approval, rejection, and new pending submissions refresh matching
+  list rows automatically.
+- `trust_status` can be `source-verified`, `imported`, `corroborated`,
+  `moderator-reviewed`, `pending-review`, or `user-private`. A pending update
+  takes priority for the submitting user; approval switches to the active
+  product's confidence, while rejection falls back to the existing active
+  product or private status.
+- `source_key` and `trust_status` support indexed, server-side filtering. The
+  `food` JSON remains a UI compatibility snapshot and is not the authority for
+  whether an item is private or shared.
 - `(user_id, food_identity_key)` is unique, so one ingredient cannot exist in
   both Fridge and Shopping List for the same user.
 - `place_user_food_list_item` performs an atomic add or confirmed move and

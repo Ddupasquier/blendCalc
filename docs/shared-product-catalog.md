@@ -107,9 +107,19 @@ Keep source handling explicit. Do not merge Open Food Facts payloads into `share
 Ingredient cards and filters keep two separate identities: the food record's
 origin (`usda`, `open-food-facts`, `shared-catalog`, or `custom`) and its current
 trust status (`source-verified`, `imported`, `corroborated`,
-`moderator-reviewed`, or `user-private`). Public catalog membership does not
+`moderator-reviewed`, `pending-review`, or `user-private`). Public catalog membership does not
 erase the original provider, and image/unit-support sources are shown only in
 their detailed provenance rather than as the primary food source.
+
+Saved Fridge and Shopping List rows hold normalized links to the active
+`shared_products` row and the current user's pending
+`shared_product_submissions` row. Database triggers refresh those links after a
+list write, automatic publication, moderator action, product retirement, or
+source/confidence change. The UI reads these links and their indexed source/trust
+projection instead of guessing from an older JSON snapshot. This means an
+approved product cannot continue to display `Private`, and a pending catalog
+update can display `Pending` without pretending the underlying active product
+has disappeared.
 
 ## Source quality monitoring
 
@@ -146,6 +156,9 @@ Migrations:
 - `supabase/migrations/20260615230000_product_submission_rejection_blocks.sql`
 - `supabase/migrations/20260715120000_shared_product_canonical_categories.sql`
 - `supabase/migrations/20260718000000_server_request_efficiency.sql`
+- `supabase/migrations/20260718130000_user_food_list_catalog_links.sql`
+- `supabase/migrations/20260718131000_user_food_list_catalog_link_defaults.sql`
+- `supabase/migrations/20260718132000_strict_user_food_list_catalog_state.sql`
 
 - Authenticated users can read only active `shared_products` and their own submissions.
 - Browser clients cannot insert, update, approve, reject, or delete shared catalog rows.
@@ -156,6 +169,8 @@ Migrations:
   `custom_food_category_options`; database triggers prevent category loss while
   publishing or creating revisions.
 - Only one pending moderation submission can exist for a barcode at a time.
+- Saved list catalog links are database-resolved and cannot be forged by a
+  browser-provided source, trust status, product id, or submission id.
 - Public product rows do not contain submitter IDs or email addresses.
 - Evidence images are private, short-lived signed URLs are created only for moderators,
   and evidence paths never appear in public product rows.
