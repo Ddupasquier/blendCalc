@@ -2,6 +2,7 @@
 	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
 	import StatusIconBadge from "$lib/components/common/badges/StatusIconBadge.svelte";
 	import TextBadge from "$lib/components/common/badges/TextBadge.svelte";
+	import VerifiedStatusBadge from "$lib/components/common/badges/VerifiedStatusBadge.svelte";
 	import {
 		getIngredientSourceBadge,
 		getIngredientTrustBadge,
@@ -31,11 +32,15 @@
 		/>
 	{/if}
 	{#if trustBadge}
-		<TextBadge
-			label={trustBadge.label}
-			tone={trustBadge.tone}
-			ariaLabel={`Review status: ${trustBadge.label}`}
-		/>
+		{#if trustBadge.value === "source-verified"}
+			<VerifiedStatusBadge label={trustBadge.label} />
+		{:else}
+			<TextBadge
+				label={trustBadge.label}
+				tone={trustBadge.tone}
+				ariaLabel={`Review status: ${trustBadge.label}`}
+			/>
+		{/if}
 	{/if}
 	{#if warning}
 		<StatusIconBadge

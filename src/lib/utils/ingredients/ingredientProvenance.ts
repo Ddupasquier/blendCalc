@@ -26,6 +26,7 @@ export type IngredientProvenanceOption = Pick<
 
 export type IngredientBadgeDescriptor = {
 	dimension: IngredientProvenanceDimension;
+	value: string;
 	label: string;
 	tone: IngredientBadgeTone;
 };
@@ -151,6 +152,7 @@ const getIngredientBadge = (
 	if (!option?.badge_label) return null;
 	return {
 		dimension,
+		value: option.value,
 		label: option.badge_label,
 		tone: option.badge_tone as IngredientBadgeTone,
 	};

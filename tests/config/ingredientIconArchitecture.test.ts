@@ -58,7 +58,7 @@ describe("ingredient icon architecture", () => {
 		expect(bottomSheetAction).toContain("<CircularIconFrame");
 	});
 
-	it("keeps optical icon alignment inside shared primitives", () => {
+	it("keeps circular icon centering inside shared primitives", () => {
 		const centeredIcon = readFileSync(
 			"src/lib/components/common/icons/CenteredIcon.svelte",
 			"utf8",
@@ -77,8 +77,12 @@ describe("ingredient icon architecture", () => {
 		);
 
 		expect(centeredIcon).toContain("--centered-icon-optical-offset-y");
+		expect(centeredIcon).toContain("place-items: center");
+		expect(centeredIcon).toContain("width: 100%");
+		expect(centeredIcon).toContain("height: 100%");
 		expect(circularIconFrame).toContain("overflow: hidden");
-		expect(statusBadge).toContain("$app-status-icon-badge-optical-offset-y");
+		expect(circularIconFrame).toContain("place-items: center");
+		expect(statusBadge).not.toContain("centered-icon-optical-offset");
 		expect(privilegedBadge).toContain("<CenteredIcon>");
 		expect(privilegedBadge).not.toContain("<CircularIconFrame");
 		expect(privilegedBadge).toContain("$app-privileged-badge-color");

@@ -21,6 +21,11 @@ export type StatusIconBadgeProps = {
 	children: Snippet;
 };
 
+export type VerifiedStatusBadgeProps = {
+	label: string;
+	class?: string;
+};
+
 export type PrivilegedActionBadgeVariant = "action" | "profile";
 
 export type PrivilegedActionBadgeProps = {

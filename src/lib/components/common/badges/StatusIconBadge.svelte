@@ -28,7 +28,6 @@
 	:global(.status-icon-badge) {
 		--circular-icon-frame-size: #{$app-status-icon-badge-size};
 		--circular-icon-frame-icon-size: #{$app-status-icon-badge-icon-size};
-		--centered-icon-optical-offset-y: #{$app-status-icon-badge-optical-offset-y};
 	}
 
 	:global(.status-icon-badge[data-tone="warning"]) {

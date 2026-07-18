@@ -8,6 +8,7 @@ import {
 	mapSharedCatalogFood,
 	type BarcodeProductDraft,
 } from "$lib/utils/barcode/productLookup";
+import { getCachedFoodImageByBarcode } from "$lib/utils/storage/supabase/foodImages";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const lookupBarcodeProductDraft = async (
@@ -16,20 +17,26 @@ export const lookupBarcodeProductDraft = async (
 ): Promise<BarcodeProductDraft | null> => {
 	const barcode = normalizeBarcode(barcodeValue);
 	if (!barcode) return null;
+	const cachedImagePromise = getCachedFoodImageByBarcode(supabase, barcode);
 
 	const sharedFood = await getSharedProductByBarcode(supabase, barcode);
 	if (sharedFood) {
-		const draft = mapSharedCatalogFood(
-			sharedFood,
-			barcode,
-			await getProductReferenceData(),
-		);
+		const [referenceData, cachedImage] = await Promise.all([
+			getProductReferenceData(),
+			cachedImagePromise,
+		]);
+		const mappedDraft = mapSharedCatalogFood(sharedFood, barcode, referenceData);
+		const draft = mappedDraft && cachedImage
+			? { ...mappedDraft, image: cachedImage }
+			: mappedDraft;
 		return draft
 			? await resolveBarcodeDraftCategory(supabase, draft)
 			: null;
 	}
 
-	const draft = await lookupExternalBarcodeProduct(barcode);
+	const draft = await lookupExternalBarcodeProduct(barcode, {
+		cachedImage: cachedImagePromise,
+	});
 	return draft
 		? await resolveBarcodeDraftCategory(supabase, draft)
 		: null;

@@ -66,6 +66,34 @@ const uniqueStrings = (values: Array<string | null | undefined>) => [
 	...new Set(values.filter(Boolean) as string[]),
 ];
 
+const FOOD_IMAGE_CONFIDENCE_PRIORITY: Record<
+	FoodImageAsset["confidence"],
+	number
+> = {
+	"moderator-reviewed": 3,
+	"source-verified": 2,
+	imported: 1,
+};
+
+const getFoodImageTimestamp = (image: FoodImageAsset) => {
+	const timestamp = Date.parse(image.approvedAt ?? image.fetchedAt ?? "");
+	return Number.isFinite(timestamp) ? timestamp : 0;
+};
+
+export const selectPreferredFoodImageAsset = (
+	images: FoodImageAsset[],
+): FoodImageAsset | null => {
+	if (!images.length) return null;
+
+	return [...images].sort((left, right) => {
+		const confidenceDifference =
+			FOOD_IMAGE_CONFIDENCE_PRIORITY[right.confidence] -
+			FOOD_IMAGE_CONFIDENCE_PRIORITY[left.confidence];
+		if (confidenceDifference !== 0) return confidenceDifference;
+		return getFoodImageTimestamp(right) - getFoodImageTimestamp(left);
+	})[0] ?? null;
+};
+
 const getFoodBarcode = (food: FdcFood) =>
 	normalizeBarcode(food.barcode ?? food.gtinUpc ?? "");
 
@@ -105,8 +133,23 @@ const readFoodImageRows = async (
 		.in(column, values)
 		.order("fetched_at", { ascending: false });
 
-	if (error || !data) return [];
+	if (error) {
+		console.warn("Cached food images could not be loaded.", error);
+		return [];
+	}
+	if (!data) return [];
 	return data;
+};
+
+export const getCachedFoodImageByBarcode = async (
+	supabase: unknown,
+	barcodeValue: string,
+) => {
+	const barcode = normalizeBarcode(barcodeValue);
+	if (!barcode) return null;
+
+	const rows = await readFoodImageRows(supabase, "barcode", [barcode]);
+	return selectPreferredFoodImageAsset(rows.map(toFoodImageAsset));
 };
 
 export const hydrateFoodsWithCachedImages = async (
@@ -125,28 +168,30 @@ export const hydrateFoodsWithCachedImages = async (
 
 	if (!barcodeRows.length && !sharedProductRows.length) return foods;
 
-	const imageByBarcode = new Map<string, FoodImageAsset>();
+	const imagesByBarcode = new Map<string, FoodImageAsset[]>();
 	for (const row of barcodeRows) {
-		if (row.barcode && !imageByBarcode.has(row.barcode)) {
-			imageByBarcode.set(row.barcode, toFoodImageAsset(row));
-		}
+		if (!row.barcode) continue;
+		const images = imagesByBarcode.get(row.barcode) ?? [];
+		images.push(toFoodImageAsset(row));
+		imagesByBarcode.set(row.barcode, images);
 	}
 
-	const imageBySharedProductId = new Map<string, FoodImageAsset>();
+	const imagesBySharedProductId = new Map<string, FoodImageAsset[]>();
 	for (const row of sharedProductRows) {
-		if (
-			row.shared_product_id &&
-			!imageBySharedProductId.has(row.shared_product_id)
-		) {
-			imageBySharedProductId.set(row.shared_product_id, toFoodImageAsset(row));
-		}
+		if (!row.shared_product_id) continue;
+		const images = imagesBySharedProductId.get(row.shared_product_id) ?? [];
+		images.push(toFoodImageAsset(row));
+		imagesBySharedProductId.set(row.shared_product_id, images);
 	}
 
 	return foods.map((food) => {
-		if (food.image) return food;
 		const image =
-			imageByBarcode.get(getFoodBarcode(food) ?? "") ??
-			imageBySharedProductId.get(food.sharedProductId ?? "");
+			selectPreferredFoodImageAsset(
+				imagesByBarcode.get(getFoodBarcode(food) ?? "") ?? [],
+			) ??
+			selectPreferredFoodImageAsset(
+				imagesBySharedProductId.get(food.sharedProductId ?? "") ?? [],
+			);
 		return image ? { ...food, image } : food;
 	});
 };

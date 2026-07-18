@@ -21,9 +21,13 @@ describe("IngredientProvenanceBadges", () => {
 		});
 
 		expect(screen.getByLabelText("Source: USDA")).toHaveClass("text-badge");
-		expect(screen.getByLabelText("Review status: Verified")).toHaveClass(
-			"text-badge",
-		);
+		const verified = screen.getByRole("img", {
+			name: "Review status: Verified",
+		});
+		expect(verified).toHaveClass("verified-status-badge");
+		expect(verified).toHaveClass("status-icon-badge");
+		expect(verified.querySelector("svg")).toBeInTheDocument();
+		expect(verified).not.toHaveTextContent("Verified");
 
 		const warning = screen.getByRole("img", {
 			name: "Gluten-free may conflict. Open ingredient for details.",
@@ -31,5 +35,26 @@ describe("IngredientProvenanceBadges", () => {
 		expect(warning).toHaveAttribute("title", "Gluten-free may conflict");
 		expect(warning).toHaveClass("status-icon-badge");
 		expect(warning).not.toHaveTextContent("Gluten-free may conflict");
+	});
+
+	it("keeps non-verified review states in the shared text badge", () => {
+		render(IngredientProvenanceBadges, {
+			props: {
+				food: {
+					fdcId: 2,
+					description: "Private food",
+					foodNutrients: [],
+					sourceKey: "custom",
+					trustStatus: "user-private",
+				},
+				provenanceOptions: ingredientProvenanceOptionsFixture,
+			},
+		});
+
+		const privateBadge = screen.getByLabelText("Review status: Private");
+		expect(privateBadge).toHaveClass("text-badge");
+		expect(privateBadge).toHaveTextContent("Private");
+		expect(screen.queryByLabelText("Review status: Verified"))
+			.not.toBeInTheDocument();
 	});
 });

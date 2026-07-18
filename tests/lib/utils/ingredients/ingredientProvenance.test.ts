@@ -107,6 +107,9 @@ describe("ingredient provenance", () => {
 			{ value: "usda", label: "USDA" },
 		]);
 		expect(getIngredientSourceBadge(usdaFood, options)?.label).toBe("USDA");
-		expect(getIngredientTrustBadge(usdaFood, options)?.label).toBe("Verified");
+		expect(getIngredientTrustBadge(usdaFood, options)).toMatchObject({
+			value: "source-verified",
+			label: "Verified",
+		});
 	});
 });

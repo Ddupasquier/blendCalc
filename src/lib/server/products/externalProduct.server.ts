@@ -5,7 +5,7 @@ import {
 	type BarcodeProductDraft,
 	type OpenFoodFactsResponse,
 } from "$lib/utils/barcode/productLookup";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
 import { APP_USER_AGENT } from "$lib/config/brand";
 import { getUsdaFoodById, searchUsdaBrandedFoods } from "./usdaCache.server";
 import { getProductReferenceData } from "./productReferenceData.server";
@@ -209,18 +209,52 @@ export const lookupOpenFoodFactsBarcodeProduct = async (
 
 export const lookupExternalBarcodeProduct = async (
 	barcode: string,
+	lookups: {
+		usda?: typeof lookupUsdaBarcodeProduct;
+		openFoodFacts?: typeof lookupOpenFoodFactsBarcodeProduct;
+		getReferenceData?: typeof getProductReferenceData;
+		cachedImage?: FoodImageAsset | null | PromiseLike<FoodImageAsset | null>;
+	} = {},
 ): Promise<BarcodeProductDraft | null> => {
-	const referenceData = await getProductReferenceData();
+	const referenceData = await (
+		lookups.getReferenceData ?? getProductReferenceData
+	)();
+	const lookupUsda = lookups.usda ?? lookupUsdaBarcodeProduct;
+	const lookupOpenFoodFacts =
+		lookups.openFoodFacts ?? lookupOpenFoodFactsBarcodeProduct;
+	const cachedImagePromise = Promise.resolve(lookups.cachedImage ?? null).catch(
+		() => null,
+	);
 	let firstError: unknown;
 	try {
-		const usdaDraft = await lookupUsdaBarcodeProduct(barcode, referenceData);
-		if (usdaDraft) return usdaDraft;
+		const [usdaDraft, cachedImage] = await Promise.all([
+			lookupUsda(barcode, referenceData),
+			cachedImagePromise,
+		]);
+		if (usdaDraft) {
+			if (cachedImage) return { ...usdaDraft, image: cachedImage };
+			if (usdaDraft.image) return usdaDraft;
+			try {
+				const imageDraft = await lookupOpenFoodFacts(barcode, referenceData);
+				return imageDraft?.image
+					? { ...usdaDraft, image: imageDraft.image }
+					: usdaDraft;
+			} catch {
+				return usdaDraft;
+			}
+		}
 	} catch (error) {
 		firstError = error;
 	}
 
 	try {
-		return await lookupOpenFoodFactsBarcodeProduct(barcode, referenceData);
+		const [openFoodFactsDraft, cachedImage] = await Promise.all([
+			lookupOpenFoodFacts(barcode, referenceData),
+			cachedImagePromise,
+		]);
+		return openFoodFactsDraft && cachedImage
+			? { ...openFoodFactsDraft, image: cachedImage }
+			: openFoodFactsDraft;
 	} catch (error) {
 		throw firstError ?? error;
 	}
