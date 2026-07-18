@@ -90,7 +90,7 @@
 		onVolumeUnitChange,
 		onShareChange,
 		onApplyVerifiedBarcode,
-		onKeepBarcodePrivate,
+		onDetachBarcodeForPrivateSave,
 		onFrontPhotoChange,
 		onImageCropXChange,
 		onImageCropYChange,
@@ -182,7 +182,7 @@
 		onVolumeUnitChange: (value: ServingMeasureUnit) => void;
 		onShareChange: (checked: boolean) => void | Promise<void>;
 		onApplyVerifiedBarcode: () => void | Promise<void>;
-		onKeepBarcodePrivate: () => void;
+		onDetachBarcodeForPrivateSave: () => void;
 		onFrontPhotoChange: (file: File | null) => void;
 		onImageCropXChange: (value: number) => void;
 		onImageCropYChange: (value: number) => void;
@@ -302,7 +302,7 @@
 		{saving}
 		onShareChange={onShareChange}
 		onApplyVerifiedBarcode={onApplyVerifiedBarcode}
-		onKeepBarcodePrivate={onKeepBarcodePrivate}
+		onDetachBarcodeForPrivateSave={onDetachBarcodeForPrivateSave}
 		onFrontPhotoChange={onFrontPhotoChange}
 		onImageCropXChange={onImageCropXChange}
 		onImageCropYChange={onImageCropYChange}

@@ -207,12 +207,12 @@ catalog features should use those pieces first.
 When a user tries to share a barcoded manual entry, route it into one of these
 clear outcomes:
 
-1. **Private save only:** no valid barcode, no consent, or the user chooses not to share.
+1. **Private save only:** no valid barcode, no consent, or a conflicting barcode has been explicitly removed. A user-authored identity must never remain attached to a verified barcode for private saving.
 2. **Already in catalog:** barcode exists and submitted data matches the active shared product. Tell the user it already exists; do not create a duplicate submission.
 3. **Catalog update request:** barcode exists, but the user’s data has meaningful differences. Let the user submit evidence, send it to moderation, and keep their private ingredient unchanged.
 4. **Trusted source auto-accept:** barcode has a trusted source match and submitted data matches closely enough. Publish without human review and keep source provenance.
-5. **Human review:** unknown label, source disagreement, missing confidence, or user chose to keep their own data over a source match. Require package, nutrition label, and barcode evidence.
-6. **Silent machine block:** barcode/source match is wildly different from the submitted data. Save the private ingredient if valid, but do not create a normal moderation item.
+5. **Human review:** unknown label, same-product source disagreement, or missing confidence. Require package, nutrition label, and barcode evidence.
+6. **Silent machine block:** the submitted product identity is wildly different from the verified barcode match. Offer verified autofill or remove the barcode and save the user-authored item privately; do not create a normal moderation item.
 
 ### Suggested checks
 

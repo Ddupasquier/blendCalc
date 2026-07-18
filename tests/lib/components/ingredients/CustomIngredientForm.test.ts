@@ -949,7 +949,7 @@ describe("CustomIngredientForm", () => {
 			barcode: draft.barcode,
 			draft,
 			message:
-				"This barcode belongs to “Strawberry Jelly, Strawberry”. Use the verified information to share it, or keep your current entry private.",
+				"This barcode belongs to “Strawberry Jelly, Strawberry”. Use the verified information to share it, or remove the barcode and save your current entry only to your account.",
 		});
 
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
@@ -977,12 +977,16 @@ describe("CustomIngredientForm", () => {
 		expect(screen.queryByText(/photos for catalog review/i)).not.toBeInTheDocument();
 		expect(screen.getByLabelText(/share with community/i)).not.toBeChecked();
 
-		await fireEvent.click(screen.getByRole("button", { name: /keep private/i }));
+		await fireEvent.click(
+			screen.getByRole("button", { name: /remove barcode.*keep private/i }),
+		);
 		expect(
-			screen.getByText(/current information will stay private/i),
+			screen.getByText(/barcode removed/i),
 		).toBeInTheDocument();
+		expect(screen.getByLabelText(/share with community/i)).toBeDisabled();
 		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
 		expect(screen.getByLabelText(/food name/i)).toHaveValue("Motor oil");
+		expect(screen.getByLabelText(/upc \/ barcode/i)).toHaveValue("");
 	});
 
 	it("replaces a mismatched name with verified barcode information", async () => {

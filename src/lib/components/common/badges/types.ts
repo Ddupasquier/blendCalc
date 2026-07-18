@@ -1,5 +1,15 @@
 import type { Snippet } from "svelte";
 
+export type TextBadgeTone = "info" | "success" | "custom" | "neutral";
+
+export type TextBadgeProps = {
+	label: string;
+	ariaLabel?: string;
+	title?: string;
+	tone?: TextBadgeTone;
+	class?: string;
+};
+
 export type StatusIconBadgeTone = "info" | "success" | "warning" | "error";
 
 export type StatusIconBadgeProps = {

@@ -244,6 +244,12 @@ $app-rebuild-ingredient-card-height: 5.25rem;
 // Figma rebuild compact badge padding.
 $app-rebuild-badge-padding-y: 0.12rem;
 $app-rebuild-badge-padding-x: 0.42rem;
+$app-text-badge-min-height: 1rem;
+$app-text-badge-padding-y: $app-rebuild-badge-padding-y;
+$app-text-badge-padding-x: $app-rebuild-badge-padding-x;
+$app-text-badge-font-size: 0.58rem;
+$app-text-badge-max-width: 8rem;
+$app-text-badge-line-height: 1;
 
 // Figma rebuild compact card/action row padding.
 $app-rebuild-card-padding-sm: 0.85rem;
@@ -359,11 +365,11 @@ $ingredient-radius-pill: $app-rebuild-radius-pill;
 $ingredient-card-min-height: $app-rebuild-ingredient-card-height;
 $ingredient-card-padding: $app-rebuild-card-padding;
 $ingredient-card-padding-compact: $app-rebuild-card-padding-sm;
-$ingredient-badge-padding-y: $app-rebuild-badge-padding-y;
-$ingredient-badge-padding-x: $app-rebuild-badge-padding-x;
-$ingredient-badge-font-size: 0.58rem;
-$ingredient-badge-max-width: 8rem;
-$ingredient-badge-line-height: 1.1;
+$ingredient-badge-padding-y: $app-text-badge-padding-y;
+$ingredient-badge-padding-x: $app-text-badge-padding-x;
+$ingredient-badge-font-size: $app-text-badge-font-size;
+$ingredient-badge-max-width: $app-text-badge-max-width;
+$ingredient-badge-line-height: $app-text-badge-line-height;
 $ingredient-count-badge-min-width: 1.3rem;
 $ingredient-status-padding-y: $app-rebuild-status-padding-y;
 $ingredient-status-padding-x: $app-rebuild-status-padding-x;
@@ -597,6 +603,17 @@ $app-custom-bg: $color-lavender-smoothie;
 // Custom ingredient emphasis. Applied to borders, text, and badges that identify
 // user-created ingredients across the app.
 $app-custom-strong: $color-lavender-smoothie-dark;
+
+// Shared compact text badges. Source, review-status, and future metadata labels
+// use these roles so feature components do not duplicate pill alignment/colors.
+$app-text-badge-info-text: color-mix(in srgb, $color-figma-sky 72%, $app-primary);
+$app-text-badge-info-bg: color-mix(in srgb, $color-figma-sky 18%, $color-figma-card);
+$app-text-badge-custom-text: $app-custom-strong;
+$app-text-badge-custom-bg: color-mix(in srgb, $app-custom-bg 55%, $color-figma-card);
+$app-text-badge-success-text: $color-figma-green;
+$app-text-badge-success-bg: $color-figma-green-soft;
+$app-text-badge-neutral-text: $app-muted;
+$app-text-badge-neutral-bg: $color-figma-control-surface;
 
 // Danger/over-goal background. Applied to exceeded-goal warnings, danger icons,
 // and states where nutritional totals are meaningfully over target.

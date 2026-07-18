@@ -43,7 +43,7 @@
 		saving,
 		onShareChange,
 		onApplyVerifiedBarcode,
-		onKeepBarcodePrivate,
+		onDetachBarcodeForPrivateSave,
 		onFrontPhotoChange,
 		onImageCropXChange,
 		onImageCropYChange,
@@ -86,7 +86,7 @@
 		saving: boolean;
 		onShareChange: (checked: boolean) => void;
 		onApplyVerifiedBarcode: () => void | Promise<void>;
-		onKeepBarcodePrivate: () => void;
+		onDetachBarcodeForPrivateSave: () => void;
 		onFrontPhotoChange: (file: File | null) => void;
 		onImageCropXChange: (value: number) => void;
 		onImageCropYChange: (value: number) => void;
@@ -143,10 +143,10 @@
 			heading="Product name does not match this barcode"
 			description={barcodeShareMismatch.message}
 			applyLabel="Use verified information"
-			keepLabel="Keep private"
+			keepLabel="Remove barcode & keep private"
 			tone="error"
 			onApply={onApplyVerifiedBarcode}
-			onKeepManual={onKeepBarcodePrivate}
+			onKeepManual={onDetachBarcodeForPrivateSave}
 		/>
 	{/if}
 

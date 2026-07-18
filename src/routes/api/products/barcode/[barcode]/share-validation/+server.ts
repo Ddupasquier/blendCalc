@@ -30,7 +30,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 			barcode,
 			draft,
 			message:
-				`This barcode belongs to “${draft.name}”. Use the verified information to share it, or keep your current entry private.`,
+				`This barcode belongs to “${draft.name}”. Use the verified information to share it, or remove the barcode and save your current entry only to your account.`,
 		});
 	}
 

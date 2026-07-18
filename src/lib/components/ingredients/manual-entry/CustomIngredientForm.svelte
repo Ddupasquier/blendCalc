@@ -699,7 +699,7 @@
 			),
 			message:
 				barcodeShareValidation.message ??
-				"Use the verified information to share this product, or keep your current entry private.",
+				"Use the verified information to share this product, or remove the barcode and save your current entry only to your account.",
 		};
 	});
 
@@ -755,15 +755,15 @@
 		shareWithCatalog = draft.source !== "shared-catalog" && activeStep === "share";
 	};
 
-	const keepMismatchedBarcodePrivate = () => {
+	const detachMismatchedBarcodeForPrivateSave = () => {
 		if (barcodeShareValidation?.status !== "name-mismatch") return;
 		const verifiedName = barcodeShareValidation.draft.name;
-		barcodeReferenceDraft = null;
-		barcodeReferenceAcceptedBarcode = "";
-		barcodeSource = "manual";
-		shareWithCatalog = false;
-		barcodeShareValidation = null;
-		barcodeMessage = `This barcode matches “${verifiedName}”. Your current information will stay private and will not be shared.`;
+		setManualBarcode("");
+		frontPhoto = null;
+		nutritionPhoto = null;
+		barcodePhoto = null;
+		image = undefined;
+		barcodeMessage = `Barcode removed. “${verifiedName}” remains the verified product, while your current entry can be saved privately to your account.`;
 	};
 
 	const getOptionalNutrientCount = () =>
@@ -1311,7 +1311,7 @@
 				onVolumeUnitChange={(value) => (volumeUnit = value)}
 				onShareChange={handleShareChange}
 				onApplyVerifiedBarcode={applyVerifiedBarcodeForSharing}
-				onKeepBarcodePrivate={keepMismatchedBarcodePrivate}
+				onDetachBarcodeForPrivateSave={detachMismatchedBarcodeForPrivateSave}
 				onFrontPhotoChange={(file) => (frontPhoto = file)}
 				onImageCropXChange={(value) => (imageCropX = value)}
 				onImageCropYChange={(value) => (imageCropY = value)}
