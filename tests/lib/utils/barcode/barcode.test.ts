@@ -25,6 +25,14 @@ describe("barcode normalization", () => {
 		);
 	});
 
+	it("tries the normal package barcode before padded equivalents", () => {
+		expect(getBarcodeLookupCandidates("00021130493609")).toEqual([
+			"021130493609",
+			"0021130493609",
+			"00021130493609",
+		]);
+	});
+
 	it("explains incomplete and invalid manually typed barcodes", () => {
 		expect(getBarcodeInputValidationMessage("12345")).toMatch(
 			/barcode is incomplete/i,

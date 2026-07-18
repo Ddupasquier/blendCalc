@@ -6,6 +6,10 @@ import {
 	toFoodCategoryId,
 	toFoodCategoryLabel,
 } from "../src/lib/utils/food/categories/categoryNormalization.js";
+import {
+	findFirstBarcodeCandidateMatch,
+	normalizeBarcode,
+} from "./lib/barcode_candidates.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -66,22 +70,6 @@ const fetchJson = async (url, label, options = {}) => {
 	return null;
 };
 
-const normalizeBarcode = (value) => {
-	const digits = String(value ?? "").replace(/\D/g, "");
-	return digits.length >= 8 && digits.length <= 14
-		? digits.padStart(14, "0")
-		: "";
-};
-
-const barcodeCandidates = (barcode) => [
-	...new Set([
-		barcode,
-		barcode.slice(-13),
-		barcode.slice(-12),
-		barcode.replace(/^0+/, ""),
-	].filter(Boolean)),
-];
-
 const uniqueValues = (values) => {
 	const seen = new Set();
 	return values.flatMap((value) => {
@@ -110,45 +98,52 @@ const getFdcCategoryValues = (foodCategory) => {
 };
 
 const lookupUsdaCategories = async (barcode) => {
-	for (const candidate of barcodeCandidates(barcode)) {
-		const searchUrl = new URL("https://api.nal.usda.gov/fdc/v1/foods/search");
-		searchUrl.searchParams.set("api_key", fdcApiKey);
-		searchUrl.searchParams.set("query", candidate);
-		searchUrl.searchParams.set("dataType", "Branded");
-		searchUrl.searchParams.set("pageSize", "25");
-		const search = await fetchJson(searchUrl, `USDA search for ${barcode}`);
-		const match = (search?.foods ?? []).find(
-			(food) => normalizeBarcode(food.gtinUpc) === barcode,
-		);
-		if (!match?.fdcId) continue;
+	const canonicalBarcode = normalizeBarcode(barcode);
+	if (!canonicalBarcode) return { values: [], observations: [] };
+	const candidateMatch = await findFirstBarcodeCandidateMatch(
+		barcode,
+		async (candidate) => {
+			const searchUrl = new URL("https://api.nal.usda.gov/fdc/v1/foods/search");
+			searchUrl.searchParams.set("api_key", fdcApiKey);
+			searchUrl.searchParams.set("query", candidate);
+			searchUrl.searchParams.set("dataType", "Branded");
+			searchUrl.searchParams.set("pageSize", "25");
+			const search = await fetchJson(searchUrl, `USDA search for ${barcode}`);
+			const match = (search?.foods ?? []).find(
+				(food) => normalizeBarcode(food.gtinUpc) === canonicalBarcode,
+			);
+			if (!match?.fdcId) return null;
 
-		const detailUrl = new URL(`https://api.nal.usda.gov/fdc/v1/food/${match.fdcId}`);
-		detailUrl.searchParams.set("api_key", fdcApiKey);
-		const detail = await fetchJson(detailUrl, `USDA detail for ${barcode}`);
-		const values = uniqueValues([
-			detail?.brandedFoodCategory,
-			...getFdcCategoryValues(detail?.foodCategory ?? match.foodCategory),
-		]);
-		return {
-			values,
-			observations: values.map((value) => ({
-				source: "fdc-branded-detail",
-				sourceField: detail?.brandedFoodCategory === value
-					? "brandedFoodCategory"
-					: "foodCategory",
-				sourceValue: value,
-				sourceReference: String(match.fdcId),
-				sourcePayload: {
-					fdcId: match.fdcId,
-					description: detail?.description ?? match.description ?? null,
-					brandOwner: detail?.brandOwner ?? match.brandOwner ?? null,
-					brandedFoodCategory: detail?.brandedFoodCategory ?? null,
-					foodCategory: detail?.foodCategory ?? match.foodCategory ?? null,
-				},
-			})),
-		};
-	}
-	return { values: [], observations: [] };
+			const detailUrl = new URL(
+				`https://api.nal.usda.gov/fdc/v1/food/${match.fdcId}`,
+			);
+			detailUrl.searchParams.set("api_key", fdcApiKey);
+			const detail = await fetchJson(detailUrl, `USDA detail for ${barcode}`);
+			const values = uniqueValues([
+				detail?.brandedFoodCategory,
+				...getFdcCategoryValues(detail?.foodCategory ?? match.foodCategory),
+			]);
+			return {
+				values,
+				observations: values.map((value) => ({
+					source: "fdc-branded-detail",
+					sourceField: detail?.brandedFoodCategory === value
+						? "brandedFoodCategory"
+						: "foodCategory",
+					sourceValue: value,
+					sourceReference: String(match.fdcId),
+					sourcePayload: {
+						fdcId: match.fdcId,
+						description: detail?.description ?? match.description ?? null,
+						brandOwner: detail?.brandOwner ?? match.brandOwner ?? null,
+						brandedFoodCategory: detail?.brandedFoodCategory ?? null,
+						foodCategory: detail?.foodCategory ?? match.foodCategory ?? null,
+					},
+				})),
+			};
+		},
+	);
+	return candidateMatch?.value ?? { values: [], observations: [] };
 };
 
 const lookupUsdaCategoriesByName = async (product) => {
@@ -203,52 +198,69 @@ const lookupUsdaCategoriesByName = async (product) => {
 };
 
 const lookupOpenFoodFactsCategories = async (barcode) => {
-	for (const candidate of barcodeCandidates(barcode)) {
-		const url = new URL(`${OPEN_FOOD_FACTS_URL}/${encodeURIComponent(candidate)}.json`);
-		url.searchParams.set("fields", OPEN_FOOD_FACTS_FIELDS);
-		const payload = await fetchJson(url, `Open Food Facts lookup for ${barcode}`, {
-			headers: { accept: "application/json", "user-agent": "blendCalc/0.0.1" },
-		});
-		if (payload?.status !== 1 || !payload.product) continue;
-		const product = payload.product;
-		const fields = [
-			["food_groups", splitValues(product.food_groups)],
-			["food_groups_tags", product.food_groups_tags ?? []],
-			["categories_tags", product.categories_tags ?? []],
-			["categories", splitValues(product.categories)],
-			["main_category", [product.main_category]],
-			["categories_hierarchy", product.categories_hierarchy ?? []],
-		];
-		const observations = [];
-		for (const [sourceField, values] of fields) {
-			for (const sourceValue of uniqueValues(values)) {
-				observations.push({
-					source: "open-food-facts",
-					sourceField,
-					sourceValue,
-					sourceReference: normalizeBarcode(product.code) || barcode,
-					sourcePayload: {
-						code: product.code ?? null,
-						productName: product.product_name ?? null,
-						brands: product.brands ?? null,
-						[sourceField]: product[sourceField] ?? null,
+	const canonicalBarcode = normalizeBarcode(barcode);
+	if (!canonicalBarcode) return { values: [], observations: [] };
+	const candidateMatch = await findFirstBarcodeCandidateMatch(
+		barcode,
+		async (candidate) => {
+			const url = new URL(
+				`${OPEN_FOOD_FACTS_URL}/${encodeURIComponent(candidate)}.json`,
+			);
+			url.searchParams.set("fields", OPEN_FOOD_FACTS_FIELDS);
+			const payload = await fetchJson(
+				url,
+				`Open Food Facts lookup for ${barcode}`,
+				{
+					headers: {
+						accept: "application/json",
+						"user-agent": "blendCalc/0.0.1",
 					},
-				});
+				},
+			);
+			if (payload?.status !== 1 || !payload.product) return null;
+			const product = payload.product;
+			if (
+				normalizeBarcode(product.code ?? candidate) !== canonicalBarcode
+			) return null;
+			const fields = [
+				["food_groups", splitValues(product.food_groups)],
+				["food_groups_tags", product.food_groups_tags ?? []],
+				["categories_tags", product.categories_tags ?? []],
+				["categories", splitValues(product.categories)],
+				["main_category", [product.main_category]],
+				["categories_hierarchy", product.categories_hierarchy ?? []],
+			];
+			const observations = [];
+			for (const [sourceField, values] of fields) {
+				for (const sourceValue of uniqueValues(values)) {
+					observations.push({
+						source: "open-food-facts",
+						sourceField,
+						sourceValue,
+						sourceReference: normalizeBarcode(product.code) || barcode,
+						sourcePayload: {
+							code: product.code ?? null,
+							productName: product.product_name ?? null,
+							brands: product.brands ?? null,
+							[sourceField]: product[sourceField] ?? null,
+						},
+					});
+				}
 			}
-		}
-		return {
-			values: uniqueValues([
+			return {
+				values: uniqueValues([
 				...splitValues(product.food_groups),
 				...(product.food_groups_tags ?? []),
 				...(product.categories_tags ?? []),
-				...splitValues(product.categories),
-				product.main_category,
-				...(product.categories_hierarchy ?? []),
-			]),
-			observations,
-		};
-	}
-	return { values: [], observations: [] };
+					...splitValues(product.categories),
+					product.main_category,
+					...(product.categories_hierarchy ?? []),
+				]),
+				observations,
+			};
+		},
+	);
+	return candidateMatch?.value ?? { values: [], observations: [] };
 };
 
 const readAllActiveProducts = async () => {

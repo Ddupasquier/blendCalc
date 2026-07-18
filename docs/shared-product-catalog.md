@@ -73,9 +73,13 @@ backfills valid serving data from existing catalog and user food records.
 
 USDA search, barcode search, and detail responses are cached server-side in Supabase with
 expiration timestamps. The browser never receives the USDA API key. Cached USDA data reduces
-rate-limit pressure but is not treated as permanently current.
+rate-limit pressure but is not treated as permanently current. Barcode providers try the normal
+package code before padded equivalents, stop after the first exact usable match, and share an
+identical request that is already running instead of starting a duplicate call.
 
-Open Food Facts is queried live and is not copied into `shared_products` or the API cache.
+Open Food Facts is queried live and is not copied into `shared_products` or the persistent API
+cache. Concurrent identical Open Food Facts requests are coalesced in server memory, and barcode
+variants stop after the first usable match.
 Allowed package image metadata is stored separately in `food_image_assets` with attribution.
 Trusted DB/API product images are used first. User-uploaded product photos stay in
 private evidence storage until a moderator approves them, then a public
@@ -100,6 +104,16 @@ and then `npm run report:source-quality -- --origin=benchmark` to send the same
 saved barcodes to both sources. Treat that coverage report as evidence about
 availability and fullness, not permission to replace USDA as the primary
 nutrition authority.
+
+Use `--reset-today` when validating a code-level request optimization. It clears
+only today's synthetic `benchmark` rows before the run, leaving runtime metrics
+untouched, so old benchmark behavior does not distort the new calls-per-lookup
+result.
+
+Both reports show `Calls / lookup`. The controlled benchmark warns when a source
+averages more than 2.5 outbound calls per logical lookup so equivalent barcode
+fan-out, unnecessary detail requests, and excessive retries are caught before a
+new source is trusted at production scale.
 
 ## Database security
 

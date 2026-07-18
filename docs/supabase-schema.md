@@ -256,11 +256,19 @@ Notes:
   payload.
 - `runtime` rows explain real traffic and API/cache load. `benchmark` rows send
   the same saved barcodes to each source for a fair coverage comparison.
+- Cache hits also include reuse of an identical provider request that was already
+  running in the same server process; this prevents concurrent requests from
+  creating duplicate outbound traffic.
 - Run `npm run report:source-quality` for runtime activity, or run `npm run
   benchmark:source-quality -- --limit=10` followed by `npm run
   report:source-quality -- --origin=benchmark` for a direct comparison.
+- Add `--reset-today` to the benchmark command when comparing request-count code
+  changes; it deletes only the current UTC day's synthetic benchmark rows and
+  never deletes runtime source metrics.
 - The report's coverage index measures observed completeness and reliability;
   it does not replace the source-authority policy.
+- The report includes outbound calls per logical lookup and flags controlled
+  benchmark averages above `2.5` for request-fan-out review.
 
 ### `nutrient_source_mappings`
 

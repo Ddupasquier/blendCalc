@@ -113,6 +113,10 @@ const report = [...totals.entries()].map(([sourceKey, total]) => {
 		Source: sourceNames.get(sourceKey) ?? sourceKey,
 		Lookups: total.lookup_count,
 		"API calls": total.api_request_count,
+		"Calls / lookup": rounded(
+			total.api_request_count / Math.max(total.lookup_count, 1),
+			2,
+		),
 		"Cache hits": total.cache_hit_count,
 		"API errors": total.api_error_count,
 		"Match %": rounded(matchRate),
@@ -132,6 +136,12 @@ if (report.length === 0) {
 	console.log("No source metrics have been recorded in this period yet.");
 } else {
 	console.table(report);
+	const inefficientSources = report.filter((row) => row["Calls / lookup"] > 2.5);
+	if (inefficientSources.length > 0) {
+		console.warn(
+			`Review request fan-out for: ${inefficientSources.map((row) => row.Source).join(", ")}. Each source averaged more than 2.5 outbound calls per logical lookup.`,
+		);
+	}
 }
 console.log(
 	"Coverage index measures observed match/fullness/reliability, not authority. Runtime fallback sources receive harder requests, so use benchmark-origin rows for direct source comparisons.",

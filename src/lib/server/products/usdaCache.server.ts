@@ -20,6 +20,7 @@ import {
 	type ProductSourceRequestTrace,
 } from "$lib/server/products/sourceMetrics.server";
 import { summarizeUsdaFoodQuality } from "$lib/utils/food/sources/sourceQuality";
+import { coalesceProductApiRequest } from "$lib/server/products/productApiRequests.server";
 
 const FDC_BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 const SEARCH_CACHE_MILLISECONDS = 12 * 60 * 60 * 1000;
@@ -102,29 +103,31 @@ const fetchUsdaJson = async <T>(input: {
 		return cached;
 	}
 
-	recordProductSourceApiRequest(input.trace);
-	let response: Response;
-	try {
-		response = await fetch(buildFdcUrl(input.path, input.params), {
-			headers: { accept: "application/json" },
-		});
-	} catch (error) {
-		recordProductSourceApiError(input.trace);
-		throw error;
-	}
-	if (!response.ok) {
-		recordProductSourceApiError(input.trace);
-		throw new Error(`USDA request failed with ${response.status}.`);
-	}
-	const payload = await response.json() as T;
-	await cacheResponse(
-		cacheKey,
-		input.requestKind,
-		response.status,
-		payload,
-		input.ttlMilliseconds,
-	);
-	return payload;
+	return coalesceProductApiRequest(`usda:${cacheKey}`, async () => {
+		recordProductSourceApiRequest(input.trace);
+		let response: Response;
+		try {
+			response = await fetch(buildFdcUrl(input.path, input.params), {
+				headers: { accept: "application/json" },
+			});
+		} catch (error) {
+			recordProductSourceApiError(input.trace);
+			throw error;
+		}
+		if (!response.ok) {
+			recordProductSourceApiError(input.trace);
+			throw new Error(`USDA request failed with ${response.status}.`);
+		}
+		const payload = await response.json() as T;
+		await cacheResponse(
+			cacheKey,
+			input.requestKind,
+			response.status,
+			payload,
+			input.ttlMilliseconds,
+		);
+		return payload;
+	}, input.trace);
 };
 
 const searchUsdaFoodsWithTrace = async (

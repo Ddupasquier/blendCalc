@@ -1,6 +1,10 @@
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
+import {
+	findFirstBarcodeCandidateMatch,
+	normalizeBarcode,
+} from "./lib/barcode_candidates.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -11,6 +15,7 @@ const usdaApiKey = process.env.FDC_API_KEY || process.env.VITE_FDC_API_KEY;
 const limitArgument = process.argv.find((argument) => argument.startsWith("--limit="));
 const requestedLimit = Number.parseInt(limitArgument?.split("=")[1] ?? "10", 10);
 const limit = Math.min(Math.max(requestedLimit, 1), 200);
+const resetToday = process.argv.includes("--reset-today");
 
 if (!supabaseUrl || !serviceRoleKey || !usdaApiKey) {
 	throw new Error(
@@ -29,22 +34,23 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 	},
 });
 
+if (resetToday) {
+	const metricDate = new Date().toISOString().slice(0, 10);
+	const { error } = await supabase
+		.from("product_source_daily_metrics")
+		.delete()
+		.eq("metric_date", metricDate)
+		.eq("lookup_origin", "benchmark");
+	if (error) throw error;
+	console.log(`Cleared ${metricDate} benchmark metrics before this controlled run.`);
+}
+
 const sleep = (milliseconds) => new Promise((resolve) => {
 	setTimeout(resolve, milliseconds);
 });
 const numeric = (value) =>
 	value !== null && value !== "" && Number.isFinite(Number(value));
 const hasText = (value) => Boolean(String(value ?? "").trim());
-const canonicalBarcode = (value) => String(value ?? "").replace(/[^0-9]/g, "").padStart(14, "0");
-const barcodeCandidates = (barcode) => {
-	const canonical = canonicalBarcode(barcode);
-	const candidates = new Set([canonical]);
-	for (const length of [13, 12, 8]) {
-		const candidate = canonical.slice(-length);
-		if (canonicalBarcode(candidate) === canonical) candidates.add(candidate);
-	}
-	return [...candidates];
-};
 const sourceDate = (food) => Date.parse(
 	food.publishedDate
 	|| food.publicationDate
@@ -55,7 +61,7 @@ const sourceDate = (food) => Date.parse(
 const selectNewestUsdaMatch = (foods, barcode) => foods
 	.filter((food) =>
 		food.dataType === "Branded"
-		&& canonicalBarcode(food.gtinUpc) === barcode
+		&& normalizeBarcode(food.gtinUpc) === barcode
 	)
 	.sort((left, right) => {
 		const activeDifference = Number(Boolean(left.discontinuedDate))
@@ -91,19 +97,25 @@ const benchmarkUsda = async (barcode) => {
 	const trace = { apiRequestCount: 0, apiErrorCount: 0 };
 	const startedAt = Date.now();
 	try {
-		const matches = [];
-		for (const candidate of barcodeCandidates(barcode)) {
-			const url = new URL("https://api.nal.usda.gov/fdc/v1/foods/search");
-			url.searchParams.set("api_key", usdaApiKey);
-			url.searchParams.set("query", candidate);
-			url.searchParams.set("dataType", "Branded");
-			url.searchParams.set("pageSize", "50");
-			const response = await fetchTracked(url, { headers: { accept: "application/json" } }, trace);
-			if (response.status === 404) continue;
-			const data = await response.json();
-			matches.push(...(data.foods ?? []));
-		}
-		const match = selectNewestUsdaMatch(matches, barcode);
+		const candidateMatch = await findFirstBarcodeCandidateMatch(
+			barcode,
+			async (candidate) => {
+				const url = new URL("https://api.nal.usda.gov/fdc/v1/foods/search");
+				url.searchParams.set("api_key", usdaApiKey);
+				url.searchParams.set("query", candidate);
+				url.searchParams.set("dataType", "Branded");
+				url.searchParams.set("pageSize", "50");
+				const response = await fetchTracked(
+					url,
+					{ headers: { accept: "application/json" } },
+					trace,
+				);
+				if (response.status === 404) return null;
+				const data = await response.json();
+				return selectNewestUsdaMatch(data.foods ?? [], barcode);
+			},
+		);
+		const match = candidateMatch?.value ?? null;
 		if (!match) return { outcome: "not-found", trace, startedAt };
 
 		const detailUrl = new URL(`https://api.nal.usda.gov/fdc/v1/food/${match.fdcId}`);
@@ -157,43 +169,61 @@ const benchmarkOpenFoodFacts = async (barcode, nutrientMappings) => {
 	const trace = { apiRequestCount: 0, apiErrorCount: 0 };
 	const startedAt = Date.now();
 	try {
-		for (const candidate of barcodeCandidates(barcode)) {
-			const url = new URL(
-				`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(candidate)}.json`,
-			);
-			url.searchParams.set("fields", openFoodFactsFields);
-			const response = await fetchTracked(url, {
-				headers: {
-					accept: "application/json",
-					"user-agent": "blendCalc/1.0 (source quality benchmark)",
-				},
-			}, trace);
-			if (response.status === 404) continue;
-			const data = await response.json();
-			if (data.status !== 1 || !data.product) continue;
-			const product = data.product;
-			const nutrientIds = new Set(nutrientMappings.flatMap((mapping) => {
-				const per100Value = product.nutriments?.[`${mapping.source_nutrient_key}_100g`];
-				const servingValue = product.nutriments?.[`${mapping.source_nutrient_key}_serving`];
-				return numeric(per100Value) || numeric(servingValue) ? [mapping.nutrient_id] : [];
-			}));
-			return {
-				outcome: "matched",
-				trace,
-				startedAt,
-				quality: {
-					reportedNutrientCount: nutrientIds.size,
-					hasBrand: hasText(product.brands),
-					hasCategory: hasText(product.categories) || product.categories_tags?.length > 0,
-					hasServing: hasText(product.serving_size)
-						|| Number(product.serving_quantity) > 0,
-					hasIngredients: hasText(
-						product.ingredients_text_en || product.ingredients_text,
-					),
-					hasImage: hasText(product.image_front_url || product.image_url),
-				},
-			};
-		}
+		const candidateMatch = await findFirstBarcodeCandidateMatch(
+			barcode,
+			async (candidate) => {
+				const url = new URL(
+					`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(candidate)}.json`,
+				);
+				url.searchParams.set("fields", openFoodFactsFields);
+				const response = await fetchTracked(url, {
+					headers: {
+						accept: "application/json",
+						"user-agent": "blendCalc/1.0 (source quality benchmark)",
+					},
+				}, trace);
+				if (response.status === 404) return null;
+				const data = await response.json();
+				if (data.status !== 1 || !data.product) return null;
+				if (normalizeBarcode(data.product.code ?? candidate) !== barcode) {
+					return null;
+				}
+				const product = data.product;
+				const nutrientIds = new Set(nutrientMappings.flatMap((mapping) => {
+					const per100Value = product.nutriments?.[
+						`${mapping.source_nutrient_key}_100g`
+					];
+					const servingValue = product.nutriments?.[
+						`${mapping.source_nutrient_key}_serving`
+					];
+					return numeric(per100Value) || numeric(servingValue)
+						? [mapping.nutrient_id]
+						: [];
+				}));
+				return {
+					outcome: "matched",
+					trace,
+					startedAt,
+					quality: {
+						reportedNutrientCount: nutrientIds.size,
+						hasBrand: hasText(product.brands),
+						hasCategory:
+							hasText(product.categories)
+							|| product.categories_tags?.length > 0,
+						hasServing:
+							hasText(product.serving_size)
+							|| Number(product.serving_quantity) > 0,
+						hasIngredients: hasText(
+							product.ingredients_text_en || product.ingredients_text,
+						),
+						hasImage: hasText(
+							product.image_front_url || product.image_url,
+						),
+					},
+				};
+			},
+		);
+		if (candidateMatch) return candidateMatch.value;
 		return { outcome: "not-found", trace, startedAt };
 	} catch (error) {
 		return { outcome: "error", trace, startedAt, error };
@@ -248,8 +278,17 @@ if (productError) throw productError;
 if (mappingError) throw mappingError;
 if (!products?.length) throw new Error("No active shared-product barcodes are available.");
 
+const runResults = {
+	usda: [],
+	"open-food-facts": [],
+};
+
 for (const [index, product] of products.entries()) {
-	const barcode = canonicalBarcode(product.barcode);
+	const barcode = normalizeBarcode(product.barcode);
+	if (!barcode) {
+		console.warn(`${index + 1}/${products.length} ${product.product_name}: invalid barcode skipped`);
+		continue;
+	}
 	const [usda, openFoodFacts] = await Promise.all([
 		benchmarkUsda(barcode),
 		benchmarkOpenFoodFacts(barcode, nutrientMappings ?? []),
@@ -258,11 +297,28 @@ for (const [index, product] of products.entries()) {
 		recordBenchmark("usda", usda),
 		recordBenchmark("open-food-facts", openFoodFacts),
 	]);
+	runResults.usda.push(usda);
+	runResults["open-food-facts"].push(openFoodFacts);
 	console.log(
 		`${index + 1}/${products.length} ${product.product_name}: USDA ${usda.outcome}, Open Food Facts ${openFoodFacts.outcome}`,
 	);
 	await sleep(350);
 }
+
+console.table(Object.entries(runResults).map(([source, results]) => ({
+	Source: source,
+	Lookups: results.length,
+	"API calls": results.reduce(
+		(total, result) => total + result.trace.apiRequestCount,
+		0,
+	),
+	"Calls / lookup": Number((results.reduce(
+		(total, result) => total + result.trace.apiRequestCount,
+		0,
+	) / Math.max(results.length, 1)).toFixed(2)),
+	Matches: results.filter((result) => result.outcome === "matched").length,
+	Errors: results.filter((result) => result.outcome === "error").length,
+})));
 
 console.log(
 	`Recorded an equal-barcode benchmark for ${products.length} products. Run npm run report:source-quality -- --origin=benchmark to compare results.`,

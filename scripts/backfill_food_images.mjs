@@ -8,6 +8,10 @@ import { config } from "dotenv";
 import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
+import {
+	findFirstBarcodeCandidateMatch,
+	normalizeBarcode,
+} from "./lib/barcode_candidates.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -40,8 +44,6 @@ const OPEN_FOOD_FACTS_IMAGE_LICENSE = {
 	attribution: "Open Food Facts contributors",
 };
 const APP_USER_AGENT = "blendCalc/1.0 (https://blendcalc.vercel.app)";
-const GTIN_LENGTHS = [8, 12, 13, 14];
-const GTIN_LENGTH_SET = new Set(GTIN_LENGTHS);
 const REQUEST_DELAY_MS = 350;
 const TEMPORARY_ERROR_RETRY_DELAYS_MS = [500, 1500, 3000];
 const RATE_LIMIT_RETRY_DELAYS_MS = [5000, 15000, 30000];
@@ -52,48 +54,6 @@ const sleep = (milliseconds) =>
 	new Promise((resolve) => {
 		setTimeout(resolve, milliseconds);
 	});
-
-const cleanBarcode = (value) => String(value ?? "").replace(/[^0-9]/g, "");
-
-const hasValidGtinCheckDigit = (value) => {
-	const digits = cleanBarcode(value);
-	if (!GTIN_LENGTH_SET.has(digits.length)) return false;
-
-	const payload = digits.slice(0, -1);
-	const suppliedCheckDigit = Number(digits.at(-1));
-	const sum = [...payload]
-		.reverse()
-		.reduce(
-			(total, digit, index) => total + Number(digit) * (index % 2 === 0 ? 3 : 1),
-			0,
-		);
-	const expectedCheckDigit = (10 - (sum % 10)) % 10;
-
-	return suppliedCheckDigit === expectedCheckDigit;
-};
-
-const normalizeBarcode = (value) => {
-	const digits = cleanBarcode(value);
-	if (!hasValidGtinCheckDigit(digits)) return null;
-	return digits.padStart(14, "0");
-};
-
-const getBarcodeLookupCandidates = (value) => {
-	const digits = cleanBarcode(value);
-	const canonicalValue = normalizeBarcode(digits);
-	if (!canonicalValue) return [];
-
-	const candidates = new Set([digits, canonicalValue]);
-	let unpadded = canonicalValue;
-	while (unpadded.startsWith("0") && unpadded.length > 8) {
-		unpadded = unpadded.slice(1);
-		if (GTIN_LENGTH_SET.has(unpadded.length) && hasValidGtinCheckDigit(unpadded)) {
-			candidates.add(unpadded);
-		}
-	}
-
-	return [...candidates];
-};
 
 const createSupabaseClient = () => {
 	if (!supabaseUrl || !serviceRoleKey) {
@@ -299,28 +259,37 @@ const parseOpenFoodFactsImage = (product, barcode) => {
 };
 
 const lookupOpenFoodFactsImage = async (barcode) => {
-	for (const candidate of getBarcodeLookupCandidates(barcode)) {
-		const url = new URL(
-			`${OPEN_FOOD_FACTS_PRODUCT_URL}/${encodeURIComponent(candidate)}.json`,
-		);
-		url.searchParams.set("fields", OPEN_FOOD_FACTS_IMAGE_FIELDS);
-		const data = await fetchJson(
-			url,
-			{
-				headers: {
-					accept: "application/json",
-					"user-agent": APP_USER_AGENT,
+	const canonicalBarcode = normalizeBarcode(barcode);
+	if (!canonicalBarcode) return null;
+	const candidateMatch = await findFirstBarcodeCandidateMatch(
+		barcode,
+		async (candidate) => {
+			const url = new URL(
+				`${OPEN_FOOD_FACTS_PRODUCT_URL}/${encodeURIComponent(candidate)}.json`,
+			);
+			url.searchParams.set("fields", OPEN_FOOD_FACTS_IMAGE_FIELDS);
+			const data = await fetchJson(
+				url,
+				{
+					headers: {
+						accept: "application/json",
+						"user-agent": APP_USER_AGENT,
+					},
 				},
-			},
-			`Open Food Facts image lookup for ${candidate}`,
-		);
-		if (!data || data.status !== 1 || !data.product) continue;
+				`Open Food Facts image lookup for ${candidate}`,
+			);
+			if (!data || data.status !== 1 || !data.product) return null;
+			if (
+				normalizeBarcode(data.product.code ?? candidate) !== canonicalBarcode
+			) return null;
 
-		const image = parseOpenFoodFactsImage(data.product, barcode);
-		if (image) return image;
-	}
+			return {
+				image: parseOpenFoodFactsImage(data.product, canonicalBarcode),
+			};
+		},
+	);
 
-	return null;
+	return candidateMatch?.value.image ?? null;
 };
 
 const persistFoodImageAsset = async (supabase, image, sharedProductId) => {

@@ -1,7 +1,4 @@
-import {
-	getBarcodeLookupCandidates,
-	normalizeBarcode,
-} from "$lib/utils/barcode/barcode";
+import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
 	mapFdcBarcodeFood,
 	mapOpenFoodFactsProduct,
@@ -21,6 +18,8 @@ import {
 	recordProductSourceLookup,
 } from "$lib/server/products/sourceMetrics.server";
 import { summarizeBarcodeProductQuality } from "$lib/utils/food/sources/sourceQuality";
+import { findFirstBarcodeCandidateMatch } from "$lib/server/products/barcodeCandidateLookup";
+import { coalesceProductApiRequest } from "$lib/server/products/productApiRequests.server";
 
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v2/product";
 const OPEN_FOOD_FACTS_FIELDS = [
@@ -64,23 +63,17 @@ export const lookupUsdaBarcodeProduct = async (
 	const trace = createProductSourceRequestTrace();
 
 	try {
-		const searchResults = await Promise.allSettled(
-			getBarcodeLookupCandidates(barcode).map((candidate) =>
-				searchUsdaBrandedFoods(candidate, trace)
-			),
+		const candidateMatch = await findFirstBarcodeCandidateMatch(
+			barcode,
+			async (candidate) => {
+				const searchResult = await searchUsdaBrandedFoods(candidate, trace);
+				return selectPreferredUsdaBarcodeFood(
+					searchResult.foods ?? [],
+					canonicalBarcode,
+				);
+			},
 		);
-		if (searchResults.every((result) => result.status === "rejected")) {
-			throw searchResults[0]?.status === "rejected"
-				? searchResults[0].reason
-				: new Error("USDA barcode lookup failed.");
-		}
-		const matches = searchResults.flatMap((result) =>
-			result.status === "fulfilled" ? result.value.foods ?? [] : []
-		);
-		const uniqueMatches = [...new Map(
-			matches.map((food) => [food.fdcId, food]),
-		).values()];
-		const match = selectPreferredUsdaBarcodeFood(uniqueMatches, canonicalBarcode);
+		const match = candidateMatch?.value ?? null;
 		if (!match) {
 			await recordProductSourceLookup({
 				sourceKey: "usda",
@@ -139,40 +132,55 @@ export const lookupOpenFoodFactsBarcodeProduct = async (
 	const trace = createProductSourceRequestTrace();
 
 	try {
-		for (const candidate of getBarcodeLookupCandidates(barcode)) {
-			const url = new URL(
-				`${OPEN_FOOD_FACTS_URL}/${encodeURIComponent(candidate)}.json`,
-			);
-			url.searchParams.set("fields", OPEN_FOOD_FACTS_FIELDS);
-			recordProductSourceApiRequest(trace);
-			let response: Response;
-			try {
-				response = await fetch(url, {
-					headers: {
-						accept: "application/json",
-						"user-agent": PRODUCT_LOOKUP_USER_AGENT,
-					},
-				});
-			} catch (error) {
-				recordProductSourceApiError(trace);
-				throw error;
-			}
-			if (!response.ok) {
-				if (response.status === 404) continue;
-				recordProductSourceApiError(trace);
-				throw new Error(
-					`Open Food Facts lookup failed with ${response.status}.`,
+		const candidateMatch = await findFirstBarcodeCandidateMatch(
+			barcode,
+			async (candidate) => {
+				const url = new URL(
+					`${OPEN_FOOD_FACTS_URL}/${encodeURIComponent(candidate)}.json`,
 				);
-			}
-
-			const data = await response.json() as OpenFoodFactsResponse;
-			if (data.status !== 1 || !data.product) continue;
-			const draft = mapOpenFoodFactsProduct(
-				data.product,
-				canonicalBarcode,
-				referenceData ?? await getProductReferenceData(),
-			);
-			if (!draft) continue;
+				url.searchParams.set("fields", OPEN_FOOD_FACTS_FIELDS);
+				const data = await coalesceProductApiRequest(
+					`open-food-facts:barcode:${candidate}:${OPEN_FOOD_FACTS_FIELDS}`,
+					async () => {
+						recordProductSourceApiRequest(trace);
+						let response: Response;
+						try {
+							response = await fetch(url, {
+								headers: {
+									accept: "application/json",
+									"user-agent": PRODUCT_LOOKUP_USER_AGENT,
+								},
+							});
+						} catch (error) {
+							recordProductSourceApiError(trace);
+							throw error;
+						}
+						if (!response.ok) {
+							if (response.status === 404) return null;
+							recordProductSourceApiError(trace);
+							throw new Error(
+								`Open Food Facts lookup failed with ${response.status}.`,
+							);
+						}
+						return await response.json() as OpenFoodFactsResponse;
+					},
+					trace,
+				);
+				if (!data || data.status !== 1 || !data.product) return null;
+				if (
+					normalizeBarcode(data.product.code ?? candidate) !== canonicalBarcode
+				) return null;
+				return {
+					draft: mapOpenFoodFactsProduct(
+						data.product,
+						canonicalBarcode,
+						referenceData ?? await getProductReferenceData(),
+					),
+				};
+			},
+		);
+		const draft = candidateMatch?.value.draft ?? null;
+		if (draft) {
 			await recordProductSourceLookup({
 				sourceKey: "open-food-facts",
 				lookupKind: "barcode",

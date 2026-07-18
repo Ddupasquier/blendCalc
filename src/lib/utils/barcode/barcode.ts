@@ -64,5 +64,7 @@ export const getBarcodeLookupCandidates = (value: string) => {
 		}
 	}
 
-	return [...candidates];
+	return [...candidates].sort(
+		(left, right) => left.length - right.length || left.localeCompare(right),
+	);
 };
