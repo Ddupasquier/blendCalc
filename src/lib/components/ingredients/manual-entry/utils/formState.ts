@@ -27,6 +27,7 @@ export type ManualEntryFormResetState = {
 	nameProvenance: NonNullable<FdcFood["nameProvenance"]>;
 	brandOwner: string;
 	category: string;
+	categoryOptionId: string;
 	servingLabel: string;
 	servingWeightGrams: number | null;
 	volumeQuantity: number | null;
@@ -70,6 +71,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	nameProvenance: "user",
 	brandOwner: "",
 	category: "",
+	categoryOptionId: "",
 	servingLabel: "",
 	servingWeightGrams: null,
 	volumeQuantity: null,

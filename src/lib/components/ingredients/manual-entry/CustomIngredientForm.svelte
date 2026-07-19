@@ -31,11 +31,11 @@
 		type NutrientValueState,
 		type NutritionLabelOcrApplyPayload,
 		type StepValidationItem,
+		type FoodCategoryPickerStatus,
 	} from "$lib/components/ingredients/manual-entry/formTypes";
 	import ManualEntryFormShell from "$lib/components/ingredients/manual-entry/ManualEntryFormShell.svelte";
 	import ManualEntryScanOption from "$lib/components/ingredients/manual-entry/ManualEntryScanOption.svelte";
 	import ManualEntryStepContent from "$lib/components/ingredients/manual-entry/ManualEntryStepContent.svelte";
-	import type { CustomFoodCategoryOption } from "$lib/utils/food/nutrients/categoryOptions";
 	import {
 		type ManualEntryNutrientDefinition,
 		type ManualEntryNutrientGroupsByStep,
@@ -146,6 +146,7 @@
 	let nameProvenance = $state<NonNullable<FdcFood["nameProvenance"]>>("user");
 	let brandOwner = $state("");
 	let category = $state("");
+	let categoryOptionId = $state("");
 	let servingLabel = $state("");
 	let servingWeightGrams = $state<number | null>(null);
 	let volumeQuantity = $state<number | null>(null);
@@ -159,8 +160,8 @@
 	let manualEntryNutrientGroups = $state<ManualEntryNutrientGroupsByStep>(
 		emptyManualEntryNutrientGroups,
 	);
-	let categoryOptions = $state<CustomFoodCategoryOption[]>([]);
-	let loadingCategoryOptions = $state(false);
+	let loadingCategoryOptions = $state(true);
+	let categoryOptionsAvailable = $state(false);
 	let categoryOptionsError = $state("");
 	let loadingManualEntryNutrients = $state(false);
 	let manualEntryNutrientError = $state("");
@@ -217,15 +218,12 @@
 	let lastCloseManualSignal = $state<number | null>(null);
 	let lastScanSignal = $state<number | null>(null);
 
-
 	onMount(() => {
 		let cancelled = false;
 
 		loadingManualEntryNutrients = true;
-		loadingCategoryOptions = true;
 		loadingNutrientRelationshipRules = true;
 		manualEntryNutrientError = "";
-		categoryOptionsError = "";
 		nutrientRelationshipRuleError = "";
 
 		void loadManualEntryReferenceData().then((referenceData) => {
@@ -234,15 +232,12 @@
 			manualEntryNutrientGroups =
 				referenceData.nutrientGroups ?? emptyManualEntryNutrientGroups;
 			manualEntryNutrientError = referenceData.nutrientGroupError;
-			categoryOptions = referenceData.categoryOptions;
-			categoryOptionsError = referenceData.categoryOptionsError;
 			nutrientRelationshipRules = referenceData.nutrientRelationshipRules;
 			nutrientRelationshipRuleError =
 				referenceData.nutrientRelationshipRuleError;
 			nutritionLabelOcrMappings = referenceData.nutritionLabelOcrMappings;
 			nutritionLabelOcrMappingError = referenceData.nutritionLabelOcrMappingError;
 			loadingManualEntryNutrients = false;
-			loadingCategoryOptions = false;
 			loadingNutrientRelationshipRules = false;
 		});
 
@@ -251,23 +246,8 @@
 		};
 	});
 
-	const categoryOptionLabels = $derived(
-		categoryOptions.map((option) => option.label),
-	);
-	const visibleCategoryOptions = $derived(
-		category && !categoryOptionLabels.includes(category)
-			? [category, ...categoryOptionLabels]
-			: categoryOptionLabels,
-	);
-	const categoryPlaceholder = $derived(
-		categoryOptionLabels.length > 0
-			? `Example: ${categoryOptionLabels.slice(0, 3).join(", ")}`
-			: "Choose a category",
-	);
 	const activeCategory = $derived(category);
-	const activeCategoryOptionId = $derived(
-		categoryOptions.find((option) => option.label === activeCategory)?.id ?? "",
-	);
+	const activeCategoryOptionId = $derived(categoryOptionId);
 	const normalizedName = $derived(name.trim());
 	const barcodeValidationMessage = $derived(
 		getBarcodeInputValidationMessage(barcode),
@@ -280,6 +260,11 @@
 			selectedCategory: category,
 		}),
 	);
+	const handleCategoryPickerStatus = (status: FoodCategoryPickerStatus) => {
+		loadingCategoryOptions = status.loading;
+		categoryOptionsAvailable = status.hasOptions;
+		categoryOptionsError = status.error;
+	};
 	const resolvedServingLabel = $derived(
 		buildCustomServingLabel({
 			servingLabel,
@@ -419,6 +404,7 @@
 			nameProvenance,
 			brandOwner,
 			category,
+			categoryOptionId,
 			servingLabel,
 			servingWeightGrams,
 			importedNutrients,
@@ -470,7 +456,7 @@
 		validationAttemptedSteps = result.attemptedSteps;
 		activeStep = result.activeStep;
 		if (result.warning) {
-			showStepWarning(result.warning.message, result.warning.step);
+			showNavigationStepWarning(result.warning.message, result.warning.step);
 			return;
 		}
 
@@ -583,9 +569,10 @@
 			volumeQuantity,
 			volumeAmountRequiredMessage,
 			activeCategory,
+			activeCategoryOptionId,
 			loadingCategoryOptions,
 			categoryOptionsError,
-			visibleCategoryOptions,
+			categoryOptionsAvailable,
 			loadingNutrientRelationshipRules,
 			nutrientRelationshipRuleError,
 			manualEntryNutrientAvailabilityItems,
@@ -635,6 +622,14 @@
 			stepWarningStep = null;
 			stepWarningTimer = null;
 		}, 3200);
+	};
+
+	const showNavigationStepWarning = (message: string, step: ManualEntryStepId) => {
+		if (step === "identity" && !activeCategoryOptionId && categoryWarningMessage) {
+			clearStepWarning();
+			return;
+		}
+		showStepWarning(message, step);
 	};
 
 	$effect(() => {
@@ -824,6 +819,7 @@
 			nameProvenance,
 			brandOwner,
 			category,
+			categoryOptionId,
 			servingLabel,
 			servingWeightGrams,
 			volumeQuantity,
@@ -877,7 +873,7 @@
 		validationAttemptedSteps = result.attemptedSteps;
 		activeStep = result.activeStep;
 		if (result.warning) {
-			showStepWarning(result.warning.message, result.warning.step);
+			showNavigationStepWarning(result.warning.message, result.warning.step);
 			return;
 		}
 
@@ -896,7 +892,7 @@
 		validationAttemptedSteps = result.attemptedSteps;
 		activeStep = result.activeStep;
 		if (result.warning) {
-			showStepWarning(result.warning.message, result.warning.step);
+			showNavigationStepWarning(result.warning.message, result.warning.step);
 			return;
 		}
 
@@ -1160,7 +1156,10 @@
 			markValidationAttempted(submitState.block.step);
 			error = submitState.block.message;
 			activeStep = submitState.block.step;
-			showStepWarning(submitState.block.message, submitState.block.step);
+			showNavigationStepWarning(
+				submitState.block.message,
+				submitState.block.step,
+			);
 			return;
 		}
 
@@ -1274,12 +1273,10 @@
 				{name}
 				{brandOwner}
 				{category}
+				{categoryOptionId}
 				{barcode}
-				{categoryPlaceholder}
-				{visibleCategoryOptions}
-				{loadingCategoryOptions}
-				{categoryOptionsError}
 				{categoryWarningMessage}
+				categorySourceValues={barcodeReferenceSourceDraft?.categories ?? categories}
 				{barcodeMessage}
 				{barcodeValidationMessage}
 				{checkingBarcodeReference}
@@ -1339,10 +1336,12 @@
 				isRequired={isRequiredManualNutrient}
 				onNameChange={setManualName}
 				onBrandChange={(value) => (brandOwner = value)}
-				onCategoryChange={(value) => {
-					category = value;
+				onCategoryChange={(option) => {
+					category = option.label;
+					categoryOptionId = option.id;
 					markFieldAsUserEntered("categories");
 				}}
+				onCategoryStatusChange={handleCategoryPickerStatus}
 				onBarcodeChange={setManualBarcode}
 				onBarcodeBlur={checkManualBarcodeReference}
 				onApplyBarcodeSuggestion={applyBarcodeReferenceSuggestion}

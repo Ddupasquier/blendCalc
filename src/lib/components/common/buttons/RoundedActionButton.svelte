@@ -4,25 +4,37 @@
 	import type { RoundedActionButtonProps } from "$lib/components/common/buttons/types";
 
 	let {
+		id,
 		type = "button",
 		variant = "primary",
+		contentAlign = "center",
 		fullWidth = false,
 		busy = false,
 		disabled = false,
 		privileged = false,
 		ariaLabel,
+		"aria-controls": ariaControls = undefined,
+		"aria-describedby": ariaDescribedBy = undefined,
+		"aria-expanded": ariaExpanded = undefined,
+		"aria-pressed": ariaPressed = undefined,
 		onclick,
 		children,
 	}: RoundedActionButtonProps = $props();
 </script>
 
 <button
+	{id}
 	{type}
 	class="rounded-action-button"
 	class:rounded-action-button--full={fullWidth}
 	data-variant={variant}
+	data-content-align={contentAlign}
 	aria-label={ariaLabel}
 	aria-busy={busy}
+	aria-controls={ariaControls}
+	aria-describedby={ariaDescribedBy}
+	aria-expanded={ariaExpanded}
+	aria-pressed={ariaPressed}
 	disabled={disabled || busy}
 	{onclick}
 >
@@ -55,6 +67,7 @@
 		font-weight: $app-button-font-weight;
 		line-height: $app-button-line-height;
 		text-align: center;
+		text-transform: none;
 		transition:
 			background-color 160ms ease,
 			border-color 160ms ease,
@@ -79,6 +92,16 @@
 
 	.rounded-action-button--full {
 		width: 100%;
+	}
+
+	.rounded-action-button[data-content-align="start"] {
+		justify-content: flex-start;
+		text-align: left;
+	}
+
+	.rounded-action-button[data-content-align="space-between"] {
+		justify-content: space-between;
+		text-align: left;
 	}
 
 	.rounded-action-button[data-variant="primary"] {

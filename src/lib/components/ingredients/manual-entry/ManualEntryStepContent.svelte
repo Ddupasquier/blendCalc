@@ -15,7 +15,9 @@
 		ManualEntrySummaryItem,
 		StepValidationItem,
 		NutritionLabelOcrApplyPayload,
+		FoodCategoryPickerStatus,
 	} from "$lib/components/ingredients/manual-entry/formTypes";
+	import type { FoodCategoryPickerOption } from "$lib/utils/food/categories/categoryPicker";
 	import type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
 	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 	import IdentityStep from "$lib/components/ingredients/manual-entry/steps/IdentityStep.svelte";
@@ -28,12 +30,10 @@
 		name,
 		brandOwner,
 		category,
+		categoryOptionId,
 		barcode,
-		categoryPlaceholder,
-		visibleCategoryOptions,
-		loadingCategoryOptions,
-		categoryOptionsError,
 		categoryWarningMessage,
+		categorySourceValues,
 		barcodeMessage,
 		barcodeValidationMessage,
 		checkingBarcodeReference,
@@ -83,6 +83,7 @@
 		onNameChange,
 		onBrandChange,
 		onCategoryChange,
+		onCategoryStatusChange,
 		onBarcodeChange,
 		onBarcodeBlur,
 		onApplyBarcodeSuggestion,
@@ -113,12 +114,10 @@
 		name: string;
 		brandOwner: string;
 		category: string;
+		categoryOptionId: string;
 		barcode: string;
-		categoryPlaceholder: string;
-		visibleCategoryOptions: string[];
-		loadingCategoryOptions: boolean;
-		categoryOptionsError: string;
 		categoryWarningMessage: string;
+		categorySourceValues: string[];
 		barcodeMessage: string;
 		barcodeValidationMessage: string;
 		checkingBarcodeReference: boolean;
@@ -174,7 +173,8 @@
 		isRequired: (field: ManualEntryNutrientDefinition) => boolean;
 		onNameChange: (value: string) => void;
 		onBrandChange: (value: string) => void;
-		onCategoryChange: (value: string) => void;
+		onCategoryChange: (option: FoodCategoryPickerOption) => void;
+		onCategoryStatusChange: (status: FoodCategoryPickerStatus) => void;
 		onBarcodeChange: (value: string) => void;
 		onBarcodeBlur: () => void | Promise<void>;
 		onApplyBarcodeSuggestion: () => void | Promise<void>;
@@ -208,12 +208,10 @@
 		{name}
 		{brandOwner}
 		{category}
+		{categoryOptionId}
 		{barcode}
-		{categoryPlaceholder}
-		{visibleCategoryOptions}
-		{loadingCategoryOptions}
-		{categoryOptionsError}
 		{categoryWarningMessage}
+		{categorySourceValues}
 		{barcodeMessage}
 		{barcodeValidationMessage}
 		{checkingBarcodeReference}
@@ -221,6 +219,7 @@
 		onNameChange={onNameChange}
 		onBrandChange={onBrandChange}
 		onCategoryChange={onCategoryChange}
+		onCategoryStatusChange={onCategoryStatusChange}
 		onBarcodeChange={onBarcodeChange}
 		onBarcodeBlur={onBarcodeBlur}
 		onApplyBarcodeSuggestion={onApplyBarcodeSuggestion}

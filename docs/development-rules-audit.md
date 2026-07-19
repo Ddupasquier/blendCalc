@@ -25,6 +25,7 @@ clickable navigation block instead.
 - [Component And Route Boundaries](#rule-component-boundaries)
 - [Manual Entry Modularization](#rule-manual-entry-modularization)
 - [Database And API-Driven Data](#rule-no-hardcoded-reference-data)
+- [Canonical Category Picker](#rule-canonical-category-picker)
 - [USDA Food Source Priority](#rule-usda-source-priority)
 - [Source Quality Measurement](#rule-source-quality-measurement)
 - [Field-Level Product Enrichment](#rule-field-level-product-enrichment)
@@ -278,9 +279,10 @@ building, and styling. Do not let one file become the home for every new behavio
 
 - <a id="rule-manual-entry-reference-data"></a>Reference data loading belongs in a
   focused data utility, not in step components. Manual entry uses
-  `manualEntryReferenceData.ts` to load category options, nutrient groups, and nutrient
-  relationship rules from the database-backed path. Components render that data; they do
-  not invent fallback lists or hardcode API-derived options.
+  `manualEntryReferenceData.ts` to load nutrient groups and nutrient relationship rules
+  from the database-backed path, while the canonical category picker uses its focused
+  server endpoint. Components render that data; they do not invent fallback lists or
+  hardcode API-derived options.
 
 - <a id="rule-manual-entry-types"></a>Flow-specific types and constants belong in
   `formTypes.ts` or `types.ts`, not scattered through components. Step ids, summary item
@@ -597,6 +599,19 @@ raw source data for moderation/provenance and ask the user to choose a category.
 submission, automatic publication, moderator approval, and revision creation must
 preserve the canonical category foreign key and the raw source categories; they must
 never replace either with a generic placeholder category.
+
+**31a.1.** <a id="rule-canonical-category-picker"></a>Unresolved manual-entry categories
+must use the shared canonical category picker backed by enabled
+`custom_food_category_options` rows. The server ranks a small `Suggested` group from the
+product name and preserved raw source categories, returns a bounded multi-source
+`Common categories` group, and performs bounded database search as the user types. A
+suggestion is help, not an automatic classification: the user must choose it before the
+form can continue. Never render the entire category catalog in a native select, expose
+raw provider labels as canonical choices, invent a client fallback list, or fetch and
+sort every category in the browser. Persist both the chosen canonical category id and
+label while retaining the raw source observations separately. A user's one-time choice
+must not silently create or promote a global source mapping; mapping changes require the
+normal evidence and review path.
 
 **31b.** <a id="rule-source-backed-food-images"></a>Ingredient/product images must
 follow the same API → DB → UI path as other reference data. Do not render new

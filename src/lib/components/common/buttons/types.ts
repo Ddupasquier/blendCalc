@@ -34,6 +34,8 @@ export type RoundedActionButtonVariant =
 	| "neutral"
 	| "dashed";
 
+export type RoundedActionButtonContentAlign = "center" | "start" | "space-between";
+
 export type ButtonClickHandler = (event: MouseEvent) => void;
 
 export type ButtonFocusHandler = (event: FocusEvent) => void;
@@ -133,13 +135,19 @@ export type PillButtonProps = {
 };
 
 export type RoundedActionButtonProps = {
+	id?: string;
 	type?: ButtonType;
 	variant?: RoundedActionButtonVariant;
+	contentAlign?: RoundedActionButtonContentAlign;
 	fullWidth?: boolean;
 	busy?: boolean;
 	disabled?: boolean;
 	privileged?: boolean;
 	ariaLabel?: string;
+	"aria-controls"?: string;
+	"aria-describedby"?: string;
+	"aria-expanded"?: boolean | "true" | "false";
+	"aria-pressed"?: boolean | "true" | "false";
 	onclick?: ButtonClickHandler;
 	children?: Snippet;
 };

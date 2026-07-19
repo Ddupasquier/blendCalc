@@ -25,6 +25,7 @@ export type ManualEntryBarcodeDraftState = {
 	nameProvenance: NonNullable<FdcFood["nameProvenance"]>;
 	brandOwner: string;
 	category: string;
+	categoryOptionId: string;
 	servingLabel: string;
 	servingWeightGrams: number;
 	importedNutrients: FdcNutrient[];
@@ -197,6 +198,7 @@ export const getBarcodeDraftState = (
 	nameProvenance: draft.nameProvenance,
 	brandOwner: draft.brandOwner,
 	category: draft.resolvedCategory ?? "",
+	categoryOptionId: draft.categoryResolution?.categoryOptionId ?? "",
 	servingLabel: draft.servingLabel,
 	servingWeightGrams: draft.servingWeightGrams,
 	importedNutrients: [...draft.nutrients],

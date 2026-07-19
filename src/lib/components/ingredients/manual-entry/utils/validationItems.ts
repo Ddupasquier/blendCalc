@@ -72,9 +72,10 @@ export const buildManualEntryValidationItems = ({
 	volumeQuantity,
 	volumeAmountRequiredMessage,
 	activeCategory,
+	activeCategoryOptionId,
 	loadingCategoryOptions,
 	categoryOptionsError,
-	visibleCategoryOptions,
+	categoryOptionsAvailable,
 	loadingNutrientRelationshipRules,
 	nutrientRelationshipRuleError,
 	manualEntryNutrientAvailabilityItems,
@@ -87,9 +88,10 @@ export const buildManualEntryValidationItems = ({
 	volumeQuantity: number | null;
 	volumeAmountRequiredMessage: string;
 	activeCategory: string;
+	activeCategoryOptionId: string;
 	loadingCategoryOptions: boolean;
 	categoryOptionsError: string;
-	visibleCategoryOptions: string[];
+	categoryOptionsAvailable: boolean;
 	loadingNutrientRelationshipRules: boolean;
 	nutrientRelationshipRuleError: string;
 	manualEntryNutrientAvailabilityItems: StepValidationItem[];
@@ -121,11 +123,11 @@ export const buildManualEntryValidationItems = ({
 					step: "servings",
 				}
 			: null,
-		!activeCategory
+		!activeCategory || !activeCategoryOptionId
 			? {
 					message: loadingCategoryOptions
 						? "Food categories are still loading. Try again in a moment."
-						: categoryOptionsError || visibleCategoryOptions.length === 0
+						: categoryOptionsError || !categoryOptionsAvailable
 							? "Food categories are unavailable. Try again after categories finish syncing."
 							: "Please select a category for this ingredient.",
 					tone: "error",

@@ -222,20 +222,6 @@ const foodMetadataMocks = vi.hoisted(() => {
 			macros: [{ title: "Macros", fields: macros }],
 			extended: [],
 		}),
-		readCustomFoodCategoryOptions: vi.fn().mockResolvedValue([
-			{
-				id: "other",
-				label: "Other",
-				observation_count: 1,
-				source_count: 1,
-			},
-			{
-				id: "jams",
-				label: "Jams",
-				observation_count: 1,
-				source_count: 1,
-			},
-		]),
 	};
 });
 
@@ -249,13 +235,49 @@ vi.mock("$lib/utils/food/nutrients/nutrientDefinitions", async (importOriginal) 
 	};
 });
 
-vi.mock("$lib/utils/food/nutrients/categoryOptions", async (importOriginal) => {
+vi.mock("$lib/utils/food/ocr/nutritionLabelOcrMappings", () => ({
+	readNutritionLabelOcrMappings: vi.fn().mockResolvedValue([
+		{
+			alias: "calories",
+			sourceUnitName: "kcal",
+			nutrientId: 1008,
+			nutrientName: "Calories",
+			targetUnitName: "kcal",
+			priority: 1,
+			conversionMultiplier: null,
+		},
+	]),
+}));
+
+const categoryPickerMocks = vi.hoisted(() => ({
+	loadFoodCategoryPickerData: vi.fn().mockResolvedValue({
+		suggestions: [],
+		common: [
+			{
+				id: "other",
+				label: "Other",
+				observationCount: 1,
+				sourceCount: 1,
+				verificationStatus: "single_source",
+			},
+			{
+				id: "jams",
+				label: "Jams",
+				observationCount: 1,
+				sourceCount: 1,
+				verificationStatus: "single_source",
+			},
+		],
+		results: [],
+	}),
+}));
+
+vi.mock("$lib/utils/food/categories/categoryPicker", async (importOriginal) => {
 	const actual =
-		await importOriginal<typeof import("$lib/utils/food/nutrients/categoryOptions")>();
+		await importOriginal<typeof import("$lib/utils/food/categories/categoryPicker")>();
 	return {
 		...actual,
-		readCustomFoodCategoryOptions:
-			foodMetadataMocks.readCustomFoodCategoryOptions,
+		loadFoodCategoryPickerData: categoryPickerMocks.loadFoodCategoryPickerData,
 	};
 });
 
@@ -338,14 +360,25 @@ const continueToNextStep = async () => {
 	await fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 };
 
+const chooseCategory = async (label = "Other") => {
+	const trigger = await screen.findByRole("button", { name: "Category" });
+	await waitFor(() => expect(trigger).not.toBeDisabled());
+	await fireEvent.click(trigger);
+	await fireEvent.click(await screen.findByRole("button", { name: label }));
+};
+
+const createTestCategoryResolution = (id: string, label: string) => ({
+	categoryOptionId: id,
+	label,
+	sourceValue: label,
+	confidence: "exact",
+});
+
 const fillIdentityStep = async (name = "Test ingredient") => {
 	await fireEvent.input(screen.getByLabelText(/food name/i), {
 		target: { value: name },
 	});
-	await waitFor(() => expect(screen.getByLabelText(/category/i)).not.toBeDisabled());
-	await fireEvent.change(screen.getByLabelText(/category/i), {
-		target: { value: "Other" },
-	});
+	await chooseCategory();
 };
 
 const openEmptyMacrosStep = async () => {
@@ -376,10 +409,7 @@ const fillRequiredCustomIngredient = async (
 	await fireEvent.input(screen.getByLabelText(/food name/i), {
 		target: { value: name },
 	});
-	await waitFor(() => expect(screen.getByLabelText(/category/i)).not.toBeDisabled());
-	await fireEvent.change(screen.getByLabelText(/category/i), {
-		target: { value: "Other" },
-	});
+	await chooseCategory();
 	if (options.barcode) {
 		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
 			target: { value: options.barcode },
@@ -428,6 +458,26 @@ describe("CustomIngredientForm", () => {
 	beforeEach(() => {
 		localStorage.clear();
 		vi.clearAllMocks();
+		categoryPickerMocks.loadFoodCategoryPickerData.mockResolvedValue({
+			suggestions: [],
+			common: [
+				{
+					id: "other",
+					label: "Other",
+					observationCount: 1,
+					sourceCount: 1,
+					verificationStatus: "single_source",
+				},
+				{
+					id: "jams",
+					label: "Jams",
+					observationCount: 1,
+					sourceCount: 1,
+					verificationStatus: "single_source",
+				},
+			],
+			results: [],
+		});
 		customFoodMocks.saveCustomFood.mockResolvedValue("saved");
 		customFoodMocks.findCustomFoodByBarcode.mockReturnValue(null);
 		customFoodMocks.findCustomFoodByName.mockReturnValue(null);
@@ -639,13 +689,11 @@ describe("CustomIngredientForm", () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 
 		await openManualForm();
-		await waitFor(() => expect(screen.getByLabelText(/category/i)).not.toBeDisabled());
-		const categorySelect = screen.getByLabelText(/category/i) as HTMLSelectElement;
-		expect(categorySelect.value).toBe("");
-		expect(screen.getByRole("option", { name: /example: other/i })).toBeDisabled();
+		const categoryTrigger = await screen.findByRole("button", { name: "Category" });
+		expect(categoryTrigger).toHaveTextContent("Choose a category");
 
-		await fireEvent.change(categorySelect, { target: { value: "Other" } });
-		expect(categorySelect.value).toBe("Other");
+		await chooseCategory();
+		expect(categoryTrigger).toHaveTextContent("Other");
 	});
 
 	it("can add a saved custom ingredient directly to the shopping list", async () => {
@@ -784,6 +832,7 @@ describe("CustomIngredientForm", () => {
 				reportedNutrientIds: [1008, 1004, 1005, 1003],
 				categories: ["Other"],
 				resolvedCategory: "Other",
+				categoryResolution: createTestCategoryResolution("other", "Other"),
 				source: "usda",
 				sourceLabel: "USDA FDC",
 				sourceReference: "12345",
@@ -845,6 +894,7 @@ describe("CustomIngredientForm", () => {
 				reportedNutrientIds: [1008, 1004, 1005, 1003],
 				categories: ["Other"],
 				resolvedCategory: "Other",
+				categoryResolution: createTestCategoryResolution("other", "Other"),
 				source: "usda",
 				sourceLabel: "USDA FDC",
 				sourceReference: "12345",
@@ -875,6 +925,72 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByText(/autofilled from USDA FDC/i)).toBeInTheDocument();
 	});
 
+	it("keeps unresolved barcode autofill on Identity until a canonical category is chosen", async () => {
+		categoryPickerMocks.loadFoodCategoryPickerData.mockResolvedValue({
+			suggestions: [
+				{
+					id: "protein-bars",
+					label: "Protein Bars",
+					observationCount: 47,
+					sourceCount: 1,
+					verificationStatus: "single_source",
+				},
+			],
+			common: [],
+			results: [],
+		});
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft: {
+				barcode: "00850000487260",
+				name: "Barebells Chocolate Dough Protein Bar",
+				nameProvenance: "source",
+				brandOwner: "Barebells",
+				servingLabel: "1 bar",
+				servingWeightGrams: 55,
+				nutrients: makeTestNutrients({
+					calories: 200,
+					fat: 7,
+					carbs: 20,
+					fiber: 3,
+					sugar: 2,
+					protein: 20,
+					sodium: 180,
+				}),
+				reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
+				categories: [],
+				source: "usda",
+				sourceLabel: "USDA FDC",
+				sourceReference: "test-protein-bar",
+			},
+		});
+
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: "00850000487260" },
+		});
+		await fireEvent.click(await screen.findByRole("button", { name: /autofill/i }));
+
+		expect(screen.getByLabelText(/food name/i)).toHaveValue(
+			"Barebells Chocolate Dough Protein Bar",
+		);
+		expect(
+			screen.getByText(/barcode found, but.*trusted category/i),
+		).toBeInTheDocument();
+		expect(screen.queryByText(/^please select a category/i)).not.toBeInTheDocument();
+		await fireEvent.click(screen.getByRole("button", { name: "Category" }));
+		await fireEvent.click(
+			await screen.findByRole("button", { name: "Protein Bars" }),
+		);
+		expect(screen.getByRole("button", { name: "Category" })).toHaveTextContent(
+			"Protein Bars",
+		);
+
+		await continueToNextStep();
+		expect(screen.getByLabelText(/weight \(g\)/i)).toHaveValue(55);
+	});
+
 	it("does not offer community sharing when an autofilled catalog product is unchanged", async () => {
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
 			status: "found",
@@ -897,6 +1013,7 @@ describe("CustomIngredientForm", () => {
 				reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
 				categories: ["Jams"],
 				resolvedCategory: "Jams",
+				categoryResolution: createTestCategoryResolution("jams", "Jams"),
 				source: "shared-catalog",
 				sourceLabel: "blendCalc verified catalog",
 				sourceReference: "shared-product-1",
@@ -941,6 +1058,7 @@ describe("CustomIngredientForm", () => {
 				reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
 				categories: ["Jams"],
 				resolvedCategory: "Jams",
+				categoryResolution: createTestCategoryResolution("jams", "Jams"),
 				source: "shared-catalog",
 				sourceLabel: "blendCalc verified catalog",
 				sourceReference: "shared-product-1",
@@ -999,6 +1117,7 @@ describe("CustomIngredientForm", () => {
 			reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
 			categories: ["Jams"],
 			resolvedCategory: "Jams",
+			categoryResolution: createTestCategoryResolution("jams", "Jams"),
 			source: "shared-catalog" as const,
 			sourceLabel: "blendCalc verified catalog",
 			sourceReference: "shared-product-1",
@@ -1072,6 +1191,7 @@ describe("CustomIngredientForm", () => {
 			reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
 			categories: ["Other"],
 			resolvedCategory: "Other",
+			categoryResolution: createTestCategoryResolution("other", "Other"),
 			source: "usda" as const,
 			sourceLabel: "USDA FDC",
 			sourceReference: "12345",
@@ -1123,6 +1243,7 @@ describe("CustomIngredientForm", () => {
 				reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
 				categories: ["Other"],
 				resolvedCategory: "Other",
+				categoryResolution: createTestCategoryResolution("other", "Other"),
 				source: "usda",
 				sourceLabel: "USDA FDC",
 				sourceReference: "12345",
@@ -1138,6 +1259,9 @@ describe("CustomIngredientForm", () => {
 			target: { value: "100" },
 		});
 		await continueToNextStep();
+		await waitFor(() =>
+			expect(screen.getByLabelText(/calories/i)).toBeInTheDocument(),
+		);
 		await continueToNextStep();
 
 		expect(screen.getAllByText("Total Fat is required").length).toBeGreaterThan(0);

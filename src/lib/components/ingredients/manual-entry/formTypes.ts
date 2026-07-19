@@ -3,6 +3,7 @@ import type { FdcFood } from "$lib/utils/food/types";
 import type { ManualEntryNutrientGroupsByStep } from "$lib/utils/food/nutrients/nutrientDefinitions";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
+import type { FoodCategoryPickerOption } from "$lib/utils/food/categories/categoryPicker";
 import type {
 	NutritionLabelOcrCandidate,
 	NutritionLabelOcrMapping,
@@ -41,6 +42,22 @@ export type ManualEntryBarcodeSuggestion = {
 	brandOwner: string;
 	sourceLabel: string;
 } | null;
+
+export type FoodCategoryPickerStatus = {
+	error: string;
+	hasOptions: boolean;
+	loading: boolean;
+};
+
+export type FoodCategoryPickerProps = {
+	selectedId: string;
+	selectedLabel: string;
+	productName: string;
+	sourceCategories: string[];
+	warningMessage?: string;
+	onChange: (option: FoodCategoryPickerOption) => void;
+	onStatusChange?: (status: FoodCategoryPickerStatus) => void;
+};
 
 export type ManualEntryBarcodeShareMismatch = {
 	name: string;

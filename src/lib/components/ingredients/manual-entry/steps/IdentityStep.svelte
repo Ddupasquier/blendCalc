@@ -2,17 +2,21 @@
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
 	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame.svelte";
 	import BarcodeAutofillSuggestion from "$lib/components/ingredients/manual-entry/BarcodeAutofillSuggestion.svelte";
+	import FoodCategoryPicker from "$lib/components/ingredients/manual-entry/FoodCategoryPicker.svelte";
+	import type {
+		FoodCategoryPickerStatus,
+		ManualEntryBarcodeSuggestion,
+	} from "$lib/components/ingredients/manual-entry/formTypes";
+	import type { FoodCategoryPickerOption } from "$lib/utils/food/categories/categoryPicker";
 
 	let {
 		name,
 		brandOwner,
 		category,
+		categoryOptionId,
 		barcode,
-		categoryPlaceholder,
-		visibleCategoryOptions,
-		loadingCategoryOptions,
-		categoryOptionsError,
 		categoryWarningMessage,
+		categorySourceValues,
 		barcodeMessage,
 		barcodeValidationMessage,
 		checkingBarcodeReference,
@@ -20,6 +24,7 @@
 		onNameChange,
 		onBrandChange,
 		onCategoryChange,
+		onCategoryStatusChange,
 		onBarcodeChange,
 		onBarcodeBlur,
 		onApplyBarcodeSuggestion,
@@ -30,23 +35,18 @@
 		name: string;
 		brandOwner: string;
 		category: string;
+		categoryOptionId: string;
 		barcode: string;
-		categoryPlaceholder: string;
-		visibleCategoryOptions: string[];
-		loadingCategoryOptions: boolean;
-		categoryOptionsError: string;
 		categoryWarningMessage: string;
+		categorySourceValues: string[];
 		barcodeMessage: string;
 		barcodeValidationMessage: string;
 		checkingBarcodeReference: boolean;
-		barcodeSuggestion: {
-			name: string;
-			brandOwner?: string;
-			sourceLabel: string;
-		} | null;
+		barcodeSuggestion: ManualEntryBarcodeSuggestion;
 		onNameChange: (value: string) => void;
 		onBrandChange: (value: string) => void;
-		onCategoryChange: (value: string) => void;
+		onCategoryChange: (option: FoodCategoryPickerOption) => void;
+		onCategoryStatusChange: (status: FoodCategoryPickerStatus) => void;
 		onBarcodeChange: (value: string) => void;
 		onBarcodeBlur: () => void | Promise<void>;
 		onApplyBarcodeSuggestion: () => void | Promise<void>;
@@ -132,44 +132,15 @@
 		/>
 	</label>
 
-	<label class="custom-ingredient__field">
-		<span>Category <em>*</em></span>
-		<InputLoadingFrame
-			loading={loadingCategoryOptions}
-			loadingLabel="Loading categories"
-			controlKind="select"
-		>
-			<select
-				id="custom-ingredient-category"
-				name="custom-ingredient-category"
-				value={category}
-				disabled={loadingCategoryOptions || visibleCategoryOptions.length === 0}
-				onchange={(event) => onCategoryChange(event.currentTarget.value)}
-			>
-				{#if loadingCategoryOptions}
-					<option value="">{categoryPlaceholder}</option>
-				{:else if visibleCategoryOptions.length === 0}
-					<option value="">Categories unavailable</option>
-				{:else}
-					<option value="" disabled>{categoryPlaceholder}</option>
-					{#each visibleCategoryOptions as option}
-						<option value={option}>{option}</option>
-					{/each}
-				{/if}
-			</select>
-		</InputLoadingFrame>
-		{#if categoryOptionsError}
-			<small>{categoryOptionsError}</small>
-		{/if}
-		{#if categoryWarningMessage}
-			<small
-				class="custom-ingredient__field-status custom-ingredient__field-status--error"
-				role="alert"
-			>
-				{categoryWarningMessage}
-			</small>
-		{/if}
-	</label>
+	<FoodCategoryPicker
+		selectedId={categoryOptionId}
+		selectedLabel={category}
+		productName={name}
+		sourceCategories={categorySourceValues}
+		warningMessage={categoryWarningMessage}
+		onChange={onCategoryChange}
+		onStatusChange={onCategoryStatusChange}
+	/>
 
 	<RoundedActionButton fullWidth busy={checkingBarcodeReference} onclick={onNext}>
 		Continue
