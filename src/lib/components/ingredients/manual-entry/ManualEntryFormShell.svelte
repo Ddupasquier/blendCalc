@@ -36,6 +36,9 @@
 
 	let detailsElement = $state<HTMLDetailsElement | null>(null);
 	let bodyElement = $state<HTMLFieldSetElement | null>(null);
+	const shellId = $props.id();
+	const stepPanelId = `${shellId}-step-panel`;
+	const stepTabIdPrefix = `${shellId}-step-tab`;
 
 	$effect(() => {
 		onDetailsElement(detailsElement);
@@ -79,16 +82,25 @@
 		<ManualEntryStepTabs
 			{steps}
 			{activeStep}
+			panelId={stepPanelId}
+			tabIdPrefix={stepTabIdPrefix}
 			onSelect={handleSelectStep}
 		/>
 
-		<WarningPopup
-			open={Boolean(stepWarningMessage && stepWarningStep === activeStep)}
-			message={stepWarningMessage}
-			tone="error"
-		/>
+		<div
+			id={stepPanelId}
+			class="custom-ingredient__step-panel"
+			role="tabpanel"
+			aria-labelledby={`${stepTabIdPrefix}-${activeStep}`}
+		>
+			<WarningPopup
+				open={Boolean(stepWarningMessage && stepWarningStep === activeStep)}
+				message={stepWarningMessage}
+				tone="error"
+			/>
 
-		{@render children()}
+			{@render children()}
+		</div>
 	</fieldset>
 </details>
 
@@ -147,5 +159,11 @@
 			font-size: $app-font-size-lg;
 			font-weight: $app-font-weight-bold;
 		}
+	}
+
+	.custom-ingredient__step-panel {
+		display: grid;
+		gap: $app-vertical-stack-gap;
+		min-width: 0;
 	}
 </style>

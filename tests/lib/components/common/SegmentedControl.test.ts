@@ -37,4 +37,32 @@ describe("SegmentedControl", () => {
 		expect(onSelect).toHaveBeenCalledWith("shopping");
 		expect(shoppingTab).toHaveFocus();
 	});
+
+	it("renders reusable progress steps with completion and current-step state", async () => {
+		const onSelect = vi.fn();
+		render(SegmentedControl, {
+			props: {
+				label: "Manual ingredient progress",
+				value: "macros",
+				variant: "progress",
+				options: [
+					{ value: "identity", label: "Identity" },
+					{ value: "servings", label: "Servings" },
+					{ value: "macros", label: "Macros" },
+					{ value: "extended", label: "Extended" },
+				],
+				onSelect,
+			},
+		});
+
+		const [identityTab, servingsTab, macrosTab, extendedTab] = screen.getAllByRole("tab");
+		expect(identityTab).toHaveClass("segmented-control__button--completed");
+		expect(servingsTab).toHaveClass("segmented-control__button--completed");
+		expect(macrosTab).toHaveClass("segmented-control__button--completed");
+		expect(macrosTab).toHaveAttribute("aria-current", "step");
+		expect(extendedTab).not.toHaveClass("segmented-control__button--completed");
+
+		await fireEvent.click(extendedTab);
+		expect(onSelect).toHaveBeenCalledWith("extended");
+	});
 });

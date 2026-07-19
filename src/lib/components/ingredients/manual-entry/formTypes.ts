@@ -87,6 +87,8 @@ export type ManualEntryStep = {
 export type ManualEntryStepTabsProps = {
 	steps: ManualEntryStep[];
 	activeStep: ManualEntryStepId;
+	panelId: string;
+	tabIdPrefix: string;
 	onSelect: (step: ManualEntryStepId) => void;
 };
 

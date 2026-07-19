@@ -160,9 +160,12 @@ export type SegmentedControlOption = {
 	controlsId?: string;
 };
 
+export type SegmentedControlVariant = "pill" | "progress";
+
 export type SegmentedControlProps = {
 	label: string;
 	options: SegmentedControlOption[];
 	value: string;
+	variant?: SegmentedControlVariant;
 	onSelect: (value: string) => void;
 };

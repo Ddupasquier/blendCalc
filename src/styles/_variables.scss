@@ -209,6 +209,9 @@ $app-bottom-sheet-handle-width: 2.25rem;
 // Visible drag-handle thickness at the top of reusable bottom sheets.
 $app-bottom-sheet-handle-thickness: 0.22rem;
 
+// Shared progress-step indicator thickness. Used by reusable multi-step navigation.
+$app-progress-step-indicator-thickness: $app-bottom-sheet-handle-thickness;
+
 // Back-arrow tap target in reusable bottom sheet headers.
 $app-bottom-sheet-back-size: 2rem;
 

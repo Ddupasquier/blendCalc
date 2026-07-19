@@ -353,7 +353,7 @@ const openManualForm = async () => {
 };
 
 const goToStep = async (name: string | RegExp) => {
-	await fireEvent.click(screen.getByRole("button", { name }));
+	await fireEvent.click(screen.getByRole("tab", { name }));
 };
 
 const continueToNextStep = async () => {
@@ -919,7 +919,7 @@ describe("CustomIngredientForm", () => {
 
 		expect(screen.getByText("Share with community")).toBeInTheDocument();
 		expect(screen.getByLabelText(/share with community/i)).not.toBeChecked();
-		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
+		await goToStep(/identity/i);
 		expect(screen.getByLabelText(/food name/i)).toHaveValue("Source tomato product");
 		expect(screen.getByLabelText(/brand/i)).toHaveValue("Source brand");
 		expect(screen.getByText(/autofilled from USDA FDC/i)).toBeInTheDocument();
@@ -1030,7 +1030,7 @@ describe("CustomIngredientForm", () => {
 			expect(screen.getByRole("button", { name: /autofill/i })).toBeInTheDocument(),
 		);
 		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
-		await fireEvent.click(screen.getByRole("button", { name: /^share$/i }));
+		await goToStep(/^share$/i);
 
 		expect(
 			screen.getByText(/already exists in blendCalc with matching data/i),
@@ -1083,11 +1083,11 @@ describe("CustomIngredientForm", () => {
 			expect(screen.getByRole("button", { name: /autofill/i })).toBeInTheDocument(),
 		);
 		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
-		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
+		await goToStep(/identity/i);
 		await fireEvent.input(screen.getByLabelText(/brand/i), {
 			target: { value: "Safeway Updated" },
 		});
-		await fireEvent.click(screen.getByRole("button", { name: /^share$/i }));
+		await goToStep(/^share$/i);
 
 		const shareToggle = screen.getByLabelText(/share with community/i);
 		expect(shareToggle).not.toBeDisabled();
@@ -1144,11 +1144,11 @@ describe("CustomIngredientForm", () => {
 			expect(screen.getByRole("button", { name: /autofill/i })).toBeInTheDocument(),
 		);
 		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
-		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
+		await goToStep(/identity/i);
 		await fireEvent.input(screen.getByLabelText(/food name/i), {
 			target: { value: "Motor oil" },
 		});
-		await fireEvent.click(screen.getByRole("button", { name: /^share$/i }));
+		await goToStep(/^share$/i);
 		await fireEvent.click(screen.getByLabelText(/share with community/i));
 
 		await waitFor(() =>
@@ -1166,7 +1166,7 @@ describe("CustomIngredientForm", () => {
 			screen.getByText(/barcode removed/i),
 		).toBeInTheDocument();
 		expect(screen.getByLabelText(/share with community/i)).toBeDisabled();
-		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
+		await goToStep(/identity/i);
 		expect(screen.getByLabelText(/food name/i)).toHaveValue("Motor oil");
 		expect(screen.getByLabelText(/upc \/ barcode/i)).toHaveValue("");
 	});
@@ -1217,7 +1217,7 @@ describe("CustomIngredientForm", () => {
 			screen.getByRole("button", { name: /use verified information/i }),
 		);
 
-		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
+		await goToStep(/identity/i);
 		expect(screen.getByLabelText(/food name/i)).toHaveValue(draft.name);
 	});
 
@@ -1268,7 +1268,7 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getAllByText("Protein is required").length).toBeGreaterThan(0);
 		expect(screen.getAllByText(/sodium.*is required/i).length).toBeGreaterThan(0);
 
-		await fireEvent.click(screen.getByRole("button", { name: /identity/i }));
+		await goToStep(/identity/i);
 		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
 			target: { value: "4006381333931" },
 		});
@@ -1276,7 +1276,7 @@ describe("CustomIngredientForm", () => {
 			expect(screen.getByRole("button", { name: /autofill/i })).toBeInTheDocument(),
 		);
 		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
-		await fireEvent.click(screen.getByRole("button", { name: /macros/i }));
+		await goToStep(/macros/i);
 
 		await waitFor(() => {
 			expect(screen.queryByText("Total Fat is required")).not.toBeInTheDocument();
@@ -1402,7 +1402,7 @@ describe("CustomIngredientForm", () => {
 		await fireEvent.input(screen.getByLabelText(/sugars, added/i), {
 			target: { value: "9" },
 		});
-		await fireEvent.click(screen.getByRole("button", { name: "Share" }));
+		await goToStep("Share");
 
 		expect(onCreate).not.toHaveBeenCalled();
 		expect(
