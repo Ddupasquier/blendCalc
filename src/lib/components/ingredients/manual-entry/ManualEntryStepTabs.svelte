@@ -39,6 +39,7 @@
 		display: grid;
 		grid-template-columns: repeat(5, minmax(0, 1fr));
 		gap: $app-gap-xs;
+		padding: $app-gap-xs;
 		margin-block: $app-vertical-stack-gap;
 	}
 
