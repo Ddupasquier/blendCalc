@@ -601,7 +601,7 @@ and searchable without calling the source again.
 
 | Table | Primary Key | Purpose | Important Columns / Rules |
 | --- | --- | --- | --- |
-| `nutrition_completeness_profiles` | `key` | Defines what complete nutrition means for a food scope/region | `food_scope`, `region_code`, DB-owned labels, source reference, one enabled default per scope/region |
+| `nutrition_completeness_profiles` | `key` | Defines what complete nutrition means for a food scope/region | `food_scope` (`generic`, `manual`, or `packaged`), `region_code`, DB-owned labels, source reference, one enabled default per scope/region |
 | `nutrition_completeness_profile_nutrients` | `profile_key, nutrient_id` | Orders required and recommended nutrients for one profile | `requirement_level`, `display_order`, `reason`; nutrient FK prevents invented definitions |
 | `generic_food_datasets` | `key` | Records each national release and its legal/import state | Source/license URLs, attribution, file SHA-256, review status, import/active gates, imported row counts |
 | `generic_food_records` | `dataset_key, source_food_key` | Stores one source-owned generic food/preparation | Raw description, group, preparation, searchable text, source identifiers and dates |
@@ -617,6 +617,13 @@ Current release state:
 
 Runtime generic search reads only active, import-enabled datasets through the
 indexed search RPC. It does not merge similar foods from different sources.
+
+Private custom foods use `private-manual-core-v1`, whose required rows are copied
+from the enabled manual-entry nutrient requirements. A typed barcode does not
+switch that private record to the U.S. packaged-label profile. Source-imported,
+pending-review, and shared packaged products continue to use
+`us-packaged-label-v1`. A database trigger refreshes the private-manual profile
+whenever the manual-entry requirements change so the two policies cannot drift.
 
 ## Product Source Policies
 

@@ -114,4 +114,36 @@ describe("food quality", () => {
 			missingCount: 1,
 		});
 	});
+
+	it("uses the private manual profile for a private custom food with a barcode", () => {
+		const privateManualFood = {
+			...completeFood,
+			barcode: "00021130462506",
+			customFood: true,
+			trustStatus: "user-private" as const,
+		};
+
+		expect(getFoodQuality(privateManualFood)).toMatchObject({
+			label: "Complete",
+			profileKey: "private-manual-core-v1",
+			completeCount: 5,
+			missingCount: 0,
+			needsDetails: false,
+		});
+	});
+
+	it("keeps the packaged profile for a custom food submitted for review", () => {
+		const pendingFood = {
+			...completeFood,
+			barcode: "00021130462506",
+			customFood: true,
+			trustStatus: "pending-review" as const,
+		};
+
+		expect(getFoodQuality(pendingFood)).toMatchObject({
+			label: "Partial label",
+			profileKey: "us-packaged-label-v1",
+			missingCount: 1,
+		});
+	});
 });

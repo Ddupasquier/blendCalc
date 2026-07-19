@@ -31,6 +31,9 @@ describe("ProductImagePanel", () => {
 
 		expect(screen.getByText("Card image placement")).toBeInTheDocument();
 		expect(screen.getAllByTitle("Admin or moderator action")).toHaveLength(6);
+		expect(
+			screen.queryByText("Nutrition page shows the full image."),
+		).not.toBeInTheDocument();
 	});
 
 	it("does not show privileged action badges to normal users", () => {

@@ -1,6 +1,6 @@
 import type { FdcFood } from "$lib/utils/food/types";
 
-export type NutritionCompletenessScope = "generic" | "packaged";
+export type NutritionCompletenessScope = "generic" | "manual" | "packaged";
 export type NutritionRequirementLevel = "required" | "recommended";
 
 export type NutritionCompletenessNutrient = {
@@ -43,8 +43,23 @@ export const configureNutritionCompletenessCatalog = (
 export const getConfiguredNutritionCompletenessCatalog = () => configuredCatalog;
 
 export const getNutritionCompletenessScope = (
-	food: Pick<FdcFood, "barcode" | "gtinUpc" | "dataType" | "sourceDataType">,
+	food: Pick<
+		FdcFood,
+		| "barcode"
+		| "gtinUpc"
+		| "dataType"
+		| "sourceDataType"
+		| "customFood"
+		| "trustStatus"
+	>,
 ): NutritionCompletenessScope => {
+	if (
+		food.trustStatus === "user-private" ||
+		(food.customFood === true && !food.trustStatus)
+	) {
+		return "manual";
+	}
+
 	const dataType = `${food.dataType ?? ""} ${food.sourceDataType ?? ""}`.toLowerCase();
 	return food.barcode || food.gtinUpc || dataType.includes("branded")
 		? "packaged"
@@ -61,7 +76,9 @@ export const getNutritionCompletenessProfile = (
 	);
 
 	return scopedProfiles.find(
-		(profile) => profile.isDefault && profile.regionCode === (scope === "packaged" ? "US" : ""),
+		(profile) =>
+			profile.isDefault &&
+			profile.regionCode === (scope === "packaged" ? "US" : ""),
 	) ??
 		scopedProfiles.find((profile) => profile.isDefault) ??
 		scopedProfiles[0] ??

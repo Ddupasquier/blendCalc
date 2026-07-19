@@ -115,8 +115,8 @@
 					imageUrl={imageUrl}
 					alt={imageAlt}
 					title="Card image placement"
-					description="Adjust how this image appears in ingredient cards. The nutrition page keeps showing the full image."
-					mode="card-and-full"
+					description="Adjust how this image appears in ingredient cards."
+					mode="card-only"
 					value={draftPlacement}
 					privileged
 					onChange={(value) => {

@@ -79,7 +79,11 @@ export const readNutritionCompletenessCatalog = async (
 	}
 
 	const profiles = profileRows.map((row) => {
-		if (row.food_scope !== "generic" && row.food_scope !== "packaged") {
+		if (
+			row.food_scope !== "generic" &&
+			row.food_scope !== "manual" &&
+			row.food_scope !== "packaged"
+		) {
 			throw new Error(
 				`Nutrition completeness scope ${row.food_scope} is not supported.`,
 			);
