@@ -10,6 +10,11 @@ import {
 } from "$lib/utils/barcode/productLookup";
 import { getCachedFoodImageByBarcode } from "$lib/utils/storage/supabase/foodImages";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+	applyCachedImageToBarcodeDraft,
+	mergeMissingBarcodeProductFields,
+	needsBarcodeProductSupplement,
+} from "$lib/utils/barcode/barcodeProductEnrichment";
 
 export const lookupBarcodeProductDraft = async (
 	supabase: SupabaseClient<Database>,
@@ -17,7 +22,9 @@ export const lookupBarcodeProductDraft = async (
 ): Promise<BarcodeProductDraft | null> => {
 	const barcode = normalizeBarcode(barcodeValue);
 	if (!barcode) return null;
-	const cachedImagePromise = getCachedFoodImageByBarcode(supabase, barcode);
+	const cachedImagePromise = getCachedFoodImageByBarcode(supabase, barcode).catch(
+		() => null,
+	);
 
 	const sharedFood = await getSharedProductByBarcode(supabase, barcode);
 	if (sharedFood) {
@@ -26,12 +33,25 @@ export const lookupBarcodeProductDraft = async (
 			cachedImagePromise,
 		]);
 		const mappedDraft = mapSharedCatalogFood(sharedFood, barcode, referenceData);
-		const draft = mappedDraft && cachedImage
-			? { ...mappedDraft, image: cachedImage }
-			: mappedDraft;
-		return draft
-			? await resolveBarcodeDraftCategory(supabase, draft)
-			: null;
+		if (mappedDraft) {
+			const cachedDraft = applyCachedImageToBarcodeDraft(
+				mappedDraft,
+				cachedImage,
+			);
+			let draft = cachedDraft;
+			if (needsBarcodeProductSupplement(cachedDraft)) {
+				try {
+					const supplement = await lookupExternalBarcodeProduct(barcode, {
+						cachedImage,
+						getReferenceData: async () => referenceData,
+					});
+					draft = mergeMissingBarcodeProductFields(cachedDraft, supplement);
+				} catch {
+					draft = cachedDraft;
+				}
+			}
+			return await resolveBarcodeDraftCategory(supabase, draft);
+		}
 	}
 
 	const draft = await lookupExternalBarcodeProduct(barcode, {

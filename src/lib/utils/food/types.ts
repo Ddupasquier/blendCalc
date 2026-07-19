@@ -58,6 +58,25 @@ export interface FoodServing {
     confidence?: FdcNutrient["confidence"];
 }
 
+export type FoodTrackedField =
+    | "nutrition"
+    | "image"
+    | "categories"
+    | "serving";
+
+export type FoodFieldSource = {
+    source:
+        | NonNullable<FdcNutrient["source"]>
+        | FoodImageAsset["source"]
+        | "shared-catalog";
+    sourceReference?: string;
+    confidence?: NonNullable<FdcNutrient["confidence"]>;
+};
+
+export type FoodFieldProvenance = Partial<
+    Record<FoodTrackedField, FoodFieldSource>
+>;
+
 export type FoodTrustStatus =
     | "source-verified"
     | "imported"
@@ -99,6 +118,7 @@ export interface FdcFood {
     categories?: string[];
     categoryOptionId?: string;
     image?: FoodImageAsset;
+    fieldProvenance?: FoodFieldProvenance;
     customFood?: boolean;
     barcode?: string;
     barcodeSource?: "open-food-facts" | "usda" | "manual" | "community";

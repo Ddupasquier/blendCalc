@@ -18,6 +18,11 @@ import {
 import { summarizeBarcodeProductQuality } from "$lib/utils/food/sources/sourceQuality";
 import { findFirstBarcodeCandidateMatch } from "$lib/server/products/barcodeCandidateLookup";
 import { fetchCachedProductApiJson } from "$lib/server/products/productApiRequests.server";
+import {
+	applyCachedImageToBarcodeDraft,
+	mergeMissingBarcodeProductFields,
+	needsBarcodeProductSupplement,
+} from "$lib/utils/barcode/barcodeProductEnrichment";
 
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v2/product";
 const OPEN_FOOD_FACTS_FIELDS = [
@@ -232,15 +237,16 @@ export const lookupExternalBarcodeProduct = async (
 			cachedImagePromise,
 		]);
 		if (usdaDraft) {
-			if (cachedImage) return { ...usdaDraft, image: cachedImage };
-			if (usdaDraft.image) return usdaDraft;
+			const primaryDraft = applyCachedImageToBarcodeDraft(
+				usdaDraft,
+				cachedImage,
+			);
+			if (!needsBarcodeProductSupplement(primaryDraft)) return primaryDraft;
 			try {
-				const imageDraft = await lookupOpenFoodFacts(barcode, referenceData);
-				return imageDraft?.image
-					? { ...usdaDraft, image: imageDraft.image }
-					: usdaDraft;
+				const supplement = await lookupOpenFoodFacts(barcode, referenceData);
+				return mergeMissingBarcodeProductFields(primaryDraft, supplement);
 			} catch {
-				return usdaDraft;
+				return primaryDraft;
 			}
 		}
 	} catch (error) {
@@ -252,9 +258,9 @@ export const lookupExternalBarcodeProduct = async (
 			lookupOpenFoodFacts(barcode, referenceData),
 			cachedImagePromise,
 		]);
-		return openFoodFactsDraft && cachedImage
-			? { ...openFoodFactsDraft, image: cachedImage }
-			: openFoodFactsDraft;
+		return openFoodFactsDraft
+			? applyCachedImageToBarcodeDraft(openFoodFactsDraft, cachedImage)
+			: null;
 	} catch (error) {
 		throw firstError ?? error;
 	}

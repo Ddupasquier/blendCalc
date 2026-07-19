@@ -45,6 +45,7 @@ export const createCatalogFoodFromDraft = (
 		labels: draft.labels,
 		categories: mergeCanonicalFoodCategories(category.label, draft.categories),
 		image: draft.image,
+		fieldProvenance: draft.fieldProvenance,
 		nutrients: draft.nutrients,
 		reportedNutrientIds: draft.reportedNutrientIds,
 		hasSourceServing: draft.hasSourceServing,

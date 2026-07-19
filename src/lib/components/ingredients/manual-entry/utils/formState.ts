@@ -4,7 +4,12 @@ import {
 } from "$lib/utils/serving/servingMeasureCatalog";
 import { MIX_STORAGE_KEYS } from "../../../../../defaults/mixDefaults";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
-import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
+import type {
+	FdcFood,
+	FdcNutrient,
+	FoodFieldProvenance,
+	FoodImageAsset,
+} from "$lib/utils/food/types";
 import type {
 	ManualEntryStepId,
 	NutrientValueState,
@@ -54,6 +59,7 @@ export type ManualEntryFormResetState = {
 	labels: string[];
 	categories: string[];
 	image?: FoodImageAsset;
+	fieldProvenance?: FoodFieldProvenance;
 };
 
 export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
@@ -97,6 +103,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	labels: [],
 	categories: [],
 	image: undefined,
+	fieldProvenance: undefined,
 });
 
 export const getInitialSaveDestination = (): SmoothieListKey => MIX_STORAGE_KEYS.fridge;

@@ -2,7 +2,12 @@ import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalo
 import type { NutrientValueState } from "$lib/components/ingredients/manual-entry/formTypes";
 import { createCustomFood } from "$lib/utils/food/custom/customFoods";
 import type { ManualEntryNutrientDefinition } from "$lib/utils/food/nutrients/nutrientDefinitions";
-import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
+import type {
+	FdcFood,
+	FdcNutrient,
+	FoodFieldProvenance,
+	FoodImageAsset,
+} from "$lib/utils/food/types";
 import { buildSaveNutrients } from "$lib/components/ingredients/manual-entry/utils/nutrientValues";
 
 export type ManualEntryCustomFoodPayload = {
@@ -31,6 +36,7 @@ export type ManualEntryCustomFoodPayload = {
 	categoryOptionId: string;
 	categories: string[];
 	image?: FoodImageAsset;
+	fieldProvenance?: FoodFieldProvenance;
 	reportedNutrientIds: number[];
 	hasSourceServing?: boolean;
 	importedNutrients: FdcNutrient[];
@@ -101,7 +107,8 @@ export const createManualEntryCustomFood = (
 		labels: payload.labels,
 			categories: buildManualEntrySaveCategories(payload),
 			categoryOptionId: payload.categoryOptionId,
-			image: payload.image,
+		image: payload.image,
+		fieldProvenance: payload.fieldProvenance,
 		nutrients: saveNutrients,
 		reportedNutrientIds: [
 			...new Set([

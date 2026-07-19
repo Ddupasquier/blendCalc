@@ -30,6 +30,14 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		categories: food.categories,
 		categoryOptionId: food.categoryOptionId,
 		image: food.image,
+		fieldProvenance: food.fieldProvenance
+			? Object.fromEntries(
+				Object.entries(food.fieldProvenance).map(([field, source]) => [
+					field,
+					{ ...source },
+				]),
+			)
+			: undefined,
 		customFood: food.customFood,
 		barcode: food.barcode,
 		barcodeSource: food.barcodeSource,

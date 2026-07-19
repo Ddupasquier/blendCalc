@@ -13,7 +13,12 @@ import {
 	type BarcodeProductDraft,
 	type BarcodeLookupResult,
 } from "$lib/utils/barcode/productLookup";
-import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
+import type {
+	FdcFood,
+	FdcNutrient,
+	FoodFieldProvenance,
+	FoodImageAsset,
+} from "$lib/utils/food/types";
 
 export type ManualEntryBarcodeDraftState = {
 	name: string;
@@ -38,6 +43,7 @@ export type ManualEntryBarcodeDraftState = {
 	labels: string[];
 	categories: string[];
 	image?: FoodImageAsset;
+	fieldProvenance?: FoodFieldProvenance;
 	checkedBarcodeReferenceKey: string;
 };
 
@@ -222,6 +228,9 @@ export const getBarcodeDraftState = (
 		].filter(isStringValue)),
 	],
 	image: draft.image,
+	fieldProvenance: draft.fieldProvenance
+		? { ...draft.fieldProvenance }
+		: undefined,
 	checkedBarcodeReferenceKey: getBarcodeReferenceKey(draft.barcode, draft.name),
 });
 

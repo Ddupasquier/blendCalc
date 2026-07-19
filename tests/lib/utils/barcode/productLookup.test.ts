@@ -194,6 +194,40 @@ describe("barcode product mapping", () => {
 			confidence: "imported",
 		});
 		expect(draft?.image?.fetchedAt).toBeTruthy();
+		expect(draft?.fieldProvenance?.image).toMatchObject({
+			source: "open-food-facts",
+			sourceReference: "00021130462506",
+			confidence: "imported",
+		});
+	});
+
+	it("keeps a useful Open Food Facts supplement when nutrition is missing", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Test sauce",
+				categories_tags: ["en:pasta-sauces"],
+				image_front_url: "https://images.openfoodfacts.org/product.jpg",
+			},
+			"00021130493609",
+			productReferenceDataFixture,
+		);
+
+		expect(draft).toMatchObject({
+			barcode: "00021130493609",
+			name: "Test Sauce",
+			nutrients: [],
+			reportedNutrientIds: [],
+			categories: ["pasta sauces"],
+			image: {
+				source: "open-food-facts",
+				imageUrl: "https://images.openfoodfacts.org/product.jpg",
+			},
+			fieldProvenance: {
+				image: { source: "open-food-facts" },
+				categories: { source: "open-food-facts" },
+			},
+		});
+		expect(draft?.fieldProvenance?.nutrition).toBeUndefined();
 	});
 
 	it("converts USDA per-100g branded values to the serving", () => {
@@ -252,6 +286,11 @@ describe("barcode product mapping", () => {
 			sourceDataType: "Branded",
 			sourcePublishedDate: "2024-05-01",
 			sourceModifiedDate: "2024-04-15",
+			fieldProvenance: {
+				nutrition: { source: "usda" },
+				categories: { source: "usda" },
+				serving: { source: "usda" },
+			},
 		});
 	});
 

@@ -9,7 +9,13 @@
 	import { buildCustomServingLabel } from "$lib/utils/food/custom/customFoods";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import { getMotionSafeScrollBehavior } from "$lib/utils/accessibility/motion";
-	import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
+	import type {
+		FdcFood,
+		FdcNutrient,
+		FoodFieldProvenance,
+		FoodImageAsset,
+		FoodTrackedField,
+	} from "$lib/utils/food/types";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog.svelte";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog.svelte";
 	import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
@@ -190,6 +196,7 @@
 	let labels = $state<string[]>([]);
 	let categories = $state<string[]>([]);
 	let image = $state<FoodImageAsset | undefined>(undefined);
+	let fieldProvenance = $state<FoodFieldProvenance | undefined>(undefined);
 	let saveDestination = $state<SmoothieListKey>(getInitialSaveDestination());
 	let lastOutcome = $state<CustomIngredientOutcomeState | null>(null);
 	let listMovePrompt = $state<ManualEntryListMovePromptState | null>(null);
@@ -419,6 +426,7 @@
 			labels,
 			categories,
 			image,
+			fieldProvenance,
 			checkedBarcodeReferenceKey,
 		} = draftState);
 		manualTouchedNutrientIds = {};
@@ -488,6 +496,16 @@
 		listMovePrompt?.resolve(false);
 	});
 
+	const markFieldAsUserEntered = (field: FoodTrackedField) => {
+		fieldProvenance = {
+			...fieldProvenance,
+			[field]: {
+				source: "user-label",
+				confidence: "user-reported",
+			},
+		};
+	};
+
 	const setManualNutrientValue = (
 		field: ManualEntryNutrientDefinition,
 		value: string,
@@ -500,6 +518,7 @@
 		});
 		manualNutrientValues = nextState.values;
 		manualTouchedNutrientIds = nextState.touched;
+		markFieldAsUserEntered("nutrition");
 	};
 
 	const getManualNutrientValue = (field: ManualEntryNutrientDefinition) =>
@@ -811,6 +830,7 @@
 			labels,
 			categories,
 			image,
+			fieldProvenance,
 		} = getManualEntryFormResetState());
 	};
 
@@ -1150,6 +1170,7 @@
 			categoryOptionId: activeCategoryOptionId,
 			categories,
 			image,
+			fieldProvenance,
 			reportedNutrientIds,
 			hasSourceServing: barcodeSource === "manual"
 				? true
@@ -1284,18 +1305,35 @@
 				isRequired={isRequiredManualNutrient}
 				onNameChange={setManualName}
 				onBrandChange={(value) => (brandOwner = value)}
-				onCategoryChange={(value) => (category = value)}
+				onCategoryChange={(value) => {
+					category = value;
+					markFieldAsUserEntered("categories");
+				}}
 				onBarcodeChange={setManualBarcode}
 				onBarcodeBlur={checkManualBarcodeReference}
 				onApplyBarcodeSuggestion={applyBarcodeReferenceSuggestion}
 				onKeepManualBarcodeEntry={keepManualBarcodeEntry}
 				onNameInput={(element) => (ingredientNameInput = element)}
-				onServingLabelChange={(value) => (servingLabel = value)}
-				onServingWeightChange={(value) =>
-					(servingWeightGrams = Number.isFinite(value) ? value : null)}
-				onUseVolumeChange={(value) => (useVolumeEquivalent = value)}
-				onVolumeQuantityChange={(value) => (volumeQuantity = value)}
-				onVolumeUnitChange={(value) => (volumeUnit = value)}
+				onServingLabelChange={(value) => {
+					servingLabel = value;
+					markFieldAsUserEntered("serving");
+				}}
+				onServingWeightChange={(value) => {
+					servingWeightGrams = Number.isFinite(value) ? value : null;
+					markFieldAsUserEntered("serving");
+				}}
+				onUseVolumeChange={(value) => {
+					useVolumeEquivalent = value;
+					markFieldAsUserEntered("serving");
+				}}
+				onVolumeQuantityChange={(value) => {
+					volumeQuantity = value;
+					markFieldAsUserEntered("serving");
+				}}
+				onVolumeUnitChange={(value) => {
+					volumeUnit = value;
+					markFieldAsUserEntered("serving");
+				}}
 				onShareChange={handleShareChange}
 				onApplyVerifiedBarcode={applyVerifiedBarcodeForSharing}
 				onDetachBarcodeForPrivateSave={detachMismatchedBarcodeForPrivateSave}

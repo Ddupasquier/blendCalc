@@ -10,7 +10,13 @@ import {
 } from "$lib/utils/storage/supabase";
 import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
-import type { FdcFood, FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
+import type {
+	FdcFood,
+	FdcNutrient,
+	FoodFieldProvenance,
+	FoodFieldSource,
+	FoodImageAsset,
+} from "$lib/utils/food/types";
 import { normalizeCustomFoodName } from "$lib/utils/food/custom/customFoodNames";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 
@@ -41,6 +47,7 @@ export type CustomFoodInput = {
 	categories?: string[];
 	categoryOptionId?: string;
 	image?: FoodImageAsset;
+	fieldProvenance?: FoodFieldProvenance;
 	nutrients: FdcNutrient[];
 	reportedNutrientIds?: number[];
 	hasSourceServing?: boolean;
@@ -140,6 +147,14 @@ export const buildCustomServingLabel = ({
 	return `${formatServingNumber(servingWeightGrams)}g serving`;
 };
 
+const normalizeServingSource = (
+	source: FoodFieldSource["source"] | undefined,
+): FdcNutrient["source"] => {
+	if (source === "shared-catalog") return "community-reviewed";
+	if (source === "wikimedia-commons") return "unknown";
+	return source;
+};
+
 export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 	const servingWeightGrams = Math.max(0.1, input.servingWeightGrams);
 	const nameProvenance = input.nameProvenance ??
@@ -164,20 +179,24 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		volumeUnit: input.volumeUnit,
 	});
 	const hasSourceServing = input.hasSourceServing ?? true;
-	const servingSource = input.barcodeSource === "usda"
+	const defaultServingSource = input.barcodeSource === "usda"
 		? "usda"
 		: input.barcodeSource === "open-food-facts"
 			? "open-food-facts"
 			: input.barcodeSource === "community"
 				? "community-reviewed"
 				: "user-label";
-	const servingConfidence = servingSource === "usda"
-		? "source-verified"
-		: servingSource === "open-food-facts"
-			? "imported"
-			: servingSource === "community-reviewed"
-				? "moderator-reviewed"
-				: "user-reported";
+	const servingSource = normalizeServingSource(
+		input.fieldProvenance?.serving?.source,
+	) ?? defaultServingSource;
+	const servingConfidence = input.fieldProvenance?.serving?.confidence ??
+		(servingSource === "usda"
+			? "source-verified"
+			: servingSource === "open-food-facts"
+				? "imported"
+				: servingSource === "community-reviewed"
+					? "moderator-reviewed"
+					: "user-reported");
 
 	return {
 		fdcId: createCustomFoodId(),
@@ -197,7 +216,8 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 				unitKey: input.volumeUnit,
 				isPrimary: true,
 				source: servingSource,
-				sourceReference: input.barcode,
+					sourceReference:
+						input.fieldProvenance?.serving?.sourceReference ?? input.barcode,
 				confidence: servingConfidence,
 			}]
 			: [],
@@ -210,6 +230,7 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		categories: input.categories,
 		categoryOptionId: input.categoryOptionId,
 		image: input.image,
+		fieldProvenance: input.fieldProvenance,
 		customFood: true,
 		barcode: input.barcode,
 		barcodeSource: input.barcodeSource,

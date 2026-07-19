@@ -6,6 +6,7 @@ import type { ProductReferenceData } from "$lib/utils/food/reference/productRefe
 const makeDraft = (
 	source: BarcodeProductDraft["source"],
 	image: BarcodeProductDraft["image"] = undefined,
+	overrides: Partial<BarcodeProductDraft> = {},
 ): BarcodeProductDraft => ({
 	barcode: "00021130493609",
 	name: "Roasted Onion & Garlic Pasta Sauce",
@@ -13,13 +14,47 @@ const makeDraft = (
 	brandOwner: "Signature Select",
 	servingLabel: "125g",
 	servingWeightGrams: 125,
-	nutrients: [],
-	reportedNutrientIds: [],
+	hasSourceServing: true,
+	nutrients: [{
+		nutrientId: 1079,
+		nutrientName: "Fiber, total dietary",
+		nutrientNumber: "291",
+		unitName: "G",
+		value: 2,
+		source: source === "usda" ? "usda" : "open-food-facts",
+		confidence: source === "usda" ? "source-verified" : "imported",
+	}],
+	reportedNutrientIds: [1079],
+	categories: ["Pasta sauces"],
 	image,
 	source,
 	sourceLabel:
 		source === "usda" ? "USDA FoodData Central" : "Open Food Facts",
 	sourceReference: source === "usda" ? "2658692" : "021130493609",
+	fieldProvenance: {
+		nutrition: {
+			source: source === "usda" ? "usda" : "open-food-facts",
+			confidence: source === "usda" ? "source-verified" : "imported",
+		},
+		categories: {
+			source: source === "usda" ? "usda" : "open-food-facts",
+			confidence: source === "usda" ? "source-verified" : "imported",
+		},
+		serving: {
+			source: source === "usda" ? "usda" : "open-food-facts",
+			confidence: source === "usda" ? "source-verified" : "imported",
+		},
+		...(image
+			? {
+				image: {
+					source: image.source,
+					sourceReference: image.sourceReference,
+					confidence: image.confidence,
+				},
+			}
+			: {}),
+	},
+	...overrides,
 });
 
 const openFoodFactsImage = {
@@ -155,5 +190,55 @@ describe("external barcode product lookup", () => {
 
 		expect(result).toBe(usdaDraft);
 		expect(openFoodFacts).not.toHaveBeenCalled();
+	});
+
+	it("still fills a missing category when the image already came from the DB", async () => {
+		const usdaDraft = makeDraft("usda", undefined, {
+			categories: [],
+			fieldProvenance: {
+				nutrition: { source: "usda", confidence: "source-verified" },
+				serving: { source: "usda", confidence: "source-verified" },
+			},
+		});
+		const openFoodFacts = vi
+			.fn()
+			.mockResolvedValue(makeDraft("open-food-facts", openFoodFactsImage));
+
+		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
+			usda: vi.fn().mockResolvedValue(usdaDraft),
+			openFoodFacts,
+			getReferenceData,
+			cachedImage: cachedCommunityImage,
+		});
+
+		expect(openFoodFacts).toHaveBeenCalledOnce();
+		expect(result).toMatchObject({
+			source: "usda",
+			categories: ["Pasta sauces"],
+			image: cachedCommunityImage,
+			fieldProvenance: {
+				nutrition: { source: "usda" },
+				categories: { source: "open-food-facts" },
+				image: { source: "community-reviewed" },
+			},
+		});
+	});
+
+	it("uses Open Food Facts when USDA is unavailable", async () => {
+		const openFoodFactsDraft = makeDraft(
+			"open-food-facts",
+			openFoodFactsImage,
+		);
+
+		const result = await lookupExternalBarcodeProduct(
+			openFoodFactsDraft.barcode,
+			{
+				usda: vi.fn().mockRejectedValue(new Error("USDA unavailable")),
+				openFoodFacts: vi.fn().mockResolvedValue(openFoodFactsDraft),
+				getReferenceData,
+			},
+		);
+
+		expect(result).toEqual(openFoodFactsDraft);
 	});
 });

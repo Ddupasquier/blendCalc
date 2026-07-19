@@ -9,6 +9,8 @@ import {
 } from "$lib/utils/barcode/servingVolume";
 import {
 	type FdcFood,
+	type FoodFieldProvenance,
+	type FoodFieldSource,
 	type FdcNutrient,
 	type FoodImageAsset,
 } from "$lib/utils/food/types";
@@ -86,6 +88,7 @@ export type BarcodeProductDraft = {
 		confidence: string;
 	};
 	image?: FoodImageAsset;
+	fieldProvenance?: FoodFieldProvenance;
 	volumeEquivalent?: BarcodeVolumeEquivalent;
 	source: "open-food-facts" | "usda" | "shared-catalog";
 	sourceLabel: string;
@@ -206,6 +209,141 @@ const parseFdcMetadata = (food: FdcFood) => ({
 	]),
 });
 
+const getFieldConfidence = (
+	source: FoodFieldSource["source"],
+): NonNullable<FoodFieldSource["confidence"]> => {
+	if (source === "usda") return "source-verified";
+	if (source === "community-reviewed" || source === "shared-catalog") {
+		return "moderator-reviewed";
+	}
+	if (source === "user-label") return "user-reported";
+	return "imported";
+};
+
+const normalizeFieldSource = (
+	source: string | null | undefined,
+): FoodFieldSource["source"] => {
+	switch (source) {
+		case "usda":
+		case "open-food-facts":
+		case "user-label":
+		case "manufacturer":
+		case "gs1":
+		case "community-reviewed":
+		case "shared-catalog":
+			return source;
+		default:
+			return "unknown";
+	}
+};
+
+const createFieldSource = (
+	source: FoodFieldSource["source"],
+	sourceReference?: string,
+	confidence: FoodFieldSource["confidence"] = getFieldConfidence(source),
+): FoodFieldSource => ({
+	source,
+	sourceReference,
+	confidence,
+});
+
+const createOpenFoodFactsFieldProvenance = ({
+	barcode,
+	nutrients,
+	image,
+	categories,
+	hasSourceServing,
+}: {
+	barcode: string;
+	nutrients: FdcNutrient[];
+	image?: FoodImageAsset;
+	categories: string[];
+	hasSourceServing: boolean;
+}): FoodFieldProvenance => {
+	const source = createFieldSource("open-food-facts", barcode, "imported");
+	return {
+		...(nutrients.length > 0 ? { nutrition: source } : {}),
+		...(image
+			? {
+				image: createFieldSource(
+					image.source,
+					image.sourceReference,
+					image.confidence,
+				),
+			}
+			: {}),
+		...(categories.length > 0 ? { categories: source } : {}),
+		...(hasSourceServing ? { serving: source } : {}),
+	};
+};
+
+const createFdcFieldProvenance = ({
+	food,
+	nutrients,
+	image,
+	categories,
+	hasSourceServing,
+}: {
+	food: FdcFood;
+	nutrients: FdcNutrient[];
+	image?: FoodImageAsset;
+	categories: string[];
+	hasSourceServing: boolean;
+}): FoodFieldProvenance => {
+	const fallbackSource = normalizeFieldSource(
+		food.sourceKey ?? food.barcodeSource ?? "usda",
+	);
+	const fallbackReference = food.sharedProductId ?? String(food.fdcId);
+	const fallbackConfidence = food.sharedProductConfidence ??
+		getFieldConfidence(fallbackSource);
+	const fallback = createFieldSource(
+		fallbackSource,
+		fallbackReference,
+		fallbackConfidence,
+	);
+	const nutrientSource = nutrients.find((nutrient) => nutrient.source);
+	const servingSource = food.foodServings?.find((serving) => serving.isPrimary) ??
+		food.foodServings?.[0];
+
+	return {
+		...food.fieldProvenance,
+		...(nutrients.length > 0 && !food.fieldProvenance?.nutrition
+			? {
+				nutrition: nutrientSource
+					? createFieldSource(
+						nutrientSource.source ?? fallbackSource,
+						nutrientSource.sourceReference ?? fallbackReference,
+						nutrientSource.confidence ?? fallbackConfidence,
+					)
+					: fallback,
+			}
+			: {}),
+		...(image && !food.fieldProvenance?.image
+			? {
+				image: createFieldSource(
+					image.source,
+					image.sourceReference,
+					image.confidence,
+				),
+			}
+			: {}),
+		...(categories.length > 0 && !food.fieldProvenance?.categories
+			? { categories: fallback }
+			: {}),
+		...(hasSourceServing && !food.fieldProvenance?.serving
+			? {
+				serving: servingSource
+					? createFieldSource(
+						servingSource.source ?? fallbackSource,
+						servingSource.sourceReference ?? fallbackReference,
+						servingSource.confidence ?? fallbackConfidence,
+					)
+					: fallback,
+			}
+			: {}),
+	};
+};
+
 const parseServingBasis = (product: OpenFoodFactsProduct) => {
 	const servingQuantity = toNumber(product.serving_quantity);
 	const parsedServing = parseServingAmount(product.serving_size ?? "");
@@ -245,12 +383,12 @@ export const mapOpenFoodFactsProduct = (
 	const canonicalBarcode = normalizeBarcode(barcode);
 	const sourceName = product.product_name?.trim() || product.generic_name?.trim();
 	const name = formatSourceProductName(sourceName);
-	if (!canonicalBarcode || !name || !product.nutriments) return null;
+	if (!canonicalBarcode || !name) return null;
 
 	const { servingWeightGrams, useServingValues, hasExactGramWeight } =
 		parseServingBasis(product);
 	const nutrients = mapOpenFoodFactsNutrients(
-		product.nutriments,
+		product.nutriments ?? {},
 		servingWeightGrams,
 		useServingValues,
 		referenceData,
@@ -273,6 +411,13 @@ export const mapOpenFoodFactsProduct = (
 		reportedNutrientIds: [...new Set(nutrients.map((nutrient) => nutrient.nutrientId))],
 		...metadata,
 		image,
+		fieldProvenance: createOpenFoodFactsFieldProvenance({
+			barcode: canonicalBarcode,
+			nutrients,
+			image,
+			categories: metadata.categories,
+			hasSourceServing: hasExactGramWeight,
+		}),
 		volumeEquivalent: hasExactGramWeight
 			? parseVolumeEquivalent(product.serving_size)
 				?? undefined
@@ -326,6 +471,13 @@ export const mapFdcBarcodeFood = (
 		],
 		...metadata,
 		image: food.image,
+		fieldProvenance: createFdcFieldProvenance({
+			food,
+			nutrients,
+			image: food.image,
+			categories: metadata.categories,
+			hasSourceServing: hasExactGramWeight,
+		}),
 		volumeEquivalent: hasExactGramWeight
 			? parseVolumeEquivalent(food.householdServingFullText) ?? undefined
 			: undefined,
@@ -370,7 +522,19 @@ export const mapSharedCatalogFood = (
 						sourceValue: normalizeFoodCategoryValue(food.foodCategory),
 						confidence: "exact",
 					}
-				: undefined,
+					: undefined,
+		fieldProvenance: {
+			...draft.fieldProvenance,
+			...(food.foodCategory && !food.fieldProvenance?.categories
+				? {
+					categories: createFieldSource(
+						"shared-catalog",
+						food.sharedProductId,
+						food.sharedProductConfidence ?? "moderator-reviewed",
+					),
+				}
+				: {}),
+		},
 		sourceKey: source.key,
 		sourceDataType: food.sourceDataType,
 		sourcePublishedDate: food.sourcePublishedDate,
