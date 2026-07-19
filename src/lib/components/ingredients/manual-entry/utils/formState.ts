@@ -18,6 +18,8 @@ import type {
 import type { ValidationAttemptState } from "$lib/components/ingredients/manual-entry/utils/validationItems";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { BarcodeShareValidationResult } from "$lib/utils/products/catalog";
+import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
+import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 
 export type ManualEntryFormResetState = {
 	activeStep: ManualEntryStepId;
@@ -47,9 +49,7 @@ export type ManualEntryFormResetState = {
 	validatingBarcodeShare: boolean;
 	shareWithCatalog: boolean;
 	frontPhoto: File | null;
-	imageCropX: number;
-	imageCropY: number;
-	imageCropZoom: number;
+	imagePlacement: ImagePlacementValue;
 	nutritionPhoto: File | null;
 	barcodePhoto: File | null;
 	reportedNutrientIds: number[];
@@ -92,9 +92,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	validatingBarcodeShare: false,
 	shareWithCatalog: false,
 	frontPhoto: null,
-	imageCropX: 50,
-	imageCropY: 50,
-	imageCropZoom: 1,
+	imagePlacement: createFullImagePlacement(),
 	nutritionPhoto: null,
 	barcodePhoto: null,
 	reportedNutrientIds: [],

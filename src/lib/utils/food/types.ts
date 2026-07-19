@@ -1,5 +1,6 @@
 import type { FoodPreferenceWarning } from "$lib/utils/profile/foodPreferenceWarnings";
 import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
+import type { ImageFitMode } from "$lib/utils/food/images/types";
 
 /** A single food nutrient returned by the FDC API */
 export interface FdcNutrient {
@@ -46,6 +47,8 @@ export interface FoodImageAsset {
     cropY?: number;
     cropZoom?: number;
     cropSource?: "auto" | "user" | "moderator";
+    fitMode?: ImageFitMode;
+    placementVersion?: number;
     approvedBy?: string;
     approvedAt?: string;
     fetchedAt?: string;

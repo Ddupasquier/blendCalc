@@ -1,11 +1,14 @@
-import type { ImagePlacementValue } from "$lib/components/common/images/types";
+import type {
+	ImagePlacementGeometry,
+	ImagePlacementValue,
+} from "$lib/utils/food/images/types";
 
 const clamp = (value: number, min: number, max: number, fallback: number) => {
 	if (!Number.isFinite(value)) return fallback;
 	return Math.min(max, Math.max(min, value));
 };
 
-export const getImagePlacementCssVars = (
+export const getLegacyImagePlacementCssVars = (
 	value: Partial<ImagePlacementValue>,
 	prefix: string,
 ) => {
@@ -23,3 +26,14 @@ export const getImagePlacementCssVars = (
 		`--${prefix}-translate-y: ${translateY}%`,
 	].join("; ");
 };
+
+export const getImagePlacementGeometryCssVars = (
+	geometry: ImagePlacementGeometry,
+	prefix: string,
+) => [
+	`--${prefix}-base-width: ${geometry.baseWidth}px`,
+	`--${prefix}-base-height: ${geometry.baseHeight}px`,
+	`--${prefix}-zoom: ${geometry.effectiveZoom}`,
+	`--${prefix}-offset-x: ${geometry.offsetX}px`,
+	`--${prefix}-offset-y: ${geometry.offsetY}px`,
+].join("; ");

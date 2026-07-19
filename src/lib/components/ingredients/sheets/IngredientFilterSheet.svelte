@@ -96,12 +96,6 @@
 			</div>
 		</section>
 
-		{#if loading}
-			<p class="ingredient-filter-sheet__status" role="status" aria-live="polite">
-				Updating results…
-			</p>
-		{/if}
-
 		<ActionButton fullWidth variant="success" busy={loading} onclick={applyFilters}>
 			Apply
 		</ActionButton>
@@ -137,10 +131,4 @@
 		gap: $app-horizontal-control-gap;
 	}
 
-	.ingredient-filter-sheet__status {
-		margin: 0;
-		color: $ingredient-text-muted;
-		font-size: $app-font-size-sm;
-		font-weight: $app-font-weight-bold;
-	}
 </style>

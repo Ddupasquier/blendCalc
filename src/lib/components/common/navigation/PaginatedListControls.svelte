@@ -71,7 +71,7 @@
 				disabled={loadMoreDisabled}
 				onclick={() => void onLoadMore()}
 			>
-				{loadingMore ? "Loading…" : loadMoreLabel}
+				{loadMoreLabel}
 			</RoundedActionButton>
 		{/if}
 

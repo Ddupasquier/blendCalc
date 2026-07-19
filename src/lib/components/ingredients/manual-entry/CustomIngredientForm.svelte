@@ -106,6 +106,8 @@
 	import { getManualEntrySubmitState } from "$lib/components/ingredients/manual-entry/utils/submitValidation";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 	import { pickFoodFullImageUrl } from "$lib/utils/food/images/foodImages";
+	import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
+	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 	import {
 		type BarcodeShareValidationResult,
 		validateBarcodeProductForSharing,
@@ -188,9 +190,7 @@
 	let catalogMessage = $state("");
 	let outcomeAction = $state<ManualEntryOutcomeAction | null>(null);
 	let frontPhoto = $state<File | null>(null);
-	let imageCropX = $state(50);
-	let imageCropY = $state(50);
-	let imageCropZoom = $state(1);
+	let imagePlacement = $state<ImagePlacementValue>(createFullImagePlacement());
 	let nutritionPhoto = $state<File | null>(null);
 	let barcodePhoto = $state<File | null>(null);
 	let reportedNutrientIds = $state<number[]>([]);
@@ -846,9 +846,7 @@
 			validatingBarcodeShare,
 			shareWithCatalog,
 			frontPhoto,
-			imageCropX,
-			imageCropY,
-			imageCropZoom,
+			imagePlacement,
 			nutritionPhoto,
 			barcodePhoto,
 			reportedNutrientIds,
@@ -1227,9 +1225,7 @@
 				submitForCatalog: shouldSubmitOptionalProductImageReview,
 				photos: {
 					frontPhoto,
-					frontImageCrop: frontPhoto
-						? { cropX: imageCropX, cropY: imageCropY, cropZoom: imageCropZoom }
-						: null,
+					frontImageCrop: frontPhoto ? imagePlacement : null,
 					nutritionPhoto,
 					barcodePhoto,
 				},
@@ -1328,9 +1324,7 @@
 				{showOptionalProductImageUpload}
 				{trustedProductImageUrl}
 				{frontPhoto}
-				{imageCropX}
-				{imageCropY}
-				{imageCropZoom}
+				{imagePlacement}
 				{saveDestination}
 				{error}
 				{lastOutcome}
@@ -1378,9 +1372,7 @@
 				onApplyVerifiedBarcode={applyVerifiedBarcodeForSharing}
 				onDetachBarcodeForPrivateSave={detachMismatchedBarcodeForPrivateSave}
 				onFrontPhotoChange={(file) => (frontPhoto = file)}
-				onImageCropXChange={(value) => (imageCropX = value)}
-				onImageCropYChange={(value) => (imageCropY = value)}
-				onImageCropZoomChange={(value) => (imageCropZoom = value)}
+				onImagePlacementChange={(value) => (imagePlacement = value)}
 				onNutritionPhotoChange={(file) => (nutritionPhoto = file)}
 				onBarcodePhotoChange={(file) => (barcodePhoto = file)}
 				onSaveDestinationChange={(destination) => (saveDestination = destination)}

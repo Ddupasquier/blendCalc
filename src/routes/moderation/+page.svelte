@@ -2,8 +2,10 @@
 	import { enhance } from "$app/forms";
 	import type { SubmitFunction } from "@sveltejs/kit";
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
+	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor.svelte";
-	import type { ImagePlacementValue } from "$lib/components/common/images/types";
+	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 	import { APP_NAME } from "$lib/config/brand";
 	import type { ActionData, PageData } from "./$types";
 
@@ -65,17 +67,20 @@
 		<form method="GET" role="search" onsubmit={() => (searching = true)}>
 			<label for="moderation-search">Account search</label>
 			<div class="search-controls">
-				<input
-					id="moderation-search"
-					type="search"
-					name="q"
-					value={data.query}
-					placeholder="Name, email, user ID..."
-					autocomplete="off"
-					disabled={searching}
-				/>
+				<InputLoadingFrame loading={searching} loadingLabel="Searching accounts">
+					<input
+						id="moderation-search"
+						type="search"
+						name="q"
+						value={data.query}
+						placeholder="Name, email, user ID..."
+						autocomplete="off"
+						disabled={searching}
+					/>
+				</InputLoadingFrame>
 				<button class="search-action" type="submit" disabled={searching}>
-					{searching ? "Searching…" : "Search"}
+					{#if searching}<LoadingSpinner size="small" decorative />{/if}
+					Search
 				</button>
 				{#if data.query}
 					<a class="clear-search" href="/moderation">Clear</a>
@@ -194,12 +199,15 @@
 							<input type="hidden" name="imageCropX" value={getImageCrop(submission).cropX} />
 							<input type="hidden" name="imageCropY" value={getImageCrop(submission).cropY} />
 							<input type="hidden" name="imageCropZoom" value={getImageCrop(submission).cropZoom} />
+							<input type="hidden" name="imageFitMode" value={getImageCrop(submission).fitMode} />
+							<input type="hidden" name="imagePlacementVersion" value={getImageCrop(submission).placementVersion} />
 							<button
 								type="submit"
 								disabled={pendingTargetUserId !== null || !submission.evidenceComplete || submission.isQaFixture}
 							>
 								<PrivilegedActionBadge />
-								<span>{pendingTargetUserId === submission.id ? "Approving…" : "Approve"}</span>
+								{#if pendingTargetUserId === submission.id}<LoadingSpinner size="small" decorative />{/if}
+								<span>Approve</span>
 							</button>
 						</form>
 						<form method="POST" action="?/rejectProduct" use:enhance={enhanceModerationAction}>
@@ -210,7 +218,8 @@
 							</label>
 							<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
 								<PrivilegedActionBadge />
-								<span>{pendingTargetUserId === submission.id ? "Rejecting…" : "Reject"}</span>
+								{#if pendingTargetUserId === submission.id}<LoadingSpinner size="small" decorative />{/if}
+								<span>Reject</span>
 							</button>
 						</form>
 					</div>
@@ -259,7 +268,8 @@
 						<input type="hidden" name="targetUserId" value={user.id} />
 						<button class="secondary-action" type="submit" disabled={pendingTargetUserId !== null}>
 							<PrivilegedActionBadge />
-							<span>{pendingTargetUserId === user.id ? "Restoring…" : "Restore access"}</span>
+							{#if pendingTargetUserId === user.id}<LoadingSpinner size="small" decorative />{/if}
+							<span>Restore access</span>
 						</button>
 					</form>
 				{:else if user.id !== data.viewerUserId && user.role !== "admin" && !(data.viewerRole === "moderator" && user.role)}
@@ -277,7 +287,8 @@
 						</label>
 						<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
 							<PrivilegedActionBadge />
-							<span>{pendingTargetUserId === user.id ? "Blocking…" : "Block account"}</span>
+							{#if pendingTargetUserId === user.id}<LoadingSpinner size="small" decorative />{/if}
+							<span>Block account</span>
 						</button>
 					</form>
 				{/if}
@@ -513,8 +524,10 @@
 
 	.search-action,
 	.clear-search {
-		display: inline-grid;
-		place-items: center;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: $app-gap-xs;
 		min-width: 0;
 		padding-inline: $app-gap-sm;
 		border-radius: $app-radius-sm;

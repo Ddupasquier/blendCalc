@@ -4,6 +4,7 @@ import {
 	saveCustomFood,
 } from "$lib/utils/food/custom/customFoods";
 import type { FdcFood } from "$lib/utils/food/types";
+import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import { submitSharedProduct } from "$lib/utils/products/catalog";
 import { notifySmoothieListsChanged } from "$lib/utils/storage/client/smoothieLists";
 
@@ -11,11 +12,7 @@ export type ManualEntrySharedProductPhotos = {
 	frontPhoto: File | null;
 	nutritionPhoto: File | null;
 	barcodePhoto: File | null;
-	frontImageCrop: {
-		cropX: number;
-		cropY: number;
-		cropZoom: number;
-	} | null;
+	frontImageCrop: ImagePlacementValue | null;
 };
 
 export type ManualEntrySubmitFlowResult =

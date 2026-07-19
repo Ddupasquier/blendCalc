@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import IngredientListTabs from "./IngredientListTabs.svelte";
 	import type { SavedIngredientListLayoutProps } from "$lib/components/ingredients/list/types";
 	import {
@@ -40,9 +41,9 @@
 	{/if}
 
 	{#if listLoading}
-		<p class="saved-ingredients__loading" role="status" aria-live="polite">
-			Loading saved ingredients…
-		</p>
+		<div class="saved-ingredients__loading">
+			<LoadingSpinner label="Loading saved ingredients" showLabel />
+		</div>
 	{/if}
 
 	<div
@@ -78,11 +79,7 @@
 	}
 
 	.saved-ingredients__loading {
-		margin: 0;
 		color: $ingredient-text-muted;
-		font-size: $app-font-size-sm;
-		font-weight: $app-font-weight-bold;
-		line-height: 1.3;
 	}
 
 	.list-action-error {

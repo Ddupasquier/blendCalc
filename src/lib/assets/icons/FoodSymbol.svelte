@@ -4,7 +4,8 @@
 		getFoodImageAltText,
 		pickFoodImageUrl,
 	} from "$lib/utils/food/images/foodImages";
-	import { getImagePlacementCssVars } from "$lib/components/common/images/imagePlacementStyle";
+	import ImagePlacementViewport from "$lib/components/common/images/ImagePlacementViewport.svelte";
+	import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
 	import { getFoodSymbolCatalogItem } from "$lib/utils/food/symbols/foodSymbolCatalog";
 
 	let {
@@ -20,15 +21,14 @@
 			role: food.image?.role,
 		}),
 	);
-	const imageStyle = $derived(
-		getImagePlacementCssVars(
-			{
-				cropX: food.image?.cropX,
-				cropY: food.image?.cropY,
-				cropZoom: food.image?.cropZoom,
-			},
-			"food-symbol",
-		),
+	const imagePlacement = $derived(
+		getStoredImagePlacement({
+			cropX: food.image?.cropX,
+			cropY: food.image?.cropY,
+			cropZoom: food.image?.cropZoom,
+			fitMode: food.image?.fitMode,
+			placementVersion: food.image?.placementVersion,
+		}),
 	);
 	let imageFailed = $state(false);
 	let lastImageUrl = $state("");
@@ -42,15 +42,14 @@
 </script>
 
 {#if imageUrl && !imageFailed}
-	<img
-		class={`food-symbol__image ${className}`.trim()}
-		src={imageUrl}
-		alt={imageAlt}
-		style={imageStyle}
-		loading="lazy"
-		decoding="async"
-		onerror={() => (imageFailed = true)}
-	/>
+	<span class={`food-symbol__image ${className}`.trim()}>
+		<ImagePlacementViewport
+			imageUrl={imageUrl}
+			alt={imageAlt}
+			value={imagePlacement}
+			onError={() => (imageFailed = true)}
+		/>
+	</span>
 {:else}
 	<span class={className} aria-hidden="true" title={symbolItem.label}>
 		{symbolItem.symbol}
@@ -62,15 +61,7 @@
 
 	.food-symbol__image {
 		display: block;
-		width: $ingredient-food-image-content-size;
-		height: $ingredient-food-image-content-size;
-		object-fit: cover;
-		object-position: var(--food-symbol-focus-x, 50%) var(--food-symbol-focus-y, 50%);
-		transform: translate(
-				var(--food-symbol-translate-x, 0%),
-				var(--food-symbol-translate-y, 0%)
-			)
-			scale(var(--food-symbol-zoom, 1));
-		transform-origin: center;
+		width: 100%;
+		height: 100%;
 	}
 </style>

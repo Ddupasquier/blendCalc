@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { tick } from "svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import TutorialStepIcon from "$lib/components/app/TutorialStepIcon.svelte";
 	import { tutorialSteps } from "../../../defaults/tutorialSteps";
 
@@ -186,7 +187,8 @@
 						disabled={busy}
 						onclick={() => saveChoice("never")}
 					>
-						{busy ? "Saving…" : "Don’t show again"}
+						{#if busy}<LoadingSpinner size="small" decorative />{/if}
+						Don’t show again
 					</button>
 				</div>
 			</footer>
@@ -339,6 +341,10 @@
 	}
 
 	.tutorial__primary {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: $app-gap-xs;
 		color: $app-btn-text;
 		background: $app-btn-bg;
 	}

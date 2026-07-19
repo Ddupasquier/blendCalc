@@ -30,7 +30,7 @@ describe("ProductImagePanel", () => {
 		});
 
 		expect(screen.getByText("Card image placement")).toBeInTheDocument();
-		expect(screen.getAllByTitle("Admin or moderator action")).toHaveLength(3);
+		expect(screen.getAllByTitle("Admin or moderator action")).toHaveLength(6);
 	});
 
 	it("does not show privileged action badges to normal users", () => {

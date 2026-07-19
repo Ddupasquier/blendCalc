@@ -36,21 +36,28 @@
 				variant="neutral"
 				onclick={onMoveToShopping}
 				disabled={action !== null}
+				busy={action === "move"}
 			>
-				{action === "move" ? "Moving…" : "Move to Shopping"}
+				Move to Shopping
 			</PillButton>
 		{:else if outcome.addedToList && outcome.destination === MIX_STORAGE_KEYS.shoppingList}
 			<PillButton
 				variant="neutral"
 				onclick={onMoveToFridge}
 				disabled={action !== null}
+				busy={action === "move"}
 			>
-				{action === "move" ? "Moving…" : "Move to Fridge"}
+				Move to Fridge
 			</PillButton>
 		{/if}
 		{#if outcome.addedToList}
-			<PillButton variant="neutral" onclick={onUndo} disabled={action !== null}>
-				{action === "undo" ? "Undoing…" : "Undo"}
+			<PillButton
+				variant="neutral"
+				onclick={onUndo}
+				disabled={action !== null}
+				busy={action === "undo"}
+			>
+				Undo
 			</PillButton>
 		{/if}
 	</div>

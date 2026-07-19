@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { getImagePlacementCssVars } from "$lib/components/common/images/imagePlacementStyle";
+import { getLegacyImagePlacementCssVars } from "$lib/components/common/images/imagePlacementStyle";
 
-describe("getImagePlacementCssVars", () => {
+describe("getLegacyImagePlacementCssVars", () => {
 	it("moves horizontally and vertically even without extra zoom", () => {
-		const style = getImagePlacementCssVars(
+		const style = getLegacyImagePlacementCssVars(
 			{ cropX: 25, cropY: 75, cropZoom: 1 },
 			"image-placement",
 		);
@@ -15,7 +15,7 @@ describe("getImagePlacementCssVars", () => {
 	});
 
 	it("keeps centered images still when crop is centered", () => {
-		const style = getImagePlacementCssVars(
+		const style = getLegacyImagePlacementCssVars(
 			{ cropX: 50, cropY: 50, cropZoom: 4 },
 			"food-symbol",
 		);

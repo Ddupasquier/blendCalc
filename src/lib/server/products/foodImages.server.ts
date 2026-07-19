@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { normalizeImagePlacement } from "$lib/utils/food/images/imagePlacement";
+import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { FoodImageAsset } from "$lib/utils/food/types";
 import {
 	getAvatarExtension,
@@ -9,25 +11,21 @@ import { PRODUCT_EVIDENCE_BUCKET } from "./productEvidence.server";
 
 export const PUBLIC_FOOD_IMAGE_BUCKET = "food-image-assets";
 
-export type FoodImageCropValues = {
-	cropX?: number | null;
-	cropY?: number | null;
-	cropZoom?: number | null;
+export type FoodImagePlacementValues = Partial<ImagePlacementValue> & {
 	cropSource?: FoodImageAsset["cropSource"] | null;
 };
 
-const clampCropValue = (value: number | null | undefined, fallback: number) =>
-	Number.isFinite(value) ? Math.min(100, Math.max(0, Number(value))) : fallback;
-
-const clampCropZoom = (value: number | null | undefined) =>
-	Number.isFinite(value) ? Math.min(4, Math.max(1, Number(value))) : 1;
-
-const normalizeCrop = (crop: FoodImageCropValues = {}) => ({
-	crop_x: clampCropValue(crop.cropX, 50),
-	crop_y: clampCropValue(crop.cropY, 50),
-	crop_zoom: clampCropZoom(crop.cropZoom),
-	crop_source: crop.cropSource ?? "auto",
-});
+const normalizePlacement = (value: FoodImagePlacementValues = {}) => {
+	const placement = normalizeImagePlacement(value);
+	return {
+		crop_x: placement.cropX,
+		crop_y: placement.cropY,
+		crop_zoom: placement.cropZoom,
+		fit_mode: placement.fitMode,
+		placement_version: placement.placementVersion,
+		crop_source: value.cropSource ?? "auto",
+	};
+};
 
 export const persistFoodImageAsset = async ({
 	image,
@@ -54,12 +52,6 @@ export const persistFoodImageAsset = async ({
 		license_url: image.licenseUrl ?? null,
 		attribution_text: image.attributionText ?? null,
 		confidence: image.confidence,
-		...normalizeCrop({
-			cropX: image.cropX,
-			cropY: image.cropY,
-			cropZoom: image.cropZoom,
-			cropSource: image.cropSource,
-		}),
 		approved_by: image.approvedBy ?? null,
 		approved_at: image.approvedAt ?? null,
 		status: "active",
@@ -86,7 +78,7 @@ export const publishModeratedFoodImageAsset = async ({
 	sharedProductId?: string | null;
 	evidencePath: string;
 	moderatorId: string;
-	crop?: FoodImageCropValues;
+	crop?: FoodImagePlacementValues;
 }) => {
 	if (!evidencePath || (!barcode && !sharedProductId)) return null;
 
@@ -129,7 +121,7 @@ export const publishModeratedFoodImageAsset = async ({
 		license_url: null,
 		attribution_text: "blendCalc community submission",
 		confidence: "moderator-reviewed" as const,
-		...normalizeCrop({
+		...normalizePlacement({
 			...crop,
 			cropSource: crop?.cropSource ?? "moderator",
 		}),
@@ -159,6 +151,8 @@ export const publishModeratedFoodImageAsset = async ({
 		cropX: payload.crop_x,
 		cropY: payload.crop_y,
 		cropZoom: payload.crop_zoom,
+		fitMode: payload.fit_mode,
+		placementVersion: payload.placement_version,
 		cropSource: payload.crop_source,
 		approvedBy: moderatorId,
 		approvedAt: now,
@@ -177,12 +171,12 @@ export const updateFoodImageAssetPlacement = async ({
 	sourceReference: string;
 	role: FoodImageAsset["role"];
 	moderatorId: string;
-	crop: FoodImageCropValues;
+	crop: FoodImagePlacementValues;
 }) => {
 	const admin = getSupabaseAdminClient();
 	const now = new Date().toISOString();
 	const payload = {
-		...normalizeCrop({
+		...normalizePlacement({
 			...crop,
 			cropSource: "moderator",
 		}),
@@ -198,7 +192,7 @@ export const updateFoodImageAssetPlacement = async ({
 		.eq("image_role", role)
 		.eq("status", "active")
 		.select(
-			"source, source_reference, image_role, image_url, thumbnail_url, storage_path, license_name, license_url, attribution_text, confidence, crop_x, crop_y, crop_zoom, crop_source, approved_by, approved_at, fetched_at",
+				"source, source_reference, image_role, image_url, thumbnail_url, storage_path, license_name, license_url, attribution_text, confidence, crop_x, crop_y, crop_zoom, fit_mode, placement_version, crop_source, approved_by, approved_at, fetched_at",
 		)
 		.maybeSingle();
 	if (error) throw error;
@@ -218,6 +212,8 @@ export const updateFoodImageAssetPlacement = async ({
 		cropX: data.crop_x,
 		cropY: data.crop_y,
 		cropZoom: data.crop_zoom,
+		fitMode: data.fit_mode as FoodImageAsset["fitMode"],
+		placementVersion: data.placement_version,
 		cropSource: data.crop_source as FoodImageAsset["cropSource"],
 		approvedBy: data.approved_by ?? undefined,
 		approvedAt: data.approved_at ?? undefined,

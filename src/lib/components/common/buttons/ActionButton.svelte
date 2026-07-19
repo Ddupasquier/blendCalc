@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import type { ActionButtonProps } from "./types";
 
 	let {
@@ -28,7 +29,11 @@
 	disabled={disabled || busy}
 	{onclick}
 >
-	{#if leading}
+	{#if busy}
+		<span class="action-button__icon">
+			<LoadingSpinner size="small" decorative />
+		</span>
+	{:else if leading}
 		<span class="action-button__icon" aria-hidden="true">{@render leading()}</span>
 	{/if}
 	<span class="action-button__label">
@@ -36,7 +41,7 @@
 			{@render children()}
 		{/if}
 	</span>
-	{#if trailing}
+	{#if trailing && !busy}
 		<span class="action-button__icon" aria-hidden="true">{@render trailing()}</span>
 	{/if}
 </button>

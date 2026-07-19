@@ -15,6 +15,7 @@
 	} from "$lib/utils/food/custom/customFoods";
 	import { matchesIngredientProvenance } from "$lib/utils/ingredients/ingredientProvenance";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import Search from "$lib/assets/icons/Search.svelte";
 	import X from "$lib/assets/icons/X.svelte";
 	import { createEventDispatcher, onMount, tick } from "svelte";
@@ -347,9 +348,7 @@
 			{#if loading || query}
 				<span class="search-status-actions">
 					{#if loading}
-						<span class="spinner" role="status" aria-live="polite">
-							<span class="sr-only">Searching…</span>
-						</span>
+						<LoadingSpinner size="small" label="Searching ingredients" />
 					{/if}
 					{#if query}
 						<CircleIconButton
@@ -479,15 +478,6 @@
 		}
 	}
 
-	.spinner {
-		width: 0.9rem;
-		height: 0.9rem;
-		border: 2px solid color-mix(in srgb, $ingredient-text-muted 28%, transparent);
-		border-top-color: $ingredient-accent-primary;
-		border-radius: $ingredient-radius-pill;
-		animation: ingredient-search-spin 700ms linear infinite;
-	}
-
 	.search-status-actions {
 		display: inline-flex;
 		align-items: center;
@@ -509,12 +499,6 @@
 			content: "·";
 			margin-right: $app-gap-sm;
 			color: color-mix(in srgb, $ingredient-text-muted 62%, transparent);
-		}
-	}
-
-	@keyframes ingredient-search-spin {
-		to {
-			transform: rotate(360deg);
 		}
 	}
 

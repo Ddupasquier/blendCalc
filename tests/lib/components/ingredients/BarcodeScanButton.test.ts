@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
 
 describe("BarcodeScanButton", () => {
-	it("keeps its static icon while a scan lookup is busy", () => {
+	it("uses the shared spinner while a scan lookup is busy", () => {
 		const { container } = render(BarcodeScanButton, {
 			props: {
 				scanning: true,
@@ -15,6 +15,8 @@ describe("BarcodeScanButton", () => {
 		const button = screen.getByRole("button", { name: "Scanning barcode" });
 		expect(button).toBeDisabled();
 		expect(button).toHaveAttribute("aria-busy", "true");
+		expect(container.querySelector(".loading-spinner__ring")).toBeInTheDocument();
+		expect(container.querySelector(".barcode-scanner")).toBeNull();
 		expect(container.querySelector(".barcode-scanner--active")).toBeNull();
 		expect(container.querySelector(".barcode-scanner__laser")).toBeNull();
 	});

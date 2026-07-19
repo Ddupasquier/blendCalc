@@ -1,4 +1,6 @@
 <script lang="ts">
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import type { PillButtonProps } from "$lib/components/common/buttons/types";
 
 	let {
@@ -8,6 +10,7 @@
 		busy = false,
 		disabled = false,
 		fullWidth = false,
+		privileged = false,
 		ariaLabel,
 		onclick,
 		children,
@@ -25,6 +28,12 @@
 	disabled={disabled || busy}
 	{onclick}
 >
+	{#if privileged}
+		<PrivilegedActionBadge />
+	{/if}
+	{#if busy}
+		<LoadingSpinner size="small" decorative />
+	{/if}
 	{#if children}
 		{@render children()}
 	{/if}
@@ -37,6 +46,7 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
+		gap: $app-gap-xs;
 		min-width: 0;
 		min-height: $ingredient-control-height-compact;
 		padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x-compact;

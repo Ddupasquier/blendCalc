@@ -2,19 +2,16 @@
 	import { onDestroy } from "svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor.svelte";
 	import type { ProductImageEvidenceInputProps } from "$lib/components/ingredients/manual-entry/formTypes";
+	import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
 
 	let {
 		trustedImageUrl = "",
 		frontPhoto,
-		cropX,
-		cropY,
-		cropZoom,
+		placement,
 		required = false,
 		description = "",
 		onFrontPhotoChange,
-		onCropXChange,
-		onCropYChange,
-		onCropZoomChange,
+		onPlacementChange,
 	}: ProductImageEvidenceInputProps = $props();
 
 	let objectUrl = $state("");
@@ -25,6 +22,7 @@
 		if (objectUrl) URL.revokeObjectURL(objectUrl);
 		lastFile = frontPhoto;
 		objectUrl = frontPhoto ? URL.createObjectURL(frontPhoto) : "";
+		if (frontPhoto) onPlacementChange(createFullImagePlacement());
 	});
 
 	onDestroy(() => {
@@ -58,19 +56,10 @@
 			description={trustedImageUrl
 				? "Trusted images use the saved placement."
 				: "Adjust how the package image appears in ingredient cards."}
-			mode="card-only"
+			mode="card-and-full"
 			editable={!trustedImageUrl && Boolean(objectUrl)}
-			value={{ cropX, cropY, cropZoom }}
-			onChange={(value) => {
-				onCropXChange(value.cropX);
-				onCropYChange(value.cropY);
-				onCropZoomChange(value.cropZoom);
-			}}
-			onReset={() => {
-				onCropXChange(50);
-				onCropYChange(50);
-				onCropZoomChange(1);
-			}}
+			value={placement}
+			onChange={onPlacementChange}
 		/>
 	{/if}
 

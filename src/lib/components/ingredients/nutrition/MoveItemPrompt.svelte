@@ -18,7 +18,7 @@
     <div class="prompt-title">{message}</div>
     <div class="prompt-actions">
         <RoundedActionButton variant="primary" busy={busy} onclick={onConfirm}>
-            {busy ? "Moving…" : "Move"}
+            Move
         </RoundedActionButton>
         <RoundedActionButton variant="quiet" disabled={busy} onclick={onCancel}>
             Cancel

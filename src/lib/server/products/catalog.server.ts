@@ -56,7 +56,7 @@ import {
 import {
 	persistFoodImageAsset,
 	publishModeratedFoodImageAsset,
-	type FoodImageCropValues,
+	type FoodImagePlacementValues,
 } from "./foodImages.server";
 
 type CatalogSource = "usda" | "open-food-facts" | "community-reviewed";
@@ -77,12 +77,12 @@ type ValidationReport = {
 	existingCatalogMatch?: boolean;
 	existingCatalogAction?: "already_available" | "update_review" | "auto_declined";
 	existingCatalogComparison?: CatalogSubmissionComparison;
-	imageCrop?: FoodImageCropValues | null;
+	imageCrop?: FoodImagePlacementValues | null;
 };
 
 type ProductSubmissionContext = {
 	reviewFlags?: string[];
-	frontImageCrop?: FoodImageCropValues | null;
+	frontImageCrop?: FoodImagePlacementValues | null;
 };
 
 type PendingProductSubmission = {
@@ -733,7 +733,7 @@ export const listPendingProductSubmissions = async () => {
 export const approveCommunityProductSubmission = async (
 	submissionId: string,
 	moderatorId: string,
-	imageCrop?: FoodImageCropValues,
+	imageCrop?: FoodImagePlacementValues,
 ) => {
 	const admin = getSupabaseAdminClient();
 	const { data: submission, error } = await admin

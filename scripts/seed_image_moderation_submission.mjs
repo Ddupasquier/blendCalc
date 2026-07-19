@@ -269,6 +269,8 @@ const createValidationReport = (mode) => ({
 		cropX: mode === "adjustment" ? 42 : 50,
 		cropY: mode === "adjustment" ? 48 : 50,
 		cropZoom: mode === "adjustment" ? 1.45 : 1.2,
+		fitMode: "custom",
+		placementVersion: 2,
 	},
 });
 

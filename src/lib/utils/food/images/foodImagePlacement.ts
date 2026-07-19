@@ -1,4 +1,4 @@
-import type { ImagePlacementValue } from "$lib/components/common/images/types";
+import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { FoodImageAsset } from "$lib/utils/food/types";
 
 export type FoodImagePlacementRequest = ImagePlacementValue & {

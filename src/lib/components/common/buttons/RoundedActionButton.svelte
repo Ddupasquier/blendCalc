@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import type { RoundedActionButtonProps } from "$lib/components/common/buttons/types";
 
 	let {
@@ -27,6 +28,9 @@
 >
 	{#if privileged}
 		<PrivilegedActionBadge />
+	{/if}
+	{#if busy}
+		<LoadingSpinner size="small" decorative />
 	{/if}
 	{#if children}
 		{@render children()}

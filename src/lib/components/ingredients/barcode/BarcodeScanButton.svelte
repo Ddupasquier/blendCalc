@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import BarcodeScannerIcon from "$lib/components/ingredients/barcode/BarcodeScannerIcon.svelte";
 
 	let {
@@ -23,8 +24,12 @@
 	aria-label={scanning ? "Scanning barcode" : "Scan barcode"}
 	{onclick}
 >
-	<BarcodeScannerIcon />
-	<span class="barcode-scan-button__label">{scanning ? "Scanning..." : "Scan"}</span>
+	{#if scanning}
+		<LoadingSpinner size="small" decorative />
+	{:else}
+		<BarcodeScannerIcon />
+	{/if}
+	<span class="barcode-scan-button__label">Scan</span>
 </button>
 
 <style lang="scss">

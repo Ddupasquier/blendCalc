@@ -443,8 +443,8 @@ approved image records that the app can safely render.
 Columns: `id`, `barcode`, `shared_product_id`, `source`, `source_reference`,
 `image_role`, `image_url`, `thumbnail_url`, `storage_path`, `license_name`,
 `license_url`, `attribution_text`, `confidence`, `crop_x`, `crop_y`,
-`crop_zoom`, `crop_source`, `approved_by`, `approved_at`, `status`,
-`fetched_at`, `created_at`, `updated_at`.
+`crop_zoom`, `fit_mode`, `placement_version`, `crop_source`, `approved_by`,
+`approved_at`, `status`, `fetched_at`, `created_at`, `updated_at`.
 
 Notes:
 - Open Food Facts package images are stored here with source, license, and
@@ -455,8 +455,15 @@ Notes:
 - Users can read active rows, but only service-role/server code can write rows.
 - Indexed lookup paths cover active barcode images, shared-product images,
   generic images, and source/reference deduping.
-- Card thumbnails use `crop_x`, `crop_y`, and `crop_zoom`; nutrition detail
-  views use the full image.
+- Card thumbnails use normalized `crop_x`, `crop_y`, `crop_zoom`, and
+  `fit_mode`; nutrition detail views use the unchanged full image.
+- Version 1 rows retain the original cover-based rendering until edited.
+  Version 2 rows make `1×` mean the fully contained image and support
+  `contain`, calculated `cover`, and measured `custom` placement. New rows
+  default to version 2 `contain`; any user/moderator edit upgrades that row to
+  version 2.
+- Automatic API image metadata refreshes omit placement columns so they cannot
+  overwrite a user- or moderator-selected position.
 - Community images stay private until a moderator approves them. Approval writes
   a `community-reviewed` image row with `moderator-reviewed` confidence and
   approval metadata.

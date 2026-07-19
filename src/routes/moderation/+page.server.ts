@@ -22,6 +22,12 @@ import {
 } from "$lib/server/products/catalog.server";
 import type { FdcFood } from "$lib/utils/food/types";
 import { mapWithConcurrency } from "$lib/server/concurrency/mapWithConcurrency";
+import {
+	getStoredImagePlacement,
+	isImageFitMode,
+	normalizeImagePlacement,
+} from "$lib/utils/food/images/imagePlacement";
+import type { ImageFitMode } from "$lib/utils/food/images/types";
 
 const PERMANENT_BAN_DURATION = "876000h";
 const MODERATION_PAGE_SIZE = 100;
@@ -246,6 +252,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 					cropX?: number;
 					cropY?: number;
 					cropZoom?: number;
+					fitMode?: ImageFitMode;
+					placementVersion?: number;
 				} | null;
 			};
 			const validationIssues = Array.isArray(validationReport.issues)
@@ -268,11 +276,13 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 					{ key: "barcode", label: "Barcode", url: submission.evidenceUrls.barcode },
 				].filter((item) => Boolean(item.url)),
 				frontEvidenceUrl: submission.evidenceUrls.front ?? null,
-				imageCrop: {
+				imageCrop: getStoredImagePlacement({
 					cropX: validationReport.imageCrop?.cropX ?? 50,
 					cropY: validationReport.imageCrop?.cropY ?? 50,
 					cropZoom: validationReport.imageCrop?.cropZoom ?? 1,
-				},
+					fitMode: validationReport.imageCrop?.fitMode,
+					placementVersion: validationReport.imageCrop?.placementVersion,
+				}),
 				conflictCount: validationReport.conflictCount ?? 0,
 				externalLookupFailed: validationReport.externalLookupFailed ?? false,
 				validationIssues,
@@ -302,11 +312,17 @@ export const actions: Actions = {
 		const { user } = await requireModerator(locals);
 		const formData = await request.formData();
 		const submissionId = String(formData.get("submissionId") ?? "");
-		const imageCrop = {
+		const fitModeValue = String(formData.get("imageFitMode") ?? "");
+		if (!isImageFitMode(fitModeValue)) {
+			return fail(400, { productReviewError: "Choose a valid image placement." });
+		}
+		const imageCrop = normalizeImagePlacement({
 			cropX: Number(formData.get("imageCropX") ?? 50),
 			cropY: Number(formData.get("imageCropY") ?? 50),
 			cropZoom: Number(formData.get("imageCropZoom") ?? 1),
-		};
+			fitMode: fitModeValue,
+			placementVersion: Number(formData.get("imagePlacementVersion") ?? 1),
+		});
 		if (!submissionId) {
 			return fail(400, { productReviewError: "Choose a product submission." });
 		}

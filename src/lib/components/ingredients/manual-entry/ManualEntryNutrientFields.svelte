@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Chevron from "$lib/assets/icons/Chevron.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import type {
 		ManualEntryNutrientDefinition,
 		ManualEntryNutrientGroup,
@@ -45,9 +46,9 @@
 </script>
 
 {#if loading}
-	<p class="manual-nutrients__status" role="status">
-		Loading nutrient fields…
-	</p>
+	<div class="manual-nutrients__status">
+		<LoadingSpinner label="Loading nutrient fields" showLabel />
+	</div>
 {:else if error}
 	<p class="manual-nutrients__status manual-nutrients__status--error" role="alert">
 		{error}

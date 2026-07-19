@@ -1,5 +1,6 @@
 import type { FdcFood } from "$lib/utils/food/types";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
+import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 
 export type SharedProductSubmissionStatus =
 	| "already-available"
@@ -17,11 +18,7 @@ export type SharedProductEvidence = {
 	frontPhoto?: File | null;
 	nutritionPhoto?: File | null;
 	barcodePhoto?: File | null;
-	frontImageCrop?: {
-		cropX: number;
-		cropY: number;
-		cropZoom: number;
-	} | null;
+	frontImageCrop?: ImagePlacementValue | null;
 };
 
 export type SharedProductSubmissionContext = {

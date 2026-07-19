@@ -374,11 +374,13 @@ export type Database = {
           crop_y: number
           crop_zoom: number
           fetched_at: string
+          fit_mode: string
           id: string
           image_role: string
           image_url: string
           license_name: string
           license_url: string | null
+          placement_version: number
           shared_product_id: string | null
           source: string
           source_reference: string | null
@@ -399,11 +401,13 @@ export type Database = {
           crop_y?: number
           crop_zoom?: number
           fetched_at?: string
+          fit_mode?: string
           id?: string
           image_role: string
           image_url: string
           license_name: string
           license_url?: string | null
+          placement_version?: number
           shared_product_id?: string | null
           source: string
           source_reference?: string | null
@@ -424,11 +428,13 @@ export type Database = {
           crop_y?: number
           crop_zoom?: number
           fetched_at?: string
+          fit_mode?: string
           id?: string
           image_role?: string
           image_url?: string
           license_name?: string
           license_url?: string | null
+          placement_version?: number
           shared_product_id?: string | null
           source?: string
           source_reference?: string | null

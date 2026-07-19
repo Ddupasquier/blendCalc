@@ -2,6 +2,7 @@ import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalo
 import type { FdcFood } from "$lib/utils/food/types";
 import type { ManualEntryNutrientGroupsByStep } from "$lib/utils/food/nutrients/nutrientDefinitions";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type {
 	NutritionLabelOcrCandidate,
 	NutritionLabelOcrMapping,
@@ -94,15 +95,11 @@ export type ManualEntryListMovePromptState = {
 export type ProductImageEvidenceInputProps = {
 	trustedImageUrl?: string;
 	frontPhoto: File | null;
-	cropX: number;
-	cropY: number;
-	cropZoom: number;
+	placement: ImagePlacementValue;
 	required?: boolean;
 	description?: string;
 	onFrontPhotoChange: (file: File | null) => void;
-	onCropXChange: (value: number) => void;
-	onCropYChange: (value: number) => void;
-	onCropZoomChange: (value: number) => void;
+	onPlacementChange: (value: ImagePlacementValue) => void;
 };
 
 export type NutritionLabelOcrApplyPayload = {

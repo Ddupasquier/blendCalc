@@ -285,7 +285,7 @@
 		initialValue={renamingItem?.food.description ?? ""}
 		error={renameError}
 		busy={renameBusy}
-		confirmLabel={renameBusy ? "Saving…" : "Save name"}
+		confirmLabel="Save name"
 		onConfirm={renameListItem}
 		onValueChange={() => (renameError = "")}
 		onCancel={closeRenameDialog}

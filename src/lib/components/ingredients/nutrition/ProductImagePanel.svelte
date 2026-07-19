@@ -1,7 +1,8 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor.svelte";
-	import type { ImagePlacementValue } from "$lib/components/common/images/types";
+	import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
+	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 	import {
 		getFoodImageAltText,
 		pickFoodFullImageUrl,
@@ -25,20 +26,18 @@
 	let imageFailed = $state(false);
 	let lastImageUrl = $state("");
 	let lastImageKey = $state("");
-	let draftPlacement = $state<ImagePlacementValue>({
-		cropX: 50,
-		cropY: 50,
-		cropZoom: 1,
-	});
+	let draftPlacement = $state<ImagePlacementValue>(getStoredImagePlacement());
 	let savingPlacement = $state(false);
 	let placementMessage = $state("");
 	let placementError = $state("");
 
-	const savedPlacement = $derived<ImagePlacementValue>({
+	const savedPlacement = $derived<ImagePlacementValue>(getStoredImagePlacement({
 		cropX: food?.image?.cropX ?? 50,
 		cropY: food?.image?.cropY ?? 50,
 		cropZoom: food?.image?.cropZoom ?? 1,
-	});
+		fitMode: food?.image?.fitMode,
+		placementVersion: food?.image?.placementVersion,
+	}));
 	const imageKey = $derived(
 		[
 			food?.image?.source ?? "",
@@ -52,7 +51,9 @@
 	const hasPlacementChanges = $derived(
 		draftPlacement.cropX !== savedPlacement.cropX ||
 			draftPlacement.cropY !== savedPlacement.cropY ||
-			draftPlacement.cropZoom !== savedPlacement.cropZoom,
+			draftPlacement.cropZoom !== savedPlacement.cropZoom ||
+			draftPlacement.fitMode !== savedPlacement.fitMode ||
+			draftPlacement.placementVersion !== savedPlacement.placementVersion,
 	);
 
 	$effect(() => {
@@ -69,12 +70,6 @@
 		placementMessage = "";
 		placementError = "";
 	});
-
-	const resetPlacement = () => {
-		draftPlacement = { ...savedPlacement };
-		placementMessage = "";
-		placementError = "";
-	};
 
 	const savePlacement = async () => {
 		if (!food?.image?.sourceReference || savingPlacement) return;
@@ -121,7 +116,7 @@
 					alt={imageAlt}
 					title="Card image placement"
 					description="Adjust how this image appears in ingredient cards. The nutrition page keeps showing the full image."
-					mode="card-only"
+					mode="card-and-full"
 					value={draftPlacement}
 					privileged
 					onChange={(value) => {
@@ -129,7 +124,6 @@
 						placementMessage = "";
 						placementError = "";
 					}}
-					onReset={resetPlacement}
 				/>
 				<RoundedActionButton
 					variant="primary"

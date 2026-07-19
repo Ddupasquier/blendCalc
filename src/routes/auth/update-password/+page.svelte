@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import PasswordRequirements from "$lib/components/auth/PasswordRequirements.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import type { ActionData, PageData } from "./$types";
@@ -72,7 +73,8 @@
 			confirmation={passwordConfirmation}
 		/>
 		<button type="submit" disabled={isSubmitting}>
-			{isSubmitting ? "Updating password…" : "Update password"}
+			{#if isSubmitting}<LoadingSpinner size="small" decorative />{/if}
+			Update password
 		</button>
 	</form>
 </section>
@@ -127,6 +129,10 @@
 		}
 
 		button {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: $app-gap-xs;
 			padding: 0.65rem 1rem;
 			color: $app-btn-text;
 			background: $app-btn-bg;

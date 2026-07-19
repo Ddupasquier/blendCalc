@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import CenteredIcon from "$lib/components/common/icons/CenteredIcon.svelte";
 	import type { CircleIconButtonProps } from "./types";
 
@@ -47,7 +48,7 @@
 >
 	<CenteredIcon>
 		{#if busy}
-			<span aria-hidden="true">…</span>
+			<LoadingSpinner size="small" decorative />
 		{:else if children}
 			{@render children()}
 		{/if}

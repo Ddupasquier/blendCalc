@@ -35,6 +35,8 @@ const makeImageRow = (image: FoodImageAsset) => ({
 	crop_x: image.cropX ?? 50,
 	crop_y: image.cropY ?? 50,
 	crop_zoom: image.cropZoom ?? 1,
+	fit_mode: image.fitMode ?? "contain",
+	placement_version: image.placementVersion ?? 2,
 	crop_source: image.cropSource ?? "auto",
 	approved_by: image.approvedBy ?? null,
 	approved_at: image.approvedAt ?? null,
@@ -102,6 +104,8 @@ describe("food image selection", () => {
 		).resolves.toMatchObject({
 			imageUrl: moderated.imageUrl,
 			confidence: "moderator-reviewed",
+			fitMode: "contain",
+			placementVersion: 2,
 		});
 	});
 

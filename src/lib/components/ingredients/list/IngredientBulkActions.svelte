@@ -22,9 +22,7 @@
 	{#if selectedCount > 0}
 		<PillButton disabled={moving} onclick={onClear}>Uncheck all</PillButton>
 		<PillButton variant="primary" busy={moving} onclick={onMove}>
-			{moving
-				? "Moving…"
-				: `Move ${selectedCount} checked → ${moveTargetLabel}`}
+			Move {selectedCount} checked → {moveTargetLabel}
 		</PillButton>
 	{:else}
 		<PillButton disabled={moving} onclick={onSelectAll}>Check all</PillButton>

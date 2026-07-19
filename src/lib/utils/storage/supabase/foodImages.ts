@@ -17,6 +17,8 @@ type FoodImageAssetRow = {
 	crop_x: number;
 	crop_y: number;
 	crop_zoom: number;
+	fit_mode: NonNullable<FoodImageAsset["fitMode"]>;
+	placement_version: number;
 	crop_source: FoodImageAsset["cropSource"];
 	approved_by: string | null;
 	approved_at: string | null;
@@ -56,6 +58,8 @@ const FOOD_IMAGE_SELECT = [
 	"crop_x",
 	"crop_y",
 	"crop_zoom",
+	"fit_mode",
+	"placement_version",
 	"crop_source",
 	"approved_by",
 	"approved_at",
@@ -111,6 +115,8 @@ const toFoodImageAsset = (row: FoodImageAssetRow): FoodImageAsset => ({
 	cropX: row.crop_x,
 	cropY: row.crop_y,
 	cropZoom: row.crop_zoom,
+	fitMode: row.fit_mode,
+	placementVersion: row.placement_version,
 	cropSource: row.crop_source,
 	approvedBy: row.approved_by ?? undefined,
 	approvedAt: row.approved_at ?? undefined,

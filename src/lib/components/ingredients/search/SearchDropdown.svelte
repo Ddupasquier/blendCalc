@@ -108,11 +108,7 @@
                                     onfocus={() => onActivate(index)}
                                     onclick={() => onAdd(food)}
                                 >
-                                    {#if isAdding}
-                                        …
-                                    {:else}
-                                        <Plus size={17} strokeWidth={2.9} />
-                                    {/if}
+                                    <Plus size={17} strokeWidth={2.9} />
                                 </CircleIconButton>
                             </span>
                         {/if}

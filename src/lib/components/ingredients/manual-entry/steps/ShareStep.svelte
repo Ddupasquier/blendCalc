@@ -1,5 +1,6 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch.svelte";
 	import CustomIngredientOutcome from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
 	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
@@ -12,6 +13,7 @@
 		ManualEntryValidationItem,
 	} from "$lib/components/ingredients/manual-entry/formTypes";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 	import { MIX_STORAGE_KEYS } from "../../../../../defaults/mixDefaults";
 
 	let {
@@ -31,9 +33,7 @@
 		showOptionalProductImageUpload,
 		trustedProductImageUrl,
 		frontPhoto,
-		imageCropX,
-		imageCropY,
-		imageCropZoom,
+		imagePlacement,
 		saveDestination,
 		error,
 		lastOutcome,
@@ -45,9 +45,7 @@
 		onApplyVerifiedBarcode,
 		onDetachBarcodeForPrivateSave,
 		onFrontPhotoChange,
-		onImageCropXChange,
-		onImageCropYChange,
-		onImageCropZoomChange,
+		onImagePlacementChange,
 		onNutritionPhotoChange,
 		onBarcodePhotoChange,
 		onSaveDestinationChange,
@@ -74,9 +72,7 @@
 		showOptionalProductImageUpload: boolean;
 		trustedProductImageUrl: string;
 		frontPhoto: File | null;
-		imageCropX: number;
-		imageCropY: number;
-		imageCropZoom: number;
+		imagePlacement: ImagePlacementValue;
 		saveDestination: SmoothieListKey;
 		error: string;
 		lastOutcome: CustomIngredientOutcomeState | null;
@@ -88,9 +84,7 @@
 		onApplyVerifiedBarcode: () => void | Promise<void>;
 		onDetachBarcodeForPrivateSave: () => void;
 		onFrontPhotoChange: (file: File | null) => void;
-		onImageCropXChange: (value: number) => void;
-		onImageCropYChange: (value: number) => void;
-		onImageCropZoomChange: (value: number) => void;
+		onImagePlacementChange: (value: ImagePlacementValue) => void;
 		onNutritionPhotoChange: (file: File | null) => void;
 		onBarcodePhotoChange: (file: File | null) => void;
 		onSaveDestinationChange: (destination: SmoothieListKey) => void;
@@ -161,9 +155,15 @@
 			<span>
 				<strong>Share with community</strong>
 				<small>
-					{validatingBarcodeShare
-						? "Checking this barcode before sharing…"
-						: shareHelpMessage}
+					{#if validatingBarcodeShare}
+						<LoadingSpinner
+							size="small"
+							label="Checking this barcode before sharing"
+							showLabel
+						/>
+					{:else}
+						{shareHelpMessage}
+					{/if}
 				</small>
 			</span>
 			<ToggleSwitch
@@ -187,16 +187,12 @@
 				</p>
 			</div>
 			<ProductImageEvidenceInput
-				trustedImageUrl={trustedProductImageUrl}
-				{frontPhoto}
-				cropX={imageCropX}
-				cropY={imageCropY}
-				cropZoom={imageCropZoom}
+					trustedImageUrl={trustedProductImageUrl}
+					{frontPhoto}
+					placement={imagePlacement}
 				required
-				onFrontPhotoChange={onFrontPhotoChange}
-				onCropXChange={onImageCropXChange}
-				onCropYChange={onImageCropYChange}
-				onCropZoomChange={onImageCropZoomChange}
+					onFrontPhotoChange={onFrontPhotoChange}
+					onPlacementChange={onImagePlacementChange}
 			/>
 			<label class="custom-ingredient__field">
 				<span>Nutrition facts label</span>
@@ -224,16 +220,12 @@
 	{:else if showOptionalProductImageUpload}
 		<section class="custom-ingredient__evidence" aria-labelledby="product-image-title">
 			<ProductImageEvidenceInput
-				trustedImageUrl={trustedProductImageUrl}
-				{frontPhoto}
-				cropX={imageCropX}
-				cropY={imageCropY}
-				cropZoom={imageCropZoom}
+					trustedImageUrl={trustedProductImageUrl}
+					{frontPhoto}
+					placement={imagePlacement}
 				description="No trusted DB/API product image was found for this barcode. You can add a front package photo now; it stays private until a moderator approves it."
-				onFrontPhotoChange={onFrontPhotoChange}
-				onCropXChange={onImageCropXChange}
-				onCropYChange={onImageCropYChange}
-				onCropZoomChange={onImageCropZoomChange}
+					onFrontPhotoChange={onFrontPhotoChange}
+					onPlacementChange={onImagePlacementChange}
 			/>
 		</section>
 	{/if}
@@ -275,8 +267,8 @@
 		<RoundedActionButton variant="neutral" onclick={onBack}>
 			Back
 		</RoundedActionButton>
-		<RoundedActionButton onclick={onSubmit} disabled={saving}>
-			{saving ? "Saving…" : "Add Ingredient"}
+		<RoundedActionButton onclick={onSubmit} busy={saving}>
+			Add Ingredient
 		</RoundedActionButton>
 	</div>
 </div>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame.svelte";
 	import BarcodeAutofillSuggestion from "$lib/components/ingredients/manual-entry/BarcodeAutofillSuggestion.svelte";
 
 	let {
@@ -64,29 +65,30 @@
 <div class="custom-ingredient__step">
 	<label class="custom-ingredient__field">
 		<span>UPC / Barcode <small>optional</small></span>
-		<input
-			id="custom-ingredient-barcode"
-			name="custom-ingredient-barcode"
-			type="text"
-			inputmode="numeric"
-			placeholder="Recommended for packaged foods"
-			maxlength="18"
-			value={barcode}
-			oninput={(event) => onBarcodeChange(event.currentTarget.value)}
-			onblur={onBarcodeBlur}
-		/>
+		<InputLoadingFrame
+			loading={checkingBarcodeReference}
+			loadingLabel="Checking barcode sources"
+		>
+			<input
+				id="custom-ingredient-barcode"
+				name="custom-ingredient-barcode"
+				type="text"
+				inputmode="numeric"
+				placeholder="Recommended for packaged foods"
+				maxlength="18"
+				value={barcode}
+				oninput={(event) => onBarcodeChange(event.currentTarget.value)}
+				onblur={onBarcodeBlur}
+			/>
+		</InputLoadingFrame>
 		<small class="custom-ingredient__field-info">
 			We’ll check trusted sources and offer autofill if existing data is available.
 		</small>
-		{#if checkingBarcodeReference}
-			<small class="custom-ingredient__field-status" role="status">
-				Checking barcode sources…
-			</small>
-		{:else if barcodeValidationMessage}
+		{#if !checkingBarcodeReference && barcodeValidationMessage}
 			<small class="custom-ingredient__field-status" role="status">
 				{barcodeValidationMessage}
 			</small>
-		{:else if barcodeMessage}
+		{:else if !checkingBarcodeReference && barcodeMessage}
 			<small class="custom-ingredient__field-status" role="status">
 				{barcodeMessage}
 			</small>
@@ -132,25 +134,30 @@
 
 	<label class="custom-ingredient__field">
 		<span>Category <em>*</em></span>
-		<select
-			id="custom-ingredient-category"
-			name="custom-ingredient-category"
-			value={category}
-			disabled={loadingCategoryOptions || visibleCategoryOptions.length === 0}
-			aria-busy={loadingCategoryOptions}
-			onchange={(event) => onCategoryChange(event.currentTarget.value)}
+		<InputLoadingFrame
+			loading={loadingCategoryOptions}
+			loadingLabel="Loading categories"
+			controlKind="select"
 		>
-			{#if loadingCategoryOptions}
-				<option value="">Loading categories…</option>
-			{:else if visibleCategoryOptions.length === 0}
-				<option value="">Categories unavailable</option>
-			{:else}
-				<option value="" disabled>{categoryPlaceholder}</option>
-				{#each visibleCategoryOptions as option}
-					<option value={option}>{option}</option>
-				{/each}
-			{/if}
-		</select>
+			<select
+				id="custom-ingredient-category"
+				name="custom-ingredient-category"
+				value={category}
+				disabled={loadingCategoryOptions || visibleCategoryOptions.length === 0}
+				onchange={(event) => onCategoryChange(event.currentTarget.value)}
+			>
+				{#if loadingCategoryOptions}
+					<option value="">{categoryPlaceholder}</option>
+				{:else if visibleCategoryOptions.length === 0}
+					<option value="">Categories unavailable</option>
+				{:else}
+					<option value="" disabled>{categoryPlaceholder}</option>
+					{#each visibleCategoryOptions as option}
+						<option value={option}>{option}</option>
+					{/each}
+				{/if}
+			</select>
+		</InputLoadingFrame>
 		{#if categoryOptionsError}
 			<small>{categoryOptionsError}</small>
 		{/if}
@@ -165,6 +172,6 @@
 	</label>
 
 	<RoundedActionButton fullWidth busy={checkingBarcodeReference} onclick={onNext}>
-		{checkingBarcodeReference ? "Checking…" : "Continue"}
+		Continue
 	</RoundedActionButton>
 </div>

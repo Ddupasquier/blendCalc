@@ -15,6 +15,7 @@ import {
 	type FoodImageAsset,
 } from "$lib/utils/food/types";
 import { OPEN_FOOD_FACTS_IMAGE_LICENSE } from "$lib/utils/food/images/foodImages";
+import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
 import { normalizeFoodCategoryValue } from "$lib/utils/food/categories/categoryNormalization.js";
 import {
 	getProductDataSource,
@@ -189,6 +190,7 @@ const parseOpenFoodFactsImage = (
 		licenseUrl: OPEN_FOOD_FACTS_IMAGE_LICENSE.url,
 		attributionText: OPEN_FOOD_FACTS_IMAGE_LICENSE.attribution,
 		confidence: "imported",
+		...createFullImagePlacement(),
 		fetchedAt: new Date().toISOString(),
 	};
 };

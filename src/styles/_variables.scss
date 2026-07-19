@@ -479,6 +479,8 @@ $app-gap-inline-compact: calc($app-gap-xs / 1.5);
 $app-gap-badge-inline: calc($app-gap-xs / 1.7);
 
 $ingredient-food-image-content-size: 118%;
+$ingredient-image-editor-preview-size: 8rem;
+$ingredient-image-editor-actual-preview-size: $ingredient-food-icon-size;
 
 $ingredient-list-loading-min-height: 12rem;
 $ingredient-list-sentinel-min-height: $app-gap-micro;
@@ -522,6 +524,19 @@ $app-action-button-padding-x-lg: 1.15rem;
 
 // Shared icon button sizing.
 $app-circle-button-size-tiny: 1.6rem;
+
+// Shared loading indicators. Every spinner, including input and button loading
+// states, must use these tokens through the reusable loading components.
+$app-loading-spinner-size-sm: 0.9rem;
+$app-loading-spinner-size-md: 1.2rem;
+$app-loading-spinner-size-lg: 1.8rem;
+$app-loading-spinner-border-width: 0.125rem;
+$app-loading-spinner-duration: 700ms;
+$app-loading-input-inset: $app-gap-md;
+$app-loading-select-inset: calc($ingredient-control-padding-x * 2.5);
+$app-loading-input-padding-end: calc(
+	$app-loading-spinner-size-sm + ($app-loading-input-inset * 2)
+);
 $app-close-button-size-sm: 1.75rem;
 $app-close-button-size-md: 2.15rem;
 $app-close-button-icon-scale: 52%;

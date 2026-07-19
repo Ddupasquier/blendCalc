@@ -10,6 +10,12 @@ import {
 	type ProductEvidencePaths,
 } from "$lib/server/products/productEvidence.server";
 import type { FdcFood } from "$lib/utils/food/types";
+import {
+	CURRENT_IMAGE_PLACEMENT_VERSION,
+	isImageFitMode,
+	normalizeImagePlacement,
+} from "$lib/utils/food/images/imagePlacement";
+import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
@@ -62,25 +68,31 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		}),
 	) as ProductEvidenceFiles;
 	const frontImageCropValue = formData.get("frontImageCrop");
-	let frontImageCrop: {
-		cropX: number;
-		cropY: number;
-		cropZoom: number;
-	} | null = null;
+	let frontImageCrop: ImagePlacementValue | null = null;
 	if (frontImageCropValue) {
 		try {
 			const parsedCrop = JSON.parse(String(frontImageCropValue)) as {
 				cropX?: unknown;
 				cropY?: unknown;
 				cropZoom?: unknown;
+				fitMode?: unknown;
 			};
-			frontImageCrop = {
+			if (
+				![parsedCrop.cropX, parsedCrop.cropY, parsedCrop.cropZoom].every((value) =>
+					Number.isFinite(Number(value))) ||
+				!isImageFitMode(parsedCrop.fitMode)
+			) {
+				throw new Error("Invalid image placement");
+			}
+			frontImageCrop = normalizeImagePlacement({
 				cropX: Number(parsedCrop.cropX),
 				cropY: Number(parsedCrop.cropY),
 				cropZoom: Number(parsedCrop.cropZoom),
-			};
+				fitMode: parsedCrop.fitMode,
+				placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
+			});
 		} catch {
-			throw error(400, "Product image crop data is invalid.");
+			throw error(400, "Product image placement data is invalid.");
 		}
 	}
 	let evidencePaths: ProductEvidencePaths = {};

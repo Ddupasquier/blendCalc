@@ -17,6 +17,7 @@
 		NutritionLabelOcrApplyPayload,
 	} from "$lib/components/ingredients/manual-entry/formTypes";
 	import type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
+	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 	import IdentityStep from "$lib/components/ingredients/manual-entry/steps/IdentityStep.svelte";
 	import NutrientStep from "$lib/components/ingredients/manual-entry/steps/NutrientStep.svelte";
 	import ServingsStep from "$lib/components/ingredients/manual-entry/steps/ServingsStep.svelte";
@@ -66,9 +67,7 @@
 		showOptionalProductImageUpload,
 		trustedProductImageUrl,
 		frontPhoto,
-		imageCropX,
-		imageCropY,
-		imageCropZoom,
+		imagePlacement,
 		saveDestination,
 		error,
 		lastOutcome,
@@ -98,9 +97,7 @@
 		onApplyVerifiedBarcode,
 		onDetachBarcodeForPrivateSave,
 		onFrontPhotoChange,
-		onImageCropXChange,
-		onImageCropYChange,
-		onImageCropZoomChange,
+		onImagePlacementChange,
 		onNutritionPhotoChange,
 		onBarcodePhotoChange,
 		onSaveDestinationChange,
@@ -155,9 +152,7 @@
 		showOptionalProductImageUpload: boolean;
 		trustedProductImageUrl: string;
 		frontPhoto: File | null;
-		imageCropX: number;
-		imageCropY: number;
-		imageCropZoom: number;
+		imagePlacement: ImagePlacementValue;
 		saveDestination: SmoothieListKey;
 		error: string;
 		lastOutcome: CustomIngredientOutcomeState | null;
@@ -194,9 +189,7 @@
 		onApplyVerifiedBarcode: () => void | Promise<void>;
 		onDetachBarcodeForPrivateSave: () => void;
 		onFrontPhotoChange: (file: File | null) => void;
-		onImageCropXChange: (value: number) => void;
-		onImageCropYChange: (value: number) => void;
-		onImageCropZoomChange: (value: number) => void;
+		onImagePlacementChange: (value: ImagePlacementValue) => void;
 		onNutritionPhotoChange: (file: File | null) => void;
 		onBarcodePhotoChange: (file: File | null) => void;
 		onSaveDestinationChange: (destination: SmoothieListKey) => void;
@@ -303,11 +296,9 @@
 		{validatingBarcodeShare}
 		{requiresCatalogEvidence}
 		{showOptionalProductImageUpload}
-		{trustedProductImageUrl}
-		{frontPhoto}
-		{imageCropX}
-		{imageCropY}
-		{imageCropZoom}
+			{trustedProductImageUrl}
+			{frontPhoto}
+			{imagePlacement}
 		{saveDestination}
 		{error}
 		{lastOutcome}
@@ -317,11 +308,9 @@
 		{saving}
 		onShareChange={onShareChange}
 		onApplyVerifiedBarcode={onApplyVerifiedBarcode}
-		onDetachBarcodeForPrivateSave={onDetachBarcodeForPrivateSave}
-		onFrontPhotoChange={onFrontPhotoChange}
-		onImageCropXChange={onImageCropXChange}
-		onImageCropYChange={onImageCropYChange}
-		onImageCropZoomChange={onImageCropZoomChange}
+			onDetachBarcodeForPrivateSave={onDetachBarcodeForPrivateSave}
+			onFrontPhotoChange={onFrontPhotoChange}
+			onImagePlacementChange={onImagePlacementChange}
 		onNutritionPhotoChange={onNutritionPhotoChange}
 		onBarcodePhotoChange={onBarcodePhotoChange}
 		onSaveDestinationChange={onSaveDestinationChange}

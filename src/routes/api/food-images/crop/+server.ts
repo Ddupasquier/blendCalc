@@ -3,6 +3,12 @@ import type { RequestHandler } from "./$types";
 import { updateFoodImageAssetPlacement } from "$lib/server/products/foodImages.server";
 import { getUserAppRole } from "$lib/utils/moderation/moderation";
 import type { FoodImageAsset } from "$lib/utils/food/types";
+import {
+	CURRENT_IMAGE_PLACEMENT_VERSION,
+	IMAGE_PLACEMENT_MAX_ZOOM,
+	isImageFitMode,
+} from "$lib/utils/food/images/imagePlacement";
+import type { ImageFitMode } from "$lib/utils/food/images/types";
 
 const allowedSources = new Set<FoodImageAsset["source"]>([
 	"open-food-facts",
@@ -16,7 +22,6 @@ const allowedRoles = new Set<FoodImageAsset["role"]>([
 	"ingredient",
 	"generic",
 ]);
-
 const clamp = (value: unknown, min: number, max: number, fallback: number) => {
 	const numberValue = Number(value);
 	if (!Number.isFinite(numberValue)) return fallback;
@@ -36,10 +41,17 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 	const source = String(body.source ?? "") as FoodImageAsset["source"];
 	const sourceReference = String(body.sourceReference ?? "").trim();
 	const imageRole = String(body.role ?? "") as FoodImageAsset["role"];
+	const requestedFitMode = String(body.fitMode ?? "");
 
-	if (!allowedSources.has(source) || !sourceReference || !allowedRoles.has(imageRole)) {
+	if (
+		!allowedSources.has(source) ||
+		!sourceReference ||
+		!allowedRoles.has(imageRole) ||
+		!isImageFitMode(requestedFitMode)
+	) {
 		throw kitError(400, "Choose a valid image to update.");
 	}
+	const fitMode: ImageFitMode = requestedFitMode;
 
 	const image = await updateFoodImageAssetPlacement({
 		source,
@@ -49,7 +61,9 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 		crop: {
 			cropX: clamp(body.cropX, 0, 100, 50),
 			cropY: clamp(body.cropY, 0, 100, 50),
-			cropZoom: clamp(body.cropZoom, 1, 4, 1),
+			cropZoom: clamp(body.cropZoom, 1, IMAGE_PLACEMENT_MAX_ZOOM, 1),
+			fitMode,
+			placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
 		},
 	});
 

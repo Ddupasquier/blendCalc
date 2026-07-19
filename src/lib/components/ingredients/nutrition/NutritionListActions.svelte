@@ -191,7 +191,7 @@
 			disabled={!food || pendingAction !== null}
 			onclick={handleAddToFridge}
 		>
-			{pendingAction === "fridge" ? "Adding…" : "Add to Fridge"}
+			Add to Fridge
 		</RoundedActionButton>
 		<RoundedActionButton
 			fullWidth
@@ -200,7 +200,7 @@
 			disabled={!food || pendingAction !== null}
 			onclick={handleAddToShopping}
 		>
-			{pendingAction === "shopping" ? "Adding…" : "Shopping List"}
+			Shopping List
 		</RoundedActionButton>
 	</div>
 {/if}

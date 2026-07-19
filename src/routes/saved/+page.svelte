@@ -4,6 +4,7 @@
     import Pagination from "$lib/components/common/lists/Pagination.svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge.svelte";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
     import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
     import {
         clampPage,
@@ -179,8 +180,7 @@
 
     {#if loadingDrinks && drinks.length === 0}
 		<section class="saved-empty" aria-busy="true">
-			<h3>Loading saved drinks…</h3>
-			<p>Checking your account for saved mixes.</p>
+			<LoadingSpinner label="Loading saved drinks" showLabel />
 		</section>
     {:else if drinks.length > 0}
         <ListControls
@@ -239,7 +239,8 @@
 							disabled={loadingDrinkId !== null || deletingDrinkId !== null}
 							onclick={() => void loadDrink(drink)}
 						>
-                            {loadingDrinkId === drink.id ? "Loading…" : "Load"}
+							{#if loadingDrinkId === drink.id}<LoadingSpinner size="small" decorative />{/if}
+							Load
                         </button>
                         <button
                             class="saved-card__delete"
@@ -407,8 +408,12 @@
         gap: $app-gap-sm;
         justify-content: flex-end;
 
-        button {
-            padding: 0.4rem 0.8rem;
+		button {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: $app-gap-xs;
+			padding: 0.4rem 0.8rem;
             color: $app-btn-text;
             background: $app-btn-bg;
             border-radius: $app-radius-pill;

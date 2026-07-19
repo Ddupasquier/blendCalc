@@ -126,6 +126,7 @@ export type PillButtonProps = {
 	busy?: boolean;
 	disabled?: boolean;
 	fullWidth?: boolean;
+	privileged?: boolean;
 	ariaLabel?: string;
 	onclick?: ButtonClickHandler;
 	children?: Snippet;

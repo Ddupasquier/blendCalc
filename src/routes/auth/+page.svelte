@@ -3,6 +3,7 @@
 	import { onMount } from "svelte";
 	import FloatingFruitBackground from "$lib/components/app/FloatingFruitBackground.svelte";
 	import PasswordRequirements from "$lib/components/auth/PasswordRequirements.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import { APP_NAME } from "$lib/config/brand";
 	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
@@ -100,7 +101,8 @@
 			<input type="hidden" name="next" value={form?.next ?? data.next} />
 			<button class="google-button" type="submit" disabled={isSubmitting}>
 				<span aria-hidden="true">G</span>
-				{isSubmitting ? "Opening Google…" : "Continue with Google"}
+				{#if isSubmitting}<LoadingSpinner size="small" decorative />{/if}
+				Continue with Google
 			</button>
 		</form>
 
@@ -166,11 +168,8 @@
 					type="submit"
 					disabled={isSubmitting}
 				>
-					{isSubmitting
-						? "Working…"
-						: authMode === "signUp"
-							? "Create account"
-							: "Sign in"}
+					{#if isSubmitting}<LoadingSpinner size="small" decorative />{/if}
+					{authMode === "signUp" ? "Create account" : "Sign in"}
 				</button>
 				<button
 					class="email-button email-button--secondary"
@@ -392,7 +391,7 @@
 			border-color: $app-primary;
 		}
 
-		span {
+		> span:first-child {
 			display: grid;
 			place-items: center;
 			width: 1.35rem;

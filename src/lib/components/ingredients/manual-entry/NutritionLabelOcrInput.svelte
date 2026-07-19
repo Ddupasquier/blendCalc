@@ -139,8 +139,12 @@
 		/>
 	</label>
 
-	<RoundedActionButton onclick={scanPhoto} disabled={!photo || scanning || mappings.length === 0}>
-		{scanning ? "Reading label…" : "Read label"}
+	<RoundedActionButton
+		onclick={scanPhoto}
+		busy={scanning}
+		disabled={!photo || mappings.length === 0}
+	>
+		Read label
 	</RoundedActionButton>
 
 	{#if scanning}

@@ -1,4 +1,7 @@
 <script lang="ts">
+	import ActionButton from "$lib/components/common/buttons/ActionButton.svelte";
+	import type { ConfirmationDialogProps } from "$lib/components/common/dialogs/types";
+
 	let {
 		open,
 		title,
@@ -9,17 +12,7 @@
 		danger = false,
 		onConfirm,
 		onCancel,
-	} = $props<{
-		open: boolean;
-		title: string;
-		description: string;
-		confirmLabel?: string;
-		cancelLabel?: string;
-		busy?: boolean;
-		danger?: boolean;
-		onConfirm: () => void;
-		onCancel: () => void;
-	}>();
+	}: ConfirmationDialogProps = $props();
 </script>
 
 {#if open}
@@ -43,15 +36,16 @@
 				<p id="confirmation-dialog-description">{description}</p>
 			</div>
 			<div class="confirmation-dialog__actions">
-				<button type="button" onclick={onCancel} disabled={busy}>{cancelLabel}</button>
-				<button
-					class:confirmation-dialog__danger={danger}
-					type="button"
+				<ActionButton variant="ghost" disabled={busy} onclick={onCancel}>
+					{cancelLabel}
+				</ActionButton>
+				<ActionButton
+					variant={danger ? "danger" : "primary"}
+					busy={busy}
 					onclick={onConfirm}
-					disabled={busy}
 				>
-					{busy ? `${confirmLabel}…` : confirmLabel}
-				</button>
+					{confirmLabel}
+				</ActionButton>
 			</div>
 		</div>
 	</div>
@@ -97,25 +91,5 @@
 		display: flex;
 		justify-content: flex-end;
 		gap: $app-gap-sm;
-
-		button {
-			padding: 0.6rem 1rem;
-			color: $app-primary;
-			background: $app-accent;
-			border-radius: $app-radius-pill;
-			font-family: $app-button-font-family;
-			font-weight: $app-button-font-weight;
-			line-height: $app-button-line-height;
-		}
-
-		button:disabled {
-			cursor: wait;
-			opacity: 0.65;
-		}
-	}
-
-	.confirmation-dialog__danger {
-		color: $app-btn-text !important;
-		background: $app-warning-strong !important;
 	}
 </style>

@@ -2,6 +2,7 @@
 	import { enhance } from "$app/forms";
 	import { invalidateAll } from "$app/navigation";
 	import User from "$lib/assets/icons/User.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker.svelte";
 	import { APP_NAME } from "$lib/config/brand";
@@ -346,7 +347,8 @@
 			>{profileValues.bio}</textarea>
 
 			<button class="primary-action" type="submit" disabled={profilePending}>
-				{profilePending ? "Saving profile…" : "Save profile"}
+				{#if profilePending}<LoadingSpinner size="small" decorative />{/if}
+				Save profile
 			</button>
 		</form>
 	</section>
@@ -411,11 +413,13 @@
 
 			<div class="form-actions">
 				<button class="primary-action" type="submit" disabled={avatarPending}>
-					{avatarPending ? "Saving image…" : "Upload image"}
+					{#if avatarPending}<LoadingSpinner size="small" decorative />{/if}
+					Upload image
 				</button>
 				{#if data.profile?.avatar_path}
 					<button class="secondary-action" type="submit" formaction="?/removeAvatar" formnovalidate disabled={avatarPending}>
-						{avatarPending ? "Working…" : "Remove image"}
+						{#if avatarPending}<LoadingSpinner size="small" decorative />{/if}
+						Remove image
 					</button>
 				{/if}
 			</div>
@@ -583,7 +587,8 @@
 			</label>
 
 			<button class="primary-action" type="submit" disabled={foodPreferencesDisabled}>
-				{foodPreferencesPending ? "Saving preferences…" : "Save food preferences"}
+				{#if foodPreferencesPending}<LoadingSpinner size="small" decorative />{/if}
+				Save food preferences
 			</button>
 		</form>
 	</section>
@@ -878,6 +883,10 @@
 
 	.primary-action,
 	.secondary-action {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: $app-gap-xs;
 		width: fit-content;
 		font-family: $app-button-font-family;
 		font-weight: $app-button-font-weight;
