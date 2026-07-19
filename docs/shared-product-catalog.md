@@ -1,32 +1,42 @@
 # Shared product catalog
 
-The shared catalog lets one verified packaged product become searchable for every signed-in user without exposing the account that submitted it.
+The shared catalog lets one verified packaged product become searchable for every
+signed-in user without exposing the account that submitted it.
 
 ## User flow
 
 1. A user scans or enters a valid UPC/EAN barcode.
 2. The ingredient is always saved to that user's private custom-food list first.
 3. For eligible labels, the user can explicitly opt in to catalog review.
-4. The server validates the barcode, serving weight, nutrient values, and basic macro relationships.
-5. An exact USDA FoodData Central barcode match is published automatically, with USDA selected as the canonical source.
+4. The server validates the barcode, serving weight, nutrient values, and basic macro
+   relationships.
+5. An exact USDA FoodData Central barcode match is published automatically, with USDA
+   selected as the canonical source.
 6. Unknown labels require front-package, nutrition-label, and barcode photos.
 7. Unknown labels stay pending until a moderator approves or rejects them.
-8. Approved products appear in ingredient text search and are checked before outside barcode services.
-9. Accounts with 5 rejected shared-product submissions in 30 days are paused from sharing products for 30 days.
+8. Approved products appear in ingredient text search and are checked before outside
+   barcode services.
+9. Accounts with 5 rejected shared-product submissions in 30 days are paused from
+   sharing products for 30 days.
 
-Barcode autofill and publication use two category layers: raw category values
-from the source APIs remain on the food payload for provenance, while
-`category_option_id` points to the clean DB-backed category shown in the app.
-Publication is blocked if a canonical category cannot be resolved.
+Barcode autofill and publication use two category layers: raw category values from the
+source APIs remain on the food payload for provenance, while `category_option_id` points
+to the clean DB-backed category shown in the app. Publication is blocked if a canonical
+category cannot be resolved.
 
-Submitting is optional. A failed catalog submission never rolls back the user's private ingredient.
-Submission pauses only affect shared catalog submissions. Users can still save private
-custom foods, use their fridge, and build mixes.
+Submitting is optional. A failed catalog submission never rolls back the user's private
+ingredient. Submission pauses only affect shared catalog submissions. Users can still
+save private custom foods, use their fridge, and build mixes.
 
 ## Source policy
 
-- **USDA FoodData Central:** exact barcode matches may auto-publish. USDA data is CC0/public domain.
-- **Open Food Facts:** used for live barcode lookup with attribution. Its ODbL records are not copied into this independently managed shared catalog. Package image metadata may be stored in `food_image_assets` with source, license, attribution, and confidence so the UI can render source-backed images without treating the full record as shared catalog data.
+- **USDA FoodData Central:** exact barcode matches may auto-publish. USDA data is
+  CC0/public domain.
+- **Open Food Facts:** used for live barcode lookup with attribution. Its ODbL records
+  are not copied into this independently managed shared catalog. Package image metadata
+  may be stored in `food_image_assets` with source, license, attribution, and confidence
+  so the UI can render source-backed images without treating the full record as shared
+  catalog data.
 - **User-entered labels:** may be published only after moderator review.
 
 ## Provenance and merging
@@ -35,117 +45,114 @@ Every published field records the observation that supplied it. Source observati
 selected field provenance, and disagreements are stored separately from the canonical
 product row.
 
-Source/API product names are normalized to readable title-style capitalization
-and use `&` instead of the standalone word `and` before publication so
-inconsistent vendor naming does not become app display names. Canonical food
-JSON stores `nameProvenance` as `source`, `barcode`, or
-`user`: source and barcode-assisted names use the shared formatter, while fully
-manual and personally renamed user-owned capitalization is preserved exactly. Raw API
-cache payloads, observations, revisions, and evidence remain unchanged.
+Source/API product names are normalized to readable title-style capitalization and use
+`&` instead of the standalone word `and` before publication so inconsistent vendor
+naming does not become app display names. Canonical food JSON stores `nameProvenance` as
+`source`, `barcode`, or `user`: source and barcode-assisted names use the shared
+formatter, while fully manual and personally renamed user-owned capitalization is
+preserved exactly. Raw API cache payloads, observations, revisions, and evidence remain
+unchanged.
 
-- Exact USDA barcode matches outrank user-entered values. When USDA returns
-  duplicate records for one GTIN, select the newest active `Branded` record.
+- Exact USDA barcode matches outrank user-entered values. When USDA returns duplicate
+  records for one GTIN, select the newest active `Branded` record.
 - Generic USDA food searches prefer `Foundation`, then `SR Legacy`, then
   `Survey (FNDDS)` only after description relevance has been compared.
 - Values from different sources are never averaged.
-- Do not fill a missing packaged-label nutrient from a different or generic food
-  record. Open Food Facts remains a secondary barcode/package cross-check rather
-  than a replacement for an exact USDA record.
+- Do not fill a missing packaged-label nutrient from a different or generic food record.
+  Open Food Facts remains a secondary barcode/package cross-check rather than a
+  replacement for an exact USDA record.
 - A reported zero is kept as zero. A missing nutrient remains unknown.
-- Canonical categories are resolved through database options and mappings; they
-  are not replaced with a generic packaged-food label during publication.
-- Raw USDA and Open Food Facts category values remain attached to the food
-  payload so mappings can improve without losing source information.
-- Material serving, brand, unit, or nutrient disagreements are recorded as conflicts for review.
-- Moderator-reviewed labels remain identified as community-reviewed rather than source-verified.
+- Canonical categories are resolved through database options and mappings; they are not
+  replaced with a generic packaged-food label during publication.
+- Raw USDA and Open Food Facts category values remain attached to the food payload so
+  mappings can improve without losing source information.
+- Material serving, brand, unit, or nutrient disagreements are recorded as conflicts for
+  review.
+- Moderator-reviewed labels remain identified as community-reviewed rather than
+  source-verified.
 
-This structure allows another source to be added later without losing which source supplied
-each value or silently replacing a trusted value.
+This structure allows another source to be added later without losing which source
+supplied each value or silently replacing a trusted value.
 
 ## Serving data
 
-Reported serving sizes are normalized into `food_servings` when products are
-saved, submitted, approved, revised, or observed. Each row keeps the readable
-label, gram weight, optional amount/unit pair, primary flag, source reference,
-and confidence. The product JSON remains a compatibility snapshot, but the
-normalized rows are what nutrition views load and what future mix conversions
-should consume.
+Reported serving sizes are normalized into `food_servings` when products are saved,
+submitted, approved, revised, or observed. Each row keeps the readable label, gram
+weight, optional amount/unit pair, primary flag, source reference, and confidence. The
+product JSON remains a compatibility snapshot, but the normalized rows are what
+nutrition views load and what future mix conversions should consume.
 
-The nutrition view defaults to the primary reported serving when one exists and
-also offers a 100g standard view. Missing source serving data stays missing; a
-100g nutrition basis is not treated as proof that the package reports a 100g
-serving. Database triggers synchronize future writes, and the serving migration
-backfills valid serving data from existing catalog and user food records.
+The nutrition view defaults to the primary reported serving when one exists and also
+offers a 100g standard view. Missing source serving data stays missing; a 100g nutrition
+basis is not treated as proof that the package reports a 100g serving. Database triggers
+synchronize future writes, and the serving migration backfills valid serving data from
+existing catalog and user food records.
 
 ## API caching
 
-USDA search, barcode search, and detail responses are cached server-side in
-Supabase with expiration timestamps. Open Food Facts barcode responses use the
-same server-only cache in a separate provider namespace. Open Food Facts cache
-rows remain raw ODbL provider data: they are not blended into USDA data or
-treated as independently owned canonical records. Cache expiration, attribution,
-and source identity remain explicit so broader reuse can continue to meet the
-provider's license and refresh requirements.
+USDA search, barcode search, and detail responses are cached server-side in Supabase
+with expiration timestamps. Open Food Facts barcode responses use the same server-only
+cache in a separate provider namespace. Open Food Facts cache rows remain raw ODbL
+provider data: they are not blended into USDA data or treated as independently owned
+canonical records. Cache expiration, attribution, and source identity remain explicit so
+broader reuse can continue to meet the provider's license and refresh requirements.
 
-The browser never receives provider credentials. Cached data reduces rate-limit
-pressure but is not treated as permanently current. A recent expired row may be
-used only as a temporary outage fallback. ETags refresh unchanged records without
-downloading the body again. Cache failures do not block a successful live lookup.
-Barcode providers try the normal package code before padded equivalents, stop
-after the first exact usable match, and share an identical request that is already
-running instead of starting a duplicate call.
-Allowed package image metadata is stored separately in `food_image_assets` with attribution.
-Trusted DB/API product images are used first. User-uploaded product photos stay in
-private evidence storage until a moderator approves them, then a public
-`community-reviewed` image asset is created with the moderator's crop values.
-Its ODbL database terms still require attribution, provider separation, refresh
-planning, and a deliberate share-alike decision before building a broader derived
-database from its records.
+The browser never receives provider credentials. Cached data reduces rate-limit pressure
+but is not treated as permanently current. A recent expired row may be used only as a
+temporary outage fallback. ETags refresh unchanged records without downloading the body
+again. Cache failures do not block a successful live lookup. Barcode providers try the
+normal package code before padded equivalents, stop after the first exact usable match,
+and share an identical request that is already running instead of starting a duplicate
+call. Allowed package image metadata is stored separately in `food_image_assets` with
+attribution. Trusted DB/API product images are used first. User-uploaded product photos
+stay in private evidence storage until a moderator approves them, then a public
+`community-reviewed` image asset is created with the moderator's crop values. Its ODbL
+database terms still require attribution, provider separation, refresh planning, and a
+deliberate share-alike decision before building a broader derived database from its
+records.
 
-Keep source handling explicit. Do not merge Open Food Facts payloads into `shared_products` unless the entire downstream database licensing and attribution model is intentionally changed.
+Keep source handling explicit. Do not merge Open Food Facts payloads into
+`shared_products` unless the entire downstream database licensing and attribution model
+is intentionally changed.
 
-Ingredient cards and filters keep two separate identities: the food record's
-origin (`usda`, `open-food-facts`, `shared-catalog`, or `custom`) and its current
-trust status (`source-verified`, `imported`, `corroborated`,
-`moderator-reviewed`, `pending-review`, or `user-private`). Public catalog membership does not
-erase the original provider, and image/unit-support sources are shown only in
-their detailed provenance rather than as the primary food source.
+Ingredient cards and filters keep two separate identities: the food record's origin
+(`usda`, `open-food-facts`, `shared-catalog`, or `custom`) and its current trust status
+(`source-verified`, `imported`, `corroborated`, `moderator-reviewed`, `pending-review`,
+or `user-private`). Public catalog membership does not erase the original provider, and
+image/unit-support sources are shown only in their detailed provenance rather than as
+the primary food source.
 
 Saved Fridge and Shopping List rows hold normalized links to the active
-`shared_products` row and the current user's pending
-`shared_product_submissions` row. Database triggers refresh those links after a
-list write, automatic publication, moderator action, product retirement, or
-source/confidence change. The UI reads these links and their indexed source/trust
-projection instead of guessing from an older JSON snapshot. This means an
-approved product cannot continue to display `Private`, and a pending catalog
-update can display `Pending` without pretending the underlying active product
-has disappeared.
+`shared_products` row and the current user's pending `shared_product_submissions` row.
+Database triggers refresh those links after a list write, automatic publication,
+moderator action, product retirement, or source/confidence change. The UI reads these
+links and their indexed source/trust projection instead of guessing from an older JSON
+snapshot. This means an approved product cannot continue to display `Private`, and a
+pending catalog update can display `Pending` without pretending the underlying active
+product has disappeared.
 
 ## Source quality monitoring
 
-External source usage is measured in privacy-safe daily aggregates. Runtime
-metrics separate logical lookups from real outbound requests and USDA cache
-hits, then track source errors, exact matches, nutrient depth, useful product
-metadata, and response time. They do not retain barcodes, search terms, users,
-or raw API responses.
+External source usage is measured in privacy-safe daily aggregates. Runtime metrics
+separate logical lookups from real outbound requests and USDA cache hits, then track
+source errors, exact matches, nutrient depth, useful product metadata, and response
+time. They do not retain barcodes, search terms, users, or raw API responses.
 
-Use `npm run report:source-quality` to inspect normal traffic. Because Open Food
-Facts is normally called only after USDA misses, runtime match rates are not a
-fair head-to-head ranking. Run `npm run benchmark:source-quality -- --limit=10`
-and then `npm run report:source-quality -- --origin=benchmark` to send the same
-saved barcodes to both sources. Treat that coverage report as evidence about
-availability and fullness, not permission to replace USDA as the primary
-nutrition authority.
+Use `npm run report:source-quality` to inspect normal traffic. Because Open Food Facts
+is normally called only after USDA misses, runtime match rates are not a fair
+head-to-head ranking. Run `npm run benchmark:source-quality -- --limit=10` and then
+`npm run report:source-quality -- --origin=benchmark` to send the same saved barcodes to
+both sources. Treat that coverage report as evidence about availability and fullness,
+not permission to replace USDA as the primary nutrition authority.
 
-Use `--reset-today` when validating a code-level request optimization. It clears
-only today's synthetic `benchmark` rows before the run, leaving runtime metrics
-untouched, so old benchmark behavior does not distort the new calls-per-lookup
-result.
+Use `--reset-today` when validating a code-level request optimization. It clears only
+today's synthetic `benchmark` rows before the run, leaving runtime metrics untouched, so
+old benchmark behavior does not distort the new calls-per-lookup result.
 
 Both reports show `Calls / lookup`. The controlled benchmark warns when a source
-averages more than 2.5 outbound calls per logical lookup so equivalent barcode
-fan-out, unnecessary detail requests, and excessive retries are caught before a
-new source is trusted at production scale.
+averages more than 2.5 outbound calls per logical lookup so equivalent barcode fan-out,
+unnecessary detail requests, and excessive retries are caught before a new source is
+trusted at production scale.
 
 ## Database security
 
@@ -174,8 +181,8 @@ Migrations:
 - Public product rows do not contain submitter IDs or email addresses.
 - Evidence images are private, short-lived signed URLs are created only for moderators,
   and evidence paths never appear in public product rows.
-- Approved public product images live in `food-image-assets`; private evidence
-  paths are never exposed through public ingredient data.
+- Approved public product images live in `food-image-assets`; private evidence paths are
+  never exposed through public ingredient data.
 - API cache, source observations, provenance, and conflict tables are service-role only.
 
 Apply and regenerate types:
@@ -193,83 +200,104 @@ npm run backfill:shared-product-categories
 ```
 
 The backfill checks both USDA FoodData Central and Open Food Facts, keeps raw
-observations and source references, then stores the resolved canonical category
-on submissions, products, and revisions.
+observations and source references, then stores the resolved canonical category on
+submissions, products, and revisions.
 
 ## Moderation
 
-Pending product submissions appear on `/moderation` for moderators and admins. Review all
-three evidence photos against the entered serving and nutrient values before approval.
+Pending product submissions appear on `/moderation` for moderators and admins. Review
+all three evidence photos against the entered serving and nutrient values before
+approval.
 
-- **Approve:** publishes the submitted label as `community-reviewed` and appends a revision.
+- **Approve:** publishes the submitted label as `community-reviewed` and appends a
+  revision.
 - **Approve image:** if the submission has a front-package image, the moderator can
-  adjust the card crop. Approval copies that image into public product image
-  storage and records it in `food_image_assets`.
-- **Reject:** retains the private user ingredient, records the review note, and does not publish a shared product.
+  adjust the card crop. Approval copies that image into public product image storage and
+  records it in `food_image_assets`.
+- **Reject:** retains the private user ingredient, records the review note, and does not
+  publish a shared product.
 - **Submission pause:** 5 rejected submissions in 30 days blocks new shared-catalog
   submissions for 30 days. This prevents repeated bad catalog entries without blocking
   private food tracking.
 
 ## Submit and moderation improvement plan
 
-The current schema already gives us useful pieces: private custom foods, shared
-product submissions, approved shared products, observations, field provenance,
-conflicts, validation reports, evidence photos, and rejection blocks. New
-catalog features should use those pieces first.
+The current schema already gives us useful pieces: private custom foods, shared product
+submissions, approved shared products, observations, field provenance, conflicts,
+validation reports, evidence photos, and rejection blocks. New catalog features should
+use those pieces first.
 
 ### Intake outcomes
 
-When a user tries to share a barcoded manual entry, route it into one of these
-clear outcomes:
+When a user tries to share a barcoded manual entry, route it into one of these clear
+outcomes:
 
-1. **Private save only:** no valid barcode, no consent, or a conflicting barcode has been explicitly removed. A user-authored identity must never remain attached to a verified barcode for private saving.
-2. **Already in catalog:** barcode exists and submitted data matches the active shared product. Tell the user it already exists; do not create a duplicate submission.
-3. **Catalog update request:** barcode exists, but the user’s data has meaningful differences. Let the user submit evidence, send it to moderation, and keep their private ingredient unchanged.
-4. **Trusted source auto-accept:** barcode has a trusted source match and submitted data matches closely enough. Publish without human review and keep source provenance.
-5. **Human review:** unknown label, same-product source disagreement, or missing confidence. Require package, nutrition label, and barcode evidence.
-6. **Silent machine block:** the submitted product identity is wildly different from the verified barcode match. Offer verified autofill or remove the barcode and save the user-authored item privately; do not create a normal moderation item.
+1. **Private save only:** no valid barcode, no consent, or a conflicting barcode has
+   been explicitly removed. A user-authored identity must never remain attached to a
+   verified barcode for private saving.
+2. **Already in catalog:** barcode exists and submitted data matches the active shared
+   product. Tell the user it already exists; do not create a duplicate submission.
+3. **Catalog update request:** barcode exists, but the user’s data has meaningful
+   differences. Let the user submit evidence, send it to moderation, and keep their
+   private ingredient unchanged.
+4. **Trusted source auto-accept:** barcode has a trusted source match and submitted data
+   matches closely enough. Publish without human review and keep source provenance.
+5. **Human review:** unknown label, same-product source disagreement, or missing
+   confidence. Require package, nutrition label, and barcode evidence.
+6. **Silent machine block:** the submitted product identity is wildly different from the
+   verified barcode match. Offer verified autofill or remove the barcode and save the
+   user-authored item privately; do not create a normal moderation item.
 
 ### Suggested checks
 
-- **Barcode:** valid GTIN format, duplicate active product, duplicate pending submission, trusted-source match, and source mismatch.
-- **Identity:** product name similarity, brand similarity, category similarity, and ingredient list similarity.
-- **Serving:** positive serving weight, unit consistency, and volume/weight consistency when both are present.
-- **Nutrients:** required nutrients present, typed `0` accepted as real data, no negative values, child nutrients not greater than parent nutrients, and extreme values flagged.
-- **Evidence:** front package, nutrition label, and barcode photos required for unknown labels, catalog update requests, and source disagreement.
-- **User history:** repeated human rejections pause sharing, but silent machine blocks should be tracked separately unless we explicitly decide they should count.
+- **Barcode:** valid GTIN format, duplicate active product, duplicate pending
+  submission, trusted-source match, and source mismatch.
+- **Identity:** product name similarity, brand similarity, category similarity, and
+  ingredient list similarity.
+- **Serving:** positive serving weight, unit consistency, and volume/weight consistency
+  when both are present.
+- **Nutrients:** required nutrients present, typed `0` accepted as real data, no
+  negative values, child nutrients not greater than parent nutrients, and extreme values
+  flagged.
+- **Evidence:** front package, nutrition label, and barcode photos required for unknown
+  labels, catalog update requests, and source disagreement.
+- **User history:** repeated human rejections pause sharing, but silent machine blocks
+  should be tracked separately unless we explicitly decide they should count.
 
 ### Auto-accept candidates
 
 - Exact trusted barcode source match with no material conflicts.
 - Existing shared product match with no changes.
-- Missing optional nutrients filled from a trusted source without changing user-entered required label data.
+- Missing optional nutrients filled from a trusted source without changing user-entered
+  required label data.
 
 ### Auto-block candidates
 
-These should not show as normal moderation rows unless we intentionally want
-moderators to audit them:
+These should not show as normal moderation rows unless we intentionally want moderators
+to audit them:
 
-- Barcode belongs to an existing catalog product, but the submitted name/brand/category is clearly unrelated.
-- Barcode has a trusted source match, but the submitted nutrients are wildly outside the source range.
+- Barcode belongs to an existing catalog product, but the submitted name/brand/category
+  is clearly unrelated.
+- Barcode has a trusted source match, but the submitted nutrients are wildly outside the
+  source range.
 - Submission appears to reuse a barcode for a different product.
 - Required evidence is absent after the flow already told the user it is required.
 
 ### Schema note
 
-Normal `rejected` submissions count toward the 5-rejection sharing pause.
-Silent machine blocks use `shared_product_submissions.status = 'auto_declined'`
-and do not count as normal moderator rejections. That keeps spam protection
-useful without punishing honest users who hit a machine guardrail while saving a
-private ingredient.
+Normal `rejected` submissions count toward the 5-rejection sharing pause. Silent machine
+blocks use `shared_product_submissions.status = 'auto_declined'` and do not count as
+normal moderator rejections. That keeps spam protection useful without punishing honest
+users who hit a machine guardrail while saving a private ingredient.
 
-Current server behavior compares new barcoded submissions against an active
-shared product before deciding the outcome:
+Current server behavior compares new barcoded submissions against an active shared
+product before deciding the outcome:
 
 - matching catalog data returns `already-available` and does not create a new
   submission;
 - meaningful differences become a pending catalog update request with evidence;
-- wildly unrelated data is stored as `auto_declined` for audit and never appears
-  in the normal moderation queue.
+- wildly unrelated data is stored as `auto_declined` for audit and never appears in the
+  normal moderation queue.
 
 ## Verification rules
 
@@ -283,47 +311,47 @@ Current automatic checks reject:
 - fiber or sugar values greater than total carbohydrates
 
 These checks identify malformed data; they do not prove that a manually entered label is
-truthful. Human review and complete image evidence remain required when USDA cannot verify
-the barcode.
+truthful. Human review and complete image evidence remain required when USDA cannot
+verify the barcode.
 
 ## Nutrition Completeness Flow
 
 Packaged products and generic foods use different evidence paths:
 
 1. Exact barcode lookup checks the blendCalc catalog/cache first.
-2. Missing packaged-product fields are filled independently from active legal
-   sources. USDA nutrition stays authoritative when reported; another source
-   may supply only an image, category, or serving.
-3. Generic search can return active national dataset records. These keep their
-   original food/preparation identity and are not automatically merged into a
-   packaged barcode product.
+2. Missing packaged-product fields are filled independently from active legal sources.
+   USDA nutrition stays authoritative when reported; another source may supply only an
+   image, category, or serving.
+3. Generic search can return active national dataset records. These keep their original
+   food/preparation identity and are not automatically merged into a packaged barcode
+   product.
 4. A database-backed completeness profile checks whether required nutrients are
    reported. It does not change missing, trace, or unmapped values into zero.
-5. Optional label recognition may suggest missing packaged-label values, but
-   the user must review and confirm them. Confirmed values remain user-label
-   observations and follow normal moderation rules if shared.
+5. Optional label recognition may suggest missing packaged-label values, but the user
+   must review and confirm them. Confirmed values remain user-label observations and
+   follow normal moderation rules if shared.
 
-Every accepted nutrient keeps its own source and source reference. Product-level
-field provenance separately records nutrition, image, category, and serving
-sources. A fuller secondary record may supplement missing fields but cannot
-silently overwrite an authoritative reported value or zero.
+Every accepted nutrient keeps its own source and source reference. Product-level field
+provenance separately records nutrition, image, category, and serving sources. A fuller
+secondary record may supplement missing fields but cannot silently overwrite an
+authoritative reported value or zero.
 
 ## Product Identifier QR Codes
 
 The scanner supports uncompressed GS1 Digital Link product QR codes containing
-application identifier `01` and a valid GTIN-14. The app extracts that GTIN
-locally and then uses the normal DB-first barcode lookup. It does not request the
-scanned URL. Lot, serial, expiration, query, and fragment data are removed before
-the safe product-level reference is stored. GS1 is therefore identifier
-provenance, not nutrition-source provenance.
+application identifier `01` and a valid GTIN-14. The app extracts that GTIN locally and
+then uses the normal DB-first barcode lookup. It does not request the scanned URL. Lot,
+serial, expiration, query, and fragment data are removed before the safe product-level
+reference is stored. GS1 is therefore identifier provenance, not nutrition-source
+provenance.
 
 ## Source Lifecycle
 
 Provider availability and legal status are checked before benchmarks or runtime
-integration. FoodRepo retired on 2026-02-28, so its source row is disabled and
-the planned benchmark is recorded as not run rather than misreported as poor
-coverage. Active providers must be tested on the same representative barcode
-sample before source priority changes.
+integration. FoodRepo retired on 2026-02-28, so its source row is disabled and the
+planned benchmark is recorded as not run rather than misreported as poor coverage.
+Active providers must be tested on the same representative barcode sample before source
+priority changes.
 
 ## QA moderation fixtures
 

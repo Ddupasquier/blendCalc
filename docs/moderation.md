@@ -4,10 +4,14 @@
 
 - Normal users have no row in `app_role_assignments`.
 - `moderator` can block and restore normal user accounts.
-- `admin` can block normal users and moderators. Admin accounts cannot be blocked through the web moderation page.
-- Authenticated browser clients can read only their own role and moderation status. They cannot grant roles, block users, edit audit history, or edit the signup blocklist.
-- The `/moderation` route verifies the signed-in user's database role before creating a server-only Supabase admin client.
-- `SUPABASE_SERVICE_ROLE_KEY` must exist only in server environments. Never prefix it with `PUBLIC_` or import it into a client component.
+- `admin` can block normal users and moderators. Admin accounts cannot be blocked
+  through the web moderation page.
+- Authenticated browser clients can read only their own role and moderation status. They
+  cannot grant roles, block users, edit audit history, or edit the signup blocklist.
+- The `/moderation` route verifies the signed-in user's database role before creating a
+  server-only Supabase admin client.
+- `SUPABASE_SERVICE_ROLE_KEY` must exist only in server environments. Never prefix it
+  with `PUBLIC_` or import it into a client component.
 
 ## Apply and configure
 
@@ -17,16 +21,21 @@ npm run db:push:auto
 npm run db:types
 ```
 
-Add `SUPABASE_SERVICE_ROLE_KEY` to the Vercel project as a sensitive **Production-only** environment variable, then redeploy. Do not expose this key to arbitrary preview branches; preview code can change before review and the service role bypasses RLS.
+Add `SUPABASE_SERVICE_ROLE_KEY` to the Vercel project as a sensitive **Production-only**
+environment variable, then redeploy. Do not expose this key to arbitrary preview
+branches; preview code can change before review and the service role bypasses RLS.
 
 ## Block notification emails
 
-Blocking through `/moderation` sends the affected user a transactional email that includes the selected public reason. The message never includes internal moderator notes.
+Blocking through `/moderation` sends the affected user a transactional email that
+includes the selected public reason. The message never includes internal moderator
+notes.
 
 The implementation uses Resend from server code. Before enabling it:
 
 1. Create a Resend account and API key.
-2. Add and verify a sending domain. Prefer a dedicated subdomain such as `updates.example.com` so transactional mail has an isolated sending reputation.
+2. Add and verify a sending domain. Prefer a dedicated subdomain such as
+   `updates.example.com` so transactional mail has an isolated sending reputation.
 3. Add these sensitive Production environment variables in Vercel and redeploy:
 
 ```dotenv
@@ -35,13 +44,21 @@ MODERATION_EMAIL_FROM="blendCalc <moderation@updates.example.com>"
 MODERATION_SUPPORT_EMAIL=support@example.com
 ```
 
-`MODERATION_SUPPORT_EMAIL` is optional. When present, it is used as the reply-to address and is named in the appeal instructions. `RESEND_API_KEY` and `MODERATION_EMAIL_FROM` are required for delivery and must never use a `PUBLIC_` prefix.
+`MODERATION_SUPPORT_EMAIL` is optional. When present, it is used as the reply-to address
+and is named in the appeal instructions. `RESEND_API_KEY` and `MODERATION_EMAIL_FROM`
+are required for delivery and must never use a `PUBLIC_` prefix.
 
-Each attempt is appended to `moderation_email_deliveries` using only a SHA-256 hash of the recipient address. Provider message IDs and failures are retained for operational review. The email request uses the moderation action ID as an idempotency key.
+Each attempt is appended to `moderation_email_deliveries` using only a SHA-256 hash of
+the recipient address. Provider message IDs and failures are retained for operational
+review. The email request uses the moderation action ID as an idempotency key.
 
-An email outage does not reverse an account block. The moderation page instead reports a warning, and the failed attempt remains in the delivery ledger for review. Apply `20260614040000_moderation_email_deliveries.sql` before deploying the email-enabled application code.
+An email outage does not reverse an account block. The moderation page instead reports a
+warning, and the failed attempt remains in the delivery ledger for review. Apply
+`20260614040000_moderation_email_deliveries.sql` before deploying the email-enabled
+application code.
 
-For local moderation commands and database pushes, create an ignored `.env.moderation.local`:
+For local moderation commands and database pushes, create an ignored
+`.env.moderation.local`:
 
 ```dotenv
 PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
@@ -56,7 +73,10 @@ Start from the tracked template:
 cp .env.moderation.example .env.moderation.local
 ```
 
-`SUPABASE_DB_PASSWORD` is the remote Postgres database password used by `npm run db:push:auto`. It is not your Supabase dashboard login password and not an API key. If you do not know it, reset it in Supabase’s Database settings, then paste the new value into `.env.moderation.local`.
+`SUPABASE_DB_PASSWORD` is the remote Postgres database password used by
+`npm run db:push:auto`. It is not your Supabase dashboard login password and not an API
+key. If you do not know it, reset it in Supabase’s Database settings, then paste the new
+value into `.env.moderation.local`.
 
 Bootstrap the first admin from the terminal:
 
@@ -84,25 +104,31 @@ A block performs four separate operations:
 
 1. Supabase Auth receives a long-duration account ban.
 2. `account_moderation` blocks existing sessions on their next app request.
-3. The normalized email hash is added to `blocked_signup_emails` for future signup rejection.
-4. A reason-specific account-blocked email is sent and recorded in `moderation_email_deliveries`.
+3. The normalized email hash is added to `blocked_signup_emails` for future signup
+   rejection.
+4. A reason-specific account-blocked email is sent and recorded in
+   `moderation_email_deliveries`.
 
-Every action is appended to `moderation_actions`. Do not delete moderation evidence as part of normal operations.
+Every action is appended to `moderation_actions`. Do not delete moderation evidence as
+part of normal operations.
 
 ## Enable future-signup blocking
 
-The migration creates `public.reject_blocked_signup(event jsonb)`, but Supabase must be told to use it:
+The migration creates `public.reject_blocked_signup(event jsonb)`, but Supabase must be
+told to use it:
 
 1. Open Supabase Dashboard → Authentication → Hooks.
 2. Enable **Before User Created**.
 3. Choose the Postgres function `public.reject_blocked_signup`.
 4. Save and test with a disposable blocked account.
 
-Without this hook, existing-account bans still work, but a user could register a new account using the same email after the original account is removed.
+Without this hook, existing-account bans still work, but a user could register a new
+account using the same email after the original account is removed.
 
 ## Profile image evidence
 
-Every accepted upload appends an immutable row to `profile_image_policy_acceptances` containing:
+Every accepted upload appends an immutable row to `profile_image_policy_acceptances`
+containing:
 
 - user ID
 - storage path
@@ -111,11 +137,14 @@ Every accepted upload appends an immutable row to `profile_image_policy_acceptan
 - exact rules accepted
 - acceptance timestamp
 
-The user can read these records but cannot update or delete them. This records agreement; it does not replace actual image moderation.
+The user can read these records but cannot update or delete them. This records
+agreement; it does not replace actual image moderation.
 
 ## IP addresses
 
-Do not use a permanent application-level IP ban as the primary identity block. Home and mobile IPs rotate, VPNs bypass them, and shared networks can cause unrelated people to be blocked.
+Do not use a permanent application-level IP ban as the primary identity block. Home and
+mobile IPs rotate, VPNs bypass them, and shared networks can cause unrelated people to
+be blocked.
 
 For active abuse:
 
@@ -126,4 +155,7 @@ For active abuse:
 
 ## Current moderation boundary
 
-Profile images remain private and the application does not currently run an automated image-classification service. Before avatars become publicly visible, upload them into a pending state, scan them server-side with a dedicated moderation provider, and expose only approved images.
+Profile images remain private and the application does not currently run an automated
+image-classification service. Before avatars become publicly visible, upload them into a
+pending state, scan them server-side with a dedicated moderation provider, and expose
+only approved images.

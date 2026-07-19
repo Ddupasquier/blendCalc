@@ -1,3 +1,4 @@
+```text
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -184,3 +185,4 @@
     line-height: 1.5;
   }
 }
+```

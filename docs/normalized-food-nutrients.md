@@ -1,9 +1,9 @@
 # Normalized food nutrients
 
-Food records continue to store their full `food` JSON payload. That JSON is the
-lossless source snapshot used by the current application. The normalized tables
-added in `20260615010000_normalized_food_nutrients.sql` make nutrient data
-queryable without discarding or rewriting the source payload.
+Food records continue to store their full `food` JSON payload. That JSON is the lossless
+source snapshot used by the current application. The normalized tables added in
+`20260615010000_normalized_food_nutrients.sql` make nutrient data queryable without
+discarding or rewriting the source payload.
 
 ## Tables
 
@@ -15,8 +15,8 @@ One row per FoodData Central nutrient ID:
 - default unit
 - timestamps
 
-USDA-backed records may refresh the canonical label and unit. User-entered data
-cannot overwrite an existing canonical definition.
+USDA-backed records may refresh the canonical label and unit. User-entered data cannot
+overwrite an existing canonical definition.
 
 ### `food_nutrients`
 
@@ -38,15 +38,15 @@ Each row records:
 - confidence
 - the selected source observation, when canonical catalog provenance identifies one
 
-The parent JSON remains authoritative for reconstruction and auditing. The
-normalized row is the query model.
+The parent JSON remains authoritative for reconstruction and auditing. The normalized
+row is the query model.
 
 ## Synchronization
 
-Database triggers rebuild a parent's normalized rows whenever its nutrition JSON
-or relevant provenance metadata changes. This covers browser writes, moderation
-approval, catalog revisions, and future server-side imports. Deleting a parent
-deletes its nutrient rows through foreign-key cascades.
+Database triggers rebuild a parent's normalized rows whenever its nutrition JSON or
+relevant provenance metadata changes. This covers browser writes, moderation approval,
+catalog revisions, and future server-side imports. Deleting a parent deletes its
+nutrient rows through foreign-key cascades.
 
 The migration also backfills all existing food snapshots.
 
@@ -59,24 +59,24 @@ normalized tables for:
 - saved custom foods
 - active shared catalog products returned by barcode lookup or search
 
-Reads are batched by parent ID and nutrient definitions are fetched once per
-batch. Existing graph, nutrition-total, warning, and nutrient-detail code then
-uses the hydrated values without needing a second data model.
+Reads are batched by parent ID and nutrient definitions are fetched once per batch.
+Existing graph, nutrition-total, warning, and nutrient-detail code then uses the
+hydrated values without needing a second data model.
 
-The embedded `food` JSON remains the automatic fallback when normalized rows are
-empty or unavailable. This permits a safe deployment order: application code can
-ship before the migration, and older or incomplete records remain readable.
+The embedded `food` JSON remains the automatic fallback when normalized rows are empty
+or unavailable. This permits a safe deployment order: application code can ship before
+the migration, and older or incomplete records remain readable.
 
-Saved drinks intentionally retain their embedded recipe snapshots. Loading a
-saved drink continues to reproduce what the user saved rather than silently
-changing historical recipe nutrition when catalog data changes.
+Saved drinks intentionally retain their embedded recipe snapshots. Loading a saved drink
+continues to reproduce what the user saved rather than silently changing historical
+recipe nutrition when catalog data changes.
 
 ## Access control
 
 - Users can read normalized rows owned by their account.
 - Authenticated users can read nutrients for active shared products.
-- Pending submissions, source observations, and revisions remain server-only
-  unless the row belongs to the submitting user.
+- Pending submissions, source observations, and revisions remain server-only unless the
+  row belongs to the submitting user.
 - Browser roles cannot directly insert, update, or delete normalized rows.
 
 The trigger functions use `security definer`, an empty `search_path`, and revoked
@@ -126,5 +126,5 @@ npm run db:push
 npm run db:types
 ```
 
-Run `db:types` after `db:push`; the checked-in database types include the new
-tables so this branch can compile before the remote migration is applied.
+Run `db:types` after `db:push`; the checked-in database types include the new tables so
+this branch can compile before the remote migration is applied.

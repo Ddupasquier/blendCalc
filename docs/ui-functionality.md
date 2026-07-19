@@ -1,11 +1,11 @@
 # UI Functionality Preservation Brief
 
-This file is the handoff brief for a large UI rebuild. It lists the app behavior,
-data points, and user flows that must survive a visual refactor. Treat this as a
-functional contract for Figma/Make or any future redesign work.
+This file is the handoff brief for a large UI rebuild. It lists the app behavior, data
+points, and user flows that must survive a visual refactor. Treat this as a functional
+contract for Figma/Make or any future redesign work.
 
-The UI can change significantly. The product behavior below should not be
-removed, hidden, or made harder to reach without an explicit product decision.
+The UI can change significantly. The product behavior below should not be removed,
+hidden, or made harder to reach without an explicit product decision.
 
 ## Product Summary
 
@@ -19,20 +19,28 @@ blendCalc is an authenticated, mobile-first smoothie planning app. Users:
 6. Save reusable drinks.
 7. Maintain optional profile and food preference settings.
 
-The app uses Supabase as the account data source of truth. Local storage is only
-a scoped cache while the user is signed in.
+The app uses Supabase as the account data source of truth. Local storage is only a
+scoped cache while the user is signed in.
 
 ## Global Non-Negotiables
 
 - **Mobile-first layout:** Every surface must work on narrow iPhone-sized screens.
-- **No horizontal overflow:** Long food names, badges, nutrition labels, graph labels, and form controls must wrap or truncate safely.
-- **Important actions stay visible:** Barcode scan, nutrition warnings, save state, and food conflicts must not be buried.
-- **Account privacy:** Do not display user emails in normal app chrome when a display name exists. Generated usernames/display names are preferred.
-- **Health-sensitive data:** Allergens, dietary restrictions, food preferences, and nutrient priorities are optional and must be described as sensitive/important.
-- **Warnings do not block by default:** Food preference conflicts should warn and down-rank unless a specific moderation/security rule says otherwise.
-- **Consistent interaction language:** Use simple, direct wording. Avoid technical API language in primary user flows.
-- **Reusable primitives:** Close buttons, dialogs, popovers, pills, list controls, pagination, and sort controls should look consistent everywhere.
-- **SCSS tokens:** Colors, spacing, sizing, typography, breakpoints, and action states should use the shared style variables.
+- **No horizontal overflow:** Long food names, badges, nutrition labels, graph labels,
+  and form controls must wrap or truncate safely.
+- **Important actions stay visible:** Barcode scan, nutrition warnings, save state, and
+  food conflicts must not be buried.
+- **Account privacy:** Do not display user emails in normal app chrome when a display
+  name exists. Generated usernames/display names are preferred.
+- **Health-sensitive data:** Allergens, dietary restrictions, food preferences, and
+  nutrient priorities are optional and must be described as sensitive/important.
+- **Warnings do not block by default:** Food preference conflicts should warn and
+  down-rank unless a specific moderation/security rule says otherwise.
+- **Consistent interaction language:** Use simple, direct wording. Avoid technical API
+  language in primary user flows.
+- **Reusable primitives:** Close buttons, dialogs, popovers, pills, list controls,
+  pagination, and sort controls should look consistent everywhere.
+- **SCSS tokens:** Colors, spacing, sizing, typography, breakpoints, and action states
+  should use the shared style variables.
 - **No box shadows:** Current design direction removes box shadows globally.
 
 ## App Shell and Authentication
@@ -70,13 +78,15 @@ Required behavior:
 - Auth callback is `/auth/callback`.
 - Auth errors must show clear, non-technical messages.
 - Password validation must show requirements during sign-up.
-- Existing accounts with weak passwords should be prompted to update to current standards.
+- Existing accounts with weak passwords should be prompted to update to current
+  standards.
 - Duplicate submits should be blocked with loading states.
 - Signed-out users cannot use authenticated app routes.
 
 ### Authenticated Header and Navigation
 
-- Header includes app title/logo, profile access, tutorial/info access, moderation access for privileged users, and sign out.
+- Header includes app title/logo, profile access, tutorial/info access, moderation
+  access for privileged users, and sign out.
 - Do not show full email in the header.
 - Prefer display name/generated username in personalized UI.
 - Navigation tabs:
@@ -108,8 +118,8 @@ Required behavior:
 
 Route: `/fridge`
 
-This page owns food discovery, barcode scanning, custom ingredient creation, and
-On Hand / Shopping List management.
+This page owns food discovery, barcode scanning, custom ingredient creation, and On Hand
+/ Shopping List management.
 
 ### Find Ingredients Card
 
@@ -121,8 +131,8 @@ Core visible elements:
 - Search input.
 - Collapsible manual entry section.
 
-Do not make barcode scanning feel secondary. It should be the quickest and most
-obvious way to add packaged foods.
+Do not make barcode scanning feel secondary. It should be the quickest and most obvious
+way to add packaged foods.
 
 ### Barcode Scan Flow
 
@@ -189,8 +199,8 @@ After successful manual submit:
 - Collapse manual entry.
 - Show success feedback.
 - Add to the selected destination or make destination choice clear before saving.
-- If the same custom ingredient already exists, do not show a dead-end error.
-  Use the existing food and continue the add-to-list flow.
+- If the same custom ingredient already exists, do not show a dead-end error. Use the
+  existing food and continue the add-to-list flow.
 
 ### Search Ingredients
 
@@ -267,8 +277,7 @@ For limited or partial nutrition data:
 
 ### On Hand and Shopping List
 
-These list sections appear on Ingredients and Mix and should remain visually
-consistent.
+These list sections appear on Ingredients and Mix and should remain visually consistent.
 
 Required controls:
 
@@ -295,8 +304,8 @@ Item behavior:
 
 Route: `/mix`
 
-The Mix page is the core smoothie builder. It combines selected foods, amounts,
-nutrient goals, visual graph feedback, warnings, suggestions, and saving.
+The Mix page is the core smoothie builder. It combines selected foods, amounts, nutrient
+goals, visual graph feedback, warnings, suggestions, and saving.
 
 ### Loaded Mix State
 
@@ -409,11 +418,13 @@ Preserve three layers:
 Behavior:
 
 - Goal shape changes based on goal inputs.
-- Highest goal value reaches the outer shape boundary; other goal points scale relative to it.
+- Highest goal value reaches the outer shape boundary; other goal points scale relative
+  to it.
 - Current shape changes when ingredients or amounts change.
 - Current shape animates growth.
 - Numeric labels show current/goal value under or near each nutrient label.
-- Labels must not clip, overlap graph lines, or disappear at 1, 2, 3, 6, or more nutrients.
+- Labels must not clip, overlap graph lines, or disappear at 1, 2, 3, 6, or more
+  nutrients.
 
 Color behavior:
 
@@ -561,8 +572,8 @@ Rules shown to users should include:
 - No graphic violence.
 - No hate imagery.
 
-Do not disclose internal moderation gaps or whether automated image moderation is
-or is not active.
+Do not disclose internal moderation gaps or whether automated image moderation is or is
+not active.
 
 ### Food Preferences
 
@@ -586,7 +597,8 @@ Preserve:
 Current product direction:
 
 - Keep **Allergens** and **Dietary restrictions**.
-- Do not reintroduce overbuilt “dislikes” or “ingredients to avoid” sections unless explicitly requested.
+- Do not reintroduce overbuilt “dislikes” or “ingredients to avoid” sections unless
+  explicitly requested.
 - Dropdown options must be DB/API-observed, not hard-coded fallback constants.
 - Users can also type custom allergens/restrictions.
 - Selected values need dividers/separation so the section reads clearly.
@@ -602,7 +614,8 @@ Food preference data must drive:
 Important matching rule:
 
 - Avoid naive string matching that creates bad false positives.
-- Example: almond milk should not trigger a milk/dairy allergy warning unless metadata specifically indicates dairy/milk.
+- Example: almond milk should not trigger a milk/dairy allergy warning unless metadata
+  specifically indicates dairy/milk.
 - Prefer DB compatibility tags and source metadata over raw name matching.
 
 ## Moderation Page
@@ -656,14 +669,16 @@ Preserve:
 
 Submission abuse protection:
 
-- Users with too many rejected submissions are blocked from submitting for a limited period.
-- Current rule target: 5 rejected submissions over a reasonable window causes a 30-day submission block.
+- Users with too many rejected submissions are blocked from submitting for a limited
+  period.
+- Current rule target: 5 rejected submissions over a reasonable window causes a 30-day
+  submission block.
 - This is a submission block, not necessarily a full app ban.
 
 ## Shared Product Catalog and API Data
 
-The shared catalog prevents every user from repeatedly hitting external APIs and
-lets verified barcode/custom product data become reusable.
+The shared catalog prevents every user from repeatedly hitting external APIs and lets
+verified barcode/custom product data become reusable.
 
 Preserve:
 
@@ -671,8 +686,8 @@ Preserve:
 - Shared product search in ingredient search.
 - Product submissions when data is missing or needs verification.
 - Product evidence/photo upload for moderation.
-- Source-backed product image metadata for user-facing ingredient cards and
-  detail views.
+- Source-backed product image metadata for user-facing ingredient cards and detail
+  views.
 - Source/provenance fields.
 - Nutrient completeness tracking.
 - Normalized nutrient storage.
@@ -701,13 +716,13 @@ Data to retain from APIs when available:
 - Dietary tags.
 - Source IDs and URLs.
 - Confidence/provenance.
-- Product image URLs only when source terms allow storage/rendering, with
-  license and attribution retained in the database.
+- Product image URLs only when source terms allow storage/rendering, with license and
+  attribution retained in the database.
 
 ## Food Preference and Compatibility Data
 
-Allergen and dietary restriction options should come from observed API/catalog
-data stored in Supabase.
+Allergen and dietary restriction options should come from observed API/catalog data
+stored in Supabase.
 
 Preserve these concepts:
 
@@ -715,7 +730,8 @@ Preserve these concepts:
 - `food_preference_option_catalog`: user-facing option catalog.
 - `compatibility_tags`: canonical compatibility tags.
 - `product_compatibility_facts`: product-to-tag/source facts.
-- `user_compatibility_rules`: user preference rules generated from saved food preferences.
+- `user_compatibility_rules`: user preference rules generated from saved food
+  preferences.
 
 Required behavior:
 
@@ -740,8 +756,8 @@ Preserve:
 - Moderation tools hidden from normal users.
 - Blocked users prevented from app access.
 
-Do not reintroduce browser-local cross-user data migration that duplicates one
-user’s local ingredients into another user’s account.
+Do not reintroduce browser-local cross-user data migration that duplicates one user’s
+local ingredients into another user’s account.
 
 ## Database-Backed Feature Areas
 
@@ -826,23 +842,29 @@ These must remain easy to notice:
 
 Before accepting a rebuilt UI, verify:
 
-- [ ] User can sign in with Google and email/password on localhost, production, and branch preview.
+- [ ] User can sign in with Google and email/password on localhost, production, and
+      branch preview.
 - [ ] Unauthenticated users cannot reach authenticated app functionality.
 - [ ] Barcode scan is prominent and works end-to-end.
 - [ ] Custom manual ingredient entry can be opened, completed, submitted, and collapsed.
 - [ ] Search can find USDA, shared catalog, and custom foods.
 - [ ] Nutrition facts show full available nutrient detail without mobile clipping.
-- [ ] On Hand and Shopping List support search, source filter, sort, pagination, rename, and remove.
-- [ ] Food preference conflicts visibly warn on search/list/preview/mix where applicable.
-- [ ] Milk allergy flags real milk products but does not falsely flag almond milk only by name.
+- [ ] On Hand and Shopping List support search, source filter, sort, pagination, rename,
+      and remove.
+- [ ] Food preference conflicts visibly warn on search/list/preview/mix where
+      applicable.
+- [ ] Milk allergy flags real milk products but does not falsely flag almond milk only
+      by name.
 - [ ] Mix graph supports 1, 2, 3, 6, and many nutrient points without label overlap.
 - [ ] Goal changes update goal shape.
 - [ ] Ingredient amount changes update current shape and warnings.
 - [ ] Suggestions are collapsed by default but clearly indicated.
 - [ ] Save review shows actual-vs-goal diffs before saving.
-- [ ] Loaded saved mixes display their name and do not overwrite unless explicitly saved.
+- [ ] Loaded saved mixes display their name and do not overwrite unless explicitly
+      saved.
 - [ ] Saved drinks support search, sort, pagination, load, and delete.
-- [ ] Profile display name, avatar, and food preferences save and show current saved values.
+- [ ] Profile display name, avatar, and food preferences save and show current saved
+      values.
 - [ ] Tutorial appears for first-time users and can be reopened.
 - [ ] Daily welcome appears once per day.
 - [ ] Moderation account search and product review remain usable.
