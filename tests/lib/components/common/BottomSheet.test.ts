@@ -24,6 +24,17 @@ describe("BottomSheet shared chrome", () => {
 		expect(handleRule?.groups?.body).toContain("place-items: center;");
 	});
 
+	it("keeps the drag handle focus outline visible", () => {
+		const source = readFileSync(componentPath, "utf8");
+		const sheetRule = source.match(/\.bottom-sheet\s*{(?<body>[\s\S]*?)\n\t}/);
+		const focusRule = source.match(/&:focus-visible\s*{(?<body>[^}]*)}/s);
+
+		expect(sheetRule?.groups?.body).toContain("overflow: visible;");
+		expect(focusRule?.groups?.body).toContain(
+			"outline-offset: $app-focus-outline-offset;",
+		);
+	});
+
 	it("allows a flow to hide the shared back control", () => {
 		const source = readFileSync(componentPath, "utf8");
 		const manualEntrySource = readFileSync(manualEntrySheetPath, "utf8");

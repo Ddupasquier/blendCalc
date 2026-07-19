@@ -751,7 +751,9 @@ backdrop behavior, Escape/backdrop close behavior, max/min height rules, and bot
 anchoring. Back-arrow visibility must be configured through the shared sheet primitive
 rather than hand-rolled in feature content; manual entry omits the top back arrow
 because step navigation already provides its own Back controls. Do not hand-roll sheet
-headers inside individual sheet bodies. After a successful submit, the sheet wrapper
+headers inside individual sheet bodies. The shared handle's complete keyboard focus
+outline must remain visible inside the sheet's reserved top clearance; sheet chrome must
+not clip interactive focus indicators. After a successful submit, the sheet wrapper
 must close exactly once before forwarding to any next view; child forms must not issue a
 second close or reset into a visible blank form while route navigation is in progress.
 

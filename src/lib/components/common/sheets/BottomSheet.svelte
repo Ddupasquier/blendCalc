@@ -63,7 +63,7 @@
 		gap: $app-gap-sm;
 		flex: 1 1 auto;
 		min-height: 0;
-		overflow: hidden;
+		overflow: visible;
 
 		h2 {
 			margin: 0;
@@ -92,7 +92,7 @@
 		justify-self: center;
 		display: grid;
 		place-items: center;
-		width: 4rem;
+		width: $app-bottom-sheet-handle-target-width;
 		height: $app-bottom-sheet-handle-height;
 		padding: 0;
 		background: transparent;
@@ -111,7 +111,7 @@
 
 		&:focus-visible {
 			outline: $app-focus-outline;
-			outline-offset: 0;
+			outline-offset: $app-focus-outline-offset;
 		}
 	}
 
