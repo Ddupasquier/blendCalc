@@ -21,7 +21,7 @@ const foodWithImage: FdcFood = {
 
 describe("ProductImagePanel", () => {
 	it("marks admin and moderator image-placement actions with crown badges", () => {
-		render(ProductImagePanel, {
+		const { container } = render(ProductImagePanel, {
 			props: {
 				food: foodWithImage,
 				canAdjustImagePlacement: true,
@@ -34,6 +34,7 @@ describe("ProductImagePanel", () => {
 		expect(
 			screen.queryByText("Nutrition page shows the full image."),
 		).not.toBeInTheDocument();
+		expect(container.querySelector(".product-image-frame")).toBeInTheDocument();
 	});
 
 	it("does not show privileged action badges to normal users", () => {

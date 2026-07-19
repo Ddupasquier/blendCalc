@@ -266,7 +266,7 @@
 
 	.image-placement-editor__full-preview img {
 		width: 100%;
-		max-height: $ingredient-nutrition-product-image-max-height;
+		max-height: $ingredient-product-image-frame-max-height;
 		object-fit: contain;
 		background: $ingredient-surface-soft;
 		border: $app-border-divider;

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor.svelte";
+	import ProductImageFrame from "$lib/components/common/images/ProductImageFrame.svelte";
 	import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
 	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 	import {
@@ -99,15 +100,11 @@
 
 {#if imageUrl && !imageFailed}
 	<section class="product-image-panel">
-		<figure class="product-image-panel__image">
-			<img
-				src={imageUrl}
-				alt={imageAlt}
-				loading="lazy"
-				decoding="async"
-				onerror={() => (imageFailed = true)}
-			/>
-		</figure>
+		<ProductImageFrame
+			src={imageUrl}
+			alt={imageAlt}
+			onError={() => (imageFailed = true)}
+		/>
 
 		{#if canEditPlacement}
 			<div class="product-image-panel__placement">
@@ -154,29 +151,6 @@
 		gap: $app-vertical-stack-gap;
 		width: 100%;
 		margin: 0;
-	}
-
-	.product-image-panel__image {
-		display: grid;
-		place-items: center;
-		width: 100%;
-		min-height: $ingredient-nutrition-product-image-min-height;
-		max-height: $ingredient-nutrition-product-image-max-height;
-		margin: 0;
-		padding: $ingredient-card-padding;
-		overflow: hidden;
-		background: $ingredient-surface-card;
-		border: $app-border-divider;
-		border-radius: $ingredient-radius-card;
-	}
-
-	.product-image-panel__image img {
-		display: block;
-		width: 100%;
-		max-width: $ingredient-nutrition-product-image-max-width;
-		height: 100%;
-		max-height: $ingredient-nutrition-product-image-max-height;
-		object-fit: contain;
 	}
 
 	.product-image-panel__placement {

@@ -63,3 +63,10 @@ export type CircularMediaFrameProps = {
 	label?: string;
 	children?: Snippet;
 };
+
+export type ProductImageFrameProps = {
+	src: string;
+	alt: string;
+	loading?: "eager" | "lazy";
+	onError?: () => void;
+};
