@@ -11,6 +11,7 @@ clickable navigation block instead.
 
 - [Development Rules](#development-rules)
 - [Core Engineering Rules](#rule-best-practices)
+- [Mandatory Rules Preflight](#rule-rules-preflight)
 - [Browser And Mobile Compatibility](#rule-browser-compatibility)
 - [Accessibility](#rule-accessibility)
 - [Search Relevance](#rule-search-relevance)
@@ -60,6 +61,19 @@ bypass maintainability, accessibility, data integrity, security, reusable primit
 design tokens, tested behavior, clean architecture, or clear database ownership. If a
 requested implementation conflicts with these rules or a defensible best practice, stop
 and call out the conflict before writing code.
+
+**0a.** <a id="rule-rules-preflight"></a>Before starting any feature, fix,
+adjustment, refactor, migration, script, style change, documentation behavior change,
+or other implementation work, read the current development rules that apply to the
+affected area. Treat this as a required preflight, not an optional final audit. Inspect
+the relevant code, schema, data flow, shared primitives, and QA coverage before editing.
+If existing code or the requested approach conflicts with a rule, call it out
+immediately in plain language; do not silently copy, preserve, or work around the
+violation. Fix small, clearly in-scope violations while doing the work. For broader,
+risky, ambiguous, or product-level conflicts, explain the issue and ask before
+expanding scope. Re-check every touched file against the applicable rules before
+handoff, and add newly discovered repeatable lessons to this document rather than
+relying on memory.
 
 **1.** Build mobile-first. Every screen and component should work on narrow phones
 before wider layouts.
