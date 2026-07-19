@@ -43,6 +43,6 @@
 	.ingredient-card-actions {
 		display: flex;
 		align-items: center;
-		gap: $app-gap-xs;
+		gap: $app-gap-sm;
 	}
 </style>

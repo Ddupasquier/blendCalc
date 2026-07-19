@@ -116,9 +116,9 @@
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto auto;
 		align-items: center;
-		gap: $app-gap-xs;
+		gap: $app-gap-sm;
 		min-height: $ingredient-card-min-height;
-		padding: $app-gap-sm;
+		padding: $ingredient-card-padding-compact;
 		background: $ingredient-surface-card;
 		border: 1px solid transparent;
 		border-radius: $ingredient-radius-card;
@@ -168,7 +168,7 @@
 
 	.saved-ingredient-card__copy {
 		display: grid;
-		gap: $app-gap-micro;
+		gap: $app-gap-2xs;
 		min-width: 0;
 
 		strong {
