@@ -21,6 +21,8 @@
 		"check:auth": "node scripts/check_auth_config.mjs",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"audit:fdc-vitals": "node scripts/audit_fdc_vitals.mjs",
+		"import:nutrition:cnf": "node scripts/import_cnf_2026.mjs",
+		"import:nutrition:cofid": "node scripts/import_cofid_2021.mjs",
 		"audit:fdc-allergens": "node scripts/audit_fdc_allergen_fields.mjs",
 		"audit:usda-branded-allergens": "node scripts/audit_usda_branded_allergen_fields.mjs",
 		"audit:off-allergens": "node scripts/audit_openfoodfacts_allergen_fields.mjs",
@@ -65,7 +67,9 @@
 		"@testing-library/svelte": "^5.3.1",
 		"@types/node": "^25.9.1",
 		"@types/ws": "^8.18.1",
+		"csv-parse": "^6.2.1",
 		"jsdom": "^29.1.1",
+		"read-excel-file": "^9.3.2",
 		"sass": "^1.100.0",
 		"supabase": "^2.109.1",
 		"svelte": "^5.55.2",
@@ -85,6 +89,7 @@
 		"bufferutil": "^4.1.0",
 		"dotenv": "^17.4.2",
 		"node-fetch": "^3.3.2",
+		"tesseract.js": "^7.0.0",
 		"utf-8-validate": "^6.0.6",
 		"ws": "^8.21.0"
 	}

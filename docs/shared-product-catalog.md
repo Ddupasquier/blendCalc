@@ -286,6 +286,45 @@ These checks identify malformed data; they do not prove that a manually entered 
 truthful. Human review and complete image evidence remain required when USDA cannot verify
 the barcode.
 
+## Nutrition Completeness Flow
+
+Packaged products and generic foods use different evidence paths:
+
+1. Exact barcode lookup checks the blendCalc catalog/cache first.
+2. Missing packaged-product fields are filled independently from active legal
+   sources. USDA nutrition stays authoritative when reported; another source
+   may supply only an image, category, or serving.
+3. Generic search can return active national dataset records. These keep their
+   original food/preparation identity and are not automatically merged into a
+   packaged barcode product.
+4. A database-backed completeness profile checks whether required nutrients are
+   reported. It does not change missing, trace, or unmapped values into zero.
+5. Optional label recognition may suggest missing packaged-label values, but
+   the user must review and confirm them. Confirmed values remain user-label
+   observations and follow normal moderation rules if shared.
+
+Every accepted nutrient keeps its own source and source reference. Product-level
+field provenance separately records nutrition, image, category, and serving
+sources. A fuller secondary record may supplement missing fields but cannot
+silently overwrite an authoritative reported value or zero.
+
+## Product Identifier QR Codes
+
+The scanner supports uncompressed GS1 Digital Link product QR codes containing
+application identifier `01` and a valid GTIN-14. The app extracts that GTIN
+locally and then uses the normal DB-first barcode lookup. It does not request the
+scanned URL. Lot, serial, expiration, query, and fragment data are removed before
+the safe product-level reference is stored. GS1 is therefore identifier
+provenance, not nutrition-source provenance.
+
+## Source Lifecycle
+
+Provider availability and legal status are checked before benchmarks or runtime
+integration. FoodRepo retired on 2026-02-28, so its source row is disabled and
+the planned benchmark is recorded as not run rather than misreported as poor
+coverage. Active providers must be tested on the same representative barcode
+sample before source priority changes.
+
 ## QA moderation fixtures
 
 Create clearly marked pending submissions without calling outside product APIs:

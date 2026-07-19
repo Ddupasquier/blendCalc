@@ -586,6 +586,45 @@ Notes:
 - `blocked_signup_emails` stores hashes, not raw email addresses.
 - `reject_blocked_signup` is the auth hook function for blocking signups.
 
+## Nutrition Completeness And National Datasets
+
+These tables keep completeness policy and imported generic-food data separate
+from packaged barcode products. Imports are source-versioned, license-gated,
+and searchable without calling the source again.
+
+| Table | Primary Key | Purpose | Important Columns / Rules |
+| --- | --- | --- | --- |
+| `nutrition_completeness_profiles` | `key` | Defines what complete nutrition means for a food scope/region | `food_scope`, `region_code`, DB-owned labels, source reference, one enabled default per scope/region |
+| `nutrition_completeness_profile_nutrients` | `profile_key, nutrient_id` | Orders required and recommended nutrients for one profile | `requirement_level`, `display_order`, `reason`; nutrient FK prevents invented definitions |
+| `generic_food_datasets` | `key` | Records each national release and its legal/import state | Source/license URLs, attribution, file SHA-256, review status, import/active gates, imported row counts |
+| `generic_food_records` | `dataset_key, source_food_key` | Stores one source-owned generic food/preparation | Raw description, group, preparation, searchable text, source identifiers and dates |
+| `generic_food_nutrients` | `dataset_key, source_food_key, source_nutrient_key` | Stores source nutrient amounts and canonical mappings | Explicit basis, amount, unit, mapping status, and `value_status` (`numeric`, `trace`, `missing`) |
+| `generic_food_measures` | `dataset_key, source_food_key, source_measure_key` | Stores source household measures | Amount/unit, gram weight, source label and metadata; never inferred from names |
+| `generic_food_dataset_reference_rows` | `dataset_key, reference_type, source_key` | Stores source dictionaries used to interpret imports | Reference labels and metadata remain tied to the dataset release |
+
+Current release state:
+
+- `cnf-2026` is active: 5,993 foods, 565,409 nutrient values, and 29,867 measures.
+- `cofid-2021` is active: 2,887 foods and 199,415 nutrient values. Trace values remain `trace`; alcohol records reported per 100 ml are not presented as per 100g.
+- AFCD remains disabled until its acceptance/share-alike obligations are explicitly approved.
+
+Runtime generic search reads only active, import-enabled datasets through the
+indexed search RPC. It does not merge similar foods from different sources.
+
+## Product Source Policies
+
+| Table / Registry Row | Purpose | Current Behavior |
+| --- | --- | --- |
+| `product_source_evaluations` | Auditable provider benchmark/lifecycle decisions | Records sample target, run state, legal/operational findings, result summary, and decision |
+| `product_data_sources.foodrepo` | Retired barcode provider record | Disabled; retirement and Open Food Facts replacement are documented; no benchmark traffic is sent |
+| `product_data_sources.nutrition-label-ocr` | Label-reading helper identity | Nutrient aliases/conversions are DB-backed; values require explicit user confirmation and remain `user-label` |
+| `product_data_sources.gs1-digital-link` | GS1 product QR identifier standard | GTIN is extracted locally; arbitrary scanned URLs are never fetched; lot/serial/query data is not persisted |
+
+OCR aliases live in `nutrient_source_mappings` and safe unit conversions live in
+`nutrient_unit_conversions`, so label parsing does not own a second nutrient
+catalog. GS1 links identify a product but do not claim ownership of its
+nutrition, image, category, or serving fields.
+
 ## RPC / Database Functions
 
 | Function | Purpose |
@@ -608,6 +647,7 @@ Notes:
 | `rebuild_custom_food_category_options` | Rebuilds manual custom-food category options from observations |
 | `normalize_food_category_value` | Normalizes category text for option and mapping lookup |
 | `resolve_custom_food_category_option` | Resolves raw API category values to one enabled canonical category option |
+| `search_generic_food_records` | Searches active national generic-food datasets with indexed, stable relevance ordering and returns normalized food JSON with source provenance |
 | `reject_blocked_signup` | Supabase Auth hook for hashed email signup blocks |
 
 ## Storage Buckets

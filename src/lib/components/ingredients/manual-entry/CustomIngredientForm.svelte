@@ -15,6 +15,7 @@
 		FoodFieldProvenance,
 		FoodImageAsset,
 		FoodTrackedField,
+		FoodBarcodeProvenance,
 	} from "$lib/utils/food/types";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog.svelte";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog.svelte";
@@ -28,6 +29,7 @@
 		type ManualEntryStepId,
 		type ManualEntrySummaryItem,
 		type NutrientValueState,
+		type NutritionLabelOcrApplyPayload,
 		type StepValidationItem,
 	} from "$lib/components/ingredients/manual-entry/formTypes";
 	import ManualEntryFormShell from "$lib/components/ingredients/manual-entry/ManualEntryFormShell.svelte";
@@ -109,6 +111,7 @@
 		validateBarcodeProductForSharing,
 	} from "$lib/utils/products/catalog";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
+	import type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
 
 	let {
 		onCreate,
@@ -159,6 +162,8 @@
 	let categoryOptionsError = $state("");
 	let loadingManualEntryNutrients = $state(false);
 	let manualEntryNutrientError = $state("");
+	let nutritionLabelOcrMappings = $state<NutritionLabelOcrMapping[]>([]);
+	let nutritionLabelOcrMappingError = $state("");
 	let nutrientRelationshipRules = $state<NutrientRelationshipRule[]>([]);
 	let loadingNutrientRelationshipRules = $state(false);
 	let nutrientRelationshipRuleError = $state("");
@@ -177,6 +182,7 @@
 	let scannerOpen = $state(false);
 	let barcode = $state("");
 	let barcodeSource = $state<FdcFood["barcodeSource"]>("manual");
+	let barcodeProvenance = $state<FoodBarcodeProvenance | undefined>();
 	let barcodeMessage = $state("");
 	let shareWithCatalog = $state(false);
 	let catalogMessage = $state("");
@@ -233,6 +239,8 @@
 			nutrientRelationshipRules = referenceData.nutrientRelationshipRules;
 			nutrientRelationshipRuleError =
 				referenceData.nutrientRelationshipRuleError;
+			nutritionLabelOcrMappings = referenceData.nutritionLabelOcrMappings;
+			nutritionLabelOcrMappingError = referenceData.nutritionLabelOcrMappingError;
 			loadingManualEntryNutrients = false;
 			loadingCategoryOptions = false;
 			loadingNutrientRelationshipRules = false;
@@ -379,6 +387,9 @@
 
 	const setManualBarcode = (value: string) => {
 		barcode = value;
+		barcodeProvenance = value.trim()
+			? { captureMethod: "manual-entry" }
+			: undefined;
 		nameProvenance = normalizeBarcode(value) ? "barcode" : "user";
 		clearBarcodeShareValidation();
 		barcodeSource = "manual";
@@ -523,6 +534,24 @@
 
 	const getManualNutrientValue = (field: ManualEntryNutrientDefinition) =>
 		getNutrientValue(field.nutrientId);
+
+	const applyNutritionLabelOcr = ({
+		candidates,
+		serving,
+	}: NutritionLabelOcrApplyPayload) => {
+		for (const candidate of candidates) {
+			const field = manualEntryNutrientFields.find(
+				(item) => item.nutrientId === candidate.nutrientId,
+			);
+			if (!field) continue;
+			setManualNutrientValue(field, String(candidate.value));
+		}
+		if (serving) {
+			servingWeightGrams = serving.gramWeight;
+			servingLabel = serving.label;
+			markFieldAsUserEntered("serving");
+		}
+	};
 
 	const isRequiredManualNutrient = (field: ManualEntryNutrientDefinition) =>
 		field.requiredForManualEntry;
@@ -806,6 +835,7 @@
 			importedNutrients,
 			barcode,
 			barcodeSource,
+			barcodeProvenance,
 			barcodeMessage,
 			checkingBarcodeReference,
 			checkedBarcodeReferenceKey,
@@ -1065,6 +1095,11 @@
 		error = "";
 		barcodeMessage = "Looking up this product…";
 		barcode = result.canonicalValue;
+		barcodeProvenance = {
+			captureMethod: result.captureMethod,
+			sourceReference: result.sourceReference,
+			format: result.format,
+		};
 		barcodeReferenceDraft = null;
 		barcodeReferenceAcceptedBarcode = "";
 		activeStep = "share";
@@ -1145,6 +1180,7 @@
 			volumeUnit,
 			barcode: normalizedBarcode,
 			barcodeSource,
+			barcodeProvenance,
 			sourceKey: barcodeSource !== "manual"
 				? barcodeReferenceSourceDraft?.sourceKey
 				: undefined,
@@ -1273,6 +1309,9 @@
 				{manualEntryNutrientGroups}
 				{loadingManualEntryNutrients}
 				{manualEntryNutrientError}
+				{nutritionLabelOcrMappings}
+				{nutritionLabelOcrMappingError}
+				{nutritionPhoto}
 				{hideMacroUnavailableStatus}
 				{customIngredientValidationItems}
 				{normalizedName}
@@ -1302,6 +1341,7 @@
 				{getAttemptedValidationItems}
 				getManualNutrientValue={getManualNutrientValue}
 				onValueChange={setManualNutrientValue}
+				onApplyNutritionLabelOcr={applyNutritionLabelOcr}
 				isRequired={isRequiredManualNutrient}
 				onNameChange={setManualName}
 				onBrandChange={(value) => (brandOwner = value)}

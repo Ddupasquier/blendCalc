@@ -9,6 +9,7 @@ import type {
 	FdcNutrient,
 	FoodFieldProvenance,
 	FoodImageAsset,
+	FoodBarcodeProvenance,
 } from "$lib/utils/food/types";
 import type {
 	ManualEntryStepId,
@@ -35,6 +36,7 @@ export type ManualEntryFormResetState = {
 	importedNutrients: FdcNutrient[];
 	barcode: string;
 	barcodeSource: FdcFood["barcodeSource"];
+	barcodeProvenance?: FoodBarcodeProvenance;
 	barcodeMessage: string;
 	checkingBarcodeReference: boolean;
 	checkedBarcodeReferenceKey: string;
@@ -79,6 +81,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	importedNutrients: [],
 	barcode: "",
 	barcodeSource: "manual",
+	barcodeProvenance: undefined,
 	barcodeMessage: "",
 	checkingBarcodeReference: false,
 	checkedBarcodeReferenceKey: "",

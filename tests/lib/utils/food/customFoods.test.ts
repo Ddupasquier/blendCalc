@@ -104,6 +104,33 @@ describe("custom foods", () => {
 		expect(food.nameProvenance).toBe("barcode");
 	});
 
+	it("preserves safe GS1 product identifier provenance", () => {
+		const food = createCustomFood({
+			name: "GS1 Test Product",
+			barcode: "09506000151519",
+			barcodeProvenance: {
+				captureMethod: "gs1-digital-link",
+				sourceReference: "https://id.gs1.org/01/09506000151519",
+				format: "QR_CODE",
+			},
+			servingWeightGrams: 100,
+			nutrients: makeTestNutrients({
+				calories: 0,
+				fat: 0,
+				carbs: 0,
+				fiber: 0,
+				sugar: 0,
+				protein: 0,
+			}),
+		});
+
+		expect(food.barcodeProvenance).toEqual({
+			captureMethod: "gs1-digital-link",
+			sourceReference: "https://id.gs1.org/01/09506000151519",
+			format: "QR_CODE",
+		});
+	});
+
 	it("preserves capitalization for a fully manual private item", () => {
 		const food = createCustomFood({
 			name: "MY PRIVATE TEST FOOD",

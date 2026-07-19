@@ -2,6 +2,13 @@ import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalo
 import type { FdcFood } from "$lib/utils/food/types";
 import type { ManualEntryNutrientGroupsByStep } from "$lib/utils/food/nutrients/nutrientDefinitions";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type {
+	NutritionLabelOcrCandidate,
+	NutritionLabelOcrMapping,
+	NutritionLabelOcrProgress,
+	NutritionLabelOcrRecognition,
+	NutritionLabelServingCandidate,
+} from "$lib/utils/food/ocr/nutritionLabelOcr";
 
 export type ManualEntryStepId =
 	| "identity"
@@ -96,6 +103,25 @@ export type ProductImageEvidenceInputProps = {
 	onCropXChange: (value: number) => void;
 	onCropYChange: (value: number) => void;
 	onCropZoomChange: (value: number) => void;
+};
+
+export type NutritionLabelOcrApplyPayload = {
+	candidates: NutritionLabelOcrCandidate[];
+	serving: NutritionLabelServingCandidate | null;
+};
+
+export type NutritionLabelOcrRecognizer = (options: {
+	file: File;
+	onProgress?: (progress: NutritionLabelOcrProgress) => void;
+	signal?: AbortSignal;
+}) => Promise<NutritionLabelOcrRecognition>;
+
+export type NutritionLabelOcrInputProps = {
+	mappings: NutritionLabelOcrMapping[];
+	photo: File | null;
+	recognize?: NutritionLabelOcrRecognizer;
+	onPhotoChange: (file: File | null) => void;
+	onApply: (payload: NutritionLabelOcrApplyPayload) => void;
 };
 
 export const manualEntrySteps: ManualEntryStep[] = [

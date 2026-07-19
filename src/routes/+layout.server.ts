@@ -14,6 +14,8 @@ import {
 } from "$lib/utils/tutorial/tutorial";
 import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 import { getServingMeasureCatalog } from "$lib/server/serving/servingMeasureCatalog.server";
+import { getNutritionCompletenessCatalog } from "$lib/server/nutrition/nutritionCompletenessCatalog.server";
+import { configureNutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 
 const PUBLIC_PATHS = new Set(["/", "/auth"]);
 
@@ -55,6 +57,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		tutorialPreference,
 		foodPreferencesResult,
 		servingMeasureCatalog,
+		nutritionCompletenessCatalog,
 	] = await Promise.all([
 		profileWithAvatarPromise,
 		getUserAppRole(locals.supabase, user.id),
@@ -67,8 +70,10 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			.eq("user_id", user.id)
 			.maybeSingle(),
 		getServingMeasureCatalog(),
+		getNutritionCompletenessCatalog(),
 	]);
 	configureServingMeasureCatalog(servingMeasureCatalog);
+	configureNutritionCompletenessCatalog(nutritionCompletenessCatalog);
 	const foodPreferencesError = foodPreferencesResult.error;
 	if (
 		foodPreferencesError &&
@@ -89,5 +94,6 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		},
 		foodPreferences: getFoodPreferenceProfile(foodPreferencesResult.data),
 		servingMeasureCatalog,
+		nutritionCompletenessCatalog,
 	};
 };

@@ -2,6 +2,57 @@ import type { ProductReferenceData } from "$lib/utils/food/reference/productRefe
 import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 import type { ServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 import { NUTRIENT_IDS } from "$lib/utils/food/types";
+import type { NutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
+
+export const nutritionCompletenessCatalogFixture: NutritionCompletenessCatalog = {
+	profiles: [
+		{
+			key: "generic-core-v1",
+			displayName: "Generic food core nutrition",
+			foodScope: "generic",
+			regionCode: "",
+			completeLabel: "Complete",
+			resolvedLabel: "Resolved",
+			partialLabel: "Partial",
+			limitedLabel: "Limited",
+			description: "Core generic food nutrition.",
+			sourceKey: "blendcalc-nutrition-policy",
+			sourceReference: "test",
+			isDefault: true,
+			nutrients: [
+				{ nutrientId: NUTRIENT_IDS.CALORIES, label: "Energy", unitName: "KCAL", requirementLevel: "required", displayOrder: 10, reason: "test" },
+				{ nutrientId: NUTRIENT_IDS.FAT, label: "Total Fat", unitName: "G", requirementLevel: "required", displayOrder: 20, reason: "test" },
+				{ nutrientId: NUTRIENT_IDS.CARBS, label: "Total Carbohydrate", unitName: "G", requirementLevel: "required", displayOrder: 30, reason: "test" },
+				{ nutrientId: NUTRIENT_IDS.PROTEIN, label: "Protein", unitName: "G", requirementLevel: "required", displayOrder: 40, reason: "test" },
+				{ nutrientId: NUTRIENT_IDS.SODIUM, label: "Sodium, Na", unitName: "MG", requirementLevel: "required", displayOrder: 50, reason: "test" },
+				{ nutrientId: NUTRIENT_IDS.FIBER, label: "Dietary Fiber", unitName: "G", requirementLevel: "recommended", displayOrder: 60, reason: "test" },
+				{ nutrientId: NUTRIENT_IDS.SUGAR, label: "Total Sugars", unitName: "G", requirementLevel: "recommended", displayOrder: 70, reason: "test" },
+			],
+		},
+		{
+			key: "us-packaged-label-v1",
+			displayName: "U.S. packaged food label nutrition",
+			foodScope: "packaged",
+			regionCode: "US",
+			completeLabel: "Complete label",
+			resolvedLabel: "Resolved label",
+			partialLabel: "Partial label",
+			limitedLabel: "Limited label",
+			description: "U.S. packaged food nutrition.",
+			sourceKey: "fda-nutrition-facts",
+			sourceReference: "test",
+			isDefault: true,
+			nutrients: [
+				{ nutrientId: NUTRIENT_IDS.CALORIES, label: "Energy", unitName: "KCAL", requirementLevel: "required", displayOrder: 10, reason: "test" },
+				{ nutrientId: NUTRIENT_IDS.FAT, label: "Total Fat", unitName: "G", requirementLevel: "required", displayOrder: 20, reason: "test" },
+				{ nutrientId: NUTRIENT_IDS.CARBS, label: "Total Carbohydrate", unitName: "G", requirementLevel: "required", displayOrder: 30, reason: "test" },
+				{ nutrientId: NUTRIENT_IDS.PROTEIN, label: "Protein", unitName: "G", requirementLevel: "required", displayOrder: 40, reason: "test" },
+				{ nutrientId: NUTRIENT_IDS.SODIUM, label: "Sodium, Na", unitName: "MG", requirementLevel: "required", displayOrder: 50, reason: "test" },
+				{ nutrientId: 1235, label: "Added Sugars", unitName: "G", requirementLevel: "required", displayOrder: 60, reason: "test" },
+			],
+		},
+	],
+};
 
 export const servingMeasureCatalogFixture: ServingMeasureCatalog = {
 	options: [

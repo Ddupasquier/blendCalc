@@ -29,4 +29,20 @@ describe("compact food records", () => {
 
 		expect(compactFood(food).fieldProvenance).toEqual(food.fieldProvenance);
 	});
+
+	it("keeps safe barcode capture provenance in saved food snapshots", () => {
+		const food: FdcFood = {
+			fdcId: -1,
+			description: "GS1 Test Product",
+			foodNutrients: [],
+			barcode: "09506000151519",
+			barcodeProvenance: {
+				captureMethod: "gs1-digital-link",
+				sourceReference: "https://id.gs1.org/01/09506000151519",
+				format: "QR_CODE",
+			},
+		};
+
+		expect(compactFood(food).barcodeProvenance).toEqual(food.barcodeProvenance);
+	});
 });

@@ -3,6 +3,7 @@ import { compareFoodQuality } from "$lib/utils/food/quality/foodQuality";
 import { createIngredientSearchRelevanceComparator } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 import { getFoodDownrankScore } from "$lib/utils/profile/foodPreferenceWarnings";
+import type { NutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 
 export const mergeIngredientSearchResults = (...resultGroups: FdcFood[][]) => {
 	const seen = new Set<number>();
@@ -22,6 +23,7 @@ export const sortIngredientSearchResults = (
 	results: FdcFood[],
 	query: string,
 	preferenceProfile: FoodPreferenceProfile | null,
+	nutritionCompletenessCatalog?: NutritionCompletenessCatalog,
 ) => {
 	const compareRelevance = createIngredientSearchRelevanceComparator(query);
 	return [...results].sort((left, right) => {
@@ -33,7 +35,11 @@ export const sortIngredientSearchResults = (
 			getFoodDownrankScore(right, preferenceProfile);
 		if (preferencePenalty !== 0) return preferencePenalty;
 
-		const qualitySort = compareFoodQuality(left, right);
+		const qualitySort = compareFoodQuality(
+			left,
+			right,
+			nutritionCompletenessCatalog,
+		);
 		if (qualitySort !== 0) return qualitySort;
 		return (
 			left.description.localeCompare(right.description) ||

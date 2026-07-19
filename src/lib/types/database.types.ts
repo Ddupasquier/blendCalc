@@ -787,6 +787,314 @@ export type Database = {
           },
         ]
       }
+      generic_food_dataset_reference_rows: {
+        Row: {
+          created_at: string
+          dataset_key: string
+          payload: Json
+          reference_type: string
+          source_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dataset_key: string
+          payload: Json
+          reference_type: string
+          source_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dataset_key?: string
+          payload?: Json
+          reference_type?: string
+          source_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generic_food_dataset_reference_rows_dataset_key_fkey"
+            columns: ["dataset_key"]
+            isOneToOne: false
+            referencedRelation: "generic_food_datasets"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      generic_food_datasets: {
+        Row: {
+          active: boolean
+          attribution_text: string
+          created_at: string
+          display_name: string
+          download_url: string
+          food_count: number
+          import_enabled: boolean
+          imported_at: string | null
+          key: string
+          license_name: string
+          license_review_status: string
+          license_url: string
+          measure_count: number
+          metadata: Json
+          nutrient_value_count: number
+          region_code: string
+          source_file_sha256: string | null
+          source_key: string
+          source_url: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          active?: boolean
+          attribution_text: string
+          created_at?: string
+          display_name: string
+          download_url: string
+          food_count?: number
+          import_enabled?: boolean
+          imported_at?: string | null
+          key: string
+          license_name: string
+          license_review_status: string
+          license_url: string
+          measure_count?: number
+          metadata?: Json
+          nutrient_value_count?: number
+          region_code: string
+          source_file_sha256?: string | null
+          source_key: string
+          source_url: string
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          active?: boolean
+          attribution_text?: string
+          created_at?: string
+          display_name?: string
+          download_url?: string
+          food_count?: number
+          import_enabled?: boolean
+          imported_at?: string | null
+          key?: string
+          license_name?: string
+          license_review_status?: string
+          license_url?: string
+          measure_count?: number
+          metadata?: Json
+          nutrient_value_count?: number
+          region_code?: string
+          source_file_sha256?: string | null
+          source_key?: string
+          source_url?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generic_food_datasets_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      generic_food_measures: {
+        Row: {
+          created_at: string
+          dataset_key: string
+          description: string
+          gram_weight: number
+          is_household_measure: boolean
+          measure_type: string
+          metadata: Json
+          source_food_key: string
+          source_measure_key: string
+          source_updated_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dataset_key: string
+          description: string
+          gram_weight: number
+          is_household_measure?: boolean
+          measure_type: string
+          metadata?: Json
+          source_food_key: string
+          source_measure_key: string
+          source_updated_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dataset_key?: string
+          description?: string
+          gram_weight?: number
+          is_household_measure?: boolean
+          measure_type?: string
+          metadata?: Json
+          source_food_key?: string
+          source_measure_key?: string
+          source_updated_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generic_food_measures_dataset_key_source_food_key_fkey"
+            columns: ["dataset_key", "source_food_key"]
+            isOneToOne: false
+            referencedRelation: "generic_food_records"
+            referencedColumns: ["dataset_key", "source_food_key"]
+          },
+        ]
+      }
+      generic_food_nutrients: {
+        Row: {
+          amount_per_100g: number | null
+          created_at: string
+          dataset_key: string
+          mapping_status: string
+          metadata: Json
+          nutrient_id: number | null
+          nutrient_source_code: string | null
+          observation_count: number | null
+          source_food_key: string
+          source_nutrient_key: string
+          source_nutrient_name: string
+          source_updated_at: string | null
+          standard_error: number | null
+          unit_name: string
+          updated_at: string
+          value_status: string
+        }
+        Insert: {
+          amount_per_100g?: number | null
+          created_at?: string
+          dataset_key: string
+          mapping_status: string
+          metadata?: Json
+          nutrient_id?: number | null
+          nutrient_source_code?: string | null
+          observation_count?: number | null
+          source_food_key: string
+          source_nutrient_key: string
+          source_nutrient_name: string
+          source_updated_at?: string | null
+          standard_error?: number | null
+          unit_name: string
+          updated_at?: string
+          value_status?: string
+        }
+        Update: {
+          amount_per_100g?: number | null
+          created_at?: string
+          dataset_key?: string
+          mapping_status?: string
+          metadata?: Json
+          nutrient_id?: number | null
+          nutrient_source_code?: string | null
+          observation_count?: number | null
+          source_food_key?: string
+          source_nutrient_key?: string
+          source_nutrient_name?: string
+          source_updated_at?: string | null
+          standard_error?: number | null
+          unit_name?: string
+          updated_at?: string
+          value_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generic_food_nutrients_dataset_key_source_food_key_fkey"
+            columns: ["dataset_key", "source_food_key"]
+            isOneToOne: false
+            referencedRelation: "generic_food_records"
+            referencedColumns: ["dataset_key", "source_food_key"]
+          },
+          {
+            foreignKeyName: "generic_food_nutrients_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+        ]
+      }
+      generic_food_records: {
+        Row: {
+          alternate_description: string | null
+          application_food_id: number | null
+          created_at: string
+          dataset_key: string
+          description: string
+          external_reference: string | null
+          food_group_key: string | null
+          food_group_name: string | null
+          measurement_basis: string
+          metadata: Json
+          preparation: string | null
+          scientific_name: string | null
+          search_text: string
+          search_vector: unknown
+          source_food_code: string | null
+          source_food_key: string
+          source_updated_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          alternate_description?: string | null
+          application_food_id?: number | null
+          created_at?: string
+          dataset_key: string
+          description: string
+          external_reference?: string | null
+          food_group_key?: string | null
+          food_group_name?: string | null
+          measurement_basis?: string
+          metadata?: Json
+          preparation?: string | null
+          scientific_name?: string | null
+          search_text: string
+          search_vector?: unknown
+          source_food_code?: string | null
+          source_food_key: string
+          source_updated_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alternate_description?: string | null
+          application_food_id?: number | null
+          created_at?: string
+          dataset_key?: string
+          description?: string
+          external_reference?: string | null
+          food_group_key?: string | null
+          food_group_name?: string | null
+          measurement_basis?: string
+          metadata?: Json
+          preparation?: string | null
+          scientific_name?: string | null
+          search_text?: string
+          search_vector?: unknown
+          source_food_code?: string | null
+          source_food_key?: string
+          source_updated_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generic_food_records_dataset_key_fkey"
+            columns: ["dataset_key"]
+            isOneToOne: false
+            referencedRelation: "generic_food_datasets"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       ingredient_provenance_options: {
         Row: {
           badge_enabled: boolean
@@ -1430,6 +1738,113 @@ export type Database = {
           },
         ]
       }
+      nutrition_completeness_profile_nutrients: {
+        Row: {
+          created_at: string
+          display_order: number
+          nutrient_id: number
+          profile_key: string
+          reason: string
+          requirement_level: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order: number
+          nutrient_id: number
+          profile_key: string
+          reason: string
+          requirement_level: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          nutrient_id?: number
+          profile_key?: string
+          reason?: string
+          requirement_level?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrition_completeness_profile_nutrients_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "nutrition_completeness_profile_nutrients_profile_key_fkey"
+            columns: ["profile_key"]
+            isOneToOne: false
+            referencedRelation: "nutrition_completeness_profiles"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      nutrition_completeness_profiles: {
+        Row: {
+          complete_label: string
+          created_at: string
+          description: string
+          display_name: string
+          enabled: boolean
+          food_scope: string
+          is_default: boolean
+          key: string
+          limited_label: string
+          partial_label: string
+          region_code: string
+          resolved_label: string
+          source_key: string
+          source_reference: string
+          updated_at: string
+        }
+        Insert: {
+          complete_label: string
+          created_at?: string
+          description: string
+          display_name: string
+          enabled?: boolean
+          food_scope: string
+          is_default?: boolean
+          key: string
+          limited_label: string
+          partial_label: string
+          region_code?: string
+          resolved_label: string
+          source_key: string
+          source_reference: string
+          updated_at?: string
+        }
+        Update: {
+          complete_label?: string
+          created_at?: string
+          description?: string
+          display_name?: string
+          enabled?: boolean
+          food_scope?: string
+          is_default?: boolean
+          key?: string
+          limited_label?: string
+          partial_label?: string
+          region_code?: string
+          resolved_label?: string
+          source_key?: string
+          source_reference?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrition_completeness_profiles_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       product_api_cache: {
         Row: {
           cache_key: string
@@ -1664,6 +2079,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_source_daily_metrics_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      product_source_evaluations: {
+        Row: {
+          created_at: string
+          decision: string
+          details: Json
+          evaluated_at: string
+          evaluation_kind: string
+          evidence_url: string | null
+          id: string
+          matched_count: number
+          sample_size: number
+          source_key: string
+          summary: string
+          usable_count: number
+        }
+        Insert: {
+          created_at?: string
+          decision: string
+          details?: Json
+          evaluated_at?: string
+          evaluation_kind: string
+          evidence_url?: string | null
+          id?: string
+          matched_count?: number
+          sample_size?: number
+          source_key: string
+          summary: string
+          usable_count?: number
+        }
+        Update: {
+          created_at?: string
+          decision?: string
+          details?: Json
+          evaluated_at?: string
+          evaluation_kind?: string
+          evidence_url?: string | null
+          id?: string
+          matched_count?: number
+          sample_size?: number
+          source_key?: string
+          summary?: string
+          usable_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_source_evaluations_source_key_fkey"
             columns: ["source_key"]
             isOneToOne: false
             referencedRelation: "product_data_sources"
@@ -2616,6 +3084,29 @@ export type Database = {
         Returns: string
       }
       save_custom_foods: { Args: { p_foods: Json }; Returns: boolean }
+      search_generic_food_records: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          application_food_id: number
+          attribution_text: string
+          dataset_display_name: string
+          dataset_key: string
+          dataset_version: string
+          description: string
+          external_reference: string
+          food_group_name: string
+          license_name: string
+          license_url: string
+          measures: Json
+          metadata: Json
+          nutrients: Json
+          source_display_name: string
+          source_food_key: string
+          source_key: string
+          source_updated_at: string
+          source_url: string
+        }[]
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       sync_nutrient_manual_entry_fields: { Args: never; Returns: undefined }

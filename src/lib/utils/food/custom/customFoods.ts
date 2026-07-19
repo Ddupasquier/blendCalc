@@ -16,6 +16,7 @@ import type {
 	FoodFieldProvenance,
 	FoodFieldSource,
 	FoodImageAsset,
+	FoodBarcodeProvenance,
 } from "$lib/utils/food/types";
 import { normalizeCustomFoodName } from "$lib/utils/food/custom/customFoodNames";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
@@ -33,6 +34,7 @@ export type CustomFoodInput = {
 	volumeUnit?: ServingMeasureUnit;
 	barcode?: string;
 	barcodeSource?: FdcFood["barcodeSource"];
+	barcodeProvenance?: FoodBarcodeProvenance;
 	sourceKey?: string;
 	sourceLabel?: string;
 	sourceDataType?: string;
@@ -234,6 +236,7 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		customFood: true,
 		barcode: input.barcode,
 		barcodeSource: input.barcodeSource,
+		barcodeProvenance: input.barcodeProvenance,
 		sourceKey: input.sourceKey,
 		sourceLabel: input.sourceLabel,
 		sourceDataType: input.sourceDataType,

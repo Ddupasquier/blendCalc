@@ -1,0 +1,107 @@
+@use "../../../../../styles/variables" as *;
+
+.nutrition-label-ocr {
+	display: grid;
+	gap: $app-vertical-stack-gap;
+	min-width: 0;
+	padding: $ingredient-card-padding;
+	background: $ingredient-surface-soft;
+	border-radius: $ingredient-radius-card;
+}
+
+.nutrition-label-ocr__heading {
+	display: flex;
+	align-items: center;
+	gap: $app-gap-xs;
+}
+
+.nutrition-label-ocr__heading strong,
+.nutrition-label-ocr__review legend {
+	color: $ingredient-text-primary;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-bold;
+}
+
+.nutrition-label-ocr__heading span {
+	padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
+	color: $ingredient-text-muted;
+	background: $ingredient-surface-control;
+	border-radius: $ingredient-radius-pill;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+}
+
+.nutrition-label-ocr > p,
+.nutrition-label-ocr__review p {
+	margin: 0;
+	color: $ingredient-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: 1.35;
+}
+
+.nutrition-label-ocr__file {
+	display: grid;
+	gap: $app-gap-sm;
+	color: $ingredient-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	text-transform: uppercase;
+}
+
+.nutrition-label-ocr__file input {
+	width: 100%;
+	min-width: 0;
+	min-height: $ingredient-control-height;
+	padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x;
+	color: $ingredient-text-primary;
+	background: $ingredient-surface-card;
+	border: 0;
+	border-radius: $ingredient-radius-card;
+	font: inherit;
+	font-size: $app-font-size-sm;
+	text-transform: none;
+}
+
+.nutrition-label-ocr__progress,
+.nutrition-label-ocr__review {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.nutrition-label-ocr__progress progress {
+	width: 100%;
+	accent-color: $ingredient-accent-primary;
+}
+
+.nutrition-label-ocr__progress span {
+	color: $ingredient-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+}
+
+.nutrition-label-ocr__review {
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.nutrition-label-ocr__raw-text summary {
+	color: $ingredient-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	cursor: pointer;
+}
+
+.nutrition-label-ocr__raw-text pre {
+	max-height: $nutrition-label-scroll-max-height-mobile;
+	margin: $app-gap-sm 0 0;
+	padding: $app-gap-sm;
+	overflow: auto;
+	color: $ingredient-text-primary;
+	background: $ingredient-surface-card;
+	border-radius: $ingredient-radius-card;
+	font-size: $app-font-size-xs;
+	white-space: pre-wrap;
+}

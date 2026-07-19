@@ -3,6 +3,9 @@
 	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
 	import type { ManualEntryValidationItem } from "$lib/components/ingredients/manual-entry/formTypes";
 	import ManualEntryNutrientFields from "$lib/components/ingredients/manual-entry/ManualEntryNutrientFields.svelte";
+	import NutritionLabelOcrInput from "$lib/components/ingredients/manual-entry/NutritionLabelOcrInput.svelte";
+	import type { NutritionLabelOcrApplyPayload } from "$lib/components/ingredients/manual-entry/formTypes";
+	import type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
 	import type {
 		ManualEntryNutrientDefinition,
 		ManualEntryNutrientGroup,
@@ -17,6 +20,11 @@
 		accordion = true,
 		defaultOpenFirst = true,
 		hideUnavailableStatus = false,
+		labelOcrMappings,
+		labelOcrMappingError = "",
+		nutritionPhoto = null,
+		onNutritionPhotoChange,
+		onApplyNutritionLabelOcr,
 		getValue,
 		onValueChange,
 		isRequired,
@@ -31,6 +39,11 @@
 		accordion?: boolean;
 		defaultOpenFirst?: boolean;
 		hideUnavailableStatus?: boolean;
+		labelOcrMappings?: NutritionLabelOcrMapping[];
+		labelOcrMappingError?: string;
+		nutritionPhoto?: File | null;
+		onNutritionPhotoChange?: (file: File | null) => void;
+		onApplyNutritionLabelOcr?: (payload: NutritionLabelOcrApplyPayload) => void;
 		getValue: (field: ManualEntryNutrientDefinition) => number | null;
 		onValueChange: (field: ManualEntryNutrientDefinition, value: string) => void;
 		isRequired: (field: ManualEntryNutrientDefinition) => boolean;
@@ -41,6 +54,20 @@
 
 <div class="custom-ingredient__step">
 	<p class="custom-ingredient__helper">{helper}</p>
+
+	{#if labelOcrMappings && onNutritionPhotoChange && onApplyNutritionLabelOcr}
+		<NutritionLabelOcrInput
+			mappings={labelOcrMappings}
+			photo={nutritionPhoto}
+			onPhotoChange={onNutritionPhotoChange}
+			onApply={onApplyNutritionLabelOcr}
+		/>
+		{#if labelOcrMappingError}
+			<p class="custom-ingredient__field-status custom-ingredient__field-status--error" role="status">
+				{labelOcrMappingError}
+			</p>
+		{/if}
+	{/if}
 
 	<ManualEntryValidationList items={validationItems} />
 

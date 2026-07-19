@@ -7,6 +7,7 @@ export type IngredientProvenanceDimension = "source" | "trust";
 export type IngredientSourceKey =
 	| "usda"
 	| "open-food-facts"
+	| "national-dataset"
 	| "shared-catalog"
 	| "custom";
 export type IngredientTrustStatus = FoodTrustStatus;
@@ -39,6 +40,7 @@ export type IngredientProvenanceFilters = {
 const SOURCE_KEYS = new Set<IngredientSourceKey>([
 	"usda",
 	"open-food-facts",
+	"national-dataset",
 	"shared-catalog",
 	"custom",
 ]);
@@ -65,6 +67,10 @@ export const isIngredientTrustFilter = (value: string) =>
 export const getFoodSourceKey = (food: FdcFood): IngredientSourceKey => {
 	const sourceKey = food.sourceKey === "fdc"
 		? "usda"
+		: food.sourceKey === "health-canada-cnf" ||
+				food.sourceKey === "uk-cofid" ||
+				food.sourceKey === "fsanz-afcd"
+			? "national-dataset"
 		: food.sourceKey === "community-reviewed" || food.sourceKey === "community"
 			? "shared-catalog"
 			: food.sourceKey;
@@ -102,7 +108,9 @@ export const getFoodTrustStatus = (food: FdcFood): IngredientTrustStatus => {
 
 	const sourceKey = getFoodSourceKey(food);
 	if (sourceKey === "usda") return "source-verified";
-	if (sourceKey === "open-food-facts") return "imported";
+	if (sourceKey === "open-food-facts" || sourceKey === "national-dataset") {
+		return "imported";
+	}
 	if (sourceKey === "shared-catalog") return "moderator-reviewed";
 	return "user-private";
 };

@@ -1,6 +1,7 @@
 import { searchApprovedSharedProducts } from "$lib/server/products/catalog.server";
 import { searchUserCustomFoods } from "$lib/server/products/customFoods.server";
 import { searchUsdaFoods } from "$lib/server/products/usdaCache.server";
+import { searchGenericFoods } from "$lib/server/products/genericFoods.server";
 import type { FdcFood } from "$lib/utils/food/types";
 import {
 	mergeIngredientSearchResults,
@@ -23,6 +24,7 @@ import {
 import { annotateFoodWithPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
 import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { getNutritionCompletenessCatalog } from "$lib/server/nutrition/nutritionCompletenessCatalog.server";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const user = await locals.getVerifiedUser();
@@ -86,10 +88,17 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		) {
 			searches.push(searchUsdaFoods(query));
 		}
+		if (
+			(sourceFilter === "all" || sourceFilter === "national-dataset") &&
+			(trustFilter === "any" || trustFilter === "imported")
+		) {
+			searches.push(searchGenericFoods(locals.supabase, query));
+		}
 		const searchPromise = Promise.allSettled(searches);
-		const [foodPreferencesResult, searchResults] = await Promise.all([
+		const [foodPreferencesResult, searchResults, nutritionCompletenessCatalog] = await Promise.all([
 			foodPreferencesPromise,
 			searchPromise,
+			getNutritionCompletenessCatalog(),
 		]);
 		if (
 			foodPreferencesResult.error &&
@@ -113,6 +122,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			),
 			query,
 			profile,
+			nutritionCompletenessCatalog,
 		);
 		const page = paginateIngredientSearchResults(foods, offset, limit);
 		return json({

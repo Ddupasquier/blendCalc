@@ -1,14 +1,18 @@
 # Barcode scanning
 
-The custom ingredient form supports UPC-A, UPC-E, EAN-8, EAN-13, and GTIN-14 package barcodes.
+The custom ingredient form supports UPC-A, UPC-E, EAN-8, EAN-13, GTIN-14,
+and uncompressed GS1 Digital Link product QR codes.
 
 ## Current web flow
 
 1. The browser uses `BarcodeDetector` when the API is available.
 2. Other supported browsers fall back to `@zxing/browser`.
-3. The private blendCalc verified catalog is checked first.
-4. USDA FoodData Central branded foods are checked next through the server-side cache.
-5. Open Food Facts is used as the final live lookup source.
+3. A GS1 product QR is parsed locally. Its valid `01` GTIN is sent through the
+   same lookup as a linear barcode; the scanned URL is never requested.
+4. The blendCalc verified catalog and legal source caches are checked first.
+5. Missing product fields are filled independently. USDA remains the nutrition
+   authority when it reports nutrition, while Open Food Facts may provide a
+   missing image, category, or serving without replacing USDA nutrients.
 6. Imported nutrition stays in the form until the user reviews and saves it.
 
 Camera access requires HTTPS outside local development. Users can always type the barcode and nutrition label manually.
@@ -23,6 +27,9 @@ Camera access requires HTTPS outside local development. Users can always type th
 - Open Food Facts records remain live source lookups and are not copied into the shared catalog.
 - USDA responses are cached in Supabase with expiration dates; Open Food Facts responses are not.
 - Nutrients omitted by a source remain missing rather than being converted to zero.
+- GS1 lot, serial, expiration, query, and fragment values are not persisted.
+- Random, HTTP, credential-bearing, compressed/unsupported, and invalid-GTIN QR
+  links are rejected instead of opened or guessed.
 - Unknown products require package, nutrition-label, and barcode photos before catalog review.
 
 See [`shared-product-catalog.md`](shared-product-catalog.md) for verification, moderation, licensing, and deployment details.

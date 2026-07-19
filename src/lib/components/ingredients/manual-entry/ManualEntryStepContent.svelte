@@ -14,7 +14,9 @@
 		ManualEntryStepId,
 		ManualEntrySummaryItem,
 		StepValidationItem,
+		NutritionLabelOcrApplyPayload,
 	} from "$lib/components/ingredients/manual-entry/formTypes";
+	import type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
 	import IdentityStep from "$lib/components/ingredients/manual-entry/steps/IdentityStep.svelte";
 	import NutrientStep from "$lib/components/ingredients/manual-entry/steps/NutrientStep.svelte";
 	import ServingsStep from "$lib/components/ingredients/manual-entry/steps/ServingsStep.svelte";
@@ -45,6 +47,9 @@
 		manualEntryNutrientGroups,
 		loadingManualEntryNutrients,
 		manualEntryNutrientError,
+		nutritionLabelOcrMappings,
+		nutritionLabelOcrMappingError,
+		nutritionPhoto,
 		hideMacroUnavailableStatus,
 		customIngredientValidationItems,
 		normalizedName,
@@ -74,6 +79,7 @@
 		getAttemptedValidationItems,
 		getManualNutrientValue,
 		onValueChange,
+		onApplyNutritionLabelOcr,
 		isRequired,
 		onNameChange,
 		onBrandChange,
@@ -130,6 +136,9 @@
 		manualEntryNutrientGroups: ManualEntryNutrientGroupsByStep;
 		loadingManualEntryNutrients: boolean;
 		manualEntryNutrientError: string;
+		nutritionLabelOcrMappings: NutritionLabelOcrMapping[];
+		nutritionLabelOcrMappingError: string;
+		nutritionPhoto: File | null;
 		hideMacroUnavailableStatus: boolean;
 		customIngredientValidationItems: StepValidationItem[];
 		normalizedName: string;
@@ -166,6 +175,7 @@
 			field: ManualEntryNutrientDefinition,
 			value: string,
 		) => void;
+		onApplyNutritionLabelOcr: (payload: NutritionLabelOcrApplyPayload) => void;
 		isRequired: (field: ManualEntryNutrientDefinition) => boolean;
 		onNameChange: (value: string) => void;
 		onBrandChange: (value: string) => void;
@@ -252,6 +262,11 @@
 		validationItems={getAttemptedValidationItems(
 			customIngredientValidationItems.filter((item) => item.step === "macros"),
 		)}
+		labelOcrMappings={nutritionLabelOcrMappings}
+		labelOcrMappingError={nutritionLabelOcrMappingError}
+		{nutritionPhoto}
+		onNutritionPhotoChange={onNutritionPhotoChange}
+		{onApplyNutritionLabelOcr}
 		getValue={getManualNutrientValue}
 		onValueChange={onValueChange}
 		{isRequired}

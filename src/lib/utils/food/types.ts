@@ -12,6 +12,10 @@ export interface FdcNutrient {
     source?:
         | "usda"
         | "open-food-facts"
+		| "health-canada-cnf"
+		| "uk-cofid"
+		| "fsanz-afcd"
+		| "foodrepo"
         | "user-label"
         | "manufacturer"
         | "gs1"
@@ -85,6 +89,12 @@ export type FoodTrustStatus =
     | "pending-review"
     | "user-private";
 
+export type FoodBarcodeProvenance = {
+	captureMethod: "manual-entry" | "linear-scan" | "gs1-digital-link";
+	sourceReference?: string;
+	format?: string;
+};
+
 /** A food item returned from the FDC search endpoint */
 export interface FdcFood {
     fdcId: number;
@@ -122,6 +132,7 @@ export interface FdcFood {
     customFood?: boolean;
     barcode?: string;
     barcodeSource?: "open-food-facts" | "usda" | "manual" | "community";
+	barcodeProvenance?: FoodBarcodeProvenance;
     sourceKey?: string;
     sourceLabel?: string;
     sourceDataType?: string;

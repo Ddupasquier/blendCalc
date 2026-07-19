@@ -27,9 +27,12 @@ const MANAGED_PRODUCT_SOURCE_KEYS = new Set([
 	"community",
 	"community-reviewed",
 	"fdc",
+	"fsanz-afcd",
+	"health-canada-cnf",
 	"open-food-facts",
 	"shared-catalog",
 	"usda",
+	"uk-cofid",
 ]);
 
 /** @param {unknown} value */

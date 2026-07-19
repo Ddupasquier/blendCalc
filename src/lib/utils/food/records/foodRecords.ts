@@ -41,6 +41,9 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		customFood: food.customFood,
 		barcode: food.barcode,
 		barcodeSource: food.barcodeSource,
+		barcodeProvenance: food.barcodeProvenance
+			? { ...food.barcodeProvenance }
+			: undefined,
 		sourceKey: food.sourceKey,
 		sourceLabel: food.sourceLabel,
 		sourceDataType: food.sourceDataType,

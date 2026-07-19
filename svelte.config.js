@@ -21,6 +21,7 @@ const config = {
 					'self',
 					'https://api.nal.usda.gov',
 					'https://world.openfoodfacts.org',
+					'https://cdn.jsdelivr.net',
 					'https://*.supabase.co',
 					'wss://*.supabase.co',
 					'https://vitals.vercel-insights.com'
@@ -30,7 +31,8 @@ const config = {
 				'frame-ancestors': ['none'],
 				'img-src': ['self', 'data:', 'https:'],
 				'object-src': ['none'],
-				'script-src': ['self'],
+				'script-src': ['self', 'wasm-unsafe-eval', 'https://cdn.jsdelivr.net'],
+				'worker-src': ['self', 'blob:', 'https://cdn.jsdelivr.net'],
 				'style-src': ['self', 'unsafe-inline']
 			}
 		}

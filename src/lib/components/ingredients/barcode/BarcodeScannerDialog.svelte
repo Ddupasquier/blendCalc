@@ -110,7 +110,9 @@
 				/>
 				<div>
 					<h2 id="barcode-scanner-title">Scan Barcode</h2>
-					<p id="barcode-scanner-help">Align barcode within the frame.</p>
+					<p id="barcode-scanner-help">
+						Align the barcode or GS1 product QR code within the frame.
+					</p>
 				</div>
 			</header>
 
@@ -127,7 +129,9 @@
 						Starting camera…
 					</p>
 				{:else if !error}
-					<p class="barcode-scanner__hint">Align barcode within the frame</p>
+					<p class="barcode-scanner__hint">
+						Align barcode or product QR within the frame
+					</p>
 				{/if}
 			</div>
 

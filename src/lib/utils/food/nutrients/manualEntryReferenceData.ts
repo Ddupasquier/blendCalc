@@ -11,6 +11,10 @@ import {
 	type NutrientRelationshipRule,
 } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
+import {
+	readNutritionLabelOcrMappings,
+	type NutritionLabelOcrMapping,
+} from "$lib/utils/food/ocr/nutritionLabelOcrMappings";
 
 export type ManualEntryReferenceData = {
 	nutrientGroups: ManualEntryNutrientGroupsByStep | null;
@@ -19,15 +23,23 @@ export type ManualEntryReferenceData = {
 	categoryOptionsError: string;
 	nutrientRelationshipRules: NutrientRelationshipRule[];
 	nutrientRelationshipRuleError: string;
+	nutritionLabelOcrMappings: NutritionLabelOcrMapping[];
+	nutritionLabelOcrMappingError: string;
 };
 
 export const loadManualEntryReferenceData =
 	async (): Promise<ManualEntryReferenceData> => {
-		const [nutrientGroupsResult, categoryOptionsResult, relationshipRulesResult] =
+		const [
+			nutrientGroupsResult,
+			categoryOptionsResult,
+			relationshipRulesResult,
+			nutritionLabelOcrMappingsResult,
+		] =
 			await Promise.allSettled([
 				readManualEntryNutrientGroups(),
 				readCustomFoodCategoryOptions(),
 				readNutrientRelationshipRules(getSupabaseBrowserClient()),
+				readNutritionLabelOcrMappings(getSupabaseBrowserClient()),
 			]);
 
 		const nutrientGroups =
@@ -41,6 +53,10 @@ export const loadManualEntryReferenceData =
 		const nutrientRelationshipRules =
 			relationshipRulesResult.status === "fulfilled"
 				? relationshipRulesResult.value
+				: null;
+		const nutritionLabelOcrMappings =
+			nutritionLabelOcrMappingsResult.status === "fulfilled"
+				? nutritionLabelOcrMappingsResult.value
 				: null;
 
 		return {
@@ -56,5 +72,9 @@ export const loadManualEntryReferenceData =
 			nutrientRelationshipRuleError: nutrientRelationshipRules?.length
 				? ""
 				: "Nutrition validation rules could not be loaded. Try again in a moment.",
+			nutritionLabelOcrMappings: nutritionLabelOcrMappings ?? [],
+			nutritionLabelOcrMappingError: nutritionLabelOcrMappings?.length
+				? ""
+				: "Nutrition label scanning is unavailable. Enter the label values manually.",
 		};
 	};

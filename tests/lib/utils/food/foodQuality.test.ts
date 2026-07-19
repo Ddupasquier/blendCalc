@@ -12,6 +12,7 @@ const completeFood = {
 		[NUTRIENT_IDS.FIBER, "Fiber", "291", "G", 2],
 		[NUTRIENT_IDS.SUGAR, "Sugars", "269", "G", 5],
 		[NUTRIENT_IDS.PROTEIN, "Protein", "203", "G", 3],
+		[NUTRIENT_IDS.SODIUM, "Sodium, Na", "307", "MG", 5],
 	].map(([nutrientId, nutrientName, nutrientNumber, unitName, value]) => ({
 		nutrientId: Number(nutrientId),
 		nutrientName: String(nutrientName),
@@ -50,7 +51,7 @@ const resolvedFood = {
 } satisfies FdcFood;
 
 describe("food quality", () => {
-	it("marks complete exact vital data", () => {
+	it("marks complete exact required data", () => {
 		expect(getFoodQuality(completeFood)).toMatchObject({
 			label: "Complete",
 			symbol: "✅",
@@ -63,20 +64,54 @@ describe("food quality", () => {
 
 		expect(quality.sourceCounts.fallback).toBe(1);
 		expect(quality.sourceCounts.derived).toBe(1);
-		expect(quality.sourceCounts.missing).toBe(2);
+		expect(quality.sourceCounts.missing).toBe(3);
+		expect(quality.missingCount).toBe(1);
+		expect(quality.recommendedMissingCount).toBe(2);
 		expect(quality.symbol).toBe("⚠️");
 		expect(quality.needsDetails).toBe(true);
 		expect(
 			quality.details.filter((detail) => detail.source === "missing"),
 		).toEqual([
+			expect.objectContaining({ label: "Sodium, Na" }),
 			expect.objectContaining({ label: "Dietary Fiber" }),
 			expect.objectContaining({ label: "Total Sugars" }),
 		]);
 		expect(
 			quality.details.find((detail) => detail.source === "derived"),
 		).toMatchObject({
-			label: "Calories",
+			label: "Energy",
 			sourceLabel: "Derived",
+		});
+	});
+
+	it("does not call generic food partial when only recommended nutrients are missing", () => {
+		const food = {
+			...completeFood,
+			foodNutrients: completeFood.foodNutrients.filter(
+				(nutrient) =>
+					nutrient.nutrientId !== NUTRIENT_IDS.FIBER &&
+					nutrient.nutrientId !== NUTRIENT_IDS.SUGAR,
+			),
+		};
+
+		expect(getFoodQuality(food)).toMatchObject({
+			label: "Complete",
+			missingCount: 0,
+			recommendedMissingCount: 2,
+			needsDetails: false,
+		});
+	});
+
+	it("uses the packaged profile when a barcode is present", () => {
+		const packagedFood = {
+			...completeFood,
+			barcode: "00021130462506",
+		};
+
+		expect(getFoodQuality(packagedFood)).toMatchObject({
+			label: "Partial label",
+			profileKey: "us-packaged-label-v1",
+			missingCount: 1,
 		});
 	});
 });

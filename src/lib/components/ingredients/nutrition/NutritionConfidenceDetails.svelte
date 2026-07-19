@@ -23,7 +23,7 @@
 		),
 	);
 
-	const totalVitalCount = $derived(quality.completeCount + quality.missingCount);
+	const totalRequiredCount = $derived(quality.completeCount + quality.missingCount);
 
 </script>
 
@@ -48,7 +48,7 @@
 			<span class="confidence-details__header">
 				<strong>{quality.label} nutrition data</strong>
 				<span>
-					{quality.completeCount}/{totalVitalCount} vital nutrients available
+					{quality.completeCount}/{totalRequiredCount} required nutrients available
 				</span>
 			</span>
 			<span

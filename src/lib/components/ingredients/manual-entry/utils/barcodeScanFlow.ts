@@ -25,7 +25,7 @@ export const resolveManualEntryBarcodeScan = async ({
 	result: BarcodeScanResult;
 	getOptionalNutrientCount: () => number;
 }): Promise<ManualEntryBarcodeScanOutcome> => {
-	const lookup = await lookupBarcodeProduct(result.value);
+	const lookup = await lookupBarcodeProduct(result.canonicalValue);
 
 	if (lookup.status === "found") {
 		return {

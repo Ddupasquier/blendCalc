@@ -4,12 +4,16 @@ import NutritionConfidenceDetails from "$lib/components/ingredients/nutrition/Nu
 import type { FoodQuality } from "$lib/utils/food/quality/foodQuality";
 
 const partialQuality: FoodQuality = {
+	status: "partial",
 	label: "Partial",
 	symbol: "⚠️",
-	title: "4/6 vital nutrients are available.",
+	title: "4/6 required nutrients are available.",
 	score: 10,
 	completeCount: 4,
 	missingCount: 2,
+	recommendedMissingCount: 0,
+	profileKey: "generic-core-v1",
+	profileName: "Generic food core nutrition",
 	sourceCounts: {
 		exact: 3,
 		fallback: 1,
@@ -23,6 +27,7 @@ const partialQuality: FoodQuality = {
 			source: "fallback",
 			sourceLabel: "Mapped",
 			detail: "Resolved from an alternate source nutrient field.",
+			requirementLevel: "required",
 		},
 		{
 			nutrientId: 2000,
@@ -30,6 +35,7 @@ const partialQuality: FoodQuality = {
 			source: "missing",
 			sourceLabel: "Missing",
 			detail: "Not reported in this source record.",
+			requirementLevel: "required",
 		},
 	],
 	needsDetails: true,

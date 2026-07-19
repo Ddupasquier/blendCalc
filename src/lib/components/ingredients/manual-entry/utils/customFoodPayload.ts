@@ -7,6 +7,7 @@ import type {
 	FdcNutrient,
 	FoodFieldProvenance,
 	FoodImageAsset,
+	FoodBarcodeProvenance,
 } from "$lib/utils/food/types";
 import { buildSaveNutrients } from "$lib/components/ingredients/manual-entry/utils/nutrientValues";
 
@@ -21,6 +22,7 @@ export type ManualEntryCustomFoodPayload = {
 	volumeUnit: ServingMeasureUnit;
 	barcode: string | null;
 	barcodeSource: FdcFood["barcodeSource"];
+	barcodeProvenance?: FoodBarcodeProvenance;
 	sourceKey?: string;
 	sourceLabel?: string;
 	sourceDataType?: string;
@@ -90,6 +92,7 @@ export const createManualEntryCustomFood = (
 		volumeUnit: payload.useVolumeEquivalent ? payload.volumeUnit : undefined,
 		barcode: payload.barcode ?? undefined,
 		barcodeSource: payload.barcode ? payload.barcodeSource : undefined,
+		barcodeProvenance: payload.barcode ? payload.barcodeProvenance : undefined,
 		sourceKey: payload.barcode ? payload.sourceKey : undefined,
 		sourceLabel: payload.barcode ? payload.sourceLabel : undefined,
 		sourceDataType: payload.barcode ? payload.sourceDataType : undefined,

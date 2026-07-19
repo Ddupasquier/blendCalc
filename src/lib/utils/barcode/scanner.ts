@@ -1,4 +1,5 @@
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
+import { parseGs1DigitalLink } from "$lib/utils/barcode/gs1DigitalLink";
 import type {
 	BarcodeScanResult,
 	BarcodeScannerCallbacks,
@@ -16,13 +17,25 @@ type BarcodeDetectorConstructor = new (options?: {
 	detect: (source: ImageBitmapSource) => Promise<DetectedBarcode[]>;
 };
 
-const BARCODE_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e"];
+const BARCODE_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "qr_code"];
 
-const createResult = (
+export const createBarcodeScanResult = (
 	value: string,
 	format: string,
 	platform: BarcodeScanResult["platform"],
 ): BarcodeScanResult | null => {
+	const digitalLink = parseGs1DigitalLink(value);
+	if (digitalLink) {
+		return {
+			value,
+			canonicalValue: digitalLink.canonicalValue,
+			format,
+			platform,
+			captureMethod: "gs1-digital-link",
+			sourceReference: digitalLink.productReference,
+		};
+	}
+
 	const canonicalValue = normalizeBarcode(value);
 	if (!canonicalValue) return null;
 
@@ -31,6 +44,7 @@ const createResult = (
 		canonicalValue,
 		format,
 		platform,
+		captureMethod: "linear-scan",
 	};
 };
 
@@ -83,7 +97,7 @@ export const scanNativeBarcode = async (): Promise<BarcodeScanResult | null> => 
 		scanInstructions: "Place the product barcode inside the frame.",
 	});
 
-	return createResult(scan.ScanResult, String(scan.format), "capacitor");
+	return createBarcodeScanResult(scan.ScanResult, String(scan.format), "capacitor");
 };
 
 const startNativeWebScanner = async (
@@ -124,7 +138,7 @@ const startNativeWebScanner = async (
 		try {
 			const [barcode] = await detector.detect(video);
 			if (barcode) {
-				const result = createResult(
+				const result = createBarcodeScanResult(
 					barcode.rawValue,
 					barcode.format ?? "unknown",
 					"web-native",
@@ -157,6 +171,7 @@ const startZxingScanner = async (
 		BarcodeFormat.EAN_8,
 		BarcodeFormat.UPC_A,
 		BarcodeFormat.UPC_E,
+		BarcodeFormat.QR_CODE,
 	]);
 	const reader = new BrowserMultiFormatReader(hints, {
 		delayBetweenScanAttempts: 180,
@@ -170,7 +185,7 @@ const startZxingScanner = async (
 		video,
 		(result) => {
 			if (!result) return;
-			const scanResult = createResult(
+			const scanResult = createBarcodeScanResult(
 				result.getText(),
 				String(result.getBarcodeFormat()),
 				"web-zxing",

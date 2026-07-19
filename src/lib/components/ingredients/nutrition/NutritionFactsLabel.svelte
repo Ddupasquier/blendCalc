@@ -111,7 +111,7 @@
 			dataType={food.sourceDataType ?? food.dataType}
 		/>
 	{/if}
-	{#if foodQuality && (foodQuality.label === "Partial" || foodQuality.label === "Limited")}
+	{#if foodQuality && (foodQuality.status === "partial" || foodQuality.status === "limited")}
 		<NutritionConfidenceDetails quality={foodQuality} />
 	{/if}
 	<div class="nf-thick-divider"></div>
