@@ -87,7 +87,7 @@ export const findCanonicalNutrientMatch = ({
 					),
 			);
 			const preferred = preferredNutrientIds.has(definition.nutrient_id);
-			const score = Math.min(1, semanticScore + (preferred ? 0.1 : 0));
+			const score = semanticScore;
 			return {
 				definition,
 				score,

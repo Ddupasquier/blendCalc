@@ -6,6 +6,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ws from "ws";
 import { createAppUserAgent } from "./lib/app_version.mjs";
+import { createManualEntryNutrientCatalog } from "./lib/manual_entry_nutrient_catalog.mjs";
+import { createSourceNutrientMappingCatalog } from "./lib/source_nutrient_mapping_catalog.mjs";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDirectory, "..");
@@ -128,93 +130,6 @@ const normalizeUnit = (unit) => {
 	return units[normalized] ?? String(unit ?? "").trim();
 };
 
-const normalizeName = (value) =>
-	String(value ?? "")
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, " ")
-		.trim();
-
-const normalizeLookupKey = (value) =>
-	normalizeName(value)
-		.replace(/\btotal\b/g, "")
-		.replace(/\bincluding nlea\b/g, "")
-		.replace(/\bdifference\b/g, "")
-		.replace(/\bby\b/g, "")
-		.replace(/\bsubtract\b/g, "")
-		.replace(/\bkilocalories?\b/g, "kcal")
-		.replace(/\bkilojoules?\b/g, "kj")
-		.replace(/\s+/g, " ")
-		.trim();
-
-const singularizeLookupKey = (value) =>
-	value
-		.split(" ")
-		.map((part) => {
-			if (part.length > 3 && part.endsWith("ies")) return `${part.slice(0, -3)}y`;
-			if (part.length > 3 && part.endsWith("s")) return part.slice(0, -1);
-			return part;
-		})
-		.join(" ");
-
-const OFF_NUTRIMENT_LOOKUP_KEYS = {
-	"energy kcal": ["energy", "calories", "calorie"],
-	"energy kj": ["energy kj", "energy kilojoule"],
-	fat: ["total lipid fat", "total fat", "fat"],
-	"saturated fat": ["fatty acids saturated", "saturated fat"],
-	"trans fat": ["fatty acids trans", "trans fat"],
-	"monounsaturated fat": ["fatty acids monounsaturated", "monounsaturated fat"],
-	"polyunsaturated fat": ["fatty acids polyunsaturated", "polyunsaturated fat"],
-	carbohydrates: ["carbohydrate by difference", "total carbohydrate", "carbohydrate"],
-	sugars: ["sugars total", "total sugars", "sugar"],
-	salt: ["sodium na", "sodium"],
-	"added sugars": ["sugars added", "added sugars"],
-	fiber: ["fiber total dietary", "dietary fiber", "fiber"],
-	starch: ["starch"],
-	proteins: ["protein"],
-	protein: ["protein"],
-	sodium: ["sodium"],
-	calcium: ["calcium ca", "calcium"],
-	iron: ["iron fe", "iron"],
-	potassium: ["potassium k", "potassium"],
-	magnesium: ["magnesium mg", "magnesium"],
-	phosphorus: ["phosphorus p", "phosphorus"],
-	zinc: ["zinc zn", "zinc"],
-	copper: ["copper cu", "copper"],
-	manganese: ["manganese mn", "manganese"],
-	selenium: ["selenium se", "selenium"],
-	"vitamin a": ["vitamin a"],
-	"vitamin c": ["vitamin c"],
-	"vitamin d": ["vitamin d"],
-	"vitamin e": ["vitamin e"],
-	"vitamin k": ["vitamin k"],
-	"vitamin b1": ["thiamin", "thiamine"],
-	"vitamin b2": ["riboflavin"],
-	"vitamin b9": ["folate", "folic acid"],
-	thiamin: ["thiamin", "thiamine"],
-	riboflavin: ["riboflavin"],
-	niacin: ["niacin"],
-	folate: ["folate", "folic acid"],
-	"vitamin b6": ["vitamin b 6", "vitamin b6"],
-	"vitamin b12": ["vitamin b 12", "vitamin b12"],
-	biotin: ["biotin"],
-	choline: ["choline"],
-	iodine: ["iodine"],
-	chloride: ["chloride"],
-};
-
-const normalizeOpenFoodFactsNutrimentKey = (key) =>
-	normalizeLookupKey(
-		String(key ?? "")
-			.replace(/_(100g|serving|unit|value)$/i, "")
-			.replace(/-/g, " "),
-	);
-
-const getOpenFoodFactsLookupKeys = (key) => {
-	const normalized = normalizeOpenFoodFactsNutrimentKey(key);
-	const aliases = OFF_NUTRIMENT_LOOKUP_KEYS[normalized] ?? [];
-	return [...new Set([normalized, singularizeLookupKey(normalized), ...aliases].map(normalizeLookupKey))];
-};
-
 const titleCase = (value) =>
 	String(value ?? "")
 		.toLowerCase()
@@ -226,188 +141,13 @@ const formatDisplayLabel = (name, unit) => {
 	return normalizedUnit ? `${normalizedName} (${normalizedUnit})` : normalizedName;
 };
 
-const buildManualEntryDedupeKey = ({ entryStep, groupId, displayLabel, unitName }) =>
-	[
-		entryStep,
-		groupId,
-		normalizeLookupKey(displayLabel),
-		normalizeUnit(unitName).toLowerCase(),
-	]
-		.filter(Boolean)
-		.join(":");
-
-const withManualEntryDedupeKey = (observation) => ({
-	...observation,
-	dedupe_key: buildManualEntryDedupeKey({
-		entryStep: observation.entry_step,
-		groupId: observation.group_id,
-		displayLabel: observation.display_label,
-		unitName: observation.unit_name,
-	}),
-});
-
-const matchAny = (name, patterns) => patterns.some((pattern) => pattern.test(name));
-
-const classifyNutrient = ({ nutrientName, unitName }) => {
-	const name = normalizeName(nutrientName);
-	const unit = normalizeUnit(unitName).toLowerCase();
-
-	if (matchAny(name, [/\benergy\b/, /\bcalories?\b/]) && unit === "kcal") {
-		return {
-			groupId: "required-basics",
-			nutrientType: "energy",
-			fieldSortOrder: 10,
-			displayLabel: "Calories (kcal)",
-			classificationMethod: "fdc-name-unit",
-		};
-	}
-
-	if (matchAny(name, [/\bprotein\b/])) {
-		return {
-			groupId: "required-basics",
-			nutrientType: "macro",
-			fieldSortOrder: 40,
-			displayLabel: formatDisplayLabel("Protein", unitName),
-			classificationMethod: "fdc-name",
-		};
-	}
-
-	if (matchAny(name, [/\btotal lipid\b/, /\btotal fat\b/])) {
-		return {
-			groupId: "required-basics",
-			nutrientType: "macro",
-			fieldSortOrder: 20,
-			displayLabel: formatDisplayLabel("Total Fat", unitName),
-			classificationMethod: "fdc-name",
-		};
-	}
-
-	if (matchAny(name, [/\bcarbohydrate\b.*\bdifference\b/, /\btotal carbohydrate\b/])) {
-		return {
-			groupId: "required-basics",
-			nutrientType: "macro",
-			fieldSortOrder: 30,
-			displayLabel: formatDisplayLabel("Total Carbohydrates", unitName),
-			classificationMethod: "fdc-name",
-		};
-	}
-
-	if (matchAny(name, [/\bsodium\b/])) {
-		return {
-			groupId: "required-basics",
-			nutrientType: "mineral",
-			fieldSortOrder: 50,
-			displayLabel: formatDisplayLabel("Sodium", unitName),
-			classificationMethod: "fdc-name-required-basic",
-		};
-	}
-
-	if (matchAny(name, [/\bfiber\b/, /\bsugars?\b/, /\bstarch\b/])) {
-		const order = matchAny(name, [/\bfiber\b/])
-			? 10
-			: matchAny(name, [/\badded sugars?\b/])
-				? 30
-				: 20;
-		return {
-			groupId: "carbohydrate-details",
-			nutrientType: "carbohydrate",
-			fieldSortOrder: order,
-			displayLabel: formatDisplayLabel(nutrientName, unitName),
-			classificationMethod: "fdc-name",
-		};
-	}
-
-	if (matchAny(name, [/\bfatty acids?\b/, /\bsaturated\b/, /\btrans\b/, /\bmonounsaturated\b/, /\bpolyunsaturated\b/, /\bcholesterol\b/, /\bsfa\b/, /\bmufa\b/, /\bpufa\b/])) {
-		const order = matchAny(name, [/\bsaturated\b/])
-			? 10
-			: matchAny(name, [/\btrans\b/])
-				? 20
-				: matchAny(name, [/\bpolyunsaturated\b/])
-					? 30
-					: matchAny(name, [/\bmonounsaturated\b/])
-						? 40
-						: 50;
-		return {
-			groupId: "fat-details",
-			nutrientType: "fat",
-			fieldSortOrder: order,
-			displayLabel: formatDisplayLabel(nutrientName, unitName),
-			classificationMethod: "fdc-name",
-		};
-	}
-
-	if (matchAny(name, [/\bvitamin\b/, /\bthiamin\b/, /\briboflavin\b/, /\bniacin\b/, /\bfolate\b/, /\bfolic acid\b/, /\bbiotin\b/, /\bpantothenic\b/, /\bcholine\b/, /\bretinol\b/, /\bcarotene\b/, /\bcryptoxanthin\b/, /\blycopene\b/, /\blutein\b/, /\bzeaxanthin\b/])) {
-		return {
-			groupId: "vitamins",
-			nutrientType: "vitamin",
-			fieldSortOrder: 1000 + name.localeCompare(""),
-			displayLabel: formatDisplayLabel(nutrientName, unitName),
-			classificationMethod: "fdc-name",
-		};
-	}
-
-	if (matchAny(name, [/\bcalcium\b/, /\biron\b/, /\bpotassium\b/, /\bphosphorus\b/, /\bmagnesium\b/, /\bzinc\b/, /\bselenium\b/, /\bcopper\b/, /\bmanganese\b/, /\biodine\b/, /\bfluoride\b/, /\bchromium\b/, /\bmolybdenum\b/, /\bchloride\b/, /\bash\b/])) {
-		const groupId = matchAny(name, [/\bash\b/])
-			? "mineral-details"
-			: "minerals";
-		return {
-			groupId,
-			nutrientType: "mineral",
-			fieldSortOrder: groupId === "mineral-details" ? 10 : 1000 + name.localeCompare(""),
-			displayLabel: formatDisplayLabel(nutrientName, unitName),
-			classificationMethod: "fdc-name",
-		};
-	}
-
-	if (matchAny(name, [/\bleucine\b/, /\bisoleucine\b/, /\bvaline\b/, /\blysine\b/, /\bmethionine\b/, /\bthreonine\b/, /\btryptophan\b/, /\bphenylalanine\b/, /\bhistidine\b/, /\barginine\b/, /\bcystine\b/, /\btyrosine\b/, /\balanine\b/, /\baspartic\b/, /\bglutamic\b/, /\bglycine\b/, /\bproline\b/, /\bserine\b/])) {
-		return {
-			groupId: "amino-acids",
-			nutrientType: "amino_acid",
-			fieldSortOrder: 1000 + name.localeCompare(""),
-			displayLabel: formatDisplayLabel(nutrientName, unitName),
-			classificationMethod: "fdc-name",
-		};
-	}
-
+const classifyNutrient = ({ nutrientId, nutrientName, unitName, catalog }) => {
+	const classification = catalog.resolve(nutrientId);
+	if (!classification) return null;
 	return {
-		groupId: "other-nutrients",
-		nutrientType: "other",
-		fieldSortOrder: 5000,
-		displayLabel: formatDisplayLabel(nutrientName, unitName),
-		classificationMethod: "fdc-name-fallback",
-	};
-};
-
-const toGroupTitle = (groupId) => {
-	if (groupId === "amino-acids") return "Amino Acids";
-	return titleCase(groupId.replace(/-/g, " "));
-};
-
-const getGroupSortOrder = (groupId, nutrientType) => {
-	if (groupId === "required-basics") return 10;
-	if (groupId === "carbohydrate-details") return 20;
-	if (groupId === "fat-details") return 30;
-	if (groupId === "mineral-details") return 40;
-	if (nutrientType === "vitamin") return 10;
-	if (nutrientType === "mineral") return 20;
-	if (nutrientType === "amino_acid") return 30;
-	return 90;
-};
-
-const getManualEntryGroup = (classification) => {
-	const entryStep = ["vitamin", "amino_acid"].includes(classification.nutrientType)
-		|| (classification.nutrientType === "mineral" && classification.groupId !== "mineral-details")
-		|| classification.groupId === "other-nutrients"
-		? "extended"
-		: "macros";
-
-	return {
-		entryStep,
-		title: toGroupTitle(classification.groupId),
-		groupSortOrder: getGroupSortOrder(
-			classification.groupId,
-			classification.nutrientType,
-		),
+		...classification,
+		displayLabel:
+			classification.displayLabel ?? formatDisplayLabel(nutrientName, unitName),
 	};
 };
 
@@ -484,31 +224,6 @@ const runWithConcurrency = async (items, concurrency, task) => {
 	return results;
 };
 
-const buildCanonicalNutrientLookup = (nutrientDefinitions) => {
-	const lookup = new Map();
-	for (const definition of nutrientDefinitions.values()) {
-		const keys = [
-			definition.nutrient_name,
-			`${definition.nutrient_name} ${definition.default_unit_name}`,
-			definition.nutrient_name?.split(",")[0],
-			`${definition.nutrient_name?.split(",")[0]} ${definition.default_unit_name}`,
-			definition.nutrient_name?.replace(/\(.+?\)/g, ""),
-			definition.nutrient_name?.replace(/,\s*(ca|fe|k|mg|p|na|zn|cu|mn|se)$/i, ""),
-			definition.nutrient_number,
-		]
-			.filter(Boolean)
-			.flatMap((value) => {
-				const normalized = normalizeLookupKey(value);
-				return [normalized, singularizeLookupKey(normalized)];
-			});
-
-		for (const key of keys) {
-			if (key && !lookup.has(key)) lookup.set(key, definition);
-		}
-	}
-	return lookup;
-};
-
 const readDiscoveredFdcNutrients = () => {
 	try {
 		const report = JSON.parse(readFileSync(DISCOVERED_FDC_NUTRIENTS_PATH, "utf8"));
@@ -521,8 +236,10 @@ const readDiscoveredFdcNutrients = () => {
 	}
 };
 
-const buildDiscoveredFdcNutrientDefinitions = () => {
-	const definitions = new Map();
+const buildDiscoveredFdcNutrientDefinitions = (databaseDefinitions) => {
+	const definitions = new Map(
+		databaseDefinitions.map((definition) => [definition.nutrient_id, definition]),
+	);
 
 	for (const nutrient of readDiscoveredFdcNutrients()) {
 		const nutrientId = Number(nutrient.id);
@@ -541,8 +258,8 @@ const buildDiscoveredFdcNutrientDefinitions = () => {
 	return definitions;
 };
 
-const collectFdcObservations = (pages) => {
-	const nutrientDefinitions = buildDiscoveredFdcNutrientDefinitions();
+const collectFdcObservations = ({ pages, databaseDefinitions, manualEntryCatalog }) => {
+	const nutrientDefinitions = buildDiscoveredFdcNutrientDefinitions(databaseDefinitions);
 	const observations = new Map();
 	const ignoredNutrients = new Map();
 
@@ -557,13 +274,16 @@ const collectFdcObservations = (pages) => {
 				const unitName = normalizeUnit(nutrient.unitName);
 				if (!Number.isFinite(nutrientId) || !nutrientName || !unitName) continue;
 
-				const classification = classifyNutrient({ nutrientName, unitName });
+				const classification = classifyNutrient({
+					nutrientId,
+					nutrientName,
+					unitName,
+					catalog: manualEntryCatalog,
+				});
 				if (!classification) {
 					ignoredNutrients.set(nutrientName, (ignoredNutrients.get(nutrientName) ?? 0) + 1);
 					continue;
 				}
-
-				const group = getManualEntryGroup(classification);
 
 				nutrientDefinitions.set(nutrientId, {
 					nutrient_id: nutrientId,
@@ -573,21 +293,23 @@ const collectFdcObservations = (pages) => {
 				});
 
 				const sourceReference = `${foodId}:${nutrientId}`;
-				observations.set(`${page.source}:${page.query}:${sourceReference}`, withManualEntryDedupeKey({
+				observations.set(`${page.source}:${page.query}:${sourceReference}`, {
 					source: page.source,
 					query: page.query,
 					source_reference: sourceReference,
 					source_food_name: String(food.description ?? "").trim() || null,
 					source_data_type: String(food.dataType ?? "").trim() || null,
 					nutrient_id: nutrientId,
+					canonical_nutrient_id: classification.canonicalNutrientId,
 					nutrient_name: nutrientName,
 					nutrient_number: String(nutrient.nutrientNumber ?? "").trim() || null,
 					unit_name: unitName,
-					entry_step: group.entryStep,
+					entry_step: classification.entryStep,
 					group_id: classification.groupId,
-					group_title: group.title,
-					group_sort_order: group.groupSortOrder,
+					group_title: classification.groupTitle,
+					group_sort_order: classification.groupSortOrder,
 					nutrient_type: classification.nutrientType,
+					dedupe_key: classification.dedupeKey,
 					display_label: classification.displayLabel,
 					field_sort_order: classification.fieldSortOrder,
 					classification_method: classification.classificationMethod,
@@ -596,7 +318,7 @@ const collectFdcObservations = (pages) => {
 						dataType: food.dataType,
 						nutrientValue: nutrient.value ?? null,
 					},
-				}));
+				});
 			}
 		}
 	}
@@ -608,8 +330,13 @@ const collectFdcObservations = (pages) => {
 	};
 };
 
-const collectOpenFoodFactsObservations = ({ pages, nutrientDefinitions, observations }) => {
-	const canonicalLookup = buildCanonicalNutrientLookup(nutrientDefinitions);
+const collectOpenFoodFactsObservations = ({
+	pages,
+	nutrientDefinitions,
+	observations,
+	manualEntryCatalog,
+	sourceMappingCatalog,
+}) => {
 	const ignoredNutrients = new Map();
 
 	for (const page of pages) {
@@ -621,10 +348,15 @@ const collectOpenFoodFactsObservations = ({ pages, nutrientDefinitions, observat
 				if (!rawKey.endsWith("_100g")) continue;
 				if (!Number.isFinite(Number(rawValue))) continue;
 
-				const lookupKeys = getOpenFoodFactsLookupKeys(rawKey);
-				const definition = lookupKeys
-					.map((key) => canonicalLookup.get(key))
-					.find(Boolean);
+				const sourceNutrientKey = rawKey.replace(/_100g$/i, "");
+				const sourceUnitName = product.nutriments[`${sourceNutrientKey}_unit`];
+				const mapping = sourceMappingCatalog.resolve({
+					sourceNutrientKey,
+					sourceUnitName,
+				});
+				const definition = mapping
+					? nutrientDefinitions.get(mapping.nutrient_id)
+					: null;
 
 				if (!definition) {
 					ignoredNutrients.set(rawKey, (ignoredNutrients.get(rawKey) ?? 0) + 1);
@@ -632,29 +364,31 @@ const collectOpenFoodFactsObservations = ({ pages, nutrientDefinitions, observat
 				}
 
 				const classification = classifyNutrient({
+					nutrientId: definition.nutrient_id,
 					nutrientName: definition.nutrient_name,
 					unitName: definition.default_unit_name,
+					catalog: manualEntryCatalog,
 				});
 				if (!classification) continue;
 
-				const group = getManualEntryGroup(classification);
-
 				const sourceReference = `${code}:${rawKey}`;
-				observations.set(`open-food-facts:${page.query}:${sourceReference}`, withManualEntryDedupeKey({
+				observations.set(`open-food-facts:${page.query}:${sourceReference}`, {
 					source: "open-food-facts",
 					query: page.query,
 					source_reference: sourceReference,
 					source_food_name: String(product.product_name ?? "").trim() || null,
 					source_data_type: "Open Food Facts",
 					nutrient_id: definition.nutrient_id,
+					canonical_nutrient_id: classification.canonicalNutrientId,
 					nutrient_name: definition.nutrient_name,
 					nutrient_number: definition.nutrient_number,
 					unit_name: definition.default_unit_name,
-					entry_step: group.entryStep,
+					entry_step: classification.entryStep,
 					group_id: classification.groupId,
-					group_title: group.title,
-					group_sort_order: group.groupSortOrder,
+					group_title: classification.groupTitle,
+					group_sort_order: classification.groupSortOrder,
 					nutrient_type: classification.nutrientType,
+					dedupe_key: classification.dedupeKey,
 					display_label: classification.displayLabel,
 					field_sort_order: classification.fieldSortOrder,
 					classification_method: `${classification.classificationMethod}+off-key-match`,
@@ -664,9 +398,12 @@ const collectOpenFoodFactsObservations = ({ pages, nutrientDefinitions, observat
 						brands: product.brands ?? null,
 						categories: product.categories ?? null,
 						nutrimentKey: rawKey,
+						nutrimentUnit: sourceUnitName ?? null,
 						nutrimentValue: Number(rawValue),
+						mappingPriority: mapping.priority,
+						mappingConfidence: mapping.confidence,
 					},
-				}));
+				});
 			}
 		}
 	}
@@ -674,21 +411,77 @@ const collectOpenFoodFactsObservations = ({ pages, nutrientDefinitions, observat
 	return ignoredNutrients;
 };
 
-const upsertInChunks = async ({ supabase, table, records, chunkSize = 500 }) => {
+const upsertInChunks = async ({
+	supabase,
+	table,
+	records,
+	chunkSize = 500,
+	onConflict,
+}) => {
 	for (let start = 0; start < records.length; start += chunkSize) {
 		const chunk = records.slice(start, start + chunkSize);
-		const { error } = await supabase.from(table).upsert(chunk);
+		const { error } = await supabase
+			.from(table)
+			.upsert(chunk, onConflict ? { onConflict } : undefined);
 		if (error) throw error;
 	}
 };
 
-if (!FDC_API_KEY || FDC_API_KEY === "your_api_key_here") {
-	console.error("Missing VITE_FDC_API_KEY in .env.");
+if (
+	!FDC_API_KEY ||
+	FDC_API_KEY === "your_api_key_here" ||
+	!SUPABASE_URL ||
+	!SERVICE_ROLE_KEY
+) {
+	console.error(
+		"Missing VITE_FDC_API_KEY, PUBLIC_SUPABASE_URL, or SUPABASE_SERVICE_ROLE_KEY.",
+	);
 	process.exit(1);
 }
 
 try {
 	const options = parseArguments(process.argv.slice(2));
+	const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+		realtime: { transport: ws },
+		auth: { persistSession: false, autoRefreshToken: false },
+	});
+	const [groupsResult, fieldsResult, definitionsResult, mappingsResult] =
+		await Promise.all([
+			supabase
+				.from("nutrient_manual_entry_groups")
+				.select("id, entry_step, title, sort_order, enabled, group_role"),
+			supabase
+				.from("nutrient_manual_entry_fields")
+				.select(
+					"nutrient_id, group_id, nutrient_type, display_label, sort_order, enabled, dedupe_key, classification_status, classification_version, replacement_nutrient_id",
+				),
+			supabase
+				.from("nutrient_definitions")
+				.select("nutrient_id, nutrient_name, nutrient_number, default_unit_name")
+				.limit(5000),
+			supabase
+				.from("nutrient_source_mappings")
+				.select(
+					"source_nutrient_key, source_unit_name, nutrient_id, priority, confidence, enabled",
+				)
+				.eq("source_key", "open-food-facts")
+				.limit(5000),
+		]);
+	for (const result of [
+		groupsResult,
+		fieldsResult,
+		definitionsResult,
+		mappingsResult,
+	]) {
+		if (result.error) throw result.error;
+	}
+	const manualEntryCatalog = createManualEntryNutrientCatalog({
+		groups: groupsResult.data ?? [],
+		fields: fieldsResult.data ?? [],
+	});
+	const sourceMappingCatalog = createSourceNutrientMappingCatalog(
+		mappingsResult.data ?? [],
+	);
 	const requests = options.queries.flatMap((query) =>
 		DEFAULT_FDC_SOURCE_REQUESTS.flatMap((sourceRequest) =>
 			Array.from({ length: options.pages }, (_, index) => ({
@@ -709,7 +502,11 @@ try {
 		nutrientDefinitions,
 		observations,
 		ignoredNutrients: ignoredFdcNutrients,
-	} = collectFdcObservations(pages);
+	} = collectFdcObservations({
+		pages,
+		databaseDefinitions: definitionsResult.data ?? [],
+		manualEntryCatalog,
+	});
 	const openFoodFactsPages = await runWithConcurrency(
 		options.queries,
 		Math.min(options.concurrency, 2),
@@ -719,6 +516,8 @@ try {
 		pages: openFoodFactsPages,
 		nutrientDefinitions,
 		observations,
+		manualEntryCatalog,
+		sourceMappingCatalog,
 	});
 	const nutrientDefinitionRows = [...nutrientDefinitions.values()];
 	const observationRows = [...observations.values()];
@@ -752,17 +551,13 @@ try {
 		process.exit(0);
 	}
 
-	if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-		throw new Error("Missing PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.");
-	}
-
-	const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-		realtime: { transport: ws },
-		auth: { persistSession: false, autoRefreshToken: false },
-	});
-
 	await upsertInChunks({ supabase, table: "nutrient_definitions", records: nutrientDefinitionRows });
-	await upsertInChunks({ supabase, table: "nutrient_manual_entry_observations", records: observationRows });
+	await upsertInChunks({
+		supabase,
+		table: "nutrient_manual_entry_observations",
+		records: observationRows,
+		onConflict: "source,query,source_reference,nutrient_id",
+	});
 
 	const { error } = await supabase.rpc("sync_nutrient_manual_entry_fields");
 	if (error) throw error;

@@ -169,10 +169,10 @@ Notes:
 | ------------------------------------------ | ------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `nutrient_definitions`                     | `nutrient_id` | Shared reference                         | Canonical nutrient names, numbers, and default units                                                                        | Referenced by every nutrient table                                              |
 | `food_nutrients`                           | `id`          | Shared or user-owned depending on parent | Normalized nutrient values per 100g for list items, custom foods, shared products, submissions, revisions, and observations | Exactly one parent id; `nutrient_id → nutrient_definitions.nutrient_id`         |
-| `nutrient_manual_entry_groups`             | `id`          | Shared reference                         | DB-backed manual-entry UI groups such as macros, vitamins, minerals, amino acids                                            | Fed by observations                                                             |
-| `nutrient_manual_entry_fields`             | `dedupe_key`  | Shared reference                         | DB-backed manual-entry fields for nutrients, including whether a field is required                                          | `nutrient_id → nutrient_definitions`, `group_id → nutrient_manual_entry_groups` |
+| `nutrient_manual_entry_groups`             | `id`          | Shared reference                         | Versioned DB-owned manual-entry UI groups and hidden review queues                                                           | Summarizes observation evidence without surrendering UI policy                  |
+| `nutrient_manual_entry_fields`             | `nutrient_id` | Shared reference                         | Versioned DB-owned nutrient placement, labels, order, visibility, aliases, and review state                                  | `nutrient_id → nutrient_definitions`, `group_id → nutrient_manual_entry_groups` |
 | `nutrient_manual_entry_required_nutrients` | `nutrient_id` | Shared validation reference              | DB-backed list of required manual-entry nutrients such as calories, macros, and sodium                                      | `nutrient_id → nutrient_definitions`, `group_id → nutrient_manual_entry_groups` |
-| `nutrient_manual_entry_observations`       | `id`          | Shared reference/provenance              | Source API observations used to build manual-entry groups and fields                                                        | `nutrient_id → nutrient_definitions`                                            |
+| `nutrient_manual_entry_observations`       | `id`          | Shared reference/provenance              | Raw source API nutrient observations retained separately from approved UI classification                                    | Raw and canonical nutrient ids → `nutrient_definitions`                         |
 | `nutrient_relationship_rules`              | `id`          | Shared validation reference              | DB-backed nutrient math/relationship rules, such as child nutrients not exceeding parent nutrients                          | `parent_nutrient_id` and `child_nutrient_id → nutrient_definitions`             |
 
 ### `nutrient_definitions`
@@ -211,26 +211,36 @@ These tables make manual-entry UI DB-driven.
 Columns:
 
 - `nutrient_manual_entry_groups`: `id`, `entry_step`, `title`, `sort_order`, `enabled`,
-  `source_count`, `observation_count`, `verification_status`, `sources`,
+  `group_role`, `source_count`, `observation_count`, `verification_status`, `sources`,
   `last_observed_at`, timestamps.
 - `nutrient_manual_entry_fields`: `dedupe_key`, `nutrient_id`, `group_id`,
   `nutrient_type`, `display_label`, `required_for_manual_entry`, `sort_order`,
   `enabled`, `source_count`, `observation_count`, `verification_status`, `sources`,
-  `last_observed_at`, timestamps.
+  `last_observed_at`, `classification_status`, `classification_source_key`,
+  `classification_reference`, `classification_version`, `classification_notes`,
+  `replacement_nutrient_id`, `reviewed_at`, timestamps.
 - `nutrient_manual_entry_required_nutrients`: `nutrient_id`, `requirement_key`,
   `group_id`, `field_sort_order`, `reason`, `source`, `source_count`,
   `observation_count`, `sources`, `provenance`, `enabled`, timestamps.
-- `nutrient_manual_entry_observations`: source/query/reference fields,
-  nutrient/group/field classification, source payload, and timestamps.
+- `nutrient_manual_entry_observations`: source/query/reference fields, raw
+  `nutrient_id`, approved `canonical_nutrient_id`, observed group/field metadata,
+  source payload, and timestamps.
 
 Notes:
 
-- Seeded by `scripts/seed_manual_entry_nutrients.mjs`.
-- Groups/fields should render from these tables only.
+- Seeded by `scripts/seed_manual_entry_nutrients.mjs` through the current approved DB
+  catalog. The script records new source nutrients but does not invent their UI group.
+- Groups/fields render from enabled, approved DB rows only. Macros contains common
+  nutrition-label fields; specialized carbohydrates, fats, carotenoids, vitamins,
+  minerals, amino acids, and other composition data remain in Extended.
 - Required status should render from `nutrient_manual_entry_required_nutrients` via
   `nutrient_manual_entry_fields.required_for_manual_entry`; do not maintain a separate
   UI-only required nutrient list.
-- Observations preserve API provenance; groups/fields are the app-ready lookup.
+- Observations preserve raw API provenance. Unknown nutrients go to the disabled
+  unclassified review group until an approved DB classification is added. Retired
+  aliases retain a canonical replacement rather than becoming duplicate inputs.
+- Observation sync updates evidence counts only. It cannot overwrite approved DB
+  grouping, labels, order, visibility, semantic type, or aliases.
 
 ### `nutrient_relationship_rules`
 

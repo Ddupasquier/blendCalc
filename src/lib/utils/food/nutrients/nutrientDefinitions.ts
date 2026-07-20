@@ -247,6 +247,7 @@ export const readManualEntryNutrientGroups = async (
 				"nutrient_id, nutrient_type, group_id, display_label, required_for_manual_entry, sort_order, dedupe_key",
 			)
 			.eq("enabled", true)
+			.eq("classification_status", "approved")
 			.order("sort_order", { ascending: true }),
 		supabase
 			.from("nutrient_manual_entry_required_nutrients")
@@ -290,7 +291,8 @@ export const readManualEntryNutrientGroups = async (
 			.from("nutrient_manual_entry_groups")
 			.select("id, entry_step, title, sort_order")
 			.in("id", groupIds)
-			.eq("enabled", true),
+			.eq("enabled", true)
+			.eq("group_role", "display"),
 		supabase
 			.from("nutrient_definitions")
 			.select("nutrient_id, nutrient_name, nutrient_number, default_unit_name")

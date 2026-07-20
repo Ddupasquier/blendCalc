@@ -1282,6 +1282,11 @@ export type Database = {
       }
       nutrient_manual_entry_fields: {
         Row: {
+          classification_notes: string | null
+          classification_reference: string
+          classification_source_key: string
+          classification_status: string
+          classification_version: number
           created_at: string
           dedupe_key: string
           display_label: string | null
@@ -1291,7 +1296,9 @@ export type Database = {
           nutrient_id: number
           nutrient_type: string
           observation_count: number
+          replacement_nutrient_id: number | null
           required_for_manual_entry: boolean
+          reviewed_at: string | null
           sort_order: number
           source_count: number
           sources: string[]
@@ -1299,6 +1306,11 @@ export type Database = {
           verification_status: string
         }
         Insert: {
+          classification_notes?: string | null
+          classification_reference?: string
+          classification_source_key?: string
+          classification_status?: string
+          classification_version?: number
           created_at?: string
           dedupe_key: string
           display_label?: string | null
@@ -1308,7 +1320,9 @@ export type Database = {
           nutrient_id: number
           nutrient_type: string
           observation_count?: number
+          replacement_nutrient_id?: number | null
           required_for_manual_entry?: boolean
+          reviewed_at?: string | null
           sort_order: number
           source_count?: number
           sources?: string[]
@@ -1316,6 +1330,11 @@ export type Database = {
           verification_status?: string
         }
         Update: {
+          classification_notes?: string | null
+          classification_reference?: string
+          classification_source_key?: string
+          classification_status?: string
+          classification_version?: number
           created_at?: string
           dedupe_key?: string
           display_label?: string | null
@@ -1325,7 +1344,9 @@ export type Database = {
           nutrient_id?: number
           nutrient_type?: string
           observation_count?: number
+          replacement_nutrient_id?: number | null
           required_for_manual_entry?: boolean
+          reviewed_at?: string | null
           sort_order?: number
           source_count?: number
           sources?: string[]
@@ -1347,6 +1368,13 @@ export type Database = {
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
           },
+          {
+            foreignKeyName: "nutrient_manual_entry_fields_replacement_nutrient_id_fkey"
+            columns: ["replacement_nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
         ]
       }
       nutrient_manual_entry_groups: {
@@ -1354,6 +1382,7 @@ export type Database = {
           created_at: string
           enabled: boolean
           entry_step: string
+          group_role: string
           id: string
           last_observed_at: string | null
           observation_count: number
@@ -1368,6 +1397,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           entry_step: string
+          group_role?: string
           id: string
           last_observed_at?: string | null
           observation_count?: number
@@ -1382,6 +1412,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           entry_step?: string
+          group_role?: string
           id?: string
           last_observed_at?: string | null
           observation_count?: number
@@ -1396,6 +1427,7 @@ export type Database = {
       }
       nutrient_manual_entry_observations: {
         Row: {
+          canonical_nutrient_id: number
           classification_method: string
           created_at: string
           dedupe_key: string
@@ -1421,6 +1453,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          canonical_nutrient_id: number
           classification_method: string
           created_at?: string
           dedupe_key: string
@@ -1446,6 +1479,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          canonical_nutrient_id?: number
           classification_method?: string
           created_at?: string
           dedupe_key?: string
@@ -1471,6 +1505,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "nutrient_manual_entry_observations_canonical_nutrient_id_fkey"
+            columns: ["canonical_nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
           {
             foreignKeyName: "nutrient_manual_entry_observations_nutrient_id_fkey"
             columns: ["nutrient_id"]
@@ -3097,30 +3138,30 @@ export type Database = {
       food_normalized_barcode: { Args: { p_food: Json }; Returns: string }
       food_source_key: { Args: { p_food: Json }; Returns: string }
       food_trust_status: { Args: { p_food: Json }; Returns: string }
-      is_valid_gtin: { Args: { p_value: string }; Returns: boolean }
       get_blendcalc_product_v1: {
         Args: { p_barcode: string }
         Returns: {
           barcode: string
-          brand_owner: string | null
+          brand_owner: string
           canonical_provenance: Json
-          category_option_id: string | null
+          category_option_id: string
           compatibility_summary: Json
           confidence: string
           created_at: string
-          current_revision_id: string | null
-          current_revision_number: number | null
+          current_revision_id: string
+          current_revision_number: number
           food: Json
           id: string
-          label_observed_at: string | null
-          last_verified_at: string | null
+          label_observed_at: string
+          last_verified_at: string
           product_name: string
-          revision_created_at: string | null
+          revision_created_at: string
           source: string
-          source_reference: string | null
+          source_reference: string
           updated_at: string
         }[]
       }
+      is_valid_gtin: { Args: { p_value: string }; Returns: boolean }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
       normalize_food_category_value: {
         Args: { p_value: string }
@@ -3159,35 +3200,6 @@ export type Database = {
       rebuild_shared_product_compatibility_summary: {
         Args: { p_shared_product_id: string }
         Returns: undefined
-      }
-      search_blendcalc_products_v1: {
-        Args: {
-          p_limit?: number
-          p_offset?: number
-          p_query: string
-          p_terms: string[]
-        }
-        Returns: {
-          barcode: string
-          brand_owner: string | null
-          canonical_provenance: Json
-          category_option_id: string | null
-          compatibility_summary: Json
-          confidence: string
-          created_at: string
-          current_revision_id: string | null
-          current_revision_number: number | null
-          food: Json
-          id: string
-          label_observed_at: string | null
-          last_verified_at: string | null
-          product_name: string
-          revision_created_at: string | null
-          source: string
-          source_reference: string | null
-          total_count: number
-          updated_at: string
-        }[]
       }
       record_product_source_daily_metric: {
         Args: {
@@ -3265,6 +3277,35 @@ export type Database = {
         Returns: string
       }
       save_custom_foods: { Args: { p_foods: Json }; Returns: boolean }
+      search_blendcalc_products_v1: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_query: string
+          p_terms: string[]
+        }
+        Returns: {
+          barcode: string
+          brand_owner: string
+          canonical_provenance: Json
+          category_option_id: string
+          compatibility_summary: Json
+          confidence: string
+          created_at: string
+          current_revision_id: string
+          current_revision_number: number
+          food: Json
+          id: string
+          label_observed_at: string
+          last_verified_at: string
+          product_name: string
+          revision_created_at: string
+          source: string
+          source_reference: string
+          total_count: number
+          updated_at: string
+        }[]
+      }
       search_generic_food_records: {
         Args: { p_limit?: number; p_query: string }
         Returns: {

@@ -9,7 +9,7 @@ export default defineConfig({
 		cssTarget: ['chrome111', 'edge111', 'firefox113', 'safari16.4']
 	},
 	test: {
-		include: ['tests/**/*.{test,spec}.{js,ts}'],
+		include: ['tests/**/*.{test,spec}.{js,mjs,ts}'],
 		globals: true,
 		environment: 'jsdom',
 		setupFiles: ['tests/test-setup.ts']

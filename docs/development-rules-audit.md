@@ -26,6 +26,7 @@ clickable navigation block instead.
 - [Component And Route Boundaries](#rule-component-boundaries)
 - [Manual Entry Modularization](#rule-manual-entry-modularization)
 - [Database And API-Driven Data](#rule-no-hardcoded-reference-data)
+- [Manual Entry Nutrient Classification](#rule-manual-entry-nutrient-classification)
 - [Canonical Category Picker](#rule-canonical-category-picker)
 - [USDA Food Source Priority](#rule-usda-source-priority)
 - [Source Quality Measurement](#rule-source-quality-measurement)
@@ -404,6 +405,17 @@ option lists, nutrient catalogs, category catalogs, allergen catalogs, dietary
 restriction catalogs, or source-derived metadata. If an API does not expose the needed
 data directly, write a script that samples every relevant available source API, stores
 observations/provenance in Supabase, and renders only from the stored database result.
+
+**29a.** <a id="rule-manual-entry-nutrient-classification"></a>Keep manual-entry
+nutrient grouping, titles, order, visibility, semantic type, aliases, and replacements
+in a versioned database catalog. Source APIs may add raw nutrient definitions and
+observations, but a seed or sync script must never guess a UI group from a nutrient name
+or overwrite an approved classification. Store unknown source nutrients as hidden,
+unclassified observations for review instead of discarding them or exposing them in the
+form. Keep Macros limited to common nutrition-label values; move specialized
+carbohydrate, fat, carotenoid, mineral, vitamin, amino-acid, and other composition data
+to Extended. Preserve retired aliases and their canonical replacements so new provider
+terms can be adopted without losing history or creating duplicate inputs.
 
 **30.** <a id="rule-cross-reference-apis"></a>Cross-reference all relevant source APIs
 before treating seeded reference data as verified. Any script that writes reusable,
