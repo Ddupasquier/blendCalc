@@ -5,6 +5,7 @@ config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
 
 const args = ["supabase", "db", "push", "--yes"];
+if (process.argv.includes("--dry-run")) args.push("--dry-run");
 const keychainService = "blendcalc-supabase-db-password";
 
 const getKeychainPassword = () => {

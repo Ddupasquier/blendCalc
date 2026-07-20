@@ -31,6 +31,7 @@ export const applyCanonicalFoodCategory = (
 	...food,
 	foodCategory: category.label,
 	categories: mergeCanonicalFoodCategories(category.label, food.categories),
+	categoryOptionId: category.categoryOptionId,
 });
 
 const resolveSourceFoodCategoryOption = async (

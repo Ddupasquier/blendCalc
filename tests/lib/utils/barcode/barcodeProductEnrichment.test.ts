@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	applyCachedImageToBarcodeDraft,
 	getMissingBarcodeProductFields,
+	getSupplementedBarcodeProductFields,
 	mergeMissingBarcodeProductFields,
 } from "$lib/utils/barcode/barcodeProductEnrichment";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
@@ -103,6 +104,11 @@ describe("barcode product field enrichment", () => {
 		});
 
 		const result = mergeMissingBarcodeProductFields(usda, openFoodFacts);
+		expect(getSupplementedBarcodeProductFields(usda, openFoodFacts)).toEqual([
+			"image",
+			"categories",
+			"serving",
+		]);
 
 		expect(result.source).toBe("usda");
 		expect(result.nutrients[0]).toMatchObject({

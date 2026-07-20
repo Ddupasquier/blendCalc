@@ -517,8 +517,13 @@ as its accessible name and tooltip.
 record merely because it returned the first or most authoritative match. Build
 exact-barcode products field by field: select nutrition, image, category, and serving
 data independently, retain the chosen source, source reference, and confidence for each
-field, and preserve per-nutrient provenance. Read the blendCalc database and legal
-source caches first. Apply an explicit selection policy independently to every field;
+field, and preserve per-nutrient provenance. The active `shared_products` row and its
+normalized child rows are the canonical source of truth for published blendCalc product
+reads and the future public API. Read that canonical database record first, then legal
+source caches, and call external providers only for fields that are still missing.
+External providers supply observations and gap-fill candidates; they never outrank an
+accepted nonmissing canonical value merely because of the provider name. Apply an
+explicit selection policy independently to every field;
 the policy may prefer a source for a particular field but must not turn that preference
 into a whole-product hierarchy or user-facing provider badge. Continue checking only
 missing fields instead of returning early; an exact source match may supplement
@@ -526,12 +531,21 @@ nutrition, image, category, or serving without replacing accepted nutrients or r
 zeroes. A complete database record must make no external product request. A partial
 record may request a fallback only while a tracked field remains missing, and a cache
 failure, missing optional field, or later-source outage must never discard usable data.
-When a fallback serving changes the
-working gram basis, rescale the retained nutrient values exactly once to that serving
-before saving. Persist field-level provenance through manual-entry autofill, catalog
-creation, normalized serving rows, and saved food snapshots, and cover complete-cache,
-mixed-source, missing-field, cache-failure, source-outage, zero-value, and
-serving-rescale cases with regression tests.
+Canonical-storage permission, license identity, and review notes must come from the
+database-backed source policy, never a provider-name condition in application code.
+When a legally reusable exact-source observation fills a missing canonical field,
+record the observation, selected field provenance, canonical update, normalized rows,
+and immutable revision in one server-only transaction so later app and API reads use
+the improved database row instead of repeating the provider request. Never promote
+provider data into the canonical/public database when its storage or redistribution
+terms do not permit that use; keep it in its licensed cache or asset path instead. When
+a fallback serving changes the working gram basis, rescale the retained nutrient values
+exactly once to that serving before saving. Persist field-level provenance through
+manual-entry autofill, catalog creation, normalized serving rows, and saved food
+snapshots, and cover complete-cache, mixed-source, missing-field, concurrent-update,
+cache-failure, source-outage, zero-value, legal-storage, and serving-rescale cases with
+regression tests. Provider priority remains internal and must never be presented to
+users as a trust hierarchy.
 
 **30h.** <a id="rule-national-nutrition-datasets"></a>Import official national
 food-composition datasets only after recording the exact release, download URL, file

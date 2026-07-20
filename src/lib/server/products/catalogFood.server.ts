@@ -20,7 +20,7 @@ const getCatalogFoodId = (draft: BarcodeProductDraft) => {
 
 export const createCatalogFoodFromDraft = (
 	draft: BarcodeProductDraft,
-	category: ResolvedFoodCategory,
+	category?: ResolvedFoodCategory,
 	sharedProductId?: string,
 ): FdcFood => {
 	const food = createCustomFood({
@@ -43,7 +43,9 @@ export const createCatalogFoodFromDraft = (
 		traces: draft.traces,
 		dietaryTags: draft.dietaryTags,
 		labels: draft.labels,
-		categories: mergeCanonicalFoodCategories(category.label, draft.categories),
+		categories: category
+			? mergeCanonicalFoodCategories(category.label, draft.categories)
+			: draft.categories,
 		image: draft.image,
 		fieldProvenance: draft.fieldProvenance,
 		nutrients: draft.nutrients,
@@ -51,7 +53,7 @@ export const createCatalogFoodFromDraft = (
 		hasSourceServing: draft.hasSourceServing,
 	});
 
-	return applyCanonicalFoodCategory({
+	const catalogFood: FdcFood = {
 		...food,
 		reportedNutrientIds: [...draft.reportedNutrientIds],
 		fdcId: getCatalogFoodId(draft),
@@ -68,5 +70,9 @@ export const createCatalogFoodFromDraft = (
 		sourceDataType: draft.sourceDataType,
 		sourcePublishedDate: draft.sourcePublishedDate,
 		sourceModifiedDate: draft.sourceModifiedDate,
-	}, category);
+	};
+
+	return category
+		? applyCanonicalFoodCategory(catalogFood, category)
+		: catalogFood;
 };

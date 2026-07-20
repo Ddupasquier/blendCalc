@@ -49,7 +49,7 @@
 		"db:push": "supabase db push",
 		"db:push:auto": "node scripts/push_supabase_db.mjs",
 		"db:types": "mkdir -p src/lib/types && supabase gen types typescript --linked > src/lib/types/database.types.ts",
-		"db:push:dry": "supabase db push --dry-run",
+		"db:push:dry": "node scripts/push_supabase_db.mjs --dry-run",
 		"db:lint": "supabase db lint --linked",
 		"catalog:qa-seed": "node scripts/seed_catalog_submission.mjs seed",
 		"catalog:qa-clean": "node scripts/seed_catalog_submission.mjs cleanup",

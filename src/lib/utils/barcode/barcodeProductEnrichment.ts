@@ -37,6 +37,18 @@ export const getMissingBarcodeProductFields = (
 export const needsBarcodeProductSupplement = (draft: BarcodeProductDraft) =>
 	Object.values(getMissingBarcodeProductFields(draft)).some(Boolean);
 
+export const getSupplementedBarcodeProductFields = (
+	primary: BarcodeProductDraft,
+	supplement: BarcodeProductDraft | null | undefined,
+): FoodTrackedField[] => {
+	if (!supplement) return [];
+	const missing = getMissingBarcodeProductFields(primary);
+	const supplementMissing = getMissingBarcodeProductFields(supplement);
+	return (Object.keys(missing) as FoodTrackedField[]).filter(
+		(field) => missing[field] && !supplementMissing[field],
+	);
+};
+
 const getDefaultConfidence = (
 	source: FoodFieldSource["source"],
 ): NonNullable<FoodFieldSource["confidence"]> => {
@@ -156,12 +168,13 @@ export const mergeMissingBarcodeProductFields = (
 ): BarcodeProductDraft => {
 	if (!supplement) return primary;
 
-	const missing = getMissingBarcodeProductFields(primary);
-	const supplementMissing = getMissingBarcodeProductFields(supplement);
-	const useSupplementServing = missing.serving && !supplementMissing.serving;
-	const useSupplementNutrition = missing.nutrition && !supplementMissing.nutrition;
-	const useSupplementImage = missing.image && !supplementMissing.image;
-	const useSupplementCategories = missing.categories && !supplementMissing.categories;
+	const supplementedFields = new Set(
+		getSupplementedBarcodeProductFields(primary, supplement),
+	);
+	const useSupplementServing = supplementedFields.has("serving");
+	const useSupplementNutrition = supplementedFields.has("nutrition");
+	const useSupplementImage = supplementedFields.has("image");
+	const useSupplementCategories = supplementedFields.has("categories");
 	if (
 		!useSupplementServing &&
 		!useSupplementNutrition &&

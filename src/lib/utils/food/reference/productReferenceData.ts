@@ -5,6 +5,8 @@ export type ProductDataSource = {
 	key: string;
 	displayName: string;
 	attributionText: string | null;
+	canonicalStorageAllowed?: boolean;
+	canonicalLicenseName?: string | null;
 };
 
 export type CanonicalNutrientDefinition = {
@@ -43,7 +45,9 @@ export const readProductReferenceData = async (
 		await Promise.all([
 			supabase
 				.from("product_data_sources")
-				.select("key, display_name, attribution_text")
+				.select(
+					"key, display_name, attribution_text, canonical_storage_allowed, canonical_license_name",
+				)
 				.eq("enabled", true),
 			supabase
 				.from("nutrient_source_mappings")
@@ -82,6 +86,8 @@ export const readProductReferenceData = async (
 					key: source.key,
 					displayName: source.display_name,
 					attributionText: source.attribution_text,
+					canonicalStorageAllowed: source.canonical_storage_allowed,
+					canonicalLicenseName: source.canonical_license_name,
 				},
 			]),
 		),

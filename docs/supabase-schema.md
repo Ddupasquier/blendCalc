@@ -265,7 +265,11 @@ FoodData Central and Open Food Facts products.
 
 Columns: `key`, `display_name`, `source_type`, `homepage_url`, `api_base_url`,
 `terms_url`, `attribution_text`, `enabled`, observation counts/timestamps, `provenance`,
-and timestamps.
+`canonical_storage_allowed`, `canonical_license_name`,
+`canonical_policy_reviewed_at`, `canonical_policy_notes`, and timestamps. Canonical
+storage stays disabled until the provider's downstream storage and redistribution terms
+have been reviewed; server enrichment reads this policy instead of hardcoding a provider
+hierarchy.
 
 Notes:
 
@@ -415,7 +419,10 @@ Notes:
 
 ### `shared_products`
 
-Approved catalog product.
+Approved canonical blendCalc catalog product. This table and its normalized child rows
+are the source of truth for published app reads and the planned public product API;
+external API rows are evidence or missing-field candidates, not competing public
+product authorities.
 
 Columns: `id`, `barcode`, `product_name`, `brand_owner`, `search_text`,
 `category_option_id`, `food`, `source`, `source_reference`, `confidence`, `status`,
@@ -425,6 +432,15 @@ Columns: `id`, `barcode`, `product_name`, `brand_owner`, `search_text`,
 Notes:
 
 - Search uses indexed `search_text`.
+- Barcode lookup reads the active canonical row before source caches or external APIs.
+  Complete rows make no external product request. A legally reusable exact-source value
+  may fill only a field that is still missing through
+  `apply_shared_product_external_enrichment`, which also writes the source observation,
+  selected provenance, normalized projections, and a revision in one transaction.
+- Existing nonmissing canonical values are never replaced by automatic provider
+  enrichment. Data with incompatible storage or redistribution terms remains in its
+  isolated cache or source-backed asset table and is not copied into the future public
+  dataset.
 - The `food` JSON preserves source identity separately from catalog status. For
   USDA-backed products this includes `sourceKey`, the DB-provided `sourceLabel`,
   `sourceDataType` (`Branded`, `Foundation`, `SR Legacy`, or `Survey (FNDDS)`), and

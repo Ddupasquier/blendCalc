@@ -1959,6 +1959,10 @@ export type Database = {
         Row: {
           api_base_url: string | null
           attribution_text: string | null
+		  canonical_license_name: string | null
+		  canonical_policy_notes: string | null
+		  canonical_policy_reviewed_at: string | null
+		  canonical_storage_allowed: boolean
           created_at: string
           display_name: string
           enabled: boolean
@@ -1975,6 +1979,10 @@ export type Database = {
         Insert: {
           api_base_url?: string | null
           attribution_text?: string | null
+		  canonical_license_name?: string | null
+		  canonical_policy_notes?: string | null
+		  canonical_policy_reviewed_at?: string | null
+		  canonical_storage_allowed?: boolean
           created_at?: string
           display_name: string
           enabled?: boolean
@@ -1991,6 +1999,10 @@ export type Database = {
         Update: {
           api_base_url?: string | null
           attribution_text?: string | null
+		  canonical_license_name?: string | null
+		  canonical_policy_notes?: string | null
+		  canonical_policy_reviewed_at?: string | null
+		  canonical_storage_allowed?: boolean
           created_at?: string
           display_name?: string
           enabled?: boolean
@@ -2948,6 +2960,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+	  apply_shared_product_external_enrichment: {
+		Args: {
+		  p_barcode: string
+		  p_candidate_fields?: string[]
+		  p_category_option_id?: string
+		  p_enriched_food: Json
+		  p_observations?: Json
+		  p_provenance?: Json
+		  p_shared_product_id: string
+		}
+		Returns: string[]
+	  }
       compatibility_normalize_text: {
         Args: { p_value: string }
         Returns: string

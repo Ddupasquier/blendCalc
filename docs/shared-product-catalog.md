@@ -10,8 +10,9 @@ signed-in user without exposing the account that submitted it.
 3. For eligible labels, the user can explicitly opt in to catalog review.
 4. The server validates the barcode, serving weight, nutrient values, and basic macro
    relationships.
-5. An exact USDA FoodData Central barcode match is published automatically, with USDA
-   selected as the canonical source.
+5. An exact, legally reusable USDA FoodData Central barcode match may publish or improve
+   the blendCalc canonical product; the stored blendCalc record becomes the source used
+   by later app and public-API reads while USDA remains recorded as field evidence.
 6. Unknown labels require front-package, nutrition-label, and barcode photos.
 7. Unknown labels stay pending until a moderator approves or rejects them.
 8. Approved products appear in ingredient text search and are checked before outside
@@ -30,8 +31,13 @@ save private custom foods, use their fridge, and build mixes.
 
 ## Source policy
 
+- **blendCalc shared catalog:** the active `shared_products` row plus its normalized
+  nutrient, serving, image, category, provenance, and revision records is the canonical
+  source of truth for published product reads. External providers do not bypass or
+  overwrite accepted nonmissing canonical fields.
 - **USDA FoodData Central:** exact barcode matches may auto-publish. USDA data is
-  CC0/public domain.
+  CC0/public domain. Exact USDA fields may fill missing canonical fields when the
+  observation, selected provenance, and revision are saved together.
 - **Open Food Facts:** used for live barcode lookup with attribution. Its ODbL records
   are not copied into this independently managed shared catalog. Package image metadata
   may be stored in `food_image_assets` with source, license, attribution, and confidence
@@ -39,11 +45,24 @@ save private custom foods, use their fridge, and build mixes.
   catalog data.
 - **User-entered labels:** may be published only after moderator review.
 
+Whether a provider may populate the future public blendCalc dataset is stored in
+`product_data_sources` through `canonical_storage_allowed`, license, review date, and
+policy notes. Application code must not infer redistribution permission from a provider
+name.
+
 ## Provenance and merging
 
 Every published field records the observation that supplied it. Source observations,
 selected field provenance, and disagreements are stored separately from the canonical
 product row.
+
+When a canonical product is incomplete, the server may consult source caches and
+external APIs only for the missing fields. A legally reusable exact-source value can be
+promoted into the canonical row through the server-only enrichment transaction, which
+rechecks that the field is still missing before writing it. Existing canonical values
+are not silently replaced. Provider data whose terms do not allow inclusion in the
+future blendCalc public dataset remains in its isolated licensed cache or image-asset
+path and is never disguised as blendCalc-owned canonical data.
 
 Source/API product names are normalized to readable title-style capitalization and use
 `&` instead of the standalone word `and` before publication so inconsistent vendor
@@ -123,6 +142,9 @@ barcode match, corroboration, or moderator review. Public catalog membership doe
 erase provider provenance. Compact cards do not expose provider or `Imported` hierarchy
 badges; detailed nutrition keeps neutral source attribution and actionable verification
 states remain consistent across views.
+The database's role as the canonical product source is an internal data-flow rule, not a
+consumer badge. Users see actionable verification, review, conflict, and completeness
+states rather than a ranking of blendCalc, USDA, Open Food Facts, or future providers.
 
 Saved Fridge and Shopping List rows hold normalized links to the active
 `shared_products` row and the current user's pending `shared_product_submissions` row.
@@ -164,6 +186,7 @@ Migrations:
 - `supabase/migrations/20260614200000_catalog_provenance_cache_and_evidence.sql`
 - `supabase/migrations/20260615230000_product_submission_rejection_blocks.sql`
 - `supabase/migrations/20260715120000_shared_product_canonical_categories.sql`
+- `supabase/migrations/20260719210000_canonical_product_external_enrichment.sql`
 - `supabase/migrations/20260718000000_server_request_efficiency.sql`
 - `supabase/migrations/20260718130000_user_food_list_catalog_links.sql`
 - `supabase/migrations/20260718131000_user_food_list_catalog_link_defaults.sql`

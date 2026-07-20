@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
 	mapSharedCatalogFood: vi.fn(),
 	getCachedFoodImageByBarcode: vi.fn(),
 	resolveBarcodeDraftCategory: vi.fn(),
+	persistSharedProductExternalEnrichment: vi.fn(),
 }));
 
 vi.mock("$lib/server/products/catalog.server", () => ({
@@ -27,6 +28,10 @@ vi.mock("$lib/utils/storage/supabase/foodImages", () => ({
 }));
 vi.mock("$lib/server/products/categoryMapping.server", () => ({
 	resolveBarcodeDraftCategory: mocks.resolveBarcodeDraftCategory,
+}));
+vi.mock("$lib/server/products/catalogEnrichment.server", () => ({
+	persistSharedProductExternalEnrichment:
+		mocks.persistSharedProductExternalEnrichment,
 }));
 
 import { lookupBarcodeProductDraft } from "$lib/server/products/barcodeProduct.server";
@@ -73,6 +78,7 @@ describe("barcode product DB-first enrichment", () => {
 		mocks.resolveBarcodeDraftCategory.mockImplementation(
 			async (_supabase, draft) => draft,
 		);
+		mocks.persistSharedProductExternalEnrichment.mockResolvedValue([]);
 	});
 
 	it("returns a complete DB product without calling an external API", async () => {
@@ -88,6 +94,9 @@ describe("barcode product DB-first enrichment", () => {
 		expect(result).toBe(sharedDraft);
 		expect(mocks.getSharedProductByBarcode).toHaveBeenCalledOnce();
 		expect(mocks.lookupExternalBarcodeProduct).not.toHaveBeenCalled();
+		expect(
+			mocks.persistSharedProductExternalEnrichment,
+		).not.toHaveBeenCalled();
 	});
 
 	it("uses APIs only to fill fields missing from the DB product", async () => {
@@ -118,6 +127,13 @@ describe("barcode product DB-first enrichment", () => {
 			categories: ["Pasta sauces"],
 			image: supplement.image,
 		});
+		expect(
+			mocks.persistSharedProductExternalEnrichment,
+		).toHaveBeenCalledWith(expect.objectContaining({
+			sharedProductId: "shared-product-id",
+			barcode: sharedDraft.barcode,
+			fields: expect.arrayContaining(["image", "categories"]),
+		}));
 	});
 
 	it("keeps a usable DB product when optional cache and API lookups fail", async () => {
@@ -133,5 +149,8 @@ describe("barcode product DB-first enrichment", () => {
 		);
 
 		expect(result).toBe(sharedDraft);
+		expect(
+			mocks.persistSharedProductExternalEnrichment,
+		).not.toHaveBeenCalled();
 	});
 });

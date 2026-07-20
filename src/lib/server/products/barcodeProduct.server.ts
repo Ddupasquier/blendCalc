@@ -1,5 +1,6 @@
 import { getSharedProductByBarcode } from "$lib/server/products/catalog.server";
 import { resolveBarcodeDraftCategory } from "$lib/server/products/categoryMapping.server";
+import { persistSharedProductExternalEnrichment } from "$lib/server/products/catalogEnrichment.server";
 import { lookupExternalBarcodeProduct } from "$lib/server/products/externalProduct.server";
 import { getProductReferenceData } from "$lib/server/products/productReferenceData.server";
 import type { Database } from "$lib/types/database.types";
@@ -12,6 +13,7 @@ import { getCachedFoodImageByBarcode } from "$lib/utils/storage/supabase/foodIma
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
 	applyCachedImageToBarcodeDraft,
+	getSupplementedBarcodeProductFields,
 	mergeMissingBarcodeProductFields,
 	needsBarcodeProductSupplement,
 } from "$lib/utils/barcode/barcodeProductEnrichment";
@@ -39,18 +41,36 @@ export const lookupBarcodeProductDraft = async (
 				cachedImage,
 			);
 			let draft = cachedDraft;
+			let supplementedFields = [] as ReturnType<
+				typeof getSupplementedBarcodeProductFields
+			>;
 			if (needsBarcodeProductSupplement(cachedDraft)) {
 				try {
 					const supplement = await lookupExternalBarcodeProduct(barcode, {
 						cachedImage,
 						getReferenceData: async () => referenceData,
 					});
+					supplementedFields = getSupplementedBarcodeProductFields(
+						cachedDraft,
+						supplement,
+					);
 					draft = mergeMissingBarcodeProductFields(cachedDraft, supplement);
 				} catch {
 					draft = cachedDraft;
 				}
 			}
-			return await resolveBarcodeDraftCategory(supabase, draft);
+			const resolvedDraft = await resolveBarcodeDraftCategory(supabase, draft);
+			if (supplementedFields.length > 0 && mappedDraft.sourceReference) {
+				await persistSharedProductExternalEnrichment({
+					sharedProductId: mappedDraft.sourceReference,
+					barcode,
+					currentFood: sharedFood,
+					enrichedDraft: resolvedDraft,
+					fields: supplementedFields,
+					referenceData,
+				});
+			}
+			return resolvedDraft;
 		}
 	}
 
