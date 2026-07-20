@@ -1,5 +1,6 @@
 import type { FdcFood } from "$lib/utils/food/types";
 import { normalizeFoodProductName } from "$lib/utils/products/productNameFormatting.js";
+import { resolveFoodSymbolKey } from "$lib/utils/food/reference/appReferenceCatalog";
 
 export const compactFood = (food: FdcFood): FdcFood => {
 	const normalizedFood = normalizeFoodProductName(food) as FdcFood;
@@ -29,7 +30,7 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		labels: food.labels,
 		categories: food.categories,
 		categoryOptionId: food.categoryOptionId,
-		symbolKey: food.symbolKey,
+			symbolKey: resolveFoodSymbolKey(normalizedFood),
 		image: food.image,
 		fieldProvenance: food.fieldProvenance
 			? Object.fromEntries(

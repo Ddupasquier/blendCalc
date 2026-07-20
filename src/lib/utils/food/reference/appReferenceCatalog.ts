@@ -49,6 +49,19 @@ export type FoodSymbolDefinition = {
 	label: string;
 };
 
+export type FoodSymbolCategoryRule = {
+	symbolKey: string;
+	matchPattern: string;
+	priority: number;
+};
+
+export type FoodSymbolSubject = {
+	symbolKey?: string;
+	foodCategory?: string;
+	brandedFoodCategory?: string;
+	categories?: string[];
+};
+
 export type AppReferenceCatalog = {
 	nutrients: NutrientCatalogItem[];
 	nutrientDisplayProfiles: NutrientDisplayProfile[];
@@ -56,6 +69,7 @@ export type AppReferenceCatalog = {
 	mixGoalTemplates: MixGoalTemplate[];
 	mixRuntime: MixRuntimeConfiguration;
 	foodSymbols: FoodSymbolDefinition[];
+	foodSymbolCategoryRules: FoodSymbolCategoryRule[];
 };
 
 const EMPTY_MIX_RUNTIME: MixRuntimeConfiguration = {
@@ -76,6 +90,7 @@ const EMPTY_CATALOG: AppReferenceCatalog = {
 	mixGoalTemplates: [],
 	mixRuntime: EMPTY_MIX_RUNTIME,
 	foodSymbols: [],
+	foodSymbolCategoryRules: [],
 };
 
 let configuredCatalog = EMPTY_CATALOG;
@@ -137,3 +152,36 @@ export const getFoodSymbolDefinition = (
 	catalog.foodSymbols.find((symbol) => symbol.key === key) ??
 	catalog.foodSymbols.find((symbol) => symbol.key === "generic") ??
 	null;
+
+const matchesFoodSymbolRule = (value: string, matchPattern: string) => {
+	try {
+		return new RegExp(matchPattern, "i").test(value);
+	} catch {
+		return false;
+	}
+};
+
+export const resolveFoodSymbolKey = (
+	food: FoodSymbolSubject,
+	catalog: AppReferenceCatalog = configuredCatalog,
+) => {
+	if (
+		food.symbolKey &&
+		catalog.foodSymbols.some((symbol) => symbol.key === food.symbolKey)
+	) {
+		return food.symbolKey;
+	}
+
+	const categoryText = [
+		food.foodCategory,
+		food.brandedFoodCategory,
+		...(food.categories ?? []),
+	]
+		.filter(Boolean)
+		.join(" ");
+	const matchedRule = [...(catalog.foodSymbolCategoryRules ?? [])]
+		.sort((left, right) => left.priority - right.priority)
+		.find((rule) => matchesFoodSymbolRule(categoryText, rule.matchPattern));
+
+	return matchedRule?.symbolKey ?? "generic";
+};

@@ -60,9 +60,10 @@ export const readAppReferenceCatalog = async (
 		equivalencesResult,
 		templatesResult,
 		templateTargetsResult,
-		runtimeResult,
-		symbolsResult,
-	] = await Promise.all([
+			runtimeResult,
+			symbolsResult,
+			symbolRulesResult,
+		] = await Promise.all([
 		supabase
 			.from("nutrient_definitions")
 			.select("nutrient_id, nutrient_name, nutrient_number, default_unit_name")
@@ -91,12 +92,17 @@ export const readAppReferenceCatalog = async (
 			.from("mix_runtime_configuration")
 			.select("key, value")
 			.eq("enabled", true),
-		supabase
-			.from("food_symbol_definitions")
-			.select("key, display_name, sort_order")
-			.eq("enabled", true)
-			.order("sort_order", { ascending: true }),
-	]);
+			supabase
+				.from("food_symbol_definitions")
+				.select("key, display_name, sort_order")
+				.eq("enabled", true)
+				.order("sort_order", { ascending: true }),
+			supabase
+				.from("food_symbol_category_rules")
+				.select("symbol_key, match_pattern, priority")
+				.eq("enabled", true)
+				.order("priority", { ascending: true }),
+		]);
 
 	for (const result of [
 		definitionsResult,
@@ -105,9 +111,10 @@ export const readAppReferenceCatalog = async (
 		equivalencesResult,
 		templatesResult,
 		templateTargetsResult,
-		runtimeResult,
-		symbolsResult,
-	]) {
+			runtimeResult,
+			symbolsResult,
+			symbolRulesResult,
+		]) {
 		if (result.error) throw result.error;
 	}
 
@@ -178,6 +185,11 @@ export const readAppReferenceCatalog = async (
 		foodSymbols: (symbolsResult.data ?? []).map((symbol) => ({
 			key: symbol.key,
 			label: symbol.display_name,
+		})),
+		foodSymbolCategoryRules: (symbolRulesResult.data ?? []).map((rule) => ({
+			symbolKey: rule.symbol_key,
+			matchPattern: rule.match_pattern,
+			priority: rule.priority,
 		})),
 	};
 };

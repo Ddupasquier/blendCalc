@@ -7,14 +7,18 @@
 	import ImagePlacementViewport from "$lib/components/common/images/ImagePlacementViewport.svelte";
 	import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
 	import CategoryFoodIcon from "$lib/assets/icons/CategoryFoodIcon.svelte";
-	import { getFoodSymbolDefinition } from "$lib/utils/food/reference/appReferenceCatalog";
+	import {
+		getFoodSymbolDefinition,
+		resolveFoodSymbolKey,
+	} from "$lib/utils/food/reference/appReferenceCatalog";
 
 	let {
 		food,
 		class: className = "",
 	}: FoodSymbolProps = $props();
 
-	const symbolDefinition = $derived(getFoodSymbolDefinition(food.symbolKey));
+	const symbolKey = $derived(resolveFoodSymbolKey(food));
+	const symbolDefinition = $derived(getFoodSymbolDefinition(symbolKey));
 	const imageUrl = $derived(pickFoodImageUrl(food.image));
 	const imageAlt = $derived(
 		getFoodImageAltText({
@@ -53,7 +57,7 @@
 	</span>
 {:else}
 <span class={`food-symbol__fallback ${className}`.trim()} title={symbolDefinition?.label ?? "Ingredient"}>
-		<CategoryFoodIcon symbolKey={food.symbolKey} />
+		<CategoryFoodIcon {symbolKey} />
 	</span>
 {/if}
 

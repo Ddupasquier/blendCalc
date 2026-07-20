@@ -93,7 +93,17 @@ export const appReferenceCatalogFixture: AppReferenceCatalog = {
 		pointGoalTolerance: 0.1,
 		defaultServingGrams: 100,
 	},
-	foodSymbols: [{ key: "generic", label: "Food" }],
+	foodSymbols: [
+		{ key: "generic", label: "Food" },
+		{ key: "fruit", label: "Fruit" },
+		{ key: "vegetables", label: "Vegetables" },
+		{ key: "sweets", label: "Sweets" },
+	],
+	foodSymbolCategoryRules: [
+		{ symbolKey: "sweets", matchPattern: "(sweet|jelly|jam)", priority: 10 },
+		{ symbolKey: "vegetables", matchPattern: "(vegetable|tomato)", priority: 20 },
+		{ symbolKey: "fruit", matchPattern: "(fruit|berr)", priority: 30 },
+	],
 };
 
 export const nutritionCompletenessCatalogFixture: NutritionCompletenessCatalog = {
