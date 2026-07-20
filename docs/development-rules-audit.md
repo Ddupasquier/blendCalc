@@ -773,10 +773,14 @@ controls are complete.
 
 **31g.** <a id="rule-app-versioning"></a>Version the blendCalc application and its API
 as separate products. `package.json` is the single source for the app's semantic
-version, and the MVP starts at app version `1.0.0`, displayed as `V1`. Every build must
-carry that release version plus a deterministic deployment identifier, expose the app
-release/build through shared runtime constants, HTML metadata, and response headers,
-and use the same release version in outbound user-agent strings. Use semantic versioning:
+version, and the MVP starts at app version `1.0.0`. Every build must carry that release
+version plus a deterministic deployment identifier, expose the app release/build through
+shared runtime constants, HTML metadata, and response headers, and use the same release
+version in outbound user-agent strings. Keep this technical version metadata out of the
+app header, navigation, and primary product screens. If users or support need a visible
+version, show the complete app release in a focused About or Settings view rather than
+repeating `V1` throughout the interface; API versions belong in API URLs, responses, and
+documentation rather than the normal app UI. Use semantic versioning:
 major for incompatible app or persisted-data behavior, minor for backward-compatible
 features, and patch for backward-compatible fixes. The catalog API keeps its own URL and
 contract version such as `/api/v1` and `apiVersion: 1.0`; an app release never changes
