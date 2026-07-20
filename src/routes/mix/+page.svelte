@@ -21,14 +21,12 @@
         type SmartWarning,
     } from "$lib/utils/mix/warnings/smartWarnings";
     import {
-        cacheSmoothieListLocally,
 		preserveSelectedListItems,
-        readSmoothieList,
         SMOOTHIE_LISTS_CHANGED_EVENT,
     } from "$lib/utils/storage/client/smoothieLists";
     import {
+		readCloudSmoothieList,
         readCloudMixPreferences,
-        reconcileCloudSmoothieList,
         saveCloudMixPreferences,
     } from "$lib/utils/storage/supabase";
     import IngredientContributionBreakdown from "$lib/components/mix/insights/IngredientContributionBreakdown.svelte";
@@ -377,51 +375,42 @@
         );
     };
 
-    const loadIngredientLists = () => {
-        fridgeItems = readSmoothieList(MIX_STORAGE_KEYS.fridge);
-        shoppingItems = readSmoothieList(MIX_STORAGE_KEYS.shoppingList);
-    };
-
     const loadCloudBackedIngredientLists = async () => {
-        const localFridge = readSmoothieList(MIX_STORAGE_KEYS.fridge);
-        const localShoppingList = readSmoothieList(MIX_STORAGE_KEYS.shoppingList);
-
-        fridgeItems = localFridge;
-        shoppingItems = localShoppingList;
+		const loadedFridge = fridgeItems;
+		const loadedShoppingList = shoppingItems;
 
 		try {
 			const [nextFridge, nextShoppingList] = await Promise.all([
-				reconcileCloudSmoothieList(MIX_STORAGE_KEYS.fridge, localFridge),
-				reconcileCloudSmoothieList(
-					MIX_STORAGE_KEYS.shoppingList,
-					localShoppingList,
-				),
+				readCloudSmoothieList(MIX_STORAGE_KEYS.fridge),
+				readCloudSmoothieList(MIX_STORAGE_KEYS.shoppingList),
 			]);
+			if (!nextFridge || !nextShoppingList) {
+				throw new Error("Saved ingredient lists are unavailable.");
+			}
 
 			const preservedFridge = preserveSelectedListItems(
 				nextFridge,
-				localFridge,
+				loadedFridge,
 				selectedFoodIds,
 			);
 			const preservedShoppingList = preserveSelectedListItems(
 				nextShoppingList,
-				localShoppingList,
+				loadedShoppingList,
 				selectedFoodIds,
 			);
 
 			fridgeItems = preservedFridge;
 			shoppingItems = preservedShoppingList;
-			cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, preservedFridge);
-			cacheSmoothieListLocally(
-				MIX_STORAGE_KEYS.shoppingList,
-				preservedShoppingList,
-			);
 			cloudLoadError = "";
 		} catch {
 			cloudLoadError =
-				"Your saved ingredient lists could not be loaded from the database. Local items are shown temporarily.";
+				"Your saved ingredient lists could not be loaded. Try again.";
 		}
     };
+
+	const loadIngredientLists = () => {
+		void loadCloudBackedIngredientLists();
+	};
 
     const loadNutrientGoals = () => {
         nutrientGoals = readStoredNutrientGoals();
@@ -705,15 +694,13 @@
         loadMixState();
         loadNutrientGoals();
         if (!restoredSavedDrink) void loadCloudBackedMixPreferences();
-        window.addEventListener("storage", loadIngredientLists);
-        window.addEventListener(
+		window.addEventListener(
             SMOOTHIE_LISTS_CHANGED_EVENT,
             loadIngredientLists,
         );
         window.addEventListener("focus", loadIngredientLists);
         return () => {
-            window.removeEventListener("storage", loadIngredientLists);
-            window.removeEventListener(
+			window.removeEventListener(
                 SMOOTHIE_LISTS_CHANGED_EVENT,
                 loadIngredientLists,
             );

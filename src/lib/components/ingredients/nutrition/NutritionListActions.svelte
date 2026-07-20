@@ -12,7 +12,6 @@
 	import {
 		addFoodToSmoothieList,
 		moveFoodToSmoothieList,
-		readSmoothieList,
 	} from "$lib/utils/storage/client/smoothieLists";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 
@@ -70,22 +69,6 @@
 
 	const handleAddToFridge = async () => {
 		if (!food) return;
-		const shoppingList = readSmoothieList(MIX_STORAGE_KEYS.shoppingList);
-		if (shoppingList.some((item) => item.fdcId === food.fdcId)) {
-			movePrompt = {
-				message:
-					"This item is already in your shopping list. Move it to your fridge?",
-				onConfirm: () =>
-					void moveFood(
-						MIX_STORAGE_KEYS.fridge,
-						"Moved to fridge.",
-					),
-				onCancel: () => {
-					movePrompt = null;
-				},
-			};
-			return;
-		}
 		if (pendingAction) return;
 		pendingAction = "fridge";
 		try {
@@ -120,22 +103,6 @@
 
 	const handleAddToShopping = async () => {
 		if (!food) return;
-		const fridgeList = readSmoothieList(MIX_STORAGE_KEYS.fridge);
-		if (fridgeList.some((item) => item.fdcId === food.fdcId)) {
-			movePrompt = {
-				message:
-					"This item is already in your fridge. Move it to your shopping list?",
-				onConfirm: () =>
-					void moveFood(
-						MIX_STORAGE_KEYS.shoppingList,
-						"Moved to shopping list.",
-					),
-				onCancel: () => {
-					movePrompt = null;
-				},
-			};
-			return;
-		}
 		if (pendingAction) return;
 		pendingAction = "shopping";
 		try {

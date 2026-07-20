@@ -11,9 +11,7 @@
 	} from "$lib/utils/ingredients/ingredientSearchPagination";
 	import {
 		CUSTOM_FOODS_CHANGED_EVENT,
-		searchCustomFoods,
 	} from "$lib/utils/food/custom/customFoods";
-	import { matchesIngredientProvenance } from "$lib/utils/ingredients/ingredientProvenance";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
 	import Search from "$lib/assets/icons/Search.svelte";
@@ -84,16 +82,14 @@
 				dispatch("results", { results, query: searchString });
 			} catch (searchError) {
 				if (requestVersion !== searchRequestVersion) return;
-				results = searchCustomFoods(searchString).filter((food) =>
-					matchesIngredientProvenance(food, sourceFilter, trustFilter)
-				);
+				results = [];
 				hasMoreResults = false;
 				nextOffset = null;
 				activeResultIndex = -1;
 				dispatch("results", { results, query: searchString });
 				error = searchError instanceof FdcConfigurationError
 					? searchError.message
-					: "Online food search failed. Your saved foods are still available.";
+					: "Food search is temporarily unavailable. Try again.";
 			} finally {
 				if (requestVersion === searchRequestVersion) {
 					loading = false;
@@ -288,7 +284,6 @@
 		};
 
 		window.addEventListener(CUSTOM_FOODS_CHANGED_EVENT, refreshCustomResults);
-		window.addEventListener("storage", refreshCustomResults);
 		window.addEventListener("keydown", handleWindowKeydown);
 		return () => {
 			searchReady = false;
@@ -298,7 +293,6 @@
 				CUSTOM_FOODS_CHANGED_EVENT,
 				refreshCustomResults,
 			);
-			window.removeEventListener("storage", refreshCustomResults);
 			window.removeEventListener("keydown", handleWindowKeydown);
 		};
 	});

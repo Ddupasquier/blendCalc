@@ -5,18 +5,16 @@ import { getMixRuntimeConfiguration } from "$lib/utils/food/reference/appReferen
 import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 import {
 	addFoodsToSmoothieList,
-	cacheSmoothieListLocally,
-	readSmoothieList,
 } from "$lib/utils/storage/client/smoothieLists";
 import { compactFood } from "$lib/utils/food/records/foodRecords";
 import {
 	deleteCloudSavedDrink,
+	readCloudSavedDrinkById,
+	readCloudSmoothieList,
 	saveCloudSavedDrinkWithResult,
 	saveCloudMixPreferences,
-	reconcileCloudSmoothieList,
 } from "$lib/utils/storage/supabase";
 import type { FdcFood } from "$lib/utils/food/types";
-import { cacheClearAll } from "$lib/cache";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
 import {
 	hasLegacySodiumOption,
@@ -25,7 +23,6 @@ import {
 	migrateLegacyNutrientOptions,
 } from "$lib/utils/mix/nutrients/nutrientMappings";
 
-export const SAVED_DRINKS_STORAGE_KEY = "smoothie-saved-drinks";
 export const SAVED_DRINKS_CHANGED_EVENT = "smoothie-saved-drinks-changed";
 export const LOADED_SAVED_DRINK_STORAGE_KEY = "smoothie-loaded-saved-drink";
 
@@ -60,18 +57,11 @@ export type LoadedSavedDrink = {
 };
 
 const dispatchSavedDrinksChanged = () => {
+	if (typeof window === "undefined") return;
 	window.dispatchEvent(new CustomEvent(SAVED_DRINKS_CHANGED_EVENT));
 };
 
-const isQuotaExceededError = (error: unknown) => {
-	return (
-		error instanceof DOMException &&
-		(error.name === "QuotaExceededError" ||
-			error.name === "NS_ERROR_DOM_QUOTA_REACHED")
-	);
-};
-
-const normalizeDrink = (value: SavedDrink): SavedDrink => {
+export const normalizeSavedDrink = (value: SavedDrink): SavedDrink => {
 	const rawOptions = Array.isArray(value.options) ? value.options : [];
 	const shouldMigrateLegacySodium = hasLegacySodiumOption(rawOptions);
 
@@ -93,64 +83,9 @@ const normalizeDrink = (value: SavedDrink): SavedDrink => {
 	};
 };
 
-export const normalizeSavedDrinkName = (name: string) => {
-	return name.trim().toLowerCase();
-};
-
-export const hasSavedDrinkName = (name: string, excludeId?: string) => {
-	const normalizedName = normalizeSavedDrinkName(name);
-	if (!normalizedName) return false;
-
-	return readSavedDrinks().some(
-		(drink) =>
-			drink.id !== excludeId &&
-			normalizeSavedDrinkName(drink.name) === normalizedName,
-	);
-};
-
-export const readSavedDrinks = () => {
-	try {
-		const raw = localStorage.getItem(getScopedStorageKey(SAVED_DRINKS_STORAGE_KEY));
-		const drinks = raw ? (JSON.parse(raw) as SavedDrink[]) : [];
-		return drinks.map(normalizeDrink);
-	} catch {
-		return [];
-	}
-};
-
-const persistSavedDrinksLocally = (drinks: SavedDrink[]) => {
-	const serializedDrinks = JSON.stringify(drinks.map(normalizeDrink));
-
-	try {
-		localStorage.setItem(
-			getScopedStorageKey(SAVED_DRINKS_STORAGE_KEY),
-			serializedDrinks,
-		);
-		return true;
-	} catch (error) {
-		if (!isQuotaExceededError(error)) return false;
-	}
-
-	cacheClearAll();
-
-	try {
-		localStorage.setItem(
-			getScopedStorageKey(SAVED_DRINKS_STORAGE_KEY),
-			serializedDrinks,
-		);
-		return true;
-	} catch {
-		return false;
-	}
-};
-
-export const cacheSavedDrinksLocally = (drinks: SavedDrink[]) => {
-	persistSavedDrinksLocally(drinks);
-};
-
 export const readLoadedSavedDrink = (): LoadedSavedDrink | null => {
 	try {
-		const raw = localStorage.getItem(
+		const raw = sessionStorage.getItem(
 			getScopedStorageKey(LOADED_SAVED_DRINK_STORAGE_KEY),
 		);
 		if (!raw) return null;
@@ -171,21 +106,14 @@ export const readLoadedSavedDrink = (): LoadedSavedDrink | null => {
 };
 
 export const writeLoadedSavedDrink = (drink: LoadedSavedDrink) => {
-	localStorage.setItem(
+	sessionStorage.setItem(
 		getScopedStorageKey(LOADED_SAVED_DRINK_STORAGE_KEY),
 		JSON.stringify(drink),
 	);
 };
 
 export const clearLoadedSavedDrink = () => {
-	localStorage.removeItem(getScopedStorageKey(LOADED_SAVED_DRINK_STORAGE_KEY));
-};
-
-const writeSavedDrinkCache = (drinks: SavedDrink[]) => {
-	const normalizedDrinks = drinks.map(normalizeDrink);
-	const persistedLocally = persistSavedDrinksLocally(normalizedDrinks);
-	dispatchSavedDrinksChanged();
-	return persistedLocally;
+	sessionStorage.removeItem(getScopedStorageKey(LOADED_SAVED_DRINK_STORAGE_KEY));
 };
 
 const createSavedDrink = (input: SavedDrinkInput): SavedDrink => {
@@ -202,7 +130,7 @@ const createUpdatedSavedDrink = (
 	existingDrink: SavedDrink,
 	input: SavedDrinkInput,
 ): SavedDrink => {
-	return normalizeDrink({
+	return normalizeSavedDrink({
 		...input,
 		id: existingDrink.id,
 		name: input.name.trim() || existingDrink.name,
@@ -214,16 +142,12 @@ const createUpdatedSavedDrink = (
 export const saveNewSavedDrink = async (
 	input: SavedDrinkInput,
 ): Promise<SavedDrinkMutationResult> => {
-	if (hasSavedDrinkName(input.name)) {
-		return { ok: false, reason: "duplicate" };
-	}
-
 	const drink = createSavedDrink(input);
 	const cloudResult = await saveCloudSavedDrinkWithResult(drink);
 	if (cloudResult === "duplicate") return { ok: false, reason: "duplicate" };
 	if (cloudResult !== "saved") return { ok: false, reason: "unavailable" };
 
-	writeSavedDrinkCache([drink, ...readSavedDrinks()]);
+	dispatchSavedDrinksChanged();
 	return { ok: true, drink };
 };
 
@@ -231,21 +155,16 @@ export const saveExistingSavedDrink = async (
 	id: string,
 	input: SavedDrinkInput,
 ): Promise<SavedDrinkMutationResult> => {
-	const drinks = readSavedDrinks();
-	const existingDrink = drinks.find((drink) => drink.id === id);
+	const cloudDrink = await readCloudSavedDrinkById(id);
+	const existingDrink = cloudDrink ? normalizeSavedDrink(cloudDrink) : null;
 	if (!existingDrink) return { ok: false, reason: "missing" };
-	if (hasSavedDrinkName(input.name, id)) {
-		return { ok: false, reason: "duplicate" };
-	}
 
 	const updatedDrink = createUpdatedSavedDrink(existingDrink, input);
 	const cloudResult = await saveCloudSavedDrinkWithResult(updatedDrink);
 	if (cloudResult === "duplicate") return { ok: false, reason: "duplicate" };
 	if (cloudResult !== "saved") return { ok: false, reason: "unavailable" };
 
-	writeSavedDrinkCache(
-		drinks.map((drink) => (drink.id === id ? updatedDrink : drink)),
-	);
+	dispatchSavedDrinksChanged();
 	return { ok: true, drink: updatedDrink };
 };
 
@@ -253,25 +172,18 @@ export const deleteSavedDrink = async (id: string) => {
 	const deleted = await deleteCloudSavedDrink(id);
 	if (!deleted) return false;
 
-	writeSavedDrinkCache(readSavedDrinks().filter((drink) => drink.id !== id));
+	dispatchSavedDrinksChanged();
 	if (readLoadedSavedDrink()?.id === id) clearLoadedSavedDrink();
 	return true;
 };
 
 export const restoreSavedDrinkToMix = async (drink: SavedDrink) => {
-	const normalizedDrink = normalizeDrink(drink);
-	const cachedFridge = readSmoothieList(MIX_STORAGE_KEYS.fridge);
-	const cachedShopping = readSmoothieList(MIX_STORAGE_KEYS.shoppingList);
+	const normalizedDrink = normalizeSavedDrink(drink);
 	const [fridge, shopping] = await Promise.all([
-		reconcileCloudSmoothieList(MIX_STORAGE_KEYS.fridge, cachedFridge),
-		reconcileCloudSmoothieList(
-			MIX_STORAGE_KEYS.shoppingList,
-			cachedShopping,
-		),
+		readCloudSmoothieList(MIX_STORAGE_KEYS.fridge),
+		readCloudSmoothieList(MIX_STORAGE_KEYS.shoppingList),
 	]);
-
-	cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, fridge);
-	cacheSmoothieListLocally(MIX_STORAGE_KEYS.shoppingList, shopping);
+	if (!fridge || !shopping) return false;
 
 	const fridgeIds = new Set(fridge.map((food) => food.fdcId));
 	const shoppingIds = new Set(shopping.map((food) => food.fdcId));

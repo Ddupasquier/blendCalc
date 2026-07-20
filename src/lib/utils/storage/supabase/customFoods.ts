@@ -1,5 +1,5 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
-import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
+import { compactFood } from "$lib/utils/food/records/foodRecords";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type { FdcFood } from "$lib/utils/food/types";
@@ -50,19 +50,6 @@ export const readCloudCustomFoods = async () => {
 	});
 };
 
-export const writeCloudCustomFoods = async (foods: FdcFood[]) => {
-	const supabase = getSupabaseBrowserClient();
-	if (!supabase) return false;
-
-	if (foods.length === 0) return true;
-
-	const { data, error } = await supabase.rpc("save_custom_foods", {
-		p_foods: toJson(uniqueFoodsById(foods).map((food) => compactFood(food))),
-	});
-
-	return !error && data === true;
-};
-
 export const saveCloudCustomFood = async (
 	food: FdcFood,
 ): Promise<CloudCustomFoodWriteResult> => {
@@ -80,10 +67,4 @@ export const saveCloudCustomFood = async (
 		data === "duplicate-barcode"
 		? data
 		: "error";
-};
-
-export const reconcileCloudCustomFoods = async (localFoods: FdcFood[]) => {
-	const cloudFoods = await readCloudCustomFoods();
-	if (!cloudFoods) return localFoods;
-	return cloudFoods;
 };

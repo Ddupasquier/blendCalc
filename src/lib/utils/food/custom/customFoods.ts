@@ -3,12 +3,12 @@ import {
 	SERVING_MEASURE_OPTIONS,
 	type ServingMeasureUnit,
 } from "$lib/utils/serving/servingMeasureCatalog";
-import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
+import { compactFood } from "$lib/utils/food/records/foodRecords";
 import {
+	readCloudCustomFoods,
 	saveCloudCustomFood,
 } from "$lib/utils/storage/supabase";
 import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
-import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
 import type {
 	FdcFood,
 	FdcNutrient,
@@ -21,7 +21,6 @@ import { normalizeCustomFoodName } from "$lib/utils/food/custom/customFoodNames"
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
-export const CUSTOM_FOODS_STORAGE_KEY = "smoothie-custom-foods";
 export const CUSTOM_FOODS_CHANGED_EVENT = "smoothie-custom-foods-changed";
 
 export type CustomFoodInput = {
@@ -260,112 +259,43 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 	};
 };
 
-export const readCustomFoods = () => {
-	try {
-		const raw = localStorage.getItem(getScopedStorageKey(CUSTOM_FOODS_STORAGE_KEY));
-		const foods = raw ? (JSON.parse(raw) as FdcFood[]) : [];
-		return foods.map(compactFood);
-	} catch {
-		return [];
-	}
-};
-
 const getBarcodeComparisonKey = (barcode: string) => {
 	const digits = cleanBarcode(barcode);
 	if (!digits) return null;
 	return normalizeBarcode(digits) ?? digits.padStart(14, "0");
 };
 
-export const findCustomFoodByBarcode = (barcode: string) => {
+export const findCustomFoodByBarcode = async (barcode: string) => {
 	const normalizedBarcode = getBarcodeComparisonKey(barcode);
 	if (!normalizedBarcode) return null;
+	const foods = await readCloudCustomFoods();
+	if (!foods) return null;
 	return (
-		readCustomFoods().find(
+		foods.find(
 			(food) => getBarcodeComparisonKey(food.barcode ?? food.gtinUpc ?? "") === normalizedBarcode,
 		) ?? null
 	);
 };
 
-export const findCustomFoodByName = (name: string) => {
+export const findCustomFoodByName = async (name: string) => {
 	const normalizedName = normalizeCustomFoodName(name);
 	if (!normalizedName) return null;
+	const foods = await readCloudCustomFoods();
+	if (!foods) return null;
 	return (
-		readCustomFoods().find(
+		foods.find(
 			(food) => normalizeCustomFoodName(food.description) === normalizedName,
 		) ?? null
 	);
 };
 
-export const cacheCustomFoodsLocally = (foods: FdcFood[]) => {
-	try {
-		localStorage.setItem(
-			getScopedStorageKey(CUSTOM_FOODS_STORAGE_KEY),
-			JSON.stringify(uniqueFoodsById(foods).map(compactFood)),
-		);
-	} catch {
-		// ignore cache write failures; localStorage is only a fallback cache here
-	}
-};
-
 export const saveCustomFood = async (
 	food: FdcFood,
 ): Promise<CustomFoodSaveResult> => {
-	const foods = readCustomFoods();
-	const normalizedName = normalizeCustomFoodName(food.description);
-	if (
-		foods.some(
-			(item) => normalizeCustomFoodName(item.description) === normalizedName,
-		)
-	) {
-		return "duplicate-name";
-	}
-	if (food.barcode && findCustomFoodByBarcode(food.barcode)) {
-		return "duplicate-barcode";
-	}
-
 	const foodRecord = compactFood(food);
 	const cloudResult = await saveCloudCustomFood(foodRecord);
 	if (cloudResult !== "saved") return cloudResult;
 
-	const nextFoods = [
-		foodRecord,
-		...foods.filter((item) => item.fdcId !== food.fdcId),
-	];
-	localStorage.setItem(
-		getScopedStorageKey(CUSTOM_FOODS_STORAGE_KEY),
-		JSON.stringify(uniqueFoodsById(nextFoods).map(compactFood)),
-	);
 	dispatchCustomFoodsChanged();
 	return "saved";
-};
-
-export const searchCustomFoods = (query: string) => {
-	const terms = query
-		.trim()
-		.toLowerCase()
-		.split(/\s+/)
-		.filter(Boolean);
-	if (terms.length === 0) return readCustomFoods();
-
-	return readCustomFoods().filter((food) => {
-		const text = [
-			food.description,
-			food.brandOwner,
-			food.foodCategory,
-			food.customServingLabel,
-			food.ingredients,
-			...(food.ingredientList ?? []),
-			...(food.allergens ?? []),
-			...(food.traces ?? []),
-			...(food.dietaryTags ?? []),
-			...(food.labels ?? []),
-			...(food.categories ?? []),
-			food.barcode,
-		]
-			.filter(Boolean)
-			.join(" ")
-			.toLowerCase();
-
-		return terms.every((term) => text.includes(term));
-	});
 };

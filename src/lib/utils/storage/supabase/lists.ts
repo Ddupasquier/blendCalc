@@ -1,7 +1,10 @@
 import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
-import { uniqueFoodsByIdentity } from "$lib/utils/food/records/foodIdentity";
+import {
+	getFoodIdentityKey,
+	uniqueFoodsByIdentity,
+} from "$lib/utils/food/records/foodIdentity";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type { FdcFood } from "$lib/utils/food/types";
@@ -26,6 +29,14 @@ export type CloudListPlacementResult =
 	| "move-required:fridge"
 	| "move-required:shopping"
 	| "error";
+
+export type CloudSmoothieListIndex = Record<
+	SmoothieListKey,
+	{
+		foodIds: number[];
+		foodIdentityKeys: string[];
+	}
+>;
 
 const getCloudListType = (key: SmoothieListKey): CloudListType => {
 	return key === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping";
@@ -228,6 +239,41 @@ export const readCloudSmoothieList = async (key: SmoothieListKey) => {
 	});
 };
 
+export const readCloudSmoothieListIndex = async (): Promise<CloudSmoothieListIndex | null> => {
+	const userId = await getCurrentUserId();
+	if (!userId) return null;
+	const supabase = getSupabaseBrowserClient();
+	if (!supabase) return null;
+
+	const rows = await readAllCursorPages(async (cursorId) => {
+		let query = supabase
+			.from("user_food_list_items")
+			.select("id, list_type, fdc_id, food")
+			.eq("user_id", userId)
+			.order("id", { ascending: true })
+			.limit(CLOUD_CURSOR_PAGE_SIZE);
+
+		if (cursorId) query = query.gt("id", cursorId);
+		return await query;
+	});
+
+	const index: CloudSmoothieListIndex = {
+		[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
+		[MIX_STORAGE_KEYS.shoppingList]: { foodIds: [], foodIdentityKeys: [] },
+	};
+
+	for (const row of rows) {
+		const key = row.list_type === "fridge"
+			? MIX_STORAGE_KEYS.fridge
+			: MIX_STORAGE_KEYS.shoppingList;
+		const food = row.food as unknown as FdcFood;
+		index[key].foodIds.push(Number(row.fdc_id));
+		index[key].foodIdentityKeys.push(getFoodIdentityKey(food));
+	}
+
+	return index;
+};
+
 export const writeCloudSmoothieList = async (
 	key: SmoothieListKey,
 	foods: FdcFood[],
@@ -323,13 +369,4 @@ export const removeCloudSmoothieListItem = async (
 		.eq("fdc_id", foodId);
 
 	return !error;
-};
-
-export const reconcileCloudSmoothieList = async (
-	key: SmoothieListKey,
-	localFoods: FdcFood[],
-) => {
-	const cloudFoods = await readCloudSmoothieList(key);
-	if (!cloudFoods) return localFoods;
-	return cloudFoods;
 };

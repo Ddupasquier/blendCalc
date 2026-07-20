@@ -1,4 +1,3 @@
-import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 import {
 	SERVING_MEASURE_ALIASES,
 	type ServingMeasureUnit,
@@ -193,13 +192,4 @@ export const withOverageDetails = (
 			value: `${formatChartNumber(contributor.amount)}${overage.unit} from ${formatChartNumber(contributor.grams)}g`,
 		})),
 	};
-};
-
-export const readNutrientGoalsFromStorage = () => {
-	try {
-		const rawGoals = localStorage.getItem(MIX_STORAGE_KEYS.nutrientGoals);
-		return rawGoals ? JSON.parse(rawGoals) : {};
-	} catch {
-		return {};
-	}
 };

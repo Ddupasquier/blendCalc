@@ -38,6 +38,30 @@ export const readCloudSavedDrinks = async () => {
 		.sort((first, second) => second.createdAt - first.createdAt);
 };
 
+export const readCloudSavedDrinkById = async (drinkId: string) => {
+	const userId = await getCurrentUserId();
+	if (!userId) return null;
+	const supabase = getSupabaseBrowserClient();
+	if (!supabase) return null;
+
+	const { data, error } = await supabase
+		.from("saved_drinks")
+		.select("id, drink, created_at")
+		.eq("user_id", userId)
+		.eq("id", drinkId)
+		.maybeSingle();
+	if (error) throw error;
+	if (!data) return null;
+
+	return {
+		...(data.drink as unknown as SavedDrink),
+		id: data.id,
+		createdAt:
+			(data.drink as unknown as SavedDrink).createdAt ??
+			new Date(data.created_at).getTime(),
+	};
+};
+
 export const saveCloudSavedDrinkWithResult = async (
 	drink: SavedDrink,
 ): Promise<CloudSavedDrinkWriteResult> => {
@@ -72,10 +96,4 @@ export const deleteCloudSavedDrink = async (drinkId: string) => {
 		.eq("id", drinkId);
 
 	return !error;
-};
-
-export const reconcileCloudSavedDrinks = async (localDrinks: SavedDrink[]) => {
-	const cloudDrinks = await readCloudSavedDrinks();
-	if (!cloudDrinks) return localDrinks;
-	return cloudDrinks;
 };

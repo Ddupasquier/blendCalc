@@ -1,14 +1,18 @@
 import { browser } from "$app/environment";
 
 const ACTIVE_STORAGE_USER_KEY = "smoothie-active-storage-user";
-const LEGACY_APP_STORAGE_KEYS = [
+const OBSOLETE_SERVER_BACKED_STORAGE_KEYS = [
 	"smoothie-fridge",
 	"smoothie-shopping-list",
-	"smoothie-nutrient-goals",
-	"smoothie-mix-state",
 	"smoothie-custom-foods",
 	"smoothie-saved-drinks",
+	"smoothie-loaded-saved-drink",
 ];
+const LEGACY_UNSCOPED_TRANSIENT_STORAGE_KEYS = [
+	"smoothie-nutrient-goals",
+	"smoothie-mix-state",
+];
+const OBSOLETE_CACHE_PREFIX = "smoothie-cache:";
 
 let activeStorageUserId = "";
 
@@ -33,7 +37,25 @@ export const getScopedStorageKey = (key: string) => {
 	return storedUserId ? `${key}:user:${storedUserId}` : key;
 };
 
-export const clearLegacyAppStorage = () => {
+export const clearObsoleteAppStorage = () => {
 	if (!browser) return;
-	LEGACY_APP_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+	const keysToRemove: string[] = [];
+
+	for (let index = 0; index < localStorage.length; index += 1) {
+		const storageKey = localStorage.key(index);
+		if (!storageKey) continue;
+		if (
+			storageKey.startsWith(OBSOLETE_CACHE_PREFIX) ||
+			OBSOLETE_SERVER_BACKED_STORAGE_KEYS.some(
+				(key) => storageKey === key || storageKey.startsWith(`${key}:user:`),
+			)
+		) {
+			keysToRemove.push(storageKey);
+		}
+	}
+
+	for (const storageKey of keysToRemove) localStorage.removeItem(storageKey);
+	for (const storageKey of LEGACY_UNSCOPED_TRANSIENT_STORAGE_KEYS) {
+		localStorage.removeItem(storageKey);
+	}
 };

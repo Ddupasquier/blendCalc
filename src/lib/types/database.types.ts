@@ -3659,7 +3659,6 @@ export type Database = {
         Args: { p_fdc_id: number; p_food: Json }
         Returns: string
       }
-      save_custom_foods: { Args: { p_foods: Json }; Returns: boolean }
       search_blendcalc_products_v1: {
         Args: {
           p_limit?: number

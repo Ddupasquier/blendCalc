@@ -2,6 +2,7 @@ import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
 import {
 	placeCloudSmoothieListItem,
+	readCloudSmoothieList,
 	removeCloudSmoothieListItem,
 	upsertCloudSmoothieListItem,
 	writeCloudSmoothieList,
@@ -11,7 +12,6 @@ import {
 	getFoodIdentityKey,
 	uniqueFoodsByIdentity,
 } from "$lib/utils/food/records/foodIdentity";
-import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
 
 export const SMOOTHIE_LISTS_CHANGED_EVENT = "smoothie-lists-changed";
 
@@ -42,49 +42,23 @@ const getOppositeListKey = (key: SmoothieListKey): SmoothieListKey =>
 		? MIX_STORAGE_KEYS.shoppingList
 		: MIX_STORAGE_KEYS.fridge;
 
-export const readSmoothieList = (key: SmoothieListKey) => {
-	try {
-		const raw = localStorage.getItem(getScopedStorageKey(key));
-		const list = raw ? (JSON.parse(raw) as FdcFood[]) : [];
-		return list.map(compactFood);
-	} catch {
-		return [];
-	}
-};
-
-export const cacheSmoothieListLocally = (key: SmoothieListKey, list: FdcFood[]) => {
-	try {
-		localStorage.setItem(
-			getScopedStorageKey(key),
-			JSON.stringify(uniqueFoodsByIdentity(uniqueFoodsById(list)).map(compactFood)),
-		);
-	} catch {
-		// ignore cache write failures; localStorage is only a fallback cache here
-	}
-};
-
 export const preserveSelectedListItems = (
 	syncedList: FdcFood[],
-	cachedList: FdcFood[],
+	loadedList: FdcFood[],
 	selectedFoodIds: number[],
 ) => {
 	const selectedFoodIdSet = new Set(selectedFoodIds);
-	const selectedCachedFoods = cachedList.filter((food) =>
+	const selectedLoadedFoods = loadedList.filter((food) =>
 		selectedFoodIdSet.has(food.fdcId),
 	);
 
-	return uniqueFoodsByIdentity(uniqueFoodsById([...syncedList, ...selectedCachedFoods]));
+	return uniqueFoodsByIdentity(uniqueFoodsById([...syncedList, ...selectedLoadedFoods]));
 };
 
 export const addFoodToSmoothieList = async (
 	key: SmoothieListKey,
 	food: FdcFood,
 ): Promise<SmoothieListMutationResult> => {
-	const list = readSmoothieList(key);
-	const foodIdentityKey = getFoodIdentityKey(food);
-	if (list.some((item) => getFoodIdentityKey(item) === foodIdentityKey)) {
-		return "duplicate";
-	}
 	const foodRecord = compactFood({
 		...food,
 		listAddedAt: food.listAddedAt ?? Date.now(),
@@ -95,9 +69,6 @@ export const addFoodToSmoothieList = async (
 	}
 	if (placementResult === "duplicate") return "duplicate";
 
-	const nextList = [...list, foodRecord];
-
-	cacheSmoothieListLocally(key, nextList);
 	notifySmoothieListsChanged();
 	return "added";
 };
@@ -113,17 +84,6 @@ export const moveFoodToSmoothieList = async (
 	const placementResult = await placeCloudSmoothieListItem(key, foodRecord, true);
 	if (placementResult === "error") return "error";
 
-	const foodIdentityKey = getFoodIdentityKey(foodRecord);
-	const targetList = readSmoothieList(key).filter(
-		(item) => getFoodIdentityKey(item) !== foodIdentityKey,
-	);
-	const sourceKey = getOppositeListKey(key);
-	const sourceList = readSmoothieList(sourceKey).filter(
-		(item) => getFoodIdentityKey(item) !== foodIdentityKey,
-	);
-
-	cacheSmoothieListLocally(key, [...targetList, foodRecord]);
-	cacheSmoothieListLocally(sourceKey, sourceList);
 	notifySmoothieListsChanged();
 	return placementResult === "duplicate" ? "duplicate" : "moved";
 };
@@ -132,9 +92,13 @@ export const addFoodsToSmoothieList = async (
 	key: SmoothieListKey,
 	foods: FdcFood[],
 ): Promise<SmoothieListMutationResult> => {
-	const list = readSmoothieList(key);
+	const [list, oppositeList] = await Promise.all([
+		readCloudSmoothieList(key),
+		readCloudSmoothieList(getOppositeListKey(key)),
+	]);
+	if (!list || !oppositeList) return "error";
 	const oppositeIdentityKeys = new Set(
-		readSmoothieList(getOppositeListKey(key)).map(getFoodIdentityKey),
+		oppositeList.map(getFoodIdentityKey),
 	);
 	const existingIds = new Set(list.map((item) => item.fdcId));
 	const existingIdentityKeys = new Set(list.map(getFoodIdentityKey));
@@ -164,7 +128,6 @@ export const addFoodsToSmoothieList = async (
 	const saved = await writeCloudSmoothieList(key, additions);
 	if (!saved) return "error";
 
-	cacheSmoothieListLocally(key, [...list, ...additions]);
 	notifySmoothieListsChanged();
 	return "added";
 };
@@ -173,17 +136,8 @@ export const removeFoodFromSmoothieList = async (
 	key: SmoothieListKey,
 	foodId: number,
 ): Promise<SmoothieListMutationResult> => {
-	const currentList = readSmoothieList(key);
-
 	const removed = await removeCloudSmoothieListItem(key, foodId);
-	if (!removed && !currentList.some((item) => item.fdcId === foodId)) {
-		return "missing";
-	}
 	if (!removed) return "error";
-
-	const list = currentList.filter((item) => item.fdcId !== foodId);
-
-	cacheSmoothieListLocally(key, list);
 	notifySmoothieListsChanged();
 	return "removed";
 };
@@ -197,7 +151,8 @@ export const renameFoodInSmoothieList = async (
 	const trimmedDescription = nextDescription.trim().replace(/\s+/g, " ");
 	if (!trimmedDescription) return "invalid";
 
-	const currentList = readSmoothieList(key);
+	const currentList = await readCloudSmoothieList(key);
+	if (!currentList) return "error";
 	const itemIndex = currentList.findIndex((item) => item.fdcId === foodId);
 	if (itemIndex === -1 && !loadedFood) return "missing";
 
@@ -229,14 +184,6 @@ export const renameFoodInSmoothieList = async (
 	const saved = await upsertCloudSmoothieListItem(key, renamedFood);
 	if (!saved) return "error";
 
-	const nextList = currentList.map((item, index) =>
-		index === itemIndex ? renamedFood : item,
-	);
-
-	cacheSmoothieListLocally(
-		key,
-		itemIndex === -1 ? [...currentList, renamedFood] : nextList,
-	);
 	notifySmoothieListsChanged();
 	return "renamed";
 };

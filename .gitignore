@@ -21,7 +21,6 @@ Thumbs.db
 
 # Generated API audit output
 /scripts/output/
-/.cache/
 
 # Local QA task tracker and screenshot references
 /docs/qa-tasks.md

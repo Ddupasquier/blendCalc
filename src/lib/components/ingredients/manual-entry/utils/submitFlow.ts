@@ -51,7 +51,7 @@ export const saveManualEntryCustomFood = async ({
 	const result = await saveCustomFood(food);
 
 	if (result === "duplicate-name") {
-		const existingFood = findCustomFoodByName(name);
+		const existingFood = await findCustomFoodByName(name);
 		if (existingFood) {
 			const usedIngredient = await useIngredient(existingFood, true);
 			if (!usedIngredient) return { status: "cancelled" };
@@ -67,7 +67,7 @@ export const saveManualEntryCustomFood = async ({
 
 	if (result === "duplicate-barcode") {
 		const existingFood = normalizedBarcode
-			? findCustomFoodByBarcode(normalizedBarcode)
+			? await findCustomFoodByBarcode(normalizedBarcode)
 			: null;
 		if (existingFood) {
 			const usedIngredient = await useIngredient(existingFood, true);

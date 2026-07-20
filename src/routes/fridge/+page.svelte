@@ -20,7 +20,6 @@
     import SavedIngredientListLayout from "$lib/components/ingredients/list/SavedIngredientListLayout.svelte";
     import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
     import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
-    import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
     import {
         areFoodIdsEqual,
         getIngredientActionKey,
@@ -46,23 +45,19 @@
         FOOD_LIST_SORT_OPTIONS,
         type FoodListSort,
     } from "$lib/utils/list/listNavigation";
-    import { readLocalIngredientListPage } from "$lib/utils/ingredients/ingredientListFiltering";
-    import {
-        cacheCustomFoodsLocally,
-        readCustomFoods,
-    } from "$lib/utils/food/custom/customFoods";
     import {
         addFoodToSmoothieList,
 		moveFoodToSmoothieList,
-        readSmoothieList,
         removeFoodFromSmoothieList,
         renameFoodInSmoothieList,
         SMOOTHIE_LISTS_CHANGED_EVENT,
         type SmoothieListKey,
     } from "$lib/utils/storage/client/smoothieLists";
     import {
-        reconcileCloudCustomFoods,
+		readCloudCustomFoods,
         readCloudSmoothieListPage,
+		readCloudSmoothieListIndex,
+		type CloudSmoothieListIndex,
     } from "$lib/utils/storage/supabase";
     import { onMount } from "svelte";
     import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
@@ -70,6 +65,11 @@
 
     let onHand = $state<FdcFood[]>([]);
     let shoppingList = $state<FdcFood[]>([]);
+	let customFoods = $state<FdcFood[]>([]);
+	let listIndex = $state<CloudSmoothieListIndex>({
+		[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
+		[MIX_STORAGE_KEYS.shoppingList]: { foodIds: [], foodIdentityKeys: [] },
+	});
     let selectedFood = $state<FdcFood | null>(null);
     let selectedFoodShowListActions = $state(true);
     let scanSignal = $state(0);
@@ -168,27 +168,19 @@
         const foodId = selectedFood?.fdcId;
         if (!foodId) return { inFridge: false, inShoppingList: false };
 
-        const inFridge =
-            onHand.some((food) => food.fdcId === foodId) ||
-            readSmoothieList(MIX_STORAGE_KEYS.fridge).some(
-                (food) => food.fdcId === foodId,
-            );
-        const inShoppingList =
-            shoppingList.some((food) => food.fdcId === foodId) ||
-            readSmoothieList(MIX_STORAGE_KEYS.shoppingList).some(
-                (food) => food.fdcId === foodId,
-            );
+        const inFridge = listIndex[MIX_STORAGE_KEYS.fridge].foodIds.includes(foodId);
+        const inShoppingList = listIndex[
+			MIX_STORAGE_KEYS.shoppingList
+		].foodIds.includes(foodId);
 
         return { inFridge, inShoppingList };
     });
     const savedFoodIdentityKeys = $derived.by(() =>
         new Set(
-            [
-                ...onHand,
-                ...shoppingList,
-                ...readSmoothieList(MIX_STORAGE_KEYS.fridge),
-                ...readSmoothieList(MIX_STORAGE_KEYS.shoppingList),
-            ].map(getFoodIdentityKey),
+			[
+				...listIndex[MIX_STORAGE_KEYS.fridge].foodIdentityKeys,
+				...listIndex[MIX_STORAGE_KEYS.shoppingList].foodIdentityKeys,
+			],
         ),
     );
     const canRevealMoreActiveItems = $derived(
@@ -251,17 +243,10 @@
             sourceFilter,
             trustFilter,
         });
-        const page =
-            cloudPage ??
-            readLocalIngredientListPage(key, currentOffset, pageSize, {
-                query: listQuery,
-                sourceFilter,
-                trustFilter,
-                sort: listSort,
-            });
+        if (!cloudPage) throw new Error("Saved ingredients are unavailable.");
 
         if (requestId !== listLoadRequestId) return;
-        setListPage(key, page.foods, page.totalCount, reset);
+        setListPage(key, cloudPage.foods, cloudPage.totalCount, reset);
     };
 
     const loadLists = async () => {
@@ -270,14 +255,19 @@
         listLoadingError = "";
         resetVisibleCounts();
         try {
-            const [nextCustomFoods] = await Promise.all([
-                reconcileCloudCustomFoods(readCustomFoods()),
+            const [nextCustomFoods, nextListIndex] = await Promise.all([
+				readCloudCustomFoods(),
+				readCloudSmoothieListIndex(),
                 loadListPage(MIX_STORAGE_KEYS.fridge, true, requestId),
                 loadListPage(MIX_STORAGE_KEYS.shoppingList, true, requestId),
             ]);
+			if (!nextCustomFoods || !nextListIndex) {
+				throw new Error("Saved ingredients are unavailable.");
+			}
 
             if (requestId !== listLoadRequestId) return;
-            cacheCustomFoodsLocally(nextCustomFoods);
+			customFoods = nextCustomFoods;
+			listIndex = nextListIndex;
         } catch {
             if (requestId === listLoadRequestId) {
                 listLoadingError =
@@ -308,7 +298,7 @@
             ingredientRouteState.listKey,
             onHand,
             shoppingList,
-            readCustomFoods(),
+			customFoods,
         );
 
     const closeIngredientSheet = () => {
@@ -874,11 +864,9 @@
         resetVisibleCounts();
         void loadProvenanceOptions();
         loadLists();
-        window.addEventListener("storage", loadLists);
         window.addEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, loadLists);
         window.addEventListener("focus", loadLists);
         return () => {
-            window.removeEventListener("storage", loadLists);
             window.removeEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, loadLists);
             window.removeEventListener("focus", loadLists);
         };

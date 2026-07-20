@@ -10,7 +10,6 @@ vi.mock("$lib/supabase/client", () => ({
 
 import {
 	saveCloudCustomFood,
-	writeCloudCustomFoods,
 } from "$lib/utils/storage/supabase/customFoods";
 import type { FdcFood } from "$lib/utils/food/types";
 
@@ -51,13 +50,4 @@ describe("custom-food Supabase storage", () => {
 		},
 	);
 
-	it("uses one database request for a bulk recovery write", async () => {
-		supabaseMocks.rpc.mockResolvedValue({ data: true, error: null });
-
-		await expect(writeCloudCustomFoods([food])).resolves.toBe(true);
-		expect(supabaseMocks.rpc).toHaveBeenCalledOnce();
-		expect(supabaseMocks.rpc).toHaveBeenCalledWith("save_custom_foods", {
-			p_foods: [expect.objectContaining({ fdcId: food.fdcId })],
-		});
-	});
 });

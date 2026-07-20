@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { rmSync } from "node:fs";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
@@ -29,22 +31,27 @@ export const createNutritionImportClient = () => {
 	});
 };
 
-export const downloadCachedFile = async ({
-	cacheDirectory,
+const temporaryDirectories = new Set();
+
+process.once("exit", () => {
+	for (const directory of temporaryDirectories) {
+		rmSync(directory, { force: true, recursive: true });
+	}
+});
+
+export const createTemporaryDownloadDirectory = async (prefix) => {
+	const directory = await mkdtemp(path.join(tmpdir(), prefix));
+	temporaryDirectories.add(directory);
+	return directory;
+};
+
+export const downloadTemporaryFile = async ({
+	directory,
 	name,
 	url,
-	refresh = false,
 	userAgent = "blendCalc nutrition data importer",
 }) => {
-	await mkdir(cacheDirectory, { recursive: true });
-	const filePath = path.join(cacheDirectory, name);
-	if (!refresh) {
-		try {
-			await readFile(filePath);
-			return filePath;
-		} catch {}
-	}
-
+	const filePath = path.join(directory, name);
 	const response = await fetch(url, { headers: { "user-agent": userAgent } });
 	if (!response.ok) {
 		throw new Error(`Could not download ${name}: ${response.status}`);

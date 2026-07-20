@@ -12,14 +12,13 @@
         paginateItems,
     } from "$lib/utils/list/listNavigation";
     import {
-        cacheSavedDrinksLocally,
         deleteSavedDrink,
-        readSavedDrinks,
+        normalizeSavedDrink,
         restoreSavedDrinkToMix,
         SAVED_DRINKS_CHANGED_EVENT,
         type SavedDrink,
     } from "$lib/utils/storage/client/savedDrinks";
-    import { reconcileCloudSavedDrinks } from "$lib/utils/storage/supabase";
+    import { readCloudSavedDrinks } from "$lib/utils/storage/supabase";
     import { onMount } from "svelte";
 
     let drinks = $state<SavedDrink[]>([]);
@@ -64,17 +63,15 @@
     );
 
     const loadSavedDrinks = async () => {
+		loadingDrinks = true;
 		try {
 			loadError = "";
-			const localDrinks = readSavedDrinks();
-			drinks = localDrinks;
-
-			const nextDrinks = await reconcileCloudSavedDrinks(localDrinks);
-			drinks = nextDrinks;
-			cacheSavedDrinksLocally(nextDrinks);
+			const nextDrinks = await readCloudSavedDrinks();
+			if (!nextDrinks) throw new Error("Saved drinks are unavailable.");
+			drinks = nextDrinks.map(normalizeSavedDrink);
 		} catch {
-			loadError =
-				"Your saved drinks could not be loaded from the database. Local drinks are shown temporarily.";
+			drinks = [];
+			loadError = "Your saved drinks could not be loaded. Try again.";
 		} finally {
 			loadingDrinks = false;
 		}
@@ -143,11 +140,9 @@
     });
 
     onMount(() => {
-        loadSavedDrinks();
-        window.addEventListener("storage", loadSavedDrinks);
+		void loadSavedDrinks();
         window.addEventListener(SAVED_DRINKS_CHANGED_EVENT, loadSavedDrinks);
         return () => {
-            window.removeEventListener("storage", loadSavedDrinks);
             window.removeEventListener(
                 SAVED_DRINKS_CHANGED_EVENT,
                 loadSavedDrinks,

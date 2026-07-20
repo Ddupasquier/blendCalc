@@ -18,7 +18,7 @@
 	import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 	import { setFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import {
-		clearLegacyAppStorage,
+		clearObsoleteAppStorage,
 		setActiveStorageUserId,
 	} from "$lib/utils/storage/client/storageScope";
 	import { saveTutorialChoice } from "$lib/utils/tutorial/tutorial";
@@ -89,7 +89,7 @@
 		foodPreferenceContext.current = data.foodPreferences ?? null;
 
 		if (data.authUser) {
-			clearLegacyAppStorage();
+			clearObsoleteAppStorage();
 		}
 	});
 </script>

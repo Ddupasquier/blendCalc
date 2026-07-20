@@ -19,8 +19,8 @@ blendCalc is an authenticated, mobile-first smoothie planning app. Users:
 6. Save reusable drinks.
 7. Maintain optional profile and food preference settings.
 
-The app uses Supabase as the account data source of truth. Local storage is only a
-scoped cache while the user is signed in.
+The app uses Supabase as the account data source of truth. Browser storage is limited to
+account-scoped unsaved drafts, device-only preferences, and short-lived session context.
 
 ## Global Non-Negotiables
 
@@ -746,7 +746,7 @@ Required behavior:
 Preserve:
 
 - Supabase account data as source of truth.
-- Account-scoped local cache only.
+- Account-scoped unsaved Mix draft and temporary UI/session state only.
 - Row-level security for user data.
 - Service-role keys only in server/scripts environments.
 - `.env` and moderation env files excluded from source control.

@@ -1,21 +1,22 @@
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { readFile } from "node:fs/promises";
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { parse } from "csv-parse";
 import WebSocket from "ws";
+import {
+	createTemporaryDownloadDirectory,
+	downloadTemporaryFile,
+} from "./lib/nutrition_dataset_import.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
 
 const DATASET_KEY = "cnf-2026";
 const SOURCE_KEY = "health-canada-cnf";
-const CACHE_DIRECTORY = path.resolve(".cache/nutrition-data/cnf-2026");
 const BATCH_SIZE = 750;
 const WRITE_CONCURRENCY = 4;
-const refreshFiles = process.argv.includes("--refresh");
 const dryRun = process.argv.includes("--dry-run");
 
 const files = {
@@ -115,25 +116,6 @@ const readCsvRows = async (filePath) => {
 	return rows;
 };
 
-const downloadFile = async ({ name, url }) => {
-	const filePath = path.join(CACHE_DIRECTORY, name);
-	if (!refreshFiles) {
-		try {
-			await readFile(filePath);
-			return filePath;
-		} catch {}
-	}
-
-	const response = await fetch(url, {
-		headers: { "user-agent": "blendCalc nutrition data importer" },
-	});
-	if (!response.ok) {
-		throw new Error(`Could not download ${name}: ${response.status}`);
-	}
-	await writeFile(filePath, Buffer.from(await response.arrayBuffer()));
-	return filePath;
-};
-
 const getFilesChecksum = async (paths) => {
 	const hash = createHash("sha256");
 	for (const [key, filePath] of Object.entries(paths).sort()) {
@@ -226,10 +208,15 @@ const importReferenceRows = async (referenceGroups) => {
 	await writer.finish();
 };
 
-await mkdir(CACHE_DIRECTORY, { recursive: true });
+const downloadDirectory = await createTemporaryDownloadDirectory(
+	"blendcalc-cnf-2026-",
+);
 const downloadedPaths = {};
 for (const [key, file] of Object.entries(files)) {
-	downloadedPaths[key] = await downloadFile(file);
+	downloadedPaths[key] = await downloadTemporaryFile({
+		directory: downloadDirectory,
+		...file,
+	});
 }
 
 const [

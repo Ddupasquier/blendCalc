@@ -12,14 +12,6 @@ vi.mock("$lib/utils/food/sources/fdc", () => ({
 	}),
 }));
 
-vi.mock("$lib/utils/food/custom/customFoods", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("$lib/utils/food/custom/customFoods")>();
-	return {
-		...actual,
-		searchCustomFoods: vi.fn().mockReturnValue([]),
-	};
-});
-
 vi.mock("$lib/utils/products/catalog", () => ({
 	searchSharedProducts: vi.fn().mockResolvedValue([]),
 }));

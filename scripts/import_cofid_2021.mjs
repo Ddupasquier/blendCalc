@@ -1,11 +1,11 @@
 import { createReadStream } from "node:fs";
-import path from "node:path";
 import readExcelFile from "read-excel-file/node";
 import {
 	createBatchWriter,
 	createNutritionImportClient,
+	createTemporaryDownloadDirectory,
 	deleteGenericDatasetRows,
-	downloadCachedFile,
+	downloadTemporaryFile,
 	getFilesChecksum,
 	normalizeDatasetSearchText,
 	normalizeDatasetUnit,
@@ -13,11 +13,9 @@ import {
 
 const DATASET_KEY = "cofid-2021";
 const SOURCE_KEY = "uk-cofid";
-const CACHE_DIRECTORY = path.resolve(".cache/nutrition-data/cofid-2021");
 const SOURCE_URL =
 	"https://assets.publishing.service.gov.uk/media/60538b91e90e07527df82ae4/McCance_Widdowsons_Composition_of_Foods_Integrated_Dataset_2021..xlsx";
 const FILE_NAME = "cofid-2021.xlsx";
-const refreshFiles = process.argv.includes("--refresh");
 const dryRun = process.argv.includes("--dry-run");
 const NUTRIENT_SHEETS = new Set([
 	"1.3 Proximates",
@@ -78,11 +76,13 @@ const parseSourceValue = (value) => {
 	return null;
 };
 
-const filePath = await downloadCachedFile({
-	cacheDirectory: CACHE_DIRECTORY,
+const downloadDirectory = await createTemporaryDownloadDirectory(
+	"blendcalc-cofid-2021-",
+);
+const filePath = await downloadTemporaryFile({
+	directory: downloadDirectory,
 	name: FILE_NAME,
 	url: SOURCE_URL,
-	refresh: refreshFiles,
 });
 const checksum = await getFilesChecksum({ workbook: filePath });
 const sheets = await readExcelFile(createReadStream(filePath));

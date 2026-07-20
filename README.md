@@ -205,7 +205,7 @@ src/
 │       ├── food/              # FDC, custom foods, compatibility, normalized nutrients
 │       ├── mix/               # Mix state, calculations, chart metrics, suggestions
 │       ├── profile/           # Profile validation, food preferences, warnings
-│       └── storage/           # Account-scoped local cache + Supabase sync helpers
+│       └── storage/           # Supabase persistence + scoped transient UI state
 └── routes/
     ├── +layout.svelte
     ├── +page.svelte           # Auth-gated landing page

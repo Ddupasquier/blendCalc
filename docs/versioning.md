@@ -13,7 +13,7 @@ force every other part of the system to change versions.
 | Database schema | Timestamped migrations | `supabase/migrations` | Ordered, forward-only database changes |
 | Catalog product | Per-product revision number | `shared_product_revisions` | Product-label and evidence history |
 | Image placement | Placement version | `food_image_assets.placement_version` | Crop and positioning behavior |
-| Browser storage | Feature-specific schema versions | Each storage utility | Safe local-data migrations |
+| Transient browser state | Feature-specific schema versions | Each owning utility | Safe draft/session migrations |
 
 ## Application Releases
 

@@ -119,8 +119,8 @@ description words, and keep later matches available below stronger results. Use 
 required-word queries first and a wider partial-word fallback for unfinished input; do
 not replace real search with hardcoded correction lists. Source quality, user
 preferences, and alphabetical order are tie-breakers after textual relevance, not
-substitutes for relevance. Keep local client search only as an explicit failure fallback
-for private cached data.
+substitutes for relevance. Authenticated private search must read the database through
+the server; do not maintain a browser-local ingredient catalog as a failure fallback.
 
 **2b.** <a id="rule-pagination-controls"></a>Paginated result lists must use bounded
 server pages, loading guards, stable ordering, and the shared footer containing explicit
@@ -211,8 +211,16 @@ reject duplicate handling of the same browser event, expire automatically, prese
 keyboard access, prevent mobile double-tap zoom on the control, show a busy/disabled
 state during the real delete, and use shared design tokens.
 
-**10.** Treat Supabase as the source of truth for authenticated users. Browser storage
-should be a scoped cache or temporary UI state, not the durable data model.
+**10.** <a id="rule-supabase-source-of-truth"></a>Treat Supabase as the source of truth for authenticated users. Fridge, Shopping
+List, custom foods, saved drinks, profiles, and other durable account records must never
+be mirrored into `localStorage` or used from browser storage as a fallback authority.
+Browser storage is limited to account-scoped unsaved drafts, device-only preferences,
+and short-lived session context that can be safely discarded. Reads and duplicate
+checks for durable records must use focused database queries or RPCs, and failed database
+reads must show an honest retry state instead of silently displaying stale local data.
+Legal, bounded server/API caches and in-memory request coalescing remain allowed under
+the server-request rules because they reduce external calls without replacing canonical
+Supabase data.
 
 **11.** Avoid exposing user email in normal app UI. Prefer display name, profile name,
 or a safe fallback.
@@ -1093,7 +1101,7 @@ mismatch on the server and mirror the outcome immediately in the UI.
 | Calm visual language     | Mostly pass | Palette is coherent. Remaining risk is inconsistent typography and one-off component spacing.                                       |
 | Obvious key actions      | Mostly pass | Barcode scan is now prominent. Save/add flows still need consistent loading and validation affordances.                             |
 | Reusable UI              | Mostly pass | Shared controls are established and Ingredients/Mix prop contracts now live in imported type files.                                |
-| Supabase source of truth | Partial     | Supabase utilities exist, but local storage remains widely used and needs continued narrowing to cache-only behavior.               |
+| Supabase source of truth | Pass        | Durable Fridge, Shopping, custom-food, and saved-drink data reads and writes use Supabase; browser storage is limited to transient UI state. |
 | Email exposure           | Partial     | Normal profile copy avoids email, but layout fallback and moderation surfaces still use email intentionally.                        |
 | Action validation        | Partial     | Validation and constraints exist, but duplicate prevention and pending states are not yet consistently centralized.                 |
 | Auth predictability      | Mostly pass | Redirect flow was hardened and documented. Preview/production/local auth still deserves regression tests.                           |
@@ -1150,31 +1158,22 @@ rg -n "box-shadow" src
 
 ### 4. Browser Storage vs Supabase
 
-Local/session storage is still used in:
+Browser storage is now limited to:
 
-- `src/lib/cache.ts`
-- `src/lib/components/app/DailyWelcome.svelte`
-- `src/lib/utils/mix/state/mixState.ts`
-- `src/lib/utils/mix/ui/mixUi.ts`
-- `src/lib/utils/food/customFoods.ts`
-- `src/lib/utils/storage/savedDrinks.ts`
-- `src/lib/utils/storage/smoothieLists.ts`
-- `src/lib/utils/storage/storageScope.ts`
+- `DailyWelcome.svelte`: a device-only once-per-day presentation flag.
+- `mixState.ts`: an account-scoped unsaved Mix draft and nutrient-goal recovery state;
+  Supabase remains authoritative for saved drinks and saved Mix preferences.
+- `savedDrinks.ts`: the currently loaded drink identifier in `sessionStorage`, so it is
+  discarded with the tab session.
+- `storageScope.ts`: user scoping plus one-time removal of obsolete durable browser
+  mirrors from the earlier local-first architecture.
 
-Some usage is valid:
-
-- Daily welcome state is device-specific UI state.
-- TTL cache is acceptable for read-through cache.
-- Scoped storage helpers reduce cross-user contamination.
-
-Remaining risk:
-
-- Mix state and saved/list state still look capable of functioning as durable local
-  state. That can reintroduce cross-user confusion if sync behavior drifts.
-
-Recommendation: document which storage keys are cache-only, session-only, or
-migration-only. Long term, make route loaders hydrate from Supabase and write local
-storage only as recoverable cache.
+Fridge, Shopping List, custom foods, and saved drinks no longer read or write durable
+browser copies. Database failures render retryable errors instead of silently restoring
+stale local records. The old generic local TTL cache and repository-level nutrition
+dataset cache have been removed. Nutrition dataset import downloads now use disposable
+operating-system temporary directories; the imported checksum, provenance, and rows are
+stored in Supabase.
 
 ### 5. Email Exposure
 
@@ -1319,10 +1318,9 @@ Recommended boundaries:
 
 ### Later
 
-1. Narrow local storage to cache-only behavior with clear comments and tests.
-2. Move product-source and nutrient-quality metadata deeper into the shared catalog
+1. Move product-source and nutrient-quality metadata deeper into the shared catalog
    flow.
-3. Add a lightweight architecture doc that defines component, route, utility, server,
+2. Add a lightweight architecture doc that defines component, route, utility, server,
    and migration boundaries.
 
 ## Checks Run

@@ -5,21 +5,12 @@ import {
 	sortFoodListItems,
 	type FoodListSort,
 } from "$lib/utils/list/listNavigation";
-import {
-	readSmoothieList,
-	type SmoothieListKey,
-} from "$lib/utils/storage/client/smoothieLists";
 
 export type IngredientListFilterOptions = {
 	query: string;
 	sourceFilter: string;
 	trustFilter?: string;
 	sort: FoodListSort;
-};
-
-export type IngredientListPage = {
-	foods: FdcFood[];
-	totalCount: number;
 };
 
 export const filterIngredientFoods = (
@@ -49,17 +40,4 @@ export const filterIngredientFoods = (
 		(food) => food.description,
 		(food) => food.listAddedAt,
 	);
-};
-
-export const readLocalIngredientListPage = (
-	key: SmoothieListKey,
-	offset: number,
-	limit: number,
-	options: IngredientListFilterOptions,
-): IngredientListPage => {
-	const foods = filterIngredientFoods(readSmoothieList(key), options);
-	return {
-		foods: foods.slice(offset, offset + limit),
-		totalCount: foods.length,
-	};
 };
