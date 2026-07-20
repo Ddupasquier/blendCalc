@@ -37,7 +37,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: $app-gap-xs;
-	letter-spacing: 0.01em;
+	letter-spacing: $app-letter-spacing-data;
 }
 
 .custom-ingredient__field em,

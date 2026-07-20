@@ -3,6 +3,98 @@ import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredie
 import type { ServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 import { NUTRIENT_IDS } from "$lib/utils/food/types";
 import type { NutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
+import type { AppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
+
+const testNutrient = (id: number, label: string, unit: string, nutrientNumber = String(id)) => ({
+	id,
+	label,
+	unit,
+	nutrientNumber,
+});
+
+const testNutrients = [
+	testNutrient(NUTRIENT_IDS.CALORIES, "Calories", "kcal", "208"),
+	testNutrient(NUTRIENT_IDS.FAT, "Total Fat", "g", "204"),
+	testNutrient(NUTRIENT_IDS.CARBS, "Total Carbohydrates", "g", "205"),
+	testNutrient(NUTRIENT_IDS.FIBER, "Dietary Fiber", "g", "291"),
+	testNutrient(NUTRIENT_IDS.SUGAR, "Total Sugars", "g", "269"),
+	testNutrient(NUTRIENT_IDS.PROTEIN, "Protein", "g", "203"),
+	testNutrient(NUTRIENT_IDS.SODIUM, "Sodium", "mg", "307"),
+	testNutrient(NUTRIENT_IDS.POTASSIUM, "Potassium", "mg", "306"),
+	testNutrient(NUTRIENT_IDS.CALCIUM, "Calcium", "mg", "301"),
+	testNutrient(NUTRIENT_IDS.IRON, "Iron", "mg", "303"),
+	testNutrient(1090, "Magnesium", "mg", "304"),
+	testNutrient(1258, "Saturated Fat", "g", "606"),
+	testNutrient(1235, "Added Sugars", "g", "1235"),
+];
+
+const mixFields = testNutrients.slice(0, 6).map((nutrient, index) => ({
+	...nutrient,
+	sortOrder: (index + 1) * 10,
+	highlight: nutrient.id === NUTRIENT_IDS.CALORIES,
+	defaultGoal: [350, 15, 60, 10, 25, 25][index],
+}));
+
+export const appReferenceCatalogFixture: AppReferenceCatalog = {
+	nutrients: testNutrients,
+	nutrientDisplayProfiles: [
+		{
+			key: "nutrition-facts-primary-v1",
+			displayName: "Nutrition facts primary fields",
+			purpose: "nutrition_facts",
+			version: 1,
+			fields: mixFields,
+		},
+		{
+			key: "mix-default-v1",
+			displayName: "Default Mix nutrients",
+			purpose: "mix_default",
+			version: 1,
+			fields: [
+				...mixFields,
+				{
+					...testNutrients.find((nutrient) => nutrient.id === NUTRIENT_IDS.SODIUM)!,
+					sortOrder: 70,
+					highlight: false,
+					defaultGoal: 500,
+				},
+			],
+		},
+		{
+			key: "mix-popular-v1",
+			displayName: "Popular Mix nutrients",
+			purpose: "mix_popular",
+			version: 1,
+			fields: testNutrients.map((nutrient, index) => ({
+				...nutrient,
+				sortOrder: (index + 1) * 10,
+				highlight: false,
+				defaultGoal: null,
+			})),
+		},
+	],
+	nutrientEquivalences: [
+		{ canonicalNutrientId: NUTRIENT_IDS.CALORIES, sourceNutrientId: 2047, sourceNutrientNumber: null, sourceKey: "usda" },
+		{ canonicalNutrientId: NUTRIENT_IDS.CALORIES, sourceNutrientId: 2048, sourceNutrientNumber: null, sourceKey: "usda" },
+		{ canonicalNutrientId: NUTRIENT_IDS.FAT, sourceNutrientId: 1085, sourceNutrientNumber: null, sourceKey: "usda" },
+		{ canonicalNutrientId: NUTRIENT_IDS.SUGAR, sourceNutrientId: 1063, sourceNutrientNumber: null, sourceKey: "usda" },
+		{ canonicalNutrientId: NUTRIENT_IDS.CALORIES, sourceNutrientId: null, sourceNutrientNumber: "208", sourceKey: "usda" },
+		{ canonicalNutrientId: NUTRIENT_IDS.SUGAR, sourceNutrientId: null, sourceNutrientNumber: "269", sourceKey: "usda" },
+	],
+	mixGoalTemplates: [{
+		id: "balanced",
+		label: "Balanced",
+		description: "Balanced test goals.",
+		goals: Object.fromEntries(mixFields.map((field) => [field.id, field.defaultGoal ?? 0])),
+	}],
+	mixRuntime: {
+		defaultGoalByUnit: { g: 20, kcal: 350, fallback: 100 },
+		progressThresholds: { atGoal: 1, barelyOver: 1.1, midwayOver: 1.35 },
+		pointGoalTolerance: 0.1,
+		defaultServingGrams: 100,
+	},
+	foodSymbols: [{ key: "generic", label: "Food" }],
+};
 
 export const nutritionCompletenessCatalogFixture: NutritionCompletenessCatalog = {
 	profiles: [

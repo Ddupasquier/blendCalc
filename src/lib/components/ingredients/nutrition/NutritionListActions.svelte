@@ -5,10 +5,9 @@
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
 	import MoveItemPrompt from "$lib/components/ingredients/nutrition/MoveItemPrompt.svelte";
-	import type { FdcFood } from "$lib/utils/food/types";
+	import type { NutritionListActionsProps } from "$lib/components/ingredients/nutrition/types";
 	import {
 		getIngredientMembershipLabel,
-		type IngredientListMembership,
 	} from "$lib/utils/ingredients/ingredientListUi";
 	import {
 		addFoodToSmoothieList,
@@ -21,11 +20,7 @@
 		food,
 		showListActions = true,
 		listMembership = { inFridge: false, inShoppingList: false },
-	}: {
-		food?: FdcFood;
-		showListActions?: boolean;
-		listMembership?: IngredientListMembership;
-	} = $props();
+	}: NutritionListActionsProps = $props();
 
 	const membershipLabel = $derived(getIngredientMembershipLabel(listMembership));
 	const isAlreadySaved = $derived(Boolean(membershipLabel));

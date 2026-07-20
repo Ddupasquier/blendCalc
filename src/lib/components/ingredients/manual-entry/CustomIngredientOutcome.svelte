@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PillButton from "$lib/components/common/buttons/PillButton.svelte";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
-	import type { CustomIngredientOutcomeState } from "$lib/components/ingredients/manual-entry/formTypes";
+	import type { CustomIngredientOutcomeProps } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
 		outcome,
@@ -9,13 +9,7 @@
 		onMoveToShopping,
 		onMoveToFridge,
 		onUndo,
-	}: {
-		outcome: CustomIngredientOutcomeState;
-		action: "move" | "undo" | null;
-		onMoveToShopping: () => void | Promise<void>;
-		onMoveToFridge: () => void | Promise<void>;
-		onUndo: () => void | Promise<void>;
-	} = $props();
+	}: CustomIngredientOutcomeProps = $props();
 </script>
 
 <section class="custom-ingredient-outcome" role="status" aria-live="polite">
@@ -101,7 +95,7 @@
 
 		a {
 			width: fit-content;
-			min-height: 2.15rem;
+			min-height: $ingredient-outcome-action-min-height;
 			padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x-compact;
 			border-radius: $app-radius-pill;
 			font-family: $app-button-font-family;

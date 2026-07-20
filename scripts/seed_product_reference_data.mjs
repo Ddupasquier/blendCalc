@@ -282,6 +282,9 @@ const seedNutrientMappings = async ({
 		mapping_method: "api_id_match",
 		confidence: 1,
 		enabled: true,
+		review_status: "approved",
+		review_reference: "USDA nutrient ID identity",
+		reviewed_at: observedAt,
 		observation_count: usdaCounts.get(definition.nutrient_id) ?? 0,
 		first_observed_at: observedAt,
 		last_observed_at: observedAt,
@@ -323,10 +326,15 @@ const seedNutrientMappings = async ({
 				source_unit_name: sourceUnit,
 				source_nutrient_name: sourceName,
 				nutrient_id: match.definition.nutrient_id,
-				priority: observationCount > 0 ? 10 : 50,
-				mapping_method: "api_taxonomy_match",
-				confidence: Number(match.score.toFixed(4)),
-				enabled: true,
+					priority: observationCount > 0 ? 10 : 50,
+					mapping_method: "api_taxonomy_match",
+					confidence: Number(match.score.toFixed(4)),
+					enabled: match.automaticApproval,
+					review_status: match.automaticApproval ? "approved" : "pending_review",
+					review_reference: match.automaticApproval
+						? "Exact normalized taxonomy name and compatible unit"
+						: null,
+					reviewed_at: match.automaticApproval ? observedAt : null,
 				observation_count: observationCount,
 				first_observed_at: observedAt,
 				last_observed_at: observedAt,
@@ -394,7 +402,7 @@ const getObservedIuConversions = (definitions, usdaFoods) => {
 
 const seedNutrientConversions = async ({ mappings, definitions, usdaFoods }) => {
 	const conversionRequests = new Map();
-	for (const mapping of mappings) {
+	for (const mapping of mappings.filter((candidate) => candidate.enabled)) {
 		const fromUnit = normalizeUnitName(mapping.source_unit_name);
 		const definition = definitions.find(
 			(candidate) => candidate.nutrient_id === mapping.nutrient_id,

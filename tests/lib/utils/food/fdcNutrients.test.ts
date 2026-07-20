@@ -28,10 +28,10 @@ describe("FDC nutrient resolver", () => {
 			});
 	});
 
-	it("derives calories from macro values when FDC omits calories", () => {
+	it("does not derive calories when any macro value is missing", () => {
 		expect(
 			getFdcNutrientValue(sunflowerOilSearchResult, NUTRIENT_IDS.CALORIES),
-		).toBeCloseTo(838.8);
+		).toBeNull();
 	});
 
 	it("uses Foundation total sugars as a fallback for Total Sugars", () => {

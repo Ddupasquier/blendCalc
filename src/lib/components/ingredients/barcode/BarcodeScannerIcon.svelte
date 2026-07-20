@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Barcode from "$lib/assets/icons/Barcode.svelte";
+	import type { BarcodeScannerIconProps } from "$lib/components/ingredients/barcode/types";
 
 	const barcodeBars = [
 		2, 2, 6, 1, 9, 3, 14, 1, 17, 2, 21, 1, 24, 3, 29, 1, 32, 2, 36, 1, 39,
@@ -12,9 +13,7 @@
 
 	let {
 		active = false,
-	}: {
-		active?: boolean;
-	} = $props();
+	}: BarcodeScannerIconProps = $props();
 </script>
 
 <span class="barcode-scanner" class:barcode-scanner--active={active} aria-hidden="true">

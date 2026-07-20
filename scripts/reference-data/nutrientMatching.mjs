@@ -106,5 +106,9 @@ export const findCanonicalNutrientMatch = ({
 	const second = candidates[1];
 	if (!best || best.score < 0.7) return null;
 	if (second && best.score - second.score < 0.025 && best.score < 0.98) return null;
-	return best;
+	const bestTokens = getNutrientTokens(best.definition.nutrient_name);
+	const automaticApproval =
+		sourceTokens.length === bestTokens.length &&
+		sourceTokens.every((token) => bestTokens.includes(token));
+	return { ...best, automaticApproval };
 };

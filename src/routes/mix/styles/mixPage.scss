@@ -1,0 +1,114 @@
+@use "../../../styles/variables" as *;
+
+.mix-page {
+	box-sizing: border-box;
+	max-width: $app-max-width;
+	padding: $app-gap-sm 0;
+	margin: 0 auto;
+}
+
+.mix-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: $app-gap-md;
+	margin-bottom: $app-gap-md;
+
+	h2 {
+		margin-bottom: $app-gap-inline-compact;
+		color: $app-primary;
+		font-size: $app-font-size-xl;
+		font-weight: $app-font-weight-bold;
+	}
+
+	p {
+		color: $app-muted;
+		font-size: $app-font-size-md;
+	}
+}
+
+.mix-header .mix-header__eyebrow {
+	margin-bottom: $app-gap-2xs;
+	color: $app-warning-strong;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-heavy;
+	letter-spacing: $app-gap-micro;
+	text-transform: uppercase;
+}
+
+.mix-header__title-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $app-gap-xs;
+	margin-bottom: $app-gap-inline-compact;
+
+	h2 {
+		min-width: 0;
+		margin-bottom: 0;
+		overflow-wrap: anywhere;
+	}
+
+	span {
+		padding: $app-gap-2xs $app-gap-sm;
+		color: $app-warning-strong;
+		background: $app-warning-bg;
+		border-radius: $app-radius-pill;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-heavy;
+		white-space: nowrap;
+	}
+}
+
+.reset-actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: $app-gap-xs;
+	max-width: $mix-reset-actions-max-width;
+}
+
+.mix-panel {
+	padding: $app-gap-sm;
+	background: $app-section-bg;
+	border: $app-border;
+	border-radius: $app-card-radius;
+}
+
+.mix-builder {
+	display: grid;
+	grid-template-columns: 1fr;
+	align-items: stretch;
+	gap: $app-gap-sm;
+}
+
+.shape-panel {
+	display: grid;
+	place-items: center;
+	padding: $app-gap-sm;
+	background: $app-bg;
+	border: $app-border;
+	border-radius: $app-card-radius;
+}
+
+.shape-preview {
+	display: grid;
+	place-items: center;
+	width: 100%;
+	background: $app-section-bg;
+	border-radius: $app-card-radius;
+}
+
+@media (max-width: $app-breakpoint-md) {
+	.mix-page {
+		padding-top: $app-gap-sm;
+	}
+
+	.mix-header {
+		display: grid;
+	}
+
+	.reset-actions {
+		justify-content: flex-start;
+	}
+}

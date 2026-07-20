@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { GOAL_TEMPLATES } from "../../../../defaults/mixDefaults";
-	import type { NutrientMeta } from "$lib/utils/mix/calculations";
+	import { getMixGoalTemplates } from "$lib/utils/food/reference/appReferenceCatalog";
+	import type { GoalTargetsProps } from "$lib/components/mix/types";
 
 	let {
 		selectedNutrients,
@@ -11,16 +11,9 @@
 		onUpdateGoal,
 		getGoal,
 		getTotal,
-	}: {
-		selectedNutrients: NutrientMeta[];
-		nutrientGoals: Record<number, number>;
-		selectedGoalTemplateId: string;
-		onTemplateChange: (templateId: string) => void;
-		onApplyTemplate: () => void;
-		onUpdateGoal: (id: string | number, value: string) => void;
-		getGoal: (nutrient: NutrientMeta) => number;
-		getTotal: (nutrientId: number) => number;
-	} = $props();
+	}: GoalTargetsProps = $props();
+
+	const goalTemplates = getMixGoalTemplates();
 </script>
 
 <section class="setup-card setup-card--goals">
@@ -38,7 +31,7 @@
 				onchange={(event) => onTemplateChange(event.currentTarget.value)}
 			>
 				<option value="">Choose preset</option>
-				{#each GOAL_TEMPLATES as template}
+				{#each goalTemplates as template}
 					<option value={template.id}>{template.label}</option>
 				{/each}
 			</select>
@@ -99,7 +92,7 @@
 		h4 {
 			color: $app-primary;
 			font-size: $app-font-size-lg;
-			font-weight: 800;
+			font-weight: $app-font-weight-bold;
 		}
 
 		p {
@@ -111,22 +104,22 @@
 
 	.goal-template-controls {
 		display: grid;
-		grid-template-columns: minmax(8.5rem, 1fr) auto;
-		gap: 0.35rem;
-		min-width: min(100%, 15rem);
+		grid-template-columns: minmax($mix-goal-template-min-width, 1fr) auto;
+		gap: $app-gap-xs;
+		min-width: min(100%, $mix-goal-template-max-width);
 
 		label {
 			grid-column: 1 / -1;
 			color: $app-muted;
 			font-size: $app-font-size-xs;
-			font-weight: 800;
+			font-weight: $app-font-weight-bold;
 		}
 
 		select {
 			width: 100%;
 			min-width: 0;
 			height: $app-control-height-sm;
-			padding: 0 0.5rem;
+			padding: 0 $app-gap-sm;
 			color: $app-primary;
 			background: $app-section-bg;
 			border: $app-border;
@@ -136,7 +129,7 @@
 
 		button {
 			height: $app-control-height-sm;
-			padding: 0 0.6rem;
+			padding: 0 $app-gap-sm;
 			color: $app-primary;
 			background: $app-btn-bg;
 			border-radius: $app-radius-sm;
@@ -157,23 +150,23 @@
 
 	.goal-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
-		gap: 0.45rem;
+		grid-template-columns: repeat(auto-fit, minmax($mix-goal-card-min-width, 1fr));
+		gap: $app-gap-sm;
 	}
 
 	.goal-input {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
 		align-items: center;
-		gap: 0.35rem;
+		gap: $app-gap-xs;
 		min-width: 0;
-		padding: 0.42rem 0.55rem;
+		padding: $app-gap-sm;
 		background: $app-section-bg;
 		border: $app-border;
 		border-radius: $app-radius;
 		color: $app-primary;
 		font-size: $app-font-size-sm;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 
 		.goal-label {
 			grid-column: 1;
@@ -188,7 +181,7 @@
 			width: 100%;
 			min-width: 0;
 			height: $app-control-height-sm;
-			padding: 0 0.45rem;
+			padding: 0 $app-gap-sm;
 			color: $app-primary;
 			background: $app-bg;
 			border: $app-border;

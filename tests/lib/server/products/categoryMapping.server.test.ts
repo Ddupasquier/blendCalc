@@ -25,6 +25,7 @@ const createSupabaseMock = () => ({
 				category_option_id: "fruit-and-vegetable-preserves",
 				category_option_label: "Fruit And Vegetable Preserves",
 				confidence: "exact",
+				symbol_key: "fruit",
 			},
 		],
 		error: null,

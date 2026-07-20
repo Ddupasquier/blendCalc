@@ -6,7 +6,6 @@ import type { FoodQuality } from "$lib/utils/food/quality/foodQuality";
 const partialQuality: FoodQuality = {
 	status: "partial",
 	label: "Partial",
-	symbol: "⚠️",
 	title: "4/6 required nutrients are available.",
 	score: 10,
 	completeCount: 4,

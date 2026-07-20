@@ -48,6 +48,7 @@ export type CustomFoodInput = {
 	labels?: string[];
 	categories?: string[];
 	categoryOptionId?: string;
+	symbolKey?: string;
 	image?: FoodImageAsset;
 	fieldProvenance?: FoodFieldProvenance;
 	nutrients: FdcNutrient[];
@@ -234,6 +235,7 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		labels: input.labels,
 		categories: input.categories,
 		categoryOptionId: input.categoryOptionId,
+		symbolKey: input.symbolKey,
 		image: input.image,
 		fieldProvenance: input.fieldProvenance,
 		customFood: true,

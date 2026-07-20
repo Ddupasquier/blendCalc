@@ -1,11 +1,10 @@
 <script lang="ts">
 	import type { FdcNutrient } from "$lib/utils/food/types";
+	import type { ImportedNutrientsProps } from "$lib/components/ingredients/nutrition/types";
 
 	let {
 		nutrients,
-	}: {
-		nutrients: FdcNutrient[];
-	} = $props();
+	}: ImportedNutrientsProps = $props();
 
 	const formatNutrientValue = (nutrient: FdcNutrient) => {
 		const value =

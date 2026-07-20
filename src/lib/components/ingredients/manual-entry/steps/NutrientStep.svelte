@@ -1,15 +1,9 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
 	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
-	import type { ManualEntryValidationItem } from "$lib/components/ingredients/manual-entry/formTypes";
 	import ManualEntryNutrientFields from "$lib/components/ingredients/manual-entry/ManualEntryNutrientFields.svelte";
 	import NutritionLabelOcrInput from "$lib/components/ingredients/manual-entry/NutritionLabelOcrInput.svelte";
-	import type { NutritionLabelOcrApplyPayload } from "$lib/components/ingredients/manual-entry/formTypes";
-	import type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
-	import type {
-		ManualEntryNutrientDefinition,
-		ManualEntryNutrientGroup,
-	} from "$lib/utils/food/nutrients/nutrientDefinitions";
+	import type { NutrientStepProps } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
 		groups,
@@ -30,26 +24,7 @@
 		isRequired,
 		onBack,
 		onNext,
-	}: {
-		groups: ManualEntryNutrientGroup[];
-		loading: boolean;
-		error: string;
-		helper: string;
-		validationItems?: ManualEntryValidationItem[];
-		accordion?: boolean;
-		defaultOpenFirst?: boolean;
-		hideUnavailableStatus?: boolean;
-		labelOcrMappings?: NutritionLabelOcrMapping[];
-		labelOcrMappingError?: string;
-		nutritionPhoto?: File | null;
-		onNutritionPhotoChange?: (file: File | null) => void;
-		onApplyNutritionLabelOcr?: (payload: NutritionLabelOcrApplyPayload) => void;
-		getValue: (field: ManualEntryNutrientDefinition) => number | null;
-		onValueChange: (field: ManualEntryNutrientDefinition, value: string) => void;
-		isRequired: (field: ManualEntryNutrientDefinition) => boolean;
-		onBack: () => void;
-		onNext: () => void;
-	} = $props();
+	}: NutrientStepProps = $props();
 </script>
 
 <div class="custom-ingredient__step">

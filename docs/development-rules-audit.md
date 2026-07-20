@@ -1,8 +1,10 @@
 # Development Rules Audit
 
-Date: 2026-06-15  
-Branch: `audit-development-rules`  
-Baseline: `main` after merging `compact-ingredient-scan-ui`
+Last verified: 2026-07-19
+
+Branch: `ui-rebuild/ingredients`
+
+Scope: current working tree after the database-driven nutrient/reference catalog cleanup
 
 ## Navigation
 
@@ -1070,37 +1072,40 @@ mismatch on the server and mirror the outcome immediately in the UI.
 
 | Area                     | Status      | Notes                                                                                                                               |
 | ------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Mobile-first UI          | Partial     | Breakpoints exist, but several dense components still rely on local styling and large files.                                        |
+| Mobile-first UI          | Partial     | Ingredients has explicit mobile behavior; remaining routes still need the same browser/device pass.                                 |
 | Simple user flow         | Partial     | Barcode/manual flow is improving, but ingredient search, nutrition facts, list placement, and mix flow still have many transitions. |
-| Design tokens            | Partial     | Strong variable foundation exists, but hard-coded color, spacing, and font values remain across route and component styles.         |
+| Design tokens            | Partial     | Ingredients and Mix pass the raw spacing/font scan; untouched routes still contain older one-off values.                            |
 | No box shadows           | Pass        | `rg -n "box-shadow" src` returned no matches.                                                                                       |
 | Calm visual language     | Mostly pass | Palette is coherent. Remaining risk is inconsistent typography and one-off component spacing.                                       |
 | Obvious key actions      | Mostly pass | Barcode scan is now prominent. Save/add flows still need consistent loading and validation affordances.                             |
-| Reusable UI              | Mostly pass | `common`, `ingredients`, `mix`, `app`, and `auth` folders are clear. Some page/component styles still duplicate patterns.           |
+| Reusable UI              | Mostly pass | Shared controls are established and Ingredients/Mix prop contracts now live in imported type files.                                |
 | Supabase source of truth | Partial     | Supabase utilities exist, but local storage remains widely used and needs continued narrowing to cache-only behavior.               |
 | Email exposure           | Partial     | Normal profile copy avoids email, but layout fallback and moderation surfaces still use email intentionally.                        |
 | Action validation        | Partial     | Validation and constraints exist, but duplicate prevention and pending states are not yet consistently centralized.                 |
 | Auth predictability      | Mostly pass | Redirect flow was hardened and documented. Preview/production/local auth still deserves regression tests.                           |
-| File/folder structure    | Partial     | Folder names are much better than before. Some files are still too large and mix behavior, markup, and styling.                     |
+| File/folder structure    | Mostly pass | Large coordinator files delegate UI and domain logic; Mix page styles now live in a tandem stylesheet.                              |
 | Branch workflow          | Pass        | `staging` exists as the integration gate before `main`; new major work should branch from and return to `staging`.                  |
-| Verification             | Mostly pass | Scripts exist for check/build/tests/database checks. Audit branch has not changed app code yet.                                     |
+| Verification             | Mostly pass | Type checks and focused regression tests cover the reference catalog; full browser QA remains required.                             |
 
 ## Findings
 
 ### 1. File Size and Boundaries
 
-Several files are large enough that future changes will become risky:
+Some coordinator files remain long, but line count alone is not a reason to split them.
+The risk is whether they absorb reusable UI, validation, formatting, persistence, or
+reference-data policy that belongs elsewhere.
 
 | File                                                         | Lines | Risk                                                                                                       |
 | ------------------------------------------------------------ | ----: | ---------------------------------------------------------------------------------------------------------- |
-| `src/lib/components/ingredients/CustomIngredientForm.svelte` |  1324 | Too many responsibilities: barcode/manual entry, nutrients, serving, volume, submission flow, and styling. |
-| `src/routes/mix/+page.svelte`                                |   974 | Page orchestration, state, persistence, and UI wiring are all in one file.                                 |
-| `src/routes/moderation/+page.svelte`                         |   649 | Admin cards, submission review, account review, filtering, and styles should be split.                     |
-| `src/routes/fridge/+page.svelte`                             |   572 | Page state and ingredient/search/list UI are still tightly coupled.                                        |
-| `src/lib/components/ingredients/NutritionPanel.svelte`       |   567 | Nutrition-label rendering is specialized and dense; should stay isolated but may need subcomponents.       |
+| `src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte` | 1404 | Acceptable as the manual-entry coordinator while new UI, validation, formatting, and persistence continue to live in focused children/utilities. |
+| `src/routes/fridge/+page.svelte`                                           |  990 | Acceptable as route orchestration; repeated panels and list UI are delegated to reusable components.                                |
+| `src/routes/mix/+page.svelte`                                              |  869 | Improved: tandem styles, shared controls, DB-owned catalogs, and extracted calculations leave the page focused on wiring.           |
+| `src/routes/moderation/+page.svelte`                                       |  771 | Still pending the planned moderation UI rebuild; avoid growing it before that pass.                                                  |
+| `src/lib/components/ingredients/nutrition/NutritionPanel.svelte`           |   38 | Pass: now a small coordinator around focused nutrition components.                                                                  |
 
-Recommendation: prioritize `CustomIngredientForm.svelte` and `mix/+page.svelte`. These
-are the highest-traffic files and most likely to regress UX.
+Recommendation: keep coordinator ownership explicit. Extract only when a new change adds
+a reusable view, business rule, formatter, persistence operation, or reference-data
+decision—not merely to reduce a line count.
 
 ### 2. SCSS Variable Usage
 
@@ -1108,21 +1113,16 @@ The variable system is strong and well documented in `src/styles/_variables.scss
 includes palette primitives, semantic colors, font roles, font weights, spacing, radii,
 and breakpoints.
 
-Gaps found:
+Current result:
 
-- Hard-coded colors still exist outside variables in
-  `src/defaults/pointShapeDefaults.ts`, `src/defaults/mixDefaults.ts`,
-  `src/lib/components/ingredients/BarcodeScanButton.svelte`,
-  `src/lib/components/common/dialogs/ConfirmationDialog.svelte`,
-  `src/routes/+page.svelte`, and email template inline styles.
-- Hard-coded spacing and font weights are common across Svelte components, especially
-  route pages and large components.
-- Some hard-coded values are legitimate SVG/animation internals, but many should use
-  `$app-gap-*`, `$app-font-size-*`, `$app-font-weight-*`, `$app-radius-*`, and semantic
-  color tokens.
-
-Recommendation: do not attempt a single global style rewrite. Convert one UI area at a
-time, starting with shared controls and the ingredient entry flow.
+- Ingredients and Mix component styles use semantic spacing, typography, radius, and
+  layout tokens; the raw-value audit returns no matches in those areas.
+- `mixDefaults.ts` now contains storage keys only. Nutrient choices, goals, runtime
+  thresholds, and chart colors come from the database reference catalog or SCSS tokens.
+- Remaining raw values outside these rebuilt areas should be converted during each
+  route's planned UI pass. Moderation remains intentionally deferred until its rebuild.
+- SVG path coordinates, measured runtime dimensions, animation timing, and standards
+  constants are not UI spacing and should not be converted into misleading design tokens.
 
 ### 3. Box Shadows
 
@@ -1199,12 +1199,14 @@ Strong reusable pieces already exist:
 - `ConfirmationDialog.svelte`
 - `TextInputDialog.svelte`
 
-Remaining cleanup:
+Current result:
 
-- Ingredient list sections on fridge and mix should use identical composition.
-- Button variants need one shared convention for primary, secondary, mango-highlight,
-  danger, and disabled.
-- Large route pages still hold too much styling.
+- Ingredients and Mix use shared button, badge, icon-frame, list, loading, pagination,
+  and form primitives.
+- Component and page prop contracts are imported from focused `types.ts` files rather
+  than declared inline.
+- Feature components may still own genuinely unique semantic controls, but repeated
+  controls must extend the shared primitives.
 
 ### 7. Authentication and Security
 
@@ -1232,23 +1234,21 @@ Recommendation:
 
 ### 8. Product and Nutrition Data
 
-Product catalog, normalized nutrients, barcode lookup, FDC search, and custom foods now
-have clear domains.
+Product catalog, normalized nutrients, barcode lookup, generic datasets, and custom
+foods now have clear domains.
 
-Risk:
+Current result:
 
-- Nutrition data can come from multiple sources and quality levels. Without clear
-  source/quality metadata in the UI, users may overtrust incomplete data.
-
-Recommendation:
-
-- Continue showing confidence details, but keep them collapsed by default.
-- Normalize nutrients into Supabase for products that are reused.
-- Preserve source, source timestamp, barcode, serving basis, and quality flags.
-- Resolve external nutrient keys, vendor identity, source labels, serving units,
-  aliases, and nutrient-specific conversions through normalized DB reference tables.
-  Runtime barcode code may perform arithmetic, but it must not own those source-derived
-  definitions.
+- Approved source mappings, nutrient equivalences, display profiles, manual-entry
+  groups, Mix goals/runtime policy, source identities, serving units, and category
+  symbols are database-owned.
+- Missing nutrients remain `null`; a reported zero remains a real zero. Calories are
+  derived only when all required macro inputs are present.
+- Unsafe fuzzy parent/sub-nutrient substitutions are disabled and explicitly rejected.
+- Runtime code performs arithmetic and orchestration but does not own source-derived
+  nutrient names, units, aliases, conversions, or display catalogs.
+- Source, timestamp, barcode, serving basis, field provenance, and quality details must
+  remain attached when reusable products are normalized into Supabase.
 
 ### 9. UI Flow Complexity
 
@@ -1290,21 +1290,18 @@ Recommended boundaries:
 
 ### Immediate
 
-1. Split `CustomIngredientForm.svelte` into smaller sections: barcode entry, manual
-   serving details, nutrient inputs, volume equivalent, and post-save destination.
-2. Add a shared button variant pattern so button typography, disabled state, and loading
-   state are consistent.
-3. Replace hard-coded scanner colors with tokens everywhere in
-   `BarcodeScanButton.svelte`.
-4. Add redirect/auth utility tests for local, production, and Vercel preview URLs.
+1. Complete browser and visual QA for the database-driven manual-entry nutrient groups.
+2. Verify missing nutrient values remain missing throughout Mix totals and warnings.
+3. Apply the same token/type audit when rebuilding the moderation view.
+4. Keep redirect/auth utility tests current for local, production, and preview URLs.
 
 ### Next
 
-1. Refactor `mix/+page.svelte` into page orchestration plus smaller panels.
-2. Create a shared identity display utility to avoid full email in normal UI.
-3. Convert route-page local spacing/font weights to SCSS variables.
-4. Make list/search/pagination controls identical across fridge, shopping, mix chooser,
-   and saved drinks.
+1. Create a shared identity display utility to avoid full email in normal UI.
+2. Convert raw route styles to semantic tokens as each remaining view is rebuilt.
+3. Keep list/search/pagination controls identical across fridge, shopping, Mix, and
+   saved drinks.
+4. Add browser QA for reference-catalog load failure and retry states.
 
 ### Later
 

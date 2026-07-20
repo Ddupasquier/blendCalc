@@ -1,15 +1,12 @@
 <script lang="ts">
 	import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
+	import type { ManualEntryScanOptionProps } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
 		scanning = false,
 		disabled = false,
 		onScan,
-	}: {
-		scanning?: boolean;
-		disabled?: boolean;
-		onScan: () => void;
-	} = $props();
+	}: ManualEntryScanOptionProps = $props();
 </script>
 
 <section

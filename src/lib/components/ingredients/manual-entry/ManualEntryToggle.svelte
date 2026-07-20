@@ -2,14 +2,12 @@
 	import Chevron from "$lib/assets/icons/Chevron.svelte";
 	import Pencil from "$lib/assets/icons/Pencil.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
+	import type { ManualEntryToggleProps } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
 		title = "Enter manually",
 		description = "Add a custom ingredient by hand",
-	}: {
-		title?: string;
-		description?: string;
-	} = $props();
+	}: ManualEntryToggleProps = $props();
 </script>
 
 <CircularIconFrame class="manual-entry-toggle__icon" decorative>

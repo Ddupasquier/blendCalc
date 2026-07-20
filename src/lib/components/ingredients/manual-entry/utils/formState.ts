@@ -28,6 +28,7 @@ export type ManualEntryFormResetState = {
 	brandOwner: string;
 	category: string;
 	categoryOptionId: string;
+	categorySymbolKey: string;
 	servingLabel: string;
 	servingWeightGrams: number | null;
 	volumeQuantity: number | null;
@@ -72,6 +73,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	brandOwner: "",
 	category: "",
 	categoryOptionId: "",
+	categorySymbolKey: "generic",
 	servingLabel: "",
 	servingWeightGrams: null,
 	volumeQuantity: null,

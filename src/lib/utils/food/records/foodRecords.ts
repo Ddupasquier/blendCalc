@@ -29,6 +29,7 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		labels: food.labels,
 		categories: food.categories,
 		categoryOptionId: food.categoryOptionId,
+		symbolKey: food.symbolKey,
 		image: food.image,
 		fieldProvenance: food.fieldProvenance
 			? Object.fromEntries(

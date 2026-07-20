@@ -25,6 +25,13 @@ export type NutrientGoalWarningInput = {
 	unit?: string;
 	total: number;
 	goal: number;
+	complete?: boolean;
+};
+
+export type NutrientDataCoverageInput = {
+	id: string | number;
+	label: string;
+	missingFoods: string[];
 };
 
 const formatAmount = (value: number) => {
@@ -39,6 +46,7 @@ export const getNutrientGoalWarnings = (
 	{ includeUnderTargets = true } = {},
 ): SmartWarning[] => {
 	return nutrients.flatMap((nutrient): SmartWarning[] => {
+		if (nutrient.complete === false) return [];
 		const unit = nutrient.unit ?? "";
 		const goal = Math.max(0, nutrient.goal);
 		const total = Math.max(0, nutrient.total);
@@ -76,6 +84,21 @@ export const getNutrientGoalWarnings = (
 		return [];
 	});
 };
+
+export const getIncompleteNutrientDataWarnings = (
+	nutrients: NutrientDataCoverageInput[],
+): SmartWarning[] => nutrients.flatMap((nutrient) => {
+	if (nutrient.missingFoods.length === 0) return [];
+	const visibleFoods = nutrient.missingFoods.slice(0, 3);
+	const extraCount = nutrient.missingFoods.length - visibleFoods.length;
+	return [{
+		id: `incomplete-${nutrient.id}`,
+		tone: "info",
+		symbol: "?",
+		title: `${nutrient.label} total is incomplete`,
+		message: `${visibleFoods.join(", ")}${extraCount > 0 ? ` and ${extraCount} more` : ""} did not report this nutrient. The chart shows the known subtotal, not zero for missing data.`,
+	}];
+});
 
 export const getFoodPreferenceSmartWarnings = (
 	foods: FdcFood[],

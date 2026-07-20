@@ -131,6 +131,7 @@ export interface FdcFood {
     labels?: string[];
     categories?: string[];
     categoryOptionId?: string;
+	symbolKey?: string;
     image?: FoodImageAsset;
     fieldProvenance?: FoodFieldProvenance;
     customFood?: boolean;

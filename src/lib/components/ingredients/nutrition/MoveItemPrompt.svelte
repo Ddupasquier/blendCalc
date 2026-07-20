@@ -42,7 +42,7 @@
 
         .prompt-title {
             font-size: $ingredient-nutrition-move-prompt-title-font-size;
-            font-weight: 600;
+            font-weight: $app-font-weight-medium;
             margin-bottom: $app-vertical-stack-gap;
             color: $app-primary;
             text-align: center;

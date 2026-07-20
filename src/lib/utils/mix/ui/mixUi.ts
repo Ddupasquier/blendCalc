@@ -1,12 +1,12 @@
-import {
-	DEFAULT_SERVING_GRAMS,
-	MIX_STORAGE_KEYS,
-} from "../../../../defaults/mixDefaults";
+import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 import {
 	SERVING_MEASURE_ALIASES,
 	type ServingMeasureUnit,
 } from "$lib/utils/serving/servingMeasureCatalog";
-import { vitalNutrients } from "../../../../variables/vitalNutrients";
+import {
+	getDefaultMixFields,
+	getMixRuntimeConfiguration,
+} from "$lib/utils/food/reference/appReferenceCatalog";
 import { getFoodNutrientAmount, type NutrientMeta } from "$lib/utils/mix/calculations";
 import type { ServingConversion } from "$lib/utils/serving/servingAmount";
 import type { SmartWarning } from "$lib/utils/mix/warnings/smartWarnings";
@@ -54,7 +54,7 @@ export type SaveGoalDiff = {
 };
 
 export const getDefaultNutrientOptions = () => {
-	return vitalNutrients.map((nutrient) => ({
+	return getDefaultMixFields().map((nutrient) => ({
 		id: nutrient.id,
 		label: nutrient.label,
 	}));
@@ -137,7 +137,7 @@ export const getFoodNutrientChips = (
 			amount: getFoodNutrientAmount(food, Number(nutrient.id), servingGrams),
 			unit: nutrient.unit ?? "",
 		}))
-		.filter((chip) => chip.amount > 0)
+		.filter((chip): chip is typeof chip & { amount: number } => chip.amount !== null && chip.amount > 0)
 		.sort((a, b) => b.amount - a.amount)
 		.slice(0, 3)
 		.map((chip) => ({
@@ -164,7 +164,7 @@ export const getDefaultServingAmount = (food?: FdcFood) => {
 	}
 
 	return {
-		quantity: DEFAULT_SERVING_GRAMS,
+		quantity: getMixRuntimeConfiguration().defaultServingGrams,
 		unit: "g" as ServingMeasureUnit,
 	};
 };

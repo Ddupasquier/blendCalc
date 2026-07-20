@@ -36,6 +36,7 @@ export type ManualEntryCustomFoodPayload = {
 	labels: string[];
 	activeCategory: string;
 	categoryOptionId: string;
+	categorySymbolKey: string;
 	categories: string[];
 	image?: FoodImageAsset;
 	fieldProvenance?: FoodFieldProvenance;
@@ -110,6 +111,7 @@ export const createManualEntryCustomFood = (
 		labels: payload.labels,
 			categories: buildManualEntrySaveCategories(payload),
 			categoryOptionId: payload.categoryOptionId,
+		symbolKey: payload.categorySymbolKey,
 		image: payload.image,
 		fieldProvenance: payload.fieldProvenance,
 		nutrients: saveNutrients,

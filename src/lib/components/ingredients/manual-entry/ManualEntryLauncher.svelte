@@ -1,11 +1,10 @@
 <script lang="ts">
 	import ManualEntryToggle from "$lib/components/ingredients/manual-entry/ManualEntryToggle.svelte";
+	import type { ManualEntryLauncherProps } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
 		onSelect,
-	}: {
-		onSelect: () => void;
-	} = $props();
+	}: ManualEntryLauncherProps = $props();
 </script>
 
 <button
@@ -25,7 +24,7 @@
 		grid-template-columns: auto minmax(0, 1fr) auto;
 		align-items: center;
 		gap: $app-gap-sm;
-		min-height: 3.55rem;
+		min-height: $ingredient-manual-entry-launcher-min-height;
 		width: 100%;
 		padding: $ingredient-card-padding-compact $ingredient-control-padding-x;
 		color: $ingredient-text-primary;

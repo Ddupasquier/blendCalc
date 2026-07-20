@@ -1,5 +1,20 @@
 @use "./styles/variables" as *;
 
+:root {
+	--mix-chart-success-fill: #{$mix-chart-success-fill};
+	--mix-chart-success-stroke: #{$mix-chart-success-stroke};
+	--mix-chart-caution-fill: #{$mix-chart-caution-fill};
+	--mix-chart-caution-stroke: #{$mix-chart-caution-stroke};
+	--mix-chart-warning-fill: #{$mix-chart-warning-fill};
+	--mix-chart-warning-stroke: #{$mix-chart-warning-stroke};
+	--mix-chart-danger-fill: #{$mix-chart-danger-fill};
+	--mix-chart-danger-stroke: #{$mix-chart-danger-stroke};
+	--mix-chart-grid: #{$mix-chart-grid};
+	--mix-chart-goal: #{$mix-chart-goal};
+	--mix-chart-goal-fill: #{$mix-chart-goal-fill};
+	--mix-chart-goal-stroke: #{$mix-chart-goal-stroke};
+}
+
 /* ============================================================
    Global styles — mobile-first, single-column layout
    ============================================================ */

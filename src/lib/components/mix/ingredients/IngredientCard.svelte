@@ -4,8 +4,7 @@
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge.svelte";
 	import CloseButton from "$lib/components/common/buttons/CloseButton.svelte";
-	import type { NutrientChip } from "$lib/utils/mix/ui/mixUi";
-	import type { FdcFood } from "$lib/utils/food/types";
+	import type { IngredientCardProps } from "$lib/components/mix/types";
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import { getFoodPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
 	import { slide } from "svelte/transition";
@@ -24,21 +23,7 @@
 		nutrientChips = [],
 		onRemove,
 		onServingChange,
-	}: {
-		food: FdcFood;
-		sourceLabel: string;
-		quantity: number;
-		unit: ServingMeasureUnit;
-		gramsLabel: string;
-		warning?: string | null;
-		nutrientChips?: NutrientChip[];
-		onRemove: (foodId: number) => void;
-		onServingChange: (
-			food: FdcFood,
-			quantityValue: string,
-			unit: ServingMeasureUnit,
-		) => void;
-	} = $props();
+	}: IngredientCardProps = $props();
 
 	let nutrientsOpen = $state(false);
 	const foodPreferenceContext = getFoodPreferenceContext();
@@ -190,7 +175,7 @@
 		gap: $app-gap-sm;
 		align-items: flex-start;
 		min-width: 0;
-		padding-right: 1.85rem;
+		padding-right: $mix-ingredient-heading-padding-end;
 
 		div {
 			min-width: 0;
@@ -198,10 +183,10 @@
 
 		h5 {
 			display: -webkit-box;
-			margin: 0.08rem 0 0;
+			margin: $app-gap-micro 0 0;
 			color: $app-primary;
 			font-size: $app-font-size-md;
-			font-weight: 800;
+			font-weight: $app-font-weight-bold;
 			line-height: 1.2;
 			overflow: hidden;
 			-webkit-box-orient: vertical;
@@ -215,21 +200,21 @@
 	.ingredient-card__badges {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.22rem;
+		gap: $app-gap-inline-compact;
 	}
 
 	.ingredient-card__source {
 		display: inline-flex;
 		width: fit-content;
-		padding: 0.1rem 0.4rem;
+		padding: $app-gap-micro $app-gap-sm;
 		color: $app-muted;
 		background: $app-bg;
 		border: $app-border;
 		border-radius: $app-radius-pill;
 		font-size: $app-font-size-xs;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 		text-transform: uppercase;
-		letter-spacing: 0.04em;
+		letter-spacing: $app-letter-spacing-label;
 	}
 
 	:global(.ingredient-card__remove) {
@@ -240,19 +225,19 @@
 
 	.ingredient-card__controls {
 		display: grid;
-		grid-template-columns: minmax(4.25rem, 0.75fr) minmax(0, 1fr);
-		gap: 0.3rem;
+		grid-template-columns: minmax($mix-ingredient-controls-min-width, 0.75fr) minmax(0, 1fr);
+		gap: $app-gap-xs;
 		align-items: end;
 		min-width: 0;
 	}
 
 	label {
 		display: grid;
-		gap: 0.16rem;
+		gap: $app-gap-2xs;
 		min-width: 0;
 		color: $app-muted;
 		font-size: $app-font-size-xs;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 	}
 
 	input,
@@ -260,7 +245,7 @@
 		width: 100%;
 		height: $app-control-height-sm;
 		min-width: 0;
-		padding: 0 0.45rem;
+		padding: 0 $app-gap-sm;
 		color: $app-primary;
 		background: $app-bg;
 		border: $app-border;
@@ -281,7 +266,7 @@
 	.ingredient-card__details-toggle {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.35rem;
+		gap: $app-gap-xs;
 		width: fit-content;
 		padding: 0;
 		color: $app-primary;
@@ -310,17 +295,17 @@
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
-		gap: 0.35rem;
+		gap: $app-gap-xs;
 		min-width: 0;
 	}
 
 	.ingredient-card__grams {
 		display: inline-flex;
 		align-items: baseline;
-		gap: 0.25rem;
+		gap: $app-gap-xs;
 		width: fit-content;
 		max-width: 100%;
-		padding: 0.16rem 0.45rem;
+		padding: $app-gap-2xs $app-gap-sm;
 		color: $app-muted;
 		background: $app-bg;
 		border: $app-border;
@@ -339,8 +324,8 @@
 
 	.ingredient-card__warning {
 		display: grid;
-		gap: 0.16rem;
-		padding: 0.45rem 0.55rem;
+		gap: $app-gap-2xs;
+		padding: $app-gap-sm;
 		color: $app-warning-strong;
 		background: $app-warning-bg;
 		border: $app-warning-border;
@@ -360,17 +345,17 @@
 	.ingredient-card__chips {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.25rem;
+		gap: $app-gap-xs;
 
 		span {
 			max-width: 100%;
-			padding: 0.16rem 0.45rem;
+			padding: $app-gap-2xs $app-gap-sm;
 			color: $app-primary;
 			background: $app-accent;
 			border: 1px solid $app-accent;
 			border-radius: $app-radius-pill;
 			font-size: $app-font-size-xs;
-			font-weight: 800;
+			font-weight: $app-font-weight-bold;
 			overflow-wrap: anywhere;
 		}
 	}

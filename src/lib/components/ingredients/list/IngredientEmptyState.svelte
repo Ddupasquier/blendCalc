@@ -4,15 +4,12 @@
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 	import { getIngredientListLabel } from "$lib/utils/ingredients/ingredientListUi";
-	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+	import type { IngredientEmptyStateProps } from "$lib/components/ingredients/list/types";
 
 	let {
 		activeList,
 		hasItems,
-	}: {
-		activeList: SmoothieListKey;
-		hasItems: boolean;
-	} = $props();
+	}: IngredientEmptyStateProps = $props();
 
 	const title = $derived(
 		activeList === MIX_STORAGE_KEYS.fridge

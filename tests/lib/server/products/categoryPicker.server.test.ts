@@ -11,6 +11,7 @@ const proteinBars = {
 	observation_count: 24,
 	source_count: 3,
 	verification_status: "multi_source_verified",
+	symbol_key: "protein-powder",
 };
 
 const bars = {
@@ -20,6 +21,7 @@ const bars = {
 	observation_count: 60,
 	source_count: 3,
 	verification_status: "multi_source_verified",
+	symbol_key: "generic",
 };
 
 const snacks = {
@@ -29,6 +31,7 @@ const snacks = {
 	observation_count: 100,
 	source_count: 4,
 	verification_status: "multi_source_verified",
+	symbol_key: "generic",
 };
 
 const createQuery = (candidateRows: typeof proteinBars[], commonRows: typeof proteinBars[]) => {

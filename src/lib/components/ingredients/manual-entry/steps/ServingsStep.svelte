@@ -1,8 +1,8 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch.svelte";
+	import type { ServingsStepProps } from "$lib/components/ingredients/manual-entry/formTypes";
 	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
-	import type { ManualEntryVolumeOption } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
 		servingLabel,
@@ -19,22 +19,7 @@
 		onVolumeUnitChange,
 		onBack,
 		onNext,
-	}: {
-		servingLabel: string;
-		resolvedServingLabel: string;
-		servingWeightGrams: number | null;
-		useVolumeEquivalent: boolean;
-		volumeQuantity: number | null;
-		volumeUnit: ServingMeasureUnit;
-		volumeOptions: ManualEntryVolumeOption[];
-		onServingLabelChange: (value: string) => void;
-		onServingWeightChange: (value: number) => void;
-		onUseVolumeChange: (value: boolean) => void;
-		onVolumeQuantityChange: (value: number | null) => void;
-		onVolumeUnitChange: (value: ServingMeasureUnit) => void;
-		onBack: () => void;
-		onNext: () => void;
-	} = $props();
+	}: ServingsStepProps = $props();
 
 	const servingWeightDisplay = $derived(
 		Number.isFinite(servingWeightGrams) && (servingWeightGrams ?? 0) > 0

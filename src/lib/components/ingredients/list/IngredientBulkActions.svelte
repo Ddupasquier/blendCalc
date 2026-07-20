@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PillButton from "$lib/components/common/buttons/PillButton.svelte";
+	import type { IngredientBulkActionsProps } from "$lib/components/ingredients/list/types";
 
 	let {
 		selectedCount,
@@ -8,14 +9,7 @@
 		onSelectAll,
 		onClear,
 		onMove,
-	}: {
-		selectedCount: number;
-		moveTargetLabel: string;
-		moving?: boolean;
-		onSelectAll: () => void;
-		onClear: () => void;
-		onMove: () => void;
-	} = $props();
+	}: IngredientBulkActionsProps = $props();
 </script>
 
 <div class="ingredient-bulk-actions" class:ingredient-bulk-actions--active={selectedCount > 0}>

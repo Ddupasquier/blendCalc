@@ -4,6 +4,7 @@ export type FoodCategoryPickerOption = {
 	observationCount: number;
 	sourceCount: number;
 	verificationStatus: string;
+	symbolKey: string;
 };
 
 export type FoodCategoryPickerData = {
@@ -36,7 +37,8 @@ const isPickerOption = (value: unknown): value is FoodCategoryPickerOption => {
 		&& Number.isFinite(option.observationCount)
 		&& typeof option.sourceCount === "number"
 		&& Number.isFinite(option.sourceCount)
-		&& typeof option.verificationStatus === "string";
+		&& typeof option.verificationStatus === "string"
+		&& typeof option.symbolKey === "string";
 };
 
 const readOptions = (value: unknown) =>

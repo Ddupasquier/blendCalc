@@ -19,7 +19,7 @@
 	} from "$lib/utils/food/types";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog.svelte";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog.svelte";
-	import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
+	import type { CustomIngredientFormProps } from "$lib/components/ingredients/manual-entry/types";
 	import {
 			type CustomIngredientOutcomeState,
 			type ManualEntryListMovePromptState,
@@ -125,17 +125,7 @@
 		onScannerOpen,
 		onScannerClose,
 		onLookupStateChange = () => {},
-	}: {
-		onCreate: ManualEntryCreateHandler;
-		onClose?: () => void;
-		closeManualSignal?: number;
-		scanSignal?: number;
-		showScanButton?: boolean;
-		inline?: boolean;
-		onScannerOpen?: () => void;
-		onScannerClose?: () => void;
-		onLookupStateChange?: (lookingUp: boolean) => void;
-	} = $props();
+	}: CustomIngredientFormProps = $props();
 
 	const volumeOptions = SERVING_MEASURE_OPTIONS.filter(
 		(option) => option.dimension === "volume",
@@ -147,6 +137,7 @@
 	let brandOwner = $state("");
 	let category = $state("");
 	let categoryOptionId = $state("");
+	let categorySymbolKey = $state("generic");
 	let servingLabel = $state("");
 	let servingWeightGrams = $state<number | null>(null);
 	let volumeQuantity = $state<number | null>(null);
@@ -405,6 +396,7 @@
 			brandOwner,
 			category,
 			categoryOptionId,
+			categorySymbolKey,
 			servingLabel,
 			servingWeightGrams,
 			importedNutrients,
@@ -822,6 +814,7 @@
 			brandOwner,
 			category,
 			categoryOptionId,
+			categorySymbolKey,
 			servingLabel,
 			servingWeightGrams,
 			volumeQuantity,
@@ -1203,6 +1196,7 @@
 			labels,
 			activeCategory,
 			categoryOptionId: activeCategoryOptionId,
+			categorySymbolKey,
 			categories,
 			image,
 			fieldProvenance,
@@ -1341,6 +1335,7 @@
 				onCategoryChange={(option) => {
 					category = option.label;
 					categoryOptionId = option.id;
+					categorySymbolKey = option.symbolKey;
 					markFieldAsUserEntered("categories");
 				}}
 				onCategoryStatusChange={handleCategoryPickerStatus}

@@ -1,21 +1,18 @@
 <script lang="ts">
 	import IngredientCard from "$lib/components/mix/ingredients/IngredientCard.svelte";
+	import type { SelectedIngredientsPanelProps } from "$lib/components/mix/types";
 	import ListControls from "$lib/components/common/lists/ListControls.svelte";
 	import Pagination from "$lib/components/common/lists/Pagination.svelte";
-	import type { FdcFood } from "$lib/utils/food/types";
 	import {
 		clampPage,
 		filterItemsByQuery,
 		paginateItems,
 	} from "$lib/utils/list/listNavigation";
-	import type { NutrientMeta } from "$lib/utils/mix/calculations";
 	import {
 		getFoodNutrientChips,
 		getFoodSourceLabel,
 		getServingGramsLabel,
 	} from "$lib/utils/mix/ui/mixUi";
-	import type { ServingConversion } from "$lib/utils/serving/servingAmount";
-	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 	import {
 		LIST_PAGE_SIZES,
 		LIST_SEARCH_THRESHOLDS,
@@ -32,22 +29,7 @@
 		getServingConversionWarning,
 		onRemove,
 		onServingChange,
-	}: {
-		selectedFoods: FdcFood[];
-		fridgeItems: FdcFood[];
-		selectedNutrients: NutrientMeta[];
-		servingGrams: Record<number, number>;
-		getServingQuantity: (food: FdcFood) => number;
-		getServingUnit: (food: FdcFood) => ServingMeasureUnit;
-		getServingConversion: (food: FdcFood) => ServingConversion;
-		getServingConversionWarning: (food: FdcFood) => string | null | undefined;
-		onRemove: (foodId: number) => void;
-		onServingChange: (
-			food: FdcFood,
-			quantityValue: string,
-			unit: ServingMeasureUnit,
-		) => void;
-	} = $props();
+	}: SelectedIngredientsPanelProps = $props();
 
 	let query = $state("");
 	let page = $state(1);
@@ -147,7 +129,7 @@
 		h4 {
 			color: $app-primary;
 			font-size: $app-font-size-lg;
-			font-weight: 800;
+			font-weight: $app-font-weight-bold;
 		}
 
 		p {
@@ -164,12 +146,12 @@
 
 	.selected-ingredient-cards {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax($mix-selected-ingredient-card-min-width, 1fr));
 		gap: $app-gap-sm;
-		max-height: min(52vh, 30rem);
+		max-height: min(52vh, $mix-selected-ingredient-list-max-height);
 		overflow-y: auto;
 		overscroll-behavior: contain;
-		padding-right: 0.2rem;
+		padding-right: $app-gap-inline-compact;
 	}
 
 	.no-results {

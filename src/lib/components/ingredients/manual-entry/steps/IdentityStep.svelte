@@ -3,11 +3,7 @@
 	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame.svelte";
 	import BarcodeAutofillSuggestion from "$lib/components/ingredients/manual-entry/BarcodeAutofillSuggestion.svelte";
 	import FoodCategoryPicker from "$lib/components/ingredients/manual-entry/FoodCategoryPicker.svelte";
-	import type {
-		FoodCategoryPickerStatus,
-		ManualEntryBarcodeSuggestion,
-	} from "$lib/components/ingredients/manual-entry/formTypes";
-	import type { FoodCategoryPickerOption } from "$lib/utils/food/categories/categoryPicker";
+	import type { IdentityStepProps } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
 		name,
@@ -31,29 +27,7 @@
 		onKeepManualBarcodeEntry,
 		onNameInput,
 		onNext,
-	}: {
-		name: string;
-		brandOwner: string;
-		category: string;
-		categoryOptionId: string;
-		barcode: string;
-		categoryWarningMessage: string;
-		categorySourceValues: string[];
-		barcodeMessage: string;
-		barcodeValidationMessage: string;
-		checkingBarcodeReference: boolean;
-		barcodeSuggestion: ManualEntryBarcodeSuggestion;
-		onNameChange: (value: string) => void;
-		onBrandChange: (value: string) => void;
-		onCategoryChange: (option: FoodCategoryPickerOption) => void;
-		onCategoryStatusChange: (status: FoodCategoryPickerStatus) => void;
-		onBarcodeChange: (value: string) => void;
-		onBarcodeBlur: () => void | Promise<void>;
-		onApplyBarcodeSuggestion: () => void | Promise<void>;
-		onKeepManualBarcodeEntry: () => void;
-		onNameInput?: (element: HTMLInputElement) => void;
-		onNext: () => void | Promise<void>;
-	} = $props();
+	}: IdentityStepProps = $props();
 
 	let nameInput = $state<HTMLInputElement | null>(null);
 

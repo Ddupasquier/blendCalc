@@ -9,6 +9,7 @@ export type ResolvedFoodCategory = {
 	label: string;
 	sourceValue: string;
 	confidence: string;
+	symbolKey?: string;
 };
 
 export const mergeCanonicalFoodCategories = (
@@ -32,6 +33,7 @@ export const applyCanonicalFoodCategory = (
 	foodCategory: category.label,
 	categories: mergeCanonicalFoodCategories(category.label, food.categories),
 	categoryOptionId: category.categoryOptionId,
+	symbolKey: category.symbolKey ?? "generic",
 });
 
 const resolveSourceFoodCategoryOption = async (
@@ -44,7 +46,7 @@ const resolveSourceFoodCategoryOption = async (
 	if (!normalizedValues.length) return null;
 
 	const { data, error } = await supabase.rpc(
-		"resolve_custom_food_category_option",
+		"resolve_custom_food_category_option_with_symbol",
 		{ p_source_values: sourceValues },
 	);
 	if (error) throw error;
@@ -56,6 +58,7 @@ const resolveSourceFoodCategoryOption = async (
 		label: resolved.category_option_label,
 		sourceValue: resolved.source_normalized_value,
 		confidence: resolved.confidence,
+		symbolKey: resolved.symbol_key,
 	};
 };
 
@@ -67,7 +70,7 @@ export const resolveFoodCategoryOption = async (
 	if (selectedValue) {
 		const { data, error } = await supabase
 			.from("custom_food_category_options")
-			.select("id, label, normalized_value")
+			.select("id, label, normalized_value, symbol_key")
 			.eq("normalized_value", selectedValue)
 			.eq("enabled", true)
 			.maybeSingle();
@@ -78,6 +81,7 @@ export const resolveFoodCategoryOption = async (
 				label: data.label,
 				sourceValue: data.normalized_value,
 				confidence: "exact",
+				symbolKey: data.symbol_key,
 			};
 		}
 	}
@@ -91,7 +95,7 @@ export const readFoodCategoryOption = async (
 	if (!categoryOptionId) return null;
 	const { data, error } = await supabase
 		.from("custom_food_category_options")
-		.select("id, label, normalized_value")
+		.select("id, label, normalized_value, symbol_key")
 		.eq("id", categoryOptionId)
 		.eq("enabled", true)
 		.maybeSingle();
@@ -102,6 +106,7 @@ export const readFoodCategoryOption = async (
 		label: data.label,
 		sourceValue: data.normalized_value,
 		confidence: "exact",
+		symbolKey: data.symbol_key,
 	};
 };
 
@@ -113,7 +118,7 @@ export const readFoodCategoryOptions = async (
 	if (!ids.length) return new Map<string, ResolvedFoodCategory>();
 	const { data, error } = await supabase
 		.from("custom_food_category_options")
-		.select("id, label, normalized_value")
+		.select("id, label, normalized_value, symbol_key")
 		.in("id", ids)
 		.eq("enabled", true);
 	if (error) throw error;
@@ -125,6 +130,7 @@ export const readFoodCategoryOptions = async (
 				label: row.label,
 				sourceValue: row.normalized_value,
 				confidence: "exact",
+				symbolKey: row.symbol_key,
 			} satisfies ResolvedFoodCategory,
 		]),
 	);
@@ -147,6 +153,7 @@ export const resolveBarcodeDraftCategory = async (
 			label: resolved.label,
 			sourceValue: resolved.sourceValue,
 			confidence: resolved.confidence,
+			symbolKey: resolved.symbolKey,
 		},
 	};
 };

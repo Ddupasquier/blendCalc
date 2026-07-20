@@ -56,8 +56,8 @@
 	}
 
 	:global(.ingredient-search-trigger__icon) {
-		width: 1rem;
-		height: 1rem;
+		width: $ingredient-search-input-icon-size;
+		height: $ingredient-search-input-icon-size;
 		stroke: currentColor;
 	}
 </style>

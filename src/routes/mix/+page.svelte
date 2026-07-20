@@ -1,4 +1,6 @@
 <script lang="ts">
+	import "./styles/mixPage.scss";
+	import PillButton from "$lib/components/common/buttons/PillButton.svelte";
 	import GoalTargets from "$lib/components/mix/controls/GoalTargets.svelte";
 	import IngredientChooser from "$lib/components/mix/ingredients/IngredientChooser.svelte";
 	import MixEmptyState from "$lib/components/mix/states/MixEmptyState.svelte";
@@ -13,6 +15,7 @@
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
     import {
 		getFoodPreferenceSmartWarnings,
+		getIncompleteNutrientDataWarnings,
         getNutrientGoalWarnings,
         type SmartWarning,
     } from "$lib/utils/mix/warnings/smartWarnings";
@@ -76,24 +79,29 @@
         getNutrientReductionSuggestions,
         getPointColors,
         getNutrientProgress,
-        getNutrientTotal as calculateNutrientTotal,
+		getNutrientTotal as calculateNutrientTotal,
+		getNutrientTotalResult,
     } from "$lib/utils/mix/calculations";
     import type { FdcFood } from "$lib/utils/food/types";
     import { onMount } from "svelte";
-    import {
-        DEFAULT_NUTRIENT_GOALS,
-        GOAL_TEMPLATES,
-        MIX_STORAGE_KEYS,
-    } from "../../defaults/mixDefaults";
+    import { MIX_STORAGE_KEYS } from "../../defaults/mixDefaults";
     import { POINT_SHAPE_DEFAULTS } from "../../defaults/pointShapeDefaults";
 	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
-	import { vitalNutrients } from "../../variables/vitalNutrients";
-	import { ALL_NUTRIENTS } from "../../variables/allNutrients";
+	import {
+		getDefaultMixFields,
+		getDefaultMixGoals,
+		getMixGoalTemplates,
+		getNutrientCatalog,
+	} from "$lib/utils/food/reference/appReferenceCatalog";
+	import type { MixResetAction } from "./types";
 
-	type ResetAction = "goals" | "ingredients" | "all";
+	const defaultMixFields = getDefaultMixFields();
+	const nutrientCatalog = getNutrientCatalog();
+	const defaultNutrientGoals = getDefaultMixGoals();
+	const goalTemplates = getMixGoalTemplates();
 
-    let selected = $state<(string | number)[]>(vitalNutrients.map((n) => n.id));
-	let pendingResetAction = $state<ResetAction | null>(null);
+    let selected = $state<(string | number)[]>(defaultMixFields.map((n) => n.id));
+	let pendingResetAction = $state<MixResetAction | null>(null);
     let options = $state<NutrientOption[]>(getDefaultNutrientOptions());
     let fridgeItems = $state<FdcFood[]>([]);
     let shoppingItems = $state<FdcFood[]>([]);
@@ -102,7 +110,7 @@
     let servingQuantities = $state<Record<number, number>>({});
     let servingUnits = $state<Record<number, ServingMeasureUnit>>({});
     let nutrientGoals = $state<Record<number, number>>({
-        ...DEFAULT_NUTRIENT_GOALS,
+		...defaultNutrientGoals,
     });
     let saveDialogOpen = $state(false);
     let selectedGoalTemplateId = $state("");
@@ -166,8 +174,8 @@
     const selectedNutrients = $derived(
         selected.flatMap((id) => {
             const nutrient = getNutrientMeta(id, [
-                vitalNutrients,
-                ALL_NUTRIENTS,
+				defaultMixFields,
+				nutrientCatalog,
             ]);
             return nutrient ? [nutrient] : [];
         }),
@@ -184,15 +192,15 @@
     );
 	const hasCustomGoals = $derived.by(() => {
 		const goalIds = new Set([
-			...Object.keys(DEFAULT_NUTRIENT_GOALS),
+			...Object.keys(defaultNutrientGoals),
 			...Object.keys(nutrientGoals),
 		]);
 		return [...goalIds].some(
-			(id) => nutrientGoals[Number(id)] !== DEFAULT_NUTRIENT_GOALS[Number(id)],
+			(id) => nutrientGoals[Number(id)] !== defaultNutrientGoals[Number(id)],
 		);
 	});
 	const hasCustomNutrientSelection = $derived.by(() => {
-		const defaultIds = vitalNutrients.map((nutrient) => String(nutrient.id));
+		const defaultIds = defaultMixFields.map((nutrient) => String(nutrient.id));
 		return (
 			selected.length !== defaultIds.length ||
 			selected.some((id, index) => String(id) !== defaultIds[index])
@@ -307,7 +315,26 @@
             ];
         }),
     );
+    const nutrientCoverage = $derived(
+		selectedNutrients.map((nutrient) => {
+			const result = getNutrientTotalResult(
+				selectedFoods,
+				Number(nutrient.id),
+				servingGrams,
+			);
+			return {
+				id: nutrient.id,
+				label: nutrient.label ?? String(nutrient.id),
+				total: result.total,
+				missingFoods: result.missingFoodIds.flatMap((foodId) => {
+					const food = selectedFoods.find((item) => item.fdcId === foodId);
+					return food ? [food.description] : [];
+				}),
+			};
+		}),
+	);
     const smartWarnings = $derived<SmartWarning[]>([
+		...getIncompleteNutrientDataWarnings(nutrientCoverage),
         ...getNutrientGoalWarnings(
             selectedNutrients.map((nutrient) => {
                 const nutrientId = Number(nutrient.id);
@@ -315,7 +342,10 @@
                     id: nutrient.id,
                     label: nutrient.label ?? String(nutrient.id),
                     unit: nutrient.unit ?? "",
-                    total: getNutrientTotal(nutrientId),
+					total: getNutrientTotal(nutrientId),
+					complete:
+						nutrientCoverage.find((coverage) => coverage.id == nutrient.id)
+							?.missingFoods.length === 0,
                     goal:
                         nutrientGoals[nutrientId] ??
                         getDefaultNutrientGoal(nutrient),
@@ -431,7 +461,7 @@
 
     const resetGoals = () => {
         detachLoadedSavedDrink();
-        nutrientGoals = { ...DEFAULT_NUTRIENT_GOALS };
+		nutrientGoals = { ...defaultNutrientGoals };
         selectedGoalTemplateId = "";
         saveNutrientGoals(nutrientGoals);
     };
@@ -449,7 +479,7 @@
     const resetMix = () => {
 		detachLoadedSavedDrink();
 		assignMixState(getDefaultMixState());
-        nutrientGoals = { ...DEFAULT_NUTRIENT_GOALS };
+		nutrientGoals = { ...defaultNutrientGoals };
         selectedGoalTemplateId = "";
         saveNutrientGoals(nutrientGoals);
         saveMixState();
@@ -566,7 +596,7 @@
     };
 
     const handleAddNutrient = (nutrientId: string | number) => {
-        const nutrient = ALL_NUTRIENTS.find((n) => n.id == nutrientId);
+		const nutrient = nutrientCatalog.find((n) => n.id == nutrientId);
         if (nutrient && !options.some((opt) => opt.id == nutrient.id)) {
             options = [...options, { id: nutrient.id, label: nutrient.label }];
 			selected = [...selected, nutrient.id];
@@ -591,7 +621,7 @@
     };
 
     const applyGoalTemplate = () => {
-        const template = GOAL_TEMPLATES.find(
+		const template = goalTemplates.find(
             (item) => item.id === selectedGoalTemplateId,
         );
         if (!template) return;
@@ -717,21 +747,25 @@
             {/if}
         </div>
         <div class="reset-actions" aria-label="Mix reset actions">
-            <button
-                class="primary-save-action"
-                type="button"
-                onclick={() => {
-                    saveDialogError = "";
-                    saveDialogOpen = true;
-                }}
-                disabled={!canSaveCurrentMix}
-            >{loadedSavedDrink ? "Save Changes" : "Save"}</button
-            >
-            <button type="button" onclick={() => (pendingResetAction = "goals")} disabled={!hasCustomGoals}>Reset Goals</button>
-            <button type="button" onclick={() => (pendingResetAction = "ingredients")} disabled={selectedFoodIds.length === 0}
-                >Clear Ingredients</button
-            >
-            <button type="button" onclick={() => (pendingResetAction = "all")} disabled={!hasResettableMixState}>Reset All</button>
+			<PillButton
+				variant="primary"
+				onclick={() => {
+					saveDialogError = "";
+					saveDialogOpen = true;
+				}}
+				disabled={!canSaveCurrentMix}
+			>
+				{loadedSavedDrink ? "Save Changes" : "Save"}
+			</PillButton>
+			<PillButton onclick={() => (pendingResetAction = "goals")} disabled={!hasCustomGoals}>
+				Reset Goals
+			</PillButton>
+			<PillButton onclick={() => (pendingResetAction = "ingredients")} disabled={selectedFoodIds.length === 0}>
+				Clear Ingredients
+			</PillButton>
+			<PillButton onclick={() => (pendingResetAction = "all")} disabled={!hasResettableMixState}>
+				Reset All
+			</PillButton>
         </div>
     </header>
 
@@ -833,149 +867,3 @@
         </div>
     </section>
 </div>
-
-<style lang="scss">
-    @use "../../styles/variables" as *;
-
-    .mix-page {
-        max-width: $app-max-width;
-        margin: 0 auto;
-        padding: $app-gap-sm 0;
-        box-sizing: border-box;
-    }
-
-    .mix-header {
-        display: flex;
-        justify-content: space-between;
-        gap: $app-gap-md;
-        align-items: flex-start;
-        margin-bottom: $app-gap-md;
-
-        h2 {
-            margin-bottom: 0.18rem;
-            color: $app-primary;
-            font-size: $app-font-size-xl;
-            font-weight: 800;
-        }
-
-        p {
-            color: $app-muted;
-            font-size: $app-font-size-md;
-        }
-    }
-
-    .mix-header .mix-header__eyebrow {
-        margin-bottom: 0.12rem;
-        color: $app-warning-strong;
-        font-size: $app-font-size-xs;
-        font-weight: 900;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-    }
-
-    .mix-header__title-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.35rem;
-        align-items: center;
-        margin-bottom: 0.18rem;
-
-        h2 {
-            min-width: 0;
-            margin-bottom: 0;
-            overflow-wrap: anywhere;
-        }
-
-        span {
-            padding: 0.14rem 0.42rem;
-            color: $app-warning-strong;
-            background: $app-warning-bg;
-            border-radius: $app-radius-pill;
-            font-size: $app-font-size-xs;
-            font-weight: 900;
-            white-space: nowrap;
-        }
-    }
-
-    .reset-actions {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        gap: 0.35rem;
-        max-width: 22rem;
-
-        button {
-            background: $app-btn-bg;
-            color: $app-btn-text;
-            border-radius: $app-radius;
-            font-size: $app-font-size-sm;
-            font-weight: $app-button-font-weight;
-            line-height: $app-button-line-height;
-            padding: 0.38rem 0.65rem;
-
-            &:hover {
-                background: $app-btn-bg-hover;
-            }
-
-            &:disabled {
-                cursor: not-allowed;
-                background: $app-btn-disabled;
-            }
-        }
-
-        .primary-save-action:not(:disabled) {
-            color: $app-highlight-text;
-            background: $app-highlight;
-
-            &:hover {
-                background: $app-highlight-hover;
-            }
-        }
-    }
-
-    .mix-panel {
-        padding: $app-gap-sm;
-        background: $app-section-bg;
-        border: $app-border;
-        border-radius: $app-card-radius;
-    }
-
-    .mix-builder {
-        display: grid;
-        grid-template-columns: 1fr;
-        align-items: stretch;
-        gap: $app-gap-sm;
-    }
-
-    .shape-panel {
-        display: grid;
-        place-items: center;
-        padding: $app-gap-sm;
-        background: $app-bg;
-        border: $app-border;
-        border-radius: $app-card-radius;
-    }
-
-    .shape-preview {
-        display: grid;
-        place-items: center;
-        width: 100%;
-        background: $app-section-bg;
-        border-radius: $app-card-radius;
-    }
-
-    @media (max-width: $app-breakpoint-md) {
-        .mix-page {
-            padding-top: $app-gap-sm;
-        }
-
-        .mix-header {
-            display: grid;
-        }
-
-        .reset-actions {
-            justify-content: flex-start;
-        }
-
-    }
-</style>

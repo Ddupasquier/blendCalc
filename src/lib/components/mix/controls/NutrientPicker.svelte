@@ -1,29 +1,29 @@
 <script lang="ts">
 	import { searchNutrientCatalog } from "$lib/utils/mix/nutrients/nutrientSearch";
 	import type { NutrientMeta } from "$lib/utils/mix/calculations";
+	import type { NutrientPickerProps } from "$lib/components/mix/types";
 	import {
-		ALL_NUTRIENTS,
-		POPULAR_NUTRIENT_IDS,
-	} from "../../../../variables/allNutrients";
+		getNutrientCatalog,
+		getPopularMixFields,
+	} from "$lib/utils/food/reference/appReferenceCatalog";
 
 	let {
 		excludedIds,
 		onSelect,
-	}: {
-		excludedIds: (string | number)[];
-		onSelect: (id: string | number) => void;
-	} = $props();
+	}: NutrientPickerProps = $props();
 
 	let isOpen = $state(false);
 	let query = $state("");
+	const nutrientCatalog = getNutrientCatalog();
+	const popularNutrientIds = getPopularMixFields().map((nutrient) => nutrient.id);
 
 	const availableNutrients = $derived(
-		ALL_NUTRIENTS.filter(
+		nutrientCatalog.filter(
 			(nutrient) => !excludedIds.some((id) => id == nutrient.id),
 		),
 	);
 	const popularNutrients = $derived(
-		POPULAR_NUTRIENT_IDS.flatMap((id) => {
+		popularNutrientIds.flatMap((id) => {
 			const nutrient = availableNutrients.find((item) => item.id === id);
 			return nutrient ? [nutrient] : [];
 		}),
@@ -104,7 +104,7 @@
 		background: $app-btn-bg;
 		border-radius: $app-radius-sm;
 		font-size: $app-font-size-sm;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 	}
 
 	.nutrient-picker__panel {
@@ -123,7 +123,7 @@
 			margin-bottom: $app-gap-xs;
 			color: $app-primary;
 			font-size: $app-font-size-sm;
-			font-weight: 800;
+			font-weight: $app-font-weight-bold;
 		}
 
 		input {
@@ -149,7 +149,7 @@
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: $app-gap-xs;
-		max-height: 18rem;
+		max-height: $mix-nutrient-picker-results-max-height;
 		overflow-y: auto;
 		overscroll-behavior: contain;
 
@@ -197,7 +197,7 @@
 
 		.nutrient-picker__results {
 			grid-template-columns: 1fr;
-			max-height: 15rem;
+			max-height: $mix-nutrient-picker-results-max-height-mobile;
 		}
 	}
 </style>

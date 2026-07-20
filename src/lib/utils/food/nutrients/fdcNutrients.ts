@@ -1,31 +1,17 @@
 import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
+import { getConfiguredAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
 
 export type FdcNutrientSource = "exact" | "fallback" | "derived" | "missing";
 
 export type ResolvedFdcNutrient = {
 	nutrient: FdcNutrient | null;
-	value: number;
+	value: number | null;
 	source: FdcNutrientSource;
-};
-
-const FALLBACK_NUTRIENT_IDS: Record<number, number[]> = {
-	[NUTRIENT_IDS.FAT]: [1085],
-	[NUTRIENT_IDS.SUGAR]: [1063],
-	[NUTRIENT_IDS.CALORIES]: [2047, 2048],
-};
-
-const FALLBACK_NUTRIENT_NUMBERS: Record<number, string[]> = {
-	[NUTRIENT_IDS.CALORIES]: ["208"],
-	[NUTRIENT_IDS.PROTEIN]: ["203"],
-	[NUTRIENT_IDS.FAT]: ["204", "298"],
-	[NUTRIENT_IDS.CARBS]: ["205"],
-	[NUTRIENT_IDS.FIBER]: ["291"],
-	[NUTRIENT_IDS.SUGAR]: ["269"],
 };
 
 export const findFdcNutrient = (food: FdcFood, nutrientId: number) => {
 	return food.foodNutrients.find((nutrient) =>
-		isFdcNutrientMatch(nutrient, nutrientId),
+		isFdcNutrientMatch(nutrient, nutrientId, food.sourceKey),
 	);
 };
 
@@ -46,7 +32,7 @@ export const resolveFdcNutrient = (
 	}
 
 	const fallback = food.foodNutrients.find((nutrient) =>
-		matchesFallbackNutrient(nutrient, nutrientId),
+		matchesEquivalentNutrient(nutrient, nutrientId, food.sourceKey),
 	);
 
 	if (fallback) {
@@ -60,7 +46,7 @@ export const resolveFdcNutrient = (
 	if (nutrientId === NUTRIENT_IDS.CALORIES) {
 		const calories = deriveCalories(food);
 
-		if (calories > 0) {
+		if (calories !== null) {
 			return {
 				nutrient: null,
 				value: calories,
@@ -69,21 +55,34 @@ export const resolveFdcNutrient = (
 		}
 	}
 
-	return { nutrient: null, value: 0, source: "missing" };
+	return { nutrient: null, value: null, source: "missing" };
 };
 
-export const isFdcNutrientMatch = (nutrient: FdcNutrient, nutrientId: number) => {
+export const isFdcNutrientMatch = (
+	nutrient: FdcNutrient,
+	nutrientId: number,
+	foodSourceKey?: string,
+) => {
 	if (Number(nutrient.nutrientId) === nutrientId) return true;
 
-	return matchesFallbackNutrient(nutrient, nutrientId);
+	return matchesEquivalentNutrient(nutrient, nutrientId, foodSourceKey);
 };
 
-const matchesFallbackNutrient = (nutrient: FdcNutrient, nutrientId: number) => {
-	const fallbackIds = FALLBACK_NUTRIENT_IDS[nutrientId] ?? [];
-	if (fallbackIds.includes(Number(nutrient.nutrientId))) return true;
-
-	const fallbackNumbers = FALLBACK_NUTRIENT_NUMBERS[nutrientId] ?? [];
-	return fallbackNumbers.includes(String(nutrient.nutrientNumber));
+const matchesEquivalentNutrient = (
+	nutrient: FdcNutrient,
+	nutrientId: number,
+	foodSourceKey?: string,
+) => {
+	const sourceKey = nutrient.source ?? foodSourceKey ?? "usda";
+	return getConfiguredAppReferenceCatalog().nutrientEquivalences.some(
+		(equivalence) =>
+			equivalence.canonicalNutrientId === nutrientId &&
+			equivalence.sourceKey === sourceKey &&
+			((equivalence.sourceNutrientId !== null &&
+				Number(nutrient.nutrientId) === equivalence.sourceNutrientId) ||
+				(equivalence.sourceNutrientNumber !== null &&
+					String(nutrient.nutrientNumber) === equivalence.sourceNutrientNumber)),
+	);
 };
 
 const deriveCalories = (food: FdcFood) => {
@@ -91,12 +90,12 @@ const deriveCalories = (food: FdcFood) => {
 	const carbs = getMacroValue(food, NUTRIENT_IDS.CARBS);
 	const protein = getMacroValue(food, NUTRIENT_IDS.PROTEIN);
 
-	if (fat === 0 && carbs === 0 && protein === 0) return 0;
+	if (fat === null || carbs === null || protein === null) return null;
 
 	return fat * 9 + carbs * 4 + protein * 4;
 };
 
 const getMacroValue = (food: FdcFood, nutrientId: number) => {
 	const nutrient = findFdcNutrient(food, nutrientId);
-	return nutrient?.value ?? 0;
+	return nutrient?.value ?? null;
 };

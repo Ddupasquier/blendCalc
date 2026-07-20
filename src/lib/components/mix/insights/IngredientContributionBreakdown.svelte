@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { NutrientContributionBreakdown } from "$lib/utils/mix/calculations";
+	import type { IngredientContributionBreakdownProps } from "$lib/components/mix/types";
 
 	let {
 		breakdowns = [],
-	}: { breakdowns?: NutrientContributionBreakdown[] } = $props();
+	}: IngredientContributionBreakdownProps = $props();
 
 	const formatAmount = (value: number) => {
 		return value >= 10 ? value.toFixed(0) : value.toFixed(1);
@@ -81,26 +81,26 @@
 
 		h4 {
 			color: $app-primary;
-			font-size: 0.92rem;
-			font-weight: 800;
+			font-size: $app-font-size-sm;
+			font-weight: $app-font-weight-bold;
 		}
 
 		p {
 			color: $app-muted;
-			font-size: 0.8rem;
+			font-size: $app-font-size-xs;
 			line-height: 1.35;
 		}
 	}
 
 	.contribution-breakdown__grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
-		gap: 0.45rem;
+		grid-template-columns: repeat(auto-fit, minmax($mix-contribution-card-min-width, 1fr));
+		gap: $app-gap-sm;
 	}
 
 	.contribution-card {
 		min-width: 0;
-		padding: 0.55rem;
+		padding: $app-gap-sm;
 		background: $app-section-bg;
 		border: $app-border;
 		border-radius: $app-radius;
@@ -109,10 +109,10 @@
 	.contribution-card__title {
 		display: flex;
 		justify-content: space-between;
-		gap: 0.5rem;
-		margin-bottom: 0.45rem;
+		gap: $app-gap-sm;
+		margin-bottom: $app-gap-sm;
 		color: $app-primary;
-		font-size: 0.82rem;
+		font-size: $app-font-size-xs;
 
 		strong {
 			min-width: 0;
@@ -124,20 +124,20 @@
 		span {
 			flex-shrink: 0;
 			color: $app-muted;
-			font-weight: 800;
+			font-weight: $app-font-weight-bold;
 		}
 	}
 
 	ul {
 		display: grid;
-		gap: 0.4rem;
+		gap: $app-gap-sm;
 		list-style: none;
 	}
 
 	li {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
-		gap: 0.15rem 0.45rem;
+		gap: $app-gap-2xs $app-gap-sm;
 		align-items: center;
 	}
 
@@ -145,21 +145,21 @@
 		min-width: 0;
 		overflow: hidden;
 		color: $app-primary;
-		font-size: 0.78rem;
-		font-weight: 700;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-semibold;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
 	.contribution-card__value {
 		color: $app-primary;
-		font-size: 0.78rem;
-		font-weight: 900;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-heavy;
 	}
 
 	.contribution-card__bar {
 		grid-column: 1 / -1;
-		height: 0.35rem;
+		height: $mix-contribution-bar-height;
 		overflow: hidden;
 		background: $app-accent;
 		border-radius: $app-radius-pill;
@@ -175,7 +175,7 @@
 	small {
 		grid-column: 1 / -1;
 		color: $app-muted;
-		font-size: 0.68rem;
-		font-weight: 700;
+		font-size: $app-font-size-2xs;
+		font-weight: $app-font-weight-semibold;
 	}
 </style>

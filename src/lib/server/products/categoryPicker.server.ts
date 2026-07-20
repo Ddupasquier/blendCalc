@@ -17,6 +17,7 @@ type CategoryOptionRow = Pick<
 	| "observation_count"
 	| "source_count"
 	| "verification_status"
+	| "symbol_key"
 >;
 
 const CATEGORY_CANDIDATE_LIMIT = 120;
@@ -47,6 +48,7 @@ const toPickerOption = (row: CategoryOptionRow): FoodCategoryPickerOption => ({
 	observationCount: row.observation_count,
 	sourceCount: row.source_count,
 	verificationStatus: row.verification_status,
+	symbolKey: row.symbol_key,
 });
 
 const getQualityScore = (row: CategoryOptionRow) =>
@@ -105,7 +107,7 @@ const readCandidateRows = async (
 	const { data, error } = await supabase
 		.from("custom_food_category_options")
 		.select(
-			"id, label, normalized_value, observation_count, source_count, verification_status",
+			"id, label, normalized_value, observation_count, source_count, verification_status, symbol_key",
 		)
 		.eq("enabled", true)
 		.or(buildCandidateFilter(tokens))
@@ -141,7 +143,7 @@ const readCommonCategories = async (
 	const { data, error } = await supabase
 		.from("custom_food_category_options")
 		.select(
-			"id, label, normalized_value, observation_count, source_count, verification_status",
+			"id, label, normalized_value, observation_count, source_count, verification_status, symbol_key",
 		)
 		.eq("enabled", true)
 		.eq("verification_status", "multi_source_verified")

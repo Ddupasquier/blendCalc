@@ -5,3 +5,14 @@ export type BarcodeScannerDialogProps = {
 	onDetected: (result: BarcodeScanResult) => void;
 	onClose: () => void;
 };
+
+export type BarcodeScannerIconProps = {
+	active?: boolean;
+};
+
+export type BarcodeScanButtonProps = {
+	scanning?: boolean;
+	disabled?: boolean;
+	compact?: boolean;
+	onclick: () => void;
+};

@@ -87,6 +87,7 @@ export type BarcodeProductDraft = {
 		label: string;
 		sourceValue: string;
 		confidence: string;
+		symbolKey?: string;
 	};
 	image?: FoodImageAsset;
 	fieldProvenance?: FoodFieldProvenance;
@@ -525,6 +526,7 @@ export const mapSharedCatalogFood = (
 						label: food.foodCategory,
 						sourceValue: normalizeFoodCategoryValue(food.foodCategory),
 						confidence: "exact",
+						symbolKey: food.symbolKey,
 					}
 					: undefined,
 		fieldProvenance: {

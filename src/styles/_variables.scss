@@ -130,6 +130,21 @@ $color-figma-sky: #55a6c8;
 // rebuilt mobile sheets/cards.
 $color-figma-red: #d84242;
 
+// Mix-chart semantic colors. Keep visualization colors here so graph utilities
+// never introduce one-off color values in TypeScript or component files.
+$mix-chart-success-fill: color-mix(in srgb, $color-figma-green 34%, transparent);
+$mix-chart-success-stroke: color-mix(in srgb, $color-figma-green 95%, black);
+$mix-chart-caution-fill: color-mix(in srgb, $color-mango-gold 38%, transparent);
+$mix-chart-caution-stroke: color-mix(in srgb, $color-mango-gold-dark 95%, black);
+$mix-chart-warning-fill: color-mix(in srgb, $color-peach-cream 55%, transparent);
+$mix-chart-warning-stroke: $color-cinnamon-clay;
+$mix-chart-danger-fill: color-mix(in srgb, $color-figma-red 38%, transparent);
+$mix-chart-danger-stroke: $color-figma-red;
+$mix-chart-grid: color-mix(in srgb, $color-figma-muted 22%, transparent);
+$mix-chart-goal: color-mix(in srgb, $color-blueberry-milk 72%, $color-figma-muted);
+$mix-chart-goal-fill: color-mix(in srgb, $color-blueberry-milk 42%, transparent);
+$mix-chart-goal-stroke: color-mix(in srgb, $color-figma-muted 72%, transparent);
+
 // App layout
 // -----------------------------------------------------------------------------
 // Interface font. Use for body copy, navigation, forms, buttons, labels, helper
@@ -157,12 +172,14 @@ $app-font-weight-heavy: 900;
 // Shared typography scale. Semantic component tokens should alias these sizes
 // instead of repeating equivalent raw values.
 $app-font-size-base: 16px;
+$app-font-size-2xs: 0.68rem;
 $app-font-size-xs: 0.76rem;
 $app-font-size-sm: 0.88rem;
 $app-font-size-md: 1rem;
 $app-font-size-lg: 1.08rem;
 $app-font-size-xl: 1.25rem;
 $app-letter-spacing-label: 0.04em;
+$app-letter-spacing-data: 0.01em;
 $app-line-height-readable: 1.35;
 
 // Shared interactive-control typography. All buttons and button-like links use
@@ -371,6 +388,8 @@ $ingredient-control-padding-x: $app-rebuild-control-padding-x;
 $ingredient-control-padding-y-compact: $app-rebuild-control-padding-y-sm;
 $ingredient-control-padding-x-compact: $app-rebuild-control-padding-x-sm;
 $ingredient-control-icon-size: $app-control-icon-size;
+$ingredient-search-input-icon-size: $app-font-size-md;
+$ingredient-outcome-action-min-height: $ingredient-control-height-compact;
 
 $ingredient-radius-card: $app-rebuild-radius;
 $ingredient-radius-control: $app-rebuild-radius;
@@ -483,6 +502,16 @@ $app-gap-inline-compact: calc($app-gap-xs / 1.5);
 // Badge-adjacent spacing token for count badges and source metadata chips.
 $app-gap-badge-inline: calc($app-gap-xs / 1.7);
 
+$ingredient-manual-entry-launcher-min-height: calc(
+	$ingredient-control-height + ($app-gap-xs * 2)
+);
+$ingredient-nutrition-confidence-radius: calc(
+	$ingredient-radius-control - ($app-gap-sm / 2)
+);
+$ingredient-nutrition-confidence-item-radius: calc(
+	$ingredient-radius-control - ($app-gap-md / 2)
+);
+
 $ingredient-food-image-content-size: 118%;
 $ingredient-image-editor-preview-size: 8rem;
 $ingredient-image-editor-actual-preview-size: $ingredient-food-icon-size;
@@ -496,6 +525,29 @@ $ingredient-select-chevron-position-right: calc(
 	$ingredient-select-chevron-padding-right / 2.57
 );
 $ingredient-select-chevron-size: $app-gap-xs;
+
+// Mix route layout tokens.
+$mix-reset-actions-max-width: 22rem;
+$mix-review-list-max-height: 16rem;
+$mix-review-badge-max-width: 8rem;
+$mix-nutrient-picker-results-max-height: 18rem;
+$mix-nutrient-picker-results-max-height-mobile: 15rem;
+$mix-nutrient-selector-header-min-width: 220px;
+$mix-nutrient-selector-header-max-width: 300px;
+$mix-nutrient-selector-checkbox-size: 0.8rem;
+$mix-ingredient-heading-padding-end: 1.85rem;
+$mix-selected-ingredient-card-min-width: 210px;
+$mix-selected-ingredient-list-max-height: 30rem;
+$mix-goal-template-min-width: 8.5rem;
+$mix-goal-template-max-width: 15rem;
+$mix-goal-card-min-width: 135px;
+$mix-contribution-card-min-width: 155px;
+$mix-contribution-bar-height: 0.35rem;
+$mix-empty-step-min-width: 115px;
+$mix-chart-value-font-size: 0.62rem;
+$mix-chart-label-letter-spacing: $app-letter-spacing-data;
+$mix-ingredient-controls-min-width: 4.25rem;
+$mix-chooser-filter-min-width: 10rem;
 
 // Standard page/card padding for primary app sections.
 $app-padding: 1.5rem;

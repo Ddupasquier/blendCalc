@@ -1,7 +1,7 @@
 import {
 	MIX_STORAGE_KEYS,
-	DEFAULT_SERVING_GRAMS,
 } from "../../../../defaults/mixDefaults";
+import { getMixRuntimeConfiguration } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 import {
 	addFoodsToSmoothieList,
@@ -330,7 +330,7 @@ export const restoreSavedDrinkToMix = async (drink: SavedDrink) => {
 				food.fdcId,
 				normalizedDrink.servingQuantities[food.fdcId] ??
 					normalizedDrink.servingGrams[food.fdcId] ??
-					DEFAULT_SERVING_GRAMS,
+					getMixRuntimeConfiguration().defaultServingGrams,
 			]),
 		),
 		servingUnits: Object.fromEntries(

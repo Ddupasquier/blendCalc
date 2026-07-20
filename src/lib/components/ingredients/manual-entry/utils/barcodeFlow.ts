@@ -26,6 +26,7 @@ export type ManualEntryBarcodeDraftState = {
 	brandOwner: string;
 	category: string;
 	categoryOptionId: string;
+	categorySymbolKey: string;
 	servingLabel: string;
 	servingWeightGrams: number;
 	importedNutrients: FdcNutrient[];
@@ -199,6 +200,7 @@ export const getBarcodeDraftState = (
 	brandOwner: draft.brandOwner,
 	category: draft.resolvedCategory ?? "",
 	categoryOptionId: draft.categoryResolution?.categoryOptionId ?? "",
+	categorySymbolKey: draft.categoryResolution?.symbolKey ?? "generic",
 	servingLabel: draft.servingLabel,
 	servingWeightGrams: draft.servingWeightGrams,
 	importedNutrients: [...draft.nutrients],

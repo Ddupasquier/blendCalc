@@ -7,6 +7,7 @@ const validOption = {
 	observationCount: 12,
 	sourceCount: 3,
 	verificationStatus: "multi_source_verified",
+	symbolKey: "protein",
 };
 
 describe("food category picker client", () => {

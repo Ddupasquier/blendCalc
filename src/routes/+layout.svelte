@@ -24,6 +24,7 @@
 	import { saveTutorialChoice } from "$lib/utils/tutorial/tutorial";
 	import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 	import { configureNutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
+	import { configureAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
 	import type { LayoutData } from "./$types";
 	import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
 
@@ -64,6 +65,7 @@
 	$effect.pre(() => {
 		configureServingMeasureCatalog(data.servingMeasureCatalog);
 		configureNutritionCompletenessCatalog(data.nutritionCompletenessCatalog);
+		configureAppReferenceCatalog(data.appReferenceCatalog);
 	});
 
 	const recordTutorialChoice = async (choice: "later" | "never") => {

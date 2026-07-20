@@ -2,15 +2,12 @@
 	import Chevron from "$lib/assets/icons/Chevron.svelte";
 	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
 	import StatusIconBadge from "$lib/components/common/badges/StatusIconBadge.svelte";
-	import type { FoodQuality } from "$lib/utils/food/quality/foodQuality";
+	import type { NutritionConfidenceDetailsProps } from "$lib/components/ingredients/nutrition/types";
 
 	let {
 		quality,
 		compact = false,
-	}: {
-		quality: FoodQuality;
-		compact?: boolean;
-	} = $props();
+	}: NutritionConfidenceDetailsProps = $props();
 
 	let isOpen = $state(false);
 
@@ -109,7 +106,7 @@
 		text-align: left;
 		background: transparent;
 		border: 0;
-		border-radius: calc($ingredient-radius-control - 0.25rem);
+		border-radius: $ingredient-nutrition-confidence-radius;
 		cursor: pointer;
 
 		&:hover,
@@ -179,7 +176,7 @@
 		background: $ingredient-surface-soft;
 		border: 1.5px solid
 			color-mix(in srgb, $app-warning-border-color 42%, $ingredient-border-subtle);
-		border-radius: calc($ingredient-radius-control - 0.35rem);
+		border-radius: $ingredient-nutrition-confidence-item-radius;
 
 		span {
 			min-width: 0;

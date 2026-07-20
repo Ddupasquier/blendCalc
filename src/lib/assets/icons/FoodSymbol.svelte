@@ -6,14 +6,15 @@
 	} from "$lib/utils/food/images/foodImages";
 	import ImagePlacementViewport from "$lib/components/common/images/ImagePlacementViewport.svelte";
 	import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
-	import { getFoodSymbolCatalogItem } from "$lib/utils/food/symbols/foodSymbolCatalog";
+	import CategoryFoodIcon from "$lib/assets/icons/CategoryFoodIcon.svelte";
+	import { getFoodSymbolDefinition } from "$lib/utils/food/reference/appReferenceCatalog";
 
 	let {
 		food,
 		class: className = "",
 	}: FoodSymbolProps = $props();
 
-	const symbolItem = $derived(getFoodSymbolCatalogItem(food));
+	const symbolDefinition = $derived(getFoodSymbolDefinition(food.symbolKey));
 	const imageUrl = $derived(pickFoodImageUrl(food.image));
 	const imageAlt = $derived(
 		getFoodImageAltText({
@@ -51,8 +52,8 @@
 		/>
 	</span>
 {:else}
-	<span class={className} aria-hidden="true" title={symbolItem.label}>
-		{symbolItem.symbol}
+<span class={`food-symbol__fallback ${className}`.trim()} title={symbolDefinition?.label ?? "Ingredient"}>
+		<CategoryFoodIcon symbolKey={food.symbolKey} />
 	</span>
 {/if}
 
@@ -63,5 +64,19 @@
 		display: block;
 		width: 100%;
 		height: 100%;
+	}
+
+	.food-symbol__fallback {
+		display: grid;
+		width: 100%;
+		height: 100%;
+		place-items: center;
+		color: $app-primary;
+
+		:global(svg) {
+			display: block;
+			width: $ingredient-control-icon-size;
+			height: $ingredient-control-icon-size;
+		}
 	}
 </style>

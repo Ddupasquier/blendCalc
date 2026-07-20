@@ -7,8 +7,7 @@
 	import IngredientBulkToggle from "$lib/components/ingredients/list/IngredientBulkToggle.svelte";
 	import IngredientCardActions from "$lib/components/ingredients/list/IngredientCardActions.svelte";
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges.svelte";
-	import type { FdcFood } from "$lib/utils/food/types";
-	import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
+	import type { SavedIngredientCardProps } from "$lib/components/ingredients/list/types";
 
 	let {
 		food,
@@ -26,23 +25,7 @@
 		onMove,
 		onActions,
 		onRemove,
-	}: {
-		food: FdcFood;
-		active?: boolean;
-		checked?: boolean;
-		moving?: boolean;
-		removing?: boolean;
-		moveDirection: "left" | "right";
-		moveLabel: string;
-		category: string;
-		warning?: string | null;
-		provenanceOptions?: readonly IngredientProvenanceOption[];
-		onToggle: () => void;
-		onPreview: () => void;
-		onMove: () => void;
-		onActions: () => void;
-		onRemove: () => void;
-	} = $props();
+	}: SavedIngredientCardProps = $props();
 </script>
 
 <article

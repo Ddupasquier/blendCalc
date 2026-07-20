@@ -18,7 +18,6 @@ export type NutrientQualityDetail = {
 export type FoodQuality = {
 	status: "complete" | "resolved" | "partial" | "limited" | "unavailable";
 	label: string;
-	symbol: string;
 	title: string;
 	score: number;
 	completeCount: number;
@@ -54,7 +53,6 @@ export const getFoodQuality = (
 		return {
 			status: "unavailable",
 			label: "Unavailable",
-			symbol: "ℹ️",
 			title: "Nutrition completeness rules are temporarily unavailable.",
 			score: 0,
 			completeCount: 0,
@@ -134,7 +132,6 @@ export const getFoodQuality = (
 		return {
 			status: "complete",
 			label: profile.completeLabel,
-			symbol: "✅",
 			title: "All required nutrients are present from exact source fields.",
 			...commonFields,
 		};
@@ -144,7 +141,6 @@ export const getFoodQuality = (
 		return {
 			status: "resolved",
 			label: profile.resolvedLabel,
-			symbol: "🧩",
 			title:
 				"All required nutrients are available, with some values mapped or derived.",
 			...commonFields,
@@ -155,7 +151,6 @@ export const getFoodQuality = (
 		return {
 			status: "partial",
 			label: profile.partialLabel,
-			symbol: "⚠️",
 			title: `${completeCount}/${requiredDetails.length} required nutrients are available.`,
 			...commonFields,
 		};
@@ -164,7 +159,6 @@ export const getFoodQuality = (
 	return {
 		status: "limited",
 		label: profile.limitedLabel,
-		symbol: "ℹ️",
 		title: `${completeCount}/${requiredDetails.length} required nutrients are available. Some graph values may be incomplete.`,
 		...commonFields,
 	};

@@ -65,12 +65,12 @@
 
 	.mix-empty-state__intro {
 		display: grid;
-		gap: 0.25rem;
+		gap: $app-gap-xs;
 
 		h4 {
 			color: $app-primary;
 			font-size: $app-font-size-lg;
-			font-weight: 800;
+			font-weight: $app-font-weight-bold;
 		}
 
 		p {
@@ -83,14 +83,14 @@
 	.mix-empty-state__intro .mix-empty-state__eyebrow {
 		color: $app-primary;
 		font-size: $app-font-size-xs;
-		font-weight: 900;
-		letter-spacing: 0.08em;
+		font-weight: $app-font-weight-heavy;
+		letter-spacing: calc($app-letter-spacing-label * 2);
 		text-transform: uppercase;
 	}
 
 	.mix-empty-state__steps {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax($mix-empty-step-min-width, 1fr));
 		gap: $app-gap-sm;
 		list-style: none;
 	}
@@ -98,7 +98,7 @@
 	li {
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr);
-		gap: 0.4rem;
+		gap: $app-gap-sm;
 		align-items: start;
 		min-width: 0;
 		padding: $app-gap-sm;
@@ -113,20 +113,20 @@
 		--circular-icon-frame-color: #{$app-primary};
 		--circular-icon-frame-background: #{$app-accent};
 
-		font-weight: 900;
+		font-weight: $app-font-weight-heavy;
 	}
 
 	strong {
 		display: block;
 		color: $app-primary;
 		font-size: $app-font-size-sm;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 	}
 
 	li p {
 		color: $app-muted;
 		font-size: $app-font-size-xs;
-		font-weight: 600;
+		font-weight: $app-font-weight-medium;
 		line-height: 1.3;
 	}
 
@@ -140,8 +140,8 @@
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
-			min-height: 2rem;
-			padding: 0 0.75rem;
+			min-height: $app-control-height-sm;
+			padding: 0 $app-gap-md;
 			color: $app-btn-text;
 			background: $app-btn-bg;
 			border-radius: $app-radius;
@@ -159,7 +159,7 @@
 		p {
 			color: $app-muted;
 			font-size: $app-font-size-sm;
-			font-weight: 600;
+			font-weight: $app-font-weight-medium;
 			line-height: 1.35;
 		}
 	}

@@ -1,4 +1,5 @@
-import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
+import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import { getNutritionFactsFields } from "$lib/utils/food/reference/appReferenceCatalog";
 import {
 	productNamesAreUnrelated,
 	productNamesDiffer,
@@ -25,17 +26,6 @@ export type CatalogSubmissionComparison = {
 	issues: string[];
 	severeDifferences: string[];
 };
-
-const KEY_NUTRIENT_IDS = [
-	NUTRIENT_IDS.CALORIES,
-	NUTRIENT_IDS.FAT,
-	NUTRIENT_IDS.CARBS,
-	NUTRIENT_IDS.PROTEIN,
-	NUTRIENT_IDS.SODIUM,
-	NUTRIENT_IDS.SUGAR,
-	NUTRIENT_IDS.FIBER,
-];
-const KEY_NUTRIENT_ID_SET = new Set<number>(KEY_NUTRIENT_IDS);
 
 const normalizeText = (value?: string | null) =>
 	(value ?? "")
@@ -293,9 +283,12 @@ export const compareCatalogSubmissionToExistingProduct = (
 	const hasCategoryMismatch = differences.some((difference) =>
 		difference.field === "category" && difference.severity === "high"
 	);
+	const keyNutrientIds = new Set(
+		getNutritionFactsFields().map((nutrient) => nutrient.id),
+	);
 	const severeNutrientCount = differences.filter((difference) =>
 		difference.field.startsWith("nutrient:") &&
-		KEY_NUTRIENT_ID_SET.has(Number(difference.field.split(":")[1])) &&
+		keyNutrientIds.has(Number(difference.field.split(":")[1])) &&
 		difference.severity === "high"
 	).length;
 

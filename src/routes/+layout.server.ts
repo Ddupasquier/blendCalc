@@ -16,6 +16,8 @@ import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasur
 import { getServingMeasureCatalog } from "$lib/server/serving/servingMeasureCatalog.server";
 import { getNutritionCompletenessCatalog } from "$lib/server/nutrition/nutritionCompletenessCatalog.server";
 import { configureNutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
+import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
+import { configureAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
 
 const PUBLIC_PATHS = new Set(["/", "/auth"]);
 
@@ -58,6 +60,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		foodPreferencesResult,
 		servingMeasureCatalog,
 		nutritionCompletenessCatalog,
+		appReferenceCatalog,
 	] = await Promise.all([
 		profileWithAvatarPromise,
 		getUserAppRole(locals.supabase, user.id),
@@ -71,9 +74,11 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			.maybeSingle(),
 		getServingMeasureCatalog(),
 		getNutritionCompletenessCatalog(),
+		getAppReferenceCatalog(),
 	]);
 	configureServingMeasureCatalog(servingMeasureCatalog);
 	configureNutritionCompletenessCatalog(nutritionCompletenessCatalog);
+	configureAppReferenceCatalog(appReferenceCatalog);
 	const foodPreferencesError = foodPreferencesResult.error;
 	if (
 		foodPreferencesError &&
@@ -95,5 +100,6 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		foodPreferences: getFoodPreferenceProfile(foodPreferencesResult.data),
 		servingMeasureCatalog,
 		nutritionCompletenessCatalog,
+		appReferenceCatalog,
 	};
 };

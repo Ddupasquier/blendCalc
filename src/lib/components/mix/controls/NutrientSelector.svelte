@@ -1,7 +1,7 @@
 <script lang="ts">
 	import CheckboxGroup from "$lib/components/common/forms/CheckboxGroup.svelte";
 	import NutrientPicker from "$lib/components/mix/controls/NutrientPicker.svelte";
-	import type { NutrientOption } from "$lib/utils/mix/ui/mixUi";
+	import type { NutrientSelectorProps } from "$lib/components/mix/types";
 
 	let {
 		options,
@@ -9,13 +9,7 @@
 		selectedCount,
 		onChange,
 		onAddNutrient,
-	}: {
-		options: NutrientOption[];
-		selected: (string | number)[];
-		selectedCount: number;
-		onChange: (next: (string | number)[]) => void;
-		onAddNutrient: (id: string | number) => void;
-	} = $props();
+	}: NutrientSelectorProps = $props();
 
 </script>
 
@@ -45,22 +39,25 @@
 
 	.panel-header {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+		grid-template-columns: minmax(0, 1fr) minmax(
+			$mix-nutrient-selector-header-min-width,
+			$mix-nutrient-selector-header-max-width
+		);
 		gap: $app-gap-sm;
 		align-items: end;
 		margin-bottom: $app-gap-sm;
 
 		h3 {
-			margin-bottom: 0.1rem;
+			margin-bottom: $app-gap-micro;
 			color: $app-primary;
 			font-size: $app-font-size-lg;
-			font-weight: 800;
+			font-weight: $app-font-weight-bold;
 		}
 
 		p {
 			color: $app-muted;
 			font-size: $app-font-size-sm;
-			font-weight: 600;
+			font-weight: $app-font-weight-medium;
 		}
 	}
 
@@ -69,18 +66,18 @@
 		align-content: flex-start;
 
 		:global(.checkbox-group) {
-			gap: 0.35rem;
+			gap: $app-gap-xs;
 		}
 
 		:global(.checkbox-item) {
-			min-height: 1.85rem;
-			padding: 0.3rem 0.55rem;
+			min-height: $app-control-height-sm;
+			padding: $app-gap-xs $app-gap-sm;
 			font-size: $app-font-size-sm;
 		}
 
 		:global(input) {
-			width: 0.8rem;
-			height: 0.8rem;
+			width: $mix-nutrient-selector-checkbox-size;
+			height: $mix-nutrient-selector-checkbox-size;
 		}
 	}
 

@@ -1,7 +1,5 @@
 <script lang="ts">
 	import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls.svelte";
-	import type { FdcFood } from "$lib/utils/food/types";
-	import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 	import {
 		getFoodDisplayCategory,
 		getIngredientActionKey,
@@ -10,9 +8,7 @@
 		getOppositeIngredientListKey,
 		getPrimaryFoodWarning,
 	} from "$lib/utils/ingredients/ingredientListUi";
-	import {
-		type IngredientProvenanceOption,
-	} from "$lib/utils/ingredients/ingredientProvenance";
+	import type { SavedIngredientListProps } from "$lib/components/ingredients/list/types";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 	import IngredientBulkActions from "./IngredientBulkActions.svelte";
@@ -44,32 +40,7 @@
 		onActions,
 		onRemove,
 		onRevealMore,
-	}: {
-		activeList: SmoothieListKey;
-		foods: FdcFood[];
-		provenanceOptions?: readonly IngredientProvenanceOption[];
-		activeRawCount?: number;
-		listLoading?: boolean;
-		loadingMoreList?: SmoothieListKey | null;
-		canRevealMore?: boolean;
-		selectedFoodId?: number | null;
-		selectedIds?: number[];
-		removingItem?: string | null;
-		movingItem?: string | null;
-		moving?: boolean;
-		revealPaused?: boolean;
-		preferenceProfile?: FoodPreferenceProfile | null;
-		resetKey?: number;
-		onSelectAll: () => void;
-		onClearSelection: () => void;
-		onMoveSelection: () => void;
-		onMoveItem: (food: FdcFood) => void | Promise<void>;
-		onToggle: (foodId: number) => void;
-		onPreview: (food: FdcFood) => void;
-		onActions: (food: FdcFood) => void;
-		onRemove: (foodId: number) => void;
-		onRevealMore: () => void | Promise<void>;
-	} = $props();
+	}: SavedIngredientListProps = $props();
 
 	let listElement = $state<HTMLUListElement | null>(null);
 	let previousActiveList: SmoothieListKey | null = null;

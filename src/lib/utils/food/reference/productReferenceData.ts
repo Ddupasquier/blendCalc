@@ -55,6 +55,7 @@ export const readProductReferenceData = async (
 					"source_key, source_nutrient_key, source_nutrient_name, source_unit_name, nutrient_id, priority",
 				)
 				.eq("enabled", true)
+				.eq("review_status", "approved")
 				.order("priority", { ascending: true }),
 			supabase
 				.from("nutrient_unit_conversions")

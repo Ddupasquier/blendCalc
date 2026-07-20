@@ -1,12 +1,10 @@
 <script lang="ts">
 	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
-	import type { ManualEntryValidationItem } from "$lib/components/ingredients/manual-entry/formTypes";
+	import type { ManualEntryValidationListProps } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {
 		items,
-	}: {
-		items: ManualEntryValidationItem[];
-	} = $props();
+	}: ManualEntryValidationListProps = $props();
 </script>
 
 {#if items.length > 0}

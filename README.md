@@ -164,8 +164,8 @@ npm run discover:fdc-nutrients
 ```
 
 `discover:fdc-nutrients` samples broad food categories and generates a
-deduplicated nutrient report in `scripts/output/` and refreshes the application
-catalog at `src/variables/fdcNutrients.generated.ts`. Pass food queries or options such as `--pages=1`,
+deduplicated audit report in `scripts/output/`. Runtime nutrient definitions and
+display profiles remain database-driven. Pass food queries or options such as `--pages=1`,
 `--page-size=25`, and `--min-occurrences=3` to narrow the audit.
 
 `generate:api-structures` samples observed query terms from Supabase API

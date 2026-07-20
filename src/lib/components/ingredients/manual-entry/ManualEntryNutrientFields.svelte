@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Chevron from "$lib/assets/icons/Chevron.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
+	import type { ManualEntryNutrientFieldsProps } from "$lib/components/ingredients/manual-entry/formTypes";
 	import type {
 		ManualEntryNutrientDefinition,
 		ManualEntryNutrientGroup,
@@ -15,16 +16,7 @@
 		getValue,
 		onValueChange,
 		isRequired = () => false,
-	}: {
-		groups: ManualEntryNutrientGroup[];
-		loading?: boolean;
-		error?: string;
-		accordion?: boolean;
-		defaultOpenFirst?: boolean;
-		getValue: (field: ManualEntryNutrientDefinition) => number | null;
-		onValueChange: (field: ManualEntryNutrientDefinition, value: string) => void;
-		isRequired?: (field: ManualEntryNutrientDefinition) => boolean;
-	} = $props();
+	}: ManualEntryNutrientFieldsProps = $props();
 
 	const toDomSafeId = (value: string | number) =>
 		String(value)
@@ -226,7 +218,7 @@
 			display: inline-flex;
 			align-items: center;
 			gap: $app-gap-xs;
-			letter-spacing: 0.01em;
+			letter-spacing: $app-letter-spacing-data;
 		}
 
 		em {

@@ -1,8 +1,5 @@
-import {
-	DEFAULT_SERVING_GRAMS,
-	NUTRIENT_POINT_GOAL_TOLERANCE,
-} from "../../../../defaults/mixDefaults";
 import { getFdcNutrientValue } from "$lib/utils/food/nutrients/fdcNutrients";
+import { getMixRuntimeConfiguration } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { FdcFood } from "$lib/utils/food/types";
 import type {
 	NutrientFoodSuggestion,
@@ -30,6 +27,7 @@ export const getNutrientFoodSuggestions = ({
 	sourceLabelForFood: (food: FdcFood) => string;
 	maxSuggestions?: number;
 }) => {
+	const { defaultServingGrams, pointGoalTolerance } = getMixRuntimeConfiguration();
 	const selectedFoods = availableFoods.filter((food) =>
 		selectedFoodIds.includes(food.fdcId),
 	);
@@ -59,7 +57,7 @@ export const getNutrientFoodSuggestions = ({
 				if (!amountPer100g || amountPer100g <= 0) return [];
 
 				const currentServingGrams = selectedFoodIds.includes(food.fdcId)
-					? (servingGrams[food.fdcId] ?? DEFAULT_SERVING_GRAMS)
+					? (servingGrams[food.fdcId] ?? defaultServingGrams)
 					: 0;
 				const servingGramsToTarget = remainingAmount / (amountPer100g / 100);
 				if (!Number.isFinite(servingGramsToTarget) || servingGramsToTarget <= 0) {
@@ -74,14 +72,15 @@ export const getNutrientFoodSuggestions = ({
 								food,
 								nutrientState.nutrientId,
 							);
+							if (nutrientAmountPer100g === null) return [];
 							const amountAdded =
 								(nutrientAmountPer100g * servingGramsToTarget) /
-								DEFAULT_SERVING_GRAMS;
+								defaultServingGrams;
 							const nextTotal = nutrientState.total + amountAdded;
 							const safeGoal =
 								nutrientState.goal > 0 ? nutrientState.goal : 1;
 							const overGoalLimit =
-								safeGoal * (1 + NUTRIENT_POINT_GOAL_TOLERANCE);
+								safeGoal * (1 + pointGoalTolerance);
 
 							if (amountAdded <= Math.max(safeGoal * 0.01, 0.05)) {
 								return [];
@@ -176,6 +175,7 @@ export const getNutrientReductionSuggestions = ({
 	sourceLabelForFood: (food: FdcFood) => string;
 	maxSuggestions?: number;
 }) => {
+	const { defaultServingGrams, pointGoalTolerance } = getMixRuntimeConfiguration();
 	const nutrientStates = nutrients.map((nutrient) => {
 		const nutrientId = Number(nutrient.id);
 		const goal = nutrientGoals[nutrientId] ?? getDefaultNutrientGoal(nutrient);
@@ -198,14 +198,14 @@ export const getNutrientReductionSuggestions = ({
 
 			return selectedFoods.flatMap((food) => {
 				const currentServingGrams =
-					servingGrams[food.fdcId] ?? DEFAULT_SERVING_GRAMS;
+					servingGrams[food.fdcId] ?? defaultServingGrams;
 				const targetAmount = getFoodNutrientAmount(
 					food,
 					nutrientId,
 					servingGrams,
 				);
 
-				if (currentServingGrams <= 0 || targetAmount <= 0) return [];
+				if (currentServingGrams <= 0 || targetAmount === null || targetAmount <= 0) return [];
 
 				const targetReducedAmount = Math.min(overageAmount, targetAmount);
 				const percentOfOverageResolved =
@@ -238,11 +238,12 @@ export const getNutrientReductionSuggestions = ({
 								nutrientState.nutrientId,
 								servingGrams,
 							);
+							if (currentFoodAmount === null) return [];
 							const amountRemoved =
 								(currentFoodAmount * reduceByGrams) / currentServingGrams;
 							const nextTotal = nutrientState.total - amountRemoved;
 							const underGoalLimit =
-								nutrientState.goal * (1 - NUTRIENT_POINT_GOAL_TOLERANCE);
+								nutrientState.goal * (1 - pointGoalTolerance);
 
 							if (
 								amountRemoved <=

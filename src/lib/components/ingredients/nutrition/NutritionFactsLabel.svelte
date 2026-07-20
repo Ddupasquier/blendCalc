@@ -14,7 +14,7 @@
 		scalePer100gValue,
 	} from "$lib/utils/food/nutrients/nutritionDisplay";
 	import { getFoodQuality } from "$lib/utils/food/quality/foodQuality";
-	import { vitalNutrients } from "../../../../variables/vitalNutrients";
+	import { getNutritionFactsFields } from "$lib/utils/food/reference/appReferenceCatalog";
 	import type { NutritionFactsLabelProps } from "./types";
 
 	let {
@@ -27,19 +27,23 @@
 		viewingServing ? "Amount per serving" : getNutritionBasisLabel(viewingGrams),
 	);
 
-	const vitalIds = vitalNutrients.map((vn) => Number(vn.id));
+	const nutritionFactsFields = getNutritionFactsFields();
+	const vitalIds = nutritionFactsFields.map((field) => field.id);
 	const foodQuality = $derived(food ? getFoodQuality(food) : null);
 	const vitalRows = $derived(
 		food
-			? vitalNutrients.map((vn) => {
-					const value = getFdcNutrientValue(food, Number(vn.id));
+			? nutritionFactsFields.map((field) => {
+					const value = getFdcNutrientValue(food, field.id);
 					return {
-						label: vn.label,
-						value: formatNutritionAmount(
-							scalePer100gValue(value, viewingGrams),
-						),
-						unit: vn.unit,
-						highlight: vn.highlight || false,
+						label: field.label,
+						value:
+							value === null
+								? "—"
+								: formatNutritionAmount(
+									scalePer100gValue(value, viewingGrams),
+								),
+						unit: value === null ? "" : field.unit,
+						highlight: field.highlight,
 					};
 				})
 			: [],
@@ -180,7 +184,7 @@
 		font-size: $nutrition-label-title-font-size;
 		font-weight: $app-font-weight-heavy;
 		line-height: $nutrition-label-title-line-height;
-		letter-spacing: 0.01em;
+		letter-spacing: $app-letter-spacing-data;
 		text-transform: uppercase;
 	}
 
@@ -304,7 +308,7 @@
 		color: $nutrition-label-text;
 		font-size: $nutrition-label-row-font-size;
 		font-weight: $app-font-weight-semibold;
-		letter-spacing: 0.01em;
+		letter-spacing: $app-letter-spacing-data;
 		text-transform: uppercase;
 	}
 

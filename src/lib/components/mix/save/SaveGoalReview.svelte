@@ -2,10 +2,10 @@
 	import {
 		formatChartNumber,
 		formatSignedChartNumber,
-		type SaveGoalDiff,
 	} from "$lib/utils/mix/ui/mixUi";
+	import type { SaveGoalReviewProps } from "$lib/components/mix/types";
 
-	let { diffs }: { diffs: SaveGoalDiff[] } = $props();
+	let { diffs }: SaveGoalReviewProps = $props();
 </script>
 
 <div class="save-goal-review">
@@ -50,25 +50,25 @@
 
 	.save-goal-review__list {
 		display: grid;
-		gap: 0.4rem;
-		max-height: 16rem;
+		gap: $app-gap-sm;
+		max-height: $mix-review-list-max-height;
 		overflow-y: auto;
-		padding-right: 0.15rem;
+		padding-right: $app-gap-2xs;
 	}
 
 	.save-goal-review__row {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
 		align-items: center;
-		gap: 0.6rem;
-		padding: 0.5rem 0.6rem;
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
 		background: $app-bg;
 		border: $app-border;
 		border-radius: $app-radius;
 
 		div {
 			display: grid;
-			gap: 0.1rem;
+			gap: $app-gap-micro;
 			min-width: 0;
 		}
 
@@ -80,15 +80,15 @@
 		span {
 			color: $app-muted;
 			font-size: $app-font-size-sm;
-			font-weight: 700;
+			font-weight: $app-font-weight-semibold;
 		}
 	}
 
 	.save-goal-review__badge {
 		justify-self: end;
 		width: fit-content;
-		max-width: 8rem;
-		padding: 0.2rem 0.5rem;
+		max-width: $mix-review-badge-max-width;
+		padding: $app-gap-inline-compact $app-gap-sm;
 		border-radius: $app-radius-pill;
 		text-align: right;
 		white-space: nowrap;

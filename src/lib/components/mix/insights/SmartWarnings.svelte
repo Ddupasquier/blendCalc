@@ -1,9 +1,9 @@
 <script lang="ts">
 	import Popover from "$lib/components/common/display/Popover.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
-	import type { SmartWarning } from "$lib/utils/mix/warnings/smartWarnings";
+	import type { SmartWarningsProps } from "$lib/components/mix/types";
 
-	let { warnings = [] }: { warnings?: SmartWarning[] } = $props();
+	let { warnings = [] }: SmartWarningsProps = $props();
 </script>
 
 {#if warnings.length > 0}
@@ -48,33 +48,33 @@
 	.smart-warnings {
 		width: 100%;
 		margin-top: $app-gap-sm;
-		padding: 0.55rem;
+		padding: $app-gap-sm;
 		background: $app-bg;
 		border: $app-border;
 		border-radius: $app-card-radius;
 
 		h4 {
-			margin-bottom: 0.45rem;
+			margin-bottom: $app-gap-sm;
 			color: $app-primary;
-			font-size: 0.92rem;
-			font-weight: 800;
+			font-size: $app-font-size-sm;
+			font-weight: $app-font-weight-bold;
 		}
 	}
 
 	.smart-warnings__list {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.35rem;
+		gap: $app-gap-xs;
 	}
 
 	.smart-warning {
 		display: inline-grid;
 		grid-template-columns: auto minmax(0, 1fr) auto;
-		gap: 0.4rem;
+		gap: $app-gap-sm;
 		align-items: center;
 		max-width: 100%;
-		min-height: 2.25rem;
-		padding: 0.35rem 0.45rem;
+		min-height: $app-control-height;
+		padding: $app-gap-xs $app-gap-sm;
 		background: $app-section-bg;
 		border: $app-border;
 		border-radius: $app-radius;
@@ -121,8 +121,8 @@
 	strong {
 		display: block;
 		color: $app-primary;
-		font-size: 0.76rem;
-		font-weight: 800;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-bold;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -130,8 +130,8 @@
 
 	p {
 		color: $app-muted;
-		font-size: 0.7rem;
-		font-weight: 600;
+		font-size: $app-font-size-2xs;
+		font-weight: $app-font-weight-medium;
 		line-height: 1.25;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -141,19 +141,19 @@
 	.smart-warning__popover-summary {
 		margin-bottom: $app-gap-sm;
 		color: $app-muted;
-		font-size: 0.82rem;
+		font-size: $app-font-size-xs;
 		white-space: normal;
 	}
 
 	.smart-warning__details {
 		display: grid;
-		gap: 0.4rem;
+		gap: $app-gap-sm;
 		list-style: none;
 
 		li {
 			display: grid;
-			gap: 0.1rem;
-			padding-bottom: 0.4rem;
+			gap: $app-gap-micro;
+			padding-bottom: $app-gap-sm;
 			border-bottom: $app-border;
 		}
 
@@ -164,14 +164,14 @@
 
 		strong {
 			color: $app-primary;
-			font-size: 0.78rem;
+			font-size: $app-font-size-xs;
 			white-space: normal;
 		}
 
 		span {
 			color: $app-muted;
-			font-size: 0.74rem;
-			font-weight: 700;
+			font-size: $app-font-size-xs;
+			font-weight: $app-font-weight-semibold;
 		}
 	}
 </style>

@@ -1,21 +1,21 @@
-import {
-	DEFAULT_GOAL_BY_UNIT,
-	DEFAULT_NUTRIENT_GOALS,
-	DEFAULT_SERVING_GRAMS,
-} from "../../../../defaults/mixDefaults";
 import { getFdcNutrientValue } from "$lib/utils/food/nutrients/fdcNutrients";
+import {
+	getDefaultMixGoals,
+	getMixRuntimeConfiguration,
+} from "$lib/utils/food/reference/appReferenceCatalog";
 import type { FdcFood } from "$lib/utils/food/types";
 import type {
 	NutrientContributionBreakdown,
 	NutrientMeta,
+	NutrientTotalResult,
 } from "./nutrientTypes";
 
 export const getDefaultNutrientGoal = (nutrient: NutrientMeta) => {
 	const id = Number(nutrient.id);
-	if (DEFAULT_NUTRIENT_GOALS[id]) return DEFAULT_NUTRIENT_GOALS[id];
-	if (nutrient.unit === "g") return DEFAULT_GOAL_BY_UNIT.grams;
-	if (nutrient.unit === "kcal") return DEFAULT_GOAL_BY_UNIT.calories;
-	return DEFAULT_GOAL_BY_UNIT.fallback;
+	const configuredGoal = getDefaultMixGoals()[id];
+	if (configuredGoal !== undefined) return configuredGoal;
+	const goalsByUnit = getMixRuntimeConfiguration().defaultGoalByUnit;
+	return goalsByUnit[nutrient.unit ?? ""] ?? goalsByUnit.fallback;
 };
 
 export const getFoodNutrientAmount = (
@@ -24,22 +24,36 @@ export const getFoodNutrientAmount = (
 	servingGrams: Record<number, number>,
 ) => {
 	const nutrientValue = getFdcNutrientValue(food, nutrientId);
-	if (!nutrientValue) return 0;
+	if (nutrientValue === null) return null;
 
-	const grams = servingGrams[food.fdcId] ?? DEFAULT_SERVING_GRAMS;
-	return (nutrientValue * grams) / DEFAULT_SERVING_GRAMS;
+	const defaultServingGrams = getMixRuntimeConfiguration().defaultServingGrams;
+	const grams = servingGrams[food.fdcId] ?? defaultServingGrams;
+	return (nutrientValue * grams) / defaultServingGrams;
 };
+
+export const getNutrientTotalResult = (
+	foods: FdcFood[],
+	nutrientId: number,
+	servingGrams: Record<number, number>,
+): NutrientTotalResult => foods.reduce<NutrientTotalResult>(
+	(result, food) => {
+		const amount = getFoodNutrientAmount(food, nutrientId, servingGrams);
+		if (amount === null) {
+			result.missingFoodIds.push(food.fdcId);
+			return result;
+		}
+		result.total += amount;
+		return result;
+	},
+	{ total: 0, missingFoodIds: [] },
+);
 
 export const getNutrientTotal = (
 	foods: FdcFood[],
 	nutrientId: number,
 	servingGrams: Record<number, number>,
 ) => {
-	return foods.reduce(
-		(total, food) =>
-			total + getFoodNutrientAmount(food, nutrientId, servingGrams),
-		0,
-	);
+	return getNutrientTotalResult(foods, nutrientId, servingGrams).total;
 };
 
 export const getNutrientContributors = (
@@ -47,12 +61,15 @@ export const getNutrientContributors = (
 	nutrientId: number,
 	servingGrams: Record<number, number>,
 ) => {
-	return foods
-		.map((food) => ({
+	const defaultServingGrams = getMixRuntimeConfiguration().defaultServingGrams;
+	return foods.flatMap((food) => {
+		const amount = getFoodNutrientAmount(food, nutrientId, servingGrams);
+		return amount === null ? [] : [{
 			label: food.description,
-			amount: getFoodNutrientAmount(food, nutrientId, servingGrams),
-			grams: servingGrams[food.fdcId] ?? DEFAULT_SERVING_GRAMS,
-		}))
+			amount,
+			grams: servingGrams[food.fdcId] ?? defaultServingGrams,
+		}];
+	})
 		.filter((contributor) => contributor.amount > 0)
 		.sort((a, b) => b.amount - a.amount);
 };

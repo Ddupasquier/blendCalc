@@ -174,7 +174,7 @@
 			color: $ingredient-text-muted;
 			font-size: $app-font-size-sm;
 			font-weight: $app-font-weight-bold;
-			letter-spacing: 0.04em;
+			letter-spacing: $app-letter-spacing-label;
 			text-transform: uppercase;
 		}
 	}

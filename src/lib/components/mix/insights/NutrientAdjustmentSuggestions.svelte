@@ -2,19 +2,9 @@
 	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
 	import StatusIconBadge from "$lib/components/common/badges/StatusIconBadge.svelte";
 	import type {
-		NutrientFoodSuggestion,
-		NutrientReductionSuggestion,
-	} from "$lib/utils/mix/calculations";
-
-	type Adjustment =
-		| {
-				type: "add";
-				suggestion: NutrientFoodSuggestion;
-		  }
-		| {
-				type: "reduce";
-				suggestion: NutrientReductionSuggestion;
-		  };
+		NutrientAdjustment,
+		NutrientAdjustmentSuggestionsProps,
+	} from "$lib/components/mix/types";
 
 	let {
 		foodSuggestions = [],
@@ -22,13 +12,7 @@
 		onAdd,
 		onReduce,
 		maxSuggestions = 3,
-	}: {
-		foodSuggestions?: NutrientFoodSuggestion[];
-		reductionSuggestions?: NutrientReductionSuggestion[];
-		onAdd: (foodId: number, servingGrams: number) => void;
-		onReduce: (foodId: number, nextServingGrams: number) => void;
-		maxSuggestions?: number;
-	} = $props();
+	}: NutrientAdjustmentSuggestionsProps = $props();
 
 	let isOpen = $state(false);
 
@@ -44,10 +28,10 @@
 		return value.toFixed(1).replace(/\.0$/, "");
 	};
 
-	const getConflictCount = (adjustment: Adjustment) =>
+	const getConflictCount = (adjustment: NutrientAdjustment) =>
 		adjustment.suggestion.conflicts.length;
 
-	const getAdjustmentPriority = (adjustment: Adjustment) => {
+	const getAdjustmentPriority = (adjustment: NutrientAdjustment) => {
 		if (getConflictCount(adjustment) > 0) return 2;
 		return adjustment.type === "reduce" ? 0 : 1;
 	};
@@ -72,12 +56,12 @@
 			.slice(0, maxSuggestions),
 	);
 
-	const getActionLabel = (adjustment: Adjustment) => {
+	const getActionLabel = (adjustment: NutrientAdjustment) => {
 		if (adjustment.type === "reduce") return "Use less";
 		return adjustment.suggestion.action === "increase" ? "Add more" : "Add";
 	};
 
-	const getImpactLabel = (adjustment: Adjustment) => {
+	const getImpactLabel = (adjustment: NutrientAdjustment) => {
 		if (adjustment.type === "reduce") {
 			return `Lower ${adjustment.suggestion.nutrientLabel}`;
 		}
@@ -85,7 +69,7 @@
 		return `Reach ${adjustment.suggestion.nutrientLabel}`;
 	};
 
-	const getPrimaryText = (adjustment: Adjustment) => {
+	const getPrimaryText = (adjustment: NutrientAdjustment) => {
 		if (adjustment.type === "reduce") {
 			return `Use ${formatGrams(adjustment.suggestion.reduceByGrams)}g less to lower ${adjustment.suggestion.nutrientLabel}.`;
 		}
@@ -94,7 +78,7 @@
 		return `${verb} ${formatGrams(adjustment.suggestion.servingGramsToTarget)}g ${adjustment.suggestion.action === "increase" ? "more" : ""} to reach ${adjustment.suggestion.nutrientLabel}.`;
 	};
 
-	const getAmountText = (adjustment: Adjustment) => {
+	const getAmountText = (adjustment: NutrientAdjustment) => {
 		if (adjustment.type === "reduce") {
 			if (adjustment.suggestion.nextServingGrams < 1) {
 				return "New amount: remove it";
@@ -109,7 +93,7 @@
 		return `Amount to use: ${formatGrams(adjustment.suggestion.nextServingGrams)}g`;
 	};
 
-	const getHelpText = (adjustment: Adjustment) => {
+	const getHelpText = (adjustment: NutrientAdjustment) => {
 		if (adjustment.type === "reduce") {
 			return `Lowers ${adjustment.suggestion.nutrientLabel} by ${formatAmount(adjustment.suggestion.targetReducedAmount)}${adjustment.suggestion.unit}.`;
 		}
@@ -117,7 +101,7 @@
 		return `Adds ${formatAmount(adjustment.suggestion.targetAddedAmount)}${adjustment.suggestion.unit} ${adjustment.suggestion.nutrientLabel}.`;
 	};
 
-	const getWarningText = (adjustment: Adjustment) => {
+	const getWarningText = (adjustment: NutrientAdjustment) => {
 		const conflict = adjustment.suggestion.conflicts[0];
 		if (!conflict) return "";
 
@@ -132,7 +116,7 @@
 			: `This may push ${conflict.label} over goal.`;
 	};
 
-	const applyAdjustment = (adjustment: Adjustment) => {
+	const applyAdjustment = (adjustment: NutrientAdjustment) => {
 		if (adjustment.type === "reduce") {
 			onReduce(adjustment.suggestion.food.fdcId, adjustment.suggestion.nextServingGrams);
 			return;
@@ -227,7 +211,7 @@
 	.nutrient-adjustments {
 		width: 100%;
 		margin-top: $app-gap-sm;
-		padding: 0.45rem;
+		padding: $app-gap-sm;
 		background: $app-bg;
 		border: $app-border;
 		border-radius: $app-card-radius;
@@ -237,9 +221,9 @@
 		width: 100%;
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto;
-		gap: 0.55rem;
+		gap: $app-gap-sm;
 		align-items: center;
-		padding: 0.42rem;
+		padding: $app-gap-sm;
 		color: inherit;
 		background: transparent;
 		border-radius: $app-radius;
@@ -257,27 +241,27 @@
 
 	.nutrient-adjustments__copy {
 		display: grid;
-		gap: 0.08rem;
+		gap: $app-gap-micro;
 		min-width: 0;
 	}
 
 	.nutrient-adjustments__title {
 		color: $app-primary;
-		font-size: 0.92rem;
-		font-weight: 800;
+		font-size: $app-font-size-sm;
+		font-weight: $app-font-weight-bold;
 	}
 
 	.nutrient-adjustments__summary {
 		color: $app-muted;
-		font-size: 0.76rem;
-		font-weight: 700;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-semibold;
 		line-height: 1.3;
 	}
 
 	.nutrient-adjustments__chevron {
 		color: $app-primary;
-		font-size: 1.15rem;
-		font-weight: 900;
+		font-size: $app-font-size-lg;
+		font-weight: $app-font-weight-heavy;
 		line-height: 1;
 		transition: transform 0.16s ease;
 
@@ -288,16 +272,16 @@
 
 	.nutrient-adjustments__list {
 		display: grid;
-		gap: 0.42rem;
-		margin-top: 0.45rem;
+		gap: $app-gap-sm;
+		margin-top: $app-gap-sm;
 	}
 
 	.nutrient-adjustment {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
-		gap: 0.55rem;
+		gap: $app-gap-sm;
 		align-items: end;
-		padding: 0.6rem;
+		padding: $app-gap-sm;
 		background: $app-section-bg;
 		border: $app-border;
 		border-radius: $app-radius;
@@ -309,21 +293,21 @@
 
 	.nutrient-adjustment__main {
 		display: grid;
-		gap: 0.16rem;
+		gap: $app-gap-2xs;
 		min-width: 0;
 	}
 
 	.nutrient-adjustment__title-row {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
-		gap: 0.4rem;
+		gap: $app-gap-sm;
 		align-items: start;
 		min-width: 0;
 	}
 
 	.nutrient-adjustment__title-row > div {
 		display: grid;
-		gap: 0.15rem;
+		gap: $app-gap-2xs;
 		min-width: 0;
 	}
 
@@ -331,12 +315,12 @@
 	.nutrient-adjustment__impact {
 		width: fit-content;
 		max-width: 100%;
-		padding: 0.12rem 0.42rem;
+		padding: $app-gap-2xs $app-gap-sm;
 		color: $app-primary;
 		background: $app-accent;
 		border-radius: $app-radius-pill;
-		font-size: 0.66rem;
-		font-weight: 800;
+		font-size: $app-font-size-2xs;
+		font-weight: $app-font-weight-bold;
 		line-height: 1.2;
 	}
 
@@ -350,8 +334,8 @@
 
 	strong {
 		color: $app-primary;
-		font-size: 0.78rem;
-		font-weight: 800;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-bold;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -359,8 +343,8 @@
 
 	p {
 		color: $app-muted;
-		font-size: 0.72rem;
-		font-weight: 700;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-semibold;
 		line-height: 1.28;
 	}
 
@@ -374,28 +358,28 @@
 	}
 
 	.nutrient-adjustment__help {
-		font-size: 0.68rem;
+		font-size: $app-font-size-2xs;
 	}
 
 	.nutrient-adjustment__warning {
-		margin-top: 0.18rem;
-		padding: 0.34rem 0.42rem;
+		margin-top: $app-gap-inline-compact;
+		padding: $app-gap-xs $app-gap-sm;
 		color: $app-primary;
 		background: $app-warning-bg;
 		border-radius: $app-radius-sm;
 
 		span {
-			font-weight: 900;
+			font-weight: $app-font-weight-heavy;
 		}
 	}
 
 	.nutrient-adjustment > button {
 		justify-self: end;
-		padding: 0.34rem 0.62rem;
+		padding: $app-gap-xs $app-gap-sm;
 		color: $app-btn-text;
 		background: $app-btn-bg;
 		border-radius: $app-radius-pill;
-		font-size: 0.74rem;
+		font-size: $app-font-size-xs;
 		font-weight: $app-button-font-weight;
 		line-height: $app-button-line-height;
 

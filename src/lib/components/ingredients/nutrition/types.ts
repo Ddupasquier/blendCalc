@@ -1,6 +1,7 @@
 import type { FoodImageAsset, FdcFood, FoodServing } from "$lib/utils/food/types";
 import type { IngredientListMembership } from "$lib/utils/ingredients/ingredientListUi";
 import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
+import type { FoodQuality } from "$lib/utils/food/quality/foodQuality";
 
 export type ImagePlacementSaveHandler = (
 	image: FoodImageAsset,
@@ -53,4 +54,19 @@ export type NutritionServingSelectProps = {
 	food: FdcFood;
 	viewingGrams: number;
 	onSelect: (gramWeight: number) => void;
+};
+
+export type NutritionListActionsProps = {
+	food?: FdcFood;
+	showListActions?: boolean;
+	listMembership?: IngredientListMembership;
+};
+
+export type NutritionConfidenceDetailsProps = {
+	quality: FoodQuality;
+	compact?: boolean;
+};
+
+export type ImportedNutrientsProps = {
+	nutrients: FdcFood["foodNutrients"];
 };

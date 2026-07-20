@@ -54,7 +54,6 @@ describe("food quality", () => {
 	it("marks complete exact required data", () => {
 		expect(getFoodQuality(completeFood)).toMatchObject({
 			label: "Complete",
-			symbol: "✅",
 			missingCount: 0,
 		});
 	});
@@ -67,7 +66,6 @@ describe("food quality", () => {
 		expect(quality.sourceCounts.missing).toBe(3);
 		expect(quality.missingCount).toBe(1);
 		expect(quality.recommendedMissingCount).toBe(2);
-		expect(quality.symbol).toBe("⚠️");
 		expect(quality.needsDetails).toBe(true);
 		expect(
 			quality.details.filter((detail) => detail.source === "missing"),

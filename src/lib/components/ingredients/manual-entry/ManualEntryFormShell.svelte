@@ -1,10 +1,9 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
 	import WarningPopup from "$lib/components/common/feedback/WarningPopup.svelte";
 	import ManualEntryStepTabs from "$lib/components/ingredients/manual-entry/ManualEntryStepTabs.svelte";
 	import ManualEntryToggle from "$lib/components/ingredients/manual-entry/ManualEntryToggle.svelte";
 	import type {
-		ManualEntryStep,
+		ManualEntryFormShellProps,
 		ManualEntryStepId,
 	} from "$lib/components/ingredients/manual-entry/formTypes";
 
@@ -20,19 +19,7 @@
 		onSelectStep,
 		onDetailsElement = () => {},
 		onBodyElement = () => {},
-	}: {
-		inline?: boolean;
-		activeStep: ManualEntryStepId;
-		steps: ManualEntryStep[];
-		saving?: boolean;
-		lookingUpBarcode?: boolean;
-		stepWarningMessage?: string;
-		stepWarningStep?: ManualEntryStepId | null;
-		children: Snippet;
-		onSelectStep: (step: ManualEntryStepId) => void;
-		onDetailsElement?: (element: HTMLDetailsElement | null) => void;
-		onBodyElement?: (element: HTMLFieldSetElement | null) => void;
-	} = $props();
+	}: ManualEntryFormShellProps = $props();
 
 	let detailsElement = $state<HTMLDetailsElement | null>(null);
 	let bodyElement = $state<HTMLFieldSetElement | null>(null);

@@ -9,7 +9,9 @@ import {
 	getNutrientProgress,
 	getNutrientReductionSuggestions,
 	getNutrientTotal,
+	getNutrientTotalResult,
 } from "$lib/utils/mix/calculations";
+import { resolveFdcNutrient } from "$lib/utils/food/nutrients/fdcNutrients";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 
 const sunflowerOil = {
@@ -47,6 +49,76 @@ describe("mix calculations", () => {
 				1: 50,
 			}),
 		).toBeCloseTo(46.6);
+	});
+
+	it("keeps reported zero separate from a missing nutrient", () => {
+		const zeroProteinFood = {
+			fdcId: 10,
+			description: "Zero protein food",
+			foodNutrients: [
+				{
+					nutrientId: NUTRIENT_IDS.PROTEIN,
+					nutrientName: "Protein",
+					nutrientNumber: "203",
+					unitName: "G",
+					value: 0,
+				},
+			],
+		} satisfies FdcFood;
+
+		expect(resolveFdcNutrient(zeroProteinFood, NUTRIENT_IDS.PROTEIN)).toMatchObject({
+			value: 0,
+			source: "exact",
+		});
+		expect(
+			getNutrientTotalResult(
+				[zeroProteinFood],
+				NUTRIENT_IDS.PROTEIN,
+				{ [zeroProteinFood.fdcId]: 100 },
+			),
+		).toEqual({ total: 0, missingFoodIds: [] });
+	});
+
+	it("tracks missing nutrients instead of silently treating them as zero", () => {
+		const result = getNutrientTotalResult(
+			[milk],
+			NUTRIENT_IDS.FAT,
+			{ [milk.fdcId]: 100 },
+		);
+
+		expect(result).toEqual({ total: 0, missingFoodIds: [milk.fdcId] });
+		expect(resolveFdcNutrient(milk, NUTRIENT_IDS.FAT)).toMatchObject({
+			value: null,
+			source: "missing",
+		});
+	});
+
+	it("derives calories only when fat, carbs, and protein are all reported", () => {
+		const completeMacros = {
+			fdcId: 11,
+			description: "Complete macros",
+			foodNutrients: [
+				{ nutrientId: NUTRIENT_IDS.FAT, nutrientName: "Fat", nutrientNumber: "204", unitName: "G", value: 2 },
+				{ nutrientId: NUTRIENT_IDS.CARBS, nutrientName: "Carbohydrate", nutrientNumber: "205", unitName: "G", value: 3 },
+				{ nutrientId: NUTRIENT_IDS.PROTEIN, nutrientName: "Protein", nutrientNumber: "203", unitName: "G", value: 4 },
+			],
+		} satisfies FdcFood;
+		const incompleteMacros = {
+			...completeMacros,
+			fdcId: 12,
+			foodNutrients: completeMacros.foodNutrients.filter(
+				(nutrient) => nutrient.nutrientId !== NUTRIENT_IDS.PROTEIN,
+			),
+		} satisfies FdcFood;
+
+		expect(resolveFdcNutrient(completeMacros, NUTRIENT_IDS.CALORIES)).toMatchObject({
+			value: 46,
+			source: "derived",
+		});
+		expect(resolveFdcNutrient(incompleteMacros, NUTRIENT_IDS.CALORIES)).toMatchObject({
+			value: null,
+			source: "missing",
+		});
 	});
 
 	it("sorts overage contributors by amount", () => {

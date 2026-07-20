@@ -1,7 +1,9 @@
+import type { Snippet } from "svelte";
 import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
 import type {
 	ManualEntryNutrientDefinition,
+	ManualEntryNutrientGroup,
 	ManualEntryNutrientGroupsByStep,
 } from "$lib/utils/food/nutrients/nutrientDefinitions";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
@@ -62,6 +64,39 @@ export type FoodCategoryPickerProps = {
 	onStatusChange?: (status: FoodCategoryPickerStatus) => void;
 };
 
+export type ManualEntryFormShellProps = {
+	inline?: boolean;
+	activeStep: ManualEntryStepId;
+	steps: ManualEntryStep[];
+	saving?: boolean;
+	lookingUpBarcode?: boolean;
+	stepWarningMessage?: string;
+	stepWarningStep?: ManualEntryStepId | null;
+	children: Snippet;
+	onSelectStep: (step: ManualEntryStepId) => void;
+	onDetailsElement?: (element: HTMLDetailsElement | null) => void;
+	onBodyElement?: (element: HTMLFieldSetElement | null) => void;
+};
+
+export type ManualEntryLauncherProps = {
+	onSelect: () => void;
+};
+
+export type ManualEntryScanOptionProps = {
+	scanning?: boolean;
+	disabled?: boolean;
+	onScan: () => void;
+};
+
+export type ManualEntryToggleProps = {
+	title?: string;
+	description?: string;
+};
+
+export type ManualEntryValidationListProps = {
+	items: ManualEntryValidationItem[];
+};
+
 export type ManualEntryBarcodeShareMismatch = {
 	name: string;
 	brandOwner: string;
@@ -105,6 +140,14 @@ export type CustomIngredientOutcomeState = {
 	destination: SmoothieListKey;
 	addedToList: boolean;
 	message: string;
+};
+
+export type CustomIngredientOutcomeProps = {
+	outcome: CustomIngredientOutcomeState;
+	action: "move" | "undo" | null;
+	onMoveToShopping: () => void | Promise<void>;
+	onMoveToFridge: () => void | Promise<void>;
+	onUndo: () => void | Promise<void>;
 };
 
 export type ManualEntryListMovePromptState = {
@@ -212,6 +255,85 @@ export type ManualEntryStepContentProps = Omit<
 	onVolumeQuantityChange: (value: number | null) => void;
 	onVolumeUnitChange: (value: ServingMeasureUnit) => void;
 	onNext: () => void | Promise<void>;
+};
+
+export type IdentityStepProps = {
+	name: string;
+	brandOwner: string;
+	category: string;
+	categoryOptionId: string;
+	barcode: string;
+	categoryWarningMessage: string;
+	categorySourceValues: string[];
+	barcodeMessage: string;
+	barcodeValidationMessage: string;
+	checkingBarcodeReference: boolean;
+	barcodeSuggestion: ManualEntryBarcodeSuggestion;
+	onNameChange: (value: string) => void;
+	onBrandChange: (value: string) => void;
+	onCategoryChange: (option: FoodCategoryPickerOption) => void;
+	onCategoryStatusChange: (status: FoodCategoryPickerStatus) => void;
+	onBarcodeChange: (value: string) => void;
+	onBarcodeBlur: () => void | Promise<void>;
+	onApplyBarcodeSuggestion: () => void | Promise<void>;
+	onKeepManualBarcodeEntry: () => void;
+	onNameInput?: (element: HTMLInputElement) => void;
+	onNext: () => void | Promise<void>;
+};
+
+export type ServingsStepProps = {
+	servingLabel: string;
+	resolvedServingLabel: string;
+	servingWeightGrams: number | null;
+	useVolumeEquivalent: boolean;
+	volumeQuantity: number | null;
+	volumeUnit: ServingMeasureUnit;
+	volumeOptions: ManualEntryVolumeOption[];
+	onServingLabelChange: (value: string) => void;
+	onServingWeightChange: (value: number) => void;
+	onUseVolumeChange: (value: boolean) => void;
+	onVolumeQuantityChange: (value: number | null) => void;
+	onVolumeUnitChange: (value: ServingMeasureUnit) => void;
+	onBack: () => void;
+	onNext: () => void;
+};
+
+export type ManualEntryNutrientFieldsProps = {
+	groups: ManualEntryNutrientGroup[];
+	loading?: boolean;
+	error?: string;
+	accordion?: boolean;
+	defaultOpenFirst?: boolean;
+	getValue: (field: ManualEntryNutrientDefinition) => number | null;
+	onValueChange: (
+		field: ManualEntryNutrientDefinition,
+		value: string,
+	) => void;
+	isRequired?: (field: ManualEntryNutrientDefinition) => boolean;
+};
+
+export type NutrientStepProps = {
+	groups: ManualEntryNutrientGroup[];
+	loading: boolean;
+	error: string;
+	helper: string;
+	validationItems?: ManualEntryValidationItem[];
+	accordion?: boolean;
+	defaultOpenFirst?: boolean;
+	hideUnavailableStatus?: boolean;
+	labelOcrMappings?: NutritionLabelOcrMapping[];
+	labelOcrMappingError?: string;
+	nutritionPhoto?: File | null;
+	onNutritionPhotoChange?: (file: File | null) => void;
+	onApplyNutritionLabelOcr?: (payload: NutritionLabelOcrApplyPayload) => void;
+	getValue: (field: ManualEntryNutrientDefinition) => number | null;
+	onValueChange: (
+		field: ManualEntryNutrientDefinition,
+		value: string,
+	) => void;
+	isRequired: (field: ManualEntryNutrientDefinition) => boolean;
+	onBack: () => void;
+	onNext: () => void;
 };
 
 export type ProductImageEvidenceInputProps = {

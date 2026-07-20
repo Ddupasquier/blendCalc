@@ -38,7 +38,8 @@ import {
 	getFoodPreferenceOptionSets,
 	isMissingFoodPreferenceOptionCatalogError,
 } from "$lib/utils/profile/foodPreferenceOptions";
-import { vitalNutrients } from "../../variables/vitalNutrients";
+import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
+import { getDefaultMixFields } from "$lib/utils/food/reference/appReferenceCatalog";
 
 const getAuthenticatedUser = async (locals: App.Locals) => {
 	const user = await locals.getVerifiedUser();
@@ -87,6 +88,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		{ profile, avatarUrl },
 		{ data: foodPreferences, error: foodPreferencesError },
 		{ data: foodPreferenceOptions, error: foodPreferenceOptionsError },
+		appReferenceCatalog,
 	] = await Promise.all([
 		profileWithAvatarPromise,
 		locals.supabase
@@ -103,6 +105,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			)
 			.order("usage_count", { ascending: false })
 			.order("label", { ascending: true }),
+		getAppReferenceCatalog(),
 	]);
 	const foodPreferencesUnavailable =
 		isMissingFoodPreferencesTableError(foodPreferencesError);
@@ -125,7 +128,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		foodPreferenceOptions: getFoodPreferenceOptionSets(
 			foodPreferenceOptionsUnavailable ? [] : foodPreferenceOptions,
 		),
-		priorityNutrientOptions: vitalNutrients,
+		priorityNutrientOptions: getDefaultMixFields(appReferenceCatalog),
 		defaultDisplayName: getDefaultDisplayName(user.id),
 		avatarPolicyItems: PROFILE_AVATAR_POLICY_ITEMS,
 		requireHumanFace: PROFILE_AVATAR_REQUIRE_HUMAN_FACE,

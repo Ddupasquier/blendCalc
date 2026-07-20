@@ -275,6 +275,7 @@ export type Database = {
           observation_count: number
           source_count: number
           sources: string[]
+          symbol_key: string
           updated_at: string
           verification_status: string
         }
@@ -289,6 +290,7 @@ export type Database = {
           observation_count?: number
           source_count?: number
           sources?: string[]
+          symbol_key?: string
           updated_at?: string
           verification_status?: string
         }
@@ -303,10 +305,19 @@ export type Database = {
           observation_count?: number
           source_count?: number
           sources?: string[]
+          symbol_key?: string
           updated_at?: string
           verification_status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "custom_food_category_options_symbol_key_fkey"
+            columns: ["symbol_key"]
+            isOneToOne: false
+            referencedRelation: "food_symbol_definitions"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       custom_foods: {
         Row: {
@@ -793,6 +804,84 @@ export type Database = {
           },
         ]
       }
+      food_symbol_category_rules: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: number
+          match_pattern: string
+          priority: number
+          source_key: string
+          source_reference: string
+          symbol_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: never
+          match_pattern: string
+          priority: number
+          source_key: string
+          source_reference: string
+          symbol_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: never
+          match_pattern?: string
+          priority?: number
+          source_key?: string
+          source_reference?: string
+          symbol_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_symbol_category_rules_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "food_symbol_category_rules_symbol_key_fkey"
+            columns: ["symbol_key"]
+            isOneToOne: false
+            referencedRelation: "food_symbol_definitions"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      food_symbol_definitions: {
+        Row: {
+          created_at: string
+          display_name: string
+          enabled: boolean
+          key: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          enabled?: boolean
+          key: string
+          sort_order: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          enabled?: boolean
+          key?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       generic_food_dataset_reference_rows: {
         Row: {
           created_at: string
@@ -1143,6 +1232,86 @@ export type Database = {
         }
         Relationships: []
       }
+      mix_goal_template_targets: {
+        Row: {
+          nutrient_id: number
+          target_amount: number
+          template_key: string
+        }
+        Insert: {
+          nutrient_id: number
+          target_amount: number
+          template_key: string
+        }
+        Update: {
+          nutrient_id?: number
+          target_amount?: number
+          template_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mix_goal_template_targets_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "mix_goal_template_targets_template_key_fkey"
+            columns: ["template_key"]
+            isOneToOne: false
+            referencedRelation: "mix_goal_templates"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      mix_goal_templates: {
+        Row: {
+          created_at: string
+          description: string
+          display_name: string
+          enabled: boolean
+          key: string
+          sort_order: number
+          source_key: string
+          source_reference: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          display_name: string
+          enabled?: boolean
+          key: string
+          sort_order: number
+          source_key: string
+          source_reference: string
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_name?: string
+          enabled?: boolean
+          key?: string
+          sort_order?: number
+          source_key?: string
+          source_reference?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mix_goal_templates_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       mix_preferences: {
         Row: {
           created_at: string
@@ -1166,6 +1335,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      mix_runtime_configuration: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          key: string
+          source_key: string
+          source_reference: string
+          updated_at: string
+          value: Json
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          key: string
+          source_key: string
+          source_reference: string
+          updated_at?: string
+          value: Json
+          version: number
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          key?: string
+          source_key?: string
+          source_reference?: string
+          updated_at?: string
+          value?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mix_runtime_configuration_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       moderation_actions: {
         Row: {
@@ -1279,6 +1489,149 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      nutrient_display_profile_fields: {
+        Row: {
+          default_goal: number | null
+          display_label: string | null
+          display_unit: string | null
+          highlight: boolean
+          nutrient_id: number
+          profile_key: string
+          sort_order: number
+        }
+        Insert: {
+          default_goal?: number | null
+          display_label?: string | null
+          display_unit?: string | null
+          highlight?: boolean
+          nutrient_id: number
+          profile_key: string
+          sort_order: number
+        }
+        Update: {
+          default_goal?: number | null
+          display_label?: string | null
+          display_unit?: string | null
+          highlight?: boolean
+          nutrient_id?: number
+          profile_key?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_display_profile_fields_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "nutrient_display_profile_fields_profile_key_fkey"
+            columns: ["profile_key"]
+            isOneToOne: false
+            referencedRelation: "nutrient_display_profiles"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      nutrient_display_profiles: {
+        Row: {
+          created_at: string
+          display_name: string
+          enabled: boolean
+          key: string
+          purpose: string
+          source_key: string
+          source_reference: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          enabled?: boolean
+          key: string
+          purpose: string
+          source_key: string
+          source_reference: string
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          enabled?: boolean
+          key?: string
+          purpose?: string
+          source_key?: string
+          source_reference?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_display_profiles_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      nutrient_equivalences: {
+        Row: {
+          canonical_nutrient_id: number
+          created_at: string
+          enabled: boolean
+          id: number
+          relation: string
+          source_key: string
+          source_nutrient_id: number | null
+          source_nutrient_number: string | null
+          source_reference: string
+          updated_at: string
+        }
+        Insert: {
+          canonical_nutrient_id: number
+          created_at?: string
+          enabled?: boolean
+          id?: never
+          relation: string
+          source_key: string
+          source_nutrient_id?: number | null
+          source_nutrient_number?: string | null
+          source_reference: string
+          updated_at?: string
+        }
+        Update: {
+          canonical_nutrient_id?: number
+          created_at?: string
+          enabled?: boolean
+          id?: never
+          relation?: string
+          source_key?: string
+          source_nutrient_id?: number | null
+          source_nutrient_number?: string | null
+          source_reference?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrient_equivalences_canonical_nutrient_id_fkey"
+            columns: ["canonical_nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "nutrient_equivalences_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       nutrient_manual_entry_fields: {
         Row: {
@@ -1671,6 +2024,9 @@ export type Database = {
           observation_count: number
           priority: number
           provenance: Json
+          review_reference: string | null
+          review_status: string
+          reviewed_at: string | null
           source_key: string
           source_nutrient_key: string
           source_nutrient_name: string | null
@@ -1688,6 +2044,9 @@ export type Database = {
           observation_count?: number
           priority?: number
           provenance?: Json
+          review_reference?: string | null
+          review_status?: string
+          reviewed_at?: string | null
           source_key: string
           source_nutrient_key: string
           source_nutrient_name?: string | null
@@ -1705,6 +2064,9 @@ export type Database = {
           observation_count?: number
           priority?: number
           provenance?: Json
+          review_reference?: string | null
+          review_status?: string
+          reviewed_at?: string | null
           source_key?: string
           source_nutrient_key?: string
           source_nutrient_name?: string | null
@@ -3271,6 +3633,20 @@ export type Database = {
           confidence: string
           source_normalized_value: string
         }[]
+      }
+      resolve_custom_food_category_option_with_symbol: {
+        Args: { p_source_values: string[] }
+        Returns: {
+          category_option_id: string
+          category_option_label: string
+          confidence: string
+          source_normalized_value: string
+          symbol_key: string
+        }[]
+      }
+      resolve_food_symbol_key: {
+        Args: { category_value: string }
+        Returns: string
       }
       save_custom_food: {
         Args: { p_fdc_id: number; p_food: Json }

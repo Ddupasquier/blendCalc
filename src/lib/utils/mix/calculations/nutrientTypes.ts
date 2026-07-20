@@ -27,6 +27,12 @@ export type NutrientContributionBreakdown = {
 export type NutrientChartMetric = {
 	goalRatio: number;
 	totalRatio: number;
+	incomplete: boolean;
+};
+
+export type NutrientTotalResult = {
+	total: number;
+	missingFoodIds: number[];
 };
 
 export type NutrientFoodSuggestion = {

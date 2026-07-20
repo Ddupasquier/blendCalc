@@ -1,12 +1,14 @@
-import {
-	NUTRIENT_POINT_COLORS,
-	NUTRIENT_POINT_GOAL_TOLERANCE,
-	NUTRIENT_PROGRESS_COLORS,
-	NUTRIENT_PROGRESS_THRESHOLDS,
-} from "../../../../defaults/mixDefaults";
+import { getMixRuntimeConfiguration } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { NutrientChartMetric, NutrientMeta } from "./nutrientTypes";
-import { getDefaultNutrientGoal, getNutrientTotal } from "./nutrientTotals";
+import { getDefaultNutrientGoal, getNutrientTotalResult } from "./nutrientTotals";
+
+const CHART_COLORS = {
+	atGoal: { fill: "var(--mix-chart-success-fill)", stroke: "var(--mix-chart-success-stroke)" },
+	barelyOver: { fill: "var(--mix-chart-caution-fill)", stroke: "var(--mix-chart-caution-stroke)" },
+	midwayOver: { fill: "var(--mix-chart-warning-fill)", stroke: "var(--mix-chart-warning-stroke)" },
+	wayOver: { fill: "var(--mix-chart-danger-fill)", stroke: "var(--mix-chart-danger-stroke)" },
+} as const;
 
 export const getNutrientChartMetrics = (
 	nutrients: NutrientMeta[],
@@ -19,11 +21,12 @@ export const getNutrientChartMetrics = (
 		const baselineGoal = getDefaultNutrientGoal(nutrient);
 		const safeBaselineGoal = baselineGoal > 0 ? baselineGoal : 1;
 		const goal = nutrientGoals[nutrientId] ?? baselineGoal;
-		const total = getNutrientTotal(foods, nutrientId, servingGrams);
+		const result = getNutrientTotalResult(foods, nutrientId, servingGrams);
 
 		return {
 			goalRatio: goal / safeBaselineGoal,
-			totalRatio: total / safeBaselineGoal,
+			totalRatio: result.total / safeBaselineGoal,
+			incomplete: result.missingFoodIds.length > 0,
 		};
 	});
 };
@@ -47,32 +50,34 @@ export const getGoalValues = (metrics: NutrientChartMetric[]) => {
 };
 
 export const getChartColors = (progress: number) => {
-	if (progress <= NUTRIENT_PROGRESS_THRESHOLDS.atGoal) {
-		return NUTRIENT_PROGRESS_COLORS.atGoal;
+	const thresholds = getMixRuntimeConfiguration().progressThresholds;
+	if (progress <= thresholds.atGoal) {
+		return CHART_COLORS.atGoal;
 	}
 
-	if (progress <= NUTRIENT_PROGRESS_THRESHOLDS.barelyOver) {
-		return NUTRIENT_PROGRESS_COLORS.barelyOver;
+	if (progress <= thresholds.barelyOver) {
+		return CHART_COLORS.barelyOver;
 	}
 
-	if (progress <= NUTRIENT_PROGRESS_THRESHOLDS.midwayOver) {
-		return NUTRIENT_PROGRESS_COLORS.midwayOver;
+	if (progress <= thresholds.midwayOver) {
+		return CHART_COLORS.midwayOver;
 	}
 
-	return NUTRIENT_PROGRESS_COLORS.wayOver;
+	return CHART_COLORS.wayOver;
 };
 
 export const getPointColors = (progressValues: number[]) => {
+	const tolerance = getMixRuntimeConfiguration().pointGoalTolerance;
 	return progressValues.map((progress) => {
-		if (progress > 1 + NUTRIENT_POINT_GOAL_TOLERANCE) {
-			return NUTRIENT_POINT_COLORS.overGoal;
+		if (progress > 1 + tolerance) {
+			return CHART_COLORS.wayOver;
 		}
 
-		if (progress >= 1 - NUTRIENT_POINT_GOAL_TOLERANCE) {
-			return NUTRIENT_POINT_COLORS.nearGoal;
+		if (progress >= 1 - tolerance) {
+			return CHART_COLORS.atGoal;
 		}
 
-		return NUTRIENT_POINT_COLORS.belowGoal;
+		return CHART_COLORS.barelyOver;
 	});
 };
 

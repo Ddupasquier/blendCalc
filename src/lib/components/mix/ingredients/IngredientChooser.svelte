@@ -5,6 +5,7 @@
 	import Pagination from "$lib/components/common/lists/Pagination.svelte";
 	import SortSelect from "$lib/components/common/lists/SortSelect.svelte";
 	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog.svelte";
+	import type { IngredientChooserProps } from "$lib/components/mix/types";
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
@@ -28,12 +29,7 @@
 		shoppingItems,
 		selectedFoodIds,
 		onToggleFood,
-	}: {
-		fridgeItems: FdcFood[];
-		shoppingItems: FdcFood[];
-		selectedFoodIds: number[];
-		onToggleFood: (foodId: number) => void;
-	} = $props();
+	}: IngredientChooserProps = $props();
 
 	let query = $state("");
 	let filter = $state("all");
@@ -312,7 +308,7 @@
 		h4 {
 			color: $app-primary;
 			font-size: $app-font-size-lg;
-			font-weight: 800;
+			font-weight: $app-font-weight-bold;
 		}
 
 		p {
@@ -324,7 +320,7 @@
 
 	.ingredient-list-controls {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(10rem, auto);
+		grid-template-columns: minmax(0, 1fr) minmax($mix-chooser-filter-min-width, auto);
 		align-items: end;
 		gap: $app-gap-sm;
 		margin-bottom: $app-gap-sm;

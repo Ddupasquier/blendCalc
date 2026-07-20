@@ -406,17 +406,17 @@
 	.point-shape__label {
 		fill: $app-primary;
 		font-family: $app-font-family-interface;
-		font-size: 0.8rem;
-		font-weight: 700;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-semibold;
 	}
 
 	.point-shape__value-label {
 		fill: $app-muted;
 		font-family: $app-font-family-data;
-		font-size: 0.62rem;
-		font-weight: 800;
+		font-size: $mix-chart-value-font-size;
+		font-weight: $app-font-weight-bold;
 		font-variant-numeric: tabular-nums;
-		letter-spacing: 0.01em;
+		letter-spacing: $mix-chart-label-letter-spacing;
 	}
 
 	.point-shape__value-circle {
