@@ -6,14 +6,8 @@
 	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
 	import ProductImageEvidenceInput from "$lib/components/ingredients/manual-entry/ProductImageEvidenceInput.svelte";
 	import BarcodeAutofillSuggestion from "$lib/components/ingredients/manual-entry/BarcodeAutofillSuggestion.svelte";
-	import type {
-		CustomIngredientOutcomeState,
-		ManualEntryBarcodeShareMismatch,
-		ManualEntrySummaryItem,
-		ManualEntryValidationItem,
-	} from "$lib/components/ingredients/manual-entry/formTypes";
+	import type { ShareStepProps } from "$lib/components/ingredients/manual-entry/formTypes";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
-	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 	import { MIX_STORAGE_KEYS } from "../../../../../defaults/mixDefaults";
 
 	let {
@@ -31,7 +25,7 @@
 		validatingBarcodeShare,
 		requiresCatalogEvidence,
 		showOptionalProductImageUpload,
-		trustedProductImageUrl,
+		trustedProductImage,
 		frontPhoto,
 		imagePlacement,
 		saveDestination,
@@ -55,46 +49,7 @@
 		onBack,
 		onSubmit,
 		onSaveDestinationInput,
-	}: {
-		normalizedName: string;
-		activeCategory: string;
-		summaryNutrients: ManualEntrySummaryItem[];
-		optionalNutrientCount: number;
-		validationItems: ManualEntryValidationItem[];
-		barcodeMessage: string;
-		canShareWithCatalog: boolean;
-		shareUnavailableMessage: string;
-		shareHelpMessage: string;
-		shareWithCatalog: boolean;
-		barcodeShareMismatch: ManualEntryBarcodeShareMismatch;
-		validatingBarcodeShare: boolean;
-		requiresCatalogEvidence: boolean;
-		showOptionalProductImageUpload: boolean;
-		trustedProductImageUrl: string;
-		frontPhoto: File | null;
-		imagePlacement: ImagePlacementValue;
-		saveDestination: SmoothieListKey;
-		error: string;
-		lastOutcome: CustomIngredientOutcomeState | null;
-		outcomeAction: "move" | "undo" | null;
-		savedMessage: string;
-		catalogMessage: string;
-		saving: boolean;
-		onShareChange: (checked: boolean) => void;
-		onApplyVerifiedBarcode: () => void | Promise<void>;
-		onDetachBarcodeForPrivateSave: () => void;
-		onFrontPhotoChange: (file: File | null) => void;
-		onImagePlacementChange: (value: ImagePlacementValue) => void;
-		onNutritionPhotoChange: (file: File | null) => void;
-		onBarcodePhotoChange: (file: File | null) => void;
-		onSaveDestinationChange: (destination: SmoothieListKey) => void;
-		onMoveToShopping: () => void | Promise<void>;
-		onMoveToFridge: () => void | Promise<void>;
-		onUndo: () => void | Promise<void>;
-		onBack: () => void;
-		onSubmit: () => void | Promise<void>;
-		onSaveDestinationInput?: (element: HTMLSelectElement) => void;
-	} = $props();
+	}: ShareStepProps = $props();
 
 	let saveDestinationSelect = $state<HTMLSelectElement | null>(null);
 
@@ -187,12 +142,12 @@
 				</p>
 			</div>
 			<ProductImageEvidenceInput
-					trustedImageUrl={trustedProductImageUrl}
-					{frontPhoto}
-					placement={imagePlacement}
+				trustedImage={trustedProductImage}
+				{frontPhoto}
+				placement={imagePlacement}
 				required
-					onFrontPhotoChange={onFrontPhotoChange}
-					onPlacementChange={onImagePlacementChange}
+				onFrontPhotoChange={onFrontPhotoChange}
+				onPlacementChange={onImagePlacementChange}
 			/>
 			<label class="custom-ingredient__field">
 				<span>Nutrition facts label</span>
@@ -220,12 +175,12 @@
 	{:else if showOptionalProductImageUpload}
 		<section class="custom-ingredient__evidence" aria-labelledby="product-image-title">
 			<ProductImageEvidenceInput
-					trustedImageUrl={trustedProductImageUrl}
-					{frontPhoto}
-					placement={imagePlacement}
+				trustedImage={trustedProductImage}
+				{frontPhoto}
+				placement={imagePlacement}
 				description="No trusted DB/API product image was found for this barcode. You can add a front package photo now; it stays private until a moderator approves it."
-					onFrontPhotoChange={onFrontPhotoChange}
-					onPlacementChange={onImagePlacementChange}
+				onFrontPhotoChange={onFrontPhotoChange}
+				onPlacementChange={onImagePlacementChange}
 			/>
 		</section>
 	{/if}

@@ -691,6 +691,11 @@ images while preserving each field's provenance. A missing cache row, missing pr
 image, or failed optional image lookup
 must never discard an otherwise valid nutrition match. User-submitted product evidence
 remains moderation evidence unless it is approved into a reusable image record.
+Every detailed third-party image and trusted-image preview must use the shared asset
+attribution component to show its stored credit and license, with the stored license URL
+as an accessible link when available. Compact card thumbnails may omit inline credit to
+protect readability only when the corresponding detailed view exposes it; never invent,
+hardcode, or infer attribution in a component.
 
 **31c.** <a id="rule-image-placement-editor"></a>Image zoom and placement must be
 non-destructive and versioned. Keep the original image unchanged; placement only

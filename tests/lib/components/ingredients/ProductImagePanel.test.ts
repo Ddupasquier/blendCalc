@@ -15,6 +15,8 @@ const foodWithImage: FdcFood = {
 		role: "front",
 		imageUrl: "https://example.com/almond-milk.jpg",
 		licenseName: "Example license",
+		licenseUrl: "https://example.com/license",
+		attributionText: "Example contributors",
 		confidence: "moderator-reviewed",
 	},
 };
@@ -35,6 +37,9 @@ describe("ProductImagePanel", () => {
 			screen.queryByText("Nutrition page shows the full image."),
 		).not.toBeInTheDocument();
 		expect(container.querySelector(".product-image-frame")).toBeInTheDocument();
+		expect(screen.getByText("Image: Example contributors")).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: /Example license/ }))
+			.toHaveAttribute("href", "https://example.com/license");
 	});
 
 	it("does not show privileged action badges to normal users", () => {

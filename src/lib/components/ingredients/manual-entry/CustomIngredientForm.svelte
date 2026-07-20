@@ -49,6 +49,7 @@
 		getBarcodeInputValidationMessage,
 		normalizeBarcode,
 	} from "$lib/utils/barcode/barcode";
+	import { pickFoodFullImageUrl } from "$lib/utils/food/images/foodImages";
 	import {
 		type BarcodeProductDraft,
 		getBarcodeProductSourceDisplayLabel,
@@ -105,7 +106,6 @@
 	import { saveManualEntryCustomFood } from "$lib/components/ingredients/manual-entry/utils/submitFlow";
 	import { getManualEntrySubmitState } from "$lib/components/ingredients/manual-entry/utils/submitValidation";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
-	import { pickFoodFullImageUrl } from "$lib/utils/food/images/foodImages";
 	import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
 	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 	import {
@@ -693,8 +693,10 @@
 			(barcodeSource === "manual" ||
 				Boolean(hasSharedCatalogBarcodeReference && barcodeReferenceHasChanges)),
 	);
-	const trustedProductImageUrl = $derived(pickFoodFullImageUrl(image));
-	const hasTrustedProductImage = $derived(Boolean(trustedProductImageUrl));
+	const trustedProductImage = $derived(
+		pickFoodFullImageUrl(image) ? image : undefined,
+	);
+	const hasTrustedProductImage = $derived(Boolean(trustedProductImage));
 	const hasAcceptedSourceBarcode = $derived.by(() => {
 		const normalizedBarcode = normalizeBarcode(barcode);
 		return Boolean(
@@ -1319,7 +1321,7 @@
 				{validatingBarcodeShare}
 				{requiresCatalogEvidence}
 				{showOptionalProductImageUpload}
-				{trustedProductImageUrl}
+				{trustedProductImage}
 				{frontPhoto}
 				{imagePlacement}
 				{saveDestination}

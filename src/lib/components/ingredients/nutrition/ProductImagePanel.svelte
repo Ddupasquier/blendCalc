@@ -1,5 +1,6 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import AssetAttribution from "$lib/components/common/display/AssetAttribution.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor.svelte";
 	import ProductImageFrame from "$lib/components/common/images/ProductImageFrame.svelte";
 	import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
@@ -104,6 +105,11 @@
 			src={imageUrl}
 			alt={imageAlt}
 			onError={() => (imageFailed = true)}
+		/>
+		<AssetAttribution
+			attributionText={food?.image?.attributionText}
+			licenseName={food?.image?.licenseName}
+			licenseUrl={food?.image?.licenseUrl}
 		/>
 
 		{#if canEditPlacement}

@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { onDestroy } from "svelte";
+	import AssetAttribution from "$lib/components/common/display/AssetAttribution.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor.svelte";
 	import type { ProductImageEvidenceInputProps } from "$lib/components/ingredients/manual-entry/formTypes";
 	import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
+	import { pickFoodFullImageUrl } from "$lib/utils/food/images/foodImages";
 
 	let {
-		trustedImageUrl = "",
+		trustedImage,
 		frontPhoto,
 		placement,
 		required = false,
@@ -29,6 +31,7 @@
 		if (objectUrl) URL.revokeObjectURL(objectUrl);
 	});
 
+	const trustedImageUrl = $derived(pickFoodFullImageUrl(trustedImage));
 	const previewUrl = $derived(trustedImageUrl || objectUrl);
 </script>
 
@@ -61,6 +64,13 @@
 			value={placement}
 			onChange={onPlacementChange}
 		/>
+		{#if trustedImage}
+			<AssetAttribution
+				attributionText={trustedImage.attributionText}
+				licenseName={trustedImage.licenseName}
+				licenseUrl={trustedImage.licenseUrl}
+			/>
+		{/if}
 	{/if}
 
 	{#if !trustedImageUrl}

@@ -1,6 +1,9 @@
 import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
-import type { FdcFood } from "$lib/utils/food/types";
-import type { ManualEntryNutrientGroupsByStep } from "$lib/utils/food/nutrients/nutrientDefinitions";
+import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
+import type {
+	ManualEntryNutrientDefinition,
+	ManualEntryNutrientGroupsByStep,
+} from "$lib/utils/food/nutrients/nutrientDefinitions";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { FoodCategoryPickerOption } from "$lib/utils/food/categories/categoryPicker";
@@ -111,8 +114,108 @@ export type ManualEntryListMovePromptState = {
 	resolve: (confirmed: boolean) => void;
 };
 
+export type ShareStepProps = {
+	normalizedName: string;
+	activeCategory: string;
+	summaryNutrients: ManualEntrySummaryItem[];
+	optionalNutrientCount: number;
+	validationItems: ManualEntryValidationItem[];
+	barcodeMessage: string;
+	canShareWithCatalog: boolean;
+	shareUnavailableMessage: string;
+	shareHelpMessage: string;
+	shareWithCatalog: boolean;
+	barcodeShareMismatch: ManualEntryBarcodeShareMismatch;
+	validatingBarcodeShare: boolean;
+	requiresCatalogEvidence: boolean;
+	showOptionalProductImageUpload: boolean;
+	trustedProductImage: FoodImageAsset | undefined;
+	frontPhoto: File | null;
+	imagePlacement: ImagePlacementValue;
+	saveDestination: SmoothieListKey;
+	error: string;
+	lastOutcome: CustomIngredientOutcomeState | null;
+	outcomeAction: "move" | "undo" | null;
+	savedMessage: string;
+	catalogMessage: string;
+	saving: boolean;
+	onShareChange: (checked: boolean) => void | Promise<void>;
+	onApplyVerifiedBarcode: () => void | Promise<void>;
+	onDetachBarcodeForPrivateSave: () => void;
+	onFrontPhotoChange: (file: File | null) => void;
+	onImagePlacementChange: (value: ImagePlacementValue) => void;
+	onNutritionPhotoChange: (file: File | null) => void;
+	onBarcodePhotoChange: (file: File | null) => void;
+	onSaveDestinationChange: (destination: SmoothieListKey) => void;
+	onMoveToShopping: () => void | Promise<void>;
+	onMoveToFridge: () => void | Promise<void>;
+	onUndo: () => void | Promise<void>;
+	onBack: () => void;
+	onSubmit: () => void | Promise<void>;
+	onSaveDestinationInput?: (element: HTMLSelectElement | null) => void;
+};
+
+export type ManualEntryStepContentProps = Omit<
+	ShareStepProps,
+	"validationItems"
+> & {
+	activeStep: ManualEntryStepId;
+	name: string;
+	brandOwner: string;
+	category: string;
+	categoryOptionId: string;
+	barcode: string;
+	categoryWarningMessage: string;
+	categorySourceValues: string[];
+	barcodeValidationMessage: string;
+	checkingBarcodeReference: boolean;
+	barcodeSuggestion: ManualEntryBarcodeSuggestion;
+	servingLabel: string;
+	resolvedServingLabel: string;
+	servingWeightGrams: number | null;
+	useVolumeEquivalent: boolean;
+	volumeQuantity: number | null;
+	volumeUnit: ServingMeasureUnit;
+	volumeOptions: ManualEntryVolumeOption[];
+	manualEntryNutrientGroups: ManualEntryNutrientGroupsByStep;
+	loadingManualEntryNutrients: boolean;
+	manualEntryNutrientError: string;
+	nutritionLabelOcrMappings: NutritionLabelOcrMapping[];
+	nutritionLabelOcrMappingError: string;
+	nutritionPhoto: File | null;
+	hideMacroUnavailableStatus: boolean;
+	customIngredientValidationItems: StepValidationItem[];
+	getAttemptedValidationItems: (
+		items: StepValidationItem[],
+	) => StepValidationItem[];
+	getManualNutrientValue: (
+		field: ManualEntryNutrientDefinition,
+	) => number | null;
+	onValueChange: (
+		field: ManualEntryNutrientDefinition,
+		value: string,
+	) => void;
+	onApplyNutritionLabelOcr: (payload: NutritionLabelOcrApplyPayload) => void;
+	isRequired: (field: ManualEntryNutrientDefinition) => boolean;
+	onNameChange: (value: string) => void;
+	onBrandChange: (value: string) => void;
+	onCategoryChange: (option: FoodCategoryPickerOption) => void;
+	onCategoryStatusChange: (status: FoodCategoryPickerStatus) => void;
+	onBarcodeChange: (value: string) => void;
+	onBarcodeBlur: () => void | Promise<void>;
+	onApplyBarcodeSuggestion: () => void | Promise<void>;
+	onKeepManualBarcodeEntry: () => void;
+	onNameInput: (element: HTMLInputElement | null) => void;
+	onServingLabelChange: (value: string) => void;
+	onServingWeightChange: (value: number | null) => void;
+	onUseVolumeChange: (value: boolean) => void;
+	onVolumeQuantityChange: (value: number | null) => void;
+	onVolumeUnitChange: (value: ServingMeasureUnit) => void;
+	onNext: () => void | Promise<void>;
+};
+
 export type ProductImageEvidenceInputProps = {
-	trustedImageUrl?: string;
+	trustedImage?: FoodImageAsset;
 	frontPhoto: File | null;
 	placement: ImagePlacementValue;
 	required?: boolean;
