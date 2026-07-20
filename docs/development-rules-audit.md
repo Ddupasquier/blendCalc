@@ -412,28 +412,31 @@ record any available corroborating observations from the other APIs and expose t
 confidence difference in the data model. Source-specific audit scripts are allowed only
 when they are clearly named as diagnostics and do not write canonical app data.
 
-**30a.** <a id="rule-usda-source-priority"></a>USDA FoodData Central is the primary
-nutrition authority. Barcode lookup must require an exact normalized GTIN match and
-select the newest active `Branded` USDA record; it must never substitute a generic food
-estimate for a packaged label. Generic food search may use `Foundation`, then
-`SR Legacy`, then `Survey (FNDDS)` as a quality tie-breaker after text relevance. Store
-the USDA data subtype and available publication/modification dates with saved food
-provenance, and show that subtype in detailed nutrition views. Open Food Facts is a
-secondary barcode cross-check and packaging/image source when USDA or the verified
-blendCalc catalog has no suitable record. Never average nutrients across records,
-silently merge unrelated foods, replace a reported zero, or convert a missing nutrient
-into zero.
+**30a.** <a id="rule-usda-source-priority"></a>Apply source authority per field, not per
+provider or whole product. Barcode lookup must require an exact normalized GTIN match
+before any packaged-product source can provide verification evidence. USDA lookup must
+select the newest active exact-match `Branded` record and must never substitute a
+generic food estimate for a packaged label. Open Food Facts exact-barcode records are
+equally valid association evidence and may provide nutrition, images, ingredients,
+categories, or servings according to the policy for each field. Generic food search may
+use `Foundation`, then `SR Legacy`, then `Survey (FNDDS)` as a quality tie-breaker after
+text relevance. Store every provider, source subtype, source reference, and available
+publication/modification date with field-level provenance, and show neutral attribution
+in detailed views. A provider name alone must never create a user-facing trust level.
+Never average nutrients across records, silently merge unrelated foods, replace a
+reported zero, or convert a missing nutrient into zero.
 
 **30b.** <a id="rule-source-quality-measurement"></a>Measure external product sources
 with privacy-safe backend metrics instead of assumptions. Count logical lookups, actual
 outbound API requests, cache hits, API failures, completed lookups, exact barcode
 matches, returned nutrient depth, useful metadata coverage, and response time
 separately. Never store a user's barcode, search text, user id, or raw vendor payload in
-source-usage metrics. Keep source authority separate from observed coverage: a fuller
-community record does not automatically outrank a more authoritative nutrition source.
-Runtime fallback traffic is biased because secondary sources receive harder misses, so
-direct source comparisons must use the same representative barcode sample through the
-controlled benchmark before changing source priority.
+source-usage metrics. Keep field authority, observed coverage, and verification evidence
+separate: a fuller record does not automatically replace a stronger value for a specific
+field, and a provider name does not make an entire product verified. Runtime fallback
+traffic is biased because later providers receive harder misses, so direct source
+comparisons must use the same representative barcode sample through the controlled
+benchmark before changing a field-selection policy.
 
 **30c.** <a id="rule-external-api-request-efficiency"></a>Every external API integration
 must minimize and bound outbound requests. Read the blendCalc database/cache first when
@@ -484,39 +487,46 @@ Node runtimes. Add request-count, timeout, retry, cache, stale-fallback, batchin
 authentication, and runtime-client tests for every shared request utility, and inspect
 real query statistics before adding or removing indexes.
 
-**30f.** <a id="rule-ingredient-provenance"></a>Keep ingredient origin and trust status
-as separate database-backed dimensions. Origin answers where the food record came from,
-such as USDA, Open Food Facts, the blendCalc community catalog, or private custom entry.
-Trust answers how the current record was accepted, such as source-verified, imported,
-corroborated, moderator-reviewed, pending-review, or user-private. Never replace either
-dimension with a generic `shared` badge, infer API ownership from whether a record is
-public, or show image/unit-support APIs as the food's primary source. Source and trust
-filter labels, badge labels, ordering, enabled states, and tones must come from database
-reference rows. Saved list rows must use normalized foreign keys to their active shared
-product and current user submission; database triggers must refresh those links and
-their indexed source/trust projections whenever a list item is written, a submission
-changes status, or a shared product changes. JSON food payloads may remain compatibility
-snapshots but must never be the authority for whether an item is private, pending, or
-approved. Saved-list and search filtering must execute on the server using normalized,
-indexed source/trust fields. Saved cards, search cards, and nutrition details must
-render source and trust through the same `IngredientProvenanceBadges` component and
-descriptor lookup so one ingredient cannot change badge meaning between views. The
-source-verified trust state must use the shared `VerifiedStatusBadge` shield-check
-treatment in every view while retaining the database label as its accessible name and
-tooltip; nutrition details must also retain the complete field-level source attribution.
+**30f.** <a id="rule-ingredient-provenance"></a>Keep ingredient origin, field authority,
+and verification as separate database-backed concepts. Origin answers where each value
+came from, field authority selects the accepted value for nutrition, image, category,
+or serving, and verification records evidence such as an exact barcode match,
+cross-source agreement, or moderator review. `Imported` describes an ingestion method,
+not a lower trust level. USDA, Open Food Facts, national datasets, and future providers
+must never receive blanket verified or unverified status from their names alone. Keep
+origin and field-level provenance internally and show neutral source attribution in
+detailed nutrition views where useful or legally required, but do not show provider or
+`Imported` hierarchy badges on compact saved/search cards. Compact UI may show only
+actionable states such as `Verified`, `Pending Review`, `Conflict`, or `Incomplete`;
+verified evidence states must share one user-facing label and treatment regardless of
+whether the evidence was an exact source match, corroboration, or moderator approval.
+Badge labels, ordering, enabled states, and tones must come from database reference rows.
+Saved list rows must use normalized foreign keys to their active shared product and
+current user submission; database triggers must refresh those links and their indexed
+origin/verification projections whenever a list item is written, a submission changes
+status, or a shared product changes. JSON food payloads may remain compatibility
+snapshots but must never be the authority for whether an item is pending or approved.
+Provider and internal acceptance-method filters must not be exposed as consumer trust
+controls. Unknown origin must remain `unknown`; never assign USDA or another provider
+merely because source metadata is absent. Render all actionable verification states
+through the shared `IngredientProvenanceBadges` component, and use
+`VerifiedStatusBadge` for the unified verified state while retaining the database label
+as its accessible name and tooltip.
 
 **30g.** <a id="rule-field-level-product-enrichment"></a>No API owns an entire product
 record merely because it returned the first or most authoritative match. Build
 exact-barcode products field by field: select nutrition, image, category, and serving
 data independently, retain the chosen source, source reference, and confidence for each
 field, and preserve per-nutrient provenance. Read the blendCalc database and legal
-source caches first. Keep USDA as the nutrition authority when it reports nutrition, but
-continue checking only the missing fields instead of returning early; a cached or Open
-Food Facts image, category, or serving may supplement USDA without replacing USDA
-nutrients or reported zeroes. A complete database record must make no external product
-request. A partial database or USDA record may request a fallback only while a tracked
-field remains missing, and a cache failure, missing optional field, or secondary-source
-outage must never discard the usable primary data. When a fallback serving changes the
+source caches first. Apply an explicit selection policy independently to every field;
+the policy may prefer a source for a particular field but must not turn that preference
+into a whole-product hierarchy or user-facing provider badge. Continue checking only
+missing fields instead of returning early; an exact source match may supplement
+nutrition, image, category, or serving without replacing accepted nutrients or reported
+zeroes. A complete database record must make no external product request. A partial
+record may request a fallback only while a tracked field remains missing, and a cache
+failure, missing optional field, or later-source outage must never discard usable data.
+When a fallback serving changes the
 working gram basis, rescale the retained nutrient values exactly once to that serving
 before saving. Persist field-level provenance through manual-entry autofill, catalog
 creation, normalized serving rows, and saved food snapshots, and cover complete-cache,
@@ -638,10 +648,10 @@ savings do not add avoidable delay. Once a reusable image exists, do not call an
 external image source merely to rediscover it. Prefer moderator-reviewed images over
 source-verified images, source-verified images over imported images, and the newest
 image only as a same-confidence tie-breaker. Database image records override stale image
-snapshots embedded in saved food JSON. The authoritative nutrition source and the image
-source may differ: keep USDA nutrition as primary while enriching an exact barcode match
-with a legally usable Open Food Facts package image, preserving the image’s own
-provenance. A missing cache row, missing provider image, or failed optional image lookup
+snapshots embedded in saved food JSON. The accepted nutrition field and image field may
+come from different providers: enrich exact barcode matches with legally usable package
+images while preserving each field's provenance. A missing cache row, missing provider
+image, or failed optional image lookup
 must never discard an otherwise valid nutrition match. User-submitted product evidence
 remains moderation evidence unless it is approved into a reusable image record.
 
@@ -823,23 +833,25 @@ buttons. The crown is a standalone filled yellow mark without a circular backgro
 border; both profile and action variants must use the shared component and token-backed
 sizes.
 
-**45b.** <a id="rule-text-badges"></a>Compact text badges for sources, trust/review
+**45b.** <a id="rule-text-badges"></a>Compact text badges for actionable verification
 states, statuses, and similar metadata must use the shared `TextBadge` component unless
 an explicitly approved semantic status uses a focused shared icon badge such as
-`VerifiedStatusBadge`. Do not reproduce badge spans or pill styling inside feature
-components. The shared primitive owns horizontal and vertical centering, minimum height,
-typography, truncation, tone colors, padding, and rounding through SCSS variables;
-feature code supplies only semantic label, tone, and accessible text.
+`VerifiedStatusBadge`. Provider origin and ingestion-method labels do not belong in
+compact cards. Do not reproduce badge spans or pill styling inside feature components.
+The shared primitive owns horizontal and vertical centering, minimum height, typography,
+truncation, tone colors, padding, and rounding through SCSS variables; feature code
+supplies only semantic label, tone, and accessible text.
 
-**45c.** <a id="rule-verified-status-badge"></a>The source-verified trust state must
-render as the reusable `ShieldCheck` icon inside `VerifiedStatusBadge`, which must
-compose `StatusIconBadge` and the shared circular icon frame. Do not show a separate
-visible `Verified` text pill, inline the shield SVG, or recreate its circle in
-ingredient features. Keep the database-provided badge label available through the icon's
-accessible name and tooltip so the icon is understandable without relying on color or
-shape alone. Ingredient cards, search results, shopping lists, and nutrition details
-must all receive this treatment through `IngredientProvenanceBadges` rather than
-rendering their own version.
+**45c.** <a id="rule-verified-status-badge"></a>Any verification backed by accepted
+evidence—an exact source match, corroboration, or moderator approval—must render as the
+same reusable `ShieldCheck` icon inside `VerifiedStatusBadge`, which must compose
+`StatusIconBadge` and the shared circular icon frame. Do not create provider-specific
+verified treatments, show a separate visible `Verified` text pill, inline the shield
+SVG, or recreate its circle in ingredient features. Keep the database-provided badge
+label available through the icon's accessible name and tooltip so the icon is
+understandable without relying on color or shape alone. Ingredient cards, search
+results, shopping lists, and nutrition details must all receive this treatment through
+`IngredientProvenanceBadges` rather than rendering their own version.
 
 **46.** <a id="rule-qa-links"></a>QA tasks must include exact reproduction steps,
 concrete example inputs, observable expected outcomes, exact code references, and links

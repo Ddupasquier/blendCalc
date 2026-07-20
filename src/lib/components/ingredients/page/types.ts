@@ -1,7 +1,6 @@
 import type { ManualEntryCreateContext } from "$lib/components/ingredients/manual-entry/types";
 import type {
 	IngredientFilterApplyPayload,
-	IngredientFilterOption,
 	IngredientSortOption,
 } from "$lib/components/ingredients/sheets/types";
 import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
@@ -41,10 +40,6 @@ export type IngredientRoutePopinsProps = {
 	activeSheet: IngredientRouteActiveSheet;
 	actionSheetItem: IngredientActionItem | null;
 	barcodeLookupBusy: boolean;
-	filterOptions: readonly IngredientFilterOption[];
-	filterValue: string;
-	trustOptions: readonly IngredientFilterOption[];
-	trustValue: string;
 	listLoading: boolean;
 	listMembership: IngredientListMembership;
 	imagePlacementItem: IngredientActionItem | null;

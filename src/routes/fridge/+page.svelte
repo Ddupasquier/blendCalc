@@ -30,7 +30,6 @@
         type IngredientActionItem,
     } from "$lib/utils/ingredients/ingredientListUi";
     import {
-        getIngredientFilterOptions,
         readIngredientProvenanceOptions,
         type IngredientProvenanceOption,
     } from "$lib/utils/ingredients/ingredientProvenance";
@@ -77,8 +76,8 @@
     let barcodeScannerRouteOpen = $state(false);
     let barcodeLookupBusy = $state(false);
     let listQuery = $state("");
-    let sourceFilter = $state("all");
-    let trustFilter = $state("any");
+    const sourceFilter = "all";
+    const trustFilter = "any";
     let listSort = $state<FoodListSort>("recent");
     let activeList = $state<SmoothieListKey>(MIX_STORAGE_KEYS.fridge);
     let activeSheet = $state<"manual-entry" | "filters" | null>(null);
@@ -141,12 +140,6 @@
 
     const filteredOnHand = $derived(onHand);
     const filteredShoppingList = $derived(shoppingList);
-    const sourceFilterOptions = $derived(
-        getIngredientFilterOptions(provenanceOptions, "source"),
-    );
-    const trustFilterOptions = $derived(
-        getIngredientFilterOptions(provenanceOptions, "trust"),
-    );
     const activeFilteredList = $derived.by(() =>
         activeList === MIX_STORAGE_KEYS.fridge
             ? filteredOnHand
@@ -753,20 +746,14 @@
 
     const applyListFilters = ({
         query,
-        filterValue,
-        trustValue,
         sortValue,
     }: IngredientFilterApplyPayload) => {
         const nextSort = sortValue as FoodListSort;
         const unchanged =
             listQuery === query &&
-            sourceFilter === filterValue &&
-            trustFilter === trustValue &&
             listSort === nextSort;
 
         listQuery = query;
-        sourceFilter = filterValue;
-        trustFilter = trustValue;
         listSort = nextSort;
         activeSheet = null;
         void closeRoutedPopin();
@@ -962,10 +949,6 @@
     {activeSheet}
     {actionSheetItem}
     {barcodeLookupBusy}
-    filterOptions={sourceFilterOptions}
-    filterValue={sourceFilter}
-    trustOptions={trustFilterOptions}
-    trustValue={trustFilter}
     {listLoading}
     listMembership={selectedFoodListMembership}
     {imagePlacementItem}

@@ -11,7 +11,7 @@
 
 <StatusIconBadge
 	class={`verified-status-badge ${className}`.trim()}
-	label={`Review status: ${label}`}
+	label={`Verification status: ${label}`}
 	title={label}
 	tone="success"
 >

@@ -60,11 +60,9 @@ export const createCatalogFoodFromDraft = (
 		gtinUpc: draft.barcode,
 		sharedProductId,
 		sharedProductConfidence:
-			draft.source === "usda"
+			draft.source === "usda" || draft.source === "open-food-facts"
 				? "source-verified"
-				: draft.source === "open-food-facts"
-					? "imported"
-					: "moderator-reviewed",
+				: "moderator-reviewed",
 		sourceKey: draft.sourceKey,
 		sourceLabel: draft.sourceLabel,
 		sourceDataType: draft.sourceDataType,

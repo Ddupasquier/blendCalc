@@ -9,7 +9,8 @@ export type IngredientSourceKey =
 	| "open-food-facts"
 	| "national-dataset"
 	| "shared-catalog"
-	| "custom";
+	| "custom"
+	| "unknown";
 export type IngredientTrustStatus = FoodTrustStatus;
 export type IngredientBadgeTone = "info" | "success" | "custom" | "neutral";
 
@@ -25,13 +26,6 @@ export type IngredientProvenanceOption = Pick<
 	| "badge_enabled"
 >;
 
-export type IngredientBadgeDescriptor = {
-	dimension: IngredientProvenanceDimension;
-	value: string;
-	label: string;
-	tone: IngredientBadgeTone;
-};
-
 export type IngredientProvenanceFilters = {
 	sourceFilter?: string;
 	trustFilter?: string;
@@ -43,6 +37,7 @@ const SOURCE_KEYS = new Set<IngredientSourceKey>([
 	"national-dataset",
 	"shared-catalog",
 	"custom",
+	"unknown",
 ]);
 const TRUST_STATUSES = new Set<IngredientTrustStatus>([
 	"source-verified",
@@ -50,7 +45,14 @@ const TRUST_STATUSES = new Set<IngredientTrustStatus>([
 	"corroborated",
 	"moderator-reviewed",
 	"pending-review",
+	"unverified",
 	"user-private",
+]);
+
+const VERIFIED_EVIDENCE_STATUSES = new Set<IngredientTrustStatus>([
+	"source-verified",
+	"corroborated",
+	"moderator-reviewed",
 ]);
 
 export const isIngredientTrustStatus = (
@@ -86,34 +88,27 @@ export const getFoodSourceKey = (food: FdcFood): IngredientSourceKey => {
 	if (food.barcodeSource === "community") return "shared-catalog";
 	if (food.customFood) return "custom";
 	if (food.sharedProductId) return "shared-catalog";
-	return "usda";
+	return "unknown";
 };
 
 export const getFoodTrustStatus = (food: FdcFood): IngredientTrustStatus => {
-	if (isIngredientTrustStatus(food.trustStatus)) return food.trustStatus;
+	if (isIngredientTrustStatus(food.trustStatus)) {
+		return food.trustStatus === "imported" ? "unverified" : food.trustStatus;
+	}
 	if (
-		food.sharedProductId &&
 		food.sharedProductConfidence &&
 		TRUST_STATUSES.has(food.sharedProductConfidence as IngredientTrustStatus)
 	) {
-		return food.sharedProductConfidence as IngredientTrustStatus;
+		return food.sharedProductConfidence === "imported"
+			? "unverified"
+			: food.sharedProductConfidence as IngredientTrustStatus;
 	}
-	if (food.sharedProductId) {
-		const sourceKey = getFoodSourceKey(food);
-		if (sourceKey === "usda") return "source-verified";
-		if (sourceKey === "open-food-facts") return "imported";
-		return "moderator-reviewed";
-	}
-	if (food.customFood) return "user-private";
-
-	const sourceKey = getFoodSourceKey(food);
-	if (sourceKey === "usda") return "source-verified";
-	if (sourceKey === "open-food-facts" || sourceKey === "national-dataset") {
-		return "imported";
-	}
-	if (sourceKey === "shared-catalog") return "moderator-reviewed";
-	return "user-private";
+	if (food.customFood && !food.sharedProductId) return "user-private";
+	return "unverified";
 };
+
+export const isFoodVerified = (food: FdcFood) =>
+	VERIFIED_EVIDENCE_STATUSES.has(getFoodTrustStatus(food));
 
 export const readIngredientProvenanceOptions = async (
 	supabase: SupabaseClient<Database> | null = getSupabaseBrowserClient(),
@@ -132,49 +127,41 @@ export const readIngredientProvenanceOptions = async (
 	return data ?? [];
 };
 
-export const getIngredientFilterOptions = (
-	options: readonly IngredientProvenanceOption[],
-	dimension: IngredientProvenanceDimension,
-) =>
-	options
-		.filter((option) => option.dimension === dimension && option.filter_enabled)
-		.map((option) => ({
-			value: option.value,
-			label: option.filter_label,
-		}));
-
-const getIngredientBadge = (
-	food: FdcFood,
-	options: readonly IngredientProvenanceOption[],
-	dimension: IngredientProvenanceDimension,
-): IngredientBadgeDescriptor | null => {
-	const value = dimension === "source"
-		? getFoodSourceKey(food)
-		: getFoodTrustStatus(food);
-	const option = options.find(
-		(item) =>
-			item.dimension === dimension &&
-			item.value === value &&
-			item.badge_enabled,
-	);
-	if (!option?.badge_label) return null;
-	return {
-		dimension,
-		value: option.value,
-		label: option.badge_label,
-		tone: option.badge_tone as IngredientBadgeTone,
-	};
-};
-
-export const getIngredientSourceBadge = (
-	food: FdcFood,
-	options: readonly IngredientProvenanceOption[],
-) => getIngredientBadge(food, options, "source");
-
 export const getIngredientTrustBadge = (
 	food: FdcFood,
 	options: readonly IngredientProvenanceOption[],
-) => getIngredientBadge(food, options, "trust");
+) => {
+	const trustStatus = getFoodTrustStatus(food);
+	if (VERIFIED_EVIDENCE_STATUSES.has(trustStatus)) {
+		const verifiedOption = options.find(
+			(option) =>
+				option.dimension === "trust" &&
+				option.value === "source-verified" &&
+				option.badge_enabled,
+		);
+		if (!verifiedOption?.badge_label) return null;
+		return {
+			dimension: "trust" as const,
+			value: "verified",
+			label: verifiedOption.badge_label,
+			tone: verifiedOption.badge_tone as IngredientBadgeTone,
+		};
+	}
+	if (trustStatus !== "pending-review") return null;
+	const pendingOption = options.find(
+		(option) =>
+			option.dimension === "trust" &&
+			option.value === trustStatus &&
+			option.badge_enabled,
+	);
+	if (!pendingOption?.badge_label) return null;
+	return {
+		dimension: "trust" as const,
+		value: trustStatus,
+		label: pendingOption.badge_label,
+		tone: pendingOption.badge_tone as IngredientBadgeTone,
+	};
+};
 
 export const matchesIngredientProvenance = (
 	food: FdcFood,

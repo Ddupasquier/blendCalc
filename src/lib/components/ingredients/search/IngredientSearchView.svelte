@@ -60,7 +60,7 @@
 				<BarcodeScanButton scanning={scanning} compact onclick={onScan} />
 				<IconControlButton
 					class="ingredient-search-view__filter"
-					label="Filter ingredients"
+					label="Sort ingredients"
 					active={filtersActive}
 					aria-expanded={filtersActive}
 					aria-controls="ingredient-filter-sheet-title"

@@ -146,7 +146,7 @@ describe("NutritionDetailView", () => {
 		expect(screen.getByText("SR Legacy")).toBeInTheDocument();
 	});
 
-	it("uses the same source and review badges as ingredient cards", () => {
+	it("keeps neutral source attribution separate from verification", () => {
 		render(NutritionDetailView, {
 			props: {
 				food: {
@@ -163,12 +163,15 @@ describe("NutritionDetailView", () => {
 			},
 		});
 
-		const sourceBadge = screen.getByLabelText("Source: USDA");
-		expect(sourceBadge).toBeInTheDocument();
-		expect(screen.getByLabelText("Review status: Verified")).toBeInTheDocument();
+		expect(screen.queryByLabelText("Source: USDA")).not.toBeInTheDocument();
+		expect(screen.getByLabelText("Verification status: Verified"))
+			.toBeInTheDocument();
 		expect(screen.queryByLabelText("Source: Custom")).not.toBeInTheDocument();
 		expect(screen.getByText("Source: USDA FoodData Central")).toBeInTheDocument();
 		expect(screen.getByText("Branded")).toBeInTheDocument();
-		expect(sourceBadge.closest(".nf-heading-badges")).toBeInTheDocument();
+		expect(
+			screen.getByLabelText("Verification status: Verified")
+				.closest(".nf-heading-badges"),
+		).toBeInTheDocument();
 	});
 });

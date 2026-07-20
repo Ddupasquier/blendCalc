@@ -7,7 +7,7 @@ describe("VerifiedStatusBadge", () => {
 		render(VerifiedStatusBadge, { props: { label: "Verified" } });
 
 		const badge = screen.getByRole("img", {
-			name: "Review status: Verified",
+			name: "Verification status: Verified",
 		});
 		expect(badge).toHaveClass("verified-status-badge");
 		expect(badge).toHaveClass("status-icon-badge");

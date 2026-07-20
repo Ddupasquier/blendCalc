@@ -34,9 +34,13 @@ describe("loading indicator architecture", () => {
 		const identityStep = read(
 			"src/lib/components/ingredients/manual-entry/steps/IdentityStep.svelte",
 		);
+		const categoryPicker = read(
+			"src/lib/components/ingredients/manual-entry/FoodCategoryPicker.svelte",
+		);
 
 		expect(identityStep).toContain("InputLoadingFrame");
 		expect(identityStep).toContain('loadingLabel="Checking barcode sources"');
-		expect(identityStep).toContain('loadingLabel="Loading categories"');
+		expect(categoryPicker).toContain("InputLoadingFrame");
+		expect(categoryPicker).toContain('loadingLabel="Searching categories"');
 	});
 });

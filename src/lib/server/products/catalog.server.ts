@@ -673,7 +673,7 @@ export const submitProductForCatalog = async (
 				brandOwner: matchedDraft.brandOwner,
 				source,
 				sourceReference: matchedDraft.sourceReference,
-				confidence: usdaDraft ? "source-verified" : "imported",
+				confidence: "source-verified",
 				observations: verificationBundle.observations,
 				provenance: verificationBundle.provenance,
 				conflicts: verificationBundle.conflicts,
@@ -689,9 +689,7 @@ export const submitProductForCatalog = async (
 		}
 		return {
 			status: "approved",
-			message: usdaDraft
-				? "USDA verified this product, so it is now available to everyone."
-				: "Open Food Facts matched this barcode, so it is now available in shared search.",
+			message: "An exact source match verified this product, so it is now available to everyone.",
 			evidenceAccepted: true,
 		};
 	}

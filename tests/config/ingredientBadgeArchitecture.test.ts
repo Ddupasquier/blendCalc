@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 describe("ingredient badge architecture", () => {
-	it("uses shared centered badges for source and review status", () => {
+	it("uses shared centered badges for actionable verification status", () => {
 		const ingredientBadges = readFileSync(
 			"src/lib/components/ingredients/provenance/IngredientProvenanceBadges.svelte",
 			"utf8",
@@ -30,9 +30,8 @@ describe("ingredient badge architecture", () => {
 		expect(ingredientBadges).toContain(
 			'$lib/components/common/badges/VerifiedStatusBadge.svelte',
 		);
-		expect(ingredientBadges).toContain(
-			'trustBadge.value === "source-verified"',
-		);
+		expect(ingredientBadges).toContain('trustBadge.value === "verified"');
+		expect(ingredientBadges).not.toContain("getIngredientSourceBadge");
 		expect(ingredientBadges).not.toContain('class="ingredient-card-badge"');
 		expect(textBadge).toContain("place-items: center");
 		expect(textBadge).toContain("min-height: $app-text-badge-min-height");

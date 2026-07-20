@@ -53,14 +53,15 @@ formatter, while fully manual and personally renamed user-owned capitalization i
 preserved exactly. Raw API cache payloads, observations, revisions, and evidence remain
 unchanged.
 
-- Exact USDA barcode matches outrank user-entered values. When USDA returns duplicate
-  records for one GTIN, select the newest active `Branded` record.
+- Exact normalized barcode matches provide association evidence regardless of whether
+  the match comes from USDA or Open Food Facts. When USDA returns duplicate records for
+  one GTIN, select the newest active `Branded` record.
 - Generic USDA food searches prefer `Foundation`, then `SR Legacy`, then
   `Survey (FNDDS)` only after description relevance has been compared.
 - Values from different sources are never averaged.
 - Do not fill a missing packaged-label nutrient from a different or generic food record.
-  Open Food Facts remains a secondary barcode/package cross-check rather than a
-  replacement for an exact USDA record.
+  Select values independently by field and preserve the accepted provider, source
+  reference, and evidence for every field.
 - A reported zero is kept as zero. A missing nutrient remains unknown.
 - Canonical categories are resolved through database options and mappings; they are not
   replaced with a generic packaged-food label during publication.
@@ -115,21 +116,22 @@ Keep source handling explicit. Do not merge Open Food Facts payloads into
 `shared_products` unless the entire downstream database licensing and attribution model
 is intentionally changed.
 
-Ingredient cards and filters keep two separate identities: the food record's origin
-(`usda`, `open-food-facts`, `shared-catalog`, or `custom`) and its current trust status
-(`source-verified`, `imported`, `corroborated`, `moderator-reviewed`, `pending-review`,
-or `user-private`). Public catalog membership does not erase the original provider, and
-image/unit-support sources are shown only in their detailed provenance rather than as
-the primary food source.
+The database keeps origin, field authority, and verification separate. Origin identifies
+each provider, field authority records which source supplied an accepted nutrition,
+image, category, or serving value, and verification records evidence such as an exact
+barcode match, corroboration, or moderator review. Public catalog membership does not
+erase provider provenance. Compact cards do not expose provider or `Imported` hierarchy
+badges; detailed nutrition keeps neutral source attribution and actionable verification
+states remain consistent across views.
 
 Saved Fridge and Shopping List rows hold normalized links to the active
 `shared_products` row and the current user's pending `shared_product_submissions` row.
 Database triggers refresh those links after a list write, automatic publication,
 moderator action, product retirement, or source/confidence change. The UI reads these
-links and their indexed source/trust projection instead of guessing from an older JSON
-snapshot. This means an approved product cannot continue to display `Private`, and a
-pending catalog update can display `Pending` without pretending the underlying active
-product has disappeared.
+links and their indexed origin/verification projection instead of guessing from an
+older JSON snapshot. This means an approved product cannot continue to display a stale
+state, and a pending catalog update can display `Pending` without pretending the
+underlying active product has disappeared.
 
 ## Source quality monitoring
 
@@ -138,12 +140,12 @@ separate logical lookups from real outbound requests and USDA cache hits, then t
 source errors, exact matches, nutrient depth, useful product metadata, and response
 time. They do not retain barcodes, search terms, users, or raw API responses.
 
-Use `npm run report:source-quality` to inspect normal traffic. Because Open Food Facts
-is normally called only after USDA misses, runtime match rates are not a fair
+Use `npm run report:source-quality` to inspect normal traffic. Because later providers
+normally receive harder or incomplete records, runtime match rates are not a fair
 head-to-head ranking. Run `npm run benchmark:source-quality -- --limit=10` and then
 `npm run report:source-quality -- --origin=benchmark` to send the same saved barcodes to
 both sources. Treat that coverage report as evidence about availability and fullness,
-not permission to replace USDA as the primary nutrition authority.
+not permission to assign one provider a blanket whole-product trust level.
 
 Use `--reset-today` when validating a code-level request optimization. It clears only
 today's synthetic `benchmark` rows before the run, leaving runtime metrics untouched, so

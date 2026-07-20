@@ -7,10 +7,6 @@
 	let {
 		open,
 		query,
-		filterValue,
-		filterOptions,
-		trustValue,
-		trustOptions,
 		sortValue,
 		sortOptions,
 		loading = false,
@@ -18,8 +14,6 @@
 		onClose,
 	}: IngredientFilterSheetProps = $props();
 
-	let draftFilterValue = $state("");
-	let draftTrustValue = $state("");
 	let draftSortValue = $state("");
 
 	const visibleSortOptions = $derived(
@@ -29,58 +23,24 @@
 	const applyFilters = () => {
 		onApply({
 			query,
-			filterValue: draftFilterValue,
-			trustValue: draftTrustValue,
 			sortValue: draftSortValue,
 		});
 	};
 
 	$effect(() => {
 		if (!open) return;
-		draftFilterValue = filterValue;
-		draftTrustValue = trustValue;
 		draftSortValue = sortValue;
 	});
 </script>
 
 <BottomSheet
 	{open}
-	title="Filter & Sort"
+	title="Sort"
 	titleId="ingredient-filter-sheet-title"
-	label="Filter saved ingredients"
+	label="Sort saved ingredients"
 	onClose={onClose}
 >
 	<div class="ingredient-filter-sheet">
-		<section class="ingredient-filter-sheet__section" aria-labelledby="filter-source-heading">
-			<h3 id="filter-source-heading">Source</h3>
-			<div class="ingredient-filter-sheet__chips" role="group" aria-labelledby="filter-source-heading">
-				{#each filterOptions as option (option.value)}
-					<PillButton
-						variant={draftFilterValue === option.value ? "primary" : "neutral"}
-						pressed={draftFilterValue === option.value}
-						onclick={() => (draftFilterValue = option.value)}
-					>
-						{option.label}
-					</PillButton>
-				{/each}
-			</div>
-		</section>
-
-		<section class="ingredient-filter-sheet__section" aria-labelledby="filter-trust-heading">
-			<h3 id="filter-trust-heading">Review status</h3>
-			<div class="ingredient-filter-sheet__chips" role="group" aria-labelledby="filter-trust-heading">
-				{#each trustOptions as option (option.value)}
-					<PillButton
-						variant={draftTrustValue === option.value ? "primary" : "neutral"}
-						pressed={draftTrustValue === option.value}
-						onclick={() => (draftTrustValue = option.value)}
-					>
-						{option.label}
-					</PillButton>
-				{/each}
-			</div>
-		</section>
-
 		<section class="ingredient-filter-sheet__section" aria-labelledby="filter-sort-heading">
 			<h3 id="filter-sort-heading">Sort</h3>
 			<div class="ingredient-filter-sheet__chips" role="group" aria-labelledby="filter-sort-heading">

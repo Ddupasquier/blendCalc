@@ -40,7 +40,9 @@ export const needsBarcodeProductSupplement = (draft: BarcodeProductDraft) =>
 const getDefaultConfidence = (
 	source: FoodFieldSource["source"],
 ): NonNullable<FoodFieldSource["confidence"]> => {
-	if (source === "usda") return "source-verified";
+	if (source === "usda" || source === "open-food-facts") {
+		return "source-verified";
+	}
 	if (source === "community-reviewed" || source === "shared-catalog") {
 		return "moderator-reviewed";
 	}

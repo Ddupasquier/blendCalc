@@ -90,6 +90,7 @@ export type FoodTrustStatus =
     | "corroborated"
     | "moderator-reviewed"
     | "pending-review"
+    | "unverified"
     | "user-private";
 
 export type FoodBarcodeProvenance = {

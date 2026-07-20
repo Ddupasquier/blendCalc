@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
 	getFoodSourceKey,
 	getFoodTrustStatus,
-	getIngredientFilterOptions,
-	getIngredientSourceBadge,
 	getIngredientTrustBadge,
 	matchesIngredientProvenance,
 	type IngredientProvenanceOption,
@@ -62,10 +60,14 @@ describe("ingredient provenance", () => {
 		expect(getFoodTrustStatus(privateUsdaFood)).toBe("user-private");
 	});
 
-	it("recognizes external and reviewed catalog sources", () => {
+	it("keeps provider identity neutral until evidence is recorded", () => {
 		expect(getFoodSourceKey(food({ sourceKey: "open-food-facts" }))).toBe(
 			"open-food-facts",
 		);
+		expect(getFoodTrustStatus(food({ sourceKey: "open-food-facts" })))
+			.toBe("unverified");
+		expect(getFoodTrustStatus(food({ sourceKey: "usda" })))
+			.toBe("unverified");
 		expect(
 			getFoodTrustStatus(food({
 				sourceKey: "shared-catalog",
@@ -87,12 +89,15 @@ describe("ingredient provenance", () => {
 		});
 
 		expect(getFoodSourceKey(reviewedFood)).toBe("shared-catalog");
-		expect(getFoodTrustStatus(reviewedFood)).toBe("moderator-reviewed");
+		expect(getFoodTrustStatus(reviewedFood)).toBe("unverified");
 		expect(getFoodTrustStatus(pendingFood)).toBe("pending-review");
 	});
 
 	it("filters source and trust independently", () => {
-		const usdaFood = food({ sourceKey: "usda" });
+		const usdaFood = food({
+			sourceKey: "usda",
+			trustStatus: "source-verified",
+		});
 		expect(matchesIngredientProvenance(usdaFood, "usda", "source-verified"))
 			.toBe(true);
 		expect(matchesIngredientProvenance(usdaFood, "open-food-facts", "any"))
@@ -101,15 +106,29 @@ describe("ingredient provenance", () => {
 			.toBe(false);
 	});
 
-	it("builds database-configured filters and badges", () => {
-		const usdaFood = food({ sourceKey: "usda" });
-		expect(getIngredientFilterOptions(options, "source")).toEqual([
-			{ value: "usda", label: "USDA" },
-		]);
-		expect(getIngredientSourceBadge(usdaFood, options)?.label).toBe("USDA");
+	it("builds the database-configured actionable verification badge", () => {
+		const usdaFood = food({
+			sourceKey: "usda",
+			trustStatus: "source-verified",
+		});
 		expect(getIngredientTrustBadge(usdaFood, options)).toMatchObject({
-			value: "source-verified",
+			value: "verified",
 			label: "Verified",
 		});
+	});
+
+	it("does not assign an unknown origin to USDA", () => {
+		expect(getFoodSourceKey(food({}))).toBe("unknown");
+	});
+
+	it("maps imported acceptance metadata to neutral unverified state", () => {
+		expect(getFoodTrustStatus(food({
+			sourceKey: "open-food-facts",
+			trustStatus: "imported",
+		}))).toBe("unverified");
+		expect(getIngredientTrustBadge(food({
+			sourceKey: "open-food-facts",
+			trustStatus: "imported",
+		}), options)).toBeNull();
 	});
 });

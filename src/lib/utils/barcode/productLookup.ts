@@ -189,7 +189,7 @@ const parseOpenFoodFactsImage = (
 		licenseName: OPEN_FOOD_FACTS_IMAGE_LICENSE.name,
 		licenseUrl: OPEN_FOOD_FACTS_IMAGE_LICENSE.url,
 		attributionText: OPEN_FOOD_FACTS_IMAGE_LICENSE.attribution,
-		confidence: "imported",
+		confidence: "source-verified",
 		...createFullImagePlacement(),
 		fetchedAt: new Date().toISOString(),
 	};
@@ -214,7 +214,6 @@ const parseFdcMetadata = (food: FdcFood) => ({
 const getFieldConfidence = (
 	source: FoodFieldSource["source"],
 ): NonNullable<FoodFieldSource["confidence"]> => {
-	if (source === "usda") return "source-verified";
 	if (source === "community-reviewed" || source === "shared-catalog") {
 		return "moderator-reviewed";
 	}
@@ -262,7 +261,11 @@ const createOpenFoodFactsFieldProvenance = ({
 	categories: string[];
 	hasSourceServing: boolean;
 }): FoodFieldProvenance => {
-	const source = createFieldSource("open-food-facts", barcode, "imported");
+	const source = createFieldSource(
+		"open-food-facts",
+		barcode,
+		"source-verified",
+	);
 	return {
 		...(nutrients.length > 0 ? { nutrition: source } : {}),
 		...(image
@@ -296,8 +299,7 @@ const createFdcFieldProvenance = ({
 		food.sourceKey ?? food.barcodeSource ?? "usda",
 	);
 	const fallbackReference = food.sharedProductId ?? String(food.fdcId);
-	const fallbackConfidence = food.sharedProductConfidence ??
-		getFieldConfidence(fallbackSource);
+	const fallbackConfidence = food.sharedProductConfidence ?? "source-verified";
 	const fallback = createFieldSource(
 		fallbackSource,
 		fallbackReference,

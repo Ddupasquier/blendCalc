@@ -25,7 +25,7 @@
 		<BarcodeScanButton scanning={barcodeLookupBusy} compact onclick={onScan} />
 		<IconControlButton
 			class="filter-button"
-			label="Filter saved ingredients"
+			label="Sort saved ingredients"
 			active={filtersActive}
 			aria-expanded={filtersActive}
 			aria-controls="ingredient-filter-sheet-title"

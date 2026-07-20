@@ -4,7 +4,7 @@ import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/I
 import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceData";
 
 describe("IngredientProvenanceBadges", () => {
-	it("shows database-backed provenance and compact warning detail", () => {
+	it("shows evidence-backed verification without exposing provider hierarchy", () => {
 		render(IngredientProvenanceBadges, {
 			props: {
 				food: {
@@ -20,9 +20,9 @@ describe("IngredientProvenanceBadges", () => {
 			},
 		});
 
-		expect(screen.getByLabelText("Source: USDA")).toHaveClass("text-badge");
+		expect(screen.queryByLabelText("Source: USDA")).not.toBeInTheDocument();
 		const verified = screen.getByRole("img", {
-			name: "Review status: Verified",
+			name: "Verification status: Verified",
 		});
 		expect(verified).toHaveClass("verified-status-badge");
 		expect(verified).toHaveClass("status-icon-badge");
@@ -37,7 +37,7 @@ describe("IngredientProvenanceBadges", () => {
 		expect(warning).not.toHaveTextContent("Gluten-free may conflict");
 	});
 
-	it("keeps non-verified review states in the shared text badge", () => {
+	it("hides private and unverified metadata from compact cards", () => {
 		render(IngredientProvenanceBadges, {
 			props: {
 				food: {
@@ -51,10 +51,26 @@ describe("IngredientProvenanceBadges", () => {
 			},
 		});
 
-		const privateBadge = screen.getByLabelText("Review status: Private");
-		expect(privateBadge).toHaveClass("text-badge");
-		expect(privateBadge).toHaveTextContent("Private");
-		expect(screen.queryByLabelText("Review status: Verified"))
+		expect(screen.queryByLabelText("Verification status: Private"))
 			.not.toBeInTheDocument();
+		expect(screen.queryByLabelText("Verification status: Verified"))
+			.not.toBeInTheDocument();
+	});
+
+	it("shows pending review as an actionable status", () => {
+		render(IngredientProvenanceBadges, {
+			props: {
+				food: {
+					fdcId: 3,
+					description: "Pending food",
+					foodNutrients: [],
+					trustStatus: "pending-review",
+				},
+				provenanceOptions: ingredientProvenanceOptionsFixture,
+			},
+		});
+
+		expect(screen.getByLabelText("Verification status: Pending"))
+			.toHaveTextContent("Pending");
 	});
 });

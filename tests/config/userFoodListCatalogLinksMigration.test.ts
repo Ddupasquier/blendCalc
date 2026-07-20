@@ -13,6 +13,10 @@ const strictStateMigration = readFileSync(
 	"supabase/migrations/20260718132000_strict_user_food_list_catalog_state.sql",
 	"utf8",
 );
+const evidenceStateMigration = readFileSync(
+	"supabase/migrations/20260719170000_evidence_based_ingredient_verification.sql",
+	"utf8",
+);
 
 describe("saved ingredient catalog links migration", () => {
 	it("stores canonical catalog and submission relationships", () => {
@@ -29,13 +33,14 @@ describe("saved ingredient catalog links migration", () => {
 		expect(migration).toContain("product.status = 'active'");
 		expect(migration).toContain("submission.status = 'pending'");
 		expect(migration).toContain("then 'pending-review'");
-		expect(strictStateMigration).toContain(
+		expect(strictStateMigration).toContain("v_fallback_source");
+		expect(evidenceStateMigration).not.toContain(
 			"when v_fallback_source = 'usda' then 'source-verified'",
 		);
-		expect(strictStateMigration).toContain(
+		expect(evidenceStateMigration).not.toContain(
 			"when v_fallback_source = 'open-food-facts' then 'imported'",
 		);
-		expect(strictStateMigration).toContain("else 'user-private'");
+		expect(evidenceStateMigration).toContain("else 'unverified'");
 		expect(strictStateMigration).not.toContain("public.food_trust_status(new.food)");
 	});
 

@@ -297,7 +297,7 @@ export const buildOpenFoodFactsCatalogBundle = (
 		provenance: addFoodProvenance(
 			openFoodFactsFood,
 			"open-food-facts",
-			"imported",
+			"source-verified",
 			"exact-barcode",
 		),
 		conflicts: findFoodConflicts(

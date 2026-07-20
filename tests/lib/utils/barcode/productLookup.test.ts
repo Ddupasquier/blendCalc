@@ -191,13 +191,13 @@ describe("barcode product mapping", () => {
 			licenseName: "Creative Commons Attribution-ShareAlike",
 			licenseUrl: "https://world.openfoodfacts.org/terms-of-use",
 			attributionText: "Open Food Facts contributors",
-			confidence: "imported",
+			confidence: "source-verified",
 		});
 		expect(draft?.image?.fetchedAt).toBeTruthy();
 		expect(draft?.fieldProvenance?.image).toMatchObject({
 			source: "open-food-facts",
 			sourceReference: "00021130462506",
-			confidence: "imported",
+			confidence: "source-verified",
 		});
 	});
 

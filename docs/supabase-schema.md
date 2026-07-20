@@ -90,16 +90,17 @@ Notes:
   its normalized barcode. `shared_product_submission_id` links the current user's
   pending catalog submission for that barcode.
 - A database trigger resolves both links and derives `source_key` and `trust_status`
-  from current catalog state. Product publication, retirement, moderation approval,
+  from current catalog evidence. Product publication, retirement, moderation approval,
   rejection, and new pending submissions refresh matching list rows automatically.
 - `trust_status` can be `source-verified`, `imported`, `corroborated`,
-  `moderator-reviewed`, `pending-review`, or `user-private`. A pending update takes
-  priority for the submitting user; approval switches to the active product's
-  confidence, while rejection falls back to the existing active product or private
-  status.
-- `source_key` and `trust_status` support indexed, server-side filtering. The `food`
-  JSON remains a UI compatibility snapshot and is not the authority for whether an item
-  is private or shared.
+  `moderator-reviewed`, `pending-review`, `unverified`, or `user-private`. `Imported` is
+  retained only as a legacy/internal ingestion method; provider-only rows project to
+  `unverified`. A pending update takes priority for the submitting user, while accepted
+  exact-match, corroboration, or moderator evidence uses a verified evidence state.
+- `source_key` records `unknown` rather than falsely defaulting an unattributed row to
+  USDA. `source_key` and `trust_status` support indexed internal queries. Consumer filters do
+  not expose provider or ingestion-method hierarchy. The `food` JSON remains a UI
+  compatibility snapshot and is not the authority for pending or approved state.
 - `(user_id, food_identity_key)` is unique, so one ingredient cannot exist in both
   Fridge and Shopping List for the same user.
 - `place_user_food_list_item` performs an atomic add or confirmed move and reports when
@@ -146,7 +147,8 @@ Notes:
 
 ### `ingredient_provenance_options`
 
-Stores app-ready source and trust labels for ingredient filtering and badges.
+Stores app-ready origin and verification metadata. Provider rows remain available for
+internal attribution; only actionable verification rows are enabled for compact badges.
 
 Columns: `dimension`, `value`, `filter_label`, `badge_label`, `badge_tone`,
 `display_order`, `filter_enabled`, `badge_enabled`, `description`, `created_at`,
@@ -154,11 +156,11 @@ Columns: `dimension`, `value`, `filter_label`, `badge_label`, `badge_tone`,
 
 Notes:
 
-- `dimension` separates record origin (`source`) from review confidence (`trust`).
+- `dimension` separates record origin (`source`) from verification evidence (`trust`).
 - Supporting APIs used only for images or unit conversion do not become a food's primary
-  source badge.
-- Components render filters and both badge dimensions from one reference read instead of
-  hardcoded component constants.
+  source attribution.
+- Compact components render only enabled actionable verification badges from the shared
+  reference read. Detailed nutrition renders provider attribution separately.
 
 ## Nutrient Definitions, Values, and Validation
 

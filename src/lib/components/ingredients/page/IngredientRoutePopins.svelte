@@ -14,10 +14,6 @@
 		activeSheet,
 		actionSheetItem,
 		barcodeLookupBusy,
-		filterOptions,
-		filterValue,
-		trustOptions,
-		trustValue,
 		listLoading,
 		listMembership,
 		imagePlacementItem,
@@ -93,10 +89,6 @@
 <IngredientFilterSheet
 	open={activeSheet === "filters"}
 	query={listQuery}
-	{filterValue}
-	filterOptions={[...filterOptions]}
-	{trustValue}
-	trustOptions={[...trustOptions]}
 	sortValue={listSort}
 	sortOptions={[...sortOptions]}
 	loading={listLoading}
@@ -131,8 +123,6 @@
 		addingFoodId={searchAddFoodId}
 		{savedFoodIdentityKeys}
 		{provenanceOptions}
-		sourceFilter={filterValue}
-		trustFilter={trustValue}
 		onScan={onScan}
 		onFilter={onFilterFromSearch}
 		onClose={onCloseSearch}
