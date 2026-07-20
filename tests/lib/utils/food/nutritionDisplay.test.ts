@@ -34,13 +34,14 @@ describe("nutrition display helpers", () => {
 		expect(scalePer100gValue(23, 100)).toBe(23);
 		expect(scalePer100gValue(23, 150)).toBe(34.5);
 		expect(scalePer100gValue(0.4, 50)).toBe(0.2);
-		expect(scalePer100gValue(undefined, 100)).toBe(0);
+		expect(scalePer100gValue(undefined, 100)).toBeNull();
 	});
 
 	it("formats nutrition amounts and basis labels for the detail panel", () => {
 		expect(formatNutritionAmount(23)).toBe("23");
 		expect(formatNutritionAmount(34.5)).toBe("34.5");
 		expect(formatNutritionAmount(0.04)).toBe("0.04");
+		expect(formatNutritionAmount(undefined)).toBe("—");
 		expect(formatViewingGrams(125)).toBe("125g");
 		expect(getNutritionBasisLabel(100)).toBe("Per 100g food data");
 		expect(getNutritionBasisLabel(125)).toBe("Per 125g viewing amount");

@@ -57,6 +57,7 @@ export type FoodSymbolCategoryRule = {
 
 export type FoodSymbolSubject = {
 	symbolKey?: string;
+	description?: string;
 	foodCategory?: string;
 	brandedFoodCategory?: string;
 	categories?: string[];
@@ -167,6 +168,7 @@ export const resolveFoodSymbolKey = (
 ) => {
 	if (
 		food.symbolKey &&
+		food.symbolKey !== "generic" &&
 		catalog.foodSymbols.some((symbol) => symbol.key === food.symbolKey)
 	) {
 		return food.symbolKey;
@@ -176,6 +178,7 @@ export const resolveFoodSymbolKey = (
 		food.foodCategory,
 		food.brandedFoodCategory,
 		...(food.categories ?? []),
+		food.description,
 	]
 		.filter(Boolean)
 		.join(" ");

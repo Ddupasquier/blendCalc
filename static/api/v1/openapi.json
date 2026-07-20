@@ -150,7 +150,7 @@
           "number": { "type": ["string", "null"] },
           "unit": { "type": "string" },
           "amountPer100g": { "type": ["number", "null"], "minimum": 0 },
-          "valueStatus": { "type": "string", "enum": ["reported", "derived", "missing"] },
+          "valueStatus": { "type": "string", "enum": ["reported", "derived", "missing", "unknown"] },
           "source": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] }
         }
       },
@@ -258,7 +258,7 @@
             "additionalProperties": false,
             "required": ["name", "brand", "category", "ingredients"],
             "properties": {
-              "name": { "$ref": "#/components/schemas/Source" },
+              "name": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
               "brand": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
               "category": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
               "ingredients": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] }

@@ -12,6 +12,7 @@
 	import SmartWarnings from "$lib/components/mix/insights/SmartWarnings.svelte";
 	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog.svelte";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage.svelte";
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
     import {
 		getFoodPreferenceSmartWarnings,
@@ -43,7 +44,6 @@
 	import {
 		formatChartNumber,
 		getDefaultNutrientOptions,
-		getEstimatedVolumeWarnings,
 		getFoodSourceLabel,
 		getNutrientMeta,
 		type NutrientOption,
@@ -117,6 +117,7 @@
     let loadedSavedDrink = $state<LoadedSavedDrink | null>(null);
     let saveDialogError = $state("");
     let saveDialogBusy = $state(false);
+	let cloudLoadError = $state("");
 	const foodPreferenceContext = getFoodPreferenceContext();
 
 	const assignMixState = (state: MixStateSnapshot) => {
@@ -353,7 +354,6 @@
             }),
             { includeUnderTargets: selectedFoods.length > 0 },
         ).map((warning) => withOverageDetails(warning, nutrientOverages)),
-		...getEstimatedVolumeWarnings(selectedFoods, getServingConversion),
 		...getFoodPreferenceSmartWarnings(
 			selectedFoods,
 			foodPreferenceContext.current,
@@ -389,32 +389,38 @@
         fridgeItems = localFridge;
         shoppingItems = localShoppingList;
 
-        const [nextFridge, nextShoppingList] = await Promise.all([
-            reconcileCloudSmoothieList(MIX_STORAGE_KEYS.fridge, localFridge),
-            reconcileCloudSmoothieList(
-                MIX_STORAGE_KEYS.shoppingList,
-                localShoppingList,
-            ),
-        ]);
+		try {
+			const [nextFridge, nextShoppingList] = await Promise.all([
+				reconcileCloudSmoothieList(MIX_STORAGE_KEYS.fridge, localFridge),
+				reconcileCloudSmoothieList(
+					MIX_STORAGE_KEYS.shoppingList,
+					localShoppingList,
+				),
+			]);
 
-		const preservedFridge = preserveSelectedListItems(
-			nextFridge,
-			localFridge,
-			selectedFoodIds,
-		);
-		const preservedShoppingList = preserveSelectedListItems(
-			nextShoppingList,
-			localShoppingList,
-			selectedFoodIds,
-		);
+			const preservedFridge = preserveSelectedListItems(
+				nextFridge,
+				localFridge,
+				selectedFoodIds,
+			);
+			const preservedShoppingList = preserveSelectedListItems(
+				nextShoppingList,
+				localShoppingList,
+				selectedFoodIds,
+			);
 
-        fridgeItems = preservedFridge;
-        shoppingItems = preservedShoppingList;
-        cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, preservedFridge);
-		cacheSmoothieListLocally(
-			MIX_STORAGE_KEYS.shoppingList,
-			preservedShoppingList,
-		);
+			fridgeItems = preservedFridge;
+			shoppingItems = preservedShoppingList;
+			cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, preservedFridge);
+			cacheSmoothieListLocally(
+				MIX_STORAGE_KEYS.shoppingList,
+				preservedShoppingList,
+			);
+			cloudLoadError = "";
+		} catch {
+			cloudLoadError =
+				"Your saved ingredient lists could not be loaded from the database. Local items are shown temporarily.";
+		}
     };
 
     const loadNutrientGoals = () => {
@@ -791,6 +797,12 @@
     >
         <SaveGoalReview diffs={saveGoalDiffs} />
     </TextInputDialog>
+
+	{#if cloudLoadError}
+		<StatusMessage tone="danger" title="Database lists unavailable">
+			{cloudLoadError}
+		</StatusMessage>
+	{/if}
 
     <section class="mix-panel" aria-labelledby="nutrient-controls-title">
         <div class="mix-builder">

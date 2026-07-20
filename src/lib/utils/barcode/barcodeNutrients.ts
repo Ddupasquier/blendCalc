@@ -3,6 +3,7 @@ import type {
 	NutrientSourceMapping,
 	ProductReferenceData,
 } from "$lib/utils/food/reference/productReferenceData";
+import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export type OpenFoodFactsNutriments = Record<
 	string,
@@ -19,9 +20,7 @@ export const normalizeNutrientUnit = (unit: unknown) =>
 
 const toOptionalNumber = (value: unknown) => {
 	if (value === undefined || value === null || value === "") return null;
-	const numberValue =
-		typeof value === "string" ? Number.parseFloat(value) : Number(value);
-	return Number.isFinite(numberValue) ? Math.max(0, numberValue) : null;
+	return toFiniteNonnegativeNumber(value);
 };
 
 export const getOpenFoodFactsValue = (
@@ -115,7 +114,7 @@ export const mapOpenFoodFactsNutrients = (
 			value,
 			valueOrigin: "reported",
 			source: "open-food-facts",
-			confidence: "imported",
+			confidence: "unknown",
 		});
 	}
 

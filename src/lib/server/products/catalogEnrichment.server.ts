@@ -148,7 +148,7 @@ export const persistSharedProductExternalEnrichment = async (input: {
 			sourceReference: source?.sourceReference ?? null,
 			sourceValue: getFieldValue(input.enrichedDraft, field),
 			normalizedValue: getFieldValue(input.enrichedDraft, field),
-			confidence: source?.confidence ?? "source-verified",
+			confidence: source?.confidence ?? "unknown",
 			verificationMethod: "exact-barcode",
 		};
 	});

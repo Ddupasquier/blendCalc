@@ -16,20 +16,18 @@ export type ParsedServingAmount = {
 	unit: ServingMeasureUnit;
 };
 
-export type DensityEstimate = {
+export type DensityConversion = {
 	gramsPerMilliliter: number;
 	label: string;
-	variancePercent: number;
-	confidence: "known" | "estimated" | "rough";
+	confidence: "known";
 };
 
 export type ServingConversion = {
-	grams: number;
+	grams: number | null;
 	milliliters: number | null;
 	dimension: ServingMeasureDimension;
-	density: DensityEstimate | null;
-	isEstimate: boolean;
-	range: { minGrams: number; maxGrams: number } | null;
+	density: DensityConversion | null;
+	available: boolean;
 	warning: string | null;
 };
 
@@ -73,16 +71,17 @@ export const convertServingAmount = (
 	unit: ServingMeasureUnit,
 	food?: FdcFood,
 ): ServingConversion => {
-	const safeQuantity = Number.isFinite(quantity) ? Math.max(0, quantity) : 0;
+	const safeQuantity = Number.isFinite(quantity) && quantity >= 0 ? quantity : null;
 	if (isWeightServingMeasureUnit(unit)) {
 		const conversion = DEFAULT_GRAMS_PER_WEIGHT_MEASURE[unit];
 		return {
-			grams: safeQuantity * (conversion ?? 0),
+			grams: safeQuantity !== null && typeof conversion === "number"
+				? safeQuantity * conversion
+				: null,
 			milliliters: null,
 			dimension: "weight",
 			density: null,
-			isEstimate: false,
-			range: null,
+			available: safeQuantity !== null && typeof conversion === "number",
 			warning: null,
 		};
 	}
@@ -90,169 +89,89 @@ export const convertServingAmount = (
 	const volumeConversion = DEFAULT_MILLILITERS_PER_VOLUME_MEASURE[unit];
 	if (typeof volumeConversion !== "number") {
 		return {
-			grams: 0,
+			grams: null,
 			milliliters: null,
-			dimension: getServingMeasureOption(unit)?.dimension ?? "weight",
+			dimension: getServingMeasureOption(unit)?.dimension ?? "volume",
 			density: null,
-			isEstimate: false,
-			range: null,
+			available: false,
 			warning: "This serving unit is not available right now.",
 		};
 	}
-	const milliliters = safeQuantity * volumeConversion;
-	const density = getDensityEstimate(food);
+	const milliliters = safeQuantity === null ? null : safeQuantity * volumeConversion;
+	const density = getDensityConversion(food);
+	if (milliliters === null || !density) {
+		return {
+			grams: null,
+			milliliters,
+			dimension: "volume",
+			density: null,
+			available: false,
+			warning: "A measured weight-to-volume conversion is not available for this ingredient. Use a weight unit instead.",
+		};
+	}
 	const grams = milliliters * density.gramsPerMilliliter;
-	const variance = density.variancePercent / 100;
-	const range = {
-		minGrams: grams * Math.max(0, 1 - variance),
-		maxGrams: grams * (1 + variance),
-	};
 
 	return {
 		grams,
 		milliliters,
 		dimension: "volume",
 		density,
-		isEstimate: true,
-		range,
-		warning: getVolumeWarning(density, range),
+		available: true,
+		warning: null,
 	};
 };
 
 export const getServingMeasureDimension = (
 	unit: ServingMeasureUnit,
-): ServingMeasureDimension => {
-	return getServingMeasureOption(unit)?.dimension ?? "weight";
+): ServingMeasureDimension | null => {
+	return getServingMeasureOption(unit)?.dimension ?? null;
 };
 
-export const getDensityEstimate = (food?: FdcFood): DensityEstimate => {
-	if (food?.customDensityGramsPerMilliliter) {
+export const getDensityConversion = (food?: FdcFood): DensityConversion | null => {
+	if (
+		food?.customDensityConfidence === "known" &&
+		Number.isFinite(food.customDensityGramsPerMilliliter) &&
+		Number(food.customDensityGramsPerMilliliter) > 0
+	) {
 		return {
-			gramsPerMilliliter: food.customDensityGramsPerMilliliter,
+			gramsPerMilliliter: Number(food.customDensityGramsPerMilliliter),
 			label: food.customDensityLabel ?? "custom serving",
-			variancePercent: food.customDensityVariancePercent ?? 0,
-			confidence: food.customDensityConfidence ?? "known",
-		};
-	}
-
-	const text = `${food?.description ?? ""} ${food?.foodCategory ?? ""}`.toLowerCase();
-
-	if (/\boil\b|olive oil|sunflower oil|canola oil|avocado oil/.test(text)) {
-		return {
-			gramsPerMilliliter: 0.91,
-			label: "cooking oil",
-			variancePercent: 3,
 			confidence: "known",
 		};
 	}
 
-	if (/\bmilk\b|dairy beverage/.test(text)) {
+	for (const serving of food?.foodServings ?? []) {
+		const unit = serving.unitKey?.trim();
+		const option = unit ? getServingMeasureOption(unit) : null;
+		const amount = Number(serving.amount);
+		const gramWeight = Number(serving.gramWeight);
+		if (
+			option?.dimension !== "volume" ||
+			!Number.isFinite(amount) ||
+			amount <= 0 ||
+			!Number.isFinite(gramWeight) ||
+			gramWeight <= 0 ||
+			!Number.isFinite(option.conversionToBase) ||
+			option.conversionToBase <= 0
+		) continue;
+
 		return {
-			gramsPerMilliliter: 1.03,
-			label: "milk",
-			variancePercent: 3,
+			gramsPerMilliliter: gramWeight / (amount * option.conversionToBase),
+			label: serving.label,
 			confidence: "known",
 		};
 	}
 
-	if (/water|juice|beverage|drink|tea|coffee/.test(text)) {
-		return {
-			gramsPerMilliliter: 1,
-			label: "water-like liquid",
-			variancePercent: 5,
-			confidence: "estimated",
-		};
-	}
-
-	if (/yogurt|yoghurt/.test(text)) {
-		return {
-			gramsPerMilliliter: 1.05,
-			label: "yogurt",
-			variancePercent: 10,
-			confidence: "estimated",
-		};
-	}
-
-	if (/honey|syrup|molasses/.test(text)) {
-		return {
-			gramsPerMilliliter: 1.38,
-			label: "syrup or honey",
-			variancePercent: 10,
-			confidence: "estimated",
-		};
-	}
-
-	if (/peanut butter|almond butter|nut butter/.test(text)) {
-		return {
-			gramsPerMilliliter: 1.08,
-			label: "nut butter",
-			variancePercent: 15,
-			confidence: "estimated",
-		};
-	}
-
-	if (/protein|powder|flour/.test(text)) {
-		return {
-			gramsPerMilliliter: 0.5,
-			label: "powder",
-			variancePercent: 40,
-			confidence: "rough",
-		};
-	}
-
-	if (/kale|spinach|lettuce|leafy|greens/.test(text)) {
-		return {
-			gramsPerMilliliter: 0.22,
-			label: "leafy greens",
-			variancePercent: 50,
-			confidence: "rough",
-		};
-	}
-
-	if (/blueberr|strawberr|raspberr|blackberr|berries/.test(text)) {
-		return {
-			gramsPerMilliliter: 0.62,
-			label: "berries",
-			variancePercent: 20,
-			confidence: "estimated",
-		};
-	}
-
-	if (/banana/.test(text)) {
-		return {
-			gramsPerMilliliter: 0.65,
-			label: "sliced banana",
-			variancePercent: 25,
-			confidence: "rough",
-		};
-	}
-
-	return {
-		gramsPerMilliliter: 1,
-		label: "generic volume fallback",
-		variancePercent: 50,
-		confidence: "rough",
-	};
+	return null;
 };
 
-const getVolumeWarning = (
-	density: DensityEstimate,
-	range: { minGrams: number; maxGrams: number },
-) => {
-	const rangeText = `${range.minGrams.toFixed(1)}–${range.maxGrams.toFixed(1)}g`;
-	if (density.variancePercent === 0) {
-		return `Volume conversion uses the custom density you entered for this ingredient (${rangeText}). Accuracy depends on how closely this ingredient matches the serving weight and volume you entered.`;
-	}
-
-	const prefix =
-		density.confidence === "known"
-			? "Volume conversion uses a typical"
-			: density.confidence === "estimated"
-				? "Volume conversion is estimated from a typical"
-				: "Volume conversion is a rough estimate using a";
-
-	return `${prefix} ${density.label} density. Actual weight may vary about ±${density.variancePercent}% (${rangeText}). Use grams for the most accurate result.`;
-};
+export const canConvertServingUnit = (
+	unit: ServingMeasureUnit,
+	food?: FdcFood,
+) => isWeightServingMeasureUnit(unit) || (
+	getServingMeasureOption(unit)?.dimension === "volume" &&
+	Boolean(getDensityConversion(food))
+);
 
 export const parseServingAmount = (input: string): ParsedServingAmount | null => {
 	const normalized = input.trim().toLowerCase();
@@ -273,8 +192,10 @@ export const parseServingAmount = (input: string): ParsedServingAmount | null =>
 		: defaultWeightUnit;
 	if (!unit) return null;
 
+	const grams = convertServingToGrams(quantity, unit);
+	if (grams === null) return null;
 	return {
-		grams: convertServingToGrams(quantity, unit),
+		grams,
 		quantity,
 		unit,
 	};

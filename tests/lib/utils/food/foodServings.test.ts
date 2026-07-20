@@ -40,6 +40,16 @@ describe("food servings", () => {
 		})).toEqual([]);
 	});
 
+	it("does not turn a provider name into verified serving evidence", () => {
+		expect(getFoodServings({
+			...baseFood,
+			barcodeSource: "usda",
+			servingSize: 30,
+			servingSizeUnit: "g",
+			hasSourceServing: true,
+		})[0]?.confidence).toBe("unknown");
+	});
+
 	it("formats nutrition-label serving sizes with weight first", () => {
 		expect(formatNutritionServingSize({
 			label: "1/2 cup (125g)",

@@ -11,7 +11,6 @@ import {
 	getFoodIdentityKey,
 	uniqueFoodsByIdentity,
 } from "$lib/utils/food/records/foodIdentity";
-import { cacheClearAll } from "$lib/cache";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
 
 export const SMOOTHIE_LISTS_CHANGED_EVENT = "smoothie-lists-changed";
@@ -36,14 +35,6 @@ export type SmoothieListMutationResult =
 export const notifySmoothieListsChanged = () => {
 	if (typeof window === "undefined") return;
 	window.dispatchEvent(new CustomEvent(SMOOTHIE_LISTS_CHANGED_EVENT));
-};
-
-const isQuotaExceededError = (error: unknown) => {
-	return (
-		error instanceof DOMException &&
-		(error.name === "QuotaExceededError" ||
-			error.name === "NS_ERROR_DOM_QUOTA_REACHED")
-	);
 };
 
 const getOppositeListKey = (key: SmoothieListKey): SmoothieListKey =>
@@ -83,32 +74,6 @@ export const preserveSelectedListItems = (
 	);
 
 	return uniqueFoodsByIdentity(uniqueFoodsById([...syncedList, ...selectedCachedFoods]));
-};
-
-export const writeSmoothieList = (key: SmoothieListKey, list: FdcFood[]) => {
-	const compactList = uniqueFoodsByIdentity(uniqueFoodsById(list)).map(compactFood);
-
-	try {
-		localStorage.setItem(getScopedStorageKey(key), JSON.stringify(compactList));
-		void writeCloudSmoothieList(key, compactList);
-		notifySmoothieListsChanged();
-		return true;
-	} catch (error) {
-		if (!isQuotaExceededError(error)) {
-			return false;
-		}
-
-		cacheClearAll();
-
-		try {
-			localStorage.setItem(getScopedStorageKey(key), JSON.stringify(compactList));
-			void writeCloudSmoothieList(key, compactList);
-			notifySmoothieListsChanged();
-			return true;
-		} catch {
-			return false;
-		}
-	}
 };
 
 export const addFoodToSmoothieList = async (

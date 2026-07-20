@@ -7,6 +7,7 @@ import type {
 	ManualEntrySummaryItem,
 	NutrientValueState,
 } from "$lib/components/ingredients/manual-entry/formTypes";
+import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export const getManualNutrientValuesById = (values: NutrientValueState) => {
 	const valuesById = new Map<number, number>();
@@ -40,15 +41,16 @@ export const setManualNutrientState = ({
 	}
 
 	const numericValue = Number(value);
-	const nextValue = Number.isFinite(numericValue)
-		? Math.max(0, numericValue)
-		: null;
-	if (nextValue === null) return { values, touched };
+	if (!Number.isFinite(numericValue) || numericValue < 0) {
+		const { [field.nutrientId]: _removedValue, ...nextValues } = values;
+		const { [field.nutrientId]: _removedTouched, ...nextTouched } = touched;
+		return { values: nextValues, touched: nextTouched };
+	}
 
 	return {
 		values: {
 			...values,
-			[field.nutrientId]: nextValue,
+			[field.nutrientId]: numericValue,
 		},
 		touched: {
 			...touched,
@@ -86,11 +88,16 @@ export const buildSaveNutrients = ({
 
 	for (const nutrient of importedNutrients) {
 		const nutrientId = Number(nutrient.nutrientId);
-		if (!Number.isFinite(nutrientId)) continue;
+		const value = toFiniteNonnegativeNumber(nutrient.value);
+		if (
+			!Number.isSafeInteger(nutrientId) ||
+			nutrientId <= 0 ||
+			value === null
+		) continue;
 		nutrientsById.set(nutrientId, {
 			...nutrient,
 			nutrientId,
-			value: Number.isFinite(nutrient.value) ? Math.max(0, nutrient.value) : 0,
+			value,
 		});
 	}
 
@@ -104,7 +111,7 @@ export const buildSaveNutrients = ({
 			field.requiredForManualEntry ||
 			(value !== null && value > 0);
 
-		if (!shouldPersistManualValue || !Number.isFinite(value)) continue;
+		if (!shouldPersistManualValue || !Number.isFinite(value) || Number(value) < 0) continue;
 		if (value <= 0 && !field.requiredForManualEntry && !wasEdited) continue;
 
 		const keepImportedMetadata = Boolean(existing && !wasEdited);
@@ -148,6 +155,6 @@ export const getSummaryItems = ({
 }): ManualEntrySummaryItem[] =>
 	requiredFields.slice(0, 4).map((field) => ({
 		label: stripUnitFromNutrientLabel(field.label),
-		value: getValue(field) ?? 0,
+		value: getValue(field),
 		unitName: field.unitName,
 	}));

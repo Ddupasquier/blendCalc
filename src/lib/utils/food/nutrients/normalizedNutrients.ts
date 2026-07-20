@@ -1,5 +1,6 @@
 import { compactFood } from "$lib/utils/food/records/foodRecords";
 import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export type NormalizedNutrientRow = {
 	nutrientId: number;
@@ -11,10 +12,6 @@ export type NormalizedNutrientRow = {
 	source: NonNullable<FdcNutrient["source"]>;
 	sourceReference: string | null;
 	confidence: NonNullable<FdcNutrient["confidence"]>;
-};
-
-const toFiniteNonnegativeNumber = (value: number) => {
-	return Number.isFinite(value) && value >= 0 ? value : null;
 };
 
 export const normalizedRowsToNutrients = (
@@ -55,10 +52,9 @@ export const normalizedRowsToNutrients = (
 
 export const hydrateFoodWithNormalizedNutrients = (
 	food: FdcFood,
-	rows: NormalizedNutrientRow[] | undefined,
+	rows: NormalizedNutrientRow[],
 ): FdcFood => {
-	const normalizedNutrients = normalizedRowsToNutrients(rows ?? []);
-	if (normalizedNutrients.length === 0) return compactFood(food);
+	const normalizedNutrients = normalizedRowsToNutrients(rows);
 
 	return compactFood({
 		...food,

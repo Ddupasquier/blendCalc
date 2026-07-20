@@ -170,7 +170,7 @@ export const getDefaultServingAmount = (food?: FdcFood) => {
 };
 
 export const getServingGramsLabel = (conversion: ServingConversion) => {
-	return `${conversion.isEstimate ? "≈ " : ""}${conversion.grams.toFixed(1)}g`;
+	return conversion.grams === null ? "Unavailable" : `${conversion.grams.toFixed(1)}g`;
 };
 
 export const withOverageDetails = (
@@ -193,46 +193,6 @@ export const withOverageDetails = (
 			value: `${formatChartNumber(contributor.amount)}${overage.unit} from ${formatChartNumber(contributor.grams)}g`,
 		})),
 	};
-};
-
-export const getEstimatedVolumeWarnings = (
-	selectedFoods: FdcFood[],
-	getServingConversion: (food: FdcFood) => ServingConversion,
-): SmartWarning[] => {
-	const estimatedConversions = selectedFoods
-		.map((food) => ({
-			food,
-			conversion: getServingConversion(food),
-		}))
-		.filter(
-			({ conversion }) =>
-				conversion.isEstimate && Boolean(conversion.density),
-		);
-
-	if (estimatedConversions.length === 0) return [];
-
-	const maxVariance = Math.max(
-		...estimatedConversions.map(
-			({ conversion }) => conversion.density?.variancePercent ?? 0,
-		),
-	);
-	const labels = estimatedConversions
-		.slice(0, 3)
-		.map(({ food }) => food.description);
-	const extraCount = estimatedConversions.length - labels.length;
-	const labelText = `${labels.join(", ")}${
-		extraCount > 0 ? `, and ${extraCount} more` : ""
-	}`;
-
-	return [
-		{
-			id: "estimated-volume-conversions",
-			tone: maxVariance >= 40 ? "warning" : "info",
-			symbol: "~",
-			title: "Estimated volume conversions",
-			message: `This graph uses estimated volume conversions for ${labelText}. Actual weights may vary up to ±${maxVariance}%. Use grams for the most accurate graph.`,
-		},
-	];
 };
 
 export const readNutrientGoalsFromStorage = () => {

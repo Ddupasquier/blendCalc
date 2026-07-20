@@ -2,18 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const cloudData = vi.hoisted(() => ({
 	deleteCloudSavedDrink: vi.fn(),
-	saveCloudSavedDrink: vi.fn(),
 	saveCloudSavedDrinkWithResult: vi.fn(),
 	saveCloudMixPreferences: vi.fn(),
 	reconcileCloudSmoothieList: vi.fn(),
 	writeCloudSmoothieList: vi.fn(),
-	writeCloudSavedDrinks: vi.fn(),
 }));
 
 vi.mock("$lib/utils/storage/supabase", () => cloudData);
 import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
 import {
-	addSavedDrink,
 	clearLoadedSavedDrink,
 	deleteSavedDrink,
 	hasSavedDrinkName,
@@ -21,7 +18,9 @@ import {
 	readSavedDrinks,
 	restoreSavedDrinkToMix,
 	SAVED_DRINKS_STORAGE_KEY,
-	updateSavedDrink,
+	saveExistingSavedDrink,
+	saveNewSavedDrink,
+	type SavedDrinkInput,
 } from "$lib/utils/storage/client/savedDrinks";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 import { LEGACY_SODIUM_NUTRIENT_ID } from "$lib/utils/mix/nutrients/nutrientMappings";
@@ -37,19 +36,26 @@ const food = {
 	foodNutrients: [],
 } satisfies FdcFood;
 
+const saveDrink = async (input: SavedDrinkInput) => {
+	const result = await saveNewSavedDrink(input);
+	if (!result.ok) throw new Error(`Unable to seed saved drink: ${result.reason}`);
+	return result.drink;
+};
+
 describe("saved drinks", () => {
 	beforeEach(() => {
 		localStorage.clear();
 		vi.clearAllMocks();
 		cloudData.deleteCloudSavedDrink.mockResolvedValue(true);
+		cloudData.saveCloudSavedDrinkWithResult.mockResolvedValue("saved");
 		cloudData.reconcileCloudSmoothieList.mockImplementation(
 			async (_key: string, localFoods: FdcFood[]) => localFoods,
 		);
 		cloudData.writeCloudSmoothieList.mockResolvedValue(true);
 	});
 
-	it("saves drink snapshots", () => {
-		addSavedDrink({
+	it("saves drink snapshots", async () => {
+		await saveDrink({
 			name: "Post-workout",
 			foods: [food],
 			selected: [1008],
@@ -67,7 +73,7 @@ describe("saved drinks", () => {
 	});
 
 	it("restores a saved drink to mix state", async () => {
-		const drink = addSavedDrink({
+		const drink = await saveDrink({
 			name: "High fiber",
 			foods: [food],
 			selected: [1008],
@@ -95,7 +101,7 @@ describe("saved drinks", () => {
 	it("adds saved ingredients missing from the fridge to the shopping list", async () => {
 		const kale = { ...food, fdcId: 2, description: "Kale, Raw" };
 		cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, [food]);
-		const drink = addSavedDrink({
+		const drink = await saveDrink({
 			name: "Green smoothie",
 			foods: [food, kale],
 			selected: [1008],
@@ -120,8 +126,8 @@ describe("saved drinks", () => {
 		);
 	});
 
-	it("overwrites an existing saved drink without creating a duplicate", () => {
-		const drink = addSavedDrink({
+	it("overwrites an existing saved drink without creating a duplicate", async () => {
+		const drink = await saveDrink({
 			name: "Original",
 			foods: [food],
 			selected: [1008],
@@ -132,7 +138,7 @@ describe("saved drinks", () => {
 			servingUnits: { 1: "g" },
 		});
 
-		const updated = updateSavedDrink(drink.id, {
+		const result = await saveExistingSavedDrink(drink.id, {
 			name: "Updated",
 			foods: [food],
 			selected: [1008],
@@ -143,7 +149,9 @@ describe("saved drinks", () => {
 			servingUnits: { 1: "g" },
 		});
 
-		expect(updated).toMatchObject({
+		expect(result).toMatchObject({ ok: true });
+		if (!result.ok) throw new Error("Saved drink update failed.");
+		expect(result.drink).toMatchObject({
 			id: drink.id,
 			name: "Updated",
 			createdAt: drink.createdAt,
@@ -152,8 +160,8 @@ describe("saved drinks", () => {
 		expect(readSavedDrinks()).toHaveLength(1);
 	});
 
-	it("detects saved drink names case-insensitively for the current user cache", () => {
-		const drink = addSavedDrink({
+	it("detects saved drink names case-insensitively for the current user cache", async () => {
+		const drink = await saveDrink({
 			name: "Post-workout",
 			foods: [food],
 			selected: [1008],
@@ -170,7 +178,7 @@ describe("saved drinks", () => {
 	});
 
 	it("clears the loaded saved drink context", async () => {
-		const drink = addSavedDrink({
+		const drink = await saveDrink({
 			name: "Draft",
 			foods: [food],
 			selected: [1008],
@@ -188,7 +196,7 @@ describe("saved drinks", () => {
 	});
 
 	it("keeps a saved drink cached when the database delete fails", async () => {
-		const drink = addSavedDrink({
+		const drink = await saveDrink({
 			name: "Keep me",
 			foods: [food],
 			selected: [1008],
@@ -205,7 +213,7 @@ describe("saved drinks", () => {
 	});
 
 	it("removes a saved drink only after the database confirms deletion", async () => {
-		const drink = addSavedDrink({
+		const drink = await saveDrink({
 			name: "Delete me",
 			foods: [food],
 			selected: [1008],
@@ -249,7 +257,7 @@ describe("saved drinks", () => {
 	});
 
 	it("restores the nutrient selection belonging to each saved mix", async () => {
-		const sodiumMix = addSavedDrink({
+		const sodiumMix = await saveDrink({
 			name: "Low sodium",
 			foods: [food],
 			selected: [NUTRIENT_IDS.SODIUM],
@@ -259,7 +267,7 @@ describe("saved drinks", () => {
 			servingQuantities: { 1: 100 },
 			servingUnits: { 1: "g" },
 		});
-		const potassiumMix = addSavedDrink({
+		const potassiumMix = await saveDrink({
 			name: "Potassium",
 			foods: [food],
 			selected: [NUTRIENT_IDS.POTASSIUM],

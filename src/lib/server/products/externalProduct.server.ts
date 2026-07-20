@@ -23,6 +23,7 @@ import {
 	mergeMissingBarcodeProductFields,
 	needsBarcodeProductSupplement,
 } from "$lib/utils/barcode/barcodeProductEnrichment";
+import { getNutritionCompletenessCatalog } from "$lib/server/nutrition/nutritionCompletenessCatalog.server";
 
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v2/product";
 const OPEN_FOOD_FACTS_FIELDS = [
@@ -58,6 +59,17 @@ const PRODUCT_LOOKUP_USER_AGENT = APP_USER_AGENT;
 const OPEN_FOOD_FACTS_CACHE_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
 const OPEN_FOOD_FACTS_NOT_FOUND_CACHE_MILLISECONDS = 12 * 60 * 60 * 1000;
 const OPEN_FOOD_FACTS_STALE_FALLBACK_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
+
+const getRequiredPackagedNutrientIds = async () => {
+	const catalog = await getNutritionCompletenessCatalog();
+	const profiles = catalog.profiles.filter((profile) => profile.foodScope === "packaged");
+	const profile = profiles.find(
+		(item) => item.isDefault && item.regionCode === "US",
+	) ?? profiles.find((item) => item.isDefault) ?? profiles[0];
+	return profile?.nutrients
+		.filter((nutrient) => nutrient.requirementLevel === "required")
+		.map((nutrient) => nutrient.nutrientId) ?? [];
+};
 
 export const lookupUsdaBarcodeProduct = async (
 	barcode: string,
@@ -218,6 +230,7 @@ export const lookupExternalBarcodeProduct = async (
 		usda?: typeof lookupUsdaBarcodeProduct;
 		openFoodFacts?: typeof lookupOpenFoodFactsBarcodeProduct;
 		getReferenceData?: typeof getProductReferenceData;
+		requiredNutrientIds?: Iterable<number>;
 		cachedImage?: FoodImageAsset | null | PromiseLike<FoodImageAsset | null>;
 	} = {},
 ): Promise<BarcodeProductDraft | null> => {
@@ -227,6 +240,10 @@ export const lookupExternalBarcodeProduct = async (
 	const lookupUsda = lookups.usda ?? lookupUsdaBarcodeProduct;
 	const lookupOpenFoodFacts =
 		lookups.openFoodFacts ?? lookupOpenFoodFactsBarcodeProduct;
+	const requiredNutrientIds = lookups.requiredNutrientIds ??
+		(lookups.usda || lookups.openFoodFacts
+			? []
+			: await getRequiredPackagedNutrientIds());
 	const cachedImagePromise = Promise.resolve(lookups.cachedImage ?? null).catch(
 		() => null,
 	);
@@ -241,7 +258,9 @@ export const lookupExternalBarcodeProduct = async (
 				usdaDraft,
 				cachedImage,
 			);
-			if (!needsBarcodeProductSupplement(primaryDraft)) return primaryDraft;
+			if (!needsBarcodeProductSupplement(primaryDraft, requiredNutrientIds)) {
+				return primaryDraft;
+			}
 			try {
 				const supplement = await lookupOpenFoodFacts(barcode, referenceData);
 				return mergeMissingBarcodeProductFields(primaryDraft, supplement);

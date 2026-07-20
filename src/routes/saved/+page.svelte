@@ -65,12 +65,16 @@
 
     const loadSavedDrinks = async () => {
 		try {
+			loadError = "";
 			const localDrinks = readSavedDrinks();
 			drinks = localDrinks;
 
 			const nextDrinks = await reconcileCloudSavedDrinks(localDrinks);
 			drinks = nextDrinks;
 			cacheSavedDrinksLocally(nextDrinks);
+		} catch {
+			loadError =
+				"Your saved drinks could not be loaded from the database. Local drinks are shown temporarily.";
 		} finally {
 			loadingDrinks = false;
 		}

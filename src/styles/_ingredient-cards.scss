@@ -1,0 +1,17 @@
+@use "variables" as *;
+
+@mixin warning-edge {
+	position: relative;
+
+	&::before {
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: 0;
+		width: $ingredient-card-warning-bar-width;
+		background: $ingredient-card-warning-bar-color;
+		border-start-start-radius: $ingredient-radius-card;
+		border-end-start-radius: $ingredient-radius-card;
+		content: "";
+		pointer-events: none;
+	}
+}

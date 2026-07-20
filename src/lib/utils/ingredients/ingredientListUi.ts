@@ -45,7 +45,7 @@ export const areFoodIdsEqual = (left: number[], right: number[]) =>
 
 export const getFoodCalories = (food: FdcFood) => {
 	const calories = getFdcNutrientValue(food, NUTRIENT_IDS.CALORIES);
-	if (!calories) return null;
+	if (calories === null) return null;
 	return Math.round(calories);
 };
 
@@ -60,8 +60,7 @@ export const getFoodDisplayCategory = (food: FdcFood) => {
 			Boolean(category) && category.toLowerCase() !== "custom ingredient"
 		);
 	if (canonicalCategory) return canonicalCategory;
-	if (food.brandOwner) return food.brandOwner;
-	return "Ingredient";
+	return "Category unavailable";
 };
 
 export const getPrimaryFoodWarning = (

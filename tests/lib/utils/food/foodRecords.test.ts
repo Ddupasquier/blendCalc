@@ -45,4 +45,20 @@ describe("compact food records", () => {
 
 		expect(compactFood(food).barcodeProvenance).toEqual(food.barcodeProvenance);
 	});
+
+	it("does not assume nutrients were reported when status is absent", () => {
+		const food: FdcFood = {
+			fdcId: 2,
+			description: "Unknown nutrient status",
+			foodNutrients: [{
+				nutrientId: 1004,
+				nutrientName: "Total Fat",
+				nutrientNumber: "204",
+				unitName: "G",
+				value: 0,
+			}],
+		};
+
+		expect(compactFood(food).reportedNutrientIds).toEqual([]);
+	});
 });

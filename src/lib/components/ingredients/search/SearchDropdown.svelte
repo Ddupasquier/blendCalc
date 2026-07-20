@@ -70,7 +70,7 @@
                     class:result-card--saved={isSaved}
                     role="row"
                     tabindex="-1"
-                    aria-label={`${food.description}, ${getFoodDisplayCategory(food)}${isSaved ? ", already in Fridge or Shopping List" : ""}`}
+                    aria-label={`${food.description}, ${getFoodDisplayCategory(food)}${isSaved ? ", already in Fridge or Shopping List" : ""}${primaryWarning ? `, warning: ${primaryWarning}` : ""}`}
                     aria-selected={activeResultIndex === index}
                     onmouseenter={() => onActivate(index)}
                 >
@@ -78,7 +78,7 @@
                             <button
                                 class="result-main"
                                 type="button"
-                                aria-label={`View nutrition for ${food.description}${isSaved ? ", already in Fridge or Shopping List" : ""}`}
+                                aria-label={`View nutrition for ${food.description}${isSaved ? ", already in Fridge or Shopping List" : ""}${primaryWarning ? `. Warning: ${primaryWarning}` : ""}`}
                                 onfocus={() => onActivate(index)}
                                 onclick={() => onSelect(food)}
                             >
@@ -91,8 +91,7 @@
 									<IngredientProvenanceBadges
 										{food}
 										{provenanceOptions}
-                                        warning={primaryWarning}
-                                    />
+									/>
                                 </span>
                             </button>
                         </span>
@@ -131,6 +130,7 @@
 
 <style lang="scss">
     @use "../../../../styles/variables" as *;
+	@use "../../../../styles/ingredient-cards" as ingredient-cards;
 
     .results-panel {
         min-width: 0;
@@ -176,6 +176,10 @@
         background: $ingredient-surface-card;
         border-color: $ingredient-accent-primary;
     }
+
+	.result-card--warning {
+		@include ingredient-cards.warning-edge;
+	}
 
     .result-card--saved {
         grid-template-columns: minmax(0, 1fr) auto;

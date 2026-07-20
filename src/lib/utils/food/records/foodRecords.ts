@@ -4,6 +4,16 @@ import { resolveFoodSymbolKey } from "$lib/utils/food/reference/appReferenceCata
 
 export const compactFood = (food: FdcFood): FdcFood => {
 	const normalizedFood = normalizeFoodProductName(food) as FdcFood;
+	const foodNutrients = food.foodNutrients.filter((nutrient) =>
+		Number.isSafeInteger(nutrient.nutrientId) &&
+		nutrient.nutrientId > 0 &&
+		Number.isFinite(nutrient.value) &&
+		nutrient.value >= 0
+	);
+	const nutrientIds = new Set(foodNutrients.map((nutrient) => nutrient.nutrientId));
+	const reportedNutrientIds = food.reportedNutrientIds ?? foodNutrients
+		.filter((nutrient) => nutrient.valueOrigin === "reported")
+		.map((nutrient) => nutrient.nutrientId);
 	return {
 		fdcId: normalizedFood.fdcId,
 		description: normalizedFood.description,
@@ -53,6 +63,7 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		sourceModifiedDate: food.sourceModifiedDate,
 		sharedProductId: food.sharedProductId,
 		sharedProductConfidence: food.sharedProductConfidence,
+		trustStatus: food.trustStatus,
 		listAddedAt: food.listAddedAt,
 		customServingLabel: food.customServingLabel,
 		customServingWeightGrams: food.customServingWeightGrams,
@@ -61,10 +72,10 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		customDensityVariancePercent: food.customDensityVariancePercent,
 		customDensityConfidence: food.customDensityConfidence,
 		compatibilitySummary: food.compatibilitySummary,
-		reportedNutrientIds: food.reportedNutrientIds
-			? [...food.reportedNutrientIds]
-			: food.foodNutrients.map((nutrient) => nutrient.nutrientId),
-		foodNutrients: food.foodNutrients.map((nutrient) => ({
+		reportedNutrientIds: [...new Set(reportedNutrientIds)].filter((nutrientId) =>
+			nutrientIds.has(nutrientId)
+		),
+		foodNutrients: foodNutrients.map((nutrient) => ({
 			nutrientId: nutrient.nutrientId,
 			nutrientName: nutrient.nutrientName,
 			nutrientNumber: nutrient.nutrientNumber,

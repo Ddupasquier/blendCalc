@@ -11,10 +11,8 @@ import {
 import { compactFood } from "$lib/utils/food/records/foodRecords";
 import {
 	deleteCloudSavedDrink,
-	saveCloudSavedDrink,
 	saveCloudSavedDrinkWithResult,
 	saveCloudMixPreferences,
-	writeCloudSavedDrinks,
 	reconcileCloudSmoothieList,
 } from "$lib/utils/storage/supabase";
 import type { FdcFood } from "$lib/utils/food/types";
@@ -183,13 +181,9 @@ export const clearLoadedSavedDrink = () => {
 	localStorage.removeItem(getScopedStorageKey(LOADED_SAVED_DRINK_STORAGE_KEY));
 };
 
-export const writeSavedDrinks = (
-	drinks: SavedDrink[],
-	{ syncCloud = true } = {},
-) => {
+const writeSavedDrinkCache = (drinks: SavedDrink[]) => {
 	const normalizedDrinks = drinks.map(normalizeDrink);
 	const persistedLocally = persistSavedDrinksLocally(normalizedDrinks);
-	if (syncCloud) void writeCloudSavedDrinks(normalizedDrinks);
 	dispatchSavedDrinksChanged();
 	return persistedLocally;
 };
@@ -217,29 +211,6 @@ const createUpdatedSavedDrink = (
 	});
 };
 
-export const addSavedDrink = (input: SavedDrinkInput) => {
-	const drink = createSavedDrink(input);
-	const drinks = readSavedDrinks();
-	writeSavedDrinks([drink, ...drinks], { syncCloud: false });
-	void saveCloudSavedDrink(drink);
-	return drink;
-};
-
-export const updateSavedDrink = (id: string, input: SavedDrinkInput) => {
-	const drinks = readSavedDrinks();
-	const existingDrink = drinks.find((drink) => drink.id === id);
-	if (!existingDrink) return null;
-
-	const updatedDrink = createUpdatedSavedDrink(existingDrink, input);
-	const updatedDrinks = drinks.map((drink) =>
-		drink.id === id ? updatedDrink : drink,
-	);
-
-	writeSavedDrinks(updatedDrinks, { syncCloud: false });
-	void saveCloudSavedDrink(updatedDrink);
-	return updatedDrink;
-};
-
 export const saveNewSavedDrink = async (
 	input: SavedDrinkInput,
 ): Promise<SavedDrinkMutationResult> => {
@@ -252,7 +223,7 @@ export const saveNewSavedDrink = async (
 	if (cloudResult === "duplicate") return { ok: false, reason: "duplicate" };
 	if (cloudResult !== "saved") return { ok: false, reason: "unavailable" };
 
-	writeSavedDrinks([drink, ...readSavedDrinks()], { syncCloud: false });
+	writeSavedDrinkCache([drink, ...readSavedDrinks()]);
 	return { ok: true, drink };
 };
 
@@ -272,9 +243,8 @@ export const saveExistingSavedDrink = async (
 	if (cloudResult === "duplicate") return { ok: false, reason: "duplicate" };
 	if (cloudResult !== "saved") return { ok: false, reason: "unavailable" };
 
-	writeSavedDrinks(
+	writeSavedDrinkCache(
 		drinks.map((drink) => (drink.id === id ? updatedDrink : drink)),
-		{ syncCloud: false },
 	);
 	return { ok: true, drink: updatedDrink };
 };
@@ -283,9 +253,7 @@ export const deleteSavedDrink = async (id: string) => {
 	const deleted = await deleteCloudSavedDrink(id);
 	if (!deleted) return false;
 
-	writeSavedDrinks(readSavedDrinks().filter((drink) => drink.id !== id), {
-		syncCloud: false,
-	});
+	writeSavedDrinkCache(readSavedDrinks().filter((drink) => drink.id !== id));
 	if (readLoadedSavedDrink()?.id === id) clearLoadedSavedDrink();
 	return true;
 };

@@ -33,6 +33,7 @@
 	class:saved-ingredient-card--active={active}
 	class:saved-ingredient-card--checked={checked}
 	class:saved-ingredient-card--custom={food.customFood}
+	class:saved-ingredient-card--warning={warning}
 >
 	<IngredientBulkToggle
 		{checked}
@@ -42,7 +43,7 @@
 	<button
 		class="saved-ingredient-card__select"
 		type="button"
-		aria-label={`Preview ${food.description}`}
+		aria-label={`Preview ${food.description}${warning ? `. Warning: ${warning}` : ""}`}
 		onclick={onPreview}
 	>
 		<CircularMediaFrame class="saved-ingredient-card__icon">
@@ -52,7 +53,6 @@
 			<IngredientProvenanceBadges
 				{food}
 				{provenanceOptions}
-				{warning}
 			/>
 			<strong title={food.description}>{food.description}</strong>
 			<small>{category}</small>
@@ -94,6 +94,7 @@
 
 <style lang="scss">
 	@use "../../../../styles/variables" as *;
+	@use "../../../../styles/ingredient-cards" as ingredient-cards;
 
 	.saved-ingredient-card {
 		display: grid;
@@ -109,6 +110,10 @@
 			border-color 160ms ease,
 			background-color 160ms ease,
 			opacity 160ms ease;
+	}
+
+	.saved-ingredient-card--warning {
+		@include ingredient-cards.warning-edge;
 	}
 
 	.saved-ingredient-card--active {

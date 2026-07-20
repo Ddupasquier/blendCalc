@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
 	dedupeManualEntryNutrients,
 	groupManualEntryNutrients,
+	readManualEntryNutrientGroups,
 	type ManualEntryNutrientDefinition,
 } from "$lib/utils/food/nutrients/nutrientDefinitions";
+import type { Database } from "$lib/types/database.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const makeDefinition = (
 	override: Partial<ManualEntryNutrientDefinition>,
@@ -93,5 +96,23 @@ describe("manual entry nutrient definitions", () => {
 			label: "Sodium (mg)",
 			requiredForManualEntry: true,
 		});
+	});
+
+	it("treats an empty database nutrient catalog as unavailable", async () => {
+		const emptyQuery = {
+			eq() {
+				return this;
+			},
+			order() {
+				return Promise.resolve({ data: [], error: null });
+			},
+		};
+		const supabase = {
+			from: () => ({
+				select: () => emptyQuery,
+			}),
+		} as unknown as SupabaseClient<Database>;
+
+		await expect(readManualEntryNutrientGroups(supabase)).resolves.toBeNull();
 	});
 });

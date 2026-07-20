@@ -1,6 +1,4 @@
 <script lang="ts">
-	import WarningTriangle from "$lib/assets/icons/WarningTriangle.svelte";
-	import StatusIconBadge from "$lib/components/common/badges/StatusIconBadge.svelte";
 	import TextBadge from "$lib/components/common/badges/TextBadge.svelte";
 	import VerifiedStatusBadge from "$lib/components/common/badges/VerifiedStatusBadge.svelte";
 	import { getIngredientTrustBadge } from "$lib/utils/ingredients/ingredientProvenance";
@@ -9,7 +7,6 @@
 	let {
 		food,
 		provenanceOptions = [],
-		warning = null,
 	}: IngredientProvenanceBadgesProps = $props();
 
 	const trustBadge = $derived(
@@ -28,14 +25,6 @@
 				ariaLabel={`Verification status: ${trustBadge.label}`}
 			/>
 		{/if}
-	{/if}
-	{#if warning}
-		<StatusIconBadge
-			label={`${warning}. Open ingredient for details.`}
-			title={warning}
-		>
-			<WarningTriangle strokeWidth={2.7} />
-		</StatusIconBadge>
 	{/if}
 </span>
 

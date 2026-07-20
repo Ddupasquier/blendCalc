@@ -16,7 +16,6 @@ describe("IngredientProvenanceBadges", () => {
 					trustStatus: "source-verified",
 				},
 				provenanceOptions: ingredientProvenanceOptionsFixture,
-				warning: "Gluten-free may conflict",
 			},
 		});
 
@@ -28,13 +27,6 @@ describe("IngredientProvenanceBadges", () => {
 		expect(verified).toHaveClass("status-icon-badge");
 		expect(verified.querySelector("svg")).toBeInTheDocument();
 		expect(verified).not.toHaveTextContent("Verified");
-
-		const warning = screen.getByRole("img", {
-			name: "Gluten-free may conflict. Open ingredient for details.",
-		});
-		expect(warning).toHaveAttribute("title", "Gluten-free may conflict");
-		expect(warning).toHaveClass("status-icon-badge");
-		expect(warning).not.toHaveTextContent("Gluten-free may conflict");
 	});
 
 	it("hides private and unverified metadata from compact cards", () => {

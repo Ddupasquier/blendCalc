@@ -6,7 +6,6 @@ import {
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
 import {
 	saveCloudCustomFood,
-	writeCloudCustomFoods,
 } from "$lib/utils/storage/supabase";
 import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
@@ -20,6 +19,7 @@ import type {
 } from "$lib/utils/food/types";
 import { normalizeCustomFoodName } from "$lib/utils/food/custom/customFoodNames";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
+import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export const CUSTOM_FOODS_STORAGE_KEY = "smoothie-custom-foods";
 export const CUSTOM_FOODS_CHANGED_EVENT = "smoothie-custom-foods-changed";
@@ -66,16 +66,12 @@ const dispatchCustomFoodsChanged = () => {
 	window.dispatchEvent(new CustomEvent(CUSTOM_FOODS_CHANGED_EVENT));
 };
 
-const toSafeNumber = (value: number) => {
-	return Number.isFinite(value) ? Math.max(0, value) : 0;
-};
-
 const createCustomFoodId = () => {
 	return -Math.floor(Date.now() * 1000 + Math.random() * 1000);
 };
 
 const getPer100GramValue = (valuePerServing: number, servingWeightGrams: number) => {
-	return (toSafeNumber(valuePerServing) * 100) / servingWeightGrams;
+	return (valuePerServing * 100) / servingWeightGrams;
 };
 
 const createNutrients = (
@@ -85,8 +81,11 @@ const createNutrients = (
 	const seenIds = new Set<number>();
 	return nutrients.flatMap((nutrient) => {
 		const nutrientId = Number(nutrient.nutrientId);
+		const nutrientValue = toFiniteNonnegativeNumber(nutrient.value);
 		if (
-			!Number.isFinite(nutrientId) ||
+			!Number.isSafeInteger(nutrientId) ||
+			nutrientId <= 0 ||
+			nutrientValue === null ||
 			seenIds.has(nutrientId)
 		) {
 			return [];
@@ -97,7 +96,7 @@ const createNutrients = (
 			nutrientName: nutrient.nutrientName,
 			nutrientNumber: String(nutrient.nutrientNumber ?? ""),
 			unitName: nutrient.unitName,
-			value: getPer100GramValue(nutrient.value, servingWeightGrams),
+			value: getPer100GramValue(nutrientValue, servingWeightGrams),
 			valueOrigin: nutrient.valueOrigin,
 			source: nutrient.source,
 			sourceReference: nutrient.sourceReference,
@@ -110,18 +109,25 @@ const getVolumeMilliliters = (
 	quantity?: number,
 	unit?: ServingMeasureUnit,
 ): number | null => {
-	if (!quantity || !unit || !(unit in DEFAULT_MILLILITERS_PER_VOLUME_MEASURE)) {
+	if (
+		!Number.isFinite(quantity) ||
+		Number(quantity) <= 0 ||
+		!unit ||
+		!(unit in DEFAULT_MILLILITERS_PER_VOLUME_MEASURE)
+	) {
 		return null;
 	}
 
-	return (
-		Math.max(0, quantity) *
-		(DEFAULT_MILLILITERS_PER_VOLUME_MEASURE[unit] ?? 0)
-	);
+	const conversion = DEFAULT_MILLILITERS_PER_VOLUME_MEASURE[unit];
+	return typeof conversion === "number" && Number.isFinite(conversion) && conversion > 0
+		? Number(quantity) * conversion
+		: null;
 };
 
 const formatServingNumber = (value: number) => {
-	if (!Number.isFinite(value)) return "0";
+	if (!Number.isFinite(value)) {
+		throw new TypeError("Serving amount must be a finite number.");
+	}
 	return String(Number(value.toFixed(2)));
 };
 
@@ -159,7 +165,10 @@ const normalizeServingSource = (
 };
 
 export const createCustomFood = (input: CustomFoodInput): FdcFood => {
-	const servingWeightGrams = Math.max(0.1, input.servingWeightGrams);
+	const servingWeightGrams = Number(input.servingWeightGrams);
+	if (!Number.isFinite(servingWeightGrams) || servingWeightGrams <= 0) {
+		throw new TypeError("Serving weight must be a number greater than zero.");
+	}
 	const nameProvenance = input.nameProvenance ??
 		(normalizeBarcode(input.barcode ?? "") ? "barcode" : "user");
 	const description = nameProvenance === "user"
@@ -184,25 +193,14 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		volumeQuantity: input.volumeQuantity,
 		volumeUnit: input.volumeUnit,
 	});
-	const hasSourceServing = input.hasSourceServing ?? true;
-	const defaultServingSource = input.barcodeSource === "usda"
-		? "usda"
-		: input.barcodeSource === "open-food-facts"
-			? "open-food-facts"
-			: input.barcodeSource === "community"
-				? "community-reviewed"
-				: "user-label";
+	const hasSourceServing = input.hasSourceServing === true;
+	const isUserServing = input.barcodeSource === "manual" || !input.barcode;
+	const defaultServingSource = isUserServing ? "user-label" : "unknown";
 	const servingSource = normalizeServingSource(
 		input.fieldProvenance?.serving?.source,
 	) ?? defaultServingSource;
 	const servingConfidence = input.fieldProvenance?.serving?.confidence ??
-		(servingSource === "usda"
-			? "source-verified"
-			: servingSource === "open-food-facts"
-				? "imported"
-				: servingSource === "community-reviewed"
-					? "moderator-reviewed"
-					: "user-reported");
+		(isUserServing ? "user-reported" : "unknown");
 
 	return {
 		fdcId: createCustomFoodId(),
@@ -255,7 +253,9 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		customDensityConfidence: density ? "known" : undefined,
 		foodNutrients,
 		reportedNutrientIds: input.reportedNutrientIds
-			? [...new Set(input.reportedNutrientIds)]
+			? [...new Set(input.reportedNutrientIds)].filter((nutrientId) =>
+				foodNutrients.some((nutrient) => nutrient.nutrientId === nutrientId)
+			)
 			: foodNutrients.map((nutrient) => nutrient.nutrientId),
 	};
 };
@@ -305,17 +305,6 @@ export const cacheCustomFoodsLocally = (foods: FdcFood[]) => {
 	} catch {
 		// ignore cache write failures; localStorage is only a fallback cache here
 	}
-};
-
-export const writeCustomFoods = (foods: FdcFood[]) => {
-	const compactFoods = uniqueFoodsById(foods).map(compactFood);
-
-	localStorage.setItem(
-		getScopedStorageKey(CUSTOM_FOODS_STORAGE_KEY),
-		JSON.stringify(compactFoods),
-	);
-	void writeCloudCustomFoods(compactFoods);
-	dispatchCustomFoodsChanged();
 };
 
 export const saveCustomFood = async (

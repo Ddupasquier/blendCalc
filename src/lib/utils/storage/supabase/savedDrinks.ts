@@ -27,8 +27,6 @@ export const readCloudSavedDrinks = async () => {
 		return await query;
 	});
 
-	if (!rows) return null;
-
 	return rows
 		.map((row) => ({
 			...(row.drink as unknown as SavedDrink),
@@ -38,42 +36,6 @@ export const readCloudSavedDrinks = async () => {
 				new Date(row.created_at).getTime(),
 		}))
 		.sort((first, second) => second.createdAt - first.createdAt);
-};
-
-export const writeCloudSavedDrinks = async (drinks: SavedDrink[]) => {
-	const userId = await getCurrentUserId();
-	if (!userId) return false;
-	const supabase = getSupabaseBrowserClient();
-	if (!supabase) return false;
-
-	if (drinks.length === 0) {
-		const { error } = await supabase
-			.from("saved_drinks")
-			.delete()
-			.eq("user_id", userId);
-		return !error;
-	}
-
-	const { error: upsertError } = await supabase.from("saved_drinks").upsert(
-		drinks.map((drink) => ({
-			id: drink.id,
-			user_id: userId,
-			name: drink.name,
-			drink: toJson(drink),
-			created_at: new Date(drink.createdAt).toISOString(),
-		})),
-		{ onConflict: "id" },
-	);
-	if (upsertError) return false;
-
-	const retainedIds = drinks.map((drink) => drink.id).join(",");
-	const { error: deleteError } = await supabase
-		.from("saved_drinks")
-		.delete()
-		.eq("user_id", userId)
-		.not("id", "in", `(${retainedIds})`);
-
-	return !deleteError;
 };
 
 export const saveCloudSavedDrinkWithResult = async (
@@ -95,10 +57,6 @@ export const saveCloudSavedDrinkWithResult = async (
 	if (!error) return "saved";
 	if (error.code === "23505") return "duplicate";
 	return "error";
-};
-
-export const saveCloudSavedDrink = async (drink: SavedDrink) => {
-	return (await saveCloudSavedDrinkWithResult(drink)) === "saved";
 };
 
 export const deleteCloudSavedDrink = async (drinkId: string) => {

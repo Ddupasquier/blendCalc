@@ -3,17 +3,18 @@ import {
 	getServingMeasureDimension,
 	parseServingAmount,
 } from "$lib/utils/serving/servingAmount";
+import { toFinitePositiveNumber } from "$lib/utils/numbers/finiteNumbers";
 
 const normalizeServing = (serving: FoodServing): FoodServing | null => {
 	const label = serving.label.trim();
-	const gramWeight = Number(serving.gramWeight);
-	if (!label || !Number.isFinite(gramWeight) || gramWeight <= 0) return null;
+	const gramWeight = toFinitePositiveNumber(serving.gramWeight);
+	if (!label || gramWeight === null) return null;
 
-	const amount = Number(serving.amount);
+	const amount = toFinitePositiveNumber(serving.amount);
 	return {
 		label,
 		gramWeight,
-		amount: Number.isFinite(amount) && amount > 0 ? amount : undefined,
+		amount: amount ?? undefined,
 		unitKey: serving.unitKey?.trim() || undefined,
 		isPrimary: serving.isPrimary === true,
 		source: serving.source,
@@ -25,7 +26,7 @@ const normalizeServing = (serving: FoodServing): FoodServing | null => {
 const getLegacyServing = (food: FdcFood): FoodServing | null => {
 	if (food.hasSourceServing === false) return null;
 
-	const customWeight = Number(food.customServingWeightGrams);
+	const customWeight = toFinitePositiveNumber(food.customServingWeightGrams);
 	const parsedServing = parseServingAmount(
 		`${food.servingSize ?? ""} ${food.servingSizeUnit ?? ""}`,
 	);
@@ -34,7 +35,7 @@ const getLegacyServing = (food: FdcFood): FoodServing | null => {
 			? parsedServing.grams
 			: null;
 	const gramWeight =
-		Number.isFinite(customWeight) && customWeight > 0
+		customWeight !== null
 			? customWeight
 			: parsedWeight;
 	if (!gramWeight || gramWeight <= 0) return null;
@@ -63,9 +64,7 @@ const getLegacyServing = (food: FdcFood): FoodServing | null => {
 			? "user-reported"
 			: food.barcodeSource === "community"
 				? "moderator-reviewed"
-				: food.barcodeSource === "open-food-facts"
-					? "imported"
-					: "source-verified",
+				: "unknown",
 	};
 };
 

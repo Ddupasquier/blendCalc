@@ -1,6 +1,6 @@
 # Development Rules Audit
 
-Last verified: 2026-07-19
+Last verified: 2026-07-20
 
 Branch: `ui-rebuild/ingredients`
 
@@ -53,6 +53,7 @@ clickable navigation block instead.
 - [Sheets, Views, And URL State](#rule-bottom-sheet-flows)
 - [Privileged Actions](#rule-privileged-action-badges)
 - [QA Process](#rule-qa-process)
+- [QA Task Consistency](#rule-qa-task-consistency)
 - [MVP QA Priorities](#rule-qa-priorities)
 - [Audit Summary](#audit-summary)
 - [Findings](#findings)
@@ -886,6 +887,19 @@ pass without blocking the next view. `Post-launch` covers rare edge cases, deepe
 benchmarks, and planned expansion that does not compromise MVP correctness. Reassess
 priority whenever scope or behavior changes; never downgrade a correctness, security,
 privacy, data-integrity, mobile-usability, or accessibility problem merely to keep moving.
+
+**41b.** <a id="rule-qa-task-consistency"></a>Before adding or changing any QA task,
+automatically search the active and completed QA trackers for the same route, component,
+control, data flow, behavior, and expected outcome. Compare the proposed task against
+every matching active task before writing it. Do not leave two active tasks that expect
+opposing behavior, test a removed control, repeat the same coverage, or describe an old
+version of the feature. Update an existing task when its stable ID still represents the
+same behavior; merge duplicate coverage; and remove superseded tasks from the active
+tracker immediately. Preserve a removed task's stable ID in the completed archive under
+an explicit `Retired` heading with the reason and replacement QA ID, as required by
+[QA clearance](#rule-qa-clearance). Completed tasks remain historical records rather
+than current instructions. Recalculate QA priority summaries after these changes so the
+tracker contains one clear, current expected outcome for each behavior.
 
 **42.** <a id="rule-qa-clearance"></a>Finished tasks must prompt the user to run the
 relevant QA checks from local `docs/QA/qa-tasks.md`. Keep each QA item active until the

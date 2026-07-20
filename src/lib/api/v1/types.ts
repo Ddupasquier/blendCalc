@@ -19,7 +19,7 @@ export type ApiV1Nutrient = {
 	number: string | null;
 	unit: string;
 	amountPer100g: number | null;
-	valueStatus: "reported" | "derived" | "missing";
+	valueStatus: "reported" | "derived" | "missing" | "unknown";
 	source: ApiV1Source | null;
 };
 
@@ -90,7 +90,7 @@ export type ApiV1Product = {
 	images: ApiV1Image[];
 	warnings: ApiV1Warning[];
 	fieldSources: {
-		name: ApiV1Source;
+		name: ApiV1Source | null;
 		brand: ApiV1Source | null;
 		category: ApiV1Source | null;
 		ingredients: ApiV1Source | null;

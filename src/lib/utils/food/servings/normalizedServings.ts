@@ -1,5 +1,6 @@
 import { compactFood } from "$lib/utils/food/records/foodRecords";
 import type { FdcFood, FoodServing } from "$lib/utils/food/types";
+import { toFinitePositiveNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export type NormalizedServingRow = {
 	servingOrder: number;
@@ -19,13 +20,13 @@ export const normalizedRowsToServings = (
 	rows
 		.flatMap((row) => {
 			const label = row.label.trim();
-			const gramWeight = Number(row.gramWeight);
-			const amount = Number(row.amount);
-			if (!label || !Number.isFinite(gramWeight) || gramWeight <= 0) return [];
+			const gramWeight = toFinitePositiveNumber(row.gramWeight);
+			const amount = toFinitePositiveNumber(row.amount);
+			if (!label || gramWeight === null) return [];
 			return [{
 				label,
 				gramWeight,
-				amount: Number.isFinite(amount) && amount > 0 ? amount : undefined,
+				amount: amount ?? undefined,
 				unitKey: row.unitKey?.trim() || undefined,
 				isPrimary: row.isPrimary,
 				source: row.source,
@@ -41,10 +42,25 @@ export const normalizedRowsToServings = (
 
 export const hydrateFoodWithNormalizedServings = (
 	food: FdcFood,
-	rows: NormalizedServingRow[] | undefined,
+	rows: NormalizedServingRow[],
 ): FdcFood => {
-	const foodServings = normalizedRowsToServings(rows ?? []);
-	if (foodServings.length === 0) return compactFood(food);
+	const foodServings = normalizedRowsToServings(rows);
+	if (foodServings.length === 0) {
+		return compactFood({
+			...food,
+			hasSourceServing: false,
+			foodServings: [],
+			servingSize: undefined,
+			servingSizeUnit: undefined,
+			householdServingFullText: undefined,
+			customServingLabel: undefined,
+			customServingWeightGrams: undefined,
+			customDensityGramsPerMilliliter: undefined,
+			customDensityLabel: undefined,
+			customDensityVariancePercent: undefined,
+			customDensityConfidence: undefined,
+		});
+	}
 	const primaryServing = foodServings.find((serving) => serving.isPrimary) ?? foodServings[0];
 
 	return compactFood({

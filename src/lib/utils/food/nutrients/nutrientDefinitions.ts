@@ -69,11 +69,6 @@ type RequiredManualEntryNutrientRecord = Pick<
 	"nutrient_id" | "group_id" | "field_sort_order"
 >;
 
-const EMPTY_GROUPS: ManualEntryNutrientGroupsByStep = {
-	macros: [],
-	extended: [],
-};
-
 const UNIT_LABELS: Record<string, string> = {
 	G: "g",
 	MG: "mg",
@@ -267,7 +262,7 @@ export const readManualEntryNutrientGroups = async (
 	}
 
 	const rawFields = (fields ?? []) as RawManualEntryFieldRecord[];
-	if (rawFields.length === 0) return EMPTY_GROUPS;
+	if (rawFields.length === 0) return null;
 	const requiredRows =
 		(requiredNutrients ?? []) as RequiredManualEntryNutrientRecord[];
 	const requiredRowsByNutrientId = new Map(
@@ -340,5 +335,5 @@ export const readManualEntryNutrientGroups = async (
 		.map(toManualEntryNutrientDefinition)
 		.filter((definition): definition is ManualEntryNutrientDefinition => Boolean(definition));
 
-	return definitions.length > 0 ? groupManualEntryNutrients(definitions) : EMPTY_GROUPS;
+	return definitions.length > 0 ? groupManualEntryNutrients(definitions) : null;
 };

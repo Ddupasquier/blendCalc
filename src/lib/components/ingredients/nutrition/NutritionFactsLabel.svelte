@@ -34,15 +34,11 @@
 		food
 			? nutritionFactsFields.map((field) => {
 					const value = getFdcNutrientValue(food, field.id);
+					const scaledValue = scalePer100gValue(value, viewingGrams);
 					return {
 						label: field.label,
-						value:
-							value === null
-								? "—"
-								: formatNutritionAmount(
-									scalePer100gValue(value, viewingGrams),
-								),
-						unit: value === null ? "" : field.unit,
+						value: scaledValue === null ? "—" : formatNutritionAmount(scaledValue),
+						unit: scaledValue === null ? "" : field.unit,
 						highlight: field.highlight,
 					};
 				})
@@ -53,16 +49,16 @@
 			? food.foodNutrients
 					.filter(
 						(n) =>
-							!vitalIds.some((id) => isFdcNutrientMatch(n, id)) &&
-							n.value !== 0,
+							!vitalIds.some((id) => isFdcNutrientMatch(n, id)),
 					)
-					.map((n) => ({
-						label: n.nutrientName,
-						value: formatNutritionAmount(
-							scalePer100gValue(n.value, viewingGrams),
-						),
-						unit: n.unitName,
-					}))
+					.flatMap((n) => {
+						const scaledValue = scalePer100gValue(n.value, viewingGrams);
+						return scaledValue === null ? [] : [{
+							label: n.nutrientName,
+							value: formatNutritionAmount(scaledValue),
+							unit: n.unitName,
+						}];
+					})
 			: [],
 	);
 

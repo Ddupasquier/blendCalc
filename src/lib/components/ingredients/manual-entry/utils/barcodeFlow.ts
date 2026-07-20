@@ -19,6 +19,7 @@ import type {
 	FoodFieldProvenance,
 	FoodImageAsset,
 } from "$lib/utils/food/types";
+import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export type ManualEntryBarcodeDraftState = {
 	name: string;
@@ -194,49 +195,56 @@ export const getBarcodeLookupMessage = (
 
 export const getBarcodeDraftState = (
 	draft: BarcodeProductDraft,
-): ManualEntryBarcodeDraftState => ({
-	name: draft.name,
-	nameProvenance: draft.nameProvenance,
-	brandOwner: draft.brandOwner,
-	category: draft.resolvedCategory ?? "",
-	categoryOptionId: draft.categoryResolution?.categoryOptionId ?? "",
-	categorySymbolKey: draft.categoryResolution?.symbolKey ?? "generic",
-	servingLabel: draft.servingLabel,
-	servingWeightGrams: draft.servingWeightGrams,
-	importedNutrients: [...draft.nutrients],
-	manualNutrientValues: Object.fromEntries(
-		draft.nutrients.map((nutrient) => [
-			nutrient.nutrientId,
-			Number.isFinite(nutrient.value) ? Math.max(0, nutrient.value) : 0,
-		]),
-	),
-	useVolumeEquivalent: Boolean(draft.volumeEquivalent),
-	volumeQuantity: draft.volumeEquivalent?.quantity ?? null,
-	volumeUnit:
-		draft.volumeEquivalent?.unit ??
-		getDefaultServingMeasureUnit("volume") ??
-		"",
-	barcode: draft.barcode,
-	barcodeSource: draft.source === "shared-catalog" ? "community" : draft.source,
-	reportedNutrientIds: [...draft.reportedNutrientIds],
-	ingredients: draft.ingredients ?? "",
-	ingredientList: [...(draft.ingredientList ?? [])],
-	allergens: [...(draft.allergens ?? [])],
-	traces: [...(draft.traces ?? [])],
-	dietaryTags: [...(draft.dietaryTags ?? [])],
-	labels: [...(draft.labels ?? [])],
-	categories: [
-		...new Set([
-			draft.resolvedCategory,
-			...(draft.categories ?? []),
-		].filter(isStringValue)),
-	],
-	image: draft.image,
-	fieldProvenance: draft.fieldProvenance
-		? { ...draft.fieldProvenance }
-		: undefined,
-	checkedBarcodeReferenceKey: getBarcodeReferenceKey(draft.barcode, draft.name),
-});
+): ManualEntryBarcodeDraftState => {
+	const validNutrients = draft.nutrients.flatMap((nutrient) => {
+		const value = toFiniteNonnegativeNumber(nutrient.value);
+		return value === null ? [] : [{ ...nutrient, value }];
+	});
+
+	return {
+		name: draft.name,
+		nameProvenance: draft.nameProvenance,
+		brandOwner: draft.brandOwner,
+		category: draft.resolvedCategory ?? "",
+		categoryOptionId: draft.categoryResolution?.categoryOptionId ?? "",
+		categorySymbolKey: draft.categoryResolution?.symbolKey ?? "generic",
+		servingLabel: draft.servingLabel,
+		servingWeightGrams: draft.servingWeightGrams,
+		importedNutrients: validNutrients,
+		manualNutrientValues: Object.fromEntries(
+			validNutrients.map((nutrient) => [
+				nutrient.nutrientId,
+				nutrient.value,
+			]),
+		),
+		useVolumeEquivalent: Boolean(draft.volumeEquivalent),
+		volumeQuantity: draft.volumeEquivalent?.quantity ?? null,
+		volumeUnit:
+			draft.volumeEquivalent?.unit ??
+			getDefaultServingMeasureUnit("volume") ??
+			"",
+		barcode: draft.barcode,
+		barcodeSource: draft.source === "shared-catalog" ? "community" : draft.source,
+		reportedNutrientIds: [...draft.reportedNutrientIds],
+		ingredients: draft.ingredients ?? "",
+		ingredientList: [...(draft.ingredientList ?? [])],
+		allergens: [...(draft.allergens ?? [])],
+		traces: [...(draft.traces ?? [])],
+		dietaryTags: [...(draft.dietaryTags ?? [])],
+		labels: [...(draft.labels ?? [])],
+		categories: [
+			...new Set([
+				draft.resolvedCategory,
+				...(draft.categories ?? []),
+			].filter(isStringValue)),
+		],
+		image: draft.image,
+		fieldProvenance: draft.fieldProvenance
+			? { ...draft.fieldProvenance }
+			: undefined,
+		checkedBarcodeReferenceKey: getBarcodeReferenceKey(draft.barcode, draft.name),
+	};
+};
 
 export const getBarcodeCategoryWarningMessage = ({
 	barcode,

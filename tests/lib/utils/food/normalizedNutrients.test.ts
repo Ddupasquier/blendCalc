@@ -65,11 +65,11 @@ describe("normalized food nutrients", () => {
 		expect(hydrated.reportedNutrientIds).toEqual([1003]);
 	});
 
-	it("keeps the JSON snapshot when normalized rows are unavailable", () => {
-		expect(hydrateFoodWithNormalizedNutrients(fallbackFood, undefined))
+	it("treats an empty normalized result as authoritative", () => {
+		expect(hydrateFoodWithNormalizedNutrients(fallbackFood, []))
 			.toMatchObject({
-				foodNutrients: [expect.objectContaining({ value: 4 })],
-				reportedNutrientIds: [1003],
+				foodNutrients: [],
+				reportedNutrientIds: [],
 			});
 	});
 

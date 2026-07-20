@@ -35,8 +35,9 @@ const numbersMatch = (
 	left: number | null | undefined,
 	right: number | null | undefined,
 ) => {
-	const leftNumber = Number(left ?? 0);
-	const rightNumber = Number(right ?? 0);
+	if (left == null || right == null) return left == null && right == null;
+	const leftNumber = Number(left);
+	const rightNumber = Number(right);
 	return Number.isFinite(leftNumber) &&
 		Number.isFinite(rightNumber) &&
 		Math.abs(leftNumber - rightNumber) < 0.001;

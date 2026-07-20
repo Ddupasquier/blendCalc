@@ -11,12 +11,12 @@ vi.mock("$lib/utils/storage/supabase", () => cloudData);
 
 import {
 	addFoodToSmoothieList,
+	cacheSmoothieListLocally,
 	moveFoodToSmoothieList,
 	preserveSelectedListItems,
 	readSmoothieList,
 	removeFoodFromSmoothieList,
 	renameFoodInSmoothieList,
-	writeSmoothieList,
 } from "$lib/utils/storage/client/smoothieLists";
 import type { FdcFood } from "$lib/utils/food/types";
 import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
@@ -50,7 +50,7 @@ describe("smoothie lists", () => {
 	});
 
 	it("stores compact food records with serving metadata", () => {
-		expect(writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food])).toBe(true);
+		cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, [food]);
 
 		expect(readSmoothieList(MIX_STORAGE_KEYS.fridge)[0]).toMatchObject({
 			fdcId: 1,
@@ -165,7 +165,7 @@ describe("smoothie lists", () => {
 	});
 
 	it("removes one list item without rewriting the whole cloud list", async () => {
-		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food]);
+		cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, [food]);
 		vi.clearAllMocks();
 
 		expect(await removeFoodFromSmoothieList(MIX_STORAGE_KEYS.fridge, food.fdcId)).toBe(
@@ -181,7 +181,7 @@ describe("smoothie lists", () => {
 	});
 
 	it("renames one list item without changing the source food ID", async () => {
-		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food]);
+		cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, [food]);
 		vi.clearAllMocks();
 		cloudData.upsertCloudSmoothieListItem.mockResolvedValue(true);
 
@@ -207,7 +207,7 @@ describe("smoothie lists", () => {
 	});
 
 	it("rejects blank list item names", async () => {
-		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food]);
+		cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, [food]);
 
 		expect(
 			await renameFoodInSmoothieList(MIX_STORAGE_KEYS.fridge, food.fdcId, "   "),
@@ -219,7 +219,7 @@ describe("smoothie lists", () => {
 
 	it("rejects duplicate display names in the same list", async () => {
 		const kale = { ...food, fdcId: 2, description: "Kale, raw" };
-		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food, kale]);
+		cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, [food, kale]);
 
 		expect(
 			await renameFoodInSmoothieList(
@@ -234,7 +234,7 @@ describe("smoothie lists", () => {
 	});
 
 	it("keeps the cached name when database rename fails", async () => {
-		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food]);
+		cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, [food]);
 		cloudData.upsertCloudSmoothieListItem.mockResolvedValue(false);
 
 		expect(
@@ -257,7 +257,7 @@ describe("smoothie lists", () => {
 	});
 
 	it("does not update the cache when removing from the database fails", async () => {
-		writeSmoothieList(MIX_STORAGE_KEYS.fridge, [food]);
+		cacheSmoothieListLocally(MIX_STORAGE_KEYS.fridge, [food]);
 		cloudData.removeCloudSmoothieListItem.mockResolvedValue(false);
 
 		expect(await removeFoodFromSmoothieList(MIX_STORAGE_KEYS.fridge, food.fdcId)).toBe(

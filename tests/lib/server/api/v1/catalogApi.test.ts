@@ -99,6 +99,8 @@ describe("blendCalc API v1 catalog mapping", () => {
 
 		expect(product.nutrients[0]?.amountPer100g).toBe(0);
 		expect(product.nutrients[1]?.amountPer100g).toBeNull();
+		expect(product.nutrients[1]?.valueStatus).toBe("unknown");
+		expect(product.nutrients[1]?.source).toBeNull();
 		expect(product.servings[0]).toMatchObject({
 			grams: 125,
 			quantity: 0.5,
@@ -114,6 +116,9 @@ describe("blendCalc API v1 catalog mapping", () => {
 			source: "open-food-facts",
 			reference: "00021130493609",
 		});
+		expect(product.fieldSources.name).toBeNull();
+		expect(product.fieldSources.brand).toBeNull();
+		expect(product.fieldSources.ingredients).toBeNull();
 		expect(product.revision).toMatchObject({ number: 2 });
 		expect(product.images[0]).toMatchObject({
 			license: {

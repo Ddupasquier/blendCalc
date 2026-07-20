@@ -21,7 +21,9 @@ export const readAllCursorPages = async <Row extends { id: string }>(
 
 	while (true) {
 		const { data, error } = await readPage(cursorId);
-		if (error || !data) return null;
+		if (error || !data) {
+			throw error ?? new Error("Cloud data page could not be loaded.");
+		}
 
 		rows.push(...data);
 		if (data.length < CLOUD_CURSOR_PAGE_SIZE) return rows;
@@ -35,7 +37,8 @@ export const getCurrentUserId = async () => {
 	if (!supabase) return null;
 
 	const { data, error } = await supabase.auth.getClaims();
-	if (error || !data?.claims.sub) return null;
+	if (error) throw error;
+	if (!data?.claims.sub) return null;
 	return data.claims.sub;
 };
 

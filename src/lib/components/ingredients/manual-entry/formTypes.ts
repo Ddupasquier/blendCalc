@@ -38,7 +38,7 @@ export type StepValidationItem = ManualEntryValidationItem & {
 
 export type ManualEntrySummaryItem = {
 	label: string;
-	value: number;
+	value: number | null;
 	unitName: string;
 };
 

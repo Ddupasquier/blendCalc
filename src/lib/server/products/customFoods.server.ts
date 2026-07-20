@@ -51,15 +51,14 @@ export const searchUserCustomFoods = async (
 			rows.map((row) => row.id),
 		),
 	]);
-
 	return rows.map((row) => {
 		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
 			row.food as unknown as FdcFood,
-			normalizedRows?.get(row.id),
+			normalizedRows.get(row.id) ?? [],
 		);
 		return hydrateFoodWithNormalizedServings(
 			foodWithNutrients,
-			servingRows?.get(row.id),
+			servingRows.get(row.id) ?? [],
 		);
 	});
 };

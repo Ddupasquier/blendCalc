@@ -9,8 +9,14 @@ import type {
 
 export type MissingBarcodeProductFields = Record<FoodTrackedField, boolean>;
 
+const isValidNutrient = (nutrient: FdcNutrient) =>
+	Number.isSafeInteger(nutrient.nutrientId) &&
+	nutrient.nutrientId > 0 &&
+	Number.isFinite(nutrient.value) &&
+	nutrient.value >= 0;
+
 const hasNutrition = (draft: BarcodeProductDraft) =>
-	draft.nutrients.length > 0 || draft.reportedNutrientIds.length > 0;
+	draft.nutrients.some(isValidNutrient);
 
 const hasImage = (draft: BarcodeProductDraft) => Boolean(draft.image?.imageUrl);
 
@@ -34,8 +40,16 @@ export const getMissingBarcodeProductFields = (
 	serving: !hasServing(draft),
 });
 
-export const needsBarcodeProductSupplement = (draft: BarcodeProductDraft) =>
-	Object.values(getMissingBarcodeProductFields(draft)).some(Boolean);
+export const needsBarcodeProductSupplement = (
+	draft: BarcodeProductDraft,
+	requiredNutrientIds: Iterable<number> = [],
+) => {
+	if (Object.values(getMissingBarcodeProductFields(draft)).some(Boolean)) return true;
+	const availableIds = new Set(
+		draft.nutrients.filter(isValidNutrient).map((nutrient) => nutrient.nutrientId),
+	);
+	return [...requiredNutrientIds].some((nutrientId) => !availableIds.has(nutrientId));
+};
 
 export const getSupplementedBarcodeProductFields = (
 	primary: BarcodeProductDraft,
@@ -44,22 +58,17 @@ export const getSupplementedBarcodeProductFields = (
 	if (!supplement) return [];
 	const missing = getMissingBarcodeProductFields(primary);
 	const supplementMissing = getMissingBarcodeProductFields(supplement);
-	return (Object.keys(missing) as FoodTrackedField[]).filter(
-		(field) => missing[field] && !supplementMissing[field],
+	const primaryNutrientIds = new Set(
+		primary.nutrients.filter(isValidNutrient).map((nutrient) => nutrient.nutrientId),
 	);
-};
-
-const getDefaultConfidence = (
-	source: FoodFieldSource["source"],
-): NonNullable<FoodFieldSource["confidence"]> => {
-	if (source === "usda" || source === "open-food-facts") {
-		return "source-verified";
-	}
-	if (source === "community-reviewed" || source === "shared-catalog") {
-		return "moderator-reviewed";
-	}
-	if (source === "user-label") return "user-reported";
-	return "imported";
+	const addsNutrition = supplement.nutrients.some(
+		(nutrient) => isValidNutrient(nutrient) && !primaryNutrientIds.has(nutrient.nutrientId),
+	);
+	return (Object.keys(missing) as FoodTrackedField[]).filter((field) =>
+		field === "nutrition"
+			? addsNutrition
+			: missing[field] && !supplementMissing[field]
+	);
 };
 
 const getDraftSource = (
@@ -92,7 +101,7 @@ const inferFieldSource = (
 			return {
 				source: nutrient.source,
 				sourceReference: nutrient.sourceReference,
-				confidence: nutrient.confidence ?? getDefaultConfidence(nutrient.source),
+				confidence: nutrient.confidence ?? "unknown",
 			};
 		}
 	}
@@ -101,7 +110,7 @@ const inferFieldSource = (
 	return {
 		source,
 		sourceReference: draft.sourceReference,
-		confidence: getDefaultConfidence(source),
+		confidence: "unknown",
 	};
 };
 
@@ -115,6 +124,7 @@ const scaleNutrients = (
 	fromGrams: number,
 	toGrams: number,
 ) => {
+	const validNutrients = nutrients.filter(isValidNutrient);
 	if (
 		!Number.isFinite(fromGrams) ||
 		fromGrams <= 0 ||
@@ -122,15 +132,13 @@ const scaleNutrients = (
 		toGrams <= 0 ||
 		fromGrams === toGrams
 	) {
-		return nutrients.map((nutrient) => ({ ...nutrient }));
+		return validNutrients.map((nutrient) => ({ ...nutrient }));
 	}
 
 	const scale = toGrams / fromGrams;
-	return nutrients.map((nutrient) => ({
+	return validNutrients.map((nutrient) => ({
 		...nutrient,
-		value: Number.isFinite(nutrient.value)
-			? Math.max(0, nutrient.value * scale)
-			: 0,
+		value: nutrient.value * scale,
 	}));
 };
 
@@ -187,23 +195,32 @@ export const mergeMissingBarcodeProductFields = (
 		? supplement.servingWeightGrams
 		: primary.servingWeightGrams;
 	let provenance = { ...primary.fieldProvenance };
-	let nutrients = primary.nutrients;
-	let reportedNutrientIds = primary.reportedNutrientIds;
+	let nutrients = scaleNutrients(
+		primary.nutrients,
+		primary.servingWeightGrams,
+		nextServingWeight,
+	);
+	let reportedNutrientIds = [...primary.reportedNutrientIds];
 
 	if (useSupplementNutrition) {
-		nutrients = scaleNutrients(
+		const supplementNutrients = scaleNutrients(
 			supplement.nutrients,
 			supplement.servingWeightGrams,
 			nextServingWeight,
 		);
-		reportedNutrientIds = [...supplement.reportedNutrientIds];
-		provenance = withFieldSource(provenance, "nutrition", supplement);
-	} else if (useSupplementServing && hasNutrition(primary)) {
-		nutrients = scaleNutrients(
-			primary.nutrients,
-			primary.servingWeightGrams,
-			nextServingWeight,
+		const nutrientIds = new Set(nutrients.map((nutrient) => nutrient.nutrientId));
+		const addedNutrients = supplementNutrients.filter(
+			(nutrient) => !nutrientIds.has(nutrient.nutrientId),
 		);
+		nutrients = [...nutrients, ...addedNutrients];
+		reportedNutrientIds = [
+			...new Set([...reportedNutrientIds, ...supplement.reportedNutrientIds]),
+		].filter((nutrientId) =>
+			nutrients.some((nutrient) => nutrient.nutrientId === nutrientId)
+		);
+		if (!hasNutrition(primary)) {
+			provenance = withFieldSource(provenance, "nutrition", supplement);
+		}
 	}
 
 	if (useSupplementServing) {

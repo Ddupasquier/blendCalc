@@ -1,8 +1,10 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
+import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type { FdcFood } from "$lib/utils/food/types";
 import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
+import { readFoodServingsByParent } from "./servings";
 import { getCurrentUserId, toJson } from "./shared";
 
 export type CloudCustomFoodWriteResult =
@@ -23,18 +25,29 @@ export const readCloudCustomFoods = async () => {
 		.eq("user_id", userId)
 		.order("created_at", { ascending: false });
 
-	if (error) return null;
-	const normalizedRows = await readNormalizedNutrientsByParent(
-		supabase,
-		"custom_food_id",
-		data.map((row) => row.id),
-	);
-	return data.map((row) =>
-		hydrateFoodWithNormalizedNutrients(
-			row.food as unknown as FdcFood,
-			normalizedRows?.get(row.id),
+	if (error) throw error;
+	const [normalizedRows, servingRows] = await Promise.all([
+		readNormalizedNutrientsByParent(
+			supabase,
+			"custom_food_id",
+			data.map((row) => row.id),
 		),
-	);
+		readFoodServingsByParent(
+			supabase,
+			"custom_food_id",
+			data.map((row) => row.id),
+		),
+	]);
+	return data.map((row) => {
+		const food = hydrateFoodWithNormalizedNutrients(
+			row.food as unknown as FdcFood,
+			normalizedRows.get(row.id) ?? [],
+		);
+		return hydrateFoodWithNormalizedServings(
+			food,
+			servingRows.get(row.id) ?? [],
+		);
+	});
 };
 
 export const writeCloudCustomFoods = async (foods: FdcFood[]) => {

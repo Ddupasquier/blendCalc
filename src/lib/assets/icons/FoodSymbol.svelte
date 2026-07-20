@@ -56,7 +56,10 @@
 		/>
 	</span>
 {:else}
-<span class={`food-symbol__fallback ${className}`.trim()} title={symbolDefinition?.label ?? "Ingredient"}>
+	<span
+		class={`food-symbol__fallback ${className}`.trim()}
+		title={symbolDefinition?.label ?? "Ingredient"}
+	>
 		<CategoryFoodIcon {symbolKey} />
 	</span>
 {/if}

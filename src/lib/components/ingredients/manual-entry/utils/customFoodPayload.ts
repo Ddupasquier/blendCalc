@@ -79,6 +79,13 @@ export const buildManualEntrySaveCategories = ({
 export const createManualEntryCustomFood = (
 	payload: ManualEntryCustomFoodPayload,
 ) => {
+	if (
+		payload.servingWeightGrams === null ||
+		!Number.isFinite(payload.servingWeightGrams) ||
+		payload.servingWeightGrams <= 0
+	) {
+		throw new TypeError("Serving weight is required before saving an ingredient.");
+	}
 	const saveNutrients = buildManualEntrySaveNutrients(payload);
 
 	return createCustomFood({
@@ -86,7 +93,7 @@ export const createManualEntryCustomFood = (
 		nameProvenance: payload.nameProvenance,
 		brandOwner: payload.brandOwner,
 		servingLabel: payload.servingLabel,
-		servingWeightGrams: payload.servingWeightGrams ?? 0,
+		servingWeightGrams: payload.servingWeightGrams,
 		volumeQuantity: payload.useVolumeEquivalent
 			? payload.volumeQuantity ?? undefined
 			: undefined,

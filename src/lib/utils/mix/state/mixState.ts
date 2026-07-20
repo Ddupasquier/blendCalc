@@ -11,6 +11,7 @@ import {
 import type { FdcFood } from "$lib/utils/food/types";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
 import {
+	canConvertServingUnit,
 	convertServingAmount,
 	convertServingToGrams,
 	parseServingAmount,
@@ -31,6 +32,7 @@ import {
 	migrateLegacyNutrientIds,
 	migrateLegacyNutrientOptions,
 } from "$lib/utils/mix/nutrients/nutrientMappings";
+import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export type MixStateSnapshot = {
 	selected: (string | number)[];
@@ -184,14 +186,17 @@ export const readStoredMixState = (
 		);
 		const servingUnits = Object.fromEntries(
 			selectedFoodIds.map((foodId) => {
+				const food = allIngredientItems.find((item) => item.fdcId === foodId);
 				const parsedInput = savedState.servingInputs?.[foodId]
 					? parseServingAmount(savedState.servingInputs[foodId])
 					: null;
+				const requestedUnit =
+					normalizeServingUnit(savedState.servingUnits?.[foodId]) ??
+					parsedInput?.unit ??
+					"g";
 				return [
 					foodId,
-					normalizeServingUnit(savedState.servingUnits?.[foodId]) ??
-						parsedInput?.unit ??
-						"g",
+					canConvertServingUnit(requestedUnit, food) ? requestedUnit : "g",
 				];
 			}),
 		);
@@ -203,7 +208,12 @@ export const readStoredMixState = (
 					storedServingGrams[foodId] ??
 					defaultServingGrams;
 				const unit = servingUnits[foodId] ?? "g";
-				return [foodId, convertServingToGrams(quantity, unit, food)];
+				return [
+					foodId,
+					convertServingToGrams(quantity, unit, food) ??
+						storedServingGrams[foodId] ??
+						defaultServingGrams,
+				];
 			}),
 		);
 
@@ -272,7 +282,8 @@ export const getStateWithToggledFood = (
 			...state.servingGrams,
 			[foodId]:
 				state.servingGrams[foodId] ??
-				convertServingToGrams(defaultServing.quantity, defaultServing.unit, food),
+				convertServingToGrams(defaultServing.quantity, defaultServing.unit, food) ??
+				getMixRuntimeConfiguration().defaultServingGrams,
 		},
 		servingQuantities: {
 			...state.servingQuantities,
@@ -316,7 +327,10 @@ export const getStateWithServingAmount = (
 	quantityValue: string,
 	unit: ServingMeasureUnit,
 ): MixStateSnapshot => {
-	const quantity = Math.max(0, Number(quantityValue) || 0);
+	const quantity = toFiniteNonnegativeNumber(quantityValue);
+	if (quantity === null) return state;
+	const grams = convertServingToGrams(quantity, unit, food);
+	if (grams === null) return state;
 
 	return {
 		...state,
@@ -330,7 +344,7 @@ export const getStateWithServingAmount = (
 		},
 		servingGrams: {
 			...state.servingGrams,
-			[food.fdcId]: convertServingToGrams(quantity, unit, food),
+			[food.fdcId]: grams,
 		},
 	};
 };

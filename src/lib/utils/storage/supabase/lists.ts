@@ -125,7 +125,8 @@ export const readCloudSmoothieListPage = async (
 	query = applyFoodSort(query, options.sort);
 
 	const { data, count, error } = await query.range(offset, offset + limit - 1);
-	if (error || !data) return null;
+	if (error) throw error;
+	if (!data) throw new Error("Ingredient list could not be loaded.");
 
 	const baseFoods = data.map((row) =>
 		hydrateFoodWithCatalogState(
@@ -155,11 +156,11 @@ export const readCloudSmoothieListPage = async (
 		const row = data[index];
 		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
 			food,
-			normalizedRows?.get(row.id),
+			normalizedRows.get(row.id) ?? [],
 		);
 		return hydrateFoodWithNormalizedServings(
 			foodWithNutrients,
-			servingRows?.get(row.id),
+			servingRows.get(row.id) ?? [],
 		);
 	});
 
@@ -190,7 +191,6 @@ export const readCloudSmoothieList = async (key: SmoothieListKey) => {
 		return await query;
 	});
 
-	if (!rows) return null;
 	const baseFoods = rows.map((row) =>
 		hydrateFoodWithCatalogState(
 			{
@@ -219,11 +219,11 @@ export const readCloudSmoothieList = async (key: SmoothieListKey) => {
 		const row = rows[index];
 		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
 			food,
-			normalizedRows?.get(row.id),
+			normalizedRows.get(row.id) ?? [],
 		);
 		return hydrateFoodWithNormalizedServings(
 			foodWithNutrients,
-			servingRows?.get(row.id),
+			servingRows.get(row.id) ?? [],
 		);
 	});
 };

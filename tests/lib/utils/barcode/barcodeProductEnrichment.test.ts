@@ -20,7 +20,7 @@ const nutrient = (
 	valueOrigin: "reported",
 	source,
 	sourceReference: source === "usda" ? "2658692" : "00021130493609",
-	confidence: source === "usda" ? "source-verified" : "imported",
+	confidence: "unknown",
 });
 
 const makeDraft = (
@@ -45,7 +45,7 @@ const makeDraft = (
 		nutrition: {
 			source: source === "usda" ? "usda" : "open-food-facts",
 			sourceReference: source === "usda" ? "2658692" : "00021130493609",
-			confidence: source === "usda" ? "source-verified" : "imported",
+			confidence: "unknown",
 		},
 	},
 	...overrides,
@@ -76,35 +76,50 @@ describe("barcode product field enrichment", () => {
 			servingLabel: "1/2 cup (125 g)",
 			servingWeightGrams: 125,
 			hasSourceServing: true,
-			nutrients: [nutrient(2.4, "open-food-facts")],
+			nutrients: [
+				nutrient(2.4, "open-food-facts"),
+				{
+					nutrientId: 1003,
+					nutrientName: "Protein",
+					nutrientNumber: "203",
+					unitName: "G",
+					value: 1,
+					valueOrigin: "reported",
+					source: "open-food-facts",
+					sourceReference: "00021130493609",
+					confidence: "unknown",
+				},
+			],
+			reportedNutrientIds: [1079, 1003],
 			categories: ["Pasta sauces"],
 			image: openFoodFactsImage,
 			fieldProvenance: {
 				nutrition: {
 					source: "open-food-facts",
 					sourceReference: "00021130493609",
-					confidence: "imported",
+					confidence: "unknown",
 				},
 				image: {
 					source: "open-food-facts",
 					sourceReference: "00021130493609",
-					confidence: "imported",
+					confidence: "unknown",
 				},
 				categories: {
 					source: "open-food-facts",
 					sourceReference: "00021130493609",
-					confidence: "imported",
+					confidence: "unknown",
 				},
 				serving: {
 					source: "open-food-facts",
 					sourceReference: "00021130493609",
-					confidence: "imported",
+					confidence: "unknown",
 				},
 			},
 		});
 
 		const result = mergeMissingBarcodeProductFields(usda, openFoodFacts);
 		expect(getSupplementedBarcodeProductFields(usda, openFoodFacts)).toEqual([
+			"nutrition",
 			"image",
 			"categories",
 			"serving",
@@ -115,6 +130,11 @@ describe("barcode product field enrichment", () => {
 			value: 2.5,
 			source: "usda",
 		});
+		expect(result.nutrients.find((item) => item.nutrientId === 1003)).toMatchObject({
+			value: 1,
+			source: "open-food-facts",
+		});
+		expect(result.reportedNutrientIds).toContain(1003);
 		expect(result).toMatchObject({
 			servingLabel: "1/2 cup (125 g)",
 			servingWeightGrams: 125,
@@ -141,7 +161,7 @@ describe("barcode product field enrichment", () => {
 				serving: {
 					source: "usda",
 					sourceReference: "2658692",
-					confidence: "source-verified",
+					confidence: "unknown",
 				},
 			},
 		});

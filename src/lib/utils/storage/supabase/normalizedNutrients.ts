@@ -61,7 +61,7 @@ const readNutrientRows = async (
 					? await baseQuery.in("custom_food_id", parentIdChunk)
 					: await baseQuery.in("shared_product_id", parentIdChunk);
 
-		if (response.error) return null;
+		if (response.error) throw response.error;
 		rows.push(...(response.data as FoodNutrientRecordWithDefinition[]));
 	}
 
@@ -72,7 +72,7 @@ export const readNormalizedNutrientsByParent = async (
 	supabase: SupabaseClient<Database>,
 	parentColumn: NormalizedNutrientParentColumn,
 	parentIds: string[],
-): Promise<Map<string, NormalizedNutrientRow[]> | null> => {
+): Promise<Map<string, NormalizedNutrientRow[]>> => {
 	const uniqueParentIds = [...new Set(parentIds.filter(Boolean))];
 	if (uniqueParentIds.length === 0) return new Map();
 
@@ -81,7 +81,6 @@ export const readNormalizedNutrientsByParent = async (
 		parentColumn,
 		uniqueParentIds,
 	);
-	if (!nutrientRows) return null;
 	if (nutrientRows.length === 0) return new Map();
 
 	const rowsByParent = new Map<string, NormalizedNutrientRow[]>();

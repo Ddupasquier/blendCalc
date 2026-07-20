@@ -185,9 +185,6 @@ const hydrateCatalogRows = async (
 		),
 		readActiveFoodImages(supabase, rows),
 	]);
-	if (!nutrientRows) throw new Error("Catalog nutrients could not be loaded.");
-	if (!servingRows) throw new Error("Catalog servings could not be loaded.");
-
 	return rows.map((row) => {
 		const category = row.category_option_id
 			? categories.get(row.category_option_id) ?? null
@@ -209,11 +206,11 @@ const hydrateCatalogRows = async (
 			: baseFood;
 		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
 			categorizedFood,
-			nutrientRows.get(row.id),
+			nutrientRows.get(row.id) ?? [],
 		);
 		const food = hydrateFoodWithNormalizedServings(
 			foodWithNutrients,
-			servingRows.get(row.id),
+			servingRows.get(row.id) ?? [],
 		);
 		return {
 			id: row.id,

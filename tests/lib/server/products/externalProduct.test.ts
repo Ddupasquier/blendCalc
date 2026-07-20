@@ -22,7 +22,7 @@ const makeDraft = (
 		unitName: "G",
 		value: 2,
 		source: source === "usda" ? "usda" : "open-food-facts",
-		confidence: source === "usda" ? "source-verified" : "imported",
+		confidence: "unknown",
 	}],
 	reportedNutrientIds: [1079],
 	categories: ["Pasta sauces"],
@@ -34,15 +34,15 @@ const makeDraft = (
 	fieldProvenance: {
 		nutrition: {
 			source: source === "usda" ? "usda" : "open-food-facts",
-			confidence: source === "usda" ? "source-verified" : "imported",
+			confidence: "unknown",
 		},
 		categories: {
 			source: source === "usda" ? "usda" : "open-food-facts",
-			confidence: source === "usda" ? "source-verified" : "imported",
+			confidence: "unknown",
 		},
 		serving: {
 			source: source === "usda" ? "usda" : "open-food-facts",
-			confidence: source === "usda" ? "source-verified" : "imported",
+			confidence: "unknown",
 		},
 		...(image
 			? {
@@ -98,6 +98,39 @@ describe("external barcode product lookup", () => {
 			image: openFoodFactsImage,
 		});
 		expect(openFoodFacts).toHaveBeenCalledOnce();
+	});
+
+	it("requests a supplement when a required nutrient is missing", async () => {
+		const usdaDraft = makeDraft("usda");
+		const openFoodFacts = vi.fn().mockResolvedValue(makeDraft(
+			"open-food-facts",
+			undefined,
+			{
+				nutrients: [{
+					nutrientId: 1003,
+					nutrientName: "Protein",
+					nutrientNumber: "203",
+					unitName: "G",
+					value: 1,
+					source: "open-food-facts",
+					confidence: "unknown",
+				}],
+				reportedNutrientIds: [1003],
+			},
+		));
+
+		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
+			usda: vi.fn().mockResolvedValue(usdaDraft),
+			openFoodFacts,
+			getReferenceData,
+			requiredNutrientIds: [1079, 1003],
+		});
+
+		expect(openFoodFacts).toHaveBeenCalledOnce();
+		expect(result?.nutrients.map((item) => item.nutrientId)).toEqual([
+			1079,
+			1003,
+		]);
 	});
 
 	it("uses a cached image before requesting another image source", async () => {
@@ -196,8 +229,8 @@ describe("external barcode product lookup", () => {
 		const usdaDraft = makeDraft("usda", undefined, {
 			categories: [],
 			fieldProvenance: {
-				nutrition: { source: "usda", confidence: "source-verified" },
-				serving: { source: "usda", confidence: "source-verified" },
+				nutrition: { source: "usda", confidence: "unknown" },
+				serving: { source: "usda", confidence: "unknown" },
 			},
 		});
 		const openFoodFacts = vi

@@ -26,6 +26,7 @@ import {
 	parseServingAmount,
 } from "$lib/utils/serving/servingAmount";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
+import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export type { OpenFoodFactsNutriments } from "$lib/utils/barcode/barcodeNutrients";
 
@@ -110,10 +111,7 @@ export const getBarcodeProductSourceDisplayLabel = (
 	draft: Pick<BarcodeProductDraft, "sourceLabel" | "sourceDataType">,
 ) => [draft.sourceLabel, draft.sourceDataType].filter(Boolean).join(" · ");
 
-const toNumber = (value: unknown) => {
-	const numberValue = typeof value === "string" ? Number.parseFloat(value) : Number(value);
-	return Number.isFinite(numberValue) ? Math.max(0, numberValue) : 0;
-};
+const toNumber = (value: unknown) => toFiniteNonnegativeNumber(value);
 
 const cleanTag = (value: string) =>
 	value
@@ -190,7 +188,7 @@ const parseOpenFoodFactsImage = (
 		licenseName: OPEN_FOOD_FACTS_IMAGE_LICENSE.name,
 		licenseUrl: OPEN_FOOD_FACTS_IMAGE_LICENSE.url,
 		attributionText: OPEN_FOOD_FACTS_IMAGE_LICENSE.attribution,
-		confidence: "source-verified",
+		confidence: "imported",
 		...createFullImagePlacement(),
 		fetchedAt: new Date().toISOString(),
 	};
@@ -215,11 +213,11 @@ const parseFdcMetadata = (food: FdcFood) => ({
 const getFieldConfidence = (
 	source: FoodFieldSource["source"],
 ): NonNullable<FoodFieldSource["confidence"]> => {
-	if (source === "community-reviewed" || source === "shared-catalog") {
+	if (source === "community-reviewed") {
 		return "moderator-reviewed";
 	}
 	if (source === "user-label") return "user-reported";
-	return "imported";
+	return "unknown";
 };
 
 const normalizeFieldSource = (
@@ -262,11 +260,7 @@ const createOpenFoodFactsFieldProvenance = ({
 	categories: string[];
 	hasSourceServing: boolean;
 }): FoodFieldProvenance => {
-	const source = createFieldSource(
-		"open-food-facts",
-		barcode,
-		"source-verified",
-	);
+	const source = createFieldSource("open-food-facts", barcode, "unknown");
 	return {
 		...(nutrients.length > 0 ? { nutrition: source } : {}),
 		...(image
@@ -300,11 +294,10 @@ const createFdcFieldProvenance = ({
 		food.sourceKey ?? food.barcodeSource ?? "usda",
 	);
 	const fallbackReference = food.sharedProductId ?? String(food.fdcId);
-	const fallbackConfidence = food.sharedProductConfidence ?? "source-verified";
 	const fallback = createFieldSource(
 		fallbackSource,
 		fallbackReference,
-		fallbackConfidence,
+		"unknown",
 	);
 	const nutrientSource = nutrients.find((nutrient) => nutrient.source);
 	const servingSource = food.foodServings?.find((serving) => serving.isPrimary) ??
@@ -316,9 +309,9 @@ const createFdcFieldProvenance = ({
 			? {
 				nutrition: nutrientSource
 					? createFieldSource(
-						nutrientSource.source ?? fallbackSource,
-						nutrientSource.sourceReference ?? fallbackReference,
-						nutrientSource.confidence ?? fallbackConfidence,
+						nutrientSource.source ?? "unknown",
+						nutrientSource.sourceReference,
+						nutrientSource.confidence ?? "unknown",
 					)
 					: fallback,
 			}
@@ -339,9 +332,9 @@ const createFdcFieldProvenance = ({
 			? {
 				serving: servingSource
 					? createFieldSource(
-						servingSource.source ?? fallbackSource,
-						servingSource.sourceReference ?? fallbackReference,
-						servingSource.confidence ?? fallbackConfidence,
+						servingSource.source ?? "unknown",
+						servingSource.sourceReference,
+						servingSource.confidence ?? "unknown",
 					)
 					: fallback,
 			}
@@ -359,10 +352,13 @@ const parseServingBasis = (product: OpenFoodFactsProduct) => {
 			hasExactGramWeight: true,
 		};
 	}
-	const parsedQuantity = parseServingAmount(
-		`${servingQuantity} ${product.serving_quantity_unit ?? ""}`,
-	);
+	const parsedQuantity = servingQuantity === null
+		? null
+		: parseServingAmount(
+			`${servingQuantity} ${product.serving_quantity_unit ?? ""}`,
+		);
 	if (
+		servingQuantity !== null &&
 		servingQuantity > 0 &&
 		parsedQuantity &&
 		getServingMeasureDimension(parsedQuantity.unit) === "weight"
@@ -451,10 +447,17 @@ export const mapFdcBarcodeFood = (
 	const servingWeightGrams = hasExactGramWeight ? parsedServing?.grams ?? 100 : 100;
 	const servingScale = servingWeightGrams / 100;
 	const metadata = parseFdcMetadata(food);
-	const nutrients = food.foodNutrients.map((nutrient) => ({
-		...nutrient,
-		value: toNumber(nutrient.value) * servingScale,
-	}));
+	const nutrients = food.foodNutrients.flatMap((nutrient) => {
+		const value = toNumber(nutrient.value);
+		return value === null ? [] : [{
+			...nutrient,
+			value: value * servingScale,
+		}];
+	});
+	const nutrientIds = new Set(nutrients.map((nutrient) => nutrient.nutrientId));
+	const reportedNutrientIds = food.reportedNutrientIds ?? food.foodNutrients
+		.filter((nutrient) => nutrient.valueOrigin === "reported")
+		.map((nutrient) => nutrient.nutrientId);
 
 	return {
 		barcode: canonicalBarcode,
@@ -469,11 +472,8 @@ export const mapFdcBarcodeFood = (
 		hasSourceServing: hasExactGramWeight,
 		nutrients,
 		reportedNutrientIds: [
-			...new Set(
-				food.reportedNutrientIds ??
-					food.foodNutrients.map((nutrient) => nutrient.nutrientId),
-			),
-		],
+			...new Set(reportedNutrientIds),
+		].filter((nutrientId) => nutrientIds.has(nutrientId)),
 		...metadata,
 		image: food.image,
 		fieldProvenance: createFdcFieldProvenance({
@@ -536,7 +536,7 @@ export const mapSharedCatalogFood = (
 					categories: createFieldSource(
 						"shared-catalog",
 						food.sharedProductId,
-						food.sharedProductConfidence ?? "moderator-reviewed",
+						"unknown",
 					),
 				}
 				: {}),

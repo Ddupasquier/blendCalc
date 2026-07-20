@@ -382,6 +382,26 @@ $ingredient-accent-info: $color-figma-sky;
 $ingredient-accent-danger: $color-figma-red;
 $ingredient-border-subtle: $color-figma-border;
 
+// Reusable food-symbol illustration palette. Category icons should consume
+// these semantic roles rather than introducing one-off SVG colors.
+$food-symbol-red: $color-guava-laser;
+$food-symbol-red-soft: $color-strawberry-cream;
+$food-symbol-orange: $color-peach-cream;
+$food-symbol-yellow: $color-mango-gold;
+$food-symbol-yellow-dark: $color-mango-gold-dark;
+$food-symbol-green: $color-figma-green;
+$food-symbol-green-soft: $color-pistachio-cream;
+$food-symbol-blue: $color-figma-sky;
+$food-symbol-blue-soft: $color-blueberry-milk;
+$food-symbol-purple: $color-lavender-smoothie-dark;
+$food-symbol-purple-soft: $color-lavender-smoothie;
+$food-symbol-brown: $color-dark-taupe;
+$food-symbol-neutral: $color-warm-stone;
+$food-symbol-cream: $color-cloud-cream;
+$food-symbol-outline: $color-dark-taupe;
+$food-symbol-stroke-width: 1.15px;
+$food-symbol-detail-stroke-width: 1px;
+
 $ingredient-control-height: $app-rebuild-control-height;
 $ingredient-control-height-compact: $app-rebuild-control-height-sm;
 $ingredient-control-padding-x: $app-rebuild-control-padding-x;
@@ -399,6 +419,8 @@ $ingredient-radius-pill: $app-rebuild-radius-pill;
 $ingredient-card-min-height: $app-rebuild-ingredient-card-height;
 $ingredient-card-padding: $app-rebuild-card-padding;
 $ingredient-card-padding-compact: $app-rebuild-card-padding-sm;
+$ingredient-card-warning-bar-width: 5px;
+$ingredient-card-warning-bar-color: $color-mango-gold;
 $ingredient-badge-padding-y: $app-text-badge-padding-y;
 $ingredient-badge-padding-x: $app-text-badge-padding-x;
 $ingredient-badge-font-size: $app-text-badge-font-size;

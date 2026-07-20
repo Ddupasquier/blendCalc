@@ -15,7 +15,12 @@ export type ChevronProps = BasicIconProps & {
 
 export type FoodSymbolProps = {
 	food: Pick<FdcFood, "description" | "image"> &
-		Partial<Pick<FdcFood, "symbolKey">>;
+		Partial<
+			Pick<
+				FdcFood,
+				"symbolKey" | "foodCategory" | "brandedFoodCategory" | "categories"
+			>
+		>;
 	class?: string;
 };
 

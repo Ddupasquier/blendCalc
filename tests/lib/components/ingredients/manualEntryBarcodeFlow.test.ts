@@ -22,6 +22,30 @@ const createDraft = (overrides: Partial<BarcodeProductDraft> = {}): BarcodeProdu
 });
 
 describe("manual entry barcode flow", () => {
+	it("keeps reported zeroes without fabricating zeroes for missing values", () => {
+		const state = getBarcodeDraftState(createDraft({
+			nutrients: [
+				{
+					nutrientId: 1004,
+					nutrientName: "Total Fat",
+					nutrientNumber: "204",
+					unitName: "G",
+					value: 0,
+				},
+				{
+					nutrientId: 1003,
+					nutrientName: "Protein",
+					nutrientNumber: "203",
+					unitName: "G",
+					value: Number.NaN,
+				},
+			],
+		}));
+
+		expect(state.manualNutrientValues).toEqual({ 1004: 0 });
+		expect(state.importedNutrients).toHaveLength(1);
+	});
+
 	it("uses the DB-resolved category for the visible manual-entry category", () => {
 		const state = getBarcodeDraftState(createDraft({
 			resolvedCategory: "Jams",

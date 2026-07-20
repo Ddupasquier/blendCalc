@@ -70,7 +70,7 @@
 		<div class="custom-ingredient__macro-row">
 			{#each summaryNutrients as nutrient}
 				<span>
-					<strong>{nutrient.value.toFixed(1)}{formatUnit(nutrient.unitName)}</strong>
+					<strong>{nutrient.value === null ? "—" : `${nutrient.value.toFixed(1)}${formatUnit(nutrient.unitName)}`}</strong>
 					<small>{nutrient.label}</small>
 				</span>
 			{/each}

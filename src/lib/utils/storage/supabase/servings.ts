@@ -42,7 +42,7 @@ export const readFoodServingsByParent = async (
 	supabase: SupabaseClient<Database>,
 	parentColumn: FoodServingParentColumn,
 	parentIds: string[],
-): Promise<Map<string, NormalizedServingRow[]> | null> => {
+): Promise<Map<string, NormalizedServingRow[]>> => {
 	const uniqueParentIds = [...new Set(parentIds.filter(Boolean))];
 	if (uniqueParentIds.length === 0) return new Map();
 	const rows: FoodServingRecord[] = [];
@@ -56,7 +56,7 @@ export const readFoodServingsByParent = async (
 			: parentColumn === "custom_food_id"
 				? await baseQuery.in("custom_food_id", parentIdChunk)
 				: await baseQuery.in("shared_product_id", parentIdChunk);
-		if (response.error) return null;
+		if (response.error) throw response.error;
 		rows.push(...(response.data as FoodServingRecord[]));
 	}
 

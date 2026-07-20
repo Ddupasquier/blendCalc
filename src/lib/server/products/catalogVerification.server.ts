@@ -60,7 +60,11 @@ const normalizeText = (value?: string) =>
 	value?.trim().toLocaleLowerCase().replace(/[^a-z0-9]+/g, " ").trim() ?? "";
 
 const getReportedNutrientIds = (food: FdcFood) =>
-	new Set(food.reportedNutrientIds ?? food.foodNutrients.map((nutrient) => nutrient.nutrientId));
+	new Set(
+		food.reportedNutrientIds ?? food.foodNutrients
+			.filter((nutrient) => nutrient.valueOrigin === "reported")
+			.map((nutrient) => nutrient.nutrientId),
+	);
 
 const getNutrientMap = (food: FdcFood) =>
 	new Map(food.foodNutrients.map((nutrient) => [nutrient.nutrientId, nutrient]));

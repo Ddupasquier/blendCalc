@@ -12,6 +12,7 @@
 		SERVING_MEASURE_OPTIONS,
 		type ServingMeasureUnit,
 	} from "$lib/utils/serving/servingMeasureCatalog";
+	import { canConvertServingUnit } from "$lib/utils/serving/servingAmount";
 
 	let {
 		food,
@@ -90,7 +91,7 @@
 						event.currentTarget.value as ServingMeasureUnit,
 					)}
 			>
-				{#each SERVING_MEASURE_OPTIONS as option}
+				{#each SERVING_MEASURE_OPTIONS.filter((option) => canConvertServingUnit(option.value, food)) as option}
 					<option value={option.value}>{option.label}</option>
 				{/each}
 			</select>

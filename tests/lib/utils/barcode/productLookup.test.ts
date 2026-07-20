@@ -101,6 +101,31 @@ describe("barcode product mapping", () => {
 		);
 	});
 
+	it("does not convert missing or negative Open Food Facts values to zero", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Missing macro drink",
+				serving_size: "100 g",
+				nutriments: {
+					"energy-kcal_100g": null as unknown as number,
+					fat_100g: -1,
+					proteins_100g: 0,
+				},
+			},
+			"4006381333931",
+			productReferenceDataFixture,
+		);
+
+		expect(draft?.nutrients).toEqual([
+			expect.objectContaining({
+				nutrientId: NUTRIENT_IDS.PROTEIN,
+				value: 0,
+				confidence: "unknown",
+			}),
+		]);
+		expect(draft?.reportedNutrientIds).toEqual([NUTRIENT_IDS.PROTEIN]);
+	});
+
 	it("uses the DB-provided conversion for source-specific nutrient units", () => {
 		const draft = mapOpenFoodFactsProduct(
 			{
@@ -191,13 +216,13 @@ describe("barcode product mapping", () => {
 			licenseName: "Creative Commons Attribution-ShareAlike",
 			licenseUrl: "https://world.openfoodfacts.org/terms-of-use",
 			attributionText: "Open Food Facts contributors",
-			confidence: "source-verified",
+			confidence: "imported",
 		});
 		expect(draft?.image?.fetchedAt).toBeTruthy();
 		expect(draft?.fieldProvenance?.image).toMatchObject({
 			source: "open-food-facts",
 			sourceReference: "00021130462506",
-			confidence: "source-verified",
+			confidence: "imported",
 		});
 	});
 
@@ -255,6 +280,16 @@ describe("barcode product mapping", () => {
 					{ nutrientId: NUTRIENT_IDS.SODIUM, nutrientName: "Sodium", nutrientNumber: "307", unitName: "MG", value: 600 },
 					{ nutrientId: NUTRIENT_IDS.VITAMIN_C, nutrientName: "Vitamin C", nutrientNumber: "401", unitName: "MG", value: 20 },
 				],
+				reportedNutrientIds: [
+					NUTRIENT_IDS.CALORIES,
+					NUTRIENT_IDS.FAT,
+					NUTRIENT_IDS.CARBS,
+					NUTRIENT_IDS.FIBER,
+					NUTRIENT_IDS.SUGAR,
+					NUTRIENT_IDS.PROTEIN,
+					NUTRIENT_IDS.SODIUM,
+					NUTRIENT_IDS.VITAMIN_C,
+				],
 			},
 			"4006381333931",
 			productReferenceDataFixture,
@@ -287,9 +322,9 @@ describe("barcode product mapping", () => {
 			sourcePublishedDate: "2024-05-01",
 			sourceModifiedDate: "2024-04-15",
 			fieldProvenance: {
-				nutrition: { source: "usda" },
-				categories: { source: "usda" },
-				serving: { source: "usda" },
+				nutrition: { source: "usda", confidence: "unknown" },
+				categories: { source: "usda", confidence: "unknown" },
+				serving: { source: "usda", confidence: "unknown" },
 			},
 		});
 	});
@@ -318,6 +353,12 @@ describe("barcode product mapping", () => {
 			categoryResolution: {
 				categoryOptionId: "breakfast-cereals",
 				label: "Breakfast Cereals",
+			},
+			fieldProvenance: {
+				categories: {
+					source: "shared-catalog",
+					confidence: "unknown",
+				},
 			},
 		});
 	});

@@ -63,13 +63,11 @@ describe("normalized nutrient Supabase reads", () => {
 		expect(mock.from).toHaveBeenCalledTimes(1);
 	});
 
-	it("returns null so callers can use JSON when normalized reads fail", async () => {
-		const result = await readNormalizedNutrientsByParent(
+	it("throws when normalized reads fail instead of authorizing JSON snapshots", async () => {
+		await expect(readNormalizedNutrientsByParent(
 			createSupabaseMock({ nutrientReadFails: true }) as unknown as SupabaseClient<Database>,
 			"user_food_list_item_id",
 			["list-1"],
-		);
-
-		expect(result).toBeNull();
+		)).rejects.toMatchObject({ message: "missing relation" });
 	});
 });

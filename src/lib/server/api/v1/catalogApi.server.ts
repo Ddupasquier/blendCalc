@@ -25,10 +25,9 @@ const toSource = (
 
 const toFieldSource = (
 	fieldSource: FoodFieldSource | undefined,
-	fallback: ApiV1Source,
 ) => fieldSource
 	? toSource(fieldSource.source, fieldSource.sourceReference, fieldSource.confidence)
-	: fallback;
+	: null;
 
 const toImage = (image: FoodImageAsset): ApiV1Image => ({
 	role: image.role,
@@ -66,14 +65,9 @@ const toWarning = (fact: FoodCompatibilityFact): ApiV1Warning => ({
 export const mapApprovedCatalogRecordToApiV1Product = (
 	record: ApprovedCatalogRecord,
 ): ApiV1Product => {
-	const productSource = toSource(
-		record.source,
-		record.sourceReference,
-		record.confidence,
-	);
 	const ingredientsText = record.food.ingredients?.trim() || null;
 	const categorySource = record.category
-		? toFieldSource(record.food.fieldProvenance?.categories, productSource)
+		? toFieldSource(record.food.fieldProvenance?.categories)
 		: null;
 	return {
 		id: record.id,
@@ -104,7 +98,7 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 				amountPer100g: Number.isFinite(nutrient.value)
 					? nutrient.value
 					: null,
-				valueStatus: nutrient.valueOrigin ?? "reported",
+				valueStatus: nutrient.valueOrigin ?? "unknown",
 				source: nutrient.source
 					? toSource(
 							nutrient.source,
@@ -141,10 +135,10 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 		images: record.images.map(toImage),
 		warnings: (record.food.compatibilitySummary?.allFacts ?? []).map(toWarning),
 		fieldSources: {
-			name: productSource,
-			brand: record.brandOwner ? productSource : null,
+			name: null,
+			brand: null,
 			category: categorySource,
-			ingredients: ingredientsText ? productSource : null,
+			ingredients: null,
 		},
 		revision: {
 			id: record.revision.id,

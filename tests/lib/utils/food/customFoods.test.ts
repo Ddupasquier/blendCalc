@@ -154,6 +154,7 @@ describe("custom foods", () => {
 			name: "Oreos",
 			servingLabel: "3 cookies",
 			servingWeightGrams: 34,
+			hasSourceServing: true,
 			nutrients: makeTestNutrients({
 				calories: 160,
 				fat: 7,
@@ -194,6 +195,7 @@ describe("custom foods", () => {
 		const food = createCustomFood({
 			name: "Custom yogurt",
 			servingWeightGrams: 245,
+			hasSourceServing: true,
 			volumeQuantity: 1,
 			volumeUnit: "cup",
 			nutrients: makeTestNutrients({
@@ -214,6 +216,49 @@ describe("custom foods", () => {
 			unitKey: "cup",
 			gramWeight: 245,
 		});
+	});
+
+	it("does not claim a source serving unless the caller explicitly supplies one", () => {
+		const food = createCustomFood({
+			name: "No source serving",
+			servingWeightGrams: 100,
+			nutrients: makeTestNutrients({
+				calories: 10,
+				fat: 0,
+				carbs: 2,
+				fiber: 0,
+				sugar: 1,
+				protein: 0,
+			}),
+		});
+
+		expect(food.hasSourceServing).toBe(false);
+		expect(food.foodServings).toEqual([]);
+	});
+
+	it("rejects an invalid serving weight instead of replacing it", () => {
+		expect(() => createCustomFood({
+			name: "Invalid serving",
+			servingWeightGrams: Number.NaN,
+			nutrients: [],
+		})).toThrow("Serving weight must be a number greater than zero.");
+	});
+
+	it("drops invalid nutrients instead of converting them to zero", () => {
+		const food = createCustomFood({
+			name: "Invalid nutrient",
+			servingWeightGrams: 100,
+			nutrients: [{
+				nutrientId: NUTRIENT_IDS.PROTEIN,
+				nutrientName: "Protein",
+				nutrientNumber: "203",
+				unitName: "G",
+				value: null as unknown as number,
+			}],
+		});
+
+		expect(food.foodNutrients).toEqual([]);
+		expect(food.reportedNutrientIds).toEqual([]);
 	});
 
 	it("preserves the selected canonical category identity", () => {

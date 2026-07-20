@@ -5,6 +5,7 @@ import {
 	type IngredientSearchPage,
 	type IngredientSearchPageOptions,
 } from "$lib/utils/ingredients/ingredientSearchPagination";
+import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 type FdcDetailNutrient = {
 	amount?: number;
@@ -34,22 +35,44 @@ const normalizeFoodNutrient = (
 	nutrient: FdcNutrient | FdcDetailNutrient,
 ): FdcNutrient | null => {
 	if ("nutrientId" in nutrient) {
+		const nutrientId = Number(nutrient.nutrientId);
+		const nutrientName = nutrient.nutrientName?.trim();
+		const unitName = nutrient.unitName?.trim();
+		const value = toFiniteNonnegativeNumber(nutrient.value);
+		if (
+			!Number.isSafeInteger(nutrientId) ||
+			nutrientId <= 0 ||
+			!nutrientName ||
+			!unitName ||
+			value === null
+		) return null;
 		return {
-			nutrientId: Number(nutrient.nutrientId),
-			nutrientName: nutrient.nutrientName,
+			nutrientId,
+			nutrientName,
 			nutrientNumber: String(nutrient.nutrientNumber ?? ""),
-			unitName: nutrient.unitName,
-			value: Number(nutrient.value) || 0,
+			unitName,
+			value,
 		};
 	}
 
-	if (!nutrient.nutrient?.id) return null;
+	const definition = nutrient.nutrient;
+	const nutrientId = Number(definition?.id);
+	const nutrientName = definition?.name?.trim();
+	const unitName = definition?.unitName?.trim();
+	const value = toFiniteNonnegativeNumber(nutrient.amount);
+	if (
+		!Number.isSafeInteger(nutrientId) ||
+		nutrientId <= 0 ||
+		!nutrientName ||
+		!unitName ||
+		value === null
+	) return null;
 	return {
-		nutrientId: nutrient.nutrient.id,
-		nutrientName: nutrient.nutrient.name ?? "Unknown nutrient",
-		nutrientNumber: String(nutrient.nutrient.number ?? ""),
-		unitName: nutrient.nutrient.unitName ?? "",
-		value: Number(nutrient.amount) || 0,
+		nutrientId,
+		nutrientName,
+		nutrientNumber: String(definition?.number ?? ""),
+		unitName,
+		value,
 	};
 };
 

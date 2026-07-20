@@ -31,4 +31,45 @@ describe("FoodData Central normalization", () => {
 			},
 		]);
 	});
+
+	it("preserves reported zeroes while dropping missing or invalid nutrients", () => {
+		const food = normalizeFdcFood({
+			fdcId: 124,
+			description: "ZERO TEST PRODUCT",
+			foodNutrients: [
+				{
+					amount: 0,
+					nutrient: {
+						id: 1004,
+						name: "Total lipid (fat)",
+						number: "204",
+						unitName: "g",
+					},
+				},
+				{
+					amount: null as unknown as number,
+					nutrient: {
+						id: 1003,
+						name: "Protein",
+						number: "203",
+						unitName: "g",
+					},
+				},
+				{
+					amount: 10,
+					nutrient: {
+						id: 1005,
+						name: "",
+						number: "205",
+						unitName: "g",
+					},
+				},
+			],
+		});
+
+		expect(food.foodNutrients).toEqual([
+			expect.objectContaining({ nutrientId: 1004, value: 0 }),
+		]);
+		expect(food.reportedNutrientIds).toEqual([1004]);
+	});
 });
