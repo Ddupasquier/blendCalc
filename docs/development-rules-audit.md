@@ -36,6 +36,8 @@ clickable navigation block instead.
 - [GS1 Product QR Safety](#rule-gs1-digital-link)
 - [Source Lifecycle Reviews](#rule-source-lifecycle-reviews)
 - [Future Public Data API And Retention](#rule-store-useful-api-data)
+- [Versioned Catalog Read API](#rule-catalog-read-api)
+- [Independent App And API Versioning](#rule-app-versioning)
 - [Ingredient Source And Trust Identity](#rule-ingredient-provenance)
 - [External API Request Efficiency](#rule-external-api-request-efficiency)
 - [External API Rate Limits](#rule-api-rate-limit-handling)
@@ -747,6 +749,37 @@ these conversions so users can enter either weight or volume and receive the sam
 calculated nutrients. Keep unit labels, aliases, availability, and conversion factors
 database-backed, preserve the original serving as the primary reference, and clearly
 omit volume choices when the conversion is unknown or too uncertain.
+
+**31f.** <a id="rule-catalog-read-api"></a>Keep the versioned blendCalc catalog API
+separate from both physical database rows and external provider responses. API reads
+must use active canonical `shared_products` plus normalized child records as the source
+of truth, perform no live provider request, return bounded indexed pagination, and use
+one documented response contract for both the app and future consumers. Expose neutral
+field-level source, revision, serving, image-license, warning, and missing-value
+metadata without exposing provider hierarchy. Missing scalars are `null`; an observed
+zero remains zero; unavailable collections are empty arrays. Never expose users,
+private ingredients, pending submissions, moderation evidence, storage paths,
+moderator identities, secrets, or package-instance identifiers. New information enters
+through the existing observation/submission and review pipeline rather than direct
+canonical writes. Authenticate the internal preview, publish and test its OpenAPI
+specification, keep errors stable, and delay public keys, billing, and public write
+access until redistribution rights, corrections, rate limits, monitoring, and abuse
+controls are complete.
+
+**31g.** <a id="rule-app-versioning"></a>Version the blendCalc application and its API
+as separate products. `package.json` is the single source for the app's semantic
+version, and the MVP starts at app version `1.0.0`, displayed as `V1`. Every build must
+carry that release version plus a deterministic deployment identifier, expose the app
+release/build through shared runtime constants, HTML metadata, and response headers,
+and use the same release version in outbound user-agent strings. Use semantic versioning:
+major for incompatible app or persisted-data behavior, minor for backward-compatible
+features, and patch for backward-compatible fixes. The catalog API keeps its own URL and
+contract version such as `/api/v1` and `apiVersion: 1.0`; an app release never changes
+the API version automatically. Database migrations keep timestamp IDs, catalog records
+keep revision numbers, image placement keeps placement versions, and browser storage
+keeps feature-specific schema versions rather than reusing the app or API version.
+Document compatibility and migration behavior before any major bump, and do not scatter
+literal app versions through components, routes, scripts, headers, or provider clients.
 
 **32.** <a id="rule-loading-states"></a>Every fetch-backed, database-backed,
 camera-backed, or long-running action needs a clear loading state. While pending,

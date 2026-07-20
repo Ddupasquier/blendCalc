@@ -1,5 +1,16 @@
 import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { readFileSync } from 'node:fs';
+
+const packageMetadata = JSON.parse(
+	readFileSync(new URL('./package.json', import.meta.url), 'utf8')
+);
+const deploymentReference = (
+	process.env.VERCEL_GIT_COMMIT_SHA ??
+	process.env.GITHUB_SHA ??
+	'local'
+).slice(0, 12);
+const buildVersion = `${packageMetadata.version}+${deploymentReference}`;
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -9,6 +20,9 @@ const config = {
 		runes: ({ filename }) => (filename.split(/[/\\]/).includes('node_modules') ? undefined : true)
 	},
 	kit: {
+		version: {
+			name: buildVersion
+		},
 		adapter: adapter({
 			external: ['ws']
 		}),

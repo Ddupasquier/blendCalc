@@ -12,6 +12,7 @@ import {
 	findFirstBarcodeCandidateMatch,
 	normalizeBarcode,
 } from "./lib/barcode_candidates.mjs";
+import { createAppUserAgent } from "./lib/app_version.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -43,7 +44,7 @@ const OPEN_FOOD_FACTS_IMAGE_LICENSE = {
 	url: "https://world.openfoodfacts.org/terms-of-use",
 	attribution: "Open Food Facts contributors",
 };
-const APP_USER_AGENT = "blendCalc/1.0 (https://blendcalc.vercel.app)";
+const APP_USER_AGENT = createAppUserAgent("food image backfill");
 const REQUEST_DELAY_MS = 350;
 const TEMPORARY_ERROR_RETRY_DELAYS_MS = [500, 1500, 3000];
 const RATE_LIMIT_RETRY_DELAYS_MS = [5000, 15000, 30000];

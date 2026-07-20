@@ -15,6 +15,7 @@ import {
 	toFoodCategoryId,
 	toFoodCategoryLabel,
 } from "../src/lib/utils/food/categories/categoryNormalization.js";
+import { createAppUserAgent } from "./lib/app_version.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -32,6 +33,7 @@ const explicitQueries = process.argv
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/cgi/search.pl";
 const FDC_URL = "https://api.nal.usda.gov/fdc/v1";
 const REQUEST_DELAY_MS = 250;
+const APP_USER_AGENT = createAppUserAgent("category observation seed");
 const TEMPORARY_ERROR_RETRY_DELAYS_MS = [500, 1500, 3000];
 const RATE_LIMIT_RETRY_DELAYS_MS = [5000, 15000, 30000];
 const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
@@ -442,7 +444,7 @@ const collectOpenFoodFactsCategories = async (query) => {
 		{
 			headers: {
 				accept: "application/json",
-				"user-agent": "blendCalc/1.0 (category observation seed)",
+				"user-agent": APP_USER_AGENT,
 			},
 		},
 		`Open Food Facts category search for "${query}"`,

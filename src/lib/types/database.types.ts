@@ -3098,6 +3098,29 @@ export type Database = {
       food_source_key: { Args: { p_food: Json }; Returns: string }
       food_trust_status: { Args: { p_food: Json }; Returns: string }
       is_valid_gtin: { Args: { p_value: string }; Returns: boolean }
+      get_blendcalc_product_v1: {
+        Args: { p_barcode: string }
+        Returns: {
+          barcode: string
+          brand_owner: string | null
+          canonical_provenance: Json
+          category_option_id: string | null
+          compatibility_summary: Json
+          confidence: string
+          created_at: string
+          current_revision_id: string | null
+          current_revision_number: number | null
+          food: Json
+          id: string
+          label_observed_at: string | null
+          last_verified_at: string | null
+          product_name: string
+          revision_created_at: string | null
+          source: string
+          source_reference: string | null
+          updated_at: string
+        }[]
+      }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
       normalize_food_category_value: {
         Args: { p_value: string }
@@ -3136,6 +3159,35 @@ export type Database = {
       rebuild_shared_product_compatibility_summary: {
         Args: { p_shared_product_id: string }
         Returns: undefined
+      }
+      search_blendcalc_products_v1: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_query: string
+          p_terms: string[]
+        }
+        Returns: {
+          barcode: string
+          brand_owner: string | null
+          canonical_provenance: Json
+          category_option_id: string | null
+          compatibility_summary: Json
+          confidence: string
+          created_at: string
+          current_revision_id: string | null
+          current_revision_number: number | null
+          food: Json
+          id: string
+          label_observed_at: string | null
+          last_verified_at: string | null
+          product_name: string
+          revision_created_at: string | null
+          source: string
+          source_reference: string | null
+          total_count: number
+          updated_at: string
+        }[]
       }
       record_product_source_daily_metric: {
         Args: {

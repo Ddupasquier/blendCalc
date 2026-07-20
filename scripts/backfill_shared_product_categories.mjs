@@ -10,6 +10,7 @@ import {
 	findFirstBarcodeCandidateMatch,
 	normalizeBarcode,
 } from "./lib/barcode_candidates.mjs";
+import { createAppUserAgent } from "./lib/app_version.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -18,6 +19,7 @@ const isDryRun = process.argv.includes("--dry-run");
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const fdcApiKey = process.env.VITE_FDC_API_KEY;
+const APP_USER_AGENT = createAppUserAgent("shared product category backfill");
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v2/product";
 const OPEN_FOOD_FACTS_FIELDS = [
 	"code",
@@ -213,7 +215,7 @@ const lookupOpenFoodFactsCategories = async (barcode) => {
 				{
 					headers: {
 						accept: "application/json",
-						"user-agent": "blendCalc/0.0.1",
+						"user-agent": APP_USER_AGENT,
 					},
 				},
 			);

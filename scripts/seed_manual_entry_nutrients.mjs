@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ws from "ws";
+import { createAppUserAgent } from "./lib/app_version.mjs";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDirectory, "..");
@@ -17,6 +18,7 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/cgi/search.pl";
 const OPEN_FOOD_FACTS_PAGE_SIZE = 20;
+const APP_USER_AGENT = createAppUserAgent("manual nutrient observation seed");
 const DISCOVERED_FDC_NUTRIENTS_PATH = path.join(
 	projectRoot,
 	"scripts/output/fdc-nutrients.json",
@@ -451,7 +453,7 @@ const fetchOpenFoodFactsPage = async (query) => {
 	const response = await fetch(url, {
 		headers: {
 			accept: "application/json",
-			"user-agent": "blendCalc/1.0 (manual nutrient observation seed)",
+			"user-agent": APP_USER_AGENT,
 		},
 	});
 	if (!response.ok) {

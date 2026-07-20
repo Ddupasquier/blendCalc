@@ -8,6 +8,7 @@ import { config } from "dotenv";
 import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
+import { createAppUserAgent } from "./lib/app_version.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -23,6 +24,7 @@ const explicitQueries = process.argv
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/cgi/search.pl";
 const FDC_URL = "https://api.nal.usda.gov/fdc/v1";
 const REQUEST_DELAY_MS = 140;
+const APP_USER_AGENT = createAppUserAgent("food preference observation seed");
 
 const DEFAULT_QUERIES = [
 	"whole milk",
@@ -332,7 +334,7 @@ const collectOpenFoodFacts = async (query) => {
 		{
 			headers: {
 				accept: "application/json",
-				"user-agent": "blendCalc/1.0 (food preference observation seed)",
+				"user-agent": APP_USER_AGENT,
 			},
 		},
 		`Open Food Facts search for "${query}"`,

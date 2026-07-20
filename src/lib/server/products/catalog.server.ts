@@ -3,11 +3,6 @@ import type { Database, Json } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import { compactFood } from "$lib/utils/food/records/foodRecords";
-import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
-import {
-	hydrateFoodWithNormalizedNutrients,
-	type NormalizedNutrientRow,
-} from "$lib/utils/food/nutrients/normalizedNutrients";
 import {
 	createNutrientValueMapFromFood,
 	readNutrientRelationshipRules,
@@ -16,8 +11,6 @@ import {
 } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredientProvenance";
-import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
-import { tokenizeIngredientSearchText } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
 import {
 	compareCatalogSubmissionToExistingProduct,
@@ -29,8 +22,6 @@ import {
 	type CatalogUpdateSummary,
 } from "$lib/utils/products/catalogUpdateReview";
 import { toJson } from "$lib/utils/storage/supabase/shared";
-import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
-import { readFoodServingsByParent } from "$lib/utils/storage/supabase/servings";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
 	buildOpenFoodFactsCatalogBundle,
@@ -48,10 +39,8 @@ import {
 import {
 	applyCanonicalFoodCategory,
 	readFoodCategoryOption,
-	readFoodCategoryOptions,
 	resolveBarcodeDraftCategory,
 	resolveFoodCategoryOption,
-	type ResolvedFoodCategory,
 } from "./categoryMapping.server";
 import {
 	lookupOpenFoodFactsBarcodeProduct,
@@ -67,6 +56,10 @@ import {
 	publishModeratedFoodImageAsset,
 	type FoodImagePlacementValues,
 } from "./foodImages.server";
+import {
+	getApprovedCatalogRecordByBarcode,
+	searchApprovedCatalogRecords,
+} from "./catalogRead.server";
 
 type CatalogSource = "usda" | "open-food-facts" | "community-reviewed";
 type CatalogConfidence =
@@ -119,7 +112,6 @@ const PRODUCT_SUBMISSION_REJECTION_THRESHOLD = 5;
 const PRODUCT_SUBMISSION_REJECTION_WINDOW_DAYS = 30;
 const PRODUCT_SUBMISSION_BLOCK_DAYS = 30;
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
-const SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT = 100;
 
 type ProductSubmissionBlock = {
 	blocked_until: string;
@@ -196,64 +188,12 @@ export const validateSharedProductFood = (
 	return { barcode, issues, valid: issues.length === 0 };
 };
 
-const enrichCatalogFood = (
-	row: {
-		category_option_id?: string | null;
-		compatibility_summary?: Json;
-		id: string;
-		food: Json;
-		confidence: string;
-	},
-	nutrientRows?: NormalizedNutrientRow[],
-	category?: ResolvedFoodCategory,
-	servingRows?: Parameters<typeof hydrateFoodWithNormalizedServings>[1],
-) => {
-	const baseFood = {
-		...(row.food as unknown as FdcFood),
-		categoryOptionId: row.category_option_id ?? undefined,
-		compatibilitySummary:
-			(row.compatibility_summary as FoodCompatibilitySummary | null) ?? undefined,
-		sharedProductId: row.id,
-		sharedProductConfidence:
-			row.confidence as FdcFood["sharedProductConfidence"],
-		customFood: false,
-	};
-	const food = category
-		? applyCanonicalFoodCategory(baseFood, category)
-		: baseFood;
-	const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
-		food,
-		nutrientRows,
-	);
-	return hydrateFoodWithNormalizedServings(foodWithNutrients, servingRows);
-};
-
 export const getSharedProductByBarcode = async (
 	supabase: SupabaseClient<Database>,
 	barcode: string,
 ) => {
-	const canonicalBarcode = normalizeBarcode(barcode);
-	if (!canonicalBarcode) return null;
-
-	const { data, error } = await supabase
-		.from("shared_products")
-		.select("id, food, confidence, compatibility_summary, category_option_id")
-		.eq("barcode", canonicalBarcode)
-		.eq("status", "active")
-		.maybeSingle();
-	if (error) throw error;
-	if (!data) return null;
-	const [category, normalizedRows, servingRows] = await Promise.all([
-		readFoodCategoryOption(supabase, data.category_option_id),
-		readNormalizedNutrientsByParent(supabase, "shared_product_id", [data.id]),
-		readFoodServingsByParent(supabase, "shared_product_id", [data.id]),
-	]);
-	return enrichCatalogFood(
-		data,
-		normalizedRows?.get(data.id),
-		category ?? undefined,
-		servingRows?.get(data.id),
-	);
+	const record = await getApprovedCatalogRecordByBarcode(supabase, barcode);
+	return record?.food ?? null;
 };
 
 export const searchApprovedSharedProducts = async (
@@ -261,59 +201,8 @@ export const searchApprovedSharedProducts = async (
 	query: string,
 	filters: IngredientProvenanceFilters = {},
 ) => {
-	const terms = tokenizeIngredientSearchText(query).slice(0, 6);
-	if (terms.length === 0) return [];
-
-	let request = supabase
-		.from("shared_products")
-		.select("id, food, confidence, compatibility_summary, category_option_id")
-		.eq("status", "active")
-		.order("product_name", { ascending: true })
-		.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT);
-	if (filters.sourceFilter === "usda") request = request.eq("source", "usda");
-	if (filters.sourceFilter === "open-food-facts") {
-		request = request.eq("source", "open-food-facts");
-	}
-	if (filters.sourceFilter === "shared-catalog") {
-		request = request.eq("source", "community-reviewed");
-	}
-	if (filters.sourceFilter === "custom") return [];
-	if (filters.trustFilter && filters.trustFilter !== "any") {
-		request = request.eq("confidence", filters.trustFilter);
-	}
-	for (const term of terms) {
-		request = request.ilike("search_text", `%${term}%`);
-	}
-
-	const { data, error } = await request;
-	if (error) throw error;
-	const rows = data ?? [];
-	const [normalizedRows, servingRows, categories] = await Promise.all([
-		readNormalizedNutrientsByParent(
-			supabase,
-			"shared_product_id",
-			rows.map((row) => row.id),
-		),
-		readFoodServingsByParent(
-			supabase,
-			"shared_product_id",
-			rows.map((row) => row.id),
-		),
-		readFoodCategoryOptions(
-			supabase,
-			rows.map((row) => row.category_option_id),
-		),
-	]);
-	return rows.map((row) =>
-		enrichCatalogFood(
-			row,
-			normalizedRows?.get(row.id),
-			row.category_option_id
-				? categories.get(row.category_option_id)
-				: undefined,
-			servingRows?.get(row.id),
-		),
-	);
+	const records = await searchApprovedCatalogRecords(supabase, query, filters);
+	return records.map((record) => record.food);
 };
 
 const publishSubmission = async (input: {

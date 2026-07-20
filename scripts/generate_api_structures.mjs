@@ -8,6 +8,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import WebSocket from "ws";
+import { createAppUserAgent } from "./lib/app_version.mjs";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(scriptDirectory, "..");
@@ -21,6 +22,7 @@ const OUTPUT_DIRECTORY = path.join(projectRoot, "docs", "api-structures");
 const DEFAULT_SAMPLE_LIMIT = 3;
 const MAX_QUERY_READS = 24;
 const MAX_ARRAY_SAMPLES = 50;
+const APP_USER_AGENT = createAppUserAgent("API structure reference generator");
 
 const fdcApiKey = process.env.VITE_FDC_API_KEY;
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
@@ -210,7 +212,7 @@ const fetchOpenFoodFactsSamples = async (queries) => {
 			{
 				headers: {
 					accept: "application/json",
-					"user-agent": "blendCalc/1.0 (API structure reference generator)",
+					"user-agent": APP_USER_AGENT,
 				},
 			},
 			`Open Food Facts search for "${query}"`,
@@ -230,7 +232,7 @@ const fetchOpenFoodFactsSamples = async (queries) => {
 					{
 						headers: {
 							accept: "application/json",
-							"user-agent": "blendCalc/1.0 (API structure reference generator)",
+							"user-agent": APP_USER_AGENT,
 						},
 					},
 					`Open Food Facts product ${productCode}`,

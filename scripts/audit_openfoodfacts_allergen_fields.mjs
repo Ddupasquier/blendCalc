@@ -4,6 +4,7 @@
 //   node scripts/audit_openfoodfacts_allergen_fields.mjs "whole milk" "peanut butter"
 
 import fetch from "node-fetch";
+import { createAppUserAgent } from "./lib/app_version.mjs";
 
 const BASE_URL = "https://world.openfoodfacts.org/cgi/search.pl";
 const DEFAULT_QUERIES = [
@@ -16,6 +17,7 @@ const DEFAULT_QUERIES = [
 
 const queries = process.argv.slice(2);
 const auditQueries = queries.length > 0 ? queries : DEFAULT_QUERIES;
+const APP_USER_AGENT = createAppUserAgent("allergen field audit");
 
 const FIELDS = [
 	"product_name",
@@ -47,7 +49,7 @@ const searchTopProduct = async (query) => {
 	const response = await fetch(buildSearchUrl(query), {
 		headers: {
 			accept: "application/json",
-			"user-agent": "blendCalc/1.0 (audit script)",
+			"user-agent": APP_USER_AGENT,
 		},
 	});
 	if (!response.ok) {

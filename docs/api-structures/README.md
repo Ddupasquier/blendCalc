@@ -1,5 +1,24 @@
 # API Structures
 
+## blendCalc API v1
+
+The app-owned read contract is published at
+[`/api/v1/openapi.json`](../../static/api/v1/openapi.json). API v1 is currently an
+authenticated, read-only internal preview. It reads active canonical blendCalc catalog
+records only and does not call external providers during a request.
+
+The existing app submission, evidence, and moderation pipeline remains the only write
+path. Provider results and user label observations are intake evidence; they do not
+write directly to the canonical API record.
+
+Public API keys, billing, developer accounts, and a public write API are deliberately
+out of scope until the contract, redistribution rights, rate limits, and correction
+process are ready.
+
+The API contract version is independent from the blendCalc app release. App `V1`
+currently means semantic version `1.0.0`; API v1 remains at response version `1.0`
+until its own response contract needs a deliberate version change.
+
 This folder contains generated reference files that describe the external food API
 payloads observed by blendCalc scripts.
 

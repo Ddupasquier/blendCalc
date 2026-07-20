@@ -2,6 +2,7 @@ import { createSupabaseServerClient } from "$lib/supabase/server";
 import { readVerifiedAuthUser } from "$lib/server/auth/verifiedAuthUser.server";
 import { applySecurityHeaders } from "$lib/utils/http/securityHeaders";
 import { isActiveAccountBlock } from "$lib/utils/moderation/moderation";
+import { APP_BUILD_VERSION, APP_VERSION } from "$lib/config/version";
 import { redirect, type Handle } from "@sveltejs/kit";
 
 export const handle: Handle = async ({ event, resolve }) => {
@@ -44,5 +45,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	});
 
 	applySecurityHeaders(response, event.url, Boolean(user));
+	response.headers.set("x-blendcalc-app-version", APP_VERSION);
+	response.headers.set("x-blendcalc-app-build", APP_BUILD_VERSION);
 	return response;
 };

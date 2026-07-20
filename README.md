@@ -16,6 +16,18 @@ Mix and match ingredients for making well-balanced smoothies.
 - 📱 Mobile-first responsive UI with pagination, filtering, sorting, and large-list handling
 - 🚦 Rate-limit friendly API usage with cache layers and Supabase-backed product reuse
 
+## Versioning
+
+- The blendCalc MVP is application version `1.0.0`, shown as `V1`.
+- `package.json` is the application-version source of truth.
+- Each deployment adds a build identifier without changing the public release number.
+- The internal catalog API is versioned independently under `/api/v1` with response
+  version `1.0`.
+- Database migrations, catalog revisions, image placements, and browser-storage schemas
+  keep their own purpose-specific versions.
+
+See [`docs/versioning.md`](docs/versioning.md) for release and compatibility rules.
+
 ---
 
 ## Getting started
@@ -139,6 +151,9 @@ See [`docs/api-structures/README.md`](docs/api-structures/README.md) for the
 generated external API payload reference files. These files document observed
 FoodData Central and Open Food Facts response shapes only; do not import them
 from runtime app code.
+
+See [`docs/versioning.md`](docs/versioning.md) for the independent app, API, database,
+catalog-revision, and client-storage versioning model.
 
 To compare live FDC product data while debugging nutrient mappings:
 

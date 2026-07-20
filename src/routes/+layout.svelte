@@ -14,6 +14,7 @@
 		APP_OG_IMAGE_URL,
 		APP_PRODUCTION_ORIGIN,
 	} from "$lib/config/brand";
+	import { APP_BUILD_VERSION, APP_VERSION } from "$lib/config/version";
 	import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 	import { setFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import {
@@ -98,6 +99,8 @@
 		content={APP_DESCRIPTION}
 	/>
 	<meta name="theme-color" content="#5f564f" />
+	<meta name="application-version" content={APP_VERSION} />
+	<meta name="application-build" content={APP_BUILD_VERSION} />
 	<link rel="icon" href={favicon} />
 	<link rel="canonical" href={`${APP_PRODUCTION_ORIGIN}/`} />
 	<meta property="og:type" content="website" />

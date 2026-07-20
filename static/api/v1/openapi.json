@@ -1,0 +1,339 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "blendCalc Catalog API",
+    "version": "1.0.0-internal",
+    "description": "Read-only internal preview of approved blendCalc catalog data. This contract never performs live provider lookups and never returns private foods or moderation evidence."
+  },
+  "servers": [{ "url": "/" }],
+  "security": [{ "cookieAuth": [] }],
+  "paths": {
+    "/api/v1/products/{barcode}": {
+      "get": {
+        "summary": "Get an approved product by GTIN",
+        "operationId": "getProductByBarcode",
+        "parameters": [{
+          "name": "barcode",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string", "pattern": "^[0-9]{14}$" }
+        }],
+        "responses": {
+          "200": {
+            "description": "Approved catalog product",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/v1/foods/search": {
+      "get": {
+        "summary": "Search approved catalog products",
+        "operationId": "searchFoods",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "minLength": 2, "maxLength": 120 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 15 }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 0, "maximum": 1000, "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ranked approved catalog products",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductListResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/api/v1/categories": {
+      "get": {
+        "summary": "List enabled canonical food categories",
+        "operationId": "listCategories",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 0, "maximum": 1000, "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Enabled canonical categories",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CategoryListResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "sb-wbqsnipoiqjzppjuawpn-auth-token",
+        "description": "The existing blendCalc Supabase browser session. The cookie may be split into numbered chunks by the Supabase client. Public API keys are intentionally not available yet."
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "Unauthorized": {
+        "description": "A signed-in blendCalc account is required",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "NotFound": {
+        "description": "No approved catalog record matched",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "Unavailable": {
+        "description": "The canonical catalog could not be read",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      }
+    },
+    "schemas": {
+      "Source": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "reference", "confidence"],
+        "properties": {
+          "source": { "type": "string" },
+          "reference": { "type": ["string", "null"] },
+          "confidence": { "type": ["string", "null"] }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "slug", "updatedAt"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "updatedAt": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
+      "Nutrient": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "number", "unit", "amountPer100g", "valueStatus", "source"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "number": { "type": ["string", "null"] },
+          "unit": { "type": "string" },
+          "amountPer100g": { "type": ["number", "null"], "minimum": 0 },
+          "valueStatus": { "type": "string", "enum": ["reported", "derived", "missing"] },
+          "source": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] }
+        }
+      },
+      "Serving": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "grams", "quantity", "unit", "gramsPerUnit", "isPrimary", "source"],
+        "properties": {
+          "label": { "type": "string" },
+          "grams": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+          "quantity": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+          "unit": { "type": ["string", "null"] },
+          "gramsPerUnit": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+          "isPrimary": { "type": "boolean" },
+          "source": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] }
+        }
+      },
+      "Image": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "url", "thumbnailUrl", "license", "placement", "source", "approvedAt"],
+        "properties": {
+          "role": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "thumbnailUrl": { "type": ["string", "null"], "format": "uri" },
+          "license": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "url", "attribution"],
+            "properties": {
+              "name": { "type": "string" },
+              "url": { "type": ["string", "null"], "format": "uri" },
+              "attribution": { "type": ["string", "null"] }
+            }
+          },
+          "placement": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["fitMode", "x", "y", "zoom", "version"],
+            "properties": {
+              "fitMode": { "type": "string" },
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "zoom": { "type": "number", "exclusiveMinimum": 0 },
+              "version": { "type": "integer", "minimum": 1 }
+            }
+          },
+          "source": { "$ref": "#/components/schemas/Source" },
+          "approvedAt": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
+      "Warning": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message", "category", "type", "confidence", "sourceText"],
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" },
+          "category": { "type": "string" },
+          "type": { "type": "string" },
+          "confidence": { "type": "string" },
+          "sourceText": { "type": ["string", "null"] }
+        }
+      },
+      "Revision": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "number", "currentSince", "labelObservedAt", "updatedAt", "lastVerifiedAt"],
+        "properties": {
+          "id": { "type": ["string", "null"], "format": "uuid" },
+          "number": { "type": ["integer", "null"], "minimum": 1 },
+          "currentSince": { "type": "string", "format": "date-time" },
+          "labelObservedAt": { "type": ["string", "null"], "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "lastVerifiedAt": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "barcode", "name", "brand", "category", "ingredients", "nutrients", "servings", "images", "warnings", "fieldSources", "revision", "links"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "barcode": { "type": "string", "pattern": "^[0-9]{14}$" },
+          "name": { "type": "string" },
+          "brand": { "type": ["string", "null"] },
+          "category": { "oneOf": [{ "$ref": "#/components/schemas/Category" }, { "type": "null" }] },
+          "ingredients": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text", "allergens", "traces", "dietaryTags"],
+            "properties": {
+              "text": { "type": ["string", "null"] },
+              "allergens": { "type": "array", "items": { "type": "string" } },
+              "traces": { "type": "array", "items": { "type": "string" } },
+              "dietaryTags": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "nutrients": { "type": "array", "items": { "$ref": "#/components/schemas/Nutrient" } },
+          "servings": { "type": "array", "items": { "$ref": "#/components/schemas/Serving" } },
+          "images": { "type": "array", "items": { "$ref": "#/components/schemas/Image" } },
+          "warnings": { "type": "array", "items": { "$ref": "#/components/schemas/Warning" } },
+          "fieldSources": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "brand", "category", "ingredients"],
+            "properties": {
+              "name": { "$ref": "#/components/schemas/Source" },
+              "brand": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
+              "category": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
+              "ingredients": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] }
+            }
+          },
+          "revision": { "$ref": "#/components/schemas/Revision" },
+          "links": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["self"],
+            "properties": { "self": { "type": "string" } }
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["limit", "offset", "total", "hasMore", "nextOffset"],
+        "properties": {
+          "limit": { "type": "integer" },
+          "offset": { "type": "integer" },
+          "total": { "type": "integer" },
+          "hasMore": { "type": "boolean" },
+          "nextOffset": { "type": ["integer", "null"] }
+        }
+      },
+      "ProductResponse": {
+        "type": "object",
+        "required": ["apiVersion", "data"],
+        "properties": {
+          "apiVersion": { "type": "string", "const": "1.0" },
+          "data": { "$ref": "#/components/schemas/Product" }
+        }
+      },
+      "ProductListResponse": {
+        "type": "object",
+        "required": ["apiVersion", "data", "meta"],
+        "properties": {
+          "apiVersion": { "type": "string", "const": "1.0" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } },
+          "meta": {
+            "type": "object",
+            "required": ["pagination"],
+            "properties": { "pagination": { "$ref": "#/components/schemas/Pagination" } }
+          }
+        }
+      },
+      "CategoryListResponse": {
+        "type": "object",
+        "required": ["apiVersion", "data", "meta"],
+        "properties": {
+          "apiVersion": { "type": "string", "const": "1.0" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/Category" } },
+          "meta": {
+            "type": "object",
+            "required": ["pagination"],
+            "properties": { "pagination": { "$ref": "#/components/schemas/Pagination" } }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["apiVersion", "error"],
+        "properties": {
+          "apiVersion": { "type": "string", "const": "1.0" },
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

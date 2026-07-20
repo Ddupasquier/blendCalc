@@ -5,6 +5,9 @@ import {
 	findFirstBarcodeCandidateMatch,
 	normalizeBarcode,
 } from "./lib/barcode_candidates.mjs";
+import { createAppUserAgent } from "./lib/app_version.mjs";
+
+const APP_USER_AGENT = createAppUserAgent("source quality benchmark");
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -179,7 +182,7 @@ const benchmarkOpenFoodFacts = async (barcode, nutrientMappings) => {
 				const response = await fetchTracked(url, {
 					headers: {
 						accept: "application/json",
-						"user-agent": "blendCalc/1.0 (source quality benchmark)",
+						"user-agent": APP_USER_AGENT,
 					},
 				}, trace);
 				if (response.status === 404) return null;
