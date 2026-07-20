@@ -117,7 +117,8 @@ membership, duplicate nutrients, nonnegative values, and active nutrient relatio
 rules in one transaction. A `category_option_id` foreign key records the canonical
 category separately from the preserved source/category strings in the food JSON. Direct
 authenticated inserts and updates are revoked so browser code cannot bypass this
-validation path.
+validation path. Database triggers mirror that canonical label into the compatibility
+`food.foodCategory` field; `Custom Ingredient` is never used as a category substitute.
 
 Stores private user custom foods. Shared/public review happens through
 `shared_product_submissions`, not by making every custom food public.
@@ -459,6 +460,9 @@ Notes:
 - Compatibility summaries are rebuilt from compatibility facts.
 - `category_option_id` is inherited from the approved submission. A database trigger
   blocks publication when no enabled canonical category can be resolved.
+- `food.foodCategory` mirrors the canonical category label on custom foods, saved-list
+  snapshots, submissions, active products, and revisions. Raw source category strings
+  remain separately preserved in `food.categories`.
 - `shared_product_revisions.category_option_id` copies the published product category so
   historical revisions retain the category used at publication.
 

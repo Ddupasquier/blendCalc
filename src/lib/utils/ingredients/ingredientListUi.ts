@@ -50,9 +50,18 @@ export const getFoodCalories = (food: FdcFood) => {
 };
 
 export const getFoodDisplayCategory = (food: FdcFood) => {
-	if (food.foodCategory) return food.foodCategory;
+	const storedCategory = food.foodCategory?.trim();
+	if (storedCategory?.toLowerCase() !== "custom ingredient") {
+		if (storedCategory) return storedCategory;
+	}
+	const canonicalCategory = food.categories
+		?.map((category) => category.trim())
+		.find((category) =>
+			Boolean(category) && category.toLowerCase() !== "custom ingredient"
+		);
+	if (canonicalCategory) return canonicalCategory;
 	if (food.brandOwner) return food.brandOwner;
-	return food.customFood ? "Custom ingredient" : "Ingredient";
+	return "Ingredient";
 };
 
 export const getPrimaryFoodWarning = (

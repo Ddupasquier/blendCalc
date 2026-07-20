@@ -214,6 +214,7 @@ Migrations:
 - `supabase/migrations/20260715120000_shared_product_canonical_categories.sql`
 - `supabase/migrations/20260719210000_canonical_product_external_enrichment.sql`
 - `supabase/migrations/20260719213000_versioned_product_label_updates.sql`
+- `supabase/migrations/20260719214000_canonical_category_display.sql`
 - `supabase/migrations/20260718000000_server_request_efficiency.sql`
 - `supabase/migrations/20260718130000_user_food_list_catalog_links.sql`
 - `supabase/migrations/20260718131000_user_food_list_catalog_link_defaults.sql`
@@ -228,7 +229,9 @@ Migrations:
   newer revision.
 - Shared submissions, products, and revisions retain an indexed foreign key to
   `custom_food_category_options`; database triggers prevent category loss while
-  publishing or creating revisions.
+  publishing or creating revisions. The canonical label is also synchronized into
+  compatibility food payloads so UI and future API reads never mistake `Custom
+  Ingredient` origin for a category.
 - Only one pending moderation submission can exist for a barcode at a time.
 - Saved list catalog links are database-resolved and cannot be forged by a
   browser-provided source, trust status, product id, or submission id.

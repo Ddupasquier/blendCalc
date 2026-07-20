@@ -233,6 +233,7 @@ describe("custom foods", () => {
 		});
 
 		expect(food.categoryOptionId).toBe("fruit");
+		expect(food.foodCategory).toBe("Fruit");
 	});
 
 	it("generates a serving label when the user leaves it blank", () => {

@@ -653,7 +653,10 @@ category string as the user-facing category. If no confident DB mapping exists, 
 raw source data for moderation/provenance and ask the user to choose a category. Catalog
 submission, automatic publication, moderator approval, and revision creation must
 preserve the canonical category foreign key and the raw source categories; they must
-never replace either with a generic placeholder category.
+never replace either with a generic placeholder category. The compatibility
+`foodCategory` display field must mirror the canonical category label whenever a
+canonical category id exists. `Custom Ingredient` describes origin, not category, and
+must never be rendered or persisted as a category substitute.
 
 **31a.1.** <a id="rule-canonical-category-picker"></a>Unresolved manual-entry categories
 must use the shared canonical category picker backed by enabled

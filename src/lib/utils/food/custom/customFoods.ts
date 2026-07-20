@@ -174,6 +174,9 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 			: null;
 
 	const foodNutrients = createNutrients(input.nutrients, servingWeightGrams);
+	const canonicalCategory = input.categories
+		?.map((category) => category.trim())
+		.find(Boolean);
 	const servingLabel = buildCustomServingLabel({
 		servingLabel: input.servingLabel,
 		servingWeightGrams,
@@ -205,7 +208,7 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		description,
 		nameProvenance,
 		brandOwner: input.brandOwner?.trim() || undefined,
-		foodCategory: "Custom Ingredient",
+		foodCategory: canonicalCategory,
 		dataType: "Custom",
 		servingSize: servingWeightGrams,
 		servingSizeUnit: "g",
