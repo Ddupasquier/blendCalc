@@ -1,17 +1,19 @@
-import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import {
-	getCurrentUserId,
 	getNumberRecord,
 	getObjectRecord,
+	resolveCloudClient,
+	resolveCloudDataContext,
 	toJson,
+	type CloudDataContext,
 	type CloudMixPreferences,
 } from "./shared";
 
-export const readCloudMixPreferences = async (): Promise<CloudMixPreferences | null> => {
-	const userId = await getCurrentUserId();
-	if (!userId) return null;
-	const supabase = getSupabaseBrowserClient();
-	if (!supabase) return null;
+export const readCloudMixPreferences = async (
+	context?: CloudDataContext,
+): Promise<CloudMixPreferences | null> => {
+	const cloud = await resolveCloudDataContext(context);
+	if (!cloud) return null;
+	const { supabase, userId } = cloud;
 
 	const { data, error } = await supabase
 		.from("mix_preferences")
@@ -31,18 +33,14 @@ export const readCloudMixPreferences = async (): Promise<CloudMixPreferences | n
 export const saveCloudMixPreferences = async ({
 	nutrientGoals,
 	mixState,
-}: CloudMixPreferences) => {
-	const userId = await getCurrentUserId();
-	if (!userId) return false;
-	const supabase = getSupabaseBrowserClient();
+}: CloudMixPreferences, context?: CloudDataContext) => {
+	const supabase = resolveCloudClient(context);
 	if (!supabase) return false;
 
-	const existing = await readCloudMixPreferences();
-	const { error } = await supabase.from("mix_preferences").upsert({
-		user_id: userId,
-		nutrient_goals: toJson(nutrientGoals ?? existing?.nutrientGoals ?? {}),
-		mix_state: toJson(mixState ?? existing?.mixState ?? {}),
+	const { data, error } = await supabase.rpc("save_mix_preferences", {
+		p_nutrient_goals: nutrientGoals === undefined ? undefined : toJson(nutrientGoals),
+		p_mix_state: mixState === undefined ? undefined : toJson(mixState),
 	});
 
-	return !error;
+	return !error && data === true;
 };

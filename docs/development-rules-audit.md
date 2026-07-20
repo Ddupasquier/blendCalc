@@ -850,6 +850,14 @@ only when the behavior is complex, transactional, security-sensitive, or meaning
 reusable. Keep backend ownership clear, documented, and maintainable. This rule extends
 the global [best practices rule](#rule-best-practices), not replaces it.
 
+Protected routes must load their initial durable data through `+page.server.ts` and a
+focused server coordinator rather than waiting for `onMount`. Server loads and later
+user-triggered browser refreshes must reuse the same typed Supabase query functions by
+passing an explicit authenticated data context. Durable mutations must use one focused
+database function or server action that derives ownership from the session, validates
+current state, performs related writes atomically, and returns a small typed outcome.
+Once that path exists, revoke direct authenticated table writes that could bypass it.
+
 **38.** Ingredient manipulation controls should use toggles, buttons, action sheets, or
 explicit forms instead of raw checkboxes. If a setting behaves like on/off state, use
 the shared toggle component.

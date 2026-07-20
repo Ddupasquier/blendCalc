@@ -21,7 +21,7 @@
 		clearObsoleteAppStorage,
 		setActiveStorageUserId,
 	} from "$lib/utils/storage/client/storageScope";
-	import { saveTutorialChoice } from "$lib/utils/tutorial/tutorial";
+	import { saveTutorialChoice } from "$lib/utils/tutorial/tutorialClient";
 	import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 	import { configureNutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 	import { configureAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
@@ -71,7 +71,7 @@
 	const recordTutorialChoice = async (choice: "later" | "never") => {
 		if (!data.authUser) return false;
 
-		const saved = await saveTutorialChoice(data.authUser.id, choice);
+		const saved = await saveTutorialChoice(choice);
 		if (saved) tutorialOpen = false;
 		return saved;
 	};

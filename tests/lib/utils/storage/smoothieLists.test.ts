@@ -6,7 +6,7 @@ const cloudData = vi.hoisted(() => ({
 	placeCloudSmoothieListItem: vi.fn(),
 	readCloudSmoothieList: vi.fn(),
 	removeCloudSmoothieListItem: vi.fn(),
-	upsertCloudSmoothieListItem: vi.fn(),
+	renameCloudSmoothieListItem: vi.fn(),
 	writeCloudSmoothieList: vi.fn(),
 }));
 
@@ -35,7 +35,7 @@ describe("database-backed smoothie lists", () => {
 			key === MIX_STORAGE_KEYS.fridge ? [food] : []
 		);
 		cloudData.removeCloudSmoothieListItem.mockResolvedValue(true);
-		cloudData.upsertCloudSmoothieListItem.mockResolvedValue(true);
+		cloudData.renameCloudSmoothieListItem.mockResolvedValue("renamed");
 		cloudData.writeCloudSmoothieList.mockResolvedValue(true);
 	});
 
@@ -93,7 +93,7 @@ describe("database-backed smoothie lists", () => {
 			.resolves.toBe("error");
 	});
 
-	it("renames from the current database list", async () => {
+	it("renames through the authoritative database function", async () => {
 		await expect(
 			renameFoodInSmoothieList(
 				MIX_STORAGE_KEYS.fridge,
@@ -101,18 +101,16 @@ describe("database-backed smoothie lists", () => {
 				"Cooking oil",
 			),
 		).resolves.toBe("renamed");
-		expect(cloudData.upsertCloudSmoothieListItem).toHaveBeenCalledWith(
+		expect(cloudData.renameCloudSmoothieListItem).toHaveBeenCalledWith(
 			MIX_STORAGE_KEYS.fridge,
-			expect.objectContaining({
-				description: "Cooking oil",
-				nameProvenance: "user",
-			}),
+			food.fdcId,
+			"Cooking oil",
 		);
 	});
 
-	it("rejects duplicate names from the current database list", async () => {
+	it("preserves duplicate-name results from the database", async () => {
 		const kale = { ...food, fdcId: 2, description: "Kale, Raw" };
-		cloudData.readCloudSmoothieList.mockResolvedValue([food, kale]);
+		cloudData.renameCloudSmoothieListItem.mockResolvedValue("duplicate");
 
 		await expect(
 			renameFoodInSmoothieList(
@@ -121,7 +119,11 @@ describe("database-backed smoothie lists", () => {
 				" olive oil ",
 			),
 		).resolves.toBe("duplicate");
-		expect(cloudData.upsertCloudSmoothieListItem).not.toHaveBeenCalled();
+		expect(cloudData.renameCloudSmoothieListItem).toHaveBeenCalledWith(
+			MIX_STORAGE_KEYS.fridge,
+			kale.fdcId,
+			"olive oil",
+		);
 	});
 
 	it("preserves selected in-memory foods while a database refresh catches up", () => {

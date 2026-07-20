@@ -1,5 +1,7 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
+import type { Database } from "$lib/types/database.types";
 import type { Json } from "$lib/types/database.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type CloudMixPreferences = {
 	nutrientGoals?: Record<number, number>;
@@ -7,6 +9,11 @@ export type CloudMixPreferences = {
 };
 
 export const CLOUD_CURSOR_PAGE_SIZE = 500;
+
+export type CloudDataContext = {
+	supabase: SupabaseClient<Database>;
+	userId: string;
+};
 
 type CursorPage<Row> = {
 	data: Row[] | null;
@@ -41,6 +48,21 @@ export const getCurrentUserId = async () => {
 	if (!data?.claims.sub) return null;
 	return data.claims.sub;
 };
+
+export const resolveCloudDataContext = async (
+	context?: CloudDataContext,
+): Promise<CloudDataContext | null> => {
+	if (context) return context;
+
+	const supabase = getSupabaseBrowserClient();
+	if (!supabase) return null;
+	const userId = await getCurrentUserId();
+	return userId ? { supabase, userId } : null;
+};
+
+export const resolveCloudClient = (
+	context?: Pick<CloudDataContext, "supabase">,
+) => context?.supabase ?? getSupabaseBrowserClient();
 
 export const toJson = (value: unknown): Json => {
 	return JSON.parse(JSON.stringify(value)) as Json;

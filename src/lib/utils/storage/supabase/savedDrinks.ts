@@ -1,19 +1,19 @@
-import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import type { SavedDrink } from "$lib/utils/storage/client/savedDrinks";
 import {
 	CLOUD_CURSOR_PAGE_SIZE,
-	getCurrentUserId,
+	type CloudDataContext,
 	readAllCursorPages,
+	resolveCloudClient,
+	resolveCloudDataContext,
 	toJson,
 } from "./shared";
 
 export type CloudSavedDrinkWriteResult = "saved" | "duplicate" | "error";
 
-export const readCloudSavedDrinks = async () => {
-	const userId = await getCurrentUserId();
-	if (!userId) return null;
-	const supabase = getSupabaseBrowserClient();
-	if (!supabase) return null;
+export const readCloudSavedDrinks = async (context?: CloudDataContext) => {
+	const cloud = await resolveCloudDataContext(context);
+	if (!cloud) return null;
+	const { supabase, userId } = cloud;
 
 	const rows = await readAllCursorPages(async (cursorId) => {
 		let query = supabase
@@ -38,11 +38,13 @@ export const readCloudSavedDrinks = async () => {
 		.sort((first, second) => second.createdAt - first.createdAt);
 };
 
-export const readCloudSavedDrinkById = async (drinkId: string) => {
-	const userId = await getCurrentUserId();
-	if (!userId) return null;
-	const supabase = getSupabaseBrowserClient();
-	if (!supabase) return null;
+export const readCloudSavedDrinkById = async (
+	drinkId: string,
+	context?: CloudDataContext,
+) => {
+	const cloud = await resolveCloudDataContext(context);
+	if (!cloud) return null;
+	const { supabase, userId } = cloud;
 
 	const { data, error } = await supabase
 		.from("saved_drinks")
@@ -64,36 +66,33 @@ export const readCloudSavedDrinkById = async (drinkId: string) => {
 
 export const saveCloudSavedDrinkWithResult = async (
 	drink: SavedDrink,
+	context?: CloudDataContext,
 ): Promise<CloudSavedDrinkWriteResult> => {
-	const userId = await getCurrentUserId();
-	if (!userId) return "error";
-	const supabase = getSupabaseBrowserClient();
+	const supabase = resolveCloudClient(context);
 	if (!supabase) return "error";
 
-	const { error } = await supabase.from("saved_drinks").upsert({
-		id: drink.id,
-		user_id: userId,
-		name: drink.name,
-		drink: toJson(drink),
-		created_at: new Date(drink.createdAt).toISOString(),
+	const { data, error } = await supabase.rpc("save_saved_drink", {
+		p_created_at: new Date(drink.createdAt).toISOString(),
+		p_drink: toJson(drink),
+		p_id: drink.id,
+		p_name: drink.name,
 	});
 
-	if (!error) return "saved";
-	if (error.code === "23505") return "duplicate";
+	if (error) return "error";
+	if (data === "saved" || data === "duplicate") return data;
 	return "error";
 };
 
-export const deleteCloudSavedDrink = async (drinkId: string) => {
-	const userId = await getCurrentUserId();
-	if (!userId) return false;
-	const supabase = getSupabaseBrowserClient();
+export const deleteCloudSavedDrink = async (
+	drinkId: string,
+	context?: CloudDataContext,
+) => {
+	const supabase = resolveCloudClient(context);
 	if (!supabase) return false;
 
-	const { error } = await supabase
-		.from("saved_drinks")
-		.delete()
-		.eq("user_id", userId)
-		.eq("id", drinkId);
+	const { data, error } = await supabase.rpc("delete_saved_drink", {
+		p_id: drinkId,
+	});
 
-	return !error;
+	return !error && data === true;
 };

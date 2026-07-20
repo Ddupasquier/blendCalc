@@ -4,7 +4,7 @@ import {
 	placeCloudSmoothieListItem,
 	readCloudSmoothieList,
 	removeCloudSmoothieListItem,
-	upsertCloudSmoothieListItem,
+	renameCloudSmoothieListItem,
 	writeCloudSmoothieList,
 } from "$lib/utils/storage/supabase";
 import type { FdcFood } from "$lib/utils/food/types";
@@ -150,39 +150,19 @@ export const renameFoodInSmoothieList = async (
 ): Promise<SmoothieListMutationResult> => {
 	const trimmedDescription = nextDescription.trim().replace(/\s+/g, " ");
 	if (!trimmedDescription) return "invalid";
-
-	const currentList = await readCloudSmoothieList(key);
-	if (!currentList) return "error";
-	const itemIndex = currentList.findIndex((item) => item.fdcId === foodId);
-	if (itemIndex === -1 && !loadedFood) return "missing";
-
-	const currentItem = currentList[itemIndex] ?? loadedFood;
-	if (!currentItem) return "missing";
 	if (
-		currentItem.description.trim().toLowerCase() ===
+		loadedFood?.description.trim().toLowerCase() ===
 		trimmedDescription.toLowerCase()
 	) {
 		return "unchanged";
 	}
 
-	if (
-		currentList.some(
-			(item) =>
-				item.fdcId !== foodId &&
-				item.description.trim().toLowerCase() ===
-					trimmedDescription.toLowerCase(),
-		)
-	) {
-		return "duplicate";
-	}
-
-	const renamedFood = compactFood({
-		...currentItem,
-		description: trimmedDescription,
-		nameProvenance: "user",
-	});
-	const saved = await upsertCloudSmoothieListItem(key, renamedFood);
-	if (!saved) return "error";
+	const result = await renameCloudSmoothieListItem(
+		key,
+		foodId,
+		trimmedDescription,
+	);
+	if (result !== "renamed") return result;
 
 	notifySmoothieListsChanged();
 	return "renamed";

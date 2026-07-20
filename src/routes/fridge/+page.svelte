@@ -28,10 +28,7 @@
         type IngredientListMembership,
         type IngredientActionItem,
     } from "$lib/utils/ingredients/ingredientListUi";
-    import {
-        readIngredientProvenanceOptions,
-        type IngredientProvenanceOption,
-    } from "$lib/utils/ingredients/ingredientProvenance";
+    import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
     import {
         buildIngredientRouteHref,
         findIngredientRouteFood,
@@ -63,13 +60,18 @@
     import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
     import { MIX_STORAGE_KEYS } from "../../defaults/mixDefaults";
 
-    let onHand = $state<FdcFood[]>([]);
-    let shoppingList = $state<FdcFood[]>([]);
-	let customFoods = $state<FdcFood[]>([]);
-	let listIndex = $state<CloudSmoothieListIndex>({
-		[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
-		[MIX_STORAGE_KEYS.shoppingList]: { foodIds: [], foodIdentityKeys: [] },
-	});
+	const initialIngredientData = page.data.ingredientData;
+    let onHand = $state<FdcFood[]>(initialIngredientData?.fridge.foods ?? []);
+    let shoppingList = $state<FdcFood[]>(
+		initialIngredientData?.shoppingList.foods ?? [],
+	);
+	let customFoods = $state<FdcFood[]>(initialIngredientData?.customFoods ?? []);
+	let listIndex = $state<CloudSmoothieListIndex>(
+		initialIngredientData?.listIndex ?? {
+			[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
+			[MIX_STORAGE_KEYS.shoppingList]: { foodIds: [], foodIdentityKeys: [] },
+		},
+	);
     let selectedFood = $state<FdcFood | null>(null);
     let selectedFoodShowListActions = $state(true);
     let scanSignal = $state(0);
@@ -85,12 +87,18 @@
     let searchAddFoodId = $state<number | null>(null);
     let onHandVisibleCount = $state<number>(LIST_PAGE_SIZES.ingredientPills);
     let shoppingVisibleCount = $state<number>(LIST_PAGE_SIZES.ingredientPills);
-    let onHandTotalCount = $state(0);
-    let shoppingListTotalCount = $state(0);
-    let listLoading = $state(true);
-    let listLoadingError = $state("");
-    let provenanceOptions = $state<IngredientProvenanceOption[]>([]);
-    let provenanceOptionsError = $state("");
+    let onHandTotalCount = $state(initialIngredientData?.fridge.totalCount ?? 0);
+    let shoppingListTotalCount = $state(
+		initialIngredientData?.shoppingList.totalCount ?? 0,
+	);
+    let listLoading = $state(false);
+    let listLoadingError = $state(initialIngredientData?.loadError ?? "");
+    let provenanceOptions = $state<IngredientProvenanceOption[]>(
+		initialIngredientData?.provenanceOptions ?? [],
+	);
+    let provenanceOptionsError = $state(
+		initialIngredientData?.provenanceError ?? "",
+	);
     let listLoadRequestId = 0;
     let loadingMoreList = $state<SmoothieListKey | null>(null);
     let listViewResetKey = $state(0);
@@ -278,18 +286,6 @@
                 listLoading = false;
             }
         }
-    };
-
-    const loadProvenanceOptions = async () => {
-        const options = await readIngredientProvenanceOptions();
-        if (!options?.length) {
-            provenanceOptions = [];
-            provenanceOptionsError =
-                "Ingredient source and review filters could not load. Try again after refreshing.";
-            return;
-        }
-        provenanceOptions = options;
-        provenanceOptionsError = "";
     };
 
     const getRouteFood = () =>
@@ -861,11 +857,8 @@
     });
 
     onMount(() => {
-        resetVisibleCounts();
-        void loadProvenanceOptions();
-        loadLists();
-        window.addEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, loadLists);
-        window.addEventListener("focus", loadLists);
+		window.addEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, loadLists);
+		window.addEventListener("focus", loadLists);
         return () => {
             window.removeEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, loadLists);
             window.removeEventListener("focus", loadLists);

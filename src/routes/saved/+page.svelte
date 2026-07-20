@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { page as routePage } from "$app/state";
     import { goto } from "$app/navigation";
     import ListControls from "$lib/components/common/lists/ListControls.svelte";
     import Pagination from "$lib/components/common/lists/Pagination.svelte";
@@ -21,7 +22,10 @@
     import { readCloudSavedDrinks } from "$lib/utils/storage/supabase";
     import { onMount } from "svelte";
 
-    let drinks = $state<SavedDrink[]>([]);
+	const initialSavedData = routePage.data.savedData;
+    let drinks = $state<SavedDrink[]>(
+		(initialSavedData?.drinks ?? []).map(normalizeSavedDrink),
+	);
     let query = $state("");
     let sort = $state("newest");
     let page = $state(1);
@@ -29,8 +33,8 @@
 	let deletingDrinkId = $state<string | null>(null);
 	let loadingDrinkId = $state<string | null>(null);
     let deleteError = $state("");
-	let loadError = $state("");
-	let loadingDrinks = $state(true);
+	let loadError = $state(initialSavedData?.loadError ?? "");
+	let loadingDrinks = $state(false);
 
     const sortOptions = [
         { value: "newest", label: "Newest first" },
@@ -140,7 +144,6 @@
     });
 
     onMount(() => {
-		void loadSavedDrinks();
         window.addEventListener(SAVED_DRINKS_CHANGED_EVENT, loadSavedDrinks);
         return () => {
             window.removeEventListener(

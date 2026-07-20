@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import type { Database, Tables } from "$lib/types/database.types";
 
 export const CURRENT_TUTORIAL_VERSION = 1;
@@ -42,14 +41,12 @@ const getReminderDate = (now: Date) => {
 	return reminderDate;
 };
 
-export const saveTutorialChoice = async (
+export const writeTutorialChoice = async (
+	supabase: SupabaseClient<Database>,
 	userId: string,
 	choice: TutorialChoice,
 	now = new Date(),
 ) => {
-	const supabase = getSupabaseBrowserClient();
-	if (!supabase) return false;
-
 	const neverShowAutomatically = choice === "never";
 	const { error } = await supabase.from("user_tutorial_preferences").upsert(
 		{

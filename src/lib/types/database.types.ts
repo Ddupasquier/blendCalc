@@ -3485,6 +3485,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      delete_saved_drink: { Args: { p_id: string }; Returns: boolean }
       extract_product_compatibility_facts: {
         Args: {
           p_food?: Json
@@ -3539,6 +3540,10 @@ export type Database = {
           p_food: Json
           p_list_type: string
         }
+        Returns: string
+      }
+      place_user_food_list_items: {
+        Args: { p_foods: Json; p_list_type: string }
         Returns: string
       }
       publish_shared_product_submission: {
@@ -3596,6 +3601,14 @@ export type Database = {
         Returns: undefined
       }
       reject_blocked_signup: { Args: { event: Json }; Returns: Json }
+      remove_user_food_list_item: {
+        Args: { p_fdc_id: number; p_list_type: string }
+        Returns: boolean
+      }
+      rename_user_food_list_item: {
+        Args: { p_description: string; p_fdc_id: number; p_list_type: string }
+        Returns: string
+      }
       replace_food_nutrients: {
         Args: {
           p_custom_food_id: string
@@ -3657,6 +3670,19 @@ export type Database = {
       }
       save_custom_food: {
         Args: { p_fdc_id: number; p_food: Json }
+        Returns: string
+      }
+      save_mix_preferences: {
+        Args: { p_mix_state?: Json; p_nutrient_goals?: Json }
+        Returns: boolean
+      }
+      save_saved_drink: {
+        Args: {
+          p_created_at: string
+          p_drink: Json
+          p_id: string
+          p_name: string
+        }
         Returns: string
       }
       search_blendcalc_products_v1: {

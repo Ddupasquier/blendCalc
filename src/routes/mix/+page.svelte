@@ -1,5 +1,6 @@
 <script lang="ts">
 	import "./styles/mixPage.scss";
+	import { page } from "$app/state";
 	import PillButton from "$lib/components/common/buttons/PillButton.svelte";
 	import GoalTargets from "$lib/components/mix/controls/GoalTargets.svelte";
 	import IngredientChooser from "$lib/components/mix/ingredients/IngredientChooser.svelte";
@@ -26,7 +27,6 @@
     } from "$lib/utils/storage/client/smoothieLists";
     import {
 		readCloudSmoothieList,
-        readCloudMixPreferences,
         saveCloudMixPreferences,
     } from "$lib/utils/storage/supabase";
     import IngredientContributionBreakdown from "$lib/components/mix/insights/IngredientContributionBreakdown.svelte";
@@ -97,12 +97,13 @@
 	const nutrientCatalog = getNutrientCatalog();
 	const defaultNutrientGoals = getDefaultMixGoals();
 	const goalTemplates = getMixGoalTemplates();
+	const initialMixData = page.data.mixData;
 
     let selected = $state<(string | number)[]>(defaultMixFields.map((n) => n.id));
 	let pendingResetAction = $state<MixResetAction | null>(null);
     let options = $state<NutrientOption[]>(getDefaultNutrientOptions());
-    let fridgeItems = $state<FdcFood[]>([]);
-    let shoppingItems = $state<FdcFood[]>([]);
+    let fridgeItems = $state<FdcFood[]>(initialMixData?.fridge ?? []);
+    let shoppingItems = $state<FdcFood[]>(initialMixData?.shoppingList ?? []);
     let selectedFoodIds = $state<number[]>([]);
     let servingGrams = $state<Record<number, number>>({});
     let servingQuantities = $state<Record<number, number>>({});
@@ -115,7 +116,7 @@
     let loadedSavedDrink = $state<LoadedSavedDrink | null>(null);
     let saveDialogError = $state("");
     let saveDialogBusy = $state(false);
-	let cloudLoadError = $state("");
+	let cloudLoadError = $state(initialMixData?.loadError ?? "");
 	const foodPreferenceContext = getFoodPreferenceContext();
 
 	const assignMixState = (state: MixStateSnapshot) => {
@@ -431,8 +432,8 @@
         void saveCloudMixPreferences({ mixState });
     };
 
-    const loadCloudBackedMixPreferences = async () => {
-        const cloudPreferences = await readCloudMixPreferences();
+    const loadCloudBackedMixPreferences = () => {
+        const cloudPreferences = initialMixData?.preferences;
         if (!cloudPreferences) return;
 
         const hasCloudGoals =
@@ -690,10 +691,9 @@
     onMount(() => {
         const restoredSavedDrink = readLoadedSavedDrink();
         loadedSavedDrink = restoredSavedDrink;
-        void loadCloudBackedIngredientLists();
         loadMixState();
         loadNutrientGoals();
-        if (!restoredSavedDrink) void loadCloudBackedMixPreferences();
+        if (!restoredSavedDrink) loadCloudBackedMixPreferences();
 		window.addEventListener(
             SMOOTHIE_LISTS_CHANGED_EVENT,
             loadIngredientLists,

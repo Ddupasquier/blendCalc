@@ -3,6 +3,11 @@ import type { Database } from "$lib/types/database.types";
 import type { VerifiedAuthUser } from "$lib/utils/auth/types";
 import type { AppRole } from "$lib/utils/moderation/moderation";
 import type { RequestContext } from "@sveltejs/adapter-vercel";
+import type {
+	IngredientPageInitialData,
+	MixPageInitialData,
+	SavedPageInitialData,
+} from "$lib/types/userData";
 
 type AuthUser = {
 	id: string;
@@ -23,6 +28,9 @@ declare global {
 		}
 		interface PageData {
 			authUser: AuthUser | null;
+			ingredientData?: IngredientPageInitialData;
+			mixData?: MixPageInitialData;
+			savedData?: SavedPageInitialData;
 		}
 		// interface PageState {}
 		interface Platform {

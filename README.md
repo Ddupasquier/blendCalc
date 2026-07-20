@@ -27,6 +27,8 @@ Mix and match ingredients for making well-balanced smoothies.
   keep their own purpose-specific versions.
 
 See [`docs/versioning.md`](docs/versioning.md) for release and compatibility rules.
+See [`docs/data-architecture.md`](docs/data-architecture.md) for the database-first read,
+write, browser-state, and external-enrichment boundaries.
 
 ---
 
