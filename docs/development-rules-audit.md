@@ -547,6 +547,23 @@ cache-failure, source-outage, zero-value, legal-storage, and serving-rescale cas
 regression tests. Provider priority remains internal and must never be presented to
 users as a trust hierarchy.
 
+**30g.1.** <a id="rule-versioned-product-label-updates"></a>Treat a changed package
+label for an existing barcode as a proposed revision of the blendCalc canonical product,
+not as a new product and not as permission for an external provider to overwrite the
+database. Compare the submission with the active `shared_products` row first. An
+unchanged match creates no duplicate submission. A plausible change must record the
+target product, exact base revision, label-observed timestamp, structured old/new field
+values, submitted evidence, and the results of exact-barcode checks against every
+available product source. Source agreement informs moderation but does not replace an
+accepted nonmissing canonical value. Block clearly incompatible identities server-side;
+send credible label changes to moderator review. Approval must append an immutable
+revision and queryable field-change rows while preserving observations and provenance.
+Use optimistic revision checks so a review based on an old revision cannot overwrite a
+newer approved change. Never invent a label effective date: distinguish when blendCalc
+observed the label from a manufacturer-provided effective/publication date. Keep private
+evidence out of public product/API responses, and design the future public API to expose
+the current canonical record separately from its documented revision history.
+
 **30h.** <a id="rule-national-nutrition-datasets"></a>Import official national
 food-composition datasets only after recording the exact release, download URL, file
 hash, license, attribution, review status, and legal storage/reuse decision in Supabase.

@@ -127,6 +127,7 @@
 						</div>
 						<div class="product-card__statuses">
 							{#if submission.isQaFixture}<span class="status status--qa">QA fixture</span>{/if}
+							{#if submission.updateReview}<span class="status">product update</span>{/if}
 							<span class="status">pending</span>
 						</div>
 					</header>
@@ -139,6 +140,35 @@
 						<div><dt>Evidence</dt><dd>{submission.evidenceComplete ? "Complete" : "Incomplete"}</dd></div>
 						<div><dt>Detected conflicts</dt><dd>{submission.conflictCount}</dd></div>
 					</dl>
+					{#if submission.updateReview}
+						<section class="product-card__update" aria-label="Proposed catalog update">
+							<div>
+								<strong>Existing product update</strong>
+								<p>
+									Compared with blendCalc revision {submission.updateReview.baseRevisionNumber} from the active catalog. Label observed {submission.labelObservedDate}.
+								</p>
+							</div>
+							<ul>
+								{#each submission.updateReview.changes as change (change.field)}
+									<li>
+										<strong>{change.label}</strong>
+										<span>{change.previousValue} → {change.submittedValue}</span>
+									</li>
+								{/each}
+							</ul>
+							<div>
+								<strong>External checks</strong>
+								<ul>
+									{#each submission.updateReview.sourceChecks as sourceCheck (sourceCheck.source)}
+										<li>
+											<span>{sourceCheck.source}</span>
+											<strong>{sourceCheck.status}</strong>
+										</li>
+									{/each}
+								</ul>
+							</div>
+						</section>
+					{/if}
 					{#if submission.externalLookupFailed}
 						<p class="product-card__notice">
 							An outside source could not be checked. Review the label carefully.
@@ -500,6 +530,40 @@
 
 	.product-card__notice--danger {
 		color: $app-warning-strong;
+	}
+
+	.product-card__update {
+		display: grid;
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+		background: $app-accent;
+		border: $app-border;
+		border-radius: $app-radius;
+
+		p {
+			margin: $app-gap-xs 0 0;
+			font-size: $app-font-size-sm;
+		}
+
+		ul {
+			display: grid;
+			gap: $app-gap-xs;
+			margin: 0;
+			padding: 0;
+			list-style: none;
+		}
+
+		li {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: space-between;
+			gap: $app-gap-xs;
+		}
+
+		li span {
+			color: $app-muted;
+			font-size: $app-font-size-sm;
+		}
 	}
 
 	.account-search label {

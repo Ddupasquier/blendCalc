@@ -1959,10 +1959,10 @@ export type Database = {
         Row: {
           api_base_url: string | null
           attribution_text: string | null
-		  canonical_license_name: string | null
-		  canonical_policy_notes: string | null
-		  canonical_policy_reviewed_at: string | null
-		  canonical_storage_allowed: boolean
+          canonical_license_name: string | null
+          canonical_policy_notes: string | null
+          canonical_policy_reviewed_at: string | null
+          canonical_storage_allowed: boolean
           created_at: string
           display_name: string
           enabled: boolean
@@ -1979,10 +1979,10 @@ export type Database = {
         Insert: {
           api_base_url?: string | null
           attribution_text?: string | null
-		  canonical_license_name?: string | null
-		  canonical_policy_notes?: string | null
-		  canonical_policy_reviewed_at?: string | null
-		  canonical_storage_allowed?: boolean
+          canonical_license_name?: string | null
+          canonical_policy_notes?: string | null
+          canonical_policy_reviewed_at?: string | null
+          canonical_storage_allowed?: boolean
           created_at?: string
           display_name: string
           enabled?: boolean
@@ -1999,10 +1999,10 @@ export type Database = {
         Update: {
           api_base_url?: string | null
           attribution_text?: string | null
-		  canonical_license_name?: string | null
-		  canonical_policy_notes?: string | null
-		  canonical_policy_reviewed_at?: string | null
-		  canonical_storage_allowed?: boolean
+          canonical_license_name?: string | null
+          canonical_policy_notes?: string | null
+          canonical_policy_reviewed_at?: string | null
+          canonical_storage_allowed?: boolean
           created_at?: string
           display_name?: string
           enabled?: boolean
@@ -2573,39 +2573,95 @@ export type Database = {
           },
         ]
       }
+      shared_product_revision_changes: {
+        Row: {
+          change_type: string
+          created_at: string
+          field_label: string
+          field_path: string
+          id: string
+          new_value: Json | null
+          previous_value: Json | null
+          revision_id: string
+          severity: string
+        }
+        Insert: {
+          change_type: string
+          created_at?: string
+          field_label: string
+          field_path: string
+          id?: string
+          new_value?: Json | null
+          previous_value?: Json | null
+          revision_id: string
+          severity: string
+        }
+        Update: {
+          change_type?: string
+          created_at?: string
+          field_label?: string
+          field_path?: string
+          id?: string
+          new_value?: Json | null
+          previous_value?: Json | null
+          revision_id?: string
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shared_product_revision_changes_revision_id_fkey"
+            columns: ["revision_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_revisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shared_product_revisions: {
         Row: {
           category_option_id: string | null
+          change_summary: Json
           created_at: string
           created_by: string | null
           food: Json
           id: string
+          label_observed_at: string
           revision_number: number
           shared_product_id: string
           source: string
           source_reference: string | null
+          submission_id: string | null
+          supersedes_revision_id: string | null
         }
         Insert: {
           category_option_id?: string | null
+          change_summary?: Json
           created_at?: string
           created_by?: string | null
           food: Json
           id?: string
+          label_observed_at?: string
           revision_number: number
           shared_product_id: string
           source: string
           source_reference?: string | null
+          submission_id?: string | null
+          supersedes_revision_id?: string | null
         }
         Update: {
           category_option_id?: string | null
+          change_summary?: Json
           created_at?: string
           created_by?: string | null
           food?: Json
           id?: string
+          label_observed_at?: string
           revision_number?: number
           shared_product_id?: string
           source?: string
           source_reference?: string | null
+          submission_id?: string | null
+          supersedes_revision_id?: string | null
         }
         Relationships: [
           {
@@ -2622,19 +2678,36 @@ export type Database = {
             referencedRelation: "shared_products"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "shared_product_revisions_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_product_revisions_supersedes_revision_id_fkey"
+            columns: ["supersedes_revision_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_revisions"
+            referencedColumns: ["id"]
+          },
         ]
       }
       shared_product_submissions: {
         Row: {
           barcode: string
+          base_revision_id: string | null
           brand_owner: string | null
           category_option_id: string | null
+          change_summary: Json
           consent_to_share: boolean
           created_at: string
           evidence_complete: boolean
           evidence_paths: Json
           food: Json
           id: string
+          label_observed_at: string
           matched_reference: string | null
           matched_source: string | null
           product_name: string
@@ -2642,21 +2715,26 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          submission_kind: string
           submitted_by: string
+          target_shared_product_id: string | null
           updated_at: string
           validation_report: Json
           verification_status: string
         }
         Insert: {
           barcode: string
+          base_revision_id?: string | null
           brand_owner?: string | null
           category_option_id?: string | null
+          change_summary?: Json
           consent_to_share: boolean
           created_at?: string
           evidence_complete?: boolean
           evidence_paths?: Json
           food: Json
           id?: string
+          label_observed_at?: string
           matched_reference?: string | null
           matched_source?: string | null
           product_name: string
@@ -2664,21 +2742,26 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          submission_kind?: string
           submitted_by: string
+          target_shared_product_id?: string | null
           updated_at?: string
           validation_report?: Json
           verification_status?: string
         }
         Update: {
           barcode?: string
+          base_revision_id?: string | null
           brand_owner?: string | null
           category_option_id?: string | null
+          change_summary?: Json
           consent_to_share?: boolean
           created_at?: string
           evidence_complete?: boolean
           evidence_paths?: Json
           food?: Json
           id?: string
+          label_observed_at?: string
           matched_reference?: string | null
           matched_source?: string | null
           product_name?: string
@@ -2686,17 +2769,33 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          submission_kind?: string
           submitted_by?: string
+          target_shared_product_id?: string | null
           updated_at?: string
           validation_report?: Json
           verification_status?: string
         }
         Relationships: [
           {
+            foreignKeyName: "shared_product_submissions_base_revision_id_fkey"
+            columns: ["base_revision_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_revisions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "shared_product_submissions_category_option_id_fkey"
             columns: ["category_option_id"]
             isOneToOne: false
             referencedRelation: "custom_food_category_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shared_product_submissions_target_shared_product_id_fkey"
+            columns: ["target_shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
             referencedColumns: ["id"]
           },
         ]
@@ -2960,18 +3059,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-	  apply_shared_product_external_enrichment: {
-		Args: {
-		  p_barcode: string
-		  p_candidate_fields?: string[]
-		  p_category_option_id?: string
-		  p_enriched_food: Json
-		  p_observations?: Json
-		  p_provenance?: Json
-		  p_shared_product_id: string
-		}
-		Returns: string[]
-	  }
+      apply_shared_product_external_enrichment: {
+        Args: {
+          p_barcode: string
+          p_candidate_fields?: string[]
+          p_category_option_id?: string
+          p_enriched_food: Json
+          p_observations?: Json
+          p_provenance?: Json
+          p_shared_product_id: string
+        }
+        Returns: string[]
+      }
       compatibility_normalize_text: {
         Args: { p_value: string }
         Returns: string

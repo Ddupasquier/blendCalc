@@ -6,10 +6,14 @@ import {
 
 type DifferenceSeverity = "low" | "medium" | "high";
 
-type Difference = {
+export type CatalogSubmissionFieldChange = {
 	field: string;
+	label: string;
 	message: string;
 	severity: DifferenceSeverity;
+	changeType: "added" | "removed" | "changed";
+	previousValue: string | number | Record<string, string | number> | null;
+	submittedValue: string | number | Record<string, string | number> | null;
 };
 
 export type CatalogSubmissionComparison = {
@@ -17,6 +21,7 @@ export type CatalogSubmissionComparison = {
 	shouldAutoDecline: boolean;
 	hasBlockingIdentityMismatch: boolean;
 	changedFields: string[];
+	changes: CatalogSubmissionFieldChange[];
 	issues: string[];
 	severeDifferences: string[];
 };
@@ -30,6 +35,7 @@ const KEY_NUTRIENT_IDS = [
 	NUTRIENT_IDS.SUGAR,
 	NUTRIENT_IDS.FIBER,
 ];
+const KEY_NUTRIENT_ID_SET = new Set<number>(KEY_NUTRIENT_IDS);
 
 const normalizeText = (value?: string | null) =>
 	(value ?? "")
@@ -63,6 +69,27 @@ const getNutrientMap = (food: FdcFood) =>
 const getNutrientLabel = (nutrient: FdcNutrient) =>
 	nutrient.nutrientName || `Nutrient ${nutrient.nutrientId}`;
 
+const getNutrientValue = (nutrient?: FdcNutrient) =>
+	nutrient
+		? { value: nutrient.value, unit: nutrient.unitName.toLocaleUpperCase() }
+		: null;
+
+const getChangeType = (previousValue: unknown, submittedValue: unknown) => {
+	if (previousValue === null || previousValue === "") return "added" as const;
+	if (submittedValue === null || submittedValue === "") return "removed" as const;
+	return "changed" as const;
+};
+
+const normalizeTextList = (values?: string[]) =>
+	[...new Set((values ?? []).map(normalizeText).filter(Boolean))].sort();
+
+const textListsDiffer = (left?: string[], right?: string[]) => {
+	const normalizedLeft = normalizeTextList(left);
+	const normalizedRight = normalizeTextList(right);
+	return normalizedLeft.length !== normalizedRight.length ||
+		normalizedLeft.some((value, index) => value !== normalizedRight[index]);
+};
+
 const getNutrientDifferenceSeverity = (
 	left: FdcNutrient,
 	right: FdcNutrient,
@@ -81,11 +108,12 @@ const getNutrientDifferenceSeverity = (
 };
 
 const getDifferences = (submittedFood: FdcFood, existingFood: FdcFood) => {
-	const differences: Difference[] = [];
+	const differences: CatalogSubmissionFieldChange[] = [];
 
 	if (productNamesDiffer(submittedFood.description, existingFood.description)) {
 		differences.push({
 			field: "productName",
+			label: "Product name",
 			message: "Product name differs from the active catalog item.",
 			severity: productNamesAreUnrelated(
 				submittedFood.description,
@@ -93,12 +121,17 @@ const getDifferences = (submittedFood: FdcFood, existingFood: FdcFood) => {
 			)
 				? "high"
 				: "medium",
+			changeType: "changed",
+			previousValue: existingFood.description,
+			submittedValue: submittedFood.description,
 		});
 	}
 
-	if (productNamesDiffer(submittedFood.brandOwner, existingFood.brandOwner)) {
+	if (submittedFood.brandOwner?.trim() &&
+		productNamesDiffer(submittedFood.brandOwner, existingFood.brandOwner)) {
 		differences.push({
 			field: "brandOwner",
+			label: "Brand",
 			message: "Brand differs from the active catalog item.",
 			severity: productNamesAreUnrelated(
 				submittedFood.brandOwner,
@@ -106,6 +139,12 @@ const getDifferences = (submittedFood: FdcFood, existingFood: FdcFood) => {
 			)
 				? "high"
 				: "medium",
+			changeType: getChangeType(
+				existingFood.brandOwner?.trim() || null,
+				submittedFood.brandOwner?.trim() || null,
+			),
+			previousValue: existingFood.brandOwner?.trim() || null,
+			submittedValue: submittedFood.brandOwner?.trim() || null,
 		});
 	}
 
@@ -114,35 +153,118 @@ const getDifferences = (submittedFood: FdcFood, existingFood: FdcFood) => {
 	if (productNamesDiffer(submittedCategory, existingCategory)) {
 		differences.push({
 			field: "category",
+			label: "Category",
 			message: "Category differs from the active catalog item.",
 			severity: productNamesAreUnrelated(submittedCategory, existingCategory)
 				? "high"
 				: "low",
+			changeType: getChangeType(existingCategory || null, submittedCategory || null),
+			previousValue: existingCategory || null,
+			submittedValue: submittedCategory || null,
 		});
 	}
 
 	const submittedServing = getServingWeight(submittedFood);
 	const existingServing = getServingWeight(existingFood);
-	if (numbersDiffer(submittedServing, existingServing, 0.1)) {
+	if (submittedServing !== null &&
+		(existingServing === null || numbersDiffer(submittedServing, existingServing, 0.1))) {
 		differences.push({
 			field: "servingWeightGrams",
+			label: "Serving weight",
 			message: "Serving weight differs from the active catalog item.",
 			severity: "medium",
+			changeType: getChangeType(existingServing, submittedServing),
+			previousValue: existingServing,
+			submittedValue: submittedServing,
+		});
+	}
+
+	if (submittedFood.householdServingFullText?.trim() && productNamesDiffer(
+		submittedFood.householdServingFullText,
+		existingFood.householdServingFullText,
+	)) {
+		differences.push({
+			field: "householdServing",
+			label: "Household serving",
+			message: "Household serving text differs from the active catalog item.",
+			severity: "low",
+			changeType: getChangeType(
+				existingFood.householdServingFullText?.trim() || null,
+				submittedFood.householdServingFullText?.trim() || null,
+			),
+			previousValue: existingFood.householdServingFullText?.trim() || null,
+			submittedValue: submittedFood.householdServingFullText?.trim() || null,
+		});
+	}
+
+	if (submittedFood.ingredients?.trim() &&
+		normalizeText(submittedFood.ingredients) !== normalizeText(existingFood.ingredients)) {
+		differences.push({
+			field: "ingredients",
+			label: "Ingredient statement",
+			message: "Ingredient statement differs from the active catalog item.",
+			severity: "medium",
+			changeType: getChangeType(
+				existingFood.ingredients?.trim() || null,
+				submittedFood.ingredients?.trim() || null,
+			),
+			previousValue: existingFood.ingredients?.trim() || null,
+			submittedValue: submittedFood.ingredients?.trim() || null,
+		});
+	}
+
+	for (const [field, label, submittedValues, existingValues] of [
+		["allergens", "Allergens", submittedFood.allergens, existingFood.allergens],
+		["traces", "Possible traces", submittedFood.traces, existingFood.traces],
+	] as const) {
+		if (!submittedValues?.length) continue;
+		if (!textListsDiffer(submittedValues, existingValues)) continue;
+		const previousValue = normalizeTextList(existingValues).join(", ") || null;
+		const submittedValue = normalizeTextList(submittedValues).join(", ") || null;
+		differences.push({
+			field,
+			label,
+			message: `${label} differ from the active catalog item.`,
+			severity: "medium",
+			changeType: getChangeType(previousValue, submittedValue),
+			previousValue,
+			submittedValue,
 		});
 	}
 
 	const submittedNutrients = getNutrientMap(submittedFood);
 	const existingNutrients = getNutrientMap(existingFood);
-	for (const nutrientId of KEY_NUTRIENT_IDS) {
+	const nutrientIds = new Set([
+		...submittedNutrients.keys(),
+		...existingNutrients.keys(),
+	]);
+	for (const nutrientId of nutrientIds) {
 		const submittedNutrient = submittedNutrients.get(nutrientId);
 		const existingNutrient = existingNutrients.get(nutrientId);
-		if (!submittedNutrient || !existingNutrient) continue;
+		if (!submittedNutrient) continue;
+		if (!existingNutrient) {
+			const label = getNutrientLabel(submittedNutrient);
+			differences.push({
+				field: `nutrient:${nutrientId}`,
+				label,
+				message: `${label} was added to the submitted label data.`,
+				severity: "low",
+				changeType: "added",
+				previousValue: null,
+				submittedValue: getNutrientValue(submittedNutrient),
+			});
+			continue;
+		}
 		const severity = getNutrientDifferenceSeverity(submittedNutrient, existingNutrient);
 		if (!severity) continue;
 		differences.push({
 			field: `nutrient:${nutrientId}`,
+			label: getNutrientLabel(submittedNutrient),
 			message: `${getNutrientLabel(submittedNutrient)} differs from the active catalog item.`,
 			severity,
+			changeType: "changed",
+			previousValue: getNutrientValue(existingNutrient),
+			submittedValue: getNutrientValue(submittedNutrient),
 		});
 	}
 
@@ -172,7 +294,9 @@ export const compareCatalogSubmissionToExistingProduct = (
 		difference.field === "category" && difference.severity === "high"
 	);
 	const severeNutrientCount = differences.filter((difference) =>
-		difference.field.startsWith("nutrient:") && difference.severity === "high"
+		difference.field.startsWith("nutrient:") &&
+		KEY_NUTRIENT_ID_SET.has(Number(difference.field.split(":")[1])) &&
+		difference.severity === "high"
 	).length;
 
 	const shouldAutoDecline =
@@ -185,6 +309,7 @@ export const compareCatalogSubmissionToExistingProduct = (
 		shouldAutoDecline,
 		hasBlockingIdentityMismatch: hasNameMismatch,
 		changedFields,
+		changes: differences,
 		issues: differences.map((difference) => difference.message),
 		severeDifferences,
 	};

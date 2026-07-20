@@ -388,6 +388,7 @@ Notes:
 | `shared_product_submissions`      | `id`                    | Submitted by one auth user    | Community product submissions awaiting review or already reviewed         | `submitted_by → auth.users.id`, optional reviewer                   |
 | `shared_products`                 | `id`                    | Shared catalog                | Approved active shared products searchable by all authenticated users     | Optional approved submission/reviewer                               |
 | `shared_product_revisions`        | `id`                    | Shared catalog                | Historical revisions for approved products                                | `shared_product_id → shared_products.id`                            |
+| `shared_product_revision_changes` | `id`                    | Shared catalog history        | Queryable old/new field values attached to an approved product revision    | `revision_id → shared_product_revisions.id`                         |
 | `shared_product_observations`     | `id`                    | Shared evidence/provenance    | API, user-label, manufacturer, or GS1 observations for a barcode          | Optional submission/user links                                      |
 | `shared_product_field_provenance` | `id`                    | Shared evidence/provenance    | Which observation supplied each canonical shared product field            | `shared_product_id`, `observation_id`                               |
 | `shared_product_conflicts`        | `id`                    | Shared moderation/provenance  | Open/resolved conflicts between observed values                           | `shared_product_id → shared_products.id`                            |
@@ -402,8 +403,9 @@ Stores user-submitted products before/after moderation.
 Columns: `id`, `submitted_by`, `barcode`, `product_name`, `brand_owner`,
 `category_option_id`, `food`, `consent_to_share`, `status`, `verification_status`,
 `matched_source`, `matched_reference`, `validation_report`, `evidence_paths`,
-`evidence_complete`, `reviewed_by`, `reviewed_at`, `review_note`, `created_at`,
-`updated_at`.
+`evidence_complete`, `submission_kind`, `target_shared_product_id`,
+`base_revision_id`, `change_summary`, `label_observed_at`, `reviewed_by`,
+`reviewed_at`, `review_note`, `created_at`, `updated_at`.
 
 Notes:
 
@@ -416,6 +418,12 @@ Notes:
 - `category_option_id` points to the canonical DB-backed app category selected or
   resolved before submission. Raw API categories remain inside `food` for source proof
   and future remapping.
+- `submission_kind` is `new_product` or `product_update`. Product updates must point to
+  both the active shared product and the exact base revision used for comparison.
+- `change_summary` stores structured before/after values and exact-source research
+  results. `label_observed_at` records when blendCalc received the label; it does not
+  claim to be the manufacturer's effective date.
+- A partial unique index allows only one pending update for a shared product at a time.
 
 ### `shared_products`
 
@@ -453,6 +461,22 @@ Notes:
   blocks publication when no enabled canonical category can be resolved.
 - `shared_product_revisions.category_option_id` copies the published product category so
   historical revisions retain the category used at publication.
+
+### `shared_product_revisions` and `shared_product_revision_changes`
+
+Every approved publication appends a revision. New revision columns include
+`submission_id`, `supersedes_revision_id`, `change_summary`, and `label_observed_at` in
+addition to the canonical food snapshot, source, source reference, category, creator,
+revision number, and timestamps.
+
+For an approved product update, a database trigger verifies that the submission's
+`base_revision_id` is still the latest revision before the active product can change.
+Another trigger copies the submission and observed-label metadata onto the new revision.
+`shared_product_revision_changes` then stores one row per changed field with
+`field_path`, `field_label`, `change_type`, `previous_value`, `new_value`, and
+`severity`. These service-role-only rows make future API history queryable without
+parsing every historical food document. Older revisions keep their original snapshots;
+the migration does not invent historical field differences.
 
 ### Product evidence and cache tables
 

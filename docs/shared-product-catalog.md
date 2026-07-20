@@ -94,6 +94,32 @@ unchanged.
 This structure allows another source to be added later without losing which source
 supplied each value or silently replacing a trusted value.
 
+## Existing barcodes and label changes
+
+An existing barcode does not make the catalog permanent or make a new label
+automatically correct. Packaging, serving sizes, ingredients, allergens, and nutrition
+can change over time.
+
+1. The server compares the submitted label with the active blendCalc product first.
+2. An unchanged match returns the existing product and creates no duplicate submission.
+3. A clearly incompatible identity is blocked before normal moderation.
+4. A credible difference becomes a `product_update` submission linked to the active
+   product and the exact revision reviewed by the comparison.
+5. USDA and Open Food Facts are checked for exact-barcode support. Their results are
+   stored as research context; neither provider silently replaces the canonical row.
+6. Moderation shows the old and proposed values, source-check results, and private label
+   evidence before approval.
+7. Approval succeeds only if the base revision is still current. It updates the active
+   product, appends an immutable revision, and stores each changed field in
+   `shared_product_revision_changes`.
+8. If another update was approved while the submission waited, approval stops as stale
+   and the change must be compared again.
+
+`label_observed_at` records when blendCalc saw the submitted label. It is not presented
+as the date the manufacturer changed the product unless a separate source provides that
+date. Revision history is retained for the future public API, while private evidence
+paths remain moderator-only.
+
 ## Serving data
 
 Reported serving sizes are normalized into `food_servings` when products are saved,
@@ -187,6 +213,7 @@ Migrations:
 - `supabase/migrations/20260615230000_product_submission_rejection_blocks.sql`
 - `supabase/migrations/20260715120000_shared_product_canonical_categories.sql`
 - `supabase/migrations/20260719210000_canonical_product_external_enrichment.sql`
+- `supabase/migrations/20260719213000_versioned_product_label_updates.sql`
 - `supabase/migrations/20260718000000_server_request_efficiency.sql`
 - `supabase/migrations/20260718130000_user_food_list_catalog_links.sql`
 - `supabase/migrations/20260718131000_user_food_list_catalog_link_defaults.sql`
@@ -196,7 +223,9 @@ Migrations:
 - Browser clients cannot insert, update, approve, reject, or delete shared catalog rows.
 - Server routes authenticate the user, then use the server-only Supabase admin client.
 - Publication happens through one transactional, service-role-only database function.
-- Product revisions are append-only and serialized per barcode.
+- Product revisions are append-only and serialized per barcode. Existing-product
+  submissions identify their base revision, and stale approvals cannot overwrite a
+  newer revision.
 - Shared submissions, products, and revisions retain an indexed foreign key to
   `custom_food_category_options`; database triggers prevent category loss while
   publishing or creating revisions.
@@ -235,7 +264,8 @@ all three evidence photos against the entered serving and nutrient values before
 approval.
 
 - **Approve:** publishes the submitted label as `community-reviewed` and appends a
-  revision.
+  revision. Existing-product updates also preserve the superseded revision and
+  structured before/after fields.
 - **Approve image:** if the submission has a front-package image, the moderator can
   adjust the card crop. Approval copies that image into public product image storage and
   records it in `food_image_assets`.

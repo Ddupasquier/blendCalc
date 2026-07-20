@@ -28,6 +28,10 @@ import {
 	normalizeImagePlacement,
 } from "$lib/utils/food/images/imagePlacement";
 import type { ImageFitMode } from "$lib/utils/food/images/types";
+import {
+	formatCatalogChangeValue,
+	readCatalogUpdateSummary,
+} from "$lib/utils/products/catalogUpdateReview";
 
 const PERMANENT_BAN_DURATION = "876000h";
 const MODERATION_PAGE_SIZE = 100;
@@ -261,6 +265,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 						(issue): issue is string => typeof issue === "string" && Boolean(issue.trim()),
 					)
 				: [];
+			const updateSummary = readCatalogUpdateSummary(submission.change_summary);
 			return {
 				id: submission.id,
 				barcode: submission.barcode,
@@ -287,6 +292,36 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				externalLookupFailed: validationReport.externalLookupFailed ?? false,
 				validationIssues,
 				isQaFixture: validationReport.qaSeed === true,
+				submissionKind: submission.submission_kind,
+				labelObservedAt: submission.label_observed_at,
+				labelObservedDate: submission.label_observed_at.slice(0, 10),
+				updateReview: updateSummary
+					? {
+							baseRevisionNumber: updateSummary.baseRevisionNumber,
+							changes: updateSummary.changes.map((change) => ({
+								field: change.field,
+								label: change.label,
+								changeType: change.changeType,
+								previousValue: formatCatalogChangeValue(change.previousValue),
+								submittedValue: formatCatalogChangeValue(change.submittedValue),
+							})),
+							sourceChecks: updateSummary.sourceChecks.map((sourceCheck) => ({
+								source: sourceCheck.source === "usda"
+									? "USDA FoodData Central"
+									: "Open Food Facts",
+								status: sourceCheck.status === "error"
+									? "Check failed"
+									: sourceCheck.status === "not-found"
+										? "No exact barcode match"
+										: sourceCheck.supportsSubmittedValues
+											? "Matches proposed label"
+											: sourceCheck.supportsCurrentValues
+												? "Matches current catalog"
+												: "Exact barcode found; values differ",
+								sourceReference: sourceCheck.sourceReference,
+							})),
+						}
+					: null,
 				nutrients: (food.foodNutrients ?? []).map((nutrient) => ({
 					name: nutrient.nutrientName,
 					value: nutrient.value,

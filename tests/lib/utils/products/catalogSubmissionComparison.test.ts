@@ -56,6 +56,7 @@ describe("catalog submission comparison", () => {
 		expect(comparison.shouldAutoDecline).toBe(false);
 		expect(comparison.hasBlockingIdentityMismatch).toBe(false);
 		expect(comparison.changedFields).toEqual([]);
+		expect(comparison.changes).toEqual([]);
 	});
 
 	it("allows same-barcode nutrient edits to go to moderation", () => {
@@ -74,6 +75,71 @@ describe("catalog submission comparison", () => {
 		expect(comparison.shouldAutoDecline).toBe(false);
 		expect(comparison.hasBlockingIdentityMismatch).toBe(false);
 		expect(comparison.changedFields).toContain(`nutrient:${NUTRIENT_IDS.CARBS}`);
+		expect(comparison.changes).toContainEqual(
+			expect.objectContaining({
+				field: `nutrient:${NUTRIENT_IDS.CARBS}`,
+				previousValue: { value: 13, unit: "G" },
+				submittedValue: { value: 10, unit: "G" },
+			}),
+		);
+	});
+
+	it("documents newly reported nutrients and label allergen changes", () => {
+		const comparison = compareCatalogSubmissionToExistingProduct(
+			createFood({
+				allergens: ["Milk"],
+				foodNutrients: [
+					...createFood().foodNutrients,
+					{
+						nutrientId: NUTRIENT_IDS.CALCIUM,
+						nutrientName: "Calcium, Ca",
+						nutrientNumber: "301",
+						unitName: "MG",
+						value: 15,
+					},
+				],
+			}),
+			createFood(),
+		);
+
+		expect(comparison.changes).toContainEqual(
+			expect.objectContaining({
+				field: "allergens",
+				changeType: "added",
+				submittedValue: "milk",
+			}),
+		);
+		expect(comparison.changes).toContainEqual(
+			expect.objectContaining({
+				field: `nutrient:${NUTRIENT_IDS.CALCIUM}`,
+				changeType: "added",
+				previousValue: null,
+				submittedValue: { value: 15, unit: "MG" },
+			}),
+		);
+	});
+
+	it("does not treat an unreported submitted nutrient as a removal", () => {
+		const existingFood = createFood({
+			foodNutrients: [
+				...createFood().foodNutrients,
+				{
+					nutrientId: NUTRIENT_IDS.CALCIUM,
+					nutrientName: "Calcium, Ca",
+					nutrientNumber: "301",
+					unitName: "MG",
+					value: 15,
+				},
+			],
+		});
+		const comparison = compareCatalogSubmissionToExistingProduct(
+			createFood(),
+			existingFood,
+		);
+
+		expect(comparison.changedFields).not.toContain(
+			`nutrient:${NUTRIENT_IDS.CALCIUM}`,
+		);
 	});
 
 	it("blocks a related but non-matching product name", () => {
