@@ -23,7 +23,3 @@ export type FoodSymbolProps = {
 		>;
 	class?: string;
 };
-
-export type CategoryFoodIconProps = BasicIconProps & {
-	symbolKey?: string;
-};

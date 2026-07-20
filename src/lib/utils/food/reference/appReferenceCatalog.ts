@@ -47,6 +47,7 @@ export type MixRuntimeConfiguration = {
 export type FoodSymbolDefinition = {
 	key: string;
 	label: string;
+	emoji: string;
 };
 
 export type FoodSymbolCategoryRule = {

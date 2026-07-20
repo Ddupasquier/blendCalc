@@ -50,11 +50,13 @@
 			<FoodSymbol {food} />
 		</CircularMediaFrame>
 		<span class="saved-ingredient-card__copy">
-			<IngredientProvenanceBadges
-				{food}
-				{provenanceOptions}
-			/>
-			<strong title={food.description}>{food.description}</strong>
+			<span class="saved-ingredient-card__title-row">
+				<strong title={food.description}>{food.description}</strong>
+				<IngredientProvenanceBadges
+					{food}
+					{provenanceOptions}
+				/>
+			</span>
 			<small>{category}</small>
 		</span>
 	</button>
@@ -112,10 +114,6 @@
 			opacity 160ms ease;
 	}
 
-	.saved-ingredient-card--warning {
-		@include ingredient-cards.warning-edge;
-	}
-
 	.saved-ingredient-card--active {
 		border-color: $ingredient-accent-primary;
 		background: $ingredient-surface-card;
@@ -124,6 +122,10 @@
 	.saved-ingredient-card--custom {
 		border-color: color-mix(in srgb, $app-custom-strong 45%, transparent);
 		background: color-mix(in srgb, $app-custom-bg 18%, $ingredient-surface-card);
+	}
+
+	.saved-ingredient-card--warning {
+		@include ingredient-cards.warning-edge;
 	}
 
 	.saved-ingredient-card--checked {
@@ -177,6 +179,18 @@
 			line-height: 1.15;
 			text-overflow: ellipsis;
 			white-space: nowrap;
+		}
+	}
+
+	.saved-ingredient-card__title-row {
+		display: flex;
+		align-items: center;
+		gap: $app-gap-badge-inline;
+		min-width: 0;
+
+		strong {
+			flex: 1 1 auto;
+			min-width: 0;
 		}
 	}
 

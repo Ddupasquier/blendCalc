@@ -13,6 +13,10 @@ const legacyBackfillMigration = readFileSync(
 	"supabase/migrations/20260719225500_backfill_legacy_custom_food_symbols.sql",
 	"utf8",
 );
+const emojiMigration = readFileSync(
+	"supabase/migrations/20260720130000_restore_food_symbol_emojis.sql",
+	"utf8",
+);
 const foodSymbol = readFileSync(
 	"src/lib/assets/icons/FoodSymbol.svelte",
 	"utf8",
@@ -44,10 +48,12 @@ describe("food symbol reference catalog", () => {
 		expect(legacyBackfillMigration).toContain("update public.custom_foods");
 	});
 
-	it("loads DB rules and resolves missing stored keys without hardcoded keywords", () => {
+	it("loads DB-owned emoji definitions and resolves keys without hardcoded keywords", () => {
 		expect(referenceData).toContain('from("food_symbol_category_rules")');
+		expect(referenceData).toContain('select("key, display_name, emoji, sort_order")');
 		expect(foodSymbol).toContain("resolveFoodSymbolKey(food)");
+		expect(foodSymbol).toContain("symbolDefinition?.emoji");
+		expect(emojiMigration).toContain("add column if not exists emoji text");
 		expect(foodSymbol).not.toContain("keywords");
-		expect(foodSymbol).not.toMatch(/[🥤🍬🧈🥛🥩🐟🌾🌰🥬🍓📦🥣]/u);
 	});
 });

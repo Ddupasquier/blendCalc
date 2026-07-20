@@ -24,6 +24,8 @@ describe("ingredient warning card architecture", () => {
 		expect(searchCards).toContain("@include ingredient-cards.warning-edge");
 		expect(cardStyles).toContain("$ingredient-card-warning-bar-width");
 		expect(cardStyles).toContain("$ingredient-card-warning-bar-color");
+		expect(cardStyles).toContain("background-image: linear-gradient");
+		expect(cardStyles).not.toContain("&::before");
 	});
 
 	it("does not render warning icons inside compact card badges", () => {

@@ -84,15 +84,17 @@
                             >
                                 <CircularMediaFrame class="result-icon">
                                     <FoodSymbol {food} />
-                                </CircularMediaFrame>
-                                <span class="result-copy">
-                                    <span class="result-name">{formatName(food.description)}</span>
-                                    <span class="result-category">{getFoodDisplayCategory(food)}</span>
-									<IngredientProvenanceBadges
-										{food}
-										{provenanceOptions}
-									/>
-                                </span>
+								</CircularMediaFrame>
+								<span class="result-copy">
+									<span class="result-title-row">
+										<span class="result-name">{formatName(food.description)}</span>
+										<IngredientProvenanceBadges
+											{food}
+											{provenanceOptions}
+										/>
+									</span>
+									<span class="result-category">{getFoodDisplayCategory(food)}</span>
+								</span>
                             </button>
                         </span>
                         {#if !isSaved}
@@ -236,6 +238,7 @@
     }
 
     .result-name {
+		flex: 1 1 auto;
         overflow: hidden;
         min-width: 0;
         color: $ingredient-text-primary;
@@ -246,6 +249,13 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+
+	.result-title-row {
+		display: flex;
+		align-items: center;
+		gap: $app-gap-badge-inline;
+		min-width: 0;
+	}
 
     .result-category {
         overflow: hidden;

@@ -5,8 +5,8 @@ const migration = readFileSync(
 	"supabase/migrations/20260720010000_expand_food_symbol_catalog.sql",
 	"utf8",
 );
-const iconComponent = readFileSync(
-	"src/lib/assets/icons/CategoryFoodIcon.svelte",
+const emojiMigration = readFileSync(
+	"supabase/migrations/20260720130000_restore_food_symbol_emojis.sql",
 	"utf8",
 );
 
@@ -32,8 +32,9 @@ describe("expanded food symbol catalog migration", () => {
 	it("adds a focused set of useful category symbols", () => {
 		for (const key of expectedSymbolKeys) {
 			expect(migration).toContain(`('${key}'`);
-			expect(iconComponent).toContain(`symbolKey === "${key}"`);
+			expect(emojiMigration).toContain(`when '${key}' then`);
 		}
+		expect(emojiMigration).toContain("alter column emoji set not null");
 	});
 
 	it("keeps category assignment database-driven and refreshes stored foods", () => {

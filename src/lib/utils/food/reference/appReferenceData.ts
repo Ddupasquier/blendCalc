@@ -92,9 +92,9 @@ export const readAppReferenceCatalog = async (
 			.from("mix_runtime_configuration")
 			.select("key, value")
 			.eq("enabled", true),
-			supabase
+		supabase
 				.from("food_symbol_definitions")
-				.select("key, display_name, sort_order")
+				.select("key, display_name, emoji, sort_order")
 				.eq("enabled", true)
 				.order("sort_order", { ascending: true }),
 			supabase
@@ -185,6 +185,7 @@ export const readAppReferenceCatalog = async (
 		foodSymbols: (symbolsResult.data ?? []).map((symbol) => ({
 			key: symbol.key,
 			label: symbol.display_name,
+			emoji: symbol.emoji,
 		})),
 		foodSymbolCategoryRules: (symbolRulesResult.data ?? []).map((rule) => ({
 			symbolKey: rule.symbol_key,

@@ -859,6 +859,7 @@ export type Database = {
         Row: {
           created_at: string
           display_name: string
+          emoji: string
           enabled: boolean
           key: string
           sort_order: number
@@ -867,6 +868,7 @@ export type Database = {
         Insert: {
           created_at?: string
           display_name: string
+          emoji: string
           enabled?: boolean
           key: string
           sort_order: number
@@ -875,6 +877,7 @@ export type Database = {
         Update: {
           created_at?: string
           display_name?: string
+          emoji?: string
           enabled?: boolean
           key?: string
           sort_order?: number
@@ -3646,6 +3649,10 @@ export type Database = {
       }
       resolve_food_symbol_key: {
         Args: { category_value: string }
+        Returns: string
+      }
+      resolve_food_symbol_key_for_food: {
+        Args: { p_category_option_id?: string; p_food: Json }
         Returns: string
       }
       save_custom_food: {

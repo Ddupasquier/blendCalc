@@ -6,7 +6,6 @@
 	} from "$lib/utils/food/images/foodImages";
 	import ImagePlacementViewport from "$lib/components/common/images/ImagePlacementViewport.svelte";
 	import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
-	import CategoryFoodIcon from "$lib/assets/icons/CategoryFoodIcon.svelte";
 	import {
 		getFoodSymbolDefinition,
 		resolveFoodSymbolKey,
@@ -59,8 +58,12 @@
 	<span
 		class={`food-symbol__fallback ${className}`.trim()}
 		title={symbolDefinition?.label ?? "Ingredient"}
+		role="img"
+		aria-label={symbolDefinition?.label ?? "Ingredient"}
 	>
-		<CategoryFoodIcon {symbolKey} />
+		<span class="food-symbol__emoji" aria-hidden="true">
+			{symbolDefinition?.emoji}
+		</span>
 	</span>
 {/if}
 
@@ -78,12 +81,12 @@
 		width: 100%;
 		height: 100%;
 		place-items: center;
-		color: $app-primary;
+		font-size: $ingredient-food-icon-font-size;
+		line-height: 1;
+	}
 
-		:global(svg) {
-			display: block;
-			width: $ingredient-control-icon-size;
-			height: $ingredient-control-icon-size;
-		}
+	.food-symbol__emoji {
+		display: block;
+		line-height: 1;
 	}
 </style>

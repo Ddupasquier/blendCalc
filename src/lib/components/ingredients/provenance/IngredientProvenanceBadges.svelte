@@ -33,10 +33,12 @@
 
 	.ingredient-provenance-badges {
 		display: flex;
+		flex: 0 0 auto;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: $app-gap-badge-inline;
-		width: 100%;
+		width: fit-content;
+		max-width: 100%;
 		min-width: 0;
 	}
 </style>
