@@ -48,6 +48,7 @@ clickable navigation block instead.
 - [Sheets, Views, And URL State](#rule-bottom-sheet-flows)
 - [Privileged Actions](#rule-privileged-action-badges)
 - [QA Process](#rule-qa-process)
+- [MVP QA Priorities](#rule-qa-priorities)
 - [Audit Summary](#audit-summary)
 - [Findings](#findings)
 
@@ -816,6 +817,19 @@ no user verification. QA notes should be created as part of the task, not after 
 fact. Give every QA section a stable `QA-GGG` group ID and every task a stable
 `QA-GGG-TTT` ID. Use the next unused number, never reuse or renumber existing IDs, and
 preserve IDs when archiving tasks.
+
+**41a.** <a id="rule-qa-priorities"></a>Assign every active QA group one explicit MVP
+priority and keep that priority visible in `docs/QA/qa-tasks.md`. `Launch blocker`
+means the behavior can produce wrong calculations, data loss or corruption, duplicate
+records, a security or privacy failure, a broken core save/navigation flow, unusable
+mobile behavior, an accessibility blocker, or a failed required build, migration, or
+schema check. Launch blockers for the current view must pass before work moves to the
+next major view. `Before launch` covers common user flows, cross-view integration,
+readability, consistency, and maintainability that may move into the full-app regression
+pass without blocking the next view. `Post-launch` covers rare edge cases, deeper polish,
+benchmarks, and planned expansion that does not compromise MVP correctness. Reassess
+priority whenever scope or behavior changes; never downgrade a correctness, security,
+privacy, data-integrity, mobile-usability, or accessibility problem merely to keep moving.
 
 **42.** <a id="rule-qa-clearance"></a>Finished tasks must prompt the user to run the
 relevant QA checks from local `docs/QA/qa-tasks.md`. Keep each QA item active until the
