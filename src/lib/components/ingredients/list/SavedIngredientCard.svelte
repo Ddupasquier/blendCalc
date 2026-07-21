@@ -106,8 +106,9 @@
 		min-height: $ingredient-card-min-height;
 		padding: $ingredient-card-padding-compact;
 		background: $ingredient-surface-card;
-		border: 1px solid transparent;
+		// border: 1px solid transparent;
 		border-radius: $ingredient-radius-card;
+		// box-shadow: black 0 3px 10px 2px;
 		transition:
 			border-color 160ms ease,
 			background-color 160ms ease,
@@ -121,7 +122,7 @@
 
 	.saved-ingredient-card--custom {
 		border-color: color-mix(in srgb, $app-custom-strong 45%, transparent);
-		background: color-mix(in srgb, $app-custom-bg 18%, $ingredient-surface-card);
+		background: color-mix(in srgb, $app-custom-bg 30%, $ingredient-surface-card);
 	}
 
 	.saved-ingredient-card--warning {
