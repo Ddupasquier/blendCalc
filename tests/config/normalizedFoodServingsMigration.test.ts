@@ -26,4 +26,16 @@ describe("normalized food servings migration", () => {
 		expect(migration).toContain("grant select on table public.food_servings to authenticated");
 		expect(migration).not.toContain("grant insert on table public.food_servings to authenticated");
 	});
+
+	it("does not invent a legacy serving after a source explicitly reports none", () => {
+		const explicitNoServingGuard = migration.indexOf(
+			"(p_food ->> 'hasSourceServing')::boolean is false",
+		);
+		const legacyServingFallback = migration.indexOf(
+			"p_food -> 'customServingWeightGrams'",
+		);
+
+		expect(explicitNoServingGuard).toBeGreaterThan(-1);
+		expect(legacyServingFallback).toBeGreaterThan(explicitNoServingGuard);
+	});
 });

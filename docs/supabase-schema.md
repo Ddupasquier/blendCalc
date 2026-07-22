@@ -243,6 +243,9 @@ Notes:
   aliases retain a canonical replacement rather than becoming duplicate inputs.
 - Observation sync updates evidence counts only. It cannot overwrite approved DB
   grouping, labels, order, visibility, semantic type, or aliases.
+- Observation seeds write in bounded idempotent batches and call
+  `sync_nutrient_manual_entry_fields()` once after the import. The database does not
+  rescan the full observation catalog after every batch.
 
 ### `nutrient_relationship_rules`
 
@@ -295,6 +298,10 @@ Notes:
   not invent vendor labels.
 - Source rows are maintained by the reference-data seed script, with API-observed
   provenance.
+- Health Canada CNF and UK CoFID have explicit canonical-storage decisions based on
+  their published Open Government licences. Their rows retain the required attribution,
+  licence URL, review date, permitted-use summary, and excluded-rights warning; public
+  API output must preserve that attribution metadata.
 
 ### `product_source_daily_metrics`
 

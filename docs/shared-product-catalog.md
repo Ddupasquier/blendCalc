@@ -43,6 +43,11 @@ save private custom foods, use their fridge, and build mixes.
   may be stored in `food_image_assets` with source, license, attribution, and confidence
   so the UI can render source-backed images without treating the full record as shared
   catalog data.
+- **Health Canada CNF and UK CoFID:** their published Open Government licences permit
+  canonical and API reuse with attribution. These datasets support confidently matched
+  generic foods, not exact packaged-product substitution. Stored policy evidence records
+  the licence, official dataset URL, review date, attribution requirement, excluded
+  third-party rights, and non-endorsement condition.
 - **User-entered labels:** may be published only after moderator review.
 
 Whether a provider may populate the future public blendCalc dataset is stored in

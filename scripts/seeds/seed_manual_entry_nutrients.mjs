@@ -5,7 +5,11 @@ import { fileURLToPath } from "node:url";
 import ws from "ws";
 import { createAppUserAgent } from "../lib/app_version.mjs";
 import { createManualEntryNutrientCatalog } from "../lib/manual_entry_nutrient_catalog.mjs";
-import { fetchWithRetry } from "../lib/reference-data/api.mjs";
+import {
+	fetchWithRetry,
+	runSettledWithConcurrency,
+} from "../lib/reference-data/api.mjs";
+import { createNutrientDefinitionCatalog } from "../lib/reference-data/nutrientDefinitions.mjs";
 import { createSourceNutrientMappingCatalog } from "../lib/source_nutrient_mapping_catalog.mjs";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -202,29 +206,8 @@ const fetchOpenFoodFactsPage = async (query) => {
 	};
 };
 
-const runWithConcurrency = async (items, concurrency, task) => {
-	const results = new Array(items.length);
-	let nextIndex = 0;
-
-	const worker = async () => {
-		while (nextIndex < items.length) {
-			const currentIndex = nextIndex;
-			nextIndex += 1;
-			results[currentIndex] = await task(items[currentIndex]);
-		}
-	};
-
-	await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
-	return results;
-};
-
-const buildNutrientDefinitions = (databaseDefinitions) =>
-	new Map(
-		databaseDefinitions.map((definition) => [definition.nutrient_id, definition]),
-	);
-
 const collectFdcObservations = ({ pages, databaseDefinitions, manualEntryCatalog }) => {
-	const nutrientDefinitions = buildNutrientDefinitions(databaseDefinitions);
+	const nutrientDefinitions = createNutrientDefinitionCatalog(databaseDefinitions);
 	const observations = new Map();
 	const ignoredNutrients = new Map();
 
@@ -234,15 +217,27 @@ const collectFdcObservations = ({ pages, databaseDefinitions, manualEntryCatalog
 			if (!Number.isFinite(foodId)) continue;
 
 			for (const nutrient of food.foodNutrients ?? []) {
-				const nutrientId = Number(nutrient.nutrientId);
+				const sourceNutrientId = Number(nutrient.nutrientId);
 				const nutrientName = String(nutrient.nutrientName ?? "").trim();
+				const nutrientNumber = String(nutrient.nutrientNumber ?? "").trim() || null;
 				const unitName = normalizeUnit(nutrient.unitName);
-				if (!Number.isFinite(nutrientId) || !nutrientName || !unitName) continue;
+				if (!Number.isFinite(sourceNutrientId) || !nutrientName || !unitName) continue;
+
+				const definition = nutrientDefinitions.resolve(
+					sourceNutrientId,
+					nutrientNumber,
+				) ?? nutrientDefinitions.register({
+					nutrient_id: sourceNutrientId,
+					nutrient_name: nutrientName,
+					nutrient_number: nutrientNumber,
+					default_unit_name: unitName,
+				});
+				if (!definition) continue;
 
 				const classification = classifyNutrient({
-					nutrientId,
-					nutrientName,
-					unitName,
+					nutrientId: definition.nutrient_id,
+					nutrientName: definition.nutrient_name,
+					unitName: definition.default_unit_name,
 					catalog: manualEntryCatalog,
 				});
 				if (!classification) {
@@ -250,24 +245,17 @@ const collectFdcObservations = ({ pages, databaseDefinitions, manualEntryCatalog
 					continue;
 				}
 
-				nutrientDefinitions.set(nutrientId, {
-					nutrient_id: nutrientId,
-					nutrient_name: nutrientName,
-					nutrient_number: String(nutrient.nutrientNumber ?? "").trim() || null,
-					default_unit_name: unitName,
-				});
-
-				const sourceReference = `${foodId}:${nutrientId}`;
+				const sourceReference = `${foodId}:${sourceNutrientId}`;
 				observations.set(`${page.source}:${page.query}:${sourceReference}`, {
 					source: page.source,
 					query: page.query,
 					source_reference: sourceReference,
 					source_food_name: String(food.description ?? "").trim() || null,
 					source_data_type: String(food.dataType ?? "").trim() || null,
-					nutrient_id: nutrientId,
+					nutrient_id: definition.nutrient_id,
 					canonical_nutrient_id: classification.canonicalNutrientId,
 					nutrient_name: nutrientName,
-					nutrient_number: String(nutrient.nutrientNumber ?? "").trim() || null,
+					nutrient_number: nutrientNumber,
 					unit_name: unitName,
 					entry_step: classification.entryStep,
 					group_id: classification.groupId,
@@ -281,6 +269,7 @@ const collectFdcObservations = ({ pages, databaseDefinitions, manualEntryCatalog
 					source_payload: {
 						fdcId: foodId,
 						dataType: food.dataType,
+						sourceNutrientId,
 						nutrientValue: nutrient.value ?? null,
 					},
 				});
@@ -382,13 +371,25 @@ const upsertInChunks = async ({
 	records,
 	chunkSize = 500,
 	onConflict,
+	ignoreDuplicates = false,
 }) => {
 	for (let start = 0; start < records.length; start += chunkSize) {
 		const chunk = records.slice(start, start + chunkSize);
 		const { error } = await supabase
 			.from(table)
-			.upsert(chunk, onConflict ? { onConflict } : undefined);
-		if (error) throw error;
+			.upsert(
+				chunk,
+				onConflict ? { ignoreDuplicates, onConflict } : undefined,
+			);
+		if (error) {
+			throw new Error(
+				`${table} write failed at rows ${start + 1}-${start + chunk.length}: ${error.message}`,
+				{ cause: error },
+			);
+		}
+		if (records.length >= 10_000 && (start + chunk.length) % 10_000 === 0) {
+			console.log(`${table}: ${start + chunk.length}/${records.length} rows processed`);
+		}
 	}
 };
 
@@ -462,23 +463,40 @@ try {
 	console.log(
 		`Requesting ${requests.length} FDC pages plus Open Food Facts for manual-entry nutrients with concurrency ${options.concurrency}...`,
 	);
-	const pages = await runWithConcurrency(requests, options.concurrency, fetchSearchPage);
+	const fdcResult = await runSettledWithConcurrency(
+		requests,
+		options.concurrency,
+		fetchSearchPage,
+	);
+	for (const failure of fdcResult.failures) {
+		console.warn(
+			`FDC nutrient page was skipped after retries for “${failure.item.query}” page ${failure.item.pageNumber} (${failure.item.source}): ${failure.error.message}`,
+		);
+	}
+	if (fdcResult.values.length === 0) {
+		throw new Error("Every FDC nutrient request failed; refusing to record an empty run.");
+	}
 	const {
 		nutrientDefinitions,
 		observations,
 		ignoredNutrients: ignoredFdcNutrients,
 	} = collectFdcObservations({
-		pages,
+		pages: fdcResult.values,
 		databaseDefinitions: definitionsResult.data ?? [],
 		manualEntryCatalog,
 	});
-	const openFoodFactsPages = await runWithConcurrency(
+	const openFoodFactsResult = await runSettledWithConcurrency(
 		options.queries,
 		Math.min(options.concurrency, 2),
 		fetchOpenFoodFactsPage,
 	);
+	for (const failure of openFoodFactsResult.failures) {
+		console.warn(
+			`Open Food Facts nutrient query was skipped after retries for “${failure.item}”: ${failure.error.message}`,
+		);
+	}
 	const ignoredOpenFoodFactsNutrients = collectOpenFoodFactsObservations({
-		pages: openFoodFactsPages,
+		pages: openFoodFactsResult.values,
 		nutrientDefinitions,
 		observations,
 		manualEntryCatalog,
@@ -488,6 +506,9 @@ try {
 	const observationRows = [...observations.values()];
 
 	console.log(`Collected ${observationRows.length} manual-entry nutrient observations.`);
+	console.log(
+		`Source requests: FDC ${fdcResult.values.length}/${requests.length} succeeded; Open Food Facts ${openFoodFactsResult.values.length}/${options.queries.length} succeeded.`,
+	);
 	console.table(
 		Object.entries(
 			observationRows.reduce((counts, observation) => {
@@ -522,6 +543,7 @@ try {
 		table: "nutrient_manual_entry_observations",
 		records: observationRows,
 		onConflict: "source,query,source_reference,nutrient_id",
+		ignoreDuplicates: true,
 	});
 
 	const { error } = await supabase.rpc("sync_nutrient_manual_entry_fields");
