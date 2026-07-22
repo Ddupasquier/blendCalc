@@ -3,7 +3,7 @@
 	import Check from "$lib/assets/icons/Check.svelte";
 	import X from "$lib/assets/icons/X.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
-	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import MoveItemPrompt from "$lib/components/ingredients/nutrition/MoveItemPrompt.svelte";
 	import type { NutritionListActionsProps } from "$lib/components/ingredients/nutrition/types";
 	import {
@@ -200,7 +200,7 @@
 	.nf-actions {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: $app-horizontal-control-gap;
+		gap: $app-gap-md;
 		margin: 0;
 	}
 
@@ -209,19 +209,19 @@
 		align-items: center;
 		justify-content: center;
 		gap: $app-gap-xs;
-		min-height: $ingredient-control-height;
+		min-height: $app-shell-control-height;
 		padding: $app-gap-sm $app-gap-md;
 		margin: 0;
-		color: $ingredient-accent-primary;
+		color: $app-shell-accent-primary;
 		font-family: $app-button-font-family;
 		font-size: $app-font-size-md;
 		font-weight: $app-button-font-weight;
 		line-height: $app-button-line-height;
 		text-align: center;
-		background: $ingredient-surface-positive;
+		background: $app-shell-accent-soft;
 		border: 1px solid
-			color-mix(in srgb, $ingredient-accent-primary 35%, transparent);
-		border-radius: $ingredient-radius-control;
+			color-mix(in srgb, $app-shell-accent-primary 35%, transparent);
+		border-radius: $app-shell-radius-control;
 	}
 
 	.nf-feedback {
@@ -229,19 +229,19 @@
 		align-items: center;
 		justify-content: flex-end;
 		gap: $app-gap-xs;
-		min-height: $nutrition-label-list-status-size;
+		min-height: 1.3rem;
 		margin: $app-gap-2xs 0;
 		color: $app-primary;
 		font-family: $app-font-family-data;
-		font-size: $nutrition-label-feedback-font-size;
+		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
 		animation: nf-feedback-pop 0.18s ease-out;
 
 	}
 
 	:global(.nf-feedback__icon) {
-		--circular-icon-frame-size: #{$nutrition-label-list-status-icon-size};
-		--circular-icon-frame-icon-size: #{$nutrition-label-feedback-icon-font-size};
+		--circular-icon-frame-size: #{1.06rem};
+		--circular-icon-frame-icon-size: #{$app-font-size-xs};
 		--circular-icon-frame-color: #{$app-primary};
 		--circular-icon-frame-background: #{$app-success-bg};
 	}
@@ -261,7 +261,7 @@
 	@keyframes nf-feedback-pop {
 		from {
 			opacity: 0;
-			transform: translateY($nutrition-label-feedback-pop-offset);
+			transform: translateY($app-gap-xs);
 		}
 
 		to {

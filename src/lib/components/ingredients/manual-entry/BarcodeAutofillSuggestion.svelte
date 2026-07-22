@@ -51,10 +51,10 @@
 		gap: $app-gap-sm;
 		margin-top: $app-gap-sm;
 		padding: $app-gap-md;
-		border: 1px solid $ingredient-border-subtle;
-		border-radius: $ingredient-radius-card;
-		background: $ingredient-surface-soft;
-		color: $ingredient-text-primary;
+		border: 1px solid $app-shell-border-subtle;
+		border-radius: $app-shell-radius-card;
+		background: $app-shell-surface-soft;
+		color: $app-shell-text-primary;
 
 		strong,
 		span {
@@ -67,7 +67,7 @@
 		}
 
 		span {
-			color: $ingredient-text-muted;
+			color: $app-shell-text-muted;
 			font-size: $app-font-size-sm;
 		}
 
@@ -79,9 +79,9 @@
 	}
 
 	.barcode-suggestion--error {
-		border-color: $ingredient-status-error-text;
-		background: $ingredient-status-error-bg;
-		color: $ingredient-status-error-text;
+		border-color: $app-status-error-text;
+		background: $app-status-error-bg;
+		color: $app-status-error-text;
 
 		span,
 		p {

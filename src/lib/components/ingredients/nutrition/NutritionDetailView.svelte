@@ -132,14 +132,14 @@
 		grid-template-columns: auto minmax(0, 1fr) auto;
 		align-items: center;
 		gap: $app-gap-sm;
-		min-height: $ingredient-control-height;
+		min-height: $app-shell-control-height;
 		padding: $app-gap-xs;
 	}
 
 	h1 {
 		margin: 0;
 		overflow: hidden;
-		color: $ingredient-text-primary;
+		color: $app-shell-text-primary;
 		font-family: $app-font-family-interface;
 		font-size: $app-font-size-lg;
 		font-weight: $app-font-weight-bold;
@@ -151,7 +151,7 @@
 	.nutrition-detail-view__source {
 		display: inline-grid;
 		place-items: center;
-		color: $ingredient-accent-info;
+		color: $app-shell-accent-info;
 	}
 
 	.nutrition-detail-view__measurement-controls {
@@ -164,14 +164,14 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: $app-gap-md;
-		min-height: $ingredient-control-height;
+		min-height: $app-shell-control-height;
 		padding-block: $app-gap-sm;
-		border-top: $app-border-divider;
-		border-bottom: $app-border-divider;
+		border-top: 2px solid #111;
+		border-bottom: 2px solid #111;
 
 		h2 {
 			margin: 0;
-			color: $ingredient-text-muted;
+			color: $app-shell-text-muted;
 			font-size: $app-font-size-sm;
 			font-weight: $app-font-weight-bold;
 			letter-spacing: $app-letter-spacing-label;
@@ -183,7 +183,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: $app-gap-md;
-		color: $ingredient-text-primary;
+		color: $app-shell-text-primary;
 
 		strong {
 			font-size: $app-font-size-md;

@@ -20,7 +20,7 @@
 	.view-top {
 		display: grid;
 		flex: 0 0 auto;
-		gap: $app-vertical-stack-gap;
+		gap: $app-gap-md;
 		min-width: 0;
 	}
 </style>

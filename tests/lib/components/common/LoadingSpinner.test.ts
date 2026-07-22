@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
-import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
+import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 
 describe("LoadingSpinner", () => {
 	it("announces an accessible label and uses the requested shared size", () => {

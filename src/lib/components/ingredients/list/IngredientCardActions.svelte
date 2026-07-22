@@ -1,7 +1,7 @@
 <script lang="ts">
 	import DotsHorizontal from "$lib/assets/icons/DotsHorizontal.svelte";
 	import X from "$lib/assets/icons/X.svelte";
-	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import type { IngredientCardActionsProps } from "./types";
 
 	let {

@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/svelte";
 import { createRawSnippet } from "svelte";
 import { describe, expect, it } from "vitest";
-import ActionButton from "$lib/components/common/buttons/ActionButton.svelte";
-import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
+import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 
 const label = createRawSnippet(() => ({ render: () => "Save product" }));
 const icon = createRawSnippet(() => ({

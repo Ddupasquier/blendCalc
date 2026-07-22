@@ -94,7 +94,7 @@
 
 	.contribution-breakdown__grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax($mix-contribution-card-min-width, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
 		gap: $app-gap-sm;
 	}
 
@@ -159,7 +159,7 @@
 
 	.contribution-card__bar {
 		grid-column: 1 / -1;
-		height: $mix-contribution-bar-height;
+		height: 0.35rem;
 		overflow: hidden;
 		background: $app-accent;
 		border-radius: $app-radius-pill;

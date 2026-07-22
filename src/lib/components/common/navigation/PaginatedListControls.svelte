@@ -1,5 +1,5 @@
 <script lang="ts">
-	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import type { PaginatedListControlsProps } from "$lib/components/common/navigation/types";
 	import { getMotionSafeScrollBehavior } from "$lib/utils/accessibility/motion";
 
@@ -93,7 +93,7 @@
 	.paginated-list-controls {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
-		gap: $app-horizontal-control-gap;
+		gap: $app-gap-md;
 		min-width: 0;
 	}
 

@@ -7,7 +7,7 @@
         getFoodDisplayCategory,
         getPrimaryFoodWarning,
     } from "$lib/utils/ingredients/ingredientListUi";
-    import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+    import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
     import Chevron from "$lib/assets/icons/Chevron.svelte";
     import Plus from "$lib/assets/icons/Plus.svelte";
@@ -145,9 +145,9 @@
 
     .results-list {
         display: grid;
-        gap: $app-vertical-stack-gap;
+        gap: $app-gap-md;
 		margin: 0;
-		padding: 0 0 $app-vertical-stack-gap;
+		padding: 0 0 $app-gap-md;
         overflow: visible;
         list-style: none;
     }
@@ -163,20 +163,20 @@
         box-sizing: border-box;
         width: 100%;
         min-width: 0;
-        min-height: calc($ingredient-control-height * 1.35);
-        padding: $ingredient-card-padding-compact;
-        background: $ingredient-surface-positive;
-        border: 2px solid $ingredient-accent-primary;
-        border-radius: $ingredient-radius-card;
-        gap: $app-horizontal-control-gap;
+        min-height: calc($app-shell-control-height * 1.35);
+        padding: $app-shell-card-padding-compact;
+        background: $app-shell-accent-soft;
+        border: 2px solid $app-shell-accent-primary;
+        border-radius: $app-shell-radius-card;
+        gap: $app-gap-md;
         transition:
             border-color 160ms ease,
             background-color 160ms ease;
     }
 
     .result-card--active {
-        background: $ingredient-surface-card;
-        border-color: $ingredient-accent-primary;
+        background: $app-shell-surface-panel;
+        border-color: $app-shell-accent-primary;
     }
 
 	.result-card--warning {
@@ -191,7 +191,7 @@
         display: grid;
         grid-template-columns: auto minmax(0, 1fr);
         align-items: center;
-        gap: $app-horizontal-control-gap;
+        gap: $app-gap-md;
         min-width: 0;
         padding: 0;
         color: inherit;
@@ -203,7 +203,7 @@
         &:focus-visible {
             outline: $app-focus-outline;
             outline-offset: $app-focus-outline-offset;
-            border-radius: $ingredient-radius-control;
+            border-radius: $app-shell-radius-control;
         }
     }
 
@@ -218,16 +218,16 @@
     }
 
     .result-open {
-        width: $ingredient-action-icon-size;
-        height: $ingredient-action-icon-size;
-        color: $ingredient-text-muted;
-		font-size: $ingredient-control-icon-size;
+        width: $app-shell-action-icon-size;
+        height: $app-shell-action-icon-size;
+        color: $app-shell-text-muted;
+		font-size: $app-shell-control-icon-size;
         line-height: 1;
     }
 
 	:global(.result-icon) {
-		--circular-media-frame-size: #{$ingredient-search-result-icon-size};
-		--circular-media-frame-background: color-mix(in srgb, #{$ingredient-surface-card} 74%, transparent);
+		--circular-media-frame-size: #{2.7rem};
+		--circular-media-frame-background: color-mix(in srgb, #{$app-shell-surface-panel} 74%, transparent);
 		--circular-media-frame-font-size: #{$app-font-size-xl};
 	}
 
@@ -241,7 +241,7 @@
 		flex: 1 1 auto;
         overflow: hidden;
         min-width: 0;
-        color: $ingredient-text-primary;
+        color: $app-shell-text-primary;
         font-family: $app-font-family-display;
         font-size: $app-font-size-md;
         font-weight: $app-font-weight-bold;
@@ -259,7 +259,7 @@
 
     .result-category {
         overflow: hidden;
-        color: $ingredient-text-muted;
+        color: $app-shell-text-muted;
         font-size: $app-font-size-sm;
         font-weight: $app-font-weight-regular;
         line-height: 1.25;

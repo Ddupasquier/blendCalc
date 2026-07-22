@@ -1,10 +1,10 @@
 <script lang="ts">
 	import Chevron from "$lib/assets/icons/Chevron.svelte";
 	import Search from "$lib/assets/icons/Search.svelte";
-	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage.svelte";
 	import WarningPopup from "$lib/components/common/feedback/WarningPopup.svelte";
-	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame.svelte";
+	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame/InputLoadingFrame.svelte";
 	import type { FoodCategoryPickerProps } from "$lib/components/ingredients/manual-entry/formTypes";
 	import {
 		FOOD_CATEGORY_SEARCH_DEBOUNCE_MS,
@@ -12,7 +12,6 @@
 		type FoodCategoryPickerData,
 		type FoodCategoryPickerOption,
 	} from "$lib/utils/food/categories/categoryPicker";
-	import "./styles/foodCategoryPicker.scss";
 
 	let {
 		selectedId,
@@ -285,3 +284,7 @@
 		</div>
 	{/if}
 </div>
+
+<style lang="scss">
+	@use "./FoodCategoryPicker.scss";
+</style>

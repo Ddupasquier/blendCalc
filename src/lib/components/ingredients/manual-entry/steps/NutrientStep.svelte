@@ -1,8 +1,8 @@
 <script lang="ts">
-	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList.svelte";
 	import ManualEntryNutrientFields from "$lib/components/ingredients/manual-entry/ManualEntryNutrientFields.svelte";
-	import NutritionLabelOcrInput from "$lib/components/ingredients/manual-entry/NutritionLabelOcrInput.svelte";
+	import NutritionLabelOcrInput from "$lib/components/ingredients/manual-entry/NutritionLabelOcrInput/NutritionLabelOcrInput.svelte";
 	import type { NutrientStepProps } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {

@@ -3,7 +3,7 @@
 	import { onMount } from "svelte";
 	import FloatingFruitBackground from "$lib/components/app/FloatingFruitBackground.svelte";
 	import PasswordRequirements from "$lib/components/auth/PasswordRequirements.svelte";
-	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import { APP_NAME } from "$lib/config/brand";
 	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
@@ -424,7 +424,7 @@
 
 		span {
 			height: 1px;
-			background: $color-orchid-mist;
+			background: $app-border-color;
 		}
 
 		em {

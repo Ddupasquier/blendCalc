@@ -111,7 +111,7 @@
 		align-items: center;
 		justify-content: space-between;
 		width: 100%;
-		padding: $ingredient-card-padding-compact $ingredient-card-padding;
+		padding: $app-shell-card-padding-compact $app-shell-card-padding;
 		list-style: none;
 		cursor: pointer;
 
@@ -126,7 +126,7 @@
 
 	.custom-ingredient__body {
 		display: grid;
-		gap: $app-vertical-stack-gap;
+		gap: $app-gap-md;
 		min-width: 0;
 		padding: 0;
 		margin: 0;
@@ -141,7 +141,7 @@
 
 		h2 {
 			margin: 0;
-			color: $ingredient-text-primary;
+			color: $app-shell-text-primary;
 			font-family: $app-font-family-interface;
 			font-size: $app-font-size-lg;
 			font-weight: $app-font-weight-bold;
@@ -150,7 +150,7 @@
 
 	.custom-ingredient__step-panel {
 		display: grid;
-		gap: $app-vertical-stack-gap;
+		gap: $app-gap-md;
 		min-width: 0;
 	}
 </style>

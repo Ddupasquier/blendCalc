@@ -51,7 +51,7 @@
 	.save-goal-review__list {
 		display: grid;
 		gap: $app-gap-sm;
-		max-height: $mix-review-list-max-height;
+		max-height: 16rem;
 		overflow-y: auto;
 		padding-right: $app-gap-2xs;
 	}
@@ -87,7 +87,7 @@
 	.save-goal-review__badge {
 		justify-self: end;
 		width: fit-content;
-		max-width: $mix-review-badge-max-width;
+		max-width: 8rem;
 		padding: $app-gap-inline-compact $app-gap-sm;
 		border-radius: $app-radius-pill;
 		text-align: right;

@@ -12,9 +12,9 @@ describe("nutrition serving selector spacing", () => {
 			"utf8",
 		);
 
-		expect(component).toContain("gap: $app-vertical-stack-gap");
-		expect(component).toContain("padding: $app-vertical-stack-gap 0");
-		expect(component).toContain("padding: 0 $ingredient-control-padding-x");
+		expect(component).toContain("gap: $app-gap-md");
+		expect(component).toContain("padding: $app-gap-md 0");
+		expect(component).toContain("padding: 0 $app-shell-control-padding-x");
 		expect(component).not.toContain("padding-block: $app-gap-sm");
 		expect(detailView).toContain(
 			'<div class="nutrition-detail-view__measurement-controls">',

@@ -5,7 +5,7 @@
     import Pagination from "$lib/components/common/lists/Pagination.svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge.svelte";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog.svelte";
-	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
     import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
     import {
         clampPage,

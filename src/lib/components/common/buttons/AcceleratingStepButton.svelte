@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from "svelte";
-	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import type { AcceleratingStepButtonProps } from "$lib/components/common/buttons/types";
 	import {
 		ACCELERATING_STEP_HOLD_DELAY_MS,

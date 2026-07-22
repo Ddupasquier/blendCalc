@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { tick } from "svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
-	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import TutorialStepIcon from "$lib/components/app/TutorialStepIcon.svelte";
 	import { tutorialSteps } from "../../../defaults/tutorialSteps";
 
@@ -206,7 +206,7 @@
 		display: grid;
 		place-items: center;
 		padding: $app-gap-sm;
-		background: $app-overlay-bg;
+		background: rgba(26, 58, 90, 0.28);
 		backdrop-filter: blur(3px);
 	}
 
@@ -261,7 +261,7 @@
 		span {
 			width: 0.55rem;
 			height: 0.55rem;
-			background: $color-orchid-mist;
+			background: $app-border-color;
 			border-radius: 50%;
 		}
 
@@ -272,7 +272,7 @@
 
 	.tutorial__body {
 		display: grid;
-		grid-template-columns: $app-tutorial-illustration-size minmax(0, 1fr);
+		grid-template-columns: 7rem minmax(0, 1fr);
 		align-items: center;
 		gap: $app-gap-lg;
 		min-height: 0;
@@ -281,8 +281,8 @@
 	}
 
 	:global(.tutorial__illustration) {
-		--circular-icon-frame-size: #{$app-tutorial-illustration-size};
-		--circular-icon-frame-icon-size: #{$app-tutorial-illustration-icon-size};
+		--circular-icon-frame-size: #{7rem};
+		--circular-icon-frame-icon-size: #{4.06rem};
 		--circular-icon-frame-color: #{$app-primary};
 		--circular-icon-frame-background: #{$app-highlight};
 	}
@@ -384,8 +384,8 @@
 		}
 
 		:global(.tutorial__illustration) {
-			--circular-icon-frame-size: #{$app-tutorial-illustration-size-mobile};
-			--circular-icon-frame-icon-size: #{$app-tutorial-illustration-icon-size-mobile};
+			--circular-icon-frame-size: #{5rem};
+			--circular-icon-frame-icon-size: #{2.9rem};
 		}
 
 		.tutorial__choices {

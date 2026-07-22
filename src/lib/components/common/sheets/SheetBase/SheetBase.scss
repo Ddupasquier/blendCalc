@@ -1,0 +1,119 @@
+@use "../../../../../styles/variables" as *;
+
+.sheet-base__backdrop,
+.sheet-base {
+	--sheet-top-offset: #{$app-shell-header-height};
+	--sheet-bottom-offset: calc(
+		#{$app-shell-nav-height} + env(safe-area-inset-bottom)
+	);
+	--sheet-shell-side: max(
+		0rem,
+		calc((100vw - #{$app-shell-content-max-width}) / 2)
+	);
+}
+
+.sheet-base__backdrop {
+	position: fixed;
+	top: var(--sheet-top-offset);
+	right: 0;
+	bottom: var(--sheet-bottom-offset);
+	left: 0;
+	z-index: 110;
+	background: rgba(0, 0, 0, 0.38);
+}
+
+.sheet-base__backdrop--full-viewport,
+.sheet-base--full-viewport {
+	--sheet-bottom-offset: 0rem;
+}
+
+.sheet-base {
+	position: fixed;
+	box-sizing: border-box;
+	pointer-events: auto;
+	isolation: isolate;
+	overflow: hidden;
+}
+
+.sheet-base--bottom {
+	right: var(--sheet-shell-side);
+	bottom: var(--sheet-bottom-offset);
+	left: var(--sheet-shell-side);
+	z-index: 111;
+	display: flex;
+	align-items: end;
+}
+
+.sheet-base--right {
+	inset: var(--sheet-top-offset) 0 var(--sheet-bottom-offset);
+	z-index: 80;
+	display: grid;
+	justify-items: center;
+	background: $app-shell-surface-page;
+}
+
+.sheet-base__panel {
+	width: 100%;
+	min-width: 0;
+	min-height: 0;
+	box-sizing: border-box;
+	background: $app-shell-surface-panel;
+}
+
+.sheet-base__panel--bottom {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-height: min(
+		56vh,
+		calc(100vh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+	);
+	min-height: min(
+		56dvh,
+		calc(100dvh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+	);
+	max-height: min(
+		80vh,
+		calc(100vh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+	);
+	max-height: min(
+		80dvh,
+		calc(100dvh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+	);
+	padding: $app-gap-sm $app-shell-padding-x $app-gap-md;
+	overflow: hidden;
+	border-radius: 1.35rem 1.35rem 0 0;
+}
+
+.sheet-base--fill .sheet-base__panel--bottom {
+	height: min(
+		80vh,
+		calc(100vh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+	);
+	height: min(
+		80dvh,
+		calc(100dvh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+	);
+}
+
+.sheet-base--comfortable .sheet-base__panel--bottom {
+	min-height: min(
+		23rem,
+		calc(100vh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+	);
+	min-height: min(
+		23rem,
+		calc(100dvh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+	);
+}
+
+.sheet-base__panel--right {
+	width: 100%;
+	max-width: $app-shell-content-max-width;
+	height: 100%;
+	padding: $app-shell-padding-y $app-shell-padding-x 0;
+	overflow-y: auto;
+	background: $app-shell-surface-page;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+}

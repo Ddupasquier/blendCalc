@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import NutritionLabelOcrInput from "$lib/components/ingredients/manual-entry/NutritionLabelOcrInput.svelte";
+import NutritionLabelOcrInput from "$lib/components/ingredients/manual-entry/NutritionLabelOcrInput/NutritionLabelOcrInput.svelte";
 import type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
 
 const mappings: NutritionLabelOcrMapping[] = [

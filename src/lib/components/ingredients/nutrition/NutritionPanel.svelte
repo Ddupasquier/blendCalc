@@ -32,7 +32,7 @@
 
 	.nutrition-panel {
 		display: grid;
-		gap: $app-vertical-stack-gap;
+		gap: $app-gap-md;
 		width: 100%;
 	}
 </style>

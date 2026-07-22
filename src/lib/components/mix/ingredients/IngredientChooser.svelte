@@ -320,7 +320,7 @@
 
 	.ingredient-list-controls {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax($mix-chooser-filter-min-width, auto);
+		grid-template-columns: minmax(0, 1fr) minmax(10rem, auto);
 		align-items: end;
 		gap: $app-gap-sm;
 		margin-bottom: $app-gap-sm;

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
-	import SegmentedControl from "$lib/components/common/buttons/SegmentedControl.svelte";
+	import SegmentedControl from "$lib/components/common/buttons/SegmentedControl/SegmentedControl.svelte";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import type { IngredientListTabsProps } from "$lib/components/ingredients/list/types";
 	import {

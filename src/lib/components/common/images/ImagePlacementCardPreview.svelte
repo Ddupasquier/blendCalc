@@ -34,14 +34,14 @@
 	@use "../../../../styles/variables" as *;
 
 	:global(.image-placement-card-preview) {
-		--circular-media-frame-background: #{$ingredient-surface-positive};
+		--circular-media-frame-background: #{$app-shell-accent-soft};
 	}
 
 	:global(.image-placement-card-preview--card) {
-		--circular-media-frame-size: #{$ingredient-image-editor-actual-preview-size};
+		--circular-media-frame-size: #{$app-shell-leading-icon-size};
 	}
 
 	:global(.image-placement-card-preview--editor) {
-		--circular-media-frame-size: #{$ingredient-image-editor-preview-size};
+		--circular-media-frame-size: #{8rem};
 	}
 </style>

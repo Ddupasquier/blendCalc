@@ -149,7 +149,7 @@
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: $app-gap-xs;
-		max-height: $mix-nutrient-picker-results-max-height;
+		max-height: 18rem;
 		overflow-y: auto;
 		overscroll-behavior: contain;
 
@@ -197,7 +197,7 @@
 
 		.nutrient-picker__results {
 			grid-template-columns: 1fr;
-			max-height: $mix-nutrient-picker-results-max-height-mobile;
+			max-height: 15rem;
 		}
 	}
 </style>

@@ -157,29 +157,29 @@
 	.nf-label {
 		width: 100%;
 		max-width: 100%;
-		padding: $nutrition-label-padding-y $nutrition-label-padding-x
-			$nutrition-label-padding-bottom;
+		padding: $app-gap-md 1.0875rem
+			1.0875rem;
 		margin: 0 auto;
 		overflow: hidden;
-		color: $nutrition-label-text;
+		color: #111;
 		font-family: $app-font-family-data;
-		background: $nutrition-label-bg;
-		border: $app-border-strong;
+		background: #fff;
+		border: 3.5px solid #111;
 		border-radius: 0;
 	}
 
 	.nf-heading {
 		display: grid;
 		gap: $app-gap-2xs;
-		padding-bottom: $nutrition-label-list-row-padding-y;
-		margin-bottom: $nutrition-label-gap-micro;
-		border-bottom: $app-border-highlight;
+		padding-bottom: 0.13rem;
+		margin-bottom: $app-gap-micro;
+		border-bottom: 8px solid #111;
 	}
 
 	.nf-title {
-		font-size: $nutrition-label-title-font-size;
+		font-size: 2.1rem;
 		font-weight: $app-font-weight-heavy;
-		line-height: $nutrition-label-title-line-height;
+		line-height: 1.1;
 		letter-spacing: $app-letter-spacing-data;
 		text-transform: uppercase;
 	}
@@ -205,10 +205,10 @@
 	.nf-basis {
 		max-width: none;
 		padding-top: 0;
-		color: $nutrition-label-muted;
+		color: #222;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
-		line-height: $nutrition-label-basis-line-height;
+		line-height: 1.15;
 		text-align: left;
 		letter-spacing: 0;
 		text-transform: none;
@@ -229,36 +229,36 @@
 	.nf-food {
 		min-width: 0;
 		overflow-wrap: anywhere;
-		color: $nutrition-label-muted;
-		font-size: $nutrition-label-food-font-size;
+		color: #222;
+		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-medium;
 	}
 
 	.nf-thick-divider {
 		margin: $app-gap-2xs 0 $app-gap-xs;
-		border-bottom: $app-border-thick;
+		border-bottom: 4px solid #111;
 	}
 
 	.nf-divider {
 		margin: $app-gap-micro 0;
-		border-bottom: $app-border-divider;
+		border-bottom: 2px solid #111;
 	}
 
 	.nf-columns {
 		display: flex;
 		align-items: stretch;
-		gap: $nutrition-label-column-gap;
+		gap: 1.0875rem;
 		min-width: 0;
-		min-height: $nutrition-label-columns-min-height;
+		min-height: 7.5rem;
 		margin-bottom: $app-gap-2xs;
 	}
 
 	.vital-list {
-		flex: 0 0 $nutrition-label-main-column-width;
-		min-width: $nutrition-label-main-column-min-width;
-		max-width: $nutrition-label-main-column-width;
+		flex: 0 0 13.75rem;
+		min-width: 11.25rem;
+		max-width: 13.75rem;
 		padding: 0;
-		padding-right: $nutrition-label-column-gap;
+		padding-right: 1.0875rem;
 		margin: 0;
 	}
 
@@ -268,10 +268,10 @@
 		flex: 1 1 0;
 		min-width: 0;
 		max-height: 100%;
-		padding-left: $nutrition-label-column-gap;
+		padding-left: 1.0875rem;
 		overflow-x: hidden;
 		overflow-y: auto;
-		border-left: $app-border-strong;
+		border-left: 3.5px solid #111;
 	}
 
 	.nf-list {
@@ -285,59 +285,59 @@
 		align-items: baseline;
 		justify-content: space-between;
 		gap: $app-gap-sm;
-		padding: $nutrition-label-list-row-padding-y
-			$nutrition-label-list-row-padding-x;
-		color: $nutrition-label-text;
-		font-size: $nutrition-label-row-font-size;
+		padding: 0.13rem
+			0.1rem;
+		color: #111;
+		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-medium;
 		background: none;
 	}
 
 	.nf-highlight {
-		font-size: $nutrition-label-highlight-font-size;
+		font-size: $app-font-size-lg;
 		font-weight: $app-font-weight-heavy;
 	}
 
 	.nf-label-text {
 		min-width: 0;
 		overflow-wrap: anywhere;
-		color: $nutrition-label-text;
-		font-size: $nutrition-label-row-font-size;
+		color: #111;
+		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-semibold;
 		letter-spacing: $app-letter-spacing-data;
 		text-transform: uppercase;
 	}
 
 	.nf-calories-label {
-		font-size: $nutrition-label-highlight-font-size;
+		font-size: $app-font-size-lg;
 		font-weight: $app-font-weight-heavy;
 	}
 
 	.nf-value {
 		flex: 0 0 auto;
-		color: $nutrition-label-text;
-		font-size: $nutrition-label-row-font-size;
+		color: #111;
+		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-heavy;
 	}
 
 	.nf-calories-value {
-		font-size: $nutrition-label-highlight-font-size;
+		font-size: $app-font-size-lg;
 		font-weight: $app-font-weight-heavy;
 	}
 
 	.nf-unit {
-		margin-left: $nutrition-label-list-row-padding-y;
-		color: $nutrition-label-muted;
-		font-size: $nutrition-label-unit-font-size;
+		margin-left: 0.13rem;
+		color: #222;
+		font-size: 0.82em;
 		font-weight: $app-font-weight-regular;
 		text-transform: uppercase;
 	}
 
 	@media (max-width: $app-breakpoint-sm) {
 		.nf-label {
-			padding: $nutrition-label-padding-y-mobile
-				$nutrition-label-padding-x-mobile
-				$nutrition-label-padding-bottom-mobile;
+			padding: 0.65rem
+				0.85rem
+				0.95rem;
 		}
 
 		.nf-heading {
@@ -345,7 +345,7 @@
 		}
 
 		.nf-title {
-			font-size: $nutrition-label-title-font-size-mobile;
+			font-size: clamp(1.75rem, 10vw, 2.1rem);
 		}
 
 		.nf-heading-top {
@@ -374,23 +374,23 @@
 
 		.nf-scroll-wrap {
 			width: 100%;
-			max-height: $nutrition-label-scroll-max-height-mobile !important;
+			max-height: 9.5rem !important;
 			padding-top: $app-gap-sm;
 			padding-left: 0;
-			border-top: $app-border-strong;
+			border-top: 3.5px solid #111;
 			border-left: 0;
 		}
 
 		.nf-row,
 		.nf-label-text,
 		.nf-value {
-			font-size: $nutrition-label-row-font-size-mobile;
+			font-size: $app-font-size-md;
 		}
 
 		.nf-highlight,
 		.nf-calories-label,
 		.nf-calories-value {
-			font-size: $nutrition-label-highlight-font-size-mobile;
+			font-size: $app-font-size-md;
 		}
 	}
 </style>

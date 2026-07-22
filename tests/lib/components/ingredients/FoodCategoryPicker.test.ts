@@ -14,7 +14,7 @@ vi.mock("$lib/utils/food/categories/categoryPicker", async (importOriginal) => {
 	};
 });
 
-import FoodCategoryPicker from "$lib/components/ingredients/manual-entry/FoodCategoryPicker.svelte";
+import FoodCategoryPicker from "$lib/components/ingredients/manual-entry/FoodCategoryPicker/FoodCategoryPicker.svelte";
 
 const proteinBars = {
 	id: "protein-bars",

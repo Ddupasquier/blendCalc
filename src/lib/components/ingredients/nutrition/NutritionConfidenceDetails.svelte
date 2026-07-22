@@ -81,12 +81,12 @@
 		padding: $app-gap-xs;
 		background: color-mix(
 			in srgb,
-			$ingredient-status-warning-bg 24%,
-			$nutrition-label-bg
+			$app-status-warning-bg 24%,
+			#fff
 		);
 		border: 1.5px solid
-			color-mix(in srgb, $app-warning-border-color 48%, $ingredient-border-subtle);
-		border-radius: $ingredient-radius-control;
+			color-mix(in srgb, $app-warning-border-color 48%, $app-shell-border-subtle);
+		border-radius: $app-shell-radius-control;
 		font-family: $app-font-family-interface;
 	}
 
@@ -106,14 +106,14 @@
 		text-align: left;
 		background: transparent;
 		border: 0;
-		border-radius: $ingredient-nutrition-confidence-radius;
+		border-radius: calc($app-shell-radius-control - ($app-gap-sm / 2));
 		cursor: pointer;
 
 		&:hover,
 		&:focus-visible {
 			background: color-mix(
 				in srgb,
-				$ingredient-status-warning-bg 28%,
+				$app-status-warning-bg 28%,
 				transparent
 			);
 			outline: $app-focus-outline;
@@ -131,14 +131,14 @@
 		min-width: 0;
 
 		strong {
-			color: $ingredient-text-primary;
+			color: $app-shell-text-primary;
 			font-size: $app-font-size-sm;
 			font-weight: $app-font-weight-bold;
 			line-height: 1.1;
 		}
 
 		span {
-			color: $ingredient-text-muted;
+			color: $app-shell-text-muted;
 			font-size: $app-font-size-xs;
 			font-weight: $app-font-weight-semibold;
 			line-height: 1.15;
@@ -148,9 +148,9 @@
 	.confidence-details__chevron {
 		display: grid;
 		place-items: center;
-		width: $ingredient-control-icon-size;
-		height: $ingredient-control-icon-size;
-		color: $ingredient-text-primary;
+		width: $app-shell-control-icon-size;
+		height: $app-shell-control-icon-size;
+		color: $app-shell-text-primary;
 		line-height: 1;
 		transition: transform 160ms ease;
 	}
@@ -172,16 +172,16 @@
 		grid-template-columns: minmax(0, 1fr) auto;
 		gap: $app-gap-2xs $app-gap-sm;
 		align-items: center;
-		padding: $app-gap-sm $ingredient-control-padding-x-compact;
-		background: $ingredient-surface-soft;
+		padding: $app-gap-sm $app-shell-control-padding-x-compact;
+		background: $app-shell-surface-soft;
 		border: 1.5px solid
-			color-mix(in srgb, $app-warning-border-color 42%, $ingredient-border-subtle);
-		border-radius: $ingredient-nutrition-confidence-item-radius;
+			color-mix(in srgb, $app-warning-border-color 42%, $app-shell-border-subtle);
+		border-radius: calc($app-shell-radius-control - ($app-gap-md / 2));
 
 		span {
 			min-width: 0;
 			overflow: hidden;
-			color: $ingredient-text-primary;
+			color: $app-shell-text-primary;
 			font-size: $app-font-size-xs;
 			font-weight: $app-font-weight-semibold;
 			line-height: 1.2;
@@ -190,8 +190,8 @@
 		}
 
 		strong {
-			color: $ingredient-text-primary;
-			font-size: $ingredient-nutrition-confidence-tag-font-size;
+			color: $app-shell-text-primary;
+			font-size: $app-font-size-2xs;
 			font-weight: $app-font-weight-heavy;
 			letter-spacing: $app-letter-spacing-label;
 			line-height: 1.1;
@@ -200,7 +200,7 @@
 
 		small {
 			grid-column: 1 / -1;
-			color: $ingredient-text-muted;
+			color: $app-shell-text-muted;
 			font-size: $app-font-size-xs;
 			font-weight: $app-font-weight-medium;
 			line-height: 1.3;

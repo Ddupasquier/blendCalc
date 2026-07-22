@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ActionButton from "$lib/components/common/buttons/ActionButton.svelte";
+	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import type { ConfirmationDialogProps } from "$lib/components/common/dialogs/types";
 
 	let {

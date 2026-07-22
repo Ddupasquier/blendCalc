@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Check from "$lib/assets/icons/Check.svelte";
-	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import type { IngredientBulkToggleProps } from "$lib/components/ingredients/list/types";
 
 	let {

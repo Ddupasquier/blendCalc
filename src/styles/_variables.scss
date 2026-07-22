@@ -1,176 +1,22 @@
-// Global SCSS variables for blendCalc
+// App-wide design tokens
 // -----------------------------------------------------------------------------
-// Base variables (keep these as the canonical defaults). To use alternate
-// palettes, restore a commented block here manually.
+// This file contains values reused across the application. Component-only values
+// belong in that component's paired SCSS file instead of becoming global tokens.
+
+// Typography
 // -----------------------------------------------------------------------------
-
-// Palette primitives
-// -----------------------------------------------------------------------------
-// Page canvas color. Use for the app body, large empty areas, card interiors
-// that need to feel lighter than the surrounding section, and high-contrast text
-// on darker buttons.
-$color-cloud-cream: #fcf9f4;
-
-// Primary surface color. Use for cards, panels, saved-drink rows, form sections,
-// modal bodies, and other grouped content blocks that sit on the page canvas.
-$color-oat-cream: #f5eee5;
-
-// Soft structural border color. Use for card outlines, input borders, dividers,
-// disabled button backgrounds, subtle section separators, and non-emphasis
-// pill borders.
-$color-orchid-mist: #d8c9d9;
-
-// Muted copy color. Use for helper text, dates, captions, secondary nutrient
-// values, descriptions, and any text that should be readable but visually quiet.
-$color-warm-stone: #726963;
-
-// Primary readable text color. Use for headings, strong labels, active controls,
-// selected pills, graph labels, and any UI text that needs clear emphasis.
-$color-dark-taupe: #4f4842;
-
-// Cool accent fill. Use for neutral pills, secondary buttons, remove buttons,
-// graph/info accents, and low-priority highlighted UI that should remain calm.
-$color-blueberry-milk: #b7c8e3;
-
-// Danger or over-limit fill. Use for error symbols, exceeded-goal indicators,
-// destructive warning backgrounds, and nutrition warnings that require attention.
-$color-strawberry-cream: #e7b0b8;
-
-// Success or close-to-goal fill. Use for successful feedback, saved/added states,
-// positive badges, and goal-review states where the user is within target range.
-$color-pistachio-cream: #c5d8be;
-
-// Warning or estimate fill. Use for approximate volume-conversion notices,
-// caution badges, popover triggers, and warning states that are not hard errors.
-$color-peach-cream: #efc6a9;
-
-// Strong warning border color. Use for outlines around warning and over-goal
-// panels where the peach fill needs more definition than the default border.
-$color-dusty-rose: #d89ca5;
-
-// Strong warning text color. Use for overage amounts, urgent warning labels,
-// and emphasized caution copy that needs more contrast than the warning fill.
-$color-cinnamon-clay: #9c5f46;
-
-// Primary action fill. Use for main CTA buttons such as Save, Load, Add, and
-// confirmation actions where the user is committing a change.
-$color-acai-mauve: #c894a7;
-
-// Primary action hover fill. Use only for hover/active states of primary CTA
-// buttons so interactive states are visibly related but clearly distinct.
-$color-acai-mauve-dark: #ae7288;
-
-// Bright mango accent. Use very sparingly for the single most important action
-// in a view, small active-navigation markers, and compact attention indicators.
-// It should guide the eye rather than become a general-purpose button color.
-$color-mango-gold: #f4b942;
-
-// Darker mango accent. Use only for hover and active states of mango-highlighted
-// controls so the emphasis remains consistent without introducing another hue.
-$color-mango-gold-dark: #d99a24;
-
-// Warm laser red accent. Use sparingly for active scanner lasers, tiny scanning
-// indicators, and momentary motion accents that need to read as energetic
-// without clashing with the softer danger/warning palette.
-$color-guava-laser: #e45f55;
-
-// User-created ingredient fill. Use only for custom foods entered manually by
-// the user so they are visually distinct from API-sourced ingredients.
-$color-lavender-smoothie: #cbb8e8;
-
-// User-created ingredient border/emphasis. Use with lavender smoothie for
-// custom-food pills, badges, and selected ingredient cards.
-$color-lavender-smoothie-dark: #7b5fa3;
-
-// Nutrition-label ink. Use for the intentionally stark nutrition-facts component
-// borders and text where the design should mimic a printed food label.
-$color-ink-black: #111;
-
-// Figma rebuild surface canvas. Use for the mobile app shell behind white cards,
-// search rows, list views, and other rebuilt screens that should feel cleaner
-// and cooler than the legacy cream surfaces.
-$color-figma-canvas: #f8f8fb;
-
-// Figma rebuild card surface. Use for mobile list cards, headers, nav bars,
-// sheets, and high-clarity grouped content in the UI rebuild.
-$color-figma-card: #ffffff;
-
-// Figma rebuild foreground. Use for high-contrast text on rebuilt mobile views.
-$color-figma-ink: #1a1a2e;
-
-// Figma rebuild quiet text. Use for subtitles, metadata, inactive navigation,
-// and helper text in rebuilt mobile screens.
-$color-figma-muted: #8b8fa8;
-
-// Figma rebuild primary green. Use for active navigation, scanner CTAs,
-// positive actions, and selected/verified state in rebuilt mobile flows.
-$color-figma-green: #57a773;
-
-// Figma rebuild subtle green fill. Use behind active/positive icon buttons and
-// badge backgrounds that need the green hue without full CTA strength.
-$color-figma-green-soft: #e8f5ee;
-
-// Figma rebuild border. Use for subtle dividers and card outlines in rebuilt
-// screens where the legacy orchid border is too decorative.
-$color-figma-border: rgba(0, 0, 0, 0.08);
-
-// Figma rebuild pale input/surface fill. Use for search inputs, inactive
-// segmented controls, and quiet grouped rows inside rebuilt mobile screens.
-$color-figma-soft-surface: #f8f7f5;
-
-// Figma rebuild control fill. Use for search fields and quiet icon buttons that
-// need the cooler, low-contrast Figma input treatment instead of cream panels.
-$color-figma-control-surface: #e9e9ed;
-
-// Figma rebuild blue utility accent. Use for manual-entry affordances and
-// low-priority informational icons in rebuilt ingredients flows.
-$color-figma-sky: #55a6c8;
-
-// Figma rebuild destructive accent. Use for remove actions and delete icons in
-// rebuilt mobile sheets/cards.
-$color-figma-red: #d84242;
-
-// Mix-chart semantic colors. Keep visualization colors here so graph utilities
-// never introduce one-off color values in TypeScript or component files.
-$mix-chart-success-fill: color-mix(in srgb, $color-figma-green 34%, transparent);
-$mix-chart-success-stroke: color-mix(in srgb, $color-figma-green 95%, black);
-$mix-chart-caution-fill: color-mix(in srgb, $color-mango-gold 38%, transparent);
-$mix-chart-caution-stroke: color-mix(in srgb, $color-mango-gold-dark 95%, black);
-$mix-chart-warning-fill: color-mix(in srgb, $color-peach-cream 55%, transparent);
-$mix-chart-warning-stroke: $color-cinnamon-clay;
-$mix-chart-danger-fill: color-mix(in srgb, $color-figma-red 38%, transparent);
-$mix-chart-danger-stroke: $color-figma-red;
-$mix-chart-grid: color-mix(in srgb, $color-figma-muted 22%, transparent);
-$mix-chart-goal: color-mix(in srgb, $color-blueberry-milk 72%, $color-figma-muted);
-$mix-chart-goal-fill: color-mix(in srgb, $color-blueberry-milk 42%, transparent);
-$mix-chart-goal-stroke: color-mix(in srgb, $color-figma-muted 72%, transparent);
-
-// App layout
-// -----------------------------------------------------------------------------
-// Interface font. Use for body copy, navigation, forms, buttons, labels, helper
-// text, cards, and the majority of the application UI.
 $app-font-family-interface: "DM Sans", "Segoe UI Variable Text", "Segoe UI",
 	system-ui, -apple-system, sans-serif;
-
-// Display font. Use sparingly for large page headings, landing/auth headlines,
-// profile/moderation titles, and short brand moments that need more personality.
 $app-font-family-display: "Plus Jakarta Sans", "Avenir Next",
 	"Segoe UI Variable Display", "Trebuchet MS", system-ui, sans-serif;
-
-// Data font. Use for nutrition facts, graph values, measurements, and compact
-// numeric readouts where narrow forms and clearly aligned figures improve scanning.
 $app-font-family-data: "Arial Narrow", "Aptos Narrow", Arial, sans-serif;
 
-// Standard typography weights. Components should use these roles rather than
-// introducing one-off numeric weights that make the interface feel inconsistent.
 $app-font-weight-regular: 400;
 $app-font-weight-medium: 600;
 $app-font-weight-semibold: 700;
 $app-font-weight-bold: 800;
 $app-font-weight-heavy: 900;
 
-// Shared typography scale. Semantic component tokens should alias these sizes
-// instead of repeating equivalent raw values.
 $app-font-size-base: 16px;
 $app-font-size-2xs: 0.68rem;
 $app-font-size-xs: 0.76rem;
@@ -178,650 +24,135 @@ $app-font-size-sm: 0.88rem;
 $app-font-size-md: 1rem;
 $app-font-size-lg: 1.08rem;
 $app-font-size-xl: 1.25rem;
+
 $app-letter-spacing-label: 0.04em;
 $app-letter-spacing-data: 0.01em;
-$app-line-height-readable: 1.35;
 
-// Shared interactive-control typography. All buttons and button-like links use
-// the interface font, a consistent bold weight, and the same compact line height.
-$app-button-font-family: $app-font-family-interface;
-$app-button-font-weight: $app-font-weight-bold;
+$app-button-font-family: "DM Sans", "Segoe UI Variable Text", "Segoe UI",
+	system-ui, -apple-system, sans-serif;
+$app-button-font-weight: 800;
 $app-button-line-height: 1.1;
 
-// Maximum width for page-level content containers.
-$app-max-width: 600px;
-
-// Figma rebuild content width. Use for rebuilt mobile-first screens, header,
-// bottom nav, and fixed actions so the app can fill the viewport while content
-// stays readable instead of stretching edge-to-edge on larger screens.
-$app-mobile-shell-width: 520px;
-
-// Figma mobile shell header height. Use for the authenticated top app bar.
-$app-shell-header-height: 4rem;
-
-// Figma mobile shell bottom navigation height. Use for fixed nav offsets,
-// bottom sheets, and authenticated page bottom padding.
-$app-shell-nav-height: 4.85rem;
-
-// Maximum visible bottom sheet height. Sheets should shrink to their content
-// until this cap, then scroll internally without hiding the drag handle.
-$app-bottom-sheet-max-height-fallback: 80vh;
-$app-bottom-sheet-max-height: 80dvh;
-
-// Default minimum height for reusable bottom sheets. Keeps short sheets
-// anchored above the bottom nav and intentional without forcing long content to overflow.
-$app-bottom-sheet-min-height-fallback: 56vh;
-$app-bottom-sheet-min-height: 56dvh;
-
-// Minimum height for short bottom sheets that should still read as anchored UI,
-// such as filters/actions, instead of looking like a floating dialog.
-$app-bottom-sheet-comfortable-min-height: 23rem;
-
-// Clickable drag-handle area at the top of reusable bottom sheets.
-$app-bottom-sheet-handle-height: 1.5rem;
-$app-bottom-sheet-handle-target-width: 4rem;
-
-// Visible drag-handle width at the top of reusable bottom sheets.
-$app-bottom-sheet-handle-width: 2.25rem;
-
-// Visible drag-handle thickness at the top of reusable bottom sheets.
-$app-bottom-sheet-handle-thickness: 0.22rem;
-
-// Shared progress-step indicator thickness. Used by reusable multi-step navigation.
-$app-progress-step-indicator-thickness: $app-bottom-sheet-handle-thickness;
-
-// Back-arrow tap target in reusable bottom sheet headers.
-$app-bottom-sheet-back-size: 2rem;
-
-// Figma mobile shell horizontal content padding. Use for rebuilt page gutters.
-$app-shell-padding-x: 1rem;
-
-// Figma mobile shell top page padding. Use between the app header and page title.
-$app-shell-padding-y: 1.2rem;
-
-// Figma rebuild standard control height. Use for search rows, icon buttons,
-// segmented controls, and compact primary actions.
-$app-rebuild-control-height: 2.95rem;
-
-// Figma rebuild standard horizontal padding inside search/input controls.
-$app-rebuild-control-padding-x: 0.85rem;
-
-// Figma rebuild compact vertical padding for pill buttons and status controls.
-$app-rebuild-control-padding-y-sm: 0.45rem;
-
-// Figma rebuild compact horizontal padding for pill buttons and status controls.
-$app-rebuild-control-padding-x-sm: 0.75rem;
-
-// Figma rebuild icon size inside square utility controls such as filters.
-$app-rebuild-control-icon-size: 1.2rem;
-$app-control-icon-size: $app-rebuild-control-icon-size;
-
-// Figma rebuild compact action height. Use for small bulk buttons and chips.
-$app-rebuild-control-height-sm: 2.15rem;
-
-// Figma rebuild rounded-card radius. Use for ingredient cards, search controls,
-// manual-entry rows, sheets, and other rebuilt mobile containers.
-$app-rebuild-radius: 1rem;
-
-// Figma rebuild larger sheet/card radius. Use for bottom sheets and large
-// grouped sections with softened corners.
-$app-rebuild-radius-lg: 1.35rem;
-
-// Figma rebuild pill radius. Use when controls should be fully rounded.
-$app-rebuild-radius-pill: 999px;
-
-// Figma rebuild ingredient card minimum height.
-$app-rebuild-ingredient-card-height: 5.25rem;
-
-// Figma rebuild compact badge padding.
-$app-rebuild-badge-padding-y: 0.12rem;
-$app-rebuild-badge-padding-x: 0.42rem;
-$app-text-badge-min-height: 1.25rem;
-$app-text-badge-padding-y: 0.16rem;
-$app-text-badge-padding-x: 0.48rem;
-$app-text-badge-font-size: $app-font-size-xs;
-$app-text-badge-max-width: 8rem;
-$app-text-badge-line-height: 1;
-
-// Figma rebuild compact card/action row padding.
-$app-rebuild-card-padding-sm: 0.85rem;
-
-// Figma rebuild standard grouped-card padding.
-$app-rebuild-card-padding: 1rem;
-
-// Figma rebuild full-width status message padding.
-$app-rebuild-status-padding-y: 0.8rem;
-$app-rebuild-status-padding-x: 0.95rem;
-
-// Figma rebuild food icon size inside ingredient rows.
-$app-rebuild-food-icon-size: 3.2rem;
-
-// Figma rebuild round action icon size for overflow/remove buttons.
-$app-rebuild-action-icon-size: 2.2rem;
-
-// Figma rebuild floating add button size.
-$app-rebuild-fab-size: 3.6rem;
-
-// Figma rebuild modal/sheet overlay. Use behind action sheets and dialogs.
-$app-rebuild-overlay-bg: rgba(0, 0, 0, 0.38);
-
-// Figma rebuild scanner overlay. Use only for full-screen camera scanning.
-$app-rebuild-scanner-overlay-bg: rgba(0, 0, 0, 0.72);
-
-// Figma rebuild scanner dark surface. Use behind full-screen barcode camera UI.
-$app-rebuild-scanner-bg: #080909;
-
-
-// Full-screen barcode scanner target frame dimensions.
-$app-rebuild-scanner-target-width: 66%;
-$app-rebuild-scanner-target-max-width: 16rem;
-$app-rebuild-scanner-target-height: 8.7rem;
-
-// Full-screen barcode scanner target corner dimensions.
-$app-rebuild-scanner-target-corner-long: 3rem;
-$app-rebuild-scanner-target-corner-short: 2.3rem;
-$app-rebuild-scanner-target-corner-thickness: 0.18rem;
-
-// Full-screen barcode scanner status placement below the target frame.
-$app-rebuild-scanner-status-offset: 5.6rem;
-
-// Compact barcode scan button padding in its resting state.
-$app-rebuild-scan-button-padding-y: 0.48rem;
-$app-rebuild-scan-button-padding-x: 0.82rem;
-
-// Resting barcode icon dimensions inside the scan button.
-$app-rebuild-scan-icon-width: 1.125rem;
-$app-rebuild-scan-icon-height: 1rem;
-
-// Expanded barcode animation frame dimensions inside the scan button.
-$app-rebuild-scan-icon-active-width: 3.5rem;
-$app-rebuild-scan-icon-active-height: 2.25rem;
-
-// Small corner bracket size used by the compact barcode animation.
-$app-rebuild-scan-bracket-size: 0.375rem;
-
-// Rebuilt app shell semantic tokens
+// Spacing
 // -----------------------------------------------------------------------------
-// Shared primitives such as bottom sheets and slide-in panels should consume these
-// app-shell names instead of low-level Figma/source tokens. Feature-specific
-// components can add their own domain aliases below.
-$app-shell-content-max-width: $app-mobile-shell-width;
-$app-shell-surface-page: $color-figma-canvas;
-$app-shell-surface-panel: $color-figma-card;
-$app-shell-text-primary: $color-figma-ink;
-$app-shell-text-muted: $color-figma-muted;
-$app-shell-overlay-bg: $app-rebuild-overlay-bg;
-$app-sheet-backdrop-z-index: 110;
-$app-sheet-panel-z-index: 111;
-$app-right-sheet-z-index: 80;
-$app-sheet-radius: $app-rebuild-radius-lg;
-
-// Ingredient route semantic tokens
-// -----------------------------------------------------------------------------
-// These aliases are the preferred tokens for rebuilt ingredient-route UI. Keep
-// source/provenance tokens such as `$color-figma-*` and `$app-rebuild-*` here in
-// variables, then consume readable domain names from feature components.
-$ingredient-shell-max-width: $app-mobile-shell-width;
-$ingredient-shell-padding-x: $app-shell-padding-x;
-$ingredient-shell-padding-y: $app-shell-padding-y;
-$ingredient-shell-header-height: $app-shell-header-height;
-$ingredient-shell-nav-height: $app-shell-nav-height;
-
-$ingredient-surface-page: $color-figma-canvas;
-$ingredient-surface-card: $color-figma-card;
-$ingredient-surface-control: $color-figma-control-surface;
-$ingredient-surface-soft: $color-figma-soft-surface;
-$ingredient-surface-positive: $color-figma-green-soft;
-$ingredient-scanner-overlay-bg: $app-rebuild-scanner-overlay-bg;
-$ingredient-scanner-bg: $app-rebuild-scanner-bg;
-
-$ingredient-text-primary: $color-figma-ink;
-$ingredient-text-muted: $color-figma-muted;
-$ingredient-accent-primary: $color-figma-green;
-$ingredient-accent-info: $color-figma-sky;
-$ingredient-accent-danger: $color-figma-red;
-$ingredient-border-subtle: $color-figma-border;
-
-$ingredient-control-height: $app-rebuild-control-height;
-$ingredient-control-height-compact: $app-rebuild-control-height-sm;
-$ingredient-control-padding-x: $app-rebuild-control-padding-x;
-$ingredient-control-padding-y-compact: $app-rebuild-control-padding-y-sm;
-$ingredient-control-padding-x-compact: $app-rebuild-control-padding-x-sm;
-$ingredient-control-icon-size: $app-control-icon-size;
-$ingredient-search-input-icon-size: $app-font-size-md;
-$ingredient-outcome-action-min-height: $ingredient-control-height-compact;
-
-$ingredient-radius-card: $app-rebuild-radius;
-$ingredient-radius-control: $app-rebuild-radius;
-$ingredient-radius-sheet: $app-rebuild-radius-lg;
-$ingredient-radius-pill: $app-rebuild-radius-pill;
-
-$ingredient-card-min-height: $app-rebuild-ingredient-card-height;
-$ingredient-card-padding: $app-rebuild-card-padding;
-$ingredient-card-padding-compact: $app-rebuild-card-padding-sm;
-$ingredient-card-warning-bar-width: 7px;
-$ingredient-card-warning-bar-color: $color-mango-gold;
-$ingredient-badge-padding-y: $app-text-badge-padding-y;
-$ingredient-badge-padding-x: $app-text-badge-padding-x;
-$ingredient-badge-font-size: $app-text-badge-font-size;
-$ingredient-badge-max-width: $app-text-badge-max-width;
-$ingredient-badge-line-height: $app-text-badge-line-height;
-$ingredient-count-badge-min-width: 1.3rem;
-$ingredient-status-padding-y: $app-rebuild-status-padding-y;
-$ingredient-status-padding-x: $app-rebuild-status-padding-x;
-$ingredient-empty-state-min-height: 42vh;
-$ingredient-empty-state-icon-size: 4rem;
-$ingredient-empty-state-icon-font-size: 2rem;
-$ingredient-empty-state-copy-max-width: 22rem;
-$ingredient-search-result-icon-size: 2.7rem;
-$ingredient-nutrition-confidence-tag-font-size: 0.68rem;
-$ingredient-nutrition-move-prompt-min-width: 20rem;
-$ingredient-nutrition-move-prompt-max-width: 90vw;
-$ingredient-nutrition-move-prompt-title-font-size: 1.13em;
-$ingredient-product-image-frame-padding: $ingredient-card-padding-compact;
-$ingredient-product-image-frame-max-height: 14rem;
-$ingredient-product-image-frame-max-width: 18rem;
-$ingredient-scanner-camera-min-height: calc(100vh - 8rem);
-$ingredient-scanner-status-padding-y: 0.55rem;
-$ingredient-scanner-status-padding-x: 0.85rem;
-
-$ingredient-food-icon-size: $app-rebuild-food-icon-size;
-$ingredient-food-icon-font-size: $app-font-size-xl;
-$ingredient-action-icon-size: $app-rebuild-action-icon-size;
-$ingredient-fab-size: $app-rebuild-fab-size;
-
-$ingredient-scanner-target-width: $app-rebuild-scanner-target-width;
-$ingredient-scanner-target-max-width: $app-rebuild-scanner-target-max-width;
-$ingredient-scanner-target-height: $app-rebuild-scanner-target-height;
-$ingredient-scanner-target-corner-long: $app-rebuild-scanner-target-corner-long;
-$ingredient-scanner-target-corner-short: $app-rebuild-scanner-target-corner-short;
-$ingredient-scanner-target-corner-thickness: $app-rebuild-scanner-target-corner-thickness;
-$ingredient-scanner-status-offset: $app-rebuild-scanner-status-offset;
-
-$ingredient-scan-button-padding-y: $app-rebuild-scan-button-padding-y;
-$ingredient-scan-button-padding-x: $app-rebuild-scan-button-padding-x;
-$ingredient-scan-icon-width: $app-rebuild-scan-icon-width;
-$ingredient-scan-icon-height: $app-rebuild-scan-icon-height;
-$ingredient-scan-icon-active-width: $app-rebuild-scan-icon-active-width;
-$ingredient-scan-icon-active-height: $app-rebuild-scan-icon-active-height;
-$ingredient-scan-icon-radius: calc($ingredient-radius-card / 2);
-$ingredient-scan-bracket-size: $app-rebuild-scan-bracket-size;
-$ingredient-scan-bracket-inset: 0.2rem;
-$ingredient-scan-bracket-border-width: 1.5px;
-$ingredient-scan-bars-top: 0.25rem;
-$ingredient-scan-glow-height: 0.6rem;
-$ingredient-scan-laser-height: 2px;
-$ingredient-scan-laser-low-top: 1.75rem;
-$ingredient-scan-glow-start-top: -0.2rem;
-$ingredient-scan-glow-low-top: 1.3rem;
-
-// Extra-small phone breakpoint. Use for the tightest layouts where dense
-// components like nutrition labels need to stack or shrink aggressively.
-$app-breakpoint-xs: 420px;
-
-// Small phone breakpoint. Use for compact cards, ingredient rows, dialog
-// controls, and components that need single-column behavior on narrow phones.
-$app-breakpoint-sm: 520px;
-
-// Standard mobile/tablet breakpoint. Use for main app sections that switch from
-// multi-column to single-column layouts on most phones.
-$app-breakpoint-md: 680px;
-
-// Large spacing token for major vertical separation between unrelated sections.
 $app-gap-lg: 1.5rem;
-
-// Standard vertical spacing between stacked UI sections/components. Use between
-// search rows, manual-entry rows, tabs, bulk actions, cards, and sibling blocks
-// that need consistent rhythm across screens.
-$app-vertical-stack-gap: .75rem;
-
-// Standard horizontal spacing between sibling controls in the same row. Keep in
-// sync with the vertical stack gap unless a component has a documented compact
-// reason to use a smaller token.
-$app-horizontal-control-gap: $app-vertical-stack-gap;
-
-// Medium spacing token for card interiors and related section gaps.
-$app-gap-md: $app-vertical-stack-gap;
-
-// Small spacing token for dense controls, pills, compact rows, and helper text.
+$app-gap-md: 0.75rem;
 $app-gap-sm: 0.5rem;
-
-// Extra-small spacing token for tightly related icons, labels, and compact list
-// items where the standard small gap creates unnecessary visual separation.
 $app-gap-xs: 0.3rem;
-
-// Micro spacing token for tightly bound text/icon pairs inside one control.
-$app-gap-micro: calc($app-gap-xs / 5);
-
-// Tight spacing token for small icon/label pairs, badge internals, and compact
-// metadata rows that need less separation than `$app-gap-xs`.
-$app-gap-2xs: calc($app-gap-xs / 2);
-
-// Compact inline spacing token for helper/meta rows where `$app-gap-xs` is a
-// little too wide but micro spacing is too tight.
-$app-gap-inline-compact: calc($app-gap-xs / 1.5);
-
-// Badge-adjacent spacing token for count badges and source metadata chips.
-$app-gap-badge-inline: calc($app-gap-xs / 1.7);
-
-$ingredient-manual-entry-launcher-min-height: calc(
-	$ingredient-control-height + ($app-gap-xs * 2)
-);
-$ingredient-nutrition-confidence-radius: calc(
-	$ingredient-radius-control - ($app-gap-sm / 2)
-);
-$ingredient-nutrition-confidence-item-radius: calc(
-	$ingredient-radius-control - ($app-gap-md / 2)
-);
-
-$ingredient-food-image-content-size: 118%;
-$ingredient-image-editor-preview-size: 8rem;
-$ingredient-image-editor-actual-preview-size: $ingredient-food-icon-size;
-
-$ingredient-list-loading-min-height: 12rem;
-$ingredient-list-sentinel-min-height: $app-gap-micro;
-
-$ingredient-select-chevron-padding-right: calc($app-vertical-stack-gap * 3.6);
-$ingredient-select-chevron-position-left: calc($ingredient-select-chevron-padding-right / 2);
-$ingredient-select-chevron-position-right: calc(
-	$ingredient-select-chevron-padding-right / 2.57
-);
-$ingredient-select-chevron-size: $app-gap-xs;
-
-// Mix route layout tokens.
-$mix-reset-actions-max-width: 22rem;
-$mix-review-list-max-height: 16rem;
-$mix-review-badge-max-width: 8rem;
-$mix-nutrient-picker-results-max-height: 18rem;
-$mix-nutrient-picker-results-max-height-mobile: 15rem;
-$mix-nutrient-selector-header-min-width: 220px;
-$mix-nutrient-selector-header-max-width: 300px;
-$mix-nutrient-selector-checkbox-size: 0.8rem;
-$mix-ingredient-heading-padding-end: 1.85rem;
-$mix-selected-ingredient-card-min-width: 210px;
-$mix-selected-ingredient-list-max-height: 30rem;
-$mix-goal-template-min-width: 8.5rem;
-$mix-goal-template-max-width: 15rem;
-$mix-goal-card-min-width: 135px;
-$mix-contribution-card-min-width: 155px;
-$mix-contribution-bar-height: 0.35rem;
-$mix-empty-step-min-width: 115px;
-$mix-chart-value-font-size: 0.62rem;
-$mix-chart-label-letter-spacing: $app-letter-spacing-data;
-$mix-ingredient-controls-min-width: 4.25rem;
-$mix-chooser-filter-min-width: 10rem;
-
-// Standard page/card padding for primary app sections.
+$app-gap-micro: 0.06rem;
+$app-gap-2xs: 0.15rem;
+$app-gap-inline-compact: 0.2rem;
+$app-gap-badge-inline: 0.176rem;
 $app-padding: 1.5rem;
 
-// Standard radius for controls and compact surfaces.
-$app-radius: 10px;
-
-// Small radius for compact inputs and dense controls.
-$app-radius-sm: 8px;
-
-// Fully rounded radius for pills, badges, circular buttons, and token chips.
-$app-radius-pill: 15px;
-
-// True circle radius for square icon buttons.
-$app-radius-circle: 50%;
-
-// Standard form-control height for text inputs, selects, and compact buttons.
-$app-control-height: 2.1rem;
-
-// Smaller control height for dense ingredient and graph-related controls.
-$app-control-height-sm: 2rem;
-
-// Shared action button sizing.
-$app-action-button-padding-y-sm: 0.38rem;
-$app-action-button-padding-x-sm: 0.72rem;
-$app-action-button-padding-y-md: 0.52rem;
-$app-action-button-padding-x-md: 0.95rem;
-$app-action-button-height-lg: 2.55rem;
-$app-action-button-padding-y-lg: 0.68rem;
-$app-action-button-padding-x-lg: 1.15rem;
-
-// Shared icon button sizing.
-$app-circle-button-size-tiny: 1.6rem;
-
-// Shared loading indicators. Every spinner, including input and button loading
-// states, must use these tokens through the reusable loading components.
-$app-loading-spinner-size-sm: 0.9rem;
-$app-loading-spinner-size-md: 1.2rem;
-$app-loading-spinner-size-lg: 1.8rem;
-$app-loading-spinner-border-width: 0.125rem;
-$app-loading-spinner-duration: 700ms;
-$app-loading-input-inset: $app-gap-md;
-$app-loading-select-inset: calc($ingredient-control-padding-x * 2.5);
-$app-loading-input-padding-end: calc(
-	$app-loading-spinner-size-sm + ($app-loading-input-inset * 2)
-);
-$app-close-button-size-sm: 1.75rem;
-$app-close-button-size-md: 2.15rem;
-$app-close-button-icon-scale: 52%;
-
-// App color roles
+// Layout and breakpoints
 // -----------------------------------------------------------------------------
-// Default app background. Applied to pages and light nested areas that need to
-// sit behind the oat card surfaces.
-$app-bg: $color-cloud-cream;
+$app-max-width: 600px;
+$app-shell-content-max-width: 520px;
+$app-shell-header-height: 4rem;
+$app-shell-nav-height: 4.85rem;
+$app-shell-padding-x: 1rem;
+$app-shell-padding-y: 1.2rem;
 
-// Default grouped-content background. Applied to cards, panels, form sections,
-// saved drink cards, and modal surfaces.
-$app-section-bg: $color-oat-cream;
+$app-breakpoint-xs: 420px;
+$app-breakpoint-sm: 520px;
+$app-breakpoint-md: 680px;
 
-// Default subtle border. Applied to cards, inputs, pills, graph containers,
-// popovers, and section boundaries.
-$app-border: 1.5px solid $color-orchid-mist;
+// Shared app shell
+// -----------------------------------------------------------------------------
+$app-shell-surface-page: #f8f8fb;
+$app-shell-surface-panel: #fff;
+$app-shell-surface-control: #e9e9ed;
+$app-shell-surface-soft: #f8f7f5;
+$app-shell-text-primary: #1a1a2e;
+$app-shell-text-muted: #8b8fa8;
+$app-shell-accent-primary: #57a773;
+$app-shell-accent-soft: #e8f5ee;
+$app-shell-accent-info: #55a6c8;
+$app-shell-accent-danger: #d84242;
+$app-shell-border-subtle: rgba(0, 0, 0, 0.08);
 
-// Default secondary text. Applied to helper copy, dates, captions, empty-state
-// descriptions, and less important numeric values.
-$app-muted: $color-warm-stone;
+$app-shell-control-height: 2.95rem;
+$app-shell-control-height-compact: 2.15rem;
+$app-shell-control-padding-x: 0.85rem;
+$app-shell-control-padding-y-compact: 0.45rem;
+$app-shell-control-padding-x-compact: 0.75rem;
+$app-shell-control-icon-size: 1.2rem;
 
-// Default primary text/control color. Applied to headings, labels, active pills,
-// graph labels, primary icons, and selected-state foregrounds.
-$app-primary: $color-dark-taupe;
+$app-shell-radius-card: 1rem;
+$app-shell-radius-control: 1rem;
+$app-shell-radius-sheet: 1.35rem;
+$app-shell-radius-pill: 999px;
 
-// Default cool accent. Applied to neutral pills, secondary buttons, info badges,
-// remove buttons, and graph/info affordances.
-$app-accent: $color-blueberry-milk;
+$app-shell-card-padding: 1rem;
+$app-shell-card-padding-compact: 0.85rem;
+$app-shell-leading-icon-size: 3.2rem;
+$app-shell-action-icon-size: 2.2rem;
 
-// High-priority visual accent. Reserved for rare, important actions and small
-// navigation/notification details that should be noticed before surrounding UI.
-$app-highlight: $color-mango-gold;
-
-// Interactive state for high-priority highlighted controls.
-$app-highlight-hover: $color-mango-gold-dark;
-
-// Active scanning accent. Applied to the animated barcode laser only; avoid
-// using it for static error states so scanning remains visually distinct.
-$app-scan-laser: $color-guava-laser;
-
-// Readable foreground for content placed on the mango highlight.
-$app-highlight-text: $color-dark-taupe;
-
-// Privileged action badge. Applied to admin/moderator-only action markers.
-$app-privileged-badge-color: $app-highlight;
-$app-privileged-badge-size: 1.42rem;
-$app-privileged-badge-icon-size: 1rem;
-$app-privileged-action-badge-size: 1.72rem;
-$app-privileged-action-badge-icon-size: 1.18rem;
-$app-status-icon-badge-size: 1.35rem;
-$app-status-icon-badge-icon-size: 0.9rem;
-$app-profile-avatar-size: 4.5rem;
-$app-profile-avatar-icon-scale: 55%;
-$app-compact-chevron-frame-size: 1rem;
-$app-compact-chevron-icon-size: 0.65rem;
-$app-tutorial-illustration-size: 7rem;
-$app-tutorial-illustration-icon-size: 4.06rem;
-$app-tutorial-illustration-size-mobile: 5rem;
-$app-tutorial-illustration-icon-size-mobile: 2.9rem;
-
-// Custom ingredient background. Applied to manually added/user-created foods in
-// pills, result badges, ingredient cards, and saved drink ingredient chips.
-$app-custom-bg: $color-lavender-smoothie;
-
-// Custom ingredient emphasis. Applied to borders, text, and badges that identify
-// user-created ingredients across the app.
-$app-custom-strong: $color-lavender-smoothie-dark;
-
-// Shared compact text badges. Source, review-status, and future metadata labels
-// use these roles so feature components do not duplicate pill alignment/colors.
-$app-text-badge-info-text: color-mix(in srgb, $color-figma-sky 72%, $app-primary);
-$app-text-badge-info-bg: color-mix(in srgb, $color-figma-sky 18%, $color-figma-card);
-$app-text-badge-custom-text: $app-custom-strong;
-$app-text-badge-custom-bg: color-mix(in srgb, $app-custom-bg 55%, $color-figma-card);
-$app-text-badge-success-text: $color-figma-green;
-$app-text-badge-success-bg: $color-figma-green-soft;
-$app-text-badge-neutral-text: $app-muted;
-$app-text-badge-neutral-bg: $color-figma-control-surface;
-
-// Danger/over-goal background. Applied to exceeded-goal warnings, danger icons,
-// and states where nutritional totals are meaningfully over target.
-$app-danger-bg: $color-strawberry-cream;
-
-// Destructive action fill. Reserved for irreversible moderation or deletion
-// controls that require stronger contrast than a soft danger panel.
-$app-danger-action: $color-cinnamon-clay;
-
-// Success/on-target background. Applied to successful add/save feedback and
-// close-to-goal badges.
-$app-success-bg: $color-pistachio-cream;
-
-// Ingredient status tokens. Applied to manual-entry validation and ingredient
-// flow feedback so components do not consume raw palette or app-wide status
-// primitives directly.
-$ingredient-status-error-bg: color-mix(in srgb, $app-danger-bg 60%, white);
-$ingredient-status-error-text: $app-danger-action;
-$ingredient-status-error-icon: $app-scan-laser;
-$ingredient-status-warning-bg: color-mix(in srgb, $app-highlight 35%, white);
-$ingredient-status-warning-text: $color-cinnamon-clay;
-$ingredient-status-warning-icon: $app-highlight-hover;
-$ingredient-status-success-bg: $app-success-bg;
-$ingredient-status-success-text: $app-primary;
-
-// Warning/estimate background. Applied to caution panels, estimate badges,
-// popover triggers, and non-critical warning surfaces.
-$app-warning-bg: $color-peach-cream;
-
-// Warning panel border. Applied to warning cards and over-goal panels that need
-// a stronger edge than the default app border.
-$app-warning-border: 1.5px solid $color-dusty-rose;
-
-// Warning border color. Use when only the border color changes on an existing
-// border declaration.
-$app-warning-border-color: $color-dusty-rose;
-
-// Warning panel text. Applied to warning section headings and copy; currently
-// tied to primary text for readability against soft warning backgrounds.
-$app-warning-text: $app-primary;
-
-// Strong warning emphasis. Applied to overage numbers, missing-data labels,
-// and highlighted warning words.
-$app-warning-strong: $color-cinnamon-clay;
-
-// Card radius for larger surfaces like saved drinks, mix panels, graph panels,
-// and ingredient cards.
+// General controls
+// -----------------------------------------------------------------------------
+$app-radius: 10px;
+$app-radius-sm: 8px;
+$app-radius-pill: 15px;
+$app-radius-circle: 50%;
 $app-card-radius: 12px;
 
-// Modal overlay background. Applied behind dialogs/popups to dim app content.
-$app-overlay-bg: rgba(26, 58, 90, 0.28);
+$app-control-height: 2.1rem;
+$app-control-height-sm: 2rem;
+$app-control-icon-size: 1.2rem;
 
-// Guest-card corner radius. Shared by the public landing and authentication
-// cards so the two steps read as one continuous entry flow.
+// App-wide color roles
+// -----------------------------------------------------------------------------
+$app-bg: #fcf9f4;
+$app-section-bg: #f5eee5;
+$app-border-color: #d8c9d9;
+$app-border: 1.5px solid #d8c9d9;
+$app-muted: #726963;
+$app-primary: #4f4842;
+$app-accent: #b7c8e3;
+$app-highlight: #f4b942;
+$app-highlight-hover: #d99a24;
+$app-highlight-text: #4f4842;
+
+$app-danger-bg: #e7b0b8;
+$app-danger-action: #9c5f46;
+$app-success-bg: #c5d8be;
+$app-warning-bg: #efc6a9;
+$app-warning-border: 1.5px solid #d89ca5;
+$app-warning-border-color: #d89ca5;
+$app-warning-text: #4f4842;
+$app-warning-strong: #9c5f46;
+
+$app-custom-bg: #cbb8e8;
+$app-custom-strong: #7b5fa3;
 $app-guest-card-radius: 1.35rem;
-
-// Translucent guest-card surface. Used only over decorative landing artwork so
-// the card remains readable while retaining a small amount of visual depth.
 $app-guest-surface: rgb(245 238 229 / 94%);
 
-// Focus outline. Applied to keyboard-focused buttons and interactive chips.
-$app-focus-outline: 2px solid $app-primary;
+// Validation and status messages
+// -----------------------------------------------------------------------------
+$app-status-padding-y: 0.8rem;
+$app-status-padding-x: 0.95rem;
+$app-status-error-bg: color-mix(in srgb, #e7b0b8 60%, white);
+$app-status-error-text: #9c5f46;
+$app-status-error-icon: #e45f55;
+$app-status-warning-bg: color-mix(in srgb, #f4b942 35%, white);
+$app-status-warning-icon: #d99a24;
 
-// Focus outline offset. Keeps keyboard focus visible without shifting layout.
+// Focus
+// -----------------------------------------------------------------------------
+$app-focus-outline: 2px solid #4f4842;
 $app-focus-outline-offset: 2px;
 
-// Nutrition label heavy outer border. Keep intentionally high-contrast.
-$app-border-strong: 3.5px solid $color-ink-black;
+// Shared badges and media
+// -----------------------------------------------------------------------------
+$app-text-badge-padding-y: 0.16rem;
+$app-text-badge-padding-x: 0.48rem;
+$app-privileged-badge-size: 1.42rem;
+$app-status-icon-badge-size: 1.35rem;
+$app-status-icon-badge-icon-size: 0.9rem;
 
-// Nutrition label divider border. Use for medium visual breaks inside labels.
-$app-border-divider: 2px solid $color-ink-black;
-
-// Nutrition label thick divider. Use for major nutrient-label rules.
-$app-border-thick: 4px solid $color-ink-black;
-
-// Nutrition label headline divider. Use for the heaviest printed-label rule.
-$app-border-highlight: 8px solid $color-ink-black;
-
-// Nutrition label paper background. Keep stark white to mimic printed labels.
-$nutrition-label-bg: #fff;
-
-// Nutrition label main ink. Use for label text, dividers, and printed rules.
-$nutrition-label-text: $color-ink-black;
-
-// Nutrition label muted ink. Use for secondary label copy and units.
-$nutrition-label-muted: #222;
-
-// Nutrition label disabled control fill. Use only inside the label-style panel.
-$nutrition-label-disabled: #aaa;
-
-// Nutrition label hover fill. Use only inside the label-style panel.
-$nutrition-label-hover: #444;
-
-// Nutrition label button radius. Keep small to preserve printed-label styling.
-$nutrition-label-button-radius: 3px;
-
-// Nutrition label outer padding. Keep tokenized because the printed-label UI is
-// dense, but still needs consistent component-owned spacing values.
-$nutrition-label-padding-y: $app-vertical-stack-gap;
-$nutrition-label-padding-x: calc($app-vertical-stack-gap * 1.45);
-$nutrition-label-padding-bottom: calc($app-vertical-stack-gap * 1.45);
-$nutrition-label-padding-y-mobile: calc($app-vertical-stack-gap * 0.87);
-$nutrition-label-padding-x-mobile: calc($app-vertical-stack-gap * 1.13);
-$nutrition-label-padding-bottom-mobile: calc($app-vertical-stack-gap * 1.27);
-
-// Nutrition label internal spacing. These are intentionally tighter than the
-// app section rhythm because printed nutrition labels have dense information.
-$nutrition-label-gap-micro: $app-gap-micro;
-$nutrition-label-gap-tight: $app-gap-xs;
-$nutrition-label-gap-compact: $app-gap-sm;
-$nutrition-label-gap-section: $app-vertical-stack-gap;
-$nutrition-label-column-gap: calc($app-vertical-stack-gap * 1.45);
-$nutrition-label-list-row-padding-y: calc($app-gap-xs / 2.3);
-$nutrition-label-list-row-padding-x: calc($app-gap-xs / 3);
-$nutrition-label-list-status-size: calc($app-control-height-sm * 0.65);
-$nutrition-label-list-status-icon-size: calc($app-control-height-sm * 0.53);
-$nutrition-label-scroll-max-height-mobile: 9.5rem;
-$nutrition-label-title-font-size: 2.1rem;
-$nutrition-label-title-font-size-mobile: clamp(1.75rem, 10vw, 2.1rem);
-$nutrition-label-title-line-height: 1.1;
-$nutrition-label-basis-line-height: 1.15;
-$nutrition-label-warning-line-height: 1.35;
-$nutrition-label-food-font-size: $app-font-size-md;
-$nutrition-label-row-font-size: $app-font-size-md;
-$nutrition-label-row-font-size-mobile: $app-font-size-md;
-$nutrition-label-highlight-font-size: $app-font-size-lg;
-$nutrition-label-highlight-font-size-mobile: $app-font-size-md;
-$nutrition-label-unit-font-size: 0.82em;
-$nutrition-label-main-column-width: 13.75rem;
-$nutrition-label-main-column-min-width: 11.25rem;
-$nutrition-label-columns-min-height: 7.5rem;
-$nutrition-label-feedback-font-size: $app-font-size-sm;
-$nutrition-label-feedback-icon-font-size: $app-font-size-xs;
-$nutrition-label-feedback-pop-offset: $app-gap-xs;
-
-// Primary button background. Applied to main actions such as Save, Load, Add,
-// confirmation, and other commitment buttons.
-$app-btn-bg: $color-acai-mauve;
-
-// Primary button hover background. Applied to hover/active states for primary
-// action buttons.
-$app-btn-bg-hover: $color-acai-mauve-dark;
-
-// Disabled button background. Applied to inactive controls that should remain
-// visible but clearly unavailable.
-$app-btn-disabled: $color-orchid-mist;
-
-// Button foreground text. Applied to primary buttons and selected states that
-// sit on dark or saturated backgrounds.
-$app-btn-text: $color-cloud-cream;
+// Shared legacy action roles
+// -----------------------------------------------------------------------------
+$app-btn-bg: #c894a7;
+$app-btn-bg-hover: #ae7288;
+$app-btn-text: #fcf9f4;

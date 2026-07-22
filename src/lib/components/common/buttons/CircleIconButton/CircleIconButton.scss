@@ -1,0 +1,125 @@
+@use "../../../../../styles/variables" as *;
+
+.circle-icon-button {
+	display: inline-grid;
+	place-items: center;
+	flex: 0 0 auto;
+	padding: 0;
+	border: 1px solid transparent;
+	border-radius: $app-shell-radius-pill;
+	font-family: $app-button-font-family;
+	font-size: $app-font-size-md;
+	font-weight: $app-button-font-weight;
+	line-height: 1;
+	touch-action: manipulation;
+	transition:
+		background-color 160ms ease,
+		color 160ms ease,
+		transform 120ms ease,
+		opacity 160ms ease;
+
+	&:active:not(:disabled) {
+		transform: scale(0.97);
+	}
+
+	&:focus-visible {
+		outline: $app-focus-outline;
+		outline-offset: $app-focus-outline-offset;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.72;
+	}
+}
+
+.circle-icon-button[data-size="tiny"] {
+	width: 1.6rem;
+	height: 1.6rem;
+}
+
+.circle-icon-button[data-size="small"] {
+	width: $app-shell-action-icon-size;
+	height: $app-shell-action-icon-size;
+}
+
+.circle-icon-button[data-size="control"] {
+	width: $app-shell-control-height;
+	height: $app-shell-control-height;
+}
+
+.circle-icon-button[data-size="fab"] {
+	width: 3.6rem;
+	height: 3.6rem;
+	border-radius: $app-shell-radius-card;
+}
+
+.circle-icon-button[data-variant="primary"] {
+	color: $app-shell-surface-panel;
+	background: $app-shell-accent-primary;
+
+	&:hover:not(:disabled) {
+		background: color-mix(
+			in srgb,
+			$app-shell-accent-primary 88%,
+			$app-shell-text-primary
+		);
+	}
+}
+
+.circle-icon-button[data-variant="soft"] {
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-control;
+
+	&:hover:not(:disabled) {
+		color: $app-shell-accent-primary;
+		background: $app-shell-accent-soft;
+	}
+}
+
+.circle-icon-button[data-variant="ghost"] {
+	color: $app-shell-text-muted;
+	background: transparent;
+
+	&:hover:not(:disabled),
+	&:focus-visible {
+		color: $app-shell-text-primary;
+		background: color-mix(in srgb, $app-shell-surface-panel 68%, transparent);
+	}
+}
+
+.circle-icon-button[data-variant="inverse"] {
+	color: $app-shell-surface-panel;
+	background: color-mix(in srgb, $app-shell-surface-panel 10%, transparent);
+
+	&:hover:not(:disabled),
+	&:focus-visible {
+		background: color-mix(in srgb, $app-shell-surface-panel 18%, transparent);
+	}
+}
+
+.circle-icon-button[data-variant="outline"] {
+	color: $app-shell-text-muted;
+	background: transparent;
+	border-color: color-mix(in srgb, $app-shell-text-muted 42%, transparent);
+
+	&:hover:not(:disabled),
+	&:focus-visible {
+		color: $app-shell-accent-primary;
+		border-color: $app-shell-accent-primary;
+		background: $app-shell-accent-soft;
+	}
+}
+
+.circle-icon-button[data-variant="danger"] {
+	color: $app-shell-surface-panel;
+	background: $app-shell-accent-danger;
+
+	&:hover:not(:disabled) {
+		background: color-mix(
+			in srgb,
+			$app-shell-accent-danger 88%,
+			$app-shell-text-primary
+		);
+	}
+}

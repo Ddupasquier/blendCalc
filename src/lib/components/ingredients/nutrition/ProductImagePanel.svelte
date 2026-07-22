@@ -1,5 +1,5 @@
 <script lang="ts">
-	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import AssetAttribution from "$lib/components/common/display/AssetAttribution.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor.svelte";
 	import ProductImageFrame from "$lib/components/common/images/ProductImageFrame.svelte";
@@ -154,14 +154,14 @@
 
 	.product-image-panel {
 		display: grid;
-		gap: $app-vertical-stack-gap;
+		gap: $app-gap-md;
 		width: 100%;
 		margin: 0;
 	}
 
 	.product-image-panel__placement {
 		display: grid;
-		gap: $app-vertical-stack-gap;
+		gap: $app-gap-md;
 	}
 
 	.product-image-panel__message,
@@ -172,10 +172,10 @@
 	}
 
 	.product-image-panel__message {
-		color: $ingredient-accent-primary;
+		color: $app-shell-accent-primary;
 	}
 
 	.product-image-panel__error {
-		color: $ingredient-status-error-text;
+		color: $app-status-error-text;
 	}
 </style>

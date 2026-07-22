@@ -155,7 +155,7 @@
 		place-items: stretch center;
 		padding: 0;
 		overflow: hidden;
-		background: $ingredient-scanner-overlay-bg;
+		background: rgba(0, 0, 0, 0.72);
 		overscroll-behavior: contain;
 	}
 
@@ -163,12 +163,12 @@
 		display: grid;
 		grid-template-rows: auto minmax(0, 1fr) auto;
 		gap: $app-gap-md;
-		width: min(100%, $ingredient-shell-max-width);
+		width: min(100%, $app-shell-content-max-width);
 		min-height: 100vh;
 		min-height: 100dvh;
-		padding: calc($ingredient-shell-padding-y + env(safe-area-inset-top))
-			$ingredient-shell-padding-x calc($ingredient-shell-padding-y + env(safe-area-inset-bottom));
-		background: $ingredient-scanner-bg;
+		padding: calc($app-shell-padding-y + env(safe-area-inset-top))
+			$app-shell-padding-x calc($app-shell-padding-y + env(safe-area-inset-bottom));
+		background: #080909;
 		border: 0;
 		border-radius: 0;
 
@@ -180,14 +180,14 @@
 		}
 
 		h2 {
-			color: $ingredient-surface-card;
+			color: $app-shell-surface-panel;
 			font-family: $app-font-family-display;
 			font-size: $app-font-size-xl;
 			font-weight: $app-font-weight-heavy;
 		}
 
 		p {
-			color: color-mix(in srgb, $ingredient-surface-card 52%, transparent);
+			color: color-mix(in srgb, $app-shell-surface-panel 52%, transparent);
 			font-size: $app-font-size-md;
 			line-height: 1.4;
 		}
@@ -197,14 +197,14 @@
 		position: relative;
 		min-height: 100%;
 		overflow: hidden;
-		background: $ingredient-scanner-bg;
+		background: #080909;
 		border-radius: 0;
 
 		video {
 			display: block;
 			width: 100%;
 			height: 100%;
-			min-height: $ingredient-scanner-camera-min-height;
+			min-height: calc(100vh - 8rem);
 			object-fit: cover;
 		}
 	}
@@ -212,46 +212,46 @@
 	.barcode-scanner__target {
 		position: absolute;
 		inset: 50% auto auto 50%;
-		width: min($ingredient-scanner-target-width, $ingredient-scanner-target-max-width);
-		height: $ingredient-scanner-target-height;
-		border-radius: $ingredient-radius-card;
+		width: min(66%, 16rem);
+		height: 8.7rem;
+		border-radius: $app-shell-radius-card;
 		background:
-			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) top left /
-				$ingredient-scanner-target-corner-long $ingredient-scanner-target-corner-thickness no-repeat,
-			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) top left /
-				$ingredient-scanner-target-corner-thickness $ingredient-scanner-target-corner-short no-repeat,
-			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) top right /
-				$ingredient-scanner-target-corner-long $ingredient-scanner-target-corner-thickness no-repeat,
-			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) top right /
-				$ingredient-scanner-target-corner-thickness $ingredient-scanner-target-corner-short no-repeat,
-			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) bottom left /
-				$ingredient-scanner-target-corner-long $ingredient-scanner-target-corner-thickness no-repeat,
-			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) bottom left /
-				$ingredient-scanner-target-corner-thickness $ingredient-scanner-target-corner-short no-repeat,
-			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) bottom right /
-				$ingredient-scanner-target-corner-long $ingredient-scanner-target-corner-thickness no-repeat,
-			linear-gradient($ingredient-accent-primary, $ingredient-accent-primary) bottom right /
-				$ingredient-scanner-target-corner-thickness $ingredient-scanner-target-corner-short no-repeat,
-			color-mix(in srgb, $ingredient-accent-primary 6%, transparent);
+			linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) top left /
+				3rem 0.18rem no-repeat,
+			linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) top left /
+				0.18rem 2.3rem no-repeat,
+			linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) top right /
+				3rem 0.18rem no-repeat,
+			linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) top right /
+				0.18rem 2.3rem no-repeat,
+			linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) bottom left /
+				3rem 0.18rem no-repeat,
+			linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) bottom left /
+				0.18rem 2.3rem no-repeat,
+			linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) bottom right /
+				3rem 0.18rem no-repeat,
+			linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) bottom right /
+				0.18rem 2.3rem no-repeat,
+			color-mix(in srgb, $app-shell-accent-primary 6%, transparent);
 		transform: translate(-50%, -50%);
 	}
 
 	.barcode-scanner__status,
 	.barcode-scanner__hint {
 		position: absolute;
-		inset: calc(50% + $ingredient-scanner-status-offset) 50% auto auto;
+		inset: calc(50% + 5.6rem) 50% auto auto;
 		width: max-content;
 		max-width: 80%;
-		color: color-mix(in srgb, $ingredient-surface-card 58%, transparent) !important;
+		color: color-mix(in srgb, $app-shell-surface-panel 58%, transparent) !important;
 		text-align: center;
 		transform: translateX(50%);
 	}
 
 	.barcode-scanner__status {
-		padding: $ingredient-scanner-status-padding-y $ingredient-scanner-status-padding-x;
-		color: $ingredient-accent-primary !important;
-		background: rgba($ingredient-surface-card, 0.08);
-		border-radius: $ingredient-radius-pill;
+		padding: 0.55rem 0.85rem;
+		color: $app-shell-accent-primary !important;
+		background: rgba($app-shell-surface-panel, 0.08);
+		border-radius: $app-shell-radius-pill;
 		font-weight: $app-font-weight-bold;
 	}
 
@@ -265,8 +265,8 @@
 
 	@media (max-width: $app-breakpoint-sm) {
 		.barcode-scanner {
-			padding: calc($ingredient-shell-padding-x + env(safe-area-inset-top))
-				$ingredient-shell-padding-x calc($ingredient-shell-padding-x + env(safe-area-inset-bottom));
+			padding: calc($app-shell-padding-x + env(safe-area-inset-top))
+				$app-shell-padding-x calc($app-shell-padding-x + env(safe-area-inset-bottom));
 		}
 	}
 </style>

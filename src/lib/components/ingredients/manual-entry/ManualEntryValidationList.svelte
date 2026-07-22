@@ -35,24 +35,24 @@
 		display: flex;
 		align-items: center;
 		gap: $app-gap-sm;
-		padding: $ingredient-status-padding-y $ingredient-status-padding-x;
-		color: $ingredient-text-primary;
+		padding: $app-status-padding-y $app-status-padding-x;
+		color: $app-shell-text-primary;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-medium;
-		background: $ingredient-status-error-bg;
-		border-radius: $ingredient-radius-pill;
+		background: $app-status-error-bg;
+		border-radius: $app-shell-radius-pill;
 	}
 
 	.manual-entry-validation__item--warning {
-		background: $ingredient-status-warning-bg;
+		background: $app-status-warning-bg;
 	}
 
 	.manual-entry-validation__icon {
-		color: $ingredient-status-error-icon;
+		color: $app-status-error-icon;
 		flex: 0 0 auto;
 	}
 
 	.manual-entry-validation__item--warning .manual-entry-validation__icon {
-		color: $ingredient-status-warning-icon;
+		color: $app-status-warning-icon;
 	}
 </style>

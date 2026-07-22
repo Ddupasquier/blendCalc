@@ -31,7 +31,7 @@
 		flex: 0 0 auto;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: $app-horizontal-control-gap;
+		gap: $app-gap-md;
 		min-height: 0;
 	}
 

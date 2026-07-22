@@ -175,7 +175,7 @@
 	}
 
 	.saved-ingredient-list--with-actions .saved-ingredient-list__body {
-		padding-top: $app-vertical-stack-gap;
+		padding-top: $app-gap-md;
 	}
 
 	.saved-ingredient-list__cards {
@@ -183,10 +183,10 @@
 		flex: 1 1 auto;
 		align-content: start;
 		box-sizing: border-box;
-		gap: $app-vertical-stack-gap;
+		gap: $app-gap-md;
 		min-height: 0;
 		margin: 0;
-		padding: 0 0 $app-vertical-stack-gap;
+		padding: 0 0 $app-gap-md;
 		overflow-y: auto;
 		overflow-anchor: none;
 		overscroll-behavior: contain;
@@ -203,11 +203,11 @@
 		display: grid;
 		place-items: center;
 		flex: 1 1 auto;
-		min-height: $ingredient-list-loading-min-height;
+		min-height: 12rem;
 		padding: $app-gap-lg;
-		color: $ingredient-text-muted;
-		background: $ingredient-surface-card;
-		border-radius: $ingredient-radius-card;
+		color: $app-shell-text-muted;
+		background: $app-shell-surface-panel;
+		border-radius: $app-shell-radius-card;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-bold;
 		text-align: center;

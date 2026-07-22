@@ -72,7 +72,11 @@ describe("ingredient icon architecture", () => {
 			"utf8",
 		);
 		const privilegedBadge = readFileSync(
-			"src/lib/components/common/badges/PrivilegedActionBadge.svelte",
+			"src/lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte",
+			"utf8",
+		);
+		const privilegedBadgeStyles = readFileSync(
+			"src/lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.scss",
 			"utf8",
 		);
 
@@ -85,6 +89,6 @@ describe("ingredient icon architecture", () => {
 		expect(statusBadge).not.toContain("centered-icon-optical-offset");
 		expect(privilegedBadge).toContain("<CenteredIcon>");
 		expect(privilegedBadge).not.toContain("<CircularIconFrame");
-		expect(privilegedBadge).toContain("$app-privileged-badge-color");
+		expect(privilegedBadgeStyles).toContain("color: #f4b942");
 	});
 });

@@ -84,8 +84,8 @@
 		grid-column: 1 / -1;
 		min-width: 0;
 		padding: $app-gap-xs $app-gap-sm;
-		color: $ingredient-status-error-text;
-		background: $ingredient-status-error-bg;
+		color: $app-status-error-text;
+		background: $app-status-error-bg;
 		border-radius: $app-radius;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;

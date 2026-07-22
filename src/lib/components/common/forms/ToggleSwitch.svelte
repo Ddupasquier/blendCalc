@@ -65,9 +65,9 @@
 		display: block;
 		width: 100%;
 		height: 100%;
-		background: $color-figma-control-surface;
-		border: 1px solid $color-figma-border;
-		border-radius: $app-rebuild-radius-pill;
+		background: $app-shell-surface-control;
+		border: 1px solid $app-shell-border-subtle;
+		border-radius: $app-shell-radius-pill;
 		transition:
 			background-color 180ms ease,
 			border-color 180ms ease;
@@ -79,8 +79,8 @@
 		left: 0.2rem;
 		width: 1.55rem;
 		height: 1.55rem;
-		background: $color-figma-card;
-		border: 1px solid $color-figma-border;
+		background: $app-shell-surface-panel;
+		border: 1px solid $app-shell-border-subtle;
 		border-radius: 50%;
 		transform: translateY(-50%);
 		transition:
@@ -89,12 +89,12 @@
 	}
 
 	.toggle-switch__input:checked + .toggle-switch__track {
-		background: $color-figma-green;
-		border-color: $color-figma-green;
+		background: $app-shell-accent-primary;
+		border-color: $app-shell-accent-primary;
 	}
 
 	.toggle-switch__input:checked + .toggle-switch__track .toggle-switch__thumb {
-		border-color: $color-figma-green;
+		border-color: $app-shell-accent-primary;
 		transform: translate(1.25rem, -50%);
 	}
 

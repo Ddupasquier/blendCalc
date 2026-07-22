@@ -104,9 +104,9 @@
 
 	.goal-template-controls {
 		display: grid;
-		grid-template-columns: minmax($mix-goal-template-min-width, 1fr) auto;
+		grid-template-columns: minmax(8.5rem, 1fr) auto;
 		gap: $app-gap-xs;
-		min-width: min(100%, $mix-goal-template-max-width);
+		min-width: min(100%, 15rem);
 
 		label {
 			grid-column: 1 / -1;
@@ -143,14 +143,14 @@
 
 			&:disabled {
 				cursor: not-allowed;
-				background: $app-btn-disabled;
+				background: #d8c9d9;
 			}
 		}
 	}
 
 	.goal-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax($mix-goal-card-min-width, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
 		gap: $app-gap-sm;
 	}
 

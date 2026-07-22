@@ -57,15 +57,15 @@
 		z-index: 90;
 		width: 100%;
 		min-height: $app-shell-nav-height;
-		background: $color-figma-card;
-		border-top: 1px solid $color-figma-border;
+		background: $app-shell-surface-panel;
+		border-top: 1px solid $app-shell-border-subtle;
 	}
 
 	.tab-nav__inner {
 		display: grid;
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 		align-items: center;
-		width: min(100%, $app-mobile-shell-width);
+		width: min(100%, $app-shell-content-max-width);
 		min-height: $app-shell-nav-height;
 		margin: 0 auto;
 		padding: $app-gap-sm max($app-shell-padding-x, env(safe-area-inset-right))
@@ -79,7 +79,7 @@
 		place-items: center;
 		gap: $app-gap-xs;
 		min-width: 0;
-		color: $color-figma-muted;
+		color: $app-shell-text-muted;
 		font-family: $app-button-font-family;
 		font-size: $app-font-size-sm;
 		font-weight: $app-button-font-weight;
@@ -103,7 +103,7 @@
 		}
 
 		&.active {
-			color: $color-figma-green;
+			color: $app-shell-accent-primary;
 			transform: translateY(-0.08rem);
 		}
 

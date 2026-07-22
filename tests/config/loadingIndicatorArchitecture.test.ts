@@ -9,21 +9,24 @@ describe("loading indicator architecture", () => {
 			"src/lib/components/ingredients/search/IngredientSearch.svelte",
 		);
 		const spinner = read(
-			"src/lib/components/common/feedback/LoadingSpinner.svelte",
+			"src/lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte",
+		);
+		const spinnerStyles = read(
+			"src/lib/components/common/feedback/LoadingSpinner/LoadingSpinner.scss",
 		);
 
 		expect(search).toContain("LoadingSpinner");
 		expect(search).not.toMatch(/class=["'][^"']*spinner/);
 		expect(search).not.toMatch(/@keyframes[^\n]*spin/i);
-		expect(spinner).toContain("@keyframes shared-loading-spin");
+		expect(spinnerStyles).toContain("@keyframes shared-loading-spin");
 	});
 
 	it("routes busy button states through the shared spinner", () => {
 		for (const path of [
-			"src/lib/components/common/buttons/ActionButton.svelte",
-			"src/lib/components/common/buttons/RoundedActionButton.svelte",
+			"src/lib/components/common/buttons/ActionButton/ActionButton.svelte",
+			"src/lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte",
 			"src/lib/components/common/buttons/PillButton.svelte",
-			"src/lib/components/common/buttons/CircleIconButton.svelte",
+			"src/lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte",
 			"src/lib/components/common/buttons/IconControlButton.svelte",
 		]) {
 			expect(read(path), path).toContain("LoadingSpinner");
@@ -35,7 +38,7 @@ describe("loading indicator architecture", () => {
 			"src/lib/components/ingredients/manual-entry/steps/IdentityStep.svelte",
 		);
 		const categoryPicker = read(
-			"src/lib/components/ingredients/manual-entry/FoodCategoryPicker.svelte",
+			"src/lib/components/ingredients/manual-entry/FoodCategoryPicker/FoodCategoryPicker.svelte",
 		);
 
 		expect(identityStep).toContain("InputLoadingFrame");

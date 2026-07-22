@@ -57,12 +57,12 @@
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr);
 		align-items: center;
-		gap: $app-vertical-stack-gap;
-		padding: $app-vertical-stack-gap 0;
-		border-bottom: $app-border-divider;
+		gap: $app-gap-md;
+		padding: $app-gap-md 0;
+		border-bottom: 2px solid #111;
 
 		span {
-			color: $ingredient-text-muted;
+			color: $app-shell-text-muted;
 			font-size: $app-font-size-sm;
 			font-weight: $app-font-weight-bold;
 			letter-spacing: $app-letter-spacing-label;
@@ -72,14 +72,14 @@
 		select {
 			width: 100%;
 			min-width: 0;
-			min-height: $ingredient-control-height;
-			padding: 0 $ingredient-control-padding-x;
-			color: $ingredient-text-primary;
+			min-height: $app-shell-control-height;
+			padding: 0 $app-shell-control-padding-x;
+			color: $app-shell-text-primary;
 			font: inherit;
 			font-weight: $app-font-weight-semibold;
-			background: $ingredient-surface-control;
-			border: 1px solid $ingredient-border-subtle;
-			border-radius: $ingredient-radius-control;
+			background: $app-shell-surface-control;
+			border: 1px solid $app-shell-border-subtle;
+			border-radius: $app-shell-radius-control;
 		}
 	}
 </style>

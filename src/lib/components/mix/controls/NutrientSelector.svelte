@@ -40,8 +40,8 @@
 	.panel-header {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) minmax(
-			$mix-nutrient-selector-header-min-width,
-			$mix-nutrient-selector-header-max-width
+			220px,
+			300px
 		);
 		gap: $app-gap-sm;
 		align-items: end;
@@ -76,8 +76,8 @@
 		}
 
 		:global(input) {
-			width: $mix-nutrient-selector-checkbox-size;
-			height: $mix-nutrient-selector-checkbox-size;
+			width: 0.8rem;
+			height: 0.8rem;
 		}
 	}
 

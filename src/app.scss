@@ -1,20 +1,5 @@
 @use "./styles/variables" as *;
 
-:root {
-	--mix-chart-success-fill: #{$mix-chart-success-fill};
-	--mix-chart-success-stroke: #{$mix-chart-success-stroke};
-	--mix-chart-caution-fill: #{$mix-chart-caution-fill};
-	--mix-chart-caution-stroke: #{$mix-chart-caution-stroke};
-	--mix-chart-warning-fill: #{$mix-chart-warning-fill};
-	--mix-chart-warning-stroke: #{$mix-chart-warning-stroke};
-	--mix-chart-danger-fill: #{$mix-chart-danger-fill};
-	--mix-chart-danger-stroke: #{$mix-chart-danger-stroke};
-	--mix-chart-grid: #{$mix-chart-grid};
-	--mix-chart-goal: #{$mix-chart-goal};
-	--mix-chart-goal-fill: #{$mix-chart-goal-fill};
-	--mix-chart-goal-stroke: #{$mix-chart-goal-stroke};
-}
-
 /* ============================================================
    Global styles — mobile-first, single-column layout
    ============================================================ */
@@ -41,8 +26,8 @@ body {
 	min-height: 100vh;
 	min-height: 100dvh;
 	font-family: $app-font-family-interface;
-	background: $color-figma-canvas;
-	color: $color-figma-ink;
+	background: $app-shell-surface-page;
+	color: $app-shell-text-primary;
 	font-size: $app-font-size-base;
 	line-height: 1.45;
 	-webkit-font-smoothing: antialiased;
@@ -70,7 +55,7 @@ p {
 	margin: 0 auto;
 	padding: 0;
 	padding-bottom: 2rem;
-	background: $color-figma-canvas;
+	background: $app-shell-surface-page;
 }
 
 .app-main--authed {

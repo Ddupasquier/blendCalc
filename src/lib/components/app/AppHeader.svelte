@@ -1,6 +1,6 @@
 <script lang="ts">
 	import SmoothieCup from "$lib/assets/icons/SmoothieCup.svelte";
-	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
 	import type { AppHeaderProps } from "$lib/components/app/types";
 	import { APP_NAME } from "$lib/config/brand";
@@ -66,9 +66,9 @@
 		z-index: 100;
 		width: 100%;
 		min-height: $app-shell-header-height;
-		color: $color-figma-ink;
-		background: $color-figma-card;
-		border-bottom: 1px solid $color-figma-border;
+		color: $app-shell-text-primary;
+		background: $app-shell-surface-panel;
+		border-bottom: 1px solid $app-shell-border-subtle;
 	}
 
 	.app-header__inner {
@@ -76,7 +76,7 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: $app-gap-md;
-		width: min(100%, $app-mobile-shell-width);
+		width: min(100%, $app-shell-content-max-width);
 		min-height: $app-shell-header-height;
 		min-width: 0;
 		margin: 0 auto;
@@ -116,16 +116,16 @@
 		display: inline-grid;
 		place-items: center;
 		flex: 0 0 auto;
-		width: $app-rebuild-food-icon-size;
-		height: $app-rebuild-food-icon-size;
+		width: $app-shell-leading-icon-size;
+		height: $app-shell-leading-icon-size;
 		border-radius: $app-radius-circle;
 		text-decoration: none;
 	}
 
 	:global(.app-header__avatar) {
-		--circular-media-frame-size: #{$app-rebuild-food-icon-size};
-		--circular-media-frame-color: #{$color-figma-green};
-		--circular-media-frame-background: #{$color-figma-green-soft};
+		--circular-media-frame-size: #{$app-shell-leading-icon-size};
+		--circular-media-frame-color: #{$app-shell-accent-primary};
+		--circular-media-frame-background: #{$app-shell-accent-soft};
 	}
 
 	:global(.app-header__avatar img) {

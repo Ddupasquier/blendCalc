@@ -3,7 +3,7 @@
 	import Popover from "$lib/components/common/display/Popover.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge.svelte";
-	import CloseButton from "$lib/components/common/buttons/CloseButton.svelte";
+	import CloseButton from "$lib/components/common/buttons/CloseButton/CloseButton.svelte";
 	import type { IngredientCardProps } from "$lib/components/mix/types";
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import { getFoodPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
@@ -176,7 +176,7 @@
 		gap: $app-gap-sm;
 		align-items: flex-start;
 		min-width: 0;
-		padding-right: $mix-ingredient-heading-padding-end;
+		padding-right: 1.85rem;
 
 		div {
 			min-width: 0;
@@ -226,7 +226,7 @@
 
 	.ingredient-card__controls {
 		display: grid;
-		grid-template-columns: minmax($mix-ingredient-controls-min-width, 0.75fr) minmax(0, 1fr);
+		grid-template-columns: minmax(4.25rem, 0.75fr) minmax(0, 1fr);
 		gap: $app-gap-xs;
 		align-items: end;
 		min-width: 0;
@@ -279,8 +279,8 @@
 	}
 
 	:global(.ingredient-card__chevron) {
-		--circular-icon-frame-size: #{$app-compact-chevron-frame-size};
-		--circular-icon-frame-icon-size: #{$app-compact-chevron-icon-size};
+		--circular-icon-frame-size: #{1rem};
+		--circular-icon-frame-icon-size: #{0.65rem};
 		--circular-icon-frame-color: #{$app-primary};
 		--circular-icon-frame-background: #{$app-accent};
 

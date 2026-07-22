@@ -30,7 +30,7 @@
 		gap: $app-gap-xs;
 
 		small {
-			color: $ingredient-text-muted;
+			color: $app-shell-text-muted;
 			font-size: $app-font-size-xs;
 			font-weight: $app-font-weight-medium;
 		}

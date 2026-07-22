@@ -32,7 +32,7 @@
 
 		h1 {
 			margin: 0 0 $app-gap-xs;
-			color: $ingredient-text-primary;
+			color: $app-shell-text-primary;
 			font-family: $app-font-family-display;
 			font-size: clamp(1.75rem, 7vw, 2.1rem);
 			font-weight: $app-font-weight-heavy;
@@ -43,7 +43,7 @@
 		p {
 			max-width: 24rem;
 			margin: 0;
-			color: $ingredient-text-muted;
+			color: $app-shell-text-muted;
 			font-size: $app-font-size-md;
 			font-weight: $app-font-weight-medium;
 			line-height: 1.35;

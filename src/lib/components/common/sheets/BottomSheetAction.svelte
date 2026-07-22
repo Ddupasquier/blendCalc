@@ -1,5 +1,5 @@
 <script lang="ts">
-	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
 	import type { Snippet } from "svelte";
 
@@ -51,11 +51,11 @@
 		gap: $app-gap-sm;
 		min-height: 3.8rem;
 		padding: $app-gap-sm;
-		color: $color-figma-sky;
+		color: $app-shell-accent-info;
 		text-align: left;
-		background: $color-figma-canvas;
+		background: $app-shell-surface-page;
 		border: 0;
-		border-radius: $app-rebuild-radius;
+		border-radius: $app-shell-radius-card;
 		font-family: $app-button-font-family;
 		font-size: $app-font-size-md;
 		font-weight: $app-button-font-weight;
@@ -79,17 +79,17 @@
 	}
 
 	.bottom-sheet-action--danger {
-		color: $color-figma-red;
+		color: $app-shell-accent-danger;
 	}
 
 	:global(.bottom-sheet-action__icon) {
-		--circular-icon-frame-size: #{$app-rebuild-food-icon-size};
+		--circular-icon-frame-size: #{$app-shell-leading-icon-size};
 		--circular-icon-frame-icon-size: #{$app-control-icon-size};
 		--circular-icon-frame-color: currentColor;
 		--circular-icon-frame-background: color-mix(
 			in srgb,
 			currentColor 12%,
-			#{$color-figma-card}
+			#{$app-shell-surface-panel}
 		);
 		--circular-icon-frame-border: 0;
 	}

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+    import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 
     let {
         message,
@@ -33,25 +33,25 @@
         border: $app-border;
         border-radius: $app-radius;
         padding: $app-gap-lg;
-        min-width: $ingredient-nutrition-move-prompt-min-width;
-        max-width: $ingredient-nutrition-move-prompt-max-width;
-        margin: $app-vertical-stack-gap 0;
+        min-width: 20rem;
+        max-width: 90vw;
+        margin: $app-gap-md 0;
         display: flex;
         flex-direction: column;
         align-items: center;
 
         .prompt-title {
-            font-size: $ingredient-nutrition-move-prompt-title-font-size;
+            font-size: 1.13em;
             font-weight: $app-font-weight-medium;
-            margin-bottom: $app-vertical-stack-gap;
+            margin-bottom: $app-gap-md;
             color: $app-primary;
             text-align: center;
         }
 
         .prompt-actions {
             display: flex;
-            gap: $app-horizontal-control-gap;
-            margin-top: $app-vertical-stack-gap;
+            gap: $app-gap-md;
+            margin-top: $app-gap-md;
         }
     }
 </style>

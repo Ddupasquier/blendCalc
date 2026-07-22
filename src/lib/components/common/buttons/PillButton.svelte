@@ -1,6 +1,6 @@
 <script lang="ts">
-	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
-	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import type { PillButtonProps } from "$lib/components/common/buttons/types";
 
 	let {
@@ -48,12 +48,12 @@
 		justify-content: center;
 		gap: $app-gap-xs;
 		min-width: 0;
-		min-height: $ingredient-control-height-compact;
-		padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x-compact;
-		color: $ingredient-text-primary;
-		background: $ingredient-surface-card;
-		border: 1px solid $ingredient-border-subtle;
-		border-radius: $ingredient-radius-pill;
+		min-height: $app-shell-control-height-compact;
+		padding: $app-shell-control-padding-y-compact $app-shell-control-padding-x-compact;
+		color: $app-shell-text-primary;
+		background: $app-shell-surface-panel;
+		border: 1px solid $app-shell-border-subtle;
+		border-radius: $app-shell-radius-pill;
 		font-family: $app-button-font-family;
 		font-size: $app-font-size-sm;
 		font-weight: $app-button-font-weight;
@@ -86,14 +86,14 @@
 	}
 
 	.pill-button[data-variant="primary"] {
-		color: $ingredient-surface-card;
-		background: $ingredient-accent-primary;
+		color: $app-shell-surface-panel;
+		background: $app-shell-accent-primary;
 		border-color: transparent;
 	}
 
 	.pill-button[data-variant="danger"] {
 		color: $app-danger-action;
-		background: color-mix(in srgb, $app-danger-action 10%, $ingredient-surface-card);
+		background: color-mix(in srgb, $app-danger-action 10%, $app-shell-surface-panel);
 		border-color: color-mix(in srgb, $app-danger-action 22%, transparent);
 	}
 </style>

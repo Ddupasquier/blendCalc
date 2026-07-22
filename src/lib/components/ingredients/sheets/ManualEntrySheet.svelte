@@ -1,5 +1,5 @@
 <script lang="ts">
-	import BottomSheet from "$lib/components/common/sheets/BottomSheet.svelte";
+	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 	import CustomIngredientForm from "$lib/components/ingredients/manual-entry/CustomIngredientForm.svelte";
 	import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 	import type { ManualEntrySheetProps } from "$lib/components/ingredients/sheets/types";

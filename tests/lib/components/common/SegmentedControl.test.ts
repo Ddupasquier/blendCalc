@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import SegmentedControl from "$lib/components/common/buttons/SegmentedControl.svelte";
+import SegmentedControl from "$lib/components/common/buttons/SegmentedControl/SegmentedControl.svelte";
 
 describe("SegmentedControl", () => {
 	it("uses roving focus and arrow-key tab navigation", async () => {

@@ -4,7 +4,11 @@ import { describe, expect, it } from "vitest";
 
 const componentPath = resolve(
 	process.cwd(),
-	"src/lib/components/common/sheets/BottomSheet.svelte",
+	"src/lib/components/common/sheets/BottomSheet/BottomSheet.svelte",
+);
+const componentStylesPath = resolve(
+	process.cwd(),
+	"src/lib/components/common/sheets/BottomSheet/BottomSheet.scss",
 );
 const manualEntrySheetPath = resolve(
 	process.cwd(),
@@ -17,7 +21,7 @@ const manualEntryFormPath = resolve(
 
 describe("BottomSheet shared chrome", () => {
 	it("keeps the drag handle horizontally centered", () => {
-		const source = readFileSync(componentPath, "utf8");
+		const source = readFileSync(componentStylesPath, "utf8");
 		const handleRule = source.match(/\.bottom-sheet__handle\s*{(?<body>[^}]*)}/s);
 
 		expect(handleRule?.groups?.body).toContain("justify-self: center;");
@@ -25,7 +29,7 @@ describe("BottomSheet shared chrome", () => {
 	});
 
 	it("keeps the drag handle focus outline visible", () => {
-		const source = readFileSync(componentPath, "utf8");
+		const source = readFileSync(componentStylesPath, "utf8");
 		const sheetRule = source.match(/\.bottom-sheet\s*{(?<body>[\s\S]*?)\n\t}/);
 		const focusRule = source.match(/&:focus-visible\s*{(?<body>[^}]*)}/s);
 

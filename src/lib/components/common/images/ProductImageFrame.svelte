@@ -34,12 +34,12 @@
 		display: block;
 		box-sizing: border-box;
 		width: auto;
-		max-width: min(100%, $ingredient-product-image-frame-max-width);
+		max-width: min(100%, 18rem);
 		height: auto;
-		max-height: $ingredient-product-image-frame-max-height;
-		padding: $ingredient-product-image-frame-padding;
+		max-height: 14rem;
+		padding: $app-shell-card-padding-compact;
 		object-fit: contain;
-		background: $ingredient-surface-soft;
-		border-radius: $ingredient-radius-card;
+		background: $app-shell-surface-soft;
+		border-radius: $app-shell-radius-card;
 	}
 </style>

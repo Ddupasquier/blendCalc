@@ -1,0 +1,91 @@
+@use "../../../../../styles/variables" as *;
+
+.bottom-sheet {
+	display: flex;
+	flex-direction: column;
+	gap: $app-gap-sm;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: visible;
+
+	h2 {
+		margin: 0;
+		overflow: hidden;
+		color: $app-shell-text-primary;
+		font-family: $app-font-family-display;
+		font-size: $app-font-size-lg;
+		font-weight: $app-font-weight-bold;
+		line-height: 1.1;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+.bottom-sheet__chrome {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: grid;
+	gap: $app-gap-sm;
+	flex: 0 0 auto;
+	background: $app-shell-surface-panel;
+}
+
+.bottom-sheet__handle {
+	justify-self: center;
+	display: grid;
+	place-items: center;
+	width: 4rem;
+	height: 1.5rem;
+	padding: 0;
+	background: transparent;
+	border: 0;
+	border-radius: $app-radius-pill;
+	cursor: pointer;
+
+	span {
+		display: block;
+		width: 2.25rem;
+		height: 0.22rem;
+		margin: 0 auto;
+		background: color-mix(in srgb, $app-shell-text-muted 24%, transparent);
+		border-radius: $app-radius-pill;
+	}
+
+	&:focus-visible {
+		outline: $app-focus-outline;
+		outline-offset: $app-focus-outline-offset;
+	}
+}
+
+.bottom-sheet__header {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: center;
+	gap: $app-gap-sm;
+	min-height: 2rem;
+}
+
+.bottom-sheet__header--without-back {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+:global(.bottom-sheet__back) {
+	width: 2rem;
+	height: 2rem;
+}
+
+.bottom-sheet__content {
+	display: grid;
+	align-content: start;
+	align-items: start;
+	flex: 1 1 auto;
+	gap: $app-gap-md;
+	grid-auto-rows: max-content;
+	min-width: 0;
+	min-height: 0;
+	padding-bottom: $app-gap-md;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+}

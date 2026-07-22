@@ -38,7 +38,7 @@
 		gap: $app-gap-xs;
 		margin: 0;
 		padding-left: $app-gap-lg;
-		color: $ingredient-text-primary;
+		color: $app-shell-text-primary;
 		font-size: $app-font-size-sm;
 	}
 </style>

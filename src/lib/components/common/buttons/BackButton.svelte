@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Chevron from "$lib/assets/icons/Chevron.svelte";
-	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import type { BackButtonProps } from "./types";
 
 	let {

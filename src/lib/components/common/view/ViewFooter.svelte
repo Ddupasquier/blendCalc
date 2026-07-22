@@ -19,7 +19,7 @@
 
 	.view-footer {
 		display: grid;
-		gap: $app-vertical-stack-gap;
+		gap: $app-gap-md;
 		min-width: 0;
 		padding-top: $app-gap-sm;
 		background: inherit;

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from "svelte";
-	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import CheckboxGroup from "$lib/components/common/forms/CheckboxGroup.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage.svelte";
 	import type { NutritionLabelOcrInputProps } from "$lib/components/ingredients/manual-entry/formTypes";
@@ -9,7 +9,6 @@
 		parseNutritionLabelText,
 		type NutritionLabelOcrResult,
 	} from "$lib/utils/food/ocr/nutritionLabelOcr";
-	import "./styles/nutritionLabelOcrInput.scss";
 
 	let {
 		mappings,
@@ -176,3 +175,7 @@
 		<StatusMessage tone="success" title="Suggestions applied">{appliedMessage}</StatusMessage>
 	{/if}
 </section>
+
+<style lang="scss">
+	@use "./NutritionLabelOcrInput.scss";
+</style>

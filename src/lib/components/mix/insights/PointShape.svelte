@@ -413,10 +413,10 @@
 	.point-shape__value-label {
 		fill: $app-muted;
 		font-family: $app-font-family-data;
-		font-size: $mix-chart-value-font-size;
+		font-size: 0.62rem;
 		font-weight: $app-font-weight-bold;
 		font-variant-numeric: tabular-nums;
-		letter-spacing: $mix-chart-label-letter-spacing;
+		letter-spacing: $app-letter-spacing-data;
 	}
 
 	.point-shape__value-circle {

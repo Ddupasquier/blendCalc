@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import CenteredIcon from "$lib/components/common/icons/CenteredIcon.svelte";
 	import type { IconControlButtonProps } from "./types";
 
@@ -43,14 +43,14 @@
 	.icon-control-button {
 		display: inline-grid;
 		place-items: center;
-		width: $ingredient-control-height;
-		height: $ingredient-control-height;
+		width: $app-shell-control-height;
+		height: $app-shell-control-height;
 		flex: 0 0 auto;
 		padding: 0;
-		color: $ingredient-text-muted;
-		background: $ingredient-surface-control;
+		color: $app-shell-text-muted;
+		background: $app-shell-surface-control;
 		border: 0;
-		border-radius: $ingredient-radius-control;
+		border-radius: $app-shell-radius-control;
 		transition:
 			color 160ms ease,
 			background-color 160ms ease,
@@ -59,8 +59,8 @@
 
 		&:hover:not(:disabled),
 		&--active {
-			color: $ingredient-accent-primary;
-			background: $ingredient-surface-positive;
+			color: $app-shell-accent-primary;
+			background: $app-shell-accent-soft;
 		}
 
 		&:active:not(:disabled) {

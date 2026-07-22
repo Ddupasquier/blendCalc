@@ -29,6 +29,8 @@ Mix and match ingredients for making well-balanced smoothies.
 See [`docs/versioning.md`](docs/versioning.md) for release and compatibility rules.
 See [`docs/data-architecture.md`](docs/data-architecture.md) for the database-first read,
 write, browser-state, and external-enrichment boundaries.
+See [`docs/style-system.md`](docs/style-system.md) for global-token ownership,
+component-folder structure, SCSS naming, and stylesheet maintenance rules.
 
 ---
 

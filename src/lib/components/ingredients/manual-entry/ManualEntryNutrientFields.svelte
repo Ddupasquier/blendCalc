@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Chevron from "$lib/assets/icons/Chevron.svelte";
-	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import type { ManualEntryNutrientFieldsProps } from "$lib/components/ingredients/manual-entry/formTypes";
 	import type {
 		ManualEntryNutrientDefinition,
@@ -138,7 +138,7 @@
 	.manual-nutrients,
 	.manual-nutrients__fields {
 		display: grid;
-		gap: $app-vertical-stack-gap;
+		gap: $app-gap-md;
 	}
 
 	.manual-nutrients__group {
@@ -151,12 +151,12 @@
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			min-height: $ingredient-control-height;
-			padding: 0 $ingredient-control-padding-x;
+			min-height: $app-shell-control-height;
+			padding: 0 $app-shell-control-padding-x;
 			margin: 0 0 $app-gap-md;
-			color: $ingredient-text-primary;
-			background: $ingredient-surface-positive;
-			border-radius: $ingredient-radius-pill;
+			color: $app-shell-text-primary;
+			background: $app-shell-accent-soft;
+			border-radius: $app-shell-radius-pill;
 			font-family: $app-font-family-interface;
 			font-size: $app-font-size-md;
 			font-weight: $app-font-weight-bold;
@@ -171,9 +171,9 @@
 		.manual-nutrients__chevron {
 			display: inline-grid;
 			place-items: center;
-			width: $ingredient-control-icon-size;
-			height: $ingredient-control-icon-size;
-			color: $ingredient-text-muted;
+			width: $app-shell-control-icon-size;
+			height: $app-shell-control-icon-size;
+			color: $app-shell-text-muted;
 			line-height: 1;
 			transform: rotate(180deg);
 			transition: transform 160ms ease;
@@ -190,10 +190,10 @@
 		gap: $app-gap-xs;
 
 		small {
-			padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
-			color: $ingredient-text-muted;
-			background: $ingredient-surface-control;
-			border-radius: $ingredient-radius-pill;
+			padding: $app-text-badge-padding-y $app-text-badge-padding-x;
+			color: $app-shell-text-muted;
+			background: $app-shell-surface-control;
+			border-radius: $app-shell-radius-pill;
 			font-size: $app-font-size-xs;
 			font-weight: $app-font-weight-medium;
 			text-transform: none;
@@ -209,7 +209,7 @@
 	label {
 		display: grid;
 		gap: $app-gap-sm;
-		color: $ingredient-text-muted;
+		color: $app-shell-text-muted;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
 		text-transform: uppercase;
@@ -222,7 +222,7 @@
 		}
 
 		em {
-			color: $ingredient-accent-danger;
+			color: $app-shell-accent-danger;
 			font-style: normal;
 		}
 	}
@@ -230,12 +230,12 @@
 	input {
 		width: 100%;
 		min-width: 0;
-		min-height: $ingredient-control-height;
-		padding: 0 $ingredient-control-padding-x;
-		color: $ingredient-text-primary;
-		background: $ingredient-surface-soft;
+		min-height: $app-shell-control-height;
+		padding: 0 $app-shell-control-padding-x;
+		color: $app-shell-text-primary;
+		background: $app-shell-surface-soft;
 		border: 0;
-		border-radius: $ingredient-radius-pill;
+		border-radius: $app-shell-radius-pill;
 		font: inherit;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-medium;
@@ -245,15 +245,15 @@
 	.manual-nutrients__status {
 		margin: 0;
 		padding: $app-gap-md;
-		color: $ingredient-text-muted;
-		background: $ingredient-surface-soft;
-		border-radius: $ingredient-radius-sheet;
+		color: $app-shell-text-muted;
+		background: $app-shell-surface-soft;
+		border-radius: $app-shell-radius-sheet;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-semibold;
 	}
 
 	.manual-nutrients__status--error {
-		color: $ingredient-accent-danger;
+		color: $app-shell-accent-danger;
 		background: $app-danger-bg;
 	}
 </style>

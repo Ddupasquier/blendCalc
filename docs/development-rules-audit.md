@@ -20,6 +20,7 @@ clickable navigation block instead.
 - [Explicit Pagination Controls](#rule-pagination-controls)
 - [Shared Loading Indicators](#rule-loading-indicators)
 - [Design Tokens And Spacing](#rule-design-tokens)
+- [Component Styles And Folder Structure](#rule-style-file-boundaries)
 - [Shared Style Utilities](#rule-shared-style-utilities)
 - [Reusable Components And Buttons](#rule-reusable-components)
 - [Circular Icon Alignment](#rule-circular-icon-alignment)
@@ -130,21 +131,25 @@ preserve the current scroll position. Show `Load more` only while another page e
 Show `Return to top` only when the list actually overflows its scroll area. Use
 `PaginatedListControls.svelte` instead of rebuilding these controls inside a feature.
 
-**3.** <a id="rule-design-tokens"></a>Use design tokens. Colors, spacing, font sizes,
-font weights, radii, and breakpoints should come from SCSS variables wherever practical.
-Component styles should consume readable semantic tokens for their domain or shared
-primitive (`$ingredient-*`, `$app-shell-*`, etc.) instead of raw source/provenance
-tokens such as `$color-figma-*` or `$app-rebuild-*`; keep those low-level aliases
-centralized in `src/styles/_variables.scss`. Semantic typography tokens must alias the
-existing `$app-font-size-*` scale whenever that size already exists; do not repeat the
-same raw `rem`, `px`, or `em` value under a new one-off name.
+**3.** <a id="rule-design-tokens"></a>Keep global design tokens genuinely app-wide.
+`src/styles/_variables.scss` owns values reused by independent components or shared UI
+primitives: the typography scale, spacing scale, app-shell surfaces, status roles,
+breakpoints, common control dimensions, and other deliberate system-wide decisions.
+Do not add a global variable for a value used by only one component, one button variant,
+one illustration, or one temporary design pass. Put that value directly in the
+component's paired SCSS file, or use a clearly named component-local SCSS variable when
+it improves repeated calculations within that file. Global tokens must use stable,
+semantic names and direct readable values; do not preserve implementation-era names
+such as `figma` or `rebuild`, source-color aliases, duplicate semantic layers, or chains
+where one variable points to another variable that points to the real value.
 
-**3a.** <a id="rule-spacing-tokens"></a>Use shared spacing tokens for all component and
-section spacing. Adjacent UI sections in rebuilt app views should use
-`$app-vertical-stack-gap` (`.75rem`) vertically and `$app-horizontal-control-gap`
-horizontally unless a smaller internal/micro-layout token is explicitly needed. Do not
-add raw `rem`, `px`, or `em` spacing values inside component styles; add or reuse a
-semantic SCSS variable instead.
+**3a.** <a id="rule-spacing-tokens"></a>Use the shared `$app-gap-*` scale for spacing
+that establishes the app's repeated rhythm between controls, cards, sections, and
+layouts. The standard rebuilt-view gap is `$app-gap-md` (`0.75rem`). A genuinely unique
+component measurement may remain in that component's paired stylesheet; do not pollute
+the global token file merely to avoid writing a local value. Repeated local values
+should become a component-local variable first and graduate to a global token only when
+multiple independent components share the same design decision.
 
 **3b.** <a id="rule-shared-style-utilities"></a>Centralize repeated styling behavior. If
 the same accessibility helper, visually hidden text pattern, focus treatment, viewport
@@ -318,10 +323,11 @@ building, and styling. Do not let one file become the home for every new behavio
   shapes, nutrient value state, validation item shape, and create-handler types should
   stay centralized so future steps use one shared language.
 
-- <a id="rule-manual-entry-styles"></a>Large manual-entry styles belong in the paired
-  SCSS file `styles/customIngredientForm.scss`. Keep component files readable by moving
-  large style blocks out, but still use shared SCSS variables for spacing, colors,
-  radii, font sizes, and breakpoints.
+- <a id="rule-manual-entry-styles"></a>Large manual-entry styles belong beside their
+  owning component in a paired SCSS file. Flow-level styles used by several manual-entry
+  children may remain at the nearest shared manual-entry parent, but a single component
+  must not place its private styles in a generic domain stylesheet. Consume app-wide
+  tokens for shared design decisions and keep component-only values local.
 
 - <a id="rule-manual-entry-growth-check"></a>Before adding manual-entry behavior, decide
   where it belongs: visual UI in a step/display component, reusable logic in a utility,
@@ -340,11 +346,17 @@ process or architecture issue, add it to these development rules instead of fixi
 the current file. Do not create duplicate rule sets elsewhere; update this source of
 truth and link QA items back here.
 
-**16d.** <a id="rule-style-file-boundaries"></a>Keep small component styles local, but
-move large or noisy component/page styles into paired SCSS files when they make the
-Svelte file hard to scan. Use clear tandem naming such as `Component.svelte` plus
-`styles/component.scss`, keep style files near the component domain, and continue using
-shared SCSS variables for spacing, colors, radii, and typography.
+**16d.** <a id="rule-style-file-boundaries"></a>Organize non-trivial components as
+`components/<domain>/<Component>/<Component>.svelte`, with `<Component>.scss` and a
+local `types.ts` beside it when those companion files are needed. Do not create empty
+companion files. A type or style shared by sibling components belongs at their nearest
+common parent instead of being copied into each folder. Prefer paired SCSS files before
+a Svelte file becomes difficult to scan, and load component-private SCSS through that
+component's scoped `<style lang="scss">` block. Script-level stylesheet imports are
+reserved for intentionally global or multi-component flow styles because they bypass
+Svelte's normal component scoping. Keep app-wide values in `_variables.scss`; keep
+component-only colors, dimensions, radii, timing, and layout details in the paired SCSS
+file. Do not create global one-off variables to make a local declaration look tokenized.
 
 **16e.** <a id="rule-type-file-boundaries"></a>Keep reusable and feature-specific
 TypeScript types out of Svelte component and route files. Components and pages should
@@ -1139,20 +1151,23 @@ decision—not merely to reduce a line count.
 
 ### 2. SCSS Variable Usage
 
-The variable system is strong and well documented in `src/styles/_variables.scss`. It
-includes palette primitives, semantic colors, font roles, font weights, spacing, radii,
-and breakpoints.
+The variable system now keeps only direct app-wide design decisions in
+`src/styles/_variables.scss`. Obsolete palette, `figma`, `rebuild`, feature-alias, Mix,
+and nutrition-label token layers were removed so a maintainer can edit the actual value
+without following an alias chain.
 
 Current result:
 
-- Ingredients and Mix component styles use semantic spacing, typography, radius, and
-  layout tokens; the raw-value audit returns no matches in those areas.
+- Shared app rhythm, typography, shell colors, status roles, and primitive dimensions
+  use direct semantic tokens. Component-only values live beside their components.
 - `mixDefaults.ts` now contains storage keys only. Nutrient choices, goals, runtime
-  thresholds, and chart colors come from the database reference catalog or SCSS tokens.
-- Remaining raw values outside these rebuilt areas should be converted during each
-  route's planned UI pass. Moderation remains intentionally deferred until its rebuild.
+  thresholds, and data choices come from the database reference catalog. Mix-only chart
+  colors live with the Mix route rather than in global app styles.
+- New non-trivial components use a component folder containing the Svelte file and its
+  paired stylesheet; local `types.ts` files are added only when the component owns types.
+- Moderation styling remains intentionally deferred until its planned UI rebuild.
 - SVG path coordinates, measured runtime dimensions, animation timing, and standards
-  constants are not UI spacing and should not be converted into misleading design tokens.
+  constants are not app-wide design tokens and should not be globalized.
 
 ### 3. Box Shadows
 

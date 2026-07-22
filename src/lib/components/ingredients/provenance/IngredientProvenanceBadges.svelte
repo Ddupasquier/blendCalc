@@ -1,5 +1,5 @@
 <script lang="ts">
-	import TextBadge from "$lib/components/common/badges/TextBadge.svelte";
+	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
 	import VerifiedStatusBadge from "$lib/components/common/badges/VerifiedStatusBadge.svelte";
 	import { getIngredientTrustBadge } from "$lib/utils/ingredients/ingredientProvenance";
 	import type { IngredientProvenanceBadgesProps } from "./types";

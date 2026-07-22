@@ -55,11 +55,11 @@
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		width: $ingredient-scan-icon-width;
-		height: $ingredient-scan-icon-height;
+		width: 1.125rem;
+		height: 1rem;
 		overflow: hidden;
 		background-color: transparent;
-		border-radius: $ingredient-scan-icon-radius;
+		border-radius: 0.5rem;
 		transition:
 			width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
 			height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
@@ -68,13 +68,13 @@
 	}
 
 	.barcode-scanner--active {
-		width: $ingredient-scan-icon-active-width;
-		height: $ingredient-scan-icon-active-height;
-		color: color-mix(in srgb, $ingredient-surface-card 22%, transparent);
+		width: 3.5rem;
+		height: 2.25rem;
+		color: color-mix(in srgb, $app-shell-surface-panel 22%, transparent);
 		background-color: color-mix(
 			in srgb,
-			$ingredient-text-primary 84%,
-			$ingredient-accent-primary
+			$app-shell-text-primary 84%,
+			$app-shell-accent-primary
 		);
 	}
 
@@ -86,47 +86,47 @@
 	.barcode-scanner__bracket {
 		position: absolute;
 		z-index: 2;
-		width: $ingredient-scan-bracket-size;
-		height: $ingredient-scan-bracket-size;
-		border-color: $app-scan-laser;
+		width: 0.375rem;
+		height: 0.375rem;
+		border-color: #e45f55;
 		border-style: solid;
 		opacity: 0;
 		animation: scanner-detail-fade-in 0.22s ease forwards;
 	}
 
 	.barcode-scanner__bracket--top-left {
-		top: $ingredient-scan-bracket-inset;
-		left: $ingredient-scan-bracket-inset;
-		border-width: $ingredient-scan-bracket-border-width 0 0
-			$ingredient-scan-bracket-border-width;
+		top: 0.2rem;
+		left: 0.2rem;
+		border-width: 1.5px 0 0
+			1.5px;
 	}
 
 	.barcode-scanner__bracket--top-right {
-		top: $ingredient-scan-bracket-inset;
-		right: $ingredient-scan-bracket-inset;
-		border-width: $ingredient-scan-bracket-border-width
-			$ingredient-scan-bracket-border-width 0 0;
+		top: 0.2rem;
+		right: 0.2rem;
+		border-width: 1.5px
+			1.5px 0 0;
 	}
 
 	.barcode-scanner__bracket--bottom-left {
-		bottom: $ingredient-scan-bracket-inset;
-		left: $ingredient-scan-bracket-inset;
-		border-width: 0 0 $ingredient-scan-bracket-border-width
-			$ingredient-scan-bracket-border-width;
+		bottom: 0.2rem;
+		left: 0.2rem;
+		border-width: 0 0 1.5px
+			1.5px;
 	}
 
 	.barcode-scanner__bracket--bottom-right {
-		right: $ingredient-scan-bracket-inset;
-		bottom: $ingredient-scan-bracket-inset;
-		border-width: 0 $ingredient-scan-bracket-border-width
-			$ingredient-scan-bracket-border-width 0;
+		right: 0.2rem;
+		bottom: 0.2rem;
+		border-width: 0 1.5px
+			1.5px 0;
 	}
 
 	.barcode-scanner__bars {
 		position: absolute;
-		top: $ingredient-scan-bars-top;
+		top: 0.25rem;
 		display: block;
-		color: $ingredient-surface-card;
+		color: $app-shell-surface-panel;
 		opacity: 0;
 		animation: scanner-detail-fade-in 0.22s ease forwards;
 	}
@@ -135,13 +135,13 @@
 		position: absolute;
 		right: 0;
 		left: 0;
-		height: $ingredient-scan-glow-height;
+		height: 0.6rem;
 		opacity: 0;
 		pointer-events: none;
 		background: radial-gradient(
 			ellipse at center,
-			rgba($app-scan-laser, 0.46) 0%,
-			rgba($app-scan-laser, 0.18) 42%,
+			rgba(#e45f55, 0.46) 0%,
+			rgba(#e45f55, 0.18) 42%,
 			transparent 76%
 		);
 		animation:
@@ -153,17 +153,17 @@
 		position: absolute;
 		right: 0;
 		left: 0;
-		height: $ingredient-scan-laser-height;
+		height: 2px;
 		opacity: 0;
 		pointer-events: none;
 		background: linear-gradient(
 			90deg,
 			transparent 0%,
-			$app-scan-laser 8%,
-			$app-scan-laser 92%,
+			#e45f55 8%,
+			#e45f55 92%,
 			transparent 100%
 		);
-		filter: drop-shadow(0 0 3px rgba($app-scan-laser, 0.9));
+		filter: drop-shadow(0 0 3px rgba(#e45f55, 0.9));
 		animation:
 			scanner-detail-fade-in 0.22s ease forwards,
 			barcode-laser-sweep 1.1s ease-in-out infinite;
@@ -181,31 +181,31 @@
 
 	@keyframes barcode-laser-sweep {
 		0% {
-			top: $ingredient-scan-bars-top;
+			top: 0.25rem;
 		}
 
 		45%,
 		55% {
-			top: $ingredient-scan-laser-low-top;
+			top: 1.75rem;
 		}
 
 		100% {
-			top: $ingredient-scan-bars-top;
+			top: 0.25rem;
 		}
 	}
 
 	@keyframes barcode-laser-glow {
 		0% {
-			top: $ingredient-scan-glow-start-top;
+			top: -0.2rem;
 		}
 
 		45%,
 		55% {
-			top: $ingredient-scan-glow-low-top;
+			top: 1.3rem;
 		}
 
 		100% {
-			top: $ingredient-scan-glow-start-top;
+			top: -0.2rem;
 		}
 	}
 

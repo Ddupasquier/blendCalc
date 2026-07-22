@@ -21,10 +21,10 @@
 		align-items: baseline;
 		justify-content: space-between;
 		gap: $app-gap-sm;
-		color: $nutrition-label-text;
+		color: #111;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-bold;
-		line-height: $nutrition-label-basis-line-height;
+		line-height: 1.15;
 	}
 
 	strong {

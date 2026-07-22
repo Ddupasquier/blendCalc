@@ -1,8 +1,8 @@
 <script lang="ts">
-	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
-	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
+	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame/InputLoadingFrame.svelte";
 	import BarcodeAutofillSuggestion from "$lib/components/ingredients/manual-entry/BarcodeAutofillSuggestion.svelte";
-	import FoodCategoryPicker from "$lib/components/ingredients/manual-entry/FoodCategoryPicker.svelte";
+	import FoodCategoryPicker from "$lib/components/ingredients/manual-entry/FoodCategoryPicker/FoodCategoryPicker.svelte";
 	import type { IdentityStepProps } from "$lib/components/ingredients/manual-entry/formTypes";
 
 	let {

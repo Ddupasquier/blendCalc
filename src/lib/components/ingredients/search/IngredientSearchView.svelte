@@ -99,17 +99,17 @@
 		min-height: 0;
 		overflow-y: auto;
 		overscroll-behavior: contain;
-		padding-bottom: $app-vertical-stack-gap;
+		padding-bottom: $app-gap-md;
 	}
 
 	:global(.ingredient-search-view .barcode-scan-button--compact) {
-		width: $ingredient-control-height;
-		height: $ingredient-control-height;
-		min-height: $ingredient-control-height;
+		width: $app-shell-control-height;
+		height: $app-shell-control-height;
+		min-height: $app-shell-control-height;
 	}
 
 	:global(.ingredient-search-view__filter-icon) {
-		width: $ingredient-control-icon-size;
-		height: $ingredient-control-icon-size;
+		width: $app-shell-control-icon-size;
+		height: $app-shell-control-icon-size;
 	}
 </style>

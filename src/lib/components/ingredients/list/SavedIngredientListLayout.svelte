@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import IngredientListTabs from "./IngredientListTabs.svelte";
 	import type { SavedIngredientListLayoutProps } from "$lib/components/ingredients/list/types";
 	import {
@@ -65,7 +65,7 @@
 		display: flex;
 		flex-direction: column;
 		flex: 1 1 auto;
-		gap: $app-vertical-stack-gap;
+		gap: $app-gap-md;
 		min-height: 0;
 		padding-top: 0;
 		overflow: hidden;
@@ -79,7 +79,7 @@
 	}
 
 	.saved-ingredients__loading {
-		color: $ingredient-text-muted;
+		color: $app-shell-text-muted;
 	}
 
 	.list-action-error {

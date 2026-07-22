@@ -48,6 +48,6 @@
 
 	:global(.status-icon-badge[data-tone="error"]) {
 		--circular-icon-frame-color: #{$app-danger-action};
-		--circular-icon-frame-background: #{$ingredient-status-error-bg};
+		--circular-icon-frame-background: #{$app-status-error-bg};
 	}
 </style>

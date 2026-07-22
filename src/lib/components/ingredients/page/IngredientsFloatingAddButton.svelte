@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Plus from "$lib/assets/icons/Plus.svelte";
-	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import type { IngredientsFloatingAddButtonProps } from "$lib/components/ingredients/page/types";
 
 	let {
@@ -25,10 +25,10 @@
 	.add-ingredient-fab {
 		position: fixed;
 		right: max(
-			$ingredient-shell-padding-x,
-			calc((100vw - $ingredient-shell-max-width) / 2 + $ingredient-shell-padding-x)
+			$app-shell-padding-x,
+			calc((100vw - $app-shell-content-max-width) / 2 + $app-shell-padding-x)
 		);
-		bottom: calc($ingredient-shell-nav-height + $app-gap-md);
+		bottom: calc($app-shell-nav-height + $app-gap-md);
 		z-index: 12;
 	}
 </style>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SegmentedControl from "$lib/components/common/buttons/SegmentedControl.svelte";
+	import SegmentedControl from "$lib/components/common/buttons/SegmentedControl/SegmentedControl.svelte";
 	import type {
 		ManualEntryStepTabsProps,
 	} from "$lib/components/ingredients/manual-entry/formTypes";
@@ -36,6 +36,6 @@
 	@use "../../../../styles/variables" as *;
 
 	.manual-entry-tabs {
-		margin-block: $app-vertical-stack-gap;
+		margin-block: $app-gap-md;
 	}
 </style>

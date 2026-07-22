@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import type { SubmitFunction } from "@sveltejs/kit";
-	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
-	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
-	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame.svelte";
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame/InputLoadingFrame.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor.svelte";
 	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 	import { APP_NAME } from "$lib/config/brand";

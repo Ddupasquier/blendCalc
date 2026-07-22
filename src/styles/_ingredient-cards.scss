@@ -3,8 +3,8 @@
 @mixin warning-edge {
 	background-image: linear-gradient(
 		to right,
-		$ingredient-card-warning-bar-color 0 $ingredient-card-warning-bar-width,
-		transparent $ingredient-card-warning-bar-width
+		$app-highlight 0 7px,
+		transparent 7px
 	);
 	background-repeat: no-repeat;
 }

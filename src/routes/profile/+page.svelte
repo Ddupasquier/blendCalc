@@ -2,7 +2,7 @@
 	import { enhance } from "$app/forms";
 	import { invalidateAll } from "$app/navigation";
 	import User from "$lib/assets/icons/User.svelte";
-	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker.svelte";
 	import { APP_NAME } from "$lib/config/brand";
@@ -782,7 +782,7 @@
 	}
 
 	:global(.avatar-preview) {
-		--circular-media-frame-size: #{$app-profile-avatar-size};
+		--circular-media-frame-size: #{4.5rem};
 		--circular-media-frame-color: #{$app-primary};
 		--circular-media-frame-background: #{$app-accent};
 		--circular-media-frame-border: #{$app-border};
@@ -794,7 +794,7 @@
 		}
 
 		:global(.avatar-preview__icon) {
-			width: $app-profile-avatar-icon-scale;
+			width: 55%;
 		}
 	}
 

@@ -3,7 +3,7 @@
 	import Sliders from "$lib/assets/icons/Sliders.svelte";
 	import Trash from "$lib/assets/icons/Trash.svelte";
 	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation.svelte";
-	import BottomSheet from "$lib/components/common/sheets/BottomSheet.svelte";
+	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 	import BottomSheetAction from "$lib/components/common/sheets/BottomSheetAction.svelte";
 	import type { IngredientActionSheetProps } from "$lib/components/ingredients/sheets/types";
 

@@ -23,13 +23,13 @@
 	@use "../../../../styles/variables" as *;
 
 	:global(.manual-entry-toggle__icon) {
-		--circular-icon-frame-size: #{$ingredient-food-icon-size};
-		--circular-icon-frame-icon-size: #{$ingredient-control-icon-size};
-		--circular-icon-frame-color: #{$ingredient-accent-info};
+		--circular-icon-frame-size: #{$app-shell-leading-icon-size};
+		--circular-icon-frame-icon-size: #{$app-shell-control-icon-size};
+		--circular-icon-frame-color: #{$app-shell-accent-info};
 		--circular-icon-frame-background: color-mix(
 			in srgb,
-			#{$ingredient-accent-info} 11%,
-			#{$ingredient-surface-card}
+			#{$app-shell-accent-info} 11%,
+			#{$app-shell-surface-panel}
 		);
 		--circular-icon-frame-border: 0;
 	}
@@ -47,21 +47,21 @@
 		}
 
 		strong {
-			color: $ingredient-text-primary;
+			color: $app-shell-text-primary;
 			font-size: $app-font-size-lg;
 			font-weight: $app-font-weight-bold;
 		}
 
 		small {
-			color: $ingredient-text-muted;
+			color: $app-shell-text-muted;
 			font-size: $app-font-size-sm;
 			font-weight: $app-font-weight-medium;
 		}
 	}
 
 	:global(.manual-entry-toggle__chevron) {
-		width: $ingredient-control-icon-size;
-		height: $ingredient-control-icon-size;
+		width: $app-shell-control-icon-size;
+		height: $app-shell-control-icon-size;
 		flex: 0 0 auto;
 		transition: transform 180ms ease;
 	}

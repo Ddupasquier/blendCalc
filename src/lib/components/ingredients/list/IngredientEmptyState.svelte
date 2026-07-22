@@ -46,28 +46,28 @@
 		display: grid;
 		justify-items: center;
 		gap: $app-gap-sm;
-		min-height: $ingredient-empty-state-min-height;
-		padding: calc($ingredient-shell-header-height) $app-gap-md;
-		color: $ingredient-text-muted;
+		min-height: 42vh;
+		padding: calc($app-shell-header-height) $app-gap-md;
+		color: $app-shell-text-muted;
 		text-align: center;
 	}
 
 	:global(.ingredient-empty-state__icon) {
-		--circular-icon-frame-size: #{$ingredient-empty-state-icon-size};
-		--circular-icon-frame-icon-size: #{$ingredient-empty-state-icon-font-size};
-		--circular-icon-frame-background: #{$ingredient-surface-positive};
+		--circular-icon-frame-size: #{4rem};
+		--circular-icon-frame-icon-size: #{2rem};
+		--circular-icon-frame-background: #{$app-shell-accent-soft};
 		--circular-icon-frame-border: 0;
 	}
 
 	h2 {
 		margin: 0;
-		color: $ingredient-text-primary;
+		color: $app-shell-text-primary;
 		font-size: $app-font-size-xl;
 		font-weight: $app-font-weight-heavy;
 	}
 
 	p {
-		max-width: $ingredient-empty-state-copy-max-width;
+		max-width: 22rem;
 		line-height: 1.4;
 	}
 </style>

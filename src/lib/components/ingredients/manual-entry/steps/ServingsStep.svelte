@@ -1,5 +1,5 @@
 <script lang="ts">
-	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch.svelte";
 	import type { ServingsStepProps } from "$lib/components/ingredients/manual-entry/formTypes";
 	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";

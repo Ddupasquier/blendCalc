@@ -1,0 +1,46 @@
+@use "../../../../../styles/variables" as *;
+
+:global(.text-badge) {
+	display: inline-grid;
+	place-items: center;
+	box-sizing: border-box;
+	flex: 0 0 auto;
+	min-width: 0;
+	min-height: 1.25rem;
+	max-width: 8rem;
+	padding: $app-text-badge-padding-y $app-text-badge-padding-x;
+	overflow: hidden;
+	color: color-mix(in srgb, #55a6c8 72%, #4f4842);
+	font-size: 0.76rem;
+	font-weight: $app-font-weight-heavy;
+	line-height: 1;
+	text-align: center;
+	text-transform: uppercase;
+	vertical-align: middle;
+	white-space: nowrap;
+	background: color-mix(in srgb, #55a6c8 18%, #fff);
+	border-radius: $app-radius-pill;
+}
+
+:global(.text-badge__label) {
+	display: block;
+	max-width: 100%;
+	overflow: hidden;
+	line-height: inherit;
+	text-overflow: ellipsis;
+}
+
+:global(.text-badge[data-tone="custom"]) {
+	color: #7b5fa3;
+	background: color-mix(in srgb, #cbb8e8 55%, #fff);
+}
+
+:global(.text-badge[data-tone="success"]) {
+	color: #57a773;
+	background: #e8f5ee;
+}
+
+:global(.text-badge[data-tone="neutral"]) {
+	color: #726963;
+	background: #e9e9ed;
+}

@@ -1,18 +1,21 @@
 @use "../../../../../styles/variables" as *;
 
+// Intentionally flow-shared: these selectors style markup rendered across the
+// manual-entry coordinator and its step components.
+
 .custom-ingredient {
 	display: grid;
-	gap: $app-vertical-stack-gap;
+	gap: $app-gap-md;
 }
 
 .custom-ingredient__options {
 	display: grid;
-	gap: $app-vertical-stack-gap;
+	gap: $app-gap-md;
 }
 
 .custom-ingredient__step {
 	display: grid;
-	gap: $app-vertical-stack-gap;
+	gap: $app-gap-md;
 }
 
 .custom-ingredient__field,
@@ -27,7 +30,7 @@
 .custom-ingredient__field {
 	display: grid;
 	gap: $app-gap-sm;
-	color: $ingredient-text-muted;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-bold;
 	text-transform: uppercase;
@@ -42,15 +45,15 @@
 
 .custom-ingredient__field em,
 .custom-ingredient__card em {
-	color: $ingredient-accent-danger;
+	color: $app-shell-accent-danger;
 	font-style: normal;
 }
 
 .custom-ingredient__field small {
-	padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
-	color: $ingredient-text-muted;
-	background: $ingredient-surface-control;
-	border-radius: $ingredient-radius-pill;
+	padding: $app-text-badge-padding-y $app-text-badge-padding-x;
+	color: $app-shell-text-muted;
+	background: $app-shell-surface-control;
+	border-radius: $app-shell-radius-pill;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-medium;
 	text-transform: none;
@@ -59,16 +62,16 @@
 .custom-ingredient__field-info,
 .custom-ingredient__field-status {
 	display: block;
-	padding: $ingredient-status-padding-y $ingredient-status-padding-x;
-	background: $ingredient-surface-soft;
-	border-radius: $ingredient-radius-card;
+	padding: $app-status-padding-y $app-status-padding-x;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
 	font-size: $app-font-size-sm;
 	line-height: 1.35;
 }
 
 .custom-ingredient__field-status--error {
-	color: $ingredient-status-error-text;
-	background: $ingredient-status-error-bg;
+	color: $app-status-error-text;
+	background: $app-status-error-bg;
 }
 
 .custom-ingredient__field input,
@@ -76,12 +79,12 @@
 .custom-ingredient__destination select {
 	width: 100%;
 	min-width: 0;
-	min-height: $ingredient-control-height;
-	padding: 0 $ingredient-control-padding-x;
-	color: $ingredient-text-primary;
-	background: $ingredient-surface-soft;
+	min-height: $app-shell-control-height;
+	padding: 0 $app-shell-control-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-soft;
 	border: 0;
-	border-radius: $ingredient-radius-pill;
+	border-radius: $app-shell-radius-pill;
 	font: inherit;
 	font-size: $app-font-size-md;
 	font-weight: $app-font-weight-medium;
@@ -91,22 +94,22 @@
 .custom-ingredient__field select,
 .custom-ingredient__destination select {
 	appearance: none;
-	padding-right: $ingredient-select-chevron-padding-right;
-	background-color: $ingredient-surface-soft;
+	padding-right: calc($app-gap-md * 3.6);
+	background-color: $app-shell-surface-soft;
 	background-image:
-		linear-gradient(45deg, transparent 50%, $ingredient-text-muted 50%),
-		linear-gradient(135deg, $ingredient-text-muted 50%, transparent 50%);
+		linear-gradient(45deg, transparent 50%, $app-shell-text-muted 50%),
+		linear-gradient(135deg, $app-shell-text-muted 50%, transparent 50%);
 	background-position:
-		calc(100% - $ingredient-select-chevron-position-left) 52%,
-		calc(100% - $ingredient-select-chevron-position-right) 52%;
+		calc(100% - calc(calc($app-gap-md * 3.6) / 2)) 52%,
+		calc(100% - calc(calc($app-gap-md * 3.6) / 2.57)) 52%;
 	background-repeat: no-repeat;
 	background-size:
-		$ingredient-select-chevron-size $ingredient-select-chevron-size,
-		$ingredient-select-chevron-size $ingredient-select-chevron-size;
+		$app-gap-xs $app-gap-xs,
+		$app-gap-xs $app-gap-xs;
 }
 
 .custom-ingredient__field input::placeholder {
-	color: $ingredient-text-muted;
+	color: $app-shell-text-muted;
 }
 
 .custom-ingredient__field input[type="number"] {
@@ -121,7 +124,7 @@
 
 .custom-ingredient__helper {
 	margin: 0;
-	color: $ingredient-text-muted;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-medium;
 	line-height: 1.35;
@@ -133,9 +136,9 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: $app-gap-md;
-	padding: $ingredient-card-padding;
-	background: $ingredient-surface-soft;
-	border-radius: $ingredient-radius-card;
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
 	text-transform: none;
 }
 
@@ -147,7 +150,7 @@
 
 .custom-ingredient__switch strong,
 .custom-ingredient__share-toggle strong {
-	color: $ingredient-text-primary;
+	color: $app-shell-text-primary;
 	font-size: $app-font-size-md;
 	font-weight: $app-font-weight-bold;
 }
@@ -156,7 +159,7 @@
 .custom-ingredient__share-toggle small {
 	padding: 0;
 	background: transparent;
-	color: $ingredient-text-muted;
+	color: $app-shell-text-muted;
 	line-height: 1.25;
 }
 
@@ -168,15 +171,15 @@
 .custom-ingredient__summary {
 	display: grid;
 	gap: $app-gap-md;
-	padding: $ingredient-card-padding;
-	background: $ingredient-surface-soft;
-	border-radius: $ingredient-radius-card;
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
 }
 
 .custom-ingredient__card h3,
 .custom-ingredient__summary strong {
 	margin: 0;
-	color: $ingredient-text-primary;
+	color: $app-shell-text-primary;
 	font-size: $app-font-size-lg;
 	font-weight: $app-font-weight-bold;
 }
@@ -184,7 +187,7 @@
 .custom-ingredient__inline-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: $app-horizontal-control-gap;
+	gap: $app-gap-md;
 }
 
 .custom-ingredient__optional-details {
@@ -193,7 +196,7 @@
 }
 
 .custom-ingredient__optional-details summary {
-	color: $ingredient-text-primary;
+	color: $app-shell-text-primary;
 	font-size: $app-font-size-md;
 	font-weight: $app-font-weight-bold;
 	cursor: pointer;
@@ -210,8 +213,8 @@
 	justify-items: center;
 	gap: $app-gap-xs;
 	padding: $app-gap-sm;
-	background: $ingredient-surface-card;
-	border-radius: $ingredient-radius-card;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-card;
 }
 
 .custom-ingredient__macro-row strong {
@@ -220,7 +223,7 @@
 }
 
 .custom-ingredient__macro-row small {
-	color: $ingredient-text-muted;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-medium;
 }
@@ -232,16 +235,16 @@
 
 .custom-ingredient__summary > div:first-child span {
 	width: fit-content;
-	padding: $ingredient-badge-padding-y $ingredient-badge-padding-x;
-	color: $ingredient-text-primary;
-	background: $ingredient-surface-card;
-	border-radius: $ingredient-radius-pill;
+	padding: $app-text-badge-padding-y $app-text-badge-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-pill;
 	font-size: $app-font-size-xs;
 }
 
 .custom-ingredient__summary p {
 	margin: 0;
-	color: $ingredient-text-muted;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-medium;
 }
@@ -252,25 +255,25 @@
 
 .custom-ingredient__evidence {
 	display: grid;
-	gap: $app-vertical-stack-gap;
-	padding: $ingredient-card-padding;
-	background: $ingredient-surface-soft;
-	border-radius: $ingredient-radius-card;
+	gap: $app-gap-md;
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
 }
 
 .custom-ingredient__image-review {
 	display: grid;
 	gap: $app-gap-md;
-	padding: $ingredient-card-padding;
-	background: $ingredient-surface-card;
-	border: $app-border-divider;
-	border-radius: $ingredient-radius-card;
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-panel;
+	border: 2px solid #111;
+	border-radius: $app-shell-radius-card;
 }
 
 .custom-ingredient__image-review p,
 .custom-ingredient__evidence p {
 	margin: $app-gap-xs 0 0;
-	color: $ingredient-text-muted;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 	line-height: 1.35;
 }
@@ -280,32 +283,32 @@
 .custom-ingredient__catalog-message,
 .custom-ingredient__status {
 	margin: 0;
-	padding: $ingredient-status-padding-y $ingredient-status-padding-x;
-	border-radius: $ingredient-radius-card;
+	padding: $app-status-padding-y $app-status-padding-x;
+	border-radius: $app-shell-radius-card;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-bold;
 }
 
 .custom-ingredient__error {
-	color: $ingredient-status-error-text;
-	background: $ingredient-status-error-bg;
+	color: $app-status-error-text;
+	background: $app-status-error-bg;
 }
 
 .custom-ingredient__success,
 .custom-ingredient__catalog-message {
-	color: $ingredient-status-success-text;
-	background: $ingredient-status-success-bg;
+	color: #4f4842;
+	background: #c5d8be;
 }
 
 .custom-ingredient__status {
-	color: $ingredient-text-muted;
-	background: $ingredient-surface-soft;
+	color: $app-shell-text-muted;
+	background: $app-shell-surface-soft;
 }
 
 .custom-ingredient__actions {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: $app-horizontal-control-gap;
+	gap: $app-gap-md;
 	margin-top: $app-gap-sm;
 }
 

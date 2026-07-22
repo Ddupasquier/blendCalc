@@ -2,7 +2,7 @@
 	import Chevron from "$lib/assets/icons/Chevron.svelte";
 	import FoodSymbol from "$lib/assets/icons/FoodSymbol.svelte";
 	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation.svelte";
-	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
+	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame.svelte";
 	import IngredientBulkToggle from "$lib/components/ingredients/list/IngredientBulkToggle.svelte";
 	import IngredientCardActions from "$lib/components/ingredients/list/IngredientCardActions.svelte";
@@ -103,11 +103,11 @@
 		grid-template-columns: auto minmax(0, 1fr) auto auto;
 		align-items: center;
 		gap: $app-gap-sm;
-		min-height: $ingredient-card-min-height;
-		padding: $ingredient-card-padding-compact;
-		background: $ingredient-surface-card;
+		min-height: 5.25rem;
+		padding: $app-shell-card-padding-compact;
+		background: $app-shell-surface-panel;
 		// border: 1px solid transparent;
-		border-radius: $ingredient-radius-card;
+		border-radius: $app-shell-radius-card;
 		// box-shadow: black 0 3px 10px 2px;
 		transition:
 			border-color 160ms ease,
@@ -116,13 +116,13 @@
 	}
 
 	.saved-ingredient-card--active {
-		border-color: $ingredient-accent-primary;
-		background: $ingredient-surface-card;
+		border-color: $app-shell-accent-primary;
+		background: $app-shell-surface-panel;
 	}
 
 	.saved-ingredient-card--custom {
 		border-color: color-mix(in srgb, $app-custom-strong 45%, transparent);
-		background: color-mix(in srgb, $app-custom-bg 30%, $ingredient-surface-card);
+		background: color-mix(in srgb, $app-custom-bg 30%, $app-shell-surface-panel);
 	}
 
 	.saved-ingredient-card--warning {
@@ -152,9 +152,9 @@
 	}
 
 	:global(.saved-ingredient-card__icon) {
-		--circular-media-frame-size: #{$ingredient-food-icon-size};
-		--circular-media-frame-background: #{$ingredient-surface-positive};
-		--circular-media-frame-font-size: #{$ingredient-food-icon-font-size};
+		--circular-media-frame-size: #{$app-shell-leading-icon-size};
+		--circular-media-frame-background: #{$app-shell-accent-soft};
+		--circular-media-frame-font-size: #{$app-font-size-xl};
 	}
 
 	.saved-ingredient-card__copy {
@@ -164,7 +164,7 @@
 
 		strong {
 			overflow: hidden;
-			color: $ingredient-text-primary;
+			color: $app-shell-text-primary;
 			font-size: $app-font-size-md;
 			font-weight: $app-font-weight-heavy;
 			line-height: 1.08;
@@ -174,7 +174,7 @@
 
 		small {
 			overflow: hidden;
-			color: $ingredient-text-muted;
+			color: $app-shell-text-muted;
 			font-size: $app-font-size-sm;
 			font-weight: $app-font-weight-medium;
 			line-height: 1.15;
@@ -198,7 +198,7 @@
 	.saved-ingredient-card__move-action {
 		display: inline-grid;
 		place-items: center;
-		font-size: $ingredient-control-icon-size;
+		font-size: $app-shell-control-icon-size;
 	}
 
 	@media (max-width: $app-breakpoint-xs) {

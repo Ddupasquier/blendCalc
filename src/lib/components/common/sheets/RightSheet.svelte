@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SheetBase from "$lib/components/common/sheets/SheetBase.svelte";
+	import SheetBase from "$lib/components/common/sheets/SheetBase/SheetBase.svelte";
 	import type { RightSheetProps } from "$lib/components/common/sheets/types";
 
 	let {

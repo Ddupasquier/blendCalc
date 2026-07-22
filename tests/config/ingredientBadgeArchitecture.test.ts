@@ -8,7 +8,11 @@ describe("ingredient badge architecture", () => {
 			"utf8",
 		);
 		const textBadge = readFileSync(
-			"src/lib/components/common/badges/TextBadge.svelte",
+			"src/lib/components/common/badges/TextBadge/TextBadge.svelte",
+			"utf8",
+		);
+		const textBadgeStyles = readFileSync(
+			"src/lib/components/common/badges/TextBadge/TextBadge.scss",
 			"utf8",
 		);
 		const nutritionFactsLabel = readFileSync(
@@ -25,7 +29,7 @@ describe("ingredient badge architecture", () => {
 		);
 
 		expect(ingredientBadges).toContain(
-			'$lib/components/common/badges/TextBadge.svelte',
+			'$lib/components/common/badges/TextBadge/TextBadge.svelte',
 		);
 		expect(ingredientBadges).toContain(
 			'$lib/components/common/badges/VerifiedStatusBadge.svelte',
@@ -33,9 +37,9 @@ describe("ingredient badge architecture", () => {
 		expect(ingredientBadges).toContain('trustBadge.value === "verified"');
 		expect(ingredientBadges).not.toContain("getIngredientSourceBadge");
 		expect(ingredientBadges).not.toContain('class="ingredient-card-badge"');
-		expect(textBadge).toContain("place-items: center");
-		expect(textBadge).toContain("min-height: $app-text-badge-min-height");
-		expect(textBadge).toContain("text-align: center");
+		expect(textBadgeStyles).toContain("place-items: center");
+		expect(textBadgeStyles).toContain("min-height: 1.25rem");
+		expect(textBadgeStyles).toContain("text-align: center");
 		expect(verifiedStatusBadge).toContain(
 			'$lib/components/common/badges/StatusIconBadge.svelte',
 		);

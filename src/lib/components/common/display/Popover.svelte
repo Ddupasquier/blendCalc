@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
-	import CloseButton from "$lib/components/common/buttons/CloseButton.svelte";
+	import CloseButton from "$lib/components/common/buttons/CloseButton/CloseButton.svelte";
 
 	let {
 		buttonLabel = "Details",

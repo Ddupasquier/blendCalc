@@ -25,7 +25,7 @@
 	.view-frame {
 		display: flex;
 		flex-direction: column;
-		gap: $app-vertical-stack-gap;
+		gap: $app-gap-md;
 		width: 100%;
 		height: 100%;
 		min-height: 0;
@@ -36,17 +36,17 @@
 
 	.view-frame--app-shell {
 		width: 100%;
-		max-width: $ingredient-shell-max-width;
+		max-width: $app-shell-content-max-width;
 		height: calc(
-			100vh - $ingredient-shell-header-height - $ingredient-shell-nav-height -
+			100vh - $app-shell-header-height - $app-shell-nav-height -
 				env(safe-area-inset-bottom)
 		);
 		height: calc(
-			100dvh - $ingredient-shell-header-height - $ingredient-shell-nav-height -
+			100dvh - $app-shell-header-height - $app-shell-nav-height -
 				env(safe-area-inset-bottom)
 		);
 		margin: 0 auto;
-		padding: $ingredient-shell-padding-y $ingredient-shell-padding-x 0;
+		padding: $app-shell-padding-y $app-shell-padding-x 0;
 	}
 
 	@media (max-width: $app-breakpoint-xs) {

@@ -90,7 +90,7 @@
 
 	.mix-empty-state__steps {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax($mix-empty-step-min-width, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
 		gap: $app-gap-sm;
 		list-style: none;
 	}

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge.svelte";
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import PillButton from "$lib/components/common/buttons/PillButton.svelte";
-	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import ImagePlacementCardPreview from "$lib/components/common/images/ImagePlacementCardPreview.svelte";
 	import type {
 		ImagePlacementEditorProps,
@@ -202,16 +202,16 @@
 
 	.image-placement-editor {
 		display: grid;
-		gap: $app-vertical-stack-gap;
-		padding: $ingredient-card-padding;
-		background: $ingredient-surface-card;
-		border: $app-border-divider;
-		border-radius: $ingredient-radius-card;
+		gap: $app-gap-md;
+		padding: $app-shell-card-padding;
+		background: $app-shell-surface-panel;
+		border: 2px solid #111;
+		border-radius: $app-shell-radius-card;
 	}
 
 	.image-placement-editor__copy p {
 		margin: $app-gap-xs 0 0;
-		color: $ingredient-text-muted;
+		color: $app-shell-text-muted;
 		font-size: $app-font-size-sm;
 		line-height: 1.35;
 	}
@@ -224,7 +224,7 @@
 
 	.image-placement-editor__editing-preview p {
 		margin: 0;
-		color: $ingredient-text-muted;
+		color: $app-shell-text-muted;
 		font-size: $app-font-size-xs;
 		font-weight: $app-font-weight-medium;
 		text-align: center;
@@ -240,7 +240,7 @@
 	.image-placement-editor__previews {
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr);
-		gap: $app-horizontal-control-gap;
+		gap: $app-gap-md;
 		align-items: center;
 	}
 
@@ -266,23 +266,23 @@
 
 	.image-placement-editor__full-preview img {
 		width: 100%;
-		max-height: $ingredient-product-image-frame-max-height;
+		max-height: 14rem;
 		object-fit: contain;
-		background: $ingredient-surface-soft;
-		border: $app-border-divider;
-		border-radius: $ingredient-radius-card;
+		background: $app-shell-surface-soft;
+		border: 2px solid #111;
+		border-radius: $app-shell-radius-card;
 	}
 
 	.image-placement-editor__actual-preview figcaption,
 	.image-placement-editor__full-preview figcaption {
-		color: $ingredient-text-muted;
+		color: $app-shell-text-muted;
 		font-size: $app-font-size-xs;
 		font-weight: $app-font-weight-bold;
 	}
 
 	.image-placement-editor__controls {
 		display: grid;
-		gap: $app-vertical-stack-gap;
+		gap: $app-gap-md;
 	}
 
 	.image-placement-editor__presets {
@@ -294,7 +294,7 @@
 	.image-placement-editor__controls label {
 		display: grid;
 		gap: $app-gap-xs;
-		color: $ingredient-text-muted;
+		color: $app-shell-text-muted;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
 	}
@@ -308,13 +308,13 @@
 
 	.image-placement-editor__controls small,
 	.image-placement-editor__controls output {
-		color: $ingredient-text-muted;
+		color: $app-shell-text-muted;
 		font: inherit;
 	}
 
 	.image-placement-editor__controls input[type="range"] {
 		width: 100%;
-		accent-color: $ingredient-accent-primary;
+		accent-color: $app-shell-accent-primary;
 	}
 
 	.image-placement-editor__controls input[type="range"]:disabled {

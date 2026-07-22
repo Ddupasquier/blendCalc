@@ -95,8 +95,8 @@
 
 		a {
 			width: fit-content;
-			min-height: $ingredient-outcome-action-min-height;
-			padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x-compact;
+			min-height: $app-shell-control-height-compact;
+			padding: $app-shell-control-padding-y-compact $app-shell-control-padding-x-compact;
 			border-radius: $app-radius-pill;
 			font-family: $app-button-font-family;
 			font-size: $app-font-size-sm;

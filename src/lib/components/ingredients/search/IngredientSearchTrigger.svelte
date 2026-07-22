@@ -27,13 +27,13 @@
 		align-items: center;
 		gap: $app-gap-xs;
 		width: 100%;
-		height: $ingredient-control-height;
-		min-height: $ingredient-control-height;
-		padding: 0 $ingredient-control-padding-x;
-		color: $ingredient-text-muted;
-		background: $ingredient-surface-control;
+		height: $app-shell-control-height;
+		min-height: $app-shell-control-height;
+		padding: 0 $app-shell-control-padding-x;
+		color: $app-shell-text-muted;
+		background: $app-shell-surface-control;
 		border: 1px solid transparent;
-		border-radius: $ingredient-radius-control;
+		border-radius: $app-shell-radius-control;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-regular;
 		text-align: left;
@@ -43,8 +43,8 @@
 
 		&:hover,
 		&:focus-visible {
-			background: $ingredient-surface-positive;
-			border-color: $ingredient-accent-primary;
+			background: $app-shell-accent-soft;
+			border-color: $app-shell-accent-primary;
 			outline: none;
 		}
 
@@ -56,8 +56,8 @@
 	}
 
 	:global(.ingredient-search-trigger__icon) {
-		width: $ingredient-search-input-icon-size;
-		height: $ingredient-search-input-icon-size;
+		width: $app-font-size-md;
+		height: $app-font-size-md;
 		stroke: currentColor;
 	}
 </style>

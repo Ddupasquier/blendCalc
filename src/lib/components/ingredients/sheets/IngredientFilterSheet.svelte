@@ -1,7 +1,7 @@
 <script lang="ts">
-	import ActionButton from "$lib/components/common/buttons/ActionButton.svelte";
+	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import PillButton from "$lib/components/common/buttons/PillButton.svelte";
-	import BottomSheet from "$lib/components/common/sheets/BottomSheet.svelte";
+	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 	import type { IngredientFilterSheetProps } from "$lib/components/ingredients/sheets/types";
 
 	let {
@@ -76,7 +76,7 @@
 
 		h3 {
 			margin: 0;
-			color: $ingredient-text-muted;
+			color: $app-shell-text-muted;
 			font-size: $app-font-size-sm;
 			font-weight: $app-font-weight-bold;
 			line-height: 1;
@@ -88,7 +88,7 @@
 	.ingredient-filter-sheet__chips {
 		display: flex;
 		flex-wrap: wrap;
-		gap: $app-horizontal-control-gap;
+		gap: $app-gap-md;
 	}
 
 </style>

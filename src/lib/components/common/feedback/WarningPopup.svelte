@@ -33,26 +33,26 @@
 		align-items: center;
 		gap: $app-gap-sm;
 		width: 100%;
-		padding: $ingredient-status-padding-y $ingredient-status-padding-x;
-		color: $ingredient-text-primary;
-		background: $ingredient-status-warning-bg;
-		border-radius: $ingredient-radius-pill;
+		padding: $app-status-padding-y $app-status-padding-x;
+		color: $app-shell-text-primary;
+		background: $app-status-warning-bg;
+		border-radius: $app-shell-radius-pill;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-medium;
 		line-height: 1.25;
 	}
 
 	.warning-popup--error {
-		background: $ingredient-status-error-bg;
+		background: $app-status-error-bg;
 	}
 
 	.warning-popup__icon {
 		display: inline-flex;
 		flex: 0 0 auto;
-		color: $ingredient-status-warning-icon;
+		color: $app-status-warning-icon;
 	}
 
 	.warning-popup--error .warning-popup__icon {
-		color: $ingredient-status-error-icon;
+		color: $app-status-error-icon;
 	}
 </style>

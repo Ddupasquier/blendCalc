@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { createRawSnippet } from "svelte";
 import { describe, expect, it } from "vitest";
-import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame.svelte";
+import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame/InputLoadingFrame.svelte";
 
 const input = createRawSnippet(() => ({
 	render: () => '<input aria-label="Barcode" />',

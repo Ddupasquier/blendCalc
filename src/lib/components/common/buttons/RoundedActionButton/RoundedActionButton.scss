@@ -1,0 +1,108 @@
+@use "../../../../../styles/variables" as *;
+
+.rounded-action-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: $app-gap-xs;
+	min-width: 0;
+	min-height: $app-shell-control-height;
+	padding: 0 $app-shell-control-padding-x;
+	border: 2px solid transparent;
+	border-radius: $app-shell-radius-control;
+	font-family: $app-button-font-family;
+	font-size: $app-font-size-md;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
+	text-align: center;
+	text-transform: none;
+	transition:
+		background-color 160ms ease,
+		border-color 160ms ease,
+		color 160ms ease,
+		opacity 160ms ease,
+		transform 120ms ease;
+
+	&:active:not(:disabled) {
+		transform: scale(0.98);
+	}
+
+	&:focus-visible {
+		outline: $app-focus-outline;
+		outline-offset: $app-focus-outline-offset;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.68;
+	}
+}
+
+.rounded-action-button--full {
+	width: 100%;
+}
+
+.rounded-action-button[data-content-align="start"] {
+	justify-content: flex-start;
+	text-align: left;
+}
+
+.rounded-action-button[data-content-align="space-between"] {
+	justify-content: space-between;
+	text-align: left;
+}
+
+.rounded-action-button[data-variant="primary"] {
+	color: $app-shell-surface-panel;
+	background: $app-shell-accent-primary;
+	border-color: $app-shell-accent-primary;
+
+	&:hover:not(:disabled) {
+		background: color-mix(
+			in srgb,
+			$app-shell-accent-primary 88%,
+			$app-shell-text-primary
+		);
+		border-color: color-mix(
+			in srgb,
+			$app-shell-accent-primary 88%,
+			$app-shell-text-primary
+		);
+	}
+}
+
+.rounded-action-button[data-variant="outline"] {
+	color: $app-shell-accent-primary;
+	background: transparent;
+	border-color: $app-shell-accent-primary;
+
+	&:hover:not(:disabled) {
+		color: $app-shell-surface-panel;
+		background: $app-shell-accent-primary;
+	}
+}
+
+.rounded-action-button[data-variant="quiet"] {
+	color: $app-shell-text-muted;
+	background: $app-shell-surface-control;
+	border-color: $app-shell-surface-control;
+}
+
+.rounded-action-button[data-variant="soft"] {
+	color: $app-shell-accent-primary;
+	background: $app-shell-accent-soft;
+	border-color: $app-shell-accent-soft;
+}
+
+.rounded-action-button[data-variant="neutral"] {
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-panel;
+	border-color: $app-shell-border-subtle;
+}
+
+.rounded-action-button[data-variant="dashed"] {
+	color: $app-shell-accent-primary;
+	background: transparent;
+	border-style: dashed;
+	border-color: color-mix(in srgb, $app-shell-accent-primary 45%, white);
+}

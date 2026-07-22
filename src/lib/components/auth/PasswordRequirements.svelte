@@ -87,7 +87,7 @@
 		}
 
 		li.valid span {
-			color: $color-lavender-smoothie-dark;
+			color: $app-custom-strong;
 		}
 	}
 </style>

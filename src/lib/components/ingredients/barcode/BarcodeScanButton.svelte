@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import BarcodeScannerIcon from "$lib/components/ingredients/barcode/BarcodeScannerIcon.svelte";
 	import type { BarcodeScanButtonProps } from "$lib/components/ingredients/barcode/types";
 
@@ -39,12 +39,12 @@
 		box-sizing: border-box;
 		gap: $app-gap-xs;
 		width: auto;
-		min-height: $ingredient-control-height;
-		padding: $ingredient-scan-button-padding-y $ingredient-scan-button-padding-x;
-		color: $ingredient-surface-card;
-		background-color: $ingredient-accent-primary;
+		min-height: $app-shell-control-height;
+		padding: 0.48rem 0.82rem;
+		color: $app-shell-surface-panel;
+		background-color: $app-shell-accent-primary;
 		border: 0;
-		border-radius: $ingredient-radius-card;
+		border-radius: $app-shell-radius-card;
 		transition:
 			background-color 0.28s ease,
 			color 0.28s ease;
@@ -58,8 +58,8 @@
 		&:hover:not(:disabled) {
 			background-color: color-mix(
 				in srgb,
-				$ingredient-accent-primary 88%,
-				$ingredient-text-primary
+				$app-shell-accent-primary 88%,
+				$app-shell-text-primary
 			);
 		}
 
@@ -70,9 +70,9 @@
 	}
 
 	.barcode-scan-button--compact {
-		width: $ingredient-control-height;
-		height: $ingredient-control-height;
-		min-height: $ingredient-control-height;
+		width: $app-shell-control-height;
+		height: $app-shell-control-height;
+		min-height: $app-shell-control-height;
 		padding: 0;
 		flex-shrink: 0;
 	}

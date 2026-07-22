@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
-	import ActionButton from "$lib/components/common/buttons/ActionButton.svelte";
-	import BottomSheet from "$lib/components/common/sheets/BottomSheet.svelte";
+	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
+	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 
 	let {
 		open = false,
@@ -136,7 +136,7 @@
 
 	.text-input-sheet__description {
 		margin: 0;
-		color: $color-figma-muted;
+		color: $app-shell-text-muted;
 		font-size: $app-font-size-md;
 		line-height: 1.35;
 	}
@@ -149,30 +149,30 @@
 	.text-input-sheet__field {
 		display: grid;
 		gap: $app-gap-xs;
-		color: $color-figma-ink;
+		color: $app-shell-text-primary;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-bold;
 	}
 
 	input {
 		width: 100%;
-		min-height: $app-rebuild-control-height;
-		padding: 0 $app-rebuild-control-padding-x;
-		color: $color-figma-ink;
-		background: $color-figma-soft-surface;
+		min-height: $app-shell-control-height;
+		padding: 0 $app-shell-control-padding-x;
+		color: $app-shell-text-primary;
+		background: $app-shell-surface-soft;
 		border: 1px solid transparent;
-		border-radius: $app-rebuild-radius-pill;
+		border-radius: $app-shell-radius-pill;
 		font-size: $app-font-size-lg;
 		box-sizing: border-box;
 
 		&:focus {
 			outline: none;
-			border-color: $color-figma-green;
+			border-color: $app-shell-accent-primary;
 		}
 	}
 
 	.text-input-sheet__error {
-		color: $color-figma-red;
+		color: $app-shell-accent-danger;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
 	}
@@ -180,7 +180,7 @@
 	.text-input-sheet__actions {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: $app-horizontal-control-gap;
+		gap: $app-gap-md;
 	}
 
 	.text-input-sheet__actions--triple {

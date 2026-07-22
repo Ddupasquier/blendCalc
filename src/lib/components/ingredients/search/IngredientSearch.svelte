@@ -12,8 +12,8 @@
 	import {
 		CUSTOM_FOODS_CHANGED_EVENT,
 	} from "$lib/utils/food/custom/customFoods";
-	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton.svelte";
-	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner.svelte";
+	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import Search from "$lib/assets/icons/Search.svelte";
 	import X from "$lib/assets/icons/X.svelte";
 	import { createEventDispatcher, onMount, tick } from "svelte";
@@ -395,7 +395,7 @@
 	.search-wrap {
 		position: relative;
 		display: grid;
-		gap: $app-horizontal-control-gap;
+		gap: $app-gap-md;
 		min-width: 0;
 	}
 
@@ -403,7 +403,7 @@
 		display: grid;
 		grid-template-columns: minmax(0, 1fr);
 		align-items: center;
-		gap: $app-horizontal-control-gap;
+		gap: $app-gap-md;
 		min-width: 0;
 	}
 
@@ -414,7 +414,7 @@
 	.search-actions {
 		display: inline-flex;
 		align-items: center;
-		gap: $app-horizontal-control-gap;
+		gap: $app-gap-md;
 		min-width: 0;
 	}
 
@@ -424,38 +424,38 @@
 		grid-template-columns: auto minmax(0, 1fr) auto;
 		align-items: center;
 		gap: $app-gap-xs;
-		height: $ingredient-control-height;
-		min-height: $ingredient-control-height;
-		padding: 0 $ingredient-control-padding-x;
-		background: $ingredient-surface-control;
+		height: $app-shell-control-height;
+		min-height: $app-shell-control-height;
+		padding: 0 $app-shell-control-padding-x;
+		background: $app-shell-surface-control;
 		border: 1px solid transparent;
-		border-radius: $ingredient-radius-control;
+		border-radius: $app-shell-radius-control;
 		transition:
 			background-color 0.15s ease,
 			border-color 0.15s ease;
 
 		&:focus-within {
-			background: $ingredient-surface-positive;
-			border-color: $ingredient-accent-primary;
+			background: $app-shell-accent-soft;
+			border-color: $app-shell-accent-primary;
 		}
 	}
 
 	.search-row--active {
-		background: $ingredient-surface-positive;
-		border-color: color-mix(in srgb, $ingredient-accent-primary 42%, transparent);
+		background: $app-shell-accent-soft;
+		border-color: color-mix(in srgb, $app-shell-accent-primary 42%, transparent);
 	}
 
 	:global(.search-icon) {
-		width: $ingredient-search-input-icon-size;
-		height: $ingredient-search-input-icon-size;
-		stroke: $ingredient-text-muted;
+		width: $app-font-size-md;
+		height: $app-font-size-md;
+		stroke: $app-shell-text-muted;
 	}
 
 	.search-input {
 		min-width: 0;
 		height: 100%;
 		padding: 0;
-		color: $ingredient-text-primary;
+		color: $app-shell-text-primary;
 		background: transparent;
 		border: 0;
 		border-radius: 0;
@@ -463,7 +463,7 @@
 		font-size: $app-font-size-md;
 
 		&::placeholder {
-			color: $ingredient-text-muted;
+			color: $app-shell-text-muted;
 		}
 
 		&::-webkit-search-cancel-button,
@@ -484,7 +484,7 @@
 		flex-wrap: wrap;
 		gap: $app-gap-xs $app-gap-sm;
 		margin: 0;
-		color: $ingredient-text-muted;
+		color: $app-shell-text-muted;
 		font-size: $app-font-size-xs;
 		font-weight: $app-font-weight-semibold;
 		line-height: 1.25;
@@ -492,12 +492,12 @@
 		span + span::before {
 			content: "·";
 			margin-right: $app-gap-sm;
-			color: color-mix(in srgb, $ingredient-text-muted 62%, transparent);
+			color: color-mix(in srgb, $app-shell-text-muted 62%, transparent);
 		}
 	}
 
 	.search-error {
-		padding: $ingredient-control-padding-y-compact $ingredient-control-padding-x-compact;
+		padding: $app-shell-control-padding-y-compact $app-shell-control-padding-x-compact;
 		color: $app-warning-strong;
 		background: $app-warning-bg;
 		border: $app-warning-border;

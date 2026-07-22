@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
-import TextBadge from "$lib/components/common/badges/TextBadge.svelte";
+import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
 
 describe("TextBadge", () => {
 	it("renders centered metadata through the shared badge primitive", () => {

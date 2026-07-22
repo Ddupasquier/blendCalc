@@ -22,8 +22,8 @@ describe("ingredient warning card architecture", () => {
 	it("uses the shared edge treatment on saved and search cards", () => {
 		expect(savedCard).toContain("@include ingredient-cards.warning-edge");
 		expect(searchCards).toContain("@include ingredient-cards.warning-edge");
-		expect(cardStyles).toContain("$ingredient-card-warning-bar-width");
-		expect(cardStyles).toContain("$ingredient-card-warning-bar-color");
+		expect(cardStyles).toContain("$app-highlight 0 7px");
+		expect(cardStyles).toContain("transparent 7px");
 		expect(cardStyles).toContain("background-image: linear-gradient");
 		expect(cardStyles).not.toContain("&::before");
 	});

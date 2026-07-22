@@ -146,9 +146,9 @@
 
 	.selected-ingredient-cards {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax($mix-selected-ingredient-card-min-width, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 		gap: $app-gap-sm;
-		max-height: min(52vh, $mix-selected-ingredient-list-max-height);
+		max-height: min(52vh, 30rem);
 		overflow-y: auto;
 		overscroll-behavior: contain;
 		padding-right: $app-gap-inline-compact;

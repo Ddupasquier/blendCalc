@@ -1,5 +1,5 @@
 <script lang="ts">
-	import BottomSheet from "$lib/components/common/sheets/BottomSheet.svelte";
+	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 	import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel.svelte";
 	import type { IngredientImagePlacementSheetProps } from "$lib/components/ingredients/sheets/types";
 
@@ -37,7 +37,7 @@
 
 	.ingredient-image-placement-sheet__empty {
 		margin: 0;
-		color: $ingredient-text-muted;
+		color: $app-shell-text-muted;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
 		line-height: 1.35;

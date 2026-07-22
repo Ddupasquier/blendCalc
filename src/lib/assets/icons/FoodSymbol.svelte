@@ -81,7 +81,7 @@
 		width: 100%;
 		height: 100%;
 		place-items: center;
-		font-size: $ingredient-food-icon-font-size;
+		font-size: $app-font-size-xl;
 		line-height: 1;
 	}
 
