@@ -9,7 +9,6 @@ import {
 	getNutrientProgress,
 	getNutrientReductionSuggestions,
 	getNutrientTotal,
-	getNutrientTotalResult,
 } from "$lib/utils/mix/calculations";
 import { resolveFdcNutrient } from "$lib/utils/food/nutrients/fdcNutrients";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
@@ -71,22 +70,22 @@ describe("mix calculations", () => {
 			source: "exact",
 		});
 		expect(
-			getNutrientTotalResult(
+			getNutrientTotal(
 				[zeroProteinFood],
 				NUTRIENT_IDS.PROTEIN,
 				{ [zeroProteinFood.fdcId]: 100 },
 			),
-		).toEqual({ total: 0, missingFoodIds: [] });
+		).toBe(0);
 	});
 
-	it("tracks missing nutrients instead of silently treating them as zero", () => {
-		const result = getNutrientTotalResult(
+	it("uses zero for an ingredient nutrient that is not reported", () => {
+		const total = getNutrientTotal(
 			[milk],
 			NUTRIENT_IDS.FAT,
 			{ [milk.fdcId]: 100 },
 		);
 
-		expect(result).toEqual({ total: 0, missingFoodIds: [milk.fdcId] });
+		expect(total).toBe(0);
 		expect(resolveFdcNutrient(milk, NUTRIENT_IDS.FAT)).toMatchObject({
 			value: null,
 			source: "missing",

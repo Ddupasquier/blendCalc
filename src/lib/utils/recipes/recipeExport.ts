@@ -1,4 +1,4 @@
-import { getNutrientTotalResult } from "$lib/utils/mix/calculations/nutrientTotals";
+import { getNutrientTotal } from "$lib/utils/mix/calculations/nutrientTotals";
 import { getServingMeasureOption } from "$lib/utils/serving/servingMeasureCatalog";
 import type { SavedDrink } from "$lib/utils/storage/client/savedDrinks";
 
@@ -34,16 +34,13 @@ export const buildSavedDrinkExportText = (drink: SavedDrink) => {
 		const option = drink.options.find((item) => Number(item.id) === nutrientId);
 		if (!option) return [];
 
-		const result = getNutrientTotalResult(
+		const total = getNutrientTotal(
 			drink.foods,
 			nutrientId,
 			drink.servingGrams,
 		);
 		const unit = getNutrientUnit(drink, nutrientId);
-		const incompleteNote = result.missingFoodIds.length > 0
-			? ` (partial: ${result.missingFoodIds.length} ingredient${result.missingFoodIds.length === 1 ? "" : "s"} missing this value)`
-			: "";
-		return [`- ${option.label}: ${formatAmount(result.total)}${unit ? ` ${unit}` : ""}${incompleteNote}`];
+		return [`- ${option.label}: ${formatAmount(total)}${unit ? ` ${unit}` : ""}`];
 	});
 
 	return [

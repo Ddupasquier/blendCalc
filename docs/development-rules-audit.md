@@ -475,7 +475,10 @@ text relevance. Store every provider, source subtype, source reference, and avai
 publication/modification date with field-level provenance, and show neutral attribution
 in detailed views. A provider name alone must never create a user-facing trust level.
 Never average nutrients across records, silently merge unrelated foods, replace a
-reported zero, or convert a missing nutrient into zero.
+reported zero, or store an unreported nutrient as a source-reported zero. Ingredient
+labels and calculations may use the app's explicit zero fallback for an absent value,
+but that presentation/calculation fallback must never be written back as observed data
+or given source provenance.
 
 **30b.** <a id="rule-source-quality-measurement"></a>Measure external product sources
 with privacy-safe backend metrics instead of assumptions. Count logical lookups, actual
@@ -631,20 +634,25 @@ never be silently presented as per 100g. A dataset requiring unaccepted terms or
 unresolved share-alike review stays disabled until that review is complete.
 
 **30i.** <a id="rule-missing-nutrient-semantics"></a>Keep `reported zero`, `trace`,
-`missing`, `derived`, and `unmapped` as different nutrition states from ingestion
-through display. A reported zero is real data. A trace value remains trace unless the
-source supplies a numeric amount. Missing and unmapped values remain unknown and must
-never become zero or an estimate copied from a vaguely similar food. Before calling a
-food incomplete, check enabled source mappings, aliases, units, conversions, and the
-record's stated basis. Define required and recommended nutrients in database-backed
-completeness profiles, not component arrays; reserve incomplete-data warnings for
-genuinely missing profile requirements and keep source-specific optional omissions
-honest. Profile selection must distinguish private manual ingredients from source-backed
-packaged records: a private custom food uses the database-backed manual-entry
-requirements even when the user typed a barcode, while a source-imported,
-pending-review, or shared packaged product uses the applicable packaged-label profile. A
-barcode alone must not make a private manual record appear deficient against a full
-regulatory label.
+`missing`, `derived`, and `unmapped` as different source-data states throughout
+ingestion, normalized storage, moderation, provenance, and API responses. A reported
+zero is real data. A trace value remains trace unless the source supplies a numeric
+amount. Missing and unmapped values remain unknown source facts and must never be stored
+as reported zero or copied from a vaguely similar food. At the app consumption boundary,
+ingredient nutrition labels, Mix calculations, charts, warnings, and exports treat an
+absent nutrient amount as zero without showing a partial-label disclosure. This is an
+explicit product calculation/display fallback only; it must not mutate canonical data,
+field status, attribution, confidence, or future API output. Before assigning internal
+completeness or moderation status, check enabled source mappings, aliases, units,
+conversions, and the record's stated basis. Define any required and recommended
+nutrients in database-backed completeness profiles, not component arrays, and use those
+profiles for ingestion quality, search ordering, and moderation rather than exposing a
+large missing-nutrient warning to ordinary users. Profile selection must distinguish
+private manual ingredients from source-backed packaged records: a private custom food
+uses the database-backed manual-entry requirements even when the user typed a barcode,
+while a source-imported, pending-review, or shared packaged product uses the applicable
+packaged-label profile. A barcode alone must not make a private manual record appear
+deficient against a full regulatory label.
 
 **30j.** <a id="rule-confirmed-label-ocr"></a>Nutrition-label text recognition is an
 optional data-entry aid, not an authority. Run recognition only after the user
@@ -694,7 +702,8 @@ can evolve without breaking future consumers. Deduplicate repeated observations 
 erasing meaningful source history or disagreement. Sample broadly—roughly 200
 representative examples when practical—and add indexes, retention choices, and tests
 appropriate to the expected access path. Never store fabricated estimates as observed
-facts, convert missing values to zero, silently merge uncertain matches, retain
+facts, persist the app's missing-value zero fallback as observed data, silently merge
+uncertain matches, retain
 prohibited vendor payloads, or collect secrets, private evidence, personal data, or
 package-instance identifiers merely because storage is technically possible. If
 storage/reuse rights or identity confidence are unresolved, retain only the legally
@@ -1357,7 +1366,8 @@ Recommended boundaries:
 ### Immediate
 
 1. Complete browser and visual QA for the database-driven manual-entry nutrient groups.
-2. Verify missing nutrient values remain missing throughout Mix totals and warnings.
+2. Verify missing nutrients remain `null` in canonical/API data while ingredient labels,
+   Mix totals, and exports consistently apply the app's zero fallback without partial-data warnings.
 3. Apply the same token/type audit when rebuilding the moderation view.
 4. Keep redirect/auth utility tests current for local, production, and preview URLs.
 

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel/ProductImagePanel.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
@@ -22,7 +22,7 @@ const foodWithImage: FdcFood = {
 };
 
 describe("ProductImagePanel", () => {
-	it("marks admin and moderator image-placement actions with crown badges", () => {
+	it("keeps admin and moderator image-placement actions collapsed by default", async () => {
 		const { container } = render(ProductImagePanel, {
 			props: {
 				food: foodWithImage,
@@ -31,8 +31,12 @@ describe("ProductImagePanel", () => {
 			},
 		});
 
+		const details = screen.getByText("Adjust card image placement").closest("details");
+		expect(details).not.toHaveAttribute("open");
+		await fireEvent.click(screen.getByText("Adjust card image placement"));
+		expect(details).toHaveAttribute("open");
 		expect(screen.getByText("Card image placement")).toBeInTheDocument();
-		expect(screen.getAllByTitle("Admin or moderator action")).toHaveLength(6);
+		expect(screen.getAllByTitle("Admin or moderator action")).toHaveLength(7);
 		expect(
 			screen.queryByText("Nutrition page shows the full image."),
 		).not.toBeInTheDocument();
@@ -51,7 +55,7 @@ describe("ProductImagePanel", () => {
 			},
 		});
 
-		expect(screen.queryByText("Card image placement")).not.toBeInTheDocument();
+		expect(screen.queryByText("Adjust card image placement")).not.toBeInTheDocument();
 		expect(screen.queryByTitle("Admin or moderator action")).not.toBeInTheDocument();
 	});
 });

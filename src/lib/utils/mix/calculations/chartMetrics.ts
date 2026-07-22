@@ -1,7 +1,7 @@
 import { getMixRuntimeConfiguration } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { NutrientChartMetric, NutrientMeta } from "./nutrientTypes";
-import { getDefaultNutrientGoal, getNutrientTotalResult } from "./nutrientTotals";
+import { getDefaultNutrientGoal, getNutrientTotal } from "./nutrientTotals";
 
 const CHART_COLORS = {
 	atGoal: { fill: "var(--mix-chart-success-fill)", stroke: "var(--mix-chart-success-stroke)" },
@@ -21,12 +21,11 @@ export const getNutrientChartMetrics = (
 		const baselineGoal = getDefaultNutrientGoal(nutrient);
 		const safeBaselineGoal = baselineGoal > 0 ? baselineGoal : 1;
 		const goal = nutrientGoals[nutrientId] ?? baselineGoal;
-		const result = getNutrientTotalResult(foods, nutrientId, servingGrams);
+		const total = getNutrientTotal(foods, nutrientId, servingGrams);
 
 		return {
 			goalRatio: goal / safeBaselineGoal,
-			totalRatio: result.total / safeBaselineGoal,
-			incomplete: result.missingFoodIds.length > 0,
+			totalRatio: total / safeBaselineGoal,
 		};
 	});
 };

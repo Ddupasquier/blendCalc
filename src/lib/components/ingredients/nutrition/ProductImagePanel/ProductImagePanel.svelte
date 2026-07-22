@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import AssetAttribution from "$lib/components/common/display/AssetAttribution/AssetAttribution.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
@@ -113,38 +114,44 @@
 		/>
 
 		{#if canEditPlacement}
-			<div class="product-image-panel__placement">
-				<ImagePlacementEditor
-					imageUrl={imageUrl}
-					alt={imageAlt}
-					title="Card image placement"
-					description="Adjust how this image appears in ingredient cards."
-					mode="card-only"
-					value={draftPlacement}
-					privileged
-					onChange={(value) => {
-						draftPlacement = value;
-						placementMessage = "";
-						placementError = "";
-					}}
-				/>
-				<RoundedActionButton
-					variant="primary"
-					fullWidth
-					busy={savingPlacement}
-					disabled={!hasPlacementChanges}
-					privileged
-					onclick={savePlacement}
-				>
-					Save image placement
-				</RoundedActionButton>
-				{#if placementMessage}
-					<p class="product-image-panel__message">{placementMessage}</p>
-				{/if}
-				{#if placementError}
-					<p class="product-image-panel__error">{placementError}</p>
-				{/if}
-			</div>
+			<details class="product-image-panel__placement">
+				<summary>
+					Adjust card image placement
+					<PrivilegedActionBadge />
+				</summary>
+				<div class="product-image-panel__placement-content">
+					<ImagePlacementEditor
+						imageUrl={imageUrl}
+						alt={imageAlt}
+						title="Card image placement"
+						description="Adjust how this image appears in ingredient cards."
+						mode="card-only"
+						value={draftPlacement}
+						privileged
+						onChange={(value) => {
+							draftPlacement = value;
+							placementMessage = "";
+							placementError = "";
+						}}
+					/>
+					<RoundedActionButton
+						variant="primary"
+						fullWidth
+						busy={savingPlacement}
+						disabled={!hasPlacementChanges}
+						privileged
+						onclick={savePlacement}
+					>
+						Save image placement
+					</RoundedActionButton>
+					{#if placementMessage}
+						<p class="product-image-panel__message">{placementMessage}</p>
+					{/if}
+					{#if placementError}
+						<p class="product-image-panel__error">{placementError}</p>
+					{/if}
+				</div>
+			</details>
 		{/if}
 	</section>
 {/if}

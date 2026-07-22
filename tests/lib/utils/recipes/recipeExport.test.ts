@@ -56,7 +56,7 @@ describe("saved recipe export", () => {
 		expect(text).toContain("- Calories: 16 kcal");
 	});
 
-	it("labels totals as partial when an ingredient lacks the nutrient", () => {
+	it("uses zero without adding a partial-data warning when an ingredient lacks the nutrient", () => {
 		const text = buildSavedDrinkExportText({
 			...drink,
 			foods: [
@@ -66,6 +66,7 @@ describe("saved recipe export", () => {
 			servingGrams: { ...drink.servingGrams, 2: 20 },
 		});
 
-		expect(text).toContain("partial: 1 ingredient missing this value");
+		expect(text).toContain("- Calories: 16 kcal");
+		expect(text).not.toContain("partial");
 	});
 });

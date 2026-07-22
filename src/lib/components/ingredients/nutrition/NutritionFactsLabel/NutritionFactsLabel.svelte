@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import SourceAttribution from "$lib/components/common/display/SourceAttribution/SourceAttribution.svelte";
-	import NutritionConfidenceDetails from "$lib/components/ingredients/nutrition/NutritionConfidenceDetails/NutritionConfidenceDetails.svelte";
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
 	import NutritionServingStatement from "$lib/components/ingredients/nutrition/NutritionServingStatement/NutritionServingStatement.svelte";
 	import {
@@ -13,7 +12,6 @@
 		getNutritionBasisLabel,
 		scalePer100gValue,
 	} from "$lib/utils/food/nutrients/nutritionDisplay";
-	import { getFoodQuality } from "$lib/utils/food/quality/foodQuality";
 	import { getNutritionFactsFields } from "$lib/utils/food/reference/appReferenceCatalog";
 	import type { NutritionFactsLabelProps } from "./types";
 
@@ -29,16 +27,15 @@
 
 	const nutritionFactsFields = getNutritionFactsFields();
 	const vitalIds = nutritionFactsFields.map((field) => field.id);
-	const foodQuality = $derived(food ? getFoodQuality(food) : null);
 	const vitalRows = $derived(
 		food
 			? nutritionFactsFields.map((field) => {
 					const value = getFdcNutrientValue(food, field.id);
-					const scaledValue = scalePer100gValue(value, viewingGrams);
+					const scaledValue = scalePer100gValue(value ?? 0, viewingGrams) ?? 0;
 					return {
 						label: field.label,
-						value: scaledValue === null ? "—" : formatNutritionAmount(scaledValue),
-						unit: scaledValue === null ? "" : field.unit,
+						value: formatNutritionAmount(scaledValue),
+						unit: field.unit,
 						highlight: field.highlight,
 					};
 				})
@@ -110,9 +107,6 @@
 			label={food.sourceLabel}
 			dataType={food.sourceDataType ?? food.dataType}
 		/>
-	{/if}
-	{#if foodQuality && (foodQuality.status === "partial" || foodQuality.status === "limited")}
-		<NutritionConfidenceDetails quality={foodQuality} />
 	{/if}
 	<div class="nf-thick-divider"></div>
 	<div class="nf-columns">

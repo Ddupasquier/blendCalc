@@ -67,4 +67,17 @@ describe("NutritionPanel", () => {
 			nutritionFacts.compareDocumentPosition(ingredientsHeading),
 		).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
 	});
+
+	it("shows zero instead of a partial-data warning for missing ingredient nutrients", () => {
+		render(NutritionPanel, {
+			props: {
+				food: peanutButter,
+				viewingGrams: 100,
+				showListActions: false,
+			},
+		});
+
+		expect(screen.queryByText(/nutrition data/i)).not.toBeInTheDocument();
+		expect(screen.getAllByText("0").length).toBeGreaterThan(0);
+	});
 });

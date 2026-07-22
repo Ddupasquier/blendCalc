@@ -14,10 +14,9 @@
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
-    import {
+	import {
 		getFoodPreferenceSmartWarnings,
-		getIncompleteNutrientDataWarnings,
-        getNutrientGoalWarnings,
+		getNutrientGoalWarnings,
         type SmartWarning,
     } from "$lib/utils/mix/warnings/smartWarnings";
     import {
@@ -75,10 +74,9 @@
         getNutrientFoodSuggestions,
         getNutrientReductionSuggestions,
         getPointColors,
-        getNutrientProgress,
+		getNutrientProgress,
 		getNutrientTotal as calculateNutrientTotal,
-		getNutrientTotalResult,
-    } from "$lib/utils/mix/calculations";
+	} from "$lib/utils/mix/calculations";
     import type { FdcFood } from "$lib/utils/food/types";
     import { onMount } from "svelte";
     import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
@@ -313,26 +311,7 @@
             ];
         }),
     );
-    const nutrientCoverage = $derived(
-		selectedNutrients.map((nutrient) => {
-			const result = getNutrientTotalResult(
-				selectedFoods,
-				Number(nutrient.id),
-				servingGrams,
-			);
-			return {
-				id: nutrient.id,
-				label: nutrient.label ?? String(nutrient.id),
-				total: result.total,
-				missingFoods: result.missingFoodIds.flatMap((foodId) => {
-					const food = selectedFoods.find((item) => item.fdcId === foodId);
-					return food ? [food.description] : [];
-				}),
-			};
-		}),
-	);
     const smartWarnings = $derived<SmartWarning[]>([
-		...getIncompleteNutrientDataWarnings(nutrientCoverage),
         ...getNutrientGoalWarnings(
             selectedNutrients.map((nutrient) => {
                 const nutrientId = Number(nutrient.id);
@@ -341,9 +320,6 @@
                     label: nutrient.label ?? String(nutrient.id),
                     unit: nutrient.unit ?? "",
 					total: getNutrientTotal(nutrientId),
-					complete:
-						nutrientCoverage.find((coverage) => coverage.id == nutrient.id)
-							?.missingFoods.length === 0,
                     goal:
                         nutrientGoals[nutrientId] ??
                         getDefaultNutrientGoal(nutrient),
