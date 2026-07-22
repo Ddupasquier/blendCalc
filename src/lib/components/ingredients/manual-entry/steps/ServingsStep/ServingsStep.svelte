@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch/ToggleSwitch.svelte";
+	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import ManualEntryActions from "$lib/components/ingredients/manual-entry/ManualEntryActions/ManualEntryActions.svelte";
 	import ManualEntryField from "$lib/components/ingredients/manual-entry/ManualEntryField/ManualEntryField.svelte";
 	import ManualEntryHelper from "$lib/components/ingredients/manual-entry/ManualEntryHelper/ManualEntryHelper.svelte";
@@ -45,16 +46,14 @@
 	<section class="servings-step__card" aria-label="Primary serving">
 		<h3>Primary serving <em>*</em></h3>
 		<ManualEntryField forId="custom-ingredient-serving-weight" label="Weight (g)" required>
-			<input
+			<NumberInput
 				id="custom-ingredient-serving-weight"
 				name="custom-ingredient-serving-weight"
-				type="number"
 				min="0.1"
 				step="any"
 				placeholder="e.g. 30"
 				value={servingWeightDisplay}
-				onfocus={(event) => event.currentTarget.select()}
-				oninput={(event) => onServingWeightChange(event.currentTarget.valueAsNumber)}
+				onValueChange={(_, valueAsNumber) => onServingWeightChange(valueAsNumber ?? Number.NaN)}
 			/>
 		</ManualEntryField>
 
@@ -74,16 +73,14 @@
 		{#if useVolumeEquivalent}
 			<div class="servings-step__inline-grid">
 				<ManualEntryField forId="custom-ingredient-volume-amount" label="Volume in this serving" required>
-					<input
+					<NumberInput
 						id="custom-ingredient-volume-amount"
 						name="custom-ingredient-volume-amount"
-						type="number"
 						min="0.1"
 						step="any"
 						placeholder="2"
 						value={volumeQuantity ?? ""}
-						onfocus={(event) => event.currentTarget.select()}
-						oninput={(event) => onVolumeQuantityChange(Number.isFinite(event.currentTarget.valueAsNumber) ? event.currentTarget.valueAsNumber : null)}
+						onValueChange={(_, valueAsNumber) => onVolumeQuantityChange(valueAsNumber)}
 					/>
 				</ManualEntryField>
 

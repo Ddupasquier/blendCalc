@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ChevronDown from "$lib/assets/icons/ChevronDown/ChevronDown.svelte";
 	import Popover from "$lib/components/common/display/Popover/Popover.svelte";
+	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
 	import CloseButton from "$lib/components/common/buttons/CloseButton/CloseButton.svelte";
@@ -63,18 +64,16 @@
 	<div class="ingredient-card__controls">
 		<label>
 			<span>Amount</span>
-			<input
+			<NumberInput
 				id={`ingredient-${food.fdcId}-quantity`}
 				name={`ingredient-${food.fdcId}-quantity`}
-				type="number"
+				class="ingredient-card__amount-input"
 				min="0"
 				step="any"
 				placeholder="Amount"
 				value={quantity}
-				aria-label={`Quantity for ${food.description}`}
-				onfocus={(event) => event.currentTarget.select()}
-				oninput={(event) =>
-					onServingChange(food, event.currentTarget.value, unit)}
+				ariaLabel={`Quantity for ${food.description}`}
+				onValueChange={(value) => onServingChange(food, value, unit)}
 			/>
 		</label>
 		<label>

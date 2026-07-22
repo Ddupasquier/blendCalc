@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getMixGoalTemplates } from "$lib/utils/food/reference/appReferenceCatalog";
+	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import type { GoalTargetsProps } from "./types";
 
 	let {
@@ -46,17 +47,15 @@
 		{#each selectedNutrients as nutrient}
 			<label class="goal-input">
 				<span class="goal-label">{nutrient.label}</span>
-				<input
+				<NumberInput
 					id={`goal-${nutrient.id}`}
 					name={`goal-${nutrient.id}`}
-					type="number"
+					class="goal-input__number"
 					min="0"
 					step="any"
 					placeholder={`Target ${nutrient.unit}`}
 					value={nutrientGoals[Number(nutrient.id)] ?? getGoal(nutrient)}
-					onfocus={(event) => event.currentTarget.select()}
-					oninput={(event) =>
-						onUpdateGoal(nutrient.id, event.currentTarget.value)}
+					onValueChange={(value) => onUpdateGoal(nutrient.id, value)}
 				/>
 				<span class="goal-unit">{nutrient.unit}</span>
 				<small>

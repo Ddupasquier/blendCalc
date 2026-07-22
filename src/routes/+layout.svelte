@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
+	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import favicon from "$lib/assets/favicon.svg";
 	import "../app.scss";
@@ -57,6 +58,8 @@
 			(page.url.pathname === "/fridge" ||
 				page.url.pathname.startsWith("/fridge/")),
 	);
+	const tutorialRouteOpen = $derived(page.url.pathname === "/profile/tutorial");
+	const tutorialVisible = $derived(tutorialOpen || tutorialRouteOpen);
 	setFoodPreferenceContext(foodPreferenceContext);
 
 	$effect.pre(() => {
@@ -65,12 +68,19 @@
 		configureAppReferenceCatalog(data.appReferenceCatalog);
 	});
 
-	const recordTutorialChoice = async (choice: "later" | "never") => {
+	const finishTutorial = async () => {
 		if (!data.authUser) return false;
 
-		const saved = await saveTutorialChoice(choice);
-		if (saved) tutorialOpen = false;
-		return saved;
+		if (!tutorialOpen && tutorialRouteOpen) {
+			await goto("/profile");
+			return true;
+		}
+
+		const saved = await saveTutorialChoice("complete");
+		if (!saved) return false;
+		tutorialOpen = false;
+		if (tutorialRouteOpen) await goto("/profile");
+		return true;
 	};
 
 	$effect(() => {
@@ -132,16 +142,16 @@
 		role={data.authUser.role}
 	/>
 	<TabNavigation />
-	{#if !tutorialOpen}
+	{#if !tutorialVisible}
 		<DailyWelcome
 			userId={data.authUser.id}
 			name={data.authUser.welcomeName}
 		/>
 	{/if}
 	<TutorialOverlay
-		open={tutorialOpen}
-		onRemindLater={() => recordTutorialChoice("later")}
-		onDontShowAgain={() => recordTutorialChoice("never")}
+		open={tutorialVisible}
+		mode={tutorialRouteOpen ? "replay" : "onboarding"}
+		onFinish={finishTutorial}
 	/>
 {/if}
 

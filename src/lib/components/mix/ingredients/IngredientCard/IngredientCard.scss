@@ -86,7 +86,7 @@ label {
 	font-weight: $app-font-weight-bold;
 }
 
-input,
+:global(.ingredient-card__amount-input),
 select {
 	width: 100%;
 	height: $app-control-height-sm;
@@ -99,7 +99,7 @@ select {
 	font-size: $app-font-size-sm;
 }
 
-input {
+:global(.ingredient-card__amount-input) {
 	font-family: $app-font-family-data;
 	font-variant-numeric: tabular-nums;
 }

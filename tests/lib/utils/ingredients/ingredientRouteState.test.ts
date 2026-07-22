@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import {
 	buildIngredientRouteHref,
+	buildIngredientListTabHref,
 	findIngredientRouteFood,
+	getIngredientListTab,
 	getIngredientRouteState,
 	INGREDIENT_ROUTE_MODALS,
 	INGREDIENT_ROUTE_SHEETS,
@@ -19,6 +21,25 @@ const food = (fdcId: number, description: string): FdcFood => ({
 });
 
 describe("ingredient route state", () => {
+	it("keeps the active saved list in browser history", () => {
+		expect(getIngredientListTab(url("/fridge"))).toBe(MIX_STORAGE_KEYS.fridge);
+		expect(getIngredientListTab(url("/fridge?tab=shopping-list"))).toBe(
+			MIX_STORAGE_KEYS.shoppingList,
+		);
+		expect(
+			buildIngredientListTabHref(
+				url("/fridge?sort=recent"),
+				MIX_STORAGE_KEYS.shoppingList,
+			),
+		).toBe("/fridge?sort=recent&tab=shopping-list");
+		expect(
+			buildIngredientListTabHref(
+				url("/fridge?sort=recent&tab=shopping-list"),
+				MIX_STORAGE_KEYS.fridge,
+			),
+		).toBe("/fridge?sort=recent");
+	});
+
 	it("parses search, sheet, and nutrition route state", () => {
 		expect(getIngredientRouteState(url("/fridge/search"))).toMatchObject({
 			view: INGREDIENT_ROUTE_VIEWS.search,

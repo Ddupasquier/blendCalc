@@ -61,6 +61,16 @@
 		font: inherit;
 	}
 
+	:global(.profile-serving-size-input) {
+		width: 100%;
+		padding: 0.65rem $app-gap-md;
+		color: $app-primary;
+		background: $app-bg;
+		border: $app-border;
+		border-radius: $app-radius-sm;
+		font: inherit;
+	}
+
 	small {
 		color: $app-muted;
 		font-size: $app-font-size-sm;
@@ -209,6 +219,10 @@
 		color: $app-muted;
 		font-size: $app-font-size-sm;
 	}
+}
+
+.profile-card--help :global(.rounded-action-button) {
+	justify-self: start;
 }
 
 .avatar-policy {

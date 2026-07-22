@@ -31,7 +31,9 @@
     import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
     import {
         buildIngredientRouteHref,
+		buildIngredientListTabHref,
         findIngredientRouteFood,
+		getIngredientListTab,
         getIngredientRouteState,
         INGREDIENT_ROUTE_MODALS,
         INGREDIENT_ROUTE_SHEETS,
@@ -81,7 +83,7 @@
     const sourceFilter = "all";
     const trustFilter = "any";
     let listSort = $state<FoodListSort>("recent");
-    let activeList = $state<SmoothieListKey>(MIX_STORAGE_KEYS.fridge);
+    let activeList = $state<SmoothieListKey>(getIngredientListTab(page.url));
     let activeSheet = $state<"manual-entry" | "filters" | null>(null);
     let searchViewOpen = $state(false);
     let searchAddFoodId = $state<number | null>(null);
@@ -207,6 +209,13 @@
             searchViewOpen ||
             selectedFood !== null,
     );
+
+	$effect(() => {
+		const routeList = getIngredientListTab(page.url);
+		if (routeList === activeList) return;
+		activeList = routeList;
+		listViewResetKey += 1;
+	});
 
     const setListPage = (
         key: SmoothieListKey,
@@ -694,6 +703,7 @@
         if (activeList === key) return;
         activeList = key;
         listViewResetKey += 1;
+		pushState(buildIngredientListTabHref(page.url, key), { ...page.state });
     };
 
     const resetVisibleCounts = () => {

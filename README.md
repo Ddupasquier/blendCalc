@@ -129,6 +129,23 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
+## Inspecting The Supabase Schema
+
+Use the repository's CLI workflow instead of relying on a separate editor snapshot:
+
+1. Read pending SQL in `supabase/migrations/`; migrations are the schema source of
+   truth.
+2. Run `npm run db:push:dry` before applying remote changes.
+3. Run `npm run db:lint` to catch database problems.
+4. Run `npm run db:types` after a schema change, then review
+   `src/lib/types/database.types.ts` in VS Code.
+5. Update `docs/supabase-schema.md` in the same change.
+
+Use Supabase Studio only to inspect live rows or confirm a deployed migration. Do not
+edit production tables manually when the change belongs in a migration.
+
+---
+
 ## Running tests
 
 ```bash
@@ -155,6 +172,10 @@ See [`docs/api-structures/README.md`](docs/api-structures/README.md) for the
 generated external API payload reference files. These files document observed
 FoodData Central and Open Food Facts response shapes only; do not import them
 from runtime app code.
+
+See [`docs/api-structures/source-data-inventory.md`](docs/api-structures/source-data-inventory.md)
+for active source responsibilities, useful stored fields, source-specific server paths,
+and legal/canonical storage boundaries.
 
 See [`docs/versioning.md`](docs/versioning.md) for the independent app, API, database,
 catalog-revision, and client-storage versioning model.

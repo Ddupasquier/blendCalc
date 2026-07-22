@@ -1,5 +1,5 @@
 export type TutorialOverlayProps = {
 	open?: boolean;
-	onRemindLater: () => boolean | Promise<boolean>;
-	onDontShowAgain: () => boolean | Promise<boolean>;
+	mode?: "onboarding" | "replay";
+	onFinish: () => boolean | Promise<boolean>;
 };

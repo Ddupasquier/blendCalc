@@ -2,8 +2,10 @@
 	import { enhance } from "$app/forms";
 	import { invalidateAll } from "$app/navigation";
 	import User from "$lib/assets/icons/User/User.svelte";
+	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
+	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker/FoodPreferencePicker.svelte";
 	import { APP_NAME } from "$lib/config/brand";
@@ -311,6 +313,14 @@
 		</div>
 	</section>
 
+	<section class="profile-card profile-card--help">
+		<div class="profile-card__heading">
+			<h2>Help &amp; tutorial</h2>
+			<p>Replay the quick tour whenever you want a refresher.</p>
+		</div>
+		<RoundedActionLink href="/profile/tutorial">Open quick tutorial</RoundedActionLink>
+	</section>
+
 	<section class="profile-card">
 		<div class="profile-card__heading">
 			<h2>Profile details</h2>
@@ -488,15 +498,14 @@
 				<label>
 					<span>Default smoothie serving size</span>
 					<div class="inline-fields">
-						<input
+						<NumberInput
 							name="defaultSmoothieServingSize"
-							type="number"
+							class="profile-serving-size-input"
 							min="0"
 							step="0.1"
 							value={incomingFoodPreferenceValues.defaultSmoothieServingSize}
 							placeholder="Optional"
 							disabled={foodPreferencesDisabled}
-							onfocus={(event) => event.currentTarget.select()}
 						/>
 						<select
 							name="defaultSmoothieServingUnit"

@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { tick } from "svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte";
-	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import TutorialStepIcon from "$lib/components/app/TutorialStepIcon/TutorialStepIcon.svelte";
 	import { tutorialSteps } from "$lib/utils/tutorial/steps";
 	import type { TutorialOverlayProps } from "./types";
 
 	let {
 		open = false,
-		onRemindLater,
-		onDontShowAgain,
+		mode = "onboarding",
+		onFinish,
 	}: TutorialOverlayProps = $props();
 
 	let currentStepIndex = $state(0);
@@ -31,7 +31,7 @@
 		error = "";
 	};
 
-	const saveChoice = async (choice: "later" | "never") => {
+	const finishTutorial = async () => {
 		if (busy) return;
 
 		busy = true;
@@ -39,9 +39,7 @@
 
 		let saved = false;
 		try {
-			saved = await (choice === "later"
-				? onRemindLater()
-				: onDontShowAgain());
+			saved = await onFinish();
 		} catch {
 			saved = false;
 		}
@@ -151,42 +149,22 @@
 				{/if}
 
 				<div class="tutorial__navigation">
-					<button
-						class="tutorial__secondary"
-						type="button"
+					<RoundedActionButton
+						variant="neutral"
 						disabled={isFirstStep || busy}
 						onclick={() => moveStep(-1)}
 					>
 						Previous
-					</button>
-					<button
-						class="tutorial__next"
-						type="button"
-						disabled={isLastStep || busy}
-						onclick={() => moveStep(1)}
-					>
-						Next
-					</button>
-				</div>
-
-				<div class="tutorial__choices">
-					<button
-						class="tutorial__secondary"
-						type="button"
-						disabled={busy}
-						onclick={() => saveChoice("later")}
-					>
-						Remind me in 7 days
-					</button>
-					<button
-						class="tutorial__primary"
-						type="button"
-						disabled={busy}
-						onclick={() => saveChoice("never")}
-					>
-						{#if busy}<LoadingSpinner size="small" decorative />{/if}
-						Don’t show again
-					</button>
+					</RoundedActionButton>
+					{#if isLastStep}
+						<RoundedActionButton busy={busy} onclick={() => void finishTutorial()}>
+							{mode === "replay" ? "Close tutorial" : "Finish tutorial"}
+						</RoundedActionButton>
+					{:else}
+						<RoundedActionButton disabled={busy} onclick={() => moveStep(1)}>
+							Next
+						</RoundedActionButton>
+					{/if}
 				</div>
 			</footer>
 		</div>

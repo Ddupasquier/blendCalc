@@ -22,6 +22,10 @@ until its own response contract needs a deliberate version change.
 This folder contains generated reference files that describe the external food API
 payloads observed by blendCalc scripts.
 
+See [`source-data-inventory.md`](./source-data-inventory.md) for the app-owned source
+map, useful fields, legal-storage boundaries, caching behavior, and the required process
+for adding another provider.
+
 These files are documentation only. Do not import them from app code.
 
 If runtime code needs types, create focused app-owned types in `src/lib/types` or the

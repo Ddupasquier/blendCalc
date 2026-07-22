@@ -29,7 +29,7 @@ describe("tutorial preference route", () => {
 	});
 
 	it("derives tutorial ownership from the signed-in user", async () => {
-		const event = createEvent("user-1", { choice: "never" });
+		const event = createEvent("user-1", { choice: "complete" });
 		const response = await POST(event as never);
 
 		expect(response.status).toBe(200);
@@ -37,7 +37,7 @@ describe("tutorial preference route", () => {
 		expect(mocks.writeTutorialChoice).toHaveBeenCalledWith(
 			event.locals.supabase,
 			"user-1",
-			"never",
+			"complete",
 		);
 	});
 
@@ -51,7 +51,7 @@ describe("tutorial preference route", () => {
 	});
 
 	it("rejects signed-out writes", async () => {
-		const response = await POST(createEvent(null, { choice: "later" }) as never);
+		const response = await POST(createEvent(null, { choice: "complete" }) as never);
 
 		expect(response.status).toBe(401);
 		expect(mocks.writeTutorialChoice).not.toHaveBeenCalled();

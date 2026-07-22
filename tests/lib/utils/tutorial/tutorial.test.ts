@@ -28,30 +28,12 @@ describe("shouldAutomaticallyShowTutorial", () => {
 		expect(shouldAutomaticallyShowTutorial(null)).toBe(true);
 	});
 
-	it("does not automatically show after the user opts out", () => {
+	it("does not automatically repeat after any current-version completion", () => {
 		expect(
 			shouldAutomaticallyShowTutorial(
 				preference({ do_not_show_again: true }),
 			),
 		).toBe(false);
-	});
-
-	it("waits until a reminder date is due", () => {
-		const now = new Date("2026-06-13T12:00:00.000Z");
-
-		expect(
-			shouldAutomaticallyShowTutorial(
-				preference({ remind_after: "2026-06-20T12:00:00.000Z" }),
-				now,
-			),
-		).toBe(false);
-
-		expect(
-			shouldAutomaticallyShowTutorial(
-				preference({ remind_after: "2026-06-12T12:00:00.000Z" }),
-				now,
-			),
-		).toBe(true);
 	});
 
 	it("shows a newer tutorial version once", () => {

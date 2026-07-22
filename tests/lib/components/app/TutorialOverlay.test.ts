@@ -7,8 +7,7 @@ describe("TutorialOverlay", () => {
 		render(TutorialOverlay, {
 			props: {
 				open: true,
-				onRemindLater: vi.fn(() => true),
-				onDontShowAgain: vi.fn(() => true),
+				onFinish: vi.fn(() => true),
 			},
 		});
 
@@ -27,37 +26,35 @@ describe("TutorialOverlay", () => {
 		expect(screen.getByText("Step 2 of 4")).toBeInTheDocument();
 	});
 
-	it("records the selected automatic-display preference", async () => {
-		const remindLater = vi.fn(() => true);
-		const dontShowAgain = vi.fn(() => true);
+	it("finishes after the final step", async () => {
+		const onFinish = vi.fn(() => true);
 
 		render(TutorialOverlay, {
 			props: {
 				open: true,
-				onRemindLater: remindLater,
-				onDontShowAgain: dontShowAgain,
+				onFinish,
 			},
 		});
 
-		await fireEvent.click(
-			screen.getByRole("button", { name: "Remind me in 7 days" }),
-		);
-		expect(remindLater).toHaveBeenCalledOnce();
-		expect(dontShowAgain).not.toHaveBeenCalled();
+		for (let step = 1; step < 4; step += 1) {
+			await fireEvent.click(screen.getByRole("button", { name: "Next" }));
+		}
+		await fireEvent.click(screen.getByRole("button", { name: "Finish tutorial" }));
+		expect(onFinish).toHaveBeenCalledOnce();
 	});
 
 	it("keeps the tutorial open and explains a failed preference save", async () => {
 		render(TutorialOverlay, {
 			props: {
 				open: true,
-				onRemindLater: vi.fn(() => false),
-				onDontShowAgain: vi.fn(() => false),
+				onFinish: vi.fn(() => false),
 			},
 		});
 
-		await fireEvent.click(
-			screen.getByRole("button", { name: "Don’t show again" }),
-		);
+		for (let step = 1; step < 4; step += 1) {
+			await fireEvent.click(screen.getByRole("button", { name: "Next" }));
+		}
+		await fireEvent.click(screen.getByRole("button", { name: "Finish tutorial" }));
 
 		expect(screen.getByRole("alert")).toHaveTextContent(
 			"We could not save that choice. Please try again.",

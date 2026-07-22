@@ -106,7 +106,7 @@
 		word-break: normal;
 	}
 
-	input {
+	:global(.goal-input__number) {
 		width: 100%;
 		min-width: 0;
 		height: $app-control-height-sm;

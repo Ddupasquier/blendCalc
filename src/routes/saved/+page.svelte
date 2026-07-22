@@ -1,11 +1,13 @@
 <script lang="ts">
     import { page as routePage } from "$app/state";
-    import { goto } from "$app/navigation";
+	import { goto } from "$app/navigation";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
     import ListControls from "$lib/components/common/lists/ListControls/ListControls.svelte";
     import Pagination from "$lib/components/common/lists/Pagination/Pagination.svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import SavedDrinkExportAction from "$lib/components/saved/SavedDrinkExportAction/SavedDrinkExportAction.svelte";
     import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
     import {
         clampPage,
@@ -236,25 +238,24 @@
                         {/if}
                     </div>
                     <div class="saved-card__actions">
-                        <button
-							type="button"
+						<SavedDrinkExportAction {drink} />
+						<RoundedActionButton
+							busy={loadingDrinkId === drink.id}
 							disabled={loadingDrinkId !== null || deletingDrinkId !== null}
 							onclick={() => void loadDrink(drink)}
 						>
-							{#if loadingDrinkId === drink.id}<LoadingSpinner size="small" decorative />{/if}
 							Load
-                        </button>
-                        <button
-                            class="saved-card__delete"
-                            type="button"
+						</RoundedActionButton>
+						<RoundedActionButton
+							variant="neutral"
 							disabled={deletingDrinkId !== null || loadingDrinkId !== null}
 							onclick={() => {
 								deleteError = "";
 								drinkPendingDelete = drink;
 							}}
-                        >
-                            Delete
-                        </button>
+						>
+							Delete
+						</RoundedActionButton>
                     </div>
                 </article>
             {/each}
@@ -270,14 +271,14 @@
             <section class="saved-empty saved-empty--filtered">
                 <h3>No saved drinks match.</h3>
                 <p>Try a different drink name or ingredient.</p>
-                <button type="button" onclick={() => updateQuery("")}>Clear search</button>
+				<RoundedActionButton onclick={() => updateQuery("")}>Clear search</RoundedActionButton>
             </section>
         {/if}
     {:else}
         <section class="saved-empty">
             <h3>No saved drinks yet.</h3>
             <p>Build a smoothie in Mix, then use Save to name it for later.</p>
-            <button type="button" onclick={() => goto("/mix")}>Go to Mix</button>
+			<RoundedActionButton onclick={() => goto("/mix")}>Go to Mix</RoundedActionButton>
         </section>
     {/if}
 </div>

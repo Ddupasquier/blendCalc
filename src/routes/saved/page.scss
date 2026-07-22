@@ -1,10 +1,6 @@
 @use "../../styles/variables" as *;
 
 $saved-pill-gap: 0.28rem;
-$saved-primary-action-padding-y: 0.4rem;
-$saved-primary-action-padding-x: 0.8rem;
-$saved-empty-action-padding-y: 0.45rem;
-$saved-empty-action-padding-x: 0.9rem;
 
 .saved-page {
 	box-sizing: border-box;
@@ -128,30 +124,10 @@ $saved-empty-action-padding-x: 0.9rem;
 
 .saved-card__actions {
 	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
 	justify-content: flex-end;
 	gap: $app-gap-sm;
-}
-
-.saved-card__actions button {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: $app-gap-xs;
-	padding: $saved-primary-action-padding-y $saved-primary-action-padding-x;
-	color: $app-btn-text;
-	background: $app-btn-bg;
-	border-radius: $app-radius-pill;
-	font-weight: $app-button-font-weight;
-	line-height: $app-button-line-height;
-}
-
-.saved-card__actions button:hover {
-	background: $app-btn-bg-hover;
-}
-
-.saved-card__actions .saved-card__delete {
-	color: $app-primary;
-	background: $app-accent;
 }
 
 .saved-empty {
@@ -168,14 +144,8 @@ $saved-empty-action-padding-x: 0.9rem;
 	color: $app-muted;
 }
 
-.saved-empty button {
+.saved-empty :global(.rounded-action-button) {
 	justify-self: center;
-	padding: $saved-empty-action-padding-y $saved-empty-action-padding-x;
-	color: $app-btn-text;
-	background: $app-btn-bg;
-	border-radius: $app-radius-pill;
-	font-weight: $app-button-font-weight;
-	line-height: $app-button-line-height;
 }
 
 .saved-empty--filtered {

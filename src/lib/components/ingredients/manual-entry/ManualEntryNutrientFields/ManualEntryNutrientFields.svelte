@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Chevron from "$lib/assets/icons/Chevron/Chevron.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import type { ManualEntryNutrientFieldsProps } from "./types";
 	import type {
 		ManualEntryNutrientDefinition,
@@ -74,17 +75,16 @@
 										<em>*</em>
 									{/if}
 								</span>
-								<input
+								<NumberInput
 									id={getInputId(field)}
 									name={getInputId(field)}
-									type="number"
+									class="manual-nutrients__input"
 									min="0"
 									step="any"
 									placeholder="0"
-									aria-required={isRequired(field)}
+									ariaRequired={isRequired(field)}
 									value={getInputValue(field)}
-									onfocus={(event) => event.currentTarget.select()}
-									oninput={(event) => onValueChange(field, event.currentTarget.value)}
+									onValueChange={(value) => onValueChange(field, value)}
 								/>
 							</label>
 						{/each}
@@ -111,17 +111,16 @@
 										<em>*</em>
 									{/if}
 								</span>
-								<input
+								<NumberInput
 									id={getInputId(field)}
 									name={getInputId(field)}
-									type="number"
+									class="manual-nutrients__input"
 									min="0"
 									step="any"
 									placeholder="0"
-									aria-required={isRequired(field)}
+									ariaRequired={isRequired(field)}
 									value={getInputValue(field)}
-									onfocus={(event) => event.currentTarget.select()}
-									oninput={(event) => onValueChange(field, event.currentTarget.value)}
+									onValueChange={(value) => onValueChange(field, value)}
 								/>
 							</label>
 						{/each}

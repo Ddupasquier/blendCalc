@@ -258,6 +258,11 @@ Notes:
 
 ## Product Reference Data and Serving Measures
 
+The source responsibilities, useful field inventory, legal-storage boundary, and
+provider-module map are documented in
+[`api-structures/source-data-inventory.md`](./api-structures/source-data-inventory.md).
+Source observations and caches remain separate from approved canonical catalog data.
+
 These tables replace runtime nutrient, source, serving-unit, alias, and unit-conversion
 constants. The app loads them from Supabase and uses them when it interprets USDA
 FoodData Central and Open Food Facts products.

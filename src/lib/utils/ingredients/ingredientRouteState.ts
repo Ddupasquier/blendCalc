@@ -8,6 +8,7 @@ const MODAL_PARAM = "modal";
 const FOOD_PARAM = "food";
 const LIST_PARAM = "list";
 const ACTIONS_PARAM = "actions";
+const LIST_TAB_PARAM = "tab";
 const FRIDGE_ROUTE_SEGMENT = "fridge";
 const LIST_ROUTE_SLUGS = {
 	fridge: "fridge",
@@ -84,6 +85,27 @@ const getRouteSlugFromListKey = (key: SmoothieListKey | null) => {
 	if (key === MIX_STORAGE_KEYS.fridge) return LIST_ROUTE_SLUGS.fridge;
 	if (key === MIX_STORAGE_KEYS.shoppingList) return LIST_ROUTE_SLUGS.shoppingList;
 	return null;
+};
+
+export const getIngredientListTab = (url: URL): SmoothieListKey =>
+	getListKeyFromRouteSlug(url.searchParams.get(LIST_TAB_PARAM)) ??
+	MIX_STORAGE_KEYS.fridge;
+
+export const buildIngredientListTabHref = (
+	url: URL,
+	key: SmoothieListKey,
+) => {
+	const nextUrl = new URL(url);
+	if (key === MIX_STORAGE_KEYS.fridge) {
+		nextUrl.searchParams.delete(LIST_TAB_PARAM);
+	} else {
+		nextUrl.searchParams.set(
+			LIST_TAB_PARAM,
+			getRouteSlugFromListKey(key) ?? LIST_ROUTE_SLUGS.shoppingList,
+		);
+	}
+	const query = nextUrl.searchParams.toString();
+	return `${nextUrl.pathname}${query ? `?${query}` : ""}${nextUrl.hash}`;
 };
 
 const parseFoodId = (value: string | null) => {

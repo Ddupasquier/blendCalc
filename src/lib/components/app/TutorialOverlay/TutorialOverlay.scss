@@ -127,44 +127,10 @@
 	border-top: $app-border;
 }
 
-.tutorial__navigation,
-.tutorial__choices {
-	display: flex;
-	gap: $app-gap-sm;
-}
-
 .tutorial__navigation {
+	display: flex;
 	justify-content: space-between;
-}
-
-.tutorial__choices button {
-	flex: 1 1 0;
-}
-
-.tutorial__primary {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: $app-gap-xs;
-	color: $app-btn-text;
-	background: $app-btn-bg;
-}
-
-.tutorial__next {
-	color: $app-highlight-text;
-	background: $app-highlight;
-}
-
-.tutorial__secondary {
-	color: $app-primary;
-	background: $app-accent;
-}
-
-.tutorial__primary:disabled,
-.tutorial__next:disabled,
-.tutorial__secondary:disabled {
-	cursor: not-allowed;
-	opacity: 0.55;
+	gap: $app-gap-sm;
 }
 
 .tutorial__error {
@@ -189,8 +155,9 @@
 		--circular-icon-frame-icon-size: #{2.9rem};
 	}
 
-	.tutorial__choices {
-		flex-direction: column-reverse;
+	.tutorial__navigation {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 }
 

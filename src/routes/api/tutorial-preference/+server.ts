@@ -19,7 +19,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		typeof body === "object" && body !== null && "choice" in body
 			? (body as { choice?: unknown }).choice
 			: null;
-	if (choice !== "later" && choice !== "never") {
+	if (choice !== "complete") {
 		return json({ error: "Unsupported tutorial choice." }, { status: 400 });
 	}
 

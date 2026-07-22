@@ -93,7 +93,7 @@ label {
 	}
 }
 
-input {
+:global(.manual-nutrients__input) {
 	width: 100%;
 	min-width: 0;
 	min-height: $app-shell-control-height;
