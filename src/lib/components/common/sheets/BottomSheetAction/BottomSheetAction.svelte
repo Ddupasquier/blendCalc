@@ -1,5 +1,4 @@
 <script lang="ts">
-	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte";
 	import type { BottomSheetActionProps } from "./types";
 
@@ -7,7 +6,6 @@
 		label,
 		variant = "default",
 		disabled = false,
-		privileged = false,
 		icon,
 		onSelect,
 	}: BottomSheetActionProps = $props();
@@ -28,9 +26,6 @@
 	</CircularIconFrame>
 	<span class="bottom-sheet-action__label">
 		<span>{label}</span>
-		{#if privileged}
-			<PrivilegedActionBadge />
-		{/if}
 	</span>
 </button>
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Chevron from "$lib/assets/icons/Chevron/Chevron.svelte";
+	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import type { ManualEntryNutrientFieldsProps } from "./types";
@@ -54,18 +54,12 @@
 	<div class="manual-nutrients">
 		{#each groups as group, index}
 			{#if accordion}
-				<details class="manual-nutrients__group" open={defaultOpenFirst && index === 0}>
-					<summary>
-						<span class="manual-nutrients__group-title">
-							{group.title}
-							{#if isOptionalGroup(group)}
-								<small>optional</small>
-							{/if}
-						</span>
-						<span class="manual-nutrients__chevron" aria-hidden="true">
-							<Chevron direction="down" />
-						</span>
-					</summary>
+				<CollapsibleSection
+					title={group.title}
+					badge={isOptionalGroup(group) ? "optional" : undefined}
+					open={defaultOpenFirst && index === 0}
+					class="manual-nutrients__group"
+				>
 					<div class="manual-nutrients__fields">
 						{#each group.fields as field (field.dedupeKey || field.nutrientId)}
 							<label for={getInputId(field)}>
@@ -89,7 +83,7 @@
 							</label>
 						{/each}
 					</div>
-				</details>
+				</CollapsibleSection>
 			{:else}
 				<section class="manual-nutrients__group manual-nutrients__group--static">
 					{#if groups.length > 1}

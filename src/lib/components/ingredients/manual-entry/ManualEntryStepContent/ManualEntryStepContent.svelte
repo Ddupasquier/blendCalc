@@ -18,8 +18,6 @@
 		barcodeValidationMessage,
 		checkingBarcodeReference,
 		barcodeSuggestion,
-		servingLabel,
-		resolvedServingLabel,
 		servingWeightGrams,
 		useVolumeEquivalent,
 		volumeQuantity,
@@ -70,7 +68,6 @@
 		onApplyBarcodeSuggestion,
 		onKeepManualBarcodeEntry,
 		onNameInput,
-		onServingLabelChange,
 		onServingWeightChange,
 		onUseVolumeChange,
 		onVolumeQuantityChange,
@@ -119,14 +116,11 @@
 	/>
 {:else if activeStep === "servings"}
 	<ServingsStep
-		{servingLabel}
-		{resolvedServingLabel}
 		{servingWeightGrams}
 		{useVolumeEquivalent}
 		{volumeQuantity}
 		{volumeUnit}
 		{volumeOptions}
-		onServingLabelChange={onServingLabelChange}
 		onServingWeightChange={onServingWeightChange}
 		onUseVolumeChange={onUseVolumeChange}
 		onVolumeQuantityChange={onVolumeQuantityChange}

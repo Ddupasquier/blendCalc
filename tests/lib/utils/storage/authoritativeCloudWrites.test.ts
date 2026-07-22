@@ -11,6 +11,7 @@ vi.mock("$lib/supabase/client", () => ({
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { FdcFood } from "$lib/utils/food/types";
 import {
+	moveCloudSmoothieListItems,
 	removeCloudSmoothieListItem,
 	renameCloudSmoothieListItem,
 	writeCloudSmoothieList,
@@ -32,14 +33,22 @@ describe("authoritative Supabase write adapters", () => {
 		vi.clearAllMocks();
 	});
 
-	it("uses database functions for bulk list writes, renames, and deletes", async () => {
+	it("uses database functions for bulk list writes, moves, renames, and deletes", async () => {
 		supabase.rpc
 			.mockResolvedValueOnce({ data: "added", error: null })
+			.mockResolvedValueOnce({ data: 1, error: null })
 			.mockResolvedValueOnce({ data: "renamed", error: null })
 			.mockResolvedValueOnce({ data: true, error: null });
 
 		await expect(
 			writeCloudSmoothieList(MIX_STORAGE_KEYS.fridge, [food]),
+		).resolves.toBe(true);
+		await expect(
+			moveCloudSmoothieListItems(
+				MIX_STORAGE_KEYS.fridge,
+				MIX_STORAGE_KEYS.shoppingList,
+				[food.fdcId],
+			),
 		).resolves.toBe(true);
 		await expect(
 			renameCloudSmoothieListItem(
@@ -54,6 +63,7 @@ describe("authoritative Supabase write adapters", () => {
 
 		expect(supabase.rpc.mock.calls.map(([name]) => name)).toEqual([
 			"place_user_food_list_items",
+			"move_user_food_list_items",
 			"rename_user_food_list_item",
 			"remove_user_food_list_item",
 		]);

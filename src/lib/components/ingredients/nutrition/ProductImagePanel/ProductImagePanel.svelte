@@ -1,6 +1,7 @@
 <script lang="ts">
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
+	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import AssetAttribution from "$lib/components/common/display/AssetAttribution/AssetAttribution.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
 	import ProductImageFrame from "$lib/components/common/images/ProductImageFrame/ProductImageFrame.svelte";
@@ -100,6 +101,10 @@
 	};
 </script>
 
+{#snippet placementSummaryEnd()}
+	<PrivilegedActionBadge />
+{/snippet}
+
 {#if imageUrl && !imageFailed}
 	<section class="product-image-panel">
 		<ProductImageFrame
@@ -114,11 +119,11 @@
 		/>
 
 		{#if canEditPlacement}
-			<details class="product-image-panel__placement">
-				<summary>
-					Adjust card image placement
-					<PrivilegedActionBadge />
-				</summary>
+			<CollapsibleSection
+				title="Adjust card image placement"
+				summaryEnd={placementSummaryEnd}
+				class="product-image-panel__placement"
+			>
 				<div class="product-image-panel__placement-content">
 					<ImagePlacementEditor
 						imageUrl={imageUrl}
@@ -127,7 +132,6 @@
 						description="Adjust how this image appears in ingredient cards."
 						mode="card-only"
 						value={draftPlacement}
-						privileged
 						onChange={(value) => {
 							draftPlacement = value;
 							placementMessage = "";
@@ -139,7 +143,6 @@
 						fullWidth
 						busy={savingPlacement}
 						disabled={!hasPlacementChanges}
-						privileged
 						onclick={savePlacement}
 					>
 						Save image placement
@@ -151,7 +154,7 @@
 						<p class="product-image-panel__error">{placementError}</p>
 					{/if}
 				</div>
-			</details>
+			</CollapsibleSection>
 		{/if}
 	</section>
 {/if}

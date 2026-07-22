@@ -367,6 +367,27 @@ export const placeCloudSmoothieListItem = async (
 	return "error";
 };
 
+export const moveCloudSmoothieListItems = async (
+	sourceKey: SmoothieListKey,
+	targetKey: SmoothieListKey,
+	foodIds: number[],
+	context?: CloudDataContext,
+) => {
+	const supabase = resolveCloudClient(context);
+	if (!supabase) return false;
+
+	const uniqueFoodIds = [...new Set(foodIds)].filter(Number.isSafeInteger);
+	if (uniqueFoodIds.length === 0 || sourceKey === targetKey) return false;
+
+	const { data, error } = await supabase.rpc("move_user_food_list_items", {
+		p_source_list_type: getCloudListType(sourceKey),
+		p_target_list_type: getCloudListType(targetKey),
+		p_fdc_ids: uniqueFoodIds,
+	});
+
+	return !error && data === uniqueFoodIds.length;
+};
+
 export const removeCloudSmoothieListItem = async (
 	key: SmoothieListKey,
 	foodId: number,

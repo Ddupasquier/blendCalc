@@ -30,8 +30,6 @@ export type ManualEntryStepContentProps = Omit<
 	barcodeValidationMessage: string;
 	checkingBarcodeReference: boolean;
 	barcodeSuggestion: ManualEntryBarcodeSuggestion;
-	servingLabel: string;
-	resolvedServingLabel: string;
 	servingWeightGrams: number | null;
 	useVolumeEquivalent: boolean;
 	volumeQuantity: number | null;
@@ -65,7 +63,6 @@ export type ManualEntryStepContentProps = Omit<
 	onApplyBarcodeSuggestion: () => void | Promise<void>;
 	onKeepManualBarcodeEntry: () => void;
 	onNameInput: (element: HTMLInputElement | null) => void;
-	onServingLabelChange: (value: string) => void;
 	onServingWeightChange: (value: number | null) => void;
 	onUseVolumeChange: (value: boolean) => void;
 	onVolumeQuantityChange: (value: number | null) => void;

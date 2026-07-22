@@ -6,12 +6,7 @@
 	gap: $app-gap-md;
 }
 
-.manual-nutrients__group {
-	padding: 0;
-	background: transparent;
-	border: 0;
-
-	summary,
+.manual-nutrients__group--static {
 	h3 {
 		display: flex;
 		align-items: center;
@@ -26,27 +21,7 @@
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-bold;
 		list-style: none;
-		cursor: pointer;
-	}
-
-	summary::-webkit-details-marker {
-		display: none;
-	}
-
-	.manual-nutrients__chevron {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: $app-shell-control-icon-size;
-		height: $app-shell-control-icon-size;
-		color: $app-shell-text-muted;
-		line-height: 1;
-		transform: rotate(180deg);
-		transition: transform 160ms ease;
-	}
-
-	&:not([open]) .manual-nutrients__chevron {
-		transform: rotate(0deg);
+		cursor: default;
 	}
 }
 
@@ -63,12 +38,6 @@
 		font-size: $app-font-size-xs;
 		font-weight: $app-font-weight-medium;
 		text-transform: none;
-	}
-}
-
-.manual-nutrients__group--static {
-	h3 {
-		cursor: default;
 	}
 }
 

@@ -10,14 +10,11 @@
 	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 
 	let {
-		servingLabel,
-		resolvedServingLabel,
 		servingWeightGrams,
 		useVolumeEquivalent,
 		volumeQuantity,
 		volumeUnit,
 		volumeOptions,
-		onServingLabelChange,
 		onServingWeightChange,
 		onUseVolumeChange,
 		onVolumeQuantityChange,
@@ -103,26 +100,6 @@
 				does not provide both values.
 			</ManualEntryHelper>
 		{/if}
-
-		<details class="servings-step__optional-details">
-			<summary>Optional display label</summary>
-			<ManualEntryField forId="custom-ingredient-serving-label" label="Serving label" optional>
-				<input
-					id="custom-ingredient-serving-label"
-					name="custom-ingredient-serving-label"
-					type="text"
-					placeholder="Optional, e.g. 1 bar, 3 cookies, 1 scoop"
-					maxlength="80"
-					value={servingLabel}
-					oninput={(event) => onServingLabelChange(event.currentTarget.value)}
-				/>
-				<small>
-					{servingLabel.trim()
-						? "Shown anywhere this serving size is displayed."
-						: `If left blank, this saves as “${resolvedServingLabel}”.`}
-				</small>
-			</ManualEntryField>
-		</details>
 	</section>
 
 	<ManualEntryActions {onBack} {onNext} />

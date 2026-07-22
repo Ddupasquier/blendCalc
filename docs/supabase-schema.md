@@ -105,6 +105,8 @@ Notes:
   Fridge and Shopping List for the same user.
 - `place_user_food_list_item` performs an atomic add or confirmed move and reports when
   a move needs user confirmation.
+- `move_user_food_list_items` moves a checked set in one transaction. It rejects stale
+  or partial selections instead of moving only part of the requested set.
 - Indexed for user/list sorting, pagination, source filtering, and text search.
 
 ### `custom_foods`
@@ -732,6 +734,7 @@ category, or serving fields.
 | `replace_food_servings`                        | Replaces normalized serving rows for exactly one food parent; parent triggers call it after relevant writes                                    |
 | `food_list_item_identity_key`                  | Produces the canonical barcode-or-FDC identity used to prevent cross-list duplicates                                                           |
 | `place_user_food_list_item`                    | Atomically adds an ingredient, reports a required cross-list move, or completes a confirmed move                                               |
+| `move_user_food_list_items`                    | Atomically moves a checked ingredient set between Fridge and Shopping List, rejecting stale or partial sets                                    |
 | `publish_shared_product_submission`            | Publishes an approved submission into the shared catalog and revisions/evidence tables                                                         |
 | `compatibility_normalize_text`                 | Normalizes compatibility labels/values for matching                                                                                            |
 | `extract_product_compatibility_facts`          | Extracts product compatibility facts from food/product JSON                                                                                    |

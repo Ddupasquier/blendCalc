@@ -3,6 +3,7 @@ import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecord
 import {
 	placeCloudSmoothieListItem,
 	readCloudSmoothieList,
+	moveCloudSmoothieListItems,
 	removeCloudSmoothieListItem,
 	renameCloudSmoothieListItem,
 	writeCloudSmoothieList,
@@ -86,6 +87,24 @@ export const moveFoodToSmoothieList = async (
 
 	notifySmoothieListsChanged();
 	return placementResult === "duplicate" ? "duplicate" : "moved";
+};
+
+export const moveFoodsToSmoothieList = async (
+	key: SmoothieListKey,
+	foods: FdcFood[],
+): Promise<SmoothieListMutationResult> => {
+	const foodIds = [...new Set(foods.map((food) => food.fdcId))];
+	if (foodIds.length === 0) return "missing";
+
+	const moved = await moveCloudSmoothieListItems(
+		getOppositeListKey(key),
+		key,
+		foodIds,
+	);
+	if (!moved) return "error";
+
+	notifySmoothieListsChanged();
+	return "moved";
 };
 
 export const addFoodsToSmoothieList = async (

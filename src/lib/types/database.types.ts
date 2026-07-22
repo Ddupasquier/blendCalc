@@ -3546,6 +3546,14 @@ export type Database = {
         Args: { p_foods: Json; p_list_type: string }
         Returns: string
       }
+      move_user_food_list_items: {
+        Args: {
+          p_fdc_ids: number[]
+          p_source_list_type: string
+          p_target_list_type: string
+        }
+        Returns: number
+      }
       publish_shared_product_submission: {
         Args: {
           p_approved_by?: string

@@ -1284,8 +1284,6 @@
 							),
 						}
 					: null}
-				{servingLabel}
-				{resolvedServingLabel}
 				{servingWeightGrams}
 				{useVolumeEquivalent}
 				{volumeQuantity}
@@ -1344,10 +1342,6 @@
 				onApplyBarcodeSuggestion={applyBarcodeReferenceSuggestion}
 				onKeepManualBarcodeEntry={keepManualBarcodeEntry}
 				onNameInput={(element) => (ingredientNameInput = element)}
-				onServingLabelChange={(value) => {
-					servingLabel = value;
-					markFieldAsUserEntered("serving");
-				}}
 				onServingWeightChange={(value) => {
 					servingWeightGrams = Number.isFinite(value) ? value : null;
 					markFieldAsUserEntered("serving");

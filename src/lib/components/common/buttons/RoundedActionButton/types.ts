@@ -22,7 +22,6 @@ export type RoundedActionButtonProps = {
 	fullWidth?: boolean;
 	busy?: boolean;
 	disabled?: boolean;
-	privileged?: boolean;
 	ariaLabel?: string;
 	"aria-controls"?: string;
 	"aria-describedby"?: string;

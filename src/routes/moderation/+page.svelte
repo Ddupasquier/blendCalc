@@ -29,6 +29,14 @@
 		};
 	};
 
+	const hasAccountModerationAction = (
+		user: PageData["users"][number],
+	) => user.status === "banned" || (
+		user.id !== data.viewerUserId &&
+		user.role !== "admin" &&
+		!(data.viewerRole === "moderator" && user.role)
+	);
+
 	const enhanceModerationAction: SubmitFunction = ({ formData, cancel }) => {
 		if (pendingTargetUserId) {
 			cancel();
@@ -130,6 +138,7 @@
 							{#if submission.isQaFixture}<span class="status status--qa">QA fixture</span>{/if}
 							{#if submission.updateReview}<span class="status">product update</span>{/if}
 							<span class="status">pending</span>
+							<PrivilegedActionBadge />
 						</div>
 					</header>
 					<dl>
@@ -209,7 +218,6 @@
 							title="Public image preview"
 							description="Adjust what appears in ingredient cards before approving."
 							value={getImageCrop(submission)}
-							privileged
 							onChange={(value) => setImageCrop(submission, value)}
 						/>
 					{/if}
@@ -236,7 +244,6 @@
 								type="submit"
 								disabled={pendingTargetUserId !== null || !submission.evidenceComplete || submission.isQaFixture}
 							>
-								<PrivilegedActionBadge />
 								{#if pendingTargetUserId === submission.id}<LoadingSpinner size="small" decorative />{/if}
 								<span>Approve</span>
 							</button>
@@ -248,7 +255,6 @@
 								<input name="reviewNote" maxlength="1000" required placeholder="What needs correction?" />
 							</label>
 							<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
-								<PrivilegedActionBadge />
 								{#if pendingTargetUserId === submission.id}<LoadingSpinner size="small" decorative />{/if}
 								<span>Reject</span>
 							</button>
@@ -280,6 +286,9 @@
 							{/if}
 						</div>
 						<span class="status">{user.status}</span>
+						{#if hasAccountModerationAction(user)}
+							<PrivilegedActionBadge />
+						{/if}
 					</div>
 					<p class="account-email">{user.email}</p>
 					<p>Image: {user.avatarModerationStatus}</p>
@@ -298,7 +307,6 @@
 					<form method="POST" action="?/unban" use:enhance={enhanceModerationAction} aria-busy={pendingTargetUserId === user.id}>
 						<input type="hidden" name="targetUserId" value={user.id} />
 						<button class="secondary-action" type="submit" disabled={pendingTargetUserId !== null}>
-							<PrivilegedActionBadge />
 							{#if pendingTargetUserId === user.id}<LoadingSpinner size="small" decorative />{/if}
 							<span>Restore access</span>
 						</button>
@@ -317,7 +325,6 @@
 							<small>This reason and its plain-language explanation will be emailed to the user.</small>
 						</label>
 						<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
-							<PrivilegedActionBadge />
 							{#if pendingTargetUserId === user.id}<LoadingSpinner size="small" decorative />{/if}
 							<span>Block account</span>
 						</button>

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import PillButton from "$lib/components/common/buttons/PillButton/PillButton.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import ImagePlacementCardPreview from "$lib/components/common/images/ImagePlacementCardPreview/ImagePlacementCardPreview.svelte";
@@ -25,7 +24,6 @@
 		description = "Adjust how the image appears in ingredient cards.",
 		mode = "card-and-full",
 		editable = true,
-		privileged = false,
 		onChange,
 	}: ImagePlacementEditorProps = $props();
 
@@ -68,9 +66,6 @@
 	<div class="image-placement-editor__copy">
 		<strong class="image-placement-editor__title">
 			<span>{title}</span>
-			{#if privileged}
-				<PrivilegedActionBadge />
-			{/if}
 		</strong>
 		{#if description}
 			<p>{description}</p>
@@ -121,7 +116,6 @@
 				<PillButton
 					pressed={activeFitMode === "contain"}
 					variant={activeFitMode === "contain" ? "primary" : "neutral"}
-					{privileged}
 					onclick={() => selectFitMode("contain")}
 				>
 					Full image
@@ -130,7 +124,6 @@
 					pressed={activeFitMode === "cover"}
 					variant={activeFitMode === "cover" ? "primary" : "neutral"}
 					disabled={!previewGeometry.ready}
-					{privileged}
 					onclick={() => selectFitMode("cover")}
 				>
 					Fill circle
@@ -138,7 +131,6 @@
 				<PillButton
 					pressed={activeFitMode === "custom"}
 					variant={activeFitMode === "custom" ? "primary" : "neutral"}
-					{privileged}
 					onclick={() => selectFitMode("custom")}
 				>
 					Custom
@@ -188,7 +180,7 @@
 						updateCustomValue({ cropZoom: Number(event.currentTarget.value) })}
 				/>
 			</label>
-			<RoundedActionButton variant="neutral" {privileged} onclick={restoreDefault}>
+			<RoundedActionButton variant="neutral" onclick={restoreDefault}>
 				Restore default
 			</RoundedActionButton>
 		</div>

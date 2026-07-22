@@ -1,5 +1,4 @@
 <script lang="ts">
-	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import type { RoundedActionButtonProps } from "./types";
 
@@ -11,7 +10,6 @@
 		fullWidth = false,
 		busy = false,
 		disabled = false,
-		privileged = false,
 		ariaLabel,
 		"aria-controls": ariaControls = undefined,
 		"aria-describedby": ariaDescribedBy = undefined,
@@ -38,9 +36,6 @@
 	disabled={disabled || busy}
 	{onclick}
 >
-	{#if privileged}
-		<PrivilegedActionBadge />
-	{/if}
 	{#if busy}
 		<LoadingSpinner size="small" decorative />
 	{/if}

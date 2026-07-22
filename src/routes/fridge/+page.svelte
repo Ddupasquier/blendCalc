@@ -20,6 +20,7 @@
     import SavedIngredientListLayout from "$lib/components/ingredients/list/SavedIngredientListLayout/SavedIngredientListLayout.svelte";
     import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
     import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
+    import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
     import {
         areFoodIdsEqual,
         getIngredientActionKey,
@@ -47,6 +48,7 @@
     import {
         addFoodToSmoothieList,
 		moveFoodToSmoothieList,
+		moveFoodsToSmoothieList,
         removeFoodFromSmoothieList,
         renameFoodInSmoothieList,
         SMOOTHIE_LISTS_CHANGED_EVENT,
@@ -604,6 +606,63 @@
         setSelectedIds(activeList, []);
     };
 
+	const applyBulkListMove = (
+		sourceKey: SmoothieListKey,
+		foods: FdcFood[],
+	) => {
+		const movedIds = new Set(foods.map((food) => food.fdcId));
+		const movedAt = Date.now();
+		const movedFoods = foods.map((food) => ({ ...food, listAddedAt: movedAt }));
+		const targetKey = getOppositeIngredientListKey(sourceKey);
+
+		if (sourceKey === MIX_STORAGE_KEYS.fridge) {
+			onHand = onHand.filter((food) => !movedIds.has(food.fdcId));
+			shoppingList = [
+				...movedFoods,
+				...shoppingList.filter((food) => !movedIds.has(food.fdcId)),
+			];
+			onHandTotalCount = Math.max(0, onHandTotalCount - movedFoods.length);
+			shoppingListTotalCount += movedFoods.length;
+		} else {
+			shoppingList = shoppingList.filter((food) => !movedIds.has(food.fdcId));
+			onHand = [
+				...movedFoods,
+				...onHand.filter((food) => !movedIds.has(food.fdcId)),
+			];
+			shoppingListTotalCount = Math.max(
+				0,
+				shoppingListTotalCount - movedFoods.length,
+			);
+			onHandTotalCount += movedFoods.length;
+		}
+
+		const sourceIndex = listIndex[sourceKey];
+		const targetIndex = listIndex[targetKey];
+		const movedIdentityKeys = foods.map(getFoodIdentityKey);
+		const movedIdentityKeySet = new Set(movedIdentityKeys);
+		listIndex = {
+			...listIndex,
+			[sourceKey]: {
+				foodIds: sourceIndex.foodIds.filter((id) => !movedIds.has(id)),
+				foodIdentityKeys: sourceIndex.foodIdentityKeys.filter(
+					(_, index) => !movedIds.has(sourceIndex.foodIds[index]),
+				),
+			},
+			[targetKey]: {
+				foodIds: [
+					...foods.map((food) => food.fdcId),
+					...targetIndex.foodIds.filter((id) => !movedIds.has(id)),
+				],
+				foodIdentityKeys: [
+					...movedIdentityKeys,
+					...targetIndex.foodIdentityKeys.filter(
+						(identityKey) => !movedIdentityKeySet.has(identityKey),
+					),
+				],
+			},
+		};
+	};
+
     const moveFoodBetweenLists = async (
         sourceKey: SmoothieListKey,
         food: FdcFood,
@@ -636,19 +695,35 @@
         }
     };
 
-    const moveSelectedItems = async () => {
-        const selectedIds = selectedListItemIds[activeList] ?? [];
-        if (selectedIds.length === 0 || movingItem) return;
+    const moveSelectedItems = async (): Promise<boolean> => {
+		const sourceKey = activeList;
+		const targetKey = getOppositeIngredientListKey(sourceKey);
+        const selectedIds = selectedListItemIds[sourceKey] ?? [];
+        if (selectedIds.length === 0 || movingItem) return false;
 
         const selectedFoods = activeRawList.filter((food) =>
             selectedIds.includes(food.fdcId),
         );
+		if (selectedFoods.length !== selectedIds.length) {
+			listActionError = "One or more selected ingredients are no longer available.";
+			return false;
+		}
 
-        for (const food of selectedFoods) {
-            await moveFoodBetweenLists(activeList, food);
-            if (listActionError) return;
-        }
-        clearActiveSelection();
+		movingItem = `${sourceKey}:bulk`;
+		listActionError = "";
+		try {
+			const moveResult = await moveFoodsToSmoothieList(targetKey, selectedFoods);
+			if (moveResult === "error") {
+				listActionError = "The selected ingredients could not be moved. Try again.";
+				return false;
+			}
+
+			applyBulkListMove(sourceKey, selectedFoods);
+			setSelectedIds(sourceKey, []);
+			return true;
+		} finally {
+			movingItem = null;
+		}
     };
 
     const openActionSheet = (key: SmoothieListKey, food: FdcFood) => {

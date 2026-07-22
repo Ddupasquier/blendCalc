@@ -3,6 +3,7 @@ import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { FdcFood } from "$lib/utils/food/types";
 
 const cloudData = vi.hoisted(() => ({
+	moveCloudSmoothieListItems: vi.fn(),
 	placeCloudSmoothieListItem: vi.fn(),
 	readCloudSmoothieList: vi.fn(),
 	removeCloudSmoothieListItem: vi.fn(),
@@ -16,6 +17,7 @@ import {
 	addFoodsToSmoothieList,
 	addFoodToSmoothieList,
 	moveFoodToSmoothieList,
+	moveFoodsToSmoothieList,
 	preserveSelectedListItems,
 	removeFoodFromSmoothieList,
 	renameFoodInSmoothieList,
@@ -31,6 +33,7 @@ describe("database-backed smoothie lists", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		cloudData.placeCloudSmoothieListItem.mockResolvedValue("added");
+		cloudData.moveCloudSmoothieListItems.mockResolvedValue(true);
 		cloudData.readCloudSmoothieList.mockImplementation(async (key: string) =>
 			key === MIX_STORAGE_KEYS.fridge ? [food] : []
 		);
@@ -68,6 +71,20 @@ describe("database-backed smoothie lists", () => {
 			MIX_STORAGE_KEYS.shoppingList,
 			expect.objectContaining({ fdcId: food.fdcId }),
 			true,
+		);
+	});
+
+	it("moves a checked set with one atomic database request", async () => {
+		const tomato = { ...food, fdcId: 2, description: "Tomato, Roma" };
+
+		await expect(
+			moveFoodsToSmoothieList(MIX_STORAGE_KEYS.shoppingList, [food, tomato]),
+		).resolves.toBe("moved");
+		expect(cloudData.moveCloudSmoothieListItems).toHaveBeenCalledOnce();
+		expect(cloudData.moveCloudSmoothieListItems).toHaveBeenCalledWith(
+			MIX_STORAGE_KEYS.fridge,
+			MIX_STORAGE_KEYS.shoppingList,
+			[food.fdcId, tomato.fdcId],
 		);
 	});
 

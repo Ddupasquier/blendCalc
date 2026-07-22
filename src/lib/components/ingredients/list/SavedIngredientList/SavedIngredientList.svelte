@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { tick } from "svelte";
 	import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls/PaginatedListControls.svelte";
+	import { animateDirectionalExit } from "$lib/utils/animation/directionalExit";
 	import {
 		getFoodDisplayCategory,
 		getIngredientActionKey,
@@ -45,16 +47,52 @@
 	let listElement = $state<HTMLUListElement | null>(null);
 	let previousActiveList: SmoothieListKey | null = null;
 	let previousResetKey: number | null = null;
+	let bulkAnimating = $state(false);
+	let bulkMoveStatus = $state("");
 
 	const selectedIdSet = $derived(new Set(selectedIds));
 	const selectedCount = $derived(selectedIds.length);
 	const moveTargetLabel = $derived(
 		getIngredientListLabel(getOppositeIngredientListKey(activeList)),
 	);
+	const bulkMoveBusy = $derived(moving || bulkAnimating);
+	const bulkMoveDirection = $derived(
+		activeList === MIX_STORAGE_KEYS.fridge ? "right" : "left",
+	);
 
 	const requestMoreItems = () => {
 		if (revealPaused || !canRevealMore || loadingMoreList) return;
 		void onRevealMore();
+	};
+
+	const moveSelectedItems = async () => {
+		if (selectedCount === 0 || bulkMoveBusy) return;
+		const movingCount = selectedCount;
+		const targetLabel = moveTargetLabel;
+		const exitDirection = bulkMoveDirection;
+
+		bulkAnimating = true;
+		bulkMoveStatus = `Moving ${movingCount} checked ingredient${movingCount === 1 ? "" : "s"} to ${targetLabel}.`;
+		await tick();
+
+		const selectedCards = Array.from(
+			listElement?.querySelectorAll<HTMLElement>(
+				'li[data-bulk-selected="true"] > .saved-ingredient-card',
+			) ?? [],
+		);
+		const animation = animateDirectionalExit(selectedCards, exitDirection);
+
+		try {
+			await animation.finished;
+			const moved = await onMoveSelection();
+			bulkMoveStatus = moved
+				? `Moved ${movingCount} ingredient${movingCount === 1 ? "" : "s"} to ${targetLabel}.`
+				: "The selected ingredients could not be moved.";
+			await tick();
+		} finally {
+			animation.cancel();
+			bulkAnimating = false;
+		}
 	};
 
 	$effect(() => {
@@ -86,12 +124,15 @@
 		<IngredientBulkActions
 			{selectedCount}
 			{moveTargetLabel}
-			{moving}
+			moving={bulkMoveBusy}
 			onSelectAll={onSelectAll}
 			onClear={onClearSelection}
-			onMove={onMoveSelection}
+			onMove={moveSelectedItems}
 		/>
 	{/if}
+	<p class="sr-only" role="status" aria-live="polite" aria-atomic="true">
+		{bulkMoveStatus}
+	</p>
 
 	<div class="saved-ingredient-list__body">
 		{#key `${activeList}:${resetKey}`}
@@ -99,19 +140,22 @@
 				<ul
 					class="saved-ingredient-list__cards"
 					aria-label={`${getIngredientListLabel(activeList)} ingredients`}
-					aria-busy={listLoading || loadingMoreList === activeList}
+					aria-busy={listLoading || loadingMoreList === activeList || bulkMoveBusy}
 					bind:this={listElement}
 				>
 					{#each foods as food (food.fdcId)}
 						{@const actionKey = getIngredientActionKey(activeList, food.fdcId)}
 						{@const warning = getPrimaryFoodWarning(food, preferenceProfile)}
 						{@const isChecked = selectedIdSet.has(food.fdcId)}
-						<li>
+						<li
+							data-bulk-selected={isChecked}
+							class:saved-ingredient-list__card--moving={bulkMoveBusy && isChecked}
+						>
 							<SavedIngredientCard
 								{food}
 								active={selectedFoodId === food.fdcId}
 								checked={isChecked}
-								moving={movingItem === actionKey}
+								moving={movingItem === actionKey || (bulkMoveBusy && isChecked)}
 								removing={removingItem === actionKey}
 								moveDirection={activeList === MIX_STORAGE_KEYS.fridge
 									? "left"

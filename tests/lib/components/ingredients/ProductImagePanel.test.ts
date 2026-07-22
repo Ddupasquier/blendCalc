@@ -31,12 +31,18 @@ describe("ProductImagePanel", () => {
 			},
 		});
 
-		const details = screen.getByText("Adjust card image placement").closest("details");
+		const summary = screen.getByText("Adjust card image placement").closest("summary");
+		const details = summary?.closest("details");
 		expect(details).not.toHaveAttribute("open");
+		expect(summary?.querySelector(".privileged-action-badge")).toBeInTheDocument();
 		await fireEvent.click(screen.getByText("Adjust card image placement"));
 		expect(details).toHaveAttribute("open");
 		expect(screen.getByText("Card image placement")).toBeInTheDocument();
-		expect(screen.getAllByTitle("Admin or moderator action")).toHaveLength(7);
+		expect(screen.getAllByTitle("Admin or moderator action")).toHaveLength(1);
+		expect(
+			screen.getByRole("button", { name: "Save image placement" })
+				.querySelector(".privileged-action-badge"),
+		).not.toBeInTheDocument();
 		expect(
 			screen.queryByText("Nutrition page shows the full image."),
 		).not.toBeInTheDocument();

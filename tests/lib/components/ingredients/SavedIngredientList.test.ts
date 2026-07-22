@@ -12,6 +12,13 @@ const food: FdcFood = {
 	foodNutrients: [],
 };
 
+const secondFood: FdcFood = {
+	fdcId: 2,
+	description: "Tomato, roma",
+	foodCategory: "Vegetables",
+	foodNutrients: [],
+};
+
 describe("SavedIngredientList overlay behavior", () => {
 	const renderList = (
 		activeList: SmoothieListKey = MIX_STORAGE_KEYS.fridge,
@@ -185,5 +192,37 @@ describe("SavedIngredientList overlay behavior", () => {
 
 		await fireEvent.click(screen.getByRole("button", { name: "Load more" }));
 		expect(onRevealMore).toHaveBeenCalledOnce();
+	});
+
+	it("runs one bulk move after every selected card begins its exit", async () => {
+		const onMoveSelection = vi.fn().mockResolvedValue(true);
+
+		render(SavedIngredientList, {
+			props: {
+				activeList: MIX_STORAGE_KEYS.fridge,
+				foods: [food, secondFood],
+				selectedIds: [food.fdcId, secondFood.fdcId],
+				onSelectAll: vi.fn(),
+				onClearSelection: vi.fn(),
+				onMoveSelection,
+				onMoveItem: vi.fn(),
+				onToggle: vi.fn(),
+				onPreview: vi.fn(),
+				onActions: vi.fn(),
+				onRemove: vi.fn(),
+				onRevealMore: vi.fn(),
+			},
+		});
+
+		await fireEvent.click(
+			screen.getByRole("button", {
+				name: "Move 2 checked → Shopping List",
+			}),
+		);
+
+		expect(onMoveSelection).toHaveBeenCalledOnce();
+		expect(await screen.findByRole("status")).toHaveTextContent(
+			"Moved 2 ingredients to Shopping List.",
+		);
 	});
 });

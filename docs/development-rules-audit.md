@@ -52,6 +52,7 @@ clickable navigation block instead.
 - [Weight And Volume Conversions](#rule-serving-weight-volume-conversions)
 - [Backend And Validation](#rule-backend-best-practices)
 - [Exclusive Ingredient List Membership](#rule-exclusive-list-membership)
+- [Atomic Bulk Ingredient Moves](#rule-bulk-list-moves)
 - [Sheets, Views, And URL State](#rule-bottom-sheet-flows)
 - [Privileged Actions](#rule-privileged-action-badges)
 - [QA Process](#rule-qa-process)
@@ -174,7 +175,10 @@ rows, dialogs, sheets, pills, headers, action areas, or list sections are basica
 same, extract or extend a reusable component instead of copying the pattern. Do not
 reimplement close buttons, pagination, sorting, controls, icons, spacing wrappers, or
 card shells ad hoc. A one-off is acceptable only when the UI and behavior are genuinely
-unique and unlikely to repeat; if that changes later, refactor immediately.
+unique and unlikely to repeat; if that changes later, refactor immediately. Repeated
+expand/collapse sections must use the shared collapse component so summary spacing,
+left-side chevrons, right-side badges/actions, focus treatment, and open-state behavior
+remain consistent.
 
 **8.** <a id="rule-button-primitives"></a>All app buttons must use shared button
 primitives. Circular icon actions, square icon controls, and rounded rectangle CTAs must
@@ -1002,13 +1006,18 @@ sizing, and accessibility stay consistent; do not create separate feature-local 
 paths or text characters. Feature-specific animated SVG is allowed only inside a
 reusable, explicitly named icon component.
 
-**45a.** <a id="rule-privileged-action-badges"></a>Admin-only and moderator-only actions
-must show the shared crown badge on the action itself. Use the reusable
-`PrivilegedActionBadge` and shared button/action primitives; do not hardcode crown
-glyphs, duplicate badge styling, or hide privileged actions behind unmarked generic
-buttons. The crown is a standalone filled yellow mark without a circular background or
-border; both profile and action variants must use the shared component and token-backed
-sizes.
+**45a.** <a id="rule-privileged-action-badges"></a>Every admin-only or moderator-only
+action group must show exactly one shared crown badge in the heading of the nearest
+container that owns those actions. Put the crown at the far end of a collapse summary,
+card header, sheet group header, or other clear container heading; do not repeat crowns
+on every button, field, preset, or control inside that group. A privileged action mixed
+into a general-purpose action list must be placed in a clearly titled
+`PrivilegedActionGroup` rather than marked as a one-off crowned button. Use the reusable
+`PrivilegedActionBadge`; do not hardcode crown glyphs, duplicate badge styling, or hide
+privileged actions inside an unmarked container. The crown is a standalone filled
+yellow mark without a circular background or border. The profile variant may continue
+to identify an admin or moderator account independently of action-group marking. Both
+variants must use the shared component and token-backed sizes.
 
 **45b.** <a id="rule-text-badges"></a>Compact text badges for actionable verification
 states, statuses, and similar metadata must use the shared `TextBadge` component unless
@@ -1082,6 +1091,15 @@ that revalidates current database-backed rules and completes related writes atom
 Once the authoritative path is in place, revoke direct browser insert/update privileges
 that could bypass it. Derive ownership from the authenticated session, never from a user
 id supplied by the browser, and return small typed outcomes for expected conflicts.
+
+**49c.** <a id="rule-bulk-list-moves"></a>Bulk Fridge and Shopping List moves must be
+one coordinated action. Start every visible selected-card exit at the same time, move
+Fridge items toward Shopping List on the right, and move Shopping List items toward
+Fridge on the left. Honor reduced-motion preferences by skipping the slide without
+delaying the write. Persist the complete selected set through one authenticated atomic
+database function, reject stale or partial selections, notify list consumers once, and
+update the visible lists once after success. Never implement a bulk move as a loop of
+single-item writes or reload the full list after each selected item.
 
 **50.** <a id="rule-url-backed-popins"></a>Pop-in views, popovers, modals, sheets,
 scanners, dialogs, and other meaningful overlay states need URL-backed state with

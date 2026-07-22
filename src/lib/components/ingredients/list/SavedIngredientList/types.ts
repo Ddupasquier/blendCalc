@@ -21,7 +21,7 @@ export type SavedIngredientListProps = {
 	resetKey?: number;
 	onSelectAll: () => void;
 	onClearSelection: () => void;
-	onMoveSelection: () => void;
+	onMoveSelection: () => boolean | Promise<boolean>;
 	onMoveItem: (food: FdcFood) => void | Promise<void>;
 	onToggle: (foodId: number) => void;
 	onPreview: (food: FdcFood) => void;

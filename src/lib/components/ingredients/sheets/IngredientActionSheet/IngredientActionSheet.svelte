@@ -2,6 +2,7 @@
 	import Pencil from "$lib/assets/icons/Pencil/Pencil.svelte";
 	import Sliders from "$lib/assets/icons/Sliders/Sliders.svelte";
 	import Trash from "$lib/assets/icons/Trash/Trash.svelte";
+	import PrivilegedActionGroup from "$lib/components/common/actions/PrivilegedActionGroup/PrivilegedActionGroup.svelte";
 	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation/TwoStepConfirmation.svelte";
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 	import BottomSheetAction from "$lib/components/common/sheets/BottomSheetAction/BottomSheetAction.svelte";
@@ -29,15 +30,16 @@
 >
 	<div class="ingredient-action-sheet__actions">
 		{#if canAdjustImagePlacement && onAdjustImagePlacement}
-			<BottomSheetAction
-				label="Adjust image placement"
-				privileged
-				onSelect={onAdjustImagePlacement}
-			>
-				{#snippet icon()}
-					<Sliders />
-				{/snippet}
-			</BottomSheetAction>
+			<PrivilegedActionGroup>
+				<BottomSheetAction
+					label="Adjust image placement"
+					onSelect={onAdjustImagePlacement}
+				>
+					{#snippet icon()}
+						<Sliders />
+					{/snippet}
+				</BottomSheetAction>
+			</PrivilegedActionGroup>
 		{/if}
 		<BottomSheetAction label="Rename" onSelect={onRename}>
 			{#snippet icon()}

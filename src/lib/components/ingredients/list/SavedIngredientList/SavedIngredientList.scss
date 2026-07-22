@@ -41,6 +41,10 @@
 	min-width: 0;
 }
 
+.saved-ingredient-list__card--moving {
+	pointer-events: none;
+}
+
 .saved-ingredient-list__loading {
 	display: grid;
 	place-items: center;

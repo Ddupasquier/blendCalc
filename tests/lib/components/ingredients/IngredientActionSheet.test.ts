@@ -3,6 +3,29 @@ import { describe, expect, it, vi } from "vitest";
 import IngredientActionSheet from "$lib/components/ingredients/sheets/IngredientActionSheet/IngredientActionSheet.svelte";
 
 describe("IngredientActionSheet delete confirmation", () => {
+	it("groups moderator actions under one crowned heading", () => {
+		render(IngredientActionSheet, {
+			props: {
+				open: true,
+				title: "Spinach, raw",
+				removeLabel: "Remove from Fridge",
+				canAdjustImagePlacement: true,
+				onClose: vi.fn(),
+				onAdjustImagePlacement: vi.fn(),
+				onRename: vi.fn(),
+				onRemove: vi.fn(),
+			},
+		});
+
+		const group = screen.getByRole("region", { name: "Moderator actions" });
+		const action = screen.getByRole("button", { name: "Adjust image placement" });
+
+		expect(group.querySelectorAll(".privileged-action-badge")).toHaveLength(1);
+		expect(action.querySelector(".privileged-action-badge")).not.toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Rename" }))
+			.not.toContainElement(group.querySelector(".privileged-action-badge"));
+	});
+
 	it("keeps the sheet open and requires a second delete activation", async () => {
 		const onRemove = vi.fn();
 

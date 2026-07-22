@@ -397,7 +397,6 @@ const fillRequiredCustomIngredient = async (
 	options: {
 		barcode?: string;
 		destination?: string;
-		servingLabel?: string;
 		calories?: string;
 		fat?: string;
 		carbs?: string;
@@ -417,11 +416,6 @@ const fillRequiredCustomIngredient = async (
 	}
 	await continueToNextStep();
 	await waitFor(() => expect(screen.getByLabelText(/weight \(g\)/i)).toBeInTheDocument());
-	if (options.servingLabel) {
-		await fireEvent.input(screen.getByLabelText(/serving label/i), {
-			target: { value: options.servingLabel },
-		});
-	}
 	await fireEvent.input(screen.getByLabelText(/weight \(g\)/i), {
 		target: { value: "34" },
 	});
