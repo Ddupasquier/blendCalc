@@ -12,20 +12,21 @@
 	border-radius: $app-shell-radius-sheet;
 }
 
-button {
+.segmented-control__button {
 	min-width: 0;
 	color: $app-shell-text-muted;
 	background: transparent;
 	border: 0;
 	font-family: $app-button-font-family;
 	line-height: $app-button-line-height;
+	text-decoration: none;
 	cursor: pointer;
 	transition:
 		color 160ms ease,
 		background-color 160ms ease;
 }
 
-.segmented-control[data-variant="pill"] button {
+.segmented-control[data-variant="pill"] .segmented-control__button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -40,7 +41,7 @@ button {
 	padding: $app-gap-xs;
 }
 
-.segmented-control[data-variant="progress"] button {
+.segmented-control[data-variant="progress"] .segmented-control__button {
 	display: grid;
 	align-items: center;
 	gap: $app-gap-xs;
@@ -51,7 +52,7 @@ button {
 	font-weight: $app-font-weight-medium;
 }
 
-button:focus-visible {
+.segmented-control__button:focus-visible {
 	outline: $app-focus-outline;
 	outline-offset: $app-focus-outline-offset;
 }

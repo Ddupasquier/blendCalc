@@ -3,23 +3,31 @@
 	import type { IngredientBulkActionsProps } from "./types";
 
 	let {
+		selectionMode,
 		selectedCount,
+		selectableCount,
 		moveTargetLabel,
 		moving = false,
+		onEnterSelection,
 		onSelectAll,
-		onClear,
+		onCancel,
 		onMove,
 	}: IngredientBulkActionsProps = $props();
 </script>
 
-<div class="ingredient-bulk-actions" class:ingredient-bulk-actions--active={selectedCount > 0}>
-	{#if selectedCount > 0}
-		<PillButton disabled={moving} onclick={onClear}>Uncheck all</PillButton>
-		<PillButton variant="primary" busy={moving} onclick={onMove}>
-			Move {selectedCount} checked → {moveTargetLabel}
-		</PillButton>
+<div class="ingredient-bulk-actions" class:ingredient-bulk-actions--active={selectionMode}>
+	{#if selectionMode}
+		<PillButton disabled={moving} onclick={onCancel}>Cancel</PillButton>
+		{#if selectedCount < selectableCount}
+			<PillButton disabled={moving} onclick={onSelectAll}>Select all</PillButton>
+		{/if}
+		{#if selectedCount > 0}
+			<PillButton variant="primary" busy={moving} onclick={onMove}>
+				Move {selectedCount} selected → {moveTargetLabel}
+			</PillButton>
+		{/if}
 	{:else}
-		<PillButton disabled={moving} onclick={onSelectAll}>Check all</PillButton>
+		<PillButton disabled={moving} onclick={onEnterSelection}>Select items</PillButton>
 	{/if}
 </div>
 

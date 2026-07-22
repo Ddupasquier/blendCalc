@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Pencil from "$lib/assets/icons/Pencil/Pencil.svelte";
+	import Check from "$lib/assets/icons/Check/Check.svelte";
 	import Sliders from "$lib/assets/icons/Sliders/Sliders.svelte";
 	import Trash from "$lib/assets/icons/Trash/Trash.svelte";
 	import PrivilegedActionGroup from "$lib/components/common/actions/PrivilegedActionGroup/PrivilegedActionGroup.svelte";
@@ -15,6 +16,7 @@
 		removing = false,
 		canAdjustImagePlacement = false,
 		onClose,
+		onSelectItem,
 		onAdjustImagePlacement,
 		onRename,
 		onRemove,
@@ -29,6 +31,11 @@
 	onClose={onClose}
 >
 	<div class="ingredient-action-sheet__actions">
+		<BottomSheetAction label="Select item" onSelect={onSelectItem}>
+			{#snippet icon()}
+				<Check />
+			{/snippet}
+		</BottomSheetAction>
 		{#if canAdjustImagePlacement && onAdjustImagePlacement}
 			<PrivilegedActionGroup>
 				<BottomSheetAction

@@ -3,6 +3,24 @@ import { describe, expect, it, vi } from "vitest";
 import IngredientActionSheet from "$lib/components/ingredients/sheets/IngredientActionSheet/IngredientActionSheet.svelte";
 
 describe("IngredientActionSheet delete confirmation", () => {
+	it("provides a clear non-gesture route into item selection", async () => {
+		const onSelectItem = vi.fn();
+		render(IngredientActionSheet, {
+			props: {
+				open: true,
+				title: "Spinach, raw",
+				removeLabel: "Remove from Fridge",
+				onClose: vi.fn(),
+				onSelectItem,
+				onRename: vi.fn(),
+				onRemove: vi.fn(),
+			},
+		});
+
+		await fireEvent.click(screen.getByRole("button", { name: "Select item" }));
+		expect(onSelectItem).toHaveBeenCalledOnce();
+	});
+
 	it("groups moderator actions under one crowned heading", () => {
 		render(IngredientActionSheet, {
 			props: {
@@ -11,6 +29,7 @@ describe("IngredientActionSheet delete confirmation", () => {
 				removeLabel: "Remove from Fridge",
 				canAdjustImagePlacement: true,
 				onClose: vi.fn(),
+				onSelectItem: vi.fn(),
 				onAdjustImagePlacement: vi.fn(),
 				onRename: vi.fn(),
 				onRemove: vi.fn(),
@@ -35,6 +54,7 @@ describe("IngredientActionSheet delete confirmation", () => {
 				title: "Spinach, raw",
 				removeLabel: "Remove from Fridge",
 				onClose: vi.fn(),
+				onSelectItem: vi.fn(),
 				onRename: vi.fn(),
 				onRemove,
 			},

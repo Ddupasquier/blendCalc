@@ -55,6 +55,7 @@ export type IngredientRoutePopinsProps = {
 	onAdjustImagePlacementFromActionSheet: () => void;
 	onRemoveFromActionSheet: () => void | Promise<void>;
 	onRenameFromActionSheet: () => void;
+	onSelectFromActionSheet: () => void;
 	onRenameListItem: (name: string) => void | Promise<void>;
 	onRenameValueChange: () => void;
 	onScan: () => void;

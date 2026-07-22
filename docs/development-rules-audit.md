@@ -53,6 +53,7 @@ clickable navigation block instead.
 - [Backend And Validation](#rule-backend-best-practices)
 - [Exclusive Ingredient List Membership](#rule-exclusive-list-membership)
 - [Atomic Bulk Ingredient Moves](#rule-bulk-list-moves)
+- [Long-Press Ingredient Selection](#rule-long-press-selection)
 - [Sheets, Views, And URL State](#rule-bottom-sheet-flows)
 - [Privileged Actions](#rule-privileged-action-badges)
 - [QA Process](#rule-qa-process)
@@ -1100,6 +1101,20 @@ delaying the write. Persist the complete selected set through one authenticated 
 database function, reject stale or partial selections, notify list consumers once, and
 update the visible lists once after success. Never implement a bulk move as a loop of
 single-item writes or reload the full list after each selected item.
+
+**49d.** <a id="rule-long-press-selection"></a>Saved ingredient cards must keep bulk
+selection controls out of the normal card layout. A deliberate 500ms long press on the
+card's main content may enter selection mode, but the hidden gesture must never be the
+only route: provide visible `Select items` and per-item action-sheet controls for mouse,
+touch, keyboard, switch, and assistive-technology users. Cancel a pending hold when the
+pointer moves far enough to indicate scrolling, suppress the follow-up browser click,
+and avoid triggering selection from move, menu, or delete controls. Once selection mode
+starts, show the shared circular selection controls, let a normal card activation toggle
+selection, hide unrelated item actions, and provide `Select all`, `Move`, and `Cancel`
+controls. Canceling, switching lists, or completing a move must clear the selection and
+leave selection mode. Keep the press behavior in one reusable interaction utility and
+test touch, mouse, keyboard alternatives, movement cancellation, and reduced-motion-safe
+bulk movement.
 
 **50.** <a id="rule-url-backed-popins"></a>Pop-in views, popovers, modals, sheets,
 scanners, dialogs, and other meaningful overlay states need URL-backed state with

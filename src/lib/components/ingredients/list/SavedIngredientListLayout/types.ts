@@ -8,6 +8,5 @@ export type SavedIngredientListLayoutProps = {
 	listLoading?: boolean;
 	listActionError?: string;
 	listLoadingError?: string;
-	onSelectList: (key: SmoothieListKey) => void;
 	children: Snippet;
 };

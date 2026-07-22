@@ -30,7 +30,8 @@ describe("SavedIngredientList overlay behavior", () => {
 				foods: [food],
 				canRevealMore,
 				onSelectAll: vi.fn(),
-				onClearSelection: vi.fn(),
+				onEnterSelection: vi.fn(),
+				onCancelSelection: vi.fn(),
 				onMoveSelection: vi.fn(),
 				onMoveItem: vi.fn(),
 				onToggle: vi.fn(),
@@ -51,7 +52,8 @@ describe("SavedIngredientList overlay behavior", () => {
 				canRevealMore: true,
 				revealPaused: true,
 				onSelectAll: vi.fn(),
-				onClearSelection: vi.fn(),
+				onEnterSelection: vi.fn(),
+				onCancelSelection: vi.fn(),
 				onMoveSelection: vi.fn(),
 				onMoveItem: vi.fn(),
 				onToggle: vi.fn(),
@@ -77,6 +79,32 @@ describe("SavedIngredientList overlay behavior", () => {
 		).toBeDisabled();
 	});
 
+	it("keeps card checkboxes hidden until selection mode starts", async () => {
+		const onEnterSelection = vi.fn();
+		render(SavedIngredientList, {
+			props: {
+				activeList: MIX_STORAGE_KEYS.fridge,
+				foods: [food],
+				onSelectAll: vi.fn(),
+				onEnterSelection,
+				onCancelSelection: vi.fn(),
+				onMoveSelection: vi.fn(),
+				onMoveItem: vi.fn(),
+				onToggle: vi.fn(),
+				onPreview: vi.fn(),
+				onActions: vi.fn(),
+				onRemove: vi.fn(),
+				onRevealMore: vi.fn(),
+			},
+		});
+
+		expect(
+			screen.queryByRole("button", { name: "Select Spinach, raw" }),
+		).not.toBeInTheDocument();
+		await fireEvent.click(screen.getByRole("button", { name: "Select items" }));
+		expect(onEnterSelection).toHaveBeenCalledWith();
+	});
+
 	it("requires two deliberate activations before removing an ingredient", async () => {
 		const onRemove = vi.fn();
 
@@ -85,7 +113,8 @@ describe("SavedIngredientList overlay behavior", () => {
 				activeList: MIX_STORAGE_KEYS.fridge,
 				foods: [food],
 				onSelectAll: vi.fn(),
-				onClearSelection: vi.fn(),
+				onEnterSelection: vi.fn(),
+				onCancelSelection: vi.fn(),
 				onMoveSelection: vi.fn(),
 				onMoveItem: vi.fn(),
 				onToggle: vi.fn(),
@@ -164,7 +193,8 @@ describe("SavedIngredientList overlay behavior", () => {
 				foods: [food],
 				canRevealMore: true,
 				onSelectAll: vi.fn(),
-				onClearSelection: vi.fn(),
+				onEnterSelection: vi.fn(),
+				onCancelSelection: vi.fn(),
 				onMoveSelection: vi.fn(),
 				onMoveItem: vi.fn(),
 				onToggle: vi.fn(),
@@ -201,9 +231,11 @@ describe("SavedIngredientList overlay behavior", () => {
 			props: {
 				activeList: MIX_STORAGE_KEYS.fridge,
 				foods: [food, secondFood],
+				selectionMode: true,
 				selectedIds: [food.fdcId, secondFood.fdcId],
 				onSelectAll: vi.fn(),
-				onClearSelection: vi.fn(),
+				onEnterSelection: vi.fn(),
+				onCancelSelection: vi.fn(),
 				onMoveSelection,
 				onMoveItem: vi.fn(),
 				onToggle: vi.fn(),
@@ -216,7 +248,7 @@ describe("SavedIngredientList overlay behavior", () => {
 
 		await fireEvent.click(
 			screen.getByRole("button", {
-				name: "Move 2 checked → Shopping List",
+				name: "Move 2 selected → Shopping List",
 			}),
 		);
 

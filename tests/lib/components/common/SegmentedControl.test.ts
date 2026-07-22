@@ -3,6 +3,34 @@ import { describe, expect, it, vi } from "vitest";
 import SegmentedControl from "$lib/components/common/buttons/SegmentedControl/SegmentedControl.svelte";
 
 describe("SegmentedControl", () => {
+	it("renders URL-backed tabs as real links", () => {
+		render(SegmentedControl, {
+			props: {
+				label: "Saved ingredient lists",
+				value: "fridge",
+				options: [
+					{ value: "fridge", label: "Fridge", href: "/fridge" },
+					{
+						value: "shopping",
+						label: "Shopping List",
+						href: "/fridge?tab=shopping-list",
+					},
+				],
+			},
+		});
+
+		const fridgeTab = screen.getByRole("tab", { name: "Fridge" });
+		expect(fridgeTab).toHaveAttribute(
+			"href",
+			"/fridge",
+		);
+		expect(fridgeTab).toHaveAttribute("data-sveltekit-keepfocus");
+		expect(fridgeTab).toHaveAttribute("data-sveltekit-noscroll");
+		expect(
+			screen.getByRole("tab", { name: "Shopping List" }),
+		).toHaveAttribute("href", "/fridge?tab=shopping-list");
+	});
+
 	it("uses roving focus and arrow-key tab navigation", async () => {
 		const onSelect = vi.fn();
 		render(SegmentedControl, {

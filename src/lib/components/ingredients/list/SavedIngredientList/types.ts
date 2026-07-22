@@ -13,6 +13,7 @@ export type SavedIngredientListProps = {
 	canRevealMore?: boolean;
 	selectedFoodId?: number | null;
 	selectedIds?: number[];
+	selectionMode?: boolean;
 	removingItem?: string | null;
 	movingItem?: string | null;
 	moving?: boolean;
@@ -20,7 +21,8 @@ export type SavedIngredientListProps = {
 	preferenceProfile?: FoodPreferenceProfile | null;
 	resetKey?: number;
 	onSelectAll: () => void;
-	onClearSelection: () => void;
+	onEnterSelection: (foodId?: number) => void;
+	onCancelSelection: () => void;
 	onMoveSelection: () => boolean | Promise<boolean>;
 	onMoveItem: (food: FdcFood) => void | Promise<void>;
 	onToggle: (foodId: number) => void;

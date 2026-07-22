@@ -47,6 +47,7 @@
 		onAdjustImagePlacementFromActionSheet,
 		onRemoveFromActionSheet,
 		onRenameFromActionSheet,
+		onSelectFromActionSheet,
 		onRenameListItem,
 		onRenameValueChange,
 		onScan,
@@ -64,6 +65,7 @@
 	removing={removingItem !== null}
 	canAdjustImagePlacement={canAdjustImagePlacement && Boolean(actionSheetItem?.food.image?.sourceReference)}
 	onClose={onCloseActionSheet}
+	onSelectItem={onSelectFromActionSheet}
 	onAdjustImagePlacement={onAdjustImagePlacementFromActionSheet}
 	onRename={onRenameFromActionSheet}
 	onRemove={onRemoveFromActionSheet}

@@ -32,7 +32,6 @@
     import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
     import {
         buildIngredientRouteHref,
-		buildIngredientListTabHref,
         findIngredientRouteFood,
 		getIngredientListTab,
         getIngredientRouteState,
@@ -85,7 +84,10 @@
     const sourceFilter = "all";
     const trustFilter = "any";
     let listSort = $state<FoodListSort>("recent");
-    let activeList = $state<SmoothieListKey>(getIngredientListTab(page.url));
+    let activeList = $derived<SmoothieListKey>(getIngredientListTab(page.url));
+    let previousActiveList = $state<SmoothieListKey>(
+		getIngredientListTab(page.url),
+	);
     let activeSheet = $state<"manual-entry" | "filters" | null>(null);
     let searchViewOpen = $state(false);
     let searchAddFoodId = $state<number | null>(null);
@@ -110,6 +112,7 @@
         [MIX_STORAGE_KEYS.fridge]: [],
         [MIX_STORAGE_KEYS.shoppingList]: [],
     });
+	let selectionMode = $state(false);
     let actionSheetItem = $state<IngredientActionItem | null>(null);
     let imagePlacementItem = $state<IngredientActionItem | null>(null);
     let movingItem = $state<string | null>(null);
@@ -213,9 +216,14 @@
     );
 
 	$effect(() => {
-		const routeList = getIngredientListTab(page.url);
-		if (routeList === activeList) return;
-		activeList = routeList;
+		const routeList = activeList;
+		if (routeList === previousActiveList) return;
+		selectedListItemIds = {
+			...selectedListItemIds,
+			[previousActiveList]: [],
+		};
+		selectionMode = false;
+		previousActiveList = routeList;
 		listViewResetKey += 1;
 	});
 
@@ -596,15 +604,31 @@
     };
 
     const selectAllActiveItems = () => {
+		selectionMode = true;
         setSelectedIds(
             activeList,
-            activeFilteredList.map((food) => food.fdcId),
+			activeVisibleList.map((food) => food.fdcId),
         );
     };
 
     const clearActiveSelection = () => {
         setSelectedIds(activeList, []);
     };
+
+	const enterSelectionMode = (foodId?: number) => {
+		if (movingItem || removingItem) return;
+		selectionMode = true;
+		if (foodId === undefined) return;
+		const currentIds = selectedListItemIds[activeList] ?? [];
+		if (!currentIds.includes(foodId)) {
+			setSelectedIds(activeList, [...currentIds, foodId]);
+		}
+	};
+
+	const cancelSelectionMode = () => {
+		clearActiveSelection();
+		selectionMode = false;
+	};
 
 	const applyBulkListMove = (
 		sourceKey: SmoothieListKey,
@@ -720,6 +744,7 @@
 
 			applyBulkListMove(sourceKey, selectedFoods);
 			setSelectedIds(sourceKey, []);
+			selectionMode = false;
 			return true;
 		} finally {
 			movingItem = null;
@@ -741,6 +766,19 @@
         actionSheetItem = null;
         void closeRoutedPopin();
     };
+
+	const selectFromActionSheet = () => {
+		if (!actionSheetItem) return;
+		const currentItem = actionSheetItem;
+		actionSheetItem = null;
+		selectionMode = true;
+		const currentIds = selectedListItemIds[currentItem.key] ?? [];
+		setSelectedIds(currentItem.key, [
+			...currentIds.filter((id) => id !== currentItem.food.fdcId),
+			currentItem.food.fdcId,
+		]);
+		void closeRoutedPopin();
+	};
 
     const openImagePlacementFromActionSheet = () => {
         if (!actionSheetItem) return;
@@ -772,13 +810,6 @@
         actionSheetItem = null;
         void closeRoutedPopin();
         await removeFromList(currentItem.key, currentItem.food.fdcId);
-    };
-
-    const selectList = (key: SmoothieListKey) => {
-        if (activeList === key) return;
-        activeList = key;
-        listViewResetKey += 1;
-		pushState(buildIngredientListTabHref(page.url, key), { ...page.state });
     };
 
     const resetVisibleCounts = () => {
@@ -977,7 +1008,6 @@
             {listLoading}
             {listActionError}
             listLoadingError={listLoadingError || provenanceOptionsError}
-            onSelectList={selectList}
         >
             <SavedIngredientList
                 {activeList}
@@ -989,6 +1019,7 @@
                 canRevealMore={canRevealMoreActiveItems}
                 selectedFoodId={selectedFood?.fdcId ?? null}
                 selectedIds={selectedActiveItemIds}
+				{selectionMode}
                 {removingItem}
                 {movingItem}
                 moving={movingItem !== null}
@@ -996,7 +1027,8 @@
                 preferenceProfile={foodPreferenceContext.current}
                 resetKey={listViewResetKey}
                 onSelectAll={selectAllActiveItems}
-                onClearSelection={clearActiveSelection}
+				onEnterSelection={enterSelectionMode}
+				onCancelSelection={cancelSelectionMode}
                 onMoveSelection={moveSelectedItems}
                 onMoveItem={(food) => moveFoodBetweenLists(activeList, food)}
                 onToggle={(foodId) => toggleBulkSelection(activeList, foodId)}
@@ -1048,6 +1080,7 @@
     onAdjustImagePlacementFromActionSheet={openImagePlacementFromActionSheet}
     onRemoveFromActionSheet={removeFromActionSheet}
     onRenameFromActionSheet={renameFromActionSheet}
+	onSelectFromActionSheet={selectFromActionSheet}
     onRenameListItem={renameListItem}
     onRenameValueChange={() => (renameError = "")}
     onScan={startBarcodeScan}

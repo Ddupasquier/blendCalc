@@ -1,4 +1,4 @@
-export type SegmentedControlOption = {
+type SegmentedControlOptionBase = {
 	value: string;
 	label: string;
 	count?: number;
@@ -6,12 +6,34 @@ export type SegmentedControlOption = {
 	controlsId?: string;
 };
 
+export type SegmentedControlLinkOption = SegmentedControlOptionBase & {
+	href: string;
+};
+
+export type SegmentedControlButtonOption = SegmentedControlOptionBase & {
+	href?: never;
+};
+
+export type SegmentedControlOption =
+	| SegmentedControlLinkOption
+	| SegmentedControlButtonOption;
+
 export type SegmentedControlVariant = "pill" | "progress";
 
-export type SegmentedControlProps = {
+type SegmentedControlBaseProps = {
 	label: string;
-	options: SegmentedControlOption[];
 	value: string;
 	variant?: SegmentedControlVariant;
-	onSelect: (value: string) => void;
 };
+
+export type SegmentedControlProps = SegmentedControlBaseProps &
+	(
+		| {
+				options: SegmentedControlLinkOption[];
+				onSelect?: never;
+		  }
+		| {
+				options: SegmentedControlButtonOption[];
+				onSelect: (value: string) => void;
+		  }
+	);

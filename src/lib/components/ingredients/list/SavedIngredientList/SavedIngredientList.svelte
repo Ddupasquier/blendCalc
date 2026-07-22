@@ -27,6 +27,7 @@
 		canRevealMore = false,
 		selectedFoodId = null,
 		selectedIds = [],
+		selectionMode = false,
 		removingItem = null,
 		movingItem = null,
 		moving = false,
@@ -34,7 +35,8 @@
 		preferenceProfile = null,
 		resetKey = 0,
 		onSelectAll,
-		onClearSelection,
+		onEnterSelection,
+		onCancelSelection,
 		onMoveSelection,
 		onMoveItem,
 		onToggle,
@@ -72,7 +74,7 @@
 		const exitDirection = bulkMoveDirection;
 
 		bulkAnimating = true;
-		bulkMoveStatus = `Moving ${movingCount} checked ingredient${movingCount === 1 ? "" : "s"} to ${targetLabel}.`;
+		bulkMoveStatus = `Moving ${movingCount} selected ingredient${movingCount === 1 ? "" : "s"} to ${targetLabel}.`;
 		await tick();
 
 		const selectedCards = Array.from(
@@ -122,11 +124,14 @@
 >
 	{#if foods.length > 0}
 		<IngredientBulkActions
+			{selectionMode}
 			{selectedCount}
+			selectableCount={foods.length}
 			{moveTargetLabel}
 			moving={bulkMoveBusy}
+			onEnterSelection={() => onEnterSelection()}
 			onSelectAll={onSelectAll}
-			onClear={onClearSelection}
+			onCancel={onCancelSelection}
 			onMove={moveSelectedItems}
 		/>
 	{/if}
@@ -155,6 +160,7 @@
 								{food}
 								active={selectedFoodId === food.fdcId}
 								checked={isChecked}
+								{selectionMode}
 								moving={movingItem === actionKey || (bulkMoveBusy && isChecked)}
 								removing={removingItem === actionKey}
 								moveDirection={activeList === MIX_STORAGE_KEYS.fridge
@@ -165,6 +171,7 @@
 								{warning}
 								{provenanceOptions}
 								onToggle={() => onToggle(food.fdcId)}
+								onEnterSelection={() => onEnterSelection(food.fdcId)}
 								onPreview={() => onPreview(food)}
 								onMove={() => onMoveItem(food)}
 								onActions={() => onActions(food)}

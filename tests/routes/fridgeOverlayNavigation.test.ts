@@ -19,4 +19,14 @@ describe("fridge overlay navigation", () => {
 		expect(source).toContain("const ingredientOverlayOpen = $derived(");
 		expect(source).toContain("revealPaused={ingredientOverlayOpen}");
 	});
+
+	it("uses the URL as the only source of truth for the active list tab", () => {
+		const source = readFileSync(fridgePagePath, "utf8");
+
+		expect(source).toContain(
+			"let activeList = $derived<SmoothieListKey>(getIngredientListTab(page.url))",
+		);
+		expect(source).not.toContain("const selectList =");
+		expect(source).not.toContain("activeList = key");
+	});
 });

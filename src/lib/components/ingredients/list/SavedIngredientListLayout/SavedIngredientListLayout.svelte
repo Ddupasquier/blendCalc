@@ -14,7 +14,6 @@
 		listLoading = false,
 		listActionError = "",
 		listLoadingError = "",
-		onSelectList,
 		children,
 	}: SavedIngredientListLayoutProps = $props();
 </script>
@@ -29,7 +28,6 @@
 		{activeList}
 		{fridgeCount}
 		{shoppingListCount}
-		onSelect={onSelectList}
 	/>
 
 	{#if listActionError}
