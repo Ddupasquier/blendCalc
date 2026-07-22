@@ -72,8 +72,9 @@
 }
 
 .confidence-details__chevron {
-	display: grid;
-	place-items: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	width: $app-shell-control-icon-size;
 	height: $app-shell-control-icon-size;
 	color: $app-shell-text-primary;

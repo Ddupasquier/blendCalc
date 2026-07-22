@@ -96,9 +96,9 @@
 }
 
 .saved-ingredient-card__move-action {
-	display: inline-grid;
-	place-items: center;
-	font-size: $app-shell-control-icon-size;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 }
 
 @media (max-width: $app-breakpoint-xs) {

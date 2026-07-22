@@ -3,6 +3,21 @@ import { describe, expect, it, vi } from "vitest";
 import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton/BarcodeScanButton.svelte";
 
 describe("BarcodeScanButton", () => {
+	it("centers the scanner through the shared icon wrapper", () => {
+		const { container } = render(BarcodeScanButton, {
+			props: {
+				compact: true,
+				onclick: vi.fn(),
+			},
+		});
+
+		expect(
+			container.querySelector(
+				".barcode-scan-button > .centered-icon > .barcode-scanner",
+			),
+		).toBeInTheDocument();
+	});
+
 	it("uses the shared spinner while a scan lookup is busy", () => {
 		const { container } = render(BarcodeScanButton, {
 			props: {

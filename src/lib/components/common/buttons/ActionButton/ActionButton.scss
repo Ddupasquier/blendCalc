@@ -7,6 +7,7 @@
 	gap: $app-gap-xs;
 	min-width: 0;
 	min-height: $app-control-height;
+	appearance: none;
 	color: $app-btn-text;
 	background: $app-btn-bg;
 	border: 1.5px solid transparent;
@@ -107,10 +108,8 @@
 	white-space: nowrap;
 }
 
-.action-button__icon {
-	display: inline-grid;
+:global(.action-button__icon) {
 	flex: 0 0 auto;
-	place-items: center;
 	width: 1em;
 	height: 1em;
 }

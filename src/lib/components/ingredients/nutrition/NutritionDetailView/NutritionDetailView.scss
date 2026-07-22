@@ -22,8 +22,9 @@ h1 {
 }
 
 .nutrition-detail-view__source {
-	display: inline-grid;
-	place-items: center;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	color: $app-shell-accent-info;
 }
 

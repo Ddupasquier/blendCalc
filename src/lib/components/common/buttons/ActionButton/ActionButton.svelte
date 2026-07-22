@@ -1,5 +1,6 @@
 <script lang="ts">
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import CenteredIcon from "$lib/components/common/icons/CenteredIcon/CenteredIcon.svelte";
 	import type { ActionButtonProps } from "./types";
 
 	let {
@@ -30,11 +31,11 @@
 	{onclick}
 >
 	{#if busy}
-		<span class="action-button__icon">
+		<CenteredIcon class="action-button__icon">
 			<LoadingSpinner size="small" decorative />
-		</span>
+		</CenteredIcon>
 	{:else if leading}
-		<span class="action-button__icon" aria-hidden="true">{@render leading()}</span>
+		<CenteredIcon class="action-button__icon">{@render leading()}</CenteredIcon>
 	{/if}
 	<span class="action-button__label">
 		{#if children}
@@ -42,7 +43,7 @@
 		{/if}
 	</span>
 	{#if trailing && !busy}
-		<span class="action-button__icon" aria-hidden="true">{@render trailing()}</span>
+		<CenteredIcon class="action-button__icon">{@render trailing()}</CenteredIcon>
 	{/if}
 </button>
 

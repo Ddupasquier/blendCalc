@@ -190,8 +190,9 @@ Interactive circles must use `CircleIconButton`, `CloseButton`, or another appro
 shared button; non-interactive icon circles must use `CircularIconFrame` through a
 focused component such as `StatusIconBadge`; circular avatars, food symbols, and image
 previews must use `CircularMediaFrame`. These primitives own equal width and height,
-`inline-grid` or `grid` with `place-items: center`, clipping, token-backed
-container/icon sizing, and `line-height: 1`. Shared circular primitives must not apply a
+`inline-flex` or `flex` with `align-items: center` and `justify-content: center`,
+clipping, token-backed container/icon sizing, and a zero-line-height inner icon wrapper.
+Shared circular primitives must not apply a
 family-wide optical translation that moves every child away from the mathematical
 center. A genuinely asymmetric icon may receive an exceptional token-backed correction
 only through its focused reusable component after visual QA; feature components must not

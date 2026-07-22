@@ -1,8 +1,9 @@
 @use "../../../../../styles/variables" as *;
 
 .circular-media-frame {
-	display: inline-grid;
-	place-items: center;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	box-sizing: border-box;
 	flex: 0 0 auto;
 	width: var(--circular-media-frame-size, #{$app-shell-leading-icon-size});

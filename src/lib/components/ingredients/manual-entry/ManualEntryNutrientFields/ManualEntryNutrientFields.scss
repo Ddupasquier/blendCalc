@@ -34,8 +34,9 @@
 	}
 
 	.manual-nutrients__chevron {
-		display: inline-grid;
-		place-items: center;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
 		width: $app-shell-control-icon-size;
 		height: $app-shell-control-icon-size;
 		color: $app-shell-text-muted;

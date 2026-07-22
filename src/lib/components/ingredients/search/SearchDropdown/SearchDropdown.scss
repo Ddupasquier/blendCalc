@@ -77,8 +77,9 @@
 
 .result-add-cell,
 .result-open {
-	display: inline-grid;
-	place-items: center;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .result-open {

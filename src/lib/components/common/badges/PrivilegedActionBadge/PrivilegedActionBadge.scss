@@ -1,8 +1,9 @@
 @use "../../../../../styles/variables" as *;
 
 :global(.privileged-action-badge) {
-	display: inline-grid;
-	place-items: center;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	box-sizing: border-box;
 	flex: 0 0 auto;
 	width: 1.72rem;

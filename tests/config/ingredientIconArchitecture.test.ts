@@ -75,6 +75,26 @@ describe("ingredient icon architecture", () => {
 			"src/lib/components/common/icons/CircularIconFrame/CircularIconFrame.scss",
 			"utf8",
 		);
+		const circularMediaFrameStyles = readFileSync(
+			"src/lib/components/common/images/CircularMediaFrame/CircularMediaFrame.scss",
+			"utf8",
+		);
+		const circleIconButtonStyles = readFileSync(
+			"src/lib/components/common/buttons/CircleIconButton/CircleIconButton.scss",
+			"utf8",
+		);
+		const iconControlButtonStyles = readFileSync(
+			"src/lib/components/common/buttons/IconControlButton/IconControlButton.scss",
+			"utf8",
+		);
+		const closeButtonStyles = readFileSync(
+			"src/lib/components/common/buttons/CloseButton/CloseButton.scss",
+			"utf8",
+		);
+		const actionButtonComponent = readFileSync(
+			"src/lib/components/common/buttons/ActionButton/ActionButton.svelte",
+			"utf8",
+		);
 		const statusBadge = readFileSync(
 			"src/lib/components/common/badges/StatusIconBadge/StatusIconBadge.svelte",
 			"utf8",
@@ -89,14 +109,30 @@ describe("ingredient icon architecture", () => {
 		);
 
 		expect(centeredIconComponent).toContain('@use "./CenteredIcon.scss"');
-		expect(centeredIconStyles).toContain("--centered-icon-optical-offset-y");
-		expect(centeredIconStyles).toContain("place-items: center");
+		expect(centeredIconStyles).toContain("display: inline-flex");
+		expect(centeredIconStyles).toContain("align-items: center");
+		expect(centeredIconStyles).toContain("justify-content: center");
+		expect(centeredIconStyles).not.toContain("transform:");
+		expect(centeredIconStyles).not.toContain("optical-offset");
 		expect(centeredIconStyles).toContain("width: 100%");
 		expect(centeredIconStyles).toContain("height: 100%");
 		expect(circularIconFrameComponent).toContain('@use "./CircularIconFrame.scss"');
 		expect(circularIconFrameStyles).toContain("overflow: hidden");
-		expect(circularIconFrameStyles).toContain("place-items: center");
+		expect(circularIconFrameStyles).toContain("align-items: center");
+		expect(circularIconFrameStyles).toContain("justify-content: center");
+		for (const sharedContainerStyles of [
+			circularMediaFrameStyles,
+			circleIconButtonStyles,
+			iconControlButtonStyles,
+			closeButtonStyles,
+		]) {
+			expect(sharedContainerStyles).toContain("align-items: center");
+			expect(sharedContainerStyles).toContain("justify-content: center");
+		}
 		expect(statusBadge).not.toContain("centered-icon-optical-offset");
+		expect(actionButtonComponent).toContain(
+			'<CenteredIcon class="action-button__icon">',
+		);
 		expect(privilegedBadge).toContain("<CenteredIcon>");
 		expect(privilegedBadge).not.toContain("<CircularIconFrame");
 		expect(privilegedBadgeStyles).toContain("color: $app-highlight");

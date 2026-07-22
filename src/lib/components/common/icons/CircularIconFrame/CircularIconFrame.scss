@@ -1,8 +1,9 @@
 @use "../../../../../styles/variables" as *;
 
 .circular-icon-frame {
-	display: inline-grid;
-	place-items: center;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	box-sizing: border-box;
 	flex: 0 0 auto;
 	width: var(--circular-icon-frame-size, #{$app-status-icon-badge-size});

@@ -1,11 +1,13 @@
 @use "../../../../../styles/variables" as *;
 
 .icon-control-button {
-	display: inline-grid;
-	place-items: center;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	width: $app-shell-control-height;
 	height: $app-shell-control-height;
 	flex: 0 0 auto;
+	appearance: none;
 	padding: 0;
 	color: $app-shell-text-muted;
 	background: $app-shell-surface-control;
