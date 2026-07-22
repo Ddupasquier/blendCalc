@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
-import AppHeader from "$lib/components/app/AppHeader.svelte";
+import AppHeader from "$lib/components/app/AppHeader/AppHeader.svelte";
 
 describe("AppHeader", () => {
 	it("uses a circular profile frame and standalone moderator crown", () => {

@@ -6,7 +6,7 @@ const read = (path: string) => readFileSync(path, "utf8");
 describe("loading indicator architecture", () => {
 	it("keeps spinner drawing and animation in one shared component", () => {
 		const search = read(
-			"src/lib/components/ingredients/search/IngredientSearch.svelte",
+			"src/lib/components/ingredients/search/IngredientSearch/IngredientSearch.svelte",
 		);
 		const spinner = read(
 			"src/lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte",
@@ -25,9 +25,9 @@ describe("loading indicator architecture", () => {
 		for (const path of [
 			"src/lib/components/common/buttons/ActionButton/ActionButton.svelte",
 			"src/lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte",
-			"src/lib/components/common/buttons/PillButton.svelte",
+			"src/lib/components/common/buttons/PillButton/PillButton.svelte",
 			"src/lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte",
-			"src/lib/components/common/buttons/IconControlButton.svelte",
+			"src/lib/components/common/buttons/IconControlButton/IconControlButton.svelte",
 		]) {
 			expect(read(path), path).toContain("LoadingSpinner");
 		}
@@ -35,7 +35,7 @@ describe("loading indicator architecture", () => {
 
 	it("uses the shared input frame for barcode and category loading", () => {
 		const identityStep = read(
-			"src/lib/components/ingredients/manual-entry/steps/IdentityStep.svelte",
+			"src/lib/components/ingredients/manual-entry/steps/IdentityStep/IdentityStep.svelte",
 		);
 		const categoryPicker = read(
 			"src/lib/components/ingredients/manual-entry/FoodCategoryPicker/FoodCategoryPicker.svelte",

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
-	import type { ActionButtonProps } from "../types";
+	import type { ActionButtonProps } from "./types";
 
 	let {
 		type = "button",

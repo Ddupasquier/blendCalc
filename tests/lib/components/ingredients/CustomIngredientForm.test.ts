@@ -281,8 +281,8 @@ vi.mock("$lib/utils/food/categories/categoryPicker", async (importOriginal) => {
 	};
 });
 
-import CustomIngredientForm from "$lib/components/ingredients/manual-entry/CustomIngredientForm.svelte";
-import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
+import CustomIngredientForm from "$lib/components/ingredients/manual-entry/CustomIngredientForm/CustomIngredientForm.svelte";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { createCustomFood } from "$lib/utils/food/custom/customFoods";
 import type { FdcNutrient } from "$lib/utils/food/types";
 

@@ -1,0 +1,52 @@
+@use "../../../../../styles/variables" as *;
+
+.point-shape {
+	display: block;
+	overflow: hidden;
+}
+
+.point-shape--full {
+	width: 100%;
+	height: auto;
+}
+
+.point-shape__label {
+	fill: $app-primary;
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+}
+
+.point-shape__value-label {
+	fill: $app-muted;
+	font-family: $app-font-family-data;
+	font-size: 0.62rem;
+	font-weight: $app-font-weight-bold;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: $app-letter-spacing-data;
+}
+
+.point-shape__value-circle {
+	transition:
+		r 0.32s ease-out,
+		fill 0.18s ease,
+		stroke 0.18s ease;
+}
+
+.point-shape__goal-shape {
+	transition:
+		r 0.32s ease-out,
+		fill 0.18s ease,
+		stroke 0.18s ease;
+}
+
+.point-shape__value-fill,
+.point-shape__value-stroke {
+	transition:
+		fill 0.18s ease,
+		stroke 0.18s ease;
+}
+
+.point-shape__value-fill {
+	opacity: 0.78;
+}

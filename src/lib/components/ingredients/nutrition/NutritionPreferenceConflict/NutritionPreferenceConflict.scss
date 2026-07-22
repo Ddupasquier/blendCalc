@@ -1,0 +1,10 @@
+@use "../../../../../styles/variables" as *;
+
+.preference-conflict__list {
+	display: grid;
+	gap: $app-gap-xs;
+	margin: 0;
+	padding-left: $app-gap-lg;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+}

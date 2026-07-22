@@ -1,4 +1,4 @@
-import { MIX_STORAGE_KEYS } from "../../../defaults/mixDefaults";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 import { getFdcNutrientValue } from "$lib/utils/food/nutrients/fdcNutrients";
 import { getFoodPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";

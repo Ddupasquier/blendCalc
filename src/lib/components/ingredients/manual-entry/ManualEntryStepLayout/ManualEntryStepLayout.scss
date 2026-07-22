@@ -1,0 +1,6 @@
+@use "../../../../../styles/variables" as *;
+
+.manual-entry-step-layout {
+	display: grid;
+	gap: $app-gap-md;
+}

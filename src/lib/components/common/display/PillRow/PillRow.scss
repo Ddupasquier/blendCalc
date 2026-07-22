@@ -1,0 +1,8 @@
+@use "../../../../../styles/variables" as *;
+
+.pill-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-sm;
+	margin: $app-gap-sm 0 0.2em;
+}

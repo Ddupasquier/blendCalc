@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
-import VerifiedStatusBadge from "$lib/components/common/badges/VerifiedStatusBadge.svelte";
+import VerifiedStatusBadge from "$lib/components/common/badges/VerifiedStatusBadge/VerifiedStatusBadge.svelte";
 
 describe("VerifiedStatusBadge", () => {
 	it("renders the shared shield-check inside the centered circular badge", () => {

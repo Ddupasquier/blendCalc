@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import ProductImageFrame from "$lib/components/common/images/ProductImageFrame.svelte";
+import ProductImageFrame from "$lib/components/common/images/ProductImageFrame/ProductImageFrame.svelte";
 
 describe("ProductImageFrame", () => {
 	it("renders a full product image in the shared compact frame", () => {

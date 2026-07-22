@@ -1,7 +1,7 @@
 <script lang="ts">
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
-	import CenteredIcon from "$lib/components/common/icons/CenteredIcon.svelte";
-	import type { CircleIconButtonProps } from "../types";
+	import CenteredIcon from "$lib/components/common/icons/CenteredIcon/CenteredIcon.svelte";
+	import type { CircleIconButtonProps } from "./types";
 
 	let {
 		type = "button",

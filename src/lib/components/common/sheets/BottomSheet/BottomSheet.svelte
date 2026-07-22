@@ -1,7 +1,7 @@
 <script lang="ts">
-	import BackButton from "$lib/components/common/buttons/BackButton.svelte";
+	import BackButton from "$lib/components/common/buttons/BackButton/BackButton.svelte";
 	import SheetBase from "$lib/components/common/sheets/SheetBase/SheetBase.svelte";
-	import type { BottomSheetProps } from "$lib/components/common/sheets/types";
+	import type { BottomSheetProps } from "./types";
 
 	let {
 		open,

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
-	import type { RoundedActionButtonProps } from "$lib/components/common/buttons/types";
+	import type { RoundedActionButtonProps } from "./types";
 
 	let {
 		id,

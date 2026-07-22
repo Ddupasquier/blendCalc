@@ -1,0 +1,19 @@
+@use "../../../../../styles/variables" as *;
+
+.two-step-confirmation {
+	display: contents;
+}
+
+.two-step-confirmation__message {
+	display: block;
+	grid-column: 1 / -1;
+	min-width: 0;
+	padding: $app-gap-xs $app-gap-sm;
+	color: $app-status-error-text;
+	background: $app-status-error-bg;
+	border-radius: $app-radius;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	line-height: 1.25;
+	text-align: center;
+}

@@ -7,21 +7,21 @@ describe("nutrition label readability", () => {
 			"src/lib/components/common/badges/TextBadge/TextBadge.scss",
 			"utf8",
 		);
-		const nutritionLabel = readFileSync(
-			"src/lib/components/ingredients/nutrition/NutritionFactsLabel.svelte",
+		const nutritionLabelStyles = readFileSync(
+			"src/lib/components/ingredients/nutrition/NutritionFactsLabel/NutritionFactsLabel.scss",
 			"utf8",
 		);
-		const sourceAttribution = readFileSync(
-			"src/lib/components/common/display/SourceAttribution.svelte",
+		const sourceAttributionStyles = readFileSync(
+			"src/lib/components/common/display/SourceAttribution/SourceAttribution.scss",
 			"utf8",
 		);
 
 		expect(textBadgeStyles).toContain("min-height: 1.25rem");
-		expect(textBadgeStyles).toContain("font-size: 0.76rem");
-		expect(nutritionLabel).toContain(
+		expect(textBadgeStyles).toContain("font-size: $app-font-size-xs");
+		expect(nutritionLabelStyles).toContain(
 			"@media (max-width: $app-breakpoint-sm)",
 		);
-		expect(nutritionLabel).toContain("font-size: $app-font-size-md");
-		expect(sourceAttribution).toContain("font-size: $app-font-size-sm");
+		expect(nutritionLabelStyles).toContain("font-size: $app-font-size-md");
+		expect(sourceAttributionStyles).toContain("font-size: $app-font-size-sm");
 	});
 });

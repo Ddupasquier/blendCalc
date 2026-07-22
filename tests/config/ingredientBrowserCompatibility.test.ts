@@ -15,12 +15,12 @@ describe("ingredient browser compatibility baseline", () => {
 
 	it("uses safe-area support and a viewport-height fallback", () => {
 		const appHtml = readSource("src/app.html");
-		const viewFrame = readSource(
-			"src/lib/components/common/view/ViewFrame.svelte",
+		const viewFrameStyles = readSource(
+			"src/lib/components/common/view/ViewFrame/ViewFrame.scss",
 		);
 		expect(appHtml).toContain("viewport-fit=cover");
-		expect(viewFrame.indexOf("100vh")).toBeLessThan(
-			viewFrame.indexOf("100dvh"),
+		expect(viewFrameStyles.indexOf("100vh")).toBeLessThan(
+			viewFrameStyles.indexOf("100dvh"),
 		);
 	});
 

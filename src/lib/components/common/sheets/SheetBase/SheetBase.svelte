@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { cubicOut } from "svelte/easing";
 	import { fade, fly } from "svelte/transition";
-	import type { SheetBaseProps } from "$lib/components/common/sheets/types";
+	import type { SheetBaseProps } from "./types";
 	import {
 		manageDialogFocus,
 		trapDialogFocus,

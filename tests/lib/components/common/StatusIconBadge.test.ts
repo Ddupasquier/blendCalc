@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { createRawSnippet } from "svelte";
 import { describe, expect, it } from "vitest";
-import StatusIconBadge from "$lib/components/common/badges/StatusIconBadge.svelte";
+import StatusIconBadge from "$lib/components/common/badges/StatusIconBadge/StatusIconBadge.svelte";
 
 describe("StatusIconBadge", () => {
 	it("provides one shared circular container for status icons", () => {

@@ -1,0 +1,11 @@
+@use "../../../../../styles/variables" as *;
+
+.add-ingredient-fab {
+	position: fixed;
+	right: max(
+		$app-shell-padding-x,
+		calc((100vw - $app-shell-content-max-width) / 2 + $app-shell-padding-x)
+	);
+	bottom: calc($app-shell-nav-height + $app-gap-md);
+	z-index: 12;
+}

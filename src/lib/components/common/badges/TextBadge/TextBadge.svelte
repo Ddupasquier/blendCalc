@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { TextBadgeProps } from "$lib/components/common/badges/types";
+	import type { TextBadgeProps } from "./types";
 
 	let {
 		label,

@@ -1,0 +1,18 @@
+@use "../../../../../styles/variables" as *;
+
+.product-image-evidence {
+	display: grid;
+	gap: $app-gap-md;
+	min-width: 0;
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-panel;
+	border: 2px solid $app-high-contrast-ink;
+	border-radius: $app-shell-radius-card;
+}
+
+.product-image-evidence p {
+	margin: $app-gap-xs 0 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	line-height: 1.35;
+}

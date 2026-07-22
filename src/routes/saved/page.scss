@@ -1,0 +1,183 @@
+@use "../../styles/variables" as *;
+
+$saved-pill-gap: 0.28rem;
+$saved-primary-action-padding-y: 0.4rem;
+$saved-primary-action-padding-x: 0.8rem;
+$saved-empty-action-padding-y: 0.45rem;
+$saved-empty-action-padding-x: 0.9rem;
+
+.saved-page {
+	box-sizing: border-box;
+	max-width: $app-max-width;
+	margin: 0 auto;
+	padding: $app-gap-sm 0;
+}
+
+.saved-header {
+	margin-bottom: $app-gap-md;
+}
+
+.saved-header h2 {
+	margin-bottom: 0.18rem;
+	color: $app-primary;
+	font-size: $app-font-size-xl;
+	font-weight: $app-font-weight-bold;
+}
+
+.saved-header p {
+	color: $app-muted;
+	font-size: $app-font-size-md;
+}
+
+.saved-action-error {
+	margin-bottom: $app-gap-sm;
+	padding: $app-gap-sm;
+	color: $app-warning-strong;
+	background: $app-warning-bg;
+	border: $app-warning-border;
+	border-radius: $app-radius;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+}
+
+.saved-grid {
+	display: grid;
+	gap: $app-gap-sm;
+	margin-top: $app-gap-sm;
+}
+
+.saved-card,
+.saved-empty {
+	padding: $app-gap-sm;
+	background: $app-section-bg;
+	border: $app-border;
+	border-radius: $app-card-radius;
+}
+
+.saved-card {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.saved-card h3 {
+	color: $app-primary;
+	font-size: $app-font-size-lg;
+	font-weight: $app-font-weight-bold;
+}
+
+.saved-card p {
+	color: $app-muted;
+	font-size: $app-font-size-sm;
+}
+
+.saved-card__details {
+	display: grid;
+	gap: $app-gap-inline-compact;
+}
+
+.saved-card__count {
+	width: fit-content;
+	padding: $app-text-badge-padding-y $app-text-badge-padding-x;
+	color: $app-primary;
+	background: $app-accent;
+	border: 1px solid $app-accent;
+	border-radius: $app-radius-pill;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+}
+
+.saved-card__ingredients {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-xs;
+	max-height: 7.5rem;
+	padding: 0.1rem 0.1rem $app-gap-2xs 0;
+	overflow-y: auto;
+}
+
+.saved-card__ingredient-pill {
+	display: inline-grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: $saved-pill-gap;
+	max-width: 100%;
+	padding: $app-gap-inline-compact $app-gap-sm;
+	color: $app-primary;
+	background: $app-bg;
+	border: $app-border;
+	border-radius: $app-radius-pill;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-semibold;
+	line-height: 1.25;
+}
+
+.saved-card__ingredient-name {
+	display: -webkit-box;
+	min-width: 0;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow-wrap: anywhere;
+}
+
+.saved-card__ingredient-pill--custom {
+	background: $app-custom-bg;
+	border-color: $app-custom-strong;
+}
+
+.saved-card__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: $app-gap-sm;
+}
+
+.saved-card__actions button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: $app-gap-xs;
+	padding: $saved-primary-action-padding-y $saved-primary-action-padding-x;
+	color: $app-btn-text;
+	background: $app-btn-bg;
+	border-radius: $app-radius-pill;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
+}
+
+.saved-card__actions button:hover {
+	background: $app-btn-bg-hover;
+}
+
+.saved-card__actions .saved-card__delete {
+	color: $app-primary;
+	background: $app-accent;
+}
+
+.saved-empty {
+	display: grid;
+	gap: $app-gap-sm;
+	text-align: center;
+}
+
+.saved-empty h3 {
+	color: $app-primary;
+}
+
+.saved-empty p {
+	color: $app-muted;
+}
+
+.saved-empty button {
+	justify-self: center;
+	padding: $saved-empty-action-padding-y $saved-empty-action-padding-x;
+	color: $app-btn-text;
+	background: $app-btn-bg;
+	border-radius: $app-radius-pill;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
+}
+
+.saved-empty--filtered {
+	margin-top: $app-gap-sm;
+}

@@ -12,11 +12,11 @@ const componentStylesPath = resolve(
 );
 const manualEntrySheetPath = resolve(
 	process.cwd(),
-	"src/lib/components/ingredients/sheets/ManualEntrySheet.svelte",
+	"src/lib/components/ingredients/sheets/ManualEntrySheet/ManualEntrySheet.svelte",
 );
 const manualEntryFormPath = resolve(
 	process.cwd(),
-	"src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte",
+	"src/lib/components/ingredients/manual-entry/CustomIngredientForm/CustomIngredientForm.svelte",
 );
 
 describe("BottomSheet shared chrome", () => {

@@ -1,0 +1,9 @@
+@use "../../../../../styles/variables" as *;
+
+.card-warning-edge {
+	position: absolute;
+	inset: 0 auto 0 0;
+	width: 5px;
+	background: $app-highlight;
+	pointer-events: none;
+}

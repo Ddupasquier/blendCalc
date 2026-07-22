@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
-import NutritionConfidenceDetails from "$lib/components/ingredients/nutrition/NutritionConfidenceDetails.svelte";
+import NutritionConfidenceDetails from "$lib/components/ingredients/nutrition/NutritionConfidenceDetails/NutritionConfidenceDetails.svelte";
 import type { FoodQuality } from "$lib/utils/food/quality/foodQuality";
 
 const partialQuality: FoodQuality = {

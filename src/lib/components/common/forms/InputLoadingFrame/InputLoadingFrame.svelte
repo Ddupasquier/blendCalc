@@ -1,6 +1,6 @@
 <script lang="ts">
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
-	import type { InputLoadingFrameProps } from "$lib/components/common/forms/types";
+	import type { InputLoadingFrameProps } from "./types";
 
 	let {
 		loading = false,

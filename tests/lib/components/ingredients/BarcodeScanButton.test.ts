@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton.svelte";
+import BarcodeScanButton from "$lib/components/ingredients/barcode/BarcodeScanButton/BarcodeScanButton.svelte";
 
 describe("BarcodeScanButton", () => {
 	it("uses the shared spinner while a scan lookup is busy", () => {

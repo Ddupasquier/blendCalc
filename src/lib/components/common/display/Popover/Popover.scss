@@ -1,0 +1,43 @@
+@use "../../../../../styles/variables" as *;
+
+.popover {
+	position: relative;
+	display: inline-flex;
+	justify-content: flex-end;
+}
+
+.popover__trigger {
+	padding: 0.25rem 0.55rem;
+	color: $app-primary;
+	background: $app-warning-bg;
+	border: $app-warning-border;
+	border-radius: $app-radius-pill;
+	font-size: $app-font-size-sm;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
+}
+
+.popover__panel {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 0.4rem);
+	z-index: 20;
+	width: min(20rem, 82vw);
+	padding: calc(1.75rem + 2 * $app-gap-xs) $app-gap-sm $app-gap-sm;
+	background: $app-section-bg;
+	border: $app-border;
+	border-radius: $app-card-radius;
+	color: $app-primary;
+}
+
+:global(.popover__close) {
+	position: absolute;
+	top: $app-gap-xs;
+	right: $app-gap-xs;
+}
+
+h5 {
+	margin-bottom: $app-gap-sm;
+	font-size: $app-font-size-lg;
+	font-weight: 800;
+}

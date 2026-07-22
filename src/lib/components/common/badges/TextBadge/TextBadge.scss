@@ -10,15 +10,15 @@
 	max-width: 8rem;
 	padding: $app-text-badge-padding-y $app-text-badge-padding-x;
 	overflow: hidden;
-	color: color-mix(in srgb, #55a6c8 72%, #4f4842);
-	font-size: 0.76rem;
+	color: color-mix(in srgb, $app-shell-accent-info 72%, $app-primary);
+	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-heavy;
 	line-height: 1;
 	text-align: center;
 	text-transform: uppercase;
 	vertical-align: middle;
 	white-space: nowrap;
-	background: color-mix(in srgb, #55a6c8 18%, #fff);
+	background: color-mix(in srgb, $app-shell-accent-info 18%, $app-shell-surface-panel);
 	border-radius: $app-radius-pill;
 }
 
@@ -31,16 +31,16 @@
 }
 
 :global(.text-badge[data-tone="custom"]) {
-	color: #7b5fa3;
-	background: color-mix(in srgb, #cbb8e8 55%, #fff);
+	color: $app-custom-strong;
+	background: color-mix(in srgb, $app-custom-bg 55%, $app-shell-surface-panel);
 }
 
 :global(.text-badge[data-tone="success"]) {
-	color: #57a773;
-	background: #e8f5ee;
+	color: $app-shell-accent-primary;
+	background: $app-shell-accent-soft;
 }
 
 :global(.text-badge[data-tone="neutral"]) {
-	color: #726963;
-	background: #e9e9ed;
+	color: $app-muted;
+	background: $app-shell-surface-control;
 }

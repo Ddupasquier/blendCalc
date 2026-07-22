@@ -1,4 +1,4 @@
-import { MIX_STORAGE_KEYS } from "../../../defaults/mixDefaults";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 

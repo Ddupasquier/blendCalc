@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
-import AssetAttribution from "$lib/components/common/display/AssetAttribution.svelte";
+import AssetAttribution from "$lib/components/common/display/AssetAttribution/AssetAttribution.svelte";
 
 describe("AssetAttribution", () => {
 	it("shows stored credit and links the stored license", () => {

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import X from "$lib/assets/icons/X.svelte";
-	import CenteredIcon from "$lib/components/common/icons/CenteredIcon.svelte";
-	import type { CloseButtonProps } from "../types";
+	import X from "$lib/assets/icons/X/X.svelte";
+	import CenteredIcon from "$lib/components/common/icons/CenteredIcon/CenteredIcon.svelte";
+	import type { CloseButtonProps } from "./types";
 
 	let {
 		label = "Close",

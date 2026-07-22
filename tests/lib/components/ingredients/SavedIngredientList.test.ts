@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList.svelte";
+import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList/SavedIngredientList.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
-import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
 const food: FdcFood = {
 	fdcId: 1,

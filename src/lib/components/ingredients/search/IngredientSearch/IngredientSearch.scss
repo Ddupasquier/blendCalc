@@ -1,0 +1,116 @@
+@use "../../../../../styles/variables" as *;
+
+.search-wrap {
+	position: relative;
+	display: grid;
+	gap: $app-gap-md;
+	min-width: 0;
+}
+
+.search-toolbar {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	align-items: center;
+	gap: $app-gap-md;
+	min-width: 0;
+}
+
+.search-toolbar--with-actions {
+	grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.search-actions {
+	display: inline-flex;
+	align-items: center;
+	gap: $app-gap-md;
+	min-width: 0;
+}
+
+.search-row {
+	position: relative;
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: $app-gap-xs;
+	height: $app-shell-control-height;
+	min-height: $app-shell-control-height;
+	padding: 0 $app-shell-control-padding-x;
+	background: $app-shell-surface-control;
+	border: 1px solid transparent;
+	border-radius: $app-shell-radius-control;
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease;
+
+	&:focus-within {
+		background: $app-shell-accent-soft;
+		border-color: $app-shell-accent-primary;
+	}
+}
+
+.search-row--active {
+	background: $app-shell-accent-soft;
+	border-color: color-mix(in srgb, $app-shell-accent-primary 42%, transparent);
+}
+
+:global(.search-icon) {
+	width: $app-font-size-md;
+	height: $app-font-size-md;
+	stroke: $app-shell-text-muted;
+}
+
+.search-input {
+	min-width: 0;
+	height: 100%;
+	padding: 0;
+	color: $app-shell-text-primary;
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	outline: none;
+	font-size: $app-font-size-md;
+
+	&::placeholder {
+		color: $app-shell-text-muted;
+	}
+
+	&::-webkit-search-cancel-button,
+	&::-webkit-search-decoration {
+		appearance: none;
+	}
+}
+
+.search-status-actions {
+	display: inline-flex;
+	align-items: center;
+	gap: $app-gap-inline-compact;
+	min-width: 0;
+}
+
+.search-hints {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-xs $app-gap-sm;
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+	line-height: 1.25;
+
+	span + span::before {
+		content: "·";
+		margin-right: $app-gap-sm;
+		color: color-mix(in srgb, $app-shell-text-muted 62%, transparent);
+	}
+}
+
+.search-error {
+	padding: $app-shell-control-padding-y-compact $app-shell-control-padding-x-compact;
+	color: $app-warning-strong;
+	background: $app-warning-bg;
+	border: $app-warning-border;
+	border-radius: $app-radius-sm;
+	margin-top: $app-gap-xs;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-heavy;
+}

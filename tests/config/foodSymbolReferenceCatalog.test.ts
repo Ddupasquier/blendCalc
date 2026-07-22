@@ -18,7 +18,7 @@ const emojiMigration = readFileSync(
 	"utf8",
 );
 const foodSymbol = readFileSync(
-	"src/lib/assets/icons/FoodSymbol.svelte",
+	"src/lib/assets/icons/FoodSymbol/FoodSymbol.svelte",
 	"utf8",
 );
 const referenceData = readFileSync(

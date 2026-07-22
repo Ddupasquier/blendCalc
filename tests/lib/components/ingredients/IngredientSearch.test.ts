@@ -16,7 +16,7 @@ vi.mock("$lib/utils/products/catalog", () => ({
 	searchSharedProducts: vi.fn().mockResolvedValue([]),
 }));
 
-import IngredientSearch from "$lib/components/ingredients/search/IngredientSearch.svelte";
+import IngredientSearch from "$lib/components/ingredients/search/IngredientSearch/IngredientSearch.svelte";
 import { searchFoodPage } from "$lib/utils/food/sources/fdc";
 import type { IngredientSearchPage } from "$lib/utils/ingredients/ingredientSearchPagination";
 

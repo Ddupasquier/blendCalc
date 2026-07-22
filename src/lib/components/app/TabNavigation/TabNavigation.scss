@@ -1,0 +1,70 @@
+@use "../../../../styles/variables" as *;
+
+.tab-nav {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	z-index: 90;
+	width: 100%;
+	min-height: $app-shell-nav-height;
+	background: $app-shell-surface-panel;
+	border-top: 1px solid $app-shell-border-subtle;
+}
+
+.tab-nav__inner {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	align-items: center;
+	width: min(100%, $app-shell-content-max-width);
+	min-height: $app-shell-nav-height;
+	margin: 0 auto;
+	padding: $app-gap-sm max($app-shell-padding-x, env(safe-area-inset-right))
+		calc($app-gap-sm + env(safe-area-inset-bottom))
+		max($app-shell-padding-x, env(safe-area-inset-left));
+	box-sizing: border-box;
+}
+
+.tab-btn {
+	display: grid;
+	place-items: center;
+	gap: $app-gap-xs;
+	min-width: 0;
+	color: $app-shell-text-muted;
+	font-family: $app-button-font-family;
+	font-size: $app-font-size-sm;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
+	text-align: center;
+	text-decoration: none;
+	transition:
+		color 0.16s ease,
+		transform 0.16s ease;
+
+	:global(.tab-btn__icon) {
+		width: $app-gap-lg;
+		height: $app-gap-lg;
+	}
+
+	span {
+		overflow: hidden;
+		max-width: 100%;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&.active {
+		color: $app-shell-accent-primary;
+		transform: translateY(-0.08rem);
+	}
+
+	&:focus-visible {
+		outline: $app-focus-outline;
+		outline-offset: 2px;
+	}
+}
+
+@media (min-width: $app-breakpoint-md) {
+	.tab-nav__inner {
+		padding-inline: $app-shell-padding-x;
+	}
+}

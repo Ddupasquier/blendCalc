@@ -20,7 +20,7 @@ import {
 	loadMixPageData,
 	loadSavedPageData,
 } from "$lib/server/user-data/pageData.server";
-import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
 const context = {
 	supabase: {} as never,

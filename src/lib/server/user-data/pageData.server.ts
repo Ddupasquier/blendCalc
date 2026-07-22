@@ -1,5 +1,5 @@
-import { LIST_PAGE_SIZES } from "../../../defaults/listDefaults";
-import { MIX_STORAGE_KEYS } from "../../../defaults/mixDefaults";
+import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type {
 	IngredientPageInitialData,
 	MixPageInitialData,

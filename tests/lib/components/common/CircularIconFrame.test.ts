@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/svelte";
 import { createRawSnippet } from "svelte";
 import { describe, expect, it } from "vitest";
 
-import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame.svelte";
+import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte";
 
 describe("CircularIconFrame", () => {
 	it("centers every supplied icon through the shared inner wrapper", () => {

@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-import CustomIngredientOutcome from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome.svelte";
-import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
+import CustomIngredientOutcome from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome/CustomIngredientOutcome.svelte";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { createCustomFood } from "$lib/utils/food/custom/customFoods";
 
 const outcomeFood = createCustomFood({

@@ -8,7 +8,7 @@ vi.mock("$lib/supabase/client", () => ({
 	getSupabaseBrowserClient: () => supabase,
 }));
 
-import { MIX_STORAGE_KEYS } from "../../../../src/defaults/mixDefaults";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { FdcFood } from "$lib/utils/food/types";
 import {
 	removeCloudSmoothieListItem,

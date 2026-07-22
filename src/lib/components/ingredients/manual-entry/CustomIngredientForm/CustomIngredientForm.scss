@@ -1,0 +1,7 @@
+@use "../../../../../styles/variables" as *;
+
+.custom-ingredient,
+.custom-ingredient__options {
+	display: grid;
+	gap: $app-gap-md;
+}

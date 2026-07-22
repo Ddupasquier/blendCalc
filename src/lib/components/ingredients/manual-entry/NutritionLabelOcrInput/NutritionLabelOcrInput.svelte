@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onDestroy } from "svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
-	import CheckboxGroup from "$lib/components/common/forms/CheckboxGroup.svelte";
-	import StatusMessage from "$lib/components/common/feedback/StatusMessage.svelte";
-	import type { NutritionLabelOcrInputProps } from "$lib/components/ingredients/manual-entry/formTypes";
+	import CheckboxGroup from "$lib/components/common/forms/CheckboxGroup/CheckboxGroup.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
+	import type { NutritionLabelOcrInputProps } from "./types";
 	import { recognizeNutritionLabelImage } from "$lib/utils/food/ocr/nutritionLabelOcr.client";
 	import {
 		parseNutritionLabelText,

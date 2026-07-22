@@ -1,0 +1,201 @@
+@use "../../../../styles/variables" as *;
+
+.tutorial-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 300;
+	display: grid;
+	place-items: center;
+	padding: $app-gap-sm;
+	background: rgba(26, 58, 90, 0.28);
+	backdrop-filter: blur(3px);
+}
+
+.tutorial {
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	width: min(34rem, 100%);
+	max-height: min(42rem, calc(100dvh - 2 * $app-gap-sm));
+	overflow: hidden;
+	background: $app-section-bg;
+	border: $app-border;
+	border-radius: $app-guest-card-radius;
+}
+
+.tutorial:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: 3px;
+}
+
+.tutorial__header,
+.tutorial__footer {
+	padding: $app-gap-md;
+	background: $app-section-bg;
+}
+
+.tutorial__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	border-bottom: $app-border;
+}
+
+.tutorial__eyebrow {
+	color: $app-primary;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.tutorial__progress {
+	margin-top: 0.1rem;
+	color: $app-muted;
+	font-size: $app-font-size-sm;
+}
+
+.tutorial__dots {
+	display: flex;
+	gap: $app-gap-xs;
+
+	span {
+		width: 0.55rem;
+		height: 0.55rem;
+		background: $app-border-color;
+		border-radius: 50%;
+	}
+
+	.active {
+		background: $app-highlight;
+	}
+}
+
+.tutorial__body {
+	display: grid;
+	grid-template-columns: 7rem minmax(0, 1fr);
+	align-items: center;
+	gap: $app-gap-lg;
+	min-height: 0;
+	padding: $app-padding;
+	overflow-y: auto;
+}
+
+:global(.tutorial__illustration) {
+	--circular-icon-frame-size: #{7rem};
+	--circular-icon-frame-icon-size: #{4.06rem};
+	--circular-icon-frame-color: #{$app-primary};
+	--circular-icon-frame-background: #{$app-highlight};
+}
+
+.tutorial__copy {
+	min-width: 0;
+
+	h2 {
+		font-family: $app-font-family-display;
+		font-size: clamp(1.4rem, 5vw, 2rem);
+		font-weight: $app-font-weight-bold;
+		text-wrap: balance;
+	}
+
+	p {
+		margin-top: $app-gap-sm;
+		color: $app-muted;
+		font-size: $app-font-size-md;
+	}
+
+	ul {
+		display: grid;
+		gap: $app-gap-sm;
+		margin-top: $app-gap-md;
+		padding-left: 1.15rem;
+	}
+
+	li {
+		padding-left: $app-gap-xs;
+		font-size: $app-font-size-md;
+	}
+
+	li::marker {
+		color: $app-highlight-hover;
+	}
+}
+
+.tutorial__footer {
+	display: grid;
+	gap: $app-gap-sm;
+	border-top: $app-border;
+}
+
+.tutorial__navigation,
+.tutorial__choices {
+	display: flex;
+	gap: $app-gap-sm;
+}
+
+.tutorial__navigation {
+	justify-content: space-between;
+}
+
+.tutorial__choices button {
+	flex: 1 1 0;
+}
+
+.tutorial__primary {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: $app-gap-xs;
+	color: $app-btn-text;
+	background: $app-btn-bg;
+}
+
+.tutorial__next {
+	color: $app-highlight-text;
+	background: $app-highlight;
+}
+
+.tutorial__secondary {
+	color: $app-primary;
+	background: $app-accent;
+}
+
+.tutorial__primary:disabled,
+.tutorial__next:disabled,
+.tutorial__secondary:disabled {
+	cursor: not-allowed;
+	opacity: 0.55;
+}
+
+.tutorial__error {
+	padding: $app-gap-sm;
+	color: $app-warning-strong;
+	background: $app-warning-bg;
+	border: $app-warning-border;
+	border-radius: $app-radius-sm;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-semibold;
+}
+
+@media (max-width: $app-breakpoint-sm) {
+	.tutorial__body {
+		grid-template-columns: 1fr;
+		gap: $app-gap-md;
+		padding: $app-gap-md;
+	}
+
+	:global(.tutorial__illustration) {
+		--circular-icon-frame-size: #{5rem};
+		--circular-icon-frame-icon-size: #{2.9rem};
+	}
+
+	.tutorial__choices {
+		flex-direction: column-reverse;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.tutorial-backdrop {
+		backdrop-filter: none;
+	}
+}

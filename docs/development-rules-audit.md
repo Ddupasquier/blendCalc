@@ -1,6 +1,6 @@
 # Development Rules Audit
 
-Last verified: 2026-07-20
+Last verified: 2026-07-21
 
 Branch: `ui-rebuild/ingredients`
 
@@ -21,6 +21,7 @@ clickable navigation block instead.
 - [Shared Loading Indicators](#rule-loading-indicators)
 - [Design Tokens And Spacing](#rule-design-tokens)
 - [Component Styles And Folder Structure](#rule-style-file-boundaries)
+- [Canonical Project Map](project-structure.md)
 - [Shared Style Utilities](#rule-shared-style-utilities)
 - [Reusable Components And Buttons](#rule-reusable-components)
 - [Circular Icon Alignment](#rule-circular-icon-alignment)
@@ -324,10 +325,10 @@ building, and styling. Do not let one file become the home for every new behavio
   stay centralized so future steps use one shared language.
 
 - <a id="rule-manual-entry-styles"></a>Large manual-entry styles belong beside their
-  owning component in a paired SCSS file. Flow-level styles used by several manual-entry
-  children may remain at the nearest shared manual-entry parent, but a single component
-  must not place its private styles in a generic domain stylesheet. Consume app-wide
-  tokens for shared design decisions and keep component-only values local.
+  owning component in a paired SCSS file. Repeated manual-entry fields, action rows,
+  toggle rows, and step layouts must be reusable components instead of selectors in a
+  flow-global stylesheet. Consume app-wide tokens for shared design decisions and keep
+  component-only values local.
 
 - <a id="rule-manual-entry-growth-check"></a>Before adding manual-entry behavior, decide
   where it belongs: visual UI in a step/display component, reusable logic in a utility,
@@ -346,25 +347,36 @@ process or architecture issue, add it to these development rules instead of fixi
 the current file. Do not create duplicate rule sets elsewhere; update this source of
 truth and link QA items back here.
 
-**16d.** <a id="rule-style-file-boundaries"></a>Organize non-trivial components as
-`components/<domain>/<Component>/<Component>.svelte`, with `<Component>.scss` and a
-local `types.ts` beside it when those companion files are needed. Do not create empty
-companion files. A type or style shared by sibling components belongs at their nearest
-common parent instead of being copied into each folder. Prefer paired SCSS files before
-a Svelte file becomes difficult to scan, and load component-private SCSS through that
-component's scoped `<style lang="scss">` block. Script-level stylesheet imports are
-reserved for intentionally global or multi-component flow styles because they bypass
-Svelte's normal component scoping. Keep app-wide values in `_variables.scss`; keep
-component-only colors, dimensions, radii, timing, and layout details in the paired SCSS
-file. Do not create global one-off variables to make a local declaration look tokenized.
+**16d.** <a id="rule-style-file-boundaries"></a>Organize every component as
+`components/<domain>/<Component>/<Component>.svelte`, with `<Component>.scss` beside it
+when the component has styles and a local `types.ts` when component-only types are
+needed. Do not create empty companion files. A type shared by sibling components belongs
+at their nearest common parent. Shared visual behavior must become a reusable component,
+primitive, or mixin instead of a feature-global stylesheet. SvelteKit routes keep
+`+page.svelte`, `page.scss`, and optional route `types.ts` together in the route folder;
+layouts follow the equivalent `+layout.svelte` and `layout.scss` convention. Load private
+SCSS only through the owner's scoped `<style lang="scss">` block. Do not use script-level
+stylesheet imports in components or pages because they bypass Svelte's normal scoping.
+Keep app-wide values in `_variables.scss`; keep component-only colors, dimensions,
+radii, timing, and layout details in the paired SCSS file. Do not create global one-off
+variables to make a local declaration look tokenized. `src/styles` must contain only
+true app-wide style infrastructure, never ingredient-card or other feature styles.
+Follow the complete ownership map in `docs/project-structure.md`. Do not create generic
+dumping folders such as `defaults`, `helpers`, `misc`, or `shared`; place configuration,
+constants, and utilities with the domain that owns them.
 
 **16e.** <a id="rule-type-file-boundaries"></a>Keep reusable and feature-specific
 TypeScript types out of Svelte component and route files. Components and pages should
 import named types from nearby `types.ts`, `formTypes.ts`, or domain utility files
-instead of declaring local `type` or `interface` blocks. Tiny one-use prop literals are
-acceptable only when they are simpler than a named type, but repeated option shapes,
-handler contracts, state shapes, sheet props, and route data contracts must be
-centralized.
+instead of declaring local `type`, `interface`, or inline object-shaped prop contracts.
+Repeated option shapes, handler contracts, state shapes, sheet props, and route data
+contracts must be centralized.
+A named prop contract used by one component belongs in that component's local
+`types.ts`. An exact prop contract used unchanged by multiple sibling components may
+live in their nearest parent `types.ts`; that parent file must not merely collect the
+siblings' separate `*Props` types. Flow-wide files such as `formTypes.ts` may hold shared
+state and domain contracts, but component-specific prop contracts still stay with their
+component owner.
 
 **17.** Use the branch gate. Every new feature, major addition, and big change gets its
 own branch from `staging`, merges into `staging` first, and only moves from `staging` to
@@ -946,7 +958,7 @@ in the completed archive under an explicit `Retired` heading with the reason and
 replacement QA ID; retired does not mean passed.
 
 **43.** <a id="rule-view-primitives"></a>Full-height app views and sheet views must use
-shared view layout primitives (`ViewFrame`, `ViewTop`, `ViewBody`, `ViewFooter`,
+shared view layout primitives (`ViewFrame`, `ViewTop`, `ViewBody`,
 `ViewHeader`) instead of hand-rolled page grids. Keep always-visible controls in
 `ViewTop`, place only the intended scroll region in `ViewBody`, and avoid competing
 nested scroll containers unless a component explicitly owns a sub-scroll area.
@@ -1125,7 +1137,7 @@ mismatch on the server and mirror the outcome immediately in the UI.
 | Email exposure           | Partial     | Normal profile copy avoids email, but layout fallback and moderation surfaces still use email intentionally.                        |
 | Action validation        | Partial     | Validation and constraints exist, but duplicate prevention and pending states are not yet consistently centralized.                 |
 | Auth predictability      | Mostly pass | Redirect flow was hardened and documented. Preview/production/local auth still deserves regression tests.                           |
-| File/folder structure    | Mostly pass | Large coordinator files delegate UI and domain logic; Mix page styles now live in a tandem stylesheet.                              |
+| File/folder structure    | Pass        | Components and icons use namesake folders, props and styles stay with their owners, generic dumping folders are removed, and architecture tests guard the boundaries. |
 | Branch workflow          | Pass        | `staging` exists as the integration gate before `main`; new major work should branch from and return to `staging`.                  |
 | Verification             | Mostly pass | Type checks and focused regression tests cover the reference catalog; full browser QA remains required.                             |
 
@@ -1139,11 +1151,11 @@ reference-data policy that belongs elsewhere.
 
 | File                                                         | Lines | Risk                                                                                                       |
 | ------------------------------------------------------------ | ----: | ---------------------------------------------------------------------------------------------------------- |
-| `src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte` | 1404 | Acceptable as the manual-entry coordinator while new UI, validation, formatting, and persistence continue to live in focused children/utilities. |
-| `src/routes/fridge/+page.svelte`                                           |  990 | Acceptable as route orchestration; repeated panels and list UI are delegated to reusable components.                                |
+| `src/lib/components/ingredients/manual-entry/CustomIngredientForm/CustomIngredientForm.svelte` | 1407 | Acceptable as the manual-entry coordinator while new UI, validation, formatting, and persistence continue to live in focused children/utilities. |
+| `src/routes/fridge/+page.svelte`                                           |  971 | Acceptable as route orchestration; repeated panels and list UI are delegated to reusable components.                                |
 | `src/routes/mix/+page.svelte`                                              |  869 | Improved: tandem styles, shared controls, DB-owned catalogs, and extracted calculations leave the page focused on wiring.           |
-| `src/routes/moderation/+page.svelte`                                       |  771 | Still pending the planned moderation UI rebuild; avoid growing it before that pass.                                                  |
-| `src/lib/components/ingredients/nutrition/NutritionPanel.svelte`           |   38 | Pass: now a small coordinator around focused nutrition components.                                                                  |
+| `src/routes/moderation/+page.svelte`                                       |  338 | Still pending the planned moderation UI rebuild; avoid growing it before that pass.                                                  |
+| `src/lib/components/ingredients/nutrition/NutritionPanel/NutritionPanel.svelte`           |   38 | Pass: now a small coordinator around focused nutrition components.                                                                  |
 
 Recommendation: keep coordinator ownership explicit. Extract only when a new change adds
 a reusable view, business rule, formatter, persistence operation, or reference-data
@@ -1160,7 +1172,7 @@ Current result:
 
 - Shared app rhythm, typography, shell colors, status roles, and primitive dimensions
   use direct semantic tokens. Component-only values live beside their components.
-- `mixDefaults.ts` now contains storage keys only. Nutrient choices, goals, runtime
+- `src/lib/utils/storage/storageKeys.ts` contains storage keys only. Nutrient choices, goals, runtime
   thresholds, and data choices come from the database reference catalog. Mix-only chart
   colors live with the Mix route rather than in global app styles.
 - New non-trivial components use a component folder containing the Svelte file and its
@@ -1223,17 +1235,17 @@ Current structure is understandable:
 - `src/lib/components/mix`
 - `src/lib/components/illustrations/fruit`
 
-Strong reusable pieces already exist:
+Strong reusable pieces already exist in namesake folders:
 
-- `CloseButton.svelte`
-- `Pill.svelte`
-- `PillRow.svelte`
-- `FoodListSection.svelte`
-- `ListControls.svelte`
-- `Pagination.svelte`
-- `SortSelect.svelte`
-- `ConfirmationDialog.svelte`
-- `TextInputDialog.svelte`
+- `CloseButton/CloseButton.svelte`
+- `Pill/Pill.svelte`
+- `PillRow/PillRow.svelte`
+- `FoodListSection/FoodListSection.svelte`
+- `ListControls/ListControls.svelte`
+- `Pagination/Pagination.svelte`
+- `SortSelect/SortSelect.svelte`
+- `ConfirmationDialog/ConfirmationDialog.svelte`
+- `TextInputDialog/TextInputDialog.svelte`
 
 Current result:
 
@@ -1241,6 +1253,10 @@ Current result:
   and form primitives.
 - Component and page prop contracts are imported from focused `types.ts` files rather
   than declared inline.
+- Component-only prop contracts live with their namesake component; parent type files
+  contain only shared sibling contracts.
+- Dead components and utilities, empty directories, and the old generic `src/defaults`
+  folder were removed during the full ownership audit.
 - Feature components may still own genuinely unique semantic controls, but repeated
   controls must extend the shared primitives.
 
@@ -1357,5 +1373,5 @@ rg -n "localStorage|sessionStorage" src/lib src/routes --glob '!src/lib/types/da
 rg -n "\\.email|email" src/lib src/routes --glob '!src/lib/types/database.types.ts'
 rg -n "#[0-9a-fA-F]{3,8}|rgb\\(|rgba\\(" src --glob '*.svelte' --glob '*.ts' --glob '*.scss' --glob '!src/styles/_variables.scss'
 rg -n "(padding|margin|gap|font-size|font-weight|border-radius): [0-9]" src --glob '*.svelte' --glob '*.scss' --glob '!src/styles/_variables.scss'
-wc -l src/routes/fridge/+page.svelte src/routes/mix/+page.svelte src/routes/saved/+page.svelte src/routes/moderation/+page.svelte src/routes/auth/+page.svelte src/lib/components/ingredients/manual-entry/CustomIngredientForm.svelte src/lib/components/ingredients/nutrition/NutritionPanel.svelte src/lib/components/mix/insights/PointShape.svelte src/lib/components/mix/insights/NutrientAdjustmentSuggestions.svelte src/lib/components/mix/ingredients/IngredientCard.svelte src/lib/components/ingredients/search/IngredientSearch.svelte
+wc -l src/routes/fridge/+page.svelte src/routes/mix/+page.svelte src/routes/saved/+page.svelte src/routes/moderation/+page.svelte src/routes/auth/+page.svelte src/lib/components/ingredients/manual-entry/CustomIngredientForm/CustomIngredientForm.svelte src/lib/components/ingredients/nutrition/NutritionPanel/NutritionPanel.svelte src/lib/components/mix/insights/PointShape/PointShape.svelte src/lib/components/mix/insights/NutrientAdjustmentSuggestions/NutrientAdjustmentSuggestions.svelte src/lib/components/mix/ingredients/IngredientCard/IngredientCard.svelte src/lib/components/ingredients/search/IngredientSearch/IngredientSearch.svelte
 ```

@@ -1,0 +1,14 @@
+@use "../../../../../styles/variables" as *;
+
+.manual-entry-actions {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $app-gap-md;
+	margin-top: $app-gap-sm;
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.manual-entry-actions {
+		grid-template-columns: 1fr;
+	}
+}

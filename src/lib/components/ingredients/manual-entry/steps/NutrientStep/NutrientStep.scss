@@ -1,0 +1,12 @@
+@use "../../../../../../styles/variables" as *;
+
+.nutrient-step__error {
+	margin: 0;
+	padding: $app-status-padding-y $app-status-padding-x;
+	color: $app-status-error-text;
+	background: $app-status-error-bg;
+	border-radius: $app-shell-radius-card;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: 1.35;
+}

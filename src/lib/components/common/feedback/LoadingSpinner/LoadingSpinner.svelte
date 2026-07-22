@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { LoadingSpinnerProps } from "$lib/components/common/feedback/types";
+	import type { LoadingSpinnerProps } from "./types";
 
 	let {
 		size = "medium",

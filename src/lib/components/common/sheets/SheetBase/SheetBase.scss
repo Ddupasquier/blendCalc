@@ -1,5 +1,8 @@
 @use "../../../../../styles/variables" as *;
 
+$viewport-height-fallback: 100vh;
+$viewport-height-dynamic: 100dvh;
+
 .sheet-base__backdrop,
 .sheet-base {
 	--sheet-top-offset: #{$app-shell-header-height};
@@ -66,44 +69,44 @@
 	width: 100%;
 	min-height: min(
 		56vh,
-		calc(100vh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+		calc(#{$viewport-height-fallback} - var(--sheet-top-offset) - var(--sheet-bottom-offset))
 	);
 	min-height: min(
 		56dvh,
-		calc(100dvh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+		calc(#{$viewport-height-dynamic} - var(--sheet-top-offset) - var(--sheet-bottom-offset))
 	);
 	max-height: min(
 		80vh,
-		calc(100vh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+		calc(#{$viewport-height-fallback} - var(--sheet-top-offset) - var(--sheet-bottom-offset))
 	);
 	max-height: min(
 		80dvh,
-		calc(100dvh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+		calc(#{$viewport-height-dynamic} - var(--sheet-top-offset) - var(--sheet-bottom-offset))
 	);
 	padding: $app-gap-sm $app-shell-padding-x $app-gap-md;
 	overflow: hidden;
-	border-radius: 1.35rem 1.35rem 0 0;
+	border-radius: $app-shell-radius-sheet $app-shell-radius-sheet 0 0;
 }
 
 .sheet-base--fill .sheet-base__panel--bottom {
 	height: min(
 		80vh,
-		calc(100vh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+		calc(#{$viewport-height-fallback} - var(--sheet-top-offset) - var(--sheet-bottom-offset))
 	);
 	height: min(
 		80dvh,
-		calc(100dvh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+		calc(#{$viewport-height-dynamic} - var(--sheet-top-offset) - var(--sheet-bottom-offset))
 	);
 }
 
 .sheet-base--comfortable .sheet-base__panel--bottom {
 	min-height: min(
 		23rem,
-		calc(100vh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+		calc(#{$viewport-height-fallback} - var(--sheet-top-offset) - var(--sheet-bottom-offset))
 	);
 	min-height: min(
 		23rem,
-		calc(100dvh - var(--sheet-top-offset) - var(--sheet-bottom-offset))
+		calc(#{$viewport-height-dynamic} - var(--sheet-top-offset) - var(--sheet-bottom-offset))
 	);
 }
 

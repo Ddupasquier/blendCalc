@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 describe("ingredient badge architecture", () => {
 	it("uses shared centered badges for actionable verification status", () => {
 		const ingredientBadges = readFileSync(
-			"src/lib/components/ingredients/provenance/IngredientProvenanceBadges.svelte",
+			"src/lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte",
 			"utf8",
 		);
 		const textBadge = readFileSync(
@@ -16,15 +16,15 @@ describe("ingredient badge architecture", () => {
 			"utf8",
 		);
 		const nutritionFactsLabel = readFileSync(
-			"src/lib/components/ingredients/nutrition/NutritionFactsLabel.svelte",
+			"src/lib/components/ingredients/nutrition/NutritionFactsLabel/NutritionFactsLabel.svelte",
 			"utf8",
 		);
 		const verifiedStatusBadge = readFileSync(
-			"src/lib/components/common/badges/VerifiedStatusBadge.svelte",
+			"src/lib/components/common/badges/VerifiedStatusBadge/VerifiedStatusBadge.svelte",
 			"utf8",
 		);
 		const shieldCheck = readFileSync(
-			"src/lib/assets/icons/ShieldCheck.svelte",
+			"src/lib/assets/icons/ShieldCheck/ShieldCheck.svelte",
 			"utf8",
 		);
 
@@ -32,7 +32,7 @@ describe("ingredient badge architecture", () => {
 			'$lib/components/common/badges/TextBadge/TextBadge.svelte',
 		);
 		expect(ingredientBadges).toContain(
-			'$lib/components/common/badges/VerifiedStatusBadge.svelte',
+			'$lib/components/common/badges/VerifiedStatusBadge/VerifiedStatusBadge.svelte',
 		);
 		expect(ingredientBadges).toContain('trustBadge.value === "verified"');
 		expect(ingredientBadges).not.toContain("getIngredientSourceBadge");
@@ -41,16 +41,16 @@ describe("ingredient badge architecture", () => {
 		expect(textBadgeStyles).toContain("min-height: 1.25rem");
 		expect(textBadgeStyles).toContain("text-align: center");
 		expect(verifiedStatusBadge).toContain(
-			'$lib/components/common/badges/StatusIconBadge.svelte',
+			'$lib/components/common/badges/StatusIconBadge/StatusIconBadge.svelte',
 		);
 		expect(verifiedStatusBadge).toContain(
-			'$lib/assets/icons/ShieldCheck.svelte',
+			'$lib/assets/icons/ShieldCheck/ShieldCheck.svelte',
 		);
 		expect(verifiedStatusBadge).toContain('tone="success"');
 		expect(shieldCheck).toContain('viewBox="0 0 24 24"');
 		expect(shieldCheck).toContain('stroke="currentColor"');
 		expect(nutritionFactsLabel).toContain(
-			'$lib/components/ingredients/provenance/IngredientProvenanceBadges.svelte',
+			'$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte',
 		);
 		expect(nutritionFactsLabel).not.toContain("CustomBadge");
 	});

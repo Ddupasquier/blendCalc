@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import SavedIngredientCard from "$lib/components/ingredients/list/SavedIngredientCard.svelte";
+import SavedIngredientCard from "$lib/components/ingredients/list/SavedIngredientCard/SavedIngredientCard.svelte";
 
 const baseProps = {
 	food: {
@@ -28,8 +28,7 @@ describe("SavedIngredientCard warning treatment", () => {
 			},
 		});
 
-		expect(container.querySelector("article"))
-			.toHaveClass("saved-ingredient-card--warning");
+		expect(container.querySelector(".card-warning-edge")).toBeInTheDocument();
 		expect(
 			screen.getByRole("button", {
 				name: "Preview Ground Beef. Warning: Peanut may be present",
@@ -47,8 +46,7 @@ describe("SavedIngredientCard warning treatment", () => {
 			props: baseProps,
 		});
 
-		expect(container.querySelector("article"))
-			.not.toHaveClass("saved-ingredient-card--warning");
+		expect(container.querySelector(".card-warning-edge")).not.toBeInTheDocument();
 		expect(
 			screen.getByRole("button", { name: "Preview Ground Beef" }),
 		).toBeInTheDocument();

@@ -1,0 +1,113 @@
+@use "../../../../../styles/variables" as *;
+
+.contribution-breakdown {
+	width: 100%;
+	margin-top: $app-gap-sm;
+	padding: $app-gap-sm;
+	background: $app-bg;
+	border: $app-border;
+	border-radius: $app-card-radius;
+}
+
+.contribution-breakdown__header {
+	margin-bottom: $app-gap-sm;
+
+	h4 {
+		color: $app-primary;
+		font-size: $app-font-size-sm;
+		font-weight: $app-font-weight-bold;
+	}
+
+	p {
+		color: $app-muted;
+		font-size: $app-font-size-xs;
+		line-height: 1.35;
+	}
+}
+
+.contribution-breakdown__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+	gap: $app-gap-sm;
+}
+
+.contribution-card {
+	min-width: 0;
+	padding: $app-gap-sm;
+	background: $app-section-bg;
+	border: $app-border;
+	border-radius: $app-radius;
+}
+
+.contribution-card__title {
+	display: flex;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	margin-bottom: $app-gap-sm;
+	color: $app-primary;
+	font-size: $app-font-size-xs;
+
+	strong {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	span {
+		flex-shrink: 0;
+		color: $app-muted;
+		font-weight: $app-font-weight-bold;
+	}
+}
+
+ul {
+	display: grid;
+	gap: $app-gap-sm;
+	list-style: none;
+}
+
+li {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: $app-gap-2xs $app-gap-sm;
+	align-items: center;
+}
+
+.contribution-card__food {
+	min-width: 0;
+	overflow: hidden;
+	color: $app-primary;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.contribution-card__value {
+	color: $app-primary;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-heavy;
+}
+
+.contribution-card__bar {
+	grid-column: 1 / -1;
+	height: 0.35rem;
+	overflow: hidden;
+	background: $app-accent;
+	border-radius: $app-radius-pill;
+
+	span {
+		display: block;
+		height: 100%;
+		background: $app-primary;
+		border-radius: inherit;
+	}
+}
+
+small {
+	grid-column: 1 / -1;
+	color: $app-muted;
+	font-size: $app-font-size-2xs;
+	font-weight: $app-font-weight-semibold;
+}

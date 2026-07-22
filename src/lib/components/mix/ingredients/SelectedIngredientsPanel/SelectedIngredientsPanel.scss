@@ -1,0 +1,49 @@
+@use "../../../../../styles/variables" as *;
+
+.selected-ingredients-panel {
+	display: grid;
+	gap: $app-gap-sm;
+	padding: $app-gap-sm;
+	background: $app-bg;
+	border: $app-border;
+	border-radius: $app-card-radius;
+
+	h4 {
+		color: $app-primary;
+		font-size: $app-font-size-lg;
+		font-weight: $app-font-weight-bold;
+	}
+
+	p {
+		color: $app-muted;
+		font-size: $app-font-size-sm;
+	}
+}
+
+.selected-ingredients-header {
+	display: flex;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.selected-ingredient-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+	gap: $app-gap-sm;
+	max-height: min(52vh, 30rem);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding-right: $app-gap-inline-compact;
+}
+
+.no-results {
+	padding: $app-gap-sm;
+	text-align: center;
+}
+
+@media (max-width: $app-breakpoint-md) {
+	.selected-ingredient-cards {
+		grid-template-columns: 1fr;
+		max-height: 42vh;
+	}
+}

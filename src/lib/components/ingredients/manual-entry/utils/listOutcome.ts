@@ -7,7 +7,7 @@ import {
 	removeFoodFromSmoothieList,
 	type SmoothieListKey,
 } from "$lib/utils/storage/client/smoothieLists";
-import { MIX_STORAGE_KEYS } from "../../../../../defaults/mixDefaults";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
 export const getDestinationLabel = (
 	destination: SmoothieListKey,

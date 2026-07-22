@@ -1,0 +1,8 @@
+@use "../../../../../styles/variables" as *;
+
+.view-top {
+	display: grid;
+	flex: 0 0 auto;
+	gap: $app-gap-md;
+	min-width: 0;
+}

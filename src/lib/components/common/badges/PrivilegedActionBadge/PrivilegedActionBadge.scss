@@ -7,7 +7,7 @@
 	flex: 0 0 auto;
 	width: 1.72rem;
 	height: 1.72rem;
-	color: #f4b942;
+	color: $app-highlight;
 	font-size: 1.18rem;
 	line-height: 1;
 }
@@ -15,7 +15,7 @@
 :global(.privileged-action-badge--profile) {
 	width: $app-privileged-badge-size;
 	height: $app-privileged-badge-size;
-	font-size: 1rem;
+	font-size: $app-font-size-md;
 }
 
 :global(.privileged-action-badge svg) {

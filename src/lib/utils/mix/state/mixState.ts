@@ -1,6 +1,6 @@
 import {
 	MIX_STORAGE_KEYS,
-} from "../../../../defaults/mixDefaults";
+} from "$lib/utils/storage/storageKeys";
 import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 import {
 	getDefaultMixFields,

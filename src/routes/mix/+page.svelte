@@ -1,19 +1,18 @@
 <script lang="ts">
-	import "./styles/mixPage.scss";
 	import { page } from "$app/state";
-	import PillButton from "$lib/components/common/buttons/PillButton.svelte";
-	import GoalTargets from "$lib/components/mix/controls/GoalTargets.svelte";
-	import IngredientChooser from "$lib/components/mix/ingredients/IngredientChooser.svelte";
-	import MixEmptyState from "$lib/components/mix/states/MixEmptyState.svelte";
-	import NutrientAdjustmentSuggestions from "$lib/components/mix/insights/NutrientAdjustmentSuggestions.svelte";
-	import NutrientSelector from "$lib/components/mix/controls/NutrientSelector.svelte";
-	import PointShape from "$lib/components/mix/insights/PointShape.svelte";
-	import SaveGoalReview from "$lib/components/mix/save/SaveGoalReview.svelte";
-	import SelectedIngredientsPanel from "$lib/components/mix/ingredients/SelectedIngredientsPanel.svelte";
-	import SmartWarnings from "$lib/components/mix/insights/SmartWarnings.svelte";
-	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog.svelte";
-	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog.svelte";
-	import StatusMessage from "$lib/components/common/feedback/StatusMessage.svelte";
+	import PillButton from "$lib/components/common/buttons/PillButton/PillButton.svelte";
+	import GoalTargets from "$lib/components/mix/controls/GoalTargets/GoalTargets.svelte";
+	import IngredientChooser from "$lib/components/mix/ingredients/IngredientChooser/IngredientChooser.svelte";
+	import MixEmptyState from "$lib/components/mix/states/MixEmptyState/MixEmptyState.svelte";
+	import NutrientAdjustmentSuggestions from "$lib/components/mix/insights/NutrientAdjustmentSuggestions/NutrientAdjustmentSuggestions.svelte";
+	import NutrientSelector from "$lib/components/mix/controls/NutrientSelector/NutrientSelector.svelte";
+	import PointShape from "$lib/components/mix/insights/PointShape/PointShape.svelte";
+	import SaveGoalReview from "$lib/components/mix/save/SaveGoalReview/SaveGoalReview.svelte";
+	import SelectedIngredientsPanel from "$lib/components/mix/ingredients/SelectedIngredientsPanel/SelectedIngredientsPanel.svelte";
+	import SmartWarnings from "$lib/components/mix/insights/SmartWarnings/SmartWarnings.svelte";
+	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog/TextInputDialog.svelte";
+	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
     import {
 		getFoodPreferenceSmartWarnings,
@@ -29,7 +28,7 @@
 		readCloudSmoothieList,
         saveCloudMixPreferences,
     } from "$lib/utils/storage/supabase";
-    import IngredientContributionBreakdown from "$lib/components/mix/insights/IngredientContributionBreakdown.svelte";
+    import IngredientContributionBreakdown from "$lib/components/mix/insights/IngredientContributionBreakdown/IngredientContributionBreakdown.svelte";
     import {
         clearLoadedSavedDrink,
         readLoadedSavedDrink,
@@ -82,8 +81,7 @@
     } from "$lib/utils/mix/calculations";
     import type { FdcFood } from "$lib/utils/food/types";
     import { onMount } from "svelte";
-    import { MIX_STORAGE_KEYS } from "../../defaults/mixDefaults";
-    import { POINT_SHAPE_DEFAULTS } from "../../defaults/pointShapeDefaults";
+    import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 	import {
 		getDefaultMixFields,
@@ -847,7 +845,6 @@
                         {pointColors}
                         fillColor={chartColors.fill}
                         strokeColor={chartColors.stroke}
-                        size={POINT_SHAPE_DEFAULTS.size}
                         fullWidth
                     />
                 </div>
@@ -866,3 +863,7 @@
         </div>
     </section>
 </div>
+
+<style lang="scss">
+	@use "./page.scss";
+</style>

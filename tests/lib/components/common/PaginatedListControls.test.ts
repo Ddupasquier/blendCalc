@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls.svelte";
+import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls/PaginatedListControls.svelte";
 
 describe("PaginatedListControls", () => {
 	it("shows explicit load and return controls for an overflowing partial list", async () => {

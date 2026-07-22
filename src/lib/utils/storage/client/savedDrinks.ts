@@ -1,6 +1,6 @@
 import {
 	MIX_STORAGE_KEYS,
-} from "../../../../defaults/mixDefaults";
+} from "$lib/utils/storage/storageKeys";
 import { getMixRuntimeConfiguration } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 import {

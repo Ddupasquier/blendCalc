@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import NutritionPanel from "$lib/components/ingredients/nutrition/NutritionPanel.svelte";
+import NutritionPanel from "$lib/components/ingredients/nutrition/NutritionPanel/NutritionPanel.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
 
 vi.mock("$lib/utils/profile/foodPreferenceContext.svelte", () => ({

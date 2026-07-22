@@ -1,0 +1,40 @@
+@use "../../../../../styles/variables" as *;
+
+.confirmation-backdrop {
+	position: fixed;
+	z-index: 1000;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	padding: $app-gap-md;
+	background: rgb(0 0 0 / 42%);
+}
+
+.confirmation-dialog {
+	display: grid;
+	gap: $app-gap-md;
+	width: min(100%, 25rem);
+	padding: $app-gap-md;
+	background: $app-section-bg;
+	border: $app-border;
+	border-radius: $app-card-radius;
+
+	h2 {
+		margin-bottom: $app-gap-xs;
+		color: $app-primary;
+		font-family: $app-font-family-display;
+		font-size: $app-font-size-xl;
+	}
+
+	p {
+		color: $app-muted;
+		font-size: $app-font-size-md;
+		line-height: 1.45;
+	}
+}
+
+.confirmation-dialog__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: $app-gap-sm;
+}

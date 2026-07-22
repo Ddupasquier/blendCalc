@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import AcceleratingStepButton from "$lib/components/common/buttons/AcceleratingStepButton.svelte";
+import AcceleratingStepButton from "$lib/components/common/buttons/AcceleratingStepButton/AcceleratingStepButton.svelte";
 
 afterEach(() => {
 	vi.useRealTimers();

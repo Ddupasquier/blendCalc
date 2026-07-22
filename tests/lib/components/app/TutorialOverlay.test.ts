@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import TutorialOverlay from "$lib/components/app/TutorialOverlay.svelte";
+import TutorialOverlay from "$lib/components/app/TutorialOverlay/TutorialOverlay.svelte";
 
 describe("TutorialOverlay", () => {
 	it("moves through concise tutorial steps", async () => {

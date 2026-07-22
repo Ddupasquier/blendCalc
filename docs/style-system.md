@@ -7,16 +7,22 @@ variables file into a catalog of one-off component details.
 
 ## File Ownership
 
+The complete source ownership map lives in `docs/project-structure.md`.
+
 - `src/styles/_variables.scss` contains only values reused across the app or by shared
   UI primitives.
-- `src/styles/_ingredient-cards.scss` contains the card behavior deliberately shared by
-  ingredient result and saved-item cards.
-- A non-trivial component uses a folder containing `Component.svelte` and
-  `Component.scss`.
+- Every UI component lives in its own namesake folder. A styled component keeps
+  `Component.svelte` and `Component.scss` together; shared behavior belongs in a real
+  reusable component rather than a feature-global stylesheet.
 - Add `types.ts` inside that component folder only when the types belong exclusively to
   that component.
-- Types or styles shared by sibling components live at their nearest common parent.
-- Route-only styles live beside that route, such as `src/routes/mix/styles/mixPage.scss`.
+- A prop contract used by one component lives in that component's local `types.ts`.
+  Exact contracts and other types or styles genuinely shared by sibling components live
+  at their nearest common parent.
+- A route owns `+page.svelte` and `page.scss` in the same route folder. Add `types.ts`
+  there only when route-specific types are needed.
+- `src/styles` must not contain feature stylesheets. App-wide base rules belong in
+  `src/app.scss`; app-wide values belong in `_variables.scss`.
 
 ## Global Token Test
 
@@ -50,7 +56,7 @@ If any answer is no, keep the value in the component's paired stylesheet.
   decision.
 - Load private component SCSS from the component's `<style lang="scss">` block so
   Svelte scopes it.
-- Use script-level stylesheet imports only for intentionally global or flow-shared
-  styles, and document why the styles cross component boundaries.
+- Do not use script-level stylesheet imports for components or pages. If styling must
+  cross a component boundary, make the visual pattern a reusable component instead.
 - Reuse an existing component, mixin, or token when the visual behavior is genuinely
   shared; do not duplicate it or create an abstraction before a second use exists.

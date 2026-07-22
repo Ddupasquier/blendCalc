@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor.svelte";
+import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
 
 describe("ImagePlacementEditor", () => {
 	it("offers full, fill, and custom modes with accessible fallback controls", async () => {

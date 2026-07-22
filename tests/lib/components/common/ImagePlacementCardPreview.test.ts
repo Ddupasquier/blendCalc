@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 
-import ImagePlacementCardPreview from "$lib/components/common/images/ImagePlacementCardPreview.svelte";
+import ImagePlacementCardPreview from "$lib/components/common/images/ImagePlacementCardPreview/ImagePlacementCardPreview.svelte";
 
 describe("ImagePlacementCardPreview", () => {
 	it("renders versioned placement through the shared image viewport", () => {

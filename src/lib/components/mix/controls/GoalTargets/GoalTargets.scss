@@ -1,0 +1,158 @@
+@use "../../../../../styles/variables" as *;
+
+.setup-card {
+	padding: $app-gap-sm;
+	background: $app-bg;
+	border: $app-border;
+	border-radius: $app-card-radius;
+}
+
+.section-heading {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: $app-gap-sm;
+	margin-bottom: $app-gap-sm;
+
+	> div:first-child {
+		min-width: 0;
+	}
+
+	h4 {
+		color: $app-primary;
+		font-size: $app-font-size-lg;
+		font-weight: $app-font-weight-bold;
+	}
+
+	p {
+		color: $app-muted;
+		font-size: $app-font-size-sm;
+		line-height: 1.35;
+	}
+}
+
+.goal-template-controls {
+	display: grid;
+	grid-template-columns: minmax(8.5rem, 1fr) auto;
+	gap: $app-gap-xs;
+	min-width: min(100%, 15rem);
+
+	label {
+		grid-column: 1 / -1;
+		color: $app-muted;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-bold;
+	}
+
+	select {
+		width: 100%;
+		min-width: 0;
+		height: $app-control-height-sm;
+		padding: 0 $app-gap-sm;
+		color: $app-primary;
+		background: $app-section-bg;
+		border: $app-border;
+		border-radius: $app-radius-sm;
+		font-size: $app-font-size-sm;
+	}
+
+	button {
+		height: $app-control-height-sm;
+		padding: 0 $app-gap-sm;
+		color: $app-primary;
+		background: $app-btn-bg;
+		border-radius: $app-radius-sm;
+		font-size: $app-font-size-sm;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
+
+		&:hover:not(:disabled) {
+			background: $app-btn-bg-hover;
+		}
+
+		&:disabled {
+			cursor: not-allowed;
+			background: $app-border-color;
+		}
+	}
+}
+
+.goal-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+	gap: $app-gap-sm;
+}
+
+.goal-input {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: $app-gap-xs;
+	min-width: 0;
+	padding: $app-gap-sm;
+	background: $app-section-bg;
+	border: $app-border;
+	border-radius: $app-radius;
+	color: $app-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+
+	.goal-label {
+		grid-column: 1;
+		grid-row: 1;
+		min-width: 0;
+		line-height: 1.2;
+		overflow-wrap: normal;
+		word-break: normal;
+	}
+
+	input {
+		width: 100%;
+		min-width: 0;
+		height: $app-control-height-sm;
+		padding: 0 $app-gap-sm;
+		color: $app-primary;
+		background: $app-bg;
+		border: $app-border;
+		border-radius: $app-radius-sm;
+		font-family: $app-font-family-data;
+		font-size: $app-font-size-md;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.goal-unit {
+		min-width: 0;
+		color: $app-muted;
+		font-size: $app-font-size-sm;
+	}
+
+	small {
+		grid-column: 2;
+		grid-row: 1;
+		align-self: start;
+		color: $app-muted;
+		font-family: $app-font-family-data;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-medium;
+		font-variant-numeric: tabular-nums;
+		line-height: 1.2;
+		text-align: right;
+		white-space: nowrap;
+	}
+}
+
+@media (max-width: $app-breakpoint-md) {
+	.section-heading {
+		display: grid;
+	}
+
+	.goal-template-controls {
+		min-width: 0;
+	}
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.goal-grid {
+		grid-template-columns: 1fr;
+	}
+}

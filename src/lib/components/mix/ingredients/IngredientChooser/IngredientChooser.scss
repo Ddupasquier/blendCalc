@@ -1,0 +1,56 @@
+@use "../../../../../styles/variables" as *;
+
+.setup-card {
+	padding: $app-gap-sm;
+	background: $app-bg;
+	border: $app-border;
+	border-radius: $app-card-radius;
+}
+
+.section-heading {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: $app-gap-sm;
+	margin-bottom: $app-gap-sm;
+
+	h4 {
+		color: $app-primary;
+		font-size: $app-font-size-lg;
+		font-weight: $app-font-weight-bold;
+	}
+
+	p {
+		color: $app-muted;
+		font-size: $app-font-size-sm;
+		line-height: 1.35;
+	}
+}
+
+.ingredient-list-controls {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(10rem, auto);
+	align-items: end;
+	gap: $app-gap-sm;
+	margin-bottom: $app-gap-sm;
+}
+
+.ingredient-lists {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: $app-gap-sm;
+}
+
+@media (max-width: $app-breakpoint-md) {
+	.ingredient-lists {
+		grid-template-columns: 1fr;
+	}
+
+	.section-heading {
+		display: grid;
+	}
+
+	.ingredient-list-controls {
+		grid-template-columns: 1fr;
+	}
+}

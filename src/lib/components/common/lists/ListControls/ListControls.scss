@@ -1,0 +1,74 @@
+@use "../../../../../styles/variables" as *;
+
+.list-controls {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(8rem, auto) auto;
+	align-items: end;
+	gap: $app-gap-sm;
+	padding: $app-gap-sm;
+	background: $app-bg;
+	border: $app-border;
+	border-radius: $app-radius;
+}
+
+.list-controls--search-only {
+	grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.search-control,
+.filter-control {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+	color: $app-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+}
+
+input,
+select {
+	width: 100%;
+	min-width: 0;
+	height: $app-control-height;
+	padding: 0 0.65rem;
+	color: $app-primary;
+	background: $app-section-bg;
+	border: $app-border;
+	border-radius: $app-radius-sm;
+	font: inherit;
+	font-weight: $app-font-weight-medium;
+}
+
+input:focus,
+select:focus {
+	border-color: $app-primary;
+	outline: 3px solid color-mix(in srgb, $app-primary 10%, transparent);
+}
+
+.result-count {
+	align-self: center;
+	margin: 1.1rem 0 0;
+	color: $app-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-semibold;
+	white-space: nowrap;
+}
+
+@media (max-width: $app-breakpoint-sm) {
+	.list-controls {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+
+	.search-control {
+		grid-column: 1 / -1;
+	}
+
+	.result-count {
+		margin-top: 1.1rem;
+	}
+
+	.list-controls--search-only .result-count {
+		grid-column: 1 / -1;
+		margin-top: 0;
+	}
+}

@@ -1,0 +1,66 @@
+@use "../../../../../styles/variables" as *;
+
+.text-input-sheet {
+	display: grid;
+	gap: $app-gap-md;
+}
+
+.text-input-sheet__description {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-md;
+	line-height: 1.35;
+}
+
+.text-input-sheet__content {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.text-input-sheet__field {
+	display: grid;
+	gap: $app-gap-xs;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-bold;
+}
+
+input {
+	width: 100%;
+	min-height: $app-shell-control-height;
+	padding: 0 $app-shell-control-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-soft;
+	border: 1px solid transparent;
+	border-radius: $app-shell-radius-pill;
+	font-size: $app-font-size-lg;
+	box-sizing: border-box;
+
+	&:focus {
+		outline: none;
+		border-color: $app-shell-accent-primary;
+	}
+}
+
+.text-input-sheet__error {
+	color: $app-shell-accent-danger;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+}
+
+.text-input-sheet__actions {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $app-gap-md;
+}
+
+.text-input-sheet__actions--triple {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.text-input-sheet__actions,
+	.text-input-sheet__actions--triple {
+		grid-template-columns: 1fr;
+	}
+}

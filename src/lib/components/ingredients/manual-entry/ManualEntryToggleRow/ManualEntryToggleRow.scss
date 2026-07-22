@@ -1,0 +1,34 @@
+@use "../../../../../styles/variables" as *;
+
+.manual-entry-toggle-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-md;
+	min-width: 0;
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.manual-entry-toggle-row > span {
+	display: grid;
+	gap: $app-gap-xs;
+}
+
+.manual-entry-toggle-row strong {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-bold;
+}
+
+.manual-entry-toggle-row small {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: 1.25;
+}
+
+.manual-entry-toggle-row--disabled {
+	opacity: 0.78;
+}

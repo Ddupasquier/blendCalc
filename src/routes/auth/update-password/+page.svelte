@@ -1,18 +1,15 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import PasswordRequirements from "$lib/components/auth/PasswordRequirements.svelte";
+	import PasswordRequirements from "$lib/components/auth/PasswordRequirements/PasswordRequirements.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
-	import type { ActionData, PageData } from "./$types";
+	import type { UpdatePasswordPageProps } from "./types";
 
 	let {
 		data,
 		form,
-	}: {
-		data: PageData;
-		form: ActionData;
-	} = $props();
+	}: UpdatePasswordPageProps = $props();
 	let password = $state("");
 	let passwordConfirmation = $state("");
 	let isSubmitting = $state(false);
@@ -80,86 +77,5 @@
 </section>
 
 <style lang="scss">
-	@use "../../../styles/variables" as *;
-
-	.password-page {
-		display: grid;
-		place-items: center;
-		min-height: 100svh;
-		padding: $app-gap-md $app-gap-sm;
-	}
-
-	.password-card {
-		display: grid;
-		gap: $app-gap-md;
-		width: min(100%, 26rem);
-		padding: $app-gap-md;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-card-radius;
-
-		header,
-		label {
-			display: grid;
-			gap: $app-gap-xs;
-		}
-
-		h1,
-		label span {
-			color: $app-primary;
-			font-weight: 800;
-		}
-
-		h1 {
-			font-family: $app-font-family-display;
-			font-size: $app-font-size-xl;
-		}
-
-		p {
-			color: $app-muted;
-			line-height: 1.4;
-		}
-
-		input {
-			height: $app-control-height;
-			padding: 0 0.75rem;
-			background: $app-bg;
-			border: $app-border;
-			border-radius: $app-radius;
-		}
-
-		button {
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			gap: $app-gap-xs;
-			padding: 0.65rem 1rem;
-			color: $app-btn-text;
-			background: $app-btn-bg;
-			border-radius: $app-radius-pill;
-			font-weight: $app-button-font-weight;
-			line-height: $app-button-line-height;
-		}
-	}
-
-	.password-eyebrow {
-		width: fit-content;
-		padding: 0.18rem 0.5rem;
-		color: $app-primary !important;
-		background: $app-accent;
-		border-radius: $app-radius-pill;
-		font-size: $app-font-size-xs;
-		font-weight: 900;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-	}
-
-	.password-error {
-		padding: 0.5rem 0.65rem;
-		color: $app-warning-strong !important;
-		background: $app-warning-bg;
-		border: $app-warning-border;
-		border-radius: $app-radius;
-		font-weight: 800;
-	}
+	@use "./page.scss";
 </style>

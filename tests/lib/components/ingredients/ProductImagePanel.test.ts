@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel.svelte";
+import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel/ProductImagePanel.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
 
 const foodWithImage: FdcFood = {

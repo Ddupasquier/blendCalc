@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import IngredientActionSheet from "$lib/components/ingredients/sheets/IngredientActionSheet.svelte";
+import IngredientActionSheet from "$lib/components/ingredients/sheets/IngredientActionSheet/IngredientActionSheet.svelte";
 
 describe("IngredientActionSheet delete confirmation", () => {
 	it("keeps the sheet open and requires a second delete activation", async () => {

@@ -1,0 +1,55 @@
+@use "../../../../../styles/variables" as *;
+
+.image-placement-viewport {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+.image-placement-viewport--interactive {
+	cursor: grab;
+	touch-action: none;
+}
+
+.image-placement-viewport--interactive:active {
+	cursor: grabbing;
+}
+
+.image-placement-viewport img {
+	display: block;
+	max-width: none;
+	max-height: none;
+	pointer-events: none;
+	user-select: none;
+	image-orientation: from-image;
+	-webkit-user-drag: none;
+}
+
+.image-placement-viewport__image--legacy {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: var(--image-placement-viewport-focus-x, 50%)
+		var(--image-placement-viewport-focus-y, 50%);
+	transform: translate(
+			var(--image-placement-viewport-translate-x, 0%),
+			var(--image-placement-viewport-translate-y, 0%)
+		)
+		scale(var(--image-placement-viewport-zoom, 1));
+	transform-origin: center;
+}
+
+.image-placement-viewport__image--current {
+	position: absolute;
+	left: calc(50% + var(--image-placement-viewport-offset-x, 0px));
+	top: calc(50% + var(--image-placement-viewport-offset-y, 0px));
+	width: var(--image-placement-viewport-base-width, 100%);
+	height: var(--image-placement-viewport-base-height, 100%);
+	object-fit: fill;
+	transform: translate(-50%, -50%)
+		scale(var(--image-placement-viewport-zoom, 1));
+	transform-origin: center;
+}

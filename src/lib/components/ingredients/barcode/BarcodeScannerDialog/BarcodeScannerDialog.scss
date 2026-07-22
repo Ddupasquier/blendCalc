@@ -1,0 +1,129 @@
+@use "../../../../../styles/variables" as *;
+
+$scanner-viewport-background: #080909;
+$scanner-target-corner-length: 3rem;
+$scanner-target-line-width: 0.18rem;
+$scanner-target-corner-height: 2.3rem;
+
+.barcode-scanner-backdrop {
+	position: fixed;
+	z-index: 1000;
+	inset: 0;
+	display: grid;
+	place-items: stretch center;
+	padding: 0;
+	overflow: hidden;
+	background: rgba(0, 0, 0, 0.72);
+	overscroll-behavior: contain;
+}
+
+.barcode-scanner {
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	gap: $app-gap-md;
+	width: min(100%, $app-shell-content-max-width);
+	min-height: 100vh;
+	min-height: 100dvh;
+	padding: calc($app-shell-padding-y + env(safe-area-inset-top))
+		$app-shell-padding-x calc($app-shell-padding-y + env(safe-area-inset-bottom));
+	background: $scanner-viewport-background;
+	border: 0;
+	border-radius: 0;
+
+	header {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		gap: $app-gap-sm;
+	}
+
+	h2 {
+		color: $app-shell-surface-panel;
+		font-family: $app-font-family-display;
+		font-size: $app-font-size-xl;
+		font-weight: $app-font-weight-heavy;
+	}
+
+	p {
+		color: color-mix(in srgb, $app-shell-surface-panel 52%, transparent);
+		font-size: $app-font-size-md;
+		line-height: 1.4;
+	}
+}
+
+.barcode-scanner__camera {
+	position: relative;
+	min-height: 100%;
+	overflow: hidden;
+	background: $scanner-viewport-background;
+	border-radius: 0;
+
+	video {
+		display: block;
+		width: 100%;
+		height: 100%;
+		min-height: calc(100vh - 8rem);
+		object-fit: cover;
+	}
+}
+
+.barcode-scanner__target {
+	position: absolute;
+	inset: 50% auto auto 50%;
+	width: min(66%, 16rem);
+	height: 8.7rem;
+	border-radius: $app-shell-radius-card;
+	background:
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) top left /
+			$scanner-target-corner-length $scanner-target-line-width no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) top left /
+			$scanner-target-line-width $scanner-target-corner-height no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) top right /
+			$scanner-target-corner-length $scanner-target-line-width no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) top right /
+			$scanner-target-line-width $scanner-target-corner-height no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) bottom left /
+			$scanner-target-corner-length $scanner-target-line-width no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) bottom left /
+			$scanner-target-line-width $scanner-target-corner-height no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) bottom right /
+			$scanner-target-corner-length $scanner-target-line-width no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) bottom right /
+			$scanner-target-line-width $scanner-target-corner-height no-repeat,
+		color-mix(in srgb, $app-shell-accent-primary 6%, transparent);
+	transform: translate(-50%, -50%);
+}
+
+.barcode-scanner__status,
+.barcode-scanner__hint {
+	position: absolute;
+	inset: calc(50% + 5.6rem) 50% auto auto;
+	width: max-content;
+	max-width: 80%;
+	color: color-mix(in srgb, $app-shell-surface-panel 58%, transparent) !important;
+	text-align: center;
+	transform: translateX(50%);
+}
+
+.barcode-scanner__status {
+	padding: 0.55rem 0.85rem;
+	color: $app-shell-accent-primary !important;
+	background: rgba($app-shell-surface-panel, 0.08);
+	border-radius: $app-shell-radius-pill;
+	font-weight: $app-font-weight-bold;
+}
+
+.barcode-scanner__error {
+	padding: $app-gap-sm;
+	color: $app-warning-strong !important;
+	background: $app-warning-bg;
+	border: $app-warning-border;
+	border-radius: $app-radius;
+}
+
+@media (max-width: $app-breakpoint-sm) {
+	.barcode-scanner {
+		padding: calc($app-shell-padding-x + env(safe-area-inset-top))
+			$app-shell-padding-x calc($app-shell-padding-x + env(safe-area-inset-bottom));
+	}
+}

@@ -1,4 +1,4 @@
-import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
 import {
 	getFoodIdentityKey,

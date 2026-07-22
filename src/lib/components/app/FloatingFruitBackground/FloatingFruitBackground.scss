@@ -1,0 +1,39 @@
+.fruit-background {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	pointer-events: none;
+	user-select: none;
+}
+
+.fruit {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: block;
+	opacity: 0.42;
+	will-change: transform;
+	filter: saturate(0.88);
+}
+
+.fruit :global(svg) {
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+	stroke: currentColor;
+	stroke-width: 1.25px;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.fruit :global(path) {
+	vector-effect: non-scaling-stroke;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.fruit {
+		opacity: 0.3;
+		will-change: auto;
+	}
+}

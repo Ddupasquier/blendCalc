@@ -1,0 +1,109 @@
+@use "../../../../styles/variables" as *;
+
+.preference-divider {
+	margin: 0;
+	border: 0;
+	border-top: $app-border;
+	opacity: 0.65;
+}
+
+.preference-editor-card {
+	display: grid;
+	gap: $app-gap-sm;
+	padding: $app-gap-sm;
+	background: $app-bg;
+	border: $app-border;
+	border-radius: $app-radius-sm;
+}
+
+.preference-editor-card__heading {
+	display: flex;
+	justify-content: space-between;
+	align-items: start;
+	gap: $app-gap-sm;
+
+	h3 {
+		margin: 0;
+		font-size: $app-font-size-md;
+		font-weight: 800;
+	}
+
+	p {
+		margin: $app-gap-inline-compact 0 0;
+		color: $app-muted;
+		font-size: $app-font-size-sm;
+		line-height: 1.35;
+	}
+}
+
+.preference-search,
+.preference-picker {
+	display: grid;
+	gap: 0.4rem;
+
+	span {
+		color: $app-muted;
+		font-size: $app-font-size-xs;
+		font-weight: 900;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+}
+
+.preference-add-flow {
+	display: grid;
+	gap: $app-gap-xs;
+}
+
+.preference-add-flow__label {
+	color: $app-muted;
+	font-size: $app-font-size-sm;
+}
+
+.preference-add-flow__divider {
+	position: relative;
+	display: grid;
+	place-items: center;
+	margin: -0.1rem 0;
+
+	&::before {
+		content: "";
+		position: absolute;
+		inset-inline: 0;
+		top: 50%;
+		border-top: $app-border;
+		opacity: 0.45;
+	}
+
+	span {
+		position: relative;
+		padding: 0 0.45rem;
+		color: $app-muted;
+		background: $app-bg;
+		font-size: $app-font-size-xs;
+		font-weight: 900;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+}
+
+.preference-picker__controls,
+.preference-search__controls {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: $app-gap-xs;
+	align-items: center;
+}
+
+.search-add {
+	width: fit-content;
+	min-width: 4rem;
+	font-family: $app-button-font-family;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
+}
+
+.preference-empty {
+	color: $app-muted;
+	font-size: $app-font-size-sm;
+}

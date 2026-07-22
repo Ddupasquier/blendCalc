@@ -3,10 +3,10 @@
 	import { page } from "$app/state";
 	import favicon from "$lib/assets/favicon.svg";
 	import "../app.scss";
-	import AppHeader from "$lib/components/app/AppHeader.svelte";
-	import DailyWelcome from "$lib/components/app/DailyWelcome.svelte";
-	import TabNavigation from "$lib/components/app/TabNavigation.svelte";
-	import TutorialOverlay from "$lib/components/app/TutorialOverlay.svelte";
+	import AppHeader from "$lib/components/app/AppHeader/AppHeader.svelte";
+	import DailyWelcome from "$lib/components/app/DailyWelcome/DailyWelcome.svelte";
+	import TabNavigation from "$lib/components/app/TabNavigation/TabNavigation.svelte";
+	import TutorialOverlay from "$lib/components/app/TutorialOverlay/TutorialOverlay.svelte";
 	import {
 		APP_DESCRIPTION,
 		APP_NAME,
@@ -25,8 +25,8 @@
 	import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 	import { configureNutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 	import { configureAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
-	import type { LayoutData } from "./$types";
 	import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
+	import type { AppLayoutProps } from "./types";
 
 	if (!dev) {
 		injectSpeedInsights({
@@ -45,10 +45,7 @@
 	let {
 		children,
 		data,
-	}: {
-		children: import("svelte").Snippet;
-		data: LayoutData;
-	} = $props();
+	}: AppLayoutProps = $props();
 
 	let tutorialOpen = $state(false);
 	let tutorialUserId = $state<string | null>(null);

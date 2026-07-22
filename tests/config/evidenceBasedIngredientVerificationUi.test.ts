@@ -2,15 +2,15 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const ingredientBadges = readFileSync(
-	"src/lib/components/ingredients/provenance/IngredientProvenanceBadges.svelte",
+	"src/lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte",
 	"utf8",
 );
 const sortSheet = readFileSync(
-	"src/lib/components/ingredients/sheets/IngredientFilterSheet.svelte",
+	"src/lib/components/ingredients/sheets/IngredientFilterSheet/IngredientFilterSheet.svelte",
 	"utf8",
 );
 const nutritionLabel = readFileSync(
-	"src/lib/components/ingredients/nutrition/NutritionFactsLabel.svelte",
+	"src/lib/components/ingredients/nutrition/NutritionFactsLabel/NutritionFactsLabel.svelte",
 	"utf8",
 );
 

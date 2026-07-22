@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch.svelte";
+import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch/ToggleSwitch.svelte";
 
 describe("ToggleSwitch", () => {
 	it("waits for the parent state before changing its checked appearance", async () => {

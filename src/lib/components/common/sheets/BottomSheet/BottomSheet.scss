@@ -1,5 +1,7 @@
 @use "../../../../../styles/variables" as *;
 
+$bottom-sheet-back-control-size: 2rem;
+
 .bottom-sheet {
 	display: flex;
 	flex-direction: column;
@@ -63,7 +65,7 @@
 	grid-template-columns: auto minmax(0, 1fr);
 	align-items: center;
 	gap: $app-gap-sm;
-	min-height: 2rem;
+	min-height: $bottom-sheet-back-control-size;
 }
 
 .bottom-sheet__header--without-back {
@@ -71,8 +73,8 @@
 }
 
 :global(.bottom-sheet__back) {
-	width: 2rem;
-	height: 2rem;
+	width: $bottom-sheet-back-control-size;
+	height: $bottom-sheet-back-control-size;
 }
 
 .bottom-sheet__content {

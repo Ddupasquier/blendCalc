@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Crown from "$lib/assets/icons/Crown.svelte";
-	import CenteredIcon from "$lib/components/common/icons/CenteredIcon.svelte";
-	import type { PrivilegedActionBadgeProps } from "$lib/components/common/badges/types";
+	import Crown from "$lib/assets/icons/Crown/Crown.svelte";
+	import CenteredIcon from "$lib/components/common/icons/CenteredIcon/CenteredIcon.svelte";
+	import type { PrivilegedActionBadgeProps } from "./types";
 
 	let {
 		label = "Admin or moderator action",

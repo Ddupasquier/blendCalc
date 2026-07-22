@@ -1,0 +1,73 @@
+@use "../../../../../styles/variables" as *;
+
+.save-goal-review {
+	display: grid;
+	gap: $app-gap-sm;
+
+	> p {
+		color: $app-muted;
+		font-size: $app-font-size-md;
+		line-height: 1.4;
+	}
+}
+
+.save-goal-review__list {
+	display: grid;
+	gap: $app-gap-sm;
+	max-height: 16rem;
+	overflow-y: auto;
+	padding-right: $app-gap-2xs;
+}
+
+.save-goal-review__row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: $app-gap-sm;
+	padding: $app-gap-sm;
+	background: $app-bg;
+	border: $app-border;
+	border-radius: $app-radius;
+
+	div {
+		display: grid;
+		gap: $app-gap-micro;
+		min-width: 0;
+	}
+
+	strong {
+		color: $app-primary;
+		font-size: $app-font-size-md;
+	}
+
+	span {
+		color: $app-muted;
+		font-size: $app-font-size-sm;
+		font-weight: $app-font-weight-semibold;
+	}
+}
+
+.save-goal-review__badge {
+	justify-self: end;
+	width: fit-content;
+	max-width: 8rem;
+	padding: $app-gap-inline-compact $app-gap-sm;
+	border-radius: $app-radius-pill;
+	text-align: right;
+	white-space: nowrap;
+
+	&.near {
+		color: $app-primary;
+		background: $app-success-bg;
+	}
+
+	&.under {
+		color: $app-primary;
+		background: $app-accent;
+	}
+
+	&.over {
+		color: $app-warning-text;
+		background: $app-warning-bg;
+	}
+}

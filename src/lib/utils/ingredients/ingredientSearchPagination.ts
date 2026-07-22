@@ -1,4 +1,4 @@
-import { LIST_PAGE_SIZES } from "../../../defaults/listDefaults";
+import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
 import type { FdcFood } from "$lib/utils/food/types";
 
 export const INGREDIENT_SEARCH_PAGE_SIZE = LIST_PAGE_SIZES.foodSearch;

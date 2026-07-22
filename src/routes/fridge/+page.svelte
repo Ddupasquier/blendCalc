@@ -4,21 +4,21 @@
         replaceState as replaceNavigationState,
     } from "$app/navigation";
     import { page } from "$app/state";
-    import ViewBody from "$lib/components/common/view/ViewBody.svelte";
-    import ViewFrame from "$lib/components/common/view/ViewFrame.svelte";
-    import ViewHeader from "$lib/components/common/view/ViewHeader.svelte";
-    import ViewTop from "$lib/components/common/view/ViewTop.svelte";
+    import ViewBody from "$lib/components/common/view/ViewBody/ViewBody.svelte";
+    import ViewFrame from "$lib/components/common/view/ViewFrame/ViewFrame.svelte";
+    import ViewHeader from "$lib/components/common/view/ViewHeader/ViewHeader.svelte";
+    import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
     import type { ManualEntryCreateContext } from "$lib/components/ingredients/manual-entry/types";
-    import IngredientsFloatingAddButton from "$lib/components/ingredients/page/IngredientsFloatingAddButton.svelte";
-    import IngredientsSearchPanel from "$lib/components/ingredients/page/IngredientsSearchPanel.svelte";
-    import IngredientRoutePopins from "$lib/components/ingredients/page/IngredientRoutePopins.svelte";
+    import IngredientsFloatingAddButton from "$lib/components/ingredients/page/IngredientsFloatingAddButton/IngredientsFloatingAddButton.svelte";
+    import IngredientsSearchPanel from "$lib/components/ingredients/page/IngredientsSearchPanel/IngredientsSearchPanel.svelte";
+    import IngredientRoutePopins from "$lib/components/ingredients/page/IngredientRoutePopins/IngredientRoutePopins.svelte";
     import type {
         IngredientRouteNavigationOptions,
     } from "$lib/components/ingredients/page/types";
     import type { IngredientFilterApplyPayload } from "$lib/components/ingredients/sheets/types";
-    import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList.svelte";
-    import SavedIngredientListLayout from "$lib/components/ingredients/list/SavedIngredientListLayout.svelte";
-    import { LIST_PAGE_SIZES } from "../../defaults/listDefaults";
+    import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList/SavedIngredientList.svelte";
+    import SavedIngredientListLayout from "$lib/components/ingredients/list/SavedIngredientListLayout/SavedIngredientListLayout.svelte";
+    import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
     import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
     import {
         areFoodIdsEqual,
@@ -58,7 +58,7 @@
     } from "$lib/utils/storage/supabase";
     import { onMount } from "svelte";
     import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
-    import { MIX_STORAGE_KEYS } from "../../defaults/mixDefaults";
+    import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
 	const initialIngredientData = page.data.ingredientData;
     let onHand = $state<FdcFood[]>(initialIngredientData?.fridge.foods ?? []);

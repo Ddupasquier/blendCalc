@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { SegmentedControlProps } from "$lib/components/common/buttons/types";
+	import type { SegmentedControlProps } from "./types";
 	import { getLinearNavigationIndex } from "$lib/utils/accessibility/keyboardNavigation";
 
 	let {

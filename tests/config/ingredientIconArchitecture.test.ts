@@ -24,7 +24,7 @@ describe("ingredient icon architecture", () => {
 			.map((file) => relative(".", file));
 
 		expect(inlineSvgFiles).toEqual([
-			"src/lib/components/ingredients/barcode/BarcodeScannerIcon.svelte",
+			"src/lib/components/ingredients/barcode/BarcodeScannerIcon/BarcodeScannerIcon.svelte",
 		]);
 		expect(basename(inlineSvgFiles[0])).toMatch(/Icon\.svelte$/);
 	});
@@ -36,20 +36,20 @@ describe("ingredient icon architecture", () => {
 
 		expect(componentSource).not.toMatch(/ChevronDown|ChevronRight|ArrowLeft/);
 		expect(componentSource).not.toMatch(/content:\s*["'](?:⌄|⌃|›|‹)["']/);
-		expect(componentSource).toContain("$lib/assets/icons/Chevron.svelte");
+		expect(componentSource).toContain("$lib/assets/icons/Chevron/Chevron.svelte");
 	});
 
 	it("uses shared circular frames for non-interactive ingredient icons", () => {
 		const manualEntryToggle = readFileSync(
-			"src/lib/components/ingredients/manual-entry/ManualEntryToggle.svelte",
+			"src/lib/components/ingredients/manual-entry/ManualEntryToggle/ManualEntryToggle.svelte",
 			"utf8",
 		);
 		const emptyState = readFileSync(
-			"src/lib/components/ingredients/list/IngredientEmptyState.svelte",
+			"src/lib/components/ingredients/list/IngredientEmptyState/IngredientEmptyState.svelte",
 			"utf8",
 		);
 		const bottomSheetAction = readFileSync(
-			"src/lib/components/common/sheets/BottomSheetAction.svelte",
+			"src/lib/components/common/sheets/BottomSheetAction/BottomSheetAction.svelte",
 			"utf8",
 		);
 
@@ -59,16 +59,24 @@ describe("ingredient icon architecture", () => {
 	});
 
 	it("keeps circular icon centering inside shared primitives", () => {
-		const centeredIcon = readFileSync(
-			"src/lib/components/common/icons/CenteredIcon.svelte",
+		const centeredIconComponent = readFileSync(
+			"src/lib/components/common/icons/CenteredIcon/CenteredIcon.svelte",
 			"utf8",
 		);
-		const circularIconFrame = readFileSync(
-			"src/lib/components/common/icons/CircularIconFrame.svelte",
+		const centeredIconStyles = readFileSync(
+			"src/lib/components/common/icons/CenteredIcon/CenteredIcon.scss",
+			"utf8",
+		);
+		const circularIconFrameComponent = readFileSync(
+			"src/lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte",
+			"utf8",
+		);
+		const circularIconFrameStyles = readFileSync(
+			"src/lib/components/common/icons/CircularIconFrame/CircularIconFrame.scss",
 			"utf8",
 		);
 		const statusBadge = readFileSync(
-			"src/lib/components/common/badges/StatusIconBadge.svelte",
+			"src/lib/components/common/badges/StatusIconBadge/StatusIconBadge.svelte",
 			"utf8",
 		);
 		const privilegedBadge = readFileSync(
@@ -80,15 +88,17 @@ describe("ingredient icon architecture", () => {
 			"utf8",
 		);
 
-		expect(centeredIcon).toContain("--centered-icon-optical-offset-y");
-		expect(centeredIcon).toContain("place-items: center");
-		expect(centeredIcon).toContain("width: 100%");
-		expect(centeredIcon).toContain("height: 100%");
-		expect(circularIconFrame).toContain("overflow: hidden");
-		expect(circularIconFrame).toContain("place-items: center");
+		expect(centeredIconComponent).toContain('@use "./CenteredIcon.scss"');
+		expect(centeredIconStyles).toContain("--centered-icon-optical-offset-y");
+		expect(centeredIconStyles).toContain("place-items: center");
+		expect(centeredIconStyles).toContain("width: 100%");
+		expect(centeredIconStyles).toContain("height: 100%");
+		expect(circularIconFrameComponent).toContain('@use "./CircularIconFrame.scss"');
+		expect(circularIconFrameStyles).toContain("overflow: hidden");
+		expect(circularIconFrameStyles).toContain("place-items: center");
 		expect(statusBadge).not.toContain("centered-icon-optical-offset");
 		expect(privilegedBadge).toContain("<CenteredIcon>");
 		expect(privilegedBadge).not.toContain("<CircularIconFrame");
-		expect(privilegedBadgeStyles).toContain("color: #f4b942");
+		expect(privilegedBadgeStyles).toContain("color: $app-highlight");
 	});
 });

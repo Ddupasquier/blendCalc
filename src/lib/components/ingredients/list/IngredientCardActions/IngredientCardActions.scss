@@ -1,0 +1,7 @@
+@use "../../../../../styles/variables" as *;
+
+.ingredient-card-actions {
+	display: flex;
+	align-items: center;
+	gap: $app-gap-sm;
+}
