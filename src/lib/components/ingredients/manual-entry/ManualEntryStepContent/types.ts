@@ -42,7 +42,6 @@ export type ManualEntryStepContentProps = Omit<
 	manualEntryNutrientError: string;
 	nutritionLabelOcrMappings: NutritionLabelOcrMapping[];
 	nutritionLabelOcrMappingError: string;
-	nutritionPhoto: File | null;
 	hideMacroUnavailableStatus: boolean;
 	customIngredientValidationItems: StepValidationItem[];
 	getAttemptedValidationItems: (

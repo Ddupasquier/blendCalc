@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onDestroy } from "svelte";
 	import AssetAttribution from "$lib/components/common/display/AssetAttribution/AssetAttribution.svelte";
+	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
-	import ManualEntryField from "$lib/components/ingredients/manual-entry/ManualEntryField/ManualEntryField.svelte";
 	import type { ProductImageEvidenceInputProps } from "./types";
 	import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
 	import { pickFoodFullImageUrl } from "$lib/utils/food/images/foodImages";
@@ -75,16 +75,17 @@
 	{/if}
 
 	{#if !trustedImageUrl}
-		<ManualEntryField forId="custom-product-front-photo" label="Front of package">
-			<input
-				id="custom-product-front-photo"
-				name="custom-product-front-photo"
-				type="file"
-				accept="image/jpeg,image/png,image/webp"
-				aria-required={required}
-				onchange={(event) => onFrontPhotoChange(event.currentTarget.files?.[0] ?? null)}
-			/>
-		</ManualEntryField>
+		<PhotoUploadInput
+			id="custom-product-front-photo"
+			name="custom-product-front-photo"
+			prompt="Front of package"
+			description="Show the complete package front with the product name and brand readable."
+			photoCount={1}
+			files={frontPhoto ? [frontPhoto] : []}
+			capture="environment"
+			{required}
+			onFilesChange={(files) => onFrontPhotoChange(files[0] ?? null)}
+		/>
 	{/if}
 </section>
 

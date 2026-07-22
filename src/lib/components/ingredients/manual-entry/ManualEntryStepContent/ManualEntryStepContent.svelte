@@ -47,6 +47,7 @@
 		showOptionalProductImageUpload,
 		trustedProductImage,
 		frontPhoto,
+		barcodePhoto,
 		imagePlacement,
 		saveDestination,
 		error,
@@ -186,6 +187,8 @@
 		{showOptionalProductImageUpload}
 		{trustedProductImage}
 		{frontPhoto}
+		{nutritionPhoto}
+		{barcodePhoto}
 		{imagePlacement}
 		{saveDestination}
 		{error}

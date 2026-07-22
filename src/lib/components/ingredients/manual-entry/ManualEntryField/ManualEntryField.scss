@@ -40,7 +40,8 @@
 }
 
 :global(.manual-entry-field > input),
-:global(.manual-entry-field > select) {
+:global(.manual-entry-field > select),
+:global(.manual-entry-field > .input-loading-frame > input) {
 	min-height: $app-shell-control-height;
 	padding: 0 $app-shell-control-padding-x;
 	color: $app-shell-text-primary;

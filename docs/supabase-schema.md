@@ -757,5 +757,6 @@ When schema changes:
 4. Regenerate `src/lib/types/database.types.ts` after migration is applied.
 5. Update this document with table purpose, owner scope, key columns, and relationships.
 6. Add or update focused tests for migration expectations when practical.
-7. Add a local-only QA item in `docs/QA/qa-tasks.md` if the change affects user-visible
-   data, moderation behavior, or data-entry flow.
+7. Add a local-only QA item to the appropriate priority tracker linked from
+   `docs/QA/qa-tasks.md` if the change affects user-visible data, moderation behavior,
+   or data-entry flow.

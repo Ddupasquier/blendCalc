@@ -27,6 +27,14 @@ describe("ingredient badge architecture", () => {
 			"src/lib/assets/icons/ShieldCheck/ShieldCheck.svelte",
 			"utf8",
 		);
+		const savedIngredientCard = readFileSync(
+			"src/lib/components/ingredients/list/SavedIngredientCard/SavedIngredientCard.svelte",
+			"utf8",
+		);
+		const searchDropdown = readFileSync(
+			"src/lib/components/ingredients/search/SearchDropdown/SearchDropdown.svelte",
+			"utf8",
+		);
 
 		expect(ingredientBadges).toContain(
 			'$lib/components/common/badges/TextBadge/TextBadge.svelte',
@@ -34,7 +42,10 @@ describe("ingredient badge architecture", () => {
 		expect(ingredientBadges).toContain(
 			'$lib/components/common/badges/VerifiedStatusBadge/VerifiedStatusBadge.svelte',
 		);
-		expect(ingredientBadges).toContain('trustBadge.value === "verified"');
+		expect(ingredientBadges).toContain('variant === "saved-card"');
+		expect(ingredientBadges).toContain(
+			'visibleTrustBadge.value === "verified"',
+		);
 		expect(ingredientBadges).not.toContain("getIngredientSourceBadge");
 		expect(ingredientBadges).not.toContain('class="ingredient-card-badge"');
 		expect(textBadgeStyles).toContain("place-items: center");
@@ -53,5 +64,8 @@ describe("ingredient badge architecture", () => {
 			'$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte',
 		);
 		expect(nutritionFactsLabel).not.toContain("CustomBadge");
+		expect(nutritionFactsLabel).not.toContain('variant="saved-card"');
+		expect(savedIngredientCard).toContain('variant="saved-card"');
+		expect(searchDropdown).toContain('variant="search-card"');
 	});
 });

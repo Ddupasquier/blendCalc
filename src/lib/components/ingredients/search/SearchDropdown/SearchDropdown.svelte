@@ -94,6 +94,7 @@
 										<IngredientProvenanceBadges
 											{food}
 											{provenanceOptions}
+											variant="search-card"
 										/>
 									</span>
 									<span class="result-category">{getFoodDisplayCategory(food)}</span>

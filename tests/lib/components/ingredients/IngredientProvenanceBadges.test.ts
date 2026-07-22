@@ -65,4 +65,58 @@ describe("IngredientProvenanceBadges", () => {
 		expect(screen.getByLabelText("Verification status: Pending"))
 			.toHaveTextContent("Pending");
 	});
+
+	it("hides resolved verification in compact cards", () => {
+		render(IngredientProvenanceBadges, {
+			props: {
+				food: {
+					fdcId: 4,
+					description: "Verified compact food",
+					foodNutrients: [],
+					trustStatus: "source-verified",
+				},
+				provenanceOptions: ingredientProvenanceOptionsFixture,
+				variant: "saved-card",
+			},
+		});
+
+		expect(screen.queryByLabelText("Verification status: Verified"))
+			.not.toBeInTheDocument();
+	});
+
+	it("keeps unresolved statuses visible in compact cards", () => {
+		render(IngredientProvenanceBadges, {
+			props: {
+				food: {
+					fdcId: 5,
+					description: "Pending compact food",
+					foodNutrients: [],
+					trustStatus: "pending-review",
+				},
+				provenanceOptions: ingredientProvenanceOptionsFixture,
+				variant: "saved-card",
+			},
+		});
+
+		expect(screen.getByLabelText("Verification status: Pending"))
+			.toBeInTheDocument();
+	});
+
+	it("shows resolved verification in search results", () => {
+		render(IngredientProvenanceBadges, {
+			props: {
+				food: {
+					fdcId: 6,
+					description: "Verified search food",
+					foodNutrients: [],
+					trustStatus: "source-verified",
+				},
+				provenanceOptions: ingredientProvenanceOptionsFixture,
+				variant: "search-card",
+			},
+		});
+
+		expect(screen.getByLabelText("Verification status: Verified"))
+			.toBeInTheDocument();
+	});
 });

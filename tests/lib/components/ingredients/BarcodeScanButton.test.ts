@@ -16,6 +16,8 @@ describe("BarcodeScanButton", () => {
 				".barcode-scan-button > .centered-icon > .barcode-scanner",
 			),
 		).toBeInTheDocument();
+		expect(container.querySelector(".barcode-scan-button__label")).toBeNull();
+		expect(screen.getByRole("button", { name: "Scan barcode" })).toBeInTheDocument();
 	});
 
 	it("uses the shared spinner while a scan lookup is busy", () => {

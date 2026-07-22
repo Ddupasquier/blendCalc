@@ -1,0 +1,118 @@
+@use "../../../../../styles/variables" as *;
+
+.photo-upload-input {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.photo-upload-input__heading,
+.photo-upload-input__selection {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.photo-upload-input__heading strong {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	text-transform: uppercase;
+}
+
+.photo-upload-input__heading span {
+	flex: 0 0 auto;
+	padding: $app-text-badge-padding-y $app-text-badge-padding-x;
+	color: $app-shell-text-muted;
+	background: $app-shell-surface-control;
+	border-radius: $app-shell-radius-pill;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+}
+
+.photo-upload-input > p,
+.photo-upload-input__selection p,
+.photo-upload-input__files {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: 1.35;
+}
+
+.photo-upload-input__control {
+	position: relative;
+	min-width: 0;
+}
+
+.photo-upload-input__native {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.photo-upload-input__trigger {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: $app-gap-xs;
+	min-height: $app-shell-control-height;
+	padding: 0 $app-shell-control-padding-x;
+	color: $app-shell-accent-primary;
+	background: $app-shell-surface-panel;
+	border: 2px dashed
+		color-mix(in srgb, $app-shell-accent-primary 45%, $app-shell-surface-panel);
+	border-radius: $app-shell-radius-control;
+	font-family: $app-button-font-family;
+	font-size: $app-font-size-md;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
+	cursor: pointer;
+}
+
+.photo-upload-input__trigger :global(svg) {
+	display: block;
+	flex: 0 0 auto;
+}
+
+.photo-upload-input__native:focus-visible + .photo-upload-input__trigger {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.photo-upload-input__native:disabled + .photo-upload-input__trigger {
+	cursor: not-allowed;
+	opacity: 0.68;
+}
+
+.photo-upload-input__selection {
+	min-height: $app-shell-control-height-compact;
+}
+
+.photo-upload-input__selection p {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.photo-upload-input__files {
+	display: grid;
+	gap: $app-gap-xs;
+	padding-left: calc($app-gap-md * 2);
+}
+
+.photo-upload-input__files li {
+	overflow-wrap: anywhere;
+}
+
+.photo-upload-input__error {
+	padding: $app-status-padding-y $app-status-padding-x;
+	color: $app-status-error-text;
+	background: $app-status-error-bg;
+	border-radius: $app-shell-radius-card;
+}

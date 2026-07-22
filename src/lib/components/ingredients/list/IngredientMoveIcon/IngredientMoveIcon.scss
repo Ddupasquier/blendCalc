@@ -1,0 +1,18 @@
+$move-icon-optical-offset: 0.5px;
+
+.ingredient-move-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1em;
+	height: 1em;
+	line-height: 0;
+}
+
+.ingredient-move-icon[data-direction="left"] :global(svg) {
+	transform: translateX(-$move-icon-optical-offset);
+}
+
+.ingredient-move-icon[data-direction="right"] :global(svg) {
+	transform: translateX($move-icon-optical-offset);
+}

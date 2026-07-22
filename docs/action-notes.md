@@ -5,7 +5,8 @@ tracker.
 
 - Development rules live in
   [`docs/development-rules-audit.md`](./development-rules-audit.md).
-- Active manual QA tasks live in [`docs/QA/qa-tasks.md`](./QA/qa-tasks.md).
+- The active manual QA queues are split by importance and linked from
+  [`docs/QA/qa-tasks.md`](./QA/qa-tasks.md).
 - Supabase schema notes live in [`docs/supabase-schema.md`](./supabase-schema.md).
 
 ## Standing Direction

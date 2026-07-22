@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Chevron from "$lib/assets/icons/Chevron/Chevron.svelte";
 	import FoodSymbol from "$lib/assets/icons/FoodSymbol/FoodSymbol.svelte";
 	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation/TwoStepConfirmation.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
@@ -7,6 +6,7 @@
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
 	import IngredientBulkToggle from "$lib/components/ingredients/list/IngredientBulkToggle/IngredientBulkToggle.svelte";
 	import IngredientCardActions from "$lib/components/ingredients/list/IngredientCardActions/IngredientCardActions.svelte";
+	import IngredientMoveIcon from "$lib/components/ingredients/list/IngredientMoveIcon/IngredientMoveIcon.svelte";
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
 	import type { SavedIngredientCardProps } from "./types";
 
@@ -58,6 +58,7 @@
 				<IngredientProvenanceBadges
 					{food}
 					{provenanceOptions}
+					variant="saved-card"
 				/>
 			</span>
 			<small>{category}</small>
@@ -72,7 +73,9 @@
 			disabled={moving}
 			onclick={onMove}
 		>
-			<Chevron direction={moveDirection === "right" ? "left" : "right"} />
+			<IngredientMoveIcon
+				direction={moveDirection === "right" ? "left" : "right"}
+			/>
 		</CircleIconButton>
 	</span>
 	<TwoStepConfirmation

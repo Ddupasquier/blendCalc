@@ -49,4 +49,22 @@ describe("NutritionPanel", () => {
 			statusMessage?.compareDocumentPosition(nutritionFacts) ?? 0,
 		).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
 	});
+
+	it("shows stored product ingredients after nutrition facts", () => {
+		const ingredients = "Peanuts, sea salt";
+		render(NutritionPanel, {
+			props: {
+				food: { ...peanutButter, ingredients },
+				viewingGrams: 100,
+				showListActions: false,
+			},
+		});
+
+		const nutritionFacts = screen.getByText("Nutrition Facts");
+		const ingredientsHeading = screen.getByRole("heading", { name: "Ingredients" });
+		expect(screen.getByText(ingredients)).toBeInTheDocument();
+		expect(
+			nutritionFacts.compareDocumentPosition(ingredientsHeading),
+		).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+	});
 });

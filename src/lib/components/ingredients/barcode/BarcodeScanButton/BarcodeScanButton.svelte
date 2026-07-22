@@ -28,7 +28,9 @@
 			<BarcodeScannerIcon />
 		{/if}
 	</CenteredIcon>
-	<span class="barcode-scan-button__label" class:sr-only={compact}>Scan</span>
+	{#if !compact}
+		<span class="barcode-scan-button__label">Scan</span>
+	{/if}
 </button>
 
 <style lang="scss">

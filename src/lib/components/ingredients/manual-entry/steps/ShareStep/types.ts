@@ -25,6 +25,8 @@ export type ShareStepProps = {
 	showOptionalProductImageUpload: boolean;
 	trustedProductImage: FoodImageAsset | undefined;
 	frontPhoto: File | null;
+	nutritionPhoto: File | null;
+	barcodePhoto: File | null;
 	imagePlacement: ImagePlacementValue;
 	saveDestination: SmoothieListKey;
 	error: string;

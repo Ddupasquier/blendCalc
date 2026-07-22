@@ -137,4 +137,27 @@ describe("ingredient icon architecture", () => {
 		expect(privilegedBadge).not.toContain("<CircularIconFrame");
 		expect(privilegedBadgeStyles).toContain("color: $app-highlight");
 	});
+
+	it("isolates move-chevron optical alignment from shared chevrons", () => {
+		const savedIngredientCard = readFileSync(
+			"src/lib/components/ingredients/list/SavedIngredientCard/SavedIngredientCard.svelte",
+			"utf8",
+		);
+		const moveIconComponent = readFileSync(
+			"src/lib/components/ingredients/list/IngredientMoveIcon/IngredientMoveIcon.svelte",
+			"utf8",
+		);
+		const moveIconStyles = readFileSync(
+			"src/lib/components/ingredients/list/IngredientMoveIcon/IngredientMoveIcon.scss",
+			"utf8",
+		);
+
+		expect(savedIngredientCard).toContain("<IngredientMoveIcon");
+		expect(savedIngredientCard).not.toContain("<Chevron");
+		expect(moveIconComponent).toContain("<Chevron {direction} />");
+		expect(moveIconStyles).toContain("align-items: center");
+		expect(moveIconStyles).toContain("justify-content: center");
+		expect(moveIconStyles).toContain('data-direction="left"');
+		expect(moveIconStyles).toContain('data-direction="right"');
+	});
 });

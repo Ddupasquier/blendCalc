@@ -548,8 +548,11 @@ must never receive blanket verified or unverified status from their names alone.
 origin and field-level provenance internally and show neutral source attribution in
 detailed nutrition views where useful or legally required, but do not show provider or
 `Imported` hierarchy badges on compact saved/search cards. Compact UI may show only
-actionable states such as `Verified`, `Pending Review`, `Conflict`, or `Incomplete`;
-verified evidence states must share one user-facing label and treatment regardless of
+unresolved actionable states such as `Pending Review`, `Conflict`, or `Incomplete` on
+saved Fridge and Shopping List cards. Search result cards may additionally show the
+resolved `Verified` shield because verification helps the user choose a product before
+adding it. Detailed nutrition views show verification plus neutral source attribution.
+Verified evidence states must share one user-facing label and treatment regardless of
 whether the evidence was an exact source match, corroboration, or moderator approval.
 Badge labels, ordering, enabled states, and tones must come from database reference rows.
 Saved list rows must use normalized foreign keys to their active shared product and
@@ -559,10 +562,11 @@ status, or a shared product changes. JSON food payloads may remain compatibility
 snapshots but must never be the authority for whether an item is pending or approved.
 Provider and internal acceptance-method filters must not be exposed as consumer trust
 controls. Unknown origin must remain `unknown`; never assign USDA or another provider
-merely because source metadata is absent. Render all actionable verification states
-through the shared `IngredientProvenanceBadges` component, and use
-`VerifiedStatusBadge` for the unified verified state while retaining the database label
-as its accessible name and tooltip.
+merely because source metadata is absent. Render verification states through the shared
+`IngredientProvenanceBadges` component, use its saved-card variant to omit resolved
+verification after an item is saved, and use its search-card and detail variants to show
+the unified `VerifiedStatusBadge` where verification informs selection or detail review.
+Retain the database label as the shield's accessible name and tooltip.
 
 **30g.** <a id="rule-field-level-product-enrichment"></a>No API owns an entire product
 record merely because it returned the first or most authoritative match. Build
@@ -906,10 +910,12 @@ in from the right should share the same shell bounds, right-to-left transition, 
 close behavior, content width, and between-header-and-nav layout instead of each feature
 hand-rolling its own slide-in panel.
 
-**41.** <a id="rule-qa-process"></a>Maintain `docs/QA/qa-tasks.md` as the local-only
-active manual QA tracker and `docs/QA/completed-qa-tasks.md` as the local-only completed
-QA archive. These files and screenshot assets are ignored by git and must not be
-committed. Every new feature, component, UI, data-flow, or behavior change must add
+**41.** <a id="rule-qa-process"></a>Maintain `docs/QA/qa-tasks.md` as the local-only QA
+index, split active manual checks into `launch-blocker-qa-tasks.md`,
+`before-launch-qa-tasks.md`, and `post-launch-qa-tasks.md`, and keep
+`completed-qa-tasks.md` as the completed QA archive. These files and screenshot assets
+are ignored by git and must not be committed. Every new feature, component, UI,
+data-flow, or behavior change must add
 concrete local QA notes before handoff unless it is clearly documentation-only and needs
 no user verification. QA notes should be created as part of the task, not after the
 fact. Give every QA section a stable `QA-GGG` group ID and every task a stable
@@ -917,7 +923,8 @@ fact. Give every QA section a stable `QA-GGG` group ID and every task a stable
 preserve IDs when archiving tasks.
 
 **41a.** <a id="rule-qa-priorities"></a>Assign every active QA group one explicit MVP
-priority and keep that priority visible in `docs/QA/qa-tasks.md`. `Launch blocker`
+priority, place the whole group in the matching active priority tracker, and keep that
+priority visible in the group. `Launch blocker`
 means the behavior can produce wrong calculations, data loss or corruption, duplicate
 records, a security or privacy failure, a broken core save/navigation flow, unusable
 mobile behavior, an accessibility blocker, or a failed required build, migration, or
@@ -930,7 +937,7 @@ priority whenever scope or behavior changes; never downgrade a correctness, secu
 privacy, data-integrity, mobile-usability, or accessibility problem merely to keep moving.
 
 **41b.** <a id="rule-qa-task-consistency"></a>Before adding or changing any QA task,
-automatically search the active and completed QA trackers for the same route, component,
+automatically search all active priority trackers and the completed QA archive for the same route, component,
 control, data flow, behavior, and expected outcome. Compare the proposed task against
 every matching active task before writing it. Do not leave two active tasks that expect
 opposing behavior, test a removed control, repeat the same coverage, or describe an old
@@ -943,10 +950,11 @@ than current instructions. Recalculate QA priority summaries after these changes
 tracker contains one clear, current expected outcome for each behavior.
 
 **42.** <a id="rule-qa-clearance"></a>Finished tasks must prompt the user to run the
-relevant QA checks from local `docs/QA/qa-tasks.md`. Keep each QA item active until the
-user explicitly confirms it passed; a checked checkbox counts as that confirmation.
-Whenever QA is updated and before every handoff, automatically scan the active tracker
-and move confirmed, checked items to `docs/QA/completed-qa-tasks.md` without waiting for
+relevant QA checks from the active priority trackers linked by local
+`docs/QA/qa-tasks.md`. Keep each QA item active until the user explicitly confirms it
+passed; a checked checkbox counts as that confirmation. Whenever QA is updated and
+before every handoff, automatically scan all active priority trackers and move confirmed,
+checked items to `docs/QA/completed-qa-tasks.md` without waiting for
 a separate cleanup request. Every QA cleanup or archive pass must also audit the
 remaining active tasks for stale routes, controls, labels, components, files, expected
 outcomes, superseded behavior, and duplicate coverage. When a whole section is complete,
@@ -954,7 +962,8 @@ move its section context with those items. If a checked item needs clarification
 archiving, add an unchecked `QA note needed:` prompt under the active section instead of
 guessing. Never mark an item passed on the user's behalf, and do not silently delete
 active QA coverage. When a feature or behavior has intentionally been removed or
-superseded, remove its obsolete check from the active tracker and record its stable ID
+superseded, remove its obsolete check from the appropriate active priority tracker and
+record its stable ID
 in the completed archive under an explicit `Retired` heading with the reason and
 replacement QA ID; retired does not mean passed.
 
@@ -1003,14 +1012,18 @@ supplies only semantic label, tone, and accessible text.
 
 **45c.** <a id="rule-verified-status-badge"></a>Any verification backed by accepted
 evidence—an exact source match, corroboration, or moderator approval—must render as the
-same reusable `ShieldCheck` icon inside `VerifiedStatusBadge`, which must compose
+same reusable `ShieldCheck` icon inside `VerifiedStatusBadge` when verification context
+is useful, such as nutrition details or moderation. `VerifiedStatusBadge` must compose
 `StatusIconBadge` and the shared circular icon frame. Do not create provider-specific
 verified treatments, show a separate visible `Verified` text pill, inline the shield
 SVG, or recreate its circle in ingredient features. Keep the database-provided badge
 label available through the icon's accessible name and tooltip so the icon is
-understandable without relying on color or shape alone. Ingredient cards, search
-results, shopping lists, and nutrition details must all receive this treatment through
-`IngredientProvenanceBadges` rather than rendering their own version.
+understandable without relying on color or shape alone. Saved Fridge and Shopping List
+cards must omit the resolved verified shield while retaining unresolved actionable
+states through the saved-card `IngredientProvenanceBadges` variant. Search results use
+the search-card variant to show the verified shield before a user adds a product.
+Detailed nutrition views use the detail variant and keep the verified shield plus neutral
+source attribution.
 
 **46.** <a id="rule-qa-links"></a>QA tasks must include exact reproduction steps,
 concrete example inputs, observable expected outcomes, exact code references, and links

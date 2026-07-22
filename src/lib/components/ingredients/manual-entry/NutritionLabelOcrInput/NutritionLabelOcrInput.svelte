@@ -2,6 +2,7 @@
 	import { onDestroy } from "svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import CheckboxGroup from "$lib/components/common/forms/CheckboxGroup/CheckboxGroup.svelte";
+	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import type { NutritionLabelOcrInputProps } from "./types";
 	import { recognizeNutritionLabelImage } from "$lib/utils/food/ocr/nutritionLabelOcr.client";
@@ -121,22 +122,16 @@
 		<strong id="nutrition-label-ocr-title">Scan nutrition label</strong>
 		<span>optional</span>
 	</div>
-	<p>
-		Use a clear label photo to suggest values. Nothing is added until you review and
-		confirm it.
-	</p>
-
-	<label class="nutrition-label-ocr__file">
-		<span>Nutrition facts photo</span>
-		<input
-			id="custom-ingredient-label-ocr-photo"
-			name="custom-ingredient-label-ocr-photo"
-			type="file"
-			accept="image/jpeg,image/png,image/webp"
-			capture="environment"
-			onchange={(event) => handlePhotoChange(event.currentTarget.files?.[0] ?? null)}
-		/>
-	</label>
+	<PhotoUploadInput
+		id="custom-ingredient-label-ocr-photo"
+		name="custom-ingredient-label-ocr-photo"
+		prompt="Nutrition facts photo"
+		description="Use a clear label photo to suggest values. Nothing is added until you review and confirm it."
+		photoCount={1}
+		files={photo ? [photo] : []}
+		capture="environment"
+		onFilesChange={(files) => handlePhotoChange(files[0] ?? null)}
+	/>
 
 	<RoundedActionButton
 		onclick={scanPhoto}

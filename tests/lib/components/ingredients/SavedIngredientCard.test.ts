@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import SavedIngredientCard from "$lib/components/ingredients/list/SavedIngredientCard/SavedIngredientCard.svelte";
+import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceData";
 
 const baseProps = {
 	food: {
@@ -50,5 +51,41 @@ describe("SavedIngredientCard warning treatment", () => {
 		expect(
 			screen.getByRole("button", { name: "Preview Ground Beef" }),
 		).toBeInTheDocument();
+	});
+});
+
+describe("SavedIngredientCard move action", () => {
+	it("uses the focused move icon without changing shared chevrons", () => {
+		const { container, rerender } = render(SavedIngredientCard, {
+			props: baseProps,
+		});
+
+		expect(
+			container.querySelector('.ingredient-move-icon[data-direction="left"]'),
+		).toBeInTheDocument();
+
+		rerender({ ...baseProps, moveDirection: "left" });
+
+		expect(
+			container.querySelector('.ingredient-move-icon[data-direction="right"]'),
+		).toBeInTheDocument();
+	});
+});
+
+describe("SavedIngredientCard verification metadata", () => {
+	it("does not show resolved verification on the compact card", () => {
+		render(SavedIngredientCard, {
+			props: {
+				...baseProps,
+				food: {
+					...baseProps.food,
+					trustStatus: "source-verified",
+				},
+				provenanceOptions: ingredientProvenanceOptionsFixture,
+			},
+		});
+
+		expect(screen.queryByLabelText("Verification status: Verified"))
+			.not.toBeInTheDocument();
 	});
 });

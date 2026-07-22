@@ -3,6 +3,7 @@
 	import { invalidateAll } from "$app/navigation";
 	import User from "$lib/assets/icons/User/User.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker/FoodPreferencePicker.svelte";
 	import { APP_NAME } from "$lib/config/brand";
@@ -365,12 +366,12 @@
 		{/if}
 
 		<form method="POST" action="?/uploadAvatar" enctype="multipart/form-data" use:enhance={enhanceAvatar} aria-busy={avatarPending}>
-			<label for="profile-avatar">Choose image</label>
-			<input
+			<PhotoUploadInput
 				id="profile-avatar"
 				name="avatar"
-				type="file"
-				accept="image/jpeg,image/png,image/webp"
+				prompt="Profile photo"
+				description="Choose a JPEG, PNG, or WebP portrait up to 5 MB."
+				photoCount={1}
 				required
 				disabled={avatarPending}
 			/>

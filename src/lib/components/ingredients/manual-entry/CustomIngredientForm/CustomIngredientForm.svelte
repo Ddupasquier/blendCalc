@@ -1316,6 +1316,7 @@
 				{showOptionalProductImageUpload}
 				{trustedProductImage}
 				{frontPhoto}
+				{barcodePhoto}
 				{imagePlacement}
 				{saveDestination}
 				{error}

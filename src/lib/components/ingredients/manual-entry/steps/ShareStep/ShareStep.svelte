@@ -1,5 +1,6 @@
 <script lang="ts">
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch/ToggleSwitch.svelte";
 	import CustomIngredientOutcome from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome/CustomIngredientOutcome.svelte";
 	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList/ManualEntryValidationList.svelte";
@@ -30,6 +31,8 @@
 		showOptionalProductImageUpload,
 		trustedProductImage,
 		frontPhoto,
+		nutritionPhoto,
+		barcodePhoto,
 		imagePlacement,
 		saveDestination,
 		error,
@@ -142,26 +145,28 @@
 				onFrontPhotoChange={onFrontPhotoChange}
 				onPlacementChange={onImagePlacementChange}
 			/>
-			<ManualEntryField forId="custom-product-nutrition-photo" label="Nutrition facts label">
-				<input
-					id="custom-product-nutrition-photo"
-					name="custom-product-nutrition-photo"
-					type="file"
-					accept="image/jpeg,image/png,image/webp"
-					aria-required="true"
-					onchange={(event) => onNutritionPhotoChange(event.currentTarget.files?.[0] ?? null)}
-				/>
-			</ManualEntryField>
-			<ManualEntryField forId="custom-product-barcode-photo" label="Barcode">
-				<input
-					id="custom-product-barcode-photo"
-					name="custom-product-barcode-photo"
-					type="file"
-					accept="image/jpeg,image/png,image/webp"
-					aria-required="true"
-					onchange={(event) => onBarcodePhotoChange(event.currentTarget.files?.[0] ?? null)}
-				/>
-			</ManualEntryField>
+			<PhotoUploadInput
+				id="custom-product-nutrition-photo"
+				name="custom-product-nutrition-photo"
+				prompt="Nutrition facts label"
+				description="Show the entire nutrition label with every value readable."
+				photoCount={1}
+				files={nutritionPhoto ? [nutritionPhoto] : []}
+				capture="environment"
+				required
+				onFilesChange={(files) => onNutritionPhotoChange(files[0] ?? null)}
+			/>
+			<PhotoUploadInput
+				id="custom-product-barcode-photo"
+				name="custom-product-barcode-photo"
+				prompt="Barcode"
+				description="Show the full barcode and its printed digits in clear focus."
+				photoCount={1}
+				files={barcodePhoto ? [barcodePhoto] : []}
+				capture="environment"
+				required
+				onFilesChange={(files) => onBarcodePhotoChange(files[0] ?? null)}
+			/>
 		</section>
 	{:else if showOptionalProductImageUpload}
 		<section class="share-step__evidence" aria-labelledby="product-image-title">

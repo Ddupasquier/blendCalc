@@ -37,12 +37,18 @@ describe("loading indicator architecture", () => {
 		const identityStep = read(
 			"src/lib/components/ingredients/manual-entry/steps/IdentityStep/IdentityStep.svelte",
 		);
+		const manualEntryFieldStyles = read(
+			"src/lib/components/ingredients/manual-entry/ManualEntryField/ManualEntryField.scss",
+		);
 		const categoryPicker = read(
 			"src/lib/components/ingredients/manual-entry/FoodCategoryPicker/FoodCategoryPicker.svelte",
 		);
 
 		expect(identityStep).toContain("InputLoadingFrame");
 		expect(identityStep).toContain('loadingLabel="Checking barcode sources"');
+		expect(manualEntryFieldStyles).toContain(
+			".manual-entry-field > .input-loading-frame > input",
+		);
 		expect(categoryPicker).toContain("InputLoadingFrame");
 		expect(categoryPicker).toContain('loadingLabel="Searching categories"');
 	});
