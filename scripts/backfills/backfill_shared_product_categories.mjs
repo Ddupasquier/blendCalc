@@ -5,12 +5,12 @@ import {
 	normalizeFoodCategoryValue,
 	toFoodCategoryId,
 	toFoodCategoryLabel,
-} from "../src/lib/utils/food/categories/categoryNormalization.js";
+} from "../../src/lib/utils/food/categories/categoryNormalization.js";
 import {
 	findFirstBarcodeCandidateMatch,
 	normalizeBarcode,
-} from "./lib/barcode_candidates.mjs";
-import { createAppUserAgent } from "./lib/app_version.mjs";
+} from "../lib/barcode_candidates.mjs";
+import { createAppUserAgent } from "../lib/app_version.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });

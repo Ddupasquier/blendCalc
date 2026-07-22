@@ -9,7 +9,7 @@ import {
 	getFilesChecksum,
 	normalizeDatasetSearchText,
 	normalizeDatasetUnit,
-} from "./lib/nutrition_dataset_import.mjs";
+} from "../lib/nutrition_dataset_import.mjs";
 
 const DATASET_KEY = "cofid-2021";
 const SOURCE_KEY = "uk-cofid";

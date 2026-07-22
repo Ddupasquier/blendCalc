@@ -6,8 +6,8 @@ const sharedImporter = readFileSync(
 	"utf8",
 );
 const importers = [
-	readFileSync("scripts/import_cnf_2026.mjs", "utf8"),
-	readFileSync("scripts/import_cofid_2021.mjs", "utf8"),
+	readFileSync("scripts/imports/import_cnf_2026.mjs", "utf8"),
+	readFileSync("scripts/imports/import_cofid_2021.mjs", "utf8"),
 ];
 
 describe("nutrition dataset download storage", () => {

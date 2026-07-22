@@ -8,7 +8,7 @@ import { config } from "dotenv";
 import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
-import { createAppUserAgent } from "./lib/app_version.mjs";
+import { createAppUserAgent } from "../lib/app_version.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });

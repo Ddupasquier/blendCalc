@@ -94,13 +94,13 @@ needs multiple test/support files.
 
 ## Scripts
 
-- Executable maintenance commands live at `scripts/` and use an operation prefix such
-  as `audit_`, `backfill_`, `import_`, `seed_`, or `generate_`.
-- Reusable script code lives in `scripts/lib`.
-- Shared import/reference catalogs live in `scripts/reference-data`.
-- Generated artifacts used by scripts live in `scripts/output` and must have a known
-  consumer.
+- Executable maintenance commands live in purpose directories under `scripts/`, such
+  as `audits`, `backfills`, `generators`, `imports`, `operations`, `qa`, and `seeds`.
+- Reusable script code and shared reference catalogs live under `scripts/lib`.
+- Runtime/reference data belongs in canonical database tables rather than generated
+  repository-local output or cache directories.
 - Remove obsolete scripts instead of keeping undocumented alternatives.
+- Keep the directory map and maintenance requirements in `scripts/README.md` current.
 
 ## Ownership Check
 

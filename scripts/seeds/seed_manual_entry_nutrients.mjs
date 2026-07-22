@@ -1,16 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
-import fetch from "node-fetch";
-import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ws from "ws";
-import { createAppUserAgent } from "./lib/app_version.mjs";
-import { createManualEntryNutrientCatalog } from "./lib/manual_entry_nutrient_catalog.mjs";
-import { createSourceNutrientMappingCatalog } from "./lib/source_nutrient_mapping_catalog.mjs";
+import { createAppUserAgent } from "../lib/app_version.mjs";
+import { createManualEntryNutrientCatalog } from "../lib/manual_entry_nutrient_catalog.mjs";
+import { fetchWithRetry } from "../lib/reference-data/api.mjs";
+import { createSourceNutrientMappingCatalog } from "../lib/source_nutrient_mapping_catalog.mjs";
 
 const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.resolve(scriptDirectory, "..");
+const projectRoot = path.resolve(scriptDirectory, "../..");
 config({ path: path.join(projectRoot, ".env.moderation.local"), quiet: true });
 config({ path: path.join(projectRoot, ".env"), quiet: true });
 
@@ -21,11 +20,6 @@ const BASE_URL = "https://api.nal.usda.gov/fdc/v1";
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/cgi/search.pl";
 const OPEN_FOOD_FACTS_PAGE_SIZE = 20;
 const APP_USER_AGENT = createAppUserAgent("manual nutrient observation seed");
-const DISCOVERED_FDC_NUTRIENTS_PATH = path.join(
-	projectRoot,
-	"scripts/output/fdc-nutrients.json",
-);
-
 const DEFAULT_FDC_SOURCE_REQUESTS = [
 	{
 		source: "fdc-foundation-sr",
@@ -162,7 +156,7 @@ const buildSearchUrl = ({ query, pageNumber, pageSize, dataTypes }) => {
 };
 
 const fetchSearchPage = async (request) => {
-	const response = await fetch(buildSearchUrl(request));
+	const response = await fetchWithRetry(buildSearchUrl(request));
 	if (!response.ok) {
 		throw new Error(
 			`FDC search failed for "${request.query}" page ${request.pageNumber}: ${response.status} ${response.statusText}`,
@@ -190,7 +184,7 @@ const fetchOpenFoodFactsPage = async (query) => {
 		"nutriments",
 	].join(","));
 
-	const response = await fetch(url, {
+	const response = await fetchWithRetry(url, {
 		headers: {
 			accept: "application/json",
 			"user-agent": APP_USER_AGENT,
@@ -224,42 +218,13 @@ const runWithConcurrency = async (items, concurrency, task) => {
 	return results;
 };
 
-const readDiscoveredFdcNutrients = () => {
-	try {
-		const report = JSON.parse(readFileSync(DISCOVERED_FDC_NUTRIENTS_PATH, "utf8"));
-		return Array.isArray(report.nutrients) ? report.nutrients : [];
-	} catch (error) {
-		console.warn(
-			`Could not read ${path.relative(projectRoot, DISCOVERED_FDC_NUTRIENTS_PATH)}. Continuing with live FDC observations only.`,
-		);
-		return [];
-	}
-};
-
-const buildDiscoveredFdcNutrientDefinitions = (databaseDefinitions) => {
-	const definitions = new Map(
+const buildNutrientDefinitions = (databaseDefinitions) =>
+	new Map(
 		databaseDefinitions.map((definition) => [definition.nutrient_id, definition]),
 	);
 
-	for (const nutrient of readDiscoveredFdcNutrients()) {
-		const nutrientId = Number(nutrient.id);
-		const nutrientName = String(nutrient.label ?? "").trim();
-		const unitName = normalizeUnit(nutrient.unit);
-		if (!Number.isFinite(nutrientId) || !nutrientName || !unitName) continue;
-
-		definitions.set(nutrientId, {
-			nutrient_id: nutrientId,
-			nutrient_name: nutrientName,
-			nutrient_number: String(nutrient.nutrientNumber ?? "").trim() || null,
-			default_unit_name: unitName,
-		});
-	}
-
-	return definitions;
-};
-
 const collectFdcObservations = ({ pages, databaseDefinitions, manualEntryCatalog }) => {
-	const nutrientDefinitions = buildDiscoveredFdcNutrientDefinitions(databaseDefinitions);
+	const nutrientDefinitions = buildNutrientDefinitions(databaseDefinitions);
 	const observations = new Map();
 	const ignoredNutrients = new Map();
 

@@ -4,8 +4,8 @@ import WebSocket from "ws";
 import {
 	findFirstBarcodeCandidateMatch,
 	normalizeBarcode,
-} from "./lib/barcode_candidates.mjs";
-import { createAppUserAgent } from "./lib/app_version.mjs";
+} from "../lib/barcode_candidates.mjs";
+import { createAppUserAgent } from "../lib/app_version.mjs";
 
 const APP_USER_AGENT = createAppUserAgent("source quality benchmark");
 

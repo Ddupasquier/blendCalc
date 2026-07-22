@@ -8,7 +8,7 @@ import WebSocket from "ws";
 import {
 	createTemporaryDownloadDirectory,
 	downloadTemporaryFile,
-} from "./lib/nutrition_dataset_import.mjs";
+} from "../lib/nutrition_dataset_import.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });

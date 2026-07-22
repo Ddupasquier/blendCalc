@@ -4,7 +4,7 @@ import ws from "ws";
 import {
 	formatSourceProductName,
 	isManagedProductName,
-} from "../src/lib/utils/products/productNameFormatting.js";
+} from "../../src/lib/utils/products/productNameFormatting.js";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });

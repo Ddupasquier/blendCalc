@@ -9,16 +9,16 @@ import {
 	PRODUCT_REFERENCE_QUERIES,
 	SERVING_MEASURE_REQUESTS,
 	UNIT_STANDARDS_CODES,
-} from "./reference-data/catalog.mjs";
+} from "../lib/reference-data/catalog.mjs";
 import {
 	convertUcumUnit,
 	fetchWithRetry,
 	readHtmlTitle,
-} from "./reference-data/api.mjs";
+} from "../lib/reference-data/api.mjs";
 import {
 	findCanonicalNutrientMatch,
 	normalizeUnitName,
-} from "./reference-data/nutrientMatching.mjs";
+} from "../lib/reference-data/nutrientMatching.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -93,9 +93,10 @@ const readReferenceRows = async () => {
 				.select("nutrient_id")
 				.eq("enabled", true),
 			supabase
-				.from("ingredient_source_options")
+				.from("ingredient_provenance_options")
 				.select("filter_label, description")
-				.eq("value", "shared")
+				.eq("dimension", "source")
+				.eq("value", "shared-catalog")
 				.single(),
 			supabase
 				.from("shared_products")
@@ -222,7 +223,7 @@ const seedSources = async ({ usdaCount, offCount, sharedSource, sharedProductCou
 			first_observed_at: observedAt,
 			last_observed_at: observedAt,
 			provenance: {
-				seed: "scripts/seed_product_reference_data.mjs",
+				seed: "scripts/seeds/seed_product_reference_data.mjs",
 				observedTitle,
 				sampleSize,
 			},
@@ -289,7 +290,7 @@ const seedNutrientMappings = async ({
 		first_observed_at: observedAt,
 		last_observed_at: observedAt,
 		provenance: {
-			seed: "scripts/seed_product_reference_data.mjs",
+			seed: "scripts/seeds/seed_product_reference_data.mjs",
 			api: "USDA FoodData Central",
 			sampleSize: usdaFoods.length,
 		},
@@ -339,7 +340,7 @@ const seedNutrientMappings = async ({
 				first_observed_at: observedAt,
 				last_observed_at: observedAt,
 				provenance: {
-					seed: "scripts/seed_product_reference_data.mjs",
+					seed: "scripts/seeds/seed_product_reference_data.mjs",
 					taxonomyKey,
 					taxonomyName: sourceName,
 					taxonomyUnit,
@@ -433,7 +434,7 @@ const seedNutrientConversions = async ({ mappings, definitions, usdaFoods }) => 
 					confidence: 1,
 					observation_count: 1,
 					provenance: {
-						seed: "scripts/seed_product_reference_data.mjs",
+						seed: "scripts/seeds/seed_product_reference_data.mjs",
 						sourceReference: conversion.sourceReference,
 					},
 				});
@@ -460,7 +461,7 @@ const seedNutrientConversions = async ({ mappings, definitions, usdaFoods }) => 
 					confidence: 0.99,
 					observation_count: values.length,
 					provenance: {
-						seed: "scripts/seed_product_reference_data.mjs",
+						seed: "scripts/seeds/seed_product_reference_data.mjs",
 						fdcIds: values.slice(0, 25).map((value) => value.fdcId),
 					},
 				});
@@ -494,7 +495,7 @@ const seedNutrientConversions = async ({ mappings, definitions, usdaFoods }) => 
 			confidence: 0.99,
 			observation_count: values.length,
 			provenance: {
-				seed: "scripts/seed_product_reference_data.mjs",
+				seed: "scripts/seeds/seed_product_reference_data.mjs",
 				fdcIds: values.slice(0, 25).map((value) => value.fdcId),
 			},
 		});

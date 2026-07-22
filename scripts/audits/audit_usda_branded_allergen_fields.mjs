@@ -1,8 +1,7 @@
-// Audit USDA FoodData Central search coverage for allergen/dietary metadata.
+// Audit USDA branded-food detail coverage for allergen/dietary metadata.
 // Usage:
-//   node scripts/audit_fdc_allergen_fields.mjs
-//   node scripts/audit_fdc_allergen_fields.mjs "whole milk" "peanut butter"
-//   npm run audit:fdc-allergens -- "whole milk" "peanut butter"
+//   node scripts/audits/audit_usda_branded_allergen_fields.mjs
+//   node scripts/audits/audit_usda_branded_allergen_fields.mjs "whole milk" "peanut butter"
 
 import { config } from "dotenv";
 import fetch from "node-fetch";
@@ -10,7 +9,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-config({ path: path.resolve(__dirname, "../.env") });
+config({ path: path.resolve(__dirname, "../../.env") });
 
 const API_KEY = process.env.VITE_FDC_API_KEY;
 const BASE_URL = "https://api.nal.usda.gov/fdc/v1";
@@ -34,16 +33,22 @@ const buildSearchUrl = (query) => {
 	const url = new URL(`${BASE_URL}/foods/search`);
 	url.searchParams.set("api_key", API_KEY);
 	url.searchParams.set("query", query);
-	url.searchParams.set("pageSize", "1");
-	url.searchParams.set("dataType", "Foundation,SR Legacy,Branded");
+	url.searchParams.set("pageSize", "5");
+	url.searchParams.set("dataType", "Branded");
 	return url;
 };
 
-const searchTopFood = async (query) => {
+const buildDetailUrl = (fdcId) => {
+	const url = new URL(`${BASE_URL}/food/${fdcId}`);
+	url.searchParams.set("api_key", API_KEY);
+	return url;
+};
+
+const searchTopBrandedFood = async (query) => {
 	const response = await fetch(buildSearchUrl(query));
 	if (!response.ok) {
 		throw new Error(
-			`FDC search failed for "${query}": ${response.status} ${response.statusText}`,
+			`USDA branded search failed for "${query}": ${response.status} ${response.statusText}`,
 		);
 	}
 
@@ -51,12 +56,23 @@ const searchTopFood = async (query) => {
 	return data.foods?.[0] ?? null;
 };
 
+const fetchFoodDetail = async (fdcId) => {
+	const response = await fetch(buildDetailUrl(fdcId));
+	if (!response.ok) {
+		throw new Error(
+			`USDA food detail failed for ${fdcId}: ${response.status} ${response.statusText}`,
+		);
+	}
+
+	return await response.json();
+};
+
 const summarizeFood = (query, food) => {
 	if (!food) {
 		return {
 			query,
-			matched: "No result",
-			dataType: "—",
+			matched: "No branded result",
+			brandOwner: "—",
 			allergensCount: 0,
 			dietaryTagsCount: 0,
 			ingredientListCount: 0,
@@ -67,27 +83,29 @@ const summarizeFood = (query, food) => {
 	return {
 		query,
 		matched: food.description,
-		dataType: food.dataType ?? "—",
+		brandOwner: food.brandOwner ?? "—",
 		allergensCount: food.allergens?.length ?? 0,
 		dietaryTagsCount: food.dietaryTags?.length ?? 0,
 		ingredientListCount: food.ingredientList?.length ?? 0,
 		ingredientsText: food.ingredients ? "present" : "missing",
 		allergens: food.allergens ?? [],
 		dietaryTags: food.dietaryTags ?? [],
+		ingredients: food.ingredients ?? null,
 	};
 };
 
 const results = [];
 for (const query of auditQueries) {
-	const food = await searchTopFood(query);
-	results.push(summarizeFood(query, food));
+	const topResult = await searchTopBrandedFood(query);
+	const detail = topResult ? await fetchFoodDetail(topResult.fdcId) : null;
+	results.push(summarizeFood(query, detail));
 }
 
 console.table(
 	results.map((result) => ({
 		query: result.query,
 		matched: result.matched,
-		dataType: result.dataType,
+		brandOwner: result.brandOwner,
 		allergens: result.allergensCount,
 		dietaryTags: result.dietaryTagsCount,
 		ingredientList: result.ingredientListCount,

@@ -102,8 +102,6 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | `npm run test:watch` | Watch-mode tests |
 | `npm run check` | TypeScript + Svelte type-check |
 | `npm run check:auth` | Validate auth environment and endpoint health |
-| `npm run audit:fdc-vitals` | Audit FDC output for vital nutrient coverage |
-| `npm run audit:fdc-allergens` | Sample FoodData Central allergen-related fields |
 | `npm run audit:usda-branded-allergens` | Sample USDA branded allergen-related fields |
 | `npm run audit:off-allergens` | Sample Open Food Facts allergen/restriction fields |
 | `npm run seed:food-preferences` | Store cross-source observed food preference metadata in Supabase |
@@ -114,8 +112,6 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | `npm run seed:product-reference-data -- --sample-size=200` | Cross-check product sources and seed source identities, nutrient mappings/conversions, and serving measures |
 | `npm run generate:api-structures` | Generate docs-only reference types from observed external API payloads |
 | `npm run backfill:food-images` | Backfill DB-backed product image metadata for existing barcode foods |
-| `npm run discover:fdc-nutrients` | Generate the expanded FDC nutrient catalog |
-| `npm run compare:fdc -- "a" "b"` | Compare live FDC output for two product searches |
 | `npm run db:push:dry` | Preview pending Supabase migrations |
 | `npm run db:push` | Push pending Supabase migrations with the Supabase CLI prompt |
 | `npm run db:push:auto` | Push pending Supabase migrations using `SUPABASE_DB_PASSWORD` from `.env.moderation.local` or macOS Keychain |
@@ -180,18 +176,9 @@ and legal/canonical storage boundaries.
 See [`docs/versioning.md`](docs/versioning.md) for the independent app, API, database,
 catalog-revision, and client-storage versioning model.
 
-To compare live FDC product data while debugging nutrient mappings:
-
-```bash
-npm run compare:fdc -- "sunflower oil" "2% milk"
-npm run audit:fdc-vitals
-npm run discover:fdc-nutrients
-```
-
-`discover:fdc-nutrients` samples broad food categories and generates a
-deduplicated audit report in `scripts/output/`. Runtime nutrient definitions and
-display profiles remain database-driven. Pass food queries or options such as `--pages=1`,
-`--page-size=25`, and `--min-occurrences=3` to narrow the audit.
+See [`scripts/README.md`](scripts/README.md) for the maintained script directory map
+and script-specific maintenance rules. Runtime nutrient definitions and display
+profiles remain database-driven; repository-local nutrient catalogs are not used.
 
 `generate:api-structures` samples observed query terms from Supabase API
 observation tables, calls the external food APIs the app currently uses, and

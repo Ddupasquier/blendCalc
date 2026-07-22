@@ -230,7 +230,7 @@ Columns:
 
 Notes:
 
-- Seeded by `scripts/seed_manual_entry_nutrients.mjs` through the current approved DB
+- Seeded by `scripts/seeds/seed_manual_entry_nutrients.mjs` through the current approved DB
   catalog. The script records new source nutrients but does not invent their UI group.
 - Groups/fields render from enabled, approved DB rows only. Macros contains common
   nutrition-label fields; specialized carbohydrates, fats, carotenoids, vitamins,
@@ -617,7 +617,7 @@ Columns: `id`, `label`, `normalized_value`, `sources`, `source_count`,
 Notes:
 
 - UI category dropdowns should sort by `label`.
-- Seeded by `scripts/seed_custom_food_categories.mjs`.
+- Seeded by `scripts/seeds/seed_custom_food_categories.mjs`.
 - The dropdown renders these app-ready options, not raw source payload strings.
 - `shared_product_submissions`, `shared_products`, and `shared_product_revisions`
   reference this table through `category_option_id`.
@@ -646,7 +646,7 @@ Notes:
 - Barcode/manual-entry autofill should use this table to pick the visible app category.
 - Raw API category values remain stored in `custom_food_category_observations` and on
   product payloads for proof and moderation.
-- Seeded by `scripts/seed_custom_food_categories.mjs`; use
+- Seeded by `scripts/seeds/seed_custom_food_categories.mjs`; use
   `npm run seed:food-categories:deep` for a broader API sample.
 - Use `npm run seed:food-categories:rebuild` when observations already exist and only
   mappings need to be refreshed.

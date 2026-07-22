@@ -1,10 +1,10 @@
 // Audit Open Food Facts search coverage for allergen/dietary metadata.
 // Usage:
-//   node scripts/audit_openfoodfacts_allergen_fields.mjs
-//   node scripts/audit_openfoodfacts_allergen_fields.mjs "whole milk" "peanut butter"
+//   node scripts/audits/audit_openfoodfacts_allergen_fields.mjs
+//   node scripts/audits/audit_openfoodfacts_allergen_fields.mjs "whole milk" "peanut butter"
 
 import fetch from "node-fetch";
-import { createAppUserAgent } from "./lib/app_version.mjs";
+import { createAppUserAgent } from "../lib/app_version.mjs";
 
 const BASE_URL = "https://world.openfoodfacts.org/cgi/search.pl";
 const DEFAULT_QUERIES = [

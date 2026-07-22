@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createManualEntryNutrientCatalog } from "../../../../scripts/lib/manual_entry_nutrient_catalog.mjs";
 import { createSourceNutrientMappingCatalog } from "../../../../scripts/lib/source_nutrient_mapping_catalog.mjs";
-import { findCanonicalNutrientMatch } from "../../../../scripts/reference-data/nutrientMatching.mjs";
+import { findCanonicalNutrientMatch } from "../../../../scripts/lib/reference-data/nutrientMatching.mjs";
 
 const groups = [
 	{

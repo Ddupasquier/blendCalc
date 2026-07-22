@@ -5,7 +5,7 @@ const migration = readFileSync(
 	"supabase/migrations/20260719220000_db_driven_manual_entry_nutrient_groups.sql",
 	"utf8",
 );
-const seeder = readFileSync("scripts/seed_manual_entry_nutrients.mjs", "utf8");
+const seeder = readFileSync("scripts/seeds/seed_manual_entry_nutrients.mjs", "utf8");
 const nutrientDefinitions = readFileSync(
 	"src/lib/utils/food/nutrients/nutrientDefinitions.ts",
 	"utf8",
