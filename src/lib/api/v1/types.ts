@@ -6,6 +6,15 @@ export type ApiV1Source = {
 	confidence: string | null;
 };
 
+export type ApiV1SourceAttribution = {
+	source: string;
+	displayName: string;
+	sourceUrl: string | null;
+	licenseName: string | null;
+	licenseUrl: string | null;
+	attribution: string | null;
+};
+
 export type ApiV1Category = {
 	id: string;
 	name: string;
@@ -89,6 +98,7 @@ export type ApiV1Product = {
 	servings: ApiV1Serving[];
 	images: ApiV1Image[];
 	warnings: ApiV1Warning[];
+	sourceAttributions: ApiV1SourceAttribution[];
 	fieldSources: {
 		name: ApiV1Source | null;
 		brand: ApiV1Source | null;

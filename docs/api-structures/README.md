@@ -11,6 +11,12 @@ The existing app submission, evidence, and moderation pipeline remains the only 
 path. Provider results and user label observations are intake evidence; they do not
 write directly to the canonical API record.
 
+Every product response includes a deduplicated `sourceAttributions` collection for the
+sources represented by its accepted fields. The collection is loaded from
+`product_data_sources` and preserves the configured source name, source URL, licence,
+licence URL, and attribution statement instead of inferring legal metadata from a
+provider key.
+
 Public API keys, billing, developer accounts, and a public write API are deliberately
 out of scope until the contract, redistribution rights, rate limits, and correction
 process are ready.

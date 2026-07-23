@@ -83,6 +83,51 @@ const assertDatasetCatalog = async () => {
 		assert(/^[a-f0-9]{64}$/.test(dataset.source_file_sha256 ?? ""), `${dataset.key} lacks a valid file hash.`);
 	}
 
+	const sourcePolicies = requireData(
+		await admin
+			.from("product_data_sources")
+			.select("key, terms_url, attribution_text, canonical_storage_allowed, canonical_license_name, canonical_policy_reviewed_at, canonical_policy_notes, provenance")
+			.in("key", ["health-canada-cnf", "uk-cofid"]),
+		"national dataset source policies",
+	);
+	const sourcePolicyByKey = new Map(
+		sourcePolicies.map((source) => [source.key, source]),
+	);
+	for (const [sourceKey, expectedLicense] of [
+		["health-canada-cnf", "Open Government Licence – Canada"],
+		["uk-cofid", "Open Government Licence v3.0"],
+	]) {
+		const source = sourcePolicyByKey.get(sourceKey);
+		assert(source?.canonical_storage_allowed, `${sourceKey} canonical storage is not approved.`);
+		assert(source.canonical_license_name === expectedLicense, `${sourceKey} has the wrong canonical licence.`);
+		assert(source.terms_url?.startsWith("https://"), `${sourceKey} lacks a licence URL.`);
+		assert(source.attribution_text?.trim(), `${sourceKey} lacks required attribution text.`);
+		assert(source.canonical_policy_reviewed_at, `${sourceKey} lacks a policy review date.`);
+		assert(/attribution/i.test(source.canonical_policy_notes ?? ""), `${sourceKey} policy notes omit attribution.`);
+		assert(/third-party rights/i.test(source.canonical_policy_notes ?? ""), `${sourceKey} policy notes omit excluded rights.`);
+		assert(source.provenance?.canonical_policy_review?.requires_attribution === true, `${sourceKey} attribution requirement is not machine-readable.`);
+		assert(source.provenance?.canonical_policy_review?.public_api_eligible === true, `${sourceKey} is not marked API-eligible.`);
+	}
+
+	for (const [datasetKey, searchTerm] of [
+		["cnf-2026", "blueberries raw"],
+		["cofid-2021", "arrowroot"],
+	]) {
+		const rows = requireData(
+			await admin.rpc("search_generic_food_records", {
+				p_query: searchTerm,
+				p_limit: 100,
+			}),
+			`${datasetKey} attributed generic-food search`,
+		);
+		const result = rows.find((row) => row.dataset_key === datasetKey);
+		assert(result, `${datasetKey} did not return an attributed QA search result.`);
+		assert(result.source_url?.startsWith("https://"), `${datasetKey} response lacks its source URL.`);
+		assert(result.license_name?.trim(), `${datasetKey} response lacks its licence name.`);
+		assert(result.license_url?.startsWith("https://"), `${datasetKey} response lacks its licence URL.`);
+		assert(result.attribution_text?.trim(), `${datasetKey} response lacks attribution text.`);
+	}
+
 	assert(afcd?.license_review_status === "requires_acceptance", "AFCD legal gate changed unexpectedly.");
 	assert(!afcd.import_enabled && !afcd.active, "AFCD must stay disabled before terms acceptance.");
 
@@ -106,7 +151,7 @@ const assertDatasetCatalog = async () => {
 			`Completeness profile ${profile.key} has no nutrient rows.`,
 		);
 	}
-	pass("QA-053-001 dataset metadata and DB-owned completeness policy");
+	pass("QA-053-001 dataset metadata, redistribution policy, attribution, and DB-owned completeness policy");
 };
 
 const assertSourceRegistry = async () => {
@@ -323,6 +368,16 @@ const assertOpenApiContract = async () => {
 			`${path} advertises a non-GET operation.`,
 		);
 	}
+	const productSchema = specification.components?.schemas?.Product;
+	assert(
+		productSchema?.required?.includes("sourceAttributions"),
+		"API v1 products do not require source attribution metadata.",
+	);
+	assert(
+		productSchema?.properties?.sourceAttributions?.items?.$ref ===
+			"#/components/schemas/SourceAttribution",
+		"API v1 source attribution does not use the documented schema.",
+	);
 	assert(specification.security?.[0]?.cookieAuth, "OpenAPI does not require the app session.");
 	pass("QA-058-004 read-only authenticated OpenAPI contract");
 };

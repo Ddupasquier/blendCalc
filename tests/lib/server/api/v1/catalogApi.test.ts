@@ -110,7 +110,24 @@ describe("blendCalc API v1 catalog mapping", () => {
 	});
 
 	it("returns field sources, revision dates, and licensed images without private paths", () => {
-		const product = mapApprovedCatalogRecordToApiV1Product(record);
+		const product = mapApprovedCatalogRecordToApiV1Product(record, {
+			usda: {
+				source: "usda",
+				displayName: "USDA FoodData Central",
+				sourceUrl: "https://fdc.nal.usda.gov/",
+				licenseName: "CC0-1.0",
+				licenseUrl: "https://www.usa.gov/government-copyright",
+				attribution: "USDA FoodData Central",
+			},
+			"open-food-facts": {
+				source: "open-food-facts",
+				displayName: "Open Food Facts",
+				sourceUrl: "https://world.openfoodfacts.org/",
+				licenseName: null,
+				licenseUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
+				attribution: "Open Food Facts contributors",
+			},
+		});
 
 		expect(product.fieldSources.category).toMatchObject({
 			source: "open-food-facts",
@@ -128,6 +145,16 @@ describe("blendCalc API v1 catalog mapping", () => {
 		});
 		expect(product.images[0]).not.toHaveProperty("storagePath");
 		expect(product.images[0]).not.toHaveProperty("approvedBy");
+		expect(product.sourceAttributions).toEqual([
+			expect.objectContaining({
+				source: "open-food-facts",
+				attribution: "Open Food Facts contributors",
+			}),
+			expect.objectContaining({
+				source: "usda",
+				licenseName: "CC0-1.0",
+			}),
+		]);
 	});
 
 	it("creates predictable pagination", () => {
@@ -140,4 +167,45 @@ describe("blendCalc API v1 catalog mapping", () => {
 		});
 		expect(createPagination(15, 30, 31).nextOffset).toBeNull();
 	});
+
+	it.each([
+		[
+			"health-canada-cnf",
+			"Health Canada Canadian Nutrient File",
+			"Open Government Licence – Canada",
+		],
+		[
+			"uk-cofid",
+			"UK Composition of Foods Integrated Dataset",
+			"Open Government Licence v3.0",
+		],
+	] as const)(
+		"preserves %s attribution when its fields enter the canonical API",
+		(sourceKey, displayName, licenseName) => {
+			const attributedRecord = structuredClone(record);
+			attributedRecord.food.foodNutrients[0].source = sourceKey;
+			const product = mapApprovedCatalogRecordToApiV1Product(
+				attributedRecord,
+				{
+					[sourceKey]: {
+						source: sourceKey,
+						displayName,
+						sourceUrl: "https://example.com/dataset",
+						licenseName,
+						licenseUrl: "https://example.com/licence",
+						attribution: "Required source attribution",
+					},
+				},
+			);
+
+			expect(product.sourceAttributions).toContainEqual({
+				source: sourceKey,
+				displayName,
+				sourceUrl: "https://example.com/dataset",
+				licenseName,
+				licenseUrl: "https://example.com/licence",
+				attribution: "Required source attribution",
+			});
+		},
+	);
 });

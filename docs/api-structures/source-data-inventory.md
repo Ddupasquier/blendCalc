@@ -68,6 +68,10 @@ similar.
   reviewed. Do not infer storage permission from a provider name.
 - API v1 reads approved blendCalc catalog data only and never makes an external provider
   request.
+- App generic-food search responses carry release-specific source and licence metadata
+  in `sourceAttribution`. API v1 product responses deduplicate the source policies used
+  by accepted fields into `sourceAttributions`, so required attribution survives the
+  canonical read boundary.
 
 ## Adding A Source
 

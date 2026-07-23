@@ -1,4 +1,13 @@
-import { BLENDCALC_API_V1, type ApiV1Category, type ApiV1Image, type ApiV1Pagination, type ApiV1Product, type ApiV1Source, type ApiV1Warning } from "$lib/api/v1/types";
+import {
+	BLENDCALC_API_V1,
+	type ApiV1Category,
+	type ApiV1Image,
+	type ApiV1Pagination,
+	type ApiV1Product,
+	type ApiV1Source,
+	type ApiV1SourceAttribution,
+	type ApiV1Warning,
+} from "$lib/api/v1/types";
 import {
 	getApprovedCatalogRecordByBarcode,
 	searchApprovedCatalogRecordsPage,
@@ -12,6 +21,60 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 const uniqueStrings = (values: Array<string | null | undefined>) => [
 	...new Set(values.map((value) => value?.trim()).filter(Boolean) as string[]),
 ];
+
+type SourceAttributionRow = {
+	key: string;
+	display_name: string;
+	homepage_url: string | null;
+	terms_url: string | null;
+	attribution_text: string | null;
+	canonical_license_name: string | null;
+};
+
+type SourceAttributionCatalog = Record<string, ApiV1SourceAttribution>;
+
+const readSourceAttributionCatalog = async (
+	supabase: SupabaseClient<Database>,
+): Promise<SourceAttributionCatalog> => {
+	const { data, error } = await supabase
+		.from("product_data_sources")
+		.select(
+			"key, display_name, homepage_url, terms_url, attribution_text, canonical_license_name",
+		)
+		.eq("enabled", true);
+	if (error) throw error;
+	return Object.fromEntries(
+		((data ?? []) as SourceAttributionRow[]).map((source) => [
+			source.key,
+			{
+				source: source.key,
+				displayName: source.display_name,
+				sourceUrl: source.homepage_url,
+				licenseName: source.canonical_license_name,
+				licenseUrl: source.terms_url,
+				attribution: source.attribution_text,
+			},
+		]),
+	);
+};
+
+const collectSourceKeys = (record: ApprovedCatalogRecord) => new Set(
+	[
+		record.source,
+		...record.food.foodNutrients.map((nutrient) => nutrient.source),
+		...(record.food.foodServings ?? []).map((serving) => serving.source),
+		...record.images.map((image) => image.source),
+		...Object.values(record.food.fieldProvenance ?? {}).map((source) => source?.source),
+	].filter(Boolean) as string[],
+);
+
+const selectSourceAttributions = (
+	record: ApprovedCatalogRecord,
+	catalog: SourceAttributionCatalog,
+) => [...collectSourceKeys(record)]
+	.map((sourceKey) => catalog[sourceKey])
+	.filter((source): source is ApiV1SourceAttribution => Boolean(source))
+	.sort((left, right) => left.source.localeCompare(right.source));
 
 const toSource = (
 	source: string,
@@ -64,6 +127,7 @@ const toWarning = (fact: FoodCompatibilityFact): ApiV1Warning => ({
 
 export const mapApprovedCatalogRecordToApiV1Product = (
 	record: ApprovedCatalogRecord,
+	sourceAttributionCatalog: SourceAttributionCatalog = {},
 ): ApiV1Product => {
 	const ingredientsText = record.food.ingredients?.trim() || null;
 	const categorySource = record.category
@@ -134,6 +198,10 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 		}),
 		images: record.images.map(toImage),
 		warnings: (record.food.compatibilitySummary?.allFacts ?? []).map(toWarning),
+		sourceAttributions: selectSourceAttributions(
+			record,
+			sourceAttributionCatalog,
+		),
 		fieldSources: {
 			name: null,
 			brand: null,
@@ -158,17 +226,30 @@ export const readApiV1ProductByBarcode = async (
 	supabase: SupabaseClient<Database>,
 	barcode: string,
 ) => {
-	const record = await getApprovedCatalogRecordByBarcode(supabase, barcode);
-	return record ? mapApprovedCatalogRecordToApiV1Product(record) : null;
+	const [record, sourceAttributionCatalog] = await Promise.all([
+		getApprovedCatalogRecordByBarcode(supabase, barcode),
+		readSourceAttributionCatalog(supabase),
+	]);
+	return record
+		? mapApprovedCatalogRecordToApiV1Product(record, sourceAttributionCatalog)
+		: null;
 };
 
 export const searchApiV1Products = async (
 	supabase: SupabaseClient<Database>,
 	input: { query: string; limit: number; offset: number },
 ) => {
-	const page = await searchApprovedCatalogRecordsPage(supabase, input.query, input);
+	const [page, sourceAttributionCatalog] = await Promise.all([
+		searchApprovedCatalogRecordsPage(supabase, input.query, input),
+		readSourceAttributionCatalog(supabase),
+	]);
 	return {
-		products: page.records.map(mapApprovedCatalogRecordToApiV1Product),
+		products: page.records.map((record) =>
+			mapApprovedCatalogRecordToApiV1Product(
+				record,
+				sourceAttributionCatalog,
+			)
+		),
 		pagination: createPagination(input.limit, input.offset, page.total),
 	};
 };

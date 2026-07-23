@@ -99,6 +99,17 @@ export type FoodBarcodeProvenance = {
 	format?: string;
 };
 
+export type FoodSourceAttribution = {
+	datasetKey: string;
+	datasetName: string;
+	datasetVersion: string;
+	sourceName: string;
+	sourceUrl: string;
+	licenseName: string;
+	licenseUrl: string;
+	attributionText: string;
+};
+
 /** A food item returned from the FDC search endpoint */
 export interface FdcFood {
     fdcId: number;
@@ -143,6 +154,7 @@ export interface FdcFood {
     sourceDataType?: string;
     sourcePublishedDate?: string;
     sourceModifiedDate?: string;
+	sourceAttribution?: FoodSourceAttribution;
     sharedProductId?: string;
     sharedProductSubmissionId?: string;
     trustStatus?: FoodTrustStatus;

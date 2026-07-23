@@ -129,6 +129,19 @@
           "confidence": { "type": ["string", "null"] }
         }
       },
+      "SourceAttribution": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "displayName", "sourceUrl", "licenseName", "licenseUrl", "attribution"],
+        "properties": {
+          "source": { "type": "string" },
+          "displayName": { "type": "string" },
+          "sourceUrl": { "type": ["string", "null"], "format": "uri" },
+          "licenseName": { "type": ["string", "null"] },
+          "licenseUrl": { "type": ["string", "null"], "format": "uri" },
+          "attribution": { "type": ["string", "null"] }
+        }
+      },
       "Category": {
         "type": "object",
         "additionalProperties": false,
@@ -231,7 +244,7 @@
       "Product": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "barcode", "name", "brand", "category", "ingredients", "nutrients", "servings", "images", "warnings", "fieldSources", "revision", "links"],
+        "required": ["id", "barcode", "name", "brand", "category", "ingredients", "nutrients", "servings", "images", "warnings", "sourceAttributions", "fieldSources", "revision", "links"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "barcode": { "type": "string", "pattern": "^[0-9]{14}$" },
@@ -253,6 +266,7 @@
           "servings": { "type": "array", "items": { "$ref": "#/components/schemas/Serving" } },
           "images": { "type": "array", "items": { "$ref": "#/components/schemas/Image" } },
           "warnings": { "type": "array", "items": { "$ref": "#/components/schemas/Warning" } },
+          "sourceAttributions": { "type": "array", "items": { "$ref": "#/components/schemas/SourceAttribution" } },
           "fieldSources": {
             "type": "object",
             "additionalProperties": false,
