@@ -38,11 +38,13 @@ save private custom foods, use their fridge, and build mixes.
 - **USDA FoodData Central:** exact barcode matches may auto-publish. USDA data is
   CC0/public domain. Exact USDA fields may fill missing canonical fields when the
   observation, selected provenance, and revision are saved together.
-- **Open Food Facts:** used for live barcode lookup with attribution. Its ODbL records
-  are not copied into this independently managed shared catalog. Package image metadata
-  may be stored in `food_image_assets` with source, license, attribution, and confidence
-  so the UI can render source-backed images without treating the full record as shared
-  catalog data.
+- **Open Food Facts:** intended for live barcode lookup, licensed caching, comparison,
+  and separately licensed package images. Package image metadata may be stored in
+  `food_image_assets` with source, license, attribution, and confidence. A current audit
+  found that the exact-match submission path can still auto-publish an Open Food Facts
+  record despite `canonical_storage_allowed = false`. That mismatch must be fixed or an
+  ODbL-compatible downstream database model must be deliberately adopted before public
+  API release.
 - **Health Canada CNF and UK CoFID:** their published Open Government licences permit
   canonical and API reuse with attribution. These datasets support confidently matched
   generic foods, not exact packaged-product substitution. Stored policy evidence records
@@ -54,6 +56,9 @@ Whether a provider may populate the future public blendCalc dataset is stored in
 `product_data_sources` through `canonical_storage_allowed`, license, review date, and
 policy notes. Application code must not infer redistribution permission from a provider
 name.
+
+See [`data-source-licensing.md`](data-source-licensing.md) for exact source requirements,
+current handling, and unresolved compliance blockers.
 
 ## Provenance and merging
 

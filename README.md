@@ -181,6 +181,10 @@ See [`docs/api-structures/source-data-inventory.md`](docs/api-structures/source-
 for active source responsibilities, useful stored fields, source-specific server paths,
 and legal/canonical storage boundaries.
 
+See [`docs/data-source-licensing.md`](docs/data-source-licensing.md) for each external
+data, image, standards, and OCR source's licence requirements, current blendCalc
+handling, attribution obligations, and unresolved public-API release blockers.
+
 See [`docs/versioning.md`](docs/versioning.md) for the independent app, API, database,
 catalog-revision, and client-storage versioning model.
 

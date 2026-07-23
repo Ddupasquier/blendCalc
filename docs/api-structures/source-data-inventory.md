@@ -58,6 +58,10 @@ similar.
 
 ## Legal And Canonical Rules
 
+The detailed, tracked compliance ledger is
+[`docs/data-source-licensing.md`](../data-source-licensing.md). Update that ledger and
+the database policy together whenever source terms or blendCalc's use changes.
+
 - `product_data_sources` owns source identity, terms, attribution, enablement, and
   provenance.
 - `generic_food_datasets` owns release-specific license review, import enablement,
@@ -72,6 +76,10 @@ similar.
   in `sourceAttribution`. API v1 product responses deduplicate the source policies used
   by accepted fields into `sourceAttributions`, so required attribution survives the
   canonical read boundary.
+- A current audit found that the exact-match submission path can still publish Open Food
+  Facts records despite its blocked canonical-storage policy. That mismatch is a public
+  API release blocker documented in the licensing ledger; do not treat the intended
+  cache-only policy as fully enforced until the code path is corrected.
 
 ## Adding A Source
 

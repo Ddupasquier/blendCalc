@@ -292,6 +292,10 @@ storage stays disabled until the provider's downstream storage and redistributio
 have been reviewed; server enrichment reads this policy instead of hardcoding a provider
 hierarchy.
 
+See [`data-source-licensing.md`](data-source-licensing.md) for the tracked official
+terms, attribution requirements, current implementation, and unresolved release
+blockers behind these policy columns.
+
 Notes:
 
 - Source names shown by barcode lookup come from this table. Runtime lookup code does

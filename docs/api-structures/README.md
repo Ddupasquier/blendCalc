@@ -32,6 +32,9 @@ See [`source-data-inventory.md`](./source-data-inventory.md) for the app-owned s
 map, useful fields, legal-storage boundaries, caching behavior, and the required process
 for adding another provider.
 
+See [`../data-source-licensing.md`](../data-source-licensing.md) for the tracked licence,
+attribution, current-compliance, and public-redistribution requirements for every source.
+
 These files are documentation only. Do not import them from app code.
 
 If runtime code needs types, create focused app-owned types in `src/lib/types` or the

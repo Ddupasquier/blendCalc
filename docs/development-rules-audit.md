@@ -1,6 +1,6 @@
 # Development Rules Audit
 
-Last verified: 2026-07-21
+Last verified: 2026-07-22
 
 Branch: `ui-rebuild/ingredients`
 
@@ -41,6 +41,7 @@ clickable navigation block instead.
 - [Confirmed Label OCR](#rule-confirmed-label-ocr)
 - [GS1 Product QR Safety](#rule-gs1-digital-link)
 - [Source Lifecycle Reviews](#rule-source-lifecycle-reviews)
+- [Data Source Licensing Ledger](#rule-source-licensing-ledger)
 - [Future Public Data API And Retention](#rule-store-useful-api-data)
 - [Versioned Catalog Read API](#rule-catalog-read-api)
 - [Independent App And API Versioning](#rule-app-versioning)
@@ -700,6 +701,20 @@ traffic. Benchmark active barcode sources with the same representative sample—
 200 products when practical—before changing priority, and distinguish
 `not benchmarked because retired/unavailable` from poor coverage. Recheck provider
 status, terms, and API version before every major integration expansion.
+
+**30l.1.** <a id="rule-source-licensing-ledger"></a>Maintain the tracked
+`docs/data-source-licensing.md` ledger for every external data API, imported dataset,
+image source, standards service, and data-processing tool. Before integrating a source,
+changing its cache or retention behavior, importing a release, promoting any field to
+the canonical catalog, rendering its attribution, or exposing it through an API, record
+its official terms, exact licence/version when available, required attribution,
+storage/modification/public-redistribution limits, share-alike obligations, excluded
+rights, operational requirements, review date, current blendCalc handling, and known
+gaps. The ledger, `product_data_sources`, release-specific dataset rows, per-asset
+licence metadata, app attribution, and API output must agree. A missing or contradictory
+approval defaults to blocked canonical/public use; do not turn uncertainty into
+permission. Update the ledger in the same change whenever the source terms or blendCalc
+usage changes, and distinguish repository policy review from professional legal advice.
 
 **31.** <a id="rule-store-useful-api-data"></a>Design blendCalc's ingestion and storage
 as the foundation of a future incorporated, externally usable data API—not only as
