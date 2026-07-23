@@ -5,6 +5,7 @@
     import ListControls from "$lib/components/common/lists/ListControls/ListControls.svelte";
     import Pagination from "$lib/components/common/lists/Pagination/Pagination.svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
+	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import SavedDrinkExportAction from "$lib/components/saved/SavedDrinkExportAction/SavedDrinkExportAction.svelte";
@@ -222,12 +223,12 @@
                                 {#each drink.foods as food, index (`${food.fdcId}-${index}`)}
                                     <span
                                         class="saved-card__ingredient-pill"
-                                        class:saved-card__ingredient-pill--custom={food.customFood}
+                                        class:saved-card__ingredient-pill--custom={isPrivateCustomFood(food)}
                                     >
                                         <span class="saved-card__ingredient-name" title={food.description}>
                                             {food.description}
                                         </span>
-                                        {#if food.customFood}
+                                        {#if isPrivateCustomFood(food)}
                                             <CustomBadge />
                                         {/if}
                                     </span>

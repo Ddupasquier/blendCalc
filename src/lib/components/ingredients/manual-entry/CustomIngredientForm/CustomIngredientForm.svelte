@@ -178,6 +178,7 @@
 	let barcodeProvenance = $state<FoodBarcodeProvenance | undefined>();
 	let barcodeMessage = $state("");
 	let shareWithCatalog = $state(false);
+	let keptUnmatchedPrivate = $state(false);
 	let catalogMessage = $state("");
 	let outcomeAction = $state<ManualEntryOutcomeAction | null>(null);
 	let frontPhoto = $state<File | null>(null);
@@ -361,6 +362,7 @@
 	};
 
 	const setManualBarcode = (value: string) => {
+		keptUnmatchedPrivate = false;
 		barcode = value;
 		barcodeProvenance = value.trim()
 			? { captureMethod: "manual-entry" }
@@ -387,6 +389,7 @@
 	};
 
 	const applyBarcodeProductDraft = (draft: BarcodeProductDraft) => {
+		keptUnmatchedPrivate = false;
 		clearBarcodeShareValidation();
 		const draftState = getBarcodeDraftState(draft);
 		({
@@ -456,6 +459,7 @@
 
 	const keepManualBarcodeEntry = () => {
 		if (!barcodeReferenceDraft) return;
+		keptUnmatchedPrivate = true;
 		clearBarcodeShareValidation();
 		barcodeReferenceAcceptedBarcode = "";
 		barcodeSource = "manual";
@@ -696,6 +700,12 @@
 				barcodeReferenceSourceDraft?.barcode === normalizedBarcode,
 		);
 	});
+	const privateCustomFood = $derived(
+		keptUnmatchedPrivate ||
+			(!shareWithCatalog &&
+				barcodeSource === "manual" &&
+				!hasAcceptedSourceBarcode),
+	);
 	const showOptionalProductImageUpload = $derived(
 		hasValidBarcode &&
 			hasAcceptedSourceBarcode &&
@@ -787,6 +797,7 @@
 		if (barcodeShareValidation?.status !== "name-mismatch") return;
 		const verifiedName = barcodeShareValidation.draft.name;
 		setManualBarcode("");
+		keptUnmatchedPrivate = true;
 		frontPhoto = null;
 		nutritionPhoto = null;
 		barcodePhoto = null;
@@ -835,6 +846,7 @@
 			barcodeShareValidation,
 			validatingBarcodeShare,
 			shareWithCatalog,
+			keptUnmatchedPrivate,
 			frontPhoto,
 			imagePlacement,
 			nutritionPhoto,
@@ -1207,6 +1219,7 @@
 			manualEntryNutrientFields,
 			manualNutrientValues,
 			manualTouchedNutrientIds,
+			customFood: privateCustomFood,
 		});
 
 		saving = true;

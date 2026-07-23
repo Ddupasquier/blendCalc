@@ -153,6 +153,26 @@ const sanitizeReviewFlags = (reviewFlags: string[] = []) =>
 		),
 	).slice(0, 10);
 
+export const buildProductSubmissionReviewFlags = ({
+	requestedFlags = [],
+	existingComparison,
+	sourceComparison,
+}: {
+	requestedFlags?: string[];
+	existingComparison?: CatalogSubmissionComparison | null;
+	sourceComparison?: CatalogSubmissionComparison | null;
+}) =>
+	sanitizeReviewFlags([
+		...requestedFlags,
+		...(existingComparison
+			? [
+					"Barcode exists in the active shared catalog, but the submitted label data differs. Review as a catalog update request.",
+					...existingComparison.issues,
+				]
+			: []),
+		...(sourceComparison?.issues ?? []),
+	]);
+
 export const validateSharedProductFood = (
 	food: FdcFood,
 	nutrientRelationshipRules: NutrientRelationshipRule[] = [],
@@ -160,9 +180,25 @@ export const validateSharedProductFood = (
 	const issues: string[] = [];
 	const barcode = normalizeBarcode(food.barcode ?? food.gtinUpc ?? "");
 	if (!barcode) issues.push("A valid GTIN barcode is required.");
-	if (!food.description?.trim()) issues.push("A product name is required.");
+	const productName = food.description?.trim() ?? "";
+	const brandOwner = food.brandOwner?.trim() ?? "";
+	if (!productName) issues.push("A product name is required.");
+	if (productName.length > 120) {
+		issues.push("Product name must be 120 characters or fewer.");
+	}
+	if (brandOwner.length > 120) {
+		issues.push("Brand must be 120 characters or fewer.");
+	}
+	if (food.customFood === true) {
+		issues.push(
+			"Private custom foods cannot be submitted to the shared catalog.",
+		);
+	}
 	if (!Array.isArray(food.foodNutrients) || food.foodNutrients.length === 0) {
 		issues.push("At least one nutrition value is required.");
+	}
+	if ((food.foodNutrients?.length ?? 0) > 300) {
+		issues.push("A product cannot contain more than 300 nutrition values.");
 	}
 	if (
 		food.customServingWeightGrams !== undefined &&
@@ -172,7 +208,20 @@ export const validateSharedProductFood = (
 		issues.push("Serving weight must be greater than zero.");
 	}
 
+	const nutrientIds = new Set<number>();
 	for (const nutrient of food.foodNutrients ?? []) {
+		if (
+			!Number.isSafeInteger(nutrient.nutrientId) ||
+			nutrient.nutrientId <= 0
+		) {
+			issues.push("Every nutrition value needs a valid nutrient identity.");
+			continue;
+		}
+		if (nutrientIds.has(nutrient.nutrientId)) {
+			issues.push(`${nutrient.nutrientName || "A nutrient"} is duplicated.`);
+			continue;
+		}
+		nutrientIds.add(nutrient.nutrientId);
 		if (!Number.isFinite(nutrient.value) || nutrient.value < 0) {
 			issues.push(`${nutrient.nutrientName || "A nutrient"} has an invalid value.`);
 		}
@@ -203,6 +252,28 @@ export const searchApprovedSharedProducts = async (
 ) => {
 	const records = await searchApprovedCatalogRecords(supabase, query, filters);
 	return records.map((record) => record.food);
+};
+
+const assertKnownSubmissionNutrients = async (
+	supabase: SupabaseClient<Database>,
+	food: FdcFood,
+) => {
+	const nutrientIds = [
+		...new Set(food.foodNutrients.map((nutrient) => nutrient.nutrientId)),
+	];
+	const { data, error } = await supabase
+		.from("nutrient_definitions")
+		.select("nutrient_id")
+		.in("nutrient_id", nutrientIds);
+	if (error) throw error;
+
+	const knownIds = new Set((data ?? []).map((row) => row.nutrient_id));
+	const unknownIds = nutrientIds.filter((nutrientId) => !knownIds.has(nutrientId));
+	if (unknownIds.length > 0) {
+		throw new Error(
+			`Unknown nutrient identifiers cannot be submitted: ${unknownIds.join(", ")}.`,
+		);
+	}
 };
 
 const publishSubmission = async (input: {
@@ -385,6 +456,7 @@ export const submitProductForCatalog = async (
 	if (!validation.valid || !validation.barcode) {
 		throw new Error(validation.issues.join(" "));
 	}
+	await assertKnownSubmissionNutrients(admin, food);
 	const selectedCategory = await resolveFoodCategoryOption(
 		admin,
 		food.categories ?? [],
@@ -470,27 +542,6 @@ export const submitProductForCatalog = async (
 		externalLookupFailed = true;
 	}
 
-	const reviewFlags = sanitizeReviewFlags([
-		...(context.reviewFlags ?? []),
-		...(existingCatalogComparison
-			? [
-					"Barcode exists in the active shared catalog, but the submitted label data differs. Review as a catalog update request.",
-					...existingCatalogComparison.issues,
-				]
-			: []),
-	]);
-	const needsSourceComparisonReview = reviewFlags.length > 0;
-	const report: ValidationReport = {
-		valid: true,
-		issues: reviewFlags,
-		usdaMatch: Boolean(usdaDraft),
-		openFoodFactsMatch: Boolean(openFoodFactsDraft),
-		externalLookupFailed,
-		existingCatalogMatch: Boolean(existingCatalogComparison),
-		existingCatalogAction: existingCatalogComparison ? "update_review" : undefined,
-		existingCatalogComparison: existingCatalogComparison ?? undefined,
-		imageCrop: context.frontImageCrop ?? null,
-	};
 	const matchedDraft = usdaDraft ?? openFoodFactsDraft;
 	const canonicalCategory = existingCatalogComparison
 		? selectedCategory
@@ -513,6 +564,23 @@ export const submitProductForCatalog = async (
 			evidenceAccepted: false,
 		};
 	}
+	const reviewFlags = buildProductSubmissionReviewFlags({
+		requestedFlags: context.reviewFlags,
+		existingComparison: existingCatalogComparison,
+		sourceComparison,
+	});
+	const needsSourceComparisonReview = reviewFlags.length > 0;
+	const report: ValidationReport = {
+		valid: true,
+		issues: reviewFlags,
+		usdaMatch: Boolean(usdaDraft),
+		openFoodFactsMatch: Boolean(openFoodFactsDraft),
+		externalLookupFailed,
+		existingCatalogMatch: Boolean(existingCatalogComparison),
+		existingCatalogAction: existingCatalogComparison ? "update_review" : undefined,
+		existingCatalogComparison: existingCatalogComparison ?? undefined,
+		imageCrop: context.frontImageCrop ?? null,
+	};
 	const catalogUpdateSummary = existingCatalogComparison && existingCatalogFood && catalogUpdateTarget
 		? createCatalogUpdateSummary({
 				comparison: existingCatalogComparison,

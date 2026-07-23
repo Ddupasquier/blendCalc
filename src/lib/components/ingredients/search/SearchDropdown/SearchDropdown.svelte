@@ -13,6 +13,7 @@
     import Chevron from "$lib/assets/icons/Chevron/Chevron.svelte";
     import Plus from "$lib/assets/icons/Plus/Plus.svelte";
     import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
+    import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
     import type { SearchDropdownProps } from "./types";
 
     let {
@@ -66,7 +67,7 @@
                     id={`ingredient-search-result-${food.fdcId}`}
                     class="result-item result-card"
                     class:result-card--active={activeResultIndex === index}
-                    class:result-card--custom={food.customFood}
+                    class:result-card--custom={isPrivateCustomFood(food)}
                     class:result-card--saved={isSaved}
                     role="row"
                     tabindex="-1"

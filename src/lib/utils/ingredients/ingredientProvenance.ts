@@ -1,6 +1,7 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import type { Database } from "$lib/types/database.types";
 import type { FdcFood, FoodTrustStatus } from "$lib/utils/food/types";
+import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type IngredientProvenanceDimension = "source" | "trust";
@@ -86,7 +87,7 @@ export const getFoodSourceKey = (food: FdcFood): IngredientSourceKey => {
 	if (food.barcodeSource === "usda") return "usda";
 	if (food.barcodeSource === "open-food-facts") return "open-food-facts";
 	if (food.barcodeSource === "community") return "shared-catalog";
-	if (food.customFood) return "custom";
+	if (isPrivateCustomFood(food)) return "custom";
 	if (food.sharedProductId) return "shared-catalog";
 	return "unknown";
 };
@@ -103,7 +104,7 @@ export const getFoodTrustStatus = (food: FdcFood): IngredientTrustStatus => {
 			? "unverified"
 			: food.sharedProductConfidence as IngredientTrustStatus;
 	}
-	if (food.customFood && !food.sharedProductId) return "user-private";
+	if (isPrivateCustomFood(food)) return "user-private";
 	return "unverified";
 };
 

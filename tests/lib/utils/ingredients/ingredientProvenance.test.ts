@@ -49,7 +49,7 @@ const options: IngredientProvenanceOption[] = [
 ];
 
 describe("ingredient provenance", () => {
-	it("keeps provider origin separate from private review status", () => {
+	it("does not treat provider-backed records as private custom foods", () => {
 		const privateUsdaFood = food({
 			customFood: true,
 			sourceKey: "usda",
@@ -57,7 +57,7 @@ describe("ingredient provenance", () => {
 		});
 
 		expect(getFoodSourceKey(privateUsdaFood)).toBe("usda");
-		expect(getFoodTrustStatus(privateUsdaFood)).toBe("user-private");
+		expect(getFoodTrustStatus(privateUsdaFood)).toBe("unverified");
 	});
 
 	it("keeps provider identity neutral until evidence is recorded", () => {

@@ -2,6 +2,7 @@ import { compactFood } from "$lib/utils/food/records/foodRecords";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type { FdcFood } from "$lib/utils/food/types";
+import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
 import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
 import { readFoodServingsByParent } from "./servings";
 import {
@@ -24,7 +25,7 @@ export const readCloudCustomFoods = async (context?: CloudDataContext) => {
 
 	const { data, error } = await supabase
 		.from("custom_foods")
-		.select("id, food")
+		.select("id, food, source_key, trust_status")
 		.eq("user_id", userId)
 		.order("created_at", { ascending: false });
 
@@ -42,8 +43,19 @@ export const readCloudCustomFoods = async (context?: CloudDataContext) => {
 		),
 	]);
 	return data.map((row) => {
-		const food = hydrateFoodWithNormalizedNutrients(
+		const catalogFood = hydrateFoodWithCatalogState(
 			row.food as unknown as FdcFood,
+			{
+				shared_product_id:
+					(row.food as unknown as FdcFood).sharedProductId ?? null,
+				shared_product_submission_id:
+					(row.food as unknown as FdcFood).sharedProductSubmissionId ?? null,
+				source_key: row.source_key,
+				trust_status: row.trust_status,
+			},
+		);
+		const food = hydrateFoodWithNormalizedNutrients(
+			catalogFood,
 			normalizedRows.get(row.id) ?? [],
 		);
 		return hydrateFoodWithNormalizedServings(

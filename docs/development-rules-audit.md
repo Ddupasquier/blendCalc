@@ -47,6 +47,7 @@ clickable navigation block instead.
 - [Versioned Catalog Read API](#rule-catalog-read-api)
 - [Independent App And API Versioning](#rule-app-versioning)
 - [Ingredient Source And Trust Identity](#rule-ingredient-provenance)
+- [Private Custom Food Classification](#rule-private-custom-food-classification)
 - [External API Request Efficiency](#rule-external-api-request-efficiency)
 - [External API Rate Limits](#rule-api-rate-limit-handling)
 - [Source-Backed Food Images](#rule-source-backed-food-images)
@@ -692,6 +693,20 @@ merge nonconflicting ingredient, allergen, trace, and label metadata from multip
 sources, but it must retain canonical identity and source provenance and must never
 overwrite a nonempty canonical ingredient statement automatically.
 
+**30i.2.** <a id="rule-private-custom-food-classification"></a>Use `Custom` only for a
+user-owned food that does not match an accepted blendCalc catalog record or external
+source and that the user deliberately keeps as an unmatched, fully unshared personal
+record. A source-backed autofill, active shared-catalog match, pending catalog
+submission, approved catalog item, or otherwise shareable exact-barcode record is not
+Custom merely because it entered the account through manual entry or is stored in the
+user's personal-food table. Persist this classification in authoritative food data,
+recompute stale projections from normalized catalog/source links, and use one shared
+classification utility for cards, filters, badges, search, Mix, and saved views. Removing
+a mismatched barcode for account-only saving converts the remaining draft to Custom;
+accepting verified information or entering the review pipeline clears Custom. Do not use
+table names, creation routes, provider names, or privacy alone as a substitute for this
+classification.
+
 **30j.** <a id="rule-confirmed-label-ocr"></a>Nutrition-label text recognition is an
 optional data-entry aid, not an authority. Run recognition only after the user
 deliberately selects a label photo and starts the action. Parse against database-backed
@@ -1244,7 +1259,14 @@ wildly different from an existing barcode match or trusted source should be bloc
 before they reach normal moderation. This must be server-side and schema-aware. Do not
 count silent machine blocks the same as human moderator rejections unless that is an
 explicit product decision, because normal rejections affect the user’s submission-block
-threshold.
+threshold. Private Custom records cannot be submitted directly. A source-backed
+submission with any meaningful server-calculated identity, serving, ingredient,
+allergen, category, or nutrient difference must require evidence and moderation rather
+than relying on client review flags or automatic source publication. Validate GTIN
+check digits, bounded names and brands, known unique nutrient identities, nonnegative
+amounts, database-backed nutrient relationships, canonical categories, duplicate
+submissions, evidence file signatures and sizes, and current submission blocks on the
+server even when equivalent browser feedback exists.
 
 **54a.** <a id="rule-private-barcode-detachment"></a>A user-authored product identity
 that conflicts with a verified barcode must not be saved with that barcode still

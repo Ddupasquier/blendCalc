@@ -53,6 +53,7 @@ export type CustomFoodInput = {
 	nutrients: FdcNutrient[];
 	reportedNutrientIds?: number[];
 	hasSourceServing?: boolean;
+	customFood?: boolean;
 };
 
 export type CustomFoodSaveResult =
@@ -163,6 +164,16 @@ const normalizeServingSource = (
 	return source;
 };
 
+const getDefaultSourceKey = (
+	barcodeSource: FdcFood["barcodeSource"],
+) => {
+	if (barcodeSource === "community") return "shared-catalog";
+	if (barcodeSource === "usda" || barcodeSource === "open-food-facts") {
+		return barcodeSource;
+	}
+	return undefined;
+};
+
 export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 	const servingWeightGrams = Number(input.servingWeightGrams);
 	if (!Number.isFinite(servingWeightGrams) || servingWeightGrams <= 0) {
@@ -200,6 +211,7 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 	) ?? defaultServingSource;
 	const servingConfidence = input.fieldProvenance?.serving?.confidence ??
 		(isUserServing ? "user-reported" : "unknown");
+	const customFood = input.customFood ?? true;
 
 	return {
 		fdcId: createCustomFoodId(),
@@ -207,7 +219,7 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		nameProvenance,
 		brandOwner: input.brandOwner?.trim() || undefined,
 		foodCategory: canonicalCategory,
-		dataType: "Custom",
+		dataType: input.sourceDataType?.trim() || (customFood ? "Custom" : "Branded"),
 		servingSize: servingWeightGrams,
 		servingSizeUnit: "g",
 		hasSourceServing,
@@ -235,11 +247,11 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		symbolKey: input.symbolKey,
 		image: input.image,
 		fieldProvenance: input.fieldProvenance,
-		customFood: true,
+		customFood,
 		barcode: input.barcode,
 		barcodeSource: input.barcodeSource,
 		barcodeProvenance: input.barcodeProvenance,
-		sourceKey: input.sourceKey,
+		sourceKey: input.sourceKey ?? getDefaultSourceKey(input.barcodeSource),
 		sourceLabel: input.sourceLabel,
 		sourceDataType: input.sourceDataType,
 		sourcePublishedDate: input.sourcePublishedDate,

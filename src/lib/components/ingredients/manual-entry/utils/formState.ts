@@ -50,6 +50,7 @@ export type ManualEntryFormResetState = {
 	barcodeShareValidation: BarcodeShareValidationResult | null;
 	validatingBarcodeShare: boolean;
 	shareWithCatalog: boolean;
+	keptUnmatchedPrivate: boolean;
 	frontPhoto: File | null;
 	imagePlacement: ImagePlacementValue;
 	nutritionPhoto: File | null;
@@ -95,6 +96,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	barcodeShareValidation: null,
 	validatingBarcodeShare: false,
 	shareWithCatalog: false,
+	keptUnmatchedPrivate: false,
 	frontPhoto: null,
 	imagePlacement: createFullImagePlacement(),
 	nutritionPhoto: null,

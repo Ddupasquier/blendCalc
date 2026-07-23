@@ -46,6 +46,7 @@ export type ManualEntryCustomFoodPayload = {
 	manualEntryNutrientFields: ManualEntryNutrientDefinition[];
 	manualNutrientValues: NutrientValueState;
 	manualTouchedNutrientIds: Record<number, true>;
+	customFood: boolean;
 };
 
 export const buildManualEntrySaveNutrients = ({
@@ -129,5 +130,6 @@ export const createManualEntryCustomFood = (
 			]),
 		],
 		hasSourceServing: payload.hasSourceServing,
+		customFood: payload.customFood,
 	});
 };

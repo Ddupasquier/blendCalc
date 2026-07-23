@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { validateSharedProductFood } from "$lib/server/products/catalog.server";
+import {
+	buildProductSubmissionReviewFlags,
+	validateSharedProductFood,
+} from "$lib/server/products/catalog.server";
 import type { NutrientRelationshipRule } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 
@@ -94,5 +97,35 @@ describe("shared product validation", () => {
 			"A product name is required.",
 			"Protein has an invalid value.",
 		]));
+	});
+
+	it("rejects private custom foods and duplicate nutrient identities", () => {
+		const duplicateNutrient = createFood().foodNutrients[0];
+		const result = validateSharedProductFood(createFood({
+			customFood: true,
+			foodNutrients: [duplicateNutrient, duplicateNutrient],
+		}));
+
+		expect(result.valid).toBe(false);
+		expect(result.issues).toEqual(expect.arrayContaining([
+			"Private custom foods cannot be submitted to the shared catalog.",
+			"Total Carbohydrate is duplicated.",
+		]));
+	});
+
+	it("forces source-reported differences into moderator review", () => {
+		const sourceComparison = {
+			matchesExisting: false,
+			shouldAutoDecline: false,
+			hasBlockingIdentityMismatch: false,
+			changedFields: ["nutrient:1008"],
+			changes: [],
+			issues: ["Calories differs from the source record."],
+			severeDifferences: [],
+		};
+
+		expect(buildProductSubmissionReviewFlags({ sourceComparison })).toContain(
+			"Calories differs from the source record.",
+		);
 	});
 });

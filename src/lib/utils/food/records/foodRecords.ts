@@ -62,6 +62,7 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		sourcePublishedDate: food.sourcePublishedDate,
 		sourceModifiedDate: food.sourceModifiedDate,
 		sharedProductId: food.sharedProductId,
+		sharedProductSubmissionId: food.sharedProductSubmissionId,
 		sharedProductConfidence: food.sharedProductConfidence,
 		trustStatus: food.trustStatus,
 		listAddedAt: food.listAddedAt,

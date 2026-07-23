@@ -8,6 +8,7 @@
 	import IngredientMoveIcon from "$lib/components/ingredients/list/IngredientMoveIcon/IngredientMoveIcon.svelte";
 	import IngredientSelectionIndicator from "$lib/components/ingredients/list/IngredientSelectionIndicator/IngredientSelectionIndicator.svelte";
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
+	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import { longPress } from "$lib/utils/interaction/longPress";
 	import type { SavedIngredientCardProps } from "./types";
 
@@ -44,7 +45,7 @@
 	class="saved-ingredient-card"
 	class:saved-ingredient-card--active={active}
 	class:saved-ingredient-card--checked={checked}
-	class:saved-ingredient-card--custom={food.customFood}
+	class:saved-ingredient-card--custom={isPrivateCustomFood(food)}
 	class:saved-ingredient-card--selection-mode={selectionMode}
 >
 	{#if warning}

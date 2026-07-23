@@ -24,6 +24,7 @@ describe("ingredient catalog state hydration", () => {
 		expect(hydrated.sharedProductSubmissionId).toBeUndefined();
 		expect(hydrated.sourceKey).toBe("usda");
 		expect(hydrated.trustStatus).toBe("source-verified");
+		expect(hydrated.customFood).toBe(false);
 	});
 
 	it("clears stale catalog ids and exposes pending review", () => {
@@ -37,5 +38,6 @@ describe("ingredient catalog state hydration", () => {
 		expect(hydrated.sharedProductId).toBeUndefined();
 		expect(hydrated.sharedProductSubmissionId).toBe("pending-submission-id");
 		expect(hydrated.trustStatus).toBe("pending-review");
+		expect(hydrated.customFood).toBe(false);
 	});
 });

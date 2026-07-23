@@ -867,6 +867,7 @@ describe("CustomIngredientForm", () => {
 	});
 
 	it("offers optional autofill from a matched manual barcode", async () => {
+		const onCreate = vi.fn();
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
 			status: "found",
 				draft: {
@@ -895,7 +896,7 @@ describe("CustomIngredientForm", () => {
 			},
 		});
 
-		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+		render(CustomIngredientForm, { props: { onCreate } });
 
 		await openManualForm();
 		await fireEvent.input(screen.getByLabelText(/food name/i), {
@@ -917,6 +918,15 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByLabelText(/food name/i)).toHaveValue("Source tomato product");
 		expect(screen.getByLabelText(/brand/i)).toHaveValue("Source brand");
 		expect(screen.getByText(/autofilled from USDA FDC/i)).toBeInTheDocument();
+		await goToStep(/^share$/i);
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+		expect(onCreate.mock.calls[0][0]).toMatchObject({
+			customFood: false,
+			sourceKey: "usda",
+		});
 	});
 
 	it("keeps unresolved barcode autofill on Identity until a canonical category is chosen", async () => {
@@ -1092,6 +1102,7 @@ describe("CustomIngredientForm", () => {
 	});
 
 	it("blocks sharing when a verified barcode belongs to a different product name", async () => {
+		const onCreate = vi.fn();
 		const draft = {
 			barcode: "00021130462506",
 			name: "Strawberry Jelly, Strawberry",
@@ -1128,7 +1139,7 @@ describe("CustomIngredientForm", () => {
 				"This barcode belongs to “Strawberry Jelly, Strawberry”. Use the verified information to share it, or remove the barcode and save your current entry only to your account.",
 		});
 
-		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+		render(CustomIngredientForm, { props: { onCreate } });
 
 		await openManualForm();
 		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
@@ -1163,6 +1174,15 @@ describe("CustomIngredientForm", () => {
 		await goToStep(/identity/i);
 		expect(screen.getByLabelText(/food name/i)).toHaveValue("Motor oil");
 		expect(screen.getByLabelText(/upc \/ barcode/i)).toHaveValue("");
+		await goToStep(/^share$/i);
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+		expect(onCreate.mock.calls[0][0]).toMatchObject({
+			description: "Motor oil",
+			customFood: true,
+		});
 	});
 
 	it("replaces a mismatched name with verified barcode information", async () => {

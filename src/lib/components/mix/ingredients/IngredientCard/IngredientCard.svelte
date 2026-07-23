@@ -14,6 +14,7 @@
 		type ServingMeasureUnit,
 	} from "$lib/utils/serving/servingMeasureCatalog";
 	import { canConvertServingUnit } from "$lib/utils/serving/servingAmount";
+	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 
 	let {
 		food,
@@ -40,12 +41,15 @@
 	};
 </script>
 
-<article class="ingredient-card" class:ingredient-card--custom={food.customFood}>
+<article
+	class="ingredient-card"
+	class:ingredient-card--custom={isPrivateCustomFood(food)}
+>
 	<header class="ingredient-card__header">
 		<div>
 			<div class="ingredient-card__badges">
 				<span class="ingredient-card__source">{sourceLabel}</span>
-				{#if food.customFood}
+				{#if isPrivateCustomFood(food)}
 					<CustomBadge />
 				{/if}
 			</div>

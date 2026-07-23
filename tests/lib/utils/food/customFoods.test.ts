@@ -188,6 +188,30 @@ describe("custom foods", () => {
 		expect(getFdcNutrientValue(food, NUTRIENT_IDS.SODIUM)).toBeCloseTo(397.06);
 	});
 
+	it("preserves source-backed personal records without marking them custom", () => {
+		const food = createCustomFood({
+			name: "Source product",
+			servingWeightGrams: 30,
+			sourceKey: "usda",
+			sourceDataType: "Branded",
+			barcode: "00012345678905",
+			barcodeSource: "usda",
+			customFood: false,
+			nutrients: makeTestNutrients({
+				calories: 100,
+				fat: 1,
+				carbs: 20,
+				fiber: 2,
+				sugar: 5,
+				protein: 3,
+			}),
+		});
+
+		expect(food.customFood).toBe(false);
+		expect(food.dataType).toBe("Branded");
+		expect(food.sourceKey).toBe("usda");
+	});
+
 	it("stores custom density when a volume equivalent is provided", () => {
 		const food = createCustomFood({
 			name: "Custom yogurt",

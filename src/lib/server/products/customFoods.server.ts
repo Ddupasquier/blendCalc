@@ -2,6 +2,7 @@ import type { Database } from "$lib/types/database.types";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type { FdcFood } from "$lib/utils/food/types";
+import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
 import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredientProvenance";
 import { tokenizeIngredientSearchText } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
@@ -22,7 +23,7 @@ export const searchUserCustomFoods = async (
 
 	let request = supabase
 		.from("custom_foods")
-		.select("id, food")
+		.select("id, food, source_key, trust_status")
 		.eq("user_id", userId)
 		.order("name_key", { ascending: true })
 		.limit(CUSTOM_SEARCH_CANDIDATE_LIMIT);
@@ -52,8 +53,19 @@ export const searchUserCustomFoods = async (
 		),
 	]);
 	return rows.map((row) => {
-		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
+		const catalogFood = hydrateFoodWithCatalogState(
 			row.food as unknown as FdcFood,
+			{
+				shared_product_id:
+					(row.food as unknown as FdcFood).sharedProductId ?? null,
+				shared_product_submission_id:
+					(row.food as unknown as FdcFood).sharedProductSubmissionId ?? null,
+				source_key: row.source_key,
+				trust_status: row.trust_status,
+			},
+		);
+		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
+			catalogFood,
 			normalizedRows.get(row.id) ?? [],
 		);
 		return hydrateFoodWithNormalizedServings(

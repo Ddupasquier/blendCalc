@@ -23,6 +23,7 @@
 		type SmoothieListKey,
 	} from "$lib/utils/storage/client/smoothieLists";
 	import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
+	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 
 	let {
 		fridgeItems,
@@ -53,7 +54,7 @@
 				if (filter === "selected") {
 					return selectedFoodIds.includes(food.fdcId);
 				}
-				if (filter === "custom") return food.customFood === true;
+				if (filter === "custom") return isPrivateCustomFood(food);
 				return true;
 			}),
 			query,
@@ -98,7 +99,7 @@
 
 	const getCustomIndices = (items: FdcFood[]) => {
 		return items
-			.map((food, index) => (food.customFood ? index : -1))
+			.map((food, index) => (isPrivateCustomFood(food) ? index : -1))
 			.filter((index) => index !== -1);
 	};
 	const getFoodLabel = (food: FdcFood) => {
