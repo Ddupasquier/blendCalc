@@ -68,6 +68,32 @@ describe("NutritionPanel", () => {
 		).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
 	});
 
+	it("shows source-provided allergen details below ingredients", () => {
+		render(NutritionPanel, {
+			props: {
+				food: {
+					...peanutButter,
+					ingredients: "Peanuts, sea salt",
+					allergens: ["peanuts"],
+					traces: ["tree nuts"],
+				},
+				viewingGrams: 100,
+				showListActions: false,
+			},
+		});
+
+		const ingredientsHeading = screen.getByRole("heading", { name: "Ingredients" });
+		const containsHeading = screen.getByRole("heading", { name: "Contains" });
+		const mayContainHeading = screen.getByRole("heading", { name: "May contain" });
+
+		expect(ingredientsHeading.compareDocumentPosition(containsHeading))
+			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+		expect(containsHeading.compareDocumentPosition(mayContainHeading))
+			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+		expect(screen.getByText("Peanuts")).toBeInTheDocument();
+		expect(screen.getByText("Tree nuts")).toBeInTheDocument();
+	});
+
 	it("shows zero instead of a partial-data warning for missing ingredient nutrients", () => {
 		render(NutritionPanel, {
 			props: {

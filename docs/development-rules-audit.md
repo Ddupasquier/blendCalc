@@ -38,6 +38,7 @@ clickable navigation block instead.
 - [Field-Level Product Enrichment](#rule-field-level-product-enrichment)
 - [National Nutrition Datasets](#rule-national-nutrition-datasets)
 - [Missing Nutrient Semantics](#rule-missing-nutrient-semantics)
+- [Product Ingredients And Allergen Disclosure](#rule-product-allergen-disclosure)
 - [Confirmed Label OCR](#rule-confirmed-label-ocr)
 - [GS1 Product QR Safety](#rule-gs1-digital-link)
 - [Source Lifecycle Reviews](#rule-source-lifecycle-reviews)
@@ -672,6 +673,24 @@ uses the database-backed manual-entry requirements even when the user typed a ba
 while a source-imported, pending-review, or shared packaged product uses the applicable
 packaged-label profile. A barcode alone must not make a private manual record appear
 deficient against a full regulatory label.
+
+**30i.1.** <a id="rule-product-allergen-disclosure"></a>Preserve and display
+source-provided product ingredients and allergen disclosures without inference.
+Structured allergens from exact DB/API records and confirmed compatibility facts with
+the `contains` fact type render as `Contains`; source trace statements and confirmed
+`may_contain` facts render separately as `May contain`. Never weaken an explicit
+`Contains` statement into `May contain`, and if the same normalized allergen appears in
+both groups, the explicit `Contains` statement wins. De-duplicate labels
+case-insensitively while preserving readable source wording. Do not infer package
+allergens or trace statements from the product name, category, ingredient text, or a
+user preference warning. Keep preference conflicts separate from source package
+disclosures. Hide empty disclosure groups rather than inventing `none`, `zero`, or
+`allergen-free`. Nutrition details must use the reusable ingredients/allergen
+presentation directly after the nutrition label, with `Contains` and `May contain`
+following `Ingredients` and without a one-off card shell. Exact-barcode enrichment may
+merge nonconflicting ingredient, allergen, trace, and label metadata from multiple
+sources, but it must retain canonical identity and source provenance and must never
+overwrite a nonempty canonical ingredient statement automatically.
 
 **30j.** <a id="rule-confirmed-label-ocr"></a>Nutrition-label text recognition is an
 optional data-entry aid, not an authority. Run recognition only after the user

@@ -182,6 +182,32 @@ describe("barcode product field enrichment", () => {
 		expect(result.fieldProvenance?.nutrition?.source).toBe("open-food-facts");
 	});
 
+	it("merges source-provided ingredient and allergen metadata independently", () => {
+		const usda = makeDraft("usda", {
+			ingredients: "Peanuts, sugar",
+			ingredientList: ["Peanuts", "sugar"],
+			allergens: ["peanuts"],
+		});
+		const openFoodFacts = makeDraft("open-food-facts", {
+			ingredients: "Peanuts, sugar, milk",
+			ingredientList: ["peanuts", "Sugar", "milk"],
+			allergens: ["Peanuts", "milk"],
+			traces: ["tree nuts"],
+			dietaryTags: ["vegetarian"],
+			labels: ["Rainforest Alliance"],
+		});
+
+		const result = mergeMissingBarcodeProductFields(usda, openFoodFacts);
+
+		expect(result.ingredients).toBe("Peanuts, sugar");
+		expect(result.ingredientList).toEqual(["Peanuts", "sugar", "milk"]);
+		expect(result.allergens).toEqual(["peanuts", "milk"]);
+		expect(result.traces).toEqual(["tree nuts"]);
+		expect(result.dietaryTags).toEqual(["vegetarian"]);
+		expect(result.labels).toEqual(["Rainforest Alliance"]);
+		expect(result.source).toBe("usda");
+	});
+
 	it("lets a cached DB image override an API image and records its source", () => {
 		const cachedImage: FoodImageAsset = {
 			...openFoodFactsImage,

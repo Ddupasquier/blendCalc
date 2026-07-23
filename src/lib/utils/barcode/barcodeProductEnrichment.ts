@@ -151,6 +151,48 @@ const withFieldSource = (
 	[field]: getFieldSource(draft, field),
 });
 
+const mergeMetadataValues = (
+	primary: string[] | undefined,
+	supplement: string[] | undefined,
+) => {
+	if (!primary && !supplement) return undefined;
+
+	const seen = new Set<string>();
+	return [...(primary ?? []), ...(supplement ?? [])].flatMap((value) => {
+		const normalized = value.trim();
+		const key = normalized.toLocaleLowerCase();
+		if (!normalized || seen.has(key)) return [];
+		seen.add(key);
+		return [normalized];
+	});
+};
+
+const hasSupplementaryProductMetadata = (
+	primary: BarcodeProductDraft,
+	supplement: BarcodeProductDraft,
+) => {
+	if (!primary.ingredients?.trim() && supplement.ingredients?.trim()) return true;
+
+	return [
+		"ingredientList",
+		"allergens",
+		"traces",
+		"dietaryTags",
+		"labels",
+	].some((field) => {
+		const key = field as keyof Pick<
+			BarcodeProductDraft,
+			"ingredientList" | "allergens" | "traces" | "dietaryTags" | "labels"
+		>;
+		const primaryValues = new Set(
+			(primary[key] ?? []).map((value) => value.trim().toLocaleLowerCase()),
+		);
+		return (supplement[key] ?? []).some(
+			(value) => !primaryValues.has(value.trim().toLocaleLowerCase()),
+		);
+	});
+};
+
 export const applyCachedImageToBarcodeDraft = (
 	draft: BarcodeProductDraft,
 	image: FoodImageAsset | null | undefined,
@@ -183,11 +225,16 @@ export const mergeMissingBarcodeProductFields = (
 	const useSupplementNutrition = supplementedFields.has("nutrition");
 	const useSupplementImage = supplementedFields.has("image");
 	const useSupplementCategories = supplementedFields.has("categories");
+	const useSupplementMetadata = hasSupplementaryProductMetadata(
+		primary,
+		supplement,
+	);
 	if (
 		!useSupplementServing &&
 		!useSupplementNutrition &&
 		!useSupplementImage &&
-		!useSupplementCategories
+		!useSupplementCategories &&
+		!useSupplementMetadata
 	) {
 		return primary;
 	}
@@ -247,6 +294,19 @@ export const mergeMissingBarcodeProductFields = (
 			: primary.volumeEquivalent,
 		nutrients,
 		reportedNutrientIds,
+		ingredients:
+			primary.ingredients?.trim() || supplement.ingredients?.trim() || undefined,
+		ingredientList: mergeMetadataValues(
+			primary.ingredientList,
+			supplement.ingredientList,
+		),
+		allergens: mergeMetadataValues(primary.allergens, supplement.allergens),
+		traces: mergeMetadataValues(primary.traces, supplement.traces),
+		dietaryTags: mergeMetadataValues(
+			primary.dietaryTags,
+			supplement.dietaryTags,
+		),
+		labels: mergeMetadataValues(primary.labels, supplement.labels),
 		image: useSupplementImage
 			? supplement.image
 			: primary.image,

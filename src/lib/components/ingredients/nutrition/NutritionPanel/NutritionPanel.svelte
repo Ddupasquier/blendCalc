@@ -2,8 +2,8 @@
 	import NutritionFactsLabel from "$lib/components/ingredients/nutrition/NutritionFactsLabel/NutritionFactsLabel.svelte";
 	import NutritionListActions from "$lib/components/ingredients/nutrition/NutritionListActions/NutritionListActions.svelte";
 	import NutritionPreferenceConflict from "$lib/components/ingredients/nutrition/NutritionPreferenceConflict/NutritionPreferenceConflict.svelte";
-	import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel/ProductImagePanel.svelte";
 	import ProductAllergenPanel from "$lib/components/ingredients/nutrition/ProductAllergenPanel/ProductAllergenPanel.svelte";
+	import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel/ProductImagePanel.svelte";
 	import ProductIngredientsPanel from "$lib/components/ingredients/nutrition/ProductIngredientsPanel/ProductIngredientsPanel.svelte";
 	import {
 		DEFAULT_NUTRITION_VIEWING_GRAMS,

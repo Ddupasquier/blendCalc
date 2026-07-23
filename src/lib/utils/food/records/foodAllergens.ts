@@ -1,4 +1,5 @@
-import type { FdcFood, FoodCompatibilitySummary } from "$lib/utils/food/types";
+import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
+import type { FdcFood } from "$lib/utils/food/types";
 
 export type FoodAllergenDisplay = {
 	contains: string[];
