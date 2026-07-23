@@ -31,6 +31,8 @@ See [`docs/data-architecture.md`](docs/data-architecture.md) for the database-fi
 write, browser-state, and external-enrichment boundaries.
 See [`docs/style-system.md`](docs/style-system.md) for global-token ownership,
 component-folder structure, SCSS naming, and stylesheet maintenance rules.
+See [`docs/database-testing.md`](docs/database-testing.md) for the isolated local
+Supabase test environment, reset workflow, and database QA commands.
 
 ---
 
@@ -96,6 +98,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | Command | Description |
 |---|---|
 | `npm run dev` | Start dev server |
+| `npm run dev:test` | Start the app against the isolated local Supabase test database |
 | `npm run build` | Production build |
 | `npm run preview` | Preview production build |
 | `npm test` | Run unit tests (Vitest) |
@@ -117,6 +120,11 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | `npm run db:push:auto` | Push pending Supabase migrations using `SUPABASE_DB_PASSWORD` from `.env.moderation.local` or macOS Keychain |
 | `npm run db:lint` | Run Supabase database linting |
 | `npm run db:types` | Regenerate Supabase TypeScript database types |
+| `npm run db:test:start` | Start local Supabase and seed disposable QA accounts |
+| `npm run db:test:reset` | Rebuild the local database from migrations and QA fixtures |
+| `npm run db:test:verify` | Rebuild locally and run pgTAP database tests |
+| `npm run db:test:status` | Show local Supabase service status |
+| `npm run db:test:stop` | Stop the local Supabase stack |
 | `npm run catalog:qa-seed` | Seed a fake product submission for moderation testing |
 | `npm run catalog:qa-clean` | Remove fake product submission fixtures |
 | `npm run catalog:qa-image-seed` | Seed fake product image submissions for moderation testing |

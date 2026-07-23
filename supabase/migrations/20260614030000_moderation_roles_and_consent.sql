@@ -26,6 +26,7 @@ create policy "Users can read their own elevated role"
 
 revoke all on table public.app_role_assignments from anon, authenticated;
 grant select on table public.app_role_assignments to authenticated;
+grant all on table public.app_role_assignments to service_role;
 
 create table public.profile_image_policy_acceptances (
 	id uuid primary key default gen_random_uuid(),

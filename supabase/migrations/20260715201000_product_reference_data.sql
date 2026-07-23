@@ -23,6 +23,76 @@ create index product_data_sources_enabled_idx
 	on public.product_data_sources (source_type, key)
 	where enabled;
 
+-- Source identities are durable application reference data. API seed scripts may
+-- update observation metadata, but a clean database must not depend on those scripts
+-- to satisfy foreign keys or identify the catalog's supported sources.
+insert into public.product_data_sources (
+	key,
+	display_name,
+	source_type,
+	homepage_url,
+	api_base_url,
+	terms_url,
+	attribution_text,
+	enabled,
+	provenance
+)
+values
+	(
+		'usda',
+		'USDA FoodData Central',
+		'external_api',
+		'https://fdc.nal.usda.gov/',
+		'https://api.nal.usda.gov/fdc/v1',
+		'https://fdc.nal.usda.gov/data-documentation.html',
+		'USDA FoodData Central',
+		true,
+		'{"identityOwner":"migration","sourceRole":"external_product_and_nutrition_data"}'::jsonb
+	),
+	(
+		'open-food-facts',
+		'Open Food Facts',
+		'external_api',
+		'https://world.openfoodfacts.org/',
+		'https://world.openfoodfacts.org/api/v2',
+		'https://world.openfoodfacts.org/terms-of-use',
+		'Open Food Facts contributors',
+		true,
+		'{"identityOwner":"migration","sourceRole":"external_product_data"}'::jsonb
+	),
+	(
+		'shared-catalog',
+		'blendCalc Community',
+		'internal_catalog',
+		null,
+		null,
+		null,
+		'Food data created and approved through the blendCalc community catalog.',
+		true,
+		'{"identityOwner":"migration","sourceRole":"canonical_community_catalog"}'::jsonb
+	),
+	(
+		'ucum-nlm',
+		'Unified Code for Units of Measure (UCUM) at NLM',
+		'standards_api',
+		'https://ucum.nlm.nih.gov/ucum-service.html',
+		'https://ucum.nlm.nih.gov/ucum-service/v1',
+		'https://www.nlm.nih.gov/web_policies.html',
+		'U.S. National Library of Medicine UCUM service',
+		true,
+		'{"identityOwner":"migration","sourceRole":"unit_standard"}'::jsonb
+	)
+on conflict (key) do update
+set
+	display_name = excluded.display_name,
+	source_type = excluded.source_type,
+	homepage_url = excluded.homepage_url,
+	api_base_url = excluded.api_base_url,
+	terms_url = excluded.terms_url,
+	attribution_text = excluded.attribution_text,
+	enabled = excluded.enabled,
+	provenance = public.product_data_sources.provenance || excluded.provenance;
+
 create table public.nutrient_source_mappings (
 	source_key text not null references public.product_data_sources(key) on delete cascade,
 	source_nutrient_key text not null check (btrim(source_nutrient_key) <> ''),

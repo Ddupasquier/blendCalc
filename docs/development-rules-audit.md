@@ -52,6 +52,7 @@ clickable navigation block instead.
 - [Source Product Name Formatting](#rule-source-product-name-formatting)
 - [Weight And Volume Conversions](#rule-serving-weight-volume-conversions)
 - [Backend And Validation](#rule-backend-best-practices)
+- [Test Database Isolation](#rule-test-database-isolation)
 - [Exclusive Ingredient List Membership](#rule-exclusive-list-membership)
 - [Atomic Bulk Ingredient Moves](#rule-bulk-list-moves)
 - [Long-Press Ingredient Selection](#rule-long-press-selection)
@@ -912,6 +913,17 @@ passing an explicit authenticated data context. Durable mutations must use one f
 database function or server action that derives ownership from the session, validates
 current state, performs related writes atomically, and returns a small typed outcome.
 Once that path exists, revoke direct authenticated table writes that could bypass it.
+
+**37a.** <a id="rule-test-database-isolation"></a>Run destructive database tests
+against the resettable local Supabase stack by default. The test workflow must replay
+the complete migration chain, use synthetic fixtures, run database-level pgTAP checks,
+and exercise authenticated client behavior where RLS matters. Every reset and test
+command must pass `--local` explicitly, generated test environments must reject
+non-localhost Supabase URLs, and automated tooling must never run `db reset --linked`.
+Do not copy production users, evidence, images, or private records into test seeds. A
+future remote staging environment must remain a separate project with separate keys and
+synthetic data; it supplements local testing for hosted/device QA and never becomes the
+default destructive test target.
 
 **38.** Ingredient manipulation controls should use toggles, buttons, action sheets, or
 explicit forms instead of raw checkboxes. If a setting behaves like on/off state, use

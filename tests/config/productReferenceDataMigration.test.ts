@@ -32,8 +32,27 @@ describe("product reference data migration", () => {
 		expect(migration).toContain("serving_measure_aliases_unit_idx");
 	});
 
-	it("keeps API-derived rows out of the migration", () => {
-		expect(migration).not.toMatch(/insert into public\.(product_data_sources|nutrient_source_mappings|nutrient_unit_conversions|serving_measure_units|serving_measure_aliases)/i);
+	it("seeds stable source identities without API observations", () => {
+		const sourceIdentityInsert = migration.match(
+			/insert into public\.product_data_sources \([\s\S]+?on conflict \(key\) do update[\s\S]+?;/i,
+		)?.[0];
+
+		expect(sourceIdentityInsert).toBeTruthy();
+		for (const sourceKey of [
+			"usda",
+			"open-food-facts",
+			"shared-catalog",
+			"ucum-nlm",
+		]) {
+			expect(sourceIdentityInsert).toContain(`'${sourceKey}'`);
+		}
+		expect(sourceIdentityInsert).toContain('"identityOwner":"migration"');
+		expect(sourceIdentityInsert).not.toMatch(
+			/\b(observation_count|first_observed_at|last_observed_at)\b/i,
+		);
+		expect(migration).not.toMatch(
+			/insert into public\.(nutrient_source_mappings|nutrient_unit_conversions|serving_measure_units|serving_measure_aliases)/i,
+		);
 	});
 
 	it("allows authenticated reads and service-role writes", () => {

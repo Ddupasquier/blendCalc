@@ -107,6 +107,83 @@ create trigger set_food_nutrients_updated_at
 	before update on public.food_nutrients
 	for each row execute function public.set_updated_at();
 
+-- These canonical definitions are application reference data, not observations from
+-- a particular food. Keeping the required baseline in migrations makes a clean
+-- database deterministic instead of depending on a production-only API seed run.
+insert into public.nutrient_definitions (
+	nutrient_id,
+	nutrient_name,
+	nutrient_number,
+	default_unit_name
+)
+values
+	(1002, 'Nitrogen', '202', 'G'),
+	(1003, 'Protein', '203', 'G'),
+	(1004, 'Total lipid (fat)', '204', 'G'),
+	(1005, 'Carbohydrate, by difference', '205', 'G'),
+	(1008, 'Energy', '208', 'KCAL'),
+	(1009, 'Starch', '209', 'G'),
+	(1010, 'Sucrose', '210', 'G'),
+	(1011, 'Glucose', '211', 'G'),
+	(1012, 'Fructose', '212', 'G'),
+	(1013, 'Lactose', '213', 'G'),
+	(1014, 'Maltose', '214', 'G'),
+	(1018, 'Alcohol, ethyl', '221', 'G'),
+	(1051, 'Water', '255', 'G'),
+	(1062, 'Energy', '268', 'KJ'),
+	(1075, 'Galactose', '287', 'G'),
+	(1079, 'Fiber, total dietary', '291', 'G'),
+	(1087, 'Calcium, Ca', '301', 'MG'),
+	(1089, 'Iron, Fe', '303', 'MG'),
+	(1090, 'Magnesium, Mg', '304', 'MG'),
+	(1091, 'Phosphorus, P', '305', 'MG'),
+	(1092, 'Potassium, K', '306', 'MG'),
+	(1093, 'Sodium, Na', '307', 'MG'),
+	(1095, 'Zinc, Zn', '309', 'MG'),
+	(1098, 'Copper, Cu', '312', 'MG'),
+	(1100, 'Iodine, I', '314', 'mcg'),
+	(1101, 'Manganese, Mn', '315', 'MG'),
+	(1103, 'Selenium, Se', '317', 'UG'),
+	(1105, 'Retinol', '319', 'UG'),
+	(1106, 'Vitamin A, RAE', '320', 'UG'),
+	(1107, 'Carotene, beta', '321', 'UG'),
+	(1108, 'Carotene, alpha', '322', 'UG'),
+	(1109, 'Vitamin E (alpha-tocopherol)', '323', 'MG'),
+	(1110, 'Vitamin D (D2 + D3), International Units', '324', 'IU'),
+	(1112, 'Vitamin D3 (cholecalciferol)', '326', 'UG'),
+	(1114, 'Vitamin D (D2 + D3)', '328', 'UG'),
+	(1121, 'Lutein', '338.1', 'UG'),
+	(1122, 'Lycopene', '337', 'UG'),
+	(1125, 'Tocopherol, beta', '341', 'MG'),
+	(1126, 'Tocopherol, gamma', '342', 'MG'),
+	(1127, 'Tocopherol, delta', '343', 'MG'),
+	(1128, 'Tocotrienol, alpha', '344', 'MG'),
+	(1130, 'Tocotrienol, gamma', '346', 'MG'),
+	(1158, 'Vitamin E', '394', 'MG_ATE'),
+	(1162, 'Vitamin C, total ascorbic acid', '401', 'MG'),
+	(1165, 'Thiamin', '404', 'MG'),
+	(1166, 'Riboflavin', '405', 'MG'),
+	(1167, 'Niacin', '406', 'MG'),
+	(1170, 'Pantothenic acid', '410', 'MG'),
+	(1175, 'Vitamin B-6', '415', 'MG'),
+	(1176, 'Biotin', '416', 'UG'),
+	(1177, 'Folate, total', '417', 'UG'),
+	(1178, 'Vitamin B-12', '418', 'UG'),
+	(1185, 'Vitamin K (phylloquinone)', '430', 'UG'),
+	(1235, 'Sugars, added', '539', 'G'),
+	(1253, 'Cholesterol', '601', 'MG'),
+	(1257, 'Fatty acids, total trans', '605', 'G'),
+	(1258, 'Fatty acids, total saturated', '606', 'G'),
+	(1283, 'Phytosterols', '636', 'MG'),
+	(1292, 'Fatty acids, total monounsaturated', '645', 'G'),
+	(1293, 'Fatty acids, total polyunsaturated', '646', 'G'),
+	(2000, 'Sugars, total including NLEA', '269', 'G')
+on conflict (nutrient_id) do update
+set
+	nutrient_name = excluded.nutrient_name,
+	nutrient_number = excluded.nutrient_number,
+	default_unit_name = excluded.default_unit_name;
+
 create function public.replace_food_nutrients(
 	p_food jsonb,
 	p_owner_user_id uuid,

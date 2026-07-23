@@ -17,11 +17,17 @@ alter table public.product_compatibility_facts
 		)
 	);
 
-drop policy if exists "Authenticated users can read compatibility aliases"
-	on public.compatibility_tag_aliases;
+do $$
+begin
+	if to_regclass('public.compatibility_tag_aliases') is not null then
+		drop policy if exists "Authenticated users can read compatibility aliases"
+			on public.compatibility_tag_aliases;
 
-drop trigger if exists set_compatibility_tag_aliases_updated_at
-	on public.compatibility_tag_aliases;
+		drop trigger if exists set_compatibility_tag_aliases_updated_at
+			on public.compatibility_tag_aliases;
+	end if;
+end;
+$$;
 
 drop table if exists public.compatibility_tag_aliases;
 

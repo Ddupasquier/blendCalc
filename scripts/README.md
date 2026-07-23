@@ -28,5 +28,8 @@ not separate public interfaces.
   rerun.
 - Every database-writing script must fail loudly on invalid configuration and document
   whether it is idempotent, destructive, or paired with cleanup.
+- Local test-database operations must reject non-local Supabase URLs and pass `--local`
+  explicitly for resets and pgTAP execution. Never add a linked-project reset to an
+  automated test workflow.
 - Remove one-time investigation scripts after their result is represented by runtime
   code, a maintained audit, a migration, or a database-backed seed.
