@@ -1180,12 +1180,17 @@ only route: provide visible `Select items` and per-item action-sheet controls fo
 touch, keyboard, switch, and assistive-technology users. Cancel a pending hold when the
 pointer moves far enough to indicate scrolling, suppress the follow-up browser click,
 and avoid triggering selection from move, menu, or delete controls. Once selection mode
-starts, show the shared circular selection controls, let a normal card activation toggle
-selection, hide unrelated item actions, and provide `Select all`, `Move`, and `Cancel`
+starts, let the card's native button toggle selection and expose the state through
+`aria-pressed` plus an accurate `Select` or `Unselect` accessible name. Do not add a
+second checkbox or circular selection button. Reserve the selected-border width in every
+card so state changes do not shift layout, show a shared visible check indicator so color
+is not the only cue, and keep the keyboard focus treatment visibly distinct from the
+selected border. Announce selection mode and the selected count through a polite live
+region. Hide unrelated item actions and provide `Select all`, `Move`, and `Cancel`
 controls. Canceling, switching lists, or completing a move must clear the selection and
 leave selection mode. Keep the press behavior in one reusable interaction utility and
-test touch, mouse, keyboard alternatives, movement cancellation, and reduced-motion-safe
-bulk movement.
+test touch, mouse, keyboard alternatives, movement cancellation, selection
+announcements, and reduced-motion-safe bulk movement.
 
 **50.** <a id="rule-url-backed-popins"></a>Pop-in views, popovers, modals, sheets,
 scanners, dialogs, and other meaningful overlay states need URL-backed state with

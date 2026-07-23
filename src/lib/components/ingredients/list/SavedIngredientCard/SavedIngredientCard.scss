@@ -1,8 +1,16 @@
 @use "../../../../../styles/variables" as *;
 
+$selection-border-width: 2px;
+$selection-border-color: color-mix(
+	in srgb,
+	$app-shell-accent-primary 65%,
+	$app-primary
+);
+
 .saved-ingredient-card {
 	position: relative;
 	display: grid;
+	box-sizing: border-box;
 	grid-template-columns: minmax(0, 1fr) auto auto;
 	align-items: center;
 	gap: $app-gap-sm;
@@ -10,22 +18,19 @@
 	padding: $app-shell-card-padding-compact;
 	background: $app-shell-surface-panel;
 	overflow: hidden;
-	// border: 1px solid transparent;
+	border: $selection-border-width solid transparent;
 	border-radius: $app-shell-radius-card;
-	// box-shadow: black 0 3px 10px 2px;
 	transition:
 		border-color 160ms ease,
 		background-color 160ms ease,
 		opacity 160ms ease;
 }
 
-.saved-ingredient-card--active {
-	border-color: $app-shell-accent-primary;
+.saved-ingredient-card--active:not(.saved-ingredient-card--selection-mode) {
 	background: $app-shell-surface-panel;
 }
 
-.saved-ingredient-card--custom {
-	border-color: color-mix(in srgb, $app-custom-strong 45%, transparent);
+.saved-ingredient-card--custom:not(.saved-ingredient-card--selection-mode) {
 	background: color-mix(in srgb, $app-custom-bg 30%, $app-shell-surface-panel);
 }
 
@@ -38,11 +43,16 @@
 }
 
 .saved-ingredient-card--selection-mode {
-	grid-template-columns: auto minmax(0, 1fr);
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.saved-ingredient-card--selection-mode.saved-ingredient-card--checked {
+	border-color: $selection-border-color;
 }
 
 .saved-ingredient-card__select {
 	display: grid;
+	width: 100%;
 	grid-template-columns: auto minmax(0, 1fr);
 	align-items: center;
 	gap: $app-gap-sm;
@@ -55,6 +65,16 @@
 	-webkit-touch-callout: none;
 	touch-action: manipulation;
 	user-select: none;
+}
+
+.saved-ingredient-card__select--selection-mode {
+	grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.saved-ingredient-card__select:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: 0;
+	border-radius: $app-shell-radius-control;
 }
 
 :global(.saved-ingredient-card__icon) {
@@ -113,7 +133,15 @@
 	}
 
 	.saved-ingredient-card--selection-mode {
-		grid-template-columns: auto minmax(0, 1fr);
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.saved-ingredient-card__select {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.saved-ingredient-card__select--selection-mode {
+		grid-template-columns: minmax(0, 1fr) auto;
 	}
 
 	:global(.saved-ingredient-card__icon) {

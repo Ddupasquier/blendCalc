@@ -61,6 +61,12 @@
 	const bulkMoveDirection = $derived(
 		activeList === MIX_STORAGE_KEYS.fridge ? "right" : "left",
 	);
+	const selectionStatus = $derived(
+		selectionMode
+			? `Selection mode. ${selectedCount} ingredient${selectedCount === 1 ? "" : "s"} selected.`
+			: "",
+	);
+	const listStatus = $derived(bulkMoveStatus || selectionStatus);
 
 	const requestMoreItems = () => {
 		if (revealPaused || !canRevealMore || loadingMoreList) return;
@@ -97,6 +103,15 @@
 		}
 	};
 
+	const enterSelectionMode = (foodId?: number) => {
+		bulkMoveStatus = "";
+		if (foodId === undefined) {
+			onEnterSelection();
+			return;
+		}
+		onEnterSelection(foodId);
+	};
+
 	$effect(() => {
 		if (previousActiveList === null || previousResetKey === null) {
 			previousActiveList = activeList;
@@ -129,14 +144,14 @@
 			selectableCount={foods.length}
 			{moveTargetLabel}
 			moving={bulkMoveBusy}
-			onEnterSelection={() => onEnterSelection()}
+			onEnterSelection={() => enterSelectionMode()}
 			onSelectAll={onSelectAll}
 			onCancel={onCancelSelection}
 			onMove={moveSelectedItems}
 		/>
 	{/if}
 	<p class="sr-only" role="status" aria-live="polite" aria-atomic="true">
-		{bulkMoveStatus}
+		{listStatus}
 	</p>
 
 	<div class="saved-ingredient-list__body">
@@ -171,7 +186,7 @@
 								{warning}
 								{provenanceOptions}
 								onToggle={() => onToggle(food.fdcId)}
-								onEnterSelection={() => onEnterSelection(food.fdcId)}
+								onEnterSelection={() => enterSelectionMode(food.fdcId)}
 								onPreview={() => onPreview(food)}
 								onMove={() => onMoveItem(food)}
 								onActions={() => onActions(food)}

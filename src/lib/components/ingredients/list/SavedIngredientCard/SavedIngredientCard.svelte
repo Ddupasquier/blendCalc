@@ -4,9 +4,9 @@
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
-	import IngredientBulkToggle from "$lib/components/ingredients/list/IngredientBulkToggle/IngredientBulkToggle.svelte";
 	import IngredientCardActions from "$lib/components/ingredients/list/IngredientCardActions/IngredientCardActions.svelte";
 	import IngredientMoveIcon from "$lib/components/ingredients/list/IngredientMoveIcon/IngredientMoveIcon.svelte";
+	import IngredientSelectionIndicator from "$lib/components/ingredients/list/IngredientSelectionIndicator/IngredientSelectionIndicator.svelte";
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
 	import { longPress } from "$lib/utils/interaction/longPress";
 	import type { SavedIngredientCardProps } from "./types";
@@ -50,15 +50,9 @@
 	{#if warning}
 		<CardWarningEdge />
 	{/if}
-	{#if selectionMode}
-		<IngredientBulkToggle
-			{checked}
-			label={`${food.description} selection: ${checked ? "selected" : "not selected"}`}
-			{onToggle}
-		/>
-	{/if}
 	<button
 		class="saved-ingredient-card__select"
+		class:saved-ingredient-card__select--selection-mode={selectionMode}
 		type="button"
 		aria-label={selectionMode
 			? `${checked ? "Unselect" : "Select"} ${food.description}`
@@ -84,6 +78,9 @@
 			</span>
 			<small>{category}</small>
 		</span>
+		{#if selectionMode}
+			<IngredientSelectionIndicator selected={checked} />
+		{/if}
 	</button>
 	{#if !selectionMode}
 		<span class="saved-ingredient-card__move-action">

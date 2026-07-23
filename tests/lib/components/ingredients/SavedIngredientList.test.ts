@@ -79,7 +79,7 @@ describe("SavedIngredientList overlay behavior", () => {
 		).toBeDisabled();
 	});
 
-	it("keeps card checkboxes hidden until selection mode starts", async () => {
+	it("keeps selection state out of normal cards and provides a visible entry action", async () => {
 		const onEnterSelection = vi.fn();
 		render(SavedIngredientList, {
 			props: {
@@ -103,6 +103,37 @@ describe("SavedIngredientList overlay behavior", () => {
 		).not.toBeInTheDocument();
 		await fireEvent.click(screen.getByRole("button", { name: "Select items" }));
 		expect(onEnterSelection).toHaveBeenCalledWith();
+	});
+
+	it("announces selection mode and the selected count", () => {
+		render(SavedIngredientList, {
+			props: {
+				activeList: MIX_STORAGE_KEYS.fridge,
+				foods: [food, secondFood],
+				selectionMode: true,
+				selectedIds: [food.fdcId],
+				onSelectAll: vi.fn(),
+				onEnterSelection: vi.fn(),
+				onCancelSelection: vi.fn(),
+				onMoveSelection: vi.fn(),
+				onMoveItem: vi.fn(),
+				onToggle: vi.fn(),
+				onPreview: vi.fn(),
+				onActions: vi.fn(),
+				onRemove: vi.fn(),
+				onRevealMore: vi.fn(),
+			},
+		});
+
+		expect(screen.getByRole("status")).toHaveTextContent(
+			"Selection mode. 1 ingredient selected.",
+		);
+		expect(
+			screen.getByRole("button", { name: "Unselect Spinach, raw" }),
+		).toHaveAttribute("aria-pressed", "true");
+		expect(
+			screen.getByRole("button", { name: "Select Tomato, roma" }),
+		).toHaveAttribute("aria-pressed", "false");
 	});
 
 	it("requires two deliberate activations before removing an ingredient", async () => {

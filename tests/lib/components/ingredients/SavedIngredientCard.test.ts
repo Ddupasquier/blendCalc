@@ -119,6 +119,32 @@ describe("SavedIngredientCard selection mode", () => {
 			screen.queryByRole("button", { name: "Remove Ground Beef" }),
 		).not.toBeInTheDocument();
 	});
+
+	it("uses one pressed card button and a non-color selected cue", () => {
+		const { container } = render(SavedIngredientCard, {
+			props: {
+				...baseProps,
+				selectionMode: true,
+				checked: true,
+			},
+		});
+
+		const selectionButton = screen.getByRole("button", {
+			name: "Unselect Ground Beef",
+		});
+
+		expect(selectionButton).toHaveAttribute("aria-pressed", "true");
+		expect(
+			container.querySelector(
+				".ingredient-selection-indicator--selected svg",
+			),
+		).toBeInTheDocument();
+		expect(container.querySelector(".saved-ingredient-card--checked"))
+			.toBeInTheDocument();
+		expect(screen.getAllByRole("button")).toHaveLength(1);
+		expect(container.querySelector(".ingredient-bulk-toggle"))
+			.not.toBeInTheDocument();
+	});
 });
 
 describe("SavedIngredientCard verification metadata", () => {
