@@ -1,8 +1,10 @@
-// Backfill reusable food image metadata for existing barcode-backed products.
-// Usage:
-//   npm run backfill:food-images -- --dry-run
-//   npm run backfill:food-images
-//   npm run backfill:food-images -- --limit=25
+/**
+ * Purpose: Find reusable Open Food Facts images for existing barcode-backed catalog and
+ * private foods, then cache licensed image metadata in `food_image_assets`. The live run
+ * writes Supabase rows; always inspect a dry run first and use `--limit` for a small pass.
+ * Preview: `npm run backfill:food-images -- --dry-run --limit=25`
+ * Execute: `npm run backfill:food-images -- --limit=25`
+ */
 
 import { config } from "dotenv";
 import fetch from "node-fetch";

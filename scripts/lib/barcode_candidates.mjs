@@ -1,3 +1,9 @@
+/**
+ * Purpose: Validate GTIN check digits, normalize barcode lengths, generate safe lookup
+ * candidates, and stop at the first exact candidate match. This is a shared module.
+ * Do not run directly; it is imported by barcode audit, seed, and backfill workflows.
+ */
+
 export const GTIN_LENGTHS = [8, 12, 13, 14];
 const GTIN_LENGTH_SET = new Set(GTIN_LENGTHS);
 

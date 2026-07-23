@@ -1,3 +1,11 @@
+/**
+ * Purpose: Seed deterministic image-addition and/or image-adjustment submissions with
+ * generated evidence for an existing moderator account; the paired cleanup command
+ * removes fixtures created for that email. This writes QA rows and private storage files.
+ * Seed: `npm run catalog:qa-image-seed -- moderator@example.com both`
+ * Cleanup: `npm run catalog:qa-image-clean -- moderator@example.com`
+ */
+
 import { randomUUID } from "node:crypto";
 import { deflateSync } from "node:zlib";
 import { config } from "dotenv";

@@ -1,3 +1,10 @@
+/**
+ * Purpose: Push pending Supabase migrations using the configured project and DB password,
+ * loading credentials from the local environment or macOS Keychain without printing them.
+ * Preview: `npm run db:push:dry`
+ * Execute: `npm run db:push:auto`
+ */
+
 import { execFileSync, spawn } from "node:child_process";
 import { config } from "dotenv";
 

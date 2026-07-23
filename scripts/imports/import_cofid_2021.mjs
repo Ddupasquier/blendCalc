@@ -1,3 +1,11 @@
+/**
+ * Purpose: Download UK CoFID 2021, normalize its food identities, nutrient definitions,
+ * measured/trace values, groups, and source metadata, then replace that dataset's
+ * canonical Supabase rows. Downloads use temporary files; the live import writes the DB.
+ * Validate only: `npm run import:nutrition:cofid -- --dry-run`
+ * Import: `npm run import:nutrition:cofid`
+ */
+
 import { createReadStream } from "node:fs";
 import readExcelFile from "read-excel-file/node";
 import {

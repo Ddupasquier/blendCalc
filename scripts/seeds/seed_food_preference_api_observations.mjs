@@ -1,8 +1,10 @@
-// Seed observed allergen, dietary, and ingredient reference data from food APIs.
-// Usage:
-//   npm run seed:food-preferences -- --dry-run
-//   npm run seed:food-preferences
-//   npm run seed:food-preferences -- "whole milk" "peanut butter"
+/**
+ * Purpose: Sample USDA and Open Food Facts for observed ingredients, allergens, traces,
+ * and dietary labels, then persist source observations and rebuild the DB-owned preference
+ * option catalog. The live command writes Supabase; custom terms limit the source sweep.
+ * Preview: `npm run seed:food-preferences -- --dry-run`
+ * Execute: `npm run seed:food-preferences -- "whole milk" "peanut butter"`
+ */
 
 import { config } from "dotenv";
 import fetch from "node-fetch";

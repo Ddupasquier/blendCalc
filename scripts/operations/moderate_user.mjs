@@ -1,3 +1,11 @@
+/**
+ * Purpose: Perform privileged local user operations by email: grant/revoke moderator or
+ * admin roles, ban an account, or reverse a ban while recording moderation audit rows.
+ * This writes Auth and moderation tables and requires service-role credentials.
+ * Role example: `npm run moderate -- role user@example.com moderator`
+ * Ban example: `npm run moderate -- ban user@example.com terms_violation`
+ */
+
 import { createHash } from "node:crypto";
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";

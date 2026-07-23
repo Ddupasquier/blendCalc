@@ -1,3 +1,9 @@
+/**
+ * Purpose: Normalize nutrient names/units and score cautious semantic matches against
+ * canonical nutrient definitions. Ambiguous candidates remain unmatched for review.
+ * Do not run directly; it is imported by reference-data seed workflows.
+ */
+
 export const normalizeUnitName = (value) =>
 	String(value ?? "")
 		.trim()

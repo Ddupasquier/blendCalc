@@ -1,3 +1,12 @@
+/**
+ * Purpose: Resolve active shared products to canonical DB categories using stored data,
+ * USDA, and Open Food Facts evidence; retain source observations; and update matching
+ * products, submissions, and revisions. The live command also removes invalid category
+ * links, so review the read-only preview first.
+ * Preview: `npm run backfill:shared-product-categories -- --dry-run`
+ * Execute: `npm run backfill:shared-product-categories`
+ */
+
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import ws from "ws";

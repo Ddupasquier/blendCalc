@@ -1,3 +1,11 @@
+/**
+ * Purpose: Read stored daily source metrics and print a ranked coverage, reliability,
+ * cache-efficiency, and request-cost report for runtime or controlled benchmark lookups.
+ * This report is read-only and requires Supabase script credentials.
+ * Run: `npm run report:source-quality -- --days=30 --origin=runtime`
+ * Benchmark report: `npm run report:source-quality -- --days=30 --origin=benchmark`
+ */
+
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";

@@ -1,3 +1,10 @@
+/**
+ * Purpose: Provide shared temporary-download, checksum, normalization, batched-write,
+ * retry, and dataset-cleanup utilities for national nutrition imports. This module can
+ * write when called by an importer but is not an executable workflow itself.
+ * Do not run directly; use `npm run import:nutrition:cnf` or `npm run import:nutrition:cofid`.
+ */
+
 import { createHash } from "node:crypto";
 import { rmSync } from "node:fs";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";

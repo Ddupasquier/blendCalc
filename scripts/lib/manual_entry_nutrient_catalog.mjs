@@ -1,3 +1,10 @@
+/**
+ * Purpose: Resolve observed nutrient IDs against the DB-owned manual-entry group and
+ * field catalog while routing unknown nutrients into the review queue. This is a shared
+ * module and never writes data by itself.
+ * Do not run directly; use `npm run seed:manual-entry-nutrients`.
+ */
+
 const toNutrientId = (value) => {
 	const nutrientId = Number(value);
 	return Number.isFinite(nutrientId) ? nutrientId : null;

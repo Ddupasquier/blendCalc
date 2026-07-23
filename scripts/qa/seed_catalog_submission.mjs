@@ -1,3 +1,11 @@
+/**
+ * Purpose: Seed deterministic reviewable and/or incomplete shared-product submissions,
+ * including private evidence, for an existing moderator account; the paired cleanup
+ * command removes fixtures created for that email. This writes QA rows and storage files.
+ * Seed: `npm run catalog:qa-seed -- moderator@example.com both`
+ * Cleanup: `npm run catalog:qa-clean -- moderator@example.com`
+ */
+
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { config } from "dotenv";

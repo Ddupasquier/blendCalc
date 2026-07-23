@@ -1,3 +1,9 @@
+/**
+ * Purpose: Expose the app version and a consistent blendCalc user-agent builder to
+ * scripts that call external services. This is a shared module, not a terminal workflow.
+ * Do not run directly; it is imported by audit, seed, backfill, and generator scripts.
+ */
+
 import { readFileSync } from "node:fs";
 
 const packageMetadata = JSON.parse(

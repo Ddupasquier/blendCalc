@@ -1,5 +1,10 @@
-// Generate reference-only TypeScript views of the external API payloads the app reads.
-// These files document observed payload shape only. Runtime app types belong in src/.
+/**
+ * Purpose: Sample USDA and Open Food Facts payloads and regenerate documentation-only
+ * TypeScript structure references under `docs/api-structures`. It reads observed query
+ * terms from Supabase unless explicit queries are supplied, but never mutates the DB.
+ * Run: `npm run generate:api-structures`
+ * Targeted run: `npm run generate:api-structures -- --query="almond milk" --samples=2`
+ */
 
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";

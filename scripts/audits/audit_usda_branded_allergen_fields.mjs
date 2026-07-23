@@ -1,7 +1,10 @@
-// Audit USDA branded-food detail coverage for allergen/dietary metadata.
-// Usage:
-//   node scripts/audits/audit_usda_branded_allergen_fields.mjs
-//   node scripts/audits/audit_usda_branded_allergen_fields.mjs "whole milk" "peanut butter"
+/**
+ * Purpose: Search USDA FoodData Central branded foods and report whether their detail
+ * records expose ingredients, allergens, dietary tags, and structured ingredient lists.
+ * This read-only audit requires a FoodData Central API key and does not write to Supabase.
+ * Run: `npm run audit:usda-branded-allergens`
+ * Custom queries: `npm run audit:usda-branded-allergens -- "whole milk" "peanut butter"`
+ */
 
 import { config } from "dotenv";
 import fetch from "node-fetch";

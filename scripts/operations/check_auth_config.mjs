@@ -1,3 +1,9 @@
+/**
+ * Purpose: Validate authentication-related environment URLs and secrets before running
+ * or deploying the app. It prints actionable failures/warnings and never writes data.
+ * Run: `npm run check:auth`
+ */
+
 import "dotenv/config";
 
 const failures = [];

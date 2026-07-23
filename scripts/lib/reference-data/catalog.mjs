@@ -1,3 +1,10 @@
+/**
+ * Purpose: Define the maintained source requests, seed queries, serving units, aliases,
+ * and standards codes consumed by product-reference discovery. This module contains seed
+ * inputs only and does not contact APIs or write the database by itself.
+ * Do not run directly; use `npm run seed:product-reference-data`.
+ */
+
 export const PRODUCT_REFERENCE_QUERIES = [
 	"milk",
 	"yogurt",

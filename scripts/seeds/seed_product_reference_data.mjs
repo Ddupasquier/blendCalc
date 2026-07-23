@@ -1,5 +1,9 @@
-// Seed runtime product reference data from USDA, Open Food Facts, and NLM UCUM.
-// Usage: npm run seed:product-reference-data -- --sample-size=200
+/**
+ * Purpose: Sample USDA and Open Food Facts products plus NLM UCUM conversions to upsert
+ * source identities, nutrient mappings, unit conversions, serving units, and observed
+ * serving aliases. Writes are idempotent and provenance-backed; there is no dry-run mode.
+ * Run: `npm run seed:product-reference-data -- --sample-size=200`
+ */
 
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";

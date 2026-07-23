@@ -1,3 +1,10 @@
+/**
+ * Purpose: Index canonical nutrient definitions by ID and nutrient number so provider
+ * observations reuse existing identities instead of creating duplicates. This is a pure
+ * shared module and does not read or write external data.
+ * Do not run directly; use `npm run seed:manual-entry-nutrients`.
+ */
+
 const toNutrientId = (value) => {
 	const nutrientId = Number(value);
 	return Number.isFinite(nutrientId) ? nutrientId : null;

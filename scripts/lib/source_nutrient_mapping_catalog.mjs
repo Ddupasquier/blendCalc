@@ -1,3 +1,10 @@
+/**
+ * Purpose: Resolve source nutrient keys and units through enabled DB-derived mapping rows,
+ * preferring explicit unit matches and refusing ambiguous nutrient identities. This is a
+ * pure shared module and does not query or mutate Supabase itself.
+ * Do not run directly; use `npm run seed:manual-entry-nutrients`.
+ */
+
 const normalizeKey = (value) =>
 	String(value ?? "")
 		.trim()

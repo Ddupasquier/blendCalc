@@ -1,3 +1,11 @@
+/**
+ * Purpose: Download the official Canadian Nutrient File 2026 CSV set, normalize foods,
+ * nutrients, measures, source metadata, and values, then replace that dataset's canonical
+ * Supabase rows. Downloads use temporary files; the live import writes the database.
+ * Validate only: `npm run import:nutrition:cnf -- --dry-run`
+ * Import: `npm run import:nutrition:cnf`
+ */
+
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { readFile } from "node:fs/promises";

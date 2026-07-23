@@ -1,3 +1,9 @@
+/**
+ * Purpose: Share bounded HTTP retry, settled-concurrency, page-title, and UCUM conversion
+ * helpers across reference-data scripts. Permanent HTTP failures are not retried.
+ * Do not run directly; it is imported by the maintained seed workflows.
+ */
+
 const wait = (milliseconds) =>
 	new Promise((resolve) => setTimeout(resolve, milliseconds));
 

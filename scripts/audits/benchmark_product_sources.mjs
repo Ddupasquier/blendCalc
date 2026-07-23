@@ -1,3 +1,11 @@
+/**
+ * Purpose: Query USDA and Open Food Facts with the same active catalog barcodes, measure
+ * request cost and field coverage, and record comparable benchmark metrics in Supabase.
+ * `--reset-today` deletes only today's prior benchmark-origin metrics before the run.
+ * Run: `npm run benchmark:source-quality -- --limit=10`
+ * Reset and rerun: `npm run benchmark:source-quality -- --limit=200 --reset-today`
+ */
+
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";

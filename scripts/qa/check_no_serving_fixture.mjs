@@ -1,3 +1,10 @@
+/**
+ * Purpose: Insert a disposable source observation that explicitly reports no serving,
+ * assert that normalization creates zero `food_servings` rows, and remove the fixture in
+ * a `finally` block. It writes temporary QA data but no user or Fridge records.
+ * Run: `npm run qa:no-serving-fixture`
+ */
+
 import { createHash, randomInt, randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";

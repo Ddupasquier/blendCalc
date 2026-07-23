@@ -17,6 +17,9 @@ not separate public interfaces.
 
 ## Maintenance Rules
 
+- Start every executable `.mjs` workflow with a concise `Purpose` header, exact terminal
+  command, and any important write, cleanup, or dry-run behavior. Shared `lib/` modules
+  must instead say that they are not directly executable and name the parent workflow.
 - Prefer an existing shared helper before adding another HTTP, retry, environment, or
   normalization implementation.
 - Database-backed reference data is authoritative. Do not add repository-local cache

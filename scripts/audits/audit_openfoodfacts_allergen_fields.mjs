@@ -1,7 +1,10 @@
-// Audit Open Food Facts search coverage for allergen/dietary metadata.
-// Usage:
-//   node scripts/audits/audit_openfoodfacts_allergen_fields.mjs
-//   node scripts/audits/audit_openfoodfacts_allergen_fields.mjs "whole milk" "peanut butter"
+/**
+ * Purpose: Read Open Food Facts search results and report whether common products expose
+ * ingredients, allergens, traces, and dietary-label metadata. This is a read-only source
+ * coverage audit and does not write to Supabase.
+ * Run: `npm run audit:off-allergens`
+ * Custom queries: `npm run audit:off-allergens -- "whole milk" "peanut butter"`
+ */
 
 import fetch from "node-fetch";
 import { createAppUserAgent } from "../lib/app_version.mjs";

@@ -1,3 +1,11 @@
+/**
+ * Purpose: Apply the canonical source-product title formatting rules to source-managed
+ * names in shared products, custom foods, and saved list snapshots without rewriting
+ * user-owned manual names. The live command updates Supabase; preview changes first.
+ * Preview: `npm run backfill:product-names -- --dry-run`
+ * Execute: `npm run backfill:product-names`
+ */
+
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import ws from "ws";
