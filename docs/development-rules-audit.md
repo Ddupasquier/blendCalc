@@ -16,6 +16,7 @@ clickable navigation block instead.
 - [Mandatory Rules Preflight](#rule-rules-preflight)
 - [Browser And Mobile Compatibility](#rule-browser-compatibility)
 - [Accessibility](#rule-accessibility)
+- [Strict Content Security Policy](#rule-content-security-policy)
 - [Search Relevance](#rule-search-relevance)
 - [Explicit Pagination Controls](#rule-pagination-controls)
 - [Shared Loading Indicators](#rule-loading-indicators)
@@ -110,6 +111,17 @@ Announce loading, validation, and result-count changes without duplicating visib
 warnings. Honor reduced-motion settings, preserve content at 200% text zoom, avoid
 color-only meaning, and verify important flows with VoiceOver on Safari and TalkBack on
 Android Chrome.
+
+**1c.** <a id="rule-content-security-policy"></a>Keep the Content Security Policy
+strict in development and production. Do not add `unsafe-inline` to `script-src` or
+`script-src-attr`, use `javascript:` URLs, string-valued event attributes, or raw inline
+scripts to work around a violation. Svelte server rendering can emit inline
+`this.__e=event` capture attributes when `load` or `error` handlers, actions, or spread
+attributes are attached directly to elements with native load/error events. For those
+elements, bind the DOM node and attach standard event listeners client-side through a
+shared utility instead. Preserve cached-resource handling, remove listeners during
+effect cleanup, and add a server-compile regression test that rejects inline event
+attributes. Fix the emitting component rather than weakening the policy.
 
 **2.** Keep the user flow simple. Barcode scanning, search, manual entry, fridge,
 shopping, mix, and saved drinks should feel like a guided flow instead of disconnected

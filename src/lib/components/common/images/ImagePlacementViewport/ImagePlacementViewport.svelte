@@ -14,6 +14,7 @@
 		moveImagePlacement,
 		zoomImagePlacement,
 	} from "$lib/utils/food/images/imagePlacement";
+	import { observeImageEvents } from "$lib/utils/dom/imageEvents";
 
 	let {
 		imageUrl,
@@ -81,7 +82,12 @@
 
 	$effect(() => {
 		imageUrl;
-		if (imageElement?.complete) syncImageSize();
+		const image = imageElement;
+		if (!image) return;
+		return observeImageEvents(image, {
+			onLoad: syncImageSize,
+			onError,
+		});
 	});
 
 	$effect(() => {
@@ -207,8 +213,6 @@
 		draggable="false"
 		loading="lazy"
 		decoding="async"
-		onload={syncImageSize}
-		onerror={onError}
 	/>
 </span>
 
