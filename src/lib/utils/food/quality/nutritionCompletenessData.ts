@@ -6,10 +6,17 @@ import type {
 	NutritionCompletenessScope,
 	NutritionRequirementLevel,
 } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
+import type { NutrientDefinitionReferenceRecord } from "$lib/utils/food/nutrients/nutrientDefinitionRecord";
 
 export const readNutritionCompletenessCatalog = async (
 	supabase: SupabaseClient<Database>,
+	nutrientDefinitions?: NutrientDefinitionReferenceRecord[],
 ): Promise<NutritionCompletenessCatalog> => {
+	const definitionsPromise = nutrientDefinitions
+		? Promise.resolve({ data: nutrientDefinitions, error: null })
+		: supabase
+				.from("nutrient_definitions")
+				.select("nutrient_id, nutrient_name, default_unit_name");
 	const [profilesResult, profileNutrientsResult, definitionsResult] =
 		await Promise.all([
 			supabase
@@ -28,9 +35,7 @@ export const readNutritionCompletenessCatalog = async (
 				)
 				.order("profile_key", { ascending: true })
 				.order("display_order", { ascending: true }),
-			supabase
-				.from("nutrient_definitions")
-				.select("nutrient_id, nutrient_name, default_unit_name"),
+			definitionsPromise,
 		]);
 
 	if (profilesResult.error) throw profilesResult.error;

@@ -1,7 +1,10 @@
 import { getSharedProductByBarcode } from "$lib/server/products/catalog.server";
 import { resolveBarcodeDraftCategory } from "$lib/server/products/categoryMapping.server";
 import { persistSharedProductExternalEnrichment } from "$lib/server/products/catalogEnrichment.server";
-import { lookupExternalBarcodeProduct } from "$lib/server/products/externalProduct.server";
+import {
+	getRequiredPackagedNutrientIds,
+	lookupExternalBarcodeProduct,
+} from "$lib/server/products/externalProduct.server";
 import { getProductReferenceData } from "$lib/server/products/productReferenceData.server";
 import type { Database } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
@@ -44,11 +47,13 @@ export const lookupBarcodeProductDraft = async (
 			let supplementedFields = [] as ReturnType<
 				typeof getSupplementedBarcodeProductFields
 			>;
-			if (needsBarcodeProductSupplement(cachedDraft)) {
+			const requiredNutrientIds = await getRequiredPackagedNutrientIds();
+			if (needsBarcodeProductSupplement(cachedDraft, requiredNutrientIds)) {
 				try {
 					const supplement = await lookupExternalBarcodeProduct(barcode, {
 						cachedImage,
 						getReferenceData: async () => referenceData,
+						requiredNutrientIds,
 					});
 					supplementedFields = getSupplementedBarcodeProductFields(
 						cachedDraft,

@@ -12,6 +12,7 @@ vi.mock("$lib/utils/profile/foodPreferenceContext.svelte", () => ({
 			prioritizedNutrientIds: [],
 			defaultSmoothieServingGrams: null,
 			sensitiveAcknowledgedAt: null,
+			warningRules: [],
 		},
 	}),
 }));
@@ -20,6 +21,7 @@ const peanutButter: FdcFood = {
 	fdcId: 172470,
 	description: "Peanut butter, smooth style, with salt",
 	foodCategory: "Legumes and Legume Products",
+	allergens: ["peanut"],
 	foodNutrients: [],
 };
 
@@ -33,14 +35,14 @@ describe("NutritionPanel", () => {
 			},
 		});
 
-		const heading = screen.getByText("Possible conflict");
+		const heading = screen.getByText("Potential conflict");
 		const statusMessage = heading.closest(".status-message");
 		const nutritionFacts = screen.getByText("Nutrition Facts");
 
-		expect(statusMessage).toHaveAttribute("data-tone", "warning");
+		expect(statusMessage).toHaveAttribute("data-tone", "danger");
 		expect(statusMessage).toContainElement(
 			screen.getByText(
-				/peanut may be present based on the food name or category\./i,
+				/contains peanut in structured product metadata\./i,
 			),
 		);
 		expect(statusMessage?.querySelector(".status-icon-badge"))

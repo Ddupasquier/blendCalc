@@ -64,6 +64,14 @@ export type FoodSymbolSubject = {
 	categories?: string[];
 };
 
+export type FoodPreferenceConflictRule = {
+	preferenceSlug: string;
+	preferenceLabel: string;
+	factSlug: string;
+	factLabel: string;
+	level: "warning" | "potential";
+};
+
 export type AppReferenceCatalog = {
 	nutrients: NutrientCatalogItem[];
 	nutrientDisplayProfiles: NutrientDisplayProfile[];
@@ -72,6 +80,7 @@ export type AppReferenceCatalog = {
 	mixRuntime: MixRuntimeConfiguration;
 	foodSymbols: FoodSymbolDefinition[];
 	foodSymbolCategoryRules: FoodSymbolCategoryRule[];
+	foodPreferenceConflictRules: FoodPreferenceConflictRule[];
 };
 
 const EMPTY_MIX_RUNTIME: MixRuntimeConfiguration = {
@@ -93,6 +102,7 @@ const EMPTY_CATALOG: AppReferenceCatalog = {
 	mixRuntime: EMPTY_MIX_RUNTIME,
 	foodSymbols: [],
 	foodSymbolCategoryRules: [],
+	foodPreferenceConflictRules: [],
 };
 
 let configuredCatalog = EMPTY_CATALOG;

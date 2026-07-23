@@ -27,7 +27,7 @@ policies, or core data ownership changes.
 | `user_tutorial_preferences` | `user_id`   | One row per auth user   | Tracks tutorial seen/completed/remind-later state                                                          | `user_id → auth.users.id`                                            |
 | `user_food_preferences`     | `user_id`   | One row per auth user   | Optional unit system, allergens, dietary restrictions, nutrient priorities, and default serving preference | `user_id → auth.users.id`                                            |
 | `user_compatibility_rules`  | `id`        | Many rows per auth user | Normalized active warnings/downrank rules derived from user food preferences                               | `user_id → auth.users.id`, optional `tag_id → compatibility_tags.id` |
-| `mix_preferences`           | `user_id`   | One row per auth user   | Persisted smoothie goals and mix state                                                                     | `user_id → auth.users.id`                                            |
+| `mix_preferences`           | `user_id`   | One row per auth user   | Persisted smoothie goals and versioned Mix state                                                           | `user_id → auth.users.id`                                            |
 
 ### `profiles`
 
@@ -567,6 +567,7 @@ Storage bucket:
 | Table                              | Primary Key | Owner Scope                 | Purpose                                                                                            | Key Relationships                                                                   |
 | ---------------------------------- | ----------- | --------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `compatibility_tags`               | `id`        | Shared reference            | Canonical compatibility tags for allergens, dietary claims, ingredients, and avoidance concepts    | Referenced by user rules and product facts                                          |
+| `compatibility_rule_conflicts`     | Composite   | Shared validation reference | DB-owned mapping from a user preference tag to a conflicting product fact and warning severity      | Both tag ids → `compatibility_tags.id`                                                 |
 | `product_compatibility_facts`      | `id`        | Shared product metadata     | Facts extracted from shared products/submissions/observations                                      | `tag_id → compatibility_tags.id`; exactly one product/submission/observation parent |
 | `food_preference_option_catalog`   | `id`        | Shared reference            | App-ready allergen/dietary/ingredient options built from product compatibility and ingredient data | Optional `tag_id → compatibility_tags.id`                                           |
 | `food_preference_api_observations` | `id`        | Shared reference/provenance | Raw observed allergen/dietary/ingredient metadata from external APIs                               | No direct user ownership                                                            |
@@ -578,6 +579,17 @@ Columns: `id`, `slug`, `label`, `category`, `created_at`, `updated_at`.
 Notes:
 
 - `category` is `allergen`, `dietary`, `ingredient`, or `avoidance`.
+
+### `compatibility_rule_conflicts`
+
+Columns: `preference_tag_id`, `fact_tag_id`, `severity`, `created_at`, `updated_at`.
+
+Notes:
+
+- This relation is the authority for matching active user preferences to structured
+  product compatibility facts.
+- App utilities must not recreate allergen or dietary vocabularies with name/category
+  guesses.
 
 ### `product_compatibility_facts`
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	applyCachedImageToBarcodeDraft,
+	getBarcodeProductSupplementPlan,
 	getMissingBarcodeProductFields,
 	getSupplementedBarcodeProductFields,
 	mergeMissingBarcodeProductFields,
@@ -67,6 +68,28 @@ describe("barcode product field enrichment", () => {
 			image: true,
 			categories: true,
 			serving: true,
+		});
+	});
+
+	it("plans optional metadata enrichment independently from core fields", () => {
+		const plan = getBarcodeProductSupplementPlan(
+			makeDraft("usda", {
+				image: openFoodFactsImage,
+				categories: ["Pasta sauces"],
+				hasSourceServing: true,
+			}),
+			[1079, 1003],
+		);
+
+		expect(plan).toMatchObject({
+			nutrition: false,
+			image: false,
+			categories: false,
+			serving: false,
+			ingredients: true,
+			allergens: true,
+			labels: true,
+			missingNutrientIds: [1003],
 		});
 	});
 

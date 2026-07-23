@@ -1,7 +1,8 @@
 /**
  * Purpose: Apply the canonical source-product title formatting rules to source-managed
- * names in shared products, custom foods, and saved list snapshots without rewriting
- * user-owned manual names. The live command updates Supabase; preview changes first.
+ * names in catalog products, submissions, revisions, normalized observations, custom
+ * foods, and saved list snapshots without rewriting user-owned manual names. The live
+ * command updates Supabase; preview changes first.
  * Preview: `npm run backfill:product-names -- --dry-run`
  * Execute: `npm run backfill:product-names`
  */
@@ -55,14 +56,17 @@ const isSourceBackedFood = (food, rowSource) => {
 	});
 };
 
-const getFoodUpdate = (food) => {
+const getFoodUpdate = (food, forceManaged = false) => {
 	const description = String(food?.description ?? "");
 	const formattedDescription = formatSourceProductName(description);
 	if (!formattedDescription || formattedDescription === description) return null;
 	return {
 		...food,
 		description: formattedDescription,
-		nameProvenance: "source",
+		nameProvenance:
+			food?.nameProvenance === "barcode" && !forceManaged
+				? "barcode"
+				: "source",
 	};
 };
 
@@ -107,8 +111,52 @@ const updateFoodJsonTable = async (table) => {
 	return changed;
 };
 
+const updateCatalogFoodTable = async ({
+	table,
+	foodColumn = "food",
+	nameColumn,
+	sourceColumn,
+	forceManaged = false,
+}) => {
+	const columns = ["id", foodColumn, nameColumn, sourceColumn]
+		.filter(Boolean)
+		.join(", ");
+	const rows = await fetchAllRows(table, columns);
+	let changed = 0;
+	for (const row of rows) {
+		const food = row[foodColumn];
+		if (!forceManaged && !isSourceBackedFood(food, sourceColumn ? row[sourceColumn] : null)) {
+			continue;
+		}
+		const normalizedFood = getFoodUpdate(food, forceManaged);
+		if (!normalizedFood) continue;
+		changed += 1;
+		console.log(`${table}: ${food.description} -> ${normalizedFood.description}`);
+		if (dryRun) continue;
+		const update = { [foodColumn]: normalizedFood };
+		if (nameColumn) update[nameColumn] = normalizedFood.description;
+		const { error } = await supabase.from(table).update(update).eq("id", row.id);
+		if (error) throw error;
+	}
+	return changed;
+};
+
 const counts = {
 	sharedProducts: await updateSharedProducts(),
+	sharedProductSubmissions: await updateCatalogFoodTable({
+		table: "shared_product_submissions",
+		nameColumn: "product_name",
+		forceManaged: true,
+	}),
+	sharedProductRevisions: await updateCatalogFoodTable({
+		table: "shared_product_revisions",
+		sourceColumn: "source",
+	}),
+	sharedProductObservations: await updateCatalogFoodTable({
+		table: "shared_product_observations",
+		foodColumn: "normalized_food",
+		sourceColumn: "source",
+	}),
 	customFoods: await updateFoodJsonTable("custom_foods"),
 	listItems: await updateFoodJsonTable("user_food_list_items"),
 };

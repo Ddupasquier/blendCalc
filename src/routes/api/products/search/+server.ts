@@ -6,6 +6,7 @@ import {
 import { annotateFoodWithPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
 import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const user = await locals.getVerifiedUser();
@@ -13,7 +14,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
 	const query = url.searchParams.get("q")?.trim() ?? "";
 	if (query.length < 2) return json({ foods: [] });
-	const [foods, foodPreferencesResult] = await Promise.all([
+	const [foods, foodPreferencesResult, appReferenceCatalog] = await Promise.all([
 		searchApprovedSharedProducts(locals.supabase, query),
 		locals.supabase
 			.from("user_food_preferences")
@@ -22,6 +23,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			)
 			.eq("user_id", user.id)
 			.maybeSingle(),
+		getAppReferenceCatalog(),
 	]);
 	if (
 		foodPreferencesResult.error &&
@@ -29,7 +31,10 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	) {
 		throw foodPreferencesResult.error;
 	}
-	const profile = getFoodPreferenceProfile(foodPreferencesResult.data);
+	const profile = getFoodPreferenceProfile(
+		foodPreferencesResult.data,
+		appReferenceCatalog.foodPreferenceConflictRules,
+	);
 	return json({
 		foods: foods.map((food) => annotateFoodWithPreferenceWarnings(food, profile)),
 	});

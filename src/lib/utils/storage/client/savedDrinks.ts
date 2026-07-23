@@ -16,6 +16,7 @@ import {
 } from "$lib/utils/storage/supabase";
 import type { FdcFood } from "$lib/utils/food/types";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
+import { writeStoredMixState } from "$lib/utils/mix/state/mixState";
 import {
 	hasLegacySodiumOption,
 	migrateLegacyNutrientGoals,
@@ -225,10 +226,7 @@ export const restoreSavedDrinkToMix = async (drink: SavedDrink) => {
 		getScopedStorageKey(MIX_STORAGE_KEYS.nutrientGoals),
 		JSON.stringify(normalizedDrink.nutrientGoals),
 	);
-	localStorage.setItem(
-		getScopedStorageKey(MIX_STORAGE_KEYS.mixState),
-		JSON.stringify(mixState),
-	);
+	const persistedMixState = writeStoredMixState(mixState);
 	writeLoadedSavedDrink({
 		id: normalizedDrink.id,
 		name: normalizedDrink.name,
@@ -236,7 +234,7 @@ export const restoreSavedDrinkToMix = async (drink: SavedDrink) => {
 	});
 	void saveCloudMixPreferences({
 		nutrientGoals: normalizedDrink.nutrientGoals,
-		mixState,
+		mixState: persistedMixState,
 	});
 	return true;
 };

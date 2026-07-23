@@ -22,6 +22,9 @@ describe("source product name formatting", () => {
 
 	it("preserves approved acronyms and intentional mixed capitalization", () => {
 		expect(formatSourceProductName("USDA BBQ SAUCE")).toBe("USDA BBQ Sauce");
+		expect(formatSourceProductName("[QA] QUESTIONABLE CHIPS")).toBe(
+			"[QA] Questionable Chips",
+		);
 		expect(formatSourceProductName("M&M'S CANDY")).toBe("M&M's Candy");
 		expect(formatSourceProductName("O'BRIEN'S 32 FL OZ SAUCE")).toBe(
 			"O'Brien's 32 fl oz Sauce",

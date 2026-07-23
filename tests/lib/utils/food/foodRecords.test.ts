@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { compactFood } from "$lib/utils/food/records/foodRecords";
+import {
+	compactFood,
+	compactManagedFood,
+} from "$lib/utils/food/records/foodRecords";
 import type { FdcFood } from "$lib/utils/food/types";
 
 describe("compact food records", () => {
@@ -60,5 +63,19 @@ describe("compact food records", () => {
 		};
 
 		expect(compactFood(food).reportedNutrientIds).toEqual([]);
+	});
+
+	it("normalizes every catalog-bound name before persistence", () => {
+		const food: FdcFood = {
+			fdcId: -3,
+			description: "ROASTED ONION AND GARLIC PASTA SAUCE",
+			nameProvenance: "user",
+			foodNutrients: [],
+		};
+
+		expect(compactManagedFood(food)).toMatchObject({
+			description: "Roasted Onion & Garlic Pasta Sauce",
+			nameProvenance: "source",
+		});
 	});
 });

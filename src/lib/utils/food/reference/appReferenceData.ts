@@ -4,6 +4,7 @@ import type {
 	MixRuntimeConfiguration,
 	NutrientDisplayProfile,
 } from "$lib/utils/food/reference/appReferenceCatalog";
+import type { NutrientDefinitionReferenceRecord } from "$lib/utils/food/nutrients/nutrientDefinitionRecord";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const asNumber = (value: unknown, label: string) => {
@@ -52,7 +53,16 @@ const readRuntimeConfiguration = (
 
 export const readAppReferenceCatalog = async (
 	supabase: SupabaseClient<Database>,
+	nutrientDefinitions?: NutrientDefinitionReferenceRecord[],
 ): Promise<AppReferenceCatalog> => {
+	const definitionsPromise = nutrientDefinitions
+		? Promise.resolve({ data: nutrientDefinitions, error: null })
+		: supabase
+				.from("nutrient_definitions")
+				.select(
+					"nutrient_id, nutrient_name, nutrient_number, default_unit_name",
+				)
+				.order("nutrient_name", { ascending: true });
 	const [
 		definitionsResult,
 		profilesResult,
@@ -63,11 +73,9 @@ export const readAppReferenceCatalog = async (
 			runtimeResult,
 			symbolsResult,
 			symbolRulesResult,
+			preferenceConflictRulesResult,
 		] = await Promise.all([
-		supabase
-			.from("nutrient_definitions")
-			.select("nutrient_id, nutrient_name, nutrient_number, default_unit_name")
-			.order("nutrient_name", { ascending: true }),
+		definitionsPromise,
 		supabase
 			.from("nutrient_display_profiles")
 			.select("key, display_name, purpose, version")
@@ -102,6 +110,11 @@ export const readAppReferenceCatalog = async (
 				.select("symbol_key, match_pattern, priority")
 				.eq("enabled", true)
 				.order("priority", { ascending: true }),
+			supabase
+				.from("compatibility_rule_conflicts")
+				.select(
+					"severity, preference_tag:compatibility_tags!compatibility_rule_conflicts_preference_tag_id_fkey(slug, label), fact_tag:compatibility_tags!compatibility_rule_conflicts_fact_tag_id_fkey(slug, label)",
+				),
 		]);
 
 	for (const result of [
@@ -114,6 +127,7 @@ export const readAppReferenceCatalog = async (
 			runtimeResult,
 			symbolsResult,
 			symbolRulesResult,
+			preferenceConflictRulesResult,
 		]) {
 		if (result.error) throw result.error;
 	}
@@ -191,6 +205,19 @@ export const readAppReferenceCatalog = async (
 			symbolKey: rule.symbol_key,
 			matchPattern: rule.match_pattern,
 			priority: rule.priority,
+		})),
+		foodPreferenceConflictRules: (
+			(preferenceConflictRulesResult.data ?? []) as unknown as Array<{
+				severity: "warning" | "potential";
+				preference_tag: { slug: string; label: string };
+				fact_tag: { slug: string; label: string };
+			}>
+		).map((rule) => ({
+			preferenceSlug: rule.preference_tag.slug,
+			preferenceLabel: rule.preference_tag.label,
+			factSlug: rule.fact_tag.slug,
+			factLabel: rule.fact_tag.label,
+			level: rule.severity,
 		})),
 	};
 };

@@ -8,7 +8,49 @@ import type {
 	NutrientReductionSuggestion,
 	NutrientReductionSuggestionConflict,
 } from "./nutrientTypes";
-import { getDefaultNutrientGoal, getFoodNutrientAmount, getNutrientTotal } from "./nutrientTotals";
+import { getDefaultNutrientGoal } from "./nutrientTotals";
+
+const createFoodNutrientLookup = () => {
+	const valuesByFood = new Map<number, Map<number, number | null>>();
+	return (food: FdcFood, nutrientId: number) => {
+		const foodValues = valuesByFood.get(food.fdcId) ?? new Map();
+		if (!valuesByFood.has(food.fdcId)) {
+			valuesByFood.set(food.fdcId, foodValues);
+		}
+		if (!foodValues.has(nutrientId)) {
+			foodValues.set(nutrientId, getFdcNutrientValue(food, nutrientId));
+		}
+		return foodValues.get(nutrientId) ?? null;
+	};
+};
+
+const createFoodNutrientAmountLookup = (defaultServingGrams: number) => {
+	const getNutrientValue = createFoodNutrientLookup();
+	return (
+		food: FdcFood,
+		nutrientId: number,
+		grams: Record<number, number>,
+	) => {
+		const value = getNutrientValue(food, nutrientId);
+		if (value === null) return 0;
+		return (
+			value * (grams[food.fdcId] ?? defaultServingGrams)
+		) / defaultServingGrams;
+	};
+};
+
+const takeBestSuggestionPerFood = <Suggestion extends { food: FdcFood }>(
+	suggestions: Suggestion[],
+	maxSuggestions: number,
+) => {
+	const bestSuggestionByFood = new Map<number, Suggestion>();
+	for (const suggestion of suggestions) {
+		if (!bestSuggestionByFood.has(suggestion.food.fdcId)) {
+			bestSuggestionByFood.set(suggestion.food.fdcId, suggestion);
+		}
+	}
+	return [...bestSuggestionByFood.values()].slice(0, maxSuggestions);
+};
 
 export const getNutrientFoodSuggestions = ({
 	nutrients,
@@ -28,13 +70,20 @@ export const getNutrientFoodSuggestions = ({
 	maxSuggestions?: number;
 }) => {
 	const { defaultServingGrams, pointGoalTolerance } = getMixRuntimeConfiguration();
+	const getNutrientValue = createFoodNutrientLookup();
+	const getNutrientAmount =
+		createFoodNutrientAmountLookup(defaultServingGrams);
 	const selectedFoods = availableFoods.filter((food) =>
 		selectedFoodIds.includes(food.fdcId),
 	);
 	const nutrientStates = nutrients.map((nutrient) => {
 		const nutrientId = Number(nutrient.id);
 		const goal = nutrientGoals[nutrientId] ?? getDefaultNutrientGoal(nutrient);
-		const total = getNutrientTotal(selectedFoods, nutrientId, servingGrams);
+		const total = selectedFoods.reduce(
+			(sum, food) =>
+				sum + getNutrientAmount(food, nutrientId, servingGrams),
+			0,
+		);
 
 		return {
 			nutrientId,
@@ -53,7 +102,7 @@ export const getNutrientFoodSuggestions = ({
 			if (goal <= 0 || remainingAmount <= goal * 0.1) return [];
 
 			return availableFoods.flatMap((food) => {
-				const amountPer100g = getFdcNutrientValue(food, nutrientId);
+				const amountPer100g = getNutrientValue(food, nutrientId);
 				if (!amountPer100g || amountPer100g <= 0) return [];
 
 				const currentServingGrams = selectedFoodIds.includes(food.fdcId)
@@ -68,7 +117,7 @@ export const getNutrientFoodSuggestions = ({
 				const conflicts: NutrientFoodSuggestionConflict[] =
 					nutrientStates.flatMap(
 						(nutrientState): NutrientFoodSuggestionConflict[] => {
-							const nutrientAmountPer100g = getFdcNutrientValue(
+							const nutrientAmountPer100g = getNutrientValue(
 								food,
 								nutrientState.nutrientId,
 							);
@@ -149,15 +198,10 @@ export const getNutrientFoodSuggestions = ({
 			return b.amountPer100g - a.amountPer100g;
 		});
 
-	const bestSuggestionByFood = new Map<number, NutrientFoodSuggestion>();
-
-	suggestions.forEach((suggestion) => {
-		if (!bestSuggestionByFood.has(suggestion.food.fdcId)) {
-			bestSuggestionByFood.set(suggestion.food.fdcId, suggestion);
-		}
-	});
-
-	return Array.from(bestSuggestionByFood.values()).slice(0, maxSuggestions);
+	return takeBestSuggestionPerFood<NutrientFoodSuggestion>(
+		suggestions,
+		maxSuggestions,
+	);
 };
 
 export const getNutrientReductionSuggestions = ({
@@ -176,10 +220,16 @@ export const getNutrientReductionSuggestions = ({
 	maxSuggestions?: number;
 }) => {
 	const { defaultServingGrams, pointGoalTolerance } = getMixRuntimeConfiguration();
+	const getNutrientAmount =
+		createFoodNutrientAmountLookup(defaultServingGrams);
 	const nutrientStates = nutrients.map((nutrient) => {
 		const nutrientId = Number(nutrient.id);
 		const goal = nutrientGoals[nutrientId] ?? getDefaultNutrientGoal(nutrient);
-		const total = getNutrientTotal(selectedFoods, nutrientId, servingGrams);
+		const total = selectedFoods.reduce(
+			(sum, food) =>
+				sum + getNutrientAmount(food, nutrientId, servingGrams),
+			0,
+		);
 
 		return {
 			nutrientId,
@@ -199,7 +249,7 @@ export const getNutrientReductionSuggestions = ({
 			return selectedFoods.flatMap((food) => {
 				const currentServingGrams =
 					servingGrams[food.fdcId] ?? defaultServingGrams;
-				const targetAmount = getFoodNutrientAmount(
+				const targetAmount = getNutrientAmount(
 					food,
 					nutrientId,
 					servingGrams,
@@ -233,7 +283,7 @@ export const getNutrientReductionSuggestions = ({
 							if (nutrientState.nutrientId === nutrientId) return [];
 							if (nutrientState.goal <= 0) return [];
 
-							const currentFoodAmount = getFoodNutrientAmount(
+							const currentFoodAmount = getNutrientAmount(
 								food,
 								nutrientState.nutrientId,
 								servingGrams,
@@ -311,13 +361,8 @@ export const getNutrientReductionSuggestions = ({
 			return a.reduceByGrams - b.reduceByGrams;
 		});
 
-	const bestSuggestionByFood = new Map<number, NutrientReductionSuggestion>();
-
-	suggestions.forEach((suggestion) => {
-		if (!bestSuggestionByFood.has(suggestion.food.fdcId)) {
-			bestSuggestionByFood.set(suggestion.food.fdcId, suggestion);
-		}
-	});
-
-	return Array.from(bestSuggestionByFood.values()).slice(0, maxSuggestions);
+	return takeBestSuggestionPerFood<NutrientReductionSuggestion>(
+		suggestions,
+		maxSuggestions,
+	);
 };

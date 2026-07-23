@@ -1,17 +1,9 @@
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
-import {
-	getFoodIdentityKey,
-	uniqueFoodsByIdentity,
-} from "$lib/utils/food/records/foodIdentity";
-import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
-import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
+import { uniqueFoodsByIdentity } from "$lib/utils/food/records/foodIdentity";
 import type { FdcFood } from "$lib/utils/food/types";
-import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
-import { hydrateFoodsWithCachedImages } from "./foodImages";
-import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
-import { readFoodServingsByParent } from "./servings";
+import { hydrateCloudFoodListRows } from "./listHydration";
 import {
 	CLOUD_CURSOR_PAGE_SIZE,
 	type CloudDataContext,
@@ -148,41 +140,7 @@ export const readCloudSmoothieListPage = async (
 	if (error) throw error;
 	if (!data) throw new Error("Ingredient list could not be loaded.");
 
-	const baseFoods = data.map((row) =>
-		hydrateFoodWithCatalogState(
-			{
-				...(row.food as unknown as FdcFood),
-				listAddedAt:
-					(row.food as unknown as FdcFood).listAddedAt ??
-					new Date(row.created_at).getTime(),
-			},
-			row,
-		),
-	);
-	const [normalizedRows, servingRows, foodsWithImages] = await Promise.all([
-		readNormalizedNutrientsByParent(
-			supabase,
-			"user_food_list_item_id",
-			data.map((row) => row.id),
-		),
-		readFoodServingsByParent(
-			supabase,
-			"user_food_list_item_id",
-			data.map((row) => row.id),
-		),
-		hydrateFoodsWithCachedImages(supabase, baseFoods),
-	]);
-	const foods = foodsWithImages.map((food, index) => {
-		const row = data[index];
-		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
-			food,
-			normalizedRows.get(row.id) ?? [],
-		);
-		return hydrateFoodWithNormalizedServings(
-			foodWithNutrients,
-			servingRows.get(row.id) ?? [],
-		);
-	});
+	const foods = await hydrateCloudFoodListRows(supabase, data);
 
 	return {
 		foods,
@@ -213,41 +171,7 @@ export const readCloudSmoothieList = async (
 		return await query;
 	});
 
-	const baseFoods = rows.map((row) =>
-		hydrateFoodWithCatalogState(
-			{
-				...(row.food as unknown as FdcFood),
-				listAddedAt:
-					(row.food as unknown as FdcFood).listAddedAt ??
-					new Date(row.created_at).getTime(),
-			},
-			row,
-		),
-	);
-	const [normalizedRows, servingRows, foodsWithImages] = await Promise.all([
-		readNormalizedNutrientsByParent(
-			supabase,
-			"user_food_list_item_id",
-			rows.map((row) => row.id),
-		),
-		readFoodServingsByParent(
-			supabase,
-			"user_food_list_item_id",
-			rows.map((row) => row.id),
-		),
-		hydrateFoodsWithCachedImages(supabase, baseFoods),
-	]);
-	return foodsWithImages.map((food, index) => {
-		const row = rows[index];
-		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
-			food,
-			normalizedRows.get(row.id) ?? [],
-		);
-		return hydrateFoodWithNormalizedServings(
-			foodWithNutrients,
-			servingRows.get(row.id) ?? [],
-		);
-	});
+	return hydrateCloudFoodListRows(supabase, rows);
 };
 
 export const readCloudSmoothieListIndex = async (
@@ -260,7 +184,7 @@ export const readCloudSmoothieListIndex = async (
 	const rows = await readAllCursorPages(async (cursorId) => {
 		let query = supabase
 			.from("user_food_list_items")
-			.select("id, list_type, fdc_id, food")
+			.select("id, list_type, fdc_id, food_identity_key")
 			.eq("user_id", userId)
 			.order("id", { ascending: true })
 			.limit(CLOUD_CURSOR_PAGE_SIZE);
@@ -278,9 +202,10 @@ export const readCloudSmoothieListIndex = async (
 		const key = row.list_type === "fridge"
 			? MIX_STORAGE_KEYS.fridge
 			: MIX_STORAGE_KEYS.shoppingList;
-		const food = row.food as unknown as FdcFood;
 		index[key].foodIds.push(Number(row.fdc_id));
-		index[key].foodIdentityKeys.push(getFoodIdentityKey(food));
+		index[key].foodIdentityKeys.push(
+			row.food_identity_key ?? `fdc:${row.fdc_id}`,
+		);
 	}
 
 	return index;

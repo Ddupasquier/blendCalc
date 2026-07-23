@@ -147,6 +147,45 @@ export type Database = {
         }
         Relationships: []
       }
+      compatibility_rule_conflicts: {
+        Row: {
+          created_at: string
+          fact_tag_id: string
+          preference_tag_id: string
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fact_tag_id: string
+          preference_tag_id: string
+          severity: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fact_tag_id?: string
+          preference_tag_id?: string
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compatibility_rule_conflicts_fact_tag_id_fkey"
+            columns: ["fact_tag_id"]
+            isOneToOne: false
+            referencedRelation: "compatibility_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compatibility_rule_conflicts_preference_tag_id_fkey"
+            columns: ["preference_tag_id"]
+            isOneToOne: false
+            referencedRelation: "compatibility_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_food_category_mappings: {
         Row: {
           category_option_id: string

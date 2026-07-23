@@ -97,7 +97,10 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			role,
 			showTutorial: shouldAutomaticallyShowTutorial(tutorialPreference),
 		},
-		foodPreferences: getFoodPreferenceProfile(foodPreferencesResult.data),
+		foodPreferences: getFoodPreferenceProfile(
+			foodPreferencesResult.data,
+			appReferenceCatalog.foodPreferenceConflictRules,
+		),
 		servingMeasureCatalog,
 		nutritionCompletenessCatalog,
 		appReferenceCatalog,

@@ -26,13 +26,9 @@ import {
 	type NutrientOption,
 	type SavedMixState,
 } from "$lib/utils/mix/ui/mixUi";
-import {
-	hasLegacySodiumOption,
-	migrateLegacyNutrientGoals,
-	migrateLegacyNutrientIds,
-	migrateLegacyNutrientOptions,
-} from "$lib/utils/mix/nutrients/nutrientMappings";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
+
+export const MIX_STATE_STORAGE_VERSION = 1;
 
 export type MixStateSnapshot = {
 	selected: (string | number)[];
@@ -41,6 +37,10 @@ export type MixStateSnapshot = {
 	servingGrams: Record<number, number>;
 	servingQuantities: Record<number, number>;
 	servingUnits: Record<number, ServingMeasureUnit>;
+};
+
+export type PersistedMixState = MixStateSnapshot & {
+	version: typeof MIX_STATE_STORAGE_VERSION;
 };
 
 export type ServingStateSnapshot = Pick<
@@ -91,29 +91,27 @@ export const getServingConversion = (
 
 export const readStoredNutrientGoals = () => {
 	const defaultGoals = getDefaultMixGoals();
+	const knownNutrientIds = new Set(
+		getNutrientCatalog().map((nutrient) => Number(nutrient.id)),
+	);
 	try {
 		const rawGoals = localStorage.getItem(
 			getScopedStorageKey(MIX_STORAGE_KEYS.nutrientGoals),
 		);
-		const rawMixState = localStorage.getItem(
-			getScopedStorageKey(MIX_STORAGE_KEYS.mixState),
-		);
-		const storedOptions = rawMixState
-			? normalizeNutrientOptions(
-					(JSON.parse(rawMixState) as SavedMixState).options,
-				)
-			: [];
-		const shouldMigrateLegacySodium = hasLegacySodiumOption(storedOptions);
+		if (!rawGoals) return { ...defaultGoals };
+		const storedGoals = Object.entries(
+			JSON.parse(rawGoals) as Record<string, unknown>,
+		).flatMap(([nutrientId, value]) => {
+			const parsedNutrientId = Number(nutrientId);
+			const parsedValue = Number(value);
+			return knownNutrientIds.has(parsedNutrientId) &&
+				Number.isFinite(parsedValue) &&
+				parsedValue >= 0
+				? [[parsedNutrientId, parsedValue] as const]
+				: [];
+		});
 
-		return rawGoals
-			? {
-					...defaultGoals,
-					...migrateLegacyNutrientGoals(
-						JSON.parse(rawGoals) as Record<number, number>,
-						shouldMigrateLegacySodium,
-					),
-				}
-			: { ...defaultGoals };
+		return { ...defaultGoals, ...Object.fromEntries(storedGoals) };
 	} catch {
 		return { ...defaultGoals };
 	}
@@ -142,20 +140,16 @@ export const readStoredMixState = (
 		if (!rawState) return fallbackState;
 
 		const savedState = JSON.parse(rawState) as SavedMixState;
+		if (savedState.version !== MIX_STATE_STORAGE_VERSION) {
+			return fallbackState;
+		}
 		const normalizedSavedOptions = normalizeNutrientOptions(savedState.options);
-		const shouldMigrateLegacySodium = hasLegacySodiumOption(
-			normalizedSavedOptions,
-		);
 		const selected = Array.isArray(savedState.selected)
-			? migrateLegacyNutrientIds(
-					savedState.selected,
-					shouldMigrateLegacySodium,
-				)
+			? savedState.selected
 			: fallbackState.selected;
-		const savedOptions = migrateLegacyNutrientOptions(normalizedSavedOptions);
 		const options = mergeNutrientOptions(
 			getDefaultNutrientOptions(),
-			savedOptions,
+			normalizedSavedOptions,
 			optionsFromSelectedNutrientIds(selected, [defaultMixFields, nutrientCatalog]),
 		);
 		const selectedFoodIds = Array.isArray(savedState.selectedFoodIds)
@@ -230,18 +224,29 @@ export const readStoredMixState = (
 	}
 };
 
+export const createPersistedMixState = (
+	mixState: MixStateSnapshot,
+): PersistedMixState => ({
+	version: MIX_STATE_STORAGE_VERSION,
+	...mixState,
+});
+
 export const writeStoredMixState = (mixState: MixStateSnapshot) => {
+	const persistedState = createPersistedMixState(mixState);
 	localStorage.setItem(
 		getScopedStorageKey(MIX_STORAGE_KEYS.mixState),
-		JSON.stringify(mixState),
+		JSON.stringify(persistedState),
 	);
+	return persistedState;
 };
 
 export const writeStoredRawMixState = (mixState: Record<string, unknown>) => {
-	localStorage.setItem(
-		getScopedStorageKey(MIX_STORAGE_KEYS.mixState),
-		JSON.stringify(mixState),
-	);
+	const storageKey = getScopedStorageKey(MIX_STORAGE_KEYS.mixState);
+	if (mixState.version !== MIX_STATE_STORAGE_VERSION) {
+		localStorage.removeItem(storageKey);
+		return;
+	}
+	localStorage.setItem(storageKey, JSON.stringify(mixState));
 };
 
 export const getMixStateSnapshot = ({

@@ -14,6 +14,7 @@ import type { FdcFood } from "$lib/utils/food/types";
 export type NutrientOption = { id: string | number; label: string };
 
 export type SavedMixState = {
+	version?: number;
 	selected?: (string | number)[];
 	options?: NutrientOption[];
 	selectedFoodIds?: number[];

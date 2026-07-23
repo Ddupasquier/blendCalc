@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "$lib/types/database.types";
+import type { NutrientDefinitionReferenceRecord } from "$lib/utils/food/nutrients/nutrientDefinitionRecord";
 
 export type ProductDataSource = {
 	key: string;
@@ -40,7 +41,15 @@ export type ProductReferenceData = {
 
 export const readProductReferenceData = async (
 	supabase: SupabaseClient<Database>,
+	nutrientDefinitions?: NutrientDefinitionReferenceRecord[],
 ): Promise<ProductReferenceData> => {
+	const definitionsPromise = nutrientDefinitions
+		? Promise.resolve({ data: nutrientDefinitions, error: null })
+		: supabase
+				.from("nutrient_definitions")
+				.select(
+					"nutrient_id, nutrient_name, nutrient_number, default_unit_name",
+				);
 	const [sourcesResult, mappingsResult, conversionsResult, definitionsResult] =
 		await Promise.all([
 			supabase
@@ -62,9 +71,7 @@ export const readProductReferenceData = async (
 				.select(
 					"source_key, nutrient_id, from_unit_name, to_unit_name, multiplier",
 				),
-			supabase
-				.from("nutrient_definitions")
-				.select("nutrient_id, nutrient_name, nutrient_number, default_unit_name"),
+			definitionsPromise,
 		]);
 
 	if (sourcesResult.error) throw sourcesResult.error;

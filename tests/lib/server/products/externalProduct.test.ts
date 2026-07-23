@@ -133,7 +133,7 @@ describe("external barcode product lookup", () => {
 		]);
 	});
 
-	it("uses a cached image before requesting another image source", async () => {
+	it("keeps a cached image while checking the secondary source for other fields", async () => {
 		const usdaDraft = makeDraft("usda");
 		const openFoodFacts = vi.fn();
 
@@ -148,7 +148,7 @@ describe("external barcode product lookup", () => {
 			source: "usda",
 			image: cachedCommunityImage,
 		});
-		expect(openFoodFacts).not.toHaveBeenCalled();
+		expect(openFoodFacts).toHaveBeenCalledOnce();
 	});
 
 	it("uses a cached image with Open Food Facts nutrition when USDA has no match", async () => {
@@ -211,8 +211,15 @@ describe("external barcode product lookup", () => {
 		expect(openFoodFacts).toHaveBeenCalledOnce();
 	});
 
-	it("skips the secondary lookup when the primary draft already has an image", async () => {
-		const usdaDraft = makeDraft("usda", openFoodFactsImage);
+	it("skips the secondary lookup when every enrichable field is already present", async () => {
+		const usdaDraft = makeDraft("usda", openFoodFactsImage, {
+			ingredients: "Tomatoes, onions",
+			ingredientList: ["Tomatoes", "onions"],
+			allergens: ["None declared"],
+			traces: ["None declared"],
+			dietaryTags: ["Vegan"],
+			labels: ["Packaged food"],
+		});
 		const openFoodFacts = vi.fn();
 
 		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {

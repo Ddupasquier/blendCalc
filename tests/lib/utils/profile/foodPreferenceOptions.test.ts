@@ -37,7 +37,7 @@ describe("food preference option sets", () => {
 		expect(options.ingredients.map((option) => option.label)).toEqual(["Banana"]);
 	});
 
-	it("orders allergens and restrictions by safety-first priority before popularity", () => {
+	it("orders allergens and restrictions by DB usage count instead of a code vocabulary", () => {
 		const options = getFoodPreferenceOptionSets([
 			{
 				category: "allergen",
@@ -74,12 +74,12 @@ describe("food preference option sets", () => {
 		]);
 
 		expect(options.allergens.map((option) => option.label)).toEqual([
-			"Peanut",
 			"Sesame",
+			"Peanut",
 		]);
 		expect(options.dietaryRestrictions.map((option) => option.label)).toEqual([
-			"Vegan",
 			"Kosher",
+			"Vegan",
 		]);
 	});
 

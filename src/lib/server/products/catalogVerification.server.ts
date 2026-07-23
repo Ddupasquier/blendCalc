@@ -3,6 +3,10 @@ import type { Json } from "$lib/types/database.types";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import { compactFood } from "$lib/utils/food/records/foodRecords";
 import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import {
+	compareNormalizedFoods,
+	normalizeComparisonText,
+} from "$lib/utils/products/productDifferenceEngine";
 import { createCatalogFoodFromDraft } from "./catalogFood.server";
 import type { ResolvedFoodCategory } from "./categoryMapping.server";
 
@@ -56,18 +60,12 @@ const toJson = (value: unknown) => value as Json;
 const hashPayload = (value: unknown) =>
 	createHash("sha256").update(JSON.stringify(value)).digest("hex");
 
-const normalizeText = (value?: string) =>
-	value?.trim().toLocaleLowerCase().replace(/[^a-z0-9]+/g, " ").trim() ?? "";
-
 const getReportedNutrientIds = (food: FdcFood) =>
 	new Set(
 		food.reportedNutrientIds ?? food.foodNutrients
 			.filter((nutrient) => nutrient.valueOrigin === "reported")
 			.map((nutrient) => nutrient.nutrientId),
 	);
-
-const getNutrientMap = (food: FdcFood) =>
-	new Map(food.foodNutrients.map((nutrient) => [nutrient.nutrientId, nutrient]));
 
 const createObservation = (input: {
 	key: string;
@@ -106,7 +104,7 @@ const addFoodProvenance = (
 			fieldPath: "productName",
 			observationKey,
 			sourceValue: food.description,
-			normalizedValue: normalizeText(food.description),
+			normalizedValue: normalizeComparisonText(food.description),
 			confidence,
 			verificationMethod,
 		},
@@ -117,7 +115,7 @@ const addFoodProvenance = (
 			fieldPath: "brandOwner",
 			observationKey,
 			sourceValue: food.brandOwner,
-			normalizedValue: normalizeText(food.brandOwner),
+			normalizedValue: normalizeComparisonText(food.brandOwner),
 			confidence,
 			verificationMethod,
 		});
@@ -166,69 +164,49 @@ const findFoodConflicts = (
 	sourceFood: FdcFood,
 	sourceKey: "usda" | "open-food-facts" = "usda",
 ): CatalogConflict[] => {
-	const conflicts: CatalogConflict[] = [];
-	const userBrand = normalizeText(userFood.brandOwner);
-	const sourceBrand = normalizeText(sourceFood.brandOwner);
-	if (userBrand && sourceBrand && userBrand !== sourceBrand) {
-		conflicts.push({
-			fieldPath: "brandOwner",
-			observedValues: [
-				toJson({ source: "user-label", value: userFood.brandOwner }),
-				toJson({ source: sourceKey, value: sourceFood.brandOwner }),
-			],
-			severity: "medium",
-		});
-	}
-
-	const userServing = userFood.customServingWeightGrams ?? userFood.servingSize;
-	const sourceServing = sourceFood.customServingWeightGrams ?? sourceFood.servingSize;
-	if (userServing && sourceServing) {
-		const severity = getNumericConflictSeverity(userServing, sourceServing);
-		if (severity) {
-			conflicts.push({
-				fieldPath: "servingWeightGrams",
-				observedValues: [
-					toJson({ source: "user-label", value: userServing }),
-					toJson({ source: sourceKey, value: sourceServing }),
-				],
-				severity,
-			});
-		}
-	}
-
-	const userNutrients = getNutrientMap(userFood);
-	const sourceNutrients = getNutrientMap(sourceFood);
 	const userReported = getReportedNutrientIds(userFood);
 	const sourceReported = getReportedNutrientIds(sourceFood);
-	for (const nutrientId of userReported) {
-		if (!sourceReported.has(nutrientId)) continue;
-		const userNutrient = userNutrients.get(nutrientId);
-		const sourceNutrient = sourceNutrients.get(nutrientId);
-		if (!userNutrient || !sourceNutrient) continue;
-		if (userNutrient.unitName.toUpperCase() !== sourceNutrient.unitName.toUpperCase()) {
-			conflicts.push({
-				fieldPath: `nutrient:${nutrientId}`,
-				observedValues: [
-					toJson({ source: "user-label", ...userNutrient }),
-					toJson({ source: sourceKey, ...sourceNutrient }),
-				],
-				severity: "high",
-			});
-			continue;
+	return compareNormalizedFoods(userFood, sourceFood, {
+		submittedNutrientIds: userReported,
+		previousNutrientIds: sourceReported,
+		includeAddedNutrients: false,
+	}).flatMap((difference): CatalogConflict[] => {
+		if (![
+			"brandOwner",
+			"servingWeightGrams",
+		].includes(difference.field) && !difference.field.startsWith("nutrient:")) {
+			return [];
 		}
-		const severity = getNumericConflictSeverity(userNutrient.value, sourceNutrient.value);
-		if (!severity) continue;
-		conflicts.push({
-			fieldPath: `nutrient:${nutrientId}`,
+		const severity = difference.field === "brandOwner"
+			? "medium"
+			: difference.unitMismatch
+				? "high"
+				: typeof difference.submittedValue === "number" &&
+						typeof difference.previousValue === "number"
+					? getNumericConflictSeverity(
+						difference.submittedValue,
+						difference.previousValue,
+					)
+					: difference.submittedNutrient && difference.previousNutrient
+						? getNumericConflictSeverity(
+							difference.submittedNutrient.value,
+							difference.previousNutrient.value,
+						)
+						: null;
+		if (!severity) return [];
+		const submittedValue = difference.submittedNutrient ??
+			difference.submittedValue;
+		const previousValue = difference.previousNutrient ??
+			difference.previousValue;
+		return [{
+			fieldPath: difference.field,
 			observedValues: [
-				toJson({ source: "user-label", ...userNutrient }),
-				toJson({ source: sourceKey, ...sourceNutrient }),
+				toJson({ source: "user-label", value: submittedValue }),
+				toJson({ source: sourceKey, value: previousValue }),
 			],
 			severity,
-		});
-	}
-
-	return conflicts;
+		}];
+	});
 };
 
 const preserveFoodMetadata = (food: FdcFood): FdcFood => ({
@@ -240,45 +218,29 @@ export const buildUsdaVerifiedCatalogBundle = (
 	userFood: FdcFood,
 	usdaDraft: BarcodeProductDraft,
 	category: ResolvedFoodCategory,
-): CatalogVerificationBundle => {
-	const usdaFood = preserveFoodMetadata(
-		createCatalogFoodFromDraft(usdaDraft, category),
-	);
-	const userObservation = createObservation({
-		key: "user-label",
-		source: "user-label",
-		sourceLicense: "submitted-with-consent",
-		food: preserveFoodMetadata(userFood),
-	});
-	const usdaObservation = createObservation({
-		key: "usda",
-		source: "usda",
-		sourceReference: usdaDraft.sourceReference,
-		sourceLicense: "CC0-1.0",
-		food: usdaFood,
-		rawPayload: usdaDraft,
-	});
-
-	return {
-		canonicalFood: usdaFood,
-		observations: [userObservation, usdaObservation],
-		provenance: addFoodProvenance(
-			usdaFood,
-			"usda",
-			"source-verified",
-			"exact-barcode",
-		),
-		conflicts: findFoodConflicts(userFood, usdaFood),
-	};
-};
+): CatalogVerificationBundle =>
+	buildCombinedSourceCatalogBundle(userFood, usdaDraft, [usdaDraft], category);
 
 export const buildOpenFoodFactsCatalogBundle = (
 	userFood: FdcFood,
 	openFoodFactsDraft: BarcodeProductDraft,
 	category: ResolvedFoodCategory,
+): CatalogVerificationBundle =>
+	buildCombinedSourceCatalogBundle(
+		userFood,
+		openFoodFactsDraft,
+		[openFoodFactsDraft],
+		category,
+	);
+
+export const buildCombinedSourceCatalogBundle = (
+	userFood: FdcFood,
+	canonicalDraft: BarcodeProductDraft,
+	sourceDrafts: BarcodeProductDraft[],
+	category: ResolvedFoodCategory,
 ): CatalogVerificationBundle => {
-	const openFoodFactsFood = preserveFoodMetadata(
-		createCatalogFoodFromDraft(openFoodFactsDraft, category),
+	const canonicalFood = preserveFoodMetadata(
+		createCatalogFoodFromDraft(canonicalDraft, category),
 	);
 	const userObservation = createObservation({
 		key: "user-label",
@@ -286,28 +248,55 @@ export const buildOpenFoodFactsCatalogBundle = (
 		sourceLicense: "submitted-with-consent",
 		food: preserveFoodMetadata(userFood),
 	});
-	const openFoodFactsObservation = createObservation({
-		key: "open-food-facts",
-		source: "open-food-facts",
-		sourceReference: openFoodFactsDraft.sourceReference,
-		sourceLicense: "ODbL-1.0",
-		food: openFoodFactsFood,
-		rawPayload: openFoodFactsDraft,
+	const sourceObservations = sourceDrafts.map((draft) => {
+		const source = draft.source === "open-food-facts"
+			? "open-food-facts" as const
+			: "usda" as const;
+		return createObservation({
+			key: source,
+			source,
+			sourceReference: draft.sourceReference,
+			sourceLicense: source === "usda" ? "CC0-1.0" : "ODbL-1.0",
+			food: preserveFoodMetadata(createCatalogFoodFromDraft(draft, category)),
+			rawPayload: draft,
+		});
 	});
+	const primaryObservationKey = canonicalDraft.source === "open-food-facts"
+		? "open-food-facts"
+		: "usda";
+	const servingObservationKey =
+		canonicalDraft.fieldProvenance?.serving?.source === "open-food-facts"
+			? "open-food-facts"
+			: canonicalDraft.fieldProvenance?.serving?.source === "usda"
+				? "usda"
+				: primaryObservationKey;
 
 	return {
-		canonicalFood: openFoodFactsFood,
-		observations: [userObservation, openFoodFactsObservation],
+		canonicalFood,
+		observations: [userObservation, ...sourceObservations],
 		provenance: addFoodProvenance(
-			openFoodFactsFood,
-			"open-food-facts",
+			canonicalFood,
+			primaryObservationKey,
 			"source-verified",
 			"exact-barcode",
-		),
+		).map((entry) => {
+			if (entry.fieldPath === "servingWeightGrams") {
+				return { ...entry, observationKey: servingObservationKey };
+			}
+			if (!entry.fieldPath.startsWith("nutrient:")) return entry;
+			const nutrientId = Number(entry.fieldPath.split(":")[1]);
+			const nutrientSource = canonicalFood.foodNutrients.find(
+				(nutrient) => nutrient.nutrientId === nutrientId,
+			)?.source;
+			if (nutrientSource !== "usda" && nutrientSource !== "open-food-facts") {
+				return entry;
+			}
+			return { ...entry, observationKey: nutrientSource };
+		}),
 		conflicts: findFoodConflicts(
 			userFood,
-			openFoodFactsFood,
-			"open-food-facts",
+			canonicalFood,
+			primaryObservationKey,
 		),
 	};
 };

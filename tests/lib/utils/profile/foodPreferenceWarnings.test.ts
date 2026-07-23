@@ -10,6 +10,22 @@ const baseProfile: FoodPreferenceProfile = {
 	prioritizedNutrientIds: [],
 	defaultSmoothieServingGrams: null,
 	sensitiveAcknowledgedAt: null,
+	warningRules: [
+		{
+			preferenceSlug: "dairy",
+			preferenceLabel: "Dairy",
+			factSlug: "milk",
+			factLabel: "Milk",
+			level: "warning",
+		},
+		{
+			preferenceSlug: "vegan",
+			preferenceLabel: "Vegan",
+			factSlug: "milk",
+			factLabel: "Milk",
+			level: "warning",
+		},
+	],
 };
 
 const makeFood = (overrides: Partial<FdcFood>): FdcFood => ({
@@ -21,22 +37,16 @@ const makeFood = (overrides: Partial<FdcFood>): FdcFood => ({
 });
 
 describe("food preference warnings", () => {
-	it("treats plain description matches as potential instead of confirmed", () => {
+	it("does not infer allergens from product descriptions", () => {
 		const warnings = getFoodPreferenceWarnings(
 			makeFood({ description: "Whole milk" }),
 			{ ...baseProfile, allergens: ["Dairy"] },
 		);
 
-		expect(warnings).toEqual([
-			expect.objectContaining({
-				category: "allergen",
-				label: "Dairy",
-				level: "potential",
-			}),
-		]);
+		expect(warnings).toEqual([]);
 	});
 
-	it("warns from controlled ingredient text terms", () => {
+	it("does not infer allergens from unstructured ingredient text", () => {
 		const warnings = getFoodPreferenceWarnings(
 			makeFood({
 				description: "Protein shake",
@@ -45,13 +55,7 @@ describe("food preference warnings", () => {
 			{ ...baseProfile, allergens: ["Dairy"] },
 		);
 
-		expect(warnings).toEqual([
-			expect.objectContaining({
-				category: "allergen",
-				label: "Dairy",
-				level: "warning",
-			}),
-		]);
+		expect(warnings).toEqual([]);
 	});
 
 	it("does not flag plant milk as dairy or milk", () => {
@@ -71,7 +75,7 @@ describe("food preference warnings", () => {
 		expect(warnings).toEqual([]);
 	});
 
-	it("still flags plant milk for the actual plant allergen", () => {
+	it("does not use hardcoded aliases for unstructured ingredient text", () => {
 		const warnings = getFoodPreferenceWarnings(
 			makeFood({
 				description: "Unsweetened almond milk",
@@ -80,13 +84,7 @@ describe("food preference warnings", () => {
 			{ ...baseProfile, allergens: ["Tree Nut"] },
 		);
 
-		expect(warnings).toEqual([
-			expect.objectContaining({
-				category: "allergen",
-				label: "Tree Nut",
-				level: "warning",
-			}),
-		]);
+		expect(warnings).toEqual([]);
 	});
 
 	it("warns when dietary restrictions conflict with ingredients", () => {
@@ -94,6 +92,7 @@ describe("food preference warnings", () => {
 			makeFood({
 				description: "Evaporated milk",
 				ingredients: "Milk, vitamin D3",
+				allergens: ["Milk"],
 			}),
 			{ ...baseProfile, dietaryRestrictions: ["Vegan"] },
 		);

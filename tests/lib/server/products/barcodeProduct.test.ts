@@ -4,6 +4,7 @@ import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 const mocks = vi.hoisted(() => ({
 	getSharedProductByBarcode: vi.fn(),
 	lookupExternalBarcodeProduct: vi.fn(),
+	getRequiredPackagedNutrientIds: vi.fn(),
 	getProductReferenceData: vi.fn(),
 	mapSharedCatalogFood: vi.fn(),
 	getCachedFoodImageByBarcode: vi.fn(),
@@ -16,6 +17,7 @@ vi.mock("$lib/server/products/catalog.server", () => ({
 }));
 vi.mock("$lib/server/products/externalProduct.server", () => ({
 	lookupExternalBarcodeProduct: mocks.lookupExternalBarcodeProduct,
+	getRequiredPackagedNutrientIds: mocks.getRequiredPackagedNutrientIds,
 }));
 vi.mock("$lib/server/products/productReferenceData.server", () => ({
 	getProductReferenceData: mocks.getProductReferenceData,
@@ -56,6 +58,12 @@ const makeDraft = (
 	}],
 	reportedNutrientIds: [1079],
 	categories: ["Pasta sauces"],
+	ingredients: "Tomato puree, onions, garlic",
+	ingredientList: ["Tomato puree", "Onions", "Garlic"],
+	allergens: ["milk"],
+	traces: ["wheat"],
+	dietaryTags: ["vegetarian"],
+	labels: ["packaged food"],
 	image: {
 		source: "open-food-facts",
 		sourceReference: "00021130493609",
@@ -74,6 +82,7 @@ describe("barcode product DB-first enrichment", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mocks.getProductReferenceData.mockResolvedValue({});
+		mocks.getRequiredPackagedNutrientIds.mockResolvedValue([1079]);
 		mocks.getCachedFoodImageByBarcode.mockResolvedValue(null);
 		mocks.resolveBarcodeDraftCategory.mockImplementation(
 			async (_supabase, draft) => draft,

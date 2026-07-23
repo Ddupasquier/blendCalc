@@ -1,5 +1,8 @@
 import type { FdcFood } from "$lib/utils/food/types";
-import { normalizeFoodProductName } from "$lib/utils/products/productNameFormatting.js";
+import {
+	formatSourceProductName,
+	normalizeFoodProductName,
+} from "$lib/utils/products/productNameFormatting.js";
 import { resolveFoodSymbolKey } from "$lib/utils/food/reference/appReferenceCatalog";
 
 export const compactFood = (food: FdcFood): FdcFood => {
@@ -89,6 +92,14 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		})),
 	};
 };
+
+export const compactManagedFood = (food: FdcFood): FdcFood =>
+	compactFood({
+		...food,
+		description: formatSourceProductName(food.description),
+		nameProvenance:
+			food.nameProvenance === "barcode" ? "barcode" : "source",
+	});
 
 export const uniqueFoodsById = (foods: FdcFood[]) => {
 	const seen = new Set<number>();

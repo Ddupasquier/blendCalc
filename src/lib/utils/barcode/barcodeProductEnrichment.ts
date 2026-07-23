@@ -9,6 +9,16 @@ import type {
 
 export type MissingBarcodeProductFields = Record<FoodTrackedField, boolean>;
 
+export type BarcodeProductSupplementPlan = MissingBarcodeProductFields & {
+	ingredients: boolean;
+	ingredientList: boolean;
+	allergens: boolean;
+	traces: boolean;
+	dietaryTags: boolean;
+	labels: boolean;
+	missingNutrientIds: number[];
+};
+
 const isValidNutrient = (nutrient: FdcNutrient) =>
 	Number.isSafeInteger(nutrient.nutrientId) &&
 	nutrient.nutrientId > 0 &&
@@ -40,15 +50,39 @@ export const getMissingBarcodeProductFields = (
 	serving: !hasServing(draft),
 });
 
+const hasValues = (values?: string[]) =>
+	Boolean(values?.some((value) => value.trim()));
+
+export const getBarcodeProductSupplementPlan = (
+	draft: BarcodeProductDraft,
+	requiredNutrientIds: Iterable<number> = [],
+): BarcodeProductSupplementPlan => {
+	const availableIds = new Set(
+		draft.nutrients.filter(isValidNutrient).map((nutrient) => nutrient.nutrientId),
+	);
+	return {
+		...getMissingBarcodeProductFields(draft),
+		ingredients: !draft.ingredients?.trim(),
+		ingredientList: !hasValues(draft.ingredientList),
+		allergens: !hasValues(draft.allergens),
+		traces: !hasValues(draft.traces),
+		dietaryTags: !hasValues(draft.dietaryTags),
+		labels: !hasValues(draft.labels),
+		missingNutrientIds: [...requiredNutrientIds].filter(
+			(nutrientId) => !availableIds.has(nutrientId),
+		),
+	};
+};
+
 export const needsBarcodeProductSupplement = (
 	draft: BarcodeProductDraft,
 	requiredNutrientIds: Iterable<number> = [],
 ) => {
-	if (Object.values(getMissingBarcodeProductFields(draft)).some(Boolean)) return true;
-	const availableIds = new Set(
-		draft.nutrients.filter(isValidNutrient).map((nutrient) => nutrient.nutrientId),
-	);
-	return [...requiredNutrientIds].some((nutrientId) => !availableIds.has(nutrientId));
+	const plan = getBarcodeProductSupplementPlan(draft, requiredNutrientIds);
+	return plan.missingNutrientIds.length > 0 ||
+		Object.entries(plan).some(
+			([field, missing]) => field !== "missingNutrientIds" && missing === true,
+		);
 };
 
 export const getSupplementedBarcodeProductFields = (

@@ -402,8 +402,8 @@
 
     const saveMixState = () => {
         const mixState = getCurrentMixState();
-        writeStoredMixState(mixState);
-        void saveCloudMixPreferences({ mixState });
+        const persistedMixState = writeStoredMixState(mixState);
+        void saveCloudMixPreferences({ mixState: persistedMixState });
     };
 
     const loadCloudBackedMixPreferences = () => {

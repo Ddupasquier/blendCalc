@@ -9,6 +9,7 @@ import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/norm
 import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
 import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredientProvenance";
 import { tokenizeIngredientSearchText } from "$lib/utils/ingredients/ingredientSearchRelevance";
+import { normalizeFoodProductName } from "$lib/utils/products/productNameFormatting.js";
 import { selectPreferredFoodImageAsset } from "$lib/utils/storage/supabase/foodImages";
 import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
 import { readFoodServingsByParent } from "$lib/utils/storage/supabase/servings";
@@ -152,12 +153,31 @@ const readActiveFoodImages = async (
 	] as FoodImageRow[]) {
 		imageRows.set(row.id, row);
 	}
+	const imageRowsByProductId = new Map<string, FoodImageRow[]>();
+	const imageRowsByBarcode = new Map<string, FoodImageRow[]>();
+	for (const image of imageRows.values()) {
+		if (image.shared_product_id) {
+			const productImages =
+				imageRowsByProductId.get(image.shared_product_id) ?? [];
+			productImages.push(image);
+			imageRowsByProductId.set(image.shared_product_id, productImages);
+		}
+		if (image.barcode) {
+			const barcodeImages = imageRowsByBarcode.get(image.barcode) ?? [];
+			barcodeImages.push(image);
+			imageRowsByBarcode.set(image.barcode, barcodeImages);
+		}
+	}
+
 	const imagesByProduct = new Map<string, FoodImageAsset[]>();
 	for (const product of rows) {
-		const images = [...imageRows.values()]
-			.filter((image) =>
-				image.shared_product_id === product.id || image.barcode === product.barcode
-			)
+		const matchingRows = new Map(
+			[
+				...(imageRowsByProductId.get(product.id) ?? []),
+				...(imageRowsByBarcode.get(product.barcode) ?? []),
+			].map((image) => [image.id, image]),
+		);
+		const images = [...matchingRows.values()]
 			.map(toFoodImageAsset);
 		const preferredFrontImage = selectPreferredFoodImageAsset(
 			images.filter((image) => image.role === "front"),
@@ -190,7 +210,7 @@ const hydrateCatalogRows = async (
 			? categories.get(row.category_option_id) ?? null
 			: null;
 		const images = imagesByProduct.get(row.id) ?? [];
-		const baseFood = {
+		const baseFood = normalizeFoodProductName({
 			...(row.food as unknown as FdcFood),
 			categoryOptionId: row.category_option_id ?? undefined,
 			compatibilitySummary:
@@ -200,7 +220,7 @@ const hydrateCatalogRows = async (
 				row.confidence as FdcFood["sharedProductConfidence"],
 			customFood: false,
 			image: images[0],
-		};
+		}) as FdcFood;
 		const categorizedFood = category
 			? applyCanonicalFoodCategory(baseFood, category)
 			: baseFood;

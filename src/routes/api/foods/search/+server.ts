@@ -25,6 +25,7 @@ import { annotateFoodWithPreferenceWarnings } from "$lib/utils/profile/foodPrefe
 import { error, json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { getNutritionCompletenessCatalog } from "$lib/server/nutrition/nutritionCompletenessCatalog.server";
+import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const user = await locals.getVerifiedUser();
@@ -95,10 +96,16 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			searches.push(searchGenericFoods(locals.supabase, query));
 		}
 		const searchPromise = Promise.allSettled(searches);
-		const [foodPreferencesResult, searchResults, nutritionCompletenessCatalog] = await Promise.all([
+		const [
+			foodPreferencesResult,
+			searchResults,
+			nutritionCompletenessCatalog,
+			appReferenceCatalog,
+		] = await Promise.all([
 			foodPreferencesPromise,
 			searchPromise,
 			getNutritionCompletenessCatalog(),
+			getAppReferenceCatalog(),
 		]);
 		if (
 			foodPreferencesResult.error &&
@@ -106,7 +113,10 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		) {
 			throw foodPreferencesResult.error;
 		}
-		const profile = getFoodPreferenceProfile(foodPreferencesResult.data);
+		const profile = getFoodPreferenceProfile(
+			foodPreferencesResult.data,
+			appReferenceCatalog.foodPreferenceConflictRules,
+		);
 		if (
 			searchResults.length > 0 &&
 			searchResults.every((result) => result.status === "rejected")

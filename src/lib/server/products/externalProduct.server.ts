@@ -14,7 +14,7 @@ import { lookupOpenFoodFactsBarcodeProduct } from "$lib/server/products/sources/
 
 export { lookupUsdaBarcodeProduct, lookupOpenFoodFactsBarcodeProduct };
 
-const getRequiredPackagedNutrientIds = async () => {
+export const getRequiredPackagedNutrientIds = async () => {
 	const catalog = await getNutritionCompletenessCatalog();
 	const profiles = catalog.profiles.filter((profile) => profile.foodScope === "packaged");
 	const profile = profiles.find(

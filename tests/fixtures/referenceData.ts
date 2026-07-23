@@ -136,6 +136,7 @@ export const appReferenceCatalogFixture: AppReferenceCatalog = {
 		{ symbolKey: "fruit", matchPattern: "(fruit|apple|banana)", priority: 90 },
 		{ symbolKey: "sweets", matchPattern: "(sweet|candy|syrup)", priority: 100 },
 	],
+	foodPreferenceConflictRules: [],
 };
 
 export const nutritionCompletenessCatalogFixture: NutritionCompletenessCatalog = {

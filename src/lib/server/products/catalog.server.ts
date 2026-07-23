@@ -1,7 +1,7 @@
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { getNutrientDefinitionCatalog } from "$lib/server/nutrition/nutrientDefinitionCatalog.server";
 import type { Database, Json } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
-import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import { compactFood } from "$lib/utils/food/records/foodRecords";
 import {
 	createNutrientValueMapFromFood,
@@ -16,39 +16,31 @@ import {
 	compareCatalogSubmissionToExistingProduct,
 	type CatalogSubmissionComparison,
 } from "$lib/utils/products/catalogSubmissionComparison";
-import {
-	createCatalogUpdateSourceCheck,
-	createCatalogUpdateSummary,
-	type CatalogUpdateSummary,
-} from "$lib/utils/products/catalogUpdateReview";
-import { toJson } from "$lib/utils/storage/supabase/shared";
+import { createCatalogUpdateSummary } from "$lib/utils/products/catalogUpdateReview";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-	buildOpenFoodFactsCatalogBundle,
 	buildModeratorReviewedCatalogBundle,
-	buildUsdaVerifiedCatalogBundle,
-	type CatalogConflict,
-	type CatalogFieldProvenance,
-	type CatalogObservation,
 } from "./catalogVerification.server";
-import { createCatalogFoodFromDraft } from "./catalogFood.server";
-import {
-	readCatalogUpdateTarget,
-	type CatalogUpdateTarget,
-} from "./catalogUpdateReview.server";
+import { readCatalogUpdateTarget } from "./catalogUpdateReview.server";
 import {
 	applyCanonicalFoodCategory,
 	readFoodCategoryOption,
-	resolveBarcodeDraftCategory,
 	resolveFoodCategoryOption,
 } from "./categoryMapping.server";
+import { assessCatalogProductSources } from "./catalogSourceAssessment.server";
+import { publishCatalogSubmission } from "./catalogPublishing.server";
 import {
-	lookupOpenFoodFactsBarcodeProduct,
-	lookupUsdaBarcodeProduct,
-} from "./externalProduct.server";
+	createCatalogSubmission,
+	findPendingCatalogSubmission,
+	recordAutoDeclinedCatalogSubmission,
+} from "./catalogSubmissionRepository.server";
+import {
+	buildProductSubmissionReviewFlags,
+	prepareCatalogSubmissionReview,
+	type CatalogSubmissionValidationReport,
+} from "./catalogSubmissionReview.server";
 import {
 	createProductEvidenceSignedUrlBatches,
-	hasCompleteProductEvidence,
 	type ProductEvidencePaths,
 } from "./productEvidence.server";
 import {
@@ -60,27 +52,6 @@ import {
 	getApprovedCatalogRecordByBarcode,
 	searchApprovedCatalogRecords,
 } from "./catalogRead.server";
-
-type CatalogSource = "usda" | "open-food-facts" | "community-reviewed";
-type CatalogConfidence =
-	| "source-verified"
-	| "moderator-reviewed"
-	| "corroborated"
-	| "imported";
-
-type ValidationReport = {
-	valid: boolean;
-	issues: string[];
-	usdaMatch?: boolean;
-	openFoodFactsMatch?: boolean;
-	externalLookupFailed?: boolean;
-	evidenceComplete?: boolean;
-	conflictCount?: number;
-	existingCatalogMatch?: boolean;
-	existingCatalogAction?: "already_available" | "update_review" | "auto_declined";
-	existingCatalogComparison?: CatalogSubmissionComparison;
-	imageCrop?: FoodImagePlacementValues | null;
-};
 
 type ProductSubmissionContext = {
 	reviewFlags?: string[];
@@ -143,35 +114,7 @@ const formatBlockDate = (value: string) =>
 		timeZone: "UTC",
 	}).format(new Date(value));
 
-const sanitizeReviewFlags = (reviewFlags: string[] = []) =>
-	Array.from(
-		new Set(
-			reviewFlags
-				.map((flag) => flag.trim())
-				.filter(Boolean)
-				.map((flag) => flag.slice(0, 1000)),
-		),
-	).slice(0, 10);
-
-export const buildProductSubmissionReviewFlags = ({
-	requestedFlags = [],
-	existingComparison,
-	sourceComparison,
-}: {
-	requestedFlags?: string[];
-	existingComparison?: CatalogSubmissionComparison | null;
-	sourceComparison?: CatalogSubmissionComparison | null;
-}) =>
-	sanitizeReviewFlags([
-		...requestedFlags,
-		...(existingComparison
-			? [
-					"Barcode exists in the active shared catalog, but the submitted label data differs. Review as a catalog update request.",
-					...existingComparison.issues,
-				]
-			: []),
-		...(sourceComparison?.issues ?? []),
-	]);
+export { buildProductSubmissionReviewFlags };
 
 export const validateSharedProductFood = (
 	food: FdcFood,
@@ -254,119 +197,21 @@ export const searchApprovedSharedProducts = async (
 	return records.map((record) => record.food);
 };
 
-const assertKnownSubmissionNutrients = async (
-	supabase: SupabaseClient<Database>,
-	food: FdcFood,
-) => {
+const assertKnownSubmissionNutrients = async (food: FdcFood) => {
 	const nutrientIds = [
 		...new Set(food.foodNutrients.map((nutrient) => nutrient.nutrientId)),
 	];
-	const { data, error } = await supabase
-		.from("nutrient_definitions")
-		.select("nutrient_id")
-		.in("nutrient_id", nutrientIds);
-	if (error) throw error;
-
-	const knownIds = new Set((data ?? []).map((row) => row.nutrient_id));
+	const knownIds = new Set(
+		(await getNutrientDefinitionCatalog()).map(
+			(definition) => definition.nutrient_id,
+		),
+	);
 	const unknownIds = nutrientIds.filter((nutrientId) => !knownIds.has(nutrientId));
 	if (unknownIds.length > 0) {
 		throw new Error(
 			`Unknown nutrient identifiers cannot be submitted: ${unknownIds.join(", ")}.`,
 		);
 	}
-};
-
-const publishSubmission = async (input: {
-	submissionId: string;
-	food: FdcFood;
-	productName: string;
-	brandOwner?: string;
-	source: CatalogSource;
-	sourceReference?: string;
-	confidence: CatalogConfidence;
-	approvedBy?: string;
-	observations: CatalogObservation[];
-	provenance: CatalogFieldProvenance[];
-	conflicts: CatalogConflict[];
-}) => {
-	const admin = getSupabaseAdminClient();
-	const { data, error } = await admin.rpc("publish_shared_product_submission", {
-		p_submission_id: input.submissionId,
-		p_food: toJson(compactFood(input.food)),
-		p_product_name: input.productName,
-		p_brand_owner: input.brandOwner ?? "",
-		p_source: input.source,
-		p_source_reference: input.sourceReference ?? "",
-		p_confidence: input.confidence,
-		p_observations: toJson(input.observations),
-		p_provenance: toJson(input.provenance),
-		p_conflicts: toJson(input.conflicts),
-		...(input.approvedBy ? { p_approved_by: input.approvedBy } : {}),
-	});
-	if (error) throw error;
-	return data;
-};
-
-const findExistingPendingSubmission = async (barcode: string) => {
-	const admin = getSupabaseAdminClient();
-	const { data, error } = await admin
-		.from("shared_product_submissions")
-		.select("id")
-		.eq("barcode", barcode)
-		.eq("status", "pending")
-		.order("created_at", { ascending: true })
-		.limit(1)
-		.maybeSingle();
-	if (error) throw error;
-	return data;
-};
-
-const recordAutoDeclinedCatalogSubmission = async (input: {
-	userId: string;
-	barcode: string;
-	food: FdcFood;
-	categoryOptionId: string;
-	comparison: CatalogSubmissionComparison;
-	updateTarget: CatalogUpdateTarget;
-	changeSummary: CatalogUpdateSummary;
-}) => {
-	const admin = getSupabaseAdminClient();
-	const now = new Date().toISOString();
-	const report: ValidationReport = {
-		valid: false,
-		issues: input.comparison.severeDifferences.length
-			? input.comparison.severeDifferences
-			: input.comparison.issues,
-		existingCatalogMatch: true,
-		existingCatalogAction: "auto_declined",
-		existingCatalogComparison: input.comparison,
-		evidenceComplete: false,
-	};
-
-	const { error } = await admin
-		.from("shared_product_submissions")
-		.insert({
-			submitted_by: input.userId,
-			barcode: input.barcode,
-			category_option_id: input.categoryOptionId,
-			product_name: input.food.description.trim(),
-			brand_owner: input.food.brandOwner?.trim() || null,
-			food: toJson(compactFood(input.food)),
-			consent_to_share: true,
-			status: "auto_declined",
-			verification_status: "manual_review",
-			submission_kind: "product_update",
-			target_shared_product_id: input.updateTarget.sharedProductId,
-			base_revision_id: input.updateTarget.baseRevisionId,
-			change_summary: toJson(input.changeSummary),
-			label_observed_at: input.changeSummary.observedAt,
-			validation_report: toJson(report),
-			evidence_paths: toJson({}),
-			evidence_complete: false,
-			reviewed_at: now,
-			review_note: "Machine blocked: submitted product data is wildly different from the active catalog product for this barcode.",
-		});
-	if (error) throw error;
 };
 
 export const getActiveProductSubmissionBlock = async (userId: string) => {
@@ -456,7 +301,7 @@ export const submitProductForCatalog = async (
 	if (!validation.valid || !validation.barcode) {
 		throw new Error(validation.issues.join(" "));
 	}
-	await assertKnownSubmissionNutrients(admin, food);
+	await assertKnownSubmissionNutrients(food);
 	const selectedCategory = await resolveFoodCategoryOption(
 		admin,
 		food.categories ?? [],
@@ -491,7 +336,7 @@ export const submitProductForCatalog = async (
 			observedAt: labelObservedAt,
 			sourceChecks: [],
 		});
-		await recordAutoDeclinedCatalogSubmission({
+		await recordAutoDeclinedCatalogSubmission(admin, {
 			userId,
 			barcode: validation.barcode,
 			food: submissionFood,
@@ -507,7 +352,10 @@ export const submitProductForCatalog = async (
 		};
 	}
 
-	const existingSubmission = await findExistingPendingSubmission(validation.barcode);
+	const existingSubmission = await findPendingCatalogSubmission(
+		admin,
+		validation.barcode,
+	);
 	if (existingSubmission) {
 		return {
 			status: "pending",
@@ -516,192 +364,79 @@ export const submitProductForCatalog = async (
 		};
 	}
 
-	let usdaDraft: BarcodeProductDraft | null = null;
-	let openFoodFactsDraft: BarcodeProductDraft | null = null;
-	let usdaLookupStatus: "exact-match" | "not-found" | "error" = "not-found";
-	let openFoodFactsLookupStatus: "exact-match" | "not-found" | "error" = "not-found";
-	let externalLookupFailed = false;
-	try {
-		const draft = await lookupUsdaBarcodeProduct(validation.barcode);
-		usdaDraft = draft
-			? await resolveBarcodeDraftCategory(admin, draft)
-			: null;
-		usdaLookupStatus = usdaDraft ? "exact-match" : "not-found";
-	} catch {
-		usdaLookupStatus = "error";
-		externalLookupFailed = true;
-	}
-	try {
-		const draft = await lookupOpenFoodFactsBarcodeProduct(validation.barcode);
-		openFoodFactsDraft = draft
-			? await resolveBarcodeDraftCategory(admin, draft)
-			: null;
-		openFoodFactsLookupStatus = openFoodFactsDraft ? "exact-match" : "not-found";
-	} catch {
-		openFoodFactsLookupStatus = "error";
-		externalLookupFailed = true;
-	}
-
-	const matchedDraft = usdaDraft ?? openFoodFactsDraft;
-	const canonicalCategory = existingCatalogComparison
-		? selectedCategory
-		: matchedDraft?.categoryResolution ?? selectedCategory;
-	const canonicalSubmissionFood = applyCanonicalFoodCategory(
-		submissionFood,
-		canonicalCategory,
+	const sourceAssessment = await assessCatalogProductSources(
+		admin,
+		validation.barcode,
 	);
-	const sourceComparison = matchedDraft
-		? compareCatalogSubmissionToExistingProduct(
-				canonicalSubmissionFood,
-				createCatalogFoodFromDraft(matchedDraft, canonicalCategory),
-			)
-		: null;
-	if (!existingCatalogComparison && sourceComparison?.hasBlockingIdentityMismatch) {
+	const preparedReview = prepareCatalogSubmissionReview({
+		submissionFood,
+		selectedCategory,
+		existingCatalogFood,
+		existingComparison: existingCatalogComparison,
+		updateTarget: catalogUpdateTarget,
+		sourceAssessment,
+		evidencePaths,
+		requestedReviewFlags: context.reviewFlags,
+		frontImageCrop: context.frontImageCrop,
+		labelObservedAt,
+	});
+	if (preparedReview.sourceMismatchName) {
 		return {
 			status: "source-mismatch",
 			message:
-				`This barcode belongs to “${matchedDraft?.name}”. Your ingredient was saved privately, but it was not shared.`,
+				`This barcode belongs to “${preparedReview.sourceMismatchName}”. Your ingredient was saved privately, but it was not shared.`,
 			evidenceAccepted: false,
 		};
 	}
-	const reviewFlags = buildProductSubmissionReviewFlags({
-		requestedFlags: context.reviewFlags,
-		existingComparison: existingCatalogComparison,
-		sourceComparison,
+	const {
+		canonicalCategory,
+		canonicalSubmissionFood,
+		catalogUpdateSummary,
+		evidenceComplete,
+		hasSourceMatchedImageEvidence,
+		matchedDraft,
+		needsSourceComparisonReview,
+		report,
+		verificationBundle,
+	} = preparedReview;
+
+	const submissionId = await createCatalogSubmission(admin, {
+		userId,
+		barcode: validation.barcode,
+		categoryOptionId: canonicalCategory.categoryOptionId,
+		food: canonicalSubmissionFood,
+		updateTarget: catalogUpdateTarget,
+		updateSummary: catalogUpdateSummary,
+		labelObservedAt,
+		isSourceVerified: Boolean(matchedDraft && !needsSourceComparisonReview),
+		matchedSource: matchedDraft?.source === "open-food-facts"
+			? "open-food-facts"
+			: matchedDraft?.source === "usda"
+				? "usda"
+				: null,
+		matchedReference: matchedDraft?.sourceReference,
+		report,
+		evidencePaths,
+		evidenceComplete,
 	});
-	const needsSourceComparisonReview = reviewFlags.length > 0;
-	const report: ValidationReport = {
-		valid: true,
-		issues: reviewFlags,
-		usdaMatch: Boolean(usdaDraft),
-		openFoodFactsMatch: Boolean(openFoodFactsDraft),
-		externalLookupFailed,
-		existingCatalogMatch: Boolean(existingCatalogComparison),
-		existingCatalogAction: existingCatalogComparison ? "update_review" : undefined,
-		existingCatalogComparison: existingCatalogComparison ?? undefined,
-		imageCrop: context.frontImageCrop ?? null,
-	};
-	const catalogUpdateSummary = existingCatalogComparison && existingCatalogFood && catalogUpdateTarget
-		? createCatalogUpdateSummary({
-				comparison: existingCatalogComparison,
-				baseRevisionNumber: catalogUpdateTarget.baseRevisionNumber,
-				observedAt: labelObservedAt,
-				sourceChecks: [
-					createCatalogUpdateSourceCheck({
-						source: "usda",
-						status: usdaLookupStatus,
-						checkedAt: labelObservedAt,
-						sourceReference: usdaDraft?.sourceReference,
-						sourceFood: usdaDraft
-							? createCatalogFoodFromDraft(usdaDraft, usdaDraft.categoryResolution ?? selectedCategory)
-							: null,
-						submittedFood: canonicalSubmissionFood,
-						currentFood: existingCatalogFood,
-					}),
-					createCatalogUpdateSourceCheck({
-						source: "open-food-facts",
-						status: openFoodFactsLookupStatus,
-						checkedAt: labelObservedAt,
-						sourceReference: openFoodFactsDraft?.sourceReference,
-						sourceFood: openFoodFactsDraft
-							? createCatalogFoodFromDraft(
-									openFoodFactsDraft,
-									openFoodFactsDraft.categoryResolution ?? selectedCategory,
-								)
-							: null,
-						submittedFood: canonicalSubmissionFood,
-						currentFood: existingCatalogFood,
-					}),
-				],
-			})
-		: null;
-	const hasSourceMatchedImageEvidence = Boolean(
-		matchedDraft &&
-			!needsSourceComparisonReview &&
-			!canonicalSubmissionFood.image?.imageUrl &&
-			evidencePaths.front,
-	);
-
-	const evidenceComplete = hasSourceMatchedImageEvidence
-		? true
-		: canonicalSubmissionFood.image?.imageUrl
-			? Boolean(evidencePaths.nutrition && evidencePaths.barcode)
-			: hasCompleteProductEvidence(evidencePaths);
-	if (!matchedDraft && !evidenceComplete) {
-		throw new Error(
-			"Unknown products need front package, nutrition label, and barcode photos for verification.",
-		);
-	}
-	if (needsSourceComparisonReview && !evidenceComplete) {
-		throw new Error(
-			"Source comparison reviews need front package, nutrition label, and barcode photos for verification.",
-		);
-	}
-	const verificationBundle = usdaDraft
-		? buildUsdaVerifiedCatalogBundle(
-			canonicalSubmissionFood,
-			usdaDraft,
-			canonicalCategory,
-		)
-		: openFoodFactsDraft
-			? buildOpenFoodFactsCatalogBundle(
-				canonicalSubmissionFood,
-				openFoodFactsDraft,
-				canonicalCategory,
-			)
-			: null;
-	report.evidenceComplete = evidenceComplete;
-	report.conflictCount = verificationBundle?.conflicts.length ?? 0;
-
-	const { data: submission, error: submissionError } = await admin
-		.from("shared_product_submissions")
-			.insert({
-				submitted_by: userId,
-				barcode: validation.barcode,
-				category_option_id: canonicalCategory.categoryOptionId,
-				product_name: canonicalSubmissionFood.description.trim(),
-				brand_owner: canonicalSubmissionFood.brandOwner?.trim() || null,
-				food: toJson(compactFood(canonicalSubmissionFood)),
-				submission_kind: catalogUpdateSummary ? "product_update" : "new_product",
-				target_shared_product_id: catalogUpdateTarget?.sharedProductId ?? null,
-				base_revision_id: catalogUpdateTarget?.baseRevisionId ?? null,
-				change_summary: toJson(catalogUpdateSummary ?? {}),
-				label_observed_at: labelObservedAt,
-				consent_to_share: true,
-				verification_status: usdaDraft && !needsSourceComparisonReview
-					? "source_verified"
-					: "manual_review",
-				matched_source: matchedDraft?.source === "open-food-facts"
-					? "open-food-facts"
-					: matchedDraft?.source === "usda"
-						? "usda"
-						: null,
-				matched_reference: matchedDraft?.sourceReference ?? null,
-				validation_report: toJson(report),
-				evidence_paths: toJson(evidencePaths),
-				evidence_complete: evidenceComplete,
-		})
-		.select("id")
-		.single();
-	if (submissionError || !submission) {
-		if (submissionError?.code === "23505") {
-			return {
-				status: "pending",
-				message: "This product is already waiting for review.",
-				evidenceAccepted: false,
-			};
-		}
-		throw submissionError ?? new Error("Product submission could not be saved.");
+	if (!submissionId) {
+		return {
+			status: "pending",
+			message: "This product is already waiting for review.",
+			evidenceAccepted: false,
+		};
 	}
 
 	if (matchedDraft && !needsSourceComparisonReview && !hasSourceMatchedImageEvidence) {
 		if (!verificationBundle) {
 			throw new Error("Product verification could not be prepared.");
 		}
-		const source = usdaDraft ? "usda" : "open-food-facts";
+		const source = matchedDraft.source === "open-food-facts"
+			? "open-food-facts"
+			: "usda";
 		try {
-			const sharedProductId = await publishSubmission({
-				submissionId: submission.id,
+			const sharedProductId = await publishCatalogSubmission({
+				submissionId,
 				food: verificationBundle.canonicalFood,
 				productName: matchedDraft.name,
 				brandOwner: matchedDraft.brandOwner,
@@ -718,7 +453,7 @@ export const submitProductForCatalog = async (
 				sharedProductId,
 			});
 		} catch (publishError) {
-			await admin.from("shared_product_submissions").delete().eq("id", submission.id);
+			await admin.from("shared_product_submissions").delete().eq("id", submissionId);
 			throw publishError;
 		}
 		return {
@@ -804,7 +539,7 @@ export const approveCommunityProductSubmission = async (
 	food.sharedProductConfidence = "moderator-reviewed";
 
 	const verificationBundle = buildModeratorReviewedCatalogBundle(food);
-	const sharedProductId = await publishSubmission({
+	const sharedProductId = await publishCatalogSubmission({
 		submissionId,
 		food: verificationBundle.canonicalFood,
 		productName: submission.product_name,
@@ -817,7 +552,8 @@ export const approveCommunityProductSubmission = async (
 		conflicts: verificationBundle.conflicts,
 	});
 	const evidencePaths = submission.evidence_paths as ProductEvidencePaths;
-	const validationReport = submission.validation_report as ValidationReport;
+	const validationReport =
+		submission.validation_report as CatalogSubmissionValidationReport;
 	if (evidencePaths.front) {
 		await publishModeratedFoodImageAsset({
 			barcode: submission.barcode,

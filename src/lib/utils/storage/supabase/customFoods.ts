@@ -3,6 +3,7 @@ import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/no
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type { FdcFood } from "$lib/utils/food/types";
 import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
+import { normalizeFoodProductName } from "$lib/utils/products/productNameFormatting.js";
 import type { Database } from "$lib/types/database.types";
 import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
 import { readFoodServingsByParent } from "./servings";
@@ -43,7 +44,9 @@ const hydrateCloudCustomFoods = async (
 
 	return rows.map((row) => {
 		const catalogFood = hydrateFoodWithCatalogState(
-			row.food as unknown as FdcFood,
+			normalizeFoodProductName(
+				row.food as unknown as FdcFood,
+			) as FdcFood,
 			{
 				shared_product_id:
 					(row.food as unknown as FdcFood).sharedProductId ?? null,

@@ -7,6 +7,7 @@ const SOURCE_NAME_ACRONYMS = [
 	"gmo",
 	"gtin",
 	"pb",
+	"qa",
 	"upc",
 	"us",
 	"usa",
