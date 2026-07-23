@@ -11,7 +11,7 @@ not separate public interfaces.
 - `generators/`: generated documentation and repository artifacts.
 - `imports/`: licensed external dataset ingestion into canonical database tables.
 - `operations/`: authentication, database deployment, and privileged user operations.
-- `qa/`: deterministic moderation fixtures with matching cleanup commands.
+- `qa/`: deterministic data checks and moderation fixtures with matching cleanup commands.
 - `seeds/`: repeatable reference-data discovery and database seeding.
 - `lib/`: shared script-only utilities; these files are not executable workflows.
 

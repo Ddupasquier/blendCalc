@@ -3,6 +3,7 @@
  * request cost and field coverage, and record comparable benchmark metrics in Supabase.
  * `--reset-today` deletes only today's prior benchmark-origin metrics before the run.
  * Run: `npm run benchmark:source-quality -- --limit=10`
+ * Stable sample: `npm run benchmark:source-quality -- --barcodes=00021130462506,00021130493609`
  * Reset and rerun: `npm run benchmark:source-quality -- --limit=200 --reset-today`
  */
 
@@ -26,7 +27,23 @@ const usdaApiKey = process.env.FDC_API_KEY || process.env.VITE_FDC_API_KEY;
 const limitArgument = process.argv.find((argument) => argument.startsWith("--limit="));
 const requestedLimit = Number.parseInt(limitArgument?.split("=")[1] ?? "10", 10);
 const limit = Math.min(Math.max(requestedLimit, 1), 200);
+const barcodesArgument = process.argv.find((argument) =>
+	argument.startsWith("--barcodes=")
+);
+const requestedBarcodes = barcodesArgument
+	? [...new Set(
+		barcodesArgument
+			.slice("--barcodes=".length)
+			.split(",")
+			.map((barcode) => normalizeBarcode(barcode))
+			.filter(Boolean),
+	)]
+	: [];
 const resetToday = process.argv.includes("--reset-today");
+
+if (barcodesArgument && requestedBarcodes.length === 0) {
+	throw new Error("--barcodes must contain at least one valid comma-separated GTIN.");
+}
 
 if (!supabaseUrl || !serviceRoleKey || !usdaApiKey) {
 	throw new Error(
@@ -270,14 +287,17 @@ const recordBenchmark = async (sourceKey, result) => {
 	if (error) throw error;
 };
 
-const [{ data: products, error: productError }, { data: nutrientMappings, error: mappingError }] =
+let productQuery = supabase
+	.from("shared_products")
+	.select("barcode, product_name")
+	.eq("status", "active");
+productQuery = requestedBarcodes.length > 0
+	? productQuery.in("barcode", requestedBarcodes)
+	: productQuery.order("created_at", { ascending: true }).limit(limit);
+
+const [productResult, { data: nutrientMappings, error: mappingError }] =
 	await Promise.all([
-		supabase
-			.from("shared_products")
-			.select("barcode, product_name")
-			.eq("status", "active")
-			.order("created_at", { ascending: true })
-			.limit(limit),
+		productQuery,
 		supabase
 			.from("nutrient_source_mappings")
 			.select("source_nutrient_key, nutrient_id")
@@ -285,9 +305,23 @@ const [{ data: products, error: productError }, { data: nutrientMappings, error:
 			.eq("enabled", true),
 	]);
 
+const { error: productError } = productResult;
+const products = requestedBarcodes.length > 0
+	? requestedBarcodes
+		.map((barcode) => productResult.data?.find((product) => product.barcode === barcode))
+		.filter(Boolean)
+	: productResult.data;
+
 if (productError) throw productError;
 if (mappingError) throw mappingError;
 if (!products?.length) throw new Error("No active shared-product barcodes are available.");
+if (requestedBarcodes.length > 0 && products.length !== requestedBarcodes.length) {
+	const foundBarcodes = new Set(products.map((product) => product.barcode));
+	const missingBarcodes = requestedBarcodes.filter((barcode) => !foundBarcodes.has(barcode));
+	throw new Error(
+		`Active shared products were not found for: ${missingBarcodes.join(", ")}.`,
+	);
+}
 
 const runResults = {
 	usda: [],

@@ -934,7 +934,15 @@ concrete local QA notes before handoff unless it is clearly documentation-only a
 no user verification. QA notes should be created as part of the task, not after the
 fact. Give every QA section a stable `QA-GGG` group ID and every task a stable
 `QA-GGG-TTT` ID. Use the next unused number, never reuse or renumber existing IDs, and
-preserve IDs when archiving tasks.
+preserve IDs when archiving tasks. Active priority trackers are the user's manual QA
+queue: keep only checks that require visual judgment, real-device/browser interaction,
+assistive-technology verification, user-controlled deployment configuration, or another
+human decision. Deterministic code, schema, migration, API, data-integrity, RLS, build,
+lint, or test checks belong to the coding agent. Run those checks instead of assigning
+them to the user, record successful evidence in the completed archive, and keep any
+genuinely unfinished agent-owned work once in the gitignored
+`docs/local-context/agent-action-notes.md`. Never duplicate one action between an active
+QA tracker and agent action notes.
 
 **41a.** <a id="rule-qa-priorities"></a>Assign every active QA group one explicit MVP
 priority, place the whole group in the matching active priority tracker, and keep that
@@ -966,7 +974,12 @@ tracker contains one clear, current expected outcome for each behavior.
 **42.** <a id="rule-qa-clearance"></a>Finished tasks must prompt the user to run the
 relevant QA checks from the active priority trackers linked by local
 `docs/QA/qa-tasks.md`. Keep each QA item active until the user explicitly confirms it
-passed; a checked checkbox counts as that confirmation. Whenever QA is updated and
+passed; a checked checkbox counts as that confirmation. The sole exception is an
+explicit user-requested automated QA pass: the agent may complete and archive only
+deterministic tasks whose full expected outcome was directly proven by current tests,
+database inspection, scripts, or build/lint output. Automated evidence must be written
+into the archived task, and mixed visual/manual tasks must remain active even when their
+automated portion passes. Whenever QA is updated and
 before every handoff, automatically scan all active priority trackers and move confirmed,
 checked items to `docs/QA/completed-qa-tasks.md` without waiting for
 a separate cleanup request. Every QA cleanup or archive pass must also audit the

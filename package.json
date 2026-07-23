@@ -51,6 +51,7 @@
 		"catalog:qa-clean": "node scripts/qa/seed_catalog_submission.mjs cleanup",
 		"catalog:qa-image-seed": "node scripts/qa/seed_image_moderation_submission.mjs seed",
 		"catalog:qa-image-clean": "node scripts/qa/seed_image_moderation_submission.mjs cleanup",
+		"qa:deterministic": "node scripts/qa/run_deterministic_qa.mjs",
 		"qa:no-serving-fixture": "node scripts/qa/check_no_serving_fixture.mjs",
 		"moderate": "node scripts/operations/moderate_user.mjs",
 		"seed:manual-entry-nutrients": "node scripts/seeds/seed_manual_entry_nutrients.mjs",
