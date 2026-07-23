@@ -1,14 +1,30 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Database } from "$lib/types/database.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseMocks = vi.hoisted(() => ({
 	rpc: vi.fn(),
+}));
+const normalizedData = vi.hoisted(() => ({
+	readNormalizedNutrientsByParent: vi.fn().mockResolvedValue(new Map()),
+	readFoodServingsByParent: vi.fn().mockResolvedValue(new Map()),
 }));
 
 vi.mock("$lib/supabase/client", () => ({
 	getSupabaseBrowserClient: () => ({ rpc: supabaseMocks.rpc }),
 }));
+vi.mock(
+	"$lib/utils/storage/supabase/normalizedNutrients",
+	() => ({ readNormalizedNutrientsByParent: normalizedData.readNormalizedNutrientsByParent }),
+);
+vi.mock(
+	"$lib/utils/storage/supabase/servings",
+	() => ({ readFoodServingsByParent: normalizedData.readFoodServingsByParent }),
+);
 
 import {
+	readCloudCustomFoodByBarcode,
+	readCloudCustomFoodByNameKey,
 	saveCloudCustomFood,
 } from "$lib/utils/storage/supabase/customFoods";
 import type { FdcFood } from "$lib/utils/food/types";
@@ -22,6 +38,29 @@ const food = {
 	categoryOptionId: "fruit",
 	foodNutrients: [],
 } satisfies FdcFood;
+
+const createReadClient = () => {
+	const maybeSingle = vi.fn().mockResolvedValue({
+		data: {
+			id: "custom-1",
+			food,
+			source_key: "custom",
+			trust_status: "user-private",
+		},
+		error: null,
+	});
+	const matchValue = vi.fn(() => ({ maybeSingle }));
+	const matchUser = vi.fn(() => ({ eq: matchValue }));
+	const select = vi.fn(() => ({ eq: matchUser }));
+	const from = vi.fn(() => ({ select }));
+
+	return {
+		client: { from } as unknown as SupabaseClient<Database>,
+		from,
+		matchUser,
+		matchValue,
+	};
+};
 
 describe("custom-food Supabase storage", () => {
 	beforeEach(() => {
@@ -47,6 +86,25 @@ describe("custom-food Supabase storage", () => {
 			supabaseMocks.rpc.mockResolvedValue({ data: result, error: null });
 
 			await expect(saveCloudCustomFood(food)).resolves.toBe(result);
+		},
+	);
+
+	it.each([
+		["barcode", "00012345678905", readCloudCustomFoodByBarcode],
+		["name_key", "backend validated food", readCloudCustomFoodByNameKey],
+	] as const)(
+		"reads one custom food through the indexed %s column",
+		async (column, value, readFood) => {
+			const query = createReadClient();
+
+			await expect(readFood(value, {
+				supabase: query.client,
+				userId: "user-1",
+			})).resolves.toMatchObject({ description: food.description });
+
+			expect(query.from).toHaveBeenCalledWith("custom_foods");
+			expect(query.matchUser).toHaveBeenCalledWith("user_id", "user-1");
+			expect(query.matchValue).toHaveBeenCalledWith(column, value);
 		},
 	);
 

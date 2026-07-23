@@ -108,9 +108,6 @@ export const getFoodTrustStatus = (food: FdcFood): IngredientTrustStatus => {
 	return "unverified";
 };
 
-export const isFoodVerified = (food: FdcFood) =>
-	VERIFIED_EVIDENCE_STATUSES.has(getFoodTrustStatus(food));
-
 export const readIngredientProvenanceOptions = async (
 	supabase: SupabaseClient<Database> | null = getSupabaseBrowserClient(),
 ): Promise<IngredientProvenanceOption[] | null> => {

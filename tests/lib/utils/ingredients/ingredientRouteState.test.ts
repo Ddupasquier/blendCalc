@@ -132,20 +132,6 @@ describe("ingredient route state", () => {
 		).toBe("/fridge/manual-entry/barcode-scanner");
 	});
 
-	it("keeps old query URLs readable while generating path slugs", () => {
-		expect(getIngredientRouteState(url("/fridge?view=search"))).toMatchObject({
-			view: INGREDIENT_ROUTE_VIEWS.search,
-			sheet: null,
-		});
-
-		expect(
-			buildIngredientRouteHref(url("/fridge?sheet=filters"), {
-				view: INGREDIENT_ROUTE_VIEWS.search,
-				sheet: null,
-			}),
-		).toBe("/fridge/search");
-	});
-
 	it("resolves route food from the requested list first", () => {
 		const fridgeFood = food(1, "Fridge spinach");
 		const shoppingFood = food(1, "Shopping spinach");

@@ -2,11 +2,6 @@ import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 
-const VIEW_PARAM = "view";
-const SHEET_PARAM = "sheet";
-const MODAL_PARAM = "modal";
-const FOOD_PARAM = "food";
-const LIST_PARAM = "list";
 const ACTIONS_PARAM = "actions";
 const LIST_TAB_PARAM = "tab";
 const FRIDGE_ROUTE_SEGMENT = "fridge";
@@ -58,15 +53,6 @@ export type IngredientRoutePatch = Partial<{
 	listKey: SmoothieListKey | null;
 	showListActions: boolean;
 }>;
-
-const routeViews = new Set<string>(Object.values(INGREDIENT_ROUTE_VIEWS));
-const routeSheets = new Set<string>(Object.values(INGREDIENT_ROUTE_SHEETS));
-const routeModals = new Set<string>(Object.values(INGREDIENT_ROUTE_MODALS));
-
-export const isIngredientListKey = (
-	value: string | null,
-): value is SmoothieListKey =>
-	value === MIX_STORAGE_KEYS.fridge || value === MIX_STORAGE_KEYS.shoppingList;
 
 const getListKeyFromRouteSlug = (value: string | null): SmoothieListKey | null => {
 	if (value === LIST_ROUTE_SLUGS.fridge || value === MIX_STORAGE_KEYS.fridge) {
@@ -236,29 +222,13 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 };
 
 export const getIngredientRouteState = (url: URL): IngredientRouteState => {
-	const pathState = getPathRouteState(url);
-	if (pathState) return pathState;
-
-	const viewParam = url.searchParams.get(VIEW_PARAM);
-	const sheetParam = url.searchParams.get(SHEET_PARAM);
-	const modalParam = url.searchParams.get(MODAL_PARAM);
-	const view = routeViews.has(viewParam ?? "")
-		? (viewParam as IngredientRouteView)
-		: null;
-	const sheet = routeSheets.has(sheetParam ?? "")
-		? (sheetParam as IngredientRouteSheet)
-		: null;
-	const modal = routeModals.has(modalParam ?? "")
-		? (modalParam as IngredientRouteModal)
-		: null;
-
-	return {
-		view,
-		sheet: view ? null : sheet,
-		modal,
-		foodId: parseFoodId(url.searchParams.get(FOOD_PARAM)),
-		listKey: getListKeyFromRouteSlug(url.searchParams.get(LIST_PARAM)),
-		showListActions: url.searchParams.get(ACTIONS_PARAM) !== "hide",
+	return getPathRouteState(url) ?? {
+		view: null,
+		sheet: null,
+		modal: null,
+		foodId: null,
+		listKey: null,
+		showListActions: true,
 	};
 };
 
@@ -286,11 +256,6 @@ export const buildIngredientRouteHref = (
 			? patch.showListActions
 			: current.showListActions;
 
-	params.delete(VIEW_PARAM);
-	params.delete(SHEET_PARAM);
-	params.delete(MODAL_PARAM);
-	params.delete(FOOD_PARAM);
-	params.delete(LIST_PARAM);
 	params.delete(ACTIONS_PARAM);
 
 	if (nextView) {

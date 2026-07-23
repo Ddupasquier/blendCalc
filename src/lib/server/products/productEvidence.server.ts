@@ -86,12 +86,6 @@ export const deleteProductEvidence = async (paths: ProductEvidencePaths) => {
 		.remove(values);
 };
 
-export const createProductEvidenceSignedUrls = async (
-	paths: ProductEvidencePaths,
-): Promise<Partial<Record<ProductEvidenceRole, string | null>>> => {
-	return (await createProductEvidenceSignedUrlBatches([paths]))[0] ?? {};
-};
-
 export const createProductEvidenceSignedUrlBatches = async (
 	pathGroups: ProductEvidencePaths[],
 ): Promise<Array<Partial<Record<ProductEvidenceRole, string | null>>>> => {

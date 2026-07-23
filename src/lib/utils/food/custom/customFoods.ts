@@ -5,7 +5,8 @@ import {
 } from "$lib/utils/serving/servingMeasureCatalog";
 import { compactFood } from "$lib/utils/food/records/foodRecords";
 import {
-	readCloudCustomFoods,
+	readCloudCustomFoodByBarcode,
+	readCloudCustomFoodByNameKey,
 	saveCloudCustomFood,
 } from "$lib/utils/storage/supabase";
 import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
@@ -271,34 +272,16 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 	};
 };
 
-const getBarcodeComparisonKey = (barcode: string) => {
-	const digits = cleanBarcode(barcode);
-	if (!digits) return null;
-	return normalizeBarcode(digits) ?? digits.padStart(14, "0");
-};
-
 export const findCustomFoodByBarcode = async (barcode: string) => {
-	const normalizedBarcode = getBarcodeComparisonKey(barcode);
+	const normalizedBarcode = normalizeBarcode(cleanBarcode(barcode));
 	if (!normalizedBarcode) return null;
-	const foods = await readCloudCustomFoods();
-	if (!foods) return null;
-	return (
-		foods.find(
-			(food) => getBarcodeComparisonKey(food.barcode ?? food.gtinUpc ?? "") === normalizedBarcode,
-		) ?? null
-	);
+	return readCloudCustomFoodByBarcode(normalizedBarcode);
 };
 
 export const findCustomFoodByName = async (name: string) => {
 	const normalizedName = normalizeCustomFoodName(name);
 	if (!normalizedName) return null;
-	const foods = await readCloudCustomFoods();
-	if (!foods) return null;
-	return (
-		foods.find(
-			(food) => normalizeCustomFoodName(food.description) === normalizedName,
-		) ?? null
-	);
+	return readCloudCustomFoodByNameKey(normalizedName);
 };
 
 export const saveCustomFood = async (

@@ -3,6 +3,7 @@ import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/no
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type { FdcFood } from "$lib/utils/food/types";
 import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
+import type { Database } from "$lib/types/database.types";
 import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
 import { readFoodServingsByParent } from "./servings";
 import {
@@ -18,31 +19,29 @@ export type CloudCustomFoodWriteResult =
 	| "duplicate-barcode"
 	| "error";
 
-export const readCloudCustomFoods = async (context?: CloudDataContext) => {
-	const cloud = await resolveCloudDataContext(context);
-	if (!cloud) return null;
-	const { supabase, userId } = cloud;
+type CloudCustomFoodRow = Pick<
+	Database["public"]["Tables"]["custom_foods"]["Row"],
+	"id" | "food" | "source_key" | "trust_status"
+>;
 
-	const { data, error } = await supabase
-		.from("custom_foods")
-		.select("id, food, source_key, trust_status")
-		.eq("user_id", userId)
-		.order("created_at", { ascending: false });
-
-	if (error) throw error;
+const hydrateCloudCustomFoods = async (
+	rows: CloudCustomFoodRow[],
+	context: CloudDataContext,
+) => {
 	const [normalizedRows, servingRows] = await Promise.all([
 		readNormalizedNutrientsByParent(
-			supabase,
+			context.supabase,
 			"custom_food_id",
-			data.map((row) => row.id),
+			rows.map((row) => row.id),
 		),
 		readFoodServingsByParent(
-			supabase,
+			context.supabase,
 			"custom_food_id",
-			data.map((row) => row.id),
+			rows.map((row) => row.id),
 		),
 	]);
-	return data.map((row) => {
+
+	return rows.map((row) => {
 		const catalogFood = hydrateFoodWithCatalogState(
 			row.food as unknown as FdcFood,
 			{
@@ -64,6 +63,51 @@ export const readCloudCustomFoods = async (context?: CloudDataContext) => {
 		);
 	});
 };
+
+export const readCloudCustomFoods = async (context?: CloudDataContext) => {
+	const cloud = await resolveCloudDataContext(context);
+	if (!cloud) return null;
+
+	const { data, error } = await cloud.supabase
+		.from("custom_foods")
+		.select("id, food, source_key, trust_status")
+		.eq("user_id", cloud.userId)
+		.order("created_at", { ascending: false });
+
+	if (error) throw error;
+	return hydrateCloudCustomFoods(data, cloud);
+};
+
+const readCloudCustomFoodByColumn = async (
+	column: "barcode" | "name_key",
+	value: string,
+	context?: CloudDataContext,
+) => {
+	const cloud = await resolveCloudDataContext(context);
+	if (!cloud) return null;
+
+	const { data, error } = await cloud.supabase
+		.from("custom_foods")
+		.select("id, food, source_key, trust_status")
+		.eq("user_id", cloud.userId)
+		.eq(column, value)
+		.maybeSingle();
+
+	if (error) throw error;
+	if (!data) return null;
+	const [food] = await hydrateCloudCustomFoods([data], cloud);
+	return food ?? null;
+};
+
+export const readCloudCustomFoodByBarcode = (
+	barcode: string,
+	context?: CloudDataContext,
+) => readCloudCustomFoodByColumn("barcode", barcode, context);
+
+export const readCloudCustomFoodByNameKey = (
+	nameKey: string,
+	context?: CloudDataContext,
+) => readCloudCustomFoodByColumn("name_key", nameKey, context);
 
 export const saveCloudCustomFood = async (
 	food: FdcFood,

@@ -40,8 +40,6 @@ export const configureNutritionCompletenessCatalog = (
 	configuredCatalog = catalog ?? { profiles: [] };
 };
 
-export const getConfiguredNutritionCompletenessCatalog = () => configuredCatalog;
-
 export const getNutritionCompletenessScope = (
 	food: Pick<
 		FdcFood,

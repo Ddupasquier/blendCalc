@@ -49,14 +49,3 @@ export const toFoodCategoryTokens = (value) =>
 			return token;
 		})
 		.filter((token) => token.length > 2 || SHORT_WORDS_TO_KEEP.has(token));
-
-/**
- * @param {unknown} source
- * @param {unknown} candidate
- */
-export const categoryTokensOverlap = (source, candidate) => {
-	const sourceTokens = new Set(toFoodCategoryTokens(source));
-	const candidateTokens = toFoodCategoryTokens(candidate);
-	if (!sourceTokens.size || !candidateTokens.length) return false;
-	return candidateTokens.every((token) => sourceTokens.has(token));
-};

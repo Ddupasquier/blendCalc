@@ -12,6 +12,4 @@ if (!versionMatch) {
 export const APP_VERSION = semanticVersion;
 export const APP_BUILD_VERSION = buildVersion;
 export const APP_MAJOR_VERSION = Number(versionMatch[1]);
-export const APP_MINOR_VERSION = Number(versionMatch[2]);
-export const APP_PATCH_VERSION = Number(versionMatch[3]);
 export const APP_VERSION_LABEL = `V${APP_MAJOR_VERSION}`;

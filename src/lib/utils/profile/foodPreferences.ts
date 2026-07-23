@@ -20,9 +20,6 @@ export type FoodPreferenceFormValues = {
 	sensitiveAcknowledged: boolean;
 };
 
-export const getJoinedPreferenceList = (values: string[] | null | undefined) =>
-	(values ?? []).join(", ");
-
 export const normalizeUnitSystem = (
 	value: FormDataEntryValue | null,
 ): FoodPreferenceUnitSystem | null => {

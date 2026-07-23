@@ -131,6 +131,3 @@ export const searchFoodPage = async (
 		total,
 	};
 };
-
-export const searchFoods = async (query: string): Promise<FdcFood[]> =>
-	(await searchFoodPage(query)).foods;
