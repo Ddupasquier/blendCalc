@@ -13,7 +13,7 @@ describe("SegmentedControl", () => {
 					{
 						value: "shopping",
 						label: "Shopping List",
-						href: "/fridge?tab=shopping-list",
+						href: "/fridge/shopping-list",
 					},
 				],
 			},
@@ -28,7 +28,7 @@ describe("SegmentedControl", () => {
 		expect(fridgeTab).toHaveAttribute("data-sveltekit-noscroll");
 		expect(
 			screen.getByRole("tab", { name: "Shopping List" }),
-		).toHaveAttribute("href", "/fridge?tab=shopping-list");
+		).toHaveAttribute("href", "/fridge/shopping-list");
 	});
 
 	it("uses roving focus and arrow-key tab navigation", async () => {

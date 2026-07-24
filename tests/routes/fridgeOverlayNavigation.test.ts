@@ -3,6 +3,10 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const fridgePagePath = resolve(process.cwd(), "src/routes/fridge/+page.svelte");
+const ingredientListTabsPath = resolve(
+	process.cwd(),
+	"src/lib/components/ingredients/list/IngredientListTabs/IngredientListTabs.svelte",
+);
 
 describe("fridge overlay navigation", () => {
 	it("uses shallow history so sheets do not remount the ingredient list", () => {
@@ -28,5 +32,13 @@ describe("fridge overlay navigation", () => {
 		);
 		expect(source).not.toContain("const selectList =");
 		expect(source).not.toContain("activeList = key");
+	});
+
+	it("uses route links rather than shallow history for primary list tabs", () => {
+		const source = readFileSync(ingredientListTabsPath, "utf8");
+
+		expect(source).toContain("href: buildIngredientListTabHref(");
+		expect(source).not.toContain('from "$app/navigation"');
+		expect(source).not.toContain("pushState(");
 	});
 });
