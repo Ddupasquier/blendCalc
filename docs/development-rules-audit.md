@@ -60,6 +60,7 @@ clickable navigation block instead.
 - [Atomic Bulk Ingredient Moves](#rule-bulk-list-moves)
 - [Long-Press Ingredient Selection](#rule-long-press-selection)
 - [Sheets, Views, And URL State](#rule-bottom-sheet-flows)
+- [Readable URLs And Browser Titles](#rule-page-metadata)
 - [Privileged Actions](#rule-privileged-action-badges)
 - [QA Process](#rule-qa-process)
 - [QA Task Consistency](#rule-qa-task-consistency)
@@ -289,11 +290,19 @@ for focused UI, lookup flow, submit flow, reset/default state, validation, paylo
 building, and styling. Do not let one file become the home for every new behavior.
 
 - <a id="rule-manual-entry-parent-role"></a>`CustomIngredientForm.svelte` is the model
-  for parent flow ownership. Parent flow components may own current step, field state,
-  pending flags, loaded reference data, and handler wiring. They should not own dense
-  step markup, large style blocks, repeated display pieces, submission payload building,
-  barcode lookup details, reset defaults, validation message construction, or list
-  outcome behavior.
+  for parent flow composition. Parent flow components may instantiate focused
+  controllers, connect typed step contracts, own DOM references, and render the flow
+  shell and dialogs. They should not own dense step markup, large style blocks, repeated
+  display pieces, submission payload building, barcode lookup details, reset defaults,
+  validation message construction, request concurrency, or list outcome behavior.
+
+- <a id="rule-manual-entry-controllers"></a>Stateful multi-step workflows use focused
+  Svelte controller modules beside the owning component. Keep entered form data in one
+  reactive form model, but divide behavior by responsibility: reference-data loading,
+  barcode lookup and sharing, validation and navigation, destination outcomes, and
+  submission. Controllers must expose typed state and actions, cancel or invalidate
+  stale asynchronous work, and remain independently understandable. Do not replace a
+  large component with one equally large catch-all controller.
 
 - <a id="rule-manual-entry-shells"></a>Shared flow chrome belongs in shell components.
   `ManualEntryFormShell.svelte` owns common layout concerns such as the sheet/form
@@ -310,7 +319,9 @@ building, and styling. Do not let one file become the home for every new behavio
 - <a id="rule-manual-entry-step-content"></a>Step switching belongs in a small
   coordinator component such as `ManualEntryStepContent.svelte`. The parent should not
   contain a long `{#if}` block full of step markup. The step-content component should
-  only choose which step component to render and pass through the needed props.
+  only choose which step component to render and pass through typed, step-specific prop
+  contracts. Do not flatten every step's values and callbacks into one catch-all prop
+  interface.
 
 - <a id="rule-manual-entry-display-components"></a>Repeated or self-contained visual
   pieces should be child components, not inline parent markup. Examples from manual
@@ -1212,14 +1223,25 @@ scanners, dialogs, and other meaningful overlay states need URL-backed state wit
 stable, readable path slugs. Use paths like `/fridge/search`, `/fridge/manual-entry`,
 `/fridge/barcode-scanner`, and `/fridge/nutrition/123` instead of hiding major state in
 local component booleans or query-only URLs. Query params are acceptable for small
-modifiers, but the main view/overlay identity belongs in the path. Opening, closing,
+modifiers, but the main view, list tab, or overlay identity belongs in the path. Use
+`/fridge` and `/fridge/shopping-list` rather than a `tab` query parameter. Preserve the
+active list as a readable path prefix when opening a list-specific overlay. Opening, closing,
 refreshing, direct loading, app-name/base-route navigation, and browser back/forward
 must go through navigation-aware handlers. When an overlay belongs on top of the current
 page, update its path with shallow history rather than remounting the page. Opening or
 closing an overlay must not reload, reset, reorder, repaginate, or move the underlying
 page content.
 
-**50a.** <a id="rule-source-product-name-formatting"></a>Normalize every product name
+**50a.** <a id="rule-page-metadata"></a>Every routable page, list tab, full-screen view,
+and meaningful overlay must provide a concise, descriptive browser title that updates
+during client-side and shallow-history navigation. Put the useful view or item name
+first and the shared app name last, such as `Shopping List · blendCalc` or
+`Tomato Soup Nutrition · blendCalc`, so narrow browser tabs remain identifiable. Keep
+title composition and route labels centralized instead of scattering literal
+`blendCalc` suffixes across pages. Canonical and social metadata URLs must use the
+stable readable path and omit transient query parameters and hashes.
+
+**50b.** <a id="rule-source-product-name-formatting"></a>Normalize every product name
 supplied by USDA, Open Food Facts, shared source records, future external product APIs,
 barcode scans, and valid barcodes entered in manual entry before those names are saved
 or returned to the UI. Apply the same normalization when older API-backed records are
@@ -1305,7 +1327,7 @@ reference-data policy that belongs elsewhere.
 
 | File                                                         | Lines | Risk                                                                                                       |
 | ------------------------------------------------------------ | ----: | ---------------------------------------------------------------------------------------------------------- |
-| `src/lib/components/ingredients/manual-entry/CustomIngredientForm/CustomIngredientForm.svelte` | 1407 | Acceptable as the manual-entry coordinator while new UI, validation, formatting, and persistence continue to live in focused children/utilities. |
+| `src/lib/components/ingredients/manual-entry/CustomIngredientForm/CustomIngredientForm.svelte` |  376 | Pass: composes focused reactive controllers and typed step contracts while UI, validation, barcode, submission, and outcome behavior remain separately owned. |
 | `src/routes/fridge/+page.svelte`                                           |  971 | Acceptable as route orchestration; repeated panels and list UI are delegated to reusable components.                                |
 | `src/routes/mix/+page.svelte`                                              |  869 | Improved: tandem styles, shared controls, DB-owned catalogs, and extracted calculations leave the page focused on wiring.           |
 | `src/routes/moderation/+page.svelte`                                       |  338 | Still pending the planned moderation UI rebuild; avoid growing it before that pass.                                                  |

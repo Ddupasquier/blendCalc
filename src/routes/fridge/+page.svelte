@@ -8,6 +8,7 @@
     import ViewFrame from "$lib/components/common/view/ViewFrame/ViewFrame.svelte";
     import ViewHeader from "$lib/components/common/view/ViewHeader/ViewHeader.svelte";
     import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
+    import { getAppDocumentTitle } from "$lib/config/pageMetadata";
     import type { ManualEntryCreateContext } from "$lib/components/ingredients/manual-entry/types";
     import IngredientsFloatingAddButton from "$lib/components/ingredients/page/IngredientsFloatingAddButton/IngredientsFloatingAddButton.svelte";
     import IngredientsSearchPanel from "$lib/components/ingredients/page/IngredientsSearchPanel/IngredientsSearchPanel.svelte";
@@ -123,6 +124,9 @@
     let listActionError = $state("");
     const foodPreferenceContext = getFoodPreferenceContext();
     const ingredientRouteState = $derived(getIngredientRouteState(page.url));
+    const documentTitle = $derived(
+        getAppDocumentTitle(page.url, selectedFood?.description),
+    );
 
     const navigateIngredientRoute = (
         patch: IngredientRoutePatch,
@@ -982,6 +986,10 @@
     });
 
 </script>
+
+<svelte:head>
+    <title>{documentTitle}</title>
+</svelte:head>
 
 <ViewFrame appShell className="ingredients-page">
     <ViewTop>

@@ -10,12 +10,14 @@
 	import TutorialOverlay from "$lib/components/app/TutorialOverlay/TutorialOverlay.svelte";
 	import {
 		APP_DESCRIPTION,
-		APP_NAME,
 		APP_NUTRITION_PREVIEW_ALT,
 		APP_OG_IMAGE_URL,
-		APP_PRODUCTION_ORIGIN,
 	} from "$lib/config/brand";
 	import { APP_BUILD_VERSION, APP_VERSION } from "$lib/config/version";
+	import {
+		getAppDocumentTitle,
+		getCanonicalAppUrl,
+	} from "$lib/config/pageMetadata";
 	import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 	import { setFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import {
@@ -60,6 +62,8 @@
 	);
 	const tutorialRouteOpen = $derived(page.url.pathname === "/profile/tutorial");
 	const tutorialVisible = $derived(tutorialOpen || tutorialRouteOpen);
+	const documentTitle = $derived(getAppDocumentTitle(page.url));
+	const canonicalUrl = $derived(getCanonicalAppUrl(page.url));
 	setFoodPreferenceContext(foodPreferenceContext);
 
 	$effect.pre(() => {
@@ -102,7 +106,7 @@
 </script>
 
 <svelte:head>
-	<title>{APP_NAME}</title>
+	<title>{documentTitle}</title>
 	<meta
 		name="description"
 		content={APP_DESCRIPTION}
@@ -111,10 +115,10 @@
 	<meta name="application-version" content={APP_VERSION} />
 	<meta name="application-build" content={APP_BUILD_VERSION} />
 	<link rel="icon" href={favicon} />
-	<link rel="canonical" href={`${APP_PRODUCTION_ORIGIN}/`} />
+	<link rel="canonical" href={canonicalUrl} />
 	<meta property="og:type" content="website" />
-	<meta property="og:url" content={`${APP_PRODUCTION_ORIGIN}/`} />
-	<meta property="og:title" content={APP_NAME} />
+	<meta property="og:url" content={canonicalUrl} />
+	<meta property="og:title" content={documentTitle} />
 	<meta
 		property="og:description"
 		content={APP_DESCRIPTION}
@@ -125,7 +129,7 @@
 	<meta property="og:image:height" content="630" />
 	<meta property="og:image:alt" content={APP_NUTRITION_PREVIEW_ALT} />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={APP_NAME} />
+	<meta name="twitter:title" content={documentTitle} />
 	<meta
 		name="twitter:description"
 		content={APP_DESCRIPTION}

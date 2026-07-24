@@ -14,9 +14,9 @@ const manualEntrySheetPath = resolve(
 	process.cwd(),
 	"src/lib/components/ingredients/sheets/ManualEntrySheet/ManualEntrySheet.svelte",
 );
-const manualEntryFormPath = resolve(
+const manualEntryOutcomeControllerPath = resolve(
 	process.cwd(),
-	"src/lib/components/ingredients/manual-entry/CustomIngredientForm/CustomIngredientForm.svelte",
+	"src/lib/components/ingredients/manual-entry/CustomIngredientForm/manualEntryOutcomeController.svelte.ts",
 );
 
 describe("BottomSheet shared chrome", () => {
@@ -50,11 +50,14 @@ describe("BottomSheet shared chrome", () => {
 
 	it("closes manual entry once before forwarding a successful creation", () => {
 		const manualEntrySource = readFileSync(manualEntrySheetPath, "utf8");
-		const manualEntryFormSource = readFileSync(manualEntryFormPath, "utf8");
+		const manualEntryOutcomeSource = readFileSync(
+			manualEntryOutcomeControllerPath,
+			"utf8",
+		);
 		const completionHandler = manualEntrySource.match(
 			/const handleCreate[\s\S]*?\n\t};/,
 		)?.[0];
-		const useIngredient = manualEntryFormSource.match(
+		const useIngredient = manualEntryOutcomeSource.match(
 			/const useIngredient[\s\S]*?\n\t};/,
 		)?.[0];
 

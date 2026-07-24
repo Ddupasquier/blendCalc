@@ -5,6 +5,7 @@
 	import PasswordRequirements from "$lib/components/auth/PasswordRequirements/PasswordRequirements.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import { APP_NAME } from "$lib/config/brand";
+	import { formatDocumentTitle } from "$lib/config/pageMetadata";
 	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import type { AuthMode, AuthPageProps } from "./types";
@@ -55,6 +56,12 @@
 		providerError = params.get("error_description") ?? "";
 	});
 </script>
+
+<svelte:head>
+	<title>{formatDocumentTitle(
+		authMode === "signUp" ? "Create Account" : "Sign In",
+	)}</title>
+</svelte:head>
 
 <section class="auth-page">
 	<FloatingFruitBackground focusElement={authCard} />

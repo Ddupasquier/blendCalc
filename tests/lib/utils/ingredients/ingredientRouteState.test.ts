@@ -4,7 +4,9 @@ import {
 	buildIngredientRouteHref,
 	buildIngredientListTabHref,
 	findIngredientRouteFood,
+	getCanonicalIngredientRouteHref,
 	getIngredientListTab,
+	getIngredientRouteTitle,
 	getIngredientRouteState,
 	INGREDIENT_ROUTE_MODALS,
 	INGREDIENT_ROUTE_SHEETS,
@@ -23,6 +25,9 @@ const food = (fdcId: number, description: string): FdcFood => ({
 describe("ingredient route state", () => {
 	it("keeps the active saved list in browser history", () => {
 		expect(getIngredientListTab(url("/fridge"))).toBe(MIX_STORAGE_KEYS.fridge);
+		expect(getIngredientListTab(url("/fridge/shopping-list"))).toBe(
+			MIX_STORAGE_KEYS.shoppingList,
+		);
 		expect(getIngredientListTab(url("/fridge?tab=shopping-list"))).toBe(
 			MIX_STORAGE_KEYS.shoppingList,
 		);
@@ -31,10 +36,10 @@ describe("ingredient route state", () => {
 				url("/fridge?sort=recent"),
 				MIX_STORAGE_KEYS.shoppingList,
 			),
-		).toBe("/fridge?sort=recent&tab=shopping-list");
+		).toBe("/fridge/shopping-list?sort=recent");
 		expect(
 			buildIngredientListTabHref(
-				url("/fridge?sort=recent&tab=shopping-list"),
+				url("/fridge/shopping-list?sort=recent"),
 				MIX_STORAGE_KEYS.fridge,
 			),
 		).toBe("/fridge?sort=recent");
@@ -51,7 +56,7 @@ describe("ingredient route state", () => {
 		});
 
 		expect(
-			getIngredientRouteState(url("/fridge/actions/fridge/42")),
+			getIngredientRouteState(url("/fridge/actions/42")),
 		).toMatchObject({
 			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.ingredientActions,
@@ -62,7 +67,7 @@ describe("ingredient route state", () => {
 
 		expect(
 			getIngredientRouteState(
-				url("/fridge/image-placement/shopping-list/42"),
+				url("/fridge/shopping-list/image-placement/42"),
 			),
 		).toMatchObject({
 			view: null,
@@ -83,7 +88,7 @@ describe("ingredient route state", () => {
 		});
 
 		expect(
-			getIngredientRouteState(url("/fridge/manual-entry/barcode-scanner")),
+			getIngredientRouteState(url("/fridge/barcode-scanner")),
 		).toMatchObject({
 			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
@@ -95,17 +100,17 @@ describe("ingredient route state", () => {
 
 	it("builds exclusive pop-in slug URLs while preserving unrelated params", () => {
 		expect(
-			buildIngredientRouteHref(url("/fridge?tab=fridge"), {
+			buildIngredientRouteHref(url("/fridge"), {
 				view: INGREDIENT_ROUTE_VIEWS.search,
 			}),
-		).toBe("/fridge/search?tab=fridge");
+		).toBe("/fridge/search");
 
 		expect(
-			buildIngredientRouteHref(url("/fridge/search"), {
+			buildIngredientRouteHref(url("/fridge/shopping-list/search"), {
 				view: null,
 				sheet: INGREDIENT_ROUTE_SHEETS.filters,
 			}),
-		).toBe("/fridge/filters");
+		).toBe("/fridge/shopping-list/filters");
 
 		expect(
 			buildIngredientRouteHref(url("/fridge/filters"), {
@@ -122,14 +127,62 @@ describe("ingredient route state", () => {
 				foodId: 42,
 				listKey: MIX_STORAGE_KEYS.fridge,
 			}),
-		).toBe("/fridge/image-placement/fridge/42");
+		).toBe("/fridge/image-placement/42");
 
 		expect(
 			buildIngredientRouteHref(url("/fridge/manual-entry"), {
 				sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
 				modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
 			}),
-		).toBe("/fridge/manual-entry/barcode-scanner");
+		).toBe("/fridge/barcode-scanner");
+	});
+
+	it("canonicalizes legacy query tabs and item URLs", () => {
+		expect(
+			getCanonicalIngredientRouteHref(
+				url("/fridge?tab=shopping-list&sort=recent"),
+			),
+		).toBe("/fridge/shopping-list?sort=recent");
+		expect(
+			getCanonicalIngredientRouteHref(
+				url("/fridge/actions/shopping-list/42"),
+			),
+		).toBe("/fridge/shopping-list/actions/42");
+		expect(
+			getCanonicalIngredientRouteHref(
+				url("/fridge/manual-entry/barcode-scanner"),
+			),
+		).toBe("/fridge/barcode-scanner");
+		expect(
+			getCanonicalIngredientRouteHref(url("/fridge/shopping-list")),
+		).toBeNull();
+	});
+
+	it("does not read URL fragments while canonicalizing server requests", () => {
+		const serverUrl = url("/fridge");
+		Object.defineProperty(serverUrl, "hash", {
+			get() {
+				throw new Error("Request URL fragments are unavailable");
+			},
+		});
+
+		expect(getCanonicalIngredientRouteHref(serverUrl)).toBeNull();
+	});
+
+	it("provides descriptive titles for list and overlay routes", () => {
+		expect(getIngredientRouteTitle(url("/fridge"))).toBe("Fridge");
+		expect(getIngredientRouteTitle(url("/fridge/shopping-list"))).toBe(
+			"Shopping List",
+		);
+		expect(getIngredientRouteTitle(url("/fridge/search"))).toBe(
+			"Search Ingredients",
+		);
+		expect(
+			getIngredientRouteTitle(
+				url("/fridge/shopping-list/nutrition/42"),
+				"Tomato Soup",
+			),
+		).toBe("Tomato Soup Nutrition");
 	});
 
 	it("resolves route food from the requested list first", () => {

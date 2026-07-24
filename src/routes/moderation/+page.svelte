@@ -6,7 +6,7 @@
 	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame/InputLoadingFrame.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
 	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
-	import { APP_NAME } from "$lib/config/brand";
+	import { formatDocumentTitle } from "$lib/config/pageMetadata";
 	import type { PageData } from "./$types";
 	import type { ModerationPageProps } from "./types";
 
@@ -57,7 +57,7 @@
 </script>
 
 <svelte:head>
-	<title>Moderation · {APP_NAME}</title>
+	<title>{formatDocumentTitle("Moderation")}</title>
 	<meta name="robots" content="noindex,nofollow" />
 </svelte:head>
 

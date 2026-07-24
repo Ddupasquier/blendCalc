@@ -9,6 +9,7 @@
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker/FoodPreferencePicker.svelte";
 	import { APP_NAME } from "$lib/config/brand";
+	import { formatDocumentTitle } from "$lib/config/pageMetadata";
 	import {
 		getServingSizeDisplayValue,
 		type DefaultServingUnit,
@@ -288,7 +289,7 @@
 </script>
 
 <svelte:head>
-	<title>Profile · {APP_NAME}</title>
+	<title>{formatDocumentTitle("Profile")}</title>
 	<meta name="description" content={`Manage your optional ${APP_NAME} profile details.`} />
 </svelte:head>
 
