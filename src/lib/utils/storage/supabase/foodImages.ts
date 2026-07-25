@@ -20,6 +20,10 @@ type FoodImageAssetRow = {
 	fit_mode: NonNullable<FoodImageAsset["fitMode"]>;
 	placement_version: number;
 	crop_source: FoodImageAsset["cropSource"];
+	placement_method: FoodImageAsset["placementMethod"];
+	placement_suggestion_version: string | null;
+	placement_suggestion_confidence: number | null;
+	placement_suggestion_accepted_at: string | null;
 	approved_by: string | null;
 	approved_at: string | null;
 	fetched_at: string;
@@ -61,6 +65,10 @@ const FOOD_IMAGE_SELECT = [
 	"fit_mode",
 	"placement_version",
 	"crop_source",
+	"placement_method",
+	"placement_suggestion_version",
+	"placement_suggestion_confidence",
+	"placement_suggestion_accepted_at",
 	"approved_by",
 	"approved_at",
 	"fetched_at",
@@ -118,6 +126,14 @@ const toFoodImageAsset = (row: FoodImageAssetRow): FoodImageAsset => ({
 	fitMode: row.fit_mode,
 	placementVersion: row.placement_version,
 	cropSource: row.crop_source,
+	placementMethod: row.placement_method,
+	suggestionVersion: row.placement_suggestion_version ?? undefined,
+	suggestionConfidence:
+		row.placement_suggestion_confidence === null
+			? undefined
+			: Number(row.placement_suggestion_confidence),
+	suggestionAcceptedAt:
+		row.placement_suggestion_accepted_at ?? undefined,
 	approvedBy: row.approved_by ?? undefined,
 	approvedAt: row.approved_at ?? undefined,
 	fetchedAt: row.fetched_at,

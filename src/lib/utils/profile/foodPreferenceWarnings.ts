@@ -4,6 +4,7 @@ import type {
 } from "$lib/utils/food/quality/compatibility";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { FoodPreferenceProfile } from "./foodPreferenceProfile";
+import { getRuleDerivedCompatibilityFacts } from "./foodCompatibilityRuleMatching";
 
 export type FoodPreferenceWarningLevel = "warning" | "potential";
 
@@ -14,6 +15,8 @@ export type FoodPreferenceWarning = {
 	label: string;
 	reason: string;
 };
+
+export const FOOD_PREFERENCE_WARNING_TITLE = "Check this ingredient";
 
 const normalizeValue = (value: string) =>
 	value
@@ -45,7 +48,10 @@ const createStructuredFact = (
 	confidence: "confirmed",
 });
 
-const getCompatibilityFacts = (food: FdcFood) => {
+const getCompatibilityFacts = (
+	food: FdcFood,
+	profile: FoodPreferenceProfile,
+) => {
 	const facts = [
 		...(food.compatibilitySummary?.allFacts ?? []),
 		...(food.allergens ?? []).map((value) =>
@@ -57,6 +63,7 @@ const getCompatibilityFacts = (food: FdcFood) => {
 		...[...(food.dietaryTags ?? []), ...(food.labels ?? [])].map((value) =>
 			createStructuredFact(value, "dietary_claim", "dietary")
 		),
+		...getRuleDerivedCompatibilityFacts(food, profile.matchRules),
 	];
 	const uniqueFacts = new Map(
 		facts.map((fact) => [
@@ -77,15 +84,36 @@ const factMatches = (fact: FoodCompatibilityFact, value: string) => {
 
 const summarizeFactReason = (fact: FoodCompatibilityFact) => {
 	if (fact.factType === "contains") {
-		return `Contains ${fact.label.toLowerCase()} in structured product metadata.`;
+		return `The label lists ${fact.label.toLocaleLowerCase()} as an allergen.`;
 	}
 	if (fact.factType === "may_contain") {
-		return `May contain ${fact.label.toLowerCase()} in structured product metadata.`;
+		return `The label says this product may contain ${fact.label.toLocaleLowerCase()}.`;
 	}
 	if (fact.factType === "ingredient_present") {
-		return `Lists ${fact.label.toLowerCase()} in structured ingredient metadata.`;
+		return fact.sourceType === "source_food_identity"
+			? `This food is identified as ${fact.label.toLocaleLowerCase()}.`
+			: `${fact.label} appears in the ingredient list.`;
 	}
-	return `Carries a ${fact.label} claim in structured product metadata.`;
+	return `The label includes a ${fact.label.toLocaleLowerCase()} claim.`;
+};
+
+const summarizeRestrictionReason = (
+	restriction: string,
+	fact: FoodCompatibilityFact,
+) => {
+	const normalizedRestriction = restriction.toLocaleLowerCase();
+	const normalizedFact = fact.label.toLocaleLowerCase();
+
+	if (fact.factType === "contains") {
+		return `This may not be ${normalizedRestriction} because the label lists ${normalizedFact} as an allergen.`;
+	}
+	if (fact.factType === "may_contain") {
+		return `This may not be ${normalizedRestriction} because the label says it may contain ${normalizedFact}.`;
+	}
+	if (fact.sourceType === "source_food_identity") {
+		return `This may not be ${normalizedRestriction} because this food is identified as ${normalizedFact}.`;
+	}
+	return `This may not be ${normalizedRestriction} because ${normalizedFact} appears in the ingredient list.`;
 };
 
 const buildWarning = (
@@ -127,7 +155,7 @@ export const getFoodPreferenceWarnings = (
 	if (!profile) return [];
 
 	const warnings: FoodPreferenceWarning[] = [];
-	const facts = getCompatibilityFacts(food);
+	const facts = getCompatibilityFacts(food, profile);
 
 	for (const allergen of profile.allergens) {
 		const directFact = facts.find((fact) =>
@@ -168,11 +196,11 @@ export const getFoodPreferenceWarnings = (
 				conflict.fact.factType === "may_contain"
 					? "potential"
 					: conflict.level,
-				"restriction",
-				restriction,
-				`${restriction} conflict: ${summarizeFactReason(conflict.fact)}`,
-			),
-		);
+					"restriction",
+					restriction,
+					summarizeRestrictionReason(restriction, conflict.fact),
+				),
+			);
 	}
 
 	return warnings;

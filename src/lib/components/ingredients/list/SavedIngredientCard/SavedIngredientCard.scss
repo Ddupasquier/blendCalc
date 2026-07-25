@@ -6,6 +6,7 @@ $selection-border-color: color-mix(
 	$app-shell-accent-primary 65%,
 	$app-primary
 );
+$feature-image-width: 18%;
 
 .saved-ingredient-card {
 	position: relative;
@@ -18,6 +19,7 @@ $selection-border-color: color-mix(
 	padding: $app-shell-card-padding-compact;
 	background: $app-shell-surface-panel;
 	overflow: hidden;
+	isolation: isolate;
 	border: $selection-border-width solid transparent;
 	border-radius: $app-shell-radius-card;
 	transition:
@@ -50,7 +52,13 @@ $selection-border-color: color-mix(
 	border-color: $selection-border-color;
 }
 
+.saved-ingredient-card--feature-image {
+	--ingredient-card-feature-image-width: #{$feature-image-width};
+}
+
 .saved-ingredient-card__select {
+	position: relative;
+	z-index: 1;
 	display: grid;
 	width: 100%;
 	grid-template-columns: auto minmax(0, 1fr);
@@ -67,8 +75,20 @@ $selection-border-color: color-mix(
 	user-select: none;
 }
 
+.saved-ingredient-card--feature-image .saved-ingredient-card__select {
+	grid-template-columns: minmax(0, 1fr);
+	padding-inline-start: calc(
+		var(--ingredient-card-feature-image-width) + #{$app-gap-xs}
+	);
+}
+
 .saved-ingredient-card__select--selection-mode {
 	grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.saved-ingredient-card--feature-image
+	.saved-ingredient-card__select--selection-mode {
+	grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .saved-ingredient-card__select:focus-visible {

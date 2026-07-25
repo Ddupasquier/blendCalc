@@ -72,6 +72,19 @@ export type FoodPreferenceConflictRule = {
 	level: "warning" | "potential";
 };
 
+export type FoodCompatibilityMatchRule = {
+	sourceKey: string | null;
+	fieldName: "description" | "food_category" | "ingredients";
+	matchPattern: string;
+	tagSlug: string;
+	tagLabel: string;
+	tagCategory: "allergen" | "dietary" | "ingredient" | "avoidance";
+	factType: "ingredient_present";
+	sourceType: "label_ingredient_field" | "source_food_identity";
+	confidence: "confirmed" | "inferred" | "uncertain";
+	priority: number;
+};
+
 export type AppReferenceCatalog = {
 	nutrients: NutrientCatalogItem[];
 	nutrientDisplayProfiles: NutrientDisplayProfile[];
@@ -81,6 +94,7 @@ export type AppReferenceCatalog = {
 	foodSymbols: FoodSymbolDefinition[];
 	foodSymbolCategoryRules: FoodSymbolCategoryRule[];
 	foodPreferenceConflictRules: FoodPreferenceConflictRule[];
+	foodCompatibilityMatchRules: FoodCompatibilityMatchRule[];
 };
 
 const EMPTY_MIX_RUNTIME: MixRuntimeConfiguration = {
@@ -103,6 +117,7 @@ const EMPTY_CATALOG: AppReferenceCatalog = {
 	foodSymbols: [],
 	foodSymbolCategoryRules: [],
 	foodPreferenceConflictRules: [],
+	foodCompatibilityMatchRules: [],
 };
 
 let configuredCatalog = EMPTY_CATALOG;

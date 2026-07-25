@@ -3,10 +3,7 @@
 .image-placement-editor {
 	display: grid;
 	gap: $app-gap-md;
-	padding: $app-shell-card-padding;
-	background: $app-shell-surface-panel;
-	border: 2px solid $app-high-contrast-ink;
-	border-radius: $app-shell-radius-card;
+	min-width: 0;
 }
 
 .image-placement-editor__copy p {
@@ -20,6 +17,7 @@
 	display: grid;
 	justify-items: center;
 	gap: $app-gap-sm;
+	width: 100%;
 }
 
 .image-placement-editor__editing-preview p {
@@ -37,57 +35,29 @@
 	min-width: 0;
 }
 
-.image-placement-editor__previews {
-	display: grid;
-	grid-template-columns: auto minmax(0, 1fr);
-	gap: $app-gap-md;
-	align-items: center;
-}
-
-.image-placement-editor__previews[data-mode="card-only"] {
-	grid-template-columns: auto;
-}
-
-.image-placement-editor__actual-preview,
-.image-placement-editor__full-preview {
-	display: grid;
-	gap: $app-gap-xs;
-	min-width: 0;
-	margin: 0;
-}
-
-.image-placement-editor__actual-preview {
-	justify-items: center;
-}
-
-.image-placement-editor__full-preview {
-	width: 100%;
-}
-
-.image-placement-editor__full-preview img {
-	width: 100%;
-	max-height: 14rem;
-	object-fit: contain;
-	background: $app-shell-surface-soft;
-	border: 2px solid $app-high-contrast-ink;
-	border-radius: $app-shell-radius-card;
-}
-
-.image-placement-editor__actual-preview figcaption,
-.image-placement-editor__full-preview figcaption {
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-bold;
-}
-
 .image-placement-editor__controls {
 	display: grid;
 	gap: $app-gap-md;
 }
 
+.image-placement-editor__suggestion-status {
+	min-height: 0;
+}
+
+.image-placement-editor__suggestion-status p {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	line-height: 1.35;
+}
+
+.image-placement-editor__suggestion-status p.image-placement-editor__suggestion-error {
+	color: $app-status-error-text;
+}
+
 .image-placement-editor__presets {
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: $app-gap-sm;
 }
 

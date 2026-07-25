@@ -3,6 +3,7 @@
 	import AssetAttribution from "$lib/components/common/display/AssetAttribution/AssetAttribution.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
+	import ProductImageFrame from "$lib/components/common/images/ProductImageFrame/ProductImageFrame.svelte";
 	import type { ProductImageEvidenceInputProps } from "./types";
 	import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
 	import { pickFoodFullImageUrl } from "$lib/utils/food/images/foodImages";
@@ -11,6 +12,9 @@
 		trustedImage,
 		frontPhoto,
 		placement,
+		foodName = "Product name",
+		brandName = "",
+		category = "Ingredient category",
 		required = false,
 		description = "",
 		onFrontPhotoChange,
@@ -53,15 +57,19 @@
 	</div>
 
 	{#if previewUrl}
+		<ProductImageFrame src={previewUrl} alt="Full product package preview" />
 		<ImagePlacementEditor
 			imageUrl={previewUrl}
 			alt="Product package preview"
+			{foodName}
+			{brandName}
+			{category}
 			title="Card image preview"
 			description={trustedImageUrl
 				? "Trusted images use the saved placement."
-				: "Adjust how the package image appears in ingredient cards."}
-			mode="card-and-full"
+				: "Drag the image in the card preview or use the controls below."}
 			editable={!trustedImageUrl && Boolean(objectUrl)}
+			smartPlacementSource={frontPhoto ?? previewUrl}
 			value={placement}
 			onChange={onPlacementChange}
 		/>

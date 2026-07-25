@@ -25,9 +25,13 @@ import { mapWithConcurrency } from "$lib/server/concurrency/mapWithConcurrency";
 import {
 	getStoredImagePlacement,
 	isImageFitMode,
+	isImagePlacementMethod,
 	normalizeImagePlacement,
 } from "$lib/utils/food/images/imagePlacement";
-import type { ImageFitMode } from "$lib/utils/food/images/types";
+import type {
+	ImageFitMode,
+	ImagePlacementValue,
+} from "$lib/utils/food/images/types";
 import {
 	formatCatalogChangeValue,
 	readCatalogUpdateSummary,
@@ -258,6 +262,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 					cropZoom?: number;
 					fitMode?: ImageFitMode;
 					placementVersion?: number;
+					placementMethod?: ImagePlacementValue["placementMethod"];
+					suggestionVersion?: string;
+					suggestionConfidence?: number;
 				} | null;
 			};
 			const validationIssues = Array.isArray(validationReport.issues)
@@ -287,6 +294,12 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 					cropZoom: validationReport.imageCrop?.cropZoom ?? 1,
 					fitMode: validationReport.imageCrop?.fitMode,
 					placementVersion: validationReport.imageCrop?.placementVersion,
+					placementMethod:
+						validationReport.imageCrop?.placementMethod,
+					suggestionVersion:
+						validationReport.imageCrop?.suggestionVersion,
+					suggestionConfidence:
+						validationReport.imageCrop?.suggestionConfidence,
 				}),
 				conflictCount: validationReport.conflictCount ?? 0,
 				externalLookupFailed: validationReport.externalLookupFailed ?? false,
@@ -348,8 +361,31 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const submissionId = String(formData.get("submissionId") ?? "");
 		const fitModeValue = String(formData.get("imageFitMode") ?? "");
+		const placementMethodValue = String(
+			formData.get("imagePlacementMethod") ?? "manual",
+		);
 		if (!isImageFitMode(fitModeValue)) {
 			return fail(400, { productReviewError: "Choose a valid image placement." });
+		}
+		if (!isImagePlacementMethod(placementMethodValue)) {
+			return fail(400, { productReviewError: "Choose a valid image placement method." });
+		}
+		const usesSmartSuggestion =
+			placementMethodValue === "smart-ocr" ||
+			placementMethodValue === "smart-ocr-adjusted";
+		const suggestionVersion = String(
+			formData.get("imageSuggestionVersion") ?? "",
+		).trim();
+		const suggestionConfidence = Number(
+			formData.get("imageSuggestionConfidence"),
+		);
+		if (
+			usesSmartSuggestion &&
+			(!suggestionVersion || !Number.isFinite(suggestionConfidence))
+		) {
+			return fail(400, {
+				productReviewError: "Smart image placement provenance is incomplete.",
+			});
 		}
 		const imageCrop = normalizeImagePlacement({
 			cropX: Number(formData.get("imageCropX") ?? 50),
@@ -357,6 +393,13 @@ export const actions: Actions = {
 			cropZoom: Number(formData.get("imageCropZoom") ?? 1),
 			fitMode: fitModeValue,
 			placementVersion: Number(formData.get("imagePlacementVersion") ?? 1),
+			placementMethod: placementMethodValue,
+			...(usesSmartSuggestion
+				? {
+					suggestionVersion,
+					suggestionConfidence,
+				}
+				: {}),
 		});
 		if (!submissionId) {
 			return fail(400, { productReviewError: "Choose a product submission." });

@@ -34,6 +34,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const profile = getFoodPreferenceProfile(
 		foodPreferencesResult.data,
 		appReferenceCatalog.foodPreferenceConflictRules,
+		appReferenceCatalog.foodCompatibilityMatchRules,
 	);
 	return json({
 		foods: foods.map((food) => annotateFoodWithPreferenceWarnings(food, profile)),

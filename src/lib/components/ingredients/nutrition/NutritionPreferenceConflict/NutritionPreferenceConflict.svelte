@@ -1,7 +1,10 @@
 <script lang="ts">
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
-	import { getFoodPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
+	import {
+		FOOD_PREFERENCE_WARNING_TITLE,
+		getFoodPreferenceWarnings,
+	} from "$lib/utils/profile/foodPreferenceWarnings";
 	import type { NutritionPreferenceConflictProps } from "./types";
 
 	let { food }: NutritionPreferenceConflictProps = $props();
@@ -16,12 +19,10 @@
 </script>
 
 {#if preferenceWarnings.length > 0}
-	<StatusMessage
-		tone={hasConfirmedPreferenceConflict ? "danger" : "warning"}
-		title={hasConfirmedPreferenceConflict
-			? "Potential conflict"
-			: "Possible conflict"}
-	>
+		<StatusMessage
+			tone={hasConfirmedPreferenceConflict ? "danger" : "warning"}
+			title={FOOD_PREFERENCE_WARNING_TITLE}
+		>
 		<ul class="preference-conflict__list">
 			{#each preferenceWarnings as warning}
 				<li>{warning.reason}</li>

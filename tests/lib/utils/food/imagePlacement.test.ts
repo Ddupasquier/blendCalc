@@ -87,6 +87,7 @@ describe("image placement geometry", () => {
 		expect(moved.cropY).toBe(50);
 		expect(moved.fitMode).toBe("custom");
 		expect(moved.placementVersion).toBe(2);
+		expect(moved.placementMethod).toBe("manual");
 	});
 
 	it("turns zoom changes into version 2 custom placement", () => {
@@ -95,6 +96,24 @@ describe("image placement geometry", () => {
 		expect(zoomed.cropZoom).toBe(3);
 		expect(zoomed.fitMode).toBe("custom");
 		expect(zoomed.placementVersion).toBe(2);
+		expect(zoomed.placementMethod).toBe("manual");
+	});
+
+	it("preserves smart provenance when a suggestion is manually adjusted", () => {
+		const zoomed = zoomImagePlacement({
+			cropX: 70,
+			cropY: 40,
+			cropZoom: 2,
+			fitMode: "custom",
+			placementVersion: 2,
+			placementMethod: "smart-ocr",
+			suggestionVersion: "tesseract-product-label-v1",
+			suggestionConfidence: 82,
+		}, 2.5);
+
+		expect(zoomed.placementMethod).toBe("smart-ocr-adjusted");
+		expect(zoomed.suggestionVersion).toBe("tesseract-product-label-v1");
+		expect(zoomed.suggestionConfidence).toBe(82);
 	});
 
 	it("keeps rows without version metadata on legacy rendering", () => {
@@ -104,6 +123,7 @@ describe("image placement geometry", () => {
 			cropZoom: 1.5,
 			fitMode: "cover",
 			placementVersion: 1,
+			placementMethod: "manual",
 		});
 	});
 });

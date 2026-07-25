@@ -5,6 +5,9 @@ export type ProductImageEvidenceInputProps = {
 	trustedImage?: FoodImageAsset;
 	frontPhoto: File | null;
 	placement: ImagePlacementValue;
+	foodName?: string;
+	brandName?: string;
+	category?: string;
 	required?: boolean;
 	description?: string;
 	onFrontPhotoChange: (file: File | null) => void;

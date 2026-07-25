@@ -7,7 +7,10 @@
 	import CloseButton from "$lib/components/common/buttons/CloseButton/CloseButton.svelte";
 	import type { IngredientCardProps } from "./types";
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
-	import { getFoodPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
+	import {
+		FOOD_PREFERENCE_WARNING_TITLE,
+		getFoodPreferenceWarnings,
+	} from "$lib/utils/profile/foodPreferenceWarnings";
 	import { slide } from "svelte/transition";
 	import {
 		SERVING_MEASURE_OPTIONS,
@@ -114,13 +117,9 @@
 		<div
 			class="ingredient-card__warning"
 			class:ingredient-card__warning--potential={!preferenceWarnings.some((item) => item.level === "warning")}
-		>
-			<strong>
-				{preferenceWarnings.some((item) => item.level === "warning")
-					? "Potential conflict"
-					: "Possible conflict"}
-			</strong>
-			<p>{preferenceWarnings.map((item) => item.reason).join(" ")}</p>
+			>
+				<strong>{FOOD_PREFERENCE_WARNING_TITLE}</strong>
+				<p>{preferenceWarnings.map((item) => item.reason).join(" ")}</p>
 		</div>
 	{/if}
 

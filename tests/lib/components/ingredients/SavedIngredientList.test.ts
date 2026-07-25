@@ -19,6 +19,21 @@ const secondFood: FdcFood = {
 	foodNutrients: [],
 };
 
+const sempioGochuJang: FdcFood = {
+	fdcId: 3,
+	description: "Sempio, Gochu Jang Hot & Sweet Chili Sauce",
+	brandOwner: "Sempio",
+	foodCategory: "Dips and Salsa",
+	foodNutrients: [],
+	image: {
+		source: "open-food-facts",
+		role: "front",
+		imageUrl: "https://images.example.com/sempio-gochu-jang.jpg",
+		licenseName: "CC BY-SA",
+		confidence: "source-verified",
+	},
+};
+
 describe("SavedIngredientList overlay behavior", () => {
 	const renderList = (
 		activeList: SmoothieListKey = MIX_STORAGE_KEYS.fridge,
@@ -103,6 +118,150 @@ describe("SavedIngredientList overlay behavior", () => {
 		).not.toBeInTheDocument();
 		await fireEvent.click(screen.getByRole("button", { name: "Select items" }));
 		expect(onEnterSelection).toHaveBeenCalledWith();
+	});
+
+	it.each([
+		["Fridge", MIX_STORAGE_KEYS.fridge],
+		["Shopping List", MIX_STORAGE_KEYS.shoppingList],
+	] as const)(
+		"uses full-height product images across %s cards",
+		(_, activeList) => {
+		const { container } = render(SavedIngredientList, {
+			props: {
+				activeList,
+				foods: [food, sempioGochuJang],
+				onSelectAll: vi.fn(),
+				onEnterSelection: vi.fn(),
+				onCancelSelection: vi.fn(),
+				onMoveSelection: vi.fn(),
+				onMoveItem: vi.fn(),
+				onToggle: vi.fn(),
+				onPreview: vi.fn(),
+				onActions: vi.fn(),
+				onRemove: vi.fn(),
+				onRevealMore: vi.fn(),
+			},
+		});
+
+		expect(
+			container.querySelector(
+				".saved-ingredient-card > .ingredient-card-feature-image img",
+			),
+		).toHaveAttribute(
+			"src",
+			"https://images.example.com/sempio-gochu-jang.jpg",
+		);
+		expect(
+			screen.getAllByRole("button", {
+				name: "Preview Sempio, Gochu Jang Hot & Sweet Chili Sauce",
+			}),
+		).toHaveLength(1);
+		},
+	);
+
+	it("keeps the circular category symbol when a card has no product image", () => {
+		const { container } = render(SavedIngredientList, {
+			props: {
+				activeList: MIX_STORAGE_KEYS.fridge,
+				foods: [food],
+				onSelectAll: vi.fn(),
+				onEnterSelection: vi.fn(),
+				onCancelSelection: vi.fn(),
+				onMoveSelection: vi.fn(),
+				onMoveItem: vi.fn(),
+				onToggle: vi.fn(),
+				onPreview: vi.fn(),
+				onActions: vi.fn(),
+				onRemove: vi.fn(),
+				onRevealMore: vi.fn(),
+			},
+		});
+
+		expect(
+			container.querySelector(".ingredient-card-feature-image"),
+		).not.toBeInTheDocument();
+		expect(
+			container.querySelector(".saved-ingredient-card__icon"),
+		).toBeInTheDocument();
+	});
+
+	it("restores the circular category symbol when a product image fails", async () => {
+		const { container } = render(SavedIngredientList, {
+			props: {
+				activeList: MIX_STORAGE_KEYS.fridge,
+				foods: [sempioGochuJang],
+				onSelectAll: vi.fn(),
+				onEnterSelection: vi.fn(),
+				onCancelSelection: vi.fn(),
+				onMoveSelection: vi.fn(),
+				onMoveItem: vi.fn(),
+				onToggle: vi.fn(),
+				onPreview: vi.fn(),
+				onActions: vi.fn(),
+				onRemove: vi.fn(),
+				onRevealMore: vi.fn(),
+			},
+		});
+
+		const image = container.querySelector<HTMLImageElement>(
+			".ingredient-card-feature-image img",
+		);
+		expect(image).not.toBeNull();
+		await fireEvent.error(image as HTMLImageElement);
+
+		expect(
+			container.querySelector(".ingredient-card-feature-image"),
+		).not.toBeInTheDocument();
+		expect(
+			container.querySelector(".saved-ingredient-card__icon"),
+		).toBeInTheDocument();
+	});
+
+	it("keeps the warning edge above cards with feature images", () => {
+		const warningFood: FdcFood = {
+			...sempioGochuJang,
+			preferenceWarnings: [{
+				id: "allergen-warning",
+				level: "warning",
+				category: "allergen",
+				label: "Soy",
+				reason: "Soy conflict: this product contains soy.",
+			}],
+		};
+		const { container } = render(SavedIngredientList, {
+			props: {
+				activeList: MIX_STORAGE_KEYS.fridge,
+				foods: [warningFood],
+				onSelectAll: vi.fn(),
+				onEnterSelection: vi.fn(),
+				onCancelSelection: vi.fn(),
+				onMoveSelection: vi.fn(),
+				onMoveItem: vi.fn(),
+				onToggle: vi.fn(),
+				onPreview: vi.fn(),
+				onActions: vi.fn(),
+				onRemove: vi.fn(),
+				onRevealMore: vi.fn(),
+			},
+		});
+
+		const card = container.querySelector(".saved-ingredient-card");
+		const image = card?.querySelector(".ingredient-card-feature-image");
+		const warningEdge = card?.querySelector(".card-warning-edge");
+		expect(image).toBeInTheDocument();
+		expect(warningEdge).toBeInTheDocument();
+		if (!image || !warningEdge) {
+			throw new Error("Expected both the feature image and warning edge.");
+		}
+		expect(
+			image.compareDocumentPosition(warningEdge) &
+				Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy();
+		expect(
+			screen.getByRole("button", {
+				name: /Warning: Soy conflict/,
+			}),
+		).toBeInTheDocument();
 	});
 
 	it("announces selection mode and the selected count", () => {

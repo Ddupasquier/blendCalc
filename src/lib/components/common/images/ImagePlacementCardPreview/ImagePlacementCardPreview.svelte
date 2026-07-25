@@ -1,14 +1,18 @@
 <script lang="ts">
-	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
-	import ImagePlacementViewport from "$lib/components/common/images/ImagePlacementViewport/ImagePlacementViewport.svelte";
+	import Chevron from "$lib/assets/icons/Chevron/Chevron.svelte";
+	import DotsHorizontal from "$lib/assets/icons/DotsHorizontal/DotsHorizontal.svelte";
+	import X from "$lib/assets/icons/X/X.svelte";
+	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte";
+	import IngredientCardFeatureImage from "$lib/components/ingredients/list/IngredientCardFeatureImage/IngredientCardFeatureImage.svelte";
 	import type { ImagePlacementCardPreviewProps } from "./types";
 
 	let {
 		imageUrl,
 		alt,
 		value,
+		foodName = "Product name",
+		category = "Ingredient category",
 		ariaLabel = "Card image preview",
-		size = "card",
 		interactive = false,
 		instructionsId = undefined,
 		onChange,
@@ -17,8 +21,8 @@
 	}: ImagePlacementCardPreviewProps = $props();
 </script>
 
-<CircularMediaFrame class={`image-placement-card-preview image-placement-card-preview--${size}`} label={ariaLabel}>
-	<ImagePlacementViewport
+<div class="image-placement-card-preview" role="group" aria-label={ariaLabel}>
+	<IngredientCardFeatureImage
 		{imageUrl}
 		{alt}
 		{value}
@@ -28,7 +32,25 @@
 		{onGeometryChange}
 		{onError}
 	/>
-</CircularMediaFrame>
+	<span class="image-placement-card-preview__copy">
+		<strong>{foodName}</strong>
+		<small>{category}</small>
+	</span>
+	<span class="image-placement-card-preview__actions" aria-hidden="true">
+		<CircularIconFrame
+			class="image-placement-card-preview__action image-placement-card-preview__action--primary"
+			decorative
+		>
+			<Chevron direction="right" />
+		</CircularIconFrame>
+		<CircularIconFrame class="image-placement-card-preview__action" decorative>
+			<DotsHorizontal />
+		</CircularIconFrame>
+		<CircularIconFrame class="image-placement-card-preview__action" decorative>
+			<X />
+		</CircularIconFrame>
+	</span>
+</div>
 
 <style lang="scss">
 	@use "./ImagePlacementCardPreview.scss";

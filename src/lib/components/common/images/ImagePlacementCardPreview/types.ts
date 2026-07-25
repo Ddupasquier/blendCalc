@@ -7,8 +7,9 @@ export type ImagePlacementCardPreviewProps = {
 	imageUrl: string;
 	alt: string;
 	value: ImagePlacementValue;
+	foodName?: string;
+	category?: string;
 	ariaLabel?: string;
-	size?: "card" | "editor";
 	interactive?: boolean;
 	instructionsId?: string;
 	onChange?: (value: ImagePlacementValue) => void;

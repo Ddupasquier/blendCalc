@@ -39,17 +39,43 @@ const getFieldValue = (
 				resolvedCategory: draft.resolvedCategory ?? null,
 				categoryResolution: draft.categoryResolution ?? null,
 			} as Json;
-		case "serving":
-			return {
-				label: draft.servingLabel,
-				weightGrams: draft.servingWeightGrams,
-				volumeEquivalent: draft.volumeEquivalent ?? null,
-			} as Json;
-	}
-};
+			case "serving":
+				return {
+					label: draft.servingLabel,
+					weightGrams: draft.servingWeightGrams,
+					volumeEquivalent: draft.volumeEquivalent ?? null,
+				} as Json;
+			case "ingredients":
+				return {
+					ingredients: draft.ingredients ?? null,
+					ingredientList: draft.ingredientList ?? [],
+				} as unknown as Json;
+			case "allergens":
+				return (draft.allergens ?? []) as Json;
+			case "traces":
+				return (draft.traces ?? []) as Json;
+			case "dietaryTags":
+				return (draft.dietaryTags ?? []) as Json;
+			case "labels":
+				return (draft.labels ?? []) as Json;
+		}
+	};
 
 const createContentHash = (value: unknown) =>
 	createHash("sha256").update(JSON.stringify(value)).digest("hex");
+
+const getCanonicalEvidenceConfidence = (
+	source: FoodFieldSource,
+): "source-verified" | "moderator-reviewed" | "corroborated" | "imported" => {
+	switch (source.confidence) {
+		case "moderator-reviewed":
+		case "corroborated":
+		case "imported":
+			return source.confidence;
+		default:
+			return "source-verified";
+	}
+};
 
 const preserveCanonicalIdentity = (
 	currentFood: FdcFood,
@@ -148,7 +174,9 @@ export const persistSharedProductExternalEnrichment = async (input: {
 			sourceReference: source?.sourceReference ?? null,
 			sourceValue: getFieldValue(input.enrichedDraft, field),
 			normalizedValue: getFieldValue(input.enrichedDraft, field),
-			confidence: source?.confidence ?? "unknown",
+				confidence: source
+					? getCanonicalEvidenceConfidence(source)
+					: "source-verified",
 			verificationMethod: "exact-barcode",
 		};
 	});

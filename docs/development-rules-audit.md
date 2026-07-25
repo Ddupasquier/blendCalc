@@ -115,7 +115,10 @@ close with Escape where a keyboard is present, and return focus to the opening c
 Announce loading, validation, and result-count changes without duplicating visible
 warnings. Honor reduced-motion settings, preserve content at 200% text zoom, avoid
 color-only meaning, and verify important flows with VoiceOver on Safari and TalkBack on
-Android Chrome.
+Android Chrome. Compact ingredient cards with a preference conflict must retain the
+shared full-height amber `CardWarningEdge`; do not replace it with an inline warning
+icon, text block, or image treatment. The card's accessible action label must include
+the warning text so the visual edge is not the only communicated signal.
 
 **1c.** <a id="rule-content-security-policy"></a>Keep the Content Security Policy
 strict in development and production. Do not add `unsafe-inline` to `script-src` or
@@ -695,7 +698,11 @@ the `contains` fact type render as `Contains`; source trace statements and confi
 both groups, the explicit `Contains` statement wins. De-duplicate labels
 case-insensitively while preserving readable source wording. Do not infer package
 allergens or trace statements from the product name, category, ingredient text, or a
-user preference warning. Keep preference conflicts separate from source package
+user preference warning. DB-reviewed exact-match rules may create
+`ingredient_present` compatibility facts from source-provided ingredient lists or
+authoritative generic-food identity fields; these facts must retain their matching
+provenance and must never be presented as package `Contains` or `May contain`
+statements. Keep preference conflicts separate from source package
 disclosures. Hide empty disclosure groups rather than inventing `none`, `zero`, or
 `allergen-free`. Nutrition details must use the reusable ingredients/allergen
 presentation directly after the nutrition label, with `Contains` and `May contain`
@@ -840,11 +847,12 @@ hardcode, or infer attribution in a component.
 non-destructive and versioned. Keep the original image unchanged; placement only
 controls card rendering. Every new image defaults to version 2 `Full image`: contain the
 complete orientation-corrected image, center it, and treat `1×` as the full-image size.
-Offer the shared `Full image`, `Fill circle`, and `Custom` modes plus a plainly labeled
+Offer the shared `Full image` and `Fill card` presets plus a plainly labeled
 `Restore default` action that returns to version 2 `Full image` at centered `1×`;
 restoration must remain a draft until the surrounding save or approval flow is
-completed. `Fill circle` must calculate the minimum aspect-aware zoom needed to cover
-the circular frame. Dragging, pinching, scrolling, moving a slider, or changing zoom
+completed. `Fill card` must calculate the minimum aspect-aware zoom needed to cover
+the real card image lane. `Custom` is an automatic placement state rather than a
+separate preset: dragging, pinching, scrolling, moving a slider, or changing zoom
 must switch the placement to version 2 `Custom`. Normalized position always means
 `0 = far left/top`, `50 = centered`, and `100 = far right/bottom`; disable an axis when
 the measured image and frame leave no overflow on that axis. Keep native range controls
@@ -852,18 +860,23 @@ available for keyboard and assistive-technology use even when direct pointer/tou
 interaction is supported. User submission, moderation approval, admin/moderator editing,
 ingredient cards, and previews must use the same placement value (`fit_mode`, normalized
 X/Y, zoom, and `placement_version`), shared geometry utility, and shared measured
-renderer so previews cannot disagree with saved cards. Editors must show a large
-interactive preview and the actual card-sized circle. Show the unchanged full nutrition
-image once in the surrounding flow through the shared `ProductImageFrame`; it must use
-contained scaling, a compact content-led frame, semantic SCSS tokens, and no large
-full-width outlined area around narrow images. Use the editor's `card-only` mode when
-the nutrition view already displays that full image immediately above it, and use
-`card-and-full` only where no separate full-image reference exists. Preserve existing
-records as version 1 until a person edits them; new or newly edited records use
+renderer so previews cannot disagree with saved cards. Editors must show one interactive
+preview using the real card proportions, image lane, fade, copy spacing, and action-space
+reservation instead of separate circular approximations. Show the unchanged full image
+once in the surrounding flow through the shared `ProductImageFrame` or existing private
+evidence gallery; it must use contained scaling, a compact content-led frame, semantic
+SCSS tokens, and no large full-width outlined area around narrow images. Preserve
+existing records as version 1 until a person edits them; new or newly edited records use
 version 2. Automatic API refreshes must never overwrite a saved placement. Any future
-smart-crop feature may only offer an optional suggestion button and must never silently
-replace the selected placement. Do not rebuild one-off full-image frames, sliders,
-placement math, crop CSS, or preview boxes in feature components.
+smart-placement revision may only offer an optional suggestion and must never silently
+replace the selected placement. The current smart-placement flow runs Tesseract.js
+on-device, caches OCR results in bounded browser memory, scores text against the known
+product and brand names, penalizes nutrition/disclaimer text, and applies a draft only
+after the person chooses `Suggest placement`. Keep manual drag, zoom, sliders, presets,
+and restore available after every suggestion. Persist the accepted placement method,
+algorithm version, and bounded confidence, but do not store raw OCR text. Do not rebuild
+one-off full-image frames, sliders, placement math, crop CSS, OCR scoring, or preview
+boxes in feature components.
 
 **31d.** <a id="rule-source-backed-food-servings"></a>Serving information must follow
 the API → DB → UI path and remain usable as conversion data. When a trusted source or

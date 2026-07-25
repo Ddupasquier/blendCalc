@@ -10,6 +10,7 @@ import type {
 
 export type ShareStepProps = {
 	normalizedName: string;
+	brandOwner: string;
 	activeCategory: string;
 	summaryNutrients: ManualEntrySummaryItem[];
 	optionalNutrientCount: number;

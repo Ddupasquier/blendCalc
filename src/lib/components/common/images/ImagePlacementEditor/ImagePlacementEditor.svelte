@@ -20,10 +20,13 @@
 		imageUrl,
 		alt,
 		value,
+		foodName = "Product name",
+		brandName = "",
+		category = "Ingredient category",
 		title = "Image placement",
 		description = "Adjust how the image appears in ingredient cards.",
-		mode = "card-and-full",
 		editable = true,
+		smartPlacementSource = imageUrl,
 		onChange,
 	}: ImagePlacementEditorProps = $props();
 
@@ -32,6 +35,10 @@
 	let previewGeometry = $state<ImagePlacementGeometry>({
 		...EMPTY_IMAGE_PLACEMENT_GEOMETRY,
 	});
+	let suggestingPlacement = $state(false);
+	let suggestionProgress = $state(0);
+	let suggestionMessage = $state("");
+	let suggestionError = $state("");
 	const activeFitMode = $derived<ImageFitMode>(
 		value.placementVersion <= 1 ? "custom" : value.fitMode,
 	);
@@ -44,22 +51,59 @@
 		});
 	};
 
-	const selectFitMode = (fitMode: ImageFitMode) => {
+	const selectFitMode = (fitMode: Exclude<ImageFitMode, "custom">) => {
 		if (fitMode === "contain") {
 			onChange?.(createFullImagePlacement());
 			return;
 		}
-		if (fitMode === "cover") {
-			onChange?.(createFillImagePlacement(previewGeometry.coverZoom));
-			return;
-		}
-		onChange?.(
-			createCustomImagePlacement(value, previewGeometry.effectiveZoom),
-		);
+		onChange?.(createFillImagePlacement(previewGeometry.coverZoom));
 	};
 
 	const formatZoom = (zoom: number) => `${zoom.toFixed(2).replace(/\.00$/, "")}×`;
-	const restoreDefault = () => onChange?.(createFullImagePlacement());
+	const clearSuggestionFeedback = () => {
+		suggestionMessage = "";
+		suggestionError = "";
+	};
+	const restoreDefault = () => {
+		clearSuggestionFeedback();
+		onChange?.(createFullImagePlacement());
+	};
+	const suggestPlacement = async () => {
+		if (!previewGeometry.ready || suggestingPlacement) return;
+		suggestingPlacement = true;
+		suggestionProgress = 0;
+		clearSuggestionFeedback();
+
+		try {
+			const { suggestImagePlacement } = await import(
+				"$lib/utils/food/images/smartImagePlacement.client"
+			);
+			const suggestion = await suggestImagePlacement({
+				image: smartPlacementSource,
+				geometry: previewGeometry,
+				productName: foodName,
+				brandName,
+				onProgress: ({ progress }) => {
+					suggestionProgress = progress;
+				},
+			});
+			if (!suggestion) {
+				suggestionError =
+					"No likely front-label product text was found. The current placement was not changed.";
+				return;
+			}
+			onChange?.(suggestion.placement);
+			suggestionMessage =
+				"Smart placement was applied to the preview. Adjust it or restore the default before saving.";
+		} catch (error) {
+			suggestionError =
+				error instanceof Error
+					? error.message
+					: "Smart placement could not analyze this image.";
+		} finally {
+			suggestingPlacement = false;
+		}
+	};
 </script>
 
 <section class="image-placement-editor" aria-label={title}>
@@ -77,8 +121,9 @@
 			{imageUrl}
 			{alt}
 			{value}
+			{foodName}
+			{category}
 			ariaLabel="Interactive card image preview"
-			size="editor"
 			interactive={editable}
 			{instructionsId}
 			onChange={(nextValue) => onChange?.(nextValue)}
@@ -91,32 +136,42 @@
 		{/if}
 	</div>
 
-	<div class="image-placement-editor__previews" data-mode={mode}>
-		<figure class="image-placement-editor__actual-preview">
-			<ImagePlacementCardPreview
-				{imageUrl}
-				{alt}
-				{value}
-				ariaLabel="Actual ingredient card image preview"
-			/>
-			<figcaption>Actual card size</figcaption>
-		</figure>
-
-		{#if mode === "card-and-full"}
-			<figure class="image-placement-editor__full-preview">
-				<img src={imageUrl} {alt} />
-				<figcaption>Nutrition page shows the full image.</figcaption>
-			</figure>
-		{/if}
-	</div>
-
 	{#if editable}
 		<div class="image-placement-editor__controls">
+			<RoundedActionButton
+				variant="soft"
+				fullWidth
+				busy={suggestingPlacement}
+				disabled={!previewGeometry.ready}
+				onclick={suggestPlacement}
+			>
+				{suggestingPlacement
+					? `Finding product text ${Math.round(suggestionProgress * 100)}%`
+					: "Suggest placement"}
+			</RoundedActionButton>
+			{#if suggestionMessage || suggestionError}
+				<div
+					class="image-placement-editor__suggestion-status"
+					aria-live="polite"
+				>
+					{#if suggestionMessage}
+						<p>{suggestionMessage}</p>
+					{/if}
+					{#if suggestionError}
+						<p class="image-placement-editor__suggestion-error">
+							{suggestionError}
+						</p>
+					{/if}
+				</div>
+			{/if}
 			<div class="image-placement-editor__presets" role="group" aria-label="Image fit">
 				<PillButton
 					pressed={activeFitMode === "contain"}
 					variant={activeFitMode === "contain" ? "primary" : "neutral"}
-					onclick={() => selectFitMode("contain")}
+					onclick={() => {
+						clearSuggestionFeedback();
+						selectFitMode("contain");
+					}}
 				>
 					Full image
 				</PillButton>
@@ -124,16 +179,12 @@
 					pressed={activeFitMode === "cover"}
 					variant={activeFitMode === "cover" ? "primary" : "neutral"}
 					disabled={!previewGeometry.ready}
-					onclick={() => selectFitMode("cover")}
+					onclick={() => {
+						clearSuggestionFeedback();
+						selectFitMode("cover");
+					}}
 				>
-					Fill circle
-				</PillButton>
-				<PillButton
-					pressed={activeFitMode === "custom"}
-					variant={activeFitMode === "custom" ? "primary" : "neutral"}
-					onclick={() => selectFitMode("custom")}
-				>
-					Custom
+					Fill card
 				</PillButton>
 			</div>
 			<label>

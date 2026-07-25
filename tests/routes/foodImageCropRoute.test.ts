@@ -23,6 +23,9 @@ const requestBody = {
 	cropX: 25,
 	cropY: 75,
 	cropZoom: 2,
+	placementMethod: "smart-ocr",
+	suggestionVersion: "tesseract-product-label-v1",
+	suggestionConfidence: 84,
 };
 
 const savedImage = {
@@ -37,6 +40,9 @@ const savedImage = {
 	cropZoom: 2,
 	fitMode: "custom",
 	placementVersion: 2,
+	placementMethod: "smart-ocr",
+	suggestionVersion: "tesseract-product-label-v1",
+	suggestionConfidence: 84,
 };
 
 const createEvent = (userId: string | null) => ({
@@ -78,6 +84,9 @@ describe("food image crop route", () => {
 				cropZoom: 2,
 				fitMode: "custom",
 				placementVersion: 2,
+				placementMethod: "smart-ocr",
+				suggestionVersion: "tesseract-product-label-v1",
+				suggestionConfidence: 84,
 			},
 		});
 	});

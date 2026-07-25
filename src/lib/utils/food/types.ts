@@ -1,6 +1,9 @@
 import type { FoodPreferenceWarning } from "$lib/utils/profile/foodPreferenceWarnings";
 import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
-import type { ImageFitMode } from "$lib/utils/food/images/types";
+import type {
+	ImageFitMode,
+	ImagePlacementValue,
+} from "$lib/utils/food/images/types";
 
 /** A single food nutrient returned by the FDC API */
 export interface FdcNutrient {
@@ -49,6 +52,10 @@ export interface FoodImageAsset {
     cropSource?: "auto" | "user" | "moderator";
     fitMode?: ImageFitMode;
     placementVersion?: number;
+    placementMethod?: ImagePlacementValue["placementMethod"];
+    suggestionVersion?: string;
+    suggestionConfidence?: number;
+    suggestionAcceptedAt?: string;
     approvedBy?: string;
     approvedAt?: string;
     fetchedAt?: string;
@@ -69,7 +76,12 @@ export type FoodTrackedField =
     | "nutrition"
     | "image"
     | "categories"
-    | "serving";
+    | "serving"
+    | "ingredients"
+    | "allergens"
+    | "traces"
+    | "dietaryTags"
+    | "labels";
 
 export type FoodFieldSource = {
     source:

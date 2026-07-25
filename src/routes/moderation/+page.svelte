@@ -212,12 +212,15 @@
 						</p>
 					{/if}
 					{#if submission.frontEvidenceUrl}
-						<ImagePlacementEditor
-							imageUrl={submission.frontEvidenceUrl}
-							alt="Product image preview"
-							title="Public image preview"
-							description="Adjust what appears in ingredient cards before approving."
-							value={getImageCrop(submission)}
+							<ImagePlacementEditor
+								imageUrl={submission.frontEvidenceUrl}
+								alt="Product image preview"
+								foodName={submission.productName}
+								brandName={submission.brandOwner ?? ""}
+								category="Catalog product"
+								title="Card image preview"
+								description="Drag the image in the card preview or use the controls before approving."
+								value={getImageCrop(submission)}
 							onChange={(value) => setImageCrop(submission, value)}
 						/>
 					{/if}
@@ -240,6 +243,9 @@
 							<input type="hidden" name="imageCropZoom" value={getImageCrop(submission).cropZoom} />
 							<input type="hidden" name="imageFitMode" value={getImageCrop(submission).fitMode} />
 							<input type="hidden" name="imagePlacementVersion" value={getImageCrop(submission).placementVersion} />
+							<input type="hidden" name="imagePlacementMethod" value={getImageCrop(submission).placementMethod ?? "manual"} />
+							<input type="hidden" name="imageSuggestionVersion" value={getImageCrop(submission).suggestionVersion ?? ""} />
+							<input type="hidden" name="imageSuggestionConfidence" value={getImageCrop(submission).suggestionConfidence ?? ""} />
 							<button
 								type="submit"
 								disabled={pendingTargetUserId !== null || !submission.evidenceComplete || submission.isQaFixture}

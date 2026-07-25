@@ -17,6 +17,7 @@ import {
 import { OPEN_FOOD_FACTS_IMAGE_LICENSE } from "$lib/utils/food/images/foodImages";
 import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
 import { normalizeFoodCategoryValue } from "$lib/utils/food/categories/categoryNormalization.js";
+import { extractExplicitAllergenDeclarations } from "$lib/utils/food/allergens/allergenDeclarations.js";
 import {
 	getProductDataSource,
 	type ProductReferenceData,
@@ -189,21 +190,30 @@ const parseOpenFoodFactsImage = (
 	};
 };
 
-const parseFdcMetadata = (food: FdcFood) => ({
-	ingredients: food.ingredients?.trim() || undefined,
-	ingredientList: food.ingredientList?.length
-		? uniqueCleanValues(food.ingredientList)
-		: splitIngredientList(food.ingredients),
-	allergens: uniqueCleanValues(food.allergens ?? []),
-	traces: uniqueCleanValues(food.traces ?? []),
-	dietaryTags: uniqueCleanValues(food.dietaryTags ?? []),
-	labels: uniqueCleanValues(food.labels ?? []),
-	categories: uniqueCleanValues([
-		...(food.categories ?? []),
-		food.foodCategory,
-		food.brandedFoodCategory,
-	]),
-});
+const parseFdcMetadata = (food: FdcFood) => {
+	const declarations = extractExplicitAllergenDeclarations(food.ingredients);
+	return {
+		ingredients: food.ingredients?.trim() || undefined,
+		ingredientList: food.ingredientList?.length
+			? uniqueCleanValues(food.ingredientList)
+			: splitIngredientList(food.ingredients),
+		allergens: uniqueCleanValues([
+			...(food.allergens ?? []),
+			...declarations.contains,
+		]),
+		traces: uniqueCleanValues([
+			...(food.traces ?? []),
+			...declarations.mayContain,
+		]),
+		dietaryTags: uniqueCleanValues(food.dietaryTags ?? []),
+		labels: uniqueCleanValues(food.labels ?? []),
+		categories: uniqueCleanValues([
+			...(food.categories ?? []),
+			food.foodCategory,
+			food.brandedFoodCategory,
+		]),
+	};
+};
 
 const getFieldConfidence = (
 	source: FoodFieldSource["source"],
@@ -246,13 +256,13 @@ const createOpenFoodFactsFieldProvenance = ({
 	barcode,
 	nutrients,
 	image,
-	categories,
+	metadata,
 	hasSourceServing,
 }: {
 	barcode: string;
 	nutrients: FdcNutrient[];
 	image?: FoodImageAsset;
-	categories: string[];
+	metadata: ReturnType<typeof parseOpenFoodFactsMetadata>;
 	hasSourceServing: boolean;
 }): FoodFieldProvenance => {
 	const source = createFieldSource("open-food-facts", barcode, "unknown");
@@ -267,8 +277,15 @@ const createOpenFoodFactsFieldProvenance = ({
 				),
 			}
 			: {}),
-		...(categories.length > 0 ? { categories: source } : {}),
+		...(metadata.categories.length > 0 ? { categories: source } : {}),
 		...(hasSourceServing ? { serving: source } : {}),
+		...(metadata.ingredients || metadata.ingredientList.length > 0
+			? { ingredients: source }
+			: {}),
+		...(metadata.allergens.length > 0 ? { allergens: source } : {}),
+		...(metadata.traces.length > 0 ? { traces: source } : {}),
+		...(metadata.dietaryTags.length > 0 ? { dietaryTags: source } : {}),
+		...(metadata.labels.length > 0 ? { labels: source } : {}),
 	};
 };
 
@@ -276,13 +293,13 @@ const createFdcFieldProvenance = ({
 	food,
 	nutrients,
 	image,
-	categories,
+	metadata,
 	hasSourceServing,
 }: {
 	food: FdcFood;
 	nutrients: FdcNutrient[];
 	image?: FoodImageAsset;
-	categories: string[];
+	metadata: ReturnType<typeof parseFdcMetadata>;
 	hasSourceServing: boolean;
 }): FoodFieldProvenance => {
 	const fallbackSource = normalizeFieldSource(
@@ -320,7 +337,7 @@ const createFdcFieldProvenance = ({
 				),
 			}
 			: {}),
-		...(categories.length > 0 && !food.fieldProvenance?.categories
+		...(metadata.categories.length > 0 && !food.fieldProvenance?.categories
 			? { categories: fallback }
 			: {}),
 		...(hasSourceServing && !food.fieldProvenance?.serving
@@ -333,6 +350,22 @@ const createFdcFieldProvenance = ({
 					)
 					: fallback,
 			}
+			: {}),
+		...((metadata.ingredients || metadata.ingredientList.length > 0) &&
+				!food.fieldProvenance?.ingredients
+			? { ingredients: fallback }
+			: {}),
+		...(metadata.allergens.length > 0 && !food.fieldProvenance?.allergens
+			? { allergens: fallback }
+			: {}),
+		...(metadata.traces.length > 0 && !food.fieldProvenance?.traces
+			? { traces: fallback }
+			: {}),
+		...(metadata.dietaryTags.length > 0 && !food.fieldProvenance?.dietaryTags
+			? { dietaryTags: fallback }
+			: {}),
+		...(metadata.labels.length > 0 && !food.fieldProvenance?.labels
+			? { labels: fallback }
 			: {}),
 	};
 };
@@ -411,7 +444,7 @@ export const mapOpenFoodFactsProduct = (
 			barcode: canonicalBarcode,
 			nutrients,
 			image,
-			categories: metadata.categories,
+			metadata,
 			hasSourceServing: hasExactGramWeight,
 		}),
 		volumeEquivalent: hasExactGramWeight
@@ -475,7 +508,7 @@ export const mapFdcBarcodeFood = (
 			food,
 			nutrients,
 			image: food.image,
-			categories: metadata.categories,
+			metadata,
 			hasSourceServing: hasExactGramWeight,
 		}),
 		volumeEquivalent: hasExactGramWeight

@@ -68,6 +68,11 @@ describe("barcode product field enrichment", () => {
 			image: true,
 			categories: true,
 			serving: true,
+			ingredients: true,
+			allergens: true,
+			traces: true,
+			dietaryTags: true,
+			labels: true,
 		});
 	});
 
@@ -87,7 +92,10 @@ describe("barcode product field enrichment", () => {
 			categories: false,
 			serving: false,
 			ingredients: true,
+			ingredientList: true,
 			allergens: true,
+			traces: true,
+			dietaryTags: true,
 			labels: true,
 			missingNutrientIds: [1003],
 		});

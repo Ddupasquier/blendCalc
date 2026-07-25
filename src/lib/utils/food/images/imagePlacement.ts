@@ -2,6 +2,7 @@ import type {
 	ImageFitMode,
 	ImagePlacementGeometry,
 	ImagePlacementGeometryInput,
+	ImagePlacementMethod,
 	ImagePlacementValue,
 } from "$lib/utils/food/images/types";
 
@@ -11,9 +12,21 @@ export const IMAGE_PLACEMENT_MIN_ZOOM = 1;
 export const IMAGE_PLACEMENT_MAX_ZOOM = 8;
 
 const fitModes = new Set<ImageFitMode>(["contain", "cover", "custom"]);
+const placementMethods = new Set<ImagePlacementMethod>([
+	"default",
+	"manual",
+	"smart-ocr",
+	"smart-ocr-adjusted",
+]);
 
 export const isImageFitMode = (value: unknown): value is ImageFitMode =>
 	typeof value === "string" && fitModes.has(value as ImageFitMode);
+
+export const isImagePlacementMethod = (
+	value: unknown,
+): value is ImagePlacementMethod =>
+	typeof value === "string" &&
+	placementMethods.has(value as ImagePlacementMethod);
 
 const clamp = (value: number, min: number, max: number, fallback: number) => {
 	if (!Number.isFinite(value)) return fallback;
@@ -31,6 +44,7 @@ export const FULL_IMAGE_PLACEMENT: Readonly<ImagePlacementValue> = Object.freeze
 	cropZoom: IMAGE_PLACEMENT_MIN_ZOOM,
 	fitMode: "contain",
 	placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
+	placementMethod: "default",
 });
 
 export const LEGACY_IMAGE_PLACEMENT: Readonly<ImagePlacementValue> = Object.freeze({
@@ -39,6 +53,7 @@ export const LEGACY_IMAGE_PLACEMENT: Readonly<ImagePlacementValue> = Object.free
 	cropZoom: IMAGE_PLACEMENT_MIN_ZOOM,
 	fitMode: "cover",
 	placementVersion: LEGACY_IMAGE_PLACEMENT_VERSION,
+	placementMethod: "manual",
 });
 
 export const createFullImagePlacement = (): ImagePlacementValue => ({
@@ -59,6 +74,19 @@ export const normalizeImagePlacement = (
 	const fitMode = isImageFitMode(value.fitMode)
 		? value.fitMode
 		: fallbackFitMode;
+	const placementMethod = isImagePlacementMethod(value.placementMethod)
+		? value.placementMethod
+		: fallback.placementMethod ?? "manual";
+	const suggestionVersion =
+		typeof value.suggestionVersion === "string" &&
+			value.suggestionVersion.trim()
+			? value.suggestionVersion.trim()
+			: undefined;
+	const suggestionConfidence = Number.isFinite(
+			Number(value.suggestionConfidence),
+		)
+		? clamp(Number(value.suggestionConfidence), 0, 100, 0)
+		: undefined;
 
 	return {
 		cropX: clamp(Number(value.cropX), 0, 100, fallback.cropX),
@@ -71,6 +99,13 @@ export const normalizeImagePlacement = (
 		),
 		fitMode,
 		placementVersion,
+		placementMethod,
+		...(placementMethod.startsWith("smart-ocr") && suggestionVersion
+			? {
+				suggestionVersion,
+				suggestionConfidence,
+			}
+			: {}),
 	};
 };
 
@@ -80,6 +115,10 @@ export const getStoredImagePlacement = (
 
 export const EMPTY_IMAGE_PLACEMENT_GEOMETRY: Readonly<ImagePlacementGeometry> = Object.freeze({
 	ready: false,
+	naturalWidth: 0,
+	naturalHeight: 0,
+	frameWidth: 0,
+	frameHeight: 0,
 	baseWidth: 0,
 	baseHeight: 0,
 	effectiveZoom: 1,
@@ -107,6 +146,10 @@ export const getImagePlacementGeometry = ({
 	) {
 		return {
 			...EMPTY_IMAGE_PLACEMENT_GEOMETRY,
+			naturalWidth,
+			naturalHeight,
+			frameWidth,
+			frameHeight,
 			effectiveZoom:
 				placement.fitMode === "contain" ? 1 : placement.cropZoom,
 		};
@@ -137,6 +180,10 @@ export const getImagePlacementGeometry = ({
 
 	return {
 		ready: true,
+		naturalWidth: round(naturalWidth),
+		naturalHeight: round(naturalHeight),
+		frameWidth: round(frameWidth),
+		frameHeight: round(frameHeight),
 		baseWidth: round(baseWidth),
 		baseHeight: round(baseHeight),
 		effectiveZoom: round(effectiveZoom),
@@ -167,6 +214,7 @@ export const createFillImagePlacement = (
 	),
 	fitMode: "cover",
 	placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
+	placementMethod: "manual",
 });
 
 export const createCustomImagePlacement = (
@@ -174,6 +222,9 @@ export const createCustomImagePlacement = (
 	effectiveZoom?: number,
 ): ImagePlacementValue => {
 	const placement = normalizeImagePlacement(value);
+	const followsSmartSuggestion =
+		placement.placementMethod === "smart-ocr" ||
+		placement.placementMethod === "smart-ocr-adjusted";
 	return {
 		...placement,
 		cropZoom: clamp(
@@ -184,6 +235,15 @@ export const createCustomImagePlacement = (
 		),
 		fitMode: "custom",
 		placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
+		placementMethod: followsSmartSuggestion
+			? "smart-ocr-adjusted"
+			: "manual",
+		...(!followsSmartSuggestion
+			? {
+				suggestionVersion: undefined,
+				suggestionConfidence: undefined,
+			}
+			: {}),
 	};
 };
 

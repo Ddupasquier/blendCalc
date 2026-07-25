@@ -26,6 +26,7 @@ const baseProfile: FoodPreferenceProfile = {
 			level: "warning",
 		},
 	],
+	matchRules: [],
 };
 
 const makeFood = (overrides: Partial<FdcFood>): FdcFood => ({
@@ -133,7 +134,8 @@ describe("food preference warnings", () => {
 			{ ...baseProfile, allergens: ["Dairy"] },
 		);
 
-		expect(warnings[0]?.reason).toContain("product metadata");
+		expect(warnings[0]?.reason)
+			.toBe("The label lists dairy as an allergen.");
 	});
 
 	it("matches exact allergen metadata without substring parsing", () => {
@@ -150,6 +152,90 @@ describe("food preference warnings", () => {
 				category: "allergen",
 				label: "Peanut",
 				level: "warning",
+				reason: "The label lists peanut as an allergen.",
+			}),
+		]);
+	});
+
+	it("uses DB-provided ingredient rules for dietary conflicts", () => {
+		const warnings = getFoodPreferenceWarnings(
+			makeFood({
+				description: "Gochujang",
+				ingredients: "Rice, soybean paste, wheat extract, salt",
+			}),
+			{
+				...baseProfile,
+				dietaryRestrictions: ["Gluten-free"],
+				warningRules: [{
+					preferenceSlug: "gluten-free",
+					preferenceLabel: "Gluten-free",
+					factSlug: "wheat",
+					factLabel: "Wheat",
+					level: "warning",
+				}],
+				matchRules: [{
+					sourceKey: null,
+					fieldName: "ingredients",
+					matchPattern: "\\bwheat\\b",
+					tagSlug: "wheat",
+					tagLabel: "Wheat",
+					tagCategory: "allergen",
+					factType: "ingredient_present",
+					sourceType: "label_ingredient_field",
+					confidence: "confirmed",
+					priority: 10,
+				}],
+			},
+		);
+
+		expect(warnings).toEqual([
+			expect.objectContaining({
+				category: "restriction",
+				label: "Gluten-free",
+				level: "warning",
+				reason:
+					"This may not be gluten-free because wheat appears in the ingredient list.",
+			}),
+		]);
+	});
+
+	it("uses DB-provided source identity rules for shellfish conflicts", () => {
+		const warnings = getFoodPreferenceWarnings(
+			makeFood({
+				description: "Crustaceans, shrimp, raw",
+				sourceKey: "usda",
+			}),
+			{
+				...baseProfile,
+				allergens: ["Shellfish"],
+				warningRules: [{
+					preferenceSlug: "shellfish",
+					preferenceLabel: "Shellfish",
+					factSlug: "shellfish",
+					factLabel: "Shellfish",
+					level: "warning",
+				}],
+				matchRules: [{
+					sourceKey: "usda",
+					fieldName: "description",
+					matchPattern: "\\b(?:shellfish|shrimp|crustaceans?)\\b",
+					tagSlug: "shellfish",
+					tagLabel: "Shellfish",
+					tagCategory: "allergen",
+					factType: "ingredient_present",
+					sourceType: "source_food_identity",
+					confidence: "confirmed",
+					priority: 10,
+				}],
+			},
+		);
+
+		expect(warnings).toEqual([
+			expect.objectContaining({
+				category: "allergen",
+				label: "Shellfish",
+				level: "warning",
+				reason: "This food is identified as shellfish.",
 			}),
 		]);
 	});

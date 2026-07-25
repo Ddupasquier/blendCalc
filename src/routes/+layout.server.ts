@@ -100,6 +100,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		foodPreferences: getFoodPreferenceProfile(
 			foodPreferencesResult.data,
 			appReferenceCatalog.foodPreferenceConflictRules,
+			appReferenceCatalog.foodCompatibilityMatchRules,
 		),
 		servingMeasureCatalog,
 		nutritionCompletenessCatalog,

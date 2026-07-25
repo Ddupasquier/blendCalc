@@ -1,5 +1,8 @@
 import type { Database } from "$lib/types/database.types";
-import type { FoodPreferenceConflictRule } from "$lib/utils/food/reference/appReferenceCatalog";
+import type {
+	FoodCompatibilityMatchRule,
+	FoodPreferenceConflictRule,
+} from "$lib/utils/food/reference/appReferenceCatalog";
 
 export type FoodPreferenceRecord =
 	Database["public"]["Tables"]["user_food_preferences"]["Row"];
@@ -22,11 +25,13 @@ export type FoodPreferenceProfile = {
 	defaultSmoothieServingGrams: number | null;
 	sensitiveAcknowledgedAt: string | null;
 	warningRules: FoodPreferenceConflictRule[];
+	matchRules: FoodCompatibilityMatchRule[];
 };
 
 export const getFoodPreferenceProfile = (
 	record: FoodPreferenceProfileSource | null | undefined,
 	warningRules: FoodPreferenceConflictRule[] = [],
+	matchRules: FoodCompatibilityMatchRule[] = [],
 ): FoodPreferenceProfile | null => {
 	if (!record) return null;
 
@@ -38,6 +43,7 @@ export const getFoodPreferenceProfile = (
 		defaultSmoothieServingGrams: record.default_smoothie_serving_grams,
 		sensitiveAcknowledgedAt: record.sensitive_acknowledged_at,
 		warningRules,
+		matchRules,
 	};
 };
 

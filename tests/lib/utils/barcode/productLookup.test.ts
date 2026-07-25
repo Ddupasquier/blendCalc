@@ -184,14 +184,21 @@ describe("barcode product mapping", () => {
 			productReferenceDataFixture,
 		);
 
-		expect(draft).toMatchObject({
-			ingredients: "Cultured milk, honey, pectin",
+			expect(draft).toMatchObject({
+				ingredients: "Cultured milk, honey, pectin",
 			ingredientList: ["Cultured milk", "honey", "pectin"],
 			allergens: ["milk"],
 			traces: ["tree nuts"],
 			dietaryTags: ["gluten free"],
-			categories: ["milk and yogurt", "dairy desserts", "dairy products", "yogurts"],
-		});
+				categories: ["milk and yogurt", "dairy desserts", "dairy products", "yogurts"],
+				fieldProvenance: {
+					ingredients: { source: "open-food-facts" },
+					allergens: { source: "open-food-facts" },
+					traces: { source: "open-food-facts" },
+					dietaryTags: { source: "open-food-facts" },
+					labels: { source: "open-food-facts" },
+				},
+			});
 	});
 
 	it("keeps Open Food Facts package image metadata with attribution", () => {
@@ -322,11 +329,13 @@ describe("barcode product mapping", () => {
 			sourcePublishedDate: "2024-05-01",
 			sourceModifiedDate: "2024-04-15",
 			fieldProvenance: {
-				nutrition: { source: "usda", confidence: "unknown" },
-				categories: { source: "usda", confidence: "unknown" },
-				serving: { source: "usda", confidence: "unknown" },
-			},
-		});
+					nutrition: { source: "usda", confidence: "unknown" },
+					categories: { source: "usda", confidence: "unknown" },
+					serving: { source: "usda", confidence: "unknown" },
+					ingredients: { source: "usda", confidence: "unknown" },
+					allergens: { source: "usda", confidence: "unknown" },
+				},
+			});
 	});
 
 	it("marks approved catalog records as shared products", () => {
@@ -361,5 +370,46 @@ describe("barcode product mapping", () => {
 				},
 			},
 		});
+	});
+
+	it("keeps explicit USDA ingredient-label allergen declarations", () => {
+		const draft = mapFdcBarcodeFood(
+			{
+				fdcId: 124,
+				description: "Test almond drink",
+				ingredients:
+					"Almondmilk, calcium carbonate. Contains Almonds. May contain soy.",
+				foodNutrients: [],
+			},
+			"4006381333931",
+			productReferenceDataFixture,
+		);
+
+		expect(draft).toMatchObject({
+			allergens: ["Almonds"],
+			traces: ["soy"],
+			fieldProvenance: {
+				allergens: { source: "usda", confidence: "unknown" },
+				traces: { source: "usda", confidence: "unknown" },
+			},
+		});
+	});
+
+	it("does not infer USDA allergens from ordinary ingredient names", () => {
+		const draft = mapFdcBarcodeFood(
+			{
+				fdcId: 125,
+				description: "Test sauce",
+				ingredients: "Soybean paste, wheat extract, milk powder",
+				foodNutrients: [],
+			},
+			"4006381333931",
+			productReferenceDataFixture,
+		);
+
+		expect(draft?.allergens).toEqual([]);
+		expect(draft?.traces).toEqual([]);
+		expect(draft?.fieldProvenance?.allergens).toBeUndefined();
+		expect(draft?.fieldProvenance?.traces).toBeUndefined();
 	});
 });

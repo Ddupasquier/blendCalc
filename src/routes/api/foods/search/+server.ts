@@ -116,6 +116,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		const profile = getFoodPreferenceProfile(
 			foodPreferencesResult.data,
 			appReferenceCatalog.foodPreferenceConflictRules,
+			appReferenceCatalog.foodCompatibilityMatchRules,
 		);
 		if (
 			searchResults.length > 0 &&

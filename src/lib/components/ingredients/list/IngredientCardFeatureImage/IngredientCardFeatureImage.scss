@@ -1,0 +1,24 @@
+@use "../../../../../styles/variables" as *;
+
+.ingredient-card-feature-image {
+	position: absolute;
+	z-index: 0;
+	inset-block: 0;
+	inset-inline-start: 0;
+	display: block;
+	width: var(--ingredient-card-feature-image-width);
+	overflow: hidden;
+	pointer-events: none;
+	border-radius: $app-shell-radius-card 0 0 0;
+	mask-image: linear-gradient(to right, #000 0%, #000 52%, transparent 100%);
+	-webkit-mask-image: linear-gradient(
+		to right,
+		#000 0%,
+		#000 52%,
+		transparent 100%
+	);
+}
+
+.ingredient-card-feature-image--interactive {
+	pointer-events: auto;
+}

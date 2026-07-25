@@ -2,8 +2,12 @@
 
 .card-warning-edge {
 	position: absolute;
-	inset: 0 auto 0 0;
-	width: 5px;
+	z-index: 5;
+	inset-block: 0;
+	inset-inline-start: 0;
+	display: block;
+	inline-size: 8px;
+	block-size: 100%;
 	background: $app-highlight;
 	pointer-events: none;
 }

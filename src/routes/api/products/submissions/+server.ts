@@ -13,6 +13,7 @@ import type { FdcFood } from "$lib/utils/food/types";
 import {
 	CURRENT_IMAGE_PLACEMENT_VERSION,
 	isImageFitMode,
+	isImagePlacementMethod,
 	normalizeImagePlacement,
 } from "$lib/utils/food/images/imagePlacement";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
@@ -76,11 +77,31 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				cropY?: unknown;
 				cropZoom?: unknown;
 				fitMode?: unknown;
+				placementMethod?: unknown;
+				suggestionVersion?: unknown;
+				suggestionConfidence?: unknown;
 			};
+			const placementMethod = isImagePlacementMethod(
+					parsedCrop.placementMethod,
+				)
+				? parsedCrop.placementMethod
+				: "manual";
+			const usesSmartSuggestion =
+				placementMethod === "smart-ocr" ||
+				placementMethod === "smart-ocr-adjusted";
+			const suggestionVersion =
+				typeof parsedCrop.suggestionVersion === "string"
+					? parsedCrop.suggestionVersion.trim()
+					: "";
+			const suggestionConfidence = Number(parsedCrop.suggestionConfidence);
 			if (
 				![parsedCrop.cropX, parsedCrop.cropY, parsedCrop.cropZoom].every((value) =>
 					Number.isFinite(Number(value))) ||
-				!isImageFitMode(parsedCrop.fitMode)
+				!isImageFitMode(parsedCrop.fitMode) ||
+				(
+					usesSmartSuggestion &&
+					(!suggestionVersion || !Number.isFinite(suggestionConfidence))
+				)
 			) {
 				throw new Error("Invalid image placement");
 			}
@@ -90,6 +111,13 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				cropZoom: Number(parsedCrop.cropZoom),
 				fitMode: parsedCrop.fitMode,
 				placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
+				placementMethod,
+				...(usesSmartSuggestion
+					? {
+						suggestionVersion,
+						suggestionConfidence,
+					}
+					: {}),
 			});
 		} catch {
 			throw error(400, "Product image placement data is invalid.");

@@ -74,6 +74,7 @@ export const readAppReferenceCatalog = async (
 			symbolsResult,
 			symbolRulesResult,
 			preferenceConflictRulesResult,
+			compatibilityMatchRulesResult,
 		] = await Promise.all([
 		definitionsPromise,
 		supabase
@@ -115,6 +116,13 @@ export const readAppReferenceCatalog = async (
 				.select(
 					"severity, preference_tag:compatibility_tags!compatibility_rule_conflicts_preference_tag_id_fkey(slug, label), fact_tag:compatibility_tags!compatibility_rule_conflicts_fact_tag_id_fkey(slug, label)",
 				),
+			supabase
+				.from("food_compatibility_match_rules")
+				.select(
+					"source_key, field_name, match_pattern, fact_type, source_type, confidence, priority, tag:compatibility_tags(slug, label, category)",
+				)
+				.eq("enabled", true)
+				.order("priority", { ascending: true }),
 		]);
 
 	for (const result of [
@@ -128,6 +136,7 @@ export const readAppReferenceCatalog = async (
 			symbolsResult,
 			symbolRulesResult,
 			preferenceConflictRulesResult,
+			compatibilityMatchRulesResult,
 		]) {
 		if (result.error) throw result.error;
 	}
@@ -218,6 +227,33 @@ export const readAppReferenceCatalog = async (
 			factSlug: rule.fact_tag.slug,
 			factLabel: rule.fact_tag.label,
 			level: rule.severity,
+		})),
+		foodCompatibilityMatchRules: (
+			(compatibilityMatchRulesResult.data ?? []) as unknown as Array<{
+				source_key: string | null;
+				field_name: "description" | "food_category" | "ingredients";
+				match_pattern: string;
+				fact_type: "ingredient_present";
+				source_type: "label_ingredient_field" | "source_food_identity";
+				confidence: "confirmed" | "inferred" | "uncertain";
+				priority: number;
+				tag: {
+					slug: string;
+					label: string;
+					category: "allergen" | "dietary" | "ingredient" | "avoidance";
+				};
+			}>
+		).map((rule) => ({
+			sourceKey: rule.source_key,
+			fieldName: rule.field_name,
+			matchPattern: rule.match_pattern,
+			tagSlug: rule.tag.slug,
+			tagLabel: rule.tag.label,
+			tagCategory: rule.tag.category,
+			factType: rule.fact_type,
+			sourceType: rule.source_type,
+			confidence: rule.confidence,
+			priority: rule.priority,
 		})),
 	};
 };

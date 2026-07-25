@@ -13,10 +13,17 @@ export const PUBLIC_FOOD_IMAGE_BUCKET = "food-image-assets";
 
 export type FoodImagePlacementValues = Partial<ImagePlacementValue> & {
 	cropSource?: FoodImageAsset["cropSource"] | null;
+	suggestionAcceptedAt?: string | null;
 };
 
-const normalizePlacement = (value: FoodImagePlacementValues = {}) => {
+const normalizePlacement = (
+	value: FoodImagePlacementValues = {},
+	suggestionAcceptedAt?: string | null,
+) => {
 	const placement = normalizeImagePlacement(value);
+	const usesSmartSuggestion =
+		placement.placementMethod === "smart-ocr" ||
+		placement.placementMethod === "smart-ocr-adjusted";
 	return {
 		crop_x: placement.cropX,
 		crop_y: placement.cropY,
@@ -24,6 +31,16 @@ const normalizePlacement = (value: FoodImagePlacementValues = {}) => {
 		fit_mode: placement.fitMode,
 		placement_version: placement.placementVersion,
 		crop_source: value.cropSource ?? "auto",
+		placement_method: placement.placementMethod ?? "manual",
+		placement_suggestion_version: usesSmartSuggestion
+			? placement.suggestionVersion ?? null
+			: null,
+		placement_suggestion_confidence: usesSmartSuggestion
+			? placement.suggestionConfidence ?? null
+			: null,
+		placement_suggestion_accepted_at: usesSmartSuggestion
+			? suggestionAcceptedAt ?? value.suggestionAcceptedAt ?? null
+			: null,
 	};
 };
 
@@ -121,10 +138,13 @@ export const publishModeratedFoodImageAsset = async ({
 		license_url: null,
 		attribution_text: "blendCalc community submission",
 		confidence: "moderator-reviewed" as const,
-		...normalizePlacement({
-			...crop,
-			cropSource: crop?.cropSource ?? "moderator",
-		}),
+		...normalizePlacement(
+			{
+				...crop,
+				cropSource: crop?.cropSource ?? "moderator",
+			},
+			now,
+		),
 		approved_by: moderatorId,
 		approved_at: now,
 		status: "active",
@@ -154,6 +174,13 @@ export const publishModeratedFoodImageAsset = async ({
 		fitMode: payload.fit_mode,
 		placementVersion: payload.placement_version,
 		cropSource: payload.crop_source,
+		placementMethod: payload.placement_method,
+		suggestionVersion:
+			payload.placement_suggestion_version ?? undefined,
+		suggestionConfidence:
+			payload.placement_suggestion_confidence ?? undefined,
+		suggestionAcceptedAt:
+			payload.placement_suggestion_accepted_at ?? undefined,
 		approvedBy: moderatorId,
 		approvedAt: now,
 		fetchedAt: now,
@@ -176,10 +203,13 @@ export const updateFoodImageAssetPlacement = async ({
 	const admin = getSupabaseAdminClient();
 	const now = new Date().toISOString();
 	const payload = {
-		...normalizePlacement({
-			...crop,
-			cropSource: "moderator",
-		}),
+		...normalizePlacement(
+			{
+				...crop,
+				cropSource: "moderator",
+			},
+			now,
+		),
 		approved_by: moderatorId,
 		approved_at: now,
 	};
@@ -192,7 +222,7 @@ export const updateFoodImageAssetPlacement = async ({
 		.eq("image_role", role)
 		.eq("status", "active")
 		.select(
-				"source, source_reference, image_role, image_url, thumbnail_url, storage_path, license_name, license_url, attribution_text, confidence, crop_x, crop_y, crop_zoom, fit_mode, placement_version, crop_source, approved_by, approved_at, fetched_at",
+			"source, source_reference, image_role, image_url, thumbnail_url, storage_path, license_name, license_url, attribution_text, confidence, crop_x, crop_y, crop_zoom, fit_mode, placement_version, crop_source, placement_method, placement_suggestion_version, placement_suggestion_confidence, placement_suggestion_accepted_at, approved_by, approved_at, fetched_at",
 		)
 		.maybeSingle();
 	if (error) throw error;
@@ -215,6 +245,16 @@ export const updateFoodImageAssetPlacement = async ({
 		fitMode: data.fit_mode as FoodImageAsset["fitMode"],
 		placementVersion: data.placement_version,
 		cropSource: data.crop_source as FoodImageAsset["cropSource"],
+		placementMethod:
+			data.placement_method as FoodImageAsset["placementMethod"],
+		suggestionVersion:
+			data.placement_suggestion_version ?? undefined,
+		suggestionConfidence:
+			data.placement_suggestion_confidence === null
+				? undefined
+				: Number(data.placement_suggestion_confidence),
+		suggestionAcceptedAt:
+			data.placement_suggestion_accepted_at ?? undefined,
 		approvedBy: data.approved_by ?? undefined,
 		approvedAt: data.approved_at ?? undefined,
 		fetchedAt: data.fetched_at,

@@ -123,7 +123,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 		avatarUrl,
 		foodPreferences: foodPreferencesUnavailable
 			? null
-			: getFoodPreferenceProfile(foodPreferences),
+			: getFoodPreferenceProfile(
+				foodPreferences,
+				appReferenceCatalog.foodPreferenceConflictRules,
+				appReferenceCatalog.foodCompatibilityMatchRules,
+			),
 		foodPreferencesUnavailable,
 		foodPreferenceOptions: getFoodPreferenceOptionSets(
 			foodPreferenceOptionsUnavailable ? [] : foodPreferenceOptions,

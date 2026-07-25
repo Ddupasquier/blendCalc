@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
 
 describe("ImagePlacementEditor", () => {
-	it("offers full, fill, and custom modes with accessible fallback controls", async () => {
+	it("offers simplified full and fill presets with accessible custom controls", async () => {
 		const onChange = vi.fn();
 		render(ImagePlacementEditor, {
 			props: {
@@ -22,8 +22,11 @@ describe("ImagePlacementEditor", () => {
 		});
 
 		expect(screen.getByRole("button", { name: "Full image" })).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: "Fill circle" })).toBeDisabled();
-		expect(screen.getByRole("button", { name: "Custom" })).toHaveAttribute("aria-pressed", "true");
+		expect(screen.getByRole("button", { name: "Fill card" })).toBeDisabled();
+		expect(screen.getByRole("button", { name: "Suggest placement" })).toBeDisabled();
+		expect(screen.queryByRole("button", { name: "Custom" })).not.toBeInTheDocument();
+		expect(screen.getByRole("group", { name: "Interactive card image preview" }))
+			.toBeInTheDocument();
 		expect(screen.getByLabelText(/Horizontal position/)).toBeDisabled();
 		expect(screen.getByLabelText(/Vertical position/)).toBeDisabled();
 		expect(screen.getByLabelText(/Zoom/)).toBeEnabled();
@@ -36,6 +39,7 @@ describe("ImagePlacementEditor", () => {
 			cropZoom: 1,
 			fitMode: "contain",
 			placementVersion: 2,
+			placementMethod: "default",
 		});
 
 		onChange.mockClear();
@@ -46,6 +50,7 @@ describe("ImagePlacementEditor", () => {
 			cropZoom: 1,
 			fitMode: "contain",
 			placementVersion: 2,
+			placementMethod: "default",
 		});
 	});
 });

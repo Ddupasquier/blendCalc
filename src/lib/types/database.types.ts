@@ -120,33 +120,6 @@ export type Database = {
         }
         Relationships: []
       }
-      compatibility_tags: {
-        Row: {
-          category: string
-          created_at: string
-          id: string
-          label: string
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          category: string
-          created_at?: string
-          id?: string
-          label: string
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          id?: string
-          label?: string
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       compatibility_rule_conflicts: {
         Row: {
           created_at: string
@@ -185,6 +158,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      compatibility_tags: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          label: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          label: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          label?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       custom_food_category_mappings: {
         Row: {
@@ -411,6 +411,59 @@ export type Database = {
           },
         ]
       }
+      food_compatibility_match_rules: {
+        Row: {
+          confidence: string
+          created_at: string
+          enabled: boolean
+          fact_type: string
+          field_name: string
+          id: string
+          match_pattern: string
+          priority: number
+          source_key: string | null
+          source_type: string
+          tag_id: string
+          updated_at: string
+        }
+        Insert: {
+          confidence: string
+          created_at?: string
+          enabled?: boolean
+          fact_type: string
+          field_name: string
+          id?: string
+          match_pattern: string
+          priority?: number
+          source_key?: string | null
+          source_type: string
+          tag_id: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          enabled?: boolean
+          fact_type?: string
+          field_name?: string
+          id?: string
+          match_pattern?: string
+          priority?: number
+          source_key?: string | null
+          source_type?: string
+          tag_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_compatibility_match_rules_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "compatibility_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_image_assets: {
         Row: {
           approved_at: string | null
@@ -430,6 +483,10 @@ export type Database = {
           image_url: string
           license_name: string
           license_url: string | null
+          placement_method: string
+          placement_suggestion_accepted_at: string | null
+          placement_suggestion_confidence: number | null
+          placement_suggestion_version: string | null
           placement_version: number
           shared_product_id: string | null
           source: string
@@ -457,6 +514,10 @@ export type Database = {
           image_url: string
           license_name: string
           license_url?: string | null
+          placement_method?: string
+          placement_suggestion_accepted_at?: string | null
+          placement_suggestion_confidence?: number | null
+          placement_suggestion_version?: string | null
           placement_version?: number
           shared_product_id?: string | null
           source: string
@@ -484,6 +545,10 @@ export type Database = {
           image_url?: string
           license_name?: string
           license_url?: string | null
+          placement_method?: string
+          placement_suggestion_accepted_at?: string | null
+          placement_suggestion_confidence?: number | null
+          placement_suggestion_version?: string | null
           placement_version?: number
           shared_product_id?: string | null
           source?: string
@@ -3568,6 +3633,14 @@ export type Database = {
       }
       is_valid_gtin: { Args: { p_value: string }; Returns: boolean }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
+      move_user_food_list_items: {
+        Args: {
+          p_fdc_ids: number[]
+          p_source_list_type: string
+          p_target_list_type: string
+        }
+        Returns: number
+      }
       normalize_food_category_value: {
         Args: { p_value: string }
         Returns: string
@@ -3584,14 +3657,6 @@ export type Database = {
       place_user_food_list_items: {
         Args: { p_foods: Json; p_list_type: string }
         Returns: string
-      }
-      move_user_food_list_items: {
-        Args: {
-          p_fdc_ids: number[]
-          p_source_list_type: string
-          p_target_list_type: string
-        }
-        Returns: number
       }
       publish_shared_product_submission: {
         Args: {

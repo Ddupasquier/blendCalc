@@ -233,6 +233,7 @@
 
 	const shareStep = $derived<ShareStepProps>({
 		normalizedName: validation.normalizedName,
+		brandOwner: form.data.brandOwner,
 		activeCategory: form.data.category,
 		summaryNutrients: form.getSummaryNutrients(
 			validation.requiredNutrientFields,

@@ -10,12 +10,7 @@ import type {
 export type MissingBarcodeProductFields = Record<FoodTrackedField, boolean>;
 
 export type BarcodeProductSupplementPlan = MissingBarcodeProductFields & {
-	ingredients: boolean;
 	ingredientList: boolean;
-	allergens: boolean;
-	traces: boolean;
-	dietaryTags: boolean;
-	labels: boolean;
 	missingNutrientIds: number[];
 };
 
@@ -41,6 +36,18 @@ const hasServing = (draft: BarcodeProductDraft) =>
 	Number.isFinite(draft.servingWeightGrams) &&
 	draft.servingWeightGrams > 0;
 
+const hasValues = (values?: string[]) =>
+	Boolean(values?.some((value) => value.trim()));
+
+const hasObservedField = (
+	draft: BarcodeProductDraft,
+	field: Extract<
+		FoodTrackedField,
+		"allergens" | "traces" | "dietaryTags" | "labels"
+	>,
+	values?: string[],
+) => Boolean(draft.fieldProvenance?.[field]) || hasValues(values);
+
 export const getMissingBarcodeProductFields = (
 	draft: BarcodeProductDraft,
 ): MissingBarcodeProductFields => ({
@@ -48,10 +55,13 @@ export const getMissingBarcodeProductFields = (
 	image: !hasImage(draft),
 	categories: !hasCategories(draft),
 	serving: !hasServing(draft),
+	ingredients:
+		!draft.ingredients?.trim() || !hasValues(draft.ingredientList),
+	allergens: !hasObservedField(draft, "allergens", draft.allergens),
+	traces: !hasObservedField(draft, "traces", draft.traces),
+	dietaryTags: !hasObservedField(draft, "dietaryTags", draft.dietaryTags),
+	labels: !hasObservedField(draft, "labels", draft.labels),
 });
-
-const hasValues = (values?: string[]) =>
-	Boolean(values?.some((value) => value.trim()));
 
 export const getBarcodeProductSupplementPlan = (
 	draft: BarcodeProductDraft,
@@ -62,12 +72,7 @@ export const getBarcodeProductSupplementPlan = (
 	);
 	return {
 		...getMissingBarcodeProductFields(draft),
-		ingredients: !draft.ingredients?.trim(),
 		ingredientList: !hasValues(draft.ingredientList),
-		allergens: !hasValues(draft.allergens),
-		traces: !hasValues(draft.traces),
-		dietaryTags: !hasValues(draft.dietaryTags),
-		labels: !hasValues(draft.labels),
 		missingNutrientIds: [...requiredNutrientIds].filter(
 			(nutrientId) => !availableIds.has(nutrientId),
 		),
@@ -259,6 +264,11 @@ export const mergeMissingBarcodeProductFields = (
 	const useSupplementNutrition = supplementedFields.has("nutrition");
 	const useSupplementImage = supplementedFields.has("image");
 	const useSupplementCategories = supplementedFields.has("categories");
+	const useSupplementIngredients = supplementedFields.has("ingredients");
+	const useSupplementAllergens = supplementedFields.has("allergens");
+	const useSupplementTraces = supplementedFields.has("traces");
+	const useSupplementDietaryTags = supplementedFields.has("dietaryTags");
+	const useSupplementLabels = supplementedFields.has("labels");
 	const useSupplementMetadata = hasSupplementaryProductMetadata(
 		primary,
 		supplement,
@@ -268,6 +278,11 @@ export const mergeMissingBarcodeProductFields = (
 		!useSupplementNutrition &&
 		!useSupplementImage &&
 		!useSupplementCategories &&
+		!useSupplementIngredients &&
+		!useSupplementAllergens &&
+		!useSupplementTraces &&
+		!useSupplementDietaryTags &&
+		!useSupplementLabels &&
 		!useSupplementMetadata
 	) {
 		return primary;
@@ -313,6 +328,21 @@ export const mergeMissingBarcodeProductFields = (
 	if (useSupplementCategories) {
 		provenance = withFieldSource(provenance, "categories", supplement);
 	}
+	if (useSupplementIngredients) {
+		provenance = withFieldSource(provenance, "ingredients", supplement);
+	}
+	if (useSupplementAllergens) {
+		provenance = withFieldSource(provenance, "allergens", supplement);
+	}
+	if (useSupplementTraces) {
+		provenance = withFieldSource(provenance, "traces", supplement);
+	}
+	if (useSupplementDietaryTags) {
+		provenance = withFieldSource(provenance, "dietaryTags", supplement);
+	}
+	if (useSupplementLabels) {
+		provenance = withFieldSource(provenance, "labels", supplement);
+	}
 
 	return {
 		...primary,
@@ -328,19 +358,19 @@ export const mergeMissingBarcodeProductFields = (
 			: primary.volumeEquivalent,
 		nutrients,
 		reportedNutrientIds,
-		ingredients:
-			primary.ingredients?.trim() || supplement.ingredients?.trim() || undefined,
-		ingredientList: mergeMetadataValues(
-			primary.ingredientList,
-			supplement.ingredientList,
-		),
-		allergens: mergeMetadataValues(primary.allergens, supplement.allergens),
-		traces: mergeMetadataValues(primary.traces, supplement.traces),
-		dietaryTags: mergeMetadataValues(
-			primary.dietaryTags,
-			supplement.dietaryTags,
-		),
-		labels: mergeMetadataValues(primary.labels, supplement.labels),
+			ingredients:
+				primary.ingredients?.trim() || supplement.ingredients?.trim() || undefined,
+			ingredientList: mergeMetadataValues(
+				primary.ingredientList,
+				supplement.ingredientList,
+			),
+			allergens: mergeMetadataValues(primary.allergens, supplement.allergens),
+			traces: mergeMetadataValues(primary.traces, supplement.traces),
+			dietaryTags: mergeMetadataValues(
+				primary.dietaryTags,
+				supplement.dietaryTags,
+			),
+			labels: mergeMetadataValues(primary.labels, supplement.labels),
 		image: useSupplementImage
 			? supplement.image
 			: primary.image,

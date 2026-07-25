@@ -5,9 +5,15 @@
 	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
 	import IngredientCardActions from "$lib/components/ingredients/list/IngredientCardActions/IngredientCardActions.svelte";
+	import IngredientCardFeatureImage from "$lib/components/ingredients/list/IngredientCardFeatureImage/IngredientCardFeatureImage.svelte";
 	import IngredientMoveIcon from "$lib/components/ingredients/list/IngredientMoveIcon/IngredientMoveIcon.svelte";
 	import IngredientSelectionIndicator from "$lib/components/ingredients/list/IngredientSelectionIndicator/IngredientSelectionIndicator.svelte";
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
+	import {
+		getFoodImageAltText,
+		pickFoodFullImageUrl,
+	} from "$lib/utils/food/images/foodImages";
+	import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import { longPress } from "$lib/utils/interaction/longPress";
 	import type { SavedIngredientCardProps } from "./types";
@@ -20,10 +26,10 @@
 		moving = false,
 		removing = false,
 		moveDirection,
-		moveLabel,
-		category,
-		warning = null,
-		provenanceOptions = [],
+			moveLabel,
+			category,
+			warning = null,
+			provenanceOptions = [],
 		onToggle,
 		onEnterSelection,
 		onPreview,
@@ -32,12 +38,38 @@
 		onRemove,
 	}: SavedIngredientCardProps = $props();
 
+	const featureImageUrl = $derived(pickFoodFullImageUrl(food.image));
+	const featureImageAlt = $derived(
+		getFoodImageAltText({
+			foodName: food.description,
+			role: food.image?.role,
+		}),
+	);
+	const featureImagePlacement = $derived(
+		getStoredImagePlacement({
+			cropX: food.image?.cropX,
+			cropY: food.image?.cropY,
+			cropZoom: food.image?.cropZoom,
+			fitMode: food.image?.fitMode,
+			placementVersion: food.image?.placementVersion,
+		}),
+	);
+	let failedFeatureImageUrl = $state("");
+	const showFeatureImage = $derived(
+		Boolean(featureImageUrl) &&
+			failedFeatureImageUrl !== featureImageUrl,
+	);
+
 	const handlePrimaryAction = () => {
 		if (selectionMode) {
 			onToggle();
 			return;
 		}
 		onPreview();
+	};
+
+	const handleFeatureImageError = () => {
+		failedFeatureImageUrl = featureImageUrl;
 	};
 </script>
 
@@ -47,7 +79,17 @@
 	class:saved-ingredient-card--checked={checked}
 	class:saved-ingredient-card--custom={isPrivateCustomFood(food)}
 	class:saved-ingredient-card--selection-mode={selectionMode}
+	class:saved-ingredient-card--feature-image={showFeatureImage}
 >
+	{#if showFeatureImage}
+		<IngredientCardFeatureImage
+			imageUrl={featureImageUrl}
+			alt={featureImageAlt}
+			value={featureImagePlacement}
+			decorative
+			onError={handleFeatureImageError}
+		/>
+	{/if}
 	{#if warning}
 		<CardWarningEdge />
 	{/if}
@@ -65,9 +107,11 @@
 		}}
 		onclick={handlePrimaryAction}
 	>
-		<CircularMediaFrame class="saved-ingredient-card__icon">
-			<FoodSymbol {food} />
-		</CircularMediaFrame>
+		{#if !showFeatureImage}
+			<CircularMediaFrame class="saved-ingredient-card__icon">
+				<FoodSymbol {food} />
+			</CircularMediaFrame>
+		{/if}
 		<span class="saved-ingredient-card__copy">
 			<span class="saved-ingredient-card__title-row">
 				<strong title={food.description}>{food.description}</strong>

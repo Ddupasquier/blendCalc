@@ -1,13 +1,72 @@
 @use "../../../../../styles/variables" as *;
 
-:global(.image-placement-card-preview) {
-	--circular-media-frame-background: #{$app-shell-accent-soft};
+$preview-image-width: 18%;
+
+.image-placement-card-preview {
+	--ingredient-card-feature-image-width: #{$preview-image-width};
+	position: relative;
+	display: grid;
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 24rem;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: $app-gap-sm;
+	min-height: 5.25rem;
+	padding: $app-shell-card-padding-compact;
+	overflow: hidden;
+	background: $app-shell-surface-panel;
+	border: 2px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-card;
 }
 
-:global(.image-placement-card-preview--card) {
-	--circular-media-frame-size: #{$app-shell-leading-icon-size};
+.image-placement-card-preview__copy {
+	position: relative;
+	z-index: 1;
+	display: grid;
+	gap: $app-gap-2xs;
+	min-width: 0;
+	padding-inline-start: calc(
+		var(--ingredient-card-feature-image-width) + #{$app-gap-xs}
+	);
 }
 
-:global(.image-placement-card-preview--editor) {
-	--circular-media-frame-size: #{8rem};
+.image-placement-card-preview__copy strong,
+.image-placement-card-preview__copy small {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.image-placement-card-preview__copy strong {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-heavy;
+	line-height: 1.08;
+}
+
+.image-placement-card-preview__copy small {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: 1.15;
+}
+
+.image-placement-card-preview__actions {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	gap: $app-gap-xs;
+}
+
+:global(.image-placement-card-preview__action) {
+	--circular-icon-frame-size: #{$app-control-height-sm};
+	--circular-icon-frame-icon-size: #{$app-control-icon-size};
+	--circular-icon-frame-color: #{$app-shell-text-primary};
+	--circular-icon-frame-background: #{$app-shell-surface-soft};
+}
+
+:global(.image-placement-card-preview__action--primary) {
+	--circular-icon-frame-color: #{$app-shell-surface-panel};
+	--circular-icon-frame-background: #{$app-shell-accent-primary};
 }

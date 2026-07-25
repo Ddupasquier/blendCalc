@@ -13,6 +13,7 @@ vi.mock("$lib/utils/profile/foodPreferenceContext.svelte", () => ({
 			defaultSmoothieServingGrams: null,
 			sensitiveAcknowledgedAt: null,
 			warningRules: [],
+			matchRules: [],
 		},
 	}),
 }));
@@ -35,16 +36,16 @@ describe("NutritionPanel", () => {
 			},
 		});
 
-		const heading = screen.getByText("Potential conflict");
+		const heading = screen.getByText("Check this ingredient");
 		const statusMessage = heading.closest(".status-message");
 		const nutritionFacts = screen.getByText("Nutrition Facts");
 
 		expect(statusMessage).toHaveAttribute("data-tone", "danger");
-		expect(statusMessage).toContainElement(
-			screen.getByText(
-				/contains peanut in structured product metadata\./i,
-			),
-		);
+			expect(statusMessage).toContainElement(
+				screen.getByText(
+					/the label lists peanut as an allergen\./i,
+				),
+			);
 		expect(statusMessage?.querySelector(".status-icon-badge"))
 			.toBeInTheDocument();
 		expect(

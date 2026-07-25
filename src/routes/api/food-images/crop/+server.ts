@@ -7,6 +7,7 @@ import {
 	CURRENT_IMAGE_PLACEMENT_VERSION,
 	IMAGE_PLACEMENT_MAX_ZOOM,
 	isImageFitMode,
+	isImagePlacementMethod,
 } from "$lib/utils/food/images/imagePlacement";
 import type { ImageFitMode } from "$lib/utils/food/images/types";
 
@@ -42,12 +43,23 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 	const sourceReference = String(body.sourceReference ?? "").trim();
 	const imageRole = String(body.role ?? "") as FoodImageAsset["role"];
 	const requestedFitMode = String(body.fitMode ?? "");
+	const requestedPlacementMethod = String(body.placementMethod ?? "manual");
+	const usesSmartSuggestion =
+		requestedPlacementMethod === "smart-ocr" ||
+		requestedPlacementMethod === "smart-ocr-adjusted";
+	const suggestionVersion = String(body.suggestionVersion ?? "").trim();
+	const suggestionConfidence = Number(body.suggestionConfidence);
 
 	if (
 		!allowedSources.has(source) ||
 		!sourceReference ||
 		!allowedRoles.has(imageRole) ||
-		!isImageFitMode(requestedFitMode)
+		!isImageFitMode(requestedFitMode) ||
+		!isImagePlacementMethod(requestedPlacementMethod) ||
+		(
+			usesSmartSuggestion &&
+			(!suggestionVersion || !Number.isFinite(suggestionConfidence))
+		)
 	) {
 		throw kitError(400, "Choose a valid image to update.");
 	}
@@ -64,6 +76,18 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 			cropZoom: clamp(body.cropZoom, 1, IMAGE_PLACEMENT_MAX_ZOOM, 1),
 			fitMode,
 			placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
+			placementMethod: requestedPlacementMethod,
+			...(usesSmartSuggestion
+				? {
+					suggestionVersion,
+					suggestionConfidence: clamp(
+						suggestionConfidence,
+						0,
+						100,
+						0,
+					),
+				}
+				: {}),
 		},
 	});
 

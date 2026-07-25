@@ -16,6 +16,7 @@
 
 	let {
 		normalizedName,
+		brandOwner,
 		activeCategory,
 		summaryNutrients,
 		optionalNutrientCount,
@@ -137,11 +138,14 @@
 					and barcode before other users can find the product.
 				</p>
 			</div>
-			<ProductImageEvidenceInput
-				trustedImage={trustedProductImage}
-				{frontPhoto}
-				placement={imagePlacement}
-				required
+				<ProductImageEvidenceInput
+					trustedImage={trustedProductImage}
+					{frontPhoto}
+					placement={imagePlacement}
+					foodName={normalizedName || "Unnamed ingredient"}
+					brandName={brandOwner}
+					category={activeCategory}
+					required
 				onFrontPhotoChange={onFrontPhotoChange}
 				onPlacementChange={onImagePlacementChange}
 			/>
@@ -170,11 +174,14 @@
 		</section>
 	{:else if showOptionalProductImageUpload}
 		<section class="share-step__evidence" aria-labelledby="product-image-title">
-			<ProductImageEvidenceInput
-				trustedImage={trustedProductImage}
-				{frontPhoto}
-				placement={imagePlacement}
-				description="No trusted DB/API product image was found for this barcode. You can add a front package photo now; it stays private until a moderator approves it."
+				<ProductImageEvidenceInput
+					trustedImage={trustedProductImage}
+					{frontPhoto}
+					placement={imagePlacement}
+					foodName={normalizedName || "Unnamed ingredient"}
+					brandName={brandOwner}
+					category={activeCategory}
+					description="No trusted DB/API product image was found for this barcode. You can add a front package photo now; it stays private until a moderator approves it."
 				onFrontPhotoChange={onFrontPhotoChange}
 				onPlacementChange={onImagePlacementChange}
 			/>

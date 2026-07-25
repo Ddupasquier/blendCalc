@@ -41,6 +41,9 @@
 		cropZoom: food?.image?.cropZoom ?? 1,
 		fitMode: food?.image?.fitMode,
 		placementVersion: food?.image?.placementVersion,
+		placementMethod: food?.image?.placementMethod,
+		suggestionVersion: food?.image?.suggestionVersion,
+		suggestionConfidence: food?.image?.suggestionConfidence,
 	}));
 	const imageKey = $derived(
 		[
@@ -57,7 +60,11 @@
 			draftPlacement.cropY !== savedPlacement.cropY ||
 			draftPlacement.cropZoom !== savedPlacement.cropZoom ||
 			draftPlacement.fitMode !== savedPlacement.fitMode ||
-			draftPlacement.placementVersion !== savedPlacement.placementVersion,
+			draftPlacement.placementVersion !== savedPlacement.placementVersion ||
+			draftPlacement.placementMethod !== savedPlacement.placementMethod ||
+			draftPlacement.suggestionVersion !== savedPlacement.suggestionVersion ||
+			draftPlacement.suggestionConfidence !==
+				savedPlacement.suggestionConfidence,
 	);
 
 	$effect(() => {
@@ -125,13 +132,15 @@
 				class="product-image-panel__placement"
 			>
 				<div class="product-image-panel__placement-content">
-					<ImagePlacementEditor
-						imageUrl={imageUrl}
-						alt={imageAlt}
-						title="Card image placement"
-						description="Adjust how this image appears in ingredient cards."
-						mode="card-only"
-						value={draftPlacement}
+						<ImagePlacementEditor
+							imageUrl={imageUrl}
+							alt={imageAlt}
+							foodName={food?.description ?? "Ingredient"}
+							brandName={food?.brandOwner ?? ""}
+							category={food?.foodCategory ?? "Ingredient"}
+							title="Card image placement"
+							description="Drag the image in the card preview or use the controls below."
+							value={draftPlacement}
 						onChange={(value) => {
 							draftPlacement = value;
 							placementMessage = "";

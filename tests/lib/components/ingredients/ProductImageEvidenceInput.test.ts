@@ -16,10 +16,12 @@ describe("ProductImageEvidenceInput", () => {
 					licenseUrl: "https://example.com/license",
 					attributionText: "Example image contributors",
 					confidence: "source-verified",
-				},
-				frontPhoto: null,
-				placement: createFullImagePlacement(),
-				onFrontPhotoChange: vi.fn(),
+					},
+					frontPhoto: null,
+					placement: createFullImagePlacement(),
+					foodName: "Blue Diamond Almond Milk",
+					category: "Dairy Alternatives",
+					onFrontPhotoChange: vi.fn(),
 				onPlacementChange: vi.fn(),
 			},
 		});
@@ -28,7 +30,9 @@ describe("ProductImageEvidenceInput", () => {
 			.toBeInTheDocument();
 		expect(screen.getByRole("link", { name: /Example image license/ }))
 			.toHaveAttribute("href", "https://example.com/license");
-		expect(screen.queryByLabelText("Front of package"))
-			.not.toBeInTheDocument();
-	});
+			expect(screen.queryByLabelText("Front of package"))
+				.not.toBeInTheDocument();
+			expect(screen.getByText("Blue Diamond Almond Milk")).toBeInTheDocument();
+			expect(screen.getByText("Dairy Alternatives")).toBeInTheDocument();
+		});
 });
