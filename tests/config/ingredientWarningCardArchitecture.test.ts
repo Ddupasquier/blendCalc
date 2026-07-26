@@ -27,7 +27,8 @@ describe("ingredient warning card architecture", () => {
 		expect(savedCard).toContain("<CardWarningEdge />");
 		expect(searchCards).toContain("<CardWarningEdge />");
 		expect(warningEdge).toContain('class="card-warning-edge"');
-		expect(warningEdgeStyles).toContain("width: 5px");
+		expect(warningEdgeStyles).toMatch(/inline-size:\s*[^;]+;/);
+		expect(warningEdgeStyles).toContain("block-size: 100%");
 		expect(warningEdgeStyles).toContain("background: $app-highlight");
 	});
 

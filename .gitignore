@@ -7,10 +7,22 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
+/coverage/
+/.nyc_output/
+/playwright-report/
+/test-results/
+/blob-report/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Editor and local workspace state
+/.vscode/
+/.idea/
+*.swp
+*.swo
+*~
 
 # Env
 .env
@@ -18,6 +30,18 @@ Thumbs.db
 !.env.example
 !.env.moderation.example
 !.env.test
+
+# Logs and local caches
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+/.cache/
+/.eslintcache
+/.stylelintcache
+/.parcel-cache/
+/.turbo/
 
 # Generated API audit output
 /scripts/output/
@@ -32,6 +56,10 @@ Thumbs.db
 
 # Local development tooling
 /.agents/
+/skills-lock.json
+
+# Local database scratch work
+/supabase/snippets/
 
 # Vite
 vite.config.js.timestamp-*

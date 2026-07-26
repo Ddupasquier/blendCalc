@@ -14,6 +14,7 @@ clickable navigation block instead.
 - [Development Rules](#development-rules)
 - [Core Engineering Rules](#rule-best-practices)
 - [Mandatory Rules Preflight](#rule-rules-preflight)
+- [Repository Hygiene](#rule-repository-hygiene)
 - [Browser And Mobile Compatibility](#rule-browser-compatibility)
 - [Accessibility](#rule-accessibility)
 - [Strict Content Security Policy](#rule-content-security-policy)
@@ -91,6 +92,21 @@ risky, ambiguous, or product-level conflicts, explain the issue and ask before
 expanding scope. Re-check every touched file against the applicable rules before
 handoff, and add newly discovered repeatable lessons to this document rather than
 relying on memory.
+
+**0b.** <a id="rule-repository-hygiene"></a>Keep the remote repository limited to
+deliberate product source, migrations, tests, required configuration and lockfiles,
+maintained documentation, and intentional public assets. Gitignore local environment
+files, editor/workspace metadata, local QA trackers and screenshots, recovery and action
+notes, database scratch queries, temporary exports, generated audit output, test
+reports, logs, caches, and build artifacts. Before adding a new tool or workflow, audit
+the files it creates and add narrowly scoped ignore rules for non-product output.
+Remember that `.gitignore` does not remove files already tracked: delete or explicitly
+untrack obsolete repository fluff after confirming it is not a required product
+artifact. Do not hide canonical migrations, source code, maintained API contracts,
+generated database types required by the app, dependency lockfiles, or durable licensing
+records merely because they are generated. Gitignore is repository hygiene, not a
+substitute for deleting dead code, documenting reproducible artifacts, or keeping
+secrets out of files entirely.
 
 **1.** Build mobile-first. Every screen and component should work on narrow phones
 before wider layouts.
@@ -1035,11 +1051,13 @@ preserve IDs when archiving tasks. Active priority trackers are the user's manua
 queue: keep only checks that require visual judgment, real-device/browser interaction,
 assistive-technology verification, user-controlled deployment configuration, or another
 human decision. Deterministic code, schema, migration, API, data-integrity, RLS, build,
-lint, or test checks belong to the coding agent. Run those checks instead of assigning
+lint, or test checks belong to the automated development workflow. Run those checks instead of assigning
 them to the user, record successful evidence in the completed archive, and keep any
-genuinely unfinished agent-owned work once in the gitignored
-`docs/local-context/agent-action-notes.md`. Never duplicate one action between an active
-QA tracker and agent action notes. Begin every QA tracker and index with the current
+genuinely unfinished automation-owned work once in the gitignored
+`docs/local-context/action-notes.md`. Never duplicate one action between an active
+QA tracker and local action notes. Organize every active priority tracker with a
+workflow-category index that links related QA groups so a reviewer can complete one
+coherent area at a time without changing stable IDs or duplicating tasks. Begin every QA tracker and index with the current
 disposable local test-account credentials and the complete categorized barcode-reference
 catalog. Never place production credentials or private user data in those references.
 
