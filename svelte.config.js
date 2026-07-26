@@ -1,6 +1,7 @@
 import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { readFileSync } from 'node:fs';
+import { createConnectSources } from './config/contentSecurityPolicy.js';
 
 const packageMetadata = JSON.parse(
 	readFileSync(new URL('./package.json', import.meta.url), 'utf8')
@@ -31,15 +32,7 @@ const config = {
 			directives: {
 				'default-src': ['self'],
 				'base-uri': ['self'],
-				'connect-src': [
-					'self',
-					'https://api.nal.usda.gov',
-					'https://world.openfoodfacts.org',
-					'https://cdn.jsdelivr.net',
-					'https://*.supabase.co',
-					'wss://*.supabase.co',
-					'https://vitals.vercel-insights.com'
-				],
+				'connect-src': createConnectSources(),
 				'font-src': ['self', 'data:'],
 				'form-action': ['self'],
 				'frame-ancestors': ['none'],

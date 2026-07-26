@@ -32,6 +32,26 @@ const createSupabaseMock = () => ({
 	}),
 });
 
+const createExactOptionSupabaseMock = () => {
+	const query = {
+		select: () => query,
+		in: () => query,
+		eq: async () => ({
+			data: [{
+				id: "nut-seed-butters",
+				label: "Nut & Seed Butters",
+				normalized_value: "nut and seed butters",
+				symbol_key: "nuts-seeds",
+			}],
+			error: null,
+		}),
+	};
+	return {
+		rpc: async () => ({ data: [], error: null }),
+		from: () => query,
+	};
+};
+
 describe("barcode category mapping", () => {
 	it("uses the category ranked by the database resolver", async () => {
 		const draft = await resolveBarcodeDraftCategory(
@@ -43,6 +63,21 @@ describe("barcode category mapping", () => {
 		expect(draft.categoryResolution).toMatchObject({
 			categoryOptionId: "fruit-and-vegetable-preserves",
 			sourceValue: "fruit and vegetable preserves",
+		});
+	});
+
+	it("uses an exact enabled DB category when no source mapping exists", async () => {
+		const draft = await resolveBarcodeDraftCategory(
+			createExactOptionSupabaseMock() as never,
+			createDraft(["Nut & Seed Butters"]),
+		);
+
+		expect(draft.resolvedCategory).toBe("Nut & Seed Butters");
+		expect(draft.categoryResolution).toMatchObject({
+			categoryOptionId: "nut-seed-butters",
+			sourceValue: "nut and seed butters",
+			confidence: "exact",
+			symbolKey: "nuts-seeds",
 		});
 	});
 });

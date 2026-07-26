@@ -15,7 +15,7 @@
 	"scripts": {
 		"dev": "vite dev --host localhost --port 5173 --strictPort",
 		"predev:test": "npm run kill:vite && npm run free:dev-port && npm run db:test:start",
-		"dev:test": "vite dev --mode test --host localhost --port 5173 --strictPort",
+		"dev:test": "BLENDCALC_DATABASE_ENVIRONMENT=test vite dev --mode test --host localhost --port 5173 --strictPort",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",

@@ -62,29 +62,48 @@ const resolveSourceFoodCategoryOption = async (
 	};
 };
 
+const resolveExactFoodCategoryOption = async (
+	supabase: SupabaseClient<Database>,
+	sourceValues: string[],
+): Promise<ResolvedFoodCategory | null> => {
+	const normalizedValues = [
+		...new Set(sourceValues.map(normalizeFoodCategoryValue).filter(Boolean)),
+	];
+	if (!normalizedValues.length) return null;
+
+	const { data, error } = await supabase
+		.from("custom_food_category_options")
+		.select("id, label, normalized_value, symbol_key")
+		.in("normalized_value", normalizedValues)
+		.eq("enabled", true);
+	if (error) throw error;
+
+	const optionsByValue = new Map(
+		(data ?? []).map((option) => [option.normalized_value, option]),
+	);
+	for (const normalizedValue of normalizedValues) {
+		const option = optionsByValue.get(normalizedValue);
+		if (!option) continue;
+		return {
+			categoryOptionId: option.id,
+			label: option.label,
+			sourceValue: option.normalized_value,
+			confidence: "exact",
+			symbolKey: option.symbol_key,
+		};
+	}
+	return null;
+};
+
 export const resolveFoodCategoryOption = async (
 	supabase: SupabaseClient<Database>,
 	sourceValues: string[],
 ): Promise<ResolvedFoodCategory | null> => {
-	const selectedValue = normalizeFoodCategoryValue(sourceValues[0]);
-	if (selectedValue) {
-		const { data, error } = await supabase
-			.from("custom_food_category_options")
-			.select("id, label, normalized_value, symbol_key")
-			.eq("normalized_value", selectedValue)
-			.eq("enabled", true)
-			.maybeSingle();
-		if (error) throw error;
-		if (data) {
-			return {
-				categoryOptionId: data.id,
-				label: data.label,
-				sourceValue: data.normalized_value,
-				confidence: "exact",
-				symbolKey: data.symbol_key,
-			};
-		}
-	}
+	const exactMatch = await resolveExactFoodCategoryOption(
+		supabase,
+		sourceValues.slice(0, 1),
+	);
+	if (exactMatch) return exactMatch;
 	return resolveSourceFoodCategoryOption(supabase, sourceValues);
 };
 
@@ -142,7 +161,9 @@ export const resolveBarcodeDraftCategory = async (
 ): Promise<BarcodeProductDraft> => {
 	if (draft.categoryResolution) return draft;
 	const sourceValues = draft.categories ?? [];
-	const resolved = await resolveSourceFoodCategoryOption(supabase, sourceValues);
+	const resolved =
+		await resolveSourceFoodCategoryOption(supabase, sourceValues)
+		?? await resolveExactFoodCategoryOption(supabase, sourceValues);
 	if (!resolved) return draft;
 
 	return {

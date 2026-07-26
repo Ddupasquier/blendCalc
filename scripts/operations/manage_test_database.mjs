@@ -8,7 +8,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
@@ -17,7 +17,15 @@ const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
 const testEnvironmentPath = fileURLToPath(
 	new URL("../../.env.test.local", import.meta.url),
 );
+const supabaseConfigPath = fileURLToPath(
+	new URL("../../supabase/config.toml", import.meta.url),
+);
+const testSeedPath = fileURLToPath(
+	new URL("../../supabase/seed.sql", import.meta.url),
+);
 const action = process.argv[2] ?? "status";
+const serviceReadinessAttempts = 30;
+const serviceReadinessDelayMs = 1000;
 
 const testAccounts = [
 	{
@@ -40,11 +48,13 @@ const testAccounts = [
 	},
 ];
 
-const runCommand = (command, args, { capture = false } = {}) => {
+const runCommand = (command, args, { capture = false, input } = {}) => {
+	const shouldPipe = capture || input !== undefined;
 	const result = spawnSync(command, args, {
 		cwd: repositoryRoot,
 		encoding: "utf8",
-		stdio: capture ? ["ignore", "pipe", "pipe"] : "inherit",
+		input,
+		stdio: shouldPipe ? ["pipe", "pipe", "pipe"] : "inherit",
 	});
 
 	if (result.status !== 0) {
@@ -134,9 +144,121 @@ const writeTestEnvironment = async (environment) => {
 	await writeFile(testEnvironmentPath, lines.join("\n"), { mode: 0o600 });
 };
 
+const readLocalProjectId = async () => {
+	const config = await readFile(supabaseConfigPath, "utf8");
+	const projectId = config.match(/^project_id\s*=\s*"([^"]+)"$/m)?.[1];
+	if (!projectId) {
+		throw new Error("Unable to determine the local Supabase project ID.");
+	}
+	return projectId;
+};
+
+const getLocalServiceContainer = async (serviceName) => {
+	const projectId = await readLocalProjectId();
+	const containers = runCommand(
+		"docker",
+		[
+			"ps",
+			"--filter",
+			`label=com.supabase.cli.project=${projectId}`,
+			"--filter",
+			`name=supabase_${serviceName}_`,
+			"--format",
+			"{{.Names}}",
+		],
+		{ capture: true },
+	)
+		.trim()
+		.split("\n")
+		.filter(Boolean);
+
+	if (containers.length !== 1) {
+		throw new Error(
+			`Expected one local Supabase ${serviceName} container for ${projectId}, found ${containers.length}.`,
+		);
+	}
+
+	return containers[0];
+};
+
+const applyLocalQaSeed = async () => {
+	const databaseContainer = await getLocalServiceContainer("db");
+	const seedSql = await readFile(testSeedPath, "utf8");
+	console.log("Applying deterministic local QA reference fixtures...");
+	runCommand(
+		"docker",
+		[
+			"exec",
+			"-i",
+			databaseContainer,
+			"psql",
+			"--set",
+			"ON_ERROR_STOP=1",
+			"--username",
+			"postgres",
+			"--dbname",
+			"postgres",
+		],
+		{ capture: true, input: seedSql },
+	);
+};
+
+const restartLocalGateway = async () => {
+	const gatewayContainer = await getLocalServiceContainer("kong");
+	console.log("Refreshing the local Supabase gateway...");
+	runCommand("docker", ["restart", gatewayContainer], { capture: true });
+};
+
 const requireSuccessfulResult = (result, label) => {
 	if (result.error) throw new Error(`${label}: ${result.error.message}`);
 	return result.data;
+};
+
+const wait = (milliseconds) =>
+	new Promise((resolve) => {
+		setTimeout(resolve, milliseconds);
+	});
+
+const formatSupabaseError = (error) => {
+	if (!error) return "Unknown service error.";
+	if (typeof error.message === "string" && error.message.trim()) {
+		return error.message;
+	}
+	try {
+		return JSON.stringify(error);
+	} catch {
+		return String(error);
+	}
+};
+
+const waitForLocalServices = async (admin) => {
+	let lastAuthError;
+	let lastDatabaseError;
+
+	for (let attempt = 1; attempt <= serviceReadinessAttempts; attempt += 1) {
+		const [usersResult, profilesResult] = await Promise.all([
+			admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+			admin.from("profiles").select("user_id").limit(1),
+		]);
+
+		if (!usersResult.error && !profilesResult.error) {
+			return usersResult.data;
+		}
+
+		lastAuthError = usersResult.error;
+		lastDatabaseError = profilesResult.error;
+		if (attempt < serviceReadinessAttempts) {
+			await wait(serviceReadinessDelayMs);
+		}
+	}
+
+	throw new Error(
+		[
+			"Local Supabase services did not become ready before QA account seeding.",
+			`Auth: ${formatSupabaseError(lastAuthError)}`,
+			`Database: ${formatSupabaseError(lastDatabaseError)}`,
+		].join(" "),
+	);
 };
 
 const seedTestAccounts = async (environment) => {
@@ -148,10 +270,7 @@ const seedTestAccounts = async (environment) => {
 		},
 		realtime: { transport: WebSocket },
 	});
-	const listedUsers = requireSuccessfulResult(
-		await admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
-		"List local QA users",
-	);
+	const listedUsers = await waitForLocalServices(admin);
 	const usersByEmail = new Map(
 		listedUsers.users.map((user) => [user.email?.toLowerCase(), user]),
 	);
@@ -209,7 +328,11 @@ const seedTestAccounts = async (environment) => {
 	}
 };
 
-const startLocalStack = async ({ seedAccounts = true } = {}) => {
+const startLocalStack = async ({
+	seedAccounts = true,
+	applyMigrations = true,
+	applyReferenceFixtures = true,
+} = {}) => {
 	ensureContainerRuntime();
 	console.log("Starting isolated local Supabase test stack...");
 	runCommand("supabase", [
@@ -217,6 +340,11 @@ const startLocalStack = async ({ seedAccounts = true } = {}) => {
 		"--exclude",
 		"edge-runtime,logflare,vector",
 	], { capture: true });
+	if (applyMigrations) {
+		console.log("Applying pending local database migrations...");
+		runCommand("supabase", ["migration", "up", "--local"]);
+	}
+	if (applyReferenceFixtures) await applyLocalQaSeed();
 	const environment = getLocalEnvironment();
 	await writeTestEnvironment(environment);
 	if (seedAccounts) await seedTestAccounts(environment);
@@ -224,8 +352,14 @@ const startLocalStack = async ({ seedAccounts = true } = {}) => {
 };
 
 const resetLocalStack = async () => {
-	await startLocalStack({ seedAccounts: false });
+	await startLocalStack({
+		seedAccounts: false,
+		applyMigrations: false,
+		applyReferenceFixtures: false,
+	});
 	runCommand("supabase", ["db", "reset", "--local"]);
+	await restartLocalGateway();
+	await applyLocalQaSeed();
 	const environment = getLocalEnvironment();
 	await writeTestEnvironment(environment);
 	await seedTestAccounts(environment);

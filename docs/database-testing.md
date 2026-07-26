@@ -12,7 +12,8 @@ npm run db:test:start
 
 This command starts the Docker-compatible runtime when Colima is installed, starts the
 local Supabase services, writes local credentials to the gitignored
-`.env.test.local`, and creates regular-user, moderator, and admin QA accounts.
+`.env.test.local`, applies deterministic runtime reference fixtures, and creates
+regular-user, moderator, and admin QA accounts.
 
 Run the app against the local database with:
 
@@ -27,8 +28,8 @@ The local account password and emails are printed by the database command and st
 
 | Command | Purpose |
 |---|---|
-| `npm run db:test:start` | Start the local stack and ensure QA accounts exist. |
-| `npm run db:test:reset` | Destroy local data, replay every migration, and reseed QA accounts. |
+| `npm run db:test:start` | Start the local stack, apply pending local migrations and reference fixtures, wait for Supabase services, and ensure QA accounts exist. |
+| `npm run db:test:reset` | Destroy local data, replay every migration, refresh the local gateway, and reseed reference fixtures and QA accounts after services are ready. |
 | `npm run db:test:verify` | Reset the local database and run all pgTAP database tests. |
 | `npm run db:test:status` | Print local service URLs and status. |
 | `npm run db:test:stop` | Stop the local Supabase stack while retaining its Docker volume. |
@@ -42,8 +43,11 @@ The local account password and emails are printed by the database command and st
   data and is not a disposable test target.
 - Never copy production users or private records into local seeds. Create synthetic QA
   fixtures instead.
-- `supabase/seed.sql` remains safe to replay. Local login-capable users are created only
-  after the local Auth API is available.
+- `supabase/seed.sql` contains only deterministic local reference fixtures for manual
+  nutrients, serving measures, category selection, and food-preference options. It
+  remains safe to replay.
+- Local login-capable users are created only after the local Auth and PostgREST APIs are
+  available.
 
 ## What This Enables
 

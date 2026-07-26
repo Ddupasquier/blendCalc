@@ -1039,7 +1039,9 @@ lint, or test checks belong to the coding agent. Run those checks instead of ass
 them to the user, record successful evidence in the completed archive, and keep any
 genuinely unfinished agent-owned work once in the gitignored
 `docs/local-context/agent-action-notes.md`. Never duplicate one action between an active
-QA tracker and agent action notes.
+QA tracker and agent action notes. Begin every QA tracker and index with the current
+disposable local test-account credentials and the complete categorized barcode-reference
+catalog. Never place production credentials or private user data in those references.
 
 **41a.** <a id="rule-qa-priorities"></a>Assign every active QA group one explicit MVP
 priority, place the whole group in the matching active priority tracker, and keep that
