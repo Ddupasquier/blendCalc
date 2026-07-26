@@ -145,7 +145,7 @@ describe("SavedIngredientList overlay behavior", () => {
 
 		expect(
 			container.querySelector(
-				".saved-ingredient-card > .ingredient-card-feature-image img",
+				".saved-ingredient-card > .ingredient-card-media-lane img",
 			),
 		).toHaveAttribute(
 			"src",
@@ -178,11 +178,11 @@ describe("SavedIngredientList overlay behavior", () => {
 		});
 
 		expect(
-			container.querySelector(".ingredient-card-feature-image"),
+			container.querySelector(".ingredient-card-media-lane"),
 		).toBeInTheDocument();
 		expect(
 			container.querySelector(
-				".ingredient-card-feature-media__fallback .food-symbol__fallback",
+				".ingredient-card-media__fallback .food-symbol__fallback",
 			),
 		).toBeInTheDocument();
 		expect(container.querySelector(".circular-media-frame")).not.toBeInTheDocument();
@@ -207,17 +207,17 @@ describe("SavedIngredientList overlay behavior", () => {
 		});
 
 		const image = container.querySelector<HTMLImageElement>(
-			".ingredient-card-feature-image img",
+			".ingredient-card-media-lane img",
 		);
 		expect(image).not.toBeNull();
 		await fireEvent.error(image as HTMLImageElement);
 
 		expect(
-			container.querySelector(".ingredient-card-feature-image"),
+			container.querySelector(".ingredient-card-media-lane"),
 		).toBeInTheDocument();
 		expect(
 			container.querySelector(
-				".ingredient-card-feature-media__fallback .food-symbol__fallback",
+				".ingredient-card-media__fallback .food-symbol__fallback",
 			),
 		).toBeInTheDocument();
 		expect(container.querySelector(".circular-media-frame")).not.toBeInTheDocument();
@@ -252,7 +252,7 @@ describe("SavedIngredientList overlay behavior", () => {
 		});
 
 		const card = container.querySelector(".saved-ingredient-card");
-		const image = card?.querySelector(".ingredient-card-feature-image");
+		const image = card?.querySelector(".ingredient-card-media-lane");
 		const warningEdge = card?.querySelector(".card-warning-edge");
 		expect(image).toBeInTheDocument();
 		expect(warningEdge).toBeInTheDocument();

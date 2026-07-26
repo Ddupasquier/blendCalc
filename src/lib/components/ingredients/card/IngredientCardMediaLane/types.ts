@@ -4,7 +4,7 @@ import type {
 	ImagePlacementValue,
 } from "$lib/utils/food/images/types";
 
-export type IngredientCardFeatureImageProps = {
+export type IngredientCardMediaLaneProps = {
 	imageUrl?: string;
 	alt?: string;
 	value?: ImagePlacementValue;

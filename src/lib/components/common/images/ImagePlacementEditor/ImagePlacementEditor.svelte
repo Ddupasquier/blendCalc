@@ -26,6 +26,7 @@
 		title = "Image placement",
 		description = "Adjust how the image appears in ingredient cards.",
 		editable = true,
+		showWarningEdge = false,
 		smartPlacementSource = imageUrl,
 		onChange,
 	}: ImagePlacementEditorProps = $props();
@@ -124,6 +125,7 @@
 			{foodName}
 			{category}
 			ariaLabel="Interactive card image preview"
+			{showWarningEdge}
 			interactive={editable}
 			{instructionsId}
 			onChange={(nextValue) => onChange?.(nextValue)}

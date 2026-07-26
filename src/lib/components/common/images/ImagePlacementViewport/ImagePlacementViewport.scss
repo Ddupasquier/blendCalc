@@ -53,3 +53,11 @@
 		scale(var(--image-placement-viewport-zoom, 1));
 	transform-origin: center;
 }
+
+.image-placement-viewport--contained-inline-start
+	.image-placement-viewport__image--current {
+	left: 0;
+	transform: translateY(-50%)
+		scale(var(--image-placement-viewport-zoom, 1));
+	transform-origin: left center;
+}

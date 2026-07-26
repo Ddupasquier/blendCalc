@@ -248,10 +248,10 @@ describe("IngredientSearch", () => {
 		const card = screen.getByRole("row", {
 			name: /peanut butter, smooth.*warning/i,
 		});
-		expect(card).toHaveClass("ingredient-search-card--feature-image");
+		expect(card).toHaveClass("ingredient-search-card--media");
 		expect(card.querySelector(".card-warning-edge")).toBeInTheDocument();
 		expect(
-			card.querySelector(".ingredient-card-feature-image img"),
+			card.querySelector(".ingredient-card-media-lane img"),
 		).toHaveAttribute(
 			"src",
 			"https://images.example.com/peanut-butter.jpg",
@@ -291,10 +291,10 @@ describe("IngredientSearch", () => {
 		);
 
 		const card = screen.getByRole("row", { name: /spinach, raw/i });
-		expect(card).toHaveClass("ingredient-search-card--feature-image");
+		expect(card).toHaveClass("ingredient-search-card--media");
 		expect(
 			card.querySelector(
-				".ingredient-card-feature-media__fallback .food-symbol__fallback",
+				".ingredient-card-media__fallback .food-symbol__fallback",
 			),
 		).toBeInTheDocument();
 		expect(container.querySelector(".circular-media-frame")).not.toBeInTheDocument();

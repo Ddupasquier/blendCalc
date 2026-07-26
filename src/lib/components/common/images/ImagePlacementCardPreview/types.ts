@@ -10,6 +10,7 @@ export type ImagePlacementCardPreviewProps = {
 	foodName?: string;
 	category?: string;
 	ariaLabel?: string;
+	showWarningEdge?: boolean;
 	interactive?: boolean;
 	instructionsId?: string;
 	onChange?: (value: ImagePlacementValue) => void;

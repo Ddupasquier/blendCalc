@@ -107,7 +107,11 @@ artifact. Do not hide canonical migrations, source code, maintained API contract
 generated database types required by the app, dependency lockfiles, or durable licensing
 records merely because they are generated. Gitignore is repository hygiene, not a
 substitute for deleting dead code, documenting reproducible artifacts, or keeping
-secrets out of files entirely.
+secrets out of files entirely. Empty files and empty directories are cleanup artifacts,
+not project structure. Remove them before every handoff unless a current tool or runtime
+explicitly requires the empty path; document that rare requirement beside the owning
+configuration. Do not use `.gitkeep` to preserve speculative directories—create a
+directory when it gains real content and remove it when its final file is removed.
 
 **1.** Build mobile-first. Every screen and component should work on narrow phones
 before wider layouts.
@@ -246,19 +250,42 @@ recreate circular wrappers, duplicate centering CSS, or compensate with glyph
 whitespace, manual margins, one-off transforms, or browser-default alignment.
 
 **8b.** <a id="rule-ingredient-card-media"></a>Ingredient-card media must render
-through the shared `IngredientCardFeatureMedia` treatment. Source-backed product images
-and database-driven fallback food symbols use the same full-height left media lane,
-left-corner clipping, fade, content offset, and warning-edge layering. Fallback symbols
-must not use a circular container inside saved or search-result cards. Center fallback
-symbols vertically and center them horizontally within the media lane after reserving
-token-backed space on the text-facing side for the fade. Keep that reserve in the
-shared media component and use logical padding; do not use transforms, glyph whitespace,
-manual margins, percentages that collapse the fallback wrapper, or card-specific
-offsets.
+through the shared `IngredientCardMedia` resolver and `IngredientCardMediaLane`
+presentation component. `IngredientCardMedia` owns food-image selection, stored
+placement, alt text, image-failure state, and fallback-symbol resolution.
+`IngredientCardMediaLane` owns the full-height lane, clipping, fade, interaction, and
+image-or-fallback slot. Source-backed product images and database-driven fallback food
+symbols use that same full-height left media lane,
+left-corner clipping, fade, content offset, and warning-edge layering. The shared mask
+must reach full transparency before the lane's text-facing boundary so source images
+with opaque rectangular backgrounds do not leave a visible vertical seam. Use a broad
+elliptical transition with a soft intermediate opacity rather than a straight vertical
+edge or abrupt opacity drop. A contained source image that is narrower than the lane
+must align to the card's outer edge so unused containment space falls on the faded,
+text-facing side; once zoom creates horizontal overflow, normal placement coordinates
+resume. Fallback symbols must not use a circular container inside saved or search-result
+cards. Center fallback symbols vertically and center them horizontally within the media
+lane after reserving token-backed space on the text-facing side for the fade. Keep that
+reserve in the shared media component and use logical padding; do not use transforms,
+glyph whitespace, manual margins, percentages that collapse the fallback wrapper, or
+card-specific offsets.
 Source-backed images must preserve their intrinsic aspect ratio and may be clipped or
 contained according to placement, but never stretched. Missing and failed images must
 switch to the fallback within the existing media lane without changing card geometry,
 hiding the media on small screens, or moving the card copy.
+Use one shared media-lane proportion between 25% and 30% for saved cards, search cards,
+and image-placement card previews. Keep the copy inset separate and narrower than the
+media lane so titles may overlap only the lane's low-opacity faded tail without covering
+the solid, readable image. Resolve both measurements from the outer card's inline-size
+container through `IngredientCardGeometry.scss`; percentage padding on an inner grid
+cell is not equivalent and causes preview drift. The shared geometry owns card sizing,
+padding, border width, radius, and media variables. Placement previews must use 100% of
+their available width and must not impose a separate maximum width. User upload,
+moderator/admin adjustment, and moderation-review flows must render the same
+`ImagePlacementCardPreview`; do not create a simplified, circular, capped-width, or
+differently proportioned placement preview. When the current user's preference profile
+would place a warning edge on the saved card, the adjustment preview must include that
+same shared `CardWarningEdge` so it does not conceal part of the saved result.
 Saved and search cards must not independently recreate image failure state, placement
 resolution, fallback wrappers, media widths, masks, or clipping behavior.
 

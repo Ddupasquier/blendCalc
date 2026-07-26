@@ -2,7 +2,7 @@
 	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation/TwoStepConfirmation.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
-	import IngredientCardFeatureMedia from "$lib/components/ingredients/card/IngredientCardFeatureMedia/IngredientCardFeatureMedia.svelte";
+	import IngredientCardMedia from "$lib/components/ingredients/card/IngredientCardMedia/IngredientCardMedia.svelte";
 	import IngredientCardActions from "$lib/components/ingredients/list/IngredientCardActions/IngredientCardActions.svelte";
 	import IngredientMoveIcon from "$lib/components/ingredients/list/IngredientMoveIcon/IngredientMoveIcon.svelte";
 	import IngredientSelectionIndicator from "$lib/components/ingredients/list/IngredientSelectionIndicator/IngredientSelectionIndicator.svelte";
@@ -41,13 +41,13 @@
 </script>
 
 <article
-	class="saved-ingredient-card saved-ingredient-card--feature-image"
+	class="saved-ingredient-card saved-ingredient-card--media"
 	class:saved-ingredient-card--active={active}
 	class:saved-ingredient-card--checked={checked}
 	class:saved-ingredient-card--custom={isPrivateCustomFood(food)}
 	class:saved-ingredient-card--selection-mode={selectionMode}
 >
-	<IngredientCardFeatureMedia {food} />
+	<IngredientCardMedia {food} />
 	{#if warning}
 		<CardWarningEdge />
 	{/if}

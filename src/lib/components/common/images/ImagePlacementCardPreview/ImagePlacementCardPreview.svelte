@@ -2,8 +2,9 @@
 	import Chevron from "$lib/assets/icons/Chevron/Chevron.svelte";
 	import DotsHorizontal from "$lib/assets/icons/DotsHorizontal/DotsHorizontal.svelte";
 	import X from "$lib/assets/icons/X/X.svelte";
+	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte";
-	import IngredientCardFeatureImage from "$lib/components/ingredients/card/IngredientCardFeatureImage/IngredientCardFeatureImage.svelte";
+	import IngredientCardMediaLane from "$lib/components/ingredients/card/IngredientCardMediaLane/IngredientCardMediaLane.svelte";
 	import type { ImagePlacementCardPreviewProps } from "./types";
 
 	let {
@@ -13,6 +14,7 @@
 		foodName = "Product name",
 		category = "Ingredient category",
 		ariaLabel = "Card image preview",
+		showWarningEdge = false,
 		interactive = false,
 		instructionsId = undefined,
 		onChange,
@@ -22,7 +24,7 @@
 </script>
 
 <div class="image-placement-card-preview" role="group" aria-label={ariaLabel}>
-	<IngredientCardFeatureImage
+	<IngredientCardMediaLane
 		{imageUrl}
 		{alt}
 		{value}
@@ -32,6 +34,9 @@
 		{onGeometryChange}
 		{onError}
 	/>
+	{#if showWarningEdge}
+		<CardWarningEdge />
+	{/if}
 	<span class="image-placement-card-preview__copy">
 		<strong>{foodName}</strong>
 		<small>{category}</small>

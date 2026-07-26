@@ -1,6 +1,6 @@
 <script lang="ts">
 	import ImagePlacementViewport from "$lib/components/common/images/ImagePlacementViewport/ImagePlacementViewport.svelte";
-	import type { IngredientCardFeatureImageProps } from "./types";
+	import type { IngredientCardMediaLaneProps } from "./types";
 
 	let {
 		imageUrl,
@@ -13,13 +13,13 @@
 		onChange,
 		onGeometryChange,
 		onError,
-	}: IngredientCardFeatureImageProps = $props();
+	}: IngredientCardMediaLaneProps = $props();
 </script>
 
 <span
-	class="ingredient-card-feature-image"
-	class:ingredient-card-feature-image--interactive={interactive}
-	class:ingredient-card-feature-image--fallback={!imageUrl || !value}
+	class="ingredient-card-media-lane"
+	class:ingredient-card-media-lane--interactive={interactive}
+	class:ingredient-card-media-lane--fallback={!imageUrl || !value}
 	aria-hidden={decorative ? "true" : undefined}
 >
 	{#if imageUrl && value}
@@ -27,6 +27,7 @@
 			{imageUrl}
 			alt={alt ?? ""}
 			{value}
+			containedInlineAlignment="start"
 			{interactive}
 			{instructionsId}
 			{onChange}
@@ -39,5 +40,5 @@
 </span>
 
 <style lang="scss">
-	@use "./IngredientCardFeatureImage.scss";
+	@use "./IngredientCardMediaLane.scss";
 </style>

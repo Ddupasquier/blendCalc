@@ -20,6 +20,7 @@
 		imageUrl,
 		alt,
 		value,
+		containedInlineAlignment = "center",
 		interactive = false,
 		instructionsId = undefined,
 		onChange,
@@ -55,6 +56,12 @@
 	);
 	const geometryStyle = $derived(
 		getImagePlacementGeometryCssVars(geometry, "image-placement-viewport"),
+	);
+	const startAlignContainedImage = $derived(
+		containedInlineAlignment === "start" &&
+			value.placementVersion > 1 &&
+			geometry.ready &&
+			!geometry.canMoveX,
 	);
 
 	const syncFrameSize = () => {
@@ -193,6 +200,7 @@
 	bind:this={frameElement}
 	class="image-placement-viewport"
 	class:image-placement-viewport--interactive={interactive}
+	class:image-placement-viewport--contained-inline-start={startAlignContainedImage}
 	role={interactive ? "group" : undefined}
 	aria-label={interactive ? "Drag product image to reposition it" : undefined}
 	aria-describedby={interactive ? instructionsId : undefined}

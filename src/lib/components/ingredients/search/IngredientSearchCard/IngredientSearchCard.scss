@@ -1,24 +1,10 @@
 @use "../../../../../styles/variables" as *;
-
-$feature-image-width: 18%;
+@use "../../card/IngredientCardMediaLane/IngredientCardGeometry" as ingredient-card-geometry;
 
 .ingredient-search-card {
-	--ingredient-card-feature-image-width: #{$feature-image-width};
-	position: relative;
-	display: grid;
-	box-sizing: border-box;
-	width: 100%;
+	@include ingredient-card-geometry.frame;
+
 	grid-template-columns: minmax(0, 1fr) auto auto;
-	align-items: center;
-	gap: $app-gap-sm;
-	min-width: 0;
-	min-height: $app-shell-card-min-height;
-	padding: $app-shell-card-padding-compact;
-	overflow: hidden;
-	isolation: isolate;
-	background: $app-shell-surface-panel;
-	border: 0;
-	border-radius: $app-shell-radius-card;
 	transition:
 		background-color 160ms ease,
 		opacity 160ms ease;
@@ -52,11 +38,9 @@ $feature-image-width: 18%;
 	border: 0;
 }
 
-.ingredient-search-card--feature-image .ingredient-search-card__main {
+.ingredient-search-card--media .ingredient-search-card__main {
 	grid-template-columns: minmax(0, 1fr);
-	padding-inline-start: calc(
-		var(--ingredient-card-feature-image-width) + #{$app-gap-xs}
-	);
+	@include ingredient-card-geometry.media-content-inset;
 }
 
 .ingredient-search-card__main:focus-visible {

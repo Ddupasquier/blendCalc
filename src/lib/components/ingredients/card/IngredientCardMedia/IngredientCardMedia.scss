@@ -1,8 +1,8 @@
 @use "../../../../../styles/variables" as *;
 
-$fallback-fade-reserve: calc($app-gap-sm * 2);
+$fallback-fade-reserve: $app-gap-md;
 
-.ingredient-card-feature-media__fallback {
+.ingredient-card-media__fallback {
 	display: flex;
 	box-sizing: border-box;
 	width: 100%;

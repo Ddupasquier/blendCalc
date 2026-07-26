@@ -1,17 +1,17 @@
 <script lang="ts">
 	import FoodSymbol from "$lib/assets/icons/FoodSymbol/FoodSymbol.svelte";
-	import IngredientCardFeatureImage from "$lib/components/ingredients/card/IngredientCardFeatureImage/IngredientCardFeatureImage.svelte";
+	import IngredientCardMediaLane from "$lib/components/ingredients/card/IngredientCardMediaLane/IngredientCardMediaLane.svelte";
 	import {
 		getFoodImageAltText,
 		pickFoodFullImageUrl,
 	} from "$lib/utils/food/images/foodImages";
 	import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
-	import type { IngredientCardFeatureMediaProps } from "./types";
+	import type { IngredientCardMediaProps } from "./types";
 
 	let {
 		food,
 		decorative = true,
-	}: IngredientCardFeatureMediaProps = $props();
+	}: IngredientCardMediaProps = $props();
 
 	const imageUrl = $derived(pickFoodFullImageUrl(food.image));
 	const imageAlt = $derived(
@@ -43,7 +43,7 @@
 	};
 </script>
 
-<IngredientCardFeatureImage
+<IngredientCardMediaLane
 	imageUrl={renderImageUrl}
 	alt={imageAlt}
 	value={imagePlacement}
@@ -51,12 +51,12 @@
 	onError={handleImageError}
 >
 	{#snippet fallback()}
-		<span class="ingredient-card-feature-media__fallback">
+		<span class="ingredient-card-media__fallback">
 			<FoodSymbol food={fallbackFood} />
 		</span>
 	{/snippet}
-</IngredientCardFeatureImage>
+</IngredientCardMediaLane>
 
 <style lang="scss">
-	@use "./IngredientCardFeatureMedia.scss";
+	@use "./IngredientCardMedia.scss";
 </style>

@@ -11,6 +11,8 @@
 		getFoodImageAltText,
 		pickFoodFullImageUrl,
 	} from "$lib/utils/food/images/foodImages";
+	import { getPrimaryFoodWarning } from "$lib/utils/ingredients/ingredientListUi";
+	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import { updateFoodImagePlacement } from "$lib/utils/food/images/foodImagePlacement";
 	import type { ProductImagePanelProps } from "./types";
 
@@ -21,6 +23,10 @@
 	}: ProductImagePanelProps = $props();
 
 	const imageUrl = $derived(pickFoodFullImageUrl(food?.image));
+	const foodPreferenceContext = getFoodPreferenceContext();
+	const showWarningEdge = $derived(
+		Boolean(food && getPrimaryFoodWarning(food, foodPreferenceContext.current)),
+	);
 	const imageAlt = $derived(
 		getFoodImageAltText({
 			foodName: food?.description ?? "Ingredient",
@@ -140,6 +146,7 @@
 							category={food?.foodCategory ?? "Ingredient"}
 							title="Card image placement"
 							description="Drag the image in the card preview or use the controls below."
+							{showWarningEdge}
 							value={draftPlacement}
 						onChange={(value) => {
 							draftPlacement = value;

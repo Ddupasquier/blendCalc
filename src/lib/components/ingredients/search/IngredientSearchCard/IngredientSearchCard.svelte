@@ -3,7 +3,7 @@
 	import Plus from "$lib/assets/icons/Plus/Plus.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
-	import IngredientCardFeatureMedia from "$lib/components/ingredients/card/IngredientCardFeatureMedia/IngredientCardFeatureMedia.svelte";
+	import IngredientCardMedia from "$lib/components/ingredients/card/IngredientCardMedia/IngredientCardMedia.svelte";
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
 	import {
 		getFoodDisplayCategory,
@@ -33,7 +33,7 @@
 
 <div
 	id={`ingredient-search-result-${food.fdcId}`}
-	class="ingredient-search-card ingredient-search-card--feature-image"
+	class="ingredient-search-card ingredient-search-card--media"
 	class:ingredient-search-card--active={active}
 	class:ingredient-search-card--saved={saved}
 	role="row"
@@ -42,7 +42,7 @@
 	aria-selected={active}
 	onmouseenter={() => onActivate(index)}
 >
-	<IngredientCardFeatureMedia {food} />
+	<IngredientCardMedia {food} />
 	{#if warning}
 		<CardWarningEdge />
 	{/if}

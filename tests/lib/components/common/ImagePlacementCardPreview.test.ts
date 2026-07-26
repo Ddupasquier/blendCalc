@@ -11,6 +11,7 @@ describe("ImagePlacementCardPreview", () => {
 					alt: "Package image",
 					foodName: "Sempio Gochu Jang",
 					category: "Dips & Salsa",
+					showWarningEdge: true,
 					value: {
 					cropX: 25,
 					cropY: 75,
@@ -28,6 +29,7 @@ describe("ImagePlacementCardPreview", () => {
 			expect(image.getAttribute("style")).toContain("--image-placement-viewport-zoom");
 			expect(screen.getByText("Sempio Gochu Jang")).toBeInTheDocument();
 			expect(screen.getByText("Dips & Salsa")).toBeInTheDocument();
-			expect(image.closest(".ingredient-card-feature-image")).toBeInTheDocument();
+			expect(image.closest(".ingredient-card-media-lane")).toBeInTheDocument();
+			expect(document.querySelector(".card-warning-edge")).toBeInTheDocument();
 		});
 });

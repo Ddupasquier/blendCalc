@@ -1,23 +1,10 @@
 @use "../../../../../styles/variables" as *;
-
-$preview-image-width: 18%;
+@use "../../../ingredients/card/IngredientCardMediaLane/IngredientCardGeometry" as ingredient-card-geometry;
 
 .image-placement-card-preview {
-	--ingredient-card-feature-image-width: #{$preview-image-width};
-	position: relative;
-	display: grid;
-	box-sizing: border-box;
-	width: 100%;
-	max-width: 24rem;
+	@include ingredient-card-geometry.frame;
+
 	grid-template-columns: minmax(0, 1fr) auto;
-	align-items: center;
-	gap: $app-gap-sm;
-	min-height: $app-shell-card-min-height;
-	padding: $app-shell-card-padding-compact;
-	overflow: hidden;
-	background: $app-shell-surface-panel;
-	border: 2px solid $app-shell-border-subtle;
-	border-radius: $app-shell-radius-card;
 }
 
 .image-placement-card-preview__copy {
@@ -26,9 +13,7 @@ $preview-image-width: 18%;
 	display: grid;
 	gap: $app-gap-2xs;
 	min-width: 0;
-	padding-inline-start: calc(
-		var(--ingredient-card-feature-image-width) + #{$app-gap-xs}
-	);
+	@include ingredient-card-geometry.media-content-inset;
 }
 
 .image-placement-card-preview__copy strong,
@@ -56,12 +41,12 @@ $preview-image-width: 18%;
 	position: relative;
 	z-index: 1;
 	display: flex;
-	gap: $app-gap-xs;
+	gap: $app-gap-sm;
 }
 
 :global(.image-placement-card-preview__action) {
-	--circular-icon-frame-size: #{$app-control-height-sm};
-	--circular-icon-frame-icon-size: #{$app-control-icon-size};
+	--circular-icon-frame-size: #{$app-shell-action-icon-size};
+	--circular-icon-frame-icon-size: #{$app-shell-control-icon-size};
 	--circular-icon-frame-color: #{$app-shell-text-primary};
 	--circular-icon-frame-background: #{$app-shell-surface-soft};
 }
