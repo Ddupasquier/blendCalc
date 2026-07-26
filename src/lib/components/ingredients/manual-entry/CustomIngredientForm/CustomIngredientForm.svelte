@@ -25,6 +25,10 @@
 	import { createManualEntryBarcodeController } from "./manualEntryBarcodeController.svelte";
 	import { createManualEntryOutcomeController } from "./manualEntryOutcomeController.svelte";
 	import { createManualEntrySubmissionController } from "./manualEntrySubmissionController.svelte";
+	import {
+		persistManualEntryDraft,
+		readManualEntryDraft,
+	} from "./manualEntryDraft";
 
 	let {
 		onCreate,
@@ -53,6 +57,7 @@
 	let saveDestinationSelect: HTMLSelectElement | null = null;
 	let lastCloseManualSignal: number | null = null;
 	let lastScanSignal: number | null = null;
+	let draftRestored = $state(false);
 
 	const collapseManualEntry = () => {
 		if (labelDetailsElement) labelDetailsElement.open = false;
@@ -286,6 +291,12 @@
 	});
 
 	onMount(() => {
+		const draft = readManualEntryDraft();
+		if (draft) {
+			form.restore(draft.form);
+			outcome.state.saveDestination = draft.saveDestination;
+		}
+		draftRestored = true;
 		void referenceData.load();
 	});
 
@@ -315,6 +326,11 @@
 		if (scanSignal === lastScanSignal) return;
 		lastScanSignal = scanSignal;
 		barcode.state.scannerOpen = true;
+	});
+
+	$effect(() => {
+		if (!draftRestored) return;
+		persistManualEntryDraft(form.data, outcome.state.saveDestination);
 	});
 </script>
 

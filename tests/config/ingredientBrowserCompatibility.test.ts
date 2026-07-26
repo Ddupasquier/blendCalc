@@ -31,4 +31,18 @@ describe("ingredient browser compatibility baseline", () => {
 			"app-main--ingredients",
 		);
 	});
+
+	it("does not refresh page data when the browser merely regains focus", () => {
+		const pages = [
+			readSource("src/routes/fridge/+page.svelte"),
+			readSource("src/routes/mix/+page.svelte"),
+		];
+
+		for (const page of pages) {
+			expect(page).not.toMatch(
+				/window\.addEventListener\(\s*["']focus["']/,
+			);
+			expect(page).toContain("SMOOTHIE_LISTS_CHANGED_EVENT");
+		}
+	});
 });

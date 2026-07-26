@@ -120,7 +120,10 @@ storage, and other device-backed features must fail with useful guidance and pre
 non-device fallback when practical. Do not use browser-name checks when capability
 checks can answer the real question. Before handoff, test the current and previous two
 stable desktop releases plus real or emulated iOS Safari and Android Chrome at portrait
-and landscape sizes.
+and landscape sizes. Do not reload or refetch page data merely because the browser
+window regains focus; focus changes are not evidence that application data changed and
+must not interrupt forms, selections, overlays, or other in-progress work. Synchronize
+known mutations through explicit domain events and update local state in place.
 
 **1b.** <a id="rule-accessibility"></a>Target WCAG 2.2 AA and treat accessibility as
 part of normal implementation, not a later polish pass. Use native semantic elements
@@ -1405,6 +1408,10 @@ rg -n "box-shadow" src
 Browser storage is now limited to:
 
 - `DailyWelcome.svelte`: a device-only once-per-day presentation flag.
+- `manualEntryDraft.ts`: an account-scoped, session-only unsaved manual-entry draft
+  that survives development hot reloads, ordinary page reloads, and short-lived tab
+  eviction; evidence photo files are intentionally excluded and successful or
+  intentional sheet closure clears the draft.
 - `mixState.ts`: an account-scoped unsaved Mix draft and nutrient-goal recovery state;
   Supabase remains authoritative for saved drinks and saved Mix preferences.
 - `savedDrinks.ts`: the currently loaded drink identifier in `sessionStorage`, so it is

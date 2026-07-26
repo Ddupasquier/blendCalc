@@ -1,6 +1,7 @@
 <script lang="ts">
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 	import CustomIngredientForm from "$lib/components/ingredients/manual-entry/CustomIngredientForm/CustomIngredientForm.svelte";
+	import { clearManualEntryDraft } from "$lib/components/ingredients/manual-entry/CustomIngredientForm/manualEntryDraft";
 	import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 	import type { ManualEntrySheetProps } from "./types";
 
@@ -13,8 +14,13 @@
 		onLookupStateChange = () => {},
 	}: ManualEntrySheetProps = $props();
 
-	const handleCreate: ManualEntryCreateHandler = async (food, context) => {
+	const handleClose = () => {
+		clearManualEntryDraft();
 		onClose();
+	};
+
+	const handleCreate: ManualEntryCreateHandler = async (food, context) => {
+		handleClose();
 		await onCreate(food, context);
 	};
 </script>
@@ -26,12 +32,12 @@
 	label="Enter a custom ingredient manually"
 	showBack={false}
 	fill
-	onClose={onClose}
+	onClose={handleClose}
 >
 	<CustomIngredientForm
 		onCreate={handleCreate}
 		{scanSignal}
-		{onClose}
+		onClose={handleClose}
 		{onScannerClose}
 		inline={false}
 		showScanButton={false}

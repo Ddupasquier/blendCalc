@@ -17,6 +17,18 @@ export const createManualEntryFormState = () => {
 		Object.assign(data, getManualEntryFormResetState());
 	};
 
+	const restore = (
+		savedData: Partial<ReturnType<typeof getManualEntryFormResetState>>,
+	) => {
+		Object.assign(data, getManualEntryFormResetState(), savedData, {
+			checkingBarcodeReference: false,
+			validatingBarcodeShare: false,
+			frontPhoto: null,
+			nutritionPhoto: null,
+			barcodePhoto: null,
+		});
+	};
+
 	const markFieldAsUserEntered = (field: FoodTrackedField) => {
 		data.fieldProvenance = {
 			...data.fieldProvenance,
@@ -107,6 +119,7 @@ export const createManualEntryFormState = () => {
 	return {
 		data,
 		reset,
+		restore,
 		markFieldAsUserEntered,
 		setNutrientValue,
 		getNutrientValue,

@@ -451,6 +451,7 @@ const fillRequiredCustomIngredient = async (
 describe("CustomIngredientForm", () => {
 	beforeEach(() => {
 		localStorage.clear();
+		sessionStorage.clear();
 		vi.clearAllMocks();
 		categoryPickerMocks.loadFoodCategoryPickerData.mockResolvedValue({
 			suggestions: [],
@@ -525,6 +526,36 @@ describe("CustomIngredientForm", () => {
 		await goToStep(/share/i);
 
 		expect(screen.getByText("Name must be at least 3 characters")).toBeInTheDocument();
+	});
+
+	it("restores an unsaved draft after the form remounts", async () => {
+		const firstRender = render(CustomIngredientForm, {
+			props: { onCreate: vi.fn() },
+		});
+
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/food name/i), {
+			target: { value: "QA Recovery Ingredient" },
+		});
+		await waitFor(() =>
+			expect(
+				Object.keys(sessionStorage).some((key) =>
+					key.includes("blendcalc-manual-entry-draft-v1"),
+				),
+			).toBe(true),
+		);
+		firstRender.unmount();
+
+		render(CustomIngredientForm, {
+			props: { onCreate: vi.fn() },
+		});
+		await openManualForm();
+
+		await waitFor(() =>
+			expect(screen.getByLabelText(/food name/i)).toHaveValue(
+				"QA Recovery Ingredient",
+			),
+		);
 	});
 
 	it("waits for Continue before showing required macro warnings", async () => {

@@ -672,13 +672,11 @@
             SMOOTHIE_LISTS_CHANGED_EVENT,
             loadIngredientLists,
         );
-        window.addEventListener("focus", loadIngredientLists);
         return () => {
 			window.removeEventListener(
                 SMOOTHIE_LISTS_CHANGED_EVENT,
                 loadIngredientLists,
             );
-            window.removeEventListener("focus", loadIngredientLists);
         };
     });
 </script>

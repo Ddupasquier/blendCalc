@@ -978,10 +978,8 @@
 
     onMount(() => {
 		window.addEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, loadLists);
-		window.addEventListener("focus", loadLists);
         return () => {
             window.removeEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, loadLists);
-            window.removeEventListener("focus", loadLists);
         };
     });
 
