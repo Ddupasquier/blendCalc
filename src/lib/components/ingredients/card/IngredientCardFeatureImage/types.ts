@@ -1,12 +1,14 @@
+import type { Snippet } from "svelte";
 import type {
 	ImagePlacementGeometry,
 	ImagePlacementValue,
 } from "$lib/utils/food/images/types";
 
 export type IngredientCardFeatureImageProps = {
-	imageUrl: string;
-	alt: string;
-	value: ImagePlacementValue;
+	imageUrl?: string;
+	alt?: string;
+	value?: ImagePlacementValue;
+	fallback?: Snippet;
 	interactive?: boolean;
 	decorative?: boolean;
 	instructionsId?: string;

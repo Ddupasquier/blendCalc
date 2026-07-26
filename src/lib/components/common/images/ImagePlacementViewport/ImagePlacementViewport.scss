@@ -48,7 +48,7 @@
 	top: calc(50% + var(--image-placement-viewport-offset-y, 0px));
 	width: var(--image-placement-viewport-base-width, 100%);
 	height: var(--image-placement-viewport-base-height, 100%);
-	object-fit: fill;
+	object-fit: contain;
 	transform: translate(-50%, -50%)
 		scale(var(--image-placement-viewport-zoom, 1));
 	transform-origin: center;

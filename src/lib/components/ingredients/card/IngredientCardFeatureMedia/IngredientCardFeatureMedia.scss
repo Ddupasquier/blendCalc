@@ -1,0 +1,16 @@
+@use "../../../../../styles/variables" as *;
+
+$fallback-fade-reserve: calc($app-gap-sm * 2);
+
+.ingredient-card-feature-media__fallback {
+	display: flex;
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+	align-items: center;
+	justify-content: center;
+	padding-inline-end: $fallback-fade-reserve;
+	font-size: $app-font-size-xl;
+	line-height: 1;
+	text-align: center;
+}

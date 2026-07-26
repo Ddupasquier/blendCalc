@@ -3,7 +3,7 @@
 	import DotsHorizontal from "$lib/assets/icons/DotsHorizontal/DotsHorizontal.svelte";
 	import X from "$lib/assets/icons/X/X.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte";
-	import IngredientCardFeatureImage from "$lib/components/ingredients/list/IngredientCardFeatureImage/IngredientCardFeatureImage.svelte";
+	import IngredientCardFeatureImage from "$lib/components/ingredients/card/IngredientCardFeatureImage/IngredientCardFeatureImage.svelte";
 	import type { ImagePlacementCardPreviewProps } from "./types";
 
 	let {

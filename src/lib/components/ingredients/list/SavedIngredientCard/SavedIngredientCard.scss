@@ -12,14 +12,16 @@ $feature-image-width: 18%;
 	position: relative;
 	display: grid;
 	box-sizing: border-box;
+	width: 100%;
 	grid-template-columns: minmax(0, 1fr) auto auto;
 	align-items: center;
 	gap: $app-gap-sm;
-	min-height: 5.25rem;
+	min-width: 0;
+	min-height: $app-shell-card-min-height;
 	padding: $app-shell-card-padding-compact;
-	background: $app-shell-surface-panel;
 	overflow: hidden;
 	isolation: isolate;
+	background: $app-shell-surface-panel;
 	border: $selection-border-width solid transparent;
 	border-radius: $app-shell-radius-card;
 	transition:
@@ -97,12 +99,6 @@ $feature-image-width: 18%;
 	border-radius: $app-shell-radius-control;
 }
 
-:global(.saved-ingredient-card__icon) {
-	--circular-media-frame-size: #{$app-shell-leading-icon-size};
-	--circular-media-frame-background: #{$app-shell-accent-soft};
-	--circular-media-frame-font-size: #{$app-font-size-xl};
-}
-
 .saved-ingredient-card__copy {
 	display: grid;
 	gap: $app-gap-2xs;
@@ -164,7 +160,4 @@ $feature-image-width: 18%;
 		grid-template-columns: minmax(0, 1fr) auto;
 	}
 
-	:global(.saved-ingredient-card__icon) {
-		display: none;
-	}
 }

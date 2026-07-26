@@ -12,7 +12,7 @@ $preview-image-width: 18%;
 	grid-template-columns: minmax(0, 1fr) auto;
 	align-items: center;
 	gap: $app-gap-sm;
-	min-height: 5.25rem;
+	min-height: $app-shell-card-min-height;
 	padding: $app-shell-card-padding-compact;
 	overflow: hidden;
 	background: $app-shell-surface-panel;

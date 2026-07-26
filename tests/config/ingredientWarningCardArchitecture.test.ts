@@ -6,7 +6,11 @@ const savedCard = readFileSync(
 	"utf8",
 );
 const searchCards = readFileSync(
-	"src/lib/components/ingredients/search/SearchDropdown/SearchDropdown.svelte",
+	"src/lib/components/ingredients/search/IngredientSearchCard/IngredientSearchCard.svelte",
+	"utf8",
+);
+const featureMedia = readFileSync(
+	"src/lib/components/ingredients/card/IngredientCardFeatureMedia/IngredientCardFeatureMedia.svelte",
 	"utf8",
 );
 const provenanceBadges = readFileSync(
@@ -37,5 +41,14 @@ describe("ingredient warning card architecture", () => {
 		expect(provenanceBadges).not.toContain("warning = null");
 		expect(savedCard).not.toMatch(/<IngredientProvenanceBadges[^>]*\bwarning=/);
 		expect(searchCards).not.toMatch(/<IngredientProvenanceBadges[^>]*\bwarning=/);
+	});
+
+	it("shares full-height image and fallback media without circular card wrappers", () => {
+		expect(savedCard).toContain("<IngredientCardFeatureMedia {food} />");
+		expect(searchCards).toContain("<IngredientCardFeatureMedia {food} />");
+		expect(featureMedia).toContain("<IngredientCardFeatureImage");
+		expect(featureMedia).toContain("<FoodSymbol food={fallbackFood} />");
+		expect(savedCard).not.toContain("CircularMediaFrame");
+		expect(searchCards).not.toContain("CircularMediaFrame");
 	});
 });

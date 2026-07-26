@@ -119,7 +119,7 @@ export const readAppReferenceCatalog = async (
 			supabase
 				.from("food_compatibility_match_rules")
 				.select(
-					"source_key, field_name, match_pattern, fact_type, source_type, confidence, priority, tag:compatibility_tags(slug, label, category)",
+					"source_key, field_name, match_pattern, exclude_pattern, fact_type, source_type, confidence, priority, tag:compatibility_tags(slug, label, category)",
 				)
 				.eq("enabled", true)
 				.order("priority", { ascending: true }),
@@ -233,6 +233,7 @@ export const readAppReferenceCatalog = async (
 				source_key: string | null;
 				field_name: "description" | "food_category" | "ingredients";
 				match_pattern: string;
+				exclude_pattern: string | null;
 				fact_type: "ingredient_present";
 				source_type: "label_ingredient_field" | "source_food_identity";
 				confidence: "confirmed" | "inferred" | "uncertain";
@@ -247,6 +248,7 @@ export const readAppReferenceCatalog = async (
 			sourceKey: rule.source_key,
 			fieldName: rule.field_name,
 			matchPattern: rule.match_pattern,
+			excludePattern: rule.exclude_pattern,
 			tagSlug: rule.tag.slug,
 			tagLabel: rule.tag.label,
 			tagCategory: rule.tag.category,

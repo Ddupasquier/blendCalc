@@ -11,6 +11,14 @@ const getRuleFieldValue = (
 	return food.ingredients ?? "";
 };
 
+const matchesPattern = (value: string, pattern: string) => {
+	try {
+		return new RegExp(pattern, "i").exec(value);
+	} catch {
+		return null;
+	}
+};
+
 export const getRuleDerivedCompatibilityFacts = (
 	food: FdcFood,
 	rules: FoodCompatibilityMatchRule[],
@@ -22,19 +30,19 @@ export const getRuleDerivedCompatibilityFacts = (
 			const sourceValue = getRuleFieldValue(food, rule.fieldName);
 			if (!sourceValue) return [];
 
-			try {
-				const match = new RegExp(rule.matchPattern, "i").exec(sourceValue);
-				if (!match) return [];
-				return [{
-					slug: rule.tagSlug,
-					label: rule.tagLabel,
-					category: rule.tagCategory,
-					factType: rule.factType,
-					sourceType: rule.sourceType,
-					sourceText: match[0],
-					confidence: rule.confidence,
-				}];
-			} catch {
-				return [];
-			}
+			const match = matchesPattern(sourceValue, rule.matchPattern);
+			if (
+				!match ||
+				(rule.excludePattern &&
+					matchesPattern(sourceValue, rule.excludePattern))
+			) return [];
+			return [{
+				slug: rule.tagSlug,
+				label: rule.tagLabel,
+				category: rule.tagCategory,
+				factType: rule.factType,
+				sourceType: rule.sourceType,
+				sourceText: match[0],
+				confidence: rule.confidence,
+			}];
 		});

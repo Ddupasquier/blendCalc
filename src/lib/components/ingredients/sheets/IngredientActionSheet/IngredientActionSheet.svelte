@@ -36,18 +36,6 @@
 				<Check />
 			{/snippet}
 		</BottomSheetAction>
-		{#if canAdjustImagePlacement && onAdjustImagePlacement}
-			<PrivilegedActionGroup>
-				<BottomSheetAction
-					label="Adjust image placement"
-					onSelect={onAdjustImagePlacement}
-				>
-					{#snippet icon()}
-						<Sliders />
-					{/snippet}
-				</BottomSheetAction>
-			</PrivilegedActionGroup>
-		{/if}
 		<BottomSheetAction label="Rename" onSelect={onRename}>
 			{#snippet icon()}
 				<Pencil />
@@ -74,6 +62,18 @@
 				</BottomSheetAction>
 			{/snippet}
 		</TwoStepConfirmation>
+		{#if canAdjustImagePlacement && onAdjustImagePlacement}
+			<PrivilegedActionGroup>
+				<BottomSheetAction
+					label="Adjust image placement"
+					onSelect={onAdjustImagePlacement}
+				>
+					{#snippet icon()}
+						<Sliders />
+					{/snippet}
+				</BottomSheetAction>
+			</PrivilegedActionGroup>
+		{/if}
 	</div>
 </BottomSheet>
 

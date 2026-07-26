@@ -702,9 +702,9 @@
 
         try {
             const moveResult = await moveFoodToSmoothieList(targetKey, food);
-			if (moveResult === "error") {
+            if (moveResult === "error") {
                 listActionError = `${food.description} could not be moved. Try again.`;
-                return;
+                return false;
             }
 
             if (selectedFood?.fdcId === food.fdcId) {
@@ -718,6 +718,7 @@
                 ),
             );
             await loadLists();
+            return true;
         } finally {
             movingItem = null;
         }

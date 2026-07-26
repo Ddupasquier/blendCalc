@@ -27,6 +27,7 @@ clickable navigation block instead.
 - [Shared Style Utilities](#rule-shared-style-utilities)
 - [Reusable Components And Buttons](#rule-reusable-components)
 - [Circular Icon Alignment](#rule-circular-icon-alignment)
+- [Ingredient Card Media](#rule-ingredient-card-media)
 - [Verified Status Badge](#rule-verified-status-badge)
 - [Destructive Action Confirmation](#rule-destructive-action-confirmation)
 - [Component And Route Boundaries](#rule-component-boundaries)
@@ -232,8 +233,9 @@ already exist, extend or create the shared primitive first, then use it in the f
 must be centered both horizontally and vertically by the shared `CenteredIcon` layer.
 Interactive circles must use `CircleIconButton`, `CloseButton`, or another approved
 shared button; non-interactive icon circles must use `CircularIconFrame` through a
-focused component such as `StatusIconBadge`; circular avatars, food symbols, and image
-previews must use `CircularMediaFrame`. These primitives own equal width and height,
+focused component such as `StatusIconBadge`; circular avatars, circular food symbols,
+and circular image previews must use `CircularMediaFrame`. These primitives own equal
+width and height,
 `inline-flex` or `flex` with `align-items: center` and `justify-content: center`,
 clipping, token-backed container/icon sizing, and a zero-line-height inner icon wrapper.
 Shared circular primitives must not apply a
@@ -242,6 +244,23 @@ center. A genuinely asymmetric icon may receive an exceptional token-backed corr
 only through its focused reusable component after visual QA; feature components must not
 recreate circular wrappers, duplicate centering CSS, or compensate with glyph
 whitespace, manual margins, one-off transforms, or browser-default alignment.
+
+**8b.** <a id="rule-ingredient-card-media"></a>Ingredient-card media must render
+through the shared `IngredientCardFeatureMedia` treatment. Source-backed product images
+and database-driven fallback food symbols use the same full-height left media lane,
+left-corner clipping, fade, content offset, and warning-edge layering. Fallback symbols
+must not use a circular container inside saved or search-result cards. Center fallback
+symbols vertically and center them horizontally within the media lane after reserving
+token-backed space on the text-facing side for the fade. Keep that reserve in the
+shared media component and use logical padding; do not use transforms, glyph whitespace,
+manual margins, percentages that collapse the fallback wrapper, or card-specific
+offsets.
+Source-backed images must preserve their intrinsic aspect ratio and may be clipped or
+contained according to placement, but never stretched. Missing and failed images must
+switch to the fallback within the existing media lane without changing card geometry,
+hiding the media on small screens, or moving the card copy.
+Saved and search cards must not independently recreate image failure state, placement
+resolution, fallback wrappers, media widths, masks, or clipping behavior.
 
 **9.** <a id="rule-functional-controls"></a>Never render non-functional controls. If
 something looks clickable, tappable, adjustable, expandable, or actionable, it must
@@ -721,7 +740,11 @@ user preference warning. DB-reviewed exact-match rules may create
 `ingredient_present` compatibility facts from source-provided ingredient lists or
 authoritative generic-food identity fields; these facts must retain their matching
 provenance and must never be presented as package `Contains` or `May contain`
-statements. Keep preference conflicts separate from source package
+statements. An inferred generic-food identity match may drive the compact warning edge
+only as a `potential` preference conflict, never as confirmed package disclosure. Every
+broad identity rule must be DB-backed and include an exclusion pattern when names can
+explicitly contradict the inference, such as `gluten-free bread` or `rice noodles`.
+Keep preference conflicts separate from source package
 disclosures. Hide empty disclosure groups rather than inventing `none`, `zero`, or
 `allergen-free`. Nutrition details must use the reusable ingredients/allergen
 presentation directly after the nutrition label, with `Contains` and `May contain`
@@ -1233,7 +1256,9 @@ Fridge on the left. Honor reduced-motion preferences by skipping the slide witho
 delaying the write. Persist the complete selected set through one authenticated atomic
 database function, reject stale or partial selections, notify list consumers once, and
 update the visible lists once after success. Never implement a bulk move as a loop of
-single-item writes or reload the full list after each selected item.
+single-item writes or reload the full list after each selected item. Single-item moves
+must use the same directional exit semantics and reduced-motion behavior as bulk moves
+while retaining their item-level busy state.
 
 **49d.** <a id="rule-long-press-selection"></a>Saved ingredient cards must keep bulk
 selection controls out of the normal card layout. A deliberate 500ms long press on the

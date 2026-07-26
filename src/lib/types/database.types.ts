@@ -416,6 +416,7 @@ export type Database = {
           confidence: string
           created_at: string
           enabled: boolean
+          exclude_pattern: string | null
           fact_type: string
           field_name: string
           id: string
@@ -430,6 +431,7 @@ export type Database = {
           confidence: string
           created_at?: string
           enabled?: boolean
+          exclude_pattern?: string | null
           fact_type: string
           field_name: string
           id?: string
@@ -444,6 +446,7 @@ export type Database = {
           confidence?: string
           created_at?: string
           enabled?: boolean
+          exclude_pattern?: string | null
           fact_type?: string
           field_name?: string
           id?: string

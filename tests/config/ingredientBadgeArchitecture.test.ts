@@ -31,8 +31,8 @@ describe("ingredient badge architecture", () => {
 			"src/lib/components/ingredients/list/SavedIngredientCard/SavedIngredientCard.svelte",
 			"utf8",
 		);
-		const searchDropdown = readFileSync(
-			"src/lib/components/ingredients/search/SearchDropdown/SearchDropdown.svelte",
+		const ingredientSearchCard = readFileSync(
+			"src/lib/components/ingredients/search/IngredientSearchCard/IngredientSearchCard.svelte",
 			"utf8",
 		);
 
@@ -66,6 +66,6 @@ describe("ingredient badge architecture", () => {
 		expect(nutritionFactsLabel).not.toContain("CustomBadge");
 		expect(nutritionFactsLabel).not.toContain('variant="saved-card"');
 		expect(savedIngredientCard).toContain('variant="saved-card"');
-		expect(searchDropdown).toContain('variant="search-card"');
+		expect(ingredientSearchCard).toContain('variant="search-card"');
 	});
 });

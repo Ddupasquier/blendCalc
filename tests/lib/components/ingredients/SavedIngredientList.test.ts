@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList/SavedIngredientList.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
@@ -159,7 +159,7 @@ describe("SavedIngredientList overlay behavior", () => {
 		},
 	);
 
-	it("keeps the circular category symbol when a card has no product image", () => {
+	it("uses the full-height media lane for a category symbol without a product image", () => {
 		const { container } = render(SavedIngredientList, {
 			props: {
 				activeList: MIX_STORAGE_KEYS.fridge,
@@ -179,13 +179,16 @@ describe("SavedIngredientList overlay behavior", () => {
 
 		expect(
 			container.querySelector(".ingredient-card-feature-image"),
-		).not.toBeInTheDocument();
-		expect(
-			container.querySelector(".saved-ingredient-card__icon"),
 		).toBeInTheDocument();
+		expect(
+			container.querySelector(
+				".ingredient-card-feature-media__fallback .food-symbol__fallback",
+			),
+		).toBeInTheDocument();
+		expect(container.querySelector(".circular-media-frame")).not.toBeInTheDocument();
 	});
 
-	it("restores the circular category symbol when a product image fails", async () => {
+	it("keeps the full-height media lane when a product image fails", async () => {
 		const { container } = render(SavedIngredientList, {
 			props: {
 				activeList: MIX_STORAGE_KEYS.fridge,
@@ -211,10 +214,13 @@ describe("SavedIngredientList overlay behavior", () => {
 
 		expect(
 			container.querySelector(".ingredient-card-feature-image"),
-		).not.toBeInTheDocument();
-		expect(
-			container.querySelector(".saved-ingredient-card__icon"),
 		).toBeInTheDocument();
+		expect(
+			container.querySelector(
+				".ingredient-card-feature-media__fallback .food-symbol__fallback",
+			),
+		).toBeInTheDocument();
+		expect(container.querySelector(".circular-media-frame")).not.toBeInTheDocument();
 	});
 
 	it("keeps the warning edge above cards with feature images", () => {
@@ -414,6 +420,76 @@ describe("SavedIngredientList overlay behavior", () => {
 		expect(onRevealMore).toHaveBeenCalledOnce();
 	});
 
+	it.each([
+		[
+			"Fridge",
+			MIX_STORAGE_KEYS.fridge,
+			"Move to Shopping List: Spinach, raw",
+			"110%",
+		],
+		[
+			"Shopping List",
+			MIX_STORAGE_KEYS.shoppingList,
+			"Move to Fridge: Spinach, raw",
+			"-110%",
+		],
+	] as const)(
+		"animates one %s card in the destination direction before persisting",
+		async (_, activeList, moveLabel, distance) => {
+			const onMoveItem = vi.fn().mockResolvedValue(true);
+			const cancel = vi.fn();
+			let finishExit: (() => void) | undefined;
+			const finished = new Promise<void>((resolve) => {
+				finishExit = resolve;
+			});
+			const animate = vi.fn(
+				(_keyframes: Keyframe[], _options?: KeyframeAnimationOptions) =>
+					({
+						finished,
+						cancel,
+					}) as unknown as Animation,
+			);
+			const { container } = render(SavedIngredientList, {
+				props: {
+					activeList,
+					foods: [food],
+					onSelectAll: vi.fn(),
+					onEnterSelection: vi.fn(),
+					onCancelSelection: vi.fn(),
+					onMoveSelection: vi.fn(),
+					onMoveItem,
+					onToggle: vi.fn(),
+					onPreview: vi.fn(),
+					onActions: vi.fn(),
+					onRemove: vi.fn(),
+					onRevealMore: vi.fn(),
+				},
+			});
+			const card = container.querySelector<HTMLElement>(
+				".saved-ingredient-card",
+			);
+			if (!card) throw new Error("Expected a saved ingredient card.");
+			Object.defineProperty(card, "animate", {
+				configurable: true,
+				value: animate,
+			});
+
+			await fireEvent.click(screen.getByRole("button", { name: moveLabel }));
+
+			await waitFor(() => expect(animate).toHaveBeenCalledOnce());
+			expect(animate.mock.calls[0][0]).toEqual([
+				{ opacity: 1, transform: "translate3d(0, 0, 0)" },
+				{ opacity: 0, transform: `translate3d(${distance}, 0, 0)` },
+			]);
+			expect(onMoveItem).not.toHaveBeenCalled();
+
+			finishExit?.();
+
+			await waitFor(() => expect(onMoveItem).toHaveBeenCalledWith(food));
+			await waitFor(() => expect(cancel).toHaveBeenCalledOnce());
+		},
+	);
+
 	it("runs one bulk move after every selected card begins its exit", async () => {
 		const onMoveSelection = vi.fn().mockResolvedValue(true);
 
@@ -442,7 +518,7 @@ describe("SavedIngredientList overlay behavior", () => {
 			}),
 		);
 
-		expect(onMoveSelection).toHaveBeenCalledOnce();
+		await waitFor(() => expect(onMoveSelection).toHaveBeenCalledOnce());
 		expect(await screen.findByRole("status")).toHaveTextContent(
 			"Moved 2 ingredients to Shopping List.",
 		);

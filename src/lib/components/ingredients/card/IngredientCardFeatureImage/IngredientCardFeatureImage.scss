@@ -22,3 +22,7 @@
 .ingredient-card-feature-image--interactive {
 	pointer-events: auto;
 }
+
+.ingredient-card-feature-image--fallback {
+	background: $app-shell-accent-soft;
+}

@@ -10,6 +10,7 @@
 		getOppositeIngredientListKey,
 		getPrimaryFoodWarning,
 	} from "$lib/utils/ingredients/ingredientListUi";
+	import type { FdcFood } from "$lib/utils/food/types";
 	import type { SavedIngredientListProps } from "./types";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
@@ -51,6 +52,8 @@
 	let previousResetKey: number | null = null;
 	let bulkAnimating = $state(false);
 	let bulkMoveStatus = $state("");
+	let singleAnimatingFoodId = $state<number | null>(null);
+	let singleMoveStatus = $state("");
 
 	const selectedIdSet = $derived(new Set(selectedIds));
 	const selectedCount = $derived(selectedIds.length);
@@ -61,34 +64,48 @@
 	const bulkMoveDirection = $derived(
 		activeList === MIX_STORAGE_KEYS.fridge ? "right" : "left",
 	);
+	const moveBusy = $derived(
+		moving || bulkAnimating || singleAnimatingFoodId !== null,
+	);
 	const selectionStatus = $derived(
 		selectionMode
 			? `Selection mode. ${selectedCount} ingredient${selectedCount === 1 ? "" : "s"} selected.`
 			: "",
 	);
-	const listStatus = $derived(bulkMoveStatus || selectionStatus);
+	const listStatus = $derived(
+		bulkMoveStatus || singleMoveStatus || selectionStatus,
+	);
 
 	const requestMoreItems = () => {
 		if (revealPaused || !canRevealMore || loadingMoreList) return;
 		void onRevealMore();
 	};
 
+	const startCardExit = async (
+		foodIds: number[],
+		direction: "left" | "right",
+	) => {
+		await tick();
+		const targetIds = new Set(foodIds.map(String));
+		const cards = Array.from(
+			listElement?.querySelectorAll<HTMLElement>(
+				"li[data-food-id] > .saved-ingredient-card",
+			) ?? [],
+		).filter((card) =>
+			targetIds.has(card.parentElement?.dataset.foodId ?? ""),
+		);
+		return animateDirectionalExit(cards, direction);
+	};
+
 	const moveSelectedItems = async () => {
-		if (selectedCount === 0 || bulkMoveBusy) return;
+		if (selectedCount === 0 || moveBusy) return;
 		const movingCount = selectedCount;
 		const targetLabel = moveTargetLabel;
 		const exitDirection = bulkMoveDirection;
 
 		bulkAnimating = true;
 		bulkMoveStatus = `Moving ${movingCount} selected ingredient${movingCount === 1 ? "" : "s"} to ${targetLabel}.`;
-		await tick();
-
-		const selectedCards = Array.from(
-			listElement?.querySelectorAll<HTMLElement>(
-				'li[data-bulk-selected="true"] > .saved-ingredient-card',
-			) ?? [],
-		);
-		const animation = animateDirectionalExit(selectedCards, exitDirection);
+		const animation = await startCardExit(selectedIds, exitDirection);
 
 		try {
 			await animation.finished;
@@ -100,6 +117,27 @@
 		} finally {
 			animation.cancel();
 			bulkAnimating = false;
+		}
+	};
+
+	const moveSingleItem = async (food: FdcFood) => {
+		if (moveBusy) return;
+		const targetLabel = moveTargetLabel;
+		const exitDirection = bulkMoveDirection;
+
+		singleAnimatingFoodId = food.fdcId;
+		singleMoveStatus = `Moving ${food.description} to ${targetLabel}.`;
+		const animation = await startCardExit([food.fdcId], exitDirection);
+
+		try {
+			await animation.finished;
+			const moved = await onMoveItem(food);
+			singleMoveStatus = moved
+				? `Moved ${food.description} to ${targetLabel}.`
+				: `${food.description} could not be moved.`;
+		} finally {
+			animation.cancel();
+			singleAnimatingFoodId = null;
 		}
 	};
 
@@ -160,7 +198,7 @@
 				<ul
 					class="saved-ingredient-list__cards"
 					aria-label={`${getIngredientListLabel(activeList)} ingredients`}
-					aria-busy={listLoading || loadingMoreList === activeList || bulkMoveBusy}
+					aria-busy={listLoading || loadingMoreList === activeList || moveBusy}
 					bind:this={listElement}
 				>
 					{#each foods as food (food.fdcId)}
@@ -168,15 +206,19 @@
 						{@const warning = getPrimaryFoodWarning(food, preferenceProfile)}
 						{@const isChecked = selectedIdSet.has(food.fdcId)}
 						<li
+							data-food-id={food.fdcId}
 							data-bulk-selected={isChecked}
-							class:saved-ingredient-list__card--moving={bulkMoveBusy && isChecked}
+							class:saved-ingredient-list__card--moving={(bulkMoveBusy && isChecked) ||
+								singleAnimatingFoodId === food.fdcId}
 						>
 							<SavedIngredientCard
 								{food}
 								active={selectedFoodId === food.fdcId}
 								checked={isChecked}
 								{selectionMode}
-								moving={movingItem === actionKey || (bulkMoveBusy && isChecked)}
+								moving={movingItem === actionKey ||
+									singleAnimatingFoodId === food.fdcId ||
+									(bulkMoveBusy && isChecked)}
 								removing={removingItem === actionKey}
 								moveDirection={activeList === MIX_STORAGE_KEYS.fridge
 									? "left"
@@ -188,7 +230,7 @@
 								onToggle={() => onToggle(food.fdcId)}
 								onEnterSelection={() => enterSelectionMode(food.fdcId)}
 								onPreview={() => onPreview(food)}
-								onMove={() => onMoveItem(food)}
+								onMove={() => moveSingleItem(food)}
 								onActions={() => onActions(food)}
 								onRemove={() => onRemove(food.fdcId)}
 							/>

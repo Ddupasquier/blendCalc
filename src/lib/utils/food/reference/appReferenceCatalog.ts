@@ -76,6 +76,7 @@ export type FoodCompatibilityMatchRule = {
 	sourceKey: string | null;
 	fieldName: "description" | "food_category" | "ingredients";
 	matchPattern: string;
+	excludePattern: string | null;
 	tagSlug: string;
 	tagLabel: string;
 	tagCategory: "allergen" | "dietary" | "ingredient" | "avoidance";

@@ -91,7 +91,9 @@ const summarizeFactReason = (fact: FoodCompatibilityFact) => {
 	}
 	if (fact.factType === "ingredient_present") {
 		return fact.sourceType === "source_food_identity"
-			? `This food is identified as ${fact.label.toLocaleLowerCase()}.`
+			? fact.confidence === "confirmed"
+				? `This food is identified as ${fact.label.toLocaleLowerCase()}.`
+				: `The food name suggests ${fact.label.toLocaleLowerCase()} may be present.`
 			: `${fact.label} appears in the ingredient list.`;
 	}
 	return `The label includes a ${fact.label.toLocaleLowerCase()} claim.`;
@@ -111,7 +113,9 @@ const summarizeRestrictionReason = (
 		return `This may not be ${normalizedRestriction} because the label says it may contain ${normalizedFact}.`;
 	}
 	if (fact.sourceType === "source_food_identity") {
-		return `This may not be ${normalizedRestriction} because this food is identified as ${normalizedFact}.`;
+		return fact.confidence === "confirmed"
+			? `This may not be ${normalizedRestriction} because this food is identified as ${normalizedFact}.`
+			: `This may not be ${normalizedRestriction} because the food name suggests ${normalizedFact} may be present.`;
 	}
 	return `This may not be ${normalizedRestriction} because ${normalizedFact} appears in the ingredient list.`;
 };
@@ -167,7 +171,8 @@ export const getFoodPreferenceWarnings = (
 			: getConflictFact(allergen, facts, profile);
 		const fact = directFact ?? relatedFact?.fact;
 		if (!fact) continue;
-		const level = fact.factType === "may_contain"
+		const level = fact.factType === "may_contain" ||
+				fact.confidence !== "confirmed"
 			? "potential"
 			: relatedFact?.level ?? "warning";
 		warnings.push(
@@ -193,7 +198,8 @@ export const getFoodPreferenceWarnings = (
 		warnings.push(
 			buildWarning(
 				`restriction-${normalizeKey(restriction)}-${normalizeKey(conflict.fact.slug)}`,
-				conflict.fact.factType === "may_contain"
+				conflict.fact.factType === "may_contain" ||
+						conflict.fact.confidence !== "confirmed"
 					? "potential"
 					: conflict.level,
 					"restriction",

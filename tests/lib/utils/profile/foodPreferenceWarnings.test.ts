@@ -177,6 +177,7 @@ describe("food preference warnings", () => {
 					sourceKey: null,
 					fieldName: "ingredients",
 					matchPattern: "\\bwheat\\b",
+					excludePattern: null,
 					tagSlug: "wheat",
 					tagLabel: "Wheat",
 					tagCategory: "allergen",
@@ -219,6 +220,7 @@ describe("food preference warnings", () => {
 					sourceKey: "usda",
 					fieldName: "description",
 					matchPattern: "\\b(?:shellfish|shrimp|crustaceans?)\\b",
+					excludePattern: null,
 					tagSlug: "shellfish",
 					tagLabel: "Shellfish",
 					tagCategory: "allergen",
@@ -238,5 +240,88 @@ describe("food preference warnings", () => {
 				reason: "This food is identified as shellfish.",
 			}),
 		]);
+	});
+
+	it("uses inferred identity rules for likely gluten conflicts in search", () => {
+		const profile: FoodPreferenceProfile = {
+			...baseProfile,
+			dietaryRestrictions: ["Gluten-free"],
+			warningRules: [{
+				preferenceSlug: "gluten-free",
+				preferenceLabel: "Gluten-free",
+				factSlug: "wheat",
+				factLabel: "Wheat",
+				level: "warning",
+			}],
+			matchRules: [{
+				sourceKey: null,
+				fieldName: "description",
+				matchPattern: "\\b(?:bread|ramen|noodles?)\\b",
+				excludePattern: "\\b(?:gluten[\\s-]*free|rice noodles?)\\b",
+				tagSlug: "wheat",
+				tagLabel: "Wheat",
+				tagCategory: "allergen",
+				factType: "ingredient_present",
+				sourceType: "source_food_identity",
+				confidence: "inferred",
+				priority: 10,
+			}],
+		};
+
+		expect(
+			getFoodPreferenceWarnings(
+				makeFood({ description: "Bread stuffing", sourceKey: "usda" }),
+				profile,
+			),
+		).toEqual([
+			expect.objectContaining({
+				category: "restriction",
+				label: "Gluten-free",
+				level: "potential",
+				reason:
+					"This may not be gluten-free because the food name suggests wheat may be present.",
+			}),
+		]);
+		expect(
+			getFoodPreferenceWarnings(
+				makeFood({ description: "Soup, ramen noodles", sourceKey: "usda" }),
+				profile,
+			),
+		).toHaveLength(1);
+	});
+
+	it("honors rule exclusions for explicitly gluten-free identities", () => {
+		const warnings = getFoodPreferenceWarnings(
+			makeFood({
+				description: "Bread, gluten-free",
+				sourceKey: "usda",
+			}),
+			{
+				...baseProfile,
+				dietaryRestrictions: ["Gluten-free"],
+				warningRules: [{
+					preferenceSlug: "gluten-free",
+					preferenceLabel: "Gluten-free",
+					factSlug: "wheat",
+					factLabel: "Wheat",
+					level: "warning",
+				}],
+				matchRules: [{
+					sourceKey: null,
+					fieldName: "description",
+					matchPattern: "\\bbread\\b",
+					excludePattern: "\\bgluten[\\s-]*free\\b",
+					tagSlug: "wheat",
+					tagLabel: "Wheat",
+					tagCategory: "allergen",
+					factType: "ingredient_present",
+					sourceType: "source_food_identity",
+					confidence: "inferred",
+					priority: 10,
+				}],
+			},
+		);
+
+		expect(warnings).toEqual([]);
 	});
 });

@@ -102,8 +102,8 @@ describe("IngredientSearch", () => {
 			"aria-selected",
 			"true",
 		);
-		expect(firstOption.closest(".result-card")).toHaveClass(
-			"result-card--active",
+		expect(firstOption.closest(".ingredient-search-card")).toHaveClass(
+			"ingredient-search-card--active",
 		);
 		expect(searchInput).toHaveAttribute(
 			"aria-activedescendant",
@@ -115,8 +115,8 @@ describe("IngredientSearch", () => {
 			"aria-selected",
 			"true",
 		);
-		expect(secondOption.closest(".result-card")).toHaveClass(
-			"result-card--active",
+		expect(secondOption.closest(".ingredient-search-card")).toHaveClass(
+			"ingredient-search-card--active",
 		);
 		expect(firstOption).toHaveAttribute("aria-selected", "false");
 		await fireEvent.keyDown(searchInput, { key: "Enter" });
@@ -205,6 +205,99 @@ describe("IngredientSearch", () => {
 
 		expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ fdcId: 301 }));
 		expect(onSelect).not.toHaveBeenCalled();
+	});
+
+	it("uses product images and warning edges without changing search actions", async () => {
+		const onSelect = vi.fn();
+		const onAdd = vi.fn();
+		const imageFood: FdcFood = {
+			...makeFood(303, "Peanut Butter, Smooth"),
+			image: {
+				source: "open-food-facts",
+				role: "front",
+				imageUrl: "https://images.example.com/peanut-butter.jpg",
+				licenseName: "CC BY-SA",
+				confidence: "source-verified",
+			},
+			preferenceWarnings: [{
+				id: "peanut-warning",
+				level: "warning",
+				category: "allergen",
+				label: "Peanut",
+				reason: "Peanut conflict: this product contains peanuts.",
+			}],
+		};
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([imageFood]));
+
+		const { container } = render(IngredientSearch, {
+			props: {
+				onSelect,
+				onAdd,
+				onSearchFocus: vi.fn(),
+			},
+		});
+		const searchInput = screen.getByRole("combobox", {
+			name: /search ingredients/i,
+		});
+		await fireEvent.input(searchInput, { target: { value: "peanut butter" } });
+		await waitFor(
+			() => expect(screen.getByText("Peanut Butter, Smooth")).toBeInTheDocument(),
+			{ timeout: 2000 },
+		);
+
+		const card = screen.getByRole("row", {
+			name: /peanut butter, smooth.*warning/i,
+		});
+		expect(card).toHaveClass("ingredient-search-card--feature-image");
+		expect(card.querySelector(".card-warning-edge")).toBeInTheDocument();
+		expect(
+			card.querySelector(".ingredient-card-feature-image img"),
+		).toHaveAttribute(
+			"src",
+			"https://images.example.com/peanut-butter.jpg",
+		);
+		expect(
+			card.querySelector(".ingredient-search-card__icon"),
+		).not.toBeInTheDocument();
+
+		await fireEvent.click(
+			screen.getByRole("button", {
+				name: /add peanut butter, smooth to fridge/i,
+			}),
+		);
+		expect(onAdd).toHaveBeenCalledWith(imageFood);
+		expect(onSelect).not.toHaveBeenCalled();
+		expect(container.querySelector(".result-card")).not.toBeInTheDocument();
+	});
+
+	it("uses the full-height feature lane for fallback symbols", async () => {
+		const fallbackFood = makeFood(304, "Spinach, Raw");
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([fallbackFood]));
+
+		const { container } = render(IngredientSearch, {
+			props: {
+				onSelect: vi.fn(),
+				onAdd: vi.fn(),
+				onSearchFocus: vi.fn(),
+			},
+		});
+		const searchInput = screen.getByRole("combobox", {
+			name: /search ingredients/i,
+		});
+		await fireEvent.input(searchInput, { target: { value: "spinach" } });
+		await waitFor(
+			() => expect(screen.getByText("Spinach, Raw")).toBeInTheDocument(),
+			{ timeout: 2000 },
+		);
+
+		const card = screen.getByRole("row", { name: /spinach, raw/i });
+		expect(card).toHaveClass("ingredient-search-card--feature-image");
+		expect(
+			card.querySelector(
+				".ingredient-card-feature-media__fallback .food-symbol__fallback",
+			),
+		).toBeInTheDocument();
+		expect(container.querySelector(".circular-media-frame")).not.toBeInTheDocument();
 	});
 
 	it("hides the add button when a result is already saved", async () => {
