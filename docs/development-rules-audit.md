@@ -15,6 +15,7 @@ clickable navigation block instead.
 - [Core Engineering Rules](#rule-best-practices)
 - [Mandatory Rules Preflight](#rule-rules-preflight)
 - [Repository Hygiene](#rule-repository-hygiene)
+- [Development Tooling Privacy](#rule-development-tooling-privacy)
 - [Browser And Mobile Compatibility](#rule-browser-compatibility)
 - [Accessibility](#rule-accessibility)
 - [Strict Content Security Policy](#rule-content-security-policy)
@@ -113,6 +114,16 @@ explicitly requires the empty path; document that rare requirement beside the ow
 configuration. Do not use `.gitkeep` to preserve speculative directories—create a
 directory when it gains real content and remove it when its final file is removed.
 
+**0c.** <a id="rule-development-tooling-privacy"></a>Do not identify or imply automated
+authorship or development-assistance tooling in any tracked or public artifact. This
+includes application code, comments, documentation, tests, UI copy, metadata, generated
+notices, commit-facing notes, and public assets. Do not add tool names, authorship
+labels, maintenance labels, generated-by markers, or commentary about who or what
+produced the work. Private workflow context may record that information only in an
+explicitly Git-ignored local file. Before handoff, audit changed tracked files for
+accidental disclosure. Technical HTTP `User-Agent` headers and dependency package names
+are protocol/runtime terminology and are not authorship disclosure.
+
 **1.** Build mobile-first. Every screen and component should work on narrow phones
 before wider layouts.
 
@@ -189,6 +200,9 @@ it improves repeated calculations within that file. Global tokens must use stabl
 semantic names and direct readable values; do not preserve implementation-era names
 such as `figma` or `rebuild`, source-color aliases, duplicate semantic layers, or chains
 where one variable points to another variable that points to the real value.
+Use the maintained, Ingredients-derived implementation reference in
+`docs/style-guide.md` when selecting tokens, primitives, and established visual patterns.
+This development-rules file remains authoritative when the documents overlap.
 
 **3a.** <a id="rule-spacing-tokens"></a>Use the shared `$app-gap-*` scale for spacing
 that establishes the app's repeated rhythm between controls, cards, sections, and
@@ -1169,7 +1183,7 @@ tracker contains one clear, current expected outcome for each behavior.
 relevant QA checks from the active priority trackers linked by local
 `docs/QA/qa-tasks.md`. Keep each QA item active until the user explicitly confirms it
 passed; a checked checkbox counts as that confirmation. The sole exception is an
-explicit user-requested automated QA pass: the agent may complete and archive only
+explicit user-requested automated QA pass: automated tooling may complete and archive only
 deterministic tasks whose full expected outcome was directly proven by current tests,
 database inspection, scripts, or build/lint output. Automated evidence must be written
 into the archived task, and mixed visual/manual tasks must remain active even when their

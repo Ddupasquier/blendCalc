@@ -5,6 +5,9 @@
 This is the canonical ownership map for blendCalc. Put a file with the code that owns
 it, not in a generic folder that merely describes what kind of file it is.
 
+Visual implementation and token selection follow the Ingredients-derived system in
+[`style-guide.md`](style-guide.md).
+
 ## Application Source
 
 ```text

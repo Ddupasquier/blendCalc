@@ -37,11 +37,9 @@ account-scoped unsaved drafts, device-only preferences, and short-lived session 
   down-rank unless a specific moderation/security rule says otherwise.
 - **Consistent interaction language:** Use simple, direct wording. Avoid technical API
   language in primary user flows.
-- **Reusable primitives:** Close buttons, dialogs, popovers, pills, list controls,
-  pagination, and sort controls should look consistent everywhere.
-- **SCSS tokens:** Colors, spacing, sizing, typography, breakpoints, and action states
-  should use the shared style variables.
-- **No box shadows:** Current design direction removes box shadows globally.
+- **Visual implementation:** Follow the maintained, Ingredients-derived system in
+  [`style-guide.md`](style-guide.md). This brief defines behavior, not a competing style
+  system.
 
 ## App Shell and Authentication
 
@@ -806,21 +804,10 @@ records.
 
 ## Visual and Interaction Rules
 
-Preserve current design direction:
-
-- Mobile-first.
-- Soft neutral palette.
-- Mango/yellow accent used sparingly for high-value actions.
-- Red/caution colors reserved for actual warning states.
-- No box shadows.
-- Consistent button typography and weights.
-- Consistent input heights and spacing.
-- Clear section boundaries.
-- Pill readability on iOS/mobile.
-- Checkbox selected states must remain visible on Apple mobile.
-- Close buttons use the same reusable visual pattern.
-- Collapsible sections use obvious chevrons.
-- Important collapsed sections show indicators when they contain warnings/suggestions.
+The visual system, token values, component choices, and Ingredients baseline are
+centralized in [`style-guide.md`](style-guide.md). Preserve the behavior in this brief
+while applying that guide; do not infer visual rules from unfinished Mix or Saved Drinks
+views.
 
 ## Critical Items Not to Hide or Bury
 
