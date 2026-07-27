@@ -54,6 +54,9 @@ pnpm-debug.log*
 # Local development recovery context
 /docs/local-context/
 
+# Personal notes
+/notes/
+
 # Local development tooling
 /.agents/
 /skills-lock.json
