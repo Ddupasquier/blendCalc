@@ -45,8 +45,8 @@ const placementPreviewStyles = readFileSync(
 	"src/lib/components/common/images/ImagePlacementCardPreview/ImagePlacementCardPreview.scss",
 	"utf8",
 );
-const cardGeometryStyles = readFileSync(
-	"src/lib/components/ingredients/card/IngredientCardMediaLane/IngredientCardGeometry.scss",
+const cardLayoutStyles = readFileSync(
+	"src/lib/components/ingredients/card/IngredientCardMediaLane/_IngredientCardLayout.scss",
 	"utf8",
 );
 const imagePlacementEditor = readFileSync(
@@ -77,28 +77,50 @@ describe("ingredient card media architecture", () => {
 	});
 
 	it("keeps saved, search, and placement-preview geometry identical", () => {
-		expect(cardGeometryStyles).toContain("$media-lane-width: 28cqw");
-		expect(cardGeometryStyles).toContain("$media-content-inset: 18cqw");
-		expect(cardGeometryStyles).toContain("container-type: inline-size");
+		expect(cardLayoutStyles).toContain("$card-media-lane-width: 28cqw");
+		expect(cardLayoutStyles).toContain("$card-content-inset: 18cqw");
+		expect(cardLayoutStyles).toContain(
+			"--ingredient-card-copy-start-offset",
+		);
+		expect(cardLayoutStyles).toContain("container-type: inline-size");
 		expect(savedCardStyles).toContain(
-			"@include ingredient-card-geometry.frame",
+			"@include ingredient-card-layout.frame",
 		);
 		expect(searchCardStyles).toContain(
-			"@include ingredient-card-geometry.frame",
+			"@include ingredient-card-layout.frame",
 		);
 		expect(placementPreviewStyles).toContain(
-			"@include ingredient-card-geometry.frame",
+			"@include ingredient-card-layout.frame",
 		);
 		expect(savedCardStyles).toContain(
-			"@include ingredient-card-geometry.media-content-inset",
+			"@include ingredient-card-layout.media-content-inset",
 		);
 		expect(searchCardStyles).toContain(
-			"@include ingredient-card-geometry.media-content-inset",
+			"@include ingredient-card-layout.media-content-inset",
 		);
 		expect(placementPreviewStyles).toContain(
-			"@include ingredient-card-geometry.media-content-inset",
+			"@include ingredient-card-layout.media-content-inset",
 		);
 		expect(placementPreviewStyles).not.toContain("max-width");
+	});
+
+	it("shares compact-card copy, focus, and action layout without a prop-forwarding wrapper", () => {
+		expect(cardLayoutStyles).toContain("@mixin interactive-content");
+		expect(cardLayoutStyles).toContain("@mixin interactive-content-focus");
+		expect(cardLayoutStyles).toContain("@mixin copy");
+		expect(cardLayoutStyles).toContain("@mixin title-row");
+		expect(cardLayoutStyles).toContain("@mixin action-layer");
+		expect(cardLayoutStyles).toContain("@mixin action-row");
+		expect(savedCardStyles).toContain(
+			"@include ingredient-card-layout.copy",
+		);
+		expect(searchCardStyles).toContain(
+			"@include ingredient-card-layout.copy",
+		);
+		expect(placementPreviewStyles).toContain(
+			"@include ingredient-card-layout.copy",
+		);
+		expect(savedCard).not.toContain("IngredientCardActions");
 	});
 
 	it("uses the exact card preview in user and privileged placement flows", () => {
@@ -110,31 +132,25 @@ describe("ingredient card media architecture", () => {
 		expect(moderationPage).toContain("<ImagePlacementEditor");
 	});
 
-	it("anchors contained card images to the outer edge until they overflow", () => {
-		expect(mediaLane).toContain('containedInlineAlignment="start"');
-		expect(imageViewport).toContain(
-			'containedInlineAlignment === "start"',
-		);
-		expect(imageViewport).toContain("!geometry.canMoveX");
-		expect(imageViewportStyles).toContain(
+	it("uses shared left-only geometry for card rendering and placement previews", () => {
+		expect(mediaLane).toContain('horizontalMovement="left-only"');
+		expect(imageViewport).toContain("horizontalMovement,");
+		expect(imageViewport).toContain("moveImagePlacement");
+		expect(imageViewportStyles).not.toContain(
 			".image-placement-viewport--contained-inline-start",
 		);
-		expect(imageViewportStyles).toContain("transform-origin: left center");
 	});
 
-	it("centers fallback symbols on both axes", () => {
-		expect(cardMediaStyles).toContain(
-			"$fallback-fade-reserve: $app-gap-md",
-		);
-		expect(cardMediaStyles).toContain("display: flex");
+	it("centers fallback symbols between the card edge and shared copy start", () => {
+		expect(cardMediaStyles).toContain("display: grid");
 		expect(cardMediaStyles).toContain("box-sizing: border-box");
-		expect(cardMediaStyles).toContain("width: 100%");
-		expect(cardMediaStyles).toContain("height: 100%");
-		expect(cardMediaStyles).toContain("align-items: center");
-		expect(cardMediaStyles).toContain("justify-content: center");
 		expect(cardMediaStyles).toContain(
-			"padding-inline-end: $fallback-fade-reserve",
+			"width: min(100%, var(--ingredient-card-copy-start-offset))",
 		);
+		expect(cardMediaStyles).toContain("height: 100%");
+		expect(cardMediaStyles).toContain("place-items: center");
+		expect(cardMediaStyles).not.toContain("padding-inline");
+		expect(cardMediaStyles).not.toContain("$fallback-fade-reserve");
 		expect(cardMediaStyles).not.toContain("width: 52%");
 		expect(cardMediaStyles).not.toContain("transform:");
 	});

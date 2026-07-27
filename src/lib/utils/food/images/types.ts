@@ -1,4 +1,5 @@
 export type ImageFitMode = "contain" | "cover" | "custom";
+export type ImageHorizontalMovement = "symmetric" | "left-only";
 
 export type ImagePlacementMethod =
 	| "default"
@@ -33,6 +34,8 @@ export type ImagePlacementGeometry = {
 	offsetY: number;
 	canMoveX: boolean;
 	canMoveY: boolean;
+	horizontalMovement: ImageHorizontalMovement;
+	horizontalOriginOffsetX: number;
 };
 
 export type ImagePlacementGeometryInput = {
@@ -41,6 +44,7 @@ export type ImagePlacementGeometryInput = {
 	frameWidth: number;
 	frameHeight: number;
 	value: Partial<ImagePlacementValue>;
+	horizontalMovement?: ImageHorizontalMovement;
 };
 
 export type SmartImageTextBounds = {

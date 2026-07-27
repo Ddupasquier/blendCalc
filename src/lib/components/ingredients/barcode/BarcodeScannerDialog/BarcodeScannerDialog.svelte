@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import BackButton from "$lib/components/common/buttons/BackButton/BackButton.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import type { BarcodeScannerDialogProps } from "./types";
 	import {
 		isNativeBarcodePlatform,
@@ -136,7 +137,7 @@
 			</div>
 
 			{#if error}
-				<p class="barcode-scanner__error" role="alert">{error}</p>
+				<StatusMessage tone="danger" message={error} />
 			{/if}
 
 			<!-- <button class="barcode-scanner__cancel" type="button" onclick={close}>Cancel</button> -->

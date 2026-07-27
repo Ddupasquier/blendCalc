@@ -1,5 +1,9 @@
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { FoodImageAsset } from "$lib/utils/food/types";
+import {
+	createUserFacingErrorFromResponse,
+	createUserFacingIssueError,
+} from "$lib/utils/errors/userFacingErrors";
 
 export type FoodImagePlacementRequest = ImagePlacementValue & {
 	source: FoodImageAsset["source"];
@@ -17,11 +21,15 @@ export const updateFoodImagePlacement = async (
 	});
 
 	if (!response.ok) {
-		const message = await response.text();
-		throw new Error(message || "Product image placement could not be saved.");
+		throw await createUserFacingErrorFromResponse(
+			response,
+			"IMAGE_PLACEMENT_SAVE_UNCONFIRMED",
+		);
 	}
 
 	const data = (await response.json()) as { image?: FoodImageAsset };
-	if (!data.image) throw new Error("Product image placement could not be saved.");
+	if (!data.image) {
+		throw createUserFacingIssueError("IMAGE_PLACEMENT_SAVE_UNCONFIRMED");
+	}
 	return data.image;
 };

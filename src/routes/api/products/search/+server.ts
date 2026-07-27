@@ -4,13 +4,20 @@ import {
 	isMissingFoodPreferencesTableError,
 } from "$lib/utils/profile/foodPreferenceProfile";
 import { annotateFoodWithPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
-import { error, json } from "@sveltejs/kit";
+import {
+	requireAppValue,
+	throwAppError,
+} from "$lib/server/errors/appError.server";
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
-	const user = await locals.getVerifiedUser();
-	if (!user) throw error(401, "Sign in to search shared products.");
+	const user = requireAppValue(
+		await locals.getVerifiedUser(),
+		401,
+		"AUTH_REQUIRED",
+	);
 
 	const query = url.searchParams.get("q")?.trim() ?? "";
 	if (query.length < 2) return json({ foods: [] });

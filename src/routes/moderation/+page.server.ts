@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { error, fail, redirect } from "@sveltejs/kit";
+import { fail, redirect } from "@sveltejs/kit";
 import type { User } from "@supabase/supabase-js";
 import type { Actions, PageServerLoad } from "./$types";
 import {
@@ -23,10 +23,10 @@ import {
 import type { FdcFood } from "$lib/utils/food/types";
 import { mapWithConcurrency } from "$lib/server/concurrency/mapWithConcurrency";
 import {
+	constrainCardImagePlacement,
 	getStoredImagePlacement,
 	isImageFitMode,
 	isImagePlacementMethod,
-	normalizeImagePlacement,
 } from "$lib/utils/food/images/imagePlacement";
 import type {
 	ImageFitMode,
@@ -36,6 +36,10 @@ import {
 	formatCatalogChangeValue,
 	readCatalogUpdateSummary,
 } from "$lib/utils/products/catalogUpdateReview";
+import {
+	requireAppValue,
+	throwAppError,
+} from "$lib/server/errors/appError.server";
 
 const PERMANENT_BAN_DURATION = "876000h";
 const MODERATION_PAGE_SIZE = 100;
@@ -47,13 +51,17 @@ const ALLOWED_REASONS = new Set<ModerationReason>([
 	"fraud_or_spam",
 	"terms_violation",
 ]);
+const isPresent = <Value>(value: Value | null): value is Value => value !== null;
 
 const requireModerator = async (locals: App.Locals) => {
 	const user = await locals.getVerifiedUser();
 	if (!user) throw redirect(303, "/auth?next=%2Fmoderation");
 
-	const role = await getUserAppRole(locals.supabase, user.id);
-	if (!role) throw error(403, "You do not have access to moderation tools.");
+	const role = requireAppValue(
+		await getUserAppRole(locals.supabase, user.id),
+		403,
+		"ACCESS_DENIED",
+	);
 
 	return { user, role };
 };
@@ -77,7 +85,7 @@ const listAuthUsers = async () => {
 			perPage: MODERATION_PAGE_SIZE,
 		});
 
-		if (listError) throw error(502, "User accounts could not be loaded.");
+		if (listError) throwAppError(502, "MODERATION_DATA_UNAVAILABLE");
 
 		users.push(...data.users);
 		if (data.users.length < MODERATION_PAGE_SIZE) break;
@@ -115,7 +123,7 @@ const getTargetContext = async (
 	targetUserId: string,
 ) => {
 	if (!targetUserId || targetUserId === actorUserId) {
-		throw error(400, "You cannot moderate your own account.");
+		throwAppError(400, "MODERATION_SELF_ACTION_FORBIDDEN");
 	}
 
 	const admin = getSupabaseAdminClient();
@@ -138,19 +146,24 @@ const getTargetContext = async (
 				.maybeSingle(),
 		]);
 
-	if (targetAuthError || !targetAuth.user) {
-		throw error(404, "That account no longer exists.");
+	if (targetAuthError) {
+		throwAppError(404, "MODERATION_TARGET_NOT_FOUND");
 	}
+	const targetUser = requireAppValue(
+		targetAuth.user,
+		404,
+		"MODERATION_TARGET_NOT_FOUND",
+	);
 
 	const targetRole = (roleRecord?.role as AppRole | undefined) ?? null;
 	if (!canModerateTargetRole(actorRole, targetRole)) {
-		throw error(403, "Your role cannot moderate that account.");
+		throwAppError(403, "MODERATION_TARGET_FORBIDDEN");
 	}
 
 	return {
 		admin,
-		targetUser: targetAuth.user,
-		displayName: profile?.display_name ?? getDefaultDisplayName(targetAuth.user.id),
+		targetUser,
+		displayName: profile?.display_name ?? getDefaultDisplayName(targetUser.id),
 	};
 };
 
@@ -191,13 +204,13 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			]);
 
 			if (profileResult.error || moderationResult.error || roleResult.error) {
-				throw error(502, "Account details could not be loaded.");
+				throwAppError(502, "MODERATION_DATA_UNAVAILABLE");
 			}
 
 			return {
-				profiles: profileResult.data,
-				moderation: moderationResult.data,
-				roles: roleResult.data,
+				profiles: (profileResult.data ?? []).filter(isPresent),
+				moderation: (moderationResult.data ?? []).filter(isPresent),
+				roles: (roleResult.data ?? []).filter(isPresent),
 			};
 		},
 	);
@@ -387,7 +400,7 @@ export const actions: Actions = {
 				productReviewError: "Smart image placement provenance is incomplete.",
 			});
 		}
-		const imageCrop = normalizeImagePlacement({
+		const imageCrop = constrainCardImagePlacement({
 			cropX: Number(formData.get("imageCropX") ?? 50),
 			cropY: Number(formData.get("imageCropY") ?? 50),
 			cropZoom: Number(formData.get("imageCropZoom") ?? 1),

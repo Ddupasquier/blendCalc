@@ -8,6 +8,10 @@ import type {
 	MixPageInitialData,
 	SavedPageInitialData,
 } from "$lib/types/userData";
+import type {
+	AppIssueCode,
+	AppIssueParams,
+} from "$lib/utils/errors/appIssues";
 
 type AuthUser = {
 	id: string;
@@ -20,7 +24,11 @@ type AuthUser = {
 
 declare global {
 	namespace App {
-		// interface Error {}
+		interface Error {
+			message: string;
+			code?: AppIssueCode;
+			params?: AppIssueParams;
+		}
 		interface Locals {
 			supabase: SupabaseClient<Database>;
 			getVerifiedUser: () => Promise<VerifiedAuthUser | null>;

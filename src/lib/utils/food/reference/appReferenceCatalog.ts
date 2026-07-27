@@ -70,6 +70,7 @@ export type FoodPreferenceConflictRule = {
 	factSlug: string;
 	factLabel: string;
 	level: "warning" | "potential";
+	warningCode: "FOOD_RESTRICTION_CONFLICT";
 };
 
 export type FoodCompatibilityMatchRule = {

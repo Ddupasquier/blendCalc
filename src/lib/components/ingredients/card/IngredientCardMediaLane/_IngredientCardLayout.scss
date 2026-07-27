@@ -1,0 +1,109 @@
+@use "../../../../../styles/variables" as *;
+
+$card-media-lane-width: 28cqw;
+$card-content-inset: 18cqw;
+$card-border-width: 2px;
+
+@mixin frame {
+	--ingredient-card-media-lane-width: #{$card-media-lane-width};
+	--ingredient-card-content-inset: calc(
+		#{$card-content-inset} + #{$app-gap-xs}
+	);
+	--ingredient-card-copy-start-offset: calc(
+		#{$app-shell-card-padding-compact} +
+			var(--ingredient-card-content-inset)
+	);
+	position: relative;
+	display: grid;
+	box-sizing: border-box;
+	container-type: inline-size;
+	width: 100%;
+	align-items: center;
+	gap: $app-gap-sm;
+	min-width: 0;
+	min-height: $app-shell-card-min-height;
+	padding: $app-shell-card-padding-compact;
+	overflow: hidden;
+	isolation: isolate;
+	background: $app-shell-surface-panel;
+	border: $card-border-width solid transparent;
+	border-radius: $app-shell-radius-card;
+}
+
+@mixin media-content-inset {
+	padding-inline-start: var(--ingredient-card-content-inset);
+}
+
+@mixin interactive-content {
+	position: relative;
+	z-index: 1;
+	display: grid;
+	width: 100%;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: center;
+	gap: $app-gap-sm;
+	min-width: 0;
+	padding: 0;
+	color: inherit;
+	text-align: left;
+	background: transparent;
+	border: 0;
+}
+
+@mixin interactive-content-focus {
+	border-radius: $app-shell-radius-control;
+	outline: $app-focus-outline;
+	outline-offset: 0;
+}
+
+@mixin copy {
+	display: grid;
+	gap: $app-gap-2xs;
+	min-width: 0;
+
+	strong {
+		overflow: hidden;
+		color: $app-shell-text-primary;
+		font-size: $app-font-size-md;
+		font-weight: $app-font-weight-heavy;
+		line-height: 1.08;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	small {
+		overflow: hidden;
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-sm;
+		font-weight: $app-font-weight-medium;
+		line-height: 1.15;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+@mixin title-row {
+	display: flex;
+	align-items: center;
+	gap: $app-gap-badge-inline;
+	min-width: 0;
+
+	strong {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+}
+
+@mixin action-layer {
+	position: relative;
+	z-index: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+@mixin action-row {
+	@include action-layer;
+
+	gap: $app-gap-sm;
+}

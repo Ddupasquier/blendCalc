@@ -69,27 +69,3 @@
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-medium;
 }
-
-.share-step__status,
-.share-step__message {
-	margin: 0;
-	padding: $app-status-padding-y $app-status-padding-x;
-	border-radius: $app-shell-radius-card;
-	font-size: $app-font-size-sm;
-	font-weight: $app-font-weight-bold;
-}
-
-.share-step__status {
-	color: $app-shell-text-muted;
-	background: $app-shell-surface-soft;
-}
-
-.share-step__message--error {
-	color: $app-status-error-text;
-	background: $app-status-error-bg;
-}
-
-.share-step__message--success {
-	color: $app-primary;
-	background: $app-success-bg;
-}

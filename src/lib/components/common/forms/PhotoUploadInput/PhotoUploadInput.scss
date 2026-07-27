@@ -109,10 +109,3 @@
 .photo-upload-input__files li {
 	overflow-wrap: anywhere;
 }
-
-.photo-upload-input__error {
-	padding: $app-status-padding-y $app-status-padding-x;
-	color: $app-status-error-text;
-	background: $app-status-error-bg;
-	border-radius: $app-shell-radius-card;
-}

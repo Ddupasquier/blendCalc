@@ -1,15 +1,14 @@
 import type {
+	ImageHorizontalMovement,
 	ImagePlacementGeometry,
 	ImagePlacementValue,
 } from "$lib/utils/food/images/types";
-
-export type ContainedImageInlineAlignment = "center" | "start";
 
 export type ImagePlacementViewportProps = {
 	imageUrl: string;
 	alt: string;
 	value: ImagePlacementValue;
-	containedInlineAlignment?: ContainedImageInlineAlignment;
+	horizontalMovement?: ImageHorizontalMovement;
 	interactive?: boolean;
 	instructionsId?: string;
 	onChange?: (value: ImagePlacementValue) => void;

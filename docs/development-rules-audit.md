@@ -260,15 +260,20 @@ left-corner clipping, fade, content offset, and warning-edge layering. The share
 must reach full transparency before the lane's text-facing boundary so source images
 with opaque rectangular backgrounds do not leave a visible vertical seam. Use a broad
 elliptical transition with a soft intermediate opacity rather than a straight vertical
-edge or abrupt opacity drop. A contained source image that is narrower than the lane
-must align to the card's outer edge so unused containment space falls on the faded,
-text-facing side; once zoom creates horizontal overflow, normal placement coordinates
-resume. Fallback symbols must not use a circular container inside saved or search-result
-cards. Center fallback symbols vertically and center them horizontally within the media
-lane after reserving token-backed space on the text-facing side for the fade. Keep that
-reserve in the shared media component and use logical padding; do not use transforms,
-glyph whitespace, manual margins, percentages that collapse the fallback wrapper, or
-card-specific offsets.
+edge or abrupt opacity drop. Card-image horizontal placement is intentionally
+one-directional: the default keeps the image flush with the card's outer edge so unused
+containment space falls on the faded, text-facing side. Adjustment may shift the image
+left beneath the fade but must never move it right and expose an outer gap. Keep that
+control usable when a contained image does not overflow by allowing a bounded left
+shift that always leaves a meaningful portion of the image visible. The shared geometry,
+drag behavior, slider, smart suggestion, persisted validation, saved/search rendering,
+and exact card preview must all use that same constraint. Fallback symbols must not use
+a circular container inside saved or search-result cards. Center fallback symbols
+vertically and place their horizontal center exactly halfway between the card's outer
+edge and the shared title-start line. Derive that line from the same shared card-layout
+measurement used by saved cards, search cards, and placement previews; do not maintain a
+separate fallback offset. Do not use transforms, glyph whitespace, manual margins,
+duplicated percentages, or card-specific offsets.
 Source-backed images must preserve their intrinsic aspect ratio and may be clipped or
 contained according to placement, but never stretched. Missing and failed images must
 switch to the fallback within the existing media lane without changing card geometry,
@@ -277,8 +282,8 @@ Use one shared media-lane proportion between 25% and 30% for saved cards, search
 and image-placement card previews. Keep the copy inset separate and narrower than the
 media lane so titles may overlap only the lane's low-opacity faded tail without covering
 the solid, readable image. Resolve both measurements from the outer card's inline-size
-container through `IngredientCardGeometry.scss`; percentage padding on an inner grid
-cell is not equivalent and causes preview drift. The shared geometry owns card sizing,
+container through `IngredientCardLayout.scss`; percentage padding on an inner grid
+cell is not equivalent and causes preview drift. The shared layout owns card sizing,
 padding, border width, radius, and media variables. Placement previews must use 100% of
 their available width and must not impose a separate maximum width. User upload,
 moderator/admin adjustment, and moderation-review flows must render the same
@@ -640,6 +645,25 @@ hook. Server client setup must be smoke-tested under the supported local and dep
 Node runtimes. Add request-count, timeout, retry, cache, stale-fallback, batching,
 authentication, and runtime-client tests for every shared request utility, and inspect
 real query statistics before adding or removing indexes.
+
+**30e.1.** <a id="rule-user-facing-failures"></a>Never render raw browser exceptions,
+database errors, provider responses, HTTP diagnostics, or strings such as `Failed to
+fetch` in the UI. Keep the technical cause in structured console or server logs and
+translate the visible message through the shared user-facing error utility. Messages
+must explain what the user was trying to do, whether anything changed, and the most
+useful next action in plain language. Network and timeout failures should mention
+retrying or checking the connection when relevant. Validation warnings should identify
+the field or decision that needs attention without exposing implementation terms.
+Reusable features must own reusable wording and error mapping instead of duplicating
+catch-block message parsing in components. Database tables may own business rules,
+validation thresholds, structured evidence, severity, and stable machine-readable issue
+codes, but must not own ordinary user-interface sentences. Server boundaries must enforce
+those rules and return only an approved issue code plus bounded, non-sensitive parameters.
+The shared client message catalog owns friendly wording, versioning, and future
+localization. Unknown exceptions must be logged technically on the server and mapped to a
+safe generic code before they reach SvelteKit pages or API consumers. Route failures must
+use SvelteKit's native `+error.svelte` path, and all visible error, warning, and success
+states must use the shared current-UI feedback components instead of one-off alert styles.
 
 **30f.** <a id="rule-ingredient-provenance"></a>Keep ingredient origin, field authority,
 and verification as separate database-backed concepts. Origin answers where each value

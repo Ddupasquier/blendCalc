@@ -1,5 +1,6 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import { buildSavedDrinkExportText } from "$lib/utils/recipes/recipeExport";
 	import type { SavedDrinkExportActionProps } from "./types";
 
@@ -40,8 +41,8 @@
 	<RoundedActionButton variant="outline" {busy} onclick={() => void shareDrink()}>
 		Share recipe
 	</RoundedActionButton>
-	{#if message}<small role="status">{message}</small>{/if}
-	{#if error}<small class="saved-drink-export__error" role="alert">{error}</small>{/if}
+	{#if message}<StatusMessage tone="success" message={message} />{/if}
+	{#if error}<StatusMessage tone="danger" message={error} />{/if}
 </div>
 
 <style lang="scss">

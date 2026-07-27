@@ -2,6 +2,7 @@ const SHARED_CONNECT_SOURCES = [
 	"self",
 	"https://api.nal.usda.gov",
 	"https://world.openfoodfacts.org",
+	"https://images.openfoodfacts.org",
 	"https://cdn.jsdelivr.net",
 	"https://*.supabase.co",
 	"wss://*.supabase.co",

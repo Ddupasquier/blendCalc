@@ -230,26 +230,6 @@
 	}
 }
 
-.auth-error {
-	padding: $app-gap-sm 0.65rem;
-	color: $app-warning-strong;
-	background: $app-warning-bg;
-	border: $app-warning-border;
-	border-radius: $app-radius;
-	font-size: $app-font-size-sm;
-	font-weight: 800;
-}
-
-.auth-success {
-	padding: $app-gap-sm 0.65rem;
-	color: $app-primary;
-	background: $app-success-bg;
-	border: $app-border;
-	border-radius: $app-radius;
-	font-size: $app-font-size-sm;
-	font-weight: 800;
-}
-
 .auth-note {
 	display: flex;
 	gap: $app-gap-sm;

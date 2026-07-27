@@ -20,6 +20,7 @@ import {
 import { resolveManualEntryBarcodeScan } from "$lib/components/ingredients/manual-entry/utils/barcodeScanFlow";
 import { pickFoodFullImageUrl } from "$lib/utils/food/images/foodImages";
 import { validateBarcodeProductForSharing } from "$lib/utils/products/catalog";
+import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 import type { ManualEntryBarcodeShareMismatch } from "$lib/components/ingredients/manual-entry/formTypes";
 import type { ManualEntryFormState } from "./manualEntryFormState.svelte";
 import type { ManualEntryValidationController } from "./manualEntryValidationController.svelte";
@@ -363,11 +364,15 @@ export const createManualEntryBarcodeController = ({
 			form.data.shareWithCatalog = true;
 		} catch (error) {
 			if (generation !== shareValidationGeneration) return;
-			onError(
-				error instanceof Error
-					? error.message
-					: "The barcode could not be verified for sharing. You can still save it privately.",
-			);
+			console.error("[manual entry] Barcode sharing check failed", error);
+			onError(getUserFacingErrorMessage(error, {
+				fallback:
+					"We couldn't confirm this barcode for community sharing. Try again, or turn off sharing to save it to your account.",
+				network:
+					"We couldn't connect to check this barcode. Try again, or turn off sharing to save it to your account.",
+				timeout:
+					"The barcode check took too long. Try again, or turn off sharing to save it to your account.",
+			}));
 		} finally {
 			if (generation === shareValidationGeneration) {
 				form.data.validatingBarcodeShare = false;

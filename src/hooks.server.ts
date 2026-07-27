@@ -3,7 +3,25 @@ import { readVerifiedAuthUser } from "$lib/server/auth/verifiedAuthUser.server";
 import { applySecurityHeaders } from "$lib/utils/http/securityHeaders";
 import { isActiveAccountBlock } from "$lib/utils/moderation/moderation";
 import { APP_BUILD_VERSION, APP_VERSION } from "$lib/config/version";
-import { redirect, type Handle } from "@sveltejs/kit";
+import { createAppIssuePayload } from "$lib/utils/errors/appIssues";
+import {
+	redirect,
+	type Handle,
+	type HandleServerError,
+} from "@sveltejs/kit";
+
+export const handleError: HandleServerError = ({ error, event, status }) => {
+	const technicalError = error instanceof Error
+		? { name: error.name, message: error.message }
+		: { type: typeof error };
+	console.error("[request] Unexpected server error", {
+		method: event.request.method,
+		path: event.url.pathname,
+		status,
+		error: technicalError,
+	});
+	return createAppIssuePayload("UNEXPECTED_ERROR");
+};
 
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.supabase = createSupabaseServerClient(event.cookies);

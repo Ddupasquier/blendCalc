@@ -10,6 +10,8 @@ export const LEGACY_IMAGE_PLACEMENT_VERSION = 1;
 export const CURRENT_IMAGE_PLACEMENT_VERSION = 2;
 export const IMAGE_PLACEMENT_MIN_ZOOM = 1;
 export const IMAGE_PLACEMENT_MAX_ZOOM = 8;
+export const CARD_IMAGE_PLACEMENT_MIN_X = 50;
+export const CARD_IMAGE_PLACEMENT_MAX_X = 100;
 
 const fitModes = new Set<ImageFitMode>(["contain", "cover", "custom"]);
 const placementMethods = new Set<ImagePlacementMethod>([
@@ -113,6 +115,21 @@ export const getStoredImagePlacement = (
 	value?: Partial<ImagePlacementValue> | null,
 ) => normalizeImagePlacement(value ?? {}, LEGACY_IMAGE_PLACEMENT);
 
+export const constrainCardImagePlacement = (
+	value: Partial<ImagePlacementValue>,
+): ImagePlacementValue => {
+	const placement = normalizeImagePlacement(value);
+	return {
+		...placement,
+		cropX: clamp(
+			placement.cropX,
+			CARD_IMAGE_PLACEMENT_MIN_X,
+			CARD_IMAGE_PLACEMENT_MAX_X,
+			CARD_IMAGE_PLACEMENT_MIN_X,
+		),
+	};
+};
+
 export const EMPTY_IMAGE_PLACEMENT_GEOMETRY: Readonly<ImagePlacementGeometry> = Object.freeze({
 	ready: false,
 	naturalWidth: 0,
@@ -129,6 +146,8 @@ export const EMPTY_IMAGE_PLACEMENT_GEOMETRY: Readonly<ImagePlacementGeometry> = 
 	offsetY: 0,
 	canMoveX: false,
 	canMoveY: false,
+	horizontalMovement: "symmetric",
+	horizontalOriginOffsetX: 0,
 });
 
 export const getImagePlacementGeometry = ({
@@ -137,6 +156,7 @@ export const getImagePlacementGeometry = ({
 	frameWidth,
 	frameHeight,
 	value,
+	horizontalMovement = "symmetric",
 }: ImagePlacementGeometryInput): ImagePlacementGeometry => {
 	const placement = normalizeImagePlacement(value);
 	if (
@@ -150,6 +170,7 @@ export const getImagePlacementGeometry = ({
 			naturalHeight,
 			frameWidth,
 			frameHeight,
+			horizontalMovement,
 			effectiveZoom:
 				placement.fitMode === "contain" ? 1 : placement.cropZoom,
 		};
@@ -173,10 +194,31 @@ export const getImagePlacementGeometry = ({
 			: placement.fitMode === "cover"
 				? coverZoom
 				: placement.cropZoom;
-	const maxOffsetX = Math.max(0, (baseWidth * effectiveZoom - frameWidth) / 2);
+	const scaledWidth = baseWidth * effectiveZoom;
+	const symmetricMaxOffsetX = Math.max(0, (scaledWidth - frameWidth) / 2);
+	const horizontalOriginOffsetX =
+		horizontalMovement === "left-only"
+			? (scaledWidth - frameWidth) / 2
+			: 0;
+	const maxOffsetX =
+		horizontalMovement === "left-only"
+			? Math.max(
+				Math.max(0, scaledWidth - frameWidth),
+				Math.min(scaledWidth, frameWidth) / 2,
+			)
+			: symmetricMaxOffsetX;
 	const maxOffsetY = Math.max(0, (baseHeight * effectiveZoom - frameHeight) / 2);
 	const canMoveX = maxOffsetX > 0.5;
 	const canMoveY = maxOffsetY > 0.5;
+	const horizontalCropX =
+		horizontalMovement === "left-only"
+			? clamp(
+				placement.cropX,
+				CARD_IMAGE_PLACEMENT_MIN_X,
+				CARD_IMAGE_PLACEMENT_MAX_X,
+				CARD_IMAGE_PLACEMENT_MIN_X,
+			)
+			: placement.cropX;
 
 	return {
 		ready: true,
@@ -190,15 +232,54 @@ export const getImagePlacementGeometry = ({
 		coverZoom: round(coverZoom),
 		maxOffsetX: round(maxOffsetX),
 		maxOffsetY: round(maxOffsetY),
-		offsetX: canMoveX
-			? round(((50 - placement.cropX) / 50) * maxOffsetX)
-			: 0,
+		offsetX:
+			horizontalMovement === "left-only"
+				? round(
+					horizontalOriginOffsetX -
+						((horizontalCropX - CARD_IMAGE_PLACEMENT_MIN_X) /
+							(CARD_IMAGE_PLACEMENT_MAX_X -
+								CARD_IMAGE_PLACEMENT_MIN_X)) *
+							maxOffsetX,
+				)
+				: canMoveX
+					? round(((50 - placement.cropX) / 50) * maxOffsetX)
+					: 0,
 		offsetY: canMoveY
 			? round(((50 - placement.cropY) / 50) * maxOffsetY)
 			: 0,
 		canMoveX,
 		canMoveY,
+		horizontalMovement,
+		horizontalOriginOffsetX: round(horizontalOriginOffsetX),
 	};
+};
+
+export const getImagePlacementCropXFromOffset = (
+	geometry: ImagePlacementGeometry,
+	offsetX: number,
+) => {
+	if (geometry.maxOffsetX <= 0.5) return CARD_IMAGE_PLACEMENT_MIN_X;
+	if (geometry.horizontalMovement === "left-only") {
+		const shift = clamp(
+			geometry.horizontalOriginOffsetX - offsetX,
+			0,
+			geometry.maxOffsetX,
+			0,
+		);
+		return round(
+			CARD_IMAGE_PLACEMENT_MIN_X +
+				(shift / geometry.maxOffsetX) *
+					(CARD_IMAGE_PLACEMENT_MAX_X - CARD_IMAGE_PLACEMENT_MIN_X),
+		);
+	}
+	return round(
+		clamp(
+			50 - (offsetX / geometry.maxOffsetX) * 50,
+			0,
+			100,
+			50,
+		),
+	);
 };
 
 export const createFillImagePlacement = (
@@ -247,7 +328,7 @@ export const createCustomImagePlacement = (
 	};
 };
 
-const moveAxis = (
+const moveSymmetricAxis = (
 	position: number,
 	delta: number,
 	maxOffset: number,
@@ -256,6 +337,30 @@ const moveAxis = (
 	const currentOffset = ((50 - position) / 50) * maxOffset;
 	const nextOffset = clamp(currentOffset + delta, -maxOffset, maxOffset, 0);
 	return round(50 - (nextOffset / maxOffset) * 50);
+};
+
+const moveLeftOnlyHorizontalAxis = (
+	position: number,
+	delta: number,
+	maxOffset: number,
+) => {
+	if (maxOffset <= 0.5) return CARD_IMAGE_PLACEMENT_MIN_X;
+	const constrainedPosition = clamp(
+		position,
+		CARD_IMAGE_PLACEMENT_MIN_X,
+		CARD_IMAGE_PLACEMENT_MAX_X,
+		CARD_IMAGE_PLACEMENT_MIN_X,
+	);
+	const currentShift =
+		((constrainedPosition - CARD_IMAGE_PLACEMENT_MIN_X) /
+			(CARD_IMAGE_PLACEMENT_MAX_X - CARD_IMAGE_PLACEMENT_MIN_X)) *
+		maxOffset;
+	const nextShift = clamp(currentShift - delta, 0, maxOffset, 0);
+	return round(
+		CARD_IMAGE_PLACEMENT_MIN_X +
+			(nextShift / maxOffset) *
+				(CARD_IMAGE_PLACEMENT_MAX_X - CARD_IMAGE_PLACEMENT_MIN_X),
+	);
 };
 
 export const moveImagePlacement = ({
@@ -272,8 +377,23 @@ export const moveImagePlacement = ({
 	const placement = createCustomImagePlacement(value, geometry.effectiveZoom);
 	return {
 		...placement,
-		cropX: moveAxis(placement.cropX, deltaX, geometry.maxOffsetX),
-		cropY: moveAxis(placement.cropY, deltaY, geometry.maxOffsetY),
+		cropX:
+			geometry.horizontalMovement === "left-only"
+				? moveLeftOnlyHorizontalAxis(
+					placement.cropX,
+					deltaX,
+					geometry.maxOffsetX,
+				)
+				: moveSymmetricAxis(
+					placement.cropX,
+					deltaX,
+					geometry.maxOffsetX,
+				),
+		cropY: moveSymmetricAxis(
+			placement.cropY,
+			deltaY,
+			geometry.maxOffsetY,
+		),
 	};
 };
 

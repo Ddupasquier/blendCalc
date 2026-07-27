@@ -9,6 +9,7 @@
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import {
 		FOOD_PREFERENCE_WARNING_TITLE,
+		getFoodPreferenceWarningMessage,
 		getFoodPreferenceWarnings,
 	} from "$lib/utils/profile/foodPreferenceWarnings";
 	import { slide } from "svelte/transition";
@@ -119,7 +120,9 @@
 			class:ingredient-card__warning--potential={!preferenceWarnings.some((item) => item.level === "warning")}
 			>
 				<strong>{FOOD_PREFERENCE_WARNING_TITLE}</strong>
-				<p>{preferenceWarnings.map((item) => item.reason).join(" ")}</p>
+				<p>
+					{preferenceWarnings.map(getFoodPreferenceWarningMessage).join(" ")}
+				</p>
 		</div>
 	{/if}
 

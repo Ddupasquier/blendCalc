@@ -27,7 +27,8 @@ describe("ImagePlacementEditor", () => {
 		expect(screen.queryByRole("button", { name: "Custom" })).not.toBeInTheDocument();
 		expect(screen.getByRole("group", { name: "Interactive card image preview" }))
 			.toBeInTheDocument();
-		expect(screen.getByLabelText(/Horizontal position/)).toBeDisabled();
+		expect(screen.getByLabelText(/Shift image left/)).toBeDisabled();
+		expect(screen.getByLabelText(/Shift image left/)).toHaveValue("0");
 		expect(screen.getByLabelText(/Vertical position/)).toBeDisabled();
 		expect(screen.getByLabelText(/Zoom/)).toBeEnabled();
 		expect(screen.getByRole("button", { name: "Restore default" })).toBeEnabled();

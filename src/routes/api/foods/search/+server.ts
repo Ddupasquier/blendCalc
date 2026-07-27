@@ -22,14 +22,21 @@ import {
 	isMissingFoodPreferencesTableError,
 } from "$lib/utils/profile/foodPreferenceProfile";
 import { annotateFoodWithPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
-import { error, json } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { getNutritionCompletenessCatalog } from "$lib/server/nutrition/nutritionCompletenessCatalog.server";
 import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
+import {
+	requireAppValue,
+	throwAppError,
+} from "$lib/server/errors/appError.server";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
-	const user = await locals.getVerifiedUser();
-	if (!user) throw error(401, "Sign in to search foods.");
+	const user = requireAppValue(
+		await locals.getVerifiedUser(),
+		401,
+		"AUTH_REQUIRED",
+	);
 
 	const query = url.searchParams.get("q")?.trim() ?? "";
 	const sourceFilter = url.searchParams.get("source")?.trim() || "all";
@@ -39,27 +46,26 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		url.searchParams.get("limit") ?? INGREDIENT_SEARCH_PAGE_SIZE,
 	);
 	if (!Number.isInteger(offset) || offset < 0) {
-		throw error(400, "Search offset must be a non-negative whole number.");
+		throwAppError(400, "SEARCH_PAGINATION_INVALID");
 	}
 	if (
 		!Number.isInteger(limit) ||
 		limit < 1 ||
 		limit > INGREDIENT_SEARCH_MAX_PAGE_SIZE
 	) {
-		throw error(
-			400,
-			`Search limit must be between 1 and ${INGREDIENT_SEARCH_MAX_PAGE_SIZE}.`,
-		);
+		throwAppError(400, "SEARCH_PAGINATION_INVALID");
 	}
 	if (query.length < 2) {
 		return json({ foods: [], hasMore: false, nextOffset: null, total: 0 });
 	}
-	if (query.length > 120) throw error(400, "Search is too long.");
+	if (query.length > 120) {
+		throwAppError(400, "SEARCH_QUERY_TOO_LONG", { maximum: 120 });
+	}
 	if (!isIngredientSourceFilter(sourceFilter)) {
-		throw error(400, "Ingredient source filter is not valid.");
+		throwAppError(400, "SEARCH_FILTER_INVALID");
 	}
 	if (!isIngredientTrustFilter(trustFilter)) {
-		throw error(400, "Ingredient review filter is not valid.");
+		throwAppError(400, "SEARCH_FILTER_INVALID");
 	}
 
 	try {
@@ -143,6 +149,6 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			),
 		});
 	} catch {
-		throw error(503, "Food search is temporarily unavailable.");
+		return throwAppError(503, "FOOD_SEARCH_UNAVAILABLE");
 	}
 };

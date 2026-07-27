@@ -1,6 +1,7 @@
 <script lang="ts">
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import type { ManualEntryNutrientFieldsProps } from "./types";
 	import type {
@@ -43,13 +44,12 @@
 		<LoadingSpinner label="Loading nutrient fields" showLabel />
 	</div>
 {:else if error}
-	<p class="manual-nutrients__status manual-nutrients__status--error" role="alert">
-		{error}
-	</p>
+	<StatusMessage tone="danger" message={error} />
 {:else if groups.length === 0}
-	<p class="manual-nutrients__status" role="status">
-		Nutrient fields are unavailable right now.
-	</p>
+	<StatusMessage
+		tone="warning"
+		message="Nutrient fields are unavailable right now."
+	/>
 {:else}
 	<div class="manual-nutrients">
 		{#each groups as group, index}

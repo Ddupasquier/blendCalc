@@ -11,9 +11,11 @@ const rules: NutrientRelationshipRule[] = [
 		id: "total-sugars-lte-carbs",
 		parentNutrientId: NUTRIENT_IDS.CARBS,
 		childNutrientId: NUTRIENT_IDS.SUGAR,
+		parentLabel: "Total Carbohydrates",
+		childLabel: "Total Sugars",
 		relationship: "child_must_not_exceed_parent",
 		severity: "error",
-		message: "Total sugars cannot exceed total carbohydrates.",
+		issueCode: "NUTRIENT_CHILD_EXCEEDS_PARENT",
 		requiresParent: true,
 		tolerance: 0,
 	},
@@ -21,9 +23,11 @@ const rules: NutrientRelationshipRule[] = [
 		id: "fiber-lte-carbs",
 		parentNutrientId: NUTRIENT_IDS.CARBS,
 		childNutrientId: NUTRIENT_IDS.FIBER,
+		parentLabel: "Total Carbohydrates",
+		childLabel: "Dietary Fiber",
 		relationship: "child_must_not_exceed_parent",
 		severity: "error",
-		message: "Dietary fiber cannot exceed total carbohydrates.",
+		issueCode: "NUTRIENT_CHILD_EXCEEDS_PARENT",
 		requiresParent: true,
 		tolerance: 0,
 	},
@@ -65,6 +69,7 @@ describe("nutrient relationship rules", () => {
 		)).toEqual([
 			expect.objectContaining({
 				ruleId: "total-sugars-lte-carbs",
+				code: "NUTRIENT_CHILD_EXCEEDS_PARENT",
 				message: "Total sugars cannot exceed total carbohydrates.",
 			}),
 		]);
@@ -76,6 +81,7 @@ describe("nutrient relationship rules", () => {
 		expect(validateNutrientRelationshipRules(values, rules)).toEqual([
 			expect.objectContaining({
 				ruleId: "fiber-lte-carbs",
+				code: "NUTRIENT_CHILD_EXCEEDS_PARENT",
 				message: "Dietary fiber cannot exceed total carbohydrates.",
 			}),
 		]);

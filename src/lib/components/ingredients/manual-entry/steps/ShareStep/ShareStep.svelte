@@ -2,6 +2,7 @@
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch/ToggleSwitch.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import CustomIngredientOutcome from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome/CustomIngredientOutcome.svelte";
 	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList/ManualEntryValidationList.svelte";
 	import ProductImageEvidenceInput from "$lib/components/ingredients/manual-entry/ProductImageEvidenceInput/ProductImageEvidenceInput.svelte";
@@ -88,7 +89,7 @@
 	<ManualEntryValidationList items={validationItems} />
 
 	{#if barcodeMessage}
-		<p class="share-step__status" role="status">{barcodeMessage}</p>
+		<StatusMessage message={barcodeMessage} />
 	{/if}
 
 	{#if barcodeShareMismatch}
@@ -107,7 +108,7 @@
 	{/if}
 
 	{#if shareUnavailableMessage}
-		<p class="share-step__status" role="status">{shareUnavailableMessage}</p>
+		<StatusMessage message={shareUnavailableMessage} />
 	{:else}
 		<ManualEntryToggleRow
 			title="Share with community"
@@ -203,7 +204,7 @@
 	</ManualEntryField>
 
 	{#if error}
-		<p class="share-step__message share-step__message--error" role="alert">{error}</p>
+		<StatusMessage tone="danger" message={error} />
 	{/if}
 	{#if lastOutcome}
 		<CustomIngredientOutcome
@@ -214,10 +215,10 @@
 			onUndo={onUndo}
 		/>
 	{:else if savedMessage}
-		<p class="share-step__message share-step__message--success" role="status">{savedMessage}</p>
+		<StatusMessage tone="success" message={savedMessage} />
 	{/if}
 	{#if catalogMessage}
-		<p class="share-step__message share-step__message--success" role="status">{catalogMessage}</p>
+		<StatusMessage tone="success" message={catalogMessage} />
 	{/if}
 
 	<ManualEntryActions {onBack} onNext={onSubmit} nextLabel="Add Ingredient" busy={saving} />

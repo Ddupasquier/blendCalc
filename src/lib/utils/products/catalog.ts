@@ -1,6 +1,10 @@
 import type { FdcFood } from "$lib/utils/food/types";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
+import {
+	createUserFacingErrorFromResponse,
+	readAppIssuePayload,
+} from "$lib/utils/errors/userFacingErrors";
 
 export type SharedProductSubmissionStatus =
 	| "already-available"
@@ -53,15 +57,23 @@ export const validateBarcodeProductForSharing = async (
 		},
 	);
 	if (!response.ok) {
-		const body = await response.json().catch(() => null) as {
-			message?: string;
-		} | null;
-		throw new Error(
-			body?.message ??
-				"The barcode could not be verified for sharing. You can still save it privately.",
+		throw await createUserFacingErrorFromResponse(
+			response,
+			"CATALOG_VALIDATION_UNAVAILABLE",
 		);
 	}
-	return await response.json() as BarcodeShareValidationResult;
+	const result = await response.json() as BarcodeShareValidationResult & {
+		issue?: unknown;
+	};
+	if (result.status !== "name-mismatch") return result;
+
+	const issue = readAppIssuePayload(result.issue);
+	return {
+		status: result.status,
+		barcode: result.barcode,
+		draft: result.draft,
+		message: issue?.message,
+	};
 };
 
 export const submitSharedProduct = async (
@@ -91,9 +103,9 @@ export const submitSharedProduct = async (
 	});
 
 	if (!response.ok) {
-		const body = await response.json().catch(() => null) as { message?: string } | null;
-		throw new Error(
-			body?.message ?? "The product could not be submitted for catalog review.",
+		throw await createUserFacingErrorFromResponse(
+			response,
+			"CATALOG_SUBMISSION_FAILED",
 		);
 	}
 

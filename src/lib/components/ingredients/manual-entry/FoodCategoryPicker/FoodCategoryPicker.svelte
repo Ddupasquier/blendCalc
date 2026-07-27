@@ -5,6 +5,7 @@
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import WarningPopup from "$lib/components/common/feedback/WarningPopup/WarningPopup.svelte";
 	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame/InputLoadingFrame.svelte";
+	import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 	import type { FoodCategoryPickerProps } from "./types";
 	import {
 		FOOD_CATEGORY_SEARCH_DEBOUNCE_MS,
@@ -123,9 +124,14 @@
 				})
 				.catch((requestError: unknown) => {
 					if (controller.signal.aborted || sequence !== requestSequence) return;
-					error = requestError instanceof Error
-						? requestError.message
-						: "Food categories could not be loaded.";
+					console.error("[food categories] Picker request failed", requestError);
+					error = getUserFacingErrorMessage(requestError, {
+						fallback: "We couldn't load food categories. Try again.",
+						network:
+							"We couldn't connect to load food categories. Check your connection and try again.",
+						timeout:
+							"Food categories took too long to load. Check your connection and try again.",
+					});
 				})
 				.finally(() => {
 					if (sequence === requestSequence) loading = false;

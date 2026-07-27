@@ -165,6 +165,23 @@ Notes:
 - Compact components render only enabled actionable verification badges from the shared
   reference read. Detailed nutrition renders provider attribution separately.
 
+### `app_issue_codes`
+
+Stores stable machine-readable codes used by database-backed validation and business
+rules.
+
+Columns: `code`, `kind`, `domain`, `description`, `enabled`, `created_at`, `updated_at`.
+
+Notes:
+
+- `description` is developer-facing contract documentation and must never be rendered as
+  user-interface copy.
+- The database owns rule evidence, severity, thresholds, and issue-code references.
+- Server boundaries return approved codes with bounded, non-sensitive parameters.
+- Friendly wording belongs to the versioned application message catalog so it remains
+  available during database outages and can be tested, revised, and translated.
+- Direct table access is restricted to the service role.
+
 ## Nutrient Definitions, Values, and Validation
 
 | Table                                      | Primary Key   | Owner Scope                              | Purpose                                                                                                                     | Key Relationships                                                               |
@@ -252,7 +269,7 @@ Notes:
 Stores validation rules for nutrient math.
 
 Columns: `id`, `parent_nutrient_id`, `child_nutrient_id`, `relationship`, `severity`,
-`message`, `requires_parent`, `tolerance`, `enabled`, `sort_order`, `source`,
+`issue_code`, `requires_parent`, `tolerance`, `enabled`, `sort_order`, `source`,
 `source_count`, `observation_count`, `sources`, `provenance`, `created_at`,
 `updated_at`.
 
@@ -260,6 +277,8 @@ Notes:
 
 - Used by client and server paths so canonical nutrient validation is not browser-only.
 - Current rule type is `child_must_not_exceed_parent`.
+- `issue_code → app_issue_codes.code`; the client message catalog combines that code
+  with the joined nutrient labels to produce friendly wording.
 
 ## Product Reference Data and Serving Measures
 
@@ -582,7 +601,8 @@ Notes:
 
 ### `compatibility_rule_conflicts`
 
-Columns: `preference_tag_id`, `fact_tag_id`, `severity`, `created_at`, `updated_at`.
+Columns: `preference_tag_id`, `fact_tag_id`, `severity`, `warning_code`, `created_at`,
+`updated_at`.
 
 Notes:
 
@@ -590,6 +610,8 @@ Notes:
   product compatibility facts.
 - App utilities must not recreate allergen or dietary vocabularies with name/category
   guesses.
+- `warning_code → app_issue_codes.code`; ordinary warning sentences are not stored in
+  this table.
 
 ### `product_compatibility_facts`
 

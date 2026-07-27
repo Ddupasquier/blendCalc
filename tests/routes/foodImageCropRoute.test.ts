@@ -35,7 +35,7 @@ const savedImage = {
 	imageUrl: "https://example.com/product.jpg",
 	licenseName: "Example license",
 	confidence: "source-verified",
-	cropX: 25,
+	cropX: 50,
 	cropY: 75,
 	cropZoom: 2,
 	fitMode: "custom",
@@ -79,7 +79,7 @@ describe("food image crop route", () => {
 			role: "front",
 			moderatorId: "moderator-id",
 			crop: {
-				cropX: 25,
+				cropX: 50,
 				cropY: 75,
 				cropZoom: 2,
 				fitMode: "custom",

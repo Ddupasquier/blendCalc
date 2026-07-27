@@ -7,29 +7,41 @@
 	align-items: flex-start;
 	width: 100%;
 	min-width: 0;
-	padding: $app-gap-sm;
-	color: $app-primary;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-radius;
+	padding: $app-status-padding-y $app-status-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-panel;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
 	font-family: $app-font-family-interface;
 	font-size: $app-font-size-sm;
 	line-height: 1.35;
 }
 
 .status-message[data-tone="success"] {
-	background: color-mix(in srgb, $app-success-bg 48%, $app-section-bg);
-	border-color: $app-success-bg;
+	background: $app-shell-accent-soft;
+	border-color: color-mix(
+		in srgb,
+		$app-shell-accent-primary 35%,
+		$app-shell-surface-panel
+	);
 }
 
 .status-message[data-tone="warning"] {
-	background: $app-warning-bg;
-	border-color: $app-warning-border-color;
+	background: $app-status-warning-bg;
+	border-color: color-mix(
+		in srgb,
+		$app-status-warning-icon 36%,
+		$app-shell-surface-panel
+	);
 }
 
 .status-message[data-tone="danger"] {
-	background: color-mix(in srgb, $app-danger-bg 42%, $app-section-bg);
-	border-color: $app-danger-bg;
+	background: $app-status-error-bg;
+	border-color: color-mix(
+		in srgb,
+		$app-status-error-icon 34%,
+		$app-shell-surface-panel
+	);
 }
 
 .status-message__copy {
@@ -38,11 +50,11 @@
 
 strong {
 	display: block;
-	margin-bottom: 0.1rem;
 	font-weight: $app-font-weight-bold;
 }
 
 .status-message__body {
-	color: $app-muted;
+	margin: 0;
+	color: $app-shell-text-muted;
 	font-weight: $app-font-weight-medium;
 }

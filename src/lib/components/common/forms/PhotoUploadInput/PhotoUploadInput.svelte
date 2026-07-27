@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Plus from "$lib/assets/icons/Plus/Plus.svelte";
 	import PillButton from "$lib/components/common/buttons/PillButton/PillButton.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import type { PhotoUploadInputProps } from "./types";
 
 	let {
@@ -132,7 +133,9 @@
 	{/if}
 
 	{#if error}
-		<p class="photo-upload-input__error" id={errorId} role="alert">{error}</p>
+		<div id={errorId}>
+			<StatusMessage tone="danger" message={error} />
+		</div>
 	{/if}
 </div>
 

@@ -1,4 +1,5 @@
 import {
+	getImagePlacementCropXFromOffset,
 	getImagePlacementGeometry,
 	IMAGE_PLACEMENT_MAX_ZOOM,
 } from "$lib/utils/food/images/imagePlacement";
@@ -240,11 +241,12 @@ const buildPlacement = ({
 			MAX_SUGGESTED_ZOOM,
 		),
 	);
-	const centeredGeometry = getImagePlacementGeometry({
+	const suggestionGeometry = getImagePlacementGeometry({
 		naturalWidth: document.width,
 		naturalHeight: document.height,
 		frameWidth: geometry.frameWidth,
 		frameHeight: geometry.frameHeight,
+		horizontalMovement: geometry.horizontalMovement,
 		value: {
 			cropX: 50,
 			cropY: 50,
@@ -261,13 +263,13 @@ const buildPlacement = ({
 		-(targetCenterY - document.height / 2) * scale * cropZoom;
 
 	return {
-		cropX: positionFromOffset(
+		cropX: getImagePlacementCropXFromOffset(
+			suggestionGeometry,
 			desiredOffsetX,
-			centeredGeometry.maxOffsetX,
 		),
 		cropY: positionFromOffset(
 			desiredOffsetY,
-			centeredGeometry.maxOffsetY,
+			suggestionGeometry.maxOffsetY,
 		),
 		cropZoom,
 		fitMode: "custom",

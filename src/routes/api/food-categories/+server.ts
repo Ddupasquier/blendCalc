@@ -1,5 +1,6 @@
 import { readFoodCategoryPickerData } from "$lib/server/products/categoryPicker.server";
-import { error, json } from "@sveltejs/kit";
+import { throwAppError } from "$lib/server/errors/appError.server";
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
 const MAX_QUERY_LENGTH = 120;
@@ -10,7 +11,7 @@ const readSearchValue = (url: URL, key: string) =>
 
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const user = await locals.getVerifiedUser();
-	if (!user) throw error(401, "Sign in to load food categories.");
+	if (!user) throwAppError(401, "AUTH_REQUIRED");
 
 	const sourceCategories = url.searchParams
 		.getAll("sourceCategory")

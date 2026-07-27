@@ -61,9 +61,9 @@ describe("BottomSheet shared chrome", () => {
 			/const useIngredient[\s\S]*?\n\t};/,
 		)?.[0];
 
-		expect(completionHandler).toContain("onClose();");
+		expect(completionHandler).toContain("handleClose();");
 		expect(completionHandler).toContain("await onCreate(food, context);");
-		expect(completionHandler?.indexOf("onClose();")).toBeLessThan(
+		expect(completionHandler?.indexOf("handleClose();")).toBeLessThan(
 			completionHandler?.indexOf("await onCreate(food, context);") ?? -1,
 		);
 		expect(useIngredient).not.toContain("onClose?.()");

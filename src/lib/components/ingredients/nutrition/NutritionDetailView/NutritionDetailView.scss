@@ -11,14 +11,12 @@
 
 h1 {
 	margin: 0;
-	overflow: hidden;
 	color: $app-shell-text-primary;
 	font-family: $app-font-family-interface;
 	font-size: $app-font-size-lg;
 	font-weight: $app-font-weight-bold;
 	line-height: 1.15;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	overflow-wrap: anywhere;
 }
 
 .nutrition-detail-view__source {

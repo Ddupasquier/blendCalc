@@ -113,14 +113,6 @@ $scanner-target-corner-height: 2.3rem;
 	font-weight: $app-font-weight-bold;
 }
 
-.barcode-scanner__error {
-	padding: $app-gap-sm;
-	color: $app-warning-strong !important;
-	background: $app-warning-bg;
-	border: $app-warning-border;
-	border-radius: $app-radius;
-}
-
 @media (max-width: $app-breakpoint-sm) {
 	.barcode-scanner {
 		padding: calc($app-shell-padding-x + env(safe-area-inset-top))

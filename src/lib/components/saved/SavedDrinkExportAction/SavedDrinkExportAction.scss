@@ -4,12 +4,3 @@
 	display: grid;
 	gap: $app-gap-xs;
 }
-
-.saved-drink-export small {
-	color: $app-muted;
-	font-size: $app-font-size-xs;
-}
-
-.saved-drink-export .saved-drink-export__error {
-	color: $app-status-error-text;
-}

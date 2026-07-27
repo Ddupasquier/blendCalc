@@ -387,24 +387,6 @@ select {
 	background: $app-accent;
 }
 
-.message {
-	padding: $app-gap-sm;
-	border-radius: $app-radius-sm;
-	font-weight: 700;
-}
-
-.message--error {
-	background: $app-danger-bg;
-}
-
-.message--success {
-	background: $app-success-bg;
-}
-
-.message--warning {
-	background: $app-warning-bg;
-}
-
 @media (max-width: $app-breakpoint-xs) {
 	.product-card__evidence {
 		grid-template-columns: 1fr;

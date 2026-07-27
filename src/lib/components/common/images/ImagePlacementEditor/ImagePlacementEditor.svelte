@@ -1,9 +1,13 @@
 <script lang="ts">
 	import PillButton from "$lib/components/common/buttons/PillButton/PillButton.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import ImagePlacementCardPreview from "$lib/components/common/images/ImagePlacementCardPreview/ImagePlacementCardPreview.svelte";
 	import type { ImagePlacementEditorProps } from "./types";
 	import {
+		CARD_IMAGE_PLACEMENT_MAX_X,
+		CARD_IMAGE_PLACEMENT_MIN_X,
+		constrainCardImagePlacement,
 		createCustomImagePlacement,
 		createFillImagePlacement,
 		createFullImagePlacement,
@@ -15,6 +19,7 @@
 		ImagePlacementGeometry,
 		ImagePlacementValue,
 	} from "$lib/utils/food/images/types";
+	import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 
 	let {
 		imageUrl,
@@ -43,13 +48,30 @@
 	const activeFitMode = $derived<ImageFitMode>(
 		value.placementVersion <= 1 ? "custom" : value.fitMode,
 	);
+	const horizontalShift = $derived(
+		Math.max(
+			0,
+			Math.min(
+				100,
+				((value.cropX - CARD_IMAGE_PLACEMENT_MIN_X) /
+					(CARD_IMAGE_PLACEMENT_MAX_X - CARD_IMAGE_PLACEMENT_MIN_X)) *
+					100,
+			),
+		),
+	);
 
 	const updateCustomValue = (patch: Partial<ImagePlacementValue>) => {
-		onChange?.({
-			...createCustomImagePlacement(value, previewGeometry.effectiveZoom),
-			...patch,
-			fitMode: "custom",
-		});
+		onChange?.(
+			constrainCardImagePlacement({
+				...createCustomImagePlacement(value, previewGeometry.effectiveZoom),
+				...patch,
+				fitMode: "custom",
+			}),
+		);
+	};
+
+	const handlePreviewChange = (nextValue: ImagePlacementValue) => {
+		onChange?.(constrainCardImagePlacement(nextValue));
 	};
 
 	const selectFitMode = (fitMode: Exclude<ImageFitMode, "custom">) => {
@@ -90,17 +112,22 @@
 			});
 			if (!suggestion) {
 				suggestionError =
-					"No likely front-label product text was found. The current placement was not changed.";
+					"We couldn't confidently find the product name in this photo. Nothing changed, and you can still position it by hand.";
 				return;
 			}
-			onChange?.(suggestion.placement);
+			onChange?.(constrainCardImagePlacement(suggestion.placement));
 			suggestionMessage =
-				"Smart placement was applied to the preview. Adjust it or restore the default before saving.";
+				"We found the likely product name and updated the preview. Check it before saving.";
 		} catch (error) {
-			suggestionError =
-				error instanceof Error
-					? error.message
-					: "Smart placement could not analyze this image.";
+			console.error("[image placement] Automatic placement failed", error);
+			suggestionError = getUserFacingErrorMessage(error, {
+				fallback:
+					"We couldn't check this photo automatically. You can still position it by hand or try again.",
+				network:
+					"We couldn't load this photo for automatic placement. Check your connection or adjust it by hand.",
+				timeout:
+					"Automatic placement took too long. Try again, or position the photo by hand.",
+			});
 		} finally {
 			suggestingPlacement = false;
 		}
@@ -128,12 +155,13 @@
 			{showWarningEdge}
 			interactive={editable}
 			{instructionsId}
-			onChange={(nextValue) => onChange?.(nextValue)}
+			onChange={handlePreviewChange}
 			onGeometryChange={(geometry) => (previewGeometry = geometry)}
 		/>
 		{#if editable}
 			<p id={instructionsId}>
-				Drag to reposition. Pinch or scroll over the preview to zoom.
+				Drag left to shift the image, or drag right to return it. Pinch or
+				scroll over the preview to zoom.
 			</p>
 		{/if}
 	</div>
@@ -152,19 +180,12 @@
 					: "Suggest placement"}
 			</RoundedActionButton>
 			{#if suggestionMessage || suggestionError}
-				<div
-					class="image-placement-editor__suggestion-status"
-					aria-live="polite"
-				>
-					{#if suggestionMessage}
-						<p>{suggestionMessage}</p>
-					{/if}
-					{#if suggestionError}
-						<p class="image-placement-editor__suggestion-error">
-							{suggestionError}
-						</p>
-					{/if}
-				</div>
+				{#if suggestionMessage}
+					<StatusMessage tone="success" message={suggestionMessage} />
+				{/if}
+				{#if suggestionError}
+					<StatusMessage tone="danger" message={suggestionError} />
+				{/if}
 			{/if}
 			<div class="image-placement-editor__presets" role="group" aria-label="Image fit">
 				<PillButton
@@ -191,18 +212,24 @@
 			</div>
 			<label>
 				<span>
-					Horizontal position
-					{#if !previewGeometry.canMoveX}<small>Centered at this zoom</small>{/if}
+					Shift image left
+					{#if !previewGeometry.ready}<small>Available after the image loads</small>{/if}
 				</span>
 				<input
 					type="range"
 					min="0"
 					max="100"
 					step="1"
-					value={value.cropX}
-					disabled={!previewGeometry.canMoveX}
+					value={horizontalShift}
+					disabled={!previewGeometry.ready}
 					oninput={(event) =>
-						updateCustomValue({ cropX: Number(event.currentTarget.value) })}
+						updateCustomValue({
+							cropX:
+								CARD_IMAGE_PLACEMENT_MIN_X +
+								(Number(event.currentTarget.value) / 100) *
+									(CARD_IMAGE_PLACEMENT_MAX_X -
+										CARD_IMAGE_PLACEMENT_MIN_X),
+						})}
 				/>
 			</label>
 			<label>

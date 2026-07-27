@@ -57,7 +57,7 @@ export const buildManualEntryNutrientAvailabilityItems = ({
 		requiredFieldCount === 0
 			? {
 					message:
-						"Required nutrient fields are unavailable. Try again after nutrient metadata loads.",
+						"Required nutrition fields are missing. Try again when the nutrition fields finish loading.",
 					tone: "error",
 					step: "macros",
 					showImmediately: true,

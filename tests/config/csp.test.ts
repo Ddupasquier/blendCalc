@@ -18,6 +18,12 @@ describe("content security policy", () => {
 		);
 	});
 
+	it("allows trusted Open Food Facts images to be read for on-device OCR", () => {
+		expect(createConnectSources("production")).toContain(
+			"https://images.openfoodfacts.org",
+		);
+	});
+
 	it("limits on-device OCR assets to the Tesseract CDN and local workers", () => {
 		const configSource = readFileSync("svelte.config.js", "utf8");
 

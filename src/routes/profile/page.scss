@@ -320,27 +320,6 @@
 	background: $app-accent;
 }
 
-.form-message {
-	padding: $app-gap-sm;
-	border-radius: $app-radius-sm;
-	font-size: $app-font-size-sm;
-	font-weight: 800;
-}
-
-.form-message--error {
-	background: $app-danger-bg;
-}
-
-.form-message--success {
-	background: $app-success-bg;
-}
-
-.form-message--warning {
-	color: $app-warning-text;
-	background: $app-warning-bg;
-	border: $app-warning-border;
-}
-
 @media (max-width: $app-breakpoint-xs) {
 	.preference-grid,
 	.preference-editor-grid,

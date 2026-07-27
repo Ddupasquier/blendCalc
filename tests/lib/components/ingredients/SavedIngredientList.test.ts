@@ -231,7 +231,8 @@ describe("SavedIngredientList overlay behavior", () => {
 				level: "warning",
 				category: "allergen",
 				label: "Soy",
-				reason: "Soy conflict: this product contains soy.",
+				code: "FOOD_ALLERGEN_CONTAINS",
+				params: { factLabel: "Soy" },
 			}],
 		};
 		const { container } = render(SavedIngredientList, {
@@ -263,11 +264,11 @@ describe("SavedIngredientList overlay behavior", () => {
 			image.compareDocumentPosition(warningEdge) &
 				Node.DOCUMENT_POSITION_FOLLOWING,
 		).toBeTruthy();
-		expect(
-			screen.getByRole("button", {
-				name: /Warning: Soy conflict/,
-			}),
-		).toBeInTheDocument();
+			expect(
+				screen.getByRole("button", {
+					name: /Warning: The label lists soy as an allergen/,
+				}),
+			).toBeInTheDocument();
 	});
 
 	it("announces selection mode and the selected count", () => {

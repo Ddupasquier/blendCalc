@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { onMount } from "svelte";
 	import FloatingFruitBackground from "$lib/components/app/FloatingFruitBackground/FloatingFruitBackground.svelte";
 	import PasswordRequirements from "$lib/components/auth/PasswordRequirements/PasswordRequirements.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import { APP_NAME } from "$lib/config/brand";
 	import { formatDocumentTitle } from "$lib/config/pageMetadata";
 	import { PASSWORD_MIN_LENGTH } from "$lib/utils/auth/passwordPolicy";
@@ -15,7 +15,6 @@
 		form,
 	}: AuthPageProps = $props();
 
-	let providerError = $state("");
 	let email = $state("");
 	let password = $state("");
 	let passwordConfirmation = $state("");
@@ -51,10 +50,6 @@
 		passwordConfirmation = "";
 	};
 
-	onMount(() => {
-		const params = new URLSearchParams(window.location.hash.slice(1));
-		providerError = params.get("error_description") ?? "";
-	});
 </script>
 
 <svelte:head>
@@ -78,20 +73,17 @@
 		</div>
 
 		{#if data.authError}
-			<p class="auth-error" role="alert">
-				Sign in did not complete.
-				{#if providerError}
-					<span>{providerError}</span>
-				{:else}
-					<span>{authErrorMessages[data.authError] ?? "Try again."}</span>
-				{/if}
-			</p>
+			<StatusMessage
+				tone="danger"
+				title="Sign in didn’t complete"
+				message={authErrorMessages[data.authError] ?? "Try again."}
+			/>
 		{/if}
 		{#if form?.message}
-			<p class="auth-error" role="alert">{form.message}</p>
+			<StatusMessage tone="danger" message={form.message} />
 		{/if}
 		{#if form?.success}
-			<p class="auth-success" role="status">{form.success}</p>
+			<StatusMessage tone="success" message={form.success} />
 		{/if}
 
 		<form

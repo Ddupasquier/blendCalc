@@ -1,6 +1,10 @@
 import type { Database } from "$lib/types/database.types";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+	getAppIssueMessage,
+	type AppIssueParams,
+} from "$lib/utils/errors/appIssues";
 
 export type NutrientRelationshipSeverity = "error" | "warning";
 export type NutrientRelationshipRuleType = "child_must_not_exceed_parent";
@@ -9,9 +13,11 @@ export type NutrientRelationshipRule = {
 	id: string;
 	parentNutrientId: number;
 	childNutrientId: number;
+	parentLabel: string;
+	childLabel: string;
 	relationship: NutrientRelationshipRuleType;
 	severity: NutrientRelationshipSeverity;
-	message: string;
+	issueCode: "NUTRIENT_CHILD_EXCEEDS_PARENT";
 	requiresParent: boolean;
 	tolerance: number;
 };
@@ -21,20 +27,23 @@ export type NutrientRelationshipIssue = {
 	parentNutrientId: number;
 	childNutrientId: number;
 	severity: NutrientRelationshipSeverity;
+	code: "NUTRIENT_CHILD_EXCEEDS_PARENT";
+	params: AppIssueParams;
 	message: string;
 };
 
-type NutrientRelationshipRuleRow = Pick<
-	Database["public"]["Tables"]["nutrient_relationship_rules"]["Row"],
-	| "id"
-	| "parent_nutrient_id"
-	| "child_nutrient_id"
-	| "relationship"
-	| "severity"
-	| "message"
-	| "requires_parent"
-	| "tolerance"
->;
+type NutrientRelationshipRuleRow = {
+	id: string;
+	parent_nutrient_id: number;
+	child_nutrient_id: number;
+	relationship: string;
+	severity: string;
+	issue_code: "NUTRIENT_CHILD_EXCEEDS_PARENT";
+	requires_parent: boolean;
+	tolerance: number;
+	parent_definition: { nutrient_name: string } | null;
+	child_definition: { nutrient_name: string } | null;
+};
 
 export type NutrientValueMap = Map<number, number> | Record<number, number | undefined>;
 
@@ -49,9 +58,11 @@ const toRule = (row: NutrientRelationshipRuleRow): NutrientRelationshipRule => (
 	id: row.id,
 	parentNutrientId: row.parent_nutrient_id,
 	childNutrientId: row.child_nutrient_id,
+	parentLabel: row.parent_definition?.nutrient_name ?? "its total",
+	childLabel: row.child_definition?.nutrient_name ?? "This nutrient",
 	relationship: row.relationship as NutrientRelationshipRuleType,
 	severity: row.severity as NutrientRelationshipSeverity,
-	message: row.message,
+	issueCode: row.issue_code,
 	requiresParent: row.requires_parent,
 	tolerance: Number(row.tolerance ?? 0),
 });
@@ -64,7 +75,7 @@ export const readNutrientRelationshipRules = async (
 	const { data, error } = await supabase
 		.from("nutrient_relationship_rules")
 		.select(
-			"id, parent_nutrient_id, child_nutrient_id, relationship, severity, message, requires_parent, tolerance",
+			"id, parent_nutrient_id, child_nutrient_id, relationship, severity, issue_code, requires_parent, tolerance, parent_definition:nutrient_definitions!nutrient_relationship_rules_parent_nutrient_id_fkey(nutrient_name), child_definition:nutrient_definitions!nutrient_relationship_rules_child_nutrient_id_fkey(nutrient_name)",
 		)
 		.eq("enabled", true)
 		.order("sort_order", { ascending: true })
@@ -98,6 +109,10 @@ export const validateNutrientRelationshipRules = (
 	const issues: NutrientRelationshipIssue[] = [];
 
 	for (const rule of rules) {
+		const params = {
+			parentLabel: rule.parentLabel,
+			childLabel: rule.childLabel,
+		};
 		const childValue = getNutrientValue(values, rule.childNutrientId);
 		if (childValue === undefined || childValue <= 0) continue;
 
@@ -109,7 +124,9 @@ export const validateNutrientRelationshipRules = (
 					parentNutrientId: rule.parentNutrientId,
 					childNutrientId: rule.childNutrientId,
 					severity: rule.severity,
-					message: rule.message,
+					code: rule.issueCode,
+					params,
+					message: getAppIssueMessage(rule.issueCode, params),
 				});
 			}
 			continue;
@@ -123,7 +140,9 @@ export const validateNutrientRelationshipRules = (
 					parentNutrientId: rule.parentNutrientId,
 					childNutrientId: rule.childNutrientId,
 					severity: rule.severity,
-					message: rule.message,
+					code: rule.issueCode,
+					params,
+					message: getAppIssueMessage(rule.issueCode, params),
 				});
 			}
 		}

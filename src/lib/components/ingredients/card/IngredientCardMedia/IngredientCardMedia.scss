@@ -1,15 +1,11 @@
 @use "../../../../../styles/variables" as *;
 
-$fallback-fade-reserve: $app-gap-md;
-
 .ingredient-card-media__fallback {
-	display: flex;
+	display: grid;
 	box-sizing: border-box;
-	width: 100%;
+	width: min(100%, var(--ingredient-card-copy-start-offset));
 	height: 100%;
-	align-items: center;
-	justify-content: center;
-	padding-inline-end: $fallback-fade-reserve;
+	place-items: center;
 	font-size: $app-font-size-xl;
 	line-height: 1;
 	text-align: center;

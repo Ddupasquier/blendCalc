@@ -1,10 +1,8 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import type { FdcFood } from "$lib/utils/food/types";
-	import {
-		FdcConfigurationError,
-		searchFoodPage,
-	} from "$lib/utils/food/sources/fdc";
+	import { searchFoodPage } from "$lib/utils/food/sources/fdc";
+	import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 	import {
 		INGREDIENT_SEARCH_LOAD_MORE_PAGE_SIZE,
 		INGREDIENT_SEARCH_PAGE_SIZE,
@@ -14,6 +12,7 @@
 	} from "$lib/utils/food/custom/customFoods";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import Search from "$lib/assets/icons/Search/Search.svelte";
 	import X from "$lib/assets/icons/X/X.svelte";
 	import { createEventDispatcher, onMount, tick } from "svelte";
@@ -87,9 +86,15 @@
 				nextOffset = null;
 				activeResultIndex = -1;
 				dispatch("results", { results, query: searchString });
-				error = searchError instanceof FdcConfigurationError
-					? searchError.message
-					: "Food search is temporarily unavailable. Try again.";
+				console.error("[ingredient search] Search failed", searchError);
+				error = getUserFacingErrorMessage(searchError, {
+					fallback:
+						"We couldn't search foods right now. Wait a moment and try again.",
+					network:
+						"We couldn't connect to food search. Check your connection and try again.",
+					timeout:
+						"Food search took too long. Check your connection and try again.",
+				});
 			} finally {
 				if (requestVersion === searchRequestVersion) {
 					loading = false;
@@ -371,7 +376,7 @@
 		</p>
 	{/if}
 	{#if error}
-		<p class="search-error" role="alert">{error}</p>
+		<StatusMessage tone="danger" message={error} />
 	{/if}
 	<SearchDropdown
 		results={sortedResults()}

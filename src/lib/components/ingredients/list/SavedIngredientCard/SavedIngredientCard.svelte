@@ -1,9 +1,10 @@
 <script lang="ts">
+	import DotsHorizontal from "$lib/assets/icons/DotsHorizontal/DotsHorizontal.svelte";
+	import X from "$lib/assets/icons/X/X.svelte";
 	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation/TwoStepConfirmation.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
 	import IngredientCardMedia from "$lib/components/ingredients/card/IngredientCardMedia/IngredientCardMedia.svelte";
-	import IngredientCardActions from "$lib/components/ingredients/list/IngredientCardActions/IngredientCardActions.svelte";
 	import IngredientMoveIcon from "$lib/components/ingredients/list/IngredientMoveIcon/IngredientMoveIcon.svelte";
 	import IngredientSelectionIndicator from "$lib/components/ingredients/list/IngredientSelectionIndicator/IngredientSelectionIndicator.svelte";
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
@@ -104,15 +105,27 @@
 			onConfirm={onRemove}
 		>
 			{#snippet children({ armed, activate, label, messageId })}
-				<IngredientCardActions
-					description={food.description}
-					{removing}
-					removeArmed={armed}
-					removeLabel={label}
-					removeMessageId={messageId}
-					{onActions}
-					onRemove={activate}
-				/>
+				<span class="saved-ingredient-card__actions">
+					<CircleIconButton
+						label={`Open actions for ${food.description}`}
+						variant="soft"
+						size="small"
+						onclick={onActions}
+					>
+						<DotsHorizontal size={16} />
+					</CircleIconButton>
+					<CircleIconButton
+						label={label}
+						variant={armed ? "danger" : "soft"}
+						size="small"
+						busy={removing}
+						disabled={removing}
+						aria-describedby={armed ? messageId : undefined}
+						onclick={activate}
+					>
+						<X size={16} strokeWidth={2.7} />
+					</CircleIconButton>
+				</span>
 			{/snippet}
 		</TwoStepConfirmation>
 	{/if}

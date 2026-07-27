@@ -1,15 +1,22 @@
 import { lookupBarcodeProductDraft } from "$lib/server/products/barcodeProduct.server";
+import {
+	requireAppValue,
+	throwAppError,
+} from "$lib/server/errors/appError.server";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { productNamesDiffer } from "$lib/utils/products/productIdentity";
-import { error, json } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = async ({ locals, params, request }) => {
 	const user = await locals.getVerifiedUser();
-	if (!user) throw error(401, "Sign in to verify products.");
+	if (!user) throwAppError(401, "AUTH_REQUIRED");
 
-	const barcode = normalizeBarcode(params.barcode);
-	if (!barcode) throw error(400, "Invalid barcode.");
+	const barcode = requireAppValue(
+		normalizeBarcode(params.barcode),
+		400,
+		"INVALID_BARCODE",
+	);
 
 	const body = await request.json().catch(() => null) as {
 		productName?: unknown;
@@ -17,7 +24,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 	const productName = typeof body?.productName === "string"
 		? body.productName.trim()
 		: "";
-	if (!productName) throw error(400, "A product name is required.");
+	if (!productName) throwAppError(400, "PRODUCT_NAME_REQUIRED");
 
 	const draft = await lookupBarcodeProductDraft(locals.supabase, barcode);
 	if (!draft) {
@@ -29,8 +36,10 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 			status: "name-mismatch",
 			barcode,
 			draft,
-			message:
-				`This barcode belongs to “${draft.name}”. Use the verified information to share it, or remove the barcode and save your current entry only to your account.`,
+			issue: {
+				code: "PRODUCT_NAME_CONFLICT",
+				params: { productName: draft.name },
+			},
 		});
 	}
 

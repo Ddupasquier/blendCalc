@@ -1,8 +1,8 @@
 @use "../../../../../styles/variables" as *;
-@use "../../../ingredients/card/IngredientCardMediaLane/IngredientCardGeometry" as ingredient-card-geometry;
+@use "../../../ingredients/card/IngredientCardMediaLane/IngredientCardLayout" as ingredient-card-layout;
 
 .image-placement-card-preview {
-	@include ingredient-card-geometry.frame;
+	@include ingredient-card-layout.frame;
 
 	grid-template-columns: minmax(0, 1fr) auto;
 }
@@ -10,38 +10,12 @@
 .image-placement-card-preview__copy {
 	position: relative;
 	z-index: 1;
-	display: grid;
-	gap: $app-gap-2xs;
-	min-width: 0;
-	@include ingredient-card-geometry.media-content-inset;
-}
-
-.image-placement-card-preview__copy strong,
-.image-placement-card-preview__copy small {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.image-placement-card-preview__copy strong {
-	color: $app-shell-text-primary;
-	font-size: $app-font-size-md;
-	font-weight: $app-font-weight-heavy;
-	line-height: 1.08;
-}
-
-.image-placement-card-preview__copy small {
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-sm;
-	font-weight: $app-font-weight-medium;
-	line-height: 1.15;
+	@include ingredient-card-layout.copy;
+	@include ingredient-card-layout.media-content-inset;
 }
 
 .image-placement-card-preview__actions {
-	position: relative;
-	z-index: 1;
-	display: flex;
-	gap: $app-gap-sm;
+	@include ingredient-card-layout.action-row;
 }
 
 :global(.image-placement-card-preview__action) {

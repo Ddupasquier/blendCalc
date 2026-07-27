@@ -4,6 +4,7 @@
 	import User from "$lib/assets/icons/User/User.svelte";
 	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
@@ -103,7 +104,8 @@
 	> = {
 		allergens: {
 			title: "Allergens",
-			helper: "Adds warnings when metadata suggests a conflict.",
+			helper:
+				"Adds a warning when a food's ingredients or allergen details may conflict.",
 			searchLabel: "Type your own allergen",
 			selectLabel: "Common allergens",
 		},
@@ -329,9 +331,9 @@
 		</div>
 
 		{#if form?.profileError}
-			<p class="form-message form-message--error" role="alert">{form.profileError}</p>
+			<StatusMessage tone="danger" message={form.profileError} />
 		{:else if form?.profileSuccess}
-			<p class="form-message form-message--success" role="status">{form.profileSuccess}</p>
+			<StatusMessage tone="success" message={form.profileSuccess} />
 		{/if}
 
 		<form method="POST" action="?/saveProfile" use:enhance={enhanceProfile} aria-busy={profilePending}>
@@ -371,9 +373,9 @@
 		</div>
 
 		{#if form?.avatarError}
-			<p class="form-message form-message--error" role="alert">{form.avatarError}</p>
+			<StatusMessage tone="danger" message={form.avatarError} />
 		{:else if form?.avatarSuccess}
-			<p class="form-message form-message--success" role="status">{form.avatarSuccess}</p>
+			<StatusMessage tone="success" message={form.avatarSuccess} />
 		{/if}
 
 		<form method="POST" action="?/uploadAvatar" enctype="multipart/form-data" use:enhance={enhanceAvatar} aria-busy={avatarPending}>
@@ -453,14 +455,15 @@
 		</div>
 
 		{#if form?.foodPreferencesError}
-			<p class="form-message form-message--error" role="alert">{form.foodPreferencesError}</p>
+			<StatusMessage tone="danger" message={form.foodPreferencesError} />
 		{:else if form?.foodPreferencesSuccess}
-			<p class="form-message form-message--success" role="status">{form.foodPreferencesSuccess}</p>
+			<StatusMessage tone="success" message={form.foodPreferencesSuccess} />
 		{/if}
 		{#if data.foodPreferencesUnavailable}
-			<p class="form-message form-message--warning" role="status">
-				Food preference storage is waiting on the latest database migration. Profile details and images still work.
-			</p>
+			<StatusMessage
+				tone="warning"
+				message="Food preference storage is waiting on the latest database migration. Profile details and images still work."
+			/>
 		{/if}
 		{#if savedPreferenceSummary.length}
 			<div class="saved-preferences" aria-label="Saved food preferences">

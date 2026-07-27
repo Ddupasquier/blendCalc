@@ -1,15 +1,24 @@
-import { json, error as kitError } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { updateFoodImageAssetPlacement } from "$lib/server/products/foodImages.server";
+import {
+	requireAppValue,
+	throwAppError,
+} from "$lib/server/errors/appError.server";
 import { getUserAppRole } from "$lib/utils/moderation/moderation";
 import type { FoodImageAsset } from "$lib/utils/food/types";
 import {
 	CURRENT_IMAGE_PLACEMENT_VERSION,
+	CARD_IMAGE_PLACEMENT_MAX_X,
+	CARD_IMAGE_PLACEMENT_MIN_X,
 	IMAGE_PLACEMENT_MAX_ZOOM,
 	isImageFitMode,
 	isImagePlacementMethod,
 } from "$lib/utils/food/images/imagePlacement";
-import type { ImageFitMode } from "$lib/utils/food/images/types";
+import type {
+	ImageFitMode,
+	ImagePlacementMethod,
+} from "$lib/utils/food/images/types";
 
 const allowedSources = new Set<FoodImageAsset["source"]>([
 	"open-food-facts",
@@ -30,40 +39,54 @@ const clamp = (value: unknown, min: number, max: number, fallback: number) => {
 };
 
 export const PATCH: RequestHandler = async ({ locals, request }) => {
-	const user = await locals.getVerifiedUser();
-	if (!user) throw kitError(401, "Sign in before updating image placement.");
+	const user = requireAppValue(
+		await locals.getVerifiedUser(),
+		401,
+		"AUTH_REQUIRED",
+	);
 
 	const role = await getUserAppRole(locals.supabase, user.id);
 	if (role !== "admin" && role !== "moderator") {
-		throw kitError(403, "Only moderators and admins can update product image placement.");
+		throwAppError(403, "ACCESS_DENIED");
 	}
 
-	const body = await request.json();
+	const body = requireAppValue(
+		await request.json().catch(() => null) as Record<string, unknown> | null,
+		400,
+		"IMAGE_PLACEMENT_INVALID",
+	);
 	const source = String(body.source ?? "") as FoodImageAsset["source"];
 	const sourceReference = String(body.sourceReference ?? "").trim();
 	const imageRole = String(body.role ?? "") as FoodImageAsset["role"];
-	const requestedFitMode = String(body.fitMode ?? "");
-	const requestedPlacementMethod = String(body.placementMethod ?? "manual");
-	const usesSmartSuggestion =
-		requestedPlacementMethod === "smart-ocr" ||
-		requestedPlacementMethod === "smart-ocr-adjusted";
+	const requestedFitMode = body.fitMode;
+	const requestedPlacementMethod = body.placementMethod ?? "manual";
 	const suggestionVersion = String(body.suggestionVersion ?? "").trim();
 	const suggestionConfidence = Number(body.suggestionConfidence);
 
 	if (
 		!allowedSources.has(source) ||
 		!sourceReference ||
-		!allowedRoles.has(imageRole) ||
-		!isImageFitMode(requestedFitMode) ||
-		!isImagePlacementMethod(requestedPlacementMethod) ||
-		(
-			usesSmartSuggestion &&
-			(!suggestionVersion || !Number.isFinite(suggestionConfidence))
-		)
+		!allowedRoles.has(imageRole)
 	) {
-		throw kitError(400, "Choose a valid image to update.");
+		throwAppError(400, "IMAGE_PLACEMENT_INVALID");
 	}
-	const fitMode: ImageFitMode = requestedFitMode;
+	if (!isImageFitMode(requestedFitMode)) {
+		throwAppError(400, "IMAGE_PLACEMENT_INVALID");
+	}
+	if (!isImagePlacementMethod(requestedPlacementMethod)) {
+		throwAppError(400, "IMAGE_PLACEMENT_INVALID");
+	}
+	const usesSmartSuggestion =
+		requestedPlacementMethod === "smart-ocr" ||
+		requestedPlacementMethod === "smart-ocr-adjusted";
+	if (
+		usesSmartSuggestion &&
+		(!suggestionVersion || !Number.isFinite(suggestionConfidence))
+	) {
+		throwAppError(400, "IMAGE_PLACEMENT_INVALID");
+	}
+	const fitMode = requestedFitMode as ImageFitMode;
+	const placementMethod = requestedPlacementMethod as ImagePlacementMethod;
 
 	const image = await updateFoodImageAssetPlacement({
 		source,
@@ -71,12 +94,17 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 		role: imageRole,
 		moderatorId: user.id,
 		crop: {
-			cropX: clamp(body.cropX, 0, 100, 50),
+			cropX: clamp(
+				body.cropX,
+				CARD_IMAGE_PLACEMENT_MIN_X,
+				CARD_IMAGE_PLACEMENT_MAX_X,
+				CARD_IMAGE_PLACEMENT_MIN_X,
+			),
 			cropY: clamp(body.cropY, 0, 100, 50),
 			cropZoom: clamp(body.cropZoom, 1, IMAGE_PLACEMENT_MAX_ZOOM, 1),
 			fitMode,
 			placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
-			placementMethod: requestedPlacementMethod,
+			placementMethod,
 			...(usesSmartSuggestion
 				? {
 					suggestionVersion,
@@ -91,7 +119,7 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 		},
 	});
 
-	if (!image) throw kitError(404, "That product image could not be found.");
+	if (!image) throwAppError(404, "IMAGE_NOT_FOUND");
 
 	return json({ image });
 };

@@ -21,6 +21,20 @@ const spinach: FdcFood = {
 };
 
 describe("NutritionDetailView", () => {
+	it("shows the complete product name in the nutrition header", () => {
+		const longName =
+			"Roasted Onion & Garlic Pasta Sauce With Extra Herbs & Vegetables";
+		render(NutritionDetailView, {
+			props: {
+				food: { ...spinach, description: longName },
+				onClose: vi.fn(),
+				provenanceOptions: ingredientProvenanceOptionsFixture,
+			},
+		});
+
+		expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(longName);
+	});
+
 	it("shows a source-backed product image when available", () => {
 		render(NutritionDetailView, {
 			props: {

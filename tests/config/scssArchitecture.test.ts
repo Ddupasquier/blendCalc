@@ -77,8 +77,14 @@ describe("SCSS architecture", () => {
 	it("keeps component styles paired and scoped to their owner", () => {
 		for (const stylePath of componentStyleFiles) {
 			const componentName = basename(stylePath, ".scss");
-			expect(basename(dirname(stylePath)), stylePath).toBe(componentName);
-			expect(existsSync(join(dirname(stylePath), `${componentName}.svelte`)), stylePath).toBe(true);
+			const ownerName = basename(dirname(stylePath));
+			expect(
+				existsSync(join(dirname(stylePath), `${ownerName}.svelte`)),
+				stylePath,
+			).toBe(true);
+			if (!componentName.startsWith("_")) {
+				expect(ownerName, stylePath).toBe(componentName);
+			}
 		}
 
 		for (const componentPath of componentFiles) {

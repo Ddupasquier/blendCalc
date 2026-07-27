@@ -224,7 +224,8 @@ describe("IngredientSearch", () => {
 				level: "warning",
 				category: "allergen",
 				label: "Peanut",
-				reason: "Peanut conflict: this product contains peanuts.",
+				code: "FOOD_ALLERGEN_CONTAINS",
+				params: { factLabel: "Peanut" },
 			}],
 		};
 		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([imageFood]));

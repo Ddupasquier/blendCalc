@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { getFoodPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
+import {
+	getFoodPreferenceWarningMessage,
+	getFoodPreferenceWarnings,
+} from "$lib/utils/profile/foodPreferenceWarnings";
 import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 import type { FdcFood } from "$lib/utils/food/types";
 
@@ -17,6 +20,7 @@ const baseProfile: FoodPreferenceProfile = {
 			factSlug: "milk",
 			factLabel: "Milk",
 			level: "warning",
+			warningCode: "FOOD_RESTRICTION_CONFLICT",
 		},
 		{
 			preferenceSlug: "vegan",
@@ -24,6 +28,7 @@ const baseProfile: FoodPreferenceProfile = {
 			factSlug: "milk",
 			factLabel: "Milk",
 			level: "warning",
+			warningCode: "FOOD_RESTRICTION_CONFLICT",
 		},
 	],
 	matchRules: [],
@@ -105,6 +110,10 @@ describe("food preference warnings", () => {
 				level: "warning",
 			}),
 		]);
+		expect(getFoodPreferenceWarningMessage(warnings[0]))
+			.toBe(
+				"This may not be vegan because the label lists milk as an allergen.",
+			);
 	});
 
 	it("prefers DB-backed compatibility facts when available", () => {
@@ -134,7 +143,7 @@ describe("food preference warnings", () => {
 			{ ...baseProfile, allergens: ["Dairy"] },
 		);
 
-		expect(warnings[0]?.reason)
+		expect(warnings[0] && getFoodPreferenceWarningMessage(warnings[0]))
 			.toBe("The label lists dairy as an allergen.");
 	});
 
@@ -152,9 +161,11 @@ describe("food preference warnings", () => {
 				category: "allergen",
 				label: "Peanut",
 				level: "warning",
-				reason: "The label lists peanut as an allergen.",
+				code: "FOOD_ALLERGEN_CONTAINS",
 			}),
 		]);
+		expect(getFoodPreferenceWarningMessage(warnings[0]))
+			.toBe("The label lists peanut as an allergen.");
 	});
 
 	it("uses DB-provided ingredient rules for dietary conflicts", () => {
@@ -172,6 +183,7 @@ describe("food preference warnings", () => {
 					factSlug: "wheat",
 					factLabel: "Wheat",
 					level: "warning",
+					warningCode: "FOOD_RESTRICTION_CONFLICT",
 				}],
 				matchRules: [{
 					sourceKey: null,
@@ -194,10 +206,13 @@ describe("food preference warnings", () => {
 				category: "restriction",
 				label: "Gluten-free",
 				level: "warning",
-				reason:
-					"This may not be gluten-free because wheat appears in the ingredient list.",
+				code: "FOOD_RESTRICTION_CONFLICT",
 			}),
 		]);
+		expect(getFoodPreferenceWarningMessage(warnings[0]))
+			.toBe(
+				"This may not be gluten-free because wheat appears in the ingredient list.",
+			);
 	});
 
 	it("uses DB-provided source identity rules for shellfish conflicts", () => {
@@ -215,6 +230,7 @@ describe("food preference warnings", () => {
 					factSlug: "shellfish",
 					factLabel: "Shellfish",
 					level: "warning",
+					warningCode: "FOOD_RESTRICTION_CONFLICT",
 				}],
 				matchRules: [{
 					sourceKey: "usda",
@@ -237,9 +253,11 @@ describe("food preference warnings", () => {
 				category: "allergen",
 				label: "Shellfish",
 				level: "warning",
-				reason: "This food is identified as shellfish.",
+				code: "FOOD_IDENTITY_CONFIRMED",
 			}),
 		]);
+		expect(getFoodPreferenceWarningMessage(warnings[0]))
+			.toBe("This food is identified as shellfish.");
 	});
 
 	it("uses inferred identity rules for likely gluten conflicts in search", () => {
@@ -252,6 +270,7 @@ describe("food preference warnings", () => {
 				factSlug: "wheat",
 				factLabel: "Wheat",
 				level: "warning",
+				warningCode: "FOOD_RESTRICTION_CONFLICT",
 			}],
 			matchRules: [{
 				sourceKey: null,
@@ -278,10 +297,17 @@ describe("food preference warnings", () => {
 				category: "restriction",
 				label: "Gluten-free",
 				level: "potential",
-				reason:
-					"This may not be gluten-free because the food name suggests wheat may be present.",
+				code: "FOOD_RESTRICTION_CONFLICT",
 			}),
 		]);
+		const inferredWarnings = getFoodPreferenceWarnings(
+			makeFood({ description: "Bread stuffing", sourceKey: "usda" }),
+			profile,
+		);
+		expect(getFoodPreferenceWarningMessage(inferredWarnings[0]))
+			.toBe(
+				"This may not be gluten-free because the food name suggests wheat may be present.",
+			);
 		expect(
 			getFoodPreferenceWarnings(
 				makeFood({ description: "Soup, ramen noodles", sourceKey: "usda" }),
@@ -305,6 +331,7 @@ describe("food preference warnings", () => {
 					factSlug: "wheat",
 					factLabel: "Wheat",
 					level: "warning",
+					warningCode: "FOOD_RESTRICTION_CONFLICT",
 				}],
 				matchRules: [{
 					sourceKey: null,

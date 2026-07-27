@@ -42,12 +42,6 @@ input {
 	}
 }
 
-.text-input-sheet__error {
-	color: $app-shell-accent-danger;
-	font-size: $app-font-size-sm;
-	font-weight: $app-font-weight-bold;
-}
-
 .text-input-sheet__actions {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));

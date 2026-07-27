@@ -71,12 +71,3 @@
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
 }
-
-.password-error {
-	padding: $app-gap-sm 0.65rem;
-	color: $app-warning-strong !important;
-	background: $app-warning-bg;
-	border: $app-warning-border;
-	border-radius: $app-radius;
-	font-weight: 800;
-}

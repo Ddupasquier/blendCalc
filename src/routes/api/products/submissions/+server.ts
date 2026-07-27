@@ -12,25 +12,35 @@ import {
 import type { FdcFood } from "$lib/utils/food/types";
 import {
 	CURRENT_IMAGE_PLACEMENT_VERSION,
+	constrainCardImagePlacement,
 	isImageFitMode,
 	isImagePlacementMethod,
-	normalizeImagePlacement,
 } from "$lib/utils/food/images/imagePlacement";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
-import { error, json } from "@sveltejs/kit";
+import {
+	requireAppValue,
+	throwAppError,
+} from "$lib/server/errors/appError.server";
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = async ({ locals, request }) => {
-	const user = await locals.getVerifiedUser();
-	if (!user) throw error(401, "Sign in to share products.");
+	const user = requireAppValue(
+		await locals.getVerifiedUser(),
+		401,
+		"AUTH_REQUIRED",
+	);
 
 	try {
 		await assertCanSubmitSharedProduct(user.id);
 	} catch (submissionError) {
 		if (submissionError instanceof ProductSubmissionBlockedError) {
-			throw error(submissionError.status, submissionError.message);
+			throwAppError(submissionError.status, "CATALOG_SUBMISSION_BLOCKED", {
+				blockedUntil: submissionError.displayBlockedUntil,
+			});
 		}
-		throw submissionError;
+		console.error("[catalog submission] Eligibility check failed", submissionError);
+		return throwAppError(503, "CATALOG_VALIDATION_UNAVAILABLE");
 	}
 
 	const formData = await request.formData();
@@ -40,11 +50,14 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	try {
 		food = foodValue ? JSON.parse(String(foodValue)) as FdcFood : null;
 	} catch {
-		throw error(400, "Product data is invalid.");
+		throwAppError(400, "CATALOG_SUBMISSION_INVALID");
 	}
-	if (!food || !consentToShare) {
-		throw error(400, "Product data and sharing consent are required.");
-	}
+	const submissionFood = requireAppValue(
+		food,
+		400,
+		"CATALOG_SUBMISSION_INVALID",
+	);
+	if (!consentToShare) throwAppError(400, "CATALOG_CONSENT_REQUIRED");
 	const reviewFlagsValue = formData.get("reviewFlags");
 	let reviewFlags: string[] = [];
 	if (reviewFlagsValue) {
@@ -58,7 +71,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 						.slice(0, 10)
 				: [];
 		} catch {
-			throw error(400, "Review flag data is invalid.");
+			throwAppError(400, "CATALOG_REVIEW_FLAGS_INVALID");
 		}
 	}
 
@@ -105,7 +118,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			) {
 				throw new Error("Invalid image placement");
 			}
-			frontImageCrop = normalizeImagePlacement({
+			frontImageCrop = constrainCardImagePlacement({
 				cropX: Number(parsedCrop.cropX),
 				cropY: Number(parsedCrop.cropY),
 				cropZoom: Number(parsedCrop.cropZoom),
@@ -120,14 +133,14 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 					: {}),
 			});
 		} catch {
-			throw error(400, "Product image placement data is invalid.");
+			throwAppError(400, "IMAGE_PLACEMENT_INVALID");
 		}
 	}
 	let evidencePaths: ProductEvidencePaths = {};
 
 	try {
 		evidencePaths = await uploadProductEvidence(user.id, evidenceFiles);
-		const result = await submitProductForCatalog(user.id, food, evidencePaths, {
+		const result = await submitProductForCatalog(user.id, submissionFood, evidencePaths, {
 			reviewFlags,
 			frontImageCrop,
 		});
@@ -138,11 +151,11 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	} catch (submissionError) {
 		await deleteProductEvidence(evidencePaths);
 		if (submissionError instanceof ProductSubmissionBlockedError) {
-			throw error(submissionError.status, submissionError.message);
+			throwAppError(submissionError.status, "CATALOG_SUBMISSION_BLOCKED", {
+				blockedUntil: submissionError.displayBlockedUntil,
+			});
 		}
-		const message = submissionError instanceof Error
-			? submissionError.message
-			: "The product could not be submitted.";
-		throw error(400, message);
+		console.error("[catalog submission] Product submission failed", submissionError);
+		return throwAppError(500, "CATALOG_SUBMISSION_FAILED");
 	}
 };

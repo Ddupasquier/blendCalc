@@ -4,6 +4,7 @@
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import AssetAttribution from "$lib/components/common/display/AssetAttribution/AssetAttribution.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import ProductImageFrame from "$lib/components/common/images/ProductImageFrame/ProductImageFrame.svelte";
 	import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
 	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
@@ -14,6 +15,7 @@
 	import { getPrimaryFoodWarning } from "$lib/utils/ingredients/ingredientListUi";
 	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import { updateFoodImagePlacement } from "$lib/utils/food/images/foodImagePlacement";
+	import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 	import type { ProductImagePanelProps } from "./types";
 
 	let {
@@ -102,12 +104,17 @@
 				...draftPlacement,
 			});
 			await onImagePlacementSave?.(image, food?.fdcId);
-			placementMessage = "Image placement saved.";
+			placementMessage = "Your card image placement is saved.";
 		} catch (error) {
-			placementError =
-				error instanceof Error
-					? error.message
-					: "Image placement could not be saved.";
+			console.error("[image placement] Save failed", error);
+			placementError = getUserFacingErrorMessage(error, {
+				fallback:
+					"We couldn't save this image placement. Restore the default or try again.",
+				network:
+					"We couldn't connect while saving. Check your connection and try again.",
+				timeout:
+					"Saving took too long. Check your connection and try again.",
+			});
 		} finally {
 			savingPlacement = false;
 		}
@@ -164,10 +171,10 @@
 						Save image placement
 					</RoundedActionButton>
 					{#if placementMessage}
-						<p class="product-image-panel__message">{placementMessage}</p>
+						<StatusMessage tone="success" message={placementMessage} />
 					{/if}
 					{#if placementError}
-						<p class="product-image-panel__error">{placementError}</p>
+						<StatusMessage tone="danger" message={placementError} />
 					{/if}
 				</div>
 			</CollapsibleSection>

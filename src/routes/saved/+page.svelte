@@ -8,6 +8,7 @@
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import SavedDrinkExportAction from "$lib/components/saved/SavedDrinkExportAction/SavedDrinkExportAction.svelte";
     import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
     import {
@@ -175,12 +176,12 @@
     <header class="saved-header">
         <h2>Saved Drinks</h2>
         <p>Load a saved smoothie back into Mix when you want to make it again.</p>
-    </header>
+	</header>
 	{#if deleteError}
-		<p class="saved-action-error" role="alert">{deleteError}</p>
+		<StatusMessage tone="danger" message={deleteError} />
 	{/if}
 	{#if loadError}
-		<p class="saved-action-error" role="alert">{loadError}</p>
+		<StatusMessage tone="danger" message={loadError} />
 	{/if}
 
     {#if loadingDrinks && drinks.length === 0}

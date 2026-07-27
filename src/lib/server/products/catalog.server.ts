@@ -92,14 +92,13 @@ type ProductSubmissionBlock = {
 export class ProductSubmissionBlockedError extends Error {
 	status = 429;
 	blockedUntil: string;
+	displayBlockedUntil: string;
 
 	constructor(block: ProductSubmissionBlock) {
-		const blockedUntil = formatBlockDate(block.blocked_until);
-		super(
-			`Product sharing is paused until ${blockedUntil} because this account has ${block.rejection_count} rejected submissions in the last ${PRODUCT_SUBMISSION_REJECTION_WINDOW_DAYS} days. You can still save foods privately.`,
-		);
+		super("Catalog product submission is blocked.");
 		this.name = "ProductSubmissionBlockedError";
 		this.blockedUntil = block.blocked_until;
+		this.displayBlockedUntil = formatBlockDate(block.blocked_until);
 	}
 }
 

@@ -1,18 +1,19 @@
 import { writeTutorialChoice } from "$lib/utils/tutorial/tutorial";
+import { appIssueJson } from "$lib/server/errors/appError.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = async ({ locals, request }) => {
 	const user = await locals.getVerifiedUser();
 	if (!user) {
-		return json({ error: "Authentication is required." }, { status: 401 });
+		return appIssueJson(401, "AUTH_REQUIRED");
 	}
 
 	let body: unknown;
 	try {
 		body = await request.json();
 	} catch {
-		return json({ error: "Request body must be valid JSON." }, { status: 400 });
+		return appIssueJson(400, "INVALID_REQUEST");
 	}
 
 	const choice =
@@ -20,7 +21,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			? (body as { choice?: unknown }).choice
 			: null;
 	if (choice !== "complete") {
-		return json({ error: "Unsupported tutorial choice." }, { status: 400 });
+		return appIssueJson(400, "TUTORIAL_CHOICE_INVALID");
 	}
 
 	const saved = await writeTutorialChoice(
@@ -30,5 +31,5 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	);
 	return saved
 		? json({ saved: true })
-		: json({ error: "Tutorial preference could not be saved." }, { status: 500 });
+		: appIssueJson(500, "TUTORIAL_SAVE_FAILED");
 };

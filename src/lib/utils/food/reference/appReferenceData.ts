@@ -114,7 +114,7 @@ export const readAppReferenceCatalog = async (
 			supabase
 				.from("compatibility_rule_conflicts")
 				.select(
-					"severity, preference_tag:compatibility_tags!compatibility_rule_conflicts_preference_tag_id_fkey(slug, label), fact_tag:compatibility_tags!compatibility_rule_conflicts_fact_tag_id_fkey(slug, label)",
+					"severity, warning_code, preference_tag:compatibility_tags!compatibility_rule_conflicts_preference_tag_id_fkey(slug, label), fact_tag:compatibility_tags!compatibility_rule_conflicts_fact_tag_id_fkey(slug, label)",
 				),
 			supabase
 				.from("food_compatibility_match_rules")
@@ -218,6 +218,7 @@ export const readAppReferenceCatalog = async (
 		foodPreferenceConflictRules: (
 			(preferenceConflictRulesResult.data ?? []) as unknown as Array<{
 				severity: "warning" | "potential";
+				warning_code: "FOOD_RESTRICTION_CONFLICT";
 				preference_tag: { slug: string; label: string };
 				fact_tag: { slug: string; label: string };
 			}>
@@ -227,6 +228,7 @@ export const readAppReferenceCatalog = async (
 			factSlug: rule.fact_tag.slug,
 			factLabel: rule.fact_tag.label,
 			level: rule.severity,
+			warningCode: rule.warning_code,
 		})),
 		foodCompatibilityMatchRules: (
 			(compatibilityMatchRulesResult.data ?? []) as unknown as Array<{

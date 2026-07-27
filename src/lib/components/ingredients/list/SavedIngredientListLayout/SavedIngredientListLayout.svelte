@@ -1,5 +1,6 @@
 <script lang="ts">
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import IngredientListTabs from "../IngredientListTabs/IngredientListTabs.svelte";
 	import type { SavedIngredientListLayoutProps } from "./types";
 	import {
@@ -31,11 +32,11 @@
 	/>
 
 	{#if listActionError}
-		<p class="list-action-error" role="alert">{listActionError}</p>
+		<StatusMessage tone="danger" message={listActionError} />
 	{/if}
 
 	{#if listLoadingError}
-		<p class="list-action-error" role="alert">{listLoadingError}</p>
+		<StatusMessage tone="danger" message={listLoadingError} />
 	{/if}
 
 	{#if listLoading}

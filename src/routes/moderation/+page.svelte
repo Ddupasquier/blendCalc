@@ -3,6 +3,7 @@
 	import type { SubmitFunction } from "@sveltejs/kit";
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame/InputLoadingFrame.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
 	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
@@ -106,11 +107,11 @@
 	</section>
 
 	{#if form?.moderationError}
-		<p class="message message--error" role="alert">{form.moderationError}</p>
+		<StatusMessage tone="danger" message={form.moderationError} />
 	{:else if form?.moderationWarning}
-		<p class="message message--warning" role="status">{form.moderationWarning}</p>
+		<StatusMessage tone="warning" message={form.moderationWarning} />
 	{:else if form?.moderationSuccess}
-		<p class="message message--success" role="status">{form.moderationSuccess}</p>
+		<StatusMessage tone="success" message={form.moderationSuccess} />
 	{/if}
 
 	<section class="product-review" aria-labelledby="product-review-title">
@@ -121,9 +122,9 @@
 		</div>
 
 		{#if form?.productReviewError}
-			<p class="message message--error" role="alert">{form.productReviewError}</p>
+			<StatusMessage tone="danger" message={form.productReviewError} />
 		{:else if form?.productReviewSuccess}
-			<p class="message message--success" role="status">{form.productReviewSuccess}</p>
+			<StatusMessage tone="success" message={form.productReviewSuccess} />
 		{/if}
 
 		<div class="product-review__list">
@@ -181,7 +182,8 @@
 					{/if}
 					{#if submission.externalLookupFailed}
 						<p class="product-card__notice">
-							An outside source could not be checked. Review the label carefully.
+							We couldn't compare this submission with an outside food database.
+							Review the package label carefully.
 						</p>
 					{/if}
 					{#if submission.validationIssues.length > 0}

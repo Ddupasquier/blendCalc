@@ -5,6 +5,7 @@
 	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList/ManualEntryValidationList.svelte";
 	import ManualEntryNutrientFields from "$lib/components/ingredients/manual-entry/ManualEntryNutrientFields/ManualEntryNutrientFields.svelte";
 	import NutritionLabelOcrInput from "$lib/components/ingredients/manual-entry/NutritionLabelOcrInput/NutritionLabelOcrInput.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import type { NutrientStepProps } from "./types";
 
 	let {
@@ -40,9 +41,7 @@
 			onApply={onApplyNutritionLabelOcr}
 		/>
 		{#if labelOcrMappingError}
-			<p class="nutrient-step__error" role="status">
-				{labelOcrMappingError}
-			</p>
+			<StatusMessage tone="danger" message={labelOcrMappingError} />
 		{/if}
 	{/if}
 
@@ -63,7 +62,3 @@
 
 	<ManualEntryActions {onBack} {onNext} />
 </ManualEntryStepLayout>
-
-<style lang="scss">
-	@use "./NutrientStep.scss";
-</style>

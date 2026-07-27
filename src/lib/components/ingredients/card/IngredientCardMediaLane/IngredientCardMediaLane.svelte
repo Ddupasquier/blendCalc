@@ -27,7 +27,7 @@
 			{imageUrl}
 			alt={alt ?? ""}
 			{value}
-			containedInlineAlignment="start"
+			horizontalMovement="left-only"
 			{interactive}
 			{instructionsId}
 			{onChange}

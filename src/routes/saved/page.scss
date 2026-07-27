@@ -25,17 +25,6 @@ $saved-pill-gap: 0.28rem;
 	font-size: $app-font-size-md;
 }
 
-.saved-action-error {
-	margin-bottom: $app-gap-sm;
-	padding: $app-gap-sm;
-	color: $app-warning-strong;
-	background: $app-warning-bg;
-	border: $app-warning-border;
-	border-radius: $app-radius;
-	font-size: $app-font-size-sm;
-	font-weight: $app-font-weight-bold;
-}
-
 .saved-grid {
 	display: grid;
 	gap: $app-gap-sm;

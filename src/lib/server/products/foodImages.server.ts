@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
-import { normalizeImagePlacement } from "$lib/utils/food/images/imagePlacement";
+import { constrainCardImagePlacement } from "$lib/utils/food/images/imagePlacement";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { FoodImageAsset } from "$lib/utils/food/types";
 import {
@@ -20,7 +20,7 @@ const normalizePlacement = (
 	value: FoodImagePlacementValues = {},
 	suggestionAcceptedAt?: string | null,
 ) => {
-	const placement = normalizeImagePlacement(value);
+	const placement = constrainCardImagePlacement(value);
 	const usesSmartSuggestion =
 		placement.placementMethod === "smart-ocr" ||
 		placement.placementMethod === "smart-ocr-adjusted";

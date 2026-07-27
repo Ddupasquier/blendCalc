@@ -1,6 +1,9 @@
 import type { FdcFood } from "$lib/utils/food/types";
 import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
-import { getFoodPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
+import {
+	getFoodPreferenceWarningMessage,
+	getFoodPreferenceWarnings,
+} from "$lib/utils/profile/foodPreferenceWarnings";
 
 export type SmartWarningTone = "danger" | "warning" | "info";
 
@@ -94,7 +97,7 @@ export const getFoodPreferenceSmartWarnings = (
 				tone: hasWarning ? "warning" : "info",
 				symbol: hasWarning ? "!" : "?",
 				title: food.description,
-				message: warnings.map((warning) => warning.reason).join(" "),
+				message: warnings.map(getFoodPreferenceWarningMessage).join(" "),
 			},
 		];
 	});

@@ -69,6 +69,36 @@ export type Database = {
         }
         Relationships: []
       }
+      app_issue_codes: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          domain: string
+          enabled: boolean
+          kind: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          domain: string
+          enabled?: boolean
+          kind: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          domain?: string
+          enabled?: boolean
+          kind?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_role_assignments: {
         Row: {
           created_at: string
@@ -127,6 +157,7 @@ export type Database = {
           preference_tag_id: string
           severity: string
           updated_at: string
+          warning_code: string
         }
         Insert: {
           created_at?: string
@@ -134,6 +165,7 @@ export type Database = {
           preference_tag_id: string
           severity: string
           updated_at?: string
+          warning_code: string
         }
         Update: {
           created_at?: string
@@ -141,6 +173,7 @@ export type Database = {
           preference_tag_id?: string
           severity?: string
           updated_at?: string
+          warning_code?: string
         }
         Relationships: [
           {
@@ -156,6 +189,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "compatibility_tags"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compatibility_rule_conflicts_warning_code_fkey"
+            columns: ["warning_code"]
+            isOneToOne: false
+            referencedRelation: "app_issue_codes"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -2053,7 +2093,7 @@ export type Database = {
           created_at: string
           enabled: boolean
           id: string
-          message: string
+          issue_code: string
           observation_count: number
           parent_nutrient_id: number
           provenance: Json
@@ -2072,7 +2112,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           id: string
-          message: string
+          issue_code: string
           observation_count?: number
           parent_nutrient_id: number
           provenance?: Json
@@ -2091,7 +2131,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           id?: string
-          message?: string
+          issue_code?: string
           observation_count?: number
           parent_nutrient_id?: number
           provenance?: Json
@@ -2112,6 +2152,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "nutrient_relationship_rules_issue_code_fkey"
+            columns: ["issue_code"]
+            isOneToOne: false
+            referencedRelation: "app_issue_codes"
+            referencedColumns: ["code"]
           },
           {
             foreignKeyName: "nutrient_relationship_rules_parent_nutrient_id_fkey"
@@ -3584,6 +3631,10 @@ export type Database = {
         }
         Returns: string[]
       }
+      compatibility_first_regex_match: {
+        Args: { p_pattern: string; p_value: string }
+        Returns: string
+      }
       compatibility_normalize_text: {
         Args: { p_value: string }
         Returns: string
@@ -3713,6 +3764,10 @@ export type Database = {
       }
       refresh_nutrient_manual_entry_required_flags: {
         Args: never
+        Returns: undefined
+      }
+      refresh_shared_product_compatibility_match_facts: {
+        Args: { p_shared_product_id: string }
         Returns: undefined
       }
       reject_blocked_signup: { Args: { event: Json }; Returns: Json }

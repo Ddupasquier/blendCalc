@@ -8,6 +8,7 @@
 	let {
 		tone = "info",
 		title = "",
+		message = "",
 		children,
 	}: StatusMessageProps = $props();
 </script>
@@ -34,6 +35,8 @@
 			<div class="status-message__body">
 				{@render children()}
 			</div>
+		{:else if message}
+			<p class="status-message__body">{message}</p>
 		{/if}
 	</div>
 </div>

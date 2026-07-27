@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { tick } from "svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte";
 	import TutorialStepIcon from "$lib/components/app/TutorialStepIcon/TutorialStepIcon.svelte";
 	import { tutorialSteps } from "$lib/utils/tutorial/steps";
@@ -145,7 +146,7 @@
 
 			<footer class="tutorial__footer">
 				{#if error}
-					<p class="tutorial__error" role="alert">{error}</p>
+					<StatusMessage tone="danger" message={error} />
 				{/if}
 
 				<div class="tutorial__navigation">

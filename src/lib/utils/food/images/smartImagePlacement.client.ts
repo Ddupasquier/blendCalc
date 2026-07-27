@@ -4,6 +4,7 @@ import type {
 	SmartImagePlacementProgress,
 	SmartImagePlacementSuggestion,
 } from "$lib/utils/food/images/types";
+import { UserFacingError } from "$lib/utils/errors/userFacingErrors";
 import { suggestImagePlacementFromText } from "./smartImagePlacement";
 
 const MAX_URL_CACHE_ENTRIES = 12;
@@ -17,38 +18,63 @@ const urlRecognitionCache = new Map<
 >();
 
 const loadBitmap = async (blob: Blob) => {
-	if (typeof createImageBitmap === "function") {
-		const bitmap = await createImageBitmap(blob, {
-			imageOrientation: "from-image",
-		});
-		return {
-			source: bitmap,
-			width: bitmap.width,
-			height: bitmap.height,
-			dispose: () => bitmap.close(),
-		};
-	}
+	try {
+		if (typeof createImageBitmap === "function") {
+			const bitmap = await createImageBitmap(blob, {
+				imageOrientation: "from-image",
+			});
+			return {
+				source: bitmap,
+				width: bitmap.width,
+				height: bitmap.height,
+				dispose: () => bitmap.close(),
+			};
+		}
 
-	const objectUrl = URL.createObjectURL(blob);
-	const image = new Image();
-	image.src = objectUrl;
-	await image.decode();
-	return {
-		source: image,
-		width: image.naturalWidth,
-		height: image.naturalHeight,
-		dispose: () => URL.revokeObjectURL(objectUrl),
-	};
+		const objectUrl = URL.createObjectURL(blob);
+		const image = new Image();
+		image.src = objectUrl;
+		try {
+			await image.decode();
+			return {
+				source: image,
+				width: image.naturalWidth,
+				height: image.naturalHeight,
+				dispose: () => URL.revokeObjectURL(objectUrl),
+			};
+		} catch (error) {
+			URL.revokeObjectURL(objectUrl);
+			throw error;
+		}
+	} catch (error) {
+		throw new UserFacingError(
+			"We couldn't open this photo. Try another image or adjust it by hand.",
+			error,
+		);
+	}
+};
+
+const loadRemoteImage = async (url: string) => {
+	let response: Response;
+	try {
+		response = await fetch(url, { credentials: "omit", mode: "cors" });
+	} catch (error) {
+		throw new UserFacingError(
+			"We couldn't load this photo for automatic placement. Check your connection or adjust it by hand.",
+			error,
+		);
+	}
+	if (!response.ok) {
+		throw new UserFacingError(
+			"We couldn't load this photo for automatic placement. You can still adjust it by hand.",
+		);
+	}
+	return response.blob();
 };
 
 const prepareImage = async (image: Blob | string) => {
 	const blob = typeof image === "string"
-		? await fetch(image, { credentials: "omit", mode: "cors" }).then((response) => {
-			if (!response.ok) {
-				throw new Error("The product image could not be loaded for text recognition.");
-			}
-			return response.blob();
-		})
+		? await loadRemoteImage(image)
 		: image;
 	const bitmap = await loadBitmap(blob);
 	const canvas = document.createElement("canvas");
@@ -57,7 +83,9 @@ const prepareImage = async (image: Blob | string) => {
 	const context = canvas.getContext("2d");
 	if (!context) {
 		bitmap.dispose();
-		throw new Error("The product image could not be prepared for text recognition.");
+		throw new UserFacingError(
+			"We couldn't prepare this photo for automatic placement. You can still adjust it by hand.",
+		);
 	}
 	context.drawImage(bitmap.source, 0, 0);
 	bitmap.dispose();
@@ -70,16 +98,17 @@ const recognizeImage = async (
 ): Promise<SmartImagePlacementDocument> => {
 	const canvas = await prepareImage(image);
 	const { createWorker } = await import("tesseract.js");
-	const worker = await createWorker("eng", 1, {
-		logger: (message) => {
-			onProgress?.({
-				status: message.status,
-				progress: Math.max(0, Math.min(1, message.progress ?? 0)),
-			});
-		},
-	});
+	let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
 
 	try {
+		worker = await createWorker("eng", 1, {
+			logger: (message) => {
+				onProgress?.({
+					status: message.status,
+					progress: Math.max(0, Math.min(1, message.progress ?? 0)),
+				});
+			},
+		});
 		const result = await worker.recognize(
 			canvas,
 			{ rotateAuto: true },
@@ -105,8 +134,14 @@ const recognizeImage = async (
 			height: canvas.height,
 			regions,
 		};
+	} catch (error) {
+		if (error instanceof UserFacingError) throw error;
+		throw new UserFacingError(
+			"We couldn't find the product name in this photo. You can still adjust it by hand or try again.",
+			error,
+		);
 	} finally {
-		await worker.terminate();
+		await worker?.terminate();
 	}
 };
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 	import type { TextInputDialogProps } from "./types";
 
@@ -79,9 +80,9 @@
 				}}
 			/>
 			{#if error}
-				<span id="text-input-dialog-error" class="text-input-sheet__error" role="alert">
-					{error}
-				</span>
+				<div id="text-input-dialog-error">
+					<StatusMessage tone="danger" message={error} />
+				</div>
 			{/if}
 		</label>
 

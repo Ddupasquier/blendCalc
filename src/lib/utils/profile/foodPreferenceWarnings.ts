@@ -5,6 +5,11 @@ import type {
 import type { FdcFood } from "$lib/utils/food/types";
 import type { FoodPreferenceProfile } from "./foodPreferenceProfile";
 import { getRuleDerivedCompatibilityFacts } from "./foodCompatibilityRuleMatching";
+import {
+	getAppIssueMessage,
+	type AppIssueCode,
+	type AppIssueParams,
+} from "$lib/utils/errors/appIssues";
 
 export type FoodPreferenceWarningLevel = "warning" | "potential";
 
@@ -13,7 +18,8 @@ export type FoodPreferenceWarning = {
 	level: FoodPreferenceWarningLevel;
 	category: "allergen" | "restriction";
 	label: string;
-	reason: string;
+	code: AppIssueCode;
+	params: AppIssueParams;
 };
 
 export const FOOD_PREFERENCE_WARNING_TITLE = "Check this ingredient";
@@ -82,51 +88,61 @@ const factMatches = (fact: FoodCompatibilityFact, value: string) => {
 		);
 };
 
-const summarizeFactReason = (fact: FoodCompatibilityFact) => {
+const getFactIssue = (
+	fact: FoodCompatibilityFact,
+): { code: AppIssueCode; params: AppIssueParams } => {
+	const params = { factLabel: fact.label };
 	if (fact.factType === "contains") {
-		return `The label lists ${fact.label.toLocaleLowerCase()} as an allergen.`;
+		return { code: "FOOD_ALLERGEN_CONTAINS", params };
 	}
 	if (fact.factType === "may_contain") {
-		return `The label says this product may contain ${fact.label.toLocaleLowerCase()}.`;
+		return { code: "FOOD_ALLERGEN_MAY_CONTAIN", params };
 	}
 	if (fact.factType === "ingredient_present") {
-		return fact.sourceType === "source_food_identity"
-			? fact.confidence === "confirmed"
-				? `This food is identified as ${fact.label.toLocaleLowerCase()}.`
-				: `The food name suggests ${fact.label.toLocaleLowerCase()} may be present.`
-			: `${fact.label} appears in the ingredient list.`;
+		if (fact.sourceType !== "source_food_identity") {
+			return { code: "FOOD_INGREDIENT_PRESENT", params };
+		}
+		return {
+			code: fact.confidence === "confirmed"
+				? "FOOD_IDENTITY_CONFIRMED"
+				: "FOOD_IDENTITY_POSSIBLE",
+			params,
+		};
 	}
-	return `The label includes a ${fact.label.toLocaleLowerCase()} claim.`;
+	return { code: "FOOD_INGREDIENT_PRESENT", params };
 };
 
-const summarizeRestrictionReason = (
-	restriction: string,
+const getRestrictionEvidenceType = (
 	fact: FoodCompatibilityFact,
 ) => {
-	const normalizedRestriction = restriction.toLocaleLowerCase();
-	const normalizedFact = fact.label.toLocaleLowerCase();
-
-	if (fact.factType === "contains") {
-		return `This may not be ${normalizedRestriction} because the label lists ${normalizedFact} as an allergen.`;
-	}
-	if (fact.factType === "may_contain") {
-		return `This may not be ${normalizedRestriction} because the label says it may contain ${normalizedFact}.`;
+	if (fact.factType === "contains" || fact.factType === "may_contain") {
+		return fact.factType;
 	}
 	if (fact.sourceType === "source_food_identity") {
 		return fact.confidence === "confirmed"
-			? `This may not be ${normalizedRestriction} because this food is identified as ${normalizedFact}.`
-			: `This may not be ${normalizedRestriction} because the food name suggests ${normalizedFact} may be present.`;
+			? "identity_confirmed"
+			: "identity_possible";
 	}
-	return `This may not be ${normalizedRestriction} because ${normalizedFact} appears in the ingredient list.`;
+	return "ingredient";
 };
+
+const getRestrictionIssueParams = (
+	restriction: string,
+	fact: FoodCompatibilityFact,
+): AppIssueParams => ({
+	restrictionLabel: restriction,
+	factLabel: fact.label,
+	evidenceType: getRestrictionEvidenceType(fact),
+});
 
 const buildWarning = (
 	id: string,
 	level: FoodPreferenceWarningLevel,
 	category: FoodPreferenceWarning["category"],
 	label: string,
-	reason: string,
-): FoodPreferenceWarning => ({ id, level, category, label, reason });
+	code: AppIssueCode,
+	params: AppIssueParams,
+): FoodPreferenceWarning => ({ id, level, category, label, code, params });
 
 const getConflictFact = (
 	preference: string,
@@ -147,7 +163,13 @@ const getConflictFact = (
 				normalizeValue(candidate.label) === normalizeValue(rule.factLabel)
 			)
 		);
-		if (fact) return { fact, level: rule.level };
+		if (fact) {
+			return {
+				fact,
+				level: rule.level,
+				warningCode: rule.warningCode,
+			};
+		}
 	}
 	return null;
 };
@@ -175,13 +197,15 @@ export const getFoodPreferenceWarnings = (
 				fact.confidence !== "confirmed"
 			? "potential"
 			: relatedFact?.level ?? "warning";
+		const issue = getFactIssue(fact);
 		warnings.push(
 			buildWarning(
 				`allergen-${normalizeKey(allergen)}-${normalizeKey(fact.slug)}-${fact.factType}`,
 				level,
 				"allergen",
 				allergen,
-				summarizeFactReason(fact),
+				issue.code,
+				issue.params,
 			),
 		);
 	}
@@ -204,13 +228,18 @@ export const getFoodPreferenceWarnings = (
 					: conflict.level,
 					"restriction",
 					restriction,
-					summarizeRestrictionReason(restriction, conflict.fact),
+					conflict.warningCode,
+					getRestrictionIssueParams(restriction, conflict.fact),
 				),
 			);
 	}
 
 	return warnings;
 };
+
+export const getFoodPreferenceWarningMessage = (
+	warning: Pick<FoodPreferenceWarning, "code" | "params">,
+) => getAppIssueMessage(warning.code, warning.params);
 
 export const annotateFoodWithPreferenceWarnings = (
 	food: FdcFood,

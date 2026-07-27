@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	constrainCardImagePlacement,
 	createFillImagePlacement,
 	createFullImagePlacement,
 	getImagePlacementGeometry,
@@ -67,6 +68,64 @@ describe("image placement geometry", () => {
 		expect(getOffset(0)).toBe(50);
 		expect(getOffset(50)).toBe(0);
 		expect(getOffset(100)).toBe(-50);
+	});
+
+	it("keeps card images flush left and only permits shifting them farther left", () => {
+		const getGeometry = (cropX: number) => getImagePlacementGeometry({
+			...squareFrame,
+			naturalWidth: 50,
+			naturalHeight: 100,
+			horizontalMovement: "left-only",
+			value: {
+				...createFullImagePlacement(),
+				cropX,
+			},
+		});
+
+		const flushGeometry = getGeometry(50);
+		const shiftedGeometry = getGeometry(100);
+		const disallowedRightGeometry = getGeometry(0);
+
+		expect(flushGeometry.canMoveX).toBe(true);
+		expect(flushGeometry.offsetX).toBe(-25);
+		expect(shiftedGeometry.offsetX).toBe(-50);
+		expect(disallowedRightGeometry.offsetX).toBe(flushGeometry.offsetX);
+	});
+
+	it("maps card dragging to left-only movement and allows returning to the edge", () => {
+		const geometry = getImagePlacementGeometry({
+			...squareFrame,
+			naturalWidth: 50,
+			naturalHeight: 100,
+			horizontalMovement: "left-only",
+			value: createFullImagePlacement(),
+		});
+		const shifted = moveImagePlacement({
+			value: createFullImagePlacement(),
+			geometry,
+			deltaX: -12.5,
+			deltaY: 0,
+		});
+		const returned = moveImagePlacement({
+			value: shifted,
+			geometry,
+			deltaX: 25,
+			deltaY: 0,
+		});
+
+		expect(shifted.cropX).toBe(75);
+		expect(returned.cropX).toBe(50);
+	});
+
+	it("constrains persisted card placement to the left-only range", () => {
+		expect(constrainCardImagePlacement({
+			...createFullImagePlacement(),
+			cropX: 10,
+		}).cropX).toBe(50);
+		expect(constrainCardImagePlacement({
+			...createFullImagePlacement(),
+			cropX: 80,
+		}).cropX).toBe(80);
 	});
 
 	it("keeps an axis centered when there is no overflow", () => {

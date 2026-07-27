@@ -11,6 +11,7 @@ const geometry = getImagePlacementGeometry({
 	naturalHeight: 1600,
 	frameWidth: 80,
 	frameHeight: 68,
+	horizontalMovement: "left-only",
 	value: {
 		cropX: 50,
 		cropY: 50,

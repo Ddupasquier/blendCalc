@@ -73,6 +73,24 @@ describe("SavedIngredientCard move action", () => {
 	});
 });
 
+describe("SavedIngredientCard action controls", () => {
+	it("opens the ingredient actions from the card-owned action button", async () => {
+		const onActions = vi.fn();
+		render(SavedIngredientCard, {
+			props: {
+				...baseProps,
+				onActions,
+			},
+		});
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Open actions for Ground Beef" }),
+		);
+
+		expect(onActions).toHaveBeenCalledOnce();
+	});
+});
+
 describe("SavedIngredientCard selection mode", () => {
 	it("enters selection mode after a deliberate hold", async () => {
 		vi.useFakeTimers();
