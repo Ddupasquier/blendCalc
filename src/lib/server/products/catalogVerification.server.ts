@@ -162,7 +162,7 @@ const getNumericConflictSeverity = (left: number, right: number) => {
 const findFoodConflicts = (
 	userFood: FdcFood,
 	sourceFood: FdcFood,
-	sourceKey: "usda" | "open-food-facts" = "usda",
+	sourceKey: "usda" | "open-food-facts",
 ): CatalogConflict[] => {
 	const userReported = getReportedNutrientIds(userFood);
 	const sourceReported = getReportedNutrientIds(sourceFood);

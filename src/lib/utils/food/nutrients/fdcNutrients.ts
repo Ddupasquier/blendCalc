@@ -73,7 +73,7 @@ const matchesEquivalentNutrient = (
 	nutrientId: number,
 	foodSourceKey?: string,
 ) => {
-	const sourceKey = nutrient.source ?? foodSourceKey ?? "usda";
+	const sourceKey = nutrient.source ?? foodSourceKey ?? "unknown";
 	return getConfiguredAppReferenceCatalog().nutrientEquivalences.some(
 		(equivalence) =>
 			equivalence.canonicalNutrientId === nutrientId &&

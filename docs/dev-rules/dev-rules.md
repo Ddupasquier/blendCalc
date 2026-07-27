@@ -51,6 +51,7 @@ clickable navigation block instead.
 - [Component And Route Boundaries](#rule-component-boundaries)
 - [Manual Entry Modularization](#rule-manual-entry-modularization)
 - [Database And API-Driven Data](#rule-no-hardcoded-reference-data)
+- [Schema Documentation Synchronization](#rule-schema-documentation)
 - [Manual Entry Nutrient Classification](#rule-manual-entry-nutrient-classification)
 - [Canonical Category Picker](#rule-canonical-category-picker)
 - [USDA Food Source Priority](#rule-usda-source-priority)
@@ -563,6 +564,15 @@ Canonical source tables should stay focused on canonical data; UI flow metadata,
 grouping, ordering, and display configuration should live in separate purpose-built
 tables when that keeps ownership clearer. Before adding schema, inventory existing
 tables, RLS, indexes, and app access paths to avoid duplicated concepts.
+
+**26a.** <a id="rule-schema-documentation"></a>Update
+`docs/supabase-schema.md` in the same change as every database table, column,
+constraint, index, trigger, function/RPC, RLS policy, Storage policy, seed contract, or
+other durable schema behavior change. Keep the documented table map, relationships,
+access boundaries, backfill behavior, and operational commands synchronized with the
+forward-only migration and regenerate `src/lib/types/database.types.ts` whenever the
+generated database contract changes. A migration is not complete while its maintained
+schema map or generated types are stale.
 
 **27.** <a id="rule-no-hardcoded-reference-data"></a>Do not hardcode DB-backed catalog
 data, API-derived reference data, nutrient definitions, allergens, dietary restrictions,

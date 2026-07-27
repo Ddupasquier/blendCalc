@@ -382,6 +382,9 @@ Current local geometry:
 - Left corners follow the card; right corners remain square beneath the fade.
 - Images and fallback symbols preserve aspect ratio and never stretch.
 - Fallback symbols use the same media lane rather than a circular container.
+- Fallback symbols are centered between the card's left edge and the ingredient title's
+  actual shifted start, using the shared card-geometry calculation rather than a
+  one-off offset.
 - The warning edge stays above the media through its explicit z-index.
 - The complete placement-preview card is the drag/pinch/wheel surface. Do not limit
   interaction to the masked media lane or let copy and fade layers create dead zones.

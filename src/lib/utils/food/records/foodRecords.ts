@@ -28,6 +28,9 @@ export const compactFood = (food: FdcFood): FdcFood => {
 	return {
 		fdcId: normalizedFood.fdcId,
 		description: normalizedFood.description,
+		sourceIdentifiers: food.sourceIdentifiers
+			? { ...food.sourceIdentifiers }
+			: undefined,
 		nameProvenance: normalizedFood.nameProvenance,
 		brandOwner: food.brandOwner,
 		foodCategory: food.foodCategory,

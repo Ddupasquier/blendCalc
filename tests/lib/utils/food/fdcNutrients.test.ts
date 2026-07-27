@@ -8,6 +8,7 @@ import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 const sunflowerOilSearchResult = {
 	fdcId: 1750349,
 	description: "Oil, sunflower",
+	sourceKey: "usda",
 	foodNutrients: [
 		{
 			nutrientId: 1085,
@@ -38,6 +39,7 @@ describe("FDC nutrient resolver", () => {
 		const foundationFood = {
 			fdcId: 2,
 			description: "Foundation food",
+			sourceKey: "usda",
 			foodNutrients: [
 				{
 					nutrientId: 1063,
@@ -56,6 +58,7 @@ describe("FDC nutrient resolver", () => {
 		const foundationFood = {
 			fdcId: 3,
 			description: "Foundation food",
+			sourceKey: "usda",
 			foodNutrients: [
 				{
 					nutrientId: 2047,
@@ -70,5 +73,12 @@ describe("FDC nutrient resolver", () => {
 		expect(getFdcNutrientValue(foundationFood, NUTRIENT_IDS.CALORIES)).toBe(
 			123,
 		);
+	});
+
+	it("does not assume source-less nutrients use USDA equivalence mappings", () => {
+		expect(getFdcNutrientValue({
+			...sunflowerOilSearchResult,
+			sourceKey: undefined,
+		}, NUTRIENT_IDS.FAT)).toBeNull();
 	});
 });

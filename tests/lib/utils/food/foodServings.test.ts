@@ -50,6 +50,19 @@ describe("food servings", () => {
 		})[0]?.confidence).toBe("unknown");
 	});
 
+	it("does not invent USDA provenance for a source-less legacy serving", () => {
+		expect(getFoodServings({
+			...baseFood,
+			servingSize: 30,
+			servingSizeUnit: "g",
+			hasSourceServing: true,
+		})[0]).toMatchObject({
+			source: "unknown",
+			sourceReference: undefined,
+			confidence: "unknown",
+		});
+	});
+
 	it("formats nutrition-label serving sizes with weight first", () => {
 		expect(formatNutritionServingSize({
 			label: "1/2 cup (125g)",

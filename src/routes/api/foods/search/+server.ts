@@ -4,6 +4,7 @@ import { searchUsdaFoods } from "$lib/server/products/usdaCache.server";
 import { searchGenericFoods } from "$lib/server/products/genericFoods.server";
 import type { FdcFood } from "$lib/utils/food/types";
 import {
+	isUsableIngredientSearchResult,
 	mergeIngredientSearchResults,
 	sortIngredientSearchResults,
 } from "$lib/utils/ingredients/ingredientSearchResults";
@@ -110,8 +111,10 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			result.status === "fulfilled" ? result.value : [],
 		);
 		const annotatedFoods = annotateFoodsWithFoodSafety(
-			mergeIngredientSearchResults(...resultGroups).filter((food) =>
-				matchesIngredientProvenance(food, sourceFilter, trustFilter)
+			mergeIngredientSearchResults(...resultGroups).filter(
+				(food) =>
+					isUsableIngredientSearchResult(food) &&
+					matchesIngredientProvenance(food, sourceFilter, trustFilter),
 			),
 			foodSafetyContext,
 		);

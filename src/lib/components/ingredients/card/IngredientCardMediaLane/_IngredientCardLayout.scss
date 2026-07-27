@@ -13,7 +13,8 @@ $card-border-width: 2px;
 	);
 	--ingredient-card-copy-start-offset: calc(
 		#{$app-shell-card-padding-compact} +
-			var(--ingredient-card-content-inset)
+			var(--ingredient-card-content-inset) -
+			#{$card-title-shift}
 	);
 	position: relative;
 	display: grid;

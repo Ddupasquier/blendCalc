@@ -131,6 +131,16 @@ export const searchGenericFoods = async (
 		return {
 			fdcId: Number(row.application_food_id),
 			description: formatSourceProductName(row.description),
+			sourceIdentifiers: {
+				datasetFoodKey: sourceReference,
+				...(row.dataset_key === "cnf-2026" && row.external_reference
+					? {
+						usdaNdbNumber: row.external_reference
+							.replace(/\D/g, "")
+							.padStart(5, "0"),
+					}
+					: {}),
+			},
 			nameProvenance: "source",
 			foodIdentityType: "generic",
 			alternateDescription: row.alternate_description ?? undefined,

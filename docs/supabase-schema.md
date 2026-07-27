@@ -5,6 +5,24 @@ truth remains the migrations in `supabase/migrations/` and the generated types i
 `src/lib/types/database.types.ts`; update this file whenever tables, relationships,
 policies, or core data ownership changes.
 
+## Schema Navigation
+
+| Domain | Tables and registries |
+| --- | --- |
+| [Core User Data](#core-user-data) | `profiles`, `user_tutorial_preferences`, `user_food_preferences`, `user_compatibility_rules`, `mix_preferences` |
+| [Ingredient Lists and Saved Mixes](#ingredient-lists-and-saved-mixes) | `user_food_list_items`, `custom_foods`, `saved_drinks`, `ingredient_provenance_options`, `app_issue_codes` |
+| [Nutrients and Validation](#nutrient-definitions-values-and-validation) | `nutrient_definitions`, `food_nutrients`, `nutrient_manual_entry_*`, `nutrient_relationship_rules` |
+| [Product Sources and Servings](#product-reference-data-and-serving-measures) | `product_data_sources`, source metrics/mappings/conversions, serving measures, `food_servings` |
+| [Shared Product Catalog](#shared-product-catalog-and-barcode-flow) | submissions, products, revisions, observations, provenance, conflicts, images, caches, and submission blocks |
+| [Compatibility and Allergens](#compatibility-allergens-and-dietary-restrictions) | tags, conflict rules, product facts, preference options, and API observations |
+| [Food Categories](#custom-food-category-reference) | category options, source observations, and canonical mappings |
+| [Moderation](#moderation-and-access-control) | roles, account moderation, action logs, email delivery, blocked signups, and image-policy acceptance |
+| [Nutrition Completeness and National Datasets](#nutrition-completeness-and-national-datasets) | completeness profiles plus CNF, CoFID, and future national food datasets |
+| [Product Source Policies](#product-source-policies) | source evaluations and source-specific lifecycle policy |
+| [Database Functions](#rpc--database-functions) | Shared trigger helpers, validation, search, publication, and API read functions |
+| [Storage](#storage-buckets) | Private avatar and product-submission evidence buckets |
+| [Schema Update Checklist](#update-checklist) | Required migration, documentation, type, backfill, and test work |
+
 ## Schema Rules
 
 - Auth accounts live in Supabase Auth (`auth.users`). App data lives in `public`.
@@ -33,8 +51,9 @@ policies, or core data ownership changes.
 
 Stores app-facing profile information. Email should not be copied here.
 
-Columns: `user_id`, `display_name`, `bio`, `avatar_path`, `avatar_alt_text`,
-`avatar_moderation_status`, `avatar_policy_acknowledged_at`, `created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `profiles` | `user_id`, `display_name`, `bio`, `avatar_path`, `avatar_alt_text`, `avatar_moderation_status`, `avatar_policy_acknowledged_at`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -48,9 +67,9 @@ Notes:
 Stores optional, potentially sensitive preference inputs. These are user-owned and
 should not be required to use the app.
 
-Columns: `user_id`, `unit_system`, `allergens`, `dietary_restrictions`,
-`prioritized_nutrient_ids`, `default_smoothie_serving_grams`,
-`sensitive_acknowledged_at`, `created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `user_food_preferences` | `user_id`, `unit_system`, `allergens`, `dietary_restrictions`, `prioritized_nutrient_ids`, `default_smoothie_serving_grams`, `sensitive_acknowledged_at`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -72,9 +91,9 @@ Notes:
 
 Stores the user's active ingredient lists.
 
-Columns: `id`, `user_id`, `list_type`, `fdc_id`, `food`, `food_identity_key`,
-`shared_product_id`, `shared_product_submission_id`, `source_key`, `trust_status`,
-`created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `user_food_list_items` | `id`, `user_id`, `list_type`, `fdc_id`, `food`, `food_identity_key`, `shared_product_id`, `shared_product_submission_id`, `source_key`, `trust_status`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -125,8 +144,9 @@ validation path. Database triggers mirror that canonical label into the compatib
 Stores private user custom foods. Shared/public review happens through
 `shared_product_submissions`, not by making every custom food public.
 
-Columns: `id`, `user_id`, `fdc_id`, `barcode`, `name_key`, `category_option_id`,
-`search_text`, `source_key`, `trust_status`, `food`, `created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `custom_foods` | `id`, `user_id`, `fdc_id`, `barcode`, `name_key`, `category_option_id`, `search_text`, `source_key`, `trust_status`, `food`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -141,7 +161,9 @@ Notes:
 
 Stores a saved mix snapshot.
 
-Columns: `id`, `user_id`, `name`, `drink`, `created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `saved_drinks` | `id`, `user_id`, `name`, `drink`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -153,9 +175,9 @@ Notes:
 Stores app-ready origin and verification metadata. Provider rows remain available for
 internal attribution; only actionable verification rows are enabled for compact badges.
 
-Columns: `dimension`, `value`, `filter_label`, `badge_label`, `badge_tone`,
-`display_order`, `filter_enabled`, `badge_enabled`, `description`, `created_at`,
-`updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `ingredient_provenance_options` | `dimension`, `value`, `filter_label`, `badge_label`, `badge_tone`, `display_order`, `filter_enabled`, `badge_enabled`, `description`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -170,7 +192,9 @@ Notes:
 Stores stable machine-readable codes used by database-backed validation and business
 rules.
 
-Columns: `code`, `kind`, `domain`, `description`, `enabled`, `created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `app_issue_codes` | `code`, `kind`, `domain`, `description`, `enabled`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -198,8 +222,9 @@ Notes:
 
 Canonical nutrient lookup table.
 
-Columns: `nutrient_id`, `nutrient_name`, `nutrient_number`, `default_unit_name`,
-`created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `nutrient_definitions` | `nutrient_id`, `nutrient_name`, `nutrient_number`, `default_unit_name`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -210,11 +235,9 @@ Notes:
 
 Stores normalized nutrient facts for any supported food parent.
 
-Columns: `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`,
-`shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`,
-`shared_product_observation_id`, `nutrient_id`, `amount_per_100g`, `unit_name`,
-`value_origin`, `source`, `source_reference`, `source_observation_id`, `confidence`,
-`created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `food_nutrients` | `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`, `shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`, `shared_product_observation_id`, `nutrient_id`, `amount_per_100g`, `unit_name`, `value_origin`, `source`, `source_reference`, `source_observation_id`, `confidence`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -227,23 +250,12 @@ Notes:
 
 These tables make manual-entry UI DB-driven.
 
-Columns:
-
-- `nutrient_manual_entry_groups`: `id`, `entry_step`, `title`, `sort_order`, `enabled`,
-  `group_role`, `source_count`, `observation_count`, `verification_status`, `sources`,
-  `last_observed_at`, timestamps.
-- `nutrient_manual_entry_fields`: `dedupe_key`, `nutrient_id`, `group_id`,
-  `nutrient_type`, `display_label`, `required_for_manual_entry`, `sort_order`,
-  `enabled`, `source_count`, `observation_count`, `verification_status`, `sources`,
-  `last_observed_at`, `classification_status`, `classification_source_key`,
-  `classification_reference`, `classification_version`, `classification_notes`,
-  `replacement_nutrient_id`, `reviewed_at`, timestamps.
-- `nutrient_manual_entry_required_nutrients`: `nutrient_id`, `requirement_key`,
-  `group_id`, `field_sort_order`, `reason`, `source`, `source_count`,
-  `observation_count`, `sources`, `provenance`, `enabled`, timestamps.
-- `nutrient_manual_entry_observations`: source/query/reference fields, raw
-  `nutrient_id`, approved `canonical_nutrient_id`, observed group/field metadata,
-  source payload, and timestamps.
+| Table | Documented columns |
+| --- | --- |
+| `nutrient_manual_entry_groups` | `id`, `entry_step`, `title`, `sort_order`, `enabled`, `group_role`, `source_count`, `observation_count`, `verification_status`, `sources`, `last_observed_at`, timestamps |
+| `nutrient_manual_entry_fields` | `dedupe_key`, `nutrient_id`, `group_id`, `nutrient_type`, `display_label`, `required_for_manual_entry`, `sort_order`, `enabled`, `source_count`, `observation_count`, `verification_status`, `sources`, `last_observed_at`, `classification_status`, `classification_source_key`, `classification_reference`, `classification_version`, `classification_notes`, `replacement_nutrient_id`, `reviewed_at`, timestamps |
+| `nutrient_manual_entry_required_nutrients` | `nutrient_id`, `requirement_key`, `group_id`, `field_sort_order`, `reason`, `source`, `source_count`, `observation_count`, `sources`, `provenance`, `enabled`, timestamps |
+| `nutrient_manual_entry_observations` | Source/query/reference fields, raw `nutrient_id`, approved `canonical_nutrient_id`, observed group/field metadata, source payload, and timestamps |
 
 Notes:
 
@@ -268,10 +280,9 @@ Notes:
 
 Stores validation rules for nutrient math.
 
-Columns: `id`, `parent_nutrient_id`, `child_nutrient_id`, `relationship`, `severity`,
-`issue_code`, `requires_parent`, `tolerance`, `enabled`, `sort_order`, `source`,
-`source_count`, `observation_count`, `sources`, `provenance`, `created_at`,
-`updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `nutrient_relationship_rules` | `id`, `parent_nutrient_id`, `child_nutrient_id`, `relationship`, `severity`, `issue_code`, `requires_parent`, `tolerance`, `enabled`, `sort_order`, `source`, `source_count`, `observation_count`, `sources`, `provenance`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -303,14 +314,13 @@ FoodData Central and Open Food Facts products.
 
 ### `product_data_sources`
 
-Columns: `key`, `display_name`, `source_type`, `homepage_url`, `api_base_url`,
-`terms_url`, `attribution_text`, `enabled`, observation counts/timestamps, `provenance`,
-`canonical_storage_allowed`, `canonical_license_name`,
-`canonical_policy_reviewed_at`, `canonical_policy_notes`,
-`api_redistribution_allowed`, and timestamps. Canonical storage and API redistribution
-stay disabled until the provider's downstream storage and redistribution terms have
-been reviewed; server enrichment and API publication read this policy instead of
-hardcoding a provider hierarchy.
+| Table | Documented columns |
+| --- | --- |
+| `product_data_sources` | `key`, `display_name`, `source_type`, `homepage_url`, `api_base_url`, `terms_url`, `attribution_text`, `enabled`, observation counts/timestamps, `provenance`, `canonical_storage_allowed`, `canonical_license_name`, `canonical_policy_reviewed_at`, `canonical_policy_notes`, `api_redistribution_allowed`, and timestamps |
+
+Canonical storage and API redistribution stay disabled until the provider's downstream
+storage and redistribution terms have been reviewed; server enrichment and API
+publication read this policy instead of hardcoding a provider hierarchy.
 
 See [`data-source-licensing.md`](data-source-licensing.md) for the tracked official
 terms, attribution requirements, current implementation, and unresolved release
@@ -331,10 +341,9 @@ Notes:
 
 ### `product_source_daily_metrics`
 
-Columns: `metric_date`, `source_key`, `source_data_type`, `lookup_kind`,
-`lookup_origin`, lookup/API/cache/error/match counters, evaluated product and reported
-nutrient totals, brand/category/serving/ingredient/image coverage counters, response
-milliseconds, and timestamps.
+| Table | Documented columns |
+| --- | --- |
+| `product_source_daily_metrics` | `metric_date`, `source_key`, `source_data_type`, `lookup_kind`, `lookup_origin`, lookup/API/cache/error/match counters, evaluated product and reported nutrient totals, brand/category/serving/ingredient/image coverage counters, response milliseconds, and timestamps |
 
 Notes:
 
@@ -360,9 +369,9 @@ Notes:
 
 ### `nutrient_source_mappings`
 
-Columns: `source_key`, `source_nutrient_key`, `source_unit_name`,
-`source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `confidence`,
-`enabled`, observation counts/timestamps, `provenance`, and timestamps.
+| Table | Documented columns |
+| --- | --- |
+| `nutrient_source_mappings` | `source_key`, `source_nutrient_key`, `source_unit_name`, `source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `confidence`, `enabled`, observation counts/timestamps, `provenance`, and timestamps |
 
 Notes:
 
@@ -374,8 +383,9 @@ Notes:
 
 ### `nutrient_unit_conversions`
 
-Columns: `source_key`, `nutrient_id`, `from_unit_name`, `to_unit_name`, `multiplier`,
-`conversion_method`, `confidence`, `observation_count`, `provenance`, and timestamps.
+| Table | Documented columns |
+| --- | --- |
+| `nutrient_unit_conversions` | `source_key`, `nutrient_id`, `from_unit_name`, `to_unit_name`, `multiplier`, `conversion_method`, `confidence`, `observation_count`, `provenance`, and timestamps |
 
 Notes:
 
@@ -386,12 +396,10 @@ Notes:
 
 ### `serving_measure_units` and `serving_measure_aliases`
 
-Unit columns: `key`, `display_label`, `short_label`, `dimension`, `base_unit_key`,
-`conversion_to_base`, `standards_code`, `display_order`, `is_default`, `enabled`,
-`source_key`, `source_reference`, `observed_at`, and timestamps.
-
-Alias columns: `unit_key`, `alias`, `normalized_alias`, `source_key`, observation
-counts/timestamps, and timestamps.
+| Table | Documented columns |
+| --- | --- |
+| `serving_measure_units` | `key`, `display_label`, `short_label`, `dimension`, `base_unit_key`, `conversion_to_base`, `standards_code`, `display_order`, `is_default`, `enabled`, `source_key`, `source_reference`, `observed_at`, and timestamps |
+| `serving_measure_aliases` | `unit_key`, `alias`, `normalized_alias`, `source_key`, observation counts/timestamps, and timestamps |
 
 Notes:
 
@@ -410,11 +418,9 @@ Notes:
 Stores source-reported and user-entered serving sizes separately from each food's JSON
 snapshot.
 
-Columns: `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`,
-`shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`,
-`shared_product_observation_id`, `serving_order`, `label`, `gram_weight`, optional
-`amount` and `unit_key`, `is_primary`, `source`, `source_reference`, `confidence`, and
-timestamps.
+| Table | Documented columns |
+| --- | --- |
+| `food_servings` | `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`, `shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`, `shared_product_observation_id`, `serving_order`, `label`, `gram_weight`, optional `amount` and `unit_key`, `is_primary`, `source`, `source_reference`, `confidence`, and timestamps |
 
 Notes:
 
@@ -451,12 +457,9 @@ Notes:
 
 Stores user-submitted products before/after moderation.
 
-Columns: `id`, `submitted_by`, `barcode`, `product_name`, `brand_owner`,
-`category_option_id`, `food`, `consent_to_share`, `status`, `verification_status`,
-`matched_source`, `matched_reference`, `validation_report`, `evidence_paths`,
-`evidence_complete`, `submission_kind`, `target_shared_product_id`,
-`base_revision_id`, `change_summary`, `label_observed_at`, `reviewed_by`,
-`reviewed_at`, `review_note`, `created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `shared_product_submissions` | `id`, `submitted_by`, `barcode`, `product_name`, `brand_owner`, `category_option_id`, `food`, `consent_to_share`, `status`, `verification_status`, `matched_source`, `matched_reference`, `validation_report`, `evidence_paths`, `evidence_complete`, `submission_kind`, `target_shared_product_id`, `base_revision_id`, `change_summary`, `label_observed_at`, `reviewed_by`, `reviewed_at`, `review_note`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -483,10 +486,9 @@ are the source of truth for published app reads and the planned public product A
 external API rows are evidence or missing-field candidates, not competing public
 product authorities.
 
-Columns: `id`, `barcode`, `product_name`, `brand_owner`, `search_text`,
-`category_option_id`, `food`, `source`, `source_reference`, `confidence`, `status`,
-`approved_submission_id`, `approved_by`, `last_verified_at`, `canonical_provenance`,
-`compatibility_summary`, `created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `shared_products` | `id`, `barcode`, `product_name`, `brand_owner`, `search_text`, `category_option_id`, `food`, `source`, `source_reference`, `confidence`, `status`, `approved_submission_id`, `approved_by`, `last_verified_at`, `canonical_provenance`, `compatibility_summary`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -571,11 +573,9 @@ Stores reusable image metadata for ingredients and packaged products. This table
 not replace private moderation evidence; it only stores source-backed or approved image
 records that the app can safely render.
 
-Columns: `id`, `barcode`, `shared_product_id`, `source`, `source_reference`,
-`image_role`, `image_url`, `thumbnail_url`, `storage_path`, `license_name`,
-`license_url`, `attribution_text`, `confidence`, `crop_x`, `crop_y`, `crop_zoom`,
-`fit_mode`, `placement_version`, `crop_source`, `approved_by`, `approved_at`, `status`,
-`fetched_at`, `created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `food_image_assets` | `id`, `barcode`, `shared_product_id`, `source`, `source_reference`, `image_role`, `image_url`, `thumbnail_url`, `storage_path`, `license_name`, `license_url`, `attribution_text`, `confidence`, `crop_x`, `crop_y`, `crop_zoom`, `fit_mode`, `placement_version`, `crop_source`, `approved_by`, `approved_at`, `status`, `fetched_at`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -598,12 +598,10 @@ Notes:
   `community-reviewed` image row with `moderator-reviewed` confidence and approval
   metadata.
 
-Storage bucket:
-
-- `product-submission-evidence`: private product evidence images, scoped under the
-  submitting user id.
-- `food-image-assets`: public approved/source-backed product image files. Do not store
-  private evidence here until moderation approves it.
+| Storage bucket | Visibility | Purpose |
+| --- | --- | --- |
+| `product-submission-evidence` | Private | Product evidence images scoped under the submitting user id |
+| `food-image-assets` | Public | Approved/source-backed product image files; private evidence must not move here before moderation approval |
 
 ## Compatibility, Allergens, and Dietary Restrictions
 
@@ -617,7 +615,9 @@ Storage bucket:
 
 ### `compatibility_tags`
 
-Columns: `id`, `slug`, `label`, `category`, `created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `compatibility_tags` | `id`, `slug`, `label`, `category`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -625,8 +625,9 @@ Notes:
 
 ### `compatibility_rule_conflicts`
 
-Columns: `preference_tag_id`, `fact_tag_id`, `severity`, `warning_code`, `created_at`,
-`updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `compatibility_rule_conflicts` | `preference_tag_id`, `fact_tag_id`, `severity`, `warning_code`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -651,9 +652,9 @@ Notes:
 
 ### `product_compatibility_facts`
 
-Columns: `id`, `shared_product_id`, `shared_product_observation_id`,
-`shared_product_submission_id`, `tag_id`, `fact_type`, `source_type`, `source_text`,
-`confidence`, `created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `product_compatibility_facts` | `id`, `shared_product_id`, `shared_product_observation_id`, `shared_product_submission_id`, `tag_id`, `fact_type`, `source_type`, `source_text`, `confidence`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -668,8 +669,9 @@ Notes:
 
 ### `food_preference_option_catalog`
 
-Columns: `id`, `category`, `label`, `normalized_value`, `source_type`, `tag_id`,
-`source_values`, `usage_count`, `created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `food_preference_option_catalog` | `id`, `category`, `label`, `normalized_value`, `source_type`, `tag_id`, `source_values`, `usage_count`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -678,9 +680,9 @@ Notes:
 
 ### `food_preference_api_observations`
 
-Columns: `id`, `category`, `fact_type`, `label`, `normalized_value`, `source`,
-`source_field`, `source_value`, `source_reference`, `source_payload`, `query`,
-`matched_name`, `brand_owner`, `observation_count`, `first_seen_at`, `last_seen_at`.
+| Table | Documented columns |
+| --- | --- |
+| `food_preference_api_observations` | `id`, `category`, `fact_type`, `label`, `normalized_value`, `source`, `source_field`, `source_value`, `source_reference`, `source_payload`, `query`, `matched_name`, `brand_owner`, `observation_count`, `first_seen_at`, `last_seen_at` |
 
 Notes:
 
@@ -697,9 +699,9 @@ Notes:
 
 ### `custom_food_category_options`
 
-Columns: `id`, `label`, `normalized_value`, `sources`, `source_count`,
-`observation_count`, `verification_status`, `enabled`, `first_seen_at`, `last_seen_at`,
-`created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `custom_food_category_options` | `id`, `label`, `normalized_value`, `sources`, `source_count`, `observation_count`, `verification_status`, `enabled`, `first_seen_at`, `last_seen_at`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -711,9 +713,9 @@ Notes:
 
 ### `custom_food_category_observations`
 
-Columns: `id`, `category_id`, `label`, `normalized_value`, `source`, `query`,
-`source_field`, `source_value`, `source_reference`, `source_payload`,
-`observation_count`, `first_seen_at`, `last_seen_at`, `created_at`, `updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `custom_food_category_observations` | `id`, `category_id`, `label`, `normalized_value`, `source`, `query`, `source_field`, `source_value`, `source_reference`, `source_payload`, `observation_count`, `first_seen_at`, `last_seen_at`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -723,10 +725,9 @@ Notes:
 
 ### `custom_food_category_mappings`
 
-Columns: `source_normalized_value`, `source_value`, `source_values`, `source_fields`,
-`sources`, `category_option_id`, `category_option_label`, `confidence`, `match_reason`,
-`source_count`, `observation_count`, `first_seen_at`, `last_seen_at`, `created_at`,
-`updated_at`.
+| Table | Documented columns |
+| --- | --- |
+| `custom_food_category_mappings` | `source_normalized_value`, `source_value`, `source_values`, `source_fields`, `sources`, `category_option_id`, `category_option_label`, `confidence`, `match_reason`, `source_count`, `observation_count`, `first_seen_at`, `last_seen_at`, `created_at`, `updated_at` |
 
 Notes:
 

@@ -100,6 +100,9 @@ describe("ingredient card media architecture", () => {
 		expect(cardLayoutStyles).toContain(
 			"--ingredient-card-copy-start-offset",
 		);
+		expect(cardLayoutStyles).toMatch(
+			/--ingredient-card-copy-start-offset:[\s\S]*var\(--ingredient-card-content-inset\)[\s\S]*-\s*#\{\$card-title-shift\}/,
+		);
 		expect(cardLayoutStyles).toContain("container-type: inline-size");
 		expect(savedCardStyles).toContain(
 			"@include ingredient-card-layout.frame",
@@ -162,7 +165,7 @@ describe("ingredient card media architecture", () => {
 		);
 	});
 
-	it("centers fallback symbols between the card edge and shared copy start", () => {
+	it("centers fallback symbols between the card edge and shifted title start", () => {
 		expect(cardMediaStyles).toContain("display: grid");
 		expect(cardMediaStyles).toContain("box-sizing: border-box");
 		expect(cardMediaStyles).toContain(

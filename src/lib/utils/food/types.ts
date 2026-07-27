@@ -183,6 +183,7 @@ export type FoodAllergenDisclosure = {
 export interface FdcFood {
     fdcId: number;
     description: string;
+    sourceIdentifiers?: Record<string, string>;
     nameProvenance?: "source" | "barcode" | "user";
     brandOwner?: string;
     foodCategory?: string;

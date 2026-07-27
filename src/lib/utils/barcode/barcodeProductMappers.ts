@@ -539,15 +539,17 @@ const createFdcFieldProvenance = ({
 	image,
 	metadata,
 	hasSourceServing,
+	defaultSource,
 }: {
 	food: FdcFood;
 	nutrients: FdcNutrient[];
 	image?: FoodImageAsset;
 	metadata: ReturnType<typeof parseFdcMetadata>;
 	hasSourceServing: boolean;
+	defaultSource: FoodFieldSource["source"];
 }): FoodFieldProvenance => {
 	const fallbackSource = normalizeFieldSource(
-		food.sourceKey ?? food.barcodeSource ?? "usda",
+		food.sourceKey ?? food.barcodeSource ?? defaultSource,
 	);
 	const fallbackReference = food.sharedProductId ?? String(food.fdcId);
 	const fallback = createFieldSource(
@@ -724,6 +726,7 @@ export const mapFdcBarcodeFood = (
 	food: FdcFood,
 	barcode: string,
 	referenceData: ProductReferenceData,
+	defaultSource: FoodFieldSource["source"] = "usda",
 ): BarcodeProductDraft | null => {
 	const canonicalBarcode = normalizeBarcode(barcode);
 	if (!canonicalBarcode || !food.description) return null;
@@ -778,6 +781,7 @@ export const mapFdcBarcodeFood = (
 			image: food.image,
 			metadata,
 			hasSourceServing: hasExactGramWeight,
+			defaultSource,
 		}),
 		volumeEquivalent: hasExactGramWeight
 			? parseVolumeEquivalent(food.householdServingFullText) ?? undefined
@@ -798,7 +802,12 @@ export const mapSharedCatalogFood = (
 	barcode: string,
 	referenceData: ProductReferenceData,
 ): BarcodeProductDraft | null => {
-	const draft = mapFdcBarcodeFood(food, barcode, referenceData);
+	const draft = mapFdcBarcodeFood(
+		food,
+		barcode,
+		referenceData,
+		"shared-catalog",
+	);
 	if (!draft) return null;
 	const sourceKey = food.sourceKey ?? (
 		food.barcodeSource === "usda"

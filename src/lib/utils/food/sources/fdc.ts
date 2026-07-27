@@ -20,6 +20,12 @@ type FdcDetailNutrient = {
 
 type FdcFoodResponse = Omit<FdcFood, "foodNutrients"> & {
 	foodNutrients?: Array<FdcNutrient | FdcDetailNutrient>;
+	ndbNumber?: number | string;
+};
+
+const normalizeLegacyUsdaNdbNumber = (value: number | string | undefined) => {
+	const digits = String(value ?? "").replace(/\D/g, "");
+	return digits ? digits.padStart(5, "0") : null;
 };
 
 export const FDC_CONFIGURATION_MESSAGE =
@@ -82,9 +88,17 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FdcFood => {
 		const normalized = normalizeFoodNutrient(nutrient);
 		return normalized ? [normalized] : [];
 	});
+	const legacyUsdaNdbNumber = normalizeLegacyUsdaNdbNumber(food.ndbNumber);
 	return {
 		...food,
 		description: formatSourceProductName(food.description),
+		sourceIdentifiers: {
+			...food.sourceIdentifiers,
+			usdaFdcId: String(food.fdcId),
+			...(legacyUsdaNdbNumber
+				? { usdaNdbNumber: legacyUsdaNdbNumber }
+				: {}),
+		},
 		nameProvenance: "source",
 		foodIdentityType: resolveFoodIdentityType(food),
 		foodNutrients,

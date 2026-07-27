@@ -23,6 +23,48 @@ const normalizeServing = (serving: FoodServing): FoodServing | null => {
 	};
 };
 
+const SERVING_SOURCES = new Set<NonNullable<FoodServing["source"]>>([
+	"usda",
+	"open-food-facts",
+	"health-canada-cnf",
+	"uk-cofid",
+	"fsanz-afcd",
+	"foodrepo",
+	"user-label",
+	"manufacturer",
+	"gs1",
+	"community-reviewed",
+	"unknown",
+]);
+
+const isServingSource = (
+	value: unknown,
+): value is NonNullable<FoodServing["source"]> =>
+	typeof value === "string" &&
+	SERVING_SOURCES.has(value as NonNullable<FoodServing["source"]>);
+
+const getLegacyServingSource = (
+	food: FdcFood,
+): NonNullable<FoodServing["source"]> => {
+	const provenanceSource = food.fieldProvenance?.serving?.source;
+	if (provenanceSource === "shared-catalog") return "community-reviewed";
+	if (isServingSource(provenanceSource)) {
+		return provenanceSource;
+	}
+	if (isServingSource(food.sourceKey)) {
+		return food.sourceKey;
+	}
+	if (food.barcodeSource === "manual") return "user-label";
+	if (food.barcodeSource === "community") return "community-reviewed";
+	if (
+		food.barcodeSource === "usda" ||
+		food.barcodeSource === "open-food-facts"
+	) {
+		return food.barcodeSource;
+	}
+	return "unknown";
+};
+
 const getLegacyServing = (food: FdcFood): FoodServing | null => {
 	if (food.hasSourceServing === false) return null;
 
@@ -50,16 +92,12 @@ const getLegacyServing = (food: FdcFood): FoodServing | null => {
 		amount: parsedServing?.quantity,
 		unitKey: parsedServing?.unit,
 		isPrimary: true,
-		source: food.barcodeSource === "open-food-facts"
-			? "open-food-facts"
-			: food.barcodeSource === "manual"
-				? "user-label"
-				: food.barcodeSource === "community"
-					? "community-reviewed"
-					: "usda",
-		sourceReference: food.sourceKey === "usda"
-			? String(food.fdcId)
-			: food.barcode ?? food.gtinUpc,
+		source: getLegacyServingSource(food),
+		sourceReference:
+			food.fieldProvenance?.serving?.sourceReference ??
+			(food.sourceKey === "usda"
+				? String(food.fdcId)
+				: food.barcode ?? food.gtinUpc),
 		confidence: food.barcodeSource === "manual"
 			? "user-reported"
 			: food.barcodeSource === "community"

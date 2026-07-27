@@ -98,6 +98,26 @@ write path, disables only the relevant controls while pending, prevents duplicat
 submissions, maps safe server issue codes to friendly copy, and clears stale status at a
 predictable boundary.
 
+### Remaining Heuristic Decision Thresholds
+
+**Status:** Open
+
+**Evidence:** Nutrition values and serving conversions no longer use name-based density
+guesses or fabricated missing values, but several workflow classifications still use
+code-owned thresholds. Catalog conflict severity uses fixed 3%, 10%, and 25% bands in
+`src/lib/server/products/catalogVerification.server.ts`; catalog revision comparison
+uses separate fixed absolute and relative bands in
+`src/lib/utils/products/catalogSubmissionComparison.ts`; and nutrition completeness
+labels use a fixed 60% boundary in `src/lib/utils/food/quality/foodQuality.ts`.
+These values affect moderation and quality labels rather than the stored nutrient
+amounts themselves, but they remain product policy that cannot currently evolve through
+the database.
+
+**Complete when:** The thresholds are represented by versioned, validated database
+policy rows or an equivalent authoritative reference-data contract; server loaders fail
+clearly when required policy is unavailable; and regression tests prove that changing a
+policy row changes classification without changing nutrient values or provenance.
+
 ### Coordinator And Domain Boundary Watchlist
 
 **Status:** Review during related changes; do not split by line count alone
