@@ -616,6 +616,13 @@ Important matching rule:
   specifically indicates dairy/milk.
 - Prefer DB compatibility tags and source metadata over raw name matching.
 
+### Account Session
+
+- Provide a clear `Log out` action on the Profile page.
+- Submit logout through the server authentication endpoint so the Supabase session and
+  password-upgrade state are cleared together.
+- Keep saved profile, food, and list data intact for the next authenticated session.
+
 ## Moderation Page
 
 Route: `/moderation`

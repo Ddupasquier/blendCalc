@@ -2,6 +2,7 @@
 	import { enhance } from "$app/forms";
 	import { invalidateAll } from "$app/navigation";
 	import User from "$lib/assets/icons/User/User.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
@@ -271,6 +272,7 @@
 	let profilePending = $state(false);
 	let avatarPending = $state(false);
 	let foodPreferencesPending = $state(false);
+	let logoutPending = $state(false);
 	const foodPreferencesDisabled = $derived(
 		foodPreferencesPending || data.foodPreferencesUnavailable,
 	);
@@ -316,7 +318,7 @@
 		</div>
 	</section>
 
-	<section class="profile-card profile-card--help">
+	<section class="profile-card profile-card--action">
 		<div class="profile-card__heading">
 			<h2>Help &amp; tutorial</h2>
 			<p>Replay the quick tour whenever you want a refresher.</p>
@@ -603,6 +605,27 @@
 				{#if foodPreferencesPending}<LoadingSpinner size="small" decorative />{/if}
 				Save food preferences
 			</button>
+		</form>
+	</section>
+
+	<section class="profile-card profile-card--action">
+		<div class="profile-card__heading">
+			<h2>Account session</h2>
+			<p>Log out of this device. Your saved profile and foods will still be here next time.</p>
+		</div>
+		<form
+			method="POST"
+			action="/auth/logout"
+			aria-busy={logoutPending}
+			onsubmit={() => (logoutPending = true)}
+		>
+			<RoundedActionButton
+				type="submit"
+				variant="neutral"
+				busy={logoutPending}
+			>
+				Log out
+			</RoundedActionButton>
 		</form>
 	</section>
 </div>
