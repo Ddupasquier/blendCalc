@@ -75,14 +75,14 @@ export type FoodPreferenceConflictRule = {
 
 export type FoodCompatibilityMatchRule = {
 	sourceKey: string | null;
-	fieldName: "description" | "food_category" | "ingredients";
+	fieldName: "ingredients";
 	matchPattern: string;
 	excludePattern: string | null;
 	tagSlug: string;
 	tagLabel: string;
 	tagCategory: "allergen" | "dietary" | "ingredient" | "avoidance";
 	factType: "ingredient_present";
-	sourceType: "label_ingredient_field" | "source_food_identity";
+	sourceType: "label_ingredient_field";
 	confidence: "confirmed" | "inferred" | "uncertain";
 	priority: number;
 };

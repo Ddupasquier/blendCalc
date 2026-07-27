@@ -816,21 +816,20 @@ deficient against a full regulatory label.
 **30i.1.** <a id="rule-product-allergen-disclosure"></a>Preserve and display
 source-provided product ingredients and allergen disclosures without inference.
 Structured allergens from exact DB/API records and confirmed compatibility facts with
-the `contains` fact type render as `Contains`; source trace statements and confirmed
-`may_contain` facts render separately as `May contain`. Never weaken an explicit
+the `contains` fact type render as `Contains`; explicit source trace statements and
+confirmed `may_contain` facts render separately as `May contain`. Never weaken an explicit
 `Contains` statement into `May contain`, and if the same normalized allergen appears in
 both groups, the explicit `Contains` statement wins. De-duplicate labels
 case-insensitively while preserving readable source wording. Do not infer package
 allergens or trace statements from the product name, category, ingredient text, or a
 user preference warning. DB-reviewed exact-match rules may create
-`ingredient_present` compatibility facts from source-provided ingredient lists or
-authoritative generic-food identity fields; these facts must retain their matching
-provenance and must never be presented as package `Contains` or `May contain`
-statements. An inferred generic-food identity match may drive the compact warning edge
-only as a `potential` preference conflict, never as confirmed package disclosure. Every
-broad identity rule must be DB-backed and include an exclusion pattern when names can
-explicitly contradict the inference, such as `gluten-free bread` or `rice noodles`.
-Keep preference conflicts separate from source package
+`ingredient_present` compatibility facts only from source-provided ingredient lists;
+these facts must retain their matching provenance and must never be presented as package
+`Contains` or `May contain` statements. Product titles, descriptions, categories, and
+generic identity labels must never create a preference warning, warning edge, allergen
+fact, or trace fact. If an ingredient statement is unavailable, show no inferred
+ingredient conflict; do not substitute the product name. Keep preference conflicts
+separate from source package
 disclosures. Hide empty disclosure groups rather than inventing `none`, `zero`, or
 `allergen-free`. Nutrition details must use the reusable ingredients/allergen
 presentation directly after the nutrition label, with `Contains` and `May contain`

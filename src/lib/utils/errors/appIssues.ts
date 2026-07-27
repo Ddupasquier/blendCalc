@@ -34,8 +34,6 @@ export const APP_ISSUE_CODES = [
 	"FOOD_ALLERGEN_CONTAINS",
 	"FOOD_ALLERGEN_MAY_CONTAIN",
 	"FOOD_INGREDIENT_PRESENT",
-	"FOOD_IDENTITY_CONFIRMED",
-	"FOOD_IDENTITY_POSSIBLE",
 	"FOOD_RESTRICTION_CONFLICT",
 ] as const;
 
@@ -275,18 +273,6 @@ export const APP_ISSUE_DEFINITIONS: Record<AppIssueCode, AppIssueDefinition> = {
 		message: (params) =>
 			`${readString(params, "factLabel", "A flagged ingredient")} appears in the ingredient list.`,
 	},
-	FOOD_IDENTITY_CONFIRMED: {
-		kind: "warning",
-		title: "Check this ingredient",
-		message: (params) =>
-			`This food is identified as ${lowerLabel(params, "factLabel", "a flagged ingredient")}.`,
-	},
-	FOOD_IDENTITY_POSSIBLE: {
-		kind: "warning",
-		title: "Check this ingredient",
-		message: (params) =>
-			`The food name suggests ${lowerLabel(params, "factLabel", "a flagged ingredient")} may be present.`,
-	},
 	FOOD_RESTRICTION_CONFLICT: {
 		kind: "warning",
 		title: "Check this ingredient",
@@ -299,12 +285,6 @@ export const APP_ISSUE_DEFINITIONS: Record<AppIssueCode, AppIssueDefinition> = {
 			}
 			if (evidenceType === "may_contain") {
 				return `This may not be ${restriction} because the label says it may contain ${fact}.`;
-			}
-			if (evidenceType === "identity_confirmed") {
-				return `This may not be ${restriction} because this food is identified as ${fact}.`;
-			}
-			if (evidenceType === "identity_possible") {
-				return `This may not be ${restriction} because the food name suggests ${fact} may be present.`;
 			}
 			return `This may not be ${restriction} because ${fact} appears in the ingredient list.`;
 		},

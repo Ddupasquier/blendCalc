@@ -122,6 +122,8 @@ export const readAppReferenceCatalog = async (
 					"source_key, field_name, match_pattern, exclude_pattern, fact_type, source_type, confidence, priority, tag:compatibility_tags(slug, label, category)",
 				)
 				.eq("enabled", true)
+				.eq("field_name", "ingredients")
+				.eq("source_type", "label_ingredient_field")
 				.order("priority", { ascending: true }),
 		]);
 
@@ -233,11 +235,11 @@ export const readAppReferenceCatalog = async (
 		foodCompatibilityMatchRules: (
 			(compatibilityMatchRulesResult.data ?? []) as unknown as Array<{
 				source_key: string | null;
-				field_name: "description" | "food_category" | "ingredients";
+				field_name: "ingredients";
 				match_pattern: string;
 				exclude_pattern: string | null;
 				fact_type: "ingredient_present";
-				source_type: "label_ingredient_field" | "source_food_identity";
+				source_type: "label_ingredient_field";
 				confidence: "confirmed" | "inferred" | "uncertain";
 				priority: number;
 				tag: {

@@ -610,6 +610,8 @@ Notes:
   product compatibility facts.
 - App utilities must not recreate allergen or dietary vocabularies with name/category
   guesses.
+- Match rules operate only on source-provided ingredient statements. Product names,
+  descriptions, categories, and generic identity labels are not warning evidence.
 - `warning_code → app_issue_codes.code`; ordinary warning sentences are not stored in
   this table.
 
@@ -623,6 +625,9 @@ Notes:
 
 - A fact points to exactly one product, observation, or submission parent.
 - These facts drive profile warnings such as allergen and dietary conflicts.
+- `contains` comes from explicit allergen metadata, `may_contain` comes only from
+  explicit trace metadata, and `ingredient_present` comes from a reviewed match against
+  a source-provided ingredient statement.
 
 ### `food_preference_option_catalog`
 

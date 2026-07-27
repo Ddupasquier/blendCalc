@@ -54,12 +54,22 @@ const createStructuredFact = (
 	confidence: "confirmed",
 });
 
+const isCurrentCompatibilityFact = (fact: FoodCompatibilityFact) => {
+	const sourceType = String(
+		(fact as unknown as { sourceType?: unknown }).sourceType ?? "",
+	);
+	if (sourceType === "source_food_identity") return false;
+	return fact.factType !== "ingredient_present" ||
+		sourceType === "label_ingredient_field";
+};
+
 const getCompatibilityFacts = (
 	food: FdcFood,
 	profile: FoodPreferenceProfile,
 ) => {
 	const facts = [
-		...(food.compatibilitySummary?.allFacts ?? []),
+		...(food.compatibilitySummary?.allFacts ?? [])
+			.filter(isCurrentCompatibilityFact),
 		...(food.allergens ?? []).map((value) =>
 			createStructuredFact(value, "contains", "allergen")
 		),
@@ -99,15 +109,7 @@ const getFactIssue = (
 		return { code: "FOOD_ALLERGEN_MAY_CONTAIN", params };
 	}
 	if (fact.factType === "ingredient_present") {
-		if (fact.sourceType !== "source_food_identity") {
-			return { code: "FOOD_INGREDIENT_PRESENT", params };
-		}
-		return {
-			code: fact.confidence === "confirmed"
-				? "FOOD_IDENTITY_CONFIRMED"
-				: "FOOD_IDENTITY_POSSIBLE",
-			params,
-		};
+		return { code: "FOOD_INGREDIENT_PRESENT", params };
 	}
 	return { code: "FOOD_INGREDIENT_PRESENT", params };
 };
@@ -117,11 +119,6 @@ const getRestrictionEvidenceType = (
 ) => {
 	if (fact.factType === "contains" || fact.factType === "may_contain") {
 		return fact.factType;
-	}
-	if (fact.sourceType === "source_food_identity") {
-		return fact.confidence === "confirmed"
-			? "identity_confirmed"
-			: "identity_possible";
 	}
 	return "ingredient";
 };
