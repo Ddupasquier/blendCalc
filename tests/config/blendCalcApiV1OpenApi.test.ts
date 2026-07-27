@@ -39,6 +39,16 @@ describe("blendCalc API v1 OpenAPI contract", () => {
 		);
 		expect(specification.components.schemas).toHaveProperty("PackageQuantity");
 		expect(specification.components.schemas).toHaveProperty("SourceRecord");
+		expect(specification.components.schemas).toHaveProperty("CatalogMetadata");
+	});
+
+	it("identifies shared catalog authority and field-level attribution", () => {
+		const serialized = JSON.stringify(specification);
+		expect(serialized).toContain("blendcalc-shared-catalog");
+		expect(serialized).toContain("redistributionPolicy");
+		expect(serialized).toContain("sourceAttributions");
+		expect(serialized).toContain("fieldSources");
+		expect(serialized).toContain("sourceType");
 	});
 
 	it("never documents private storage or moderation fields", () => {

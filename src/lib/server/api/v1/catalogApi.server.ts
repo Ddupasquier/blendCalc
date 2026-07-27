@@ -15,7 +15,7 @@ import {
 } from "$lib/server/products/catalogRead.server";
 import type { Database } from "$lib/types/database.types";
 import type { FoodCompatibilityFact } from "$lib/utils/food/quality/compatibility";
-import type { FoodFieldSource, FoodImageAsset } from "$lib/utils/food/types";
+import type { FoodImageAsset } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const uniqueStrings = (values: Array<string | null | undefined>) => [
@@ -29,9 +29,17 @@ type SourceAttributionRow = {
 	terms_url: string | null;
 	attribution_text: string | null;
 	canonical_license_name: string | null;
+	api_redistribution_allowed: boolean;
 };
 
 type SourceAttributionCatalog = Record<string, ApiV1SourceAttribution>;
+
+const normalizeSourceKey = (source: string) => {
+	if (source === "community" || source === "community-reviewed") {
+		return "shared-catalog";
+	}
+	return source;
+};
 
 const readSourceAttributionCatalog = async (
 	supabase: SupabaseClient<Database>,
@@ -39,9 +47,10 @@ const readSourceAttributionCatalog = async (
 	const { data, error } = await supabase
 		.from("product_data_sources")
 		.select(
-			"key, display_name, homepage_url, terms_url, attribution_text, canonical_license_name",
+			"key, display_name, homepage_url, terms_url, attribution_text, canonical_license_name, api_redistribution_allowed",
 		)
-		.eq("enabled", true);
+		.eq("enabled", true)
+		.eq("api_redistribution_allowed", true);
 	if (error) throw error;
 	return Object.fromEntries(
 		((data ?? []) as SourceAttributionRow[]).map((source) => [
@@ -60,12 +69,12 @@ const readSourceAttributionCatalog = async (
 
 const collectSourceKeys = (record: ApprovedCatalogRecord) => new Set(
 	[
-		record.source,
-		...record.food.foodNutrients.map((nutrient) => nutrient.source),
-		...(record.food.foodServings ?? []).map((serving) => serving.source),
-		...record.images.map((image) => image.source),
-		...Object.values(record.food.fieldProvenance ?? {}).map((source) => source?.source),
-	].filter(Boolean) as string[],
+			...record.food.foodNutrients.map((nutrient) => nutrient.source),
+			...(record.food.foodServings ?? []).map((serving) => serving.source),
+			...Object.values(record.fieldProvenance).map((source) => source.source),
+		]
+		.filter(Boolean)
+		.map((source) => normalizeSourceKey(source as string)),
 );
 
 const selectSourceAttributions = (
@@ -85,12 +94,6 @@ const toSource = (
 	reference: reference?.trim() || null,
 	confidence: confidence?.trim() || null,
 });
-
-const toFieldSource = (
-	fieldSource: FoodFieldSource | undefined,
-) => fieldSource
-	? toSource(fieldSource.source, fieldSource.sourceReference, fieldSource.confidence)
-	: null;
 
 const toImage = (image: FoodImageAsset): ApiV1Image => ({
 	role: image.role,
@@ -121,9 +124,32 @@ const toWarning = (fact: FoodCompatibilityFact): ApiV1Warning => ({
 	message: fact.label,
 	category: fact.category,
 	type: fact.factType,
+	sourceType: fact.sourceType,
 	confidence: fact.confidence,
 	sourceText: fact.sourceText,
 });
+
+const hasCompleteImageRights = (image: FoodImageAsset) =>
+	Boolean(
+		image.licenseName.trim() &&
+		image.licenseUrl?.trim() &&
+		image.attributionText?.trim(),
+	);
+
+const toCanonicalFieldSource = (
+	record: ApprovedCatalogRecord,
+	fieldPath: string,
+) => {
+	const canonical = record.fieldProvenance[fieldPath];
+	if (canonical) {
+		return toSource(
+			canonical.source,
+			canonical.sourceReference,
+			canonical.confidence,
+		);
+	}
+	return null;
+};
 
 export const mapApprovedCatalogRecordToApiV1Product = (
 	record: ApprovedCatalogRecord,
@@ -131,8 +157,12 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 ): ApiV1Product => {
 	const ingredientsText = record.food.ingredients?.trim() || null;
 	const categorySource = record.category
-		? toFieldSource(record.food.fieldProvenance?.categories)
+		? toCanonicalFieldSource(record, "categories")
 		: null;
+	const sourceAttributions = selectSourceAttributions(
+		record,
+		sourceAttributionCatalog,
+	);
 	return {
 		id: record.id,
 		barcode: record.barcode,
@@ -140,11 +170,11 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 		brand: record.brandOwner?.trim() || null,
 		category: record.category
 			? {
-					id: record.category.categoryOptionId,
-					name: record.category.label,
-					slug: record.category.sourceValue,
-					updatedAt: null,
-				}
+				id: record.category.categoryOptionId,
+				name: record.category.label,
+				slug: record.category.sourceValue,
+				updatedAt: record.category.updatedAt ?? null,
+			}
 			: null,
 		ingredients: {
 			text: ingredientsText,
@@ -270,32 +300,38 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 					: null,
 			};
 		}),
-		images: record.images.map(toImage),
+		images: record.images.filter(hasCompleteImageRights).map(toImage),
 		warnings: (record.food.compatibilitySummary?.allFacts ?? []).map(toWarning),
-		sourceAttributions: selectSourceAttributions(
-			record,
-			sourceAttributionCatalog,
-		),
+		sourceAttributions,
+		catalog: {
+			authority: "blendcalc-shared-catalog",
+			status: "active",
+			verification: record.confidence,
+			redistributionPolicy: "approved",
+			sourceCount: sourceAttributions.length,
+		},
 		fieldSources: {
-			name: null,
-			brand: null,
+			name: toCanonicalFieldSource(record, "productName"),
+			brand: record.brandOwner
+				? toCanonicalFieldSource(record, "brandOwner")
+				: null,
 			category: categorySource,
-			ingredients: toFieldSource(record.food.fieldProvenance?.ingredients),
-			structuredIngredients: toFieldSource(
-				record.food.fieldProvenance?.structuredIngredients,
+			ingredients: toCanonicalFieldSource(record, "ingredients"),
+			structuredIngredients: toCanonicalFieldSource(
+				record,
+				"structuredIngredients",
 			),
-			ingredientAnalysis: toFieldSource(
-				record.food.fieldProvenance?.ingredientAnalysis,
+			ingredientAnalysis: toCanonicalFieldSource(
+				record,
+				"ingredientAnalysis",
 			),
-			additives: toFieldSource(record.food.fieldProvenance?.additives),
-			allergens: toFieldSource(record.food.fieldProvenance?.allergens),
-			traces: toFieldSource(record.food.fieldProvenance?.traces),
-			dietaryTags: toFieldSource(record.food.fieldProvenance?.dietaryTags),
-			labels: toFieldSource(record.food.fieldProvenance?.labels),
-			package: toFieldSource(record.food.fieldProvenance?.package),
-			sourceMetadata: toFieldSource(
-				record.food.fieldProvenance?.sourceMetadata,
-			),
+			additives: toCanonicalFieldSource(record, "additives"),
+			allergens: toCanonicalFieldSource(record, "allergens"),
+			traces: toCanonicalFieldSource(record, "traces"),
+			dietaryTags: toCanonicalFieldSource(record, "dietaryTags"),
+			labels: toCanonicalFieldSource(record, "labels"),
+			package: toCanonicalFieldSource(record, "package"),
+			sourceMetadata: toCanonicalFieldSource(record, "sourceMetadata"),
 		},
 		revision: {
 			id: record.revision.id,

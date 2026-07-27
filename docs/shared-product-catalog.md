@@ -42,9 +42,10 @@ save private custom foods, use their fridge, and build mixes.
   and separately licensed package images. Package image metadata may be stored in
   `food_image_assets` with source, license, attribution, and confidence. A current audit
   found that the exact-match submission path can still auto-publish an Open Food Facts
-  record despite `canonical_storage_allowed = false`. That mismatch must be fixed or an
-  ODbL-compatible downstream database model must be deliberately adopted before public
-  API release.
+  record despite `canonical_storage_allowed = false`. API v1 now withholds those rows
+  through its database publication gate; the intake mismatch must still be fixed or an
+  ODbL-compatible downstream database model must be deliberately adopted before those
+  product fields can be exposed.
 - **Health Canada CNF and UK CoFID:** their published Open Government licences permit
   canonical and API reuse with attribution. These datasets support confidently matched
   generic foods, not exact packaged-product substitution. Stored policy evidence records
@@ -54,8 +55,8 @@ save private custom foods, use their fridge, and build mixes.
 
 Whether a provider may populate the future public blendCalc dataset is stored in
 `product_data_sources` through `canonical_storage_allowed`, license, review date, and
-policy notes. Application code must not infer redistribution permission from a provider
-name.
+policy notes. `api_redistribution_allowed` separately controls API publication.
+Application code must not infer redistribution permission from a provider name.
 
 See [`data-source-licensing.md`](data-source-licensing.md) for exact source requirements,
 current handling, and unresolved compliance blockers.
@@ -117,6 +118,13 @@ unchanged.
 
 This structure allows another source to be added later without losing which source
 supplied each value or silently replacing a trusted value.
+
+API v1 reads this canonical structure through a service-only publication gate. Every
+active `shared_products` row is evaluated, but only rows with complete selected
+field evidence, normalized nutrient provenance, valid serving evidence, and
+API-approved source policy are returned. See
+[`api-structures/catalog-field-lineage.md`](api-structures/catalog-field-lineage.md)
+for the response-field map and row audit.
 
 ## Existing barcodes and label changes
 

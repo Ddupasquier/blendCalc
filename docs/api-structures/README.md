@@ -7,6 +7,12 @@ The app-owned read contract is published at
 authenticated, read-only internal preview. It reads active canonical blendCalc catalog
 records only and does not call external providers during a request.
 
+Every product read starts from `shared_products`, which is the canonical catalog
+authority. The API hydrates that row from normalized nutrients, normalized servings,
+the canonical category catalog, selected field provenance, revisions, compatibility
+facts, and licensed image assets. It does not choose one external provider as the
+winner for the complete product.
+
 The existing app submission, evidence, and moderation pipeline remains the only write
 path. Provider results and user label observations are intake evidence; they do not
 write directly to the canonical API record.
@@ -22,6 +28,11 @@ analysis, additives, explicit allergen/trace disclosures, labels, package quanti
 provider record metadata, and field-specific sources. Missing values remain `null` or
 empty collections according to the contract; derived ingredient trace hypotheses do
 not become explicit `May contain` disclosures.
+
+The database publication gate excludes any active catalog row whose populated fields,
+nutrients, or servings lack accepted provenance or use a source without complete
+reviewed redistribution metadata. Images are licensed independently and are omitted
+when their asset-level licence or attribution is incomplete.
 
 Public API keys, billing, developer accounts, and a public write API are deliberately
 out of scope until the contract, redistribution rights, rate limits, and correction
@@ -39,6 +50,10 @@ payloads observed by blendCalc scripts.
 See [`source-data-inventory.md`](./source-data-inventory.md) for the app-owned source
 map, useful fields, legal-storage boundaries, caching behavior, and the required process
 for adding another provider.
+
+See [`catalog-field-lineage.md`](./catalog-field-lineage.md) for the exact
+`shared_products` read path, publication gate, response-field mapping, and row-level
+audit command.
 
 See [`../data-source-licensing.md`](../data-source-licensing.md) for the tracked licence,
 attribution, current-compliance, and public-redistribution requirements for every source.

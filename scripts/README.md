@@ -34,3 +34,13 @@ not separate public interfaces.
   automated test workflow.
 - Remove one-time investigation scripts after their result is represented by runtime
   code, a maintained audit, a migration, or a database-backed seed.
+
+## Catalog API Audit
+
+`npm run audit:api-catalog` performs a read-only audit of every active
+`shared_products` row. It reports API inclusion, exact publication-readiness reasons,
+selected field lineage, normalized nutrient and serving sources, image sources, and
+asset-rights completeness.
+
+Use `npm run audit:api-catalog -- --strict` only when every active shared-catalog row is
+required to pass the API publication gate.

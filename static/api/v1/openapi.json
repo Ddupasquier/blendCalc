@@ -219,14 +219,27 @@
       "Warning": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["code", "message", "category", "type", "confidence", "sourceText"],
+        "required": ["code", "message", "category", "type", "sourceType", "confidence", "sourceText"],
         "properties": {
           "code": { "type": "string" },
           "message": { "type": "string" },
           "category": { "type": "string" },
           "type": { "type": "string" },
+          "sourceType": { "type": "string" },
           "confidence": { "type": "string" },
           "sourceText": { "type": ["string", "null"] }
+        }
+      },
+      "CatalogMetadata": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["authority", "status", "verification", "redistributionPolicy", "sourceCount"],
+        "properties": {
+          "authority": { "type": "string", "const": "blendcalc-shared-catalog" },
+          "status": { "type": "string", "const": "active" },
+          "verification": { "type": "string" },
+          "redistributionPolicy": { "type": "string", "const": "approved" },
+          "sourceCount": { "type": "integer", "minimum": 1 }
         }
       },
       "Revision": {
@@ -315,7 +328,7 @@
       "Product": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "barcode", "name", "brand", "category", "ingredients", "packageQuantity", "sourceRecord", "nutrients", "servings", "images", "warnings", "sourceAttributions", "fieldSources", "revision", "links"],
+        "required": ["id", "barcode", "name", "brand", "category", "ingredients", "packageQuantity", "sourceRecord", "nutrients", "servings", "images", "warnings", "sourceAttributions", "catalog", "fieldSources", "revision", "links"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "barcode": { "type": "string", "pattern": "^[0-9]{14}$" },
@@ -363,6 +376,7 @@
           "images": { "type": "array", "items": { "$ref": "#/components/schemas/Image" } },
           "warnings": { "type": "array", "items": { "$ref": "#/components/schemas/Warning" } },
           "sourceAttributions": { "type": "array", "items": { "$ref": "#/components/schemas/SourceAttribution" } },
+          "catalog": { "$ref": "#/components/schemas/CatalogMetadata" },
           "fieldSources": {
             "type": "object",
             "additionalProperties": false,

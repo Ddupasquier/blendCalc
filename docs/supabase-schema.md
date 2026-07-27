@@ -306,10 +306,11 @@ FoodData Central and Open Food Facts products.
 Columns: `key`, `display_name`, `source_type`, `homepage_url`, `api_base_url`,
 `terms_url`, `attribution_text`, `enabled`, observation counts/timestamps, `provenance`,
 `canonical_storage_allowed`, `canonical_license_name`,
-`canonical_policy_reviewed_at`, `canonical_policy_notes`, and timestamps. Canonical
-storage stays disabled until the provider's downstream storage and redistribution terms
-have been reviewed; server enrichment reads this policy instead of hardcoding a provider
-hierarchy.
+`canonical_policy_reviewed_at`, `canonical_policy_notes`,
+`api_redistribution_allowed`, and timestamps. Canonical storage and API redistribution
+stay disabled until the provider's downstream storage and redistribution terms have
+been reviewed; server enrichment and API publication read this policy instead of
+hardcoding a provider hierarchy.
 
 See [`data-source-licensing.md`](data-source-licensing.md) for the tracked official
 terms, attribution requirements, current implementation, and unresolved release
@@ -325,6 +326,8 @@ Notes:
   their published Open Government licences. Their rows retain the required attribution,
   licence URL, review date, permitted-use summary, and excluded-rights warning; public
   API output must preserve that attribution metadata.
+- `api_redistribution_allowed` is the separate API-publication decision. API v1 never
+  infers it from the provider name or from canonical storage alone.
 
 ### `product_source_daily_metrics`
 
@@ -526,6 +529,13 @@ Notes:
   remain separately preserved in `food.categories`.
 - `shared_product_revisions.category_option_id` copies the published product category so
   historical revisions retain the category used at publication.
+- API v1 reads this table through `get_blendcalc_product_v1` and
+  `search_blendcalc_products_v1`. Both RPCs require an empty result from
+  `blendcalc_api_v1_product_readiness_reasons`; therefore an active catalog row is not
+  automatically an API-publishable row.
+- `blendcalc_api_v1_product_readiness` is a service-role-only diagnostic view over every
+  active shared product. It reports missing provenance, normalized-data gaps, and
+  source-policy failures without exposing private evidence to API consumers.
 
 ### `shared_product_revisions` and `shared_product_revision_changes`
 
@@ -826,6 +836,10 @@ category, or serving fields.
 | `resolve_custom_food_category_option`          | Resolves raw API category values to one enabled canonical category option                                                                      |
 | `search_generic_food_records`                  | Searches active national generic-food datasets with indexed, stable relevance ordering and returns normalized food JSON with source provenance |
 | `apply_shared_product_external_enrichment`     | Atomically fills legally reusable missing canonical fields, including structured package metadata, while recording observations, provenance, normalized projections, and a revision |
+| `blendcalc_api_v1_source_is_eligible`           | Tests a stored source against the DB-owned API redistribution, licence, attribution, and policy-review gate |
+| `blendcalc_api_v1_product_readiness_reasons`    | Returns the service-only reasons an active shared product is withheld from API v1 |
+| `get_blendcalc_product_v1`                      | Reads one active, publication-ready shared product and its latest revision by GTIN-14 |
+| `search_blendcalc_products_v1`                  | Searches only active, publication-ready shared products with bounded pagination and stable relevance |
 | `reject_blocked_signup`                        | Supabase Auth hook for hashed email signup blocks                                                                                              |
 
 ## Storage Buckets

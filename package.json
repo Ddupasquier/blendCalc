@@ -30,6 +30,7 @@
 		"import:nutrition:cofid": "node scripts/imports/import_cofid_2021.mjs",
 		"audit:usda-branded-allergens": "node scripts/audits/audit_usda_branded_allergen_fields.mjs",
 		"audit:off-allergens": "node scripts/audits/audit_openfoodfacts_allergen_fields.mjs",
+		"audit:api-catalog": "node scripts/audits/audit_api_catalog_readiness.mjs",
 		"report:source-quality": "node scripts/audits/report_product_source_quality.mjs",
 		"benchmark:source-quality": "node scripts/audits/benchmark_product_sources.mjs",
 		"seed:food-preferences": "node scripts/seeds/seed_food_preference_api_observations.mjs",

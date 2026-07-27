@@ -69,6 +69,7 @@ export type ApiV1Warning = {
 	message: string;
 	category: string;
 	type: string;
+	sourceType: string;
 	confidence: string;
 	sourceText: string | null;
 };
@@ -145,6 +146,13 @@ export type ApiV1Product = {
 	images: ApiV1Image[];
 	warnings: ApiV1Warning[];
 	sourceAttributions: ApiV1SourceAttribution[];
+	catalog: {
+		authority: "blendcalc-shared-catalog";
+		status: "active";
+		verification: string;
+		redistributionPolicy: "approved";
+		sourceCount: number;
+	};
 	fieldSources: {
 		name: ApiV1Source | null;
 		brand: ApiV1Source | null;

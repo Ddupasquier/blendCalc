@@ -15,8 +15,83 @@ const record: ApprovedCatalogRecord = {
 		label: "Sauces",
 		sourceValue: "sauces",
 		confidence: "exact",
+		updatedAt: "2026-07-18T10:00:00.000Z",
 	},
 	canonicalProvenance: {},
+	fieldProvenance: {
+		productName: {
+			source: "usda",
+			sourceReference: "123",
+			confidence: "source-verified",
+			verificationMethod: "exact-barcode",
+		},
+		brandOwner: {
+			source: "usda",
+			sourceReference: "123",
+			confidence: "source-verified",
+			verificationMethod: "exact-barcode",
+		},
+		ingredients: {
+			source: "usda",
+			sourceReference: "123",
+			confidence: "source-verified",
+			verificationMethod: "exact-barcode",
+		},
+		categories: {
+			source: "open-food-facts",
+			sourceReference: "00021130493609",
+			confidence: "imported",
+			verificationMethod: "exact-barcode",
+		},
+		structuredIngredients: {
+			source: "open-food-facts",
+			sourceReference: "00021130493609",
+			confidence: "imported",
+			verificationMethod: "exact-barcode",
+		},
+		ingredientAnalysis: {
+			source: "open-food-facts",
+			sourceReference: "00021130493609",
+			confidence: "imported",
+			verificationMethod: "exact-barcode",
+		},
+		additives: {
+			source: "open-food-facts",
+			sourceReference: "00021130493609",
+			confidence: "imported",
+			verificationMethod: "exact-barcode",
+		},
+		allergens: {
+			source: "usda",
+			sourceReference: "123",
+			confidence: "source-verified",
+			verificationMethod: "exact-barcode",
+		},
+		traces: {
+			source: "open-food-facts",
+			sourceReference: "00021130493609",
+			confidence: "imported",
+			verificationMethod: "exact-barcode",
+		},
+		labels: {
+			source: "open-food-facts",
+			sourceReference: "00021130493609",
+			confidence: "imported",
+			verificationMethod: "exact-barcode",
+		},
+		package: {
+			source: "open-food-facts",
+			sourceReference: "00021130493609",
+			confidence: "imported",
+			verificationMethod: "exact-barcode",
+		},
+		sourceMetadata: {
+			source: "open-food-facts",
+			sourceReference: "00021130493609",
+			confidence: "imported",
+			verificationMethod: "exact-barcode",
+		},
+	},
 	source: "community-reviewed",
 	sourceReference: "submission-1",
 	confidence: "moderator-reviewed",
@@ -194,9 +269,18 @@ describe("blendCalc API v1 catalog mapping", () => {
 			source: "open-food-facts",
 			reference: "00021130493609",
 		});
-		expect(product.fieldSources.name).toBeNull();
-		expect(product.fieldSources.brand).toBeNull();
-		expect(product.fieldSources.ingredients).toBeNull();
+		expect(product.fieldSources.name).toMatchObject({
+			source: "usda",
+			reference: "123",
+		});
+		expect(product.fieldSources.brand).toMatchObject({
+			source: "usda",
+			reference: "123",
+		});
+		expect(product.fieldSources.ingredients).toMatchObject({
+			source: "usda",
+			reference: "123",
+		});
 		expect(product.ingredients).toMatchObject({
 			items: ["Tomatoes", "Onion"],
 			structured: [{
@@ -235,6 +319,13 @@ describe("blendCalc API v1 catalog mapping", () => {
 		});
 		expect(product.images[0]).not.toHaveProperty("storagePath");
 		expect(product.images[0]).not.toHaveProperty("approvedBy");
+		expect(product.catalog).toEqual({
+			authority: "blendcalc-shared-catalog",
+			status: "active",
+			verification: "moderator-reviewed",
+			redistributionPolicy: "approved",
+			sourceCount: 2,
+		});
 		expect(product.sourceAttributions).toEqual([
 			expect.objectContaining({
 				source: "open-food-facts",
@@ -245,6 +336,84 @@ describe("blendCalc API v1 catalog mapping", () => {
 				licenseName: "CC0-1.0",
 			}),
 		]);
+	});
+
+	it("keeps image licensing separate from product-field attribution", () => {
+		const imageOnlyRecord = structuredClone(record);
+		imageOnlyRecord.source = "usda";
+		imageOnlyRecord.food.fieldProvenance = {};
+		imageOnlyRecord.fieldProvenance = {
+			productName: record.fieldProvenance.productName,
+			brandOwner: record.fieldProvenance.brandOwner,
+			ingredients: record.fieldProvenance.ingredients,
+		};
+		const product = mapApprovedCatalogRecordToApiV1Product(imageOnlyRecord, {
+			usda: {
+				source: "usda",
+				displayName: "USDA FoodData Central",
+				sourceUrl: "https://fdc.nal.usda.gov/",
+				licenseName: "CC0-1.0",
+				licenseUrl: "https://www.usa.gov/government-copyright",
+				attribution: "USDA FoodData Central",
+			},
+			"open-food-facts": {
+				source: "open-food-facts",
+				displayName: "Open Food Facts",
+				sourceUrl: "https://world.openfoodfacts.org/",
+				licenseName: "ODbL-1.0",
+				licenseUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
+				attribution: "Open Food Facts contributors",
+			},
+		});
+
+		expect(product.images).toHaveLength(1);
+		expect(product.sourceAttributions.map((source) => source.source)).toEqual([
+			"usda",
+		]);
+	});
+
+	it("does not publish legacy JSON provenance as canonical field lineage", () => {
+		const legacyRecord = structuredClone(record);
+		legacyRecord.fieldProvenance = {
+			productName: record.fieldProvenance.productName,
+			brandOwner: record.fieldProvenance.brandOwner,
+			ingredients: record.fieldProvenance.ingredients,
+		};
+		const product = mapApprovedCatalogRecordToApiV1Product(legacyRecord, {
+			usda: {
+				source: "usda",
+				displayName: "USDA FoodData Central",
+				sourceUrl: "https://fdc.nal.usda.gov/",
+				licenseName: "CC0-1.0",
+				licenseUrl: "https://www.usa.gov/government-copyright",
+				attribution: "USDA FoodData Central",
+			},
+			"open-food-facts": {
+				source: "open-food-facts",
+				displayName: "Open Food Facts",
+				sourceUrl: "https://world.openfoodfacts.org/",
+				licenseName: "ODbL-1.0",
+				licenseUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
+				attribution: "Open Food Facts contributors",
+			},
+		});
+
+		expect(product.fieldSources.category).toBeNull();
+		expect(product.fieldSources.structuredIngredients).toBeNull();
+		expect(product.sourceAttributions.map((source) => source.source)).toEqual([
+			"usda",
+		]);
+	});
+
+	it("withholds images that lack complete asset-level rights metadata", () => {
+		const incompleteImageRecord = structuredClone(record);
+		delete incompleteImageRecord.images[0].attributionText;
+
+		const product = mapApprovedCatalogRecordToApiV1Product(
+			incompleteImageRecord,
+		);
+
+		expect(product.images).toEqual([]);
 	});
 
 	it("creates predictable pagination", () => {

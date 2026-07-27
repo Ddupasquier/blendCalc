@@ -92,6 +92,7 @@ export type ApprovedCatalogRecord = {
 	brandOwner: string | null;
 	category: ResolvedFoodCategory | null;
 	canonicalProvenance: Json;
+	fieldProvenance: Record<string, CatalogFieldSource>;
 	source: string;
 	sourceReference: string | null;
 	confidence: string;
@@ -101,6 +102,13 @@ export type ApprovedCatalogRecord = {
 	revision: ProductRevision;
 	food: FdcFood;
 	images: FoodImageAsset[];
+};
+
+export type CatalogFieldSource = {
+	source: string;
+	sourceReference: string | null;
+	confidence: string | null;
+	verificationMethod: string | null;
 };
 
 export type ApprovedCatalogPage = {
@@ -204,13 +212,67 @@ const readActiveFoodImages = async (
 	return imagesByProduct;
 };
 
+type CatalogFieldProvenanceRow = {
+	shared_product_id: string;
+	field_path: string;
+	confidence: string;
+	verification_method: string;
+	shared_product_observations:
+		| {
+			source: string;
+			source_reference: string | null;
+		}
+		| Array<{
+			source: string;
+			source_reference: string | null;
+		}>
+		| null;
+};
+
+const readSelectedFieldProvenance = async (
+	supabase: SupabaseClient<Database>,
+	productIds: string[],
+) => {
+	const { data, error } = await supabase
+		.from("shared_product_field_provenance")
+		.select(
+			"shared_product_id, field_path, confidence, verification_method, shared_product_observations(source, source_reference)",
+		)
+		.in("shared_product_id", productIds)
+		.eq("selected", true);
+	if (error) throw error;
+
+	const provenanceByProduct = new Map<string, Record<string, CatalogFieldSource>>();
+	for (const row of (data ?? []) as CatalogFieldProvenanceRow[]) {
+		const observation = Array.isArray(row.shared_product_observations)
+			? row.shared_product_observations[0]
+			: row.shared_product_observations;
+		if (!observation) continue;
+		const productProvenance = provenanceByProduct.get(row.shared_product_id) ?? {};
+		productProvenance[row.field_path] = {
+			source: observation.source,
+			sourceReference: observation.source_reference,
+			confidence: row.confidence,
+			verificationMethod: row.verification_method,
+		};
+		provenanceByProduct.set(row.shared_product_id, productProvenance);
+	}
+	return provenanceByProduct;
+};
+
 const hydrateCatalogRows = async (
 	supabase: SupabaseClient<Database>,
 	rows: CatalogProductRow[],
 ): Promise<ApprovedCatalogRecord[]> => {
 	if (rows.length === 0) return [];
 	const ids = rows.map((row) => row.id);
-	const [nutrientRows, servingRows, categories, imagesByProduct] = await Promise.all([
+	const [
+		nutrientRows,
+		servingRows,
+		categories,
+		imagesByProduct,
+		fieldProvenanceByProduct,
+	] = await Promise.all([
 		readNormalizedNutrientsByParent(supabase, "shared_product_id", ids),
 		readFoodServingsByParent(supabase, "shared_product_id", ids),
 		readFoodCategoryOptions(
@@ -218,6 +280,7 @@ const hydrateCatalogRows = async (
 			rows.map((row) => row.category_option_id),
 		),
 		readActiveFoodImages(supabase, rows),
+		readSelectedFieldProvenance(supabase, ids),
 	]);
 	return rows.map((row) => {
 		const category = row.category_option_id
@@ -253,6 +316,7 @@ const hydrateCatalogRows = async (
 			brandOwner: row.brand_owner,
 			category,
 			canonicalProvenance: row.canonical_provenance,
+			fieldProvenance: fieldProvenanceByProduct.get(row.id) ?? {},
 			source: row.source,
 			sourceReference: row.source_reference,
 			confidence: row.confidence,

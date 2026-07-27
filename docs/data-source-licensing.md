@@ -1,6 +1,6 @@
 # Data Source Licensing And Compliance
 
-Last reviewed: 2026-07-22
+Last reviewed: 2026-07-26
 
 This tracked document is blendCalc's human-readable licensing and attribution ledger
 for external food data, images, standards, and processing tools. It records what each
@@ -21,7 +21,8 @@ blendCalc separates source evidence from canonical published data:
 2. Accepted fields retain source identifiers, references, retrieval dates, confidence,
    and field-level provenance.
 3. `product_data_sources` records source identity, terms, attribution, enablement,
-   canonical-storage permission, licence identity, policy review date, and policy notes.
+   canonical-storage permission, API-redistribution permission, licence identity,
+   policy review date, and policy notes.
 4. `generic_food_datasets` records release-specific source URLs, hashes, licences,
    attribution, import approval, and activation.
 5. `food_image_assets` records per-image source, source reference, licence, licence URL,
@@ -30,17 +31,21 @@ blendCalc separates source evidence from canonical published data:
 7. API v1 reads the blendCalc database only. It does not call external providers during
    a public read, and product responses preserve represented sources in
    `sourceAttributions`.
+8. `blendcalc_api_v1_product_readiness` evaluates every active `shared_products` row.
+   Product API reads include only rows whose populated fields, normalized nutrients, and
+   normalized servings have complete, API-approved source evidence.
 
-`canonical_storage_allowed = false` is intended to be a hard publication boundary. A
-source may still be usable for live lookup, comparison, or a separately licensed asset
-without being eligible for the blendCalc canonical catalog or future public API.
+`canonical_storage_allowed = false` and `api_redistribution_allowed = false` are hard
+publication boundaries. A source may still be usable for live lookup, comparison, or a
+separately licensed asset without being eligible for the blendCalc canonical catalog or
+future public API.
 
 ## Status Summary
 
 | Source | Current use | Governing terms | Current engineering status |
 | --- | --- | --- | --- |
 | USDA FoodData Central | Runtime barcode/product data and nutrition | CC0 1.0/public domain | Canonical and API reuse allowed |
-| Open Food Facts | Runtime barcode lookup, licensed cache, package images | ODbL/Database Contents Licence; images under CC BY-SA | **Policy mismatch must be fixed before public API release** |
+| Open Food Facts | Runtime barcode lookup, licensed cache, package images | ODbL/Database Contents Licence; images under CC BY-SA | Product fields are excluded from API v1; individually licensed images remain eligible |
 | Canadian Nutrient File 2026 | Imported generic-food composition data | Open Government Licence – Canada | Canonical and API reuse approved in the registry with attribution |
 | UK CoFID 2021 | Imported generic-food composition data | Open Government Licence v3.0 | Canonical and API reuse approved in the registry with attribution |
 | Australian Food Composition Database Release 3 | Candidate generic-food dataset | FSANZ agreement based on CC BY-SA 3.0 Australia | Import and canonical use blocked |
@@ -115,8 +120,11 @@ Official references:
 - Open Food Facts images are stored separately in `food_image_assets` with their source,
   reference, licence, licence URL, and attribution. Full image views use the shared
   asset-attribution component.
-- API v1 can return stored source metadata, but Open Food Facts has no approved canonical
-  licence in `product_data_sources`, so it is not ready for public canonical output.
+- API v1 excludes products or populated fields that depend on Open Food Facts database
+  content because its source row is not approved for canonical/API redistribution.
+- Open Food Facts images remain a separate asset class. API v1 may return an image only
+  when the asset row contains its CC BY-SA licence, licence URL, and attribution; image
+  provenance does not make Open Food Facts a source of the product-data row.
 
 ### Known Policy Mismatch
 
@@ -134,8 +142,9 @@ Before public API release, blendCalc must choose and implement one model:
    attribution, share-alike publication, compatible-source analysis, and a reviewed
    legal decision.
 
-Until that decision is implemented, Open Food Facts-backed canonical records are a
-release blocker for public API redistribution.
+Until that decision is implemented, Open Food Facts-backed canonical fields remain
+withheld by the database publication gate. Their existence in `shared_products` does
+not silently authorize or expose them.
 
 ## Canadian Nutrient File 2026
 
@@ -328,9 +337,10 @@ Only deliberately selected, per-file-reviewed assets may be stored and rendered.
 
 ## Known Gaps And Release Blockers
 
-1. **Open Food Facts canonical publication:** exact matches can still auto-publish even
-   though the source registry blocks canonical storage. Resolve the downstream ODbL
-   model or block that publication path before public API release.
+1. **Open Food Facts canonical intake:** exact matches can still enter the internal
+   shared catalog even though the source registry blocks canonical/API redistribution.
+   The API publication gate now withholds those rows. Resolve the downstream ODbL model
+   or block that intake path before those fields can be published.
 2. **In-app data attribution:** detailed nutrition currently shows a neutral source
    label, while full licence URLs and attribution are consistently available for images
    and API v1. Add a centralized, discoverable data-attribution view before public
@@ -380,6 +390,7 @@ Complete every item before enabling production traffic or canonical storage:
 Do not include a source in a public blendCalc API response unless:
 
 - canonical/public storage is explicitly allowed in the database;
+- `api_redistribution_allowed` is explicitly enabled after policy review;
 - licence name, licence URL, attribution, and policy review date are present;
 - required field- and asset-level provenance survives normalization;
 - share-alike compatibility has been reviewed across combined sources;
@@ -403,8 +414,9 @@ output. Do not convert uncertainty into permission.
 | Per-image licence and attribution | `food_image_assets` |
 | Provider cache | `product_api_cache` |
 | API v1 source attribution mapping | `src/lib/server/api/v1/catalogApi.server.ts` |
+| API v1 row publication gate | `blendcalc_api_v1_product_readiness` |
+| API v1 field lineage | `docs/api-structures/catalog-field-lineage.md` |
 | Runtime provider requests | `src/lib/server/products/sources/` |
 | Request caching/rate controls | `src/lib/server/products/productApiRequests.server.ts` |
 | Shared catalog policy | `docs/shared-product-catalog.md` |
 | Database table map | `docs/supabase-schema.md` |
-

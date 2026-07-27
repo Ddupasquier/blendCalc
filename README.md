@@ -107,6 +107,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 | `npm run check:auth` | Validate auth environment and endpoint health |
 | `npm run audit:usda-branded-allergens` | Sample USDA branded allergen-related fields |
 | `npm run audit:off-allergens` | Sample Open Food Facts allergen/restriction fields |
+| `npm run audit:api-catalog` | Audit every active shared-catalog row for API publication readiness and field lineage |
 | `npm run seed:food-preferences` | Store cross-source observed food preference metadata in Supabase |
 | `npm run seed:food-categories` | Store cross-source observed custom-food category metadata in Supabase |
 | `npm run seed:food-categories:deep` | Run the broader category API sweep and rebuild category mappings |

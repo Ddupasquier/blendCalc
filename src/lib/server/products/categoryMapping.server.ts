@@ -10,6 +10,7 @@ export type ResolvedFoodCategory = {
 	sourceValue: string;
 	confidence: string;
 	symbolKey?: string;
+	updatedAt?: string | null;
 };
 
 export const mergeCanonicalFoodCategories = (
@@ -73,7 +74,7 @@ const resolveExactFoodCategoryOption = async (
 
 	const { data, error } = await supabase
 		.from("custom_food_category_options")
-		.select("id, label, normalized_value, symbol_key")
+		.select("id, label, normalized_value, symbol_key, updated_at")
 		.in("normalized_value", normalizedValues)
 		.eq("enabled", true);
 	if (error) throw error;
@@ -87,10 +88,11 @@ const resolveExactFoodCategoryOption = async (
 		return {
 			categoryOptionId: option.id,
 			label: option.label,
-			sourceValue: option.normalized_value,
-			confidence: "exact",
-			symbolKey: option.symbol_key,
-		};
+				sourceValue: option.normalized_value,
+				confidence: "exact",
+				symbolKey: option.symbol_key,
+				updatedAt: option.updated_at,
+			};
 	}
 	return null;
 };
@@ -114,7 +116,7 @@ export const readFoodCategoryOption = async (
 	if (!categoryOptionId) return null;
 	const { data, error } = await supabase
 		.from("custom_food_category_options")
-		.select("id, label, normalized_value, symbol_key")
+		.select("id, label, normalized_value, symbol_key, updated_at")
 		.eq("id", categoryOptionId)
 		.eq("enabled", true)
 		.maybeSingle();
@@ -126,6 +128,7 @@ export const readFoodCategoryOption = async (
 		sourceValue: data.normalized_value,
 		confidence: "exact",
 		symbolKey: data.symbol_key,
+		updatedAt: data.updated_at,
 	};
 };
 
@@ -137,7 +140,7 @@ export const readFoodCategoryOptions = async (
 	if (!ids.length) return new Map<string, ResolvedFoodCategory>();
 	const { data, error } = await supabase
 		.from("custom_food_category_options")
-		.select("id, label, normalized_value, symbol_key")
+		.select("id, label, normalized_value, symbol_key, updated_at")
 		.in("id", ids)
 		.eq("enabled", true);
 	if (error) throw error;
@@ -150,6 +153,7 @@ export const readFoodCategoryOptions = async (
 				sourceValue: row.normalized_value,
 				confidence: "exact",
 				symbolKey: row.symbol_key,
+				updatedAt: row.updated_at,
 			} satisfies ResolvedFoodCategory,
 		]),
 	);
