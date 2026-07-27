@@ -23,6 +23,7 @@ import {
 	findCanonicalNutrientMatch,
 	normalizeUnitName,
 } from "../lib/reference-data/nutrientMatching.mjs";
+import { preserveReviewedSourceNutrientMappings } from "../lib/source_nutrient_mapping_catalog.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -276,6 +277,14 @@ const seedNutrientMappings = async ({
 	offFoods,
 	taxonomy,
 }) => {
+	const { data: existingMappings, error: existingMappingsError } = await supabase
+		.from("nutrient_source_mappings")
+		.select(
+			"source_key, source_nutrient_key, source_unit_name, source_nutrient_name, nutrient_id, priority, mapping_method, confidence, enabled, review_status, review_reference, reviewed_at, first_observed_at, provenance",
+		)
+		.range(0, 4999);
+	if (existingMappingsError) throw existingMappingsError;
+
 	const usdaCounts = collectUsdaNutrients(usdaFoods);
 	const mappings = definitions.map((definition) => ({
 		source_key: "usda",
@@ -354,12 +363,16 @@ const seedNutrientMappings = async ({
 		}
 	}
 
-	const uniqueMappings = [...new Map(
+	const observedMappings = [...new Map(
 		mappings.map((mapping) => [
 			`${mapping.source_key}\u0000${mapping.source_nutrient_key}\u0000${mapping.source_unit_name}`,
 			mapping,
 		]),
 	).values()];
+	const uniqueMappings = preserveReviewedSourceNutrientMappings({
+		existingMappings: existingMappings ?? [],
+		observedMappings,
+	});
 	await upsertRows(
 		"nutrient_source_mappings",
 		uniqueMappings,

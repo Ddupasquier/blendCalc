@@ -3,6 +3,7 @@ import type {
 	NutrientSourceMapping,
 	ProductReferenceData,
 } from "$lib/utils/food/reference/productReferenceData";
+import { canonicalizeProductNutrients } from "$lib/utils/food/reference/productReferenceData";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export type OpenFoodFactsNutriments = Record<
@@ -118,5 +119,5 @@ export const mapOpenFoodFactsNutrients = (
 		});
 	}
 
-	return nutrients;
+	return canonicalizeProductNutrients(nutrients, referenceData);
 };

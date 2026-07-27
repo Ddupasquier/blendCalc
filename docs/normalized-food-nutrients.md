@@ -50,6 +50,12 @@ nutrient rows through foreign-key cascades.
 
 The migration also backfills all existing food snapshots.
 
+Barcode imports canonicalize enabled nutrient aliases before persistence. The
+`20260727120000_canonical_barcode_nutrient_mappings.sql` corrective migration applies
+the same database-reviewed equivalences to existing list items, custom foods, catalog
+submissions, catalog products, revisions, and source observations. Reported values and
+units are preserved; duplicate aliases yield to an already-present canonical nutrient.
+
 ## Application reads
 
 The application hydrates the existing `FdcFood.foodNutrients` contract from the

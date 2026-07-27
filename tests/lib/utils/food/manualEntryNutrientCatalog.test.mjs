@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createManualEntryNutrientCatalog } from "../../../../scripts/lib/manual_entry_nutrient_catalog.mjs";
-import { createSourceNutrientMappingCatalog } from "../../../../scripts/lib/source_nutrient_mapping_catalog.mjs";
+import {
+	createSourceNutrientMappingCatalog,
+	preserveReviewedSourceNutrientMappings,
+} from "../../../../scripts/lib/source_nutrient_mapping_catalog.mjs";
 import { findCanonicalNutrientMatch } from "../../../../scripts/lib/reference-data/nutrientMatching.mjs";
 
 const groups = [
@@ -128,6 +131,58 @@ describe("source nutrient mapping catalog", () => {
 				sourceUnitName: "µg",
 			}),
 		).toMatchObject({ nutrient_id: 1114 });
+	});
+
+	it("does not let a later API observation overwrite a reviewed mapping", () => {
+		const [mapping] = preserveReviewedSourceNutrientMappings({
+			existingMappings: [{
+				source_key: "open-food-facts",
+				source_nutrient_key: "fat",
+				source_unit_name: "G",
+				source_nutrient_name: "Fat",
+				nutrient_id: 1004,
+				priority: 0,
+				mapping_method: "db_reviewed_api_key_match",
+				confidence: 1,
+				enabled: true,
+				review_status: "approved",
+				review_reference: "reviewed-core-label-field",
+				reviewed_at: "2026-07-19T00:00:00.000Z",
+				first_observed_at: "2026-07-19T00:00:00.000Z",
+				provenance: { reviewed: true },
+			}],
+			observedMappings: [{
+				source_key: "open-food-facts",
+				source_nutrient_key: "fat",
+				source_unit_name: "G",
+				source_nutrient_name: "Total fat",
+				nutrient_id: 1085,
+				priority: 10,
+				mapping_method: "api_taxonomy_match",
+				confidence: 0.99,
+				enabled: true,
+				review_status: "approved",
+				review_reference: "taxonomy",
+				reviewed_at: "2026-07-27T00:00:00.000Z",
+				observation_count: 25,
+				first_observed_at: "2026-07-27T00:00:00.000Z",
+				last_observed_at: "2026-07-27T00:00:00.000Z",
+				provenance: { sampleSize: 25 },
+			}],
+		});
+
+		expect(mapping).toMatchObject({
+			nutrient_id: 1004,
+			mapping_method: "db_reviewed_api_key_match",
+			review_status: "approved",
+			review_reference: "reviewed-core-label-field",
+			observation_count: 25,
+			provenance: {
+				reviewed: true,
+				sampleSize: 25,
+				reviewedMappingPreserved: true,
+			},
+		});
 	});
 });
 

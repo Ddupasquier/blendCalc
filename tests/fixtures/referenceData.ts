@@ -290,6 +290,26 @@ export const productReferenceDataFixture: ProductReferenceData = {
 		toUnitName: "UG",
 		multiplier: 0.025,
 	}],
+	nutrientEquivalences: [
+		{
+			sourceKey: "usda",
+			sourceNutrientId: 1085,
+			sourceNutrientNumber: null,
+			nutrientId: NUTRIENT_IDS.FAT,
+			nutrientName: "Total lipid (fat)",
+			nutrientNumber: "204",
+			unitName: "G",
+		},
+		{
+			sourceKey: "usda",
+			sourceNutrientId: 1063,
+			sourceNutrientNumber: null,
+			nutrientId: NUTRIENT_IDS.SUGAR,
+			nutrientName: "Total Sugars",
+			nutrientNumber: "269",
+			unitName: "G",
+		},
+	],
 };
 
 export const ingredientProvenanceOptionsFixture: IngredientProvenanceOption[] = [

@@ -378,8 +378,16 @@ Notes:
 - `nutrient_definitions` remains the canonical owner of nutrient names, numbers, and
   default units. This table only explains how a source API field maps to that canonical
   row.
+- Runtime barcode mapping resolves enabled `nutrient_equivalences` before form
+  autofill, so source aliases such as USDA `1085` cannot bypass the canonical Total Fat
+  field. Exact canonical rows take precedence if a response contains both forms.
+- Reviewed mappings are semantic decisions. API-observation seed runs may refresh
+  observation metadata but cannot replace an approved or rejected nutrient identity.
 - The lookup index starts with source and source nutrient key so barcode mapping does
   not scan the full table.
+- `20260727120000_canonical_barcode_nutrient_mappings.sql` restores the reviewed Open
+  Food Facts label mappings, including Total Fat and gram-to-milligram Sodium, and
+  rewrites applicable existing food snapshots through the enabled equivalence catalog.
 
 ### `nutrient_unit_conversions`
 

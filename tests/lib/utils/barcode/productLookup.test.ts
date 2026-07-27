@@ -68,6 +68,107 @@ describe("barcode product mapping", () => {
 		);
 	});
 
+	it("autofills every nutrient reported for barcode 00011110129505", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Kalamata olives",
+				brands: "Kroger",
+				serving_size: "4 olives (15 g)",
+				serving_quantity: 15,
+				nutriments: {
+					"energy-kcal_serving": 40,
+					"energy-kcal_unit": "kcal",
+					fat_serving: 4,
+					fat_unit: "g",
+					"saturated-fat_serving": 0.5,
+					"saturated-fat_unit": "g",
+					carbohydrates_serving: 1,
+					carbohydrates_unit: "g",
+					fiber_serving: 1,
+					fiber_unit: "g",
+					proteins_serving: 0,
+					proteins_unit: "g",
+					sodium_serving: 0.25,
+					sodium_unit: "g",
+				},
+			},
+			"00011110129505",
+			productReferenceDataFixture,
+		);
+
+		expect(draft).toMatchObject({
+			barcode: "00011110129505",
+			name: "Kalamata Olives",
+			servingLabel: "4 olives (15 g)",
+			servingWeightGrams: 15,
+		});
+		expect(draft?.nutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CALORIES, value: 40 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.FAT, value: 4 }),
+				expect.objectContaining({ nutrientId: 1258, value: 0.5 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.CARBS, value: 1 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.FIBER, value: 1 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.PROTEIN, value: 0 }),
+				expect.objectContaining({
+					nutrientId: NUTRIENT_IDS.SODIUM,
+					unitName: "MG",
+					value: 250,
+				}),
+			]),
+		);
+		expect(draft?.nutrients).not.toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ nutrientId: 1257 }),
+				expect.objectContaining({ nutrientId: 1292 }),
+				expect.objectContaining({ nutrientId: 1293 }),
+				expect.objectContaining({ nutrientId: 1253 }),
+				expect.objectContaining({ nutrientId: NUTRIENT_IDS.SUGAR }),
+			]),
+		);
+	});
+
+	it("canonicalizes a drifted Open Food Facts total-fat mapping", () => {
+		const driftedReferenceData = {
+			...productReferenceDataFixture,
+			nutrientMappings: productReferenceDataFixture.nutrientMappings.map(
+				(mapping) =>
+					mapping.sourceNutrientKey === "fat"
+						? {
+								...mapping,
+								nutrientId: 1085,
+								nutrientName: "Total fat (NLEA)",
+								nutrientNumber: "298",
+							}
+						: mapping,
+			),
+		};
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Test eggs",
+				serving_size: "50 g",
+				nutriments: {
+					fat_serving: 5,
+					fat_unit: "g",
+				},
+			},
+			"00011110129505",
+			driftedReferenceData,
+		);
+
+		expect(draft?.nutrients).toContainEqual(
+			expect.objectContaining({
+				nutrientId: NUTRIENT_IDS.FAT,
+				nutrientName: "Total lipid (fat)",
+				nutrientNumber: "204",
+				value: 5,
+			}),
+		);
+		expect(draft?.nutrients).not.toContainEqual(
+			expect.objectContaining({ nutrientId: 1085 }),
+		);
+	});
+
 	it("keeps Open Food Facts core nutrients when the source reports zero", () => {
 		const draft = mapOpenFoodFactsProduct(
 			{
@@ -465,6 +566,104 @@ describe("barcode product mapping", () => {
 				value: 8,
 			}),
 		);
+	});
+
+	it("canonicalizes alternate USDA nutrient IDs before manual-entry autofill", () => {
+		const draft = mapFdcBarcodeFood(
+			{
+				fdcId: 127,
+				description: "Large eggs",
+				servingSize: 50,
+				servingSizeUnit: "g",
+				householdServingFullText: "1 egg",
+				foodNutrients: [
+					{
+						nutrientId: 1085,
+						nutrientName: "Total fat (NLEA)",
+						nutrientNumber: "298",
+						unitName: "G",
+						value: 10,
+						valueOrigin: "reported",
+						source: "usda",
+					},
+					{
+						nutrientId: 1063,
+						nutrientName: "Sugars, Total",
+						nutrientNumber: "269.3",
+						unitName: "G",
+						value: 2,
+						valueOrigin: "reported",
+						source: "usda",
+					},
+				],
+				reportedNutrientIds: [1085, 1063],
+			},
+			"00021130462506",
+			productReferenceDataFixture,
+		);
+
+		expect(draft?.nutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					nutrientId: NUTRIENT_IDS.FAT,
+					nutrientName: "Total lipid (fat)",
+					value: 5,
+				}),
+				expect.objectContaining({
+					nutrientId: NUTRIENT_IDS.SUGAR,
+					nutrientName: "Total Sugars",
+					value: 1,
+				}),
+			]),
+		);
+		expect(draft?.reportedNutrientIds).toEqual(
+			expect.arrayContaining([NUTRIENT_IDS.FAT, NUTRIENT_IDS.SUGAR]),
+		);
+	});
+
+	it("keeps an exact canonical nutrient when the provider also reports its alias", () => {
+		const draft = mapFdcBarcodeFood(
+			{
+				fdcId: 128,
+				description: "Egg product",
+				servingSize: 50,
+				servingSizeUnit: "g",
+				householdServingFullText: "1 egg",
+				foodNutrients: [
+					{
+						nutrientId: 1085,
+						nutrientName: "Total fat (NLEA)",
+						nutrientNumber: "298",
+						unitName: "G",
+						value: 12,
+						valueOrigin: "reported",
+						source: "usda",
+					},
+					{
+						nutrientId: NUTRIENT_IDS.FAT,
+						nutrientName: "Total lipid (fat)",
+						nutrientNumber: "204",
+						unitName: "G",
+						value: 10,
+						valueOrigin: "reported",
+						source: "usda",
+					},
+				],
+			},
+			"00021130462506",
+			productReferenceDataFixture,
+		);
+
+		expect(
+			draft?.nutrients.filter(
+				(nutrient) => nutrient.nutrientId === NUTRIENT_IDS.FAT,
+			),
+		).toEqual([
+			expect.objectContaining({
+				nutrientName: "Total lipid (fat)",
+				value: 5,
+			}),
+		]);
 	});
 
 	it("marks approved catalog records as shared products", () => {

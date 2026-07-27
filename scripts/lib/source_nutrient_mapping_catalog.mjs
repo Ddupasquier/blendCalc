@@ -1,7 +1,8 @@
 /**
  * Purpose: Resolve source nutrient keys and units through enabled DB-derived mapping rows,
- * preferring explicit unit matches and refusing ambiguous nutrient identities. This is a
- * pure shared module and does not query or mutate Supabase itself.
+ * preferring explicit unit matches and refusing ambiguous nutrient identities. It also
+ * protects reviewed semantic mappings when a later API-observation seed refreshes counts.
+ * This is a pure shared module and does not query or mutate Supabase itself.
  * Do not run directly; use `npm run seed:manual-entry-nutrients`.
  */
 
@@ -23,6 +24,52 @@ const normalizeUnit = (value) =>
 const compareMappings = (left, right) =>
 	Number(left.priority ?? 1000) - Number(right.priority ?? 1000) ||
 	Number(right.confidence ?? 0) - Number(left.confidence ?? 0);
+
+const getMappingIdentity = (mapping) =>
+	[
+		mapping.source_key,
+		normalizeKey(mapping.source_nutrient_key),
+		normalizeUnit(mapping.source_unit_name),
+	].join("\u0000");
+
+const REVIEWED_STATUSES = new Set(["approved", "rejected"]);
+
+export const preserveReviewedSourceNutrientMappings = ({
+	existingMappings,
+	observedMappings,
+}) => {
+	const existingByIdentity = new Map(
+		existingMappings.map((mapping) => [getMappingIdentity(mapping), mapping]),
+	);
+
+	return observedMappings.map((observed) => {
+		const existing = existingByIdentity.get(getMappingIdentity(observed));
+		if (!existing || !REVIEWED_STATUSES.has(existing.review_status)) {
+			return observed;
+		}
+
+		return {
+			...observed,
+			source_nutrient_name:
+				existing.source_nutrient_name ?? observed.source_nutrient_name,
+			nutrient_id: existing.nutrient_id,
+			priority: existing.priority,
+			mapping_method: existing.mapping_method,
+			confidence: existing.confidence,
+			enabled: existing.enabled,
+			review_status: existing.review_status,
+			review_reference: existing.review_reference,
+			reviewed_at: existing.reviewed_at,
+			first_observed_at:
+				existing.first_observed_at ?? observed.first_observed_at,
+			provenance: {
+				...(existing.provenance ?? {}),
+				...(observed.provenance ?? {}),
+				reviewedMappingPreserved: true,
+			},
+		};
+	});
+};
 
 export const createSourceNutrientMappingCatalog = (mappings) => {
 	const mappingsByKey = new Map();

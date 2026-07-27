@@ -24,6 +24,8 @@ import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement"
 import { normalizeFoodCategoryValue } from "$lib/utils/food/categories/categoryNormalization.js";
 import { extractExplicitAllergenDeclarations } from "$lib/server/products/allergenDeclarations.server.js";
 import {
+	canonicalizeProductNutrients,
+	getCanonicalProductNutrientId,
 	getProductDataSource,
 	type ProductReferenceData,
 } from "$lib/utils/food/reference/productReferenceData";
@@ -740,17 +742,24 @@ export const mapFdcBarcodeFood = (
 	const servingWeightGrams = hasExactGramWeight ? parsedServing?.grams ?? 100 : 100;
 	const servingScale = servingWeightGrams / 100;
 	const metadata = parseFdcMetadata(food);
-	const nutrients = food.foodNutrients.flatMap((nutrient) => {
-		const value = toNumber(nutrient.value);
-		return value === null ? [] : [{
-			...nutrient,
-			value: value * servingScale,
-		}];
-	});
+	const nutrients = canonicalizeProductNutrients(
+		food.foodNutrients.flatMap((nutrient) => {
+			const value = toNumber(nutrient.value);
+			return value === null ? [] : [{
+				...nutrient,
+				value: value * servingScale,
+			}];
+		}),
+		referenceData,
+	);
 	const nutrientIds = new Set(nutrients.map((nutrient) => nutrient.nutrientId));
-	const reportedNutrientIds = food.reportedNutrientIds ?? food.foodNutrients
-		.filter((nutrient) => nutrient.valueOrigin === "reported")
-		.map((nutrient) => nutrient.nutrientId);
+	const reportedNutrientIds = (
+		food.reportedNutrientIds ?? food.foodNutrients
+			.filter((nutrient) => nutrient.valueOrigin === "reported")
+			.map((nutrient) => nutrient.nutrientId)
+	).map((nutrientId) =>
+		getCanonicalProductNutrientId(referenceData, nutrientId)
+	);
 
 	return {
 		barcode: canonicalBarcode,
