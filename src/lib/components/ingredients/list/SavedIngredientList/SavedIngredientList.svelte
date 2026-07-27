@@ -33,7 +33,6 @@
 		movingItem = null,
 		moving = false,
 		revealPaused = false,
-		preferenceProfile = null,
 		resetKey = 0,
 		onSelectAll,
 		onEnterSelection,
@@ -203,7 +202,7 @@
 				>
 					{#each foods as food (food.fdcId)}
 						{@const actionKey = getIngredientActionKey(activeList, food.fdcId)}
-						{@const warning = getPrimaryFoodWarning(food, preferenceProfile)}
+						{@const warning = getPrimaryFoodWarning(food)}
 						{@const isChecked = selectedIdSet.has(food.fdcId)}
 						<li
 							data-food-id={food.fdcId}

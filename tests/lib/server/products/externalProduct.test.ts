@@ -219,6 +219,15 @@ describe("external barcode product lookup", () => {
 			traces: ["None declared"],
 			dietaryTags: ["Vegan"],
 			labels: ["Packaged food"],
+			structuredIngredients: [{ id: "tomato", text: "Tomatoes" }],
+			ingredientAnalysis: {
+				ingredientTags: ["tomato", "onion"],
+				analysisTags: ["vegan"],
+				derivedTraceTags: [],
+			},
+			additives: ["e330"],
+			packageQuantity: { label: "24 oz", amount: 24, unit: "oz" },
+			sourceMetadata: { language: "en", revision: 4 },
 		});
 		const openFoodFacts = vi.fn();
 

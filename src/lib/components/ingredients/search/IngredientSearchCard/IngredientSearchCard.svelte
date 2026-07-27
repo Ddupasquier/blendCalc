@@ -9,7 +9,6 @@
 		getFoodDisplayCategory,
 		getPrimaryFoodWarning,
 	} from "$lib/utils/ingredients/ingredientListUi";
-	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import type { IngredientSearchCardProps } from "./types";
 
 	let {
@@ -24,11 +23,8 @@
 		onActivate,
 	}: IngredientSearchCardProps = $props();
 
-	const foodPreferenceContext = getFoodPreferenceContext();
 	const category = $derived(getFoodDisplayCategory(food));
-	const warning = $derived(
-		getPrimaryFoodWarning(food, foodPreferenceContext.current),
-	);
+	const warning = $derived(getPrimaryFoodWarning(food));
 </script>
 
 <div

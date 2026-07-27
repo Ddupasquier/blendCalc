@@ -5,7 +5,7 @@ import type { FdcFood } from "$lib/utils/food/types";
 const cloudData = vi.hoisted(() => ({
 	deleteCloudSavedDrink: vi.fn(),
 	readCloudSavedDrinkById: vi.fn(),
-	readCloudSmoothieList: vi.fn(),
+	readCloudSmoothieListIndex: vi.fn(),
 	saveCloudSavedDrinkWithResult: vi.fn(),
 	saveCloudMixPreferences: vi.fn(),
 }));
@@ -51,9 +51,16 @@ describe("database-backed saved drinks", () => {
 		sessionStorage.clear();
 		vi.clearAllMocks();
 		cloudData.deleteCloudSavedDrink.mockResolvedValue(true);
-		cloudData.readCloudSmoothieList.mockImplementation(async (key: string) =>
-			key === MIX_STORAGE_KEYS.fridge ? [food] : []
-		);
+		cloudData.readCloudSmoothieListIndex.mockResolvedValue({
+			[MIX_STORAGE_KEYS.fridge]: {
+				foodIds: [food.fdcId],
+				foodIdentityKeys: [`fdc:${food.fdcId}`],
+			},
+			[MIX_STORAGE_KEYS.shoppingList]: {
+				foodIds: [],
+				foodIdentityKeys: [],
+			},
+		});
 		cloudData.saveCloudSavedDrinkWithResult.mockResolvedValue("saved");
 		cloudData.saveCloudMixPreferences.mockResolvedValue(true);
 		listData.addFoodsToSmoothieList.mockResolvedValue("added");

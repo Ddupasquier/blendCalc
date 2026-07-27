@@ -31,6 +31,14 @@ describe("blendCalc API v1 OpenAPI contract", () => {
 		expect(specification.components.schemas).toHaveProperty("Revision");
 		expect(specification.components.schemas).toHaveProperty("Serving");
 		expect(specification.components.schemas).toHaveProperty("Image");
+		expect(specification.components.schemas).toHaveProperty(
+			"StructuredIngredient",
+		);
+		expect(specification.components.schemas).toHaveProperty(
+			"IngredientAnalysis",
+		);
+		expect(specification.components.schemas).toHaveProperty("PackageQuantity");
+		expect(specification.components.schemas).toHaveProperty("SourceRecord");
 	});
 
 	it("never documents private storage or moderation fields", () => {

@@ -22,7 +22,7 @@ vi.mock("$lib/server/products/externalProduct.server", () => ({
 vi.mock("$lib/server/products/productReferenceData.server", () => ({
 	getProductReferenceData: mocks.getProductReferenceData,
 }));
-vi.mock("$lib/utils/barcode/productLookup", () => ({
+vi.mock("$lib/utils/barcode/barcodeProductMappers", () => ({
 	mapSharedCatalogFood: mocks.mapSharedCatalogFood,
 }));
 vi.mock("$lib/utils/storage/supabase/foodImages", () => ({
@@ -60,10 +60,19 @@ const makeDraft = (
 	categories: ["Pasta sauces"],
 	ingredients: "Tomato puree, onions, garlic",
 	ingredientList: ["Tomato puree", "Onions", "Garlic"],
+	structuredIngredients: [{ id: "tomato", text: "Tomato puree" }],
+	ingredientAnalysis: {
+		ingredientTags: ["tomato", "onion", "garlic"],
+		analysisTags: ["vegetarian"],
+		derivedTraceTags: [],
+	},
+	additives: ["e330"],
 	allergens: ["milk"],
 	traces: ["wheat"],
 	dietaryTags: ["vegetarian"],
 	labels: ["packaged food"],
+	packageQuantity: { label: "24 oz", amount: 24, unit: "oz" },
+	sourceMetadata: { language: "en", revision: 4 },
 	image: {
 		source: "open-food-facts",
 		sourceReference: "00021130493609",

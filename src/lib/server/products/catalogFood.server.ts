@@ -37,12 +37,18 @@ export const createCatalogFoodFromDraft = (
 			: draft.source === "usda"
 				? "usda"
 				: "community",
+		foodIdentityType: "packaged",
 		ingredients: draft.ingredients,
 		ingredientList: draft.ingredientList,
+		structuredIngredients: draft.structuredIngredients,
+		ingredientAnalysis: draft.ingredientAnalysis,
+		additives: draft.additives,
 		allergens: draft.allergens,
 		traces: draft.traces,
 		dietaryTags: draft.dietaryTags,
 		labels: draft.labels,
+		packageQuantity: draft.packageQuantity,
+		sourceMetadata: draft.sourceMetadata,
 		categories: category
 			? mergeCanonicalFoodCategories(category.label, draft.categories)
 			: draft.categories,
@@ -58,6 +64,7 @@ export const createCatalogFoodFromDraft = (
 		reportedNutrientIds: [...draft.reportedNutrientIds],
 		fdcId: getCatalogFoodId(draft),
 		dataType: "Shared Product",
+		foodIdentityType: "packaged",
 		customFood: false,
 		gtinUpc: draft.barcode,
 		sharedProductId,

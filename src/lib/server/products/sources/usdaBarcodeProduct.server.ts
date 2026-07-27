@@ -10,7 +10,7 @@ import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
 	mapFdcBarcodeFood,
 	type BarcodeProductDraft,
-} from "$lib/utils/barcode/productLookup";
+} from "$lib/utils/barcode/barcodeProductMappers";
 import type { ProductReferenceData } from "$lib/utils/food/reference/productReferenceData";
 import { summarizeBarcodeProductQuality } from "$lib/utils/food/sources/sourceQuality";
 import type { FdcFood } from "$lib/utils/food/types";

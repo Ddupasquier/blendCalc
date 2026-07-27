@@ -10,7 +10,7 @@ import { compactFood } from "$lib/utils/food/records/foodRecords";
 import {
 	deleteCloudSavedDrink,
 	readCloudSavedDrinkById,
-	readCloudSmoothieList,
+	readCloudSmoothieListIndex,
 	saveCloudSavedDrinkWithResult,
 	saveCloudMixPreferences,
 } from "$lib/utils/storage/supabase";
@@ -180,14 +180,15 @@ export const deleteSavedDrink = async (id: string) => {
 
 export const restoreSavedDrinkToMix = async (drink: SavedDrink) => {
 	const normalizedDrink = normalizeSavedDrink(drink);
-	const [fridge, shopping] = await Promise.all([
-		readCloudSmoothieList(MIX_STORAGE_KEYS.fridge),
-		readCloudSmoothieList(MIX_STORAGE_KEYS.shoppingList),
-	]);
-	if (!fridge || !shopping) return false;
+	const listIndex = await readCloudSmoothieListIndex();
+	if (!listIndex) return false;
 
-	const fridgeIds = new Set(fridge.map((food) => food.fdcId));
-	const shoppingIds = new Set(shopping.map((food) => food.fdcId));
+	const fridgeIds = new Set(
+		listIndex[MIX_STORAGE_KEYS.fridge].foodIds,
+	);
+	const shoppingIds = new Set(
+		listIndex[MIX_STORAGE_KEYS.shoppingList].foodIds,
+	);
 	const foodsMissingFromBothLists = normalizedDrink.foods.filter(
 		(food) =>
 			!fridgeIds.has(food.fdcId) && !shoppingIds.has(food.fdcId),

@@ -56,12 +56,11 @@
     } from "$lib/utils/storage/client/smoothieLists";
     import {
 		readCloudCustomFoods,
-        readCloudSmoothieListPage,
 		readCloudSmoothieListIndex,
 		type CloudSmoothieListIndex,
     } from "$lib/utils/storage/supabase";
+	import { readIngredientListPage } from "$lib/utils/ingredients/ingredientListApi";
     import { onMount } from "svelte";
-    import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
     import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
 	const initialIngredientData = page.data.ingredientData;
@@ -122,7 +121,6 @@
 	let renameBusy = $state(false);
 	let renameError = $state("");
     let listActionError = $state("");
-    const foodPreferenceContext = getFoodPreferenceContext();
     const ingredientRouteState = $derived(getIngredientRouteState(page.url));
     const documentTitle = $derived(
         getAppDocumentTitle(page.url, selectedFood?.description),
@@ -266,7 +264,7 @@
         const pageSize = reset
             ? LIST_PAGE_SIZES.ingredientPills
             : LIST_PAGE_SIZES.ingredientLoadMore;
-        const cloudPage = await readCloudSmoothieListPage(key, {
+        const cloudPage = await readIngredientListPage(key, {
             limit: pageSize,
             offset: currentOffset,
             query: listQuery,
@@ -1031,7 +1029,6 @@
                 {movingItem}
                 moving={movingItem !== null}
                 revealPaused={ingredientOverlayOpen}
-                preferenceProfile={foodPreferenceContext.current}
                 resetKey={listViewResetKey}
                 onSelectAll={selectAllActiveItems}
 				onEnterSelection={enterSelectionMode}

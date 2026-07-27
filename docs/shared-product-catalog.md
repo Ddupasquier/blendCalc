@@ -74,6 +74,16 @@ are not silently replaced. Provider data whose terms do not allow inclusion in t
 future blendCalc public dataset remains in its isolated licensed cache or image-asset
 path and is never disguised as blendCalc-owned canonical data.
 
+The missing-field plan covers nutrition, images, categories, servings, ingredient text
+and lists, recursive structured ingredients, ingredient analysis, additives, explicit
+allergens, explicit traces, dietary tags, labels, package quantity, and provider
+record/version metadata. One provider returning nutrition does not stop another
+provider from contributing a missing field. Provider-derived trace hypotheses stay in
+ingredient analysis; only explicit source trace/advisory fields populate `May contain`.
+Applicable existing products are backfilled through the same canonical enrichment
+transaction so recovered data, provenance, normalized rows, and revisions remain
+consistent with future writes.
+
 Source/API product names are normalized to readable title-style capitalization and use
 `&` instead of the standalone word `and` before publication so inconsistent vendor
 naming does not become app display names. Canonical food JSON stores `nameProvenance` as
@@ -96,6 +106,10 @@ unchanged.
   replaced with a generic packaged-food label during publication.
 - Raw USDA and Open Food Facts category values remain attached to the food payload so
   mappings can improve without losing source information.
+- Authoritative generic-food identities are typed separately from packaged products.
+  Their reviewed taxonomy may identify an intrinsic allergen such as shellfish for
+  shrimp. Packaged names, brands, descriptions, and categories never supply that
+  evidence and never create `May contain`.
 - Material serving, brand, unit, or nutrient disagreements are recorded as conflicts for
   review.
 - Moderator-reviewed labels remain identified as community-reviewed rather than
@@ -400,7 +414,8 @@ Packaged products and generic foods use different evidence paths:
    follow normal moderation rules if shared.
 
 Every accepted nutrient keeps its own source and source reference. Product-level field
-provenance separately records nutrition, image, category, and serving sources. A fuller
+provenance separately records nutrition, image, category, serving, ingredient,
+allergen, trace, label, additive, package, and source-metadata fields. A fuller
 secondary record may supplement missing fields but cannot silently overwrite an
 authoritative reported value or zero.
 

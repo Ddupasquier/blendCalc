@@ -17,15 +17,11 @@ import {
 	INGREDIENT_SEARCH_PAGE_SIZE,
 	paginateIngredientSearchResults,
 } from "$lib/utils/ingredients/ingredientSearchPagination";
-import {
-	getFoodPreferenceProfile,
-	isMissingFoodPreferencesTableError,
-} from "$lib/utils/profile/foodPreferenceProfile";
-import { annotateFoodWithPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { getNutritionCompletenessCatalog } from "$lib/server/nutrition/nutritionCompletenessCatalog.server";
-import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
+import { getUserFoodSafetyContext } from "$lib/server/food-safety/userFoodSafety.server";
+import { annotateFoodsWithFoodSafety } from "$lib/server/food-safety/foodSafetyEvaluation.server";
 import {
 	requireAppValue,
 	throwAppError,
@@ -69,13 +65,6 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	}
 
 	try {
-		const foodPreferencesPromise = locals.supabase
-			.from("user_food_preferences")
-			.select(
-				"unit_system, allergens, dietary_restrictions, prioritized_nutrient_ids, default_smoothie_serving_grams, sensitive_acknowledged_at",
-			)
-			.eq("user_id", user.id)
-			.maybeSingle();
 		const searches: Promise<FdcFood[]>[] = [];
 		if (trustFilter === "any" || trustFilter === "user-private") {
 			searches.push(searchUserCustomFoods(locals.supabase, user.id, query, {
@@ -103,27 +92,14 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		}
 		const searchPromise = Promise.allSettled(searches);
 		const [
-			foodPreferencesResult,
 			searchResults,
 			nutritionCompletenessCatalog,
-			appReferenceCatalog,
+			foodSafetyContext,
 		] = await Promise.all([
-			foodPreferencesPromise,
 			searchPromise,
 			getNutritionCompletenessCatalog(),
-			getAppReferenceCatalog(),
+			getUserFoodSafetyContext(locals.supabase, user.id),
 		]);
-		if (
-			foodPreferencesResult.error &&
-			!isMissingFoodPreferencesTableError(foodPreferencesResult.error)
-		) {
-			throw foodPreferencesResult.error;
-		}
-		const profile = getFoodPreferenceProfile(
-			foodPreferencesResult.data,
-			appReferenceCatalog.foodPreferenceConflictRules,
-			appReferenceCatalog.foodCompatibilityMatchRules,
-		);
 		if (
 			searchResults.length > 0 &&
 			searchResults.every((result) => result.status === "rejected")
@@ -133,21 +109,19 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		const resultGroups = searchResults.map((result) =>
 			result.status === "fulfilled" ? result.value : [],
 		);
-		const foods = sortIngredientSearchResults(
+		const annotatedFoods = annotateFoodsWithFoodSafety(
 			mergeIngredientSearchResults(...resultGroups).filter((food) =>
 				matchesIngredientProvenance(food, sourceFilter, trustFilter)
 			),
+			foodSafetyContext,
+		);
+		const foods = sortIngredientSearchResults(
+			annotatedFoods,
 			query,
-			profile,
 			nutritionCompletenessCatalog,
 		);
 		const page = paginateIngredientSearchResults(foods, offset, limit);
-		return json({
-			...page,
-			foods: page.foods.map((food) =>
-				annotateFoodWithPreferenceWarnings(food, profile)
-			),
-		});
+		return json(page);
 	} catch {
 		return throwAppError(503, "FOOD_SEARCH_UNAVAILABLE");
 	}

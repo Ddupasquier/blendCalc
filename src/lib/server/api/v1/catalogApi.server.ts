@@ -148,10 +148,84 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 			: null,
 		ingredients: {
 			text: ingredientsText,
+			items: uniqueStrings(record.food.ingredientList ?? []),
+			structured: (record.food.structuredIngredients ?? []).map(
+				function mapIngredient(ingredient): ApiV1Product["ingredients"]["structured"][number] {
+					return {
+						id: ingredient.id ?? null,
+						text: ingredient.text ?? null,
+						percent: ingredient.percent ?? null,
+						percentEstimate: ingredient.percentEstimate ?? null,
+						percentMin: ingredient.percentMin ?? null,
+						percentMax: ingredient.percentMax ?? null,
+						vegan: ingredient.vegan ?? null,
+						vegetarian: ingredient.vegetarian ?? null,
+						ingredients: (ingredient.ingredients ?? []).map(mapIngredient),
+					};
+				},
+			),
+			analysis: record.food.ingredientAnalysis
+				? {
+					ingredientTags: uniqueStrings(
+						record.food.ingredientAnalysis.ingredientTags,
+					),
+					analysisTags: uniqueStrings(
+						record.food.ingredientAnalysis.analysisTags,
+					),
+					derivedTraceTags: uniqueStrings(
+						record.food.ingredientAnalysis.derivedTraceTags,
+					),
+					percentAnalysis:
+						record.food.ingredientAnalysis.percentAnalysis ?? null,
+					percentEstimate:
+						record.food.ingredientAnalysis.percentEstimate ?? null,
+					percentKnown:
+						record.food.ingredientAnalysis.percentKnown ?? null,
+					percentUnknown:
+						record.food.ingredientAnalysis.percentUnknown ?? null,
+				}
+				: null,
+			additives: uniqueStrings(record.food.additives ?? []),
 			allergens: uniqueStrings(record.food.allergens ?? []),
 			traces: uniqueStrings(record.food.traces ?? []),
 			dietaryTags: uniqueStrings(record.food.dietaryTags ?? []),
+			labels: uniqueStrings(record.food.labels ?? []),
 		},
+		packageQuantity: record.food.packageQuantity
+			? {
+				label: record.food.packageQuantity.label ?? null,
+				amount: record.food.packageQuantity.amount ?? null,
+				unit: record.food.packageQuantity.unit ?? null,
+			}
+			: null,
+		sourceRecord: record.food.sourceMetadata
+			? {
+				language: record.food.sourceMetadata.language ?? null,
+				languages: uniqueStrings(record.food.sourceMetadata.languages ?? []),
+				revision: record.food.sourceMetadata.revision ?? null,
+				schemaVersion: record.food.sourceMetadata.schemaVersion ?? null,
+				createdAt: record.food.sourceMetadata.createdAt ?? null,
+				modifiedAt: record.food.sourceMetadata.modifiedAt ?? null,
+				updatedAt: record.food.sourceMetadata.updatedAt ?? null,
+				completeness: record.food.sourceMetadata.completeness ?? null,
+				qualityTags: uniqueStrings(
+					record.food.sourceMetadata.qualityTags ?? [],
+				),
+				qualityErrorTags: uniqueStrings(
+					record.food.sourceMetadata.qualityErrorTags ?? [],
+				),
+				qualityWarningTags: uniqueStrings(
+					record.food.sourceMetadata.qualityWarningTags ?? [],
+				),
+				obsolete: record.food.sourceMetadata.obsolete ?? null,
+				obsoleteSince: record.food.sourceMetadata.obsoleteSince ?? null,
+				tagSources: Object.fromEntries(
+					Object.entries(record.food.sourceMetadata.tagSources ?? {}).map(
+						([field, sources]) => [field, uniqueStrings(sources)],
+					),
+				),
+			}
+			: null,
 		nutrients: [...record.food.foodNutrients]
 			.sort((left, right) => left.nutrientId - right.nutrientId)
 			.map((nutrient) => ({
@@ -206,7 +280,22 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 			name: null,
 			brand: null,
 			category: categorySource,
-			ingredients: null,
+			ingredients: toFieldSource(record.food.fieldProvenance?.ingredients),
+			structuredIngredients: toFieldSource(
+				record.food.fieldProvenance?.structuredIngredients,
+			),
+			ingredientAnalysis: toFieldSource(
+				record.food.fieldProvenance?.ingredientAnalysis,
+			),
+			additives: toFieldSource(record.food.fieldProvenance?.additives),
+			allergens: toFieldSource(record.food.fieldProvenance?.allergens),
+			traces: toFieldSource(record.food.fieldProvenance?.traces),
+			dietaryTags: toFieldSource(record.food.fieldProvenance?.dietaryTags),
+			labels: toFieldSource(record.food.fieldProvenance?.labels),
+			package: toFieldSource(record.food.fieldProvenance?.package),
+			sourceMetadata: toFieldSource(
+				record.food.fieldProvenance?.sourceMetadata,
+			),
 		},
 		revision: {
 			id: record.revision.id,

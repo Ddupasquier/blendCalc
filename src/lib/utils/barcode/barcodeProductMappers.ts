@@ -13,11 +13,16 @@ import {
 	type FoodFieldSource,
 	type FdcNutrient,
 	type FoodImageAsset,
+	type FoodIdentityType,
+	type FoodIngredientAnalysis,
+	type FoodPackageQuantity,
+	type FoodSourceRecordMetadata,
+	type FoodStructuredIngredient,
 } from "$lib/utils/food/types";
 import { OPEN_FOOD_FACTS_IMAGE_LICENSE } from "$lib/utils/food/images/foodImages";
 import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
 import { normalizeFoodCategoryValue } from "$lib/utils/food/categories/categoryNormalization.js";
-import { extractExplicitAllergenDeclarations } from "$lib/utils/food/allergens/allergenDeclarations.js";
+import { extractExplicitAllergenDeclarations } from "$lib/server/products/allergenDeclarations.server.js";
 import {
 	getProductDataSource,
 	type ProductReferenceData,
@@ -28,6 +33,7 @@ import {
 } from "$lib/utils/serving/servingAmount";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
+import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
 
 export type { OpenFoodFactsNutriments } from "$lib/utils/barcode/barcodeNutrients";
 
@@ -38,10 +44,24 @@ export type OpenFoodFactsProduct = {
 	brands?: string;
 	ingredients_text?: string;
 	ingredients_text_en?: string;
+	ingredients?: OpenFoodFactsIngredient[];
+	ingredients_tags?: string[];
+	ingredients_analysis_tags?: string[];
+	ingredients_percent_analysis?: number | string;
+	ingredients_percent_estimate?: number | string;
+	ingredients_percent_known?: number | string;
+	ingredients_percent_unknown?: number | string;
 	allergens?: string;
 	allergens_tags?: string[];
+	allergens_hierarchy?: string[];
+	allergens_lc?: string;
 	traces?: string;
 	traces_tags?: string[];
+	traces_hierarchy?: string[];
+	traces_lc?: string;
+	traces_from_ingredients?: string;
+	traces_from_user?: string;
+	additives_tags?: string[];
 	labels?: string;
 	labels_tags?: string[];
 	categories?: string;
@@ -58,7 +78,36 @@ export type OpenFoodFactsProduct = {
 	serving_size?: string;
 	serving_quantity?: number | string;
 	serving_quantity_unit?: string;
+	quantity?: string;
+	product_quantity?: number | string;
+	product_quantity_unit?: string;
+	lang?: string;
+	languages_tags?: string[];
+	created_t?: number | string;
+	last_modified_t?: number | string;
+	last_updated_t?: number | string;
+	rev?: number | string;
+	schema_version?: number | string;
+	completeness?: number | string;
+	data_quality_tags?: string[];
+	data_quality_errors_tags?: string[];
+	data_quality_warnings_tags?: string[];
+	obsolete?: boolean;
+	obsolete_since_date?: string;
+	tags_sources?: Record<string, string[] | string>;
 	nutriments?: OpenFoodFactsNutriments;
+};
+
+export type OpenFoodFactsIngredient = {
+	id?: string;
+	text?: string;
+	percent?: number | string;
+	percent_estimate?: number | string;
+	percent_min?: number | string;
+	percent_max?: number | string;
+	vegan?: string;
+	vegetarian?: string;
+	ingredients?: OpenFoodFactsIngredient[];
 };
 
 export type OpenFoodFactsResponse = {
@@ -76,12 +125,18 @@ export type BarcodeProductDraft = {
 	hasSourceServing?: boolean;
 	nutrients: FdcNutrient[];
 	reportedNutrientIds: number[];
+	foodIdentityType?: FoodIdentityType;
 	ingredients?: string;
 	ingredientList?: string[];
+	structuredIngredients?: FoodStructuredIngredient[];
+	ingredientAnalysis?: FoodIngredientAnalysis;
+	additives?: string[];
 	allergens?: string[];
 	traces?: string[];
 	dietaryTags?: string[];
 	labels?: string[];
+	packageQuantity?: FoodPackageQuantity;
+	sourceMetadata?: FoodSourceRecordMetadata;
 	categories?: string[];
 	resolvedCategory?: string;
 	categoryResolution?: {
@@ -102,10 +157,6 @@ export type BarcodeProductDraft = {
 	sourcePublishedDate?: string;
 	sourceModifiedDate?: string;
 };
-
-export const getBarcodeProductSourceDisplayLabel = (
-	draft: Pick<BarcodeProductDraft, "sourceLabel" | "sourceDataType">,
-) => [draft.sourceLabel, draft.sourceDataType].filter(Boolean).join(" · ");
 
 const toNumber = (value: unknown) => toFiniteNonnegativeNumber(value);
 
@@ -133,20 +184,200 @@ const splitDelimitedValues = (value?: string) =>
 const splitIngredientList = (value?: string) =>
 	uniqueCleanValues((value ?? "").split(/,(?![^(]*\))/));
 
+const toOptionalNumber = (value: unknown) => {
+	const number = Number(value);
+	return Number.isFinite(number) && number >= 0 ? number : undefined;
+};
+
+const toOptionalInteger = (value: unknown) => {
+	const number = Number(value);
+	return Number.isSafeInteger(number) && number >= 0 ? number : undefined;
+};
+
+const toIsoTimestamp = (value: unknown) => {
+	const timestamp = Number(value);
+	if (!Number.isFinite(timestamp) || timestamp <= 0) return undefined;
+	const date = new Date(timestamp * 1000);
+	return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
+const sanitizeStructuredIngredient = (
+	ingredient: OpenFoodFactsIngredient,
+	depth = 0,
+): FoodStructuredIngredient | null => {
+	if (depth > 5 || !ingredient || typeof ingredient !== "object") return null;
+	const id = ingredient.id?.trim();
+	const text = ingredient.text?.trim();
+	const nested = (ingredient.ingredients ?? [])
+		.slice(0, 100)
+		.flatMap((item) => {
+			const parsed = sanitizeStructuredIngredient(item, depth + 1);
+			return parsed ? [parsed] : [];
+		});
+	if (!id && !text && nested.length === 0) return null;
+	return {
+		...(id ? { id: cleanTag(id) } : {}),
+		...(text ? { text } : {}),
+		...(toOptionalNumber(ingredient.percent) !== undefined
+			? { percent: toOptionalNumber(ingredient.percent) }
+			: {}),
+		...(toOptionalNumber(ingredient.percent_estimate) !== undefined
+			? { percentEstimate: toOptionalNumber(ingredient.percent_estimate) }
+			: {}),
+		...(toOptionalNumber(ingredient.percent_min) !== undefined
+			? { percentMin: toOptionalNumber(ingredient.percent_min) }
+			: {}),
+		...(toOptionalNumber(ingredient.percent_max) !== undefined
+			? { percentMax: toOptionalNumber(ingredient.percent_max) }
+			: {}),
+		...(ingredient.vegan?.trim() ? { vegan: ingredient.vegan.trim() } : {}),
+		...(ingredient.vegetarian?.trim()
+			? { vegetarian: ingredient.vegetarian.trim() }
+			: {}),
+		...(nested.length > 0 ? { ingredients: nested } : {}),
+	};
+};
+
+const getStructuredIngredientTexts = (
+	ingredients: FoodStructuredIngredient[],
+): string[] => ingredients.flatMap((ingredient) => [
+	...(ingredient.text ? [ingredient.text] : []),
+	...(ingredient.ingredients
+		? getStructuredIngredientTexts(ingredient.ingredients)
+		: []),
+]);
+
+const normalizeTagSources = (
+	value: OpenFoodFactsProduct["tags_sources"],
+): Record<string, string[]> | undefined => {
+	if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+	const entries = Object.entries(value).flatMap(([key, sources]) => {
+		const normalized = uniqueCleanValues(
+			Array.isArray(sources) ? sources : [sources],
+		);
+		return key.trim() && normalized.length > 0 ? [[key, normalized] as const] : [];
+	});
+	return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+};
+
+const parseOpenFoodFactsPackageQuantity = (
+	product: OpenFoodFactsProduct,
+): FoodPackageQuantity | undefined => {
+	const label = product.quantity?.trim();
+	const amount = toOptionalNumber(product.product_quantity);
+	const unit = product.product_quantity_unit?.trim();
+	if (!label && amount === undefined && !unit) return undefined;
+	return {
+		...(label ? { label } : {}),
+		...(amount !== undefined ? { amount } : {}),
+		...(unit ? { unit } : {}),
+	};
+};
+
+const parseOpenFoodFactsSourceMetadata = (
+	product: OpenFoodFactsProduct,
+): FoodSourceRecordMetadata | undefined => {
+	const metadata: FoodSourceRecordMetadata = {
+		...(product.lang?.trim() ? { language: product.lang.trim() } : {}),
+		...(product.languages_tags?.length
+			? { languages: uniqueCleanValues(product.languages_tags) }
+			: {}),
+		...(toOptionalInteger(product.rev) !== undefined
+			? { revision: toOptionalInteger(product.rev) }
+			: {}),
+		...(toOptionalInteger(product.schema_version) !== undefined
+			? { schemaVersion: toOptionalInteger(product.schema_version) }
+			: {}),
+		...(toIsoTimestamp(product.created_t)
+			? { createdAt: toIsoTimestamp(product.created_t) }
+			: {}),
+		...(toIsoTimestamp(product.last_modified_t)
+			? { modifiedAt: toIsoTimestamp(product.last_modified_t) }
+			: {}),
+		...(toIsoTimestamp(product.last_updated_t)
+			? { updatedAt: toIsoTimestamp(product.last_updated_t) }
+			: {}),
+		...(toOptionalNumber(product.completeness) !== undefined
+			? { completeness: toOptionalNumber(product.completeness) }
+			: {}),
+		...(product.data_quality_tags?.length
+			? { qualityTags: uniqueCleanValues(product.data_quality_tags) }
+			: {}),
+		...(product.data_quality_errors_tags?.length
+			? { qualityErrorTags: uniqueCleanValues(product.data_quality_errors_tags) }
+			: {}),
+		...(product.data_quality_warnings_tags?.length
+			? { qualityWarningTags: uniqueCleanValues(product.data_quality_warnings_tags) }
+			: {}),
+		...(typeof product.obsolete === "boolean"
+			? { obsolete: product.obsolete }
+			: {}),
+		...(product.obsolete_since_date?.trim()
+			? { obsoleteSince: product.obsolete_since_date.trim() }
+			: {}),
+		...(normalizeTagSources(product.tags_sources)
+			? { tagSources: normalizeTagSources(product.tags_sources) }
+			: {}),
+	};
+	return Object.keys(metadata).length > 0 ? metadata : undefined;
+};
+
 const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
 	const ingredients =
 		product.ingredients_text_en?.trim() || product.ingredients_text?.trim();
+	const structuredIngredients = (product.ingredients ?? [])
+		.slice(0, 250)
+		.flatMap((ingredient) => {
+			const parsed = sanitizeStructuredIngredient(ingredient);
+			return parsed ? [parsed] : [];
+		});
+	const ingredientAnalysis: FoodIngredientAnalysis = {
+		ingredientTags: uniqueCleanValues(product.ingredients_tags ?? []),
+		analysisTags: uniqueCleanValues(product.ingredients_analysis_tags ?? []),
+		derivedTraceTags: uniqueCleanValues(
+			splitDelimitedValues(product.traces_from_ingredients),
+		),
+		...(toOptionalNumber(product.ingredients_percent_analysis) !== undefined
+			? {
+				percentAnalysis: toOptionalNumber(
+					product.ingredients_percent_analysis,
+				),
+			}
+			: {}),
+		...(toOptionalNumber(product.ingredients_percent_estimate) !== undefined
+			? {
+				percentEstimate: toOptionalNumber(
+					product.ingredients_percent_estimate,
+				),
+			}
+			: {}),
+		...(toOptionalNumber(product.ingredients_percent_known) !== undefined
+			? { percentKnown: toOptionalNumber(product.ingredients_percent_known) }
+			: {}),
+		...(toOptionalNumber(product.ingredients_percent_unknown) !== undefined
+			? { percentUnknown: toOptionalNumber(product.ingredients_percent_unknown) }
+			: {}),
+	};
 
 	return {
 		ingredients: ingredients || undefined,
-		ingredientList: splitIngredientList(ingredients),
+		ingredientList: uniqueCleanValues([
+			...splitIngredientList(ingredients),
+			...getStructuredIngredientTexts(structuredIngredients),
+		]),
+		structuredIngredients,
+		ingredientAnalysis,
+		additives: uniqueCleanValues(product.additives_tags ?? []),
 		allergens: uniqueCleanValues([
 			...splitDelimitedValues(product.allergens),
 			...(product.allergens_tags ?? []),
+			...(product.allergens_hierarchy ?? []),
 		]),
 		traces: uniqueCleanValues([
 			...splitDelimitedValues(product.traces),
 			...(product.traces_tags ?? []),
+			...(product.traces_hierarchy ?? []),
+			...splitDelimitedValues(product.traces_from_user),
 		]),
 		dietaryTags: uniqueCleanValues(product.labels_tags ?? []),
 		labels: uniqueCleanValues([
@@ -160,6 +391,8 @@ const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
 			...(product.categories_tags ?? []),
 			...splitDelimitedValues(product.categories),
 		]),
+		packageQuantity: parseOpenFoodFactsPackageQuantity(product),
+		sourceMetadata: parseOpenFoodFactsSourceMetadata(product),
 	};
 };
 
@@ -286,6 +519,17 @@ const createOpenFoodFactsFieldProvenance = ({
 		...(metadata.traces.length > 0 ? { traces: source } : {}),
 		...(metadata.dietaryTags.length > 0 ? { dietaryTags: source } : {}),
 		...(metadata.labels.length > 0 ? { labels: source } : {}),
+		...(metadata.structuredIngredients.length > 0
+			? { structuredIngredients: source }
+			: {}),
+		...(metadata.ingredientAnalysis.ingredientTags.length > 0 ||
+				metadata.ingredientAnalysis.analysisTags.length > 0 ||
+				metadata.ingredientAnalysis.derivedTraceTags.length > 0
+			? { ingredientAnalysis: source }
+			: {}),
+		...(metadata.additives.length > 0 ? { additives: source } : {}),
+		...(metadata.packageQuantity ? { package: source } : {}),
+		...(metadata.sourceMetadata ? { sourceMetadata: source } : {}),
 	};
 };
 
@@ -367,6 +611,22 @@ const createFdcFieldProvenance = ({
 		...(metadata.labels.length > 0 && !food.fieldProvenance?.labels
 			? { labels: fallback }
 			: {}),
+		...(food.structuredIngredients?.length &&
+				!food.fieldProvenance?.structuredIngredients
+			? { structuredIngredients: fallback }
+			: {}),
+		...(food.ingredientAnalysis && !food.fieldProvenance?.ingredientAnalysis
+			? { ingredientAnalysis: fallback }
+			: {}),
+		...(food.additives?.length && !food.fieldProvenance?.additives
+			? { additives: fallback }
+			: {}),
+		...(food.packageQuantity && !food.fieldProvenance?.package
+			? { package: fallback }
+			: {}),
+		...(food.sourceMetadata && !food.fieldProvenance?.sourceMetadata
+			? { sourceMetadata: fallback }
+			: {}),
 	};
 };
 
@@ -438,6 +698,7 @@ export const mapOpenFoodFactsProduct = (
 		hasSourceServing: hasExactGramWeight,
 		nutrients,
 		reportedNutrientIds: [...new Set(nutrients.map((nutrient) => nutrient.nutrientId))],
+		foodIdentityType: "packaged",
 		...metadata,
 		image,
 		fieldProvenance: createOpenFoodFactsFieldProvenance({
@@ -455,6 +716,7 @@ export const mapOpenFoodFactsProduct = (
 		sourceLabel: source.displayName,
 		sourceReference: canonicalBarcode,
 		sourceKey: source.key,
+		sourceModifiedDate: metadata.sourceMetadata?.modifiedAt,
 	};
 };
 
@@ -502,7 +764,13 @@ export const mapFdcBarcodeFood = (
 		reportedNutrientIds: [
 			...new Set(reportedNutrientIds),
 		].filter((nutrientId) => nutrientIds.has(nutrientId)),
+		foodIdentityType: resolveFoodIdentityType(food),
 		...metadata,
+		structuredIngredients: food.structuredIngredients,
+		ingredientAnalysis: food.ingredientAnalysis,
+		additives: food.additives,
+		packageQuantity: food.packageQuantity,
+		sourceMetadata: food.sourceMetadata,
 		image: food.image,
 		fieldProvenance: createFdcFieldProvenance({
 			food,
@@ -543,6 +811,7 @@ export const mapSharedCatalogFood = (
 
 	return {
 		...draft,
+		foodIdentityType: "packaged",
 		source: "shared-catalog",
 		sourceLabel: food.sourceLabel ?? source.displayName,
 		sourceReference: food.sharedProductId,

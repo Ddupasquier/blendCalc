@@ -1,19 +1,14 @@
 <script lang="ts">
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
-	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import {
 		FOOD_PREFERENCE_WARNING_TITLE,
 		getFoodPreferenceWarningMessage,
-		getFoodPreferenceWarnings,
 	} from "$lib/utils/profile/foodPreferenceWarnings";
 	import type { NutritionPreferenceConflictProps } from "./types";
 
 	let { food }: NutritionPreferenceConflictProps = $props();
 
-	const foodPreferenceContext = getFoodPreferenceContext();
-	const preferenceWarnings = $derived(
-		food ? getFoodPreferenceWarnings(food, foodPreferenceContext.current) : [],
-	);
+	const preferenceWarnings = $derived(food?.preferenceWarnings ?? []);
 	const hasConfirmedPreferenceConflict = $derived(
 		preferenceWarnings.some((warning) => warning.level === "warning"),
 	);

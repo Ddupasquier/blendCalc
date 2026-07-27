@@ -1,6 +1,5 @@
 import type { FdcFood } from "$lib/utils/food/types";
 import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
-import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 
 export type SavedIngredientListProps = {
@@ -18,7 +17,6 @@ export type SavedIngredientListProps = {
 	movingItem?: string | null;
 	moving?: boolean;
 	revealPaused?: boolean;
-	preferenceProfile?: FoodPreferenceProfile | null;
 	resetKey?: number;
 	onSelectAll: () => void;
 	onEnterSelection: (foodId?: number) => void;

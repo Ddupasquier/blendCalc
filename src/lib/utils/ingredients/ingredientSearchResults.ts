@@ -1,7 +1,6 @@
 import type { FdcFood } from "$lib/utils/food/types";
 import { compareFoodQuality } from "$lib/utils/food/quality/foodQuality";
 import { createIngredientSearchRelevanceComparator } from "$lib/utils/ingredients/ingredientSearchRelevance";
-import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 import { getFoodDownrankScore } from "$lib/utils/profile/foodPreferenceWarnings";
 import type { NutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 
@@ -22,7 +21,6 @@ export const mergeIngredientSearchResults = (...resultGroups: FdcFood[][]) => {
 export const sortIngredientSearchResults = (
 	results: FdcFood[],
 	query: string,
-	preferenceProfile: FoodPreferenceProfile | null,
 	nutritionCompletenessCatalog?: NutritionCompletenessCatalog,
 ) => {
 	const compareRelevance = createIngredientSearchRelevanceComparator(query);
@@ -31,8 +29,8 @@ export const sortIngredientSearchResults = (
 		if (relevanceSort !== 0) return relevanceSort;
 
 		const preferencePenalty =
-			getFoodDownrankScore(left, preferenceProfile) -
-			getFoodDownrankScore(right, preferenceProfile);
+			getFoodDownrankScore(left) -
+			getFoodDownrankScore(right);
 		if (preferencePenalty !== 0) return preferencePenalty;
 
 		const qualitySort = compareFoodQuality(

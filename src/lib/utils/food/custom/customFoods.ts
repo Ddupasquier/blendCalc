@@ -17,6 +17,11 @@ import type {
 	FoodFieldSource,
 	FoodImageAsset,
 	FoodBarcodeProvenance,
+	FoodIdentityType,
+	FoodIngredientAnalysis,
+	FoodPackageQuantity,
+	FoodSourceRecordMetadata,
+	FoodStructuredIngredient,
 } from "$lib/utils/food/types";
 import { normalizeCustomFoodName } from "$lib/utils/food/custom/customFoodNames";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
@@ -40,12 +45,21 @@ export type CustomFoodInput = {
 	sourceDataType?: string;
 	sourcePublishedDate?: string;
 	sourceModifiedDate?: string;
+	foodIdentityType?: FoodIdentityType;
+	scientificName?: string;
+	alternateDescription?: string;
+	preparation?: string;
 	ingredients?: string;
 	ingredientList?: string[];
+	structuredIngredients?: FoodStructuredIngredient[];
+	ingredientAnalysis?: FoodIngredientAnalysis;
+	additives?: string[];
 	allergens?: string[];
 	traces?: string[];
 	dietaryTags?: string[];
 	labels?: string[];
+	packageQuantity?: FoodPackageQuantity;
+	sourceMetadata?: FoodSourceRecordMetadata;
 	categories?: string[];
 	categoryOptionId?: string;
 	symbolKey?: string;
@@ -221,6 +235,11 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		brandOwner: input.brandOwner?.trim() || undefined,
 		foodCategory: canonicalCategory,
 		dataType: input.sourceDataType?.trim() || (customFood ? "Custom" : "Branded"),
+		foodIdentityType: input.foodIdentityType ??
+			(customFood ? "private-custom" : "packaged"),
+		scientificName: input.scientificName,
+		alternateDescription: input.alternateDescription,
+		preparation: input.preparation,
 		servingSize: servingWeightGrams,
 		servingSizeUnit: "g",
 		hasSourceServing,
@@ -239,10 +258,15 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 			: [],
 		ingredients: input.ingredients?.trim() || undefined,
 		ingredientList: input.ingredientList,
+		structuredIngredients: input.structuredIngredients,
+		ingredientAnalysis: input.ingredientAnalysis,
+		additives: input.additives,
 		allergens: input.allergens,
 		traces: input.traces,
 		dietaryTags: input.dietaryTags,
 		labels: input.labels,
+		packageQuantity: input.packageQuantity,
+		sourceMetadata: input.sourceMetadata,
 		categories: input.categories,
 		categoryOptionId: input.categoryOptionId,
 		symbolKey: input.symbolKey,

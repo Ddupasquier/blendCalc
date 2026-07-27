@@ -103,12 +103,18 @@ export const createManualEntrySubmissionController = ({
 				form.data.barcodeSource !== "manual"
 					? form.data.barcodeReferenceSourceDraft?.sourceModifiedDate
 					: undefined,
+			foodIdentityType: form.data.foodIdentityType,
 			ingredients: form.data.ingredients,
 			ingredientList: form.data.ingredientList,
+			structuredIngredients: form.data.structuredIngredients,
+			ingredientAnalysis: form.data.ingredientAnalysis,
+			additives: form.data.additives,
 			allergens: form.data.allergens,
 			traces: form.data.traces,
 			dietaryTags: form.data.dietaryTags,
 			labels: form.data.labels,
+			packageQuantity: form.data.packageQuantity,
+			sourceMetadata: form.data.sourceMetadata,
 			activeCategory: form.data.category,
 			categoryOptionId: form.data.categoryOptionId,
 			categorySymbolKey: form.data.categorySymbolKey,

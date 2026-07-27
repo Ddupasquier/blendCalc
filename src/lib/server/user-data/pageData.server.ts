@@ -11,16 +11,31 @@ import {
 	readCloudCustomFoods,
 	readCloudMixPreferences,
 	readCloudSavedDrinks,
-	readCloudSmoothieList,
 	readCloudSmoothieListIndex,
-	readCloudSmoothieListPage,
 	type CloudDataContext,
 	type CloudSmoothieListIndex,
 } from "$lib/utils/storage/supabase";
+import {
+	readCloudSmoothieList,
+	readCloudSmoothieListPage,
+} from "$lib/server/user-data/foodLists.server";
+import {
+	annotateFoodsWithFoodSafety,
+	type FoodSafetyEvaluationContext,
+} from "$lib/server/food-safety/foodSafetyEvaluation.server";
+import { getUserFoodSafetyContext } from "$lib/server/food-safety/userFoodSafety.server";
 
 const emptyListIndex = (): CloudSmoothieListIndex => ({
 	[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
 	[MIX_STORAGE_KEYS.shoppingList]: { foodIds: [], foodIdentityKeys: [] },
+});
+
+const annotateListPage = (
+	page: NonNullable<Awaited<ReturnType<typeof readCloudSmoothieListPage>>>,
+	context: FoodSafetyEvaluationContext,
+) => ({
+	...page,
+	foods: annotateFoodsWithFoodSafety(page.foods, context),
 });
 
 const readInitialListPage = (
@@ -43,13 +58,21 @@ export const loadIngredientPageData = async (
 	context: CloudDataContext,
 ): Promise<IngredientPageInitialData> => {
 	try {
-		const [fridge, shoppingList, customFoods, listIndex, provenanceOptions] =
+		const [
+			fridge,
+			shoppingList,
+			customFoods,
+			listIndex,
+			provenanceOptions,
+			foodSafetyContext,
+		] =
 			await Promise.all([
 				readInitialListPage(context, MIX_STORAGE_KEYS.fridge),
 				readInitialListPage(context, MIX_STORAGE_KEYS.shoppingList),
 				readCloudCustomFoods(context),
 				readCloudSmoothieListIndex(context),
 				readIngredientProvenanceOptions(context.supabase),
+				getUserFoodSafetyContext(context.supabase, context.userId),
 			]);
 
 		if (!fridge || !shoppingList || !customFoods || !listIndex) {
@@ -57,9 +80,12 @@ export const loadIngredientPageData = async (
 		}
 
 		return {
-			fridge,
-			shoppingList,
-			customFoods,
+			fridge: annotateListPage(fridge, foodSafetyContext),
+			shoppingList: annotateListPage(shoppingList, foodSafetyContext),
+			customFoods: annotateFoodsWithFoodSafety(
+				customFoods,
+				foodSafetyContext,
+			),
 			listIndex,
 			provenanceOptions: provenanceOptions ?? [],
 			loadError: "",
@@ -85,15 +111,24 @@ export const loadMixPageData = async (
 	context: CloudDataContext,
 ): Promise<MixPageInitialData> => {
 	try {
-		const [fridge, shoppingList, preferences] = await Promise.all([
+		const [fridge, shoppingList, preferences, foodSafetyContext] = await Promise.all([
 			readCloudSmoothieList(MIX_STORAGE_KEYS.fridge, context),
 			readCloudSmoothieList(MIX_STORAGE_KEYS.shoppingList, context),
 			readCloudMixPreferences(context),
+			getUserFoodSafetyContext(context.supabase, context.userId),
 		]);
 		if (!fridge || !shoppingList || !preferences) {
 			throw new Error("Authenticated ingredient lists were unavailable.");
 		}
-		return { fridge, shoppingList, preferences, loadError: "" };
+		return {
+			fridge: annotateFoodsWithFoodSafety(fridge, foodSafetyContext),
+			shoppingList: annotateFoodsWithFoodSafety(
+				shoppingList,
+				foodSafetyContext,
+			),
+			preferences,
+			loadError: "",
+		};
 	} catch (error) {
 		console.error("[user-data] Mix ingredient data could not load.", error);
 		return {

@@ -2,7 +2,7 @@ import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
 import {
 	placeCloudSmoothieListItem,
-	readCloudSmoothieList,
+	readCloudSmoothieListIndex,
 	moveCloudSmoothieListItems,
 	removeCloudSmoothieListItem,
 	renameCloudSmoothieListItem,
@@ -111,16 +111,13 @@ export const addFoodsToSmoothieList = async (
 	key: SmoothieListKey,
 	foods: FdcFood[],
 ): Promise<SmoothieListMutationResult> => {
-	const [list, oppositeList] = await Promise.all([
-		readCloudSmoothieList(key),
-		readCloudSmoothieList(getOppositeListKey(key)),
-	]);
-	if (!list || !oppositeList) return "error";
-	const oppositeIdentityKeys = new Set(
-		oppositeList.map(getFoodIdentityKey),
-	);
-	const existingIds = new Set(list.map((item) => item.fdcId));
-	const existingIdentityKeys = new Set(list.map(getFoodIdentityKey));
+	const listIndex = await readCloudSmoothieListIndex();
+	if (!listIndex) return "error";
+	const currentList = listIndex[key];
+	const oppositeList = listIndex[getOppositeListKey(key)];
+	const oppositeIdentityKeys = new Set(oppositeList.foodIdentityKeys);
+	const existingIds = new Set(currentList.foodIds);
+	const existingIdentityKeys = new Set(currentList.foodIdentityKeys);
 	const addedAt = Date.now();
 	const additions = uniqueFoodsById(foods)
 		.filter(

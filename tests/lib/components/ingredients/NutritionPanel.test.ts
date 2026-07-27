@@ -1,28 +1,21 @@
 import { render, screen } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import NutritionPanel from "$lib/components/ingredients/nutrition/NutritionPanel/NutritionPanel.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
-
-vi.mock("$lib/utils/profile/foodPreferenceContext.svelte", () => ({
-	getFoodPreferenceContext: () => ({
-		current: {
-			unitSystem: "metric",
-			allergens: ["peanut"],
-			dietaryRestrictions: [],
-			prioritizedNutrientIds: [],
-			defaultSmoothieServingGrams: null,
-			sensitiveAcknowledgedAt: null,
-			warningRules: [],
-			matchRules: [],
-		},
-	}),
-}));
 
 const peanutButter: FdcFood = {
 	fdcId: 172470,
 	description: "Peanut butter, smooth style, with salt",
 	foodCategory: "Legumes and Legume Products",
 	allergens: ["peanut"],
+	preferenceWarnings: [{
+		id: "allergen-peanut-peanut-contains",
+		level: "warning",
+		category: "allergen",
+		label: "peanut",
+		code: "FOOD_ALLERGEN_CONTAINS",
+		params: { factLabel: "peanut" },
+	}],
 	foodNutrients: [],
 };
 
@@ -77,10 +70,14 @@ describe("NutritionPanel", () => {
 			props: {
 				food: {
 					...peanutButter,
-					ingredients: "Peanuts, sea salt",
-					allergens: ["peanuts"],
-					traces: ["tree nuts"],
-				},
+						ingredients: "Peanuts, sea salt",
+						allergens: ["peanuts"],
+						traces: ["tree nuts"],
+						allergenDisclosure: {
+							contains: ["Peanuts"],
+							mayContain: ["Tree nuts"],
+						},
+					},
 				viewingGrams: 100,
 				showListActions: false,
 			},

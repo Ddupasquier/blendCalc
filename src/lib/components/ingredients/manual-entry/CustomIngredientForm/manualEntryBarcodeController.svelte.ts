@@ -444,12 +444,18 @@ export const createManualEntryBarcodeController = ({
 			form.data.barcodeReferenceDraft = null;
 			form.data.barcodeReferenceAcceptedBarcode = "";
 			form.data.reportedNutrientIds = [];
+			form.data.foodIdentityType = "private-custom";
 			form.data.ingredients = "";
 			form.data.ingredientList = [];
+			form.data.structuredIngredients = [];
+			form.data.ingredientAnalysis = undefined;
+			form.data.additives = [];
 			form.data.allergens = [];
 			form.data.traces = [];
 			form.data.dietaryTags = [];
 			form.data.labels = [];
+			form.data.packageQuantity = undefined;
+			form.data.sourceMetadata = undefined;
 			form.data.categories = [];
 			return { focusTarget };
 		} finally {

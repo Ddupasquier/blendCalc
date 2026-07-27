@@ -33,7 +33,33 @@ const record: ApprovedCatalogRecord = {
 		fdcId: 123,
 		description: "Roasted Onion & Garlic Pasta Sauce",
 		ingredients: "Tomatoes, onion",
+		ingredientList: ["Tomatoes", "Onion"],
+		structuredIngredients: [{
+			id: "en:tomato",
+			text: "Tomatoes",
+			percentEstimate: 80,
+		}],
+		ingredientAnalysis: {
+			ingredientTags: ["tomato", "onion"],
+			analysisTags: ["vegan"],
+			derivedTraceTags: ["celery"],
+			percentEstimate: 92,
+		},
+		additives: ["e330"],
 		allergens: [" Milk ", "Milk"],
+		traces: ["Celery"],
+		labels: ["Vegan"],
+		packageQuantity: {
+			label: "24 oz",
+			amount: 24,
+			unit: "oz",
+		},
+		sourceMetadata: {
+			language: "en",
+			revision: 4,
+			completeness: 0.92,
+			tagSources: { allergens: ["ingredients", "packaging"] },
+		},
 		foodNutrients: [
 			{
 				nutrientId: 1003,
@@ -69,6 +95,41 @@ const record: ApprovedCatalogRecord = {
 				source: "open-food-facts",
 				sourceReference: "00021130493609",
 				confidence: "imported",
+			},
+			structuredIngredients: {
+				source: "open-food-facts",
+				sourceReference: "00021130493609",
+				confidence: "unknown",
+			},
+			ingredientAnalysis: {
+				source: "open-food-facts",
+				sourceReference: "00021130493609",
+				confidence: "unknown",
+			},
+			additives: {
+				source: "open-food-facts",
+				sourceReference: "00021130493609",
+				confidence: "unknown",
+			},
+			traces: {
+				source: "open-food-facts",
+				sourceReference: "00021130493609",
+				confidence: "unknown",
+			},
+			labels: {
+				source: "open-food-facts",
+				sourceReference: "00021130493609",
+				confidence: "unknown",
+			},
+			package: {
+				source: "open-food-facts",
+				sourceReference: "00021130493609",
+				confidence: "unknown",
+			},
+			sourceMetadata: {
+				source: "open-food-facts",
+				sourceReference: "00021130493609",
+				confidence: "unknown",
 			},
 		},
 	},
@@ -136,6 +197,35 @@ describe("blendCalc API v1 catalog mapping", () => {
 		expect(product.fieldSources.name).toBeNull();
 		expect(product.fieldSources.brand).toBeNull();
 		expect(product.fieldSources.ingredients).toBeNull();
+		expect(product.ingredients).toMatchObject({
+			items: ["Tomatoes", "Onion"],
+			structured: [{
+				id: "en:tomato",
+				text: "Tomatoes",
+				percentEstimate: 80,
+			}],
+			analysis: {
+				percentEstimate: 92,
+				derivedTraceTags: ["celery"],
+			},
+			additives: ["e330"],
+			traces: ["Celery"],
+			labels: ["Vegan"],
+		});
+		expect(product.packageQuantity).toEqual({
+			label: "24 oz",
+			amount: 24,
+			unit: "oz",
+		});
+		expect(product.sourceRecord).toMatchObject({
+			language: "en",
+			revision: 4,
+			completeness: 0.92,
+			tagSources: { allergens: ["ingredients", "packaging"] },
+		});
+		expect(product.fieldSources.structuredIngredients).toMatchObject({
+			source: "open-food-facts",
+		});
 		expect(product.revision).toMatchObject({ number: 2 });
 		expect(product.images[0]).toMatchObject({
 			license: {

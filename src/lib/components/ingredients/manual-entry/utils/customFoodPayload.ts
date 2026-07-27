@@ -8,6 +8,11 @@ import type {
 	FoodFieldProvenance,
 	FoodImageAsset,
 	FoodBarcodeProvenance,
+	FoodIdentityType,
+	FoodIngredientAnalysis,
+	FoodPackageQuantity,
+	FoodSourceRecordMetadata,
+	FoodStructuredIngredient,
 } from "$lib/utils/food/types";
 import { buildSaveNutrients } from "$lib/components/ingredients/manual-entry/utils/nutrientValues";
 
@@ -28,12 +33,18 @@ export type ManualEntryCustomFoodPayload = {
 	sourceDataType?: string;
 	sourcePublishedDate?: string;
 	sourceModifiedDate?: string;
+	foodIdentityType: FoodIdentityType;
 	ingredients: string;
 	ingredientList: string[];
+	structuredIngredients: FoodStructuredIngredient[];
+	ingredientAnalysis?: FoodIngredientAnalysis;
+	additives: string[];
 	allergens: string[];
 	traces: string[];
 	dietaryTags: string[];
 	labels: string[];
+	packageQuantity?: FoodPackageQuantity;
+	sourceMetadata?: FoodSourceRecordMetadata;
 	activeCategory: string;
 	categoryOptionId: string;
 	categorySymbolKey: string;
@@ -111,12 +122,20 @@ export const createManualEntryCustomFood = (
 		sourceModifiedDate: payload.barcode
 			? payload.sourceModifiedDate
 			: undefined,
+		foodIdentityType: payload.customFood
+			? "private-custom"
+			: payload.foodIdentityType,
 		ingredients: payload.ingredients,
 		ingredientList: payload.ingredientList,
+		structuredIngredients: payload.structuredIngredients,
+		ingredientAnalysis: payload.ingredientAnalysis,
+		additives: payload.additives,
 		allergens: payload.allergens,
 		traces: payload.traces,
 		dietaryTags: payload.dietaryTags,
 		labels: payload.labels,
+		packageQuantity: payload.packageQuantity,
+		sourceMetadata: payload.sourceMetadata,
 			categories: buildManualEntrySaveCategories(payload),
 			categoryOptionId: payload.categoryOptionId,
 		symbolKey: payload.categorySymbolKey,

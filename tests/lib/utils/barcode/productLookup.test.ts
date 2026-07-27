@@ -3,7 +3,7 @@ import {
 	mapFdcBarcodeFood,
 	mapOpenFoodFactsProduct,
 	mapSharedCatalogFood,
-} from "$lib/utils/barcode/productLookup";
+} from "$lib/utils/barcode/barcodeProductMappers";
 import { NUTRIENT_IDS } from "$lib/utils/food/types";
 import { productReferenceDataFixture } from "../../../fixtures/referenceData";
 
@@ -199,6 +199,100 @@ describe("barcode product mapping", () => {
 					labels: { source: "open-food-facts" },
 				},
 			});
+	});
+
+	it("preserves structured Open Food Facts package and quality metadata", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Structured product",
+				ingredients_text_en: "Shrimp, wheat flour, salt",
+				ingredients: [
+					{
+						id: "en:shrimp",
+						text: "Shrimp",
+						percent_estimate: 45,
+					},
+					{
+						id: "en:wheat-flour",
+						text: "Wheat flour",
+						ingredients: [{ id: "en:wheat", text: "Wheat" }],
+					},
+				],
+				ingredients_tags: ["en:shrimp", "en:wheat-flour"],
+				ingredients_analysis_tags: ["en:non-vegan"],
+				ingredients_percent_estimate: 81,
+				ingredients_percent_known: 75,
+				traces_from_ingredients: "en:soy",
+				allergens_hierarchy: ["en:crustaceans", "en:wheat"],
+				traces_hierarchy: ["en:sesame-seeds"],
+				additives_tags: ["en:e330"],
+				quantity: "340 g",
+				product_quantity: 340,
+				product_quantity_unit: "g",
+				lang: "en",
+				languages_tags: ["en:english"],
+				rev: 12,
+				schema_version: 999,
+				created_t: 1_700_000_000,
+				last_modified_t: 1_710_000_000,
+				completeness: 0.92,
+				data_quality_warnings_tags: ["en:ingredients-unknown-score-above-0"],
+				tags_sources: { allergens: ["ingredients", "packaging"] },
+				nutriments: { "energy-kcal_100g": 100 },
+			},
+			"049000042566",
+			productReferenceDataFixture,
+		);
+
+		expect(draft).toMatchObject({
+			foodIdentityType: "packaged",
+			ingredientList: ["Shrimp", "wheat flour", "salt", "Wheat"],
+			structuredIngredients: [
+				{
+					id: "shrimp",
+					text: "Shrimp",
+					percentEstimate: 45,
+				},
+				{
+					id: "wheat flour",
+					text: "Wheat flour",
+					ingredients: [{ id: "wheat", text: "Wheat" }],
+				},
+			],
+			ingredientAnalysis: {
+				ingredientTags: ["shrimp", "wheat flour"],
+				analysisTags: ["non vegan"],
+				derivedTraceTags: ["soy"],
+				percentEstimate: 81,
+				percentKnown: 75,
+			},
+			additives: ["e330"],
+			allergens: ["crustaceans", "wheat"],
+			traces: ["sesame seeds"],
+			packageQuantity: {
+				label: "340 g",
+				amount: 340,
+				unit: "g",
+			},
+			sourceMetadata: {
+				language: "en",
+				languages: ["english"],
+				revision: 12,
+				schemaVersion: 999,
+				completeness: 0.92,
+				qualityWarningTags: ["ingredients unknown score above 0"],
+				tagSources: { allergens: ["ingredients", "packaging"] },
+			},
+			fieldProvenance: {
+				structuredIngredients: { source: "open-food-facts" },
+				ingredientAnalysis: { source: "open-food-facts" },
+				additives: { source: "open-food-facts" },
+				package: { source: "open-food-facts" },
+				sourceMetadata: { source: "open-food-facts" },
+			},
+		});
+		expect(draft?.sourceModifiedDate).toBe("2024-03-09T16:00:00.000Z");
+		expect(draft?.traces).not.toContain("soy");
 	});
 
 	it("keeps Open Food Facts package image metadata with attribution", () => {

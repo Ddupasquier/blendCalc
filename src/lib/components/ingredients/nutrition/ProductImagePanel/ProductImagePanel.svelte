@@ -13,7 +13,6 @@
 		pickFoodFullImageUrl,
 	} from "$lib/utils/food/images/foodImages";
 	import { getPrimaryFoodWarning } from "$lib/utils/ingredients/ingredientListUi";
-	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import { updateFoodImagePlacement } from "$lib/utils/food/images/foodImagePlacement";
 	import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 	import type { ProductImagePanelProps } from "./types";
@@ -25,9 +24,8 @@
 	}: ProductImagePanelProps = $props();
 
 	const imageUrl = $derived(pickFoodFullImageUrl(food?.image));
-	const foodPreferenceContext = getFoodPreferenceContext();
 	const showWarningEdge = $derived(
-		Boolean(food && getPrimaryFoodWarning(food, foodPreferenceContext.current)),
+		Boolean(food && getPrimaryFoodWarning(food)),
 	);
 	const imageAlt = $derived(
 		getFoodImageAltText({

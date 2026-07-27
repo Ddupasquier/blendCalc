@@ -825,18 +825,39 @@ allergens or trace statements from the product name, category, ingredient text, 
 user preference warning. DB-reviewed exact-match rules may create
 `ingredient_present` compatibility facts only from source-provided ingredient lists;
 these facts must retain their matching provenance and must never be presented as package
-`Contains` or `May contain` statements. Product titles, descriptions, categories, and
-generic identity labels must never create a preference warning, warning edge, allergen
-fact, or trace fact. If an ingredient statement is unavailable, show no inferred
-ingredient conflict; do not substitute the product name. Keep preference conflicts
-separate from source package
-disclosures. Hide empty disclosure groups rather than inventing `none`, `zero`, or
+`Contains` or `May contain` statements. Packaged-product titles, descriptions,
+categories, brand names, and generic labels must never create a preference warning,
+warning edge, allergen fact, or trace fact. An explicitly typed generic-food record from
+an authoritative source dataset may create an intrinsic `contains` compatibility fact
+from its food identity taxonomy—for example, a generic shrimp record is intrinsically
+shellfish—but it must retain generic identity and taxonomy provenance and must never be
+presented as a package-label disclosure or `May contain` statement. Never apply this
+exception to a packaged, barcode, or private-custom food. If a packaged ingredient
+statement is unavailable, show no inferred ingredient conflict; do not substitute the
+product name. Keep preference conflicts separate from source package disclosures. Hide
+empty disclosure groups rather than inventing `none`, `zero`, or
 `allergen-free`. Nutrition details must use the reusable ingredients/allergen
 presentation directly after the nutrition label, with `Contains` and `May contain`
 following `Ingredients` and without a one-off card shell. Exact-barcode enrichment may
 merge nonconflicting ingredient, allergen, trace, and label metadata from multiple
-sources, but it must retain canonical identity and source provenance and must never
-overwrite a nonempty canonical ingredient statement automatically.
+sources. Preserve structured ingredient trees, analysis tags, additive tags, package
+quantity, provider record versions/dates, quality metadata, and explicit field sources
+when supplied and legally storable. A provider-derived trace hypothesis is analysis
+metadata, not an explicit `May contain` statement. Retain canonical identity and source
+provenance, and never overwrite a nonempty canonical ingredient statement
+automatically. When new legally accepted fields are added, backfill applicable existing
+canonical and user-linked records instead of limiting the improvement to future saves.
+Compatibility vocabularies, match patterns, conflict mappings, disclosure normalization,
+and personalized warning evaluation are server/database responsibilities. Do not include
+those rule tables in the browser reference catalog, execute compatibility regular
+expressions in client utilities, or rebuild warnings from raw `allergens`, `traces`,
+ingredients, titles, categories, labels, or compatibility summaries in Svelte
+components. Authenticated server page loads and API endpoints must attach the evaluated
+`allergenDisclosure` and `preferenceWarnings` fields before food records reach the
+browser. Client code may only render those bounded results and translate their stable
+issue codes through the shared user-facing message catalog. Paginated or refreshed user
+lists must therefore use the authenticated server list endpoint rather than bypassing
+evaluation with a direct browser database read.
 
 **30i.2.** <a id="rule-private-custom-food-classification"></a>Use `Custom` only for a
 user-owned food that does not match an accepted blendCalc catalog record or external

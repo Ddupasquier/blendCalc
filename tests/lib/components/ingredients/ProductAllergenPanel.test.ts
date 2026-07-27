@@ -15,8 +15,10 @@ describe("ProductAllergenPanel", () => {
 		render(ProductAllergenPanel, {
 			props: {
 				food: createFood({
-					allergens: ["milk", "soybeans"],
-					traces: ["tree nuts"],
+					allergenDisclosure: {
+						contains: ["Milk", "Soybeans"],
+						mayContain: ["Tree nuts"],
+					},
 				}),
 			},
 		});

@@ -8,7 +8,6 @@
 	import type { IngredientChooserProps } from "./types";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 	import type { FdcFood } from "$lib/utils/food/types";
-	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import { getFoodWarningLabel } from "$lib/utils/profile/foodPreferenceWarnings";
 	import {
 		clampPage,
@@ -40,7 +39,6 @@
 	let renamingItem = $state<{ key: SmoothieListKey; food: FdcFood } | null>(null);
 	let renameBusy = $state(false);
 	let renameError = $state("");
-	const foodPreferenceContext = getFoodPreferenceContext();
 
 	const filterOptions = [
 		{ value: "all", label: "All ingredients" },
@@ -103,7 +101,7 @@
 			.filter((index) => index !== -1);
 	};
 	const getFoodLabel = (food: FdcFood) => {
-		const warningLabel = getFoodWarningLabel(food, foodPreferenceContext.current);
+		const warningLabel = getFoodWarningLabel(food);
 		return warningLabel ? `${warningLabel} ${food.description}` : food.description;
 	};
 

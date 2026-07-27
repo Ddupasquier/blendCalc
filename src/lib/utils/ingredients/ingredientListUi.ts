@@ -3,9 +3,7 @@ import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 import { getFdcNutrientValue } from "$lib/utils/food/nutrients/fdcNutrients";
 import {
 	getFoodPreferenceWarningMessage,
-	getFoodPreferenceWarnings,
 } from "$lib/utils/profile/foodPreferenceWarnings";
-import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 
 export type IngredientActionItem = {
@@ -66,12 +64,8 @@ export const getFoodDisplayCategory = (food: FdcFood) => {
 	return "Category unavailable";
 };
 
-export const getPrimaryFoodWarning = (
-	food: FdcFood,
-	preferenceProfile: FoodPreferenceProfile | null,
-) => {
-	const warnings =
-		food.preferenceWarnings ?? getFoodPreferenceWarnings(food, preferenceProfile);
+export const getPrimaryFoodWarning = (food: FdcFood) => {
+	const warnings = food.preferenceWarnings ?? [];
 	if (warnings.length === 0) return null;
 	const warning = warnings.find((item) => item.level === "warning") ?? warnings[0];
 	return getFoodPreferenceWarningMessage(warning);

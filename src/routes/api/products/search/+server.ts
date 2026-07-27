@@ -1,16 +1,11 @@
 import { searchApprovedSharedProducts } from "$lib/server/products/catalog.server";
 import {
-	getFoodPreferenceProfile,
-	isMissingFoodPreferencesTableError,
-} from "$lib/utils/profile/foodPreferenceProfile";
-import { annotateFoodWithPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
-import {
 	requireAppValue,
 	throwAppError,
 } from "$lib/server/errors/appError.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
+import { annotateFoodsForUser } from "$lib/server/food-safety/userFoodSafety.server";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const user = requireAppValue(
@@ -21,29 +16,12 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
 	const query = url.searchParams.get("q")?.trim() ?? "";
 	if (query.length < 2) return json({ foods: [] });
-	const [foods, foodPreferencesResult, appReferenceCatalog] = await Promise.all([
-		searchApprovedSharedProducts(locals.supabase, query),
-		locals.supabase
-			.from("user_food_preferences")
-			.select(
-				"unit_system, allergens, dietary_restrictions, prioritized_nutrient_ids, default_smoothie_serving_grams, sensitive_acknowledged_at",
-			)
-			.eq("user_id", user.id)
-			.maybeSingle(),
-		getAppReferenceCatalog(),
-	]);
-	if (
-		foodPreferencesResult.error &&
-		!isMissingFoodPreferencesTableError(foodPreferencesResult.error)
-	) {
-		throw foodPreferencesResult.error;
-	}
-	const profile = getFoodPreferenceProfile(
-		foodPreferencesResult.data,
-		appReferenceCatalog.foodPreferenceConflictRules,
-		appReferenceCatalog.foodCompatibilityMatchRules,
-	);
+	const foods = await searchApprovedSharedProducts(locals.supabase, query);
 	return json({
-		foods: foods.map((food) => annotateFoodWithPreferenceWarnings(food, profile)),
+		foods: await annotateFoodsForUser(
+			locals.supabase,
+			user.id,
+			foods,
+		),
 	});
 };

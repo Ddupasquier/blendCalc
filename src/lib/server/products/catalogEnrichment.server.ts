@@ -58,6 +58,16 @@ const getFieldValue = (
 				return (draft.dietaryTags ?? []) as Json;
 			case "labels":
 				return (draft.labels ?? []) as Json;
+			case "structuredIngredients":
+				return (draft.structuredIngredients ?? []) as unknown as Json;
+			case "ingredientAnalysis":
+				return (draft.ingredientAnalysis ?? null) as unknown as Json;
+			case "additives":
+				return (draft.additives ?? []) as Json;
+			case "package":
+				return (draft.packageQuantity ?? null) as unknown as Json;
+			case "sourceMetadata":
+				return (draft.sourceMetadata ?? null) as unknown as Json;
 		}
 	};
 
@@ -85,6 +95,7 @@ const preserveCanonicalIdentity = (
 	...enrichedFood,
 	fdcId: currentFood.fdcId,
 	dataType: "Shared Product",
+	foodIdentityType: "packaged",
 	customFood: false,
 	sharedProductId,
 	sharedProductConfidence: currentFood.sharedProductConfidence,

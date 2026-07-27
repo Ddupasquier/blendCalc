@@ -73,8 +73,6 @@ export const readAppReferenceCatalog = async (
 			runtimeResult,
 			symbolsResult,
 			symbolRulesResult,
-			preferenceConflictRulesResult,
-			compatibilityMatchRulesResult,
 		] = await Promise.all([
 		definitionsPromise,
 		supabase
@@ -111,20 +109,6 @@ export const readAppReferenceCatalog = async (
 				.select("symbol_key, match_pattern, priority")
 				.eq("enabled", true)
 				.order("priority", { ascending: true }),
-			supabase
-				.from("compatibility_rule_conflicts")
-				.select(
-					"severity, warning_code, preference_tag:compatibility_tags!compatibility_rule_conflicts_preference_tag_id_fkey(slug, label), fact_tag:compatibility_tags!compatibility_rule_conflicts_fact_tag_id_fkey(slug, label)",
-				),
-			supabase
-				.from("food_compatibility_match_rules")
-				.select(
-					"source_key, field_name, match_pattern, exclude_pattern, fact_type, source_type, confidence, priority, tag:compatibility_tags(slug, label, category)",
-				)
-				.eq("enabled", true)
-				.eq("field_name", "ingredients")
-				.eq("source_type", "label_ingredient_field")
-				.order("priority", { ascending: true }),
 		]);
 
 	for (const result of [
@@ -137,8 +121,6 @@ export const readAppReferenceCatalog = async (
 			runtimeResult,
 			symbolsResult,
 			symbolRulesResult,
-			preferenceConflictRulesResult,
-			compatibilityMatchRulesResult,
 		]) {
 		if (result.error) throw result.error;
 	}
@@ -215,50 +197,6 @@ export const readAppReferenceCatalog = async (
 		foodSymbolCategoryRules: (symbolRulesResult.data ?? []).map((rule) => ({
 			symbolKey: rule.symbol_key,
 			matchPattern: rule.match_pattern,
-			priority: rule.priority,
-		})),
-		foodPreferenceConflictRules: (
-			(preferenceConflictRulesResult.data ?? []) as unknown as Array<{
-				severity: "warning" | "potential";
-				warning_code: "FOOD_RESTRICTION_CONFLICT";
-				preference_tag: { slug: string; label: string };
-				fact_tag: { slug: string; label: string };
-			}>
-		).map((rule) => ({
-			preferenceSlug: rule.preference_tag.slug,
-			preferenceLabel: rule.preference_tag.label,
-			factSlug: rule.fact_tag.slug,
-			factLabel: rule.fact_tag.label,
-			level: rule.severity,
-			warningCode: rule.warning_code,
-		})),
-		foodCompatibilityMatchRules: (
-			(compatibilityMatchRulesResult.data ?? []) as unknown as Array<{
-				source_key: string | null;
-				field_name: "ingredients";
-				match_pattern: string;
-				exclude_pattern: string | null;
-				fact_type: "ingredient_present";
-				source_type: "label_ingredient_field";
-				confidence: "confirmed" | "inferred" | "uncertain";
-				priority: number;
-				tag: {
-					slug: string;
-					label: string;
-					category: "allergen" | "dietary" | "ingredient" | "avoidance";
-				};
-			}>
-		).map((rule) => ({
-			sourceKey: rule.source_key,
-			fieldName: rule.field_name,
-			matchPattern: rule.match_pattern,
-			excludePattern: rule.exclude_pattern,
-			tagSlug: rule.tag.slug,
-			tagLabel: rule.tag.label,
-			tagCategory: rule.tag.category,
-			factType: rule.fact_type,
-			sourceType: rule.source_type,
-			confidence: rule.confidence,
 			priority: rule.priority,
 		})),
 	};

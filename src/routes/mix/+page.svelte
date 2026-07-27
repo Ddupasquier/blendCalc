@@ -13,7 +13,6 @@
 	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog/TextInputDialog.svelte";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
-	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import {
 		getFoodPreferenceSmartWarnings,
 		getNutrientGoalWarnings,
@@ -23,10 +22,10 @@
 		preserveSelectedListItems,
         SMOOTHIE_LISTS_CHANGED_EVENT,
     } from "$lib/utils/storage/client/smoothieLists";
-    import {
-		readCloudSmoothieList,
-        saveCloudMixPreferences,
-    } from "$lib/utils/storage/supabase";
+	    import {
+	        saveCloudMixPreferences,
+	    } from "$lib/utils/storage/supabase";
+	import { readIngredientList } from "$lib/utils/ingredients/ingredientListApi";
     import IngredientContributionBreakdown from "$lib/components/mix/insights/IngredientContributionBreakdown/IngredientContributionBreakdown.svelte";
     import {
         clearLoadedSavedDrink,
@@ -113,7 +112,6 @@
     let saveDialogError = $state("");
     let saveDialogBusy = $state(false);
 	let cloudLoadError = $state(initialMixData?.loadError ?? "");
-	const foodPreferenceContext = getFoodPreferenceContext();
 
 	const assignMixState = (state: MixStateSnapshot) => {
 		selected = state.selected;
@@ -327,10 +325,7 @@
             }),
             { includeUnderTargets: selectedFoods.length > 0 },
         ).map((warning) => withOverageDetails(warning, nutrientOverages)),
-		...getFoodPreferenceSmartWarnings(
-			selectedFoods,
-			foodPreferenceContext.current,
-		),
+		...getFoodPreferenceSmartWarnings(selectedFoods),
     ]);
     const maxNutrientProgress = $derived(
         nutrientProgress.reduce((max, progress) => Math.max(max, progress), 0),
@@ -356,13 +351,9 @@
 
 		try {
 			const [nextFridge, nextShoppingList] = await Promise.all([
-				readCloudSmoothieList(MIX_STORAGE_KEYS.fridge),
-				readCloudSmoothieList(MIX_STORAGE_KEYS.shoppingList),
+				readIngredientList(MIX_STORAGE_KEYS.fridge),
+				readIngredientList(MIX_STORAGE_KEYS.shoppingList),
 			]);
-			if (!nextFridge || !nextShoppingList) {
-				throw new Error("Saved ingredient lists are unavailable.");
-			}
-
 			const preservedFridge = preserveSelectedListItems(
 				nextFridge,
 				loadedFridge,

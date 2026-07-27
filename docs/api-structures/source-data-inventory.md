@@ -25,7 +25,7 @@ coalescing, caching, request counts, and source-policy checks.
 | Source | Useful observed fields | Runtime/storage boundary |
 | --- | --- | --- |
 | USDA FoodData Central | Exact GTIN, source food id/type, names, brand, ingredients, nutrients, units, serving size, household serving, publication/update dates, categories | Barcode logic: `sources/usdaBarcodeProduct.server.ts`; search/detail caches and canonical promotion follow `product_data_sources` policy |
-| Open Food Facts | Exact GTIN, names, brand, ingredients, allergens, traces, labels, categories, nutrients, serving text/weight/volume, package images, modification date | Barcode logic: `sources/openFoodFactsBarcodeProduct.server.ts`; reusable images require stored license and attribution metadata |
+| Open Food Facts | Exact GTIN, names, brand, raw and recursive structured ingredients, ingredient analysis, additives, explicit allergens, explicit traces, labels, categories, nutrients, serving text/weight/volume, package quantity, package images, language, record/schema revisions, source timestamps, completeness, quality/obsolete state, and tag-source metadata | Barcode logic: `sources/openFoodFactsBarcodeProduct.server.ts`; reusable images require stored license and attribution metadata; provider-derived trace hypotheses remain analysis data rather than explicit `May contain` |
 | Canadian Nutrient File 2026 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | Imported through `scripts/imports/import_cnf_2026.mjs`; Open Government Licence – Canada canonical/API reuse is allowed with the stored Health Canada attribution and licence link; excluded third-party rights and non-endorsement limits still apply |
 | UK CoFID 2021 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | Imported through `scripts/imports/import_cofid_2021.mjs`; Open Government Licence v3.0 canonical/API reuse is allowed with the stored CoFID attribution and licence link; excluded third-party rights and non-endorsement limits still apply |
 | Australian Food Composition Database | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | Registered but disabled until its click-through and share-alike terms are accepted for this project |
@@ -45,12 +45,15 @@ coalescing, caching, request counts, and source-policy checks.
   reported/derived/missing state, uncertainty, mapping method, and conversions.
 - **Serving and conversion:** label quantity, household measure, grams or milliliters,
   serving count, density evidence, aliases, and conversion provenance.
-- **Package information:** ingredients, allergens, traces, dietary labels, raw source
-  categories, canonical category, package quantity, and warnings.
+- **Package information:** raw and structured ingredients, ingredient percentages and
+  analysis, additives, explicit allergens, explicit traces/advisories, dietary labels,
+  raw source categories, canonical category, package quantity, and warnings.
 - **Images:** role, original and thumbnail locations, source, license, attribution,
   approval state, dimensions, and non-destructive card placement.
-- **Quality:** exact-match evidence, cross-source agreement or disagreement,
-  completeness, confidence, moderation decision, source metrics, and correction history.
+- **Quality:** exact-match evidence, cross-source agreement or disagreement, source
+  record/schema revisions, language, source timestamps, tag-source evidence,
+  completeness, quality tags, obsolete state, confidence, moderation decision, source
+  metrics, and correction history.
 
 Missing values stay missing. A source omission is never converted to zero, and records
 from different foods or preparations are never merged only because their names are

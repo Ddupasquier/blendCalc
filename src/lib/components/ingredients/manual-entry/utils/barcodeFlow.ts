@@ -18,6 +18,11 @@ import type {
 	FdcNutrient,
 	FoodFieldProvenance,
 	FoodImageAsset,
+	FoodIdentityType,
+	FoodIngredientAnalysis,
+	FoodPackageQuantity,
+	FoodSourceRecordMetadata,
+	FoodStructuredIngredient,
 } from "$lib/utils/food/types";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
@@ -38,12 +43,18 @@ export type ManualEntryBarcodeDraftState = {
 	barcode: string;
 	barcodeSource: FdcFood["barcodeSource"];
 	reportedNutrientIds: number[];
+	foodIdentityType: FoodIdentityType;
 	ingredients: string;
 	ingredientList: string[];
+	structuredIngredients: FoodStructuredIngredient[];
+	ingredientAnalysis?: FoodIngredientAnalysis;
+	additives: string[];
 	allergens: string[];
 	traces: string[];
 	dietaryTags: string[];
 	labels: string[];
+	packageQuantity?: FoodPackageQuantity;
+	sourceMetadata?: FoodSourceRecordMetadata;
 	categories: string[];
 	image?: FoodImageAsset;
 	fieldProvenance?: FoodFieldProvenance;
@@ -226,12 +237,24 @@ export const getBarcodeDraftState = (
 		barcode: draft.barcode,
 		barcodeSource: draft.source === "shared-catalog" ? "community" : draft.source,
 		reportedNutrientIds: [...draft.reportedNutrientIds],
+		foodIdentityType: draft.foodIdentityType ?? "packaged",
 		ingredients: draft.ingredients ?? "",
 		ingredientList: [...(draft.ingredientList ?? [])],
+		structuredIngredients: [...(draft.structuredIngredients ?? [])],
+		ingredientAnalysis: draft.ingredientAnalysis
+			? { ...draft.ingredientAnalysis }
+			: undefined,
+		additives: [...(draft.additives ?? [])],
 		allergens: [...(draft.allergens ?? [])],
 		traces: [...(draft.traces ?? [])],
 		dietaryTags: [...(draft.dietaryTags ?? [])],
 		labels: [...(draft.labels ?? [])],
+		packageQuantity: draft.packageQuantity
+			? { ...draft.packageQuantity }
+			: undefined,
+		sourceMetadata: draft.sourceMetadata
+			? { ...draft.sourceMetadata }
+			: undefined,
 		categories: [
 			...new Set([
 				draft.resolvedCategory,

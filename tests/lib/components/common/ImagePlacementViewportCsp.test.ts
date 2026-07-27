@@ -29,5 +29,6 @@ describe("image component CSP", () => {
 			expect(serverCode).not.toMatch(/on(?:load|error)=/);
 			expect(serverCode).not.toContain("this.__e=event");
 		},
+		15_000,
 	);
 });

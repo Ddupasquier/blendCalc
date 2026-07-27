@@ -1,14 +1,20 @@
 import { describe, expect, it } from "vitest";
-import {
-	getFoodPreferenceWarningMessage,
-	getFoodPreferenceWarnings,
-} from "$lib/utils/profile/foodPreferenceWarnings";
+import { getFoodPreferenceWarningMessage } from "$lib/utils/profile/foodPreferenceWarnings";
 import type { FoodCompatibilityFact } from "$lib/utils/food/quality/compatibility";
-import type { FoodCompatibilityMatchRule } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 import type { FdcFood } from "$lib/utils/food/types";
+import { annotateFoodWithFoodSafety } from "$lib/server/food-safety/foodSafetyEvaluation.server";
+import type {
+	FoodCompatibilityMatchRule,
+	FoodPreferenceConflictRule,
+} from "$lib/server/food-safety/foodSafetyPolicy.server";
 
-const baseProfile: FoodPreferenceProfile = {
+type TestPreferenceProfile = FoodPreferenceProfile & {
+	warningRules?: FoodPreferenceConflictRule[];
+	matchRules?: FoodCompatibilityMatchRule[];
+};
+
+const baseProfile: TestPreferenceProfile = {
 	unitSystem: null,
 	allergens: [],
 	dietaryRestrictions: [],
@@ -35,6 +41,17 @@ const baseProfile: FoodPreferenceProfile = {
 	],
 	matchRules: [],
 };
+
+const getFoodPreferenceWarnings = (
+	food: FdcFood,
+	profile: TestPreferenceProfile,
+) => annotateFoodWithFoodSafety(food, {
+	profile,
+	policy: {
+		preferenceConflictRules: profile.warningRules ?? [],
+		compatibilityMatchRules: profile.matchRules ?? [],
+	},
+}).preferenceWarnings ?? [];
 
 const makeFood = (overrides: Partial<FdcFood>): FdcFood => ({
 	fdcId: 1,
@@ -254,6 +271,76 @@ describe("food preference warnings", () => {
 		expect(warnings).toEqual([]);
 	});
 
+	it("uses authoritative generic food identity for intrinsic allergens", () => {
+		const warnings = getFoodPreferenceWarnings(
+			makeFood({
+				description: "Crustaceans, shrimp, raw",
+				foodIdentityType: "generic",
+				dataType: "Foundation",
+				sourceKey: "usda",
+			}),
+			{
+				...baseProfile,
+				allergens: ["Shellfish"],
+				matchRules: [{
+					sourceKey: null,
+					fieldName: "generic_food_identity",
+					matchPattern: "\\b(?:shrimp|crustaceans?)\\b",
+					excludePattern: null,
+					tagSlug: "shellfish",
+					tagLabel: "Shellfish",
+					tagCategory: "allergen",
+					factType: "contains",
+					sourceType: "food_identity_taxonomy",
+					confidence: "confirmed",
+					priority: 10,
+				}],
+			},
+		);
+
+		expect(warnings).toEqual([
+			expect.objectContaining({
+				category: "allergen",
+				label: "Shellfish",
+				level: "warning",
+				code: "FOOD_INTRINSIC_ALLERGEN",
+			}),
+		]);
+		expect(getFoodPreferenceWarningMessage(warnings[0]))
+			.toBe("This ingredient is shellfish.");
+	});
+
+	it("does not use a packaged product name as intrinsic allergen evidence", () => {
+		const genericRule: FoodCompatibilityMatchRule = {
+			sourceKey: null,
+			fieldName: "generic_food_identity",
+			matchPattern: "\\bshrimp\\b",
+			excludePattern: null,
+			tagSlug: "shellfish",
+			tagLabel: "Shellfish",
+			tagCategory: "allergen",
+			factType: "contains",
+			sourceType: "food_identity_taxonomy",
+			confidence: "confirmed",
+			priority: 10,
+		};
+		const warnings = getFoodPreferenceWarnings(
+			makeFood({
+				description: "Shrimp Flavored Crackers",
+				foodIdentityType: "packaged",
+				dataType: "Branded",
+				barcode: "00012345678905",
+			}),
+			{
+				...baseProfile,
+				allergens: ["Shellfish"],
+				matchRules: [genericRule],
+			},
+		);
+
+		expect(warnings).toEqual([]);
+	});
+
 	it("ignores stored compatibility facts derived from product identity", () => {
 		const warnings = getFoodPreferenceWarnings(
 			makeFood({
@@ -315,7 +402,7 @@ describe("food preference warnings", () => {
 	});
 
 	it("does not infer gluten conflicts from bread or ramen titles", () => {
-		const profile: FoodPreferenceProfile = {
+		const profile: TestPreferenceProfile = {
 			...baseProfile,
 			dietaryRestrictions: ["Gluten-free"],
 			warningRules: [{

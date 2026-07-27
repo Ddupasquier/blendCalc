@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractExplicitAllergenDeclarations } from "$lib/utils/food/allergens/allergenDeclarations.js";
+import { extractExplicitAllergenDeclarations } from "$lib/server/products/allergenDeclarations.server.js";
 
 describe("explicit allergen declarations", () => {
 	it("extracts contains and may-contain label statements", () => {

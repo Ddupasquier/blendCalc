@@ -1,14 +1,14 @@
 import type { Database } from "$lib/types/database.types";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
-import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
+import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type { FdcFood } from "$lib/utils/food/types";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
 import { normalizeFoodProductName } from "$lib/utils/products/productNameFormatting.js";
-import { hydrateFoodsWithCachedImages } from "./foodImages";
-import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
-import { readFoodServingsByParent } from "./servings";
-import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
+import { hydrateFoodsWithCachedImages } from "$lib/utils/storage/supabase/foodImages";
+import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
+import { readFoodServingsByParent } from "$lib/utils/storage/supabase/servings";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type CloudFoodListHydrationRow = Pick<
 	Database["public"]["Tables"]["user_food_list_items"]["Row"],
@@ -45,16 +45,7 @@ const readSharedProductCompatibilityRows = async (
 	return new Map((data ?? []).map((row) => [row.id, row]));
 };
 
-const preferCanonicalValues = (
-	canonical: string[] | undefined,
-	snapshot: string[] | undefined,
-) => canonical?.length ? canonical : snapshot;
-
-const hasCompatibilityFacts = (
-	summary: FoodCompatibilitySummary | undefined,
-) => Boolean(summary?.allFacts?.length);
-
-const hydrateFoodWithSharedProductCompatibility = (
+const hydrateFoodWithSharedProductMetadata = (
 	food: FdcFood,
 	row: SharedProductCompatibilityRow | undefined,
 ) => {
@@ -62,23 +53,25 @@ const hydrateFoodWithSharedProductCompatibility = (
 	const canonicalFood = row.food as unknown as FdcFood;
 	const canonicalSummary =
 		row.compatibility_summary as unknown as FoodCompatibilitySummary;
+
 	return {
 		...food,
-		ingredients: canonicalFood.ingredients?.trim() || food.ingredients,
-		ingredientList: preferCanonicalValues(
-			canonicalFood.ingredientList,
-			food.ingredientList,
-		),
-		allergens: preferCanonicalValues(canonicalFood.allergens, food.allergens),
-		traces: preferCanonicalValues(canonicalFood.traces, food.traces),
-		dietaryTags: preferCanonicalValues(
-			canonicalFood.dietaryTags,
-			food.dietaryTags,
-		),
-		labels: preferCanonicalValues(canonicalFood.labels, food.labels),
-		compatibilitySummary: hasCompatibilityFacts(canonicalSummary)
-			? canonicalSummary
-			: food.compatibilitySummary,
+		foodIdentityType: canonicalFood.foodIdentityType,
+		scientificName: canonicalFood.scientificName,
+		alternateDescription: canonicalFood.alternateDescription,
+		preparation: canonicalFood.preparation,
+		ingredients: canonicalFood.ingredients?.trim() || undefined,
+		ingredientList: canonicalFood.ingredientList,
+		structuredIngredients: canonicalFood.structuredIngredients,
+		ingredientAnalysis: canonicalFood.ingredientAnalysis,
+		additives: canonicalFood.additives,
+		allergens: canonicalFood.allergens,
+		traces: canonicalFood.traces,
+		dietaryTags: canonicalFood.dietaryTags,
+		labels: canonicalFood.labels,
+		packageQuantity: canonicalFood.packageQuantity,
+		sourceMetadata: canonicalFood.sourceMetadata,
+		compatibilitySummary: canonicalSummary,
 	};
 };
 
@@ -119,14 +112,14 @@ export const hydrateCloudFoodListRows = async (
 
 	return foodsWithImages.map((food, index) => {
 		const row = rows[index];
-		const foodWithCompatibility = hydrateFoodWithSharedProductCompatibility(
+		const foodWithMetadata = hydrateFoodWithSharedProductMetadata(
 			food,
 			row.shared_product_id
 				? sharedProductCompatibilityRows.get(row.shared_product_id)
 				: undefined,
 		);
 		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
-			foodWithCompatibility,
+			foodWithMetadata,
 			normalizedRows.get(row.id) ?? [],
 		);
 		return hydrateFoodWithNormalizedServings(

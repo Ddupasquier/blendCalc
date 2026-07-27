@@ -6,6 +6,7 @@ import {
 	type IngredientSearchPageOptions,
 } from "$lib/utils/ingredients/ingredientSearchPagination";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
+import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
 
 type FdcDetailNutrient = {
 	amount?: number;
@@ -85,6 +86,7 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FdcFood => {
 		...food,
 		description: formatSourceProductName(food.description),
 		nameProvenance: "source",
+		foodIdentityType: resolveFoodIdentityType(food),
 		foodNutrients,
 		reportedNutrientIds: foodNutrients.map((nutrient) => nutrient.nutrientId),
 	};

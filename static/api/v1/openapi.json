@@ -242,10 +242,80 @@
           "lastVerifiedAt": { "type": ["string", "null"], "format": "date-time" }
         }
       },
+      "StructuredIngredient": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "text", "percent", "percentEstimate", "percentMin", "percentMax", "vegan", "vegetarian", "ingredients"],
+        "properties": {
+          "id": { "type": ["string", "null"] },
+          "text": { "type": ["string", "null"] },
+          "percent": { "type": ["number", "null"], "minimum": 0 },
+          "percentEstimate": { "type": ["number", "null"], "minimum": 0 },
+          "percentMin": { "type": ["number", "null"], "minimum": 0 },
+          "percentMax": { "type": ["number", "null"], "minimum": 0 },
+          "vegan": { "type": ["string", "null"] },
+          "vegetarian": { "type": ["string", "null"] },
+          "ingredients": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StructuredIngredient" }
+          }
+        }
+      },
+      "IngredientAnalysis": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ingredientTags", "analysisTags", "derivedTraceTags", "percentAnalysis", "percentEstimate", "percentKnown", "percentUnknown"],
+        "properties": {
+          "ingredientTags": { "type": "array", "items": { "type": "string" } },
+          "analysisTags": { "type": "array", "items": { "type": "string" } },
+          "derivedTraceTags": { "type": "array", "items": { "type": "string" } },
+          "percentAnalysis": { "type": ["number", "null"], "minimum": 0 },
+          "percentEstimate": { "type": ["number", "null"], "minimum": 0 },
+          "percentKnown": { "type": ["number", "null"], "minimum": 0 },
+          "percentUnknown": { "type": ["number", "null"], "minimum": 0 }
+        }
+      },
+      "PackageQuantity": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "amount", "unit"],
+        "properties": {
+          "label": { "type": ["string", "null"] },
+          "amount": { "type": ["number", "null"], "minimum": 0 },
+          "unit": { "type": ["string", "null"] }
+        }
+      },
+      "SourceRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["language", "languages", "revision", "schemaVersion", "createdAt", "modifiedAt", "updatedAt", "completeness", "qualityTags", "qualityErrorTags", "qualityWarningTags", "obsolete", "obsoleteSince", "tagSources"],
+        "properties": {
+          "language": { "type": ["string", "null"] },
+          "languages": { "type": "array", "items": { "type": "string" } },
+          "revision": { "type": ["integer", "null"], "minimum": 0 },
+          "schemaVersion": { "type": ["integer", "null"], "minimum": 0 },
+          "createdAt": { "type": ["string", "null"], "format": "date-time" },
+          "modifiedAt": { "type": ["string", "null"], "format": "date-time" },
+          "updatedAt": { "type": ["string", "null"], "format": "date-time" },
+          "completeness": { "type": ["number", "null"], "minimum": 0 },
+          "qualityTags": { "type": "array", "items": { "type": "string" } },
+          "qualityErrorTags": { "type": "array", "items": { "type": "string" } },
+          "qualityWarningTags": { "type": "array", "items": { "type": "string" } },
+          "obsolete": { "type": ["boolean", "null"] },
+          "obsoleteSince": { "type": ["string", "null"] },
+          "tagSources": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      },
       "Product": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "barcode", "name", "brand", "category", "ingredients", "nutrients", "servings", "images", "warnings", "sourceAttributions", "fieldSources", "revision", "links"],
+        "required": ["id", "barcode", "name", "brand", "category", "ingredients", "packageQuantity", "sourceRecord", "nutrients", "servings", "images", "warnings", "sourceAttributions", "fieldSources", "revision", "links"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "barcode": { "type": "string", "pattern": "^[0-9]{14}$" },
@@ -255,13 +325,38 @@
           "ingredients": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["text", "allergens", "traces", "dietaryTags"],
+            "required": ["text", "items", "structured", "analysis", "additives", "allergens", "traces", "dietaryTags", "labels"],
             "properties": {
               "text": { "type": ["string", "null"] },
+              "items": { "type": "array", "items": { "type": "string" } },
+              "structured": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/StructuredIngredient" }
+              },
+              "analysis": {
+                "oneOf": [
+                  { "$ref": "#/components/schemas/IngredientAnalysis" },
+                  { "type": "null" }
+                ]
+              },
+              "additives": { "type": "array", "items": { "type": "string" } },
               "allergens": { "type": "array", "items": { "type": "string" } },
               "traces": { "type": "array", "items": { "type": "string" } },
-              "dietaryTags": { "type": "array", "items": { "type": "string" } }
+              "dietaryTags": { "type": "array", "items": { "type": "string" } },
+              "labels": { "type": "array", "items": { "type": "string" } }
             }
+          },
+          "packageQuantity": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/PackageQuantity" },
+              { "type": "null" }
+            ]
+          },
+          "sourceRecord": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/SourceRecord" },
+              { "type": "null" }
+            ]
           },
           "nutrients": { "type": "array", "items": { "$ref": "#/components/schemas/Nutrient" } },
           "servings": { "type": "array", "items": { "$ref": "#/components/schemas/Serving" } },
@@ -271,12 +366,21 @@
           "fieldSources": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["name", "brand", "category", "ingredients"],
+            "required": ["name", "brand", "category", "ingredients", "structuredIngredients", "ingredientAnalysis", "additives", "allergens", "traces", "dietaryTags", "labels", "package", "sourceMetadata"],
             "properties": {
               "name": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
               "brand": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
               "category": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
-              "ingredients": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] }
+              "ingredients": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
+              "structuredIngredients": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
+              "ingredientAnalysis": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
+              "additives": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
+              "allergens": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
+              "traces": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
+              "dietaryTags": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
+              "labels": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
+              "package": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
+              "sourceMetadata": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] }
             }
           },
           "revision": { "$ref": "#/components/schemas/Revision" },

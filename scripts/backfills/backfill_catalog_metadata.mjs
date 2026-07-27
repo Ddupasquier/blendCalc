@@ -20,7 +20,7 @@ import {
 	normalizeBarcode,
 } from "../lib/barcode_candidates.mjs";
 import { createAppUserAgent } from "../lib/app_version.mjs";
-import { extractExplicitAllergenDeclarations } from "../../src/lib/utils/food/allergens/allergenDeclarations.js";
+import { extractExplicitAllergenDeclarations } from "../../src/lib/server/products/allergenDeclarations.server.js";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -71,10 +71,24 @@ const OPEN_FOOD_FACTS_FIELDS = [
 	"brands",
 	"ingredients_text",
 	"ingredients_text_en",
+	"ingredients",
+	"ingredients_tags",
+	"ingredients_analysis_tags",
+	"ingredients_percent_analysis",
+	"ingredients_percent_estimate",
+	"ingredients_percent_known",
+	"ingredients_percent_unknown",
 	"allergens",
 	"allergens_tags",
+	"allergens_hierarchy",
+	"allergens_lc",
 	"traces",
 	"traces_tags",
+	"traces_hierarchy",
+	"traces_lc",
+	"traces_from_ingredients",
+	"traces_from_user",
+	"additives_tags",
 	"labels",
 	"labels_tags",
 	"categories",
@@ -91,6 +105,23 @@ const OPEN_FOOD_FACTS_FIELDS = [
 	"serving_size",
 	"serving_quantity",
 	"serving_quantity_unit",
+	"quantity",
+	"product_quantity",
+	"product_quantity_unit",
+	"lang",
+	"languages_tags",
+	"created_t",
+	"last_modified_t",
+	"last_updated_t",
+	"rev",
+	"schema_version",
+	"completeness",
+	"data_quality_tags",
+	"data_quality_errors_tags",
+	"data_quality_warnings_tags",
+	"obsolete",
+	"obsolete_since_date",
+	"tags_sources",
 	"nutriments",
 ].join(",");
 const RETRY_DELAYS_MS = [750, 2_000];
@@ -658,12 +689,20 @@ for (const [index, product] of products.entries()) {
 				const offHasMetadata = Boolean(
 					offProduct?.ingredients_text_en ||
 						offProduct?.ingredients_text ||
+						offProduct?.ingredients?.length ||
+						offProduct?.ingredients_tags?.length ||
+						offProduct?.ingredients_analysis_tags?.length ||
 						offProduct?.allergens ||
 						offProduct?.allergens_tags?.length ||
+						offProduct?.allergens_hierarchy?.length ||
 						offProduct?.traces ||
 						offProduct?.traces_tags?.length ||
+						offProduct?.traces_hierarchy?.length ||
+						offProduct?.additives_tags?.length ||
 						offProduct?.labels ||
-						offProduct?.labels_tags?.length,
+						offProduct?.labels_tags?.length ||
+						offProduct?.product_quantity ||
+						offProduct?.last_modified_t,
 				);
 				if (offHasMetadata) {
 					summary.openFoodFactsMetadataCached += 1;

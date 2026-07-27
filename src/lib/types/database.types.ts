@@ -3887,6 +3887,7 @@ export type Database = {
       search_generic_food_records: {
         Args: { p_limit?: number; p_query: string }
         Returns: {
+          alternate_description: string
           application_food_id: number
           attribution_text: string
           dataset_display_name: string
@@ -3900,6 +3901,8 @@ export type Database = {
           measures: Json
           metadata: Json
           nutrients: Json
+          preparation: string
+          scientific_name: string
           source_display_name: string
           source_food_key: string
           source_key: string

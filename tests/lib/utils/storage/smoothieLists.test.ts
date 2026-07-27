@@ -5,7 +5,7 @@ import type { FdcFood } from "$lib/utils/food/types";
 const cloudData = vi.hoisted(() => ({
 	moveCloudSmoothieListItems: vi.fn(),
 	placeCloudSmoothieListItem: vi.fn(),
-	readCloudSmoothieList: vi.fn(),
+	readCloudSmoothieListIndex: vi.fn(),
 	removeCloudSmoothieListItem: vi.fn(),
 	renameCloudSmoothieListItem: vi.fn(),
 	writeCloudSmoothieList: vi.fn(),
@@ -34,9 +34,16 @@ describe("database-backed smoothie lists", () => {
 		vi.clearAllMocks();
 		cloudData.placeCloudSmoothieListItem.mockResolvedValue("added");
 		cloudData.moveCloudSmoothieListItems.mockResolvedValue(true);
-		cloudData.readCloudSmoothieList.mockImplementation(async (key: string) =>
-			key === MIX_STORAGE_KEYS.fridge ? [food] : []
-		);
+		cloudData.readCloudSmoothieListIndex.mockResolvedValue({
+			[MIX_STORAGE_KEYS.fridge]: {
+				foodIds: [food.fdcId],
+				foodIdentityKeys: [`fdc:${food.fdcId}`],
+			},
+			[MIX_STORAGE_KEYS.shoppingList]: {
+				foodIds: [],
+				foodIdentityKeys: [],
+			},
+		});
 		cloudData.removeCloudSmoothieListItem.mockResolvedValue(true);
 		cloudData.renameCloudSmoothieListItem.mockResolvedValue("renamed");
 		cloudData.writeCloudSmoothieList.mockResolvedValue(true);
@@ -90,10 +97,6 @@ describe("database-backed smoothie lists", () => {
 
 	it("bulk-adds only foods absent from both database lists", async () => {
 		const kale = { ...food, fdcId: 2, description: "Kale, Raw" };
-		cloudData.readCloudSmoothieList.mockImplementation(async (key: string) =>
-			key === MIX_STORAGE_KEYS.fridge ? [food] : []
-		);
-
 		await expect(addFoodsToSmoothieList(MIX_STORAGE_KEYS.fridge, [food, kale]))
 			.resolves.toBe("added");
 		expect(cloudData.writeCloudSmoothieList).toHaveBeenCalledWith(

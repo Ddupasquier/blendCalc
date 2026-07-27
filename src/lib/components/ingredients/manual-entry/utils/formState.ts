@@ -10,6 +10,11 @@ import type {
 	FoodFieldProvenance,
 	FoodImageAsset,
 	FoodBarcodeProvenance,
+	FoodIdentityType,
+	FoodIngredientAnalysis,
+	FoodPackageQuantity,
+	FoodSourceRecordMetadata,
+	FoodStructuredIngredient,
 } from "$lib/utils/food/types";
 import type {
 	ManualEntryStepId,
@@ -56,12 +61,18 @@ export type ManualEntryFormResetState = {
 	nutritionPhoto: File | null;
 	barcodePhoto: File | null;
 	reportedNutrientIds: number[];
+	foodIdentityType: FoodIdentityType;
 	ingredients: string;
 	ingredientList: string[];
+	structuredIngredients: FoodStructuredIngredient[];
+	ingredientAnalysis?: FoodIngredientAnalysis;
+	additives: string[];
 	allergens: string[];
 	traces: string[];
 	dietaryTags: string[];
 	labels: string[];
+	packageQuantity?: FoodPackageQuantity;
+	sourceMetadata?: FoodSourceRecordMetadata;
 	categories: string[];
 	image?: FoodImageAsset;
 	fieldProvenance?: FoodFieldProvenance;
@@ -102,12 +113,18 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	nutritionPhoto: null,
 	barcodePhoto: null,
 	reportedNutrientIds: [],
+	foodIdentityType: "private-custom",
 	ingredients: "",
 	ingredientList: [],
+	structuredIngredients: [],
+	ingredientAnalysis: undefined,
+	additives: [],
 	allergens: [],
 	traces: [],
 	dietaryTags: [],
 	labels: [],
+	packageQuantity: undefined,
+	sourceMetadata: undefined,
 	categories: [],
 	image: undefined,
 	fieldProvenance: undefined,

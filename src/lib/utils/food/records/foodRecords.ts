@@ -4,6 +4,14 @@ import {
 	normalizeFoodProductName,
 } from "$lib/utils/products/productNameFormatting.js";
 import { resolveFoodSymbolKey } from "$lib/utils/food/reference/appReferenceCatalog";
+import type { FoodStructuredIngredient } from "$lib/utils/food/types";
+
+const cloneStructuredIngredients = (
+	ingredients: FoodStructuredIngredient[] | undefined,
+): FoodStructuredIngredient[] | undefined => ingredients?.map((ingredient) => ({
+	...ingredient,
+	ingredients: cloneStructuredIngredients(ingredient.ingredients),
+}));
 
 export const compactFood = (food: FdcFood): FdcFood => {
 	const normalizedFood = normalizeFoodProductName(food) as FdcFood;
@@ -24,6 +32,10 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		brandOwner: food.brandOwner,
 		foodCategory: food.foodCategory,
 		dataType: food.dataType,
+		foodIdentityType: food.foodIdentityType,
+		scientificName: food.scientificName,
+		alternateDescription: food.alternateDescription,
+		preparation: food.preparation,
 		publishedDate: food.publishedDate,
 		publicationDate: food.publicationDate,
 		modifiedDate: food.modifiedDate,
@@ -36,12 +48,49 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		foodServings: food.foodServings?.map((serving) => ({ ...serving })),
 		gtinUpc: food.gtinUpc,
 		ingredients: food.ingredients,
-		ingredientList: food.ingredientList,
-		allergens: food.allergens,
-		traces: food.traces,
-		dietaryTags: food.dietaryTags,
-		labels: food.labels,
-		categories: food.categories,
+		ingredientList: food.ingredientList ? [...food.ingredientList] : undefined,
+		structuredIngredients: cloneStructuredIngredients(food.structuredIngredients),
+		ingredientAnalysis: food.ingredientAnalysis
+			? {
+				...food.ingredientAnalysis,
+				ingredientTags: [...food.ingredientAnalysis.ingredientTags],
+				analysisTags: [...food.ingredientAnalysis.analysisTags],
+				derivedTraceTags: [...food.ingredientAnalysis.derivedTraceTags],
+			}
+			: undefined,
+		additives: food.additives ? [...food.additives] : undefined,
+		allergens: food.allergens ? [...food.allergens] : undefined,
+		traces: food.traces ? [...food.traces] : undefined,
+		dietaryTags: food.dietaryTags ? [...food.dietaryTags] : undefined,
+		labels: food.labels ? [...food.labels] : undefined,
+		packageQuantity: food.packageQuantity
+			? { ...food.packageQuantity }
+			: undefined,
+		sourceMetadata: food.sourceMetadata
+			? {
+				...food.sourceMetadata,
+				languages: food.sourceMetadata.languages
+					? [...food.sourceMetadata.languages]
+					: undefined,
+				qualityTags: food.sourceMetadata.qualityTags
+					? [...food.sourceMetadata.qualityTags]
+					: undefined,
+				qualityErrorTags: food.sourceMetadata.qualityErrorTags
+					? [...food.sourceMetadata.qualityErrorTags]
+					: undefined,
+				qualityWarningTags: food.sourceMetadata.qualityWarningTags
+					? [...food.sourceMetadata.qualityWarningTags]
+					: undefined,
+				tagSources: food.sourceMetadata.tagSources
+					? Object.fromEntries(
+						Object.entries(food.sourceMetadata.tagSources).map(
+							([key, sources]) => [key, [...sources]],
+						),
+					)
+					: undefined,
+			}
+			: undefined,
+		categories: food.categories ? [...food.categories] : undefined,
 		categoryOptionId: food.categoryOptionId,
 			symbolKey: resolveFoodSymbolKey(normalizedFood),
 		image: food.image,

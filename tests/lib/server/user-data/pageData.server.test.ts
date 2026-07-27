@@ -4,16 +4,29 @@ const storage = vi.hoisted(() => ({
 	readCloudCustomFoods: vi.fn(),
 	readCloudMixPreferences: vi.fn(),
 	readCloudSavedDrinks: vi.fn(),
-	readCloudSmoothieList: vi.fn(),
 	readCloudSmoothieListIndex: vi.fn(),
+}));
+const serverLists = vi.hoisted(() => ({
+	readCloudSmoothieList: vi.fn(),
 	readCloudSmoothieListPage: vi.fn(),
 }));
 const provenance = vi.hoisted(() => ({
 	readIngredientProvenanceOptions: vi.fn(),
 }));
+const foodSafety = vi.hoisted(() => ({
+	annotateFoodsWithFoodSafety: vi.fn((foods) => foods),
+	getUserFoodSafetyContext: vi.fn(),
+}));
 
 vi.mock("$lib/utils/storage/supabase", () => storage);
+vi.mock("$lib/server/user-data/foodLists.server", () => serverLists);
 vi.mock("$lib/utils/ingredients/ingredientProvenance", () => provenance);
+vi.mock("$lib/server/food-safety/foodSafetyEvaluation.server", () => ({
+	annotateFoodsWithFoodSafety: foodSafety.annotateFoodsWithFoodSafety,
+}));
+vi.mock("$lib/server/food-safety/userFoodSafety.server", () => ({
+	getUserFoodSafetyContext: foodSafety.getUserFoodSafetyContext,
+}));
 
 import {
 	loadIngredientPageData,
@@ -37,12 +50,12 @@ const listIndex = {
 describe("server-loaded user page data", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		storage.readCloudSmoothieListPage
+		serverLists.readCloudSmoothieListPage
 			.mockResolvedValueOnce({ foods: [{ fdcId: 1 }], totalCount: 1 })
 			.mockResolvedValueOnce({ foods: [{ fdcId: 2 }], totalCount: 1 });
 		storage.readCloudCustomFoods.mockResolvedValue([{ fdcId: -1 }]);
 		storage.readCloudSmoothieListIndex.mockResolvedValue(listIndex);
-		storage.readCloudSmoothieList.mockImplementation(async (key: string) =>
+		serverLists.readCloudSmoothieList.mockImplementation(async (key: string) =>
 			key === MIX_STORAGE_KEYS.fridge ? [{ fdcId: 1 }] : [{ fdcId: 2 }],
 		);
 		storage.readCloudMixPreferences.mockResolvedValue({
@@ -53,6 +66,13 @@ describe("server-loaded user page data", () => {
 		provenance.readIngredientProvenanceOptions.mockResolvedValue([
 			{ dimension: "trust", value: "source-verified" },
 		]);
+		foodSafety.getUserFoodSafetyContext.mockResolvedValue({
+			profile: null,
+			policy: {
+				preferenceConflictRules: [],
+				compatibilityMatchRules: [],
+			},
+		});
 	});
 
 	it("loads the Ingredients page through one server coordinator", async () => {
@@ -63,7 +83,7 @@ describe("server-loaded user page data", () => {
 		expect(result.customFoods).toEqual([{ fdcId: -1 }]);
 		expect(result.listIndex).toEqual(listIndex);
 		expect(result.loadError).toBe("");
-		expect(storage.readCloudSmoothieListPage).toHaveBeenCalledTimes(2);
+		expect(serverLists.readCloudSmoothieListPage).toHaveBeenCalledTimes(2);
 	});
 
 	it("loads Mix lists and preferences together on the server", async () => {

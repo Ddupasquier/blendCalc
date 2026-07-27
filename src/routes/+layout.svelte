@@ -18,8 +18,6 @@
 		getAppDocumentTitle,
 		getCanonicalAppUrl,
 	} from "$lib/config/pageMetadata";
-	import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
-	import { setFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import {
 		clearObsoleteAppStorage,
 		setActiveStorageUserId,
@@ -52,9 +50,6 @@
 
 	let tutorialOpen = $state(false);
 	let tutorialUserId = $state<string | null>(null);
-	let foodPreferenceContext: { current: FoodPreferenceProfile | null } = $state({
-		current: null,
-	});
 	const ingredientsRoute = $derived(
 		Boolean(data.authUser) &&
 			(page.url.pathname === "/fridge" ||
@@ -64,7 +59,6 @@
 	const tutorialVisible = $derived(tutorialOpen || tutorialRouteOpen);
 	const documentTitle = $derived(getAppDocumentTitle(page.url));
 	const canonicalUrl = $derived(getCanonicalAppUrl(page.url));
-	setFoodPreferenceContext(foodPreferenceContext);
 
 	$effect.pre(() => {
 		configureServingMeasureCatalog(data.servingMeasureCatalog);
@@ -97,8 +91,6 @@
 
 	$effect.pre(() => {
 		setActiveStorageUserId(data.authUser?.id ?? null);
-		foodPreferenceContext.current = data.foodPreferences ?? null;
-
 		if (data.authUser) {
 			clearObsoleteAppStorage();
 		}

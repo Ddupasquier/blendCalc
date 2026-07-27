@@ -501,6 +501,20 @@ Notes:
   USDA-backed products this includes `sourceKey`, the DB-provided `sourceLabel`,
   `sourceDataType` (`Branded`, `Foundation`, `SR Legacy`, or `Survey (FNDDS)`), and
   available source publication/modification dates.
+- Canonical food snapshots distinguish `foodIdentityType` as `packaged`, `generic`, or
+  `private-custom`. Existing shared products/submissions are backfilled as packaged;
+  existing custom/list snapshots use their explicit custom state and strict source data
+  type to recover the applicable identity.
+- When a source supplies them and source policy permits canonical storage, `food`
+  preserves the raw ingredient statement, normalized `ingredientList`, recursive
+  `structuredIngredients`, `ingredientAnalysis`, `additives`, explicit `allergens`,
+  explicit `traces`, `dietaryTags`, `labels`, `packageQuantity`, and
+  `sourceMetadata`. `sourceMetadata` includes source language, revision/schema version,
+  source timestamps, completeness, quality tags, obsolete state, and tag-source
+  evidence. Each independently accepted field keeps its source in `fieldProvenance`.
+- `ingredientAnalysis.derivedTraceTags` records a provider-derived ingredient analysis
+  only. It is not promoted into `food.traces` and therefore cannot become a package
+  `May contain` disclosure.
 - USDA barcode products use exact normalized GTIN matches and keep the newest active
   `Branded` record. Missing nutrient values remain missing; values from unrelated USDA
   records are not blended into the product.
@@ -610,10 +624,20 @@ Notes:
   product compatibility facts.
 - App utilities must not recreate allergen or dietary vocabularies with name/category
   guesses.
-- Match rules operate only on source-provided ingredient statements. Product names,
-  descriptions, categories, and generic identity labels are not warning evidence.
+- Conflict rows and `food_compatibility_match_rules` remain server-only policy. They are
+  not serialized through the browser reference catalog. Authenticated page/API reads
+  evaluate them before returning bounded `preferenceWarnings` and
+  `allergenDisclosure`; client components only render those results.
+- Packaged match rules operate only on source-provided ingredient statements. Product
+  names, descriptions, categories, brands, and generic labels are not warning evidence.
+  Separately, an explicitly typed authoritative generic-food record may match a
+  `generic_food_identity` rule and create an intrinsic `contains` fact with
+  `food_identity_taxonomy` provenance. This path is unavailable to packaged and
+  private-custom foods.
 - `warning_code → app_issue_codes.code`; ordinary warning sentences are not stored in
   this table.
+- `prepare_custom_food_record` enforces the same nutrient relationship rules with their
+  stable `issue_code`; the database no longer owns the user-facing warning sentence.
 
 ### `product_compatibility_facts`
 
@@ -628,6 +652,9 @@ Notes:
 - `contains` comes from explicit allergen metadata, `may_contain` comes only from
   explicit trace metadata, and `ingredient_present` comes from a reviewed match against
   a source-provided ingredient statement.
+- `contains` may also represent the intrinsic taxonomy of an authoritative generic food
+  such as shrimp or milk. The source type is `food_identity_taxonomy`, keeping it
+  distinct from a packaged-label allergen declaration.
 
 ### `food_preference_option_catalog`
 
@@ -749,7 +776,9 @@ Current release state:
   approved.
 
 Runtime generic search reads only active, import-enabled datasets through the indexed
-search RPC. It does not merge similar foods from different sources.
+search RPC. Results retain alternate descriptions, scientific names, and preparation
+metadata so generic identity can be evaluated without using packaged-product title
+inference. It does not merge similar foods from different sources.
 
 Private custom foods use `private-manual-core-v1`, whose required rows are copied from
 the enabled manual-entry nutrient requirements. A typed barcode does not switch that
@@ -796,6 +825,7 @@ category, or serving fields.
 | `normalize_food_category_value`                | Normalizes category text for option and mapping lookup                                                                                         |
 | `resolve_custom_food_category_option`          | Resolves raw API category values to one enabled canonical category option                                                                      |
 | `search_generic_food_records`                  | Searches active national generic-food datasets with indexed, stable relevance ordering and returns normalized food JSON with source provenance |
+| `apply_shared_product_external_enrichment`     | Atomically fills legally reusable missing canonical fields, including structured package metadata, while recording observations, provenance, normalized projections, and a revision |
 | `reject_blocked_signup`                        | Supabase Auth hook for hashed email signup blocks                                                                                              |
 
 ## Storage Buckets
@@ -813,6 +843,9 @@ When schema changes:
 2. Add RLS and grants intentionally.
 3. Add indexes for expected filtering, sorting, joins, and lookup paths.
 4. Regenerate `src/lib/types/database.types.ts` after migration is applied.
+5. Backfill applicable existing rows whenever a new accepted field can be recovered
+   from canonical data, normalized child rows, or legally reusable exact-source
+   observations.
 5. Update this document with table purpose, owner scope, key columns, and relationships.
 6. Add or update focused tests for migration expectations when practical.
 7. Add a local-only QA item to the appropriate priority tracker linked from

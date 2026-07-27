@@ -1,8 +1,6 @@
 import type { FdcFood } from "$lib/utils/food/types";
-import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 import {
 	getFoodPreferenceWarningMessage,
-	getFoodPreferenceWarnings,
 } from "$lib/utils/profile/foodPreferenceWarnings";
 
 export type SmartWarningTone = "danger" | "warning" | "info";
@@ -82,12 +80,9 @@ export const getNutrientGoalWarnings = (
 
 export const getFoodPreferenceSmartWarnings = (
 	foods: FdcFood[],
-	profile: FoodPreferenceProfile | null | undefined,
 ): SmartWarning[] => {
-	if (!profile) return [];
-
 	return foods.flatMap((food) => {
-		const warnings = getFoodPreferenceWarnings(food, profile);
+		const warnings = food.preferenceWarnings ?? [];
 		if (warnings.length === 0) return [];
 
 		const hasWarning = warnings.some((warning) => warning.level === "warning");

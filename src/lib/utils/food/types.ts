@@ -72,6 +72,53 @@ export interface FoodServing {
     confidence?: FdcNutrient["confidence"];
 }
 
+export type FoodIdentityType = "generic" | "packaged" | "private-custom";
+
+export type FoodStructuredIngredient = {
+	id?: string;
+	text?: string;
+	percent?: number;
+	percentEstimate?: number;
+	percentMin?: number;
+	percentMax?: number;
+	vegan?: string;
+	vegetarian?: string;
+	ingredients?: FoodStructuredIngredient[];
+};
+
+export type FoodIngredientAnalysis = {
+	ingredientTags: string[];
+	analysisTags: string[];
+	derivedTraceTags: string[];
+	percentAnalysis?: number;
+	percentEstimate?: number;
+	percentKnown?: number;
+	percentUnknown?: number;
+};
+
+export type FoodPackageQuantity = {
+	label?: string;
+	amount?: number;
+	unit?: string;
+};
+
+export type FoodSourceRecordMetadata = {
+	language?: string;
+	languages?: string[];
+	revision?: number;
+	schemaVersion?: number;
+	createdAt?: string;
+	modifiedAt?: string;
+	updatedAt?: string;
+	completeness?: number;
+	qualityTags?: string[];
+	qualityErrorTags?: string[];
+	qualityWarningTags?: string[];
+	obsolete?: boolean;
+	obsoleteSince?: string;
+	tagSources?: Record<string, string[]>;
+};
+
 export type FoodTrackedField =
     | "nutrition"
     | "image"
@@ -81,7 +128,12 @@ export type FoodTrackedField =
     | "allergens"
     | "traces"
     | "dietaryTags"
-    | "labels";
+    | "labels"
+	| "structuredIngredients"
+	| "ingredientAnalysis"
+	| "additives"
+	| "package"
+	| "sourceMetadata";
 
 export type FoodFieldSource = {
     source:
@@ -122,6 +174,11 @@ export type FoodSourceAttribution = {
 	attributionText: string;
 };
 
+export type FoodAllergenDisclosure = {
+	contains: string[];
+	mayContain: string[];
+};
+
 /** A food item returned from the FDC search endpoint */
 export interface FdcFood {
     fdcId: number;
@@ -135,6 +192,10 @@ export interface FdcFood {
     reportedNutrientIds?: number[];
     // Branded food fields (optional)
     dataType?: string;
+	foodIdentityType?: FoodIdentityType;
+	scientificName?: string;
+	alternateDescription?: string;
+	preparation?: string;
     publishedDate?: string;
     publicationDate?: string;
     modifiedDate?: string;
@@ -148,10 +209,15 @@ export interface FdcFood {
     gtinUpc?: string;
     ingredients?: string;
     ingredientList?: string[];
+	structuredIngredients?: FoodStructuredIngredient[];
+	ingredientAnalysis?: FoodIngredientAnalysis;
+	additives?: string[];
     allergens?: string[];
     traces?: string[];
     dietaryTags?: string[];
     labels?: string[];
+	packageQuantity?: FoodPackageQuantity;
+	sourceMetadata?: FoodSourceRecordMetadata;
     categories?: string[];
     categoryOptionId?: string;
 	symbolKey?: string;
@@ -183,8 +249,9 @@ export interface FdcFood {
     customDensityLabel?: string;
     customDensityVariancePercent?: number;
     customDensityConfidence?: "known" | "estimated" | "rough";
-    compatibilitySummary?: FoodCompatibilitySummary;
-    preferenceWarnings?: FoodPreferenceWarning[];
+	    compatibilitySummary?: FoodCompatibilitySummary;
+	    allergenDisclosure?: FoodAllergenDisclosure;
+	    preferenceWarnings?: FoodPreferenceWarning[];
 }
 
 /** The FDC foods/search response envelope */

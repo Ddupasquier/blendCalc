@@ -17,6 +17,12 @@ sources represented by its accepted fields. The collection is loaded from
 licence URL, and attribution statement instead of inferring legal metadata from a
 provider key.
 
+Product responses also preserve accepted structured ingredient trees, ingredient
+analysis, additives, explicit allergen/trace disclosures, labels, package quantity,
+provider record metadata, and field-specific sources. Missing values remain `null` or
+empty collections according to the contract; derived ingredient trace hypotheses do
+not become explicit `May contain` disclosures.
+
 Public API keys, billing, developer accounts, and a public write API are deliberately
 out of scope until the contract, redistribution rights, rate limits, and correction
 process are ready.

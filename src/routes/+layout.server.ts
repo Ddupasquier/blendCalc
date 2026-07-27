@@ -1,10 +1,6 @@
 import { redirect } from "@sveltejs/kit";
 import type { LayoutServerLoad } from "./$types";
 import { getPasswordUpgradeNext } from "$lib/utils/auth/passwordUpgrade";
-import {
-	getFoodPreferenceProfile,
-	isMissingFoodPreferencesTableError,
-} from "$lib/utils/profile/foodPreferenceProfile";
 import { getSignedAvatarUrl, getUserProfile } from "$lib/utils/profile/profile";
 import { getDefaultDisplayName } from "$lib/utils/profile/profileValidation";
 import { getUserAppRole } from "$lib/utils/moderation/moderation";
@@ -57,7 +53,6 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		{ profile, avatarUrl },
 		role,
 		tutorialPreference,
-		foodPreferencesResult,
 		servingMeasureCatalog,
 		nutritionCompletenessCatalog,
 		appReferenceCatalog,
@@ -65,13 +60,6 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		profileWithAvatarPromise,
 		getUserAppRole(locals.supabase, user.id),
 		getTutorialPreference(locals.supabase, user.id),
-		locals.supabase
-			.from("user_food_preferences")
-			.select(
-				"unit_system, allergens, dietary_restrictions, prioritized_nutrient_ids, default_smoothie_serving_grams, sensitive_acknowledged_at",
-			)
-			.eq("user_id", user.id)
-			.maybeSingle(),
 		getServingMeasureCatalog(),
 		getNutritionCompletenessCatalog(),
 		getAppReferenceCatalog(),
@@ -79,14 +67,6 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	configureServingMeasureCatalog(servingMeasureCatalog);
 	configureNutritionCompletenessCatalog(nutritionCompletenessCatalog);
 	configureAppReferenceCatalog(appReferenceCatalog);
-	const foodPreferencesError = foodPreferencesResult.error;
-	if (
-		foodPreferencesError &&
-		!isMissingFoodPreferencesTableError(foodPreferencesError)
-	) {
-		throw foodPreferencesError;
-	}
-
 	return {
 		authUser: {
 			id: user.id,
@@ -97,11 +77,6 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			role,
 			showTutorial: shouldAutomaticallyShowTutorial(tutorialPreference),
 		},
-		foodPreferences: getFoodPreferenceProfile(
-			foodPreferencesResult.data,
-			appReferenceCatalog.foodPreferenceConflictRules,
-			appReferenceCatalog.foodCompatibilityMatchRules,
-		),
 		servingMeasureCatalog,
 		nutritionCompletenessCatalog,
 		appReferenceCatalog,

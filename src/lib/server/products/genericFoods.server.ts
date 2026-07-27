@@ -27,6 +27,30 @@ type GenericMeasureRow = {
 	sourceUpdatedAt?: string | null;
 };
 
+type GenericFoodSearchRow = {
+	application_food_id: number | string;
+	dataset_key: string;
+	source_food_key: string;
+	description: string;
+	alternate_description: string | null;
+	food_group_name: string | null;
+	scientific_name: string | null;
+	preparation: string | null;
+	external_reference: string | null;
+	source_updated_at: string | null;
+	source_key: string;
+	source_display_name: string;
+	dataset_display_name: string;
+	dataset_version: string;
+	source_url: string;
+	license_name: string;
+	license_url: string;
+	attribution_text: string;
+	metadata: Json;
+	nutrients: Json;
+	measures: Json;
+};
+
 const asRecordArray = <Row>(value: Json): Row[] =>
 	Array.isArray(value) ? value as unknown as Row[] : [];
 
@@ -87,7 +111,7 @@ export const searchGenericFoods = async (
 	});
 	if (error) throw error;
 
-	return (data ?? []).map((row) => {
+	return ((data ?? []) as unknown as GenericFoodSearchRow[]).map((row) => {
 		const sourceReference = createSourceReference(
 			row.dataset_key,
 			row.source_food_key,
@@ -108,6 +132,10 @@ export const searchGenericFoods = async (
 			fdcId: Number(row.application_food_id),
 			description: formatSourceProductName(row.description),
 			nameProvenance: "source",
+			foodIdentityType: "generic",
+			alternateDescription: row.alternate_description ?? undefined,
+			scientificName: row.scientific_name ?? undefined,
+			preparation: row.preparation ?? undefined,
 			foodCategory: row.food_group_name ?? undefined,
 			foodNutrients,
 			reportedNutrientIds: foodNutrients.map(({ nutrientId }) => nutrientId),

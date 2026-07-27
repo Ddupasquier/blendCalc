@@ -12,7 +12,8 @@ export type FoodCompatibilitySourceType =
 	| "label_allergen_field"
 	| "label_trace_field"
 	| "label_dietary_field"
-	| "label_ingredient_field";
+	| "label_ingredient_field"
+	| "food_identity_taxonomy";
 
 export type FoodCompatibilityConfidence = "confirmed" | "inferred" | "uncertain";
 

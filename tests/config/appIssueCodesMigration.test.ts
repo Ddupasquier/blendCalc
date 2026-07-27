@@ -10,6 +10,10 @@ const correctiveMigration = readFileSync(
 	"supabase/migrations/20260726180000_ingredient_evidence_only_compatibility.sql",
 	"utf8",
 );
+const genericFoodMetadataMigration = readFileSync(
+	"supabase/migrations/20260726200000_authoritative_generic_food_metadata.sql",
+	"utf8",
+);
 const retiredIssueCodes = [
 	"FOOD_IDENTITY_CONFIRMED",
 	"FOOD_IDENTITY_POSSIBLE",
@@ -26,6 +30,10 @@ describe("application issue code migration", () => {
 			migrationCodes.delete(retiredCode);
 			expect(correctiveMigration).toContain(`'${retiredCode}'`);
 		}
+		expect(genericFoodMetadataMigration).toContain(
+			"'FOOD_INTRINSIC_ALLERGEN'",
+		);
+		migrationCodes.add("FOOD_INTRINSIC_ALLERGEN");
 
 		expect([...migrationCodes].sort()).toEqual([...APP_ISSUE_CODES].sort());
 	});

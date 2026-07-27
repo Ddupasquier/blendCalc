@@ -73,6 +73,11 @@ describe("barcode product field enrichment", () => {
 			traces: true,
 			dietaryTags: true,
 			labels: true,
+			structuredIngredients: true,
+			ingredientAnalysis: true,
+			additives: true,
+			package: true,
+			sourceMetadata: true,
 		});
 	});
 
@@ -97,6 +102,11 @@ describe("barcode product field enrichment", () => {
 			traces: true,
 			dietaryTags: true,
 			labels: true,
+			structuredIngredients: true,
+			ingredientAnalysis: true,
+			additives: true,
+			package: true,
+			sourceMetadata: true,
 			missingNutrientIds: [1003],
 		});
 	});
@@ -226,6 +236,15 @@ describe("barcode product field enrichment", () => {
 			traces: ["tree nuts"],
 			dietaryTags: ["vegetarian"],
 			labels: ["Rainforest Alliance"],
+			structuredIngredients: [{ id: "milk", text: "milk" }],
+			ingredientAnalysis: {
+				ingredientTags: ["milk"],
+				analysisTags: ["non vegan"],
+				derivedTraceTags: ["tree nuts"],
+			},
+			additives: ["e330"],
+			packageQuantity: { label: "12 oz", amount: 12, unit: "oz" },
+			sourceMetadata: { revision: 4 },
 		});
 
 		const result = mergeMissingBarcodeProductFields(usda, openFoodFacts);
@@ -236,6 +255,23 @@ describe("barcode product field enrichment", () => {
 		expect(result.traces).toEqual(["tree nuts"]);
 		expect(result.dietaryTags).toEqual(["vegetarian"]);
 		expect(result.labels).toEqual(["Rainforest Alliance"]);
+		expect(result.structuredIngredients).toEqual([{ id: "milk", text: "milk" }]);
+		expect(result.ingredientAnalysis).toEqual({
+			ingredientTags: ["milk"],
+			analysisTags: ["non vegan"],
+			derivedTraceTags: ["tree nuts"],
+			percentAnalysis: undefined,
+			percentEstimate: undefined,
+			percentKnown: undefined,
+			percentUnknown: undefined,
+		});
+		expect(result.additives).toEqual(["e330"]);
+		expect(result.packageQuantity).toEqual({
+			label: "12 oz",
+			amount: 12,
+			unit: "oz",
+		});
+		expect(result.sourceMetadata).toEqual({ revision: 4 });
 		expect(result.source).toBe("usda");
 	});
 

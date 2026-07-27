@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { getFoodAllergenDisplay } from "$lib/utils/food/records/foodAllergens";
 	import type { ProductAllergenPanelProps } from "./types";
 
 	let { food }: ProductAllergenPanelProps = $props();
 
-	const allergenDisplay = $derived(getFoodAllergenDisplay(food));
+	const allergenDisplay = $derived(food.allergenDisclosure);
 </script>
 
-{#if allergenDisplay.contains.length > 0 || allergenDisplay.mayContain.length > 0}
+{#if allergenDisplay &&
+	(allergenDisplay.contains.length > 0 || allergenDisplay.mayContain.length > 0)}
 	<div class="product-allergen-panel">
 		{#if allergenDisplay.contains.length > 0}
 			<section class="product-allergen-panel__group">

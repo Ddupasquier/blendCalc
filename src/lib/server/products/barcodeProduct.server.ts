@@ -11,7 +11,7 @@ import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
 	mapSharedCatalogFood,
 	type BarcodeProductDraft,
-} from "$lib/utils/barcode/productLookup";
+} from "$lib/utils/barcode/barcodeProductMappers";
 import { getCachedFoodImageByBarcode } from "$lib/utils/storage/supabase/foodImages";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {

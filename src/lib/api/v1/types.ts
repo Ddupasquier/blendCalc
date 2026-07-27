@@ -82,6 +82,18 @@ export type ApiV1ProductRevision = {
 	lastVerifiedAt: string | null;
 };
 
+export type ApiV1StructuredIngredient = {
+	id: string | null;
+	text: string | null;
+	percent: number | null;
+	percentEstimate: number | null;
+	percentMin: number | null;
+	percentMax: number | null;
+	vegan: string | null;
+	vegetarian: string | null;
+	ingredients: ApiV1StructuredIngredient[];
+};
+
 export type ApiV1Product = {
 	id: string;
 	barcode: string;
@@ -90,10 +102,44 @@ export type ApiV1Product = {
 	category: ApiV1Category | null;
 	ingredients: {
 		text: string | null;
+		items: string[];
+		structured: ApiV1StructuredIngredient[];
+		analysis: {
+			ingredientTags: string[];
+			analysisTags: string[];
+			derivedTraceTags: string[];
+			percentAnalysis: number | null;
+			percentEstimate: number | null;
+			percentKnown: number | null;
+			percentUnknown: number | null;
+		} | null;
+		additives: string[];
 		allergens: string[];
 		traces: string[];
 		dietaryTags: string[];
+		labels: string[];
 	};
+	packageQuantity: {
+		label: string | null;
+		amount: number | null;
+		unit: string | null;
+	} | null;
+	sourceRecord: {
+		language: string | null;
+		languages: string[];
+		revision: number | null;
+		schemaVersion: number | null;
+		createdAt: string | null;
+		modifiedAt: string | null;
+		updatedAt: string | null;
+		completeness: number | null;
+		qualityTags: string[];
+		qualityErrorTags: string[];
+		qualityWarningTags: string[];
+		obsolete: boolean | null;
+		obsoleteSince: string | null;
+		tagSources: Record<string, string[]>;
+	} | null;
 	nutrients: ApiV1Nutrient[];
 	servings: ApiV1Serving[];
 	images: ApiV1Image[];
@@ -104,6 +150,15 @@ export type ApiV1Product = {
 		brand: ApiV1Source | null;
 		category: ApiV1Source | null;
 		ingredients: ApiV1Source | null;
+		structuredIngredients: ApiV1Source | null;
+		ingredientAnalysis: ApiV1Source | null;
+		additives: ApiV1Source | null;
+		allergens: ApiV1Source | null;
+		traces: ApiV1Source | null;
+		dietaryTags: ApiV1Source | null;
+		labels: ApiV1Source | null;
+		package: ApiV1Source | null;
+		sourceMetadata: ApiV1Source | null;
 	};
 	revision: ApiV1ProductRevision;
 	links: {

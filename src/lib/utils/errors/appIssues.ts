@@ -31,6 +31,7 @@ export const APP_ISSUE_CODES = [
 	"TUTORIAL_CHOICE_INVALID",
 	"TUTORIAL_SAVE_FAILED",
 	"NUTRIENT_CHILD_EXCEEDS_PARENT",
+	"FOOD_INTRINSIC_ALLERGEN",
 	"FOOD_ALLERGEN_CONTAINS",
 	"FOOD_ALLERGEN_MAY_CONTAIN",
 	"FOOD_INGREDIENT_PRESENT",
@@ -255,6 +256,12 @@ export const APP_ISSUE_DEFINITIONS: Record<AppIssueCode, AppIssueDefinition> = {
 		message: (params) =>
 			`${sentenceLabel(params, "childLabel", "This nutrient")} cannot exceed ${lowerLabel(params, "parentLabel", "its total")}.`,
 	},
+	FOOD_INTRINSIC_ALLERGEN: {
+		kind: "warning",
+		title: "Check this ingredient",
+		message: (params) =>
+			`This ingredient is ${lowerLabel(params, "factLabel", "a selected allergen")}.`,
+	},
 	FOOD_ALLERGEN_CONTAINS: {
 		kind: "warning",
 		title: "Check this ingredient",
@@ -285,6 +292,9 @@ export const APP_ISSUE_DEFINITIONS: Record<AppIssueCode, AppIssueDefinition> = {
 			}
 			if (evidenceType === "may_contain") {
 				return `This may not be ${restriction} because the label says it may contain ${fact}.`;
+			}
+			if (evidenceType === "intrinsic") {
+				return `This may not be ${restriction} because this ingredient is ${fact}.`;
 			}
 			return `This may not be ${restriction} because ${fact} appears in the ingredient list.`;
 		},

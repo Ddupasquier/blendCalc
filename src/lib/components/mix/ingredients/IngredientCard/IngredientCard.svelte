@@ -6,11 +6,9 @@
 	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
 	import CloseButton from "$lib/components/common/buttons/CloseButton/CloseButton.svelte";
 	import type { IngredientCardProps } from "./types";
-	import { getFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
 	import {
 		FOOD_PREFERENCE_WARNING_TITLE,
 		getFoodPreferenceWarningMessage,
-		getFoodPreferenceWarnings,
 	} from "$lib/utils/profile/foodPreferenceWarnings";
 	import { slide } from "svelte/transition";
 	import {
@@ -33,10 +31,7 @@
 	}: IngredientCardProps = $props();
 
 	let nutrientsOpen = $state(false);
-	const foodPreferenceContext = getFoodPreferenceContext();
-	const preferenceWarnings = $derived(
-		getFoodPreferenceWarnings(food, foodPreferenceContext.current),
-	);
+	const preferenceWarnings = $derived(food.preferenceWarnings ?? []);
 
 	const getDisplayName = (name: string, maxLength = 30): string => {
 		if (name.length <= maxLength) return name;
