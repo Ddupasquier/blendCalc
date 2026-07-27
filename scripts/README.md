@@ -1,8 +1,12 @@
 # Repository Scripts
 
-Run maintained workflows through the named `npm` commands in the root
-`package.json`. The folders below organize implementation files by purpose; they are
-not separate public interfaces.
+The root `package.json` exposes only stable commands that a developer is reasonably
+expected to run directly. Internal maintenance and one-off workflows remain executable
+through the exact `node scripts/...` command documented at the top of their file; they
+do not need an npm alias merely for automated repository work.
+
+The folders below organize implementation files by purpose. Their contents are not
+automatically part of the public developer command surface.
 
 ## Directory Map
 
@@ -34,6 +38,9 @@ not separate public interfaces.
   automated test workflow.
 - Remove one-time investigation scripts after their result is represented by runtime
   code, a maintained audit, a migration, or a database-backed seed.
+- Add an npm alias only for a stable, repeatable developer workflow. Do not add aliases
+  for internal backfills, narrow investigations, or commands that can be run directly
+  from their documented file header.
 
 ## Catalog API Audit
 

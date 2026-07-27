@@ -189,6 +189,7 @@ const createBatchWriter = (table, onConflict) => {
 const deleteDatasetRows = async () => {
 	for (const table of [
 		"generic_food_dataset_reference_rows",
+		"generic_food_source_identifiers",
 		"generic_food_measures",
 		"generic_food_nutrients",
 		"generic_food_records",
@@ -365,6 +366,30 @@ for (const row of foodRows) {
 	});
 }
 await recordWriter.finish();
+
+const sourceIdentifierWriter = createBatchWriter(
+	"generic_food_source_identifiers",
+	"dataset_key,source_food_key,source_key,identifier_type,identifier_value",
+);
+for (const row of foodRows) {
+	const rawNdbNumber = textOrNull(row.USDA_NDB_Code);
+	const digits = rawNdbNumber?.replace(/\D/g, "") ?? "";
+	if (!digits) continue;
+	await sourceIdentifierWriter.add({
+		dataset_key: DATASET_KEY,
+		source_food_key: String(row.Food_Code),
+		source_key: "usda",
+		identifier_type: "ndb-number",
+		identifier_value: digits.padStart(5, "0"),
+		source_field: "USDA_NDB_Code",
+		verification_method: "source-reference",
+		metadata: {
+			declaredByDataset: DATASET_KEY,
+			rawValue: rawNdbNumber,
+		},
+	});
+}
+await sourceIdentifierWriter.finish();
 
 await importReferenceRows({
 	food_source: { keyField: "Food_Source_Code", rows: foodSourceRows },

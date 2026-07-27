@@ -82,6 +82,32 @@ on conflict (normalized_alias) do update set
 	first_observed_at = excluded.first_observed_at,
 	last_observed_at = excluded.last_observed_at;
 
+insert into public.serving_measure_aliases (
+	unit_key,
+	alias,
+	normalized_alias,
+	source_key,
+	observation_count,
+	first_observed_at,
+	last_observed_at
+)
+values (
+	'g',
+	'GRM',
+	'grm',
+	'usda',
+	1,
+	'2026-07-27T00:00:00Z',
+	'2026-07-27T00:00:00Z'
+)
+on conflict (normalized_alias) do update set
+	unit_key = excluded.unit_key,
+	alias = excluded.alias,
+	source_key = excluded.source_key,
+	observation_count = excluded.observation_count,
+	first_observed_at = excluded.first_observed_at,
+	last_observed_at = excluded.last_observed_at;
+
 insert into public.nutrient_manual_entry_groups (
 	id,
 	entry_step,

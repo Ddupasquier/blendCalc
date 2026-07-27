@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const supabase = vi.hoisted(() => ({
 	rpc: vi.fn(),
@@ -33,9 +33,17 @@ describe("authoritative Supabase write adapters", () => {
 		vi.clearAllMocks();
 	});
 
-	it("uses database functions for bulk list writes, moves, renames, and deletes", async () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	it("uses server enrichment for list writes and database functions for remaining mutations", async () => {
+		const fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			json: async () => ({ result: "added" }),
+		});
+		vi.stubGlobal("fetch", fetchMock);
 		supabase.rpc
-			.mockResolvedValueOnce({ data: "added", error: null })
 			.mockResolvedValueOnce({ data: 1, error: null })
 			.mockResolvedValueOnce({ data: "renamed", error: null })
 			.mockResolvedValueOnce({ data: true, error: null });
@@ -62,11 +70,17 @@ describe("authoritative Supabase write adapters", () => {
 		).resolves.toBe(true);
 
 		expect(supabase.rpc.mock.calls.map(([name]) => name)).toEqual([
-			"place_user_food_list_items",
 			"move_user_food_list_items",
 			"rename_user_food_list_item",
 			"remove_user_food_list_item",
 		]);
+		expect(fetchMock).toHaveBeenCalledWith(
+			"/api/user-food-lists/fridge",
+			expect.objectContaining({
+				method: "POST",
+				body: expect.stringContaining("\"foods\""),
+			}),
+		);
 	});
 
 	it("uses database functions for saved-drink writes and deletes", async () => {

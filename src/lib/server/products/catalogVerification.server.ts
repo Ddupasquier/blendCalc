@@ -2,7 +2,11 @@ import { createHash } from "node:crypto";
 import type { Json } from "$lib/types/database.types";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import { compactFood } from "$lib/utils/food/records/foodRecords";
-import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import type {
+	FdcFood,
+	FdcNutrient,
+	FoodTrackedField,
+} from "$lib/utils/food/types";
 import {
 	compareNormalizedFoods,
 	normalizeComparisonText,
@@ -143,6 +147,85 @@ const addFoodProvenance = (
 				value: nutrient.value,
 				unitName: nutrient.unitName.toUpperCase(),
 			}),
+			confidence,
+			verificationMethod,
+		});
+	}
+
+	const trackedFields: Array<{
+		fieldPath: FoodTrackedField;
+		include: boolean;
+		value: Json;
+	}> = [
+		{
+			fieldPath: "categories",
+			include: Boolean(food.foodCategory?.trim() || food.categories?.length),
+			value: toJson({
+				foodCategory: food.foodCategory ?? null,
+				categories: food.categories ?? [],
+			}),
+		},
+		{
+			fieldPath: "ingredients",
+			include: Boolean(food.ingredients?.trim() || food.ingredientList?.length),
+			value: toJson({
+				ingredients: food.ingredients ?? null,
+				ingredientList: food.ingredientList ?? [],
+			}),
+		},
+		{
+			fieldPath: "allergens",
+			include: Boolean(food.allergens?.length),
+			value: toJson(food.allergens ?? []),
+		},
+		{
+			fieldPath: "traces",
+			include: Boolean(food.traces?.length),
+			value: toJson(food.traces ?? []),
+		},
+		{
+			fieldPath: "dietaryTags",
+			include: Boolean(food.dietaryTags?.length),
+			value: toJson(food.dietaryTags ?? []),
+		},
+		{
+			fieldPath: "labels",
+			include: Boolean(food.labels?.length),
+			value: toJson(food.labels ?? []),
+		},
+		{
+			fieldPath: "structuredIngredients",
+			include: Boolean(food.structuredIngredients?.length),
+			value: toJson(food.structuredIngredients ?? []),
+		},
+		{
+			fieldPath: "ingredientAnalysis",
+			include: Boolean(food.ingredientAnalysis),
+			value: toJson(food.ingredientAnalysis ?? null),
+		},
+		{
+			fieldPath: "additives",
+			include: Boolean(food.additives?.length),
+			value: toJson(food.additives ?? []),
+		},
+		{
+			fieldPath: "package",
+			include: Boolean(food.packageQuantity),
+			value: toJson(food.packageQuantity ?? null),
+		},
+		{
+			fieldPath: "sourceMetadata",
+			include: Boolean(food.sourceMetadata),
+			value: toJson(food.sourceMetadata ?? null),
+		},
+	];
+	for (const field of trackedFields) {
+		if (!field.include) continue;
+		fields.push({
+			fieldPath: field.fieldPath,
+			observationKey,
+			sourceValue: field.value,
+			normalizedValue: field.value,
 			confidence,
 			verificationMethod,
 		});
@@ -292,6 +375,13 @@ export const buildCombinedSourceCatalogBundle = (
 				return entry;
 			}
 			return { ...entry, observationKey: nutrientSource };
+		}).map((entry) => {
+			const trackedField = entry.fieldPath as FoodTrackedField;
+			const fieldSource = canonicalDraft.fieldProvenance?.[trackedField]?.source;
+			if (fieldSource !== "usda" && fieldSource !== "open-food-facts") {
+				return entry;
+			}
+			return { ...entry, observationKey: fieldSource };
 		}),
 		conflicts: findFoodConflicts(
 			userFood,

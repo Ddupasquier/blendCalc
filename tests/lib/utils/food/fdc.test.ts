@@ -72,4 +72,54 @@ describe("FoodData Central normalization", () => {
 		]);
 		expect(food.reportedNutrientIds).toEqual([1004]);
 	});
+
+	it("preserves exact USDA household portion weights as serving conversions", () => {
+		const food = normalizeFdcFood({
+			fdcId: 171032,
+			description: "Oil, apricot kernel",
+			foodNutrients: [],
+			foodPortions: [
+				{
+					amount: 1,
+					gramWeight: 13.6,
+					portionDescription: "1 tablespoon",
+					sequenceNumber: 1,
+				},
+				{
+					amount: 1,
+					gramWeight: 218,
+					portionDescription: "1 cup",
+					sequenceNumber: 2,
+				},
+				{
+					amount: 1,
+					gramWeight: null as unknown as number,
+					portionDescription: "missing weight",
+					sequenceNumber: 3,
+				},
+			],
+		});
+
+		expect(food.hasSourceServing).toBe(true);
+		expect(food.foodServings).toEqual([
+			{
+				label: "1 tablespoon",
+				gramWeight: 13.6,
+				amount: 1,
+				isPrimary: true,
+				source: "usda",
+				sourceReference: "171032",
+				confidence: "unknown",
+			},
+			{
+				label: "1 cup",
+				gramWeight: 218,
+				amount: 1,
+				isPrimary: false,
+				source: "usda",
+				sourceReference: "171032",
+				confidence: "unknown",
+			},
+		]);
+	});
 });

@@ -1361,6 +1361,60 @@ export type Database = {
           },
         ]
       }
+      generic_food_source_identifiers: {
+        Row: {
+          created_at: string
+          dataset_key: string
+          identifier_type: string
+          identifier_value: string
+          metadata: Json
+          source_field: string
+          source_food_key: string
+          source_key: string
+          updated_at: string
+          verification_method: string
+        }
+        Insert: {
+          created_at?: string
+          dataset_key: string
+          identifier_type: string
+          identifier_value: string
+          metadata?: Json
+          source_field: string
+          source_food_key: string
+          source_key: string
+          updated_at?: string
+          verification_method?: string
+        }
+        Update: {
+          created_at?: string
+          dataset_key?: string
+          identifier_type?: string
+          identifier_value?: string
+          metadata?: Json
+          source_field?: string
+          source_food_key?: string
+          source_key?: string
+          updated_at?: string
+          verification_method?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generic_food_source_identifier_dataset_key_source_food_key_fkey"
+            columns: ["dataset_key", "source_food_key"]
+            isOneToOne: false
+            referencedRelation: "generic_food_records"
+            referencedColumns: ["dataset_key", "source_food_key"]
+          },
+          {
+            foreignKeyName: "generic_food_source_identifiers_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       ingredient_provenance_options: {
         Row: {
           badge_enabled: boolean
@@ -4002,6 +4056,7 @@ export type Database = {
           scientific_name: string
           source_display_name: string
           source_food_key: string
+          source_identifiers: Json
           source_key: string
           source_updated_at: string
           source_url: string

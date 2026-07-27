@@ -1,4 +1,8 @@
-import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import type {
+	FdcFood,
+	FdcNutrient,
+	FoodServing,
+} from "$lib/utils/food/types";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 import {
 	INGREDIENT_SEARCH_PAGE_SIZE,
@@ -18,8 +22,31 @@ type FdcDetailNutrient = {
 	};
 };
 
+type FdcDetailPortion = {
+	amount?: number;
+	gramWeight?: number;
+	modifier?: string;
+	portionDescription?: string;
+	sequenceNumber?: number;
+	measureUnit?: {
+		name?: string;
+		abbreviation?: string;
+	};
+};
+
+type FdcSearchMeasure = {
+	amount?: number;
+	disseminationText?: string;
+	gramWeight?: number;
+	measureUnitName?: string;
+	modifier?: string;
+	rank?: number;
+};
+
 type FdcFoodResponse = Omit<FdcFood, "foodNutrients"> & {
 	foodNutrients?: Array<FdcNutrient | FdcDetailNutrient>;
+	foodPortions?: FdcDetailPortion[];
+	foodMeasures?: FdcSearchMeasure[];
 	ndbNumber?: number | string;
 };
 
@@ -83,12 +110,84 @@ const normalizeFoodNutrient = (
 	};
 };
 
+const toPositiveNumber = (value: unknown) => {
+	const number = Number(value);
+	return Number.isFinite(number) && number > 0 ? number : null;
+};
+
+const getDetailPortionLabel = (portion: FdcDetailPortion) =>
+	portion.portionDescription?.trim() ||
+	portion.modifier?.trim() ||
+	[
+		toPositiveNumber(portion.amount),
+		portion.measureUnit?.abbreviation?.trim() ||
+			portion.measureUnit?.name?.trim(),
+	].filter(Boolean).join(" ");
+
+const getSearchMeasureLabel = (measure: FdcSearchMeasure) =>
+	measure.disseminationText?.trim() ||
+	measure.modifier?.trim() ||
+	[
+		toPositiveNumber(measure.amount),
+		measure.measureUnitName?.trim(),
+	].filter(Boolean).join(" ");
+
+const normalizeFoodServings = (
+	food: FdcFoodResponse,
+): FoodServing[] => {
+	const sourceReference = String(food.fdcId);
+	const rows = [
+		...(food.foodPortions ?? []).flatMap((portion) => {
+			const label = getDetailPortionLabel(portion);
+			const gramWeight = toPositiveNumber(portion.gramWeight);
+			return label && gramWeight !== null
+				? [{
+					label,
+					gramWeight,
+					amount: toPositiveNumber(portion.amount),
+					order: toPositiveNumber(portion.sequenceNumber),
+				}]
+				: [];
+		}),
+		...(food.foodMeasures ?? []).flatMap((measure) => {
+			const label = getSearchMeasureLabel(measure);
+			const gramWeight = toPositiveNumber(measure.gramWeight);
+			return label && gramWeight !== null
+				? [{
+					label,
+					gramWeight,
+					amount: toPositiveNumber(measure.amount),
+					order: toPositiveNumber(measure.rank),
+				}]
+				: [];
+		}),
+	];
+	const seen = new Set<string>();
+	return rows.flatMap((serving, index) => {
+		const key = `${serving.label.toLocaleLowerCase("en-US")}:${serving.gramWeight}`;
+		if (seen.has(key)) return [];
+		seen.add(key);
+		return [{
+			label: serving.label,
+			gramWeight: serving.gramWeight,
+			amount: serving.amount ?? undefined,
+			isPrimary: serving.order === 1 || (index === 0 && !rows.some(
+				(candidate) => candidate.order === 1,
+			)),
+			source: "usda" as const,
+			sourceReference,
+			confidence: "unknown" as const,
+		}];
+	});
+};
+
 export const normalizeFdcFood = (food: FdcFoodResponse): FdcFood => {
 	const foodNutrients = (food.foodNutrients ?? []).flatMap((nutrient) => {
 		const normalized = normalizeFoodNutrient(nutrient);
 		return normalized ? [normalized] : [];
 	});
 	const legacyUsdaNdbNumber = normalizeLegacyUsdaNdbNumber(food.ndbNumber);
+	const foodServings = normalizeFoodServings(food);
 	return {
 		...food,
 		description: formatSourceProductName(food.description),
@@ -103,6 +202,8 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FdcFood => {
 		foodIdentityType: resolveFoodIdentityType(food),
 		foodNutrients,
 		reportedNutrientIds: foodNutrients.map((nutrient) => nutrient.nutrientId),
+		foodServings,
+		hasSourceServing: foodServings.length > 0,
 	};
 };
 

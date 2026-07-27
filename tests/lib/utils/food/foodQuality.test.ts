@@ -25,6 +25,7 @@ const completeFood = {
 const resolvedFood = {
 	fdcId: 2,
 	description: "Oil",
+	sourceKey: "usda",
 	foodNutrients: [
 		{
 			nutrientId: 1085,

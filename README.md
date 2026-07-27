@@ -95,6 +95,10 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## Scripts
 
+This table is the intentional developer-facing command surface. Other repository
+scripts document their direct `node scripts/...` command in the file header instead of
+adding one-off npm aliases.
+
 | Command | Description |
 |---|---|
 | `npm run dev` | Start dev server |

@@ -27,6 +27,12 @@ type GenericMeasureRow = {
 	sourceUpdatedAt?: string | null;
 };
 
+type GenericSourceIdentifierRow = {
+	sourceKey: string;
+	identifierType: string;
+	identifierValue: string;
+};
+
 type GenericFoodSearchRow = {
 	application_food_id: number | string;
 	dataset_key: string;
@@ -47,6 +53,7 @@ type GenericFoodSearchRow = {
 	license_url: string;
 	attribution_text: string;
 	metadata: Json;
+	source_identifiers: Json;
 	nutrients: Json;
 	measures: Json;
 };
@@ -56,6 +63,37 @@ const asRecordArray = <Row>(value: Json): Row[] =>
 
 const createSourceReference = (datasetKey: string, sourceFoodKey: string) =>
 	`${datasetKey}:${sourceFoodKey}`;
+
+const getApplicationIdentifierKey = (
+	identifier: GenericSourceIdentifierRow,
+) => {
+	if (
+		identifier.sourceKey === "usda" &&
+		identifier.identifierType === "ndb-number"
+	) {
+		return "usdaNdbNumber";
+	}
+	if (
+		identifier.sourceKey === "usda" &&
+		identifier.identifierType === "fdc-id"
+	) {
+		return "usdaFdcId";
+	}
+	return `${identifier.sourceKey}:${identifier.identifierType}`;
+};
+
+const mapSourceIdentifiers = (
+	rows: GenericSourceIdentifierRow[],
+	sourceReference: string,
+) => Object.fromEntries([
+	["datasetFoodKey", sourceReference],
+	...rows.flatMap((identifier) => {
+		const value = identifier.identifierValue?.trim();
+		return value
+			? [[getApplicationIdentifierKey(identifier), value] as const]
+			: [];
+	}),
+]);
 
 const mapNutrients = (
 	rows: GenericNutrientRow[],
@@ -127,20 +165,15 @@ export const searchGenericFoods = async (
 			sourceKey,
 			sourceReference,
 		);
+		const sourceIdentifiers = mapSourceIdentifiers(
+			asRecordArray<GenericSourceIdentifierRow>(row.source_identifiers),
+			sourceReference,
+		);
 
 		return {
 			fdcId: Number(row.application_food_id),
 			description: formatSourceProductName(row.description),
-			sourceIdentifiers: {
-				datasetFoodKey: sourceReference,
-				...(row.dataset_key === "cnf-2026" && row.external_reference
-					? {
-						usdaNdbNumber: row.external_reference
-							.replace(/\D/g, "")
-							.padStart(5, "0"),
-					}
-					: {}),
-			},
+			sourceIdentifiers,
 			nameProvenance: "source",
 			foodIdentityType: "generic",
 			alternateDescription: row.alternate_description ?? undefined,

@@ -116,6 +116,17 @@ unchanged.
 - Moderator-reviewed labels remain identified as community-reviewed rather than
   source-verified.
 
+Generic-food search remains separate from the shared packaged-product catalog. National
+dataset records must contain canonical measured nutrition before they are searchable,
+and exact source-declared identifiers may connect equivalent source records without
+using a title guess. For example, `Oil, Apricot Kernel` is USDA SR Legacy FDC `171032`
+and CNF 2026 food `441`; CNF declares USDA NDB `04530`, so the app can retain CNF's 97
+measured nutrients and five household measures while preserving both source identities.
+Source-derived list records are enriched on the server from an exact barcode or positive
+USDA FDC identifier before placement. Older list snapshots use the same exact-match
+backfill. Records with no exact detail match keep their existing measured data and
+remain explicitly incomplete instead of receiving a similar-food substitution.
+
 This structure allows another source to be added later without losing which source
 supplied each value or silently replacing a trusted value.
 

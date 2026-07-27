@@ -3,8 +3,8 @@
  * names in catalog products, submissions, revisions, normalized observations, custom
  * foods, and saved list snapshots without rewriting user-owned manual names. The live
  * command updates Supabase; preview changes first.
- * Preview: `npm run backfill:product-names -- --dry-run`
- * Execute: `npm run backfill:product-names`
+ * Preview: `node scripts/backfills/backfill_product_names.mjs --dry-run`
+ * Execute: `node scripts/backfills/backfill_product_names.mjs`
  */
 
 import { config } from "dotenv";

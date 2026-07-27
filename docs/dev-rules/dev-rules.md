@@ -585,6 +585,15 @@ available in the database, create or extend a script that queries the available 
 APIs, stores the observed/canonical data in Supabase with source/provenance metadata,
 and renders from that database data instead of inventing fallback constants.
 
+**28a.** Keep the root `package.json` command surface deliberate. Add an npm script only
+for a stable, repeatable workflow that a developer is reasonably expected to run
+directly, such as application development, validation, database lifecycle, maintained
+imports, or documented QA operations. Internal backfills, narrow audits, temporary
+investigations, and repository-maintenance scripts must use the exact direct
+`node scripts/...` command documented in their file header unless they later become a
+maintained developer workflow. Do not add npm aliases merely for implementation
+convenience.
+
 **29.** <a id="rule-api-observed-seeds"></a>Seed reusable app data only from
 API-observed or database-canonical data. Do not hand-write fallback constants, static
 option lists, nutrient catalogs, category catalogs, allergen catalogs, dietary

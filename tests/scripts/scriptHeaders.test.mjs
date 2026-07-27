@@ -31,9 +31,17 @@ describe("repository script headers", () => {
 			);
 			const npmCommands = [...header.matchAll(/npm run ([\w:-]+)/gu)]
 				.map((match) => match[1]);
-			expect(npmCommands.length).toBeGreaterThan(0);
+			const directScriptPaths = [
+				...header.matchAll(/node (scripts\/[^\s`]+\.mjs)/gu),
+			].map((match) => match[1]);
+			expect(npmCommands.length + directScriptPaths.length).toBeGreaterThan(0);
 			for (const command of npmCommands) {
 				expect(packageMetadata.scripts).toHaveProperty(command);
+			}
+			for (const directScriptPath of directScriptPaths) {
+				expect(directScriptPath).toBe(
+					path.relative(process.cwd(), filePath).split(path.sep).join("/"),
+				);
 			}
 		}
 	});

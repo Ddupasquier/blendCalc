@@ -223,7 +223,7 @@ export const servingMeasureCatalogFixture: ServingMeasureCatalog = {
 		{ value: "floz", label: "fluid ounces (fl oz)", shortLabel: "fl oz", dimension: "volume", conversionToBase: 29.57353, isDefault: false },
 	],
 	aliases: {
-		g: "g", gram: "g", grams: "g", mg: "mg", milligram: "mg", milligrams: "mg",
+		g: "g", gram: "g", grams: "g", grm: "g", mg: "mg", milligram: "mg", milligrams: "mg",
 		oz: "oz", ounce: "oz", ounces: "oz", kg: "kg", kilogram: "kg", kilograms: "kg",
 		lb: "lb", lbs: "lb", pound: "lb", pounds: "lb", ml: "ml", milliliter: "ml",
 		milliliters: "ml", tsp: "tsp", teaspoon: "tsp", teaspoons: "tsp", tbsp: "tbsp",
@@ -231,7 +231,7 @@ export const servingMeasureCatalogFixture: ServingMeasureCatalog = {
 		fluidounce: "floz", fluidounces: "floz",
 	},
 	aliasEntries: [
-		{ alias: "g", unit: "g" }, { alias: "grams", unit: "g" },
+		{ alias: "g", unit: "g" }, { alias: "grams", unit: "g" }, { alias: "GRM", unit: "g" },
 		{ alias: "ml", unit: "ml" }, { alias: "milliliters", unit: "ml" },
 		{ alias: "tsp", unit: "tsp" }, { alias: "teaspoons", unit: "tsp" },
 		{ alias: "tbsp", unit: "tbsp" }, { alias: "tablespoons", unit: "tbsp" },

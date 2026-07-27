@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
 	annotateFoodsWithFoodSafety: vi.fn(),
+	enrichFoodForListPlacement: vi.fn(),
 	getUserFoodSafetyContext: vi.fn(),
 	readCloudSmoothieListPage: vi.fn(),
 }));
@@ -15,8 +16,14 @@ vi.mock("$lib/server/food-safety/userFoodSafety.server", () => ({
 vi.mock("$lib/server/user-data/foodLists.server", () => ({
 	readCloudSmoothieListPage: mocks.readCloudSmoothieListPage,
 }));
+vi.mock("$lib/server/user-data/foodListPlacement.server", () => ({
+	enrichFoodForListPlacement: mocks.enrichFoodForListPlacement,
+}));
 
-import { GET } from "../../src/routes/api/user-food-lists/[list]/+server";
+import {
+	GET,
+	POST,
+} from "../../src/routes/api/user-food-lists/[list]/+server";
 
 const createEvent = (
 	list = "fridge",
@@ -31,6 +38,32 @@ const createEvent = (
 		"http://localhost:5173/api/user-food-lists/fridge?limit=15&offset=0&sort=recent&source=all&trust=any",
 	),
 });
+
+const createPostEvent = (
+	body: unknown,
+	list = "fridge",
+	userId: string | null = "user-id",
+) => {
+	const rpc = vi.fn().mockResolvedValue({ data: "added", error: null });
+	return {
+		locals: {
+			getVerifiedUser: vi.fn().mockResolvedValue(
+				userId ? { id: userId } : null,
+			),
+			supabase: { rpc },
+		},
+		params: { list },
+		request: new Request(
+			`http://localhost:5173/api/user-food-lists/${list}`,
+			{
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify(body),
+			},
+		),
+		rpc,
+	};
+};
 
 describe("user food list route", () => {
 	beforeEach(() => {
@@ -53,6 +86,9 @@ describe("user food list route", () => {
 			allergenDisclosure: { contains: ["Milk"], mayContain: [] },
 			preferenceWarnings: [],
 		}]);
+		mocks.enrichFoodForListPlacement.mockImplementation(
+			async (_supabase, food) => food,
+		);
 	});
 
 	it("requires a signed-in user", async () => {
@@ -96,5 +132,63 @@ describe("user food list route", () => {
 			},
 		);
 		expect(mocks.annotateFoodsWithFoodSafety).toHaveBeenCalledTimes(1);
+	});
+
+	it("requires authentication for list placement", async () => {
+		const response = await POST(
+			createPostEvent({
+				food: { fdcId: 1, description: "Milk", foodNutrients: [] },
+			}, "fridge", null) as never,
+		);
+
+		expect(response.status).toBe(401);
+		expect(await response.json()).toMatchObject({ code: "AUTH_REQUIRED" });
+	});
+
+	it("enriches and places one food through the authoritative RPC", async () => {
+		const food = { fdcId: 1, description: "Milk", foodNutrients: [] };
+		const enrichedFood = {
+			...food,
+			ingredients: "Milk",
+		};
+		mocks.enrichFoodForListPlacement.mockResolvedValue(enrichedFood);
+		const event = createPostEvent({ food, allowMove: true });
+
+		const response = await POST(event as never);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({ result: "added" });
+		expect(mocks.enrichFoodForListPlacement).toHaveBeenCalledWith(
+			event.locals.supabase,
+			food,
+		);
+		expect(event.rpc).toHaveBeenCalledWith(
+			"place_user_food_list_item",
+			expect.objectContaining({
+				p_allow_move: true,
+				p_food: enrichedFood,
+				p_list_type: "fridge",
+			}),
+		);
+	});
+
+	it("enriches a bounded batch before atomic placement", async () => {
+		const foods = [
+			{ fdcId: 1, description: "Milk", foodNutrients: [] },
+			{ fdcId: 2, description: "Bread", foodNutrients: [] },
+		];
+		const event = createPostEvent({ foods }, "shopping-list");
+
+		const response = await POST(event as never);
+
+		expect(response.status).toBe(200);
+		expect(mocks.enrichFoodForListPlacement).toHaveBeenCalledTimes(2);
+		expect(event.rpc).toHaveBeenCalledWith(
+			"place_user_food_list_items",
+			expect.objectContaining({
+				p_foods: foods,
+				p_list_type: "shopping",
+			}),
+		);
 	});
 });

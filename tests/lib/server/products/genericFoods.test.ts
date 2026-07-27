@@ -26,10 +26,19 @@ describe("generic food search", () => {
 			license_url: "https://open.canada.ca/en/open-government-licence-canada",
 			attribution_text: "Contains information licensed under the Open Government Licence – Canada.",
 			metadata: {},
+			source_identifiers: [{
+				sourceKey: "usda",
+				identifierType: "ndb-number",
+				identifierValue: "09050",
+			}],
 			nutrients: [],
 			measures: [],
 		}), "blueberries");
 
+		expect(foods[0]?.sourceIdentifiers).toEqual({
+			datasetFoodKey: "cnf-2026:101",
+			usdaNdbNumber: "09050",
+		});
 		expect(foods[0]?.sourceAttribution).toEqual({
 			datasetKey: "cnf-2026",
 			datasetName: "Canadian Nutrient File 2026",

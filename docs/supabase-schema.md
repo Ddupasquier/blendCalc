@@ -17,7 +17,7 @@ policies, or core data ownership changes.
 | [Compatibility and Allergens](#compatibility-allergens-and-dietary-restrictions) | tags, conflict rules, product facts, preference options, and API observations |
 | [Food Categories](#custom-food-category-reference) | category options, source observations, and canonical mappings |
 | [Moderation](#moderation-and-access-control) | roles, account moderation, action logs, email delivery, blocked signups, and image-policy acceptance |
-| [Nutrition Completeness and National Datasets](#nutrition-completeness-and-national-datasets) | completeness profiles plus CNF, CoFID, and future national food datasets |
+| [Nutrition Completeness and National Datasets](#nutrition-completeness-and-national-datasets) | completeness profiles, generic foods, exact source identifiers, CNF, CoFID, and future national food datasets |
 | [Product Source Policies](#product-source-policies) | source evaluations and source-specific lifecycle policy |
 | [Database Functions](#rpc--database-functions) | Shared trigger helpers, validation, search, publication, and API read functions |
 | [Storage](#storage-buckets) | Private avatar and product-submission evidence buckets |
@@ -559,13 +559,18 @@ the migration does not invent historical field differences.
 
 `shared_product_observations`, `shared_product_field_provenance`, and
 `shared_product_conflicts` hold the evidence trail behind shared catalog data.
-`product_api_cache` reduces external API load and should be written/read by server code
-only. Its `(provider, cache_key)` primary key keeps each source in a separate namespace.
+`product_api_cache` reduces external API load and is readable/writable only through
+server code using the `service_role`. Browser roles receive no table privileges. Its
+`(provider, cache_key)` primary key keeps each source in a separate namespace.
 `request_kind`, `status_code`, `response`, `fetched_at`, `expires_at`, and optional
 `etag` support positive/negative caching, conditional refreshes, and short
 stale-on-outage fallback without turning cached provider data into canonical blendCalc
 data. Provider and request-kind names use normalized kebab-case so a new integration can
 use the shared request boundary without a new provider-specific schema constraint.
+
+`serving_measure_aliases` includes provider-observed unit spellings such as USDA
+`GRM`, allowing source serving weights to normalize through the same database-backed
+measure catalog as user-entered units.
 
 ### `food_image_assets`
 
@@ -773,8 +778,9 @@ without calling the source again.
 | `nutrition_completeness_profiles`          | `key`                                               | Defines what complete nutrition means for a food scope/region | `food_scope` (`generic`, `manual`, or `packaged`), `region_code`, DB-owned labels, source reference, one enabled default per scope/region |
 | `nutrition_completeness_profile_nutrients` | `profile_key, nutrient_id`                          | Orders required and recommended nutrients for one profile     | `requirement_level`, `display_order`, `reason`; nutrient FK prevents invented definitions                                                 |
 | `generic_food_datasets`                    | `key`                                               | Records each national release and its legal/import state      | Source/license URLs, attribution, file SHA-256, review status, import/active gates, imported row counts                                   |
-| `generic_food_records`                     | `dataset_key, source_food_key`                      | Stores one source-owned generic food/preparation              | Raw description, group, preparation, searchable text, source identifiers and dates                                                        |
-| `generic_food_nutrients`                   | `dataset_key, source_food_key, source_nutrient_key` | Stores source nutrient amounts and canonical mappings         | Explicit basis, amount, unit, mapping status, and `value_status` (`numeric`, `trace`, `missing`)                                          |
+| `generic_food_records`                     | `dataset_key, source_food_key`                      | Stores one source-owned generic food/preparation              | Raw description, group, preparation, searchable text, source reference and dates                                                          |
+| `generic_food_source_identifiers`          | Dataset food plus source, type, and value           | Stores exact source-declared cross-dataset identifiers        | Supports exact joins such as CNF `USDA_NDB_Code` to USDA NDB without fuzzy name matching; includes source field and verification method   |
+| `generic_food_nutrients`                   | `dataset_key, source_food_key, source_nutrient_key` | Stores source nutrient amounts and canonical mappings         | Explicit basis, amount, unit, mapping status, and `value_status` (`measured`, `trace`, `present-unquantified`)                            |
 | `generic_food_measures`                    | `dataset_key, source_food_key, source_measure_key`  | Stores source household measures                              | Amount/unit, gram weight, source label and metadata; never inferred from names                                                            |
 | `generic_food_dataset_reference_rows`      | `dataset_key, reference_type, source_key`           | Stores source dictionaries used to interpret imports          | Reference labels and metadata remain tied to the dataset release                                                                          |
 
@@ -786,10 +792,12 @@ Current release state:
 - AFCD remains disabled until its acceptance/share-alike obligations are explicitly
   approved.
 
-Runtime generic search reads only active, import-enabled datasets through the indexed
-search RPC. Results retain alternate descriptions, scientific names, and preparation
-metadata so generic identity can be evaluated without using packaged-product title
-inference. It does not merge similar foods from different sources.
+Runtime generic search reads only active, import-enabled datasets through an indexed
+prefix-search RPC. A result must have at least one canonical measured nutrient, so
+identity-only shells cannot consume result slots. Results retain alternate descriptions,
+scientific names, preparation metadata, and exact source-declared identifiers. Those
+identifiers may connect the same source food across datasets, but similar names are never
+treated as an identity match.
 
 Private custom foods use `private-manual-core-v1`, whose required rows are copied from
 the enabled manual-entry nutrient requirements. A typed barcode does not switch that
@@ -835,7 +843,7 @@ category, or serving fields.
 | `rebuild_custom_food_category_options`         | Rebuilds manual custom-food category options from observations                                                                                 |
 | `normalize_food_category_value`                | Normalizes category text for option and mapping lookup                                                                                         |
 | `resolve_custom_food_category_option`          | Resolves raw API category values to one enabled canonical category option                                                                      |
-| `search_generic_food_records`                  | Searches active national generic-food datasets with indexed, stable relevance ordering and returns normalized food JSON with source provenance |
+| `search_generic_food_records`                  | Uses indexed prefix matching and stable relevance ordering across active national datasets; excludes nutrient-empty shells and returns normalized food JSON with exact source identifiers and provenance |
 | `apply_shared_product_external_enrichment`     | Atomically fills legally reusable missing canonical fields, including structured package metadata, while recording observations, provenance, normalized projections, and a revision |
 | `blendcalc_api_v1_source_is_eligible`           | Tests a stored source against the DB-owned API redistribution, licence, attribution, and policy-review gate |
 | `blendcalc_api_v1_product_readiness_reasons`    | Returns the service-only reasons an active shared product is withheld from API v1 |

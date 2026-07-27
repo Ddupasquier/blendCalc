@@ -9,7 +9,6 @@ import {
 	readAllCursorPages,
 	resolveCloudClient,
 	resolveCloudDataContext,
-	toJson,
 } from "./shared";
 
 type CloudListType = "fridge" | "shopping";
@@ -40,6 +39,32 @@ export type CloudSmoothieListIndex = Record<
 
 const getCloudListType = (key: SmoothieListKey): CloudListType => {
 	return key === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping";
+};
+
+const getCloudListApiPath = (key: SmoothieListKey) =>
+	key === MIX_STORAGE_KEYS.fridge
+		? "/api/user-food-lists/fridge"
+		: "/api/user-food-lists/shopping-list";
+
+const placeFoodsThroughServer = async (
+	key: SmoothieListKey,
+	body: Record<string, unknown>,
+) => {
+	try {
+		const response = await fetch(getCloudListApiPath(key), {
+			method: "POST",
+			headers: {
+				accept: "application/json",
+				"content-type": "application/json",
+			},
+			body: JSON.stringify(body),
+		});
+		if (!response.ok) return null;
+		const payload = await response.json() as { result?: unknown };
+		return payload.result;
+	} catch {
+		return null;
+	}
 };
 
 export type CloudListSort = "recent" | "oldest" | "name-asc" | "name-desc";
@@ -95,22 +120,15 @@ export const writeCloudSmoothieList = async (
 	foods: FdcFood[],
 	context?: CloudDataContext,
 ) => {
-	const supabase = resolveCloudClient(context);
-	if (!supabase) return false;
-
-	const listType = getCloudListType(key);
 	if (foods.length === 0) return true;
 
-	const { data, error } = await supabase.rpc("place_user_food_list_items", {
-		p_list_type: listType,
-		p_foods: toJson(
-			uniqueFoodsByIdentity(uniqueFoodsById(foods)).map((food) =>
-				compactFood(food),
-			),
+	const result = await placeFoodsThroughServer(key, {
+		foods: uniqueFoodsByIdentity(uniqueFoodsById(foods)).map((food) =>
+			compactFood(food),
 		),
 	});
 
-	return !error && (data === "added" || data === "duplicate");
+	return result === "added" || result === "duplicate";
 };
 
 export const renameCloudSmoothieListItem = async (
@@ -147,25 +165,19 @@ export const placeCloudSmoothieListItem = async (
 	allowMove = false,
 	context?: CloudDataContext,
 ): Promise<CloudListPlacementResult> => {
-	const supabase = resolveCloudClient(context);
-	if (!supabase) return "error";
-
-	const { data, error } = await supabase.rpc("place_user_food_list_item", {
-		p_allow_move: allowMove,
-		p_fdc_id: food.fdcId,
-		p_food: toJson(compactFood(food)),
-		p_list_type: getCloudListType(key),
+	const result = await placeFoodsThroughServer(key, {
+		allowMove,
+		food: compactFood(food),
 	});
 
-	if (error) return "error";
 	if (
-		data === "added" ||
-		data === "duplicate" ||
-		data === "moved" ||
-		data === "move-required:fridge" ||
-		data === "move-required:shopping"
+		result === "added" ||
+		result === "duplicate" ||
+		result === "moved" ||
+		result === "move-required:fridge" ||
+		result === "move-required:shopping"
 	) {
-		return data;
+		return result;
 	}
 
 	return "error";

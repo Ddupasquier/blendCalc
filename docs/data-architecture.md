@@ -56,6 +56,16 @@ only when database source policy permits that storage; raw or restricted observa
 remain in their licensed cache/evidence boundary. New accepted fields require an
 applicable existing-record backfill and the same provenance rules as future writes.
 
+Generic-food identity links are exact and relational. Dataset-declared identifiers such
+as a USDA NDB number are stored separately from descriptions and can connect the same
+food across national datasets without a fuzzy title match. Generic search excludes
+records that have no canonical measured nutrient. When a source-derived food is placed
+in Fridge or Shopping List, the authenticated server write path resolves its exact
+barcode or positive USDA FDC identifier, enriches only from that exact source record,
+and then performs the authoritative list placement. A bounded backfill applies the same
+rule to older unlinked list snapshots. Provider misses remain unchanged rather than
+being substituted with a similar food.
+
 Food identity is explicit: `packaged`, `generic`, or `private-custom`. Packaged titles
 and categories are never allergen evidence. An authoritative generic dataset record may
 produce an intrinsic food-taxonomy compatibility fact, while explicit package
@@ -73,6 +83,8 @@ infer safety information from raw food text or execute compatibility patterns.
 
 - `src/routes/**/+page.server.ts`: route authentication handoff and thin load wiring.
 - `src/lib/server/user-data`: page-level server coordination.
+- `src/lib/server/user-data/foodListPlacement.server.ts`: exact-source enrichment before
+  authoritative Fridge or Shopping List placement.
 - `src/lib/server/food-safety`: cached DB policy loading, compatibility evaluation,
   allergen disclosure normalization, and personalized warning annotation.
 - `src/lib/utils/storage/supabase`: browser-safe identity reads and authoritative RPC

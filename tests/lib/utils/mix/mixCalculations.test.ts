@@ -16,6 +16,7 @@ import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 const sunflowerOil = {
 	fdcId: 1,
 	description: "Sunflower oil",
+	sourceKey: "usda",
 	foodNutrients: [
 		{
 			nutrientId: 1085,

@@ -432,6 +432,41 @@ describe("barcode product mapping", () => {
 			});
 	});
 
+	it("uses the database-derived USDA GRM serving alias", () => {
+		const draft = mapFdcBarcodeFood(
+			{
+				fdcId: 126,
+				description: "Test spread",
+				servingSize: 32,
+				servingSizeUnit: "GRM",
+				householdServingFullText: "2 Tbsp",
+				foodNutrients: [
+					{
+						nutrientId: NUTRIENT_IDS.PROTEIN,
+						nutrientName: "Protein",
+						nutrientNumber: "203",
+						unitName: "G",
+						value: 25,
+					},
+				],
+			},
+			"4006381333931",
+			productReferenceDataFixture,
+		);
+
+		expect(draft).toMatchObject({
+			servingLabel: "2 Tbsp",
+			servingWeightGrams: 32,
+			hasSourceServing: true,
+		});
+		expect(draft?.nutrients).toContainEqual(
+			expect.objectContaining({
+				nutrientId: NUTRIENT_IDS.PROTEIN,
+				value: 8,
+			}),
+		);
+	});
+
 	it("marks approved catalog records as shared products", () => {
 		const draft = mapSharedCatalogFood(
 			{

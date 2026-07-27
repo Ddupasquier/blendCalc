@@ -6,9 +6,9 @@
  * the licensed Open Food Facts cache for metadata USDA does not provide. Open Food Facts
  * data is not promoted into the public canonical catalog while its canonical-storage
  * policy remains disabled.
- * Preview: `npm run backfill:catalog-metadata -- --dry-run`
- * Execute: `npm run backfill:catalog-metadata`
- * Cached only: `npm run backfill:catalog-metadata -- --cached-only`
+ * Preview: `node scripts/backfills/backfill_catalog_metadata.mjs --dry-run`
+ * Execute: `node scripts/backfills/backfill_catalog_metadata.mjs`
+ * Cached only: `node scripts/backfills/backfill_catalog_metadata.mjs --cached-only`
  */
 
 import { createHash } from "node:crypto";
