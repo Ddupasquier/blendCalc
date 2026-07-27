@@ -1173,6 +1173,10 @@ workflow-category index that links related QA groups so a reviewer can complete 
 coherent area at a time without changing stable IDs or duplicating tasks. Begin every QA tracker and index with the current
 disposable local test-account credentials and the complete categorized barcode-reference
 catalog. Never place production credentials or private user data in those references.
+After a group's final active task moves to the completed archive or is retired, remove
+the empty group shell and its workflow-category link from the active tracker. The
+completed archive preserves its context; active trackers must not keep placeholder
+groups for possible future additions.
 
 **41a.** <a id="rule-qa-priorities"></a>Assign every active QA group one explicit MVP
 priority, place the whole group in the matching active priority tracker, and keep that

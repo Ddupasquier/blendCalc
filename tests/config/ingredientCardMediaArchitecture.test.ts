@@ -165,7 +165,18 @@ describe("ingredient card media architecture", () => {
 		expect(imageViewportStyles).not.toContain("object-fit: fill");
 	});
 
-	it("uses a curved fade that finishes before the media lane boundary", () => {
+	it("uses a horizontally stretched curved fade that finishes before the media lane boundary", () => {
+		const horizontalRadius = Number(
+			mediaLaneStyles.match(
+				/\$media-lane-mask-horizontal-radius:\s*(\d+)%/,
+			)?.[1],
+		);
+		const verticalRadius = Number(
+			mediaLaneStyles.match(
+				/\$media-lane-mask-vertical-radius:\s*(\d+)%/,
+			)?.[1],
+		);
+
 		expect(mediaLaneStyles).toMatch(
 			/\$media-lane-fade-solid:\s*\d+%/,
 		);
@@ -176,9 +187,10 @@ describe("ingredient card media architecture", () => {
 			/\$media-lane-fade-end:\s*\d+%/,
 		);
 		expect(mediaLaneStyles).toContain("$media-lane-mask: radial-gradient");
-		expect(mediaLaneStyles).toMatch(
-			/ellipse\s+\d+%\s+\d+%\s+at left center/,
+		expect(mediaLaneStyles).toContain(
+			"ellipse $media-lane-mask-horizontal-radius $media-lane-mask-vertical-radius at left center",
 		);
+		expect(horizontalRadius).toBeGreaterThan(verticalRadius);
 		expect(mediaLaneStyles).toMatch(
 			/rgb\(0 0 0 \/ \d+%\)\s+\$media-lane-fade-soft/,
 		);
