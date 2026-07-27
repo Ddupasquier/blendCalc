@@ -1,17 +1,34 @@
-# Development Rules Audit
+# Development Rules
 
-Last verified: 2026-07-22
+Last reviewed: 2026-07-26
 
-Branch: `ui-rebuild/ingredients`
+## Purpose
 
-Scope: current working tree after the database-driven nutrient/reference catalog cleanup
+These are the authoritative engineering and product-development requirements for
+blendCalc. They contain settled decisions and remain the source of truth when another
+document, an older implementation, or a current audit finding disagrees.
+
+## Required Preflight
+
+Before any feature, fix, adjustment, refactor, migration, script, style change, or
+documentation behavior change:
+
+1. Read the applicable rules in this document.
+2. Read [the current development audit](dev-rules-audit.md) for unresolved findings that
+   may affect the work.
+3. Inspect the relevant implementation, schema, data flow, shared primitives, and QA
+   coverage before editing.
+4. Re-check touched files against both documents before handoff.
+
+Maintain both documents as the project evolves. Add only settled, repeatable requirements
+here. Keep temporary observations and unresolved implementation gaps in the audit, and
+remove those audit entries once they are resolved.
 
 ## Navigation
 
 Markdown cannot provide a true sticky sidebar in every editor, so this document uses a
 clickable navigation block instead.
 
-- [Development Rules](#development-rules)
 - [Core Engineering Rules](#rule-best-practices)
 - [Mandatory Rules Preflight](#rule-rules-preflight)
 - [Repository Hygiene](#rule-repository-hygiene)
@@ -24,7 +41,7 @@ clickable navigation block instead.
 - [Shared Loading Indicators](#rule-loading-indicators)
 - [Design Tokens And Spacing](#rule-design-tokens)
 - [Component Styles And Folder Structure](#rule-style-file-boundaries)
-- [Canonical Project Map](project-structure.md)
+- [Canonical Project Map](../project-structure.md)
 - [Shared Style Utilities](#rule-shared-style-utilities)
 - [Reusable Components And Buttons](#rule-reusable-components)
 - [Circular Icon Alignment](#rule-circular-icon-alignment)
@@ -68,10 +85,9 @@ clickable navigation block instead.
 - [QA Process](#rule-qa-process)
 - [QA Task Consistency](#rule-qa-task-consistency)
 - [MVP QA Priorities](#rule-qa-priorities)
-- [Audit Summary](#audit-summary)
-- [Findings](#findings)
+- [Current Development Audit](dev-rules-audit.md)
 
-## Development Rules
+## Rules
 
 These are the working rules gathered from prior product and implementation decisions.
 
@@ -92,8 +108,9 @@ immediately in plain language; do not silently copy, preserve, or work around th
 violation. Fix small, clearly in-scope violations while doing the work. For broader,
 risky, ambiguous, or product-level conflicts, explain the issue and ask before
 expanding scope. Re-check every touched file against the applicable rules before
-handoff, and add newly discovered repeatable lessons to this document rather than
-relying on memory.
+handoff. Record settled, repeatable requirements in this rules file and unresolved
+implementation findings in the current development audit. Review both documents before
+work begins; this rules file is authoritative and an audit finding cannot override it.
 
 **0b.** <a id="rule-repository-hygiene"></a>Keep the remote repository limited to
 deliberate product source, migrations, tests, required configuration and lockfiles,
@@ -1428,262 +1445,3 @@ remove the barcode and keep the remaining draft as a private, user-owned ingredi
 Barcode removal must also clear source references, sharing consent, and barcode-specific
 moderation evidence while preserving the user's other entered values. Enforce the
 mismatch on the server and mirror the outcome immediately in the UI.
-
-## Audit Summary
-
-| Area                     | Status      | Notes                                                                                                                               |
-| ------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Mobile-first UI          | Partial     | Ingredients has explicit mobile behavior; remaining routes still need the same browser/device pass.                                 |
-| Simple user flow         | Partial     | Barcode/manual flow is improving, but ingredient search, nutrition facts, list placement, and mix flow still have many transitions. |
-| Design tokens            | Partial     | Ingredients and Mix pass the raw spacing/font scan; untouched routes still contain older one-off values.                            |
-| No box shadows           | Pass        | `rg -n "box-shadow" src` returned no matches.                                                                                       |
-| Calm visual language     | Mostly pass | Palette is coherent. Remaining risk is inconsistent typography and one-off component spacing.                                       |
-| Obvious key actions      | Mostly pass | Barcode scan is now prominent. Save/add flows still need consistent loading and validation affordances.                             |
-| Reusable UI              | Mostly pass | Shared controls are established and Ingredients/Mix prop contracts now live in imported type files.                                |
-| Supabase source of truth | Pass        | Durable Fridge, Shopping, custom-food, and saved-drink data reads and writes use Supabase; browser storage is limited to transient UI state. |
-| Email exposure           | Partial     | Normal profile copy avoids email, but layout fallback and moderation surfaces still use email intentionally.                        |
-| Action validation        | Partial     | Validation and constraints exist, but duplicate prevention and pending states are not yet consistently centralized.                 |
-| Auth predictability      | Mostly pass | Redirect flow was hardened and documented. Preview/production/local auth still deserves regression tests.                           |
-| File/folder structure    | Pass        | Components and icons use namesake folders, props and styles stay with their owners, generic dumping folders are removed, and architecture tests guard the boundaries. |
-| Branch workflow          | Pass        | `staging` exists as the integration gate before `main`; new major work should branch from and return to `staging`.                  |
-| Verification             | Mostly pass | Type checks and focused regression tests cover the reference catalog; full browser QA remains required.                             |
-
-## Findings
-
-### 1. File Size and Boundaries
-
-Some coordinator files remain long, but line count alone is not a reason to split them.
-The risk is whether they absorb reusable UI, validation, formatting, persistence, or
-reference-data policy that belongs elsewhere.
-
-| File                                                         | Lines | Risk                                                                                                       |
-| ------------------------------------------------------------ | ----: | ---------------------------------------------------------------------------------------------------------- |
-| `src/lib/components/ingredients/manual-entry/CustomIngredientForm/CustomIngredientForm.svelte` |  376 | Pass: composes focused reactive controllers and typed step contracts while UI, validation, barcode, submission, and outcome behavior remain separately owned. |
-| `src/routes/fridge/+page.svelte`                                           |  971 | Acceptable as route orchestration; repeated panels and list UI are delegated to reusable components.                                |
-| `src/routes/mix/+page.svelte`                                              |  869 | Improved: tandem styles, shared controls, DB-owned catalogs, and extracted calculations leave the page focused on wiring.           |
-| `src/routes/moderation/+page.svelte`                                       |  338 | Still pending the planned moderation UI rebuild; avoid growing it before that pass.                                                  |
-| `src/lib/components/ingredients/nutrition/NutritionPanel/NutritionPanel.svelte`           |   38 | Pass: now a small coordinator around focused nutrition components.                                                                  |
-
-Recommendation: keep coordinator ownership explicit. Extract only when a new change adds
-a reusable view, business rule, formatter, persistence operation, or reference-data
-decision—not merely to reduce a line count.
-
-### 2. SCSS Variable Usage
-
-The variable system now keeps only direct app-wide design decisions in
-`src/styles/_variables.scss`. Obsolete palette, `figma`, `rebuild`, feature-alias, Mix,
-and nutrition-label token layers were removed so a maintainer can edit the actual value
-without following an alias chain.
-
-Current result:
-
-- Shared app rhythm, typography, shell colors, status roles, and primitive dimensions
-  use direct semantic tokens. Component-only values live beside their components.
-- `src/lib/utils/storage/storageKeys.ts` contains storage keys only. Nutrient choices, goals, runtime
-  thresholds, and data choices come from the database reference catalog. Mix-only chart
-  colors live with the Mix route rather than in global app styles.
-- New non-trivial components use a component folder containing the Svelte file and its
-  paired stylesheet; local `types.ts` files are added only when the component owns types.
-- Moderation styling remains intentionally deferred until its planned UI rebuild.
-- SVG path coordinates, measured runtime dimensions, animation timing, and standards
-  constants are not app-wide design tokens and should not be globalized.
-
-### 3. Box Shadows
-
-`src` currently has no `box-shadow` declarations. This rule is being followed.
-
-Recommendation: keep this as a cheap regression check:
-
-```bash
-rg -n "box-shadow" src
-```
-
-### 4. Browser Storage vs Supabase
-
-Browser storage is now limited to:
-
-- `DailyWelcome.svelte`: a device-only once-per-day presentation flag.
-- `manualEntryDraft.ts`: an account-scoped, session-only unsaved manual-entry draft
-  that survives development hot reloads, ordinary page reloads, and short-lived tab
-  eviction; evidence photo files are intentionally excluded and successful or
-  intentional sheet closure clears the draft.
-- `mixState.ts`: an account-scoped unsaved Mix draft and nutrient-goal recovery state;
-  Supabase remains authoritative for saved drinks and saved Mix preferences.
-- `savedDrinks.ts`: the currently loaded drink identifier in `sessionStorage`, so it is
-  discarded with the tab session.
-- `storageScope.ts`: user scoping plus one-time removal of obsolete durable browser
-  mirrors from the earlier local-first architecture.
-
-Fridge, Shopping List, custom foods, and saved drinks no longer read or write durable
-browser copies. Database failures render retryable errors instead of silently restoring
-stale local records. The old generic local TTL cache and repository-level nutrition
-dataset cache have been removed. Nutrition dataset import downloads now use disposable
-operating-system temporary directories; the imported checksum, provenance, and rows are
-stored in Supabase.
-
-### 5. Email Exposure
-
-The normal profile flow correctly tells users their email is not shown. The layout still
-falls back to email if display name is unavailable, and moderation pages intentionally
-show admin-only email data.
-
-Recommendation:
-
-- For public/normal app chrome, show display name first, then email prefix fallback,
-  never full email.
-- Keep full email restricted to moderation/admin surfaces only.
-- Add a small utility for display identity so every component formats identity the same
-  way.
-
-### 6. Reusable Components
-
-Current structure is understandable:
-
-- `src/lib/components/common`
-- `src/lib/components/app`
-- `src/lib/components/auth`
-- `src/lib/components/ingredients`
-- `src/lib/components/mix`
-- `src/lib/components/illustrations/fruit`
-
-Strong reusable pieces already exist in namesake folders:
-
-- `CloseButton/CloseButton.svelte`
-- `Pill/Pill.svelte`
-- `PillRow/PillRow.svelte`
-- `FoodListSection/FoodListSection.svelte`
-- `ListControls/ListControls.svelte`
-- `Pagination/Pagination.svelte`
-- `SortSelect/SortSelect.svelte`
-- `ConfirmationDialog/ConfirmationDialog.svelte`
-- `TextInputDialog/TextInputDialog.svelte`
-
-Current result:
-
-- Ingredients and Mix use shared button, badge, icon-frame, list, loading, pagination,
-  and form primitives.
-- Component and page prop contracts are imported from focused `types.ts` files rather
-  than declared inline.
-- Component-only prop contracts live with their namesake component; parent type files
-  contain only shared sibling contracts.
-- Dead components and utilities, empty directories, and the old generic `src/defaults`
-  folder were removed during the full ownership audit.
-- Feature components may still own genuinely unique semantic controls, but repeated
-  controls must extend the shared primitives.
-
-### 7. Authentication and Security
-
-Auth has dedicated utilities and docs:
-
-- `src/lib/utils/auth/authFlow.ts`
-- `src/lib/utils/auth/authUrls.ts`
-- `src/routes/auth/callback/+server.ts`
-- `docs/authentication.md`
-
-Current direction is sound:
-
-- Auth callback is server-side.
-- Redirect behavior accounts for localhost, Vercel previews, and production.
-- Password policy and upgrade flow are separated.
-- Moderation/admin access has database and route-level concepts.
-
-Recommendation:
-
-- Add tests for preview URL redirect behavior.
-- Keep the Supabase URL allow list documented with examples for local, production, and
-  preview.
-- Avoid relying on Supabase Site URL for environment-specific returns; always pass
-  explicit redirect URLs from the app.
-
-### 8. Product and Nutrition Data
-
-Product catalog, normalized nutrients, barcode lookup, generic datasets, and custom
-foods now have clear domains.
-
-Current result:
-
-- Approved source mappings, nutrient equivalences, display profiles, manual-entry
-  groups, Mix goals/runtime policy, source identities, serving units, and category
-  symbols are database-owned.
-- Missing nutrients remain `null`; a reported zero remains a real zero. Calories are
-  derived only when all required macro inputs are present.
-- Unsafe fuzzy parent/sub-nutrient substitutions are disabled and explicitly rejected.
-- Runtime code performs arithmetic and orchestration but does not own source-derived
-  nutrient names, units, aliases, conversions, or display catalogs.
-- Source, timestamp, barcode, serving basis, field provenance, and quality details must
-  remain attached when reusable products are normalized into Supabase.
-
-### 9. UI Flow Complexity
-
-The app has powerful features, but the user flow can still become jumpy:
-
-- Search result → nutrition panel → add to list.
-- Barcode scan → extra info → save custom ingredient → add to list.
-- List item → mix selection → amount adjustment → graph → suggestions → save.
-
-Recommendation:
-
-- Ingredient entry should end with one clear question: “Add to On Hand or Shopping
-  List?”
-- After a custom/barcode product is saved, collapse manual details and scroll/focus to
-  the next required action.
-- Avoid making the user find the nutrition panel to finish an add flow.
-
-### 10. Folder and File Structure
-
-The folder structure is now directionally good. It is domain-oriented and easy to scan.
-
-What is not yet “beautiful”:
-
-- Large components are doing too much.
-- Route pages still contain enough local styles and logic to hide the actual page
-  intent.
-- Some utility domains overlap: `food`, `storage/supabase`, `products`, and `barcode`
-  need explicit boundaries.
-
-Recommended boundaries:
-
-- `food`: local nutrition models and data normalization.
-- `products`: shared catalog, submissions, verification, cross-source product records.
-- `barcode`: scanner adapters, barcode parsing, source lookup orchestration.
-- `storage/supabase`: persistence adapters only.
-- `mix`: smoothie-specific calculations and UI state.
-
-## Priority Cleanup Plan
-
-### Immediate
-
-1. Complete browser and visual QA for the database-driven manual-entry nutrient groups.
-2. Verify missing nutrients remain `null` in canonical/API data while ingredient labels,
-   Mix totals, and exports consistently apply the app's zero fallback without partial-data warnings.
-3. Apply the same token/type audit when rebuilding the moderation view.
-4. Keep redirect/auth utility tests current for local, production, and preview URLs.
-
-### Next
-
-1. Create a shared identity display utility to avoid full email in normal UI.
-2. Convert raw route styles to semantic tokens as each remaining view is rebuilt.
-3. Keep list/search/pagination controls identical across fridge, shopping, Mix, and
-   saved drinks.
-4. Add browser QA for reference-catalog load failure and retry states.
-
-### Later
-
-1. Move product-source and nutrient-quality metadata deeper into the shared catalog
-   flow.
-2. Add a lightweight architecture doc that defines component, route, utility, server,
-   and migration boundaries.
-
-## Checks Run
-
-```bash
-git status --short --branch
-find src/lib/components -maxdepth 2 -type d | sort
-find src/lib/utils -maxdepth 3 -type d | sort
-rg -n "box-shadow" src
-rg -n "localStorage|sessionStorage" src/lib src/routes --glob '!src/lib/types/database.types.ts'
-rg -n "\\.email|email" src/lib src/routes --glob '!src/lib/types/database.types.ts'
-rg -n "#[0-9a-fA-F]{3,8}|rgb\\(|rgba\\(" src --glob '*.svelte' --glob '*.ts' --glob '*.scss' --glob '!src/styles/_variables.scss'
-rg -n "(padding|margin|gap|font-size|font-weight|border-radius): [0-9]" src --glob '*.svelte' --glob '*.scss' --glob '!src/styles/_variables.scss'
-wc -l src/routes/fridge/+page.svelte src/routes/mix/+page.svelte src/routes/saved/+page.svelte src/routes/moderation/+page.svelte src/routes/auth/+page.svelte src/lib/components/ingredients/manual-entry/CustomIngredientForm/CustomIngredientForm.svelte src/lib/components/ingredients/nutrition/NutritionPanel/NutritionPanel.svelte src/lib/components/mix/insights/PointShape/PointShape.svelte src/lib/components/mix/insights/NutrientAdjustmentSuggestions/NutrientAdjustmentSuggestions.svelte src/lib/components/mix/ingredients/IngredientCard/IngredientCard.svelte src/lib/components/ingredients/search/IngredientSearch/IngredientSearch.svelte
-```

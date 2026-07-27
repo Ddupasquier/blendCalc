@@ -44,8 +44,31 @@
 	);
 }
 
+.status-message__icon {
+	display: flex;
+	grid-column: 1;
+	grid-row: 1;
+	align-items: center;
+	justify-content: center;
+}
+
 .status-message__copy {
+	grid-column: 2;
+	grid-row: 1;
 	min-width: 0;
+}
+
+.status-message[data-icon-placement="top-end"] {
+	grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.status-message[data-icon-placement="top-end"] .status-message__icon {
+	grid-column: 2;
+	justify-self: end;
+}
+
+.status-message[data-icon-placement="top-end"] .status-message__copy {
+	grid-column: 1;
 }
 
 strong {

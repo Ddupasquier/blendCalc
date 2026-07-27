@@ -41,11 +41,12 @@ describe("NutritionPanel", () => {
 		const nutritionFacts = screen.getByText("Nutrition Facts");
 
 		expect(statusMessage).toHaveAttribute("data-tone", "danger");
-			expect(statusMessage).toContainElement(
-				screen.getByText(
-					/the label lists peanut as an allergen\./i,
-				),
-			);
+		expect(statusMessage).toHaveAttribute("data-icon-placement", "top-end");
+		expect(statusMessage).toContainElement(
+			screen.getByText(
+				/the label lists peanut as an allergen\./i,
+			),
+		);
 		expect(statusMessage?.querySelector(".status-icon-badge"))
 			.toBeInTheDocument();
 		expect(

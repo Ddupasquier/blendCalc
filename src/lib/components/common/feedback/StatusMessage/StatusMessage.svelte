@@ -7,26 +7,34 @@
 
 	let {
 		tone = "info",
+		iconPlacement = "start",
 		title = "",
 		message = "",
 		children,
 	}: StatusMessageProps = $props();
 </script>
 
-<div class="status-message" data-tone={tone} role={tone === "danger" ? "alert" : "status"}>
-	<StatusIconBadge
-		label={`${tone} message`}
-		tone={tone === "danger" ? "error" : tone}
-		decorative
-	>
-		{#if tone === "success"}
-			<Check size="1em" />
-		{:else if tone === "info"}
-			<Info size="1em" />
-		{:else}
-			<WarningTriangle size="1em" />
-		{/if}
-	</StatusIconBadge>
+<div
+	class="status-message"
+	data-tone={tone}
+	data-icon-placement={iconPlacement}
+	role={tone === "danger" ? "alert" : "status"}
+>
+	<div class="status-message__icon">
+		<StatusIconBadge
+			label={`${tone} message`}
+			tone={tone === "danger" ? "error" : tone}
+			decorative
+		>
+			{#if tone === "success"}
+				<Check size="1em" />
+			{:else if tone === "info"}
+				<Info size="1em" />
+			{:else}
+				<WarningTriangle size="1em" />
+			{/if}
+		</StatusIconBadge>
+	</div>
 	<div class="status-message__copy">
 		{#if title}
 			<strong>{title}</strong>

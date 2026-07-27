@@ -16,7 +16,7 @@ styles must not override or expand this guide unless a deliberate redesign bring
 into the Ingredients system first.
 
 This guide explains how the system looks and which existing implementation to reuse.
-[`development-rules-audit.md`](development-rules-audit.md) remains the normative source
+[`dev-rules/dev-rules.md`](dev-rules/dev-rules.md) remains the normative source
 for engineering, accessibility, security, and reuse rules.
 
 ## Maintenance Contract
@@ -45,7 +45,7 @@ changes; do not preserve competing generations of the same visual system.
 
 Use this order when implementing or reviewing styling:
 
-1. [`development-rules-audit.md`](development-rules-audit.md) for mandatory rules.
+1. [`dev-rules/dev-rules.md`](dev-rules/dev-rules.md) for mandatory rules.
 2. This guide for the approved Ingredients visual language and component selection.
 3. [`src/styles/_variables.scss`](../src/styles/_variables.scss) for exact app-wide
    values.
@@ -441,6 +441,9 @@ provider, database, stack, or network messages.
 
 Compact ingredient conflicts do not use `StatusMessage`; they use `CardWarningEdge` and
 an accessible action label. The full warning appears in the detailed view.
+Detailed ingredient preference conflicts use the shared `StatusMessage` top-end icon
+layout so the warning icon sits in the top-right while the title and reasons remain
+left-aligned.
 
 ## Badges And Privileged Actions
 

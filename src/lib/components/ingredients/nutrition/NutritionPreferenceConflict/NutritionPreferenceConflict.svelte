@@ -20,15 +20,16 @@
 </script>
 
 {#if preferenceWarnings.length > 0}
-		<StatusMessage
-			tone={hasConfirmedPreferenceConflict ? "danger" : "warning"}
-			title={FOOD_PREFERENCE_WARNING_TITLE}
-		>
-			<ul class="preference-conflict__list">
-				{#each preferenceWarnings as warning}
-					<li>{getFoodPreferenceWarningMessage(warning)}</li>
-				{/each}
-			</ul>
+	<StatusMessage
+		tone={hasConfirmedPreferenceConflict ? "danger" : "warning"}
+		iconPlacement="top-end"
+		title={FOOD_PREFERENCE_WARNING_TITLE}
+	>
+		<ul class="preference-conflict__list">
+			{#each preferenceWarnings as warning}
+				<li>{getFoodPreferenceWarningMessage(warning)}</li>
+			{/each}
+		</ul>
 	</StatusMessage>
 {/if}
 
