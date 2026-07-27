@@ -9,10 +9,7 @@ export type IngredientCardMediaLaneProps = {
 	alt?: string;
 	value?: ImagePlacementValue;
 	fallback?: Snippet;
-	interactive?: boolean;
 	decorative?: boolean;
-	instructionsId?: string;
-	onChange?: (value: ImagePlacementValue) => void;
 	onGeometryChange?: (geometry: ImagePlacementGeometry) => void;
 	onError?: () => void;
 };

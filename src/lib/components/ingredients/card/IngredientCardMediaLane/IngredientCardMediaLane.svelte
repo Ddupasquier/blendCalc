@@ -7,10 +7,7 @@
 		alt,
 		value,
 		fallback,
-		interactive = false,
 		decorative = false,
-		instructionsId,
-		onChange,
 		onGeometryChange,
 		onError,
 	}: IngredientCardMediaLaneProps = $props();
@@ -18,7 +15,6 @@
 
 <span
 	class="ingredient-card-media-lane"
-	class:ingredient-card-media-lane--interactive={interactive}
 	class:ingredient-card-media-lane--fallback={!imageUrl || !value}
 	aria-hidden={decorative ? "true" : undefined}
 >
@@ -28,9 +24,6 @@
 			alt={alt ?? ""}
 			{value}
 			horizontalMovement="left-only"
-			{interactive}
-			{instructionsId}
-			{onChange}
 			{onGeometryChange}
 			{onError}
 		/>

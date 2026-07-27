@@ -9,15 +9,6 @@
 	overflow: hidden;
 }
 
-.image-placement-viewport--interactive {
-	cursor: grab;
-	touch-action: none;
-}
-
-.image-placement-viewport--interactive:active {
-	cursor: grabbing;
-}
-
 .image-placement-viewport img {
 	display: block;
 	max-width: none;

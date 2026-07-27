@@ -8,11 +8,11 @@ describe("ImagePlacementCardPreview", () => {
 		render(ImagePlacementCardPreview, {
 			props: {
 				imageUrl: "https://example.com/package.jpg",
-					alt: "Package image",
-					foodName: "Sempio Gochu Jang",
-					category: "Dips & Salsa",
-					showWarningEdge: true,
-					value: {
+				alt: "Package image",
+				foodName: "Sempio Gochu Jang",
+				category: "Dips & Salsa",
+				showWarningEdge: true,
+				value: {
 					cropX: 25,
 					cropY: 75,
 					cropZoom: 2,
@@ -24,12 +24,43 @@ describe("ImagePlacementCardPreview", () => {
 
 		const image = screen.getByRole("img", { name: "Package image" });
 
-			expect(image).toHaveAttribute("src", "https://example.com/package.jpg");
-			expect(image).toHaveClass("image-placement-viewport__image--current");
-			expect(image.getAttribute("style")).toContain("--image-placement-viewport-zoom");
-			expect(screen.getByText("Sempio Gochu Jang")).toBeInTheDocument();
-			expect(screen.getByText("Dips & Salsa")).toBeInTheDocument();
-			expect(image.closest(".ingredient-card-media-lane")).toBeInTheDocument();
-			expect(document.querySelector(".card-warning-edge")).toBeInTheDocument();
+		expect(image).toHaveAttribute("src", "https://example.com/package.jpg");
+		expect(image).toHaveClass("image-placement-viewport__image--current");
+		expect(image.getAttribute("style")).toContain(
+			"--image-placement-viewport-zoom",
+		);
+		expect(screen.getByText("Sempio Gochu Jang")).toBeInTheDocument();
+		expect(screen.getByText("Dips & Salsa")).toBeInTheDocument();
+		expect(image.closest(".ingredient-card-media-lane")).toBeInTheDocument();
+		expect(document.querySelector(".card-warning-edge")).toBeInTheDocument();
+	});
+
+	it("uses the complete card preview as the direct-manipulation surface", () => {
+		render(ImagePlacementCardPreview, {
+			props: {
+				imageUrl: "https://example.com/package.jpg",
+				alt: "Package image",
+				interactive: true,
+				instructionsId: "placement-instructions",
+				value: {
+					cropX: 50,
+					cropY: 50,
+					cropZoom: 1,
+					fitMode: "contain",
+					placementVersion: 2,
+				},
+			},
 		});
+
+		const preview = screen.getByRole("group", { name: "Card image preview" });
+
+		expect(preview).toHaveClass("image-placement-card-preview--interactive");
+		expect(preview).toHaveAttribute(
+			"aria-describedby",
+			"placement-instructions",
+		);
+		expect(
+			preview.querySelector(".image-placement-viewport"),
+		).not.toHaveAttribute("role");
+	});
 });

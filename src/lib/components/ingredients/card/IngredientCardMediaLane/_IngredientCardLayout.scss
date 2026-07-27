@@ -2,6 +2,8 @@
 
 $card-media-lane-width: 28cqw;
 $card-content-inset: 18cqw;
+$card-title-shift: $app-gap-lg;
+$card-supporting-copy-indent: $app-gap-sm;
 $card-border-width: 2px;
 
 @mixin frame {
@@ -62,6 +64,7 @@ $card-border-width: 2px;
 	min-width: 0;
 
 	strong {
+		margin-inline-start: -$card-title-shift;
 		overflow: hidden;
 		color: $app-shell-text-primary;
 		font-size: $app-font-size-md;
@@ -72,6 +75,9 @@ $card-border-width: 2px;
 	}
 
 	small {
+		margin-inline-start: calc(
+			-#{$card-title-shift} + #{$card-supporting-copy-indent}
+		);
 		overflow: hidden;
 		color: $app-shell-text-muted;
 		font-size: $app-font-size-sm;

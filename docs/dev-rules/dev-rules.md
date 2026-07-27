@@ -291,10 +291,14 @@ left-corner clipping, fade, content offset, and warning-edge layering. The share
 must reach full transparency before the lane's text-facing boundary so source images
 with opaque rectangular backgrounds do not leave a visible vertical seam. Use a broad
 elliptical transition with a soft intermediate opacity rather than a straight vertical
-edge or abrupt opacity drop. Card-image horizontal placement is intentionally
-one-directional: the default keeps the image flush with the card's outer edge so unused
-containment space falls on the faded, text-facing side. Adjustment may shift the image
-left beneath the fade but must never move it right and expose an outer gap. Keep that
+edge or abrupt opacity drop. The approved shared mask uses a `100%` horizontal radius
+and `140%` vertical radius in `IngredientCardMediaLane.scss`; preserve that
+component-local gradient across saved cards, search cards, and placement previews unless
+a later deliberate visual decision replaces it. Card-image horizontal placement is
+intentionally one-directional: the default keeps the image flush with the card's outer
+edge so unused containment space falls on the faded, text-facing side. Adjustment may
+shift the image left beneath the fade but must never move it right and expose an outer
+gap. Keep that
 control usable when a contained image does not overflow by allowing a bounded left
 shift that always leaves a meaningful portion of the image visible. The shared geometry,
 drag behavior, slider, smart suggestion, persisted validation, saved/search rendering,
@@ -981,7 +985,11 @@ must switch the placement to version 2 `Custom`. Normalized position always mean
 `0 = far left/top`, `50 = centered`, and `100 = far right/bottom`; disable an axis when
 the measured image and frame leave no overflow on that axis. Keep native range controls
 available for keyboard and assistive-technology use even when direct pointer/touch
-interaction is supported. User submission, moderation approval, admin/moderator editing,
+interaction is supported. The complete interactive card preview must be one continuous
+pointer/touch surface, including the copy, faded overlap, and transparent card area.
+Never attach direct-manipulation handlers only to the masked media lane because its
+mask and higher-layer copy create inaccessible drag dead zones. User submission,
+moderation approval, admin/moderator editing,
 ingredient cards, and previews must use the same placement value (`fit_mode`, normalized
 X/Y, zoom, and `placement_version`), shared geometry utility, and shared measured
 renderer so previews cannot disagree with saved cards. Editors must show one interactive

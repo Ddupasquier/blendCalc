@@ -7,6 +7,15 @@
 	grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.image-placement-card-preview--interactive {
+	cursor: grab;
+	touch-action: none;
+}
+
+.image-placement-card-preview--interactive:active {
+	cursor: grabbing;
+}
+
 .image-placement-card-preview__copy {
 	position: relative;
 	z-index: 1;

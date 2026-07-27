@@ -374,12 +374,17 @@ Current local geometry:
 
 - Media lane width: `28cqw`.
 - Copy inset: `18cqw` plus `$app-gap-xs`.
+- Ingredient title: shifted toward the media by `$app-gap-lg`.
+- Category/supporting copy: begins `$app-gap-sm` to the right of the ingredient title.
 - Fade: radial ellipse from the left, solid through `35%`, soft at `55%`, transparent
   at `80%`.
+- Fade shape: `100%` horizontal mask radius and `140%` vertical mask radius.
 - Left corners follow the card; right corners remain square beneath the fade.
 - Images and fallback symbols preserve aspect ratio and never stretch.
 - Fallback symbols use the same media lane rather than a circular container.
 - The warning edge stays above the media through its explicit z-index.
+- The complete placement-preview card is the drag/pinch/wheel surface. Do not limit
+  interaction to the masked media lane or let copy and fade layers create dead zones.
 
 These are intentionally component-local values in
 `IngredientCardMediaLane.scss` and `_IngredientCardLayout.scss`. They are not app-wide

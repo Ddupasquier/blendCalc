@@ -2,8 +2,8 @@
 $media-lane-fade-solid: 35%;
 $media-lane-fade-soft: 55%;
 $media-lane-fade-end: 80%;
-$media-lane-mask-horizontal-radius: 135%;
-$media-lane-mask-vertical-radius: 82%;
+$media-lane-mask-horizontal-radius: 100%;
+$media-lane-mask-vertical-radius: 140%;
 $media-lane-mask: radial-gradient(
 	ellipse $media-lane-mask-horizontal-radius $media-lane-mask-vertical-radius at left center,
 	#000 0%,
@@ -24,10 +24,6 @@ $media-lane-mask: radial-gradient(
 	border-radius: $app-shell-radius-card 0 0 0;
 	mask-image: $media-lane-mask;
 	-webkit-mask-image: $media-lane-mask;
-}
-
-.ingredient-card-media-lane--interactive {
-	pointer-events: auto;
 }
 
 .ingredient-card-media-lane--fallback {

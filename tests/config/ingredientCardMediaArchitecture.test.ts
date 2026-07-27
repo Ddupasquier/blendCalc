@@ -45,6 +45,14 @@ const placementPreviewStyles = readFileSync(
 	"src/lib/components/common/images/ImagePlacementCardPreview/ImagePlacementCardPreview.scss",
 	"utf8",
 );
+const placementPreview = readFileSync(
+	"src/lib/components/common/images/ImagePlacementCardPreview/ImagePlacementCardPreview.svelte",
+	"utf8",
+);
+const placementInteraction = readFileSync(
+	"src/lib/components/common/images/ImagePlacementCardPreview/imagePlacementInteraction.ts",
+	"utf8",
+);
 const cardLayoutStyles = readFileSync(
 	"src/lib/components/ingredients/card/IngredientCardMediaLane/_IngredientCardLayout.scss",
 	"utf8",
@@ -79,6 +87,16 @@ describe("ingredient card media architecture", () => {
 	it("keeps saved, search, and placement-preview geometry identical", () => {
 		expect(cardLayoutStyles).toContain("$card-media-lane-width: 28cqw");
 		expect(cardLayoutStyles).toContain("$card-content-inset: 18cqw");
+		expect(cardLayoutStyles).toContain("$card-title-shift: $app-gap-lg");
+		expect(cardLayoutStyles).toContain(
+			"$card-supporting-copy-indent: $app-gap-sm",
+		);
+		expect(cardLayoutStyles).toContain(
+			"margin-inline-start: -$card-title-shift",
+		);
+		expect(cardLayoutStyles).toContain(
+			"-#{$card-title-shift} + #{$card-supporting-copy-indent}",
+		);
 		expect(cardLayoutStyles).toContain(
 			"--ingredient-card-copy-start-offset",
 		);
@@ -135,7 +153,10 @@ describe("ingredient card media architecture", () => {
 	it("uses shared left-only geometry for card rendering and placement previews", () => {
 		expect(mediaLane).toContain('horizontalMovement="left-only"');
 		expect(imageViewport).toContain("horizontalMovement,");
-		expect(imageViewport).toContain("moveImagePlacement");
+		expect(placementPreview).toContain("createImagePlacementInteraction");
+		expect(placementPreview).toContain("onpointerdown=");
+		expect(placementInteraction).toContain("moveImagePlacement");
+		expect(imageViewport).not.toContain("onpointerdown=");
 		expect(imageViewportStyles).not.toContain(
 			".image-placement-viewport--contained-inline-start",
 		);
@@ -165,7 +186,7 @@ describe("ingredient card media architecture", () => {
 		expect(imageViewportStyles).not.toContain("object-fit: fill");
 	});
 
-	it("uses a horizontally stretched curved fade that finishes before the media lane boundary", () => {
+	it("uses a configurable curved fade that finishes before the media lane boundary", () => {
 		const horizontalRadius = Number(
 			mediaLaneStyles.match(
 				/\$media-lane-mask-horizontal-radius:\s*(\d+)%/,
@@ -190,7 +211,8 @@ describe("ingredient card media architecture", () => {
 		expect(mediaLaneStyles).toContain(
 			"ellipse $media-lane-mask-horizontal-radius $media-lane-mask-vertical-radius at left center",
 		);
-		expect(horizontalRadius).toBeGreaterThan(verticalRadius);
+		expect(horizontalRadius).toBe(100);
+		expect(verticalRadius).toBe(140);
 		expect(mediaLaneStyles).toMatch(
 			/rgb\(0 0 0 \/ \d+%\)\s+\$media-lane-fade-soft/,
 		);
