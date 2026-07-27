@@ -22,4 +22,5 @@
 .circular-icon-frame :global(svg) {
 	width: 1em;
 	height: 1em;
+	transform: var(--circular-icon-frame-icon-transform, none);
 }

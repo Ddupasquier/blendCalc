@@ -99,6 +99,18 @@ describe("ingredient icon architecture", () => {
 			"src/lib/components/common/badges/StatusIconBadge/StatusIconBadge.svelte",
 			"utf8",
 		);
+		const statusBadgeStyles = readFileSync(
+			"src/lib/components/common/badges/StatusIconBadge/StatusIconBadge.scss",
+			"utf8",
+		);
+		const verifiedStatusBadge = readFileSync(
+			"src/lib/components/common/badges/VerifiedStatusBadge/VerifiedStatusBadge.svelte",
+			"utf8",
+		);
+		const verifiedStatusBadgeStyles = readFileSync(
+			"src/lib/components/common/badges/VerifiedStatusBadge/VerifiedStatusBadge.scss",
+			"utf8",
+		);
 		const privilegedBadge = readFileSync(
 			"src/lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte",
 			"utf8",
@@ -120,6 +132,9 @@ describe("ingredient icon architecture", () => {
 		expect(circularIconFrameStyles).toContain("overflow: hidden");
 		expect(circularIconFrameStyles).toContain("align-items: center");
 		expect(circularIconFrameStyles).toContain("justify-content: center");
+		expect(circularIconFrameStyles).toContain(
+			"var(--circular-icon-frame-icon-transform, none)",
+		);
 		for (const sharedContainerStyles of [
 			circularMediaFrameStyles,
 			circleIconButtonStyles,
@@ -130,6 +145,15 @@ describe("ingredient icon architecture", () => {
 			expect(sharedContainerStyles).toContain("justify-content: center");
 		}
 		expect(statusBadge).not.toContain("centered-icon-optical-offset");
+		expect(statusBadgeStyles).toContain(
+			"--circular-icon-frame-icon-transform",
+		);
+		expect(verifiedStatusBadge).toContain(
+			'@use "./VerifiedStatusBadge.scss"',
+		);
+		expect(verifiedStatusBadgeStyles).toContain(
+			"--circular-icon-frame-icon-transform",
+		);
 		expect(actionButtonComponent).toContain(
 			'<CenteredIcon class="action-button__icon">',
 		);

@@ -17,3 +17,7 @@
 >
 	<ShieldCheck />
 </StatusIconBadge>
+
+<style lang="scss">
+	@use "./VerifiedStatusBadge.scss";
+</style>
