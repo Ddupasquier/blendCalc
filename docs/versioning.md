@@ -9,7 +9,7 @@ force every other part of the system to change versions.
 | --- | --- | --- | --- |
 | Application release | `1.0.0` | `package.json` | Web/mobile product release |
 | Application build | `1.0.0+<deployment>` | SvelteKit build configuration | Exact deployed build identification |
-| Catalog API | URL `/api/v1`, response `1.0` | `src/lib/api/v1/types.ts` and OpenAPI | Stable consumer contract |
+| Catalog API | URL `/api/v1`, response `1.0`, OpenAPI `1.0.0` | `src/lib/api/v1/types.ts` and OpenAPI | Stable consumer contract |
 | Database schema | Timestamped migrations | `supabase/migrations` | Ordered, forward-only database changes |
 | Catalog product | Per-product revision number | `shared_product_revisions` | Product-label and evidence history |
 | Image placement | Placement version | `food_image_assets.placement_version` | Crop and positioning behavior |
@@ -29,12 +29,47 @@ the version, a future About or Settings view may show the complete release, such
 `1.0.0`. Deployment build identifiers distinguish two builds of the same release without
 pretending each deployment is a new product release.
 
+### Application Release Commands
+
+Check every version source without changing files:
+
+```bash
+npm run version:check
+```
+
+Bump the application release:
+
+```bash
+npm run version:bump -- patch
+npm run version:bump -- minor
+npm run version:bump -- major
+```
+
+The bump helper runs `npm version <level> --no-git-tag-version`, updates both package
+files and this document, and reruns the consistency check. It does not create a commit
+or Git tag. Review the resulting files before choosing whether to commit them.
+
+`npm run check` and `npm run build` execute `version:check` automatically. Future CI
+should run either command, so version drift fails before deployment.
+
 ## API Releases
 
 The API version changes only when its consumer contract changes. An app patch or feature
 does not automatically change `/api/v1` or `apiVersion: 1.0`. Compatible API additions
 remain in the current API major version; incompatible response changes require a new API
 path and migration period.
+
+The response contract uses `major.minor`; OpenAPI uses the matching full semantic
+version. Preview status is stored separately in `info.x-blendcalc-status` instead of
+being appended to the version.
+
+API changes remain deliberate:
+
+1. Compatible additions may update the contract minor and OpenAPI version while staying
+   under `/api/v1`.
+2. Breaking changes require a new `/api/v2` route tree, contract constant, OpenAPI
+   document, and a documented migration period.
+3. Run `npm run version:check` after changing any API version source.
 
 ## Compatibility Rules
 

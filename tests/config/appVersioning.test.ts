@@ -11,21 +11,44 @@ import { BLENDCALC_API_V1 } from "$lib/api/v1/types";
 const packageMetadata = JSON.parse(readFileSync("package.json", "utf8")) as {
 	version: string;
 };
+const packageLock = JSON.parse(readFileSync("package-lock.json", "utf8")) as {
+	packages: Record<string, { version?: string }>;
+};
+const openApi = JSON.parse(
+	readFileSync("static/api/v1/openapi.json", "utf8"),
+) as {
+	info: {
+		version: string;
+		"x-blendcalc-status"?: string;
+	};
+	paths: Record<string, unknown>;
+};
 const appLayout = readFileSync("src/routes/+layout.svelte", "utf8");
 const serverHook = readFileSync("src/hooks.server.ts", "utf8");
+const semanticVersionPattern =
+	/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$/;
 
 describe("blendCalc versioning", () => {
-	it("starts the MVP at application V1", () => {
-		expect(packageMetadata.version).toBe("1.0.0");
+	it("uses one valid application release and keeps the MVP on major V1", () => {
+		expect(packageMetadata.version).toMatch(semanticVersionPattern);
 		expect(APP_VERSION).toBe(packageMetadata.version);
+		expect(packageLock.packages[""]?.version).toBe(APP_VERSION);
 		expect(APP_MAJOR_VERSION).toBe(1);
 		expect(APP_VERSION_LABEL).toBe("V1");
-		expect(APP_BUILD_VERSION).toMatch(/^1\.0\.0\+/);
+		expect(APP_BUILD_VERSION.startsWith(`${APP_VERSION}+`)).toBe(true);
+		expect(APP_BUILD_VERSION.length).toBeGreaterThan(APP_VERSION.length + 1);
 	});
 
 	it("keeps the API contract version independent", () => {
-		expect(BLENDCALC_API_V1).toBe("1.0");
+		expect(BLENDCALC_API_V1).toMatch(/^1\.\d+$/);
 		expect(BLENDCALC_API_V1).not.toBe(APP_VERSION);
+		expect(openApi.info.version.startsWith(`${BLENDCALC_API_V1}.`)).toBe(true);
+		expect(openApi.info["x-blendcalc-status"]).toBe("internal");
+		expect(
+			Object.keys(openApi.paths).every((path) =>
+				path.startsWith("/api/v1/"),
+			),
+		).toBe(true);
 	});
 
 	it("exposes app release and build identity globally", () => {

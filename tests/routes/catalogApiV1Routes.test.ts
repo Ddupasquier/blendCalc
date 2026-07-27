@@ -15,6 +15,7 @@ vi.mock("$lib/server/api/v1/catalogApi.server", () => ({
 import { GET as getCategories } from "../../src/routes/api/v1/categories/+server";
 import { GET as searchFoods } from "../../src/routes/api/v1/foods/search/+server";
 import { GET as getProduct } from "../../src/routes/api/v1/products/[barcode]/+server";
+import { BLENDCALC_API_V1 } from "$lib/api/v1/types";
 
 const createLocals = (signedIn = true) => ({
 	getVerifiedUser: vi.fn().mockResolvedValue(signedIn ? { id: "user-id" } : null),
@@ -34,7 +35,7 @@ describe("blendCalc API v1 routes", () => {
 
 		expect(response.status).toBe(401);
 		expect(await response.json()).toMatchObject({
-			apiVersion: "1.0",
+			apiVersion: BLENDCALC_API_V1,
 			error: { code: "authentication_required" },
 		});
 		expect(mocks.searchApiV1Products).not.toHaveBeenCalled();
@@ -52,9 +53,11 @@ describe("blendCalc API v1 routes", () => {
 		} as never);
 
 		expect(response.status).toBe(200);
-		expect(response.headers.get("x-blendcalc-api-version")).toBe("1.0");
+		expect(response.headers.get("x-blendcalc-api-version")).toBe(
+			BLENDCALC_API_V1,
+		);
 		expect(await response.json()).toEqual({
-			apiVersion: "1.0",
+			apiVersion: BLENDCALC_API_V1,
 			data: { id: "product-id", barcode: "00021130493609" },
 		});
 		expect(mocks.readApiV1ProductByBarcode).toHaveBeenCalledWith(
@@ -94,7 +97,7 @@ describe("blendCalc API v1 routes", () => {
 
 		expect(response.status).toBe(200);
 		expect(await response.json()).toMatchObject({
-			apiVersion: "1.0",
+			apiVersion: BLENDCALC_API_V1,
 			data: [{ id: "product-id" }],
 			meta: { pagination: { nextOffset: 15 } },
 		});

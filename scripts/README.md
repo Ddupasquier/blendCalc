@@ -10,7 +10,8 @@ not separate public interfaces.
 - `backfills/`: idempotent repairs or enrichment of existing database records.
 - `generators/`: generated documentation and repository artifacts.
 - `imports/`: licensed external dataset ingestion into canonical database tables.
-- `operations/`: authentication, database deployment, and privileged user operations.
+- `operations/`: authentication, database deployment, release-version checks/bumps, and
+  privileged user operations.
 - `qa/`: deterministic data checks and moderation fixtures with matching cleanup commands.
 - `seeds/`: repeatable reference-data discovery and database seeding.
 - `lib/`: shared script-only utilities; these files are not executable workflows.

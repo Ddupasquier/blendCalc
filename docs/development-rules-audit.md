@@ -1048,6 +1048,11 @@ keep revision numbers, image placement keeps placement versions, and browser sto
 keeps feature-specific schema versions rather than reusing the app or API version.
 Document compatibility and migration behavior before any major bump, and do not scatter
 literal app versions through components, routes, scripts, headers, or provider clients.
+Run `npm run version:check` before checks and builds, and use
+`npm run version:bump -- patch|minor|major` for a reviewed app-release bump that updates
+package metadata without creating a commit or tag. API contract bumps remain deliberate
+and must keep the URL major, response `major.minor`, full OpenAPI version, tests, and
+documentation aligned.
 
 **32.** <a id="rule-loading-states"></a>Every fetch-backed, database-backed,
 camera-backed, or long-running action needs a clear loading state. While pending,

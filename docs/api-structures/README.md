@@ -23,7 +23,9 @@ process are ready.
 
 The API contract version is independent from the blendCalc app release. App `V1`
 currently means semantic version `1.0.0`; API v1 remains at response version `1.0`
-until its own response contract needs a deliberate version change.
+and OpenAPI version `1.0.0` until its own response contract needs a deliberate version
+change. The OpenAPI `x-blendcalc-status` field records that the API is still internal;
+preview status is not part of the version number.
 
 This folder contains generated reference files that describe the external food API
 payloads observed by blendCalc scripts.
