@@ -39,6 +39,9 @@ Supabase test environment, reset workflow, and database QA commands.
 ## Getting started
 
 This project uses Node.js 24. With `nvm`, run `nvm use` from the repository root.
+`.nvmrc`, `package.json`, and `package-lock.json` share that runtime contract;
+dependency installation is engine-strict, and project checks/builds stop immediately
+when another Node major is active.
 
 ### 1. Install dependencies
 
@@ -109,6 +112,8 @@ adding one-off npm aliases.
 | `npm run test:watch` | Watch-mode tests |
 | `npm run check` | TypeScript + Svelte type-check |
 | `npm run check:auth` | Validate auth environment and endpoint health |
+| `npm run version:check` | Validate Node 24 and all application/API version sources |
+| `npm run version:bump -- patch\|minor\|major` | Update the application release without committing or tagging |
 | `npm run audit:usda-branded-allergens` | Sample USDA branded allergen-related fields |
 | `npm run audit:off-allergens` | Sample Open Food Facts allergen/restriction fields |
 | `npm run audit:api-catalog` | Audit every active shared-catalog row for API publication readiness and field lineage |

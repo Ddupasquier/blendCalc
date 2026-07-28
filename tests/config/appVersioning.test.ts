@@ -10,10 +10,17 @@ import { BLENDCALC_API_V1 } from "$lib/api/v1/types";
 
 const packageMetadata = JSON.parse(readFileSync("package.json", "utf8")) as {
 	version: string;
+	engines: {
+		node: string;
+	};
 };
 const packageLock = JSON.parse(readFileSync("package-lock.json", "utf8")) as {
-	packages: Record<string, { version?: string }>;
+	packages: Record<string, { version?: string; engines?: { node?: string } }>;
 };
+const configuredNodeMajor = Number.parseInt(
+	readFileSync(".nvmrc", "utf8").trim(),
+	10,
+);
 const openApi = JSON.parse(
 	readFileSync("static/api/v1/openapi.json", "utf8"),
 ) as {
@@ -29,6 +36,17 @@ const semanticVersionPattern =
 	/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$/;
 
 describe("blendCalc versioning", () => {
+	it("uses one supported Node major across local setup and package metadata", () => {
+		const expectedEngine = `>=${configuredNodeMajor} <${configuredNodeMajor + 1}`;
+
+		expect(configuredNodeMajor).toBe(24);
+		expect(packageMetadata.engines.node).toBe(expectedEngine);
+		expect(packageLock.packages[""]?.engines?.node).toBe(expectedEngine);
+		expect(Number.parseInt(process.versions.node.split(".")[0], 10)).toBe(
+			configuredNodeMajor,
+		);
+	});
+
 	it("uses one valid application release and keeps the MVP on major V1", () => {
 		expect(packageMetadata.version).toMatch(semanticVersionPattern);
 		expect(APP_VERSION).toBe(packageMetadata.version);

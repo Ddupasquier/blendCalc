@@ -713,7 +713,9 @@
         listActionError = "";
 
         try {
-            const moveResult = await moveFoodToSmoothieList(targetKey, food);
+            const moveResult = await moveFoodToSmoothieList(targetKey, food, {
+				notify: false,
+			});
             if (moveResult === "error") {
                 listActionError = `${food.description} could not be moved. Try again.`;
                 return false;
@@ -729,7 +731,7 @@
                     (id) => id !== food.fdcId,
                 ),
             );
-            await loadLists();
+			applyBulkListMove(sourceKey, [food]);
             return true;
         } finally {
             movingItem = null;
@@ -753,7 +755,9 @@
 		movingItem = `${sourceKey}:bulk`;
 		listActionError = "";
 		try {
-			const moveResult = await moveFoodsToSmoothieList(targetKey, selectedFoods);
+			const moveResult = await moveFoodsToSmoothieList(targetKey, selectedFoods, {
+				notify: false,
+			});
 			if (moveResult === "error") {
 				listActionError = "The selected ingredients could not be moved. Try again.";
 				return false;

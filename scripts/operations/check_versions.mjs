@@ -1,6 +1,7 @@
 /**
- * Purpose: Verify that application, build, API route, response-contract, OpenAPI, test,
- * and version-documentation metadata stay consistent without modifying repository files.
+ * Purpose: Verify that the active Node runtime, application, build, API route,
+ * response-contract, OpenAPI, test, and version-documentation metadata stay consistent
+ * without modifying repository files.
  * Run: `npm run version:check`
  * This read-only check also runs automatically before `npm run check` and
  * `npm run build`.
@@ -24,6 +25,9 @@ const requireCondition = (condition, message) => {
 
 const packageMetadata = readJson("package.json");
 const packageLock = readJson("package-lock.json");
+const configuredNodeMajor = Number.parseInt(readText(".nvmrc").trim(), 10);
+const activeNodeMajor = Number.parseInt(process.versions.node.split(".")[0], 10);
+const expectedNodeEngine = `>=${configuredNodeMajor} <${configuredNodeMajor + 1}`;
 const appVersion = packageMetadata.version;
 const lockRootVersion = packageLock.packages?.[""]?.version;
 const svelteConfig = readText("svelte.config.js");
@@ -35,6 +39,22 @@ const apiRouteTest = readText("tests/routes/catalogApiV1Routes.test.ts");
 const versioningDocumentation = readText("docs/versioning.md");
 const openApi = readJson("static/api/v1/openapi.json");
 
+requireCondition(
+	Number.isInteger(configuredNodeMajor) && configuredNodeMajor > 0,
+	".nvmrc must contain one supported Node major version.",
+);
+requireCondition(
+	packageMetadata.engines?.node === expectedNodeEngine,
+	`package.json engines.node must match .nvmrc as ${expectedNodeEngine}; received ${JSON.stringify(packageMetadata.engines?.node)}.`,
+);
+requireCondition(
+	packageLock.packages?.[""]?.engines?.node === expectedNodeEngine,
+	`package-lock.json engines.node must match .nvmrc as ${expectedNodeEngine}.`,
+);
+requireCondition(
+	activeNodeMajor === configuredNodeMajor,
+	`Node ${configuredNodeMajor} is required; the active runtime is ${process.versions.node}. Run \`nvm use\` before project commands.`,
+);
 requireCondition(
 	typeof appVersion === "string" && semanticVersionPattern.test(appVersion),
 	`package.json version must be semantic versioning; received ${JSON.stringify(appVersion)}.`,
@@ -163,5 +183,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-	`Version consistency passed: app ${appVersion}, build ${appVersion}+<deployment>, API v${apiMajor} response ${apiVersion}, OpenAPI ${openApiVersion} (${openApi.info["x-blendcalc-status"]}).`,
+	`Version consistency passed: Node ${configuredNodeMajor}, app ${appVersion}, build ${appVersion}+<deployment>, API v${apiMajor} response ${apiVersion}, OpenAPI ${openApiVersion} (${openApi.info["x-blendcalc-status"]}).`,
 );

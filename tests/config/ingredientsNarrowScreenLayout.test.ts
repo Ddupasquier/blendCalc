@@ -68,6 +68,9 @@ describe("Ingredients narrow-screen layout", () => {
 		expect(segmentedControl).toContain(
 			"min-height: $app-shell-control-height-compact",
 		);
+		expect(segmentedControl).toContain(
+			'data-variant="pill"] {\n\tpadding: $app-gap-xs;\n\tbackground: $app-shell-surface-control;\n\tborder-radius: $app-shell-radius-pill;',
+		);
 		expect(segmentedControl).toContain("inset-block: calc(-1 * $app-gap-xs)");
 		expect(cardLayout).toContain("$card-min-height-narrow: 4.1rem");
 		expect(cardLayout).toContain("$card-action-size-narrow: 2rem");

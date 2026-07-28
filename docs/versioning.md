@@ -29,6 +29,15 @@ the version, a future About or Settings view may show the complete release, such
 `1.0.0`. Deployment build identifiers distinguish two builds of the same release without
 pretending each deployment is a new product release.
 
+### Node Runtime Contract
+
+Node.js 24 is the only supported development and build major. `.nvmrc` is the local
+runtime selector, while `package.json` and `package-lock.json` require `>=24 <25`.
+Engine-strict dependency installation rejects unsupported majors, and
+`npm run version:check` verifies the active runtime before checks and production builds
+perform substantive work. Run `nvm use` from the repository root before project
+commands.
+
 ### Application Release Commands
 
 Check every version source without changing files:

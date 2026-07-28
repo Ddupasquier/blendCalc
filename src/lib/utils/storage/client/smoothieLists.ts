@@ -33,6 +33,10 @@ export type SmoothieListMutationResult =
 	| "invalid"
 	| "error";
 
+type SmoothieListMutationOptions = {
+	notify?: boolean;
+};
+
 export const notifySmoothieListsChanged = () => {
 	if (typeof window === "undefined") return;
 	window.dispatchEvent(new CustomEvent(SMOOTHIE_LISTS_CHANGED_EVENT));
@@ -77,6 +81,7 @@ export const addFoodToSmoothieList = async (
 export const moveFoodToSmoothieList = async (
 	key: SmoothieListKey,
 	food: FdcFood,
+	options: SmoothieListMutationOptions = {},
 ): Promise<SmoothieListMutationResult> => {
 	const foodRecord = compactFood({
 		...food,
@@ -85,13 +90,14 @@ export const moveFoodToSmoothieList = async (
 	const placementResult = await placeCloudSmoothieListItem(key, foodRecord, true);
 	if (placementResult === "error") return "error";
 
-	notifySmoothieListsChanged();
+	if (options.notify !== false) notifySmoothieListsChanged();
 	return placementResult === "duplicate" ? "duplicate" : "moved";
 };
 
 export const moveFoodsToSmoothieList = async (
 	key: SmoothieListKey,
 	foods: FdcFood[],
+	options: SmoothieListMutationOptions = {},
 ): Promise<SmoothieListMutationResult> => {
 	const foodIds = [...new Set(foods.map((food) => food.fdcId))];
 	if (foodIds.length === 0) return "missing";
@@ -103,7 +109,7 @@ export const moveFoodsToSmoothieList = async (
 	);
 	if (!moved) return "error";
 
-	notifySmoothieListsChanged();
+	if (options.notify !== false) notifySmoothieListsChanged();
 	return "moved";
 };
 

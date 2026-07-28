@@ -21,6 +21,7 @@ import {
 	preserveSelectedListItems,
 	removeFoodFromSmoothieList,
 	renameFoodInSmoothieList,
+	SMOOTHIE_LISTS_CHANGED_EVENT,
 } from "$lib/utils/storage/client/smoothieLists";
 
 const food = {
@@ -93,6 +94,25 @@ describe("database-backed smoothie lists", () => {
 			MIX_STORAGE_KEYS.shoppingList,
 			[food.fdcId, tomato.fdcId],
 		);
+	});
+
+	it("suppresses refresh events when the caller reconciles moved list state", async () => {
+		const listener = vi.fn();
+		window.addEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, listener);
+
+		try {
+			cloudData.placeCloudSmoothieListItem.mockResolvedValue("moved");
+			await moveFoodToSmoothieList(MIX_STORAGE_KEYS.shoppingList, food, {
+				notify: false,
+			});
+			await moveFoodsToSmoothieList(MIX_STORAGE_KEYS.shoppingList, [food], {
+				notify: false,
+			});
+
+			expect(listener).not.toHaveBeenCalled();
+		} finally {
+			window.removeEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, listener);
+		}
 	});
 
 	it("bulk-adds only foods absent from both database lists", async () => {

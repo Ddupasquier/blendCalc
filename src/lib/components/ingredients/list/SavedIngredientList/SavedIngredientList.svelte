@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { tick } from "svelte";
+	import { flip } from "svelte/animate";
 	import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls/PaginatedListControls.svelte";
 	import { animateDirectionalExit } from "$lib/utils/animation/directionalExit";
+	import { prefersReducedMotion } from "$lib/utils/accessibility/motion";
 	import {
 		getFoodDisplayCategory,
 		getIngredientActionKey,
@@ -59,6 +61,7 @@
 
 	const BULK_EXIT_STAGGER_MS = 100;
 	const BULK_EXIT_ANTICIPATION_PERCENT = 10;
+	const LIST_REFLOW_DURATION_MS = 320;
 
 	const selectedIdSet = $derived(new Set(selectedIds));
 	const selectedCount = $derived(selectedIds.length);
@@ -85,6 +88,9 @@
 		if (revealPaused || !canRevealMore || loadingMoreList) return;
 		void onRevealMore();
 	};
+
+	const getListReflowDuration = () =>
+		prefersReducedMotion() ? 0 : LIST_REFLOW_DURATION_MS;
 
 	const startCardExit = async (
 		foodIds: number[],
@@ -148,6 +154,7 @@
 			singleMoveStatus = moved
 				? `Moved ${food.description} to ${targetLabel}.`
 				: `${food.description} could not be moved.`;
+			if (moved) await tick();
 		} finally {
 			animation.cancel();
 			singleAnimatingFoodId = null;
@@ -231,6 +238,7 @@
 						<li
 							data-food-id={food.fdcId}
 							data-bulk-selected={isChecked}
+							animate:flip={{ duration: getListReflowDuration() }}
 							class:saved-ingredient-list__card--moving={(bulkMoveBusy && isChecked) ||
 								singleAnimatingFoodId === food.fdcId}
 						>
