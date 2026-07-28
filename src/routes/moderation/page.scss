@@ -415,3 +415,25 @@ select {
 		grid-template-columns: 1fr;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.moderation-page,
+	.account-list,
+	header,
+	.account-search,
+	.product-review,
+	.product-review__list,
+	.account-details,
+	form,
+	label {
+		gap: $app-gap-xs;
+	}
+
+	.account-search,
+	.product-review,
+	.empty-results,
+	.product-card,
+	.account-card {
+		padding: $app-gap-sm;
+	}
+}

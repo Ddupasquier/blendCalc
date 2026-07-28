@@ -1148,13 +1148,34 @@ useful failure feedback.
 data in SvelteKit `load` functions or server actions, and run client-only lookups from
 `onMount`, user events, or code guarded with `browser`.
 
-**34.** <a id="rule-mobile-readability"></a>Keep mobile typography and tap targets
-readable. Body text should start from a 16px baseline, critical labels and controls
-should avoid tiny metadata sizing, and interactive controls should target roughly 44px
-minimum touch size unless there is a documented compact exception. Dense data panels
-such as Nutrition Facts must switch to a stacked narrow-screen layout before columns
-force labels, values, badges, or source details below readable sizes; compact styling is
-not permission to use text smaller than the shared readable metadata tokens.
+**34.** <a id="rule-mobile-readability"></a>Apply the shared responsive system to the
+entire application, not only the currently rebuilt view. Every page, card, form, modal,
+dialog, bottom sheet, right sheet, popover, menu, notification, button group, data
+panel, and fixed control must remain usable at the shared width and compact-height
+breakpoints. Use `$app-breakpoint-xs`, `$app-breakpoint-sm`, `$app-breakpoint-md`, and
+`$app-breakpoint-height-compact`; do not add device-brand queries or feature-local
+numeric breakpoints when an existing token describes the layout change.
+
+Choose breakpoints by layout pressure. Width queries may stack columns, actions, and
+form fields; the compact-height query may reduce repeated vertical gaps, fixed chrome,
+and overlay padding without needlessly forcing a wide landscape layout into a narrow
+single column. Shared primitives own responsive button, sheet, dialog, popover, and
+control behavior so features do not duplicate it. Route-level styles may add only the
+layout changes unique to that route.
+
+Keep mobile typography and tap targets readable. Body text starts from a 16px baseline,
+critical labels and controls avoid tiny metadata sizing, and interactive controls
+target roughly 44px minimum touch size unless the style guide documents a compact
+exception that still meets WCAG 2.2 target-size requirements. Dense data panels such as
+Nutrition Facts must stack before columns force labels, values, badges, or source
+details below readable sizes. Compact styling is not permission to use text smaller
+than the shared readable metadata tokens.
+
+Verify every changed surface at `320px × 568px`, `360px × 740px`, `390px × 844px`,
+`420px × 844px`, `740px × 360px`, tablet, desktop, and 200% text zoom. Preserve
+safe-area insets, full focus outlines, reachable scrolling, useful fixed navigation,
+and zero unintended two-dimensional overflow. An overlay must fit the usable viewport,
+keep its actions reachable, and scroll its own content rather than the obscured page.
 
 **35.** <a id="rule-api-structure-references"></a>Keep external API structure references
 generated and isolated. When the app needs a full understanding of vendor payload shape,

@@ -6,7 +6,10 @@
 	z-index: 300;
 	display: grid;
 	place-items: center;
-	padding: $app-gap-sm;
+	padding: max($app-gap-sm, env(safe-area-inset-top))
+		max($app-gap-sm, env(safe-area-inset-right))
+		max($app-gap-sm, env(safe-area-inset-bottom))
+		max($app-gap-sm, env(safe-area-inset-left));
 	background: rgba(26, 58, 90, 0.28);
 	backdrop-filter: blur(3px);
 }
@@ -15,6 +18,7 @@
 	display: grid;
 	grid-template-rows: auto minmax(0, 1fr) auto;
 	width: min(34rem, 100%);
+	max-height: min(42rem, calc(100vh - 2 * $app-gap-sm));
 	max-height: min(42rem, calc(100dvh - 2 * $app-gap-sm));
 	overflow: hidden;
 	background: $app-section-bg;
@@ -148,6 +152,36 @@
 	.tutorial__navigation {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.tutorial__navigation {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-height: $app-breakpoint-height-compact) {
+	.tutorial__header,
+	.tutorial__footer {
+		padding: $app-gap-sm;
+	}
+
+	.tutorial__body {
+		grid-template-columns: 4rem minmax(0, 1fr);
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+	}
+
+	:global(.tutorial__illustration) {
+		--circular-icon-frame-size: #{4rem};
+		--circular-icon-frame-icon-size: #{2.3rem};
+	}
+}
+
+@media (max-width: $app-breakpoint-sm) and (max-height: $app-breakpoint-height-compact) {
+	.tutorial__body {
+		grid-template-columns: 1fr;
 	}
 }
 

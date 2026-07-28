@@ -83,7 +83,9 @@ $viewport-height-dynamic: 100dvh;
 		80dvh,
 		calc(#{$viewport-height-dynamic} - var(--sheet-top-offset) - var(--sheet-bottom-offset))
 	);
-	padding: $app-gap-sm $app-shell-padding-x $app-gap-md;
+	padding-block: $app-gap-sm $app-gap-md;
+	padding-inline: max($app-shell-padding-x, env(safe-area-inset-left))
+		max($app-shell-padding-x, env(safe-area-inset-right));
 	overflow: hidden;
 	border-radius: $app-shell-radius-sheet $app-shell-radius-sheet 0 0;
 }
@@ -119,4 +121,25 @@ $viewport-height-dynamic: 100dvh;
 	background: $app-shell-surface-page;
 	overscroll-behavior: contain;
 	-webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.sheet-base__backdrop,
+	.sheet-base {
+		--sheet-top-offset: #{$app-shell-header-height-compact};
+		--sheet-bottom-offset: calc(
+			#{$app-shell-nav-height-compact} + env(safe-area-inset-bottom)
+		);
+	}
+
+	.sheet-base__panel--bottom {
+		padding-block: $app-gap-xs $app-gap-sm;
+		padding-inline: max($app-gap-sm, env(safe-area-inset-left))
+			max($app-gap-sm, env(safe-area-inset-right));
+	}
+
+	.sheet-base__panel--right {
+		padding: $app-gap-md max($app-gap-sm, env(safe-area-inset-right)) 0
+			max($app-gap-sm, env(safe-area-inset-left));
+	}
 }

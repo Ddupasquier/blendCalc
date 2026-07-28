@@ -124,3 +124,23 @@
 		justify-content: flex-start;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.mix-page {
+		padding-top: 0;
+	}
+
+	.mix-header {
+		gap: $app-gap-sm;
+		margin-bottom: $app-gap-sm;
+	}
+
+	.mix-panel,
+	.shape-panel {
+		padding: $app-gap-xs;
+	}
+
+	.mix-builder {
+		gap: $app-gap-xs;
+	}
+}

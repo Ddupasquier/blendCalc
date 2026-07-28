@@ -121,3 +121,23 @@
 	overscroll-behavior: contain;
 	-webkit-overflow-scrolling: touch;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.food-category-picker,
+	.food-category-picker__panel {
+		gap: $app-gap-xs;
+	}
+
+	.food-category-picker__panel {
+		padding: $app-gap-sm;
+	}
+
+	.food-category-picker__search-control input {
+		min-height: $app-shell-control-height-narrow;
+	}
+
+	.food-category-picker__options {
+		grid-template-columns: 1fr;
+		max-height: calc($app-shell-control-height * 5);
+	}
+}

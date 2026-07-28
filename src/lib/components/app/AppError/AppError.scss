@@ -3,8 +3,14 @@
 .app-error {
 	display: grid;
 	place-items: center;
+	min-height: 100vh;
 	min-height: 100dvh;
-	padding: $app-shell-padding-y $app-shell-padding-x;
+	padding: max($app-shell-padding-y, env(safe-area-inset-top))
+		max($app-shell-padding-x, env(safe-area-inset-right))
+		max($app-shell-padding-y, env(safe-area-inset-bottom))
+		max($app-shell-padding-x, env(safe-area-inset-left));
+	overflow-x: hidden;
+	overflow-y: auto;
 	background: $app-shell-surface-page;
 }
 
@@ -45,5 +51,18 @@ h1 {
 @media (max-width: $app-breakpoint-xs) {
 	.app-error__actions {
 		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.app-error {
+		place-items: start center;
+		padding-block: max($app-gap-sm, env(safe-area-inset-top))
+			max($app-gap-sm, env(safe-area-inset-bottom));
+	}
+
+	.app-error__panel {
+		gap: $app-gap-sm;
+		padding: $app-gap-md;
 	}
 }

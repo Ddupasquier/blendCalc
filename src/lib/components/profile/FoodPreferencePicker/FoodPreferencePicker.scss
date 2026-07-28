@@ -107,3 +107,21 @@
 	color: $app-muted;
 	font-size: $app-font-size-sm;
 }
+
+@media (max-width: $app-breakpoint-xs) {
+	.preference-picker__controls,
+	.preference-search__controls {
+		grid-template-columns: 1fr;
+	}
+
+	.search-add {
+		width: 100%;
+	}
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.preference-editor-card {
+		gap: $app-gap-xs;
+		padding: $app-gap-xs;
+	}
+}

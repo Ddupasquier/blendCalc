@@ -30,3 +30,11 @@
 		outline-offset: $app-gap-xs;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.manual-entry-launcher {
+		gap: $app-gap-xs;
+		min-height: $app-shell-control-height-narrow;
+		padding: $app-gap-sm $app-shell-control-padding-x-compact;
+	}
+}

@@ -107,3 +107,11 @@
 	border-style: dashed;
 	border-color: color-mix(in srgb, $app-shell-accent-primary 45%, white);
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.rounded-action-button {
+		min-height: $app-shell-control-height-narrow;
+		padding-inline: $app-shell-control-padding-x-compact;
+		font-size: $app-font-size-sm;
+	}
+}

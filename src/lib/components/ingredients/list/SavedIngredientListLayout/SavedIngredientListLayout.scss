@@ -22,3 +22,9 @@
 .saved-ingredients__loading {
 	color: $app-shell-text-muted;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.saved-ingredient-list-layout {
+		gap: $app-gap-sm;
+	}
+}

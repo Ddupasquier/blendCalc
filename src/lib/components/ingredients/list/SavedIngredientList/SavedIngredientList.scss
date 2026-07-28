@@ -58,3 +58,14 @@
 	font-weight: $app-font-weight-bold;
 	text-align: center;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.saved-ingredient-list--with-actions .saved-ingredient-list__body {
+		padding-top: $app-gap-sm;
+	}
+
+	.saved-ingredient-list__cards {
+		gap: $app-gap-sm;
+		padding-bottom: $app-gap-sm;
+	}
+}

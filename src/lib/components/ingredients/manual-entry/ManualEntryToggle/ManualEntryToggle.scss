@@ -47,3 +47,19 @@
 :global(.custom-ingredient__manual[open] .manual-entry-toggle__chevron) {
 	transform: rotate(180deg);
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	:global(.manual-entry-toggle__icon) {
+		--circular-icon-frame-size: #{$app-shell-leading-icon-size-narrow};
+	}
+
+	.manual-entry-toggle__copy {
+		strong {
+			font-size: $app-font-size-md;
+		}
+
+		small {
+			font-size: $app-font-size-xs;
+		}
+	}
+}

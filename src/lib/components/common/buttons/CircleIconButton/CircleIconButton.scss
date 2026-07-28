@@ -125,3 +125,15 @@
 		);
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.circle-icon-button[data-size="control"] {
+		width: $app-shell-control-height-narrow;
+		height: $app-shell-control-height-narrow;
+	}
+
+	.circle-icon-button[data-size="fab"] {
+		width: 3.25rem;
+		height: 3.25rem;
+	}
+}

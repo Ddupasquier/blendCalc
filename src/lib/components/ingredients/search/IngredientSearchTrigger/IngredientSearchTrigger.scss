@@ -39,3 +39,12 @@
 	height: $app-font-size-md;
 	stroke: currentColor;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.ingredient-search-trigger {
+		height: $app-shell-control-height-narrow;
+		min-height: $app-shell-control-height-narrow;
+		padding-inline: $app-shell-control-padding-x-compact;
+		font-size: $app-font-size-sm;
+	}
+}

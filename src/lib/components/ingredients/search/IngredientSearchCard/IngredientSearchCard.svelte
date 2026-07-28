@@ -66,7 +66,7 @@
 	{#if !saved}
 		<span class="ingredient-search-card__add-cell" role="gridcell">
 			<CircleIconButton
-				class="ingredient-search-card__add"
+				class="ingredient-search-card__add ingredient-card-action-button"
 				label={`Add ${food.description} to fridge`}
 				busy={adding}
 				disabled={adding}

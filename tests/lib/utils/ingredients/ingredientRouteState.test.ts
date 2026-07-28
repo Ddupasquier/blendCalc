@@ -135,6 +135,14 @@ describe("ingredient route state", () => {
 				modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
 			}),
 		).toBe("/fridge/barcode-scanner");
+
+		expect(
+			buildIngredientRouteHref(url("/fridge/barcode-scanner"), {
+				view: null,
+				sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+				modal: null,
+			}),
+		).toBe("/fridge/manual-entry");
 	});
 
 	it("canonicalizes legacy query tabs and item URLs", () => {

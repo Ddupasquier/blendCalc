@@ -3,8 +3,15 @@
 .password-page {
 	display: grid;
 	place-items: center;
+	min-height: 100vh;
 	min-height: 100svh;
-	padding: $app-gap-md $app-gap-sm;
+	min-height: 100dvh;
+	padding: max($app-gap-md, env(safe-area-inset-top))
+		max($app-gap-sm, env(safe-area-inset-right))
+		max($app-gap-md, env(safe-area-inset-bottom))
+		max($app-gap-sm, env(safe-area-inset-left));
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 
 .password-card {
@@ -51,12 +58,32 @@
 		align-items: center;
 		justify-content: center;
 		gap: $app-gap-xs;
+		min-height: $app-shell-control-height-narrow;
 		padding: 0.65rem 1rem;
 		color: $app-btn-text;
 		background: $app-btn-bg;
 		border-radius: $app-radius-pill;
 		font-weight: $app-button-font-weight;
 		line-height: $app-button-line-height;
+	}
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.password-card button {
+		width: 100%;
+	}
+}
+
+@media (max-height: $app-breakpoint-height-compact) {
+	.password-page {
+		place-items: start center;
+		padding-block: max($app-gap-sm, env(safe-area-inset-top))
+			max($app-gap-sm, env(safe-area-inset-bottom));
+	}
+
+	.password-card {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
 	}
 }
 

@@ -188,19 +188,70 @@ is semantically tighter or broader—not because a screenshot is a few pixels di
 | Overall max width | `$app-max-width` | `600px` |
 | Main content max width | `$app-shell-content-max-width` | `520px` |
 | Header height | `$app-shell-header-height` | `4rem` |
+| Narrow-phone header height | `$app-shell-header-height-compact` | `3.5rem` |
 | Bottom navigation height | `$app-shell-nav-height` | `4.85rem` |
+| Narrow-phone navigation height | `$app-shell-nav-height-compact` | `4.25rem` |
 | Horizontal shell padding | `$app-shell-padding-x` | `1rem` |
 | Vertical shell padding | `$app-shell-padding-y` | `1.2rem` |
-| Breakpoints | `$app-breakpoint-xs/sm/md` | `420px / 520px / 680px` |
+| Width breakpoints | `$app-breakpoint-xs/sm/md` | `420px / 520px / 680px` |
+| Compact-height breakpoint | `$app-breakpoint-height-compact` | `700px` |
 
 Account for `env(safe-area-inset-*)`, keep a `vh` fallback before `dvh`, and do not
 introduce horizontal overflow at narrow widths or 200% text zoom.
+
+### App-Wide Responsive Contract
+
+The visual language remains derived from the completed Ingredients experience, but its
+responsive contract applies to every route and shared primitive.
+
+| Trigger | Intended response |
+| --- | --- |
+| Up to `$app-breakpoint-xs` (`420px`) | Compact phone geometry; stack crowded actions and narrow form columns; reduce repeated card/surface padding where documented |
+| Up to `$app-breakpoint-sm` (`520px`) | Collapse layouts that need more than one comfortable phone column; keep overlays and popovers inside viewport edges |
+| Up to `$app-breakpoint-md` (`680px`) | Collapse tablet/desktop split panels and multi-column workflow regions |
+| Up to `$app-breakpoint-height-compact` (`700px`) | Reduce fixed chrome, repeated vertical rhythm, and overlay padding without automatically treating a wide landscape screen as narrow |
+
+At the compact width or height tier, the fixed header/navigation, authenticated route
+shell, shared sheets/dialogs/popovers, common controls, and feature-specific compact
+layouts use coordinated geometry. This is a system change, not independent one-off
+overrides. Primary controls remain at least `2.75rem` (`44px`), normal body text remains
+readable, and safe-area insets remain part of every fixed or modal boundary. Documented
+compact controls may be visually smaller only when they remain distinct, operable, and
+at least the WCAG 2.2 minimum target size.
+
+Use width and height queries for different jobs. Width queries may stack columns,
+actions, and form fields. Compact-height queries reduce vertical gaps, padding, fixed
+chrome, and overlay framing; do not stack a wide landscape layout merely because it is
+short. Prefer fluid `min()`, `max()`, `clamp()`, bounded grids, and wrapping before
+adding another breakpoint.
+
+Every page and overlay must be checked at `320px × 568px`, `360px × 740px`,
+`390px × 844px`, `420px × 844px`, `740px × 360px`, tablet, desktop, and 200% text
+zoom. Content must remain reachable without horizontal page scrolling. Fixed controls,
+dialogs, sheets, popovers, and notifications preserve safe areas and never cover their
+own required actions.
+
+On those compact Ingredients layouts, downward saved-list scrolling retracts the page
+title, search toolbar, and manual-entry launcher upward so the list receives more usable
+space. A short upward scroll reveals that complete region by animating it downward
+without requiring the user to return to the first card. The Fridge/Shopping List tabs
+remain available, switching lists restores the region, and reduced-motion preferences
+remove the transition without changing the visibility behavior. Wider layouts keep the
+complete region visible.
+
+Treat `360px × 740px` as the reference compact portrait viewport and continue supporting
+`320px × 568px` phones plus short landscape windows. Widths between the shared
+breakpoints remain fluid. At and beyond the `680px` content breakpoint, the Ingredients
+column stays centered at its intentional maximum width rather than stretching cards
+across tablets, desktops, and ultrawide displays. Do not add device-brand breakpoints;
+add a content or height breakpoint only when the layout actually changes.
 
 ### Controls And Surfaces
 
 | Decision | Token | Value |
 | --- | --- | --- |
 | Standard control height | `$app-shell-control-height` | `2.95rem` |
+| Narrow-phone control height | `$app-shell-control-height-narrow` | `2.75rem` |
 | Compact control height | `$app-shell-control-height-compact` | `2.15rem` |
 | Standard horizontal padding | `$app-shell-control-padding-x` | `0.85rem` |
 | Card radius | `$app-shell-radius-card` | `1rem` |
@@ -313,6 +364,11 @@ Overlay rules:
   anchored popover is needed, use the common `Popover` primitive and keep focus,
   dismissal, viewport collision, and accessible naming consistent.
 - Scroll belongs to the overlay content, not to the obscured page.
+- Every overlay is bounded by the usable viewport with a `vh` fallback before `dvh`,
+  safe-area-aware padding, and internally scrollable content. Compact-height layouts
+  reduce overlay chrome and spacing before content becomes unreachable.
+- Dialog action rows may stack at narrow widths. Anchored popovers must cap both width
+  and height to the viewport and scroll internally instead of rendering off-screen.
 - Backdrops use the shared sheet/dialog treatment; do not add shadows or feature-local
   opacity systems.
 
@@ -347,10 +403,17 @@ They remain separate behavior components because their actions differ.
 
 Current card rules:
 
-- White panel, `1rem` radius, `5.25rem` minimum height, `0.85rem` compact padding.
+- White panel, `1rem` radius, `5.25rem` standard minimum height, and `0.85rem`
+  compact padding.
+- At `420px` and below—or at the compact-height breakpoint—the shared card shell uses a
+  local `4.1rem` minimum height, `$app-gap-sm` padding, tighter shared gaps, `0.88rem`
+  ingredient names, `0.76rem` supporting copy, and `2rem` visual card controls without
+  changing media placement.
+- Compact card controls may be visually smaller than toolbar controls, but must remain
+  distinct, operable, non-overlapping, and at least the WCAG minimum target size.
 - No default green border or tinted search-card background.
-- Ingredient name uses heavy `1rem` interface type and one-line ellipsis on compact
-  cards.
+- Ingredient names use heavy `1rem` interface type normally and the shared compact-card
+  size on narrow or short screens, with one-line ellipsis in both states.
 - Category/supporting copy uses muted `0.88rem` medium type and one-line ellipsis.
 - Action buttons remain in the foreground action layer.
 - The saved card's native preview/selection target covers the full card surface, not
@@ -533,7 +596,7 @@ Before styling a new view:
 4. Reuse existing card, sheet, status, badge, loading, and control primitives.
 5. Keep unique layout details in the new component's paired SCSS.
 6. Check narrow mobile width, 200% text zoom, keyboard focus, reduced motion, and
-   touch targets.
+   touch targets at the complete app-wide viewport matrix.
 7. Compare visual differences with the Ingredients baseline. Keep a difference only
    when the view's purpose requires it.
 8. If the difference is likely to repeat, create or extend a reusable component and

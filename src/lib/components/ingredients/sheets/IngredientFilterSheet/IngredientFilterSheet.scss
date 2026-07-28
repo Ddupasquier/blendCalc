@@ -25,3 +25,13 @@
 	flex-wrap: wrap;
 	gap: $app-gap-md;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.ingredient-filter-sheet {
+		gap: $app-gap-md;
+	}
+
+	.ingredient-filter-sheet__chips {
+		gap: $app-gap-sm;
+	}
+}

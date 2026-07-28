@@ -59,18 +59,49 @@ p {
 }
 
 .app-main--authed {
-	padding-bottom: calc($app-shell-nav-height + env(safe-area-inset-bottom));
+	width: min(100%, $app-max-width);
+	min-height: calc(100vh - $app-shell-header-height);
+	min-height: calc(100dvh - $app-shell-header-height);
+	padding: $app-shell-padding-y
+		max($app-shell-padding-x, env(safe-area-inset-right))
+		calc(
+			$app-shell-nav-height + $app-shell-padding-y +
+				env(safe-area-inset-bottom)
+		)
+		max($app-shell-padding-x, env(safe-area-inset-left));
 }
 
 .app-main--ingredients {
+	width: 100%;
+	max-width: none;
 	min-height: 0;
+	margin: 0;
 	padding-bottom: 0;
+	padding-inline: 0;
+	padding-top: 0;
 	overflow: hidden;
 }
 
 .app-main--guest {
 	max-width: none;
 	padding: 0;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.app-main--authed {
+		min-height: calc(100vh - $app-shell-header-height-compact);
+		min-height: calc(100dvh - $app-shell-header-height-compact);
+		padding: $app-gap-md max($app-gap-sm, env(safe-area-inset-right))
+			calc(
+				$app-shell-nav-height-compact + $app-gap-md +
+					env(safe-area-inset-bottom)
+			)
+			max($app-gap-sm, env(safe-area-inset-left));
+
+		&.app-main--ingredients {
+			padding: 0;
+		}
+	}
 }
 
 /* ---- Utility ---- */
@@ -96,8 +127,16 @@ button:active {
 input,
 select,
 textarea {
+	max-width: 100%;
+	min-width: 0;
 	font-family: $app-font-family-interface;
 	font-size: $app-font-size-md;
+}
+
+img,
+video,
+canvas {
+	max-width: 100%;
 }
 
 a {

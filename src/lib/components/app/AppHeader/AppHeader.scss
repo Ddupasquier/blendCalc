@@ -100,3 +100,39 @@
 		padding-inline: $app-shell-padding-x;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.app-header,
+	.app-header__inner {
+		min-height: $app-shell-header-height-compact;
+	}
+
+	.app-header__inner {
+		gap: $app-gap-sm;
+		padding-block: $app-gap-xs;
+		padding-inline: max($app-gap-md, env(safe-area-inset-right))
+			max($app-gap-md, env(safe-area-inset-left));
+	}
+
+	.app-header__brand {
+		gap: $app-gap-xs;
+	}
+
+	.app-header__mark :global(svg) {
+		width: $app-font-size-lg;
+		height: $app-font-size-lg;
+	}
+
+	.app-header__title {
+		font-size: $app-font-size-lg;
+	}
+
+	.app-header__profile {
+		width: $app-shell-leading-icon-size-narrow;
+		height: $app-shell-leading-icon-size-narrow;
+	}
+
+	:global(.app-header__avatar) {
+		--circular-media-frame-size: #{$app-shell-leading-icon-size-narrow};
+	}
+}

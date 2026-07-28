@@ -74,3 +74,15 @@
 .collapsible-section__content {
 	padding-top: $app-gap-md;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.collapsible-section summary {
+		min-height: $app-shell-control-height-narrow;
+		padding-inline: $app-shell-control-padding-x-compact;
+		font-size: $app-font-size-sm;
+	}
+
+	.collapsible-section__content {
+		padding-top: $app-gap-sm;
+	}
+}

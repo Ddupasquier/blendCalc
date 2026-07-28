@@ -5,9 +5,12 @@ $card-content-inset: 18cqw;
 $card-title-shift: $app-gap-lg;
 $card-supporting-copy-indent: $app-gap-sm;
 $card-border-width: 2px;
+$card-min-height-narrow: 4.1rem;
+$card-action-size-narrow: 2rem;
 
 @mixin frame {
 	--ingredient-card-media-lane-width: #{$card-media-lane-width};
+	--ingredient-card-action-size: #{$app-shell-action-icon-size};
 	--ingredient-card-content-inset: calc(
 		#{$card-content-inset} + #{$app-gap-xs}
 	);
@@ -31,6 +34,18 @@ $card-border-width: 2px;
 	background: $app-shell-surface-panel;
 	border: $card-border-width solid transparent;
 	border-radius: $app-shell-radius-card;
+
+	@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+		--ingredient-card-action-size: #{$card-action-size-narrow};
+		--ingredient-card-copy-start-offset: calc(
+			#{$app-gap-sm} +
+				var(--ingredient-card-content-inset) -
+				#{$card-title-shift}
+		);
+		gap: $app-gap-xs;
+		min-height: $card-min-height-narrow;
+		padding: $app-gap-sm;
+	}
 }
 
 @mixin media-content-inset {
@@ -87,6 +102,16 @@ $card-border-width: 2px;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
+
+	@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+		strong {
+			font-size: $app-font-size-sm;
+		}
+
+		small {
+			font-size: $app-font-size-xs;
+		}
+	}
 }
 
 @mixin title-row {
@@ -109,8 +134,19 @@ $card-border-width: 2px;
 	justify-content: center;
 }
 
+@mixin action-button {
+	:global(.ingredient-card-action-button) {
+		width: var(--ingredient-card-action-size);
+		height: var(--ingredient-card-action-size);
+	}
+}
+
 @mixin action-row {
 	@include action-layer;
 
 	gap: $app-gap-sm;
+
+	@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+		gap: $app-gap-xs;
+	}
 }

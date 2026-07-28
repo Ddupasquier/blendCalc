@@ -99,3 +99,21 @@
 .segmented-control[data-variant="progress"] .segmented-control__button--active {
 	color: $app-shell-accent-primary;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.segmented-control[data-variant="pill"] {
+		padding: $app-gap-xs;
+	}
+
+	.segmented-control[data-variant="pill"] .segmented-control__button {
+		min-height: $app-shell-control-height-narrow;
+		font-size: $app-font-size-sm;
+	}
+
+	.segmented-control__count {
+		min-width: 1.15rem;
+		margin-left: $app-gap-inline-compact;
+		padding-inline: $app-gap-xs;
+		font-size: $app-font-size-2xs;
+	}
+}

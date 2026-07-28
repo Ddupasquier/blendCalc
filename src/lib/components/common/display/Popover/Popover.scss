@@ -7,6 +7,7 @@
 }
 
 .popover__trigger {
+	min-height: $app-shell-control-height-compact;
 	padding: 0.25rem 0.55rem;
 	color: $app-primary;
 	background: $app-warning-bg;
@@ -22,12 +23,16 @@
 	right: 0;
 	top: calc(100% + 0.4rem);
 	z-index: 20;
-	width: min(20rem, 82vw);
+	width: min(20rem, calc(100vw - 2 * $app-gap-md));
+	max-height: min(24rem, calc(100vh - 2 * $app-gap-md));
+	max-height: min(24rem, calc(100dvh - 2 * $app-gap-md));
 	padding: calc(1.75rem + 2 * $app-gap-xs) $app-gap-sm $app-gap-sm;
+	overflow-y: auto;
 	background: $app-section-bg;
 	border: $app-border;
 	border-radius: $app-card-radius;
 	color: $app-primary;
+	overscroll-behavior: contain;
 }
 
 :global(.popover__close) {
@@ -40,4 +45,16 @@ h5 {
 	margin-bottom: $app-gap-sm;
 	font-size: $app-font-size-lg;
 	font-weight: 800;
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.popover__panel {
+		width: min(18rem, calc(100vw - 2 * $app-gap-sm));
+	}
+}
+
+@media (max-height: $app-breakpoint-height-compact) {
+	.popover__panel {
+		max-height: calc(100dvh - 2 * $app-gap-sm);
+	}
 }

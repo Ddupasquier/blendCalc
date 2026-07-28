@@ -45,6 +45,7 @@
         FOOD_LIST_SORT_OPTIONS,
         type FoodListSort,
     } from "$lib/utils/list/listNavigation";
+    import type { ScrollDirection } from "$lib/utils/navigation/scrollDirection";
     import {
         addFoodToSmoothieList,
 		moveFoodToSmoothieList,
@@ -90,6 +91,7 @@
 	);
     let activeSheet = $state<"manual-entry" | "filters" | null>(null);
     let searchViewOpen = $state(false);
+    let compactTopHidden = $state(false);
     let searchAddFoodId = $state<number | null>(null);
     let onHandVisibleCount = $state<number>(LIST_PAGE_SIZES.ingredientPills);
     let shoppingVisibleCount = $state<number>(LIST_PAGE_SIZES.ingredientPills);
@@ -319,6 +321,8 @@
         );
 
     const closeIngredientSheet = () => {
+        barcodeScannerRouteOpen = false;
+        scanSignal = 0;
         activeSheet = null;
         void closeRoutedPopin();
     };
@@ -339,6 +343,7 @@
 
     const closeBarcodeScanner = () => {
         barcodeScannerRouteOpen = false;
+        scanSignal = 0;
         void navigateIngredientRoute({
             view: null,
             sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
@@ -349,10 +354,13 @@
     };
 
     const openManualEntry = () => {
+        barcodeScannerRouteOpen = false;
+        scanSignal = 0;
         activeSheet = "manual-entry";
         void navigateIngredientRoute({
             view: null,
             sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+            modal: null,
             foodId: null,
             listKey: null,
         });
@@ -383,6 +391,12 @@
             foodId: null,
             listKey: null,
         });
+    };
+
+    const handleListScrollDirectionChange = (
+        direction: ScrollDirection,
+    ) => {
+        compactTopHidden = direction === "down";
     };
 
     const closeSearchView = () => {
@@ -887,6 +901,7 @@
             }
         } else {
             barcodeScannerRouteOpen = false;
+            scanSignal = 0;
         }
 
         if (routeState.view === INGREDIENT_ROUTE_VIEWS.nutrition) {
@@ -989,7 +1004,7 @@
 </svelte:head>
 
 <ViewFrame appShell className="ingredients-page">
-    <ViewTop>
+    <ViewTop compactHidden={compactTopHidden}>
         <ViewHeader
             title="Ingredients"
             subtitle="Search foods, add them to your fridge, and track shopping needs."
@@ -1040,6 +1055,7 @@
                 onActions={(food) => openActionSheet(activeList, food)}
                 onRemove={(foodId) => removeFromList(activeList, foodId)}
                 onRevealMore={revealMoreActiveItems}
+                onScrollDirectionChange={handleListScrollDirectionChange}
             />
         </SavedIngredientListLayout>
     </ViewBody>

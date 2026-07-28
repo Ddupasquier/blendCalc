@@ -68,3 +68,26 @@
 		padding-inline: $app-shell-padding-x;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.tab-nav,
+	.tab-nav__inner {
+		min-height: $app-shell-nav-height-compact;
+	}
+
+	.tab-nav__inner {
+		padding: $app-gap-xs max($app-gap-md, env(safe-area-inset-right))
+			calc($app-gap-xs + env(safe-area-inset-bottom))
+			max($app-gap-md, env(safe-area-inset-left));
+	}
+
+	.tab-btn {
+		gap: $app-gap-2xs;
+		font-size: $app-font-size-xs;
+
+		:global(.tab-btn__icon) {
+			width: $app-font-size-xl;
+			height: $app-font-size-xl;
+		}
+	}
+}

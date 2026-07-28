@@ -24,9 +24,17 @@ account-scoped unsaved drafts, device-only preferences, and short-lived session 
 
 ## Global Non-Negotiables
 
-- **Mobile-first layout:** Every surface must work on narrow iPhone-sized screens.
+- **App-wide responsive layout:** Every route, card, form, modal, sheet, popover,
+  notification, button group, data panel, and fixed control must work on narrow phones,
+  short landscape screens, tablets, desktops, and at 200% text zoom using the shared
+  width and compact-height breakpoints.
 - **No horizontal overflow:** Long food names, badges, nutrition labels, graph labels,
   and form controls must wrap or truncate safely.
+- **Reachable overlays:** Dialogs, sheets, popovers, tutorials, and scanners stay within
+  the safe usable viewport, scroll internally, and keep required actions reachable.
+- **Compact cards on constrained screens:** Narrow or short phone layouts reduce saved
+  and search-card height, copy size, gaps, and visual action size together while
+  preserving card media, warning edges, readable state, and operable controls.
 - **Important actions stay visible:** Barcode scan, nutrition warnings, save state, and
   food conflicts must not be buried.
 - **Account privacy:** Do not display user emails in normal app chrome when a display
@@ -131,6 +139,12 @@ Core visible elements:
 
 Do not make barcode scanning feel secondary. It should be the quickest and most obvious
 way to add packaged foods.
+
+On compact phone and short-screen layouts, the Ingredients page title, search controls,
+and manual-entry launcher animate upward after deliberate downward saved-list scrolling.
+They animate back down after a short upward scroll, even before the list reaches its
+first item. Keep the saved-list tabs available and keep this region fixed on wider
+layouts.
 
 ### Barcode Scan Flow
 

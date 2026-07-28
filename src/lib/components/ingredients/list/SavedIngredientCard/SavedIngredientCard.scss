@@ -9,6 +9,7 @@ $selection-border-color: color-mix(
 
 .saved-ingredient-card {
 	@include ingredient-card-layout.frame;
+	@include ingredient-card-layout.action-button;
 
 	grid-template-columns: minmax(0, 1fr) auto auto;
 	transition:

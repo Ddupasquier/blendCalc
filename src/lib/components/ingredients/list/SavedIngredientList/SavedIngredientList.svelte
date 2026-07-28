@@ -10,6 +10,7 @@
 		getOppositeIngredientListKey,
 		getPrimaryFoodWarning,
 	} from "$lib/utils/ingredients/ingredientListUi";
+	import { createScrollDirectionTracker } from "$lib/utils/navigation/scrollDirection";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import type { SavedIngredientListProps } from "./types";
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
@@ -44,9 +45,11 @@
 		onActions,
 		onRemove,
 		onRevealMore,
+		onScrollDirectionChange = () => {},
 	}: SavedIngredientListProps = $props();
 
 	let listElement = $state<HTMLUListElement | null>(null);
+	const scrollDirectionTracker = createScrollDirectionTracker();
 	let previousActiveList: SmoothieListKey | null = null;
 	let previousResetKey: number | null = null;
 	let bulkAnimating = $state(false);
@@ -160,6 +163,13 @@
 		onEnterSelection(foodId);
 	};
 
+	const handleListScroll = (event: Event) => {
+		const direction = scrollDirectionTracker.update(
+			(event.currentTarget as HTMLUListElement).scrollTop,
+		);
+		if (direction) onScrollDirectionChange(direction);
+	};
+
 	$effect(() => {
 		if (previousActiveList === null || previousResetKey === null) {
 			previousActiveList = activeList;
@@ -173,6 +183,8 @@
 
 		previousActiveList = activeList;
 		previousResetKey = resetKey;
+		scrollDirectionTracker.reset();
+		onScrollDirectionChange("up");
 		requestAnimationFrame(() => {
 			listElement?.scrollTo({ top: 0, behavior: "auto" });
 		});
@@ -210,6 +222,7 @@
 					aria-label={`${getIngredientListLabel(activeList)} ingredients`}
 					aria-busy={listLoading || loadingMoreList === activeList || moveBusy}
 					bind:this={listElement}
+					onscroll={handleListScroll}
 				>
 					{#each foods as food (food.fdcId)}
 						{@const actionKey = getIngredientActionKey(activeList, food.fdcId)}

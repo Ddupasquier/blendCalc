@@ -24,6 +24,20 @@ describe("fridge overlay navigation", () => {
 		expect(source).toContain("revealPaused={ingredientOverlayOpen}");
 	});
 
+	it("does not replay a stale barcode scan when manual entry is reopened", () => {
+		const source = readFileSync(fridgePagePath, "utf8");
+		const openManualEntry = source.match(
+			/const openManualEntry = \(\) => \{[\s\S]*?\n    \};/,
+		)?.[0];
+
+		expect(openManualEntry).toContain("barcodeScannerRouteOpen = false;");
+		expect(openManualEntry).toContain("scanSignal = 0;");
+		expect(openManualEntry).toContain("modal: null,");
+		expect(source).toMatch(
+			/routeState\.modal === INGREDIENT_ROUTE_MODALS\.barcodeScanner[\s\S]*?\} else \{\s*barcodeScannerRouteOpen = false;\s*scanSignal = 0;/,
+		);
+	});
+
 	it("uses the URL as the only source of truth for the active list tab", () => {
 		const source = readFileSync(fridgePagePath, "utf8");
 

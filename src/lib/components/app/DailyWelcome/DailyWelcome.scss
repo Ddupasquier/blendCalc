@@ -3,7 +3,9 @@
 .daily-welcome-region {
 	position: fixed;
 	right: $app-gap-md;
-	bottom: $app-gap-md;
+	bottom: calc(
+		$app-shell-nav-height + env(safe-area-inset-bottom) + $app-gap-md
+	);
 	z-index: 200;
 	pointer-events: none;
 }
@@ -81,12 +83,32 @@
 @media (max-width: $app-breakpoint-sm) {
 	.daily-welcome-region {
 		right: 50%;
-		bottom: $app-gap-sm;
+		bottom: calc(
+			$app-shell-nav-height + env(safe-area-inset-bottom) + $app-gap-sm
+		);
 		transform: translateX(50%);
 	}
 
 	.daily-welcome {
 		width: min(22rem, calc(100vw - 2 * $app-gap-sm));
+	}
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.daily-welcome-region {
+		bottom: calc(
+			$app-shell-nav-height-compact + env(safe-area-inset-bottom) +
+				$app-gap-sm
+		);
+	}
+
+	.daily-welcome {
+		gap: $app-gap-2xs;
+		padding: $app-gap-sm;
+
+		strong {
+			font-size: $app-font-size-lg;
+		}
 	}
 }
 

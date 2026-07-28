@@ -140,3 +140,35 @@ $saved-pill-gap: 0.28rem;
 .saved-empty--filtered {
 	margin-top: $app-gap-sm;
 }
+
+@media (max-width: $app-breakpoint-xs) {
+	.saved-card__actions {
+		display: grid;
+		grid-template-columns: 1fr;
+	}
+
+	.saved-card__actions :global(.rounded-action-button) {
+		width: 100%;
+	}
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.saved-page {
+		padding-top: 0;
+	}
+
+	.saved-header {
+		margin-bottom: $app-gap-sm;
+	}
+
+	.saved-grid,
+	.saved-card,
+	.saved-empty {
+		gap: $app-gap-xs;
+	}
+
+	.saved-card,
+	.saved-empty {
+		padding: $app-gap-xs;
+	}
+}

@@ -324,12 +324,33 @@
 	.preference-grid,
 	.preference-editor-grid,
 	.priority-options,
-	.saved-preferences__grid {
+	.saved-preferences__grid,
+	.inline-fields {
 		grid-template-columns: 1fr;
+	}
+
+	.profile-card--identity {
+		grid-template-columns: 1fr;
+	}
+
+	:global(.avatar-preview) {
+		--circular-media-frame-size: #{3.5rem};
 	}
 
 	.form-actions button {
 		flex: 1 1 100%;
 		width: 100%;
+	}
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.profile-page,
+	.profile-card,
+	.profile-card form {
+		gap: $app-gap-sm;
+	}
+
+	.profile-card {
+		padding: $app-gap-sm;
 	}
 }

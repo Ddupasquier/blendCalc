@@ -27,8 +27,17 @@
 	padding: $app-shell-padding-y $app-shell-padding-x 0;
 }
 
-@media (max-width: $app-breakpoint-xs) {
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.view-frame--app-shell {
-		padding-inline: $app-gap-sm;
+		height: calc(
+			100vh - $app-shell-header-height-compact -
+				$app-shell-nav-height-compact - env(safe-area-inset-bottom)
+		);
+		height: calc(
+			100dvh - $app-shell-header-height-compact -
+				$app-shell-nav-height-compact - env(safe-area-inset-bottom)
+		);
+		gap: $app-gap-sm;
+		padding: $app-gap-md $app-gap-sm 0;
 	}
 }

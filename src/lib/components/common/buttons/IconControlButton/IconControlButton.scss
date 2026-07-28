@@ -39,3 +39,10 @@
 		opacity: 0.7;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.icon-control-button {
+		width: $app-shell-control-height-narrow;
+		height: $app-shell-control-height-narrow;
+	}
+}

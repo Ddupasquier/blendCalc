@@ -33,8 +33,19 @@
 	height: $app-shell-control-icon-size;
 }
 
-@media (max-width: $app-breakpoint-xs) {
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.search-toolbar {
-		gap: $app-gap-md;
+		grid-template-columns:
+			minmax(0, 1fr)
+			$app-shell-control-height-narrow
+			$app-shell-control-height-narrow;
+		gap: $app-gap-sm;
+	}
+
+	.search-toolbar :global(.barcode-scan-button--compact),
+	.search-toolbar :global(.filter-button) {
+		width: $app-shell-control-height-narrow;
+		height: $app-shell-control-height-narrow;
+		min-height: $app-shell-control-height-narrow;
 	}
 }

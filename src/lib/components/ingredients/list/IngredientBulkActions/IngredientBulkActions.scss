@@ -9,7 +9,11 @@
 	min-height: 0;
 }
 
-@media (max-width: $app-breakpoint-xs) {
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.ingredient-bulk-actions {
+		gap: $app-gap-sm;
+	}
+
 	.ingredient-bulk-actions :global(.pill-button[data-variant="primary"]) {
 		width: 100%;
 	}

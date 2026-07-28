@@ -5,9 +5,15 @@
 	isolation: isolate;
 	display: grid;
 	place-items: center;
+	min-height: 100vh;
 	min-height: 100svh;
-	overflow: hidden;
-	padding: clamp($app-gap-md, 5vw, 3rem) $app-gap-sm;
+	min-height: 100dvh;
+	padding: max(clamp($app-gap-md, 5vw, 3rem), env(safe-area-inset-top))
+		max($app-gap-sm, env(safe-area-inset-right))
+		max(clamp($app-gap-md, 5vw, 3rem), env(safe-area-inset-bottom))
+		max($app-gap-sm, env(safe-area-inset-left));
+	overflow-x: hidden;
+	overflow-y: auto;
 	background:
 		radial-gradient(circle at 50% 44%, rgb(239 211 194 / 18%), transparent 38%),
 		$app-bg;
@@ -151,7 +157,7 @@
 	justify-content: center;
 	gap: $app-gap-sm;
 	width: 100%;
-	min-height: 2.65rem;
+	min-height: $app-shell-control-height-narrow;
 	padding: 0.65rem 0.85rem;
 	border-radius: $app-radius-pill;
 	font-family: $app-button-font-family;
@@ -247,11 +253,24 @@
 
 @media (max-width: $app-breakpoint-xs) {
 	.auth-card {
-		gap: 1rem;
-		padding: 1.15rem;
+		gap: $app-gap-md;
+		padding: $app-gap-md;
 	}
 
 	.email-form__actions {
 		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-height: $app-breakpoint-height-compact) {
+	.auth-page {
+		place-items: start center;
+		padding-block: max($app-gap-sm, env(safe-area-inset-top))
+			max($app-gap-sm, env(safe-area-inset-bottom));
+	}
+
+	.auth-card {
+		gap: $app-gap-sm;
+		padding: $app-gap-md;
 	}
 }

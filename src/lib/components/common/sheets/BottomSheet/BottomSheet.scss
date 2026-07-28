@@ -91,3 +91,19 @@ $bottom-sheet-back-control-size: 2rem;
 	overscroll-behavior: contain;
 	-webkit-overflow-scrolling: touch;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.bottom-sheet,
+	.bottom-sheet__chrome {
+		gap: $app-gap-xs;
+	}
+
+	.bottom-sheet h2 {
+		font-size: $app-font-size-md;
+	}
+
+	.bottom-sheet__content {
+		gap: $app-gap-sm;
+		padding-bottom: $app-gap-sm;
+	}
+}

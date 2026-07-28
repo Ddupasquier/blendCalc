@@ -22,6 +22,8 @@ $scanner-target-corner-height: 2.3rem;
 	grid-template-rows: auto minmax(0, 1fr) auto;
 	gap: $app-gap-md;
 	width: min(100%, $app-shell-content-max-width);
+	height: 100vh;
+	height: 100dvh;
 	min-height: 100vh;
 	min-height: 100dvh;
 	padding: calc($app-shell-padding-y + env(safe-area-inset-top))
@@ -53,7 +55,8 @@ $scanner-target-corner-height: 2.3rem;
 
 .barcode-scanner__camera {
 	position: relative;
-	min-height: 100%;
+	min-width: 0;
+	min-height: 0;
 	overflow: hidden;
 	background: $scanner-viewport-background;
 	border-radius: 0;
@@ -62,7 +65,7 @@ $scanner-target-corner-height: 2.3rem;
 		display: block;
 		width: 100%;
 		height: 100%;
-		min-height: calc(100vh - 8rem);
+		min-height: 0;
 		object-fit: cover;
 	}
 }
@@ -117,5 +120,31 @@ $scanner-target-corner-height: 2.3rem;
 	.barcode-scanner {
 		padding: calc($app-shell-padding-x + env(safe-area-inset-top))
 			$app-shell-padding-x calc($app-shell-padding-x + env(safe-area-inset-bottom));
+	}
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.barcode-scanner {
+		gap: $app-gap-sm;
+		padding: calc($app-gap-sm + env(safe-area-inset-top)) $app-gap-sm
+			calc($app-gap-sm + env(safe-area-inset-bottom));
+
+		h2 {
+			font-size: $app-font-size-lg;
+		}
+
+		p {
+			font-size: $app-font-size-sm;
+		}
+	}
+
+	.barcode-scanner__target {
+		width: min(72%, 14rem);
+		height: 7.5rem;
+	}
+
+	.barcode-scanner__status,
+	.barcode-scanner__hint {
+		inset-block-start: calc(50% + 4.8rem);
 	}
 }

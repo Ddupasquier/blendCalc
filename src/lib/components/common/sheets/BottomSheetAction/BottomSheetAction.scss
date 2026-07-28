@@ -56,3 +56,15 @@
 	gap: $app-gap-xs;
 	min-width: 0;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.bottom-sheet-action {
+		min-height: $app-shell-header-height-compact;
+		padding: $app-gap-xs;
+		font-size: $app-font-size-sm;
+	}
+
+	:global(.bottom-sheet-action__icon) {
+		--circular-icon-frame-size: #{$app-shell-leading-icon-size-narrow};
+	}
+}

@@ -109,3 +109,23 @@
 .photo-upload-input__files li {
 	overflow-wrap: anywhere;
 }
+
+@media (max-width: $app-breakpoint-xs) {
+	.photo-upload-input__heading,
+	.photo-upload-input__selection {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.photo-upload-input {
+		gap: $app-gap-xs;
+	}
+
+	.photo-upload-input__trigger {
+		min-height: $app-shell-control-height-narrow;
+		padding-inline: $app-shell-control-padding-x-compact;
+		font-size: $app-font-size-sm;
+	}
+}

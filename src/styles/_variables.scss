@@ -50,13 +50,16 @@ $app-padding: 1.5rem;
 $app-max-width: 600px;
 $app-shell-content-max-width: 520px;
 $app-shell-header-height: 4rem;
+$app-shell-header-height-compact: 3.5rem;
 $app-shell-nav-height: 4.85rem;
+$app-shell-nav-height-compact: 4.25rem;
 $app-shell-padding-x: 1rem;
 $app-shell-padding-y: 1.2rem;
 
 $app-breakpoint-xs: 420px;
 $app-breakpoint-sm: 520px;
 $app-breakpoint-md: 680px;
+$app-breakpoint-height-compact: 700px;
 
 // Shared app shell
 // -----------------------------------------------------------------------------
@@ -74,6 +77,7 @@ $app-shell-border-subtle: rgba(0, 0, 0, 0.08);
 $app-high-contrast-ink: #111;
 
 $app-shell-control-height: 2.95rem;
+$app-shell-control-height-narrow: 2.75rem;
 $app-shell-control-height-compact: 2.15rem;
 $app-shell-control-padding-x: 0.85rem;
 $app-shell-control-padding-y-compact: 0.45rem;
@@ -89,6 +93,7 @@ $app-shell-card-padding: 1rem;
 $app-shell-card-padding-compact: 0.85rem;
 $app-shell-card-min-height: 5.25rem;
 $app-shell-leading-icon-size: 3.2rem;
+$app-shell-leading-icon-size-narrow: 2.75rem;
 $app-shell-action-icon-size: 2.2rem;
 
 // General controls
@@ -142,8 +147,8 @@ $app-status-warning-icon: #d99a24;
 
 // Focus
 // -----------------------------------------------------------------------------
-$app-focus-outline: 2px solid #4f4842;
-$app-focus-outline-offset: 2px;
+$app-focus-outline: 1px solid #4f4842;
+$app-focus-outline-offset: 1px;
 
 // Shared badges and media
 // -----------------------------------------------------------------------------

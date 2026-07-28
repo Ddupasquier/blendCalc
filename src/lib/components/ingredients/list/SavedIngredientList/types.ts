@@ -1,5 +1,6 @@
 import type { FdcFood } from "$lib/utils/food/types";
 import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
+import type { ScrollDirection } from "$lib/utils/navigation/scrollDirection";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 
 export type SavedIngredientListProps = {
@@ -28,4 +29,5 @@ export type SavedIngredientListProps = {
 	onActions: (food: FdcFood) => void;
 	onRemove: (foodId: number) => void;
 	onRevealMore: () => void | Promise<void>;
+	onScrollDirectionChange?: (direction: ScrollDirection) => void;
 };

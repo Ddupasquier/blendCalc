@@ -5,9 +5,15 @@
 	isolation: isolate;
 	display: grid;
 	place-items: center;
+	min-height: 100vh;
 	min-height: 100svh;
-	overflow: hidden;
-	padding: clamp($app-gap-md, 5vw, 3rem);
+	min-height: 100dvh;
+	padding: max(clamp($app-gap-md, 5vw, 3rem), env(safe-area-inset-top))
+		max(clamp($app-gap-md, 5vw, 3rem), env(safe-area-inset-right))
+		max(clamp($app-gap-md, 5vw, 3rem), env(safe-area-inset-bottom))
+		max(clamp($app-gap-md, 5vw, 3rem), env(safe-area-inset-left));
+	overflow-x: hidden;
+	overflow-y: auto;
 	background:
 		radial-gradient(circle at 50% 46%, rgb(239 211 194 / 20%), transparent 38%),
 		$app-bg;
@@ -136,10 +142,27 @@ a {
 @media (max-width: $app-breakpoint-xs) {
 	.landing-card {
 		gap: $app-gap-md;
-		padding: 1.25rem;
+		padding: $app-gap-md;
 	}
 
 	a {
 		width: 100%;
+	}
+}
+
+@media (max-height: $app-breakpoint-height-compact) {
+	.landing-page {
+		place-items: start center;
+		padding-block: max($app-gap-sm, env(safe-area-inset-top))
+			max($app-gap-sm, env(safe-area-inset-bottom));
+	}
+
+	.landing-card,
+	.landing-copy {
+		gap: $app-gap-sm;
+	}
+
+	.landing-card {
+		padding: $app-gap-md;
 	}
 }

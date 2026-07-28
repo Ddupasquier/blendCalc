@@ -22,3 +22,18 @@
 		line-height: 1.35;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.view-header {
+		h1 {
+			margin-bottom: $app-gap-xs;
+			font-size: 1.6rem;
+		}
+
+		p {
+			max-width: 21rem;
+			font-size: $app-font-size-sm;
+			line-height: 1.3;
+		}
+	}
+}

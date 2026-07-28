@@ -84,6 +84,7 @@
 	{#if !selectionMode}
 		<span class="saved-ingredient-card__move-action">
 			<CircleIconButton
+				class="ingredient-card-action-button"
 				label={`${moveLabel}: ${food.description}`}
 				variant="primary"
 				size="small"
@@ -107,6 +108,7 @@
 			{#snippet children({ armed, activate, label, messageId })}
 				<span class="saved-ingredient-card__actions">
 					<CircleIconButton
+						class="ingredient-card-action-button"
 						label={`Open actions for ${food.description}`}
 						variant="soft"
 						size="small"
@@ -115,6 +117,7 @@
 						<DotsHorizontal size={16} />
 					</CircleIconButton>
 					<CircleIconButton
+						class="ingredient-card-action-button"
 						label={label}
 						variant={armed ? "danger" : "soft"}
 						size="small"

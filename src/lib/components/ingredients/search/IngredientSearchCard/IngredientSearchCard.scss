@@ -3,6 +3,7 @@
 
 .ingredient-search-card {
 	@include ingredient-card-layout.frame;
+	@include ingredient-card-layout.action-button;
 
 	grid-template-columns: minmax(0, 1fr) auto auto;
 	transition:
@@ -49,8 +50,8 @@
 }
 
 .ingredient-search-card__open {
-	width: $app-shell-action-icon-size;
-	height: $app-shell-action-icon-size;
+	width: var(--ingredient-card-action-size);
+	height: var(--ingredient-card-action-size);
 	color: $app-shell-text-muted;
 	font-size: $app-shell-control-icon-size;
 	line-height: 1;

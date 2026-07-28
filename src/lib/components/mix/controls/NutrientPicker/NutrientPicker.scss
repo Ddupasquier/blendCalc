@@ -25,10 +25,14 @@
 	top: calc(100% + #{$app-gap-xs});
 	right: 0;
 	width: min(26rem, calc(100vw - #{$app-gap-lg}));
+	max-height: min(28rem, calc(100vh - 2 * $app-gap-md));
+	max-height: min(28rem, calc(100dvh - 2 * $app-gap-md));
 	padding: $app-gap-sm;
+	overflow-y: auto;
 	background: $app-bg;
 	border: $app-border;
 	border-radius: $app-card-radius;
+	overscroll-behavior: contain;
 
 	label {
 		display: block;
@@ -110,5 +114,15 @@
 	.nutrient-picker__results {
 		grid-template-columns: 1fr;
 		max-height: 15rem;
+	}
+}
+
+@media (max-height: $app-breakpoint-height-compact) {
+	.nutrient-picker__panel {
+		max-height: calc(100dvh - 2 * $app-gap-sm);
+	}
+
+	.nutrient-picker__results {
+		max-height: 10rem;
 	}
 }

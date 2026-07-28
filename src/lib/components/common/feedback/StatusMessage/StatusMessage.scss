@@ -81,3 +81,10 @@ strong {
 	color: $app-shell-text-muted;
 	font-weight: $app-font-weight-medium;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.status-message {
+		gap: $app-gap-xs;
+		padding: $app-gap-xs $app-gap-sm;
+	}
+}
