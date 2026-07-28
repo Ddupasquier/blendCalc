@@ -13,6 +13,7 @@ const packageMetadata = JSON.parse(readFileSync("package.json", "utf8")) as {
 	engines: {
 		node: string;
 	};
+	scripts: Record<string, string>;
 };
 const packageLock = JSON.parse(readFileSync("package-lock.json", "utf8")) as {
 	packages: Record<string, { version?: string; engines?: { node?: string } }>;
@@ -45,6 +46,25 @@ describe("blendCalc versioning", () => {
 		expect(Number.parseInt(process.versions.node.split(".")[0], 10)).toBe(
 			configuredNodeMajor,
 		);
+	});
+
+	it("guards every interactive project runtime before startup", () => {
+		const guardedLifecycleScripts = [
+			"predev",
+			"predev:test",
+			"prebuild",
+			"prepreview",
+			"precheck",
+			"precheck:watch",
+			"pretest",
+			"pretest:watch",
+		];
+
+		for (const script of guardedLifecycleScripts) {
+			expect(packageMetadata.scripts[script], script).toContain(
+				"npm run version:check",
+			);
+		}
 	});
 
 	it("uses one valid application release and keeps the MVP on major V1", () => {
