@@ -33,8 +33,30 @@
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.manual-entry-launcher {
-		gap: $app-gap-xs;
+		justify-self: start;
+		grid-template-columns: 1fr;
+		place-items: center;
+		gap: 0;
+		width: $app-shell-control-height-narrow;
+		height: $app-shell-control-height-narrow;
 		min-height: $app-shell-control-height-narrow;
-		padding: $app-gap-sm $app-shell-control-padding-x-compact;
+		padding: 0;
+		background: $app-shell-surface-control;
+		border-radius: $app-shell-radius-control;
+
+		&:hover {
+			background: $app-shell-accent-soft;
+		}
+	}
+
+	.manual-entry-launcher :global(.manual-entry-toggle__icon) {
+		--circular-icon-frame-size: #{$app-shell-control-icon-size};
+		--circular-icon-frame-icon-size: #{$app-shell-control-icon-size};
+		--circular-icon-frame-background: transparent;
+	}
+
+	.manual-entry-launcher :global(.manual-entry-toggle__copy),
+	.manual-entry-launcher :global(.manual-entry-toggle__chevron) {
+		display: none;
 	}
 }

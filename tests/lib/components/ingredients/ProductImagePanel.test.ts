@@ -1,5 +1,10 @@
-import { fireEvent, render, screen } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+} from "@testing-library/svelte";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel/ProductImagePanel.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
 
@@ -22,6 +27,10 @@ const foodWithImage: FdcFood = {
 };
 
 describe("ProductImagePanel", () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
 	it("keeps admin and moderator image-placement actions collapsed by default", async () => {
 		const { container } = render(ProductImagePanel, {
 			props: {
@@ -63,5 +72,68 @@ describe("ProductImagePanel", () => {
 
 		expect(screen.queryByText("Adjust card image placement")).not.toBeInTheDocument();
 		expect(screen.queryByTitle("Admin or moderator action")).not.toBeInTheDocument();
+	});
+
+	it("saves the current placement with one submit activation", async () => {
+		const savedImage = {
+			...foodWithImage.image!,
+			rotationDegrees: 90 as const,
+			fitMode: "custom" as const,
+			placementVersion: 2,
+		};
+		const fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			json: vi.fn().mockResolvedValue({ image: savedImage }),
+		});
+		const onImagePlacementSave = vi.fn();
+		vi.stubGlobal("fetch", fetchMock);
+
+		render(ProductImagePanel, {
+			props: {
+				food: foodWithImage,
+				canAdjustImagePlacement: true,
+				onImagePlacementSave,
+			},
+		});
+
+		await fireEvent.click(screen.getByText("Adjust card image placement"));
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Rotate 90° clockwise" }),
+		);
+		const saveButton = screen.getByRole("button", {
+			name: "Save image placement",
+		});
+		expect(saveButton).toBeEnabled();
+
+		await fireEvent.click(saveButton);
+
+		await waitFor(() => {
+			expect(fetchMock).toHaveBeenCalledOnce();
+			expect(onImagePlacementSave).toHaveBeenCalledOnce();
+		});
+		expect(screen.getByText("Your card image placement is saved."))
+			.toBeInTheDocument();
+	});
+
+	it("responds to one save activation when the placement is unchanged", async () => {
+		const fetchMock = vi.fn();
+		vi.stubGlobal("fetch", fetchMock);
+
+		render(ProductImagePanel, {
+			props: {
+				food: foodWithImage,
+				canAdjustImagePlacement: true,
+				onImagePlacementSave: vi.fn(),
+			},
+		});
+
+		await fireEvent.click(screen.getByText("Adjust card image placement"));
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Save image placement" }),
+		);
+
+		expect(fetchMock).not.toHaveBeenCalled();
+		expect(screen.getByText("This card image placement is already saved."))
+			.toBeInTheDocument();
 	});
 });

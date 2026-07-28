@@ -33,9 +33,8 @@
 		>
 			<Sliders class="filter-button__icon" />
 		</IconControlButton>
+		<ManualEntryLauncher onSelect={onOpenManualEntry} />
 	</div>
-
-	<ManualEntryLauncher onSelect={onOpenManualEntry} />
 </section>
 
 <style lang="scss">

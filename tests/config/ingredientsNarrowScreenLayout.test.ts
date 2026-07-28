@@ -40,6 +40,9 @@ describe("Ingredients narrow-screen layout", () => {
 		const manualEntry = readStyles(
 			"src/lib/components/ingredients/manual-entry/ManualEntryLauncher/ManualEntryLauncher.scss",
 		);
+		const segmentedControl = readStyles(
+			"src/lib/components/common/buttons/SegmentedControl/SegmentedControl.scss",
+		);
 		const cardLayout = readStyles(
 			"src/lib/components/ingredients/card/IngredientCardMediaLane/_IngredientCardLayout.scss",
 		);
@@ -55,6 +58,17 @@ describe("Ingredients narrow-screen layout", () => {
 
 		expect(searchPanel).toContain("$app-shell-control-height-narrow");
 		expect(manualEntry).toContain("@media (max-width: $app-breakpoint-xs)");
+		expect(searchPanel).toContain(
+			".search-toolbar :global(.manual-entry-launcher)",
+		);
+		expect(searchPanel).toContain("grid-column: auto");
+		expect(manualEntry).toContain("width: $app-shell-control-height-narrow");
+		expect(manualEntry).toContain(".manual-entry-toggle__copy");
+		expect(manualEntry).toContain("display: none");
+		expect(segmentedControl).toContain(
+			"min-height: $app-shell-control-height-compact",
+		);
+		expect(segmentedControl).toContain("inset-block: calc(-1 * $app-gap-xs)");
 		expect(cardLayout).toContain("$card-min-height-narrow: 4.1rem");
 		expect(cardLayout).toContain("$card-action-size-narrow: 2rem");
 		expect(cardLayout).toContain("font-size: $app-font-size-sm");

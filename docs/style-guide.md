@@ -239,6 +239,13 @@ remain available, switching lists restores the region, and reduced-motion prefer
 remove the transition without changing the visibility behavior. Wider layouts keep the
 complete region visible.
 
+The compact manual-entry action is one `44px` pencil-only button in the same toolbar row
+as Search, Barcode, and Filters. It uses the shared rounded icon-control shape and keeps
+the full accessible name `Enter a custom ingredient manually`; the larger launcher row
+is not shown at that tier. The compact Fridge/Shopping List segmented control uses
+shorter visual pills, smaller labels, and tighter count badges. Its outer padding and
+expanded hit area keep each tab's combined touch target at least `44px`.
+
 Treat `360px × 740px` as the reference compact portrait viewport and continue supporting
 `320px × 568px` phones plus short landscape windows. Widths between the shared
 breakpoints remain fluid. At and beyond the `680px` content breakpoint, the Ingredients

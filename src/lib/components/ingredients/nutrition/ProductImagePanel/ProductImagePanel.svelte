@@ -38,6 +38,7 @@
 	let lastImageKey = $state("");
 	let draftPlacement = $state<ImagePlacementValue>(getStoredImagePlacement());
 	let savingPlacement = $state(false);
+	let saveRequestInFlight = false;
 	let placementMessage = $state("");
 	let placementError = $state("");
 
@@ -62,18 +63,17 @@
 	const canEditPlacement = $derived(
 		canAdjustImagePlacement && Boolean(food?.image?.sourceReference),
 	);
-	const hasPlacementChanges = $derived(
+	const placementHasChanged = () =>
 		draftPlacement.cropX !== savedPlacement.cropX ||
-			draftPlacement.cropY !== savedPlacement.cropY ||
-			draftPlacement.cropZoom !== savedPlacement.cropZoom ||
-			draftPlacement.rotationDegrees !== savedPlacement.rotationDegrees ||
-			draftPlacement.fitMode !== savedPlacement.fitMode ||
-			draftPlacement.placementVersion !== savedPlacement.placementVersion ||
-			draftPlacement.placementMethod !== savedPlacement.placementMethod ||
-			draftPlacement.suggestionVersion !== savedPlacement.suggestionVersion ||
-			draftPlacement.suggestionConfidence !==
-				savedPlacement.suggestionConfidence,
-	);
+		draftPlacement.cropY !== savedPlacement.cropY ||
+		draftPlacement.cropZoom !== savedPlacement.cropZoom ||
+		draftPlacement.rotationDegrees !== savedPlacement.rotationDegrees ||
+		draftPlacement.fitMode !== savedPlacement.fitMode ||
+		draftPlacement.placementVersion !== savedPlacement.placementVersion ||
+		draftPlacement.placementMethod !== savedPlacement.placementMethod ||
+		draftPlacement.suggestionVersion !== savedPlacement.suggestionVersion ||
+		draftPlacement.suggestionConfidence !==
+			savedPlacement.suggestionConfidence;
 
 	$effect(() => {
 		if (imageUrl !== lastImageUrl) {
@@ -91,19 +91,29 @@
 	});
 
 	const savePlacement = async () => {
-		if (!food?.image?.sourceReference || savingPlacement) return;
+		const imageAsset = food?.image;
+		const sourceReference = imageAsset?.sourceReference;
+		if (!sourceReference || saveRequestInFlight) return;
+		if (!placementHasChanged()) {
+			placementError = "";
+			placementMessage = "This card image placement is already saved.";
+			return;
+		}
 
+		saveRequestInFlight = true;
 		savingPlacement = true;
 		placementMessage = "";
 		placementError = "";
+		const placementToSave = { ...draftPlacement };
+		const foodId = food?.fdcId;
 		try {
 			const image = await updateFoodImagePlacement({
-				source: food.image.source,
-				sourceReference: food.image.sourceReference,
-				role: food.image.role,
-				...draftPlacement,
+				source: imageAsset.source,
+				sourceReference,
+				role: imageAsset.role,
+				...placementToSave,
 			});
-			await onImagePlacementSave?.(image, food?.fdcId);
+			await onImagePlacementSave?.(image, foodId);
 			placementMessage = "Your card image placement is saved.";
 		} catch (error) {
 			console.error("[image placement] Save failed", error);
@@ -116,8 +126,14 @@
 					"Saving took too long. Check your connection and try again.",
 			});
 		} finally {
+			saveRequestInFlight = false;
 			savingPlacement = false;
 		}
+	};
+
+	const handlePlacementSubmit = (event: SubmitEvent) => {
+		event.preventDefault();
+		void savePlacement();
 	};
 </script>
 
@@ -161,21 +177,27 @@
 							placementError = "";
 						}}
 					/>
-					<RoundedActionButton
-						variant="primary"
-						fullWidth
-						busy={savingPlacement}
-						disabled={!hasPlacementChanges}
-						onclick={savePlacement}
+					<form
+						class="product-image-panel__placement-save"
+						onsubmit={handlePlacementSubmit}
 					>
-						Save image placement
-					</RoundedActionButton>
-					{#if placementMessage}
-						<StatusMessage tone="success" message={placementMessage} />
-					{/if}
-					{#if placementError}
-						<StatusMessage tone="danger" message={placementError} />
-					{/if}
+						<RoundedActionButton
+							type="submit"
+							variant="primary"
+							fullWidth
+							busy={savingPlacement}
+						>
+							{savingPlacement
+								? "Saving image placement…"
+								: "Save image placement"}
+						</RoundedActionButton>
+						{#if placementMessage}
+							<StatusMessage tone="success" message={placementMessage} />
+						{/if}
+						{#if placementError}
+							<StatusMessage tone="danger" message={placementError} />
+						{/if}
+					</form>
 				</div>
 			</CollapsibleSection>
 		{/if}

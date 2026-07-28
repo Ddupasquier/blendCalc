@@ -143,8 +143,10 @@ way to add packaged foods.
 On compact phone and short-screen layouts, the Ingredients page title, search controls,
 and manual-entry launcher animate upward after deliberate downward saved-list scrolling.
 They animate back down after a short upward scroll, even before the list reaches its
-first item. Keep the saved-list tabs available and keep this region fixed on wider
-layouts.
+first item. Manual entry becomes a pencil-only rounded icon button beside Search,
+Barcode, and Filters while retaining its full accessible name. Fridge/Shopping List
+tabs use compact visual pills without reducing their combined touch targets below
+`44px`. Keep the saved-list tabs available and keep this region fixed on wider layouts.
 
 ### Barcode Scan Flow
 

@@ -106,14 +106,22 @@
 	}
 
 	.segmented-control[data-variant="pill"] .segmented-control__button {
-		min-height: $app-shell-control-height-narrow;
-		font-size: $app-font-size-sm;
+		position: relative;
+		min-height: $app-shell-control-height-compact;
+		font-size: $app-font-size-xs;
+	}
+
+	.segmented-control[data-variant="pill"] .segmented-control__button::before {
+		position: absolute;
+		inset-block: calc(-1 * $app-gap-xs);
+		inset-inline: 0;
+		content: "";
 	}
 
 	.segmented-control__count {
-		min-width: 1.15rem;
+		min-width: 1rem;
 		margin-left: $app-gap-inline-compact;
-		padding-inline: $app-gap-xs;
+		padding: $app-gap-2xs $app-gap-inline-compact;
 		font-size: $app-font-size-2xs;
 	}
 }
