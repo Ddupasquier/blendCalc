@@ -5,6 +5,10 @@ const script = readFileSync(
 	"scripts/operations/manage_test_database.mjs",
 	"utf8",
 );
+const tutorialUtility = readFileSync(
+	"src/lib/utils/tutorial/tutorial.ts",
+	"utf8",
+);
 
 describe("local test database management", () => {
 	it("applies pending migrations before seeding QA accounts", () => {
@@ -51,5 +55,22 @@ describe("local test database management", () => {
 		expect(script).toContain(
 			'runCommand("supabase", ["db", "reset", "--local"])',
 		);
+	});
+
+	it("seeds standard QA accounts past onboarding with the current tutorial version", () => {
+		const tutorialVersion = tutorialUtility.match(
+			/export const CURRENT_TUTORIAL_VERSION = (\d+);/,
+		)?.[1];
+
+		expect(tutorialVersion).toBeTruthy();
+		expect(script).toContain(
+			`const currentTutorialVersion = ${tutorialVersion};`,
+		);
+		expect(script).toContain(
+			'userClient.from("user_tutorial_preferences").upsert',
+		);
+		expect(script).toContain("seedTestTutorialPreference");
+		expect(script).toContain("do_not_show_again: true");
+		expect(script).toContain("completed_at: tutorialCompletedAt");
 	});
 });

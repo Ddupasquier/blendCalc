@@ -39,4 +39,48 @@ describe("readVerifiedAuthUser", () => {
 
 		await expect(readVerifiedAuthUser(supabase)).resolves.toBeNull();
 	});
+
+	it("checks the current Auth record when destructive test resets can stale the JWT", async () => {
+		const getClaims = vi.fn();
+		const getUser = vi.fn().mockResolvedValue({
+			data: {
+				user: {
+					id: "current-user",
+					email: "qa-user@blendcalc.local",
+					app_metadata: { provider: "email" },
+					user_metadata: { display_name: "QA User" },
+				},
+			},
+			error: null,
+		});
+		const supabase = {
+			auth: { getClaims, getUser },
+		} as unknown as SupabaseClient<Database>;
+
+		await expect(
+			readVerifiedAuthUser(supabase, { requireCurrentAuthRecord: true }),
+		).resolves.toEqual({
+			id: "current-user",
+			email: "qa-user@blendcalc.local",
+			app_metadata: { provider: "email" },
+			user_metadata: { display_name: "QA User" },
+		});
+		expect(getUser).toHaveBeenCalledTimes(1);
+		expect(getClaims).not.toHaveBeenCalled();
+	});
+
+	it("rejects a JWT whose Auth user was removed by a test reset", async () => {
+		const supabase = {
+			auth: {
+				getUser: vi.fn().mockResolvedValue({
+					data: { user: null },
+					error: new Error("User from sub claim in JWT does not exist"),
+				}),
+			},
+		} as unknown as SupabaseClient<Database>;
+
+		await expect(
+			readVerifiedAuthUser(supabase, { requireCurrentAuthRecord: true }),
+		).resolves.toBeNull();
+	});
 });

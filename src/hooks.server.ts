@@ -4,6 +4,7 @@ import { applySecurityHeaders } from "$lib/utils/http/securityHeaders";
 import { isActiveAccountBlock } from "$lib/utils/moderation/moderation";
 import { APP_BUILD_VERSION, APP_VERSION } from "$lib/config/version";
 import { createAppIssuePayload } from "$lib/utils/errors/appIssues";
+import { env } from "$env/dynamic/private";
 import {
 	redirect,
 	type Handle,
@@ -28,7 +29,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	let authResult: ReturnType<App.Locals["getVerifiedUser"]> | null = null;
 	event.locals.getVerifiedUser = () => {
-		authResult ??= readVerifiedAuthUser(event.locals.supabase);
+		authResult ??= readVerifiedAuthUser(event.locals.supabase, {
+			requireCurrentAuthRecord:
+				env.BLENDCALC_DATABASE_ENVIRONMENT === "test",
+		});
 		return authResult;
 	};
 

@@ -13,7 +13,8 @@ npm run db:test:start
 This command starts the Docker-compatible runtime when Colima is installed, starts the
 local Supabase services, writes local credentials to the gitignored
 `.env.test.local`, applies deterministic runtime reference fixtures, and creates
-regular-user, moderator, and admin QA accounts.
+regular-user, moderator, and admin QA accounts. Standard QA accounts are seeded with the
+current tutorial completed so onboarding does not block unrelated test passes.
 
 Run the app against the local database with:
 
@@ -48,6 +49,28 @@ The local account password and emails are printed by the database command and st
   remains safe to replay.
 - Local login-capable users are created only after the local Auth and PostgREST APIs are
   available.
+
+## Manual QA Database Changes
+
+When a QA task needs a temporary database condition, use only the exact setup and
+restoration commands written in that task. Run SQL against local Supabase Studio at
+`http://127.0.0.1:54323`, never against the linked project.
+
+Unless a task provides a narrower safe restoration script, restore the deterministic
+local state with:
+
+```bash
+npm run db:test:reset
+```
+
+This reset deletes disposable local QA records, replays all migrations, and recreates
+the maintained reference fixtures and QA accounts.
+
+Resetting recreates Auth users with new IDs. A browser session created before the reset
+is therefore invalid. Test mode validates the current Auth record and sends that stale
+session back to sign-in; sign in again with a seeded account after the reset. The new
+session should not show onboarding unless the active QA task explicitly removes that
+account's tutorial preference with its supplied SQL.
 
 ## What This Enables
 

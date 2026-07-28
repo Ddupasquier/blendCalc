@@ -1,6 +1,7 @@
 /**
  * Purpose: Manage blendCalc's isolated local Supabase test stack, generate its
- * gitignored environment file, seed local-only QA accounts, and run pgTAP checks.
+ * gitignored environment file, seed local-only QA accounts with deterministic
+ * onboarding state, and run pgTAP checks.
  * Run: `npm run db:test:start`, `npm run db:test:reset`,
  * `npm run db:test:verify`, `npm run db:test:status`, or `npm run db:test:stop`.
  * Reset and verify are destructive only to the localhost database and never use the
@@ -26,6 +27,7 @@ const testSeedPath = fileURLToPath(
 const action = process.argv[2] ?? "status";
 const serviceReadinessAttempts = 30;
 const serviceReadinessDelayMs = 1000;
+const currentTutorialVersion = 1;
 
 const testAccounts = [
 	{
@@ -261,6 +263,52 @@ const waitForLocalServices = async (admin) => {
 	);
 };
 
+const seedTestTutorialPreference = async (
+	environment,
+	account,
+	expectedUserId,
+) => {
+	const userClient = createClient(
+		environment.apiUrl,
+		environment.publishableKey,
+		{
+			auth: {
+				autoRefreshToken: false,
+				detectSessionInUrl: false,
+				persistSession: false,
+			},
+			realtime: { transport: WebSocket },
+		},
+	);
+	const session = requireSuccessfulResult(
+		await userClient.auth.signInWithPassword({
+			email: account.email,
+			password: account.password,
+		}),
+		`Sign in ${account.email} for tutorial setup`,
+	);
+	if (session.user.id !== expectedUserId) {
+		throw new Error(`Tutorial setup resolved the wrong user for ${account.email}.`);
+	}
+
+	const tutorialCompletedAt = new Date().toISOString();
+	requireSuccessfulResult(
+		await userClient.from("user_tutorial_preferences").upsert(
+			{
+				user_id: expectedUserId,
+				tutorial_version: currentTutorialVersion,
+				do_not_show_again: true,
+				remind_after: null,
+				last_seen_at: tutorialCompletedAt,
+				completed_at: tutorialCompletedAt,
+			},
+			{ onConflict: "user_id" },
+		),
+		`Seed tutorial preference for ${account.email}`,
+	);
+	await userClient.auth.signOut();
+};
+
 const seedTestAccounts = async (environment) => {
 	const admin = createClient(environment.apiUrl, environment.serviceRoleKey, {
 		auth: {
@@ -325,6 +373,8 @@ const seedTestAccounts = async (environment) => {
 				`Clear role for ${account.email}`,
 			);
 		}
+
+		await seedTestTutorialPreference(environment, account, user.id);
 	}
 };
 

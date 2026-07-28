@@ -1364,6 +1364,16 @@ step. Example inputs must name concrete values, commands, roles, files, or UI co
 never use `None` as a shortcut for an incomplete task. Do not create duplicate rule sets
 inside QA docs; reference this document as the source of truth.
 
+**46a.** <a id="rule-qa-database-mutations"></a>Any QA task that requires changing
+local or test-database state must include the exact copy-paste SQL or terminal command
+for both setup and restoration. Never instruct a tester only to edit, disable, insert,
+update, or delete a row manually. Identify the disposable test-database boundary,
+concrete affected tables or rows, the expected command result, and whether restoration
+deletes other local QA data. Prefer deterministic local SQL for setup and
+`npm run db:test:reset` for restoration when the test does not need to preserve other
+disposable fixtures. Never direct destructive QA commands at a linked, staging, or
+production database.
+
 **47.** <a id="rule-local-recovery-context"></a>Keep temporary recovery checkpoints and
 decision notes under local-only `docs/local-context/`. Keep that folder ignored by Git.
 Never store passwords, tokens, environment values, private user data, or raw private
