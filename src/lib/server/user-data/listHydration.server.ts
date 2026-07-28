@@ -57,9 +57,20 @@ const hydrateFoodWithSharedProductMetadata = (
 	return {
 		...food,
 		foodIdentityType: canonicalFood.foodIdentityType,
+		brandOwner: canonicalFood.brandOwner ?? food.brandOwner,
+		foodCategory: canonicalFood.foodCategory ?? food.foodCategory,
+		brandedFoodCategory:
+			canonicalFood.brandedFoodCategory ?? food.brandedFoodCategory,
+		categories: canonicalFood.categories ?? food.categories,
+		categoryOptionId:
+			canonicalFood.categoryOptionId ?? food.categoryOptionId,
 		scientificName: canonicalFood.scientificName,
 		alternateDescription: canonicalFood.alternateDescription,
 		preparation: canonicalFood.preparation,
+		gtinUpc: canonicalFood.gtinUpc ?? food.gtinUpc,
+		barcode: canonicalFood.barcode ?? food.barcode,
+		barcodeProvenance:
+			canonicalFood.barcodeProvenance ?? food.barcodeProvenance,
 		ingredients: canonicalFood.ingredients?.trim() || undefined,
 		ingredientList: canonicalFood.ingredientList,
 		structuredIngredients: canonicalFood.structuredIngredients,
@@ -71,6 +82,23 @@ const hydrateFoodWithSharedProductMetadata = (
 		labels: canonicalFood.labels,
 		packageQuantity: canonicalFood.packageQuantity,
 		sourceMetadata: canonicalFood.sourceMetadata,
+		sourceIdentifiers:
+			canonicalFood.sourceIdentifiers ?? food.sourceIdentifiers,
+		sourceLabel: canonicalFood.sourceLabel ?? food.sourceLabel,
+		sourceDataType: canonicalFood.sourceDataType ?? food.sourceDataType,
+		sourcePublishedDate:
+			canonicalFood.sourcePublishedDate ?? food.sourcePublishedDate,
+		sourceModifiedDate:
+			canonicalFood.sourceModifiedDate ?? food.sourceModifiedDate,
+		sourceAttribution:
+			canonicalFood.sourceAttribution ?? food.sourceAttribution,
+		publishedDate: canonicalFood.publishedDate ?? food.publishedDate,
+		publicationDate:
+			canonicalFood.publicationDate ?? food.publicationDate,
+		modifiedDate: canonicalFood.modifiedDate ?? food.modifiedDate,
+		availableDate: canonicalFood.availableDate ?? food.availableDate,
+		discontinuedDate:
+			canonicalFood.discontinuedDate ?? food.discontinuedDate,
 		compatibilitySummary: canonicalSummary,
 	};
 };

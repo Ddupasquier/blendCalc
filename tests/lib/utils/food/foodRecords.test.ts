@@ -49,6 +49,32 @@ describe("compact food records", () => {
 		expect(compactFood(food).barcodeProvenance).toEqual(food.barcodeProvenance);
 	});
 
+	it("keeps deep-dive source and category metadata in saved food snapshots", () => {
+		const food: FdcFood = {
+			fdcId: 101,
+			description: "Blueberries",
+			foodNutrients: [],
+			brandedFoodCategory: "Fresh fruit",
+			sourceAttribution: {
+				datasetKey: "cnf-2026",
+				datasetName: "Canadian Nutrient File 2026",
+				datasetVersion: "2026",
+				sourceName: "Health Canada",
+				sourceUrl: "https://example.com/cnf",
+				licenseName: "Open Government Licence – Canada",
+				licenseUrl: "https://example.com/license",
+				attributionText: "Contains licensed Canadian data.",
+			},
+		};
+
+		expect(compactFood(food)).toMatchObject({
+			brandedFoodCategory: "Fresh fruit",
+			sourceAttribution: food.sourceAttribution,
+		});
+		expect(compactFood(food).sourceAttribution)
+			.not.toBe(food.sourceAttribution);
+	});
+
 	it("does not assume nutrients were reported when status is absent", () => {
 		const food: FdcFood = {
 			fdcId: 2,

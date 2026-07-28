@@ -63,14 +63,14 @@ describe("food servings", () => {
 		});
 	});
 
-	it("formats nutrition-label serving sizes with weight first", () => {
+	it("formats nutrition-label serving sizes with grams in trailing parentheses", () => {
 		expect(formatNutritionServingSize({
 			label: "1/2 cup (125g)",
 			gramWeight: 125,
 			amount: 0.5,
 			unitKey: "cup",
 			isPrimary: true,
-		})).toBe("125g (1/2 cup)");
+		})).toBe("1/2 cup (125g)");
 		expect(formatNutritionServingSize({
 			label: "30 g serving",
 			gramWeight: 30,
@@ -80,6 +80,6 @@ describe("food servings", () => {
 			label: "1 oz",
 			gramWeight: 28.35,
 			isPrimary: true,
-		})).toBe("28.35g (1 oz)");
+		})).toBe("1 oz (28.35g)");
 	});
 });

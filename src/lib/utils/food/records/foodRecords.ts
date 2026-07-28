@@ -34,6 +34,7 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		nameProvenance: normalizedFood.nameProvenance,
 		brandOwner: food.brandOwner,
 		foodCategory: food.foodCategory,
+		brandedFoodCategory: food.brandedFoodCategory,
 		dataType: food.dataType,
 		foodIdentityType: food.foodIdentityType,
 		scientificName: food.scientificName,
@@ -116,6 +117,9 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		sourceDataType: food.sourceDataType,
 		sourcePublishedDate: food.sourcePublishedDate,
 		sourceModifiedDate: food.sourceModifiedDate,
+		sourceAttribution: food.sourceAttribution
+			? { ...food.sourceAttribution }
+			: undefined,
 		sharedProductId: food.sharedProductId,
 		sharedProductSubmissionId: food.sharedProductSubmissionId,
 		sharedProductConfidence: food.sharedProductConfidence,

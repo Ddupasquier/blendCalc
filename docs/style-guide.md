@@ -427,6 +427,11 @@ placement previews remain identical.
 - Product name is not truncated in the detailed view.
 - Place source, verification, ingredients, allergens, and preference conflicts where
   users can understand them without crowding the nutrient table.
+- Treat the detail view as the complete user-facing food record: show every available
+  useful product, serving, disclosure, and neutral source field; hide absent fields
+  cleanly rather than adding empty rows or placeholders.
+- Group product, serving, and source metadata inside the shared `Product details`
+  collapse and keep it closed by default.
 - Ingredients and “May contain” content remain plain text against the app background
   unless interaction or status requires a surface.
 - Privileged image-placement actions live at the bottom in a collapsed privileged

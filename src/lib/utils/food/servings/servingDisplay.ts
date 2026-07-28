@@ -23,5 +23,5 @@ const getHouseholdServingLabel = (serving: FoodServing): string | null => {
 export const formatNutritionServingSize = (serving: FoodServing): string => {
 	const gramWeight = formatGramWeight(serving.gramWeight);
 	const householdLabel = getHouseholdServingLabel(serving);
-	return householdLabel ? `${gramWeight} (${householdLabel})` : gramWeight;
+	return householdLabel ? `${householdLabel} (${gramWeight})` : gramWeight;
 };

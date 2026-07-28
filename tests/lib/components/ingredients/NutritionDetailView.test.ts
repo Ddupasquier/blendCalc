@@ -103,7 +103,7 @@ describe("NutritionDetailView", () => {
 
 		expect(screen.getByText("30g")).toBeInTheDocument();
 		expect(screen.getByText("Serving Size")).toBeInTheDocument();
-		expect(screen.getByText("30g (2 tbsp)")).toBeInTheDocument();
+		expect(screen.getByText("2 tbsp (30g)")).toBeInTheDocument();
 		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
 		await fireEvent.change(screen.getByRole("combobox", { name: "Serving" }), {
 			target: { value: "standard-100g" },

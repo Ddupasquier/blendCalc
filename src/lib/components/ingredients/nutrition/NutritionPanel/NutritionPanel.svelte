@@ -4,6 +4,7 @@
 	import NutritionPreferenceConflict from "$lib/components/ingredients/nutrition/NutritionPreferenceConflict/NutritionPreferenceConflict.svelte";
 	import ProductAllergenPanel from "$lib/components/ingredients/nutrition/ProductAllergenPanel/ProductAllergenPanel.svelte";
 	import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel/ProductImagePanel.svelte";
+	import ProductInformationPanel from "$lib/components/ingredients/nutrition/ProductInformationPanel/ProductInformationPanel.svelte";
 	import ProductIngredientsPanel from "$lib/components/ingredients/nutrition/ProductIngredientsPanel/ProductIngredientsPanel.svelte";
 	import {
 		DEFAULT_NUTRITION_VIEWING_GRAMS,
@@ -29,6 +30,7 @@
 	{#if food}
 		<ProductIngredientsPanel {food} />
 		<ProductAllergenPanel {food} />
+		<ProductInformationPanel {food} />
 	{/if}
 	<NutritionListActions {food} {showListActions} {listMembership} />
 </section>

@@ -60,6 +60,7 @@ clickable navigation block instead.
 - [National Nutrition Datasets](#rule-national-nutrition-datasets)
 - [Missing Nutrient Semantics](#rule-missing-nutrient-semantics)
 - [Product Ingredients And Allergen Disclosure](#rule-product-allergen-disclosure)
+- [Nutrition Food Deep Dive](#rule-nutrition-food-deep-dive)
 - [Confirmed Label OCR](#rule-confirmed-label-ocr)
 - [GS1 Product QR Safety](#rule-gs1-digital-link)
 - [Source Lifecycle Reviews](#rule-source-lifecycle-reviews)
@@ -878,6 +879,22 @@ issue codes through the shared user-facing message catalog. Paginated or refresh
 lists must therefore use the authenticated server list endpoint rather than bypassing
 evaluation with a direct browser database read.
 
+**30i.1a.** <a id="rule-nutrition-food-deep-dive"></a>Treat the nutrition detail view
+as the complete user-facing food record. When stored values exist, display product
+identity and brand, barcode/GTIN and format, categories, package quantity, labels,
+scientific or alternate identity, preparation, every available nutrient through the
+existing Nutrition Facts presentation, source-provided ingredients and structured
+percentages, additives, server-evaluated `Contains` and `May contain` disclosures,
+serving measures, legitimate weight-to-volume density with its qualifier, field-level
+source attribution, source record identifiers and dates, dataset/version attribution,
+and source/license links. Keep saved-list snapshots hydrated from the accepted canonical
+record so search and saved nutrition views expose the same available details after a
+refresh. Render no empty headings or placeholder rows, and never invent a missing value,
+conversion, disclosure, source, identifier, or date. Do not expose private evidence,
+moderation paths, user identifiers, internal catalog/submission IDs, raw provider quality
+tags, or implementation metadata. Showing neutral provenance in this detailed view must
+not create a provider hierarchy or substitute provider identity for verification.
+
 **30i.2.** <a id="rule-private-custom-food-classification"></a>Use `Custom` only for a
 user-owned food that does not match an accepted blendCalc catalog record or external
 source and that the user deliberately keeps as an unmatched, fully unshared personal
@@ -1056,8 +1073,9 @@ structured amount/unit, primary status, source, source reference, and confidence
 normalized `food_servings` rows. Nutrition views must load these rows and let users view
 the source serving or the 100g standard; future mix conversions must consume the same
 normalized gram weights instead of reparsing display text. When a stored serving is
-selected, the nutrition sticker must show a standard weight-first statement such as
-`Serving Size 125g (1/2 cup)` followed by `Amount per serving`; omit the household
+selected, the nutrition sticker must show the household label first with grams in
+trailing parentheses, such as `Serving Size 1/2 cup (125g)`, followed by
+`Amount per serving`; omit the household
 measurement when the source only provides weight, and do not show a serving statement
 for an arbitrary viewing amount. Keep one primary serving per food parent, preserve
 reported zero values, and never invent a package serving when the source did not provide

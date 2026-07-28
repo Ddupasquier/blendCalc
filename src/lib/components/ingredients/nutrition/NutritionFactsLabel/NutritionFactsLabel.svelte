@@ -50,7 +50,7 @@
 					)
 					.flatMap((n) => {
 						const scaledValue = scalePer100gValue(n.value, viewingGrams);
-						return scaledValue === null ? [] : [{
+						return scaledValue === null || scaledValue === 0 ? [] : [{
 							label: n.nutrientName,
 							value: formatNutritionAmount(scaledValue),
 							unit: n.unitName,

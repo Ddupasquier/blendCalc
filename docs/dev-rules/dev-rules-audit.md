@@ -1,6 +1,6 @@
 # Development Rules Audit
 
-Last audited: 2026-07-26
+Last audited: 2026-07-27
 
 ## Purpose
 
@@ -98,25 +98,359 @@ write path, disables only the relevant controls while pending, prevents duplicat
 submissions, maps safe server issue codes to friendly copy, and clears stale status at a
 predictable boundary.
 
-### Remaining Heuristic Decision Thresholds
+### Canonical Category Backfill Can Promote Fuzzy Identity
+
+**Status:** Critical
+
+**Evidence:** `scripts/backfills/backfill_shared_product_categories.mjs` falls back from
+an exact-barcode lookup to a USDA product-name token search, records the match as a
+category observation, rebuilds it as an `exact_api_observation`, and writes the resolved
+category into the active catalog. The provenance backfill in
+`supabase/migrations/20260726225800_backfill_api_v1_catalog_field_provenance.sql` then
+selects category observations by the requested barcode and exact taxonomy mapping
+without rejecting observations whose payload says
+`matchMethod: description-token-match`. It can therefore publish a fuzzy product match
+as exact-barcode, source-verified category evidence.
+
+**Affected areas:** Shared-product category values, category observations, field
+provenance, catalog revisions, and public API category attribution.
+
+**Complete when:** Authoritative category backfills use exact product identity only;
+description matches are stored as pending suggestions that cannot update canonical
+rows; and a corrective migration removes or downgrades every selected category
+provenance row derived from a description match.
+
+### Nutrient Mapping Seed Can Auto-Approve Semantic Guesses
+
+**Status:** Critical
+
+**Evidence:** `scripts/lib/reference-data/nutrientMatching.mjs` removes identity-bearing
+tokens such as `acid`, `d2`, and `d3`, accepts a semantic score of `0.7`, and marks a
+mapping automatically approved when the remaining tokens match. Unit compatibility
+contributes to ranking but is not required for automatic approval.
+`scripts/seeds/seed_product_reference_data.mjs` enables those approved Open Food Facts
+mappings. Reviewed mapping rows are now protected from observation-seed overwrites, but
+new semantic candidates can still be automatically approved and can therefore collapse
+distinct nutrients or enable a mapping whose units are incompatible.
+
+**Affected areas:** `nutrient_source_mappings`, imported product nutrients, normalized
+catalog nutrients, nutrition facts, Mix totals, and the public API.
+
+**Complete when:** Automatic approval requires a reviewed exact source key or an
+identity-preserving exact mapping with compatible units; semantic candidates always
+remain pending; dangerous ignored tokens are restored; and regression fixtures cover
+vitamin forms, fatty acids, parent/sub-nutrients, and incompatible units.
+
+### IU Conversions Are Inferred From Observed Food Ratios
+
+**Status:** Critical
+
+**Evidence:** `scripts/seeds/seed_product_reference_data.mjs` pairs USDA IU and
+microgram nutrients by normalized name, calculates ratios observed in foods, stores the
+median as `api_observed_ratio`, assigns `0.99` confidence, and reuses those ratios for
+Open Food Facts. IU conversion depends on the nutrient and chemical form; an observed
+median is not a conversion standard and can silently create incorrect nutrient values.
+
+**Affected areas:** `nutrient_unit_conversions`, barcode normalization, normalized
+nutrients, nutrition facts, Mix calculations, and API output.
+
+**Complete when:** Only reviewed nutrient-and-form-specific conversions from an
+authoritative standard can be enabled; observed ratios remain audit evidence rather
+than conversion rows; and a corrective migration disables or removes existing
+`api_observed_ratio` conversions before dependent data is rebuilt.
+
+### Normalized-Row Triggers Infer Source And Verification
+
+**Status:** Critical
+
+**Evidence:** The current `sync_food_nutrients_from_parent` function in
+`supabase/migrations/20260615010000_normalized_food_nutrients.sql` infers USDA from the
+presence of an FDC ID and upgrades USDA defaults to `source-verified`. The current
+`sync_food_servings_from_parent` function in
+`supabase/migrations/20260717213000_normalized_food_servings.sql` defaults an
+unclassified list-item serving to USDA and similarly derives confidence from provider
+identity. No later migration replaces these functions. Provider identity or a record ID
+does not prove field provenance.
+
+**Affected areas:** `food_nutrients`, `food_servings`, private foods, shared products,
+revisions, observations, provenance filters, and API attribution.
+
+**Complete when:** A corrective migration makes explicit nutrient/serving field
+provenance authoritative, leaves absent lineage as `unknown`, separates exact identity
+from field verification, and rebuilds affected normalized rows.
+
+### Catalog Enrichment Fabricates Canonical Confidence
+
+**Status:** Critical
+
+**Evidence:** `src/lib/server/products/catalogEnrichment.server.ts` maps missing or
+unknown field confidence to `source-verified` and labels promoted fields
+`exact-barcode`. `src/lib/server/products/catalog.server.ts` can publish an entire
+mixed-field product with `source-verified` confidence when the product identity matched
+an external barcode record. Exact barcode identity verifies the product match, not
+every nutrient, serving, ingredient, category, or image.
+
+**Affected areas:** Canonical shared products, observations, selected field provenance,
+moderation bypass, revisions, and public API trust metadata.
+
+**Complete when:** Publication status is separate from field confidence; every promoted
+field retains explicit source evidence and its actual confidence; unknown confidence
+stays unknown; and exact-barcode identity cannot blanket-verify mixed or derived fields.
+
+### Whole-Provider Priority Still Controls Field Conflicts
+
+**Status:** High
+
+**Evidence:** `src/lib/server/products/catalogSourceAssessment.server.ts` always starts
+with the USDA draft and lets Open Food Facts fill only missing values. The merge utility
+combines some metadata, but a present USDA field wins even when another exact-barcode
+source has newer, more complete, or better-supported evidence for that field.
+
+**Affected areas:** Barcode autofill, submission comparison, catalog enrichment,
+ingredients, allergens, categories, servings, nutrients, and images.
+
+**Complete when:** A versioned field-resolution policy evaluates identity, recency,
+completeness, corroboration, moderation, and source-specific evidence per field instead
+of declaring one provider the whole-product winner.
+
+### Field Provenance Falls Back To Whole-Record Source
+
+**Status:** High
+
+**Evidence:** `src/lib/utils/barcode/barcodeProductEnrichment.ts` and
+`src/lib/utils/barcode/barcodeProductMappers.ts` assign a draft or food's overall source
+to fields that contain data but lack explicit field lineage. This can attribute
+categories, ingredients, allergens, traces, labels, additives, package data, and source
+metadata to a provider without proving that provider supplied the individual field.
+
+**Affected areas:** Field-level provenance, canonical promotion, API attribution,
+licensing, and moderation evidence.
+
+**Complete when:** Source adapters attach provenance while extracting each field;
+legacy or mixed records without field lineage remain unknown; and canonical promotion
+requires explicit field evidence.
+
+### Exact-Identity Search Dedupe Replaces Whole Records
+
+**Status:** High
+
+**Evidence:** `src/lib/utils/ingredients/ingredientSearchResults.ts` correctly links
+records only by explicit IDs, but chooses one entire record using counts of nutrients,
+servings, and generic metadata. A richer nutrient record can replace a record with
+better category, serving, attribution, preparation, or other field evidence.
+
+**Affected areas:** Search results, list placement, generic-food enrichment, food-safety
+evaluation, and the data a user saves.
+
+**Complete when:** Exact-linked records are merged per field with provenance and
+dataset metadata preserved; no whole-record richness score can discard independently
+better evidence.
+
+### Exact-Source List Enrichment Overwrites Whole Fields
+
+**Status:** High
+
+**Evidence:** `src/lib/utils/food/records/sourceFoodEnrichment.ts` replaces nutrients by
+ID, prefers source arrays and text wholesale, and spreads the source record over the
+saved record. It preserves selected user-owned identity fields, but it does not compare
+field provenance, observation date, value origin, or review state before overwriting
+other values.
+
+**Affected areas:** Adding search results to Fridge or Shopping List and refreshing
+USDA or barcode-backed foods before persistence.
+
+**Complete when:** Exact-source enrichment uses the same field resolver as catalog
+enrichment, preserves explicit user edits and stronger evidence, and records why each
+field changed.
+
+### Ambiguous Serving Quantities Can Default To Grams
+
+**Status:** High
+
+**Evidence:** `parseServingAmount` in
+`src/lib/utils/serving/servingAmount.ts` intentionally applies the configured default
+weight unit when an interactive user input omits a unit. Provider mappers in
+`src/lib/utils/barcode/barcodeProductMappers.ts` and the legacy path in
+`src/lib/utils/food/servings/foodServings.ts` use the same parser. A provider's bare
+`serving_quantity` or incomplete serving text can therefore become grams without source
+evidence.
+
+**Affected areas:** Per-serving normalization, serving choices, density calculation,
+nutrition scaling, Mix conversions, and API servings.
+
+**Complete when:** Provider and legacy parsers require an explicit recognized unit;
+only interactive form input may use a user-visible selected default; and ambiguous
+provider quantities remain unavailable.
+
+### Legacy Serving Provenance Is Inferred From Food Identity
+
+**Status:** High
+
+**Evidence:** `src/lib/utils/food/servings/foodServings.ts` reconstructs a legacy
+serving's source from field provenance, then the food source, barcode source, or FDC ID.
+That can attach a provider to a serving that was edited or added later. The normalized
+database trigger has the related provider-default problem documented above.
+
+**Affected areas:** Legacy food snapshots, source labels, weight-volume conversion,
+normalized servings, and API attribution.
+
+**Complete when:** Legacy serving reconstruction uses explicit serving lineage only;
+user-entered values are user-reported; and absent lineage remains unknown.
+
+### Generic Identity Defaults Unknown Foods To Packaged
+
+**Status:** High
+
+**Evidence:** `src/lib/utils/food/identity/foodIdentity.ts` classifies any unbranded,
+barcode-free record whose data type is not in a short hardcoded generic set as
+`packaged`. New national datasets or future source types can therefore be
+misclassified when explicit identity metadata is absent.
+
+**Affected areas:** Generic food-safety rules, custom/private classification, search
+behavior, and source enrichment.
+
+**Complete when:** Imported adapters provide explicit identity; unknown identity stays
+unknown or is rejected from identity-dependent rules; and source expansion does not
+require editing a hidden datatype allowlist.
+
+### General Atwater Calories Are Presented As Resolved Data
+
+**Status:** High
+
+**Evidence:** `src/lib/utils/food/nutrients/fdcNutrients.ts` derives calories with
+`fat × 9 + carbohydrate × 4 + protein × 4` when energy is missing. The result is marked
+derived rather than reported, but the general factors can disagree with authoritative
+energy because of fiber, sugar alcohols, alcohol, organic acids, and food-specific
+factors.
+
+**Affected areas:** Nutrition completeness, search ranking, nutrition facts, Mix
+totals, warnings, and suggestions.
+
+**Complete when:** The derivation is an explicitly versioned policy with method and
+input provenance, uses a standards-backed applicable formula, and is never presented as
+reported energy; otherwise missing calories remain missing.
+
+### Mix Math Couples The 100-Gram Basis To A UX Default
+
+**Status:** High
+
+**Evidence:** `src/lib/utils/mix/calculations/nutrientTotals.ts` and
+`src/lib/utils/mix/calculations/nutrientSuggestions.ts` divide per-100-gram nutrient
+values by `mixRuntime.defaultServingGrams`. That setting currently happens to be `100`,
+but it is a user-experience default, not the immutable canonical nutrient basis.
+Changing the default serving in the database would silently change every Mix total and
+recommendation.
+
+**Affected areas:** Mix totals, goal progress, contributor breakdowns, warnings, and
+add/reduce suggestions.
+
+**Complete when:** Canonical scaling always divides by an immutable 100-gram basis
+constant; the configurable default controls only initial selected quantity; and a
+regression test changes the UX default without changing math for a fixed gram amount.
+
+### Unit-Only Goal Fallbacks Invent Nutrient Targets
+
+**Status:** High
+
+**Evidence:** `src/lib/utils/mix/calculations/nutrientTotals.ts` falls back from a
+nutrient-specific target to `defaultGoalByUnit`, including the generic value seeded in
+`supabase/migrations/20260719221000_reference_catalog_integrity.sql`. Unconfigured
+nutrients can therefore receive the same goal merely because they share `g`, `mg`,
+`mcg`, or another unit.
+
+**Affected areas:** Mix charts, progress, warnings, save summaries, and suggestions.
+
+**Complete when:** A nutrient has a goal only through an explicit versioned
+nutrient-specific policy row; unsupported nutrients show no target and cannot generate
+goal-based warnings or suggestions.
+
+### Imported Estimate Qualifiers Are Lost At Runtime
+
+**Status:** High
+
+**Evidence:** CoFID parenthesized values are stored by
+`scripts/imports/import_cofid_2021.mjs` with `valueQualifier: source-estimate`, while the
+generic search RPC includes nutrient metadata. `src/lib/server/products/genericFoods.server.ts`
+maps only the numeric amount and reports every returned value as `valueOrigin:
+reported`; the `FdcNutrient` model has no estimate/trace qualifier. Open Food Facts
+ingredient percentages similarly retain estimate fields without field-level estimate
+provenance.
+
+**Affected areas:** Search, saved foods, quality labels, nutrition facts, Mix,
+canonical enrichment, and public API value status.
+
+**Complete when:** The runtime and API models preserve measured, estimated, trace,
+present-unquantified, and derived status separately; estimated values never appear as
+ordinary reported measurements; and subfield provenance identifies provider estimates.
+
+### Remaining Heuristic Product Policies
 
 **Status:** Open
 
-**Evidence:** Nutrition values and serving conversions no longer use name-based density
-guesses or fabricated missing values, but several workflow classifications still use
-code-owned thresholds. Catalog conflict severity uses fixed 3%, 10%, and 25% bands in
-`src/lib/server/products/catalogVerification.server.ts`; catalog revision comparison
-uses separate fixed absolute and relative bands in
-`src/lib/utils/products/catalogSubmissionComparison.ts`; and nutrition completeness
-labels use a fixed 60% boundary in `src/lib/utils/food/quality/foodQuality.ts`.
-These values affect moderation and quality labels rather than the stored nutrient
-amounts themselves, but they remain product policy that cannot currently evolve through
-the database.
+**Evidence:** Several workflow decisions remain fixed in code:
 
-**Complete when:** The thresholds are represented by versioned, validated database
-policy rows or an equivalent authoritative reference-data contract; server loaders fail
-clearly when required policy is unavailable; and regression tests prove that changing a
-policy row changes classification without changing nutrient values or provenance.
+- catalog verification uses 3%, 10%, and 25% numeric conflict bands in
+  `src/lib/server/products/catalogVerification.server.ts`;
+- catalog submission comparison uses separate 10%, 35%, and 75% relative bands,
+  absolute minimums, serving tolerance, and auto-decline counts in
+  `src/lib/utils/products/catalogSubmissionComparison.ts`;
+- product-name identity calls records unrelated below 20% token overlap in
+  `src/lib/utils/products/productIdentity.ts`;
+- nutrition completeness weights required fields four times, scores source-resolution
+  modes as 3/2/1/0, and uses a 60% partial threshold in
+  `src/lib/utils/food/quality/foodQuality.ts`;
+- Mix warning and suggestion utilities use fixed 1%, 2%, 5%, and 10% significance
+  thresholds and minimum reduction amounts; and
+- category suggestions and source/search ranking use hardcoded scoring systems.
+
+These policies do not directly rewrite measured nutrient amounts, and category/search
+suggestions still require user action. They nevertheless affect moderation,
+verification, warnings, recommendations, and perceived quality.
+
+**Complete when:** Canonical and moderation decisions use versioned, validated policy
+rows with regression coverage; recommendation/search-only scores are clearly scoped as
+UX ranking rather than source authority; and duplicate thresholds are consolidated.
+
+### Trace Nutrients Can Display As Zero
+
+**Status:** Open
+
+**Evidence:** `src/lib/utils/food/nutrients/nutritionDisplay.ts` renders every nonzero
+absolute value below `0.005` as `0`. This is a presentation rule rather than a stored
+value mutation, but it visually converts a measured trace amount into zero without
+showing that rounding occurred.
+
+**Complete when:** Formatting is unit-aware and uses an explicit trace or less-than
+label where appropriate; the stored amount remains unchanged; and tests cover values
+around each display boundary.
+
+### Allergen Declaration Parsing Is Language-Specific Evidence Extraction
+
+**Status:** Open
+
+**Evidence:** `src/lib/server/products/allergenDeclarations.server.js` uses English
+phrase and punctuation heuristics to extract `contains`, `may contain`, and facility
+statements. It correctly avoids treating ordinary product titles as allergen evidence,
+but parsed text can be mistaken for a structured provider declaration if the extraction
+method and confidence are not retained.
+
+**Complete when:** Raw declarations are preserved, parser method/language/confidence are
+stored, unsupported languages remain unparsed, multilingual and nested-statement
+fixtures are covered, and parsed declarations never claim stronger evidence than their
+source text.
+
+### Normalized Nutrient Documentation Still Describes A Removed Fallback
+
+**Status:** Open
+
+**Evidence:** `docs/normalized-food-nutrients.md` says embedded food JSON is an
+automatic read fallback when normalized nutrient rows are empty. Current normalized
+hydration treats the normalized tables as authoritative and no longer performs that
+fallback.
+
+**Complete when:** The document describes current normalized authority, deployment
+requirements, failure behavior, and the separate role of retained source snapshots
+without promising an implementation that no longer exists.
 
 ### Coordinator And Domain Boundary Watchlist
 

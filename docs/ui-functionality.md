@@ -238,6 +238,8 @@ Preserve:
 
 - Nutrition Facts visual panel.
 - Visible “per 100g food data” label near the top.
+- When a source serving includes both a household label and gram weight, show the
+  household label first and the gram weight in trailing parentheses.
 - Main nutrients:
   - Calories.
   - Total fat.
@@ -250,6 +252,19 @@ Preserve:
   - Minerals.
   - Fatty acids.
   - Other FDC nutrients.
+- Complete food details when available:
+  - Brand, barcode/GTIN, barcode format, categories, package size, labels, and food
+    identity.
+  - Ingredients, structured ingredient percentages, additives, `Contains`, and
+    `May contain`.
+  - Every normalized serving and legitimate weight-to-volume density with its
+    confidence qualifier.
+  - Field-level data sources, source record identifiers and dates, dataset/version,
+    attribution, and license links.
+- Keep the complete product, serving, and source metadata inside the shared
+  `Product details` collapse, closed by default.
+- Missing detail fields do not create empty sections, guessed values, or placeholder
+  wording.
 - Add to On Hand button.
 - Add to Shopping List button.
 - Successful action feedback.
