@@ -531,6 +531,7 @@ export type Database = {
           placement_suggestion_confidence: number | null
           placement_suggestion_version: string | null
           placement_version: number
+          rotation_degrees: number
           shared_product_id: string | null
           source: string
           source_reference: string | null
@@ -562,6 +563,7 @@ export type Database = {
           placement_suggestion_confidence?: number | null
           placement_suggestion_version?: string | null
           placement_version?: number
+          rotation_degrees?: number
           shared_product_id?: string | null
           source: string
           source_reference?: string | null
@@ -593,6 +595,7 @@ export type Database = {
           placement_suggestion_confidence?: number | null
           placement_suggestion_version?: string | null
           placement_version?: number
+          rotation_degrees?: number
           shared_product_id?: string | null
           source?: string
           source_reference?: string | null

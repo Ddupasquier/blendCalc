@@ -27,6 +27,7 @@ import {
 	getStoredImagePlacement,
 	isImageFitMode,
 	isImagePlacementMethod,
+	isImageRotationDegrees,
 } from "$lib/utils/food/images/imagePlacement";
 import type {
 	ImageFitMode,
@@ -273,6 +274,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 					cropX?: number;
 					cropY?: number;
 					cropZoom?: number;
+					rotationDegrees?: ImagePlacementValue["rotationDegrees"];
 					fitMode?: ImageFitMode;
 					placementVersion?: number;
 					placementMethod?: ImagePlacementValue["placementMethod"];
@@ -305,6 +307,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 					cropX: validationReport.imageCrop?.cropX ?? 50,
 					cropY: validationReport.imageCrop?.cropY ?? 50,
 					cropZoom: validationReport.imageCrop?.cropZoom ?? 1,
+					rotationDegrees:
+						validationReport.imageCrop?.rotationDegrees,
 					fitMode: validationReport.imageCrop?.fitMode,
 					placementVersion: validationReport.imageCrop?.placementVersion,
 					placementMethod:
@@ -392,6 +396,14 @@ export const actions: Actions = {
 		const suggestionConfidence = Number(
 			formData.get("imageSuggestionConfidence"),
 		);
+		const rotationDegrees = Number(
+			formData.get("imageRotationDegrees") ?? 0,
+		);
+		if (!isImageRotationDegrees(rotationDegrees)) {
+			return fail(400, {
+				productReviewError: "Choose a supported image rotation.",
+			});
+		}
 		if (
 			usesSmartSuggestion &&
 			(!suggestionVersion || !Number.isFinite(suggestionConfidence))
@@ -404,6 +416,7 @@ export const actions: Actions = {
 			cropX: Number(formData.get("imageCropX") ?? 50),
 			cropY: Number(formData.get("imageCropY") ?? 50),
 			cropZoom: Number(formData.get("imageCropZoom") ?? 1),
+			rotationDegrees,
 			fitMode: fitModeValue,
 			placementVersion: Number(formData.get("imagePlacementVersion") ?? 1),
 			placementMethod: placementMethodValue,

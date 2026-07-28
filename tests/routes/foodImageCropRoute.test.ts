@@ -23,6 +23,7 @@ const requestBody = {
 	cropX: 25,
 	cropY: 75,
 	cropZoom: 2,
+	rotationDegrees: 90,
 	placementMethod: "smart-ocr",
 	suggestionVersion: "tesseract-product-label-v1",
 	suggestionConfidence: 84,
@@ -38,6 +39,7 @@ const savedImage = {
 	cropX: 50,
 	cropY: 75,
 	cropZoom: 2,
+	rotationDegrees: 90,
 	fitMode: "custom",
 	placementVersion: 2,
 	placementMethod: "smart-ocr",
@@ -45,7 +47,10 @@ const savedImage = {
 	suggestionConfidence: 84,
 };
 
-const createEvent = (userId: string | null) => ({
+const createEvent = (
+	userId: string | null,
+	body: Record<string, unknown> = requestBody,
+) => ({
 	locals: {
 		getVerifiedUser: vi.fn().mockResolvedValue(
 			userId ? { id: userId } : null,
@@ -55,7 +60,7 @@ const createEvent = (userId: string | null) => ({
 	request: new Request("http://localhost:5173/api/food-images/crop", {
 		method: "PATCH",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(requestBody),
+		body: JSON.stringify(body),
 	}),
 });
 
@@ -82,6 +87,7 @@ describe("food image crop route", () => {
 				cropX: 50,
 				cropY: 75,
 				cropZoom: 2,
+				rotationDegrees: 90,
 				fitMode: "custom",
 				placementVersion: 2,
 				placementMethod: "smart-ocr",
@@ -95,6 +101,20 @@ describe("food image crop route", () => {
 		await expect(PATCH(createEvent(null) as never)).rejects.toMatchObject({
 			status: 401,
 		});
+		expect(mocks.updateFoodImageAssetPlacement).not.toHaveBeenCalled();
+	});
+
+	it("rejects rotations outside supported quarter turns", async () => {
+		mocks.getUserAppRole.mockResolvedValue("moderator");
+
+		await expect(
+			PATCH(
+				createEvent("moderator-id", {
+					...requestBody,
+					rotationDegrees: 45,
+				}) as never,
+			),
+		).rejects.toMatchObject({ status: 400 });
 		expect(mocks.updateFoodImageAssetPlacement).not.toHaveBeenCalled();
 	});
 });

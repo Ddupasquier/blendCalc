@@ -35,9 +35,14 @@ const makeImageRow = (image: FoodImageAsset) => ({
 	crop_x: image.cropX ?? 50,
 	crop_y: image.cropY ?? 50,
 	crop_zoom: image.cropZoom ?? 1,
+	rotation_degrees: image.rotationDegrees ?? 0,
 	fit_mode: image.fitMode ?? "contain",
 	placement_version: image.placementVersion ?? 2,
 	crop_source: image.cropSource ?? "auto",
+	placement_method: image.placementMethod ?? "default",
+	placement_suggestion_version: image.suggestionVersion ?? null,
+	placement_suggestion_confidence: image.suggestionConfidence ?? null,
+	placement_suggestion_accepted_at: image.suggestionAcceptedAt ?? null,
 	approved_by: image.approvedBy ?? null,
 	approved_at: image.approvedAt ?? null,
 	fetched_at: image.fetchedAt ?? "2026-07-18T12:00:00.000Z",
@@ -105,6 +110,7 @@ describe("food image selection", () => {
 			imageUrl: moderated.imageUrl,
 			confidence: "moderator-reviewed",
 			fitMode: "contain",
+			rotationDegrees: 0,
 			placementVersion: 2,
 		});
 	});

@@ -243,6 +243,7 @@
 							<input type="hidden" name="imageCropX" value={getImageCrop(submission).cropX} />
 							<input type="hidden" name="imageCropY" value={getImageCrop(submission).cropY} />
 							<input type="hidden" name="imageCropZoom" value={getImageCrop(submission).cropZoom} />
+							<input type="hidden" name="imageRotationDegrees" value={getImageCrop(submission).rotationDegrees} />
 							<input type="hidden" name="imageFitMode" value={getImageCrop(submission).fitMode} />
 							<input type="hidden" name="imagePlacementVersion" value={getImageCrop(submission).placementVersion} />
 							<input type="hidden" name="imagePlacementMethod" value={getImageCrop(submission).placementMethod ?? "manual"} />

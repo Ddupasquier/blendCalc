@@ -14,6 +14,7 @@ describe("ImagePlacementEditor", () => {
 					cropX: 20,
 					cropY: 70,
 					cropZoom: 2,
+					rotationDegrees: 0,
 					fitMode: "custom",
 					placementVersion: 2,
 				},
@@ -31,13 +32,31 @@ describe("ImagePlacementEditor", () => {
 		expect(screen.getByLabelText(/Shift image left/)).toHaveValue("0");
 		expect(screen.getByLabelText(/Vertical position/)).toBeDisabled();
 		expect(screen.getByLabelText(/Zoom/)).toBeEnabled();
+		expect(
+			screen.getByRole("button", { name: "Rotate 90° clockwise" }),
+		).toBeEnabled();
 		expect(screen.getByRole("button", { name: "Restore default" })).toBeEnabled();
 
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Rotate 90° clockwise" }),
+		);
+		expect(onChange).toHaveBeenCalledWith({
+			cropX: 50,
+			cropY: 70,
+			cropZoom: 2,
+			rotationDegrees: 90,
+			fitMode: "custom",
+			placementVersion: 2,
+			placementMethod: "manual",
+		});
+
+		onChange.mockClear();
 		await fireEvent.click(screen.getByRole("button", { name: "Full image" }));
 		expect(onChange).toHaveBeenCalledWith({
 			cropX: 50,
 			cropY: 50,
 			cropZoom: 1,
+			rotationDegrees: 0,
 			fitMode: "contain",
 			placementVersion: 2,
 			placementMethod: "default",
@@ -49,6 +68,7 @@ describe("ImagePlacementEditor", () => {
 			cropX: 50,
 			cropY: 50,
 			cropZoom: 1,
+			rotationDegrees: 0,
 			fitMode: "contain",
 			placementVersion: 2,
 			placementMethod: "default",

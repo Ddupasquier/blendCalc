@@ -22,7 +22,7 @@ import {
 
 const SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT = 100;
 const SHARED_PRODUCT_COLUMNS = "id, barcode, product_name, brand_owner, category_option_id, compatibility_summary, canonical_provenance, food, source, source_reference, confidence, created_at, updated_at, last_verified_at";
-const FOOD_IMAGE_COLUMNS = "id, barcode, shared_product_id, source, source_reference, image_role, image_url, thumbnail_url, license_name, license_url, attribution_text, confidence, crop_x, crop_y, crop_zoom, fit_mode, placement_version, crop_source, placement_method, placement_suggestion_version, placement_suggestion_confidence, placement_suggestion_accepted_at, approved_at, fetched_at";
+const FOOD_IMAGE_COLUMNS = "id, barcode, shared_product_id, source, source_reference, image_role, image_url, thumbnail_url, license_name, license_url, attribution_text, confidence, crop_x, crop_y, crop_zoom, rotation_degrees, fit_mode, placement_version, crop_source, placement_method, placement_suggestion_version, placement_suggestion_confidence, placement_suggestion_accepted_at, approved_at, fetched_at";
 
 type SharedProductRow = Pick<
 	Database["public"]["Tables"]["shared_products"]["Row"],
@@ -74,6 +74,7 @@ type FoodImageRow = Pick<
 	| "crop_x"
 	| "crop_y"
 	| "crop_zoom"
+	| "rotation_degrees"
 	| "fit_mode"
 	| "placement_version"
 	| "crop_source"
@@ -129,6 +130,9 @@ const toFoodImageAsset = (row: FoodImageRow): FoodImageAsset => ({
 	cropX: row.crop_x,
 	cropY: row.crop_y,
 	cropZoom: row.crop_zoom,
+	rotationDegrees: row.rotation_degrees as NonNullable<
+		FoodImageAsset["rotationDegrees"]
+	>,
 	fitMode: row.fit_mode as FoodImageAsset["fitMode"],
 	placementVersion: row.placement_version,
 	cropSource: row.crop_source as FoodImageAsset["cropSource"],

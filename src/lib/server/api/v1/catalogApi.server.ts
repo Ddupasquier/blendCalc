@@ -109,6 +109,7 @@ const toImage = (image: FoodImageAsset): ApiV1Image => ({
 		x: image.cropX ?? 50,
 		y: image.cropY ?? 50,
 		zoom: image.cropZoom ?? 1,
+		rotationDegrees: image.rotationDegrees ?? 0,
 		version: image.placementVersion ?? 1,
 	},
 	source: toSource(

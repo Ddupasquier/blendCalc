@@ -30,10 +30,23 @@ export const getLegacyImagePlacementCssVars = (
 export const getImagePlacementGeometryCssVars = (
 	geometry: ImagePlacementGeometry,
 	prefix: string,
-) => [
-	`--${prefix}-base-width: ${geometry.baseWidth}px`,
-	`--${prefix}-base-height: ${geometry.baseHeight}px`,
-	`--${prefix}-zoom: ${geometry.effectiveZoom}`,
-	`--${prefix}-offset-x: ${geometry.offsetX}px`,
-	`--${prefix}-offset-y: ${geometry.offsetY}px`,
-].join("; ");
+) => {
+	const swapsDimensions =
+		geometry.rotationDegrees === 90 ||
+		geometry.rotationDegrees === 270;
+	const imageWidth = swapsDimensions
+		? geometry.baseHeight
+		: geometry.baseWidth;
+	const imageHeight = swapsDimensions
+		? geometry.baseWidth
+		: geometry.baseHeight;
+
+	return [
+		`--${prefix}-image-width: ${imageWidth}px`,
+		`--${prefix}-image-height: ${imageHeight}px`,
+		`--${prefix}-zoom: ${geometry.effectiveZoom}`,
+		`--${prefix}-rotation: ${geometry.rotationDegrees}deg`,
+		`--${prefix}-offset-x: ${geometry.offsetX}px`,
+		`--${prefix}-offset-y: ${geometry.offsetY}px`,
+	].join("; ");
+};

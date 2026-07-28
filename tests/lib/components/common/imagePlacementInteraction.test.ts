@@ -11,6 +11,7 @@ const geometry: ImagePlacementGeometry = {
 	frameHeight: 84,
 	baseWidth: 63,
 	baseHeight: 84,
+	rotationDegrees: 0 as const,
 	effectiveZoom: 1,
 	coverZoom: 1.9048,
 	maxOffsetX: 31.5,
@@ -27,6 +28,7 @@ const value = {
 	cropX: 50,
 	cropY: 50,
 	cropZoom: 1,
+	rotationDegrees: 0 as const,
 	fitMode: "contain" as const,
 	placementVersion: 2,
 };

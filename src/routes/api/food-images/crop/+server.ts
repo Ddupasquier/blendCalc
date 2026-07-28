@@ -14,10 +14,12 @@ import {
 	IMAGE_PLACEMENT_MAX_ZOOM,
 	isImageFitMode,
 	isImagePlacementMethod,
+	isImageRotationDegrees,
 } from "$lib/utils/food/images/imagePlacement";
 import type {
 	ImageFitMode,
 	ImagePlacementMethod,
+	ImageRotationDegrees,
 } from "$lib/utils/food/images/types";
 
 const allowedSources = new Set<FoodImageAsset["source"]>([
@@ -59,6 +61,7 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 	const sourceReference = String(body.sourceReference ?? "").trim();
 	const imageRole = String(body.role ?? "") as FoodImageAsset["role"];
 	const requestedFitMode = body.fitMode;
+	const requestedRotationDegrees = Number(body.rotationDegrees ?? 0);
 	const requestedPlacementMethod = body.placementMethod ?? "manual";
 	const suggestionVersion = String(body.suggestionVersion ?? "").trim();
 	const suggestionConfidence = Number(body.suggestionConfidence);
@@ -71,6 +74,9 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 		throwAppError(400, "IMAGE_PLACEMENT_INVALID");
 	}
 	if (!isImageFitMode(requestedFitMode)) {
+		throwAppError(400, "IMAGE_PLACEMENT_INVALID");
+	}
+	if (!isImageRotationDegrees(requestedRotationDegrees)) {
 		throwAppError(400, "IMAGE_PLACEMENT_INVALID");
 	}
 	if (!isImagePlacementMethod(requestedPlacementMethod)) {
@@ -87,6 +93,7 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 	}
 	const fitMode = requestedFitMode as ImageFitMode;
 	const placementMethod = requestedPlacementMethod as ImagePlacementMethod;
+	const rotationDegrees = requestedRotationDegrees as ImageRotationDegrees;
 
 	const image = await updateFoodImageAssetPlacement({
 		source,
@@ -102,6 +109,7 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 			),
 			cropY: clamp(body.cropY, 0, 100, 50),
 			cropZoom: clamp(body.cropZoom, 1, IMAGE_PLACEMENT_MAX_ZOOM, 1),
+			rotationDegrees,
 			fitMode,
 			placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
 			placementMethod,

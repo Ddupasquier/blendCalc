@@ -54,6 +54,9 @@
 	let singleAnimatingFoodId = $state<number | null>(null);
 	let singleMoveStatus = $state("");
 
+	const BULK_EXIT_STAGGER_MS = 100;
+	const BULK_EXIT_ANTICIPATION_PERCENT = 10;
+
 	const selectedIdSet = $derived(new Set(selectedIds));
 	const selectedCount = $derived(selectedIds.length);
 	const moveTargetLabel = $derived(
@@ -83,6 +86,7 @@
 	const startCardExit = async (
 		foodIds: number[],
 		direction: "left" | "right",
+		stagger = false,
 	) => {
 		await tick();
 		const targetIds = new Set(foodIds.map(String));
@@ -93,7 +97,14 @@
 		).filter((card) =>
 			targetIds.has(card.parentElement?.dataset.foodId ?? ""),
 		);
-		return animateDirectionalExit(cards, direction);
+		const animationOptions = stagger
+			? {
+					anticipationPercent: BULK_EXIT_ANTICIPATION_PERCENT,
+					staggerMs: BULK_EXIT_STAGGER_MS,
+					unclipFromContainer: true,
+				}
+			: { unclipFromContainer: true };
+		return animateDirectionalExit(cards, direction, animationOptions);
 	};
 
 	const moveSelectedItems = async () => {
@@ -104,7 +115,7 @@
 
 		bulkAnimating = true;
 		bulkMoveStatus = `Moving ${movingCount} selected ingredient${movingCount === 1 ? "" : "s"} to ${targetLabel}.`;
-		const animation = await startCardExit(selectedIds, exitDirection);
+		const animation = await startCardExit(selectedIds, exitDirection, true);
 
 		try {
 			await animation.finished;

@@ -314,7 +314,8 @@ approval.
   structured before/after fields.
 - **Approve image:** if the submission has a front-package image, the moderator can
   adjust the card crop. Approval copies that image into public product image storage and
-  records it in `food_image_assets`.
+  records it in `food_image_assets`, including the accepted fit, crop, zoom, and
+  clockwise quarter-turn rotation.
 - **Reject:** retains the private user ingredient, records the review note, and does not
   publish a shared product.
 - **Submission pause:** 5 rejected submissions in 30 days blocks new shared-catalog

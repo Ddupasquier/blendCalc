@@ -588,7 +588,7 @@ records that the app can safely render.
 
 | Table | Documented columns |
 | --- | --- |
-| `food_image_assets` | `id`, `barcode`, `shared_product_id`, `source`, `source_reference`, `image_role`, `image_url`, `thumbnail_url`, `storage_path`, `license_name`, `license_url`, `attribution_text`, `confidence`, `crop_x`, `crop_y`, `crop_zoom`, `fit_mode`, `placement_version`, `crop_source`, `approved_by`, `approved_at`, `status`, `fetched_at`, `created_at`, `updated_at` |
+| `food_image_assets` | `id`, `barcode`, `shared_product_id`, `source`, `source_reference`, `image_role`, `image_url`, `thumbnail_url`, `storage_path`, `license_name`, `license_url`, `attribution_text`, `confidence`, `crop_x`, `crop_y`, `crop_zoom`, `rotation_degrees`, `fit_mode`, `placement_version`, `crop_source`, `placement_method`, `placement_suggestion_version`, `placement_suggestion_confidence`, `placement_suggestion_accepted_at`, `approved_by`, `approved_at`, `status`, `fetched_at`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -599,12 +599,14 @@ Notes:
 - Users can read active rows, but only service-role/server code can write rows.
 - Indexed lookup paths cover active barcode images, shared-product images, generic
   images, and source/reference deduping.
-- Card thumbnails use normalized `crop_x`, `crop_y`, `crop_zoom`, and `fit_mode`;
-  nutrition detail views use the unchanged full image.
+- Card thumbnails use normalized `crop_x`, `crop_y`, `crop_zoom`, quarter-turn
+  `rotation_degrees`, and `fit_mode`; nutrition detail views use the unchanged full
+  image.
 - Version 1 rows retain the original cover-based rendering until edited. Version 2 rows
   make `1×` mean the fully contained image and support `contain`, calculated `cover`,
-  and measured `custom` placement. New rows default to version 2 `contain`; any
-  user/moderator edit upgrades that row to version 2.
+  measured `custom` placement, and clockwise 90-degree rotation. New rows default to
+  version 2 `contain` at `0` degrees; any user/moderator edit upgrades that row to
+  version 2.
 - Automatic API image metadata refreshes omit placement columns so they cannot overwrite
   a user- or moderator-selected position.
 - Community images stay private until a moderator approves them. Approval writes a

@@ -222,6 +222,7 @@ const record: ApprovedCatalogRecord = {
 		cropX: 60,
 		cropY: 40,
 		cropZoom: 1.5,
+		rotationDegrees: 90,
 		fitMode: "custom",
 		placementVersion: 2,
 		approvedBy: "moderator-never-returned",
@@ -315,6 +316,9 @@ describe("blendCalc API v1 catalog mapping", () => {
 			license: {
 				name: "CC BY-SA 3.0",
 				attribution: "Open Food Facts contributors",
+			},
+			placement: {
+				rotationDegrees: 90,
 			},
 		});
 		expect(product.images[0]).not.toHaveProperty("storagePath");

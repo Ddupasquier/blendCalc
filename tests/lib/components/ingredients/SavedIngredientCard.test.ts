@@ -74,20 +74,31 @@ describe("SavedIngredientCard move action", () => {
 });
 
 describe("SavedIngredientCard action controls", () => {
-	it("opens the ingredient actions from the card-owned action button", async () => {
+	it("keeps card actions separate from the full-card primary target", async () => {
+		const onPreview = vi.fn();
+		const onMove = vi.fn();
 		const onActions = vi.fn();
 		render(SavedIngredientCard, {
 			props: {
 				...baseProps,
+				onPreview,
+				onMove,
 				onActions,
 			},
 		});
 
 		await fireEvent.click(
+			screen.getByRole("button", {
+				name: "Move to Shopping List: Ground Beef",
+			}),
+		);
+		await fireEvent.click(
 			screen.getByRole("button", { name: "Open actions for Ground Beef" }),
 		);
 
+		expect(onMove).toHaveBeenCalledOnce();
 		expect(onActions).toHaveBeenCalledOnce();
+		expect(onPreview).not.toHaveBeenCalled();
 	});
 });
 

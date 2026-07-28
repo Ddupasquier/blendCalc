@@ -3,6 +3,7 @@ import type {
 	ImagePlacementGeometry,
 	ImagePlacementGeometryInput,
 	ImagePlacementMethod,
+	ImageRotationDegrees,
 	ImagePlacementValue,
 } from "$lib/utils/food/images/types";
 
@@ -12,8 +13,10 @@ export const IMAGE_PLACEMENT_MIN_ZOOM = 1;
 export const IMAGE_PLACEMENT_MAX_ZOOM = 8;
 export const CARD_IMAGE_PLACEMENT_MIN_X = 50;
 export const CARD_IMAGE_PLACEMENT_MAX_X = 100;
+export const IMAGE_ROTATION_INCREMENT = 90;
 
 const fitModes = new Set<ImageFitMode>(["contain", "cover", "custom"]);
+const rotationDegrees = new Set<ImageRotationDegrees>([0, 90, 180, 270]);
 const placementMethods = new Set<ImagePlacementMethod>([
 	"default",
 	"manual",
@@ -30,6 +33,29 @@ export const isImagePlacementMethod = (
 	typeof value === "string" &&
 	placementMethods.has(value as ImagePlacementMethod);
 
+export const isImageRotationDegrees = (
+	value: unknown,
+): value is ImageRotationDegrees =>
+	typeof value === "number" &&
+	rotationDegrees.has(value as ImageRotationDegrees);
+
+export const normalizeImageRotationDegrees = (
+	value: unknown,
+	fallback: ImageRotationDegrees = 0,
+): ImageRotationDegrees => {
+	const numericValue = Number(value);
+	if (!Number.isFinite(numericValue)) return fallback;
+	const normalizedValue =
+		((Math.round(numericValue / IMAGE_ROTATION_INCREMENT) *
+			IMAGE_ROTATION_INCREMENT) %
+			360 +
+			360) %
+		360;
+	return isImageRotationDegrees(normalizedValue)
+		? normalizedValue
+		: fallback;
+};
+
 const clamp = (value: number, min: number, max: number, fallback: number) => {
 	if (!Number.isFinite(value)) return fallback;
 	return Math.min(max, Math.max(min, value));
@@ -44,6 +70,7 @@ export const FULL_IMAGE_PLACEMENT: Readonly<ImagePlacementValue> = Object.freeze
 	cropX: 50,
 	cropY: 50,
 	cropZoom: IMAGE_PLACEMENT_MIN_ZOOM,
+	rotationDegrees: 0,
 	fitMode: "contain",
 	placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
 	placementMethod: "default",
@@ -53,13 +80,17 @@ export const LEGACY_IMAGE_PLACEMENT: Readonly<ImagePlacementValue> = Object.free
 	cropX: 50,
 	cropY: 50,
 	cropZoom: IMAGE_PLACEMENT_MIN_ZOOM,
+	rotationDegrees: 0,
 	fitMode: "cover",
 	placementVersion: LEGACY_IMAGE_PLACEMENT_VERSION,
 	placementMethod: "manual",
 });
 
-export const createFullImagePlacement = (): ImagePlacementValue => ({
+export const createFullImagePlacement = (
+	rotationDegrees: ImageRotationDegrees = 0,
+): ImagePlacementValue => ({
 	...FULL_IMAGE_PLACEMENT,
+	rotationDegrees,
 });
 
 export const normalizeImagePlacement = (
@@ -98,6 +129,10 @@ export const normalizeImagePlacement = (
 			IMAGE_PLACEMENT_MIN_ZOOM,
 			IMAGE_PLACEMENT_MAX_ZOOM,
 			fallback.cropZoom,
+		),
+		rotationDegrees: normalizeImageRotationDegrees(
+			value.rotationDegrees,
+			fallback.rotationDegrees,
 		),
 		fitMode,
 		placementVersion,
@@ -138,6 +173,7 @@ export const EMPTY_IMAGE_PLACEMENT_GEOMETRY: Readonly<ImagePlacementGeometry> = 
 	frameHeight: 0,
 	baseWidth: 0,
 	baseHeight: 0,
+	rotationDegrees: 0,
 	effectiveZoom: 1,
 	coverZoom: 1,
 	maxOffsetX: 0,
@@ -159,6 +195,15 @@ export const getImagePlacementGeometry = ({
 	horizontalMovement = "symmetric",
 }: ImagePlacementGeometryInput): ImagePlacementGeometry => {
 	const placement = normalizeImagePlacement(value);
+	const swapsDimensions =
+		placement.rotationDegrees === 90 ||
+		placement.rotationDegrees === 270;
+	const rotatedNaturalWidth = swapsDimensions
+		? naturalHeight
+		: naturalWidth;
+	const rotatedNaturalHeight = swapsDimensions
+		? naturalWidth
+		: naturalHeight;
 	if (
 		![naturalWidth, naturalHeight, frameWidth, frameHeight].every(
 			(dimension) => Number.isFinite(dimension) && dimension > 0,
@@ -171,17 +216,18 @@ export const getImagePlacementGeometry = ({
 			frameWidth,
 			frameHeight,
 			horizontalMovement,
+			rotationDegrees: placement.rotationDegrees,
 			effectiveZoom:
 				placement.fitMode === "contain" ? 1 : placement.cropZoom,
 		};
 	}
 
 	const containScale = Math.min(
-		frameWidth / naturalWidth,
-		frameHeight / naturalHeight,
+		frameWidth / rotatedNaturalWidth,
+		frameHeight / rotatedNaturalHeight,
 	);
-	const baseWidth = naturalWidth * containScale;
-	const baseHeight = naturalHeight * containScale;
+	const baseWidth = rotatedNaturalWidth * containScale;
+	const baseHeight = rotatedNaturalHeight * containScale;
 	const coverZoom = clamp(
 		Math.max(frameWidth / baseWidth, frameHeight / baseHeight),
 		IMAGE_PLACEMENT_MIN_ZOOM,
@@ -228,6 +274,7 @@ export const getImagePlacementGeometry = ({
 		frameHeight: round(frameHeight),
 		baseWidth: round(baseWidth),
 		baseHeight: round(baseHeight),
+		rotationDegrees: placement.rotationDegrees,
 		effectiveZoom: round(effectiveZoom),
 		coverZoom: round(coverZoom),
 		maxOffsetX: round(maxOffsetX),
@@ -284,6 +331,7 @@ export const getImagePlacementCropXFromOffset = (
 
 export const createFillImagePlacement = (
 	coverZoom: number,
+	rotationDegrees: ImageRotationDegrees = 0,
 ): ImagePlacementValue => ({
 	cropX: 50,
 	cropY: 50,
@@ -293,6 +341,7 @@ export const createFillImagePlacement = (
 		IMAGE_PLACEMENT_MAX_ZOOM,
 		IMAGE_PLACEMENT_MIN_ZOOM,
 	),
+	rotationDegrees,
 	fitMode: "cover",
 	placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
 	placementMethod: "manual",
@@ -401,3 +450,18 @@ export const zoomImagePlacement = (
 	value: Partial<ImagePlacementValue>,
 	zoom: number,
 ): ImagePlacementValue => createCustomImagePlacement(value, zoom);
+
+export const rotateImagePlacement = (
+	value: Partial<ImagePlacementValue>,
+): ImagePlacementValue => {
+	const placement = createCustomImagePlacement(value);
+	const nextRotation = normalizeImageRotationDegrees(
+		placement.rotationDegrees + IMAGE_ROTATION_INCREMENT,
+	);
+
+	return constrainCardImagePlacement({
+		...placement,
+		rotationDegrees: nextRotation,
+		placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
+	});
+};

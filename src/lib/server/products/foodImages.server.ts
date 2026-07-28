@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
-import { constrainCardImagePlacement } from "$lib/utils/food/images/imagePlacement";
+import {
+	constrainCardImagePlacement,
+	normalizeImageRotationDegrees,
+} from "$lib/utils/food/images/imagePlacement";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { FoodImageAsset } from "$lib/utils/food/types";
 import {
@@ -28,6 +31,7 @@ const normalizePlacement = (
 		crop_x: placement.cropX,
 		crop_y: placement.cropY,
 		crop_zoom: placement.cropZoom,
+		rotation_degrees: placement.rotationDegrees,
 		fit_mode: placement.fitMode,
 		placement_version: placement.placementVersion,
 		crop_source: value.cropSource ?? "auto",
@@ -171,6 +175,7 @@ export const publishModeratedFoodImageAsset = async ({
 		cropX: payload.crop_x,
 		cropY: payload.crop_y,
 		cropZoom: payload.crop_zoom,
+		rotationDegrees: payload.rotation_degrees,
 		fitMode: payload.fit_mode,
 		placementVersion: payload.placement_version,
 		cropSource: payload.crop_source,
@@ -222,7 +227,7 @@ export const updateFoodImageAssetPlacement = async ({
 		.eq("image_role", role)
 		.eq("status", "active")
 		.select(
-			"source, source_reference, image_role, image_url, thumbnail_url, storage_path, license_name, license_url, attribution_text, confidence, crop_x, crop_y, crop_zoom, fit_mode, placement_version, crop_source, placement_method, placement_suggestion_version, placement_suggestion_confidence, placement_suggestion_accepted_at, approved_by, approved_at, fetched_at",
+			"source, source_reference, image_role, image_url, thumbnail_url, storage_path, license_name, license_url, attribution_text, confidence, crop_x, crop_y, crop_zoom, rotation_degrees, fit_mode, placement_version, crop_source, placement_method, placement_suggestion_version, placement_suggestion_confidence, placement_suggestion_accepted_at, approved_by, approved_at, fetched_at",
 		)
 		.maybeSingle();
 	if (error) throw error;
@@ -242,6 +247,7 @@ export const updateFoodImageAssetPlacement = async ({
 		cropX: data.crop_x,
 		cropY: data.crop_y,
 		cropZoom: data.crop_zoom,
+		rotationDegrees: normalizeImageRotationDegrees(data.rotation_degrees),
 		fitMode: data.fit_mode as FoodImageAsset["fitMode"],
 		placementVersion: data.placement_version,
 		cropSource: data.crop_source as FoodImageAsset["cropSource"],

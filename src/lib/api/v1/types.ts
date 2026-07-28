@@ -47,6 +47,7 @@ export type ApiV1ImagePlacement = {
 	x: number;
 	y: number;
 	zoom: number;
+	rotationDegrees: number;
 	version: number;
 };
 

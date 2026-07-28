@@ -491,10 +491,12 @@ describe("SavedIngredientList overlay behavior", () => {
 		},
 	);
 
-	it("runs one bulk move after every selected card begins its exit", async () => {
+	it("runs one bulk move after the staggered selected-card exits finish", async () => {
 		const onMoveSelection = vi.fn().mockResolvedValue(true);
+		const finishExits: Array<() => void> = [];
+		const animateCards = [vi.fn(), vi.fn()];
 
-		render(SavedIngredientList, {
+		const { container } = render(SavedIngredientList, {
 			props: {
 				activeList: MIX_STORAGE_KEYS.fridge,
 				foods: [food, secondFood],
@@ -512,6 +514,23 @@ describe("SavedIngredientList overlay behavior", () => {
 				onRevealMore: vi.fn(),
 			},
 		});
+		const cards = Array.from(
+			container.querySelectorAll<HTMLElement>(".saved-ingredient-card"),
+		);
+		expect(cards).toHaveLength(2);
+		cards.forEach((card, index) => {
+			const finished = new Promise<void>((resolve) => {
+				finishExits[index] = resolve;
+			});
+			animateCards[index].mockReturnValue({
+				finished,
+				cancel: vi.fn(),
+			});
+			Object.defineProperty(card, "animate", {
+				configurable: true,
+				value: animateCards[index],
+			});
+		});
 
 		await fireEvent.click(
 			screen.getByRole("button", {
@@ -519,9 +538,47 @@ describe("SavedIngredientList overlay behavior", () => {
 			}),
 		);
 
+		await waitFor(() => {
+			expect(animateCards[0]).toHaveBeenCalledOnce();
+			expect(animateCards[1]).toHaveBeenCalledOnce();
+		});
+		const firstCardKeyframes = animateCards[0].mock.calls[0][0] as Keyframe[];
+		expect(firstCardKeyframes).toHaveLength(3);
+		expect(firstCardKeyframes[0]).toEqual({
+			offset: 0,
+			opacity: 1,
+			transform: "translate3d(0, 0, 0)",
+		});
+		expect(firstCardKeyframes[1]).toMatchObject({
+			offset: 0.18,
+			opacity: 1,
+		});
+		expect(firstCardKeyframes[1].transform).toMatch(/^translate3d\(-/);
+		expect(firstCardKeyframes[2]).toEqual({
+			offset: 1,
+			opacity: 0,
+			transform: "translate3d(110%, 0, 0)",
+		});
+		expect(animateCards[0].mock.calls[0][1]).toMatchObject({ delay: 0 });
+		expect(
+			(animateCards[1].mock.calls[0][1] as KeyframeAnimationOptions).delay,
+		).toBeGreaterThan(0);
+		expect(onMoveSelection).not.toHaveBeenCalled();
+
+		finishExits[0]();
+		await Promise.resolve();
+		expect(onMoveSelection).not.toHaveBeenCalled();
+
+		finishExits[1]();
 		await waitFor(() => expect(onMoveSelection).toHaveBeenCalledOnce());
 		expect(await screen.findByRole("status")).toHaveTextContent(
 			"Moved 2 ingredients to Shopping List.",
 		);
+		expect(
+			document.querySelector("[data-directional-exit-clone]"),
+		).not.toBeInTheDocument();
+		cards.forEach((card) => {
+			expect(card.style.visibility).toBe("");
+		});
 	});
 });

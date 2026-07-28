@@ -30,6 +30,7 @@
 			cropX: food.image?.cropX,
 			cropY: food.image?.cropY,
 			cropZoom: food.image?.cropZoom,
+			rotationDegrees: food.image?.rotationDegrees,
 			fitMode: food.image?.fitMode,
 			placementVersion: food.image?.placementVersion,
 		}),

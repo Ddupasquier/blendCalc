@@ -7,6 +7,8 @@ import {
 	getImagePlacementGeometry,
 	getStoredImagePlacement,
 	moveImagePlacement,
+	normalizeImageRotationDegrees,
+	rotateImagePlacement,
 	zoomImagePlacement,
 } from "$lib/utils/food/images/imagePlacement";
 
@@ -49,6 +51,23 @@ describe("image placement geometry", () => {
 		expect(fillGeometry.effectiveZoom).toBe(2);
 		expect(fillGeometry.canMoveX).toBe(true);
 		expect(fillGeometry.canMoveY).toBe(false);
+	});
+
+	it("swaps the rendered geometry for quarter-turn rotations", () => {
+		const geometry = getImagePlacementGeometry({
+			...squareFrame,
+			naturalWidth: 200,
+			naturalHeight: 100,
+			value: {
+				...createFullImagePlacement(),
+				rotationDegrees: 90,
+			},
+		});
+
+		expect(geometry.baseWidth).toBe(50);
+		expect(geometry.baseHeight).toBe(100);
+		expect(geometry.rotationDegrees).toBe(90);
+		expect(geometry.coverZoom).toBe(2);
 	});
 
 	it("maps 0, 50, and 100 to the full movement range", () => {
@@ -163,6 +182,7 @@ describe("image placement geometry", () => {
 			cropX: 70,
 			cropY: 40,
 			cropZoom: 2,
+			rotationDegrees: 0,
 			fitMode: "custom",
 			placementVersion: 2,
 			placementMethod: "smart-ocr",
@@ -175,11 +195,31 @@ describe("image placement geometry", () => {
 		expect(zoomed.suggestionConfidence).toBe(82);
 	});
 
+	it("rotates clockwise in supported quarter turns", () => {
+		const firstTurn = rotateImagePlacement(createFullImagePlacement());
+		const secondTurn = rotateImagePlacement(firstTurn);
+		const thirdTurn = rotateImagePlacement(secondTurn);
+		const fourthTurn = rotateImagePlacement(thirdTurn);
+
+		expect(firstTurn.rotationDegrees).toBe(90);
+		expect(secondTurn.rotationDegrees).toBe(180);
+		expect(thirdTurn.rotationDegrees).toBe(270);
+		expect(fourthTurn.rotationDegrees).toBe(0);
+		expect(firstTurn.placementMethod).toBe("manual");
+	});
+
+	it("normalizes arbitrary rotation values to the closest quarter turn", () => {
+		expect(normalizeImageRotationDegrees(44)).toBe(0);
+		expect(normalizeImageRotationDegrees(46)).toBe(90);
+		expect(normalizeImageRotationDegrees(-90)).toBe(270);
+	});
+
 	it("keeps rows without version metadata on legacy rendering", () => {
 		expect(getStoredImagePlacement({ cropX: 20, cropY: 80, cropZoom: 1.5 })).toEqual({
 			cropX: 20,
 			cropY: 80,
 			cropZoom: 1.5,
+			rotationDegrees: 0,
 			fitMode: "cover",
 			placementVersion: 1,
 			placementMethod: "manual",

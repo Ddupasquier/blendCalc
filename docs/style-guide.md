@@ -353,6 +353,9 @@ Current card rules:
   cards.
 - Category/supporting copy uses muted `0.88rem` medium type and one-line ellipsis.
 - Action buttons remain in the foreground action layer.
+- The saved card's native preview/selection target covers the full card surface, not
+  only its title or copy. Move, menu, delete, and other explicit actions remain above
+  that target and retain priority.
 - A custom-food tint indicates a private unmatched item; it is not selection.
 - Selection mode uses the reserved card border and an honest selected state. Do not show
   always-present checkboxes outside selection mode.
@@ -369,6 +372,10 @@ not separately in saved and search cards.
 image-failure state, and category fallback. `IngredientCardMediaLane` owns clipping,
 width, fallback surface, and the curved fade. Cards and image-placement previews use the
 same lane and placement renderer so a saved preview matches the real card.
+The shared placement editor offers full-image and fill-card presets, clockwise
+90-degree rotation, direct manipulation, range controls, and restore. Rotation is part
+of the saved placement and the preview must use the same rotated geometry as the
+rendered card.
 
 Current local geometry:
 
@@ -478,7 +485,11 @@ left-aligned.
 - Use pointer events for touch/mouse parity and keyboard equivalents for every action.
 - Long press may enter ingredient selection mode, but the held card must also become
   selected and the interaction must not block normal navigation.
-- Multi-item movement animates selected cards together in the destination direction.
+- Multi-item movement uses a short top-to-bottom stagger. Each selected card makes a
+  subtle opposite-direction wind-up before exiting toward the destination, while the
+  underlying bulk move remains one coordinated update.
+- Moving ingredient cards render above the list's clipping boundary; do not expose the
+  full list overflow or crop the card as it exits.
 - Do not refetch or reset a view when the browser regains focus.
 
 ## SCSS And File Ownership

@@ -45,6 +45,7 @@
 		cropX: food?.image?.cropX ?? 50,
 		cropY: food?.image?.cropY ?? 50,
 		cropZoom: food?.image?.cropZoom ?? 1,
+		rotationDegrees: food?.image?.rotationDegrees,
 		fitMode: food?.image?.fitMode,
 		placementVersion: food?.image?.placementVersion,
 		placementMethod: food?.image?.placementMethod,
@@ -65,6 +66,7 @@
 		draftPlacement.cropX !== savedPlacement.cropX ||
 			draftPlacement.cropY !== savedPlacement.cropY ||
 			draftPlacement.cropZoom !== savedPlacement.cropZoom ||
+			draftPlacement.rotationDegrees !== savedPlacement.rotationDegrees ||
 			draftPlacement.fitMode !== savedPlacement.fitMode ||
 			draftPlacement.placementVersion !== savedPlacement.placementVersion ||
 			draftPlacement.placementMethod !== savedPlacement.placementMethod ||

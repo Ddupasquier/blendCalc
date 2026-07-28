@@ -15,6 +15,7 @@ import {
 	constrainCardImagePlacement,
 	isImageFitMode,
 	isImagePlacementMethod,
+	isImageRotationDegrees,
 } from "$lib/utils/food/images/imagePlacement";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import {
@@ -89,6 +90,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				cropX?: unknown;
 				cropY?: unknown;
 				cropZoom?: unknown;
+				rotationDegrees?: unknown;
 				fitMode?: unknown;
 				placementMethod?: unknown;
 				suggestionVersion?: unknown;
@@ -110,6 +112,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 			if (
 				![parsedCrop.cropX, parsedCrop.cropY, parsedCrop.cropZoom].every((value) =>
 					Number.isFinite(Number(value))) ||
+				!isImageRotationDegrees(Number(parsedCrop.rotationDegrees ?? 0)) ||
 				!isImageFitMode(parsedCrop.fitMode) ||
 				(
 					usesSmartSuggestion &&
@@ -122,6 +125,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				cropX: Number(parsedCrop.cropX),
 				cropY: Number(parsedCrop.cropY),
 				cropZoom: Number(parsedCrop.cropZoom),
+				rotationDegrees: Number(
+					parsedCrop.rotationDegrees ?? 0,
+				) as ImagePlacementValue["rotationDegrees"],
 				fitMode: parsedCrop.fitMode,
 				placementVersion: CURRENT_IMAGE_PLACEMENT_VERSION,
 				placementMethod,

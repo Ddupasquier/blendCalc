@@ -44,9 +44,18 @@ $selection-border-color: color-mix(
 .saved-ingredient-card__select {
 	@include ingredient-card-layout.interactive-content;
 
+	position: static;
 	-webkit-touch-callout: none;
 	touch-action: manipulation;
 	user-select: none;
+
+	&::before {
+		position: absolute;
+		z-index: 1;
+		inset: 0;
+		content: "";
+		border-radius: $app-shell-radius-card;
+	}
 }
 
 .saved-ingredient-card--media .saved-ingredient-card__select {
@@ -64,7 +73,16 @@ $selection-border-color: color-mix(
 }
 
 .saved-ingredient-card__select:focus-visible {
-	@include ingredient-card-layout.interactive-content-focus;
+	outline: none;
+
+	&::before {
+		inset: $app-focus-outline-offset;
+		border-radius: calc(
+			#{$app-shell-radius-card} - #{$app-focus-outline-offset}
+		);
+		outline: $app-focus-outline;
+		outline-offset: 0;
+	}
 }
 
 .saved-ingredient-card__copy {
@@ -77,10 +95,14 @@ $selection-border-color: color-mix(
 
 .saved-ingredient-card__move-action {
 	@include ingredient-card-layout.action-layer;
+
+	z-index: 2;
 }
 
 .saved-ingredient-card__actions {
 	@include ingredient-card-layout.action-row;
+
+	z-index: 2;
 }
 
 @media (max-width: $app-breakpoint-xs) {

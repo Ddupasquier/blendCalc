@@ -49,6 +49,7 @@ export interface FoodImageAsset {
     cropX?: number;
     cropY?: number;
     cropZoom?: number;
+    rotationDegrees?: ImagePlacementValue["rotationDegrees"];
     cropSource?: "auto" | "user" | "moderator";
     fitMode?: ImageFitMode;
     placementVersion?: number;

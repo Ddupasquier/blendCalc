@@ -203,12 +203,13 @@
           "placement": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["fitMode", "x", "y", "zoom", "version"],
+            "required": ["fitMode", "x", "y", "zoom", "rotationDegrees", "version"],
             "properties": {
               "fitMode": { "type": "string" },
               "x": { "type": "number" },
               "y": { "type": "number" },
               "zoom": { "type": "number", "exclusiveMinimum": 0 },
+              "rotationDegrees": { "type": "integer", "enum": [0, 90, 180, 270] },
               "version": { "type": "integer", "minimum": 1 }
             }
           },

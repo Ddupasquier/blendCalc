@@ -1,5 +1,6 @@
 export type ImageFitMode = "contain" | "cover" | "custom";
 export type ImageHorizontalMovement = "symmetric" | "left-only";
+export type ImageRotationDegrees = 0 | 90 | 180 | 270;
 
 export type ImagePlacementMethod =
 	| "default"
@@ -11,6 +12,7 @@ export type ImagePlacementValue = {
 	cropX: number;
 	cropY: number;
 	cropZoom: number;
+	rotationDegrees: ImageRotationDegrees;
 	fitMode: ImageFitMode;
 	placementVersion: number;
 	placementMethod?: ImagePlacementMethod;
@@ -26,6 +28,7 @@ export type ImagePlacementGeometry = {
 	frameHeight: number;
 	baseWidth: number;
 	baseHeight: number;
+	rotationDegrees: ImageRotationDegrees;
 	effectiveZoom: number;
 	coverZoom: number;
 	maxOffsetX: number;

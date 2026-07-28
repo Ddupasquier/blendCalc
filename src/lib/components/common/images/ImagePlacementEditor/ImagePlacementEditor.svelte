@@ -13,6 +13,7 @@
 		createFullImagePlacement,
 		EMPTY_IMAGE_PLACEMENT_GEOMETRY,
 		IMAGE_PLACEMENT_MAX_ZOOM,
+		rotateImagePlacement,
 	} from "$lib/utils/food/images/imagePlacement";
 	import type {
 		ImageFitMode,
@@ -76,10 +77,15 @@
 
 	const selectFitMode = (fitMode: Exclude<ImageFitMode, "custom">) => {
 		if (fitMode === "contain") {
-			onChange?.(createFullImagePlacement());
+			onChange?.(createFullImagePlacement(value.rotationDegrees));
 			return;
 		}
-		onChange?.(createFillImagePlacement(previewGeometry.coverZoom));
+		onChange?.(
+			createFillImagePlacement(
+				previewGeometry.coverZoom,
+				value.rotationDegrees,
+			),
+		);
 	};
 
 	const formatZoom = (zoom: number) => `${zoom.toFixed(2).replace(/\.00$/, "")}×`;
@@ -90,6 +96,10 @@
 	const restoreDefault = () => {
 		clearSuggestionFeedback();
 		onChange?.(createFullImagePlacement());
+	};
+	const rotateClockwise = () => {
+		clearSuggestionFeedback();
+		onChange?.(rotateImagePlacement(value));
 	};
 	const suggestPlacement = async () => {
 		if (!previewGeometry.ready || suggestingPlacement) return;
@@ -172,13 +182,18 @@
 				variant="soft"
 				fullWidth
 				busy={suggestingPlacement}
-				disabled={!previewGeometry.ready}
+				disabled={!previewGeometry.ready || value.rotationDegrees !== 0}
 				onclick={suggestPlacement}
 			>
 				{suggestingPlacement
 					? `Finding product text ${Math.round(suggestionProgress * 100)}%`
 					: "Suggest placement"}
 			</RoundedActionButton>
+			{#if value.rotationDegrees !== 0}
+				<p class="image-placement-editor__control-note">
+					Automatic placement is available when rotation is set to 0°.
+				</p>
+			{/if}
 			{#if suggestionMessage || suggestionError}
 				{#if suggestionMessage}
 					<StatusMessage tone="success" message={suggestionMessage} />
@@ -209,6 +224,15 @@
 				>
 					Fill card
 				</PillButton>
+			</div>
+			<div class="image-placement-editor__rotation">
+				<span>
+					Rotation
+					<output>{value.rotationDegrees}°</output>
+				</span>
+				<RoundedActionButton variant="neutral" onclick={rotateClockwise}>
+					Rotate 90° clockwise
+				</RoundedActionButton>
 			</div>
 			<label>
 				<span>

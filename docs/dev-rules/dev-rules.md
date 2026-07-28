@@ -1032,11 +1032,13 @@ non-destructive and versioned. Keep the original image unchanged; placement only
 controls card rendering. Every new image defaults to version 2 `Full image`: contain the
 complete orientation-corrected image, center it, and treat `1×` as the full-image size.
 Offer the shared `Full image` and `Fill card` presets plus a plainly labeled
-`Restore default` action that returns to version 2 `Full image` at centered `1×`;
+clockwise `Rotate 90°` control and a plainly labeled `Restore default` action that
+returns to version 2 `Full image` at centered `1×` and `0°`;
 restoration must remain a draft until the surrounding save or approval flow is
 completed. `Fill card` must calculate the minimum aspect-aware zoom needed to cover
 the real card image lane. `Custom` is an automatic placement state rather than a
-separate preset: dragging, pinching, scrolling, moving a slider, or changing zoom
+separate preset: dragging, pinching, scrolling, moving a slider, changing zoom, or
+rotating
 must switch the placement to version 2 `Custom`. Normalized position always means
 `0 = far left/top`, `50 = centered`, and `100 = far right/bottom`; disable an axis when
 the measured image and frame leave no overflow on that axis. Keep native range controls
@@ -1047,7 +1049,8 @@ Never attach direct-manipulation handlers only to the masked media lane because 
 mask and higher-layer copy create inaccessible drag dead zones. User submission,
 moderation approval, admin/moderator editing,
 ingredient cards, and previews must use the same placement value (`fit_mode`, normalized
-X/Y, zoom, and `placement_version`), shared geometry utility, and shared measured
+X/Y, zoom, clockwise quarter-turn rotation, and `placement_version`), shared geometry
+utility, and shared measured
 renderer so previews cannot disagree with saved cards. Editors must show one interactive
 preview using the real card proportions, image lane, fade, copy spacing, and action-space
 reservation instead of separate circular approximations. Show the unchanged full image
@@ -1416,15 +1419,21 @@ that could bypass it. Derive ownership from the authenticated session, never fro
 id supplied by the browser, and return small typed outcomes for expected conflicts.
 
 **49c.** <a id="rule-bulk-list-moves"></a>Bulk Fridge and Shopping List moves must be
-one coordinated action. Start every visible selected-card exit at the same time, move
-Fridge items toward Shopping List on the right, and move Shopping List items toward
-Fridge on the left. Honor reduced-motion preferences by skipping the slide without
-delaying the write. Persist the complete selected set through one authenticated atomic
-database function, reject stale or partial selections, notify list consumers once, and
-update the visible lists once after success. Never implement a bulk move as a loop of
-single-item writes or reload the full list after each selected item. Single-item moves
-must use the same directional exit semantics and reduced-motion behavior as bulk moves
-while retaining their item-level busy state.
+one coordinated action. Animate visible selected cards in top-to-bottom order with a
+short stagger. Give each card a subtle anticipatory nudge opposite the destination
+before it exits: Fridge items nudge left and move toward Shopping List on the right;
+Shopping List items nudge right and move toward Fridge on the left. Keep the complete
+cascade short. Honor reduced-motion preferences by skipping the nudge, slide, and
+stagger without delaying the write. Persist the complete selected set through one
+authenticated atomic database function only after the visual cascade completes, reject
+stale or partial selections, notify list consumers once, and update the visible lists
+once after success. Never implement a bulk move as a loop of single-item writes or
+reload the full list after each selected item. Render moving cards through a temporary,
+noninteractive animation layer so their destination exit is not clipped by the list
+scroll container; keep the real cards hidden in place until the atomic move resolves.
+Single-item moves must use the same unclipped destination direction and reduced-motion
+behavior while retaining their item-level busy state; they do not require the bulk
+stagger or anticipatory nudge.
 
 **49d.** <a id="rule-long-press-selection"></a>Saved ingredient cards must keep bulk
 selection controls out of the normal card layout. A deliberate 500ms long press on the
@@ -1434,16 +1443,20 @@ touch, keyboard, switch, and assistive-technology users. Cancel a pending hold w
 pointer moves far enough to indicate scrolling, suppress the follow-up browser click,
 and avoid triggering selection from move, menu, or delete controls. Once selection mode
 starts, let the card's native button toggle selection and expose the state through
-`aria-pressed` plus an accurate `Select` or `Unselect` accessible name. Do not add a
-second checkbox or circular selection button. Reserve the selected-border width in every
-card so state changes do not shift layout, show a shared visible check indicator so color
-is not the only cue, and keep the keyboard focus treatment visibly distinct from the
-selected border. Announce selection mode and the selected count through a polite live
-region. Hide unrelated item actions and provide `Select all`, `Move`, and `Cancel`
-controls. Canceling, switching lists, or completing a move must clear the selection and
-leave selection mode. Keep the press behavior in one reusable interaction utility and
-test touch, mouse, keyboard alternatives, movement cancellation, selection
-announcements, and reduced-motion-safe bulk movement.
+`aria-pressed` plus an accurate `Select` or `Unselect` accessible name. Stretch that
+native primary button across the complete card surface rather than limiting it to the
+ingredient name or copy block. Keep move, menu, delete, and other explicit card actions
+in a higher interaction layer so they always perform their own action instead of
+triggering preview or selection. Do not add a second checkbox or circular selection
+button. Reserve the selected-border width in every card so state changes do not shift
+layout, show a shared visible check indicator so color is not the only cue, and keep the
+keyboard focus treatment visibly distinct from the selected border. Announce selection
+mode and the selected count through a polite live region. Hide unrelated item actions
+and provide `Select all`, `Move`, and `Cancel` controls. Canceling, switching lists, or
+completing a move must clear the selection and leave selection mode. Keep the press
+behavior in one reusable interaction utility and test touch, mouse, keyboard
+alternatives, movement cancellation, action-button priority, selection announcements,
+and reduced-motion-safe bulk movement.
 
 **50.** <a id="rule-url-backed-popins"></a>Pop-in views, popovers, modals, sheets,
 scanners, dialogs, and other meaningful overlay states need URL-backed state with
