@@ -3,8 +3,8 @@
  * response-contract, OpenAPI, test, and version-documentation metadata stay consistent
  * without modifying repository files.
  * Run: `npm run version:check`
- * This read-only check also runs automatically before `npm run check` and
- * `npm run build`.
+ * This read-only check also runs automatically before development, test, check,
+ * preview, and build commands.
  */
 
 import { existsSync, readFileSync } from "node:fs";

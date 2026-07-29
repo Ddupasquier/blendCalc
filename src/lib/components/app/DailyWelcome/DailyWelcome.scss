@@ -24,7 +24,6 @@
 	border-radius: $app-card-radius;
 	cursor: pointer;
 	pointer-events: auto;
-	animation: welcome-enter 180ms ease-out both;
 
 	strong {
 		font-family: $app-font-family-display;
@@ -60,18 +59,6 @@
 	background: $app-highlight;
 	transform-origin: left;
 	animation: welcome-timer 4s linear forwards;
-}
-
-@keyframes welcome-enter {
-	from {
-		opacity: 0;
-		transform: translateY(0.75rem);
-	}
-
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
 }
 
 @keyframes welcome-timer {
@@ -113,7 +100,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.daily-welcome,
 	.daily-welcome__timer {
 		animation: none;
 	}

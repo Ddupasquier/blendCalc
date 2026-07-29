@@ -110,7 +110,7 @@
 		height: calc($app-control-height + 0.6rem);
 		padding: 0 $app-gap-md;
 		color: $app-primary;
-		background: rgba($app-bg, 0.84);
+		background: color-mix(in srgb, $app-bg 84%, transparent);
 		border: $app-border;
 		border-radius: $app-radius;
 		font-size: $app-font-size-md;

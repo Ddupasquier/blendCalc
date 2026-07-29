@@ -37,6 +37,10 @@ All UI work must:
    become reusable.
 7. Never derive a new global rule from unfinished Mix, Saved Drinks, Profile, or
    Moderation UI.
+8. Compare every UI change with the closest approved Ingredients pattern before and
+   after implementation. Review all applicable states and every consumer of a changed
+   shared primitive; visual cohesion is required for handoff rather than deferred
+   cleanup.
 
 Keep this guide focused on current decisions. Remove superseded guidance when a pattern
 changes; do not preserve competing generations of the same visual system.
@@ -75,6 +79,25 @@ token already owns the decision.
   is compact.
 
 ## Color System
+
+### Theme Contract
+
+The app supports `system`, `light`, and `dark` appearance preferences. `system` follows
+the device color-scheme setting; explicit light or dark choices remain stable across
+devices through the authenticated profile.
+
+- Global semantic color roles are declared as CSS custom properties in
+  `src/styles/_themes.scss`.
+- Existing SCSS consumers continue to use the `$app-*` roles in
+  `src/styles/_variables.scss`; those roles resolve to the runtime theme properties.
+- New components must use semantic roles rather than branch their markup or styles by
+  theme.
+- High-contrast data artifacts such as the Nutrition Facts label may intentionally
+  remain black on white when that presentation is part of the artifact itself.
+- Product images, food symbols, warnings, errors, success states, focus indicators,
+  disabled controls, overlays, and transparent media must remain legible in both themes.
+- Theme previews in Profile communicate the choice but do not create a second palette or
+  component system.
 
 ### Ingredients Shell Palette
 
@@ -302,7 +325,7 @@ Check the existing primitive before writing markup or SCSS.
 | Compact chip/filter action | `PillButton` | Selected state must also be exposed through `aria-pressed` |
 | Tabs or step progress | `SegmentedControl` | Pill tabs for Fridge/Shopping; progress variant for manual entry |
 | Back or close | `BackButton` / `CloseButton` | Do not recreate chevrons, circles, or hit areas |
-| Collapse | `CollapsibleSection` | Chevron stays left; badges/actions stay right |
+| Collapse | `CollapsibleSection` | Chevron stays left; badges/actions stay right; shared open/close motion preserves mounted content |
 | Bottom overlay | `BottomSheet` | Owns handle, title, focus, close behavior, safe area, and navigation clearance |
 | Right-side data view | `RightSheet` | Search and full-content slide-in views |
 | Sheet action row | `BottomSheetAction` | Owns row geometry and circular leading icon |
@@ -312,6 +335,7 @@ Check the existing primitive before writing markup or SCSS.
 | Photo input | `PhotoUploadInput` | Single/multiple photo prompt, count, status, and validation |
 | Toggle | `ToggleSwitch` | Boolean settings; do not use a checkbox as an on/off switch |
 | Compact metadata badge | `TextBadge` | Owns centering, tone, padding, and truncation |
+| Structured metadata pill | `MetadataPill` | Ingredient labels, kcal, goal progress, and other compact label/value or label/icon metadata |
 | Verified evidence | `VerifiedStatusBadge` | Detail/search contexts where verification helps a decision |
 | Privileged group marker | `PrivilegedActionBadge` | One crown in the owning group header, not every child action |
 | Centered icon wrapper | `CenteredIcon` | Required inner alignment layer for icon controls |
@@ -550,9 +574,28 @@ left-aligned.
 ## Motion And Interaction
 
 - Motion should explain change: sheet entry, list movement, selection, or loading.
+- Every disclosure animates both opening and closing through the shared
+  `animatedDetails` behavior. Keep disclosure children mounted so closing a section
+  never discards unsaved form or image-placement state.
+- Animate the complete disclosure boundary rather than an arbitrary content child.
+  Child margins and padding vary between disclosures; the shared boundary animation
+  prevents delayed gaps, clipped content, and end-of-motion snapping.
+- Rapidly reversing a disclosure must continue from its currently visible height.
+  Do not add component-specific collapse transitions or opacity delays on top of the
+  shared behavior.
+- Pair functional entrances with coherent exits. Status feedback may use a brief
+  opacity/vertical transition, sheets use the shared directional transition, and
+  removed list items must be followed by local reflow rather than a flashing reload.
+- State changes such as chevrons, toggles, and scanner expansion transition in both
+  directions. Keep both visual states mounted when removing one would make the reverse
+  transition impossible.
 - Keep transitions short and calm. Avoid decorative looping motion in task flows.
-- Honor `prefers-reduced-motion`; the global stylesheet reduces animation and transition
-  duration.
+- Honor `prefers-reduced-motion`; CSS is covered globally and every Svelte or Web
+  Animations API duration must use the shared motion helper or an equivalent explicit
+  reduced-motion branch.
+- Loading spinners, scanner sweeps, timers, and other process indicators may loop only
+  while the process is active. They do not need a delayed outro that would make the UI
+  feel slower.
 - Use pointer events for touch/mouse parity and keyboard equivalents for every action.
 - Long press may enter ingredient selection mode, but the held card must also become
   selected and the interaction must not block normal navigation.
@@ -618,10 +661,15 @@ they already exist.
 ## Review Checklist
 
 - [ ] Ingredients is the visual baseline used for the change.
+- [ ] The closest equivalent Ingredients pattern was compared before and after the
+      change.
 - [ ] Existing primitives were checked before creating UI.
 - [ ] Resting, loading, empty, disabled, error, overlay, dialog, and confirmation states
       were reviewed—not only the default screenshot.
+- [ ] Every affected consumer of a changed shared primitive was regression checked.
 - [ ] Colors and type use semantic global tokens.
+- [ ] Light, dark, and device-following themes preserve hierarchy, contrast, focus,
+      statuses, overlays, and media legibility.
 - [ ] Repeated spacing uses `$app-gap-*`; unique geometry remains local.
 - [ ] No box shadow or unexplained one-off global token was added.
 - [ ] Focus, keyboard, touch, reduced motion, and 200% text zoom remain usable.

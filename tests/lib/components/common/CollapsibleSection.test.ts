@@ -15,7 +15,9 @@ describe("CollapsibleSection", () => {
 		render(CollapsibleSection, {
 			props: {
 				title: "Adjust card image placement",
+				titleId: "image-placement-title",
 				badge: "optional",
+				surface: "panel",
 				summaryEnd,
 				children,
 			},
@@ -28,13 +30,22 @@ describe("CollapsibleSection", () => {
 		const endAction = screen.getByTestId("summary-end");
 
 		expect(details).not.toHaveAttribute("open");
+		expect(details).toHaveAttribute("data-surface", "panel");
 		expect(chevron?.compareDocumentPosition(title) ?? 0)
 			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
 		expect(title.compareDocumentPosition(endAction))
 			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
 		expect(screen.getByText("optional")).toBeInTheDocument();
+		expect(title).toHaveAttribute("id", "image-placement-title");
 
 		await fireEvent.click(summary as HTMLElement);
 		expect(details).toHaveAttribute("open");
+		expect(details).toHaveAttribute("data-expanded", "true");
+		expect(summary).toHaveAttribute("aria-expanded", "true");
+
+		await fireEvent.click(summary as HTMLElement);
+		expect(details).not.toHaveAttribute("open");
+		expect(details).toHaveAttribute("data-expanded", "false");
+		expect(summary).toHaveAttribute("aria-expanded", "false");
 	});
 });

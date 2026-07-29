@@ -23,7 +23,7 @@ export const getUserProfile = async (
 	const { data, error } = await supabase
 		.from("profiles")
 		.select(
-			"user_id, display_name, bio, avatar_path, avatar_alt_text, avatar_moderation_status, avatar_policy_acknowledged_at, created_at, updated_at",
+			"user_id, display_name, bio, appearance_theme, avatar_path, avatar_alt_text, avatar_moderation_status, avatar_policy_acknowledged_at, created_at, updated_at",
 		)
 		.eq("user_id", userId)
 		.maybeSingle();

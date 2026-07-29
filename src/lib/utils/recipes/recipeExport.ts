@@ -5,7 +5,10 @@ import type { SavedDrink } from "$lib/utils/storage/client/savedDrinks";
 const formatAmount = (value: number) =>
 	new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value);
 
-const getIngredientAmount = (drink: SavedDrink, foodId: number) => {
+export const formatSavedDrinkIngredientAmount = (
+	drink: SavedDrink,
+	foodId: number,
+) => {
 	const quantity = drink.servingQuantities[foodId];
 	const unit = drink.servingUnits[foodId];
 	if (Number.isFinite(quantity) && quantity > 0 && unit) {
@@ -27,7 +30,8 @@ const getNutrientUnit = (drink: SavedDrink, nutrientId: number) =>
 
 export const buildSavedDrinkExportText = (drink: SavedDrink) => {
 	const ingredientLines = drink.foods.map(
-		(food) => `- ${getIngredientAmount(drink, food.fdcId)} ${food.description}`,
+		(food) =>
+			`- ${formatSavedDrinkIngredientAmount(drink, food.fdcId)} ${food.description}`,
 	);
 	const selectedIds = [...new Set(drink.selected.map(Number))].filter(Number.isFinite);
 	const nutrientLines = selectedIds.flatMap((nutrientId) => {

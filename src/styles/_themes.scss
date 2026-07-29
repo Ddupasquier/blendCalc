@@ -1,0 +1,104 @@
+@mixin light-theme {
+	color-scheme: light;
+
+	--app-shell-surface-page: #f8f8fb;
+	--app-shell-surface-panel: #fff;
+	--app-shell-surface-control: #e9e9ed;
+	--app-shell-surface-soft: #f8f7f5;
+	--app-shell-text-primary: #1a1a2e;
+	--app-shell-text-muted: #8b8fa8;
+	--app-shell-accent-primary: #57a773;
+	--app-shell-accent-soft: #e8f5ee;
+	--app-shell-accent-info: #55a6c8;
+	--app-shell-accent-danger: #d84242;
+	--app-shell-border-subtle: rgb(0 0 0 / 8%);
+
+	--app-bg: #fcf9f4;
+	--app-section-bg: #f5eee5;
+	--app-border-color: #d8c9d9;
+	--app-muted: #726963;
+	--app-primary: #4f4842;
+	--app-accent: #b7c8e3;
+	--app-highlight: #f4b942;
+	--app-highlight-hover: #d99a24;
+	--app-highlight-text: #4f4842;
+	--app-danger-bg: #e7b0b8;
+	--app-danger-action: #9c5f46;
+	--app-success-bg: #c5d8be;
+	--app-warning-bg: #efc6a9;
+	--app-warning-border-color: #d89ca5;
+	--app-warning-text: #4f4842;
+	--app-warning-strong: #9c5f46;
+	--app-custom-bg: #cbb8e8;
+	--app-custom-strong: #7b5fa3;
+	--app-guest-surface: rgb(245 238 229 / 94%);
+	--app-status-error-bg: color-mix(in srgb, #e7b0b8 60%, white);
+	--app-status-error-text: #9c5f46;
+	--app-status-error-icon: #e45f55;
+	--app-status-warning-bg: color-mix(in srgb, #f4b942 35%, white);
+	--app-status-warning-icon: #d99a24;
+	--app-focus-color: #4f4842;
+	--app-btn-bg: #c894a7;
+	--app-btn-bg-hover: #ae7288;
+	--app-btn-text: #fcf9f4;
+}
+
+@mixin dark-theme {
+	color-scheme: dark;
+
+	--app-shell-surface-page: #11141c;
+	--app-shell-surface-panel: #1c202a;
+	--app-shell-surface-control: #292e3a;
+	--app-shell-surface-soft: #222731;
+	--app-shell-text-primary: #f4f2f8;
+	--app-shell-text-muted: #aeb4c7;
+	--app-shell-accent-primary: #6fc28d;
+	--app-shell-accent-soft: #203b2b;
+	--app-shell-accent-info: #77c1df;
+	--app-shell-accent-danger: #ff7777;
+	--app-shell-border-subtle: rgb(255 255 255 / 12%);
+
+	--app-bg: #19181d;
+	--app-section-bg: #242128;
+	--app-border-color: #514958;
+	--app-muted: #b9afb8;
+	--app-primary: #f2edf1;
+	--app-accent: #3d4e69;
+	--app-highlight: #f4b942;
+	--app-highlight-hover: #ffc85c;
+	--app-highlight-text: #241d12;
+	--app-danger-bg: #57323d;
+	--app-danger-action: #f2a084;
+	--app-success-bg: #2e4b38;
+	--app-warning-bg: #553d2e;
+	--app-warning-border-color: #9f675e;
+	--app-warning-text: #f8ede6;
+	--app-warning-strong: #ffb497;
+	--app-custom-bg: #463b5f;
+	--app-custom-strong: #cdb9ec;
+	--app-guest-surface: rgb(36 33 40 / 96%);
+	--app-status-error-bg: #4e3039;
+	--app-status-error-text: #ffb49c;
+	--app-status-error-icon: #ff8179;
+	--app-status-warning-bg: #4f4025;
+	--app-status-warning-icon: #ffc75a;
+	--app-focus-color: #f4f2f8;
+	--app-btn-bg: #a9657f;
+	--app-btn-bg-hover: #c27b97;
+	--app-btn-text: #fff;
+}
+
+:root,
+:root[data-theme="light"] {
+	@include light-theme;
+}
+
+:root[data-theme="dark"] {
+	@include dark-theme;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root[data-theme="system"] {
+		@include dark-theme;
+	}
+}

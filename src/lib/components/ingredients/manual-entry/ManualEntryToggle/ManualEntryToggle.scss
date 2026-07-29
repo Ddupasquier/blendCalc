@@ -44,7 +44,7 @@
 	transition: transform 180ms ease;
 }
 
-:global(.custom-ingredient__manual[open] .manual-entry-toggle__chevron) {
+:global(.custom-ingredient__manual[data-expanded="true"] .manual-entry-toggle__chevron) {
 	transform: rotate(180deg);
 }
 

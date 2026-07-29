@@ -1,0 +1,161 @@
+@use "../../../../styles/variables" as *;
+
+.theme-preference-control {
+	min-width: 0;
+	border: 0;
+}
+
+.theme-preference-control > legend {
+	margin-bottom: $app-gap-sm;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+}
+
+.theme-preference-control__options {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: $app-gap-sm;
+}
+
+.theme-preference-control__option {
+	position: relative;
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr);
+	gap: $app-gap-sm;
+	min-width: 0;
+	padding: $app-gap-sm;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-soft;
+	border: 1.5px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-card;
+	cursor: pointer;
+	transition:
+		background-color 160ms ease,
+		border-color 160ms ease;
+}
+
+.theme-preference-control__option:hover {
+	background: $app-shell-accent-soft;
+}
+
+.theme-preference-control__option--selected {
+	background: $app-shell-accent-soft;
+	border-color: $app-shell-accent-primary;
+}
+
+.theme-preference-control__option:has(input:focus-visible) {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.theme-preference-control__option:has(input:disabled) {
+	cursor: not-allowed;
+	opacity: 0.62;
+}
+
+.theme-preference-control__option input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.theme-preference-control__preview {
+	position: relative;
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	overflow: hidden;
+	background: #f8f8fb;
+	border: 1px solid rgb(0 0 0 / 12%);
+	border-radius: $app-radius-sm;
+}
+
+.theme-preference-control__preview::before,
+.theme-preference-control__preview::after,
+.theme-preference-control__preview > span {
+	position: absolute;
+	content: "";
+}
+
+.theme-preference-control__preview::before {
+	inset: 15% 12% auto;
+	height: 15%;
+	background: #e9e9ed;
+	border-radius: $app-shell-radius-pill;
+}
+
+.theme-preference-control__preview::after {
+	inset: auto 12% 15%;
+	height: 40%;
+	background: #fff;
+	border-radius: $app-radius-sm;
+}
+
+.theme-preference-control__preview > span {
+	inset: auto 18% 25%;
+	z-index: 1;
+	height: 10%;
+	background: #57a773;
+	border-radius: $app-shell-radius-pill;
+}
+
+.theme-preference-control__preview[data-theme-preview="dark"] {
+	background: #11141c;
+	border-color: rgb(255 255 255 / 16%);
+}
+
+.theme-preference-control__preview[data-theme-preview="dark"]::before {
+	background: #292e3a;
+}
+
+.theme-preference-control__preview[data-theme-preview="dark"]::after {
+	background: #1c202a;
+}
+
+.theme-preference-control__preview[data-theme-preview="system"] {
+	background: linear-gradient(90deg, #f8f8fb 50%, #11141c 50%);
+}
+
+.theme-preference-control__preview[data-theme-preview="system"]::before {
+	background: linear-gradient(90deg, #e9e9ed 50%, #292e3a 50%);
+}
+
+.theme-preference-control__preview[data-theme-preview="system"]::after {
+	background: linear-gradient(90deg, #fff 50%, #1c202a 50%);
+}
+
+.theme-preference-control__copy {
+	display: grid;
+	gap: $app-gap-2xs;
+	min-width: 0;
+	text-align: center;
+}
+
+.theme-preference-control__copy strong {
+	font-size: $app-font-size-sm;
+}
+
+.theme-preference-control__copy small {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.theme-preference-control__options {
+		gap: $app-gap-xs;
+	}
+
+	.theme-preference-control__option {
+		padding: $app-gap-xs;
+	}
+
+	.theme-preference-control__copy small {
+		display: none;
+	}
+}

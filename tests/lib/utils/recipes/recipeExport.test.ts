@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { buildSavedDrinkExportText } from "$lib/utils/recipes/recipeExport";
+import {
+	buildSavedDrinkExportText,
+	formatSavedDrinkIngredientAmount,
+} from "$lib/utils/recipes/recipeExport";
 import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 import type { SavedDrink } from "$lib/utils/storage/client/savedDrinks";
 
@@ -54,6 +57,7 @@ describe("saved recipe export", () => {
 		expect(text).toContain("Berry Test");
 		expect(text).toContain("- 0.5 cup Strawberries");
 		expect(text).toContain("- Calories: 16 kcal");
+		expect(formatSavedDrinkIngredientAmount(drink, 1)).toBe("0.5 cup");
 	});
 
 	it("uses zero without adding a partial-data warning when an ingredient lacks the nutrient", () => {

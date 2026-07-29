@@ -1,0 +1,37 @@
+@use "../../../../../styles/variables" as *;
+
+.list-sort-sheet {
+	display: grid;
+	gap: $app-gap-lg;
+}
+
+.list-sort-sheet__section {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.list-sort-sheet__section h3 {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-label;
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+.list-sort-sheet__options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-md;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.list-sort-sheet {
+		gap: $app-gap-md;
+	}
+
+	.list-sort-sheet__options {
+		gap: $app-gap-sm;
+	}
+}

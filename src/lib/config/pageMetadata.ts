@@ -23,7 +23,10 @@ export const getAppDocumentTitle = (
 		);
 	}
 	if (pathname === "/mix") return formatDocumentTitle("Smoothie Builder");
-	if (pathname === "/saved") return formatDocumentTitle("Saved Smoothies");
+	if (pathname === "/saved/sort") {
+		return formatDocumentTitle("Sort Saved Drinks");
+	}
+	if (pathname === "/saved") return formatDocumentTitle("Saved Drinks");
 	if (pathname === "/profile/tutorial") {
 		return formatDocumentTitle("Quick Tutorial");
 	}

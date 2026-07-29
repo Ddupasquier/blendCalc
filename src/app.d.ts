@@ -12,6 +12,7 @@ import type {
 	AppIssueCode,
 	AppIssueParams,
 } from "$lib/utils/errors/appIssues";
+import type { ThemePreference } from "$lib/utils/theme/themePreference";
 
 type AuthUser = {
 	id: string;
@@ -20,6 +21,7 @@ type AuthUser = {
 	avatarUrl: string | null;
 	avatarAltText: string | null;
 	role: AppRole | null;
+	themePreference: ThemePreference;
 };
 
 declare global {
@@ -36,6 +38,7 @@ declare global {
 		}
 		interface PageData {
 			authUser: AuthUser | null;
+			themePreference: ThemePreference;
 			ingredientData?: IngredientPageInitialData;
 			mixData?: MixPageInitialData;
 			savedData?: SavedPageInitialData;

@@ -25,7 +25,8 @@ src/
 │   └── utils/               Pure domain logic grouped by feature
 ├── routes/                  URL routes, loading, and high-level orchestration
 └── styles/
-    └── _variables.scss      App-wide design tokens only
+    ├── _themes.scss         Runtime light/dark semantic color values
+    └── _variables.scss      App-wide SCSS design-token roles only
 ```
 
 ## Components

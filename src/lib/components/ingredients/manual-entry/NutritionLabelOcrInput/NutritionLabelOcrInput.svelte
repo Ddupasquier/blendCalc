@@ -4,6 +4,7 @@
 	import CheckboxGroup from "$lib/components/common/forms/CheckboxGroup/CheckboxGroup.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
+	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
 	import type { NutritionLabelOcrInputProps } from "./types";
 	import { recognizeNutritionLabelImage } from "$lib/utils/food/ocr/nutritionLabelOcr.client";
 	import {
@@ -157,7 +158,7 @@
 		<RoundedActionButton onclick={applySelected} disabled={selected.length === 0}>
 			Use selected values
 		</RoundedActionButton>
-		<details class="nutrition-label-ocr__raw-text">
+		<details class="nutrition-label-ocr__raw-text" use:animatedDetails>
 			<summary>View recognized text</summary>
 			<pre>{result.rawText}</pre>
 		</details>
