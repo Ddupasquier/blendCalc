@@ -554,6 +554,12 @@ left-aligned.
 - Every disclosure animates both opening and closing through the shared
   `animatedDetails` behavior. Keep disclosure children mounted so closing a section
   never discards unsaved form or image-placement state.
+- Animate the complete disclosure boundary rather than an arbitrary content child.
+  Child margins and padding vary between disclosures; the shared boundary animation
+  prevents delayed gaps, clipped content, and end-of-motion snapping.
+- Rapidly reversing a disclosure must continue from its currently visible height.
+  Do not add component-specific collapse transitions or opacity delays on top of the
+  shared behavior.
 - Pair functional entrances with coherent exits. Status feedback may use a brief
   opacity/vertical transition, sheets use the shared directional transition, and
   removed list items must be followed by local reflow rather than a flashing reload.

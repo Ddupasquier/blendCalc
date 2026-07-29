@@ -1,6 +1,7 @@
-import { prefersReducedMotion } from "./motion";
+import { getMotionSafeDuration } from "./motion";
 
 const DEFAULT_DURATION_MS = 180;
+const DISCLOSURE_EASING = "cubic-bezier(0.4, 0, 0.2, 1)";
 
 type AnimatedDetailsOptions = {
 	duration?: number;
@@ -51,55 +52,66 @@ export const animatedDetails = (
 	const setOpen = (nextOpen: boolean) => {
 		if (nextOpen === expanded && animation === null) return;
 
-		const currentHeight = element.open
-			? content.getBoundingClientRect().height
-			: 0;
-		const currentOpacity = element.open
-			? Number.parseFloat(getComputedStyle(content).opacity) || 1
-			: 0;
+		const wasRendered = element.open;
+		const currentHeight = element.getBoundingClientRect().height;
 
-		animation?.cancel();
+		const previousAnimation = animation;
 		animation = null;
+		previousAnimation?.cancel();
 		expanded = nextOpen;
 		reflectExpandedState();
 
-		if (
-			prefersReducedMotion() ||
-			typeof content.animate !== "function"
-		) {
+		const motionDuration = getMotionSafeDuration(duration);
+		if (motionDuration === 0 || typeof element.animate !== "function") {
 			element.open = nextOpen;
 			return;
 		}
 
 		element.open = true;
-		const fullHeight = content.scrollHeight;
-		const startHeight = currentHeight || (nextOpen ? 0 : fullHeight);
-		const targetHeight = nextOpen ? fullHeight : 0;
-		const startOpacity = currentHeight > 0 ? currentOpacity : nextOpen ? 0 : 1;
-		const targetOpacity = nextOpen ? 1 : 0;
+		const fullHeight = element.getBoundingClientRect().height;
+		const elementStyles = getComputedStyle(element);
+		const collapsedHeight =
+			summary.getBoundingClientRect().height +
+			(Number.parseFloat(elementStyles.paddingTop) || 0) +
+			(Number.parseFloat(elementStyles.paddingBottom) || 0) +
+			(Number.parseFloat(elementStyles.borderTopWidth) || 0) +
+			(Number.parseFloat(elementStyles.borderBottomWidth) || 0);
+		const startHeight = wasRendered
+			? currentHeight
+			: nextOpen
+				? collapsedHeight
+				: fullHeight;
+		const targetHeight = nextOpen ? fullHeight : collapsedHeight;
 
-		animation = content.animate(
+		const nextAnimation = element.animate(
 			[
 				{
 					height: `${startHeight}px`,
-					opacity: startOpacity,
 					overflow: "hidden",
 				},
 				{
 					height: `${targetHeight}px`,
-					opacity: targetOpacity,
 					overflow: "hidden",
 				},
 			],
 			{
-				duration,
-				easing: "ease",
+				duration: motionDuration,
+				easing: DISCLOSURE_EASING,
+				fill: "both",
 			},
 		);
+		animation = nextAnimation;
 
-		animation.onfinish = () => {
-			if (!expanded) element.open = false;
+		nextAnimation.onfinish = () => {
+			if (animation !== nextAnimation) return;
 			animation = null;
+			nextAnimation.onfinish = null;
+			nextAnimation.oncancel = null;
+			if (!expanded) element.open = false;
+			nextAnimation.cancel();
+		};
+		nextAnimation.oncancel = () => {
+			if (animation === nextAnimation) animation = null;
 		};
 	};
 
@@ -120,7 +132,9 @@ export const animatedDetails = (
 
 	return {
 		destroy() {
-			animation?.cancel();
+			const activeAnimation = animation;
+			animation = null;
+			activeAnimation?.cancel();
 			summary.removeEventListener("click", handleSummaryClick);
 			element.removeEventListener("toggle", handleToggle);
 			controllers.delete(element);
