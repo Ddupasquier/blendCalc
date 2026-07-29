@@ -1,6 +1,7 @@
 import {
 	annotateFoodsWithFoodSafety,
 } from "$lib/server/food-safety/foodSafetyEvaluation.server";
+import { LIST_PAGE_LIMITS } from "$lib/config/listPagination";
 import { getUserFoodSafetyContext } from "$lib/server/food-safety/userFoodSafety.server";
 import {
 	appIssueJson,
@@ -25,7 +26,6 @@ import type { FdcFood } from "$lib/utils/food/types";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
-const MAXIMUM_PAGE_SIZE = 100;
 const MAXIMUM_BATCH_SIZE = 25;
 const VALID_SORTS = new Set<FoodListSort>([
 	"recent",
@@ -71,7 +71,7 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 	if (
 		!Number.isInteger(limit) ||
 		limit < 1 ||
-		limit > MAXIMUM_PAGE_SIZE ||
+		limit > LIST_PAGE_LIMITS.userFoodListRequest ||
 		!Number.isInteger(offset) ||
 		offset < 0
 	) {

@@ -28,7 +28,7 @@ describe("saved ingredient move animation", () => {
 			bulkMoveStart,
 		);
 
-		expect(fridgePage.match(/notify:\s*false/g)).toHaveLength(2);
+		expect(fridgePage.match(/notify:\s*false/g)).toHaveLength(5);
 		expect(singleMoveWorkflow).toContain("applyBulkListMove(sourceKey, [food])");
 		expect(singleMoveWorkflow).not.toContain("await loadLists()");
 	});

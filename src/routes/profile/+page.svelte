@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { invalidateAll } from "$app/navigation";
+	import { browser } from "$app/environment";
 	import User from "$lib/assets/icons/User/User.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
@@ -9,7 +9,9 @@
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
+	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker/FoodPreferencePicker.svelte";
+	import ThemePreferenceControl from "$lib/components/profile/ThemePreferenceControl/ThemePreferenceControl.svelte";
 	import { APP_NAME } from "$lib/config/brand";
 	import { formatDocumentTitle } from "$lib/config/pageMetadata";
 	import {
@@ -17,6 +19,11 @@
 		type DefaultServingUnit,
 	} from "$lib/utils/profile/foodPreferences";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
+	import {
+		applyThemePreference,
+		normalizeThemePreference,
+		type ThemePreference,
+	} from "$lib/utils/theme/themePreference";
 	import type {
 		PreferenceGroupKey,
 		PreferenceGroupMeta,
@@ -34,6 +41,19 @@
 			data.profile?.display_name ??
 			data.defaultDisplayName,
 		bio: form?.profileValues?.bio ?? data.profile?.bio ?? "",
+	});
+	const incomingAppearanceTheme = $derived(
+		normalizeThemePreference(
+			form?.appearanceTheme ?? data.profile?.appearance_theme,
+		),
+	);
+	let appearanceTheme = $state<ThemePreference>("system");
+	let lastAppearanceSeed = "";
+
+	$effect(() => {
+		if (incomingAppearanceTheme === lastAppearanceSeed) return;
+		lastAppearanceSeed = incomingAppearanceTheme;
+		appearanceTheme = incomingAppearanceTheme;
 	});
 	const storedServingUnit = $derived<DefaultServingUnit>(
 		data.foodPreferences?.unitSystem === "us" ? "oz" : "g",
@@ -270,6 +290,7 @@
 			: null,
 	].filter((item) => item !== null));
 	let profilePending = $state(false);
+	let appearancePending = $state(false);
 	let avatarPending = $state(false);
 	let foodPreferencesPending = $state(false);
 	let logoutPending = $state(false);
@@ -279,16 +300,24 @@
 	const enhanceProfile = createPendingSubmit(
 		(pending) => (profilePending = pending),
 	);
+	const enhanceAppearance = createPendingSubmit(
+		(pending) => (appearancePending = pending),
+	);
+	const selectAppearanceTheme = (nextTheme: ThemePreference) => {
+		appearanceTheme = nextTheme;
+		if (!browser) return;
+		applyThemePreference(
+			nextTheme,
+			window.matchMedia("(prefers-color-scheme: dark)").matches,
+			document.documentElement,
+			document.querySelector<HTMLMetaElement>("meta[name='theme-color']"),
+		);
+	};
 	const enhanceAvatar = createPendingSubmit(
 		(pending) => (avatarPending = pending),
 	);
 	const enhanceFoodPreferences = createPendingSubmit(
 		(pending) => (foodPreferencesPending = pending),
-		async (result) => {
-			if (result.type !== "success") return;
-			if (!result.data?.foodPreferencesSuccess) return;
-			await invalidateAll();
-		},
 	);
 </script>
 
@@ -324,6 +353,36 @@
 			<p>Replay the quick tour whenever you want a refresher.</p>
 		</div>
 		<RoundedActionLink href="/profile/tutorial">Open quick tutorial</RoundedActionLink>
+	</section>
+
+	<section class="profile-card">
+		<div class="profile-card__heading">
+			<h2>Appearance</h2>
+			<p>Choose a light or dark look, or match this device automatically.</p>
+		</div>
+
+		{#if form?.appearanceError}
+			<StatusMessage tone="danger" message={form.appearanceError} />
+		{:else if form?.appearanceSuccess}
+			<StatusMessage tone="success" message={form.appearanceSuccess} />
+		{/if}
+
+		<form
+			method="POST"
+			action="?/saveAppearance"
+			use:enhance={enhanceAppearance}
+			aria-busy={appearancePending}
+		>
+			<ThemePreferenceControl
+				value={appearanceTheme}
+				disabled={appearancePending}
+				onSelect={selectAppearanceTheme}
+			/>
+			<button class="primary-action" type="submit" disabled={appearancePending}>
+				{#if appearancePending}<LoadingSpinner size="small" decorative />{/if}
+				Save appearance
+			</button>
+		</form>
 	</section>
 
 	<section class="profile-card">
@@ -403,7 +462,7 @@
 
 			<fieldset class="avatar-policy">
 				<legend>Profile image rules</legend>
-				<details class="avatar-policy__details">
+				<details class="avatar-policy__details" use:animatedDetails>
 					<summary>
 						<span>Review image rules</span>
 						<span class="avatar-policy__chevron" aria-hidden="true">⌄</span>

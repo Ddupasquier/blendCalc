@@ -115,7 +115,10 @@ describe("SCSS architecture", () => {
 	});
 
 	it("keeps feature styles out of the global styles folder", () => {
-		expect(readdirSync("src/styles").sort()).toEqual(["_variables.scss"]);
+		expect(readdirSync("src/styles").sort()).toEqual([
+			"_themes.scss",
+			"_variables.scss",
+		]);
 	});
 
 	it("keeps declarations of UI types out of Svelte files", () => {

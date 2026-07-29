@@ -1,4 +1,5 @@
 import { redirect } from "@sveltejs/kit";
+import { dev } from "$app/environment";
 import type { LayoutServerLoad } from "./$types";
 import { getPasswordUpgradeNext } from "$lib/utils/auth/passwordUpgrade";
 import { getSignedAvatarUrl, getUserProfile } from "$lib/utils/profile/profile";
@@ -14,6 +15,11 @@ import { getNutritionCompletenessCatalog } from "$lib/server/nutrition/nutrition
 import { configureNutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
 import { configureAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
+import {
+	getThemePreferenceCookieOptions,
+	normalizeThemePreference,
+	THEME_PREFERENCE_COOKIE,
+} from "$lib/utils/theme/themePreference";
 
 const PUBLIC_PATHS = new Set(["/", "/auth"]);
 
@@ -23,6 +29,9 @@ const isPublicPath = (pathname: string) => {
 
 export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	const user = await locals.getVerifiedUser();
+	const cookieThemePreference = normalizeThemePreference(
+		cookies.get(THEME_PREFERENCE_COOKIE),
+	);
 
 	if (!user && !isPublicPath(url.pathname)) {
 		throw redirect(
@@ -39,7 +48,12 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		);
 	}
 
-	if (!user) return { authUser: null };
+	if (!user) {
+		return {
+			authUser: null,
+			themePreference: cookieThemePreference,
+		};
+	}
 
 	const profileWithAvatarPromise = getUserProfile(locals.supabase, user.id)
 		.then(async (profile) => ({
@@ -67,7 +81,16 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	configureServingMeasureCatalog(servingMeasureCatalog);
 	configureNutritionCompletenessCatalog(nutritionCompletenessCatalog);
 	configureAppReferenceCatalog(appReferenceCatalog);
+	const themePreference = normalizeThemePreference(profile?.appearance_theme);
+	if (cookies.get(THEME_PREFERENCE_COOKIE) !== themePreference) {
+		cookies.set(
+			THEME_PREFERENCE_COOKIE,
+			themePreference,
+			getThemePreferenceCookieOptions(!dev),
+		);
+	}
 	return {
+		themePreference,
 		authUser: {
 			id: user.id,
 			displayName: profile?.display_name ?? getDefaultDisplayName(user.id),
@@ -76,6 +99,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			avatarAltText: profile?.avatar_alt_text ?? null,
 			role,
 			showTutorial: shouldAutomaticallyShowTutorial(tutorialPreference),
+			themePreference,
 		},
 		servingMeasureCatalog,
 		nutritionCompletenessCatalog,

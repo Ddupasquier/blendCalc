@@ -38,8 +38,6 @@
 	font-family: $app-font-family-data;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-bold;
-	animation: nf-feedback-pop 0.18s ease-out;
-
 }
 
 :global(.nf-feedback__icon) {
@@ -58,17 +56,5 @@
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: $app-gap-sm;
-	}
-}
-
-@keyframes nf-feedback-pop {
-	from {
-		opacity: 0;
-		transform: translateY($app-gap-xs);
-	}
-
-	to {
-		opacity: 1;
-		transform: translateY(0);
 	}
 }

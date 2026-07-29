@@ -41,6 +41,12 @@ Browser storage is limited to data that can be discarded safely:
 Fridge, Shopping List, custom foods, saved drinks, profiles, and canonical catalog data
 must not be mirrored into local storage.
 
+The account appearance theme is profile-owned durable data. A validated
+`blendcalc-theme` cookie mirrors only that preference so SvelteKit can select the
+correct theme before the page paints. The cookie is not a competing source of truth:
+authenticated layout loads reconcile it from `profiles.appearance_theme`, and invalid
+or missing values resolve to the device theme.
+
 ## External Sources
 
 External food APIs are enrichment inputs, not live UI databases. Server code checks

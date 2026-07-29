@@ -2887,6 +2887,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          appearance_theme: string
           avatar_alt_text: string | null
           avatar_moderation_status: string
           avatar_path: string | null
@@ -2898,6 +2899,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          appearance_theme?: string
           avatar_alt_text?: string | null
           avatar_moderation_status?: string
           avatar_path?: string | null
@@ -2909,6 +2911,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          appearance_theme?: string
           avatar_alt_text?: string | null
           avatar_moderation_status?: string
           avatar_path?: string | null

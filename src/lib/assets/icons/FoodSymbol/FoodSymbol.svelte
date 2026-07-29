@@ -13,12 +13,15 @@
 
 	let {
 		food,
+		fallbackOnly = false,
 		class: className = "",
 	}: FoodSymbolProps = $props();
 
 	const symbolKey = $derived(resolveFoodSymbolKey(food));
 	const symbolDefinition = $derived(getFoodSymbolDefinition(symbolKey));
-	const imageUrl = $derived(pickFoodImageUrl(food.image));
+	const imageUrl = $derived(
+		fallbackOnly ? null : pickFoodImageUrl(food.image),
+	);
 	const imageAlt = $derived(
 		getFoodImageAltText({
 			foodName: food.description,
@@ -36,7 +39,7 @@
 		}),
 	);
 	let imageFailed = $state(false);
-	let lastImageUrl = $state("");
+	let lastImageUrl = $state<string | null>(null);
 
 	$effect(() => {
 		if (imageUrl !== lastImageUrl) {

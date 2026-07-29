@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { fail, redirect } from "@sveltejs/kit";
+import { dev } from "$app/environment";
 import type { Actions, PageServerLoad } from "./$types";
 import {
 	PROFILE_AVATAR_POLICY_ITEMS,
@@ -40,6 +41,11 @@ import {
 } from "$lib/utils/profile/foodPreferenceOptions";
 import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
 import { getDefaultMixFields } from "$lib/utils/food/reference/appReferenceCatalog";
+import {
+	getThemePreferenceCookieOptions,
+	isThemePreference,
+	THEME_PREFERENCE_COOKIE,
+} from "$lib/utils/theme/themePreference";
 
 const getAuthenticatedUser = async (locals: App.Locals) => {
 	const user = await locals.getVerifiedUser();
@@ -136,6 +142,45 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
+	saveAppearance: async ({ locals, request, cookies }) => {
+		const user = await getAuthenticatedUser(locals);
+		const formData = await request.formData();
+		const appearanceTheme = formData.get("appearanceTheme");
+
+		if (!isThemePreference(appearanceTheme)) {
+			return fail(400, {
+				appearanceError: "Choose a color theme and try again.",
+			});
+		}
+
+		const existingProfile = await getUserProfile(locals.supabase, user.id);
+		const { error } = await locals.supabase.from("profiles").upsert(
+			{
+				user_id: user.id,
+				display_name:
+					existingProfile?.display_name ?? getDefaultDisplayName(user.id),
+				appearance_theme: appearanceTheme,
+			},
+			{ onConflict: "user_id" },
+		);
+
+		if (error) {
+			return fail(500, {
+				appearanceError: "Your color theme could not be saved. Try again.",
+			});
+		}
+
+		cookies.set(
+			THEME_PREFERENCE_COOKIE,
+			appearanceTheme,
+			getThemePreferenceCookieOptions(!dev),
+		);
+
+		return {
+			appearanceSuccess: "Color theme saved.",
+			appearanceTheme,
+		};
+	},
 	saveProfile: async ({ locals, request }) => {
 		const user = await getAuthenticatedUser(locals);
 		const values = getProfileFormValues(await request.formData());

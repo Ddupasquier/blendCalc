@@ -45,6 +45,7 @@ describe("DailyWelcome", () => {
 		expect(screen.getByText("dylan@example.com")).toBeInTheDocument();
 
 		vi.advanceTimersByTime(4_000);
+		await vi.runAllTimersAsync();
 		await tick();
 
 		expect(screen.queryByText("dylan@example.com")).not.toBeInTheDocument();

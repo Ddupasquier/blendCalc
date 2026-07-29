@@ -13,6 +13,19 @@ depend on a `profiles` row existing.
 - Preferred names are not unique and may contain normal spaces and punctuation.
 - Bio and profile image remain optional.
 
+## Appearance
+
+- The profile stores one `appearance_theme` preference: `system`, `light`, or `dark`.
+- `system` follows the device color-scheme setting and updates when that setting
+  changes.
+- The authenticated profile is authoritative across devices. A validated, non-sensitive
+  cookie mirrors only the theme key so the server can render the correct theme before
+  client hydration.
+- Theme changes update the current page immediately and do not reload or reset active
+  application state.
+- The app-wide semantic theme properties live in `src/styles/_themes.scss`; individual
+  views must not maintain separate dark-mode overrides.
+
 ## Profile images
 
 - Images are stored in the private `profile-avatars` Supabase Storage bucket.

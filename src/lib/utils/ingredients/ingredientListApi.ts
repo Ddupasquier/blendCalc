@@ -1,10 +1,9 @@
 import type { UserFoodListPage } from "$lib/types/userData";
+import { LIST_PAGE_LIMITS } from "$lib/config/listPagination";
 import type { FoodListSort } from "$lib/utils/list/listNavigation";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 import type { CloudSmoothieListPageOptions } from "$lib/utils/storage/supabase/lists";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-
-const FULL_LIST_PAGE_SIZE = 100;
 
 const getListPath = (key: SmoothieListKey) =>
 	key === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping-list";
@@ -32,6 +31,40 @@ export const readIngredientListPage = async (
 	return await response.json() as UserFoodListPage;
 };
 
+export const readIngredientListWindow = async (
+	key: SmoothieListKey,
+	options: CloudSmoothieListPageOptions,
+	fetcher: typeof fetch = fetch,
+): Promise<UserFoodListPage> => {
+	const foods: UserFoodListPage["foods"] = [];
+	const targetCount = Math.max(1, options.limit);
+	const startingOffset = options.offset ?? 0;
+	let totalCount = Number.POSITIVE_INFINITY;
+
+	while (
+		foods.length < targetCount &&
+		startingOffset + foods.length < totalCount
+	) {
+		const page = await readIngredientListPage(
+			key,
+			{
+				...options,
+				limit: Math.min(
+					LIST_PAGE_LIMITS.userFoodListRequest,
+					targetCount - foods.length,
+				),
+				offset: startingOffset + foods.length,
+			},
+			fetcher,
+		);
+		foods.push(...page.foods);
+		totalCount = page.totalCount;
+		if (page.foods.length === 0) break;
+	}
+
+	return { foods, totalCount };
+};
+
 export const readIngredientList = async (
 	key: SmoothieListKey,
 	fetcher: typeof fetch = fetch,
@@ -43,7 +76,7 @@ export const readIngredientList = async (
 		const page = await readIngredientListPage(
 			key,
 			{
-				limit: FULL_LIST_PAGE_SIZE,
+				limit: LIST_PAGE_LIMITS.userFoodListRequest,
 				offset: foods.length,
 				sort: "recent" satisfies FoodListSort,
 			},

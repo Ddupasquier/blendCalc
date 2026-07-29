@@ -3,6 +3,7 @@
 	import ManualEntryStepTabs from "$lib/components/ingredients/manual-entry/ManualEntryStepTabs/ManualEntryStepTabs.svelte";
 	import ManualEntryToggle from "$lib/components/ingredients/manual-entry/ManualEntryToggle/ManualEntryToggle.svelte";
 	import type { ManualEntryStepId } from "$lib/components/ingredients/manual-entry/formTypes";
+	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
 	import type { ManualEntryFormShellProps } from "./types";
 
 	let {
@@ -43,6 +44,7 @@
 	class:custom-ingredient__manual--sheet={!inline}
 	open={!inline}
 	bind:this={detailsElement}
+	use:animatedDetails
 >
 	<summary
 		class="custom-ingredient__manual-toggle"

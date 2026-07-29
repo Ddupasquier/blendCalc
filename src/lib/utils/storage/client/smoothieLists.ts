@@ -63,6 +63,7 @@ export const preserveSelectedListItems = (
 export const addFoodToSmoothieList = async (
 	key: SmoothieListKey,
 	food: FdcFood,
+	options: SmoothieListMutationOptions = {},
 ): Promise<SmoothieListMutationResult> => {
 	const foodRecord = compactFood({
 		...food,
@@ -74,7 +75,7 @@ export const addFoodToSmoothieList = async (
 	}
 	if (placementResult === "duplicate") return "duplicate";
 
-	notifySmoothieListsChanged();
+	if (options.notify !== false) notifySmoothieListsChanged();
 	return "added";
 };
 
@@ -157,10 +158,11 @@ export const addFoodsToSmoothieList = async (
 export const removeFoodFromSmoothieList = async (
 	key: SmoothieListKey,
 	foodId: number,
+	options: SmoothieListMutationOptions = {},
 ): Promise<SmoothieListMutationResult> => {
 	const removed = await removeCloudSmoothieListItem(key, foodId);
 	if (!removed) return "error";
-	notifySmoothieListsChanged();
+	if (options.notify !== false) notifySmoothieListsChanged();
 	return "removed";
 };
 
@@ -169,6 +171,7 @@ export const renameFoodInSmoothieList = async (
 	foodId: number,
 	nextDescription: string,
 	loadedFood?: FdcFood,
+	options: SmoothieListMutationOptions = {},
 ): Promise<SmoothieListMutationResult> => {
 	const trimmedDescription = nextDescription.trim().replace(/\s+/g, " ");
 	if (!trimmedDescription) return "invalid";
@@ -186,6 +189,6 @@ export const renameFoodInSmoothieList = async (
 	);
 	if (result !== "renamed") return result;
 
-	notifySmoothieListsChanged();
+	if (options.notify !== false) notifySmoothieListsChanged();
 	return "renamed";
 };

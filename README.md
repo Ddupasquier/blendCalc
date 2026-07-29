@@ -40,8 +40,8 @@ Supabase test environment, reset workflow, and database QA commands.
 
 This project uses Node.js 24. With `nvm`, run `nvm use` from the repository root.
 `.nvmrc`, `package.json`, and `package-lock.json` share that runtime contract;
-dependency installation is engine-strict, and project checks/builds stop immediately
-when another Node major is active.
+dependency installation is engine-strict, and development, test, check, preview, and
+build commands stop immediately when another Node major is active.
 
 ### 1. Install dependencies
 
