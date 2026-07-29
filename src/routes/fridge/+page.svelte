@@ -22,6 +22,7 @@
     import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
     import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
     import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
+    import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
     import {
         areFoodIdsEqual,
         getIngredientActionKey,
@@ -128,7 +129,10 @@
     let listActionError = $state("");
     const ingredientRouteState = $derived(getIngredientRouteState(page.url));
     const documentTitle = $derived(
-        getAppDocumentTitle(page.url, selectedFood?.description),
+        getAppDocumentTitle(
+			page.url,
+			selectedFood ? getCanonicalFoodDescription(selectedFood) : undefined,
+		),
     );
 
     const navigateIngredientRoute = (
@@ -550,6 +554,8 @@
                 food.fdcId === foodId
                     ? {
                             ...food,
+                            canonicalDescription:
+                                food.canonicalDescription ?? food.description,
                             description,
                             nameProvenance: "user" as const,
                         }
@@ -721,6 +727,8 @@
 			if (selectedFood?.fdcId === food.fdcId) {
 				selectedFood = {
 					...selectedFood,
+					canonicalDescription:
+						selectedFood.canonicalDescription ?? selectedFood.description,
 					description,
 					nameProvenance: "user",
 				};

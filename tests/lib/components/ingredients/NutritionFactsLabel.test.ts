@@ -45,4 +45,21 @@ describe("NutritionFactsLabel", () => {
 		expect(screen.getByText("Total Sugars").closest("li"))
 			.toHaveTextContent("0");
 	});
+
+	it("prints the canonical food name instead of a personal list name", () => {
+		render(NutritionFactsLabel, {
+			props: {
+				food: {
+					...food,
+					description: "My Test Food",
+					canonicalDescription: "Original Test Food",
+					nameProvenance: "user",
+				},
+				viewingGrams: 100,
+			},
+		});
+
+		expect(screen.getByText("Original Test Food")).toBeInTheDocument();
+		expect(screen.queryByText("My Test Food")).not.toBeInTheDocument();
+	});
 });

@@ -22,6 +22,7 @@
 		getFoodServingByGrams,
 		getPrimaryFoodServing,
 	} from "$lib/utils/food/servings/foodServings";
+	import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
 
 	let {
 		food,
@@ -35,6 +36,7 @@
 
 	let viewingGrams = $state(DEFAULT_NUTRITION_VIEWING_GRAMS);
 	let currentFoodId = $state<number | null>(null);
+	const foodName = $derived(getCanonicalFoodDescription(food));
 	const viewingServing = $derived(getFoodServingByGrams(food, viewingGrams));
 
 	$effect(() => {
@@ -69,7 +71,7 @@
 					size="small"
 					onclick={onClose}
 				/>
-			<h1 id="nutrition-detail-view-title">{food.description}</h1>
+			<h1 id="nutrition-detail-view-title">{foodName}</h1>
 			<span class="nutrition-detail-view__source" aria-label="Linked source" title="Linked source">
 				<Link size={16} strokeWidth={2.2} />
 			</span>
