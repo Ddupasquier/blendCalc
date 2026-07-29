@@ -4,6 +4,11 @@ import { applySecurityHeaders } from "$lib/utils/http/securityHeaders";
 import { isActiveAccountBlock } from "$lib/utils/moderation/moderation";
 import { APP_BUILD_VERSION, APP_VERSION } from "$lib/config/version";
 import { createAppIssuePayload } from "$lib/utils/errors/appIssues";
+import {
+	DARK_THEME_COLOR,
+	normalizeThemePreference,
+	THEME_PREFERENCE_COOKIE,
+} from "$lib/utils/theme/themePreference";
 import { env } from "$env/dynamic/private";
 import {
 	redirect,
@@ -63,6 +68,21 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const response = await resolve(event, {
 		filterSerializedResponseHeaders: (name) => {
 			return name === "content-encoding" || name === "content-range";
+		},
+		transformPageChunk: ({ html }) => {
+			const preference = normalizeThemePreference(
+				event.cookies.get(THEME_PREFERENCE_COOKIE),
+			);
+			const themedHtml = html.replace(
+				'<html lang="en" data-theme="system">',
+				`<html lang="en" data-theme="${preference}">`,
+			);
+			return preference === "dark"
+				? themedHtml.replace(
+						'<meta name="theme-color" content="#f8f8fb"/>',
+						`<meta name="theme-color" content="${DARK_THEME_COLOR}"/>`,
+					)
+				: themedHtml;
 		},
 	});
 

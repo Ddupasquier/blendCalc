@@ -96,11 +96,14 @@ describe("database-backed smoothie lists", () => {
 		);
 	});
 
-	it("suppresses refresh events when the caller reconciles moved list state", async () => {
+	it("suppresses refresh events when the caller reconciles list state", async () => {
 		const listener = vi.fn();
 		window.addEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, listener);
 
 		try {
+			await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food, {
+				notify: false,
+			});
 			cloudData.placeCloudSmoothieListItem.mockResolvedValue("moved");
 			await moveFoodToSmoothieList(MIX_STORAGE_KEYS.shoppingList, food, {
 				notify: false,
@@ -108,6 +111,18 @@ describe("database-backed smoothie lists", () => {
 			await moveFoodsToSmoothieList(MIX_STORAGE_KEYS.shoppingList, [food], {
 				notify: false,
 			});
+			await removeFoodFromSmoothieList(
+				MIX_STORAGE_KEYS.fridge,
+				food.fdcId,
+				{ notify: false },
+			);
+			await renameFoodInSmoothieList(
+				MIX_STORAGE_KEYS.fridge,
+				food.fdcId,
+				"Cooking oil",
+				food,
+				{ notify: false },
+			);
 
 			expect(listener).not.toHaveBeenCalled();
 		} finally {

@@ -37,6 +37,10 @@ All UI work must:
    become reusable.
 7. Never derive a new global rule from unfinished Mix, Saved Drinks, Profile, or
    Moderation UI.
+8. Compare every UI change with the closest approved Ingredients pattern before and
+   after implementation. Review all applicable states and every consumer of a changed
+   shared primitive; visual cohesion is required for handoff rather than deferred
+   cleanup.
 
 Keep this guide focused on current decisions. Remove superseded guidance when a pattern
 changes; do not preserve competing generations of the same visual system.
@@ -75,6 +79,25 @@ token already owns the decision.
   is compact.
 
 ## Color System
+
+### Theme Contract
+
+The app supports `system`, `light`, and `dark` appearance preferences. `system` follows
+the device color-scheme setting; explicit light or dark choices remain stable across
+devices through the authenticated profile.
+
+- Global semantic color roles are declared as CSS custom properties in
+  `src/styles/_themes.scss`.
+- Existing SCSS consumers continue to use the `$app-*` roles in
+  `src/styles/_variables.scss`; those roles resolve to the runtime theme properties.
+- New components must use semantic roles rather than branch their markup or styles by
+  theme.
+- High-contrast data artifacts such as the Nutrition Facts label may intentionally
+  remain black on white when that presentation is part of the artifact itself.
+- Product images, food symbols, warnings, errors, success states, focus indicators,
+  disabled controls, overlays, and transparent media must remain legible in both themes.
+- Theme previews in Profile communicate the choice but do not create a second palette or
+  component system.
 
 ### Ingredients Shell Palette
 
@@ -638,10 +661,15 @@ they already exist.
 ## Review Checklist
 
 - [ ] Ingredients is the visual baseline used for the change.
+- [ ] The closest equivalent Ingredients pattern was compared before and after the
+      change.
 - [ ] Existing primitives were checked before creating UI.
 - [ ] Resting, loading, empty, disabled, error, overlay, dialog, and confirmation states
       were reviewed—not only the default screenshot.
+- [ ] Every affected consumer of a changed shared primitive was regression checked.
 - [ ] Colors and type use semantic global tokens.
+- [ ] Light, dark, and device-following themes preserve hierarchy, contrast, focus,
+      statuses, overlays, and media legibility.
 - [ ] Repeated spacing uses `$app-gap-*`; unique geometry remains local.
 - [ ] No box shadow or unexplained one-off global token was added.
 - [ ] Focus, keyboard, touch, reduced motion, and 200% text zoom remain usable.

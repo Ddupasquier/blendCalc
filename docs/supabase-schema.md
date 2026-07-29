@@ -41,7 +41,7 @@ policies, or core data ownership changes.
 
 | Table                       | Primary Key | Owner Scope             | Purpose                                                                                                    | Key Relationships                                                    |
 | --------------------------- | ----------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `profiles`                  | `user_id`   | One row per auth user   | Display/profile data, avatar metadata, and avatar policy state                                             | `user_id → auth.users.id`                                            |
+| `profiles`                  | `user_id`   | One row per auth user   | Display/profile data, appearance preference, avatar metadata, and avatar policy state                       | `user_id → auth.users.id`                                            |
 | `user_tutorial_preferences` | `user_id`   | One row per auth user   | Tracks tutorial seen/completed/remind-later state                                                          | `user_id → auth.users.id`                                            |
 | `user_food_preferences`     | `user_id`   | One row per auth user   | Optional unit system, allergens, dietary restrictions, nutrient priorities, and default serving preference | `user_id → auth.users.id`                                            |
 | `user_compatibility_rules`  | `id`        | Many rows per auth user | Normalized active warnings/downrank rules derived from user food preferences                               | `user_id → auth.users.id`, optional `tag_id → compatibility_tags.id` |
@@ -53,12 +53,14 @@ Stores app-facing profile information. Email should not be copied here.
 
 | Table | Documented columns |
 | --- | --- |
-| `profiles` | `user_id`, `display_name`, `bio`, `avatar_path`, `avatar_alt_text`, `avatar_moderation_status`, `avatar_policy_acknowledged_at`, `created_at`, `updated_at` |
+| `profiles` | `user_id`, `display_name`, `bio`, `appearance_theme`, `avatar_path`, `avatar_alt_text`, `avatar_moderation_status`, `avatar_policy_acknowledged_at`, `created_at`, `updated_at` |
 
 Notes:
 
 - `display_name` is required and auto-filled with a safe `User##########` style value if
   the user has not chosen one.
+- `appearance_theme` is constrained to `system`, `light`, or `dark` and defaults to
+  `system`.
 - Avatar files live in the private `profile-avatars` storage bucket under the user id
   folder.
 

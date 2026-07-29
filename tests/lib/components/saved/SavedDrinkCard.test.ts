@@ -115,7 +115,7 @@ describe("SavedDrinkCard", () => {
 		expect(recipeDetails?.open).toBe(false);
 		expect(recipeDetails).toHaveAttribute("data-surface", "panel");
 		expect(screen.getByText("100 kcal")).toBeInTheDocument();
-		expect(screen.getByText("Goal match")).toBeInTheDocument();
+		expect(screen.queryByText("Goal match")).not.toBeInTheDocument();
 		expect(screen.getByText("75%")).toBeInTheDocument();
 		expect(
 			screen.getByLabelText("Overall goal match 75% across 2 goals"),

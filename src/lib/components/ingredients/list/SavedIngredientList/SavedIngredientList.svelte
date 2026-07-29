@@ -222,75 +222,73 @@
 	</p>
 
 	<div class="saved-ingredient-list__body">
-		{#key `${activeList}:${resetKey}`}
-			{#if foods.length > 0}
-				<ul
-					class="saved-ingredient-list__cards"
-					aria-label={`${getIngredientListLabel(activeList)} ingredients`}
-					aria-busy={listLoading || loadingMoreList === activeList || moveBusy}
-					bind:this={listElement}
-					onscroll={handleListScroll}
-				>
-					{#each foods as food (food.fdcId)}
-						{@const actionKey = getIngredientActionKey(activeList, food.fdcId)}
-						{@const warning = getPrimaryFoodWarning(food)}
-						{@const isChecked = selectedIdSet.has(food.fdcId)}
-						<li
-							data-food-id={food.fdcId}
-							data-bulk-selected={isChecked}
-							animate:flip={{ duration: getListReflowDuration() }}
-							class:saved-ingredient-list__card--moving={(bulkMoveBusy && isChecked) ||
-								singleAnimatingFoodId === food.fdcId}
-						>
-							<SavedIngredientCard
-								{food}
-								active={selectedFoodId === food.fdcId}
-								checked={isChecked}
-								{selectionMode}
-								moving={movingItem === actionKey ||
-									singleAnimatingFoodId === food.fdcId ||
-									(bulkMoveBusy && isChecked)}
-								removing={removingItem === actionKey}
-								moveDirection={activeList === MIX_STORAGE_KEYS.fridge
-									? "left"
-									: "right"}
-								moveLabel={getIngredientMoveLabel(activeList)}
-								category={getFoodDisplayCategory(food)}
-								{warning}
-								{provenanceOptions}
-								onToggle={() => onToggle(food.fdcId)}
-								onEnterSelection={() => enterSelectionMode(food.fdcId)}
-								onPreview={() => onPreview(food)}
-								onMove={() => moveSingleItem(food)}
-								onActions={() => onActions(food)}
-								onRemove={() => onRemove(food.fdcId)}
-							/>
-						</li>
-					{/each}
-					<PaginatedListControls
-						scrollContainer={listElement}
-						hasMoreItems={canRevealMore}
-						loadingMore={loadingMoreList !== null}
-						loadMoreDisabled={revealPaused}
-						contentVersion={`${activeList}:${foods.length}:${resetKey}`}
-						onLoadMore={requestMoreItems}
-					/>
-				</ul>
-			{:else if listLoading}
-				<div
-					class="saved-ingredient-list__loading"
-					role="status"
-					aria-live="polite"
-				>
-					Loading {getIngredientListLabel(activeList).toLowerCase()} ingredients…
-				</div>
-			{:else}
-				<IngredientEmptyState
-					{activeList}
-					hasItems={activeRawCount > 0}
+		{#if foods.length > 0}
+			<ul
+				class="saved-ingredient-list__cards"
+				aria-label={`${getIngredientListLabel(activeList)} ingredients`}
+				aria-busy={listLoading || loadingMoreList === activeList || moveBusy}
+				bind:this={listElement}
+				onscroll={handleListScroll}
+			>
+				{#each foods as food (food.fdcId)}
+					{@const actionKey = getIngredientActionKey(activeList, food.fdcId)}
+					{@const warning = getPrimaryFoodWarning(food)}
+					{@const isChecked = selectedIdSet.has(food.fdcId)}
+					<li
+						data-food-id={food.fdcId}
+						data-bulk-selected={isChecked}
+						animate:flip={{ duration: getListReflowDuration() }}
+						class:saved-ingredient-list__card--moving={(bulkMoveBusy && isChecked) ||
+							singleAnimatingFoodId === food.fdcId}
+					>
+						<SavedIngredientCard
+							{food}
+							active={selectedFoodId === food.fdcId}
+							checked={isChecked}
+							{selectionMode}
+							moving={movingItem === actionKey ||
+								singleAnimatingFoodId === food.fdcId ||
+								(bulkMoveBusy && isChecked)}
+							removing={removingItem === actionKey}
+							moveDirection={activeList === MIX_STORAGE_KEYS.fridge
+								? "left"
+								: "right"}
+							moveLabel={getIngredientMoveLabel(activeList)}
+							category={getFoodDisplayCategory(food)}
+							{warning}
+							{provenanceOptions}
+							onToggle={() => onToggle(food.fdcId)}
+							onEnterSelection={() => enterSelectionMode(food.fdcId)}
+							onPreview={() => onPreview(food)}
+							onMove={() => moveSingleItem(food)}
+							onActions={() => onActions(food)}
+							onRemove={() => onRemove(food.fdcId)}
+						/>
+					</li>
+				{/each}
+				<PaginatedListControls
+					scrollContainer={listElement}
+					hasMoreItems={canRevealMore}
+					loadingMore={loadingMoreList !== null}
+					loadMoreDisabled={revealPaused}
+					contentVersion={`${activeList}:${foods.length}:${resetKey}`}
+					onLoadMore={requestMoreItems}
 				/>
-			{/if}
-		{/key}
+			</ul>
+		{:else if listLoading}
+			<div
+				class="saved-ingredient-list__loading"
+				role="status"
+				aria-live="polite"
+			>
+				Loading {getIngredientListLabel(activeList).toLowerCase()} ingredients…
+			</div>
+		{:else}
+			<IngredientEmptyState
+				{activeList}
+				hasItems={activeRawCount > 0}
+			/>
+		{/if}
 	</div>
 </section>
 

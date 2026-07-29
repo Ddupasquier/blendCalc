@@ -602,6 +602,20 @@ Preserve:
 
 Do not require users to expose email addresses as public identifiers.
 
+### Appearance
+
+Preserve:
+
+- Device-following, light, and dark color-theme choices.
+- Immediate preview when a choice changes.
+- Explicit save feedback.
+- Account-level persistence across devices.
+- Correct first-paint theme without a light-to-dark hydration flash.
+- Automatic updates when the device color scheme changes while `Device` is selected.
+
+Theme changes must not reload the route, close overlays, reset forms, or create
+theme-specific copies of shared components.
+
 ### Avatar Upload
 
 Preserve:

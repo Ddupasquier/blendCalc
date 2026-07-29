@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import { goto } from "$app/navigation";
 	import type { SubmitFunction } from "@sveltejs/kit";
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
@@ -50,11 +51,32 @@
 		);
 		return async ({ update }) => {
 			try {
-				await update();
+				await update({ reset: false });
 			} finally {
 				pendingTargetUserId = null;
 			}
 		};
+	};
+
+	const submitAccountSearch = async (event: SubmitEvent) => {
+		event.preventDefault();
+		if (searching) return;
+
+		searching = true;
+		const form = event.currentTarget as HTMLFormElement;
+		const query = String(new FormData(form).get("q") ?? "").trim();
+		const href = query
+			? `/moderation?q=${encodeURIComponent(query)}`
+			: "/moderation";
+
+		try {
+			await goto(href, {
+				keepFocus: true,
+				noScroll: true,
+			});
+		} finally {
+			searching = false;
+		}
 	};
 </script>
 
@@ -75,7 +97,7 @@
 			<h2 id="account-search-title">Find an account</h2>
 			<p>Search by preferred name, email address, user ID, role, or status.</p>
 		</div>
-		<form method="GET" role="search" onsubmit={() => (searching = true)}>
+		<form method="GET" role="search" onsubmit={submitAccountSearch}>
 			<label for="moderation-search">Account search</label>
 			<div class="search-controls">
 				<InputLoadingFrame loading={searching} loadingLabel="Searching accounts">

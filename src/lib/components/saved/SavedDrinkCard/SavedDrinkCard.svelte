@@ -58,8 +58,7 @@
 			{#if overallGoalScore}
 				<MetadataPill
 					class="saved-drink-card__goal-score"
-					label="Goal match"
-					value={`${overallGoalScore.percent}%`}
+					label={`${overallGoalScore.percent}%`}
 					ariaLabel={`Overall goal match ${overallGoalScore.percent}% across ${overallGoalScore.goalCount} ${overallGoalScore.goalCount === 1 ? "goal" : "goals"}`}
 					tone="neutral"
 				/>

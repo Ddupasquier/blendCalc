@@ -33,6 +33,7 @@ clickable navigation block instead.
 - [Mandatory Rules Preflight](#rule-rules-preflight)
 - [Repository Hygiene](#rule-repository-hygiene)
 - [Development Tooling Privacy](#rule-development-tooling-privacy)
+- [Cross-View Cohesion](#rule-cross-view-cohesion)
 - [Browser And Mobile Compatibility](#rule-browser-compatibility)
 - [Accessibility](#rule-accessibility)
 - [Strict Content Security Policy](#rule-content-security-policy)
@@ -40,6 +41,7 @@ clickable navigation block instead.
 - [Explicit Pagination Controls](#rule-pagination-controls)
 - [Shared Loading Indicators](#rule-loading-indicators)
 - [Design Tokens And Spacing](#rule-design-tokens)
+- [Light And Dark Theme Support](#rule-theme-support)
 - [Component Styles And Folder Structure](#rule-style-file-boundaries)
 - [Canonical Project Map](../project-structure.md)
 - [Shared Style Utilities](#rule-shared-style-utilities)
@@ -107,12 +109,17 @@ affected area. Treat this as a required preflight, not an optional final audit. 
 the relevant code, schema, data flow, shared primitives, and QA coverage before editing.
 If existing code or the requested approach conflicts with a rule, call it out
 immediately in plain language; do not silently copy, preserve, or work around the
-violation. Fix small, clearly in-scope violations while doing the work. For broader,
-risky, ambiguous, or product-level conflicts, explain the issue and ask before
-expanding scope. Re-check every touched file against the applicable rules before
-handoff. Record settled, repeatable requirements in this rules file and unresolved
-implementation findings in the current development audit. Review both documents before
-work begins; this rules file is authoritative and an audit finding cannot override it.
+violation. If a request conflicts with any applicable maintained document, stop the
+active queue before editing, identify the exact conflict, and ask whether the request or
+the documented contract should change. Never resolve that conflict by opportunistically
+rewriting documentation. Fix small, clearly in-scope implementation violations while
+doing otherwise compatible work. For broader, risky, ambiguous, or product-level
+conflicts, explain the issue and ask before expanding scope. Re-check every touched file
+against the applicable rules before handoff. Update documentation only when an approved
+contract, structure, workflow, schema, or reusable expectation actually changes. Record
+settled, repeatable requirements in this rules file and unresolved implementation
+findings in the current development audit. Review both documents before work begins;
+this rules file is authoritative and an audit finding cannot override it.
 
 **0b.** <a id="rule-repository-hygiene"></a>Keep the remote repository limited to
 deliberate product source, migrations, tests, required configuration and lockfiles,
@@ -142,6 +149,24 @@ produced the work. Private workflow context may record that information only in 
 explicitly Git-ignored local file. Before handoff, audit changed tracked files for
 accidental disclosure. Technical HTTP `User-Agent` headers and dependency package names
 are protocol/runtime terminology and are not authorship disclosure.
+
+**0d.** <a id="rule-cross-view-cohesion"></a>Every feature, fix, adjustment, and
+refactor must preserve cohesion with the established application system. Before editing
+UI, identify the closest approved Ingredients pattern, inspect its reusable primitives
+and states, and compare the proposed behavior with sibling views. Reuse or extend the
+existing primitive when the purpose is the same; do not create a locally similar card,
+control, focus treatment, status, animation, spacing rhythm, or responsive behavior.
+A view-specific difference is acceptable only when its distinct function requires it,
+and the difference must remain local and intentional rather than silently redefining a
+shared pattern.
+
+Changing a shared primitive requires checking every consumer for visual, behavioral,
+responsive, and accessibility regressions. Before handoff, review every applicable
+resting, hover, focus, active, selected, disabled, loading, error, empty, open/closed,
+compact, mobile, desktop, reduced-motion, and text-zoom state—not only the screenshot or
+state that prompted the change. If a deliberate change establishes or replaces a
+reusable expectation, update the style guide and relevant tests in the same task.
+Cohesion is a completion requirement, not a later polish pass.
 
 **1.** Build mobile-first. Every screen and component should work on narrow phones
 before wider layouts.
@@ -245,6 +270,19 @@ places, move it into a shared utility, primitive, mixin, or token-backed class i
 of maintaining feature-local copies. Keep genuinely unique component presentation local;
 do not create abstractions with no second use. Shared utilities must use semantic SCSS
 tokens and must not become a dumping ground for unrelated feature styles.
+
+**3c.** <a id="rule-theme-support"></a>Every app view and reusable component must
+support the shared light, dark, and device-following color themes. Use semantic
+app-wide color tokens routed through the maintained theme custom properties; do not
+hardcode page, panel, control, text, focus, border, status, or action colors that become
+unreadable in another theme. Component-specific illustration and data-label colors may
+remain local only when their contrast and intended appearance are independent of the
+surrounding theme. Preserve WCAG 2.2 AA contrast, visible focus, semantic warning/error
+roles, media legibility, and the established Ingredients hierarchy in every theme.
+Store the account preference in `profiles`, mirror only the validated preference to the
+theme bootstrap cookie, render the correct theme before hydration, and let `system`
+respond to operating-system changes. A theme change must never reload the page, reset
+in-progress UI, or fork component markup by theme.
 
 **4.** Do not use box shadows. Use borders, spacing, and background contrast instead.
 
