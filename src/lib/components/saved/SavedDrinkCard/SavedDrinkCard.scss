@@ -12,7 +12,6 @@
 :global(.collapsible-section.saved-drink-card__collapse > summary) {
 	min-height: $app-shell-control-height;
 	padding: 0 $app-shell-card-padding-compact;
-	background: $app-shell-surface-panel;
 	border-radius: $app-shell-radius-card;
 }
 
@@ -70,18 +69,9 @@
 	content: "•";
 }
 
-.saved-drink-card__calories {
-	display: inline-flex;
-	align-items: center;
-	padding: $app-text-badge-padding-y $app-text-badge-padding-x;
-	color: $app-shell-accent-primary;
-	background: $app-success-bg;
-	border-radius: $app-shell-radius-pill;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-heavy;
-	line-height: 1.1;
-	white-space: nowrap;
-	box-sizing: border-box;
+:global(.saved-drink-card__calories),
+:global(.saved-drink-card__goal-score) {
+	flex: 0 0 auto;
 }
 
 .saved-drink-card__no-ingredients {
@@ -93,7 +83,7 @@
 
 .saved-drink-card__actions {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+	grid-template-columns: minmax(0, 1fr) auto auto;
 	align-items: start;
 	gap: $app-gap-sm;
 	min-width: 0;
@@ -123,9 +113,5 @@
 	.saved-drink-card__body {
 		gap: $app-gap-sm;
 		padding-top: $app-gap-sm;
-	}
-
-	.saved-drink-card__calories {
-		font-size: $app-font-size-xs;
 	}
 }

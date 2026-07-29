@@ -5,3 +5,12 @@
 	gap: $app-gap-xs;
 	min-width: 0;
 }
+
+.saved-drink-export--compact {
+	display: contents;
+}
+
+.saved-drink-export__status {
+	grid-column: 1 / -1;
+	min-width: 0;
+}

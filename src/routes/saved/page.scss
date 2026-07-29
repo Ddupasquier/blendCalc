@@ -4,9 +4,11 @@
 	flex: 1 1 auto;
 	min-width: 0;
 	min-height: 0;
-	padding: 0 $app-gap-xs max($app-gap-lg, env(safe-area-inset-bottom));
+	padding: 0 0 max($app-gap-lg, env(safe-area-inset-bottom));
 	overflow-y: auto;
+	overflow-anchor: none;
 	overscroll-behavior: contain;
+	scrollbar-gutter: stable;
 	-webkit-overflow-scrolling: touch;
 	box-sizing: border-box;
 }
@@ -35,16 +37,10 @@
 	min-height: 12rem;
 	padding: $app-gap-lg;
 	color: $app-shell-text-muted;
-	background: $app-shell-surface-panel;
-	border-radius: $app-shell-radius-card;
 	text-align: center;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.saved-page__scroll {
-		padding-inline: 0;
-	}
-
 	.saved-page__content,
 	.saved-page__list {
 		gap: $app-gap-sm;

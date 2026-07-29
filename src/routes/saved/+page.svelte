@@ -22,6 +22,7 @@
 	import { getAppDocumentTitle } from "$lib/config/pageMetadata";
 	import { prefersReducedMotion } from "$lib/utils/accessibility/motion";
 	import { filterItemsByQuery } from "$lib/utils/list/listNavigation";
+	import { createScrollDirectionTracker } from "$lib/utils/navigation/scrollDirection";
 	import {
 		deleteSavedDrink,
 		normalizeSavedDrink,
@@ -44,6 +45,8 @@
 	let loadError = $state(initialSavedData?.loadError ?? "");
 	let loadingDrinks = $state(false);
 	let scrollContainer = $state<HTMLElement | null>(null);
+	let compactTopHidden = $state(false);
+	const scrollDirectionTracker = createScrollDirectionTracker();
 
 	const sortOptions = [
 		{ value: "newest", label: "Newest first" },
@@ -133,15 +136,20 @@
 	const updateQuery = (value: string) => {
 		query = value;
 		visibleCount = LIST_PAGE_SIZES.savedDrinks;
+		compactTopHidden = false;
+		scrollDirectionTracker.reset(scrollContainer?.scrollTop ?? 0);
 	};
 
 	const updateSort = (value: string) => {
 		sort = value;
 		visibleCount = LIST_PAGE_SIZES.savedDrinks;
+		compactTopHidden = false;
+		scrollDirectionTracker.reset(scrollContainer?.scrollTop ?? 0);
 	};
 
 	const openSortSheet = () => {
 		if (sortSheetOpen) return;
+		compactTopHidden = false;
 		pushState("/saved/sort", { ...page.state });
 	};
 
@@ -160,6 +168,14 @@
 	};
 
 	const getListReflowDuration = () => (prefersReducedMotion() ? 0 : 260);
+
+	const handleSavedScroll = (event: Event) => {
+		if (sortSheetOpen) return;
+		const direction = scrollDirectionTracker.update(
+			(event.currentTarget as HTMLElement).scrollTop,
+		);
+		if (direction) compactTopHidden = direction === "down";
+	};
 
 	onMount(() => {
 		window.addEventListener(SAVED_DRINKS_CHANGED_EVENT, loadSavedDrinks);
@@ -187,7 +203,7 @@
 />
 
 <ViewFrame appShell className="saved-page">
-	<ViewTop>
+	<ViewTop compactHidden={compactTopHidden}>
 		<ViewHeader
 			title="Saved Drinks"
 			subtitle="Load a saved mix back into Mix when you want to make it again."
@@ -214,7 +230,11 @@
 	</ViewTop>
 
 	<ViewBody>
-		<div class="saved-page__scroll" bind:this={scrollContainer}>
+		<div
+			class="saved-page__scroll"
+			bind:this={scrollContainer}
+			onscroll={handleSavedScroll}
+		>
 			<div class="saved-page__content">
 				{#if deleteError}
 					<StatusMessage tone="danger" message={deleteError} />

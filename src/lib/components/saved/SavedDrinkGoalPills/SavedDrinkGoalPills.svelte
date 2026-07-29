@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MetadataPill from "$lib/components/common/display/MetadataPill/MetadataPill.svelte";
 	import type { SavedDrinkGoalPillsProps } from "./types";
 
 	let { goals }: SavedDrinkGoalPillsProps = $props();
@@ -7,9 +8,12 @@
 {#if goals.length > 0}
 	<ul class="saved-drink-goals" aria-label="Saved mix goal progress">
 		{#each goals as goal (goal.nutrientId)}
-			<li data-tone={goal.tone}>
-				<span>{goal.label}</span>
-				<strong>{goal.percent}%</strong>
+			<li>
+				<MetadataPill
+					label={goal.label}
+					value={`${goal.percent}%`}
+					tone={goal.tone}
+				/>
 			</li>
 		{/each}
 	</ul>

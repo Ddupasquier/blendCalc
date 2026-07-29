@@ -2,6 +2,7 @@
 	import Chevron from "$lib/assets/icons/Chevron/Chevron.svelte";
 	import FoodSymbol from "$lib/assets/icons/FoodSymbol/FoodSymbol.svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
+	import MetadataPill from "$lib/components/common/display/MetadataPill/MetadataPill.svelte";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import type { SavedDrinkIngredientPillsProps } from "./types";
@@ -19,14 +20,35 @@
 	<ul class="saved-drink-ingredients__pills">
 		{#each items as food (food.fdcId)}
 			<li>
-				<span class="saved-drink-ingredients__symbol" aria-hidden="true">
-					<FoodSymbol {food} fallbackOnly />
-				</span>
-				<span class="saved-drink-ingredients__name" title={food.description}>
-					{food.description}
-				</span>
 				{#if isPrivateCustomFood(food)}
-					<CustomBadge />
+					<MetadataPill
+						class="saved-drink-ingredients__pill"
+						label={food.description}
+						title={food.description}
+						tone="soft"
+					>
+						{#snippet leading()}
+							<span class="saved-drink-ingredients__symbol">
+								<FoodSymbol {food} fallbackOnly />
+							</span>
+						{/snippet}
+						{#snippet trailing()}
+							<CustomBadge />
+						{/snippet}
+					</MetadataPill>
+				{:else}
+					<MetadataPill
+						class="saved-drink-ingredients__pill"
+						label={food.description}
+						title={food.description}
+						tone="soft"
+					>
+						{#snippet leading()}
+							<span class="saved-drink-ingredients__symbol">
+								<FoodSymbol {food} fallbackOnly />
+							</span>
+						{/snippet}
+					</MetadataPill>
 				{/if}
 			</li>
 		{/each}

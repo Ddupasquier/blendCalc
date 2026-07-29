@@ -1,6 +1,6 @@
 # Development Rules
 
-Last reviewed: 2026-07-26
+Last reviewed: 2026-07-28
 
 ## Purpose
 
@@ -1364,6 +1364,12 @@ compact cards. Do not reproduce badge spans or pill styling inside feature compo
 The shared primitive owns horizontal and vertical centering, minimum height, typography,
 truncation, tone colors, padding, and rounding through SCSS variables; feature code
 supplies only semantic label, tone, and accessible text.
+
+Structured non-status metadata that combines a label with an icon, value, or compact
+marker must use the shared `MetadataPill` component. `MetadataPill` owns the same
+repeated geometry and semantic tones while allowing approved leading or trailing
+content. Do not rebuild ingredient, calorie, goal-progress, or similar metadata pills
+inside a feature stylesheet.
 
 **45c.** <a id="rule-verified-status-badge"></a>Any verification backed by accepted
 evidence—an exact source match, corroboration, or moderator approval—must render as the

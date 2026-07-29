@@ -3,6 +3,7 @@ import type { RoundedActionButtonVariant } from "$lib/components/common/buttons/
 
 export type SavedDrinkExportActionProps = {
 	drink: SavedDrink;
+	compact?: boolean;
 	fullWidth?: boolean;
 	disabled?: boolean;
 	variant?: RoundedActionButtonVariant;

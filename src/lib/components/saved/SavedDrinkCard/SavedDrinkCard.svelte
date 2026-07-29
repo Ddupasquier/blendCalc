@@ -4,9 +4,11 @@
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
+	import MetadataPill from "$lib/components/common/display/MetadataPill/MetadataPill.svelte";
 	import {
 		getSavedDrinkCalories,
 		getSavedDrinkGoalProgress,
+		getSavedDrinkOverallGoalScore,
 	} from "$lib/utils/recipes/savedDrinkPresentation";
 	import SavedDrinkExportAction from "../SavedDrinkExportAction/SavedDrinkExportAction.svelte";
 	import SavedDrinkGoalPills from "../SavedDrinkGoalPills/SavedDrinkGoalPills.svelte";
@@ -25,6 +27,7 @@
 	const titleId = $derived(`saved-drink-${drink.id}-title`);
 	const calories = $derived(getSavedDrinkCalories(drink));
 	const goalProgress = $derived(getSavedDrinkGoalProgress(drink));
+	const overallGoalScore = $derived(getSavedDrinkOverallGoalScore(drink));
 	const savedDate = $derived(
 		new Intl.DateTimeFormat(undefined, {
 			month: "short",
@@ -41,13 +44,25 @@
 	<CollapsibleSection
 		title={drink.name}
 		{titleId}
+		surface="panel"
 		class="saved-drink-card__collapse"
 	>
 		{#snippet summaryEnd()}
 			{#if calories !== null}
-				<span class="saved-drink-card__calories">
-					{calories} kcal
-				</span>
+				<MetadataPill
+					class="saved-drink-card__calories"
+					label={`${calories} kcal`}
+					tone="success"
+				/>
+			{/if}
+			{#if overallGoalScore}
+				<MetadataPill
+					class="saved-drink-card__goal-score"
+					label="Goal match"
+					value={`${overallGoalScore.percent}%`}
+					ariaLabel={`Overall goal match ${overallGoalScore.percent}% across ${overallGoalScore.goalCount} ${overallGoalScore.goalCount === 1 ? "goal" : "goals"}`}
+					tone="neutral"
+				/>
 			{/if}
 		{/snippet}
 
@@ -79,9 +94,8 @@
 				</RoundedActionButton>
 				<SavedDrinkExportAction
 					{drink}
-					fullWidth
+					compact
 					disabled={disabled}
-					variant="soft"
 				/>
 				<TwoStepConfirmation
 					actionLabel={`Delete ${drink.name}`}

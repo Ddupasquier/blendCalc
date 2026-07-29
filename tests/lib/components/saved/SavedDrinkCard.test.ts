@@ -113,7 +113,13 @@ describe("SavedDrinkCard", () => {
 		const summary = title.closest("summary");
 		const recipeDetails = summary?.closest("details");
 		expect(recipeDetails?.open).toBe(false);
+		expect(recipeDetails).toHaveAttribute("data-surface", "panel");
 		expect(screen.getByText("100 kcal")).toBeInTheDocument();
+		expect(screen.getByText("Goal match")).toBeInTheDocument();
+		expect(screen.getByText("75%")).toBeInTheDocument();
+		expect(
+			screen.getByLabelText("Overall goal match 75% across 2 goals"),
+		).toBeInTheDocument();
 		expect(screen.getByText("Protein")).not.toBeVisible();
 		expect(
 			screen.queryByRole("button", { name: "Load Morning Green" }),
@@ -129,6 +135,9 @@ describe("SavedDrinkCard", () => {
 		expect(
 			screen.getByRole("button", { name: "Load Morning Green" }),
 		).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "Share recipe" }),
+		).toHaveClass("circle-icon-button");
 
 		const ingredientSummary = screen
 			.getByText("+2 more ingredients")
@@ -168,6 +177,6 @@ describe("SavedDrinkCard", () => {
 		expect(onDelete).toHaveBeenCalledWith(drink);
 		expect(
 			screen.getByRole("button", { name: "Share recipe" }),
-		).toBeInTheDocument();
+		).toHaveClass("circle-icon-button");
 	});
 });

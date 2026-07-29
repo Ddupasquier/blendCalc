@@ -548,6 +548,9 @@ Preserve:
 - The closed saved-drink header shows:
   - Drink name.
   - Total calories when the saved food data supports that calculation.
+  - One neutral overall-goal score calculated from every goal with nutrient evidence.
+    The score averages each goal's proximity to 100%, so overages and deficits both
+    lower it instead of cancelling each other out.
 - The expanded saved-drink body shows:
   - Created date.
   - Ingredient count.
@@ -555,10 +558,10 @@ Preserve:
     images.
   - A remaining-ingredient disclosure that expands the rest of the ingredient pills
     without an inner scrolling list.
-  - Up to four progress pills derived from the saved nutrient selection and goal data;
-    nutrients with no reported or derived evidence are omitted rather than displayed as
-    zero.
-  - Load, share, and confirmed delete actions.
+  - Every progress pill derived from the saved nutrient selection and goal data;
+    nutrients with no reported or derived evidence are omitted rather than displayed
+    as zero.
+  - One dominant Load action plus compact Share and confirmed Delete actions.
 - `Load` action that loads the drink into Mix.
 - Share recipe action.
 - Delete drink action using the shared two-step tap/click confirmation.
@@ -566,6 +569,12 @@ Preserve:
 - Custom ingredient indicators.
 - Sorting uses the same URL-backed bottom-sheet and pill controls as Ingredients rather
   than a native select in the page toolbar.
+- On compact screens, deliberate downward list scrolling hides the Saved heading and
+  search/sort controls with the shared `ViewTop` transition. Upward scrolling reveals
+  them without requiring a return to the top, and reduced-motion preferences remove
+  the transition.
+- Empty and initial loading states use the quiet open-page presentation and shared
+  circular icon framing from Ingredients rather than bordered placeholder cards.
 
 When loading a drink:
 

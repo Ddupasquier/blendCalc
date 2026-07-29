@@ -21,6 +21,11 @@ export type SavedDrinkGoalProgress = {
 	tone: SavedDrinkGoalTone;
 };
 
+export type SavedDrinkOverallGoalScore = {
+	percent: number;
+	goalCount: number;
+};
+
 const hasNutrientEvidence = (
 	drink: SavedDrink,
 	nutrientId: number,
@@ -50,9 +55,8 @@ export const getSavedDrinkCalories = (drink: SavedDrink) => {
 	return Number.isFinite(calories) ? Math.max(0, Math.round(calories)) : null;
 };
 
-export const getSavedDrinkGoalProgress = (
+const getAllSavedDrinkGoalProgress = (
 	drink: SavedDrink,
-	maxGoals = 4,
 ): SavedDrinkGoalProgress[] => {
 	const selectedIds = [...new Set(drink.selected.map(Number))].filter(
 		Number.isFinite,
@@ -95,5 +99,30 @@ export const getSavedDrinkGoalProgress = (
 			percent: Math.max(0, Math.round(ratio * 100)),
 			tone: getGoalTone(ratio),
 		}];
-	}).slice(0, maxGoals);
+	});
+};
+
+export const getSavedDrinkGoalProgress = (
+	drink: SavedDrink,
+	maxGoals?: number,
+): SavedDrinkGoalProgress[] => {
+	const goals = getAllSavedDrinkGoalProgress(drink);
+	return maxGoals === undefined ? goals : goals.slice(0, maxGoals);
+};
+
+export const getSavedDrinkOverallGoalScore = (
+	drink: SavedDrink,
+): SavedDrinkOverallGoalScore | null => {
+	const goals = getAllSavedDrinkGoalProgress(drink);
+	if (goals.length === 0) return null;
+
+	const totalCloseness = goals.reduce(
+		(sum, goal) => sum + Math.max(0, 100 - Math.abs(100 - goal.percent)),
+		0,
+	);
+
+	return {
+		percent: Math.round(totalCloseness / goals.length),
+		goalCount: goals.length,
+	};
 };

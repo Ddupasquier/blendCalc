@@ -312,6 +312,7 @@ Check the existing primitive before writing markup or SCSS.
 | Photo input | `PhotoUploadInput` | Single/multiple photo prompt, count, status, and validation |
 | Toggle | `ToggleSwitch` | Boolean settings; do not use a checkbox as an on/off switch |
 | Compact metadata badge | `TextBadge` | Owns centering, tone, padding, and truncation |
+| Structured metadata pill | `MetadataPill` | Ingredient labels, kcal, goal progress, and other compact label/value or label/icon metadata |
 | Verified evidence | `VerifiedStatusBadge` | Detail/search contexts where verification helps a decision |
 | Privileged group marker | `PrivilegedActionBadge` | One crown in the owning group header, not every child action |
 | Centered icon wrapper | `CenteredIcon` | Required inner alignment layer for icon controls |

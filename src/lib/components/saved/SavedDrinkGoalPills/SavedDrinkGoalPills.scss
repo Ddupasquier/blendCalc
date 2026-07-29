@@ -11,37 +11,6 @@
 
 .saved-drink-goals li {
 	display: inline-flex;
-	align-items: center;
-	gap: $app-gap-xs;
-	min-height: 1.6rem;
-	padding: $app-gap-xs $app-gap-sm;
-	border-radius: $app-shell-radius-pill;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-semibold;
-	line-height: 1.15;
-	box-sizing: border-box;
-}
-
-.saved-drink-goals strong {
-	font-weight: $app-font-weight-heavy;
-}
-
-.saved-drink-goals li[data-tone="neutral"] {
-	color: $app-shell-text-muted;
-	background: $app-shell-surface-control;
-}
-
-.saved-drink-goals li[data-tone="success"] {
-	color: $app-shell-accent-primary;
-	background: $app-success-bg;
-}
-
-.saved-drink-goals li[data-tone="warning"] {
-	color: $app-warning-strong;
-	background: $app-status-warning-bg;
-}
-
-.saved-drink-goals li[data-tone="danger"] {
-	color: $app-status-error-text;
-	background: $app-status-error-bg;
+	max-width: 100%;
+	min-width: 0;
 }

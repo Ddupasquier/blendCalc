@@ -11,6 +11,9 @@ describe("Saved view architecture", () => {
 		expect(page).toContain("<SavedDrinksEmptyState");
 		expect(page).toContain("<ListSortSheet");
 		expect(page).toContain("<PaginatedListControls");
+		expect(page).toContain("createScrollDirectionTracker");
+		expect(page).toContain("<ViewTop compactHidden={compactTopHidden}>");
+		expect(page).toContain("onscroll={handleSavedScroll}");
 		expect(page).not.toContain("<Pagination");
 		expect(page).not.toContain('class="saved-card"');
 	});
@@ -21,11 +24,37 @@ describe("Saved view architecture", () => {
 			"src/lib/components/saved/SavedDrinkCard/SavedDrinkCard.scss",
 			"utf8",
 		);
+		const emptyStateStyles = readFileSync(
+			"src/lib/components/saved/SavedDrinksEmptyState/SavedDrinksEmptyState.scss",
+			"utf8",
+		);
 
 		expect(pageStyles).toContain(".saved-page__scroll");
 		expect(pageStyles).not.toContain(".saved-drink-card");
 		expect(cardStyles).toContain(".saved-drink-card");
 		expect(cardStyles).not.toContain("box-shadow");
+		expect(emptyStateStyles).not.toContain("$app-shell-border-subtle");
+	});
+
+	it("shares metadata and compact action primitives instead of duplicating pills", () => {
+		const card = readFileSync(
+			"src/lib/components/saved/SavedDrinkCard/SavedDrinkCard.svelte",
+			"utf8",
+		);
+		const goals = readFileSync(
+			"src/lib/components/saved/SavedDrinkGoalPills/SavedDrinkGoalPills.svelte",
+			"utf8",
+		);
+		const ingredients = readFileSync(
+			"src/lib/components/saved/SavedDrinkIngredientPills/SavedDrinkIngredientPills.svelte",
+			"utf8",
+		);
+
+		expect(card).toContain("<MetadataPill");
+		expect(card).toContain("<SavedDrinkExportAction");
+		expect(card).toContain("compact");
+		expect(goals).toContain("<MetadataPill");
+		expect(ingredients).toContain("<MetadataPill");
 	});
 
 	it("keeps the compact filter trigger from shrinking the search field", () => {

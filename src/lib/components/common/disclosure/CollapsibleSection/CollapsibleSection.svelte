@@ -8,13 +8,18 @@
 		titleId,
 		badge,
 		open = false,
+		surface = "accent",
 		class: className = "",
 		summaryEnd,
 		children,
 	}: CollapsibleSectionProps = $props();
 </script>
 
-<details class={`collapsible-section ${className}`.trim()} {open}>
+<details
+	class={`collapsible-section ${className}`.trim()}
+	data-surface={surface}
+	{open}
+>
 	<summary>
 		<span class="collapsible-section__heading">
 			<span class="collapsible-section__chevron" aria-hidden="true">
