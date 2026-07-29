@@ -35,6 +35,25 @@ describe("NutritionDetailView", () => {
 		expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(longName);
 	});
 
+	it("shows the canonical food name instead of a personal list name", () => {
+		render(NutritionDetailView, {
+			props: {
+				food: {
+					...spinach,
+					description: "My Greens",
+					canonicalDescription: "Spinach, Raw",
+					nameProvenance: "user",
+				},
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(screen.getByRole("heading", { level: 1 }))
+			.toHaveTextContent("Spinach, Raw");
+		expect(screen.queryByText("My Greens")).not.toBeInTheDocument();
+	});
+
 	it("shows a source-backed product image when available", () => {
 		render(NutritionDetailView, {
 			props: {

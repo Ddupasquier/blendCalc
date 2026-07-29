@@ -4,7 +4,10 @@ import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibi
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type { FdcFood } from "$lib/utils/food/types";
 import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
-import { normalizeFoodProductName } from "$lib/utils/products/productNameFormatting.js";
+import {
+	formatSourceProductName,
+	normalizeFoodProductName,
+} from "$lib/utils/products/productNameFormatting.js";
 import { hydrateFoodsWithCachedImages } from "$lib/utils/storage/supabase/foodImages";
 import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
 import { readFoodServingsByParent } from "$lib/utils/storage/supabase/servings";
@@ -56,6 +59,9 @@ const hydrateFoodWithSharedProductMetadata = (
 
 	return {
 		...food,
+		canonicalDescription: formatSourceProductName(
+			canonicalFood.canonicalDescription ?? canonicalFood.description,
+		),
 		foodIdentityType: canonicalFood.foodIdentityType,
 		brandOwner: canonicalFood.brandOwner ?? food.brandOwner,
 		foodCategory: canonicalFood.foodCategory ?? food.foodCategory,
