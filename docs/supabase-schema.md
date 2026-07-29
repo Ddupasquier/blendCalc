@@ -105,6 +105,11 @@ Notes:
   barcode-assisted, or explicitly user-owned. Source and barcode names use the shared
   title-style formatter and replace standalone `and` with `&`; personal renames keep the
   user's exact wording and casing.
+- `food.canonicalDescription` retains the source, shared-catalog, generic-dataset, or
+  original private-food name when `food.description` is replaced by a personal list
+  name. Ingredient cards use the personal name; nutrition details use the canonical
+  name. Existing rows are backfilled from exact shared-product, generic-food, or
+  private-food identity links when available.
 - `food_identity_key` is generated from the normalized barcode when available, otherwise
   from the FDC id.
 - `shared_product_id` links the saved item to the active approved catalog product for

@@ -13,6 +13,19 @@ const cloneStructuredIngredients = (
 	ingredients: cloneStructuredIngredients(ingredient.ingredients),
 }));
 
+export const getCanonicalFoodDescription = (
+	food: Pick<
+		FdcFood,
+		"canonicalDescription" | "description" | "foodIdentityType"
+	>,
+) => {
+	const canonicalDescription = food.canonicalDescription?.trim();
+	if (!canonicalDescription) return food.description.trim();
+	return food.foodIdentityType === "private-custom"
+		? canonicalDescription
+		: formatSourceProductName(canonicalDescription);
+};
+
 export const compactFood = (food: FdcFood): FdcFood => {
 	const normalizedFood = normalizeFoodProductName(food) as FdcFood;
 	const foodNutrients = food.foodNutrients.filter((nutrient) =>
@@ -28,6 +41,8 @@ export const compactFood = (food: FdcFood): FdcFood => {
 	return {
 		fdcId: normalizedFood.fdcId,
 		description: normalizedFood.description,
+		canonicalDescription:
+			food.canonicalDescription?.trim() || normalizedFood.description,
 		sourceIdentifiers: food.sourceIdentifiers
 			? { ...food.sourceIdentifiers }
 			: undefined,

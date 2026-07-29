@@ -15,6 +15,7 @@
 	import { getPrimaryFoodWarning } from "$lib/utils/ingredients/ingredientListUi";
 	import { updateFoodImagePlacement } from "$lib/utils/food/images/foodImagePlacement";
 	import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
+	import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
 	import type { ProductImagePanelProps } from "./types";
 
 	let {
@@ -24,12 +25,15 @@
 	}: ProductImagePanelProps = $props();
 
 	const imageUrl = $derived(pickFoodFullImageUrl(food?.image));
+	const foodName = $derived(
+		food ? getCanonicalFoodDescription(food) : "Ingredient",
+	);
 	const showWarningEdge = $derived(
 		Boolean(food && getPrimaryFoodWarning(food)),
 	);
 	const imageAlt = $derived(
 		getFoodImageAltText({
-			foodName: food?.description ?? "Ingredient",
+			foodName,
 			role: food?.image?.role,
 		}),
 	);
@@ -164,7 +168,7 @@
 						<ImagePlacementEditor
 							imageUrl={imageUrl}
 							alt={imageAlt}
-							foodName={food?.description ?? "Ingredient"}
+							{foodName}
 							brandName={food?.brandOwner ?? ""}
 							category={food?.foodCategory ?? "Ingredient"}
 							title="Card image placement"

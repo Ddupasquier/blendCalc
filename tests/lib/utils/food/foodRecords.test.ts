@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	compactFood,
 	compactManagedFood,
+	getCanonicalFoodDescription,
 } from "$lib/utils/food/records/foodRecords";
 import type { FdcFood } from "$lib/utils/food/types";
 
@@ -103,5 +104,27 @@ describe("compact food records", () => {
 			description: "Roasted Onion & Garlic Pasta Sauce",
 			nameProvenance: "source",
 		});
+	});
+
+	it("preserves the canonical name separately from a personal list name", () => {
+		const food: FdcFood = {
+			fdcId: 3,
+			description: "My Breakfast Spinach",
+			canonicalDescription: "Spinach, Raw",
+			nameProvenance: "user",
+			foodNutrients: [],
+		};
+
+		expect(compactFood(food)).toMatchObject({
+			description: "My Breakfast Spinach",
+			canonicalDescription: "Spinach, Raw",
+		});
+		expect(getCanonicalFoodDescription(food)).toBe("Spinach, Raw");
+	});
+
+	it("uses the current name when no separate canonical name exists", () => {
+		expect(getCanonicalFoodDescription({
+			description: "Spinach, Raw",
+		})).toBe("Spinach, Raw");
 	});
 });
