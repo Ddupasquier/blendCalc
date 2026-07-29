@@ -5,6 +5,7 @@
 
 	let {
 		title,
+		titleId,
 		badge,
 		open = false,
 		class: className = "",
@@ -19,7 +20,7 @@
 			<span class="collapsible-section__chevron" aria-hidden="true">
 				<Chevron direction="down" />
 			</span>
-			<span class="collapsible-section__title">
+			<span id={titleId} class="collapsible-section__title">
 				{title}
 				{#if badge}
 					<TextBadge label={badge} tone="neutral" />

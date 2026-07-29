@@ -15,6 +15,7 @@ describe("CollapsibleSection", () => {
 		render(CollapsibleSection, {
 			props: {
 				title: "Adjust card image placement",
+				titleId: "image-placement-title",
 				badge: "optional",
 				summaryEnd,
 				children,
@@ -33,6 +34,7 @@ describe("CollapsibleSection", () => {
 		expect(title.compareDocumentPosition(endAction))
 			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
 		expect(screen.getByText("optional")).toBeInTheDocument();
+		expect(title).toHaveAttribute("id", "image-placement-title");
 
 		await fireEvent.click(summary as HTMLElement);
 		expect(details).toHaveAttribute("open");

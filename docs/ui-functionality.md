@@ -534,7 +534,7 @@ Preserve:
 
 ## Saved Drinks Page
 
-Route: `/saved`
+Routes: `/saved`, `/saved/sort`
 
 Preserve:
 
@@ -543,16 +543,29 @@ Preserve:
   - Newest first.
   - Oldest first.
   - Name A–Z.
-- Pagination for large saved-drink collections.
-- Saved drink card shows:
+- Explicit load-more and return-to-top controls for large saved-drink collections.
+- Each saved drink is a shared collapse that starts closed.
+- The closed saved-drink header shows:
   - Drink name.
+  - Total calories when the saved food data supports that calculation.
+- The expanded saved-drink body shows:
   - Created date.
   - Ingredient count.
-  - Ingredient pills/badges, not comma-separated blobs.
-- Load drink action.
-- Delete drink action with confirmation.
+  - Up to eight compact ingredient pills using category symbols rather than product
+    images.
+  - A remaining-ingredient disclosure that expands the rest of the ingredient pills
+    without an inner scrolling list.
+  - Up to four progress pills derived from the saved nutrient selection and goal data;
+    nutrients with no reported or derived evidence are omitted rather than displayed as
+    zero.
+  - Load, share, and confirmed delete actions.
+- `Load` action that loads the drink into Mix.
+- Share recipe action.
+- Delete drink action using the shared two-step tap/click confirmation.
 - Loading/error states for load/delete.
 - Custom ingredient indicators.
+- Sorting uses the same URL-backed bottom-sheet and pill controls as Ingredients rather
+  than a native select in the page toolbar.
 
 When loading a drink:
 

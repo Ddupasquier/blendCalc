@@ -4,7 +4,12 @@
 	import { buildSavedDrinkExportText } from "$lib/utils/recipes/recipeExport";
 	import type { SavedDrinkExportActionProps } from "./types";
 
-	let { drink }: SavedDrinkExportActionProps = $props();
+	let {
+		drink,
+		fullWidth = false,
+		disabled = false,
+		variant = "outline",
+	}: SavedDrinkExportActionProps = $props();
 	let busy = $state(false);
 	let message = $state("");
 	let error = $state("");
@@ -38,7 +43,13 @@
 </script>
 
 <div class="saved-drink-export">
-	<RoundedActionButton variant="outline" {busy} onclick={() => void shareDrink()}>
+	<RoundedActionButton
+		{variant}
+		{fullWidth}
+		{busy}
+		{disabled}
+		onclick={() => void shareDrink()}
+	>
 		Share recipe
 	</RoundedActionButton>
 	{#if message}<StatusMessage tone="success" message={message} />{/if}

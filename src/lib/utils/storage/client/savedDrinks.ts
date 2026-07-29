@@ -51,6 +51,10 @@ export type SavedDrinkMutationResult =
 	| { ok: true; drink: SavedDrink }
 	| { ok: false; reason: "duplicate" | "missing" | "unavailable" };
 
+export type SavedDrinkMutationOptions = {
+	notify?: boolean;
+};
+
 export type LoadedSavedDrink = {
 	id: string;
 	name: string;
@@ -169,11 +173,14 @@ export const saveExistingSavedDrink = async (
 	return { ok: true, drink: updatedDrink };
 };
 
-export const deleteSavedDrink = async (id: string) => {
+export const deleteSavedDrink = async (
+	id: string,
+	{ notify = true }: SavedDrinkMutationOptions = {},
+) => {
 	const deleted = await deleteCloudSavedDrink(id);
 	if (!deleted) return false;
 
-	dispatchSavedDrinksChanged();
+	if (notify) dispatchSavedDrinksChanged();
 	if (readLoadedSavedDrink()?.id === id) clearLoadedSavedDrink();
 	return true;
 };

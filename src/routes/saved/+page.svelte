@@ -1,76 +1,80 @@
 <script lang="ts">
-    import { page as routePage } from "$app/state";
-	import { goto } from "$app/navigation";
-	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
-    import ListControls from "$lib/components/common/lists/ListControls/ListControls.svelte";
-    import Pagination from "$lib/components/common/lists/Pagination/Pagination.svelte";
-	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
-	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
-	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
+	import {
+		goto,
+		pushState,
+		replaceState as replaceNavigationState,
+	} from "$app/navigation";
+	import { page } from "$app/state";
+	import { flip } from "svelte/animate";
+	import { onMount } from "svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
-	import SavedDrinkExportAction from "$lib/components/saved/SavedDrinkExportAction/SavedDrinkExportAction.svelte";
-    import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
-    import {
-        clampPage,
-        filterItemsByQuery,
-        paginateItems,
-    } from "$lib/utils/list/listNavigation";
-    import {
-        deleteSavedDrink,
-        normalizeSavedDrink,
-        restoreSavedDrinkToMix,
-        SAVED_DRINKS_CHANGED_EVENT,
-        type SavedDrink,
-    } from "$lib/utils/storage/client/savedDrinks";
-    import { readCloudSavedDrinks } from "$lib/utils/storage/supabase";
-    import { onMount } from "svelte";
+	import ListControls from "$lib/components/common/lists/ListControls/ListControls.svelte";
+	import ListSortSheet from "$lib/components/common/lists/ListSortSheet/ListSortSheet.svelte";
+	import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls/PaginatedListControls.svelte";
+	import ViewBody from "$lib/components/common/view/ViewBody/ViewBody.svelte";
+	import ViewFrame from "$lib/components/common/view/ViewFrame/ViewFrame.svelte";
+	import ViewHeader from "$lib/components/common/view/ViewHeader/ViewHeader.svelte";
+	import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
+	import SavedDrinkCard from "$lib/components/saved/SavedDrinkCard/SavedDrinkCard.svelte";
+	import SavedDrinksEmptyState from "$lib/components/saved/SavedDrinksEmptyState/SavedDrinksEmptyState.svelte";
+	import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
+	import { getAppDocumentTitle } from "$lib/config/pageMetadata";
+	import { prefersReducedMotion } from "$lib/utils/accessibility/motion";
+	import { filterItemsByQuery } from "$lib/utils/list/listNavigation";
+	import {
+		deleteSavedDrink,
+		normalizeSavedDrink,
+		restoreSavedDrinkToMix,
+		SAVED_DRINKS_CHANGED_EVENT,
+		type SavedDrink,
+	} from "$lib/utils/storage/client/savedDrinks";
+	import { readCloudSavedDrinks } from "$lib/utils/storage/supabase";
 
-	const initialSavedData = routePage.data.savedData;
-    let drinks = $state<SavedDrink[]>(
+	const initialSavedData = page.data.savedData;
+	let drinks = $state<SavedDrink[]>(
 		(initialSavedData?.drinks ?? []).map(normalizeSavedDrink),
 	);
-    let query = $state("");
-    let sort = $state("newest");
-    let page = $state(1);
-	let drinkPendingDelete = $state<SavedDrink | null>(null);
+	let query = $state("");
+	let sort = $state("newest");
+	let visibleCount = $state<number>(LIST_PAGE_SIZES.savedDrinks);
 	let deletingDrinkId = $state<string | null>(null);
 	let loadingDrinkId = $state<string | null>(null);
-    let deleteError = $state("");
+	let deleteError = $state("");
 	let loadError = $state(initialSavedData?.loadError ?? "");
 	let loadingDrinks = $state(false);
+	let scrollContainer = $state<HTMLElement | null>(null);
 
-    const sortOptions = [
-        { value: "newest", label: "Newest first" },
-        { value: "oldest", label: "Oldest first" },
-        { value: "name", label: "Name A–Z" },
-    ];
+	const sortOptions = [
+		{ value: "newest", label: "Newest first" },
+		{ value: "oldest", label: "Oldest first" },
+		{ value: "name", label: "Name A–Z" },
+	];
 
-    const filteredDrinks = $derived.by(() => {
-        const matchingDrinks = filterItemsByQuery(
-            drinks,
-            query,
-            (drink) =>
-                [drink.name, ...drink.foods.map((food) => food.description)].join(
-                    " ",
-                ),
-        );
+	const filteredDrinks = $derived.by(() => {
+		const matchingDrinks = filterItemsByQuery(
+			drinks,
+			query,
+			(drink) =>
+				[drink.name, ...drink.foods.map((food) => food.description)].join(
+					" ",
+				),
+		);
 
-        return [...matchingDrinks].sort((first, second) => {
-            if (sort === "oldest") return first.createdAt - second.createdAt;
-            if (sort === "name") return first.name.localeCompare(second.name);
-            return second.createdAt - first.createdAt;
-        });
-    });
-    const pagedDrinks = $derived(
-        paginateItems(
-            filteredDrinks,
-            page,
-            LIST_PAGE_SIZES.savedDrinks,
-        ),
-    );
+		return [...matchingDrinks].sort((first, second) => {
+			if (sort === "oldest") return first.createdAt - second.createdAt;
+			if (sort === "name") return first.name.localeCompare(second.name);
+			return second.createdAt - first.createdAt;
+		});
+	});
+	const visibleDrinks = $derived(filteredDrinks.slice(0, visibleCount));
+	const hasMoreDrinks = $derived(
+		visibleDrinks.length < filteredDrinks.length,
+	);
+	const sortSheetOpen = $derived(page.url.pathname === "/saved/sort");
+	const documentTitle = $derived(getAppDocumentTitle(page.url));
 
-    const loadSavedDrinks = async () => {
+	const loadSavedDrinks = async () => {
 		loadingDrinks = true;
 		try {
 			loadError = "";
@@ -83,17 +87,9 @@
 		} finally {
 			loadingDrinks = false;
 		}
-    };
+	};
 
-    const formatDate = (timestamp: number) => {
-        return new Intl.DateTimeFormat(undefined, {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-        }).format(new Date(timestamp));
-    };
-
-    const loadDrink = async (drink: SavedDrink) => {
+	const loadDrink = async (drink: SavedDrink) => {
 		if (loadingDrinkId || deletingDrinkId) return;
 		loadError = "";
 		loadingDrinkId = drink.id;
@@ -106,184 +102,171 @@
 				return;
 			}
 			await goto("/mix");
+		} catch {
+			loadError = "We couldn't open that mix. Please try again.";
 		} finally {
 			loadingDrinkId = null;
 		}
-    };
+	};
 
-    const removeDrink = async () => {
-		if (!drinkPendingDelete || deletingDrinkId) return;
+	const removeDrink = async (drink: SavedDrink) => {
+		if (deletingDrinkId) return;
 
-		deletingDrinkId = drinkPendingDelete.id;
+		deletingDrinkId = drink.id;
 		deleteError = "";
 		try {
-			const deleted = await deleteSavedDrink(drinkPendingDelete.id);
+			const deleted = await deleteSavedDrink(drink.id, {
+				notify: false,
+			});
 			if (!deleted) {
-				deleteError = "That drink could not be deleted. Try again.";
+				deleteError = "We couldn't delete that mix. Please try again.";
 				return;
 			}
-			drinkPendingDelete = null;
-			await loadSavedDrinks();
+			drinks = drinks.filter((savedDrink) => savedDrink.id !== drink.id);
+		} catch {
+			deleteError = "We couldn't delete that mix. Please try again.";
 		} finally {
 			deletingDrinkId = null;
 		}
-    };
+	};
 
-    const updateQuery = (value: string) => {
-        query = value;
-        page = 1;
-    };
+	const updateQuery = (value: string) => {
+		query = value;
+		visibleCount = LIST_PAGE_SIZES.savedDrinks;
+	};
 
-    const updateSort = (value: string) => {
-        sort = value;
-        page = 1;
-    };
+	const updateSort = (value: string) => {
+		sort = value;
+		visibleCount = LIST_PAGE_SIZES.savedDrinks;
+	};
 
-    $effect(() => {
-        page = clampPage(
-            page,
-            filteredDrinks.length,
-            LIST_PAGE_SIZES.savedDrinks,
-        );
-    });
+	const openSortSheet = () => {
+		if (sortSheetOpen) return;
+		pushState("/saved/sort", { ...page.state });
+	};
 
-    onMount(() => {
-        window.addEventListener(SAVED_DRINKS_CHANGED_EVENT, loadSavedDrinks);
-        return () => {
-            window.removeEventListener(
-                SAVED_DRINKS_CHANGED_EVENT,
-                loadSavedDrinks,
-            );
-        };
-    });
+	const closeSortSheet = () => {
+		if (!sortSheetOpen) return;
+		replaceNavigationState("/saved", { ...page.state });
+	};
+
+	const applySort = (value: string) => {
+		updateSort(value);
+		closeSortSheet();
+	};
+
+	const revealMoreDrinks = () => {
+		visibleCount += LIST_PAGE_SIZES.savedDrinks;
+	};
+
+	const getListReflowDuration = () => (prefersReducedMotion() ? 0 : 260);
+
+	onMount(() => {
+		window.addEventListener(SAVED_DRINKS_CHANGED_EVENT, loadSavedDrinks);
+		return () => {
+			window.removeEventListener(
+				SAVED_DRINKS_CHANGED_EVENT,
+				loadSavedDrinks,
+			);
+		};
+	});
 </script>
 
-<div class="saved-page">
-	<ConfirmationDialog
-		open={drinkPendingDelete !== null}
-		title="Delete saved drink?"
-		description={drinkPendingDelete
-			? `Delete “${drinkPendingDelete.name}”? This cannot be undone.`
-			: "Delete this saved drink?"}
-		confirmLabel="Delete"
-		busy={deletingDrinkId !== null}
-		danger
-		onConfirm={() => void removeDrink()}
-		onCancel={() => {
-			if (!deletingDrinkId) drinkPendingDelete = null;
-		}}
-	/>
-    <header class="saved-header">
-        <h2>Saved Drinks</h2>
-        <p>Load a saved smoothie back into Mix when you want to make it again.</p>
-	</header>
-	{#if deleteError}
-		<StatusMessage tone="danger" message={deleteError} />
-	{/if}
-	{#if loadError}
-		<StatusMessage tone="danger" message={loadError} />
-	{/if}
+<svelte:head>
+	<title>{documentTitle}</title>
+</svelte:head>
 
-    {#if loadingDrinks && drinks.length === 0}
-		<section class="saved-empty" aria-busy="true">
-			<LoadingSpinner label="Loading saved drinks" showLabel />
-		</section>
-    {:else if drinks.length > 0}
-        <ListControls
-            id="saved-drinks-search"
-            {query}
-            onQueryChange={updateQuery}
-            placeholder="Search drink names or ingredients…"
-            label="Find saved drinks"
-            totalCount={drinks.length}
-            visibleCount={filteredDrinks.length}
-            itemLabel="drinks"
-            filterLabel="Sort"
-            filterValue={sort}
-            filterOptions={sortOptions}
-            onFilterChange={updateSort}
-        />
+<ListSortSheet
+	open={sortSheetOpen}
+	value={sort}
+	options={sortOptions}
+	titleId="saved-sort-sheet-title"
+	label="Sort saved drinks"
+	onApply={applySort}
+	onClose={closeSortSheet}
+/>
 
-        {#if pagedDrinks.length > 0}
-        <div class="saved-grid">
-            {#each pagedDrinks as drink (drink.id)}
-                <article class="saved-card">
-                    <div>
-                        <h3>{drink.name}</h3>
-                        <p>{formatDate(drink.createdAt)}</p>
-                    </div>
-                    <div class="saved-card__details">
-                        <span class="saved-card__count">
-                            {drink.foods.length} ingredients
-                        </span>
-                        {#if drink.foods.length > 0}
-                            <div
-                                class="saved-card__ingredients"
-                                aria-label={`${drink.name} ingredients`}
-                            >
-                                {#each drink.foods as food, index (`${food.fdcId}-${index}`)}
-                                    <span
-                                        class="saved-card__ingredient-pill"
-                                        class:saved-card__ingredient-pill--custom={isPrivateCustomFood(food)}
-                                    >
-                                        <span class="saved-card__ingredient-name" title={food.description}>
-                                            {food.description}
-                                        </span>
-                                        {#if isPrivateCustomFood(food)}
-                                            <CustomBadge />
-                                        {/if}
-                                    </span>
-                                {/each}
-                            </div>
-                        {:else}
-                            <p>No ingredients saved with this drink.</p>
-                        {/if}
-                    </div>
-                    <div class="saved-card__actions">
-						<SavedDrinkExportAction {drink} />
-						<RoundedActionButton
-							busy={loadingDrinkId === drink.id}
-							disabled={loadingDrinkId !== null || deletingDrinkId !== null}
-							onclick={() => void loadDrink(drink)}
-						>
-							Load
-						</RoundedActionButton>
-						<RoundedActionButton
-							variant="neutral"
-							disabled={deletingDrinkId !== null || loadingDrinkId !== null}
-							onclick={() => {
-								deleteError = "";
-								drinkPendingDelete = drink;
-							}}
-						>
-							Delete
-						</RoundedActionButton>
-                    </div>
-                </article>
-            {/each}
-        </div>
-        <Pagination
-            {page}
-            pageSize={LIST_PAGE_SIZES.savedDrinks}
-            totalItems={filteredDrinks.length}
-            onPageChange={(nextPage) => (page = nextPage)}
-            label="Saved drinks"
-        />
-        {:else}
-            <section class="saved-empty saved-empty--filtered">
-                <h3>No saved drinks match.</h3>
-                <p>Try a different drink name or ingredient.</p>
-				<RoundedActionButton onclick={() => updateQuery("")}>Clear search</RoundedActionButton>
-            </section>
-        {/if}
-    {:else}
-        <section class="saved-empty">
-            <h3>No saved drinks yet.</h3>
-            <p>Build a smoothie in Mix, then use Save to name it for later.</p>
-			<RoundedActionButton onclick={() => goto("/mix")}>Go to Mix</RoundedActionButton>
-        </section>
-    {/if}
-</div>
+<ViewFrame appShell className="saved-page">
+	<ViewTop>
+		<ViewHeader
+			title="Saved Drinks"
+			subtitle="Load a saved mix back into Mix when you want to make it again."
+		/>
+
+		{#if drinks.length > 0}
+			<ListControls
+				id="saved-drinks-search"
+					{query}
+					onQueryChange={updateQuery}
+					placeholder="Search saved drinks…"
+					label="Search saved drinks by name or ingredient"
+					totalCount={drinks.length}
+					visibleCount={filteredDrinks.length}
+					itemLabel="mixes"
+					filterLabel="Sort saved mixes"
+					filterValue={sort}
+					filterOptions={sortOptions}
+					filtersActive={sortSheetOpen}
+					filterControlsId="saved-sort-sheet-title"
+					onFilterOpen={openSortSheet}
+				/>
+		{/if}
+	</ViewTop>
+
+	<ViewBody>
+		<div class="saved-page__scroll" bind:this={scrollContainer}>
+			<div class="saved-page__content">
+				{#if deleteError}
+					<StatusMessage tone="danger" message={deleteError} />
+				{/if}
+				{#if loadError}
+					<StatusMessage tone="danger" message={loadError} />
+				{/if}
+
+				{#if loadingDrinks && drinks.length === 0}
+					<section class="saved-page__loading" aria-busy="true">
+						<LoadingSpinner label="Loading saved mixes" showLabel />
+					</section>
+				{:else if drinks.length > 0}
+					{#if visibleDrinks.length > 0}
+						<ul class="saved-page__list" aria-label="Saved mixes">
+							{#each visibleDrinks as drink (drink.id)}
+								<li animate:flip={{ duration: getListReflowDuration() }}>
+										<SavedDrinkCard
+											{drink}
+											loading={loadingDrinkId === drink.id}
+											deleting={deletingDrinkId === drink.id}
+											disabled={loadingDrinkId !== null ||
+												deletingDrinkId !== null}
+										onLoad={(selectedDrink) =>
+											void loadDrink(selectedDrink)}
+											onDelete={(selectedDrink) =>
+												void removeDrink(selectedDrink)}
+										/>
+								</li>
+							{/each}
+						</ul>
+						<PaginatedListControls
+							{scrollContainer}
+							hasMoreItems={hasMoreDrinks}
+							loadMoreLabel="Load more mixes"
+							contentVersion={`${query}:${sort}:${visibleDrinks.length}`}
+							containerElement="div"
+							onLoadMore={revealMoreDrinks}
+						/>
+					{:else}
+						<SavedDrinksEmptyState
+							filtered
+							onAction={() => updateQuery("")}
+						/>
+					{/if}
+				{:else}
+					<SavedDrinksEmptyState onAction={() => void goto("/mix")} />
+				{/if}
+			</div>
+		</div>
+	</ViewBody>
+</ViewFrame>
 
 <style lang="scss">
 	@use "./page.scss";

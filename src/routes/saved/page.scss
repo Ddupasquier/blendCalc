@@ -1,174 +1,52 @@
 @use "../../styles/variables" as *;
 
-$saved-pill-gap: 0.28rem;
-
-.saved-page {
-	box-sizing: border-box;
-	max-width: $app-max-width;
-	margin: 0 auto;
-	padding: $app-gap-sm 0;
-}
-
-.saved-header {
-	margin-bottom: $app-gap-md;
-}
-
-.saved-header h2 {
-	margin-bottom: 0.18rem;
-	color: $app-primary;
-	font-size: $app-font-size-xl;
-	font-weight: $app-font-weight-bold;
-}
-
-.saved-header p {
-	color: $app-muted;
-	font-size: $app-font-size-md;
-}
-
-.saved-grid {
-	display: grid;
-	gap: $app-gap-sm;
-	margin-top: $app-gap-sm;
-}
-
-.saved-card,
-.saved-empty {
-	padding: $app-gap-sm;
-	background: $app-section-bg;
-	border: $app-border;
-	border-radius: $app-card-radius;
-}
-
-.saved-card {
-	display: grid;
-	gap: $app-gap-sm;
-}
-
-.saved-card h3 {
-	color: $app-primary;
-	font-size: $app-font-size-lg;
-	font-weight: $app-font-weight-bold;
-}
-
-.saved-card p {
-	color: $app-muted;
-	font-size: $app-font-size-sm;
-}
-
-.saved-card__details {
-	display: grid;
-	gap: $app-gap-inline-compact;
-}
-
-.saved-card__count {
-	width: fit-content;
-	padding: $app-text-badge-padding-y $app-text-badge-padding-x;
-	color: $app-primary;
-	background: $app-accent;
-	border: 1px solid $app-accent;
-	border-radius: $app-radius-pill;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-bold;
-}
-
-.saved-card__ingredients {
-	display: flex;
-	flex-wrap: wrap;
-	gap: $app-gap-xs;
-	max-height: 7.5rem;
-	padding: 0.1rem 0.1rem $app-gap-2xs 0;
-	overflow-y: auto;
-}
-
-.saved-card__ingredient-pill {
-	display: inline-grid;
-	grid-template-columns: minmax(0, 1fr) auto;
-	align-items: center;
-	gap: $saved-pill-gap;
-	max-width: 100%;
-	padding: $app-gap-inline-compact $app-gap-sm;
-	color: $app-primary;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-radius-pill;
-	font-size: $app-font-size-sm;
-	font-weight: $app-font-weight-semibold;
-	line-height: 1.25;
-}
-
-.saved-card__ingredient-name {
-	display: -webkit-box;
+.saved-page__scroll {
+	flex: 1 1 auto;
 	min-width: 0;
-	overflow: hidden;
-	-webkit-box-orient: vertical;
-	-webkit-line-clamp: 2;
-	line-clamp: 2;
-	overflow-wrap: anywhere;
+	min-height: 0;
+	padding: 0 $app-gap-xs max($app-gap-lg, env(safe-area-inset-bottom));
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+	box-sizing: border-box;
 }
 
-.saved-card__ingredient-pill--custom {
-	background: $app-custom-bg;
-	border-color: $app-custom-strong;
-}
-
-.saved-card__actions {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: flex-start;
-	justify-content: flex-end;
-	gap: $app-gap-sm;
-}
-
-.saved-empty {
+.saved-page__content {
 	display: grid;
-	gap: $app-gap-sm;
+	gap: $app-gap-md;
+	min-width: 0;
+}
+
+.saved-page__list {
+	display: grid;
+	gap: $app-gap-md;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.saved-page__list > li {
+	min-width: 0;
+}
+
+.saved-page__loading {
+	display: grid;
+	place-items: center;
+	min-height: 12rem;
+	padding: $app-gap-lg;
+	color: $app-shell-text-muted;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-card;
 	text-align: center;
 }
 
-.saved-empty h3 {
-	color: $app-primary;
-}
-
-.saved-empty p {
-	color: $app-muted;
-}
-
-.saved-empty :global(.rounded-action-button) {
-	justify-self: center;
-}
-
-.saved-empty--filtered {
-	margin-top: $app-gap-sm;
-}
-
-@media (max-width: $app-breakpoint-xs) {
-	.saved-card__actions {
-		display: grid;
-		grid-template-columns: 1fr;
-	}
-
-	.saved-card__actions :global(.rounded-action-button) {
-		width: 100%;
-	}
-}
-
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.saved-page {
-		padding-top: 0;
+	.saved-page__scroll {
+		padding-inline: 0;
 	}
 
-	.saved-header {
-		margin-bottom: $app-gap-sm;
-	}
-
-	.saved-grid,
-	.saved-card,
-	.saved-empty {
-		gap: $app-gap-xs;
-	}
-
-	.saved-card,
-	.saved-empty {
-		padding: $app-gap-xs;
+	.saved-page__content,
+	.saved-page__list {
+		gap: $app-gap-sm;
 	}
 }

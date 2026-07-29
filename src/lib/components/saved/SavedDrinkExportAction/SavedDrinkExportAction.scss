@@ -3,4 +3,5 @@
 .saved-drink-export {
 	display: grid;
 	gap: $app-gap-xs;
+	min-width: 0;
 }
