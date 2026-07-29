@@ -184,6 +184,8 @@ export type FoodAllergenDisclosure = {
 export interface FdcFood {
     fdcId: number;
     description: string;
+	/** Source/catalog name retained when a user assigns a personal list name. */
+	canonicalDescription?: string;
     sourceIdentifiers?: Record<string, string>;
     nameProvenance?: "source" | "barcode" | "user";
     brandOwner?: string;

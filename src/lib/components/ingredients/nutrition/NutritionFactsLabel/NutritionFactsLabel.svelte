@@ -13,6 +13,7 @@
 		scalePer100gValue,
 	} from "$lib/utils/food/nutrients/nutritionDisplay";
 	import { getNutritionFactsFields } from "$lib/utils/food/reference/appReferenceCatalog";
+	import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
 	import type { NutritionFactsLabelProps } from "./types";
 
 	let {
@@ -24,6 +25,7 @@
 	const nutritionBasis = $derived(
 		viewingServing ? "Amount per serving" : getNutritionBasisLabel(viewingGrams),
 	);
+	const foodName = $derived(food ? getCanonicalFoodDescription(food) : "");
 
 	const nutritionFactsFields = getNutritionFactsFields();
 	const vitalIds = nutritionFactsFields.map((field) => field.id);
@@ -90,12 +92,12 @@
 		<NutritionServingStatement serving={viewingServing} />
 		<div class="nf-basis">{nutritionBasis}</div>
 	</div>
-	{#if food?.description}
+	{#if foodName}
 		<div class="nf-food-details">
 			<div class="nf-food-row">
-				<div class="nf-food">{food.description}</div>
+				<div class="nf-food">{foodName}</div>
 			</div>
-			{#if food.sourceLabel}
+			{#if food?.sourceLabel}
 				<SourceAttribution
 					label={food.sourceLabel}
 					dataType={food.sourceDataType ?? food.dataType}
