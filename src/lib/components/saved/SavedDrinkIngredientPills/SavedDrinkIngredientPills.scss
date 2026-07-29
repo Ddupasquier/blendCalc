@@ -9,9 +9,12 @@ $saved-ingredient-symbol-size: 1.15rem;
 }
 
 .saved-drink-ingredients__pills {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
+	grid-template-columns: repeat(12, minmax(0, 1fr));
+	grid-auto-flow: row;
 	gap: $app-gap-xs;
+	max-width: 100%;
+	min-width: 0;
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -19,11 +22,29 @@ $saved-ingredient-symbol-size: 1.15rem;
 
 .saved-drink-ingredients__pills li {
 	display: inline-flex;
+	justify-self: start;
 	max-width: 100%;
 	min-width: 0;
 }
 
+.saved-drink-ingredients__pills li[data-span="5"] {
+	grid-column: span 5;
+}
+
+.saved-drink-ingredients__pills li[data-span="6"] {
+	grid-column: span 6;
+}
+
+.saved-drink-ingredients__pills li[data-span="7"] {
+	grid-column: span 7;
+}
+
+.saved-drink-ingredients__pills li[data-span="12"] {
+	grid-column: span 12;
+}
+
 :global(.saved-drink-ingredients__pill) {
+	width: fit-content;
 	max-width: 100%;
 }
 

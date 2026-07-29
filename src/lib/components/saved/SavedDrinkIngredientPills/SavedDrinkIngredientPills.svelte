@@ -6,6 +6,10 @@
 	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
+	import {
+		packIngredientPills,
+		type PackedIngredientPill,
+	} from "./ingredientPillLayout";
 	import type { SavedDrinkIngredientPillsProps } from "./types";
 
 	let {
@@ -13,14 +17,19 @@
 		visibleLimit = 8,
 	}: SavedDrinkIngredientPillsProps = $props();
 
-	const visibleFoods = $derived(foods.slice(0, visibleLimit));
-	const hiddenFoods = $derived(foods.slice(visibleLimit));
+	const visibleFoods = $derived(
+		packIngredientPills(foods.slice(0, visibleLimit)),
+	);
+	const hiddenFoods = $derived(
+		packIngredientPills(foods.slice(visibleLimit)),
+	);
 </script>
 
-{#snippet ingredientPills(items: FdcFood[])}
+{#snippet ingredientPills(items: PackedIngredientPill[])}
 	<ul class="saved-drink-ingredients__pills">
-		{#each items as food (food.fdcId)}
-			<li>
+		{#each items as pill (pill.food.fdcId)}
+			{@const food = pill.food}
+			<li data-span={pill.span}>
 				{#if isPrivateCustomFood(food)}
 					<MetadataPill
 						class="saved-drink-ingredients__pill"

@@ -63,5 +63,6 @@ describe("SavedDrinkIngredientPills server rendering", () => {
 		expect(body).toContain("Show fewer ingredients");
 		expect(body).toContain("Pineapple");
 		expect(body).toContain("Ginger");
+		expect(body).toContain('data-span="5"');
 	});
 });

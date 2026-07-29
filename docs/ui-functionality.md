@@ -555,7 +555,9 @@ Preserve:
   - Created date.
   - Ingredient count.
   - Up to eight compact ingredient pills using category symbols rather than product
-    images.
+    images. Pills are size-classified and best-fit packed into bounded rows so short
+    labels share space, long labels receive wider tracks, and no pill can extend beyond
+    the recipe card.
   - A remaining-ingredient disclosure that expands the rest of the ingredient pills
     without an inner scrolling list.
   - Every progress pill derived from the saved nutrient selection and goal data;
