@@ -17,6 +17,7 @@
 	} from "$lib/utils/serving/servingMeasureCatalog";
 	import { canConvertServingUnit } from "$lib/utils/serving/servingAmount";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
+	import { getMotionSafeDuration } from "$lib/utils/accessibility/motion";
 
 	let {
 		food,
@@ -141,7 +142,7 @@
 				<div
 					class="ingredient-card__chips"
 					aria-label="Top nutrient contributions"
-					transition:slide={{ duration: 160 }}
+					transition:slide={{ duration: getMotionSafeDuration(160) }}
 				>
 					{#each nutrientChips as chip}
 						<span>{chip.label} {chip.value}</span>

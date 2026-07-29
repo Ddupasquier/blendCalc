@@ -17,32 +17,29 @@
 </script>
 
 <span class="barcode-scanner" class:barcode-scanner--active={active} aria-hidden="true">
-	{#if active}
-		<span class="barcode-scanner__bracket barcode-scanner__bracket--top-left"></span>
-		<span class="barcode-scanner__bracket barcode-scanner__bracket--top-right"></span>
-		<span class="barcode-scanner__bracket barcode-scanner__bracket--bottom-left"></span>
-		<span class="barcode-scanner__bracket barcode-scanner__bracket--bottom-right"></span>
-		<svg
-			class="barcode-scanner__bars"
-			viewBox="0 0 48 28"
-			width="48"
-			height="28"
-		>
-			{#each barcodeBarIndexes as index}
-				<rect
-					x={barcodeBars[index * 2]}
-					y="0"
-					width={barcodeBars[index * 2 + 1]}
-					height="28"
-					fill="currentColor"
-				/>
-			{/each}
-		</svg>
-		<span class="barcode-scanner__glow"></span>
-		<span class="barcode-scanner__laser"></span>
-	{:else}
-		<Barcode class="barcode-scanner__idle-bars" />
-	{/if}
+	<Barcode class="barcode-scanner__idle-bars" />
+	<span class="barcode-scanner__bracket barcode-scanner__bracket--top-left"></span>
+	<span class="barcode-scanner__bracket barcode-scanner__bracket--top-right"></span>
+	<span class="barcode-scanner__bracket barcode-scanner__bracket--bottom-left"></span>
+	<span class="barcode-scanner__bracket barcode-scanner__bracket--bottom-right"></span>
+	<svg
+		class="barcode-scanner__bars"
+		viewBox="0 0 48 28"
+		width="48"
+		height="28"
+	>
+		{#each barcodeBarIndexes as index}
+			<rect
+				x={barcodeBars[index * 2]}
+				y="0"
+				width={barcodeBars[index * 2 + 1]}
+				height="28"
+				fill="currentColor"
+			/>
+		{/each}
+	</svg>
+	<span class="barcode-scanner__glow"></span>
+	<span class="barcode-scanner__laser"></span>
 </span>
 
 <style lang="scss">

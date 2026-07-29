@@ -7,6 +7,7 @@
 		trapDialogFocus,
 	} from "$lib/utils/accessibility/dialogFocus";
 	import { createBackdropDismissal } from "$lib/utils/accessibility/backdropDismissal";
+	import { getMotionSafeDuration } from "$lib/utils/accessibility/motion";
 
 	let {
 		open = false,
@@ -54,8 +55,8 @@
 
 	const transitionOptions = $derived(
 		placement === "right"
-			? { x: "100%", duration: 240, easing: cubicOut }
-			: { y: "100%", duration: 260, easing: cubicOut },
+			? { x: "100%", duration: getMotionSafeDuration(240), easing: cubicOut }
+			: { y: "100%", duration: getMotionSafeDuration(260), easing: cubicOut },
 	);
 </script>
 
@@ -73,7 +74,7 @@
 			onpointercancel={backdropDismissal.handleBackdropPointerCancel}
 			onpointerdown={backdropDismissal.handleBackdropPointerDown}
 			onpointerup={backdropDismissal.handleBackdropPointerUp}
-			transition:fade={{ duration: 180 }}
+			transition:fade={{ duration: getMotionSafeDuration(180) }}
 		></div>
 	{/if}
 

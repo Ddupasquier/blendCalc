@@ -554,9 +554,19 @@ left-aligned.
 - Every disclosure animates both opening and closing through the shared
   `animatedDetails` behavior. Keep disclosure children mounted so closing a section
   never discards unsaved form or image-placement state.
+- Pair functional entrances with coherent exits. Status feedback may use a brief
+  opacity/vertical transition, sheets use the shared directional transition, and
+  removed list items must be followed by local reflow rather than a flashing reload.
+- State changes such as chevrons, toggles, and scanner expansion transition in both
+  directions. Keep both visual states mounted when removing one would make the reverse
+  transition impossible.
 - Keep transitions short and calm. Avoid decorative looping motion in task flows.
-- Honor `prefers-reduced-motion`; the global stylesheet reduces animation and transition
-  duration.
+- Honor `prefers-reduced-motion`; CSS is covered globally and every Svelte or Web
+  Animations API duration must use the shared motion helper or an equivalent explicit
+  reduced-motion branch.
+- Loading spinners, scanner sweeps, timers, and other process indicators may loop only
+  while the process is active. They do not need a delayed outro that would make the UI
+  feel slower.
 - Use pointer events for touch/mouse parity and keyboard equivalents for every action.
 - Long press may enter ingredient selection mode, but the held card must also become
   selected and the interaction must not block normal navigation.

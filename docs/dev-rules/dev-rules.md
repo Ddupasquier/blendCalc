@@ -169,10 +169,17 @@ close with Escape where a keyboard is present, and return focus to the opening c
 Announce loading, validation, and result-count changes without duplicating visible
 warnings. Honor reduced-motion settings, preserve content at 200% text zoom, avoid
 color-only meaning, and verify important flows with VoiceOver on Safari and TalkBack on
-Android Chrome. Compact ingredient cards with a preference conflict must retain the
-shared full-height amber `CardWarningEdge`; do not replace it with an inline warning
-icon, text block, or image treatment. The card's accessible action label must include
-the warning text so the visual edge is not the only communicated signal.
+Android Chrome. Functional motion must explain a state or spatial change and remain
+reversible: a surface or status that animates into view must transition out coherently,
+list exits must be paired with reflow, and state transforms must animate in both
+directions. Route JavaScript-driven durations through the shared reduced-motion helper;
+CSS motion remains covered by the global reduced-motion rule. Do not add animation to
+static content merely for decoration. Ambient progress, scanning, and loading motion
+may loop only while the related process is active and must stop or become immediate
+under reduced-motion preferences. Compact ingredient cards with a preference conflict
+must retain the shared full-height amber `CardWarningEdge`; do not replace it with an
+inline warning icon, text block, or image treatment. The card's accessible action label
+must include the warning text so the visual edge is not the only communicated signal.
 
 **1c.** <a id="rule-content-security-policy"></a>Keep the Content Security Policy
 strict in development and production. Do not add `unsafe-inline` to `script-src` or
