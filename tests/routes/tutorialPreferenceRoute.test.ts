@@ -41,6 +41,18 @@ describe("tutorial preference route", () => {
 		);
 	});
 
+	it("accepts a reminder-later choice", async () => {
+		const event = createEvent("user-1", { choice: "later" });
+		const response = await POST(event as never);
+
+		expect(response.status).toBe(200);
+		expect(mocks.writeTutorialChoice).toHaveBeenCalledWith(
+			event.locals.supabase,
+			"user-1",
+			"later",
+		);
+	});
+
 	it("rejects unsupported choices", async () => {
 		const response = await POST(
 			createEvent("user-1", { choice: "someone-elses-user" }) as never,

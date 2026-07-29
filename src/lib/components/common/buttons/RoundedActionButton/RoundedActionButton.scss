@@ -54,7 +54,7 @@
 }
 
 .rounded-action-button[data-variant="primary"] {
-	color: $app-shell-surface-panel;
+	color: $app-shell-text-on-accent;
 	background: $app-shell-accent-primary;
 	border-color: $app-shell-accent-primary;
 
@@ -78,7 +78,7 @@
 	border-color: $app-shell-accent-primary;
 
 	&:hover:not(:disabled) {
-		color: $app-shell-surface-panel;
+		color: $app-shell-text-on-accent;
 		background: $app-shell-accent-primary;
 	}
 }
@@ -105,7 +105,11 @@
 	color: $app-shell-accent-primary;
 	background: transparent;
 	border-style: dashed;
-	border-color: color-mix(in srgb, $app-shell-accent-primary 45%, white);
+	border-color: color-mix(
+		in srgb,
+		$app-shell-accent-primary 45%,
+		$app-shell-surface-panel
+	);
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {

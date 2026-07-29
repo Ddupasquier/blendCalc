@@ -206,7 +206,7 @@
 	<ViewTop compactHidden={compactTopHidden}>
 		<ViewHeader
 			title="Saved Drinks"
-			subtitle="Load a saved mix back into Mix when you want to make it again."
+			subtitle="Revisit combinations you’ve saved and load them back into Mix whenever you need them."
 		/>
 
 		{#if drinks.length > 0}
@@ -250,19 +250,22 @@
 				{:else if drinks.length > 0}
 					{#if visibleDrinks.length > 0}
 						<ul class="saved-page__list" aria-label="Saved mixes">
-							{#each visibleDrinks as drink (drink.id)}
-								<li animate:flip={{ duration: getListReflowDuration() }}>
-										<SavedDrinkCard
-											{drink}
-											loading={loadingDrinkId === drink.id}
-											deleting={deletingDrinkId === drink.id}
-											disabled={loadingDrinkId !== null ||
-												deletingDrinkId !== null}
+							{#each visibleDrinks as drink, index (drink.id)}
+								<li
+									data-tutorial-target={index === 0 ? "saved-mix" : undefined}
+									animate:flip={{ duration: getListReflowDuration() }}
+								>
+									<SavedDrinkCard
+										{drink}
+										loading={loadingDrinkId === drink.id}
+										deleting={deletingDrinkId === drink.id}
+										disabled={loadingDrinkId !== null ||
+											deletingDrinkId !== null}
 										onLoad={(selectedDrink) =>
 											void loadDrink(selectedDrink)}
-											onDelete={(selectedDrink) =>
-												void removeDrink(selectedDrink)}
-										/>
+										onDelete={(selectedDrink) =>
+											void removeDrink(selectedDrink)}
+									/>
 								</li>
 							{/each}
 						</ul>

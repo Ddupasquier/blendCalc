@@ -12,7 +12,7 @@
 		},
 		{
 			title: "Select",
-			text: "Choose ingredient pills here for this smoothie.",
+			text: "Choose ingredient pills here for your combination.",
 		},
 		{
 			title: "Adjust",
@@ -21,10 +21,10 @@
 	];
 </script>
 
-<section class="mix-empty-state" aria-label="How to build a smoothie">
+<section class="mix-empty-state" aria-label="How to build a food combination">
 	<div class="mix-empty-state__intro">
 		<p class="mix-empty-state__eyebrow">No ingredients selected yet</p>
-		<h4>Build a smoothie in four steps.</h4>
+		<h4>Build a food combination in four steps.</h4>
 		<p>
 			Start by adding ingredients to your fridge or shopping list, then select
 			them here to calculate goals, warnings, and graph totals.

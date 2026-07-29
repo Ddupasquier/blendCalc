@@ -71,12 +71,12 @@
 }
 
 .action-button[data-variant="success"] {
-	color: $app-shell-surface-panel;
+	color: $app-shell-text-on-accent;
 	background: $app-shell-accent-primary;
 }
 
 .action-button[data-variant="danger"] {
-	color: $app-btn-text;
+	color: $app-shell-text-on-danger;
 	background: $app-danger-action;
 }
 

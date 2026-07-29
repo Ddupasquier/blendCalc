@@ -85,6 +85,24 @@ bounded `allergenDisclosure` and `preferenceWarnings` fields to each returned fo
 Svelte components render those fields and friendly issue-code messages only; they do not
 infer safety information from raw food text or execute compatibility patterns.
 
+Compatibility policy is explicitly versioned. The database preserves snapshots of the
+match rules, conflict mappings, effective date, review date, and official regulatory
+references for every deployed version. Product compatibility facts and user feedback
+retain the version used for their evaluation, while current reads use only the active
+version.
+
+Jurisdiction-specific allergen profiles are normalized separately from user
+preferences. Reviewed United States, Canadian, United Kingdom, European Union, and
+Australia/New Zealand profiles describe regulated coverage and official source labels;
+they provide policy context without disabling warnings for preferences selected by the
+user.
+
+Users can report a likely false-positive warning through an authenticated server
+boundary. The report records the exact warning code, parameters, matched facts, product
+identity, and policy version. Moderators confirm or dismiss the report and identify
+whether the correction belongs to a rule, source record, or canonical product. Policy
+changes create a new version instead of rewriting prior evaluations.
+
 ## Module Boundaries
 
 - `src/routes/**/+page.server.ts`: route authentication handoff and thin load wiring.

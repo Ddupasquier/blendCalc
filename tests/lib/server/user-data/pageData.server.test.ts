@@ -69,8 +69,11 @@ describe("server-loaded user page data", () => {
 		foodSafety.getUserFoodSafetyContext.mockResolvedValue({
 			profile: null,
 			policy: {
+				version: 1,
+				reviewedAt: "2026-07-29T00:00:00.000Z",
 				preferenceConflictRules: [],
 				compatibilityMatchRules: [],
+				regionalProfiles: [],
 			},
 		});
 	});
