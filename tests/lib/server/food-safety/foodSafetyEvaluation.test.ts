@@ -50,8 +50,11 @@ const getFoodPreferenceWarnings = (
 ) => annotateFoodWithFoodSafety(food, {
 	profile,
 	policy: {
+		version: 1,
+		reviewedAt: "2026-07-29T00:00:00.000Z",
 		preferenceConflictRules: profile.warningRules ?? [],
 		compatibilityMatchRules: profile.matchRules ?? [],
+		regionalProfiles: [],
 	},
 }).preferenceWarnings ?? [];
 
@@ -143,6 +146,7 @@ describe("food preference warnings", () => {
 				description: "Verified milk drink",
 				compatibilitySummary: {
 					version: 1,
+					policyVersion: 1,
 					generatedAt: new Date().toISOString(),
 					allFacts: [
 						{
@@ -351,6 +355,7 @@ describe("food preference warnings", () => {
 				description: "Bread stuffing",
 				compatibilitySummary: {
 					version: 1,
+					policyVersion: 1,
 					generatedAt: new Date().toISOString(),
 					allFacts: [{
 						slug: "wheat",
@@ -706,6 +711,8 @@ describe("food preference warnings", () => {
 			{
 				profile: null,
 				policy: {
+					version: 1,
+					reviewedAt: "2026-07-29T00:00:00.000Z",
 					preferenceConflictRules: [
 						{
 							preferenceSlug: "vegan",
@@ -731,6 +738,7 @@ describe("food preference warnings", () => {
 						confidence: "confirmed",
 						priority: 10,
 					}],
+					regionalProfiles: [],
 				},
 			},
 		);

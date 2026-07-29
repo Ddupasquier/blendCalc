@@ -48,6 +48,7 @@ describe("ProductCompatibilityPanel", () => {
 				food: createFood({
 					compatibilitySummary: {
 						version: 1,
+						policyVersion: 1,
 						generatedAt: "2026-07-29T00:00:00.000Z",
 						allFacts: [
 							{

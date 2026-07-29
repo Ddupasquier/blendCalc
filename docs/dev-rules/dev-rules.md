@@ -647,6 +647,13 @@ source labels, or compatibility metadata in components or utility constants. If 
 needs reusable reference data, seed it into a table and query it through a focused
 utility.
 
+**27a.** Treat allergen and dietary compatibility policy as versioned safety data.
+Every deployed policy change must preserve the prior match/conflict snapshots, record
+its effective and reviewed dates and official source references, associate generated
+facts with the active version, and retain that version on user feedback. Regional
+regulatory profiles provide reviewed jurisdiction context but must not suppress a
+warning for a preference explicitly selected by the user.
+
 **28.** <a id="rule-api-seed-scripts"></a>If required reference data is not already
 available in the database, create or extend a script that queries the available source
 APIs, stores the observed/canonical data in Supabase with source/provenance metadata,

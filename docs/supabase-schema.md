@@ -632,7 +632,11 @@ Notes:
 | `compatibility_tags`               | `id`        | Shared reference            | Canonical compatibility tags for allergens, dietary claims, ingredients, and avoidance concepts    | Referenced by user rules and product facts                                          |
 | `compatibility_rule_conflicts`     | Composite   | Shared validation reference | DB-owned mapping from a user preference tag to a conflicting product fact and warning severity      | Both tag ids → `compatibility_tags.id`                                                 |
 | `food_compatibility_match_rules`   | `id`        | Shared validation reference | Reviewed source-field match policy that converts exact evidence into normalized compatibility facts | `tag_id → compatibility_tags.id`                                                     |
+| `food_compatibility_policy_versions` | `id`      | Shared policy history       | Immutable snapshots of each deployed compatibility match/conflict policy and its official sources  | Referenced by product facts, regional profiles, and user feedback                    |
+| `food_allergen_regulatory_profiles` | `id`       | Shared regulatory reference | Reviewed jurisdiction-specific allergen declaration profiles                                       | `policy_version_id → food_compatibility_policy_versions.id`                          |
+| `food_allergen_regulatory_profile_tags` | Composite | Shared regulatory reference | Normalized compatibility tags covered by a regional allergen profile                               | Profile and tag foreign keys                                                         |
 | `product_compatibility_facts`      | `id`        | Shared product metadata     | Facts extracted from shared products/submissions/observations                                      | `tag_id → compatibility_tags.id`; exactly one product/submission/observation parent |
+| `food_compatibility_feedback`      | `id`        | User report/moderation queue | Versioned false-positive reports containing the exact warning and evidence shown to the user         | User, policy version, optional product, and reviewer foreign keys                    |
 | `food_preference_option_catalog`   | `id`        | Shared reference            | App-ready allergen/dietary/ingredient options built from product compatibility and ingredient data | Optional `tag_id → compatibility_tags.id`                                           |
 | `food_preference_api_observations` | `id`        | Shared reference/provenance | Raw observed allergen/dietary/ingredient metadata from external APIs                               | No direct user ownership                                                            |
 
@@ -691,11 +695,43 @@ Notes:
 - Positive dietary claims are accepted only when source labels normalize to an enabled
   dietary compatibility tag. Marketing labels do not become dietary evidence.
 
+### `food_compatibility_policy_versions`
+
+| Table | Documented columns |
+| --- | --- |
+| `food_compatibility_policy_versions` | `id`, `version_number`, `status`, `change_summary`, `match_rule_snapshot`, `conflict_rule_snapshot`, `source_references`, `effective_at`, `reviewed_at`, `created_at`, `updated_at` |
+
+Notes:
+
+- Exactly one policy version may be active. New product facts and user feedback default
+  to that version through `active_food_compatibility_policy_version_id()`.
+- Match and conflict snapshots preserve the exact deployed policy for later audits.
+  Updating live rules requires a new version snapshot rather than rewriting history.
+- `source_references` records the official regulatory material reviewed for the policy.
+
+### Regional allergen profiles
+
+| Table | Documented columns |
+| --- | --- |
+| `food_allergen_regulatory_profiles` | `id`, `policy_version_id`, `profile_key`, `region_code`, `display_name`, `authority`, `policy_reference`, `source_url`, `reviewed_at`, `active`, `created_at`, `updated_at` |
+| `food_allergen_regulatory_profile_tags` | `profile_id`, `tag_id`, `classification`, `source_label`, `created_at` |
+
+Notes:
+
+- The initial policy records reviewed profiles for the United States, Canada, United
+  Kingdom, European Union, and Australia/New Zealand.
+- Regional profiles preserve each authority's source label and classification while
+  mapping it to a normalized compatibility tag.
+- Profiles add jurisdiction context and policy coverage. They never suppress a warning
+  for a preference the user explicitly selected.
+- Authenticated reads are limited by RLS to active profiles belonging to the active
+  policy version.
+
 ### `product_compatibility_facts`
 
 | Table | Documented columns |
 | --- | --- |
-| `product_compatibility_facts` | `id`, `shared_product_id`, `shared_product_observation_id`, `shared_product_submission_id`, `tag_id`, `fact_type`, `source_type`, `source_text`, `confidence`, `created_at`, `updated_at` |
+| `product_compatibility_facts` | `id`, `shared_product_id`, `shared_product_observation_id`, `shared_product_submission_id`, `tag_id`, `policy_version_id`, `fact_type`, `source_type`, `source_text`, `confidence`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -714,6 +750,26 @@ Notes:
   reads. The server evaluates those facts against the current profile and returns
   friendly warnings, `Contains`, `May contain`, dietary labels, and dietary
   considerations without exposing regex policy or private evidence.
+- Each fact records the policy version that generated it. Denormalized summaries include
+  `policyVersion` and contain only facts from the active policy version.
+
+### `food_compatibility_feedback`
+
+| Table | Documented columns |
+| --- | --- |
+| `food_compatibility_feedback` | `id`, `reported_by`, `policy_version_id`, `shared_product_id`, `source_key`, `source_id`, `barcode`, `food_description`, `warning_id`, `issue_code`, `issue_params`, `fact_snapshot`, `report_reason`, `report_details`, `report_fingerprint`, `status`, `resolution_action`, `reviewed_by`, `reviewed_at`, `review_note`, `created_at`, `updated_at` |
+
+Notes:
+
+- A signed-in user can report a warning as an incorrect match, outdated source record,
+  wrong evidence type, or another evidence-specific problem.
+- The report stores the warning parameters and exact matching fact snapshot from the
+  active policy version. It does not rely on mutable client wording.
+- A unique pending fingerprint makes repeated submissions idempotent.
+- Users may read only their own reports. Inserts and moderation updates use authenticated
+  server boundaries; the service role owns privileged writes.
+- Moderators resolve reports as `confirmed` or `dismissed` and record the next action as
+  rule review, source correction, product correction, or duplicate.
 
 ### `food_compatibility_policy_coverage`
 

@@ -40,9 +40,33 @@ export type FoodCompatibilityMatchRule = {
 	priority: number;
 };
 
+export type FoodAllergenRegionalProfile = {
+	key: string;
+	regionCode: string;
+	displayName: string;
+	authority: string;
+	policyReference: string;
+	sourceUrl: string;
+	reviewedAt: string;
+	tags: Array<{
+		slug: string;
+		label: string;
+		classification:
+			| "major_allergen"
+			| "priority_allergen"
+			| "regulated_allergen"
+			| "gluten_source"
+			| "regulated_sulphite";
+		sourceLabel: string;
+	}>;
+};
+
 export type FoodSafetyPolicy = {
+	version: number;
+	reviewedAt: string;
 	preferenceConflictRules: FoodPreferenceConflictRule[];
 	compatibilityMatchRules: FoodCompatibilityMatchRule[];
+	regionalProfiles: FoodAllergenRegionalProfile[];
 };
 
 const CACHE_DURATION_MILLISECONDS = 10 * 60 * 1000;
@@ -50,7 +74,18 @@ const CACHE_DURATION_MILLISECONDS = 10 * 60 * 1000;
 export const getFoodSafetyPolicy = createServerCachedLoader({
 	load: async (): Promise<FoodSafetyPolicy> => {
 		const supabase = getSupabaseAdminClient();
-		const [conflictsResult, matchRulesResult] = await Promise.all([
+		const { data: policyVersion, error: policyVersionError } = await supabase
+			.from("food_compatibility_policy_versions")
+			.select("id, version_number, reviewed_at")
+			.eq("status", "active")
+			.order("version_number", { ascending: false })
+			.limit(1)
+			.single();
+
+		if (policyVersionError) throw policyVersionError;
+
+		const [conflictsResult, matchRulesResult, regionalProfilesResult] =
+			await Promise.all([
 			supabase
 				.from("compatibility_rule_conflicts")
 				.select(
@@ -64,10 +99,19 @@ export const getFoodSafetyPolicy = createServerCachedLoader({
 				)
 				.eq("enabled", true)
 				.order("priority", { ascending: true }),
+			supabase
+				.from("food_allergen_regulatory_profiles")
+				.select(
+					"profile_key, region_code, display_name, authority, policy_reference, source_url, reviewed_at, profile_tags:food_allergen_regulatory_profile_tags(classification, source_label, tag:compatibility_tags(slug, label))",
+				)
+				.eq("policy_version_id", policyVersion.id)
+				.eq("active", true)
+				.order("region_code", { ascending: true }),
 		]);
 
 		if (conflictsResult.error) throw conflictsResult.error;
 		if (matchRulesResult.error) throw matchRulesResult.error;
+		if (regionalProfilesResult.error) throw regionalProfilesResult.error;
 
 		const preferenceConflictRules = (
 			(conflictsResult.data ?? []) as unknown as Array<{
@@ -136,7 +180,49 @@ export const getFoodSafetyPolicy = createServerCachedLoader({
 			priority: rule.priority,
 		}));
 
-		return { preferenceConflictRules, compatibilityMatchRules };
+		const regionalProfiles = (
+			(regionalProfilesResult.data ?? []) as unknown as Array<{
+				profile_key: string;
+				region_code: string;
+				display_name: string;
+				authority: string;
+				policy_reference: string;
+				source_url: string;
+				reviewed_at: string;
+				profile_tags: Array<{
+					classification:
+						| "major_allergen"
+						| "priority_allergen"
+						| "regulated_allergen"
+						| "gluten_source"
+						| "regulated_sulphite";
+					source_label: string;
+					tag: { slug: string; label: string };
+				}>;
+			}>
+		).map((profile) => ({
+			key: profile.profile_key,
+			regionCode: profile.region_code,
+			displayName: profile.display_name,
+			authority: profile.authority,
+			policyReference: profile.policy_reference,
+			sourceUrl: profile.source_url,
+			reviewedAt: profile.reviewed_at,
+			tags: profile.profile_tags.map((profileTag) => ({
+				slug: profileTag.tag.slug,
+				label: profileTag.tag.label,
+				classification: profileTag.classification,
+				sourceLabel: profileTag.source_label,
+			})),
+		}));
+
+		return {
+			version: policyVersion.version_number,
+			reviewedAt: policyVersion.reviewed_at,
+			preferenceConflictRules,
+			compatibilityMatchRules,
+			regionalProfiles,
+		};
 	},
 	ttlMilliseconds: CACHE_DURATION_MILLISECONDS,
 });

@@ -31,6 +31,7 @@ export type FoodCompatibilityFact = {
 
 export type FoodCompatibilitySummary = {
 	version: number;
+	policyVersion: number;
 	generatedAt: string;
 	allFacts: FoodCompatibilityFact[];
 	contains: FoodCompatibilityFact[];

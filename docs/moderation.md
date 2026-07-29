@@ -112,6 +112,29 @@ A block performs four separate operations:
 Every action is appended to `moderation_actions`. Do not delete moderation evidence as
 part of normal operations.
 
+## Compatibility warning reports
+
+Signed-in users can report a food compatibility warning when the match appears
+incorrect, relies on outdated source data, or uses the wrong evidence type. The report
+stores the product identity, warning code and parameters, exact matching compatibility
+facts, and active policy version. Repeated reports of the same warning remain
+idempotent while one is pending.
+
+The `/moderation` warning-report queue is restricted to moderators and administrators.
+Reviewers must:
+
+1. Compare the reported warning with its preserved evidence and policy version.
+2. Mark the report `confirmed` when corrective work is needed, or `dismissed` when the
+   warning is supported.
+3. Record the next action as rule review, source correction, product correction, or
+   duplicate.
+4. Leave a concise internal note explaining the decision.
+
+Resolving feedback does not silently edit a product or compatibility rule. Confirmed
+reports create a traceable correction decision; any resulting product or policy change
+uses its own reviewed workflow and, for policy changes, a new compatibility policy
+version.
+
 ## Enable future-signup blocking
 
 The migration creates `public.reject_blocked_signup(event jsonb)`, but Supabase must be

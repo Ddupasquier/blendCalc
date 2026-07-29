@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import NutritionPanel from "$lib/components/ingredients/nutrition/NutritionPanel/NutritionPanel.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
 
@@ -20,6 +20,10 @@ const peanutButter: FdcFood = {
 };
 
 describe("NutritionPanel", () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
 	it("renders the shared preference conflict before nutrition facts", () => {
 		render(NutritionPanel, {
 			props: {
@@ -45,6 +49,41 @@ describe("NutritionPanel", () => {
 		expect(
 			statusMessage?.compareDocumentPosition(nutritionFacts) ?? 0,
 		).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+	});
+
+	it("lets a signed-in user send a warning for moderation review", async () => {
+		const fetchMock = vi.fn().mockResolvedValue(
+			new Response(JSON.stringify({ status: "submitted" }), {
+				status: 200,
+				headers: { "content-type": "application/json" },
+			}),
+		);
+		vi.stubGlobal("fetch", fetchMock);
+		render(NutritionPanel, {
+			props: {
+				food: {
+					...peanutButter,
+					sourceKey: "usda",
+					barcode: "00000000119993",
+				},
+				viewingGrams: 100,
+				showListActions: false,
+			},
+		});
+
+		await fireEvent.click(
+			screen.getByRole("button", {
+				name: "Report an incorrect warning about peanut",
+			}),
+		);
+
+		expect(fetchMock).toHaveBeenCalledWith(
+			"/api/food-compatibility/feedback",
+			expect.objectContaining({ method: "POST" }),
+		);
+		expect(
+			await screen.findByText("Thanks—we’ll review this warning."),
+		).toBeInTheDocument();
 	});
 
 	it("shows stored product ingredients after nutrition facts", () => {

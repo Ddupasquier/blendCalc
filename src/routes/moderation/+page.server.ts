@@ -41,6 +41,10 @@ import {
 	requireAppValue,
 	throwAppError,
 } from "$lib/server/errors/appError.server";
+import {
+	listPendingFoodCompatibilityFeedback,
+	reviewFoodCompatibilityFeedback,
+} from "$lib/server/food-safety/foodCompatibilityFeedback.server";
 
 const PERMANENT_BAN_DURATION = "876000h";
 const MODERATION_PAGE_SIZE = 100;
@@ -171,10 +175,15 @@ const getTargetContext = async (
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const { user: viewer, role } = await requireModerator(locals);
 	const query = url.searchParams.get("q")?.trim().toLocaleLowerCase() ?? "";
-	const [{ admin, users: authUsers }, pendingProductSubmissions] =
+	const [
+		{ admin, users: authUsers },
+		pendingProductSubmissions,
+		pendingCompatibilityFeedback,
+	] =
 		await Promise.all([
 			listAuthUsers(),
 			listPendingProductSubmissions(),
+			listPendingFoodCompatibilityFeedback(),
 		]);
 	const userIds = authUsers.map((user) => user.id);
 	const userIdBatches = Array.from(
@@ -369,10 +378,88 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		totalCount: users.length,
 		users: users.filter((user) => matchesSearch(user, query)),
 		productSubmissions,
+		compatibilityFeedback: pendingCompatibilityFeedback.map((feedback) => {
+			const policyVersion = feedback.policy_version as unknown as
+				| { version_number: number }
+				| null;
+			return {
+				id: feedback.id,
+				reportedBy: feedback.reported_by,
+				sharedProductId: feedback.shared_product_id,
+				sourceKey: feedback.source_key,
+				sourceId: feedback.source_id,
+				barcode: feedback.barcode,
+				foodDescription: feedback.food_description,
+				warningId: feedback.warning_id,
+				issueCode: feedback.issue_code,
+				issueParams: feedback.issue_params,
+				factSnapshot: feedback.fact_snapshot,
+				reportReason: feedback.report_reason,
+				reportDetails: feedback.report_details,
+				createdAt: feedback.created_at,
+				policyVersion: policyVersion?.version_number ?? null,
+			};
+		}),
 	};
 };
 
 export const actions: Actions = {
+	reviewCompatibilityFeedback: async ({ locals, request }) => {
+		const { user } = await requireModerator(locals);
+		const formData = await request.formData();
+		const feedbackId = String(formData.get("feedbackId") ?? "");
+		const status = String(formData.get("status") ?? "");
+		const resolutionAction = String(
+			formData.get("resolutionAction") ?? "none",
+		);
+		const reviewNote = String(formData.get("reviewNote") ?? "").trim();
+
+		if (
+			!feedbackId ||
+			(status !== "confirmed" && status !== "dismissed") ||
+			![
+				"none",
+				"rule_review",
+				"source_correction",
+				"product_correction",
+				"duplicate",
+			].includes(resolutionAction) ||
+			!reviewNote
+		) {
+			return fail(400, {
+				compatibilityReviewError:
+					"Choose an outcome, next step, and add a review note.",
+			});
+		}
+
+		try {
+			const reviewed = await reviewFoodCompatibilityFeedback(user.id, {
+				id: feedbackId,
+				status,
+				resolutionAction: resolutionAction as
+					| "none"
+					| "rule_review"
+					| "source_correction"
+					| "product_correction"
+					| "duplicate",
+				reviewNote,
+			});
+			return reviewed
+				? {
+					compatibilityReviewSuccess:
+						"Compatibility report reviewed.",
+				}
+				: fail(409, {
+					compatibilityReviewError:
+						"That report was already reviewed. Refresh the page.",
+				});
+		} catch {
+			return fail(500, {
+				compatibilityReviewError:
+					"We couldn’t save that compatibility review.",
+			});
+		}
+	},
 	approveProduct: async ({ locals, request }) => {
 		const { user } = await requireModerator(locals);
 		const formData = await request.formData();

@@ -468,6 +468,209 @@ export type Database = {
           },
         ]
       }
+      food_allergen_regulatory_profile_tags: {
+        Row: {
+          classification: string
+          created_at: string
+          profile_id: string
+          source_label: string
+          tag_id: string
+        }
+        Insert: {
+          classification: string
+          created_at?: string
+          profile_id: string
+          source_label: string
+          tag_id: string
+        }
+        Update: {
+          classification?: string
+          created_at?: string
+          profile_id?: string
+          source_label?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_allergen_regulatory_profile_tags_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "food_allergen_regulatory_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_allergen_regulatory_profile_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "compatibility_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_allergen_regulatory_profile_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_coverage"
+            referencedColumns: ["tag_id"]
+          },
+        ]
+      }
+      food_allergen_regulatory_profiles: {
+        Row: {
+          active: boolean
+          authority: string
+          created_at: string
+          display_name: string
+          id: string
+          policy_reference: string
+          policy_version_id: string
+          profile_key: string
+          region_code: string
+          reviewed_at: string
+          source_url: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          authority: string
+          created_at?: string
+          display_name: string
+          id?: string
+          policy_reference: string
+          policy_version_id: string
+          profile_key: string
+          region_code: string
+          reviewed_at: string
+          source_url: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          authority?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          policy_reference?: string
+          policy_version_id?: string
+          profile_key?: string
+          region_code?: string
+          reviewed_at?: string
+          source_url?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_allergen_regulatory_profiles_policy_version_id_fkey"
+            columns: ["policy_version_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_compatibility_feedback: {
+        Row: {
+          barcode: string | null
+          created_at: string
+          fact_snapshot: Json
+          food_description: string
+          id: string
+          issue_code: string
+          issue_params: Json
+          policy_version_id: string
+          report_details: string | null
+          report_fingerprint: string
+          report_reason: string
+          reported_by: string
+          resolution_action: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shared_product_id: string | null
+          source_id: string | null
+          source_key: string | null
+          status: string
+          updated_at: string
+          warning_id: string
+        }
+        Insert: {
+          barcode?: string | null
+          created_at?: string
+          fact_snapshot?: Json
+          food_description: string
+          id?: string
+          issue_code: string
+          issue_params?: Json
+          policy_version_id?: string
+          report_details?: string | null
+          report_fingerprint: string
+          report_reason: string
+          reported_by: string
+          resolution_action?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shared_product_id?: string | null
+          source_id?: string | null
+          source_key?: string | null
+          status?: string
+          updated_at?: string
+          warning_id: string
+        }
+        Update: {
+          barcode?: string | null
+          created_at?: string
+          fact_snapshot?: Json
+          food_description?: string
+          id?: string
+          issue_code?: string
+          issue_params?: Json
+          policy_version_id?: string
+          report_details?: string | null
+          report_fingerprint?: string
+          report_reason?: string
+          reported_by?: string
+          resolution_action?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shared_product_id?: string | null
+          source_id?: string | null
+          source_key?: string | null
+          status?: string
+          updated_at?: string
+          warning_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_compatibility_feedback_issue_code_fkey"
+            columns: ["issue_code"]
+            isOneToOne: false
+            referencedRelation: "app_issue_codes"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "food_compatibility_feedback_policy_version_id_fkey"
+            columns: ["policy_version_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_compatibility_feedback_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "food_compatibility_feedback_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_compatibility_match_rules: {
         Row: {
           confidence: string
@@ -530,6 +733,48 @@ export type Database = {
             referencedColumns: ["tag_id"]
           },
         ]
+      }
+      food_compatibility_policy_versions: {
+        Row: {
+          change_summary: string
+          conflict_rule_snapshot: Json
+          created_at: string
+          effective_at: string
+          id: string
+          match_rule_snapshot: Json
+          reviewed_at: string
+          source_references: Json
+          status: string
+          updated_at: string
+          version_number: number
+        }
+        Insert: {
+          change_summary: string
+          conflict_rule_snapshot?: Json
+          created_at?: string
+          effective_at: string
+          id?: string
+          match_rule_snapshot?: Json
+          reviewed_at: string
+          source_references?: Json
+          status: string
+          updated_at?: string
+          version_number: number
+        }
+        Update: {
+          change_summary?: string
+          conflict_rule_snapshot?: Json
+          created_at?: string
+          effective_at?: string
+          id?: string
+          match_rule_snapshot?: Json
+          reviewed_at?: string
+          source_references?: Json
+          status?: string
+          updated_at?: string
+          version_number?: number
+        }
+        Relationships: []
       }
       food_image_assets: {
         Row: {
@@ -2559,6 +2804,7 @@ export type Database = {
           created_at: string
           fact_type: string
           id: string
+          policy_version_id: string
           shared_product_id: string | null
           shared_product_observation_id: string | null
           shared_product_submission_id: string | null
@@ -2572,6 +2818,7 @@ export type Database = {
           created_at?: string
           fact_type: string
           id?: string
+          policy_version_id?: string
           shared_product_id?: string | null
           shared_product_observation_id?: string | null
           shared_product_submission_id?: string | null
@@ -2585,6 +2832,7 @@ export type Database = {
           created_at?: string
           fact_type?: string
           id?: string
+          policy_version_id?: string
           shared_product_id?: string | null
           shared_product_observation_id?: string | null
           shared_product_submission_id?: string | null
@@ -2594,6 +2842,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "product_compatibility_facts_policy_version_id_fkey"
+            columns: ["policy_version_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_versions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "product_compatibility_facts_shared_product_id_fkey"
             columns: ["shared_product_id"]
@@ -3843,6 +4098,10 @@ export type Database = {
       }
     }
     Functions: {
+      active_food_compatibility_policy_version_id: {
+        Args: never
+        Returns: string
+      }
       apply_shared_product_external_enrichment: {
         Args: {
           p_barcode: string

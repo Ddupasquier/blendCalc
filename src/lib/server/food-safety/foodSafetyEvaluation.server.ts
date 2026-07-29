@@ -382,9 +382,11 @@ const getAllergenDisclosure = (
 
 const buildCompatibilitySummary = (
 	facts: FoodCompatibilityFact[],
+	policyVersion: number,
 	currentSummary?: FoodCompatibilitySummary,
 ): FoodCompatibilitySummary => ({
 	version: currentSummary?.version ?? 1,
+	policyVersion,
 	generatedAt: currentSummary?.generatedAt ?? new Date().toISOString(),
 	allFacts: facts,
 	contains: facts.filter((fact) => fact.factType === "contains"),
@@ -409,6 +411,7 @@ export const annotateFoodWithFoodSafety = (
 		...food,
 		compatibilitySummary: buildCompatibilitySummary(
 			facts,
+			context.policy.version,
 			food.compatibilitySummary,
 		),
 		allergenDisclosure: getAllergenDisclosure(facts),
