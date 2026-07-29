@@ -267,8 +267,8 @@ header > p:last-child,
 }
 
 .search-action {
-	color: $app-btn-text;
-	background: $app-primary;
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
 }
 
 .clear-search {
@@ -377,7 +377,7 @@ select {
 
 .danger-action {
 	width: 100%;
-	color: $app-btn-text;
+	color: $app-shell-text-on-danger;
 	background: $app-danger-action;
 }
 

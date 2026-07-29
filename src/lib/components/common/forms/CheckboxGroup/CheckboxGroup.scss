@@ -42,9 +42,9 @@ $checkbox-corner-radius: 0.22rem;
 }
 
 .checkbox-item.selected {
-	color: $app-btn-text;
-	background: $app-primary;
-	border-color: $app-primary;
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
+	border-color: $app-shell-accent-primary;
 }
 
 input {
@@ -82,7 +82,7 @@ input:checked::before {
 }
 
 .selected input {
-	color: $app-primary;
-	background: $app-btn-text;
-	border-color: $app-btn-text;
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
+	border-color: currentColor;
 }

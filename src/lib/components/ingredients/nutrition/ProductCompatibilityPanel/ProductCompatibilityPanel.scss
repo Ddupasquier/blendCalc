@@ -1,27 +1,27 @@
 @use "../../../../../styles/variables" as *;
 
-.product-allergen-panel {
+.product-compatibility-panel {
 	display: grid;
 	gap: $app-gap-md;
 	color: $app-shell-text-primary;
 }
 
-.product-allergen-panel__group {
+.product-compatibility-panel__group {
 	display: grid;
 	gap: $app-gap-sm;
 }
 
-.product-allergen-panel h2,
-.product-allergen-panel p {
+.product-compatibility-panel h2,
+.product-compatibility-panel p {
 	margin: 0;
 }
 
-.product-allergen-panel h2 {
+.product-compatibility-panel h2 {
 	font-size: $app-font-size-md;
 	font-weight: $app-font-weight-bold;
 }
 
-.product-allergen-panel p {
+.product-compatibility-panel p {
 	font-size: $app-font-size-md;
 	font-weight: $app-font-weight-regular;
 	line-height: 1.5;

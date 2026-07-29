@@ -230,13 +230,14 @@
 				bind:this={listElement}
 				onscroll={handleListScroll}
 			>
-				{#each foods as food (food.fdcId)}
+				{#each foods as food, index (food.fdcId)}
 					{@const actionKey = getIngredientActionKey(activeList, food.fdcId)}
 					{@const warning = getPrimaryFoodWarning(food)}
 					{@const isChecked = selectedIdSet.has(food.fdcId)}
 					<li
 						data-food-id={food.fdcId}
 						data-bulk-selected={isChecked}
+						data-tutorial-target={index === 0 ? "ingredient-card" : undefined}
 						animate:flip={{ duration: getListReflowDuration() }}
 						class:saved-ingredient-list__card--moving={(bulkMoveBusy && isChecked) ||
 							singleAnimatingFoodId === food.fdcId}

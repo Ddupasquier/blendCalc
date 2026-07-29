@@ -3,7 +3,8 @@ export type FoodCompatibilityFactType =
 	| "may_contain"
 	| "free_from"
 	| "dietary_claim"
-	| "ingredient_present";
+	| "ingredient_present"
+	| "dietary_conflict";
 
 export type FoodCompatibilitySourceType =
 	| "shared_product_metadata"
@@ -13,7 +14,8 @@ export type FoodCompatibilitySourceType =
 	| "label_trace_field"
 	| "label_dietary_field"
 	| "label_ingredient_field"
-	| "food_identity_taxonomy";
+	| "food_identity_taxonomy"
+	| "source_dietary_analysis";
 
 export type FoodCompatibilityConfidence = "confirmed" | "inferred" | "uncertain";
 

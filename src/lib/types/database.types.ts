@@ -155,6 +155,7 @@ export type Database = {
           created_at: string
           fact_tag_id: string
           preference_tag_id: string
+          priority: number
           severity: string
           updated_at: string
           warning_code: string
@@ -163,6 +164,7 @@ export type Database = {
           created_at?: string
           fact_tag_id: string
           preference_tag_id: string
+          priority?: number
           severity: string
           updated_at?: string
           warning_code: string
@@ -171,6 +173,7 @@ export type Database = {
           created_at?: string
           fact_tag_id?: string
           preference_tag_id?: string
+          priority?: number
           severity?: string
           updated_at?: string
           warning_code?: string
@@ -184,11 +187,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "compatibility_rule_conflicts_fact_tag_id_fkey"
+            columns: ["fact_tag_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_coverage"
+            referencedColumns: ["tag_id"]
+          },
+          {
             foreignKeyName: "compatibility_rule_conflicts_preference_tag_id_fkey"
             columns: ["preference_tag_id"]
             isOneToOne: false
             referencedRelation: "compatibility_tags"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compatibility_rule_conflicts_preference_tag_id_fkey"
+            columns: ["preference_tag_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_coverage"
+            referencedColumns: ["tag_id"]
           },
           {
             foreignKeyName: "compatibility_rule_conflicts_warning_code_fkey"
@@ -504,6 +521,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "compatibility_tags"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_compatibility_match_rules_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_coverage"
+            referencedColumns: ["tag_id"]
           },
         ]
       }
@@ -849,6 +873,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "compatibility_tags"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_preference_option_catalog_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_coverage"
+            referencedColumns: ["tag_id"]
           },
         ]
       }
@@ -2598,6 +2629,13 @@ export type Database = {
             referencedRelation: "compatibility_tags"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "product_compatibility_facts_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_coverage"
+            referencedColumns: ["tag_id"]
+          },
         ]
       }
       product_data_sources: {
@@ -3602,6 +3640,13 @@ export type Database = {
             referencedRelation: "compatibility_tags"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_compatibility_rules_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_coverage"
+            referencedColumns: ["tag_id"]
+          },
         ]
       }
       user_food_list_items: {
@@ -3763,6 +3808,36 @@ export type Database = {
           publishable?: never
           reasons?: never
           shared_product_id?: string | null
+        }
+        Relationships: []
+      }
+      food_compatibility_policy_coverage: {
+        Row: {
+          category: string | null
+          conflict_count: number | null
+          evidence_rule_count: number | null
+          label: string | null
+          selectable: boolean | null
+          slug: string | null
+          tag_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          conflict_count?: never
+          evidence_rule_count?: never
+          label?: string | null
+          selectable?: never
+          slug?: string | null
+          tag_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          conflict_count?: never
+          evidence_rule_count?: never
+          label?: string | null
+          selectable?: never
+          slug?: string | null
+          tag_id?: string | null
         }
         Relationships: []
       }

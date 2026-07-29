@@ -16,7 +16,10 @@
 	}: IngredientsSearchPanelProps = $props();
 </script>
 
-<section class="ingredient-search-panel" aria-labelledby="ingredient-search-title">
+<section
+	class="ingredient-search-panel"
+	aria-labelledby="ingredient-search-title"
+>
 	<h2 id="ingredient-search-title" class="sr-only">Find Ingredients</h2>
 	<div class="search-toolbar">
 		<div class="search-toolbar__input">

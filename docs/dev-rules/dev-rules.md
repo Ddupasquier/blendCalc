@@ -631,6 +631,16 @@ forward-only migration and regenerate `src/lib/types/database.types.ts` whenever
 generated database contract changes. A migration is not complete while its maintained
 schema map or generated types are stale.
 
+**26b.** <a id="rule-verified-migration-deployment"></a>Do not leave a verified
+database migration unapplied. Replay the complete migration chain against the
+resettable local Supabase stack, run focused database/application tests, inspect the
+linked dry run and pending migration list, then apply only the expected migration with
+`npm run db:push:auto`. Regenerate linked database types, run database lint, and confirm
+the linked and local migration histories agree before handoff. Stop instead of applying
+when local verification fails, the dry run includes an unexpected migration, or the
+linked state differs from the reviewed chain. This standing database-migration workflow
+does not grant permission to commit or push Git changes.
+
 **27.** <a id="rule-no-hardcoded-reference-data"></a>Do not hardcode DB-backed catalog
 data, API-derived reference data, nutrient definitions, allergens, dietary restrictions,
 source labels, or compatibility metadata in components or utility constants. If the app
@@ -1193,7 +1203,10 @@ Run `npm run version:check` before checks and builds, and use
 `npm run version:bump -- patch|minor|major` for a reviewed app-release bump that updates
 package metadata without creating a commit or tag. API contract bumps remain deliberate
 and must keep the URL major, response `major.minor`, full OpenAPI version, tests, and
-documentation aligned.
+documentation aligned. Node.js 24 is the only supported development, test, preview,
+and build runtime. Keep `.nvmrc`, `.node-version`, package engine metadata, runtime
+checks, and local project-terminal selection aligned so new project shells select Node
+24 automatically and unsupported runtimes fail before substantive work begins.
 
 **32.** <a id="rule-loading-states"></a>Every fetch-backed, database-backed,
 camera-backed, or long-running action needs a clear loading state. While pending,

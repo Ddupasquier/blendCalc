@@ -27,7 +27,7 @@ const testSeedPath = fileURLToPath(
 const action = process.argv[2] ?? "status";
 const serviceReadinessAttempts = 30;
 const serviceReadinessDelayMs = 1000;
-const currentTutorialVersion = 1;
+const currentTutorialVersion = 3;
 
 const testAccounts = [
 	{

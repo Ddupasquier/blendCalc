@@ -1,21 +1,26 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../../styles/themes";
 
+$nutrition-paper: #fff;
+$nutrition-ink: #111;
 $nutrition-secondary-ink: #222;
 $facts-label-inset: 1.0875rem;
 $facts-label-heavy-rule: 3.5px;
 $facts-label-tight-gap: 0.13rem;
 
 .nf-label {
+	@include themes.light-theme;
+
 	width: 100%;
 	max-width: 100%;
 	padding: $app-gap-md $facts-label-inset
 		$facts-label-inset;
 	margin: 0 auto;
 	overflow: hidden;
-	color: $app-high-contrast-ink;
+	color: $nutrition-ink;
 	font-family: $app-font-family-data;
-	background: $app-shell-surface-panel;
-	border: $facts-label-heavy-rule solid $app-high-contrast-ink;
+	background: $nutrition-paper;
+	border: $facts-label-heavy-rule solid $nutrition-ink;
 	border-radius: 0;
 }
 
@@ -24,7 +29,7 @@ $facts-label-tight-gap: 0.13rem;
 	gap: $app-gap-2xs;
 	padding-bottom: $facts-label-tight-gap;
 	margin-bottom: $app-gap-micro;
-	border-bottom: 8px solid $app-high-contrast-ink;
+	border-bottom: 8px solid $nutrition-ink;
 }
 
 .nf-title {
@@ -87,12 +92,12 @@ $facts-label-tight-gap: 0.13rem;
 
 .nf-thick-divider {
 	margin: $app-gap-2xs 0 $app-gap-xs;
-	border-bottom: 4px solid $app-high-contrast-ink;
+	border-bottom: 4px solid $nutrition-ink;
 }
 
 .nf-divider {
 	margin: $app-gap-micro 0;
-	border-bottom: 2px solid $app-high-contrast-ink;
+	border-bottom: 2px solid $nutrition-ink;
 }
 
 .nf-columns {
@@ -122,7 +127,7 @@ $facts-label-tight-gap: 0.13rem;
 	padding-left: $facts-label-inset;
 	overflow-x: hidden;
 	overflow-y: auto;
-	border-left: $facts-label-heavy-rule solid $app-high-contrast-ink;
+	border-left: $facts-label-heavy-rule solid $nutrition-ink;
 }
 
 .nf-list {
@@ -138,7 +143,7 @@ $facts-label-tight-gap: 0.13rem;
 	gap: $app-gap-sm;
 	padding: $facts-label-tight-gap
 		0.1rem;
-	color: $app-high-contrast-ink;
+	color: $nutrition-ink;
 	font-size: $app-font-size-md;
 	font-weight: $app-font-weight-medium;
 	background: none;
@@ -152,7 +157,7 @@ $facts-label-tight-gap: 0.13rem;
 .nf-label-text {
 	min-width: 0;
 	overflow-wrap: anywhere;
-	color: $app-high-contrast-ink;
+	color: $nutrition-ink;
 	font-size: $app-font-size-md;
 	font-weight: $app-font-weight-semibold;
 	letter-spacing: $app-letter-spacing-data;
@@ -166,7 +171,7 @@ $facts-label-tight-gap: 0.13rem;
 
 .nf-value {
 	flex: 0 0 auto;
-	color: $app-high-contrast-ink;
+	color: $nutrition-ink;
 	font-size: $app-font-size-md;
 	font-weight: $app-font-weight-heavy;
 }
@@ -228,7 +233,7 @@ $facts-label-tight-gap: 0.13rem;
 		max-height: 9.5rem !important;
 		padding-top: $app-gap-sm;
 		padding-left: 0;
-		border-top: $facts-label-heavy-rule solid $app-high-contrast-ink;
+		border-top: $facts-label-heavy-rule solid $nutrition-ink;
 		border-left: 0;
 	}
 

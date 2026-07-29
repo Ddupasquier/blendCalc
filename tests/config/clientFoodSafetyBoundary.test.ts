@@ -27,8 +27,8 @@ describe("client food-safety boundary", () => {
 		const warnings = readSource(
 			"src/lib/utils/profile/foodPreferenceWarnings.ts",
 		);
-		const allergenPanel = readSource(
-			"src/lib/components/ingredients/nutrition/ProductAllergenPanel/ProductAllergenPanel.svelte",
+		const compatibilityPanel = readSource(
+			"src/lib/components/ingredients/nutrition/ProductCompatibilityPanel/ProductCompatibilityPanel.svelte",
 		);
 
 		expect(warnings).toContain("food.preferenceWarnings");
@@ -36,10 +36,9 @@ describe("client food-safety boundary", () => {
 			/\.(?:allergens|traces|ingredients|compatibilitySummary)\b/,
 		);
 		expect(warnings).not.toContain("RegExp");
-		expect(allergenPanel).toContain("food.allergenDisclosure");
-		expect(allergenPanel).not.toMatch(
-			/food\.(?:allergens|traces|compatibilitySummary)\b/,
-		);
+		expect(compatibilityPanel).toContain("food.allergenDisclosure");
+		expect(compatibilityPanel).toContain("food.compatibilitySummary");
+		expect(compatibilityPanel).not.toMatch(/food\.(?:allergens|traces)\b/);
 	});
 
 	it("keeps package declaration parsing in server-only ingestion code", () => {

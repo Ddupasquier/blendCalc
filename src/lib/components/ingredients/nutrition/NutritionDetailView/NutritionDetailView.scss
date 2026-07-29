@@ -38,8 +38,8 @@ h1 {
 	gap: $app-gap-md;
 	min-height: $app-shell-control-height;
 	padding-block: $app-gap-sm;
-	border-top: 2px solid $app-high-contrast-ink;
-	border-bottom: 2px solid $app-high-contrast-ink;
+	border-top: 2px solid $app-shell-text-primary;
+	border-bottom: 2px solid $app-shell-text-primary;
 
 	h2 {
 		margin: 0;

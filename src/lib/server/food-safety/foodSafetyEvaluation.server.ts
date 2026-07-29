@@ -1,6 +1,7 @@
 import type {
 	FoodCompatibilityFact,
 	FoodCompatibilityFactType,
+	FoodCompatibilitySummary,
 } from "$lib/utils/food/quality/compatibility";
 import {
 	getAuthoritativeGenericFoodIdentity,
@@ -54,6 +55,27 @@ const createStructuredFact = (
 	confidence: "confirmed",
 });
 
+const getDietaryClaimFacts = (
+	food: FdcFood,
+	policy: FoodSafetyPolicy,
+) => {
+	const dietaryClaims = new Map(
+		policy.preferenceConflictRules
+			.filter((rule) => rule.preferenceCategory === "dietary")
+			.flatMap((rule) => [
+				[normalizeValue(rule.preferenceSlug), rule.preferenceLabel],
+				[normalizeValue(rule.preferenceLabel), rule.preferenceLabel],
+			]),
+	);
+
+	return [...(food.dietaryTags ?? []), ...(food.labels ?? [])].flatMap((value) => {
+		const label = dietaryClaims.get(normalizeValue(value));
+		return label
+			? [createStructuredFact(label, "dietary_claim", "dietary")]
+			: [];
+	});
+};
+
 const isCurrentCompatibilityFact = (fact: FoodCompatibilityFact) => {
 	const sourceType = String(
 		(fact as unknown as { sourceType?: unknown }).sourceType ?? "",
@@ -80,6 +102,27 @@ const getRuleFieldValue = (
 		rule.sourceType === "label_ingredient_field"
 	) {
 		return food.ingredients ?? "";
+	}
+	if (
+		rule.fieldName === "allergens" &&
+		rule.sourceType === "label_allergen_field"
+	) {
+		return (food.allergens ?? []).join(" | ");
+	}
+	if (
+		rule.fieldName === "traces" &&
+		rule.sourceType === "label_trace_field"
+	) {
+		return (food.traces ?? []).join(" | ");
+	}
+	if (
+		rule.fieldName === "ingredient_analysis" &&
+		rule.sourceType === "source_dietary_analysis"
+	) {
+		return JSON.stringify({
+			ingredientAnalysis: food.ingredientAnalysis ?? null,
+			structuredIngredients: food.structuredIngredients ?? [],
+		});
 	}
 	return "";
 };
@@ -135,9 +178,7 @@ const getCompatibilityFacts = (
 		...(food.traces ?? []).map((value) =>
 			createStructuredFact(value, "may_contain", "allergen")
 		),
-		...[...(food.dietaryTags ?? []), ...(food.labels ?? [])].map((value) =>
-			createStructuredFact(value, "dietary_claim", "dietary")
-		),
+		...getDietaryClaimFacts(food, policy),
 		...getRuleDerivedCompatibilityFacts(
 			food,
 			policy.compatibilityMatchRules,
@@ -181,6 +222,8 @@ const getRestrictionEvidenceType = (fact: FoodCompatibilityFact) => {
 		if (fact.sourceType === "food_identity_taxonomy") return "intrinsic";
 		return fact.factType;
 	}
+	if (fact.sourceType === "source_dietary_analysis") return "source_analysis";
+	if (fact.sourceType === "food_identity_taxonomy") return "intrinsic";
 	return "ingredient";
 };
 
@@ -207,13 +250,20 @@ const getConflictFact = (
 	facts: FoodCompatibilityFact[],
 	policy: FoodSafetyPolicy,
 ) => {
-	const matchingRules = policy.preferenceConflictRules.filter((rule) =>
-		normalizeValue(rule.preferenceSlug) === normalizeValue(preference) ||
-		normalizeValue(rule.preferenceLabel) === normalizeValue(preference)
-	);
+	const matchingRules = policy.preferenceConflictRules
+		.filter((rule) =>
+			normalizeValue(rule.preferenceSlug) === normalizeValue(preference) ||
+			normalizeValue(rule.preferenceLabel) === normalizeValue(preference)
+		)
+		.sort((left, right) => left.priority - right.priority);
 	for (const rule of matchingRules) {
 		const fact = facts.find((candidate) =>
-			["contains", "may_contain", "ingredient_present"].includes(
+			[
+				"contains",
+				"may_contain",
+				"ingredient_present",
+				"dietary_conflict",
+			].includes(
 				candidate.factType,
 			) &&
 			(
@@ -268,12 +318,6 @@ const getFoodPreferenceWarnings = (
 	}
 
 	for (const restriction of profile.dietaryRestrictions) {
-		const matchingClaim = facts.find((fact) =>
-			(fact.factType === "dietary_claim" || fact.factType === "free_from") &&
-			factMatches(fact, restriction)
-		);
-		if (matchingClaim) continue;
-
 		const conflict = getConflictFact(restriction, facts, policy);
 		if (!conflict) continue;
 		warnings.push(
@@ -336,6 +380,21 @@ const getAllergenDisclosure = (
 	return { contains, mayContain };
 };
 
+const buildCompatibilitySummary = (
+	facts: FoodCompatibilityFact[],
+	currentSummary?: FoodCompatibilitySummary,
+): FoodCompatibilitySummary => ({
+	version: currentSummary?.version ?? 1,
+	generatedAt: currentSummary?.generatedAt ?? new Date().toISOString(),
+	allFacts: facts,
+	contains: facts.filter((fact) => fact.factType === "contains"),
+	mayContain: facts.filter((fact) => fact.factType === "may_contain"),
+	dietaryClaims: facts.filter((fact) => fact.factType === "dietary_claim"),
+	ingredientSignals: facts.filter(
+		(fact) => fact.factType === "ingredient_present",
+	),
+});
+
 export type FoodSafetyEvaluationContext = {
 	profile: FoodPreferenceProfile | null;
 	policy: FoodSafetyPolicy;
@@ -348,6 +407,10 @@ export const annotateFoodWithFoodSafety = (
 	const facts = getCompatibilityFacts(food, context.policy);
 	return {
 		...food,
+		compatibilitySummary: buildCompatibilitySummary(
+			facts,
+			food.compatibilitySummary,
+		),
 		allergenDisclosure: getAllergenDisclosure(facts),
 		preferenceWarnings: getFoodPreferenceWarnings(
 			facts,
