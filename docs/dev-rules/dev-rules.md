@@ -589,6 +589,15 @@ integration branch. Major rebuild sections branch from `mobile-ui-rebuild`, merg
 into `mobile-ui-rebuild` only after approval and checks, and do not move to `staging`
 until the full rebuild is approved.
 
+**22a.** When the user explicitly approves moving work to `main` during the mobile UI
+rebuild, promote it through the complete branch chain in order:
+`ui-rebuild/ingredients` → `mobile-ui-rebuild` → `staging` → `main`. Push every updated
+branch, verify the remote branch heads, and finish by switching the local checkout back
+to the originating working branch. If a change has already landed directly on a parent
+branch, reconcile it onto the working branch and promote it forward again so no parent
+branch is skipped. This workflow does not grant standing permission to commit or push
+unrelated work.
+
 **23.** During the mobile UI rebuild, protected components require explicit written
 approval before alteration. The graph and barcode scanner are currently protected.
 
