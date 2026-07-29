@@ -17,7 +17,7 @@ export const createPendingSubmit = (
 
 		return async ({ result, update }) => {
 			try {
-				await update();
+				await update({ reset: false });
 				await onComplete?.(result);
 			} finally {
 				pending = false;

@@ -8,6 +8,7 @@
 	import DailyWelcome from "$lib/components/app/DailyWelcome/DailyWelcome.svelte";
 	import TabNavigation from "$lib/components/app/TabNavigation/TabNavigation.svelte";
 	import TutorialOverlay from "$lib/components/app/TutorialOverlay/TutorialOverlay.svelte";
+	import ThemeController from "$lib/components/app/ThemeController/ThemeController.svelte";
 	import {
 		APP_DESCRIPTION,
 		APP_NUTRITION_PREVIEW_ALT,
@@ -103,7 +104,7 @@
 		name="description"
 		content={APP_DESCRIPTION}
 	/>
-	<meta name="theme-color" content="#5f564f" />
+	<meta name="theme-color" content="#f8f8fb" />
 	<meta name="application-version" content={APP_VERSION} />
 	<meta name="application-build" content={APP_BUILD_VERSION} />
 	<link rel="icon" href={favicon} />
@@ -129,6 +130,8 @@
 	<meta name="twitter:image" content={APP_OG_IMAGE_URL} />
 	<meta name="twitter:image:alt" content={APP_NUTRITION_PREVIEW_ALT} />
 </svelte:head>
+
+<ThemeController preference={data.themePreference} />
 
 {#if data.authUser}
 	<AppHeader

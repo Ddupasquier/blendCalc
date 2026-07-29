@@ -16,7 +16,10 @@ describe("page metadata", () => {
 			"Smoothie Builder · blendCalc",
 		);
 		expect(getAppDocumentTitle(url("/saved"))).toBe(
-			"Saved Smoothies · blendCalc",
+			"Saved Drinks · blendCalc",
+		);
+		expect(getAppDocumentTitle(url("/saved/sort"))).toBe(
+			"Sort Saved Drinks · blendCalc",
 		);
 	});
 

@@ -1,4 +1,9 @@
 <script lang="ts">
+	import Search from "$lib/assets/icons/Search/Search.svelte";
+	import Sliders from "$lib/assets/icons/Sliders/Sliders.svelte";
+	import X from "$lib/assets/icons/X/X.svelte";
+	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
+	import IconControlButton from "$lib/components/common/buttons/IconControlButton/IconControlButton.svelte";
 	import type { ListControlsProps } from "./types";
 
 	let {
@@ -14,6 +19,9 @@
 		filterValue,
 		filterOptions = [],
 		onFilterChange,
+		filtersActive = false,
+		filterControlsId,
+		onFilterOpen,
 	}: ListControlsProps = $props();
 
 	const countText = $derived(
@@ -25,10 +33,17 @@
 
 <div
 	class="list-controls"
-	class:list-controls--search-only={filterOptions.length === 0}
+	class:list-controls--search-only={filterOptions.length === 0 && !onFilterOpen}
+	class:list-controls--filter-trigger={Boolean(onFilterOpen)}
 >
-	<label class="search-control" for={id}>
-		<span>{label}</span>
+	<div
+		class="search-control"
+		class:search-control--active={Boolean(query)}
+	>
+		<label class="sr-only" for={id}>{label}</label>
+		<span class="search-control__icon" aria-hidden="true">
+			<Search size={17} />
+		</span>
 		<input
 			{id}
 			name={id}
@@ -38,11 +53,35 @@
 			oninput={(event) =>
 				onQueryChange((event.currentTarget as HTMLInputElement).value)}
 		/>
-	</label>
+		{#if query}
+			<span class="search-control__clear">
+				<CircleIconButton
+					label={`Clear ${label.toLowerCase()}`}
+					variant="ghost"
+					size="tiny"
+					onclick={() => onQueryChange("")}
+				>
+					<X size={13} />
+				</CircleIconButton>
+			</span>
+		{/if}
+	</div>
 
-	{#if filterOptions.length > 0 && filterValue !== undefined && onFilterChange}
+	{#if onFilterOpen}
+		<span class="list-controls__filter-trigger">
+			<IconControlButton
+				label={filterLabel}
+				active={filtersActive}
+				aria-expanded={filtersActive}
+				aria-controls={filterControlsId}
+				onclick={onFilterOpen}
+			>
+				<Sliders />
+			</IconControlButton>
+		</span>
+	{:else if filterOptions.length > 0 && filterValue !== undefined && onFilterChange}
 		<label class="filter-control" for={`${id}-filter`}>
-			<span>{filterLabel}</span>
+			<span class="sr-only">{filterLabel}</span>
 			<select
 				id={`${id}-filter`}
 				name={`${id}-filter`}

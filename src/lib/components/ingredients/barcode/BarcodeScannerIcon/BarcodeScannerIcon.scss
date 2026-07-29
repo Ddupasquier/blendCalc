@@ -38,6 +38,12 @@ $scanner-laser-start-position: 0.25rem;
 :global(.barcode-scanner__idle-bars) {
 	display: block;
 	fill: currentColor;
+	opacity: 1;
+	transition: opacity 0.18s ease;
+}
+
+.barcode-scanner--active :global(.barcode-scanner__idle-bars) {
+	opacity: 0;
 }
 
 .barcode-scanner__bracket {
@@ -48,7 +54,7 @@ $scanner-laser-start-position: 0.25rem;
 	border-color: $scanner-laser-color;
 	border-style: solid;
 	opacity: 0;
-	animation: scanner-detail-fade-in 0.22s ease forwards;
+	transition: opacity 0.18s ease;
 }
 
 .barcode-scanner__bracket--top-left {
@@ -85,7 +91,7 @@ $scanner-laser-start-position: 0.25rem;
 	display: block;
 	color: $app-shell-surface-panel;
 	opacity: 0;
-	animation: scanner-detail-fade-in 0.22s ease forwards;
+	transition: opacity 0.18s ease;
 }
 
 .barcode-scanner__glow {
@@ -101,9 +107,7 @@ $scanner-laser-start-position: 0.25rem;
 		rgba($scanner-laser-color, 0.18) 42%,
 		transparent 76%
 	);
-	animation:
-		scanner-detail-fade-in 0.22s ease forwards,
-		barcode-laser-glow 1.1s ease-in-out infinite;
+	transition: opacity 0.18s ease;
 }
 
 .barcode-scanner__laser {
@@ -121,18 +125,23 @@ $scanner-laser-start-position: 0.25rem;
 		transparent 100%
 	);
 	filter: drop-shadow(0 0 3px rgba($scanner-laser-color, 0.9));
-	animation:
-		scanner-detail-fade-in 0.22s ease forwards,
-		barcode-laser-sweep 1.1s ease-in-out infinite;
+	transition: opacity 0.18s ease;
 }
 
-@keyframes scanner-detail-fade-in {
-	from {
-		opacity: 0;
+.barcode-scanner--active {
+	.barcode-scanner__bracket,
+	.barcode-scanner__bars,
+	.barcode-scanner__glow,
+	.barcode-scanner__laser {
+		opacity: 1;
 	}
 
-	to {
-		opacity: 1;
+	.barcode-scanner__glow {
+		animation: barcode-laser-glow 1.1s ease-in-out infinite;
+	}
+
+	.barcode-scanner__laser {
+		animation: barcode-laser-sweep 1.1s ease-in-out infinite;
 	}
 }
 
@@ -171,8 +180,12 @@ $scanner-laser-start-position: 0.25rem;
 		transition: none;
 	}
 
+	:global(.barcode-scanner__idle-bars),
+	.barcode-scanner__bracket,
+	.barcode-scanner__bars,
 	.barcode-scanner__glow,
 	.barcode-scanner__laser {
+		transition: none;
 		animation: none;
 	}
 }

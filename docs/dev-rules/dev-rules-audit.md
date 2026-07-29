@@ -44,12 +44,12 @@ the browser and mobile QA matrices.
 
 **Status:** Open
 
-**Evidence:** Ingredients defines the approved visual system and Mix has received a
-focused token pass. Root, Authentication, Profile, Saved Drinks, and Moderation styles
-still contain older one-off spacing, font-weight, sizing, and layout values. Current
-examples include `src/routes/page.scss`, `src/routes/auth/page.scss`,
-`src/routes/profile/page.scss`, `src/routes/saved/page.scss`, and
-`src/routes/moderation/page.scss`.
+**Evidence:** Ingredients defines the approved visual system, Mix has received a
+focused token pass, and Saved Drinks now uses the shared app shell and component-owned
+card/empty-state styles. Root, Authentication, Profile, and Moderation styles still
+contain older one-off spacing, font-weight, sizing, and layout values. Current examples
+include `src/routes/page.scss`, `src/routes/auth/page.scss`,
+`src/routes/profile/page.scss`, and `src/routes/moderation/page.scss`.
 
 **Complete when:** Each view is deliberately rebuilt against the Ingredients-derived
 style guide; app-wide decisions use direct global tokens, component-only decisions stay

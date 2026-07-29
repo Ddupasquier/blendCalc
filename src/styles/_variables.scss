@@ -63,17 +63,17 @@ $app-breakpoint-height-compact: 700px;
 
 // Shared app shell
 // -----------------------------------------------------------------------------
-$app-shell-surface-page: #f8f8fb;
-$app-shell-surface-panel: #fff;
-$app-shell-surface-control: #e9e9ed;
-$app-shell-surface-soft: #f8f7f5;
-$app-shell-text-primary: #1a1a2e;
-$app-shell-text-muted: #8b8fa8;
-$app-shell-accent-primary: #57a773;
-$app-shell-accent-soft: #e8f5ee;
-$app-shell-accent-info: #55a6c8;
-$app-shell-accent-danger: #d84242;
-$app-shell-border-subtle: rgba(0, 0, 0, 0.08);
+$app-shell-surface-page: var(--app-shell-surface-page);
+$app-shell-surface-panel: var(--app-shell-surface-panel);
+$app-shell-surface-control: var(--app-shell-surface-control);
+$app-shell-surface-soft: var(--app-shell-surface-soft);
+$app-shell-text-primary: var(--app-shell-text-primary);
+$app-shell-text-muted: var(--app-shell-text-muted);
+$app-shell-accent-primary: var(--app-shell-accent-primary);
+$app-shell-accent-soft: var(--app-shell-accent-soft);
+$app-shell-accent-info: var(--app-shell-accent-info);
+$app-shell-accent-danger: var(--app-shell-accent-danger);
+$app-shell-border-subtle: var(--app-shell-border-subtle);
 $app-high-contrast-ink: #111;
 
 $app-shell-control-height: 2.95rem;
@@ -110,44 +110,44 @@ $app-control-icon-size: 1.2rem;
 
 // App-wide color roles
 // -----------------------------------------------------------------------------
-$app-bg: #fcf9f4;
-$app-section-bg: #f5eee5;
-$app-border-color: #d8c9d9;
-$app-border: 1.5px solid #d8c9d9;
-$app-muted: #726963;
-$app-primary: #4f4842;
-$app-accent: #b7c8e3;
-$app-highlight: #f4b942;
-$app-highlight-hover: #d99a24;
-$app-highlight-text: #4f4842;
+$app-bg: var(--app-bg);
+$app-section-bg: var(--app-section-bg);
+$app-border-color: var(--app-border-color);
+$app-border: 1.5px solid var(--app-border-color);
+$app-muted: var(--app-muted);
+$app-primary: var(--app-primary);
+$app-accent: var(--app-accent);
+$app-highlight: var(--app-highlight);
+$app-highlight-hover: var(--app-highlight-hover);
+$app-highlight-text: var(--app-highlight-text);
 
-$app-danger-bg: #e7b0b8;
-$app-danger-action: #9c5f46;
-$app-success-bg: #c5d8be;
-$app-warning-bg: #efc6a9;
-$app-warning-border: 1.5px solid #d89ca5;
-$app-warning-border-color: #d89ca5;
-$app-warning-text: #4f4842;
-$app-warning-strong: #9c5f46;
+$app-danger-bg: var(--app-danger-bg);
+$app-danger-action: var(--app-danger-action);
+$app-success-bg: var(--app-success-bg);
+$app-warning-bg: var(--app-warning-bg);
+$app-warning-border: 1.5px solid var(--app-warning-border-color);
+$app-warning-border-color: var(--app-warning-border-color);
+$app-warning-text: var(--app-warning-text);
+$app-warning-strong: var(--app-warning-strong);
 
-$app-custom-bg: #cbb8e8;
-$app-custom-strong: #7b5fa3;
+$app-custom-bg: var(--app-custom-bg);
+$app-custom-strong: var(--app-custom-strong);
 $app-guest-card-radius: 1.35rem;
-$app-guest-surface: rgb(245 238 229 / 94%);
+$app-guest-surface: var(--app-guest-surface);
 
 // Validation and status messages
 // -----------------------------------------------------------------------------
 $app-status-padding-y: 0.8rem;
 $app-status-padding-x: 0.95rem;
-$app-status-error-bg: color-mix(in srgb, #e7b0b8 60%, white);
-$app-status-error-text: #9c5f46;
-$app-status-error-icon: #e45f55;
-$app-status-warning-bg: color-mix(in srgb, #f4b942 35%, white);
-$app-status-warning-icon: #d99a24;
+$app-status-error-bg: var(--app-status-error-bg);
+$app-status-error-text: var(--app-status-error-text);
+$app-status-error-icon: var(--app-status-error-icon);
+$app-status-warning-bg: var(--app-status-warning-bg);
+$app-status-warning-icon: var(--app-status-warning-icon);
 
 // Focus
 // -----------------------------------------------------------------------------
-$app-focus-outline: 1px solid #4f4842;
+$app-focus-outline: 1px solid var(--app-focus-color);
 $app-focus-outline-offset: 1px;
 
 // Shared badges and media
@@ -160,6 +160,6 @@ $app-status-icon-badge-icon-size: 0.9rem;
 
 // Shared legacy action roles
 // -----------------------------------------------------------------------------
-$app-btn-bg: #c894a7;
-$app-btn-bg-hover: #ae7288;
-$app-btn-text: #fcf9f4;
+$app-btn-bg: var(--app-btn-bg);
+$app-btn-bg-hover: var(--app-btn-bg-hover);
+$app-btn-text: var(--app-btn-text);

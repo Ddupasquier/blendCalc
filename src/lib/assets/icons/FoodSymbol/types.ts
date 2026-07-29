@@ -8,5 +8,6 @@ export type FoodSymbolProps = {
 				"symbolKey" | "foodCategory" | "brandedFoodCategory" | "categories"
 			>
 		>;
+	fallbackOnly?: boolean;
 	class?: string;
 };

@@ -31,12 +31,15 @@ pretending each deployment is a new product release.
 
 ### Node Runtime Contract
 
-Node.js 24 is the only supported development and build major. `.nvmrc` is the local
-runtime selector, while `package.json` and `package-lock.json` require `>=24 <25`.
+Node.js 24 is the only supported development, test, preview, and build major. `.nvmrc`
+is the local runtime selector, while `package.json` and `package-lock.json` require
+`>=24 <25`.
 Engine-strict dependency installation rejects unsupported majors, and
-`npm run version:check` verifies the active runtime before checks and production builds
-perform substantive work. Run `nvm use` from the repository root before project
-commands.
+`npm run version:check` verifies the active runtime before development, test, check,
+preview, and production-build commands perform substantive work. Development startup
+also stops any stale Vite process before checking the replacement runtime, so a server
+cannot continue using an obsolete dependency graph. Run `nvm use` from the repository
+root before project commands.
 
 ### Application Release Commands
 
@@ -58,8 +61,9 @@ The bump helper runs `npm version <level> --no-git-tag-version`, updates both pa
 files and this document, and reruns the consistency check. It does not create a commit
 or Git tag. Review the resulting files before choosing whether to commit them.
 
-`npm run check` and `npm run build` execute `version:check` automatically. Future CI
-should run either command, so version drift fails before deployment.
+Development, test, check, preview, and build commands execute `version:check`
+automatically. Future CI should run a check or build command, so version drift fails
+before deployment.
 
 ## API Releases
 

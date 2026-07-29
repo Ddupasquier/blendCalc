@@ -5,6 +5,7 @@
 		type ServingMeasureUnit,
 	} from "$lib/utils/serving/servingMeasureCatalog";
 	import { getMotionSafeScrollBehavior } from "$lib/utils/accessibility/motion";
+	import { setAnimatedDetailsOpen } from "$lib/utils/accessibility/animatedDetails";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 	import type { FoodCategoryPickerOption } from "$lib/utils/food/categories/categoryPicker";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog/BarcodeScannerDialog.svelte";
@@ -60,7 +61,9 @@
 	let draftRestored = $state(false);
 
 	const collapseManualEntry = () => {
-		if (labelDetailsElement) labelDetailsElement.open = false;
+		if (labelDetailsElement) {
+			setAnimatedDetailsOpen(labelDetailsElement, false);
+		}
 	};
 
 	const setSubmissionError = (message: string) => {
@@ -126,7 +129,9 @@
 	};
 
 	const handleBarcodeDetected = async (result: BarcodeScanResult) => {
-		if (labelDetailsElement) labelDetailsElement.open = true;
+		if (labelDetailsElement) {
+			setAnimatedDetailsOpen(labelDetailsElement, true);
+		}
 		const completion = await barcode.handleBarcodeDetected(result);
 		await scrollToManualReview(completion.focusTarget);
 	};

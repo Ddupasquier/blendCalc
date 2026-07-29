@@ -60,7 +60,10 @@
 		readCloudSmoothieListIndex,
 		type CloudSmoothieListIndex,
     } from "$lib/utils/storage/supabase";
-	import { readIngredientListPage } from "$lib/utils/ingredients/ingredientListApi";
+	import {
+		readIngredientListPage,
+		readIngredientListWindow,
+	} from "$lib/utils/ingredients/ingredientListApi";
     import { onMount } from "svelte";
     import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
@@ -180,6 +183,9 @@
             ? onHandTotalCount
             : shoppingListTotalCount,
     );
+    const showListLoadingIndicator = $derived(
+        listLoading && onHand.length === 0 && shoppingList.length === 0,
+    );
     const selectedActiveItemIds = $derived.by(
         () => selectedListItemIds[activeList] ?? [],
     );
@@ -235,38 +241,48 @@
         key: SmoothieListKey,
         foods: FdcFood[],
         totalCount: number,
-        reset: boolean,
+        replace: boolean,
+        resetViewport: boolean,
     ) => {
         if (key === MIX_STORAGE_KEYS.fridge) {
-            onHand = reset ? foods : [...onHand, ...foods];
+            onHand = replace ? foods : [...onHand, ...foods];
             onHandTotalCount = totalCount;
-            onHandVisibleCount = reset
+            onHandVisibleCount = resetViewport
                 ? LIST_PAGE_SIZES.ingredientPills
                 : Math.max(onHandVisibleCount, onHand.length);
             return;
         }
 
-        shoppingList = reset ? foods : [...shoppingList, ...foods];
+        shoppingList = replace ? foods : [...shoppingList, ...foods];
         shoppingListTotalCount = totalCount;
-        shoppingVisibleCount = reset
+        shoppingVisibleCount = resetViewport
             ? LIST_PAGE_SIZES.ingredientPills
             : Math.max(shoppingVisibleCount, shoppingList.length);
     };
 
     const loadListPage = async (
         key: SmoothieListKey,
-        reset = false,
+        replace = false,
         requestId = listLoadRequestId,
+        resetViewport = false,
     ) => {
-        const currentOffset = reset
+        const currentFoods =
+            key === MIX_STORAGE_KEYS.fridge ? onHand : shoppingList;
+        const currentOffset = replace
             ? 0
-            : key === MIX_STORAGE_KEYS.fridge
-                ? onHand.length
-                : shoppingList.length;
-        const pageSize = reset
-            ? LIST_PAGE_SIZES.ingredientPills
+            : currentFoods.length;
+        const pageSize = replace
+            ? resetViewport
+                ? LIST_PAGE_SIZES.ingredientPills
+                : Math.max(
+                        LIST_PAGE_SIZES.ingredientPills,
+                        currentFoods.length,
+                    )
             : LIST_PAGE_SIZES.ingredientLoadMore;
-        const cloudPage = await readIngredientListPage(key, {
+        const readPage = replace
+            ? readIngredientListWindow
+            : readIngredientListPage;
+        const cloudPage = await readPage(key, {
             limit: pageSize,
             offset: currentOffset,
             query: listQuery,
@@ -277,20 +293,38 @@
         if (!cloudPage) throw new Error("Saved ingredients are unavailable.");
 
         if (requestId !== listLoadRequestId) return;
-        setListPage(key, cloudPage.foods, cloudPage.totalCount, reset);
+        setListPage(
+            key,
+            cloudPage.foods,
+            cloudPage.totalCount,
+            replace,
+            resetViewport,
+        );
     };
 
-    const loadLists = async () => {
+    const loadLists = async ({
+        resetViewport = false,
+    }: { resetViewport?: boolean } = {}) => {
         const requestId = ++listLoadRequestId;
         listLoading = true;
         listLoadingError = "";
-        resetVisibleCounts();
+        if (resetViewport) resetVisibleCounts();
         try {
             const [nextCustomFoods, nextListIndex] = await Promise.all([
 				readCloudCustomFoods(),
 				readCloudSmoothieListIndex(),
-                loadListPage(MIX_STORAGE_KEYS.fridge, true, requestId),
-                loadListPage(MIX_STORAGE_KEYS.shoppingList, true, requestId),
+                loadListPage(
+                    MIX_STORAGE_KEYS.fridge,
+                    true,
+                    requestId,
+                    resetViewport,
+                ),
+                loadListPage(
+                    MIX_STORAGE_KEYS.shoppingList,
+                    true,
+                    requestId,
+                    resetViewport,
+                ),
             ]);
 			if (!nextCustomFoods || !nextListIndex) {
 				throw new Error("Saved ingredients are unavailable.");
@@ -309,6 +343,10 @@
                 listLoading = false;
             }
         }
+    };
+
+    const handleSmoothieListsChanged = () => {
+        void loadLists();
     };
 
     const getRouteFood = () =>
@@ -447,13 +485,95 @@
         });
     };
 
+    const addFoodToListState = (key: SmoothieListKey, food: FdcFood) => {
+        const currentFoods =
+            key === MIX_STORAGE_KEYS.fridge ? onHand : shoppingList;
+        if (!currentFoods.some((candidate) => candidate.fdcId === food.fdcId)) {
+            const addedFood = {
+                ...food,
+                listAddedAt: food.listAddedAt ?? Date.now(),
+            };
+            if (key === MIX_STORAGE_KEYS.fridge) {
+                onHand = [addedFood, ...onHand];
+                onHandTotalCount += 1;
+            } else {
+                shoppingList = [addedFood, ...shoppingList];
+                shoppingListTotalCount += 1;
+            }
+        }
+
+        const currentIndex = listIndex[key];
+        if (currentIndex.foodIds.includes(food.fdcId)) return;
+        listIndex = {
+            ...listIndex,
+            [key]: {
+                foodIds: [food.fdcId, ...currentIndex.foodIds],
+                foodIdentityKeys: [
+                    getFoodIdentityKey(food),
+                    ...currentIndex.foodIdentityKeys,
+                ],
+            },
+        };
+    };
+
+    const removeFoodFromListState = (
+        key: SmoothieListKey,
+        foodId: number,
+    ) => {
+        if (key === MIX_STORAGE_KEYS.fridge) {
+            onHand = onHand.filter((food) => food.fdcId !== foodId);
+            onHandTotalCount = Math.max(0, onHandTotalCount - 1);
+        } else {
+            shoppingList = shoppingList.filter((food) => food.fdcId !== foodId);
+            shoppingListTotalCount = Math.max(0, shoppingListTotalCount - 1);
+        }
+
+        const currentIndex = listIndex[key];
+        listIndex = {
+            ...listIndex,
+            [key]: {
+                foodIds: currentIndex.foodIds.filter((id) => id !== foodId),
+                foodIdentityKeys: currentIndex.foodIdentityKeys.filter(
+                    (_, index) => currentIndex.foodIds[index] !== foodId,
+                ),
+            },
+        };
+    };
+
+    const renameFoodInListState = (
+        key: SmoothieListKey,
+        foodId: number,
+        description: string,
+    ) => {
+        const rename = (foods: FdcFood[]) =>
+            foods.map((food) =>
+                food.fdcId === foodId
+                    ? {
+                            ...food,
+                            description,
+                            nameProvenance: "user" as const,
+                        }
+                    : food,
+            );
+
+        if (key === MIX_STORAGE_KEYS.fridge) {
+            onHand = rename(onHand);
+        } else {
+            shoppingList = rename(shoppingList);
+        }
+    };
+
     const addSearchResultToFridge = async (food: FdcFood) => {
         if (searchAddFoodId !== null) return;
 
         searchAddFoodId = food.fdcId;
         listActionError = "";
         try {
-            const result = await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food);
+            const result = await addFoodToSmoothieList(
+                MIX_STORAGE_KEYS.fridge,
+                food,
+                { notify: false },
+            );
             if (result === "error") {
                 listActionError = `${food.description} could not be added to fridge. Try again.`;
                 return;
@@ -462,7 +582,9 @@
 				listActionError = `${food.description} is already in Shopping List. Open its nutrition view to move it to Fridge.`;
 				return;
 			}
-            await loadLists();
+            if (result === "added") {
+                addFoodToListState(MIX_STORAGE_KEYS.fridge, food);
+            }
         } finally {
             searchAddFoodId = null;
         }
@@ -523,7 +645,9 @@
 		removingItem = actionKey;
 		listActionError = "";
 		try {
-			const result = await removeFoodFromSmoothieList(key, foodId);
+			const result = await removeFoodFromSmoothieList(key, foodId, {
+                notify: false,
+            });
 			if (result === "error") {
 				listActionError = "That ingredient could not be removed. Try again.";
 				return;
@@ -536,7 +660,7 @@
 				key,
 				(selectedListItemIds[key] ?? []).filter((id) => id !== foodId),
 			);
-			await loadLists();
+            removeFoodFromListState(key, foodId);
 		} finally {
 			removingItem = null;
 		}
@@ -568,7 +692,13 @@
 		const { key, food } = renamingItem;
 
 		try {
-			const result = await renameFoodInSmoothieList(key, food.fdcId, name, food);
+			const result = await renameFoodInSmoothieList(
+                key,
+                food.fdcId,
+                name,
+                food,
+                { notify: false },
+            );
 			if (result === "invalid") {
 				renameError = "Enter a name for this ingredient.";
 				return;
@@ -587,16 +717,17 @@
 				return;
 			}
 
+            const description = name.trim().replace(/\s+/g, " ");
 			if (selectedFood?.fdcId === food.fdcId) {
 				selectedFood = {
 					...selectedFood,
-					description: name.trim().replace(/\s+/g, " "),
+					description,
 					nameProvenance: "user",
 				};
 			}
+            renameFoodInListState(key, food.fdcId, description);
 			renamingItem = null;
             void closeRoutedPopin();
-			await loadLists();
 		} finally {
 			renameBusy = false;
 		}
@@ -882,8 +1013,7 @@
         void closeRoutedPopin();
 
         if (unchanged) return;
-        resetVisibleCounts();
-        void loadLists();
+        void loadLists({ resetViewport: true });
     };
 
     $effect(() => {
@@ -995,9 +1125,15 @@
     });
 
     onMount(() => {
-		window.addEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, loadLists);
+		window.addEventListener(
+            SMOOTHIE_LISTS_CHANGED_EVENT,
+            handleSmoothieListsChanged,
+        );
         return () => {
-            window.removeEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, loadLists);
+            window.removeEventListener(
+                SMOOTHIE_LISTS_CHANGED_EVENT,
+                handleSmoothieListsChanged,
+            );
         };
     });
 
@@ -1029,7 +1165,7 @@
             {activeList}
             fridgeCount={onHandTotalCount}
             shoppingListCount={shoppingListTotalCount}
-            {listLoading}
+            listLoading={showListLoadingIndicator}
             {listActionError}
             listLoadingError={listLoadingError || provenanceOptionsError}
         >

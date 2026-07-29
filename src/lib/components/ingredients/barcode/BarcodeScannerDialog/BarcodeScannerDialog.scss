@@ -111,7 +111,7 @@ $scanner-target-corner-height: 2.3rem;
 .barcode-scanner__status {
 	padding: 0.55rem 0.85rem;
 	color: $app-shell-accent-primary !important;
-	background: rgba($app-shell-surface-panel, 0.08);
+	background: color-mix(in srgb, $app-shell-surface-panel 8%, transparent);
 	border-radius: $app-shell-radius-pill;
 	font-weight: $app-font-weight-bold;
 }

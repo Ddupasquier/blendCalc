@@ -16,4 +16,7 @@ export type ListControlsProps = {
 	filterValue?: string;
 	filterOptions?: ListFilterOption[];
 	onFilterChange?: (value: string) => void;
+	filtersActive?: boolean;
+	filterControlsId?: string;
+	onFilterOpen?: () => void;
 };
