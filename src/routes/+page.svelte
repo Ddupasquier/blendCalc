@@ -14,25 +14,25 @@
 	<div class="landing-card" bind:this={landingCard}>
 		<div class="landing-copy">
 			<p class="landing-eyebrow">{APP_NAME}</p>
-			<h1>Build a smoothie that fits your goals.</h1>
+			<h1>See how your food adds up.</h1>
 			<p class="landing-intro">
-				Choose your ingredients, set what matters to you, and see the balance
-				before you blend.
+				Combine foods, explore nutrition details, and make more informed choices
+				around your personal goals.
 			</p>
 		</div>
 
 		<ul class="landing-benefits" aria-label={`What ${APP_NAME} helps with`}>
 			<li><CircularIconFrame class="landing-benefit-icon" decorative><Check size="1em" /></CircularIconFrame> Track the nutrients you care about</li>
 			<li><CircularIconFrame class="landing-benefit-icon" decorative><Check size="1em" /></CircularIconFrame> Adjust amounts with live feedback</li>
-			<li><CircularIconFrame class="landing-benefit-icon" decorative><Check size="1em" /></CircularIconFrame> Save mixes for next time</li>
+			<li><CircularIconFrame class="landing-benefit-icon" decorative><Check size="1em" /></CircularIconFrame> Save combinations for next time</li>
 		</ul>
 
 		<div class="landing-action">
 			<a href={`/auth?next=${encodeURIComponent(data.next)}`}>
-				Sign in to start mixing
+				Sign in to start building
 				<span aria-hidden="true">→</span>
 			</a>
-			<p><span aria-hidden="true">↻</span> Your recipes stay synced to your account.</p>
+			<p><span aria-hidden="true">↻</span> Your saved combinations stay synced to your account.</p>
 		</div>
 	</div>
 </section>

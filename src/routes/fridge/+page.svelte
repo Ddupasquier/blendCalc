@@ -1155,7 +1155,7 @@
     <ViewTop compactHidden={compactTopHidden}>
         <ViewHeader
             title="Ingredients"
-            subtitle="Search foods, add them to your fridge, and track shopping needs."
+            subtitle="Find foods, organize what you have, and explore detailed nutrition information."
         />
 
         <IngredientsSearchPanel

@@ -15,6 +15,7 @@
 		APP_OG_IMAGE_URL,
 	} from "$lib/config/brand";
 	import { APP_BUILD_VERSION, APP_VERSION } from "$lib/config/version";
+	import { LIGHT_THEME_COLOR } from "$lib/utils/theme/themePreference";
 	import {
 		getAppDocumentTitle,
 		getCanonicalAppUrl,
@@ -23,6 +24,7 @@
 		clearObsoleteAppStorage,
 		setActiveStorageUserId,
 	} from "$lib/utils/storage/client/storageScope";
+	import type { TutorialChoice } from "$lib/utils/tutorial/tutorial";
 	import { saveTutorialChoice } from "$lib/utils/tutorial/tutorialClient";
 	import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 	import { configureNutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
@@ -49,8 +51,14 @@
 		data,
 	}: AppLayoutProps = $props();
 
-	let tutorialOpen = $state(false);
+	let tutorialOpen = $state(page.url.pathname === "/profile/tutorial");
 	let tutorialUserId = $state<string | null>(null);
+	let tutorialMode = $state<"onboarding" | "replay">(
+		page.url.pathname === "/profile/tutorial" ? "replay" : "onboarding",
+	);
+	let tutorialReplayActive = $state(
+		page.url.pathname === "/profile/tutorial",
+	);
 	const ingredientsRoute = $derived(
 		Boolean(data.authUser) &&
 			(page.url.pathname === "/fridge" ||
@@ -67,18 +75,26 @@
 		configureAppReferenceCatalog(data.appReferenceCatalog);
 	});
 
-	const finishTutorial = async () => {
+	const navigateTutorial = async (href: string) => {
+		await goto(href, {
+			replaceState: true,
+			noScroll: true,
+			keepFocus: true,
+		});
+	};
+
+	const finishTutorial = async (choice: TutorialChoice) => {
 		if (!data.authUser) return false;
 
-		if (!tutorialOpen && tutorialRouteOpen) {
-			await goto("/profile");
+		if (tutorialMode === "replay") {
+			tutorialOpen = false;
+			await goto("/profile", { replaceState: true });
 			return true;
 		}
 
-		const saved = await saveTutorialChoice("complete");
+		const saved = await saveTutorialChoice(choice);
 		if (!saved) return false;
 		tutorialOpen = false;
-		if (tutorialRouteOpen) await goto("/profile");
 		return true;
 	};
 
@@ -87,7 +103,24 @@
 		if (nextUserId === tutorialUserId) return;
 
 		tutorialUserId = nextUserId;
-		tutorialOpen = data.authUser?.showTutorial ?? false;
+		if (tutorialRouteOpen) {
+			tutorialMode = "replay";
+			tutorialReplayActive = true;
+			tutorialOpen = true;
+		} else {
+			tutorialMode = "onboarding";
+			tutorialOpen = data.authUser?.showTutorial ?? false;
+		}
+	});
+
+	$effect(() => {
+		if (tutorialRouteOpen && !tutorialReplayActive) {
+			tutorialReplayActive = true;
+			tutorialMode = "replay";
+			tutorialOpen = true;
+		} else if (!tutorialRouteOpen && !tutorialOpen) {
+			tutorialReplayActive = false;
+		}
 	});
 
 	$effect.pre(() => {
@@ -104,7 +137,7 @@
 		name="description"
 		content={APP_DESCRIPTION}
 	/>
-	<meta name="theme-color" content="#f8f8fb" />
+	<meta name="theme-color" content={LIGHT_THEME_COLOR} />
 	<meta name="application-version" content={APP_VERSION} />
 	<meta name="application-build" content={APP_BUILD_VERSION} />
 	<link rel="icon" href={favicon} />
@@ -147,11 +180,13 @@
 			name={data.authUser.welcomeName}
 		/>
 	{/if}
-	<TutorialOverlay
-		open={tutorialVisible}
-		mode={tutorialRouteOpen ? "replay" : "onboarding"}
-		onFinish={finishTutorial}
-	/>
+		<TutorialOverlay
+			open={tutorialVisible}
+			mode={tutorialMode}
+			pathname={page.url.pathname}
+			onNavigate={navigateTutorial}
+			onFinish={finishTutorial}
+		/>
 {/if}
 
 <main

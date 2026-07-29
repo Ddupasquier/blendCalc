@@ -32,14 +32,15 @@ pretending each deployment is a new product release.
 ### Node Runtime Contract
 
 Node.js 24 is the only supported development, test, preview, and build major. `.nvmrc`
-is the local runtime selector, while `package.json` and `package-lock.json` require
-`>=24 <25`.
+and `.node-version` are matching runtime selectors for supported local tools, while
+`package.json` and `package-lock.json` require `>=24 <25`.
 Engine-strict dependency installation rejects unsupported majors, and
 `npm run version:check` verifies the active runtime before development, test, check,
 preview, and production-build commands perform substantive work. Development startup
 also stops any stale Vite process before checking the replacement runtime, so a server
-cannot continue using an obsolete dependency graph. Run `nvm use` from the repository
-root before project commands.
+cannot continue using an obsolete dependency graph. New project terminals select Node
+24 automatically; if an already-open terminal retains another runtime, reopen it from
+the repository instead of continuing with a stale process.
 
 ### Application Release Commands
 

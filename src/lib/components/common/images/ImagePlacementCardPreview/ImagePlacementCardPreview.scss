@@ -35,6 +35,6 @@
 }
 
 :global(.image-placement-card-preview__action--primary) {
-	--circular-icon-frame-color: #{$app-shell-surface-panel};
+	--circular-icon-frame-color: #{$app-shell-text-on-accent};
 	--circular-icon-frame-background: #{$app-shell-accent-primary};
 }

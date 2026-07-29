@@ -22,6 +22,10 @@ const configuredNodeMajor = Number.parseInt(
 	readFileSync(".nvmrc", "utf8").trim(),
 	10,
 );
+const portableNodeMajor = Number.parseInt(
+	readFileSync(".node-version", "utf8").trim(),
+	10,
+);
 const openApi = JSON.parse(
 	readFileSync("static/api/v1/openapi.json", "utf8"),
 ) as {
@@ -41,6 +45,7 @@ describe("blendCalc versioning", () => {
 		const expectedEngine = `>=${configuredNodeMajor} <${configuredNodeMajor + 1}`;
 
 		expect(configuredNodeMajor).toBe(24);
+		expect(portableNodeMajor).toBe(configuredNodeMajor);
 		expect(packageMetadata.engines.node).toBe(expectedEngine);
 		expect(packageLock.packages[""]?.engines?.node).toBe(expectedEngine);
 		expect(Number.parseInt(process.versions.node.split(".")[0], 10)).toBe(

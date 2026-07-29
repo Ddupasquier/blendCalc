@@ -12,6 +12,7 @@
 	class="ingredient-search-trigger"
 	type="button"
 	aria-label="Open ingredient search"
+	data-tutorial-target="ingredient-search"
 	onclick={onOpen}
 >
 	<Search class="ingredient-search-trigger__icon" />

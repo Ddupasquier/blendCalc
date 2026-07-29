@@ -47,7 +47,10 @@
 		}
 
 		pendingTargetUserId = String(
-			formData.get("targetUserId") ?? formData.get("submissionId") ?? "",
+			formData.get("targetUserId") ??
+			formData.get("submissionId") ??
+			formData.get("feedbackId") ??
+			"",
 		);
 		return async ({ update }) => {
 			try {
@@ -295,6 +298,103 @@
 				</article>
 			{:else}
 				<p class="empty-results">No products are waiting for review.</p>
+			{/each}
+		</div>
+	</section>
+
+	<section class="compatibility-review" aria-labelledby="compatibility-review-title">
+		<header>
+			<div>
+				<p class="eyebrow">Food compatibility</p>
+				<h2 id="compatibility-review-title">Warning reports</h2>
+				<p>
+					Review warnings that users believe were matched incorrectly.
+					A confirmed report records the next investigation step; it does not
+					silently change product or policy data.
+				</p>
+			</div>
+			<PrivilegedActionBadge />
+		</header>
+
+		{#if form?.compatibilityReviewError}
+			<StatusMessage tone="danger" message={form.compatibilityReviewError} />
+		{:else if form?.compatibilityReviewSuccess}
+			<StatusMessage tone="success" message={form.compatibilityReviewSuccess} />
+		{/if}
+
+		<div class="compatibility-review__list">
+			{#each data.compatibilityFeedback as feedback (feedback.id)}
+				<article class="compatibility-review__card">
+					<header>
+						<div>
+							<strong>{feedback.foodDescription}</strong>
+							<span>Policy v{feedback.policyVersion ?? "unknown"}</span>
+						</div>
+						<span class="status">pending</span>
+					</header>
+					<dl>
+						<div><dt>Warning</dt><dd>{feedback.issueCode}</dd></div>
+						<div><dt>Reason</dt><dd>{feedback.reportReason.replaceAll("_", " ")}</dd></div>
+						<div><dt>Source</dt><dd>{feedback.sourceKey ?? "Shared catalog"} · {feedback.sourceId}</dd></div>
+						{#if feedback.barcode}
+							<div><dt>Barcode</dt><dd>{feedback.barcode}</dd></div>
+						{/if}
+					</dl>
+					{#if feedback.reportDetails}
+						<p>{feedback.reportDetails}</p>
+					{/if}
+					<details use:animatedDetails>
+						<summary>Review captured evidence</summary>
+						<pre>{JSON.stringify({
+							issueParams: feedback.issueParams,
+							facts: feedback.factSnapshot,
+						}, null, 2)}</pre>
+					</details>
+					<form
+						method="POST"
+						action="?/reviewCompatibilityFeedback"
+						use:enhance={enhanceModerationAction}
+					>
+						<input type="hidden" name="feedbackId" value={feedback.id} />
+						<label>
+							<span>Outcome</span>
+							<select name="status" required>
+								<option value="confirmed">Confirm false positive</option>
+								<option value="dismissed">Warning is supported</option>
+							</select>
+						</label>
+						<label>
+							<span>Next step</span>
+							<select name="resolutionAction" required>
+								<option value="rule_review">Review matching rule</option>
+								<option value="source_correction">Correct source mapping</option>
+								<option value="product_correction">Correct product data</option>
+								<option value="duplicate">Duplicate report</option>
+								<option value="none">No change needed</option>
+							</select>
+						</label>
+						<label>
+							<span>Review note</span>
+							<textarea
+								name="reviewNote"
+								maxlength="2000"
+								required
+								placeholder="What evidence supports this decision?"
+							></textarea>
+						</label>
+						<button
+							type="submit"
+							disabled={pendingTargetUserId !== null}
+						>
+							{#if pendingTargetUserId === feedback.id}
+								<LoadingSpinner size="small" decorative />
+							{/if}
+							<span>Save review</span>
+						</button>
+					</form>
+				</article>
+			{:else}
+				<p class="empty-results">No compatibility warnings are waiting for review.</p>
 			{/each}
 		</div>
 	</section>

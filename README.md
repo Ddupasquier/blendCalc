@@ -1,16 +1,17 @@
 # blendCalc
 
-Mix and match ingredients for making well-balanced smoothies.
+A food and nutrition awareness tool for understanding ingredients, building combinations,
+and comparing them with personal goals.
 
 ## Features
 
-- 🔐 Account-gated smoothie workspace with Google and email/password sign-in
+- 🔐 Account-gated nutrition workspace with Google and email/password sign-in
 - 🔍 Ingredient search across FoodData Central, saved custom foods, and the shared product catalog
 - 🧾 Barcode scanning for packaged foods with reusable product data and moderation fallback
 - 🖼️ Source-backed product images stored with license and attribution metadata before UI rendering
 - 🧪 Live nutrient goals, ingredient amounts, radar chart feedback, warnings, and suggestions
 - 🧊 Account-backed Fridge and Shopping List ingredient management
-- 🥤 Saved drinks with load, overwrite, save-as-new, and per-user name validation
+- 🥤 Saved food combinations with load, overwrite, save-as-new, and per-user name validation
 - 👤 Optional profile details, avatar policy confirmation, food preferences, allergens, and dietary restrictions
 - 🛡️ Admin moderation for users, profile images, and shared product submissions
 - 📱 Mobile-first responsive UI with pagination, filtering, sorting, and large-list handling
@@ -38,10 +39,11 @@ Supabase test environment, reset workflow, and database QA commands.
 
 ## Getting started
 
-This project uses Node.js 24. With `nvm`, run `nvm use` from the repository root.
-`.nvmrc`, `package.json`, and `package-lock.json` share that runtime contract;
-dependency installation is engine-strict, and development, test, check, preview, and
-build commands stop immediately when another Node major is active.
+This project uses Node.js 24. `.nvmrc` and `.node-version` let compatible version
+managers select it automatically when a terminal enters the repository.
+`package.json` and `package-lock.json` enforce the same major; dependency installation
+is engine-strict, and development, test, check, preview, and build commands stop
+immediately if a terminal bypasses the repository selector.
 
 ### 1. Install dependencies
 
@@ -149,11 +151,14 @@ Use the repository's CLI workflow instead of relying on a separate editor snapsh
 
 1. Read pending SQL in `supabase/migrations/`; migrations are the schema source of
    truth.
-2. Run `npm run db:push:dry` before applying remote changes.
-3. Run `npm run db:lint` to catch database problems.
-4. Run `npm run db:types` after a schema change, then review
+2. Verify the complete chain with `npm run db:test:verify`.
+3. Run `npm run db:push:dry` and confirm only the expected migration is pending.
+4. Apply the verified migration with `npm run db:push:auto`.
+5. Run `npm run db:lint` to catch database problems.
+6. Run `npm run db:types` after a schema change, then review
    `src/lib/types/database.types.ts` in VS Code.
-5. Update `docs/supabase-schema.md` in the same change.
+7. Confirm the linked and local migration histories agree.
+8. Update `docs/supabase-schema.md` in the same change.
 
 Use Supabase Studio only to inspect live rows or confirm a deployed migration. Do not
 edit production tables manually when the change belongs in a migration.

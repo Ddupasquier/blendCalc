@@ -17,7 +17,10 @@
 	const goalTemplates = getMixGoalTemplates();
 </script>
 
-<section class="setup-card setup-card--goals">
+<section
+	class="setup-card setup-card--goals"
+	data-tutorial-target="mix-goals"
+>
 	<div class="section-heading">
 		<div>
 			<h4>Goal Targets</h4>

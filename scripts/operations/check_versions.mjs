@@ -26,6 +26,10 @@ const requireCondition = (condition, message) => {
 const packageMetadata = readJson("package.json");
 const packageLock = readJson("package-lock.json");
 const configuredNodeMajor = Number.parseInt(readText(".nvmrc").trim(), 10);
+const portableNodeMajor = Number.parseInt(
+	readText(".node-version").trim(),
+	10,
+);
 const activeNodeMajor = Number.parseInt(process.versions.node.split(".")[0], 10);
 const expectedNodeEngine = `>=${configuredNodeMajor} <${configuredNodeMajor + 1}`;
 const appVersion = packageMetadata.version;
@@ -44,6 +48,10 @@ requireCondition(
 	".nvmrc must contain one supported Node major version.",
 );
 requireCondition(
+	portableNodeMajor === configuredNodeMajor,
+	`.node-version must match .nvmrc as ${configuredNodeMajor}; received ${JSON.stringify(readText(".node-version").trim())}.`,
+);
+requireCondition(
 	packageMetadata.engines?.node === expectedNodeEngine,
 	`package.json engines.node must match .nvmrc as ${expectedNodeEngine}; received ${JSON.stringify(packageMetadata.engines?.node)}.`,
 );
@@ -53,7 +61,7 @@ requireCondition(
 );
 requireCondition(
 	activeNodeMajor === configuredNodeMajor,
-	`Node ${configuredNodeMajor} is required; the active runtime is ${process.versions.node}. Run \`nvm use\` before project commands.`,
+	`Node ${configuredNodeMajor} is required; the active runtime is ${process.versions.node}. Open a new project terminal so the repository runtime selector can apply.`,
 );
 requireCondition(
 	typeof appVersion === "string" && semanticVersionPattern.test(appVersion),

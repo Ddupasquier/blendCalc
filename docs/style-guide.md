@@ -92,8 +92,15 @@ devices through the authenticated profile.
   `src/styles/_variables.scss`; those roles resolve to the runtime theme properties.
 - New components must use semantic roles rather than branch their markup or styles by
   theme.
+- Theme-sensitive page, surface, text, action, border, focus, status, and overlay
+  colors must not be written as component literals. Add or reuse a semantic theme role.
 - High-contrast data artifacts such as the Nutrition Facts label may intentionally
-  remain black on white when that presentation is part of the artifact itself.
+  remain black on white when that presentation is part of the artifact itself. Keep
+  their fixed palette isolated inside the artifact rather than exposing fixed colors as
+  app-wide theme roles.
+- Fixed illustration, image-mask, camera-viewport, and theme-preview colors may remain
+  component-local only when they describe the visual asset itself and remain legible
+  independently of the surrounding theme.
 - Product images, food symbols, warnings, errors, success states, focus indicators,
   disabled controls, overlays, and transparent media must remain legible in both themes.
 - Theme previews in Profile communicate the choice but do not create a second palette or
@@ -103,32 +110,41 @@ devices through the authenticated profile.
 
 These are the primary colors for new and rebuilt views.
 
-| Role | Token | Value | Use |
-| --- | --- | --- | --- |
-| Page | `$app-shell-surface-page` | `#f8f8fb` | App canvas, route and right-sheet background |
-| Panel | `$app-shell-surface-panel` | `#fff` | Cards, sheet panels, raised-by-contrast content |
-| Control | `$app-shell-surface-control` | `#e9e9ed` | Quiet controls, inactive tabs, neutral inputs |
-| Soft surface | `$app-shell-surface-soft` | `#f8f7f5` | Subtle active or grouped content surface |
-| Primary text | `$app-shell-text-primary` | `#1a1a2e` | Titles, labels, important values |
-| Muted text | `$app-shell-text-muted` | `#8b8fa8` | Descriptions, metadata, helper text |
-| Primary accent | `$app-shell-accent-primary` | `#57a773` | Primary action, active state, success emphasis |
-| Soft accent | `$app-shell-accent-soft` | `#e8f5ee` | Active soft state, fallback-media lane, success surface |
-| Informational accent | `$app-shell-accent-info` | `#55a6c8` | Informational icon or source treatment |
-| Danger accent | `$app-shell-accent-danger` | `#d84242` | Destructive action |
-| Subtle border | `$app-shell-border-subtle` | `rgba(0, 0, 0, 0.08)` | Neutral control and panel boundaries |
-| High-contrast ink | `$app-high-contrast-ink` | `#111` | Nutrition-label rules and data-focused contrast |
+| Role                   | Token                         | Value                 | Use                                                     |
+| ---------------------- | ----------------------------- | --------------------- | ------------------------------------------------------- |
+| Page                   | `$app-shell-surface-page`     | `#f8f8fb`             | App canvas, route and right-sheet background            |
+| Panel                  | `$app-shell-surface-panel`    | `#fff`                | Cards, sheet panels, raised-by-contrast content         |
+| Control                | `$app-shell-surface-control`  | `#e9e9ed`             | Quiet controls, inactive tabs, neutral inputs           |
+| Soft surface           | `$app-shell-surface-soft`     | `#f8f7f5`             | Subtle active or grouped content surface                |
+| Primary text           | `$app-shell-text-primary`     | `#1a1a2e`             | Titles, labels, important values                        |
+| Muted text             | `$app-shell-text-muted`       | `#70758d`             | Descriptions, metadata, helper text                     |
+| Text on primary accent | `$app-shell-text-on-accent`   | `#11141c`             | Copy and icons on primary green actions                 |
+| Text on custom accent  | `$app-shell-text-on-custom`   | `#fff`                | Copy and icons on custom/private accents                |
+| Text on danger accent  | `$app-shell-text-on-danger`   | `#fff`                | Copy and icons on destructive accents                   |
+| Text on media          | `$app-shell-text-on-media`    | `#fff`                | Copy over fixed dark camera or image media              |
+| Primary accent         | `$app-shell-accent-primary`   | `#57a773`             | Primary action, active state, success emphasis          |
+| Soft accent            | `$app-shell-accent-soft`      | `#e8f5ee`             | Active soft state, fallback-media lane, success surface |
+| Informational accent   | `$app-shell-accent-info`      | `#347b99`             | Informational icon or source treatment                  |
+| Danger accent          | `$app-shell-accent-danger`    | `#d43f3f`             | Destructive action                                      |
+| Subtle border          | `$app-shell-border-subtle`    | `rgba(0, 0, 0, 0.08)` | Neutral control and panel boundaries                    |
+| Overlay backdrop       | `$app-shell-overlay-backdrop` | `rgba(0, 0, 0, 0.42)` | Shared sheet, dialog, and tutorial scrim                |
+
+The values above describe the light palette. The matching dark values live beside them
+in `_themes.scss`; component code consumes the same semantic roles in either theme.
+The Nutrition Facts artifact owns its fixed paper and ink locally and must not reuse a
+theme surface as permanent black-label paper.
 
 ### Semantic Supporting Colors
 
-| Role | Token | Value | Use |
-| --- | --- | --- | --- |
-| Warning amber | `$app-highlight` | `#f4b942` | Ingredient-card warning edge and privileged crown |
-| Warning hover/strong | `$app-highlight-hover` | `#d99a24` | Strong warning emphasis, not ordinary copy |
-| Error base | `$app-danger-bg` | `#e7b0b8` | Source color for error surfaces |
-| Destructive brown-red | `$app-danger-action` | `#9c5f46` | Destructive/strong error treatment |
-| Warning base | `$app-warning-bg` | `#efc6a9` | Source color for warning surfaces |
-| Custom base | `$app-custom-bg` | `#cbb8e8` | Private unmatched custom-food tint |
-| Custom strong | `$app-custom-strong` | `#7b5fa3` | Custom-food text/accent where needed |
+| Role                  | Token                  | Value     | Use                                               |
+| --------------------- | ---------------------- | --------- | ------------------------------------------------- |
+| Warning amber         | `$app-highlight`       | `#f4b942` | Ingredient-card warning edge and privileged crown |
+| Warning hover/strong  | `$app-highlight-hover` | `#d99a24` | Strong warning emphasis, not ordinary copy        |
+| Error base            | `$app-danger-bg`       | `#e7b0b8` | Source color for error surfaces                   |
+| Destructive brown-red | `$app-danger-action`   | `#9c5f46` | Destructive/strong error treatment                |
+| Warning base          | `$app-warning-bg`      | `#efc6a9` | Source color for warning surfaces                 |
+| Custom base           | `$app-custom-bg`       | `#cbb8e8` | Private unmatched custom-food tint                |
+| Custom strong         | `$app-custom-strong`   | `#7b5fa3` | Custom-food text/accent where needed              |
 
 `StatusMessage` derives its final warning and danger surfaces from the semantic colors
 above. Use the component rather than reproducing those color mixes.
@@ -151,32 +167,32 @@ For new work:
 
 ### Families
 
-| Purpose | Token | Use |
-| --- | --- | --- |
-| Interface | `$app-font-family-interface` | Body copy, controls, labels, metadata |
-| Display | `$app-font-family-display` | Page titles, major sheet titles, prominent headings |
-| Data | `$app-font-family-data` | Nutrition Facts and dense numeric data where narrow forms aid scanning |
+| Purpose   | Token                        | Use                                                                    |
+| --------- | ---------------------------- | ---------------------------------------------------------------------- |
+| Interface | `$app-font-family-interface` | Body copy, controls, labels, metadata                                  |
+| Display   | `$app-font-family-display`   | Page titles, major sheet titles, prominent headings                    |
+| Data      | `$app-font-family-data`      | Nutrition Facts and dense numeric data where narrow forms aid scanning |
 
 ### Weights
 
-| Token | Value | Typical use |
-| --- | --- | --- |
-| `$app-font-weight-regular` | `400` | Long-form/body copy |
-| `$app-font-weight-medium` | `600` | Helper text and supporting metadata |
-| `$app-font-weight-semibold` | `700` | Section emphasis |
-| `$app-font-weight-bold` | `800` | Buttons, labels, collapse headings |
-| `$app-font-weight-heavy` | `900` | Ingredient-card names and page-display emphasis |
+| Token                       | Value | Typical use                                     |
+| --------------------------- | ----- | ----------------------------------------------- |
+| `$app-font-weight-regular`  | `400` | Long-form/body copy                             |
+| `$app-font-weight-medium`   | `600` | Helper text and supporting metadata             |
+| `$app-font-weight-semibold` | `700` | Section emphasis                                |
+| `$app-font-weight-bold`     | `800` | Buttons, labels, collapse headings              |
+| `$app-font-weight-heavy`    | `900` | Ingredient-card names and page-display emphasis |
 
 ### Sizes
 
-| Token | Value | Typical use |
-| --- | --- | --- |
-| `$app-font-size-2xs` | `0.68rem` | Dense secondary data only |
-| `$app-font-size-xs` | `0.76rem` | Badges, progress tabs, compact labels |
-| `$app-font-size-sm` | `0.88rem` | Metadata, helper text, compact controls |
-| `$app-font-size-md` | `1rem` | Inputs, buttons, card names, normal UI |
-| `$app-font-size-lg` | `1.08rem` | Sheet and section headings |
-| `$app-font-size-xl` | `1.25rem` | Prominent content and fallback food symbols |
+| Token                | Value     | Typical use                                 |
+| -------------------- | --------- | ------------------------------------------- |
+| `$app-font-size-2xs` | `0.68rem` | Dense secondary data only                   |
+| `$app-font-size-xs`  | `0.76rem` | Badges, progress tabs, compact labels       |
+| `$app-font-size-sm`  | `0.88rem` | Metadata, helper text, compact controls     |
+| `$app-font-size-md`  | `1rem`    | Inputs, buttons, card names, normal UI      |
+| `$app-font-size-lg`  | `1.08rem` | Sheet and section headings                  |
+| `$app-font-size-xl`  | `1.25rem` | Prominent content and fallback food symbols |
 
 The root size is `$app-font-size-base` (`16px`). Do not invent nearby font sizes to make
 one label fit. First use the existing scale, fix layout constraints, and allow safe
@@ -190,34 +206,34 @@ behave like metadata may use `$app-letter-spacing-label` (`0.04em`); numeric dat
 
 ### Shared Spacing Scale
 
-| Token | Value | Use |
-| --- | --- | --- |
-| `$app-gap-lg` | `1.5rem` | Major view or section separation |
-| `$app-gap-md` | `0.75rem` | Standard Ingredients rhythm between sections, cards, and controls |
-| `$app-gap-sm` | `0.5rem` | Related controls and card actions |
-| `$app-gap-xs` | `0.3rem` | Tight label/icon and heading relationships |
-| `$app-gap-2xs` | `0.15rem` | Card title-to-subtitle relationship |
-| `$app-gap-micro` | `0.06rem` | Rare optical separation |
-| `$app-gap-inline-compact` | `0.2rem` | Compact inline content |
-| `$app-gap-badge-inline` | `0.176rem` | Badge-to-title relationship |
+| Token                     | Value      | Use                                                               |
+| ------------------------- | ---------- | ----------------------------------------------------------------- |
+| `$app-gap-lg`             | `1.5rem`   | Major view or section separation                                  |
+| `$app-gap-md`             | `0.75rem`  | Standard Ingredients rhythm between sections, cards, and controls |
+| `$app-gap-sm`             | `0.5rem`   | Related controls and card actions                                 |
+| `$app-gap-xs`             | `0.3rem`   | Tight label/icon and heading relationships                        |
+| `$app-gap-2xs`            | `0.15rem`  | Card title-to-subtitle relationship                               |
+| `$app-gap-micro`          | `0.06rem`  | Rare optical separation                                           |
+| `$app-gap-inline-compact` | `0.2rem`   | Compact inline content                                            |
+| `$app-gap-badge-inline`   | `0.176rem` | Badge-to-title relationship                                       |
 
 `$app-gap-md` is the default repeated gap. Choose another value because the relationship
 is semantically tighter or broader—not because a screenshot is a few pixels different.
 
 ### Shell Geometry
 
-| Decision | Token | Value |
-| --- | --- | --- |
-| Overall max width | `$app-max-width` | `600px` |
-| Main content max width | `$app-shell-content-max-width` | `520px` |
-| Header height | `$app-shell-header-height` | `4rem` |
-| Narrow-phone header height | `$app-shell-header-height-compact` | `3.5rem` |
-| Bottom navigation height | `$app-shell-nav-height` | `4.85rem` |
-| Narrow-phone navigation height | `$app-shell-nav-height-compact` | `4.25rem` |
-| Horizontal shell padding | `$app-shell-padding-x` | `1rem` |
-| Vertical shell padding | `$app-shell-padding-y` | `1.2rem` |
-| Width breakpoints | `$app-breakpoint-xs/sm/md` | `420px / 520px / 680px` |
-| Compact-height breakpoint | `$app-breakpoint-height-compact` | `700px` |
+| Decision                       | Token                              | Value                   |
+| ------------------------------ | ---------------------------------- | ----------------------- |
+| Overall max width              | `$app-max-width`                   | `600px`                 |
+| Main content max width         | `$app-shell-content-max-width`     | `520px`                 |
+| Header height                  | `$app-shell-header-height`         | `4rem`                  |
+| Narrow-phone header height     | `$app-shell-header-height-compact` | `3.5rem`                |
+| Bottom navigation height       | `$app-shell-nav-height`            | `4.85rem`               |
+| Narrow-phone navigation height | `$app-shell-nav-height-compact`    | `4.25rem`               |
+| Horizontal shell padding       | `$app-shell-padding-x`             | `1rem`                  |
+| Vertical shell padding         | `$app-shell-padding-y`             | `1.2rem`                |
+| Width breakpoints              | `$app-breakpoint-xs/sm/md`         | `420px / 520px / 680px` |
+| Compact-height breakpoint      | `$app-breakpoint-height-compact`   | `700px`                 |
 
 Account for `env(safe-area-inset-*)`, keep a `vh` fallback before `dvh`, and do not
 introduce horizontal overflow at narrow widths or 200% text zoom.
@@ -227,11 +243,11 @@ introduce horizontal overflow at narrow widths or 200% text zoom.
 The visual language remains derived from the completed Ingredients experience, but its
 responsive contract applies to every route and shared primitive.
 
-| Trigger | Intended response |
-| --- | --- |
-| Up to `$app-breakpoint-xs` (`420px`) | Compact phone geometry; stack crowded actions and narrow form columns; reduce repeated card/surface padding where documented |
-| Up to `$app-breakpoint-sm` (`520px`) | Collapse layouts that need more than one comfortable phone column; keep overlays and popovers inside viewport edges |
-| Up to `$app-breakpoint-md` (`680px`) | Collapse tablet/desktop split panels and multi-column workflow regions |
+| Trigger                                          | Intended response                                                                                                                   |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Up to `$app-breakpoint-xs` (`420px`)             | Compact phone geometry; stack crowded actions and narrow form columns; reduce repeated card/surface padding where documented        |
+| Up to `$app-breakpoint-sm` (`520px`)             | Collapse layouts that need more than one comfortable phone column; keep overlays and popovers inside viewport edges                 |
+| Up to `$app-breakpoint-md` (`680px`)             | Collapse tablet/desktop split panels and multi-column workflow regions                                                              |
 | Up to `$app-breakpoint-height-compact` (`700px`) | Reduce fixed chrome, repeated vertical rhythm, and overlay padding without automatically treating a wide landscape screen as narrow |
 
 At the compact width or height tier, the fixed header/navigation, authenticated route
@@ -279,19 +295,19 @@ add a content or height breakpoint only when the layout actually changes.
 
 ### Controls And Surfaces
 
-| Decision | Token | Value |
-| --- | --- | --- |
-| Standard control height | `$app-shell-control-height` | `2.95rem` |
-| Narrow-phone control height | `$app-shell-control-height-narrow` | `2.75rem` |
-| Compact control height | `$app-shell-control-height-compact` | `2.15rem` |
-| Standard horizontal padding | `$app-shell-control-padding-x` | `0.85rem` |
-| Card radius | `$app-shell-radius-card` | `1rem` |
-| Control radius | `$app-shell-radius-control` | `1rem` |
-| Sheet radius | `$app-shell-radius-sheet` | `1.35rem` |
-| Pill radius | `$app-shell-radius-pill` | `999px` |
-| Compact card padding | `$app-shell-card-padding-compact` | `0.85rem` |
-| Ingredient card minimum height | `$app-shell-card-min-height` | `5.25rem` |
-| Circular action size | `$app-shell-action-icon-size` | `2.2rem` |
+| Decision                       | Token                               | Value     |
+| ------------------------------ | ----------------------------------- | --------- |
+| Standard control height        | `$app-shell-control-height`         | `2.95rem` |
+| Narrow-phone control height    | `$app-shell-control-height-narrow`  | `2.75rem` |
+| Compact control height         | `$app-shell-control-height-compact` | `2.15rem` |
+| Standard horizontal padding    | `$app-shell-control-padding-x`      | `0.85rem` |
+| Card radius                    | `$app-shell-radius-card`            | `1rem`    |
+| Control radius                 | `$app-shell-radius-control`         | `1rem`    |
+| Sheet radius                   | `$app-shell-radius-sheet`           | `1.35rem` |
+| Pill radius                    | `$app-shell-radius-pill`            | `999px`   |
+| Compact card padding           | `$app-shell-card-padding-compact`   | `0.85rem` |
+| Ingredient card minimum height | `$app-shell-card-min-height`        | `5.25rem` |
+| Circular action size           | `$app-shell-action-icon-size`       | `2.2rem`  |
 
 Use a local SCSS value for unique geometry, such as an image-mask stop or OCR preview
 measurement. Do not add it to `_variables.scss` unless independent components should
@@ -316,39 +332,40 @@ change together.
 
 Check the existing primitive before writing markup or SCSS.
 
-| Need | Use | Notes |
-| --- | --- | --- |
-| Main rectangular CTA | `RoundedActionButton` | Current Ingredients action shape; supports primary, outline, quiet, soft, neutral, and dashed roles |
-| Existing compact/general CTA contract | `ActionButton` | Reuse where already established; do not create a third rectangular button family |
-| Circular icon action | `CircleIconButton` | Owns size, loading, pressed/disabled state, and centering |
-| Square icon control | `IconControlButton` | Scanner, filters, and similar control-height actions |
-| Compact chip/filter action | `PillButton` | Selected state must also be exposed through `aria-pressed` |
-| Tabs or step progress | `SegmentedControl` | Pill tabs for Fridge/Shopping; progress variant for manual entry |
-| Back or close | `BackButton` / `CloseButton` | Do not recreate chevrons, circles, or hit areas |
-| Collapse | `CollapsibleSection` | Chevron stays left; badges/actions stay right; shared open/close motion preserves mounted content |
-| Bottom overlay | `BottomSheet` | Owns handle, title, focus, close behavior, safe area, and navigation clearance |
-| Right-side data view | `RightSheet` | Search and full-content slide-in views |
-| Sheet action row | `BottomSheetAction` | Owns row geometry and circular leading icon |
-| Status feedback | `StatusMessage` | Info, success, warning, and danger; use approved friendly copy |
-| Input-bound loading | `InputLoadingFrame` | Spinner appears inside the related input/select |
-| General loading | `LoadingSpinner` | Never draw a feature-local spinner |
-| Photo input | `PhotoUploadInput` | Single/multiple photo prompt, count, status, and validation |
-| Toggle | `ToggleSwitch` | Boolean settings; do not use a checkbox as an on/off switch |
-| Compact metadata badge | `TextBadge` | Owns centering, tone, padding, and truncation |
-| Structured metadata pill | `MetadataPill` | Ingredient labels, kcal, goal progress, and other compact label/value or label/icon metadata |
-| Verified evidence | `VerifiedStatusBadge` | Detail/search contexts where verification helps a decision |
-| Privileged group marker | `PrivilegedActionBadge` | One crown in the owning group header, not every child action |
-| Centered icon wrapper | `CenteredIcon` | Required inner alignment layer for icon controls |
-| Noninteractive circular icon | `CircularIconFrame` | Compose through a focused component such as `StatusIconBadge` |
-| Pagination footer | `PaginatedListControls` | Explicit Load more and Return to top |
-| Confirmation modal | `ConfirmationDialog` | Destructive or consequential decisions requiring explicit confirmation |
-| Text-entry modal | `TextInputDialog` | Focused rename/edit prompt with shared validation and action layout |
-| Repeated-tap safety | `TwoStepConfirmation` | In-place double activation such as ingredient deletion |
-| Privileged action container | `PrivilegedActionGroup` | Groups moderator/admin actions and owns one crown |
-| Numeric amount | `NumberInput` | Shared number semantics and control styling |
-| Accelerating amount control | `AcceleratingStepButton` | Tap-by-one and progressive hold behavior |
-| Full product image | `ProductImageFrame` | Contained, non-stretched detailed image |
-| Image placement | `ImagePlacementEditor` | Shared preview, presets, drag/zoom, and restore flow |
+| Need                                  | Use                          | Notes                                                                                               |
+| ------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------- |
+| Main rectangular CTA                  | `RoundedActionButton`        | Current Ingredients action shape; supports primary, outline, quiet, soft, neutral, and dashed roles |
+| Existing compact/general CTA contract | `ActionButton`               | Reuse where already established; do not create a third rectangular button family                    |
+| Circular icon action                  | `CircleIconButton`           | Owns size, loading, pressed/disabled state, and centering                                           |
+| Square icon control                   | `IconControlButton`          | Scanner, filters, and similar control-height actions                                                |
+| Compact chip/filter action            | `PillButton`                 | Selected state must also be exposed through `aria-pressed`                                          |
+| Tabs or step progress                 | `SegmentedControl`           | Pill tabs for Fridge/Shopping; progress variant for manual entry                                    |
+| Back or close                         | `BackButton` / `CloseButton` | Do not recreate chevrons, circles, or hit areas                                                     |
+| Collapse                              | `CollapsibleSection`         | Chevron stays left; badges/actions stay right; shared open/close motion preserves mounted content   |
+| Bottom overlay                        | `BottomSheet`                | Owns handle, title, focus, close behavior, safe area, and navigation clearance                      |
+| Right-side data view                  | `RightSheet`                 | Search and full-content slide-in views                                                              |
+| Sheet action row                      | `BottomSheetAction`          | Owns row geometry and circular leading icon                                                         |
+| Status feedback                       | `StatusMessage`              | Info, success, warning, and danger; use approved friendly copy                                      |
+| Input-bound loading                   | `InputLoadingFrame`          | Spinner appears inside the related input/select                                                     |
+| General loading                       | `LoadingSpinner`             | Never draw a feature-local spinner                                                                  |
+| Photo input                           | `PhotoUploadInput`           | Single/multiple photo prompt, count, status, and validation                                         |
+| Toggle                                | `ToggleSwitch`               | Boolean settings; do not use a checkbox as an on/off switch                                         |
+| Compact metadata badge                | `TextBadge`                  | Owns centering, tone, padding, and truncation                                                       |
+| Structured metadata pill              | `MetadataPill`               | Ingredient labels, kcal, goal progress, and other compact label/value or label/icon metadata        |
+| Verified evidence                     | `VerifiedStatusBadge`        | Detail/search contexts where verification helps a decision                                          |
+| Privileged group marker               | `PrivilegedActionBadge`      | One crown in the owning group header, not every child action                                        |
+| Centered icon wrapper                 | `CenteredIcon`               | Required inner alignment layer for icon controls                                                    |
+| Noninteractive circular icon          | `CircularIconFrame`          | Compose through a focused component such as `StatusIconBadge`                                       |
+| Pagination footer                     | `PaginatedListControls`      | Explicit Load more and Return to top                                                                |
+| Confirmation modal                    | `ConfirmationDialog`         | Destructive or consequential decisions requiring explicit confirmation                              |
+| Text-entry modal                      | `TextInputDialog`            | Focused rename/edit prompt with shared validation and action layout                                 |
+| Guided feature tour                   | `TutorialOverlay`            | Route-aware modal guidance with one rounded spotlight and a collision-aware instruction card        |
+| Repeated-tap safety                   | `TwoStepConfirmation`        | In-place double activation such as ingredient deletion                                              |
+| Privileged action container           | `PrivilegedActionGroup`      | Groups moderator/admin actions and owns one crown                                                   |
+| Numeric amount                        | `NumberInput`                | Shared number semantics and control styling                                                         |
+| Accelerating amount control           | `AcceleratingStepButton`     | Tap-by-one and progressive hold behavior                                                            |
+| Full product image                    | `ProductImageFrame`          | Contained, non-stretched detailed image                                                             |
+| Image placement                       | `ImagePlacementEditor`       | Shared preview, presets, drag/zoom, and restore flow                                                |
 
 When a need does not fit this table, first decide whether an existing component should
 gain a reusable variant. Do not copy it and rename the copy.
@@ -360,21 +377,21 @@ gain a reusable variant. Do not copy it and rename the copy.
 The visual baseline includes every state that appears after an Ingredients interaction,
 not only the default page.
 
-| Surface | Current Ingredients implementation | Styling/behavior expectation |
-| --- | --- | --- |
-| Manual entry | `ManualEntrySheet` → `BottomSheet` | Full-height-capable bottom sheet, shared handle, no redundant top back arrow, state preserved while open |
-| Sort/filter | `IngredientFilterSheet` → `BottomSheet` | Compact grouped controls, pill selections, one clear Apply action |
-| Ingredient actions | `IngredientActionSheet` → `BottomSheet` | Reusable action rows; ordinary actions first and privileged group last |
-| Image placement | `IngredientImagePlacementSheet` → `BottomSheet` | Shared editor and exact card preview; privileged treatment comes from the owning group |
-| Search | `RightSheet` + `IngredientSearchView` | Full-content right-side view with shared shell and close behavior |
-| Nutrition detail | `RightSheet` + `NutritionDetailView` | Full-content detail view using the same right-sheet bounds |
-| Rename | `TextInputDialog` | Focused dialog with label, helper text/error, cancel, and save actions |
-| Destructive confirmation | `TwoStepConfirmation` or `ConfirmationDialog` | Explain the required confirmation and never rely on color alone |
-| Barcode scanner | `BarcodeScannerDialog` | High-contrast modal camera surface, trapped/restored focus, Escape close, manual-entry fallback |
-| Category selection | `FoodCategoryPicker` | Searchable bounded panel; never a native select containing the entire catalog |
-| Search suggestions/results | `SearchDropdown` / search cards | Bounded, readable result region with keyboard navigation and explicit loading/empty states |
-| Autofill conflict | `BarcodeAutofillSuggestion` | Clear known-product summary and two direct choices; do not expose provider internals |
-| Completion result | `CustomIngredientOutcome` | Polite live status plus compact next actions |
+| Surface                    | Current Ingredients implementation              | Styling/behavior expectation                                                                             |
+| -------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Manual entry               | `ManualEntrySheet` → `BottomSheet`              | Full-height-capable bottom sheet, shared handle, no redundant top back arrow, state preserved while open |
+| Sort/filter                | `IngredientFilterSheet` → `BottomSheet`         | Compact grouped controls, pill selections, one clear Apply action                                        |
+| Ingredient actions         | `IngredientActionSheet` → `BottomSheet`         | Reusable action rows; ordinary actions first and privileged group last                                   |
+| Image placement            | `IngredientImagePlacementSheet` → `BottomSheet` | Shared editor and exact card preview; privileged treatment comes from the owning group                   |
+| Search                     | `RightSheet` + `IngredientSearchView`           | Full-content right-side view with shared shell and close behavior                                        |
+| Nutrition detail           | `RightSheet` + `NutritionDetailView`            | Full-content detail view using the same right-sheet bounds                                               |
+| Rename                     | `TextInputDialog`                               | Focused dialog with label, helper text/error, cancel, and save actions                                   |
+| Destructive confirmation   | `TwoStepConfirmation` or `ConfirmationDialog`   | Explain the required confirmation and never rely on color alone                                          |
+| Barcode scanner            | `BarcodeScannerDialog`                          | High-contrast modal camera surface, trapped/restored focus, Escape close, manual-entry fallback          |
+| Category selection         | `FoodCategoryPicker`                            | Searchable bounded panel; never a native select containing the entire catalog                            |
+| Search suggestions/results | `SearchDropdown` / search cards                 | Bounded, readable result region with keyboard navigation and explicit loading/empty states               |
+| Autofill conflict          | `BarcodeAutofillSuggestion`                     | Clear known-product summary and two direct choices; do not expose provider internals                     |
+| Completion result          | `CustomIngredientOutcome`                       | Polite live status plus compact next actions                                                             |
 
 Major overlay states use readable path routes so reload, Back, and direct navigation are
 predictable. Do not replace them with query-only state or an unaddressable local modal.
@@ -403,6 +420,21 @@ Overlay rules:
   and height to the viewport and scroll internally instead of rendering off-screen.
 - Backdrops use the shared sheet/dialog treatment; do not add shadows or feature-local
   opacity systems.
+- Guided tutorial steps use one rounded cutout in that backdrop plus the shared accent
+  outline. The cutout keeps at least `0.5rem` of clear space around the target, mirrors
+  the target's computed corner geometry, and stays inside the owning view frame. The
+  instruction card is a token-backed panel without shadow, moves above or below the
+  target when space permits, remains usable when a target is unavailable, and never
+  makes the obscured page interactive while the tour is modal.
+- A tutorial target is one direct control, card, input, chart, or disclosure summary.
+  Do not spotlight a full page section when a single representative child can teach
+  the behavior. Use consecutive steps to move from a card into its specific action.
+- Tutorial route changes scroll the target into view without resetting route data.
+  Each step marks and visually focuses its current target automatically, while keyboard
+  focus remains inside the tutorial card. The app header, navigation, and route content
+  stay inert, and document scrolling stays locked, until the modal tour closes.
+  Compact-height layouts keep every tutorial action reachable, and reduced-motion
+  preferences remove spotlight/card movement without changing the step sequence.
 
 ### Loading, Empty, And Disabled States
 
@@ -534,8 +566,10 @@ placement previews remain identical.
   cleanly rather than adding empty rows or placeholders.
 - Group product, serving, and source metadata inside the shared `Product details`
   collapse and keep it closed by default.
-- Ingredients and “May contain” content remain plain text against the app background
-  unless interaction or status requires a surface.
+- Ingredients, `Contains`, `May contain`, source-backed dietary labels, and reviewed
+  dietary considerations remain plain text against the app background unless
+  interaction or status requires a surface. Do not expose internal match expressions,
+  policy identifiers, or provider analysis jargon.
 - Privileged image-placement actions live at the bottom in a collapsed privileged
   section with one crown in the heading.
 - Full product imagery and attribution may appear in detail; compact thumbnails may omit

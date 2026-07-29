@@ -15,7 +15,7 @@
 	overflow-x: hidden;
 	overflow-y: auto;
 	background:
-		radial-gradient(circle at 50% 44%, rgb(239 211 194 / 18%), transparent 38%),
+		radial-gradient(circle at 50% 44%, $app-guest-glow, transparent 38%),
 		$app-bg;
 }
 
@@ -189,7 +189,7 @@
 	border: $app-border;
 
 	&:hover {
-		background: white;
+		background: $app-section-bg;
 		border-color: $app-primary;
 	}
 
@@ -198,8 +198,8 @@
 		place-items: center;
 		width: 1.35rem;
 		height: 1.35rem;
-			color: white;
-		background: $app-primary;
+		color: $app-shell-text-on-accent;
+		background: $app-shell-accent-primary;
 		border-radius: $app-radius-pill;
 		font-weight: 900;
 	}
@@ -245,7 +245,7 @@
 	line-height: 1.35;
 
 	span {
-		color: $app-success-bg;
+		color: $app-shell-text-primary;
 		font-size: 0.85rem;
 		line-height: 1;
 	}

@@ -2,9 +2,9 @@
 
 .mix-page {
 	--mix-chart-success-fill: color-mix(in srgb, #{$app-shell-accent-primary} 34%, transparent);
-	--mix-chart-success-stroke: color-mix(in srgb, #{$app-shell-accent-primary} 95%, black);
+	--mix-chart-success-stroke: color-mix(in srgb, #{$app-shell-accent-primary} 95%, #{$app-shell-text-primary});
 	--mix-chart-caution-fill: color-mix(in srgb, #{$app-highlight} 38%, transparent);
-	--mix-chart-caution-stroke: color-mix(in srgb, #{$app-highlight-hover} 95%, black);
+	--mix-chart-caution-stroke: color-mix(in srgb, #{$app-highlight-hover} 95%, #{$app-shell-text-primary});
 	--mix-chart-warning-fill: color-mix(in srgb, #{$app-warning-bg} 55%, transparent);
 	--mix-chart-warning-stroke: #{$app-warning-strong};
 	--mix-chart-danger-fill: color-mix(in srgb, #{$app-shell-accent-danger} 38%, transparent);

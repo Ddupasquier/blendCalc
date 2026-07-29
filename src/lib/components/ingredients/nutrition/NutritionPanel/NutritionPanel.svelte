@@ -2,7 +2,7 @@
 	import NutritionFactsLabel from "$lib/components/ingredients/nutrition/NutritionFactsLabel/NutritionFactsLabel.svelte";
 	import NutritionListActions from "$lib/components/ingredients/nutrition/NutritionListActions/NutritionListActions.svelte";
 	import NutritionPreferenceConflict from "$lib/components/ingredients/nutrition/NutritionPreferenceConflict/NutritionPreferenceConflict.svelte";
-	import ProductAllergenPanel from "$lib/components/ingredients/nutrition/ProductAllergenPanel/ProductAllergenPanel.svelte";
+	import ProductCompatibilityPanel from "$lib/components/ingredients/nutrition/ProductCompatibilityPanel/ProductCompatibilityPanel.svelte";
 	import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel/ProductImagePanel.svelte";
 	import ProductInformationPanel from "$lib/components/ingredients/nutrition/ProductInformationPanel/ProductInformationPanel.svelte";
 	import ProductIngredientsPanel from "$lib/components/ingredients/nutrition/ProductIngredientsPanel/ProductIngredientsPanel.svelte";
@@ -29,7 +29,7 @@
 	<NutritionFactsLabel {food} {viewingGrams} {viewingServing} {provenanceOptions} />
 	{#if food}
 		<ProductIngredientsPanel {food} />
-		<ProductAllergenPanel {food} />
+		<ProductCompatibilityPanel {food} />
 		<ProductInformationPanel {food} />
 	{/if}
 	<NutritionListActions {food} {showListActions} {listMembership} />

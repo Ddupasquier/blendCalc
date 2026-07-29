@@ -699,7 +699,7 @@
                 </p>
             {:else}
                 <h2>Mix</h2>
-                <p>Build your smoothie here.</p>
+                <p>Combine ingredients and see how the result compares with your nutrition goals.</p>
             {/if}
         </div>
         <div class="reset-actions" aria-label="Mix reset actions">
@@ -800,7 +800,10 @@
             {/if}
 
             <div class="shape-panel" aria-label="Generated shape">
-                <div class="shape-preview">
+                <div
+                    class="shape-preview"
+                    data-tutorial-target="mix-result-chart"
+                >
                     <PointShape
                         points={selectedCount}
                         values={chartValues}

@@ -29,6 +29,7 @@ const baseProfile: TestPreferenceProfile = {
 			factLabel: "Milk",
 			level: "warning",
 			warningCode: "FOOD_RESTRICTION_CONFLICT",
+			priority: 10,
 		},
 		{
 			preferenceSlug: "vegan",
@@ -37,6 +38,7 @@ const baseProfile: TestPreferenceProfile = {
 			factLabel: "Milk",
 			level: "warning",
 			warningCode: "FOOD_RESTRICTION_CONFLICT",
+			priority: 10,
 		},
 	],
 	matchRules: [],
@@ -48,8 +50,11 @@ const getFoodPreferenceWarnings = (
 ) => annotateFoodWithFoodSafety(food, {
 	profile,
 	policy: {
+		version: 1,
+		reviewedAt: "2026-07-29T00:00:00.000Z",
 		preferenceConflictRules: profile.warningRules ?? [],
 		compatibilityMatchRules: profile.matchRules ?? [],
+		regionalProfiles: [],
 	},
 }).preferenceWarnings ?? [];
 
@@ -141,6 +146,7 @@ describe("food preference warnings", () => {
 				description: "Verified milk drink",
 				compatibilitySummary: {
 					version: 1,
+					policyVersion: 1,
 					generatedAt: new Date().toISOString(),
 					allFacts: [
 						{
@@ -203,6 +209,7 @@ describe("food preference warnings", () => {
 					factLabel: "Wheat",
 					level: "warning",
 					warningCode: "FOOD_RESTRICTION_CONFLICT",
+					priority: 10,
 				}],
 				matchRules: [{
 					sourceKey: null,
@@ -263,6 +270,7 @@ describe("food preference warnings", () => {
 					factLabel: "Shellfish",
 					level: "warning",
 					warningCode: "FOOD_RESTRICTION_CONFLICT",
+					priority: 10,
 				}],
 				matchRules: [staleTitleRule],
 			},
@@ -347,6 +355,7 @@ describe("food preference warnings", () => {
 				description: "Bread stuffing",
 				compatibilitySummary: {
 					version: 1,
+					policyVersion: 1,
 					generatedAt: new Date().toISOString(),
 					allFacts: [{
 						slug: "wheat",
@@ -373,6 +382,7 @@ describe("food preference warnings", () => {
 					factLabel: "Wheat",
 					level: "warning",
 					warningCode: "FOOD_RESTRICTION_CONFLICT",
+					priority: 10,
 				}],
 			},
 		);
@@ -412,6 +422,7 @@ describe("food preference warnings", () => {
 				factLabel: "Wheat",
 				level: "warning",
 				warningCode: "FOOD_RESTRICTION_CONFLICT",
+				priority: 10,
 			}],
 		};
 
@@ -441,6 +452,7 @@ describe("food preference warnings", () => {
 					factLabel: "Wheat",
 					level: "warning",
 					warningCode: "FOOD_RESTRICTION_CONFLICT",
+					priority: 10,
 				}],
 				matchRules: [{
 					sourceKey: null,
@@ -470,5 +482,279 @@ describe("food preference warnings", () => {
 			.toBe(
 				"This may not be gluten-free because wheat appears in the ingredient list.",
 			);
+	});
+
+	it("uses DB-provided generic food taxonomy rules for vegan land-meat conflicts", () => {
+		const warnings = getFoodPreferenceWarnings(
+			makeFood({
+				description: "Beef, ground, raw",
+				foodIdentityType: "generic",
+				dataType: "Foundation",
+				sourceKey: "usda",
+			}),
+			{
+				...baseProfile,
+				dietaryRestrictions: ["Vegan"],
+				warningRules: [{
+					preferenceSlug: "vegan",
+					preferenceLabel: "Vegan",
+					factSlug: "meat",
+					factLabel: "Meat",
+					level: "warning",
+					warningCode: "FOOD_RESTRICTION_CONFLICT",
+					priority: 10,
+				}],
+				matchRules: [{
+					sourceKey: null,
+					fieldName: "generic_food_identity",
+					matchPattern: "\\b(?:beef|meat)\\b",
+					excludePattern: null,
+					tagSlug: "meat",
+					tagLabel: "Meat",
+					tagCategory: "avoidance",
+					factType: "dietary_conflict",
+					sourceType: "food_identity_taxonomy",
+					confidence: "confirmed",
+					priority: 10,
+				}],
+			},
+		);
+
+		expect(warnings).toEqual([
+			expect.objectContaining({
+				category: "restriction",
+				label: "Vegan",
+				level: "warning",
+			}),
+		]);
+		expect(getFoodPreferenceWarningMessage(warnings[0]))
+			.toBe("This may not be vegan because this ingredient is meat.");
+	});
+
+	it("uses DB-provided ingredient rules for packaged meat without reading its title", () => {
+		const profile: TestPreferenceProfile = {
+			...baseProfile,
+			dietaryRestrictions: ["Vegetarian"],
+			warningRules: [{
+				preferenceSlug: "vegetarian",
+				preferenceLabel: "Vegetarian",
+				factSlug: "meat",
+				factLabel: "Meat",
+				level: "warning",
+				warningCode: "FOOD_RESTRICTION_CONFLICT",
+				priority: 10,
+			}],
+			matchRules: [{
+				sourceKey: null,
+				fieldName: "ingredients",
+				matchPattern: "\\bbeef\\b",
+				excludePattern: null,
+				tagSlug: "meat",
+				tagLabel: "Meat",
+				tagCategory: "avoidance",
+				factType: "dietary_conflict",
+				sourceType: "label_ingredient_field",
+				confidence: "confirmed",
+				priority: 10,
+			}],
+		};
+
+		expect(getFoodPreferenceWarnings(
+			makeFood({
+				description: "Savory snack",
+				foodIdentityType: "packaged",
+				ingredients: "Potatoes, beef, salt",
+			}),
+			profile,
+		)).toHaveLength(1);
+		expect(getFoodPreferenceWarnings(
+			makeFood({
+				description: "Beef-flavored snack",
+				foodIdentityType: "packaged",
+				ingredients: "Potatoes, salt",
+			}),
+			profile,
+		)).toEqual([]);
+	});
+
+	it("does not let a dietary claim hide conflicting ingredient evidence", () => {
+		const warnings = getFoodPreferenceWarnings(
+			makeFood({
+				description: "Incorrectly labeled entrée",
+				foodIdentityType: "packaged",
+				dietaryTags: ["Vegan"],
+				ingredients: "Rice, chicken, salt",
+			}),
+			{
+				...baseProfile,
+				dietaryRestrictions: ["Vegan"],
+				warningRules: [{
+					preferenceSlug: "vegan",
+					preferenceLabel: "Vegan",
+					factSlug: "meat",
+					factLabel: "Meat",
+					level: "warning",
+					warningCode: "FOOD_RESTRICTION_CONFLICT",
+					priority: 10,
+				}],
+				matchRules: [{
+					sourceKey: null,
+					fieldName: "ingredients",
+					matchPattern: "\\bchicken\\b",
+					excludePattern: null,
+					tagSlug: "meat",
+					tagLabel: "Meat",
+					tagCategory: "avoidance",
+					factType: "dietary_conflict",
+					sourceType: "label_ingredient_field",
+					confidence: "confirmed",
+					priority: 10,
+				}],
+			},
+		);
+
+		expect(warnings).toHaveLength(1);
+	});
+
+	it("canonicalizes provider allergen aliases through DB-provided rules", () => {
+		const warnings = getFoodPreferenceWarnings(
+			makeFood({
+				description: "Prepared food",
+				allergens: ["en:crustaceans"],
+			}),
+			{
+				...baseProfile,
+				allergens: ["Shellfish"],
+				matchRules: [{
+					sourceKey: null,
+					fieldName: "allergens",
+					matchPattern: "\\bcrustaceans?\\b",
+					excludePattern: null,
+					tagSlug: "shellfish",
+					tagLabel: "Shellfish",
+					tagCategory: "allergen",
+					factType: "contains",
+					sourceType: "label_allergen_field",
+					confidence: "confirmed",
+					priority: 10,
+				}],
+			},
+		);
+
+		expect(warnings).toEqual([
+			expect.objectContaining({
+				category: "allergen",
+				label: "Shellfish",
+				level: "warning",
+			}),
+		]);
+	});
+
+	it("uses source dietary analysis as potential conflict evidence", () => {
+		const warnings = getFoodPreferenceWarnings(
+			makeFood({
+				description: "Prepared food",
+				ingredientAnalysis: {
+					ingredientTags: [],
+					analysisTags: ["en:non-vegan"],
+					derivedTraceTags: [],
+				},
+			}),
+			{
+				...baseProfile,
+				dietaryRestrictions: ["Vegan"],
+				warningRules: [{
+					preferenceSlug: "vegan",
+					preferenceLabel: "Vegan",
+					factSlug: "non-vegan",
+					factLabel: "Non-vegan source analysis",
+					level: "warning",
+					warningCode: "FOOD_RESTRICTION_CONFLICT",
+					priority: 1,
+				}],
+				matchRules: [{
+					sourceKey: null,
+					fieldName: "ingredient_analysis",
+					matchPattern: "non-vegan",
+					excludePattern: null,
+					tagSlug: "non-vegan",
+					tagLabel: "Non-vegan source analysis",
+					tagCategory: "avoidance",
+					factType: "dietary_conflict",
+					sourceType: "source_dietary_analysis",
+					confidence: "inferred",
+					priority: 10,
+				}],
+			},
+		);
+
+		expect(warnings).toEqual([
+			expect.objectContaining({
+				category: "restriction",
+				label: "Vegan",
+				level: "potential",
+			}),
+		]);
+		expect(getFoodPreferenceWarningMessage(warnings[0]))
+			.toBe(
+				"The source’s ingredient analysis indicates this may not be vegan.",
+			);
+	});
+
+	it("returns DB-reviewed dietary claims and conflict evidence for nutrition details", () => {
+		const food = annotateFoodWithFoodSafety(
+			makeFood({
+				description: "Prepared entrée",
+				dietaryTags: ["en:vegan", "en:organic"],
+				ingredients: "Rice, chicken, salt",
+			}),
+			{
+				profile: null,
+				policy: {
+					version: 1,
+					reviewedAt: "2026-07-29T00:00:00.000Z",
+					preferenceConflictRules: [
+						{
+							preferenceSlug: "vegan",
+							preferenceLabel: "Vegan",
+							preferenceCategory: "dietary",
+							factSlug: "meat",
+							factLabel: "Meat",
+							level: "warning",
+							warningCode: "FOOD_RESTRICTION_CONFLICT",
+							priority: 10,
+						},
+					],
+					compatibilityMatchRules: [{
+						sourceKey: null,
+						fieldName: "ingredients",
+						matchPattern: "\\bchicken\\b",
+						excludePattern: null,
+						tagSlug: "meat",
+						tagLabel: "Meat",
+						tagCategory: "avoidance",
+						factType: "dietary_conflict",
+						sourceType: "label_ingredient_field",
+						confidence: "confirmed",
+						priority: 10,
+					}],
+					regionalProfiles: [],
+				},
+			},
+		);
+
+		expect(food.compatibilitySummary?.dietaryClaims)
+			.toEqual([expect.objectContaining({ slug: "vegan", label: "Vegan" })]);
+		expect(food.compatibilitySummary?.dietaryClaims)
+			.not.toEqual(expect.arrayContaining([
+				expect.objectContaining({ label: "Organic" }),
+			]));
+		expect(food.compatibilitySummary?.allFacts)
+			.toEqual(expect.arrayContaining([
+				expect.objectContaining({
+					slug: "meat",
+					factType: "dietary_conflict",
+				}),
+			]));
 	});
 });

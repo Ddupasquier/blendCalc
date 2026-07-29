@@ -296,6 +296,9 @@ export const APP_ISSUE_DEFINITIONS: Record<AppIssueCode, AppIssueDefinition> = {
 			if (evidenceType === "intrinsic") {
 				return `This may not be ${restriction} because this ingredient is ${fact}.`;
 			}
+			if (evidenceType === "source_analysis") {
+				return `The source’s ingredient analysis indicates this may not be ${restriction}.`;
+			}
 			return `This may not be ${restriction} because ${fact} appears in the ingredient list.`;
 		},
 	},

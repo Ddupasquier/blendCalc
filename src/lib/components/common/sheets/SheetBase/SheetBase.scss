@@ -22,7 +22,7 @@ $viewport-height-dynamic: 100dvh;
 	bottom: var(--sheet-bottom-offset);
 	left: 0;
 	z-index: 110;
-	background: rgba(0, 0, 0, 0.38);
+	background: $app-shell-overlay-backdrop;
 }
 
 .sheet-base__backdrop--full-viewport,

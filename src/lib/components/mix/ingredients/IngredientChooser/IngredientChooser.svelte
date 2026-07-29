@@ -180,7 +180,9 @@
 	});
 </script>
 
-<section class="setup-card setup-card--ingredients">
+<section
+	class="setup-card setup-card--ingredients"
+>
 	<div class="section-heading">
 		<h4>Choose Ingredients</h4>
 		<p>Select items from your fridge or shopping list.</p>
@@ -207,7 +209,11 @@
 			onChange={updateSort}
 		/>
 	</div>
-	<div class="ingredient-lists" aria-label="Smoothie ingredients">
+	<div
+		class="ingredient-lists"
+		aria-label="Mix ingredients"
+		data-tutorial-target="mix-ingredient-options"
+	>
 		<FoodListSection
 			title="Fridge"
 			count={filteredFridgeItems.length}

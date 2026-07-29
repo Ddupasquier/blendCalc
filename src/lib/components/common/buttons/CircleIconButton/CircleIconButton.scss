@@ -57,7 +57,7 @@
 }
 
 .circle-icon-button[data-variant="primary"] {
-	color: $app-shell-surface-panel;
+	color: $app-shell-text-on-accent;
 	background: $app-shell-accent-primary;
 
 	&:hover:not(:disabled) {
@@ -91,12 +91,12 @@
 }
 
 .circle-icon-button[data-variant="inverse"] {
-	color: $app-shell-surface-panel;
-	background: color-mix(in srgb, $app-shell-surface-panel 10%, transparent);
+	color: $app-shell-text-on-media;
+	background: color-mix(in srgb, $app-shell-text-on-media 10%, transparent);
 
 	&:hover:not(:disabled),
 	&:focus-visible {
-		background: color-mix(in srgb, $app-shell-surface-panel 18%, transparent);
+		background: color-mix(in srgb, $app-shell-text-on-media 18%, transparent);
 	}
 }
 
@@ -114,7 +114,7 @@
 }
 
 .circle-icon-button[data-variant="danger"] {
-	color: $app-shell-surface-panel;
+	color: $app-shell-text-on-danger;
 	background: $app-shell-accent-danger;
 
 	&:hover:not(:disabled) {

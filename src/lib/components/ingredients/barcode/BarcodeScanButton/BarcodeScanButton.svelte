@@ -19,6 +19,7 @@
 	disabled={disabled || scanning}
 	aria-busy={scanning}
 	aria-label={scanning ? "Scanning barcode" : "Scan barcode"}
+	data-tutorial-target="ingredient-barcode"
 	{onclick}
 >
 	<CenteredIcon class="barcode-scan-button__icon">

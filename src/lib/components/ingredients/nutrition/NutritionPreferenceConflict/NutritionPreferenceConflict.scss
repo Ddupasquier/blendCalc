@@ -8,3 +8,23 @@
 	color: $app-shell-text-primary;
 	font-size: $app-font-size-sm;
 }
+
+.preference-conflict__warning {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.preference-conflict__feedback {
+	margin: $app-gap-xs 0 0;
+	color: $app-muted;
+	font-size: $app-font-size-xs;
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.preference-conflict__warning {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+}
