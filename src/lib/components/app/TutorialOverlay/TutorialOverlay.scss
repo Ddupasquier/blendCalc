@@ -1,192 +1,230 @@
 @use "../../../../styles/variables" as *;
 
-.tutorial-backdrop {
-	position: fixed;
-	inset: 0;
-	z-index: 300;
-	display: grid;
-	place-items: center;
-	padding: max($app-gap-sm, env(safe-area-inset-top))
-		max($app-gap-sm, env(safe-area-inset-right))
-		max($app-gap-sm, env(safe-area-inset-bottom))
-		max($app-gap-sm, env(safe-area-inset-left));
-	background: rgba(26, 58, 90, 0.28);
-	backdrop-filter: blur(3px);
+.tutorial-tour {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  overflow: hidden;
+}
+
+.tutorial-shade,
+.tutorial-shade-fallback {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tutorial-shade {
+  display: block;
+}
+
+.tutorial-shade-fallback,
+.tutorial-shade__fill {
+  background: $app-shell-overlay-backdrop;
+  fill: $app-shell-overlay-backdrop;
+}
+
+.tutorial-shade__mask-base {
+  fill: white;
+}
+
+.tutorial-shade__mask-cutout {
+  fill: black;
+}
+
+.tutorial-spotlight {
+  position: fixed;
+  z-index: 1;
+  outline: 2px solid $app-shell-accent-primary;
+  pointer-events: none;
+  transition:
+    top 180ms ease,
+    left 180ms ease,
+    width 180ms ease,
+    height 180ms ease,
+    border-radius 180ms ease;
 }
 
 .tutorial {
-	display: grid;
-	grid-template-rows: auto minmax(0, 1fr) auto;
-	width: min(34rem, 100%);
-	max-height: min(42rem, calc(100vh - 2 * $app-gap-sm));
-	max-height: min(42rem, calc(100dvh - 2 * $app-gap-sm));
-	overflow: hidden;
-	background: $app-section-bg;
-	border: $app-border;
-	border-radius: $app-guest-card-radius;
+  position: fixed;
+  z-index: 2;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(25rem, calc(100vw - 2 * $app-gap-sm));
+  max-height: calc(100vh - 2 * $app-gap-sm);
+  max-height: calc(100dvh - 2 * $app-gap-sm);
+  overflow: hidden;
+  color: $app-shell-text-primary;
+  background: $app-shell-surface-panel;
+  border: 1px solid $app-shell-border-subtle;
+  border-radius: $app-shell-radius-card;
+  transition:
+    top 180ms ease,
+    left 180ms ease;
 }
 
 .tutorial:focus-visible {
-	outline: $app-focus-outline;
-	outline-offset: 3px;
+  outline: $app-focus-outline;
+  outline-offset: $app-focus-outline-offset;
 }
 
 .tutorial__header,
 .tutorial__footer {
-	padding: $app-gap-md;
-	background: $app-section-bg;
+  padding: $app-gap-sm $app-gap-md;
+  background: $app-shell-surface-panel;
 }
 
 .tutorial__header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: $app-gap-sm;
-	border-bottom: $app-border;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $app-gap-sm;
+  border-bottom: 1px solid $app-shell-border-subtle;
 }
 
 .tutorial__eyebrow {
-	color: $app-primary;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-bold;
-	letter-spacing: 0.1em;
-	text-transform: uppercase;
+  color: $app-shell-text-primary;
+  font-size: $app-font-size-xs;
+  font-weight: $app-font-weight-heavy;
+  letter-spacing: $app-letter-spacing-label;
+  text-transform: uppercase;
 }
 
 .tutorial__progress {
-	margin-top: 0.1rem;
-	color: $app-muted;
-	font-size: $app-font-size-sm;
+  margin-top: $app-gap-micro;
+  color: $app-shell-text-muted;
+  font-size: $app-font-size-xs;
 }
 
 .tutorial__dots {
-	display: flex;
-	gap: $app-gap-xs;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: $app-gap-2xs;
+  max-width: 6rem;
 
-	span {
-		width: 0.55rem;
-		height: 0.55rem;
-		background: $app-border-color;
-		border-radius: 50%;
-	}
+  span {
+    width: $app-gap-xs;
+    height: $app-gap-xs;
+    background: $app-shell-border-subtle;
+    border-radius: 50%;
+  }
 
-	.active {
-		background: $app-highlight;
-	}
+  .active {
+    background: $app-highlight;
+  }
 }
 
 .tutorial__body {
-	display: grid;
-	grid-template-columns: 7rem minmax(0, 1fr);
-	align-items: center;
-	gap: $app-gap-lg;
-	min-height: 0;
-	padding: $app-padding;
-	overflow-y: auto;
+  min-height: 0;
+  padding: $app-gap-md;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  > p {
+    margin-top: $app-gap-sm;
+    color: $app-shell-text-muted;
+    font-size: $app-font-size-sm;
+    line-height: 1.4;
+  }
+
+  ul {
+    display: grid;
+    gap: $app-gap-xs;
+    margin-top: $app-gap-sm;
+    padding-left: 1.1rem;
+  }
+
+  li {
+    padding-left: $app-gap-2xs;
+    font-size: $app-font-size-sm;
+    line-height: 1.4;
+  }
+
+  li::marker {
+    color: $app-highlight-hover;
+  }
+}
+
+.tutorial__title-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: $app-gap-sm;
+
+  h2 {
+    font-family: $app-font-family-display;
+    font-size: $app-font-size-xl;
+    font-weight: $app-font-weight-heavy;
+    line-height: 1.05;
+    text-wrap: balance;
+  }
 }
 
 :global(.tutorial__illustration) {
-	--circular-icon-frame-size: #{7rem};
-	--circular-icon-frame-icon-size: #{4.06rem};
-	--circular-icon-frame-color: #{$app-primary};
-	--circular-icon-frame-background: #{$app-highlight};
-}
-
-.tutorial__copy {
-	min-width: 0;
-
-	h2 {
-		font-family: $app-font-family-display;
-		font-size: clamp(1.4rem, 5vw, 2rem);
-		font-weight: $app-font-weight-bold;
-		text-wrap: balance;
-	}
-
-	p {
-		margin-top: $app-gap-sm;
-		color: $app-muted;
-		font-size: $app-font-size-md;
-	}
-
-	ul {
-		display: grid;
-		gap: $app-gap-sm;
-		margin-top: $app-gap-md;
-		padding-left: 1.15rem;
-	}
-
-	li {
-		padding-left: $app-gap-xs;
-		font-size: $app-font-size-md;
-	}
-
-	li::marker {
-		color: $app-highlight-hover;
-	}
+  --circular-icon-frame-size: #{2.75rem};
+  --circular-icon-frame-icon-size: #{1.6rem};
+  --circular-icon-frame-color: #{$app-shell-text-primary};
+  --circular-icon-frame-background: #{$app-highlight};
 }
 
 .tutorial__footer {
-	display: grid;
-	gap: $app-gap-sm;
-	border-top: $app-border;
+  display: grid;
+  gap: $app-gap-sm;
+  border-top: 1px solid $app-shell-border-subtle;
 }
 
+.tutorial__dismissal,
 .tutorial__navigation {
-	display: flex;
-	justify-content: space-between;
-	gap: $app-gap-sm;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $app-gap-xs;
+}
+
+.tutorial__navigation--replay {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 @media (max-width: $app-breakpoint-sm) {
-	.tutorial__body {
-		grid-template-columns: 1fr;
-		gap: $app-gap-md;
-		padding: $app-gap-md;
-	}
+  .tutorial__navigation--replay {
+    grid-template-columns: 1fr 1fr;
 
-	:global(.tutorial__illustration) {
-		--circular-icon-frame-size: #{5rem};
-		--circular-icon-frame-icon-size: #{2.9rem};
-	}
-
-	.tutorial__navigation {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
+    :global(.rounded-action-button:first-child) {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+  }
 }
 
-@media (max-width: $app-breakpoint-xs) {
-	.tutorial__navigation {
-		grid-template-columns: 1fr;
-	}
-}
+@media (max-width: $app-breakpoint-xs),
+  (max-height: $app-breakpoint-height-compact) {
+  .tutorial {
+    width: min(23rem, calc(100vw - 2 * $app-gap-sm));
+  }
 
-@media (max-height: $app-breakpoint-height-compact) {
-	.tutorial__header,
-	.tutorial__footer {
-		padding: $app-gap-sm;
-	}
+  .tutorial__header,
+  .tutorial__footer {
+    padding: $app-gap-xs $app-gap-sm;
+  }
 
-	.tutorial__body {
-		grid-template-columns: 4rem minmax(0, 1fr);
-		gap: $app-gap-sm;
-		padding: $app-gap-sm;
-	}
+  .tutorial__body {
+    padding: $app-gap-sm;
+  }
 
-	:global(.tutorial__illustration) {
-		--circular-icon-frame-size: #{4rem};
-		--circular-icon-frame-icon-size: #{2.3rem};
-	}
-}
+  .tutorial__title-row h2 {
+    font-size: $app-font-size-lg;
+  }
 
-@media (max-width: $app-breakpoint-sm) and (max-height: $app-breakpoint-height-compact) {
-	.tutorial__body {
-		grid-template-columns: 1fr;
-	}
+  :global(.tutorial__illustration) {
+    --circular-icon-frame-size: #{2.35rem};
+    --circular-icon-frame-icon-size: #{1.35rem};
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.tutorial-backdrop {
-		backdrop-filter: none;
-	}
+  .tutorial,
+  .tutorial-spotlight {
+    transition: none;
+  }
 }

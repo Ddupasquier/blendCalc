@@ -9,14 +9,14 @@ hidden, or made harder to reach without an explicit product decision.
 
 ## Product Summary
 
-blendCalc is an authenticated, mobile-first smoothie planning app. Users:
+blendCalc is an authenticated, mobile-first food and nutrition awareness app. Users:
 
 1. Find or create ingredients.
 2. Add ingredients to On Hand or Shopping List.
-3. Build a smoothie from available ingredients.
+3. Build a food combination from available ingredients.
 4. Set nutrient goals and amounts.
 5. Read graph feedback, warnings, and suggestions.
-6. Save reusable drinks.
+6. Save reusable combinations.
 7. Maintain optional profile and food preference settings.
 
 The app uses Supabase as the account data source of truth. Browser storage is limited to
@@ -111,14 +111,43 @@ Required behavior:
 
 ### Tutorial
 
-- First-time users see tutorial overlay automatically.
-- User can choose:
-  - Show again later.
-  - Do not show again.
+- First-time users see the current tutorial version automatically.
+- The guided tour moves through Ingredients, Mix, Saved, and Profile using the actual
+  route for each feature.
+- Every step darkens the surrounding page and leaves one rounded, clearly outlined
+  feature visible. The spotlight follows that feature's corner shape, stays inside its
+  view frame, and preserves at least `0.5rem` of clear space around it. The tutorial
+  card stays beside that feature without covering it when viewport space permits.
+- Each spotlight targets one direct control, card, input, chart, or disclosure summary
+  rather than an entire information section. Related behavior is taught through
+  consecutive focused steps, such as highlighting one ingredient card before its
+  item-actions button.
+- The concise step sequence explains:
+  - Food search, barcode scanning, manual entry, and item-specific actions.
+  - Fridge and Shopping List cards.
+  - One Mix ingredient choice and the resulting amount/serving workflow.
+  - Per-100g nutrition scaling: `source value × selected grams ÷ 100`.
+  - Goal chart meaning and why reaching `100%` is not a health score.
+  - One Saved Mix disclosure and draft behavior.
+  - Optional dietary settings and the limits of available warning data.
+- `Previous` and `Next` direct the user through the highlighted routes. First-time users
+  can choose `Remind me in 7 days`, `Don’t show again`, or complete the full sequence.
+- Every step navigates to its route when needed, scrolls its target into view, and
+  applies the spotlight automatically. Keyboard focus stays inside the tutorial card;
+  the app header, bottom navigation, route content, and document scrolling remain
+  unavailable until the tour closes or completes.
+- The reminder choice stores a seven-day reminder. Choosing not to show the tutorial
+  again or finishing stores completion for the current tutorial version.
+- A persistent Profile action reopens the tutorial without changing the saved
+  onboarding preference, and leaving the replay returns to Profile.
 - Tutorial preference is saved to the database.
-- A persistent information/tutorial button lets the user reopen the tutorial.
-- Tutorial action buttons must remain visible without needing to scroll to the bottom.
-- Tutorial copy should be short, plain, and task-oriented.
+- Tutorial action buttons remain visible while the tutorial copy scrolls internally
+  when needed.
+- Modal focus stays inside the tutorial, route changes preserve the tour, reduced-motion
+  preferences remove movement, and missing targets fall back to a centered readable
+  card rather than blocking the app.
+- Tutorial copy stays short, plain, task-oriented, and explicit about calculations and
+  data limitations.
 
 ## Ingredients Page
 
@@ -273,6 +302,8 @@ Preserve:
     identity.
   - Ingredients, structured ingredient percentages, additives, `Contains`, and
     `May contain`.
+  - Source-backed dietary labels and reviewed dietary considerations, using friendly
+    normalized labels rather than internal compatibility-policy terms.
   - Every normalized serving and legitimate weight-to-volume density with its
     confidence qualifier.
   - Field-level data sources, source record identifiers and dates, dataset/version,

@@ -27,7 +27,7 @@ $scanner-laser-start-position: 0.25rem;
 .barcode-scanner--active {
 	width: 3.5rem;
 	height: 2.25rem;
-	color: color-mix(in srgb, $app-shell-surface-panel 22%, transparent);
+	color: color-mix(in srgb, $app-shell-text-on-accent 22%, transparent);
 	background-color: color-mix(
 		in srgb,
 		$app-shell-text-primary 84%,
@@ -89,7 +89,7 @@ $scanner-laser-start-position: 0.25rem;
 	position: absolute;
 	top: $scanner-laser-start-position;
 	display: block;
-	color: $app-shell-surface-panel;
+	color: $app-shell-text-on-accent;
 	opacity: 0;
 	transition: opacity 0.18s ease;
 }

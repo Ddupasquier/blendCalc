@@ -69,13 +69,16 @@ $app-shell-surface-control: var(--app-shell-surface-control);
 $app-shell-surface-soft: var(--app-shell-surface-soft);
 $app-shell-text-primary: var(--app-shell-text-primary);
 $app-shell-text-muted: var(--app-shell-text-muted);
+$app-shell-text-on-accent: var(--app-shell-text-on-accent);
+$app-shell-text-on-custom: var(--app-shell-text-on-custom);
+$app-shell-text-on-danger: var(--app-shell-text-on-danger);
+$app-shell-text-on-media: var(--app-shell-text-on-media);
 $app-shell-accent-primary: var(--app-shell-accent-primary);
 $app-shell-accent-soft: var(--app-shell-accent-soft);
 $app-shell-accent-info: var(--app-shell-accent-info);
 $app-shell-accent-danger: var(--app-shell-accent-danger);
 $app-shell-border-subtle: var(--app-shell-border-subtle);
-$app-high-contrast-ink: #111;
-
+$app-shell-overlay-backdrop: var(--app-shell-overlay-backdrop);
 $app-shell-control-height: 2.95rem;
 $app-shell-control-height-narrow: 2.75rem;
 $app-shell-control-height-compact: 2.15rem;
@@ -134,6 +137,7 @@ $app-custom-bg: var(--app-custom-bg);
 $app-custom-strong: var(--app-custom-strong);
 $app-guest-card-radius: 1.35rem;
 $app-guest-surface: var(--app-guest-surface);
+$app-guest-glow: var(--app-guest-glow);
 
 // Validation and status messages
 // -----------------------------------------------------------------------------

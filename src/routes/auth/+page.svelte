@@ -63,12 +63,12 @@
 	<div class="auth-card" bind:this={authCard}>
 		<div class="auth-card__header">
 			<a class="auth-brand" href="/">{APP_NAME}</a>
-			<p class="auth-eyebrow">Your smoothie space</p>
+			<p class="auth-eyebrow">Your nutrition workspace</p>
 			<h1>{authMode === "signUp" ? "Create your account." : "Welcome back."}</h1>
 			<p>
 				{authMode === "signUp"
-					? "Save your ingredients, drinks, and nutrition goals securely to your account."
-					: "Sign in to pick up your fridge, saved drinks, and nutrition goals right where you left them."}
+					? "Save your ingredients, food combinations, and nutrition goals securely to your account."
+					: "Sign in to access your ingredients, saved combinations, and nutrition goals."}
 			</p>
 		</div>
 

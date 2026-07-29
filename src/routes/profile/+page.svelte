@@ -323,14 +323,17 @@
 
 <svelte:head>
 	<title>{formatDocumentTitle("Profile")}</title>
-	<meta name="description" content={`Manage your optional ${APP_NAME} profile details.`} />
+	<meta
+		name="description"
+		content={`Manage your nutrition goals, dietary preferences, appearance, and ${APP_NAME} account.`}
+	/>
 </svelte:head>
 
 <div class="profile-page">
 	<header class="profile-heading">
 		<p class="profile-heading__eyebrow">Account</p>
 		<h1>Your profile</h1>
-		<p>Your profile is optional. Your login works without completing it.</p>
+		<p>Manage your nutrition goals, dietary preferences, appearance, and account.</p>
 	</header>
 
 	<section class="profile-card profile-card--identity">
@@ -500,7 +503,10 @@
 		</form>
 	</section>
 
-	<section class="profile-card">
+	<section
+		class="profile-card"
+		data-tutorial-target="food-preferences"
+	>
 		<div class="profile-card__heading">
 			<h2>Food safety &amp; dietary restrictions</h2>
 			<p>Optional settings for safer suggestions and smoother mix planning.</p>
@@ -560,8 +566,8 @@
 					</select>
 				</label>
 
-				<label>
-					<span>Default smoothie serving size</span>
+					<label>
+						<span>Default serving size</span>
 					<div class="inline-fields">
 						<NumberInput
 							name="defaultSmoothieServingSize"

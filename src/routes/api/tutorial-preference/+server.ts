@@ -20,7 +20,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		typeof body === "object" && body !== null && "choice" in body
 			? (body as { choice?: unknown }).choice
 			: null;
-	if (choice !== "complete") {
+	if (choice !== "complete" && choice !== "later") {
 		return appIssueJson(400, "TUTORIAL_CHOICE_INVALID");
 	}
 

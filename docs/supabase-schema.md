@@ -631,7 +631,12 @@ Notes:
 | ---------------------------------- | ----------- | --------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `compatibility_tags`               | `id`        | Shared reference            | Canonical compatibility tags for allergens, dietary claims, ingredients, and avoidance concepts    | Referenced by user rules and product facts                                          |
 | `compatibility_rule_conflicts`     | Composite   | Shared validation reference | DB-owned mapping from a user preference tag to a conflicting product fact and warning severity      | Both tag ids → `compatibility_tags.id`                                                 |
+| `food_compatibility_match_rules`   | `id`        | Shared validation reference | Reviewed source-field match policy that converts exact evidence into normalized compatibility facts | `tag_id → compatibility_tags.id`                                                     |
+| `food_compatibility_policy_versions` | `id`      | Shared policy history       | Immutable snapshots of each deployed compatibility match/conflict policy and its official sources  | Referenced by product facts, regional profiles, and user feedback                    |
+| `food_allergen_regulatory_profiles` | `id`       | Shared regulatory reference | Reviewed jurisdiction-specific allergen declaration profiles                                       | `policy_version_id → food_compatibility_policy_versions.id`                          |
+| `food_allergen_regulatory_profile_tags` | Composite | Shared regulatory reference | Normalized compatibility tags covered by a regional allergen profile                               | Profile and tag foreign keys                                                         |
 | `product_compatibility_facts`      | `id`        | Shared product metadata     | Facts extracted from shared products/submissions/observations                                      | `tag_id → compatibility_tags.id`; exactly one product/submission/observation parent |
+| `food_compatibility_feedback`      | `id`        | User report/moderation queue | Versioned false-positive reports containing the exact warning and evidence shown to the user         | User, policy version, optional product, and reviewer foreign keys                    |
 | `food_preference_option_catalog`   | `id`        | Shared reference            | App-ready allergen/dietary/ingredient options built from product compatibility and ingredient data | Optional `tag_id → compatibility_tags.id`                                           |
 | `food_preference_api_observations` | `id`        | Shared reference/provenance | Raw observed allergen/dietary/ingredient metadata from external APIs                               | No direct user ownership                                                            |
 
@@ -649,7 +654,7 @@ Notes:
 
 | Table | Documented columns |
 | --- | --- |
-| `compatibility_rule_conflicts` | `preference_tag_id`, `fact_tag_id`, `severity`, `warning_code`, `created_at`, `updated_at` |
+| `compatibility_rule_conflicts` | `preference_tag_id`, `fact_tag_id`, `severity`, `warning_code`, `priority`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -672,11 +677,61 @@ Notes:
 - `prepare_custom_food_record` enforces the same nutrient relationship rules with their
   stable `issue_code`; the database no longer owns the user-facing warning sentence.
 
+### `food_compatibility_match_rules`
+
+| Table | Documented columns |
+| --- | --- |
+| `food_compatibility_match_rules` | `id`, `tag_id`, `source_key`, `field_name`, `match_pattern`, `exclude_pattern`, `fact_type`, `source_type`, `confidence`, `priority`, `enabled`, `created_at`, `updated_at` |
+
+Notes:
+
+- Rules are ordered by `priority` and loaded through the server-only food-safety policy
+  cache.
+- Packaged-product rules may inspect source-provided allergen, trace, ingredient, and
+  ingredient-analysis fields. They do not inspect a packaged name, brand, category, or
+  description.
+- An authoritative generic food may use its typed taxonomy as intrinsic food evidence.
+  That rule path remains unavailable to packaged and private custom foods.
+- Positive dietary claims are accepted only when source labels normalize to an enabled
+  dietary compatibility tag. Marketing labels do not become dietary evidence.
+
+### `food_compatibility_policy_versions`
+
+| Table | Documented columns |
+| --- | --- |
+| `food_compatibility_policy_versions` | `id`, `version_number`, `status`, `change_summary`, `match_rule_snapshot`, `conflict_rule_snapshot`, `source_references`, `effective_at`, `reviewed_at`, `created_at`, `updated_at` |
+
+Notes:
+
+- Exactly one policy version may be active. New product facts and user feedback default
+  to that version through `active_food_compatibility_policy_version_id()`.
+- Match and conflict snapshots preserve the exact deployed policy for later audits.
+  Updating live rules requires a new version snapshot rather than rewriting history.
+- `source_references` records the official regulatory material reviewed for the policy.
+
+### Regional allergen profiles
+
+| Table | Documented columns |
+| --- | --- |
+| `food_allergen_regulatory_profiles` | `id`, `policy_version_id`, `profile_key`, `region_code`, `display_name`, `authority`, `policy_reference`, `source_url`, `reviewed_at`, `active`, `created_at`, `updated_at` |
+| `food_allergen_regulatory_profile_tags` | `profile_id`, `tag_id`, `classification`, `source_label`, `created_at` |
+
+Notes:
+
+- The initial policy records reviewed profiles for the United States, Canada, United
+  Kingdom, European Union, and Australia/New Zealand.
+- Regional profiles preserve each authority's source label and classification while
+  mapping it to a normalized compatibility tag.
+- Profiles add jurisdiction context and policy coverage. They never suppress a warning
+  for a preference the user explicitly selected.
+- Authenticated reads are limited by RLS to active profiles belonging to the active
+  policy version.
+
 ### `product_compatibility_facts`
 
 | Table | Documented columns |
 | --- | --- |
-| `product_compatibility_facts` | `id`, `shared_product_id`, `shared_product_observation_id`, `shared_product_submission_id`, `tag_id`, `fact_type`, `source_type`, `source_text`, `confidence`, `created_at`, `updated_at` |
+| `product_compatibility_facts` | `id`, `shared_product_id`, `shared_product_observation_id`, `shared_product_submission_id`, `tag_id`, `policy_version_id`, `fact_type`, `source_type`, `source_text`, `confidence`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -685,9 +740,43 @@ Notes:
 - `contains` comes from explicit allergen metadata, `may_contain` comes only from
   explicit trace metadata, and `ingredient_present` comes from a reviewed match against
   a source-provided ingredient statement.
+- `dietary_conflict` records reviewed ingredient, source-analysis, or authoritative
+  generic-taxonomy evidence relevant to dietary restrictions. Its source and confidence
+  determine whether the user receives a confirmed warning or a potential warning.
 - `contains` may also represent the intrinsic taxonomy of an authoritative generic food
   such as shrimp or milk. The source type is `food_identity_taxonomy`, keeping it
   distinct from a packaged-label allergen declaration.
+- `shared_products.compatibility_summary` denormalizes all current facts for bounded
+  reads. The server evaluates those facts against the current profile and returns
+  friendly warnings, `Contains`, `May contain`, dietary labels, and dietary
+  considerations without exposing regex policy or private evidence.
+- Each fact records the policy version that generated it. Denormalized summaries include
+  `policyVersion` and contain only facts from the active policy version.
+
+### `food_compatibility_feedback`
+
+| Table | Documented columns |
+| --- | --- |
+| `food_compatibility_feedback` | `id`, `reported_by`, `policy_version_id`, `shared_product_id`, `source_key`, `source_id`, `barcode`, `food_description`, `warning_id`, `issue_code`, `issue_params`, `fact_snapshot`, `report_reason`, `report_details`, `report_fingerprint`, `status`, `resolution_action`, `reviewed_by`, `reviewed_at`, `review_note`, `created_at`, `updated_at` |
+
+Notes:
+
+- A signed-in user can report a warning as an incorrect match, outdated source record,
+  wrong evidence type, or another evidence-specific problem.
+- The report stores the warning parameters and exact matching fact snapshot from the
+  active policy version. It does not rely on mutable client wording.
+- A unique pending fingerprint makes repeated submissions idempotent.
+- Users may read only their own reports. Inserts and moderation updates use authenticated
+  server boundaries; the service role owns privileged writes.
+- Moderators resolve reports as `confirmed` or `dismissed` and record the next action as
+  rule review, source correction, product correction, or duplicate.
+
+### `food_compatibility_policy_coverage`
+
+Service-only view reporting whether each allergen or dietary tag is selectable, how
+many conflict mappings it owns, and how many enabled evidence rules are reachable
+either directly or through those conflict mappings. It is revoked from browser roles
+and is intended for deployment checks and policy audits.
 
 ### `food_preference_option_catalog`
 
@@ -699,6 +788,9 @@ Notes:
 
 - Built by `rebuild_food_preference_option_catalog`.
 - UI should query this table for allergen and dietary dropdown options.
+- `source_type` is `compatibility_tag`, `compatibility_fact`, `api_observation`, or
+  `ingredient_list`. Canonical tags keep required selectable safety preferences
+  available before any product happens to report them.
 
 ### `food_preference_api_observations`
 
@@ -854,6 +946,8 @@ category, or serving fields.
 | `compatibility_normalize_text`                 | Normalizes compatibility labels/values for matching                                                                                            |
 | `extract_product_compatibility_facts`          | Extracts product compatibility facts from food/product JSON                                                                                    |
 | `rebuild_shared_product_compatibility_summary` | Rebuilds denormalized compatibility summary JSON on shared products                                                                            |
+| `refresh_shared_product_compatibility_match_facts` | Re-extracts one canonical shared product with the current reviewed compatibility policy                                                    |
+| `sync_shared_product_compatibility_summary`    | Trigger helper that refreshes a canonical summary after fact changes, with a bulk-backfill guard                                               |
 | `sync_user_compatibility_rules`                | Syncs user food preferences into normalized compatibility rules                                                                                |
 | `rebuild_food_preference_option_catalog`       | Rebuilds allergen/dietary/ingredient option catalog from product facts                                                                         |
 | `sync_nutrient_manual_entry_fields`            | Rebuilds manual-entry nutrient groups/fields from observations                                                                                 |
@@ -882,12 +976,15 @@ When schema changes:
 1. Add a migration in `supabase/migrations/`.
 2. Add RLS and grants intentionally.
 3. Add indexes for expected filtering, sorting, joins, and lookup paths.
-4. Regenerate `src/lib/types/database.types.ts` after migration is applied.
-5. Backfill applicable existing rows whenever a new accepted field can be recovered
+4. Verify the complete migration chain against the resettable local database.
+5. Inspect `npm run db:push:dry`, apply the verified migration with
+   `npm run db:push:auto`, and confirm the local/linked migration lists match.
+6. Regenerate `src/lib/types/database.types.ts` after migration is applied.
+7. Backfill applicable existing rows whenever a new accepted field can be recovered
    from canonical data, normalized child rows, or legally reusable exact-source
    observations.
-5. Update this document with table purpose, owner scope, key columns, and relationships.
-6. Add or update focused tests for migration expectations when practical.
-7. Add a local-only QA item to the appropriate priority tracker linked from
+8. Update this document with table purpose, owner scope, key columns, and relationships.
+9. Add or update focused tests for migration expectations when practical.
+10. Add a local-only QA item to the appropriate priority tracker linked from
    `docs/QA/qa-tasks.md` if the change affects user-visible data, moderation behavior,
    or data-entry flow.

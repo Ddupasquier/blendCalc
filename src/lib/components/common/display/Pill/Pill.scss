@@ -38,14 +38,14 @@ $pill-rename-font-size: 0.9rem;
 }
 
 .pill.active {
-	color: $app-btn-text;
-	background: $app-primary;
-	border-color: $app-primary;
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
+	border-color: $app-shell-accent-primary;
 }
 
 .pill.active .pill-action,
 .pill.custom.active .pill-action {
-	color: $app-btn-text;
+	color: inherit;
 }
 
 .pill.custom {
@@ -54,19 +54,19 @@ $pill-rename-font-size: 0.9rem;
 }
 
 .pill.custom.active {
-	color: $app-btn-text;
+	color: $app-shell-text-on-custom;
 	background: $app-custom-strong;
 	border-color: $app-custom-strong;
 }
 
 .pill.custom.active :global(.custom-badge) {
 	color: $app-custom-strong;
-	background: $app-btn-text;
-	border-color: $app-btn-text;
+	background: $app-shell-surface-panel;
+	border-color: $app-shell-surface-panel;
 }
 
 .pill:active {
-	background: $app-primary;
+	background: $app-shell-accent-primary;
 }
 
 .pill[aria-disabled="true"] {
