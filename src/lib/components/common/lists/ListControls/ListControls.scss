@@ -20,7 +20,25 @@
 	position: relative;
 	display: flex;
 	align-items: center;
+	height: $app-shell-control-height;
 	min-width: 0;
+	background: $app-shell-surface-control;
+	border: 1px solid transparent;
+	border-radius: $app-shell-radius-control;
+	box-sizing: border-box;
+	transition:
+		background-color 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.search-control:focus-within {
+	background: $app-shell-accent-soft;
+	border-color: $app-shell-accent-primary;
+}
+
+.search-control--active {
+	background: $app-shell-accent-soft;
+	border-color: color-mix(in srgb, $app-shell-accent-primary 42%, transparent);
 }
 
 .search-control__icon {
@@ -52,7 +70,6 @@
 	justify-content: center;
 }
 
-.search-control input,
 .filter-control select {
 	width: 100%;
 	min-width: 0;
@@ -68,12 +85,28 @@
 }
 
 .search-control input {
+	width: 100%;
+	min-width: 0;
+	height: 100%;
 	padding: 0 2.85rem 0 2.45rem;
+	color: $app-shell-text-primary;
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	outline: none;
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	box-sizing: border-box;
 }
 
-.search-control input:not(:placeholder-shown) {
-	background: $app-shell-accent-soft;
-	border-color: $app-shell-accent-primary;
+.search-control input::placeholder {
+	color: $app-shell-text-muted;
+}
+
+.search-control input::-webkit-search-cancel-button,
+.search-control input::-webkit-search-decoration {
+	appearance: none;
 }
 
 .filter-control select {
@@ -81,7 +114,6 @@
 	cursor: pointer;
 }
 
-.search-control input:focus,
 .filter-control select:focus {
 	border-color: $app-shell-accent-primary;
 	outline: $app-focus-outline;
@@ -110,8 +142,11 @@
 		grid-template-columns: minmax(0, 1fr) auto;
 	}
 
-	.search-control input,
 	.filter-control select {
+		height: $app-shell-control-height-narrow;
+	}
+
+	.search-control {
 		height: $app-shell-control-height-narrow;
 	}
 

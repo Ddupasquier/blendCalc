@@ -36,7 +36,10 @@
 	class:list-controls--search-only={filterOptions.length === 0 && !onFilterOpen}
 	class:list-controls--filter-trigger={Boolean(onFilterOpen)}
 >
-	<div class="search-control">
+	<div
+		class="search-control"
+		class:search-control--active={Boolean(query)}
+	>
 		<label class="sr-only" for={id}>{label}</label>
 		<span class="search-control__icon" aria-hidden="true">
 			<Search size={17} />

@@ -28,7 +28,9 @@ describe("ListControls", () => {
 		const search = screen.getByRole("searchbox", {
 			name: "Search saved mixes",
 		});
+		const searchControl = search.closest(".search-control");
 		expect(search).toHaveValue("berry");
+		expect(searchControl).toHaveClass("search-control--active");
 		expect(screen.getByText("2 of 8 mixes")).toBeInTheDocument();
 
 		await fireEvent.input(search, { target: { value: "green" } });
