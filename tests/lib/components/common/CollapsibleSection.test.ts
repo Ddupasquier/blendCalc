@@ -40,5 +40,12 @@ describe("CollapsibleSection", () => {
 
 		await fireEvent.click(summary as HTMLElement);
 		expect(details).toHaveAttribute("open");
+		expect(details).toHaveAttribute("data-expanded", "true");
+		expect(summary).toHaveAttribute("aria-expanded", "true");
+
+		await fireEvent.click(summary as HTMLElement);
+		expect(details).not.toHaveAttribute("open");
+		expect(details).toHaveAttribute("data-expanded", "false");
+		expect(summary).toHaveAttribute("aria-expanded", "false");
 	});
 });

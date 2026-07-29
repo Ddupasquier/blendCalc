@@ -302,7 +302,7 @@ Check the existing primitive before writing markup or SCSS.
 | Compact chip/filter action | `PillButton` | Selected state must also be exposed through `aria-pressed` |
 | Tabs or step progress | `SegmentedControl` | Pill tabs for Fridge/Shopping; progress variant for manual entry |
 | Back or close | `BackButton` / `CloseButton` | Do not recreate chevrons, circles, or hit areas |
-| Collapse | `CollapsibleSection` | Chevron stays left; badges/actions stay right |
+| Collapse | `CollapsibleSection` | Chevron stays left; badges/actions stay right; shared open/close motion preserves mounted content |
 | Bottom overlay | `BottomSheet` | Owns handle, title, focus, close behavior, safe area, and navigation clearance |
 | Right-side data view | `RightSheet` | Search and full-content slide-in views |
 | Sheet action row | `BottomSheetAction` | Owns row geometry and circular leading icon |
@@ -551,6 +551,9 @@ left-aligned.
 ## Motion And Interaction
 
 - Motion should explain change: sheet entry, list movement, selection, or loading.
+- Every disclosure animates both opening and closing through the shared
+  `animatedDetails` behavior. Keep disclosure children mounted so closing a section
+  never discards unsaved form or image-placement state.
 - Keep transitions short and calm. Avoid decorative looping motion in task flows.
 - Honor `prefers-reduced-motion`; the global stylesheet reduces animation and transition
   duration.

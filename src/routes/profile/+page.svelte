@@ -9,6 +9,7 @@
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
+	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker/FoodPreferencePicker.svelte";
 	import { APP_NAME } from "$lib/config/brand";
 	import { formatDocumentTitle } from "$lib/config/pageMetadata";
@@ -403,7 +404,7 @@
 
 			<fieldset class="avatar-policy">
 				<legend>Profile image rules</legend>
-				<details class="avatar-policy__details">
+				<details class="avatar-policy__details" use:animatedDetails>
 					<summary>
 						<span>Review image rules</span>
 						<span class="avatar-policy__chevron" aria-hidden="true">⌄</span>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Chevron from "$lib/assets/icons/Chevron/Chevron.svelte";
 	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
+	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
 	import type { CollapsibleSectionProps } from "./types";
 
 	let {
@@ -18,6 +19,7 @@
 <details
 	class={`collapsible-section ${className}`.trim()}
 	data-surface={surface}
+	use:animatedDetails
 	{open}
 >
 	<summary>

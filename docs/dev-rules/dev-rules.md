@@ -256,7 +256,9 @@ card shells ad hoc. A one-off is acceptable only when the UI and behavior are ge
 unique and unlikely to repeat; if that changes later, refactor immediately. Repeated
 expand/collapse sections must use the shared collapse component so summary spacing,
 left-side chevrons, right-side badges/actions, focus treatment, and open-state behavior
-remain consistent.
+remain consistent. Every native disclosure must use the shared animated-details
+behavior so opening and closing motion is consistent, preserves mounted child state,
+supports programmatic controls, and becomes immediate under reduced-motion preferences.
 
 **8.** <a id="rule-button-primitives"></a>All app buttons must use shared button
 primitives. Circular icon actions, square icon controls, and rounded rectangle CTAs must

@@ -6,6 +6,7 @@
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame/InputLoadingFrame.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
+	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
 	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 	import { formatDocumentTitle } from "$lib/config/pageMetadata";
 	import type { PageData } from "./$types";
@@ -226,7 +227,7 @@
 							onChange={(value) => setImageCrop(submission, value)}
 						/>
 					{/if}
-					<details>
+					<details use:animatedDetails>
 						<summary>Review {submission.nutrients.length} nutrition values</summary>
 						<ul>
 							{#each submission.nutrients as nutrient}

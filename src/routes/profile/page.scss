@@ -266,9 +266,13 @@
 		font-size: $app-font-size-sm;
 	}
 
-	&[open] .avatar-policy__chevron {
-		transform: rotate(180deg);
-	}
+}
+
+:global(
+	.avatar-policy__details[data-expanded="true"]
+		.avatar-policy__chevron
+) {
+	transform: rotate(180deg);
 }
 
 .avatar-policy__chevron {

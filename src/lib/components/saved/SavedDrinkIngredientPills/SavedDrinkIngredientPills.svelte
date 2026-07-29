@@ -3,6 +3,7 @@
 	import FoodSymbol from "$lib/assets/icons/FoodSymbol/FoodSymbol.svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
 	import MetadataPill from "$lib/components/common/display/MetadataPill/MetadataPill.svelte";
+	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import type { SavedDrinkIngredientPillsProps } from "./types";
@@ -59,7 +60,10 @@
 	{@render ingredientPills(visibleFoods)}
 
 	{#if hiddenFoods.length > 0}
-		<details class="saved-drink-ingredients__overflow">
+		<details
+			class="saved-drink-ingredients__overflow"
+			use:animatedDetails
+		>
 			<summary>
 				<span class="saved-drink-ingredients__more-label">
 					+{hiddenFoods.length} more

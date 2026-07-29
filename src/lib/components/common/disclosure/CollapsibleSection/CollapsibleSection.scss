@@ -69,9 +69,10 @@
 	color: $app-shell-text-muted;
 	line-height: 0;
 	transform: rotate(0deg);
+	transition: transform 180ms ease;
 }
 
-.collapsible-section[open] .collapsible-section__chevron {
+:global(.collapsible-section[data-expanded="true"] .collapsible-section__chevron) {
 	transform: rotate(180deg);
 }
 
