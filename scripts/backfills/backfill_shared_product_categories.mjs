@@ -1,8 +1,9 @@
 /**
  * Purpose: Resolve active shared products to canonical DB categories using stored data,
- * USDA, and Open Food Facts evidence; retain source observations; and update matching
- * products, submissions, and revisions. The live command also removes invalid category
- * links, so review the read-only preview first.
+ * exact-barcode USDA and Open Food Facts evidence; retain source observations; and
+ * update matching products, submissions, and revisions. Name-only provider matches are
+ * deliberately ignored because they cannot establish product identity. The live command
+ * also removes invalid category links, so review the read-only preview first.
  * Preview: `npm run backfill:shared-product-categories -- --dry-run`
  * Execute: `npm run backfill:shared-product-categories`
  */
@@ -155,57 +156,6 @@ const lookupUsdaCategories = async (barcode) => {
 		},
 	);
 	return candidateMatch?.value ?? { values: [], observations: [] };
-};
-
-const lookupUsdaCategoriesByName = async (product) => {
-	const query = String(product.product_name ?? "").trim();
-	if (!query) return { values: [], observations: [] };
-	const searchUrl = new URL("https://api.nal.usda.gov/fdc/v1/foods/search");
-	searchUrl.searchParams.set("api_key", fdcApiKey);
-	searchUrl.searchParams.set("query", query);
-	searchUrl.searchParams.set("dataType", "Branded");
-	searchUrl.searchParams.set("pageSize", "25");
-	const search = await fetchJson(
-		searchUrl,
-		`USDA description search for ${product.barcode}`,
-	);
-	const queryTokens = new Set(normalizeFoodCategoryValue(query).split(" ").filter(Boolean));
-	const match = (search?.foods ?? []).find((food) => {
-		const candidateTokens = new Set(
-			normalizeFoodCategoryValue(food.description).split(" ").filter(Boolean),
-		);
-		return queryTokens.size > 1 && [...queryTokens].every((token) => candidateTokens.has(token));
-	});
-	if (!match?.fdcId) return { values: [], observations: [] };
-	const detailUrl = new URL(`https://api.nal.usda.gov/fdc/v1/food/${match.fdcId}`);
-	detailUrl.searchParams.set("api_key", fdcApiKey);
-	const detail = await fetchJson(
-		detailUrl,
-		`USDA description detail for ${product.barcode}`,
-	);
-	const values = uniqueValues([
-		detail?.brandedFoodCategory,
-		...getFdcCategoryValues(detail?.foodCategory ?? match.foodCategory),
-	]);
-	return {
-		values,
-		observations: values.map((value) => ({
-			source: "fdc-branded-detail",
-			sourceField: "foodCategory_description_match",
-			sourceValue: value,
-			sourceReference: String(match.fdcId),
-			sourcePayload: {
-				matchMethod: "description-token-match",
-				requestedBarcode: product.barcode,
-				requestedProductName: product.product_name,
-				matchedBarcode: normalizeBarcode(match.gtinUpc) || null,
-				matchedDescription: detail?.description ?? match.description ?? null,
-				brandOwner: detail?.brandOwner ?? match.brandOwner ?? null,
-				brandedFoodCategory: detail?.brandedFoodCategory ?? null,
-				foodCategory: detail?.foodCategory ?? match.foodCategory ?? null,
-			},
-		})),
-	};
 };
 
 const lookupOpenFoodFactsCategories = async (barcode) => {
@@ -471,13 +421,10 @@ const main = async () => {
 
 	for (const product of products) {
 		const submission = submissions.get(product.approved_submission_id);
-		let [usda, openFoodFacts] = await Promise.all([
+		const [usda, openFoodFacts] = await Promise.all([
 			lookupUsdaCategories(product.barcode),
 			lookupOpenFoodFactsCategories(product.barcode),
 		]);
-		if (!usda.values.length && !openFoodFacts.values.length) {
-			usda = await lookupUsdaCategoriesByName(product);
-		}
 		const observations = [...usda.observations, ...openFoodFacts.observations];
 		await saveCategoryObservations(product.barcode, observations);
 		const submissionValues = submission?.food?.categories ?? [];

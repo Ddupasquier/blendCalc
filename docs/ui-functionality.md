@@ -312,6 +312,26 @@ Preserve:
     attribution, and license links.
 - Keep the complete product, serving, and source metadata inside the shared
   `Product details` collapse, closed by default.
+- When traceable source-record metadata contains a useful caveat, show a separate
+  `Data quality` collapse that defaults closed. Translate supported completeness,
+  obsolete, warning, error, schema-version, and multi-source metadata into friendly
+  bounded messages. Never render raw provider quality tags, treat a source note as a
+  blendCalc verification result, or show the section when it has nothing useful to say.
+- Keep field sources, attribution, and licence details in `Product details`; the data
+  quality disclosure points there instead of duplicating them.
+- Show the server-provided compatibility evaluation independently from source
+  disclosures and individual warning explanations:
+  - `conflict`: a reviewed rule found at least one conflict with the signed-in user's
+    active food settings.
+  - `checked`: the current policy covers every active setting and all evidence required
+    for that food type is available; say only that no conflict was found in the
+    available information.
+  - `incomplete`: settings were applied, but required evidence or policy coverage is
+    missing.
+  - `not_checked`: no active food settings were applied.
+- Never present a compatibility status as a guarantee. For packaged food, keep the
+  current package label as the final authority. A card warning edge represents only
+  `conflict`; no edge does not mean `checked`.
 - Missing detail fields do not create empty sections, guessed values, or placeholder
   wording.
 - Add to On Hand button.
@@ -789,141 +809,26 @@ Submission abuse protection:
   submission block.
 - This is a submission block, not necessarily a full app ban.
 
-## Shared Product Catalog and API Data
+## Cross-Cutting Dependencies
 
-The shared catalog prevents every user from repeatedly hitting external APIs and lets
-verified barcode/custom product data become reusable.
+This brief owns user-visible behavior only. Supporting contracts are maintained in:
 
-Preserve:
+- [`shared-product-catalog.md`](shared-product-catalog.md) for reusable product intake,
+  verification, revisions, and moderation;
+- [`data-architecture.md`](data-architecture.md) for durable reads, writes, browser
+  state, and server-owned policy;
+- [`supabase-schema.md`](supabase-schema.md) for the database objects behind each
+  feature;
+- [`api-structures/source-data-inventory.md`](api-structures/source-data-inventory.md)
+  for provider capabilities and preserved source fields;
+- [`data-source-licensing.md`](data-source-licensing.md) for source storage,
+  attribution, and redistribution requirements; and
+- [`style-guide.md`](style-guide.md) for visual tokens, responsive presentation, and
+  reusable component patterns.
 
-- Barcode lookup against external product data.
-- Shared product search in ingredient search.
-- Product submissions when data is missing or needs verification.
-- Product evidence/photo upload for moderation.
-- Source-backed product image metadata for user-facing ingredient cards and detail
-  views.
-- Source/provenance fields.
-- Nutrient completeness tracking.
-- Normalized nutrient storage.
-- Catalog search metadata.
-- Reuse of approved community products across users.
-
-External/API sources currently relevant:
-
-- FoodData Central / USDA.
-- Open Food Facts.
-- USDA branded food metadata.
-- User-created custom food submissions.
-
-Data to retain from APIs when available:
-
-- Barcode.
-- Product name.
-- Brand.
-- Categories.
-- Ingredients text/list.
-- Serving size/weight.
-- Nutrients, including vitamins/minerals.
-- Allergens.
-- Traces/may-contain.
-- Labels.
-- Dietary tags.
-- Source IDs and URLs.
-- Confidence/provenance.
-- Product image URLs only when source terms allow storage/rendering, with license and
-  attribution retained in the database.
-
-## Food Preference and Compatibility Data
-
-Allergen and dietary restriction options should come from observed API/catalog data
-stored in Supabase.
-
-Preserve these concepts:
-
-- `food_preference_api_observations`: raw/observed values from APIs.
-- `food_preference_option_catalog`: user-facing option catalog.
-- `compatibility_tags`: canonical compatibility tags.
-- `product_compatibility_facts`: product-to-tag/source facts.
-- `user_compatibility_rules`: user preference rules generated from saved food
-  preferences.
-
-Required behavior:
-
-- Seed/audit scripts gather a large sample from APIs.
-- Observed values are stored for reference.
-- Catalog options are rebuilt from observed values and compatibility facts.
-- UI dropdowns use the DB catalog.
-- Warnings are driven by compatibility facts, not hard-coded UI constants.
-
-## Data Persistence and Security
-
-Preserve:
-
-- Supabase account data as source of truth.
-- Account-scoped unsaved Mix draft and temporary UI/session state only.
-- Row-level security for user data.
-- Service-role keys only in server/scripts environments.
-- `.env` and moderation env files excluded from source control.
-- Unique saved drink names per user.
-- User-generated custom foods scoped correctly.
-- Shared product catalog data available across users only after verification/approval.
-- Moderation tools hidden from normal users.
-- Blocked users prevented from app access.
-
-Do not reintroduce browser-local cross-user data migration that duplicates one user’s
-local ingredients into another user’s account.
-
-## Database-Backed Feature Areas
-
-The UI should expect these areas to exist:
-
-- Auth users.
-- Profiles.
-- Avatar policy consent.
-- User food preferences.
-- Tutorial preferences.
-- On Hand and Shopping List data.
-- Custom foods.
-- Saved drinks.
-- Mix preferences/goals.
-- Shared products.
-- Shared product submissions.
-- Product evidence.
-- Normalized nutrients.
-- Compatibility tags/facts.
-- Food preference API observations.
-- Moderation roles.
-- Moderation blocks.
-- Moderation email deliveries.
-- Product submission rejection blocks.
-
-## Large List Handling
-
-Large user data sets are expected.
-
-Preserve search/filter/sort/pagination on:
-
-- On Hand ingredients.
-- Shopping List ingredients.
-- Mix ingredient chooser.
-- Saved drinks.
-- Moderation account search.
-- Shared product submission lists where needed.
-
-Default sorting:
-
-- Ingredient lists: newest first.
-- Saved drinks: newest first.
-
-Always provide a way to quickly find items without scrolling through hundreds of
-records.
-
-## Visual and Interaction Rules
-
-The visual system, token values, component choices, and Ingredients baseline are
-centralized in [`style-guide.md`](style-guide.md). Preserve the behavior in this brief
-while applying that guide; do not infer visual rules from unfinished Mix or Saved Drinks
-views.
+View sections above define where search, sorting, pagination, warnings, loading,
+moderation controls, and other behavior must appear. Do not reproduce their data models
+or visual rules here.
 
 ## Critical Items Not to Hide or Bury
 
@@ -941,36 +846,8 @@ These must remain easy to notice:
 - Avatar policy consent checkbox.
 - Moderation block/reject reasons.
 
-## Refactor Acceptance Checklist
+## Verification Boundary
 
-Before accepting a rebuilt UI, verify:
-
-- [ ] User can sign in with Google and email/password on localhost, production, and
-      branch preview.
-- [ ] Unauthenticated users cannot reach authenticated app functionality.
-- [ ] Barcode scan is prominent and works end-to-end.
-- [ ] Custom manual ingredient entry can be opened, completed, submitted, and collapsed.
-- [ ] Search can find USDA, shared catalog, and custom foods.
-- [ ] Nutrition facts show full available nutrient detail without mobile clipping.
-- [ ] On Hand and Shopping List support search, source filter, sort, pagination, rename,
-      and remove.
-- [ ] Food preference conflicts visibly warn on search/list/preview/mix where
-      applicable.
-- [ ] Milk allergy flags real milk products but does not falsely flag almond milk only
-      by name.
-- [ ] Mix graph supports 1, 2, 3, 6, and many nutrient points without label overlap.
-- [ ] Goal changes update goal shape.
-- [ ] Ingredient amount changes update current shape and warnings.
-- [ ] Suggestions are collapsed by default but clearly indicated.
-- [ ] Save review shows actual-vs-goal diffs before saving.
-- [ ] Loaded saved mixes display their name and do not overwrite unless explicitly
-      saved.
-- [ ] Saved drinks support search, sort, pagination, load, and delete.
-- [ ] Profile display name, avatar, and food preferences save and show current saved
-      values.
-- [ ] Tutorial appears for first-time users and can be reopened.
-- [ ] Daily welcome appears once per day.
-- [ ] Moderation account search and product review remain usable.
-- [ ] No user email is exposed in normal app chrome.
-- [ ] No important action depends on hovering.
-- [ ] No major UI section breaks on small screens.
+Executable acceptance criteria belong in the active queues linked from
+[`QA/qa-tasks.md`](QA/qa-tasks.md). This brief defines intended behavior; it does not
+maintain a second QA checklist.

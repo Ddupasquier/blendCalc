@@ -1,9 +1,12 @@
 import {
 	BLENDCALC_API_V1,
 	type ApiV1Category,
+	type ApiV1FieldSource,
 	type ApiV1Image,
 	type ApiV1Pagination,
 	type ApiV1Product,
+	type ApiV1ProductRevisionChange,
+	type ApiV1ProductRevisionHistoryItem,
 	type ApiV1Source,
 	type ApiV1SourceAttribution,
 	type ApiV1Warning,
@@ -14,7 +17,11 @@ import {
 	type ApprovedCatalogRecord,
 } from "$lib/server/products/catalogRead.server";
 import type { Database } from "$lib/types/database.types";
+import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { FoodCompatibilityFact } from "$lib/utils/food/quality/compatibility";
+import {
+	getFoodCompatibilityEvaluation,
+} from "$lib/utils/food/quality/foodCompatibilityEvaluation";
 import type { FoodImageAsset } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -140,14 +147,20 @@ const hasCompleteImageRights = (image: FoodImageAsset) =>
 const toCanonicalFieldSource = (
 	record: ApprovedCatalogRecord,
 	fieldPath: string,
-) => {
+): ApiV1FieldSource | null => {
 	const canonical = record.fieldProvenance[fieldPath];
 	if (canonical) {
-		return toSource(
-			canonical.source,
-			canonical.sourceReference,
-			canonical.confidence,
-		);
+		return {
+			...toSource(
+				canonical.source,
+				canonical.sourceReference,
+				canonical.confidence,
+			),
+			observationId: canonical.observationId,
+			observedAt: canonical.observedAt,
+			verificationMethod: canonical.verificationMethod,
+			reviewState: canonical.reviewState,
+		};
 	}
 	return null;
 };
@@ -303,6 +316,14 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 		}),
 		images: record.images.filter(hasCompleteImageRights).map(toImage),
 		warnings: (record.food.compatibilitySummary?.allFacts ?? []).map(toWarning),
+		compatibilityEvaluation: getFoodCompatibilityEvaluation({
+			food: record.food,
+			policyVersion:
+				record.food.compatibilitySummary?.policyVersion ?? null,
+			hasActivePreferences: false,
+			policyCoversPreferences: false,
+			conflictCount: 0,
+		}),
 		sourceAttributions,
 		catalog: {
 			authority: "blendcalc-shared-catalog",
@@ -337,7 +358,10 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 		revision: {
 			id: record.revision.id,
 			number: record.revision.number,
-			currentSince: record.revision.createdAt ?? record.createdAt,
+			currentSince: record.revision.labelObservedAt,
+			currentSinceBasis: record.revision.labelObservedAt
+				? "blendcalc-observed"
+				: null,
 			labelObservedAt: record.revision.labelObservedAt,
 			updatedAt: record.updatedAt,
 			lastVerifiedAt: record.lastVerifiedAt,
@@ -345,6 +369,91 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 		links: {
 			self: `/api/v1/products/${record.barcode}`,
 		},
+	};
+};
+
+type RevisionHistoryRow =
+	Database["public"]["Functions"]["get_blendcalc_product_revision_history_v1"]["Returns"][number];
+
+const toRevisionChange = (
+	value: unknown,
+): ApiV1ProductRevisionChange | null => {
+	if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+	const change = value as Record<string, unknown>;
+	const changeType = change.changeType;
+	const severity = change.severity;
+	if (
+		typeof change.field !== "string" ||
+		typeof change.label !== "string" ||
+		(changeType !== "added" &&
+			changeType !== "removed" &&
+			changeType !== "changed") ||
+		(severity !== "low" &&
+			severity !== "medium" &&
+			severity !== "high")
+	) return null;
+	return {
+		field: change.field,
+		label: change.label,
+		changeType,
+		previousValue:
+			change.previousValue as ApiV1ProductRevisionChange["previousValue"],
+		newValue:
+			change.newValue as ApiV1ProductRevisionChange["newValue"],
+		severity,
+	};
+};
+
+const toRevisionHistoryItem = (
+	row: RevisionHistoryRow,
+): ApiV1ProductRevisionHistoryItem => ({
+	id: row.id,
+	number: row.revision_number,
+	publishedAt: row.published_at,
+	labelObservedAt: row.label_observed_at,
+	changes: Array.isArray(row.changes)
+		? row.changes.flatMap((change) => {
+				const mapped = toRevisionChange(change);
+				return mapped ? [mapped] : [];
+			})
+		: [],
+});
+
+export const readApiV1ProductRevisionHistory = async (
+	supabase: SupabaseClient<Database>,
+	barcodeValue: string,
+	input: { limit: number; offset: number },
+) => {
+	const barcode = normalizeBarcode(barcodeValue);
+	if (!barcode) return null;
+	const readRows = (limit: number, offset: number) => supabase.rpc(
+		"get_blendcalc_product_revision_history_v1",
+		{ p_barcode: barcode, p_limit: limit, p_offset: offset },
+	);
+	const { data, error } = await readRows(input.limit, input.offset);
+	if (error) throw error;
+	const rows = (data ?? []) as RevisionHistoryRow[];
+	if (rows.length === 0) {
+		const { data: firstPageData, error: firstPageError } = await readRows(1, 0);
+		if (firstPageError) throw firstPageError;
+		const firstPage = (firstPageData ?? []) as RevisionHistoryRow[];
+		if (firstPage.length === 0) return null;
+		return {
+			revisions: [],
+			pagination: createPagination(
+				input.limit,
+				input.offset,
+				Number(firstPage[0]?.total_count ?? 0),
+			),
+		};
+	}
+	return {
+		revisions: rows.map(toRevisionHistoryItem),
+		pagination: createPagination(
+			input.limit,
+			input.offset,
+			Number(rows[0]?.total_count ?? 0),
+		),
 	};
 };
 

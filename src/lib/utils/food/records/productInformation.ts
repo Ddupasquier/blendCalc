@@ -268,7 +268,7 @@ const FIELD_LABELS: Record<FoodTrackedField, string> = {
 const formatFieldSource = (
 	source: NonNullable<FdcFood["fieldProvenance"]>[FoodTrackedField],
 ) => {
-	if (!source) return "";
+	if (!source?.source?.trim()) return "";
 	const sourceLabel = formatFoodMetadataKey(source.source);
 	const sourceReference = cleanText(source.sourceReference);
 	return sourceReference
@@ -284,7 +284,8 @@ const getFieldSourceRows = (food: FdcFood) =>
 		.map(([field, source]) => ({
 			label: FIELD_LABELS[field],
 			value: formatFieldSource(source),
-		}));
+		}))
+		.filter((row) => Boolean(row.label && row.value));
 
 export const getProductInformation = (food: FdcFood): ProductInformation => ({
 	productRows: getProductRows(food),

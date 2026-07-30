@@ -383,42 +383,7 @@ const seedNutrientMappings = async ({
 
 const getUcumCode = (unit) => UNIT_STANDARDS_CODES[normalizeUnitName(unit)];
 
-const normalizeNutrientNameForPairing = (value) =>
-	String(value ?? "")
-		.toLowerCase()
-		.replace(/international units?/g, "")
-		.replace(/\biu\b/g, "")
-		.replace(/[^a-z0-9]+/g, " ")
-		.trim();
-
-const getObservedIuConversions = (definitions, usdaFoods) => {
-	const definitionsById = new Map(definitions.map((definition) => [definition.nutrient_id, definition]));
-	const ratios = new Map();
-	for (const food of usdaFoods) {
-		const nutrients = (food.foodNutrients ?? []).filter((nutrient) =>
-			Number.isFinite(Number(nutrient.value)) && Number(nutrient.value) > 0,
-		);
-		for (const source of nutrients) {
-			const sourceDefinition = definitionsById.get(Number(source.nutrientId));
-			if (normalizeUnitName(sourceDefinition?.default_unit_name) !== "IU") continue;
-			const normalizedName = normalizeNutrientNameForPairing(sourceDefinition?.nutrient_name);
-			const target = nutrients.find((candidate) => {
-				const definition = definitionsById.get(Number(candidate.nutrientId));
-				return normalizeUnitName(definition?.default_unit_name) === "UG" &&
-					normalizeNutrientNameForPairing(definition?.nutrient_name) === normalizedName;
-			});
-			if (!target) continue;
-			const ratio = Number(target.value) / Number(source.value);
-			if (!Number.isFinite(ratio) || ratio <= 0) continue;
-			const values = ratios.get(normalizedName) ?? [];
-			values.push({ ratio, fdcId: food.fdcId });
-			ratios.set(normalizedName, values);
-		}
-	}
-	return ratios;
-};
-
-const seedNutrientConversions = async ({ mappings, definitions, usdaFoods }) => {
+const seedNutrientConversions = async ({ mappings, definitions }) => {
 	const conversionRequests = new Map();
 	for (const mapping of mappings.filter((candidate) => candidate.enabled)) {
 		const fromUnit = normalizeUnitName(mapping.source_unit_name);
@@ -433,7 +398,6 @@ const seedNutrientConversions = async ({ mappings, definitions, usdaFoods }) => 
 		);
 	}
 
-	const iuRatios = getObservedIuConversions(definitions, usdaFoods);
 	const rows = [];
 	for (const request of conversionRequests.values()) {
 		const fromCode = getUcumCode(request.fromUnit);
@@ -461,59 +425,54 @@ const seedNutrientConversions = async ({ mappings, definitions, usdaFoods }) => 
 			}
 		}
 
-		if (request.fromUnit === "IU" && request.toUnit === "UG") {
-			const values = iuRatios.get(
-				normalizeNutrientNameForPairing(request.definition?.nutrient_name),
-			) ?? [];
-			if (values.length > 0) {
-				const sorted = values.map((value) => value.ratio).sort((left, right) => left - right);
-				const multiplier = sorted[Math.floor(sorted.length / 2)];
-				rows.push({
-					source_key: request.mapping.source_key,
-					nutrient_id: request.mapping.nutrient_id,
-					from_unit_name: request.fromUnit,
-					to_unit_name: request.toUnit,
-					multiplier,
-					conversion_method: "api_observed_ratio",
-					confidence: 0.99,
-					observation_count: values.length,
-					provenance: {
-						seed: "scripts/seeds/seed_product_reference_data.mjs",
-						fdcIds: values.slice(0, 25).map((value) => value.fdcId),
-					},
-				});
-			}
+		if (
+			request.mapping.nutrient_id === 1114 &&
+			request.fromUnit === "IU" &&
+			request.toUnit === "UG"
+		) {
+			rows.push({
+				source_key: request.mapping.source_key,
+				nutrient_id: request.mapping.nutrient_id,
+				from_unit_name: request.fromUnit,
+				to_unit_name: request.toUnit,
+				multiplier: 0.025,
+				conversion_method: "moderator_verified",
+				confidence: 1,
+				observation_count: 1,
+				provenance: {
+					seed: "scripts/seeds/seed_product_reference_data.mjs",
+					authority: "U.S. Food and Drug Administration",
+					sourceReference:
+						"https://www.fda.gov/media/129863/download",
+					rule: "1 IU vitamin D equals 0.025 micrograms",
+				},
+			});
 		}
 	}
 
-	for (const mapping of mappings.filter(
-		(candidate) => candidate.source_key === "open-food-facts",
+	for (const sourceKey of new Set(
+		mappings
+			.filter((mapping) => mapping.nutrient_id === 1114)
+			.map((mapping) => mapping.source_key),
 	)) {
-		const definition = definitions.find(
-			(candidate) => candidate.nutrient_id === mapping.nutrient_id,
-		);
-		if (normalizeUnitName(definition?.default_unit_name) !== "UG") continue;
-		const values = iuRatios.get(
-			normalizeNutrientNameForPairing(definition?.nutrient_name),
-		) ?? [];
-		if (values.length === 0) continue;
-		const conversionKey = `${mapping.source_key}\u0000${mapping.nutrient_id}\u0000IU\u0000UG`;
+		const conversionKey = `${sourceKey}\u0000${1114}\u0000IU\u0000UG`;
 		if (rows.some((row) =>
 			`${row.source_key}\u0000${row.nutrient_id}\u0000${row.from_unit_name}\u0000${row.to_unit_name}` === conversionKey
 		)) continue;
-		const sorted = values.map((value) => value.ratio).sort((left, right) => left - right);
 		rows.push({
-			source_key: mapping.source_key,
-			nutrient_id: mapping.nutrient_id,
+			source_key: sourceKey,
+			nutrient_id: 1114,
 			from_unit_name: "IU",
 			to_unit_name: "UG",
-			multiplier: sorted[Math.floor(sorted.length / 2)],
-			conversion_method: "api_observed_ratio",
-			confidence: 0.99,
-			observation_count: values.length,
+			multiplier: 0.025,
+			conversion_method: "moderator_verified",
+			confidence: 1,
+			observation_count: 1,
 			provenance: {
 				seed: "scripts/seeds/seed_product_reference_data.mjs",
-				fdcIds: values.slice(0, 25).map((value) => value.fdcId),
+				authority: "U.S. Food and Drug Administration",
+				sourceReference: "https://www.fda.gov/media/129863/download",
+				rule: "1 IU vitamin D equals 0.025 micrograms",
 			},
 		});
 	}
@@ -641,7 +600,6 @@ const main = async () => {
 	const conversions = await seedNutrientConversions({
 		mappings,
 		definitions: referenceRows.definitions,
-		usdaFoods,
 	});
 	const servings = await seedServingMeasures(usdaFoods, offFoods);
 	console.log(JSON.stringify({

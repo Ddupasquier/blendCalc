@@ -85,6 +85,11 @@ API changes remain deliberate:
    document, and a documented migration period.
 3. Run `npm run version:check` after changing any API version source.
 
+Current product reads and product revision-history reads remain separate endpoints.
+Adding the bounded `/api/v1/products/{barcode}/revisions` resource is a compatible API
+v1 addition; it does not expand the current-product response with historical snapshots
+or private evidence.
+
 ## Compatibility Rules
 
 - Do not use the app version as a database migration number.

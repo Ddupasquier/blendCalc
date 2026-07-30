@@ -31,6 +31,40 @@
         }
       }
     },
+    "/api/v1/products/{barcode}/revisions": {
+      "get": {
+        "summary": "List evidence-backed revisions for an approved product",
+        "operationId": "listProductRevisions",
+        "parameters": [
+          {
+            "name": "barcode",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "pattern": "^[0-9]{14}$" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 25 }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 0, "maximum": 1000, "default": 0 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Immutable revision metadata and supported field changes",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductRevisionListResponse" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
     "/api/v1/foods/search": {
       "get": {
         "summary": "Search approved catalog products",
@@ -128,6 +162,26 @@
           "source": { "type": "string" },
           "reference": { "type": ["string", "null"] },
           "confidence": { "type": ["string", "null"] }
+        }
+      },
+      "FieldSource": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "reference", "confidence", "observationId", "observedAt", "verificationMethod", "reviewState"],
+        "properties": {
+          "source": { "type": "string" },
+          "reference": { "type": ["string", "null"] },
+          "confidence": { "type": ["string", "null"] },
+          "observationId": { "type": "string", "format": "uuid" },
+          "observedAt": { "type": "string", "format": "date-time" },
+          "verificationMethod": {
+            "type": ["string", "null"],
+            "enum": ["exact-barcode", "package-label", "corroborated-sources", "moderator-reviewed", null]
+          },
+          "reviewState": {
+            "type": "string",
+            "enum": ["accepted", "moderator-reviewed"]
+          }
         }
       },
       "SourceAttribution": {
@@ -231,6 +285,52 @@
           "sourceText": { "type": ["string", "null"] }
         }
       },
+      "CompatibilityEvaluation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["version", "status", "policyVersion", "profileApplied", "conflictCount", "coverage"],
+        "properties": {
+          "version": { "type": "integer", "const": 1 },
+          "status": {
+            "type": "string",
+            "enum": ["conflict", "checked", "incomplete", "not_checked"]
+          },
+          "policyVersion": { "type": ["integer", "null"], "minimum": 1 },
+          "profileApplied": { "type": "boolean" },
+          "conflictCount": { "type": "integer", "minimum": 0 },
+          "coverage": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["basis", "identity", "ingredients", "allergens", "traces", "policy"],
+            "properties": {
+              "basis": {
+                "type": "string",
+                "enum": ["generic-taxonomy", "packaged-label", "private-entry"]
+              },
+              "identity": {
+                "type": "string",
+                "enum": ["available", "missing", "not_required"]
+              },
+              "ingredients": {
+                "type": "string",
+                "enum": ["available", "missing", "not_required"]
+              },
+              "allergens": {
+                "type": "string",
+                "enum": ["available", "missing", "not_required"]
+              },
+              "traces": {
+                "type": "string",
+                "enum": ["available", "missing", "not_required"]
+              },
+              "policy": {
+                "type": "string",
+                "enum": ["available", "missing", "not_required"]
+              }
+            }
+          }
+        }
+      },
       "CatalogMetadata": {
         "type": "object",
         "additionalProperties": false,
@@ -246,14 +346,54 @@
       "Revision": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "number", "currentSince", "labelObservedAt", "updatedAt", "lastVerifiedAt"],
+        "required": ["id", "number", "currentSince", "currentSinceBasis", "labelObservedAt", "updatedAt", "lastVerifiedAt"],
         "properties": {
           "id": { "type": ["string", "null"], "format": "uuid" },
           "number": { "type": ["integer", "null"], "minimum": 1 },
-          "currentSince": { "type": "string", "format": "date-time" },
+          "currentSince": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "The date blendCalc observed the current accepted label. It is not a manufacturer effective date unless currentSinceBasis explicitly says so."
+          },
+          "currentSinceBasis": {
+            "type": ["string", "null"],
+            "enum": ["manufacturer-effective", "blendcalc-observed", null]
+          },
           "labelObservedAt": { "type": ["string", "null"], "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" },
           "lastVerifiedAt": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
+      "ProductRevisionChange": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field", "label", "changeType", "previousValue", "newValue", "severity"],
+        "properties": {
+          "field": { "type": "string" },
+          "label": { "type": "string" },
+          "changeType": { "type": "string", "enum": ["added", "removed", "changed"] },
+          "previousValue": {},
+          "newValue": {},
+          "severity": { "type": "string", "enum": ["low", "medium", "high"] }
+        }
+      },
+      "ProductRevisionHistoryItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "number", "publishedAt", "labelObservedAt", "changes"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "number": { "type": "integer", "minimum": 1 },
+          "publishedAt": { "type": "string", "format": "date-time" },
+          "labelObservedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When blendCalc observed the accepted label; not an inferred manufacturer effective date."
+          },
+          "changes": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ProductRevisionChange" }
+          }
         }
       },
       "StructuredIngredient": {
@@ -329,7 +469,7 @@
       "Product": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "barcode", "name", "brand", "category", "ingredients", "packageQuantity", "sourceRecord", "nutrients", "servings", "images", "warnings", "sourceAttributions", "catalog", "fieldSources", "revision", "links"],
+        "required": ["id", "barcode", "name", "brand", "category", "ingredients", "packageQuantity", "sourceRecord", "nutrients", "servings", "images", "warnings", "compatibilityEvaluation", "sourceAttributions", "catalog", "fieldSources", "revision", "links"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "barcode": { "type": "string", "pattern": "^[0-9]{14}$" },
@@ -376,6 +516,7 @@
           "servings": { "type": "array", "items": { "$ref": "#/components/schemas/Serving" } },
           "images": { "type": "array", "items": { "$ref": "#/components/schemas/Image" } },
           "warnings": { "type": "array", "items": { "$ref": "#/components/schemas/Warning" } },
+          "compatibilityEvaluation": { "$ref": "#/components/schemas/CompatibilityEvaluation" },
           "sourceAttributions": { "type": "array", "items": { "$ref": "#/components/schemas/SourceAttribution" } },
           "catalog": { "$ref": "#/components/schemas/CatalogMetadata" },
           "fieldSources": {
@@ -383,19 +524,19 @@
             "additionalProperties": false,
             "required": ["name", "brand", "category", "ingredients", "structuredIngredients", "ingredientAnalysis", "additives", "allergens", "traces", "dietaryTags", "labels", "package", "sourceMetadata"],
             "properties": {
-              "name": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
-              "brand": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
-              "category": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
-              "ingredients": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
-              "structuredIngredients": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
-              "ingredientAnalysis": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
-              "additives": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
-              "allergens": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
-              "traces": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
-              "dietaryTags": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
-              "labels": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
-              "package": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
-              "sourceMetadata": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] }
+              "name": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "brand": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "category": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "ingredients": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "structuredIngredients": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "ingredientAnalysis": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "additives": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "allergens": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "traces": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "dietaryTags": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "labels": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "package": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "sourceMetadata": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] }
             }
           },
           "revision": { "$ref": "#/components/schemas/Revision" },
@@ -433,6 +574,22 @@
         "properties": {
           "apiVersion": { "type": "string", "const": "1.0" },
           "data": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } },
+          "meta": {
+            "type": "object",
+            "required": ["pagination"],
+            "properties": { "pagination": { "$ref": "#/components/schemas/Pagination" } }
+          }
+        }
+      },
+      "ProductRevisionListResponse": {
+        "type": "object",
+        "required": ["apiVersion", "data", "meta"],
+        "properties": {
+          "apiVersion": { "type": "string", "const": "1.0" },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ProductRevisionHistoryItem" }
+          },
           "meta": {
             "type": "object",
             "required": ["pagination"],

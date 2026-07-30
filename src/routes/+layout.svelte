@@ -2,6 +2,7 @@
 	import { dev } from "$app/environment";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
+	import { onMount } from "svelte";
 	import favicon from "$lib/assets/favicon.svg";
 	import "../app.scss";
 	import AppHeader from "$lib/components/app/AppHeader/AppHeader.svelte";
@@ -29,20 +30,42 @@
 	import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 	import { configureNutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 	import { configureAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
+	import { injectAnalytics } from "@vercel/analytics/sveltekit";
+	import { track } from "@vercel/analytics/sveltekit";
 	import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
+	import { APP_INTERACTION_METRICS } from "$lib/utils/analytics/appInteractionMetrics";
 	import type { AppLayoutProps } from "./types";
 
+	const redactObservabilityUrl = <Event extends { url: string }>(
+		event: Event,
+	): Event => {
+		const url = new URL(event.url);
+		url.search = "";
+		url.hash = "";
+		return { ...event, url: url.toString() };
+	};
+
 	if (!dev) {
+		injectAnalytics({
+			mode: "production",
+			debug: false,
+			beforeSend: redactObservabilityUrl,
+		});
 		injectSpeedInsights({
 			debug: false,
-			beforeSend: (event) => {
-				const url = new URL(event.url);
-				url.search = "";
-				url.hash = "";
-				return { ...event, url: url.toString() };
-			},
+			beforeSend: redactObservabilityUrl,
 		});
 	}
+
+	onMount(() => {
+		if (dev) return;
+		const navigationEntry = performance.getEntriesByType(
+			"navigation",
+		)[0] as PerformanceNavigationTiming | undefined;
+		if (navigationEntry?.type === "reload") {
+			track(APP_INTERACTION_METRICS.PAGE_RELOAD);
+		}
+	});
 
 	let {
 		children,
