@@ -24,7 +24,7 @@ const renderTutorial = (onFinish = vi.fn(() => true), onNavigate = vi.fn()) => {
   render(TutorialOverlay, {
     props: {
       open: true,
-      pathname: "/fridge",
+      pathname: "/ingredients/fridge",
       onNavigate,
       onFinish,
     },
@@ -107,7 +107,7 @@ describe("TutorialOverlay", () => {
     const { container } = render(TutorialOverlay, {
       props: {
         open: true,
-        pathname: "/fridge",
+        pathname: "/ingredients/fridge",
         onNavigate: vi.fn(),
         onFinish: vi.fn(() => true),
       },
@@ -161,7 +161,7 @@ describe("TutorialOverlay", () => {
     const view = render(TutorialOverlay, {
       props: {
         open: true,
-        pathname: "/fridge",
+        pathname: "/ingredients/fridge",
         onNavigate: vi.fn(),
         onFinish: vi.fn(() => true),
       },
@@ -182,7 +182,7 @@ describe("TutorialOverlay", () => {
 
     await view.rerender({
       open: false,
-      pathname: "/fridge",
+      pathname: "/ingredients/fridge",
       onNavigate: vi.fn(),
       onFinish: vi.fn(() => true),
     });

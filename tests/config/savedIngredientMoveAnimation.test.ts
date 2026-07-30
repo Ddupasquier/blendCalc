@@ -15,7 +15,9 @@ describe("saved ingredient move animation", () => {
 	});
 
 	it("reconciles successful moves locally instead of refreshing both lists", () => {
-		const fridgePage = readSource("src/routes/fridge/+page.svelte");
+		const fridgePage = readSource(
+			"src/routes/ingredients/fridge/+page.svelte",
+		);
 		const singleMoveStart = fridgePage.indexOf(
 			"const moveFoodBetweenLists = async",
 		);

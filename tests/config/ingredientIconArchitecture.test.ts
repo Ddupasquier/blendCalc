@@ -3,7 +3,7 @@ import { basename, join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ingredientComponentRoot = "src/lib/components/ingredients";
-const ingredientRouteRoot = "src/routes/fridge";
+const ingredientRouteRoot = "src/routes/ingredients";
 
 const collectSvelteFiles = (directory: string): string[] =>
 	readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {

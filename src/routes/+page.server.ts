@@ -2,7 +2,9 @@ import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
 const getSafeNextPath = (value: string | null) => {
-	if (!value || !value.startsWith("/") || value.startsWith("//")) return "/fridge";
+	if (!value || !value.startsWith("/") || value.startsWith("//")) {
+		return "/ingredients/fridge";
+	}
 	return value;
 };
 

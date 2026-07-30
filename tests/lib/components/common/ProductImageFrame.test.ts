@@ -22,4 +22,23 @@ describe("ProductImageFrame", () => {
 		await fireEvent.error(image);
 		expect(onError).toHaveBeenCalledOnce();
 	});
+
+	it("uses the shared full-image renderer for a saved rotation", () => {
+		const { container } = render(ProductImageFrame, {
+			props: {
+				src: "https://example.com/sideways-product.jpg",
+				alt: "Correctly oriented product package",
+				rotationDegrees: 90,
+			},
+		});
+
+		expect(
+			container.querySelector(
+				'.product-image-frame__rotated-image[data-rotation-degrees="90"]',
+			),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("img", { name: "Correctly oriented product package" }),
+		).toHaveStyle("--image-placement-viewport-rotation: 90deg");
+	});
 });

@@ -478,7 +478,7 @@ without promising an implementation that no longer exists.
 **Status:** Review during related changes; do not split by line count alone
 
 **Evidence:** Several files remain large coordinators, including
-`src/routes/fridge/+page.svelte`, `src/routes/mix/+page.svelte`,
+`src/routes/ingredients/fridge/+page.svelte`, `src/routes/mix/+page.svelte`,
 `src/lib/server/products/catalog.server.ts`,
 `src/lib/utils/barcode/barcodeProductMappers.ts`, and
 `src/lib/components/ingredients/manual-entry/CustomIngredientForm/manualEntryBarcodeController.svelte.ts`.

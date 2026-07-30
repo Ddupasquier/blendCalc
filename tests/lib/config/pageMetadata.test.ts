@@ -12,9 +12,7 @@ describe("page metadata", () => {
 		expect(formatDocumentTitle("Shopping List")).toBe(
 			"Shopping List · blendCalc",
 		);
-		expect(getAppDocumentTitle(url("/mix"))).toBe(
-			"Smoothie Builder · blendCalc",
-		);
+		expect(getAppDocumentTitle(url("/mix"))).toBe("Mix · blendCalc");
 		expect(getAppDocumentTitle(url("/saved"))).toBe(
 			"Saved Drinks · blendCalc",
 		);
@@ -24,25 +22,30 @@ describe("page metadata", () => {
 	});
 
 	it("describes ingredient subviews and selected foods", () => {
-		expect(getAppDocumentTitle(url("/fridge/shopping-list"))).toBe(
+		expect(getAppDocumentTitle(url("/ingredients/shopping"))).toBe(
 			"Shopping List · blendCalc",
 		);
-		expect(getAppDocumentTitle(url("/fridge/barcode-scanner"))).toBe(
+		expect(
+			getAppDocumentTitle(url("/ingredients/fridge/barcode-scanner")),
+		).toBe(
 			"Scan a Barcode · blendCalc",
 		);
 		expect(
 			getAppDocumentTitle(
-				url("/fridge/nutrition/42"),
+				url("/ingredients/fridge/nutrition/42"),
 				"Roasted Tomato Soup",
 			),
 		).toBe("Roasted Tomato Soup Nutrition · blendCalc");
+		expect(getAppDocumentTitle(url("/mix/save"))).toBe(
+			"Save Mix · blendCalc",
+		);
 	});
 
 	it("uses readable paths without transient query parameters as canonicals", () => {
 		expect(
 			getCanonicalAppUrl(
-				url("/fridge/shopping-list?sort=recent#saved-ingredients"),
+				url("/ingredients/shopping?sort=recent#saved-ingredients"),
 			),
-		).toBe("https://blendcalc.vercel.app/fridge/shopping-list");
+		).toBe("https://blendcalc.vercel.app/ingredients/shopping");
 	});
 });

@@ -16,7 +16,7 @@
 		<h1 id="app-error-title">{title}</h1>
 		<StatusMessage tone="danger" {message} />
 		<div class="app-error__actions">
-			<RoundedActionLink href="/fridge" fullWidth>
+			<RoundedActionLink href="/ingredients/fridge" fullWidth>
 				Open Ingredients
 			</RoundedActionLink>
 			<RoundedActionLink href="/" variant="neutral" fullWidth>

@@ -74,6 +74,35 @@ describe("ProductImagePanel", () => {
 		expect(screen.queryByTitle("Admin or moderator action")).not.toBeInTheDocument();
 	});
 
+	it("applies the saved moderator rotation to the detailed product image", () => {
+		const rotatedFood = {
+			...foodWithImage,
+			image: {
+				...foodWithImage.image!,
+				rotationDegrees: 90 as const,
+				placementVersion: 2,
+			},
+		};
+		const { container } = render(ProductImagePanel, {
+			props: {
+				food: rotatedFood,
+				canAdjustImagePlacement: false,
+				onImagePlacementSave: vi.fn(),
+			},
+		});
+
+		expect(
+			container.querySelector(
+				'.product-image-frame__rotated-image[data-rotation-degrees="90"]',
+			),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("img", {
+				name: "Blue Diamond almond milk package image",
+			}),
+		).toHaveStyle("--image-placement-viewport-rotation: 90deg");
+	});
+
 	it("saves the current placement with one submit activation", async () => {
 		const savedImage = {
 			...foodWithImage.image!,

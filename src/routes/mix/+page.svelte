@@ -1,4 +1,8 @@
 <script lang="ts">
+	import {
+		pushState,
+		replaceState as replaceNavigationState,
+	} from "$app/navigation";
 	import { page } from "$app/state";
 	import PillButton from "$lib/components/common/buttons/PillButton/PillButton.svelte";
 	import GoalTargets from "$lib/components/mix/controls/GoalTargets/GoalTargets.svelte";
@@ -87,6 +91,13 @@
 		getNutrientCatalog,
 	} from "$lib/utils/food/reference/appReferenceCatalog";
 	import type { MixResetAction } from "./types";
+	import {
+		buildMixRouteHref,
+		getMixRouteState,
+		MIX_ROUTE_OVERLAYS,
+		type MixRouteTarget,
+	} from "$lib/utils/mix/navigation/mixRouteState";
+	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 
 	const defaultMixFields = getDefaultMixFields();
 	const nutrientCatalog = getNutrientCatalog();
@@ -95,8 +106,7 @@
 	const initialMixData = page.data.mixData;
 
     let selected = $state<(string | number)[]>(defaultMixFields.map((n) => n.id));
-	let pendingResetAction = $state<MixResetAction | null>(null);
-    let options = $state<NutrientOption[]>(getDefaultNutrientOptions());
+	let options = $state<NutrientOption[]>(getDefaultNutrientOptions());
     let fridgeItems = $state<FdcFood[]>(initialMixData?.fridge ?? []);
     let shoppingItems = $state<FdcFood[]>(initialMixData?.shoppingList ?? []);
     let selectedFoodIds = $state<number[]>([]);
@@ -106,12 +116,76 @@
     let nutrientGoals = $state<Record<number, number>>({
 		...defaultNutrientGoals,
     });
-    let saveDialogOpen = $state(false);
-    let selectedGoalTemplateId = $state("");
+	let selectedGoalTemplateId = $state("");
     let loadedSavedDrink = $state<LoadedSavedDrink | null>(null);
     let saveDialogError = $state("");
     let saveDialogBusy = $state(false);
 	let cloudLoadError = $state(initialMixData?.loadError ?? "");
+	let mixStateReady = $state(false);
+	const mixRouteState = $derived(getMixRouteState(page.url));
+	const pendingResetAction = $derived<MixResetAction | null>(
+		mixRouteState.overlay === MIX_ROUTE_OVERLAYS.resetGoals
+			? "goals"
+			: mixRouteState.overlay === MIX_ROUTE_OVERLAYS.clearIngredients
+				? "ingredients"
+				: mixRouteState.overlay === MIX_ROUTE_OVERLAYS.resetAll
+					? "all"
+					: null,
+	);
+	const saveDialogOpen = $derived(
+		mixRouteState.overlay === MIX_ROUTE_OVERLAYS.save,
+	);
+	const renameRoute = $derived(
+		mixRouteState.overlay === MIX_ROUTE_OVERLAYS.renameIngredient &&
+			mixRouteState.listKey &&
+			mixRouteState.foodId !== null
+			? {
+					listKey: mixRouteState.listKey,
+					foodId: mixRouteState.foodId,
+				}
+			: null,
+	);
+
+	const navigateMixRoute = (
+		target: MixRouteTarget,
+		{ replaceState = false } = {},
+	) => {
+		const href = buildMixRouteHref(page.url, target);
+		const currentHref = `${page.url.pathname}${page.url.search}${page.url.hash}`;
+		if (href === currentHref) return;
+		const nextPageState = { ...page.state };
+
+		if (replaceState) {
+			replaceNavigationState(href, nextPageState);
+			return;
+		}
+		pushState(href, nextPageState);
+	};
+
+	const closeMixOverlay = () =>
+		navigateMixRoute({ overlay: null }, { replaceState: true });
+
+	const openRenameRoute = (listKey: SmoothieListKey, foodId: number) => {
+		navigateMixRoute({
+			overlay: MIX_ROUTE_OVERLAYS.renameIngredient,
+			listKey,
+			foodId,
+		});
+	};
+
+	const openWarningRoute = (warningId: string) => {
+		navigateMixRoute({
+			overlay: MIX_ROUTE_OVERLAYS.warningDetails,
+			warningId,
+		});
+	};
+
+	const openConversionDetailsRoute = (foodId: number) => {
+		navigateMixRoute({
+			overlay: MIX_ROUTE_OVERLAYS.conversionDetails,
+			foodId,
+		});
+	};
 
 	const assignMixState = (state: MixStateSnapshot) => {
 		selected = state.selected;
@@ -472,7 +546,7 @@
 		if (pendingResetAction === "goals") resetGoals();
 		if (pendingResetAction === "ingredients") clearIngredients();
 		if (pendingResetAction === "all") resetMix();
-		pendingResetAction = null;
+		closeMixOverlay();
 	};
 
     const getCurrentSavedDrinkInput = (name: string): SavedDrinkInput => {
@@ -522,7 +596,7 @@
             name: drink.name,
             isDirty: false,
         });
-        saveDialogOpen = false;
+        closeMixOverlay();
     };
 
     const overwriteLoadedDrink = async (name: string) => {
@@ -547,7 +621,7 @@
             name: drink.name,
             isDirty: false,
         });
-        saveDialogOpen = false;
+        closeMixOverlay();
     };
 
     const handleChange = (next: (string | number)[]) => {
@@ -632,9 +706,20 @@
         saveMixState();
     };
 
-    const getServingConversionWarning = (food: FdcFood) => {
+	const getServingConversionWarning = (food: FdcFood) => {
         return getServingConversion(food).warning;
     };
+
+	const openWarningId = $derived(
+		mixRouteState.overlay === MIX_ROUTE_OVERLAYS.warningDetails
+			? mixRouteState.warningId
+			: null,
+	);
+	const conversionDetailsFoodId = $derived(
+		mixRouteState.overlay === MIX_ROUTE_OVERLAYS.conversionDetails
+			? mixRouteState.foodId
+			: null,
+	);
 
     const updateServingAmount = (
         food: FdcFood,
@@ -659,6 +744,7 @@
         loadMixState();
         loadNutrientGoals();
         if (!restoredSavedDrink) loadCloudBackedMixPreferences();
+		mixStateReady = true;
 		window.addEventListener(
             SMOOTHIE_LISTS_CHANGED_EVENT,
             loadIngredientLists,
@@ -670,6 +756,30 @@
             );
         };
     });
+
+	$effect(() => {
+		if (
+			mixStateReady &&
+			openWarningId !== null &&
+			!smartWarnings.some((warning) => warning.id === openWarningId)
+		) {
+			closeMixOverlay();
+		}
+	});
+
+	$effect(() => {
+		if (
+			mixStateReady &&
+			conversionDetailsFoodId !== null &&
+			!selectedFoods.some(
+				(food) =>
+					food.fdcId === conversionDetailsFoodId &&
+					Boolean(getServingConversionWarning(food)),
+			)
+		) {
+			closeMixOverlay();
+		}
+	});
 </script>
 
 <div class="mix-page">
@@ -680,7 +790,7 @@
 		confirmLabel={resetDialogContent.confirmLabel}
 		danger
 		onConfirm={confirmReset}
-		onCancel={() => (pendingResetAction = null)}
+		onCancel={closeMixOverlay}
 	/>
     <header class="mix-header">
         <div>
@@ -707,19 +817,33 @@
 				variant="primary"
 				onclick={() => {
 					saveDialogError = "";
-					saveDialogOpen = true;
+					navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.save });
 				}}
 				disabled={!canSaveCurrentMix}
 			>
 				{loadedSavedDrink ? "Save Changes" : "Save"}
 			</PillButton>
-			<PillButton onclick={() => (pendingResetAction = "goals")} disabled={!hasCustomGoals}>
+			<PillButton
+				onclick={() =>
+					navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.resetGoals })}
+				disabled={!hasCustomGoals}
+			>
 				Reset Goals
 			</PillButton>
-			<PillButton onclick={() => (pendingResetAction = "ingredients")} disabled={selectedFoodIds.length === 0}>
+			<PillButton
+				onclick={() =>
+					navigateMixRoute({
+						overlay: MIX_ROUTE_OVERLAYS.clearIngredients,
+					})}
+				disabled={selectedFoodIds.length === 0}
+			>
 				Clear Ingredients
 			</PillButton>
-			<PillButton onclick={() => (pendingResetAction = "all")} disabled={!hasResettableMixState}>
+			<PillButton
+				onclick={() =>
+					navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.resetAll })}
+				disabled={!hasResettableMixState}
+			>
 				Reset All
 			</PillButton>
         </div>
@@ -742,7 +866,7 @@
         onValueChange={() => (saveDialogError = "")}
         onCancel={() => {
             saveDialogError = "";
-            saveDialogOpen = false;
+            closeMixOverlay();
         }}
     >
         <SaveGoalReview diffs={saveGoalDiffs} />
@@ -779,6 +903,9 @@
                 {fridgeItems}
                 {shoppingItems}
                 {selectedFoodIds}
+				{renameRoute}
+				onOpenRename={openRenameRoute}
+				onCloseRename={closeMixOverlay}
                 onToggleFood={toggleFood}
             />
 
@@ -792,6 +919,9 @@
                     {getServingUnit}
                     {getServingConversion}
                     {getServingConversionWarning}
+					{conversionDetailsFoodId}
+					onOpenConversionDetails={openConversionDetailsRoute}
+					onCloseConversionDetails={closeMixOverlay}
                     onRemove={toggleFood}
                     onServingChange={updateServingAmount}
                 />
@@ -816,7 +946,12 @@
                         fullWidth
                     />
                 </div>
-                <SmartWarnings warnings={smartWarnings} />
+                <SmartWarnings
+					warnings={smartWarnings}
+					{openWarningId}
+					onOpenWarning={openWarningRoute}
+					onCloseWarning={closeMixOverlay}
+				/>
                 <NutrientAdjustmentSuggestions
                     foodSuggestions={nutrientFoodSuggestions}
                     reductionSuggestions={nutrientReductionSuggestions}

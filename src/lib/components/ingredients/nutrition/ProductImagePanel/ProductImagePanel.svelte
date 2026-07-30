@@ -150,6 +150,7 @@
 		<ProductImageFrame
 			src={imageUrl}
 			alt={imageAlt}
+			rotationDegrees={savedPlacement.rotationDegrees}
 			onError={() => (imageFailed = true)}
 		/>
 		<AssetAttribution

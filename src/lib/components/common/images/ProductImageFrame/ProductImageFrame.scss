@@ -19,3 +19,11 @@
 	background: $app-shell-surface-soft;
 	border-radius: $app-shell-radius-card;
 }
+
+.product-image-frame__rotated-image {
+	display: block;
+	box-sizing: border-box;
+	width: min(100%, 18rem);
+	height: 14rem;
+	padding: $app-shell-card-padding-compact;
+}

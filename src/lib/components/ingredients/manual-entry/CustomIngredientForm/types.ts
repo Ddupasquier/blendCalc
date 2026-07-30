@@ -11,6 +11,9 @@ export type CustomIngredientFormProps = {
 	inline?: boolean;
 	onScannerOpen?: () => void;
 	onScannerClose?: () => void;
+	moveConfirmationRouteOpen?: boolean;
+	onMoveConfirmationOpen?: () => void;
+	onMoveConfirmationClose?: () => void;
 	onLookupStateChange?: (lookingUp: boolean) => void;
 };
 

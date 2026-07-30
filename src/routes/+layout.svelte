@@ -59,8 +59,10 @@
 	);
 	const ingredientsRoute = $derived(
 		Boolean(data.authUser) &&
-			(page.url.pathname === "/fridge" ||
-				page.url.pathname.startsWith("/fridge/")),
+			(page.url.pathname === "/ingredients/fridge" ||
+				page.url.pathname.startsWith("/ingredients/fridge/") ||
+				page.url.pathname === "/ingredients/shopping" ||
+				page.url.pathname.startsWith("/ingredients/shopping/")),
 	);
 	const tutorialRouteOpen = $derived(page.url.pathname === "/profile/tutorial");
 	const tutorialVisible = $derived(tutorialOpen || tutorialRouteOpen);

@@ -756,7 +756,9 @@ describe("CustomIngredientForm", () => {
 		smoothieListMocks.addFoodToSmoothieList.mockResolvedValue(
 			"move-required:fridge",
 		);
-		render(CustomIngredientForm, { props: { onCreate } });
+		render(CustomIngredientForm, {
+			props: { onCreate, moveConfirmationRouteOpen: true },
+		});
 
 		await fillRequiredCustomIngredient("Existing list snack", {
 			destination: MIX_STORAGE_KEYS.shoppingList,
@@ -775,7 +777,9 @@ describe("CustomIngredientForm", () => {
 		smoothieListMocks.addFoodToSmoothieList.mockResolvedValue(
 			"move-required:fridge",
 		);
-		render(CustomIngredientForm, { props: { onCreate } });
+		render(CustomIngredientForm, {
+			props: { onCreate, moveConfirmationRouteOpen: true },
+		});
 
 		await fillRequiredCustomIngredient("Confirmed list move", {
 			destination: MIX_STORAGE_KEYS.shoppingList,
