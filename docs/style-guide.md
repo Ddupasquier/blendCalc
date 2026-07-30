@@ -284,7 +284,12 @@ the full accessible name `Enter a custom ingredient manually`; the larger launch
 is not shown at that tier. The compact Fridge/Shopping List segmented control uses
 shorter visual pills, smaller labels, and tighter count badges. The outer track uses
 the same pill radius as its child tabs. Its outer padding and expanded hit area keep
-each tab's combined touch target at least `44px`.
+each tab's combined touch target at least `44px`. Switching lists slides one shared
+selected surface horizontally between the tabs. That surface first stretches across the
+full inner track, retracts into the destination tab, and finishes with one small damped
+jiggle. The liquid motion communicates the spatial change without moving or distorting
+the labels, counts, focus targets, or tab semantics. Reduced motion keeps the state
+change immediate.
 
 Treat `360px × 740px` as the reference compact portrait viewport and continue supporting
 `320px × 568px` phones plus short landscape windows. Widths between the shared
