@@ -23,10 +23,12 @@ import {
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { Json } from "$lib/types/database.types";
 import type { FdcFood } from "$lib/utils/food/types";
+import { readLimitedJson } from "$lib/server/security/requestBody.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
 const MAXIMUM_BATCH_SIZE = 25;
+const FOOD_LIST_WRITE_REQUEST_MAX_BYTES = 2 * 1024 * 1024;
 const VALID_SORTS = new Set<FoodListSort>([
 	"recent",
 	"oldest",
@@ -124,12 +126,10 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 	const listKey = getListKey(params.list);
 	if (!listKey) return appIssueJson(404, "RESOURCE_NOT_FOUND");
 
-	let body: unknown;
-	try {
-		body = await request.json();
-	} catch {
-		return appIssueJson(400, "INVALID_REQUEST");
-	}
+	const body = await readLimitedJson(
+		request,
+		FOOD_LIST_WRITE_REQUEST_MAX_BYTES,
+	);
 	if (!body || typeof body !== "object") {
 		return appIssueJson(400, "INVALID_REQUEST");
 	}

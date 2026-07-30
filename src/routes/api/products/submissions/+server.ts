@@ -22,8 +22,11 @@ import {
 	requireAppValue,
 	throwAppError,
 } from "$lib/server/errors/appError.server";
+import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+
+const PRODUCT_SUBMISSION_REQUEST_MAX_BYTES = 25 * 1024 * 1024;
 
 export const POST: RequestHandler = async ({ locals, request }) => {
 	const user = requireAppValue(
@@ -44,7 +47,10 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		return throwAppError(503, "CATALOG_VALIDATION_UNAVAILABLE");
 	}
 
-	const formData = await request.formData();
+	const formData = await readLimitedFormData(
+		request,
+		PRODUCT_SUBMISSION_REQUEST_MAX_BYTES,
+	);
 	const foodValue = formData.get("food");
 	const consentToShare = formData.get("consentToShare") === "true";
 	let food: FdcFood | null = null;
