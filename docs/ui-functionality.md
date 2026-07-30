@@ -151,7 +151,7 @@ Required behavior:
 
 ## Ingredients Page
 
-Route: `/fridge`
+Routes: `/ingredients/fridge` and `/ingredients/shopping`
 
 This page owns food discovery, barcode scanning, custom ingredient creation, and On Hand
 / Shopping List management.
@@ -366,6 +366,12 @@ Item behavior:
 ## Mix Page
 
 Route: `/mix`
+
+Meaningful Mix overlays use explicit child paths, including `/mix/save`,
+`/mix/reset-goals`, `/mix/clear-ingredients`, `/mix/reset-all`,
+`/mix/rename/{list}/{foodId}`, `/mix/warnings/{warningId}`, and
+`/mix/ingredients/{foodId}/conversion-details`. They use shallow history so the
+underlying Mix state stays mounted.
 
 The Mix page is the core smoothie builder. It combines selected foods, amounts, nutrient
 goals, visual graph feedback, warnings, suggestions, and saving.

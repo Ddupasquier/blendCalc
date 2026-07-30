@@ -38,6 +38,9 @@
 		onCloseImagePlacement,
 		onCloseIngredientSheet,
 		onCloseBarcodeScanner,
+		moveConfirmationRouteOpen,
+		onOpenMoveConfirmation,
+		onCloseMoveConfirmation,
 		onCloseNutrition,
 		onCloseRename,
 		onCloseSearch,
@@ -84,6 +87,9 @@
 	{scanSignal}
 	onClose={onCloseIngredientSheet}
 	onScannerClose={onCloseBarcodeScanner}
+	{moveConfirmationRouteOpen}
+	onMoveConfirmationOpen={onOpenMoveConfirmation}
+	onMoveConfirmationClose={onCloseMoveConfirmation}
 	onCreate={onCreateManualIngredient}
 	onLookupStateChange={onLookupStateChange}
 />

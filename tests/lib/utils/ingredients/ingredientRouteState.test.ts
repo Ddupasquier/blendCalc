@@ -1,18 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
+import type { FdcFood } from "$lib/utils/food/types";
 import {
-	buildIngredientRouteHref,
 	buildIngredientListTabHref,
+	buildIngredientRouteHref,
 	findIngredientRouteFood,
-	getCanonicalIngredientRouteHref,
 	getIngredientListTab,
-	getIngredientRouteTitle,
 	getIngredientRouteState,
+	getIngredientRouteTitle,
 	INGREDIENT_ROUTE_MODALS,
 	INGREDIENT_ROUTE_SHEETS,
 	INGREDIENT_ROUTE_VIEWS,
 } from "$lib/utils/ingredients/ingredientRouteState";
-import type { FdcFood } from "$lib/utils/food/types";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
 const url = (path: string) => new URL(path, "https://blendcalc.test");
 
@@ -23,171 +22,142 @@ const food = (fdcId: number, description: string): FdcFood => ({
 });
 
 describe("ingredient route state", () => {
-	it("keeps the active saved list in browser history", () => {
-		expect(getIngredientListTab(url("/fridge"))).toBe(MIX_STORAGE_KEYS.fridge);
-		expect(getIngredientListTab(url("/fridge/shopping-list"))).toBe(
-			MIX_STORAGE_KEYS.shoppingList,
+	it("uses explicit list paths and preserves supported query modifiers", () => {
+		expect(getIngredientListTab(url("/ingredients/fridge"))).toBe(
+			MIX_STORAGE_KEYS.fridge,
 		);
-		expect(getIngredientListTab(url("/fridge?tab=shopping-list"))).toBe(
+		expect(getIngredientListTab(url("/ingredients/shopping"))).toBe(
 			MIX_STORAGE_KEYS.shoppingList,
 		);
 		expect(
 			buildIngredientListTabHref(
-				url("/fridge?sort=recent"),
+				url("/ingredients/fridge?sort=recent"),
 				MIX_STORAGE_KEYS.shoppingList,
 			),
-		).toBe("/fridge/shopping-list?sort=recent");
+		).toBe("/ingredients/shopping?sort=recent");
 		expect(
 			buildIngredientListTabHref(
-				url("/fridge/shopping-list?sort=recent"),
+				url("/ingredients/shopping?sort=recent"),
 				MIX_STORAGE_KEYS.fridge,
 			),
-		).toBe("/fridge?sort=recent");
+		).toBe("/ingredients/fridge?sort=recent");
 	});
 
-	it("parses search, sheet, and nutrition route state", () => {
-		expect(getIngredientRouteState(url("/fridge/search"))).toMatchObject({
+	it("parses explicit search, sheet, modal, and nutrition routes", () => {
+		expect(
+			getIngredientRouteState(url("/ingredients/fridge/search")),
+		).toMatchObject({
 			view: INGREDIENT_ROUTE_VIEWS.search,
 			sheet: null,
 			modal: null,
 			foodId: null,
 			listKey: null,
-			showListActions: true,
 		});
-
 		expect(
-			getIngredientRouteState(url("/fridge/actions/42")),
+			getIngredientRouteState(url("/ingredients/fridge/actions/42")),
 		).toMatchObject({
 			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.ingredientActions,
-			modal: null,
 			foodId: 42,
 			listKey: MIX_STORAGE_KEYS.fridge,
 		});
-
 		expect(
 			getIngredientRouteState(
-				url("/fridge/shopping-list/image-placement/42"),
+				url("/ingredients/shopping/image-placement/42"),
 			),
 		).toMatchObject({
-			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.imagePlacement,
-			modal: null,
 			foodId: 42,
 			listKey: MIX_STORAGE_KEYS.shoppingList,
 		});
-
 		expect(
-			getIngredientRouteState(url("/fridge/nutrition/99?actions=hide")),
+			getIngredientRouteState(
+				url("/ingredients/fridge/nutrition/99?actions=hide"),
+			),
 		).toMatchObject({
 			view: INGREDIENT_ROUTE_VIEWS.nutrition,
-			sheet: null,
-			modal: null,
 			foodId: 99,
 			showListActions: false,
 		});
-
 		expect(
-			getIngredientRouteState(url("/fridge/barcode-scanner")),
+			getIngredientRouteState(
+				url("/ingredients/fridge/barcode-scanner"),
+			),
 		).toMatchObject({
-			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
 			modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
-			foodId: null,
-			listKey: null,
+		});
+		expect(
+			getIngredientRouteState(
+				url("/ingredients/shopping/manual-entry/move-ingredient"),
+			),
+		).toMatchObject({
+			sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+			modal: INGREDIENT_ROUTE_MODALS.moveIngredient,
 		});
 	});
 
-	it("builds exclusive pop-in slug URLs while preserving unrelated params", () => {
+	it("builds exclusive overlay paths beneath the active list", () => {
 		expect(
-			buildIngredientRouteHref(url("/fridge"), {
+			buildIngredientRouteHref(url("/ingredients/fridge"), {
 				view: INGREDIENT_ROUTE_VIEWS.search,
 			}),
-		).toBe("/fridge/search");
-
+		).toBe("/ingredients/fridge/search");
 		expect(
-			buildIngredientRouteHref(url("/fridge/shopping-list/search"), {
+			buildIngredientRouteHref(url("/ingredients/shopping/search"), {
 				view: null,
 				sheet: INGREDIENT_ROUTE_SHEETS.filters,
 			}),
-		).toBe("/fridge/shopping-list/filters");
-
+		).toBe("/ingredients/shopping/filters");
 		expect(
-			buildIngredientRouteHref(url("/fridge/filters"), {
+			buildIngredientRouteHref(url("/ingredients/fridge/filters"), {
 				view: INGREDIENT_ROUTE_VIEWS.nutrition,
 				sheet: null,
 				foodId: 101,
 				showListActions: false,
 			}),
-		).toBe("/fridge/nutrition/101?actions=hide");
-
+		).toBe("/ingredients/fridge/nutrition/101?actions=hide");
 		expect(
-			buildIngredientRouteHref(url("/fridge/actions/shopping-list/42"), {
-				sheet: INGREDIENT_ROUTE_SHEETS.imagePlacement,
-				foodId: 42,
-				listKey: MIX_STORAGE_KEYS.fridge,
-			}),
-		).toBe("/fridge/image-placement/42");
-
+			buildIngredientRouteHref(
+				url("/ingredients/shopping/actions/42"),
+				{
+					sheet: INGREDIENT_ROUTE_SHEETS.imagePlacement,
+					foodId: 42,
+					listKey: MIX_STORAGE_KEYS.fridge,
+				},
+			),
+		).toBe("/ingredients/fridge/image-placement/42");
 		expect(
-			buildIngredientRouteHref(url("/fridge/manual-entry"), {
+			buildIngredientRouteHref(url("/ingredients/fridge/manual-entry"), {
 				sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
 				modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
 			}),
-		).toBe("/fridge/barcode-scanner");
-
+		).toBe("/ingredients/fridge/barcode-scanner");
 		expect(
-			buildIngredientRouteHref(url("/fridge/barcode-scanner"), {
-				view: null,
-				sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
-				modal: null,
-			}),
-		).toBe("/fridge/manual-entry");
-	});
-
-	it("canonicalizes legacy query tabs and item URLs", () => {
-		expect(
-			getCanonicalIngredientRouteHref(
-				url("/fridge?tab=shopping-list&sort=recent"),
+			buildIngredientRouteHref(
+				url("/ingredients/fridge/barcode-scanner"),
+				{
+					view: null,
+					sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+					modal: null,
+				},
 			),
-		).toBe("/fridge/shopping-list?sort=recent");
-		expect(
-			getCanonicalIngredientRouteHref(
-				url("/fridge/actions/shopping-list/42"),
-			),
-		).toBe("/fridge/shopping-list/actions/42");
-		expect(
-			getCanonicalIngredientRouteHref(
-				url("/fridge/manual-entry/barcode-scanner"),
-			),
-		).toBe("/fridge/barcode-scanner");
-		expect(
-			getCanonicalIngredientRouteHref(url("/fridge/shopping-list")),
-		).toBeNull();
-	});
-
-	it("does not read URL fragments while canonicalizing server requests", () => {
-		const serverUrl = url("/fridge");
-		Object.defineProperty(serverUrl, "hash", {
-			get() {
-				throw new Error("Request URL fragments are unavailable");
-			},
-		});
-
-		expect(getCanonicalIngredientRouteHref(serverUrl)).toBeNull();
+		).toBe("/ingredients/fridge/manual-entry");
 	});
 
 	it("provides descriptive titles for list and overlay routes", () => {
-		expect(getIngredientRouteTitle(url("/fridge"))).toBe("Fridge");
-		expect(getIngredientRouteTitle(url("/fridge/shopping-list"))).toBe(
+		expect(getIngredientRouteTitle(url("/ingredients/fridge"))).toBe(
+			"Fridge",
+		);
+		expect(getIngredientRouteTitle(url("/ingredients/shopping"))).toBe(
 			"Shopping List",
 		);
-		expect(getIngredientRouteTitle(url("/fridge/search"))).toBe(
-			"Search Ingredients",
-		);
+		expect(
+			getIngredientRouteTitle(url("/ingredients/fridge/search")),
+		).toBe("Search Ingredients");
 		expect(
 			getIngredientRouteTitle(
-				url("/fridge/shopping-list/nutrition/42"),
+				url("/ingredients/shopping/nutrition/42"),
 				"Tomato Soup",
 			),
 		).toBe("Tomato Soup Nutrition");
@@ -207,9 +177,14 @@ describe("ingredient route state", () => {
 				[customFood],
 			),
 		).toBe(shoppingFood);
-
 		expect(
-			findIngredientRouteFood(2, null, [fridgeFood], [shoppingFood], [customFood]),
+			findIngredientRouteFood(
+				2,
+				null,
+				[fridgeFood],
+				[shoppingFood],
+				[customFood],
+			),
 		).toBe(customFood);
 	});
 });

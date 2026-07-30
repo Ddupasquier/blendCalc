@@ -28,6 +28,9 @@
 		fridgeItems,
 		shoppingItems,
 		selectedFoodIds,
+		renameRoute = null,
+		onOpenRename,
+		onCloseRename,
 		onToggleFood,
 	}: IngredientChooserProps = $props();
 
@@ -36,9 +39,17 @@
 	let sort = $state<FoodListSort>("recent");
 	let fridgePage = $state(1);
 	let shoppingPage = $state(1);
-	let renamingItem = $state<{ key: SmoothieListKey; food: FdcFood } | null>(null);
 	let renameBusy = $state(false);
 	let renameError = $state("");
+	const renamingItem = $derived.by(() => {
+		if (!renameRoute) return null;
+		const items =
+			renameRoute.listKey === MIX_STORAGE_KEYS.fridge
+				? fridgeItems
+				: shoppingItems;
+		const food = items.find((item) => item.fdcId === renameRoute.foodId);
+		return food ? { key: renameRoute.listKey, food } : null;
+	});
 
 	const filterOptions = [
 		{ value: "all", label: "All ingredients" },
@@ -124,14 +135,14 @@
 	};
 
 	const openRenameDialog = (key: SmoothieListKey, food: FdcFood) => {
-		renamingItem = { key, food };
 		renameError = "";
+		onOpenRename(key, food.fdcId);
 	};
 
 	const closeRenameDialog = () => {
 		if (renameBusy) return;
-		renamingItem = null;
 		renameError = "";
+		onCloseRename();
 	};
 
 	const renameListItem = async (name: string) => {
@@ -160,7 +171,7 @@
 				return;
 			}
 
-			renamingItem = null;
+			onCloseRename();
 		} finally {
 			renameBusy = false;
 		}
@@ -177,6 +188,10 @@
 			filteredShoppingItems.length,
 			LIST_PAGE_SIZES.mixChooser,
 		);
+	});
+
+	$effect(() => {
+		if (renameRoute && !renamingItem) onCloseRename();
 	});
 </script>
 

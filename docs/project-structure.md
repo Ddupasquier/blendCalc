@@ -66,6 +66,10 @@ routes/<route>/
 
 Layouts use the equivalent `+layout.svelte`, `+layout.server.ts`, `layout.scss`, and
 `types.ts` structure. A route without styles does not need an empty `page.scss`.
+Related base views and URL-backed overlays must share server data through their nearest
+common `+layout.server.ts`; do not duplicate the same loader in every child route.
+Prefer explicit route folders over broad catch-all parsers so unknown paths return a
+real `404` and generated route types remain useful.
 
 ## Domain Logic
 

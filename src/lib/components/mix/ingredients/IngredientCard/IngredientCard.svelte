@@ -27,6 +27,9 @@
 		gramsLabel,
 		warning = null,
 		nutrientChips = [],
+		conversionDetailsOpen = false,
+		onOpenConversionDetails,
+		onCloseConversionDetails,
 		onRemove,
 		onServingChange,
 	}: IngredientCardProps = $props();
@@ -104,7 +107,13 @@
 	<div class="ingredient-card__meta">
 		<span class="ingredient-card__grams">Converted <strong>{gramsLabel}</strong></span>
 		{#if warning}
-			<Popover buttonLabel="⚠️ Estimate" title="Volume conversion estimate">
+			<Popover
+				open={conversionDetailsOpen}
+				buttonLabel="⚠️ Estimate"
+				title="Volume conversion estimate"
+				onOpen={() => onOpenConversionDetails(food.fdcId)}
+				onClose={onCloseConversionDetails}
+			>
 				<p>{warning}</p>
 			</Popover>
 		{/if}

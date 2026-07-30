@@ -24,7 +24,11 @@
 
 <header class="app-header">
 	<div class="app-header__inner">
-		<a class="app-header__brand" href="/fridge" aria-label={`Open ${APP_NAME} ingredients`}>
+		<a
+			class="app-header__brand"
+			href="/ingredients/fridge"
+			aria-label={`Open ${APP_NAME} ingredients`}
+		>
 			<span class="app-header__mark" aria-hidden="true">
 				<SmoothieCup size={22} />
 			</span>

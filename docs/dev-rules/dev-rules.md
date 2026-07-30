@@ -1601,13 +1601,14 @@ and reduced-motion-safe bulk movement.
 
 **50.** <a id="rule-url-backed-popins"></a>Pop-in views, popovers, modals, sheets,
 scanners, dialogs, and other meaningful overlay states need URL-backed state with
-stable, readable path slugs. Use paths like `/fridge/search`, `/fridge/manual-entry`,
-`/fridge/barcode-scanner`, and `/fridge/nutrition/123` instead of hiding major state in
-local component booleans or query-only URLs. Query params are acceptable for small
-modifiers, but the main view, list tab, or overlay identity belongs in the path. Use
-`/fridge` and `/fridge/shopping-list` rather than a `tab` query parameter. Preserve the
-active list as a readable path prefix when opening a list-specific overlay. Opening, closing,
-refreshing, direct loading, app-name/base-route navigation, and browser back/forward
+stable, readable path slugs. Use paths like `/ingredients/fridge/search`,
+`/ingredients/fridge/manual-entry`, `/ingredients/fridge/barcode-scanner`, and
+`/ingredients/fridge/nutrition/123` instead of hiding major state in local component
+booleans or query-only URLs. Query params are acceptable for small modifiers, but the
+main view, list tab, or overlay identity belongs in the path. Use
+`/ingredients/fridge` and `/ingredients/shopping` rather than a `tab` query parameter.
+Preserve the active list as a readable path prefix when opening a list-specific overlay.
+Opening, closing, refreshing, direct loading, app-name/base-route navigation, and browser back/forward
 must go through navigation-aware handlers. When an overlay belongs on top of the current
 page, update its path with shallow history rather than remounting the page. Opening or
 closing an overlay must not reload, reset, reorder, repaginate, or move the underlying

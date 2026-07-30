@@ -3,7 +3,12 @@
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte";
 	import type { SmartWarningsProps } from "./types";
 
-	let { warnings = [] }: SmartWarningsProps = $props();
+	let {
+		warnings = [],
+		openWarningId = null,
+		onOpenWarning,
+		onCloseWarning,
+	}: SmartWarningsProps = $props();
 </script>
 
 {#if warnings.length > 0}
@@ -20,7 +25,13 @@
 						<p>{warning.message}</p>
 					</div>
 					{#if warning.details?.length}
-						<Popover buttonLabel="Why?" title={warning.title}>
+						<Popover
+							open={openWarningId === warning.id}
+							buttonLabel="Why?"
+							title={warning.title}
+							onOpen={() => onOpenWarning(warning.id)}
+							onClose={onCloseWarning}
+						>
 							{#if warning.detailSummary}
 								<p class="smart-warning__popover-summary">
 									{warning.detailSummary}

@@ -1,16 +1,42 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const fridgePagePath = resolve(process.cwd(), "src/routes/fridge/+page.svelte");
+const ingredientsPagePath = resolve(
+	process.cwd(),
+	"src/routes/ingredients/fridge/+page.svelte",
+);
 const ingredientListTabsPath = resolve(
 	process.cwd(),
 	"src/lib/components/ingredients/list/IngredientListTabs/IngredientListTabs.svelte",
 );
 
-describe("fridge overlay navigation", () => {
+describe("ingredient overlay navigation", () => {
+	it("uses explicit canonical list and overlay route files", () => {
+		const expectedRoutes = [
+			"src/routes/ingredients/fridge/+page.svelte",
+			"src/routes/ingredients/shopping/+page.svelte",
+			"src/routes/ingredients/fridge/search/+page.svelte",
+			"src/routes/ingredients/shopping/search/+page.svelte",
+			"src/routes/ingredients/fridge/manual-entry/+page.svelte",
+			"src/routes/ingredients/shopping/manual-entry/+page.svelte",
+			"src/routes/ingredients/fridge/nutrition/[foodId=signedInteger]/+page.svelte",
+			"src/routes/ingredients/shopping/nutrition/[foodId=signedInteger]/+page.svelte",
+		];
+
+		for (const route of expectedRoutes) {
+			expect(existsSync(resolve(process.cwd(), route)), route).toBe(true);
+		}
+		expect(
+			existsSync(resolve(process.cwd(), "src/routes/fridge")),
+		).toBe(false);
+		expect(
+			existsSync(resolve(process.cwd(), "src/routes/ingredients/[...slug]")),
+		).toBe(false);
+	});
+
 	it("uses shallow history so sheets do not remount the ingredient list", () => {
-		const source = readFileSync(fridgePagePath, "utf8");
+		const source = readFileSync(ingredientsPagePath, "utf8");
 
 		expect(source).toContain("pushState(href, nextPageState)");
 		expect(source).toContain("replaceNavigationState(href, nextPageState)");
@@ -18,14 +44,14 @@ describe("fridge overlay navigation", () => {
 	});
 
 	it("pauses automatic list expansion while an overlay is open", () => {
-		const source = readFileSync(fridgePagePath, "utf8");
+		const source = readFileSync(ingredientsPagePath, "utf8");
 
 		expect(source).toContain("const ingredientOverlayOpen = $derived(");
 		expect(source).toContain("revealPaused={ingredientOverlayOpen}");
 	});
 
 	it("does not replay a stale barcode scan when manual entry is reopened", () => {
-		const source = readFileSync(fridgePagePath, "utf8");
+		const source = readFileSync(ingredientsPagePath, "utf8");
 		const openManualEntry = source.match(
 			/const openManualEntry = \(\) => \{[\s\S]*?\n    \};/,
 		)?.[0];
@@ -39,7 +65,7 @@ describe("fridge overlay navigation", () => {
 	});
 
 	it("uses the URL as the only source of truth for the active list tab", () => {
-		const source = readFileSync(fridgePagePath, "utf8");
+		const source = readFileSync(ingredientsPagePath, "utf8");
 
 		expect(source).toContain(
 			"let activeList = $derived<SmoothieListKey>(getIngredientListTab(page.url))",

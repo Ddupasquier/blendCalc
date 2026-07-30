@@ -9,11 +9,15 @@ describe("SegmentedControl", () => {
 				label: "Saved ingredient lists",
 				value: "fridge",
 				options: [
-					{ value: "fridge", label: "Fridge", href: "/fridge" },
+					{
+						value: "fridge",
+						label: "Fridge",
+						href: "/ingredients/fridge",
+					},
 					{
 						value: "shopping",
 						label: "Shopping List",
-						href: "/fridge/shopping-list",
+						href: "/ingredients/shopping",
 					},
 				],
 			},
@@ -22,13 +26,13 @@ describe("SegmentedControl", () => {
 		const fridgeTab = screen.getByRole("tab", { name: "Fridge" });
 		expect(fridgeTab).toHaveAttribute(
 			"href",
-			"/fridge",
+			"/ingredients/fridge",
 		);
 		expect(fridgeTab).toHaveAttribute("data-sveltekit-keepfocus");
 		expect(fridgeTab).toHaveAttribute("data-sveltekit-noscroll");
 		expect(
 			screen.getByRole("tab", { name: "Shopping List" }),
-		).toHaveAttribute("href", "/fridge/shopping-list");
+		).toHaveAttribute("href", "/ingredients/shopping");
 		expect(container.querySelector(".segmented-control")).toHaveAttribute(
 			"data-active-index",
 			"0",
@@ -44,11 +48,15 @@ describe("SegmentedControl", () => {
 				label: "Saved ingredient lists",
 				value: "fridge",
 				options: [
-					{ value: "fridge", label: "Fridge", href: "/fridge" },
+					{
+						value: "fridge",
+						label: "Fridge",
+						href: "/ingredients/fridge",
+					},
 					{
 						value: "shopping",
 						label: "Shopping List",
-						href: "/fridge/shopping-list",
+						href: "/ingredients/shopping",
 					},
 				],
 			},
@@ -56,7 +64,7 @@ describe("SegmentedControl", () => {
 
 		const shoppingTab = screen.getByRole("tab", { name: "Shopping List" });
 		const control = container.querySelector(".segmented-control");
-		expect(shoppingTab).toHaveAttribute("href", "/fridge/shopping-list");
+		expect(shoppingTab).toHaveAttribute("href", "/ingredients/shopping");
 		expect(control).toHaveAttribute("data-active-index", "0");
 		await fireEvent.click(shoppingTab);
 		expect(control).toHaveAttribute("data-active-index", "1");
