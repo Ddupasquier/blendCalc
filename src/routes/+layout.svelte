@@ -35,8 +35,6 @@
 	if (!dev) {
 		injectSpeedInsights({
 			debug: false,
-			scriptSrc: "/_vercel/speed-insights/script.js",
-			endpoint: "/_vercel/speed-insights/vitals",
 			beforeSend: (event) => {
 				const url = new URL(event.url);
 				url.search = "";
