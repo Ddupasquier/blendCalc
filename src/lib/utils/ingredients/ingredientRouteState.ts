@@ -3,11 +3,10 @@ import type { FdcFood } from "$lib/utils/food/types";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 
 const ACTIONS_PARAM = "actions";
-const LEGACY_LIST_TAB_PARAM = "tab";
-const FRIDGE_ROUTE_SEGMENT = "fridge";
 const LIST_ROUTE_SLUGS = {
+	ingredients: "ingredients",
 	fridge: "fridge",
-	shoppingList: "shopping-list",
+	shoppingList: "shopping",
 } as const;
 
 export const INGREDIENT_ROUTE_VIEWS = {
@@ -25,6 +24,7 @@ export const INGREDIENT_ROUTE_SHEETS = {
 
 export const INGREDIENT_ROUTE_MODALS = {
 	barcodeScanner: "barcode-scanner",
+	moveIngredient: "move-ingredient",
 } as const;
 
 export type IngredientRouteView =
@@ -54,29 +54,10 @@ export type IngredientRoutePatch = Partial<{
 	showListActions: boolean;
 }>;
 
-const getListKeyFromRouteSlug = (value: string | null): SmoothieListKey | null => {
-	if (value === LIST_ROUTE_SLUGS.fridge || value === MIX_STORAGE_KEYS.fridge) {
-		return MIX_STORAGE_KEYS.fridge;
-	}
-	if (
-		value === LIST_ROUTE_SLUGS.shoppingList ||
-		value === MIX_STORAGE_KEYS.shoppingList
-	) {
-		return MIX_STORAGE_KEYS.shoppingList;
-	}
-	return null;
-};
-
-const getRouteSlugFromListKey = (key: SmoothieListKey | null) => {
-	if (key === MIX_STORAGE_KEYS.fridge) return LIST_ROUTE_SLUGS.fridge;
-	if (key === MIX_STORAGE_KEYS.shoppingList) return LIST_ROUTE_SLUGS.shoppingList;
-	return null;
-};
-
 const parseFoodId = (value: string | null) => {
 	if (!value) return null;
 	const foodId = Number(value);
-	return Number.isFinite(foodId) ? foodId : null;
+	return Number.isSafeInteger(foodId) ? foodId : null;
 };
 
 const getDecodedPathSegments = (pathname: string) =>
@@ -85,18 +66,11 @@ const getDecodedPathSegments = (pathname: string) =>
 		.filter(Boolean)
 		.map((segment) => decodeURIComponent(segment));
 
-const getIngredientRouteBasePath = (pathname: string) => {
-	const segments = getDecodedPathSegments(pathname);
-	const fridgeIndex = segments.indexOf(FRIDGE_ROUTE_SEGMENT);
-	if (fridgeIndex === -1) return `/${FRIDGE_ROUTE_SEGMENT}`;
-	return `/${segments.slice(0, fridgeIndex + 1).join("/")}`;
-};
-
 const getIngredientRoutePathSegments = (pathname: string) => {
 	const segments = getDecodedPathSegments(pathname);
-	const fridgeIndex = segments.indexOf(FRIDGE_ROUTE_SEGMENT);
-	if (fridgeIndex === -1) return [];
-	return segments.slice(fridgeIndex + 1);
+	return segments[0] === LIST_ROUTE_SLUGS.ingredients
+		? segments.slice(1)
+		: [];
 };
 
 const getIngredientPathContext = (pathname: string) => {
@@ -109,28 +83,21 @@ const getIngredientPathContext = (pathname: string) => {
 	}
 	return {
 		listKey: MIX_STORAGE_KEYS.fridge,
-		routeSegments,
+		routeSegments:
+			routeSegments[0] === LIST_ROUTE_SLUGS.fridge
+				? routeSegments.slice(1)
+				: [],
 	};
 };
 
-const getIngredientListBasePath = (
-	pathname: string,
-	listKey: SmoothieListKey,
-) => {
-	const basePath = getIngredientRouteBasePath(pathname);
+const getIngredientListBasePath = (listKey: SmoothieListKey) => {
 	return listKey === MIX_STORAGE_KEYS.shoppingList
-		? `${basePath}/${LIST_ROUTE_SLUGS.shoppingList}`
-		: basePath;
+		? `/${LIST_ROUTE_SLUGS.ingredients}/${LIST_ROUTE_SLUGS.shoppingList}`
+		: `/${LIST_ROUTE_SLUGS.ingredients}/${LIST_ROUTE_SLUGS.fridge}`;
 };
 
 export const getIngredientListTab = (url: URL): SmoothieListKey => {
-	const pathContext = getIngredientPathContext(url.pathname);
-	if (pathContext.listKey === MIX_STORAGE_KEYS.shoppingList) {
-		return pathContext.listKey;
-	}
-	return getListKeyFromRouteSlug(
-		url.searchParams.get(LEGACY_LIST_TAB_PARAM),
-	) ?? MIX_STORAGE_KEYS.fridge;
+	return getIngredientPathContext(url.pathname).listKey;
 };
 
 export const buildIngredientListTabHref = (
@@ -138,8 +105,7 @@ export const buildIngredientListTabHref = (
 	key: SmoothieListKey,
 ) => {
 	const nextUrl = new URL(url);
-	nextUrl.pathname = getIngredientListBasePath(url.pathname, key);
-	nextUrl.searchParams.delete(LEGACY_LIST_TAB_PARAM);
+	nextUrl.pathname = getIngredientListBasePath(key);
 	nextUrl.searchParams.delete(ACTIONS_PARAM);
 	const query = nextUrl.searchParams.toString();
 	return `${nextUrl.pathname}${query ? `?${query}` : ""}${nextUrl.hash}`;
@@ -147,11 +113,15 @@ export const buildIngredientListTabHref = (
 
 const getPathRouteState = (url: URL): IngredientRouteState | null => {
 	const pathContext = getIngredientPathContext(url.pathname);
-	const [routeSlug, secondSegment, thirdSegment] = pathContext.routeSegments;
+	const [routeSlug, secondSegment, ...remainingSegments] =
+		pathContext.routeSegments;
 
 	if (!routeSlug) return null;
 
-	if (routeSlug === INGREDIENT_ROUTE_VIEWS.search) {
+	if (
+		routeSlug === INGREDIENT_ROUTE_VIEWS.search &&
+		secondSegment === undefined
+	) {
 		return {
 			view: INGREDIENT_ROUTE_VIEWS.search,
 			sheet: null,
@@ -162,7 +132,11 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 		};
 	}
 
-	if (routeSlug === INGREDIENT_ROUTE_VIEWS.nutrition) {
+	if (
+		routeSlug === INGREDIENT_ROUTE_VIEWS.nutrition &&
+		parseFoodId(secondSegment ?? null) !== null &&
+		remainingSegments.length === 0
+	) {
 		return {
 			view: INGREDIENT_ROUTE_VIEWS.nutrition,
 			sheet: null,
@@ -173,13 +147,18 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 		};
 	}
 
-	if (routeSlug === INGREDIENT_ROUTE_SHEETS.manualEntry) {
+	if (
+		routeSlug === INGREDIENT_ROUTE_SHEETS.manualEntry &&
+		(secondSegment === undefined ||
+			(secondSegment === INGREDIENT_ROUTE_MODALS.moveIngredient &&
+				remainingSegments.length === 0))
+	) {
 		return {
 			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
 			modal:
-				secondSegment === INGREDIENT_ROUTE_MODALS.barcodeScanner
-					? INGREDIENT_ROUTE_MODALS.barcodeScanner
+				secondSegment === INGREDIENT_ROUTE_MODALS.moveIngredient
+					? INGREDIENT_ROUTE_MODALS.moveIngredient
 					: null,
 			foodId: null,
 			listKey: null,
@@ -187,7 +166,10 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 		};
 	}
 
-	if (routeSlug === INGREDIENT_ROUTE_SHEETS.filters) {
+	if (
+		routeSlug === INGREDIENT_ROUTE_SHEETS.filters &&
+		secondSegment === undefined
+	) {
 		return {
 			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.filters,
@@ -198,7 +180,10 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 		};
 	}
 
-	if (routeSlug === INGREDIENT_ROUTE_MODALS.barcodeScanner) {
+	if (
+		routeSlug === INGREDIENT_ROUTE_MODALS.barcodeScanner &&
+		secondSegment === undefined
+	) {
 		return {
 			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
@@ -209,44 +194,47 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 		};
 	}
 
-	if (routeSlug === "actions") {
-		const legacyListKey = getListKeyFromRouteSlug(secondSegment ?? null);
+	if (
+		routeSlug === "actions" &&
+		parseFoodId(secondSegment ?? null) !== null &&
+		remainingSegments.length === 0
+	) {
 		return {
 			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.ingredientActions,
 			modal: null,
-			foodId: parseFoodId(
-				legacyListKey ? thirdSegment ?? null : secondSegment ?? null,
-			),
-			listKey: legacyListKey ?? pathContext.listKey,
+			foodId: parseFoodId(secondSegment ?? null),
+			listKey: pathContext.listKey,
 			showListActions: true,
 		};
 	}
 
-	if (routeSlug === "rename") {
-		const legacyListKey = getListKeyFromRouteSlug(secondSegment ?? null);
+	if (
+		routeSlug === "rename" &&
+		parseFoodId(secondSegment ?? null) !== null &&
+		remainingSegments.length === 0
+	) {
 		return {
 			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.renameIngredient,
 			modal: null,
-			foodId: parseFoodId(
-				legacyListKey ? thirdSegment ?? null : secondSegment ?? null,
-			),
-			listKey: legacyListKey ?? pathContext.listKey,
+			foodId: parseFoodId(secondSegment ?? null),
+			listKey: pathContext.listKey,
 			showListActions: true,
 		};
 	}
 
-	if (routeSlug === INGREDIENT_ROUTE_SHEETS.imagePlacement) {
-		const legacyListKey = getListKeyFromRouteSlug(secondSegment ?? null);
+	if (
+		routeSlug === INGREDIENT_ROUTE_SHEETS.imagePlacement &&
+		parseFoodId(secondSegment ?? null) !== null &&
+		remainingSegments.length === 0
+	) {
 		return {
 			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.imagePlacement,
 			modal: null,
-			foodId: parseFoodId(
-				legacyListKey ? thirdSegment ?? null : secondSegment ?? null,
-			),
-			listKey: legacyListKey ?? pathContext.listKey,
+			foodId: parseFoodId(secondSegment ?? null),
+			listKey: pathContext.listKey,
 			showListActions: true,
 		};
 	}
@@ -284,14 +272,13 @@ export const buildIngredientRouteHref = (
 	const nextFoodId = patch.foodId !== undefined ? patch.foodId : current.foodId;
 	const nextListKey = patch.listKey !== undefined ? patch.listKey : current.listKey;
 	const routeListKey = nextListKey ?? getIngredientListTab(url);
-	const listBasePath = getIngredientListBasePath(url.pathname, routeListKey);
+	const listBasePath = getIngredientListBasePath(routeListKey);
 	const nextShowListActions =
 		patch.showListActions !== undefined
 			? patch.showListActions
 			: current.showListActions;
 
 	params.delete(ACTIONS_PARAM);
-	params.delete(LEGACY_LIST_TAB_PARAM);
 
 	if (nextView) {
 		nextUrl.pathname =
@@ -304,6 +291,8 @@ export const buildIngredientRouteHref = (
 	} else if (nextSheet) {
 		if (nextModal === INGREDIENT_ROUTE_MODALS.barcodeScanner) {
 			nextUrl.pathname = `${listBasePath}/${INGREDIENT_ROUTE_MODALS.barcodeScanner}`;
+		} else if (nextModal === INGREDIENT_ROUTE_MODALS.moveIngredient) {
+			nextUrl.pathname = `${listBasePath}/${INGREDIENT_ROUTE_SHEETS.manualEntry}/${INGREDIENT_ROUTE_MODALS.moveIngredient}`;
 		} else if (nextSheet === INGREDIENT_ROUTE_SHEETS.manualEntry) {
 			nextUrl.pathname = `${listBasePath}/${INGREDIENT_ROUTE_SHEETS.manualEntry}`;
 		} else if (nextSheet === INGREDIENT_ROUTE_SHEETS.filters) {
@@ -326,47 +315,6 @@ export const buildIngredientRouteHref = (
 	return `${nextUrl.pathname}${query ? `?${query}` : ""}${nextUrl.hash}`;
 };
 
-export const getCanonicalIngredientRouteHref = (url: URL) => {
-	const nextUrl = new URL(url);
-	const basePath = getIngredientRouteBasePath(url.pathname);
-	const pathContext = getIngredientPathContext(url.pathname);
-	const legacyTabKey = getListKeyFromRouteSlug(
-		url.searchParams.get(LEGACY_LIST_TAB_PARAM),
-	);
-	let listKey = legacyTabKey ?? pathContext.listKey;
-	let routeSegments = [...pathContext.routeSegments];
-
-	if (
-		["actions", "rename", INGREDIENT_ROUTE_SHEETS.imagePlacement].includes(
-			routeSegments[0] ?? "",
-		)
-	) {
-		const legacyItemListKey = getListKeyFromRouteSlug(routeSegments[1] ?? null);
-		if (legacyItemListKey) {
-			listKey = legacyItemListKey;
-			routeSegments = [routeSegments[0], routeSegments[2]].filter(Boolean);
-		}
-	}
-
-	if (
-		routeSegments[0] === INGREDIENT_ROUTE_SHEETS.manualEntry &&
-		routeSegments[1] === INGREDIENT_ROUTE_MODALS.barcodeScanner
-	) {
-		routeSegments = [INGREDIENT_ROUTE_MODALS.barcodeScanner];
-	}
-
-	nextUrl.pathname = [
-		getIngredientListBasePath(basePath, listKey),
-		...routeSegments,
-	].filter(Boolean).join("/");
-	nextUrl.searchParams.delete(LEGACY_LIST_TAB_PARAM);
-
-	const currentHref = `${url.pathname}${url.search}`;
-	const query = nextUrl.searchParams.toString();
-	const canonicalHref = `${nextUrl.pathname}${query ? `?${query}` : ""}`;
-	return canonicalHref === currentHref ? null : canonicalHref;
-};
-
 export const getIngredientRouteTitle = (
 	url: URL,
 	foodName?: string | null,
@@ -376,6 +324,9 @@ export const getIngredientRouteTitle = (
 
 	if (state.modal === INGREDIENT_ROUTE_MODALS.barcodeScanner) {
 		return "Scan a Barcode";
+	}
+	if (state.modal === INGREDIENT_ROUTE_MODALS.moveIngredient) {
+		return "Move Ingredient";
 	}
 	if (state.view === INGREDIENT_ROUTE_VIEWS.search) {
 		return "Search Ingredients";

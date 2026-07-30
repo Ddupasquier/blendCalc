@@ -40,6 +40,9 @@
 		inline = true,
 		onScannerOpen,
 		onScannerClose,
+		moveConfirmationRouteOpen = false,
+		onMoveConfirmationOpen,
+		onMoveConfirmationClose,
 		onLookupStateChange = () => {},
 	}: CustomIngredientFormProps = $props();
 
@@ -58,6 +61,7 @@
 	let saveDestinationSelect: HTMLSelectElement | null = null;
 	let lastCloseManualSignal: number | null = null;
 	let lastScanSignal: number | null = null;
+	let lastMovePromptOpen: boolean | null = null;
 	let draftRestored = $state(false);
 
 	const collapseManualEntry = () => {
@@ -337,6 +341,18 @@
 		if (!draftRestored) return;
 		persistManualEntryDraft(form.data, outcome.state.saveDestination);
 	});
+
+	$effect(() => {
+		const movePromptOpen = Boolean(outcome.state.listMovePrompt);
+		if (movePromptOpen === lastMovePromptOpen) return;
+		lastMovePromptOpen = movePromptOpen;
+
+		if (movePromptOpen) {
+			onMoveConfirmationOpen?.();
+			return;
+		}
+		onMoveConfirmationClose?.();
+	});
 </script>
 
 <section class="custom-ingredient" aria-label="Add custom ingredient">
@@ -387,7 +403,7 @@
 {/if}
 
 <ConfirmationDialog
-	open={Boolean(outcome.state.listMovePrompt)}
+	open={Boolean(outcome.state.listMovePrompt) && moveConfirmationRouteOpen}
 	title="Move ingredient?"
 	description={outcome.state.listMovePrompt
 		? `${outcome.state.listMovePrompt.food.description} is already in ${getDestinationLabel(outcome.state.listMovePrompt.source)}. Move it to ${getDestinationLabel(outcome.state.listMovePrompt.destination)}?`

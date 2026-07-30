@@ -128,7 +128,7 @@ describe("SavedIngredientCard selection mode", () => {
 
 	it("uses card taps for selection and hides unrelated actions in selection mode", async () => {
 		const onToggle = vi.fn();
-		render(SavedIngredientCard, {
+		const { container } = render(SavedIngredientCard, {
 			props: {
 				...baseProps,
 				selectionMode: true,
@@ -136,9 +136,17 @@ describe("SavedIngredientCard selection mode", () => {
 			},
 		});
 
-		await fireEvent.click(
-			screen.getByRole("button", { name: "Select Ground Beef" }),
-		);
+		const cardTarget = screen.getByRole("button", {
+			name: "Select Ground Beef",
+		});
+		const title = screen.getByText("Ground Beef");
+
+		expect(title.closest("button")).toBeNull();
+		expect(cardTarget).toHaveClass("saved-ingredient-card__select");
+		expect(container.querySelector(".saved-ingredient-card__copy"))
+			.toContainElement(title);
+
+		await fireEvent.click(cardTarget);
 
 		expect(onToggle).toHaveBeenCalledOnce();
 		expect(

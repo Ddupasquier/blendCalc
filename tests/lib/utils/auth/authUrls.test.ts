@@ -80,7 +80,11 @@ describe("authentication URLs", () => {
 			"https://blendcalc-preview-hash-dylan-dupasquiers-projects.vercel.app/auth/callback",
 		);
 		expect(
-			getCanonicalAuthPageUrl(request, new URL(request.url), "/fridge"),
+			getCanonicalAuthPageUrl(
+				request,
+				new URL(request.url),
+				"/ingredients/fridge",
+			),
 		).toBeNull();
 	});
 
@@ -103,7 +107,11 @@ describe("authentication URLs", () => {
 			"https://blendcalc-git-feature-ba-f74008-dylan-dupasquiers-projects.vercel.app",
 		);
 		expect(
-			getCanonicalAuthPageUrl(request, new URL(request.url), "/fridge"),
+			getCanonicalAuthPageUrl(
+				request,
+				new URL(request.url),
+				"/ingredients/fridge",
+			),
 		).toBeNull();
 	});
 

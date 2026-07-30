@@ -24,7 +24,7 @@ describe("reload-flash architecture", () => {
 	});
 
 	it("refreshes ingredient data without remounting or shrinking the visible list", () => {
-		const fridge = readSource("src/routes/fridge/+page.svelte");
+		const fridge = readSource("src/routes/ingredients/fridge/+page.svelte");
 		const savedList = readSource(
 			"src/lib/components/ingredients/list/SavedIngredientList/SavedIngredientList.svelte",
 		);

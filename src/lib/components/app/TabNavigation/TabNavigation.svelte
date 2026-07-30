@@ -7,22 +7,27 @@
 	const tabData = [
 		{
 			label: "Ingredients",
-			slug: "/fridge",
+			href: "/ingredients/fridge",
+			section: "/ingredients",
 			icon: "leaf",
 		},
 		{
 			label: "Mix",
-			slug: "/mix",
+			href: "/mix",
+			section: "/mix",
 			icon: "bolt",
 		},
 		{
 			label: "Saved",
-			slug: "/saved",
+			href: "/saved",
+			section: "/saved",
 			icon: "bookmark",
 		},
 	];
 
-	const isActive = (slug: string) => page.url.pathname === slug;
+	const isActive = (section: string) =>
+		page.url.pathname === section ||
+		page.url.pathname.startsWith(`${section}/`);
 </script>
 
 <nav class="tab-nav" aria-label="Main navigation">
@@ -30,9 +35,9 @@
 		{#each tabData as tab}
 			<a
 				class="tab-btn"
-				class:active={isActive(tab.slug)}
-				aria-current={isActive(tab.slug) ? "page" : undefined}
-				href={tab.slug}
+				class:active={isActive(tab.section)}
+				aria-current={isActive(tab.section) ? "page" : undefined}
+				href={tab.href}
 			>
 				{#if tab.icon === "leaf"}
 					<Leaf class="tab-btn__icon" />

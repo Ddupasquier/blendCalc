@@ -3,12 +3,13 @@
 	import type { PopoverProps } from "./types";
 
 	let {
+		open,
 		buttonLabel = "Details",
 		title = "",
 		children,
+		onOpen,
+		onClose,
 	}: PopoverProps = $props();
-
-	let open = $state(false);
 </script>
 
 <div class="popover">
@@ -16,7 +17,7 @@
 		class="popover__trigger"
 		type="button"
 		aria-expanded={open}
-		onclick={() => (open = !open)}
+		onclick={() => (open ? onClose() : onOpen())}
 	>
 		{buttonLabel}
 	</button>
@@ -27,7 +28,7 @@
 				class="popover__close"
 				size="small"
 				label={`Close ${title || buttonLabel}`}
-				onclick={() => (open = false)}
+				onclick={onClose}
 			/>
 			{#if title}
 				<h5>{title}</h5>

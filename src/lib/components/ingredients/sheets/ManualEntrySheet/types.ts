@@ -5,6 +5,9 @@ export type ManualEntrySheetProps = {
 	scanSignal?: number;
 	onClose: () => void;
 	onScannerClose?: () => void;
+	moveConfirmationRouteOpen?: boolean;
+	onMoveConfirmationOpen?: () => void;
+	onMoveConfirmationClose?: () => void;
 	onCreate: ManualEntryCreateHandler;
 	onLookupStateChange?: (lookingUp: boolean) => void;
 };

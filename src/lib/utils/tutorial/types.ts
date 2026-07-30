@@ -5,7 +5,7 @@ export type TutorialStep = {
 	description: string;
 	points: string[];
 	icon: TutorialStepIconName;
-	route: "/fridge" | "/mix" | "/saved" | "/profile";
+	route: "/ingredients/fridge" | "/mix" | "/saved" | "/profile";
 	target: string;
 	targetLabel: string;
 };
