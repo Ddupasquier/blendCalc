@@ -30,6 +30,7 @@
 		provenanceOptions,
 		selectedFood,
 		selectedFoodShowListActions,
+		correctionFood,
 		sortOptions,
 		canAdjustImagePlacement,
 		onAddSearchResult,
@@ -42,6 +43,8 @@
 		onOpenMoveConfirmation,
 		onCloseMoveConfirmation,
 		onCloseNutrition,
+		onCloseCorrection,
+		onOpenCorrection,
 		onCloseRename,
 		onCloseSearch,
 		onCreateManualIngredient,
@@ -151,6 +154,17 @@
 			{onImagePlacementSave}
 			{provenanceOptions}
 			onClose={onCloseNutrition}
+			onReportIncorrectInformation={onOpenCorrection}
 		/>
 	{/if}
 </RightSheet>
+
+<ManualEntrySheet
+	open={correctionFood !== null}
+	initialFood={correctionFood ?? undefined}
+	submissionIntent="catalog_correction"
+	catalogSubmissionOnly
+	onClose={onCloseCorrection}
+	onCreate={onCreateManualIngredient}
+	onLookupStateChange={onLookupStateChange}
+/>

@@ -35,6 +35,7 @@ export type IngredientRoutePopinsProps = {
 	provenanceOptions: readonly IngredientProvenanceOption[];
 	selectedFood: FdcFood | null;
 	selectedFoodShowListActions: boolean;
+	correctionFood: FdcFood | null;
 	sortOptions: readonly IngredientSortOption[];
 	canAdjustImagePlacement: boolean;
 	onAddSearchResult: (food: FdcFood) => void | Promise<void>;
@@ -47,6 +48,8 @@ export type IngredientRoutePopinsProps = {
 	onOpenMoveConfirmation: () => void;
 	onCloseMoveConfirmation: () => void;
 	onCloseNutrition: () => void;
+	onCloseCorrection: () => void;
+	onOpenCorrection: () => void;
 	onCloseRename: () => void;
 	onCloseSearch: () => void;
 	onCreateManualIngredient: (

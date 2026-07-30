@@ -1,8 +1,20 @@
 @use "../../../../../styles/variables" as *;
 
 .product-information-panel {
+	display: grid;
+	gap: $app-gap-md;
 	min-width: 0;
 	color: $app-shell-text-primary;
+}
+
+.product-information-panel__correction {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.product-information-panel__correction p {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
 }
 
 .product-information-panel__content {

@@ -30,6 +30,7 @@
 		persistManualEntryDraft,
 		readManualEntryDraft,
 	} from "./manualEntryDraft";
+	import { getManualEntryFormStateFromFood } from "$lib/components/ingredients/manual-entry/utils/formState";
 
 	let {
 		onCreate,
@@ -44,6 +45,9 @@
 		onMoveConfirmationOpen,
 		onMoveConfirmationClose,
 		onLookupStateChange = () => {},
+		initialFood,
+		submissionIntent = "catalog_share",
+		catalogSubmissionOnly = false,
 	}: CustomIngredientFormProps = $props();
 
 	const volumeOptions = SERVING_MEASURE_OPTIONS.filter(
@@ -106,6 +110,7 @@
 		barcode,
 		outcome,
 		onReset: resetForm,
+		getCatalogSubmissionOnly: () => catalogSubmissionOnly,
 	});
 
 	const goToStep = async (step: string) => {
@@ -189,6 +194,7 @@
 		onBarcodeBlur: barcode.checkManualBarcodeReference,
 		onApplyBarcodeSuggestion: barcode.applyBarcodeReferenceSuggestion,
 		onKeepManualBarcodeEntry: barcode.keepManualBarcodeEntry,
+		onReportBarcodeIssue: barcode.beginBarcodeCorrection,
 		onNameInput: (element) => (ingredientNameInput = element),
 		onNext: goNext,
 	});
@@ -281,10 +287,12 @@
 		savedMessage: outcome.state.savedMessage,
 		catalogMessage: submission.state.catalogMessage,
 		saving: submission.state.saving,
+		catalogSubmissionOnly,
 		onShareChange: barcode.handleShareChange,
 		onApplyVerifiedBarcode: barcode.applyVerifiedBarcodeForSharing,
 		onDetachBarcodeForPrivateSave:
 			barcode.detachMismatchedBarcodeForPrivateSave,
+		onSubmitBarcodeCorrection: barcode.beginBarcodeCorrectionForSharing,
 		onFrontPhotoChange: (file) => (form.data.frontPhoto = file),
 		onImagePlacementChange: (value) => (form.data.imagePlacement = value),
 		onNutritionPhotoChange: (file) => (form.data.nutritionPhoto = file),
@@ -297,13 +305,20 @@
 		onUndo: outcome.undoLastOutcomeAdd,
 		onBack: validation.goBack,
 		onSubmit: submission.handleSubmit,
+		onCatalogSubmissionComplete: () => onClose?.(),
 	});
 
 	onMount(() => {
-		const draft = readManualEntryDraft();
-		if (draft) {
-			form.restore(draft.form);
-			outcome.state.saveDestination = draft.saveDestination;
+		if (initialFood) {
+			form.restore(
+				getManualEntryFormStateFromFood(initialFood, submissionIntent),
+			);
+		} else {
+			const draft = readManualEntryDraft();
+			if (draft) {
+				form.restore(draft.form);
+				outcome.state.saveDestination = draft.saveDestination;
+			}
 		}
 		draftRestored = true;
 		void referenceData.load();
@@ -338,7 +353,7 @@
 	});
 
 	$effect(() => {
-		if (!draftRestored) return;
+		if (!draftRestored || initialFood) return;
 		persistManualEntryDraft(form.data, outcome.state.saveDestination);
 	});
 
@@ -355,7 +370,12 @@
 	});
 </script>
 
-<section class="custom-ingredient" aria-label="Add custom ingredient">
+<section
+	class="custom-ingredient"
+	aria-label={catalogSubmissionOnly
+		? "Correct product information"
+		: "Add custom ingredient"}
+>
 	<div class="custom-ingredient__options">
 		{#if showScanButton}
 			<ManualEntryScanOption

@@ -16,6 +16,7 @@
 		brandName = "",
 		category = "Ingredient category",
 		required = false,
+		requireFreshPhoto = false,
 		description = "",
 		onFrontPhotoChange,
 		onPlacementChange,
@@ -37,16 +38,21 @@
 	});
 
 	const trustedImageUrl = $derived(pickFoodFullImageUrl(trustedImage));
-	const previewUrl = $derived(trustedImageUrl || objectUrl);
+	const previewUrl = $derived(objectUrl || trustedImageUrl);
 </script>
 
 <section class="product-image-evidence" aria-labelledby="product-image-title">
 	<div>
 		<strong id="product-image-title">Product image</strong>
-		{#if trustedImageUrl}
+		{#if trustedImageUrl && !requireFreshPhoto}
 			<p>
 				Using a trusted DB/API image. User photo upload is hidden so moderation
 				does not need to review a duplicate image.
+			</p>
+		{:else if trustedImageUrl}
+			<p>
+				Add a current front package photo so the moderator can compare this
+				correction with the existing product.
 			</p>
 		{:else}
 			<p>
@@ -65,10 +71,10 @@
 			{brandName}
 			{category}
 			title="Card image preview"
-			description={trustedImageUrl
+			description={trustedImageUrl && !objectUrl
 				? "Trusted images use the saved placement."
 				: "Drag the image in the card preview or use the controls below."}
-			editable={!trustedImageUrl && Boolean(objectUrl)}
+			editable={Boolean(objectUrl)}
 			smartPlacementSource={frontPhoto ?? previewUrl}
 			value={placement}
 			onChange={onPlacementChange}
@@ -82,7 +88,7 @@
 		{/if}
 	{/if}
 
-	{#if !trustedImageUrl}
+	{#if !trustedImageUrl || requireFreshPhoto}
 		<PhotoUploadInput
 			id="custom-product-front-photo"
 			name="custom-product-front-photo"

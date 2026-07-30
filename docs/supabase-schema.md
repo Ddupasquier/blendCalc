@@ -483,7 +483,7 @@ Stores user-submitted products before/after moderation.
 
 | Table | Documented columns |
 | --- | --- |
-| `shared_product_submissions` | `id`, `submitted_by`, `barcode`, `product_name`, `brand_owner`, `category_option_id`, `food`, `consent_to_share`, `status`, `verification_status`, `matched_source`, `matched_reference`, `validation_report`, `evidence_paths`, `evidence_complete`, `submission_kind`, `target_shared_product_id`, `base_revision_id`, `change_summary`, `label_observed_at`, `reviewed_by`, `reviewed_at`, `review_note`, `created_at`, `updated_at` |
+| `shared_product_submissions` | `id`, `submitted_by`, `barcode`, `product_name`, `brand_owner`, `category_option_id`, `food`, `consent_to_share`, `status`, `verification_status`, `matched_source`, `matched_reference`, `validation_report`, `evidence_paths`, `evidence_complete`, `submission_intent`, `submission_kind`, `target_shared_product_id`, `base_revision_id`, `change_summary`, `label_observed_at`, `reviewed_by`, `reviewed_at`, `review_note`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -502,10 +502,15 @@ Notes:
   and future remapping.
 - `submission_kind` is `new_product` or `product_update`. Product updates must point to
   both the active shared product and the exact base revision used for comparison.
+- `submission_intent` distinguishes ordinary catalog sharing from an explicit
+  `catalog_correction`. A correction may reach moderation even when its differences
+  would be too large for an ordinary same-barcode submission.
 - `change_summary` stores structured before/after values and exact-source research
   results. `label_observed_at` records when blendCalc received the label; it does not
   claim to be the manufacturer's effective date.
-- A partial unique index allows only one pending update for a shared product at a time.
+- A user may have only one pending correction against a specific base revision.
+  Different users may independently submit supporting or conflicting package evidence;
+  approving one correction makes the others stale through the existing revision guard.
 
 ### `shared_products`
 
@@ -591,6 +596,11 @@ is the authenticated, bounded API read over publication-ready products; it retur
 revision metadata and structured changes, never revision snapshots, private evidence,
 or reviewer identities. Historical rows are left with empty changes when no retained
 evidence can prove the difference.
+
+Product updates merge only the fields named in the reviewed `change_summary`.
+Unsubmitted nutrients and metadata remain canonical, unchanged selected provenance is
+retained, and the shared row keeps its existing whole-product source identity. New
+label-review provenance replaces only the approved field paths.
 
 ### Product evidence and cache tables
 

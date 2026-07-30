@@ -6,6 +6,7 @@ import {
 import type { FdcFood } from "$lib/utils/food/types";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import { submitSharedProduct } from "$lib/utils/products/catalog";
+import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
 import { notifySmoothieListsChanged } from "$lib/utils/storage/client/smoothieLists";
 
 export type ManualEntrySharedProductPhotos = {
@@ -38,6 +39,8 @@ export const saveManualEntryCustomFood = async ({
 	photos,
 	reviewFlags,
 	useIngredient,
+	submissionIntent = "catalog_share",
+	catalogSubmissionOnly = false,
 }: {
 	food: FdcFood;
 	name: string;
@@ -47,7 +50,34 @@ export const saveManualEntryCustomFood = async ({
 	photos: ManualEntrySharedProductPhotos;
 	reviewFlags: string[];
 	useIngredient: (food: FdcFood, alreadySaved?: boolean) => Promise<boolean>;
+	submissionIntent?: CatalogSubmissionIntent;
+	catalogSubmissionOnly?: boolean;
 }): Promise<ManualEntrySubmitFlowResult> => {
+	if (catalogSubmissionOnly) {
+		if (!normalizedBarcode || !shareWithCatalog) {
+			return {
+				status: "error",
+				error: "Keep community sharing on to submit this correction for review.",
+			};
+		}
+		try {
+			const submission = await submitSharedProduct(food, photos, {
+				reviewFlags,
+				intent: submissionIntent,
+			});
+			return {
+				status: "complete",
+				catalogMessage: submission.message,
+				resetForm: false,
+			};
+		} catch {
+			return {
+				status: "error",
+				error: "We couldn’t submit this correction. Check your connection and try again.",
+			};
+		}
+	}
+
 	const result = await saveCustomFood(food);
 
 	if (result === "duplicate-name") {
@@ -99,7 +129,10 @@ export const saveManualEntryCustomFood = async ({
 		(shareWithCatalog || submitForCatalog)
 	) {
 		try {
-			const submission = await submitSharedProduct(food, photos, { reviewFlags });
+			const submission = await submitSharedProduct(food, photos, {
+				reviewFlags,
+				intent: submissionIntent,
+			});
 			catalogMessage = submission.message;
 			notifySmoothieListsChanged();
 		} catch {

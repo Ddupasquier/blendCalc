@@ -12,4 +12,5 @@ export type NutritionPanelProps = {
 	canAdjustImagePlacement?: boolean;
 	onImagePlacementSave?: ImagePlacementSaveHandler;
 	provenanceOptions?: readonly IngredientProvenanceOption[];
+	onReportIncorrectInformation?: () => void;
 };

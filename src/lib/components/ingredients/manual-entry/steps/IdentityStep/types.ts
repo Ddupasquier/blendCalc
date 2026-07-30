@@ -24,6 +24,7 @@ export type IdentityStepProps = {
 	onBarcodeBlur: () => void | Promise<void>;
 	onApplyBarcodeSuggestion: () => void | Promise<void>;
 	onKeepManualBarcodeEntry: () => void;
+	onReportBarcodeIssue: () => void;
 	onNameInput?: (element: HTMLInputElement) => void;
 	onNext: () => void | Promise<void>;
 };

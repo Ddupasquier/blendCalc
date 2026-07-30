@@ -140,6 +140,16 @@ reports create a traceable correction decision; any resulting product or policy 
 uses its own reviewed workflow and, for policy changes, a new compatibility policy
 version.
 
+## Product correction reports
+
+Explicit product-correction reports are identified separately from ordinary catalog
+updates. Reviewers compare the submitted package evidence with the active product and
+the exact base revision.
+
+Approval merges only the reviewed changed fields, preserves unsubmitted canonical data
+and provenance, and appends the normal immutable revision. If the active product changed
+while the report waited, approval stops as stale and the report must be compared again.
+
 ## Enable future-signup blocking
 
 The migration creates `public.reject_blocked_signup(event jsonb)`, but Supabase must be

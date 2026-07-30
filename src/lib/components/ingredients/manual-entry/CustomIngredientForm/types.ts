@@ -1,6 +1,8 @@
 import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 import type { ManualEntryFormResetState } from "$lib/components/ingredients/manual-entry/utils/formState";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { FdcFood } from "$lib/utils/food/types";
+import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
 
 export type CustomIngredientFormProps = {
 	onCreate: ManualEntryCreateHandler;
@@ -15,6 +17,9 @@ export type CustomIngredientFormProps = {
 	onMoveConfirmationOpen?: () => void;
 	onMoveConfirmationClose?: () => void;
 	onLookupStateChange?: (lookingUp: boolean) => void;
+	initialFood?: FdcFood;
+	submissionIntent?: CatalogSubmissionIntent;
+	catalogSubmissionOnly?: boolean;
 };
 
 export type ManualEntryDraftData = Omit<
