@@ -1605,4 +1605,80 @@ describe("CustomIngredientForm", () => {
 			"Unfinished ingredient",
 		);
 	});
+
+	it("submits a catalog correction without creating another private ingredient", async () => {
+		const onCreate = vi.fn();
+		const initialFood = createCustomFood({
+			name: "Current catalog cereal",
+			servingWeightGrams: 30,
+			nutrients: makeTestNutrients({
+				calories: 120,
+				fat: 2,
+				carbs: 24,
+				fiber: 3,
+				sugar: 6,
+				protein: 4,
+			}),
+			barcode: "04006381333931",
+			barcodeSource: "community",
+			categories: ["Jams"],
+			categoryOptionId: "jams",
+			customFood: false,
+		});
+
+		render(CustomIngredientForm, {
+			props: {
+				onCreate,
+				initialFood,
+				submissionIntent: "catalog_correction",
+				catalogSubmissionOnly: true,
+				inline: false,
+				showScanButton: false,
+			},
+		});
+
+		await waitFor(() =>
+			expect(screen.getByLabelText(/food name/i)).toHaveValue(
+				"Current Catalog Cereal",
+			),
+		);
+		await goToStep("Share");
+
+		expect(
+			screen.queryByLabelText(/share with community/i),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByLabelText(/add after saving/i),
+		).not.toBeInTheDocument();
+
+		const photo = new File(
+			[new Uint8Array([0xff, 0xd8, 0xff])],
+			"label.jpg",
+			{ type: "image/jpeg" },
+		);
+		for (const label of [
+			/front of package/i,
+			/nutrition facts label/i,
+			/^barcode$/i,
+		]) {
+			await fireEvent.change(screen.getByLabelText(label), {
+				target: { files: [photo] },
+			});
+		}
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: /submit correction/i }),
+		);
+
+		await waitFor(() => expect(submitSharedProduct).toHaveBeenCalledOnce());
+		expect(submitSharedProduct.mock.calls[0][2]).toMatchObject({
+			intent: "catalog_correction",
+		});
+		expect(customFoodMocks.saveCustomFood).not.toHaveBeenCalled();
+		expect(smoothieListMocks.addFoodToSmoothieList).not.toHaveBeenCalled();
+		expect(onCreate).not.toHaveBeenCalled();
+		expect(
+			screen.getByRole("button", { name: /done/i }),
+		).toBeInTheDocument();
+	});
 });

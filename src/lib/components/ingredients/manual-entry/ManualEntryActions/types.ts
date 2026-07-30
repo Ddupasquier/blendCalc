@@ -3,4 +3,5 @@ export type ManualEntryActionsProps = {
 	onNext: () => void | Promise<void>;
 	nextLabel?: string;
 	busy?: boolean;
+	showBack?: boolean;
 };

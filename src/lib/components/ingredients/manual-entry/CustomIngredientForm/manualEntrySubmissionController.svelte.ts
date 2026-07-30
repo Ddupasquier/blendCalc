@@ -15,6 +15,7 @@ type ManualEntrySubmissionControllerOptions = {
 	barcode: ManualEntryBarcodeController;
 	outcome: ManualEntryOutcomeController;
 	onReset: () => void;
+	getCatalogSubmissionOnly?: () => boolean;
 };
 
 export const createManualEntrySubmissionController = ({
@@ -24,6 +25,7 @@ export const createManualEntrySubmissionController = ({
 	barcode,
 	outcome,
 	onReset,
+	getCatalogSubmissionOnly = () => false,
 }: ManualEntrySubmissionControllerOptions) => {
 	const state = $state({
 		error: "",
@@ -50,6 +52,8 @@ export const createManualEntrySubmissionController = ({
 			volumeAmountRequiredMessage,
 			barcode: form.data.barcode,
 			requiresCatalogEvidence: barcode.requiresCatalogEvidence,
+			requiresFreshFrontPhoto:
+				form.data.submissionIntent === "catalog_correction",
 			hasTrustedProductImage: barcode.hasTrustedProductImage,
 			frontPhoto: form.data.frontPhoto,
 			nutritionPhoto: form.data.nutritionPhoto,
@@ -135,6 +139,7 @@ export const createManualEntrySubmissionController = ({
 
 		state.saving = true;
 		try {
+			const catalogSubmissionOnly = getCatalogSubmissionOnly();
 			const result = await saveManualEntryCustomFood({
 				food,
 				name: form.data.name,
@@ -151,6 +156,8 @@ export const createManualEntrySubmissionController = ({
 				},
 				reviewFlags: barcode.getReferenceReviewFlags(),
 				useIngredient: outcome.useIngredient,
+				submissionIntent: form.data.submissionIntent,
+				catalogSubmissionOnly,
 			});
 
 			if (result.status === "error") {
@@ -160,6 +167,7 @@ export const createManualEntrySubmissionController = ({
 			if (result.status === "cancelled") return;
 
 			state.catalogMessage = result.catalogMessage;
+			if (catalogSubmissionOnly) return;
 			if (result.resetForm) onReset();
 		} finally {
 			state.saving = false;

@@ -7,11 +7,17 @@
 		onNext,
 		nextLabel = "Continue",
 		busy = false,
+		showBack = true,
 	}: ManualEntryActionsProps = $props();
 </script>
 
-<div class="manual-entry-actions">
-	<RoundedActionButton variant="neutral" onclick={onBack}>Back</RoundedActionButton>
+<div
+	class="manual-entry-actions"
+	class:manual-entry-actions--single={!showBack}
+>
+	{#if showBack}
+		<RoundedActionButton variant="neutral" onclick={onBack}>Back</RoundedActionButton>
+	{/if}
 	<RoundedActionButton onclick={onNext} {busy}>{nextLabel}</RoundedActionButton>
 </div>
 

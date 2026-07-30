@@ -12,6 +12,11 @@ import {
 	compareNormalizedFoods,
 	normalizeComparisonText,
 } from "$lib/utils/products/productDifferenceEngine";
+import {
+	getCatalogUpdateProvenancePaths,
+	mergeCatalogUpdateFood,
+} from "$lib/utils/products/catalogUpdateMerge";
+import type { CatalogSubmissionFieldChange } from "$lib/utils/products/catalogSubmissionComparison";
 import { createCatalogFoodFromDraft } from "./catalogFood.server";
 import type { ResolvedFoodCategory } from "./categoryMapping.server";
 
@@ -440,6 +445,35 @@ export const buildModeratorReviewedCatalogBundle = (
 			"moderator-reviewed",
 			"label-review",
 		),
+		conflicts: [],
+	};
+};
+
+export const buildModeratorReviewedCatalogUpdateBundle = (
+	currentFood: FdcFood,
+	submittedFood: FdcFood,
+	changes: readonly CatalogSubmissionFieldChange[],
+): CatalogVerificationBundle => {
+	const canonicalFood = preserveFoodMetadata(
+		mergeCatalogUpdateFood(currentFood, submittedFood, changes),
+	);
+	const submittedObservationFood = preserveFoodMetadata(submittedFood);
+	const observation = createObservation({
+		key: "user-label",
+		source: "user-label",
+		sourceLicense: "submitted-with-consent",
+		food: submittedObservationFood,
+	});
+	const changedPaths = getCatalogUpdateProvenancePaths(changes);
+	return {
+		canonicalFood,
+		observations: [observation],
+		provenance: addFoodProvenance(
+			submittedObservationFood,
+			"user-label",
+			"moderator-reviewed",
+			"label-review",
+		).filter((entry) => changedPaths.has(entry.fieldPath)),
 		conflicts: [],
 	};
 };

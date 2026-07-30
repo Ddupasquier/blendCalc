@@ -98,8 +98,9 @@ export const createManualEntryBarcodeController = ({
 	);
 	const requiresCatalogEvidence = $derived(
 		form.data.shareWithCatalog &&
-			(form.data.barcodeSource === "manual" ||
-				Boolean(hasSharedCatalogReference && referenceHasChanges)),
+			(form.data.submissionIntent === "catalog_correction" ||
+				form.data.barcodeSource === "manual" ||
+					Boolean(hasSharedCatalogReference && referenceHasChanges)),
 	);
 	const trustedProductImage = $derived(
 		pickFoodFullImageUrl(form.data.image) ? form.data.image : undefined,
@@ -136,8 +137,10 @@ export const createManualEntryBarcodeController = ({
 			: "",
 	);
 	const shareHelpMessage = $derived(
-		hasSharedCatalogReference && referenceHasChanges
-			? "Submit your edits for moderator review. Your private ingredient can still be saved now."
+		form.data.submissionIntent === "catalog_correction"
+			? "Show us what changed and add clear package photos. Your correction will be reviewed before the shared product changes."
+			: hasSharedCatalogReference && referenceHasChanges
+				? "Submit your edits for moderator review. Your private ingredient can still be saved now."
 			: canShareWithCatalog
 				? "Make this ingredient available to other users. All submissions are reviewed for accuracy."
 				: "Add a valid UPC or barcode if you want to submit this ingredient for shared search.",
@@ -184,7 +187,9 @@ export const createManualEntryBarcodeController = ({
 		shareValidationGeneration += 1;
 		form.data.barcodeShareValidation = null;
 		form.data.validatingBarcodeShare = false;
-		form.data.shareWithCatalog = false;
+		if (form.data.submissionIntent !== "catalog_correction") {
+			form.data.shareWithCatalog = false;
+		}
 	};
 
 	const checkManualBarcodeReference = async () => {
@@ -267,6 +272,7 @@ export const createManualEntryBarcodeController = ({
 	const setManualBarcode = (value: string) => {
 		invalidateBarcodeLookup();
 		form.data.keptUnmatchedPrivate = false;
+		form.data.submissionIntent = "catalog_share";
 		form.data.barcode = value;
 		form.data.barcodeProvenance = value.trim()
 			? { captureMethod: "manual-entry" }
@@ -294,6 +300,7 @@ export const createManualEntryBarcodeController = ({
 
 	const applyBarcodeProductDraft = (draft: BarcodeProductDraft) => {
 		form.data.keptUnmatchedPrivate = false;
+		form.data.submissionIntent = "catalog_share";
 		clearBarcodeShareValidation();
 		Object.assign(form.data, getBarcodeDraftState(draft));
 		form.data.manualTouchedNutrientIds = {};
@@ -328,6 +335,35 @@ export const createManualEntryBarcodeController = ({
 		form.data.barcodeMessage = getKeepManualBarcodeMessage(
 			form.data.barcodeReferenceDraft,
 		);
+	};
+
+	const beginBarcodeCorrection = () => {
+		const draft = form.data.barcodeReferenceDraft;
+		if (!draft) return;
+		clearBarcodeShareValidation();
+		form.data.keptUnmatchedPrivate = false;
+		form.data.submissionIntent = "catalog_correction";
+		form.data.shareWithCatalog = true;
+		form.data.barcodeReferenceSourceDraft = draft;
+		form.data.barcodeReferenceAcceptedBarcode = draft.barcode;
+		form.data.barcodeReferenceDraft = null;
+		form.data.barcodeSource =
+			draft.source === "shared-catalog" ? "community" : draft.source;
+		form.data.barcodeMessage =
+			"Enter what the current package shows. Clear package, nutrition, and barcode photos will be required before this correction can be reviewed.";
+	};
+
+	const beginBarcodeCorrectionForSharing = () => {
+		if (form.data.barcodeShareValidation?.status !== "name-mismatch") return;
+		const draft = form.data.barcodeShareValidation.draft;
+		form.data.barcodeReferenceSourceDraft = draft;
+		form.data.barcodeReferenceAcceptedBarcode = draft.barcode;
+		form.data.barcodeShareValidation = null;
+		form.data.keptUnmatchedPrivate = false;
+		form.data.submissionIntent = "catalog_correction";
+		form.data.shareWithCatalog = true;
+		form.data.barcodeMessage =
+			"Your version will be reviewed as a correction. Add clear package, nutrition, and barcode photos before submitting.";
 	};
 
 	const handleShareChange = async (checked: boolean) => {
@@ -394,6 +430,7 @@ export const createManualEntryBarcodeController = ({
 		if (form.data.barcodeShareValidation?.status !== "name-mismatch") return;
 		const verifiedName = form.data.barcodeShareValidation.draft.name;
 		setManualBarcode("");
+		form.data.submissionIntent = "catalog_share";
 		form.data.keptUnmatchedPrivate = true;
 		form.data.frontPhoto = null;
 		form.data.nutritionPhoto = null;
@@ -466,6 +503,11 @@ export const createManualEntryBarcodeController = ({
 	};
 
 	const getReferenceReviewFlags = () => [
+		...(form.data.submissionIntent === "catalog_correction"
+			? [
+					"The user reports that the current shared or source product information is incorrect, outdated, or incomplete. Compare only the submitted changes against the current revision and package evidence.",
+				]
+			: []),
 		...getBarcodeReferenceReviewFlags({
 			shareWithCatalog: form.data.shareWithCatalog,
 			barcode: form.data.barcode,
@@ -559,6 +601,8 @@ export const createManualEntryBarcodeController = ({
 		detachMismatchedBarcodeForPrivateSave,
 		handleBarcodeDetected,
 		getReferenceReviewFlags,
+		beginBarcodeCorrection,
+		beginBarcodeCorrectionForSharing,
 		reset,
 		destroy,
 	};

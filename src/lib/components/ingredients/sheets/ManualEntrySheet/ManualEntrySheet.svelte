@@ -15,6 +15,9 @@
 		onMoveConfirmationClose,
 		onCreate,
 		onLookupStateChange = () => {},
+		initialFood,
+		submissionIntent = "catalog_share",
+		catalogSubmissionOnly = false,
 	}: ManualEntrySheetProps = $props();
 
 	const handleClose = () => {
@@ -30,9 +33,13 @@
 
 <BottomSheet
 	{open}
-	title="Enter Manually"
+	title={submissionIntent === "catalog_correction"
+		? "Correct Product Information"
+		: "Enter Manually"}
 	titleId="manual-entry-sheet-title"
-	label="Enter a custom ingredient manually"
+	label={submissionIntent === "catalog_correction"
+		? "Submit corrected product information for review"
+		: "Enter a custom ingredient manually"}
 	showBack={false}
 	fill
 	onClose={handleClose}
@@ -48,5 +55,8 @@
 		inline={false}
 		showScanButton={false}
 		{onLookupStateChange}
+		{initialFood}
+		{submissionIntent}
+		{catalogSubmissionOnly}
 	/>
 </BottomSheet>

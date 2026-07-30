@@ -10,6 +10,7 @@ import {
 	type ProductEvidencePaths,
 } from "$lib/server/products/productEvidence.server";
 import type { FdcFood } from "$lib/utils/food/types";
+import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
 import {
 	CURRENT_IMAGE_PLACEMENT_VERSION,
 	constrainCardImagePlacement,
@@ -66,6 +67,15 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	);
 	if (!consentToShare) throwAppError(400, "CATALOG_CONSENT_REQUIRED");
 	const reviewFlagsValue = formData.get("reviewFlags");
+	const submissionIntentValue = String(
+		formData.get("submissionIntent") ?? "catalog_share",
+	);
+	const submissionIntent: CatalogSubmissionIntent =
+		submissionIntentValue === "catalog_correction"
+			? "catalog_correction"
+			: submissionIntentValue === "catalog_share"
+				? "catalog_share"
+				: throwAppError(400, "CATALOG_SUBMISSION_INVALID");
 	let reviewFlags: string[] = [];
 	if (reviewFlagsValue) {
 		try {
@@ -155,6 +165,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		const result = await submitProductForCatalog(user.id, submissionFood, evidencePaths, {
 			reviewFlags,
 			frontImageCrop,
+			intent: submissionIntent,
 		});
 		if (result.evidenceAccepted !== true) {
 			await deleteProductEvidence(evidencePaths);

@@ -32,6 +32,7 @@
 		canAdjustImagePlacement = false,
 		onImagePlacementSave,
 		provenanceOptions = [],
+		onReportIncorrectInformation,
 	}: NutritionDetailViewProps = $props();
 
 	let viewingGrams = $state(DEFAULT_NUTRITION_VIEWING_GRAMS);
@@ -121,6 +122,7 @@
 				{canAdjustImagePlacement}
 				{onImagePlacementSave}
 				{provenanceOptions}
+				{onReportIncorrectInformation}
 			/>
 		</div>
 	</ViewBody>

@@ -338,6 +338,12 @@ Preserve:
 - Add to Shopping List button.
 - Successful action feedback.
 - Food preference warnings near the preview when relevant.
+- Products with a barcode expose `Report incorrect information`. The correction opens
+  as a routed child sheet, starts from the current canonical product, requires current
+  front-package, nutrition-label, and barcode photos, and saves no duplicate private
+  ingredient or list row.
+- Submitting a correction leaves the active catalog product unchanged while the report
+  waits for moderation. The completed state remains visible until the user closes it.
 
 On mobile:
 

@@ -9,6 +9,7 @@ export type ProductImageEvidenceInputProps = {
 	brandName?: string;
 	category?: string;
 	required?: boolean;
+	requireFreshPhoto?: boolean;
 	description?: string;
 	onFrontPhotoChange: (file: File | null) => void;
 	onPlacementChange: (value: ImagePlacementValue) => void;
