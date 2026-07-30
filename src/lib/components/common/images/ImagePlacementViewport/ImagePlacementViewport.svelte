@@ -15,6 +15,7 @@
 		alt,
 		value,
 		horizontalMovement = "symmetric",
+		loading = "lazy",
 		onGeometryChange,
 		onError,
 	}: ImagePlacementViewportProps = $props();
@@ -100,7 +101,7 @@
 		{alt}
 		style={value.placementVersion <= 1 ? legacyStyle : geometryStyle}
 		draggable="false"
-		loading="lazy"
+		{loading}
 		decoding="async"
 	/>
 </span>

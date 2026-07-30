@@ -211,7 +211,9 @@ Data to preserve from scanned products when available:
 - Labels, categories, and dietary tags.
 - Source/provenance and confidence.
 - Source-backed product image metadata when available, including license and
-  attribution, rendered only after it is stored in Supabase.
+  attribution, rendered only after it is stored in Supabase. A saved moderator rotation
+  corrects the full detail image orientation as well as the ingredient-card image;
+  card crop, zoom, and position remain card-only.
 - Product evidence photos when needed for moderation.
 
 ### Manual Custom Ingredient Entry

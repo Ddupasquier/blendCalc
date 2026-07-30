@@ -369,7 +369,7 @@ Check the existing primitive before writing markup or SCSS.
 | Privileged action container           | `PrivilegedActionGroup`      | Groups moderator/admin actions and owns one crown                                                   |
 | Numeric amount                        | `NumberInput`                | Shared number semantics and control styling                                                         |
 | Accelerating amount control           | `AcceleratingStepButton`     | Tap-by-one and progressive hold behavior                                                            |
-| Full product image                    | `ProductImageFrame`          | Contained, non-stretched detailed image                                                             |
+| Full product image                    | `ProductImageFrame`          | Contained, non-stretched detailed image using any saved moderator orientation correction             |
 | Image placement                       | `ImagePlacementEditor`       | Shared preview, presets, drag/zoom, and restore flow                                                |
 
 When a need does not fit this table, first decide whether an existing component should
