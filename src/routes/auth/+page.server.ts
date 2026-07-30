@@ -18,9 +18,12 @@ import {
 	clearPasswordUpgrade,
 	requirePasswordUpgrade,
 } from "$lib/utils/auth/passwordUpgrade";
+import { readLimitedFormData } from "$lib/server/security/requestBody.server";
+
+const AUTH_FORM_MAX_BYTES = 32 * 1024;
 
 const getEmailAuthFields = async (request: Request) => {
-	const formData = await request.formData();
+	const formData = await readLimitedFormData(request, AUTH_FORM_MAX_BYTES);
 	const email = String(formData.get("email") ?? "").trim().toLowerCase();
 	const password = String(formData.get("password") ?? "");
 	const passwordConfirmation = String(
@@ -32,7 +35,7 @@ const getEmailAuthFields = async (request: Request) => {
 };
 
 const getEmailField = async (request: Request) => {
-	const formData = await request.formData();
+	const formData = await readLimitedFormData(request, AUTH_FORM_MAX_BYTES);
 	return {
 		email: String(formData.get("email") ?? "").trim().toLowerCase(),
 		next: getSafeAuthNextPath(formData.get("next")),
@@ -242,7 +245,7 @@ export const actions: Actions = {
 		};
 	},
 	google: async ({ locals, request, url, cookies }) => {
-		const formData = await request.formData();
+		const formData = await readLimitedFormData(request, AUTH_FORM_MAX_BYTES);
 		const next = getSafeAuthNextPath(formData.get("next"));
 		redirectToCanonicalAuthPage(request, url, next);
 		const redirectTo = getAuthCallbackUrl(request, url);

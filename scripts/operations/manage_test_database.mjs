@@ -9,7 +9,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, readdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
@@ -23,6 +23,10 @@ const supabaseConfigPath = fileURLToPath(
 );
 const testSeedPath = fileURLToPath(
 	new URL("../../supabase/seed.sql", import.meta.url),
+);
+const databaseTestDirectory = new URL(
+	"../../supabase/tests/database/",
+	import.meta.url,
 );
 const action = process.argv[2] ?? "status";
 const serviceReadinessAttempts = 30;
@@ -209,6 +213,77 @@ const restartLocalGateway = async () => {
 	const gatewayContainer = await getLocalServiceContainer("kong");
 	console.log("Refreshing the local Supabase gateway...");
 	runCommand("docker", ["restart", gatewayContainer], { capture: true });
+};
+
+const collectDatabaseTestFiles = async (directory) => {
+	const entries = await readdir(directory, { withFileTypes: true });
+	const files = [];
+	for (const entry of entries) {
+		const entryUrl = new URL(entry.name, directory);
+		if (entry.isDirectory()) {
+			entryUrl.pathname += "/";
+			files.push(...await collectDatabaseTestFiles(entryUrl));
+		} else if (entry.isFile() && entry.name.endsWith(".sql")) {
+			files.push(entryUrl);
+		}
+	}
+	return files.sort((left, right) => left.pathname.localeCompare(right.pathname));
+};
+
+const runDatabaseTests = async () => {
+	const databaseContainer = await getLocalServiceContainer("db");
+	const testFiles = await collectDatabaseTestFiles(databaseTestDirectory);
+	if (testFiles.length === 0) {
+		throw new Error("No pgTAP database tests were found.");
+	}
+
+	runCommand(
+		"docker",
+		[
+			"exec",
+			databaseContainer,
+			"psql",
+			"--set",
+			"ON_ERROR_STOP=1",
+			"--username",
+			"postgres",
+			"--dbname",
+			"postgres",
+			"--command",
+			"create extension if not exists pgtap with schema extensions",
+		],
+		{ capture: true },
+	);
+
+	for (const testFile of testFiles) {
+		const testSql = await readFile(testFile, "utf8");
+		const output = runCommand(
+			"docker",
+			[
+				"exec",
+				"--env",
+				"PGOPTIONS=--search_path=public,extensions",
+				"--interactive",
+				databaseContainer,
+				"psql",
+				"--set",
+				"ON_ERROR_STOP=1",
+				"--username",
+				"postgres",
+				"--dbname",
+				"postgres",
+				"--tuples-only",
+				"--no-align",
+			],
+			{ capture: true, input: testSql },
+		);
+		if (!/^1\.\.\d+$/m.test(output) || /^not ok\b/m.test(output)) {
+			throw new Error(
+				`Database test ${fileURLToPath(testFile)} failed:\n${output.trim()}`,
+			);
+		}
+		console.log(output.trim());
+	}
 };
 
 const requireSuccessfulResult = (result, label) => {
@@ -435,7 +510,7 @@ const main = async () => {
 			break;
 		case "verify":
 			await resetLocalStack();
-			runCommand("supabase", ["test", "db", "--local"]);
+			await runDatabaseTests();
 			printAccounts();
 			break;
 		case "status":

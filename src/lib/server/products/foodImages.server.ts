@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { normalizeImageUpload } from "$lib/server/uploads/normalizeImageUpload.server";
 import {
 	constrainCardImagePlacement,
 	normalizeImageRotationDegrees,
@@ -7,12 +8,16 @@ import {
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { FoodImageAsset } from "$lib/utils/food/types";
 import {
-	getAvatarExtension,
 	isProfileAvatarType,
+	matchesAvatarFileSignature,
 } from "$lib/utils/profile/profileValidation";
-import { PRODUCT_EVIDENCE_BUCKET } from "./productEvidence.server";
+import {
+	PRODUCT_EVIDENCE_BUCKET,
+	PRODUCT_EVIDENCE_MAX_BYTES,
+} from "./productEvidence.server";
 
 export const PUBLIC_FOOD_IMAGE_BUCKET = "food-image-assets";
+const PUBLIC_FOOD_IMAGE_MAX_DIMENSION = 4096;
 
 export type FoodImagePlacementValues = Partial<ImagePlacementValue> & {
 	cropSource?: FoodImageAsset["cropSource"] | null;
@@ -111,16 +116,28 @@ export const publishModeratedFoodImageAsset = async ({
 		throw downloadError ?? new Error("Product image evidence could not be loaded.");
 	}
 
-	const contentType = isProfileAvatarType(evidence.type)
-		? evidence.type
-		: "image/jpeg";
-	const extension = getAvatarExtension(contentType);
+	if (!isProfileAvatarType(evidence.type)) {
+		throw new Error("Product image evidence has an unsupported file type.");
+	}
+	const evidenceBytes = new Uint8Array(await evidence.arrayBuffer());
+	if (!matchesAvatarFileSignature(evidenceBytes, evidence.type)) {
+		throw new Error("Product image evidence does not match its file type.");
+	}
+	const normalizedImage = await normalizeImageUpload({
+		bytes: evidenceBytes,
+		maximumOutputBytes: PRODUCT_EVIDENCE_MAX_BYTES,
+		maximumWidth: PUBLIC_FOOD_IMAGE_MAX_DIMENSION,
+		maximumHeight: PUBLIC_FOOD_IMAGE_MAX_DIMENSION,
+	});
 	const safeBarcode = barcode ?? "shared-product";
-	const storagePath = `${safeBarcode}/${sharedProductId ?? randomUUID()}/front.${extension}`;
-	const bytes = Buffer.from(await evidence.arrayBuffer());
+	const storagePath =
+		`${safeBarcode}/${sharedProductId ?? randomUUID()}/front.${normalizedImage.extension}`;
 	const { error: uploadError } = await admin.storage
 		.from(PUBLIC_FOOD_IMAGE_BUCKET)
-		.upload(storagePath, bytes, { contentType, upsert: true });
+		.upload(storagePath, normalizedImage.bytes, {
+			contentType: normalizedImage.contentType,
+			upsert: true,
+		});
 	if (uploadError) throw uploadError;
 
 	const { data: publicUrlData } = admin.storage
