@@ -21,6 +21,9 @@ import type {
 	ImagePlacementMethod,
 	ImageRotationDegrees,
 } from "$lib/utils/food/images/types";
+import { readLimitedJson } from "$lib/server/security/requestBody.server";
+
+const IMAGE_PLACEMENT_REQUEST_MAX_BYTES = 32 * 1024;
 
 const allowedSources = new Set<FoodImageAsset["source"]>([
 	"open-food-facts",
@@ -53,7 +56,10 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
 	}
 
 	const body = requireAppValue(
-		await request.json().catch(() => null) as Record<string, unknown> | null,
+		await readLimitedJson(
+			request,
+			IMAGE_PLACEMENT_REQUEST_MAX_BYTES,
+		) as Record<string, unknown> | null,
 		400,
 		"IMAGE_PLACEMENT_INVALID",
 	);

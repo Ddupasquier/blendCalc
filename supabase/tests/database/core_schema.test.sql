@@ -1,6 +1,6 @@
 begin;
 
-select plan(21);
+select plan(33);
 
 select has_table('public', 'profiles', 'profiles table exists');
 select has_table('public', 'user_food_list_items', 'food-list table exists');
@@ -120,6 +120,127 @@ select ok(
 			)
 	),
 	'packaged names, brands, and categories cannot become warning evidence'
+);
+select has_table(
+	'public',
+	'request_rate_limits',
+	'private request-rate counters exist'
+);
+select ok(
+	not exists (
+		select 1
+		from pg_class relation
+		join pg_namespace namespace on namespace.oid = relation.relnamespace
+		where namespace.nspname = 'public'
+			and relation.relkind in ('r', 'p')
+			and not relation.relrowsecurity
+	),
+	'every public table has RLS enabled'
+);
+select ok(
+	not exists (
+		select 1
+		from information_schema.role_table_grants grant_row
+		where grant_row.table_schema = 'public'
+			and grant_row.grantee in ('anon', 'authenticated')
+			and grant_row.privilege_type in (
+				'TRUNCATE',
+				'REFERENCES',
+				'TRIGGER',
+				'MAINTAIN'
+			)
+	),
+	'Data API roles do not retain table-wide bypass privileges'
+);
+select ok(
+	not has_function_privilege(
+		'anon',
+		'public.sync_nutrient_manual_entry_fields()',
+		'EXECUTE'
+	),
+	'anonymous users cannot rebuild nutrient reference data'
+);
+select ok(
+	not has_function_privilege(
+		'authenticated',
+		'public.sync_nutrient_manual_entry_fields()',
+		'EXECUTE'
+	),
+	'authenticated users cannot rebuild nutrient reference data'
+);
+select ok(
+	not has_function_privilege(
+		'authenticated',
+		'public.sync_user_compatibility_rules(uuid, text[], text[])',
+		'EXECUTE'
+	),
+	'authenticated users cannot rewrite another user compatibility rules'
+);
+select ok(
+	has_function_privilege(
+		'service_role',
+		'public.consume_request_rate_limit(text, text, integer, integer)',
+		'EXECUTE'
+	),
+	'the service role can consume request quotas'
+);
+select ok(
+	not exists (
+		select 1
+		from pg_default_acl defaults
+		cross join lateral aclexplode(defaults.defaclacl) privilege
+		left join pg_roles grantee on grantee.oid = privilege.grantee
+		where defaults.defaclrole = 'postgres'::regrole
+			and defaults.defaclnamespace = 'public'::regnamespace
+			and coalesce(grantee.rolname, 'public') in (
+				'public',
+				'anon',
+				'authenticated'
+			)
+			and defaults.defaclobjtype in ('r', 'S', 'f')
+	),
+	'new public objects are deny-by-default for Data API roles'
+);
+select ok(
+	not has_table_privilege(
+		'authenticated',
+		'public.profiles',
+		'INSERT, UPDATE, DELETE'
+	),
+	'profile writes are server-owned'
+);
+select ok(
+	not has_table_privilege(
+		'authenticated',
+		'public.profile_image_policy_acceptances',
+		'INSERT'
+	),
+	'profile image policy acceptance writes are server-owned'
+);
+select ok(
+	has_table_privilege(
+		'service_role',
+		'public.profile_image_policy_acceptances',
+		'INSERT'
+	),
+	'the service role can record profile image policy acceptance'
+);
+select ok(
+	not exists (
+		select 1
+		from pg_policies
+		where schemaname = 'storage'
+			and tablename = 'objects'
+			and cmd in ('INSERT', 'UPDATE', 'DELETE')
+			and policyname in (
+				'Users can upload their avatar files',
+				'Users can update their avatar files',
+				'Users can delete their avatar files',
+				'Users can upload their product evidence',
+				'Users can delete their product evidence'
+			)
+	),
+	'user storage writes cannot bypass server image normalization'
 );
 
 select * from finish();

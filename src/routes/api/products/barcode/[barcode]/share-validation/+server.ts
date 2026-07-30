@@ -5,8 +5,11 @@ import {
 } from "$lib/server/errors/appError.server";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { productNamesDiffer } from "$lib/utils/products/productIdentity";
+import { readLimitedJson } from "$lib/server/security/requestBody.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+
+const SHARE_VALIDATION_REQUEST_MAX_BYTES = 64 * 1024;
 
 export const POST: RequestHandler = async ({ locals, params, request }) => {
 	const user = await locals.getVerifiedUser();
@@ -18,7 +21,10 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		"INVALID_BARCODE",
 	);
 
-	const body = await request.json().catch(() => null) as {
+	const body = await readLimitedJson(
+		request,
+		SHARE_VALIDATION_REQUEST_MAX_BYTES,
+	) as {
 		productName?: unknown;
 	} | null;
 	const productName = typeof body?.productName === "string"
