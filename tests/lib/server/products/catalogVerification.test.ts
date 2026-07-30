@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	buildModeratorReviewedCatalogBundle,
+	buildModeratorReviewedCatalogUpdateBundle,
 	buildUsdaVerifiedCatalogBundle,
 	mergeMissingNutrients,
 } from "$lib/server/products/catalogVerification.server";
@@ -137,6 +138,49 @@ describe("catalog verification", () => {
 		expect(bundle.provenance.every((item) => item.confidence === "moderator-reviewed"))
 			.toBe(true);
 		expect(bundle.conflicts).toEqual([]);
+	});
+
+	it("attributes only reviewed update fields to the submitted label", () => {
+		const currentFood = createUserFood();
+		const submittedFood = {
+			...currentFood,
+			brandOwner: "Updated Brand",
+			foodNutrients: currentFood.foodNutrients.map((item) =>
+				item.nutrientId === NUTRIENT_IDS.SUGAR
+					? { ...item, value: 25 }
+					: item
+			),
+		};
+		const bundle = buildModeratorReviewedCatalogUpdateBundle(
+			currentFood,
+			submittedFood,
+			[
+				{
+					field: "brandOwner",
+					label: "Brand",
+					message: "Brand changed.",
+					severity: "medium",
+					changeType: "changed",
+					previousValue: currentFood.brandOwner ?? null,
+					submittedValue: submittedFood.brandOwner,
+				},
+				{
+					field: `nutrient:${NUTRIENT_IDS.SUGAR}`,
+					label: "Sugar",
+					message: "Sugar changed.",
+					severity: "medium",
+					changeType: "changed",
+					previousValue: { value: 30, unit: "G" },
+					submittedValue: { value: 25, unit: "G" },
+				},
+			],
+		);
+
+		expect(bundle.provenance.map((item) => item.fieldPath).sort()).toEqual([
+			"brandOwner",
+			`nutrient:${NUTRIENT_IDS.SUGAR}`,
+		].sort());
+		expect(bundle.canonicalFood.description).toBe("Submitted Cereal");
 	});
 
 	it("fills only nutrients that the primary source did not report", () => {

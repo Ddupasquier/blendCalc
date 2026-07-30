@@ -36,9 +36,11 @@ export type ShareStepProps = {
 	savedMessage: string;
 	catalogMessage: string;
 	saving: boolean;
+	catalogSubmissionOnly: boolean;
 	onShareChange: (checked: boolean) => void | Promise<void>;
 	onApplyVerifiedBarcode: () => void | Promise<void>;
 	onDetachBarcodeForPrivateSave: () => void;
+	onSubmitBarcodeCorrection: () => void;
 	onFrontPhotoChange: (file: File | null) => void;
 	onImagePlacementChange: (value: ImagePlacementValue) => void;
 	onNutritionPhotoChange: (file: File | null) => void;
@@ -49,5 +51,6 @@ export type ShareStepProps = {
 	onUndo: () => void | Promise<void>;
 	onBack: () => void;
 	onSubmit: () => void | Promise<void>;
+	onCatalogSubmissionComplete: () => void;
 	onSaveDestinationInput?: (element: HTMLSelectElement | null) => void;
 };

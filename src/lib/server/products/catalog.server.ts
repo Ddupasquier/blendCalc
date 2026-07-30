@@ -12,14 +12,19 @@ import {
 import type { FdcFood } from "$lib/utils/food/types";
 import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredientProvenance";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
+import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
 import {
 	compareCatalogSubmissionToExistingProduct,
 	type CatalogSubmissionComparison,
 } from "$lib/utils/products/catalogSubmissionComparison";
-import { createCatalogUpdateSummary } from "$lib/utils/products/catalogUpdateReview";
+import {
+	createCatalogUpdateSummary,
+	readCatalogUpdateSummary,
+} from "$lib/utils/products/catalogUpdateReview";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
 	buildModeratorReviewedCatalogBundle,
+	buildModeratorReviewedCatalogUpdateBundle,
 } from "./catalogVerification.server";
 import { readCatalogUpdateTarget } from "./catalogUpdateReview.server";
 import {
@@ -56,6 +61,7 @@ import {
 type ProductSubmissionContext = {
 	reviewFlags?: string[];
 	frontImageCrop?: FoodImagePlacementValues | null;
+	intent?: CatalogSubmissionIntent;
 };
 
 type PendingProductSubmission = {
@@ -75,6 +81,7 @@ type PendingProductSubmission = {
 	target_shared_product_id: string | null;
 	base_revision_id: string | null;
 	change_summary: Json;
+	submission_intent: string;
 	label_observed_at: string;
 	created_at: string;
 };
@@ -309,6 +316,7 @@ export const submitProductForCatalog = async (
 		throw new Error("Please select a valid category for this ingredient.");
 	}
 	const submissionFood = applyCanonicalFoodCategory(food, selectedCategory);
+	const submissionIntent = context.intent ?? "catalog_share";
 
 	const existingCatalogFood = await getSharedProductByBarcode(admin, validation.barcode);
 	const existingCatalogComparison = existingCatalogFood
@@ -325,7 +333,10 @@ export const submitProductForCatalog = async (
 	const catalogUpdateTarget = existingCatalogFood?.sharedProductId && existingCatalogComparison
 		? await readCatalogUpdateTarget(admin, existingCatalogFood.sharedProductId)
 		: null;
-	if (existingCatalogComparison?.shouldAutoDecline) {
+	if (
+		existingCatalogComparison?.shouldAutoDecline &&
+		submissionIntent !== "catalog_correction"
+	) {
 		if (!catalogUpdateTarget) {
 			throw new Error("The active catalog product could not be prepared for comparison.");
 		}
@@ -343,6 +354,7 @@ export const submitProductForCatalog = async (
 			comparison: existingCatalogComparison,
 			updateTarget: catalogUpdateTarget,
 			changeSummary,
+			intent: submissionIntent,
 		});
 		return {
 			status: "already-available",
@@ -353,7 +365,11 @@ export const submitProductForCatalog = async (
 
 	const existingSubmission = await findPendingCatalogSubmission(
 		admin,
-		validation.barcode,
+		{
+			barcode: validation.barcode,
+			userId,
+			updateTarget: catalogUpdateTarget,
+		},
 	);
 	if (existingSubmission) {
 		return {
@@ -379,7 +395,10 @@ export const submitProductForCatalog = async (
 		frontImageCrop: context.frontImageCrop,
 		labelObservedAt,
 	});
-	if (preparedReview.sourceMismatchName) {
+	if (
+		preparedReview.sourceMismatchName &&
+		submissionIntent !== "catalog_correction"
+	) {
 		return {
 			status: "source-mismatch",
 			message:
@@ -417,6 +436,7 @@ export const submitProductForCatalog = async (
 		report,
 		evidencePaths,
 		evidenceComplete,
+		intent: submissionIntent,
 	});
 	if (!submissionId) {
 		return {
@@ -479,7 +499,7 @@ export const listPendingProductSubmissions = async () => {
 	const { data, error } = await admin
 		.from("shared_product_submissions")
 		.select(
-			"id, submitted_by, barcode, product_name, brand_owner, category_option_id, food, matched_source, matched_reference, validation_report, evidence_paths, evidence_complete, submission_kind, target_shared_product_id, base_revision_id, change_summary, label_observed_at, created_at",
+			"id, submitted_by, barcode, product_name, brand_owner, category_option_id, food, matched_source, matched_reference, validation_report, evidence_paths, evidence_complete, submission_kind, target_shared_product_id, base_revision_id, change_summary, submission_intent, label_observed_at, created_at",
 		)
 		.eq("status", "pending")
 		.order("created_at", { ascending: true })
@@ -505,7 +525,7 @@ export const approveCommunityProductSubmission = async (
 	const admin = getSupabaseAdminClient();
 	const { data: submission, error } = await admin
 		.from("shared_product_submissions")
-		.select("id, barcode, product_name, brand_owner, category_option_id, food, status, evidence_complete, evidence_paths, validation_report")
+		.select("id, barcode, product_name, brand_owner, category_option_id, food, status, evidence_complete, evidence_paths, validation_report, submission_kind, target_shared_product_id, change_summary")
 		.eq("id", submissionId)
 		.single();
 	if (error || !submission) throw error ?? new Error("Submission not found.");
@@ -532,18 +552,37 @@ export const approveCommunityProductSubmission = async (
 			.eq("id", submissionId);
 		if (categoryError) throw categoryError;
 	}
-	const food = applyCanonicalFoodCategory(submittedFood, category);
-	food.customFood = false;
-	food.dataType = "Shared Product";
-	food.barcodeSource = "community";
-	food.sharedProductConfidence = "moderator-reviewed";
-
-	const verificationBundle = buildModeratorReviewedCatalogBundle(food);
+	const categorizedFood = applyCanonicalFoodCategory(submittedFood, category);
+	categorizedFood.customFood = false;
+	categorizedFood.dataType = "Shared Product";
+	categorizedFood.barcodeSource = "community";
+	categorizedFood.sharedProductConfidence = "moderator-reviewed";
+	const parsedUpdateSummary = readCatalogUpdateSummary(
+		submission.change_summary,
+	);
+	const currentFood = submission.target_shared_product_id
+		? await getSharedProductByBarcode(admin, submission.barcode)
+		: null;
+	if (submission.submission_kind === "product_update" && !currentFood) {
+		throw new Error("The active catalog product could not be loaded for this update.");
+	}
+	const changes = parsedUpdateSummary?.changes ?? [];
+	if (submission.submission_kind === "product_update" && changes.length === 0) {
+		throw new Error("The catalog update does not include any reviewable changes.");
+	}
+	const verificationBundle =
+		submission.submission_kind === "product_update" && currentFood
+			? buildModeratorReviewedCatalogUpdateBundle(
+					currentFood,
+					categorizedFood,
+					changes,
+				)
+			: buildModeratorReviewedCatalogBundle(categorizedFood);
 	const sharedProductId = await publishCatalogSubmission({
 		submissionId,
 		food: verificationBundle.canonicalFood,
-		productName: submission.product_name,
-		brandOwner: submission.brand_owner ?? undefined,
+		productName: verificationBundle.canonicalFood.description,
+		brandOwner: verificationBundle.canonicalFood.brandOwner,
 		source: "community-reviewed",
 		confidence: "moderator-reviewed",
 		approvedBy: moderatorId,

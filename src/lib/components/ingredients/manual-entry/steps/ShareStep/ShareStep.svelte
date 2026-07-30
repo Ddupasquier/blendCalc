@@ -43,9 +43,11 @@
 		savedMessage,
 		catalogMessage,
 		saving,
+		catalogSubmissionOnly,
 		onShareChange,
 		onApplyVerifiedBarcode,
 		onDetachBarcodeForPrivateSave,
+		onSubmitBarcodeCorrection,
 		onFrontPhotoChange,
 		onImagePlacementChange,
 		onNutritionPhotoChange,
@@ -56,6 +58,7 @@
 		onUndo,
 		onBack,
 		onSubmit,
+		onCatalogSubmissionComplete,
 		onSaveDestinationInput,
 	}: ShareStepProps = $props();
 
@@ -67,6 +70,9 @@
 
 	const formatUnit = (unitName: string) =>
 		unitName.trim().toLowerCase() === "kcal" ? "kcal" : unitName.trim().toLowerCase();
+	const catalogSubmissionComplete = $derived(
+		catalogSubmissionOnly && Boolean(catalogMessage),
+	);
 </script>
 
 <ManualEntryStepLayout>
@@ -104,10 +110,16 @@
 			tone="error"
 			onApply={onApplyVerifiedBarcode}
 			onKeepManual={onDetachBarcodeForPrivateSave}
+			extraLabel="Submit a correction"
+			onExtra={onSubmitBarcodeCorrection}
 		/>
 	{/if}
 
-	{#if shareUnavailableMessage}
+	{#if catalogSubmissionOnly}
+		<StatusMessage
+			message="Your correction will stay pending until a moderator compares it with the current product and package evidence."
+		/>
+	{:else if shareUnavailableMessage}
 		<StatusMessage message={shareUnavailableMessage} />
 	{:else}
 		<ManualEntryToggleRow
@@ -147,6 +159,7 @@
 					brandName={brandOwner}
 					category={activeCategory}
 					required
+					requireFreshPhoto={catalogSubmissionOnly}
 				onFrontPhotoChange={onFrontPhotoChange}
 				onPlacementChange={onImagePlacementChange}
 			/>
@@ -189,19 +202,21 @@
 		</section>
 	{/if}
 
-	<ManualEntryField forId="custom-ingredient-save-destination" label="Add after saving">
-		<select
-			bind:this={saveDestinationSelect}
-			id="custom-ingredient-save-destination"
-			name="custom-ingredient-save-destination"
-			value={saveDestination}
-			onchange={(event) =>
-				onSaveDestinationChange(event.currentTarget.value as SmoothieListKey)}
-		>
-			<option value={MIX_STORAGE_KEYS.fridge}>Fridge</option>
-			<option value={MIX_STORAGE_KEYS.shoppingList}>Shopping List</option>
-		</select>
-	</ManualEntryField>
+	{#if !catalogSubmissionOnly}
+		<ManualEntryField forId="custom-ingredient-save-destination" label="Add after saving">
+			<select
+				bind:this={saveDestinationSelect}
+				id="custom-ingredient-save-destination"
+				name="custom-ingredient-save-destination"
+				value={saveDestination}
+				onchange={(event) =>
+					onSaveDestinationChange(event.currentTarget.value as SmoothieListKey)}
+			>
+				<option value={MIX_STORAGE_KEYS.fridge}>Fridge</option>
+				<option value={MIX_STORAGE_KEYS.shoppingList}>Shopping List</option>
+			</select>
+		</ManualEntryField>
+	{/if}
 
 	{#if error}
 		<StatusMessage tone="danger" message={error} />
@@ -221,7 +236,19 @@
 		<StatusMessage tone="success" message={catalogMessage} />
 	{/if}
 
-	<ManualEntryActions {onBack} onNext={onSubmit} nextLabel="Add Ingredient" busy={saving} />
+	<ManualEntryActions
+		{onBack}
+		onNext={catalogSubmissionComplete
+			? onCatalogSubmissionComplete
+			: onSubmit}
+		nextLabel={catalogSubmissionComplete
+			? "Done"
+			: catalogSubmissionOnly
+				? "Submit Correction"
+				: "Add Ingredient"}
+		busy={saving}
+		showBack={!catalogSubmissionComplete}
+	/>
 </ManualEntryStepLayout>
 
 <style lang="scss">

@@ -160,18 +160,26 @@ can change over time.
 
 1. The server compares the submitted label with the active blendCalc product first.
 2. An unchanged match returns the existing product and creates no duplicate submission.
-3. A clearly incompatible identity is blocked before normal moderation.
-4. A credible difference becomes a `product_update` submission linked to the active
+3. A clearly incompatible identity is blocked before normal moderation unless the user
+   explicitly reports the catalog information as incorrect and provides complete
+   package evidence.
+4. A credible difference or explicit correction becomes a `product_update` submission linked to the active
    product and the exact revision reviewed by the comparison.
 5. USDA and Open Food Facts are checked for exact-barcode support. Their results are
    stored as research context; neither provider silently replaces the canonical row.
 6. Moderation shows the old and proposed values, source-check results, and private label
    evidence before approval.
-7. Approval succeeds only if the base revision is still current. It updates the active
-   product, appends an immutable revision, and stores each changed field in
+7. Approval succeeds only if the base revision is still current. It merges only the
+   reviewed fields into the active product, retains untouched data and provenance,
+   appends an immutable revision, and stores each changed field in
    `shared_product_revision_changes`.
 8. If another update was approved while the submission waited, approval stops as stale
    and the change must be compared again.
+
+Independent users may submit separate correction evidence against the same active
+revision. The system never averages conflicting values or silently chooses a provider.
+The first approved correction advances the revision; every other pending correction
+must then be re-compared before it can change the catalog.
 
 `label_observed_at` records when blendCalc saw the submitted label. It is not presented
 as the date the manufacturer changed the product unless a separate source provides that

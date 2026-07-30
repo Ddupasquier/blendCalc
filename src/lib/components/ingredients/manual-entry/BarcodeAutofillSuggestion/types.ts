@@ -6,7 +6,9 @@ export type BarcodeAutofillSuggestionProps = {
 	description?: string;
 	applyLabel?: string;
 	keepLabel?: string;
+	extraLabel?: string;
 	tone?: "default" | "error";
 	onApply: () => void | Promise<void>;
 	onKeepManual: () => void;
+	onExtra?: () => void;
 };

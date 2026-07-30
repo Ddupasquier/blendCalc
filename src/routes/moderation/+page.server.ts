@@ -334,6 +334,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				validationIssues,
 				isQaFixture: validationReport.qaSeed === true,
 				submissionKind: submission.submission_kind,
+				submissionIntent: submission.submission_intent,
 				labelObservedAt: submission.label_observed_at,
 				labelObservedDate: submission.label_observed_at.slice(0, 10),
 				updateReview: updateSummary

@@ -163,7 +163,13 @@
 						</div>
 						<div class="product-card__statuses">
 							{#if submission.isQaFixture}<span class="status status--qa">QA fixture</span>{/if}
-							{#if submission.updateReview}<span class="status">product update</span>{/if}
+							{#if submission.updateReview}
+								<span class="status">
+									{submission.submissionIntent === "catalog_correction"
+										? "correction report"
+										: "product update"}
+								</span>
+							{/if}
 							<span class="status">pending</span>
 							<PrivilegedActionBadge />
 						</div>
@@ -180,7 +186,11 @@
 					{#if submission.updateReview}
 						<section class="product-card__update" aria-label="Proposed catalog update">
 							<div>
-								<strong>Existing product update</strong>
+								<strong>
+									{submission.submissionIntent === "catalog_correction"
+										? "Reported product correction"
+										: "Existing product update"}
+								</strong>
 								<p>
 									Compared with blendCalc revision {submission.updateReview.baseRevisionNumber} from the active catalog. Label observed {submission.labelObservedDate}.
 								</p>

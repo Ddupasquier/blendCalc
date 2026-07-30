@@ -10,9 +10,11 @@
 		description = "",
 		applyLabel = "Autofill",
 		keepLabel = "Keep mine",
+		extraLabel,
 		tone = "default",
 		onApply,
 		onKeepManual,
+		onExtra,
 	}: BarcodeAutofillSuggestionProps = $props();
 </script>
 
@@ -40,6 +42,11 @@
 		<PillButton onclick={onKeepManual}>
 			{keepLabel}
 		</PillButton>
+		{#if extraLabel && onExtra}
+			<PillButton onclick={onExtra}>
+				{extraLabel}
+			</PillButton>
+		{/if}
 	</div>
 </div>
 

@@ -27,6 +27,7 @@
 		onBarcodeBlur,
 		onApplyBarcodeSuggestion,
 		onKeepManualBarcodeEntry,
+		onReportBarcodeIssue,
 		onNameInput,
 		onNext,
 	}: IdentityStepProps = $props();
@@ -75,6 +76,8 @@
 				sourceLabel={barcodeSuggestion.sourceLabel}
 				onApply={onApplyBarcodeSuggestion}
 				onKeepManual={onKeepManualBarcodeEntry}
+				extraLabel="Information looks wrong"
+				onExtra={onReportBarcodeIssue}
 			/>
 		{/if}
 	</ManualEntryField>
