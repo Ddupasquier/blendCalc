@@ -6,6 +6,12 @@ const migration = readFileSync(
 	resolve("supabase/migrations/20260719213000_versioned_product_label_updates.sql"),
 	"utf8",
 );
+const historyMigration = readFileSync(
+	resolve(
+		"supabase/migrations/20260729210000_queryable_catalog_revision_history.sql",
+	),
+	"utf8",
+);
 
 describe("versioned product label updates migration", () => {
 	it("links an update to the canonical product and exact base revision", () => {
@@ -39,5 +45,30 @@ describe("versioned product label updates migration", () => {
 		expect(migration).toContain(
 			"revoke all on table public.shared_product_revision_changes from public, anon, authenticated",
 		);
+	});
+
+	it("rejects empty or malformed product-update change summaries", () => {
+		expect(historyMigration).toContain(
+			"catalog_change_summary_is_valid",
+		);
+		expect(historyMigration).toContain(
+			"jsonb_array_length(p_summary -> 'changes') > 0",
+		);
+		expect(historyMigration).toContain(
+			"count(distinct change ->> 'field')",
+		);
+	});
+
+	it("provides a bounded versioned history read without exposing snapshots", () => {
+		expect(historyMigration).toContain(
+			"get_blendcalc_product_revision_history_v1",
+		);
+		expect(historyMigration).toContain(
+			"blendcalc_api_v1_product_readiness_reasons",
+		);
+		expect(historyMigration).toContain(
+			"greatest(1, least(coalesce(p_limit, 25), 100))",
+		);
+		expect(historyMigration).not.toContain("'food', revision.food");
 	});
 });

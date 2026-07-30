@@ -5,6 +5,10 @@ finish on the same origin. Production uses `PUBLIC_SITE_URL`, Vercel previews us
 exact `VERCEL_URL` or `VERCEL_BRANCH_URL` supplied by Vercel, and localhost remains
 local. Unrecognized hosted origins fall back to the canonical production origin.
 
+This document owns Auth and deployment-origin configuration. General server/database
+boundaries live in [`data-architecture.md`](data-architecture.md), and table policies
+live in [`supabase-schema.md`](supabase-schema.md).
+
 ## Environment variables
 
 Local `.env`:
@@ -26,6 +30,10 @@ PUBLIC_SITE_URL=https://blendcalc.vercel.app
 In Vercel project settings, keep **Automatically expose System Environment Variables**
 enabled so Preview deployments receive `VERCEL_URL` and `VERCEL_BRANCH_URL`. Do not put
 a Supabase service-role key in any public environment variable or browser code.
+
+Successful login and logout boundaries emit only anonymous, property-free operational
+event names. Their storage and privacy boundary is documented in
+[`data-architecture.md`](data-architecture.md#operational-analytics).
 
 ## Supabase dashboard
 
@@ -72,14 +80,9 @@ Supabase until those values and the token widget are configured.
 ## Database security
 
 Every user-data table has RLS enabled and policies scoped to `(select auth.uid())`.
-Anonymous table privileges are revoked by migration.
-
-```bash
-npm run db:push:dry
-npm run db:push
-npm run db:lint
-npm run db:types
-```
+Anonymous table privileges are revoked by migration. Follow the database change and
+verification workflow in [`database-testing.md`](database-testing.md) rather than
+maintaining an authentication-specific migration sequence.
 
 ## Verification
 

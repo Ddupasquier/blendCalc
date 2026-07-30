@@ -1,45 +1,26 @@
 # Normalized food nutrients
 
-Food records continue to store their full `food` JSON payload. That JSON is the lossless
-source snapshot used by the current application. The normalized tables added in
-`20260615010000_normalized_food_nutrients.sql` make nutrient data queryable without
-discarding or rewriting the source payload.
+This document owns nutrient normalization, synchronization, and application-read
+semantics. The complete table and column reference remains in
+[`supabase-schema.md`](supabase-schema.md).
 
-## Tables
+Food records retain their source snapshot for reconstruction and audit, while
+`food_nutrients` is the authoritative application query model for normalized nutrient
+values. A missing normalized row remains missing; readers do not silently recover it
+from legacy embedded JSON.
 
-### `nutrient_definitions`
+## Data Ownership
 
-One row per FoodData Central nutrient ID:
+- `nutrient_definitions` owns canonical nutrient identity, number, name, unit, and
+  display/reference metadata.
+- `food_nutrients` owns one normalized per-100g value for exactly one parent:
+  fridge or shopping-list item, custom food, pending shared-product submission, active
+  shared product, shared-product revision, or source observation.
 
-- nutrient name and number
-- default unit
-- timestamps
-
-USDA-backed records may refresh the canonical label and unit. User-entered data cannot
-overwrite an existing canonical definition.
-
-### `food_nutrients`
-
-One row per nutrient and parent food snapshot. A row belongs to exactly one of:
-
-- fridge or shopping-list item
-- custom food
-- pending shared-product submission
-- active shared product
-- shared-product revision
-- source observation
-
-Each row records:
-
-- amount per 100 grams
-- unit
-- whether the value was reported or derived
-- source and source reference
-- confidence
-- the selected source observation, when canonical catalog provenance identifies one
-
-The parent JSON remains authoritative for reconstruction and auditing. The normalized
-row is the query model.
+Each value retains reported-versus-derived status, source/reference, confidence, and an
+exact selected source observation when canonical provenance supports one. The schema
+map owns the column list and relationships; this document owns how those rows are
+created and consumed.
 
 ## Synchronization
 
@@ -69,9 +50,10 @@ Reads are batched by parent ID and nutrient definitions are fetched once per bat
 Existing graph, nutrition-total, warning, and nutrient-detail code then uses the
 hydrated values without needing a second data model.
 
-The embedded `food` JSON remains the automatic fallback when normalized rows are empty
-or unavailable. This permits a safe deployment order: application code can ship before
-the migration, and older or incomplete records remain readable.
+An empty normalized result is an empty nutrient set, not permission to substitute an
+embedded snapshot, invent zeroes, or copy values from a similar food. Migration and
+backfill work must populate applicable rows before readers depend on a new normalized
+field.
 
 Saved drinks intentionally retain their embedded recipe snapshots. Loading a saved drink
 continues to reproduce what the user saved rather than silently changing historical
@@ -122,15 +104,11 @@ where shared_products.status = 'active'
 order by food_nutrients.amount_per_100g desc;
 ```
 
-## Deploying
+## Change Workflow
 
-Review and apply the migration, then regenerate database types:
-
-```bash
-npm run db:push:dry
-npm run db:push
-npm run db:types
-```
-
-Run `db:types` after `db:push`; the checked-in database types include the new tables so
-this branch can compile before the remote migration is applied.
+Nutrient schema changes follow the migration, verification, deployment, type-generation,
+backfill, documentation, and QA workflow in
+[`database-testing.md`](database-testing.md),
+[`supabase-schema.md`](supabase-schema.md#update-checklist), and the authoritative
+database rules in [`dev-rules/dev-rules.md`](dev-rules/dev-rules.md). Do not maintain a
+second command sequence here.

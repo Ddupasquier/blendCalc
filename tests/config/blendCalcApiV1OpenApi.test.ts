@@ -13,10 +13,11 @@ const specification = JSON.parse(
 };
 
 describe("blendCalc API v1 OpenAPI contract", () => {
-	it("publishes the three read-only internal endpoints", () => {
+	it("publishes the four read-only internal endpoints", () => {
 		expect(specification.openapi).toBe("3.1.0");
 		expect(Object.keys(specification.paths)).toEqual([
 			"/api/v1/products/{barcode}",
+			"/api/v1/products/{barcode}/revisions",
 			"/api/v1/foods/search",
 			"/api/v1/categories",
 		]);
@@ -28,7 +29,14 @@ describe("blendCalc API v1 OpenAPI contract", () => {
 	it("documents internal authentication and safe public fields", () => {
 		expect(specification.components.securitySchemes).toHaveProperty("cookieAuth");
 		expect(specification.components.schemas).toHaveProperty("Source");
+		expect(specification.components.schemas).toHaveProperty("FieldSource");
 		expect(specification.components.schemas).toHaveProperty("Revision");
+		expect(specification.components.schemas).toHaveProperty(
+			"ProductRevisionChange",
+		);
+		expect(specification.components.schemas).toHaveProperty(
+			"ProductRevisionHistoryItem",
+		);
 		expect(specification.components.schemas).toHaveProperty("Serving");
 		expect(specification.components.schemas).toHaveProperty("Image");
 		expect(specification.components.schemas).toHaveProperty(
@@ -40,6 +48,9 @@ describe("blendCalc API v1 OpenAPI contract", () => {
 		expect(specification.components.schemas).toHaveProperty("PackageQuantity");
 		expect(specification.components.schemas).toHaveProperty("SourceRecord");
 		expect(specification.components.schemas).toHaveProperty("CatalogMetadata");
+		expect(specification.components.schemas).toHaveProperty(
+			"CompatibilityEvaluation",
+		);
 	});
 
 	it("identifies shared catalog authority and field-level attribution", () => {
@@ -48,7 +59,12 @@ describe("blendCalc API v1 OpenAPI contract", () => {
 		expect(serialized).toContain("redistributionPolicy");
 		expect(serialized).toContain("sourceAttributions");
 		expect(serialized).toContain("fieldSources");
+		expect(serialized).toContain("observationId");
+		expect(serialized).toContain("corroborated-sources");
 		expect(serialized).toContain("sourceType");
+		expect(serialized).toContain("compatibilityEvaluation");
+		expect(serialized).toContain("not_checked");
+		expect(serialized).toContain("packaged-label");
 	});
 
 	it("never documents private storage or moderation fields", () => {

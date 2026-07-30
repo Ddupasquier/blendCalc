@@ -407,7 +407,7 @@ export const submitProductForCatalog = async (
 		updateTarget: catalogUpdateTarget,
 		updateSummary: catalogUpdateSummary,
 		labelObservedAt,
-		isSourceVerified: Boolean(matchedDraft && !needsSourceComparisonReview),
+		hasExactSourceMatch: Boolean(matchedDraft && !needsSourceComparisonReview),
 		matchedSource: matchedDraft?.source === "open-food-facts"
 			? "open-food-facts"
 			: matchedDraft?.source === "usda"
@@ -441,7 +441,7 @@ export const submitProductForCatalog = async (
 				brandOwner: matchedDraft.brandOwner,
 				source,
 				sourceReference: matchedDraft.sourceReference,
-				confidence: "source-verified",
+				confidence: "imported",
 				observations: verificationBundle.observations,
 				provenance: verificationBundle.provenance,
 				conflicts: verificationBundle.conflicts,
@@ -457,7 +457,8 @@ export const submitProductForCatalog = async (
 		}
 		return {
 			status: "approved",
-			message: "An exact source match verified this product, so it is now available to everyone.",
+			message:
+				"An exact barcode match confirmed the product identity, so it is now available to everyone.",
 			evidenceAccepted: true,
 		};
 	}

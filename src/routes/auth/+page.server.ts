@@ -19,6 +19,8 @@ import {
 	requirePasswordUpgrade,
 } from "$lib/utils/auth/passwordUpgrade";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
+import { trackServerAppInteraction } from "$lib/server/analytics/appInteractionTracking.server";
+import { APP_INTERACTION_METRICS } from "$lib/utils/analytics/appInteractionMetrics";
 
 const AUTH_FORM_MAX_BYTES = 32 * 1024;
 
@@ -114,6 +116,11 @@ export const actions: Actions = {
 			});
 		}
 
+		await trackServerAppInteraction(
+			APP_INTERACTION_METRICS.LOGIN_SUCCESS,
+			request,
+		);
+
 		if (!isPasswordPolicyCompliant(password, email)) {
 			requirePasswordUpgrade(cookies, next, url.protocol === "https:");
 			throw redirect(
@@ -191,6 +198,10 @@ export const actions: Actions = {
 
 		if (data.session) {
 			clearAuthFlowContext(cookies);
+			await trackServerAppInteraction(
+				APP_INTERACTION_METRICS.LOGIN_SUCCESS,
+				request,
+			);
 			throw redirect(303, next);
 		}
 

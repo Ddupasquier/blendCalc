@@ -6,6 +6,8 @@ import {
 	getSafeAuthNextPath,
 } from "$lib/utils/auth/authFlow";
 import { getRequestOrigin } from "$lib/utils/auth/authUrls";
+import { trackServerAppInteraction } from "$lib/server/analytics/appInteractionTracking.server";
+import { APP_INTERACTION_METRICS } from "$lib/utils/analytics/appInteractionMetrics";
 
 export const GET: RequestHandler = async ({ locals, request, url, cookies }) => {
 	const code = url.searchParams.get("code");
@@ -30,6 +32,10 @@ export const GET: RequestHandler = async ({ locals, request, url, cookies }) => 
 		const { error } = await locals.supabase.auth.exchangeCodeForSession(code);
 
 		if (!error) {
+			await trackServerAppInteraction(
+				APP_INTERACTION_METRICS.LOGIN_SUCCESS,
+				request,
+			);
 			throw redirect(303, next);
 		}
 

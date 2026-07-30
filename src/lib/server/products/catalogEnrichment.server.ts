@@ -13,12 +13,18 @@ import type {
 import { createCatalogFoodFromDraft } from "./catalogFood.server";
 
 const canPromoteSourceToCanonicalCatalog = (
-	source: FoodFieldSource["source"] | undefined,
+	fieldSource: FoodFieldSource | undefined,
 	referenceData: ProductReferenceData,
-): source is "usda" | "open-food-facts" => Boolean(
-	source &&
-		referenceData.sources[source]?.canonicalStorageAllowed &&
-		referenceData.sources[source]?.canonicalLicenseName,
+): fieldSource is FoodFieldSource & {
+	source: "usda" | "open-food-facts";
+	sourceReference: string;
+} => Boolean(
+	fieldSource &&
+		fieldSource.sourceReference?.trim() &&
+		(fieldSource.source === "usda" ||
+			fieldSource.source === "open-food-facts") &&
+		referenceData.sources[fieldSource.source]?.canonicalStorageAllowed &&
+		referenceData.sources[fieldSource.source]?.canonicalLicenseName,
 );
 
 const getFieldValue = (
@@ -78,12 +84,13 @@ const getCanonicalEvidenceConfidence = (
 	source: FoodFieldSource,
 ): "source-verified" | "moderator-reviewed" | "corroborated" | "imported" => {
 	switch (source.confidence) {
+		case "source-verified":
 		case "moderator-reviewed":
 		case "corroborated":
 		case "imported":
 			return source.confidence;
 		default:
-			return "source-verified";
+			return "imported";
 	}
 };
 
@@ -117,7 +124,7 @@ export const persistSharedProductExternalEnrichment = async (input: {
 }) => {
 	const supportedFields = input.fields.filter((field) =>
 		canPromoteSourceToCanonicalCatalog(
-			input.enrichedDraft.fieldProvenance?.[field]?.source,
+			input.enrichedDraft.fieldProvenance?.[field],
 			input.referenceData,
 		),
 	);
@@ -145,7 +152,7 @@ export const persistSharedProductExternalEnrichment = async (input: {
 		const source = input.enrichedDraft.fieldProvenance?.[field];
 		if (
 			!source ||
-			!canPromoteSourceToCanonicalCatalog(source.source, input.referenceData)
+			!canPromoteSourceToCanonicalCatalog(source, input.referenceData)
 		) {
 			throw new Error(`Unsupported enrichment source for ${field}.`);
 		}
@@ -178,6 +185,9 @@ export const persistSharedProductExternalEnrichment = async (input: {
 	});
 	const provenance = supportedFields.map((field) => {
 		const source = input.enrichedDraft.fieldProvenance?.[field];
+		if (!source) {
+			throw new Error(`Explicit enrichment provenance is missing for ${field}.`);
+		}
 		return {
 			fieldPath: field,
 			observationKey: field,
@@ -185,9 +195,7 @@ export const persistSharedProductExternalEnrichment = async (input: {
 			sourceReference: source?.sourceReference ?? null,
 			sourceValue: getFieldValue(input.enrichedDraft, field),
 			normalizedValue: getFieldValue(input.enrichedDraft, field),
-				confidence: source
-					? getCanonicalEvidenceConfidence(source)
-					: "source-verified",
+			confidence: getCanonicalEvidenceConfidence(source),
 			verificationMethod: "exact-barcode",
 		};
 	});

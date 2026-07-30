@@ -60,3 +60,8 @@ export const readApiV1CategoryRequest = (url: URL) => ({
 	limit: readWholeNumber(url, "limit", 50, 1, 100),
 	offset: readWholeNumber(url, "offset", 0, 0, MAX_OFFSET),
 });
+
+export const readApiV1RevisionHistoryRequest = (url: URL) => ({
+	limit: readWholeNumber(url, "limit", 25, 1, 100),
+	offset: readWholeNumber(url, "offset", 0, 0, MAX_OFFSET),
+});

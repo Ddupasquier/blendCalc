@@ -1,9 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
 	createPagination,
 	mapApprovedCatalogRecordToApiV1Product,
+	readApiV1ProductRevisionHistory,
 } from "$lib/server/api/v1/catalogApi.server";
 import type { ApprovedCatalogRecord } from "$lib/server/products/catalogRead.server";
+
+const usdaObservation = {
+	observationId: "3f863f29-d720-43b6-aacd-3a9e1299cb94",
+	observedAt: "2026-07-17T09:00:00.000Z",
+	reviewState: "accepted" as const,
+};
+const openFoodFactsObservation = {
+	observationId: "ef989ee2-7db8-48da-970f-1f3c778fac38",
+	observedAt: "2026-07-17T09:30:00.000Z",
+	reviewState: "accepted" as const,
+};
 
 const record: ApprovedCatalogRecord = {
 	id: "8dd47c75-17f7-4458-bb24-63cff946a716",
@@ -20,72 +32,84 @@ const record: ApprovedCatalogRecord = {
 	canonicalProvenance: {},
 	fieldProvenance: {
 		productName: {
+			...usdaObservation,
 			source: "usda",
 			sourceReference: "123",
 			confidence: "source-verified",
 			verificationMethod: "exact-barcode",
 		},
 		brandOwner: {
+			...usdaObservation,
 			source: "usda",
 			sourceReference: "123",
 			confidence: "source-verified",
 			verificationMethod: "exact-barcode",
 		},
 		ingredients: {
+			...usdaObservation,
 			source: "usda",
 			sourceReference: "123",
 			confidence: "source-verified",
 			verificationMethod: "exact-barcode",
 		},
 		categories: {
+			...openFoodFactsObservation,
 			source: "open-food-facts",
 			sourceReference: "00021130493609",
 			confidence: "imported",
 			verificationMethod: "exact-barcode",
 		},
 		structuredIngredients: {
+			...openFoodFactsObservation,
 			source: "open-food-facts",
 			sourceReference: "00021130493609",
 			confidence: "imported",
 			verificationMethod: "exact-barcode",
 		},
 		ingredientAnalysis: {
+			...openFoodFactsObservation,
 			source: "open-food-facts",
 			sourceReference: "00021130493609",
 			confidence: "imported",
 			verificationMethod: "exact-barcode",
 		},
 		additives: {
+			...openFoodFactsObservation,
 			source: "open-food-facts",
 			sourceReference: "00021130493609",
 			confidence: "imported",
 			verificationMethod: "exact-barcode",
 		},
 		allergens: {
+			...usdaObservation,
 			source: "usda",
 			sourceReference: "123",
 			confidence: "source-verified",
 			verificationMethod: "exact-barcode",
 		},
 		traces: {
+			...openFoodFactsObservation,
 			source: "open-food-facts",
 			sourceReference: "00021130493609",
 			confidence: "imported",
 			verificationMethod: "exact-barcode",
 		},
 		labels: {
+			...openFoodFactsObservation,
 			source: "open-food-facts",
 			sourceReference: "00021130493609",
 			confidence: "imported",
 			verificationMethod: "exact-barcode",
 		},
 		package: {
+			...openFoodFactsObservation,
 			source: "open-food-facts",
 			sourceReference: "00021130493609",
 			confidence: "imported",
 			verificationMethod: "exact-barcode",
 		},
 		sourceMetadata: {
+			...openFoodFactsObservation,
 			source: "open-food-facts",
 			sourceReference: "00021130493609",
 			confidence: "imported",
@@ -244,6 +268,13 @@ describe("blendCalc API v1 catalog mapping", () => {
 			unit: "cup",
 			gramsPerUnit: 250,
 		});
+		expect(product.compatibilityEvaluation).toMatchObject({
+			version: 1,
+			status: "not_checked",
+			policyVersion: null,
+			profileApplied: false,
+			conflictCount: 0,
+		});
 	});
 
 	it("returns field sources, revision dates, and licensed images without private paths", () => {
@@ -267,8 +298,12 @@ describe("blendCalc API v1 catalog mapping", () => {
 		});
 
 		expect(product.fieldSources.category).toMatchObject({
+			observationId: openFoodFactsObservation.observationId,
 			source: "open-food-facts",
 			reference: "00021130493609",
+			observedAt: openFoodFactsObservation.observedAt,
+			verificationMethod: "exact-barcode",
+			reviewState: "accepted",
 		});
 		expect(product.fieldSources.name).toMatchObject({
 			source: "usda",
@@ -311,7 +346,15 @@ describe("blendCalc API v1 catalog mapping", () => {
 		expect(product.fieldSources.structuredIngredients).toMatchObject({
 			source: "open-food-facts",
 		});
+		expect(JSON.stringify(product.fieldSources)).not.toContain("rawPayload");
+		expect(JSON.stringify(product.fieldSources)).not.toContain("submittedBy");
+		expect(JSON.stringify(product.fieldSources)).not.toContain("evidencePath");
 		expect(product.revision).toMatchObject({ number: 2 });
+		expect(product.revision).toMatchObject({
+			currentSince: "2026-07-17T10:00:00.000Z",
+			currentSinceBasis: "blendcalc-observed",
+			labelObservedAt: "2026-07-17T10:00:00.000Z",
+		});
 		expect(product.images[0]).toMatchObject({
 			license: {
 				name: "CC BY-SA 3.0",
@@ -429,6 +472,97 @@ describe("blendCalc API v1 catalog mapping", () => {
 			nextOffset: 30,
 		});
 		expect(createPagination(15, 30, 31).nextOffset).toBeNull();
+	});
+
+	it("maps structured revision changes without exposing revision snapshots", async () => {
+		const rpc = vi.fn().mockResolvedValue({
+			data: [{
+				id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
+				revision_number: 2,
+				published_at: "2026-07-19T10:00:00.000Z",
+				label_observed_at: "2026-07-17T10:00:00.000Z",
+				changes: [{
+					field: "ingredients",
+					label: "Ingredient statement",
+					changeType: "changed",
+					previousValue: "Tomatoes",
+					newValue: "Tomatoes, onion",
+					severity: "medium",
+				}],
+				total_count: 2,
+			}],
+			error: null,
+		});
+
+		const result = await readApiV1ProductRevisionHistory(
+			{ rpc } as never,
+			"00021130493609",
+			{ limit: 25, offset: 0 },
+		);
+
+		expect(result).toEqual({
+			revisions: [{
+				id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
+				number: 2,
+				publishedAt: "2026-07-19T10:00:00.000Z",
+				labelObservedAt: "2026-07-17T10:00:00.000Z",
+				changes: [{
+					field: "ingredients",
+					label: "Ingredient statement",
+					changeType: "changed",
+					previousValue: "Tomatoes",
+					newValue: "Tomatoes, onion",
+					severity: "medium",
+				}],
+			}],
+			pagination: {
+				limit: 25,
+				offset: 0,
+				total: 2,
+				hasMore: false,
+				nextOffset: null,
+			},
+		});
+		expect(result?.revisions[0]).not.toHaveProperty("food");
+		expect(result?.revisions[0]).not.toHaveProperty("evidencePaths");
+	});
+
+	it("returns an empty page instead of a false not-found result", async () => {
+		const rpc = vi.fn()
+			.mockResolvedValueOnce({ data: [], error: null })
+			.mockResolvedValueOnce({
+				data: [{
+					id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
+					revision_number: 2,
+					published_at: "2026-07-19T10:00:00.000Z",
+					label_observed_at: "2026-07-17T10:00:00.000Z",
+					changes: [],
+					total_count: 2,
+				}],
+				error: null,
+			});
+
+		const result = await readApiV1ProductRevisionHistory(
+			{ rpc } as never,
+			"00021130493609",
+			{ limit: 25, offset: 100 },
+		);
+
+		expect(result).toEqual({
+			revisions: [],
+			pagination: {
+				limit: 25,
+				offset: 100,
+				total: 2,
+				hasMore: false,
+				nextOffset: null,
+			},
+		});
+		expect(rpc).toHaveBeenNthCalledWith(
+			2,
+			"get_blendcalc_product_revision_history_v1",
+			{ p_barcode: "00021130493609", p_limit: 1, p_offset: 0 },
+		);
 	});
 
 	it.each([

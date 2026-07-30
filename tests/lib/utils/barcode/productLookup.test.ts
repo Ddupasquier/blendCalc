@@ -666,7 +666,7 @@ describe("barcode product mapping", () => {
 		]);
 	});
 
-	it("marks approved catalog records as shared products", () => {
+	it("keeps approved catalog records without inventing missing field lineage", () => {
 		const draft = mapSharedCatalogFood(
 			{
 				fdcId: -10,
@@ -691,13 +691,8 @@ describe("barcode product mapping", () => {
 				categoryOptionId: "breakfast-cereals",
 				label: "Breakfast Cereals",
 			},
-			fieldProvenance: {
-				categories: {
-					source: "shared-catalog",
-					confidence: "unknown",
-				},
-			},
 		});
+		expect(draft?.fieldProvenance?.categories).toBeUndefined();
 	});
 
 	it("keeps explicit USDA ingredient-label allergen declarations", () => {

@@ -119,28 +119,6 @@ write path, disables only the relevant controls while pending, prevents duplicat
 submissions, maps safe server issue codes to friendly copy, and clears stale status at a
 predictable boundary.
 
-### Canonical Category Backfill Can Promote Fuzzy Identity
-
-**Status:** Critical
-
-**Evidence:** `scripts/backfills/backfill_shared_product_categories.mjs` falls back from
-an exact-barcode lookup to a USDA product-name token search, records the match as a
-category observation, rebuilds it as an `exact_api_observation`, and writes the resolved
-category into the active catalog. The provenance backfill in
-`supabase/migrations/20260726225800_backfill_api_v1_catalog_field_provenance.sql` then
-selects category observations by the requested barcode and exact taxonomy mapping
-without rejecting observations whose payload says
-`matchMethod: description-token-match`. It can therefore publish a fuzzy product match
-as exact-barcode, source-verified category evidence.
-
-**Affected areas:** Shared-product category values, category observations, field
-provenance, catalog revisions, and public API category attribution.
-
-**Complete when:** Authoritative category backfills use exact product identity only;
-description matches are stored as pending suggestions that cannot update canonical
-rows; and a corrective migration removes or downgrades every selected category
-provenance row derived from a description match.
-
 ### Nutrient Mapping Seed Can Auto-Approve Semantic Guesses
 
 **Status:** Critical
@@ -179,77 +157,6 @@ nutrients, nutrition facts, Mix calculations, and API output.
 authoritative standard can be enabled; observed ratios remain audit evidence rather
 than conversion rows; and a corrective migration disables or removes existing
 `api_observed_ratio` conversions before dependent data is rebuilt.
-
-### Normalized-Row Triggers Infer Source And Verification
-
-**Status:** Critical
-
-**Evidence:** The current `sync_food_nutrients_from_parent` function in
-`supabase/migrations/20260615010000_normalized_food_nutrients.sql` infers USDA from the
-presence of an FDC ID and upgrades USDA defaults to `source-verified`. The current
-`sync_food_servings_from_parent` function in
-`supabase/migrations/20260717213000_normalized_food_servings.sql` defaults an
-unclassified list-item serving to USDA and similarly derives confidence from provider
-identity. No later migration replaces these functions. Provider identity or a record ID
-does not prove field provenance.
-
-**Affected areas:** `food_nutrients`, `food_servings`, private foods, shared products,
-revisions, observations, provenance filters, and API attribution.
-
-**Complete when:** A corrective migration makes explicit nutrient/serving field
-provenance authoritative, leaves absent lineage as `unknown`, separates exact identity
-from field verification, and rebuilds affected normalized rows.
-
-### Catalog Enrichment Fabricates Canonical Confidence
-
-**Status:** Critical
-
-**Evidence:** `src/lib/server/products/catalogEnrichment.server.ts` maps missing or
-unknown field confidence to `source-verified` and labels promoted fields
-`exact-barcode`. `src/lib/server/products/catalog.server.ts` can publish an entire
-mixed-field product with `source-verified` confidence when the product identity matched
-an external barcode record. Exact barcode identity verifies the product match, not
-every nutrient, serving, ingredient, category, or image.
-
-**Affected areas:** Canonical shared products, observations, selected field provenance,
-moderation bypass, revisions, and public API trust metadata.
-
-**Complete when:** Publication status is separate from field confidence; every promoted
-field retains explicit source evidence and its actual confidence; unknown confidence
-stays unknown; and exact-barcode identity cannot blanket-verify mixed or derived fields.
-
-### Whole-Provider Priority Still Controls Field Conflicts
-
-**Status:** High
-
-**Evidence:** `src/lib/server/products/catalogSourceAssessment.server.ts` always starts
-with the USDA draft and lets Open Food Facts fill only missing values. The merge utility
-combines some metadata, but a present USDA field wins even when another exact-barcode
-source has newer, more complete, or better-supported evidence for that field.
-
-**Affected areas:** Barcode autofill, submission comparison, catalog enrichment,
-ingredients, allergens, categories, servings, nutrients, and images.
-
-**Complete when:** A versioned field-resolution policy evaluates identity, recency,
-completeness, corroboration, moderation, and source-specific evidence per field instead
-of declaring one provider the whole-product winner.
-
-### Field Provenance Falls Back To Whole-Record Source
-
-**Status:** High
-
-**Evidence:** `src/lib/utils/barcode/barcodeProductEnrichment.ts` and
-`src/lib/utils/barcode/barcodeProductMappers.ts` assign a draft or food's overall source
-to fields that contain data but lack explicit field lineage. This can attribute
-categories, ingredients, allergens, traces, labels, additives, package data, and source
-metadata to a provider without proving that provider supplied the individual field.
-
-**Affected areas:** Field-level provenance, canonical promotion, API attribution,
-licensing, and moderation evidence.
-
-**Complete when:** Source adapters attach provenance while extracting each field;
-legacy or mixed records without field lineage remain unknown; and canonical promotion
-requires explicit field evidence.
 
 ### Exact-Identity Search Dedupe Replaces Whole Records
 
@@ -459,19 +366,6 @@ method and confidence are not retained.
 stored, unsupported languages remain unparsed, multilingual and nested-statement
 fixtures are covered, and parsed declarations never claim stronger evidence than their
 source text.
-
-### Normalized Nutrient Documentation Still Describes A Removed Fallback
-
-**Status:** Open
-
-**Evidence:** `docs/normalized-food-nutrients.md` says embedded food JSON is an
-automatic read fallback when normalized nutrient rows are empty. Current normalized
-hydration treats the normalized tables as authoritative and no longer performs that
-fallback.
-
-**Complete when:** The document describes current normalized authority, deployment
-requirements, failure behavior, and the separate role of retained source snapshots
-without promising an implementation that no longer exists.
 
 ### Coordinator And Domain Boundary Watchlist
 

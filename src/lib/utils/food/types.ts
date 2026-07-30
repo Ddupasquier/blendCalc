@@ -1,5 +1,8 @@
 import type { FoodPreferenceWarning } from "$lib/utils/profile/foodPreferenceWarnings";
-import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
+import type {
+	FoodCompatibilityEvaluation,
+	FoodCompatibilitySummary,
+} from "$lib/utils/food/quality/compatibility";
 import type {
 	ImageFitMode,
 	ImagePlacementValue,
@@ -254,6 +257,7 @@ export interface FdcFood {
     customDensityVariancePercent?: number;
     customDensityConfidence?: "known" | "estimated" | "rough";
 	    compatibilitySummary?: FoodCompatibilitySummary;
+	    compatibilityEvaluation?: FoodCompatibilityEvaluation;
 	    allergenDisclosure?: FoodAllergenDisclosure;
 	    preferenceWarnings?: FoodPreferenceWarning[];
 }

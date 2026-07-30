@@ -69,6 +69,48 @@ export type Database = {
         }
         Relationships: []
       }
+      app_interaction_daily_metrics: {
+        Row: {
+          created_at: string
+          dimension_key: string
+          dimension_value: string
+          environment: string
+          event_count: number
+          metric_date: string
+          metric_key: string
+          metric_source: string
+          source_query_version: number
+          synced_at: string
+          visitor_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          dimension_key?: string
+          dimension_value?: string
+          environment?: string
+          event_count: number
+          metric_date: string
+          metric_key: string
+          metric_source?: string
+          source_query_version?: number
+          synced_at?: string
+          visitor_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          dimension_key?: string
+          dimension_value?: string
+          environment?: string
+          event_count?: number
+          metric_date?: string
+          metric_key?: string
+          metric_source?: string
+          source_query_version?: number
+          synced_at?: string
+          visitor_count?: number | null
+        }
+        Relationships: []
+      }
       app_issue_codes: {
         Row: {
           code: string
@@ -1145,6 +1187,7 @@ export type Database = {
           shared_product_revision_id: string | null
           shared_product_submission_id: string | null
           source: string
+          source_observation_id: string | null
           source_reference: string | null
           unit_key: string | null
           updated_at: string
@@ -1166,6 +1209,7 @@ export type Database = {
           shared_product_revision_id?: string | null
           shared_product_submission_id?: string | null
           source: string
+          source_observation_id?: string | null
           source_reference?: string | null
           unit_key?: string | null
           updated_at?: string
@@ -1187,6 +1231,7 @@ export type Database = {
           shared_product_revision_id?: string | null
           shared_product_submission_id?: string | null
           source?: string
+          source_observation_id?: string | null
           source_reference?: string | null
           unit_key?: string | null
           updated_at?: string
@@ -1233,6 +1278,13 @@ export type Database = {
             columns: ["shared_product_submission_id"]
             isOneToOne: false
             referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_servings_source_observation_id_fkey"
+            columns: ["source_observation_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_observations"
             referencedColumns: ["id"]
           },
           {
@@ -4149,6 +4201,10 @@ export type Database = {
         Args: { p_source: string }
         Returns: boolean
       }
+      catalog_change_summary_is_valid: {
+        Args: { p_require_changes?: boolean; p_summary: Json }
+        Returns: boolean
+      }
       compatibility_first_regex_match: {
         Args: { p_pattern: string; p_value: string }
         Returns: string
@@ -4193,6 +4249,17 @@ export type Database = {
       food_normalized_barcode: { Args: { p_food: Json }; Returns: string }
       food_source_key: { Args: { p_food: Json }; Returns: string }
       food_trust_status: { Args: { p_food: Json }; Returns: string }
+      get_blendcalc_product_revision_history_v1: {
+        Args: { p_barcode: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          changes: Json
+          id: string
+          label_observed_at: string
+          published_at: string
+          revision_number: number
+          total_count: number
+        }[]
+      }
       get_blendcalc_product_v1: {
         Args: { p_barcode: string }
         Returns: {
@@ -4309,6 +4376,10 @@ export type Database = {
       rename_user_food_list_item: {
         Args: { p_description: string; p_fdc_id: number; p_list_type: string }
         Returns: string
+      }
+      replace_app_interaction_daily_metrics: {
+        Args: { p_metrics: Json; p_since: string; p_until: string }
+        Returns: number
       }
       replace_food_nutrients: {
         Args: {
