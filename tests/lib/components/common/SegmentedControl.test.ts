@@ -4,7 +4,7 @@ import SegmentedControl from "$lib/components/common/buttons/SegmentedControl/Se
 
 describe("SegmentedControl", () => {
 	it("renders URL-backed tabs as real links", () => {
-		render(SegmentedControl, {
+		const { container } = render(SegmentedControl, {
 			props: {
 				label: "Saved ingredient lists",
 				value: "fridge",
@@ -29,6 +29,38 @@ describe("SegmentedControl", () => {
 		expect(
 			screen.getByRole("tab", { name: "Shopping List" }),
 		).toHaveAttribute("href", "/fridge/shopping-list");
+		expect(container.querySelector(".segmented-control")).toHaveAttribute(
+			"data-active-index",
+			"0",
+		);
+		expect(
+			container.querySelector(".segmented-control__selection"),
+		).toBeInTheDocument();
+	});
+
+	it("moves the visual selection before following a route link", async () => {
+		const { container } = render(SegmentedControl, {
+			props: {
+				label: "Saved ingredient lists",
+				value: "fridge",
+				options: [
+					{ value: "fridge", label: "Fridge", href: "/fridge" },
+					{
+						value: "shopping",
+						label: "Shopping List",
+						href: "/fridge/shopping-list",
+					},
+				],
+			},
+		});
+
+		const shoppingTab = screen.getByRole("tab", { name: "Shopping List" });
+		const control = container.querySelector(".segmented-control");
+		expect(shoppingTab).toHaveAttribute("href", "/fridge/shopping-list");
+		expect(control).toHaveAttribute("data-active-index", "0");
+		await fireEvent.click(shoppingTab);
+		expect(control).toHaveAttribute("data-active-index", "1");
+		expect(shoppingTab).toHaveClass("segmented-control__button--active");
 	});
 
 	it("uses roving focus and arrow-key tab navigation", async () => {
