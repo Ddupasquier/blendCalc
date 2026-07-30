@@ -17,6 +17,7 @@ policies, or core data ownership changes.
 | [Compatibility and Allergens](#compatibility-allergens-and-dietary-restrictions) | tags, conflict rules, product facts, preference options, and API observations |
 | [Food Categories](#custom-food-category-reference) | category options, source observations, and canonical mappings |
 | [Moderation](#moderation-and-access-control) | roles, account moderation, action logs, email delivery, blocked signups, and image-policy acceptance |
+| [Operational Analytics](#operational-analytics) | Private daily Vercel page-view, visitor, login, logout, and reload aggregates |
 | [Request Security](#request-security-and-least-privilege) | Private request quotas, deny-by-default grants, and protected maintenance functions |
 | [Nutrition Completeness and National Datasets](#nutrition-completeness-and-national-datasets) | completeness profiles, generic foods, exact source identifiers, CNF, CoFID, and future national food datasets |
 | [Product Source Policies](#product-source-policies) | source evaluations and source-specific lifecycle policy |
@@ -348,10 +349,6 @@ Notes:
   not invent vendor labels.
 - Source rows are maintained by the reference-data seed script, with API-observed
   provenance.
-- Health Canada CNF and UK CoFID have explicit canonical-storage decisions based on
-  their published Open Government licences. Their rows retain the required attribution,
-  licence URL, review date, permitted-use summary, and excluded-rights warning; public
-  API output must preserve that attribution metadata.
 - `api_redistribution_allowed` is the separate API-publication decision. API v1 never
   infers it from the provider name or from canonical storage alone.
 
@@ -444,7 +441,7 @@ snapshot.
 
 | Table | Documented columns |
 | --- | --- |
-| `food_servings` | `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`, `shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`, `shared_product_observation_id`, `serving_order`, `label`, `gram_weight`, optional `amount` and `unit_key`, `is_primary`, `source`, `source_reference`, `confidence`, and timestamps |
+| `food_servings` | `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`, `shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`, `shared_product_observation_id`, `source_observation_id`, `serving_order`, `label`, `gram_weight`, optional `amount` and `unit_key`, `is_primary`, `source`, `source_reference`, `confidence`, and timestamps |
 
 Notes:
 
@@ -453,6 +450,9 @@ Notes:
 - Parent-table triggers rebuild serving rows whenever food/source data changes. This
   keeps list items, custom foods, submissions, products, revisions, and observations
   synchronized without relying on browser writes.
+- `source_observation_id` identifies the exact observation supporting the serving.
+  A provider name, FDC ID, or product-level source is not sufficient field evidence;
+  rows without an observation remain explicitly `unknown`.
 - The initial migration checks every existing parent row and backfills all valid serving
   data already present. Foods without a trustworthy serving stay empty; the migration
   does not invent a 100g package serving.
@@ -489,6 +489,10 @@ Notes:
 
 - Public sharing requires `consent_to_share = true`.
 - `status` can be `pending`, `approved`, `rejected`, or `auto_declined`.
+- `verification_status` is workflow metadata, not field trust. `exact_identity` means
+  an external source matched the exact barcode; `manual_review` means a human reviewed
+  the submission. Neither state verifies every product field. Selected field evidence
+  remains authoritative in `shared_product_field_provenance`.
 - `auto_declined` means server validation blocked a bad share attempt before it reached
   normal moderation; it should not count as a human rejection.
 - `validation_report` carries barcode/source comparison and nutrient validation results
@@ -579,10 +583,34 @@ Another trigger copies the submission and observed-label metadata onto the new r
 parsing every historical food document. Older revisions keep their original snapshots;
 the migration does not invent historical field differences.
 
+`catalog_change_summary_is_valid` requires each new product-update submission to carry
+at least one uniquely named, typed change with both previous and submitted values.
+The revision trigger rejects malformed update summaries and writes the complete
+structured set in the same publication transaction. `get_blendcalc_product_revision_history_v1`
+is the authenticated, bounded API read over publication-ready products; it returns only
+revision metadata and structured changes, never revision snapshots, private evidence,
+or reviewer identities. Historical rows are left with empty changes when no retained
+evidence can prove the difference.
+
 ### Product evidence and cache tables
 
 `shared_product_observations`, `shared_product_field_provenance`, and
 `shared_product_conflicts` hold the evidence trail behind shared catalog data.
+Observations retain the neutral provider key/reference, source licence, observed time,
+content hash, normalized value, raw source payload, and optional private
+submission/user links. The public API reads only the observation ID, source, reference,
+and observed time from the selected row; raw payloads and private links remain
+service-role only.
+
+`shared_product_field_provenance` stores the canonical field path, selected observation,
+source and normalized values, confidence, evidence method, and selected state. Evidence
+methods in storage are `exact-barcode`, `label-review`, and `cross-source`; API v1 maps
+them to the bounded public vocabulary `exact-barcode`, `package-label`, and
+`corroborated-sources`, while explicit moderator-reviewed confidence maps to
+`moderator-reviewed`. Exact barcode identifies the provider product record but does not
+blanket-verify all provider fields, so uncorroborated provider values remain
+`imported`. Missing selected provenance stays unknown.
+
 `product_api_cache` reduces external API load and is readable/writable only through
 server code using the `service_role`. Browser roles receive no table privileges. Its
 `(provider, cache_key)` primary key keeps each source in a separate namespace.
@@ -887,6 +915,34 @@ Notes:
 - Application requests fail closed when account-moderation state cannot be verified;
   logout remains available so a user is never trapped in a session.
 
+## Operational Analytics
+
+### `app_interaction_daily_metrics`
+
+Stores private, daily aggregate interaction counts synchronized from Vercel Web
+Analytics. It is an operational measurement table, not a user activity log.
+
+| Table | Documented columns |
+| --- | --- |
+| `app_interaction_daily_metrics` | `metric_date`, `metric_key`, `dimension_key`, `dimension_value`, `metric_source`, `environment`, `event_count`, `visitor_count`, `source_query_version`, `created_at`, `synced_at` |
+
+Notes:
+
+- Initial metric keys are `page_view`, `auth_login_success`,
+  `auth_logout_success`, and `page_reload`. Future interactions must be deliberately
+  registered rather than copied from arbitrary event payloads.
+- `page_view` is stored both as a daily total and, where Vercel provides a framework
+  route pattern, by `dimension_key = route`. Exact request paths, query strings, and
+  URL hashes are not persisted.
+- Successful Vercel responses that omit an event for a synchronized day produce an
+  explicit aggregate zero. Missing or invalid provider values are rejected rather than
+  guessed.
+- The table never stores user ids, email addresses, IP addresses, cookies, raw URLs,
+  event properties, or Vercel's temporary visitor hashes.
+- Browser roles cannot read or write this table. The service-role-only
+  `replace_app_interaction_daily_metrics` function atomically replaces at most 32 days
+  and 500 aggregate rows per run.
+
 ## Request Security and Least Privilege
 
 ### `request_rate_limits`
@@ -938,20 +994,17 @@ without calling the source again.
 | `generic_food_measures`                    | `dataset_key, source_food_key, source_measure_key`  | Stores source household measures                              | Amount/unit, gram weight, source label and metadata; never inferred from names                                                            |
 | `generic_food_dataset_reference_rows`      | `dataset_key, reference_type, source_key`           | Stores source dictionaries used to interpret imports          | Reference labels and metadata remain tied to the dataset release                                                                          |
 
-Current release state:
-
-- `cnf-2026` is active: 5,993 foods, 565,409 nutrient values, and 29,867 measures.
-- `cofid-2021` is active: 2,887 foods and 199,415 nutrient values. Trace values remain
-  `trace`; alcohol records reported per 100 ml are not presented as per 100g.
-- AFCD remains disabled until its acceptance/share-alike obligations are explicitly
-  approved.
-
 Runtime generic search reads only active, import-enabled datasets through an indexed
 prefix-search RPC. A result must have at least one canonical measured nutrient, so
 identity-only shells cannot consume result slots. Results retain alternate descriptions,
 scientific names, preparation metadata, and exact source-declared identifiers. Those
 identifiers may connect the same source food across datasets, but similar names are never
 treated as an identity match.
+
+The current provider capability and intake-state inventory belongs in
+[`api-structures/source-data-inventory.md`](api-structures/source-data-inventory.md);
+source-specific legal and activation decisions belong in
+[`data-source-licensing.md`](data-source-licensing.md).
 
 Private custom foods use `private-manual-core-v1`, whose required rows are copied from
 the enabled manual-entry nutrient requirements. A typed barcode does not switch that
@@ -984,6 +1037,8 @@ category, or serving fields.
 | `create_profile_for_new_auth_user`             | Auth trigger helper that creates a profile row for new users                                                                                   |
 | `replace_food_nutrients`                       | Replaces normalized nutrient rows for exactly one food parent                                                                                  |
 | `replace_food_servings`                        | Replaces normalized serving rows for exactly one food parent; parent triggers call it after relevant writes                                    |
+| `normalize_food_nutrient_lineage`              | Links normalized nutrients to exact selected observations and leaves unsupported provider-derived lineage unknown                              |
+| `normalize_food_serving_lineage`               | Links normalized servings to exact selected observations and leaves unsupported provider-derived lineage unknown                              |
 | `food_list_item_identity_key`                  | Produces the canonical barcode-or-FDC identity used to prevent cross-list duplicates                                                           |
 | `place_user_food_list_item`                    | Atomically adds an ingredient, reports a required cross-list move, or completes a confirmed move                                               |
 | `move_user_food_list_items`                    | Atomically moves a checked ingredient set between Fridge and Shopping List, rejecting stale or partial sets                                    |
@@ -1004,8 +1059,11 @@ category, or serving fields.
 | `blendcalc_api_v1_source_is_eligible`           | Tests a stored source against the DB-owned API redistribution, licence, attribution, and policy-review gate |
 | `blendcalc_api_v1_product_readiness_reasons`    | Returns the service-only reasons an active shared product is withheld from API v1 |
 | `get_blendcalc_product_v1`                      | Reads one active, publication-ready shared product and its latest revision by GTIN-14 |
+| `get_blendcalc_product_revision_history_v1`     | Reads bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14 |
 | `search_blendcalc_products_v1`                  | Searches only active, publication-ready shared products with bounded pagination and stable relevance |
+| `catalog_change_summary_is_valid`               | Validates unique structured old/new field changes before a catalog product update can be accepted |
 | `consume_request_rate_limit`                    | Atomically consumes one private server-side request quota unit; service role only |
+| `replace_app_interaction_daily_metrics`         | Atomically replaces a bounded production date range of private Vercel interaction aggregates; service role only |
 | `reject_blocked_signup`                        | Supabase Auth hook for hashed email signup blocks                                                                                              |
 
 ## Storage Buckets

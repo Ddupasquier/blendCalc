@@ -110,6 +110,18 @@ needs multiple test/support files.
 - Remove obsolete scripts instead of keeping undocumented alternatives.
 - Keep the directory map and maintenance requirements in `scripts/README.md` current.
 
+## Documentation
+
+[`README.md`](README.md) is the canonical documentation ownership map. Add detail to the
+document that owns the subject and link to it from supporting documents; do not create a
+second rule set, schema map, provider ledger, API field map, command guide, or QA
+checklist.
+
+Repository setup and the stable developer command surface remain in the root
+[`README.md`](../README.md). Script execution and organization remain in
+[`scripts/README.md`](../scripts/README.md). Recovery context under
+`docs/local-context/` is local workflow state, not product documentation.
+
 ## Ownership Check
 
 Before creating a file, ask:

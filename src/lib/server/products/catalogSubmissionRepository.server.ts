@@ -86,7 +86,7 @@ export const createCatalogSubmission = async (
 		updateTarget: CatalogUpdateTarget | null;
 		updateSummary: CatalogUpdateSummary | null;
 		labelObservedAt: string;
-		isSourceVerified: boolean;
+		hasExactSourceMatch: boolean;
 		matchedSource: "usda" | "open-food-facts" | null;
 		matchedReference?: string;
 		report: CatalogSubmissionValidationReport;
@@ -110,8 +110,8 @@ export const createCatalogSubmission = async (
 			change_summary: toJson(input.updateSummary ?? {}),
 			label_observed_at: input.labelObservedAt,
 			consent_to_share: true,
-			verification_status: input.isSourceVerified
-				? "source_verified"
+			verification_status: input.hasExactSourceMatch
+				? "exact_identity"
 				: "manual_review",
 			matched_source: input.matchedSource,
 			matched_reference: input.matchedReference ?? null,

@@ -3,6 +3,7 @@
 	import NutritionListActions from "$lib/components/ingredients/nutrition/NutritionListActions/NutritionListActions.svelte";
 	import NutritionPreferenceConflict from "$lib/components/ingredients/nutrition/NutritionPreferenceConflict/NutritionPreferenceConflict.svelte";
 	import ProductCompatibilityPanel from "$lib/components/ingredients/nutrition/ProductCompatibilityPanel/ProductCompatibilityPanel.svelte";
+	import ProductDataQualityPanel from "$lib/components/ingredients/nutrition/ProductDataQualityPanel/ProductDataQualityPanel.svelte";
 	import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel/ProductImagePanel.svelte";
 	import ProductInformationPanel from "$lib/components/ingredients/nutrition/ProductInformationPanel/ProductInformationPanel.svelte";
 	import ProductIngredientsPanel from "$lib/components/ingredients/nutrition/ProductIngredientsPanel/ProductIngredientsPanel.svelte";
@@ -30,6 +31,7 @@
 	{#if food}
 		<ProductIngredientsPanel {food} />
 		<ProductCompatibilityPanel {food} />
+		<ProductDataQualityPanel {food} />
 		<ProductInformationPanel {food} />
 	{/if}
 	<NutritionListActions {food} {showListActions} {listMembership} />

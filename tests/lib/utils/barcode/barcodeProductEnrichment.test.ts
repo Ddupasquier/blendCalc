@@ -223,11 +223,24 @@ describe("barcode product field enrichment", () => {
 		expect(result.fieldProvenance?.nutrition?.source).toBe("open-food-facts");
 	});
 
-	it("merges source-provided ingredient and allergen metadata independently", () => {
+	it("fills missing metadata fields without combining differently sourced fields", () => {
 		const usda = makeDraft("usda", {
 			ingredients: "Peanuts, sugar",
 			ingredientList: ["Peanuts", "sugar"],
 			allergens: ["peanuts"],
+			fieldProvenance: {
+				nutrition: makeDraft("usda").fieldProvenance?.nutrition,
+				ingredients: {
+					source: "usda",
+					sourceReference: "2658692",
+					confidence: "unknown",
+				},
+				allergens: {
+					source: "usda",
+					sourceReference: "2658692",
+					confidence: "unknown",
+				},
+			},
 		});
 		const openFoodFacts = makeDraft("open-food-facts", {
 			ingredients: "Peanuts, sugar, milk",
@@ -245,13 +258,35 @@ describe("barcode product field enrichment", () => {
 			additives: ["e330"],
 			packageQuantity: { label: "12 oz", amount: 12, unit: "oz" },
 			sourceMetadata: { revision: 4 },
+			fieldProvenance: Object.fromEntries(
+				[
+					"nutrition",
+					"ingredients",
+					"allergens",
+					"traces",
+					"dietaryTags",
+					"labels",
+					"structuredIngredients",
+					"ingredientAnalysis",
+					"additives",
+					"package",
+					"sourceMetadata",
+				].map((field) => [
+					field,
+					{
+						source: "open-food-facts",
+						sourceReference: "00021130493609",
+						confidence: "unknown",
+					},
+				]),
+			),
 		});
 
 		const result = mergeMissingBarcodeProductFields(usda, openFoodFacts);
 
 		expect(result.ingredients).toBe("Peanuts, sugar");
-		expect(result.ingredientList).toEqual(["Peanuts", "sugar", "milk"]);
-		expect(result.allergens).toEqual(["peanuts", "milk"]);
+		expect(result.ingredientList).toEqual(["Peanuts", "sugar"]);
+		expect(result.allergens).toEqual(["peanuts"]);
 		expect(result.traces).toEqual(["tree nuts"]);
 		expect(result.dietaryTags).toEqual(["vegetarian"]);
 		expect(result.labels).toEqual(["Rainforest Alliance"]);
@@ -260,10 +295,6 @@ describe("barcode product field enrichment", () => {
 			ingredientTags: ["milk"],
 			analysisTags: ["non vegan"],
 			derivedTraceTags: ["tree nuts"],
-			percentAnalysis: undefined,
-			percentEstimate: undefined,
-			percentKnown: undefined,
-			percentUnknown: undefined,
 		});
 		expect(result.additives).toEqual(["e330"]);
 		expect(result.packageQuantity).toEqual({

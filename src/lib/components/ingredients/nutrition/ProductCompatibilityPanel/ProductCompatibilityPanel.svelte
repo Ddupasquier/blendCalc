@@ -1,4 +1,8 @@
 <script lang="ts">
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
+	import {
+		getFoodCompatibilityEvaluationMessage,
+	} from "$lib/utils/food/quality/foodCompatibilityEvaluationMessages";
 	import {
 		getUniqueFoodMetadataTags,
 	} from "$lib/utils/food/records/foodMetadataPresentation";
@@ -23,9 +27,15 @@
 				.map((fact) => fact.label),
 		),
 	);
+	const evaluationMessage = $derived(
+		food.compatibilityEvaluation
+			? getFoodCompatibilityEvaluationMessage(food.compatibilityEvaluation)
+			: null,
+	);
 	const hasContent = $derived(
 		Boolean(
-			allergenDisplay?.contains.length ||
+			evaluationMessage ||
+				allergenDisplay?.contains.length ||
 				allergenDisplay?.mayContain.length ||
 				dietaryLabels.length ||
 				dietaryConsiderations.length,
@@ -35,6 +45,14 @@
 
 {#if hasContent}
 	<div class="product-compatibility-panel">
+		{#if evaluationMessage}
+			<StatusMessage
+				tone={evaluationMessage.tone}
+				title={evaluationMessage.title}
+				message={evaluationMessage.message}
+			/>
+		{/if}
+
 		{#if allergenDisplay?.contains.length}
 			<section class="product-compatibility-panel__group">
 				<h2>Contains</h2>

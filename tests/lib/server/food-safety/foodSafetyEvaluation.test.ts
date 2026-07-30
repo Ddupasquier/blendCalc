@@ -757,4 +757,116 @@ describe("food preference warnings", () => {
 				}),
 			]));
 	});
+
+	it("computes one evidence-aware compatibility status for personalized reads", () => {
+		const completeFood = makeFood({
+			description: "Prepared snack",
+			foodIdentityType: "packaged",
+			ingredients: "Water, rice, salt",
+			fieldProvenance: {
+				ingredients: { source: "manufacturer" },
+				allergens: { source: "manufacturer" },
+				traces: { source: "manufacturer" },
+			},
+		});
+		const profile = {
+			...baseProfile,
+			dietaryRestrictions: ["Vegan"],
+		};
+		const context = {
+			profile,
+			policy: {
+				version: 7,
+				reviewedAt: "2026-07-29T00:00:00.000Z",
+				preferenceConflictRules: profile.warningRules ?? [],
+				compatibilityMatchRules: [],
+				regionalProfiles: [],
+			},
+		};
+
+		expect(
+			annotateFoodWithFoodSafety(completeFood, context)
+				.compatibilityEvaluation,
+		).toMatchObject({
+			status: "checked",
+			policyVersion: 7,
+			profileApplied: true,
+			coverage: {
+				ingredients: "available",
+				allergens: "available",
+				traces: "available",
+				policy: "available",
+			},
+		});
+
+		const incompleteFood = {
+			...completeFood,
+			fieldProvenance: {
+				ingredients: { source: "manufacturer" as const },
+				allergens: { source: "manufacturer" as const },
+			},
+		};
+		expect(
+			annotateFoodWithFoodSafety(incompleteFood, context)
+				.compatibilityEvaluation?.status,
+		).toBe("incomplete");
+	});
+
+	it("changes compatibility status when evidence or policy coverage changes", () => {
+		const food = makeFood({
+			description: "Prepared snack",
+			foodIdentityType: "packaged",
+			ingredients: "Water, rice, salt",
+			fieldProvenance: {
+				ingredients: { source: "manufacturer" },
+				allergens: { source: "manufacturer" },
+				traces: { source: "manufacturer" },
+			},
+		});
+		const uncoveredProfile = {
+			...baseProfile,
+			allergens: ["Banana"],
+		};
+		const firstEvaluation = annotateFoodWithFoodSafety(food, {
+			profile: uncoveredProfile,
+			policy: {
+				version: 7,
+				reviewedAt: "2026-07-29T00:00:00.000Z",
+				preferenceConflictRules: baseProfile.warningRules ?? [],
+				compatibilityMatchRules: [],
+				regionalProfiles: [],
+			},
+		}).compatibilityEvaluation;
+
+		expect(firstEvaluation).toMatchObject({
+			status: "incomplete",
+			policyVersion: 7,
+			coverage: { policy: "missing" },
+		});
+
+		const coveredEvaluation = annotateFoodWithFoodSafety(food, {
+			profile: uncoveredProfile,
+			policy: {
+				version: 8,
+				reviewedAt: "2026-07-30T00:00:00.000Z",
+				preferenceConflictRules: [{
+					preferenceSlug: "banana",
+					preferenceLabel: "Banana",
+					factSlug: "banana",
+					factLabel: "Banana",
+					level: "warning",
+					warningCode: "FOOD_RESTRICTION_CONFLICT",
+					priority: 10,
+				}],
+				compatibilityMatchRules: [],
+				regionalProfiles: [],
+			},
+		}).compatibilityEvaluation;
+
+		expect(coveredEvaluation).toMatchObject({
+			status: "checked",
+			policyVersion: 8,
+			coverage: { policy: "available" },
+		});
+	});
 });

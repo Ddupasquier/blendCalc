@@ -5,6 +5,7 @@ import { compactFood } from "$lib/utils/food/records/foodRecords";
 import type {
 	FdcFood,
 	FdcNutrient,
+	FoodFieldSource,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
 import {
@@ -297,6 +298,20 @@ const preserveFoodMetadata = (food: FdcFood): FdcFood => ({
 	reportedNutrientIds: [...getReportedNutrientIds(food)],
 });
 
+const getCanonicalFieldConfidence = (
+	confidence: FoodFieldSource["confidence"] | undefined,
+): CatalogFieldProvenance["confidence"] => {
+	switch (confidence) {
+		case "source-verified":
+		case "moderator-reviewed":
+		case "corroborated":
+		case "imported":
+			return confidence;
+		default:
+			return "imported";
+	}
+};
+
 export const buildUsdaVerifiedCatalogBundle = (
 	userFood: FdcFood,
 	usdaDraft: BarcodeProductDraft,
@@ -347,42 +362,57 @@ export const buildCombinedSourceCatalogBundle = (
 	const primaryObservationKey = canonicalDraft.source === "open-food-facts"
 		? "open-food-facts"
 		: "usda";
-	const servingObservationKey =
-		canonicalDraft.fieldProvenance?.serving?.source === "open-food-facts"
-			? "open-food-facts"
-			: canonicalDraft.fieldProvenance?.serving?.source === "usda"
-				? "usda"
-				: primaryObservationKey;
+	const supportedObservationKeys = new Set(
+		sourceObservations.map((observation) => observation.key),
+	);
+	const canonicalProvenance = addFoodProvenance(
+		canonicalFood,
+		primaryObservationKey,
+		"imported",
+		"exact-barcode",
+	).flatMap((entry): CatalogFieldProvenance[] => {
+		if (entry.fieldPath === "productName" || entry.fieldPath === "brandOwner") {
+			return [{ ...entry, confidence: "imported" }];
+		}
+		if (entry.fieldPath === "servingWeightGrams") {
+			const source = canonicalDraft.fieldProvenance?.serving;
+			return source && supportedObservationKeys.has(source.source)
+				? [{
+						...entry,
+						observationKey: source.source,
+						confidence: getCanonicalFieldConfidence(source.confidence),
+					}]
+				: [];
+		}
+		if (entry.fieldPath.startsWith("nutrient:")) {
+			const nutrientId = Number(entry.fieldPath.split(":")[1]);
+			const nutrient = canonicalFood.foodNutrients.find(
+				(item) => item.nutrientId === nutrientId,
+			);
+			return nutrient?.source && supportedObservationKeys.has(nutrient.source)
+				? [{
+						...entry,
+						observationKey: nutrient.source,
+						confidence: getCanonicalFieldConfidence(nutrient.confidence),
+					}]
+				: [];
+		}
+
+		const trackedField = entry.fieldPath as FoodTrackedField;
+		const source = canonicalDraft.fieldProvenance?.[trackedField];
+		return source && supportedObservationKeys.has(source.source)
+			? [{
+					...entry,
+					observationKey: source.source,
+					confidence: getCanonicalFieldConfidence(source.confidence),
+				}]
+			: [];
+	});
 
 	return {
 		canonicalFood,
 		observations: [userObservation, ...sourceObservations],
-		provenance: addFoodProvenance(
-			canonicalFood,
-			primaryObservationKey,
-			"source-verified",
-			"exact-barcode",
-		).map((entry) => {
-			if (entry.fieldPath === "servingWeightGrams") {
-				return { ...entry, observationKey: servingObservationKey };
-			}
-			if (!entry.fieldPath.startsWith("nutrient:")) return entry;
-			const nutrientId = Number(entry.fieldPath.split(":")[1]);
-			const nutrientSource = canonicalFood.foodNutrients.find(
-				(nutrient) => nutrient.nutrientId === nutrientId,
-			)?.source;
-			if (nutrientSource !== "usda" && nutrientSource !== "open-food-facts") {
-				return entry;
-			}
-			return { ...entry, observationKey: nutrientSource };
-		}).map((entry) => {
-			const trackedField = entry.fieldPath as FoodTrackedField;
-			const fieldSource = canonicalDraft.fieldProvenance?.[trackedField]?.source;
-			if (fieldSource !== "usda" && fieldSource !== "open-food-facts") {
-				return entry;
-			}
-			return { ...entry, observationKey: fieldSource };
-		}),
+		provenance: canonicalProvenance,
 		conflicts: findFoodConflicts(
 			userFood,
 			canonicalFood,

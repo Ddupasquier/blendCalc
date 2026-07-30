@@ -94,4 +94,83 @@ describe("ProductCompatibilityPanel", () => {
 			.toBeInTheDocument();
 		expect(screen.getByText("Meat")).toBeInTheDocument();
 	});
+
+	it("explains a checked result without presenting a safety guarantee", () => {
+		render(ProductCompatibilityPanel, {
+			props: {
+				food: createFood({
+					compatibilityEvaluation: {
+						version: 1,
+						status: "checked",
+						policyVersion: 3,
+						profileApplied: true,
+						conflictCount: 0,
+						coverage: {
+							basis: "packaged-label",
+							identity: "not_required",
+							ingredients: "available",
+							allergens: "available",
+							traces: "available",
+							policy: "available",
+						},
+					},
+				}),
+			},
+		});
+
+		expect(
+			screen.getByText("No conflict found in available information"),
+		).toBeInTheDocument();
+		expect(screen.getByText(/ingredients and labels can change/i))
+			.toBeInTheDocument();
+		expect(screen.getByText(/current package label/i)).toBeInTheDocument();
+	});
+
+	it("explains incomplete and unchecked evaluations distinctly", () => {
+		const incomplete = createFood({
+			compatibilityEvaluation: {
+				version: 1,
+				status: "incomplete",
+				policyVersion: 3,
+				profileApplied: true,
+				conflictCount: 0,
+				coverage: {
+					basis: "packaged-label",
+					identity: "not_required",
+					ingredients: "available",
+					allergens: "missing",
+					traces: "missing",
+					policy: "available",
+				},
+			},
+		});
+		const { unmount } = render(ProductCompatibilityPanel, {
+			props: { food: incomplete },
+		});
+
+		expect(screen.getByText("Some food details could not be checked"))
+			.toBeInTheDocument();
+		expect(screen.getByText(/required ingredient or allergen details are missing/i))
+			.toBeInTheDocument();
+		unmount();
+
+		render(ProductCompatibilityPanel, {
+			props: {
+				food: createFood({
+					compatibilityEvaluation: {
+						...incomplete.compatibilityEvaluation!,
+						status: "not_checked",
+						policyVersion: null,
+						profileApplied: false,
+						coverage: {
+							...incomplete.compatibilityEvaluation!.coverage,
+							policy: "missing",
+						},
+					},
+				}),
+			},
+		});
+		expect(screen.getByText("Not checked against food settings"))
+			.toBeInTheDocument();
+	});
 });

@@ -573,6 +573,16 @@ placement previews remain identical.
   cleanly rather than adding empty rows or placeholders.
 - Group product, serving, and source metadata inside the shared `Product details`
   collapse and keep it closed by default.
+- Show the shared `Data quality` collapse only when bounded source-record metadata has
+  a useful caveat. Keep it closed by default, describe source-reported completeness or
+  review notes in friendly language, and never expose raw provider quality tags or
+  scores. This disclosure is separate from blendCalc field verification.
+- Keep field sources, attribution, and licence details in `Product details`; do not
+  duplicate that legal/source context inside `Data quality`.
+- Show one server-computed compatibility status when available. Keep it visually
+  separate from `Contains` and `May contain`, use the shared status-message treatment,
+  and distinguish conflict, checked, incomplete, and not-checked states without
+  presenting any state as a safety guarantee.
 - Ingredients, `Contains`, `May contain`, source-backed dietary labels, and reviewed
   dietary considerations remain plain text against the app background unless
   interaction or status requires a surface. Do not expose internal match expressions,

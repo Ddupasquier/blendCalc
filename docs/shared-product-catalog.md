@@ -35,37 +35,41 @@ save private custom foods, use their fridge, and build mixes.
   nutrient, serving, image, category, provenance, and revision records is the canonical
   source of truth for published product reads. External providers do not bypass or
   overwrite accepted nonmissing canonical fields.
-- **USDA FoodData Central:** exact barcode matches may auto-publish. USDA data is
-  CC0/public domain. Exact USDA fields may fill missing canonical fields when the
-  observation, selected provenance, and revision are saved together.
-- **Open Food Facts:** intended for live barcode lookup, licensed caching, comparison,
-  and separately licensed package images. Package image metadata may be stored in
-  `food_image_assets` with source, license, attribution, and confidence. A current audit
-  found that the exact-match submission path can still auto-publish an Open Food Facts
-  record despite `canonical_storage_allowed = false`. API v1 now withholds those rows
-  through its database publication gate; the intake mismatch must still be fixed or an
-  ODbL-compatible downstream database model must be deliberately adopted before those
-  product fields can be exposed.
-- **Health Canada CNF and UK CoFID:** their published Open Government licences permit
-  canonical and API reuse with attribution. These datasets support confidently matched
-  generic foods, not exact packaged-product substitution. Stored policy evidence records
-  the licence, official dataset URL, review date, attribution requirement, excluded
-  third-party rights, and non-endorsement condition.
-- **User-entered labels:** may be published only after moderator review.
+- **Exact identity versus field verification:** an exact barcode match confirms product
+  identity only. Submission workflow records this as `exact_identity`; it does not
+  assign provider-wide verification. Automatically published exact-source records
+  remain `imported` at the whole-record level, while each selected field retains its
+  own evidence and confidence.
+- **External observations:** an exact, legally eligible value may fill a missing
+  canonical field only when the observation, selected field provenance, and revision
+  are persisted together. Provider-wide trust never substitutes for field evidence.
+- **Generic datasets:** confidently linked generic foods remain separate from exact
+  packaged-product identity.
+- **User-entered labels:** publication requires moderator review.
 
 Whether a provider may populate the future public blendCalc dataset is stored in
 `product_data_sources` through `canonical_storage_allowed`, license, review date, and
 policy notes. `api_redistribution_allowed` separately controls API publication.
 Application code must not infer redistribution permission from a provider name.
 
-See [`data-source-licensing.md`](data-source-licensing.md) for exact source requirements,
-current handling, and unresolved compliance blockers.
+Provider capabilities are maintained in the
+[`source data inventory`](api-structures/source-data-inventory.md). Exact source
+requirements, current handling, and compliance blockers are maintained only in
+[`data-source-licensing.md`](data-source-licensing.md).
 
 ## Provenance and merging
 
 Every published field records the observation that supplied it. Source observations,
 selected field provenance, and disagreements are stored separately from the canonical
 product row.
+
+An exact barcode proves that a provider record refers to the scanned product; it does
+not independently verify every field in that record. Provider-reported fields therefore
+remain `imported` unless separate evidence supports `corroborated` or
+`moderator-reviewed`. The public field-source contract translates stored evidence into
+the bounded methods `exact-barcode`, `package-label`, `corroborated-sources`, and
+`moderator-reviewed`. It exposes the selected observation ID and observation date, but
+never raw payloads, submission ownership, private label evidence, or reviewer identity.
 
 When a canonical product is incomplete, the server may consult source caches and
 external APIs only for the missing fields. A legally reusable exact-source value can be
@@ -74,6 +78,11 @@ rechecks that the field is still missing before writing it. Existing canonical v
 are not silently replaced. Provider data whose terms do not allow inclusion in the
 future blendCalc public dataset remains in its isolated licensed cache or image-asset
 path and is never disguised as blendCalc-owned canonical data.
+
+Field-resolution policy version 1 compares exact-barcode candidates independently by
+field evidence, field completeness, observation recency, and a neutral deterministic
+tie-break. It does not give a provider blanket priority. Nutrients are resolved by
+canonical nutrient ID, and differently sourced nutrients retain their own lineage.
 
 The missing-field plan covers nutrition, images, categories, servings, ingredient text
 and lists, recursive structured ingredients, ingredient analysis, additives, explicit
@@ -115,6 +124,12 @@ unchanged.
   review.
 - Moderator-reviewed labels remain identified as community-reviewed rather than
   source-verified.
+- Normalized nutrient and serving rows retain an exact source observation when one
+  exists. Provider identity, an FDC ID, or a product-level source cannot independently
+  verify a nutrient or serving; unsupported lineage remains `unknown`.
+- Moderators and admins can inspect full field candidates and observation metadata
+  through the role-gated, non-cacheable provenance endpoint. Public reads never expose
+  raw payloads, submitter identity, private evidence, or reviewer identity.
 
 Generic-food search remains separate from the shared packaged-product catalog. National
 dataset records must contain canonical measured nutrition before they are searchable,
@@ -163,6 +178,40 @@ as the date the manufacturer changed the product unless a separate source provid
 date. Revision history is retained for the future public API, while private evidence
 paths remain moderator-only.
 
+### Catalog date and evidence semantics
+
+Run `node scripts/audits/audit_catalog_transparency.mjs` to measure current population
+across canonical products, selected source observations, normalized rows, API v1
+publication, and the app read model. Add `--json` for machine-readable output. The
+report classifies each field as populated, sparse, or empty and prints representative
+non-private values.
+
+| User concept | Semantic owner | Meaning | Missing-value behavior |
+| --- | --- | --- | --- |
+| Last verified | `shared_products.last_verified_at` | Latest evidence-backed verification event accepted by blendCalc | Unknown; never substitute `updated_at`, a provider fetch date, or the current time |
+| Current label since | Explicit manufacturer effective date when supplied; otherwise `shared_product_revisions.label_observed_at` | Manufacturer effective date, or the date blendCalc explicitly observed the current label when no manufacturer date exists | Unknown; revision creation and product update timestamps are not manufacturer label dates |
+| Revision history | `shared_product_revisions` and `shared_product_revision_changes` | Immutable accepted snapshots and evidence-backed field changes | Leave unrecoverable historical differences unknown |
+| Field source | `shared_product_field_provenance` joined to `shared_product_observations` | Selected observation, method, confidence, source reference, and observation date for one accepted field | Unknown; never fall back to the whole-product provider |
+| Source quality | `shared_products.food.sourceMetadata` | Source-reported completeness, schema version, quality tags, dates, languages, and obsolete state | Not reported; absence is not a low-quality verdict |
+| Serving source | `food_servings` | Reported serving and its source, reference, confidence, observation, or revision | No reported serving; the 100g nutrition basis is not a serving claim |
+| Nutrient uncertainty | `generic_food_nutrients` | Source-reported standard error, observation count, source code, mapping, and value status | Unknown uncertainty; absence does not alter nutrient math |
+| Compatibility policy | `food_compatibility_policy_versions` | Immutable reviewed match/conflict rules and references for one policy version | No reproducible policy version |
+| Compatibility evidence | `product_compatibility_facts` | Policy-versioned evidence from ingredients, declarations, traces, source identity, or reviewed analysis | No conflict found in available evidence; never proof that a food is safe |
+| Compatibility evaluation | Server read model | `conflict`, `checked`, `incomplete`, or `not_checked`, with explicit evidence coverage and applied policy version | `not_checked` without a user profile; missing evidence never becomes `checked` |
+
+API v1 exposes current revision metadata, selected field sources with observation IDs,
+observation dates, bounded evidence methods, and honest review states, source-record
+metadata, structured ingredient analysis, serving sources, compatibility warnings, and
+the shared compatibility-evaluation contract. Because public API reads have no signed-in
+profile context, their personalized result remains `not_checked`; authenticated app
+reads use the same contract with current user preferences and policy coverage.
+Its separate bounded revision-history endpoint exposes immutable revision dates and
+evidence-backed field changes without exposing historical food snapshots or private
+moderation evidence. It does not currently expose nutrient uncertainty or policy
+snapshots. The app reads normalized nutrition and serving values plus compatibility
+evidence; deeper provenance, quality, uncertainty, and history remain future
+presentations rather than inferred UI claims.
+
 ## Serving data
 
 Reported serving sizes are normalized into `food_servings` when products are saved,
@@ -177,32 +226,18 @@ basis is not treated as proof that the package reports a 100g serving. Database 
 synchronize future writes, and the serving migration backfills valid serving data from
 existing catalog and user food records.
 
-## API caching
+## Runtime source boundary
 
-USDA search, barcode search, and detail responses are cached server-side in Supabase
-with expiration timestamps. Open Food Facts barcode responses use the same server-only
-cache in a separate provider namespace. Open Food Facts cache rows remain raw ODbL
-provider data: they are not blended into USDA data or treated as independently owned
-canonical records. Cache expiration, attribution, and source identity remain explicit so
-broader reuse can continue to meet the provider's license and refresh requirements.
+Provider requests and caches are server-only enrichment inputs. The catalog checks
+canonical data first, requests only missing permitted fields, coalesces identical
+requests, and may use an explicitly stale cache only during a provider outage.
+Provider credentials and raw licensed caches never enter public catalog responses.
 
-The browser never receives provider credentials. Cached data reduces rate-limit pressure
-but is not treated as permanently current. A recent expired row may be used only as a
-temporary outage fallback. ETags refresh unchanged records without downloading the body
-again. Cache failures do not block a successful live lookup. Barcode providers try the
-normal package code before padded equivalents, stop after the first exact usable match,
-and share an identical request that is already running instead of starting a duplicate
-call. Allowed package image metadata is stored separately in `food_image_assets` with
-attribution. Trusted DB/API product images are used first. User-uploaded product photos
-stay in private evidence storage until a moderator approves them, then a public
-`community-reviewed` image asset is created with the moderator's crop values. Its ODbL
-database terms still require attribution, provider separation, refresh planning, and a
-deliberate share-alike decision before building a broader derived database from its
-records.
-
-Keep source handling explicit. Do not merge Open Food Facts payloads into
-`shared_products` unless the entire downstream database licensing and attribution model
-is intentionally changed.
+The full read/write/cache boundary is maintained in
+[`data-architecture.md`](data-architecture.md), provider behavior in the
+[`source data inventory`](api-structures/source-data-inventory.md), and source-specific
+cache or reuse restrictions in
+[`data-source-licensing.md`](data-source-licensing.md).
 
 The database keeps origin, field authority, and verification separate. Origin identifies
 each provider, field authority records which source supplied an accepted nutrition,
@@ -231,77 +266,27 @@ separate logical lookups from real outbound requests and USDA cache hits, then t
 source errors, exact matches, nutrient depth, useful product metadata, and response
 time. They do not retain barcodes, search terms, users, or raw API responses.
 
-Use `npm run report:source-quality` to inspect normal traffic. Because later providers
-normally receive harder or incomplete records, runtime match rates are not a fair
-head-to-head ranking. Run `npm run benchmark:source-quality -- --limit=10` and then
-`npm run report:source-quality -- --origin=benchmark` to send the same saved barcodes to
-both sources. Treat that coverage report as evidence about availability and fullness,
-not permission to assign one provider a blanket whole-product trust level.
+Because later providers normally receive harder or incomplete records, runtime match
+rates are not a fair provider ranking. Controlled benchmarks send the same saved
+barcodes to each source and treat availability, nutrient depth, useful metadata, latency,
+and calls per lookup as operational evidence—not blanket trust.
 
-Use `--reset-today` when validating a code-level request optimization. It clears only
-today's synthetic `benchmark` rows before the run, leaving runtime metrics untouched, so
-old benchmark behavior does not distort the new calls-per-lookup result.
+The maintained report and benchmark commands, options, and interpretation notes belong
+in [`../scripts/README.md`](../scripts/README.md#source-quality-audits).
 
-Both reports show `Calls / lookup`. The controlled benchmark warns when a source
-averages more than 2.5 outbound calls per logical lookup so equivalent barcode fan-out,
-unnecessary detail requests, and excessive retries are caught before a new source is
-trusted at production scale.
+## Catalog security boundary
 
-## Database security
+Authenticated users may read active catalog products and their own submissions, but
+browser clients cannot publish, review, reject, or mutate canonical catalog rows.
+Publication and enrichment use transactional server-only database functions. Revisions
+are append-only, stale approvals cannot overwrite a newer revision, and public reads
+exclude submitters, private evidence, raw provider payloads, and reviewer identities.
 
-Migrations:
-
-- `supabase/migrations/20260614190000_shared_product_catalog.sql`
-- `supabase/migrations/20260614200000_catalog_provenance_cache_and_evidence.sql`
-- `supabase/migrations/20260615230000_product_submission_rejection_blocks.sql`
-- `supabase/migrations/20260715120000_shared_product_canonical_categories.sql`
-- `supabase/migrations/20260719210000_canonical_product_external_enrichment.sql`
-- `supabase/migrations/20260719213000_versioned_product_label_updates.sql`
-- `supabase/migrations/20260719214000_canonical_category_display.sql`
-- `supabase/migrations/20260718000000_server_request_efficiency.sql`
-- `supabase/migrations/20260718130000_user_food_list_catalog_links.sql`
-- `supabase/migrations/20260718131000_user_food_list_catalog_link_defaults.sql`
-- `supabase/migrations/20260718132000_strict_user_food_list_catalog_state.sql`
-
-- Authenticated users can read only active `shared_products` and their own submissions.
-- Browser clients cannot insert, update, approve, reject, or delete shared catalog rows.
-- Server routes authenticate the user, then use the server-only Supabase admin client.
-- Publication happens through one transactional, service-role-only database function.
-- Product revisions are append-only and serialized per barcode. Existing-product
-  submissions identify their base revision, and stale approvals cannot overwrite a
-  newer revision.
-- Shared submissions, products, and revisions retain an indexed foreign key to
-  `custom_food_category_options`; database triggers prevent category loss while
-  publishing or creating revisions. The canonical label is also synchronized into
-  compatibility food payloads so UI and future API reads never mistake `Custom
-  Ingredient` origin for a category.
-- Only one pending moderation submission can exist for a barcode at a time.
-- Saved list catalog links are database-resolved and cannot be forged by a
-  browser-provided source, trust status, product id, or submission id.
-- Public product rows do not contain submitter IDs or email addresses.
-- Evidence images are private, short-lived signed URLs are created only for moderators,
-  and evidence paths never appear in public product rows.
-- Approved public product images live in `food-image-assets`; private evidence paths are
-  never exposed through public ingredient data.
-- API cache, source observations, provenance, and conflict tables are service-role only.
-
-Apply and regenerate types:
-
-```sh
-npm run db:push:dry
-npm run db:push
-npm run db:types
-```
-
-Repair legacy shared products after category mappings change:
-
-```sh
-npm run backfill:shared-product-categories
-```
-
-The backfill checks both USDA FoodData Central and Open Food Facts, keeps raw
-observations and source references, then stores the resolved canonical category on
-submissions, products, and revisions.
+The complete object, RLS, function, and Storage map is maintained in
+[`supabase-schema.md`](supabase-schema.md). General server and credential boundaries are
+maintained in [`data-architecture.md`](data-architecture.md), database operation
+commands in [`database-testing.md`](database-testing.md), and privileged review behavior
+in [`moderation.md`](moderation.md).
 
 ## Moderation
 

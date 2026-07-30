@@ -3,18 +3,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
 	readApiV1Categories: vi.fn(),
 	readApiV1ProductByBarcode: vi.fn(),
+	readApiV1ProductRevisionHistory: vi.fn(),
 	searchApiV1Products: vi.fn(),
 }));
 
 vi.mock("$lib/server/api/v1/catalogApi.server", () => ({
 	readApiV1Categories: mocks.readApiV1Categories,
 	readApiV1ProductByBarcode: mocks.readApiV1ProductByBarcode,
+	readApiV1ProductRevisionHistory: mocks.readApiV1ProductRevisionHistory,
 	searchApiV1Products: mocks.searchApiV1Products,
 }));
 
 import { GET as getCategories } from "../../src/routes/api/v1/categories/+server";
 import { GET as searchFoods } from "../../src/routes/api/v1/foods/search/+server";
 import { GET as getProduct } from "../../src/routes/api/v1/products/[barcode]/+server";
+import { GET as getProductRevisions } from "../../src/routes/api/v1/products/[barcode]/revisions/+server";
 import { BLENDCALC_API_V1 } from "$lib/api/v1/types";
 
 const createLocals = (signedIn = true) => ({
@@ -77,6 +80,54 @@ describe("blendCalc API v1 routes", () => {
 			error: { code: "invalid_query" },
 		});
 		expect(mocks.searchApiV1Products).not.toHaveBeenCalled();
+	});
+
+	it("returns revision history through a separate paginated contract", async () => {
+		mocks.readApiV1ProductRevisionHistory.mockResolvedValue({
+			revisions: [{
+				id: "revision-id",
+				number: 2,
+				publishedAt: "2026-07-29T12:00:00.000Z",
+				labelObservedAt: "2026-07-28T12:00:00.000Z",
+				changes: [{
+					field: "ingredients",
+					label: "Ingredient statement",
+					changeType: "changed",
+					previousValue: "Old ingredients",
+					newValue: "New ingredients",
+					severity: "medium",
+				}],
+			}],
+			pagination: {
+				limit: 25,
+				offset: 0,
+				total: 2,
+				hasMore: true,
+				nextOffset: 25,
+			},
+		});
+		const locals = createLocals();
+		const response = await getProductRevisions({
+			locals,
+			params: { barcode: "00021130493609" },
+			url: new URL(
+				"http://localhost/api/v1/products/00021130493609/revisions",
+			),
+		} as never);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toMatchObject({
+			data: [{
+				number: 2,
+				changes: [{ field: "ingredients" }],
+			}],
+			meta: { pagination: { total: 2 } },
+		});
+		expect(mocks.readApiV1ProductRevisionHistory).toHaveBeenCalledWith(
+			locals.supabase,
+			"00021130493609",
+			{ limit: 25, offset: 0 },
+		);
 	});
 
 	it("returns search pagination from the canonical read service", async () => {

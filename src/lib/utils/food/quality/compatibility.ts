@@ -19,6 +19,33 @@ export type FoodCompatibilitySourceType =
 
 export type FoodCompatibilityConfidence = "confirmed" | "inferred" | "uncertain";
 
+export type FoodCompatibilityEvaluationStatus =
+	| "conflict"
+	| "checked"
+	| "incomplete"
+	| "not_checked";
+
+export type FoodCompatibilityEvidenceState =
+	| "available"
+	| "missing"
+	| "not_required";
+
+export type FoodCompatibilityEvaluation = {
+	version: 1;
+	status: FoodCompatibilityEvaluationStatus;
+	policyVersion: number | null;
+	profileApplied: boolean;
+	conflictCount: number;
+	coverage: {
+		basis: "generic-taxonomy" | "packaged-label" | "private-entry";
+		identity: FoodCompatibilityEvidenceState;
+		ingredients: FoodCompatibilityEvidenceState;
+		allergens: FoodCompatibilityEvidenceState;
+		traces: FoodCompatibilityEvidenceState;
+		policy: FoodCompatibilityEvidenceState;
+	};
+};
+
 export type FoodCompatibilityFact = {
 	slug: string;
 	label: string;

@@ -3,6 +3,11 @@
 Profile details are optional. Authentication and the rest of the application do not
 depend on a `profiles` row existing.
 
+This document owns profile behavior and privacy. Auth configuration belongs in
+[`authentication.md`](authentication.md), visual presentation in
+[`style-guide.md`](style-guide.md), and profile table/storage shape in
+[`supabase-schema.md`](supabase-schema.md).
+
 ## Identity and email privacy
 
 - The application does not send the authenticated email address to the shared layout UI.
@@ -56,15 +61,9 @@ bypassed.
 Account roles, blocks, audit history, and signup blocklists are documented in
 `docs/moderation.md`.
 
-## Applying the database changes
+## Change Verification
 
-Run the migration before deploying the profile code:
-
-```sh
-npm run db:push:dry
-npm run db:push
-npm run db:types
-```
-
-After regenerating types, verify that `src/lib/types/database.types.ts` still includes
-the `profiles` table.
+Profile schema and Storage changes follow
+[`database-testing.md`](database-testing.md) and the
+[`schema update checklist`](supabase-schema.md#update-checklist). Profile UI changes
+follow the Profile behavior contract in [`ui-functionality.md`](ui-functionality.md).

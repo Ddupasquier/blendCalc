@@ -1,7 +1,7 @@
 import type { Database } from "$lib/types/database.types";
 import {
-	mergeMissingBarcodeProductFields,
-} from "$lib/utils/barcode/barcodeProductEnrichment";
+	resolveBarcodeProductFields,
+} from "$lib/utils/barcode/barcodeProductFieldResolution";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveBarcodeDraftCategory } from "./categoryMapping.server";
@@ -66,9 +66,10 @@ export const assessCatalogProductSources = async (
 	return {
 		usdaDraft: usda.draft,
 		openFoodFactsDraft: openFoodFacts.draft,
-		mergedDraft: usda.draft
-			? mergeMissingBarcodeProductFields(usda.draft, openFoodFacts.draft)
-			: openFoodFacts.draft,
+		mergedDraft: resolveBarcodeProductFields([
+			usda.draft,
+			openFoodFacts.draft,
+		]),
 		usdaLookupStatus: usda.status,
 		openFoodFactsLookupStatus: openFoodFacts.status,
 		externalLookupFailed:

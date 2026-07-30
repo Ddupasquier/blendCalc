@@ -64,6 +64,7 @@ clickable navigation block instead.
 - [National Nutrition Datasets](#rule-national-nutrition-datasets)
 - [Missing Nutrient Semantics](#rule-missing-nutrient-semantics)
 - [Product Ingredients And Allergen Disclosure](#rule-product-allergen-disclosure)
+- [Compatibility Evaluation Status](#rule-compatibility-evaluation-status)
 - [Nutrition Food Deep Dive](#rule-nutrition-food-deep-dive)
 - [Confirmed Label OCR](#rule-confirmed-label-ocr)
 - [GS1 Product QR Safety](#rule-gs1-digital-link)
@@ -1005,6 +1006,29 @@ conversion, disclosure, source, identifier, or date. Do not expose private evide
 moderation paths, user identifiers, internal catalog/submission IDs, raw provider quality
 tags, or implementation metadata. Showing neutral provenance in this detailed view must
 not create a provider hierarchy or substitute provider identity for verification.
+
+**30i.1b.** <a id="rule-compatibility-evaluation-status"></a>Compute one bounded,
+server-owned food compatibility evaluation with status `conflict`, `checked`,
+`incomplete`, or `not_checked`. Keep this personalized evaluation separate from source
+package disclosures and from the individual preference warnings that explain a
+conflict. `conflict` wins whenever a reviewed rule finds a conflict, even when other
+evidence is incomplete. `checked` requires an active preference profile, a known current
+policy that covers every active preference, and every evidence field required by that
+food type. Packaged and private foods require retained ingredient, allergen-declaration,
+and trace-declaration coverage; a deliberately confirmed empty declaration must retain
+field provenance so it is distinguishable from a missing field. An authoritative
+generic food may use its typed source taxonomy instead of package-label declarations.
+Missing required evidence, an uncovered custom preference, or an unavailable policy
+produces `incomplete` when preferences are active. No active preference profile produces
+`not_checked`; public API reads without user context must also remain `not_checked`.
+Never describe a non-conflict result as safe or allergen-free. Use wording equivalent to
+`No conflict found in available information`, explain incomplete and unchecked states
+distinctly, and remind users that the current package label remains the final authority.
+Only `conflict` may create the compact warning edge on cards; absence of that edge is
+not a checked or safety claim. Saved-list, search, nutrition-detail, and versioned API
+reads must use this same contract. Client components may render the bounded status and
+translate it through the shared message catalog, but they must not recompute evidence
+coverage or policy support.
 
 **30i.2.** <a id="rule-private-custom-food-classification"></a>Use `Custom` only for a
 user-owned food that does not match an accepted blendCalc catalog record or external
