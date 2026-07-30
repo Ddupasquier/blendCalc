@@ -52,26 +52,45 @@ $card-action-size-narrow: 2rem;
 	padding-inline-start: var(--ingredient-card-content-inset);
 }
 
-@mixin interactive-content {
-	position: relative;
+@mixin primary-action-target {
+	position: absolute;
 	z-index: 1;
-	display: grid;
+	inset: 0;
 	width: 100%;
-	grid-template-columns: auto minmax(0, 1fr);
-	align-items: center;
-	gap: $app-gap-sm;
-	min-width: 0;
 	padding: 0;
 	color: inherit;
-	text-align: left;
 	background: transparent;
 	border: 0;
+	border-radius: $app-shell-radius-card;
+	-webkit-touch-callout: none;
+	touch-action: manipulation;
+	user-select: none;
+
+	&::before {
+		position: absolute;
+		inset: 0;
+		content: "";
+		border-radius: $app-shell-radius-card;
+	}
 }
 
-@mixin interactive-content-focus {
-	border-radius: $app-shell-radius-control;
-	outline: $app-focus-outline;
-	outline-offset: 0;
+@mixin primary-action-focus {
+	outline: none;
+
+	&::before {
+		inset: $app-focus-outline-offset;
+		border-radius: calc(
+			#{$app-shell-radius-card} - #{$app-focus-outline-offset}
+		);
+		outline: $app-focus-outline;
+		outline-offset: 0;
+	}
+}
+
+@mixin presentation-layer {
+	position: relative;
+	z-index: 1;
+	pointer-events: none;
 }
 
 @mixin copy {

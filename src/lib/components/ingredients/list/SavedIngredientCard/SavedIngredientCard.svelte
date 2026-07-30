@@ -54,7 +54,6 @@
 	{/if}
 	<button
 		class="saved-ingredient-card__select"
-		class:saved-ingredient-card__select--selection-mode={selectionMode}
 		type="button"
 		aria-label={selectionMode
 			? `${checked ? "Unselect" : "Select"} ${food.description}`
@@ -65,22 +64,23 @@
 			onLongPress: onEnterSelection,
 		}}
 		onclick={handlePrimaryAction}
-	>
-		<span class="saved-ingredient-card__copy">
-			<span class="saved-ingredient-card__title-row">
-				<strong title={food.description}>{food.description}</strong>
-				<IngredientProvenanceBadges
-					{food}
-					{provenanceOptions}
-					variant="saved-card"
-				/>
-			</span>
-			<small>{category}</small>
+	></button>
+	<span class="saved-ingredient-card__copy">
+		<span class="saved-ingredient-card__title-row">
+			<strong title={food.description}>{food.description}</strong>
+			<IngredientProvenanceBadges
+				{food}
+				{provenanceOptions}
+				variant="saved-card"
+			/>
 		</span>
-		{#if selectionMode}
+		<small>{category}</small>
+	</span>
+	{#if selectionMode}
+		<span class="saved-ingredient-card__selection-indicator">
 			<IngredientSelectionIndicator selected={checked} />
-		{/if}
-	</button>
+		</span>
+	{/if}
 	{#if !selectionMode}
 		<span class="saved-ingredient-card__move-action">
 			<CircleIconButton

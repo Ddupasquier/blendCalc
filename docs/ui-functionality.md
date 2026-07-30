@@ -352,7 +352,8 @@ Required controls:
 
 Item behavior:
 
-- Select/preview item where applicable.
+- Where a card has one dominant select, preview, or disclosure action, the full card
+  surface activates it. Secondary card controls remain separate and take priority.
 - Remove from list.
 - Rename item.
 - Move item between lists where supported.

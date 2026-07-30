@@ -24,20 +24,20 @@
 }
 
 .ingredient-search-card__main {
-	@include ingredient-card-layout.interactive-content;
-}
-
-.ingredient-search-card--media .ingredient-search-card__main {
-	grid-template-columns: minmax(0, 1fr);
-	@include ingredient-card-layout.media-content-inset;
+	@include ingredient-card-layout.primary-action-target;
 }
 
 .ingredient-search-card__main:focus-visible {
-	@include ingredient-card-layout.interactive-content-focus;
+	@include ingredient-card-layout.primary-action-focus;
 }
 
 .ingredient-search-card__copy {
 	@include ingredient-card-layout.copy;
+	@include ingredient-card-layout.presentation-layer;
+}
+
+.ingredient-search-card--media .ingredient-search-card__copy {
+	@include ingredient-card-layout.media-content-inset;
 }
 
 .ingredient-search-card__title-row {
@@ -49,9 +49,14 @@
 	@include ingredient-card-layout.action-layer;
 }
 
+.ingredient-search-card__add-cell {
+	z-index: 2;
+}
+
 .ingredient-search-card__open {
 	width: var(--ingredient-card-action-size);
 	height: var(--ingredient-card-action-size);
+	pointer-events: none;
 	color: $app-shell-text-muted;
 	font-size: $app-shell-control-icon-size;
 	line-height: 1;
@@ -59,10 +64,4 @@
 
 :global(.ingredient-search-card__chevron) {
 	color: currentColor;
-}
-
-@media (max-width: $app-breakpoint-xs) {
-	.ingredient-search-card__main {
-		grid-template-columns: minmax(0, 1fr);
-	}
 }

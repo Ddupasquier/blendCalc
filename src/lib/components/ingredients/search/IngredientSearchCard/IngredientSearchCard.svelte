@@ -49,19 +49,18 @@
 			aria-label={`View nutrition for ${food.description}${saved ? ", already in Fridge or Shopping List" : ""}${warning ? `. Warning: ${warning}` : ""}`}
 			onfocus={() => onActivate(index)}
 			onclick={() => onSelect(food)}
-		>
-			<span class="ingredient-search-card__copy">
-				<span class="ingredient-search-card__title-row">
-					<strong title={food.description}>{food.description}</strong>
-					<IngredientProvenanceBadges
-						{food}
-						{provenanceOptions}
-						variant="search-card"
-					/>
-				</span>
-				<small>{category}</small>
+		></button>
+		<span class="ingredient-search-card__copy">
+			<span class="ingredient-search-card__title-row">
+				<strong title={food.description}>{food.description}</strong>
+				<IngredientProvenanceBadges
+					{food}
+					{provenanceOptions}
+					variant="search-card"
+				/>
 			</span>
-		</button>
+			<small>{category}</small>
+		</span>
 	</span>
 	{#if !saved}
 		<span class="ingredient-search-card__add-cell" role="gridcell">

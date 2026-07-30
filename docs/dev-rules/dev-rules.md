@@ -51,6 +51,7 @@ clickable navigation block instead.
 - [Ingredient Card Media](#rule-ingredient-card-media)
 - [Verified Status Badge](#rule-verified-status-badge)
 - [Destructive Action Confirmation](#rule-destructive-action-confirmation)
+- [Primary Card Interactions](#rule-primary-card-interactions)
 - [Component And Route Boundaries](#rule-component-boundaries)
 - [Manual Entry Modularization](#rule-manual-entry-modularization)
 - [Database And API-Driven Data](#rule-no-hardcoded-reference-data)
@@ -420,6 +421,19 @@ timers, `dblclick` handlers, or one-off confirmation messages. The shared guard 
 reject duplicate handling of the same browser event, expire automatically, preserve
 keyboard access, prevent mobile double-tap zoom on the control, show a busy/disabled
 state during the real delete, and use shared design tokens.
+
+**9b.** <a id="rule-primary-card-interactions"></a>When a card has one clear primary
+action, make the full card surface one native button or link target instead of attaching
+the action only to its title, image, or copy. Keep visible card content presentational
+and unable to block the card target. Place explicit secondary controls—such as add,
+move, menu, delete, share, or disclosure actions—in a foreground interaction layer so
+they always take priority and never trigger the card action. Do not nest interactive
+elements. The primary target needs an accurate accessible name, keyboard operation,
+fully visible focus treatment, and honest pressed or selected state where applicable.
+Selection mode may change what the same full-card target does, but must not shrink its
+hit area. Do not apply this pattern to static information cards or forms containing
+multiple equal controls; those surfaces must remain non-clickable outside their actual
+controls.
 
 **10.** <a id="rule-supabase-source-of-truth"></a>Treat Supabase as the source of truth for authenticated users. Fridge, Shopping
 List, custom foods, saved drinks, profiles, and other durable account records must never
