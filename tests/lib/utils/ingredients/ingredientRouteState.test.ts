@@ -95,6 +95,18 @@ describe("ingredient route state", () => {
 			sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
 			modal: INGREDIENT_ROUTE_MODALS.moveIngredient,
 		});
+		expect(
+			getIngredientRouteState(
+				url(
+					"/ingredients/fridge/nutrition/99/correct-information",
+				),
+			),
+		).toMatchObject({
+			view: INGREDIENT_ROUTE_VIEWS.nutrition,
+			sheet: INGREDIENT_ROUTE_SHEETS.catalogCorrection,
+			foodId: 99,
+			listKey: MIX_STORAGE_KEYS.fridge,
+		});
 	});
 
 	it("builds exclusive overlay paths beneath the active list", () => {
@@ -143,6 +155,19 @@ describe("ingredient route state", () => {
 				},
 			),
 		).toBe("/ingredients/fridge/manual-entry");
+		expect(
+			buildIngredientRouteHref(
+				url("/ingredients/shopping/nutrition/101"),
+				{
+					view: INGREDIENT_ROUTE_VIEWS.nutrition,
+					sheet: INGREDIENT_ROUTE_SHEETS.catalogCorrection,
+					foodId: 101,
+					listKey: MIX_STORAGE_KEYS.shoppingList,
+				},
+			),
+		).toBe(
+			"/ingredients/shopping/nutrition/101/correct-information",
+		);
 	});
 
 	it("provides descriptive titles for list and overlay routes", () => {
@@ -161,6 +186,14 @@ describe("ingredient route state", () => {
 				"Tomato Soup",
 			),
 		).toBe("Tomato Soup Nutrition");
+		expect(
+			getIngredientRouteTitle(
+				url(
+					"/ingredients/shopping/nutrition/42/correct-information",
+				),
+				"Tomato Soup",
+			),
+		).toBe("Correct Tomato Soup");
 	});
 
 	it("resolves route food from the requested list first", () => {

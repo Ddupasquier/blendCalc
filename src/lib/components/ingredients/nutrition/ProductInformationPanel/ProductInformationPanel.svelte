@@ -1,9 +1,10 @@
 <script lang="ts">
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import { getProductInformation } from "$lib/utils/food/records/productInformation";
 	import type { ProductInformationPanelProps } from "./types";
 
-	let { food }: ProductInformationPanelProps = $props();
+	let { food, onReportIncorrectInformation }: ProductInformationPanelProps = $props();
 
 	const information = $derived(getProductInformation(food));
 </script>
@@ -12,7 +13,8 @@
 	information.servingRows.length > 0 ||
 	information.sourceRows.length > 0 ||
 	information.fieldSourceRows.length > 0 ||
-	information.sourceAttribution}
+	information.sourceAttribution ||
+	(onReportIncorrectInformation && (food.barcode || food.gtinUpc))}
 	<div class="product-information-panel">
 		<CollapsibleSection title="Product details">
 			<div class="product-information-panel__content">
@@ -104,6 +106,18 @@
 				{/if}
 			</div>
 		</CollapsibleSection>
+		{#if onReportIncorrectInformation && (food.barcode || food.gtinUpc)}
+			<div class="product-information-panel__correction">
+				<p>Does the current package show something different?</p>
+				<RoundedActionButton
+					variant="soft"
+					fullWidth
+					onclick={onReportIncorrectInformation}
+				>
+					Report incorrect information
+				</RoundedActionButton>
+			</div>
+		{/if}
 	</div>
 {/if}
 

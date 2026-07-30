@@ -21,6 +21,7 @@
 		canAdjustImagePlacement = false,
 		onImagePlacementSave,
 		provenanceOptions = [],
+		onReportIncorrectInformation,
 	}: NutritionPanelProps = $props();
 </script>
 
@@ -32,7 +33,7 @@
 		<ProductIngredientsPanel {food} />
 		<ProductCompatibilityPanel {food} />
 		<ProductDataQualityPanel {food} />
-		<ProductInformationPanel {food} />
+		<ProductInformationPanel {food} {onReportIncorrectInformation} />
 	{/if}
 	<NutritionListActions {food} {showListActions} {listMembership} />
 </section>

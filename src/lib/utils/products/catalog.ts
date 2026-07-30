@@ -18,6 +18,10 @@ export type SharedProductSubmissionResult = {
 	evidenceAccepted?: boolean;
 };
 
+export type CatalogSubmissionIntent =
+	| "catalog_share"
+	| "catalog_correction";
+
 export type SharedProductEvidence = {
 	frontPhoto?: File | null;
 	nutritionPhoto?: File | null;
@@ -27,6 +31,7 @@ export type SharedProductEvidence = {
 
 export type SharedProductSubmissionContext = {
 	reviewFlags?: string[];
+	intent?: CatalogSubmissionIntent;
 };
 
 export type BarcodeShareValidationResult =
@@ -87,6 +92,7 @@ export const submitSharedProduct = async (
 	if (context.reviewFlags?.length) {
 		formData.set("reviewFlags", JSON.stringify(context.reviewFlags));
 	}
+	formData.set("submissionIntent", context.intent ?? "catalog_share");
 	if (evidence.frontPhoto) formData.set("frontPhoto", evidence.frontPhoto);
 	if (evidence.frontImageCrop) {
 		formData.set("frontImageCrop", JSON.stringify(evidence.frontImageCrop));

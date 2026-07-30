@@ -3759,6 +3759,7 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          submission_intent: string
           submission_kind: string
           submitted_by: string
           target_shared_product_id: string | null
@@ -3786,6 +3787,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          submission_intent?: string
           submission_kind?: string
           submitted_by: string
           target_shared_product_id?: string | null
@@ -3813,6 +3815,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          submission_intent?: string
           submission_kind?: string
           submitted_by?: string
           target_shared_product_id?: string | null

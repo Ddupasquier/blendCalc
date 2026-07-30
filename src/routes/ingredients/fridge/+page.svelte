@@ -81,6 +81,7 @@
 		},
 	);
     let selectedFood = $state<FdcFood | null>(null);
+    let correctionFood = $state<FdcFood | null>(null);
     let selectedFoodShowListActions = $state(true);
     let scanSignal = $state(0);
     let barcodeScannerRouteOpen = $state(false);
@@ -226,7 +227,8 @@
             imagePlacementItem !== null ||
             renamingItem !== null ||
             searchViewOpen ||
-            selectedFood !== null,
+            selectedFood !== null ||
+            correctionFood !== null,
     );
 
 	$effect(() => {
@@ -665,9 +667,39 @@
     };
 
     const closeNutritionDetail = () => {
+        correctionFood = null;
         selectedFood = null;
         selectedFoodShowListActions = true;
         void closeRoutedPopin();
+    };
+
+    const openCatalogCorrection = () => {
+        if (!selectedFood) return;
+        correctionFood = selectedFood;
+        void navigateIngredientRoute({
+            view: INGREDIENT_ROUTE_VIEWS.nutrition,
+            sheet: INGREDIENT_ROUTE_SHEETS.catalogCorrection,
+            modal: null,
+            foodId: selectedFood.fdcId,
+            listKey: ingredientRouteState.listKey,
+            showListActions: selectedFoodShowListActions,
+        });
+    };
+
+    const closeCatalogCorrection = () => {
+        correctionFood = null;
+        if (!selectedFood) {
+            void closeRoutedPopin();
+            return;
+        }
+        void navigateIngredientRoute({
+            view: INGREDIENT_ROUTE_VIEWS.nutrition,
+            sheet: null,
+            modal: null,
+            foodId: selectedFood.fdcId,
+            listKey: ingredientRouteState.listKey,
+            showListActions: selectedFoodShowListActions,
+        });
     };
 
     const removeFromList = async (key: SmoothieListKey, foodId: number) => {
@@ -1083,6 +1115,14 @@
             selectedFoodShowListActions = true;
         }
 
+        correctionFood =
+            routeState.sheet === INGREDIENT_ROUTE_SHEETS.catalogCorrection
+                ? routeFood ??
+                    (selectedFood?.fdcId === routeState.foodId
+                        ? selectedFood
+                        : null)
+                : null;
+
         if (
             routeState.sheet === INGREDIENT_ROUTE_SHEETS.ingredientActions &&
             routeState.listKey &&
@@ -1257,6 +1297,7 @@
     {provenanceOptions}
     {selectedFood}
     {selectedFoodShowListActions}
+    {correctionFood}
     sortOptions={FOOD_LIST_SORT_OPTIONS}
     {canAdjustImagePlacement}
     onAddSearchResult={addSearchResultToFridge}
@@ -1265,6 +1306,8 @@
     onCloseImagePlacement={closeImagePlacementSheet}
     onCloseIngredientSheet={closeIngredientSheet}
     onCloseNutrition={closeNutritionDetail}
+    onCloseCorrection={closeCatalogCorrection}
+    onOpenCorrection={openCatalogCorrection}
     onCloseRename={closeRenameDialog}
     onCloseSearch={closeSearchView}
     onCloseBarcodeScanner={closeBarcodeScanner}

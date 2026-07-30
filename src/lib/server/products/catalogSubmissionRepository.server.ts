@@ -3,6 +3,7 @@ import { compactManagedFood } from "$lib/utils/food/records/foodRecords";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { CatalogSubmissionComparison } from "$lib/utils/products/catalogSubmissionComparison";
 import type { CatalogUpdateSummary } from "$lib/utils/products/catalogUpdateReview";
+import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
 import { toJson } from "$lib/utils/storage/supabase/shared";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CatalogUpdateTarget } from "./catalogUpdateReview.server";
@@ -11,16 +12,26 @@ import type { CatalogSubmissionValidationReport } from "./catalogSubmissionRevie
 
 export const findPendingCatalogSubmission = async (
 	supabase: SupabaseClient<Database>,
-	barcode: string,
+	input: {
+		barcode: string;
+		userId: string;
+		updateTarget: CatalogUpdateTarget | null;
+	},
 ) => {
-	const { data, error } = await supabase
+	let query = supabase
 		.from("shared_product_submissions")
 		.select("id")
-		.eq("barcode", barcode)
+		.eq("barcode", input.barcode)
 		.eq("status", "pending")
 		.order("created_at", { ascending: true })
-		.limit(1)
-		.maybeSingle();
+		.limit(1);
+	query = input.updateTarget
+		? query
+				.eq("submission_kind", "product_update")
+				.eq("submitted_by", input.userId)
+				.eq("base_revision_id", input.updateTarget.baseRevisionId)
+		: query.eq("submission_kind", "new_product");
+	const { data, error } = await query.maybeSingle();
 	if (error) throw error;
 	return data;
 };
@@ -35,6 +46,7 @@ export const recordAutoDeclinedCatalogSubmission = async (
 		comparison: CatalogSubmissionComparison;
 		updateTarget: CatalogUpdateTarget;
 		changeSummary: CatalogUpdateSummary;
+		intent: CatalogSubmissionIntent;
 	},
 ) => {
 	const now = new Date().toISOString();
@@ -65,6 +77,7 @@ export const recordAutoDeclinedCatalogSubmission = async (
 			target_shared_product_id: input.updateTarget.sharedProductId,
 			base_revision_id: input.updateTarget.baseRevisionId,
 			change_summary: toJson(input.changeSummary),
+			submission_intent: input.intent,
 			label_observed_at: input.changeSummary.observedAt,
 			validation_report: toJson(report),
 			evidence_paths: toJson({}),
@@ -92,6 +105,7 @@ export const createCatalogSubmission = async (
 		report: CatalogSubmissionValidationReport;
 		evidencePaths: ProductEvidencePaths;
 		evidenceComplete: boolean;
+		intent: CatalogSubmissionIntent;
 	},
 ) => {
 	const normalizedFood = compactManagedFood(input.food);
@@ -108,6 +122,7 @@ export const createCatalogSubmission = async (
 			target_shared_product_id: input.updateTarget?.sharedProductId ?? null,
 			base_revision_id: input.updateTarget?.baseRevisionId ?? null,
 			change_summary: toJson(input.updateSummary ?? {}),
+			submission_intent: input.intent,
 			label_observed_at: input.labelObservedAt,
 			consent_to_share: true,
 			verification_status: input.hasExactSourceMatch

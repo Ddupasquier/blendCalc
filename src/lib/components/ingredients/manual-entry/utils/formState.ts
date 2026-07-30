@@ -25,6 +25,8 @@ import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { BarcodeShareValidationResult } from "$lib/utils/products/catalog";
 import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
+import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
+import { getPrimaryFoodServing } from "$lib/utils/food/servings/foodServings";
 
 export type ManualEntryFormResetState = {
 	activeStep: ManualEntryStepId;
@@ -76,6 +78,7 @@ export type ManualEntryFormResetState = {
 	categories: string[];
 	image?: FoodImageAsset;
 	fieldProvenance?: FoodFieldProvenance;
+	submissionIntent: CatalogSubmissionIntent;
 };
 
 export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
@@ -128,6 +131,75 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	categories: [],
 	image: undefined,
 	fieldProvenance: undefined,
+	submissionIntent: "catalog_share",
 });
+
+export const getManualEntryFormStateFromFood = (
+	food: FdcFood,
+	intent: CatalogSubmissionIntent,
+): ManualEntryFormResetState => {
+	const state = getManualEntryFormResetState();
+	const serving = getPrimaryFoodServing(food);
+	const servingWeightGrams =
+		serving?.gramWeight ??
+		food.customServingWeightGrams ??
+		food.servingSize ??
+		100;
+	const nutrientsPerServing = food.foodNutrients.map((nutrient) => ({
+		...nutrient,
+		value: (nutrient.value * servingWeightGrams) / 100,
+	}));
+	const primaryCategory =
+		food.foodCategory ??
+		food.categories?.find((category) => category.trim()) ??
+		"";
+
+	return {
+		...state,
+		name: food.canonicalDescription ?? food.description,
+		nameProvenance: food.nameProvenance ?? "barcode",
+		brandOwner: food.brandOwner ?? "",
+		category: primaryCategory,
+		categoryOptionId: food.categoryOptionId ?? "",
+		categorySymbolKey: food.symbolKey ?? "generic",
+		servingLabel:
+			serving?.label ??
+			food.customServingLabel ??
+			food.householdServingFullText ??
+			`${servingWeightGrams}g`,
+		servingWeightGrams,
+		importedNutrients: nutrientsPerServing,
+		manualNutrientValues: Object.fromEntries(
+			nutrientsPerServing.map((nutrient) => [
+				nutrient.nutrientId,
+				nutrient.value,
+			]),
+		),
+		barcode: food.barcode ?? food.gtinUpc ?? "",
+		barcodeSource: food.barcodeSource ?? "community",
+		barcodeProvenance: food.barcodeProvenance,
+		shareWithCatalog: intent === "catalog_correction",
+		reportedNutrientIds: [
+			...(food.reportedNutrientIds ??
+				food.foodNutrients.map((nutrient) => nutrient.nutrientId)),
+		],
+		foodIdentityType: food.foodIdentityType ?? "packaged",
+		ingredients: food.ingredients ?? "",
+		ingredientList: [...(food.ingredientList ?? [])],
+		structuredIngredients: [...(food.structuredIngredients ?? [])],
+		ingredientAnalysis: food.ingredientAnalysis,
+		additives: [...(food.additives ?? [])],
+		allergens: [...(food.allergens ?? [])],
+		traces: [...(food.traces ?? [])],
+		dietaryTags: [...(food.dietaryTags ?? [])],
+		labels: [...(food.labels ?? [])],
+		packageQuantity: food.packageQuantity,
+		sourceMetadata: food.sourceMetadata,
+		categories: [...(food.categories ?? [])],
+		image: food.image,
+		fieldProvenance: food.fieldProvenance,
+		submissionIntent: intent,
+	};
+};
 
 export const getInitialSaveDestination = (): SmoothieListKey => MIX_STORAGE_KEYS.fridge;

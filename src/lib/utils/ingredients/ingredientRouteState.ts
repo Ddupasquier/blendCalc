@@ -20,6 +20,7 @@ export const INGREDIENT_ROUTE_SHEETS = {
 	ingredientActions: "ingredient-actions",
 	imagePlacement: "image-placement",
 	renameIngredient: "rename-ingredient",
+	catalogCorrection: "correct-information",
 } as const;
 
 export const INGREDIENT_ROUTE_MODALS = {
@@ -140,6 +141,22 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 		return {
 			view: INGREDIENT_ROUTE_VIEWS.nutrition,
 			sheet: null,
+			modal: null,
+			foodId: parseFoodId(secondSegment ?? null),
+			listKey: pathContext.listKey,
+			showListActions: url.searchParams.get(ACTIONS_PARAM) !== "hide",
+		};
+	}
+
+	if (
+		routeSlug === INGREDIENT_ROUTE_VIEWS.nutrition &&
+		parseFoodId(secondSegment ?? null) !== null &&
+		remainingSegments.length === 1 &&
+		remainingSegments[0] === INGREDIENT_ROUTE_SHEETS.catalogCorrection
+	) {
+		return {
+			view: INGREDIENT_ROUTE_VIEWS.nutrition,
+			sheet: INGREDIENT_ROUTE_SHEETS.catalogCorrection,
 			modal: null,
 			foodId: parseFoodId(secondSegment ?? null),
 			listKey: pathContext.listKey,
@@ -282,7 +299,10 @@ export const buildIngredientRouteHref = (
 
 	if (nextView) {
 		nextUrl.pathname =
-			nextView === INGREDIENT_ROUTE_VIEWS.search
+			nextView === INGREDIENT_ROUTE_VIEWS.nutrition &&
+				nextSheet === INGREDIENT_ROUTE_SHEETS.catalogCorrection
+				? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}/${INGREDIENT_ROUTE_SHEETS.catalogCorrection}`
+				: nextView === INGREDIENT_ROUTE_VIEWS.search
 				? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}`
 				: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}`;
 		if (nextView === INGREDIENT_ROUTE_VIEWS.nutrition) {
@@ -332,6 +352,11 @@ export const getIngredientRouteTitle = (
 		return "Search Ingredients";
 	}
 	if (state.view === INGREDIENT_ROUTE_VIEWS.nutrition) {
+		if (state.sheet === INGREDIENT_ROUTE_SHEETS.catalogCorrection) {
+			return namedFood
+				? `Correct ${namedFood}`
+				: "Correct Product Information";
+		}
 		return namedFood ? `${namedFood} Nutrition` : "Ingredient Nutrition";
 	}
 	if (state.sheet === INGREDIENT_ROUTE_SHEETS.manualEntry) {
