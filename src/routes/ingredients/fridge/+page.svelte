@@ -395,6 +395,32 @@
         });
     };
 
+	const openMoveConfirmation = () => {
+		void navigateIngredientRoute({
+			view: null,
+			sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+			modal: INGREDIENT_ROUTE_MODALS.moveIngredient,
+			foodId: null,
+			listKey: null,
+		});
+	};
+
+	const closeMoveConfirmation = () => {
+		if (
+			ingredientRouteState.modal !==
+			INGREDIENT_ROUTE_MODALS.moveIngredient
+		) {
+			return;
+		}
+		void navigateIngredientRoute({
+			view: null,
+			sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+			modal: null,
+			foodId: null,
+			listKey: null,
+		});
+	};
+
     const openManualEntry = () => {
         barcodeScannerRouteOpen = false;
         scanSignal = 0;
@@ -1242,6 +1268,10 @@
     onCloseRename={closeRenameDialog}
     onCloseSearch={closeSearchView}
     onCloseBarcodeScanner={closeBarcodeScanner}
+    moveConfirmationRouteOpen={ingredientRouteState.modal ===
+        INGREDIENT_ROUTE_MODALS.moveIngredient}
+    onOpenMoveConfirmation={openMoveConfirmation}
+    onCloseMoveConfirmation={closeMoveConfirmation}
     onCreateManualIngredient={handleCreate}
     onFilterFromSearch={toggleFilters}
     onLookupStateChange={(busy) => (barcodeLookupBusy = busy)}

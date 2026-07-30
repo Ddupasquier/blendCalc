@@ -12,6 +12,9 @@ export type SelectedIngredientsPanelProps = {
 	getServingUnit: (food: FdcFood) => ServingMeasureUnit;
 	getServingConversion: (food: FdcFood) => ServingConversion;
 	getServingConversionWarning: (food: FdcFood) => string | null | undefined;
+	conversionDetailsFoodId?: number | null;
+	onOpenConversionDetails: (foodId: number) => void;
+	onCloseConversionDetails: () => void;
 	onRemove: (foodId: number) => void;
 	onServingChange: (
 		food: FdcFood,

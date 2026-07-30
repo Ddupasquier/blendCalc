@@ -151,7 +151,7 @@ Required behavior:
 
 ## Ingredients Page
 
-Route: `/fridge`
+Routes: `/ingredients/fridge` and `/ingredients/shopping`
 
 This page owns food discovery, barcode scanning, custom ingredient creation, and On Hand
 / Shopping List management.
@@ -211,7 +211,9 @@ Data to preserve from scanned products when available:
 - Labels, categories, and dietary tags.
 - Source/provenance and confidence.
 - Source-backed product image metadata when available, including license and
-  attribution, rendered only after it is stored in Supabase.
+  attribution, rendered only after it is stored in Supabase. A saved moderator rotation
+  corrects the full detail image orientation as well as the ingredient-card image;
+  card crop, zoom, and position remain card-only.
 - Product evidence photos when needed for moderation.
 
 ### Manual Custom Ingredient Entry
@@ -352,7 +354,8 @@ Required controls:
 
 Item behavior:
 
-- Select/preview item where applicable.
+- Where a card has one dominant select, preview, or disclosure action, the full card
+  surface activates it. Secondary card controls remain separate and take priority.
 - Remove from list.
 - Rename item.
 - Move item between lists where supported.
@@ -363,6 +366,12 @@ Item behavior:
 ## Mix Page
 
 Route: `/mix`
+
+Meaningful Mix overlays use explicit child paths, including `/mix/save`,
+`/mix/reset-goals`, `/mix/clear-ingredients`, `/mix/reset-all`,
+`/mix/rename/{list}/{foodId}`, `/mix/warnings/{warningId}`, and
+`/mix/ingredients/{foodId}/conversion-details`. They use shallow history so the
+underlying Mix state stays mounted.
 
 The Mix page is the core smoothie builder. It combines selected foods, amounts, nutrient
 goals, visual graph feedback, warnings, suggestions, and saving.

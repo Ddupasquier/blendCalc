@@ -126,8 +126,9 @@ describe("ingredient card media architecture", () => {
 	});
 
 	it("shares compact-card copy, focus, and action layout without a prop-forwarding wrapper", () => {
-		expect(cardLayoutStyles).toContain("@mixin interactive-content");
-		expect(cardLayoutStyles).toContain("@mixin interactive-content-focus");
+		expect(cardLayoutStyles).toContain("@mixin primary-action-target");
+		expect(cardLayoutStyles).toContain("@mixin primary-action-focus");
+		expect(cardLayoutStyles).toContain("@mixin presentation-layer");
 		expect(cardLayoutStyles).toContain("@mixin copy");
 		expect(cardLayoutStyles).toContain("@mixin title-row");
 		expect(cardLayoutStyles).toContain("@mixin action-layer");
@@ -137,6 +138,18 @@ describe("ingredient card media architecture", () => {
 		);
 		expect(searchCardStyles).toContain(
 			"@include ingredient-card-layout.copy",
+		);
+		expect(savedCardStyles).toContain(
+			"@include ingredient-card-layout.primary-action-target",
+		);
+		expect(searchCardStyles).toContain(
+			"@include ingredient-card-layout.primary-action-target",
+		);
+		expect(savedCardStyles).toContain(
+			"@include ingredient-card-layout.presentation-layer",
+		);
+		expect(searchCardStyles).toContain(
+			"@include ingredient-card-layout.presentation-layer",
 		);
 		expect(placementPreviewStyles).toContain(
 			"@include ingredient-card-layout.copy",

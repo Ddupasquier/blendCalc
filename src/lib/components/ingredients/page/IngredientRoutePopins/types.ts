@@ -43,6 +43,9 @@ export type IngredientRoutePopinsProps = {
 	onCloseImagePlacement: () => void;
 	onCloseIngredientSheet: () => void;
 	onCloseBarcodeScanner: () => void;
+	moveConfirmationRouteOpen: boolean;
+	onOpenMoveConfirmation: () => void;
+	onCloseMoveConfirmation: () => void;
 	onCloseNutrition: () => void;
 	onCloseRename: () => void;
 	onCloseSearch: () => void;

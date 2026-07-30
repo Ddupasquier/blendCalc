@@ -369,7 +369,7 @@ Check the existing primitive before writing markup or SCSS.
 | Privileged action container           | `PrivilegedActionGroup`      | Groups moderator/admin actions and owns one crown                                                   |
 | Numeric amount                        | `NumberInput`                | Shared number semantics and control styling                                                         |
 | Accelerating amount control           | `AcceleratingStepButton`     | Tap-by-one and progressive hold behavior                                                            |
-| Full product image                    | `ProductImageFrame`          | Contained, non-stretched detailed image                                                             |
+| Full product image                    | `ProductImageFrame`          | Contained, non-stretched detailed image using any saved moderator orientation correction             |
 | Image placement                       | `ImagePlacementEditor`       | Shared preview, presets, drag/zoom, and restore flow                                                |
 
 When a need does not fit this table, first decide whether an existing component should
@@ -484,19 +484,21 @@ Current card rules:
 - Ingredient names use heavy `1rem` interface type normally and the shared compact-card
   size on narrow or short screens, with one-line ellipsis in both states.
 - Category/supporting copy uses muted `0.88rem` medium type and one-line ellipsis.
-- Action buttons remain in the foreground action layer.
-- The saved card's native preview/selection target covers the full card surface, not
-  only its title or copy. Move, menu, delete, and other explicit actions remain above
-  that target and retain priority.
+- When a card has one dominant action, its native primary target covers the full card
+  surface rather than only its title, image, or copy. Visible copy remains
+  presentational, and explicit add, move, menu, delete, share, or disclosure controls
+  stay in the foreground action layer and retain priority.
+- Static cards and form cards with multiple equal controls do not receive a synthetic
+  full-card action.
 - A custom-food tint indicates a private unmatched item; it is not selection.
 - Selection mode uses the reserved card border and an honest selected state. Do not show
   always-present checkboxes outside selection mode.
 - A conflict uses the full-height amber `CardWarningEdge`, clipped by the card, with no
   compact warning icon or text. The card's accessible label includes the warning.
 
-The card shell implementation lives in
-`IngredientCardMediaLane/_IngredientCardLayout.scss`. Change shared card geometry there,
-not separately in saved and search cards.
+The card shell and shared primary-target interaction layers live in
+`IngredientCardMediaLane/_IngredientCardLayout.scss`. Change shared card geometry or
+target layering there, not separately in saved and search cards.
 
 ### Ingredient Card Media
 

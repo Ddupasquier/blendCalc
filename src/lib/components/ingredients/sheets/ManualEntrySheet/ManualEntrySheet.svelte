@@ -10,6 +10,9 @@
 		scanSignal = 0,
 		onClose,
 		onScannerClose,
+		moveConfirmationRouteOpen = false,
+		onMoveConfirmationOpen,
+		onMoveConfirmationClose,
 		onCreate,
 		onLookupStateChange = () => {},
 	}: ManualEntrySheetProps = $props();
@@ -39,6 +42,9 @@
 		{scanSignal}
 		onClose={handleClose}
 		{onScannerClose}
+		{moveConfirmationRouteOpen}
+		{onMoveConfirmationOpen}
+		{onMoveConfirmationClose}
 		inline={false}
 		showScanButton={false}
 		{onLookupStateChange}

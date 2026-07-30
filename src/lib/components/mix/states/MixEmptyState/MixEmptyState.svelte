@@ -46,7 +46,7 @@
 	</ol>
 
 	<div class="mix-empty-state__actions">
-		<a href="/fridge">Go to Fridge</a>
+		<a href="/ingredients/fridge">Go to Fridge</a>
 		<p>If items are already listed above, click a pill to add it to the mix.</p>
 	</div>
 </section>

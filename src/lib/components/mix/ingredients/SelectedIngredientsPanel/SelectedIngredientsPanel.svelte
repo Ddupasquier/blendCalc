@@ -27,6 +27,9 @@
 		getServingUnit,
 		getServingConversion,
 		getServingConversionWarning,
+		conversionDetailsFoodId = null,
+		onOpenConversionDetails,
+		onCloseConversionDetails,
 		onRemove,
 		onServingChange,
 	}: SelectedIngredientsPanelProps = $props();
@@ -93,6 +96,9 @@
 				unit={getServingUnit(food)}
 				gramsLabel={getServingGramsLabel(getServingConversion(food))}
 				warning={getServingConversionWarning(food)}
+				conversionDetailsOpen={conversionDetailsFoodId === food.fdcId}
+				{onOpenConversionDetails}
+				{onCloseConversionDetails}
 				nutrientChips={getFoodNutrientChips(
 					food,
 					selectedNutrients,

@@ -67,3 +67,8 @@ pnpm-debug.log*
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Local environment values
+/.env
+/.env.local
+/.env.*.local

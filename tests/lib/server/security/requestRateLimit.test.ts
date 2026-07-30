@@ -52,7 +52,9 @@ describe("request rate-limit policies", () => {
 	});
 
 	it("does not add database rate-limit work to ordinary page reads", () => {
-		expect(getRequestRateLimitPolicy("GET", "/fridge")).toBeNull();
+		expect(
+			getRequestRateLimitPolicy("GET", "/ingredients/fridge"),
+		).toBeNull();
 		expect(getRequestRateLimitPolicy("POST", "/auth/logout")).toBeNull();
 	});
 });

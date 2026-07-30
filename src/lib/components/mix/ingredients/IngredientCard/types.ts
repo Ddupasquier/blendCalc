@@ -10,6 +10,9 @@ export type IngredientCardProps = {
 	gramsLabel: string;
 	warning?: string | null;
 	nutrientChips?: NutrientChip[];
+	conversionDetailsOpen?: boolean;
+	onOpenConversionDetails: (foodId: number) => void;
+	onCloseConversionDetails: () => void;
 	onRemove: (foodId: number) => void;
 	onServingChange: (
 		food: FdcFood,
