@@ -541,31 +541,31 @@ const createFdcFieldProvenance = ({
 	image,
 	metadata,
 	hasSourceServing,
-	defaultSource,
+	adapterSource,
 }: {
 	food: FdcFood;
 	nutrients: FdcNutrient[];
 	image?: FoodImageAsset;
 	metadata: ReturnType<typeof parseFdcMetadata>;
 	hasSourceServing: boolean;
-	defaultSource: FoodFieldSource["source"];
+	adapterSource?: FoodFieldSource;
 }): FoodFieldProvenance => {
-	const fallbackSource = normalizeFieldSource(
-		food.sourceKey ?? food.barcodeSource ?? defaultSource,
-	);
-	const fallbackReference = food.sharedProductId ?? String(food.fdcId);
-	const fallback = createFieldSource(
-		fallbackSource,
-		fallbackReference,
-		"unknown",
-	);
 	const nutrientSource = nutrients.find((nutrient) => nutrient.source);
 	const servingSource = food.foodServings?.find((serving) => serving.isPrimary) ??
 		food.foodServings?.[0];
+	const mappedSource = adapterSource
+		? createFieldSource(
+			normalizeFieldSource(adapterSource.source),
+			adapterSource.sourceReference,
+			adapterSource.confidence ?? "unknown",
+		)
+		: undefined;
 
 	return {
 		...food.fieldProvenance,
-		...(nutrients.length > 0 && !food.fieldProvenance?.nutrition
+		...(nutrients.length > 0 &&
+				(nutrientSource || mappedSource) &&
+				!food.fieldProvenance?.nutrition
 			? {
 				nutrition: nutrientSource
 					? createFieldSource(
@@ -573,7 +573,7 @@ const createFdcFieldProvenance = ({
 						nutrientSource.sourceReference,
 						nutrientSource.confidence ?? "unknown",
 					)
-					: fallback,
+					: mappedSource,
 			}
 			: {}),
 		...(image && !food.fieldProvenance?.image
@@ -585,10 +585,14 @@ const createFdcFieldProvenance = ({
 				),
 			}
 			: {}),
-		...(metadata.categories.length > 0 && !food.fieldProvenance?.categories
-			? { categories: fallback }
+		...(mappedSource &&
+				metadata.categories.length > 0 &&
+				!food.fieldProvenance?.categories
+			? { categories: mappedSource }
 			: {}),
-		...(hasSourceServing && !food.fieldProvenance?.serving
+		...(hasSourceServing &&
+				(servingSource || mappedSource) &&
+				!food.fieldProvenance?.serving
 			? {
 				serving: servingSource
 					? createFieldSource(
@@ -596,40 +600,58 @@ const createFdcFieldProvenance = ({
 						servingSource.sourceReference,
 						servingSource.confidence ?? "unknown",
 					)
-					: fallback,
+					: mappedSource,
 			}
 			: {}),
-		...((metadata.ingredients || metadata.ingredientList.length > 0) &&
+		...(mappedSource &&
+				(metadata.ingredients || metadata.ingredientList.length > 0) &&
 				!food.fieldProvenance?.ingredients
-			? { ingredients: fallback }
+			? { ingredients: mappedSource }
 			: {}),
-		...(metadata.allergens.length > 0 && !food.fieldProvenance?.allergens
-			? { allergens: fallback }
+		...(mappedSource &&
+				metadata.allergens.length > 0 &&
+				!food.fieldProvenance?.allergens
+			? { allergens: mappedSource }
 			: {}),
-		...(metadata.traces.length > 0 && !food.fieldProvenance?.traces
-			? { traces: fallback }
+		...(mappedSource &&
+				metadata.traces.length > 0 &&
+				!food.fieldProvenance?.traces
+			? { traces: mappedSource }
 			: {}),
-		...(metadata.dietaryTags.length > 0 && !food.fieldProvenance?.dietaryTags
-			? { dietaryTags: fallback }
+		...(mappedSource &&
+				metadata.dietaryTags.length > 0 &&
+				!food.fieldProvenance?.dietaryTags
+			? { dietaryTags: mappedSource }
 			: {}),
-		...(metadata.labels.length > 0 && !food.fieldProvenance?.labels
-			? { labels: fallback }
+		...(mappedSource &&
+				metadata.labels.length > 0 &&
+				!food.fieldProvenance?.labels
+			? { labels: mappedSource }
 			: {}),
-		...(food.structuredIngredients?.length &&
+		...(mappedSource &&
+				food.structuredIngredients?.length &&
 				!food.fieldProvenance?.structuredIngredients
-			? { structuredIngredients: fallback }
+			? { structuredIngredients: mappedSource }
 			: {}),
-		...(food.ingredientAnalysis && !food.fieldProvenance?.ingredientAnalysis
-			? { ingredientAnalysis: fallback }
+		...(mappedSource &&
+				food.ingredientAnalysis &&
+				!food.fieldProvenance?.ingredientAnalysis
+			? { ingredientAnalysis: mappedSource }
 			: {}),
-		...(food.additives?.length && !food.fieldProvenance?.additives
-			? { additives: fallback }
+		...(mappedSource &&
+				food.additives?.length &&
+				!food.fieldProvenance?.additives
+			? { additives: mappedSource }
 			: {}),
-		...(food.packageQuantity && !food.fieldProvenance?.package
-			? { package: fallback }
+		...(mappedSource &&
+				food.packageQuantity &&
+				!food.fieldProvenance?.package
+			? { package: mappedSource }
 			: {}),
-		...(food.sourceMetadata && !food.fieldProvenance?.sourceMetadata
-			? { sourceMetadata: fallback }
+		...(mappedSource &&
+				food.sourceMetadata &&
+				!food.fieldProvenance?.sourceMetadata
+			? { sourceMetadata: mappedSource }
 			: {}),
 	};
 };
@@ -728,7 +750,7 @@ export const mapFdcBarcodeFood = (
 	food: FdcFood,
 	barcode: string,
 	referenceData: ProductReferenceData,
-	defaultSource: FoodFieldSource["source"] = "usda",
+	attributeMappedFields = true,
 ): BarcodeProductDraft | null => {
 	const canonicalBarcode = normalizeBarcode(barcode);
 	if (!canonicalBarcode || !food.description) return null;
@@ -790,7 +812,9 @@ export const mapFdcBarcodeFood = (
 			image: food.image,
 			metadata,
 			hasSourceServing: hasExactGramWeight,
-			defaultSource,
+			adapterSource: attributeMappedFields
+				? createFieldSource("usda", String(food.fdcId), "unknown")
+				: undefined,
 		}),
 		volumeEquivalent: hasExactGramWeight
 			? parseVolumeEquivalent(food.householdServingFullText) ?? undefined
@@ -815,7 +839,7 @@ export const mapSharedCatalogFood = (
 		food,
 		barcode,
 		referenceData,
-		"shared-catalog",
+		false,
 	);
 	if (!draft) return null;
 	const sourceKey = food.sourceKey ?? (
@@ -844,18 +868,7 @@ export const mapSharedCatalogFood = (
 						symbolKey: food.symbolKey,
 					}
 					: undefined,
-		fieldProvenance: {
-			...draft.fieldProvenance,
-			...(food.foodCategory && !food.fieldProvenance?.categories
-				? {
-					categories: createFieldSource(
-						"shared-catalog",
-						food.sharedProductId,
-						"unknown",
-					),
-				}
-				: {}),
-		},
+		fieldProvenance: draft.fieldProvenance,
 		sourceKey: source.key,
 		sourceDataType: food.sourceDataType,
 		sourcePublishedDate: food.sourcePublishedDate,

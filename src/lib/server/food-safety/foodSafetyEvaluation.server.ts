@@ -4,6 +4,9 @@ import type {
 	FoodCompatibilitySummary,
 } from "$lib/utils/food/quality/compatibility";
 import {
+	getFoodCompatibilityEvaluation,
+} from "$lib/utils/food/quality/foodCompatibilityEvaluation";
+import {
 	getAuthoritativeGenericFoodIdentity,
 	isAuthoritativeGenericFood,
 } from "$lib/utils/food/identity/foodIdentity";
@@ -338,6 +341,29 @@ const getFoodPreferenceWarnings = (
 	return warnings;
 };
 
+const getActivePreferenceValues = (
+	profile: FoodPreferenceProfile | null,
+) => profile
+	? [...profile.allergens, ...profile.dietaryRestrictions]
+		.map((value) => value.trim())
+		.filter(Boolean)
+	: [];
+
+const policyCoversPreferences = (
+	preferences: string[],
+	policy: FoodSafetyPolicy,
+) => {
+	const coveredPreferences = new Set(
+		policy.preferenceConflictRules.flatMap((rule) => [
+			normalizeValue(rule.preferenceSlug),
+			normalizeValue(rule.preferenceLabel),
+		]),
+	);
+	return preferences.every((preference) =>
+		coveredPreferences.has(normalizeValue(preference))
+	);
+};
+
 const formatAllergenLabel = (value: string) => {
 	const normalized = value
 		.trim()
@@ -407,6 +433,12 @@ export const annotateFoodWithFoodSafety = (
 	context: FoodSafetyEvaluationContext,
 ): FdcFood => {
 	const facts = getCompatibilityFacts(food, context.policy);
+	const preferenceWarnings = getFoodPreferenceWarnings(
+		facts,
+		context.profile,
+		context.policy,
+	);
+	const activePreferences = getActivePreferenceValues(context.profile);
 	return {
 		...food,
 		compatibilitySummary: buildCompatibilitySummary(
@@ -415,11 +447,17 @@ export const annotateFoodWithFoodSafety = (
 			food.compatibilitySummary,
 		),
 		allergenDisclosure: getAllergenDisclosure(facts),
-		preferenceWarnings: getFoodPreferenceWarnings(
-			facts,
-			context.profile,
-			context.policy,
-		),
+		preferenceWarnings,
+		compatibilityEvaluation: getFoodCompatibilityEvaluation({
+			food,
+			policyVersion: context.policy.version,
+			hasActivePreferences: activePreferences.length > 0,
+			policyCoversPreferences: policyCoversPreferences(
+				activePreferences,
+				context.policy,
+			),
+			conflictCount: preferenceWarnings.length,
+		}),
 	};
 };
 

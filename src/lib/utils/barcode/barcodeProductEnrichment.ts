@@ -5,7 +5,6 @@ import type {
 	FoodFieldSource,
 	FoodImageAsset,
 	FoodIngredientAnalysis,
-	FoodStructuredIngredient,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
 
@@ -129,28 +128,21 @@ export const getSupplementedBarcodeProductFields = (
 		(nutrient) => isValidNutrient(nutrient) && !primaryNutrientIds.has(nutrient.nutrientId),
 	);
 	return (Object.keys(missing) as FoodTrackedField[]).filter((field) =>
-		field === "nutrition"
-			? addsNutrition
-			: missing[field] && !supplementMissing[field]
+		Boolean(
+			supplement.fieldProvenance?.[field] ||
+				(field === "image" && supplement.image?.source) ||
+				(field === "nutrition" && supplement.nutrients.some((item) => item.source)),
+		) &&
+			(field === "nutrition"
+				? addsNutrition
+				: missing[field] && !supplementMissing[field])
 	);
-};
-
-const getDraftSource = (
-	draft: BarcodeProductDraft,
-): FoodFieldSource["source"] => {
-	if (draft.source === "shared-catalog") {
-		if (draft.sourceKey === "usda" || draft.sourceKey === "open-food-facts") {
-			return draft.sourceKey;
-		}
-		return "shared-catalog";
-	}
-	return draft.source;
 };
 
 const inferFieldSource = (
 	draft: BarcodeProductDraft,
 	field: FoodTrackedField,
-): FoodFieldSource => {
+): FoodFieldSource | undefined => {
 	if (field === "image" && draft.image) {
 		return {
 			source: draft.image.source,
@@ -170,12 +162,7 @@ const inferFieldSource = (
 		}
 	}
 
-	const source = getDraftSource(draft);
-	return {
-		source,
-		sourceReference: draft.sourceReference,
-		confidence: "unknown",
-	};
+	return undefined;
 };
 
 const getFieldSource = (
@@ -210,98 +197,14 @@ const withFieldSource = (
 	provenance: FoodFieldProvenance,
 	field: FoodTrackedField,
 	draft: BarcodeProductDraft,
-) => ({
-	...provenance,
-	[field]: getFieldSource(draft, field),
-});
-
-const mergeMetadataValues = (
-	primary: string[] | undefined,
-	supplement: string[] | undefined,
 ) => {
-	if (!primary && !supplement) return undefined;
-
-	const seen = new Set<string>();
-	return [...(primary ?? []), ...(supplement ?? [])].flatMap((value) => {
-		const normalized = value.trim();
-		const key = normalized.toLocaleLowerCase();
-		if (!normalized || seen.has(key)) return [];
-		seen.add(key);
-		return [normalized];
-	});
-};
-
-const mergeStructuredIngredients = (
-	primary: FoodStructuredIngredient[] | undefined,
-	supplement: FoodStructuredIngredient[] | undefined,
-) => {
-	if (!primary && !supplement) return undefined;
-	const seen = new Set<string>();
-	return [...(primary ?? []), ...(supplement ?? [])].filter((ingredient) => {
-		const key = JSON.stringify(ingredient).toLocaleLowerCase();
-		if (seen.has(key)) return false;
-		seen.add(key);
-		return true;
-	});
-};
-
-const mergeIngredientAnalysis = (
-	primary: FoodIngredientAnalysis | undefined,
-	supplement: FoodIngredientAnalysis | undefined,
-): FoodIngredientAnalysis | undefined => {
-	if (!primary && !supplement) return undefined;
-	return {
-		ingredientTags: mergeMetadataValues(
-			primary?.ingredientTags,
-			supplement?.ingredientTags,
-		) ?? [],
-		analysisTags: mergeMetadataValues(
-			primary?.analysisTags,
-			supplement?.analysisTags,
-		) ?? [],
-		derivedTraceTags: mergeMetadataValues(
-			primary?.derivedTraceTags,
-			supplement?.derivedTraceTags,
-		) ?? [],
-		percentAnalysis:
-			primary?.percentAnalysis ?? supplement?.percentAnalysis,
-		percentEstimate:
-			primary?.percentEstimate ?? supplement?.percentEstimate,
-		percentKnown: primary?.percentKnown ?? supplement?.percentKnown,
-		percentUnknown: primary?.percentUnknown ?? supplement?.percentUnknown,
-	};
-};
-
-const hasSupplementaryProductMetadata = (
-	primary: BarcodeProductDraft,
-	supplement: BarcodeProductDraft,
-) => {
-	if (!primary.ingredients?.trim() && supplement.ingredients?.trim()) return true;
-
-	return [
-		"ingredientList",
-		"allergens",
-		"traces",
-		"dietaryTags",
-		"labels",
-		"additives",
-	].some((field) => {
-		const key = field as keyof Pick<
-			BarcodeProductDraft,
-			| "ingredientList"
-			| "allergens"
-			| "traces"
-			| "dietaryTags"
-			| "labels"
-			| "additives"
-		>;
-		const primaryValues = new Set(
-			(primary[key] ?? []).map((value) => value.trim().toLocaleLowerCase()),
-		);
-		return (supplement[key] ?? []).some(
-			(value) => !primaryValues.has(value.trim().toLocaleLowerCase()),
-		);
-	});
+	const source = getFieldSource(draft, field);
+	return source
+		? {
+				...provenance,
+				[field]: source,
+			}
+		: provenance;
 };
 
 export const applyCachedImageToBarcodeDraft = (
@@ -348,10 +251,6 @@ export const mergeMissingBarcodeProductFields = (
 	const useSupplementAdditives = supplementedFields.has("additives");
 	const useSupplementPackage = supplementedFields.has("package");
 	const useSupplementSourceMetadata = supplementedFields.has("sourceMetadata");
-	const useSupplementMetadata = hasSupplementaryProductMetadata(
-		primary,
-		supplement,
-	);
 	if (
 		!useSupplementServing &&
 		!useSupplementNutrition &&
@@ -366,8 +265,7 @@ export const mergeMissingBarcodeProductFields = (
 		!useSupplementIngredientAnalysis &&
 		!useSupplementAdditives &&
 		!useSupplementPackage &&
-		!useSupplementSourceMetadata &&
-		!useSupplementMetadata
+		!useSupplementSourceMetadata
 	) {
 		return primary;
 	}
@@ -457,28 +355,29 @@ export const mergeMissingBarcodeProductFields = (
 			: primary.volumeEquivalent,
 		nutrients,
 		reportedNutrientIds,
-			ingredients:
-				primary.ingredients?.trim() || supplement.ingredients?.trim() || undefined,
-			ingredientList: mergeMetadataValues(
-				primary.ingredientList,
-				supplement.ingredientList,
-			),
-			allergens: mergeMetadataValues(primary.allergens, supplement.allergens),
-			traces: mergeMetadataValues(primary.traces, supplement.traces),
-			dietaryTags: mergeMetadataValues(
-				primary.dietaryTags,
-				supplement.dietaryTags,
-			),
-			labels: mergeMetadataValues(primary.labels, supplement.labels),
-			structuredIngredients: mergeStructuredIngredients(
-				primary.structuredIngredients,
-				supplement.structuredIngredients,
-			),
-			ingredientAnalysis: mergeIngredientAnalysis(
-				primary.ingredientAnalysis,
-				supplement.ingredientAnalysis,
-			),
-			additives: mergeMetadataValues(primary.additives, supplement.additives),
+			ingredients: useSupplementIngredients
+				? supplement.ingredients
+				: primary.ingredients,
+			ingredientList: useSupplementIngredients
+				? supplement.ingredientList
+				: primary.ingredientList,
+			allergens: useSupplementAllergens
+				? supplement.allergens
+				: primary.allergens,
+			traces: useSupplementTraces ? supplement.traces : primary.traces,
+			dietaryTags: useSupplementDietaryTags
+				? supplement.dietaryTags
+				: primary.dietaryTags,
+			labels: useSupplementLabels ? supplement.labels : primary.labels,
+			structuredIngredients: useSupplementStructuredIngredients
+				? supplement.structuredIngredients
+				: primary.structuredIngredients,
+			ingredientAnalysis: useSupplementIngredientAnalysis
+				? supplement.ingredientAnalysis
+				: primary.ingredientAnalysis,
+			additives: useSupplementAdditives
+				? supplement.additives
+				: primary.additives,
 			packageQuantity:
 				primary.packageQuantity ?? supplement.packageQuantity,
 			sourceMetadata: primary.sourceMetadata ?? supplement.sourceMetadata,

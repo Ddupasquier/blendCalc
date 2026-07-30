@@ -6,6 +6,18 @@ export type ApiV1Source = {
 	confidence: string | null;
 };
 
+export type ApiV1FieldSource = ApiV1Source & {
+	observationId: string;
+	observedAt: string;
+	verificationMethod:
+		| "exact-barcode"
+		| "package-label"
+		| "corroborated-sources"
+		| "moderator-reviewed"
+		| null;
+	reviewState: "accepted" | "moderator-reviewed";
+};
+
 export type ApiV1SourceAttribution = {
 	source: string;
 	displayName: string;
@@ -75,13 +87,58 @@ export type ApiV1Warning = {
 	sourceText: string | null;
 };
 
+export type ApiV1CompatibilityEvaluation = {
+	version: 1;
+	status: "conflict" | "checked" | "incomplete" | "not_checked";
+	policyVersion: number | null;
+	profileApplied: boolean;
+	conflictCount: number;
+	coverage: {
+		basis: "generic-taxonomy" | "packaged-label" | "private-entry";
+		identity: "available" | "missing" | "not_required";
+		ingredients: "available" | "missing" | "not_required";
+		allergens: "available" | "missing" | "not_required";
+		traces: "available" | "missing" | "not_required";
+		policy: "available" | "missing" | "not_required";
+	};
+};
+
 export type ApiV1ProductRevision = {
 	id: string | null;
 	number: number | null;
-	currentSince: string;
+	currentSince: string | null;
+	currentSinceBasis:
+		| "manufacturer-effective"
+		| "blendcalc-observed"
+		| null;
 	labelObservedAt: string | null;
 	updatedAt: string;
 	lastVerifiedAt: string | null;
+};
+
+export type ApiV1Json =
+	| string
+	| number
+	| boolean
+	| null
+	| { [key: string]: ApiV1Json }
+	| ApiV1Json[];
+
+export type ApiV1ProductRevisionChange = {
+	field: string;
+	label: string;
+	changeType: "added" | "removed" | "changed";
+	previousValue: ApiV1Json;
+	newValue: ApiV1Json;
+	severity: "low" | "medium" | "high";
+};
+
+export type ApiV1ProductRevisionHistoryItem = {
+	id: string;
+	number: number;
+	publishedAt: string;
+	labelObservedAt: string;
+	changes: ApiV1ProductRevisionChange[];
 };
 
 export type ApiV1StructuredIngredient = {
@@ -146,6 +203,7 @@ export type ApiV1Product = {
 	servings: ApiV1Serving[];
 	images: ApiV1Image[];
 	warnings: ApiV1Warning[];
+	compatibilityEvaluation: ApiV1CompatibilityEvaluation;
 	sourceAttributions: ApiV1SourceAttribution[];
 	catalog: {
 		authority: "blendcalc-shared-catalog";
@@ -155,19 +213,19 @@ export type ApiV1Product = {
 		sourceCount: number;
 	};
 	fieldSources: {
-		name: ApiV1Source | null;
-		brand: ApiV1Source | null;
-		category: ApiV1Source | null;
-		ingredients: ApiV1Source | null;
-		structuredIngredients: ApiV1Source | null;
-		ingredientAnalysis: ApiV1Source | null;
-		additives: ApiV1Source | null;
-		allergens: ApiV1Source | null;
-		traces: ApiV1Source | null;
-		dietaryTags: ApiV1Source | null;
-		labels: ApiV1Source | null;
-		package: ApiV1Source | null;
-		sourceMetadata: ApiV1Source | null;
+		name: ApiV1FieldSource | null;
+		brand: ApiV1FieldSource | null;
+		category: ApiV1FieldSource | null;
+		ingredients: ApiV1FieldSource | null;
+		structuredIngredients: ApiV1FieldSource | null;
+		ingredientAnalysis: ApiV1FieldSource | null;
+		additives: ApiV1FieldSource | null;
+		allergens: ApiV1FieldSource | null;
+		traces: ApiV1FieldSource | null;
+		dietaryTags: ApiV1FieldSource | null;
+		labels: ApiV1FieldSource | null;
+		package: ApiV1FieldSource | null;
+		sourceMetadata: ApiV1FieldSource | null;
 	};
 	revision: ApiV1ProductRevision;
 	links: {

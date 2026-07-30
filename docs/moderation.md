@@ -1,5 +1,11 @@
 # Moderation and account access
 
+This document owns privileged role, account-control, notification, and review
+workflows. Profile upload behavior belongs in
+[`user-profiles.md`](user-profiles.md), catalog intake in
+[`shared-product-catalog.md`](shared-product-catalog.md), and database objects in
+[`supabase-schema.md`](supabase-schema.md).
+
 ## Security model
 
 - Normal users have no row in `app_role_assignments`.
@@ -15,11 +21,10 @@
 
 ## Apply and configure
 
-```sh
-npm run db:push:dry
-npm run db:push:auto
-npm run db:types
-```
+Apply moderation migrations and regenerate database types through the shared database
+change workflow in [`database-testing.md`](database-testing.md) and
+[`supabase-schema.md`](supabase-schema.md#update-checklist). This document adds only the
+moderation-specific environment and dashboard configuration below.
 
 Add `SUPABASE_SERVICE_ROLE_KEY` to the Vercel project as a sensitive **Production-only**
 environment variable, then redeploy. Do not expose this key to arbitrary preview
@@ -148,20 +153,11 @@ told to use it:
 Without this hook, existing-account bans still work, but a user could register a new
 account using the same email after the original account is removed.
 
-## Profile image evidence
+## Profile image moderation
 
-Every accepted upload appends an immutable row to `profile_image_policy_acceptances`
-containing:
-
-- user ID
-- storage path
-- SHA-256 file hash
-- policy version
-- exact rules accepted
-- acceptance timestamp
-
-The user can read these records but cannot update or delete them. This records
-agreement; it does not replace actual image moderation.
+Profile uploads retain immutable policy-acceptance evidence, but that self-attestation
+does not replace moderation. The upload, storage, replacement, and consent contract is
+maintained in [`user-profiles.md`](user-profiles.md).
 
 ## IP addresses
 
@@ -176,9 +172,7 @@ For active abuse:
 3. Set an expiration/review date and document the related moderation action.
 4. Keep the account ID and email block as the durable controls.
 
-## Current moderation boundary
-
 Profile images remain private and the application does not currently run an automated
-image-classification service. Before avatars become publicly visible, upload them into a
-pending state, scan them server-side with a dedicated moderation provider, and expose
-only approved images.
+image-classification service. Before avatars become publicly visible, keep uploads
+pending, scan them through a server-side moderation provider, and expose only approved
+images.

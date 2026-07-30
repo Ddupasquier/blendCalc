@@ -51,3 +51,45 @@ asset-rights completeness.
 
 Use `npm run audit:api-catalog -- --strict` only when every active shared-catalog row is
 required to pass the API publication gate.
+
+## Catalog Transparency Audit
+
+Run `node scripts/audits/audit_catalog_transparency.mjs` for the internal read-only
+population report covering verification dates, revision history, selected observations,
+source quality, structured ingredients, normalized provenance, nutrient uncertainty,
+policy snapshots, compatibility evidence, API exposure, and app reads. Add `--json`
+for machine-readable output. This narrow maintenance audit intentionally has no root npm
+alias.
+
+## Source Quality Audits
+
+Use `npm run report:source-quality` to inspect privacy-safe runtime source metrics. Use
+the controlled benchmark when providers need a like-for-like comparison:
+
+```bash
+npm run benchmark:source-quality -- --limit=10
+npm run report:source-quality -- --origin=benchmark
+```
+
+`--reset-today` clears only the current day's synthetic `benchmark` rows before a
+validation run; it does not alter runtime metrics. Reports include calls per logical
+lookup, and the benchmark warns above 2.5 outbound calls per lookup so barcode fan-out,
+unnecessary detail requests, and retry leaks are visible.
+
+Interpret these reports as coverage and efficiency evidence. They do not establish
+provider-wide trust or alter field-level catalog selection policy.
+
+## Barcode Nutrition Accuracy Audit
+
+Run
+`node scripts/audits/audit_barcode_nutrition_accuracy.mjs --limit=300`
+for a read-only, deterministic audit of at least 300 unique exact GTINs plus every active
+shared-catalog product. The audit checks source nutrient relationships, per-100g and
+serving round trips, USDA label consistency, Open Food Facts serving consistency,
+canonical units, normalized-versus-JSON storage, exact observation lineage, selected
+field provenance, shared-product source agreement, and tracked cross-source conflicts.
+
+The detailed machine-readable report is written to the gitignored `scripts/output/`
+directory. Source anomalies and cross-source disagreements remain separate from app-math
+or canonical-storage defects. Legally blocked source fields are reported separately and
+are never promoted into the canonical catalog merely to make the audit appear complete.

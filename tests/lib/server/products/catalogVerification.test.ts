@@ -35,15 +35,20 @@ const createUsdaDraft = (): BarcodeProductDraft => ({
 	brandOwner: "USDA Brand",
 	servingLabel: "30 g",
 	servingWeightGrams: 30,
-	nutrients: [
-		nutrient(NUTRIENT_IDS.CALORIES, 120, "KCAL"),
+		nutrients: [
+			nutrient(NUTRIENT_IDS.CALORIES, 120, "KCAL"),
 		nutrient(NUTRIENT_IDS.FAT, 2),
 		nutrient(NUTRIENT_IDS.CARBS, 15),
 		nutrient(NUTRIENT_IDS.FIBER, 2),
 		nutrient(NUTRIENT_IDS.SUGAR, 3),
 		nutrient(NUTRIENT_IDS.PROTEIN, 4),
-		nutrient(NUTRIENT_IDS.SODIUM, 100, "MG"),
-	],
+			nutrient(NUTRIENT_IDS.SODIUM, 100, "MG"),
+		].map((item) => ({
+			...item,
+			source: "usda" as const,
+			sourceReference: "12345",
+			confidence: "unknown" as const,
+		})),
 	reportedNutrientIds: [
 		NUTRIENT_IDS.CALORIES,
 		NUTRIENT_IDS.FAT,
@@ -99,6 +104,7 @@ describe("catalog verification", () => {
 			expect.objectContaining({
 				fieldPath: `nutrient:${NUTRIENT_IDS.SUGAR}`,
 				observationKey: "usda",
+				confidence: "imported",
 				verificationMethod: "exact-barcode",
 			}),
 		);

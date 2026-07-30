@@ -1,9 +1,10 @@
 # Source Data Inventory
 
-This inventory explains what blendCalc may learn from each active source, where that
-information enters the app, and what can become canonical blendCalc data. The database
-policy is authoritative: a provider response is evidence, not automatic permission to
-publish or redistribute it.
+This inventory explains what blendCalc can observe from each configured source and
+where that information enters the app. It does not decide whether observed data may be
+stored, promoted, rendered, or redistributed; those decisions belong to
+[`data-source-licensing.md`](../data-source-licensing.md) and the database source
+policy.
 
 ## Intake Flow
 
@@ -20,19 +21,28 @@ Provider-specific behavior lives under `src/lib/server/products/sources/`, and o
 requests use `src/lib/server/products/productApiRequests.server.ts` for timeouts,
 coalescing, caching, request counts, and source-policy checks.
 
-## Active Sources
+## Active Intake Sources
 
-| Source | Useful observed fields | Runtime/storage boundary |
+| Source | Useful observed fields | Intake module or path |
 | --- | --- | --- |
-| USDA FoodData Central | Exact GTIN, source food id/type, names, brand, ingredients, nutrients, units, serving size, household serving, publication/update dates, categories | Barcode logic: `sources/usdaBarcodeProduct.server.ts`; search/detail caches and canonical promotion follow `product_data_sources` policy |
-| Open Food Facts | Exact GTIN, names, brand, raw and recursive structured ingredients, ingredient analysis, additives, explicit allergens, explicit traces, labels, categories, nutrients, serving text/weight/volume, package quantity, package images, language, record/schema revisions, source timestamps, completeness, quality/obsolete state, and tag-source metadata | Barcode logic: `sources/openFoodFactsBarcodeProduct.server.ts`; reusable images require stored license and attribution metadata; provider-derived trace hypotheses remain analysis data rather than explicit `May contain` |
-| Canadian Nutrient File 2026 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | Imported through `scripts/imports/import_cnf_2026.mjs`; Open Government Licence – Canada canonical/API reuse is allowed with the stored Health Canada attribution and licence link; excluded third-party rights and non-endorsement limits still apply |
-| UK CoFID 2021 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | Imported through `scripts/imports/import_cofid_2021.mjs`; Open Government Licence v3.0 canonical/API reuse is allowed with the stored CoFID attribution and licence link; excluded third-party rights and non-endorsement limits still apply |
-| Australian Food Composition Database | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | Registered but disabled until its click-through and share-alike terms are accepted for this project |
+| USDA FoodData Central | Exact GTIN, source food id/type, names, brand, ingredients, nutrients, units, serving size, household serving, publication/update dates, categories | `src/lib/server/products/sources/usdaBarcodeProduct.server.ts` |
+| Open Food Facts | Exact GTIN, names, brand, raw and recursive structured ingredients, ingredient analysis, additives, explicit allergens, explicit traces, labels, categories, nutrients, serving text/weight/volume, package quantity, package images, language, record/schema revisions, source timestamps, completeness, quality/obsolete state, and tag-source metadata | `src/lib/server/products/sources/openFoodFactsBarcodeProduct.server.ts` |
+| Canadian Nutrient File 2026 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/import_cnf_2026.mjs` |
+| UK CoFID 2021 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/import_cofid_2021.mjs` |
 | User nutrition-label OCR | Text and nutrient candidates from a user-provided label | Tesseract runs on the client; no value is accepted until the user confirms it; shared-submission images remain private evidence |
 | Community review | User-observed product identity, label values, serving information, ingredients, warnings, and images | Moderation may create a versioned canonical revision; evidence stays private and approved public images use separate storage |
 | GS1 Digital Link | Normalized GTIN and standards-safe identifier parsing | Used only to resolve identifiers unless a separately approved data source supplies product fields |
-| Wikimedia Commons | Licensed generic or product image metadata where a suitable asset is deliberately selected | May be rendered only from `food_image_assets` with stored license, attribution, and source reference |
+
+## Registered But Inactive Sources
+
+| Source | Potential fields | Current intake state |
+| --- | --- | --- |
+| Australian Food Composition Database Release 3 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | Dataset and source records exist, but imports are disabled. |
+| Wikimedia Commons | Per-asset image and attribution metadata | The image schema supports the source, but there is no general ingestion feed. |
+| FoodRepo | Exact-barcode product metadata | Retired and disabled; production code does not call it. |
+
+The licensing document owns the reason and release conditions for every disabled or
+restricted source. This inventory records only capability and intake state.
 
 ## Useful Fields To Preserve
 
@@ -59,30 +69,23 @@ Missing values stay missing. A source omission is never converted to zero, and r
 from different foods or preparations are never merged only because their names are
 similar.
 
-## Legal And Canonical Rules
+## Ownership Boundaries
 
-The detailed, tracked compliance ledger is
-[`docs/data-source-licensing.md`](../data-source-licensing.md). Update that ledger and
-the database policy together whenever source terms or blendCalc's use changes.
+This inventory records provider capabilities and intake locations, not legal
+interpretation or publication workflow:
 
-- `product_data_sources` owns source identity, terms, attribution, enablement, and
-  provenance.
-- `generic_food_datasets` owns release-specific license review, import enablement,
-  attribution, hashes, and activation.
-- `food_image_assets` owns image license and attribution data.
-- Raw provider caches are separate from approved blendCalc catalog records.
-- New sources remain disabled for canonical storage until their terms are recorded and
-  reviewed. Do not infer storage permission from a provider name.
-- API v1 reads approved blendCalc catalog data only and never makes an external provider
-  request.
-- App generic-food search responses carry release-specific source and licence metadata
-  in `sourceAttribution`. API v1 product responses deduplicate the source policies used
-  by accepted fields into `sourceAttributions`, so required attribution survives the
-  canonical read boundary.
-- A current audit found that the exact-match submission path can still publish Open Food
-  Facts records despite its blocked canonical-storage policy. That mismatch is a public
-  API release blocker documented in the licensing ledger; do not treat the intended
-  cache-only policy as fully enforced until the code path is corrected.
+- [`../data-source-licensing.md`](../data-source-licensing.md) owns the reviewed terms,
+  attribution, storage, rendering, and redistribution decision for each source.
+- [`../shared-product-catalog.md`](../shared-product-catalog.md) owns canonical promotion,
+  field selection, revisions, and moderation.
+- [`catalog-field-lineage.md`](catalog-field-lineage.md) owns the API v1 publication gate
+  and response-field source mapping.
+- [`../supabase-schema.md`](../supabase-schema.md) maps `product_data_sources`,
+  `generic_food_datasets`, `food_image_assets`, and provider observation storage.
+
+Provider adapters must preserve the fields listed here without treating observation as
+permission to publish. The database policies referenced by those documents decide what
+may become canonical or public.
 
 ## Adding A Source
 
@@ -91,4 +94,5 @@ the database policy together whenever source terms or blendCalc's use changes.
 3. Use the shared request boundary; do not call `fetch` directly.
 4. Preserve raw observations and map fields independently.
 5. Add request-count, exact-match, missing-field, outage, cache, and legal-storage tests.
-6. Update this inventory, generated API structure samples, and the schema documentation.
+6. Update this inventory and generated API structure samples; update the licensing,
+   catalog, API-lineage, or schema document only when its owned contract also changes.

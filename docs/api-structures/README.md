@@ -7,53 +7,41 @@ The app-owned read contract is published at
 authenticated, read-only internal preview. It reads active canonical blendCalc catalog
 records only and does not call external providers during a request.
 
-Every product read starts from `shared_products`, which is the canonical catalog
-authority. The API hydrates that row from normalized nutrients, normalized servings,
-the canonical category catalog, selected field provenance, revisions, compatibility
-facts, and licensed image assets. It does not choose one external provider as the
-winner for the complete product.
+## Endpoints
+
+| Method and path | Purpose |
+| --- | --- |
+| `GET /api/v1/products/{barcode}` | Read one publication-ready canonical product. |
+| `GET /api/v1/products/{barcode}/revisions` | Read bounded immutable revision metadata and evidence-backed field changes. |
+| `GET /api/v1/foods/search` | Search publication-ready canonical products with bounded pagination. |
+| `GET /api/v1/categories` | Read enabled canonical food categories. |
+| `GET /api/moderation/catalog/products/{productId}/provenance` | Read private accepted/candidate field evidence for an authorized moderator or admin. |
 
 The existing app submission, evidence, and moderation pipeline remains the only write
-path. Provider results and user label observations are intake evidence; they do not
-write directly to the canonical API record.
+path. Public API keys, billing, developer accounts, and a public write API are out of
+scope until the contract, redistribution rights, rate limits, and correction process
+are ready.
 
-Every product response includes a deduplicated `sourceAttributions` collection for the
-sources represented by its accepted fields. The collection is loaded from
-`product_data_sources` and preserves the configured source name, source URL, licence,
-licence URL, and attribution statement instead of inferring legal metadata from a
-provider key.
-
-Product responses also preserve accepted structured ingredient trees, ingredient
-analysis, additives, explicit allergen/trace disclosures, labels, package quantity,
-provider record metadata, and field-specific sources. Missing values remain `null` or
-empty collections according to the contract; derived ingredient trace hypotheses do
-not become explicit `May contain` disclosures.
-
-The database publication gate excludes any active catalog row whose populated fields,
-nutrients, or servings lack accepted provenance or use a source without complete
-reviewed redistribution metadata. Images are licensed independently and are omitted
-when their asset-level licence or attribution is incomplete.
-
-Public API keys, billing, developer accounts, and a public write API are deliberately
-out of scope until the contract, redistribution rights, rate limits, and correction
-process are ready.
+[`catalog-field-lineage.md`](./catalog-field-lineage.md) owns the canonical read path,
+publication gate, product/category response mapping, missing-value semantics, revision
+meaning, and moderator evidence boundary. The OpenAPI document and
+`src/lib/api/v1/types.ts` remain the executable response contract.
 
 The API contract version is independent from the blendCalc app release. App `V1`
 currently means semantic version `1.0.0`; API v1 remains at response version `1.0`
 and OpenAPI version `1.0.0` until its own response contract needs a deliberate version
 change. The OpenAPI `x-blendcalc-status` field records that the API is still internal;
-preview status is not part of the version number.
+preview status is not part of the version number. Version-change rules and commands are
+maintained in [`../versioning.md`](../versioning.md).
 
-This folder contains generated reference files that describe the external food API
+## Provider Reference Files
+
+This folder also contains generated reference files that describe external food API
 payloads observed by blendCalc scripts.
 
 See [`source-data-inventory.md`](./source-data-inventory.md) for the app-owned source
-map, useful fields, legal-storage boundaries, caching behavior, and the required process
-for adding another provider.
-
-See [`catalog-field-lineage.md`](./catalog-field-lineage.md) for the exact
-`shared_products` read path, publication gate, response-field mapping, and row-level
-audit command.
+map, useful fields, intake boundaries, and the required process for adding another
+provider.
 
 See [`../data-source-licensing.md`](../data-source-licensing.md) for the tracked licence,
 attribution, current-compliance, and public-redistribution requirements for every source.

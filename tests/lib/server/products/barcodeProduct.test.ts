@@ -123,6 +123,13 @@ describe("barcode product DB-first enrichment", () => {
 			source: "usda",
 			sourceLabel: "USDA FoodData Central",
 			sourceReference: "2658692",
+			fieldProvenance: {
+				categories: {
+					source: "usda",
+					sourceReference: "2658692",
+					confidence: "imported",
+				},
+			},
 		});
 		mocks.getSharedProductByBarcode.mockResolvedValue({ id: "shared-product-id" });
 		mocks.mapSharedCatalogFood.mockReturnValue(sharedDraft);

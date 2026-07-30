@@ -96,6 +96,7 @@
 		"@capacitor/core": "^8.4.2",
 		"@supabase/ssr": "^0.12.4",
 		"@supabase/supabase-js": "^2.111.0",
+		"@vercel/analytics": "^2.0.1",
 		"@vercel/speed-insights": "^2.0.0",
 		"@zxing/browser": "^0.2.1",
 		"@zxing/library": "^0.23.0",

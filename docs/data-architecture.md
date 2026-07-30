@@ -54,54 +54,49 @@ blendCalc data first, requests only missing permitted fields, records field-leve
 and license information, and stores accepted data in Supabase. Public/catalog reads do
 not call external providers.
 
-Product enrichment is field-based rather than provider-winner based. Nutrition, images,
-categories, servings, ingredient text and structure, additives, explicit allergens,
-explicit traces, labels, package quantity, and provider record metadata are evaluated
-independently. Structured source metadata is retained in the canonical food snapshot
-only when database source policy permits that storage; raw or restricted observations
-remain in their licensed cache/evidence boundary. New accepted fields require an
-applicable existing-record backfill and the same provenance rules as future writes.
+Product enrichment is field-based rather than provider-winner based. Exact identifiers
+may link records, but similar names never establish identity. Raw or restricted
+observations remain in their licensed cache/evidence boundary, while accepted canonical
+fields retain their own provenance. Existing records receive the same applicable
+backfill as future writes.
 
-Generic-food identity links are exact and relational. Dataset-declared identifiers such
-as a USDA NDB number are stored separately from descriptions and can connect the same
-food across national datasets without a fuzzy title match. Generic search excludes
-records that have no canonical measured nutrient. When a source-derived food is placed
-in Fridge or Shopping List, the authenticated server write path resolves its exact
-barcode or positive USDA FDC identifier, enriches only from that exact source record,
-and then performs the authoritative list placement. A bounded backfill applies the same
-rule to older unlinked list snapshots. Provider misses remain unchanged rather than
-being substituted with a similar food.
+The provider capability map, legal policy, and catalog merge behavior are maintained in
+the [`source data inventory`](api-structures/source-data-inventory.md),
+[`licensing ledger`](data-source-licensing.md), and
+[`shared product catalog`](shared-product-catalog.md), respectively.
 
-Food identity is explicit: `packaged`, `generic`, or `private-custom`. Packaged titles
-and categories are never allergen evidence. An authoritative generic dataset record may
-produce an intrinsic food-taxonomy compatibility fact, while explicit package
-`Contains` and `May contain` disclosures remain separate.
+## Operational Analytics
 
-All compatibility policies remain behind the server boundary. The browser reference
-catalog does not receive conflict rules or ingredient/taxonomy match patterns. Server
-page coordinators and authenticated food-list/search endpoints load the DB policy,
-evaluate canonical/source facts against the current user's stored preferences, and add
-bounded `allergenDisclosure` and `preferenceWarnings` fields to each returned food.
-Svelte components render those fields and friendly issue-code messages only; they do not
-infer safety information from raw food text or execute compatibility patterns.
+Vercel Web Analytics owns anonymous page-view collection and the explicitly registered
+`auth_login_success`, `auth_logout_success`, and `page_reload` events. Application code
+sends only the stable event name; it does not attach email addresses, user ids, product
+identifiers, search terms, or free-form properties. Analytics and Speed Insights strip
+query strings and URL hashes before sending page URLs.
 
-Compatibility policy is explicitly versioned. The database preserves snapshots of the
-match rules, conflict mappings, effective date, review date, and official regulatory
-references for every deployed version. Product compatibility facts and user feedback
-retain the version used for their evaluation, while current reads use only the active
-version.
+A protected production cron route queries Vercel's aggregate API each day for the
+previous three completed UTC days. It atomically replaces that bounded range in
+`app_interaction_daily_metrics`, allowing delayed Vercel processing to settle without
+collecting raw clickstream data. The sync stores totals, anonymous daily visitor counts,
+and framework route patterns—not request paths or Vercel visitor hashes. Raw Vercel
+Drains are intentionally not used.
 
-Jurisdiction-specific allergen profiles are normalized separately from user
-preferences. Reviewed United States, Canadian, United Kingdom, European Union, and
-Australia/New Zealand profiles describe regulated coverage and official source labels;
-they provide policy context without disabling warnings for preferences selected by the
-user.
+Production configuration requires `VERCEL_ANALYTICS_ACCESS_TOKEN`, the Vercel-provided
+`VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` for team-owned projects, and `CRON_SECRET`.
+`VERCEL_ANALYTICS_SYNC_LOOKBACK_DAYS` may be set from 1 through 31 and defaults to 3.
+Vercel plan support is required for custom-event collection; page-view aggregation
+remains independently useful when custom events are unavailable.
 
-Users can report a likely false-positive warning through an authenticated server
-boundary. The report records the exact warning code, parameters, matched facts, product
-identity, and policy version. Moderators confirm or dismiss the report and identify
-whether the correction belongs to a rule, source record, or canonical product. Policy
-changes create a new version instead of rewriting prior evaluations.
+## Server-Owned Compatibility Policy
+
+Compatibility rules and ingredient/taxonomy match patterns remain behind the server
+boundary. Server coordinators evaluate versioned DB policy and canonical/source facts
+against the signed-in user's preferences, then return bounded disclosures, warnings,
+coverage, and stable issue codes. Browser components render those results and friendly
+messages; they do not infer safety from product text or execute policy patterns.
+
+The schema map owns compatibility tables and version relationships. The catalog
+document owns product fact extraction, evidence meaning, and moderation lifecycle. This
+document owns only the server/client boundary.
 
 ## Module Boundaries
 
