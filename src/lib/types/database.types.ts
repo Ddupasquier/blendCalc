@@ -3217,6 +3217,33 @@ export type Database = {
         }
         Relationships: []
       }
+      request_rate_limits: {
+        Row: {
+          expires_at: string
+          request_count: number
+          scope: string
+          subject_hash: string
+          updated_at: string
+          window_started_at: string
+        }
+        Insert: {
+          expires_at: string
+          request_count: number
+          scope: string
+          subject_hash: string
+          updated_at?: string
+          window_started_at: string
+        }
+        Update: {
+          expires_at?: string
+          request_count?: number
+          scope?: string
+          subject_hash?: string
+          updated_at?: string
+          window_started_at?: string
+        }
+        Relationships: []
+      }
       saved_drinks: {
         Row: {
           created_at: string
@@ -4129,6 +4156,19 @@ export type Database = {
       compatibility_normalize_text: {
         Args: { p_value: string }
         Returns: string
+      }
+      consume_request_rate_limit: {
+        Args: {
+          p_limit: number
+          p_scope: string
+          p_subject_hash: string
+          p_window_seconds: number
+        }
+        Returns: {
+          allowed: boolean
+          remaining: number
+          retry_after_seconds: number
+        }[]
       }
       default_profile_display_name: {
         Args: { p_user_id: string }

@@ -1,6 +1,6 @@
 # Development Rules Audit
 
-Last audited: 2026-07-27
+Last audited: 2026-07-29
 
 ## Purpose
 
@@ -23,6 +23,27 @@ finding never overrides a rule.
   is the remaining work.
 
 ## Active Findings
+
+### Hosted Security Controls Need Production Policy
+
+**Status:** Open
+
+**Evidence:** Database SSL enforcement is enabled and verified for the linked Supabase
+project. Direct Postgres network restrictions still allow `0.0.0.0/0` and `::/0`
+because no stable developer/CI CIDR allowlist is documented. Physical backup status
+reports WAL-G support but no listed backups and no point-in-time recovery. Repository
+configuration cannot prove the linked project's email-confirmation, leaked-password,
+CAPTCHA, MFA, log-retention, or hosted abuse-protection settings.
+
+**Affected areas:** Linked Supabase database access, authentication, privileged
+moderator/admin accounts, recovery readiness, and deployment operations.
+
+**Complete when:** Trusted developer and CI database CIDRs are documented and enforced
+without breaking migrations; backup restore behavior and retention are verified;
+production Auth requires the approved email-confirmation and leaked-password controls;
+CAPTCHA thresholds are defined for public signup/recovery abuse; privileged accounts
+use an approved MFA policy; and the decisions are checked in a repeatable prelaunch
+security runbook without storing secrets in the repository.
 
 ### Cross-View Browser, Mobile, And Accessibility Coverage
 

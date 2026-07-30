@@ -14,6 +14,10 @@ const genericFoodMetadataMigration = readFileSync(
 	"supabase/migrations/20260726200000_authoritative_generic_food_metadata.sql",
 	"utf8",
 );
+const securityMigration = readFileSync(
+	"supabase/migrations/20260729180000_security_least_privilege_and_rate_limits.sql",
+	"utf8",
+);
 const retiredIssueCodes = [
 	"FOOD_IDENTITY_CONFIRMED",
 	"FOOD_IDENTITY_POSSIBLE",
@@ -34,6 +38,11 @@ describe("application issue code migration", () => {
 			"'FOOD_INTRINSIC_ALLERGEN'",
 		);
 		migrationCodes.add("FOOD_INTRINSIC_ALLERGEN");
+		for (const match of securityMigration.matchAll(
+			/'([A-Z][A-Z0-9_]*)',\s*'error',\s*'request'/g,
+		)) {
+			migrationCodes.add(match[1]);
+		}
 
 		expect([...migrationCodes].sort()).toEqual([...APP_ISSUE_CODES].sort());
 	});

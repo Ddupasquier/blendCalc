@@ -45,8 +45,10 @@ import {
 	listPendingFoodCompatibilityFeedback,
 	reviewFoodCompatibilityFeedback,
 } from "$lib/server/food-safety/foodCompatibilityFeedback.server";
+import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 
 const PERMANENT_BAN_DURATION = "876000h";
+const MODERATION_FORM_MAX_BYTES = 512 * 1024;
 const MODERATION_PAGE_SIZE = 100;
 const MODERATION_MAX_PAGES = 100;
 const MODERATION_DATABASE_BATCH_CONCURRENCY = 4;
@@ -406,7 +408,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 export const actions: Actions = {
 	reviewCompatibilityFeedback: async ({ locals, request }) => {
 		const { user } = await requireModerator(locals);
-		const formData = await request.formData();
+		const formData = await readLimitedFormData(
+			request,
+			MODERATION_FORM_MAX_BYTES,
+		);
 		const feedbackId = String(formData.get("feedbackId") ?? "");
 		const status = String(formData.get("status") ?? "");
 		const resolutionAction = String(
@@ -462,7 +467,10 @@ export const actions: Actions = {
 	},
 	approveProduct: async ({ locals, request }) => {
 		const { user } = await requireModerator(locals);
-		const formData = await request.formData();
+		const formData = await readLimitedFormData(
+			request,
+			MODERATION_FORM_MAX_BYTES,
+		);
 		const submissionId = String(formData.get("submissionId") ?? "");
 		const fitModeValue = String(formData.get("imageFitMode") ?? "");
 		const placementMethodValue = String(
@@ -529,7 +537,10 @@ export const actions: Actions = {
 	},
 	rejectProduct: async ({ locals, request }) => {
 		const { user } = await requireModerator(locals);
-		const formData = await request.formData();
+		const formData = await readLimitedFormData(
+			request,
+			MODERATION_FORM_MAX_BYTES,
+		);
 		const submissionId = String(formData.get("submissionId") ?? "");
 		const reviewNote = String(formData.get("reviewNote") ?? "").trim();
 		if (!submissionId || !reviewNote) {
@@ -549,7 +560,10 @@ export const actions: Actions = {
 	},
 	ban: async ({ locals, request }) => {
 		const { user: actor, role: actorRole } = await requireModerator(locals);
-		const formData = await request.formData();
+		const formData = await readLimitedFormData(
+			request,
+			MODERATION_FORM_MAX_BYTES,
+		);
 		const targetUserId = String(formData.get("targetUserId") ?? "");
 		const reason = getReason(formData);
 
@@ -719,7 +733,10 @@ export const actions: Actions = {
 	},
 	unban: async ({ locals, request }) => {
 		const { user: actor, role: actorRole } = await requireModerator(locals);
-		const formData = await request.formData();
+		const formData = await readLimitedFormData(
+			request,
+			MODERATION_FORM_MAX_BYTES,
+		);
 		const targetUserId = String(formData.get("targetUserId") ?? "");
 		const { admin } = await getTargetContext(actor.id, actorRole, targetUserId);
 		const { data: currentModeration, error: moderationLookupError } = await admin

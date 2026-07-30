@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { normalizeImageUpload } from "$lib/server/uploads/normalizeImageUpload.server";
 import {
-	getAvatarExtension,
 	isProfileAvatarType,
 	matchesAvatarFileSignature,
 } from "$lib/utils/profile/profileValidation";
@@ -9,6 +9,7 @@ import {
 export const PRODUCT_EVIDENCE_BUCKET = "product-submission-evidence";
 export const PRODUCT_EVIDENCE_ROLES = ["front", "nutrition", "barcode"] as const;
 export const PRODUCT_EVIDENCE_MAX_BYTES = 8 * 1024 * 1024;
+const PRODUCT_EVIDENCE_MAX_DIMENSION = 4096;
 
 export type ProductEvidenceRole = (typeof PRODUCT_EVIDENCE_ROLES)[number];
 export type ProductEvidencePaths = Partial<Record<ProductEvidenceRole, string>>;
@@ -25,11 +26,16 @@ const validateEvidenceFile = async (file: File, role: ProductEvidenceRole) => {
 	if (!isProfileAvatarType(file.type)) {
 		throw new Error("Product photos must be JPEG, PNG, or WebP images.");
 	}
-	const bytes = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+	const bytes = new Uint8Array(await file.arrayBuffer());
 	if (!matchesAvatarFileSignature(bytes, file.type)) {
 		throw new Error("A product photo does not match its file type.");
 	}
-	return file.type;
+	return normalizeImageUpload({
+		bytes,
+		maximumOutputBytes: PRODUCT_EVIDENCE_MAX_BYTES,
+		maximumWidth: PRODUCT_EVIDENCE_MAX_DIMENSION,
+		maximumHeight: PRODUCT_EVIDENCE_MAX_DIMENSION,
+	});
 };
 
 export const uploadProductEvidence = async (
@@ -46,20 +52,26 @@ export const uploadProductEvidence = async (
 	const uploadId = randomUUID();
 	const paths: ProductEvidencePaths = {};
 
-	const validatedEntries = await Promise.all(
-		entries.map(async ([role, file]) => ({
+	const validatedEntries: Array<{
+		role: ProductEvidenceRole;
+		image: Awaited<ReturnType<typeof validateEvidenceFile>>;
+	}> = [];
+	for (const [role, file] of entries) {
+		validatedEntries.push({
 			role,
-			file,
-			imageType: await validateEvidenceFile(file, role),
-		})),
-	);
+			image: await validateEvidenceFile(file, role),
+		});
+	}
 	const uploadResults = await Promise.all(
-		validatedEntries.map(async ({ role, file, imageType }) => {
-			const path = `${userId}/${uploadId}/${role}.${getAvatarExtension(imageType)}`;
+		validatedEntries.map(async ({ role, image }) => {
+			const path = `${userId}/${uploadId}/${role}.${image.extension}`;
 			try {
 				const { error } = await admin.storage
 					.from(PRODUCT_EVIDENCE_BUCKET)
-					.upload(path, file, { contentType: file.type, upsert: false });
+					.upload(path, image.bytes, {
+						contentType: image.contentType,
+						upsert: false,
+					});
 				return { role, path, error };
 			} catch (error) {
 				return { role, path, error };

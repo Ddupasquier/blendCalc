@@ -2,6 +2,8 @@ export const APP_ISSUE_CODES = [
 	"AUTH_REQUIRED",
 	"ACCESS_DENIED",
 	"INVALID_REQUEST",
+	"REQUEST_TOO_LARGE",
+	"RATE_LIMITED",
 	"ROUTE_NOT_FOUND",
 	"RESOURCE_NOT_FOUND",
 	"SERVICE_UNAVAILABLE",
@@ -106,6 +108,16 @@ export const APP_ISSUE_DEFINITIONS: Record<AppIssueCode, AppIssueDefinition> = {
 		kind: "error",
 		title: "Check your information",
 		message: "Something in this request needs attention. Review it and try again.",
+	},
+	REQUEST_TOO_LARGE: {
+		kind: "error",
+		title: "Request is too large",
+		message: "This request includes more information than we can safely process. Reduce its size and try again.",
+	},
+	RATE_LIMITED: {
+		kind: "error",
+		title: "Slow down for a moment",
+		message: "There have been too many requests in a short time. Wait a moment, then try again.",
 	},
 	ROUTE_NOT_FOUND: {
 		kind: "error",

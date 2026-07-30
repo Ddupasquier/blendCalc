@@ -17,6 +17,7 @@ policies, or core data ownership changes.
 | [Compatibility and Allergens](#compatibility-allergens-and-dietary-restrictions) | tags, conflict rules, product facts, preference options, and API observations |
 | [Food Categories](#custom-food-category-reference) | category options, source observations, and canonical mappings |
 | [Moderation](#moderation-and-access-control) | roles, account moderation, action logs, email delivery, blocked signups, and image-policy acceptance |
+| [Request Security](#request-security-and-least-privilege) | Private request quotas, deny-by-default grants, and protected maintenance functions |
 | [Nutrition Completeness and National Datasets](#nutrition-completeness-and-national-datasets) | completeness profiles, generic foods, exact source identifiers, CNF, CoFID, and future national food datasets |
 | [Product Source Policies](#product-source-policies) | source evaluations and source-specific lifecycle policy |
 | [Database Functions](#rpc--database-functions) | Shared trigger helpers, validation, search, publication, and API read functions |
@@ -36,6 +37,11 @@ policies, or core data ownership changes.
   trustworthy it is.
 - Nutrition, compatibility, and category UI should render from DB-backed
   definition/catalog tables, not hardcoded component constants.
+- Browser-facing roles receive only the table and function privileges required by an
+  intentional RLS or RPC access path. New public objects are deny-by-default.
+- Security-definer functions use a controlled search path, derive user ownership from
+  `auth.uid()` when user-scoped, and receive explicit role grants rather than inheriting
+  PostgreSQL's default public execution privilege.
 
 ## Core User Data
 
@@ -63,6 +69,9 @@ Notes:
   `system`.
 - Avatar files live in the private `profile-avatars` storage bucket under the user id
   folder.
+- Profile and avatar-policy writes are server-owned so browser clients cannot bypass
+  field validation, image normalization, or moderation-state assignment. Users retain
+  RLS-scoped reads of their own profile and private avatar.
 
 ### `user_food_preferences`
 
@@ -875,6 +884,42 @@ Notes:
   clients.
 - `blocked_signup_emails` stores hashes, not raw email addresses.
 - `reject_blocked_signup` is the auth hook function for blocking signups.
+- Application requests fail closed when account-moderation state cannot be verified;
+  logout remains available so a user is never trapped in a session.
+
+## Request Security and Least Privilege
+
+### `request_rate_limits`
+
+Private fixed-window counters protect bounded application API scopes from abusive or
+accidental request volume. The table is not exposed through the browser Data API.
+
+| Table | Documented columns |
+| --- | --- |
+| `request_rate_limits` | `scope`, `subject_hash`, `window_started_at`, `expires_at`, `request_count`, `updated_at` |
+
+Notes:
+
+- `(scope, subject_hash)` is the primary key, so concurrent requests update one atomic
+  quota row rather than creating duplicate counters.
+- Subjects use a keyed SHA-256 HMAC derived inside the server boundary from the
+  authenticated user identity or trusted client address. Raw user ids and network
+  addresses are not stored, and stored hashes cannot be reproduced without the
+  server-only key.
+- `consume_request_rate_limit` validates all quota configuration, resets expired
+  windows atomically, opportunistically prunes counters expired for more than one day,
+  and is executable only by the service role.
+- All application JSON and form endpoints parse through bounded request readers.
+  Declared and streamed bodies that exceed the route limit are rejected before domain
+  logic runs; compressed request bodies are rejected to prevent decompression abuse.
+- Authentication, password, Profile, and Moderation form actions use persistent quotas
+  in addition to the API, external lookup, upload, and catalog-submission scopes.
+- Current and future Data API roles do not receive `TRUNCATE`, `REFERENCES`, `TRIGGER`,
+  or `MAINTAIN` table privileges. Public function execution is revoked by default and
+  each browser-callable RPC must be granted intentionally.
+- Reference rebuild and internal synchronization functions, including
+  `sync_nutrient_manual_entry_fields` and
+  `sync_user_compatibility_rules(uuid, text[], text[])`, are service-only.
 
 ## Nutrition Completeness And National Datasets
 
@@ -960,14 +1005,21 @@ category, or serving fields.
 | `blendcalc_api_v1_product_readiness_reasons`    | Returns the service-only reasons an active shared product is withheld from API v1 |
 | `get_blendcalc_product_v1`                      | Reads one active, publication-ready shared product and its latest revision by GTIN-14 |
 | `search_blendcalc_products_v1`                  | Searches only active, publication-ready shared products with bounded pagination and stable relevance |
+| `consume_request_rate_limit`                    | Atomically consumes one private server-side request quota unit; service role only |
 | `reject_blocked_signup`                        | Supabase Auth hook for hashed email signup blocks                                                                                              |
 
 ## Storage Buckets
 
 | Bucket                        | Public | Purpose                                                     | Access Pattern                                                     |
 | ----------------------------- | ------ | ----------------------------------------------------------- | ------------------------------------------------------------------ |
-| `profile-avatars`             | No     | User avatar files                                           | Authenticated user can manage files under their own user id folder |
-| `product-submission-evidence` | No     | Product label/evidence images for shared catalog moderation | Authenticated user can manage files under their own user id folder |
+| `profile-avatars`             | No     | User avatar files                                           | Owner-scoped read; verified server actions write and delete         |
+| `product-submission-evidence` | No     | Product label/evidence images for shared catalog moderation | Owner-scoped read; verified server submission flow writes and deletes |
+| `food-image-assets`           | Yes    | Moderator-approved public product images                    | Public read; service-role publication and metadata persistence     |
+
+Uploaded profile and product-evidence images are byte-bounded, signature-checked,
+decoded, orientation-normalized, dimension-bounded, metadata-stripped, and re-encoded
+as WebP before storage. Moderator publication repeats normalization so older evidence
+cannot bypass the public-image boundary.
 
 ## Update Checklist
 

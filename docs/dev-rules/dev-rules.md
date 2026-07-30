@@ -37,6 +37,7 @@ clickable navigation block instead.
 - [Browser And Mobile Compatibility](#rule-browser-compatibility)
 - [Accessibility](#rule-accessibility)
 - [Strict Content Security Policy](#rule-content-security-policy)
+- [Server And Database Security Boundaries](#rule-server-database-security)
 - [Search Relevance](#rule-search-relevance)
 - [Explicit Pagination Controls](#rule-pagination-controls)
 - [Shared Loading Indicators](#rule-loading-indicators)
@@ -216,6 +217,29 @@ elements, bind the DOM node and attach standard event listeners client-side thro
 shared utility instead. Preserve cached-resource handling, remove listeners during
 effect cleanup, and add a server-compile regression test that rejects inline event
 attributes. Fix the emitting component rather than weakening the policy.
+
+**1d.** <a id="rule-server-database-security"></a>Use deny-by-default server and
+database boundaries. Browser Data API roles receive only the table operations protected
+by an intentional RLS policy and only the RPCs explicitly required by the app; RLS does
+not justify broad `TRUNCATE`, `REFERENCES`, `TRIGGER`, `MAINTAIN`, or default public
+function privileges. Security-definer functions must use a controlled search path,
+schema-qualify referenced objects, derive user ownership from `auth.uid()` instead of a
+caller-provided user id, validate bounded inputs, and receive explicit role grants.
+Service-role credentials and internal maintenance functions stay server-only.
+
+Bound every JSON, form, and upload request before parsing, reject unsupported content
+types and request encodings, and set route limits from the actual domain payload rather
+than a universal oversized maximum. Apply persistent server-side rate limits to API
+reads and mutations with stricter quotas for expensive external lookups, uploads,
+catalog submissions, feedback, authentication actions, password changes, profile
+mutations, and privileged actions. Store only keyed pseudonymous quota subjects and
+prune expired counters. Authentication, authorization, account moderation, and
+rate-limit dependencies fail closed; logout remains available during an account status
+outage. Never return raw provider, database, or stack errors to users, and never log
+credentials, tokens, full authorization headers, or sensitive request bodies.
+Decode and re-encode accepted user images server-side with bounded pixel dimensions
+before persistence so file signatures alone never authorize malformed image structure,
+embedded metadata, animation, or decompression-heavy payloads.
 
 **2.** Keep the user flow simple. Barcode scanning, search, manual entry, fridge,
 shopping, mix, and saved drinks should feel like a guided flow instead of disconnected
