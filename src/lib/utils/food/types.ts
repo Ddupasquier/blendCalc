@@ -135,6 +135,7 @@ export type FoodTrackedField =
     | "ingredients"
     | "allergens"
     | "traces"
+	| "precautionaryStatements"
     | "dietaryTags"
     | "labels"
 	| "structuredIngredients"
@@ -187,6 +188,24 @@ export type FoodAllergenDisclosure = {
 	mayContain: string[];
 };
 
+export type FoodPrecautionaryStatementType =
+	| "may_contain"
+	| "shared_equipment"
+	| "shared_facility"
+	| "other_precautionary";
+
+export type FoodPrecautionaryStatement = {
+	type: FoodPrecautionaryStatementType;
+	text: string;
+	allergens: string[];
+	languageCode?: string;
+	sourceField: string;
+	sourceReference?: string;
+	observationId?: string;
+	revisionId?: string;
+	labelObservedAt?: string;
+};
+
 /** A food item returned from the FDC search endpoint */
 export interface FdcFood {
     fdcId: number;
@@ -227,6 +246,7 @@ export interface FdcFood {
 	additives?: string[];
     allergens?: string[];
     traces?: string[];
+	precautionaryStatements?: FoodPrecautionaryStatement[];
     dietaryTags?: string[];
     labels?: string[];
 	packageQuantity?: FoodPackageQuantity;

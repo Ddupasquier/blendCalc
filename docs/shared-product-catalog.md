@@ -98,6 +98,42 @@ User-linked list reads hydrate the current accepted canonical record instead of
 rewriting those historical submissions or duplicating canonical metadata into every
 saved snapshot.
 
+Reported ingredient evidence is also projected into relational statement and component
+rows. A structured provider tree retains its exact order, source path, nesting, source
+wording, language, source payload, and any explicitly reported percentage bounds. A
+reported list retains its order. Raw statement text is stored as one unparsed statement
+rather than being split on punctuation. The original canonical JSON and source
+observation remain the evidence authority, so the reported statement can be
+reconstructed without guessing.
+
+Canonical ingredient terms, aliases, parent relationships, derivatives, and processing
+relationships are review-gated database records. Ingestion never creates them merely
+because a provider emitted a word. Derivatives and processed ingredients default to no
+parent-conflict inheritance; any inheritance or jurisdiction-specific exemption needs
+reviewed evidence. Ingredient-derived compatibility facts link the exact component,
+match rule, active policy version, and source observation used to create them.
+
+Compatibility policy is deployed as an immutable version-bound bundle rather than a
+mutable set of global rules. A draft clones the current extraction rules, conflict
+rules, reviewed ingredient aliases and relationships, jurisdiction exemptions, and
+regional profiles. Activation records complete snapshots plus a deterministic content
+hash, switches the active version, re-extracts every product, observation, and
+submission fact, and rebuilds the preference option catalog in one transaction. A
+retired bundle can be reactivated through the same transaction for rollback. Runtime
+views expose only the active bundle, and facts are constrained to a match rule from the
+same policy version, preventing mixed-version evaluations. Jurisdiction exemptions are
+retained as context and cannot suppress a warning for an explicitly selected personal
+preference.
+
+Package precautionary statements are stored separately from ordinary ingredients and
+provider analysis. Each row preserves exact wording, statement type, normalized
+allergens, language, source field/reference, observation, and label revision. Multiple
+statements remain independently traceable even when they mention the same allergen.
+Compatibility facts link the exact statement and immutable match rule; the user-facing
+nutrition view can group statements with friendly headings while still showing the
+source wording. Legacy trace arrays can remain compatibility evidence, but they do not
+fabricate a package statement when exact wording was not reported.
+
 Source/API product names are normalized to readable title-style capitalization and use
 `&` instead of the standalone word `and` before publication so inconsistent vendor
 naming does not become app display names. Canonical food JSON stores `nameProvenance` as
@@ -209,6 +245,8 @@ non-private values.
 | Nutrient uncertainty | `generic_food_nutrients` | Source-reported standard error, observation count, source code, mapping, and value status | Unknown uncertainty; absence does not alter nutrient math |
 | Compatibility policy | `food_compatibility_policy_versions` | Immutable reviewed match/conflict rules and references for one policy version | No reproducible policy version |
 | Compatibility evidence | `product_compatibility_facts` | Policy-versioned evidence from ingredients, declarations, traces, source identity, or reviewed analysis | No conflict found in available evidence; never proof that a food is safe |
+| Relational ingredient evidence | `product_ingredient_statements` and `product_ingredient_components` | Lossless ordered projection of reported ingredient text/list/tree, including nesting and reported percentages | Keep the source statement unparsed when structure was not reported; never guess boundaries or percentages |
+| Precautionary statement evidence | `product_precautionary_statements` | Exact package statement, normalized statement type/allergens, language, source, observation, and revision | Keep legacy normalized traces as evidence only; never invent exact package wording |
 | Compatibility evaluation | Server read model | `conflict`, `checked`, `incomplete`, or `not_checked`, with explicit evidence coverage and applied policy version | `not_checked` without a user profile; missing evidence never becomes `checked` |
 
 API v1 exposes current revision metadata, selected field sources with observation IDs,

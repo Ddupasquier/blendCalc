@@ -228,6 +228,13 @@ describe("external barcode product lookup", () => {
 			additives: ["e330"],
 			packageQuantity: { label: "24 oz", amount: 24, unit: "oz" },
 			sourceMetadata: { language: "en", revision: 4 },
+			fieldProvenance: {
+				precautionaryStatements: {
+					source: "usda",
+					sourceReference: "2658692",
+					confidence: "unknown",
+				},
+			},
 		});
 		const openFoodFacts = vi.fn();
 

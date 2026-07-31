@@ -70,7 +70,8 @@ describe("barcode product field enrichment", () => {
 			serving: true,
 			ingredients: true,
 			allergens: true,
-			traces: true,
+				traces: true,
+				precautionaryStatements: true,
 			dietaryTags: true,
 			labels: true,
 			structuredIngredients: true,
@@ -99,7 +100,8 @@ describe("barcode product field enrichment", () => {
 			ingredients: true,
 			ingredientList: true,
 			allergens: true,
-			traces: true,
+				traces: true,
+				precautionaryStatements: true,
 			dietaryTags: true,
 			labels: true,
 			structuredIngredients: true,
@@ -246,7 +248,13 @@ describe("barcode product field enrichment", () => {
 			ingredients: "Peanuts, sugar, milk",
 			ingredientList: ["peanuts", "Sugar", "milk"],
 			allergens: ["Peanuts", "milk"],
-			traces: ["tree nuts"],
+				traces: ["tree nuts"],
+				precautionaryStatements: [{
+					type: "may_contain",
+					text: "May contain tree nuts",
+					allergens: ["tree nuts"],
+					sourceField: "traces",
+				}],
 			dietaryTags: ["vegetarian"],
 			labels: ["Rainforest Alliance"],
 			structuredIngredients: [{ id: "milk", text: "milk" }],
@@ -264,6 +272,7 @@ describe("barcode product field enrichment", () => {
 					"ingredients",
 					"allergens",
 					"traces",
+					"precautionaryStatements",
 					"dietaryTags",
 					"labels",
 					"structuredIngredients",
@@ -287,7 +296,13 @@ describe("barcode product field enrichment", () => {
 		expect(result.ingredients).toBe("Peanuts, sugar");
 		expect(result.ingredientList).toEqual(["Peanuts", "sugar"]);
 		expect(result.allergens).toEqual(["peanuts"]);
-		expect(result.traces).toEqual(["tree nuts"]);
+			expect(result.traces).toEqual(["tree nuts"]);
+			expect(result.precautionaryStatements).toEqual([{
+				type: "may_contain",
+				text: "May contain tree nuts",
+				allergens: ["tree nuts"],
+				sourceField: "traces",
+			}]);
 		expect(result.dietaryTags).toEqual(["vegetarian"]);
 		expect(result.labels).toEqual(["Rainforest Alliance"]);
 		expect(result.structuredIngredients).toEqual([{ id: "milk", text: "milk" }]);

@@ -273,6 +273,7 @@ const FIELD_LABELS: Record<FoodTrackedField, string> = {
 	ingredients: "Ingredient statement",
 	allergens: "Contains disclosure",
 	traces: "May contain disclosure",
+	precautionaryStatements: "Package precautionary statements",
 	dietaryTags: "Dietary tags",
 	labels: "Product labels",
 	structuredIngredients: "Ingredient breakdown",
