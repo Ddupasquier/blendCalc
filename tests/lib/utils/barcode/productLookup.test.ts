@@ -332,6 +332,8 @@ describe("barcode product mapping", () => {
 				product_quantity_unit: "g",
 				lang: "en",
 				languages_tags: ["en:english"],
+				countries: "United States, Canada",
+				countries_tags: ["en:united-states", "en:canada"],
 				rev: 12,
 				schema_version: 999,
 				created_t: 1_700_000_000,
@@ -378,6 +380,7 @@ describe("barcode product mapping", () => {
 			sourceMetadata: {
 				language: "en",
 				languages: ["english"],
+				marketCountries: ["United States", "Canada"],
 				revision: 12,
 				schemaVersion: 999,
 				completeness: 0.92,

@@ -87,12 +87,16 @@ canonical nutrient ID, and differently sourced nutrients retain their own lineag
 The missing-field plan covers nutrition, images, categories, servings, ingredient text
 and lists, recursive structured ingredients, ingredient analysis, additives, explicit
 allergens, explicit traces, dietary tags, labels, package quantity, and provider
-record/version metadata. One provider returning nutrition does not stop another
-provider from contributing a missing field. Provider-derived trace hypotheses stay in
-ingredient analysis; only explicit source trace/advisory fields populate `May contain`.
-Applicable existing products are backfilled through the same canonical enrichment
-transaction so recovered data, provenance, normalized rows, and revisions remain
-consistent with future writes.
+record/version metadata, including source dates and market countries when reported.
+One provider returning nutrition does not stop another provider from contributing a
+missing field. Provider-derived trace hypotheses stay in ingredient analysis; only
+explicit source trace/advisory fields populate `May contain`. Applicable existing
+products are backfilled through the same canonical enrichment transaction so recovered
+data, provenance, normalized rows, and revisions remain consistent with future writes.
+Historical submissions remain immutable evidence of what was actually submitted.
+User-linked list reads hydrate the current accepted canonical record instead of
+rewriting those historical submissions or duplicating canonical metadata into every
+saved snapshot.
 
 Source/API product names are normalized to readable title-style capitalization and use
 `&` instead of the standalone word `and` before publication so inconsistent vendor

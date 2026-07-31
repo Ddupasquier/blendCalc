@@ -246,11 +246,18 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 			? {
 				language: record.food.sourceMetadata.language ?? null,
 				languages: uniqueStrings(record.food.sourceMetadata.languages ?? []),
+				marketCountries: uniqueStrings(
+					record.food.sourceMetadata.marketCountries ?? [],
+				),
 				revision: record.food.sourceMetadata.revision ?? null,
 				schemaVersion: record.food.sourceMetadata.schemaVersion ?? null,
 				createdAt: record.food.sourceMetadata.createdAt ?? null,
+				publishedAt: record.food.sourceMetadata.publishedAt ?? null,
+				availableAt: record.food.sourceMetadata.availableAt ?? null,
 				modifiedAt: record.food.sourceMetadata.modifiedAt ?? null,
 				updatedAt: record.food.sourceMetadata.updatedAt ?? null,
+				discontinuedAt:
+					record.food.sourceMetadata.discontinuedAt ?? null,
 				completeness: record.food.sourceMetadata.completeness ?? null,
 				qualityTags: uniqueStrings(
 					record.food.sourceMetadata.qualityTags ?? [],

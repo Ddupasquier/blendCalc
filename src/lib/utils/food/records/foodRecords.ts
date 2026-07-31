@@ -91,6 +91,9 @@ export const compactFood = (food: FdcFood): FdcFood => {
 				languages: food.sourceMetadata.languages
 					? [...food.sourceMetadata.languages]
 					: undefined,
+				marketCountries: food.sourceMetadata.marketCountries
+					? [...food.sourceMetadata.marketCountries]
+					: undefined,
 				qualityTags: food.sourceMetadata.qualityTags
 					? [...food.sourceMetadata.qualityTags]
 					: undefined,

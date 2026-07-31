@@ -186,11 +186,15 @@ export type ApiV1Product = {
 	sourceRecord: {
 		language: string | null;
 		languages: string[];
+		marketCountries: string[];
 		revision: number | null;
 		schemaVersion: number | null;
 		createdAt: string | null;
+		publishedAt: string | null;
+		availableAt: string | null;
 		modifiedAt: string | null;
 		updatedAt: string | null;
+		discontinuedAt: string | null;
 		completeness: number | null;
 		qualityTags: string[];
 		qualityErrorTags: string[];
