@@ -58,6 +58,13 @@ const hasIngredientAnalysis = (
 	),
 );
 
+const hasPrecautionaryStatements = (draft: BarcodeProductDraft) =>
+	Boolean(
+		draft.precautionaryStatements?.some((statement) =>
+			statement.text.trim() && statement.allergens.some((allergen) => allergen.trim())
+		),
+	);
+
 const hasObservedField = (
 	draft: BarcodeProductDraft,
 	field: Extract<
@@ -78,6 +85,9 @@ export const getMissingBarcodeProductFields = (
 		!draft.ingredients?.trim() || !hasValues(draft.ingredientList),
 	allergens: !hasObservedField(draft, "allergens", draft.allergens),
 	traces: !hasObservedField(draft, "traces", draft.traces),
+	precautionaryStatements:
+		!draft.fieldProvenance?.precautionaryStatements &&
+		!hasPrecautionaryStatements(draft),
 	dietaryTags: !hasObservedField(draft, "dietaryTags", draft.dietaryTags),
 	labels: !hasObservedField(draft, "labels", draft.labels),
 	structuredIngredients: !hasStructuredIngredients(draft),
@@ -242,6 +252,8 @@ export const mergeMissingBarcodeProductFields = (
 	const useSupplementIngredients = supplementedFields.has("ingredients");
 	const useSupplementAllergens = supplementedFields.has("allergens");
 	const useSupplementTraces = supplementedFields.has("traces");
+	const useSupplementPrecautionaryStatements =
+		supplementedFields.has("precautionaryStatements");
 	const useSupplementDietaryTags = supplementedFields.has("dietaryTags");
 	const useSupplementLabels = supplementedFields.has("labels");
 	const useSupplementStructuredIngredients =
@@ -259,6 +271,7 @@ export const mergeMissingBarcodeProductFields = (
 		!useSupplementIngredients &&
 		!useSupplementAllergens &&
 		!useSupplementTraces &&
+		!useSupplementPrecautionaryStatements &&
 		!useSupplementDietaryTags &&
 		!useSupplementLabels &&
 		!useSupplementStructuredIngredients &&
@@ -319,6 +332,13 @@ export const mergeMissingBarcodeProductFields = (
 	if (useSupplementTraces) {
 		provenance = withFieldSource(provenance, "traces", supplement);
 	}
+	if (useSupplementPrecautionaryStatements) {
+		provenance = withFieldSource(
+			provenance,
+			"precautionaryStatements",
+			supplement,
+		);
+	}
 	if (useSupplementDietaryTags) {
 		provenance = withFieldSource(provenance, "dietaryTags", supplement);
 	}
@@ -365,6 +385,9 @@ export const mergeMissingBarcodeProductFields = (
 				? supplement.allergens
 				: primary.allergens,
 			traces: useSupplementTraces ? supplement.traces : primary.traces,
+			precautionaryStatements: useSupplementPrecautionaryStatements
+				? supplement.precautionaryStatements
+				: primary.precautionaryStatements,
 			dietaryTags: useSupplementDietaryTags
 				? supplement.dietaryTags
 				: primary.dietaryTags,

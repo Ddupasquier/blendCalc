@@ -472,6 +472,9 @@ Notes:
 | `shared_product_revision_changes` | `id`                    | Shared catalog history        | Queryable old/new field values attached to an approved product revision    | `revision_id → shared_product_revisions.id`                         |
 | `shared_product_observations`     | `id`                    | Shared evidence/provenance    | API, user-label, manufacturer, or GS1 observations for a barcode          | Optional submission/user links                                      |
 | `shared_product_field_provenance` | `id`                    | Shared evidence/provenance    | Which observation supplied each canonical shared product field            | `shared_product_id`, `observation_id`                               |
+| `product_ingredient_statements`   | `id`                    | Shared evidence projection    | Exact reported ingredient statement/list/tree selected for a product, observation, or submission | Exactly one owner; optional source observation                       |
+| `product_ingredient_components`   | `id`                    | Shared evidence projection    | Ordered relational ingredient tree preserving source text, nesting, reported percentages, and source payload | `statement_id`, optional parent component and reviewed ingredient term |
+| `product_precautionary_statements` | `id`                   | Shared evidence projection    | Exact package precautionary wording plus normalized statement type and allergens | Exactly one owner; optional observation and revision links           |
 | `shared_product_conflicts`        | `id`                    | Shared moderation/provenance  | Open/resolved conflicts between observed values                           | `shared_product_id → shared_products.id`                            |
 | `food_image_assets`               | `id`                    | Shared image reference        | Source-backed product/ingredient image metadata rendered by ingredient UI | Optional `shared_product_id → shared_products.id`, optional barcode |
 | `product_api_cache`               | `(provider, cache_key)` | Server cache                  | External API response cache for searches, barcode lookup, and food detail | No user ownership                                                   |
@@ -622,6 +625,66 @@ them to the bounded public vocabulary `exact-barcode`, `package-label`, and
 blanket-verify all provider fields, so uncorroborated provider values remain
 `imported`. Missing selected provenance stays unknown.
 
+### Relational ingredient evidence
+
+Ingredient normalization is a lossless projection of reported source evidence, not a
+replacement for the canonical food snapshot or raw observation. Parent-table triggers
+run `sync_product_ingredient_evidence` whenever a shared product, observation, or
+submission changes.
+
+| Table | Documented columns |
+| --- | --- |
+| `product_ingredient_statements` | `id`, exactly one owner id, `source_observation_id`, `source_field`, `extraction_method`, `language_code`, `source_key`, `raw_statement`, `source_value`, `content_hash`, `created_at`, `updated_at` |
+| `product_ingredient_components` | `id`, `statement_id`, `parent_component_id`, `ingredient_term_id`, `source_path`, `source_order`, `depth`, `source_component_id`, `source_text`, `normalized_text`, `language_code`, `percent_exact`, `percent_estimate`, `percent_min`, `percent_max`, `processing_state`, `vegan_status`, `vegetarian_status`, `source_payload`, `created_at`, `updated_at` |
+
+Notes:
+
+- The projection prefers a provider-reported structured ingredient tree, then a
+  provider-reported ordered ingredient list, then the raw ingredient statement.
+- Structured trees retain exact parent-child relationships, array order, source paths,
+  source component IDs, source wording, language, and the source payload. Reported
+  exact, estimated, minimum, and maximum percentages remain separate columns.
+- A raw ingredient statement is retained as one explicitly unparsed statement. The
+  database does not guess ingredient boundaries from commas, parentheses, or other
+  punctuation.
+- `source_observation_id` links canonical product evidence to the selected ingredients
+  observation when field provenance exists. Observation-owned projections point back
+  to that same observation.
+- Synchronization never invents percentages, processing states, canonical terms, or
+  parent relationships. Missing information remains null.
+- Compatibility facts produced by an ingredient-statement rule link both the exact
+  `product_ingredient_components` row and the reviewed
+  `food_compatibility_match_rules` row that generated the fact.
+- These evidence tables are service-role-only. Browser roles receive bounded server
+  disclosures rather than unrestricted access to source evidence.
+
+### Precautionary statement evidence
+
+Precautionary-label storage preserves what the package or permitted source actually
+reported. Normalized fields support filtering and policy evaluation without replacing
+the exact source wording.
+
+| Table | Documented columns |
+| --- | --- |
+| `product_precautionary_statements` | `id`, exactly one owner id, `source_observation_id`, `shared_product_revision_id`, `statement_type`, `statement_text`, `normalized_allergens`, `language_code`, `source_field`, `source_key`, `source_reference`, `observed_label_at`, `source_payload`, `content_hash`, `created_at`, `updated_at` |
+
+Notes:
+
+- `statement_type` is `may_contain`, `shared_equipment`, `shared_facility`, or
+  `other_precautionary`. It describes source wording and does not assign a relative
+  level of risk.
+- `statement_text` retains exact package/source wording. Distinct statements remain
+  distinct even when they normalize to the same allergen.
+- `normalized_allergens` supports reviewed compatibility matching. Ordinary ingredient
+  text and provider hypotheses do not become package precautionary statements.
+- Canonical rows link the selected source observation and current product revision when
+  available. Observation and submission rows retain their own evidence independently.
+- `sync_product_precautionary_statements` rebuilds the projection when source food JSON
+  changes. Existing compatibility facts link the exact statement and active immutable
+  match rule rather than flattening all cross-contact evidence into one trace list.
+- Authenticated and anonymous reads are limited by RLS to statements attached to active
+  shared products. Service-role paths manage observation and submission evidence.
+
 `product_api_cache` reduces external API load and is readable/writable only through
 server code using the `service_role`. Browser roles receive no table privileges. Its
 `(provider, cache_key)` primary key keeps each source in a separate namespace.
@@ -678,9 +741,13 @@ Notes:
 | Table                              | Primary Key | Owner Scope                 | Purpose                                                                                            | Key Relationships                                                                   |
 | ---------------------------------- | ----------- | --------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `compatibility_tags`               | `id`        | Shared reference            | Canonical compatibility tags for allergens, dietary claims, ingredients, and avoidance concepts    | Referenced by user rules and product facts                                          |
-| `compatibility_rule_conflicts`     | Composite   | Shared validation reference | DB-owned mapping from a user preference tag to a conflicting product fact and warning severity      | Both tag ids → `compatibility_tags.id`                                                 |
-| `food_compatibility_match_rules`   | `id`        | Shared validation reference | Reviewed source-field match policy that converts exact evidence into normalized compatibility facts | `tag_id → compatibility_tags.id`                                                     |
-| `food_compatibility_policy_versions` | `id`      | Shared policy history       | Immutable snapshots of each deployed compatibility match/conflict policy and its official sources  | Referenced by product facts, regional profiles, and user feedback                    |
+| `ingredient_terms`                 | `id`        | Shared reviewed taxonomy    | Canonical ingredient terms created only through reviewed evidence                                  | Optional source and reviewer                                                        |
+| `food_compatibility_policy_ingredient_aliases` | `id` | Versioned reviewed policy | Language-, region-, and source-specific aliases for a canonical ingredient term | Policy version and ingredient term |
+| `food_compatibility_policy_ingredient_relationships` | `id` | Versioned reviewed policy | Reviewed parent, derivative, and processing relationships with explicit jurisdiction and inheritance policy | Policy version; child and parent ingredient terms |
+| `food_compatibility_policy_conflicts` | Composite | Versioned reviewed policy | DB-owned mapping from a user preference tag to a conflicting product fact and warning severity | Policy version and both compatibility tags |
+| `food_compatibility_policy_match_rules` | `id` | Versioned reviewed policy | Reviewed source-field extraction policy that converts exact evidence into normalized compatibility facts | Policy version and compatibility tag |
+| `food_compatibility_policy_exemptions` | `id` | Versioned reviewed policy | Jurisdiction-specific labeling, threshold, and processing context that cannot suppress a personal warning | Policy version, reviewed evidence subject, and source reference |
+| `food_compatibility_policy_versions` | `id`      | Shared policy history       | Immutable, content-hashed bundles containing every activated extraction, conflict, terminology, exemption, and regional-profile rule | Referenced by facts, regional profiles, and feedback |
 | `food_allergen_regulatory_profiles` | `id`       | Shared regulatory reference | Reviewed jurisdiction-specific allergen declaration profiles                                       | `policy_version_id → food_compatibility_policy_versions.id`                          |
 | `food_allergen_regulatory_profile_tags` | Composite | Shared regulatory reference | Normalized compatibility tags covered by a regional allergen profile                               | Profile and tag foreign keys                                                         |
 | `product_compatibility_facts`      | `id`        | Shared product metadata     | Facts extracted from shared products/submissions/observations                                      | `tag_id → compatibility_tags.id`; exactly one product/submission/observation parent |
@@ -698,19 +765,47 @@ Notes:
 
 - `category` is `allergen`, `dietary`, `ingredient`, or `avoidance`.
 
-### `compatibility_rule_conflicts`
+### Reviewed ingredient taxonomy and terminology policy
 
 | Table | Documented columns |
 | --- | --- |
-| `compatibility_rule_conflicts` | `preference_tag_id`, `fact_tag_id`, `severity`, `warning_code`, `priority`, `created_at`, `updated_at` |
+| `ingredient_terms` | `id`, `canonical_key`, `display_name`, `default_language_code`, `review_status`, `source_key`, `source_reference`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` |
+| `food_compatibility_policy_ingredient_aliases` | `id`, `policy_version_id`, `ingredient_term_id`, `alias`, `normalized_alias`, `language_code`, `alias_type`, `review_status`, `source_key`, `source_reference`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` |
+| `food_compatibility_policy_ingredient_relationships` | `id`, `policy_version_id`, `child_term_id`, `parent_term_id`, `relationship_type`, `processing_state`, `jurisdiction_code`, `conflict_inheritance`, `review_status`, `source_key`, `source_reference`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` |
 
 Notes:
 
-- This relation is the authority for matching active user preferences to structured
-  product compatibility facts.
+- Product ingestion does not automatically create taxonomy terms or aliases from
+  provider text. Canonical terms and aliases require retained source evidence and a
+  reviewed state.
+- Relationship types are `is-a`, `derived-from`, and `processed-from`.
+- A derivative or processed ingredient does not inherit every parent conflict.
+  `conflict_inheritance` defaults to `none`; reviewed inheritance must be explicit and
+  may be scoped by jurisdiction and processing state.
+- Review metadata and source references make taxonomy changes auditable rather than
+  inferred from application wording.
+- The compatibility terminology rows belong to one policy version. The active-only
+  `ingredient_term_aliases` and `ingredient_term_relationships` views preserve the
+  stable runtime read names without exposing draft or retired rules.
+
+### Version-bound extraction and conflict policy
+
+| Table | Documented columns |
+| --- | --- |
+| `food_compatibility_policy_conflicts` | `policy_version_id`, `preference_tag_id`, `fact_tag_id`, `severity`, `warning_code`, `priority`, `created_at`, `updated_at` |
+| `food_compatibility_policy_match_rules` | `id`, `policy_version_id`, `tag_id`, `source_key`, `field_name`, `match_pattern`, `exclude_pattern`, `fact_type`, `source_type`, `confidence`, `priority`, `enabled`, `created_at`, `updated_at` |
+| `food_compatibility_policy_exemptions` | `id`, `policy_version_id`, `jurisdiction_code`, `ingredient_term_id`, `parent_term_id`, `fact_tag_id`, `processing_state`, `exemption_type`, `warning_behavior`, `source_reference`, `reviewed_at`, `created_at`, `updated_at` |
+
+Notes:
+
+- The active bundle is the authority for extracting structured facts and matching
+  active user preferences to those facts. Activated and retired rows are immutable.
+- `compatibility_rule_conflicts` and `food_compatibility_match_rules` are active-only
+  runtime views over the version-bound physical tables. Server loaders additionally
+  constrain physical-table reads to the selected active version.
 - App utilities must not recreate allergen or dietary vocabularies with name/category
   guesses.
-- Conflict rows and `food_compatibility_match_rules` remain server-only policy. They are
+- Conflict and extraction rows remain server-only policy. They are
   not serialized through the browser reference catalog. Authenticated page/API reads
   evaluate them before returning bounded `preferenceWarnings` and
   `allergenDisclosure`; client components only render those results.
@@ -724,17 +819,8 @@ Notes:
   this table.
 - `prepare_custom_food_record` enforces the same nutrient relationship rules with their
   stable `issue_code`; the database no longer owns the user-facing warning sentence.
-
-### `food_compatibility_match_rules`
-
-| Table | Documented columns |
-| --- | --- |
-| `food_compatibility_match_rules` | `id`, `tag_id`, `source_key`, `field_name`, `match_pattern`, `exclude_pattern`, `fact_type`, `source_type`, `confidence`, `priority`, `enabled`, `created_at`, `updated_at` |
-
-Notes:
-
 - Rules are ordered by `priority` and loaded through the server-only food-safety policy
-  cache.
+  cache for exactly one active version.
 - Packaged-product rules may inspect source-provided allergen, trace, ingredient, and
   ingredient-analysis fields. They do not inspect a packaged name, brand, category, or
   description.
@@ -742,19 +828,29 @@ Notes:
   That rule path remains unavailable to packaged and private custom foods.
 - Positive dietary claims are accepted only when source labels normalize to an enabled
   dietary compatibility tag. Marketing labels do not become dietary evidence.
+- Exemptions retain reviewed jurisdiction context only. Their enforced
+  `warning_behavior` is `context-only`, so an exemption cannot suppress a conflict for
+  a preference the user explicitly selected.
 
 ### `food_compatibility_policy_versions`
 
 | Table | Documented columns |
 | --- | --- |
-| `food_compatibility_policy_versions` | `id`, `version_number`, `status`, `change_summary`, `match_rule_snapshot`, `conflict_rule_snapshot`, `source_references`, `effective_at`, `reviewed_at`, `created_at`, `updated_at` |
+| `food_compatibility_policy_versions` | `id`, `version_number`, `status`, `change_summary`, `match_rule_snapshot`, `conflict_rule_snapshot`, `alias_snapshot`, `relationship_snapshot`, `exemption_snapshot`, `regional_profile_snapshot`, `bundle_content_hash`, `source_references`, `effective_at`, `reviewed_at`, `created_at`, `updated_at` |
 
 Notes:
 
-- Exactly one policy version may be active. New product facts and user feedback default
-  to that version through `active_food_compatibility_policy_version_id()`.
-- Match and conflict snapshots preserve the exact deployed policy for later audits.
-  Updating live rules requires a new version snapshot rather than rewriting history.
+- A policy begins as `draft`; exactly one version is `active`, while prior activated
+  versions remain `retired` and available for rollback. Product facts and feedback use
+  the active version through `active_food_compatibility_policy_version_id()`.
+- Every extraction, conflict, terminology, exemption, regional-profile, and profile-tag
+  row is cloned into a draft and bound to that version before review.
+- Activation snapshots the complete bundle, records its deterministic SHA-256 content
+  hash, retires the prior version, activates the target, re-extracts all product,
+  observation, and submission facts, and rebuilds the option catalog in one transaction.
+  The same function can reactivate a retired bundle for rollback.
+- Activated versions and child rows cannot be edited in place. Updating policy requires
+  a new draft and activation rather than rewriting history.
 - `source_references` records the official regulatory material reviewed for the policy.
 
 ### Regional allergen profiles
@@ -779,7 +875,7 @@ Notes:
 
 | Table | Documented columns |
 | --- | --- |
-| `product_compatibility_facts` | `id`, `shared_product_id`, `shared_product_observation_id`, `shared_product_submission_id`, `tag_id`, `policy_version_id`, `fact_type`, `source_type`, `source_text`, `confidence`, `created_at`, `updated_at` |
+| `product_compatibility_facts` | `id`, `shared_product_id`, `shared_product_observation_id`, `shared_product_submission_id`, `tag_id`, `policy_version_id`, `ingredient_component_id`, `precautionary_statement_id`, `match_rule_id`, `fact_type`, `source_type`, `source_text`, `confidence`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -800,6 +896,12 @@ Notes:
   considerations without exposing regex policy or private evidence.
 - Each fact records the policy version that generated it. Denormalized summaries include
   `policyVersion` and contain only facts from the active policy version.
+- Ingredient-derived facts also record the exact normalized ingredient component and
+  match rule. This preserves the source wording, tree position, selected observation,
+  and policy decision used for the warning without rerunning mutable client logic.
+- Precautionary facts record the exact normalized statement and match rule. Repeated
+  allergens de-duplicate within one statement without discarding distinct package
+  statements, wording, statement types, observations, or revisions.
 
 ### `food_compatibility_feedback`
 
@@ -1055,6 +1157,11 @@ category, or serving fields.
 | `move_user_food_list_items`                    | Atomically moves a checked ingredient set between Fridge and Shopping List, rejecting stale or partial sets                                    |
 | `publish_shared_product_submission`            | Publishes an approved submission into the shared catalog and revisions/evidence tables                                                         |
 | `compatibility_normalize_text`                 | Normalizes compatibility labels/values for matching                                                                                            |
+| `active_food_compatibility_policy_version_id`  | Returns the sole active compatibility policy version used by active-only policy views and new facts                                            |
+| `create_food_compatibility_policy_draft`       | Creates a reviewed draft shell and clones the complete active extraction, conflict, terminology, exemption, and regional-profile bundle        |
+| `activate_food_compatibility_policy_version`   | Atomically snapshots and activates or rolls back an immutable policy bundle, then refreshes every compatibility fact and preference option      |
+| `sync_product_ingredient_evidence`             | Rebuilds the lossless relational ingredient statement/tree projection for one product, observation, or submission without parsing unstructured text or inventing percentages |
+| `sync_product_precautionary_statements`         | Rebuilds exact package precautionary statements and normalized statement metadata for one product, observation, or submission                   |
 | `extract_product_compatibility_facts`          | Extracts product compatibility facts from food/product JSON                                                                                    |
 | `rebuild_shared_product_compatibility_summary` | Rebuilds denormalized compatibility summary JSON on shared products                                                                            |
 | `refresh_shared_product_compatibility_match_facts` | Re-extracts one canonical shared product with the current reviewed compatibility policy                                                    |

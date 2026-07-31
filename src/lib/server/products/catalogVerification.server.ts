@@ -190,6 +190,11 @@ const addFoodProvenance = (
 			value: toJson(food.traces ?? []),
 		},
 		{
+			fieldPath: "precautionaryStatements",
+			include: Boolean(food.precautionaryStatements?.length),
+			value: toJson(food.precautionaryStatements ?? []),
+		},
+		{
 			fieldPath: "dietaryTags",
 			include: Boolean(food.dietaryTags?.length),
 			value: toJson(food.dietaryTags ?? []),

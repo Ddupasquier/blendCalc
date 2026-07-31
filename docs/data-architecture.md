@@ -94,9 +94,32 @@ against the signed-in user's preferences, then return bounded disclosures, warni
 coverage, and stable issue codes. Browser components render those results and friendly
 messages; they do not infer safety from product text or execute policy patterns.
 
+The server selects the sole active policy version, then reads extraction and conflict
+rows explicitly bound to that version. Database active-only views preserve stable names
+for trigger and RPC execution without allowing draft or retired rules into runtime
+evaluation. Policy activation is one service-only database transaction that snapshots
+and hashes the complete bundle, changes the active version, refreshes all compatibility
+facts, and rebuilds preference options. Application code never combines rows from
+different policy versions or performs an independent partial activation.
+
 The schema map owns compatibility tables and version relationships. The catalog
 document owns product fact extraction, evidence meaning, and moderation lifecycle. This
 document owns only the server/client boundary.
+
+Reported ingredient lists and trees are normalized by database triggers into ordered,
+source-linked relational evidence. That projection preserves provider wording and
+structure but does not guess missing percentages, split raw statements, or create
+canonical taxonomy automatically. Reviewed ingredient terms, derivative relationships,
+processing states, jurisdiction rules, and compatibility inheritance remain
+server-owned policy; clients receive only bounded explanations and disclosures.
+
+Package precautionary statements use the same evidence-first boundary. Source adapters
+preserve exact wording and classify only the statement form (`may contain`, shared
+equipment, shared facility, or another precautionary form). Database projections attach
+the statement to its observation and revision; policy facts attach the reviewed match
+rule. Clients may present friendly headings, but they do not rewrite the source
+statement, infer risk severity from the wording, or promote ingredient hypotheses into
+package declarations.
 
 ## Module Boundaries
 

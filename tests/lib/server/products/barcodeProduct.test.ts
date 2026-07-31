@@ -69,6 +69,13 @@ const makeDraft = (
 	additives: ["e330"],
 	allergens: ["milk"],
 	traces: ["wheat"],
+	precautionaryStatements: [{
+		type: "may_contain",
+		text: "May contain wheat.",
+		allergens: ["wheat"],
+		languageCode: "en",
+		sourceField: "traces",
+	}],
 	dietaryTags: ["vegetarian"],
 	labels: ["packaged food"],
 	packageQuantity: { label: "24 oz", amount: 24, unit: "oz" },

@@ -11,6 +11,9 @@
 	let { food }: ProductCompatibilityPanelProps = $props();
 
 	const allergenDisplay = $derived(food.allergenDisclosure);
+	const precautionaryStatements = $derived(
+		(food.precautionaryStatements ?? []).filter((statement) => statement.text.trim()),
+	);
 	const dietaryLabels = $derived(
 		getUniqueFoodMetadataTags(
 			(food.compatibilitySummary?.dietaryClaims ?? [])
@@ -36,7 +39,8 @@
 		Boolean(
 			evaluationMessage ||
 				allergenDisplay?.contains.length ||
-				allergenDisplay?.mayContain.length ||
+					allergenDisplay?.mayContain.length ||
+					precautionaryStatements.length ||
 				dietaryLabels.length ||
 				dietaryConsiderations.length,
 		),
@@ -60,7 +64,20 @@
 			</section>
 		{/if}
 
-		{#if allergenDisplay?.mayContain.length}
+		{#if precautionaryStatements.length}
+			{#each precautionaryStatements as statement (`${statement.type}:${statement.text}`)}
+				<section class="product-compatibility-panel__group">
+					<h2>{statement.type === "shared_equipment"
+						? "Shared equipment"
+						: statement.type === "shared_facility"
+							? "Shared facility"
+							: statement.type === "may_contain"
+								? "May contain"
+								: "Package advisory"}</h2>
+					<p>{statement.text}</p>
+				</section>
+			{/each}
+		{:else if allergenDisplay?.mayContain.length}
 			<section class="product-compatibility-panel__group">
 				<h2>May contain</h2>
 				<p>{allergenDisplay.mayContain.join(", ")}</p>

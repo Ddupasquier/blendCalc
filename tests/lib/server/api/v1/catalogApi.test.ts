@@ -147,6 +147,17 @@ const record: ApprovedCatalogRecord = {
 		additives: ["e330"],
 		allergens: [" Milk ", "Milk"],
 		traces: ["Celery"],
+		precautionaryStatements: [{
+			type: "shared_facility",
+			text: "Made in a facility that also processes celery",
+			allergens: ["celery"],
+			languageCode: "en",
+			sourceField: "ingredients",
+			sourceReference: "123",
+			observationId: "c09174bc-84a3-4c7b-9740-09dfe15a4f51",
+			revisionId: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
+			labelObservedAt: "2026-07-17T10:00:00.000Z",
+		}],
 		labels: ["Vegan"],
 		packageQuantity: {
 			label: "24 oz",
@@ -335,7 +346,14 @@ describe("blendCalc API v1 catalog mapping", () => {
 				derivedTraceTags: ["celery"],
 			},
 			additives: ["e330"],
-			traces: ["Celery"],
+				traces: ["Celery"],
+				precautionaryStatements: [{
+					type: "shared_facility",
+					text: "Made in a facility that also processes celery",
+					allergens: ["celery"],
+					observationId: "c09174bc-84a3-4c7b-9740-09dfe15a4f51",
+					revisionId: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
+				}],
 			labels: ["Vegan"],
 		});
 		expect(product.packageQuantity).toEqual({

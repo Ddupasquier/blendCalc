@@ -153,6 +153,22 @@ export type ApiV1StructuredIngredient = {
 	ingredients: ApiV1StructuredIngredient[];
 };
 
+export type ApiV1PrecautionaryStatement = {
+	type:
+		| "may_contain"
+		| "shared_equipment"
+		| "shared_facility"
+		| "other_precautionary";
+	text: string;
+	allergens: string[];
+	languageCode: string | null;
+	sourceField: string;
+	sourceReference: string | null;
+	observationId: string | null;
+	revisionId: string | null;
+	labelObservedAt: string | null;
+};
+
 export type ApiV1Product = {
 	id: string;
 	barcode: string;
@@ -175,6 +191,7 @@ export type ApiV1Product = {
 		additives: string[];
 		allergens: string[];
 		traces: string[];
+		precautionaryStatements: ApiV1PrecautionaryStatement[];
 		dietaryTags: string[];
 		labels: string[];
 	};
@@ -226,6 +243,7 @@ export type ApiV1Product = {
 		additives: ApiV1FieldSource | null;
 		allergens: ApiV1FieldSource | null;
 		traces: ApiV1FieldSource | null;
+		precautionaryStatements: ApiV1FieldSource | null;
 		dietaryTags: ApiV1FieldSource | null;
 		labels: ApiV1FieldSource | null;
 		package: ApiV1FieldSource | null;

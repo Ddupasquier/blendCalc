@@ -87,16 +87,18 @@ export const getFoodSafetyPolicy = createServerCachedLoader({
 		const [conflictsResult, matchRulesResult, regionalProfilesResult] =
 			await Promise.all([
 			supabase
-				.from("compatibility_rule_conflicts")
+				.from("food_compatibility_policy_conflicts")
 				.select(
 					"severity, warning_code, priority, preference_tag:compatibility_tags!compatibility_rule_conflicts_preference_tag_id_fkey(slug, label, category), fact_tag:compatibility_tags!compatibility_rule_conflicts_fact_tag_id_fkey(slug, label)",
 				)
+				.eq("policy_version_id", policyVersion.id)
 				.order("priority", { ascending: true }),
 			supabase
-				.from("food_compatibility_match_rules")
+				.from("food_compatibility_policy_match_rules")
 				.select(
 					"source_key, field_name, match_pattern, exclude_pattern, fact_type, source_type, confidence, priority, tag:compatibility_tags(slug, label, category)",
 				)
+				.eq("policy_version_id", policyVersion.id)
 				.eq("enabled", true)
 				.order("priority", { ascending: true }),
 			supabase
