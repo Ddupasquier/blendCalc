@@ -138,10 +138,14 @@ export const CATALOG_TRANSPARENCY_SEMANTICS = [
  * @property {number | null} [schemaVersion]
  * @property {number | null} [revision]
  * @property {string | null} [createdAt]
+ * @property {string | null} [publishedAt]
+ * @property {string | null} [availableAt]
  * @property {string | null} [modifiedAt]
  * @property {string | null} [updatedAt]
+ * @property {string | null} [discontinuedAt]
  * @property {string | null} [language]
  * @property {string[]} [languages]
+ * @property {string[]} [marketCountries]
  * @property {string[]} [qualityTags]
  * @property {string[]} [qualityErrorTags]
  * @property {string[]} [qualityWarningTags]
@@ -204,10 +208,15 @@ export const hasSourceQualityMetadata = (food) => {
 				metadata.schemaVersion !== undefined) ||
 			(metadata.revision !== null && metadata.revision !== undefined) ||
 			metadata.createdAt ||
+			metadata.publishedAt ||
+			metadata.availableAt ||
 			metadata.modifiedAt ||
 			metadata.updatedAt ||
+			metadata.discontinuedAt ||
 			metadata.language ||
 			(Array.isArray(metadata.languages) && metadata.languages.length > 0) ||
+			(Array.isArray(metadata.marketCountries) &&
+				metadata.marketCountries.length > 0) ||
 			(Array.isArray(metadata.qualityTags) &&
 				metadata.qualityTags.length > 0) ||
 			(Array.isArray(metadata.qualityErrorTags) &&

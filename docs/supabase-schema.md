@@ -548,8 +548,9 @@ Notes:
   `structuredIngredients`, `ingredientAnalysis`, `additives`, explicit `allergens`,
   explicit `traces`, `dietaryTags`, `labels`, `packageQuantity`, and
   `sourceMetadata`. `sourceMetadata` includes source language, revision/schema version,
-  source timestamps, completeness, quality tags, obsolete state, and tag-source
-  evidence. Each independently accepted field keeps its source in `fieldProvenance`.
+  market countries, created/published/available/modified/updated/discontinued
+  timestamps, completeness, quality tags, obsolete state, and tag-source evidence.
+  Each independently accepted field keeps its source in `fieldProvenance`.
 - `ingredientAnalysis.derivedTraceTags` records a provider-derived ingredient analysis
   only. It is not promoted into `food.traces` and therefore cannot become a package
   `May contain` disclosure.

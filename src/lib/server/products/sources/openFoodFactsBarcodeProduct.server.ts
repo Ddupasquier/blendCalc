@@ -62,6 +62,8 @@ const OPEN_FOOD_FACTS_FIELDS = [
 	"product_quantity_unit",
 	"lang",
 	"languages_tags",
+	"countries",
+	"countries_tags",
 	"created_t",
 	"last_modified_t",
 	"last_updated_t",

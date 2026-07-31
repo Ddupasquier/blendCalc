@@ -109,11 +109,15 @@ export type FoodPackageQuantity = {
 export type FoodSourceRecordMetadata = {
 	language?: string;
 	languages?: string[];
+	marketCountries?: string[];
 	revision?: number;
 	schemaVersion?: number;
 	createdAt?: string;
+	publishedAt?: string;
+	availableAt?: string;
 	modifiedAt?: string;
 	updatedAt?: string;
+	discontinuedAt?: string;
 	completeness?: number;
 	qualityTags?: string[];
 	qualityErrorTags?: string[];
@@ -208,6 +212,8 @@ export interface FdcFood {
     modifiedDate?: string;
     availableDate?: string;
     discontinuedDate?: string;
+	marketCountry?: string;
+	packageWeight?: string;
     servingSize?: number;
     servingSizeUnit?: string;
     householdServingFullText?: string;

@@ -1,7 +1,8 @@
 /**
  * Purpose: Report population, representative values, semantic ownership, API exposure,
- * and app-read status for catalog verification, history, provenance, quality,
- * ingredient analysis, servings, nutrient uncertainty, and compatibility evidence.
+ * and app-read status for catalog verification, history, provenance, exact-product
+ * evidence coverage, ingredient analysis, servings, nutrient uncertainty, and
+ * compatibility evidence.
  * This script is read-only and does not write database rows or local output files.
  * Run: `node scripts/audits/audit_catalog_transparency.mjs`
  * JSON: `node scripts/audits/audit_catalog_transparency.mjs --json`
@@ -351,6 +352,104 @@ const policiesWithSnapshots = policyVersions.filter(
 const evidenceLinkedFacts = compatibilityFacts.filter((fact) =>
 	Boolean(fact.shared_product_observation_id || fact.source_text?.trim())
 ).length;
+const hasValues = (value) =>
+	Array.isArray(value) && value.some((item) => String(item ?? "").trim());
+const hasObject = (value) =>
+	Boolean(
+		value &&
+		typeof value === "object" &&
+		!Array.isArray(value) &&
+		Object.keys(value).length > 0,
+	);
+const hasSourceDate = (metadata) =>
+	Boolean(
+		metadata?.createdAt ||
+			metadata?.publishedAt ||
+			metadata?.availableAt ||
+			metadata?.modifiedAt ||
+			metadata?.updatedAt ||
+			metadata?.discontinuedAt,
+	);
+const catalogEvidenceCoverage = [
+	{
+		key: "ingredientStatements",
+		label: "Products with an ingredient statement",
+		hasValue: (food) => Boolean(String(food?.ingredients ?? "").trim()),
+	},
+	{
+		key: "explicitAllergens",
+		label: "Products with an explicit contains disclosure",
+		hasValue: (food) => hasValues(food?.allergens),
+	},
+	{
+		key: "explicitTraces",
+		label: "Products with an explicit may-contain disclosure",
+		hasValue: (food) => hasValues(food?.traces),
+	},
+	{
+		key: "structuredIngredients",
+		label: "Products with structured ingredients",
+		hasValue: (food) => hasValues(food?.structuredIngredients),
+	},
+	{
+		key: "additives",
+		label: "Products with reported additives",
+		hasValue: (food) => hasValues(food?.additives),
+	},
+	{
+		key: "labels",
+		label: "Products with reported labels",
+		hasValue: (food) => hasValues(food?.labels),
+	},
+	{
+		key: "packageQuantity",
+		label: "Products with package quantity",
+		hasValue: (food) => hasObject(food?.packageQuantity),
+	},
+	{
+		key: "sourceRecordMetadata",
+		label: "Products with source-record metadata",
+		hasValue: (food) => hasObject(food?.sourceMetadata),
+	},
+	{
+		key: "sourceLanguages",
+		label: "Products with source-record language",
+		hasValue: (food) =>
+			Boolean(food?.sourceMetadata?.language) ||
+			hasValues(food?.sourceMetadata?.languages),
+	},
+	{
+		key: "sourceMarkets",
+		label: "Products with source-record market countries",
+		hasValue: (food) => hasValues(food?.sourceMetadata?.marketCountries),
+	},
+	{
+		key: "sourceRevision",
+		label: "Products with source-record revision",
+		hasValue: (food) =>
+			food?.sourceMetadata?.revision !== undefined &&
+			food?.sourceMetadata?.revision !== null,
+	},
+	{
+		key: "sourceDates",
+		label: "Products with source-record dates",
+		hasValue: (food) => hasSourceDate(food?.sourceMetadata),
+	},
+].map((definition) => {
+	const matchingProducts = products.filter((product) =>
+		definition.hasValue(product.food)
+	);
+	return createCoverageRow({
+		key: definition.key,
+		label: definition.label,
+		populated: matchingProducts.length,
+		total: products.length,
+		unit: "active products",
+		representatives: sample(
+			matchingProducts.map((product) => describeProduct(product)),
+		),
+	});
+});
 
 const coverage = [
 	createCoverageRow({
@@ -443,6 +542,7 @@ const coverage = [
 			),
 		),
 	}),
+	...catalogEvidenceCoverage,
 	createCoverageRow({
 		key: "sourceQuality",
 		label: "Products with source quality metadata",
