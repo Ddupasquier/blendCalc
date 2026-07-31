@@ -69,13 +69,32 @@ const uniqueTerms = (values) => {
 };
 
 /** @param {string} source @param {number} start */
-const getDeclarationText = (source, start) => {
+const getDeclarationSegment = (source, start) => {
 	const remainder = source.slice(start);
 	const boundary = remainder.search(/[.;\n\r]/u);
-	const sentence = (boundary === -1 ? remainder : remainder.slice(0, boundary))
+	const segment = boundary === -1 ? remainder : remainder.slice(0, boundary);
+	const sentence = segment
 		.replace(BOILERPLATE_PATTERN, "")
 		.trim();
-	return NON_ALLERGEN_CONTAINS_PATTERN.test(sentence) ? "" : sentence;
+	return {
+		allergenText: NON_ALLERGEN_CONTAINS_PATTERN.test(sentence) ? "" : sentence,
+		end: start + segment.length,
+	};
+};
+
+/** @param {string} source @param {number} start @param {number} end */
+const getExactStatement = (source, start, end) =>
+	source.slice(start, end).replace(/\s+/gu, " ").trim();
+
+/** @param {Array<{ type: "may_contain" | "shared_equipment" | "shared_facility" | "other_precautionary"; text: string; allergens: string[]; sourceField: string }>} values */
+const uniqueStatements = (values) => {
+	const seen = new Set();
+	return values.filter((value) => {
+		const key = `${value.type}\u0000${value.text.toLocaleLowerCase("en-US")}`;
+		if (!value.text || value.allergens.length === 0 || seen.has(key)) return false;
+		seen.add(key);
+		return true;
+	});
 };
 
 /** @param {string} source @param {RegExpExecArray} match */
@@ -104,16 +123,18 @@ const hasExplicitDeclarationContext = (source, match) => {
  * allergens from ordinary ingredient names.
  *
  * @param {unknown} value
- * @returns {{ contains: string[]; mayContain: string[] }}
+ * @returns {{ contains: string[]; mayContain: string[]; precautionaryStatements: Array<{ type: "may_contain" | "shared_equipment" | "shared_facility" | "other_precautionary"; text: string; allergens: string[]; sourceField: string }> }}
  */
 export const extractExplicitAllergenDeclarations = (value) => {
 	const source = String(value ?? "").trim();
-	if (!source) return { contains: [], mayContain: [] };
+	if (!source) return { contains: [], mayContain: [], precautionaryStatements: [] };
 
 	/** @type {string[]} */
 	const contains = [];
 	/** @type {string[]} */
 	const mayContain = [];
+	/** @type {Array<{ type: "may_contain" | "shared_equipment" | "shared_facility" | "other_precautionary"; text: string; allergens: string[]; sourceField: string }>} */
+	const precautionaryStatements = [];
 
 	DIRECT_DECLARATION_PATTERN.lastIndex = 0;
 	for (
@@ -122,15 +143,24 @@ export const extractExplicitAllergenDeclarations = (value) => {
 		match = DIRECT_DECLARATION_PATTERN.exec(source)
 	) {
 		if (!hasExplicitDeclarationContext(source, match)) continue;
-		const declaration = getDeclarationText(
+		const declaration = getDeclarationSegment(
 			source,
 			match.index + match[0].length,
 		);
-		if (!declaration) continue;
+		if (!declaration.allergenText) continue;
 		const destination = /^may\s+contain$/iu.test(match[1] ?? "")
 			? mayContain
 			: contains;
-		destination.push(...splitTopLevelList(declaration));
+		const allergens = uniqueTerms(splitTopLevelList(declaration.allergenText));
+		destination.push(...allergens);
+		if (destination === mayContain) {
+			precautionaryStatements.push({
+				type: "may_contain",
+				text: getExactStatement(source, match.index, declaration.end),
+				allergens,
+				sourceField: "ingredients",
+			});
+		}
 	}
 
 	FACILITY_DECLARATION_PATTERN.lastIndex = 0;
@@ -139,15 +169,26 @@ export const extractExplicitAllergenDeclarations = (value) => {
 		match;
 		match = FACILITY_DECLARATION_PATTERN.exec(source)
 	) {
-		const declaration = getDeclarationText(
+		const declaration = getDeclarationSegment(
 			source,
 			match.index + match[0].length,
 		);
-		if (declaration) mayContain.push(...splitTopLevelList(declaration));
+		if (!declaration.allergenText) continue;
+		const allergens = uniqueTerms(splitTopLevelList(declaration.allergenText));
+		mayContain.push(...allergens);
+		precautionaryStatements.push({
+			type: /\bon\s+(?:shared\s+)?equipment\b/iu.test(match[0])
+				? "shared_equipment"
+				: "shared_facility",
+			text: getExactStatement(source, match.index, declaration.end),
+			allergens,
+			sourceField: "ingredients",
+		});
 	}
 
 	return {
 		contains: uniqueTerms(contains),
 		mayContain: uniqueTerms(mayContain),
+		precautionaryStatements: uniqueStatements(precautionaryStatements),
 	};
 };

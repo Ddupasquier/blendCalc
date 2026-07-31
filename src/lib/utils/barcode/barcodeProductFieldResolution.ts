@@ -15,6 +15,7 @@ const TRACKED_FIELDS: FoodTrackedField[] = [
 	"ingredients",
 	"allergens",
 	"traces",
+	"precautionaryStatements",
 	"dietaryTags",
 	"labels",
 	"structuredIngredients",
@@ -75,6 +76,8 @@ const getFieldCompleteness = (
 			return getArrayScore(draft.allergens);
 		case "traces":
 			return getArrayScore(draft.traces);
+		case "precautionaryStatements":
+			return getArrayScore(draft.precautionaryStatements);
 		case "dietaryTags":
 			return getArrayScore(draft.dietaryTags);
 		case "labels":
@@ -194,6 +197,11 @@ const applySelectedField = (
 			return { ...result, allergens: selected.allergens };
 		case "traces":
 			return { ...result, traces: selected.traces };
+		case "precautionaryStatements":
+			return {
+				...result,
+				precautionaryStatements: selected.precautionaryStatements,
+			};
 		case "dietaryTags":
 			return { ...result, dietaryTags: selected.dietaryTags };
 		case "labels":

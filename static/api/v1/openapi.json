@@ -470,6 +470,25 @@
           }
         }
       },
+      "PrecautionaryStatement": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "text", "allergens", "languageCode", "sourceField", "sourceReference", "observationId", "revisionId", "labelObservedAt"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["may_contain", "shared_equipment", "shared_facility", "other_precautionary"]
+          },
+          "text": { "type": "string" },
+          "allergens": { "type": "array", "items": { "type": "string" } },
+          "languageCode": { "type": ["string", "null"] },
+          "sourceField": { "type": "string" },
+          "sourceReference": { "type": ["string", "null"] },
+          "observationId": { "type": ["string", "null"], "format": "uuid" },
+          "revisionId": { "type": ["string", "null"], "format": "uuid" },
+          "labelObservedAt": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
       "Product": {
         "type": "object",
         "additionalProperties": false,
@@ -483,7 +502,7 @@
           "ingredients": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["text", "items", "structured", "analysis", "additives", "allergens", "traces", "dietaryTags", "labels"],
+            "required": ["text", "items", "structured", "analysis", "additives", "allergens", "traces", "precautionaryStatements", "dietaryTags", "labels"],
             "properties": {
               "text": { "type": ["string", "null"] },
               "items": { "type": "array", "items": { "type": "string" } },
@@ -500,6 +519,10 @@
               "additives": { "type": "array", "items": { "type": "string" } },
               "allergens": { "type": "array", "items": { "type": "string" } },
               "traces": { "type": "array", "items": { "type": "string" } },
+              "precautionaryStatements": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/PrecautionaryStatement" }
+              },
               "dietaryTags": { "type": "array", "items": { "type": "string" } },
               "labels": { "type": "array", "items": { "type": "string" } }
             }
@@ -526,7 +549,7 @@
           "fieldSources": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["name", "brand", "category", "ingredients", "structuredIngredients", "ingredientAnalysis", "additives", "allergens", "traces", "dietaryTags", "labels", "package", "sourceMetadata"],
+            "required": ["name", "brand", "category", "ingredients", "structuredIngredients", "ingredientAnalysis", "additives", "allergens", "traces", "precautionaryStatements", "dietaryTags", "labels", "package", "sourceMetadata"],
             "properties": {
               "name": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
               "brand": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
@@ -537,6 +560,7 @@
               "additives": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
               "allergens": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
               "traces": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "precautionaryStatements": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
               "dietaryTags": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
               "labels": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
               "package": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
