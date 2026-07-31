@@ -20,6 +20,7 @@ import type {
 	FoodIdentityType,
 	FoodIngredientAnalysis,
 	FoodPackageQuantity,
+	FoodPrecautionaryStatement,
 	FoodSourceRecordMetadata,
 	FoodStructuredIngredient,
 } from "$lib/utils/food/types";
@@ -56,6 +57,7 @@ export type CustomFoodInput = {
 	additives?: string[];
 	allergens?: string[];
 	traces?: string[];
+	precautionaryStatements?: FoodPrecautionaryStatement[];
 	dietaryTags?: string[];
 	labels?: string[];
 	packageQuantity?: FoodPackageQuantity;
@@ -263,6 +265,7 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		additives: input.additives,
 		allergens: input.allergens,
 		traces: input.traces,
+		precautionaryStatements: input.precautionaryStatements,
 		dietaryTags: input.dietaryTags,
 		labels: input.labels,
 		packageQuantity: input.packageQuantity,

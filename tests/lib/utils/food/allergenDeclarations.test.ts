@@ -10,6 +10,12 @@ describe("explicit allergen declarations", () => {
 		).toEqual({
 			contains: ["Milk", "Wheat", "Soy"],
 			mayContain: ["peanuts", "tree nuts"],
+			precautionaryStatements: [{
+				type: "may_contain",
+				text: "May contain peanuts and tree nuts",
+				allergens: ["peanuts", "tree nuts"],
+				sourceField: "ingredients",
+			}],
 		});
 	});
 
@@ -21,6 +27,12 @@ describe("explicit allergen declarations", () => {
 		).toEqual({
 			contains: [],
 			mayContain: ["milk", "eggs"],
+			precautionaryStatements: [{
+				type: "shared_facility",
+				text: "Made in a facility that also processes milk and eggs",
+				allergens: ["milk", "eggs"],
+				sourceField: "ingredients",
+			}],
 		});
 	});
 
@@ -32,6 +44,7 @@ describe("explicit allergen declarations", () => {
 		).toEqual({
 			contains: ["Almonds"],
 			mayContain: [],
+			precautionaryStatements: [],
 		});
 	});
 
@@ -43,6 +56,7 @@ describe("explicit allergen declarations", () => {
 		).toEqual({
 			contains: [],
 			mayContain: [],
+			precautionaryStatements: [],
 		});
 	});
 
@@ -54,6 +68,22 @@ describe("explicit allergen declarations", () => {
 		).toEqual({
 			contains: [],
 			mayContain: [],
+			precautionaryStatements: [],
+		});
+	});
+
+	it("preserves shared-equipment wording without assigning a risk rank", () => {
+		expect(
+			extractExplicitAllergenDeclarations(
+				"Made on shared equipment that also processes sesame and milk.",
+			),
+		).toMatchObject({
+			mayContain: ["sesame", "milk"],
+			precautionaryStatements: [{
+				type: "shared_equipment",
+				text: "Made on shared equipment that also processes sesame and milk",
+				allergens: ["sesame", "milk"],
+			}],
 		});
 	});
 });

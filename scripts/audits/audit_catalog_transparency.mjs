@@ -130,7 +130,17 @@ const [
 	servings,
 	readiness,
 	policyVersions,
+	policyConflictRules,
+	policyMatchRules,
+	policyAliases,
+	policyRelationships,
+	policyExemptions,
 	compatibilityFacts,
+	ingredientStatements,
+	ingredientComponents,
+	precautionaryStatements,
+	ingredientTerms,
+	ingredientTermRelationships,
 	genericNutrientTotal,
 	genericNutrientStandardError,
 	genericNutrientSourceCode,
@@ -212,16 +222,84 @@ const [
 		supabase
 			.from("food_compatibility_policy_versions")
 			.select(
-				"id, version_number, status, effective_at, reviewed_at, match_rule_snapshot, conflict_rule_snapshot, source_references",
+				"id, version_number, status, effective_at, reviewed_at, match_rule_snapshot, conflict_rule_snapshot, alias_snapshot, relationship_snapshot, exemption_snapshot, regional_profile_snapshot, bundle_content_hash, source_references",
 			)
 			.order("version_number", { ascending: false }),
+	),
+	readRows(
+		"Version-bound compatibility conflict rules",
+		supabase
+			.from("food_compatibility_policy_conflicts")
+			.select("policy_version_id, preference_tag_id, fact_tag_id"),
+	),
+	readRows(
+		"Version-bound compatibility extraction rules",
+		supabase
+			.from("food_compatibility_policy_match_rules")
+			.select("id, policy_version_id, enabled"),
+	),
+	readRows(
+		"Version-bound ingredient aliases",
+		supabase
+			.from("food_compatibility_policy_ingredient_aliases")
+			.select("id, policy_version_id, review_status"),
+	),
+	readRows(
+		"Version-bound ingredient relationships",
+		supabase
+			.from("food_compatibility_policy_ingredient_relationships")
+			.select("id, policy_version_id, review_status"),
+	),
+	readRows(
+		"Version-bound compatibility exemptions",
+		supabase
+			.from("food_compatibility_policy_exemptions")
+			.select("id, policy_version_id, warning_behavior"),
 	),
 	readRows(
 		"Product compatibility facts",
 		supabase
 			.from("product_compatibility_facts")
 			.select(
-				"id, shared_product_id, shared_product_observation_id, policy_version_id, fact_type, source_type, source_text, confidence, tag_id",
+				"id, shared_product_id, shared_product_observation_id, policy_version_id, ingredient_component_id, precautionary_statement_id, match_rule_id, fact_type, source_type, source_text, confidence, tag_id",
+			),
+	),
+	readRows(
+		"Normalized product ingredient statements",
+		supabase
+			.from("product_ingredient_statements")
+			.select(
+				"id, shared_product_id, shared_product_observation_id, shared_product_submission_id, source_observation_id, source_field, extraction_method, raw_statement, language_code",
+			),
+	),
+	readRows(
+		"Normalized product ingredient components",
+		supabase
+			.from("product_ingredient_components")
+			.select(
+				"id, statement_id, parent_component_id, ingredient_term_id, source_path, source_text, language_code, percent_exact, percent_estimate, percent_min, percent_max, processing_state",
+			),
+	),
+	readRows(
+		"Normalized product precautionary statements",
+		supabase
+			.from("product_precautionary_statements")
+			.select(
+				"id, shared_product_id, shared_product_observation_id, shared_product_submission_id, source_observation_id, shared_product_revision_id, statement_type, statement_text, normalized_allergens, language_code, source_field",
+			),
+	),
+	readRows(
+		"Reviewed ingredient terms",
+		supabase
+			.from("ingredient_terms")
+			.select("id, canonical_key, display_name, review_status"),
+	),
+	readRows(
+		"Reviewed ingredient term relationships",
+		supabase
+			.from("ingredient_term_relationships")
+			.select(
+				"id, child_term_id, parent_term_id, relationship_type, conflict_inheritance, jurisdiction_code, review_status",
 			),
 	),
 	readCount(
@@ -347,10 +425,60 @@ const policiesWithSnapshots = policyVersions.filter(
 		Array.isArray(row.match_rule_snapshot) &&
 		row.match_rule_snapshot.length > 0 &&
 		Array.isArray(row.conflict_rule_snapshot) &&
-		row.conflict_rule_snapshot.length > 0,
+		row.conflict_rule_snapshot.length > 0 &&
+		Array.isArray(row.alias_snapshot) &&
+		Array.isArray(row.relationship_snapshot) &&
+		Array.isArray(row.exemption_snapshot) &&
+		Array.isArray(row.regional_profile_snapshot) &&
+		row.regional_profile_snapshot.length > 0 &&
+		/^[a-f0-9]{64}$/.test(row.bundle_content_hash ?? ""),
 );
+const activePolicyVersion = policyVersions.find((row) => row.status === "active");
+const versionBoundPolicyRows = [
+	...policyConflictRules,
+	...policyMatchRules,
+	...policyAliases,
+	...policyRelationships,
+	...policyExemptions,
+];
+const factsUsingActivePolicy = compatibilityFacts.filter(
+	(fact) => fact.policy_version_id === activePolicyVersion?.id,
+).length;
 const evidenceLinkedFacts = compatibilityFacts.filter((fact) =>
 	Boolean(fact.shared_product_observation_id || fact.source_text?.trim())
+).length;
+const ingredientStatementsWithObservation = ingredientStatements.filter((statement) =>
+	Boolean(statement.source_observation_id)
+).length;
+const nestedIngredientComponents = ingredientComponents.filter((component) =>
+	Boolean(component.parent_component_id)
+).length;
+const ingredientComponentsWithReportedPercentage = ingredientComponents.filter(
+	(component) =>
+		component.percent_exact !== null ||
+		component.percent_estimate !== null ||
+		component.percent_min !== null ||
+		component.percent_max !== null,
+).length;
+const ingredientComponentsWithCanonicalTerm = ingredientComponents.filter((component) =>
+	Boolean(component.ingredient_term_id)
+).length;
+const ingredientLinkedFacts = compatibilityFacts.filter(
+	(fact) => Boolean(fact.ingredient_component_id && fact.match_rule_id),
+).length;
+const precautionaryLinkedFacts = compatibilityFacts.filter(
+	(fact) => Boolean(fact.precautionary_statement_id && fact.match_rule_id),
+).length;
+const precautionaryFacts = compatibilityFacts.filter((fact) =>
+	Boolean(fact.precautionary_statement_id)
+);
+const precautionaryStatementsWithLineage = precautionaryStatements.filter(
+	(statement) =>
+		Boolean(
+			statement.source_observation_id ||
+				statement.shared_product_revision_id ||
+				statement.shared_product_observation_id,
+		),
 ).length;
 const hasValues = (value) =>
 	Array.isArray(value) && value.some((item) => String(item ?? "").trim());
@@ -370,6 +498,30 @@ const hasSourceDate = (metadata) =>
 			metadata?.updatedAt ||
 			metadata?.discontinuedAt,
 	);
+const hasIngredientEvidence = (food) =>
+	Boolean(String(food?.ingredients ?? "").trim()) ||
+	hasValues(food?.ingredientList) ||
+	hasValues(food?.structuredIngredients);
+const eligibleRelationalIngredientOwners =
+	products.filter((product) => hasIngredientEvidence(product.food)).length +
+	uniqueSelectedObservations.filter((observation) =>
+		hasIngredientEvidence(observation.normalized_food)
+	).length;
+const selectedObservationIds = new Set(
+	provenance.map((row) => row.observation_id).filter(Boolean),
+);
+const auditedIngredientStatements = ingredientStatements.filter(
+	(statement) =>
+		Boolean(statement.shared_product_id) ||
+		selectedObservationIds.has(statement.shared_product_observation_id),
+);
+const auditedIngredientOwnerCount = new Set(
+	auditedIngredientStatements.map((statement) =>
+		statement.shared_product_id
+			? `product:${statement.shared_product_id}`
+			: `observation:${statement.shared_product_observation_id}`,
+	),
+).size;
 const catalogEvidenceCoverage = [
 	{
 		key: "ingredientStatements",
@@ -385,6 +537,15 @@ const catalogEvidenceCoverage = [
 		key: "explicitTraces",
 		label: "Products with an explicit may-contain disclosure",
 		hasValue: (food) => hasValues(food?.traces),
+	},
+	{
+		key: "exactPrecautionaryStatements",
+		label: "Products with exact precautionary wording",
+		hasValue: (food) =>
+			Array.isArray(food?.precautionaryStatements) &&
+			food.precautionaryStatements.some((statement) =>
+				Boolean(String(statement?.text ?? "").trim())
+			),
 	},
 	{
 		key: "structuredIngredients",
@@ -583,6 +744,105 @@ const coverage = [
 		),
 	}),
 	createCoverageRow({
+		key: "relationalIngredientStatements",
+		label: "Ingredient statements with relational projections",
+		populated: auditedIngredientOwnerCount,
+		total: eligibleRelationalIngredientOwners,
+		unit: "eligible canonical products and selected observations",
+		representatives: sample(
+			auditedIngredientStatements.map(
+				(statement) =>
+					`${statement.source_field} · ${statement.extraction_method} · ${statement.raw_statement ?? "structured source value"}`,
+			),
+		),
+	}),
+	createCoverageRow({
+		key: "ingredientObservationLinks",
+		label: "Ingredient statements linked to exact source observations",
+		populated: ingredientStatementsWithObservation,
+		total: ingredientStatements.length,
+		unit: "ingredient statements",
+	}),
+	createCoverageRow({
+		key: "precautionaryStatements",
+		label: "Precautionary statements retaining exact wording and type",
+		populated: precautionaryStatements.filter((statement) =>
+			Boolean(
+				statement.statement_text?.trim() &&
+					statement.statement_type?.trim(),
+			)
+		).length,
+		total: precautionaryStatements.length,
+		unit: "precautionary statements",
+		representatives: sample(
+			precautionaryStatements.map(
+				(statement) =>
+					`${statement.statement_type} · ${statement.statement_text}`,
+			),
+		),
+	}),
+	createCoverageRow({
+		key: "precautionaryStatementLineage",
+		label: "Precautionary statements linked to observation or revision evidence",
+		populated: precautionaryStatementsWithLineage,
+		total: precautionaryStatements.length,
+		unit: "precautionary statements",
+	}),
+	createCoverageRow({
+		key: "relationalIngredientComponents",
+		label: "Relational ingredient components retaining source text",
+		populated: ingredientComponents.length,
+		total: ingredientComponents.length,
+		unit: "ingredient components",
+		representatives: sample(
+			ingredientComponents.map(
+				(component) =>
+					`${component.source_path.join(".")} · ${component.source_text}`,
+			),
+		),
+	}),
+	createCoverageRow({
+		key: "nestedIngredientComponents",
+		label: "Ingredient components retaining an exact compound parent",
+		populated: nestedIngredientComponents,
+		total: ingredientComponents.length,
+		unit: "ingredient components",
+	}),
+	createCoverageRow({
+		key: "ingredientPercentEvidence",
+		label: "Ingredient components with source-reported percentages",
+		populated: ingredientComponentsWithReportedPercentage,
+		total: ingredientComponents.length,
+		unit: "ingredient components",
+	}),
+	createCoverageRow({
+		key: "ingredientTaxonomy",
+		label: "Ingredient components linked to reviewed canonical terms",
+		populated: ingredientComponentsWithCanonicalTerm,
+		total: ingredientComponents.length,
+		unit: "ingredient components",
+		representatives: sample(
+			ingredientTerms.map(
+				(term) => `${term.display_name} · ${term.review_status}`,
+			),
+		),
+	}),
+	createCoverageRow({
+		key: "ingredientRelationshipPolicy",
+		label: "Reviewed parent, derivative, and processing relationships",
+		populated: ingredientTermRelationships.filter(
+			(relationship) => relationship.review_status === "reviewed",
+		).length,
+		total: ingredientTermRelationships.length,
+		unit: "ingredient term relationships",
+		representatives: sample(
+			ingredientTermRelationships.map(
+				(relationship) =>
+					`${relationship.relationship_type} · inheritance ${relationship.conflict_inheritance} · ${relationship.jurisdiction_code ?? "all jurisdictions"}`,
+			),
+		),
+	}),
+	createCoverageRow({
 		key: "observationIngredientAnalysis",
 		label: "Selected observations with structured ingredient analysis",
 		populated: ingredientAnalysisObservations.length,
@@ -664,7 +924,7 @@ const coverage = [
 	}),
 	createCoverageRow({
 		key: "policySnapshots",
-		label: "Policy versions with immutable rule snapshots",
+		label: "Policy versions with complete immutable bundle snapshots",
 		populated: policiesWithSnapshots.length,
 		total: policyVersions.length,
 		unit: "policy versions",
@@ -674,6 +934,22 @@ const coverage = [
 					`v${row.version_number} · ${row.status} · effective ${row.effective_at}`,
 			),
 		),
+	}),
+	createCoverageRow({
+		key: "policyVersionBinding",
+		label: "Compatibility policy rows bound to an explicit version",
+		populated: versionBoundPolicyRows.filter((row) =>
+			Boolean(row.policy_version_id)
+		).length,
+		total: versionBoundPolicyRows.length,
+		unit: "policy rows",
+	}),
+	createCoverageRow({
+		key: "activePolicyConsistency",
+		label: "Compatibility facts using the active policy version",
+		populated: factsUsingActivePolicy,
+		total: compatibilityFacts.length,
+		unit: "compatibility facts",
 	}),
 	createCoverageRow({
 		key: "compatibilityEvidence",
@@ -699,6 +975,22 @@ const coverage = [
 		populated: evidenceLinkedFacts,
 		total: compatibilityFacts.length,
 		unit: "compatibility facts",
+	}),
+	createCoverageRow({
+		key: "ingredientCompatibilityLinks",
+		label: "Ingredient compatibility facts linked to exact component and rule",
+		populated: ingredientLinkedFacts,
+		total: compatibilityFacts.filter(
+			(fact) => Boolean(fact.match_rule_id),
+		).length,
+		unit: "ingredient-derived compatibility facts",
+	}),
+	createCoverageRow({
+		key: "precautionaryCompatibilityLinks",
+		label: "Precautionary facts linked to exact statement and rule",
+		populated: precautionaryLinkedFacts,
+		total: precautionaryFacts.length,
+		unit: "precautionary compatibility facts",
 	}),
 	createCoverageRow({
 		key: "apiReadiness",
@@ -770,7 +1062,10 @@ const semanticCoverage = {
 		`observations ${coverageByKey.get("observationIngredientAnalysis")?.state}`,
 	servingProvenance: coverageByKey.get("servingProvenance")?.state,
 	nutrientUncertainty: coverageByKey.get("nutrientUncertainty")?.state,
-	policySnapshots: coverageByKey.get("policySnapshots")?.state,
+	policySnapshots:
+		`bundles ${coverageByKey.get("policySnapshots")?.state}; ` +
+		`version binding ${coverageByKey.get("policyVersionBinding")?.state}; ` +
+		`active consistency ${coverageByKey.get("activePolicyConsistency")?.state}`,
 	compatibilityEvidence:
 		`products ${coverageByKey.get("compatibilityEvidence")?.state}; ` +
 		`evidence links ${coverageByKey.get("compatibilityEvidenceLinks")?.state}`,
@@ -879,6 +1174,17 @@ const report = {
 		selectedSourceObservations: uniqueSelectedObservations.length,
 		normalizedNutrientRows: nutrients.length,
 		normalizedServingRows: servings.length,
+		normalizedIngredientStatements: ingredientStatements.length,
+		normalizedIngredientComponents: ingredientComponents.length,
+		normalizedPrecautionaryStatements: precautionaryStatements.length,
+		reviewedIngredientTerms: ingredientTerms.filter(
+			(term) => term.review_status === "reviewed",
+		).length,
+		reviewedIngredientRelationships: ingredientTermRelationships.filter(
+			(relationship) => relationship.review_status === "reviewed",
+		).length,
+		compatibilityPolicyVersions: policyVersions.length,
+		versionBoundCompatibilityPolicyRows: versionBoundPolicyRows.length,
 		revisions: revisions.length,
 		revisionChanges: revisionChanges.length,
 		productUpdateSubmissions: productUpdateSubmissions.length,

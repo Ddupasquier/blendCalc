@@ -11,6 +11,7 @@ import type {
 	FoodFieldProvenance,
 	FoodFieldSource,
 	FoodImageAsset,
+	FoodPrecautionaryStatement,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
 import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredientProvenance";
@@ -43,6 +44,7 @@ const FOOD_TRACKED_FIELD_PATHS = new Set<FoodTrackedField>([
 	"ingredients",
 	"allergens",
 	"traces",
+	"precautionaryStatements",
 	"dietaryTags",
 	"labels",
 	"structuredIngredients",
@@ -112,6 +114,21 @@ type FoodImageRow = Pick<
 	| "placement_suggestion_accepted_at"
 	| "approved_at"
 	| "fetched_at"
+>;
+
+type PrecautionaryStatementRow = Pick<
+	Database["public"]["Tables"]["product_precautionary_statements"]["Row"],
+	| "shared_product_id"
+	| "statement_type"
+	| "statement_text"
+	| "normalized_allergens"
+	| "language_code"
+	| "source_field"
+	| "source_reference"
+	| "source_observation_id"
+	| "shared_product_revision_id"
+	| "label_observed_at"
+	| "created_at"
 >;
 
 export type ApprovedCatalogRecord = {
@@ -305,6 +322,39 @@ const readSelectedFieldProvenance = async (
 	return provenanceByProduct;
 };
 
+const readPrecautionaryStatements = async (
+	supabase: SupabaseClient<Database>,
+	productIds: string[],
+) => {
+	const { data, error } = await supabase
+		.from("product_precautionary_statements")
+		.select(
+			"shared_product_id, statement_type, statement_text, normalized_allergens, language_code, source_field, source_reference, source_observation_id, shared_product_revision_id, label_observed_at, created_at",
+		)
+		.in("shared_product_id", productIds)
+		.order("created_at", { ascending: true });
+	if (error) throw error;
+
+	const statementsByProduct = new Map<string, FoodPrecautionaryStatement[]>();
+	for (const row of (data ?? []) as PrecautionaryStatementRow[]) {
+		if (!row.shared_product_id) continue;
+		const statements = statementsByProduct.get(row.shared_product_id) ?? [];
+		statements.push({
+			type: row.statement_type as FoodPrecautionaryStatement["type"],
+			text: row.statement_text,
+			allergens: [...row.normalized_allergens],
+			languageCode: row.language_code ?? undefined,
+			sourceField: row.source_field,
+			sourceReference: row.source_reference ?? undefined,
+			observationId: row.source_observation_id ?? undefined,
+			revisionId: row.shared_product_revision_id ?? undefined,
+			labelObservedAt: row.label_observed_at ?? undefined,
+		});
+		statementsByProduct.set(row.shared_product_id, statements);
+	}
+	return statementsByProduct;
+};
+
 const toFoodFieldProvenance = (
 	fieldProvenance: Record<string, CatalogFieldSource>,
 ): FoodFieldProvenance => Object.fromEntries(
@@ -335,6 +385,7 @@ const hydrateCatalogRows = async (
 		categories,
 		imagesByProduct,
 		fieldProvenanceByProduct,
+		precautionaryStatementsByProduct,
 	] = await Promise.all([
 		readNormalizedNutrientsByParent(supabase, "shared_product_id", ids),
 		readFoodServingsByParent(supabase, "shared_product_id", ids),
@@ -344,6 +395,7 @@ const hydrateCatalogRows = async (
 		),
 		readActiveFoodImages(supabase, rows),
 		readSelectedFieldProvenance(supabase, ids),
+		readPrecautionaryStatements(supabase, ids),
 	]);
 	return rows.map((row) => {
 		const fieldProvenance = fieldProvenanceByProduct.get(row.id) ?? {};
@@ -360,7 +412,10 @@ const hydrateCatalogRows = async (
 			sharedProductConfidence:
 				row.confidence as FdcFood["sharedProductConfidence"],
 			customFood: false,
-			image: images[0],
+				image: images[0],
+				precautionaryStatements:
+					precautionaryStatementsByProduct.get(row.id) ??
+					(row.food as unknown as FdcFood).precautionaryStatements,
 		}) as FdcFood;
 		const categorizedFood = category
 			? applyCanonicalFoodCategory(baseFood, category)

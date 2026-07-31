@@ -16,6 +16,7 @@ import {
 	type FoodIdentityType,
 	type FoodIngredientAnalysis,
 	type FoodPackageQuantity,
+	type FoodPrecautionaryStatement,
 	type FoodSourceRecordMetadata,
 	type FoodStructuredIngredient,
 } from "$lib/utils/food/types";
@@ -137,6 +138,7 @@ export type BarcodeProductDraft = {
 	additives?: string[];
 	allergens?: string[];
 	traces?: string[];
+	precautionaryStatements?: FoodPrecautionaryStatement[];
 	dietaryTags?: string[];
 	labels?: string[];
 	packageQuantity?: FoodPackageQuantity;
@@ -337,6 +339,27 @@ const parseOpenFoodFactsSourceMetadata = (
 const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
 	const ingredients =
 		product.ingredients_text_en?.trim() || product.ingredients_text?.trim();
+	const ingredientDeclarations = extractExplicitAllergenDeclarations(ingredients);
+	const reportedTraceText = product.traces?.trim();
+	const precautionaryStatements: FoodPrecautionaryStatement[] = [
+		...ingredientDeclarations.precautionaryStatements.map((statement) => ({
+			...statement,
+			languageCode: product.lang?.trim() || product.traces_lc?.trim() || undefined,
+		})),
+		...(reportedTraceText
+			? [{
+					type: "may_contain" as const,
+					text: reportedTraceText,
+					allergens: uniqueCleanValues([
+						...splitDelimitedValues(product.traces),
+						...(product.traces_tags ?? []),
+						...(product.traces_hierarchy ?? []),
+					]),
+					languageCode: product.traces_lc?.trim() || product.lang?.trim() || undefined,
+					sourceField: "traces",
+				}]
+			: []),
+	];
 	const structuredIngredients = (product.ingredients ?? [])
 		.slice(0, 250)
 		.flatMap((ingredient) => {
@@ -391,6 +414,7 @@ const parseOpenFoodFactsMetadata = (product: OpenFoodFactsProduct) => {
 			...(product.traces_hierarchy ?? []),
 			...splitDelimitedValues(product.traces_from_user),
 		]),
+		precautionaryStatements,
 		dietaryTags: uniqueCleanValues(product.labels_tags ?? []),
 		labels: uniqueCleanValues([
 			...splitDelimitedValues(product.labels),
@@ -450,6 +474,10 @@ const parseFdcMetadata = (food: FdcFood) => {
 			...(food.traces ?? []),
 			...declarations.mayContain,
 		]),
+		precautionaryStatements: [
+			...(food.precautionaryStatements ?? []),
+			...declarations.precautionaryStatements,
+		],
 		dietaryTags: uniqueCleanValues(food.dietaryTags ?? []),
 		labels: uniqueCleanValues(food.labels ?? []),
 		categories: uniqueCleanValues([
@@ -528,7 +556,10 @@ const createOpenFoodFactsFieldProvenance = ({
 			? { ingredients: source }
 			: {}),
 		...(metadata.allergens.length > 0 ? { allergens: source } : {}),
-		...(metadata.traces.length > 0 ? { traces: source } : {}),
+			...(metadata.traces.length > 0 ? { traces: source } : {}),
+			...(metadata.precautionaryStatements.length > 0
+				? { precautionaryStatements: source }
+				: {}),
 		...(metadata.dietaryTags.length > 0 ? { dietaryTags: source } : {}),
 		...(metadata.labels.length > 0 ? { labels: source } : {}),
 		...(metadata.structuredIngredients.length > 0
@@ -623,11 +654,16 @@ const createFdcFieldProvenance = ({
 				!food.fieldProvenance?.allergens
 			? { allergens: mappedSource }
 			: {}),
-		...(mappedSource &&
-				metadata.traces.length > 0 &&
+			...(mappedSource &&
+					metadata.traces.length > 0 &&
 				!food.fieldProvenance?.traces
-			? { traces: mappedSource }
-			: {}),
+				? { traces: mappedSource }
+				: {}),
+			...(mappedSource &&
+					metadata.precautionaryStatements.length > 0 &&
+					!food.fieldProvenance?.precautionaryStatements
+				? { precautionaryStatements: mappedSource }
+				: {}),
 		...(mappedSource &&
 				metadata.dietaryTags.length > 0 &&
 				!food.fieldProvenance?.dietaryTags

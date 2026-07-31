@@ -60,6 +60,8 @@ const getFieldValue = (
 				return (draft.allergens ?? []) as Json;
 			case "traces":
 				return (draft.traces ?? []) as Json;
+			case "precautionaryStatements":
+				return (draft.precautionaryStatements ?? []) as unknown as Json;
 			case "dietaryTags":
 				return (draft.dietaryTags ?? []) as Json;
 			case "labels":
