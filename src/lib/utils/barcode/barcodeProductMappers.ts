@@ -85,6 +85,8 @@ export type OpenFoodFactsProduct = {
 	product_quantity_unit?: string;
 	lang?: string;
 	languages_tags?: string[];
+	countries?: string;
+	countries_tags?: string[];
 	created_t?: number | string;
 	last_modified_t?: number | string;
 	last_updated_t?: number | string;
@@ -283,6 +285,14 @@ const parseOpenFoodFactsSourceMetadata = (
 		...(product.lang?.trim() ? { language: product.lang.trim() } : {}),
 		...(product.languages_tags?.length
 			? { languages: uniqueCleanValues(product.languages_tags) }
+			: {}),
+		...(product.countries || product.countries_tags?.length
+			? {
+				marketCountries: uniqueCleanValues([
+					...splitDelimitedValues(product.countries),
+					...(product.countries_tags ?? []),
+				]),
+			}
 			: {}),
 		...(toOptionalInteger(product.rev) !== undefined
 			? { revision: toOptionalInteger(product.rev) }

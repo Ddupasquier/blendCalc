@@ -155,7 +155,13 @@ const record: ApprovedCatalogRecord = {
 		},
 		sourceMetadata: {
 			language: "en",
+			languages: ["en:english"],
+			marketCountries: ["United States"],
 			revision: 4,
+			publishedAt: "2026-07-01T00:00:00.000Z",
+			availableAt: "2026-07-02T00:00:00.000Z",
+			modifiedAt: "2026-07-03T00:00:00.000Z",
+			discontinuedAt: "2026-07-04T00:00:00.000Z",
 			completeness: 0.92,
 			tagSources: { allergens: ["ingredients", "packaging"] },
 		},
@@ -339,7 +345,13 @@ describe("blendCalc API v1 catalog mapping", () => {
 		});
 		expect(product.sourceRecord).toMatchObject({
 			language: "en",
+			languages: ["en:english"],
+			marketCountries: ["United States"],
 			revision: 4,
+			publishedAt: "2026-07-01T00:00:00.000Z",
+			availableAt: "2026-07-02T00:00:00.000Z",
+			modifiedAt: "2026-07-03T00:00:00.000Z",
+			discontinuedAt: "2026-07-04T00:00:00.000Z",
 			completeness: 0.92,
 			tagSources: { allergens: ["ingredients", "packaging"] },
 		});

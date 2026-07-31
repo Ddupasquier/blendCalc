@@ -204,11 +204,17 @@ const getSourceRows = (food: FdcFood) => {
 			label: "Published",
 			value: formatDate(
 				food.sourcePublishedDate ??
+					food.sourceMetadata?.publishedAt ??
 					food.publicationDate ??
 					food.publishedDate,
 			),
 		},
-		{ label: "Available since", value: formatDate(food.availableDate) },
+		{
+			label: "Available since",
+			value: formatDate(
+				food.sourceMetadata?.availableAt ?? food.availableDate,
+			),
+		},
 		{
 			label: "Last updated",
 			value: formatDate(
@@ -222,7 +228,12 @@ const getSourceRows = (food: FdcFood) => {
 			label: "Source record created",
 			value: formatDate(food.sourceMetadata?.createdAt),
 		},
-		{ label: "Discontinued", value: formatDate(food.discontinuedDate) },
+		{
+			label: "Discontinued",
+			value: formatDate(
+				food.sourceMetadata?.discontinuedAt ?? food.discontinuedDate,
+			),
+		},
 		{
 			label: "Source revision",
 			value:
@@ -236,6 +247,12 @@ const getSourceRows = (food: FdcFood) => {
 				food.sourceMetadata?.language,
 				...(food.sourceMetadata?.languages ?? []),
 			]).join(", "),
+		},
+		{
+			label: "Markets",
+			value: getUniqueFoodMetadataTags(
+				food.sourceMetadata?.marketCountries ?? [],
+			).join(", "),
 		},
 		{
 			label: "Record status",

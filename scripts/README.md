@@ -93,3 +93,21 @@ The detailed machine-readable report is written to the gitignored `scripts/outpu
 directory. Source anomalies and cross-source disagreements remain separate from app-math
 or canonical-storage defects. Legally blocked source fields are reported separately and
 are never promoted into the canonical catalog merely to make the audit appear complete.
+
+## Catalog Metadata Backfill
+
+Run `node scripts/backfills/backfill_catalog_metadata.mjs --dry-run --cached-only` to
+preview exact-barcode enrichment from the existing licensed provider cache without
+making external requests or database writes. Remove `--dry-run` to apply only missing
+USDA fields whose database source policy permits canonical storage:
+
+```bash
+node scripts/backfills/backfill_catalog_metadata.mjs --cached-only
+```
+
+The workflow can recover ingredient statements, explicit declarations embedded in the
+source statement, labels, package weight, source-record dates and market country, and
+legitimate source servings. It records observations, selected field provenance,
+normalized projections, and revisions through the canonical enrichment RPC. Open Food
+Facts metadata is audited and cached but is not promoted while its canonical-storage
+policy is disabled. A second run must make no additional writes.

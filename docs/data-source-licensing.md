@@ -79,6 +79,9 @@ Official reference: [FoodData Central API Guide](https://fdc.nal.usda.gov/api-gu
 - `product_data_sources.usda` records `CC0-1.0`, USDA attribution, reviewed canonical
   storage permission, and the source URL.
 - Accepted values retain USDA identifiers and field-level provenance.
+- Permitted exact-barcode backfills may retain reported package weight, market country,
+  and source publication/availability/update/discontinued dates alongside their USDA
+  observation; absent values remain absent.
 - API v1 returns USDA in `sourceAttributions` when an accepted field uses it.
 - Canonical gap-filling is allowed because the registry explicitly permits it; the
   provider name alone does not grant permission.

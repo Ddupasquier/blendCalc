@@ -86,7 +86,7 @@ API launch.
 | `ingredients.dietaryTags` | `shared_products.food.dietaryTags` | Accepted source dietary classifications with field provenance. |
 | `ingredients.labels` | `shared_products.food.labels` | Accepted package/provider labels with field provenance. |
 | `packageQuantity` | `shared_products.food.packageQuantity` | Accepted package label, amount, and unit; never used as an invented serving. |
-| `sourceRecord` | `shared_products.food.sourceMetadata` | Preserves accepted provider record language, timestamps, schema/revision, quality tags, completeness, obsolescence, and per-field tag-source metadata. |
+| `sourceRecord` | `shared_products.food.sourceMetadata` | Preserves accepted provider record language(s), market countries, created/published/available/modified/updated/discontinued timestamps, schema/revision, quality tags, completeness, obsolescence, and per-field tag-source metadata. |
 | `nutrients[]` | `food_nutrients` + `nutrient_definitions` | Normalized per-100g values, canonical names/numbers/units, value status, source reference, and confidence. Missing is `null`/absent, never invented zero. |
 | `servings[]` | `food_servings` | Normalized label, gram weight, quantity, unit, primary state, conversion, source reference, and confidence. No serving produces an empty array and an honest 100g basis. |
 | `images[]` | active `food_image_assets` | Public URL, thumbnail, role, placement, source, approval time, and asset-level licence/attribution. Private paths and reviewer IDs are excluded. |
