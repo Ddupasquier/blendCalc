@@ -25,8 +25,8 @@ coalescing, caching, request counts, and source-policy checks.
 
 | Source | Useful observed fields | Intake module or path |
 | --- | --- | --- |
-| USDA FoodData Central | Exact GTIN, source food id/type, names, brand, ingredients, nutrients, units, serving size, household serving, publication/update dates, categories | `src/lib/server/products/sources/usdaBarcodeProduct.server.ts` |
-| Open Food Facts | Exact GTIN, names, brand, raw and recursive structured ingredients, ingredient analysis, additives, explicit allergens, explicit traces, labels, categories, nutrients, serving text/weight/volume, package quantity, package images, language, record/schema revisions, source timestamps, completeness, quality/obsolete state, and tag-source metadata | `src/lib/server/products/sources/openFoodFactsBarcodeProduct.server.ts` |
+| USDA FoodData Central | Exact GTIN, source food id/type, names, brand, ingredients, nutrients, units, serving size, household serving, package weight, market country, publication/availability/update/discontinued dates, and categories | `src/lib/server/products/sources/usdaBarcodeProduct.server.ts` |
+| Open Food Facts | Exact GTIN, names, brand, raw and recursive structured ingredients, ingredient analysis, additives, explicit allergens, explicit traces, labels, categories, nutrients, serving text/weight/volume, package quantity, package images, language, market countries, record/schema revisions, source timestamps, completeness, quality/obsolete state, and tag-source metadata | `src/lib/server/products/sources/openFoodFactsBarcodeProduct.server.ts` |
 | Canadian Nutrient File 2026 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/import_cnf_2026.mjs` |
 | UK CoFID 2021 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/import_cofid_2021.mjs` |
 | User nutrition-label OCR | Text and nutrient candidates from a user-provided label | Tesseract runs on the client; no value is accepted until the user confirms it; shared-submission images remain private evidence |

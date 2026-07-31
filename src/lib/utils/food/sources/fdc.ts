@@ -181,6 +181,61 @@ const normalizeFoodServings = (
 	});
 };
 
+const toSourceTimestamp = (value: string | undefined) => {
+	const trimmed = value?.trim();
+	if (!trimmed) return undefined;
+	const dateParts = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+	if (dateParts) {
+		const month = Number(dateParts[1]);
+		const day = Number(dateParts[2]);
+		const year = Number(dateParts[3]);
+		const date = new Date(Date.UTC(year, month - 1, day));
+		if (
+			date.getUTCFullYear() === year &&
+			date.getUTCMonth() === month - 1 &&
+			date.getUTCDate() === day
+		) {
+			return date.toISOString();
+		}
+		return undefined;
+	}
+	const timestamp = Date.parse(trimmed);
+	return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : undefined;
+};
+
+const normalizeSourceRecordMetadata = (food: FdcFoodResponse) => {
+	const marketCountries = [
+		...(food.sourceMetadata?.marketCountries ?? []),
+		food.marketCountry?.trim(),
+	].filter((value): value is string => Boolean(value));
+	const uniqueMarketCountries = [...new Set(marketCountries)];
+	const metadata = {
+		...food.sourceMetadata,
+		...(food.sourceMetadata?.publishedAt
+			? {}
+			: {
+				publishedAt: toSourceTimestamp(
+					food.publishedDate ?? food.publicationDate,
+				),
+			}),
+		...(food.sourceMetadata?.availableAt
+			? {}
+			: { availableAt: toSourceTimestamp(food.availableDate) }),
+		...(food.sourceMetadata?.modifiedAt
+			? {}
+			: { modifiedAt: toSourceTimestamp(food.modifiedDate) }),
+		...(food.sourceMetadata?.discontinuedAt
+			? {}
+			: { discontinuedAt: toSourceTimestamp(food.discontinuedDate) }),
+		...(uniqueMarketCountries.length > 0
+			? { marketCountries: uniqueMarketCountries }
+			: {}),
+	};
+	return Object.values(metadata).some((value) => value !== undefined)
+		? metadata
+		: undefined;
+};
+
 export const normalizeFdcFood = (food: FdcFoodResponse): FdcFood => {
 	const foodNutrients = (food.foodNutrients ?? []).flatMap((nutrient) => {
 		const normalized = normalizeFoodNutrient(nutrient);
@@ -188,6 +243,7 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FdcFood => {
 	});
 	const legacyUsdaNdbNumber = normalizeLegacyUsdaNdbNumber(food.ndbNumber);
 	const foodServings = normalizeFoodServings(food);
+	const packageLabel = food.packageWeight?.trim();
 	return {
 		...food,
 		description: formatSourceProductName(food.description),
@@ -204,6 +260,9 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FdcFood => {
 		reportedNutrientIds: foodNutrients.map((nutrient) => nutrient.nutrientId),
 		foodServings,
 		hasSourceServing: foodServings.length > 0,
+		packageQuantity:
+			food.packageQuantity ?? (packageLabel ? { label: packageLabel } : undefined),
+		sourceMetadata: normalizeSourceRecordMetadata(food),
 	};
 };
 

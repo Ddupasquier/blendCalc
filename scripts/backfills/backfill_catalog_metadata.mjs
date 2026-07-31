@@ -1,11 +1,11 @@
 /**
- * Purpose: Backfill missing canonical product ingredients, structured allergen metadata,
- * label metadata, and legitimate source servings from exact USDA barcode records. The
- * workflow reads the provider cache first, makes bounded live requests only for cache
- * misses, records field-level evidence through the canonical enrichment RPC, and warms
- * the licensed Open Food Facts cache for metadata USDA does not provide. Open Food Facts
- * data is not promoted into the public canonical catalog while its canonical-storage
- * policy remains disabled.
+ * Purpose: Backfill missing canonical product ingredients, explicit allergen metadata,
+ * label metadata, package quantity, source-record dates/markets, and legitimate source
+ * servings from exact USDA barcode records. The workflow reads the provider cache first,
+ * makes bounded live requests only for cache misses, records field-level evidence through
+ * the canonical enrichment RPC, and warms the licensed Open Food Facts cache for metadata
+ * USDA does not provide. Open Food Facts data is not promoted into the public canonical
+ * catalog while its canonical-storage policy remains disabled.
  * Preview: `node scripts/backfills/backfill_catalog_metadata.mjs --dry-run`
  * Execute: `node scripts/backfills/backfill_catalog_metadata.mjs`
  * Cached only: `node scripts/backfills/backfill_catalog_metadata.mjs --cached-only`
@@ -110,6 +110,8 @@ const OPEN_FOOD_FACTS_FIELDS = [
 	"product_quantity_unit",
 	"lang",
 	"languages_tags",
+	"countries",
+	"countries_tags",
 	"created_t",
 	"last_modified_t",
 	"last_updated_t",
@@ -124,6 +126,10 @@ const OPEN_FOOD_FACTS_FIELDS = [
 	"tags_sources",
 	"nutriments",
 ].join(",");
+const OPEN_FOOD_FACTS_LEGACY_FIELDS = OPEN_FOOD_FACTS_FIELDS
+	.split(",")
+	.filter((field) => field !== "countries" && field !== "countries_tags")
+	.join(",");
 const RETRY_DELAYS_MS = [750, 2_000];
 const REQUEST_DELAY_MS = 250;
 const REQUEST_TIMEOUT_MS = 12_000;
@@ -235,6 +241,28 @@ const splitDelimitedValues = (value) =>
 const splitIngredientList = (value) =>
 	cleanValues(String(value ?? "").split(/,(?![^(]*\))/));
 
+const toSourceTimestamp = (value) => {
+	const trimmed = String(value ?? "").trim();
+	if (!trimmed) return undefined;
+	const dateParts = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+	if (dateParts) {
+		const month = Number(dateParts[1]);
+		const day = Number(dateParts[2]);
+		const year = Number(dateParts[3]);
+		const date = new Date(Date.UTC(year, month - 1, day));
+		if (
+			date.getUTCFullYear() === year &&
+			date.getUTCMonth() === month - 1 &&
+			date.getUTCDate() === day
+		) {
+			return date.toISOString();
+		}
+		return undefined;
+	}
+	const timestamp = Date.parse(trimmed);
+	return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : undefined;
+};
+
 const hasValues = (value) =>
 	Array.isArray(value) && value.some((item) => String(item ?? "").trim());
 
@@ -281,6 +309,21 @@ const parseSourceServing = (food) => {
 const getUsdaMetadata = (food) => {
 	const ingredients = String(food?.ingredients ?? "").trim();
 	const declarations = extractExplicitAllergenDeclarations(ingredients);
+	const packageLabel = String(food?.packageWeight ?? "").trim();
+	const marketCountry = String(food?.marketCountry ?? "").trim();
+	const publishedAt = toSourceTimestamp(
+		food?.publishedDate ?? food?.publicationDate,
+	);
+	const availableAt = toSourceTimestamp(food?.availableDate);
+	const modifiedAt = toSourceTimestamp(food?.modifiedDate);
+	const discontinuedAt = toSourceTimestamp(food?.discontinuedDate);
+	const sourceMetadata = {
+		...(publishedAt ? { publishedAt } : {}),
+		...(availableAt ? { availableAt } : {}),
+		...(modifiedAt ? { modifiedAt } : {}),
+		...(discontinuedAt ? { discontinuedAt } : {}),
+		...(marketCountry ? { marketCountries: [marketCountry] } : {}),
+	};
 	return {
 		ingredients: ingredients || undefined,
 		ingredientList: splitIngredientList(ingredients),
@@ -294,6 +337,10 @@ const getUsdaMetadata = (food) => {
 		]),
 		dietaryTags: cleanValues(food?.dietaryTags ?? []),
 		labels: cleanValues(food?.labels ?? []),
+		packageQuantity: packageLabel ? { label: packageLabel } : undefined,
+		sourceMetadata: Object.keys(sourceMetadata).length > 0
+			? sourceMetadata
+			: undefined,
 		serving: parseSourceServing(food),
 	};
 };
@@ -305,6 +352,15 @@ const getMissingFields = (food) => ({
 	traces: !hasValues(food?.traces),
 	dietaryTags: !hasValues(food?.dietaryTags),
 	labels: !hasValues(food?.labels),
+	structuredIngredients: !hasValues(food?.structuredIngredients),
+	ingredientAnalysis:
+		!food?.ingredientAnalysis ||
+		Object.keys(food.ingredientAnalysis).length === 0,
+	additives: !hasValues(food?.additives),
+	package: !food?.packageQuantity ||
+		Object.keys(food.packageQuantity).length === 0,
+	sourceMetadata: !food?.sourceMetadata ||
+		Object.keys(food.sourceMetadata).length === 0,
 	serving:
 		food?.hasSourceServing !== true ||
 		!Number.isFinite(Number(food?.customServingWeightGrams ?? food?.servingSize)) ||
@@ -321,6 +377,10 @@ const getUsdaCandidateFields = (currentFood, metadata) => {
 			? "dietaryTags"
 			: null,
 		missing.labels && metadata.labels.length > 0 ? "labels" : null,
+		missing.package && metadata.packageQuantity ? "package" : null,
+		missing.sourceMetadata && metadata.sourceMetadata
+			? "sourceMetadata"
+			: null,
 		missing.serving && metadata.serving ? "serving" : null,
 	].filter(Boolean);
 };
@@ -346,6 +406,12 @@ const applyUsdaMetadata = (currentFood, metadata, sourceReference, fields) => {
 			? { dietaryTags: metadata.dietaryTags }
 			: {}),
 		...(fieldSet.has("labels") ? { labels: metadata.labels } : {}),
+		...(fieldSet.has("package")
+			? { packageQuantity: metadata.packageQuantity }
+			: {}),
+		...(fieldSet.has("sourceMetadata")
+			? { sourceMetadata: metadata.sourceMetadata }
+			: {}),
 		...(fieldSet.has("serving") ? metadata.serving : {}),
 		fieldProvenance: {
 			...(currentFood?.fieldProvenance ?? {}),
@@ -368,6 +434,10 @@ const getTrackedFieldValue = (food, field) => {
 					food.customServingWeightGrams ?? food.servingSize ?? null,
 				foodServings: food.foodServings ?? [],
 			};
+		case "package":
+			return food.packageQuantity ?? null;
+		case "sourceMetadata":
+			return food.sourceMetadata ?? null;
 		default:
 			return food[field] ?? [];
 	}
@@ -501,10 +571,22 @@ const lookupOpenFoodFacts = async (barcode) => {
 				"barcode-product",
 				cacheValue,
 			);
-			if (cached) {
-				const product = cached?.product;
+			const compatibleCached = cached ?? (
+				cachedOnly
+					? await readApiCache(
+						"open-food-facts",
+						"barcode-product",
+						{
+							candidate,
+							fields: OPEN_FOOD_FACTS_LEGACY_FIELDS,
+						},
+					)
+					: null
+			);
+			if (compatibleCached) {
+				const product = compatibleCached?.product;
 				return normalizeBarcode(product?.code ?? candidate) === canonicalBarcode
-					? cached
+					? compatibleCached
 					: null;
 			}
 			if (cachedOnly) return null;
@@ -676,11 +758,17 @@ for (const [index, product] of products.entries()) {
 			summary.usdaMisses += 1;
 		}
 
-		const stillNeedsLicensedMetadata =
-			!metadata?.ingredients ||
-			metadata.allergens.length === 0 ||
-			metadata.traces.length === 0 ||
-			metadata.labels.length === 0;
+		const projectedFood = metadata
+			? applyUsdaMetadata(
+				product.food,
+				metadata,
+				String(usdaDetail.fdcId),
+				fields,
+			)
+			: product.food;
+		const stillNeedsLicensedMetadata = Object.values(
+			getMissingFields(projectedFood),
+		).some(Boolean);
 		if (stillNeedsLicensedMetadata) {
 			try {
 				const offResponse = await lookupOpenFoodFacts(product.barcode);
