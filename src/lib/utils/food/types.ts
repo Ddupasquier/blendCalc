@@ -8,7 +8,23 @@ import type {
 	ImagePlacementValue,
 } from "$lib/utils/food/images/types";
 
-/** A single food nutrient returned by the FDC API */
+export type FoodNutrientValueStatus =
+	| "reported"
+	| "reported-zero"
+	| "derived"
+	| "trace"
+	| "present-unquantified"
+	| "missing"
+	| "invalid"
+	| "unknown";
+
+export type FoodNutrientMappingStatus =
+	| "canonical"
+	| "unmapped"
+	| "excluded"
+	| "unknown";
+
+/** A single accepted numeric food nutrient. */
 export interface FdcNutrient {
     nutrientId: number;
     nutrientName: string;
@@ -29,14 +45,39 @@ export interface FdcNutrient {
         | "community-reviewed"
         | "unknown";
     sourceReference?: string;
-    confidence?:
+	    confidence?:
         | "source-verified"
         | "moderator-reviewed"
         | "corroborated"
         | "user-reported"
-        | "imported"
-        | "unknown";
+	        | "imported"
+	        | "unknown";
+	valueStatus?: FoodNutrientValueStatus;
+	standardError?: number;
+	sourceNutrientKey?: string;
+	sourceNutrientCode?: string;
+	mappingStatus?: FoodNutrientMappingStatus;
+	mappingMethod?: string;
+	mappingReviewReference?: string;
+	derivationMethod?: string;
 }
+
+export type FoodNutrientSourceReview = {
+	nutrientId?: number;
+	nutrientName: string;
+	unitName?: string;
+	amountPer100g?: number;
+	standardError?: number;
+	sourceNutrientKey?: string;
+	sourceNutrientCode?: string;
+	valueStatus: FoodNutrientValueStatus;
+	mappingStatus: FoodNutrientMappingStatus;
+	mappingMethod?: string;
+	mappingReviewReference?: string;
+	derivationMethod?: string;
+	source?: FdcNutrient["source"];
+	sourceReference?: string;
+};
 
 export interface FoodImageAsset {
     source: "open-food-facts" | "wikimedia-commons" | "community-reviewed";
@@ -65,12 +106,33 @@ export interface FoodImageAsset {
     fetchedAt?: string;
 }
 
+export type FoodServingOrigin =
+	| "package-label"
+	| "source-household-measure"
+	| "source-weight"
+	| "user-entered"
+	| "calculated-conversion"
+	| "unknown";
+
+export type FoodServingGramWeightMethod =
+	| "source-reported"
+	| "exact-unit-conversion"
+	| "user-reported"
+	| "calculated-conversion"
+	| "unknown";
+
 export interface FoodServing {
     label: string;
     gramWeight: number;
     amount?: number;
     unitKey?: string;
     isPrimary: boolean;
+	measureType?: string;
+	isHouseholdMeasure?: boolean;
+	sourceMeasureKey?: string;
+	origin?: FoodServingOrigin;
+	gramWeightMethod?: FoodServingGramWeightMethod;
+	calculationBasis?: string;
     source?: FdcNutrient["source"];
     sourceReference?: string;
     confidence?: FdcNutrient["confidence"];
@@ -98,6 +160,38 @@ export type FoodIngredientAnalysis = {
 	percentEstimate?: number;
 	percentKnown?: number;
 	percentUnknown?: number;
+};
+
+export type FoodIngredientPresentationClassification = {
+	label: "Vegan" | "Vegetarian";
+	value: string;
+};
+
+export type FoodIngredientPresentationRow = {
+	text: string;
+	depth: number;
+	path: string[];
+	percentageLabel: string | null;
+	classifications: FoodIngredientPresentationClassification[];
+};
+
+export type FoodIngredientPresentationMetric = {
+	label: string;
+	value: string;
+};
+
+export type FoodIngredientPresentationTagGroup = {
+	label: string;
+	values: string[];
+};
+
+export type FoodIngredientPresentation = {
+	ingredientText: string | null;
+	rows: FoodIngredientPresentationRow[];
+	additives: string[];
+	metrics: FoodIngredientPresentationMetric[];
+	tagGroups: FoodIngredientPresentationTagGroup[];
+	hasSourceAnalysis: boolean;
 };
 
 export type FoodPackageQuantity = {
@@ -217,7 +311,9 @@ export interface FdcFood {
     brandOwner?: string;
     foodCategory?: string;
     brandedFoodCategory?: string;
-    foodNutrients: FdcNutrient[];
+	    foodNutrients: FdcNutrient[];
+	/** Source rows retained for uncertainty and mapping review, never for nutrition math. */
+	nutrientSourceReview?: FoodNutrientSourceReview[];
     /** Nutrient IDs explicitly reported by the source. Missing IDs are unknown, not zero. */
     reportedNutrientIds?: number[];
     // Branded food fields (optional)
@@ -243,6 +339,7 @@ export interface FdcFood {
     ingredientList?: string[];
 	structuredIngredients?: FoodStructuredIngredient[];
 	ingredientAnalysis?: FoodIngredientAnalysis;
+	ingredientPresentation?: FoodIngredientPresentation;
 	additives?: string[];
     allergens?: string[];
     traces?: string[];

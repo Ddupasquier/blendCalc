@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PillRow from "$lib/components/common/display/PillRow/PillRow.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import type { FoodPreferencePickerProps } from "./types";
 
 	let {
@@ -18,6 +19,7 @@
 		selectLabel,
 		selectValue,
 		title,
+		unresolvedValues = [],
 	}: FoodPreferencePickerProps = $props();
 
 	const addSearchValue = () => {
@@ -110,6 +112,14 @@
 		/>
 	{:else}
 		<p class="preference-empty">{emptyLabel}</p>
+	{/if}
+
+	{#if unresolvedValues.length}
+		<StatusMessage
+			tone="warning"
+			title="Waiting for review"
+			message={`${unresolvedValues.join(", ")} ${unresolvedValues.length === 1 ? "is" : "are"} saved, but warnings will not use ${unresolvedValues.length === 1 ? "it" : "them"} until there is an exact reviewed match.`}
+		/>
 	{/if}
 </section>
 

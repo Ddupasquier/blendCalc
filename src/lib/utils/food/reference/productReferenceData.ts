@@ -24,6 +24,8 @@ export type NutrientSourceMapping = CanonicalNutrientDefinition & {
 	sourceNutrientName: string | null;
 	sourceUnitName: string;
 	priority: number;
+	mappingMethod?: string;
+	mappingReviewReference?: string;
 };
 
 export type NutrientUnitConversion = {
@@ -167,8 +169,8 @@ export const readProductReferenceData = async (
 				.eq("enabled", true),
 			supabase
 				.from("nutrient_source_mappings")
-				.select(
-					"source_key, source_nutrient_key, source_nutrient_name, source_unit_name, nutrient_id, priority",
+					.select(
+						"source_key, source_nutrient_key, source_nutrient_name, source_unit_name, nutrient_id, priority, mapping_method, review_reference",
 				)
 				.eq("enabled", true)
 				.eq("review_status", "approved")
@@ -248,9 +250,11 @@ export const readProductReferenceData = async (
 				sourceKey: mapping.source_key,
 				sourceNutrientKey: mapping.source_nutrient_key,
 				sourceNutrientName: mapping.source_nutrient_name,
-				sourceUnitName: mapping.source_unit_name,
-				priority: mapping.priority,
-				...definition,
+					sourceUnitName: mapping.source_unit_name,
+					priority: mapping.priority,
+					mappingMethod: mapping.mapping_method,
+					mappingReviewReference: mapping.review_reference ?? undefined,
+					...definition,
 			}];
 		}),
 		nutrientConversions: (conversionsResult.data ?? []).map((conversion) => {

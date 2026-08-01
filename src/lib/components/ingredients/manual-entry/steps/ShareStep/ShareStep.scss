@@ -69,3 +69,29 @@
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-medium;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.share-step__summary,
+	.share-step__evidence {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+	}
+
+	.share-step__summary strong {
+		font-size: $app-font-size-md;
+	}
+
+	.share-step__summary p,
+	.share-step__evidence p {
+		font-size: $app-font-size-xs;
+	}
+
+	.share-step__macro-row {
+		gap: $app-gap-xs;
+	}
+
+	.share-step__macro-row span {
+		gap: $app-gap-2xs;
+		padding: $app-gap-xs;
+	}
+}

@@ -4,7 +4,10 @@ import type { LayoutServerLoad } from "./$types";
 import { getPasswordUpgradeNext } from "$lib/utils/auth/passwordUpgrade";
 import { getSignedAvatarUrl, getUserProfile } from "$lib/utils/profile/profile";
 import { getDefaultDisplayName } from "$lib/utils/profile/profileValidation";
-import { getUserAppRole } from "$lib/utils/moderation/moderation";
+import {
+	getElevatedAppRole,
+	getUserAppRole,
+} from "$lib/utils/moderation/moderation";
 import {
 	getTutorialPreference,
 	shouldAutomaticallyShowTutorial,
@@ -63,6 +66,14 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 				profile?.avatar_path,
 			),
 		}));
+	const claimedElevatedRole = getElevatedAppRole(user.appRoleClaim);
+	const rolePromise = user.appRoleClaim === "user"
+		? Promise.resolve(null)
+		: getUserAppRole(locals.supabase, user.id).then((databaseRole) =>
+			databaseRole === claimedElevatedRole || user.appRoleClaim === null
+				? databaseRole
+				: null,
+		);
 	const [
 		{ profile, avatarUrl },
 		role,
@@ -72,7 +83,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		appReferenceCatalog,
 	] = await Promise.all([
 		profileWithAvatarPromise,
-		getUserAppRole(locals.supabase, user.id),
+		rolePromise,
 		getTutorialPreference(locals.supabase, user.id),
 		getServingMeasureCatalog(),
 		getNutritionCompletenessCatalog(),

@@ -64,11 +64,12 @@ const getFieldCompleteness = (
 			return getArrayScore(draft.categories) +
 				(draft.categoryResolution ? 10 : 0) +
 				Number(Boolean(draft.resolvedCategory));
-		case "serving":
-			return Number(draft.hasSourceServing === true) * 10 +
-				Number(draft.servingWeightGrams > 0) +
-				Number(Boolean(draft.servingLabel.trim())) +
-				Number(Boolean(draft.volumeEquivalent));
+			case "serving":
+				return Number(draft.hasSourceServing === true) * 10 +
+					Number(draft.servingWeightGrams > 0) +
+					Number(Boolean(draft.servingLabel.trim())) +
+					Number(Boolean(draft.volumeEquivalent)) +
+					Number(Boolean(draft.serving?.origin && draft.serving.origin !== "unknown"));
 		case "ingredients":
 			return (draft.ingredients?.trim().length ?? 0) +
 				getArrayScore(draft.ingredientList) * 10;
@@ -183,9 +184,10 @@ const applySelectedField = (
 			return {
 				...result,
 				servingLabel: selected.servingLabel,
-				servingWeightGrams: selected.servingWeightGrams,
-				hasSourceServing: selected.hasSourceServing,
-				volumeEquivalent: selected.volumeEquivalent,
+					servingWeightGrams: selected.servingWeightGrams,
+					hasSourceServing: selected.hasSourceServing,
+					serving: selected.serving,
+					volumeEquivalent: selected.volumeEquivalent,
 			};
 		case "ingredients":
 			return {

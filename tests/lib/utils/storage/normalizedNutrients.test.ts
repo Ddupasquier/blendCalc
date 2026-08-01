@@ -22,7 +22,15 @@ const createSupabaseMock = (options?: { nutrientReadFails?: boolean }) => {
 									value_origin: "reported",
 									source: "usda",
 									source_reference: "123",
-									confidence: "source-verified",
+							confidence: "source-verified",
+							value_status: "reported",
+							standard_error: 0.2,
+							source_nutrient_key: "1003",
+							source_nutrient_code: "203",
+							mapping_status: "canonical",
+							mapping_method: "source-identifier",
+							mapping_review_reference: "usda-fdc",
+							derivation_method: null,
 									nutrient_definitions: {
 										nutrient_id: 1003,
 										nutrient_name: "Protein",
@@ -56,7 +64,11 @@ describe("normalized nutrient Supabase reads", () => {
 			expect.objectContaining({
 				nutrientId: 1003,
 				nutrientName: "Protein",
-				value: 8,
+					value: 8,
+					valueStatus: "reported",
+					standardError: 0.2,
+					sourceNutrientCode: "203",
+					mappingStatus: "canonical",
 			}),
 		]);
 		expect(mock.from).toHaveBeenCalledWith("food_nutrients");

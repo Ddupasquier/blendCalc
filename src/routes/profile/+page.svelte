@@ -18,6 +18,10 @@
 		getServingSizeDisplayValue,
 		type DefaultServingUnit,
 	} from "$lib/utils/profile/foodPreferences";
+	import {
+		getDeviceRegulatoryRegionSuggestion,
+		type RegulatoryRegionSelectionSource,
+	} from "$lib/utils/profile/regulatoryRegion";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import {
 		applyThemePreference,
@@ -86,7 +90,53 @@
 		sensitiveAcknowledged:
 			form?.foodPreferenceValues?.sensitiveAcknowledged ??
 			Boolean(data.foodPreferences?.sensitiveAcknowledgedAt),
+		regulatoryRegionCode:
+			form?.foodPreferenceValues?.regulatoryRegionCode ??
+			data.foodPreferences?.regulatoryRegionCode ??
+			"",
+		regulatoryRegionSource:
+			form?.foodPreferenceValues?.regulatoryRegionSource ??
+			data.foodPreferences?.regulatoryRegionSource ??
+			null,
 	});
+	let regulatoryRegionCode = $state("");
+	let regulatoryRegionSource = $state<RegulatoryRegionSelectionSource | null>(null);
+	let lastRegulatoryRegionSeed = "";
+	const regulatoryRegionSeed = $derived(JSON.stringify({
+		code: incomingFoodPreferenceValues.regulatoryRegionCode,
+		source: incomingFoodPreferenceValues.regulatoryRegionSource,
+	}));
+
+	$effect(() => {
+		const seed = regulatoryRegionSeed;
+		if (seed === lastRegulatoryRegionSeed) return;
+		lastRegulatoryRegionSeed = seed;
+		regulatoryRegionCode = incomingFoodPreferenceValues.regulatoryRegionCode;
+		regulatoryRegionSource = incomingFoodPreferenceValues.regulatoryRegionSource;
+		if (!browser || regulatoryRegionCode) return;
+
+		const suggestion = getDeviceRegulatoryRegionSuggestion(
+			navigator.languages,
+			data.regulatoryRegionOptions,
+		);
+		if (suggestion) {
+			regulatoryRegionCode = suggestion;
+			regulatoryRegionSource = "device";
+		}
+	});
+
+	const selectRegulatoryRegion = (value: string) => {
+		regulatoryRegionCode = value;
+		regulatoryRegionSource = value ? "account" : null;
+	};
+	const selectedRegulatoryRegion = $derived(
+		data.regulatoryRegionOptions.find((option) =>
+			option.regionCode === regulatoryRegionCode
+		) ?? null,
+	);
+	const hasUnsupportedRegulatoryRegion = $derived(
+		Boolean(regulatoryRegionCode && !selectedRegulatoryRegion),
+	);
 	const normalizePreferenceValue = (value: string) =>
 		value.toLocaleLowerCase().trim().replace(/\s+/g, " ");
 	const uniquePreferenceValues = (values: string[]) => {
@@ -126,13 +176,14 @@
 		allergens: {
 			title: "Allergens",
 			helper:
-				"Adds a warning when a food's ingredients or allergen details may conflict.",
+				"Reviewed matches add warnings when food details conflict. New terms stay saved while their match is reviewed.",
 			searchLabel: "Type your own allergen",
 			selectLabel: "Common allergens",
 		},
 		dietaryRestrictions: {
 			title: "Dietary restrictions",
-			helper: "Warns on possible conflicts. It never prevents adding an item.",
+			helper:
+				"Reviewed matches warn on possible conflicts without preventing an item from being added.",
 			searchLabel: "Type your own restriction",
 			selectLabel: "Common restrictions",
 		},
@@ -263,7 +314,29 @@
 	const restrictionOptions = $derived(
 		getOptionRows(suggestedRestrictionLabels, dietaryRestrictions),
 	);
+	const unresolvedAllergens = $derived(
+		(data.foodPreferences?.preferenceResolutions ?? [])
+			.filter((resolution) =>
+				resolution.ruleType === "allergen" && resolution.status === "unresolved"
+			)
+			.map((resolution) => resolution.rawValue),
+	);
+	const unresolvedDietaryRestrictions = $derived(
+		(data.foodPreferences?.preferenceResolutions ?? [])
+			.filter((resolution) =>
+				resolution.ruleType === "dietary_restriction" &&
+				resolution.status === "unresolved"
+			)
+			.map((resolution) => resolution.rawValue),
+	);
 	const savedPreferenceSummary = $derived([
+		regulatoryRegionCode
+			? {
+					label: "Label region",
+					value: selectedRegulatoryRegion?.displayName ??
+						`Unavailable (${regulatoryRegionCode})`,
+				}
+			: null,
 		incomingFoodPreferenceValues.unitSystem
 			? {
 					label: "Units",
@@ -554,6 +627,37 @@
 		>
 			<div class="preference-grid">
 				<label>
+					<span>Package-label region</span>
+					<select
+						name="regulatoryRegionCode"
+						value={regulatoryRegionCode}
+						disabled={foodPreferencesDisabled}
+						onchange={(event) =>
+							selectRegulatoryRegion(event.currentTarget.value)}
+					>
+						<option value="">Personal settings only</option>
+						{#if hasUnsupportedRegulatoryRegion}
+							<option value={regulatoryRegionCode} disabled>
+								Previously saved region unavailable ({regulatoryRegionCode})
+							</option>
+						{/if}
+						{#each data.regulatoryRegionOptions as option (option.regionCode)}
+							<option value={option.regionCode}>{option.displayName}</option>
+						{/each}
+					</select>
+					<input
+						type="hidden"
+						name="regulatoryRegionSource"
+						value={regulatoryRegionSource ?? ""}
+					/>
+					<small>
+						{regulatoryRegionSource === "device"
+							? "Suggested from this device. Saving keeps it with your account."
+							: "Adds regional label context without removing any personal warning."}
+					</small>
+				</label>
+
+				<label>
 					<span>Preferred units</span>
 					<select
 						name="unitSystem"
@@ -566,8 +670,8 @@
 					</select>
 				</label>
 
-					<label>
-						<span>Default serving size</span>
+				<label>
+					<span>Default serving size</span>
 					<div class="inline-fields">
 						<NumberInput
 							name="defaultSmoothieServingSize"
@@ -610,6 +714,7 @@
 					filteredOptions={getFilteredOptions("allergens")}
 					disabled={foodPreferencesDisabled}
 					emptyLabel="No allergens saved."
+					unresolvedValues={unresolvedAllergens}
 					onAdd={(value) => addPreferenceValue("allergens", value)}
 					onRemove={(value) => removePreferenceValue("allergens", value)}
 					onSearchChange={(value) => setPreferenceSearch("allergens", value)}
@@ -628,6 +733,7 @@
 					filteredOptions={getFilteredOptions("dietaryRestrictions")}
 					disabled={foodPreferencesDisabled}
 					emptyLabel="No restrictions saved."
+					unresolvedValues={unresolvedDietaryRestrictions}
 					onAdd={(value) => addPreferenceValue("dietaryRestrictions", value)}
 					onRemove={(value) =>
 						removePreferenceValue("dietaryRestrictions", value)}

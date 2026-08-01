@@ -29,3 +29,20 @@
 		border-radius: $app-shell-radius-control;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.nutrition-serving-select {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm 0;
+
+		span {
+			font-size: $app-font-size-xs;
+		}
+
+		select {
+			min-height: $app-shell-control-height-narrow;
+			padding-inline: $app-shell-control-padding-x-compact;
+			font-size: $app-font-size-sm;
+		}
+	}
+}

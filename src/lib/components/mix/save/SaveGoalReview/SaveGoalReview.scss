@@ -71,3 +71,29 @@
 		background: $app-warning-bg;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.save-goal-review,
+	.save-goal-review__list,
+	.save-goal-review__row {
+		gap: $app-gap-xs;
+	}
+
+	.save-goal-review > p,
+	.save-goal-review__row strong {
+		font-size: $app-font-size-sm;
+	}
+
+	.save-goal-review__row {
+		padding: $app-gap-xs;
+
+		span {
+			font-size: $app-font-size-xs;
+		}
+	}
+
+	.save-goal-review__badge {
+		padding: $app-gap-2xs $app-gap-xs;
+		font-size: $app-font-size-xs;
+	}
+}

@@ -16,3 +16,14 @@
 	font-size: $app-font-size-sm;
 	line-height: 1.35;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.product-image-evidence {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+	}
+
+	.product-image-evidence p {
+		font-size: $app-font-size-xs;
+	}
+}

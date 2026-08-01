@@ -8,6 +8,7 @@ export type IngredientCardProps = {
 	quantity: number;
 	unit: ServingMeasureUnit;
 	gramsLabel: string;
+	conversionBasis?: string | null;
 	warning?: string | null;
 	nutrientChips?: NutrientChip[];
 	conversionDetailsOpen?: boolean;

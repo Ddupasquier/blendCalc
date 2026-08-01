@@ -370,6 +370,9 @@ export const mergeMissingBarcodeProductFields = (
 		hasSourceServing: useSupplementServing
 			? supplement.hasSourceServing
 			: primary.hasSourceServing,
+		serving: useSupplementServing
+			? supplement.serving
+			: primary.serving,
 		volumeEquivalent: useSupplementServing
 			? supplement.volumeEquivalent
 			: primary.volumeEquivalent,

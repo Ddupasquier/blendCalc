@@ -124,4 +124,11 @@
 		gap: $app-gap-xs;
 		padding: $app-gap-xs;
 	}
+
+	.preference-editor-card__heading h3,
+	.preference-editor-card__heading p,
+	.preference-add-flow__label,
+	.preference-empty {
+		font-size: $app-font-size-sm;
+	}
 }

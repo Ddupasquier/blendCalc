@@ -168,6 +168,13 @@ select {
 	white-space: nowrap;
 }
 
+.ingredient-card__conversion-basis {
+	flex-basis: 100%;
+	color: $app-muted;
+	font-size: $app-font-size-xs;
+	line-height: 1.35;
+}
+
 .ingredient-card__warning {
 	display: grid;
 	gap: $app-gap-2xs;
@@ -209,5 +216,36 @@ select {
 @media (max-width: $app-breakpoint-sm) {
 	.ingredient-card__controls {
 		grid-template-columns: 1fr 1fr;
+	}
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.ingredient-card {
+		gap: $app-gap-xs;
+		padding: $app-gap-xs;
+	}
+
+	.ingredient-card__header {
+		gap: $app-gap-xs;
+		padding-right: calc($app-shell-action-icon-size + $app-gap-xs);
+
+		h5 {
+			font-size: $app-font-size-sm;
+		}
+	}
+
+	:global(.ingredient-card__remove) {
+		top: $app-gap-xs;
+		right: $app-gap-xs;
+	}
+
+	.ingredient-card__controls,
+	.ingredient-card__warning,
+	.ingredient-card__meta {
+		gap: $app-gap-xs;
+	}
+
+	.ingredient-card__warning {
+		padding: $app-gap-xs;
 	}
 }

@@ -53,14 +53,31 @@ describe("app-wide responsive architecture", () => {
 		expect(popover).toContain("overflow-y: auto");
 		expect(tutorial).toContain("$app-breakpoint-height-compact");
 		expect(scanner).toContain("env(safe-area-inset-bottom)");
+		expect(
+			readStyles("src/lib/components/common/sheets/SheetBase/SheetBase.scss"),
+		).toContain("min-height: 0");
 	});
 
 	it("applies compact behavior to shared controls and every primary route", () => {
 		const files = [
+			"src/app.scss",
+			"src/lib/components/app/TutorialOverlay/TutorialOverlay.scss",
+			"src/lib/components/common/actions/PrivilegedActionGroup/PrivilegedActionGroup.scss",
 			"src/lib/components/common/buttons/ActionButton/ActionButton.scss",
 			"src/lib/components/common/buttons/RoundedActionButton/RoundedActionButton.scss",
 			"src/lib/components/common/buttons/IconControlButton/IconControlButton.scss",
+			"src/lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.scss",
+			"src/lib/components/common/dialogs/TextInputDialog/TextInputDialog.scss",
 			"src/lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.scss",
+			"src/lib/components/common/display/MetadataPill/MetadataPill.scss",
+			"src/lib/components/common/display/Popover/Popover.scss",
+			"src/lib/components/common/feedback/StatusMessage/StatusMessage.scss",
+			"src/lib/components/common/forms/CheckboxGroup/CheckboxGroup.scss",
+			"src/lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.scss",
+			"src/lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.scss",
+			"src/lib/components/common/sheets/BottomSheet/BottomSheet.scss",
+			"src/lib/components/common/sheets/BottomSheetAction/BottomSheetAction.scss",
+			"src/lib/components/common/sheets/SheetBase/SheetBase.scss",
 			"src/routes/page.scss",
 			"src/routes/auth/page.scss",
 			"src/routes/auth/update-password/page.scss",

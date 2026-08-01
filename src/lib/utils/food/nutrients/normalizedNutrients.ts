@@ -12,6 +12,14 @@ export type NormalizedNutrientRow = {
 	source: NonNullable<FdcNutrient["source"]>;
 	sourceReference: string | null;
 	confidence: NonNullable<FdcNutrient["confidence"]>;
+	valueStatus: NonNullable<FdcNutrient["valueStatus"]>;
+	standardError: number | null;
+	sourceNutrientKey: string | null;
+	sourceNutrientCode: string | null;
+	mappingStatus: NonNullable<FdcNutrient["mappingStatus"]>;
+	mappingMethod: string | null;
+	mappingReviewReference: string | null;
+	derivationMethod: string | null;
 };
 
 export const normalizedRowsToNutrients = (
@@ -44,6 +52,18 @@ export const normalizedRowsToNutrients = (
 			source: row.source,
 			sourceReference: row.sourceReference?.trim() || undefined,
 			confidence: row.confidence,
+			valueStatus: row.valueStatus,
+			standardError:
+				Number.isFinite(row.standardError) && Number(row.standardError) >= 0
+					? Number(row.standardError)
+					: undefined,
+			sourceNutrientKey: row.sourceNutrientKey?.trim() || undefined,
+			sourceNutrientCode: row.sourceNutrientCode?.trim() || undefined,
+			mappingStatus: row.mappingStatus,
+			mappingMethod: row.mappingMethod?.trim() || undefined,
+			mappingReviewReference:
+				row.mappingReviewReference?.trim() || undefined,
+			derivationMethod: row.derivationMethod?.trim() || undefined,
 		});
 	}
 

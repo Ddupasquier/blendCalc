@@ -63,5 +63,40 @@ export const getFoodDataQualityMessage = (
 				message:
 					`The source assembled label metadata from ${formatCount(notice.count)} contributing records. This note does not replace field-level verification.`,
 			};
+		case "NUTRIENT_VALUES_DERIVED":
+			return {
+				tone: "info",
+				title: "Some nutrient values were calculated",
+				message:
+					`${formatCount(notice.count)} values were derived from other reported data. The calculation does not replace the original source values.`,
+			};
+		case "NUTRIENT_STANDARD_ERROR_REPORTED":
+			return {
+				tone: "info",
+				title: "The source included measurement uncertainty",
+				message:
+					`${formatCount(notice.count)} nutrient values include a source-reported standard error. blendCalc keeps that context separate and does not alter the displayed amount.`,
+			};
+		case "NUTRIENT_SOURCE_VALUES_UNQUANTIFIED":
+			return {
+				tone: "info",
+				title: "The source reported nutrients without exact amounts",
+				message:
+					`${formatCount(notice.count)} source values were marked as trace or present without a measured amount. They are not treated as zero.`,
+			};
+		case "NUTRIENT_SOURCE_VALUES_MISSING":
+			return {
+				tone: "info",
+				title: "The source marked some nutrient values as unavailable",
+				message:
+					`${formatCount(notice.count)} source values were explicitly missing. They remain unavailable instead of becoming zero.`,
+			};
+		case "NUTRIENT_SOURCE_ROWS_UNMAPPED":
+			return {
+				tone: "info",
+				title: "Some source nutrients are awaiting mapping review",
+				message:
+					`${formatCount(notice.count)} source nutrient rows are not mapped to a blendCalc nutrient. They are retained for review but excluded from nutrition math.`,
+			};
 	}
 };

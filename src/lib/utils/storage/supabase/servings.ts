@@ -18,6 +18,12 @@ type FoodServingRecord = Pick<
 	| "amount"
 	| "unit_key"
 	| "is_primary"
+	| "measure_type"
+	| "is_household_measure"
+	| "source_measure_key"
+	| "origin"
+	| "gram_weight_method"
+	| "calculation_basis"
 	| "source"
 	| "source_reference"
 	| "confidence"
@@ -49,7 +55,7 @@ export const readFoodServingsByParent = async (
 
 	for (const parentIdChunk of chunkValues(uniqueParentIds)) {
 		const baseQuery = supabase.from("food_servings").select(
-			"user_food_list_item_id, custom_food_id, shared_product_id, serving_order, label, gram_weight, amount, unit_key, is_primary, source, source_reference, confidence",
+			"user_food_list_item_id, custom_food_id, shared_product_id, serving_order, label, gram_weight, amount, unit_key, is_primary, measure_type, is_household_measure, source_measure_key, origin, gram_weight_method, calculation_basis, source, source_reference, confidence",
 		);
 		const response = parentColumn === "user_food_list_item_id"
 			? await baseQuery.in("user_food_list_item_id", parentIdChunk)
@@ -72,6 +78,13 @@ export const readFoodServingsByParent = async (
 			amount: row.amount === null ? null : Number(row.amount),
 			unitKey: row.unit_key,
 			isPrimary: row.is_primary,
+			measureType: row.measure_type,
+			isHouseholdMeasure: row.is_household_measure,
+			sourceMeasureKey: row.source_measure_key,
+			origin: row.origin as NormalizedServingRow["origin"],
+			gramWeightMethod:
+				row.gram_weight_method as NormalizedServingRow["gramWeightMethod"],
+			calculationBasis: row.calculation_basis,
 			source: row.source as NormalizedServingRow["source"],
 			sourceReference: row.source_reference,
 			confidence: row.confidence as NormalizedServingRow["confidence"],

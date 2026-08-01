@@ -111,7 +111,7 @@
 		</div>
 	</ViewTop>
 
-	<ViewBody scroll>
+	<ViewBody className="nutrition-detail-view__body" scroll>
 		<div class="nutrition-detail-view__panel">
 			<NutritionPanel
 				{food}

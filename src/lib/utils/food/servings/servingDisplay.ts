@@ -25,3 +25,35 @@ export const formatNutritionServingSize = (serving: FoodServing): string => {
 	const householdLabel = getHouseholdServingLabel(serving);
 	return householdLabel ? `${householdLabel} (${gramWeight})` : gramWeight;
 };
+
+export const formatServingOrigin = (serving: FoodServing): string => {
+	switch (serving.origin) {
+		case "package-label":
+			return "Package label";
+		case "source-household-measure":
+			return "Source household measure";
+		case "source-weight":
+			return "Source-reported weight";
+		case "user-entered":
+			return "User-entered serving";
+		case "calculated-conversion":
+			return "Calculated conversion";
+		default:
+			return "Origin not recorded";
+	}
+};
+
+export const formatServingGramWeightMethod = (serving: FoodServing): string => {
+	switch (serving.gramWeightMethod) {
+		case "source-reported":
+			return "Weight reported directly by the source";
+		case "exact-unit-conversion":
+			return "Weight calculated with an exact unit conversion";
+		case "user-reported":
+			return "Weight entered by a user";
+		case "calculated-conversion":
+			return "Weight calculated from a reported serving conversion";
+		default:
+			return "Weight basis not recorded";
+	}
+};

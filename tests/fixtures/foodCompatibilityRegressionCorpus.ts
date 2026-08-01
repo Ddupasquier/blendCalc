@@ -4,6 +4,10 @@ import type {
 } from "$lib/utils/food/quality/compatibility";
 import type { FdcFood } from "$lib/utils/food/types";
 
+// Evaluation-only fixtures intentionally start from prepared facts. Source intake,
+// relational extraction, API serialization, and user-copy coverage live in the
+// synthetic end-to-end corpus and its database test.
+
 type RegressionPreference = {
 	allergens?: string[];
 	dietaryRestrictions?: string[];

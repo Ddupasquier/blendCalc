@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import ProductIngredientsPanel from "$lib/components/ingredients/nutrition/ProductIngredientsPanel/ProductIngredientsPanel.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
@@ -39,5 +39,37 @@ describe("ProductIngredientsPanel", () => {
 
 		expect(screen.queryByRole("heading", { name: "Ingredients" }))
 			.not.toBeInTheDocument();
+	});
+
+	it("presents the server-owned structured ingredient analysis", async () => {
+		render(ProductIngredientsPanel, {
+			props: {
+				food: createFood({
+					ingredientPresentation: {
+						ingredientText: "Sauce (tomatoes, olive oil)",
+						rows: [{
+							text: "Tomatoes",
+							depth: 1,
+							path: ["Sauce", "Tomatoes"],
+							percentageLabel: "About 65%",
+							classifications: [{ label: "Vegan", value: "Yes" }],
+						}],
+						additives: ["Citric acid"],
+						metrics: [{ label: "Source analysis coverage", value: "92%" }],
+						tagGroups: [{ label: "Source analysis", values: ["Vegan"] }],
+						hasSourceAnalysis: true,
+					},
+				}),
+			},
+		});
+
+		await fireEvent.click(
+			screen.getByText("Ingredient details").closest("summary") as HTMLElement,
+		);
+		expect(screen.getByText("Tomatoes")).toBeInTheDocument();
+		expect(screen.getByText("About 65%")).toBeInTheDocument();
+		expect(screen.getByText(/Vegan — Yes/)).toBeInTheDocument();
+		expect(screen.getByText("92%")).toBeInTheDocument();
+		expect(screen.getByText("Citric acid")).toBeInTheDocument();
 	});
 });

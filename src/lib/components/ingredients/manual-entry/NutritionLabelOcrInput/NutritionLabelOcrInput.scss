@@ -81,3 +81,21 @@
 	font-size: $app-font-size-xs;
 	white-space: pre-wrap;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.nutrition-label-ocr {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+	}
+
+	.nutrition-label-ocr__heading strong,
+	.nutrition-label-ocr__review legend,
+	.nutrition-label-ocr__progress span,
+	.nutrition-label-ocr__raw-text summary {
+		font-size: $app-font-size-sm;
+	}
+
+	.nutrition-label-ocr__review p {
+		font-size: $app-font-size-xs;
+	}
+}

@@ -56,3 +56,27 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.setup-card {
+		padding: $app-gap-xs;
+	}
+
+	.panel-header {
+		gap: $app-gap-xs;
+		margin-bottom: $app-gap-xs;
+
+		h3 {
+			font-size: $app-font-size-md;
+		}
+
+		p {
+			font-size: $app-font-size-xs;
+		}
+	}
+
+	.mix-nutrients :global(.checkbox-item) {
+		padding: $app-gap-inline-compact $app-gap-xs;
+		font-size: $app-font-size-xs;
+	}
+}

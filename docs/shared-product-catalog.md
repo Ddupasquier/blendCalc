@@ -106,6 +106,16 @@ rather than being split on punctuation. The original canonical JSON and source
 observation remain the evidence authority, so the reported statement can be
 reconstructed without guessing.
 
+Authenticated catalog reads project that evidence through one server-owned ingredient
+presentation model. It formats nested source paths, explicit exact/estimated percentage
+bounds, additives, source dietary classifications, analysis coverage, and reviewed
+ingredient tags for the nutrition deep dive. Invalid or absent percentages remain
+absent, source analysis stays visibly distinct from blendCalc verification, and warning
+explanations link the exact compatibility fact, source wording, active policy version,
+confidence, and matching structured path when available. Browser components do not
+reconstruct those semantics or use product names, brands, or categories as safety
+evidence.
+
 Canonical ingredient terms, aliases, parent relationships, derivatives, and processing
 relationships are review-gated database records. Ingestion never creates them merely
 because a provider emitted a word. Derivatives and processed ingredients default to no
@@ -116,14 +126,24 @@ match rule, active policy version, and source observation used to create them.
 Compatibility policy is deployed as an immutable version-bound bundle rather than a
 mutable set of global rules. A draft clones the current extraction rules, conflict
 rules, reviewed ingredient aliases and relationships, jurisdiction exemptions, and
-regional profiles. Activation records complete snapshots plus a deterministic content
+regional profiles, plus reviewed mappings from canonical ingredient terminology to
+preference tags. Activation records complete snapshots plus a deterministic content
 hash, switches the active version, re-extracts every product, observation, and
-submission fact, and rebuilds the preference option catalog in one transaction. A
-retired bundle can be reactivated through the same transaction for rollback. Runtime
-views expose only the active bundle, and facts are constrained to a match rule from the
-same policy version, preventing mixed-version evaluations. Jurisdiction exemptions are
-retained as context and cannot suppress a warning for an explicitly selected personal
-preference.
+submission fact, rebuilds the preference option catalog, and re-resolves saved account
+preferences in one transaction. A retired bundle can be reactivated through the same
+transaction for rollback. Runtime views expose only the active bundle, and facts and
+preference mappings remain bound to that version, preventing mixed-version evaluations.
+Jurisdiction exemptions are retained as context and cannot suppress a warning for an
+explicitly selected personal preference.
+
+The active terminology bundle currently includes reviewed English, French, and Spanish
+aliases for canonical allergen ingredients and declarations. Matching is accent-aware,
+language-scoped when source language is known, and limited to exact declarations or
+token-bounded structured/list ingredients. It does not inspect product names, brands,
+categories, or raw unparsed ingredient prose. Explicitly unsupported source languages
+leave policy coverage incomplete rather than producing an unchecked success. Regional
+labeling exemptions retain reviewed derivative, processing, threshold, and product
+context, but remain explanatory only and never remove a personal warning.
 
 Package precautionary statements are stored separately from ordinary ingredients and
 provider analysis. Each row preserves exact wording, statement type, normalized
@@ -133,6 +153,9 @@ Compatibility facts link the exact statement and immutable match rule; the user-
 nutrition view can group statements with friendly headings while still showing the
 source wording. Legacy trace arrays can remain compatibility evidence, but they do not
 fabricate a package statement when exact wording was not reported.
+If a flat trace field and an exact package statement identify the same allergen, the
+statement-linked fact replaces the duplicate flat fact so one disclosure cannot create
+two warnings.
 
 Source/API product names are normalized to readable title-style capitalization and use
 `&` instead of the standalone word `and` before publication so inconsistent vendor
@@ -152,6 +175,10 @@ unchanged.
   Select values independently by field and preserve the accepted provider, source
   reference, and evidence for every field.
 - A reported zero is kept as zero. A missing nutrient remains unknown.
+- Accepted nutrients retain reported, reported-zero, or derived status plus any exact
+  source-reported standard error, source nutrient key/code, mapping decision, and
+  derivation method. Trace, present-but-unquantified, missing, invalid, and unmapped
+  source facts remain review evidence and never enter nutrition or Mix math.
 - Canonical categories are resolved through database options and mappings; they are not
   replaced with a generic packaged-food label during publication.
 - Raw USDA and Open Food Facts category values remain attached to the food payload so
@@ -242,7 +269,7 @@ non-private values.
 | Field source | `shared_product_field_provenance` joined to `shared_product_observations` | Selected observation, method, confidence, source reference, and observation date for one accepted field | Unknown; never fall back to the whole-product provider |
 | Source quality | `shared_products.food.sourceMetadata` | Source-reported completeness, schema version, quality tags, dates, languages, and obsolete state | Not reported; absence is not a low-quality verdict |
 | Serving source | `food_servings` | Reported serving and its source, reference, confidence, observation, or revision | No reported serving; the 100g nutrition basis is not a serving claim |
-| Nutrient uncertainty | `generic_food_nutrients` | Source-reported standard error, observation count, source code, mapping, and value status | Unknown uncertainty; absence does not alter nutrient math |
+| Nutrient uncertainty | `food_nutrients`, `generic_food_nutrients`, and parent `nutrientSourceReview` | Source-reported standard error, source key/code, value status, mapping decision, review reference, and derivation method | Unknown uncertainty; absence does not alter nutrient math and nonnumeric source facts never become zero |
 | Compatibility policy | `food_compatibility_policy_versions` | Immutable reviewed match/conflict rules and references for one policy version | No reproducible policy version |
 | Compatibility evidence | `product_compatibility_facts` | Policy-versioned evidence from ingredients, declarations, traces, source identity, or reviewed analysis | No conflict found in available evidence; never proof that a food is safe |
 | Relational ingredient evidence | `product_ingredient_statements` and `product_ingredient_components` | Lossless ordered projection of reported ingredient text/list/tree, including nesting and reported percentages | Keep the source statement unparsed when structure was not reported; never guess boundaries or percentages |
@@ -257,24 +284,36 @@ profile context, their personalized result remains `not_checked`; authenticated 
 reads use the same contract with current user preferences and policy coverage.
 Its separate bounded revision-history endpoint exposes immutable revision dates and
 evidence-backed field changes without exposing historical food snapshots or private
-moderation evidence. It does not currently expose nutrient uncertainty or policy
-snapshots. The app reads normalized nutrition and serving values plus compatibility
-evidence; deeper provenance, quality, uncertainty, and history remain future
-presentations rather than inferred UI claims.
+moderation evidence. API nutrients expose safe value-status, standard-error, source-key,
+mapping, and derivation metadata; internal mapping review references remain
+moderator-only. The app keeps ordinary nutrition concise and translates only useful
+bounded uncertainty summaries into the closed Data quality disclosure. Policy snapshots
+and broader history remain future presentations rather than inferred UI claims.
+
+Authenticated app reads may additionally resolve an account's optional regulatory
+region against the regional profile in that same immutable policy version. The result
+records the authority and policy reference plus which selected allergen settings use
+regulated terminology in that profile. Region is explanation and coverage context only:
+it never changes product facts or suppresses personal conflict warnings. Unsupported
+regions remain explicitly unchecked. Public API v1 reads have no account preference
+context and therefore do not serialize this personalized regional evaluation.
 
 ## Serving data
 
 Reported serving sizes are normalized into `food_servings` when products are saved,
 submitted, approved, revised, or observed. Each row keeps the readable label, gram
-weight, optional amount/unit pair, primary flag, source reference, and confidence. The
-product JSON remains a compatibility snapshot, but the normalized rows are what
-nutrition views load and what future mix conversions should consume.
+weight, optional amount/unit pair, primary flag, source reference, confidence, exact
+measure metadata, serving origin, gram-weight method, and any measured calculation
+basis. The product JSON remains a compatibility snapshot, but normalized rows are what
+nutrition and Mix consume.
 
 The nutrition view defaults to the primary reported serving when one exists and also
 offers a 100g standard view. Missing source serving data stays missing; a 100g nutrition
 basis is not treated as proof that the package reports a 100g serving. Database triggers
 synchronize future writes, and the serving migration backfills valid serving data from
-existing catalog and user food records.
+existing catalog and user food records only when an exact serving or user-entered value
+supports it. Provider identity, food identity, names, and categories do not establish a
+serving origin or weight-to-volume relationship.
 
 ## Runtime source boundary
 

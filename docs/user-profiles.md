@@ -31,6 +31,35 @@ This document owns profile behavior and privacy. Auth configuration belongs in
 - The app-wide semantic theme properties live in `src/styles/_themes.scss`; individual
   views must not maintain separate dark-mode overrides.
 
+## Food safety preferences
+
+- Food safety and dietary preferences remain optional account data. They include
+  allergens, dietary restrictions, nutrient priorities, units, a default serving size,
+  and an optional package-label region.
+- Package-label region options come from the active versioned regulatory policy in the
+  database. The browser may suggest a matching region only when its locale contains an
+  explicit region represented by those options; it never invents a country from a
+  language alone.
+- A device suggestion is not stored until the user saves the form. Once saved, the
+  concrete region code persists with the account across refreshes and devices, together
+  with whether it began as a device suggestion or an explicit account choice.
+- Regional policy adds authority, terminology, declaration, and coverage context. It
+  never removes or lowers a warning for an allergen or dietary restriction the user
+  selected.
+- If a stored region is not supported by the active policy version, evaluation reports
+  that no regional profile was checked and continues applying personal settings.
+- The account keeps the user's exact allergen and dietary wording. Automated checks use
+  a separate server-owned resolution row tied to the active policy version.
+- Canonical dropdown values resolve through reviewed compatibility tags. Custom text
+  resolves only through one exact reviewed canonical ingredient term or language-tagged
+  alias with an active preference mapping. The app does not guess from spelling
+  similarity or hard-coded synonyms.
+- Unmatched or ambiguous custom text remains saved and visibly marked as waiting for
+  review. It is not included in automated warnings until an exact mapping is reviewed
+  and activated.
+- Activating a reviewed mapping re-resolves existing account settings without changing
+  the wording the user entered.
+
 ## Profile images
 
 - Images are stored in the private `profile-avatars` Supabase Storage bucket.

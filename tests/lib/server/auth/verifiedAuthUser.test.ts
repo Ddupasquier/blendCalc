@@ -12,6 +12,7 @@ describe("readVerifiedAuthUser", () => {
 					email: "person@example.com",
 					app_metadata: { provider: "email" },
 					user_metadata: { display_name: "Person" },
+					app_role: "moderator",
 				},
 			},
 			error: null,
@@ -23,6 +24,7 @@ describe("readVerifiedAuthUser", () => {
 			email: "person@example.com",
 			app_metadata: { provider: "email" },
 			user_metadata: { display_name: "Person" },
+			appRoleClaim: "moderator",
 		});
 		expect(getClaims).toHaveBeenCalledTimes(1);
 	});
@@ -64,6 +66,7 @@ describe("readVerifiedAuthUser", () => {
 			email: "qa-user@blendcalc.local",
 			app_metadata: { provider: "email" },
 			user_metadata: { display_name: "QA User" },
+			appRoleClaim: null,
 		});
 		expect(getUser).toHaveBeenCalledTimes(1);
 		expect(getClaims).not.toHaveBeenCalled();

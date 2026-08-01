@@ -15,3 +15,10 @@ strong {
 	font: inherit;
 	text-align: right;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.nutrition-serving-statement {
+		gap: $app-gap-xs;
+		font-size: $app-font-size-sm;
+	}
+}

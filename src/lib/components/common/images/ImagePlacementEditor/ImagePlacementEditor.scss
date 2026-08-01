@@ -99,7 +99,23 @@
 }
 
 @media (max-width: $app-breakpoint-xs) {
+	.image-placement-editor,
+	.image-placement-editor__controls {
+		gap: $app-gap-sm;
+	}
+
+	.image-placement-editor__editing-preview {
+		gap: $app-gap-xs;
+	}
+
 	.image-placement-editor__presets {
 		grid-template-columns: 1fr;
+		gap: $app-gap-xs;
+	}
+
+	.image-placement-editor__copy p,
+	.image-placement-editor__rotation,
+	.image-placement-editor__controls label {
+		font-size: $app-font-size-xs;
 	}
 }

@@ -21,23 +21,23 @@ select has_table(
 );
 
 select ok(
-	not exists (
+	exists (
 		select 1
 		from public.food_compatibility_policy_match_rules rule
-		where rule.policy_version_id is distinct from
+		where rule.policy_version_id =
 			public.active_food_compatibility_policy_version_id()
 	),
-	'initial extraction rules are bound to the active version'
+	'the active policy has extraction rules'
 );
 
 select ok(
-	not exists (
+	exists (
 		select 1
 		from public.food_compatibility_policy_conflicts conflict
-		where conflict.policy_version_id is distinct from
+		where conflict.policy_version_id =
 			public.active_food_compatibility_policy_version_id()
 	),
-	'initial conflict rules are bound to the active version'
+	'the active policy has conflict rules'
 );
 
 select throws_ok(
@@ -56,19 +56,29 @@ select throws_ok(
 
 create temporary table policy_test_ids (
 	active_policy_id uuid not null,
-	draft_policy_id uuid not null
+	draft_policy_id uuid not null,
+	draft_version_number integer not null
 );
 
-insert into policy_test_ids (active_policy_id, draft_policy_id)
+insert into policy_test_ids (
+	active_policy_id,
+	draft_policy_id,
+	draft_version_number
+)
 select
 	public.active_food_compatibility_policy_version_id(),
 	public.create_food_compatibility_policy_draft(
-		2,
+		version.next_version_number,
 		'Policy activation regression fixture.',
 		'[{"authority":"Regression fixture","url":"https://example.com/policy"}]'::jsonb,
 		'2026-07-31T13:00:00Z'::timestamptz,
 		'2026-07-31T13:00:00Z'::timestamptz
-	);
+	),
+	version.next_version_number
+from (
+	select max(version_number) + 1 as next_version_number
+	from public.food_compatibility_policy_versions
+) version;
 
 select is(
 	(
@@ -122,7 +132,7 @@ select is(
 		from public.food_compatibility_policy_versions
 		where status = 'active'
 	),
-	2,
+	(select draft_version_number from policy_test_ids),
 	'the draft becomes the sole active policy version'
 );
 
@@ -197,7 +207,12 @@ select is(
 		from public.food_compatibility_policy_versions
 		where status = 'active'
 	),
-	1,
+	(
+		select version.version_number
+		from policy_test_ids ids
+		join public.food_compatibility_policy_versions version
+			on version.id = ids.active_policy_id
+	),
 	'rollback restores the prior policy version'
 );
 

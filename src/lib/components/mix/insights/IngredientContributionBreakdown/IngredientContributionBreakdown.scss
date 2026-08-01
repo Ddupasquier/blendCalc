@@ -111,3 +111,21 @@ small {
 	font-size: $app-font-size-2xs;
 	font-weight: $app-font-weight-semibold;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.contribution-breakdown,
+	.contribution-card {
+		padding: $app-gap-xs;
+	}
+
+	.contribution-breakdown__header,
+	.contribution-card__title {
+		margin-bottom: $app-gap-xs;
+	}
+
+	.contribution-breakdown__grid,
+	ul,
+	li {
+		gap: $app-gap-xs;
+	}
+}

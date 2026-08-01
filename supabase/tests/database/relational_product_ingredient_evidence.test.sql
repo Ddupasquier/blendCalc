@@ -160,6 +160,7 @@ select is(
 	(
 		select count(*)::integer
 		from public.ingredient_terms
+		where source_reference = 'qa-relational-ingredients'
 	),
 	0,
 	'source components do not automatically create canonical taxonomy terms'

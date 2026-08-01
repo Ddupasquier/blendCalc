@@ -65,4 +65,41 @@ describe("ProductDataQualityPanel", () => {
 			screen.queryByText("ingredients-unknown-score-above-0"),
 		).not.toBeInTheDocument();
 	});
+
+	it("explains nutrient uncertainty without exposing internal mapping details", async () => {
+		render(ProductDataQualityPanel, {
+			props: {
+				food: makeFood({
+					foodNutrients: [{
+						nutrientId: 1003,
+						nutrientName: "Protein",
+						nutrientNumber: "203",
+						unitName: "G",
+						value: 4,
+						valueOrigin: "derived",
+						valueStatus: "derived",
+						standardError: 0.2,
+						mappingReviewReference: "internal-review-42",
+					}],
+					nutrientSourceReview: [{
+						nutrientName: "Source trace nutrient",
+						valueStatus: "trace",
+						mappingStatus: "canonical",
+						mappingReviewReference: "internal-review-43",
+					}],
+				}),
+			},
+		});
+
+		const summary = screen.getByText("Data quality").closest("summary");
+		await fireEvent.click(summary as HTMLElement);
+
+		expect(screen.getByText("Some nutrient values were calculated"))
+			.toBeInTheDocument();
+		expect(screen.getByText("The source included measurement uncertainty"))
+			.toBeInTheDocument();
+		expect(screen.getByText("The source reported nutrients without exact amounts"))
+			.toBeInTheDocument();
+		expect(screen.queryByText(/internal-review-/)).not.toBeInTheDocument();
+	});
 });

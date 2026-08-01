@@ -38,6 +38,6 @@
 				$app-shell-nav-height-compact - env(safe-area-inset-bottom)
 		);
 		gap: $app-gap-sm;
-		padding: $app-gap-md $app-gap-sm 0;
+		padding: $app-gap-sm $app-gap-sm 0;
 	}
 }
