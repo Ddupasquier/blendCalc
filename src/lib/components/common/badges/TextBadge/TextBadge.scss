@@ -44,3 +44,11 @@
 	color: $app-muted;
 	background: $app-shell-surface-control;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	:global(.text-badge) {
+		min-height: 1.05rem;
+		padding: $app-gap-2xs $app-gap-xs;
+		font-size: $app-font-size-2xs;
+	}
+}

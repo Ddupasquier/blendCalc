@@ -37,6 +37,23 @@ export const createManualEntryFormState = () => {
 				confidence: "user-reported",
 			},
 		};
+		if (field === "serving") {
+			data.serving = {
+				label: data.servingLabel.trim() || "Serving",
+				gramWeight: data.servingWeightGrams ?? 0,
+				amount: data.useVolumeEquivalent
+					? data.volumeQuantity ?? undefined
+					: undefined,
+				unitKey: data.useVolumeEquivalent ? data.volumeUnit : undefined,
+				isPrimary: true,
+				measureType: "User serving",
+				isHouseholdMeasure: data.useVolumeEquivalent,
+				origin: "user-entered",
+				gramWeightMethod: "user-reported",
+				source: "user-label",
+				confidence: "user-reported",
+			};
+		}
 	};
 
 	const setNutrientValue = (

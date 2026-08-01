@@ -11,6 +11,7 @@ import {
 } from "$lib/utils/ingredients/ingredientSearchPagination";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
+import { parseSourceServingMeasure } from "$lib/utils/serving/servingAmount";
 
 type FdcDetailNutrient = {
 	amount?: number;
@@ -80,13 +81,26 @@ const normalizeFoodNutrient = (
 			!unitName ||
 			value === null
 		) return null;
-		return {
+			return {
 			nutrientId,
 			nutrientName,
 			nutrientNumber: String(nutrient.nutrientNumber ?? ""),
 			unitName,
-			value,
-		};
+				value,
+				valueOrigin: nutrient.valueOrigin ?? "reported",
+				valueStatus: nutrient.valueStatus ??
+					(value === 0 ? "reported-zero" : "reported"),
+				standardError: nutrient.standardError,
+				sourceNutrientKey:
+					nutrient.sourceNutrientKey ?? String(nutrientId),
+				sourceNutrientCode:
+					nutrient.sourceNutrientCode ??
+					(String(nutrient.nutrientNumber ?? "") || undefined),
+				mappingStatus: nutrient.mappingStatus ?? "canonical",
+				mappingMethod: nutrient.mappingMethod ?? "source-identifier",
+				mappingReviewReference: nutrient.mappingReviewReference,
+				derivationMethod: nutrient.derivationMethod,
+			};
 	}
 
 	const definition = nutrient.nutrient;
@@ -101,13 +115,19 @@ const normalizeFoodNutrient = (
 		!unitName ||
 		value === null
 	) return null;
-	return {
+		return {
 		nutrientId,
 		nutrientName,
 		nutrientNumber: String(definition?.number ?? ""),
 		unitName,
-		value,
-	};
+			value,
+			valueOrigin: "reported",
+			valueStatus: value === 0 ? "reported-zero" : "reported",
+			sourceNutrientKey: String(nutrientId),
+			sourceNutrientCode: String(definition?.number ?? "") || undefined,
+			mappingStatus: "canonical",
+			mappingMethod: "source-identifier",
+		};
 };
 
 const toPositiveNumber = (value: unknown) => {
@@ -132,19 +152,50 @@ const getSearchMeasureLabel = (measure: FdcSearchMeasure) =>
 		measure.measureUnitName?.trim(),
 	].filter(Boolean).join(" ");
 
+const getFdcServingOrigin = (food: FdcFoodResponse): FoodServing["origin"] => {
+	if (food.foodIdentityType === "packaged") return "package-label";
+	if (food.foodIdentityType === "generic") return "source-household-measure";
+	const dataType = food.dataType?.trim().toLocaleLowerCase("en-US");
+	if (dataType === "branded") return "package-label";
+	if (
+		dataType === "foundation" ||
+		dataType === "sr legacy" ||
+		dataType === "survey (fndds)" ||
+		dataType === "experimental"
+	) {
+		return "source-household-measure";
+	}
+	return "unknown";
+};
+
 const normalizeFoodServings = (
 	food: FdcFoodResponse,
 ): FoodServing[] => {
 	const sourceReference = String(food.fdcId);
+	const origin = getFdcServingOrigin(food);
 	const rows = [
 		...(food.foodPortions ?? []).flatMap((portion) => {
 			const label = getDetailPortionLabel(portion);
 			const gramWeight = toPositiveNumber(portion.gramWeight);
+			const amount = toPositiveNumber(portion.amount);
+			const sourceUnit = portion.measureUnit?.abbreviation?.trim() ||
+				portion.measureUnit?.name?.trim();
+			const parsedMeasure = amount !== null && sourceUnit
+				? parseSourceServingMeasure(`${amount} ${sourceUnit}`)
+				: null;
 			return label && gramWeight !== null
 				? [{
 					label,
 					gramWeight,
-					amount: toPositiveNumber(portion.amount),
+					amount,
+					unitKey: parsedMeasure?.unit,
+					measureType: portion.measureUnit?.name?.trim() || "Food portion",
+					isHouseholdMeasure: true,
+					sourceMeasureKey: portion.sequenceNumber === undefined
+						? undefined
+						: `portion:${portion.sequenceNumber}`,
+					origin,
+					gramWeightMethod: "source-reported" as const,
 					order: toPositiveNumber(portion.sequenceNumber),
 				}]
 				: [];
@@ -152,11 +203,24 @@ const normalizeFoodServings = (
 		...(food.foodMeasures ?? []).flatMap((measure) => {
 			const label = getSearchMeasureLabel(measure);
 			const gramWeight = toPositiveNumber(measure.gramWeight);
+			const amount = toPositiveNumber(measure.amount);
+			const sourceUnit = measure.measureUnitName?.trim();
+			const parsedMeasure = amount !== null && sourceUnit
+				? parseSourceServingMeasure(`${amount} ${sourceUnit}`)
+				: null;
 			return label && gramWeight !== null
 				? [{
 					label,
 					gramWeight,
-					amount: toPositiveNumber(measure.amount),
+					amount,
+					unitKey: parsedMeasure?.unit,
+					measureType: measure.measureUnitName?.trim() || "Food measure",
+					isHouseholdMeasure: true,
+					sourceMeasureKey: measure.rank === undefined
+						? undefined
+						: `measure:${measure.rank}`,
+					origin,
+					gramWeightMethod: "source-reported" as const,
 					order: toPositiveNumber(measure.rank),
 				}]
 				: [];
@@ -170,14 +234,20 @@ const normalizeFoodServings = (
 		return [{
 			label: serving.label,
 			gramWeight: serving.gramWeight,
-			amount: serving.amount ?? undefined,
-			isPrimary: serving.order === 1 || (index === 0 && !rows.some(
+				amount: serving.amount ?? undefined,
+				unitKey: serving.unitKey,
+				isPrimary: serving.order === 1 || (index === 0 && !rows.some(
 				(candidate) => candidate.order === 1,
 			)),
 			source: "usda" as const,
-			sourceReference,
-			confidence: "unknown" as const,
-		}];
+				sourceReference,
+				confidence: "unknown" as const,
+				measureType: serving.measureType,
+				isHouseholdMeasure: serving.isHouseholdMeasure,
+				sourceMeasureKey: serving.sourceMeasureKey,
+				origin: serving.origin,
+				gramWeightMethod: serving.gramWeightMethod,
+			}];
 	});
 };
 

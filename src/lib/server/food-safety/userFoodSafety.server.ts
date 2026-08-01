@@ -10,19 +10,21 @@ import {
 	type FoodSafetyEvaluationContext,
 } from "./foodSafetyEvaluation.server";
 import { getFoodSafetyPolicy } from "./foodSafetyPolicy.server";
+import { getUserFoodPreferenceResolutions } from "./userFoodPreferenceResolution.server";
 
 export const getUserFoodSafetyContext = async (
 	supabase: SupabaseClient<Database>,
 	userId: string,
 ): Promise<FoodSafetyEvaluationContext> => {
-	const [preferencesResult, policy] = await Promise.all([
+	const [preferencesResult, preferenceResolutions, policy] = await Promise.all([
 		supabase
 			.from("user_food_preferences")
 			.select(
-				"unit_system, allergens, dietary_restrictions, prioritized_nutrient_ids, default_smoothie_serving_grams, sensitive_acknowledged_at",
+				"unit_system, allergens, dietary_restrictions, prioritized_nutrient_ids, default_smoothie_serving_grams, sensitive_acknowledged_at, regulatory_region_code, regulatory_region_source",
 			)
 			.eq("user_id", userId)
 			.maybeSingle(),
+		getUserFoodPreferenceResolutions(supabase, userId),
 		getFoodSafetyPolicy(),
 	]);
 
@@ -34,7 +36,10 @@ export const getUserFoodSafetyContext = async (
 	}
 
 	return {
-		profile: getFoodPreferenceProfile(preferencesResult.data),
+		profile: getFoodPreferenceProfile(
+			preferencesResult.data,
+			preferenceResolutions,
+		),
 		policy,
 	};
 };

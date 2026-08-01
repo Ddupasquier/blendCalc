@@ -16,7 +16,7 @@
 	information.sourceAttribution ||
 	(onReportIncorrectInformation && (food.barcode || food.gtinUpc))}
 	<div class="product-information-panel">
-		<CollapsibleSection title="Product details">
+		<CollapsibleSection title="Product details" surface="panel">
 			<div class="product-information-panel__content">
 				{#if information.productRows.length > 0}
 					<dl>
@@ -104,20 +104,21 @@
 						{/if}
 					</section>
 				{/if}
+
+				{#if onReportIncorrectInformation && (food.barcode || food.gtinUpc)}
+					<div class="product-information-panel__correction">
+						<p>Does the current package show something different?</p>
+						<RoundedActionButton
+							variant="soft"
+							fullWidth
+							onclick={onReportIncorrectInformation}
+						>
+							Report incorrect information
+						</RoundedActionButton>
+					</div>
+				{/if}
 			</div>
 		</CollapsibleSection>
-		{#if onReportIncorrectInformation && (food.barcode || food.gtinUpc)}
-			<div class="product-information-panel__correction">
-				<p>Does the current package show something different?</p>
-				<RoundedActionButton
-					variant="soft"
-					fullWidth
-					onclick={onReportIncorrectInformation}
-				>
-					Report incorrect information
-				</RoundedActionButton>
-			</div>
-		{/if}
 	</div>
 {/if}
 

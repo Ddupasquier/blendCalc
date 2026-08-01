@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { getFoodServings } from "$lib/utils/food/servings/foodServings";
 	import { formatViewingGrams } from "$lib/utils/food/nutrients/nutritionDisplay";
+	import { formatServingOrigin } from "$lib/utils/food/servings/servingDisplay";
 	import type { NutritionServingSelectProps } from "./types";
 
 	let {
@@ -40,7 +41,7 @@
 			{/if}
 			{#each servings as serving, index}
 				<option value={`serving-${index}`}>
-					{serving.label} · {formatViewingGrams(serving.gramWeight)}
+					{serving.label} · {formatViewingGrams(serving.gramWeight)} · {formatServingOrigin(serving)}
 				</option>
 			{/each}
 			{#if !servings.some((serving) => Math.abs(serving.gramWeight - 100) < 0.01)}

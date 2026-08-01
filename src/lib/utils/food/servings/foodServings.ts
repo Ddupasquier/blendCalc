@@ -1,7 +1,8 @@
 import type { FdcFood, FoodServing } from "$lib/utils/food/types";
 import {
 	getServingMeasureDimension,
-	parseServingAmount,
+	parseSourceServingMeasure,
+	convertServingToGrams,
 } from "$lib/utils/serving/servingAmount";
 import { toFinitePositiveNumber } from "$lib/utils/numbers/finiteNumbers";
 
@@ -17,6 +18,12 @@ const normalizeServing = (serving: FoodServing): FoodServing | null => {
 		amount: amount ?? undefined,
 		unitKey: serving.unitKey?.trim() || undefined,
 		isPrimary: serving.isPrimary === true,
+		measureType: serving.measureType?.trim() || undefined,
+		isHouseholdMeasure: serving.isHouseholdMeasure === true,
+		sourceMeasureKey: serving.sourceMeasureKey?.trim() || undefined,
+		origin: serving.origin ?? "unknown",
+		gramWeightMethod: serving.gramWeightMethod ?? "unknown",
+		calculationBasis: serving.calculationBasis?.trim() || undefined,
 		source: serving.source,
 		sourceReference: serving.sourceReference?.trim() || undefined,
 		confidence: serving.confidence,
@@ -43,38 +50,35 @@ const isServingSource = (
 	typeof value === "string" &&
 	SERVING_SOURCES.has(value as NonNullable<FoodServing["source"]>);
 
-const getLegacyServingSource = (
-	food: FdcFood,
-): NonNullable<FoodServing["source"]> => {
+const getLegacyServingLineage = (food: FdcFood) => {
 	const provenanceSource = food.fieldProvenance?.serving?.source;
-	if (provenanceSource === "shared-catalog") return "community-reviewed";
-	if (isServingSource(provenanceSource)) {
-		return provenanceSource;
-	}
-	if (isServingSource(food.sourceKey)) {
-		return food.sourceKey;
-	}
-	if (food.barcodeSource === "manual") return "user-label";
-	if (food.barcodeSource === "community") return "community-reviewed";
-	if (
-		food.barcodeSource === "usda" ||
-		food.barcodeSource === "open-food-facts"
-	) {
-		return food.barcodeSource;
-	}
-	return "unknown";
+	const source = provenanceSource === "shared-catalog"
+		? "community-reviewed"
+		: isServingSource(provenanceSource)
+			? provenanceSource
+			: "unknown";
+	const sourceReference = food.fieldProvenance?.serving?.sourceReference?.trim() ||
+		undefined;
+	const confidence = food.fieldProvenance?.serving?.confidence ??
+		(source === "user-label" ? "user-reported" : "unknown");
+	return { source, sourceReference, confidence } as const;
 };
 
 const getLegacyServing = (food: FdcFood): FoodServing | null => {
 	if (food.hasSourceServing === false) return null;
 
 	const customWeight = toFinitePositiveNumber(food.customServingWeightGrams);
-	const parsedServing = parseServingAmount(
+	const parsedServing = parseSourceServingMeasure(
 		`${food.servingSize ?? ""} ${food.servingSizeUnit ?? ""}`,
 	);
+	const convertedWeight = parsedServing
+		? convertServingToGrams(parsedServing.quantity, parsedServing.unit)
+		: null;
 	const parsedWeight =
-		parsedServing && getServingMeasureDimension(parsedServing.unit) === "weight"
-			? parsedServing.grams
+		parsedServing &&
+		getServingMeasureDimension(parsedServing.unit) === "weight" &&
+		convertedWeight !== null
+			? convertedWeight
 			: null;
 	const gramWeight =
 		customWeight !== null
@@ -86,23 +90,24 @@ const getLegacyServing = (food: FdcFood): FoodServing | null => {
 		food.customServingLabel?.trim() ||
 		food.householdServingFullText?.trim() ||
 		`${Number(gramWeight.toFixed(2))}g`;
+	const lineage = getLegacyServingLineage(food);
 	return {
 		label,
 		gramWeight,
 		amount: parsedServing?.quantity,
 		unitKey: parsedServing?.unit,
 		isPrimary: true,
-		source: getLegacyServingSource(food),
-		sourceReference:
-			food.fieldProvenance?.serving?.sourceReference ??
-			(food.sourceKey === "usda"
-				? String(food.fdcId)
-				: food.barcode ?? food.gtinUpc),
-		confidence: food.barcodeSource === "manual"
-			? "user-reported"
-			: food.barcodeSource === "community"
-				? "moderator-reviewed"
-				: "unknown",
+		origin: lineage.source === "user-label" ? "user-entered" : "unknown",
+		gramWeightMethod:
+			lineage.source === "user-label"
+				? "user-reported"
+				: parsedWeight !== null
+					? "exact-unit-conversion"
+					: "unknown",
+		calculationBasis: parsedWeight !== null && lineage.source !== "user-label"
+			? `${parsedServing?.quantity} ${parsedServing?.unit}`
+			: undefined,
+		...lineage,
 	};
 };
 

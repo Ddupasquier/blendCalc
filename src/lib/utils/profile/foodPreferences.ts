@@ -1,3 +1,5 @@
+import type { RegulatoryRegionOption } from "./regulatoryRegion";
+
 export const FOOD_PREFERENCE_MAX_ITEMS = 30;
 export const FOOD_PREFERENCE_MAX_LENGTH = 60;
 export const DEFAULT_SERVING_SIZE_MAX_GRAMS = 5000;
@@ -18,6 +20,8 @@ export type FoodPreferenceFormValues = {
 	defaultSmoothieServingSize: string;
 	defaultSmoothieServingUnit: DefaultServingUnit;
 	sensitiveAcknowledged: boolean;
+	regulatoryRegionCode: string;
+	regulatoryRegionSource: "account" | "device" | null;
 };
 
 export const normalizeUnitSystem = (
@@ -88,6 +92,7 @@ export const getServingSizeDisplayValue = (
 export const hasFoodPreferenceValues = (values: FoodPreferenceFormValues) =>
 	Boolean(
 		values.unitSystem ||
+			values.regulatoryRegionCode ||
 			values.allergens.length ||
 			values.dietaryRestrictions.length ||
 			values.prioritizedNutrientIds.length ||
@@ -99,7 +104,22 @@ const getLongPreferenceItem = (values: string[]) =>
 
 export const getFoodPreferencesValidationError = (
 	values: FoodPreferenceFormValues,
+	regulatoryRegionOptions: RegulatoryRegionOption[] = [],
 ) => {
+	if (
+		values.regulatoryRegionCode &&
+		!regulatoryRegionOptions.some((option) =>
+			option.regionCode === values.regulatoryRegionCode
+		)
+	) {
+		return "Choose a supported label region and try again.";
+	}
+	if (
+		Boolean(values.regulatoryRegionCode) !==
+		Boolean(values.regulatoryRegionSource)
+	) {
+		return "Choose a label region again so we can save it correctly.";
+	}
 	const preferenceGroups = [values.allergens, values.dietaryRestrictions];
 	const longItem = preferenceGroups.map(getLongPreferenceItem).find(Boolean);
 	if (longItem) {

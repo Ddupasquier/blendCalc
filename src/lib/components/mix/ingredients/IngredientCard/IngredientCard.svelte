@@ -25,6 +25,7 @@
 		quantity,
 		unit,
 		gramsLabel,
+		conversionBasis = null,
 		warning = null,
 		nutrientChips = [],
 		conversionDetailsOpen = false,
@@ -106,6 +107,9 @@
 
 	<div class="ingredient-card__meta">
 		<span class="ingredient-card__grams">Converted <strong>{gramsLabel}</strong></span>
+		{#if conversionBasis}
+			<span class="ingredient-card__conversion-basis">{conversionBasis}</span>
+		{/if}
 		{#if warning}
 			<Popover
 				open={conversionDetailsOpen}

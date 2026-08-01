@@ -249,3 +249,36 @@ $facts-label-tight-gap: 0.13rem;
 		font-size: $app-font-size-md;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs) {
+	.nf-label {
+		padding: $app-gap-sm $app-gap-sm $app-gap-md;
+	}
+
+	.nf-heading {
+		gap: $app-gap-xs;
+	}
+
+	.nf-title {
+		font-size: 1.55rem;
+	}
+
+	.nf-basis {
+		font-size: $app-font-size-xs;
+	}
+
+	.nf-food,
+	.nf-row,
+	.nf-label-text,
+	.nf-value {
+		font-size: $app-font-size-sm;
+	}
+
+	.nf-columns {
+		gap: $app-gap-xs;
+	}
+
+	.nf-scroll-wrap {
+		padding-top: $app-gap-xs;
+	}
+}

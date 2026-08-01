@@ -28,7 +28,17 @@
 }
 
 @media (max-width: $app-breakpoint-xs) {
+	.servings-step__card {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+	}
+
+	.servings-step__card h3 {
+		font-size: $app-font-size-md;
+	}
+
 	.servings-step__inline-grid {
 		grid-template-columns: 1fr;
+		gap: $app-gap-sm;
 	}
 }

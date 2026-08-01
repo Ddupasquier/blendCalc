@@ -95,7 +95,7 @@ $bottom-sheet-back-control-size: 2rem;
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.bottom-sheet,
 	.bottom-sheet__chrome {
-		gap: $app-gap-xs;
+		gap: $app-gap-2xs;
 	}
 
 	.bottom-sheet h2 {
@@ -103,7 +103,15 @@ $bottom-sheet-back-control-size: 2rem;
 	}
 
 	.bottom-sheet__content {
-		gap: $app-gap-sm;
+		gap: $app-gap-xs;
 		padding-bottom: $app-gap-sm;
+	}
+
+	.bottom-sheet__handle {
+		height: 1rem;
+
+		span {
+			width: 1.75rem;
+		}
 	}
 }

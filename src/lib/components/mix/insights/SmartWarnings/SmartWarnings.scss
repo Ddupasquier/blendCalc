@@ -129,3 +129,27 @@ p {
 		font-weight: $app-font-weight-semibold;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.smart-warnings {
+		padding: $app-gap-xs;
+
+		h4 {
+			margin-bottom: $app-gap-xs;
+			font-size: $app-font-size-xs;
+		}
+	}
+
+	.smart-warning {
+		gap: $app-gap-xs;
+		padding: $app-gap-inline-compact $app-gap-xs;
+	}
+
+	.smart-warning__details {
+		gap: $app-gap-xs;
+
+		li {
+			padding-bottom: $app-gap-xs;
+		}
+	}
+}

@@ -48,8 +48,29 @@
 }
 
 @media (max-width: $app-breakpoint-xs) {
+	.confirmation-backdrop {
+		padding: max($app-gap-sm, env(safe-area-inset-top))
+			max($app-gap-sm, env(safe-area-inset-right))
+			max($app-gap-sm, env(safe-area-inset-bottom))
+			max($app-gap-sm, env(safe-area-inset-left));
+	}
+
+	.confirmation-dialog {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+
+		h2 {
+			font-size: $app-font-size-lg;
+		}
+
+		p {
+			font-size: $app-font-size-sm;
+		}
+	}
+
 	.confirmation-dialog__actions {
 		grid-template-columns: 1fr;
+		gap: $app-gap-xs;
 	}
 }
 

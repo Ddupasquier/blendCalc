@@ -1,9 +1,11 @@
 import type { Database, Json } from "$lib/types/database.types";
-import { parseServingAmount } from "$lib/utils/serving/servingAmount";
+import { parseSourceServingMeasure } from "$lib/utils/serving/servingAmount";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 import type {
 	FdcFood,
 	FdcNutrient,
+	FoodNutrientSourceReview,
+	FoodNutrientValueStatus,
 	FoodServing,
 } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -12,16 +14,24 @@ const GENERIC_FOOD_SEARCH_LIMIT = 100;
 type GenericFoodSource = NonNullable<FdcNutrient["source"]>;
 
 type GenericNutrientRow = {
-	nutrientId: number | string;
-	nutrientNumber: string;
+	nutrientId: number | string | null;
+	nutrientNumber?: string | null;
 	nutrientName: string;
 	unitName: string;
-	value: number | string;
+	value: number | string | null;
+	standardError?: number | string | null;
+	sourceNutrientKey?: string | null;
+	sourceNutrientCode?: string | null;
+	mappingStatus?: string | null;
+	valueStatus?: string | null;
+	mappingMethod?: string | null;
+	mappingReviewReference?: string | null;
 	sourceUpdatedAt?: string | null;
 };
 
 type GenericMeasureRow = {
 	sourceMeasureKey: string;
+	measureType: string;
 	description: string;
 	gramWeight: number | string;
 	sourceUpdatedAt?: string | null;
@@ -101,9 +111,20 @@ const mapNutrients = (
 	sourceReference: string,
 ): FdcNutrient[] =>
 	rows.flatMap((row) => {
+		if (row.mappingStatus !== "canonical" || row.valueStatus !== "measured") {
+			return [];
+		}
 		const nutrientId = Number(row.nutrientId);
 		const value = Number(row.value);
-		if (!Number.isSafeInteger(nutrientId) || !Number.isFinite(value)) return [];
+		if (
+			row.nutrientId === null ||
+			row.value === null ||
+			!Number.isSafeInteger(nutrientId) ||
+			!Number.isFinite(value)
+		) return [];
+		const standardError = row.standardError === null || row.standardError === undefined
+			? undefined
+			: Number(row.standardError);
 		return [{
 			nutrientId,
 			nutrientNumber: String(row.nutrientNumber),
@@ -111,11 +132,82 @@ const mapNutrients = (
 			unitName: row.unitName,
 			value,
 			valueOrigin: "reported" as const,
+			valueStatus: value === 0 ? "reported-zero" as const : "reported" as const,
+			standardError: Number.isFinite(standardError) && Number(standardError) >= 0
+				? standardError
+				: undefined,
+			sourceNutrientKey: row.sourceNutrientKey?.trim() || undefined,
+			sourceNutrientCode: row.sourceNutrientCode?.trim() || undefined,
+			mappingStatus: "canonical" as const,
+			mappingMethod: row.mappingMethod?.trim() || undefined,
+			mappingReviewReference:
+				row.mappingReviewReference?.trim() || undefined,
 			source: sourceKey,
 			sourceReference,
 			confidence: "imported" as const,
 		}];
 	});
+
+const mapGenericValueStatus = (row: GenericNutrientRow): FoodNutrientValueStatus => {
+	if (row.valueStatus === "measured") {
+		return Number(row.value) === 0 ? "reported-zero" : "reported";
+	}
+	if (
+		row.valueStatus === "trace" ||
+		row.valueStatus === "present-unquantified" ||
+		row.valueStatus === "missing" ||
+		row.valueStatus === "invalid"
+	) {
+		return row.valueStatus;
+	}
+	return "unknown";
+};
+
+const mapNutrientSourceReview = (
+	rows: GenericNutrientRow[],
+	sourceKey: GenericFoodSource,
+	sourceReference: string,
+): FoodNutrientSourceReview[] => rows.map((row) => {
+	const nutrientId = Number(row.nutrientId);
+	const amountPer100g = row.value === null ? Number.NaN : Number(row.value);
+	const standardError = row.standardError === null || row.standardError === undefined
+		? Number.NaN
+		: Number(row.standardError);
+	return {
+		...(Number.isSafeInteger(nutrientId) && nutrientId > 0 ? { nutrientId } : {}),
+		nutrientName: row.nutrientName?.trim() ||
+			row.sourceNutrientKey?.trim() ||
+			"Unmapped source nutrient",
+		...(row.unitName?.trim() ? { unitName: row.unitName.trim() } : {}),
+		...(Number.isFinite(amountPer100g) && amountPer100g >= 0
+			? { amountPer100g }
+			: {}),
+		...(Number.isFinite(standardError) && standardError >= 0
+			? { standardError }
+			: {}),
+		...(row.sourceNutrientKey?.trim()
+			? { sourceNutrientKey: row.sourceNutrientKey.trim() }
+			: {}),
+		...(row.sourceNutrientCode?.trim()
+			? { sourceNutrientCode: row.sourceNutrientCode.trim() }
+			: {}),
+		valueStatus: mapGenericValueStatus(row),
+		mappingStatus:
+			row.mappingStatus === "canonical" ||
+			row.mappingStatus === "unmapped" ||
+			row.mappingStatus === "excluded"
+				? row.mappingStatus
+				: "unknown",
+		...(row.mappingMethod?.trim()
+			? { mappingMethod: row.mappingMethod.trim() }
+			: {}),
+		...(row.mappingReviewReference?.trim()
+			? { mappingReviewReference: row.mappingReviewReference.trim() }
+			: {}),
+		source: sourceKey,
+		sourceReference,
+	};
+});
 
 const mapServings = (
 	rows: GenericMeasureRow[],
@@ -126,13 +218,18 @@ const mapServings = (
 		const gramWeight = Number(row.gramWeight);
 		const label = row.description?.trim();
 		if (!label || !Number.isFinite(gramWeight) || gramWeight <= 0) return [];
-		const parsed = parseServingAmount(label);
+		const parsed = parseSourceServingMeasure(label);
 		return [{
 			label,
 			gramWeight,
 			amount: parsed?.quantity,
 			unitKey: parsed?.unit,
 			isPrimary: index === 0,
+			measureType: row.measureType?.trim() || undefined,
+			isHouseholdMeasure: true,
+			sourceMeasureKey: row.sourceMeasureKey?.trim() || undefined,
+			origin: "source-household-measure" as const,
+			gramWeightMethod: "source-reported" as const,
 			source: sourceKey,
 			sourceReference,
 			confidence: "imported" as const,
@@ -160,6 +257,11 @@ export const searchGenericFoods = async (
 			sourceKey,
 			sourceReference,
 		);
+		const nutrientSourceReview = mapNutrientSourceReview(
+			asRecordArray<GenericNutrientRow>(row.nutrients),
+			sourceKey,
+			sourceReference,
+		);
 		const foodServings = mapServings(
 			asRecordArray<GenericMeasureRow>(row.measures),
 			sourceKey,
@@ -181,6 +283,7 @@ export const searchGenericFoods = async (
 			preparation: row.preparation ?? undefined,
 			foodCategory: row.food_group_name ?? undefined,
 			foodNutrients,
+			nutrientSourceReview,
 			reportedNutrientIds: foodNutrients.map(({ nutrientId }) => nutrientId),
 			dataType: "Generic",
 			sourceKey: row.source_key,

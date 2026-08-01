@@ -91,3 +91,16 @@ $pill-rename-font-size: 0.9rem;
 .pill-rename {
 	font-size: $pill-rename-font-size;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.pill {
+		gap: $app-gap-inline-compact;
+		padding: $app-gap-inline-compact $app-gap-sm;
+		font-size: $app-font-size-sm;
+	}
+
+	.pill-action,
+	.pill-rename {
+		font-size: $app-font-size-sm;
+	}
+}

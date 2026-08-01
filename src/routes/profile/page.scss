@@ -345,6 +345,29 @@
 		flex: 1 1 100%;
 		width: 100%;
 	}
+
+	.profile-heading h1 {
+		font-size: 1.45rem;
+	}
+
+	.profile-heading p:last-child,
+	.profile-card label,
+	.profile-card legend,
+	.saved-preferences > strong {
+		font-size: $app-font-size-sm;
+	}
+
+	.profile-card input:not([type="checkbox"]),
+	.profile-card textarea,
+	.profile-card select,
+	:global(.profile-serving-size-input) {
+		padding: $app-gap-xs $app-shell-control-padding-x-compact;
+		font-size: $app-font-size-sm;
+	}
+
+	.profile-card__heading h2 {
+		font-size: $app-font-size-lg;
+	}
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {

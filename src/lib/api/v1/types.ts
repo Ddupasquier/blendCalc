@@ -42,6 +42,23 @@ export type ApiV1Nutrient = {
 	amountPer100g: number | null;
 	valueStatus: "reported" | "derived" | "missing" | "unknown";
 	source: ApiV1Source | null;
+	quality: {
+		sourceValueStatus:
+			| "reported"
+			| "reported-zero"
+			| "derived"
+			| "trace"
+			| "present-unquantified"
+			| "missing"
+			| "invalid"
+			| "unknown";
+		standardError: number | null;
+		sourceNutrientKey: string | null;
+		sourceNutrientCode: string | null;
+		mappingStatus: "canonical" | "unmapped" | "excluded" | "unknown";
+		mappingMethod: string | null;
+		derivationMethod: string | null;
+	};
 };
 
 export type ApiV1Serving = {
@@ -51,6 +68,12 @@ export type ApiV1Serving = {
 	unit: string | null;
 	gramsPerUnit: number | null;
 	isPrimary: boolean;
+	measureType: string | null;
+	isHouseholdMeasure: boolean;
+	sourceMeasureKey: string | null;
+	origin: string;
+	gramWeightMethod: string;
+	calculationBasis: string | null;
 	source: ApiV1Source | null;
 };
 

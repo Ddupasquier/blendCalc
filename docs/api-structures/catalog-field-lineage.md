@@ -87,8 +87,8 @@ API launch.
 | `ingredients.labels` | `shared_products.food.labels` | Accepted package/provider labels with field provenance. |
 | `packageQuantity` | `shared_products.food.packageQuantity` | Accepted package label, amount, and unit; never used as an invented serving. |
 | `sourceRecord` | `shared_products.food.sourceMetadata` | Preserves accepted provider record language(s), market countries, created/published/available/modified/updated/discontinued timestamps, schema/revision, quality tags, completeness, obsolescence, and per-field tag-source metadata. |
-| `nutrients[]` | `food_nutrients` + `nutrient_definitions` | Normalized per-100g values, canonical names/numbers/units, value status, source reference, and confidence. Missing is `null`/absent, never invented zero. |
-| `servings[]` | `food_servings` | Normalized label, gram weight, quantity, unit, primary state, conversion, source reference, and confidence. No serving produces an empty array and an honest 100g basis. |
+| `nutrients[]` | `food_nutrients` + `nutrient_definitions` | Normalized per-100g values, canonical names/numbers/units, source reference, confidence, and safe quality metadata: source value status, source-reported standard error, source nutrient key/code, mapping status/method, and derivation method. Missing is `null`/absent, never invented zero; internal mapping review references are excluded. |
+| `servings[]` | `food_servings` | Normalized label, gram weight, quantity, unit, primary state, measure type, household flag, source measure key, serving origin, gram-weight method, measured calculation basis, source reference, and confidence. No serving produces an empty array and an honest 100g basis. |
 | `images[]` | active `food_image_assets` | Public URL, thumbnail, role, placement, source, approval time, and asset-level licence/attribution. Private paths and reviewer IDs are excluded. |
 | `warnings[]` | `shared_products.compatibility_summary` | DB-derived compatibility facts with stable code, friendly label, category, fact type, evidence source type, confidence, and source text. |
 | `compatibilityEvaluation` | API serializer + canonical food evidence | Shared four-state compatibility contract and evidence coverage. Public API reads have no user profile, so they remain `not_checked`; authenticated app reads apply the same contract with the user's current policy and preferences. |
@@ -106,8 +106,12 @@ role and always returns `Cache-Control: private, no-store`.
 
 The response includes each field candidate's source and normalized values, selection
 state, confidence, stored verification method, exact observation ID, source reference,
-source licence, and observation dates. It deliberately excludes raw provider payloads,
-submitter IDs, submission IDs, private evidence paths, and reviewer identities.
+source licence, and observation dates. It also includes each accepted normalized
+nutrient's source status, standard error, exact source key/code, mapping status/method,
+internal mapping review reference, derivation method, and source observation, plus the
+parent record's retained nonnumeric source nutrient facts. It deliberately excludes raw
+provider payloads, submitter IDs, submission IDs, private evidence paths, and reviewer
+identities.
 
 Ordinary catalog and API v1 reads continue to receive only the bounded public-safe
 vocabulary: exact barcode, package label, corroborated sources, or moderator reviewed.

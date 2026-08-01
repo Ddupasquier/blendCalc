@@ -59,12 +59,13 @@
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.bottom-sheet-action {
-		min-height: $app-shell-header-height-compact;
+		min-height: $app-shell-control-height-narrow;
 		padding: $app-gap-xs;
 		font-size: $app-font-size-sm;
 	}
 
 	:global(.bottom-sheet-action__icon) {
-		--circular-icon-frame-size: #{$app-shell-leading-icon-size-narrow};
+		--circular-icon-frame-size: #{$app-shell-action-icon-size};
+		--circular-icon-frame-icon-size: #{$app-font-size-md};
 	}
 }

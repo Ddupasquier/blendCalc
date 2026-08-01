@@ -145,8 +145,23 @@ a {
 		padding: $app-gap-md;
 	}
 
+	.landing-copy {
+		gap: $app-gap-sm;
+	}
+
+	h1 {
+		font-size: 1.75rem;
+	}
+
+	.landing-intro,
+	.landing-benefits li {
+		font-size: $app-font-size-sm;
+	}
+
 	a {
 		width: 100%;
+		min-height: $app-shell-control-height-narrow;
+		padding: $app-gap-xs $app-shell-control-padding-x-compact;
 	}
 }
 

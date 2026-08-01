@@ -14,4 +14,5 @@ export type FoodPreferencePickerProps = {
 	selectLabel: string;
 	selectValue: string;
 	title: string;
+	unresolvedValues?: string[];
 };

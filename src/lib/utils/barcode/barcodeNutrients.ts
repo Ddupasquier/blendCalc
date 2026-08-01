@@ -107,16 +107,22 @@ export const mapOpenFoodFactsNutrients = (
 		if (value === null) continue;
 
 		mappedNutrientIds.add(mapping.nutrientId);
-		nutrients.push({
+			nutrients.push({
 			nutrientId: mapping.nutrientId,
 			nutrientName: mapping.nutrientName,
 			nutrientNumber: mapping.nutrientNumber,
 			unitName: mapping.unitName,
 			value,
-			valueOrigin: "reported",
-			source: "open-food-facts",
-			confidence: "unknown",
-		});
+				valueOrigin: "reported",
+				valueStatus: value === 0 ? "reported-zero" : "reported",
+				source: "open-food-facts",
+				confidence: "unknown",
+				sourceNutrientKey: source.key,
+				sourceNutrientCode: source.key,
+				mappingStatus: "canonical",
+				mappingMethod: mapping.mappingMethod,
+				mappingReviewReference: mapping.mappingReviewReference,
+			});
 	}
 
 	return canonicalizeProductNutrients(nutrients, referenceData);

@@ -59,3 +59,22 @@
 	gap: $app-gap-md;
 	min-width: 0;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.custom-ingredient__manual-toggle {
+		padding: $app-gap-sm;
+	}
+
+	.custom-ingredient__body,
+	.custom-ingredient__step-panel {
+		gap: $app-gap-sm;
+	}
+
+	.custom-ingredient__header {
+		gap: $app-gap-xs;
+
+		h2 {
+			font-size: $app-font-size-md;
+		}
+	}
+}

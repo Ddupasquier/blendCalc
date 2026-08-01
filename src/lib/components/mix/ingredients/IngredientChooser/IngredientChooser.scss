@@ -54,3 +54,28 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.setup-card {
+		padding: $app-gap-xs;
+	}
+
+	.section-heading,
+	.ingredient-list-controls,
+	.ingredient-lists {
+		gap: $app-gap-xs;
+	}
+
+	.section-heading,
+	.ingredient-list-controls {
+		margin-bottom: $app-gap-xs;
+	}
+
+	.section-heading h4 {
+		font-size: $app-font-size-md;
+	}
+
+	.section-heading p {
+		font-size: $app-font-size-xs;
+	}
+}

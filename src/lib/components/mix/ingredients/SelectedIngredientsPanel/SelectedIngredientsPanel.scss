@@ -47,3 +47,23 @@
 		max-height: 42vh;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.selected-ingredients-panel {
+		gap: $app-gap-xs;
+		padding: $app-gap-xs;
+
+		h4 {
+			font-size: $app-font-size-md;
+		}
+
+		p {
+			font-size: $app-font-size-xs;
+		}
+	}
+
+	.selected-ingredients-header,
+	.selected-ingredient-cards {
+		gap: $app-gap-xs;
+	}
+}

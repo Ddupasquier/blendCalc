@@ -61,6 +61,34 @@ const findUserByEmail = async () => {
 	throw new Error(`No Supabase Auth user found for ${email}.`);
 };
 
+const setRole = async (user) => {
+	if (!new Set(["moderator", "admin", "none"]).has(value)) {
+		throw new Error("Role must be moderator, admin, or none.");
+	}
+
+	const nextRole = value === "none" ? "user" : value;
+	const { data: changed, error } = await supabase.rpc("set_app_user_role", {
+		p_target_user_id: user.id,
+		p_role: nextRole,
+		p_actor_user_id: null,
+		p_reason_code: value === "none" ? "cli_role_revoke" : `cli_role_${value}`,
+		p_internal_note: "Executed through the local moderation CLI.",
+	});
+	if (error) throw error;
+	if (!changed) {
+		console.log(`${email} already has the requested role.`);
+		return;
+	}
+	console.log(
+		value === "none"
+			? `Removed the elevated role from ${email}.`
+			: `Assigned ${value} to ${email}.`,
+	);
+	console.log(
+		"The affected user must refresh their session or sign in again before the JWT role claim changes.",
+	);
+};
+
 const recordAction = async (userId, action, reasonCode) => {
 	const { error } = await supabase.from("moderation_actions").insert({
 		target_user_id: userId,
@@ -70,32 +98,6 @@ const recordAction = async (userId, action, reasonCode) => {
 		internal_note: "Executed through the local moderation CLI.",
 	});
 	if (error) throw error;
-};
-
-const setRole = async (user) => {
-	if (!new Set(["moderator", "admin", "none"]).has(value)) {
-		throw new Error("Role must be moderator, admin, or none.");
-	}
-
-	if (value === "none") {
-		const { error } = await supabase
-			.from("app_role_assignments")
-			.delete()
-			.eq("user_id", user.id);
-		if (error) throw error;
-		await recordAction(user.id, "role_revoked", "cli_role_change");
-		console.log(`Removed the elevated role from ${email}.`);
-		return;
-	}
-
-	const { error } = await supabase.from("app_role_assignments").upsert({
-		user_id: user.id,
-		role: value,
-		granted_by: null,
-	});
-	if (error) throw error;
-	await recordAction(user.id, "role_granted", `cli_${value}`);
-	console.log(`Assigned ${value} to ${email}.`);
 };
 
 const banUser = async (user) => {

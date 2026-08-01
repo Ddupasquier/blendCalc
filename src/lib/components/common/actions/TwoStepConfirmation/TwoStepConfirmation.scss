@@ -17,3 +17,10 @@
 	line-height: 1.25;
 	text-align: center;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.two-step-confirmation__message {
+		padding: $app-gap-inline-compact $app-gap-xs;
+		font-size: $app-font-size-xs;
+	}
+}

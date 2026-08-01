@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseFoodCompatibilityFeedbackRequest } from "$lib/server/food-safety/foodCompatibilityFeedback.server";
+import {
+	parseFoodCompatibilityFeedbackRequest,
+	parseMissingFoodWarningFeedbackRequest,
+} from "$lib/server/food-safety/foodCompatibilityFeedback.server";
 
 const validRequest = {
 	sharedProductId: "418a0615-a025-4b28-9fc9-f1ea62dddca4",
@@ -59,5 +62,48 @@ describe("parseFoodCompatibilityFeedbackRequest", () => {
 
 		expect(parsed?.factSnapshot).toHaveLength(12);
 		expect(parsed?.reportDetails).toHaveLength(1000);
+	});
+});
+
+describe("parseMissingFoodWarningFeedbackRequest", () => {
+	const createValidFormData = () => {
+		const formData = new FormData();
+		formData.set("sharedProductId", "418a0615-a025-4b28-9fc9-f1ea62dddca4");
+		formData.set("sourceKey", "open-food-facts");
+		formData.set("sourceId", "00011110129505");
+		formData.set("barcode", "00011110129505");
+		formData.set("foodDescription", "Example Product");
+		formData.set("preferenceTagId", "6cd4fcf5-9221-4b5b-ae90-b0d20f26af1b");
+		formData.set("preferenceType", "allergen");
+		formData.set("observedLabelDate", "2026-07-30");
+		formData.set(
+			"reportDetails",
+			"The current ingredients list includes milk, but no dairy warning appeared.",
+		);
+		return formData;
+	};
+
+	it("accepts a bounded missing-warning report", () => {
+		expect(parseMissingFoodWarningFeedbackRequest(createValidFormData()))
+			.toEqual(expect.objectContaining({
+				preferenceType: "allergen",
+				observedLabelDate: "2026-07-30",
+				evidenceFile: null,
+			}));
+	});
+
+	it("rejects unreviewed preference identifiers and short explanations", () => {
+		const formData = createValidFormData();
+		formData.set("preferenceTagId", "not-a-uuid");
+		formData.set("reportDetails", "Milk");
+
+		expect(parseMissingFoodWarningFeedbackRequest(formData)).toBeNull();
+	});
+
+	it("rejects future or invalid package dates", () => {
+		const formData = createValidFormData();
+		formData.set("observedLabelDate", "2099-01-01");
+
+		expect(parseMissingFoodWarningFeedbackRequest(formData)).toBeNull();
 	});
 });

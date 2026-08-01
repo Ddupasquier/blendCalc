@@ -59,3 +59,11 @@
 	color: $app-status-error-text;
 	background: $app-status-error-bg;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	:global(.metadata-pill) {
+		gap: $app-gap-inline-compact;
+		padding: $app-gap-2xs $app-gap-xs;
+		font-size: $app-font-size-2xs;
+	}
+}

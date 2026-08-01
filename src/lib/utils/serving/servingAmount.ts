@@ -9,9 +9,15 @@ import {
 	type ServingMeasureUnit,
 } from "$lib/utils/serving/servingMeasureCatalog";
 import type { FdcFood } from "../food/types";
+import type { FoodServingGramWeightMethod } from "../food/types";
 
 export type ParsedServingAmount = {
 	grams: number;
+	quantity: number;
+	unit: ServingMeasureUnit;
+};
+
+export type ParsedServingMeasure = {
 	quantity: number;
 	unit: ServingMeasureUnit;
 };
@@ -20,6 +26,7 @@ export type DensityConversion = {
 	gramsPerMilliliter: number;
 	label: string;
 	confidence: "known";
+	basis: string;
 };
 
 export type ServingConversion = {
@@ -29,6 +36,8 @@ export type ServingConversion = {
 	density: DensityConversion | null;
 	available: boolean;
 	warning: string | null;
+	method: FoodServingGramWeightMethod;
+	basis: string | null;
 };
 
 const isWeightServingMeasureUnit = (
@@ -83,6 +92,10 @@ export const convertServingAmount = (
 			density: null,
 			available: safeQuantity !== null && typeof conversion === "number",
 			warning: null,
+			method: "exact-unit-conversion",
+			basis: safeQuantity !== null && typeof conversion === "number"
+				? `${safeQuantity} ${unit} × ${conversion} grams per ${unit}`
+				: null,
 		};
 	}
 
@@ -95,6 +108,8 @@ export const convertServingAmount = (
 			density: null,
 			available: false,
 			warning: "This serving unit is not available right now.",
+			method: "unknown",
+			basis: null,
 		};
 	}
 	const milliliters = safeQuantity === null ? null : safeQuantity * volumeConversion;
@@ -107,6 +122,8 @@ export const convertServingAmount = (
 			density: null,
 			available: false,
 			warning: "A measured weight-to-volume conversion is not available for this ingredient. Use a weight unit instead.",
+			method: "unknown",
+			basis: null,
 		};
 	}
 	const grams = milliliters * density.gramsPerMilliliter;
@@ -118,6 +135,8 @@ export const convertServingAmount = (
 		density,
 		available: true,
 		warning: null,
+		method: "calculated-conversion",
+		basis: `${safeQuantity} ${unit}; ${density.basis}`,
 	};
 };
 
@@ -137,6 +156,7 @@ export const getDensityConversion = (food?: FdcFood): DensityConversion | null =
 			gramsPerMilliliter: Number(food.customDensityGramsPerMilliliter),
 			label: food.customDensityLabel ?? "custom serving",
 			confidence: "known",
+			basis: food.customDensityLabel ?? "User-reported weight and volume",
 		};
 	}
 
@@ -159,6 +179,7 @@ export const getDensityConversion = (food?: FdcFood): DensityConversion | null =
 			gramsPerMilliliter: gramWeight / (amount * option.conversionToBase),
 			label: serving.label,
 			confidence: "known",
+			basis: `${serving.label} = ${gramWeight}g (${serving.origin ?? "unknown origin"})`,
 		};
 	}
 
@@ -173,7 +194,10 @@ export const canConvertServingUnit = (
 	Boolean(getDensityConversion(food))
 );
 
-export const parseServingAmount = (input: string): ParsedServingAmount | null => {
+const parseServingMeasure = (
+	input: string,
+	defaultUnit: ServingMeasureUnit | null,
+): ParsedServingMeasure | null => {
 	const normalized = input.trim().toLowerCase();
 	if (!normalized) return null;
 
@@ -185,18 +209,57 @@ export const parseServingAmount = (input: string): ParsedServingAmount | null =>
 	const quantity = parseQuantity(match[1]);
 	if (quantity === null || quantity < 0) return null;
 
-	const defaultWeightUnit = getDefaultServingMeasureUnit("weight");
 	const unitText = match[2]?.replaceAll(".", "") ?? "";
 	const unit = unitText
 		? SERVING_MEASURE_ALIASES[normalizeServingMeasureAlias(unitText)]
-		: defaultWeightUnit;
+		: defaultUnit;
 	if (!unit) return null;
 
-	const grams = convertServingToGrams(quantity, unit);
+	return { quantity, unit };
+};
+
+export const parseSourceServingMeasure = (
+	input: string,
+): ParsedServingMeasure | null => parseServingMeasure(input, null);
+
+export const parseSourceWeightMeasure = (
+	input: string,
+): ParsedServingMeasure | null => {
+	const exactMeasure = parseSourceServingMeasure(input);
+	if (
+		exactMeasure &&
+		getServingMeasureDimension(exactMeasure.unit) === "weight"
+	) return exactMeasure;
+
+	const quantityMatches = [
+		...input.matchAll(/\d+(?:\.\d+)?(?:\s+\d+\/\d+)?|\d+\/\d+/g),
+	];
+	for (const match of quantityMatches.reverse()) {
+		const candidate = input
+			.slice(match.index)
+			.replace(/[\s)\]},;:]+$/g, "")
+			.trim();
+		const parsed = parseSourceServingMeasure(candidate);
+		if (parsed && getServingMeasureDimension(parsed.unit) === "weight") {
+			return parsed;
+		}
+	}
+
+	return null;
+};
+
+export const parseServingAmount = (input: string): ParsedServingAmount | null => {
+	const parsed = parseServingMeasure(
+		input,
+		getDefaultServingMeasureUnit("weight"),
+	);
+	if (!parsed) return null;
+
+	const grams = convertServingToGrams(parsed.quantity, parsed.unit);
 	if (grams === null) return null;
 	return {
 		grams,
-		quantity,
-		unit,
+		quantity: parsed.quantity,
+		unit: parsed.unit,
 	};
 };

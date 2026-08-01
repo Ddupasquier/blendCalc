@@ -15,6 +15,9 @@ local Supabase services, writes local credentials to the gitignored
 `.env.test.local`, applies deterministic runtime reference fixtures, and creates
 regular-user, moderator, and admin QA accounts. Standard QA accounts are seeded with the
 current tutorial completed so onboarding does not block unrelated test passes.
+The local Auth service also runs the production-shaped blocked-signup and Custom Access
+Token hooks, so regular, moderator, and administrator QA sessions receive the same
+database-owned `app_role` claims that hosted sessions receive.
 
 Run the app against the local database with:
 
@@ -79,6 +82,26 @@ account's tutorial preference with its supplied SQL.
 - Supabase-client integration tests against real Auth, PostgREST, Storage, and database
   policies rather than mocks.
 - Repeatable destructive QA without risking production records.
+
+## Food-Safety Corpus
+
+The maintained safety corpus has two deliberately separate layers:
+
+| Layer | Fixture origin | Coverage | Current size |
+|---|---|---|---:|
+| Application | Authored synthetic Open Food Facts-shaped payloads plus synthetic private and generic foods | Provider normalization, ingredient/declaration mapping, policy evaluation, API serialization, and user-facing status copy | 17 cases |
+| Database | Authored synthetic source observations stored in `shared_product_observations` | Relational ingredient projection, reviewed multilingual extraction, exact precautionary statements, immutable policy links, formulation changes, negative controls, and idempotency | 17 observations / 18 assertions |
+
+The payloads are original test fixtures. They do not copy private user evidence, real
+package-label prose, secrets, or provider records. Prepared compatibility facts remain
+in a smaller evaluation-only unit corpus, but they are not accepted as proof that
+source ingestion or database extraction works.
+
+Coverage is reported separately by
+`tests/lib/server/food-safety/foodSafetyEndToEndCorpus.test.ts` and
+`supabase/tests/database/food_safety_end_to_end_corpus.test.sql`. New false positives,
+false negatives, statement forms, supported languages, derivative rules, and
+formulation changes must become source-shaped cases in the applicable layer.
 
 A separate remote staging project can be added later for real-device and hosted-preview
 QA. It should use the same migrations and synthetic fixtures, never a production data

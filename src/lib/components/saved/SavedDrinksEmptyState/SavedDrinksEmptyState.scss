@@ -47,6 +47,15 @@
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.saved-drinks-empty {
 		gap: $app-gap-sm;
-		padding: $app-shell-header-height-compact $app-gap-sm;
+		padding: $app-gap-lg $app-gap-sm;
+	}
+
+	:global(.saved-drinks-empty__art) {
+		--circular-icon-frame-size: #{3rem};
+		--circular-icon-frame-icon-size: #{1.5rem};
+	}
+
+	.saved-drinks-empty h2 {
+		font-size: $app-font-size-lg;
 	}
 }

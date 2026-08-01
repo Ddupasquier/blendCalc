@@ -5,3 +5,19 @@
 	gap: $app-gap-md;
 	width: 100%;
 }
+
+.nutrition-panel__supplemental {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+}
+
+.nutrition-panel__supplemental:empty {
+	display: none;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.nutrition-panel {
+		gap: $app-gap-sm;
+	}
+}

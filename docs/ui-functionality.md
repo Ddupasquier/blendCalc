@@ -287,6 +287,10 @@ Preserve:
 - Visible “per 100g food data” label near the top.
 - When a source serving includes both a household label and gram weight, show the
   household label first and the gram weight in trailing parentheses.
+- In Product details, identify whether each serving came from a package label, source
+  household measure, direct reported weight, user entry, or a calculated conversion.
+  Show the source measure metadata and measured basis for a calculated conversion;
+  unknown lineage remains visibly unknown rather than inheriting a provider identity.
 - Main nutrients:
   - Calories.
   - Total fat.
@@ -306,17 +310,30 @@ Preserve:
     `May contain`.
   - Source-backed dietary labels and reviewed dietary considerations, using friendly
     normalized labels rather than internal compatibility-policy terms.
-  - Every normalized serving and legitimate weight-to-volume density with its
-    confidence qualifier.
+  - Every normalized serving and legitimate weight-to-volume density with its origin,
+    gram-weight method, measured calculation basis, and confidence qualifier.
   - Field-level data sources, source record identifiers and dates, dataset/version,
     attribution, and license links.
-- Keep the complete product, serving, and source metadata inside the shared
+- Keep the readable ingredient statement directly below Nutrition Facts. When a source
+  also reports structured ingredient detail, expose one closed `Ingredient details`
+  disclosure containing the nested ingredient path, only explicitly reported exact or
+  estimated percentages, source dietary classifications, analysis coverage, normalized
+  ingredient tags, and additives. Source analysis is supporting context rather than a
+  blendCalc verification result or a substitute for the current package label.
+- Keep the default nutrition reading path focused on the product image, any current
+  personalized warning, Nutrition Facts, ingredients, and explicit package disclosures.
+  Place supporting data quality, product/source metadata, and warning-report tools
+  inside one closed `More about this food` disclosure.
+- Keep the complete product, serving, and source metadata inside the nested shared
   `Product details` collapse, closed by default.
 - When traceable source-record metadata contains a useful caveat, show a separate
   `Data quality` collapse that defaults closed. Translate supported completeness,
-  obsolete, warning, error, schema-version, and multi-source metadata into friendly
-  bounded messages. Never render raw provider quality tags, treat a source note as a
-  blendCalc verification result, or show the section when it has nothing useful to say.
+  obsolete, warning, error, schema-version, multi-source, derived-value,
+  source-uncertainty, unquantified, missing-source-value, and unmapped-nutrient metadata
+  into friendly bounded messages. Never render raw provider quality tags, mapping
+  review references, or source codes; treat a source note as a blendCalc verification
+  result; turn missing/trace/unmapped into zero; or show the section when it has nothing
+  useful to say.
 - Keep field sources, attribution, and licence details in `Product details`; the data
   quality disclosure points there instead of duplicating them.
 - Show the server-provided compatibility evaluation independently from source
@@ -332,12 +349,35 @@ Preserve:
 - Never present a compatibility status as a guarantee. For packaged food, keep the
   current package label as the final authority. A card warning edge represents only
   `conflict`; no edge does not mean `checked`.
+- When specific personalized warnings are present, do not repeat a generic conflict
+  message. Show concise warning reasons immediately, then keep exact source evidence,
+  policy context, and each warning's `Report` action inside a closed
+  `Review these warnings` disclosure.
+- Reviewed English, French, and Spanish structured ingredient/allergen terms can drive
+  the same canonical warning. When a source explicitly declares another unsupported
+  ingredient language, show the result as incomplete rather than implying the food was
+  fully checked. Regional labeling exemptions may be explained as context but never
+  remove a warning for a preference the user selected.
+- When at least one saved allergen or dietary setting has one exact reviewed mapping,
+  the supporting `More about this food` area exposes a closed
+  `Missing a food warning?` disclosure. A report selects one resolved setting and
+  accepts a bounded explanation, optional package date, and optional current-label
+  photo. The UI explains that the report stays private and does not change product data
+  or warnings immediately.
+- Missing-warning submissions are idempotent while pending. Raw storage paths, mutable
+  policy rules, and provider errors never appear in the user interface.
 - Missing detail fields do not create empty sections, guessed values, or placeholder
   wording.
 - Add to On Hand button.
 - Add to Shopping List button.
 - Successful action feedback.
 - Food preference warnings near the preview when relevant.
+- Every food-preference warning with traceable evidence includes a plain-language
+  explanation inside `Review these warnings`. It identifies the exact ingredient,
+  `Contains` declaration, precautionary statement, dietary analysis, or authoritative
+  generic-food identity used by the active policy, together with its confidence and
+  policy version. Product names, brands, and categories never appear as packaged-food
+  safety evidence.
 - Products with a barcode expose `Report incorrect information`. The correction opens
   as a routed child sheet, starts from the current canonical product, requires current
   front-package, nutrition-label, and barcode photos, and saves no duplicate private
@@ -350,6 +390,11 @@ On mobile:
 - Additional nutrient column must not clip outside the card.
 - Buttons should remain tappable.
 - Long nutrient names and product names must wrap safely.
+- At compact width or height, repeated panel gaps, disclosure headers, serving controls,
+  supporting copy, and Nutrition Facts typography use the shared compact Ingredients
+  breakpoints rather than desktop sizing.
+- Opening or closing any nutrition disclosure must keep the current scroll position
+  stable instead of jumping toward the top of the sheet.
 
 ### Nutrition Confidence Details
 
@@ -723,9 +768,16 @@ Preserve:
 - Allergens.
 - Dietary restrictions.
 - Prioritized nutrients.
+- Optional package-label region loaded from the active DB policy. A matching device
+  locale may be offered as a suggestion, but the selected region is saved to the
+  account only with the form.
 - Acknowledgement checkbox.
 - Save food preferences action.
 - Saved summary that shows what is currently stored.
+- Nutrition details may show the selected region's authority, regulated terminology,
+  and coverage of the user's allergen settings. This context must explicitly preserve
+  all personal warnings and must not imply a regional profile was checked when the
+  saved region is unknown or unsupported.
 
 Current product direction:
 
@@ -734,6 +786,11 @@ Current product direction:
   explicitly requested.
 - Dropdown options must be DB/API-observed, not hard-coded fallback constants.
 - Users can also type custom allergens/restrictions.
+- Custom text stays saved, but the Profile page must identify any value that is waiting
+  for an exact reviewed mapping. Nutrition details must repeat that limitation when an
+  unresolved value affects the current personalized check.
+- Unresolved custom text must not create a warning, downrank a food, or be presented as
+  checked. A reviewed mapping can become active later without rewriting the saved value.
 - Selected values need dividers/separation so the section reads clearly.
 
 Food preference data must drive:
@@ -763,6 +820,14 @@ Important matching rule:
 Route: `/moderation`
 
 Only privileged users can access this page.
+
+The page links to `/moderation/data-health`, a separate privileged catalog-health
+view. That view presents bounded overview counts first and keeps source activity,
+dataset/licence state, food-warning policy coverage, conflicts, API publication gaps,
+nutrient mapping review, and revision gaps in closed shared collapses. Product issues
+link to their existing provenance review, and established submission/warning queues
+remain the only direct mutation workflows. Raw source payloads, private evidence, user
+identity, and secrets are never rendered.
 
 Preserve:
 

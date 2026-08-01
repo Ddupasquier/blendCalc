@@ -13,6 +13,7 @@ import type {
 	FoodPackageQuantity,
 	FoodSourceRecordMetadata,
 	FoodStructuredIngredient,
+	FoodServing,
 } from "$lib/utils/food/types";
 import { buildSaveNutrients } from "$lib/components/ingredients/manual-entry/utils/nutrientValues";
 
@@ -22,6 +23,7 @@ export type ManualEntryCustomFoodPayload = {
 	brandOwner: string;
 	servingLabel: string;
 	servingWeightGrams: number | null;
+	serving?: FoodServing;
 	useVolumeEquivalent: boolean;
 	volumeQuantity: number | null;
 	volumeUnit: ServingMeasureUnit;
@@ -106,6 +108,7 @@ export const createManualEntryCustomFood = (
 		brandOwner: payload.brandOwner,
 		servingLabel: payload.servingLabel,
 		servingWeightGrams: payload.servingWeightGrams,
+		serving: payload.serving,
 		volumeQuantity: payload.useVolumeEquivalent
 			? payload.volumeQuantity ?? undefined
 			: undefined,

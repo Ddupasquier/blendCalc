@@ -57,6 +57,28 @@ describe("catalog provenance moderation route", () => {
 					expiresAt: null,
 				},
 			}],
+			nutrients: [{
+				nutrientId: 1003,
+				nutrientName: "Protein",
+				amountPer100g: 4,
+				unitName: "G",
+				valueStatus: "reported",
+				standardError: 0.2,
+				source: "usda",
+				sourceReference: "123",
+				sourceObservationId: "observation-id",
+				sourceNutrientKey: "1003",
+				sourceNutrientCode: "203",
+				mappingStatus: "canonical",
+				mappingMethod: "exact-source-key",
+				mappingReviewReference: "review-1003",
+				derivationMethod: null,
+			}],
+			sourceNutrientReview: [{
+				nutrientName: "Source trace nutrient",
+				valueStatus: "trace",
+				mappingStatus: "canonical",
+			}],
 		};
 		mocks.getUserAppRole.mockResolvedValue("moderator");
 		mocks.readCatalogProvenanceReviewRecord.mockResolvedValue(record);

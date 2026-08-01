@@ -63,6 +63,34 @@ describe("food servings", () => {
 		});
 	});
 
+	it("does not interpret a source quantity without an explicit unit", () => {
+		expect(getFoodServings({
+			...baseFood,
+			servingSize: 30,
+			hasSourceServing: true,
+		})).toEqual([]);
+	});
+
+	it("preserves explicit user serving lineage without reading food identity", () => {
+		expect(getFoodServings({
+			...baseFood,
+			servingSize: 30,
+			servingSizeUnit: "g",
+			hasSourceServing: true,
+			fieldProvenance: {
+				serving: {
+					source: "user-label",
+					confidence: "user-reported",
+				},
+			},
+		})[0]).toMatchObject({
+			source: "user-label",
+			origin: "user-entered",
+			gramWeightMethod: "user-reported",
+			confidence: "user-reported",
+		});
+	});
+
 	it("formats nutrition-label serving sizes with grams in trailing parentheses", () => {
 		expect(formatNutritionServingSize({
 			label: "1/2 cup (125g)",

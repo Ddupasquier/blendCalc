@@ -433,18 +433,24 @@ const seedTestAccounts = async (environment) => {
 
 		if (account.role) {
 			requireSuccessfulResult(
-				await admin.from("app_role_assignments").upsert(
-					{
-						user_id: user.id,
-						role: account.role,
-					},
-					{ onConflict: "user_id" },
-				),
+				await admin.rpc("set_app_user_role", {
+					p_target_user_id: user.id,
+					p_role: account.role,
+					p_actor_user_id: null,
+					p_reason_code: "local_test_fixture",
+					p_internal_note: "Seeded by the isolated local test database manager.",
+				}),
 				`Seed role for ${account.email}`,
 			);
 		} else {
 			requireSuccessfulResult(
-				await admin.from("app_role_assignments").delete().eq("user_id", user.id),
+				await admin.rpc("set_app_user_role", {
+					p_target_user_id: user.id,
+					p_role: "user",
+					p_actor_user_id: null,
+					p_reason_code: "local_test_fixture",
+					p_internal_note: "Seeded by the isolated local test database manager.",
+				}),
 				`Clear role for ${account.email}`,
 			);
 		}

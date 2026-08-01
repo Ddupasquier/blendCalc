@@ -109,3 +109,26 @@ li p {
 		line-height: 1.35;
 	}
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.mix-empty-state,
+	.mix-empty-state__steps,
+	.mix-empty-state__actions,
+	li {
+		gap: $app-gap-xs;
+	}
+
+	.mix-empty-state,
+	li {
+		padding: $app-gap-xs;
+	}
+
+	.mix-empty-state__intro h4 {
+		font-size: $app-font-size-md;
+	}
+
+	.mix-empty-state__intro p,
+	.mix-empty-state__actions p {
+		font-size: $app-font-size-xs;
+	}
+}

@@ -9,6 +9,12 @@ export type NormalizedServingRow = {
 	amount: number | null;
 	unitKey: string | null;
 	isPrimary: boolean;
+	measureType: string | null;
+	isHouseholdMeasure: boolean;
+	sourceMeasureKey: string | null;
+	origin: NonNullable<FoodServing["origin"]>;
+	gramWeightMethod: NonNullable<FoodServing["gramWeightMethod"]>;
+	calculationBasis: string | null;
 	source: NonNullable<FoodServing["source"]>;
 	sourceReference: string | null;
 	confidence: NonNullable<FoodServing["confidence"]>;
@@ -29,6 +35,12 @@ export const normalizedRowsToServings = (
 				amount: amount ?? undefined,
 				unitKey: row.unitKey?.trim() || undefined,
 				isPrimary: row.isPrimary,
+				measureType: row.measureType?.trim() || undefined,
+				isHouseholdMeasure: row.isHouseholdMeasure,
+				sourceMeasureKey: row.sourceMeasureKey?.trim() || undefined,
+				origin: row.origin,
+				gramWeightMethod: row.gramWeightMethod,
+				calculationBasis: row.calculationBasis?.trim() || undefined,
 				source: row.source,
 				sourceReference: row.sourceReference?.trim() || undefined,
 				confidence: row.confidence,

@@ -16,3 +16,10 @@
 	display: grid;
 	gap: $app-gap-sm;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.product-image-panel,
+	.product-image-panel__placement-content {
+		gap: $app-gap-sm;
+	}
+}

@@ -258,6 +258,13 @@ readable, and safe-area insets remain part of every fixed or modal boundary. Doc
 compact controls may be visually smaller only when they remain distinct, operable, and
 at least the WCAG 2.2 minimum target size.
 
+Compact density comes primarily from smaller repeated gaps, panel padding, headings,
+metadata, and decorative frames—not from making primary tap targets unusable. Bottom
+sheets hug short content by default, use their bounded internal scroller when content is
+long, and occupy the larger fixed-height surface only when a workflow explicitly requests
+the `fill` mode. Dialogs, popovers, upload controls, disclosures, card groups, and route
+panels use the same compact tier rather than retaining desktop-sized internal spacing.
+
 Use width and height queries for different jobs. Width queries may stack columns,
 actions, and form fields. Compact-height queries reduce vertical gaps, padding, fixed
 chrome, and overlay framing; do not stack a wide landscape layout merely because it is
@@ -571,8 +578,12 @@ placement previews remain identical.
 - Treat the detail view as the complete user-facing food record: show every available
   useful product, serving, disclosure, and neutral source field; hide absent fields
   cleanly rather than adding empty rows or placeholders.
+- Keep the default reading path focused on the product image, current personalized
+  warning, Nutrition Facts, ingredients, and explicit package disclosures. Group
+  supporting data quality, product/source metadata, and user-reporting tools under one
+  closed `More about this food` disclosure.
 - Group product, serving, and source metadata inside the shared `Product details`
-  collapse and keep it closed by default.
+  collapse within that supporting area and keep it closed by default.
 - Show the shared `Data quality` collapse only when bounded source-record metadata has
   a useful caveat. Keep it closed by default, describe source-reported completeness or
   review notes in friendly language, and never expose raw provider quality tags or
@@ -583,6 +594,10 @@ placement previews remain identical.
   separate from `Contains` and `May contain`, use the shared status-message treatment,
   and distinguish conflict, checked, incomplete, and not-checked states without
   presenting any state as a safety guarantee.
+- When specific personalized warnings are available, show those concise reasons and do
+  not repeat a generic conflict status directly below them. Keep evidence, policy
+  context, and per-warning report controls in one closed `Review these warnings`
+  disclosure inside the warning surface.
 - Ingredients, `Contains`, `May contain`, source-backed dietary labels, and reviewed
   dietary considerations remain plain text against the app background unless
   interaction or status requires a surface. Do not expose internal match expressions,
@@ -609,7 +624,9 @@ Compact ingredient conflicts do not use `StatusMessage`; they use `CardWarningEd
 an accessible action label. The full warning appears in the detailed view.
 Detailed ingredient preference conflicts use the shared `StatusMessage` top-end icon
 layout so the warning icon sits in the top-right while the title and reasons remain
-left-aligned.
+left-aligned. Keep the immediate reasons concise; exact evidence and correction controls
+belong in the closed `Review these warnings` disclosure rather than repeating a full
+reporting interface for every warning in the default view.
 
 ## Badges And Privileged Actions
 
@@ -634,6 +651,9 @@ left-aligned.
 - Rapidly reversing a disclosure must continue from its currently visible height.
   Do not add component-specific collapse transitions or opacity delays on top of the
   shared behavior.
+- Disclosure expansion and collapse must not re-anchor the owning scroll surface or
+  move users away from the summary they activated. Shared disclosure and route scroll
+  containers disable browser scroll anchoring where animated height changes occur.
 - Pair functional entrances with coherent exits. Status feedback may use a brief
   opacity/vertical transition, sheets use the shared directional transition, and
   removed list items must be followed by local reflow rather than a flashing reload.
