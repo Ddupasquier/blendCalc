@@ -121,12 +121,20 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 
 	if (
 		routeSlug === INGREDIENT_ROUTE_VIEWS.search &&
-		secondSegment === undefined
+		(secondSegment === undefined ||
+			(secondSegment === INGREDIENT_ROUTE_MODALS.barcodeScanner &&
+				remainingSegments.length === 0))
 	) {
 		return {
 			view: INGREDIENT_ROUTE_VIEWS.search,
-			sheet: null,
-			modal: null,
+			sheet:
+				secondSegment === INGREDIENT_ROUTE_MODALS.barcodeScanner
+					? INGREDIENT_ROUTE_SHEETS.manualEntry
+					: null,
+			modal:
+				secondSegment === INGREDIENT_ROUTE_MODALS.barcodeScanner
+					? INGREDIENT_ROUTE_MODALS.barcodeScanner
+					: null,
 			foodId: null,
 			listKey: null,
 			showListActions: true,
@@ -303,7 +311,9 @@ export const buildIngredientRouteHref = (
 				nextSheet === INGREDIENT_ROUTE_SHEETS.catalogCorrection
 				? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}/${INGREDIENT_ROUTE_SHEETS.catalogCorrection}`
 				: nextView === INGREDIENT_ROUTE_VIEWS.search
-				? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}`
+					? nextModal === INGREDIENT_ROUTE_MODALS.barcodeScanner
+						? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}/${INGREDIENT_ROUTE_MODALS.barcodeScanner}`
+						: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}`
 				: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}`;
 		if (nextView === INGREDIENT_ROUTE_VIEWS.nutrition) {
 			if (!nextShowListActions) params.set(ACTIONS_PARAM, "hide");
@@ -333,6 +343,36 @@ export const buildIngredientRouteHref = (
 
 	const query = params.toString();
 	return `${nextUrl.pathname}${query ? `?${query}` : ""}${nextUrl.hash}`;
+};
+
+export const getBarcodeScannerOpenRoutePatch = (
+	url: URL,
+): IngredientRoutePatch => {
+	const preserveSearch =
+		getIngredientRouteState(url).view === INGREDIENT_ROUTE_VIEWS.search;
+
+	return {
+		view: preserveSearch ? INGREDIENT_ROUTE_VIEWS.search : null,
+		sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+		modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
+		foodId: null,
+		listKey: null,
+	};
+};
+
+export const getBarcodeScannerCloseRoutePatch = (
+	url: URL,
+): IngredientRoutePatch => {
+	const restoreSearch =
+		getIngredientRouteState(url).view === INGREDIENT_ROUTE_VIEWS.search;
+
+	return {
+		view: restoreSearch ? INGREDIENT_ROUTE_VIEWS.search : null,
+		sheet: restoreSearch ? null : INGREDIENT_ROUTE_SHEETS.manualEntry,
+		modal: null,
+		foodId: null,
+		listKey: null,
+	};
 };
 
 export const getIngredientRouteTitle = (

@@ -35,7 +35,9 @@
     import {
         buildIngredientRouteHref,
         findIngredientRouteFood,
-		getIngredientListTab,
+        getBarcodeScannerCloseRoutePatch,
+        getBarcodeScannerOpenRoutePatch,
+        getIngredientListTab,
         getIngredientRouteState,
         INGREDIENT_ROUTE_MODALS,
         INGREDIENT_ROUTE_SHEETS,
@@ -372,29 +374,24 @@
     };
 
     const startBarcodeScan = () => {
-        searchViewOpen = false;
+        const routePatch = getBarcodeScannerOpenRoutePatch(page.url);
+        searchViewOpen = routePatch.view === INGREDIENT_ROUTE_VIEWS.search;
         activeSheet = "manual-entry";
         barcodeScannerRouteOpen = true;
         scanSignal += 1;
-        void navigateIngredientRoute({
-            view: null,
-            sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
-            modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
-            foodId: null,
-            listKey: null,
-        });
+        void navigateIngredientRoute(routePatch);
     };
 
     const closeBarcodeScanner = () => {
+        const routePatch = getBarcodeScannerCloseRoutePatch(page.url);
         barcodeScannerRouteOpen = false;
         scanSignal = 0;
-        void navigateIngredientRoute({
-            view: null,
-            sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
-            modal: null,
-            foodId: null,
-            listKey: null,
-        });
+        searchViewOpen = routePatch.view === INGREDIENT_ROUTE_VIEWS.search;
+        activeSheet =
+            routePatch.sheet === INGREDIENT_ROUTE_SHEETS.manualEntry
+                ? INGREDIENT_ROUTE_SHEETS.manualEntry
+                : null;
+        void navigateIngredientRoute(routePatch);
     };
 
 	const openMoveConfirmation = () => {

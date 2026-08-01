@@ -1480,8 +1480,9 @@ tracker contains one clear, current expected outcome for each behavior.
 **42.** <a id="rule-qa-clearance"></a>Finished tasks must prompt the user to run the
 relevant QA checks from the active priority trackers linked by local
 `docs/QA/qa-tasks.md`. Keep each QA item active until the user explicitly confirms it
-passed; a checked checkbox counts as that confirmation. During an explicit user-requested
-QA pass, automation may complete and archive deterministic tasks whose full expected
+passed or automation directly proves its complete expected outcome; a checked checkbox
+counts as user confirmation. During an explicit user-requested QA pass, automation must
+complete and archive deterministic tasks whose full expected
 outcome was directly proven by current tests, database inspection, scripts, or build/lint
 output, and may complete observable browser tasks whose full repro and expected outcome
 were directly exercised in the in-app browser. Record the browser family, viewport,
@@ -1489,16 +1490,19 @@ route, and observed evidence in the archived task. Mixed tasks remain active whe
 required device, browser, permission, assistive-technology, visual, or manual outcome was
 not actually exercised; emulation never proves a physical-device requirement. Evidence
 for every automated or browser-completed task must be written into the archived task.
-Whenever QA is updated and
-before every handoff, automatically scan all active priority trackers and move confirmed,
-checked items to `docs/QA/completed-qa-tasks.md` without waiting for
-a separate cleanup request. Every QA cleanup or archive pass must also audit the
+Whenever automation verifies 100% of a task's stated repro and expected outcome, move
+that task to `docs/QA/completed-qa-tasks.md` immediately in the same pass; do not leave a
+fully proven task active or wait for a separate cleanup request. Remove it from the
+active tracker, update active and completed counts, and remove any newly empty group
+heading and workflow-category link. Whenever QA is updated and before every handoff,
+automatically scan all active priority trackers and move confirmed, checked items to the
+completed archive. Every QA cleanup or archive pass must also audit the
 remaining active tasks for stale routes, controls, labels, components, files, expected
 outcomes, superseded behavior, and duplicate coverage. When a whole section is complete,
 move its section context with those items. If a checked item needs clarification before
 archiving, add an unchecked `QA note needed:` prompt under the active section instead of
-guessing. Never mark an item passed on the user's behalf, and do not silently delete
-active QA coverage. When a feature or behavior has intentionally been removed or
+guessing. Never mark an unproven item passed on the user's behalf, and do not silently
+delete active QA coverage. When a feature or behavior has intentionally been removed or
 superseded, remove its obsolete check from the appropriate active priority tracker and
 record its stable ID
 in the completed archive under an explicit `Retired` heading with the reason and
