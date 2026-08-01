@@ -120,4 +120,58 @@ describe("food data quality disclosure", () => {
 			count: 2,
 		});
 	});
+
+	it("keeps derived, uncertain, missing, trace, and unmapped nutrient states distinct", () => {
+		const disclosure = getFoodDataQualityDisclosure(makeFood({
+			foodNutrients: [
+				{
+					nutrientId: 1003,
+					nutrientName: "Protein",
+					nutrientNumber: "203",
+					unitName: "G",
+					value: 4,
+					valueOrigin: "derived",
+					valueStatus: "derived",
+					standardError: 0.2,
+				},
+			],
+			nutrientSourceReview: [
+				{
+					nutrientName: "Trace nutrient",
+					valueStatus: "trace",
+					mappingStatus: "canonical",
+				},
+				{
+					nutrientName: "Missing nutrient",
+					valueStatus: "missing",
+					mappingStatus: "canonical",
+				},
+				{
+					nutrientName: "Unmapped nutrient",
+					valueStatus: "unknown",
+					mappingStatus: "unmapped",
+				},
+			],
+		}));
+
+		expect(disclosure?.notices).toEqual(expect.arrayContaining([
+			expect.objectContaining({ code: "NUTRIENT_VALUES_DERIVED", count: 1 }),
+			expect.objectContaining({
+				code: "NUTRIENT_STANDARD_ERROR_REPORTED",
+				count: 1,
+			}),
+			expect.objectContaining({
+				code: "NUTRIENT_SOURCE_VALUES_UNQUANTIFIED",
+				count: 1,
+			}),
+			expect.objectContaining({
+				code: "NUTRIENT_SOURCE_VALUES_MISSING",
+				count: 1,
+			}),
+			expect.objectContaining({
+				code: "NUTRIENT_SOURCE_ROWS_UNMAPPED",
+				count: 1,
+			}),
+		]));
+	});
 });

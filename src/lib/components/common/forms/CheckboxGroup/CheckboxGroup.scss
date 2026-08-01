@@ -86,3 +86,15 @@ input:checked::before {
 	background: $app-shell-accent-primary;
 	border-color: currentColor;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.checkbox-group {
+		gap: $app-gap-xs;
+	}
+
+	.checkbox-item {
+		gap: $app-gap-xs;
+		padding: $app-gap-inline-compact $app-gap-sm;
+		font-size: $app-font-size-sm;
+	}
+}

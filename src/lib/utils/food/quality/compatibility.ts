@@ -50,6 +50,13 @@ export type FoodCompatibilityEvaluation = {
 
 export type FoodCompatibilityPreferenceResolutionContext = {
 	resolvedCount: number;
+	resolvedPreferences: Array<{
+		tagId: string;
+		tagSlug: string;
+		label: string;
+		rawValue: string;
+		type: "allergen" | "dietary_restriction";
+	}>;
 	unresolvedPreferences: Array<{
 		label: string;
 		type: "allergen" | "dietary_restriction";

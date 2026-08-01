@@ -200,7 +200,7 @@
 @media (max-width: $app-breakpoint-xs),
   (max-height: $app-breakpoint-height-compact) {
   .tutorial {
-    width: min(23rem, calc(100vw - 2 * $app-gap-sm));
+    width: min(21rem, calc(100vw - 2 * $app-gap-sm));
   }
 
   .tutorial__header,
@@ -209,7 +209,12 @@
   }
 
   .tutorial__body {
-    padding: $app-gap-sm;
+    padding: $app-gap-xs $app-gap-sm;
+
+		> p,
+		li {
+			font-size: $app-font-size-xs;
+		}
   }
 
   .tutorial__title-row h2 {
@@ -217,8 +222,8 @@
   }
 
   :global(.tutorial__illustration) {
-    --circular-icon-frame-size: #{2.35rem};
-    --circular-icon-frame-icon-size: #{1.35rem};
+    --circular-icon-frame-size: #{$app-shell-action-icon-size};
+    --circular-icon-frame-icon-size: #{$app-font-size-lg};
   }
 }
 

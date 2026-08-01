@@ -31,6 +31,7 @@ const emptyRegulatoryContext: FoodCompatibilityRegulatoryContext = {
 
 const emptyPreferenceResolution: FoodCompatibilityPreferenceResolutionContext = {
 	resolvedCount: 0,
+	resolvedPreferences: [],
 	unresolvedPreferences: [],
 };
 

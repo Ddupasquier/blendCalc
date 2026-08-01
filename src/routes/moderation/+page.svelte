@@ -93,6 +93,7 @@
 		<p class="eyebrow">{data.viewerRole}</p>
 		<h1>Moderation</h1>
 		<p>Review profile images and block accounts that violate the community rules.</p>
+		<a class="data-health-link" href="/moderation/data-health">Review catalog data health</a>
 	</header>
 
 	<section class="account-search" aria-labelledby="account-search-title">
@@ -140,7 +141,7 @@
 		<StatusMessage tone="success" message={form.moderationSuccess} />
 	{/if}
 
-	<section class="product-review" aria-labelledby="product-review-title">
+	<section id="product-review" class="product-review" aria-labelledby="product-review-title">
 		<div>
 			<p class="eyebrow">Shared catalog</p>
 			<h2 id="product-review-title">Product submissions</h2>
@@ -312,13 +313,13 @@
 		</div>
 	</section>
 
-	<section class="compatibility-review" aria-labelledby="compatibility-review-title">
+	<section id="compatibility-review" class="compatibility-review" aria-labelledby="compatibility-review-title">
 		<header>
 			<div>
 				<p class="eyebrow">Food compatibility</p>
-				<h2 id="compatibility-review-title">Warning reports</h2>
+				<h2 id="compatibility-review-title">Food warning reports</h2>
 				<p>
-					Review warnings that users believe were matched incorrectly.
+					Review warnings users believe are incorrect or missing.
 					A confirmed report records the next investigation step; it does not
 					silently change product or policy data.
 				</p>
@@ -338,20 +339,49 @@
 					<header>
 						<div>
 							<strong>{feedback.foodDescription}</strong>
-							<span>Policy v{feedback.policyVersion ?? "unknown"}</span>
+							<span>
+								{feedback.feedbackType === "missing_warning"
+									? "Missing warning"
+									: "Incorrect warning"}
+								· Policy v{feedback.policyVersion ?? "unknown"}
+							</span>
 						</div>
 						<span class="status">pending</span>
 					</header>
 					<dl>
-						<div><dt>Warning</dt><dd>{feedback.issueCode}</dd></div>
+						{#if feedback.feedbackType === "missing_warning"}
+							<div>
+								<dt>Affected setting</dt>
+								<dd>{feedback.preferenceValue ?? "Unknown"}</dd>
+							</div>
+							<div>
+								<dt>Setting type</dt>
+								<dd>{feedback.preferenceType?.replaceAll("_", " ") ?? "Unknown"}</dd>
+							</div>
+						{:else}
+							<div><dt>Warning</dt><dd>{feedback.issueCode}</dd></div>
+						{/if}
 						<div><dt>Reason</dt><dd>{feedback.reportReason.replaceAll("_", " ")}</dd></div>
 						<div><dt>Source</dt><dd>{feedback.sourceKey ?? "Shared catalog"} · {feedback.sourceId}</dd></div>
 						{#if feedback.barcode}
 							<div><dt>Barcode</dt><dd>{feedback.barcode}</dd></div>
 						{/if}
+						{#if feedback.sharedProductRevisionId}
+							<div><dt>Catalog revision</dt><dd>{feedback.sharedProductRevisionId}</dd></div>
+						{/if}
+						{#if feedback.observedLabelDate}
+							<div><dt>Package checked</dt><dd>{feedback.observedLabelDate}</dd></div>
+						{/if}
 					</dl>
 					{#if feedback.reportDetails}
 						<p>{feedback.reportDetails}</p>
+					{/if}
+					{#if feedback.evidenceUrl}
+						<p>
+							<a href={feedback.evidenceUrl} target="_blank" rel="noopener noreferrer">
+								View private package-label evidence
+							</a>
+						</p>
 					{/if}
 					<details use:animatedDetails>
 						<summary>Review captured evidence</summary>
@@ -369,8 +399,16 @@
 						<label>
 							<span>Outcome</span>
 							<select name="status" required>
-								<option value="confirmed">Confirm false positive</option>
-								<option value="dismissed">Warning is supported</option>
+								<option value="confirmed">
+									{feedback.feedbackType === "missing_warning"
+										? "Confirm missing warning"
+										: "Confirm false positive"}
+								</option>
+								<option value="dismissed">
+									{feedback.feedbackType === "missing_warning"
+										? "Current warning coverage is supported"
+										: "Warning is supported"}
+								</option>
 							</select>
 						</label>
 						<label>
@@ -404,7 +442,7 @@
 					</form>
 				</article>
 			{:else}
-				<p class="empty-results">No compatibility warnings are waiting for review.</p>
+				<p class="empty-results">No food warning reports are waiting for review.</p>
 			{/each}
 		</div>
 	</section>

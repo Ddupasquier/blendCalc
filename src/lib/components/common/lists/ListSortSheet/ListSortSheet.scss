@@ -34,4 +34,12 @@
 	.list-sort-sheet__options {
 		gap: $app-gap-sm;
 	}
+
+	.list-sort-sheet__section {
+		gap: $app-gap-xs;
+	}
+
+	.list-sort-sheet__section h3 {
+		font-size: $app-font-size-xs;
+	}
 }

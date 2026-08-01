@@ -163,6 +163,17 @@ export const compactFood = (food: FdcFood): FdcFood => {
 			source: nutrient.source,
 			sourceReference: nutrient.sourceReference,
 			confidence: nutrient.confidence,
+			valueStatus: nutrient.valueStatus,
+			standardError: nutrient.standardError,
+			sourceNutrientKey: nutrient.sourceNutrientKey,
+			sourceNutrientCode: nutrient.sourceNutrientCode,
+			mappingStatus: nutrient.mappingStatus,
+			mappingMethod: nutrient.mappingMethod,
+			mappingReviewReference: nutrient.mappingReviewReference,
+			derivationMethod: nutrient.derivationMethod,
+		})),
+		nutrientSourceReview: food.nutrientSourceReview?.map((entry) => ({
+			...entry,
 		})),
 	};
 };

@@ -261,7 +261,7 @@ Stores normalized nutrient facts for any supported food parent.
 
 | Table | Documented columns |
 | --- | --- |
-| `food_nutrients` | `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`, `shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`, `shared_product_observation_id`, `nutrient_id`, `amount_per_100g`, `unit_name`, `value_origin`, `source`, `source_reference`, `source_observation_id`, `confidence`, `created_at`, `updated_at` |
+| `food_nutrients` | `id`, food-parent and ownership ids, `nutrient_id`, `amount_per_100g`, `unit_name`, `value_origin`, `value_status`, `standard_error`, `source`, `source_reference`, `source_observation_id`, `source_nutrient_key`, `source_nutrient_code`, `mapping_status`, `mapping_method`, `mapping_review_reference`, `derivation_method`, `confidence`, timestamps |
 
 Notes:
 
@@ -269,6 +269,17 @@ Notes:
 - Private user nutrients use `owner_user_id`; shared/catalog nutrients should not be
   user-owned.
 - Unique indexes prevent duplicate nutrient rows for the same parent.
+- `amount_per_100g` contains only accepted numeric values used by nutrition and Mix
+  math. `value_status` keeps reported, reported-zero, and derived values distinct;
+  missing, trace, present-but-unquantified, invalid, and unmapped source facts never
+  become numeric rows.
+- `standard_error` is source-reported review metadata. It never changes
+  `amount_per_100g`. Source nutrient keys/codes and mapping/derivation metadata retain
+  the exact normalization decision; `mapping_review_reference` is internal moderation
+  evidence and is not serialized by the public API.
+- `apply_food_nutrient_uncertainty` hydrates these columns only from the exact parent
+  food snapshot. It does not infer uncertainty from provider identity or a similar
+  nutrient.
 
 ### `nutrient_manual_entry_*`
 
@@ -391,7 +402,7 @@ Notes:
 
 | Table | Documented columns |
 | --- | --- |
-| `nutrient_source_mappings` | `source_key`, `source_nutrient_key`, `source_unit_name`, `source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `confidence`, `enabled`, observation counts/timestamps, `provenance`, and timestamps |
+| `nutrient_source_mappings` | `source_key`, `source_nutrient_key`, `source_unit_name`, `source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `review_status`, `review_reference`, `confidence`, `enabled`, observation counts/timestamps, `provenance`, and timestamps |
 
 Notes:
 
@@ -448,7 +459,7 @@ snapshot.
 
 | Table | Documented columns |
 | --- | --- |
-| `food_servings` | `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`, `shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`, `shared_product_observation_id`, `source_observation_id`, `serving_order`, `label`, `gram_weight`, optional `amount` and `unit_key`, `is_primary`, `source`, `source_reference`, `confidence`, and timestamps |
+| `food_servings` | `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`, `shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`, `shared_product_observation_id`, `source_observation_id`, `serving_order`, `label`, `gram_weight`, optional `amount` and `unit_key`, `is_primary`, `measure_type`, `is_household_measure`, `source_measure_key`, `origin`, `gram_weight_method`, `calculation_basis`, `source`, `source_reference`, `confidence`, and timestamps |
 
 Notes:
 
@@ -460,12 +471,23 @@ Notes:
 - `source_observation_id` identifies the exact observation supporting the serving.
   A provider name, FDC ID, or product-level source is not sufficient field evidence;
   rows without an observation remain explicitly `unknown`.
+- `origin` distinguishes a package-label serving, source household measure, direct
+  source weight, user-entered serving, calculated conversion, or unknown lineage.
+  `gram_weight_method` separately records whether the gram value was reported,
+  converted exactly from a weight unit, entered by the user, calculated from a measured
+  weight-to-volume pair, or is unknown.
+- `measure_type`, `is_household_measure`, and `source_measure_key` retain source measure
+  semantics without using an internal key as display copy. `calculation_basis` records
+  the measured relationship behind a calculated conversion when one exists.
+- The serving-semantics trigger backfills only from an exact matching serving in the
+  parent snapshot or linked source observation. It never infers lineage from a provider
+  name, barcode, FDC identifier, food name, or category.
 - The initial migration checks every existing parent row and backfills all valid serving
   data already present. Foods without a trustworthy serving stay empty; the migration
   does not invent a 100g package serving.
 - The nutrition view loads these rows, defaults to the primary source serving, and still
-  offers the normalized 100g basis. `gram_weight` and optional amount/unit fields are
-  the future mix conversion input.
+  offers the normalized 100g basis. Mix may calculate another unit only from an exact
+  weight conversion or a measured serving pair and preserves that calculation basis.
 - Authenticated users may read their own serving rows and servings attached to active
   shared products. Only server/service-role paths may write them.
 
@@ -673,7 +695,7 @@ the exact source wording.
 
 | Table | Documented columns |
 | --- | --- |
-| `product_precautionary_statements` | `id`, exactly one owner id, `source_observation_id`, `shared_product_revision_id`, `statement_type`, `statement_text`, `normalized_allergens`, `language_code`, `source_field`, `source_key`, `source_reference`, `observed_label_at`, `source_payload`, `content_hash`, `created_at`, `updated_at` |
+| `product_precautionary_statements` | `id`, exactly one owner id, `source_observation_id`, `shared_product_revision_id`, `statement_type`, `statement_text`, `normalized_allergens`, `language_code`, `source_field`, `source_key`, `source_reference`, `label_observed_at`, `source_payload`, `content_hash`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -689,6 +711,9 @@ Notes:
 - `sync_product_precautionary_statements` rebuilds the projection when source food JSON
   changes. Existing compatibility facts link the exact statement and active immutable
   match rule rather than flattening all cross-contact evidence into one trace list.
+- When an exact statement-linked precautionary fact and a flat `label_trace_field` fact
+  identify the same owner, tag, and fact type, extraction retains the exact
+  statement-linked fact and removes only the duplicate flat fact.
 - Authenticated and anonymous reads are limited by RLS to statements attached to active
   shared products. Service-role paths manage observation and submission evidence.
 
@@ -759,7 +784,7 @@ Notes:
 | `food_allergen_regulatory_profiles` | `id`       | Shared regulatory reference | Reviewed jurisdiction-specific allergen declaration profiles                                       | `policy_version_id → food_compatibility_policy_versions.id`                          |
 | `food_allergen_regulatory_profile_tags` | Composite | Shared regulatory reference | Normalized compatibility tags covered by a regional allergen profile                               | Profile and tag foreign keys                                                         |
 | `product_compatibility_facts`      | `id`        | Shared product metadata     | Facts extracted from shared products/submissions/observations                                      | `tag_id → compatibility_tags.id`; exactly one product/submission/observation parent |
-| `food_compatibility_feedback`      | `id`        | User report/moderation queue | Versioned false-positive reports containing the exact warning and evidence shown to the user         | User, policy version, optional product, and reviewer foreign keys                    |
+| `food_compatibility_feedback`      | `id`        | User report/moderation queue | Versioned incorrect- and missing-warning reports with preserved product, preference, policy, revision, and private evidence context | User, policy version, preference tag, optional product/revision, and reviewer foreign keys |
 | `food_preference_mapping_requests` | `id` | Shared review queue | Privacy-safe normalized requests for saved preference text that has no single exact reviewed mapping | Optional resolved mapping, term, tag, and reviewer |
 | `food_preference_option_catalog`   | `id`        | Shared reference            | App-ready allergen/dietary/ingredient options built from product compatibility and ingredient data | Optional `tag_id → compatibility_tags.id`                                           |
 | `food_preference_api_observations` | `id`        | Shared reference/provenance | Raw observed allergen/dietary/ingredient metadata from external APIs                               | No direct user ownership                                                            |
@@ -801,6 +826,10 @@ Notes:
   normalized wording has one exact reviewed canonical term or reviewed alias and that
   term has an active version-bound preference mapping. No fuzzy match or hard-coded
   synonym is accepted.
+- Policy version 2 activates reviewed English, French, and Spanish ingredient and
+  allergen-declaration aliases. Accent and provider language prefixes are normalized,
+  but the original source wording and language remain evidence. An explicitly reported
+  unsupported language remains incomplete rather than being treated as checked.
 
 ### Version-bound extraction and conflict policy
 
@@ -808,7 +837,7 @@ Notes:
 | --- | --- |
 | `food_compatibility_policy_conflicts` | `policy_version_id`, `preference_tag_id`, `fact_tag_id`, `severity`, `warning_code`, `priority`, `created_at`, `updated_at` |
 | `food_compatibility_policy_match_rules` | `id`, `policy_version_id`, `tag_id`, `source_key`, `field_name`, `match_pattern`, `exclude_pattern`, `fact_type`, `source_type`, `confidence`, `priority`, `enabled`, `created_at`, `updated_at` |
-| `food_compatibility_policy_exemptions` | `id`, `policy_version_id`, `jurisdiction_code`, `ingredient_term_id`, `parent_term_id`, `fact_tag_id`, `processing_state`, `exemption_type`, `warning_behavior`, `source_reference`, `reviewed_at`, `created_at`, `updated_at` |
+| `food_compatibility_policy_exemptions` | `id`, `policy_version_id`, `jurisdiction_code`, `ingredient_term_id`, `parent_term_id`, `fact_tag_id`, `processing_state`, `exemption_type`, `threshold_value`, `threshold_unit`, `product_context`, `warning_behavior`, `source_reference`, `reviewed_at`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -845,6 +874,11 @@ Notes:
 - Exemptions retain reviewed jurisdiction context only. Their enforced
   `warning_behavior` is `context-only`, so an exemption cannot suppress a conflict for
   a preference the user explicitly selected.
+- Exemption snapshots preserve the derivative or parent term, processing state,
+  threshold amount/unit, product context, jurisdiction, and reviewed source. Current EU
+  and Australia/New Zealand rows record reviewed labeling context such as fully refined
+  soybean oil and threshold-qualified wheat glucose syrup without converting those
+  labeling rules into personal safety claims.
 
 ### `food_compatibility_policy_versions`
 
@@ -918,8 +952,10 @@ Notes:
 - Each fact records the policy version that generated it. Denormalized summaries include
   `policyVersion` and contain only facts from the active policy version.
 - Ingredient-derived facts also record the exact normalized ingredient component and
-  match rule. This preserves the source wording, tree position, selected observation,
-  and policy decision used for the warning without rerunning mutable client logic.
+  either its extraction rule or its active reviewed terminology mapping through the
+  component term and immutable policy bundle. This preserves the source wording, tree
+  position, selected observation, and policy decision used for the warning without
+  rerunning mutable client logic.
 - Precautionary facts record the exact normalized statement and match rule. Repeated
   allergens de-duplicate within one statement without discarding distinct package
   statements, wording, statement types, observations, or revisions.
@@ -928,19 +964,27 @@ Notes:
 
 | Table | Documented columns |
 | --- | --- |
-| `food_compatibility_feedback` | `id`, `reported_by`, `policy_version_id`, `shared_product_id`, `source_key`, `source_id`, `barcode`, `food_description`, `warning_id`, `issue_code`, `issue_params`, `fact_snapshot`, `report_reason`, `report_details`, `report_fingerprint`, `status`, `resolution_action`, `reviewed_by`, `reviewed_at`, `review_note`, `created_at`, `updated_at` |
+| `food_compatibility_feedback` | `id`, `reported_by`, `policy_version_id`, `feedback_type`, `shared_product_id`, `shared_product_revision_id`, `source_key`, `source_id`, `barcode`, `food_description`, `warning_id`, `issue_code`, `issue_params`, `fact_snapshot`, `preference_type`, `preference_value`, `preference_tag_id`, `observed_label_date`, `evidence_path`, `evidence_sha256`, `report_reason`, `report_details`, `report_fingerprint`, `status`, `resolution_action`, `reviewed_by`, `reviewed_at`, `review_note`, `created_at`, `updated_at` |
 
 Notes:
 
-- A signed-in user can report a warning as an incorrect match, outdated source record,
-  wrong evidence type, or another evidence-specific problem.
+- A signed-in user can report an existing warning as an incorrect match, outdated
+  source record, wrong evidence type, or another evidence-specific problem. They can
+  also report a missing warning against one exact currently resolved food preference.
 - The report stores the warning parameters and exact matching fact snapshot from the
   active policy version. It does not rely on mutable client wording.
 - A unique pending fingerprint makes repeated submissions idempotent.
+- Missing-warning reports retain the catalog revision current at submission, an
+  optional package-observation date, and an optional normalized private label image.
+  Evidence paths remain in the private product-evidence bucket and are exposed only as
+  short-lived signed URLs inside privileged moderation reads.
 - Users may read only their own reports. Inserts and moderation updates use authenticated
   server boundaries; the service role owns privileged writes.
 - Moderators resolve reports as `confirmed` or `dismissed` and record the next action as
   rule review, source correction, product correction, or duplicate.
+- Confirming a report records an investigation decision only. Product corrections and
+  policy changes continue through their existing revisioned workflows and compatibility
+  refresh triggers.
 
 ### `food_compatibility_policy_coverage`
 
@@ -1065,6 +1109,14 @@ Notes:
 
 - Moderation/admin writes are intentionally not available to normal authenticated
   clients.
+- `get_moderator_data_health(p_days, p_issue_limit)` is an authenticated
+  moderator/admin-only security-definer aggregate. It clamps the metric window to
+  1–90 days and each issue queue to 1–50 rows. It returns catalog/publication counts,
+  source metrics and safe latest-evaluation summaries, dataset import/licence/checksum
+  state, active compatibility-policy coverage, and bounded conflict, publication,
+  mapping, and revision gaps. It deliberately excludes raw provider payloads, private
+  evidence, user identities, secrets, source-evaluation `details`, dataset `metadata`,
+  and dataset download URLs.
 - `blocked_signup_emails` stores hashes, not raw email addresses.
 - `reject_blocked_signup` is the auth hook function for blocking signups.
 - Application requests fail closed when account-moderation state cannot be verified;
@@ -1145,7 +1197,7 @@ without calling the source again.
 | `generic_food_datasets`                    | `key`                                               | Records each national release and its legal/import state      | Source/license URLs, attribution, file SHA-256, review status, import/active gates, imported row counts                                   |
 | `generic_food_records`                     | `dataset_key, source_food_key`                      | Stores one source-owned generic food/preparation              | Raw description, group, preparation, searchable text, source reference and dates                                                          |
 | `generic_food_source_identifiers`          | Dataset food plus source, type, and value           | Stores exact source-declared cross-dataset identifiers        | Supports exact joins such as CNF `USDA_NDB_Code` to USDA NDB without fuzzy name matching; includes source field and verification method   |
-| `generic_food_nutrients`                   | `dataset_key, source_food_key, source_nutrient_key` | Stores source nutrient amounts and canonical mappings         | Explicit basis, amount, unit, mapping status, and `value_status` (`measured`, `trace`, `present-unquantified`)                            |
+| `generic_food_nutrients`                   | `dataset_key, source_food_key, source_nutrient_key` | Stores source nutrient amounts and canonical mappings         | Explicit basis, amount, unit, standard error, source code, mapping status, and `value_status` (`measured`, `trace`, `present-unquantified`, `missing`) |
 | `generic_food_measures`                    | `dataset_key, source_food_key, source_measure_key`  | Stores source household measures                              | Amount/unit, gram weight, source label and metadata; never inferred from names                                                            |
 | `generic_food_dataset_reference_rows`      | `dataset_key, reference_type, source_key`           | Stores source dictionaries used to interpret imports          | Reference labels and metadata remain tied to the dataset release                                                                          |
 
@@ -1155,6 +1207,13 @@ identity-only shells cannot consume result slots. Results retain alternate descr
 scientific names, preparation metadata, and exact source-declared identifiers. Those
 identifiers may connect the same source food across datasets, but similar names are never
 treated as an identity match.
+
+The public `search_generic_food_records` wrapper returns every source nutrient fact for
+each bounded result, including trace, present-but-unquantified, missing, and unmapped
+rows. The application splits canonical measured values into `foodNutrients` and keeps
+all source rows in the review-only `nutrientSourceReview` contract. The prior ranked
+search implementation is private so browser roles cannot bypass the wrapper or query
+raw generic tables directly.
 
 The current provider capability and intake-state inventory belongs in
 [`api-structures/source-data-inventory.md`](api-structures/source-data-inventory.md);
@@ -1191,6 +1250,7 @@ category, or serving fields.
 | `set_default_profile_display_name`             | Trigger helper that fills missing profile display names                                                                                        |
 | `create_profile_for_new_auth_user`             | Auth trigger helper that creates a profile row for new users                                                                                   |
 | `replace_food_nutrients`                       | Replaces normalized nutrient rows for exactly one food parent                                                                                  |
+| `apply_food_nutrient_uncertainty`              | Trigger helper that retains exact source status, standard error, mapping, and derivation metadata without changing the accepted amount          |
 | `replace_food_servings`                        | Replaces normalized serving rows for exactly one food parent; parent triggers call it after relevant writes                                    |
 | `normalize_food_nutrient_lineage`              | Links normalized nutrients to exact selected observations and leaves unsupported provider-derived lineage unknown                              |
 | `normalize_food_serving_lineage`               | Links normalized servings to exact selected observations and leaves unsupported provider-derived lineage unknown                              |
@@ -1204,7 +1264,7 @@ category, or serving fields.
 | `activate_food_compatibility_policy_version`   | Atomically snapshots and activates or rolls back an immutable policy bundle, then refreshes every compatibility fact and preference option      |
 | `sync_product_ingredient_evidence`             | Rebuilds the lossless relational ingredient statement/tree projection for one product, observation, or submission without parsing unstructured text or inventing percentages |
 | `sync_product_precautionary_statements`         | Rebuilds exact package precautionary statements and normalized statement metadata for one product, observation, or submission                   |
-| `extract_product_compatibility_facts`          | Extracts product compatibility facts from food/product JSON                                                                                    |
+| `extract_product_compatibility_facts`          | Extracts active policy-versioned compatibility facts from food/product JSON and relational evidence, preferring exact precautionary statements over duplicate flat trace facts |
 | `rebuild_shared_product_compatibility_summary` | Rebuilds denormalized compatibility summary JSON on shared products                                                                            |
 | `refresh_shared_product_compatibility_match_facts` | Re-extracts one canonical shared product with the current reviewed compatibility policy                                                    |
 | `sync_shared_product_compatibility_summary`    | Trigger helper that refreshes a canonical summary after fact changes, with a bulk-backfill guard                                               |
@@ -1215,13 +1275,14 @@ category, or serving fields.
 | `rebuild_custom_food_category_options`         | Rebuilds manual custom-food category options from observations                                                                                 |
 | `normalize_food_category_value`                | Normalizes category text for option and mapping lookup                                                                                         |
 | `resolve_custom_food_category_option`          | Resolves raw API category values to one enabled canonical category option                                                                      |
-| `search_generic_food_records`                  | Uses indexed prefix matching and stable relevance ordering across active national datasets; excludes nutrient-empty shells and returns normalized food JSON with exact source identifiers and provenance |
+| `search_generic_food_records`                  | Security-definer wrapper around the private indexed search; excludes nutrient-empty shells while returning exact identifiers plus lossless measured, trace, missing, and mapping-review nutrient facts |
 | `apply_shared_product_external_enrichment`     | Atomically fills legally reusable missing canonical fields, including structured package metadata, while recording observations, provenance, normalized projections, and a revision |
 | `blendcalc_api_v1_source_is_eligible`           | Tests a stored source against the DB-owned API redistribution, licence, attribution, and policy-review gate |
 | `blendcalc_api_v1_product_readiness_reasons`    | Returns the service-only reasons an active shared product is withheld from API v1 |
 | `get_blendcalc_product_v1`                      | Reads one active, publication-ready shared product and its latest revision by GTIN-14 |
 | `get_blendcalc_product_revision_history_v1`     | Reads bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14 |
 | `search_blendcalc_products_v1`                  | Searches only active, publication-ready shared products with bounded pagination and stable relevance |
+| `get_moderator_data_health`                     | Returns bounded moderator/admin-only catalog, source, dataset, policy, mapping, revision, conflict, and publication-readiness summaries after independently verifying the caller's role |
 | `catalog_change_summary_is_valid`               | Validates unique structured old/new field changes before a catalog product update can be accepted |
 | `consume_request_rate_limit`                    | Atomically consumes one private server-side request quota unit; service role only |
 | `replace_app_interaction_daily_metrics`         | Atomically replaces a bounded production date range of private Vercel interaction aggregates; service role only |

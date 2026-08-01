@@ -191,40 +191,6 @@ USDA or barcode-backed foods before persistence.
 enrichment, preserves explicit user edits and stronger evidence, and records why each
 field changed.
 
-### Ambiguous Serving Quantities Can Default To Grams
-
-**Status:** High
-
-**Evidence:** `parseServingAmount` in
-`src/lib/utils/serving/servingAmount.ts` intentionally applies the configured default
-weight unit when an interactive user input omits a unit. Provider mappers in
-`src/lib/utils/barcode/barcodeProductMappers.ts` and the legacy path in
-`src/lib/utils/food/servings/foodServings.ts` use the same parser. A provider's bare
-`serving_quantity` or incomplete serving text can therefore become grams without source
-evidence.
-
-**Affected areas:** Per-serving normalization, serving choices, density calculation,
-nutrition scaling, Mix conversions, and API servings.
-
-**Complete when:** Provider and legacy parsers require an explicit recognized unit;
-only interactive form input may use a user-visible selected default; and ambiguous
-provider quantities remain unavailable.
-
-### Legacy Serving Provenance Is Inferred From Food Identity
-
-**Status:** High
-
-**Evidence:** `src/lib/utils/food/servings/foodServings.ts` reconstructs a legacy
-serving's source from field provenance, then the food source, barcode source, or FDC ID.
-That can attach a provider to a serving that was edited or added later. The normalized
-database trigger has the related provider-default problem documented above.
-
-**Affected areas:** Legacy food snapshots, source labels, weight-volume conversion,
-normalized servings, and API attribution.
-
-**Complete when:** Legacy serving reconstruction uses explicit serving lineage only;
-user-entered values are user-reported; and absent lineage remains unknown.
-
 ### Generic Identity Defaults Unknown Foods To Packaged
 
 **Status:** High

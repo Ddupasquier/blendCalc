@@ -2,7 +2,6 @@
 
 .product-information-panel {
 	display: grid;
-	gap: $app-gap-md;
 	min-width: 0;
 	color: $app-shell-text-primary;
 }
@@ -98,8 +97,24 @@
 }
 
 @media (max-width: $app-breakpoint-xs) {
+	.product-information-panel__content {
+		gap: $app-gap-md;
+	}
+
+	.product-information-panel__section,
+	.product-information-panel dl,
+	.product-information-panel__attribution {
+		gap: $app-gap-xs;
+	}
+
 	.product-information-panel__row {
 		grid-template-columns: minmax(0, 1fr);
 		gap: $app-gap-2xs;
+	}
+
+	.product-information-panel dd,
+	.product-information-panel p,
+	.product-information-panel a {
+		font-size: $app-font-size-sm;
 	}
 }

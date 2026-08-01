@@ -23,6 +23,7 @@ import type {
 	FoodPrecautionaryStatement,
 	FoodSourceRecordMetadata,
 	FoodStructuredIngredient,
+	FoodServing,
 } from "$lib/utils/food/types";
 import { normalizeCustomFoodName } from "$lib/utils/food/custom/customFoodNames";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
@@ -70,6 +71,7 @@ export type CustomFoodInput = {
 	nutrients: FdcNutrient[];
 	reportedNutrientIds?: number[];
 	hasSourceServing?: boolean;
+	serving?: FoodServing;
 	customFood?: boolean;
 };
 
@@ -117,8 +119,16 @@ const createNutrients = (
 			valueOrigin: nutrient.valueOrigin,
 			source: nutrient.source,
 			sourceReference: nutrient.sourceReference,
-			confidence: nutrient.confidence,
-		}];
+				confidence: nutrient.confidence,
+				valueStatus: nutrient.valueStatus,
+				standardError: nutrient.standardError,
+				sourceNutrientKey: nutrient.sourceNutrientKey,
+				sourceNutrientCode: nutrient.sourceNutrientCode,
+				mappingStatus: nutrient.mappingStatus,
+				mappingMethod: nutrient.mappingMethod,
+				mappingReviewReference: nutrient.mappingReviewReference,
+				derivationMethod: nutrient.derivationMethod,
+			}];
 	});
 };
 
@@ -229,6 +239,7 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 	const servingConfidence = input.fieldProvenance?.serving?.confidence ??
 		(isUserServing ? "user-reported" : "unknown");
 	const customFood = input.customFood ?? true;
+	const inputServing = input.serving;
 
 	return {
 		fdcId: createCustomFoodId(),
@@ -247,11 +258,23 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		hasSourceServing,
 		foodServings: hasSourceServing
 			? [{
+				...inputServing,
 				label: servingLabel,
 				gramWeight: servingWeightGrams,
-				amount: input.volumeQuantity,
-				unitKey: input.volumeUnit,
+				amount: input.volumeQuantity ?? inputServing?.amount,
+				unitKey: input.volumeUnit ?? inputServing?.unitKey,
 				isPrimary: true,
+				measureType: inputServing?.measureType ??
+					(isUserServing ? "User serving" : undefined),
+				isHouseholdMeasure: input.volumeQuantity !== undefined
+					? true
+					: inputServing?.isHouseholdMeasure,
+				sourceMeasureKey: inputServing?.sourceMeasureKey,
+				origin: inputServing?.origin ??
+					(isUserServing ? "user-entered" : "unknown"),
+				gramWeightMethod: inputServing?.gramWeightMethod ??
+					(isUserServing ? "user-reported" : "unknown"),
+				calculationBasis: inputServing?.calculationBasis,
 				source: servingSource,
 					sourceReference:
 						input.fieldProvenance?.serving?.sourceReference ?? input.barcode,
@@ -286,10 +309,10 @@ export const createCustomFood = (input: CustomFoodInput): FdcFood => {
 		sourceModifiedDate: input.sourceModifiedDate,
 		customServingLabel: servingLabel,
 		customServingWeightGrams: servingWeightGrams,
-		customDensityGramsPerMilliliter: density ?? undefined,
-		customDensityLabel: density ? "custom serving" : undefined,
-		customDensityVariancePercent: density ? 0 : undefined,
-		customDensityConfidence: density ? "known" : undefined,
+		customDensityGramsPerMilliliter: isUserServing ? density ?? undefined : undefined,
+		customDensityLabel: isUserServing && density ? "User-reported serving pair" : undefined,
+		customDensityVariancePercent: isUserServing && density ? 0 : undefined,
+		customDensityConfidence: isUserServing && density ? "known" : undefined,
 		foodNutrients,
 		reportedNutrientIds: input.reportedNutrientIds
 			? [...new Set(input.reportedNutrientIds)].filter((nutrientId) =>

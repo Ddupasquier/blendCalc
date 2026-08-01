@@ -1,6 +1,8 @@
 <script lang="ts">
+	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import NutritionFactsLabel from "$lib/components/ingredients/nutrition/NutritionFactsLabel/NutritionFactsLabel.svelte";
 	import NutritionListActions from "$lib/components/ingredients/nutrition/NutritionListActions/NutritionListActions.svelte";
+	import MissingFoodWarningFeedback from "$lib/components/ingredients/nutrition/MissingFoodWarningFeedback/MissingFoodWarningFeedback.svelte";
 	import NutritionPreferenceConflict from "$lib/components/ingredients/nutrition/NutritionPreferenceConflict/NutritionPreferenceConflict.svelte";
 	import ProductCompatibilityPanel from "$lib/components/ingredients/nutrition/ProductCompatibilityPanel/ProductCompatibilityPanel.svelte";
 	import ProductDataQualityPanel from "$lib/components/ingredients/nutrition/ProductDataQualityPanel/ProductDataQualityPanel.svelte";
@@ -32,8 +34,13 @@
 	{#if food}
 		<ProductIngredientsPanel {food} />
 		<ProductCompatibilityPanel {food} />
-		<ProductDataQualityPanel {food} />
-		<ProductInformationPanel {food} {onReportIncorrectInformation} />
+		<CollapsibleSection title="More about this food" surface="panel">
+			<div class="nutrition-panel__supplemental">
+				<ProductDataQualityPanel {food} />
+				<ProductInformationPanel {food} {onReportIncorrectInformation} />
+				<MissingFoodWarningFeedback {food} />
+			</div>
+		</CollapsibleSection>
 	{/if}
 	<NutritionListActions {food} {showListActions} {listMembership} />
 </section>

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import ProductCompatibilityPanel from "$lib/components/ingredients/nutrition/ProductCompatibilityPanel/ProductCompatibilityPanel.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
@@ -17,6 +17,12 @@ const notSelectedRegulatoryContext = {
 	profile: null,
 	coveredPreferences: [],
 	uncoveredPreferences: [],
+};
+
+const resolvedPreferenceContext = {
+	resolvedCount: 0,
+	resolvedPreferences: [],
+	unresolvedPreferences: [],
 };
 
 describe("ProductCompatibilityPanel", () => {
@@ -123,6 +129,7 @@ describe("ProductCompatibilityPanel", () => {
 							policy: "available",
 						},
 						regulatoryContext: notSelectedRegulatoryContext,
+						preferenceResolution: resolvedPreferenceContext,
 					},
 				}),
 			},
@@ -153,6 +160,7 @@ describe("ProductCompatibilityPanel", () => {
 					policy: "available",
 				},
 				regulatoryContext: notSelectedRegulatoryContext,
+				preferenceResolution: resolvedPreferenceContext,
 			},
 		});
 		const { unmount } = render(ProductCompatibilityPanel, {
@@ -185,7 +193,7 @@ describe("ProductCompatibilityPanel", () => {
 			.toBeInTheDocument();
 	});
 
-	it("shows regional label context without weakening personal checks", () => {
+	it("keeps regional label context in a closed supporting section", async () => {
 		render(ProductCompatibilityPanel, {
 			props: {
 				food: createFood({
@@ -223,11 +231,17 @@ describe("ProductCompatibilityPanel", () => {
 							}],
 							uncoveredPreferences: ["Banana"],
 						},
+						preferenceResolution: resolvedPreferenceContext,
 					},
 				}),
 			},
 		});
 
+		const detailsTitle = screen.getByText("Food check details");
+		const details = detailsTitle.closest("details");
+		expect(details).not.toHaveAttribute("open");
+		await fireEvent.click(detailsTitle.closest("summary") as HTMLElement);
+		expect(details).toHaveAttribute("open");
 		expect(screen.getByRole("heading", { name: "Regional label context" }))
 			.toBeInTheDocument();
 		expect(screen.getByText(/all of your personal warnings stay active/i))
@@ -237,7 +251,7 @@ describe("ProductCompatibilityPanel", () => {
 			.toBeInTheDocument();
 	});
 
-	it("explains that unresolved settings are saved but not checked", () => {
+	it("keeps unresolved-setting guidance in supporting details", async () => {
 		render(ProductCompatibilityPanel, {
 			props: {
 				food: createFood({
@@ -258,6 +272,7 @@ describe("ProductCompatibilityPanel", () => {
 						regulatoryContext: notSelectedRegulatoryContext,
 						preferenceResolution: {
 							resolvedCount: 0,
+							resolvedPreferences: [],
 							unresolvedPreferences: [{
 								label: "Banana sensitivity",
 								type: "allergen",
@@ -268,6 +283,11 @@ describe("ProductCompatibilityPanel", () => {
 			},
 		});
 
+		const detailsTitle = screen.getByText("Food check details");
+		const details = detailsTitle.closest("details");
+		expect(details).not.toHaveAttribute("open");
+		await fireEvent.click(detailsTitle.closest("summary") as HTMLElement);
+		expect(details).toHaveAttribute("open");
 		expect(screen.getByText("Some settings are waiting for review"))
 			.toBeInTheDocument();
 		expect(screen.getByText(/Banana sensitivity is saved/i))

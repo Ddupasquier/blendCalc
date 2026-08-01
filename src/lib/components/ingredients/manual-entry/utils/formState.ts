@@ -15,6 +15,7 @@ import type {
 	FoodPackageQuantity,
 	FoodSourceRecordMetadata,
 	FoodStructuredIngredient,
+	FoodServing,
 } from "$lib/utils/food/types";
 import type {
 	ManualEntryStepId,
@@ -38,6 +39,7 @@ export type ManualEntryFormResetState = {
 	categorySymbolKey: string;
 	servingLabel: string;
 	servingWeightGrams: number | null;
+	serving?: FoodServing;
 	volumeQuantity: number | null;
 	volumeUnit: ServingMeasureUnit;
 	useVolumeEquivalent: boolean;
@@ -91,6 +93,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	categorySymbolKey: "generic",
 	servingLabel: "",
 	servingWeightGrams: null,
+	serving: undefined,
 	volumeQuantity: null,
 	volumeUnit: getDefaultServingMeasureUnit("volume") ?? "",
 	useVolumeEquivalent: false,
@@ -168,6 +171,7 @@ export const getManualEntryFormStateFromFood = (
 			food.householdServingFullText ??
 			`${servingWeightGrams}g`,
 		servingWeightGrams,
+		serving: serving ?? undefined,
 		importedNutrients: nutrientsPerServing,
 		manualNutrientValues: Object.fromEntries(
 			nutrientsPerServing.map((nutrient) => [

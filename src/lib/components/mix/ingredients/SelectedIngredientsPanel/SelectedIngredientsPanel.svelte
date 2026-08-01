@@ -11,6 +11,7 @@
 	import {
 		getFoodNutrientChips,
 		getFoodSourceLabel,
+		getServingConversionBasis,
 		getServingGramsLabel,
 	} from "$lib/utils/mix/ui/mixUi";
 	import {
@@ -89,12 +90,14 @@
 	{/if}
 	<div class="selected-ingredient-cards">
 		{#each pagedFoods as food (food.fdcId)}
+			{@const servingConversion = getServingConversion(food)}
 			<IngredientCard
 				{food}
 				sourceLabel={getFoodSourceLabel(food, fridgeItems)}
 				quantity={getServingQuantity(food)}
 				unit={getServingUnit(food)}
-				gramsLabel={getServingGramsLabel(getServingConversion(food))}
+				gramsLabel={getServingGramsLabel(servingConversion)}
+				conversionBasis={getServingConversionBasis(servingConversion)}
 				warning={getServingConversionWarning(food)}
 				conversionDetailsOpen={conversionDetailsFoodId === food.fdcId}
 				{onOpenConversionDetails}

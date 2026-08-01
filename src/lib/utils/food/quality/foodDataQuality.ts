@@ -10,7 +10,12 @@ export type FoodDataQualityCode =
 	| "SOURCE_RECORD_PARTIAL"
 	| "SOURCE_RECORD_QUALITY_NOTES"
 	| "ACCEPTED_FIELDS_COMBINE_SOURCES"
-	| "SOURCE_METADATA_COMBINES_RECORDS";
+	| "SOURCE_METADATA_COMBINES_RECORDS"
+	| "NUTRIENT_VALUES_DERIVED"
+	| "NUTRIENT_STANDARD_ERROR_REPORTED"
+	| "NUTRIENT_SOURCE_VALUES_UNQUANTIFIED"
+	| "NUTRIENT_SOURCE_VALUES_MISSING"
+	| "NUTRIENT_SOURCE_ROWS_UNMAPPED";
 
 export type FoodDataQualityNotice = {
 	code: FoodDataQualityCode;
@@ -68,6 +73,21 @@ export const getFoodDataQualityDisclosure = (
 	const sourceMetadataRecordCount = getSourceMetadataRecordCount(metadata);
 	const hasSourceErrors = hasValues(metadata?.qualityErrorTags);
 	const hasSourceWarnings = hasValues(metadata?.qualityWarningTags);
+	const derivedNutrientCount = food.foodNutrients.filter((nutrient) =>
+		nutrient.valueStatus === "derived" || nutrient.valueOrigin === "derived"
+	).length;
+	const standardErrorCount = food.foodNutrients.filter((nutrient) =>
+		Number.isFinite(nutrient.standardError) && Number(nutrient.standardError) >= 0
+	).length;
+	const unquantifiedCount = (food.nutrientSourceReview ?? []).filter((entry) =>
+		entry.valueStatus === "trace" || entry.valueStatus === "present-unquantified"
+	).length;
+	const missingCount = (food.nutrientSourceReview ?? []).filter(
+		(entry) => entry.valueStatus === "missing",
+	).length;
+	const unmappedCount = (food.nutrientSourceReview ?? []).filter(
+		(entry) => entry.mappingStatus === "unmapped",
+	).length;
 
 	if (metadata?.obsolete === true) {
 		notices.push({ code: "SOURCE_RECORD_OBSOLETE" });
@@ -100,6 +120,33 @@ export const getFoodDataQualityDisclosure = (
 		notices.push({
 			code: "SOURCE_METADATA_COMBINES_RECORDS",
 			count: sourceMetadataRecordCount,
+		});
+	}
+	if (derivedNutrientCount > 0) {
+		notices.push({ code: "NUTRIENT_VALUES_DERIVED", count: derivedNutrientCount });
+	}
+	if (standardErrorCount > 0) {
+		notices.push({
+			code: "NUTRIENT_STANDARD_ERROR_REPORTED",
+			count: standardErrorCount,
+		});
+	}
+	if (unquantifiedCount > 0) {
+		notices.push({
+			code: "NUTRIENT_SOURCE_VALUES_UNQUANTIFIED",
+			count: unquantifiedCount,
+		});
+	}
+	if (missingCount > 0) {
+		notices.push({
+			code: "NUTRIENT_SOURCE_VALUES_MISSING",
+			count: missingCount,
+		});
+	}
+	if (unmappedCount > 0) {
+		notices.push({
+			code: "NUTRIENT_SOURCE_ROWS_UNMAPPED",
+			count: unmappedCount,
 		});
 	}
 

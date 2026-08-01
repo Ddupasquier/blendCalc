@@ -20,5 +20,8 @@ describe("catalog provenance moderation read", () => {
 		expect(source).toContain("shared_product_observations(id, source");
 		expect(source).toContain("source_license");
 		expect(source).toContain("observed_at");
+		expect(source).toContain("mapping_review_reference");
+		expect(source).toContain("derivation_method");
+		expect(source).toContain("nutrientSourceReview");
 	});
 });

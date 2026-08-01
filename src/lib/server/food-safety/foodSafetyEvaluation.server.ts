@@ -9,8 +9,13 @@ import {
 	getFoodCompatibilityEvaluation,
 } from "$lib/utils/food/quality/foodCompatibilityEvaluation";
 import {
+	buildFoodIngredientPresentation,
+	buildFoodPreferenceWarningEvidence,
+} from "./foodIngredientPresentation.server";
+import {
 	getAuthoritativeGenericFoodIdentity,
 	isAuthoritativeGenericFood,
+	resolveFoodIdentityType,
 } from "$lib/utils/food/identity/foodIdentity";
 import type {
 	FdcFood,
@@ -24,6 +29,7 @@ import {
 } from "$lib/utils/profile/foodPreferenceProfile";
 import type {
 	FoodCompatibilityMatchRule,
+	FoodCompatibilityIngredientAlias,
 	FoodSafetyPolicy,
 } from "./foodSafetyPolicy.server";
 import type {
@@ -37,9 +43,13 @@ import type {
 
 const normalizeValue = (value: string) =>
 	value
+		.replace(/^[a-z]{2,3}(?:-[A-Z]{2})?:/i, "")
+		.replace(/œ/gi, "oe")
+		.replace(/æ/gi, "ae")
+		.normalize("NFKD")
+		.replace(/[\u0300-\u036f]/g, "")
 		.toLocaleLowerCase()
 		.trim()
-		.replace(/^[a-z]{2}:/i, "")
 		.replace(/-/g, " ")
 		.replace(/[^a-z0-9]+/g, " ")
 		.replace(/\s+/g, " ")
@@ -64,6 +74,115 @@ const createStructuredFact = (
 	sourceText: value,
 	confidence: "confirmed",
 });
+
+const getPrimaryLanguageCode = (value: string | null | undefined) =>
+	value?.trim().toLowerCase().split("-")[0] ?? "";
+
+const getValueLanguageCode = (value: string) =>
+	getPrimaryLanguageCode(
+		/^([a-z]{2,3}(?:-[A-Z]{2})?):/i.exec(value.trim())?.[1],
+	);
+
+const getFoodLanguageCodes = (food: FdcFood) => [...new Set([
+	food.sourceMetadata?.language,
+	...(food.sourceMetadata?.languages ?? []),
+]
+	.map(getPrimaryLanguageCode)
+	.filter(Boolean))];
+
+const aliasMatchesLanguage = (
+	alias: FoodCompatibilityIngredientAlias,
+	valueLanguage: string,
+	foodLanguages: string[],
+) => {
+	const aliasLanguage = getPrimaryLanguageCode(alias.languageCode);
+	if (!aliasLanguage) return true;
+	if (valueLanguage) return aliasLanguage === valueLanguage;
+	if (foodLanguages.length > 0) return foodLanguages.includes(aliasLanguage);
+	return true;
+};
+
+const getAliasDerivedFacts = (
+	food: FdcFood,
+	policy: FoodSafetyPolicy,
+): FoodCompatibilityFact[] => {
+	const foodLanguages = getFoodLanguageCodes(food);
+	const aliases = policy.ingredientAliases.filter(
+		(alias) => alias.preferenceRuleType === "allergen",
+	);
+	const getMatches = (
+		value: string,
+		factType: "contains" | "may_contain" | "ingredient_present",
+		sourceType:
+			| "label_allergen_field"
+			| "label_trace_field"
+			| "label_ingredient_field",
+		requireExact: boolean,
+	) => {
+		const normalizedValue = normalizeValue(value);
+		if (!normalizedValue) return [];
+		const paddedValue = ` ${normalizedValue} `;
+		const valueLanguage = getValueLanguageCode(value);
+		const matches = aliases.flatMap((alias) => {
+			if (!aliasMatchesLanguage(alias, valueLanguage, foodLanguages)) return [];
+			const normalizedAlias = normalizeValue(alias.normalizedAlias);
+			const matchesAlias = requireExact
+				? normalizedValue === normalizedAlias
+				: paddedValue.includes(` ${normalizedAlias} `);
+			if (!matchesAlias) return [];
+			return [{ alias, normalizedAlias }];
+		});
+		const longestAliasLength = Math.max(
+			0,
+			...matches.map((match) => match.normalizedAlias.length),
+		);
+		return matches
+			.filter((match) =>
+				requireExact || match.normalizedAlias.length === longestAliasLength
+			)
+			.map(({ alias }) => ({
+				slug: alias.tagSlug,
+				label: alias.tagLabel,
+				category: alias.tagCategory,
+				factType,
+				sourceType,
+				sourceText: value.trim(),
+				confidence: "confirmed" as const,
+			}));
+	};
+
+	const structuredIngredientTexts: string[] = [];
+	const visitStructuredIngredients = (
+		ingredients: NonNullable<FdcFood["structuredIngredients"]>,
+	) => {
+		for (const ingredient of ingredients) {
+			const value = ingredient.text?.trim() || ingredient.id?.trim();
+			if (value) structuredIngredientTexts.push(value);
+			if (ingredient.ingredients?.length) {
+				visitStructuredIngredients(ingredient.ingredients);
+			}
+		}
+	};
+	visitStructuredIngredients(food.structuredIngredients ?? []);
+
+	return [
+		...(food.allergens ?? []).flatMap((value) =>
+			getMatches(value, "contains", "label_allergen_field", true)
+		),
+		...(food.traces ?? []).flatMap((value) =>
+			getMatches(value, "may_contain", "label_trace_field", true)
+		),
+		...[...(food.ingredientList ?? []), ...structuredIngredientTexts]
+			.flatMap((value) =>
+				getMatches(
+					value,
+					"ingredient_present",
+					"label_ingredient_field",
+					false,
+				)
+			),
+	];
+};
 
 const getDietaryClaimFacts = (
 	food: FdcFood,
@@ -188,6 +307,7 @@ const getCompatibilityFacts = (
 		...(food.traces ?? []).map((value) =>
 			createStructuredFact(value, "may_contain", "allergen")
 		),
+		...getAliasDerivedFacts(food, policy),
 		...getDietaryClaimFacts(food, policy),
 		...getRuleDerivedCompatibilityFacts(
 			food,
@@ -253,7 +373,16 @@ const buildWarning = (
 	label: string,
 	code: AppIssueCode,
 	params: AppIssueParams,
-): FoodPreferenceWarning => ({ id, level, category, label, code, params });
+	evidence: FoodPreferenceWarning["evidence"],
+): FoodPreferenceWarning => ({
+	id,
+	level,
+	category,
+	label,
+	code,
+	params,
+	evidence,
+});
 
 const getConflictFact = (
 	preference: string,
@@ -296,6 +425,7 @@ const getFoodPreferenceWarnings = (
 	facts: FoodCompatibilityFact[],
 	profile: FoodPreferenceProfile | null,
 	policy: FoodSafetyPolicy,
+	ingredientPresentation: FdcFood["ingredientPresentation"],
 ): FoodPreferenceWarning[] => {
 	if (!profile) return [];
 
@@ -304,7 +434,12 @@ const getFoodPreferenceWarnings = (
 		const allergen = resolution.rawValue;
 		const canonicalPreference = resolution.tag?.slug ?? "";
 		const directFact = facts.find((fact) =>
-			(fact.factType === "contains" || fact.factType === "may_contain") &&
+			fact.category === "allergen" &&
+			[
+				"contains",
+				"may_contain",
+				"ingredient_present",
+			].includes(fact.factType) &&
 			factMatches(fact, canonicalPreference)
 		);
 		const relatedFact = directFact
@@ -325,6 +460,11 @@ const getFoodPreferenceWarnings = (
 				allergen,
 				issue.code,
 				issue.params,
+				buildFoodPreferenceWarningEvidence(
+					fact,
+					policy.version,
+					ingredientPresentation,
+				),
 			),
 		);
 	}
@@ -353,6 +493,11 @@ const getFoodPreferenceWarnings = (
 				restriction,
 				conflict.warningCode,
 				getRestrictionIssueParams(restriction, conflict.fact),
+				buildFoodPreferenceWarningEvidence(
+					conflict.fact,
+					policy.version,
+					ingredientPresentation,
+				),
 			),
 		);
 	}
@@ -376,15 +521,29 @@ const getSavedPreferenceCount = (
 
 const getPreferenceResolutionContext = (
 	profile: FoodPreferenceProfile | null,
-): FoodCompatibilityPreferenceResolutionContext => ({
-	resolvedCount: getResolvedFoodPreferences(profile).length,
+): FoodCompatibilityPreferenceResolutionContext => {
+	const resolvedPreferences = getResolvedFoodPreferences(profile);
+	return {
+	resolvedCount: resolvedPreferences.length,
+	resolvedPreferences: resolvedPreferences.flatMap((resolution) =>
+		resolution.tag
+			? [{
+				tagId: resolution.tag.id,
+				tagSlug: resolution.tag.slug,
+				label: resolution.tag.label,
+				rawValue: resolution.rawValue,
+				type: resolution.ruleType,
+			}]
+			: []
+	),
 	unresolvedPreferences: getUnresolvedFoodPreferences(profile).map(
 		(resolution) => ({
 			label: resolution.rawValue,
 			type: resolution.ruleType,
 		}),
 	),
-});
+	};
+};
 
 const policyCoversPreferences = (
 	preferences: string[],
@@ -399,6 +558,17 @@ const policyCoversPreferences = (
 	return preferences.every((preference) =>
 		coveredPreferences.has(normalizeValue(preference))
 	);
+};
+
+const policyCoversFoodLanguages = (
+	food: FdcFood,
+	policy: FoodSafetyPolicy,
+) => {
+	if (resolveFoodIdentityType(food) === "generic") return true;
+	const languages = getFoodLanguageCodes(food);
+	if (languages.length === 0) return true;
+	const supportedLanguages = new Set(policy.supportedIngredientLanguages);
+	return languages.every((language) => supportedLanguages.has(language));
 };
 
 const getRegionalProfileTagForPreference = (
@@ -572,10 +742,12 @@ export const annotateFoodWithFoodSafety = (
 	context: FoodSafetyEvaluationContext,
 ): FdcFood => {
 	const facts = getCompatibilityFacts(food, context.policy);
+	const ingredientPresentation = buildFoodIngredientPresentation(food);
 	const preferenceWarnings = getFoodPreferenceWarnings(
 		facts,
 		context.profile,
 		context.policy,
+		ingredientPresentation,
 	);
 	const activePreferences = getActivePreferenceValues(context.profile);
 	const preferenceResolution = getPreferenceResolutionContext(context.profile);
@@ -591,6 +763,7 @@ export const annotateFoodWithFoodSafety = (
 			food.compatibilitySummary,
 		),
 		allergenDisclosure: getAllergenDisclosure(facts),
+		ingredientPresentation,
 		preferenceWarnings,
 		compatibilityEvaluation: getFoodCompatibilityEvaluation({
 			food,
@@ -599,7 +772,9 @@ export const annotateFoodWithFoodSafety = (
 			policyCoversPreferences: policyCoversPreferences(
 				activePreferences,
 				context.policy,
-			) && preferenceResolution.unresolvedPreferences.length === 0,
+			) &&
+				policyCoversFoodLanguages(food, context.policy) &&
+				preferenceResolution.unresolvedPreferences.length === 0,
 			conflictCount: preferenceWarnings.length,
 			regulatoryContext,
 			preferenceResolution,

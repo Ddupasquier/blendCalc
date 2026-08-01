@@ -29,3 +29,10 @@ $status-warning-icon-optical-offset-y: -0.04em;
 	--circular-icon-frame-background: #{$app-status-error-bg};
 	--circular-icon-frame-icon-transform: translateY(#{$status-warning-icon-optical-offset-y});
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	:global(.status-icon-badge) {
+		--circular-icon-frame-size: #{1.15rem};
+		--circular-icon-frame-icon-size: #{$app-font-size-xs};
+	}
+}

@@ -173,6 +173,13 @@ export const getServingGramsLabel = (conversion: ServingConversion) => {
 	return conversion.grams === null ? "Unavailable" : `${conversion.grams.toFixed(1)}g`;
 };
 
+export const getServingConversionBasis = (conversion: ServingConversion) => {
+	if (!conversion.available || !conversion.basis) return null;
+	return conversion.method === "calculated-conversion"
+		? `Calculated from ${conversion.basis}`
+		: `Exact unit conversion: ${conversion.basis}`;
+};
+
 export const withOverageDetails = (
 	warning: SmartWarning,
 	overages: NutrientOverageDetail[],

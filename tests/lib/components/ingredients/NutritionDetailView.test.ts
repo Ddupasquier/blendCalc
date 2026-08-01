@@ -147,6 +147,19 @@ describe("NutritionDetailView", () => {
 		);
 	});
 
+	it("marks its scroll surface for stable disclosure expansion", () => {
+		render(NutritionDetailView, {
+			props: {
+				food: spinach,
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(document.querySelector(".nutrition-detail-view__body"))
+			.toHaveClass("view-body--scroll");
+	});
+
 	it("hides redundant list status when opened from a saved list", () => {
 		render(NutritionDetailView, {
 			props: {

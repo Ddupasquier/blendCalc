@@ -9,6 +9,7 @@ import type {
 import type { FdcFood } from "$lib/utils/food/types";
 import { annotateFoodWithFoodSafety } from "$lib/server/food-safety/foodSafetyEvaluation.server";
 import type {
+	FoodCompatibilityIngredientAlias,
 	FoodCompatibilityMatchRule,
 	FoodPreferenceConflictRule,
 } from "$lib/server/food-safety/foodSafetyPolicy.server";
@@ -16,6 +17,8 @@ import type {
 type TestPreferenceProfile = FoodPreferenceProfile & {
 	warningRules?: FoodPreferenceConflictRule[];
 	matchRules?: FoodCompatibilityMatchRule[];
+	ingredientAliases?: FoodCompatibilityIngredientAlias[];
+	supportedIngredientLanguages?: string[];
 };
 
 const baseProfile: TestPreferenceProfile = {
@@ -49,6 +52,12 @@ const baseProfile: TestPreferenceProfile = {
 		},
 	],
 	matchRules: [],
+};
+
+const emptyPolicyDetails = {
+	ingredientAliases: [],
+	policyExemptions: [],
+	supportedIngredientLanguages: [],
 };
 
 const createResolvedPreference = (
@@ -93,11 +102,16 @@ const getFoodPreferenceWarnings = (
 ) => annotateFoodWithFoodSafety(food, {
 	profile: resolveTestProfile(profile),
 	policy: {
+		...emptyPolicyDetails,
 		version: 1,
 		reviewedAt: "2026-07-29T00:00:00.000Z",
 		preferenceConflictRules: profile.warningRules ?? [],
 		compatibilityMatchRules: profile.matchRules ?? [],
 		regionalProfiles: [],
+		ingredientAliases: profile.ingredientAliases ?? [],
+		policyExemptions: [],
+		supportedIngredientLanguages:
+			profile.supportedIngredientLanguages ?? [],
 	},
 }).preferenceWarnings ?? [];
 
@@ -158,6 +172,99 @@ describe("food preference warnings", () => {
 		);
 
 		expect(warnings).toEqual([]);
+	});
+
+	it("uses reviewed French aliases for structured ingredient evidence", () => {
+		const warnings = getFoodPreferenceWarnings(
+			makeFood({
+				description: "Boisson protéinée",
+				ingredientList: ["Lait écrémé"],
+				sourceMetadata: { language: "fr" },
+			}),
+			{
+				...baseProfile,
+				allergens: ["Milk"],
+				supportedIngredientLanguages: ["en", "fr", "es"],
+				ingredientAliases: [{
+					ingredientTermId: "term-milk",
+					termKey: "milk",
+					termLabel: "Milk",
+					alias: "lait",
+					normalizedAlias: "lait",
+					languageCode: "fr",
+					tagSlug: "milk",
+					tagLabel: "Milk",
+					tagCategory: "allergen",
+					preferenceRuleType: "allergen",
+				}],
+			},
+		);
+
+		expect(warnings).toEqual([
+			expect.objectContaining({ category: "allergen", label: "Milk" }),
+		]);
+	});
+
+	it("normalizes reviewed Spanish declaration aliases with accents", () => {
+		const warnings = getFoodPreferenceWarnings(
+			makeFood({
+				description: "Sopa",
+				allergens: ["es:crustáceos"],
+				sourceMetadata: { language: "es" },
+			}),
+			{
+				...baseProfile,
+				allergens: ["Shellfish"],
+				supportedIngredientLanguages: ["en", "fr", "es"],
+				ingredientAliases: [{
+					ingredientTermId: "term-crustacean",
+					termKey: "crustacean",
+					termLabel: "Crustacean",
+					alias: "crustáceos",
+					normalizedAlias: "crustaceos",
+					languageCode: "es",
+					tagSlug: "shellfish",
+					tagLabel: "Shellfish",
+					tagCategory: "allergen",
+					preferenceRuleType: "allergen",
+				}],
+			},
+		);
+
+		expect(warnings).toEqual([
+			expect.objectContaining({ category: "allergen", label: "Shellfish" }),
+		]);
+	});
+
+	it("does not let a labeling exemption suppress a personal warning", () => {
+		const warnings = getFoodPreferenceWarnings(
+			makeFood({
+				description: "Cooking oil",
+				ingredientList: ["Fully refined soybean oil"],
+				sourceMetadata: { language: "en" },
+			}),
+			{
+				...baseProfile,
+				allergens: ["Soy"],
+				supportedIngredientLanguages: ["en", "fr", "es"],
+				ingredientAliases: [{
+					ingredientTermId: "term-refined-soy-oil",
+					termKey: "fully-refined-soybean-oil",
+					termLabel: "Fully refined soybean oil",
+					alias: "fully refined soybean oil",
+					normalizedAlias: "fully refined soybean oil",
+					languageCode: "en",
+					tagSlug: "soy",
+					tagLabel: "Soy",
+					tagCategory: "allergen",
+					preferenceRuleType: "allergen",
+				}],
+			},
+		);
+
+		expect(warnings).toEqual([
+			expect.objectContaining({ category: "allergen", label: "Soy" }),
+		]);
 	});
 
 	it("warns when dietary restrictions conflict with ingredients", () => {
@@ -276,6 +383,15 @@ describe("food preference warnings", () => {
 				label: "Gluten-free",
 				level: "warning",
 				code: "FOOD_RESTRICTION_CONFLICT",
+				evidence: {
+					factType: "ingredient_present",
+					sourceType: "label_ingredient_field",
+					sourceText: "wheat",
+					confidence: "confirmed",
+					policyVersion: 1,
+					ingredientPath: [],
+					percentageLabel: null,
+				},
 			}),
 		]);
 		expect(getFoodPreferenceWarningMessage(warnings[0]))
@@ -754,6 +870,7 @@ describe("food preference warnings", () => {
 			{
 				profile: null,
 				policy: {
+					...emptyPolicyDetails,
 					version: 1,
 					reviewedAt: "2026-07-29T00:00:00.000Z",
 					preferenceConflictRules: [
@@ -819,6 +936,7 @@ describe("food preference warnings", () => {
 		const context = {
 			profile: resolveTestProfile(profile),
 			policy: {
+				...emptyPolicyDetails,
 				version: 7,
 				reviewedAt: "2026-07-29T00:00:00.000Z",
 				preferenceConflictRules: profile.warningRules ?? [],
@@ -849,11 +967,47 @@ describe("food preference warnings", () => {
 				allergens: { source: "manufacturer" as const },
 			},
 		};
-		expect(
-			annotateFoodWithFoodSafety(incompleteFood, context)
-				.compatibilityEvaluation?.status,
-		).toBe("incomplete");
-	});
+			expect(
+				annotateFoodWithFoodSafety(incompleteFood, context)
+					.compatibilityEvaluation?.status,
+			).toBe("incomplete");
+		});
+
+		it("keeps explicitly unsupported ingredient languages incomplete", () => {
+			const profile = {
+				...baseProfile,
+				dietaryRestrictions: ["Vegan"],
+			};
+			const food = makeFood({
+				description: "Zubereiteter Snack",
+				foodIdentityType: "packaged",
+				ingredients: "Wasser, Reis, Salz",
+				sourceMetadata: { language: "de" },
+				fieldProvenance: {
+					ingredients: { source: "manufacturer" },
+					allergens: { source: "manufacturer" },
+					traces: { source: "manufacturer" },
+				},
+			});
+
+			const evaluation = annotateFoodWithFoodSafety(food, {
+				profile: resolveTestProfile(profile),
+				policy: {
+					...emptyPolicyDetails,
+					version: 7,
+					reviewedAt: "2026-07-31T00:00:00.000Z",
+					preferenceConflictRules: profile.warningRules ?? [],
+					compatibilityMatchRules: [],
+					regionalProfiles: [],
+					supportedIngredientLanguages: ["en", "fr", "es"],
+				},
+			}).compatibilityEvaluation;
+
+			expect(evaluation).toMatchObject({
+				status: "incomplete",
+				coverage: { policy: "missing" },
+			});
+		});
 
 	it("changes compatibility status when evidence or policy coverage changes", () => {
 		const food = makeFood({
@@ -873,6 +1027,7 @@ describe("food preference warnings", () => {
 		const firstEvaluation = annotateFoodWithFoodSafety(food, {
 			profile: resolveTestProfile(uncoveredProfile),
 			policy: {
+				...emptyPolicyDetails,
 				version: 7,
 				reviewedAt: "2026-07-29T00:00:00.000Z",
 				preferenceConflictRules: baseProfile.warningRules ?? [],
@@ -890,6 +1045,7 @@ describe("food preference warnings", () => {
 		const coveredEvaluation = annotateFoodWithFoodSafety(food, {
 			profile: resolveTestProfile(uncoveredProfile),
 			policy: {
+				...emptyPolicyDetails,
 				version: 8,
 				reviewedAt: "2026-07-30T00:00:00.000Z",
 				preferenceConflictRules: [{
@@ -926,6 +1082,7 @@ describe("food preference warnings", () => {
 			regulatoryRegionSource: "device" as const,
 		};
 		const policy = {
+			...emptyPolicyDetails,
 			version: 9,
 			reviewedAt: "2026-07-31T00:00:00.000Z",
 			preferenceConflictRules: baseProfile.warningRules ?? [],
@@ -983,6 +1140,7 @@ describe("food preference warnings", () => {
 				regulatoryRegionSource: "account",
 			}),
 			policy: {
+				...emptyPolicyDetails,
 				version: 9,
 				reviewedAt: "2026-07-31T00:00:00.000Z",
 				preferenceConflictRules: baseProfile.warningRules ?? [],
@@ -1024,6 +1182,7 @@ describe("food preference warnings", () => {
 			{
 				profile,
 				policy: {
+					...emptyPolicyDetails,
 					version: 10,
 					reviewedAt: "2026-07-31T00:00:00.000Z",
 					preferenceConflictRules: [],

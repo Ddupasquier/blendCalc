@@ -24,3 +24,18 @@
 	gap: $app-gap-sm;
 	min-width: 0;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.privileged-action-group,
+	.privileged-action-group__content {
+		gap: $app-gap-xs;
+	}
+
+	.privileged-action-group {
+		padding: $app-gap-xs;
+	}
+
+	.privileged-action-group__header {
+		font-size: $app-font-size-xs;
+	}
+}

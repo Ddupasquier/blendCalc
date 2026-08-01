@@ -117,18 +117,21 @@ A block performs four separate operations:
 Every action is appended to `moderation_actions`. Do not delete moderation evidence as
 part of normal operations.
 
-## Compatibility warning reports
+## Food warning reports
 
 Signed-in users can report a food compatibility warning when the match appears
-incorrect, relies on outdated source data, or uses the wrong evidence type. The report
-stores the product identity, warning code and parameters, exact matching compatibility
-facts, and active policy version. Repeated reports of the same warning remain
-idempotent while one is pending.
+incorrect, relies on outdated source data, or uses the wrong evidence type. They can
+also report that a warning is missing for one exact reviewed preference currently
+active on their account. Reports preserve the active policy, exact product identity,
+current catalog revision when available, package-observation date, bounded explanation,
+and optional normalized private label photo. Repeated reports of the same product,
+policy, preference, or warning remain idempotent while one is pending.
 
 The `/moderation` warning-report queue is restricted to moderators and administrators.
 Reviewers must:
 
-1. Compare the reported warning with its preserved evidence and policy version.
+1. Compare the report with its preserved evidence, source observations, policy version,
+   and catalog revision.
 2. Mark the report `confirmed` when corrective work is needed, or `dismissed` when the
    warning is supported.
 3. Record the next action as rule review, source correction, product correction, or
@@ -138,7 +141,8 @@ Reviewers must:
 Resolving feedback does not silently edit a product or compatibility rule. Confirmed
 reports create a traceable correction decision; any resulting product or policy change
 uses its own reviewed workflow and, for policy changes, a new compatibility policy
-version.
+version. Private package evidence is viewed through short-lived signed URLs and never
+enters public catalog or API responses.
 
 ## Custom food preference mapping requests
 
@@ -161,6 +165,20 @@ Reviewers must:
 Reject requests that cannot be mapped safely. Never edit an active mapping in place or
 create a client-side synonym to bypass review.
 
+## Nutrient mapping and uncertainty review
+
+The moderator-only product provenance read contains every accepted normalized nutrient
+and the retained source nutrient review trail. Reviewers can compare the normalized
+amount with its source value status, source-reported standard error, source nutrient
+key/code, mapping status and method, mapping review reference, derivation method, and
+exact observation. Trace, present-but-unquantified, missing, invalid, and unmapped facts
+remain review evidence rather than numeric values.
+
+This endpoint is role-gated and non-cacheable. Mapping review references and retained
+source-review rows never enter ordinary product pages or the public API. A reviewer must
+correct an inaccurate mapping through the reviewed mapping workflow; the moderation
+read itself cannot rewrite nutrient math or silently approve a source row.
+
 ## Product correction reports
 
 Explicit product-correction reports are identified separately from ordinary catalog
@@ -170,6 +188,32 @@ the exact base revision.
 Approval merges only the reviewed changed fields, preserves unsubmitted canonical data
 and provenance, and appends the normal immutable revision. If the active product changed
 while the report waited, approval stops as stale and the report must be compared again.
+
+## Catalog data health
+
+`/moderation/data-health` is a moderator/admin-only catalog health summary. Its server
+load calls `get_moderator_data_health` through the signed-in user's Supabase client, and
+the database function independently verifies the caller's role. The browser receives
+only bounded aggregates and issue summaries; it never receives raw provider payloads,
+private evidence, user identifiers, secrets, source-evaluation details, dataset import
+metadata, or download URLs.
+
+The dashboard includes:
+
+- active and API-publication-ready product counts;
+- pending catalog submissions, food-warning reports, and preference mappings;
+- unresolved catalog conflicts, revision-history gaps, and nutrient-mapping review
+  gaps;
+- source request, cache, reliability, match, response-time, and field-coverage counts
+  for a bounded 30-day window;
+- dataset import counts, checksum state, licence review state, and policy gaps; and
+- active food-compatibility policy coverage.
+
+Issue queues are bounded to 20 rows in the application and the RPC enforces a maximum
+of 50. Product issues link to the existing moderator provenance read, while pending
+submissions and warning reports link to their established reviewed queues. Mapping,
+dataset, and policy corrections remain deliberate reviewed database/policy workflows;
+the health dashboard must not become an unreviewed direct-edit surface.
 
 ## Enable future-signup blocking
 

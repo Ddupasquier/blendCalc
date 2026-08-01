@@ -547,12 +547,19 @@ export type Database = {
         Row: {
           barcode: string | null
           created_at: string
+          evidence_path: string | null
+          evidence_sha256: string | null
           fact_snapshot: Json
+          feedback_type: string
           food_description: string
           id: string
-          issue_code: string
+          issue_code: string | null
           issue_params: Json
+          observed_label_date: string | null
           policy_version_id: string
+          preference_tag_id: string | null
+          preference_type: string | null
+          preference_value: string | null
           report_details: string | null
           report_fingerprint: string
           report_reason: string
@@ -562,21 +569,29 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           shared_product_id: string | null
+          shared_product_revision_id: string | null
           source_id: string | null
           source_key: string | null
           status: string
           updated_at: string
-          warning_id: string
+          warning_id: string | null
         }
         Insert: {
           barcode?: string | null
           created_at?: string
+          evidence_path?: string | null
+          evidence_sha256?: string | null
           fact_snapshot?: Json
+          feedback_type?: string
           food_description: string
           id?: string
-          issue_code: string
+          issue_code?: string | null
           issue_params?: Json
+          observed_label_date?: string | null
           policy_version_id?: string
+          preference_tag_id?: string | null
+          preference_type?: string | null
+          preference_value?: string | null
           report_details?: string | null
           report_fingerprint: string
           report_reason: string
@@ -586,21 +601,29 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           shared_product_id?: string | null
+          shared_product_revision_id?: string | null
           source_id?: string | null
           source_key?: string | null
           status?: string
           updated_at?: string
-          warning_id: string
+          warning_id?: string | null
         }
         Update: {
           barcode?: string | null
           created_at?: string
+          evidence_path?: string | null
+          evidence_sha256?: string | null
           fact_snapshot?: Json
+          feedback_type?: string
           food_description?: string
           id?: string
-          issue_code?: string
+          issue_code?: string | null
           issue_params?: Json
+          observed_label_date?: string | null
           policy_version_id?: string
+          preference_tag_id?: string | null
+          preference_type?: string | null
+          preference_value?: string | null
           report_details?: string | null
           report_fingerprint?: string
           report_reason?: string
@@ -610,11 +633,12 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           shared_product_id?: string | null
+          shared_product_revision_id?: string | null
           source_id?: string | null
           source_key?: string | null
           status?: string
           updated_at?: string
-          warning_id?: string
+          warning_id?: string | null
         }
         Relationships: [
           {
@@ -632,6 +656,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "food_compatibility_feedback_preference_tag_id_fkey"
+            columns: ["preference_tag_id"]
+            isOneToOne: false
+            referencedRelation: "compatibility_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_compatibility_feedback_preference_tag_id_fkey"
+            columns: ["preference_tag_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_coverage"
+            referencedColumns: ["tag_id"]
+          },
+          {
             foreignKeyName: "food_compatibility_feedback_shared_product_id_fkey"
             columns: ["shared_product_id"]
             isOneToOne: false
@@ -643,6 +681,13 @@ export type Database = {
             columns: ["shared_product_id"]
             isOneToOne: false
             referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_compatibility_feedback_shared_product_revision_id_fkey"
+            columns: ["shared_product_revision_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_revisions"
             referencedColumns: ["id"]
           },
         ]
@@ -734,8 +779,11 @@ export type Database = {
           parent_term_id: string | null
           policy_version_id: string
           processing_state: string | null
+          product_context: Json
           reviewed_at: string
           source_reference: string
+          threshold_unit: string | null
+          threshold_value: number | null
           updated_at: string
           warning_behavior: string
         }
@@ -749,8 +797,11 @@ export type Database = {
           parent_term_id?: string | null
           policy_version_id: string
           processing_state?: string | null
+          product_context?: Json
           reviewed_at: string
           source_reference: string
+          threshold_unit?: string | null
+          threshold_value?: number | null
           updated_at?: string
           warning_behavior?: string
         }
@@ -764,8 +815,11 @@ export type Database = {
           parent_term_id?: string | null
           policy_version_id?: string
           processing_state?: string | null
+          product_context?: Json
           reviewed_at?: string
           source_reference?: string
+          threshold_unit?: string | null
+          threshold_value?: number | null
           updated_at?: string
           warning_behavior?: string
         }
@@ -1284,7 +1338,11 @@ export type Database = {
           confidence: string
           created_at: string
           custom_food_id: string | null
+          derivation_method: string | null
           id: number
+          mapping_method: string | null
+          mapping_review_reference: string | null
+          mapping_status: string
           nutrient_id: number
           owner_user_id: string | null
           shared_product_id: string | null
@@ -1292,19 +1350,27 @@ export type Database = {
           shared_product_revision_id: string | null
           shared_product_submission_id: string | null
           source: string
+          source_nutrient_code: string | null
+          source_nutrient_key: string | null
           source_observation_id: string | null
           source_reference: string | null
+          standard_error: number | null
           unit_name: string
           updated_at: string
           user_food_list_item_id: string | null
           value_origin: string
+          value_status: string
         }
         Insert: {
           amount_per_100g: number
           confidence: string
           created_at?: string
           custom_food_id?: string | null
+          derivation_method?: string | null
           id?: never
+          mapping_method?: string | null
+          mapping_review_reference?: string | null
+          mapping_status?: string
           nutrient_id: number
           owner_user_id?: string | null
           shared_product_id?: string | null
@@ -1312,19 +1378,27 @@ export type Database = {
           shared_product_revision_id?: string | null
           shared_product_submission_id?: string | null
           source: string
+          source_nutrient_code?: string | null
+          source_nutrient_key?: string | null
           source_observation_id?: string | null
           source_reference?: string | null
+          standard_error?: number | null
           unit_name: string
           updated_at?: string
           user_food_list_item_id?: string | null
           value_origin: string
+          value_status?: string
         }
         Update: {
           amount_per_100g?: number
           confidence?: string
           created_at?: string
           custom_food_id?: string | null
+          derivation_method?: string | null
           id?: never
+          mapping_method?: string | null
+          mapping_review_reference?: string | null
+          mapping_status?: string
           nutrient_id?: number
           owner_user_id?: string | null
           shared_product_id?: string | null
@@ -1332,12 +1406,16 @@ export type Database = {
           shared_product_revision_id?: string | null
           shared_product_submission_id?: string | null
           source?: string
+          source_nutrient_code?: string | null
+          source_nutrient_key?: string | null
           source_observation_id?: string | null
           source_reference?: string | null
+          standard_error?: number | null
           unit_name?: string
           updated_at?: string
           user_food_list_item_id?: string | null
           value_origin?: string
+          value_status?: string
         }
         Relationships: [
           {
@@ -1612,13 +1690,18 @@ export type Database = {
       food_servings: {
         Row: {
           amount: number | null
+          calculation_basis: string | null
           confidence: string
           created_at: string
           custom_food_id: string | null
           gram_weight: number
+          gram_weight_method: string
           id: number
+          is_household_measure: boolean
           is_primary: boolean
           label: string
+          measure_type: string | null
+          origin: string
           owner_user_id: string | null
           serving_order: number
           shared_product_id: string | null
@@ -1626,6 +1709,7 @@ export type Database = {
           shared_product_revision_id: string | null
           shared_product_submission_id: string | null
           source: string
+          source_measure_key: string | null
           source_observation_id: string | null
           source_reference: string | null
           unit_key: string | null
@@ -1634,13 +1718,18 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
+          calculation_basis?: string | null
           confidence: string
           created_at?: string
           custom_food_id?: string | null
           gram_weight: number
+          gram_weight_method?: string
           id?: never
+          is_household_measure?: boolean
           is_primary?: boolean
           label: string
+          measure_type?: string | null
+          origin?: string
           owner_user_id?: string | null
           serving_order: number
           shared_product_id?: string | null
@@ -1648,6 +1737,7 @@ export type Database = {
           shared_product_revision_id?: string | null
           shared_product_submission_id?: string | null
           source: string
+          source_measure_key?: string | null
           source_observation_id?: string | null
           source_reference?: string | null
           unit_key?: string | null
@@ -1656,13 +1746,18 @@ export type Database = {
         }
         Update: {
           amount?: number | null
+          calculation_basis?: string | null
           confidence?: string
           created_at?: string
           custom_food_id?: string | null
           gram_weight?: number
+          gram_weight_method?: string
           id?: never
+          is_household_measure?: boolean
           is_primary?: boolean
           label?: string
+          measure_type?: string | null
+          origin?: string
           owner_user_id?: string | null
           serving_order?: number
           shared_product_id?: string | null
@@ -1670,6 +1765,7 @@ export type Database = {
           shared_product_revision_id?: string | null
           shared_product_submission_id?: string | null
           source?: string
+          source_measure_key?: string | null
           source_observation_id?: string | null
           source_reference?: string | null
           unit_key?: string | null
@@ -5471,6 +5567,10 @@ export type Database = {
         Args: { p_pattern: string; p_value: string }
         Returns: string
       }
+      compatibility_normalize_label_value: {
+        Args: { p_value: string }
+        Returns: string
+      }
       compatibility_normalize_text: {
         Args: { p_value: string }
         Returns: string
@@ -5504,26 +5604,6 @@ export type Database = {
       }
       delete_saved_drink: { Args: { p_id: string }; Returns: boolean }
       extract_product_compatibility_facts: {
-        Args: {
-          p_food?: Json
-          p_parent_source?: string
-          p_shared_product_id?: string
-          p_shared_product_observation_id?: string
-          p_shared_product_submission_id?: string
-        }
-        Returns: undefined
-      }
-      extract_product_compatibility_facts_base: {
-        Args: {
-          p_food?: Json
-          p_parent_source?: string
-          p_shared_product_id?: string
-          p_shared_product_observation_id?: string
-          p_shared_product_submission_id?: string
-        }
-        Returns: undefined
-      }
-      extract_product_compatibility_facts_unlinked: {
         Args: {
           p_food?: Json
           p_parent_source?: string
@@ -5574,6 +5654,10 @@ export type Database = {
           source_reference: string
           updated_at: string
         }[]
+      }
+      get_moderator_data_health: {
+        Args: { p_days?: number; p_issue_limit?: number }
+        Returns: Json
       }
       is_valid_gtin: { Args: { p_value: string }; Returns: boolean }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }

@@ -272,7 +272,11 @@ select is(
 
 select ok(
 	(
-		select jsonb_array_length(preference_mapping_snapshot) = 1
+		select preference_mapping_snapshot @> jsonb_build_array(
+				jsonb_build_object(
+					'id', (select mapping_id from preference_resolution_test_ids)
+				)
+			)
 			and bundle_content_hash ~ '^[a-f0-9]{64}$'
 		from public.food_compatibility_policy_versions
 		where id = (select draft_policy_id from preference_resolution_test_ids)

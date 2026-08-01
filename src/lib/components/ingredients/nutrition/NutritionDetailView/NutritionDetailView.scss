@@ -67,8 +67,49 @@ h1 {
 	display: grid;
 	gap: $app-gap-md;
 	padding-bottom: $app-gap-lg;
+	overflow-anchor: none;
 }
 
 .nutrition-detail-view__panel :global(.nf-label) {
 	margin-top: 0;
+}
+
+:global(.nutrition-detail-view__body) {
+	overflow-anchor: none;
+	scrollbar-gutter: stable;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.nutrition-detail-view__header {
+		gap: $app-gap-xs;
+		min-height: $app-shell-control-height-narrow;
+		padding: 0;
+	}
+
+	h1 {
+		font-size: $app-font-size-md;
+	}
+
+	.nutrition-detail-view__amount {
+		gap: $app-gap-sm;
+		min-height: $app-shell-control-height-narrow;
+		padding-block: $app-gap-xs;
+
+		h2 {
+			font-size: $app-font-size-xs;
+		}
+	}
+
+	.nutrition-detail-view__amount-controls {
+		gap: $app-gap-sm;
+
+		strong {
+			font-size: $app-font-size-sm;
+		}
+	}
+
+	.nutrition-detail-view__panel {
+		gap: $app-gap-sm;
+		padding-bottom: $app-gap-md;
+	}
 }

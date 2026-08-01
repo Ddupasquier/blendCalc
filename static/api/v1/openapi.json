@@ -211,7 +211,7 @@
       "Nutrient": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "number", "unit", "amountPer100g", "valueStatus", "source"],
+        "required": ["id", "name", "number", "unit", "amountPer100g", "valueStatus", "source", "quality"],
         "properties": {
           "id": { "type": "integer" },
           "name": { "type": "string" },
@@ -219,21 +219,41 @@
           "unit": { "type": "string" },
           "amountPer100g": { "type": ["number", "null"], "minimum": 0 },
           "valueStatus": { "type": "string", "enum": ["reported", "derived", "missing", "unknown"] },
-          "source": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] }
-        }
+          "source": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
+          "quality": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["sourceValueStatus", "standardError", "sourceNutrientKey", "sourceNutrientCode", "mappingStatus", "mappingMethod", "derivationMethod"],
+            "properties": {
+              "sourceValueStatus": { "type": "string", "enum": ["reported", "reported-zero", "derived", "trace", "present-unquantified", "missing", "invalid", "unknown"] },
+              "standardError": { "type": ["number", "null"], "minimum": 0 },
+              "sourceNutrientKey": { "type": ["string", "null"] },
+              "sourceNutrientCode": { "type": ["string", "null"] },
+              "mappingStatus": { "type": "string", "enum": ["canonical", "unmapped", "excluded", "unknown"] },
+              "mappingMethod": { "type": ["string", "null"] },
+              "derivationMethod": { "type": ["string", "null"] }
+            }
+          }
+		}
       },
       "Serving": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["label", "grams", "quantity", "unit", "gramsPerUnit", "isPrimary", "source"],
+		"required": ["label", "grams", "quantity", "unit", "gramsPerUnit", "isPrimary", "measureType", "isHouseholdMeasure", "sourceMeasureKey", "origin", "gramWeightMethod", "calculationBasis", "source"],
         "properties": {
           "label": { "type": "string" },
           "grams": { "type": ["number", "null"], "exclusiveMinimum": 0 },
           "quantity": { "type": ["number", "null"], "exclusiveMinimum": 0 },
           "unit": { "type": ["string", "null"] },
-          "gramsPerUnit": { "type": ["number", "null"], "exclusiveMinimum": 0 },
-          "isPrimary": { "type": "boolean" },
-          "source": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] }
+		  "gramsPerUnit": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+		  "isPrimary": { "type": "boolean" },
+		  "measureType": { "type": ["string", "null"] },
+		  "isHouseholdMeasure": { "type": "boolean" },
+		  "sourceMeasureKey": { "type": ["string", "null"] },
+		  "origin": { "type": "string", "enum": ["package-label", "source-household-measure", "source-weight", "user-entered", "calculated-conversion", "unknown"] },
+		  "gramWeightMethod": { "type": "string", "enum": ["source-reported", "exact-unit-conversion", "user-reported", "calculated-conversion", "unknown"] },
+		  "calculationBasis": { "type": ["string", "null"] },
+		  "source": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] }
         }
       },
       "Image": {

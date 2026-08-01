@@ -316,15 +316,37 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 				amountPer100g: Number.isFinite(nutrient.value)
 					? nutrient.value
 					: null,
-				valueStatus: nutrient.valueOrigin ?? "unknown",
+					valueStatus: nutrient.valueOrigin ?? "unknown",
 				source: nutrient.source
 					? toSource(
 							nutrient.source,
 							nutrient.sourceReference,
 							nutrient.confidence,
 						)
-					: null,
-			})),
+						: null,
+					quality: {
+						sourceValueStatus:
+							nutrient.valueStatus ??
+							(nutrient.valueOrigin === "derived"
+								? "derived"
+								: nutrient.value === 0
+									? "reported-zero"
+									: nutrient.valueOrigin ?? "unknown"),
+						standardError:
+							Number.isFinite(nutrient.standardError) &&
+							Number(nutrient.standardError) >= 0
+								? Number(nutrient.standardError)
+								: null,
+						sourceNutrientKey:
+							nutrient.sourceNutrientKey?.trim() || null,
+						sourceNutrientCode:
+							nutrient.sourceNutrientCode?.trim() || null,
+						mappingStatus: nutrient.mappingStatus ?? "unknown",
+						mappingMethod: nutrient.mappingMethod?.trim() || null,
+						derivationMethod:
+							nutrient.derivationMethod?.trim() || null,
+					},
+				})),
 		servings: (record.food.foodServings ?? []).map((serving) => {
 			const quantity = Number.isFinite(serving.amount) && Number(serving.amount) > 0
 				? Number(serving.amount)
@@ -337,11 +359,17 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 				grams,
 				quantity,
 				unit: serving.unitKey?.trim() || null,
-				gramsPerUnit: grams !== null && quantity !== null
-					? grams / quantity
-					: null,
-				isPrimary: serving.isPrimary,
-				source: serving.source
+					gramsPerUnit: grams !== null && quantity !== null
+						? grams / quantity
+						: null,
+					isPrimary: serving.isPrimary,
+					measureType: serving.measureType?.trim() || null,
+					isHouseholdMeasure: serving.isHouseholdMeasure === true,
+					sourceMeasureKey: serving.sourceMeasureKey?.trim() || null,
+					origin: serving.origin ?? "unknown",
+					gramWeightMethod: serving.gramWeightMethod ?? "unknown",
+					calculationBasis: serving.calculationBasis?.trim() || null,
+					source: serving.source
 					? toSource(
 							serving.source,
 							serving.sourceReference,

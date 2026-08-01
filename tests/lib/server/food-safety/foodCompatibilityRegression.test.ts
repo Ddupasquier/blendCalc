@@ -71,6 +71,9 @@ const policy: FoodSafetyPolicy = {
 	preferenceConflictRules,
 	compatibilityMatchRules: [],
 	regionalProfiles: [],
+	ingredientAliases: [],
+	policyExemptions: [],
+	supportedIngredientLanguages: [],
 };
 
 const createProfile = (
@@ -125,7 +128,7 @@ const createProfile = (
 	],
 });
 
-describe("real-product food compatibility regression corpus", () => {
+describe("prepared-fact food compatibility evaluation corpus", () => {
 	it.each(FOOD_COMPATIBILITY_REGRESSION_CORPUS)(
 		"$name",
 		({ food, preferences, expectedWarningLabels, expectedIssueCodes }) => {
