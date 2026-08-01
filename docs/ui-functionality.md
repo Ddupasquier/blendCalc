@@ -723,9 +723,16 @@ Preserve:
 - Allergens.
 - Dietary restrictions.
 - Prioritized nutrients.
+- Optional package-label region loaded from the active DB policy. A matching device
+  locale may be offered as a suggestion, but the selected region is saved to the
+  account only with the form.
 - Acknowledgement checkbox.
 - Save food preferences action.
 - Saved summary that shows what is currently stored.
+- Nutrition details may show the selected region's authority, regulated terminology,
+  and coverage of the user's allergen settings. This context must explicitly preserve
+  all personal warnings and must not imply a regional profile was checked when the
+  saved region is unknown or unsupported.
 
 Current product direction:
 
@@ -734,6 +741,11 @@ Current product direction:
   explicitly requested.
 - Dropdown options must be DB/API-observed, not hard-coded fallback constants.
 - Users can also type custom allergens/restrictions.
+- Custom text stays saved, but the Profile page must identify any value that is waiting
+  for an exact reviewed mapping. Nutrition details must repeat that limitation when an
+  unresolved value affects the current personalized check.
+- Unresolved custom text must not create a warning, downrank a food, or be presented as
+  checked. A reviewed mapping can become active later without rewriting the saved value.
 - Selected values need dividers/separation so the section reads clearly.
 
 Food preference data must drive:

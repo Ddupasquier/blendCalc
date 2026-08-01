@@ -102,6 +102,12 @@ and hashes the complete bundle, changes the active version, refreshes all compat
 facts, and rebuilds preference options. Application code never combines rows from
 different policy versions or performs an independent partial activation.
 
+Raw account preference wording remains in `user_food_preferences`. A database trigger
+projects it into server-owned `user_compatibility_rules`, where every value is either
+linked to one exact reviewed tag/term/alias mapping for the active policy or marked
+unresolved. Application warning logic consumes only resolved canonical tags; browser
+code receives bounded resolution status and never performs synonym or fuzzy matching.
+
 The schema map owns compatibility tables and version relationships. The catalog
 document owns product fact extraction, evidence meaning, and moderation lifecycle. This
 document owns only the server/client boundary.

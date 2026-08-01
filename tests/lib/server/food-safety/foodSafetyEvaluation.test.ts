@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { getFoodPreferenceWarningMessage } from "$lib/utils/profile/foodPreferenceWarnings";
 import type { FoodCompatibilityFact } from "$lib/utils/food/quality/compatibility";
-import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
+import type {
+	FoodPreferenceProfile,
+	FoodPreferenceResolution,
+	FoodPreferenceRuleType,
+} from "$lib/utils/profile/foodPreferenceProfile";
 import type { FdcFood } from "$lib/utils/food/types";
 import { annotateFoodWithFoodSafety } from "$lib/server/food-safety/foodSafetyEvaluation.server";
 import type {
@@ -21,6 +25,9 @@ const baseProfile: TestPreferenceProfile = {
 	prioritizedNutrientIds: [],
 	defaultSmoothieServingGrams: null,
 	sensitiveAcknowledgedAt: null,
+	regulatoryRegionCode: null,
+	regulatoryRegionSource: null,
+	preferenceResolutions: [],
 	warningRules: [
 		{
 			preferenceSlug: "dairy",
@@ -44,11 +51,47 @@ const baseProfile: TestPreferenceProfile = {
 	matchRules: [],
 };
 
+const createResolvedPreference = (
+	rawValue: string,
+	ruleType: FoodPreferenceRuleType,
+): FoodPreferenceResolution => ({
+	rawValue,
+	normalizedValue: rawValue.toLocaleLowerCase().trim().replace(/\s+/g, " "),
+	ruleType,
+	status: "resolved",
+	method: "direct_tag",
+	policyVersionId: "00000000-0000-4000-8000-000000000001",
+	languageCode: "und",
+	ingredientTermId: null,
+	ingredientAliasId: null,
+	preferenceTermMappingId: null,
+	tag: {
+		id: `test-${ruleType}-${rawValue}`,
+		slug: rawValue.toLocaleLowerCase().trim().replace(/\s+/g, "-"),
+		label: rawValue,
+		category: ruleType === "allergen" ? "allergen" : "dietary",
+	},
+});
+
+const resolveTestProfile = <Profile extends TestPreferenceProfile>(
+	profile: Profile,
+): Profile => ({
+	...profile,
+	preferenceResolutions: [
+		...profile.allergens.map((value) =>
+			createResolvedPreference(value, "allergen")
+		),
+		...profile.dietaryRestrictions.map((value) =>
+			createResolvedPreference(value, "dietary_restriction")
+		),
+	],
+});
+
 const getFoodPreferenceWarnings = (
 	food: FdcFood,
 	profile: TestPreferenceProfile,
 ) => annotateFoodWithFoodSafety(food, {
-	profile,
+	profile: resolveTestProfile(profile),
 	policy: {
 		version: 1,
 		reviewedAt: "2026-07-29T00:00:00.000Z",
@@ -774,7 +817,7 @@ describe("food preference warnings", () => {
 			dietaryRestrictions: ["Vegan"],
 		};
 		const context = {
-			profile,
+			profile: resolveTestProfile(profile),
 			policy: {
 				version: 7,
 				reviewedAt: "2026-07-29T00:00:00.000Z",
@@ -828,7 +871,7 @@ describe("food preference warnings", () => {
 			allergens: ["Banana"],
 		};
 		const firstEvaluation = annotateFoodWithFoodSafety(food, {
-			profile: uncoveredProfile,
+			profile: resolveTestProfile(uncoveredProfile),
 			policy: {
 				version: 7,
 				reviewedAt: "2026-07-29T00:00:00.000Z",
@@ -845,7 +888,7 @@ describe("food preference warnings", () => {
 		});
 
 		const coveredEvaluation = annotateFoodWithFoodSafety(food, {
-			profile: uncoveredProfile,
+			profile: resolveTestProfile(uncoveredProfile),
 			policy: {
 				version: 8,
 				reviewedAt: "2026-07-30T00:00:00.000Z",
@@ -867,6 +910,140 @@ describe("food preference warnings", () => {
 			status: "checked",
 			policyVersion: 8,
 			coverage: { policy: "available" },
+		});
+	});
+
+	it("adds version-bound regional context without changing personal warnings", () => {
+		const food = makeFood({
+			description: "Peanut snack",
+			allergens: ["Peanut"],
+			foodIdentityType: "packaged",
+		});
+		const profile = {
+			...baseProfile,
+			allergens: ["Peanut", "Banana"],
+			regulatoryRegionCode: "US",
+			regulatoryRegionSource: "device" as const,
+		};
+		const policy = {
+			version: 9,
+			reviewedAt: "2026-07-31T00:00:00.000Z",
+			preferenceConflictRules: baseProfile.warningRules ?? [],
+			compatibilityMatchRules: [],
+			regionalProfiles: [{
+				key: "us-fda",
+				regionCode: "US",
+				displayName: "United States major food allergens",
+				authority: "U.S. Food and Drug Administration",
+				policyReference: "Major food allergens",
+				sourceUrl: "https://example.com/us",
+				reviewedAt: "2026-07-31T00:00:00.000Z",
+				tags: [{
+					slug: "peanut",
+					label: "Peanut",
+					classification: "major_allergen" as const,
+					sourceLabel: "Peanuts",
+				}],
+			}],
+		};
+
+		const withRegion = annotateFoodWithFoodSafety(food, {
+			profile: resolveTestProfile(profile),
+			policy,
+		});
+		const withoutRegion = annotateFoodWithFoodSafety(food, {
+			profile: resolveTestProfile({
+				...profile,
+				regulatoryRegionCode: null,
+				regulatoryRegionSource: null,
+			}),
+			policy,
+		});
+
+		expect(withRegion.preferenceWarnings).toEqual(withoutRegion.preferenceWarnings);
+		expect(withRegion.compatibilityEvaluation?.regulatoryContext).toMatchObject({
+			status: "applied",
+			requestedRegionCode: "US",
+			selectionSource: "device",
+			profile: { key: "us-fda", regionCode: "US" },
+			coveredPreferences: [{
+				preference: "Peanut",
+				regulatedLabel: "Peanuts",
+			}],
+			uncoveredPreferences: ["Banana"],
+		});
+	});
+
+	it("reports unsupported regional context without applying a profile", () => {
+		const evaluation = annotateFoodWithFoodSafety(makeFood({}), {
+			profile: resolveTestProfile({
+				...baseProfile,
+				allergens: ["Peanut"],
+				regulatoryRegionCode: "ZZ",
+				regulatoryRegionSource: "account",
+			}),
+			policy: {
+				version: 9,
+				reviewedAt: "2026-07-31T00:00:00.000Z",
+				preferenceConflictRules: baseProfile.warningRules ?? [],
+				compatibilityMatchRules: [],
+				regionalProfiles: [],
+			},
+		}).compatibilityEvaluation;
+
+		expect(evaluation?.regulatoryContext).toEqual({
+			status: "unsupported",
+			requestedRegionCode: "ZZ",
+			selectionSource: "account",
+			profile: null,
+			coveredPreferences: [],
+			uncoveredPreferences: ["Peanut"],
+		});
+	});
+
+	it("keeps unresolved custom preferences out of automated warnings", () => {
+		const profile: FoodPreferenceProfile = {
+			...baseProfile,
+			allergens: ["Banana sensitivity"],
+			preferenceResolutions: [{
+				rawValue: "Banana sensitivity",
+				normalizedValue: "banana sensitivity",
+				ruleType: "allergen",
+				status: "unresolved",
+				method: "unresolved",
+				policyVersionId: "00000000-0000-4000-8000-000000000001",
+				languageCode: "und",
+				ingredientTermId: null,
+				ingredientAliasId: null,
+				preferenceTermMappingId: null,
+				tag: null,
+			}],
+		};
+		const evaluated = annotateFoodWithFoodSafety(
+			makeFood({ allergens: ["Banana sensitivity"] }),
+			{
+				profile,
+				policy: {
+					version: 10,
+					reviewedAt: "2026-07-31T00:00:00.000Z",
+					preferenceConflictRules: [],
+					compatibilityMatchRules: [],
+					regionalProfiles: [],
+				},
+			},
+		);
+
+		expect(evaluated.preferenceWarnings).toEqual([]);
+		expect(evaluated.compatibilityEvaluation).toMatchObject({
+			status: "incomplete",
+			coverage: { policy: "missing" },
+			preferenceResolution: {
+				resolvedCount: 0,
+				unresolvedPreferences: [{
+					label: "Banana sensitivity",
+					type: "allergen",
+				}],
+			},
 		});
 	});
 });

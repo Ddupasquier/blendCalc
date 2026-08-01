@@ -10,6 +10,15 @@ const createFood = (overrides: Partial<FdcFood> = {}): FdcFood => ({
 	...overrides,
 });
 
+const notSelectedRegulatoryContext = {
+	status: "not_selected" as const,
+	requestedRegionCode: null,
+	selectionSource: null,
+	profile: null,
+	coveredPreferences: [],
+	uncoveredPreferences: [],
+};
+
 describe("ProductCompatibilityPanel", () => {
 	it("renders explicit and possible allergen disclosures separately", () => {
 		render(ProductCompatibilityPanel, {
@@ -113,6 +122,7 @@ describe("ProductCompatibilityPanel", () => {
 							traces: "available",
 							policy: "available",
 						},
+						regulatoryContext: notSelectedRegulatoryContext,
 					},
 				}),
 			},
@@ -142,6 +152,7 @@ describe("ProductCompatibilityPanel", () => {
 					traces: "missing",
 					policy: "available",
 				},
+				regulatoryContext: notSelectedRegulatoryContext,
 			},
 		});
 		const { unmount } = render(ProductCompatibilityPanel, {
@@ -171,6 +182,95 @@ describe("ProductCompatibilityPanel", () => {
 			},
 		});
 		expect(screen.getByText("Not checked against food settings"))
+			.toBeInTheDocument();
+	});
+
+	it("shows regional label context without weakening personal checks", () => {
+		render(ProductCompatibilityPanel, {
+			props: {
+				food: createFood({
+					compatibilityEvaluation: {
+						version: 1,
+						status: "checked",
+						policyVersion: 9,
+						profileApplied: true,
+						conflictCount: 0,
+						coverage: {
+							basis: "packaged-label",
+							identity: "not_required",
+							ingredients: "available",
+							allergens: "available",
+							traces: "available",
+							policy: "available",
+						},
+						regulatoryContext: {
+							status: "applied",
+							requestedRegionCode: "US",
+							selectionSource: "account",
+							profile: {
+								key: "us-fda",
+								regionCode: "US",
+								displayName: "United States major food allergens",
+								authority: "U.S. Food and Drug Administration",
+								policyReference: "Major food allergens",
+								sourceUrl: "https://example.com/us",
+								reviewedAt: "2026-07-31T00:00:00.000Z",
+							},
+							coveredPreferences: [{
+								preference: "Peanut",
+								regulatedLabel: "Peanuts",
+								classification: "major_allergen",
+							}],
+							uncoveredPreferences: ["Banana"],
+						},
+					},
+				}),
+			},
+		});
+
+		expect(screen.getByRole("heading", { name: "Regional label context" }))
+			.toBeInTheDocument();
+		expect(screen.getByText(/all of your personal warnings stay active/i))
+			.toBeInTheDocument();
+		expect(screen.getByText(/Peanut \(Peanuts\)/)).toBeInTheDocument();
+		expect(screen.getByText(/Not defined by this regional profile: Banana/))
+			.toBeInTheDocument();
+	});
+
+	it("explains that unresolved settings are saved but not checked", () => {
+		render(ProductCompatibilityPanel, {
+			props: {
+				food: createFood({
+					compatibilityEvaluation: {
+						version: 1,
+						status: "incomplete",
+						policyVersion: 10,
+						profileApplied: true,
+						conflictCount: 0,
+						coverage: {
+							basis: "packaged-label",
+							identity: "not_required",
+							ingredients: "available",
+							allergens: "available",
+							traces: "available",
+							policy: "missing",
+						},
+						regulatoryContext: notSelectedRegulatoryContext,
+						preferenceResolution: {
+							resolvedCount: 0,
+							unresolvedPreferences: [{
+								label: "Banana sensitivity",
+								type: "allergen",
+							}],
+						},
+					},
+				}),
+			},
+		});
+
+		expect(screen.getByText("Some settings are waiting for review"))
+			.toBeInTheDocument();
+		expect(screen.getByText(/Banana sensitivity is saved/i))
 			.toBeInTheDocument();
 	});
 });

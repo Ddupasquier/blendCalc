@@ -51,7 +51,7 @@ policies, or core data ownership changes.
 | `profiles`                  | `user_id`   | One row per auth user   | Display/profile data, appearance preference, avatar metadata, and avatar policy state                       | `user_id → auth.users.id`                                            |
 | `user_tutorial_preferences` | `user_id`   | One row per auth user   | Tracks tutorial seen/completed/remind-later state                                                          | `user_id → auth.users.id`                                            |
 | `user_food_preferences`     | `user_id`   | One row per auth user   | Optional unit system, allergens, dietary restrictions, nutrient priorities, and default serving preference | `user_id → auth.users.id`                                            |
-| `user_compatibility_rules`  | `id`        | Many rows per auth user | Normalized active warnings/downrank rules derived from user food preferences                               | `user_id → auth.users.id`, optional `tag_id → compatibility_tags.id` |
+| `user_compatibility_rules`  | `id`        | Many rows per auth user | Server-derived exact resolution state for saved allergen and dietary preferences                            | User, active policy version, optional canonical tag/term/alias/mapping |
 | `mix_preferences`           | `user_id`   | One row per auth user   | Persisted smoothie goals and versioned Mix state                                                           | `user_id → auth.users.id`                                            |
 
 ### `profiles`
@@ -81,7 +81,7 @@ should not be required to use the app.
 
 | Table | Documented columns |
 | --- | --- |
-| `user_food_preferences` | `user_id`, `unit_system`, `allergens`, `dietary_restrictions`, `prioritized_nutrient_ids`, `default_smoothie_serving_grams`, `sensitive_acknowledged_at`, `created_at`, `updated_at` |
+| `user_food_preferences` | `user_id`, `unit_system`, `allergens`, `dietary_restrictions`, `prioritized_nutrient_ids`, `default_smoothie_serving_grams`, `regulatory_region_code`, `regulatory_region_source`, `sensitive_acknowledged_at`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -89,6 +89,13 @@ Notes:
   on actionable allergens, dietary restrictions, and prioritized nutrients.
 - `sync_user_compatibility_rules` keeps preference choices aligned with normalized
   compatibility rules.
+- `regulatory_region_code` is optional and resolves only against an active,
+  version-bound `food_allergen_regulatory_profiles.region_code`. The paired
+  `regulatory_region_source` records whether the saved account value began as an
+  accepted device suggestion or an explicit account choice.
+- `validate_user_food_preference_regulatory_region()` rejects unsupported region codes
+  at the database boundary. Regional context can explain labeling rules but cannot
+  suppress a warning created by a user's allergen or dietary settings.
 
 ## Ingredient Lists and Saved Mixes
 
@@ -747,11 +754,13 @@ Notes:
 | `food_compatibility_policy_conflicts` | Composite | Versioned reviewed policy | DB-owned mapping from a user preference tag to a conflicting product fact and warning severity | Policy version and both compatibility tags |
 | `food_compatibility_policy_match_rules` | `id` | Versioned reviewed policy | Reviewed source-field extraction policy that converts exact evidence into normalized compatibility facts | Policy version and compatibility tag |
 | `food_compatibility_policy_exemptions` | `id` | Versioned reviewed policy | Jurisdiction-specific labeling, threshold, and processing context that cannot suppress a personal warning | Policy version, reviewed evidence subject, and source reference |
+| `food_compatibility_policy_preference_term_mappings` | `id` | Versioned reviewed policy | Exact reviewed mapping from canonical ingredient terminology to an allergen or dietary preference tag | Policy version, ingredient term, and compatibility tag |
 | `food_compatibility_policy_versions` | `id`      | Shared policy history       | Immutable, content-hashed bundles containing every activated extraction, conflict, terminology, exemption, and regional-profile rule | Referenced by facts, regional profiles, and feedback |
 | `food_allergen_regulatory_profiles` | `id`       | Shared regulatory reference | Reviewed jurisdiction-specific allergen declaration profiles                                       | `policy_version_id → food_compatibility_policy_versions.id`                          |
 | `food_allergen_regulatory_profile_tags` | Composite | Shared regulatory reference | Normalized compatibility tags covered by a regional allergen profile                               | Profile and tag foreign keys                                                         |
 | `product_compatibility_facts`      | `id`        | Shared product metadata     | Facts extracted from shared products/submissions/observations                                      | `tag_id → compatibility_tags.id`; exactly one product/submission/observation parent |
 | `food_compatibility_feedback`      | `id`        | User report/moderation queue | Versioned false-positive reports containing the exact warning and evidence shown to the user         | User, policy version, optional product, and reviewer foreign keys                    |
+| `food_preference_mapping_requests` | `id` | Shared review queue | Privacy-safe normalized requests for saved preference text that has no single exact reviewed mapping | Optional resolved mapping, term, tag, and reviewer |
 | `food_preference_option_catalog`   | `id`        | Shared reference            | App-ready allergen/dietary/ingredient options built from product compatibility and ingredient data | Optional `tag_id → compatibility_tags.id`                                           |
 | `food_preference_api_observations` | `id`        | Shared reference/provenance | Raw observed allergen/dietary/ingredient metadata from external APIs                               | No direct user ownership                                                            |
 
@@ -772,6 +781,7 @@ Notes:
 | `ingredient_terms` | `id`, `canonical_key`, `display_name`, `default_language_code`, `review_status`, `source_key`, `source_reference`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` |
 | `food_compatibility_policy_ingredient_aliases` | `id`, `policy_version_id`, `ingredient_term_id`, `alias`, `normalized_alias`, `language_code`, `alias_type`, `review_status`, `source_key`, `source_reference`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` |
 | `food_compatibility_policy_ingredient_relationships` | `id`, `policy_version_id`, `child_term_id`, `parent_term_id`, `relationship_type`, `processing_state`, `jurisdiction_code`, `conflict_inheritance`, `review_status`, `source_key`, `source_reference`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` |
+| `food_compatibility_policy_preference_term_mappings` | `id`, `policy_version_id`, `ingredient_term_id`, `preference_tag_id`, `preference_rule_type`, `source_reference`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -787,6 +797,10 @@ Notes:
 - The compatibility terminology rows belong to one policy version. The active-only
   `ingredient_term_aliases` and `ingredient_term_relationships` views preserve the
   stable runtime read names without exposing draft or retired rules.
+- A custom saved preference becomes eligible for automated checking only when its
+  normalized wording has one exact reviewed canonical term or reviewed alias and that
+  term has an active version-bound preference mapping. No fuzzy match or hard-coded
+  synonym is accepted.
 
 ### Version-bound extraction and conflict policy
 
@@ -836,19 +850,21 @@ Notes:
 
 | Table | Documented columns |
 | --- | --- |
-| `food_compatibility_policy_versions` | `id`, `version_number`, `status`, `change_summary`, `match_rule_snapshot`, `conflict_rule_snapshot`, `alias_snapshot`, `relationship_snapshot`, `exemption_snapshot`, `regional_profile_snapshot`, `bundle_content_hash`, `source_references`, `effective_at`, `reviewed_at`, `created_at`, `updated_at` |
+| `food_compatibility_policy_versions` | `id`, `version_number`, `status`, `change_summary`, `match_rule_snapshot`, `conflict_rule_snapshot`, `alias_snapshot`, `relationship_snapshot`, `exemption_snapshot`, `regional_profile_snapshot`, `preference_mapping_snapshot`, `bundle_content_hash`, `source_references`, `effective_at`, `reviewed_at`, `created_at`, `updated_at` |
 
 Notes:
 
 - A policy begins as `draft`; exactly one version is `active`, while prior activated
   versions remain `retired` and available for rollback. Product facts and feedback use
   the active version through `active_food_compatibility_policy_version_id()`.
-- Every extraction, conflict, terminology, exemption, regional-profile, and profile-tag
-  row is cloned into a draft and bound to that version before review.
+- Every extraction, conflict, terminology, preference mapping, exemption,
+  regional-profile, and profile-tag row is cloned into a draft and bound to that
+  version before review.
 - Activation snapshots the complete bundle, records its deterministic SHA-256 content
   hash, retires the prior version, activates the target, re-extracts all product,
-  observation, and submission facts, and rebuilds the option catalog in one transaction.
-  The same function can reactivate a retired bundle for rollback.
+  observation, and submission facts, rebuilds the option catalog, and re-resolves every
+  saved user preference in one transaction. The same function can reactivate a retired
+  bundle for rollback.
 - Activated versions and child rows cannot be edited in place. Updating policy requires
   a new draft and activation rather than rewriting history.
 - `source_references` records the official regulatory material reviewed for the policy.
@@ -868,6 +884,11 @@ Notes:
   mapping it to a normalized compatibility tag.
 - Profiles add jurisdiction context and policy coverage. They never suppress a warning
   for a preference the user explicitly selected.
+- A signed-in account may store one profile `region_code` in
+  `user_food_preferences`. Evaluation resolves that stable code against the same active
+  policy version used for extraction and conflict rules, records whether the profile was
+  applied, and identifies selected allergen settings that the regional profile does or
+  does not cover. Unknown or retired codes remain explicitly unsupported.
 - Authenticated reads are limited by RLS to active profiles belonging to the active
   policy version.
 
@@ -941,6 +962,27 @@ Notes:
 - `source_type` is `compatibility_tag`, `compatibility_fact`, `api_observation`, or
   `ingredient_list`. Canonical tags keep required selectable safety preferences
   available before any product happens to report them.
+
+### Saved preference resolution and review requests
+
+| Table | Documented columns |
+| --- | --- |
+| `user_compatibility_rules` | `id`, `user_id`, `tag_id`, `rule_type`, `severity`, `raw_value`, `normalized_value`, `active`, `resolution_status`, `resolution_method`, `resolution_policy_version_id`, `resolution_language_code`, `ingredient_term_id`, `ingredient_alias_id`, `preference_term_mapping_id`, `created_at`, `updated_at` |
+| `food_preference_mapping_requests` | `id`, `preference_rule_type`, `normalized_value`, `language_code`, `status`, `occurrence_count`, `resolved_mapping_id`, `resolved_ingredient_term_id`, `resolved_preference_tag_id`, `reviewed_by`, `reviewed_at`, `review_note`, `first_seen_at`, `last_seen_at`, `created_at`, `updated_at` |
+
+Notes:
+
+- `user_food_preferences` retains the user's exact saved wording. The server-owned
+  `user_compatibility_rules` projection records whether each value is resolved by a
+  direct canonical tag, reviewed ingredient term, reviewed alias, or remains
+  unresolved under the active policy version.
+- Unresolved values are saved but do not participate in warning evaluation. They place
+  only their normalized value, rule type, and language in the shared review queue; user
+  identity and raw account wording are not copied there.
+- Mapping review happens on a draft policy. Activating that policy re-resolves existing
+  preferences without rewriting user-owned values.
+- Authenticated users may read only their own resolution rows. Mapping, queue, and
+  resolution writes remain service-only.
 
 ### `food_preference_api_observations`
 
@@ -1166,7 +1208,8 @@ category, or serving fields.
 | `rebuild_shared_product_compatibility_summary` | Rebuilds denormalized compatibility summary JSON on shared products                                                                            |
 | `refresh_shared_product_compatibility_match_facts` | Re-extracts one canonical shared product with the current reviewed compatibility policy                                                    |
 | `sync_shared_product_compatibility_summary`    | Trigger helper that refreshes a canonical summary after fact changes, with a bulk-backfill guard                                               |
-| `sync_user_compatibility_rules`                | Syncs user food preferences into normalized compatibility rules                                                                                |
+| `sync_user_compatibility_rules`                | Resolves exact saved preferences against the active reviewed policy and keeps unmatched text explicitly unresolved                           |
+| `refresh_food_compatibility_preference_mapping_bundle` | Snapshots and hashes reviewed preference-term mappings into one policy version                                                       |
 | `rebuild_food_preference_option_catalog`       | Rebuilds allergen/dietary/ingredient option catalog from product facts                                                                         |
 | `sync_nutrient_manual_entry_fields`            | Rebuilds manual-entry nutrient groups/fields from observations                                                                                 |
 | `rebuild_custom_food_category_options`         | Rebuilds manual custom-food category options from observations                                                                                 |

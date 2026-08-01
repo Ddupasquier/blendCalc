@@ -31,6 +31,11 @@ import {
 	type FoodPreferenceFormValues,
 } from "$lib/utils/profile/foodPreferences";
 import {
+	normalizeRegulatoryRegionCode,
+	normalizeRegulatoryRegionSource,
+	type RegulatoryRegionOption,
+} from "$lib/utils/profile/regulatoryRegion";
+import {
 	getFoodPreferenceProfile,
 	isMissingFoodPreferencesTableError,
 } from "$lib/utils/profile/foodPreferenceProfile";
@@ -50,6 +55,13 @@ import { normalizeImageUpload } from "$lib/server/uploads/normalizeImageUpload.s
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { consumeRequestRateLimit } from "$lib/server/security/requestRateLimit.server";
 import { getAppIssueMessage } from "$lib/utils/errors/appIssues";
+import {
+	getFoodSafetyPolicy,
+	type FoodSafetyPolicy,
+} from "$lib/server/food-safety/foodSafetyPolicy.server";
+import {
+	getUserFoodPreferenceResolutions,
+} from "$lib/server/food-safety/userFoodPreferenceResolution.server";
 
 const PROFILE_TEXT_FORM_MAX_BYTES = 64 * 1024;
 const PROFILE_AVATAR_FORM_MAX_BYTES = PROFILE_AVATAR_MAX_BYTES + 1024 * 1024;
@@ -85,8 +97,22 @@ const getFoodPreferenceFormValues = (
 			formData.get("defaultSmoothieServingUnit"),
 		),
 		sensitiveAcknowledged: formData.get("sensitiveAcknowledged") === "on",
+		regulatoryRegionCode: normalizeRegulatoryRegionCode(
+			formData.get("regulatoryRegionCode"),
+		),
+		regulatoryRegionSource: normalizeRegulatoryRegionSource(
+			formData.get("regulatoryRegionSource"),
+		),
 	};
 };
+
+const getRegulatoryRegionOptions = (
+	policy: FoodSafetyPolicy,
+): RegulatoryRegionOption[] => policy.regionalProfiles.map((profile) => ({
+	regionCode: profile.regionCode,
+	displayName: profile.displayName,
+	authority: profile.authority,
+}));
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = await getAuthenticatedUser(locals);
@@ -103,12 +129,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 		{ data: foodPreferences, error: foodPreferencesError },
 		{ data: foodPreferenceOptions, error: foodPreferenceOptionsError },
 		appReferenceCatalog,
+		foodSafetyPolicy,
+		preferenceResolutions,
 	] = await Promise.all([
 		profileWithAvatarPromise,
 		locals.supabase
 			.from("user_food_preferences")
 			.select(
-				"unit_system, allergens, dietary_restrictions, prioritized_nutrient_ids, default_smoothie_serving_grams, sensitive_acknowledged_at",
+				"unit_system, allergens, dietary_restrictions, prioritized_nutrient_ids, default_smoothie_serving_grams, sensitive_acknowledged_at, regulatory_region_code, regulatory_region_source",
 			)
 			.eq("user_id", user.id)
 			.maybeSingle(),
@@ -120,6 +148,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.order("usage_count", { ascending: false })
 			.order("label", { ascending: true }),
 		getAppReferenceCatalog(),
+		getFoodSafetyPolicy(),
+		getUserFoodPreferenceResolutions(locals.supabase, user.id),
 	]);
 	const foodPreferencesUnavailable =
 		isMissingFoodPreferencesTableError(foodPreferencesError);
@@ -135,14 +165,15 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return {
 		profile,
 		avatarUrl,
-			foodPreferences: foodPreferencesUnavailable
+		foodPreferences: foodPreferencesUnavailable
 				? null
-				: getFoodPreferenceProfile(foodPreferences),
+				: getFoodPreferenceProfile(foodPreferences, preferenceResolutions),
 		foodPreferencesUnavailable,
 		foodPreferenceOptions: getFoodPreferenceOptionSets(
 			foodPreferenceOptionsUnavailable ? [] : foodPreferenceOptions,
 		),
 		priorityNutrientOptions: getDefaultMixFields(appReferenceCatalog),
+		regulatoryRegionOptions: getRegulatoryRegionOptions(foodSafetyPolicy),
 		defaultDisplayName: getDefaultDisplayName(user.id),
 		avatarPolicyItems: PROFILE_AVATAR_POLICY_ITEMS,
 		requireHumanFace: PROFILE_AVATAR_REQUIRE_HUMAN_FACE,
@@ -232,10 +263,15 @@ export const actions: Actions = {
 	},
 	saveFoodPreferences: async ({ locals, request }) => {
 		const user = await getAuthenticatedUser(locals);
+		const foodSafetyPolicy = await getFoodSafetyPolicy();
+		const regulatoryRegionOptions = getRegulatoryRegionOptions(foodSafetyPolicy);
 		const values = getFoodPreferenceFormValues(
 			await readLimitedFormData(request, PROFILE_TEXT_FORM_MAX_BYTES),
 		);
-		const validationError = getFoodPreferencesValidationError(values);
+		const validationError = getFoodPreferencesValidationError(
+			values,
+			regulatoryRegionOptions,
+		);
 
 		if (validationError) {
 			return fail(400, {
@@ -261,6 +297,8 @@ export const actions: Actions = {
 				prioritized_nutrient_ids: values.prioritizedNutrientIds,
 				default_smoothie_serving_grams: defaultSmoothieServingGrams,
 				sensitive_acknowledged_at: sensitiveAcknowledgedAt,
+				regulatory_region_code: values.regulatoryRegionCode || null,
+				regulatory_region_source: values.regulatoryRegionSource,
 			},
 			{ onConflict: "user_id" },
 		);

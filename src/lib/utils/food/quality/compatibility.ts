@@ -44,6 +44,42 @@ export type FoodCompatibilityEvaluation = {
 		traces: FoodCompatibilityEvidenceState;
 		policy: FoodCompatibilityEvidenceState;
 	};
+	regulatoryContext: FoodCompatibilityRegulatoryContext;
+	preferenceResolution: FoodCompatibilityPreferenceResolutionContext;
+};
+
+export type FoodCompatibilityPreferenceResolutionContext = {
+	resolvedCount: number;
+	unresolvedPreferences: Array<{
+		label: string;
+		type: "allergen" | "dietary_restriction";
+	}>;
+};
+
+export type FoodCompatibilityRegulatoryContext = {
+	status: "applied" | "unsupported" | "not_selected";
+	requestedRegionCode: string | null;
+	selectionSource: "account" | "device" | null;
+	profile: {
+		key: string;
+		regionCode: string;
+		displayName: string;
+		authority: string;
+		policyReference: string;
+		sourceUrl: string;
+		reviewedAt: string;
+	} | null;
+	coveredPreferences: Array<{
+		preference: string;
+		regulatedLabel: string;
+		classification:
+			| "major_allergen"
+			| "priority_allergen"
+			| "regulated_allergen"
+			| "gluten_source"
+			| "regulated_sulphite";
+	}>;
+	uncoveredPreferences: string[];
 };
 
 export type FoodCompatibilityFact = {

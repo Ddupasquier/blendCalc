@@ -30,8 +30,9 @@ describe("food compatibility evaluation architecture", () => {
 			"src/lib/components/ingredients/nutrition/ProductCompatibilityPanel/ProductCompatibilityPanel.svelte",
 		);
 
+		expect(api).toContain("const appCompatibilityEvaluation = getFoodCompatibilityEvaluation");
 		expect(api).toContain(
-			"compatibilityEvaluation: getFoodCompatibilityEvaluation",
+			"const compatibilityEvaluation: ApiV1CompatibilityEvaluation",
 		);
 		expect(api).toContain("hasActivePreferences: false");
 		expect(panel).toContain("food.compatibilityEvaluation");

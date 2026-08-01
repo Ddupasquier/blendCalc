@@ -5,6 +5,8 @@ import {
 import type {
 	FoodCompatibilityEvaluation,
 	FoodCompatibilityEvidenceState,
+	FoodCompatibilityPreferenceResolutionContext,
+	FoodCompatibilityRegulatoryContext,
 } from "$lib/utils/food/quality/compatibility";
 import type { FdcFood } from "$lib/utils/food/types";
 
@@ -14,6 +16,22 @@ export type FoodCompatibilityEvaluationInput = {
 	hasActivePreferences: boolean;
 	policyCoversPreferences: boolean;
 	conflictCount: number;
+	regulatoryContext?: FoodCompatibilityRegulatoryContext;
+	preferenceResolution?: FoodCompatibilityPreferenceResolutionContext;
+};
+
+const emptyRegulatoryContext: FoodCompatibilityRegulatoryContext = {
+	status: "not_selected",
+	requestedRegionCode: null,
+	selectionSource: null,
+	profile: null,
+	coveredPreferences: [],
+	uncoveredPreferences: [],
+};
+
+const emptyPreferenceResolution: FoodCompatibilityPreferenceResolutionContext = {
+	resolvedCount: 0,
+	unresolvedPreferences: [],
 };
 
 const hasText = (value: string | null | undefined) => Boolean(value?.trim());
@@ -78,6 +96,8 @@ export const getFoodCompatibilityEvaluation = ({
 	hasActivePreferences,
 	policyCoversPreferences,
 	conflictCount,
+	regulatoryContext = emptyRegulatoryContext,
+	preferenceResolution = emptyPreferenceResolution,
 }: FoodCompatibilityEvaluationInput): FoodCompatibilityEvaluation => {
 	const normalizedPolicyVersion =
 		Number.isSafeInteger(policyVersion) && (policyVersion ?? 0) > 0
@@ -112,5 +132,7 @@ export const getFoodCompatibilityEvaluation = ({
 		profileApplied,
 		conflictCount: normalizedConflictCount,
 		coverage,
+		regulatoryContext,
+		preferenceResolution,
 	};
 };

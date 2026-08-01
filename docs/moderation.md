@@ -140,6 +140,27 @@ reports create a traceable correction decision; any resulting product or policy 
 uses its own reviewed workflow and, for policy changes, a new compatibility policy
 version.
 
+## Custom food preference mapping requests
+
+Custom allergen and dietary text without one exact reviewed match enters
+`food_preference_mapping_requests`. The shared queue contains normalized text, rule
+type, language, status, and occurrence metadata; it does not contain a user identifier
+or copy raw account wording.
+
+Reviewers must:
+
+1. Confirm that the request describes a real allergen or dietary concept rather than
+   assuming similar spelling means equivalent meaning.
+2. Create or select a reviewed canonical ingredient term and language-tagged alias with
+   retained source evidence.
+3. Add its preference-tag mapping to a draft compatibility policy with a source
+   reference and review time.
+4. Activate the complete policy through the standard policy workflow. Activation
+   automatically re-resolves existing saved preferences without rewriting them.
+
+Reject requests that cannot be mapped safely. Never edit an active mapping in place or
+create a client-side synonym to bypass review.
+
 ## Product correction reports
 
 Explicit product-correction reports are identified separately from ordinary catalog

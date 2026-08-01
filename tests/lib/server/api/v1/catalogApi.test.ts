@@ -292,6 +292,8 @@ describe("blendCalc API v1 catalog mapping", () => {
 			profileApplied: false,
 			conflictCount: 0,
 		});
+		expect(product.compatibilityEvaluation).not.toHaveProperty("regulatoryContext");
+		expect(product.compatibilityEvaluation).not.toHaveProperty("preferenceResolution");
 	});
 
 	it("returns field sources, revision dates, and licensed images without private paths", () => {

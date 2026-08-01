@@ -116,14 +116,15 @@ match rule, active policy version, and source observation used to create them.
 Compatibility policy is deployed as an immutable version-bound bundle rather than a
 mutable set of global rules. A draft clones the current extraction rules, conflict
 rules, reviewed ingredient aliases and relationships, jurisdiction exemptions, and
-regional profiles. Activation records complete snapshots plus a deterministic content
+regional profiles, plus reviewed mappings from canonical ingredient terminology to
+preference tags. Activation records complete snapshots plus a deterministic content
 hash, switches the active version, re-extracts every product, observation, and
-submission fact, and rebuilds the preference option catalog in one transaction. A
-retired bundle can be reactivated through the same transaction for rollback. Runtime
-views expose only the active bundle, and facts are constrained to a match rule from the
-same policy version, preventing mixed-version evaluations. Jurisdiction exemptions are
-retained as context and cannot suppress a warning for an explicitly selected personal
-preference.
+submission fact, rebuilds the preference option catalog, and re-resolves saved account
+preferences in one transaction. A retired bundle can be reactivated through the same
+transaction for rollback. Runtime views expose only the active bundle, and facts and
+preference mappings remain bound to that version, preventing mixed-version evaluations.
+Jurisdiction exemptions are retained as context and cannot suppress a warning for an
+explicitly selected personal preference.
 
 Package precautionary statements are stored separately from ordinary ingredients and
 provider analysis. Each row preserves exact wording, statement type, normalized
@@ -261,6 +262,14 @@ moderation evidence. It does not currently expose nutrient uncertainty or policy
 snapshots. The app reads normalized nutrition and serving values plus compatibility
 evidence; deeper provenance, quality, uncertainty, and history remain future
 presentations rather than inferred UI claims.
+
+Authenticated app reads may additionally resolve an account's optional regulatory
+region against the regional profile in that same immutable policy version. The result
+records the authority and policy reference plus which selected allergen settings use
+regulated terminology in that profile. Region is explanation and coverage context only:
+it never changes product facts or suppresses personal conflict warnings. Unsupported
+regions remain explicitly unchecked. Public API v1 reads have no account preference
+context and therefore do not serialize this personalized regional evaluation.
 
 ## Serving data
 

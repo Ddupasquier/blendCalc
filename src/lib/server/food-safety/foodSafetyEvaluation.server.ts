@@ -1,6 +1,8 @@
 import type {
 	FoodCompatibilityFact,
 	FoodCompatibilityFactType,
+	FoodCompatibilityPreferenceResolutionContext,
+	FoodCompatibilityRegulatoryContext,
 	FoodCompatibilitySummary,
 } from "$lib/utils/food/quality/compatibility";
 import {
@@ -14,7 +16,12 @@ import type {
 	FdcFood,
 	FoodAllergenDisclosure,
 } from "$lib/utils/food/types";
-import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
+import {
+	getResolvedFoodPreferences,
+	getUnresolvedFoodPreferences,
+	type FoodPreferenceProfile,
+	type FoodPreferenceResolution,
+} from "$lib/utils/profile/foodPreferenceProfile";
 import type {
 	FoodCompatibilityMatchRule,
 	FoodSafetyPolicy,
@@ -293,14 +300,16 @@ const getFoodPreferenceWarnings = (
 	if (!profile) return [];
 
 	const warnings: FoodPreferenceWarning[] = [];
-	for (const allergen of profile.allergens) {
+	for (const resolution of getResolvedFoodPreferences(profile, "allergen")) {
+		const allergen = resolution.rawValue;
+		const canonicalPreference = resolution.tag?.slug ?? "";
 		const directFact = facts.find((fact) =>
 			(fact.factType === "contains" || fact.factType === "may_contain") &&
-			factMatches(fact, allergen)
+			factMatches(fact, canonicalPreference)
 		);
 		const relatedFact = directFact
 			? null
-			: getConflictFact(allergen, facts, policy);
+			: getConflictFact(canonicalPreference, facts, policy);
 		const fact = directFact ?? relatedFact?.fact;
 		if (!fact) continue;
 		const level = fact.factType === "may_contain" ||
@@ -320,8 +329,18 @@ const getFoodPreferenceWarnings = (
 		);
 	}
 
-	for (const restriction of profile.dietaryRestrictions) {
-		const conflict = getConflictFact(restriction, facts, policy);
+	for (
+		const resolution of getResolvedFoodPreferences(
+			profile,
+			"dietary_restriction",
+		)
+	) {
+		const restriction = resolution.rawValue;
+		const conflict = getConflictFact(
+			resolution.tag?.slug ?? "",
+			facts,
+			policy,
+		);
 		if (!conflict) continue;
 		warnings.push(
 			buildWarning(
@@ -343,11 +362,29 @@ const getFoodPreferenceWarnings = (
 
 const getActivePreferenceValues = (
 	profile: FoodPreferenceProfile | null,
+) => getResolvedFoodPreferences(profile)
+	.map((resolution) => resolution.tag?.slug.trim() ?? "")
+	.filter(Boolean);
+
+const getSavedPreferenceCount = (
+	profile: FoodPreferenceProfile | null,
 ) => profile
 	? [...profile.allergens, ...profile.dietaryRestrictions]
 		.map((value) => value.trim())
-		.filter(Boolean)
-	: [];
+		.filter(Boolean).length
+	: 0;
+
+const getPreferenceResolutionContext = (
+	profile: FoodPreferenceProfile | null,
+): FoodCompatibilityPreferenceResolutionContext => ({
+	resolvedCount: getResolvedFoodPreferences(profile).length,
+	unresolvedPreferences: getUnresolvedFoodPreferences(profile).map(
+		(resolution) => ({
+			label: resolution.rawValue,
+			type: resolution.ruleType,
+		}),
+	),
+});
 
 const policyCoversPreferences = (
 	preferences: string[],
@@ -362,6 +399,108 @@ const policyCoversPreferences = (
 	return preferences.every((preference) =>
 		coveredPreferences.has(normalizeValue(preference))
 	);
+};
+
+const getRegionalProfileTagForPreference = (
+	preference: FoodPreferenceResolution,
+	policy: FoodSafetyPolicy,
+	profile: FoodSafetyPolicy["regionalProfiles"][number],
+) => {
+	const normalizedPreference = normalizeValue(preference.tag?.slug ?? "");
+	const directMatch = profile.tags.find((tag) =>
+		[tag.slug, tag.label, tag.sourceLabel]
+			.some((value) => normalizeValue(value) === normalizedPreference)
+	);
+	if (directMatch) return directMatch;
+
+	const relatedFactKeys = new Set(
+		policy.preferenceConflictRules
+			.filter((rule) =>
+				rule.preferenceCategory === "allergen" &&
+				[
+					rule.preferenceSlug,
+					rule.preferenceLabel,
+				].some((value) => normalizeValue(value) === normalizedPreference)
+			)
+			.flatMap((rule) => [
+				normalizeValue(rule.factSlug),
+				normalizeValue(rule.factLabel),
+			]),
+	);
+
+	return profile.tags.find((tag) =>
+		relatedFactKeys.has(normalizeValue(tag.slug)) ||
+		relatedFactKeys.has(normalizeValue(tag.label))
+	);
+};
+
+export const getFoodCompatibilityRegulatoryContext = (
+	profile: FoodPreferenceProfile | null,
+	policy: FoodSafetyPolicy,
+): FoodCompatibilityRegulatoryContext => {
+	const requestedRegionCode = profile?.regulatoryRegionCode ?? null;
+	const selectionSource = profile?.regulatoryRegionSource ?? null;
+	if (!requestedRegionCode) {
+		return {
+			status: "not_selected",
+			requestedRegionCode: null,
+			selectionSource: null,
+			profile: null,
+			coveredPreferences: [],
+			uncoveredPreferences: [],
+		};
+	}
+
+	const regionalProfile = policy.regionalProfiles.find(
+		(candidate) => candidate.regionCode === requestedRegionCode,
+	);
+	if (!regionalProfile) {
+		return {
+			status: "unsupported",
+			requestedRegionCode,
+			selectionSource,
+			profile: null,
+			coveredPreferences: [],
+			uncoveredPreferences: getResolvedFoodPreferences(profile, "allergen")
+				.map((resolution) => resolution.rawValue),
+		};
+	}
+
+	const coveredPreferences: FoodCompatibilityRegulatoryContext["coveredPreferences"] = [];
+	const uncoveredPreferences: string[] = [];
+	for (const preference of getResolvedFoodPreferences(profile, "allergen")) {
+		const matchedTag = getRegionalProfileTagForPreference(
+			preference,
+			policy,
+			regionalProfile,
+		);
+		if (!matchedTag) {
+			uncoveredPreferences.push(preference.rawValue);
+			continue;
+		}
+		coveredPreferences.push({
+			preference: preference.rawValue,
+			regulatedLabel: matchedTag.sourceLabel,
+			classification: matchedTag.classification,
+		});
+	}
+
+	return {
+		status: "applied",
+		requestedRegionCode,
+		selectionSource,
+		profile: {
+			key: regionalProfile.key,
+			regionCode: regionalProfile.regionCode,
+			displayName: regionalProfile.displayName,
+			authority: regionalProfile.authority,
+			policyReference: regionalProfile.policyReference,
+			sourceUrl: regionalProfile.sourceUrl,
+			reviewedAt: regionalProfile.reviewedAt,
+		},
+		coveredPreferences,
+		uncoveredPreferences,
+	};
 };
 
 const formatAllergenLabel = (value: string) => {
@@ -439,6 +578,11 @@ export const annotateFoodWithFoodSafety = (
 		context.policy,
 	);
 	const activePreferences = getActivePreferenceValues(context.profile);
+	const preferenceResolution = getPreferenceResolutionContext(context.profile);
+	const regulatoryContext = getFoodCompatibilityRegulatoryContext(
+		context.profile,
+		context.policy,
+	);
 	return {
 		...food,
 		compatibilitySummary: buildCompatibilitySummary(
@@ -451,12 +595,14 @@ export const annotateFoodWithFoodSafety = (
 		compatibilityEvaluation: getFoodCompatibilityEvaluation({
 			food,
 			policyVersion: context.policy.version,
-			hasActivePreferences: activePreferences.length > 0,
+			hasActivePreferences: getSavedPreferenceCount(context.profile) > 0,
 			policyCoversPreferences: policyCoversPreferences(
 				activePreferences,
 				context.policy,
-			),
+			) && preferenceResolution.unresolvedPreferences.length === 0,
 			conflictCount: preferenceWarnings.length,
+			regulatoryContext,
+			preferenceResolution,
 		}),
 	};
 };

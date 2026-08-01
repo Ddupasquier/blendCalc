@@ -1036,6 +1036,74 @@ export type Database = {
           },
         ]
       }
+      food_compatibility_policy_preference_term_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          ingredient_term_id: string
+          policy_version_id: string
+          preference_rule_type: string
+          preference_tag_id: string
+          reviewed_at: string
+          reviewed_by: string | null
+          source_reference: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ingredient_term_id: string
+          policy_version_id: string
+          preference_rule_type: string
+          preference_tag_id: string
+          reviewed_at: string
+          reviewed_by?: string | null
+          source_reference: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ingredient_term_id?: string
+          policy_version_id?: string
+          preference_rule_type?: string
+          preference_tag_id?: string
+          reviewed_at?: string
+          reviewed_by?: string | null
+          source_reference?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_compatibility_policy_preference_te_ingredient_term_id_fkey"
+            columns: ["ingredient_term_id"]
+            isOneToOne: false
+            referencedRelation: "ingredient_terms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_compatibility_policy_preference_ter_policy_version_id_fkey"
+            columns: ["policy_version_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_compatibility_policy_preference_ter_preference_tag_id_fkey"
+            columns: ["preference_tag_id"]
+            isOneToOne: false
+            referencedRelation: "compatibility_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_compatibility_policy_preference_ter_preference_tag_id_fkey"
+            columns: ["preference_tag_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_coverage"
+            referencedColumns: ["tag_id"]
+          },
+        ]
+      }
       food_compatibility_policy_versions: {
         Row: {
           alias_snapshot: Json
@@ -1047,6 +1115,7 @@ export type Database = {
           exemption_snapshot: Json
           id: string
           match_rule_snapshot: Json
+          preference_mapping_snapshot: Json
           regional_profile_snapshot: Json
           relationship_snapshot: Json
           reviewed_at: string
@@ -1065,6 +1134,7 @@ export type Database = {
           exemption_snapshot?: Json
           id?: string
           match_rule_snapshot?: Json
+          preference_mapping_snapshot?: Json
           regional_profile_snapshot?: Json
           relationship_snapshot?: Json
           reviewed_at: string
@@ -1083,6 +1153,7 @@ export type Database = {
           exemption_snapshot?: Json
           id?: string
           match_rule_snapshot?: Json
+          preference_mapping_snapshot?: Json
           regional_profile_snapshot?: Json
           relationship_snapshot?: Json
           reviewed_at?: string
@@ -1390,6 +1461,99 @@ export type Database = {
           source_value?: string
         }
         Relationships: []
+      }
+      food_preference_mapping_requests: {
+        Row: {
+          created_at: string
+          first_seen_at: string
+          id: string
+          language_code: string
+          last_seen_at: string
+          normalized_value: string
+          occurrence_count: number
+          preference_rule_type: string
+          resolved_ingredient_term_id: string | null
+          resolved_mapping_id: string | null
+          resolved_preference_tag_id: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          language_code?: string
+          last_seen_at?: string
+          normalized_value: string
+          occurrence_count?: number
+          preference_rule_type: string
+          resolved_ingredient_term_id?: string | null
+          resolved_mapping_id?: string | null
+          resolved_preference_tag_id?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          language_code?: string
+          last_seen_at?: string
+          normalized_value?: string
+          occurrence_count?: number
+          preference_rule_type?: string
+          resolved_ingredient_term_id?: string | null
+          resolved_mapping_id?: string | null
+          resolved_preference_tag_id?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_preference_mapping_reques_resolved_ingredient_term_id_fkey"
+            columns: ["resolved_ingredient_term_id"]
+            isOneToOne: false
+            referencedRelation: "ingredient_terms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_preference_mapping_request_resolved_preference_tag_id_fkey"
+            columns: ["resolved_preference_tag_id"]
+            isOneToOne: false
+            referencedRelation: "compatibility_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_preference_mapping_request_resolved_preference_tag_id_fkey"
+            columns: ["resolved_preference_tag_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_coverage"
+            referencedColumns: ["tag_id"]
+          },
+          {
+            foreignKeyName: "food_preference_mapping_requests_resolved_mapping_id_fkey"
+            columns: ["resolved_mapping_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_preference_term_mappings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_preference_mapping_requests_resolved_mapping_id_fkey"
+            columns: ["resolved_mapping_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_preference_term_mappings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       food_preference_option_catalog: {
         Row: {
@@ -4586,8 +4750,15 @@ export type Database = {
           active: boolean
           created_at: string
           id: string
+          ingredient_alias_id: string | null
+          ingredient_term_id: string | null
           normalized_value: string
+          preference_term_mapping_id: string | null
           raw_value: string
+          resolution_language_code: string
+          resolution_method: string
+          resolution_policy_version_id: string
+          resolution_status: string
           rule_type: string
           severity: string
           tag_id: string | null
@@ -4598,8 +4769,15 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          ingredient_alias_id?: string | null
+          ingredient_term_id?: string | null
           normalized_value: string
+          preference_term_mapping_id?: string | null
           raw_value: string
+          resolution_language_code?: string
+          resolution_method?: string
+          resolution_policy_version_id: string
+          resolution_status?: string
           rule_type: string
           severity: string
           tag_id?: string | null
@@ -4610,8 +4788,15 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          ingredient_alias_id?: string | null
+          ingredient_term_id?: string | null
           normalized_value?: string
+          preference_term_mapping_id?: string | null
           raw_value?: string
+          resolution_language_code?: string
+          resolution_method?: string
+          resolution_policy_version_id?: string
+          resolution_status?: string
           rule_type?: string
           severity?: string
           tag_id?: string | null
@@ -4619,6 +4804,48 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_compatibility_rules_ingredient_alias_id_fkey"
+            columns: ["ingredient_alias_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_ingredient_aliases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_compatibility_rules_ingredient_alias_id_fkey"
+            columns: ["ingredient_alias_id"]
+            isOneToOne: false
+            referencedRelation: "ingredient_term_aliases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_compatibility_rules_ingredient_term_id_fkey"
+            columns: ["ingredient_term_id"]
+            isOneToOne: false
+            referencedRelation: "ingredient_terms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_compatibility_rules_preference_term_mapping_id_fkey"
+            columns: ["preference_term_mapping_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_preference_term_mappings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_compatibility_rules_preference_term_mapping_id_fkey"
+            columns: ["preference_term_mapping_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_preference_term_mappings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_compatibility_rules_resolution_policy_version_id_fkey"
+            columns: ["resolution_policy_version_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_versions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_compatibility_rules_tag_id_fkey"
             columns: ["tag_id"]
@@ -4709,6 +4936,8 @@ export type Database = {
           default_smoothie_serving_grams: number | null
           dietary_restrictions: string[]
           prioritized_nutrient_ids: number[]
+          regulatory_region_code: string | null
+          regulatory_region_source: string | null
           sensitive_acknowledged_at: string | null
           unit_system: string | null
           updated_at: string
@@ -4720,6 +4949,8 @@ export type Database = {
           default_smoothie_serving_grams?: number | null
           dietary_restrictions?: string[]
           prioritized_nutrient_ids?: number[]
+          regulatory_region_code?: string | null
+          regulatory_region_source?: string | null
           sensitive_acknowledged_at?: string | null
           unit_system?: string | null
           updated_at?: string
@@ -4731,6 +4962,8 @@ export type Database = {
           default_smoothie_serving_grams?: number | null
           dietary_restrictions?: string[]
           prioritized_nutrient_ids?: number[]
+          regulatory_region_code?: string | null
+          regulatory_region_source?: string | null
           sensitive_acknowledged_at?: string | null
           unit_system?: string | null
           updated_at?: string
@@ -4975,6 +5208,74 @@ export type Database = {
           tag_id?: string | null
         }
         Relationships: []
+      }
+      food_compatibility_preference_term_mappings: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          ingredient_term_id: string | null
+          policy_version_id: string | null
+          preference_rule_type: string | null
+          preference_tag_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_reference: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          ingredient_term_id?: string | null
+          policy_version_id?: string | null
+          preference_rule_type?: string | null
+          preference_tag_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_reference?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          ingredient_term_id?: string | null
+          policy_version_id?: string | null
+          preference_rule_type?: string | null
+          preference_tag_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_reference?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_compatibility_policy_preference_te_ingredient_term_id_fkey"
+            columns: ["ingredient_term_id"]
+            isOneToOne: false
+            referencedRelation: "ingredient_terms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_compatibility_policy_preference_ter_policy_version_id_fkey"
+            columns: ["policy_version_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_compatibility_policy_preference_ter_preference_tag_id_fkey"
+            columns: ["preference_tag_id"]
+            isOneToOne: false
+            referencedRelation: "compatibility_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_compatibility_policy_preference_ter_preference_tag_id_fkey"
+            columns: ["preference_tag_id"]
+            isOneToOne: false
+            referencedRelation: "food_compatibility_policy_coverage"
+            referencedColumns: ["tag_id"]
+          },
+        ]
       }
       ingredient_term_aliases: {
         Row: {
@@ -5349,6 +5650,10 @@ export type Database = {
           p_source_data_type: string
           p_source_key: string
         }
+        Returns: undefined
+      }
+      refresh_food_compatibility_preference_mapping_bundle: {
+        Args: { p_policy_version_id: string }
         Returns: undefined
       }
       refresh_nutrient_manual_entry_required_flags: {

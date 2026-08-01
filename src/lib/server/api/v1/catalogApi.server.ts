@@ -1,6 +1,7 @@
 import {
 	BLENDCALC_API_V1,
 	type ApiV1Category,
+	type ApiV1CompatibilityEvaluation,
 	type ApiV1FieldSource,
 	type ApiV1Image,
 	type ApiV1Pagination,
@@ -177,6 +178,21 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 		record,
 		sourceAttributionCatalog,
 	);
+	const appCompatibilityEvaluation = getFoodCompatibilityEvaluation({
+		food: record.food,
+		policyVersion: record.food.compatibilitySummary?.policyVersion ?? null,
+		hasActivePreferences: false,
+		policyCoversPreferences: false,
+		conflictCount: 0,
+	});
+	const compatibilityEvaluation: ApiV1CompatibilityEvaluation = {
+		version: appCompatibilityEvaluation.version,
+		status: appCompatibilityEvaluation.status,
+		policyVersion: appCompatibilityEvaluation.policyVersion,
+		profileApplied: appCompatibilityEvaluation.profileApplied,
+		conflictCount: appCompatibilityEvaluation.conflictCount,
+		coverage: appCompatibilityEvaluation.coverage,
+	};
 	return {
 		id: record.id,
 		barcode: record.barcode,
@@ -336,14 +352,7 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 		}),
 		images: record.images.filter(hasCompleteImageRights).map(toImage),
 		warnings: (record.food.compatibilitySummary?.allFacts ?? []).map(toWarning),
-		compatibilityEvaluation: getFoodCompatibilityEvaluation({
-			food: record.food,
-			policyVersion:
-				record.food.compatibilitySummary?.policyVersion ?? null,
-			hasActivePreferences: false,
-			policyCoversPreferences: false,
-			conflictCount: 0,
-		}),
+		compatibilityEvaluation,
 		sourceAttributions,
 		catalog: {
 			authority: "blendcalc-shared-catalog",
