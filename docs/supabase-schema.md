@@ -1099,6 +1099,7 @@ Notes:
 | Table                              | Primary Key  | Owner Scope                | Purpose                                                   | Key Relationships                                  |
 | ---------------------------------- | ------------ | -------------------------- | --------------------------------------------------------- | -------------------------------------------------- |
 | `app_role_assignments`             | `user_id`    | One row per elevated user  | Grants `moderator` or `admin` role                        | `user_id → auth.users.id`, optional `granted_by`   |
+| `app_role_permissions`             | Composite    | Global role policy         | Maps application roles to moderation capabilities        | `role + permission`                                |
 | `account_moderation`               | `user_id`    | One row per moderated user | Tracks active/suspended/banned state                      | `user_id → auth.users.id`, optional `moderated_by` |
 | `moderation_actions`               | `id`         | Audit log                  | Records moderation actions and reason codes               | `target_user_id`, optional `actor_user_id`         |
 | `moderation_email_deliveries`      | `id`         | Audit log                  | Tracks moderation email delivery status                   | `moderation_action_id → moderation_actions.id`     |
@@ -1109,6 +1110,19 @@ Notes:
 
 - Moderation/admin writes are intentionally not available to normal authenticated
   clients.
+- `app_role_assignments` is the authority for application roles. The `app_role` enum
+  contains `user`, `moderator`, and `admin`, while assignments store only elevated
+  roles. `app_role_permissions` maps those roles to database-owned capabilities.
+- `custom_access_token_hook` copies the current assignment into a newly issued JWT as
+  `app_role`, defaults normal or malformed subjects to `user`, replaces stale or
+  caller-supplied claims, and is executable only by `supabase_auth_admin`.
+- JWT role claims are not the sole authorization boundary. Privileged server routes and
+  security-definer functions independently query `app_role_assignments` so role
+  revocation does not wait for token expiry.
+- The server-only `service_role` has explicit least-privilege table grants for the
+  moderation dashboard and reviewed catalog workflows. Those grants cover only the
+  reads and writes performed by trusted server modules; they do not change browser
+  access or bypass the route's independent moderator/admin role check.
 - `get_moderator_data_health(p_days, p_issue_limit)` is an authenticated
   moderator/admin-only security-definer aggregate. It clamps the metric window to
   1–90 days and each issue queue to 1–50 rows. It returns catalog/publication counts,
@@ -1119,6 +1133,8 @@ Notes:
   and dataset download URLs.
 - `blocked_signup_emails` stores hashes, not raw email addresses.
 - `reject_blocked_signup` is the auth hook function for blocking signups.
+- `set_app_user_role` is the only service-role write path for role assignments; it
+  updates the assignment and appends the moderation ledger in one transaction.
 - Application requests fail closed when account-moderation state cannot be verified;
   logout remains available so a user is never trapped in a session.
 
@@ -1287,6 +1303,9 @@ category, or serving fields.
 | `consume_request_rate_limit`                    | Atomically consumes one private server-side request quota unit; service role only |
 | `replace_app_interaction_daily_metrics`         | Atomically replaces a bounded production date range of private Vercel interaction aggregates; service role only |
 | `reject_blocked_signup`                        | Supabase Auth hook for hashed email signup blocks                                                                                              |
+| `custom_access_token_hook`                     | Supabase Auth hook that adds the current database-owned `user`, `moderator`, or `admin` role to newly issued JWTs as `app_role`                  |
+| `authorize_app_permission`                     | Checks the signed `app_role` claim against database-owned role permissions for RLS policies                                                     |
+| `set_app_user_role`                            | Service-only atomic role assignment/revocation with a matching moderation audit action                                                         |
 
 ## Storage Buckets
 

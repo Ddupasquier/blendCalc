@@ -12,10 +12,15 @@ workflows. Profile upload behavior belongs in
 - `moderator` can block and restore normal user accounts.
 - `admin` can block normal users and moderators. Admin accounts cannot be blocked
   through the web moderation page.
+- Supabase Auth copies the database assignment into newly issued access tokens as the
+  `app_role` claim, defaulting normal users to `user`. It does not replace the database
+  assignment or Supabase's infrastructure `authenticated` role.
 - Authenticated browser clients can read only their own role and moderation status. They
   cannot grant roles, block users, edit audit history, or edit the signup blocklist.
-- The `/moderation` route verifies the signed-in user's database role before creating a
-  server-only Supabase admin client.
+- The `/moderation` route and every privileged server/database boundary verify the
+  signed-in user's current database role before using server-only capabilities. They do
+  not authorize from the JWT claim alone because claims remain valid until token
+  refresh.
 - `SUPABASE_SERVICE_ROLE_KEY` must exist only in server environments. Never prefix it
   with `PUBLIC_` or import it into a client component.
 
@@ -25,6 +30,33 @@ Apply moderation migrations and regenerate database types through the shared dat
 change workflow in [`database-testing.md`](database-testing.md) and
 [`supabase-schema.md`](supabase-schema.md#update-checklist). This document adds only the
 moderation-specific environment and dashboard configuration below.
+
+`supabase/config.toml` enables `public.custom_access_token_hook` and
+`public.reject_blocked_signup` for local Auth. After the database migration is deployed,
+run `supabase config push` to apply the same hooks and tracked callback allowlist to the
+linked project. Do not use a custom PostgreSQL login role, overwrite the required JWT
+`role` claim, or store moderator/admin status in editable user metadata.
+
+`app_role_permissions` owns capability mapping. Moderators receive account, catalog,
+warning, and data-health permissions; only admins receive role-management permission.
+The `authorize_app_permission` helper is suitable for RLS policy checks. Sensitive
+server actions continue to re-read `app_role_assignments` so revocations apply without
+waiting for JWT expiry.
+
+| Capability | User | Moderator | Admin |
+| --- | --- | --- | --- |
+| Access moderation | No | Yes | Yes |
+| Manage eligible accounts | No | Yes | Yes |
+| Review catalog submissions | No | Yes | Yes |
+| Review food warnings | No | Yes | Yes |
+| Read moderator data health | No | Yes | Yes |
+| Grant or revoke application roles | No | No | Yes |
+
+The table describes authorization policy, not UI availability or target eligibility.
+Role changes currently use the trusted operator CLI; any future web control must require
+the admin capability at its live server boundary. Separate moderation rules still
+prevent self-actions, prevent moderators from acting on elevated users, and prevent the
+web workflow from blocking administrators.
 
 Add `SUPABASE_SERVICE_ROLE_KEY` to the Vercel project as a sensitive **Production-only**
 environment variable, then redeploy. Do not expose this key to arbitrary preview
@@ -95,6 +127,12 @@ Other role commands:
 npm run moderate -- role moderator@example.com moderator
 npm run moderate -- role moderator@example.com none
 ```
+
+Role assignment and removal call the service-only `set_app_user_role` function, which
+changes the authoritative row and appends the moderation action in one transaction.
+Direct service-role writes to `app_role_assignments` are revoked. Newly issued tokens
+reflect the change through the Auth hook; privileged requests enforce the database
+change immediately.
 
 ## Blocking and restoring accounts
 

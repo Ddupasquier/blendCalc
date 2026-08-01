@@ -145,23 +145,38 @@ export type Database = {
         Row: {
           created_at: string
           granted_by: string | null
-          role: string
+          role: Database["public"]["Enums"]["app_role"]
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           granted_by?: string | null
-          role: string
+          role: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           granted_by?: string | null
-          role?: string
+          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      app_role_permissions: {
+        Row: {
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          permission?: Database["public"]["Enums"]["app_permission"]
+          role?: Database["public"]["Enums"]["app_role"]
         }
         Relationships: []
       }
@@ -5551,6 +5566,12 @@ export type Database = {
         }
         Returns: string[]
       }
+      authorize_app_permission: {
+        Args: {
+          requested_permission: Database["public"]["Enums"]["app_permission"]
+        }
+        Returns: boolean
+      }
       blendcalc_api_v1_product_readiness_reasons: {
         Args: { p_shared_product_id: string }
         Returns: string[]
@@ -5598,6 +5619,7 @@ export type Database = {
         }
         Returns: string
       }
+      custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       default_profile_display_name: {
         Args: { p_user_id: string }
         Returns: string
@@ -5893,6 +5915,16 @@ export type Database = {
           source_url: string
         }[]
       }
+      set_app_user_role: {
+        Args: {
+          p_actor_user_id?: string
+          p_internal_note?: string
+          p_reason_code?: string
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_target_user_id: string
+        }
+        Returns: boolean
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       sync_nutrient_manual_entry_fields: { Args: never; Returns: undefined }
@@ -5924,7 +5956,14 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_permission:
+        | "moderation.access"
+        | "moderation.accounts.manage"
+        | "moderation.catalog.review"
+        | "moderation.warnings.review"
+        | "moderation.data_health.read"
+        | "moderation.roles.manage"
+      app_role: "user" | "moderator" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6054,6 +6093,16 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      app_permission: [
+        "moderation.access",
+        "moderation.accounts.manage",
+        "moderation.catalog.review",
+        "moderation.warnings.review",
+        "moderation.data_health.read",
+        "moderation.roles.manage",
+      ],
+      app_role: ["user", "moderator", "admin"],
+    },
   },
 } as const

@@ -15,6 +15,9 @@ local Supabase services, writes local credentials to the gitignored
 `.env.test.local`, applies deterministic runtime reference fixtures, and creates
 regular-user, moderator, and admin QA accounts. Standard QA accounts are seeded with the
 current tutorial completed so onboarding does not block unrelated test passes.
+The local Auth service also runs the production-shaped blocked-signup and Custom Access
+Token hooks, so regular, moderator, and administrator QA sessions receive the same
+database-owned `app_role` claims that hosted sessions receive.
 
 Run the app against the local database with:
 

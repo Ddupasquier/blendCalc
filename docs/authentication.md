@@ -57,16 +57,21 @@ secret. In Google Cloud, configure:
 
 ## Account security settings
 
-Configure these in Supabase before public launch:
+The tracked Supabase configuration currently enforces:
 
-- Require email confirmation for password accounts.
-- Set the minimum password length to **15 characters** so hosted Auth matches the
+- Email confirmation for password accounts.
+- A minimum password length of **15 characters** so hosted Auth matches the
   application policy in `src/lib/utils/auth/passwordPolicy.ts`.
-- Do not add uppercase, lowercase, number, or symbol composition requirements. The app
+- No uppercase, lowercase, number, or symbol composition requirements. The app
   accepts long passphrases, spaces, Unicode, and password-manager values.
-- Enable leaked-password protection when the project plan supports it.
-- Enable secure password changes. Recently authenticated users and password recovery
+- Secure password changes. Recently authenticated users and password recovery
   sessions can update directly; older sessions must reauthenticate.
+- Eight-character email OTPs with a one-minute resend interval.
+- Optional TOTP enrollment and verification.
+
+Before public launch, also:
+
+- Enable leaked-password protection when the project plan supports it.
 - Before enabling Cloudflare Turnstile or hCaptcha, add its browser widget and pass the
   resulting token to Supabase sign-up and recovery calls.
 - Review Auth rate limits; lower them if automated abuse appears.
@@ -84,10 +89,36 @@ Anonymous table privileges are revoked by migration. Follow the database change 
 verification workflow in [`database-testing.md`](database-testing.md) rather than
 maintaining an authentication-specific migration sequence.
 
+### Application role claims
+
+Supabase's `anon`, `authenticated`, and `service_role` claims remain infrastructure
+roles. blendCalc moderator and administrator access is instead assigned in
+`app_role_assignments`. The Custom Access Token hook adds `user`, `moderator`, or
+`admin` to newly issued JWTs as the signed `app_role` claim.
+
+The claim is a signed role hint for application and policy use; it is not the sole
+authority for privileged work. Moderator routes, server actions, and privileged
+database functions re-check the current assignment because an already-issued JWT can
+outlive a role change until its next refresh. The hook always replaces a pre-existing
+claim from the database and defaults unknown or malformed subjects to `user`.
+
+`supabase/config.toml` owns the canonical production/local callback allowlist, the
+blocked-signup hook, and the role-claim hook. After the migrations pass locally, deploy
+the database first and then run `supabase config push` so the linked Auth service uses
+the tracked hooks. Users receive a changed role on their next sign-in or token refresh;
+removing a role takes effect immediately at privileged server/database checks even if
+an older token still contains the previous hint.
+
+Application permissions are mapped in `app_role_permissions`. The
+`authorize_app_permission` function is available for RLS policies, but destructive
+moderation boundaries still check the current assignment rather than trusting a
+potentially stale JWT alone.
+
 ## Verification
 
 ```bash
 npm run check:auth
+supabase config push
 npm run check
 npm test
 npm run build
