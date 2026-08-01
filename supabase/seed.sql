@@ -739,7 +739,8 @@ with qa_generic_foods (
 		(13, '09000000000131', 9200013, 'Shrimp, Cooked', 'qa-seafood', 'Finfish and Shellfish Products', 99, 0.3, 0.2, 24, 0, 0, 111, 85, 3, 'oz', '3 oz (85 g)', 'Shrimp.', '["Shrimp"]'::jsonb, '["shellfish"]'::jsonb, '[]'::jsonb),
 		(14, '09000000000148', 9200014, 'Egg, Whole, Cooked', 'qa-dairy', 'Dairy and Egg Products', 155, 10.6, 1.12, 12.6, 0, 1.12, 124, 50, 1, null::text, '1 large egg (50 g)', 'Egg.', '["Egg"]'::jsonb, '["egg"]'::jsonb, '["vegetarian"]'::jsonb),
 		(15, '09000000000155', 9200015, 'Tomato, Roma, Raw', 'qa-vegetables', 'Vegetables and Vegetable Products', 18, 0.2, 3.9, 0.9, 1.2, 2.6, 5, 62, 1, null::text, '1 medium tomato (62 g)', 'Roma tomato.', '["Roma tomato"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
-		(16, '09000000000162', 9200016, 'Lemon Juice, Raw', 'qa-fruit', 'Fruits and Fruit Juices', 22, 0.24, 6.9, 0.35, 0.3, 2.52, 1, 15, 1, 'tbsp', '1 tbsp (15 g)', 'Lemon juice.', '["Lemon juice"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb)
+		(16, '09000000000162', 9200016, 'Lemon Juice, Raw', 'qa-fruit', 'Fruits and Fruit Juices', 22, 0.24, 6.9, 0.35, 0.3, 2.52, 1, 15, 1, 'tbsp', '1 tbsp (15 g)', 'Lemon juice.', '["Lemon juice"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
+		(17, '09000000000179', 170456, 'Tomatoes, Green, Raw', 'qa-vegetables', 'Vegetables and Vegetable Products', 23, 0.2, 5.1, 1.2, 1.1, 4, 13, 180, 1, 'cup', '1 cup (180 g)', 'Green tomato.', '["Green tomato"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb)
 )
 insert into private.qa_catalog_product_fixtures (
 	product_id,

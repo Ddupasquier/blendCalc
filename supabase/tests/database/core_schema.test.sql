@@ -1,6 +1,6 @@
 begin;
 
-select plan(41);
+select plan(42);
 
 select has_table('public', 'profiles', 'profiles table exists');
 select has_table('public', 'user_food_list_items', 'food-list table exists');
@@ -70,6 +70,19 @@ select ok(
 				and enabled
 		),
 	'local QA category fixtures prove search beyond the former 1,000-row cutoff'
+);
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '09000000000179'
+			and product.status = 'active'
+			and product.search_text ilike '%green%'
+			and product.search_text ilike '%tomat%'
+			and product.food ->> 'fdcId' = '170456'
+			and jsonb_array_length(product.food -> 'foodNutrients') >= 7
+	),
+	'local QA catalog includes a source-shaped multi-word partial-search fixture'
 );
 select is(
 	(

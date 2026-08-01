@@ -247,7 +247,7 @@ select is(
 		where product.source_reference like 'local-qa-%'
 			or product.source_reference like 'local-qa:%'
 	),
-	21::bigint,
+	22::bigint,
 	'the local catalog contains all packaged and generic QA foods'
 );
 

@@ -45,6 +45,8 @@ describe("local QA reference seed", () => {
 		expect(seed).toContain("'Shrimp, Cooked'");
 		expect(seed).toContain("'Egg, Whole, Cooked'");
 		expect(seed).toContain("'Lemon Juice, Raw'");
+		expect(seed).toContain("'09000000000179'");
+		expect(seed).toContain("'Tomatoes, Green, Raw'");
 	});
 
 	it("restores canonical validation rules after destructive QA", () => {

@@ -79,10 +79,13 @@ fixed-ID submissions are not recreated by `start` after they have been reviewed;
   intentionally exceeds 1,000 enabled rows so server-side category search and selection
   persistence can be tested beyond the former client-list cutoff without copying
   production data.
-- The local catalog contains 21 approved synthetic foods: five packaged-product cases
-  plus sixteen generic foods spanning produce, dairy, seeds, beverages, meat, shellfish,
-  leafy greens, spices, and juice. `Strawberries, Raw` intentionally remains outside
-  the populated account's lists so search always has a deterministic unsaved result.
+- The local catalog contains 22 approved synthetic foods: five packaged-product cases
+  plus seventeen generic foods spanning produce, dairy, seeds, beverages, meat,
+  shellfish, leafy greens, spices, and juice. `Strawberries, Raw` intentionally remains
+  outside the populated account's lists so search always has a deterministic unsaved
+  result.
+  `Tomatoes, Green, Raw` preserves USDA SR Legacy identity `170456` and provides a
+  deterministic multi-word partial-search result for `green tomat`.
 - Local catalog products are authored package-label fixtures with normalized nutrients,
   servings, categories, ingredients, allergen declarations, traces, package metadata,
   and field-level provenance. They are available through the same blendCalc app and API
@@ -124,6 +127,17 @@ account's tutorial preference with its supplied SQL.
 - Supabase-client integration tests against real Auth, PostgREST, Storage, and database
   policies rather than mocks.
 - Repeatable destructive QA without risking production records.
+
+## Verification Corpus Standard
+
+A minimal reproduction identifies the original failure; it does not prove the affected
+behavior is fixed. Deterministic database and data-flow QA must exercise a representative
+corpus containing the original input, comparable positive cases across the affected
+source or data path, and applicable negative and boundary controls. Record every tested
+input and its result in the QA evidence. Do not clear a search, barcode, validation,
+calculation, mapping, or data-behavior task from one successful example. See
+[development rule 46](dev-rules/dev-rules.md#rule-qa-process) for the authoritative QA
+requirement.
 
 ## Food-Safety Corpus
 

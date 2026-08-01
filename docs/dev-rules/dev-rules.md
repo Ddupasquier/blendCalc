@@ -1582,8 +1582,13 @@ concrete example inputs, observable expected outcomes, exact code references, an
 to the relevant development rules. Every task must use the `Repro`, `Example input`, and
 `Expected` labels. `Repro` must be a numbered bullet list with one exact action per
 step. Example inputs must name concrete values, commands, roles, files, or UI controls;
-never use `None` as a shortcut for an incomplete task. Do not create duplicate rule sets
-inside QA docs; reference this document as the source of truth.
+never use `None` as a shortcut for an incomplete task. A written example is the minimum
+repro input, not sufficient proof by itself. Before clearing search, barcode, validation,
+calculation, mapping, or data-behavior QA, exercise multiple representative inputs that
+cover the stated behavior, at least one comparable positive case, and an applicable
+negative or boundary control. Record the tested corpus and evidence; do not generalize a
+single successful product, query, barcode, or value to the entire behavior. Do not create
+duplicate rule sets inside QA docs; reference this document as the source of truth.
 
 **46a.** <a id="rule-qa-database-mutations"></a>Any QA task that requires changing
 local or test-database state must include the exact copy-paste SQL or terminal command
