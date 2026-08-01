@@ -115,7 +115,7 @@ adding one-off npm aliases.
 | `npm run db:push:auto` | Push pending Supabase migrations using `SUPABASE_DB_PASSWORD` from `.env.moderation.local` or macOS Keychain |
 | `npm run db:lint` | Run Supabase database linting |
 | `npm run db:types` | Regenerate Supabase TypeScript database types |
-| `npm run db:test:start` | Start local Supabase and seed disposable QA accounts, onboarding state, and ingredient lists |
+| `npm run db:test:start` | Start local Supabase and repair disposable QA personas across Ingredients, Saved, Mix, onboarding, warnings, and moderation |
 | `npm run db:test:reset` | Rebuild the local database from migrations and QA fixtures |
 | `npm run db:test:verify` | Rebuild locally and run pgTAP database tests |
 | `npm run db:test:status` | Show local Supabase service status |

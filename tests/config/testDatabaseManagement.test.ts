@@ -9,6 +9,7 @@ const tutorialUtility = readFileSync(
 	"src/lib/utils/tutorial/tutorial.ts",
 	"utf8",
 );
+const personas = readFileSync("scripts/lib/local_qa_personas.mjs", "utf8");
 
 describe("local test database management", () => {
 	it("applies pending migrations before seeding QA accounts", () => {
@@ -57,7 +58,7 @@ describe("local test database management", () => {
 		);
 	});
 
-	it("seeds standard QA accounts past onboarding with the current tutorial version", () => {
+	it("seeds completed and pending tutorial personas with the current version", () => {
 		const tutorialVersion = tutorialUtility.match(
 			/export const CURRENT_TUTORIAL_VERSION = (\d+);/,
 		)?.[1];
@@ -72,14 +73,33 @@ describe("local test database management", () => {
 		expect(script).toContain("seedTestAccountState");
 		expect(script).toContain("do_not_show_again: true");
 		expect(script).toContain("completed_at: tutorialCompletedAt");
+		expect(script).toContain('account.tutorialState === "pending"');
+		expect(personas).toContain('email: "qa-onboarding@blendcalc.local"');
 	});
 
-	it("seeds useful fridge and shopping fixtures for every QA account", () => {
-		expect(script).toContain("testFoodListFixtures");
-		expect(script).toContain("loadTestFoodListFixtures");
+	it("seeds purpose-built personas across the major application states", () => {
+		expect(personas).toContain('email: "qa-user@blendcalc.local"');
+		expect(personas).toContain('email: "qa-preferences@blendcalc.local"');
+		expect(personas).toContain('email: "qa-empty@blendcalc.local"');
+		expect(personas).toContain('email: "qa-onboarding@blendcalc.local"');
+		expect(personas).toContain('email: "qa-moderator@blendcalc.local"');
+		expect(personas).toContain('email: "qa-admin@blendcalc.local"');
+		expect(personas).toContain('name: "QA Morning Green"');
+		expect(personas).toContain('name: "QA Berry Repeat"');
+		expect(personas).toContain('name: "QA Export Berry Mix"');
+	});
+
+	it("seeds useful list, Saved, Mix, preference, and moderation state", () => {
+		expect(script).toContain("loadTestCatalogFoods");
 		expect(script).toContain("seedTestFoodLists");
 		expect(script).toContain('userClient.rpc("place_user_food_list_items"');
-		expect(script).toContain('{ barcode: "00021130493609", listType: "fridge" }');
-		expect(script).toContain('{ barcode: "00869759000149", listType: "shopping" }');
+		expect(script).toContain("seedTestSavedDrinks");
+		expect(script).toContain('userClient.rpc("save_saved_drink"');
+		expect(script).toContain("seedTestMixPreferences");
+		expect(script).toContain('userClient.rpc("save_mix_preferences"');
+		expect(script).toContain("seedTestFoodPreferences");
+		expect(script).toContain("seedModerationFixtures");
+		expect(script).toContain("QA Reviewable Pantry Crisps");
+		expect(script).toContain("QA Missing Evidence Pantry Crisps");
 	});
 });

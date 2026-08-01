@@ -66,6 +66,14 @@ vi.mock("$lib/utils/barcode/productLookup", async (importOriginal) => {
 	};
 });
 
+const barcodeScannerMocks = vi.hoisted(() => ({
+	isNativeBarcodePlatform: vi.fn().mockResolvedValue(false),
+	scanNativeBarcode: vi.fn().mockResolvedValue(null),
+	startWebBarcodeScanner: vi.fn().mockResolvedValue(vi.fn()),
+}));
+
+vi.mock("$lib/utils/barcode/scanner", () => barcodeScannerMocks);
+
 const nutrientRelationshipMocks = vi.hoisted(() => ({
 	readNutrientRelationshipRules: vi.fn().mockResolvedValue([
 		{
@@ -534,6 +542,27 @@ describe("CustomIngredientForm", () => {
 		await goToStep(/share/i);
 
 		expect(screen.getByText("Name must be at least 3 characters")).toBeInTheDocument();
+	});
+
+	it("closes the routed barcode scanner when its signal resets", async () => {
+		const view = render(CustomIngredientForm, {
+			props: {
+				onCreate: vi.fn(),
+				scanSignal: 1,
+			},
+		});
+
+		expect(
+			await screen.findByRole("dialog", { name: "Scan Barcode" }),
+		).toBeInTheDocument();
+
+		await view.rerender({ onCreate: vi.fn(), scanSignal: 0 });
+
+		await waitFor(() =>
+			expect(
+				screen.queryByRole("dialog", { name: "Scan Barcode" }),
+			).not.toBeInTheDocument(),
+		);
 	});
 
 	it("restores an unsaved draft after the form remounts", async () => {

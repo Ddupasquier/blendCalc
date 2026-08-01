@@ -743,7 +743,7 @@
         loadedSavedDrink = restoredSavedDrink;
         loadMixState();
         loadNutrientGoals();
-        if (!restoredSavedDrink) loadCloudBackedMixPreferences();
+		loadCloudBackedMixPreferences();
 		mixStateReady = true;
 		window.addEventListener(
             SMOOTHIE_LISTS_CHANGED_EVENT,

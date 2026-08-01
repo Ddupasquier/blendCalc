@@ -110,7 +110,7 @@ const assertDatasetCatalog = async () => {
 	}
 
 	for (const [datasetKey, searchTerm] of [
-		["cnf-2026", "blueberries raw"],
+		["cnf-2026", "blueberry"],
 		["cofid-2021", "arrowroot"],
 	]) {
 		const rows = requireData(

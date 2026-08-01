@@ -349,7 +349,7 @@
 		}
 		if (scanSignal === lastScanSignal) return;
 		lastScanSignal = scanSignal;
-		barcode.state.scannerOpen = true;
+		barcode.state.scannerOpen = scanSignal > 0;
 	});
 
 	$effect(() => {

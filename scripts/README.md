@@ -42,6 +42,20 @@ automatically part of the public developer command surface.
   for internal backfills, narrow investigations, or commands that can be run directly
   from their documented file header.
 
+## Local Test Database
+
+`scripts/operations/manage_test_database.mjs` owns the stable `db:test:*` commands. It
+starts or resets only localhost Supabase, applies `supabase/seed.sql`, writes the
+gitignored test environment, and creates the maintained personas defined in
+`scripts/lib/local_qa_personas.mjs`. Those personas cover populated, warning-heavy,
+empty, onboarding, moderator, and admin workflows across Ingredients, Saved, Mix,
+profiles, Storage evidence, and catalog review.
+
+Use `npm run db:test:start` to repair missing baseline fixtures while preserving current
+local tester changes. Use `npm run db:test:reset` for the exact deterministic baseline,
+or `npm run db:test:verify` to recreate it and run every database test. The complete
+persona inventory and recovery behavior live in `docs/database-testing.md`.
+
 ## Catalog API Audit
 
 `npm run audit:api-catalog` performs a read-only audit of every active

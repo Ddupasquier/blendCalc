@@ -207,15 +207,17 @@ export const moveCloudSmoothieListItems = async (
 export const removeCloudSmoothieListItem = async (
 	key: SmoothieListKey,
 	foodId: number,
-	context?: CloudDataContext,
 ) => {
-	const supabase = resolveCloudClient(context);
-	if (!supabase) return false;
-
-	const { data, error } = await supabase.rpc("remove_user_food_list_item", {
-		p_fdc_id: foodId,
-		p_list_type: getCloudListType(key),
-	});
-
-	return !error && data === true;
+	try {
+		const path = `${getCloudListApiPath(key)}?foodId=${encodeURIComponent(foodId)}`;
+		const response = await fetch(path, {
+			method: "DELETE",
+			headers: { accept: "application/json" },
+		});
+		if (!response.ok) return false;
+		const payload = await response.json() as { removed?: unknown };
+		return payload.removed === true;
+	} catch {
+		return false;
+	}
 };

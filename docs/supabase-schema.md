@@ -1126,7 +1126,10 @@ Notes:
 - The server-only `service_role` has explicit least-privilege table grants for the
   moderation dashboard and reviewed catalog workflows. Those grants cover only the
   reads and writes performed by trusted server modules; they do not change browser
-  access or bypass the route's independent moderator/admin role check.
+  access or bypass the route's independent moderator/admin role check. Catalog intake
+  includes `insert` on `shared_product_submissions` because the trusted server creates
+  pending submissions before moderator review; ordinary authenticated clients still
+  cannot insert, update, or delete those rows directly.
 - `get_moderator_data_health(p_days, p_issue_limit)` is an authenticated
   moderator/admin-only security-definer aggregate. It clamps the metric window to
   1–90 days and each issue queue to 1–50 rows. It returns catalog/publication counts,

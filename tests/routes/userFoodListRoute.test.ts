@@ -21,6 +21,7 @@ vi.mock("$lib/server/user-data/foodListPlacement.server", () => ({
 }));
 
 import {
+	DELETE,
 	GET,
 	POST,
 } from "../../src/routes/api/user-food-lists/[list]/+server";
@@ -61,6 +62,27 @@ const createPostEvent = (
 				body: JSON.stringify(body),
 			},
 		),
+		rpc,
+	};
+};
+
+const createDeleteEvent = (
+	foodId: string | null = "1",
+	list = "fridge",
+	userId: string | null = "user-id",
+) => {
+	const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
+	const url = new URL(`http://localhost:5173/api/user-food-lists/${list}`);
+	if (foodId !== null) url.searchParams.set("foodId", foodId);
+	return {
+		locals: {
+			getVerifiedUser: vi.fn().mockResolvedValue(
+				userId ? { id: userId } : null,
+			),
+			supabase: { rpc },
+		},
+		params: { list },
+		url,
 		rpc,
 	};
 };
@@ -193,5 +215,30 @@ describe("user food list route", () => {
 				p_list_type: "shopping",
 			}),
 		);
+	});
+
+	it("removes one authenticated list item through the authoritative RPC", async () => {
+		const event = createDeleteEvent("42", "shopping-list");
+
+		const response = await DELETE(event as never);
+
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({ removed: true });
+		expect(event.rpc).toHaveBeenCalledWith("remove_user_food_list_item", {
+			p_fdc_id: 42,
+			p_list_type: "shopping",
+		});
+	});
+
+	it("rejects unauthenticated and invalid list deletion requests", async () => {
+		const unauthenticated = await DELETE(
+			createDeleteEvent("42", "fridge", null) as never,
+		);
+		const invalidFood = await DELETE(
+			createDeleteEvent("not-a-food") as never,
+		);
+
+		expect(unauthenticated.status).toBe(401);
+		expect(invalidFood.status).toBe(400);
 	});
 });

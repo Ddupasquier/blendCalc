@@ -12,11 +12,10 @@ npm run db:test:start
 
 This command starts the Docker-compatible runtime when Colima is installed, starts the
 local Supabase services, writes local credentials to the gitignored
-`.env.test.local`, applies deterministic runtime reference fixtures, and creates
-regular-user, moderator, and admin QA accounts. Standard QA accounts are seeded with the
-current tutorial completed so onboarding does not block unrelated test passes. Each
-account also starts with three approved catalog ingredients in Fridge and two in
-Shopping List, including serving, allergen, trace, and missing-serving fixtures.
+`.env.test.local`, applies deterministic runtime reference fixtures, and repairs six
+purpose-built QA personas. The personas cover populated everyday use, food warnings,
+empty states, guided onboarding, moderation, and administration without requiring
+manual setup before each pass.
 The local Auth service also runs the production-shaped blocked-signup and Custom Access
 Token hooks, so regular, moderator, and administrator QA sessions receive the same
 database-owned `app_role` claims that hosted sessions receive.
@@ -30,11 +29,36 @@ npm run dev:test
 The local account password and emails are printed by the database command and stored in
 `.env.test.local` for local tooling.
 
+## Seeded Personas
+
+All accounts use `BlendCalc-Local-QA-2026!`. `npm run db:test:start` repairs missing
+baseline records without moving a tester's existing list items. Use
+`npm run db:test:reset` whenever the exact baseline below is required.
+
+| Persona | Email | Deterministic state |
+|---|---|---|
+| Populated | `qa-user@blendcalc.local` | 15 Fridge items, 4 Shopping items, 4 Saved mixes, one active 10-food Mix, tutorial complete |
+| Warnings | `qa-preferences@blendcalc.local` | Vegan and gluten-free restrictions; peanut and shellfish allergies; 7 foods covering beef, shrimp, dairy, peanut, wheat/soy, egg, and tree nuts |
+| Empty | `qa-empty@blendcalc.local` | No list items, Saved mixes, or Mix state; tutorial complete |
+| Onboarding | `qa-onboarding@blendcalc.local` | Guided tour pending, 10 Fridge foods, `QA Morning Green`, and an active Mix so every tour target exists |
+| Moderator | `qa-moderator@blendcalc.local` | Moderator claim, 6 list items, one Saved mix, and access to two deterministic catalog-review cases |
+| Admin | `qa-admin@blendcalc.local` | Admin claim, 6 list items, one Saved mix, moderation access, and data-health access |
+
+The populated account includes `QA Morning Green` (10 ingredients), `QA Berry Repeat`,
+`QA Export Berry Mix`, and `QA Server Load`. The Saved view can therefore test collapsed
+cards, the more-than-eight ingredient disclosure, search, sorting, export/share actions,
+server loading, and goal summaries immediately after reset.
+
+The moderation queue includes `QA Reviewable Pantry Crisps` with three private local
+evidence images and `QA Missing Evidence Pantry Crisps` without evidence. Existing
+fixed-ID submissions are not recreated by `start` after they have been reviewed; a
+`reset` restores both pending cases.
+
 ## Commands
 
 | Command | Purpose |
 |---|---|
-| `npm run db:test:start` | Start the local stack, apply pending local migrations and reference fixtures, wait for Supabase services, and ensure QA accounts exist. |
+| `npm run db:test:start` | Start the local stack, apply pending local migrations and reference fixtures, wait for Supabase services, and repair missing persona fixtures. |
 | `npm run db:test:reset` | Destroy local data, replay every migration, refresh the local gateway, and reseed reference fixtures and QA accounts after services are ready. |
 | `npm run db:test:verify` | Reset the local database and run all pgTAP database tests. |
 | `npm run db:test:status` | Print local service URLs and status. |
@@ -55,6 +79,10 @@ The local account password and emails are printed by the database command and st
   intentionally exceeds 1,000 enabled rows so server-side category search and selection
   persistence can be tested beyond the former client-list cutoff without copying
   production data.
+- The local catalog contains 21 approved synthetic foods: five packaged-product cases
+  plus sixteen generic foods spanning produce, dairy, seeds, beverages, meat, shellfish,
+  leafy greens, spices, and juice. `Strawberries, Raw` intentionally remains outside
+  the populated account's lists so search always has a deterministic unsaved result.
 - Local catalog products are authored package-label fixtures with normalized nutrients,
   servings, categories, ingredients, allergen declarations, traces, package metadata,
   and field-level provenance. They are available through the same blendCalc app and API
@@ -80,7 +108,8 @@ npm run db:test:reset
 ```
 
 This reset deletes disposable local QA records, replays all migrations, and recreates
-the maintained reference fixtures and QA accounts.
+the maintained reference fixtures, personas, Saved mixes, Mix state, preferences,
+tutorial state, Storage evidence, and moderation queue.
 
 Resetting recreates Auth users with new IDs. A browser session created before the reset
 is therefore invalid. Test mode validates the current Auth record and sends that stale

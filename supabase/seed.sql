@@ -700,6 +700,121 @@ values
 		}'::jsonb
 	);
 
+with qa_generic_foods (
+	fixture_number,
+	barcode,
+	fdc_id,
+	product_name,
+	category_option_id,
+	category_label,
+	calories,
+	total_fat,
+	total_carbohydrates,
+	protein,
+	dietary_fiber,
+	total_sugars,
+	sodium,
+	serving_grams,
+	serving_amount,
+	serving_unit,
+	serving_label,
+	ingredients,
+	ingredient_list,
+	allergens,
+	dietary_tags
+) as (
+	values
+		(1, '09000000000018', 9200001, 'Spinach, Raw', 'qa-vegetables', 'Vegetables and Vegetable Products', 23::numeric, 0.39::numeric, 3.63::numeric, 2.86::numeric, 2.2::numeric, 0.42::numeric, 79::numeric, 30::numeric, 1::numeric, 'cup', '1 cup (30 g)', 'Spinach.', '["Spinach"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
+		(2, '09000000000025', 9200002, 'Banana, Raw', 'qa-fruit', 'Fruits and Fruit Juices', 89, 0.33, 22.84, 1.09, 2.6, 12.23, 1, 118, 1, null::text, '1 medium banana (118 g)', 'Banana.', '["Banana"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
+		(3, '09000000000032', 9200003, 'Greek Yogurt, Plain', 'qa-yogurts', 'Yogurts', 59, 0.39, 3.6, 10.19, 0, 3.24, 36, 170, 0.75, 'cup', '3/4 cup (170 g)', 'Cultured milk.', '["Cultured milk"]'::jsonb, '["milk"]'::jsonb, '["vegetarian"]'::jsonb),
+		(4, '09000000000049', 9200004, 'Chia Seeds, Dried', 'qa-nuts', 'Nut and Seed Products', 486, 30.74, 42.12, 16.54, 34.4, 0, 16, 28, 2, 'tbsp', '2 tbsp (28 g)', 'Chia seeds.', '["Chia seeds"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
+		(5, '09000000000056', 9200005, 'Blueberries, Raw', 'qa-fruit', 'Fruits and Fruit Juices', 57, 0.33, 14.49, 0.74, 2.4, 9.96, 1, 148, 1, 'cup', '1 cup (148 g)', 'Blueberries.', '["Blueberries"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
+		(6, '09000000000063', 9200006, 'Almond Milk, Unsweetened', 'qa-beverages', 'Beverages', 15, 1.1, 0.3, 0.4, 0.2, 0, 63, 240, 1, 'cup', '1 cup (240 g)', 'Water, almonds, sea salt.', '["Water","Almonds","Sea salt"]'::jsonb, '["tree-nut"]'::jsonb, '["vegan","vegetarian"]'::jsonb),
+		(7, '09000000000070', 9200007, 'Flax Seeds, Dried', 'qa-nuts', 'Nut and Seed Products', 534, 42.16, 28.88, 18.29, 27.3, 1.55, 30, 10, 1, 'tbsp', '1 tbsp (10 g)', 'Flax seeds.', '["Flax seeds"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
+		(8, '09000000000087', 9200008, 'Mango, Raw', 'qa-fruit', 'Fruits and Fruit Juices', 60, 0.38, 14.98, 0.82, 1.6, 13.66, 1, 165, 1, 'cup', '1 cup (165 g)', 'Mango.', '["Mango"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
+		(9, '09000000000094', 9200009, 'Pineapple, Raw', 'qa-fruit', 'Fruits and Fruit Juices', 50, 0.12, 13.12, 0.54, 1.4, 9.85, 1, 165, 1, 'cup', '1 cup (165 g)', 'Pineapple.', '["Pineapple"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
+		(10, '09000000000100', 9200010, 'Ginger Root, Raw', 'qa-spices', 'Spices and Herbs', 80, 0.75, 17.77, 1.82, 2, 1.7, 13, 5, 1, 'tsp', '1 tsp (5 g)', 'Ginger root.', '["Ginger root"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
+		(11, '09000000000117', 9200011, 'Strawberries, Raw', 'qa-fruit', 'Fruits and Fruit Juices', 32, 0.3, 7.68, 0.67, 2, 4.89, 1, 152, 1, 'cup', '1 cup (152 g)', 'Strawberries.', '["Strawberries"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
+		(12, '09000000000124', 9200012, 'Ground Beef, 85% Lean, Cooked', 'qa-beef', 'Beef Products', 250, 15, 0, 26, 0, 0, 72, 113, 4, 'oz', '4 oz (113 g)', 'Beef.', '["Beef"]'::jsonb, '[]'::jsonb, '[]'::jsonb),
+		(13, '09000000000131', 9200013, 'Shrimp, Cooked', 'qa-seafood', 'Finfish and Shellfish Products', 99, 0.3, 0.2, 24, 0, 0, 111, 85, 3, 'oz', '3 oz (85 g)', 'Shrimp.', '["Shrimp"]'::jsonb, '["shellfish"]'::jsonb, '[]'::jsonb),
+		(14, '09000000000148', 9200014, 'Egg, Whole, Cooked', 'qa-dairy', 'Dairy and Egg Products', 155, 10.6, 1.12, 12.6, 0, 1.12, 124, 50, 1, null::text, '1 large egg (50 g)', 'Egg.', '["Egg"]'::jsonb, '["egg"]'::jsonb, '["vegetarian"]'::jsonb),
+		(15, '09000000000155', 9200015, 'Tomato, Roma, Raw', 'qa-vegetables', 'Vegetables and Vegetable Products', 18, 0.2, 3.9, 0.9, 1.2, 2.6, 5, 62, 1, null::text, '1 medium tomato (62 g)', 'Roma tomato.', '["Roma tomato"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
+		(16, '09000000000162', 9200016, 'Lemon Juice, Raw', 'qa-fruit', 'Fruits and Fruit Juices', 22, 0.24, 6.9, 0.35, 0.3, 2.52, 1, 15, 1, 'tbsp', '1 tbsp (15 g)', 'Lemon juice.', '["Lemon juice"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb)
+)
+insert into private.qa_catalog_product_fixtures (
+	product_id,
+	revision_id,
+	observation_id,
+	barcode,
+	product_name,
+	brand_owner,
+	category_option_id,
+	source_reference,
+	food
+)
+select
+	('82000000-0000-4000-8000-' || lpad((fixture_number * 10 + 1)::text, 12, '0'))::uuid,
+	('82000000-0000-4000-8000-' || lpad((fixture_number * 10 + 2)::text, 12, '0'))::uuid,
+	('82000000-0000-4000-8000-' || lpad((fixture_number * 10 + 3)::text, 12, '0'))::uuid,
+	barcode,
+	product_name,
+	'blendCalc QA Foods',
+	category_option_id,
+	'local-qa-generic:' || barcode,
+	jsonb_build_object(
+		'fdcId', fdc_id,
+		'description', product_name,
+		'nameProvenance', 'source',
+		'brandOwner', 'blendCalc QA Foods',
+		'foodNutrients', jsonb_build_array(
+			jsonb_build_object('nutrientId', 1008, 'nutrientName', 'Energy', 'nutrientNumber', '208', 'unitName', 'KCAL', 'value', calories, 'valueOrigin', 'reported', 'valueStatus', case when calories = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical'),
+			jsonb_build_object('nutrientId', 1004, 'nutrientName', 'Total lipid (fat)', 'nutrientNumber', '204', 'unitName', 'G', 'value', total_fat, 'valueOrigin', 'reported', 'valueStatus', case when total_fat = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical'),
+			jsonb_build_object('nutrientId', 1005, 'nutrientName', 'Carbohydrate, by difference', 'nutrientNumber', '205', 'unitName', 'G', 'value', total_carbohydrates, 'valueOrigin', 'reported', 'valueStatus', case when total_carbohydrates = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical'),
+			jsonb_build_object('nutrientId', 1003, 'nutrientName', 'Protein', 'nutrientNumber', '203', 'unitName', 'G', 'value', protein, 'valueOrigin', 'reported', 'valueStatus', case when protein = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical'),
+			jsonb_build_object('nutrientId', 1079, 'nutrientName', 'Fiber, total dietary', 'nutrientNumber', '291', 'unitName', 'G', 'value', dietary_fiber, 'valueOrigin', 'reported', 'valueStatus', case when dietary_fiber = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical'),
+			jsonb_build_object('nutrientId', 2000, 'nutrientName', 'Sugars, total including NLEA', 'nutrientNumber', '269', 'unitName', 'G', 'value', total_sugars, 'valueOrigin', 'reported', 'valueStatus', case when total_sugars = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical'),
+			jsonb_build_object('nutrientId', 1093, 'nutrientName', 'Sodium, Na', 'nutrientNumber', '307', 'unitName', 'MG', 'value', sodium, 'valueOrigin', 'reported', 'valueStatus', case when sodium = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical')
+		),
+		'reportedNutrientIds', jsonb_build_array(1008, 1004, 1005, 1003, 1079, 2000, 1093),
+		'dataType', 'Foundation',
+		'foodIdentityType', 'generic',
+		'foodCategory', category_label,
+		'servingSize', serving_grams,
+		'servingSizeUnit', 'g',
+		'householdServingFullText', serving_label,
+		'hasSourceServing', true,
+		'foodServings', jsonb_build_array(jsonb_build_object(
+			'label', serving_label,
+			'gramWeight', serving_grams,
+			'amount', case when serving_unit is null then null else serving_amount end,
+			'unitKey', serving_unit,
+			'isPrimary', true,
+			'measureType', 'Source serving',
+			'isHouseholdMeasure', true,
+			'sourceMeasureKey', 'qa-source-serving',
+			'origin', 'source-household-measure',
+			'gramWeightMethod', 'source-reported'
+		)),
+		'gtinUpc', barcode,
+		'barcode', barcode,
+		'ingredients', ingredients,
+		'ingredientList', ingredient_list,
+		'allergens', allergens,
+		'traces', jsonb_build_array(),
+		'dietaryTags', dietary_tags,
+		'labels', jsonb_build_array('Local QA fixture'),
+		'sourceMetadata', jsonb_build_object('language', 'en', 'marketCountries', jsonb_build_array('United States'), 'revision', 1, 'schemaVersion', 1, 'completeness', 1),
+		'categories', jsonb_build_array(category_label),
+		'categoryOptionId', category_option_id,
+		'barcodeSource', 'community',
+		'sourceKey', 'shared-catalog',
+		'sourceLabel', 'blendCalc Community',
+		'sourceDataType', 'local-qa-generic',
+		'trustStatus', 'moderator-reviewed',
+		'sharedProductConfidence', 'moderator-reviewed'
+	)
+from qa_generic_foods;
+
 delete from public.food_nutrients
 where shared_product_id in (select product_id from private.qa_catalog_product_fixtures);
 delete from public.food_servings

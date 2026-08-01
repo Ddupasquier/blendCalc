@@ -37,6 +37,16 @@ describe("local QA reference seed", () => {
 		expect(seed).toContain("public.food_servings");
 	});
 
+	it("provides broad generic-food fixtures for cross-view QA", () => {
+		expect(seed).toContain("qa_generic_foods");
+		expect(seed).toContain("'09000000000018'");
+		expect(seed).toContain("'Spinach, Raw'");
+		expect(seed).toContain("'Ground Beef, 85% Lean, Cooked'");
+		expect(seed).toContain("'Shrimp, Cooked'");
+		expect(seed).toContain("'Egg, Whole, Cooked'");
+		expect(seed).toContain("'Lemon Juice, Raw'");
+	});
+
 	it("restores canonical validation rules after destructive QA", () => {
 		expect(seed).toContain("update public.nutrient_relationship_rules");
 		expect(seed).toContain("where source = 'nutrient_definitions'");
