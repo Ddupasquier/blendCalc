@@ -758,6 +758,50 @@ describe("CustomIngredientForm", () => {
 		expect(categoryTrigger).toHaveTextContent("Other");
 	});
 
+	it("blocks a stale selected category when the category catalog is unavailable", async () => {
+		categoryPickerMocks.loadFoodCategoryPickerData.mockResolvedValue({
+			suggestions: [],
+			common: [],
+			results: [],
+		});
+		const initialFood = createCustomFood({
+			name: "QA Missing Reference Data",
+			servingWeightGrams: 100,
+			nutrients: makeTestNutrients({
+				calories: 100,
+				fat: 1,
+				carbs: 20,
+				fiber: 0,
+				sugar: 0,
+				protein: 2,
+				sodium: 10,
+			}),
+			categories: ["Jams"],
+			categoryOptionId: "jams",
+			customFood: true,
+		});
+
+		render(CustomIngredientForm, {
+			props: { initialFood, onCreate: vi.fn() },
+		});
+
+		await openManualForm();
+		await waitFor(() =>
+			expect(categoryPickerMocks.loadFoodCategoryPickerData).toHaveBeenCalled(),
+		);
+		await continueToNextStep();
+
+		expect(
+			screen.getByText(
+				"Food categories are unavailable. Try again after categories finish syncing.",
+			),
+		).toBeInTheDocument();
+		expect(screen.getByRole("tab", { name: "Identity" })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
+	});
+
 	it("can add a saved custom ingredient directly to the shopping list", async () => {
 		const onCreate = vi.fn();
 		render(CustomIngredientForm, {

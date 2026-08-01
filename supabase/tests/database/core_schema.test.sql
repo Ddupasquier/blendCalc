@@ -1,6 +1,6 @@
 begin;
 
-select plan(40);
+select plan(41);
 
 select has_table('public', 'profiles', 'profiles table exists');
 select has_table('public', 'user_food_list_items', 'food-list table exists');
@@ -21,6 +21,36 @@ select ok(
 		where enabled
 	),
 	'local QA validation rules are enabled'
+);
+select ok(
+	(select count(*) from public.nutrient_manual_entry_fields where enabled) >= 68
+		and exists (
+			select 1
+			from public.nutrient_manual_entry_groups
+			where id = 'amino-acids'
+				and entry_step = 'extended'
+				and enabled
+		)
+		and not exists (
+			select expected.group_id
+			from (
+				values
+					('advanced-carbohydrate-details', 8),
+					('advanced-fat-details', 3),
+					('carotenoids', 2),
+					('minerals', 12),
+					('amino-acids', 19),
+					('other-nutrients', 1)
+			) as expected(group_id, minimum_fields)
+			where (
+				select count(*)
+				from public.nutrient_manual_entry_fields fields
+				where fields.group_id = expected.group_id
+					and fields.enabled
+					and fields.classification_status = 'approved'
+			) < expected.minimum_fields
+		),
+	'local QA manual entry includes the reviewed Extended nutrient catalog'
 );
 select ok(
 	exists (

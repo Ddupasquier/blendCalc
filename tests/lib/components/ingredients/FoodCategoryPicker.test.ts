@@ -100,6 +100,8 @@ describe("FoodCategoryPicker", () => {
 	});
 
 	it("closes with Escape, restores trigger focus, and uses the shared warning", async () => {
+		const escapedPickerKeydown = vi.fn();
+		window.addEventListener("keydown", escapedPickerKeydown);
 		render(FoodCategoryPicker, {
 			props: {
 				selectedId: "",
@@ -119,10 +121,13 @@ describe("FoodCategoryPicker", () => {
 		);
 
 		await fireEvent.click(trigger);
-		expect(screen.getByLabelText("Search categories")).toHaveFocus();
-		await fireEvent.keyDown(window, { key: "Escape" });
+		const searchInput = screen.getByLabelText("Search categories");
+		expect(searchInput).toHaveFocus();
+		await fireEvent.keyDown(searchInput, { key: "Escape" });
 
 		expect(trigger).toHaveFocus();
 		expect(trigger).toHaveAttribute("aria-expanded", "false");
+		expect(escapedPickerKeydown).not.toHaveBeenCalled();
+		window.removeEventListener("keydown", escapedPickerKeydown);
 	});
 });

@@ -299,6 +299,10 @@ Notes:
 - Groups/fields render from enabled, approved DB rows only. Macros contains common
   nutrition-label fields; specialized carbohydrates, fats, carotenoids, vitamins,
   minerals, amino acids, and other composition data remain in Extended.
+- The reviewed baseline Extended catalog is installed independently of provider
+  observations so valid fields do not disappear when an optional source is unavailable.
+  Source observations add evidence counts and review candidates; they do not decide
+  whether an approved field exists in the UI.
 - Required status should render from `nutrient_manual_entry_required_nutrients` via
   `nutrient_manual_entry_fields.required_for_manual_entry`; do not maintain a separate
   UI-only required nutrient list.
