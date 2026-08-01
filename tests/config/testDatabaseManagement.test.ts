@@ -69,8 +69,17 @@ describe("local test database management", () => {
 		expect(script).toContain(
 			'userClient.from("user_tutorial_preferences").upsert',
 		);
-		expect(script).toContain("seedTestTutorialPreference");
+		expect(script).toContain("seedTestAccountState");
 		expect(script).toContain("do_not_show_again: true");
 		expect(script).toContain("completed_at: tutorialCompletedAt");
+	});
+
+	it("seeds useful fridge and shopping fixtures for every QA account", () => {
+		expect(script).toContain("testFoodListFixtures");
+		expect(script).toContain("loadTestFoodListFixtures");
+		expect(script).toContain("seedTestFoodLists");
+		expect(script).toContain('userClient.rpc("place_user_food_list_items"');
+		expect(script).toContain('{ barcode: "00021130493609", listType: "fridge" }');
+		expect(script).toContain('{ barcode: "00869759000149", listType: "shopping" }');
 	});
 });

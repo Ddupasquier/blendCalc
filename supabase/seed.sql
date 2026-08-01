@@ -309,6 +309,693 @@ on conflict (id) do update set
 	last_seen_at = excluded.last_seen_at,
 	symbol_key = excluded.symbol_key;
 
+with scale_categories(id, label, normalized_value, symbol_key) as (
+	select
+		'qa-scale-category-' || lpad(category_number::text, 4, '0'),
+		'QA Scale Category ' || lpad(category_number::text, 4, '0'),
+		'qa scale category ' || lpad(category_number::text, 4, '0'),
+		'packaged'
+	from generate_series(1, 1005) as category_number
+	union all
+	select
+		'qa-yogurts',
+		'Yogurts',
+		'yogurts',
+		'dairy'
+)
+insert into public.custom_food_category_options (
+	id,
+	label,
+	normalized_value,
+	sources,
+	source_count,
+	observation_count,
+	verification_status,
+	enabled,
+	first_seen_at,
+	last_seen_at,
+	symbol_key
+)
+select
+	id,
+	label,
+	normalized_value,
+	array['local-qa-scale-fixture'],
+	1,
+	1,
+	'single_source',
+	true,
+	'2026-08-01T00:00:00Z',
+	'2026-08-01T00:00:00Z',
+	symbol_key
+from scale_categories
+on conflict (id) do update set
+	label = excluded.label,
+	normalized_value = excluded.normalized_value,
+	sources = excluded.sources,
+	source_count = excluded.source_count,
+	observation_count = excluded.observation_count,
+	verification_status = excluded.verification_status,
+	enabled = excluded.enabled,
+	first_seen_at = excluded.first_seen_at,
+	last_seen_at = excluded.last_seen_at,
+	symbol_key = excluded.symbol_key;
+
+insert into public.product_data_sources (
+	key,
+	display_name,
+	source_type,
+	homepage_url,
+	terms_url,
+	attribution_text,
+	enabled,
+	canonical_storage_allowed,
+	canonical_license_name,
+	canonical_policy_notes,
+	canonical_policy_reviewed_at,
+	api_redistribution_allowed,
+	provenance
+)
+values
+	(
+		'user-label',
+		'Local QA label fixture',
+		'internal_catalog',
+		'https://blendcalc.local/qa-fixtures',
+		'https://blendcalc.local/qa-fixtures',
+		'Synthetic package-label data maintained only in the isolated blendCalc QA database.',
+		true,
+		true,
+		'Local QA fixture',
+		'Authored deterministic data for local testing; never imported into production.',
+		'2026-08-01T00:00:00Z',
+		true,
+		'{"environment":"local-test","fixtureVersion":1}'::jsonb
+	),
+	(
+		'shared-catalog',
+		'blendCalc Community',
+		'internal_catalog',
+		'https://blendcalc.local/qa-fixtures',
+		'https://blendcalc.local/qa-fixtures',
+		'Food data created and approved through the blendCalc community catalog.',
+		true,
+		true,
+		'blendCalc catalog data',
+		'Local QA catalog records are authored fixtures and remain isolated from production.',
+		'2026-08-01T00:00:00Z',
+		true,
+		'{"environment":"local-test","fixtureVersion":1}'::jsonb
+	)
+on conflict (key) do update set
+	display_name = excluded.display_name,
+	source_type = excluded.source_type,
+	homepage_url = excluded.homepage_url,
+	terms_url = excluded.terms_url,
+	attribution_text = excluded.attribution_text,
+	enabled = excluded.enabled,
+	canonical_storage_allowed = excluded.canonical_storage_allowed,
+	canonical_license_name = excluded.canonical_license_name,
+	canonical_policy_notes = excluded.canonical_policy_notes,
+	canonical_policy_reviewed_at = excluded.canonical_policy_reviewed_at,
+	api_redistribution_allowed = excluded.api_redistribution_allowed,
+	provenance = public.product_data_sources.provenance || excluded.provenance;
+
+do $catalog_fixtures$
+begin
+drop table if exists private.qa_catalog_product_fixtures;
+create table private.qa_catalog_product_fixtures (
+	product_id uuid primary key,
+	revision_id uuid not null unique,
+	observation_id uuid not null unique,
+	barcode text not null unique,
+	product_name text not null,
+	brand_owner text not null,
+	category_option_id text not null,
+	source_reference text not null,
+	food jsonb not null
+);
+
+insert into private.qa_catalog_product_fixtures (
+	product_id,
+	revision_id,
+	observation_id,
+	barcode,
+	product_name,
+	brand_owner,
+	category_option_id,
+	source_reference,
+	food
+)
+values
+	(
+		'81000000-0000-4000-8000-000000000001',
+		'81000000-0000-4000-8000-000000000002',
+		'81000000-0000-4000-8000-000000000003',
+		'00021130462506',
+		'Strawberry Jelly, Strawberry',
+		'QA Pantry',
+		'qa-preserves',
+		'local-qa-label:00021130462506',
+		'{
+			"fdcId": 9100001,
+			"description": "Strawberry Jelly, Strawberry",
+			"nameProvenance": "source",
+			"brandOwner": "QA Pantry",
+			"foodNutrients": [
+				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":250,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1004,"nutrientName":"Total lipid (fat)","nutrientNumber":"204","unitName":"G","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical"},
+				{"nutrientId":1005,"nutrientName":"Carbohydrate, by difference","nutrientNumber":"205","unitName":"G","value":65,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1003,"nutrientName":"Protein","nutrientNumber":"203","unitName":"G","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical"},
+				{"nutrientId":1079,"nutrientName":"Fiber, total dietary","nutrientNumber":"291","unitName":"G","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical"},
+				{"nutrientId":2000,"nutrientName":"Sugars, total including NLEA","nutrientNumber":"269","unitName":"G","value":60,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1093,"nutrientName":"Sodium, Na","nutrientNumber":"307","unitName":"MG","value":10,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"}
+			],
+			"reportedNutrientIds": [1008,1004,1005,1003,1079,2000,1093],
+			"dataType": "Branded",
+			"foodIdentityType": "packaged",
+			"servingSize": 20,
+			"servingSizeUnit": "g",
+			"householdServingFullText": "1 tbsp (20 g)",
+			"hasSourceServing": true,
+			"foodServings": [{"label":"1 tbsp (20 g)","gramWeight":20,"amount":1,"unitKey":"tbsp","isPrimary":true,"measureType":"Package serving","isHouseholdMeasure":true,"sourceMeasureKey":"label-serving","origin":"package-label","gramWeightMethod":"source-reported"}],
+			"gtinUpc": "00021130462506",
+			"barcode": "00021130462506",
+			"ingredients": "Strawberries, sugar, fruit pectin, citric acid.",
+			"ingredientList": ["Strawberries","Sugar","Fruit pectin","Citric acid"],
+			"allergens": [],
+			"traces": [],
+			"dietaryTags": ["vegan","vegetarian"],
+			"labels": ["Local QA fixture"],
+			"packageQuantity": {"label":"18 oz","amount":18,"unit":"oz"},
+			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"completeness":1},
+			"categories": ["Jams and Preserves"],
+			"categoryOptionId": "qa-preserves",
+			"barcodeSource": "community",
+			"sourceKey": "shared-catalog",
+			"sourceLabel": "blendCalc Community",
+			"sourceDataType": "local-qa-label",
+			"trustStatus": "moderator-reviewed",
+			"sharedProductConfidence": "moderator-reviewed"
+		}'::jsonb
+	),
+	(
+		'81000000-0000-4000-8000-000000000011',
+		'81000000-0000-4000-8000-000000000012',
+		'81000000-0000-4000-8000-000000000013',
+		'00021130493609',
+		'Roasted Onion & Garlic Pasta Sauce',
+		'QA Pantry',
+		'qa-dips',
+		'local-qa-label:00021130493609',
+		'{
+			"fdcId": 9100002,
+			"description": "Roasted Onion & Garlic Pasta Sauce",
+			"nameProvenance": "source",
+			"brandOwner": "QA Pantry",
+			"foodNutrients": [
+				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":48,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1004,"nutrientName":"Total lipid (fat)","nutrientNumber":"204","unitName":"G","value":1.2,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1005,"nutrientName":"Carbohydrate, by difference","nutrientNumber":"205","unitName":"G","value":8.8,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1003,"nutrientName":"Protein","nutrientNumber":"203","unitName":"G","value":1.6,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1079,"nutrientName":"Fiber, total dietary","nutrientNumber":"291","unitName":"G","value":1.6,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":2000,"nutrientName":"Sugars, total including NLEA","nutrientNumber":"269","unitName":"G","value":4.8,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1093,"nutrientName":"Sodium, Na","nutrientNumber":"307","unitName":"MG","value":440,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"}
+			],
+			"reportedNutrientIds": [1008,1004,1005,1003,1079,2000,1093],
+			"dataType": "Branded",
+			"foodIdentityType": "packaged",
+			"servingSize": 125,
+			"servingSizeUnit": "g",
+			"householdServingFullText": "1/2 cup (125 g)",
+			"hasSourceServing": true,
+			"foodServings": [{"label":"1/2 cup (125 g)","gramWeight":125,"amount":0.5,"unitKey":"cup","isPrimary":true,"measureType":"Package serving","isHouseholdMeasure":true,"sourceMeasureKey":"label-serving","origin":"package-label","gramWeightMethod":"source-reported"}],
+			"gtinUpc": "00021130493609",
+			"barcode": "00021130493609",
+			"ingredients": "Diced tomatoes, tomato puree, olive oil, roasted onions, roasted garlic, salt, sugar, spices.",
+			"ingredientList": ["Diced tomatoes","Tomato puree","Olive oil","Roasted onions","Roasted garlic","Salt","Sugar","Spices"],
+			"allergens": [],
+			"traces": [],
+			"dietaryTags": ["vegan","vegetarian"],
+			"labels": ["Local QA fixture"],
+			"packageQuantity": {"label":"24 oz","amount":24,"unit":"oz"},
+			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"completeness":1},
+			"categories": ["Dips and Salsa"],
+			"categoryOptionId": "qa-dips",
+			"barcodeSource": "community",
+			"sourceKey": "shared-catalog",
+			"sourceLabel": "blendCalc Community",
+			"sourceDataType": "local-qa-label",
+			"trustStatus": "moderator-reviewed",
+			"sharedProductConfidence": "moderator-reviewed"
+		}'::jsonb
+	),
+	(
+		'81000000-0000-4000-8000-000000000021',
+		'81000000-0000-4000-8000-000000000022',
+		'81000000-0000-4000-8000-000000000023',
+		'08801005523455',
+		'Gochu Jang Hot & Sweet Chili Sauce',
+		'QA Pantry',
+		'qa-dips',
+		'local-qa-label:08801005523455',
+		'{
+			"fdcId": 9100003,
+			"description": "Gochu Jang Hot & Sweet Chili Sauce",
+			"nameProvenance": "source",
+			"brandOwner": "QA Pantry",
+			"foodNutrients": [
+				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":100,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1004,"nutrientName":"Total lipid (fat)","nutrientNumber":"204","unitName":"G","value":1.67,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1005,"nutrientName":"Carbohydrate, by difference","nutrientNumber":"205","unitName":"G","value":44.44,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1003,"nutrientName":"Protein","nutrientNumber":"203","unitName":"G","value":3.33,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1079,"nutrientName":"Fiber, total dietary","nutrientNumber":"291","unitName":"G","value":5.56,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":2000,"nutrientName":"Sugars, total including NLEA","nutrientNumber":"269","unitName":"G","value":27.78,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1093,"nutrientName":"Sodium, Na","nutrientNumber":"307","unitName":"MG","value":2167,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"}
+			],
+			"reportedNutrientIds": [1008,1004,1005,1003,1079,2000,1093],
+			"dataType": "Branded",
+			"foodIdentityType": "packaged",
+			"servingSize": 30,
+			"servingSizeUnit": "g",
+			"householdServingFullText": "2 tbsp (30 g)",
+			"hasSourceServing": true,
+			"foodServings": [{"label":"2 tbsp (30 g)","gramWeight":30,"amount":2,"unitKey":"tbsp","isPrimary":true,"measureType":"Package serving","isHouseholdMeasure":true,"sourceMeasureKey":"label-serving","origin":"package-label","gramWeightMethod":"source-reported"}],
+			"gtinUpc": "08801005523455",
+			"barcode": "08801005523455",
+			"ingredients": "Red pepper paste (wheat flour, red pepper powder), corn syrup, fermented soybean paste, salt.",
+			"ingredientList": ["Red pepper paste","Wheat flour","Red pepper powder","Corn syrup","Fermented soybean paste","Salt"],
+			"allergens": ["wheat","soy"],
+			"traces": ["peanuts"],
+			"dietaryTags": ["vegetarian"],
+			"labels": ["Local QA fixture"],
+			"packageQuantity": {"label":"500 g","amount":500,"unit":"g"},
+			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"completeness":1},
+			"categories": ["Dips and Salsa"],
+			"categoryOptionId": "qa-dips",
+			"barcodeSource": "community",
+			"sourceKey": "shared-catalog",
+			"sourceLabel": "blendCalc Community",
+			"sourceDataType": "local-qa-label",
+			"trustStatus": "moderator-reviewed",
+			"sharedProductConfidence": "moderator-reviewed"
+		}'::jsonb
+	),
+	(
+		'81000000-0000-4000-8000-000000000031',
+		'81000000-0000-4000-8000-000000000032',
+		'81000000-0000-4000-8000-000000000033',
+		'00869759000149',
+		'Peanut Butter',
+		'QA Pantry',
+		'qa-nut-seed-butters',
+		'local-qa-label:00869759000149',
+		'{
+			"fdcId": 9100004,
+			"description": "Peanut Butter",
+			"nameProvenance": "source",
+			"brandOwner": "QA Pantry",
+			"foodNutrients": [
+				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":588,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1004,"nutrientName":"Total lipid (fat)","nutrientNumber":"204","unitName":"G","value":50,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1005,"nutrientName":"Carbohydrate, by difference","nutrientNumber":"205","unitName":"G","value":20,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1003,"nutrientName":"Protein","nutrientNumber":"203","unitName":"G","value":25,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1079,"nutrientName":"Fiber, total dietary","nutrientNumber":"291","unitName":"G","value":6,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":2000,"nutrientName":"Sugars, total including NLEA","nutrientNumber":"269","unitName":"G","value":9,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1093,"nutrientName":"Sodium, Na","nutrientNumber":"307","unitName":"MG","value":400,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"}
+			],
+			"reportedNutrientIds": [1008,1004,1005,1003,1079,2000,1093],
+			"dataType": "Branded",
+			"foodIdentityType": "packaged",
+			"servingSize": 32,
+			"servingSizeUnit": "g",
+			"householdServingFullText": "2 tbsp (32 g)",
+			"hasSourceServing": true,
+			"foodServings": [{"label":"2 tbsp (32 g)","gramWeight":32,"amount":2,"unitKey":"tbsp","isPrimary":true,"measureType":"Package serving","isHouseholdMeasure":true,"sourceMeasureKey":"label-serving","origin":"package-label","gramWeightMethod":"source-reported"}],
+			"gtinUpc": "00869759000149",
+			"barcode": "00869759000149",
+			"ingredients": "Peanuts, salt.",
+			"ingredientList": ["Peanuts","Salt"],
+			"allergens": ["peanuts"],
+			"traces": [],
+			"dietaryTags": ["vegan","vegetarian"],
+			"labels": ["Local QA fixture"],
+			"packageQuantity": {"label":"16 oz","amount":16,"unit":"oz"},
+			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"completeness":1},
+			"categories": ["Nut & Seed Butters"],
+			"categoryOptionId": "qa-nut-seed-butters",
+			"barcodeSource": "community",
+			"sourceKey": "shared-catalog",
+			"sourceLabel": "blendCalc Community",
+			"sourceDataType": "local-qa-label",
+			"trustStatus": "moderator-reviewed",
+			"sharedProductConfidence": "moderator-reviewed"
+		}'::jsonb
+	),
+	(
+		'81000000-0000-4000-8000-000000000041',
+		'81000000-0000-4000-8000-000000000042',
+		'81000000-0000-4000-8000-000000000043',
+		'00011110904416',
+		'Blue Agave Light Golden Syrup',
+		'QA Pantry',
+		'qa-sweets',
+		'local-qa-label:00011110904416',
+		'{
+			"fdcId": 9100005,
+			"description": "Blue Agave Light Golden Syrup",
+			"nameProvenance": "source",
+			"brandOwner": "QA Pantry",
+			"foodNutrients": [
+				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":310,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1004,"nutrientName":"Total lipid (fat)","nutrientNumber":"204","unitName":"G","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical"},
+				{"nutrientId":1005,"nutrientName":"Carbohydrate, by difference","nutrientNumber":"205","unitName":"G","value":76,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1003,"nutrientName":"Protein","nutrientNumber":"203","unitName":"G","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical"},
+				{"nutrientId":2000,"nutrientName":"Sugars, total including NLEA","nutrientNumber":"269","unitName":"G","value":76,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1093,"nutrientName":"Sodium, Na","nutrientNumber":"307","unitName":"MG","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical"}
+			],
+			"reportedNutrientIds": [1008,1004,1005,1003,2000,1093],
+			"dataType": "Branded",
+			"foodIdentityType": "packaged",
+			"hasSourceServing": false,
+			"foodServings": [],
+			"gtinUpc": "00011110904416",
+			"barcode": "00011110904416",
+			"ingredients": "Organic blue agave syrup.",
+			"ingredientList": ["Organic blue agave syrup"],
+			"allergens": [],
+			"traces": [],
+			"dietaryTags": ["vegan","vegetarian"],
+			"labels": ["Local QA fixture"],
+			"packageQuantity": {"label":"23.5 oz","amount":23.5,"unit":"oz"},
+			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"completeness":0.85,"qualityWarningTags":["serving-not-reported"]},
+			"categories": ["Sweets"],
+			"categoryOptionId": "qa-sweets",
+			"barcodeSource": "community",
+			"sourceKey": "shared-catalog",
+			"sourceLabel": "blendCalc Community",
+			"sourceDataType": "local-qa-label",
+			"trustStatus": "moderator-reviewed",
+			"sharedProductConfidence": "moderator-reviewed"
+		}'::jsonb
+	);
+
+delete from public.food_nutrients
+where shared_product_id in (select product_id from private.qa_catalog_product_fixtures);
+delete from public.food_servings
+where shared_product_id in (select product_id from private.qa_catalog_product_fixtures);
+delete from public.shared_product_field_provenance
+where shared_product_id in (select product_id from private.qa_catalog_product_fixtures);
+
+-- Local catalog fixtures are authored directly rather than submitted by a QA user.
+-- Disable only the submission-derived category trigger while inserting them; the
+-- fixtures still provide a valid canonical category and all other product triggers run.
+alter table public.shared_products
+	disable trigger set_shared_product_category_from_submission;
+
+insert into public.shared_products (
+	id,
+	barcode,
+	product_name,
+	brand_owner,
+	search_text,
+	category_option_id,
+	food,
+	source,
+	source_reference,
+	confidence,
+	status,
+	last_verified_at,
+	canonical_provenance
+)
+select
+	product_id,
+	barcode,
+	product_name,
+	brand_owner,
+	lower(concat_ws(' ', product_name, brand_owner, barcode)),
+	category_option_id,
+	food,
+	'community-reviewed',
+	source_reference,
+	'moderator-reviewed',
+	'active',
+	'2026-08-01T00:00:00Z',
+	jsonb_build_object(
+		'fixture', true,
+		'source', 'user-label',
+		'sourceReference', source_reference,
+		'verificationMethod', 'label-review'
+	)
+from private.qa_catalog_product_fixtures
+on conflict (barcode) do update set
+	product_name = excluded.product_name,
+	brand_owner = excluded.brand_owner,
+	search_text = excluded.search_text,
+	category_option_id = excluded.category_option_id,
+	food = excluded.food,
+	source = excluded.source,
+	source_reference = excluded.source_reference,
+	confidence = excluded.confidence,
+	status = excluded.status,
+	last_verified_at = excluded.last_verified_at,
+	canonical_provenance = excluded.canonical_provenance;
+
+alter table public.shared_products
+	enable trigger set_shared_product_category_from_submission;
+
+insert into public.shared_product_revisions (
+	id,
+	shared_product_id,
+	revision_number,
+	category_option_id,
+	food,
+	source,
+	source_reference,
+	change_summary,
+	label_observed_at
+)
+select
+	revision_id,
+	product_id,
+	1,
+	category_option_id,
+	food,
+	'community-reviewed',
+	source_reference,
+	'{"version":1,"fixture":true,"changes":[]}'::jsonb,
+	'2026-08-01T00:00:00Z'
+from private.qa_catalog_product_fixtures
+on conflict (id) do update set
+	category_option_id = excluded.category_option_id,
+	food = excluded.food,
+	source = excluded.source,
+	source_reference = excluded.source_reference,
+	change_summary = excluded.change_summary,
+	label_observed_at = excluded.label_observed_at;
+
+insert into public.shared_product_observations (
+	id,
+	barcode,
+	source,
+	source_reference,
+	source_license,
+	raw_payload,
+	normalized_food,
+	content_hash,
+	observed_at
+)
+select
+	observation_id,
+	barcode,
+	'user-label',
+	source_reference,
+	'Local QA fixture',
+	jsonb_build_object('fixture', true, 'fixtureVersion', 1, 'label', food),
+	food,
+	encode(extensions.digest(source_reference || food::text, 'sha256'), 'hex'),
+	'2026-08-01T00:00:00Z'
+from private.qa_catalog_product_fixtures
+on conflict (id) do update set
+	source_reference = excluded.source_reference,
+	source_license = excluded.source_license,
+	raw_payload = excluded.raw_payload,
+	normalized_food = excluded.normalized_food,
+	content_hash = excluded.content_hash,
+	observed_at = excluded.observed_at;
+
+with selected_fields as (
+	select
+		fixture.product_id,
+		fixture.observation_id,
+		field.field_path,
+		field.field_value
+	from private.qa_catalog_product_fixtures fixture
+	join public.custom_food_category_options category
+		on category.id = fixture.category_option_id
+	cross join lateral (
+		values
+			('productName', to_jsonb(fixture.product_name)),
+			('brandOwner', to_jsonb(fixture.brand_owner)),
+			('categories', to_jsonb(array[category.label])),
+			('ingredients', fixture.food -> 'ingredients'),
+			('allergens', fixture.food -> 'allergens'),
+			('traces', fixture.food -> 'traces'),
+			('dietaryTags', fixture.food -> 'dietaryTags'),
+			('labels', fixture.food -> 'labels'),
+			('package', fixture.food -> 'packageQuantity'),
+			('sourceMetadata', fixture.food -> 'sourceMetadata'),
+			('serving', fixture.food -> 'foodServings'),
+			('nutrition', fixture.food -> 'foodNutrients')
+	) field(field_path, field_value)
+	where field.field_value is not null
+), nutrient_fields as (
+	select
+		fixture.product_id,
+		fixture.observation_id,
+		'nutrient:' || (nutrient.value ->> 'nutrientId') as field_path,
+		nutrient.value as field_value
+	from private.qa_catalog_product_fixtures fixture
+	cross join lateral jsonb_array_elements(fixture.food -> 'foodNutrients') nutrient(value)
+)
+insert into public.shared_product_field_provenance (
+	shared_product_id,
+	observation_id,
+	field_path,
+	source_value,
+	normalized_value,
+	selected,
+	confidence,
+	verification_method
+)
+select
+	product_id,
+	observation_id,
+	field_path,
+	field_value,
+	field_value,
+	true,
+	'moderator-reviewed',
+	'label-review'
+from (
+	select * from selected_fields
+	union all
+	select * from nutrient_fields
+) fields
+on conflict (shared_product_id, observation_id, field_path) do update set
+	source_value = excluded.source_value,
+	normalized_value = excluded.normalized_value,
+	selected = excluded.selected,
+	confidence = excluded.confidence,
+	verification_method = excluded.verification_method;
+
+insert into public.food_nutrients (
+	shared_product_id,
+	nutrient_id,
+	amount_per_100g,
+	unit_name,
+	value_origin,
+	source,
+	source_reference,
+	source_observation_id,
+	confidence,
+	value_status,
+	source_nutrient_key,
+	mapping_status,
+	mapping_method,
+	mapping_review_reference
+)
+select
+	fixture.product_id,
+	(nutrient.value ->> 'nutrientId')::bigint,
+	(nutrient.value ->> 'value')::numeric,
+	nutrient.value ->> 'unitName',
+	nutrient.value ->> 'valueOrigin',
+	'user-label',
+	fixture.source_reference,
+	fixture.observation_id,
+	'moderator-reviewed',
+	nutrient.value ->> 'valueStatus',
+	'local-qa:' || (nutrient.value ->> 'nutrientId'),
+	'canonical',
+	'local-qa-label-fixture',
+	'docs/database-testing.md'
+from private.qa_catalog_product_fixtures fixture
+cross join lateral jsonb_array_elements(fixture.food -> 'foodNutrients') nutrient(value)
+on conflict (shared_product_id, nutrient_id) where shared_product_id is not null
+do update set
+	amount_per_100g = excluded.amount_per_100g,
+	unit_name = excluded.unit_name,
+	value_origin = excluded.value_origin,
+	source = excluded.source,
+	source_reference = excluded.source_reference,
+	source_observation_id = excluded.source_observation_id,
+	confidence = excluded.confidence,
+	value_status = excluded.value_status,
+	source_nutrient_key = excluded.source_nutrient_key,
+	mapping_status = excluded.mapping_status,
+	mapping_method = excluded.mapping_method,
+	mapping_review_reference = excluded.mapping_review_reference;
+
+insert into public.food_servings (
+	shared_product_id,
+	serving_order,
+	label,
+	gram_weight,
+	amount,
+	unit_key,
+	is_primary,
+	measure_type,
+	is_household_measure,
+	source_measure_key,
+	origin,
+	gram_weight_method,
+	source,
+	source_reference,
+	source_observation_id,
+	confidence
+)
+select
+	fixture.product_id,
+	serving.position::smallint,
+	serving.value ->> 'label',
+	(serving.value ->> 'gramWeight')::numeric,
+	(serving.value ->> 'amount')::numeric,
+	serving.value ->> 'unitKey',
+	(serving.value ->> 'isPrimary')::boolean,
+	serving.value ->> 'measureType',
+	(serving.value ->> 'isHouseholdMeasure')::boolean,
+	serving.value ->> 'sourceMeasureKey',
+	serving.value ->> 'origin',
+	serving.value ->> 'gramWeightMethod',
+	'user-label',
+	fixture.source_reference,
+	fixture.observation_id,
+	'moderator-reviewed'
+from private.qa_catalog_product_fixtures fixture
+cross join lateral jsonb_array_elements(fixture.food -> 'foodServings')
+	with ordinality serving(value, position)
+on conflict (shared_product_id, serving_order) where shared_product_id is not null
+do update set
+	label = excluded.label,
+	gram_weight = excluded.gram_weight,
+	amount = excluded.amount,
+	unit_key = excluded.unit_key,
+	is_primary = excluded.is_primary,
+	measure_type = excluded.measure_type,
+	is_household_measure = excluded.is_household_measure,
+	source_measure_key = excluded.source_measure_key,
+	origin = excluded.origin,
+	gram_weight_method = excluded.gram_weight_method,
+	source = excluded.source,
+	source_reference = excluded.source_reference,
+	source_observation_id = excluded.source_observation_id,
+	confidence = excluded.confidence;
+
+drop table private.qa_catalog_product_fixtures;
+end
+$catalog_fixtures$;
+
 insert into public.food_preference_option_catalog (
 	category,
 	label,

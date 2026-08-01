@@ -1379,6 +1379,11 @@ future remote staging environment must remain a separate project with separate k
 synthetic data; it supplements local testing for hosted/device QA and never becomes the
 default destructive test target.
 
+Routine test-app and internal-API reads must use source-shaped approved catalog fixtures
+from the isolated local database and must not call live food providers. A missing fixture
+returns the normal not-found state. External provider adapters are exercised only by
+dependency-injected unit tests or an explicitly requested live-source audit.
+
 Food-safety confidence tests must begin with legally usable, authored synthetic
 provider-shaped payloads or database observations and exercise each applicable stage:
 source normalization, lossless evidence projection, reviewed policy extraction,
@@ -1422,11 +1427,16 @@ concrete local QA notes before handoff unless it is clearly documentation-only a
 no user verification. QA notes should be created as part of the task, not after the
 fact. Give every QA section a stable `QA-GGG` group ID and every task a stable
 `QA-GGG-TTT` ID. Use the next unused number, never reuse or renumber existing IDs, and
-preserve IDs when archiving tasks. Active priority trackers are the user's manual QA
-queue: keep only checks that require visual judgment, real-device/browser interaction,
+preserve IDs when archiving tasks. Active priority trackers are the remaining observable
+QA queue: keep only checks that require visual judgment, real-device/browser interaction,
 assistive-technology verification, user-controlled deployment configuration, or another
-human decision. Deterministic code, schema, migration, API, data-integrity, RLS, build,
-lint, or test checks belong to the automated development workflow. Run those checks instead of assigning
+human decision. An available in-app browser may satisfy desktop visual and interaction
+checks only when the complete repro and expected outcome are directly observed in the
+required browser and viewport. It does not substitute for an unavailable named browser,
+a physical-device requirement, camera or operating-system permission behavior, or
+assistive-technology behavior that was not actually exercised. Deterministic code,
+schema, migration, API, data-integrity, RLS, build, lint, or test checks belong to the
+automated development workflow. Run those checks instead of assigning
 them to the user, record successful evidence in the completed archive, and keep any
 genuinely unfinished automation-owned work once in the gitignored
 `docs/local-context/action-notes.md`. Never duplicate one action between an active
@@ -1470,12 +1480,16 @@ tracker contains one clear, current expected outcome for each behavior.
 **42.** <a id="rule-qa-clearance"></a>Finished tasks must prompt the user to run the
 relevant QA checks from the active priority trackers linked by local
 `docs/QA/qa-tasks.md`. Keep each QA item active until the user explicitly confirms it
-passed; a checked checkbox counts as that confirmation. The sole exception is an
-explicit user-requested automated QA pass: automated tooling may complete and archive only
-deterministic tasks whose full expected outcome was directly proven by current tests,
-database inspection, scripts, or build/lint output. Automated evidence must be written
-into the archived task, and mixed visual/manual tasks must remain active even when their
-automated portion passes. Whenever QA is updated and
+passed; a checked checkbox counts as that confirmation. During an explicit user-requested
+QA pass, automation may complete and archive deterministic tasks whose full expected
+outcome was directly proven by current tests, database inspection, scripts, or build/lint
+output, and may complete observable browser tasks whose full repro and expected outcome
+were directly exercised in the in-app browser. Record the browser family, viewport,
+route, and observed evidence in the archived task. Mixed tasks remain active when any
+required device, browser, permission, assistive-technology, visual, or manual outcome was
+not actually exercised; emulation never proves a physical-device requirement. Evidence
+for every automated or browser-completed task must be written into the archived task.
+Whenever QA is updated and
 before every handoff, automatically scan all active priority trackers and move confirmed,
 checked items to `docs/QA/completed-qa-tasks.md` without waiting for
 a separate cleanup request. Every QA cleanup or archive pass must also audit the

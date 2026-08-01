@@ -14,7 +14,9 @@ This command starts the Docker-compatible runtime when Colima is installed, star
 local Supabase services, writes local credentials to the gitignored
 `.env.test.local`, applies deterministic runtime reference fixtures, and creates
 regular-user, moderator, and admin QA accounts. Standard QA accounts are seeded with the
-current tutorial completed so onboarding does not block unrelated test passes.
+current tutorial completed so onboarding does not block unrelated test passes. Each
+account also starts with three approved catalog ingredients in Fridge and two in
+Shopping List, including serving, allergen, trace, and missing-serving fixtures.
 The local Auth service also runs the production-shaped blocked-signup and Custom Access
 Token hooks, so regular, moderator, and administrator QA sessions receive the same
 database-owned `app_role` claims that hosted sessions receive.
@@ -48,8 +50,19 @@ The local account password and emails are printed by the database command and st
 - Never copy production users or private records into local seeds. Create synthetic QA
   fixtures instead.
 - `supabase/seed.sql` contains only deterministic local reference fixtures for manual
-  nutrients, serving measures, category selection, and food-preference options. It
-  remains safe to replay.
+  nutrients, serving measures, category selection, food-preference options, and approved
+  catalog products. It remains safe to replay. Its synthetic category catalog
+  intentionally exceeds 1,000 enabled rows so server-side category search and selection
+  persistence can be tested beyond the former client-list cutoff without copying
+  production data.
+- Local catalog products are authored package-label fixtures with normalized nutrients,
+  servings, categories, ingredients, allergen declarations, traces, package metadata,
+  and field-level provenance. They are available through the same blendCalc app and API
+  routes as production catalog products. One fixture intentionally reports no serving.
+- `npm run dev:test` disables runtime USDA and Open Food Facts lookups. A barcode missing
+  from the local catalog returns the normal not-found result instead of silently spending
+  provider or hosted-database quota. Provider adapters remain covered through injected
+  unit tests and separate explicit live-source audits.
 - Local login-capable users are created only after the local Auth and PostgREST APIs are
   available.
 

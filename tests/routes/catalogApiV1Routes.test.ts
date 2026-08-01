@@ -1,10 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+	adminClient: { source: "trusted-server" },
+	getSupabaseAdminClient: vi.fn(),
 	readApiV1Categories: vi.fn(),
 	readApiV1ProductByBarcode: vi.fn(),
 	readApiV1ProductRevisionHistory: vi.fn(),
 	searchApiV1Products: vi.fn(),
+}));
+
+vi.mock("$lib/supabase/admin.server", () => ({
+	getSupabaseAdminClient: mocks.getSupabaseAdminClient,
 }));
 
 vi.mock("$lib/server/api/v1/catalogApi.server", () => ({
@@ -28,6 +34,7 @@ const createLocals = (signedIn = true) => ({
 describe("blendCalc API v1 routes", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mocks.getSupabaseAdminClient.mockReturnValue(mocks.adminClient);
 	});
 
 	it("requires a signed-in account", async () => {
@@ -42,6 +49,7 @@ describe("blendCalc API v1 routes", () => {
 			error: { code: "authentication_required" },
 		});
 		expect(mocks.searchApiV1Products).not.toHaveBeenCalled();
+		expect(mocks.getSupabaseAdminClient).not.toHaveBeenCalled();
 	});
 
 	it("returns an approved product with a stable envelope", async () => {
@@ -64,7 +72,7 @@ describe("blendCalc API v1 routes", () => {
 			data: { id: "product-id", barcode: "00021130493609" },
 		});
 		expect(mocks.readApiV1ProductByBarcode).toHaveBeenCalledWith(
-			locals.supabase,
+			mocks.adminClient,
 			"00021130493609",
 		);
 	});
@@ -124,7 +132,7 @@ describe("blendCalc API v1 routes", () => {
 			meta: { pagination: { total: 2 } },
 		});
 		expect(mocks.readApiV1ProductRevisionHistory).toHaveBeenCalledWith(
-			locals.supabase,
+			mocks.adminClient,
 			"00021130493609",
 			{ limit: 25, offset: 0 },
 		);
@@ -152,6 +160,10 @@ describe("blendCalc API v1 routes", () => {
 			data: [{ id: "product-id" }],
 			meta: { pagination: { nextOffset: 15 } },
 		});
+		expect(mocks.searchApiV1Products).toHaveBeenCalledWith(
+			mocks.adminClient,
+			{ limit: 15, offset: 0, query: "tomato" },
+		);
 	});
 
 	it("lists enabled categories with bounded pagination", async () => {
@@ -175,5 +187,9 @@ describe("blendCalc API v1 routes", () => {
 			data: [{ id: "sauces", name: "Sauces" }],
 			meta: { pagination: { limit: 25 } },
 		});
+		expect(mocks.readApiV1Categories).toHaveBeenCalledWith(
+			mocks.adminClient,
+			{ limit: 25, offset: 0 },
+		);
 	});
 });

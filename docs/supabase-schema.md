@@ -643,7 +643,9 @@ Observations retain the neutral provider key/reference, source licence, observed
 content hash, normalized value, raw source payload, and optional private
 submission/user links. The public API reads only the observation ID, source, reference,
 and observed time from the selected row; raw payloads and private links remain
-service-role only.
+service-role only. Trusted server-side catalog hydration has explicit read access to
+observations so authenticated app routes can return selected provenance without
+granting browsers direct access to the evidence tables.
 
 `shared_product_field_provenance` stores the canonical field path, selected observation,
 source and normalized values, confidence, evidence method, and selected state. Evidence
@@ -1058,6 +1060,8 @@ Notes:
 - UI category dropdowns should sort by `label`.
 - Seeded by `scripts/seeds/seed_custom_food_categories.mjs`.
 - The dropdown renders these app-ready options, not raw source payload strings.
+- Trusted server-side catalog hydration has read access to these labels; authenticated
+  browser access remains governed independently by RLS.
 - `shared_product_submissions`, `shared_products`, and `shared_product_revisions`
   reference this table through `category_option_id`.
 

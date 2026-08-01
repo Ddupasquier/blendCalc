@@ -1,7 +1,9 @@
 /**
  * Purpose: Manage blendCalc's isolated local Supabase test stack, generate its
  * gitignored environment file, seed local-only QA accounts with deterministic
- * onboarding state, and run pgTAP checks.
+ * onboarding and ingredient-list state, and run pgTAP checks. Every QA account
+ * receives three approved catalog products in Fridge and two in Shopping List;
+ * rerunning start adds only missing identities and does not move existing items.
  * Run: `npm run db:test:start`, `npm run db:test:reset`,
  * `npm run db:test:verify`, `npm run db:test:status`, or `npm run db:test:stop`.
  * Reset and verify are destructive only to the localhost database and never use the
@@ -52,6 +54,14 @@ const testAccounts = [
 		displayName: "QA Admin",
 		role: "admin",
 	},
+];
+
+const testFoodListFixtures = [
+	{ barcode: "00021130462506", listType: "fridge" },
+	{ barcode: "00021130493609", listType: "fridge" },
+	{ barcode: "08801005523455", listType: "fridge" },
+	{ barcode: "00869759000149", listType: "shopping" },
+	{ barcode: "00011110904416", listType: "shopping" },
 ];
 
 const runCommand = (command, args, { capture = false, input } = {}) => {
@@ -291,6 +301,44 @@ const requireSuccessfulResult = (result, label) => {
 	return result.data;
 };
 
+const loadTestFoodListFixtures = async (admin) => {
+	const products = requireSuccessfulResult(
+		await admin
+			.from("shared_products")
+			.select("id, barcode, confidence, food")
+			.in(
+				"barcode",
+				testFoodListFixtures.map((fixture) => fixture.barcode),
+			)
+			.eq("status", "active"),
+		"Load local QA catalog products for account lists",
+	);
+	const productsByBarcode = new Map(
+		products.map((product) => [product.barcode, product]),
+	);
+
+	return testFoodListFixtures.map((fixture) => {
+		const product = productsByBarcode.get(fixture.barcode);
+		if (!product) {
+			throw new Error(
+				`Local QA catalog product ${fixture.barcode} is unavailable for account list seeding.`,
+			);
+		}
+		const food = {
+			...product.food,
+			customFood: false,
+			sharedProductId: product.id,
+			sharedProductConfidence: product.confidence,
+		};
+		if (!Number.isSafeInteger(Number(food.fdcId))) {
+			throw new Error(
+				`Local QA catalog product ${fixture.barcode} has no valid food identity.`,
+			);
+		}
+		return { ...fixture, food };
+	});
+};
+
 const wait = (milliseconds) =>
 	new Promise((resolve) => {
 		setTimeout(resolve, milliseconds);
@@ -338,10 +386,31 @@ const waitForLocalServices = async (admin) => {
 	);
 };
 
-const seedTestTutorialPreference = async (
+const seedTestFoodLists = async (userClient, account, fixtures) => {
+	for (const listType of ["fridge", "shopping"]) {
+		const foods = fixtures
+			.filter((fixture) => fixture.listType === listType)
+			.map((fixture) => fixture.food);
+		const result = requireSuccessfulResult(
+			await userClient.rpc("place_user_food_list_items", {
+				p_foods: foods,
+				p_list_type: listType,
+			}),
+			`Seed ${listType} ingredients for ${account.email}`,
+		);
+		if (result !== "added" && result !== "duplicate") {
+			throw new Error(
+				`Unexpected ${listType} fixture result for ${account.email}: ${result}.`,
+			);
+		}
+	}
+};
+
+const seedTestAccountState = async (
 	environment,
 	account,
 	expectedUserId,
+	foodListFixtures,
 ) => {
 	const userClient = createClient(
 		environment.apiUrl,
@@ -381,6 +450,7 @@ const seedTestTutorialPreference = async (
 		),
 		`Seed tutorial preference for ${account.email}`,
 	);
+	await seedTestFoodLists(userClient, account, foodListFixtures);
 	await userClient.auth.signOut();
 };
 
@@ -394,6 +464,7 @@ const seedTestAccounts = async (environment) => {
 		realtime: { transport: WebSocket },
 	});
 	const listedUsers = await waitForLocalServices(admin);
+	const foodListFixtures = await loadTestFoodListFixtures(admin);
 	const usersByEmail = new Map(
 		listedUsers.users.map((user) => [user.email?.toLowerCase(), user]),
 	);
@@ -455,7 +526,12 @@ const seedTestAccounts = async (environment) => {
 			);
 		}
 
-		await seedTestTutorialPreference(environment, account, user.id);
+		await seedTestAccountState(
+			environment,
+			account,
+			user.id,
+			foodListFixtures,
+		);
 	}
 };
 
