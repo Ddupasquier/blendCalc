@@ -1,6 +1,7 @@
 import {
 	BLENDCALC_API_V1,
 	type ApiV1Category,
+	type ApiV1CompatibilityEvaluation,
 	type ApiV1FieldSource,
 	type ApiV1Image,
 	type ApiV1Pagination,
@@ -177,6 +178,21 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 		record,
 		sourceAttributionCatalog,
 	);
+	const appCompatibilityEvaluation = getFoodCompatibilityEvaluation({
+		food: record.food,
+		policyVersion: record.food.compatibilitySummary?.policyVersion ?? null,
+		hasActivePreferences: false,
+		policyCoversPreferences: false,
+		conflictCount: 0,
+	});
+	const compatibilityEvaluation: ApiV1CompatibilityEvaluation = {
+		version: appCompatibilityEvaluation.version,
+		status: appCompatibilityEvaluation.status,
+		policyVersion: appCompatibilityEvaluation.policyVersion,
+		profileApplied: appCompatibilityEvaluation.profileApplied,
+		conflictCount: appCompatibilityEvaluation.conflictCount,
+		coverage: appCompatibilityEvaluation.coverage,
+	};
 	return {
 		id: record.id,
 		barcode: record.barcode,
@@ -300,15 +316,37 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 				amountPer100g: Number.isFinite(nutrient.value)
 					? nutrient.value
 					: null,
-				valueStatus: nutrient.valueOrigin ?? "unknown",
+					valueStatus: nutrient.valueOrigin ?? "unknown",
 				source: nutrient.source
 					? toSource(
 							nutrient.source,
 							nutrient.sourceReference,
 							nutrient.confidence,
 						)
-					: null,
-			})),
+						: null,
+					quality: {
+						sourceValueStatus:
+							nutrient.valueStatus ??
+							(nutrient.valueOrigin === "derived"
+								? "derived"
+								: nutrient.value === 0
+									? "reported-zero"
+									: nutrient.valueOrigin ?? "unknown"),
+						standardError:
+							Number.isFinite(nutrient.standardError) &&
+							Number(nutrient.standardError) >= 0
+								? Number(nutrient.standardError)
+								: null,
+						sourceNutrientKey:
+							nutrient.sourceNutrientKey?.trim() || null,
+						sourceNutrientCode:
+							nutrient.sourceNutrientCode?.trim() || null,
+						mappingStatus: nutrient.mappingStatus ?? "unknown",
+						mappingMethod: nutrient.mappingMethod?.trim() || null,
+						derivationMethod:
+							nutrient.derivationMethod?.trim() || null,
+					},
+				})),
 		servings: (record.food.foodServings ?? []).map((serving) => {
 			const quantity = Number.isFinite(serving.amount) && Number(serving.amount) > 0
 				? Number(serving.amount)
@@ -321,11 +359,17 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 				grams,
 				quantity,
 				unit: serving.unitKey?.trim() || null,
-				gramsPerUnit: grams !== null && quantity !== null
-					? grams / quantity
-					: null,
-				isPrimary: serving.isPrimary,
-				source: serving.source
+					gramsPerUnit: grams !== null && quantity !== null
+						? grams / quantity
+						: null,
+					isPrimary: serving.isPrimary,
+					measureType: serving.measureType?.trim() || null,
+					isHouseholdMeasure: serving.isHouseholdMeasure === true,
+					sourceMeasureKey: serving.sourceMeasureKey?.trim() || null,
+					origin: serving.origin ?? "unknown",
+					gramWeightMethod: serving.gramWeightMethod ?? "unknown",
+					calculationBasis: serving.calculationBasis?.trim() || null,
+					source: serving.source
 					? toSource(
 							serving.source,
 							serving.sourceReference,
@@ -336,14 +380,7 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 		}),
 		images: record.images.filter(hasCompleteImageRights).map(toImage),
 		warnings: (record.food.compatibilitySummary?.allFacts ?? []).map(toWarning),
-		compatibilityEvaluation: getFoodCompatibilityEvaluation({
-			food: record.food,
-			policyVersion:
-				record.food.compatibilitySummary?.policyVersion ?? null,
-			hasActivePreferences: false,
-			policyCoversPreferences: false,
-			conflictCount: 0,
-		}),
+		compatibilityEvaluation,
 		sourceAttributions,
 		catalog: {
 			authority: "blendcalc-shared-catalog",

@@ -6,3 +6,10 @@
 	gap: $app-gap-sm;
 	margin: $app-gap-sm 0 0.2em;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.pill-row {
+		gap: $app-gap-xs;
+		margin-top: $app-gap-xs;
+	}
+}

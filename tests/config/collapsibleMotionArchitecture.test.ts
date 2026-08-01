@@ -3,6 +3,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const sourceRoot = join(process.cwd(), "src");
+const collapsibleStylesPath = join(
+	sourceRoot,
+	"lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.scss",
+);
 
 const getSvelteFiles = (directory: string): string[] =>
 	readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -21,5 +25,11 @@ describe("collapsible motion architecture", () => {
 		});
 
 		expect(unanimatedDetails).toEqual([]);
+	});
+
+	it("prevents disclosure height changes from re-anchoring scroll surfaces", () => {
+		const source = readFileSync(collapsibleStylesPath, "utf8");
+
+		expect(source).toMatch(/\.collapsible-section\s*\{[^}]*overflow-anchor:\s*none;/s);
 	});
 });

@@ -11,6 +11,10 @@ import type {
 	FoodServing,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
+import {
+	formatServingGramWeightMethod,
+	formatServingOrigin,
+} from "$lib/utils/food/servings/servingDisplay";
 
 export type ProductInformationRow = {
 	label: string;
@@ -151,10 +155,27 @@ const getServingRows = (food: FdcFood) => {
 			(left, right) =>
 				Number(right.isPrimary) - Number(left.isPrimary),
 		)
-		.map((serving) => ({
-			label: serving.isPrimary ? "Primary serving" : "Serving option",
-			value: formatServing(serving),
-		}));
+		.flatMap((serving, index) => {
+			const prefix = serving.isPrimary
+				? "Primary serving"
+				: `Serving option ${index + 1}`;
+			const sourceMeasure = [
+				cleanText(serving.measureType),
+				cleanText(serving.sourceMeasureKey),
+			].filter(Boolean).join(" · ");
+			return [
+				{ label: prefix, value: formatServing(serving) },
+				{ label: `${prefix} origin`, value: formatServingOrigin(serving) },
+				{
+					label: `${prefix} weight basis`,
+					value: [
+						formatServingGramWeightMethod(serving),
+						cleanText(serving.calculationBasis),
+					].filter(Boolean).join(" · "),
+				},
+				{ label: `${prefix} source measure`, value: sourceMeasure },
+			];
+		});
 	const sourceServing =
 		normalizedServings.length === 0 &&
 		Number.isFinite(food.servingSize) &&

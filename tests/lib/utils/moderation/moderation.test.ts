@@ -1,8 +1,26 @@
 import { describe, expect, it } from "vitest";
 import {
 	canModerateTargetRole,
+	getElevatedAppRole,
 	isActiveAccountBlock,
+	normalizeAppRoleClaim,
 } from "$lib/utils/moderation/moderation";
+
+describe("application role claims", () => {
+	it("accepts only database-defined application roles", () => {
+		expect(normalizeAppRoleClaim("user")).toBe("user");
+		expect(normalizeAppRoleClaim("moderator")).toBe("moderator");
+		expect(normalizeAppRoleClaim("admin")).toBe("admin");
+		expect(normalizeAppRoleClaim("owner")).toBeNull();
+		expect(normalizeAppRoleClaim(null)).toBeNull();
+	});
+
+	it("keeps normal users out of elevated role checks", () => {
+		expect(getElevatedAppRole("user")).toBeNull();
+		expect(getElevatedAppRole("moderator")).toBe("moderator");
+		expect(getElevatedAppRole("admin")).toBe("admin");
+	});
+});
 
 describe("moderation permissions", () => {
 	it("lets moderators act only on normal users", () => {

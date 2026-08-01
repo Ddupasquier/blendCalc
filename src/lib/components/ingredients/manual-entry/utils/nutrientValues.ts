@@ -121,16 +121,35 @@ export const buildSaveNutrients = ({
 			nutrientName: field.nutrientName,
 			nutrientNumber: field.nutrientNumber,
 			unitName: field.unitName,
-			value,
-			valueOrigin: "reported",
-			source: keepImportedMetadata ? existing?.source : "user-label",
+				value,
+				valueOrigin: "reported",
+				valueStatus: value === 0 ? "reported-zero" : "reported",
+				source: keepImportedMetadata ? existing?.source : "user-label",
 			sourceReference: keepImportedMetadata
 				? existing?.sourceReference
 				: undefined,
-			confidence: keepImportedMetadata
-				? existing?.confidence
-				: "user-reported",
-		});
+				confidence: keepImportedMetadata
+					? existing?.confidence
+					: "user-reported",
+				sourceNutrientKey: keepImportedMetadata
+					? existing?.sourceNutrientKey
+					: String(field.nutrientId),
+				sourceNutrientCode: keepImportedMetadata
+					? existing?.sourceNutrientCode
+					: field.nutrientNumber,
+				mappingStatus: keepImportedMetadata
+					? existing?.mappingStatus
+					: "canonical",
+				mappingMethod: keepImportedMetadata
+					? existing?.mappingMethod
+					: "user-entered-canonical-field",
+				mappingReviewReference: keepImportedMetadata
+					? existing?.mappingReviewReference
+					: undefined,
+				derivationMethod: keepImportedMetadata
+					? existing?.derivationMethod
+					: undefined,
+			});
 	}
 
 	return [...nutrientsById.values()];

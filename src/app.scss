@@ -134,6 +134,19 @@ textarea {
 	font-size: $app-font-size-md;
 }
 
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	button {
+		padding: $app-gap-xs $app-shell-control-padding-x-compact;
+		font-size: $app-font-size-sm;
+	}
+
+	input,
+	select,
+	textarea {
+		font-size: $app-font-size-sm;
+	}
+}
+
 img,
 video,
 canvas {

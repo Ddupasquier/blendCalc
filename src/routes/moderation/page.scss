@@ -40,6 +40,17 @@ header > p:last-child,
 	text-transform: uppercase;
 }
 
+.data-health-link {
+	justify-self: start;
+	color: $app-shell-accent-primary;
+	font-weight: $app-font-weight-bold;
+}
+
+.data-health-link:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
 .account-search,
 .product-review,
 .compatibility-review,

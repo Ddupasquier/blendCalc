@@ -8,12 +8,24 @@
 
 .product-compatibility-panel__group {
 	display: grid;
-	gap: $app-gap-sm;
+	gap: $app-gap-xs;
+}
+
+.product-compatibility-panel__check-details {
+	display: grid;
+	gap: $app-gap-md;
 }
 
 .product-compatibility-panel h2,
 .product-compatibility-panel p {
 	margin: 0;
+}
+
+.product-compatibility-panel a {
+	justify-self: start;
+	color: $app-shell-accent-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
 }
 
 .product-compatibility-panel h2 {
@@ -26,4 +38,17 @@
 	font-weight: $app-font-weight-regular;
 	line-height: 1.5;
 	overflow-wrap: anywhere;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.product-compatibility-panel,
+	.product-compatibility-panel__check-details {
+		gap: $app-gap-sm;
+	}
+
+	.product-compatibility-panel h2,
+	.product-compatibility-panel p,
+	.product-compatibility-panel a {
+		font-size: $app-font-size-sm;
+	}
 }

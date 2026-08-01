@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import {
 		getFoodCompatibilityEvaluationMessage,
@@ -35,9 +36,28 @@
 			? getFoodCompatibilityEvaluationMessage(food.compatibilityEvaluation)
 			: null,
 	);
+	const regulatoryContext = $derived(
+		food.compatibilityEvaluation?.regulatoryContext ?? null,
+	);
+	const unresolvedPreferences = $derived(
+		food.compatibilityEvaluation?.preferenceResolution?.unresolvedPreferences ?? [],
+	);
+	const showEvaluationMessage = $derived(Boolean(
+		evaluationMessage &&
+		(
+			food.compatibilityEvaluation?.status !== "conflict" ||
+			(food.preferenceWarnings ?? []).length === 0
+		),
+	));
+	const hasCheckDetails = $derived(Boolean(
+		unresolvedPreferences.length ||
+		regulatoryContext?.status === "applied" ||
+		regulatoryContext?.status === "unsupported",
+	));
 	const hasContent = $derived(
 		Boolean(
-			evaluationMessage ||
+			showEvaluationMessage ||
+				hasCheckDetails ||
 				allergenDisplay?.contains.length ||
 					allergenDisplay?.mayContain.length ||
 					precautionaryStatements.length ||
@@ -49,7 +69,7 @@
 
 {#if hasContent}
 	<div class="product-compatibility-panel">
-		{#if evaluationMessage}
+		{#if evaluationMessage && showEvaluationMessage}
 			<StatusMessage
 				tone={evaluationMessage.tone}
 				title={evaluationMessage.title}
@@ -96,6 +116,61 @@
 				<h2>Dietary considerations</h2>
 				<p>{dietaryConsiderations.join(", ")}</p>
 			</section>
+		{/if}
+
+		{#if hasCheckDetails}
+			<CollapsibleSection title="Food check details" surface="panel">
+				<div class="product-compatibility-panel__check-details">
+					{#if unresolvedPreferences.length}
+						<StatusMessage
+							tone="warning"
+							title="Some settings are waiting for review"
+							message={`${unresolvedPreferences.map((item) => item.label).join(", ")} ${unresolvedPreferences.length === 1 ? "is" : "are"} saved, but not included in automated checks until there is one exact reviewed match.`}
+						/>
+					{/if}
+
+					{#if regulatoryContext?.status === "applied" && regulatoryContext.profile}
+						<section class="product-compatibility-panel__group">
+							<h2>Regional label context</h2>
+							<p>
+								Uses {regulatoryContext.profile.displayName} guidance from
+								{regulatoryContext.profile.authority}. Regulated allergens are expected
+								to use the listed label terms, while all of your personal warnings stay active.
+							</p>
+							{#if regulatoryContext.coveredPreferences.length}
+								<p>
+									Covered settings:
+									{regulatoryContext.coveredPreferences.map((item) =>
+										`${item.preference} (${item.regulatedLabel})`,
+									).join(", ")}.
+								</p>
+							{/if}
+							{#if regulatoryContext.uncoveredPreferences.length}
+								<p>
+									Not defined by this regional profile:
+									{regulatoryContext.uncoveredPreferences.join(", ")}. Personal checks
+									still continue.
+								</p>
+							{/if}
+							<a
+								href={regulatoryContext.profile.sourceUrl}
+								target="_blank"
+								rel="noreferrer"
+							>
+								View official labeling guidance
+							</a>
+						</section>
+					{:else if regulatoryContext?.status === "unsupported"}
+						<section class="product-compatibility-panel__group">
+							<h2>Regional label context unavailable</h2>
+							<p>
+								Your personal warnings still apply, but no regional label profile was
+								checked for {regulatoryContext.requestedRegionCode}.
+							</p>
+						</section>
+					{/if}
+				</div>
+			</CollapsibleSection>
 		{/if}
 	</div>
 {/if}

@@ -32,3 +32,22 @@
 .manual-entry-toggle-row--disabled {
 	opacity: 0.78;
 }
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.manual-entry-toggle-row {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+	}
+
+	.manual-entry-toggle-row > span {
+		gap: $app-gap-2xs;
+	}
+
+	.manual-entry-toggle-row strong {
+		font-size: $app-font-size-sm;
+	}
+
+	.manual-entry-toggle-row small {
+		font-size: $app-font-size-xs;
+	}
+}

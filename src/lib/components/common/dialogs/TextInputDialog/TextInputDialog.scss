@@ -53,8 +53,24 @@ input {
 }
 
 @media (max-width: $app-breakpoint-xs) {
+	.text-input-sheet {
+		gap: $app-gap-sm;
+	}
+
+	.text-input-sheet__description,
+	.text-input-sheet__field {
+		font-size: $app-font-size-sm;
+	}
+
+	input {
+		min-height: $app-shell-control-height-narrow;
+		padding-inline: $app-shell-control-padding-x-compact;
+		font-size: $app-font-size-sm;
+	}
+
 	.text-input-sheet__actions,
 	.text-input-sheet__actions--triple {
 		grid-template-columns: 1fr;
+		gap: $app-gap-xs;
 	}
 }

@@ -58,6 +58,7 @@ export const createCatalogFoodFromDraft = (
 		nutrients: draft.nutrients,
 		reportedNutrientIds: draft.reportedNutrientIds,
 		hasSourceServing: draft.hasSourceServing,
+		serving: draft.serving,
 	});
 
 	const catalogFood: FdcFood = {

@@ -81,6 +81,7 @@ export const createManualEntrySubmissionController = ({
 			brandOwner: form.data.brandOwner,
 			servingLabel: form.getResolvedServingLabel(),
 			servingWeightGrams: form.data.servingWeightGrams,
+			serving: form.data.serving,
 			useVolumeEquivalent: form.data.useVolumeEquivalent,
 			volumeQuantity: form.data.volumeQuantity,
 			volumeUnit: form.data.volumeUnit,

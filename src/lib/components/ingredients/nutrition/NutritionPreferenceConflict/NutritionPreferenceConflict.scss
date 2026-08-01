@@ -1,30 +1,92 @@
 @use "../../../../../styles/variables" as *;
 
-.preference-conflict__list {
+.preference-conflict__summary-list,
+.preference-conflict__detail-list {
 	display: grid;
-	gap: $app-gap-xs;
-	margin: 0;
-	padding-left: $app-gap-lg;
+	padding: 0;
 	color: $app-shell-text-primary;
 	font-size: $app-font-size-sm;
+	list-style: none;
 }
 
-.preference-conflict__warning {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: $app-gap-sm;
+.preference-conflict__summary-list {
+	gap: $app-gap-xs;
+	margin: $app-gap-xs 0 0;
+	padding-left: $app-gap-md;
+	list-style: disc;
+}
+
+.preference-conflict__summary-list li {
+	padding-left: $app-gap-inline-compact;
+	font-weight: $app-font-weight-medium;
+	line-height: 1.4;
+	overflow-wrap: anywhere;
+}
+
+:global(.preference-conflict__details) {
+	margin-top: $app-gap-sm;
+}
+
+.preference-conflict__detail-list {
+	gap: 0;
+}
+
+.preference-conflict__item {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: $app-gap-sm $app-gap-md;
+	align-items: start;
+	padding-block: $app-gap-sm;
+}
+
+.preference-conflict__item:first-child {
+	padding-top: 0;
+}
+
+.preference-conflict__item:last-child {
+	padding-bottom: 0;
+}
+
+.preference-conflict__item + .preference-conflict__item {
+	border-top: 1px solid $app-shell-border-subtle;
+}
+
+.preference-conflict__evidence {
+	display: grid;
+	gap: $app-gap-xs;
+	grid-column: 1;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+	line-height: 1.4;
+}
+
+.preference-conflict__evidence p {
+	margin: 0;
+}
+
+.preference-conflict__evidence strong {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+}
+
+.preference-conflict__action {
+	align-self: start;
+	grid-column: 2;
 }
 
 .preference-conflict__feedback {
-	margin: $app-gap-xs 0 0;
-	color: $app-muted;
+	grid-column: 1 / -1;
+	margin: 0;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+	line-height: 1.4;
 }
 
 @media (max-width: $app-breakpoint-xs) {
-	.preference-conflict__warning {
-		align-items: flex-start;
-		flex-direction: column;
+	.preference-conflict__item {
+		gap: $app-gap-sm;
 	}
 }

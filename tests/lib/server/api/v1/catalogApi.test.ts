@@ -184,6 +184,13 @@ const record: ApprovedCatalogRecord = {
 				unitName: "G",
 				value: 0,
 				valueOrigin: "reported",
+				valueStatus: "reported-zero",
+				standardError: 0.2,
+				sourceNutrientKey: "1003",
+				sourceNutrientCode: "203",
+				mappingStatus: "canonical",
+				mappingMethod: "exact-source-key",
+				mappingReviewReference: "internal-review-1003",
 				source: "usda",
 				sourceReference: "123",
 				confidence: "source-verified",
@@ -202,6 +209,12 @@ const record: ApprovedCatalogRecord = {
 			amount: 0.5,
 			unitKey: "cup",
 			isPrimary: true,
+			measureType: "Package serving",
+			isHouseholdMeasure: true,
+			sourceMeasureKey: "serving_size",
+			origin: "package-label",
+			gramWeightMethod: "source-reported",
+			calculationBasis: "Package reports 1/2 cup as 125g",
 			source: "usda",
 			sourceReference: "123",
 			confidence: "source-verified",
@@ -276,14 +289,35 @@ describe("blendCalc API v1 catalog mapping", () => {
 		const product = mapApprovedCatalogRecordToApiV1Product(record);
 
 		expect(product.nutrients[0]?.amountPer100g).toBe(0);
+		expect(product.nutrients[0]?.quality.sourceValueStatus).toBe("reported-zero");
+		expect(product.nutrients[0]?.quality).toMatchObject({
+			standardError: 0.2,
+			sourceNutrientKey: "1003",
+			sourceNutrientCode: "203",
+			mappingStatus: "canonical",
+			mappingMethod: "exact-source-key",
+		});
+		expect(product.nutrients[0]?.quality).not.toHaveProperty(
+			"mappingReviewReference",
+		);
 		expect(product.nutrients[1]?.amountPer100g).toBeNull();
 		expect(product.nutrients[1]?.valueStatus).toBe("unknown");
 		expect(product.nutrients[1]?.source).toBeNull();
+		expect(product.nutrients[1]?.quality).toMatchObject({
+			mappingStatus: "unknown",
+			standardError: null,
+		});
 		expect(product.servings[0]).toMatchObject({
 			grams: 125,
 			quantity: 0.5,
 			unit: "cup",
 			gramsPerUnit: 250,
+			measureType: "Package serving",
+			isHouseholdMeasure: true,
+			sourceMeasureKey: "serving_size",
+			origin: "package-label",
+			gramWeightMethod: "source-reported",
+			calculationBasis: "Package reports 1/2 cup as 125g",
 		});
 		expect(product.compatibilityEvaluation).toMatchObject({
 			version: 1,
@@ -292,6 +326,8 @@ describe("blendCalc API v1 catalog mapping", () => {
 			profileApplied: false,
 			conflictCount: 0,
 		});
+		expect(product.compatibilityEvaluation).not.toHaveProperty("regulatoryContext");
+		expect(product.compatibilityEvaluation).not.toHaveProperty("preferenceResolution");
 	});
 
 	it("returns field sources, revision dates, and licensed images without private paths", () => {

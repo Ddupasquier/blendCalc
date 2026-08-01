@@ -1,15 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
-import { normalizeImageUpload } from "$lib/server/uploads/normalizeImageUpload.server";
 import {
-	isProfileAvatarType,
-	matchesAvatarFileSignature,
-} from "$lib/utils/profile/profileValidation";
+	normalizePrivateImageEvidence,
+	PRIVATE_PRODUCT_EVIDENCE_BUCKET,
+} from "$lib/server/uploads/privateImageEvidence.server";
 
-export const PRODUCT_EVIDENCE_BUCKET = "product-submission-evidence";
+export const PRODUCT_EVIDENCE_BUCKET = PRIVATE_PRODUCT_EVIDENCE_BUCKET;
 export const PRODUCT_EVIDENCE_ROLES = ["front", "nutrition", "barcode"] as const;
 export const PRODUCT_EVIDENCE_MAX_BYTES = 8 * 1024 * 1024;
-const PRODUCT_EVIDENCE_MAX_DIMENSION = 4096;
 
 export type ProductEvidenceRole = (typeof PRODUCT_EVIDENCE_ROLES)[number];
 export type ProductEvidencePaths = Partial<Record<ProductEvidenceRole, string>>;
@@ -20,22 +18,7 @@ export const hasCompleteProductEvidence = (paths: ProductEvidencePaths) =>
 
 const validateEvidenceFile = async (file: File, role: ProductEvidenceRole) => {
 	if (!file.size) throw new Error(`Add the ${role} photo.`);
-	if (file.size > PRODUCT_EVIDENCE_MAX_BYTES) {
-		throw new Error("Each product photo must be 8MB or smaller.");
-	}
-	if (!isProfileAvatarType(file.type)) {
-		throw new Error("Product photos must be JPEG, PNG, or WebP images.");
-	}
-	const bytes = new Uint8Array(await file.arrayBuffer());
-	if (!matchesAvatarFileSignature(bytes, file.type)) {
-		throw new Error("A product photo does not match its file type.");
-	}
-	return normalizeImageUpload({
-		bytes,
-		maximumOutputBytes: PRODUCT_EVIDENCE_MAX_BYTES,
-		maximumWidth: PRODUCT_EVIDENCE_MAX_DIMENSION,
-		maximumHeight: PRODUCT_EVIDENCE_MAX_DIMENSION,
-	});
+	return normalizePrivateImageEvidence(file, PRODUCT_EVIDENCE_MAX_BYTES);
 };
 
 export const uploadProductEvidence = async (

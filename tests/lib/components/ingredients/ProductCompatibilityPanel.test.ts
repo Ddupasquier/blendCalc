@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import ProductCompatibilityPanel from "$lib/components/ingredients/nutrition/ProductCompatibilityPanel/ProductCompatibilityPanel.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
@@ -9,6 +9,21 @@ const createFood = (overrides: Partial<FdcFood> = {}): FdcFood => ({
 	foodNutrients: [],
 	...overrides,
 });
+
+const notSelectedRegulatoryContext = {
+	status: "not_selected" as const,
+	requestedRegionCode: null,
+	selectionSource: null,
+	profile: null,
+	coveredPreferences: [],
+	uncoveredPreferences: [],
+};
+
+const resolvedPreferenceContext = {
+	resolvedCount: 0,
+	resolvedPreferences: [],
+	unresolvedPreferences: [],
+};
 
 describe("ProductCompatibilityPanel", () => {
 	it("renders explicit and possible allergen disclosures separately", () => {
@@ -113,6 +128,8 @@ describe("ProductCompatibilityPanel", () => {
 							traces: "available",
 							policy: "available",
 						},
+						regulatoryContext: notSelectedRegulatoryContext,
+						preferenceResolution: resolvedPreferenceContext,
 					},
 				}),
 			},
@@ -142,6 +159,8 @@ describe("ProductCompatibilityPanel", () => {
 					traces: "missing",
 					policy: "available",
 				},
+				regulatoryContext: notSelectedRegulatoryContext,
+				preferenceResolution: resolvedPreferenceContext,
 			},
 		});
 		const { unmount } = render(ProductCompatibilityPanel, {
@@ -171,6 +190,107 @@ describe("ProductCompatibilityPanel", () => {
 			},
 		});
 		expect(screen.getByText("Not checked against food settings"))
+			.toBeInTheDocument();
+	});
+
+	it("keeps regional label context in a closed supporting section", async () => {
+		render(ProductCompatibilityPanel, {
+			props: {
+				food: createFood({
+					compatibilityEvaluation: {
+						version: 1,
+						status: "checked",
+						policyVersion: 9,
+						profileApplied: true,
+						conflictCount: 0,
+						coverage: {
+							basis: "packaged-label",
+							identity: "not_required",
+							ingredients: "available",
+							allergens: "available",
+							traces: "available",
+							policy: "available",
+						},
+						regulatoryContext: {
+							status: "applied",
+							requestedRegionCode: "US",
+							selectionSource: "account",
+							profile: {
+								key: "us-fda",
+								regionCode: "US",
+								displayName: "United States major food allergens",
+								authority: "U.S. Food and Drug Administration",
+								policyReference: "Major food allergens",
+								sourceUrl: "https://example.com/us",
+								reviewedAt: "2026-07-31T00:00:00.000Z",
+							},
+							coveredPreferences: [{
+								preference: "Peanut",
+								regulatedLabel: "Peanuts",
+								classification: "major_allergen",
+							}],
+							uncoveredPreferences: ["Banana"],
+						},
+						preferenceResolution: resolvedPreferenceContext,
+					},
+				}),
+			},
+		});
+
+		const detailsTitle = screen.getByText("Food check details");
+		const details = detailsTitle.closest("details");
+		expect(details).not.toHaveAttribute("open");
+		await fireEvent.click(detailsTitle.closest("summary") as HTMLElement);
+		expect(details).toHaveAttribute("open");
+		expect(screen.getByRole("heading", { name: "Regional label context" }))
+			.toBeInTheDocument();
+		expect(screen.getByText(/all of your personal warnings stay active/i))
+			.toBeInTheDocument();
+		expect(screen.getByText(/Peanut \(Peanuts\)/)).toBeInTheDocument();
+		expect(screen.getByText(/Not defined by this regional profile: Banana/))
+			.toBeInTheDocument();
+	});
+
+	it("keeps unresolved-setting guidance in supporting details", async () => {
+		render(ProductCompatibilityPanel, {
+			props: {
+				food: createFood({
+					compatibilityEvaluation: {
+						version: 1,
+						status: "incomplete",
+						policyVersion: 10,
+						profileApplied: true,
+						conflictCount: 0,
+						coverage: {
+							basis: "packaged-label",
+							identity: "not_required",
+							ingredients: "available",
+							allergens: "available",
+							traces: "available",
+							policy: "missing",
+						},
+						regulatoryContext: notSelectedRegulatoryContext,
+						preferenceResolution: {
+							resolvedCount: 0,
+							resolvedPreferences: [],
+							unresolvedPreferences: [{
+								label: "Banana sensitivity",
+								type: "allergen",
+							}],
+						},
+					},
+				}),
+			},
+		});
+
+		const detailsTitle = screen.getByText("Food check details");
+		const details = detailsTitle.closest("details");
+		expect(details).not.toHaveAttribute("open");
+		await fireEvent.click(detailsTitle.closest("summary") as HTMLElement);
+		expect(details).toHaveAttribute("open");
+		expect(screen.getByText("Some settings are waiting for review"))
+			.toBeInTheDocument();
+		expect(screen.getByText(/Banana sensitivity is saved/i))
 			.toBeInTheDocument();
 	});
 });

@@ -143,4 +143,12 @@
 	.mix-builder {
 		gap: $app-gap-xs;
 	}
+
+	.mix-header h2 {
+		font-size: $app-font-size-lg;
+	}
+
+	.mix-header p {
+		font-size: $app-font-size-sm;
+	}
 }

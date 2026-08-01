@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { fail, redirect } from "@sveltejs/kit";
+import { fail } from "@sveltejs/kit";
 import type { User } from "@supabase/supabase-js";
 import type { Actions, PageServerLoad } from "./$types";
 import {
@@ -10,7 +10,6 @@ import {
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import {
 	canModerateTargetRole,
-	getUserAppRole,
 	type AppRole,
 } from "$lib/utils/moderation/moderation";
 import { PROFILE_AVATAR_BUCKET } from "$lib/utils/profile/profile";
@@ -46,6 +45,7 @@ import {
 	reviewFoodCompatibilityFeedback,
 } from "$lib/server/food-safety/foodCompatibilityFeedback.server";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
+import { requireModeratorAccess } from "$lib/server/moderation/moderationAccess.server";
 
 const PERMANENT_BAN_DURATION = "876000h";
 const MODERATION_FORM_MAX_BYTES = 512 * 1024;
@@ -59,19 +59,6 @@ const ALLOWED_REASONS = new Set<ModerationReason>([
 	"terms_violation",
 ]);
 const isPresent = <Value>(value: Value | null): value is Value => value !== null;
-
-const requireModerator = async (locals: App.Locals) => {
-	const user = await locals.getVerifiedUser();
-	if (!user) throw redirect(303, "/auth?next=%2Fmoderation");
-
-	const role = requireAppValue(
-		await getUserAppRole(locals.supabase, user.id),
-		403,
-		"ACCESS_DENIED",
-	);
-
-	return { user, role };
-};
 
 const getReason = (formData: FormData) => {
 	const reason = String(formData.get("reason") ?? "") as ModerationReason;
@@ -175,7 +162,7 @@ const getTargetContext = async (
 };
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	const { user: viewer, role } = await requireModerator(locals);
+	const { user: viewer, role } = await requireModeratorAccess(locals);
 	const query = url.searchParams.get("q")?.trim().toLocaleLowerCase() ?? "";
 	const [
 		{ admin, users: authUsers },
@@ -387,8 +374,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				| null;
 			return {
 				id: feedback.id,
+				feedbackType: feedback.feedback_type,
 				reportedBy: feedback.reported_by,
 				sharedProductId: feedback.shared_product_id,
+				sharedProductRevisionId: feedback.shared_product_revision_id,
 				sourceKey: feedback.source_key,
 				sourceId: feedback.source_id,
 				barcode: feedback.barcode,
@@ -397,6 +386,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				issueCode: feedback.issue_code,
 				issueParams: feedback.issue_params,
 				factSnapshot: feedback.fact_snapshot,
+				preferenceType: feedback.preference_type,
+				preferenceValue: feedback.preference_value,
+				observedLabelDate: feedback.observed_label_date,
+				evidenceUrl: feedback.evidence_signed_url,
 				reportReason: feedback.report_reason,
 				reportDetails: feedback.report_details,
 				createdAt: feedback.created_at,
@@ -408,7 +401,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 export const actions: Actions = {
 	reviewCompatibilityFeedback: async ({ locals, request }) => {
-		const { user } = await requireModerator(locals);
+		const { user } = await requireModeratorAccess(locals);
 		const formData = await readLimitedFormData(
 			request,
 			MODERATION_FORM_MAX_BYTES,
@@ -467,7 +460,7 @@ export const actions: Actions = {
 		}
 	},
 	approveProduct: async ({ locals, request }) => {
-		const { user } = await requireModerator(locals);
+		const { user } = await requireModeratorAccess(locals);
 		const formData = await readLimitedFormData(
 			request,
 			MODERATION_FORM_MAX_BYTES,
@@ -537,7 +530,7 @@ export const actions: Actions = {
 		}
 	},
 	rejectProduct: async ({ locals, request }) => {
-		const { user } = await requireModerator(locals);
+		const { user } = await requireModeratorAccess(locals);
 		const formData = await readLimitedFormData(
 			request,
 			MODERATION_FORM_MAX_BYTES,
@@ -560,7 +553,7 @@ export const actions: Actions = {
 		}
 	},
 	ban: async ({ locals, request }) => {
-		const { user: actor, role: actorRole } = await requireModerator(locals);
+		const { user: actor, role: actorRole } = await requireModeratorAccess(locals);
 		const formData = await readLimitedFormData(
 			request,
 			MODERATION_FORM_MAX_BYTES,
@@ -733,7 +726,7 @@ export const actions: Actions = {
 		};
 	},
 	unban: async ({ locals, request }) => {
-		const { user: actor, role: actorRole } = await requireModerator(locals);
+		const { user: actor, role: actorRole } = await requireModeratorAccess(locals);
 		const formData = await readLimitedFormData(
 			request,
 			MODERATION_FORM_MAX_BYTES,

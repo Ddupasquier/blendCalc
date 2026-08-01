@@ -23,6 +23,7 @@ import type {
 	FoodPackageQuantity,
 	FoodSourceRecordMetadata,
 	FoodStructuredIngredient,
+	FoodServing,
 } from "$lib/utils/food/types";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
@@ -35,6 +36,7 @@ export type ManualEntryBarcodeDraftState = {
 	categorySymbolKey: string;
 	servingLabel: string;
 	servingWeightGrams: number;
+	serving?: FoodServing;
 	importedNutrients: FdcNutrient[];
 	manualNutrientValues: Record<number, number>;
 	useVolumeEquivalent: boolean;
@@ -221,6 +223,7 @@ export const getBarcodeDraftState = (
 		categorySymbolKey: draft.categoryResolution?.symbolKey ?? "generic",
 		servingLabel: draft.servingLabel,
 		servingWeightGrams: draft.servingWeightGrams,
+		serving: draft.serving,
 		importedNutrients: validNutrients,
 		manualNutrientValues: Object.fromEntries(
 			validNutrients.map((nutrient) => [

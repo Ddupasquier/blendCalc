@@ -41,6 +41,12 @@ describe("FoodData Central normalization", () => {
 				nutrientNumber: "306",
 				unitName: "mg",
 				value: 42,
+				valueOrigin: "reported",
+				valueStatus: "reported",
+				sourceNutrientKey: "1092",
+				sourceNutrientCode: "306",
+				mappingStatus: "canonical",
+				mappingMethod: "source-identifier",
 			},
 		]);
 	});
@@ -90,6 +96,7 @@ describe("FoodData Central normalization", () => {
 		const food = normalizeFdcFood({
 			fdcId: 171032,
 			description: "Oil, apricot kernel",
+			dataType: "SR Legacy",
 			foodNutrients: [],
 			foodPortions: [
 				{
@@ -119,7 +126,13 @@ describe("FoodData Central normalization", () => {
 				label: "1 tablespoon",
 				gramWeight: 13.6,
 				amount: 1,
+				unitKey: undefined,
 				isPrimary: true,
+				measureType: "Food portion",
+				isHouseholdMeasure: true,
+				sourceMeasureKey: "portion:1",
+				origin: "source-household-measure",
+				gramWeightMethod: "source-reported",
 				source: "usda",
 				sourceReference: "171032",
 				confidence: "unknown",
@@ -128,7 +141,13 @@ describe("FoodData Central normalization", () => {
 				label: "1 cup",
 				gramWeight: 218,
 				amount: 1,
+				unitKey: undefined,
 				isPrimary: false,
+				measureType: "Food portion",
+				isHouseholdMeasure: true,
+				sourceMeasureKey: "portion:2",
+				origin: "source-household-measure",
+				gramWeightMethod: "source-reported",
 				source: "usda",
 				sourceReference: "171032",
 				confidence: "unknown",

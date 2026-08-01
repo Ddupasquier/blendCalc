@@ -71,6 +71,9 @@ const policy: FoodSafetyPolicy = {
 	preferenceConflictRules,
 	compatibilityMatchRules: [],
 	regionalProfiles: [],
+	ingredientAliases: [],
+	policyExemptions: [],
+	supportedIngredientLanguages: [],
 };
 
 const createProfile = (
@@ -83,9 +86,49 @@ const createProfile = (
 	prioritizedNutrientIds: [],
 	defaultSmoothieServingGrams: null,
 	sensitiveAcknowledgedAt: "2026-07-29T00:00:00.000Z",
+	regulatoryRegionCode: null,
+	regulatoryRegionSource: null,
+	preferenceResolutions: [
+		...allergens.map((value) => ({
+			rawValue: value,
+			normalizedValue: value.toLocaleLowerCase().trim().replace(/\s+/g, " "),
+			ruleType: "allergen" as const,
+			status: "resolved" as const,
+			method: "direct_tag" as const,
+			policyVersionId: "00000000-0000-4000-8000-000000000001",
+			languageCode: "und",
+			ingredientTermId: null,
+			ingredientAliasId: null,
+			preferenceTermMappingId: null,
+			tag: {
+				id: `test-allergen-${value}`,
+				slug: value.toLocaleLowerCase().trim().replace(/\s+/g, "-"),
+				label: value,
+				category: "allergen",
+			},
+		})),
+		...dietaryRestrictions.map((value) => ({
+			rawValue: value,
+			normalizedValue: value.toLocaleLowerCase().trim().replace(/\s+/g, " "),
+			ruleType: "dietary_restriction" as const,
+			status: "resolved" as const,
+			method: "direct_tag" as const,
+			policyVersionId: "00000000-0000-4000-8000-000000000001",
+			languageCode: "und",
+			ingredientTermId: null,
+			ingredientAliasId: null,
+			preferenceTermMappingId: null,
+			tag: {
+				id: `test-restriction-${value}`,
+				slug: value.toLocaleLowerCase().trim().replace(/\s+/g, "-"),
+				label: value,
+				category: "dietary",
+			},
+		})),
+	],
 });
 
-describe("real-product food compatibility regression corpus", () => {
+describe("prepared-fact food compatibility evaluation corpus", () => {
 	it.each(FOOD_COMPATIBILITY_REGRESSION_CORPUS)(
 		"$name",
 		({ food, preferences, expectedWarningLabels, expectedIssueCodes }) => {

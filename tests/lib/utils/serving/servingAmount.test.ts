@@ -3,6 +3,9 @@ import {
 	convertServingAmount,
 	convertServingToGrams,
 	getServingMeasureDimension,
+	parseServingAmount,
+	parseSourceServingMeasure,
+	parseSourceWeightMeasure,
 } from "$lib/utils/serving/servingAmount";
 import type { FdcFood } from "$lib/utils/food/types";
 
@@ -43,6 +46,30 @@ describe("serving amount conversion", () => {
 		expect(convertServingToGrams(2, "oz")).toBeCloseTo(56.7);
 	});
 
+	it("requires explicit source units while retaining the interactive default", () => {
+		expect(parseSourceServingMeasure("30")).toBeNull();
+		expect(parseSourceServingMeasure("30 g")).toMatchObject({
+			quantity: 30,
+			unit: "g",
+		});
+		expect(parseServingAmount("30")).toMatchObject({
+			grams: 30,
+			unit: "g",
+		});
+	});
+
+	it("finds explicit source weights inside composite serving labels", () => {
+		expect(parseSourceWeightMeasure("2 tbsp (30 g)")).toMatchObject({
+			quantity: 30,
+			unit: "g",
+		});
+		expect(parseSourceWeightMeasure("4 olives (15 g)")).toMatchObject({
+			quantity: 15,
+			unit: "g",
+		});
+		expect(parseSourceWeightMeasure("4 olives")).toBeNull();
+	});
+
 	it("does not guess a volume conversion from the food name or category", () => {
 		const conversion = convertServingAmount(1, "cup", unknownFood);
 
@@ -72,5 +99,7 @@ describe("serving amount conversion", () => {
 		expect(conversion.grams).toBeCloseTo(122.5);
 		expect(conversion.density?.label).toBe("1 cup");
 		expect(conversion.warning).toBeNull();
+		expect(conversion.method).toBe("calculated-conversion");
+		expect(conversion.basis).toContain("1 cup = 245g");
 	});
 });

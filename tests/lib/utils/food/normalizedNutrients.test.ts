@@ -31,6 +31,14 @@ const normalizedProtein = {
 	source: "usda",
 	sourceReference: "12345",
 	confidence: "source-verified",
+	valueStatus: "reported",
+	standardError: null,
+	sourceNutrientKey: "1003",
+	sourceNutrientCode: "203",
+	mappingStatus: "canonical",
+	mappingMethod: "source-identifier",
+	mappingReviewReference: "usda-fdc",
+	derivationMethod: null,
 } satisfies NormalizedNutrientRow;
 
 describe("normalized food nutrients", () => {
@@ -44,7 +52,9 @@ describe("normalized food nutrients", () => {
 				nutrientNumber: "208",
 				unitName: "kcal",
 				value: 90,
-				valueOrigin: "derived",
+					valueOrigin: "derived",
+					valueStatus: "derived",
+					derivationMethod: "Atwater calculation",
 			},
 		]);
 
@@ -53,13 +63,17 @@ describe("normalized food nutrients", () => {
 				nutrientId: 1003,
 				unitName: "G",
 				value: 12.5,
-				source: "usda",
-				confidence: "source-verified",
+					source: "usda",
+					confidence: "source-verified",
+					sourceNutrientCode: "203",
+					mappingStatus: "canonical",
 			}),
 			expect.objectContaining({
 				nutrientId: 1008,
 				unitName: "KCAL",
-				valueOrigin: "derived",
+					valueOrigin: "derived",
+					valueStatus: "derived",
+					derivationMethod: "Atwater calculation",
 			}),
 		]);
 		expect(hydrated.reportedNutrientIds).toEqual([1003]);

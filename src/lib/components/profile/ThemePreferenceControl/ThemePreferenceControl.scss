@@ -158,4 +158,9 @@
 	.theme-preference-control__copy small {
 		display: none;
 	}
+
+	.theme-preference-control > legend,
+	.theme-preference-control__copy strong {
+		font-size: $app-font-size-xs;
+	}
 }

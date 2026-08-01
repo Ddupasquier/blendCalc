@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
+	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import {
 		createFoodCompatibilityFeedbackRequest,
@@ -7,6 +8,8 @@
 	} from "$lib/utils/food/quality/compatibilityFeedback";
 	import {
 		FOOD_PREFERENCE_WARNING_TITLE,
+		getFoodPreferenceWarningEvidenceMessage,
+		getFoodPreferenceWarningEvidenceReviewMessage,
 		getFoodPreferenceWarningMessage,
 		type FoodPreferenceWarning,
 	} from "$lib/utils/profile/foodPreferenceWarnings";
@@ -62,33 +65,53 @@
 		iconPlacement="top-end"
 		title={FOOD_PREFERENCE_WARNING_TITLE}
 	>
-		<ul class="preference-conflict__list">
+		<ul class="preference-conflict__summary-list">
 			{#each preferenceWarnings as warning}
-				<li>
-					<div class="preference-conflict__warning">
-						<span>{getFoodPreferenceWarningMessage(warning)}</span>
-						<ActionButton
-							variant="ghost"
-							size="small"
-							busy={pendingWarningId === warning.id}
-							disabled={Boolean(
-								feedbackStatusByWarning[warning.id] &&
-								!feedbackStatusByWarning[warning.id].startsWith("We couldn’t"),
-							)}
-							ariaLabel={`Report an incorrect warning about ${warning.label}`}
-							onclick={() => reportWarning(warning)}
-						>
-							Report
-						</ActionButton>
-					</div>
-					{#if feedbackStatusByWarning[warning.id]}
-						<p class="preference-conflict__feedback" aria-live="polite">
-							{feedbackStatusByWarning[warning.id]}
-						</p>
-					{/if}
-				</li>
+				<li>{getFoodPreferenceWarningMessage(warning)}</li>
 			{/each}
 		</ul>
+
+		<CollapsibleSection
+			title="Review these warnings"
+			surface="panel"
+			class="preference-conflict__details"
+		>
+			<ul class="preference-conflict__detail-list">
+				{#each preferenceWarnings as warning}
+					<li class="preference-conflict__item">
+						<div class="preference-conflict__evidence">
+							<strong>{warning.label}</strong>
+							{#if warning.evidence}
+								<p>{getFoodPreferenceWarningEvidenceMessage(warning)}</p>
+								<p>{getFoodPreferenceWarningEvidenceReviewMessage(warning)}</p>
+							{:else}
+								<p>{getFoodPreferenceWarningMessage(warning)}</p>
+							{/if}
+						</div>
+						<div class="preference-conflict__action">
+							<ActionButton
+								variant="ghost"
+								size="small"
+								busy={pendingWarningId === warning.id}
+								disabled={Boolean(
+									feedbackStatusByWarning[warning.id] &&
+									!feedbackStatusByWarning[warning.id].startsWith("We couldn’t"),
+								)}
+								ariaLabel={`Report an incorrect warning about ${warning.label}`}
+								onclick={() => reportWarning(warning)}
+							>
+								Report
+							</ActionButton>
+						</div>
+						{#if feedbackStatusByWarning[warning.id]}
+							<p class="preference-conflict__feedback" aria-live="polite">
+								{feedbackStatusByWarning[warning.id]}
+							</p>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		</CollapsibleSection>
 	</StatusMessage>
 {/if}
 

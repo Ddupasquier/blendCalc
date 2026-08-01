@@ -49,6 +49,7 @@ const getFieldValue = (
 				return {
 					label: draft.servingLabel,
 					weightGrams: draft.servingWeightGrams,
+					serving: draft.serving ?? null,
 					volumeEquivalent: draft.volumeEquivalent ?? null,
 				} as Json;
 			case "ingredients":

@@ -86,6 +86,37 @@ Production configuration requires `VERCEL_ANALYTICS_ACCESS_TOKEN`, the Vercel-pr
 Vercel plan support is required for custom-event collection; page-view aggregation
 remains independently useful when custom events are unavailable.
 
+## Serving Provenance And Conversion
+
+Serving labels, gram weights, household measures, and conversion lineage cross the
+provider boundary as one typed record. Source adapters require an explicit recognized
+unit and preserve whether a measure came from a package label, a source household
+measure, a direct reported weight, or unknown evidence. Manual values are explicitly
+user-entered. Bare provider quantities never inherit the interactive form's default
+gram unit.
+
+Normalized `food_servings` rows retain the exact observation, source measure metadata,
+serving origin, gram-weight method, and measured calculation basis. Nutrition presents
+that information in Product details. Mix performs basic weight math in code and may
+calculate weight from volume only when the food has a source-reported or user-reported
+weight/volume pair. Food names, categories, provider identity, and water-like defaults
+never supply density.
+
+## Nutrient Values And Uncertainty
+
+Normalized nutrient math and source-review evidence are separate contracts. Accepted
+numeric values live in `food_nutrients` and `foodNutrients`; each retains whether the
+value was reported, explicitly reported as zero, or derived. Source-reported standard
+error, source nutrient identifiers, mapping status/method, review reference, and exact
+derivation method travel with the value but never modify its amount.
+
+Generic source facts that cannot enter math—trace, present but unquantified, missing,
+invalid, excluded, or unmapped rows—remain in `nutrientSourceReview`. They are not
+coerced to zero and are not discarded. Ordinary nutrition details translate only
+bounded useful summaries into the closed Data quality disclosure. The public API omits
+internal mapping review references; moderator-only provenance reads receive the exact
+normalized rows and complete source review trail.
+
 ## Server-Owned Compatibility Policy
 
 Compatibility rules and ingredient/taxonomy match patterns remain behind the server
@@ -102,6 +133,12 @@ and hashes the complete bundle, changes the active version, refreshes all compat
 facts, and rebuilds preference options. Application code never combines rows from
 different policy versions or performs an independent partial activation.
 
+Raw account preference wording remains in `user_food_preferences`. A database trigger
+projects it into server-owned `user_compatibility_rules`, where every value is either
+linked to one exact reviewed tag/term/alias mapping for the active policy or marked
+unresolved. Application warning logic consumes only resolved canonical tags; browser
+code receives bounded resolution status and never performs synonym or fuzzy matching.
+
 The schema map owns compatibility tables and version relationships. The catalog
 document owns product fact extraction, evidence meaning, and moderation lifecycle. This
 document owns only the server/client boundary.
@@ -112,6 +149,16 @@ structure but does not guess missing percentages, split raw statements, or creat
 canonical taxonomy automatically. Reviewed ingredient terms, derivative relationships,
 processing states, jurisdiction rules, and compatibility inheritance remain
 server-owned policy; clients receive only bounded explanations and disclosures.
+The server also builds the ingredient presentation contract used by nutrition details:
+nested paths, explicitly reported percentage labels, additives, source analysis,
+coverage, and exact warning evidence. Browser components render that bounded contract
+and never reinterpret source percentages, infer ingredient classifications, or rebuild
+the policy evidence behind a warning.
+The server policy loader also resolves reviewed language-tagged aliases and immutable
+regional exemption conditions for one active version. Structured ingredient and
+explicit allergen/trace fields may create canonical facts only through those reviewed
+rows. Unsupported declared languages make policy coverage incomplete; ordinary client
+code never translates, fuzzily matches, or supplies a synonym fallback.
 
 Package precautionary statements use the same evidence-first boundary. Source adapters
 preserve exact wording and classify only the statement form (`may contain`, shared
@@ -121,9 +168,18 @@ rule. Clients may present friendly headings, but they do not rewrite the source
 statement, infer risk severity from the wording, or promote ingredient hypotheses into
 package declarations.
 
+When a provider supplies both a flat trace array and exact precautionary wording for
+the same allergen, the exact statement-linked fact is canonical. Extraction removes
+the duplicate flat trace fact while preserving the lossless statement, source field,
+observation, revision, and immutable policy link. Internal predecessor implementations
+live outside the public schema so database helpers do not silently expand the Data API.
+
 ## Module Boundaries
 
 - `src/routes/**/+page.server.ts`: route authentication handoff and thin load wiring.
+- `src/lib/server/moderation`: shared moderator role enforcement and bounded privileged
+  read repositories. Catalog health uses the caller's authenticated client so the RPC
+  must pass its independent role check; browser code never scans operational tables.
 - `src/lib/server/user-data`: page-level server coordination.
 - `src/lib/server/user-data/foodListPlacement.server.ts`: exact-source enrichment before
   authoritative Fridge or Shopping List placement.

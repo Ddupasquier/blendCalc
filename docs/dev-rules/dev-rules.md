@@ -56,6 +56,7 @@ clickable navigation block instead.
 - [Manual Entry Modularization](#rule-manual-entry-modularization)
 - [Database And API-Driven Data](#rule-no-hardcoded-reference-data)
 - [Schema Documentation Synchronization](#rule-schema-documentation)
+- [Database And API Hygiene](#rule-database-api-hygiene)
 - [Manual Entry Nutrient Classification](#rule-manual-entry-nutrient-classification)
 - [Canonical Category Picker](#rule-canonical-category-picker)
 - [USDA Food Source Priority](#rule-usda-source-priority)
@@ -679,6 +680,30 @@ the linked and local migration histories agree before handoff. Stop instead of a
 when local verification fails, the dry run includes an unexpected migration, or the
 linked state differs from the reviewed chain. This standing database-migration workflow
 does not grant permission to commit or push Git changes.
+
+**26c.** <a id="rule-database-api-hygiene"></a>Treat database and blendCalc API hygiene
+as a continuous responsibility, not a one-time cleanup project. Whenever work touches a
+table, column, relationship, RPC, view, trigger, policy, index, seed, repository query,
+or API field, inspect the surrounding domain for orphaned tables, dead or duplicated
+columns, overlapping concepts, stale compatibility structures, inconsistent naming,
+missing constraints or indexes, redundant joins, obsolete API fields, and structures
+that can be normalized or consolidated without obscuring ownership. Before declaring
+anything unused, verify direct and indirect use through routes, repositories, generated
+types, database functions, views, triggers, RLS and Storage policies, scripts, tests,
+moderation flows, imports, backfills, analytics, and public API contracts. Use production
+or linked-data evidence when availability or migration risk depends on existing rows.
+
+Do not rewrite or delete historical migrations. Remove confirmed legacy structures only
+through reviewed forward-only migrations with explicit data preservation, backfill, API
+compatibility, rollback or recovery reasoning, generated-type updates, schema-map
+updates, and focused regression coverage. Merge tables only when their lifecycle,
+authority, access policy, retention, and cardinality genuinely align; fewer tables is
+not inherently cleaner. Keep naming consistent with the canonical domain vocabulary,
+and keep the public API deliberately narrower and more stable than the internal schema.
+Fix small, clearly safe findings within the active task. Record broader, destructive,
+or uncertain findings in the maintained development audit or implementation-owned todo
+with evidence and a completion condition instead of silently expanding scope or leaving
+the finding undocumented.
 
 **27.** <a id="rule-no-hardcoded-reference-data"></a>Do not hardcode DB-backed catalog
 data, API-derived reference data, nutrient definitions, allergens, dietary restrictions,
@@ -1353,6 +1378,16 @@ Do not copy production users, evidence, images, or private records into test see
 future remote staging environment must remain a separate project with separate keys and
 synthetic data; it supplements local testing for hosted/device QA and never becomes the
 default destructive test target.
+
+Food-safety confidence tests must begin with legally usable, authored synthetic
+provider-shaped payloads or database observations and exercise each applicable stage:
+source normalization, lossless evidence projection, reviewed policy extraction,
+personalized evaluation, API serialization, and bounded user-facing messages.
+Prepared compatibility facts may remain focused evaluation fixtures, but they are not
+primary evidence that ingestion or extraction works. Report extraction and evaluation
+coverage separately, preserve positive and negative controls, and add every confirmed
+false positive, false negative, supported statement form, language case, derivative,
+exemption, and formulation change to the applicable source-shaped corpus.
 
 **38.** Ingredient manipulation controls should use toggles, buttons, action sheets, or
 explicit forms instead of raw checkboxes. If a setting behaves like on/off state, use

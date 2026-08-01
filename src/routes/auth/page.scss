@@ -260,6 +260,22 @@
 	.email-form__actions {
 		grid-template-columns: 1fr;
 	}
+
+	.auth-card__header h1 {
+		font-size: 1.65rem;
+	}
+
+	.auth-card__header p,
+	.email-form label {
+		font-size: $app-font-size-sm;
+	}
+
+	.email-form input,
+	.email-button,
+	.google-button {
+		min-height: $app-shell-control-height-narrow;
+		font-size: $app-font-size-sm;
+	}
 }
 
 @media (max-height: $app-breakpoint-height-compact) {

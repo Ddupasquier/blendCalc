@@ -50,6 +50,16 @@ h5 {
 @media (max-width: $app-breakpoint-xs) {
 	.popover__panel {
 		width: min(18rem, calc(100vw - 2 * $app-gap-sm));
+		padding: calc(1.5rem + 2 * $app-gap-xs) $app-gap-xs $app-gap-xs;
+	}
+
+	.popover__trigger,
+	h5 {
+		font-size: $app-font-size-xs;
+	}
+
+	h5 {
+		margin-bottom: $app-gap-xs;
 	}
 }
 

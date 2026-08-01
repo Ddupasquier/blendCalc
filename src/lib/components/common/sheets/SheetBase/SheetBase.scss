@@ -67,14 +67,7 @@ $viewport-height-dynamic: 100dvh;
 	display: flex;
 	flex-direction: column;
 	width: 100%;
-	min-height: min(
-		56vh,
-		calc(#{$viewport-height-fallback} - var(--sheet-top-offset) - var(--sheet-bottom-offset))
-	);
-	min-height: min(
-		56dvh,
-		calc(#{$viewport-height-dynamic} - var(--sheet-top-offset) - var(--sheet-bottom-offset))
-	);
+	min-height: 0;
 	max-height: min(
 		80vh,
 		calc(#{$viewport-height-fallback} - var(--sheet-top-offset) - var(--sheet-bottom-offset))
@@ -133,13 +126,13 @@ $viewport-height-dynamic: 100dvh;
 	}
 
 	.sheet-base__panel--bottom {
-		padding-block: $app-gap-xs $app-gap-sm;
+		padding-block: $app-gap-2xs $app-gap-sm;
 		padding-inline: max($app-gap-sm, env(safe-area-inset-left))
 			max($app-gap-sm, env(safe-area-inset-right));
 	}
 
 	.sheet-base__panel--right {
-		padding: $app-gap-md max($app-gap-sm, env(safe-area-inset-right)) 0
+		padding: $app-gap-sm max($app-gap-sm, env(safe-area-inset-right)) 0
 			max($app-gap-sm, env(safe-area-inset-left));
 	}
 }

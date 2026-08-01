@@ -1,7 +1,19 @@
 import type { Database } from "$lib/types/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type AppRole = "moderator" | "admin";
+export type AppRoleClaim = Database["public"]["Enums"]["app_role"];
+export type AppRole = Exclude<AppRoleClaim, "user">;
+
+export const normalizeAppRoleClaim = (value: unknown): AppRoleClaim | null => {
+	if (value === "user" || value === "moderator" || value === "admin") {
+		return value;
+	}
+	return null;
+};
+
+export const getElevatedAppRole = (
+	role: AppRoleClaim | null,
+): AppRole | null => (role === "moderator" || role === "admin" ? role : null);
 
 export const getUserAppRole = async (
 	supabase: SupabaseClient<Database>,
@@ -14,7 +26,7 @@ export const getUserAppRole = async (
 		.maybeSingle();
 
 	if (error) throw error;
-	return (data?.role as AppRole | undefined) ?? null;
+	return getElevatedAppRole(data?.role ?? null);
 };
 
 export const canModerateTargetRole = (
