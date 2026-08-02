@@ -1,6 +1,6 @@
 begin;
 
-select plan(21);
+select plan(26);
 
 select is(
 	(select count(*) from auth.users where email like 'qa-%@blendcalc.local'),
@@ -26,7 +26,7 @@ select ok(
 	not exists (
 		with expected(email, fridge_count, shopping_count) as (
 			values
-				('qa-user@blendcalc.local', 15, 4),
+				('qa-user@blendcalc.local', 60, 40),
 				('qa-preferences@blendcalc.local', 4, 3),
 				('qa-empty@blendcalc.local', 0, 0),
 				('qa-onboarding@blendcalc.local', 10, 0),
@@ -49,14 +49,26 @@ select ok(
 		select 1
 		from public.user_food_list_items item
 		join auth.users user_row on user_row.id = item.user_id
+		left join public.shared_products product on product.id = item.shared_product_id
 		where user_row.email like 'qa-%@blendcalc.local'
 			and (
 				item.shared_product_id is null
-				or item.source_key <> 'shared-catalog'
-				or item.trust_status <> 'moderator-reviewed'
+				or product.status <> 'active'
+				or item.source_key <> case product.source
+					when 'community-reviewed' then 'shared-catalog'
+					else product.source
+				end
+				or item.trust_status <> case
+					when product.confidence in (
+						'source-verified',
+						'corroborated',
+						'moderator-reviewed'
+					) then product.confidence
+					else 'unverified'
+				end
 			)
 	),
-	'all QA list ingredients retain approved shared-catalog identity'
+	'all QA list ingredients retain catalog identity without upgrading imported evidence'
 );
 
 select ok(
@@ -79,13 +91,31 @@ select ok(
 		from public.user_food_list_items item
 		join auth.users user_row on user_row.id = item.user_id
 		where user_row.email like 'qa-%@blendcalc.local'
-			and public.food_normalized_barcode(item.food) <> '00011110904416'
-			and not exists (
-				select 1 from public.food_servings serving
-				where serving.user_food_list_item_id = item.id
+			and (
+				(
+					jsonb_typeof(item.food -> 'foodServings') = 'array'
+					and jsonb_array_length(item.food -> 'foodServings') > 0
+					and not exists (
+						select 1 from public.food_servings serving
+						where serving.user_food_list_item_id = item.id
+					)
+				)
+				or (
+					coalesce(jsonb_array_length(
+						case
+							when jsonb_typeof(item.food -> 'foodServings') = 'array'
+								then item.food -> 'foodServings'
+							else '[]'::jsonb
+						end
+					), 0) = 0
+					and exists (
+						select 1 from public.food_servings serving
+						where serving.user_food_list_item_id = item.id
+					)
+				)
 			)
 	),
-	'all reported-serving fixtures hydrate normalized serving rows'
+	'normalized list servings exactly match source-backed serving availability'
 );
 
 select ok(
@@ -246,9 +276,69 @@ select is(
 		select count(*) from public.shared_products product
 		where product.source_reference like 'local-qa-%'
 			or product.source_reference like 'local-qa:%'
+			or product.source = 'usda'
 	),
-	22::bigint,
-	'the local catalog contains all packaged and generic QA foods'
+		105::bigint,
+	'the local catalog contains all focused and source-shaped QA foods'
+);
+
+select is(
+	(
+		select count(distinct item.shared_product_id)
+		from public.user_food_list_items item
+		join auth.users user_row on user_row.id = item.user_id
+		where user_row.email = 'qa-user@blendcalc.local'
+	),
+	100::bigint,
+	'the populated persona has one hundred distinct catalog products across its lists'
+);
+
+select is(
+	(select count(*) from public.shared_products where source = 'usda' and status = 'active'),
+	83::bigint,
+	'the local catalog includes eighty-three real USDA branded-product snapshots'
+);
+
+select is(
+	(select count(*) from public.blendcalc_api_v1_product_readiness where publishable),
+	105::bigint,
+	'every local QA catalog product is searchable through blendCalc API v1'
+);
+
+select ok(
+	not exists (
+		select 1
+		from public.shared_products product
+		where product.source = 'usda'
+			and (
+				product.confidence <> 'imported'
+				or product.canonical_provenance ->> 'source' <> 'usda'
+				or product.canonical_provenance ->> 'verificationMethod' <> 'exact-barcode'
+				or not exists (
+					select 1
+					from public.shared_product_observations observation
+					where observation.id = (product.canonical_provenance ->> 'observationId')::uuid
+						and observation.source = 'usda'
+						and observation.source_license = 'CC0-1.0'
+				)
+			)
+	),
+	'USDA QA products retain exact-barcode evidence and CC0 source attribution'
+);
+
+select ok(
+	not exists (
+		select 1
+		from public.shared_products product
+		where product.source = 'usda'
+			and (
+				select count(distinct nutrient.nutrient_id)
+				from public.food_nutrients nutrient
+				where nutrient.shared_product_id = product.id
+					and nutrient.nutrient_id in (1008, 1004, 1005, 1003, 1093)
+			) <> 5
+	),
+	'every USDA QA product retains all five reported core nutrient values'
 );
 
 select ok(
@@ -268,7 +358,7 @@ select ok(
 select ok(
 	not exists (
 		select 1 from public.shared_products product
-		where (product.source_reference like 'local-qa-%' or product.source_reference like 'local-qa:%')
+		where (product.source_reference like 'local-qa-%' or product.source_reference like 'local-qa:%' or product.source = 'usda')
 			and not exists (
 				select 1 from public.food_nutrients nutrient
 				where nutrient.shared_product_id = product.id

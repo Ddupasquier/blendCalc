@@ -1,6 +1,6 @@
 begin;
 
-select plan(42);
+select plan(46);
 
 select has_table('public', 'profiles', 'profiles table exists');
 select has_table('public', 'user_food_list_items', 'food-list table exists');
@@ -99,6 +99,54 @@ select is(
 	),
 	5,
 	'local QA catalog fixtures are publishable through blendCalc API v1'
+);
+select is(
+	(
+		select count(*)::integer
+		from public.blendcalc_api_v1_product_readiness
+		where publishable
+	),
+	105,
+	'the full local QA catalog is publishable through blendCalc API v1'
+);
+select is(
+	(select count(*)::integer from public.shared_products where source = 'usda' and status = 'active'),
+	83,
+	'local QA includes a broad set of exact USDA branded-product snapshots'
+);
+select ok(
+	not exists (
+		select 1
+		from public.shared_products product
+		where product.source = 'usda'
+			and not exists (
+				select 1
+				from public.food_nutrients nutrient
+				where nutrient.shared_product_id = product.id
+					and nutrient.source = 'usda'
+					and nutrient.source_observation_id is not null
+					and nutrient.mapping_status = 'canonical'
+			)
+	),
+	'USDA catalog snapshots retain normalized nutrient lineage'
+);
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '00867824000001'
+			and product.product_name = 'Apple'
+			and product.food ->> 'fdcId' = '454004'
+			and product.food ->> 'sourceKey' = 'usda'
+	)
+	and exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '00812624010613'
+			and product.product_name = 'Shrimp'
+			and product.food ->> 'fdcId' = '1899566'
+	),
+	'USDA QA snapshots cover distinct produce and seafood identities'
 );
 select ok(
 	not exists (

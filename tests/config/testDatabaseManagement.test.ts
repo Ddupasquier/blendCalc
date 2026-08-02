@@ -1,5 +1,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import {
+	getLocalQaCatalogBarcodes,
+	localQaPersonas,
+	localQaUsdaCatalogBarcodes,
+} from "../../scripts/lib/local_qa_personas.mjs";
 
 const script = readFileSync(
 	"scripts/operations/manage_test_database.mjs",
@@ -101,5 +106,20 @@ describe("local test database management", () => {
 		expect(script).toContain("seedModerationFixtures");
 		expect(script).toContain("QA Reviewable Pantry Crisps");
 		expect(script).toContain("QA Missing Evidence Pantry Crisps");
+	});
+
+	it("loads a broad catalog into the populated QA persona", () => {
+		const populatedPersona = localQaPersonas.find(({ key }) => key === "user");
+		const populatedBarcodes = new Set([
+			...(populatedPersona?.lists.fridge ?? []),
+			...(populatedPersona?.lists.shopping ?? []),
+		]);
+
+		expect(localQaUsdaCatalogBarcodes).toHaveLength(83);
+		expect(new Set(localQaUsdaCatalogBarcodes)).toHaveLength(83);
+		expect(populatedBarcodes).toHaveLength(100);
+		expect(populatedPersona?.lists.fridge).toHaveLength(60);
+		expect(populatedPersona?.lists.shopping).toHaveLength(40);
+		expect(getLocalQaCatalogBarcodes()).toHaveLength(102);
 	});
 });

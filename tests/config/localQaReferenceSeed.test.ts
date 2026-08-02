@@ -49,6 +49,16 @@ describe("local QA reference seed", () => {
 		expect(seed).toContain("'Tomatoes, Green, Raw'");
 	});
 
+	it("provides a broad real USDA catalog corpus with source attribution", () => {
+		expect(seed).toContain("qa_usda_products");
+		expect(seed).toContain("'00867824000001'");
+		expect(seed).toContain("'00812624010613'");
+		expect(seed).toContain("'00071754410030'");
+		expect(seed).toContain("'CC0-1.0'");
+		expect(seed).toContain("'exact-barcode'");
+		expect(seed).toContain("USDA FoodData Central");
+	});
+
 	it("restores canonical validation rules after destructive QA", () => {
 		expect(seed).toContain("update public.nutrient_relationship_rules");
 		expect(seed).toContain("where source = 'nutrient_definitions'");

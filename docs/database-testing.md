@@ -79,21 +79,32 @@ fixed-ID submissions are not recreated by `start` after they have been reviewed;
   intentionally exceeds 1,000 enabled rows so server-side category search and selection
   persistence can be tested beyond the former client-list cutoff without copying
   production data.
-- The local catalog contains 22 approved synthetic foods: five packaged-product cases
-  plus seventeen generic foods spanning produce, dairy, seeds, beverages, meat,
-  shellfish, leafy greens, spices, and juice. `Strawberries, Raw` intentionally remains
-  outside the populated account's lists so search always has a deterministic unsaved
-  result.
+- The local catalog contains 105 approved foods: five focused package-label fixtures,
+  seventeen generic fixtures, and eighty-three source-shaped USDA FoodData Central
+  Branded snapshots. The snapshots retain their exact GTIN, FDC ID, source category,
+  raw ingredient statement when reported, selected source nutrient records, source
+  dates, and CC0 attribution. Every record is publishable through the local blendCalc
+  API without making a live provider request.
+- The populated QA user starts with 100 distinct catalog products: 60 in Fridge and 40
+  in Shopping List. The remaining five catalog products stay searchable but unsaved,
+  preserving add-item coverage while providing enough saved data for pagination,
+  filtering, movement, and list-performance QA.
   `Tomatoes, Green, Raw` preserves USDA SR Legacy identity `170456` and provides a
   deterministic multi-word partial-search result for `green tomat`.
-- Local catalog products are authored package-label fixtures with normalized nutrients,
-  servings, categories, ingredients, allergen declarations, traces, package metadata,
-  and field-level provenance. They are available through the same blendCalc app and API
-  routes as production catalog products. One fixture intentionally reports no serving.
+- Focused local catalog products include normalized nutrients, servings, categories,
+  ingredients, allergen declarations, traces, package metadata, and field-level
+  provenance. USDA snapshots normalize only reported nutrient values and exact
+  source-weight servings. Volume-only or malformed source serving units remain in the
+  raw observation and do not become guessed gram conversions. USDA ingredient text is
+  retained without inventing structured ingredients, allergen declarations, traces, or
+  dietary classifications that the source did not report. One focused fixture
+  intentionally reports no serving.
 - `npm run dev:test` disables runtime USDA and Open Food Facts lookups. A barcode missing
   from the local catalog returns the normal not-found result instead of silently spending
   provider or hosted-database quota. Provider adapters remain covered through injected
-  unit tests and separate explicit live-source audits.
+  unit tests, source-shaped Open Food Facts application fixtures, and separate explicit
+  live-source audits. Open Food Facts records are not silently republished through the
+  blendCalc API because their redistribution model remains separate from USDA CC0 data.
 - Local login-capable users are created only after the local Auth and PostgREST APIs are
   available.
 

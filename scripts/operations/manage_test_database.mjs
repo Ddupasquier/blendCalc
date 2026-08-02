@@ -2,9 +2,10 @@
  * Purpose: Manage blendCalc's isolated local Supabase test stack, generate its
  * gitignored environment file, seed local-only QA accounts with deterministic
  * onboarding, list, Saved, Mix, preference, and moderation state, and run pgTAP
- * checks. Personas cover populated, warning-heavy, empty, guided-tour, moderator,
- * and admin workflows. Rerunning start repairs missing baseline fixtures without
- * moving existing list items; reset recreates the exact documented baseline.
+ * checks. The populated persona receives one hundred distinct catalog products while
+ * focused personas preserve warning-heavy, empty, guided-tour, moderator, and admin
+ * workflows. Rerunning start repairs missing baseline fixtures without moving existing
+ * list items; reset recreates the exact documented baseline.
  * Run: `npm run db:test:start`, `npm run db:test:reset`,
  * `npm run db:test:verify`, `npm run db:test:status`, or `npm run db:test:stop`.
  * Reset and verify are destructive only to the localhost database and never use the

@@ -1,11 +1,100 @@
 /**
- * Purpose: Define deterministic local-only QA personas, catalog identities, saved
- * mixes, and profile states for `scripts/operations/manage_test_database.mjs`.
+ * Purpose: Define deterministic local-only QA personas, a broad USDA-backed catalog
+ * selection, saved mixes, and profile states for
+ * `scripts/operations/manage_test_database.mjs`. The populated persona intentionally
+ * carries one hundred distinct products across Fridge and Shopping List so pagination,
+ * filtering, movement, and list performance are testable immediately.
  * Do not run directly. Reset the isolated stack
  * with `npm run db:test:reset` to recreate the exact states below.
  */
 
 export const localQaPassword = "BlendCalc-Local-QA-2026!";
+
+export const localQaUsdaCatalogBarcodes = [
+	"00867824000001",
+	"00016459200441",
+	"00717434503112",
+	"00074323095067",
+	"00041345115585",
+	"00115418008323",
+	"00888903450715",
+	"00007078413102",
+	"00041303055151",
+	"00041190085439",
+	"00853237003067",
+	"00051933369283",
+	"00051022600112",
+	"00639266392538",
+	"00007789048538",
+	"00079893408866",
+	"00814944011158",
+	"00004656700201",
+	"00737208004119",
+	"00072700102827",
+	"00041668019669",
+	"00044100146992",
+	"00853910006170",
+	"00032601033125",
+	"00644209425563",
+	"00041192100116",
+	"00753182823638",
+	"00679948100150",
+	"00620811144115",
+	"00028400580083",
+	"00041290355296",
+	"00072728020059",
+	"00076397036205",
+	"00070038349327",
+	"00041770581702",
+	"00796853100065",
+	"00796853100010",
+	"00037600276269",
+	"00785331755538",
+	"00851016002522",
+	"00653849094947",
+	"00812624010613",
+	"00850037362288",
+	"00092825098614",
+	"00854217005026",
+	"00780746111559",
+	"00058449891000",
+	"00639372233022",
+	"00041196448894",
+	"00850122004017",
+	"00746132000937",
+	"00000001481038",
+	"00609207617761",
+	"00079471148443",
+	"00007789049585",
+	"00041250152606",
+	"08801105940428",
+	"00095248823740",
+	"00071166013241",
+	"00049022598836",
+	"00041250938415",
+	"00688267098130",
+	"00078742237329",
+	"00814944010656",
+	"00076185004911",
+	"00709481000201",
+	"00716519002106",
+	"00018894899730",
+	"00070038596929",
+	"00074175505288",
+	"00099482489359",
+	"00049508002512",
+	"00002114029705",
+	"00850276005014",
+	"00051497081447",
+	"00056833000205",
+	"00042400258872",
+	"00657484200138",
+	"00041380196402",
+	"00029737000039",
+	"00850010430133",
+	"00070038321064",
+	"00071754410030",
+];
 
 export const localQaSavedDrinks = {
 	morningGreen: {
@@ -71,12 +160,14 @@ const populatedLists = {
 		"09000000000100",
 		"09000000000124",
 		"09000000000131",
+		...localQaUsdaCatalogBarcodes.slice(0, 45),
 	],
 	shopping: [
 		"00869759000149",
 		"00011110904416",
 		"09000000000155",
 		"09000000000162",
+		...localQaUsdaCatalogBarcodes.slice(45, 81),
 	],
 };
 
@@ -195,12 +286,24 @@ export const localQaPersonas = [
 	},
 ].map((persona) => ({ ...persona, password: localQaPassword }));
 
+/** @param {string} key */
+const requireLocalQaSavedDrink = (key) => {
+	if (!Object.hasOwn(localQaSavedDrinks, key)) {
+		throw new Error(`Unknown local QA Saved fixture: ${key}.`);
+	}
+	return localQaSavedDrinks[
+		/** @type {keyof typeof localQaSavedDrinks} */ (key)
+	];
+};
+
 export const getLocalQaCatalogBarcodes = () => [
 	...new Set(localQaPersonas.flatMap((persona) => [
 		...persona.lists.fridge,
 		...persona.lists.shopping,
 		...persona.savedDrinkKeys.flatMap((key) =>
-			localQaSavedDrinks[key].ingredients.map(([barcode]) => barcode),
+			requireLocalQaSavedDrink(key).ingredients.map((ingredient) =>
+				String(ingredient[0]),
+			),
 		),
 	])),
 ];
