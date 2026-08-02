@@ -1,6 +1,6 @@
 # Development Rules
 
-Last reviewed: 2026-07-28
+Last reviewed: 2026-08-01
 
 ## Purpose
 
@@ -1449,6 +1449,18 @@ After a group's final active task moves to the completed archive or is retired, 
 the empty group shell and its workflow-category link from the active tracker. The
 completed archive preserves its context; active trackers must not keep placeholder
 groups for possible future additions.
+
+At the end of every requested QA run, make one deliberate closeout pass over every task
+that remains marked as a failure, blocker, partial result, or input-needed state. Retry
+each remaining check when the required environment is available, first restoring its
+documented deterministic baseline and clearing stale app, database, browser, or service
+state when relevant. Use the full representative corpus required by rule 46 rather than
+repeating only the original example. Record the second attempt and its evidence. A
+retry is an additional opportunity to prove the behavior, never permission to weaken
+the expected outcome, omit required coverage, or turn an unresolved result into a pass.
+If the named browser, physical device, assistive technology, external service, user
+decision, or other required dependency remains unavailable, do not simulate success or
+loop pointlessly; preserve the honest active status and the exact remaining blocker.
 
 **41a.** <a id="rule-qa-priorities"></a>Assign every active QA group one explicit MVP
 priority, place the whole group in the matching active priority tracker, and keep that

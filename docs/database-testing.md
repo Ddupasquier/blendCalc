@@ -37,7 +37,7 @@ baseline records without moving a tester's existing list items. Use
 
 | Persona | Email | Deterministic state |
 |---|---|---|
-| Populated | `qa-user@blendcalc.local` | 15 Fridge items, 4 Shopping items, 4 Saved mixes, one active 10-food Mix, tutorial complete |
+| Populated | `qa-user@blendcalc.local` | 60 Fridge items, 40 Shopping items, 4 Saved mixes, one active 10-food Mix, tutorial complete |
 | Warnings | `qa-preferences@blendcalc.local` | Vegan and gluten-free restrictions; peanut and shellfish allergies; 7 foods covering beef, shrimp, dairy, peanut, wheat/soy, egg, and tree nuts |
 | Empty | `qa-empty@blendcalc.local` | No list items, Saved mixes, or Mix state; tutorial complete |
 | Onboarding | `qa-onboarding@blendcalc.local` | Guided tour pending, 10 Fridge foods, `QA Morning Green`, and an active Mix so every tour target exists |
@@ -147,8 +147,14 @@ corpus containing the original input, comparable positive cases across the affec
 source or data path, and applicable negative and boundary controls. Record every tested
 input and its result in the QA evidence. Do not clear a search, barcode, validation,
 calculation, mapping, or data-behavior task from one successful example. See
-[development rule 46](dev-rules/dev-rules.md#rule-qa-process) for the authoritative QA
+[the QA process rule](dev-rules/dev-rules.md#rule-qa-process) for the authoritative QA
 requirement.
+
+Before ending a requested database or data-flow QA run, restore the documented baseline
+and retry every remaining deterministic failure, blocker, or partial result once when
+its dependencies are available. The retry must rerun the representative corpus and
+applicable negative or boundary controls; it must not convert a repeated failure or an
+unavailable dependency into a passing result.
 
 ## Food-Safety Corpus
 
