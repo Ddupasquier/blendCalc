@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -129,5 +130,25 @@ describe("FoodCategoryPicker", () => {
 		expect(trigger).toHaveAttribute("aria-expanded", "false");
 		expect(escapedPickerKeydown).not.toHaveBeenCalled();
 		window.removeEventListener("keydown", escapedPickerKeydown);
+	});
+
+	it("keeps option focus outlines inside the nested results scroller", () => {
+		const styles = readFileSync(
+			"src/lib/components/ingredients/manual-entry/FoodCategoryPicker/FoodCategoryPicker.scss",
+			"utf8",
+		);
+		const optionsRule = styles.match(
+			/\.food-category-picker__options\s*{(?<body>[\s\S]*?)\n}/,
+		);
+
+		expect(styles).toContain(
+			"$category-picker-focus-clearance: $app-gap-2xs;",
+		);
+		expect(optionsRule?.groups?.body).toContain(
+			"padding: $category-picker-focus-clearance;",
+		);
+		expect(optionsRule?.groups?.body).toContain(
+			"scroll-padding: $category-picker-focus-clearance;",
+		);
 	});
 });

@@ -269,7 +269,8 @@ with categories(id, label, normalized_value, symbol_key) as (
 		('qa-protein-powders', 'Protein Powders', 'protein powders', 'protein-powder'),
 		('qa-nut-seed-butters', 'Nut & Seed Butters', 'nut and seed butters', 'nuts-seeds'),
 		('qa-dips', 'Dips and Salsa', 'dips and salsa', 'sauces-condiments'),
-		('qa-preserves', 'Jams and Preserves', 'jams and preserves', 'spreads-preserves')
+		('qa-preserves', 'Jams and Preserves', 'jams and preserves', 'spreads-preserves'),
+		('jams', 'Jams', 'jams', 'spreads-preserves')
 )
 insert into public.custom_food_category_options (
 	id,
@@ -464,7 +465,7 @@ values
 		'00021130462506',
 		'Strawberry Jelly, Strawberry',
 		'QA Pantry',
-		'qa-preserves',
+		'jams',
 		'local-qa-label:00021130462506',
 		'{
 			"fdcId": 9100001,
@@ -498,8 +499,8 @@ values
 			"labels": ["Local QA fixture"],
 			"packageQuantity": {"label":"18 oz","amount":18,"unit":"oz"},
 			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"completeness":1},
-			"categories": ["Jams and Preserves"],
-			"categoryOptionId": "qa-preserves",
+			"categories": ["Jams"],
+			"categoryOptionId": "jams",
 			"barcodeSource": "community",
 			"sourceKey": "shared-catalog",
 			"sourceLabel": "blendCalc Community",
@@ -514,49 +515,55 @@ values
 		'81000000-0000-4000-8000-000000000013',
 		'00021130493609',
 		'Roasted Onion & Garlic Pasta Sauce',
-		'QA Pantry',
+		'Safeway, Inc.',
 		'qa-dips',
 		'local-qa-label:00021130493609',
 		'{
-			"fdcId": 9100002,
+			"fdcId": 2032704,
 			"description": "Roasted Onion & Garlic Pasta Sauce",
 			"nameProvenance": "source",
-			"brandOwner": "QA Pantry",
+			"brandOwner": "Safeway, Inc.",
+			"brandName": "Signature Select",
 			"foodNutrients": [
-				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":48,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
-				{"nutrientId":1004,"nutrientName":"Total lipid (fat)","nutrientNumber":"204","unitName":"G","value":1.2,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
-				{"nutrientId":1005,"nutrientName":"Carbohydrate, by difference","nutrientNumber":"205","unitName":"G","value":8.8,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
-				{"nutrientId":1003,"nutrientName":"Protein","nutrientNumber":"203","unitName":"G","value":1.6,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
-				{"nutrientId":1079,"nutrientName":"Fiber, total dietary","nutrientNumber":"291","unitName":"G","value":1.6,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
-				{"nutrientId":2000,"nutrientName":"Sugars, total including NLEA","nutrientNumber":"269","unitName":"G","value":4.8,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
-				{"nutrientId":1093,"nutrientName":"Sodium, Na","nutrientNumber":"307","unitName":"MG","value":440,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"}
+				{"nutrientId":1253,"nutrientName":"Cholesterol","nutrientNumber":"601","unitName":"MG","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical","sourceNutrientKey":"1253","derivationCode":"LCCD","derivationDescription":"Calculated from a daily value percentage per serving size measure"},
+				{"nutrientId":1079,"nutrientName":"Fiber, total dietary","nutrientNumber":"291","unitName":"G","value":1.6,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1079","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1092,"nutrientName":"Potassium, K","nutrientNumber":"306","unitName":"MG","value":280,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1092","derivationCode":"LCCD","derivationDescription":"Calculated from a daily value percentage per serving size measure"},
+				{"nutrientId":1087,"nutrientName":"Calcium, Ca","nutrientNumber":"301","unitName":"MG","value":48,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1087","derivationCode":"LCCD","derivationDescription":"Calculated from a daily value percentage per serving size measure"},
+				{"nutrientId":1089,"nutrientName":"Iron, Fe","nutrientNumber":"303","unitName":"MG","value":0.86,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1089","derivationCode":"LCCD","derivationDescription":"Calculated from a daily value percentage per serving size measure"},
+				{"nutrientId":2000,"nutrientName":"Total Sugars","nutrientNumber":"269","unitName":"G","value":4.8,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"2000","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1257,"nutrientName":"Fatty acids, total trans","nutrientNumber":"605","unitName":"G","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical","sourceNutrientKey":"1257","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1005,"nutrientName":"Carbohydrate, by difference","nutrientNumber":"205","unitName":"G","value":8.8,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1005","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1004,"nutrientName":"Total lipid (fat)","nutrientNumber":"204","unitName":"G","value":1.2,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1004","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":48,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1008","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1235,"nutrientName":"Sugars, added","nutrientNumber":"539","unitName":"G","value":0.8,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1235","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1003,"nutrientName":"Protein","nutrientNumber":"203","unitName":"G","value":1.6,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1003","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"},
+				{"nutrientId":1258,"nutrientName":"Fatty acids, total saturated","nutrientNumber":"606","unitName":"G","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical","sourceNutrientKey":"1258","derivationCode":"LCCD","derivationDescription":"Calculated from a daily value percentage per serving size measure"},
+				{"nutrientId":1110,"nutrientName":"Vitamin D (D2 + D3), International Units","nutrientNumber":"324","unitName":"IU","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical","sourceNutrientKey":"1110","derivationCode":"LCCD","derivationDescription":"Calculated from a daily value percentage per serving size measure"},
+				{"nutrientId":1093,"nutrientName":"Sodium, Na","nutrientNumber":"307","unitName":"MG","value":440,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical","sourceNutrientKey":"1093","derivationCode":"LCCS","derivationDescription":"Calculated from value per serving size measure"}
 			],
-			"reportedNutrientIds": [1008,1004,1005,1003,1079,2000,1093],
+			"reportedNutrientIds": [1253,1079,1092,1087,1089,2000,1257,1005,1004,1008,1235,1003,1258,1110,1093],
 			"dataType": "Branded",
 			"foodIdentityType": "packaged",
 			"servingSize": 125,
 			"servingSizeUnit": "g",
 			"householdServingFullText": "1/2 cup (125 g)",
 			"hasSourceServing": true,
-			"foodServings": [{"label":"1/2 cup (125 g)","gramWeight":125,"amount":0.5,"unitKey":"cup","isPrimary":true,"measureType":"Package serving","isHouseholdMeasure":true,"sourceMeasureKey":"label-serving","origin":"package-label","gramWeightMethod":"source-reported"}],
+			"foodServings": [{"label":"1/2 cup (125 g)","gramWeight":125,"amount":0.5,"unitKey":"cup","isPrimary":true,"measureType":"Package serving","isHouseholdMeasure":true,"sourceMeasureKey":"usda:2032704:serving","origin":"package-label","gramWeightMethod":"source-reported"}],
 			"gtinUpc": "00021130493609",
 			"barcode": "00021130493609",
-			"ingredients": "Diced tomatoes, tomato puree, olive oil, roasted onions, roasted garlic, salt, sugar, spices.",
-			"ingredientList": ["Diced tomatoes","Tomato puree","Olive oil","Roasted onions","Roasted garlic","Salt","Sugar","Spices"],
-			"allergens": [],
-			"traces": [],
-			"dietaryTags": ["vegan","vegetarian"],
-			"labels": ["Local QA fixture"],
-			"packageQuantity": {"label":"24 oz","amount":24,"unit":"oz"},
-			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"completeness":1},
+			"ingredients": "DICED TOMATOES IN JUICE (TOMATOES, TOMATO JUICE, CALCIUM CHLORIDE, CITRIC ACID), TOMATO PUREE (WATER, TOMATO PASTE), EXTRA VIRGIN OLIVE OIL, SALT, SUGAR, ROASTED GARLIC, ROASTED RED ONIONS, ROASTED YELLOW ONIONS, DEHYDRATED ONIONS, VINEGAR, GARLIC POWDER, SPICES.",
+			"ingredientList": ["Diced tomatoes in juice","Tomatoes","Tomato juice","Calcium chloride","Citric acid","Tomato puree","Water","Tomato paste","Extra virgin olive oil","Salt","Sugar","Roasted garlic","Roasted red onions","Roasted yellow onions","Dehydrated onions","Vinegar","Garlic powder","Spices"],
+			"packageQuantity": {"label":"24 oz/680 g"},
+			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"sourcePublishedDate":"2021-10-28","sourceModifiedDate":"2021-08-26","sourceCategory":"Prepared Pasta & Pizza Sauces","sourceDataType":"Branded","sourceServing":{"amount":125,"unit":"g","label":"1/2 cup"}},
 			"categories": ["Dips and Salsa"],
+			"sourceCategories": ["Prepared Pasta & Pizza Sauces"],
 			"categoryOptionId": "qa-dips",
-			"barcodeSource": "community",
-			"sourceKey": "shared-catalog",
-			"sourceLabel": "blendCalc Community",
-			"sourceDataType": "local-qa-label",
-			"trustStatus": "moderator-reviewed",
-			"sharedProductConfidence": "moderator-reviewed"
+			"barcodeSource": "usda",
+			"sourceKey": "usda",
+			"sourceLabel": "USDA FoodData Central",
+			"sourceDataType": "Branded",
+			"trustStatus": "imported",
+			"sharedProductConfidence": "imported"
 		}'::jsonb
 	),
 	(
@@ -709,6 +716,53 @@ values
 		}'::jsonb
 	);
 
+update private.qa_catalog_product_fixtures
+set
+	evidence_source = 'usda',
+	evidence_reference = '2032704',
+	evidence_license = 'CC0-1.0',
+	evidence_confidence = 'imported',
+	evidence_method = 'exact-barcode',
+	source_category = 'Prepared Pasta & Pizza Sauces',
+	raw_source_payload = '{
+		"source":"USDA FoodData Central",
+		"fdcId":2032704,
+		"description":"ROASTED ONION & GARLIC PASTA SAUCE, ROASTED ONION & GARLIC",
+		"dataType":"Branded",
+		"gtinUpc":"021130493609",
+		"publicationDate":"2021-10-28",
+		"modifiedDate":"2021-08-26",
+		"brandOwner":"Safeway, Inc.",
+		"brandName":"SIGNATURE SELECT",
+		"ingredients":"DICED TOMATOES IN JUICE (TOMATOES, TOMATO JUICE, CALCIUM CHLORIDE, CITRIC ACID), TOMATO PUREE (WATER, TOMATO PASTE), EXTRA VIRGIN OLIVE OIL, SALT, SUGAR, ROASTED GARLIC, ROASTED RED ONIONS, ROASTED YELLOW ONIONS, DEHYDRATED ONIONS, VINEGAR, GARLIC POWDER, SPICES.",
+		"marketCountry":"United States",
+		"brandedFoodCategory":"Prepared Pasta & Pizza Sauces",
+		"servingSize":125,
+		"servingSizeUnit":"g",
+		"householdServingFullText":"1/2 cup",
+		"packageWeight":"24 oz/680 g",
+		"serving":{"servingSize":125,"servingSizeUnit":"g","householdServingFullText":"1/2 cup"},
+		"foodNutrients":[
+			{"nutrientId":1253,"nutrientName":"Cholesterol","nutrientNumber":"601","unitName":"mg","value":0,"derivationCode":"LCCD"},
+			{"nutrientId":1079,"nutrientName":"Fiber, total dietary","nutrientNumber":"291","unitName":"g","value":1.6,"derivationCode":"LCCS"},
+			{"nutrientId":1092,"nutrientName":"Potassium, K","nutrientNumber":"306","unitName":"mg","value":280,"derivationCode":"LCCD"},
+			{"nutrientId":1087,"nutrientName":"Calcium, Ca","nutrientNumber":"301","unitName":"mg","value":48,"derivationCode":"LCCD"},
+			{"nutrientId":1089,"nutrientName":"Iron, Fe","nutrientNumber":"303","unitName":"mg","value":0.86,"derivationCode":"LCCD"},
+			{"nutrientId":2000,"nutrientName":"Total Sugars","nutrientNumber":"269","unitName":"g","value":4.8,"derivationCode":"LCCS"},
+			{"nutrientId":1257,"nutrientName":"Fatty acids, total trans","nutrientNumber":"605","unitName":"g","value":0,"derivationCode":"LCCS"},
+			{"nutrientId":1005,"nutrientName":"Carbohydrate, by difference","nutrientNumber":"205","unitName":"g","value":8.8,"derivationCode":"LCCS"},
+			{"nutrientId":1004,"nutrientName":"Total lipid (fat)","nutrientNumber":"204","unitName":"g","value":1.2,"derivationCode":"LCCS"},
+			{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"kcal","value":48,"derivationCode":"LCCS"},
+			{"nutrientId":1235,"nutrientName":"Sugars, added","nutrientNumber":"539","unitName":"g","value":0.8,"derivationCode":"LCCS"},
+			{"nutrientId":1003,"nutrientName":"Protein","nutrientNumber":"203","unitName":"g","value":1.6,"derivationCode":"LCCS"},
+			{"nutrientId":1258,"nutrientName":"Fatty acids, total saturated","nutrientNumber":"606","unitName":"g","value":0,"derivationCode":"LCCD"},
+			{"nutrientId":1110,"nutrientName":"Vitamin D (D2 + D3), International Units","nutrientNumber":"324","unitName":"IU","value":0,"derivationCode":"LCCD"},
+			{"nutrientId":1093,"nutrientName":"Sodium, Na","nutrientNumber":"307","unitName":"mg","value":440,"derivationCode":"LCCS"}
+		],
+		"fixtureSnapshotVersion":1
+	}'::jsonb
+where barcode = '00021130493609';
+
 with qa_generic_foods (
 	fixture_number,
 	barcode,
@@ -749,7 +803,9 @@ with qa_generic_foods (
 		(14, '09000000000148', 9200014, 'Egg, Whole, Cooked', 'qa-dairy', 'Dairy and Egg Products', 155, 10.6, 1.12, 12.6, 0, 1.12, 124, 50, 1, null::text, '1 large egg (50 g)', 'Egg.', '["Egg"]'::jsonb, '["egg"]'::jsonb, '["vegetarian"]'::jsonb),
 		(15, '09000000000155', 9200015, 'Tomato, Roma, Raw', 'qa-vegetables', 'Vegetables and Vegetable Products', 18, 0.2, 3.9, 0.9, 1.2, 2.6, 5, 62, 1, null::text, '1 medium tomato (62 g)', 'Roma tomato.', '["Roma tomato"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
 		(16, '09000000000162', 9200016, 'Lemon Juice, Raw', 'qa-fruit', 'Fruits and Fruit Juices', 22, 0.24, 6.9, 0.35, 0.3, 2.52, 1, 15, 1, 'tbsp', '1 tbsp (15 g)', 'Lemon juice.', '["Lemon juice"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
-		(17, '09000000000179', 170456, 'Tomatoes, Green, Raw', 'qa-vegetables', 'Vegetables and Vegetable Products', 23, 0.2, 5.1, 1.2, 1.1, 4, 13, 180, 1, 'cup', '1 cup (180 g)', 'Green tomato.', '["Green tomato"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb)
+		(17, '09000000000179', 170456, 'Tomatoes, Green, Raw', 'qa-vegetables', 'Vegetables and Vegetable Products', 23, 0.2, 5.1, 1.2, 1.1, 4, 13, 180, 1, 'cup', '1 cup (180 g)', 'Green tomato.', '["Green tomato"]'::jsonb, '[]'::jsonb, '["vegan","vegetarian"]'::jsonb),
+		(18, '09000000000186', 9200018, 'Babyfood, Ravioli, Cheese Filled, With Tomato Sauce', 'qa-meals', 'Meals, Entrees, and Side Dishes', 98, 2.7, 14.2, 4.1, 1.2, 2.8, 210, 100, 1, null::text, '100 g', 'Pasta, tomato sauce, cheese.', '["Pasta","Tomato sauce","Cheese"]'::jsonb, '["milk","wheat"]'::jsonb, '["vegetarian"]'::jsonb),
+		(19, '09000000000193', 9200019, 'Babyfood, Dinner, Macaroni And Tomato', 'qa-meals', 'Meals, Entrees, and Side Dishes', 82, 1.5, 14.8, 2.8, 1.1, 3.1, 145, 100, 1, null::text, '100 g', 'Macaroni, tomato puree.', '["Macaroni","Tomato puree"]'::jsonb, '["wheat"]'::jsonb, '["vegan","vegetarian"]'::jsonb)
 )
 insert into private.qa_catalog_product_fixtures (
 	product_id,
@@ -964,7 +1020,165 @@ select
 	source_category,
 	raw_source_payload,
 	food
-from qa_usda_products;
+from qa_usda_products
+where public.is_valid_gtin(barcode);
+
+-- USDA occasionally publishes source identifiers that resemble UPCs but fail the
+-- GTIN check digit. Keep those identifiers in source audit data only; barcode QA uses
+-- independently verified exact-GTIN records so the public API contract stays honest.
+with qa_valid_usda_replacements (
+	fixture_number,
+	barcode,
+	fdc_id,
+	product_name,
+	brand_owner,
+	category_option_id,
+	category_label,
+	source_category,
+	source_description,
+	ingredients,
+	published_date,
+	modified_date,
+	market_country,
+	serving_grams,
+	serving_label,
+	calories,
+	total_fat,
+	total_carbohydrates,
+	protein,
+	dietary_fiber,
+	total_sugars,
+	sodium
+) as (
+	values
+		(84, '00084114902047', 2772482, 'Kettle Brand Jalapeno Kettle Potato Chips', 'Snyder''s-Lance Inc.', 'qa-snacks', 'Snacks', 'Snacks', 'KETTLE BRAND JALAPENO KETTLE POTATO CHIPS, GLUTEN-FREE, NON-GMO, 7.5 OZ BAG', 'INGREDIENTS: POTATOES, VEGETABLE OILS (CANOLA, SUNFLOWER AND/OR SAFFLOWER), SALT, SUGAR, ONION POWDER, SPICES, TORULA YEAST, YEAST EXTRACT, GARLIC POWDER, JALAPEO PEPPER POWDER, NATURAL FLAVORS, PARSLEY.', '2026-07-23', '2026-06-29', 'US', 28::numeric, '1 oz (28 g/about 13 chips)', 536::numeric, 32.14::numeric, 53.57::numeric, 7.14::numeric, 7.1::numeric, 3.57::numeric, 607::numeric),
+		(85, '00041570054130', 2757275, 'Blue Diamond Almond Breeze Almondmilk, Unsweetened Original', 'Blue Diamond', 'qa-beverages', 'Beverages', 'Milk/Milk Substitutes', 'BLUE DIAMOND KOSHER ALMOND BREEZE ALMONDMILK UNSWEETENED ORIGINAL -- 32 FL OZ', 'Other Ingredients: Almondmilk (filtered water, almonds), calcium carbonate, sea salt, potassium citrate, sunflower lecithin, gellan gum, natural flavors, D-alpha-tocopherol (natural Vitamin E). Contains Almonds All products are produced in a stringent allergen control enviroment.', '2026-04-23', null, 'United States', 240, '240 g', 12.5, 1.0417, 0.4167, 0.4167, 0.4167, 0, 70.8333),
+		(86, '00076371011112', 2038883, 'Tofu', 'House Foods America Corporation', 'qa-legumes', 'Legumes and Legume Products', 'Other Meats', 'TOFU', 'WATER, SOYBEANS, CALCIUM SULFATE, CALCIUM CHLORIDE', '2021-10-28', '2020-11-19', 'United States', 85, '3 oz', 94, 5.29, 2.35, 9.41, 2.4, 0, 12),
+		(87, '00000020865153', 1028841, 'Salmon', 'Not a Branded Item', 'qa-seafood', 'Finfish and Shellfish Products', 'Fish & Seafood', 'SALMON', 'FARM RAISED FISH (SALMON).', '2020-06-26', '2020-04-13', 'United States', 142, '5 oz', 232, 15.49, 0, 19.01, 0, 0, 63),
+		(88, '00814343020355', 2131322, 'Instant Oatmeal, Organic Just Oats', 'KeHE Distributors, LLC', 'qa-grains', 'Cereal Grains and Pasta', 'Cereal', 'INSTANT OATMEAL ORGANIC JUST OATS, INSTANT OATMEAL', 'ORGANIC ROLLED OATS.', '2021-10-28', '2019-10-28', 'United States', 40, '1 packet', 375, 6.25, 67.5, 15, 10, 2.5, 0),
+		(89, '00011863119181', 2428039, 'Cheddar', 'Sartori Company', 'qa-dairy', 'Dairy and Egg Products', 'Cheese', 'CHEDDAR', 'PASTEURIZED MILK, CHEESE CULTURES, SALT, ENZYMES', '2022-12-22', '2020-02-26', 'United States', 28, '1 oz', 393, 32.14, 0, 25, 0, 0, 643),
+		(90, '00852945006063', 2653420, 'Black Beans', 'Seneca Foods Corporation', 'qa-legumes', 'Legumes and Legume Products', 'Canned & Bottled Beans', 'BLACK BEANS', 'ORGANIC BLACK BEANS, WATER, SEA SALT.', '2023-10-26', '2023-09-19', 'United States', 125, '1/2 cup', 88, 0, 14.4, 4.8, 3.2, 0.8, 112)
+)
+insert into private.qa_catalog_product_fixtures (
+	product_id,
+	revision_id,
+	observation_id,
+	barcode,
+	product_name,
+	brand_owner,
+	category_option_id,
+	source_reference,
+	catalog_source,
+	catalog_confidence,
+	evidence_source,
+	evidence_reference,
+	evidence_license,
+	evidence_confidence,
+	evidence_method,
+	source_category,
+	raw_source_payload,
+	food
+)
+select
+	('84000000-0000-4000-8000-' || lpad((fixture_number * 10 + 1)::text, 12, '0'))::uuid,
+	('84000000-0000-4000-8000-' || lpad((fixture_number * 10 + 2)::text, 12, '0'))::uuid,
+	('84000000-0000-4000-8000-' || lpad((fixture_number * 10 + 3)::text, 12, '0'))::uuid,
+	barcode,
+	product_name,
+	brand_owner,
+	category_option_id,
+	fdc_id::text,
+	'usda',
+	'imported',
+	'usda',
+	fdc_id::text,
+	'CC0-1.0',
+	'imported',
+	'exact-barcode',
+	source_category,
+	jsonb_build_object(
+		'source', 'USDA FoodData Central',
+		'fdcId', fdc_id,
+		'description', source_description,
+		'dataType', 'Branded',
+		'gtinUpc', barcode,
+		'publicationDate', published_date,
+		'modifiedDate', modified_date,
+		'brandOwner', brand_owner,
+		'ingredients', ingredients,
+		'marketCountry', market_country,
+		'foodCategory', source_category,
+		'serving', jsonb_build_object('servingSize', serving_grams, 'servingSizeUnit', 'g', 'householdServingFullText', serving_label),
+		'foodNutrients', jsonb_build_array(
+			jsonb_build_object('nutrientId', 1008, 'nutrientName', 'Energy', 'nutrientNumber', '208', 'unitName', 'KCAL', 'value', calories),
+			jsonb_build_object('nutrientId', 1004, 'nutrientName', 'Total lipid (fat)', 'nutrientNumber', '204', 'unitName', 'G', 'value', total_fat),
+			jsonb_build_object('nutrientId', 1005, 'nutrientName', 'Carbohydrate, by difference', 'nutrientNumber', '205', 'unitName', 'G', 'value', total_carbohydrates),
+			jsonb_build_object('nutrientId', 1003, 'nutrientName', 'Protein', 'nutrientNumber', '203', 'unitName', 'G', 'value', protein),
+			jsonb_build_object('nutrientId', 1079, 'nutrientName', 'Fiber, total dietary', 'nutrientNumber', '291', 'unitName', 'G', 'value', dietary_fiber),
+			jsonb_build_object('nutrientId', 2000, 'nutrientName', 'Total Sugars', 'nutrientNumber', '269', 'unitName', 'G', 'value', total_sugars),
+			jsonb_build_object('nutrientId', 1093, 'nutrientName', 'Sodium, Na', 'nutrientNumber', '307', 'unitName', 'MG', 'value', sodium)
+		),
+		'fixtureSnapshotVersion', 1
+	),
+	jsonb_build_object(
+		'fdcId', fdc_id,
+		'description', product_name,
+		'nameProvenance', 'source',
+		'brandOwner', brand_owner,
+		'foodNutrients', jsonb_build_array(
+			jsonb_build_object('nutrientId', 1008, 'nutrientName', 'Energy', 'nutrientNumber', '208', 'unitName', 'KCAL', 'value', calories, 'valueOrigin', 'reported', 'valueStatus', case when calories = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical', 'sourceNutrientKey', '1008'),
+			jsonb_build_object('nutrientId', 1004, 'nutrientName', 'Total lipid (fat)', 'nutrientNumber', '204', 'unitName', 'G', 'value', total_fat, 'valueOrigin', 'reported', 'valueStatus', case when total_fat = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical', 'sourceNutrientKey', '1004'),
+			jsonb_build_object('nutrientId', 1005, 'nutrientName', 'Carbohydrate, by difference', 'nutrientNumber', '205', 'unitName', 'G', 'value', total_carbohydrates, 'valueOrigin', 'reported', 'valueStatus', case when total_carbohydrates = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical', 'sourceNutrientKey', '1005'),
+			jsonb_build_object('nutrientId', 1003, 'nutrientName', 'Protein', 'nutrientNumber', '203', 'unitName', 'G', 'value', protein, 'valueOrigin', 'reported', 'valueStatus', case when protein = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical', 'sourceNutrientKey', '1003'),
+			jsonb_build_object('nutrientId', 1079, 'nutrientName', 'Fiber, total dietary', 'nutrientNumber', '291', 'unitName', 'G', 'value', dietary_fiber, 'valueOrigin', 'reported', 'valueStatus', case when dietary_fiber = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical', 'sourceNutrientKey', '1079'),
+			jsonb_build_object('nutrientId', 2000, 'nutrientName', 'Total Sugars', 'nutrientNumber', '269', 'unitName', 'G', 'value', total_sugars, 'valueOrigin', 'reported', 'valueStatus', case when total_sugars = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical', 'sourceNutrientKey', '2000'),
+			jsonb_build_object('nutrientId', 1093, 'nutrientName', 'Sodium, Na', 'nutrientNumber', '307', 'unitName', 'MG', 'value', sodium, 'valueOrigin', 'reported', 'valueStatus', case when sodium = 0 then 'reported-zero' else 'reported' end, 'mappingStatus', 'canonical', 'sourceNutrientKey', '1093')
+		),
+		'reportedNutrientIds', jsonb_build_array(1008, 1004, 1005, 1003, 1079, 2000, 1093),
+		'dataType', 'Branded',
+		'foodIdentityType', 'packaged',
+		'foodCategory', category_label,
+		'servingSize', serving_grams,
+		'servingSizeUnit', 'g',
+		'householdServingFullText', serving_label,
+		'hasSourceServing', true,
+		'foodServings', jsonb_build_array(jsonb_build_object(
+			'label', serving_label,
+			'gramWeight', serving_grams,
+			'amount', null,
+			'unitKey', null,
+			'isPrimary', true,
+			'measureType', 'Source serving',
+			'isHouseholdMeasure', true,
+			'sourceMeasureKey', 'fdc:' || fdc_id::text || ':serving',
+			'origin', 'source-household-measure',
+			'gramWeightMethod', 'source-reported'
+		)),
+		'gtinUpc', barcode,
+		'barcode', barcode,
+		'ingredients', ingredients,
+		'sourceMetadata', jsonb_build_object(
+			'language', 'en',
+			'marketCountries', jsonb_build_array(market_country),
+			'revision', 1,
+			'schemaVersion', 1,
+			'sourcePublishedDate', published_date,
+			'sourceModifiedDate', modified_date,
+			'sourceCategory', source_category,
+			'sourceDataType', 'Branded',
+			'sourceServing', jsonb_build_object('amount', serving_grams, 'unit', 'g', 'label', serving_label)
+		),
+		'categories', jsonb_build_array(category_label),
+		'sourceCategories', jsonb_build_array(source_category),
+		'categoryOptionId', category_option_id,
+		'barcodeSource', 'usda',
+		'sourceKey', 'usda',
+		'sourceLabel', 'USDA FoodData Central',
+		'sourceDataType', 'Branded',
+		'trustStatus', 'imported',
+		'sharedProductConfidence', 'imported'
+	)
+from qa_valid_usda_replacements;
 
 delete from public.food_nutrients
 where shared_product_id in (select product_id from private.qa_catalog_product_fixtures);
@@ -1275,6 +1489,51 @@ do update set
 	source_reference = excluded.source_reference,
 	source_observation_id = excluded.source_observation_id,
 	confidence = excluded.confidence;
+
+insert into public.food_image_assets (
+	id,
+	barcode,
+	shared_product_id,
+	source,
+	source_reference,
+	image_role,
+	image_url,
+	thumbnail_url,
+	license_name,
+	license_url,
+	attribution_text,
+	confidence,
+	status,
+	fetched_at
+)
+select
+	'85000000-0000-4000-8000-000000000001'::uuid,
+	fixture.barcode,
+	fixture.product_id,
+	'open-food-facts',
+	'https://world.openfoodfacts.org/product/0021130493609',
+	'front',
+	'https://images.openfoodfacts.org/images/products/002/113/049/3609/front_en.5.400.jpg',
+	'https://images.openfoodfacts.org/images/products/002/113/049/3609/front_en.5.200.jpg',
+	'CC BY-SA 3.0',
+	'https://creativecommons.org/licenses/by-sa/3.0/',
+	'Open Food Facts contributors',
+	'imported',
+	'active',
+	'2026-08-01T00:00:00Z'
+from private.qa_catalog_product_fixtures fixture
+where fixture.barcode = '00021130493609'
+on conflict (source, source_reference, image_role) do update set
+	barcode = excluded.barcode,
+	shared_product_id = excluded.shared_product_id,
+	image_url = excluded.image_url,
+	thumbnail_url = excluded.thumbnail_url,
+	license_name = excluded.license_name,
+	license_url = excluded.license_url,
+	attribution_text = excluded.attribution_text,
+	confidence = excluded.confidence,
+	status = excluded.status,
+	fetched_at = excluded.fetched_at;
 
 drop table private.qa_catalog_product_fixtures;
 end

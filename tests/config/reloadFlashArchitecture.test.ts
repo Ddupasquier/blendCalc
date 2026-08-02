@@ -55,4 +55,42 @@ describe("reload-flash architecture", () => {
 		expect(savedList).not.toContain("{#key");
 		expect(savedList).toContain("listElement?.scrollTo");
 	});
+
+	it("hydrates durable route data from SSR without an eager browser reload", () => {
+		const fridge = readSource("src/routes/ingredients/fridge/+page.svelte");
+		const mix = readSource("src/routes/mix/+page.svelte");
+		const saved = readSource("src/routes/saved/+page.svelte");
+
+		expect(fridge).toContain("page.data.ingredientData");
+		expect(mix).toContain("page.data.mixData");
+		expect(saved).toContain("page.data.savedData");
+
+		const fridgeMount = fridge.slice(fridge.indexOf("onMount(() =>"));
+		const mixMount = mix.slice(mix.indexOf("onMount(() =>"));
+		const savedMount = saved.slice(saved.indexOf("onMount(() =>"));
+
+		expect(fridgeMount).not.toContain("void loadLists();");
+		expect(mixMount).not.toContain("readCloudSmoothieList");
+		expect(savedMount).not.toContain("void loadSavedDrinks();");
+	});
+
+	it("hydrates direct nutrition routes with the selected food before SSR", () => {
+		const fridge = readSource("src/routes/ingredients/fridge/+page.svelte");
+		const selectedFoodStart = fridge.indexOf("let selectedFood = $state");
+		const routeEffectStart = fridge.indexOf("$effect(() => {", selectedFoodStart);
+
+		expect(fridge).toContain(
+			"const initialIngredientRouteState = getIngredientRouteState(page.url)",
+		);
+		expect(fridge).toContain(
+			"const initialRouteFood = initialIngredientData?.routeFood ??",
+		);
+		expect(fridge).toContain("findIngredientRouteFood(");
+		expect(fridge.slice(selectedFoodStart, routeEffectStart)).toContain(
+			"initialIngredientRouteState.view === INGREDIENT_ROUTE_VIEWS.nutrition",
+		);
+		expect(fridge.slice(selectedFoodStart, routeEffectStart)).toContain(
+			"? initialRouteFood",
+		);
+	});
 });

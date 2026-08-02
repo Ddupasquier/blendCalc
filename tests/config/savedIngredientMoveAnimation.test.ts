@@ -34,4 +34,19 @@ describe("saved ingredient move animation", () => {
 		expect(singleMoveWorkflow).toContain("applyBulkListMove(sourceKey, [food])");
 		expect(singleMoveWorkflow).not.toContain("await loadLists()");
 	});
+
+	it("renders both ingredient destinations through one shared list path", () => {
+		const fridgePage = readSource(
+			"src/routes/ingredients/fridge/+page.svelte",
+		);
+
+		expect(fridgePage.match(/<SavedIngredientList\b/g)).toHaveLength(1);
+		expect(fridgePage).toContain("foods={activeVisibleList}");
+		expect(fridgePage).toContain(
+			"onMoveItem={(food) => moveFoodBetweenLists(activeList, food)}",
+		);
+		expect(fridgePage).toContain(
+			"onRemove={(foodId) => removeFromList(activeList, foodId)}",
+		);
+	});
 });

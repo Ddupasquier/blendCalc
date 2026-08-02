@@ -472,6 +472,23 @@ export const getApprovedCatalogRecordByBarcode = async (
 	return (await hydrateCatalogRows(supabase, [row]))[0] ?? null;
 };
 
+export const getApprovedCatalogRecordByApplicationFoodId = async (
+	supabase: SupabaseClient<Database>,
+	foodId: number,
+) => {
+	if (!Number.isSafeInteger(foodId) || foodId <= 0) return null;
+	const { data, error } = await supabase
+		.from("shared_products")
+		.select(SHARED_PRODUCT_COLUMNS)
+		.eq("status", "active")
+		.eq("food->>fdcId", String(foodId))
+		.limit(1);
+	if (error) throw error;
+	const row = data?.[0] as CatalogProductRow | undefined;
+	if (!row) return null;
+	return (await hydrateCatalogRows(supabase, [row]))[0] ?? null;
+};
+
 export const searchApprovedCatalogRecordsPage = async (
 	supabase: SupabaseClient<Database>,
 	query: string,

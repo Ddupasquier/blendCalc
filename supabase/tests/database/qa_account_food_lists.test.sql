@@ -1,6 +1,6 @@
 begin;
 
-select plan(26);
+select plan(32);
 
 select is(
 	(select count(*) from auth.users where email like 'qa-%@blendcalc.local'),
@@ -278,7 +278,7 @@ select is(
 			or product.source_reference like 'local-qa:%'
 			or product.source = 'usda'
 	),
-		105::bigint,
+		107::bigint,
 	'the local catalog contains all focused and source-shaped QA foods'
 );
 
@@ -299,9 +299,24 @@ select is(
 	'the local catalog includes eighty-three real USDA branded-product snapshots'
 );
 
+select ok(
+	not exists (
+		select 1
+		from public.shared_products product
+		where product.status = 'active'
+			and (
+				product.source_reference like 'local-qa-%'
+				or product.source_reference like 'local-qa:%'
+				or product.source = 'usda'
+			)
+			and not public.is_valid_gtin(product.barcode)
+	),
+	'every active local QA catalog barcode is a valid GTIN'
+);
+
 select is(
 	(select count(*) from public.blendcalc_api_v1_product_readiness where publishable),
-	105::bigint,
+	107::bigint,
 	'every local QA catalog product is searchable through blendCalc API v1'
 );
 
@@ -378,6 +393,87 @@ select ok(
 			and serving.unit_key is null
 	),
 	'discrete serving labels retain exact weight without inventing conversion units'
+);
+
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		join public.shared_product_observations observation
+			on observation.id = (product.canonical_provenance ->> 'observationId')::uuid
+		where product.barcode = '00021130493609'
+			and product.product_name = 'Roasted Onion & Garlic Pasta Sauce'
+			and product.brand_owner = 'Safeway, Inc.'
+			and observation.source = 'usda'
+			and observation.source_reference = '2032704'
+			and observation.source_license = 'CC0-1.0'
+	),
+	'the pasta-sauce fixture retains its exact USDA FDC observation'
+);
+
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '00021130493609'
+			and (
+				select count(*)
+				from public.food_nutrients nutrient
+				where nutrient.shared_product_id = product.id
+					and nutrient.source = 'usda'
+					and nutrient.source_reference = '2032704'
+			) = 15
+			and exists (
+				select 1
+				from public.food_nutrients nutrient
+				where nutrient.shared_product_id = product.id
+					and nutrient.nutrient_id = 1079
+					and nutrient.amount_per_100g = 1.6
+			)
+	),
+	'the pasta-sauce fixture retains all fifteen USDA nutrients and exact fiber math'
+);
+
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		join public.food_servings serving on serving.shared_product_id = product.id
+		where product.barcode = '00021130493609'
+			and serving.gram_weight = 125
+			and serving.amount = 0.5
+			and serving.unit_key = 'cup'
+			and serving.origin = 'package-label'
+			and serving.source = 'usda'
+			and serving.source_reference = '2032704'
+	),
+	'the pasta-sauce package serving remains source-backed by USDA'
+);
+
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		join public.food_image_assets image on image.shared_product_id = product.id
+		where product.barcode = '00021130493609'
+			and image.source = 'open-food-facts'
+			and image.license_name = 'CC BY-SA 3.0'
+			and image.attribution_text = 'Open Food Facts contributors'
+	),
+	'the pasta-sauce image retains separate Open Food Facts attribution'
+);
+
+select ok(
+	not exists (
+		select 1
+		from public.shared_products product
+		join public.shared_product_field_provenance provenance
+			on provenance.shared_product_id = product.id
+		where product.barcode = '00021130493609'
+			and provenance.selected
+			and provenance.field_path in ('allergens', 'traces', 'dietaryTags', 'labels')
+	),
+	'the pasta-sauce fixture does not fabricate unsupported USDA safety or diet fields'
 );
 
 select * from finish();

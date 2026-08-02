@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const storage = vi.hoisted(() => ({
+	readCloudCustomFoodByFdcId: vi.fn(),
 	readCloudCustomFoods: vi.fn(),
 	readCloudMixPreferences: vi.fn(),
 	readCloudSavedDrinks: vi.fn(),
@@ -8,7 +9,18 @@ const storage = vi.hoisted(() => ({
 }));
 const serverLists = vi.hoisted(() => ({
 	readCloudSmoothieList: vi.fn(),
+	readCloudSmoothieListFood: vi.fn(),
 	readCloudSmoothieListPage: vi.fn(),
+}));
+const catalog = vi.hoisted(() => ({
+	getApprovedCatalogRecordByApplicationFoodId: vi.fn(),
+}));
+const genericFoods = vi.hoisted(() => ({
+	readGenericFoodByApplicationId: vi.fn(),
+}));
+const supabaseAdmin = vi.hoisted(() => ({
+	client: { role: "service" },
+	getSupabaseAdminClient: vi.fn(),
 }));
 const provenance = vi.hoisted(() => ({
 	readIngredientProvenanceOptions: vi.fn(),
@@ -20,6 +32,11 @@ const foodSafety = vi.hoisted(() => ({
 
 vi.mock("$lib/utils/storage/supabase", () => storage);
 vi.mock("$lib/server/user-data/foodLists.server", () => serverLists);
+vi.mock("$lib/server/products/catalogRead.server", () => catalog);
+vi.mock("$lib/server/products/genericFoods.server", () => genericFoods);
+vi.mock("$lib/supabase/admin.server", () => ({
+	getSupabaseAdminClient: supabaseAdmin.getSupabaseAdminClient,
+}));
 vi.mock("$lib/utils/ingredients/ingredientProvenance", () => provenance);
 vi.mock("$lib/server/food-safety/foodSafetyEvaluation.server", () => ({
 	annotateFoodsWithFoodSafety: foodSafety.annotateFoodsWithFoodSafety,
@@ -54,7 +71,14 @@ describe("server-loaded user page data", () => {
 			.mockResolvedValueOnce({ foods: [{ fdcId: 1 }], totalCount: 1 })
 			.mockResolvedValueOnce({ foods: [{ fdcId: 2 }], totalCount: 1 });
 		storage.readCloudCustomFoods.mockResolvedValue([{ fdcId: -1 }]);
+		storage.readCloudCustomFoodByFdcId.mockResolvedValue(null);
 		storage.readCloudSmoothieListIndex.mockResolvedValue(listIndex);
+		serverLists.readCloudSmoothieListFood.mockResolvedValue(null);
+		catalog.getApprovedCatalogRecordByApplicationFoodId.mockResolvedValue(null);
+		genericFoods.readGenericFoodByApplicationId.mockResolvedValue(null);
+		supabaseAdmin.getSupabaseAdminClient.mockReturnValue(
+			supabaseAdmin.client,
+		);
 		serverLists.readCloudSmoothieList.mockImplementation(async (key: string) =>
 			key === MIX_STORAGE_KEYS.fridge ? [{ fdcId: 1 }] : [{ fdcId: 2 }],
 		);
@@ -84,9 +108,58 @@ describe("server-loaded user page data", () => {
 		expect(result.fridge.totalCount).toBe(1);
 		expect(result.shoppingList.totalCount).toBe(1);
 		expect(result.customFoods).toEqual([{ fdcId: -1 }]);
+		expect(result.routeFood).toBeNull();
 		expect(result.listIndex).toEqual(listIndex);
 		expect(result.loadError).toBe("");
 		expect(serverLists.readCloudSmoothieListPage).toHaveBeenCalledTimes(2);
+	});
+
+	it("hydrates the exact routed food even when it is outside the first page", async () => {
+		serverLists.readCloudSmoothieListFood.mockResolvedValueOnce({
+			fdcId: 99,
+			description: "Original Routed Food",
+		});
+
+		const result = await loadIngredientPageData(context, {
+			routeFoodId: 99,
+			routeListKey: MIX_STORAGE_KEYS.fridge,
+		});
+
+		expect(result.routeFood).toMatchObject({
+			fdcId: 99,
+			description: "Original Routed Food",
+		});
+		expect(serverLists.readCloudSmoothieListFood).toHaveBeenCalledWith(
+			MIX_STORAGE_KEYS.fridge,
+			99,
+			context,
+		);
+		expect(
+			catalog.getApprovedCatalogRecordByApplicationFoodId,
+		).not.toHaveBeenCalled();
+	});
+
+	it("uses the server catalog boundary for routed public foods", async () => {
+		catalog.getApprovedCatalogRecordByApplicationFoodId.mockResolvedValueOnce({
+			food: { fdcId: 99, description: "Catalog Routed Food" },
+		});
+
+		const result = await loadIngredientPageData(context, {
+			routeFoodId: 99,
+			routeListKey: MIX_STORAGE_KEYS.fridge,
+		});
+
+		expect(result.routeFood).toMatchObject({
+			fdcId: 99,
+			description: "Catalog Routed Food",
+		});
+		expect(
+			catalog.getApprovedCatalogRecordByApplicationFoodId,
+		).toHaveBeenCalledWith(supabaseAdmin.client, 99);
+		expect(genericFoods.readGenericFoodByApplicationId).toHaveBeenCalledWith(
+			supabaseAdmin.client,
+			99,
+		);
 	});
 
 	it("loads Mix lists and preferences together on the server", async () => {
@@ -112,6 +185,48 @@ describe("server-loaded user page data", () => {
 		await expect(loadSavedPageData(context)).resolves.toEqual({
 			drinks: [],
 			loadError: "Your saved drinks could not be loaded. Try again.",
+		});
+	});
+
+	it("returns an honest Ingredients error state without stale records", async () => {
+		vi.spyOn(console, "error").mockImplementation(() => undefined);
+		serverLists.readCloudSmoothieListPage.mockReset();
+		serverLists.readCloudSmoothieListPage.mockRejectedValueOnce(
+			new Error("offline"),
+		);
+
+		await expect(loadIngredientPageData(context)).resolves.toEqual({
+			fridge: { foods: [], totalCount: 0 },
+			shoppingList: { foods: [], totalCount: 0 },
+			customFoods: [],
+			routeFood: null,
+			listIndex: {
+				[MIX_STORAGE_KEYS.fridge]: {
+					foodIds: [],
+					foodIdentityKeys: [],
+				},
+				[MIX_STORAGE_KEYS.shoppingList]: {
+					foodIds: [],
+					foodIdentityKeys: [],
+				},
+			},
+			provenanceOptions: [],
+			loadError: "Saved ingredients could not be loaded. Try again.",
+			provenanceError: "",
+		});
+	});
+
+	it("returns an honest Mix error state without stale records", async () => {
+		vi.spyOn(console, "error").mockImplementation(() => undefined);
+		serverLists.readCloudSmoothieList.mockRejectedValueOnce(
+			new Error("offline"),
+		);
+
+		await expect(loadMixPageData(context)).resolves.toEqual({
+			fridge: [],
+			shoppingList: [],
+			preferences: {},
+			loadError: "Your saved ingredient lists could not be loaded. Try again.",
 		});
 	});
 });

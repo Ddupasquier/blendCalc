@@ -322,3 +322,20 @@ export const searchGenericFoods = async (
 		};
 	});
 };
+
+export const readGenericFoodByApplicationId = async (
+	supabase: SupabaseClient<Database>,
+	foodId: number,
+) => {
+	if (!Number.isSafeInteger(foodId) || foodId <= 0) return null;
+	const { data, error } = await supabase
+		.from("generic_food_records")
+		.select("description")
+		.eq("application_food_id", foodId)
+		.maybeSingle();
+	if (error) throw error;
+	if (!data?.description) return null;
+
+	const matches = await searchGenericFoods(supabase, data.description);
+	return matches.find((food) => food.fdcId === foodId) ?? null;
+};

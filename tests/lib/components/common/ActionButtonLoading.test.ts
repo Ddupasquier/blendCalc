@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest";
 import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 
-const label = createRawSnippet(() => ({ render: () => "Save product" }));
+const label = createRawSnippet(() => ({
+	render: () => "<span>Save product</span>",
+}));
 const icon = createRawSnippet(() => ({
 	render: () => '<svg aria-hidden="true"></svg>',
 }));

@@ -93,6 +93,7 @@ clickable navigation block instead.
 - [QA Process](#rule-qa-process)
 - [QA Task Consistency](#rule-qa-task-consistency)
 - [MVP QA Priorities](#rule-qa-priorities)
+- [General TODO Queue](#rule-general-todo-queue)
 - [Current Development Audit](dev-rules-audit.md)
 
 ## Rules
@@ -128,7 +129,7 @@ this rules file is authoritative and an audit finding cannot override it.
 **0b.** <a id="rule-repository-hygiene"></a>Keep the remote repository limited to
 deliberate product source, migrations, tests, required configuration and lockfiles,
 maintained documentation, and intentional public assets. Gitignore local environment
-files, editor/workspace metadata, local QA trackers and screenshots, recovery and action
+files, editor/workspace metadata, local TODO and QA trackers and screenshots, recovery
 notes, database scratch queries, temporary exports, generated audit output, test
 reports, logs, caches, and build artifacts. Before adding a new tool or workflow, audit
 the files it creates and add narrowly scoped ignore rules for non-product output.
@@ -1438,9 +1439,10 @@ assistive-technology behavior that was not actually exercised. Deterministic cod
 schema, migration, API, data-integrity, RLS, build, lint, or test checks belong to the
 automated development workflow. Run those checks instead of assigning
 them to the user, record successful evidence in the completed archive, and keep any
-genuinely unfinished automation-owned work once in the gitignored
-`docs/local-context/action-notes.md`. Never duplicate one action between an active
-QA tracker and local action notes. Organize every active priority tracker with a
+genuinely unfinished automation-owned work once in the appropriate gitignored
+`docs/TODO/` priority queue. Never duplicate one action between an active QA tracker and
+the TODO queue; a transition TODO may link to one QA group without copying its repro or
+expected outcome. Organize every active priority tracker with a
 workflow-category index that links related QA groups so a reviewer can complete one
 coherent area at a time without changing stable IDs or duplicating tasks. Begin every QA tracker and index with the current
 disposable local test-account credentials and the complete categorized barcode-reference
@@ -1519,6 +1521,34 @@ superseded, remove its obsolete check from the appropriate active priority track
 record its stable ID
 in the completed archive under an explicit `Retired` heading with the reason and
 replacement QA ID; retired does not mean passed.
+
+**41c.** <a id="rule-general-todo-queue"></a>Maintain
+`docs/TODO/todo-tasks.md` as the local-only general work index. Split active work into
+`launch-blocker-todo-tasks.md`, `before-launch-todo-tasks.md`, and
+`post-launch-todo-tasks.md`, and preserve completed work in
+`completed-todo-tasks.md`. Keep the entire folder ignored by Git. This queue is the
+canonical home for actionable implementation, verification, decision, deployment, and
+research work that cannot be completed safely in the current pass.
+
+Every native TODO group and task needs a stable `TODO-GGG` and `TODO-GGG-TTT` ID, one
+explicit priority, a task type, an owner, concrete source references, an exact next
+action, a measurable completion condition, and completion or blocker evidence. Use the
+next unused ID and never renumber or reuse IDs. Place each action in exactly one active
+priority file. Search the rules, current audit, every active and completed TODO file,
+and every active and completed QA file before adding or changing work; merge duplicates,
+remove obsolete work, and stop for any conflicting contract instead of maintaining
+opposing tasks. Move completed tasks to the completed TODO archive immediately and
+remove newly empty groups and category links.
+
+During the transition away from standalone QA queues, existing QA IDs and their detailed
+reproduction instructions remain authoritative verification contracts. Represent each
+remaining QA group once in the TODO queue as a migration pointer containing only its
+source link and remaining QA IDs; do not copy the repro, examples, or expected outcomes.
+New work belongs in TODO. When new work needs observation, include its `Repro`,
+`Example input`, and `Expected` criteria directly in that TODO task. As legacy QA checks
+are completed or retired, update the pointer in the same pass. After the final active QA
+check is archived, remove the active QA priority files and retain the completed QA
+archive as historical evidence.
 
 **43.** <a id="rule-view-primitives"></a>Full-height app views and sheet views must use
 shared view layout primitives (`ViewFrame`, `ViewTop`, `ViewBody`,

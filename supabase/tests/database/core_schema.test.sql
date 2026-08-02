@@ -1,6 +1,6 @@
 begin;
 
-select plan(46);
+select plan(48);
 
 select has_table('public', 'profiles', 'profiles table exists');
 select has_table('public', 'user_food_list_items', 'food-list table exists');
@@ -84,6 +84,38 @@ select ok(
 	),
 	'local QA catalog includes a source-shaped multi-word partial-search fixture'
 );
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '09000000000186'
+			and product.product_name = 'Babyfood, Ravioli, Cheese Filled, With Tomato Sauce'
+			and product.search_text ilike '%tomato%'
+	)
+	and exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '09000000000193'
+			and product.product_name = 'Babyfood, Dinner, Macaroni And Tomato'
+			and product.search_text ilike '%tomato%'
+	),
+	'local QA catalog includes intentionally weaker late-name search matches'
+);
+select ok(
+	exists (
+		select 1
+		from public.food_image_assets image
+		join public.shared_products product on product.id = image.shared_product_id
+		where product.barcode = '00021130493609'
+			and image.source = 'open-food-facts'
+			and image.image_role = 'front'
+			and image.license_name = 'CC BY-SA 3.0'
+			and image.license_url = 'https://creativecommons.org/licenses/by-sa/3.0/'
+			and image.attribution_text = 'Open Food Facts contributors'
+			and image.status = 'active'
+	),
+	'local QA pasta-sauce fixture includes source-licensed image attribution'
+);
 select is(
 	(
 		select count(*)::integer
@@ -106,7 +138,7 @@ select is(
 		from public.blendcalc_api_v1_product_readiness
 		where publishable
 	),
-	105,
+	107,
 	'the full local QA catalog is publishable through blendCalc API v1'
 );
 select is(
@@ -163,7 +195,10 @@ select ok(
 				select 1
 				from public.food_nutrients nutrient
 				where nutrient.shared_product_id = product.id
-					and nutrient.source = 'user-label'
+					and nutrient.source = case
+						when product.barcode = '00021130493609' then 'usda'
+						else 'user-label'
+					end
 					and nutrient.source_observation_id is not null
 					and nutrient.mapping_status = 'canonical'
 			)

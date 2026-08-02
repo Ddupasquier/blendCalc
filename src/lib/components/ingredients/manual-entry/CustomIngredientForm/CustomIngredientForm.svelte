@@ -293,13 +293,24 @@
 		onDetachBarcodeForPrivateSave:
 			barcode.detachMismatchedBarcodeForPrivateSave,
 		onSubmitBarcodeCorrection: barcode.beginBarcodeCorrectionForSharing,
-		onFrontPhotoChange: (file) => (form.data.frontPhoto = file),
-		onImagePlacementChange: (value) => (form.data.imagePlacement = value),
-		onNutritionPhotoChange: (file) => (form.data.nutritionPhoto = file),
-		onBarcodePhotoChange: (file) => (form.data.barcodePhoto = file),
-		onSaveDestinationChange: (destination) =>
-			(outcome.state.saveDestination = destination),
-		onSaveDestinationInput: (element) => (saveDestinationSelect = element),
+		onFrontPhotoChange: (file) => {
+			form.data.frontPhoto = file;
+		},
+		onImagePlacementChange: (value) => {
+			form.data.imagePlacement = value;
+		},
+		onNutritionPhotoChange: (file) => {
+			form.data.nutritionPhoto = file;
+		},
+		onBarcodePhotoChange: (file) => {
+			form.data.barcodePhoto = file;
+		},
+		onSaveDestinationChange: (destination) => {
+			outcome.state.saveDestination = destination;
+		},
+		onSaveDestinationInput: (element) => {
+			saveDestinationSelect = element;
+		},
 		onMoveToShopping: outcome.moveLastOutcomeToShopping,
 		onMoveToFridge: outcome.moveLastOutcomeToFridge,
 		onUndo: outcome.undoLastOutcomeAdd,

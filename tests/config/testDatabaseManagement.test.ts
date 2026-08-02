@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { hasValidGtinCheckDigit } from "$lib/utils/barcode/barcode";
 import {
 	getLocalQaCatalogBarcodes,
 	localQaPersonas,
@@ -121,5 +122,9 @@ describe("local test database management", () => {
 		expect(populatedPersona?.lists.fridge).toHaveLength(60);
 		expect(populatedPersona?.lists.shopping).toHaveLength(40);
 		expect(getLocalQaCatalogBarcodes()).toHaveLength(102);
+	});
+
+	it("uses valid GTINs for every USDA barcode fixture", () => {
+		expect(localQaUsdaCatalogBarcodes.every(hasValidGtinCheckDigit)).toBe(true);
 	});
 });

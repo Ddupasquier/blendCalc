@@ -120,10 +120,10 @@ adding one-off npm aliases.
 | `npm run db:test:verify` | Rebuild locally and run pgTAP database tests |
 | `npm run db:test:status` | Show local Supabase service status |
 | `npm run db:test:stop` | Stop the local Supabase stack |
-| `npm run catalog:qa-seed` | Seed a fake product submission for moderation testing |
-| `npm run catalog:qa-clean` | Remove fake product submission fixtures |
-| `npm run catalog:qa-image-seed` | Seed fake product image submissions for moderation testing |
-| `npm run catalog:qa-image-clean` | Remove fake image moderation fixtures that were not approved |
+| `npm run catalog:qa-seed` | Seed fake product submissions in the disposable local test database |
+| `npm run catalog:qa-clean` | Remove fake product submissions from the disposable local test database |
+| `npm run catalog:qa-image-seed` | Seed fake image submissions in the disposable local test database |
+| `npm run catalog:qa-image-clean` | Remove unapproved fake image submissions from the disposable local test database |
 | `npm run moderate -- ...` | Run moderation CLI role/block helpers |
 
 ---
