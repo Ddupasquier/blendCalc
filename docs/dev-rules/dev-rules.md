@@ -1,6 +1,6 @@
 # Development Rules
 
-Last reviewed: 2026-07-28
+Last reviewed: 2026-08-01
 
 ## Purpose
 
@@ -93,6 +93,7 @@ clickable navigation block instead.
 - [QA Process](#rule-qa-process)
 - [QA Task Consistency](#rule-qa-task-consistency)
 - [MVP QA Priorities](#rule-qa-priorities)
+- [General TODO Queue](#rule-general-todo-queue)
 - [Current Development Audit](dev-rules-audit.md)
 
 ## Rules
@@ -128,7 +129,7 @@ this rules file is authoritative and an audit finding cannot override it.
 **0b.** <a id="rule-repository-hygiene"></a>Keep the remote repository limited to
 deliberate product source, migrations, tests, required configuration and lockfiles,
 maintained documentation, and intentional public assets. Gitignore local environment
-files, editor/workspace metadata, local QA trackers and screenshots, recovery and action
+files, editor/workspace metadata, local TODO and QA trackers and screenshots, recovery
 notes, database scratch queries, temporary exports, generated audit output, test
 reports, logs, caches, and build artifacts. Before adding a new tool or workflow, audit
 the files it creates and add narrowly scoped ignore rules for non-product output.
@@ -1379,6 +1380,11 @@ future remote staging environment must remain a separate project with separate k
 synthetic data; it supplements local testing for hosted/device QA and never becomes the
 default destructive test target.
 
+Routine test-app and internal-API reads must use source-shaped approved catalog fixtures
+from the isolated local database and must not call live food providers. A missing fixture
+returns the normal not-found state. External provider adapters are exercised only by
+dependency-injected unit tests or an explicitly requested live-source audit.
+
 Food-safety confidence tests must begin with legally usable, authored synthetic
 provider-shaped payloads or database observations and exercise each applicable stage:
 source normalization, lossless evidence projection, reviewed policy extraction,
@@ -1422,15 +1428,21 @@ concrete local QA notes before handoff unless it is clearly documentation-only a
 no user verification. QA notes should be created as part of the task, not after the
 fact. Give every QA section a stable `QA-GGG` group ID and every task a stable
 `QA-GGG-TTT` ID. Use the next unused number, never reuse or renumber existing IDs, and
-preserve IDs when archiving tasks. Active priority trackers are the user's manual QA
-queue: keep only checks that require visual judgment, real-device/browser interaction,
+preserve IDs when archiving tasks. Active priority trackers are the remaining observable
+QA queue: keep only checks that require visual judgment, real-device/browser interaction,
 assistive-technology verification, user-controlled deployment configuration, or another
-human decision. Deterministic code, schema, migration, API, data-integrity, RLS, build,
-lint, or test checks belong to the automated development workflow. Run those checks instead of assigning
+human decision. An available in-app browser may satisfy desktop visual and interaction
+checks only when the complete repro and expected outcome are directly observed in the
+required browser and viewport. It does not substitute for an unavailable named browser,
+a physical-device requirement, camera or operating-system permission behavior, or
+assistive-technology behavior that was not actually exercised. Deterministic code,
+schema, migration, API, data-integrity, RLS, build, lint, or test checks belong to the
+automated development workflow. Run those checks instead of assigning
 them to the user, record successful evidence in the completed archive, and keep any
-genuinely unfinished automation-owned work once in the gitignored
-`docs/local-context/action-notes.md`. Never duplicate one action between an active
-QA tracker and local action notes. Organize every active priority tracker with a
+genuinely unfinished automation-owned work once in the appropriate gitignored
+`docs/TODO/` priority queue. Never duplicate one action between an active QA tracker and
+the TODO queue; a transition TODO may link to one QA group without copying its repro or
+expected outcome. Organize every active priority tracker with a
 workflow-category index that links related QA groups so a reviewer can complete one
 coherent area at a time without changing stable IDs or duplicating tasks. Begin every QA tracker and index with the current
 disposable local test-account credentials and the complete categorized barcode-reference
@@ -1439,6 +1451,18 @@ After a group's final active task moves to the completed archive or is retired, 
 the empty group shell and its workflow-category link from the active tracker. The
 completed archive preserves its context; active trackers must not keep placeholder
 groups for possible future additions.
+
+At the end of every requested QA run, make one deliberate closeout pass over every task
+that remains marked as a failure, blocker, partial result, or input-needed state. Retry
+each remaining check when the required environment is available, first restoring its
+documented deterministic baseline and clearing stale app, database, browser, or service
+state when relevant. Use the full representative corpus required by rule 46 rather than
+repeating only the original example. Record the second attempt and its evidence. A
+retry is an additional opportunity to prove the behavior, never permission to weaken
+the expected outcome, omit required coverage, or turn an unresolved result into a pass.
+If the named browser, physical device, assistive technology, external service, user
+decision, or other required dependency remains unavailable, do not simulate success or
+loop pointlessly; preserve the honest active status and the exact remaining blocker.
 
 **41a.** <a id="rule-qa-priorities"></a>Assign every active QA group one explicit MVP
 priority, place the whole group in the matching active priority tracker, and keep that
@@ -1470,25 +1494,61 @@ tracker contains one clear, current expected outcome for each behavior.
 **42.** <a id="rule-qa-clearance"></a>Finished tasks must prompt the user to run the
 relevant QA checks from the active priority trackers linked by local
 `docs/QA/qa-tasks.md`. Keep each QA item active until the user explicitly confirms it
-passed; a checked checkbox counts as that confirmation. The sole exception is an
-explicit user-requested automated QA pass: automated tooling may complete and archive only
-deterministic tasks whose full expected outcome was directly proven by current tests,
-database inspection, scripts, or build/lint output. Automated evidence must be written
-into the archived task, and mixed visual/manual tasks must remain active even when their
-automated portion passes. Whenever QA is updated and
-before every handoff, automatically scan all active priority trackers and move confirmed,
-checked items to `docs/QA/completed-qa-tasks.md` without waiting for
-a separate cleanup request. Every QA cleanup or archive pass must also audit the
+passed or automation directly proves its complete expected outcome; a checked checkbox
+counts as user confirmation. During an explicit user-requested QA pass, automation must
+complete and archive deterministic tasks whose full expected
+outcome was directly proven by current tests, database inspection, scripts, or build/lint
+output, and may complete observable browser tasks whose full repro and expected outcome
+were directly exercised in the in-app browser. Record the browser family, viewport,
+route, and observed evidence in the archived task. Mixed tasks remain active when any
+required device, browser, permission, assistive-technology, visual, or manual outcome was
+not actually exercised; emulation never proves a physical-device requirement. Evidence
+for every automated or browser-completed task must be written into the archived task.
+Whenever automation verifies 100% of a task's stated repro and expected outcome, move
+that task to `docs/QA/completed-qa-tasks.md` immediately in the same pass; do not leave a
+fully proven task active or wait for a separate cleanup request. Remove it from the
+active tracker, update active and completed counts, and remove any newly empty group
+heading and workflow-category link. Whenever QA is updated and before every handoff,
+automatically scan all active priority trackers and move confirmed, checked items to the
+completed archive. Every QA cleanup or archive pass must also audit the
 remaining active tasks for stale routes, controls, labels, components, files, expected
 outcomes, superseded behavior, and duplicate coverage. When a whole section is complete,
 move its section context with those items. If a checked item needs clarification before
 archiving, add an unchecked `QA note needed:` prompt under the active section instead of
-guessing. Never mark an item passed on the user's behalf, and do not silently delete
-active QA coverage. When a feature or behavior has intentionally been removed or
+guessing. Never mark an unproven item passed on the user's behalf, and do not silently
+delete active QA coverage. When a feature or behavior has intentionally been removed or
 superseded, remove its obsolete check from the appropriate active priority tracker and
 record its stable ID
 in the completed archive under an explicit `Retired` heading with the reason and
 replacement QA ID; retired does not mean passed.
+
+**41c.** <a id="rule-general-todo-queue"></a>Maintain
+`docs/TODO/todo-tasks.md` as the local-only general work index. Split active work into
+`launch-blocker-todo-tasks.md`, `before-launch-todo-tasks.md`, and
+`post-launch-todo-tasks.md`, and preserve completed work in
+`completed-todo-tasks.md`. Keep the entire folder ignored by Git. This queue is the
+canonical home for actionable implementation, verification, decision, deployment, and
+research work that cannot be completed safely in the current pass.
+
+Every native TODO group and task needs a stable `TODO-GGG` and `TODO-GGG-TTT` ID, one
+explicit priority, a task type, an owner, concrete source references, an exact next
+action, a measurable completion condition, and completion or blocker evidence. Use the
+next unused ID and never renumber or reuse IDs. Place each action in exactly one active
+priority file. Search the rules, current audit, every active and completed TODO file,
+and every active and completed QA file before adding or changing work; merge duplicates,
+remove obsolete work, and stop for any conflicting contract instead of maintaining
+opposing tasks. Move completed tasks to the completed TODO archive immediately and
+remove newly empty groups and category links.
+
+During the transition away from standalone QA queues, existing QA IDs and their detailed
+reproduction instructions remain authoritative verification contracts. Represent each
+remaining QA group once in the TODO queue as a migration pointer containing only its
+source link and remaining QA IDs; do not copy the repro, examples, or expected outcomes.
+New work belongs in TODO. When new work needs observation, include its `Repro`,
+`Example input`, and `Expected` criteria directly in that TODO task. As legacy QA checks
+are completed or retired, update the pointer in the same pass. After the final active QA
+check is archived, remove the active QA priority files and retain the completed QA
+archive as historical evidence.
 
 **43.** <a id="rule-view-primitives"></a>Full-height app views and sheet views must use
 shared view layout primitives (`ViewFrame`, `ViewTop`, `ViewBody`,
@@ -1563,9 +1623,20 @@ source attribution.
 concrete example inputs, observable expected outcomes, exact code references, and links
 to the relevant development rules. Every task must use the `Repro`, `Example input`, and
 `Expected` labels. `Repro` must be a numbered bullet list with one exact action per
-step. Example inputs must name concrete values, commands, roles, files, or UI controls;
-never use `None` as a shortcut for an incomplete task. Do not create duplicate rule sets
-inside QA docs; reference this document as the source of truth.
+step. Whenever a repro step names a static application or API route that can be opened
+directly, render that route as a clickable absolute localhost link, such as
+[`/ingredients/fridge`](http://localhost:5173/ingredients/fridge), inside the step.
+Keep the readable route text as the link label. Do not invent a link for a dynamic route
+whose required identifier, token, or state is not available; explain how to reach that
+view through the preceding interaction instead. Example inputs must name concrete
+values, commands, roles, files, or UI controls; never use `None` as a shortcut for an
+incomplete task. A written example is the minimum repro input, not sufficient proof by
+itself. Before clearing search, barcode, validation, calculation, mapping, or
+data-behavior QA, exercise multiple representative inputs that cover the stated
+behavior, at least one comparable positive case, and an applicable negative or boundary
+control. Record the tested corpus and evidence; do not generalize a single successful
+product, query, barcode, or value to the entire behavior. Do not create duplicate rule
+sets inside QA docs; reference this document as the source of truth.
 
 **46a.** <a id="rule-qa-database-mutations"></a>Any QA task that requires changing
 local or test-database state must include the exact copy-paste SQL or terminal command

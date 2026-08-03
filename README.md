@@ -115,15 +115,15 @@ adding one-off npm aliases.
 | `npm run db:push:auto` | Push pending Supabase migrations using `SUPABASE_DB_PASSWORD` from `.env.moderation.local` or macOS Keychain |
 | `npm run db:lint` | Run Supabase database linting |
 | `npm run db:types` | Regenerate Supabase TypeScript database types |
-| `npm run db:test:start` | Start local Supabase and seed disposable QA accounts |
+| `npm run db:test:start` | Start local Supabase and repair disposable QA personas across Ingredients, Saved, Mix, onboarding, warnings, and moderation |
 | `npm run db:test:reset` | Rebuild the local database from migrations and QA fixtures |
 | `npm run db:test:verify` | Rebuild locally and run pgTAP database tests |
 | `npm run db:test:status` | Show local Supabase service status |
 | `npm run db:test:stop` | Stop the local Supabase stack |
-| `npm run catalog:qa-seed` | Seed a fake product submission for moderation testing |
-| `npm run catalog:qa-clean` | Remove fake product submission fixtures |
-| `npm run catalog:qa-image-seed` | Seed fake product image submissions for moderation testing |
-| `npm run catalog:qa-image-clean` | Remove fake image moderation fixtures that were not approved |
+| `npm run catalog:qa-seed` | Seed fake product submissions in the disposable local test database |
+| `npm run catalog:qa-clean` | Remove fake product submissions from the disposable local test database |
+| `npm run catalog:qa-image-seed` | Seed fake image submissions in the disposable local test database |
+| `npm run catalog:qa-image-clean` | Remove unapproved fake image submissions from the disposable local test database |
 | `npm run moderate -- ...` | Run moderation CLI role/block helpers |
 
 ---

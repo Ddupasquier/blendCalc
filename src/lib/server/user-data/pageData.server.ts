@@ -9,6 +9,7 @@ import { readIngredientProvenanceOptions } from "$lib/utils/ingredients/ingredie
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 import {
 	readCloudCustomFoods,
+	readCloudCustomFoodByFdcId,
 	readCloudMixPreferences,
 	readCloudSavedDrinks,
 	readCloudSmoothieListIndex,
@@ -17,6 +18,7 @@ import {
 } from "$lib/utils/storage/supabase";
 import {
 	readCloudSmoothieList,
+	readCloudSmoothieListFood,
 	readCloudSmoothieListPage,
 } from "$lib/server/user-data/foodLists.server";
 import {
@@ -24,6 +26,14 @@ import {
 	type FoodSafetyEvaluationContext,
 } from "$lib/server/food-safety/foodSafetyEvaluation.server";
 import { getUserFoodSafetyContext } from "$lib/server/food-safety/userFoodSafety.server";
+import { getApprovedCatalogRecordByApplicationFoodId } from "$lib/server/products/catalogRead.server";
+import { readGenericFoodByApplicationId } from "$lib/server/products/genericFoods.server";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+
+type IngredientPageDataOptions = {
+	routeFoodId?: number | null;
+	routeListKey?: SmoothieListKey | null;
+};
 
 const emptyListIndex = (): CloudSmoothieListIndex => ({
 	[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
@@ -54,8 +64,37 @@ const readInitialListPage = (
 		context,
 	);
 
+const readIngredientRouteFood = async (
+	context: CloudDataContext,
+	options: IngredientPageDataOptions,
+) => {
+	const foodId = options.routeFoodId;
+	if (!Number.isSafeInteger(foodId) || Number(foodId) <= 0) return null;
+
+	if (options.routeListKey) {
+		const listFood = await readCloudSmoothieListFood(
+			options.routeListKey,
+			Number(foodId),
+			context,
+		);
+		if (listFood) return listFood;
+	}
+
+	const catalogClient = getSupabaseAdminClient();
+	const [customFood, catalogRecord, genericFood] = await Promise.all([
+		readCloudCustomFoodByFdcId(Number(foodId), context),
+		getApprovedCatalogRecordByApplicationFoodId(
+			catalogClient,
+			Number(foodId),
+		),
+		readGenericFoodByApplicationId(catalogClient, Number(foodId)),
+	]);
+	return customFood ?? catalogRecord?.food ?? genericFood;
+};
+
 export const loadIngredientPageData = async (
 	context: CloudDataContext,
+	options: IngredientPageDataOptions = {},
 ): Promise<IngredientPageInitialData> => {
 	try {
 		const [
@@ -65,6 +104,7 @@ export const loadIngredientPageData = async (
 			listIndex,
 			provenanceOptions,
 			foodSafetyContext,
+			routeFood,
 		] =
 			await Promise.all([
 				readInitialListPage(context, MIX_STORAGE_KEYS.fridge),
@@ -73,6 +113,7 @@ export const loadIngredientPageData = async (
 				readCloudSmoothieListIndex(context),
 				readIngredientProvenanceOptions(context.supabase),
 				getUserFoodSafetyContext(context.supabase, context.userId),
+				readIngredientRouteFood(context, options),
 			]);
 
 		if (!fridge || !shoppingList || !customFoods || !listIndex) {
@@ -86,6 +127,9 @@ export const loadIngredientPageData = async (
 				customFoods,
 				foodSafetyContext,
 			),
+			routeFood: routeFood
+				? annotateFoodsWithFoodSafety([routeFood], foodSafetyContext)[0] ?? null
+				: null,
 			listIndex,
 			provenanceOptions: provenanceOptions ?? [],
 			loadError: "",
@@ -99,6 +143,7 @@ export const loadIngredientPageData = async (
 			fridge: { foods: [], totalCount: 0 },
 			shoppingList: { foods: [], totalCount: 0 },
 			customFoods: [],
+			routeFood: null,
 			listIndex: emptyListIndex(),
 			provenanceOptions: [],
 			loadError: "Saved ingredients could not be loaded. Try again.",

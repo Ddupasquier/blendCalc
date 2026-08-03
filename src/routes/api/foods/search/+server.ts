@@ -1,5 +1,6 @@
 import { searchApprovedSharedProducts } from "$lib/server/products/catalog.server";
 import { searchUserCustomFoods } from "$lib/server/products/customFoods.server";
+import { areExternalProductLookupsEnabled } from "$lib/server/products/externalProductPolicy.server";
 import { searchUsdaFoods } from "$lib/server/products/usdaCache.server";
 import { searchGenericFoods } from "$lib/server/products/genericFoods.server";
 import type { FdcFood } from "$lib/utils/food/types";
@@ -27,6 +28,7 @@ import {
 	requireAppValue,
 	throwAppError,
 } from "$lib/server/errors/appError.server";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const user = requireAppValue(
@@ -67,6 +69,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
 	try {
 		const searches: Promise<FdcFood[]>[] = [];
+		const catalogClient = getSupabaseAdminClient();
 		if (trustFilter === "any" || trustFilter === "user-private") {
 			searches.push(searchUserCustomFoods(locals.supabase, user.id, query, {
 				sourceFilter,
@@ -74,12 +77,13 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			}));
 		}
 		if (sourceFilter !== "custom" && trustFilter !== "user-private") {
-			searches.push(searchApprovedSharedProducts(locals.supabase, query, {
+			searches.push(searchApprovedSharedProducts(catalogClient, query, {
 				sourceFilter,
 				trustFilter,
 			}));
 		}
 		if (
+			areExternalProductLookupsEnabled() &&
 			(sourceFilter === "all" || sourceFilter === "usda") &&
 			(trustFilter === "any" || trustFilter === "source-verified")
 		) {

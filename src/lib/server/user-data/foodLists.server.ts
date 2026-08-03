@@ -106,6 +106,30 @@ export const readCloudSmoothieListPage = async (
 	};
 };
 
+export const readCloudSmoothieListFood = async (
+	key: SmoothieListKey,
+	foodId: number,
+	context: CloudDataContext,
+) => {
+	const cloud = await resolveCloudDataContext(context);
+	if (!cloud) return null;
+	const { supabase, userId } = cloud;
+
+	const { data, error } = await supabase
+		.from("user_food_list_items")
+		.select(
+			"id, food, created_at, shared_product_id, shared_product_submission_id, source_key, trust_status",
+		)
+		.eq("user_id", userId)
+		.eq("list_type", getCloudListType(key))
+		.eq("fdc_id", foodId)
+		.limit(1);
+	if (error) throw error;
+	if (!data?.length) return null;
+
+	return (await hydrateCloudFoodListRows(supabase, data))[0] ?? null;
+};
+
 export const readCloudSmoothieList = async (
 	key: SmoothieListKey,
 	context: CloudDataContext,

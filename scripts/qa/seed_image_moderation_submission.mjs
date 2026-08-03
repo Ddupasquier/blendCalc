@@ -8,15 +8,11 @@
 
 import { randomUUID } from "node:crypto";
 import { deflateSync } from "node:zlib";
-import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
+import { loadQaDatabaseEnvironment } from "../lib/qa_database_environment.mjs";
 
-config({ path: ".env", quiet: true });
-config({ path: ".env.moderation.local", override: true, quiet: true });
-
-const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const { supabaseUrl, serviceRoleKey } = loadQaDatabaseEnvironment();
 const [command = "seed", rawEmail, rawMode = "both"] = process.argv.slice(2);
 const email = rawEmail?.trim().toLowerCase();
 const allowedModes = new Set(["addition", "adjustment", "both"]);
@@ -30,13 +26,6 @@ const usage = () => {
   npm run catalog:qa-image-seed -- moderator@example.com adjustment
   npm run catalog:qa-image-clean -- moderator@example.com`);
 };
-
-if (!supabaseUrl || !serviceRoleKey) {
-	console.error(
-		"Add PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to .env.moderation.local.",
-	);
-	process.exit(1);
-}
 
 if (!email || (command === "seed" && !allowedModes.has(rawMode))) {
 	usage();

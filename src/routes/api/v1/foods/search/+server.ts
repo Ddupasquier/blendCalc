@@ -1,6 +1,7 @@
 import { ApiV1RequestError, readApiV1SearchRequest } from "$lib/api/v1/request";
 import { searchApiV1Products } from "$lib/server/api/v1/catalogApi.server";
 import { apiV1Error, apiV1Success } from "$lib/server/api/v1/http.server";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
@@ -8,7 +9,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	if (!user) return apiV1Error(401, "authentication_required", "Sign in to use the internal API.");
 	try {
 		const request = readApiV1SearchRequest(url);
-		const result = await searchApiV1Products(locals.supabase, request);
+		const result = await searchApiV1Products(getSupabaseAdminClient(), request);
 		return apiV1Success(result.products, result.pagination);
 	} catch (error) {
 		if (error instanceof ApiV1RequestError) {

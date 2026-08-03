@@ -37,16 +37,20 @@ describe("authoritative Supabase write adapters", () => {
 		vi.unstubAllGlobals();
 	});
 
-	it("uses server enrichment for list writes and database functions for remaining mutations", async () => {
-		const fetchMock = vi.fn().mockResolvedValue({
-			ok: true,
-			json: async () => ({ result: "added" }),
-		});
+	it("uses authenticated server routes for list writes and database functions for remaining mutations", async () => {
+		const fetchMock = vi.fn()
+			.mockResolvedValueOnce({
+				ok: true,
+				json: async () => ({ result: "added" }),
+			})
+			.mockResolvedValueOnce({
+				ok: true,
+				json: async () => ({ removed: true }),
+			});
 		vi.stubGlobal("fetch", fetchMock);
 		supabase.rpc
 			.mockResolvedValueOnce({ data: 1, error: null })
-			.mockResolvedValueOnce({ data: "renamed", error: null })
-			.mockResolvedValueOnce({ data: true, error: null });
+			.mockResolvedValueOnce({ data: "renamed", error: null });
 
 		await expect(
 			writeCloudSmoothieList(MIX_STORAGE_KEYS.fridge, [food]),
@@ -72,14 +76,19 @@ describe("authoritative Supabase write adapters", () => {
 		expect(supabase.rpc.mock.calls.map(([name]) => name)).toEqual([
 			"move_user_food_list_items",
 			"rename_user_food_list_item",
-			"remove_user_food_list_item",
 		]);
-		expect(fetchMock).toHaveBeenCalledWith(
+		expect(fetchMock).toHaveBeenNthCalledWith(
+			1,
 			"/api/user-food-lists/fridge",
 			expect.objectContaining({
 				method: "POST",
 				body: expect.stringContaining("\"foods\""),
 			}),
+		);
+		expect(fetchMock).toHaveBeenNthCalledWith(
+			2,
+			"/api/user-food-lists/fridge?foodId=1",
+			expect.objectContaining({ method: "DELETE" }),
 		);
 	});
 

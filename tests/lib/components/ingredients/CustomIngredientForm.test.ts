@@ -66,6 +66,14 @@ vi.mock("$lib/utils/barcode/productLookup", async (importOriginal) => {
 	};
 });
 
+const barcodeScannerMocks = vi.hoisted(() => ({
+	isNativeBarcodePlatform: vi.fn().mockResolvedValue(false),
+	scanNativeBarcode: vi.fn().mockResolvedValue(null),
+	startWebBarcodeScanner: vi.fn().mockResolvedValue(vi.fn()),
+}));
+
+vi.mock("$lib/utils/barcode/scanner", () => barcodeScannerMocks);
+
 const nutrientRelationshipMocks = vi.hoisted(() => ({
 	readNutrientRelationshipRules: vi.fn().mockResolvedValue([
 		{
@@ -536,6 +544,27 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByText("Name must be at least 3 characters")).toBeInTheDocument();
 	});
 
+	it("closes the routed barcode scanner when its signal resets", async () => {
+		const view = render(CustomIngredientForm, {
+			props: {
+				onCreate: vi.fn(),
+				scanSignal: 1,
+			},
+		});
+
+		expect(
+			await screen.findByRole("dialog", { name: "Scan Barcode" }),
+		).toBeInTheDocument();
+
+		await view.rerender({ onCreate: vi.fn(), scanSignal: 0 });
+
+		await waitFor(() =>
+			expect(
+				screen.queryByRole("dialog", { name: "Scan Barcode" }),
+			).not.toBeInTheDocument(),
+		);
+	});
+
 	it("restores an unsaved draft after the form remounts", async () => {
 		const firstRender = render(CustomIngredientForm, {
 			props: { onCreate: vi.fn() },
@@ -727,6 +756,50 @@ describe("CustomIngredientForm", () => {
 
 		await chooseCategory();
 		expect(categoryTrigger).toHaveTextContent("Other");
+	});
+
+	it("blocks a stale selected category when the category catalog is unavailable", async () => {
+		categoryPickerMocks.loadFoodCategoryPickerData.mockResolvedValue({
+			suggestions: [],
+			common: [],
+			results: [],
+		});
+		const initialFood = createCustomFood({
+			name: "QA Missing Reference Data",
+			servingWeightGrams: 100,
+			nutrients: makeTestNutrients({
+				calories: 100,
+				fat: 1,
+				carbs: 20,
+				fiber: 0,
+				sugar: 0,
+				protein: 2,
+				sodium: 10,
+			}),
+			categories: ["Jams"],
+			categoryOptionId: "jams",
+			customFood: true,
+		});
+
+		render(CustomIngredientForm, {
+			props: { initialFood, onCreate: vi.fn() },
+		});
+
+		await openManualForm();
+		await waitFor(() =>
+			expect(categoryPickerMocks.loadFoodCategoryPickerData).toHaveBeenCalled(),
+		);
+		await continueToNextStep();
+
+		expect(
+			screen.getByText(
+				"Food categories are unavailable. Try again after categories finish syncing.",
+			),
+		).toBeInTheDocument();
+		expect(screen.getByRole("tab", { name: "Identity" })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
 	});
 
 	it("can add a saved custom ingredient directly to the shopping list", async () => {
@@ -972,6 +1045,332 @@ describe("CustomIngredientForm", () => {
 		});
 	});
 
+	it("autofills an exact Open Food Facts product without unrelated provider values", async () => {
+		const nutrients = makeTestNutrients({
+			calories: 539,
+			fat: 30.9,
+			carbs: 57.5,
+			fiber: 0,
+			sugar: 56.3,
+			protein: 6.3,
+			sodium: 0.107,
+		}).map((nutrient) => ({
+			...nutrient,
+			source: "open-food-facts" as const,
+			sourceReference: "03017620422003",
+			confidence: "unknown" as const,
+		}));
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft: {
+				barcode: "03017620422003",
+				name: "Nutella",
+				nameProvenance: "source",
+				brandOwner: "Ferrero",
+				servingLabel: "100g serving",
+				servingWeightGrams: 100,
+				nutrients,
+				reportedNutrientIds: nutrients.map((nutrient) => nutrient.nutrientId),
+				categories: ["Other"],
+				resolvedCategory: "Other",
+				categoryResolution: createTestCategoryResolution("other", "Other"),
+				source: "open-food-facts",
+				sourceKey: "open-food-facts",
+				sourceLabel: "Open Food Facts",
+				sourceReference: "03017620422003",
+				fieldProvenance: {
+					nutrition: {
+						source: "open-food-facts",
+						sourceReference: "03017620422003",
+						confidence: "unknown",
+					},
+				},
+			},
+		});
+
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: "03017620422003" },
+		});
+		await fireEvent.click(
+			await screen.findByRole("button", { name: /autofill/i }),
+		);
+
+		await goToStep(/identity/i);
+		expect(screen.getByLabelText(/food name/i)).toHaveValue("Nutella");
+		expect(screen.getByText(/autofilled from Open Food Facts/i)).toBeInTheDocument();
+		expect(screen.queryByText(/USDA/i)).not.toBeInTheDocument();
+		expect(screen.queryByText(/Imported/i)).not.toBeInTheDocument();
+		await goToStep(/macros/i);
+		expect(screen.getByLabelText(/calories/i)).toHaveValue(539);
+		expect(screen.getByLabelText(/total fat/i)).toHaveValue(30.9);
+		expect(screen.getByLabelText(/total carbohydrates/i)).toHaveValue(57.5);
+		expect(screen.getByLabelText(/protein/i)).toHaveValue(6.3);
+		expect(screen.getByLabelText(/sodium/i)).toHaveValue(0.107);
+		expect(screen.queryByDisplayValue("18")).not.toBeInTheDocument();
+		await goToStep(/extended/i);
+		expect(screen.getByText(/all fields on this step are optional/i)).toBeInTheDocument();
+	});
+
+	it("uses an exact catalog category and advances autofill directly to Share", async () => {
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft: {
+				barcode: "00021130462506",
+				name: "Strawberry Jelly, Strawberry",
+				nameProvenance: "source",
+				brandOwner: "QA Pantry",
+				servingLabel: "1 tbsp (20 g)",
+				servingWeightGrams: 20,
+				nutrients: makeTestNutrients({
+					calories: 250,
+					fat: 0,
+					carbs: 65,
+					fiber: 0,
+					sugar: 60,
+					protein: 0,
+					sodium: 10,
+				}),
+				reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
+				categories: ["Jams"],
+				resolvedCategory: "Jams",
+				categoryResolution: createTestCategoryResolution("jams", "Jams"),
+				source: "shared-catalog",
+				sourceLabel: "blendCalc catalog",
+				sourceReference: "00021130462506",
+			},
+		});
+
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: "00021130462506" },
+		});
+		await fireEvent.click(
+			await screen.findByRole("button", { name: /autofill/i }),
+		);
+
+		expect(screen.getByRole("tab", { name: /^share$/i })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
+		expect(
+			screen.getByText(/already exists in blendCalc with matching data/i),
+		).toBeInTheDocument();
+		await goToStep(/identity/i);
+		expect(screen.getByRole("button", { name: "Category" })).toHaveTextContent(
+			"Jams",
+		);
+	});
+
+	it("detaches provider authority when an autofilled barcode is cleared", async () => {
+		const onCreate = vi.fn();
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft: {
+				barcode: "04006381333931",
+				name: "Source tomato product",
+				nameProvenance: "source",
+				brandOwner: "Source brand",
+				servingLabel: "100g serving",
+				servingWeightGrams: 100,
+				serving: {
+					label: "100g serving",
+					gramWeight: 100,
+					isPrimary: true,
+					origin: "package-label",
+					gramWeightMethod: "source-reported",
+					source: "usda",
+					sourceReference: "12345",
+					confidence: "imported",
+				},
+				nutrients: makeTestNutrients({
+					calories: 18,
+					fat: 0.2,
+					carbs: 3.9,
+					fiber: 1.2,
+					sugar: 2.6,
+					protein: 0.9,
+					sodium: 5,
+				}).map((nutrient) => ({
+					...nutrient,
+					source: "usda" as const,
+					sourceReference: "12345",
+					confidence: "imported" as const,
+				})),
+				reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
+				categories: ["Other"],
+				resolvedCategory: "Other",
+				categoryResolution: createTestCategoryResolution("other", "Other"),
+				ingredients: "Tomatoes",
+				ingredientList: ["Tomatoes"],
+				sourceMetadata: { language: "en", revision: 2 },
+				fieldProvenance: {
+					nutrition: {
+						source: "usda",
+						sourceReference: "12345",
+						confidence: "imported",
+					},
+					ingredients: {
+						source: "usda",
+						sourceReference: "12345",
+						confidence: "imported",
+					},
+				},
+				source: "usda",
+				sourceKey: "usda",
+				sourceLabel: "USDA FDC",
+				sourceReference: "12345",
+				hasSourceServing: true,
+			},
+		});
+
+		render(CustomIngredientForm, { props: { onCreate } });
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/food name/i), {
+			target: { value: "Typed tomato label" },
+		});
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: "4006381333931" },
+		});
+		await fireEvent.click(
+			await screen.findByRole("button", { name: /autofill/i }),
+		);
+
+		await goToStep(/identity/i);
+		expect(screen.getByText(/autofilled from USDA FDC/i)).toBeInTheDocument();
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: "" },
+		});
+		expect(screen.queryByText(/autofilled from USDA FDC/i)).not.toBeInTheDocument();
+
+		await goToStep(/^share$/i);
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+
+		const savedFood = onCreate.mock.calls[0][0];
+		expect(savedFood).toMatchObject({
+			customFood: true,
+			foodIdentityType: "private-custom",
+			hasSourceServing: false,
+			ingredients: "Tomatoes",
+		});
+		expect(savedFood.barcode).toBeUndefined();
+		expect(savedFood.sourceKey).toBeUndefined();
+		expect(savedFood.sourceMetadata).toBeUndefined();
+		expect(savedFood.fieldProvenance).toBeUndefined();
+		expect(savedFood.foodNutrients).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					nutrientId: 1008,
+					source: "user-label",
+					confidence: "user-reported",
+				}),
+			]),
+		);
+		expect(
+			savedFood.foodNutrients.every(
+				(nutrient: { sourceReference?: string }) =>
+					nutrient.sourceReference === undefined,
+			),
+		).toBe(true);
+		expect(submitSharedProduct).not.toHaveBeenCalled();
+	});
+
+	it("detaches the previous source before a replacement barcode is revalidated", async () => {
+		const onCreate = vi.fn();
+		barcodeLookupMocks.lookupBarcodeProduct
+			.mockResolvedValueOnce({
+				status: "found",
+				draft: {
+					barcode: "04006381333931",
+					name: "Source tomato product",
+					nameProvenance: "source",
+					brandOwner: "Source brand",
+					servingLabel: "100g serving",
+					servingWeightGrams: 100,
+					nutrients: makeTestNutrients({
+						calories: 18,
+						fat: 0.2,
+						carbs: 3.9,
+						fiber: 1.2,
+						sugar: 2.6,
+						protein: 0.9,
+						sodium: 5,
+					}).map((nutrient) => ({
+						...nutrient,
+						source: "usda" as const,
+						sourceReference: "12345",
+						confidence: "imported" as const,
+					})),
+					reportedNutrientIds: [1008, 1004, 1005, 1003, 1093],
+					categories: ["Other"],
+					resolvedCategory: "Other",
+					categoryResolution: createTestCategoryResolution("other", "Other"),
+					sourceMetadata: { language: "en", revision: 2 },
+					fieldProvenance: {
+						nutrition: {
+							source: "usda",
+							sourceReference: "12345",
+							confidence: "imported",
+						},
+					},
+					source: "usda",
+					sourceKey: "usda",
+					sourceLabel: "USDA FDC",
+					sourceReference: "12345",
+				},
+			})
+			.mockResolvedValue({
+				status: "not-found",
+				barcode: "00021130462506",
+			});
+
+		render(CustomIngredientForm, { props: { onCreate } });
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/food name/i), {
+			target: { value: "Typed tomato label" },
+		});
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: "4006381333931" },
+		});
+		await fireEvent.click(
+			await screen.findByRole("button", { name: /autofill/i }),
+		);
+
+		await goToStep(/identity/i);
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: "00021130462506" },
+		});
+		await fireEvent.blur(screen.getByLabelText(/upc \/ barcode/i));
+		await waitFor(() =>
+			expect(
+				screen.getByText(/no source match found for this barcode/i),
+			).toBeInTheDocument(),
+		);
+
+		await goToStep(/^share$/i);
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+
+		const savedFood = onCreate.mock.calls[0][0];
+		expect(savedFood).toMatchObject({
+			barcode: "00021130462506",
+			barcodeSource: "manual",
+			customFood: true,
+			foodIdentityType: "private-custom",
+		});
+		expect(savedFood.sourceKey).toBeUndefined();
+		expect(savedFood.sourceMetadata).toBeUndefined();
+		expect(savedFood.fieldProvenance).toBeUndefined();
+		expect(submitSharedProduct).not.toHaveBeenCalled();
+	});
+
 	it("keeps unresolved barcode autofill on Identity until a canonical category is chosen", async () => {
 		categoryPickerMocks.loadFoodCategoryPickerData.mockResolvedValue({
 			suggestions: [
@@ -1194,7 +1593,7 @@ describe("CustomIngredientForm", () => {
 		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
 		await goToStep(/identity/i);
 		await fireEvent.input(screen.getByLabelText(/food name/i), {
-			target: { value: "Motor oil" },
+			target: { value: "Purple Homebrew" },
 		});
 		await goToStep(/^share$/i);
 		await fireEvent.click(screen.getByLabelText(/share with community/i));
@@ -1215,17 +1614,30 @@ describe("CustomIngredientForm", () => {
 		).toBeInTheDocument();
 		expect(screen.getByLabelText(/share with community/i)).toBeDisabled();
 		await goToStep(/identity/i);
-		expect(screen.getByLabelText(/food name/i)).toHaveValue("Motor oil");
+		expect(screen.getByLabelText(/food name/i)).toHaveValue("Purple Homebrew");
 		expect(screen.getByLabelText(/upc \/ barcode/i)).toHaveValue("");
 		await goToStep(/^share$/i);
 		await fireEvent.click(
 			screen.getByRole("button", { name: /add ingredient/i }),
 		);
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
-		expect(onCreate.mock.calls[0][0]).toMatchObject({
-			description: "Motor oil",
+		expect(customFoodMocks.saveCustomFood).toHaveBeenCalledOnce();
+		expect(customFoodMocks.saveCustomFood.mock.calls[0][0]).toMatchObject({
+			description: "Purple Homebrew",
+			foodIdentityType: "private-custom",
 			customFood: true,
 		});
+		expect(customFoodMocks.saveCustomFood.mock.calls[0][0].barcode).toBeUndefined();
+		expect(
+			customFoodMocks.saveCustomFood.mock.calls[0][0].barcodeProvenance,
+		).toBeUndefined();
+		expect(onCreate.mock.calls[0][0]).toMatchObject({
+			description: "Purple Homebrew",
+			foodIdentityType: "private-custom",
+			customFood: true,
+		});
+		expect(onCreate.mock.calls[0][0].barcode).toBeUndefined();
+		expect(submitSharedProduct).not.toHaveBeenCalled();
 	});
 
 	it("replaces a mismatched name with verified barcode information", async () => {
@@ -1445,6 +1857,68 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByLabelText(/volume in this serving/i)).toBeInTheDocument();
 	});
 
+	it("saves an explicit weight and volume pair as one user-reported serving", async () => {
+		const onCreate = vi.fn();
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await openManualForm();
+		await fillIdentityStep("QA Serving Test");
+		await continueToNextStep();
+		await fireEvent.input(screen.getByLabelText(/weight \(g\)/i), {
+			target: { value: "32" },
+		});
+		await fireEvent.click(screen.getByLabelText(/label includes volume/i));
+		await fireEvent.input(screen.getByLabelText(/volume in this serving/i), {
+			target: { value: "2" },
+		});
+		await fireEvent.change(screen.getByLabelText(/volume unit/i), {
+			target: { value: "tbsp" },
+		});
+		expect(screen.queryByLabelText(/serving label/i)).not.toBeInTheDocument();
+
+		await continueToNextStep();
+		await fireEvent.input(screen.getByLabelText(/calories/i), {
+			target: { value: "0" },
+		});
+		await fireEvent.input(screen.getByLabelText(/total fat/i), {
+			target: { value: "0" },
+		});
+		await fireEvent.input(screen.getByLabelText(/total carbohydrates/i), {
+			target: { value: "0" },
+		});
+		await fireEvent.input(screen.getByLabelText(/protein/i), {
+			target: { value: "0" },
+		});
+		await fireEvent.input(screen.getByLabelText(/sodium/i), {
+			target: { value: "0" },
+		});
+		await continueToNextStep();
+		await continueToNextStep();
+		await fireEvent.click(screen.getByRole("button", { name: /add ingredient/i }));
+
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+		const savedFood = onCreate.mock.calls[0][0];
+		expect(savedFood).toMatchObject({
+			description: "QA Serving Test",
+			hasSourceServing: true,
+			customServingLabel: "2 tbsp",
+			customServingWeightGrams: 32,
+		});
+		expect(savedFood.foodServings).toEqual([
+			expect.objectContaining({
+				label: "2 tbsp",
+				gramWeight: 32,
+				amount: 2,
+				unitKey: "tbsp",
+				isPrimary: true,
+				origin: "user-entered",
+				gramWeightMethod: "user-reported",
+				source: "user-label",
+				confidence: "user-reported",
+			}),
+		]);
+	});
+
 	it("blocks impossible nutrient relationships from DB-backed rules", async () => {
 		const onCreate = vi.fn();
 		render(CustomIngredientForm, { props: { onCreate } });
@@ -1465,6 +1939,44 @@ describe("CustomIngredientForm", () => {
 		expect(
 			screen.getAllByText("Added sugars cannot exceed total sugars.").length,
 		).toBeGreaterThan(0);
+	});
+
+	it("allows a corrected total-sugars value after blocking an invalid one", async () => {
+		const onCreate = vi.fn();
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await fillRequiredCustomIngredient("Backend QA Sugar Rule", {
+			carbs: "5",
+		});
+		await goToStep(/macros/i);
+		await fireEvent.input(screen.getByLabelText(/^total sugars/i), {
+			target: { value: "8" },
+		});
+		await goToStep("Share");
+
+		expect(onCreate).not.toHaveBeenCalled();
+		expect(
+			screen.getAllByText("Total sugars cannot exceed total carbohydrates.").length,
+		).toBeGreaterThan(0);
+
+		await fireEvent.input(screen.getByLabelText(/^total sugars/i), {
+			target: { value: "4" },
+		});
+		await goToStep("Share");
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+		const savedNutrients = onCreate.mock.calls[0][0].foodNutrients;
+		expect(
+			savedNutrients.find((nutrient: FdcNutrient) => nutrient.nutrientId === 1005)
+				?.value,
+		).toBeCloseTo((5 / 34) * 100);
+		expect(
+			savedNutrients.find((nutrient: FdcNutrient) => nutrient.nutrientId === 2000)
+				?.value,
+		).toBeCloseTo((4 / 34) * 100);
 	});
 
 	it("blocks forward step navigation until the current step required fields are valid", async () => {
@@ -1522,6 +2034,10 @@ describe("CustomIngredientForm", () => {
 
 		await waitFor(() => expect(submitSharedProduct).toHaveBeenCalledOnce());
 		expect(onCreate).toHaveBeenCalledOnce();
+		expect(onCreate.mock.calls[0][0]).toMatchObject({
+			barcode: "04006381333931",
+			customFood: false,
+		});
 	});
 
 	it("requires package evidence before sharing an unknown product", async () => {

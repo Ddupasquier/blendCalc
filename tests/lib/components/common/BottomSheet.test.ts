@@ -39,6 +39,26 @@ describe("BottomSheet shared chrome", () => {
 		);
 	});
 
+	it("reserves scroll clearance for focused content without changing alignment", () => {
+		const source = readFileSync(componentStylesPath, "utf8");
+		const contentRule = source.match(
+			/\.bottom-sheet__content\s*{(?<body>[\s\S]*?)\n}/,
+		);
+
+		expect(source).toContain(
+			"$bottom-sheet-focus-clearance: $app-gap-2xs;",
+		);
+		expect(contentRule?.groups?.body).toContain(
+			"margin-inline: calc(0rem - #{$bottom-sheet-focus-clearance});",
+		);
+		expect(contentRule?.groups?.body).toContain(
+			"padding-inline: $bottom-sheet-focus-clearance;",
+		);
+		expect(contentRule?.groups?.body).toContain(
+			"scroll-padding: $bottom-sheet-focus-clearance;",
+		);
+	});
+
 	it("allows a flow to hide the shared back control", () => {
 		const source = readFileSync(componentPath, "utf8");
 		const manualEntrySource = readFileSync(manualEntrySheetPath, "utf8");

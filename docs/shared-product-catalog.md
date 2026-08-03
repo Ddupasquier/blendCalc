@@ -532,7 +532,9 @@ priority changes.
 
 ## QA moderation fixtures
 
-Create clearly marked pending submissions without calling outside product APIs:
+Create clearly marked pending submissions in the disposable local test database without
+calling outside product APIs. Run `npm run db:test:start` first so the local credentials
+and seeded moderator account exist:
 
 ```sh
 npm run catalog:qa-seed -- moderator@example.com
@@ -546,7 +548,8 @@ action to exercise the moderation flow safely. Remove leftover fixtures with:
 npm run catalog:qa-clean -- moderator@example.com
 ```
 
-Create fake image-review submissions for the moderated product image flow:
+Create fake image-review submissions for the moderated product image flow in the same
+disposable local database:
 
 ```sh
 npm run catalog:qa-image-seed -- moderator@example.com

@@ -19,6 +19,7 @@ vi.mock("$lib/utils/products/catalog", () => ({
 import IngredientSearch from "$lib/components/ingredients/search/IngredientSearch/IngredientSearch.svelte";
 import { searchFoodPage } from "$lib/utils/food/sources/fdc";
 import type { IngredientSearchPage } from "$lib/utils/ingredients/ingredientSearchPagination";
+import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceData";
 
 const makeFood = (fdcId: number, description: string): FdcFood => ({
 	fdcId,
@@ -269,6 +270,50 @@ describe("IngredientSearch", () => {
 		expect(onAdd).toHaveBeenCalledWith(imageFood);
 		expect(onSelect).not.toHaveBeenCalled();
 		expect(container.querySelector(".result-card")).not.toBeInTheDocument();
+	});
+
+	it("keeps provider identity off compact cards while retaining evidence status", async () => {
+		const foods: FdcFood[] = [
+			{
+				...makeFood(305, "Spinach, Raw"),
+				sourceKey: "usda",
+				sourceLabel: "USDA FoodData Central",
+				sourceDataType: "SR Legacy",
+				trustStatus: "source-verified",
+			},
+			{
+				...makeFood(306, "Spinach, Baby, Raw"),
+				sourceKey: "usda",
+				sourceLabel: "USDA FoodData Central",
+				sourceDataType: "Foundation",
+				trustStatus: "source-verified",
+			},
+		];
+		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage(foods));
+
+		render(IngredientSearch, {
+			props: {
+				onSelect: vi.fn(),
+				onAdd: vi.fn(),
+				onSearchFocus: vi.fn(),
+				provenanceOptions: ingredientProvenanceOptionsFixture,
+			},
+		});
+		await fireEvent.input(
+			screen.getByRole("combobox", { name: /search ingredients/i }),
+			{ target: { value: "spinach raw" } },
+		);
+		await waitFor(
+			() => expect(screen.getByText("Spinach, Baby, Raw")).toBeInTheDocument(),
+			{ timeout: 2000 },
+		);
+
+		expect(screen.queryByText("USDA")).not.toBeInTheDocument();
+		expect(screen.queryByText("USDA FoodData Central")).not.toBeInTheDocument();
+		expect(screen.queryByText("SR Legacy")).not.toBeInTheDocument();
+		expect(screen.queryByText("Foundation")).not.toBeInTheDocument();
+		expect(screen.queryByText("Imported")).not.toBeInTheDocument();
+		expect(screen.getAllByLabelText("Verification status: Verified")).toHaveLength(2);
 	});
 
 	it("uses the full-height feature lane for fallback symbols", async () => {

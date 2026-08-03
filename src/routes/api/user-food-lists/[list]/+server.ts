@@ -42,6 +42,9 @@ const getListKey = (value: string): SmoothieListKey | null => {
 	return null;
 };
 
+const getListType = (listKey: SmoothieListKey) =>
+	listKey === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping";
+
 const isFood = (value: unknown): value is FdcFood => {
 	if (!value || typeof value !== "object") return false;
 	const food = value as Partial<FdcFood>;
@@ -155,9 +158,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 	const enrichedFoods = await Promise.all(
 		foods.map((food) => enrichFoodForListPlacement(locals.supabase, food)),
 	);
-	const listType = listKey === MIX_STORAGE_KEYS.fridge
-		? "fridge"
-		: "shopping";
+	const listType = getListType(listKey);
 
 	if (payload.food && foods.length === 1) {
 		const food = enrichedFoods[0];
@@ -185,4 +186,28 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 	return error
 		? appIssueJson(500, "SERVICE_UNAVAILABLE")
 		: json({ result: data });
+};
+
+export const DELETE: RequestHandler = async ({ locals, params, url }) => {
+	const user = await locals.getVerifiedUser();
+	if (!user) return appIssueJson(401, "AUTH_REQUIRED");
+	const listKey = getListKey(params.list);
+	if (!listKey) return appIssueJson(404, "RESOURCE_NOT_FOUND");
+
+	const foodId = Number(url.searchParams.get("foodId"));
+	if (!Number.isSafeInteger(foodId)) {
+		return appIssueJson(400, "INVALID_REQUEST");
+	}
+
+	const { data, error } = await locals.supabase.rpc(
+		"remove_user_food_list_item",
+		{
+			p_fdc_id: foodId,
+			p_list_type: getListType(listKey),
+		},
+	);
+
+	return error
+		? appIssueJson(500, "SERVICE_UNAVAILABLE")
+		: json({ removed: data === true });
 };

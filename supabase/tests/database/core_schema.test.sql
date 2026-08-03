@@ -1,6 +1,6 @@
 begin;
 
-select plan(33);
+select plan(48);
 
 select has_table('public', 'profiles', 'profiles table exists');
 select has_table('public', 'user_food_list_items', 'food-list table exists');
@@ -23,6 +23,36 @@ select ok(
 	'local QA validation rules are enabled'
 );
 select ok(
+	(select count(*) from public.nutrient_manual_entry_fields where enabled) >= 68
+		and exists (
+			select 1
+			from public.nutrient_manual_entry_groups
+			where id = 'amino-acids'
+				and entry_step = 'extended'
+				and enabled
+		)
+		and not exists (
+			select expected.group_id
+			from (
+				values
+					('advanced-carbohydrate-details', 8),
+					('advanced-fat-details', 3),
+					('carotenoids', 2),
+					('minerals', 12),
+					('amino-acids', 19),
+					('other-nutrients', 1)
+			) as expected(group_id, minimum_fields)
+			where (
+				select count(*)
+				from public.nutrient_manual_entry_fields fields
+				where fields.group_id = expected.group_id
+					and fields.enabled
+					and fields.classification_status = 'approved'
+			) < expected.minimum_fields
+		),
+	'local QA manual entry includes the reviewed Extended nutrient catalog'
+);
+select ok(
 	exists (
 		select 1
 		from public.custom_food_category_options
@@ -30,6 +60,195 @@ select ok(
 			and enabled
 	),
 	'local QA category fixtures include nut and seed butters'
+);
+select ok(
+	(select count(*) from public.custom_food_category_options where enabled) > 1000
+		and exists (
+			select 1
+			from public.custom_food_category_options
+			where normalized_value = 'yogurts'
+				and enabled
+		),
+	'local QA category fixtures prove search beyond the former 1,000-row cutoff'
+);
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '09000000000179'
+			and product.status = 'active'
+			and product.search_text ilike '%green%'
+			and product.search_text ilike '%tomat%'
+			and product.food ->> 'fdcId' = '170456'
+			and jsonb_array_length(product.food -> 'foodNutrients') >= 7
+	),
+	'local QA catalog includes a source-shaped multi-word partial-search fixture'
+);
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '09000000000186'
+			and product.product_name = 'Babyfood, Ravioli, Cheese Filled, With Tomato Sauce'
+			and product.search_text ilike '%tomato%'
+	)
+	and exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '09000000000193'
+			and product.product_name = 'Babyfood, Dinner, Macaroni And Tomato'
+			and product.search_text ilike '%tomato%'
+	),
+	'local QA catalog includes intentionally weaker late-name search matches'
+);
+select ok(
+	exists (
+		select 1
+		from public.food_image_assets image
+		join public.shared_products product on product.id = image.shared_product_id
+		where product.barcode = '00021130493609'
+			and image.source = 'open-food-facts'
+			and image.image_role = 'front'
+			and image.license_name = 'CC BY-SA 3.0'
+			and image.license_url = 'https://creativecommons.org/licenses/by-sa/3.0/'
+			and image.attribution_text = 'Open Food Facts contributors'
+			and image.status = 'active'
+	),
+	'local QA pasta-sauce fixture includes source-licensed image attribution'
+);
+select is(
+	(
+		select count(*)::integer
+		from public.blendcalc_api_v1_product_readiness
+		where barcode in (
+			'00021130462506',
+			'00021130493609',
+			'08801005523455',
+			'00869759000149',
+			'00011110904416'
+		)
+			and publishable
+	),
+	5,
+	'local QA catalog fixtures are publishable through blendCalc API v1'
+);
+select is(
+	(
+		select count(*)::integer
+		from public.blendcalc_api_v1_product_readiness
+		where publishable
+	),
+	107,
+	'the full local QA catalog is publishable through blendCalc API v1'
+);
+select is(
+	(select count(*)::integer from public.shared_products where source = 'usda' and status = 'active'),
+	83,
+	'local QA includes a broad set of exact USDA branded-product snapshots'
+);
+select ok(
+	not exists (
+		select 1
+		from public.shared_products product
+		where product.source = 'usda'
+			and not exists (
+				select 1
+				from public.food_nutrients nutrient
+				where nutrient.shared_product_id = product.id
+					and nutrient.source = 'usda'
+					and nutrient.source_observation_id is not null
+					and nutrient.mapping_status = 'canonical'
+			)
+	),
+	'USDA catalog snapshots retain normalized nutrient lineage'
+);
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '00867824000001'
+			and product.product_name = 'Apple'
+			and product.food ->> 'fdcId' = '454004'
+			and product.food ->> 'sourceKey' = 'usda'
+	)
+	and exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '00812624010613'
+			and product.product_name = 'Shrimp'
+			and product.food ->> 'fdcId' = '1899566'
+	),
+	'USDA QA snapshots cover distinct produce and seafood identities'
+);
+select ok(
+	not exists (
+		select 1
+		from public.shared_products product
+		where product.barcode in (
+			'00021130462506',
+			'00021130493609',
+			'08801005523455',
+			'00869759000149',
+			'00011110904416'
+		)
+			and not exists (
+				select 1
+				from public.food_nutrients nutrient
+				where nutrient.shared_product_id = product.id
+					and nutrient.source = case
+						when product.barcode = '00021130493609' then 'usda'
+						else 'user-label'
+					end
+					and nutrient.source_observation_id is not null
+					and nutrient.mapping_status = 'canonical'
+			)
+	),
+	'local QA catalog fixtures retain normalized nutrient lineage'
+);
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		join public.food_servings serving on serving.shared_product_id = product.id
+		where product.barcode = '00021130493609'
+			and serving.label = '1/2 cup (125 g)'
+			and serving.gram_weight = 125
+			and serving.source_observation_id is not null
+	)
+	and not exists (
+		select 1
+		from public.shared_products product
+		join public.food_servings serving on serving.shared_product_id = product.id
+		where product.barcode = '00011110904416'
+	),
+	'local QA fixtures cover exact serving and source-reported no-serving states'
+);
+select ok(
+	exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '08801005523455'
+			and product.food ->> 'ingredients' like '%wheat flour%'
+			and product.food -> 'allergens' ?& array['wheat', 'soy']
+			and product.food -> 'traces' ? 'peanuts'
+	),
+	'local QA catalog fixtures include ingredient, allergen, and trace evidence'
+);
+select ok(
+	has_table_privilege(
+		'service_role',
+		'public.custom_food_category_options',
+		'SELECT'
+	),
+	'trusted catalog reads can resolve canonical category labels'
+);
+select ok(
+	has_table_privilege(
+		'service_role',
+		'public.shared_product_observations',
+		'SELECT'
+	),
+	'trusted catalog reads can resolve selected observation provenance'
 );
 select ok(
 	(select relrowsecurity from pg_class where oid = 'public.user_food_list_items'::regclass),
