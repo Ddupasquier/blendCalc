@@ -396,7 +396,7 @@ not only the default page.
 | Ingredient actions         | `IngredientActionSheet` → `BottomSheet`         | Reusable action rows; ordinary actions first and privileged group last                                   |
 | Image placement            | `IngredientImagePlacementSheet` → `BottomSheet` | Shared editor and exact card preview; privileged treatment comes from the owning group                   |
 | Search                     | `RightSheet` + `IngredientSearchView`           | Full-content right-side view with shared shell and close behavior                                        |
-| Nutrition detail           | `RightSheet` + `NutritionDetailView`            | Full-content detail view using the same right-sheet bounds                                               |
+| Nutrition detail           | `RightSheet` + `NutritionDetailView`            | Full-content detail view using the same right-sheet bounds; static food information and list actions come first, every disclosure is grouped at the bottom, and privileged disclosures remain last |
 | Rename                     | `TextInputDialog`                               | Focused dialog with label, helper text/error, cancel, and save actions                                   |
 | Destructive confirmation   | `TwoStepConfirmation` or `ConfirmationDialog`   | Explain the required confirmation and never rely on color alone                                          |
 | Barcode scanner            | `BarcodeScannerDialog`                          | High-contrast modal camera surface, trapped/restored focus, Escape close, manual-entry fallback          |

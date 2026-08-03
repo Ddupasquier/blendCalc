@@ -316,14 +316,21 @@ Preserve:
     attribution, and license links.
 - Keep the readable ingredient statement directly below Nutrition Facts. When a source
   also reports structured ingredient detail, expose one closed `Ingredient details`
-  disclosure containing the nested ingredient path, only explicitly reported exact or
-  estimated percentages, source dietary classifications, analysis coverage, normalized
-  ingredient tags, and additives. Source analysis is supporting context rather than a
-  blendCalc verification result or a substitute for the current package label.
+  disclosure in the bottom disclosure group. It contains the nested ingredient path,
+  only explicitly reported exact or estimated percentages, source dietary
+  classifications, analysis coverage, normalized ingredient tags, and additives.
+  Source analysis is supporting context rather than a blendCalc verification result or
+  a substitute for the current package label.
 - Keep the default nutrition reading path focused on the product image, any current
   personalized warning, Nutrition Facts, ingredients, and explicit package disclosures.
   Place supporting data quality, product/source metadata, and warning-report tools
   inside one closed `More about this food` disclosure.
+- Render the complete non-collapsible food record and list actions before disclosures.
+  Group every nutrition disclosure together at the bottom in this order when present:
+  warning review, ingredient details, food-check details, `More about this food`, then
+  moderator image placement. Do not interrupt Ingredients, Contains, May contain,
+  dietary labels, or dietary considerations with disclosure rows. Privileged controls
+  remain last and are absent for ordinary users.
 - Keep the complete product, serving, and source metadata inside the nested shared
   `Product details` collapse, closed by default.
 - When traceable source-record metadata contains a useful caveat, show a separate
@@ -352,7 +359,7 @@ Preserve:
 - When specific personalized warnings are present, do not repeat a generic conflict
   message. Show concise warning reasons immediately, then keep exact source evidence,
   policy context, and each warning's `Report` action inside a closed
-  `Review these warnings` disclosure.
+  `Review these warnings` disclosure in the bottom disclosure group.
 - Reviewed English, French, and Spanish structured ingredient/allergen terms can drive
   the same canonical warning. When a source explicitly declares another unsupported
   ingredient language, show the result as incomplete rather than implying the food was

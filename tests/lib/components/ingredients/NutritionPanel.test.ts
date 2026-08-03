@@ -55,8 +55,10 @@ describe("NutritionPanel", () => {
 		);
 		const reviewTitle = screen.getByText("Review these warnings");
 		const reviewDetails = reviewTitle.closest("details");
+		const disclosureGroup = reviewTitle.closest(".nutrition-panel__disclosures");
 		expect(reviewDetails).not.toHaveAttribute("open");
-		expect(statusMessage).toContainElement(reviewTitle);
+		expect(statusMessage).not.toContainElement(reviewTitle);
+		expect(disclosureGroup).toContainElement(reviewTitle);
 		expect(statusMessage?.querySelector(".status-icon-badge"))
 			.toBeInTheDocument();
 		expect(
@@ -65,10 +67,10 @@ describe("NutritionPanel", () => {
 
 		await fireEvent.click(reviewTitle.closest("summary") as HTMLElement);
 		expect(reviewDetails).toHaveAttribute("open");
-		expect(statusMessage).toContainElement(
+		expect(reviewDetails).toContainElement(
 			screen.getByText(/package’s Contains information lists “Peanut”/i),
 		);
-		expect(statusMessage).toContainElement(
+		expect(reviewDetails).toContainElement(
 			screen.getByText(/current food-check rules: version 2/i),
 		);
 		expect(screen.getByRole("button", {
@@ -236,6 +238,98 @@ describe("NutritionPanel", () => {
 			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
 		expect(screen.getByText("Peanuts")).toBeInTheDocument();
 		expect(screen.getByText("Tree nuts")).toBeInTheDocument();
+	});
+
+	it("groups every disclosure at the bottom and keeps moderator actions last", () => {
+		const { container } = render(NutritionPanel, {
+			props: {
+				food: {
+					...peanutButter,
+					ingredients: "Peanuts, sea salt",
+					ingredientPresentation: {
+						ingredientText: "Peanuts, sea salt",
+						rows: [{
+							text: "Peanuts",
+							depth: 0,
+							path: ["Peanuts"],
+							percentageLabel: "About 98%",
+							classifications: [],
+						}],
+						additives: [],
+						metrics: [],
+						tagGroups: [],
+						hasSourceAnalysis: false,
+					},
+					allergenDisclosure: {
+						contains: ["Peanuts"],
+						mayContain: [],
+					},
+					compatibilityEvaluation: {
+						version: 1,
+						status: "conflict",
+						policyVersion: 2,
+						profileApplied: true,
+						conflictCount: 1,
+						coverage: {
+							basis: "packaged-label",
+							identity: "not_required",
+							ingredients: "available",
+							allergens: "available",
+							traces: "missing",
+							policy: "available",
+						},
+						regulatoryContext: {
+							status: "unsupported",
+							requestedRegionCode: "ZZ",
+							selectionSource: "account",
+							profile: null,
+							coveredPreferences: [],
+							uncoveredPreferences: [],
+						},
+						preferenceResolution: {
+							resolvedCount: 1,
+							resolvedPreferences: [],
+							unresolvedPreferences: [],
+						},
+					},
+					image: {
+						source: "open-food-facts",
+						sourceReference: "00000000119993",
+						role: "front",
+						imageUrl: "https://example.com/peanut-butter.jpg",
+						confidence: "moderator-reviewed",
+					},
+				},
+				viewingGrams: 100,
+				canAdjustImagePlacement: true,
+				onImagePlacementSave: vi.fn(),
+			},
+		});
+
+		const disclosureGroup = container.querySelector(
+			".nutrition-panel__disclosures",
+		);
+		const disclosures = Array.from(container.querySelectorAll("details"));
+		const ingredientsHeading = screen.getByRole("heading", { name: "Ingredients" });
+		const containsHeading = screen.getByRole("heading", { name: "Contains" });
+		const listAction = screen.getByRole("button", { name: "Add to Fridge" });
+		const summaries = Array.from(
+			disclosureGroup?.querySelectorAll("summary") ?? [],
+		);
+
+		expect(disclosureGroup).toBeInTheDocument();
+		expect(disclosures.length).toBeGreaterThanOrEqual(5);
+		for (const disclosure of disclosures) {
+			expect(disclosureGroup).toContainElement(disclosure);
+			expect(disclosure).not.toHaveAttribute("open");
+		}
+		expect(ingredientsHeading.compareDocumentPosition(disclosureGroup as Node))
+			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+		expect(containsHeading.compareDocumentPosition(disclosureGroup as Node))
+			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+		expect(listAction.compareDocumentPosition(disclosureGroup as Node))
+			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+		expect(summaries.at(-1)).toHaveTextContent("Adjust card image placement");
 	});
 
 	it("keeps the complete useful product record in a closed details section", async () => {

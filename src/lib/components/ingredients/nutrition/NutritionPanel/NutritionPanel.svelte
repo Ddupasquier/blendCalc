@@ -28,21 +28,34 @@
 </script>
 
 <section class="nutrition-panel">
-	<ProductImagePanel {food} {canAdjustImagePlacement} {onImagePlacementSave} />
-	<NutritionPreferenceConflict {food} />
+	<ProductImagePanel {food} mode="summary" />
+	<NutritionPreferenceConflict {food} mode="summary" />
 	<NutritionFactsLabel {food} {viewingGrams} {viewingServing} {provenanceOptions} />
 	{#if food}
-		<ProductIngredientsPanel {food} />
-		<ProductCompatibilityPanel {food} />
-		<CollapsibleSection title="More about this food" surface="panel">
-			<div class="nutrition-panel__supplemental">
-				<ProductDataQualityPanel {food} />
-				<ProductInformationPanel {food} {onReportIncorrectInformation} />
-				<MissingFoodWarningFeedback {food} />
-			</div>
-		</CollapsibleSection>
+		<ProductIngredientsPanel {food} mode="summary" />
+		<ProductCompatibilityPanel {food} mode="summary" />
 	{/if}
 	<NutritionListActions {food} {showListActions} {listMembership} />
+	{#if food}
+		<div class="nutrition-panel__disclosures" aria-label="Additional food information">
+			<NutritionPreferenceConflict {food} mode="details" />
+			<ProductIngredientsPanel {food} mode="details" />
+			<ProductCompatibilityPanel {food} mode="details" />
+			<CollapsibleSection title="More about this food" surface="panel">
+				<div class="nutrition-panel__supplemental">
+					<ProductDataQualityPanel {food} />
+					<ProductInformationPanel {food} {onReportIncorrectInformation} />
+					<MissingFoodWarningFeedback {food} />
+				</div>
+			</CollapsibleSection>
+			<ProductImagePanel
+				{food}
+				mode="details"
+				{canAdjustImagePlacement}
+				{onImagePlacementSave}
+			/>
+		</div>
+	{/if}
 </section>
 
 <style lang="scss">
