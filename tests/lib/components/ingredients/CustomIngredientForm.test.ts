@@ -1045,6 +1045,74 @@ describe("CustomIngredientForm", () => {
 		});
 	});
 
+	it("autofills an exact Open Food Facts product without unrelated provider values", async () => {
+		const nutrients = makeTestNutrients({
+			calories: 539,
+			fat: 30.9,
+			carbs: 57.5,
+			fiber: 0,
+			sugar: 56.3,
+			protein: 6.3,
+			sodium: 0.107,
+		}).map((nutrient) => ({
+			...nutrient,
+			source: "open-food-facts" as const,
+			sourceReference: "03017620422003",
+			confidence: "unknown" as const,
+		}));
+		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
+			status: "found",
+			draft: {
+				barcode: "03017620422003",
+				name: "Nutella",
+				nameProvenance: "source",
+				brandOwner: "Ferrero",
+				servingLabel: "100g serving",
+				servingWeightGrams: 100,
+				nutrients,
+				reportedNutrientIds: nutrients.map((nutrient) => nutrient.nutrientId),
+				categories: ["Other"],
+				resolvedCategory: "Other",
+				categoryResolution: createTestCategoryResolution("other", "Other"),
+				source: "open-food-facts",
+				sourceKey: "open-food-facts",
+				sourceLabel: "Open Food Facts",
+				sourceReference: "03017620422003",
+				fieldProvenance: {
+					nutrition: {
+						source: "open-food-facts",
+						sourceReference: "03017620422003",
+						confidence: "unknown",
+					},
+				},
+			},
+		});
+
+		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
+		await openManualForm();
+		await fireEvent.input(screen.getByLabelText(/upc \/ barcode/i), {
+			target: { value: "03017620422003" },
+		});
+		await fireEvent.click(
+			await screen.findByRole("button", { name: /autofill/i }),
+		);
+
+		await goToStep(/identity/i);
+		expect(screen.getByLabelText(/food name/i)).toHaveValue("Nutella");
+		expect(screen.getByText(/autofilled from Open Food Facts/i)).toBeInTheDocument();
+		expect(screen.queryByText(/USDA/i)).not.toBeInTheDocument();
+		expect(screen.queryByText(/Imported/i)).not.toBeInTheDocument();
+		await goToStep(/macros/i);
+		expect(screen.getByLabelText(/calories/i)).toHaveValue(539);
+		expect(screen.getByLabelText(/total fat/i)).toHaveValue(30.9);
+		expect(screen.getByLabelText(/total carbohydrates/i)).toHaveValue(57.5);
+		expect(screen.getByLabelText(/protein/i)).toHaveValue(6.3);
+		expect(screen.getByLabelText(/sodium/i)).toHaveValue(0.107);
+		expect(screen.queryByDisplayValue("18")).not.toBeInTheDocument();
+		await goToStep(/extended/i);
+		expect(screen.getByText(/all fields on this step are optional/i)).toBeInTheDocument();
+	});
+
 	it("uses an exact catalog category and advances autofill directly to Share", async () => {
 		barcodeLookupMocks.lookupBarcodeProduct.mockResolvedValue({
 			status: "found",
@@ -1525,7 +1593,7 @@ describe("CustomIngredientForm", () => {
 		await fireEvent.click(screen.getByRole("button", { name: /autofill/i }));
 		await goToStep(/identity/i);
 		await fireEvent.input(screen.getByLabelText(/food name/i), {
-			target: { value: "Motor oil" },
+			target: { value: "Purple Homebrew" },
 		});
 		await goToStep(/^share$/i);
 		await fireEvent.click(screen.getByLabelText(/share with community/i));
@@ -1546,17 +1614,30 @@ describe("CustomIngredientForm", () => {
 		).toBeInTheDocument();
 		expect(screen.getByLabelText(/share with community/i)).toBeDisabled();
 		await goToStep(/identity/i);
-		expect(screen.getByLabelText(/food name/i)).toHaveValue("Motor oil");
+		expect(screen.getByLabelText(/food name/i)).toHaveValue("Purple Homebrew");
 		expect(screen.getByLabelText(/upc \/ barcode/i)).toHaveValue("");
 		await goToStep(/^share$/i);
 		await fireEvent.click(
 			screen.getByRole("button", { name: /add ingredient/i }),
 		);
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
-		expect(onCreate.mock.calls[0][0]).toMatchObject({
-			description: "Motor oil",
+		expect(customFoodMocks.saveCustomFood).toHaveBeenCalledOnce();
+		expect(customFoodMocks.saveCustomFood.mock.calls[0][0]).toMatchObject({
+			description: "Purple Homebrew",
+			foodIdentityType: "private-custom",
 			customFood: true,
 		});
+		expect(customFoodMocks.saveCustomFood.mock.calls[0][0].barcode).toBeUndefined();
+		expect(
+			customFoodMocks.saveCustomFood.mock.calls[0][0].barcodeProvenance,
+		).toBeUndefined();
+		expect(onCreate.mock.calls[0][0]).toMatchObject({
+			description: "Purple Homebrew",
+			foodIdentityType: "private-custom",
+			customFood: true,
+		});
+		expect(onCreate.mock.calls[0][0].barcode).toBeUndefined();
+		expect(submitSharedProduct).not.toHaveBeenCalled();
 	});
 
 	it("replaces a mismatched name with verified barcode information", async () => {
@@ -1776,6 +1857,68 @@ describe("CustomIngredientForm", () => {
 		expect(screen.getByLabelText(/volume in this serving/i)).toBeInTheDocument();
 	});
 
+	it("saves an explicit weight and volume pair as one user-reported serving", async () => {
+		const onCreate = vi.fn();
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await openManualForm();
+		await fillIdentityStep("QA Serving Test");
+		await continueToNextStep();
+		await fireEvent.input(screen.getByLabelText(/weight \(g\)/i), {
+			target: { value: "32" },
+		});
+		await fireEvent.click(screen.getByLabelText(/label includes volume/i));
+		await fireEvent.input(screen.getByLabelText(/volume in this serving/i), {
+			target: { value: "2" },
+		});
+		await fireEvent.change(screen.getByLabelText(/volume unit/i), {
+			target: { value: "tbsp" },
+		});
+		expect(screen.queryByLabelText(/serving label/i)).not.toBeInTheDocument();
+
+		await continueToNextStep();
+		await fireEvent.input(screen.getByLabelText(/calories/i), {
+			target: { value: "0" },
+		});
+		await fireEvent.input(screen.getByLabelText(/total fat/i), {
+			target: { value: "0" },
+		});
+		await fireEvent.input(screen.getByLabelText(/total carbohydrates/i), {
+			target: { value: "0" },
+		});
+		await fireEvent.input(screen.getByLabelText(/protein/i), {
+			target: { value: "0" },
+		});
+		await fireEvent.input(screen.getByLabelText(/sodium/i), {
+			target: { value: "0" },
+		});
+		await continueToNextStep();
+		await continueToNextStep();
+		await fireEvent.click(screen.getByRole("button", { name: /add ingredient/i }));
+
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+		const savedFood = onCreate.mock.calls[0][0];
+		expect(savedFood).toMatchObject({
+			description: "QA Serving Test",
+			hasSourceServing: true,
+			customServingLabel: "2 tbsp",
+			customServingWeightGrams: 32,
+		});
+		expect(savedFood.foodServings).toEqual([
+			expect.objectContaining({
+				label: "2 tbsp",
+				gramWeight: 32,
+				amount: 2,
+				unitKey: "tbsp",
+				isPrimary: true,
+				origin: "user-entered",
+				gramWeightMethod: "user-reported",
+				source: "user-label",
+				confidence: "user-reported",
+			}),
+		]);
+	});
+
 	it("blocks impossible nutrient relationships from DB-backed rules", async () => {
 		const onCreate = vi.fn();
 		render(CustomIngredientForm, { props: { onCreate } });
@@ -1796,6 +1939,44 @@ describe("CustomIngredientForm", () => {
 		expect(
 			screen.getAllByText("Added sugars cannot exceed total sugars.").length,
 		).toBeGreaterThan(0);
+	});
+
+	it("allows a corrected total-sugars value after blocking an invalid one", async () => {
+		const onCreate = vi.fn();
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await fillRequiredCustomIngredient("Backend QA Sugar Rule", {
+			carbs: "5",
+		});
+		await goToStep(/macros/i);
+		await fireEvent.input(screen.getByLabelText(/^total sugars/i), {
+			target: { value: "8" },
+		});
+		await goToStep("Share");
+
+		expect(onCreate).not.toHaveBeenCalled();
+		expect(
+			screen.getAllByText("Total sugars cannot exceed total carbohydrates.").length,
+		).toBeGreaterThan(0);
+
+		await fireEvent.input(screen.getByLabelText(/^total sugars/i), {
+			target: { value: "4" },
+		});
+		await goToStep("Share");
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+		const savedNutrients = onCreate.mock.calls[0][0].foodNutrients;
+		expect(
+			savedNutrients.find((nutrient: FdcNutrient) => nutrient.nutrientId === 1005)
+				?.value,
+		).toBeCloseTo((5 / 34) * 100);
+		expect(
+			savedNutrients.find((nutrient: FdcNutrient) => nutrient.nutrientId === 2000)
+				?.value,
+		).toBeCloseTo((4 / 34) * 100);
 	});
 
 	it("blocks forward step navigation until the current step required fields are valid", async () => {
@@ -1853,6 +2034,10 @@ describe("CustomIngredientForm", () => {
 
 		await waitFor(() => expect(submitSharedProduct).toHaveBeenCalledOnce());
 		expect(onCreate).toHaveBeenCalledOnce();
+		expect(onCreate.mock.calls[0][0]).toMatchObject({
+			barcode: "04006381333931",
+			customFood: false,
+		});
 	});
 
 	it("requires package evidence before sharing an unknown product", async () => {

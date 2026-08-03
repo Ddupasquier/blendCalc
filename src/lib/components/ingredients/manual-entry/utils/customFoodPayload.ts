@@ -164,9 +164,7 @@ export const createManualEntryCustomFood = (
 				...saveNutrients.map((nutrient) => nutrient.nutrientId),
 			]),
 		],
-		hasSourceServing: payload.customFood
-			? false
-			: payload.hasSourceServing,
+		hasSourceServing: payload.hasSourceServing === true,
 		customFood: payload.customFood,
 	});
 };

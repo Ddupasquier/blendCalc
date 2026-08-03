@@ -168,6 +168,54 @@ describe("barcode product DB-first enrichment", () => {
 		}));
 	});
 
+	it("uses the completed DB row on a repeated lookup without another provider request", async () => {
+		const incompleteDraft = makeDraft({
+			hasSourceServing: false,
+			servingLabel: undefined,
+			servingWeightGrams: undefined,
+		});
+		const completedDraft = makeDraft();
+		const supplement = makeDraft({
+			source: "usda",
+			sourceLabel: "USDA FoodData Central",
+			sourceReference: "2032704",
+			fieldProvenance: {
+				serving: {
+					source: "usda",
+					sourceReference: "2032704",
+					confidence: "unknown",
+				},
+			},
+		});
+
+		mocks.getSharedProductByBarcode.mockResolvedValue({
+			id: "shared-product-id",
+		});
+		mocks.mapSharedCatalogFood
+			.mockReturnValueOnce(incompleteDraft)
+			.mockReturnValueOnce(completedDraft);
+		mocks.lookupExternalBarcodeProduct.mockResolvedValue(supplement);
+
+		const firstResult = await lookupBarcodeProductDraft(
+			{} as never,
+			incompleteDraft.barcode,
+		);
+		const repeatedResult = await lookupBarcodeProductDraft(
+			{} as never,
+			incompleteDraft.barcode,
+		);
+
+		expect(firstResult).toMatchObject({
+			hasSourceServing: true,
+			servingWeightGrams: 125,
+		});
+		expect(repeatedResult).toBe(completedDraft);
+		expect(mocks.lookupExternalBarcodeProduct).toHaveBeenCalledOnce();
+		expect(
+			mocks.persistSharedProductExternalEnrichment,
+		).toHaveBeenCalledOnce();
+	});
+
 	it("keeps a usable DB product when optional cache and API lookups fail", async () => {
 		const sharedDraft = makeDraft({ categories: [], image: undefined });
 		mocks.getSharedProductByBarcode.mockResolvedValue({ id: "shared-product-id" });

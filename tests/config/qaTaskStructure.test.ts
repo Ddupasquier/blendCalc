@@ -133,6 +133,23 @@ describe.runIf(localTrackersAvailable)("QA and TODO task structure", () => {
 		}
 	});
 
+	it("links directly accessible routes inside numbered repro steps", () => {
+		for (const queue of activeQueues) {
+			for (const task of readTasks(queue.file)) {
+				const repro = task.body
+					.split("- Repro:\n")[1]
+					?.split("\n    - Example input:")[0];
+				for (const line of repro?.split("\n") ?? []) {
+					if (!/^\s+\d+\./.test(line)) continue;
+					expect(
+						line,
+						`${task.id} contains an unlinked static route in its repro`,
+					).not.toMatch(/(?<!\[)`\/[^`\s{}<>]*`/);
+				}
+			}
+		}
+	});
+
 	it("keeps active and completed task IDs disjoint", () => {
 		const active = new Set(
 			activeQueues.flatMap((queue) => readTasks(queue.file).map((task) => task.id)),

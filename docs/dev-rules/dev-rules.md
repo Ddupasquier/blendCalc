@@ -1623,14 +1623,20 @@ source attribution.
 concrete example inputs, observable expected outcomes, exact code references, and links
 to the relevant development rules. Every task must use the `Repro`, `Example input`, and
 `Expected` labels. `Repro` must be a numbered bullet list with one exact action per
-step. Example inputs must name concrete values, commands, roles, files, or UI controls;
-never use `None` as a shortcut for an incomplete task. A written example is the minimum
-repro input, not sufficient proof by itself. Before clearing search, barcode, validation,
-calculation, mapping, or data-behavior QA, exercise multiple representative inputs that
-cover the stated behavior, at least one comparable positive case, and an applicable
-negative or boundary control. Record the tested corpus and evidence; do not generalize a
-single successful product, query, barcode, or value to the entire behavior. Do not create
-duplicate rule sets inside QA docs; reference this document as the source of truth.
+step. Whenever a repro step names a static application or API route that can be opened
+directly, render that route as a clickable absolute localhost link, such as
+[`/ingredients/fridge`](http://localhost:5173/ingredients/fridge), inside the step.
+Keep the readable route text as the link label. Do not invent a link for a dynamic route
+whose required identifier, token, or state is not available; explain how to reach that
+view through the preceding interaction instead. Example inputs must name concrete
+values, commands, roles, files, or UI controls; never use `None` as a shortcut for an
+incomplete task. A written example is the minimum repro input, not sufficient proof by
+itself. Before clearing search, barcode, validation, calculation, mapping, or
+data-behavior QA, exercise multiple representative inputs that cover the stated
+behavior, at least one comparable positive case, and an applicable negative or boundary
+control. Record the tested corpus and evidence; do not generalize a single successful
+product, query, barcode, or value to the entire behavior. Do not create duplicate rule
+sets inside QA docs; reference this document as the source of truth.
 
 **46a.** <a id="rule-qa-database-mutations"></a>Any QA task that requires changing
 local or test-database state must include the exact copy-paste SQL or terminal command
