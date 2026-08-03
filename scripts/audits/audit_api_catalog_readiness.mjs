@@ -85,12 +85,14 @@ const products = await readRows(
 );
 const productIds = products.map((product) => product.id);
 
-const [readiness, provenance, nutrients, servings, images] = await Promise.all([
+const [readiness, provenance, nutrients, servings, images, conflicts] = await Promise.all([
 	readRows(
 		"API readiness",
 		supabase
 			.from("blendcalc_api_v1_product_readiness")
-			.select("shared_product_id, publishable, reasons"),
+			.select(
+				"shared_product_id, publishable, reasons, profile_key, publication_status, quality_dimensions",
+			),
 	),
 	productIds.length
 		? readRows(
@@ -110,7 +112,7 @@ const [readiness, provenance, nutrients, servings, images] = await Promise.all([
 			supabase
 			.from("food_nutrients")
 				.select(
-					"shared_product_id, nutrient_id, source, source_reference, confidence",
+					"shared_product_id, nutrient_id, value_status, mapping_status, source, source_reference, confidence",
 				)
 				.in("shared_product_id", productIds),
 		)
@@ -138,6 +140,16 @@ const [readiness, provenance, nutrients, servings, images] = await Promise.all([
 				.eq("status", "active"),
 		)
 		: [],
+	productIds.length
+		? readRows(
+			"Open catalog conflicts",
+			supabase
+				.from("shared_product_conflicts")
+				.select("shared_product_id, severity")
+				.in("shared_product_id", productIds)
+				.eq("status", "open"),
+		)
+		: [],
 ]);
 
 const readinessByProduct = new Map(
@@ -151,6 +163,7 @@ const provenanceByProduct = groupRows(provenance, "shared_product_id");
 const nutrientsByProduct = groupRows(nutrients, "shared_product_id");
 const servingsByProduct = groupRows(servings, "shared_product_id");
 const imagesByProduct = groupRows(images, "shared_product_id");
+const conflictsByProduct = groupRows(conflicts, "shared_product_id");
 const incompleteImageRights = new Set(
 	images
 		.filter(
@@ -166,11 +179,15 @@ const incompleteImageRights = new Set(
 const report = products.map((product) => {
 	const status = readinessByProduct.get(product.id);
 	const productImages = imagesByProduct.get(product.id) ?? [];
+	const productNutrients = nutrientsByProduct.get(product.id) ?? [];
+	const productConflicts = conflictsByProduct.get(product.id) ?? [];
 	return {
 		barcode: product.barcode,
 		product: product.product_name,
 		catalogSource: product.source,
 		api: status?.publishable ? "included" : "withheld",
+		publicationStatus: status?.publication_status ?? "not_evaluated",
+		profile: status?.profile_key ?? "none",
 		reasons: (status?.reasons ?? ["readiness_not_evaluated"]).join(", "),
 		category: product.category_option_id ? "yes" : "no",
 		fieldSources: provenanceCounts.get(product.id) ?? 0,
@@ -181,6 +198,16 @@ const report = products.map((product) => {
 			)
 			.join(", "),
 		nutrients: nutrientCounts.get(product.id) ?? 0,
+		reportedZeroes: productNutrients.filter(
+			(nutrient) => nutrient.value_status === "reported-zero",
+		).length,
+		unreviewedMappings: productNutrients.filter(
+			(nutrient) => nutrient.mapping_status !== "canonical",
+		).length,
+		requiredNutrition:
+			status?.quality_dimensions?.nutrition?.acceptedCount === undefined
+				? "unknown"
+				: `${status.quality_dimensions.nutrition.acceptedCount}/${status.quality_dimensions.nutrition.requiredCount}`,
 		nutrientSources: summarizeSources(
 			nutrientsByProduct.get(product.id) ?? [],
 			(row) => row.source,
@@ -200,6 +227,10 @@ const report = products.map((product) => {
 			: incompleteImageRights.has(product.id)
 				? "incomplete"
 				: "complete",
+		openConflicts: productConflicts.length,
+		materialConflicts: productConflicts.filter(
+			(conflict) => conflict.severity === "medium" || conflict.severity === "high",
+		).length,
 	};
 });
 

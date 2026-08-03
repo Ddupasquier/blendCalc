@@ -64,8 +64,9 @@ persona inventory and recovery behavior live in `docs/database-testing.md`.
 
 `npm run audit:api-catalog` performs a read-only audit of every active
 `shared_products` row. It reports API inclusion, exact publication-readiness reasons,
-selected field lineage, normalized nutrient and serving sources, image sources, and
-asset-rights completeness.
+publication profile/status, required-nutrition coverage, explicit reported-zero counts,
+mapping and material-conflict gaps, selected field lineage, normalized nutrient and
+serving sources, image sources, and asset-rights completeness.
 
 Use `npm run audit:api-catalog -- --strict` only when every active shared-catalog row is
 required to pass the API publication gate.

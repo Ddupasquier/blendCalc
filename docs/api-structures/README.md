@@ -22,6 +22,13 @@ path. Public API keys, billing, developer accounts, and a public write API are o
 scope until the contract, redistribution rights, rate limits, and correction process
 are ready.
 
+Canonical storage is intentionally broader than API publication. The versioned
+DB-backed packaged-product profile requires complete evidence-backed identity,
+nutrition, serving, provenance, recency, redistribution, and conflict checks. Rows that
+fail remain in the catalog for enrichment or review but are absent from API v1 reads.
+Numeric zero is accepted only when its stored state is explicitly `reported-zero`;
+missing never becomes zero.
+
 [`catalog-field-lineage.md`](./catalog-field-lineage.md) owns the canonical read path,
 publication gate, product/category response mapping, missing-value semantics, revision
 meaning, and moderator evidence boundary. The OpenAPI document and

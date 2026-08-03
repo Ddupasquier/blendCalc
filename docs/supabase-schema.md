@@ -608,8 +608,17 @@ Notes:
   `blendcalc_api_v1_product_readiness_reasons`; therefore an active catalog row is not
   automatically an API-publishable row.
 - `blendcalc_api_v1_product_readiness` is a service-role-only diagnostic view over every
-  active shared product. It reports missing provenance, normalized-data gaps, and
-  source-policy failures without exposing private evidence to API consumers.
+  active shared product. It reports the profile key, `verified`, `under_review`, or
+  `incomplete` publication status, exact block reasons, and separate quality dimensions
+  for identity, required nutrition, servings, ingredient/allergen evidence, provenance,
+  conflicts, recency, and redistribution without exposing private evidence to API
+  consumers.
+- `blendcalc_api_publication_profiles` stores versioned fail-closed hard gates separately
+  from the broader canonical catalog. The default API v1 packaged-product profile links
+  to `api-v1-packaged-core-v1`, requires evidence-backed core identity and serving
+  fields, accepts only reported/reported-zero/exactly derived nutrient states, blocks
+  unreviewed nutrient mappings and medium/high open conflicts, and expires stale
+  verification. A failed row remains canonical but is omitted from API reads.
 
 ### `shared_product_revisions` and `shared_product_revision_changes`
 
@@ -1225,6 +1234,7 @@ without calling the source again.
 | ------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `nutrition_completeness_profiles`          | `key`                                               | Defines what complete nutrition means for a food scope/region | `food_scope` (`generic`, `manual`, or `packaged`), `region_code`, DB-owned labels, source reference, one enabled default per scope/region |
 | `nutrition_completeness_profile_nutrients` | `profile_key, nutrient_id`                          | Orders required and recommended nutrients for one profile     | `requirement_level`, `display_order`, `reason`; nutrient FK prevents invented definitions                                                 |
+| `blendcalc_api_publication_profiles`       | `key`                                               | Versions the hard gates for one API major and resource scope   | Linked nutrition profile, required/recommended fields, accepted nutrient states, conflict severities, verification age, reviewed policy source, and one enabled default per scope |
 | `generic_food_datasets`                    | `key`                                               | Records each national release and its legal/import state      | Source/license URLs, attribution, file SHA-256, review status, import/active gates, imported row counts                                   |
 | `generic_food_records`                     | `dataset_key, source_food_key`                      | Stores one source-owned generic food/preparation              | Raw description, group, preparation, searchable text, source reference and dates                                                          |
 | `generic_food_source_identifiers`          | Dataset food plus source, type, and value           | Stores exact source-declared cross-dataset identifiers        | Supports exact joins such as CNF `USDA_NDB_Code` to USDA NDB without fuzzy name matching; includes source field and verification method   |
@@ -1310,7 +1320,7 @@ category, or serving fields.
 | `apply_shared_product_external_enrichment`     | Atomically fills legally reusable missing canonical fields, including structured package metadata, while recording observations, provenance, normalized projections, and a revision |
 | `apply_shared_product_supplemental_enrichment` | Atomically fills a missing product identity field or exact package precautionary statement from a legally reusable exact source while recording observations, provenance, projections, and a revision |
 | `blendcalc_api_v1_source_is_eligible`           | Tests a stored source against the DB-owned API redistribution, licence, attribution, and policy-review gate |
-| `blendcalc_api_v1_product_readiness_reasons`    | Returns the service-only reasons an active shared product is withheld from API v1 |
+| `blendcalc_api_v1_product_readiness_reasons`    | Applies the enabled DB-backed profile and returns the service-only reasons an active shared product is withheld from API v1 |
 | `get_blendcalc_product_v1`                      | Reads one active, publication-ready shared product and its latest revision by GTIN-14 |
 | `get_blendcalc_product_revision_history_v1`     | Reads bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14 |
 | `search_blendcalc_products_v1`                  | Searches only active, publication-ready shared products with bounded pagination and stable relevance |

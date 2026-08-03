@@ -214,10 +214,21 @@ remain explicitly incomplete instead of receiving a similar-food substitution.
 This structure allows another source to be added later without losing which source
 supplied each value or silently replacing a trusted value.
 
-API v1 reads this canonical structure through a service-only publication gate. Every
-active `shared_products` row is evaluated, but only rows with complete selected
-field evidence, normalized nutrient provenance, valid serving evidence, and
-API-approved source policy are returned. See
+Catalog intake and API publication are intentionally separate tiers. Private user saves
+never publish automatically. Shareable observations and review candidates may improve
+future evidence. Accepted field-by-field facts form the canonical catalog, while API v1
+returns only canonical revisions that pass the enabled DB-backed publication profile.
+An incomplete row remains available for enrichment and moderation without polluting the
+public read contract.
+
+The packaged-product profile requires exact GTIN identity; name, brand, category,
+ingredients, market, and source metadata with selected provenance; every required core
+nutrient with explicit value state and approved mapping; an evidence-backed primary
+serving; acceptable redistribution policy; current verification; revision history; and
+no unresolved medium/high conflict. Reported zero is valid evidence, not a missing-value
+fallback. Missing, trace, unquantified, invalid, and unmapped values stay nonnumeric.
+Failed products are withheld rather than deleted, and the existing moderator data-health
+view shows the exact block reasons. See
 [`api-structures/catalog-field-lineage.md`](api-structures/catalog-field-lineage.md)
 for the response-field map and row audit.
 

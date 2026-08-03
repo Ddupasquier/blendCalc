@@ -34,12 +34,10 @@ describe("developer application role migrations", () => {
     );
   });
 
-  it("allows the developer role through the independently checked data-health boundary", () => {
-    expect(dataHealthMigration).toContain(
-      "role_assignment.role in ('moderator', 'admin', 'developer')",
-    );
-    expect(dataHealthMigration).toContain(
-      "Privileged data-health access is required.",
-    );
-  });
+	it("allows the developer role through the independently checked data-health boundary", () => {
+		expect(dataHealthMigration).toContain(
+			"role_assignment.role in ('moderator', 'admin', 'developer')",
+		);
+		expect(dataHealthMigration).toContain("errcode = '42501'");
+	});
 });
