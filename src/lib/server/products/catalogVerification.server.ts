@@ -382,7 +382,14 @@ export const buildCombinedSourceCatalogBundle = (
 		"exact-barcode",
 	).flatMap((entry): CatalogFieldProvenance[] => {
 		if (entry.fieldPath === "productName" || entry.fieldPath === "brandOwner") {
-			return [{ ...entry, confidence: "imported" }];
+			const source = canonicalDraft.fieldProvenance?.[entry.fieldPath];
+			return source && supportedObservationKeys.has(source.source)
+				? [{
+						...entry,
+						observationKey: source.source,
+						confidence: getCanonicalFieldConfidence(source.confidence),
+					}]
+				: [{ ...entry, confidence: "imported" }];
 		}
 		if (entry.fieldPath === "servingWeightGrams") {
 			const source = canonicalDraft.fieldProvenance?.serving;

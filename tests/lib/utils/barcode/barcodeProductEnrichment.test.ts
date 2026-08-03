@@ -64,6 +64,8 @@ const openFoodFactsImage: FoodImageAsset = {
 describe("barcode product field enrichment", () => {
 	it("tracks missing nutrition, image, category, and serving independently", () => {
 		expect(getMissingBarcodeProductFields(makeDraft("usda"))).toEqual({
+			productName: false,
+			brandOwner: false,
 			nutrition: false,
 			image: true,
 			categories: true,
@@ -93,6 +95,8 @@ describe("barcode product field enrichment", () => {
 		);
 
 		expect(plan).toMatchObject({
+			productName: false,
+			brandOwner: false,
 			nutrition: false,
 			image: false,
 			categories: false,
@@ -110,6 +114,30 @@ describe("barcode product field enrichment", () => {
 			package: true,
 			sourceMetadata: true,
 			missingNutrientIds: [1003],
+		});
+	});
+
+	it("fills a missing brand from an exact field-attributed supplement", () => {
+		const primary = makeDraft("usda", { brandOwner: "" });
+		const supplement = makeDraft("open-food-facts", {
+			brandOwner: "Signature Select",
+			fieldProvenance: {
+				brandOwner: {
+					source: "open-food-facts",
+					sourceReference: "00021130493609",
+					confidence: "unknown",
+				},
+			},
+		});
+
+		expect(getSupplementedBarcodeProductFields(primary, supplement)).toContain(
+			"brandOwner",
+		);
+		expect(mergeMissingBarcodeProductFields(primary, supplement)).toMatchObject({
+			brandOwner: "Signature Select",
+			fieldProvenance: {
+				brandOwner: { source: "open-food-facts" },
+			},
 		});
 	});
 

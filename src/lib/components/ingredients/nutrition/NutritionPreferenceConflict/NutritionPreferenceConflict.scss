@@ -23,10 +23,6 @@
 	overflow-wrap: anywhere;
 }
 
-:global(.preference-conflict__details) {
-	margin-top: $app-gap-sm;
-}
-
 .preference-conflict__detail-list {
 	gap: 0;
 }
@@ -89,4 +85,9 @@
 	.preference-conflict__item {
 		gap: $app-gap-sm;
 	}
+}
+.nutrition-preference-conflict {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
 }

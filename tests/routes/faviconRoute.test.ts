@@ -16,9 +16,9 @@ describe("favicon route", () => {
 	it("uses the blendCalc favicon for browser tabs", () => {
 		const layout = readFileSync("src/routes/+layout.svelte", "utf8");
 
-		expect(layout).toContain('import favicon from "$lib/assets/favicon.svg";');
+		expect(layout).not.toContain('import favicon from "$lib/assets/favicon.svg";');
 		expect(layout).toContain(
-			'<link rel="icon" type="image/svg+xml" sizes="any" href={favicon} />',
+			'<link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.ico" />',
 		);
 		expect(layout).toContain('<link rel="shortcut icon" href="/favicon.ico" />');
 	});

@@ -12,6 +12,9 @@ workflows. Profile upload behavior belongs in
 - `moderator` can block and restore normal user accounts.
 - `admin` can block normal users and moderators. Admin accounts cannot be blocked
   through the web moderation page.
+- `developer` is a protected operational role with the current admin capability set.
+  Its capabilities are explicit permission rows rather than inherited from `admin`.
+  Developer accounts cannot be blocked through the web moderation page.
 - Supabase Auth copies the database assignment into newly issued access tokens as the
   `app_role` claim, defaulting normal users to `user`. It does not replace the database
   assignment or Supabase's infrastructure `authenticated` role.
@@ -35,28 +38,29 @@ moderation-specific environment and dashboard configuration below.
 `public.reject_blocked_signup` for local Auth. After the database migration is deployed,
 run `supabase config push` to apply the same hooks and tracked callback allowlist to the
 linked project. Do not use a custom PostgreSQL login role, overwrite the required JWT
-`role` claim, or store moderator/admin status in editable user metadata.
+`role` claim, or store privileged app-role status in editable user metadata.
 
 `app_role_permissions` owns capability mapping. Moderators receive account, catalog,
-warning, and data-health permissions; only admins receive role-management permission.
+warning, and data-health permissions. Admins and developers receive those capabilities
+plus role management.
 The `authorize_app_permission` helper is suitable for RLS policy checks. Sensitive
 server actions continue to re-read `app_role_assignments` so revocations apply without
 waiting for JWT expiry.
 
-| Capability | User | Moderator | Admin |
-| --- | --- | --- | --- |
-| Access moderation | No | Yes | Yes |
-| Manage eligible accounts | No | Yes | Yes |
-| Review catalog submissions | No | Yes | Yes |
-| Review food warnings | No | Yes | Yes |
-| Read moderator data health | No | Yes | Yes |
-| Grant or revoke application roles | No | No | Yes |
+| Capability | User | Moderator | Admin | Developer |
+| --- | --- | --- | --- | --- |
+| Access moderation | No | Yes | Yes | Yes |
+| Manage eligible accounts | No | Yes | Yes | Yes |
+| Review catalog submissions | No | Yes | Yes | Yes |
+| Review food warnings | No | Yes | Yes | Yes |
+| Read moderator data health | No | Yes | Yes | Yes |
+| Grant or revoke application roles | No | No | Yes | Yes |
 
 The table describes authorization policy, not UI availability or target eligibility.
 Role changes currently use the trusted operator CLI; any future web control must require
 the admin capability at its live server boundary. Separate moderation rules still
 prevent self-actions, prevent moderators from acting on elevated users, and prevent the
-web workflow from blocking administrators.
+web workflow from blocking administrators or developers.
 
 Add `SUPABASE_SERVICE_ROLE_KEY` to the Vercel project as a sensitive **Production-only**
 environment variable, then redeploy. Do not expose this key to arbitrary preview
@@ -125,6 +129,7 @@ Other role commands:
 
 ```sh
 npm run moderate -- role moderator@example.com moderator
+npm run moderate -- role developer@example.com developer --user-id=<expected-user-uuid>
 npm run moderate -- role moderator@example.com none
 ```
 
@@ -136,7 +141,8 @@ change immediately.
 
 ## Blocking and restoring accounts
 
-Use `/moderation` while signed in as a moderator/admin, or use the emergency CLI:
+Use `/moderation` while signed in with a moderator, admin, or developer role, or use the
+emergency CLI:
 
 ```sh
 npm run moderate -- ban user@example.com profile_image_policy_violation
@@ -165,7 +171,8 @@ current catalog revision when available, package-observation date, bounded expla
 and optional normalized private label photo. Repeated reports of the same product,
 policy, preference, or warning remain idempotent while one is pending.
 
-The `/moderation` warning-report queue is restricted to moderators and administrators.
+The `/moderation` warning-report queue is restricted to moderators, administrators, and
+developers.
 Reviewers must:
 
 1. Compare the report with its preserved evidence, source observations, policy version,
@@ -229,7 +236,8 @@ while the report waited, approval stops as stale and the report must be compared
 
 ## Catalog data health
 
-`/moderation/data-health` is a moderator/admin-only catalog health summary. Its server
+`/moderation/data-health` is a privileged catalog health summary available to
+moderators, admins, and developers. Its server
 load calls `get_moderator_data_health` through the signed-in user's Supabase client, and
 the database function independently verifies the caller's role. The browser receives
 only bounded aggregates and issue summaries; it never receives raw provider payloads,

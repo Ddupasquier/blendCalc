@@ -1,6 +1,6 @@
 begin;
 
-select plan(48);
+select plan(50);
 
 select has_table('public', 'profiles', 'profiles table exists');
 select has_table('public', 'user_food_list_items', 'food-list table exists');
@@ -129,8 +129,8 @@ select is(
 		)
 			and publishable
 	),
-	5,
-	'local QA catalog fixtures are publishable through blendCalc API v1'
+	1,
+	'only the fully evidenced local QA catalog fixture is publishable through blendCalc API v1'
 );
 select is(
 	(
@@ -138,8 +138,28 @@ select is(
 		from public.blendcalc_api_v1_product_readiness
 		where publishable
 	),
-	107,
-	'the full local QA catalog is publishable through blendCalc API v1'
+	1,
+	'the strict publication profile withholds incomplete local QA catalog fixtures'
+);
+select ok(
+	exists (
+		select 1
+		from public.blendcalc_api_v1_product_readiness
+		where barcode = '00011110904416'
+			and not publishable
+			and reasons @> array['missing_evidence_backed_primary_serving']
+	),
+	'the explicit no-serving QA fixture remains canonical but is withheld from API v1'
+);
+select ok(
+	exists (
+		select 1
+		from public.blendcalc_api_v1_product_readiness
+		where barcode = '00021130462506'
+			and not publishable
+			and reasons @> array['missing_required_nutrient:1258']
+	),
+	'a detailed fixture with an unreported required nutrient is withheld instead of receiving an invented zero'
 );
 select is(
 	(select count(*)::integer from public.shared_products where source = 'usda' and status = 'active'),

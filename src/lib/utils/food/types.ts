@@ -222,6 +222,8 @@ export type FoodSourceRecordMetadata = {
 };
 
 export type FoodTrackedField =
+	| "productName"
+	| "brandOwner"
     | "nutrition"
     | "image"
     | "categories"

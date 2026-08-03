@@ -15,7 +15,9 @@
 	} from "$lib/utils/profile/foodPreferenceWarnings";
 	import type { NutritionPreferenceConflictProps } from "./types";
 
-	let { food }: NutritionPreferenceConflictProps = $props();
+	let { food, mode = "all" }: NutritionPreferenceConflictProps = $props();
+	const showSummary = $derived(mode !== "details");
+	const showDetails = $derived(mode !== "summary");
 	let pendingWarningId = $state<string | null>(null);
 	let feedbackStatusByWarning = $state<Record<string, string>>({});
 
@@ -60,59 +62,65 @@
 </script>
 
 {#if preferenceWarnings.length > 0}
-	<StatusMessage
-		tone={hasConfirmedPreferenceConflict ? "danger" : "warning"}
-		iconPlacement="top-end"
-		title={FOOD_PREFERENCE_WARNING_TITLE}
-	>
-		<ul class="preference-conflict__summary-list">
-			{#each preferenceWarnings as warning}
-				<li>{getFoodPreferenceWarningMessage(warning)}</li>
-			{/each}
-		</ul>
+	<div class="nutrition-preference-conflict">
+		{#if showSummary}
+			<StatusMessage
+				tone={hasConfirmedPreferenceConflict ? "danger" : "warning"}
+				iconPlacement="top-end"
+				title={FOOD_PREFERENCE_WARNING_TITLE}
+			>
+				<ul class="preference-conflict__summary-list">
+					{#each preferenceWarnings as warning}
+						<li>{getFoodPreferenceWarningMessage(warning)}</li>
+					{/each}
+				</ul>
+			</StatusMessage>
+		{/if}
 
-		<CollapsibleSection
-			title="Review these warnings"
-			surface="panel"
-			class="preference-conflict__details"
-		>
-			<ul class="preference-conflict__detail-list">
-				{#each preferenceWarnings as warning}
-					<li class="preference-conflict__item">
-						<div class="preference-conflict__evidence">
-							<strong>{warning.label}</strong>
-							{#if warning.evidence}
-								<p>{getFoodPreferenceWarningEvidenceMessage(warning)}</p>
-								<p>{getFoodPreferenceWarningEvidenceReviewMessage(warning)}</p>
-							{:else}
-								<p>{getFoodPreferenceWarningMessage(warning)}</p>
+		{#if showDetails}
+			<CollapsibleSection
+				title="Review these warnings"
+				surface="panel"
+				class="preference-conflict__details"
+			>
+				<ul class="preference-conflict__detail-list">
+					{#each preferenceWarnings as warning}
+						<li class="preference-conflict__item">
+							<div class="preference-conflict__evidence">
+								<strong>{warning.label}</strong>
+								{#if warning.evidence}
+									<p>{getFoodPreferenceWarningEvidenceMessage(warning)}</p>
+									<p>{getFoodPreferenceWarningEvidenceReviewMessage(warning)}</p>
+								{:else}
+									<p>{getFoodPreferenceWarningMessage(warning)}</p>
+								{/if}
+							</div>
+							<div class="preference-conflict__action">
+								<ActionButton
+									variant="ghost"
+									size="small"
+									busy={pendingWarningId === warning.id}
+									disabled={Boolean(
+										feedbackStatusByWarning[warning.id] &&
+										!feedbackStatusByWarning[warning.id].startsWith("We couldn’t"),
+									)}
+									ariaLabel={`Report an incorrect warning about ${warning.label}`}
+									onclick={() => reportWarning(warning)}
+								>
+									Report
+								</ActionButton>
+							</div>
+							{#if feedbackStatusByWarning[warning.id]}
+								<p class="preference-conflict__feedback" aria-live="polite">
+									{feedbackStatusByWarning[warning.id]}
+								</p>
 							{/if}
-						</div>
-						<div class="preference-conflict__action">
-							<ActionButton
-								variant="ghost"
-								size="small"
-								busy={pendingWarningId === warning.id}
-								disabled={Boolean(
-									feedbackStatusByWarning[warning.id] &&
-									!feedbackStatusByWarning[warning.id].startsWith("We couldn’t"),
-								)}
-								ariaLabel={`Report an incorrect warning about ${warning.label}`}
-								onclick={() => reportWarning(warning)}
-							>
-								Report
-							</ActionButton>
-						</div>
-						{#if feedbackStatusByWarning[warning.id]}
-							<p class="preference-conflict__feedback" aria-live="polite">
-								{feedbackStatusByWarning[warning.id]}
-							</p>
-						{/if}
-					</li>
-				{/each}
-			</ul>
-		</CollapsibleSection>
-	</StatusMessage>
+						</li>
+					{/each}
+				</ul>
+			</CollapsibleSection>
+		{/if}
+	</div>
 {/if}
 
 <style lang="scss">

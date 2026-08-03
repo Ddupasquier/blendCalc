@@ -34,7 +34,9 @@ save private custom foods, use their fridge, and build mixes.
 - **blendCalc shared catalog:** the active `shared_products` row plus its normalized
   nutrient, serving, image, category, provenance, and revision records is the canonical
   source of truth for published product reads. External providers do not bypass or
-  overwrite accepted nonmissing canonical fields.
+  overwrite accepted nonmissing canonical fields. When search receives the same barcode
+  from the catalog and an external provider, the canonical catalog record remains the
+  result even if the transient provider payload contains more optional fields.
 - **Exact identity versus field verification:** an exact barcode match confirms product
   identity only. Submission workflow records this as `exact_identity`; it does not
   assign provider-wide verification. Automatically published exact-source records
@@ -212,10 +214,21 @@ remain explicitly incomplete instead of receiving a similar-food substitution.
 This structure allows another source to be added later without losing which source
 supplied each value or silently replacing a trusted value.
 
-API v1 reads this canonical structure through a service-only publication gate. Every
-active `shared_products` row is evaluated, but only rows with complete selected
-field evidence, normalized nutrient provenance, valid serving evidence, and
-API-approved source policy are returned. See
+Catalog intake and API publication are intentionally separate tiers. Private user saves
+never publish automatically. Shareable observations and review candidates may improve
+future evidence. Accepted field-by-field facts form the canonical catalog, while API v1
+returns only canonical revisions that pass the enabled DB-backed publication profile.
+An incomplete row remains available for enrichment and moderation without polluting the
+public read contract.
+
+The packaged-product profile requires exact GTIN identity; name, brand, category,
+ingredients, market, and source metadata with selected provenance; every required core
+nutrient with explicit value state and approved mapping; an evidence-backed primary
+serving; acceptable redistribution policy; current verification; revision history; and
+no unresolved medium/high conflict. Reported zero is valid evidence, not a missing-value
+fallback. Missing, trace, unquantified, invalid, and unmapped values stay nonnumeric.
+Failed products are withheld rather than deleted, and the existing moderator data-health
+view shows the exact block reasons. See
 [`api-structures/catalog-field-lineage.md`](api-structures/catalog-field-lineage.md)
 for the response-field map and row audit.
 
@@ -508,8 +521,9 @@ Packaged products and generic foods use different evidence paths:
    follow normal moderation rules if shared.
 
 Every accepted nutrient keeps its own source and source reference. Product-level field
-provenance separately records nutrition, image, category, serving, ingredient,
-allergen, trace, label, additive, package, and source-metadata fields. A fuller
+provenance separately records product name, brand, nutrition, image, category, serving,
+ingredient, allergen, trace, precautionary-statement, label, additive, package, and
+source-metadata fields. A fuller
 secondary record may supplement missing fields but cannot silently overwrite an
 authoritative reported value or zero.
 

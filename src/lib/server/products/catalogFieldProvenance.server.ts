@@ -13,6 +13,8 @@ import {
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const FOOD_TRACKED_FIELD_PATHS = new Set<FoodTrackedField>([
+	"productName",
+	"brandOwner",
 	"nutrition",
 	"image",
 	"categories",

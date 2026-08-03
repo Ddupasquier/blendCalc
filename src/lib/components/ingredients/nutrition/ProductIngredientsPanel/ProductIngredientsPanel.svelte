@@ -2,7 +2,9 @@
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import type { ProductIngredientsPanelProps } from "./types";
 
-	let { food }: ProductIngredientsPanelProps = $props();
+	let { food, mode = "all" }: ProductIngredientsPanelProps = $props();
+	const showSummary = $derived(mode !== "details");
+	const showDetails = $derived(mode !== "summary");
 
 	const presentation = $derived(food.ingredientPresentation);
 	const ingredientText = $derived(
@@ -24,15 +26,17 @@
 	));
 </script>
 
-{#if ingredientText || hasDetails}
+{#if showSummary && ingredientText}
 	<section class="product-ingredients-panel" aria-labelledby="product-ingredients-title">
 		<h2 id="product-ingredients-title">Ingredients</h2>
-		{#if ingredientText}
-			<p>{ingredientText}</p>
-		{/if}
-		{#if hasDetails && presentation}
-			<CollapsibleSection title="Ingredient details" surface="panel">
-				<div class="product-ingredients-panel__content">
+		<p>{ingredientText}</p>
+	</section>
+{/if}
+
+{#if showDetails && hasDetails && presentation}
+	<div class="product-ingredients-panel">
+		<CollapsibleSection title="Ingredient details" surface="panel">
+			<div class="product-ingredients-panel__content">
 					{#if presentation.rows.length > 0}
 						<div class="product-ingredients-panel__details">
 							<h3>Ingredient breakdown</h3>
@@ -93,10 +97,9 @@
 							label or blendCalc food warnings.
 						</p>
 					{/if}
-				</div>
-			</CollapsibleSection>
-		{/if}
-	</section>
+			</div>
+		</CollapsibleSection>
+	</div>
 {/if}
 
 <style lang="scss">
