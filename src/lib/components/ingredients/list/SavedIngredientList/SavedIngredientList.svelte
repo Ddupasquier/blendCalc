@@ -178,6 +178,18 @@
 	};
 
 	$effect(() => {
+		const element = listElement;
+		if (!element || typeof ResizeObserver === "undefined") return;
+
+		const observer = new ResizeObserver(() => {
+			scrollDirectionTracker.rebase(element.scrollTop);
+		});
+		observer.observe(element);
+
+		return () => observer.disconnect();
+	});
+
+	$effect(() => {
 		if (previousActiveList === null || previousResetKey === null) {
 			previousActiveList = activeList;
 			previousResetKey = resetKey;

@@ -35,4 +35,13 @@ describe("scroll direction tracker", () => {
 		expect(tracker.update(8)).toBeNull();
 		expect(tracker.update(26)).toBe("down");
 	});
+
+	it("rebases after a layout resize without reversing the reported direction", () => {
+		const tracker = createScrollDirectionTracker();
+
+		expect(tracker.update(40)).toBe("down");
+		tracker.rebase(18);
+		expect(tracker.update(15)).toBeNull();
+		expect(tracker.update(5)).toBe("up");
+	});
 });

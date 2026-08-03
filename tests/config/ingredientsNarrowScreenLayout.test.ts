@@ -102,6 +102,8 @@ describe("Ingredients narrow-screen layout", () => {
 		expect(viewTopStyles).toContain("transform: translateY(-100%)");
 		expect(viewTopStyles).toContain("@media (prefers-reduced-motion: reduce)");
 		expect(savedList).toContain("onscroll={handleListScroll}");
+		expect(savedList).toContain("new ResizeObserver");
+		expect(savedList).toContain("scrollDirectionTracker.rebase(element.scrollTop)");
 		expect(savedList).toContain('onScrollDirectionChange("up")');
 	});
 });
