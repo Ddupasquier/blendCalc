@@ -1,5 +1,7 @@
 @use "../../../../../styles/variables" as *;
 
+$category-picker-focus-clearance: $app-gap-2xs;
+
 .food-category-picker {
 	display: grid;
 	gap: $app-gap-sm;
@@ -117,7 +119,10 @@
 	grid-template-columns: repeat(auto-fit, minmax(min(100%, calc($app-shell-control-height * 3)), 1fr));
 	gap: $app-gap-sm;
 	max-height: calc($app-shell-control-height * 7);
+	margin: calc(0rem - #{$category-picker-focus-clearance});
+	padding: $category-picker-focus-clearance;
 	overflow-y: auto;
+	scroll-padding: $category-picker-focus-clearance;
 	overscroll-behavior: contain;
 	-webkit-overflow-scrolling: touch;
 }

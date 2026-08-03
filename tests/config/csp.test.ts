@@ -48,4 +48,16 @@ describe("content security policy", () => {
 			readViteMode([], { BLENDCALC_DATABASE_ENVIRONMENT: "test" }),
 		).toBe("test");
 	});
+
+	it("preserves test-database CSP while validation commands regenerate SvelteKit output", () => {
+		const packageMetadata = JSON.parse(readFileSync("package.json", "utf8")) as {
+			scripts: Record<string, string>;
+		};
+
+		for (const command of ["check", "check:watch", "test", "test:watch"]) {
+			expect(packageMetadata.scripts[command]).toContain(
+				"BLENDCALC_DATABASE_ENVIRONMENT=test",
+			);
+		}
+	});
 });

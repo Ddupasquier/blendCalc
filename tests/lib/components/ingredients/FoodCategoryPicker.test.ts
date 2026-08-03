@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -100,6 +101,8 @@ describe("FoodCategoryPicker", () => {
 	});
 
 	it("closes with Escape, restores trigger focus, and uses the shared warning", async () => {
+		const escapedPickerKeydown = vi.fn();
+		window.addEventListener("keydown", escapedPickerKeydown);
 		render(FoodCategoryPicker, {
 			props: {
 				selectedId: "",
@@ -119,10 +122,33 @@ describe("FoodCategoryPicker", () => {
 		);
 
 		await fireEvent.click(trigger);
-		expect(screen.getByLabelText("Search categories")).toHaveFocus();
-		await fireEvent.keyDown(window, { key: "Escape" });
+		const searchInput = screen.getByLabelText("Search categories");
+		expect(searchInput).toHaveFocus();
+		await fireEvent.keyDown(searchInput, { key: "Escape" });
 
 		expect(trigger).toHaveFocus();
 		expect(trigger).toHaveAttribute("aria-expanded", "false");
+		expect(escapedPickerKeydown).not.toHaveBeenCalled();
+		window.removeEventListener("keydown", escapedPickerKeydown);
+	});
+
+	it("keeps option focus outlines inside the nested results scroller", () => {
+		const styles = readFileSync(
+			"src/lib/components/ingredients/manual-entry/FoodCategoryPicker/FoodCategoryPicker.scss",
+			"utf8",
+		);
+		const optionsRule = styles.match(
+			/\.food-category-picker__options\s*{(?<body>[\s\S]*?)\n}/,
+		);
+
+		expect(styles).toContain(
+			"$category-picker-focus-clearance: $app-gap-2xs;",
+		);
+		expect(optionsRule?.groups?.body).toContain(
+			"padding: $category-picker-focus-clearance;",
+		);
+		expect(optionsRule?.groups?.body).toContain(
+			"scroll-padding: $category-picker-focus-clearance;",
+		);
 	});
 });

@@ -5,6 +5,7 @@ import {
 	throwAppError,
 } from "$lib/server/errors/appError.server";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
@@ -19,7 +20,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 	);
 
 	const draft = requireAppValue(
-		await lookupBarcodeProductDraft(locals.supabase, barcode),
+		await lookupBarcodeProductDraft(getSupabaseAdminClient(), barcode),
 		404,
 		"PRODUCT_NOT_FOUND",
 	);

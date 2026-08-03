@@ -299,6 +299,10 @@ Notes:
 - Groups/fields render from enabled, approved DB rows only. Macros contains common
   nutrition-label fields; specialized carbohydrates, fats, carotenoids, vitamins,
   minerals, amino acids, and other composition data remain in Extended.
+- The reviewed baseline Extended catalog is installed independently of provider
+  observations so valid fields do not disappear when an optional source is unavailable.
+  Source observations add evidence counts and review candidates; they do not decide
+  whether an approved field exists in the UI.
 - Required status should render from `nutrient_manual_entry_required_nutrients` via
   `nutrient_manual_entry_fields.required_for_manual_entry`; do not maintain a separate
   UI-only required nutrient list.
@@ -643,7 +647,9 @@ Observations retain the neutral provider key/reference, source licence, observed
 content hash, normalized value, raw source payload, and optional private
 submission/user links. The public API reads only the observation ID, source, reference,
 and observed time from the selected row; raw payloads and private links remain
-service-role only.
+service-role only. Trusted server-side catalog hydration has explicit read access to
+observations so authenticated app routes can return selected provenance without
+granting browsers direct access to the evidence tables.
 
 `shared_product_field_provenance` stores the canonical field path, selected observation,
 source and normalized values, confidence, evidence method, and selected state. Evidence
@@ -1058,6 +1064,8 @@ Notes:
 - UI category dropdowns should sort by `label`.
 - Seeded by `scripts/seeds/seed_custom_food_categories.mjs`.
 - The dropdown renders these app-ready options, not raw source payload strings.
+- Trusted server-side catalog hydration has read access to these labels; authenticated
+  browser access remains governed independently by RLS.
 - `shared_product_submissions`, `shared_products`, and `shared_product_revisions`
   reference this table through `category_option_id`.
 
@@ -1122,7 +1130,10 @@ Notes:
 - The server-only `service_role` has explicit least-privilege table grants for the
   moderation dashboard and reviewed catalog workflows. Those grants cover only the
   reads and writes performed by trusted server modules; they do not change browser
-  access or bypass the route's independent moderator/admin role check.
+  access or bypass the route's independent moderator/admin role check. Catalog intake
+  includes `insert` on `shared_product_submissions` because the trusted server creates
+  pending submissions before moderator review; ordinary authenticated clients still
+  cannot insert, update, or delete those rows directly.
 - `get_moderator_data_health(p_days, p_issue_limit)` is an authenticated
   moderator/admin-only security-definer aggregate. It clamps the metric window to
   1–90 days and each issue queue to 1–50 rows. It returns catalog/publication counts,

@@ -64,6 +64,59 @@ describe("ingredient overlay navigation", () => {
 		);
 	});
 
+	it("leaves manual entry for one stable nutrition route after a successful save", () => {
+		const source = readFileSync(ingredientsPagePath, "utf8");
+		const handleCreate = source.match(
+			/const handleCreate = \([\s\S]*?\n    };/,
+		)?.[0];
+
+		expect(handleCreate).toContain('activeSheet = null;');
+		expect(handleCreate).toContain('view: INGREDIENT_ROUTE_VIEWS.nutrition');
+		expect(handleCreate).toContain('foodId: food.fdcId');
+		expect(handleCreate).not.toContain('view: INGREDIENT_ROUTE_VIEWS.manualEntry');
+		expect(handleCreate).not.toContain('activeSheet = "manual-entry"');
+	});
+
+	it("suppresses redundant nutrition actions after manual entry adds to a list", () => {
+		const source = readFileSync(ingredientsPagePath, "utf8");
+		const handleCreate = source.match(
+			/const handleCreate = \([\s\S]*?\n    };/,
+		)?.[0];
+
+		expect(handleCreate).toContain(
+			"selectedFoodShowListActions = !context.addedToList;",
+		);
+		expect(handleCreate).toContain(
+			"showListActions: !context.addedToList,",
+		);
+	});
+
+	it("adds a search result to Fridge without opening nutrition", () => {
+		const source = readFileSync(ingredientsPagePath, "utf8");
+		const addSearchResult = source.match(
+			/const addSearchResultToFridge = async \(food: FdcFood\) => \{[\s\S]*?\n    \};/,
+		)?.[0];
+		const addFoodToListState = source.match(
+			/const addFoodToListState = \(key: SmoothieListKey, food: FdcFood\) => \{[\s\S]*?\n    \};/,
+		)?.[0];
+
+		expect(addSearchResult).toContain("await addFoodToSmoothieList(");
+		expect(addSearchResult).toContain("MIX_STORAGE_KEYS.fridge,");
+		expect(addSearchResult).toContain("{ notify: false },");
+		expect(addSearchResult).toContain('if (result === "added")');
+		expect(addSearchResult).toContain(
+			"addFoodToListState(MIX_STORAGE_KEYS.fridge, food);",
+		);
+		expect(addSearchResult).not.toContain("handleSearchSelect");
+		expect(addSearchResult).not.toContain("navigateIngredientRoute");
+		expect(addFoodToListState).toContain("onHand = [addedFood, ...onHand]");
+		expect(addFoodToListState).toContain("onHandTotalCount += 1");
+		expect(addFoodToListState).toContain(
+			"foodIds: [food.fdcId, ...currentIndex.foodIds]",
+		);
+		expect(addFoodToListState).toContain("getFoodIdentityKey(food)");
+	});
+
 	it("uses the URL as the only source of truth for the active list tab", () => {
 		const source = readFileSync(ingredientsPagePath, "utf8");
 

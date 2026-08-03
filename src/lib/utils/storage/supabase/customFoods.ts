@@ -82,8 +82,8 @@ export const readCloudCustomFoods = async (context?: CloudDataContext) => {
 };
 
 const readCloudCustomFoodByColumn = async (
-	column: "barcode" | "name_key",
-	value: string,
+	column: "barcode" | "fdc_id" | "name_key",
+	value: number | string,
 	context?: CloudDataContext,
 ) => {
 	const cloud = await resolveCloudDataContext(context);
@@ -111,6 +111,11 @@ export const readCloudCustomFoodByNameKey = (
 	nameKey: string,
 	context?: CloudDataContext,
 ) => readCloudCustomFoodByColumn("name_key", nameKey, context);
+
+export const readCloudCustomFoodByFdcId = (
+	foodId: number,
+	context?: CloudDataContext,
+) => readCloudCustomFoodByColumn("fdc_id", foodId, context);
 
 export const saveCloudCustomFood = async (
 	food: FdcFood,

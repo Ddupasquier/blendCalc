@@ -11,6 +11,7 @@ import {
 import { getNutritionCompletenessCatalog } from "$lib/server/nutrition/nutritionCompletenessCatalog.server";
 import { lookupUsdaBarcodeProduct } from "$lib/server/products/sources/usdaBarcodeProduct.server";
 import { lookupOpenFoodFactsBarcodeProduct } from "$lib/server/products/sources/openFoodFactsBarcodeProduct.server";
+import { areExternalProductLookupsEnabled } from "./externalProductPolicy.server";
 
 export { lookupUsdaBarcodeProduct, lookupOpenFoodFactsBarcodeProduct };
 
@@ -33,8 +34,14 @@ export const lookupExternalBarcodeProduct = async (
 		getReferenceData?: typeof getProductReferenceData;
 		requiredNutrientIds?: Iterable<number>;
 		cachedImage?: FoodImageAsset | null | PromiseLike<FoodImageAsset | null>;
+		externalLookupsEnabled?: boolean;
 	} = {},
 ): Promise<BarcodeProductDraft | null> => {
+	const hasInjectedProvider = Boolean(lookups.usda || lookups.openFoodFacts);
+	const externalLookupsEnabled = lookups.externalLookupsEnabled ??
+		areExternalProductLookupsEnabled();
+	if (!hasInjectedProvider && !externalLookupsEnabled) return null;
+
 	const referenceData = await (
 		lookups.getReferenceData ?? getProductReferenceData
 	)();

@@ -27,7 +27,8 @@ import type { FdcFood } from "$lib/utils/food/types";
 
 const food: FdcFood = {
 	fdcId: -1,
-	description: "Imported test product",
+	description: "Trader Joe's Peanut Butter",
+	barcode: "00000000119993",
 	barcodeSource: "open-food-facts",
 	foodNutrients: [],
 };
@@ -47,32 +48,72 @@ describe("manual entry catalog submission", () => {
 	});
 
 	it("keeps an Open Food Facts import private without explicit sharing", async () => {
-		await saveManualEntryCustomFood({
+		const useIngredient = vi.fn().mockResolvedValue(true);
+		const result = await saveManualEntryCustomFood({
 			food,
 			name: food.description,
-			normalizedBarcode: "00021130462506",
+			normalizedBarcode: food.barcode ?? null,
 			shareWithCatalog: false,
 			photos,
 			reviewFlags: [],
-			useIngredient: vi.fn().mockResolvedValue(true),
+			useIngredient,
 		});
 
+		expect(result).toEqual({
+			status: "complete",
+			catalogMessage: "",
+			resetForm: true,
+		});
+		expect(mocks.saveCustomFood).toHaveBeenCalledOnce();
+		expect(useIngredient).toHaveBeenCalledOnce();
+		expect(useIngredient).toHaveBeenCalledWith(food);
 		expect(mocks.submitSharedProduct).not.toHaveBeenCalled();
 		expect(mocks.notifySmoothieListsChanged).not.toHaveBeenCalled();
 	});
 
 	it("submits only after the user explicitly enables sharing", async () => {
-		await saveManualEntryCustomFood({
+		const useIngredient = vi.fn().mockResolvedValue(true);
+		const result = await saveManualEntryCustomFood({
 			food,
 			name: food.description,
-			normalizedBarcode: "00021130462506",
+			normalizedBarcode: food.barcode ?? null,
 			shareWithCatalog: true,
 			photos,
 			reviewFlags: [],
-			useIngredient: vi.fn().mockResolvedValue(true),
+			useIngredient,
 		});
 
+		expect(result).toEqual({
+			status: "complete",
+			catalogMessage: "Submitted",
+			resetForm: true,
+		});
+		expect(mocks.saveCustomFood).toHaveBeenCalledOnce();
+		expect(useIngredient).toHaveBeenCalledOnce();
 		expect(mocks.submitSharedProduct).toHaveBeenCalledOnce();
+		expect(mocks.submitSharedProduct).toHaveBeenCalledWith(food, photos, {
+			reviewFlags: [],
+			intent: "catalog_share",
+		});
 		expect(mocks.notifySmoothieListsChanged).toHaveBeenCalledOnce();
+	});
+
+	it("does not submit when destination placement is cancelled", async () => {
+		const useIngredient = vi.fn().mockResolvedValue(false);
+		const result = await saveManualEntryCustomFood({
+			food,
+			name: food.description,
+			normalizedBarcode: food.barcode ?? null,
+			shareWithCatalog: true,
+			photos,
+			reviewFlags: [],
+			useIngredient,
+		});
+
+		expect(result).toEqual({ status: "cancelled" });
+		expect(mocks.saveCustomFood).toHaveBeenCalledOnce();
+		expect(useIngredient).toHaveBeenCalledOnce();
+		expect(mocks.submitSharedProduct).not.toHaveBeenCalled();
+		expect(mocks.notifySmoothieListsChanged).not.toHaveBeenCalled();
 	});
 });

@@ -4,6 +4,7 @@ import {
 } from "$lib/api/v1/request";
 import { readApiV1ProductRevisionHistory } from "$lib/server/api/v1/catalogApi.server";
 import { apiV1Error, apiV1Success } from "$lib/server/api/v1/http.server";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { RequestHandler } from "./$types";
 
@@ -27,7 +28,7 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 	try {
 		const request = readApiV1RevisionHistoryRequest(url);
 		const result = await readApiV1ProductRevisionHistory(
-			locals.supabase,
+			getSupabaseAdminClient(),
 			barcode,
 			request,
 		);

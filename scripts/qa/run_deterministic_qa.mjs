@@ -1,7 +1,8 @@
 /**
  * Purpose: Verify remote data invariants that are deterministic and safe to automate:
  * imported dataset metadata, source registry policy, metrics privacy, canonical catalog
- * reads, search pagination, category pagination, image/serving fixtures, and API privacy.
+ * reads, generic-food source fidelity, search pagination, category pagination,
+ * image/serving fixtures, and API privacy.
  * It performs read-only Supabase requests and never creates users or Fridge records.
  * Run: `npm run qa:deterministic`
  */
@@ -110,7 +111,7 @@ const assertDatasetCatalog = async () => {
 	}
 
 	for (const [datasetKey, searchTerm] of [
-		["cnf-2026", "blueberries raw"],
+		["cnf-2026", "blueberry"],
 		["cofid-2021", "arrowroot"],
 	]) {
 		const rows = requireData(
@@ -359,6 +360,7 @@ const assertOpenApiContract = async () => {
 			"/api/v1/categories",
 			"/api/v1/foods/search",
 			"/api/v1/products/{barcode}",
+			"/api/v1/products/{barcode}/revisions",
 		]),
 		"OpenAPI document advertises an unexpected endpoint set.",
 	);
@@ -382,10 +384,64 @@ const assertOpenApiContract = async () => {
 	pass("QA-058-004 read-only authenticated OpenAPI contract");
 };
 
+const assertGenericFoodSourceFidelity = async () => {
+	const abiyuchRows = requireData(
+		await admin.rpc("search_generic_food_records", {
+			p_query: "abiyuch",
+			p_limit: 20,
+		}),
+		"CNF Abiyuch fixture",
+	);
+	const abiyuch = abiyuchRows.find(
+		(row) => row.dataset_key === "cnf-2026" && row.source_food_key === "5282",
+	);
+	assert(abiyuch?.description === "Abiyuch, raw", "CNF Abiyuch identity changed.");
+	assert(abiyuch.source_display_name?.trim(), "CNF Abiyuch lacks source attribution.");
+	assert(Array.isArray(abiyuch.nutrients) && abiyuch.nutrients.length > 0, "CNF Abiyuch lacks nutrients.");
+	assert(Array.isArray(abiyuch.measures) && abiyuch.measures.length > 0, "CNF Abiyuch lacks measures.");
+
+	const arrowrootRows = requireData(
+		await admin.rpc("search_generic_food_records", {
+			p_query: "arrowroot",
+			p_limit: 20,
+		}),
+		"CoFID Arrowroot fixture",
+	);
+	const arrowroot = arrowrootRows.find(
+		(row) => row.dataset_key === "cofid-2021" && row.source_food_key === "11-001",
+	);
+	assert(arrowroot?.description === "Arrowroot", "CoFID Arrowroot identity changed.");
+	assert(Array.isArray(arrowroot.nutrients) && arrowroot.nutrients.length > 0, "CoFID Arrowroot lacks nutrients.");
+
+	const traceRows = requireData(
+		await admin
+			.from("generic_food_nutrients")
+			.select("source_nutrient_name, amount_per_100g, value_status, nutrient_id, mapping_status")
+			.eq("dataset_key", "cofid-2021")
+			.eq("source_food_key", "11-001")
+			.eq("value_status", "trace"),
+		"CoFID Arrowroot trace nutrients",
+	);
+	for (const nutrientName of [
+		"Sucrose",
+		"Glucose",
+		"Zinc",
+		"Total Vitamin E",
+		"Thiamin",
+	]) {
+		const row = traceRows.find((candidate) => candidate.source_nutrient_name === nutrientName);
+		assert(row, `CoFID Arrowroot is missing trace nutrient ${nutrientName}.`);
+		assert(row.amount_per_100g === null, `${nutrientName} trace was converted to numeric zero.`);
+		assert(row.nutrient_id !== null && row.mapping_status === "canonical", `${nutrientName} trace lost its canonical mapping.`);
+	}
+	pass("QA-053-002 and QA-053-003 generic-food source fidelity");
+};
+
 await assertDatasetCatalog();
 await assertSourceRegistry();
 await assertMetricsPrivacy();
 await assertCatalogReads();
 await assertOpenApiContract();
+await assertGenericFoodSourceFidelity();
 
 console.log(`\n${passedChecks.length} deterministic QA groups passed.`);

@@ -86,7 +86,10 @@ export const getRequestRateLimitPolicy = (
 			windowSeconds: 60,
 		};
 	}
-	if (pathname.startsWith("/api/user-food-lists/") && requestMethod === "POST") {
+	if (
+		pathname.startsWith("/api/user-food-lists/") &&
+		(requestMethod === "POST" || requestMethod === "DELETE")
+	) {
 		return {
 			scope: "food-list:write",
 			limit: 120,

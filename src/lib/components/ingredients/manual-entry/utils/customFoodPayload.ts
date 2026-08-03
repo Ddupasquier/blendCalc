@@ -101,6 +101,13 @@ export const createManualEntryCustomFood = (
 		throw new TypeError("Serving weight is required before saving an ingredient.");
 	}
 	const saveNutrients = buildManualEntrySaveNutrients(payload);
+	const fieldProvenance = payload.customFood
+		? Object.fromEntries(
+				Object.entries(payload.fieldProvenance ?? {}).filter(
+					([, provenance]) => provenance?.source === "user-label",
+				),
+			)
+		: payload.fieldProvenance;
 
 	return createCustomFood({
 		name: payload.name,
@@ -138,12 +145,18 @@ export const createManualEntryCustomFood = (
 		dietaryTags: payload.dietaryTags,
 		labels: payload.labels,
 		packageQuantity: payload.packageQuantity,
-		sourceMetadata: payload.sourceMetadata,
+		sourceMetadata:
+			payload.barcode && !payload.customFood
+				? payload.sourceMetadata
+				: undefined,
 			categories: buildManualEntrySaveCategories(payload),
 			categoryOptionId: payload.categoryOptionId,
 		symbolKey: payload.categorySymbolKey,
 		image: payload.image,
-		fieldProvenance: payload.fieldProvenance,
+		fieldProvenance:
+			Object.keys(fieldProvenance ?? {}).length > 0
+				? fieldProvenance
+				: undefined,
 		nutrients: saveNutrients,
 		reportedNutrientIds: [
 			...new Set([
@@ -151,7 +164,7 @@ export const createManualEntryCustomFood = (
 				...saveNutrients.map((nutrient) => nutrient.nutrientId),
 			]),
 		],
-		hasSourceServing: payload.hasSourceServing,
+		hasSourceServing: payload.hasSourceServing === true,
 		customFood: payload.customFood,
 	});
 };

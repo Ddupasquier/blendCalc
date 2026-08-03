@@ -269,9 +269,56 @@ export const createManualEntryBarcodeController = ({
 		clearBarcodeShareValidation();
 	};
 
+	const detachAcceptedSourceState = () => {
+		form.data.nameProvenance = "user";
+		form.data.foodIdentityType = "private-custom";
+		form.data.barcodeProvenance = undefined;
+		form.data.importedNutrients = form.data.importedNutrients.map(
+			(nutrient) => ({
+				...nutrient,
+				source: "user-label",
+				sourceReference: undefined,
+				confidence: "user-reported",
+				sourceNutrientKey: undefined,
+				sourceNutrientCode: undefined,
+				mappingReviewReference: undefined,
+				derivationMethod: undefined,
+			}),
+		);
+		form.data.manualTouchedNutrientIds = Object.fromEntries(
+			form.data.importedNutrients.map((nutrient) => [
+				nutrient.nutrientId,
+				true,
+			]),
+		);
+		form.data.reportedNutrientIds = [];
+		form.data.serving = form.data.serving
+			? {
+					...form.data.serving,
+					origin: "user-entered",
+					gramWeightMethod: "user-reported",
+					source: "user-label",
+					sourceReference: undefined,
+					sourceMeasureKey: undefined,
+					calculationBasis: undefined,
+					confidence: "user-reported",
+				}
+			: undefined;
+		form.data.sourceMetadata = undefined;
+		form.data.fieldProvenance = undefined;
+		form.data.image = undefined;
+	};
+
 	const setManualBarcode = (value: string) => {
+		const acceptedBarcode = form.data.barcodeReferenceAcceptedBarcode;
+		const nextBarcode = normalizeBarcode(value);
+		const detachedAcceptedSource = Boolean(
+			acceptedBarcode && acceptedBarcode !== nextBarcode,
+		);
+		if (detachedAcceptedSource) detachAcceptedSourceState();
+
 		invalidateBarcodeLookup();
-		form.data.keptUnmatchedPrivate = false;
+		form.data.keptUnmatchedPrivate = detachedAcceptedSource && !nextBarcode;
 		form.data.submissionIntent = "catalog_share";
 		form.data.barcode = value;
 		form.data.barcodeProvenance = value.trim()

@@ -4,6 +4,8 @@ import {
 	buildIngredientListTabHref,
 	buildIngredientRouteHref,
 	findIngredientRouteFood,
+	getBarcodeScannerCloseRoutePatch,
+	getBarcodeScannerOpenRoutePatch,
 	getIngredientListTab,
 	getIngredientRouteState,
 	getIngredientRouteTitle,
@@ -89,6 +91,15 @@ describe("ingredient route state", () => {
 		});
 		expect(
 			getIngredientRouteState(
+				url("/ingredients/fridge/search/barcode-scanner"),
+			),
+		).toMatchObject({
+			view: INGREDIENT_ROUTE_VIEWS.search,
+			sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
+			modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
+		});
+		expect(
+			getIngredientRouteState(
 				url("/ingredients/shopping/manual-entry/move-ingredient"),
 			),
 		).toMatchObject({
@@ -145,6 +156,21 @@ describe("ingredient route state", () => {
 				modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
 			}),
 		).toBe("/ingredients/fridge/barcode-scanner");
+		expect(
+			buildIngredientRouteHref(url("/ingredients/fridge/search"), {
+				...getBarcodeScannerOpenRoutePatch(
+					url("/ingredients/fridge/search"),
+				),
+			}),
+		).toBe("/ingredients/fridge/search/barcode-scanner");
+		expect(
+			buildIngredientRouteHref(
+				url("/ingredients/fridge/search/barcode-scanner"),
+				getBarcodeScannerCloseRoutePatch(
+					url("/ingredients/fridge/search/barcode-scanner"),
+				),
+			),
+		).toBe("/ingredients/fridge/search");
 		expect(
 			buildIngredientRouteHref(
 				url("/ingredients/fridge/barcode-scanner"),
