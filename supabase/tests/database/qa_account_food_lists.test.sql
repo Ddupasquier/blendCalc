@@ -4,8 +4,8 @@ select plan(32);
 
 select is(
 	(select count(*) from auth.users where email like 'qa-%@blendcalc.local'),
-	6::bigint,
-	'the isolated database contains all six QA personas'
+	7::bigint,
+	'the isolated database contains all seven QA personas'
 );
 
 select ok(
@@ -18,8 +18,13 @@ select ok(
 		select 1 from auth.users user_row
 		join public.app_role_assignments role on role.user_id = user_row.id
 		where user_row.email = 'qa-admin@blendcalc.local' and role.role = 'admin'
+	)
+	and exists (
+		select 1 from auth.users user_row
+		join public.app_role_assignments role on role.user_id = user_row.id
+		where user_row.email = 'qa-developer@blendcalc.local' and role.role = 'developer'
 	),
-	'moderator and admin personas receive their elevated roles'
+	'moderator, admin, and developer personas receive their elevated roles'
 );
 
 select ok(
@@ -31,7 +36,8 @@ select ok(
 				('qa-empty@blendcalc.local', 0, 0),
 				('qa-onboarding@blendcalc.local', 10, 0),
 				('qa-moderator@blendcalc.local', 3, 3),
-				('qa-admin@blendcalc.local', 3, 3)
+				('qa-admin@blendcalc.local', 3, 3),
+				('qa-developer@blendcalc.local', 3, 3)
 		)
 		select expected.email
 		from expected

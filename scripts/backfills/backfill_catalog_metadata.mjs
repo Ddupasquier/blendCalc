@@ -1,7 +1,8 @@
 /**
- * Purpose: Backfill missing canonical product ingredients, explicit allergen metadata,
- * label metadata, package quantity, source-record dates/markets, and legitimate source
- * servings from exact USDA barcode records. The workflow reads the provider cache first,
+ * Purpose: Backfill missing canonical product brands, ingredients, explicit allergen
+ * and precautionary metadata, label metadata, package quantity, source-record
+ * dates/markets, and legitimate source servings from exact USDA barcode records. The
+ * workflow reads the provider cache first,
  * makes bounded live requests only for cache misses, records field-level evidence through
  * the canonical enrichment RPC, and warms the licensed Open Food Facts cache for metadata
  * USDA does not provide. Open Food Facts data is not promoted into the public canonical
@@ -136,6 +137,10 @@ const REQUEST_TIMEOUT_MS = 12_000;
 const USDA_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1_000;
 const OPEN_FOOD_FACTS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1_000;
 const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+const SUPPLEMENTAL_ENRICHMENT_FIELDS = new Set([
+	"brandOwner",
+	"precautionaryStatements",
+]);
 
 const sleep = (milliseconds) =>
 	new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -309,6 +314,7 @@ const parseSourceServing = (food) => {
 const getUsdaMetadata = (food) => {
 	const ingredients = String(food?.ingredients ?? "").trim();
 	const declarations = extractExplicitAllergenDeclarations(ingredients);
+	const brandOwner = String(food?.brandOwner || food?.brandName || "").trim();
 	const packageLabel = String(food?.packageWeight ?? "").trim();
 	const marketCountry = String(food?.marketCountry ?? "").trim();
 	const publishedAt = toSourceTimestamp(
@@ -325,6 +331,7 @@ const getUsdaMetadata = (food) => {
 		...(marketCountry ? { marketCountries: [marketCountry] } : {}),
 	};
 	return {
+		brandOwner: brandOwner || undefined,
 		ingredients: ingredients || undefined,
 		ingredientList: splitIngredientList(ingredients),
 		allergens: cleanValues([
@@ -335,6 +342,7 @@ const getUsdaMetadata = (food) => {
 			...(food?.traces ?? []),
 			...declarations.mayContain,
 		]),
+		precautionaryStatements: declarations.precautionaryStatements,
 		dietaryTags: cleanValues(food?.dietaryTags ?? []),
 		labels: cleanValues(food?.labels ?? []),
 		packageQuantity: packageLabel ? { label: packageLabel } : undefined,
@@ -345,11 +353,13 @@ const getUsdaMetadata = (food) => {
 	};
 };
 
-const getMissingFields = (food) => ({
+const getMissingFields = (food, brandOwner) => ({
+	brandOwner: !String(brandOwner ?? food?.brandOwner ?? "").trim(),
 	ingredients:
 		!String(food?.ingredients ?? "").trim() || !hasValues(food?.ingredientList),
 	allergens: !hasValues(food?.allergens),
 	traces: !hasValues(food?.traces),
+	precautionaryStatements: !hasValues(food?.precautionaryStatements),
 	dietaryTags: !hasValues(food?.dietaryTags),
 	labels: !hasValues(food?.labels),
 	structuredIngredients: !hasValues(food?.structuredIngredients),
@@ -367,12 +377,17 @@ const getMissingFields = (food) => ({
 		Number(food?.customServingWeightGrams ?? food?.servingSize) <= 0,
 });
 
-const getUsdaCandidateFields = (currentFood, metadata) => {
-	const missing = getMissingFields(currentFood);
+const getUsdaCandidateFields = (product, metadata) => {
+	const missing = getMissingFields(product.food, product.brand_owner);
 	return [
+		missing.brandOwner && metadata.brandOwner ? "brandOwner" : null,
 		missing.ingredients && metadata.ingredients ? "ingredients" : null,
 		missing.allergens && metadata.allergens.length > 0 ? "allergens" : null,
 		missing.traces && metadata.traces.length > 0 ? "traces" : null,
+		missing.precautionaryStatements &&
+			metadata.precautionaryStatements.length > 0
+			? "precautionaryStatements"
+			: null,
 		missing.dietaryTags && metadata.dietaryTags.length > 0
 			? "dietaryTags"
 			: null,
@@ -394,6 +409,9 @@ const applyUsdaMetadata = (currentFood, metadata, sourceReference, fields) => {
 	};
 	return {
 		...currentFood,
+		...(fieldSet.has("brandOwner")
+			? { brandOwner: metadata.brandOwner }
+			: {}),
 		...(fieldSet.has("ingredients")
 			? {
 				ingredients: metadata.ingredients,
@@ -402,6 +420,9 @@ const applyUsdaMetadata = (currentFood, metadata, sourceReference, fields) => {
 			: {}),
 		...(fieldSet.has("allergens") ? { allergens: metadata.allergens } : {}),
 		...(fieldSet.has("traces") ? { traces: metadata.traces } : {}),
+		...(fieldSet.has("precautionaryStatements")
+			? { precautionaryStatements: metadata.precautionaryStatements }
+			: {}),
 		...(fieldSet.has("dietaryTags")
 			? { dietaryTags: metadata.dietaryTags }
 			: {}),
@@ -422,6 +443,8 @@ const applyUsdaMetadata = (currentFood, metadata, sourceReference, fields) => {
 
 const getTrackedFieldValue = (food, field) => {
 	switch (field) {
+		case "brandOwner":
+			return food.brandOwner ?? null;
 		case "ingredients":
 			return {
 				ingredients: food.ingredients ?? null,
@@ -633,7 +656,7 @@ const [{ data: sourceRows, error: sourceError }, {
 		supabase
 			.from("shared_products")
 			.select(
-				"id, barcode, product_name, source, source_reference, food, category_option_id",
+				"id, barcode, product_name, brand_owner, source, source_reference, food, category_option_id",
 			)
 			.eq("status", "active")
 			.order("barcode"),
@@ -667,7 +690,7 @@ const summary = {
 };
 
 for (const [index, product] of products.entries()) {
-	const missing = getMissingFields(product.food);
+	const missing = getMissingFields(product.food, product.brand_owner);
 	if (!Object.values(missing).some(Boolean)) continue;
 	console.log(
 		`[${index + 1}/${products.length}] ${product.barcode} — ${product.product_name}`,
@@ -685,7 +708,7 @@ for (const [index, product] of products.entries()) {
 
 		const metadata = usdaDetail ? getUsdaMetadata(usdaDetail) : null;
 		const fields = metadata
-			? getUsdaCandidateFields(product.food, metadata)
+			? getUsdaCandidateFields(product, metadata)
 			: [];
 
 		if (usdaDetail && fields.length > 0) {
@@ -734,20 +757,39 @@ for (const [index, product] of products.entries()) {
 			if (isDryRun) {
 				console.log(`  would persist USDA fields: ${fields.join(", ")}`);
 			} else {
-				const { data, error } = await supabase.rpc(
-					"apply_shared_product_external_enrichment",
-					{
+				const standardFields = fields.filter(
+					(field) => !SUPPLEMENTAL_ENRICHMENT_FIELDS.has(field),
+				);
+				const supplementalFields = fields.filter((field) =>
+					SUPPLEMENTAL_ENRICHMENT_FIELDS.has(field),
+				);
+				const appliedFields = [];
+				for (const [rpcName, rpcFields] of [
+					["apply_shared_product_external_enrichment", standardFields],
+					[
+						"apply_shared_product_supplemental_enrichment",
+						supplementalFields,
+					],
+				]) {
+					if (rpcFields.length === 0) continue;
+					const { data, error } = await supabase.rpc(rpcName, {
 						p_shared_product_id: product.id,
 						p_barcode: normalizeBarcode(product.barcode),
 						p_enriched_food: enrichedFood,
-						p_category_option_id: product.category_option_id,
-						p_candidate_fields: fields,
-						p_observations: observations,
-						p_provenance: provenance,
-					},
-				);
-				if (error) throw error;
-				const appliedFields = data ?? [];
+						...(rpcName === "apply_shared_product_external_enrichment"
+							? { p_category_option_id: product.category_option_id }
+							: {}),
+						p_candidate_fields: rpcFields,
+						p_observations: observations.filter((observation) =>
+							rpcFields.includes(observation.trackedField)
+						),
+						p_provenance: provenance.filter((entry) =>
+							rpcFields.includes(entry.fieldPath)
+						),
+					});
+					if (error) throw error;
+					appliedFields.push(...(data ?? []));
+				}
 				if (appliedFields.length > 0) {
 					summary.productsUpdated += 1;
 					summary.fieldsUpdated += appliedFields.length;
@@ -767,7 +809,10 @@ for (const [index, product] of products.entries()) {
 			)
 			: product.food;
 		const stillNeedsLicensedMetadata = Object.values(
-			getMissingFields(projectedFood),
+			getMissingFields(
+				projectedFood,
+				projectedFood.brandOwner ?? product.brand_owner,
+			),
 		).some(Boolean);
 		if (stillNeedsLicensedMetadata) {
 			try {

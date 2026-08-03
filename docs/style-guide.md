@@ -373,7 +373,7 @@ Check the existing primitive before writing markup or SCSS.
 | Text-entry modal                      | `TextInputDialog`            | Focused rename/edit prompt with shared validation and action layout                                 |
 | Guided feature tour                   | `TutorialOverlay`            | Route-aware modal guidance with one rounded spotlight and a collision-aware instruction card        |
 | Repeated-tap safety                   | `TwoStepConfirmation`        | In-place double activation such as ingredient deletion                                              |
-| Privileged action container           | `PrivilegedActionGroup`      | Groups moderator/admin actions and owns one crown                                                   |
+| Privileged action container           | `PrivilegedActionGroup`      | Groups privileged moderator, admin, or developer actions and owns one crown                         |
 | Numeric amount                        | `NumberInput`                | Shared number semantics and control styling                                                         |
 | Accelerating amount control           | `AcceleratingStepButton`     | Tap-by-one and progressive hold behavior                                                            |
 | Full product image                    | `ProductImageFrame`          | Contained, non-stretched detailed image using any saved moderator orientation correction             |
@@ -636,7 +636,7 @@ reporting interface for every warning in the default view.
 - Nutrition detail may show verification and neutral source attribution.
 - `Custom` means a private unmatched item the user deliberately kept; it does not mean
   every manual entry or every external-source record.
-- Use one crown at the header of the nearest moderator/admin action group. Do not add a
+- Use one crown at the header of the nearest privileged action group. Do not add a
   crown to every control inside it.
 
 ## Motion And Interaction

@@ -49,6 +49,8 @@ type FdcFoodResponse = Omit<FdcFood, "foodNutrients"> & {
 	foodPortions?: FdcDetailPortion[];
 	foodMeasures?: FdcSearchMeasure[];
 	ndbNumber?: number | string;
+	brandName?: string;
+	subbrandName?: string;
 };
 
 const normalizeLegacyUsdaNdbNumber = (value: number | string | undefined) => {
@@ -314,6 +316,7 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FdcFood => {
 	const legacyUsdaNdbNumber = normalizeLegacyUsdaNdbNumber(food.ndbNumber);
 	const foodServings = normalizeFoodServings(food);
 	const packageLabel = food.packageWeight?.trim();
+	const brandOwner = food.brandOwner?.trim() || food.brandName?.trim();
 	return {
 		...food,
 		description: formatSourceProductName(food.description),
@@ -325,6 +328,7 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FdcFood => {
 				: {}),
 		},
 		nameProvenance: "source",
+		brandOwner: brandOwner || undefined,
 		foodIdentityType: resolveFoodIdentityType(food),
 		foodNutrients,
 		reportedNutrientIds: foodNutrients.map((nutrient) => nutrient.nutrientId),

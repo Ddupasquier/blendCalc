@@ -5566,6 +5566,17 @@ export type Database = {
         }
         Returns: string[]
       }
+      apply_shared_product_supplemental_enrichment: {
+        Args: {
+          p_barcode: string
+          p_candidate_fields?: string[]
+          p_enriched_food: Json
+          p_observations?: Json
+          p_provenance?: Json
+          p_shared_product_id: string
+        }
+        Returns: string[]
+      }
       authorize_app_permission: {
         Args: {
           requested_permission: Database["public"]["Enums"]["app_permission"]
@@ -5963,7 +5974,7 @@ export type Database = {
         | "moderation.warnings.review"
         | "moderation.data_health.read"
         | "moderation.roles.manage"
-      app_role: "user" | "moderator" | "admin"
+      app_role: "user" | "moderator" | "admin" | "developer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6102,7 +6113,7 @@ export const Constants = {
         "moderation.data_health.read",
         "moderation.roles.manage",
       ],
-      app_role: ["user", "moderator", "admin"],
+      app_role: ["user", "moderator", "admin", "developer"],
     },
   },
 } as const

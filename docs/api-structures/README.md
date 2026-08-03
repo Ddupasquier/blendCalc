@@ -15,7 +15,7 @@ records only and does not call external providers during a request.
 | `GET /api/v1/products/{barcode}/revisions` | Read bounded immutable revision metadata and evidence-backed field changes. |
 | `GET /api/v1/foods/search` | Search publication-ready canonical products with bounded pagination. |
 | `GET /api/v1/categories` | Read enabled canonical food categories. |
-| `GET /api/moderation/catalog/products/{productId}/provenance` | Read private accepted/candidate field evidence for an authorized moderator or admin. |
+| `GET /api/moderation/catalog/products/{productId}/provenance` | Read private accepted/candidate field evidence for an authorized moderator, admin, or developer. |
 
 The existing app submission, evidence, and moderation pipeline remains the only write
 path. Public API keys, billing, developer accounts, and a public write API are out of

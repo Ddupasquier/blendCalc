@@ -5,6 +5,10 @@ expected to run directly. Internal maintenance and one-off workflows remain exec
 through the exact `node scripts/...` command documented at the top of their file; they
 do not need an npm alias merely for automated repository work.
 
+The privileged `npm run moderate -- role` operation accepts `moderator`, `admin`,
+`developer`, or `none`. Add `--user-id=<expected-user-uuid>` when assigning a sensitive
+role so the email and Auth identifier must agree before the write.
+
 The folders below organize implementation files by purpose. Their contents are not
 automatically part of the public developer command surface.
 
@@ -119,9 +123,10 @@ USDA fields whose database source policy permits canonical storage:
 node scripts/backfills/backfill_catalog_metadata.mjs --cached-only
 ```
 
-The workflow can recover ingredient statements, explicit declarations embedded in the
-source statement, labels, package weight, source-record dates and market country, and
-legitimate source servings. It records observations, selected field provenance,
-normalized projections, and revisions through the canonical enrichment RPC. Open Food
-Facts metadata is audited and cached but is not promoted while its canonical-storage
-policy is disabled. A second run must make no additional writes.
+The workflow can recover a missing brand, ingredient statements, explicit allergen and
+precautionary declarations embedded in the source statement, labels, package weight,
+source-record dates and market country, and legitimate source servings. It records
+observations, selected field provenance, normalized projections, and revisions through
+the canonical enrichment RPCs. Open Food Facts metadata is audited and cached but is not
+promoted while its canonical-storage policy is disabled. A second run must make no
+additional writes.

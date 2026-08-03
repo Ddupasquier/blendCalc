@@ -297,6 +297,7 @@ describe("NutritionPanel", () => {
 						sourceReference: "00000000119993",
 						role: "front",
 						imageUrl: "https://example.com/peanut-butter.jpg",
+						licenseName: "Open Database License",
 						confidence: "moderator-reviewed",
 					},
 				},

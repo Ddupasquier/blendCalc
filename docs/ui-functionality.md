@@ -853,9 +853,9 @@ Preserve:
   - Role.
   - Image moderation status.
   - Public reason if blocked.
-- Admin/moderator guardrails:
+- Privileged-account guardrails:
   - User cannot moderate their own account.
-  - Admin accounts cannot be blocked here.
+  - Admin and developer accounts cannot be blocked here.
   - Moderators cannot moderate other privileged users unless allowed.
 - Block account action with reason.
 - Restore access action.

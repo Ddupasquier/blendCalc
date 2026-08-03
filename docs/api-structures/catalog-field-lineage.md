@@ -25,7 +25,8 @@ identities, and private Storage paths never enter this read path.
 
 Exact-barcode drafts are resolved through field-resolution policy version 1. The policy
 does not rank USDA, Open Food Facts, or another provider as the whole-product winner.
-Each populated field must retain its own evidence before it can be selected.
+Each populated field—including product name and brand—must retain its own evidence
+before it can be selected.
 
 Candidates are compared by:
 
@@ -101,8 +102,8 @@ API launch.
 ## Moderator Evidence Read
 
 `GET /api/moderation/catalog/products/{productId}/provenance` provides the deeper
-field-evidence record needed for moderation. It requires a verified moderator or admin
-role and always returns `Cache-Control: private, no-store`.
+field-evidence record needed for moderation. It requires a verified moderator, admin,
+or developer role and always returns `Cache-Control: private, no-store`.
 
 The response includes each field candidate's source and normalized values, selection
 state, confidence, stored verification method, exact observation ID, source reference,

@@ -34,7 +34,9 @@ save private custom foods, use their fridge, and build mixes.
 - **blendCalc shared catalog:** the active `shared_products` row plus its normalized
   nutrient, serving, image, category, provenance, and revision records is the canonical
   source of truth for published product reads. External providers do not bypass or
-  overwrite accepted nonmissing canonical fields.
+  overwrite accepted nonmissing canonical fields. When search receives the same barcode
+  from the catalog and an external provider, the canonical catalog record remains the
+  result even if the transient provider payload contains more optional fields.
 - **Exact identity versus field verification:** an exact barcode match confirms product
   identity only. Submission workflow records this as `exact_identity`; it does not
   assign provider-wide verification. Automatically published exact-source records
@@ -508,8 +510,9 @@ Packaged products and generic foods use different evidence paths:
    follow normal moderation rules if shared.
 
 Every accepted nutrient keeps its own source and source reference. Product-level field
-provenance separately records nutrition, image, category, serving, ingredient,
-allergen, trace, label, additive, package, and source-metadata fields. A fuller
+provenance separately records product name, brand, nutrition, image, category, serving,
+ingredient, allergen, trace, precautionary-statement, label, additive, package, and
+source-metadata fields. A fuller
 secondary record may supplement missing fields but cannot silently overwrite an
 authoritative reported value or zero.
 
