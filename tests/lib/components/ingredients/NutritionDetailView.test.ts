@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView/NutritionDetailView.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
 import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceData";
@@ -19,6 +19,10 @@ const spinach: FdcFood = {
 		},
 	],
 };
+
+afterEach(() => {
+	vi.useRealTimers();
+});
 
 describe("NutritionDetailView", () => {
 	it("shows the complete product name in the nutrition header", () => {
@@ -99,7 +103,44 @@ describe("NutritionDetailView", () => {
 		expect(screen.getByText("100g")).toBeInTheDocument();
 	});
 
-	it("uses a stored product serving and keeps 100g available", async () => {
+	it("accelerates a held amount control, rescales nutrition, and stops on release", async () => {
+		vi.useFakeTimers();
+		render(NutritionDetailView, {
+			props: {
+				food: spinach,
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		const increase = screen.getByRole("button", {
+			name: /increase viewing amount by 1g/i,
+		});
+		await fireEvent.pointerDown(increase, {
+			button: 0,
+			pointerId: 1,
+			pointerType: "mouse",
+		});
+		expect(screen.getByText("101g")).toBeInTheDocument();
+
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(screen.getByText("103g")).toBeInTheDocument();
+		expect(screen.getByText("23.7")).toBeInTheDocument();
+
+		await vi.advanceTimersByTimeAsync(3000);
+		expect(screen.getByText("219g")).toBeInTheDocument();
+		expect(screen.getByText("50.4")).toBeInTheDocument();
+		await fireEvent.pointerUp(increase, {
+			pointerId: 1,
+			pointerType: "mouse",
+		});
+
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(screen.getByText("219g")).toBeInTheDocument();
+	});
+
+	it("clamps a held decrease at 1g and disables further decreases", async () => {
+		vi.useFakeTimers();
 		render(NutritionDetailView, {
 			props: {
 				food: {
@@ -120,9 +161,54 @@ describe("NutritionDetailView", () => {
 			},
 		});
 
-		expect(screen.getByText("30g")).toBeInTheDocument();
+		const decrease = screen.getByRole("button", {
+			name: /decrease viewing amount by 1g/i,
+		});
+		await fireEvent.pointerDown(decrease, {
+			button: 0,
+			pointerId: 2,
+			pointerType: "mouse",
+		});
+		expect(screen.getByText("29g")).toBeInTheDocument();
+
+		await vi.advanceTimersByTimeAsync(4000);
+		expect(screen.getByText("1g")).toBeInTheDocument();
+		expect(decrease).toBeDisabled();
+
+		await fireEvent.pointerUp(decrease, {
+			pointerId: 2,
+			pointerType: "mouse",
+		});
+		await fireEvent.click(decrease);
+		expect(screen.getByText("1g")).toBeInTheDocument();
+	});
+
+	it("uses a stored product serving and keeps 100g available", async () => {
+		render(NutritionDetailView, {
+			props: {
+				food: {
+					...spinach,
+					hasSourceServing: true,
+					foodServings: [{
+						label: "2 tbsp",
+						gramWeight: 32,
+						amount: 2,
+						unitKey: "tbsp",
+						isPrimary: true,
+						origin: "user-entered",
+						gramWeightMethod: "user-reported",
+						source: "user-label",
+						confidence: "user-reported",
+					}],
+				},
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(screen.getByText("32g")).toBeInTheDocument();
 		expect(screen.getByText("Serving Size")).toBeInTheDocument();
-		expect(screen.getByText("2 tbsp (30g)")).toBeInTheDocument();
+		expect(screen.getByText("2 tbsp (32g)")).toBeInTheDocument();
 		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
 		await fireEvent.change(screen.getByRole("combobox", { name: "Serving" }), {
 			target: { value: "standard-100g" },
@@ -130,6 +216,128 @@ describe("NutritionDetailView", () => {
 		expect(screen.getByText("100g")).toBeInTheDocument();
 		expect(screen.getByText("Per 100g food data")).toBeInTheDocument();
 		expect(screen.queryByText("Serving Size")).not.toBeInTheDocument();
+	});
+
+	it("switches an exact 125g package serving back to the same per-100g values", async () => {
+		render(NutritionDetailView, {
+			props: {
+				food: {
+					...spinach,
+					fdcId: 2032704,
+					description: "Roasted Onion & Garlic Pasta Sauce",
+					barcode: "00021130493609",
+					sourceKey: "usda",
+					sourceLabel: "USDA FoodData Central",
+					sourceDataType: "Branded",
+					foodNutrients: [
+						{
+							nutrientId: 1008,
+							nutrientName: "Energy",
+							nutrientNumber: "208",
+							unitName: "KCAL",
+							value: 60,
+						},
+						{
+							nutrientId: 1079,
+							nutrientName: "Fiber, total dietary",
+							nutrientNumber: "291",
+							unitName: "G",
+							value: 1.6,
+						},
+					],
+					hasSourceServing: true,
+					foodServings: [{
+						label: "1/2 cup",
+						gramWeight: 125,
+						amount: 0.5,
+						unitKey: "cup",
+						isPrimary: true,
+						source: "usda",
+						confidence: "source-verified",
+					}],
+					image: {
+						source: "open-food-facts",
+						sourceReference: "021130493609",
+						role: "front",
+						imageUrl: "https://example.com/pasta-sauce.jpg",
+						licenseName: "CC BY-SA 3.0",
+						licenseUrl: "https://creativecommons.org/licenses/by-sa/3.0/",
+						attributionText: "Open Food Facts contributors",
+						confidence: "imported",
+					},
+					fieldProvenance: {
+						nutrition: {
+							source: "usda",
+							sourceReference: "2032704",
+							confidence: "source-verified",
+						},
+						categories: {
+							source: "usda",
+							sourceReference: "2032704",
+							confidence: "source-verified",
+						},
+						serving: {
+							source: "usda",
+							sourceReference: "2032704",
+							confidence: "source-verified",
+						},
+						image: {
+							source: "open-food-facts",
+							sourceReference: "021130493609",
+							confidence: "imported",
+						},
+					},
+				},
+				onClose: vi.fn(),
+				showListActions: false,
+			},
+		});
+
+		expect(screen.getByText("1/2 cup · 125g")).toBeInTheDocument();
+		expect(screen.getByText("1/2 cup (125g)")).toBeInTheDocument();
+		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
+		expect(screen.getByText("75")).toBeInTheDocument();
+		expect(screen.getByText("2")).toBeInTheDocument();
+		expect(screen.getByText("Source: USDA FoodData Central")).toBeInTheDocument();
+		expect(screen.getByText("Branded")).toBeInTheDocument();
+		expect(screen.getByRole("img", {
+			name: "Roasted Onion & Garlic Pasta Sauce package image",
+		})).toBeInTheDocument();
+		expect(screen.getByText("Image: Open Food Facts contributors"))
+			.toBeInTheDocument();
+		const imageLicense = screen.getByRole("link", {
+			name: "CC BY-SA 3.0 (opens in a new tab)",
+		});
+		expect(imageLicense).toHaveAttribute(
+			"href",
+			"https://creativecommons.org/licenses/by-sa/3.0/",
+		);
+		expect(imageLicense).toHaveAttribute("target", "_blank");
+		expect(imageLicense).toHaveAttribute("rel", "noopener noreferrer");
+		expect(screen.getByText("Total Fat").closest("li")).toHaveTextContent("0 g");
+		expect(screen.queryByText(/partial nutrition data/i)).not.toBeInTheDocument();
+
+		await fireEvent.click(screen.getByText("More about this food"));
+		await fireEvent.click(screen.getByText("Product details"));
+		expect(screen.getByRole("heading", { name: "Data sources" }))
+			.toBeInTheDocument();
+		expect(screen.getByText("Nutrition data").closest("div"))
+			.toHaveTextContent("USDA · 2032704");
+		expect(screen.getByText("Categories").closest("div"))
+			.toHaveTextContent("USDA · 2032704");
+		expect(screen.getByText("Serving data").closest("div"))
+			.toHaveTextContent("USDA · 2032704");
+		expect(screen.getByText("Product image").closest("div"))
+			.toHaveTextContent("Open Food Facts · 021130493609");
+
+		await fireEvent.change(screen.getByRole("combobox", { name: "Serving" }), {
+			target: { value: "standard-100g" },
+		});
+		expect(screen.getByText("100g")).toBeInTheDocument();
+		expect(screen.getByText("Per 100g food data")).toBeInTheDocument();
+		expect(screen.queryByText("Serving Size")).not.toBeInTheDocument();
+		expect(screen.getByText("60")).toBeInTheDocument();
+		expect(screen.getByText("1.6")).toBeInTheDocument();
 	});
 
 	it("uses a compact back button with room for its focus outline", () => {
@@ -175,13 +383,15 @@ describe("NutritionDetailView", () => {
 			.not.toBeInTheDocument();
 	});
 
-	it("shows stored source identity and USDA subtype", () => {
+	it.each(["Foundation", "SR Legacy"])(
+		"shows stored source identity and USDA %s subtype",
+		(sourceDataType) => {
 		render(NutritionDetailView, {
 			props: {
 				food: {
 					...spinach,
 					sourceLabel: "USDA FoodData Central",
-					sourceDataType: "SR Legacy",
+					sourceDataType,
 				},
 				onClose: vi.fn(),
 				showListActions: false,
@@ -189,8 +399,9 @@ describe("NutritionDetailView", () => {
 		});
 
 		expect(screen.getByText("Source: USDA FoodData Central")).toBeInTheDocument();
-		expect(screen.getByText("SR Legacy")).toBeInTheDocument();
-	});
+		expect(screen.getByText(sourceDataType)).toBeInTheDocument();
+		},
+	);
 
 	it("keeps neutral source attribution separate from verification", () => {
 		render(NutritionDetailView, {

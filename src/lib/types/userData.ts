@@ -13,6 +13,7 @@ export type IngredientPageInitialData = {
 	fridge: UserFoodListPage;
 	shoppingList: UserFoodListPage;
 	customFoods: FdcFood[];
+	routeFood: FdcFood | null;
 	listIndex: CloudSmoothieListIndex;
 	provenanceOptions: IngredientProvenanceOption[];
 	loadError: string;

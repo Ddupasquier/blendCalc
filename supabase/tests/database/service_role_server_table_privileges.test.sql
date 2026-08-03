@@ -39,9 +39,10 @@ select ok(
 
 select ok(
 	has_table_privilege('service_role', 'public.shared_product_submissions', 'select')
+		and has_table_privilege('service_role', 'public.shared_product_submissions', 'insert')
 		and has_table_privilege('service_role', 'public.shared_product_submissions', 'update')
 		and has_table_privilege('service_role', 'public.shared_product_submissions', 'delete'),
-	'the server role can review and clean up product submissions'
+	'the server role can create, review, and clean up product submissions'
 );
 
 select ok(

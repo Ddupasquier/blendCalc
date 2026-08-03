@@ -163,7 +163,8 @@
 	<meta name="theme-color" content={LIGHT_THEME_COLOR} />
 	<meta name="application-version" content={APP_VERSION} />
 	<meta name="application-build" content={APP_BUILD_VERSION} />
-	<link rel="icon" href={favicon} />
+	<link rel="icon" type="image/svg+xml" sizes="any" href={favicon} />
+	<link rel="shortcut icon" href="/favicon.ico" />
 	<link rel="canonical" href={canonicalUrl} />
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content={canonicalUrl} />

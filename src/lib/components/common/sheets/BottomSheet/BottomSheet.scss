@@ -1,6 +1,7 @@
 @use "../../../../../styles/variables" as *;
 
 $bottom-sheet-back-control-size: 2rem;
+$bottom-sheet-focus-clearance: $app-gap-2xs;
 
 .bottom-sheet {
 	display: flex;
@@ -86,8 +87,11 @@ $bottom-sheet-back-control-size: 2rem;
 	grid-auto-rows: max-content;
 	min-width: 0;
 	min-height: 0;
+	margin-inline: calc(0rem - #{$bottom-sheet-focus-clearance});
+	padding-inline: $bottom-sheet-focus-clearance;
 	padding-bottom: $app-gap-md;
 	overflow-y: auto;
+	scroll-padding: $bottom-sheet-focus-clearance;
 	overscroll-behavior: contain;
 	-webkit-overflow-scrolling: touch;
 }

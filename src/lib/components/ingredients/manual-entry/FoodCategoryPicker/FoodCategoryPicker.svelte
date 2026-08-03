@@ -86,6 +86,7 @@
 	const handlePickerKeydown = (event: KeyboardEvent) => {
 		if (event.key !== "Escape" || !open) return;
 		event.preventDefault();
+		event.stopPropagation();
 		closePicker(true);
 	};
 
@@ -149,8 +150,6 @@
 	});
 </script>
 
-<svelte:window onkeydown={handlePickerKeydown} />
-
 <div class="food-category-picker">
 	<span class="food-category-picker__label">Category <em>*</em></span>
 	<RoundedActionButton
@@ -177,8 +176,11 @@
 		<div
 			id={panelId}
 			class="food-category-picker__panel"
-			role="region"
+			role="dialog"
+			aria-modal="false"
 			aria-labelledby={triggerId}
+			tabindex="-1"
+			onkeydown={handlePickerKeydown}
 		>
 			<label class="food-category-picker__search">
 				<span class="food-category-picker__search-label">Search categories</span>

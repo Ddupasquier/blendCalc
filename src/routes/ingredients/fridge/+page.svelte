@@ -35,7 +35,9 @@
     import {
         buildIngredientRouteHref,
         findIngredientRouteFood,
-		getIngredientListTab,
+        getBarcodeScannerCloseRoutePatch,
+        getBarcodeScannerOpenRoutePatch,
+        getIngredientListTab,
         getIngredientRouteState,
         INGREDIENT_ROUTE_MODALS,
         INGREDIENT_ROUTE_SHEETS,
@@ -69,20 +71,38 @@
     import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
 	const initialIngredientData = page.data.ingredientData;
-    let onHand = $state<FdcFood[]>(initialIngredientData?.fridge.foods ?? []);
-    let shoppingList = $state<FdcFood[]>(
-		initialIngredientData?.shoppingList.foods ?? [],
-	);
-	let customFoods = $state<FdcFood[]>(initialIngredientData?.customFoods ?? []);
+	const initialIngredientRouteState = getIngredientRouteState(page.url);
+	const initialOnHand = initialIngredientData?.fridge.foods ?? [];
+	const initialShoppingList = initialIngredientData?.shoppingList.foods ?? [];
+	const initialCustomFoods = initialIngredientData?.customFoods ?? [];
+    let onHand = $state<FdcFood[]>(initialOnHand);
+    let shoppingList = $state<FdcFood[]>(initialShoppingList);
+	let customFoods = $state<FdcFood[]>(initialCustomFoods);
+	const initialRouteFood = initialIngredientData?.routeFood ??
+		findIngredientRouteFood(
+			initialIngredientRouteState.foodId,
+			initialIngredientRouteState.listKey,
+			initialOnHand,
+			initialShoppingList,
+			initialCustomFoods,
+		);
 	let listIndex = $state<CloudSmoothieListIndex>(
 		initialIngredientData?.listIndex ?? {
 			[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
 			[MIX_STORAGE_KEYS.shoppingList]: { foodIds: [], foodIdentityKeys: [] },
 		},
 	);
-    let selectedFood = $state<FdcFood | null>(null);
+    let selectedFood = $state<FdcFood | null>(
+		initialIngredientRouteState.view === INGREDIENT_ROUTE_VIEWS.nutrition
+			? initialRouteFood
+			: null,
+	);
     let correctionFood = $state<FdcFood | null>(null);
-    let selectedFoodShowListActions = $state(true);
+    let selectedFoodShowListActions = $state(
+		initialIngredientRouteState.view === INGREDIENT_ROUTE_VIEWS.nutrition
+			? initialIngredientRouteState.showListActions
+			: true,
+	);
     let scanSignal = $state(0);
     let barcodeScannerRouteOpen = $state(false);
     let barcodeLookupBusy = $state(false);
@@ -372,29 +392,24 @@
     };
 
     const startBarcodeScan = () => {
-        searchViewOpen = false;
+        const routePatch = getBarcodeScannerOpenRoutePatch(page.url);
+        searchViewOpen = routePatch.view === INGREDIENT_ROUTE_VIEWS.search;
         activeSheet = "manual-entry";
         barcodeScannerRouteOpen = true;
         scanSignal += 1;
-        void navigateIngredientRoute({
-            view: null,
-            sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
-            modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
-            foodId: null,
-            listKey: null,
-        });
+        void navigateIngredientRoute(routePatch);
     };
 
     const closeBarcodeScanner = () => {
+        const routePatch = getBarcodeScannerCloseRoutePatch(page.url);
         barcodeScannerRouteOpen = false;
         scanSignal = 0;
-        void navigateIngredientRoute({
-            view: null,
-            sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
-            modal: null,
-            foodId: null,
-            listKey: null,
-        });
+        searchViewOpen = routePatch.view === INGREDIENT_ROUTE_VIEWS.search;
+        activeSheet =
+            routePatch.sheet === INGREDIENT_ROUTE_SHEETS.manualEntry
+                ? INGREDIENT_ROUTE_SHEETS.manualEntry
+                : null;
+        void navigateIngredientRoute(routePatch);
     };
 
 	const openMoveConfirmation = () => {

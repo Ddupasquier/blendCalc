@@ -123,7 +123,10 @@ export const buildManualEntryValidationItems = ({
 					step: "servings",
 				}
 			: null,
-		!activeCategory || !activeCategoryOptionId
+		(!loadingCategoryOptions &&
+			(Boolean(categoryOptionsError) || !categoryOptionsAvailable)) ||
+		!activeCategory ||
+		!activeCategoryOptionId
 			? {
 					message: loadingCategoryOptions
 						? "Food categories are still loading. Try again in a moment."

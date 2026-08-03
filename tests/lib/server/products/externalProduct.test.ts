@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { lookupExternalBarcodeProduct } from "$lib/server/products/externalProduct.server";
+import {
+	lookupExternalBarcodeProduct,
+} from "$lib/server/products/externalProduct.server";
+import { areExternalProductLookupsEnabled } from "$lib/server/products/externalProductPolicy.server";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { ProductReferenceData } from "$lib/utils/food/reference/productReferenceData";
 
@@ -79,6 +82,20 @@ describe("external barcode product lookup", () => {
 	const getReferenceData = vi
 		.fn<() => Promise<ProductReferenceData>>()
 		.mockResolvedValue({} as ProductReferenceData);
+
+	it("disables runtime provider calls for the isolated test database", async () => {
+		const getDisabledReferenceData = vi.fn();
+
+		const result = await lookupExternalBarcodeProduct("00021130493609", {
+			externalLookupsEnabled: false,
+			getReferenceData: getDisabledReferenceData,
+		});
+
+		expect(result).toBeNull();
+		expect(getDisabledReferenceData).not.toHaveBeenCalled();
+		expect(areExternalProductLookupsEnabled("test")).toBe(false);
+		expect(areExternalProductLookupsEnabled("production")).toBe(true);
+	});
 
 	it("keeps USDA nutrition while adding an available trusted source image", async () => {
 		const usdaDraft = makeDraft("usda");
@@ -281,20 +298,46 @@ describe("external barcode product lookup", () => {
 	});
 
 	it("uses Open Food Facts when USDA is unavailable", async () => {
-		const openFoodFactsDraft = makeDraft(
-			"open-food-facts",
-			openFoodFactsImage,
-		);
+		const openFoodFactsDraft = makeDraft("open-food-facts", openFoodFactsImage, {
+			barcode: "03017620422003",
+			name: "Nutella",
+			sourceReference: "03017620422003",
+			nutrients: [
+				{
+					nutrientId: 1008,
+					nutrientName: "Energy",
+					nutrientNumber: "208",
+					unitName: "KCAL",
+					value: 539,
+					source: "open-food-facts",
+					sourceReference: "03017620422003",
+					confidence: "unknown",
+				},
+			],
+			reportedNutrientIds: [1008],
+		});
+		const usda = vi.fn().mockRejectedValue(new Error("USDA unavailable"));
+		const openFoodFacts = vi.fn().mockResolvedValue(openFoodFactsDraft);
 
 		const result = await lookupExternalBarcodeProduct(
 			openFoodFactsDraft.barcode,
 			{
-				usda: vi.fn().mockRejectedValue(new Error("USDA unavailable")),
-				openFoodFacts: vi.fn().mockResolvedValue(openFoodFactsDraft),
+				usda,
+				openFoodFacts,
 				getReferenceData,
 			},
 		);
 
 		expect(result).toEqual(openFoodFactsDraft);
+		expect(result).toMatchObject({
+			barcode: "03017620422003",
+			name: "Nutella",
+			source: "open-food-facts",
+			sourceReference: "03017620422003",
+			reportedNutrientIds: [1008],
+		});
+		expect(result?.nutrients).toHaveLength(1);
+		expect(usda).toHaveBeenCalledOnce();
+		expect(openFoodFacts).toHaveBeenCalledOnce();
 	});
 });
