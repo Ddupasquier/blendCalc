@@ -3,7 +3,6 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { onMount } from "svelte";
-	import favicon from "$lib/assets/favicon.svg";
 	import "../app.scss";
 	import AppHeader from "$lib/components/app/AppHeader/AppHeader.svelte";
 	import DailyWelcome from "$lib/components/app/DailyWelcome/DailyWelcome.svelte";
@@ -163,7 +162,7 @@
 	<meta name="theme-color" content={LIGHT_THEME_COLOR} />
 	<meta name="application-version" content={APP_VERSION} />
 	<meta name="application-build" content={APP_BUILD_VERSION} />
-	<link rel="icon" type="image/svg+xml" sizes="any" href={favicon} />
+	<link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.ico" />
 	<link rel="shortcut icon" href="/favicon.ico" />
 	<link rel="canonical" href={canonicalUrl} />
 	<meta property="og:type" content="website" />

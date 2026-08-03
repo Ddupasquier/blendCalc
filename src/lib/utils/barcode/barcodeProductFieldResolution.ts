@@ -9,6 +9,8 @@ import type {
 export const BARCODE_PRODUCT_FIELD_RESOLUTION_POLICY_VERSION = 1;
 
 const TRACKED_FIELDS: FoodTrackedField[] = [
+	"productName",
+	"brandOwner",
 	"image",
 	"categories",
 	"serving",
@@ -56,6 +58,10 @@ const getFieldCompleteness = (
 	field: FoodTrackedField,
 ) => {
 	switch (field) {
+		case "productName":
+			return draft.name.trim().length;
+		case "brandOwner":
+			return draft.brandOwner.trim().length;
 		case "image":
 			return draft.image?.imageUrl
 				? 1 + Number(Boolean(draft.image.thumbnailUrl))
@@ -171,6 +177,14 @@ const applySelectedField = (
 	selected: BarcodeProductDraft,
 ): BarcodeProductDraft => {
 	switch (field) {
+		case "productName":
+			return {
+				...result,
+				name: selected.name,
+				nameProvenance: selected.nameProvenance,
+			};
+		case "brandOwner":
+			return { ...result, brandOwner: selected.brandOwner };
 		case "image":
 			return { ...result, image: selected.image };
 		case "categories":

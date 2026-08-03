@@ -180,6 +180,99 @@ export type Database = {
         }
         Relationships: []
       }
+      blendcalc_api_publication_profiles: {
+        Row: {
+          accepted_nutrient_value_statuses: string[]
+          api_major: number
+          blocked_conflict_severities: string[]
+          created_at: string
+          description: string
+          display_name: string
+          enabled: boolean
+          is_default: boolean
+          key: string
+          max_verification_age_days: number | null
+          minimum_allergen_evidence: string
+          nutrition_profile_key: string
+          policy_version: number
+          recommended_field_paths: string[]
+          require_canonical_nutrient_mapping: boolean
+          require_primary_serving: boolean
+          require_valid_gtin: boolean
+          required_field_paths: string[]
+          resource_scope: string
+          reviewed_at: string
+          source_key: string
+          source_reference: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_nutrient_value_statuses?: string[]
+          api_major: number
+          blocked_conflict_severities?: string[]
+          created_at?: string
+          description: string
+          display_name: string
+          enabled?: boolean
+          is_default?: boolean
+          key: string
+          max_verification_age_days?: number | null
+          minimum_allergen_evidence?: string
+          nutrition_profile_key: string
+          policy_version: number
+          recommended_field_paths?: string[]
+          require_canonical_nutrient_mapping?: boolean
+          require_primary_serving?: boolean
+          require_valid_gtin?: boolean
+          required_field_paths: string[]
+          resource_scope: string
+          reviewed_at: string
+          source_key: string
+          source_reference: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_nutrient_value_statuses?: string[]
+          api_major?: number
+          blocked_conflict_severities?: string[]
+          created_at?: string
+          description?: string
+          display_name?: string
+          enabled?: boolean
+          is_default?: boolean
+          key?: string
+          max_verification_age_days?: number | null
+          minimum_allergen_evidence?: string
+          nutrition_profile_key?: string
+          policy_version?: number
+          recommended_field_paths?: string[]
+          require_canonical_nutrient_mapping?: boolean
+          require_primary_serving?: boolean
+          require_valid_gtin?: boolean
+          required_field_paths?: string[]
+          resource_scope?: string
+          reviewed_at?: string
+          source_key?: string
+          source_reference?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blendcalc_api_publication_profiles_nutrition_profile_key_fkey"
+            columns: ["nutrition_profile_key"]
+            isOneToOne: false
+            referencedRelation: "nutrition_completeness_profiles"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "blendcalc_api_publication_profiles_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       blocked_signup_emails: {
         Row: {
           blocked_by: string | null
@@ -5121,23 +5214,12 @@ export type Database = {
         Row: {
           barcode: string | null
           product_name: string | null
+          profile_key: string | null
+          publication_status: string | null
           publishable: boolean | null
+          quality_dimensions: Json | null
           reasons: string[] | null
           shared_product_id: string | null
-        }
-        Insert: {
-          barcode?: string | null
-          product_name?: string | null
-          publishable?: never
-          reasons?: never
-          shared_product_id?: string | null
-        }
-        Update: {
-          barcode?: string | null
-          product_name?: string | null
-          publishable?: never
-          reasons?: never
-          shared_product_id?: string | null
         }
         Relationships: []
       }
@@ -5566,6 +5648,17 @@ export type Database = {
         }
         Returns: string[]
       }
+      apply_shared_product_supplemental_enrichment: {
+        Args: {
+          p_barcode: string
+          p_candidate_fields?: string[]
+          p_enriched_food: Json
+          p_observations?: Json
+          p_provenance?: Json
+          p_shared_product_id: string
+        }
+        Returns: string[]
+      }
       authorize_app_permission: {
         Args: {
           requested_permission: Database["public"]["Enums"]["app_permission"]
@@ -5963,7 +6056,7 @@ export type Database = {
         | "moderation.warnings.review"
         | "moderation.data_health.read"
         | "moderation.roles.manage"
-      app_role: "user" | "moderator" | "admin"
+      app_role: "user" | "moderator" | "admin" | "developer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6102,7 +6195,7 @@ export const Constants = {
         "moderation.data_health.read",
         "moderation.roles.manage",
       ],
-      app_role: ["user", "moderator", "admin"],
+      app_role: ["user", "moderator", "admin", "developer"],
     },
   },
 } as const

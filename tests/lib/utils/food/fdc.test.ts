@@ -6,6 +6,8 @@ describe("FoodData Central normalization", () => {
 		const food = normalizeFdcFood({
 			fdcId: 123,
 			description: "DETAILED PRODUCT",
+			brandOwner: "",
+			brandName: "Example Brand",
 			packageWeight: "24 oz",
 			marketCountry: "United States",
 			publicationDate: "7/17/2024",
@@ -27,6 +29,7 @@ describe("FoodData Central normalization", () => {
 
 		expect(food.description).toBe("Detailed Product");
 		expect(food.nameProvenance).toBe("source");
+		expect(food.brandOwner).toBe("Example Brand");
 		expect(food.packageQuantity).toEqual({ label: "24 oz" });
 		expect(food.sourceMetadata).toEqual({
 			publishedAt: "2024-07-17T00:00:00.000Z",

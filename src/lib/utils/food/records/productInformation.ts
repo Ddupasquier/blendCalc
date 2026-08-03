@@ -287,6 +287,8 @@ const getSourceRows = (food: FdcFood) => {
 };
 
 const FIELD_LABELS: Record<FoodTrackedField, string> = {
+	productName: "Product name",
+	brandOwner: "Brand",
 	nutrition: "Nutrition data",
 	image: "Product image",
 	categories: "Categories",

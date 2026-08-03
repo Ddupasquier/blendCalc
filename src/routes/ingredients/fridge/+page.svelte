@@ -32,6 +32,7 @@
         type IngredientActionItem,
     } from "$lib/utils/ingredients/ingredientListUi";
     import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
+    import { isModerationAppRole } from "$lib/utils/moderation/moderation";
     import {
         buildIngredientRouteHref,
         findIngredientRouteFood,
@@ -238,8 +239,7 @@
             activeRawList.length < activeTotalCount,
     );
     const canAdjustImagePlacement = $derived(
-        page.data.authUser?.role === "admin" ||
-            page.data.authUser?.role === "moderator",
+		isModerationAppRole(page.data.authUser?.role ?? null),
     );
     const ingredientOverlayOpen = $derived(
         activeSheet !== null ||

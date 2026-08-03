@@ -9,7 +9,9 @@
 	} from "$lib/utils/food/records/foodMetadataPresentation";
 	import type { ProductCompatibilityPanelProps } from "./types";
 
-	let { food }: ProductCompatibilityPanelProps = $props();
+	let { food, mode = "all" }: ProductCompatibilityPanelProps = $props();
+	const showSummary = $derived(mode !== "details");
+	const showDetails = $derived(mode !== "summary");
 
 	const allergenDisplay = $derived(food.allergenDisclosure);
 	const precautionaryStatements = $derived(
@@ -54,10 +56,9 @@
 		regulatoryContext?.status === "applied" ||
 		regulatoryContext?.status === "unsupported",
 	));
-	const hasContent = $derived(
+	const hasSummaryContent = $derived(
 		Boolean(
 			showEvaluationMessage ||
-				hasCheckDetails ||
 				allergenDisplay?.contains.length ||
 					allergenDisplay?.mayContain.length ||
 					precautionaryStatements.length ||
@@ -67,7 +68,7 @@
 	);
 </script>
 
-{#if hasContent}
+{#if showSummary && hasSummaryContent}
 	<div class="product-compatibility-panel">
 		{#if evaluationMessage && showEvaluationMessage}
 			<StatusMessage
@@ -117,10 +118,13 @@
 				<p>{dietaryConsiderations.join(", ")}</p>
 			</section>
 		{/if}
+	</div>
+{/if}
 
-		{#if hasCheckDetails}
-			<CollapsibleSection title="Food check details" surface="panel">
-				<div class="product-compatibility-panel__check-details">
+{#if showDetails && hasCheckDetails}
+	<div class="product-compatibility-panel">
+		<CollapsibleSection title="Food check details" surface="panel">
+			<div class="product-compatibility-panel__check-details">
 					{#if unresolvedPreferences.length}
 						<StatusMessage
 							tone="warning"
@@ -169,9 +173,8 @@
 							</p>
 						</section>
 					{/if}
-				</div>
-			</CollapsibleSection>
-		{/if}
+			</div>
+		</CollapsibleSection>
 	</div>
 {/if}
 

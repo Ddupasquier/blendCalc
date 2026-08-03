@@ -13,6 +13,9 @@ const compareFoodSearchRichness = (left: FdcFood, right: FdcFood) =>
 		Number(Boolean(right.alternateDescription)) ||
 	Number(Boolean(left.preparation)) - Number(Boolean(right.preparation));
 
+const isCanonicalCatalogFood = (food: FdcFood) =>
+	Boolean(food.sharedProductId) || food.dataType === "Shared Product";
+
 const getFoodSearchIdentityKeys = (food: FdcFood) => {
 	const keys = [`food:${food.fdcId}`];
 	const barcode = food.barcode ?? food.gtinUpc;
@@ -42,7 +45,17 @@ export const mergeIngredientSearchResults = (...resultGroups: FdcFood[][]) => {
 			continue;
 		}
 
-		if (compareFoodSearchRichness(food, merged[existingIndex]) <= 0) {
+		const existingFood = merged[existingIndex];
+		const existingIsCanonical = isCanonicalCatalogFood(existingFood);
+		const candidateIsCanonical = isCanonicalCatalogFood(food);
+		if (existingIsCanonical !== candidateIsCanonical) {
+			if (!candidateIsCanonical) continue;
+			merged[existingIndex] = food;
+			for (const key of identityKeys) indexesByIdentity.set(key, existingIndex);
+			continue;
+		}
+
+		if (compareFoodSearchRichness(food, existingFood) <= 0) {
 			continue;
 		}
 		merged[existingIndex] = food;
