@@ -77,6 +77,8 @@ const hasObservedField = (
 export const getMissingBarcodeProductFields = (
 	draft: BarcodeProductDraft,
 ): MissingBarcodeProductFields => ({
+	productName: !draft.name.trim(),
+	brandOwner: !draft.brandOwner.trim(),
 	nutrition: !hasNutrition(draft),
 	image: !hasImage(draft),
 	categories: !hasCategories(draft),
@@ -246,6 +248,8 @@ export const mergeMissingBarcodeProductFields = (
 		getSupplementedBarcodeProductFields(primary, supplement),
 	);
 	const useSupplementServing = supplementedFields.has("serving");
+	const useSupplementProductName = supplementedFields.has("productName");
+	const useSupplementBrandOwner = supplementedFields.has("brandOwner");
 	const useSupplementNutrition = supplementedFields.has("nutrition");
 	const useSupplementImage = supplementedFields.has("image");
 	const useSupplementCategories = supplementedFields.has("categories");
@@ -264,6 +268,8 @@ export const mergeMissingBarcodeProductFields = (
 	const useSupplementPackage = supplementedFields.has("package");
 	const useSupplementSourceMetadata = supplementedFields.has("sourceMetadata");
 	if (
+		!useSupplementProductName &&
+		!useSupplementBrandOwner &&
 		!useSupplementServing &&
 		!useSupplementNutrition &&
 		!useSupplementImage &&
@@ -292,6 +298,12 @@ export const mergeMissingBarcodeProductFields = (
 		nextServingWeight,
 	);
 	let reportedNutrientIds = [...primary.reportedNutrientIds];
+	if (useSupplementProductName) {
+		provenance = withFieldSource(provenance, "productName", supplement);
+	}
+	if (useSupplementBrandOwner) {
+		provenance = withFieldSource(provenance, "brandOwner", supplement);
+	}
 
 	if (useSupplementNutrition) {
 		const supplementNutrients = scaleNutrients(
@@ -363,6 +375,13 @@ export const mergeMissingBarcodeProductFields = (
 
 	return {
 		...primary,
+		name: useSupplementProductName ? supplement.name : primary.name,
+		nameProvenance: useSupplementProductName
+			? supplement.nameProvenance
+			: primary.nameProvenance,
+		brandOwner: useSupplementBrandOwner
+			? supplement.brandOwner
+			: primary.brandOwner,
 		servingLabel: useSupplementServing
 			? supplement.servingLabel
 			: primary.servingLabel,

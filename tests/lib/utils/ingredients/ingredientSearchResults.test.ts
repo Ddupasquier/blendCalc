@@ -75,6 +75,34 @@ describe("ingredient search result merging", () => {
 		expect(mergeIngredientSearchResults([first, other], [richerDuplicate]))
 			.toEqual([richerDuplicate, other]);
 	});
+
+	it("keeps the canonical shared-catalog record ahead of a richer provider duplicate", () => {
+		const catalogFood = food({
+			fdcId: -1,
+			barcode: "00041570054130",
+			sharedProductId: "shared-product-id",
+			dataType: "Shared Product",
+		});
+		const providerFood = food({
+			fdcId: 2757275,
+			barcode: "00041570054130",
+			foodNutrients: [
+				...catalogFood.foodNutrients,
+				{
+					nutrientId: 1003,
+					nutrientName: "Protein",
+					nutrientNumber: "203",
+					unitName: "g",
+					value: 1,
+				},
+			],
+		});
+
+		expect(mergeIngredientSearchResults([catalogFood], [providerFood]))
+			.toEqual([catalogFood]);
+		expect(mergeIngredientSearchResults([providerFood], [catalogFood]))
+			.toEqual([catalogFood]);
+	});
 });
 
 describe("usable ingredient search results", () => {

@@ -535,15 +535,19 @@ const createOpenFoodFactsFieldProvenance = ({
 	image,
 	metadata,
 	hasSourceServing,
+	hasBrandOwner,
 }: {
 	barcode: string;
 	nutrients: FdcNutrient[];
 	image?: FoodImageAsset;
 	metadata: ReturnType<typeof parseOpenFoodFactsMetadata>;
 	hasSourceServing: boolean;
+	hasBrandOwner: boolean;
 }): FoodFieldProvenance => {
 	const source = createFieldSource("open-food-facts", barcode, "unknown");
 	return {
+		productName: source,
+		...(hasBrandOwner ? { brandOwner: source } : {}),
 		...(nutrients.length > 0 ? { nutrition: source } : {}),
 		...(image
 			? {
@@ -608,6 +612,12 @@ const createFdcFieldProvenance = ({
 
 	return {
 		...food.fieldProvenance,
+		...(mappedSource && !food.fieldProvenance?.productName
+			? { productName: mappedSource }
+			: {}),
+		...(mappedSource && food.brandOwner?.trim() && !food.fieldProvenance?.brandOwner
+			? { brandOwner: mappedSource }
+			: {}),
 		...(nutrients.length > 0 &&
 				(nutrientSource || mappedSource) &&
 				!food.fieldProvenance?.nutrition
@@ -813,6 +823,7 @@ export const mapOpenFoodFactsProduct = (
 			image,
 			metadata,
 			hasSourceServing: hasExactGramWeight,
+			hasBrandOwner: Boolean(product.brands?.trim()),
 		}),
 		volumeEquivalent,
 		source: "open-food-facts",

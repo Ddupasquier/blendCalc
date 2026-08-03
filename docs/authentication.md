@@ -92,9 +92,9 @@ maintaining an authentication-specific migration sequence.
 ### Application role claims
 
 Supabase's `anon`, `authenticated`, and `service_role` claims remain infrastructure
-roles. blendCalc moderator and administrator access is instead assigned in
-`app_role_assignments`. The Custom Access Token hook adds `user`, `moderator`, or
-`admin` to newly issued JWTs as the signed `app_role` claim.
+roles. blendCalc moderator, administrator, and developer access is instead assigned in
+`app_role_assignments`. The Custom Access Token hook adds `user`, `moderator`, `admin`,
+or `developer` to newly issued JWTs as the signed `app_role` claim.
 
 The claim is a signed role hint for application and policy use; it is not the sole
 authority for privileged work. Moderator routes, server actions, and privileged

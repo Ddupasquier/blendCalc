@@ -60,6 +60,13 @@ observations remain in their licensed cache/evidence boundary, while accepted ca
 fields retain their own provenance. Existing records receive the same applicable
 backfill as future writes.
 
+Catalog storage and API publication are separate trust boundaries. Useful immutable
+observations may be retained broadly, accepted fields may enter the canonical catalog,
+and only canonical revisions satisfying the active DB-backed publication profile enter
+API v1. Publication fails closed on incomplete identity, nutrition, serving, provenance,
+source policy, recency, or unresolved material conflicts. Withholding never deletes the
+underlying evidence or revision history.
+
 The provider capability map, legal policy, and catalog merge behavior are maintained in
 the [`source data inventory`](api-structures/source-data-inventory.md),
 [`licensing ledger`](data-source-licensing.md), and

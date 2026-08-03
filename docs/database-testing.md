@@ -43,6 +43,7 @@ baseline records without moving a tester's existing list items. Use
 | Onboarding | `qa-onboarding@blendcalc.local` | Guided tour pending, 10 Fridge foods, `QA Morning Green`, and an active Mix so every tour target exists |
 | Moderator | `qa-moderator@blendcalc.local` | Moderator claim, 6 list items, one Saved mix, and access to two deterministic catalog-review cases |
 | Admin | `qa-admin@blendcalc.local` | Admin claim, 6 list items, one Saved mix, moderation access, and data-health access |
+| Developer | `qa-developer@blendcalc.local` | Developer claim, 6 list items, one Saved mix, full privileged capability coverage, and protected-account boundaries |
 
 The populated account includes `QA Morning Green` (10 ingredients), `QA Berry Repeat`,
 `QA Export Berry Mix`, and `QA Server Load`. The Saved view can therefore test collapsed

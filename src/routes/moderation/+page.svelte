@@ -9,6 +9,7 @@
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
 	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
 	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
+	import { canModerateTargetRole } from "$lib/utils/moderation/moderation";
 	import { formatDocumentTitle } from "$lib/config/pageMetadata";
 	import type { PageData } from "./$types";
 	import type { ModerationPageProps } from "./types";
@@ -34,10 +35,9 @@
 
 	const hasAccountModerationAction = (
 		user: PageData["users"][number],
-	) => user.status === "banned" || (
+	) => (
 		user.id !== data.viewerUserId &&
-		user.role !== "admin" &&
-		!(data.viewerRole === "moderator" && user.role)
+		canModerateTargetRole(data.viewerRole, user.role)
 	);
 
 	const enhanceModerationAction: SubmitFunction = ({ formData, cancel }) => {
@@ -476,39 +476,41 @@
 					{#if user.publicReason}<p>{user.publicReason}</p>{/if}
 					{#if user.id === data.viewerUserId}
 						<p class="account-note">You cannot moderate your own account.</p>
-					{:else if user.role === "admin"}
-						<p class="account-note">Admin accounts cannot be blocked here.</p>
-					{:else if data.viewerRole === "moderator" && user.role}
-						<p class="account-note">Only an admin can moderate another moderator.</p>
+					{:else if user.role === "admin" || user.role === "developer"}
+						<p class="account-note">{user.role === "admin" ? "Admin" : "Developer"} accounts cannot be blocked here.</p>
+					{:else if !canModerateTargetRole(data.viewerRole, user.role)}
+						<p class="account-note">Only an admin or developer can moderate another privileged account.</p>
 					{/if}
 				</div>
 
-				{#if user.status === "banned"}
-					<form method="POST" action="?/unban" use:enhance={enhanceModerationAction} aria-busy={pendingTargetUserId === user.id}>
-						<input type="hidden" name="targetUserId" value={user.id} />
-						<button class="secondary-action" type="submit" disabled={pendingTargetUserId !== null}>
-							{#if pendingTargetUserId === user.id}<LoadingSpinner size="small" decorative />{/if}
-							<span>Restore access</span>
-						</button>
-					</form>
-				{:else if user.id !== data.viewerUserId && user.role !== "admin" && !(data.viewerRole === "moderator" && user.role)}
-					<form method="POST" action="?/ban" use:enhance={enhanceModerationAction} aria-busy={pendingTargetUserId === user.id}>
-						<input type="hidden" name="targetUserId" value={user.id} />
-						<label>
-							<span>Reason</span>
-							<select name="reason" required disabled={pendingTargetUserId !== null}>
-								<option value="profile_image_policy_violation">Profile image violation</option>
-								<option value="harassment_or_abuse">Harassment or abuse</option>
-								<option value="fraud_or_spam">Fraud or spam</option>
-								<option value="terms_violation">Other terms violation</option>
-							</select>
-							<small>This reason and its plain-language explanation will be emailed to the user.</small>
-						</label>
-						<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
-							{#if pendingTargetUserId === user.id}<LoadingSpinner size="small" decorative />{/if}
-							<span>Block account</span>
-						</button>
-					</form>
+				{#if user.id !== data.viewerUserId && canModerateTargetRole(data.viewerRole, user.role)}
+					{#if user.status === "banned"}
+						<form method="POST" action="?/unban" use:enhance={enhanceModerationAction} aria-busy={pendingTargetUserId === user.id}>
+							<input type="hidden" name="targetUserId" value={user.id} />
+							<button class="secondary-action" type="submit" disabled={pendingTargetUserId !== null}>
+								{#if pendingTargetUserId === user.id}<LoadingSpinner size="small" decorative />{/if}
+								<span>Restore access</span>
+							</button>
+						</form>
+					{:else}
+						<form method="POST" action="?/ban" use:enhance={enhanceModerationAction} aria-busy={pendingTargetUserId === user.id}>
+							<input type="hidden" name="targetUserId" value={user.id} />
+							<label>
+								<span>Reason</span>
+								<select name="reason" required disabled={pendingTargetUserId !== null}>
+									<option value="profile_image_policy_violation">Profile image violation</option>
+									<option value="harassment_or_abuse">Harassment or abuse</option>
+									<option value="fraud_or_spam">Fraud or spam</option>
+									<option value="terms_violation">Other terms violation</option>
+								</select>
+								<small>This reason and its plain-language explanation will be emailed to the user.</small>
+							</label>
+							<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
+								{#if pendingTargetUserId === user.id}<LoadingSpinner size="small" decorative />{/if}
+								<span>Block account</span>
+							</button>
+						</form>
+					{/if}
 				{/if}
 			</article>
 		{:else}

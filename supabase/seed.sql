@@ -1330,6 +1330,19 @@ with selected_fields as (
 			('package', fixture.food -> 'packageQuantity', fixture.food -> 'packageQuantity'),
 			('sourceMetadata', fixture.raw_source_payload, fixture.food -> 'sourceMetadata'),
 			('serving', coalesce(fixture.raw_source_payload -> 'serving', fixture.food -> 'foodServings'), fixture.food -> 'foodServings'),
+			(
+				'servingWeightGrams',
+				coalesce(
+					fixture.raw_source_payload -> 'serving' -> 'servingSize',
+					fixture.raw_source_payload -> 'servingSize',
+					fixture.food -> 'servingSize',
+					fixture.food -> 'foodServings' -> 0 -> 'gramWeight'
+				),
+				coalesce(
+					fixture.food -> 'servingSize',
+					fixture.food -> 'foodServings' -> 0 -> 'gramWeight'
+				)
+			),
 			('nutrition', coalesce(fixture.raw_source_payload -> 'foodNutrients', fixture.food -> 'foodNutrients'), fixture.food -> 'foodNutrients')
 	) field(field_path, source_value, normalized_value)
 	where field.normalized_value is not null

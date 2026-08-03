@@ -4,7 +4,7 @@
 	import type { PrivilegedActionBadgeProps } from "./types";
 
 	let {
-		label = "Admin or moderator action",
+		label = "Privileged action",
 		class: className = "",
 		variant = "action",
 	}: PrivilegedActionBadgeProps = $props();

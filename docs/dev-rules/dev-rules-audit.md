@@ -36,7 +36,7 @@ configuration cannot prove the linked project's email-confirmation, leaked-passw
 CAPTCHA, MFA, log-retention, or hosted abuse-protection settings.
 
 **Affected areas:** Linked Supabase database access, authentication, privileged
-moderator/admin accounts, recovery readiness, and deployment operations.
+moderator/admin/developer accounts, recovery readiness, and deployment operations.
 
 **Complete when:** Trusted developer and CI database CIDRs are documented and enforced
 without breaking migrations; backup restore behavior and retention are verified;

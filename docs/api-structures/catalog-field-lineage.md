@@ -25,7 +25,8 @@ identities, and private Storage paths never enter this read path.
 
 Exact-barcode drafts are resolved through field-resolution policy version 1. The policy
 does not rank USDA, Open Food Facts, or another provider as the whole-product winner.
-Each populated field must retain its own evidence before it can be selected.
+Each populated field—including product name and brand—must retain its own evidence
+before it can be selected.
 
 Candidates are compared by:
 
@@ -45,19 +46,31 @@ publication readiness.
 `blendcalc_api_v1_product_readiness` evaluates every active shared-catalog row. Product
 and search RPCs expose only rows with no readiness reasons.
 
-A publishable row must have:
+A versioned row in `blendcalc_api_publication_profiles` owns the hard gates. The current
+packaged-product profile requires:
 
-- an active shared-catalog record and at least one revision;
-- a verification timestamp and enabled canonical category;
-- selected evidence for every populated tracked field, including name and category;
+- a valid exact GTIN, active shared-catalog record, current verification timestamp, and
+  at least one immutable revision;
+- product name, brand, enabled canonical category, ingredient statement, market, and
+  source metadata, each with selected field evidence;
 - only database-approved sources with reviewed storage, licence, terms, and attribution
   metadata;
-- at least one normalized nutrient, with a source reference and confidence for every
-  nutrient;
-- valid source references, confidence, and positive gram weights for every stored
-  serving; and
-- no selected field, nutrient, or serving from a source that is ineligible for API
-  redistribution.
+- every required nutrient from the linked completeness profile, with a nonnegative
+  `reported`, `reported-zero`, or exactly explained `derived` value, approved canonical
+  mapping, selected nutrient provenance, source reference, and confidence;
+- an evidence-backed primary serving plus selected serving and gram-weight provenance;
+- ingredient-list allergen evidence at minimum; and
+- no unresolved medium/high material conflict or selected field, nutrient, or serving
+  from a source that is ineligible for API redistribution.
+
+Missing, trace, present-but-unquantified, invalid, and unmapped nutrient facts never
+become numeric zero. An explicit zero is publishable only as `reported-zero` with the
+same provenance requirements as any other value. Failed rows remain canonical review
+candidates with observations and revision history intact; they are withheld rather than
+deleted. The service-only readiness view reports `verified`, `under_review`, or
+`incomplete`, exact block reasons, and separate identity, nutrition, serving,
+ingredient/allergen, provenance, source-agreement, recency, and redistribution
+dimensions for audit and moderation.
 
 Images are evaluated independently. An otherwise publishable product remains available
 when it has no image, but an image is omitted unless its asset row contains a licence
@@ -101,8 +114,8 @@ API launch.
 ## Moderator Evidence Read
 
 `GET /api/moderation/catalog/products/{productId}/provenance` provides the deeper
-field-evidence record needed for moderation. It requires a verified moderator or admin
-role and always returns `Cache-Control: private, no-store`.
+field-evidence record needed for moderation. It requires a verified moderator, admin,
+or developer role and always returns `Cache-Control: private, no-store`.
 
 The response includes each field candidate's source and normalized values, selection
 state, confidence, stored verification method, exact observation ID, source reference,

@@ -20,9 +20,12 @@
 
 	let {
 		food,
+		mode = "all",
 		canAdjustImagePlacement = false,
 		onImagePlacementSave,
 	}: ProductImagePanelProps = $props();
+	const showImage = $derived(mode !== "details");
+	const showPlacementEditor = $derived(mode !== "summary");
 
 	const imageUrl = $derived(pickFoodFullImageUrl(food?.image));
 	const foodName = $derived(
@@ -146,20 +149,24 @@
 {/snippet}
 
 {#if imageUrl && !imageFailed}
-	<section class="product-image-panel">
-		<ProductImageFrame
-			src={imageUrl}
-			alt={imageAlt}
-			rotationDegrees={savedPlacement.rotationDegrees}
-			onError={() => (imageFailed = true)}
-		/>
-		<AssetAttribution
-			attributionText={food?.image?.attributionText}
-			licenseName={food?.image?.licenseName}
-			licenseUrl={food?.image?.licenseUrl}
-		/>
+	{#if showImage}
+		<section class="product-image-panel">
+			<ProductImageFrame
+				src={imageUrl}
+				alt={imageAlt}
+				rotationDegrees={savedPlacement.rotationDegrees}
+				onError={() => (imageFailed = true)}
+			/>
+			<AssetAttribution
+				attributionText={food?.image?.attributionText}
+				licenseName={food?.image?.licenseName}
+				licenseUrl={food?.image?.licenseUrl}
+			/>
+		</section>
+	{/if}
 
-		{#if canEditPlacement}
+	{#if showPlacementEditor && canEditPlacement}
+		<section class="product-image-panel">
 			<CollapsibleSection
 				title="Adjust card image placement"
 				summaryEnd={placementSummaryEnd}
@@ -205,8 +212,8 @@
 					</form>
 				</div>
 			</CollapsibleSection>
-		{/if}
-	</section>
+		</section>
+	{/if}
 {/if}
 
 <style lang="scss">

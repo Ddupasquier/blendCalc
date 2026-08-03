@@ -398,7 +398,7 @@ container through `IngredientCardLayout.scss`; percentage padding on an inner gr
 cell is not equivalent and causes preview drift. The shared layout owns card sizing,
 padding, border width, radius, and media variables. Placement previews must use 100% of
 their available width and must not impose a separate maximum width. User upload,
-moderator/admin adjustment, and moderation-review flows must render the same
+privileged moderator/admin/developer adjustment and moderation-review flows must render the same
 `ImagePlacementCardPreview`; do not create a simplified, circular, capped-width, or
 differently proportioned placement preview. When the current user's preference profile
 would place a warning edge on the saved card, the adjustment preview must include that
@@ -1208,7 +1208,7 @@ interaction is supported. The complete interactive card preview must be one cont
 pointer/touch surface, including the copy, faded overlap, and transparent card area.
 Never attach direct-manipulation handlers only to the masked media lane because its
 mask and higher-layer copy create inaccessible drag dead zones. User submission,
-moderation approval, admin/moderator editing,
+moderation approval, admin/moderator/developer editing,
 ingredient cards, and previews must use the same placement value (`fit_mode`, normalized
 X/Y, zoom, clockwise quarter-turn rotation, and `placement_version`), shared geometry
 utility, and shared measured
