@@ -28,7 +28,7 @@
 	strong {
 		font-family: $app-font-family-display;
 		font-size: $app-font-size-xl;
-		line-height: 1.2;
+		line-height: $app-line-height-compact;
 		overflow-wrap: anywhere;
 	}
 
@@ -41,7 +41,7 @@
 .daily-welcome__eyebrow {
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-semibold;
-	letter-spacing: 0.04em;
+	letter-spacing: $app-letter-spacing-label;
 	text-transform: uppercase;
 }
 

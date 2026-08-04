@@ -1,9 +1,11 @@
 <script lang="ts">
 	import PillRow from "$lib/components/common/display/PillRow/PillRow.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import type { FoodPreferencePickerProps } from "./types";
 
 	let {
+		id,
 		availableOptions,
 		disabled = false,
 		emptyLabel,
@@ -38,20 +40,19 @@
 	<div class="preference-add-flow">
 		<p class="preference-add-flow__label">Add a saved option or type your own.</p>
 
-		<label class="preference-picker">
-			<span>{selectLabel}</span>
+		<div class="preference-picker">
 			<div class="preference-picker__controls">
-				<select
+				<SelectField
+					id={`${id}-saved-option`}
+					label={selectLabel}
 					value={selectValue}
 					disabled={disabled}
-					onchange={(event) =>
-						onSelectChange((event.currentTarget as HTMLSelectElement).value)}
-				>
-					<option value="">Select an option</option>
-					{#each availableOptions as option}
-						<option value={option}>{option}</option>
-					{/each}
-				</select>
+					options={[
+						{ value: "", label: "Select an option" },
+						...availableOptions.map((option) => ({ value: option, label: option })),
+					]}
+					onValueChange={onSelectChange}
+				/>
 				<button
 					type="button"
 					class="search-add"
@@ -61,7 +62,7 @@
 					Add
 				</button>
 			</div>
-		</label>
+		</div>
 
 		<div class="preference-add-flow__divider" aria-hidden="true">
 			<span>or</span>

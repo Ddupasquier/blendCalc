@@ -8,11 +8,11 @@
 	appearance: none;
 	padding: 0;
 	border: 1px solid transparent;
-	border-radius: $app-shell-radius-pill;
+	border-radius: $app-radius-circle;
 	font-family: $app-button-font-family;
 	font-size: $app-shell-control-icon-size;
 	font-weight: $app-button-font-weight;
-	line-height: 1;
+	line-height: $app-line-height-tight;
 	touch-action: manipulation;
 	transition:
 		background-color 160ms ease,
@@ -53,7 +53,6 @@
 .circle-icon-button[data-size="fab"] {
 	width: 3.6rem;
 	height: 3.6rem;
-	border-radius: $app-shell-radius-card;
 }
 
 .circle-icon-button[data-variant="primary"] {
@@ -122,6 +121,20 @@
 			in srgb,
 			$app-shell-accent-danger 88%,
 			$app-shell-text-primary
+		);
+	}
+}
+
+.circle-icon-button[data-variant="danger-soft"] {
+	color: $app-shell-accent-danger;
+	background: $app-danger-bg;
+
+	&:hover:not(:disabled),
+	&:focus-visible {
+		background: color-mix(
+			in srgb,
+			$app-danger-bg 84%,
+			$app-shell-accent-danger
 		);
 	}
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from "svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
+	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
 	import CheckboxGroup from "$lib/components/common/forms/CheckboxGroup/CheckboxGroup.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
@@ -159,7 +160,10 @@
 			Use selected values
 		</RoundedActionButton>
 		<details class="nutrition-label-ocr__raw-text" use:animatedDetails>
-			<summary>View recognized text</summary>
+			<summary>
+				<span>View recognized text</span>
+				<DisclosureChevron />
+			</summary>
 			<pre>{result.rawText}</pre>
 		</details>
 	{/if}

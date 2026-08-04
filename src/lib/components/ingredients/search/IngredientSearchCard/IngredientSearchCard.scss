@@ -59,7 +59,7 @@
 	pointer-events: none;
 	color: $app-shell-text-muted;
 	font-size: $app-shell-control-icon-size;
-	line-height: 1;
+	line-height: $app-line-height-tight;
 }
 
 :global(.ingredient-search-card__chevron) {

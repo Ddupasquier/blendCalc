@@ -30,7 +30,7 @@ body {
 	background: $app-shell-surface-page;
 	color: $app-shell-text-primary;
 	font-size: $app-font-size-base;
-	line-height: 1.45;
+	line-height: $app-line-height-body;
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -40,11 +40,11 @@ h3,
 h4,
 h5,
 h6 {
-	line-height: 1.15;
+	line-height: $app-line-height-heading;
 }
 
 p {
-	line-height: 1.4;
+	line-height: $app-line-height-ui;
 }
 
 /* ---- Main content ---- */
@@ -72,7 +72,7 @@ p {
 		max($app-shell-padding-x, env(safe-area-inset-left));
 }
 
-.app-main--ingredients {
+.app-main--view-shell {
 	width: 100%;
 	max-width: none;
 	min-height: 0;
@@ -99,7 +99,7 @@ p {
 			)
 			max($app-gap-sm, env(safe-area-inset-left));
 
-		&.app-main--ingredients {
+		&.app-main--view-shell {
 			padding: 0;
 		}
 	}

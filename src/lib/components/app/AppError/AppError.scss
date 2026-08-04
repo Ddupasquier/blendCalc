@@ -39,7 +39,7 @@ h1 {
 	font-family: $app-font-family-display;
 	font-size: $app-font-size-xl;
 	font-weight: $app-font-weight-heavy;
-	line-height: 1.2;
+	line-height: $app-line-height-compact;
 }
 
 .app-error__actions {

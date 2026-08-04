@@ -126,7 +126,7 @@
     margin-top: $app-gap-sm;
     color: $app-shell-text-muted;
     font-size: $app-font-size-sm;
-    line-height: 1.4;
+    line-height: $app-line-height-ui;
   }
 
   ul {
@@ -139,7 +139,7 @@
   li {
     padding-left: $app-gap-2xs;
     font-size: $app-font-size-sm;
-    line-height: 1.4;
+    line-height: $app-line-height-ui;
   }
 
   li::marker {
@@ -157,7 +157,7 @@
     font-family: $app-font-family-display;
     font-size: $app-font-size-xl;
     font-weight: $app-font-weight-heavy;
-    line-height: 1.05;
+    line-height: $app-line-height-heading;
     text-wrap: balance;
   }
 }

@@ -13,11 +13,14 @@
 		pressed = undefined,
 		class: className = "",
 		"aria-describedby": ariaDescribedBy = undefined,
+		"aria-expanded": ariaExpanded = undefined,
+		"aria-controls": ariaControls = undefined,
 		onclick,
 		onfocus,
 		onkeydown,
 		onkeyup,
 		onpointerdown,
+		onpointermove,
 		onpointerup,
 		onpointercancel,
 		onlostpointercapture,
@@ -35,12 +38,15 @@
 	aria-busy={busy}
 	aria-pressed={pressed}
 	aria-describedby={ariaDescribedBy}
+	aria-expanded={ariaExpanded}
+	aria-controls={ariaControls}
 	disabled={disabled || busy}
 	{onclick}
 	{onfocus}
 	{onkeydown}
 	{onkeyup}
 	{onpointerdown}
+	{onpointermove}
 	{onpointerup}
 	{onpointercancel}
 	{onlostpointercapture}

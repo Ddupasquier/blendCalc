@@ -59,29 +59,10 @@
 	justify-content: center;
 }
 
-.filter-control {
-	display: block;
-	min-width: 0;
-}
-
 .list-controls__filter-trigger {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-}
-
-.filter-control select {
-	width: 100%;
-	min-width: 0;
-	height: $app-shell-control-height;
-	color: $app-shell-text-primary;
-	background: $app-shell-surface-control;
-	border: 2px solid transparent;
-	border-radius: $app-shell-radius-control;
-	font-family: $app-font-family-interface;
-	font-size: $app-font-size-sm;
-	font-weight: $app-font-weight-medium;
-	box-sizing: border-box;
 }
 
 .search-control input {
@@ -109,17 +90,6 @@
 	appearance: none;
 }
 
-.filter-control select {
-	padding: 0 2.25rem 0 $app-shell-control-padding-x;
-	cursor: pointer;
-}
-
-.filter-control select:focus {
-	border-color: $app-shell-accent-primary;
-	outline: $app-focus-outline;
-	outline-offset: $app-focus-outline-offset;
-}
-
 .result-count {
 	grid-column: 1 / -1;
 	margin: 0;
@@ -140,10 +110,6 @@
 
 	.list-controls--filter-trigger {
 		grid-template-columns: minmax(0, 1fr) auto;
-	}
-
-	.filter-control select {
-		height: $app-shell-control-height-narrow;
 	}
 
 	.search-control {

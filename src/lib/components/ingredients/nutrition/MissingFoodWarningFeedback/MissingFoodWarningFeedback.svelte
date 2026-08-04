@@ -3,6 +3,7 @@
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import {
 		createUserFacingErrorFromResponse,
 		getUserFacingErrorMessage,
@@ -36,6 +37,12 @@
 		reportablePreferences.find((preference) =>
 			`${preference.tagId}:${preference.type}` === selectedPreferenceKey
 		) ?? null,
+	);
+	const preferenceOptions = $derived(
+		reportablePreferences.map((preference) => ({
+			value: `${preference.tagId}:${preference.type}`,
+			label: preference.rawValue,
+		})),
 	);
 	const sourceId = $derived(String(
 		food.sourceIdentifiers?.[food.sourceKey ?? ""] ?? food.fdcId,
@@ -111,16 +118,14 @@
 					tell us what the current package shows.
 				</p>
 
-				<label class="missing-warning-feedback__field">
-					<span>Affected setting</span>
-					<select bind:value={selectedPreferenceKey} required disabled={submitting}>
-						{#each reportablePreferences as preference}
-							<option value={`${preference.tagId}:${preference.type}`}>
-								{preference.rawValue}
-							</option>
-						{/each}
-					</select>
-				</label>
+				<SelectField
+					id={`missing-warning-setting-${food.fdcId}`}
+					label="Affected setting"
+					bind:value={selectedPreferenceKey}
+					options={preferenceOptions}
+					required
+					disabled={submitting}
+				/>
 
 				<label class="missing-warning-feedback__field">
 					<span>When did you check this package? <small>optional</small></span>

@@ -1,3 +1,5 @@
+@use "../../../../../styles/variables" as *;
+
 $move-icon-optical-offset: 0.5px;
 
 .ingredient-move-icon {
@@ -6,7 +8,7 @@ $move-icon-optical-offset: 0.5px;
 	justify-content: center;
 	width: 1em;
 	height: 1em;
-	line-height: 0;
+	line-height: $app-line-height-none;
 }
 
 .ingredient-move-icon[data-direction="left"] :global(svg) {

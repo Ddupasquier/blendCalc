@@ -6,6 +6,7 @@ export type CircleIconButtonVariant =
 	| "ghost"
 	| "inverse"
 	| "outline"
+	| "danger-soft"
 	| "danger";
 
 export type CircleIconButtonSize = "tiny" | "small" | "control" | "fab";

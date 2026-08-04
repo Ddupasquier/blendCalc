@@ -18,7 +18,7 @@ $bottom-sheet-focus-clearance: $app-gap-2xs;
 		font-family: $app-font-family-display;
 		font-size: $app-font-size-lg;
 		font-weight: $app-font-weight-bold;
-		line-height: 1.1;
+		line-height: $app-line-height-heading;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}

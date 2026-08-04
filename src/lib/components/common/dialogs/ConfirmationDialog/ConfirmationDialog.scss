@@ -37,7 +37,7 @@
 	p {
 		color: $app-muted;
 		font-size: $app-font-size-md;
-		line-height: 1.45;
+		line-height: $app-line-height-body;
 	}
 }
 

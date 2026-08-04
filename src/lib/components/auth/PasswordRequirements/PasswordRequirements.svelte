@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Check from "$lib/assets/icons/Check/Check.svelte";
+	import Minus from "$lib/assets/icons/Minus/Minus.svelte";
 	import {
 		getPasswordLength,
 		getPasswordPolicyIssues,
@@ -20,24 +22,34 @@
 	let hasInput = $derived(password.length > 0);
 </script>
 
+{#snippet requirementStatus(valid: boolean)}
+	<span class="password-requirements__status" class:valid aria-hidden="true">
+		{#if valid}
+			<Check size={14} />
+		{:else}
+			<Minus size={14} />
+		{/if}
+	</span>
+{/snippet}
+
 <div class="password-requirements" id="password-requirements">
 	<p>Use a long, unique password or passphrase.</p>
 	<ul>
 		<li class:valid={hasInput && !issueCodes.has("too_short") && !issueCodes.has("too_long")}>
-			<span aria-hidden="true">{hasInput && length >= PASSWORD_MIN_LENGTH && length <= PASSWORD_MAX_LENGTH ? "✓" : "○"}</span>
+			{@render requirementStatus(hasInput && length >= PASSWORD_MIN_LENGTH && length <= PASSWORD_MAX_LENGTH)}
 			{PASSWORD_MIN_LENGTH}–{PASSWORD_MAX_LENGTH} characters
 		</li>
 		<li class:valid={hasInput && !issueCodes.has("common")}>
-			<span aria-hidden="true">{hasInput && !issueCodes.has("common") ? "✓" : "○"}</span>
+			{@render requirementStatus(hasInput && !issueCodes.has("common"))}
 			Not a commonly used password
 		</li>
 		<li class:valid={hasInput && !issueCodes.has("contains_email")}>
-			<span aria-hidden="true">{hasInput && !issueCodes.has("contains_email") ? "✓" : "○"}</span>
+			{@render requirementStatus(hasInput && !issueCodes.has("contains_email"))}
 			Does not contain your email name
 		</li>
 		{#if confirmation !== undefined}
 			<li class:valid={confirmation.length > 0 && password === confirmation}>
-				<span aria-hidden="true">{confirmation.length > 0 && password === confirmation ? "✓" : "○"}</span>
+				{@render requirementStatus(confirmation.length > 0 && password === confirmation)}
 				Passwords match
 			</li>
 		{/if}

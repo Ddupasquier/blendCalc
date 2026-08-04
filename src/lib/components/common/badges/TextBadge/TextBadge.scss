@@ -13,7 +13,7 @@
 	color: color-mix(in srgb, $app-shell-accent-info 72%, $app-primary);
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-heavy;
-	line-height: 1;
+	line-height: $app-line-height-tight;
 	text-align: center;
 	text-transform: uppercase;
 	vertical-align: middle;

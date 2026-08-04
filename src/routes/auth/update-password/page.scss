@@ -32,7 +32,7 @@
 	h1,
 	label span {
 		color: $app-primary;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 	}
 
 	h1 {
@@ -42,7 +42,7 @@
 
 	p {
 		color: $app-muted;
-		line-height: 1.4;
+		line-height: $app-line-height-ui;
 	}
 
 	input {
@@ -94,7 +94,7 @@
 	background: $app-accent;
 	border-radius: $app-radius-pill;
 	font-size: $app-font-size-xs;
-	font-weight: 900;
-	letter-spacing: 0.06em;
+	font-weight: $app-font-weight-heavy;
+	letter-spacing: $app-letter-spacing-label;
 	text-transform: uppercase;
 }

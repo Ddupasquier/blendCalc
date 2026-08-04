@@ -9,6 +9,7 @@ export type ImagePlacementEditorProps = {
 	category?: string;
 	title?: string;
 	description?: string;
+	showIntro?: boolean;
 	editable?: boolean;
 	showWarningEdge?: boolean;
 	smartPlacementSource?: Blob | string;

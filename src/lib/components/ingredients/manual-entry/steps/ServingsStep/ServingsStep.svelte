@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch/ToggleSwitch.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import ManualEntryActions from "$lib/components/ingredients/manual-entry/ManualEntryActions/ManualEntryActions.svelte";
 	import ManualEntryField from "$lib/components/ingredients/manual-entry/ManualEntryField/ManualEntryField.svelte";
 	import ManualEntryHelper from "$lib/components/ingredients/manual-entry/ManualEntryHelper/ManualEntryHelper.svelte";
@@ -82,16 +83,13 @@
 				</ManualEntryField>
 
 				<ManualEntryField forId="custom-ingredient-volume-unit" label="Volume unit">
-					<select
+					<SelectField
 						id="custom-ingredient-volume-unit"
 						name="custom-ingredient-volume-unit"
 						value={volumeUnit}
-						onchange={(event) => onVolumeUnitChange(event.currentTarget.value as ServingMeasureUnit)}
-					>
-						{#each volumeOptions as option}
-							<option value={option.value}>{option.label}</option>
-						{/each}
-					</select>
+						options={volumeOptions}
+						onValueChange={(value) => onVolumeUnitChange(value as ServingMeasureUnit)}
+					/>
 				</ManualEntryField>
 			</div>
 			<ManualEntryHelper>

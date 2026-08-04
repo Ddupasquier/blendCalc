@@ -95,7 +95,7 @@
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-semibold;
-	line-height: 1.25;
+	line-height: $app-line-height-compact;
 
 	span + span::before {
 		content: "·";

@@ -58,6 +58,9 @@
 	let bulkMoveStatus = $state("");
 	let singleAnimatingFoodId = $state<number | null>(null);
 	let singleMoveStatus = $state("");
+	let scrollResumeFrame: number | null = null;
+	let scrollSettleFrame: number | null = null;
+	let compactHeaderLayoutSettling = false;
 
 	const BULK_EXIT_STAGGER_MS = 100;
 	const BULK_EXIT_ANTICIPATION_PERCENT = 10;
@@ -170,12 +173,59 @@
 		onEnterSelection(foodId);
 	};
 
+	const cancelScrollTrackingResume = () => {
+		if (scrollResumeFrame !== null) cancelAnimationFrame(scrollResumeFrame);
+		if (scrollSettleFrame !== null) cancelAnimationFrame(scrollSettleFrame);
+		scrollResumeFrame = null;
+		scrollSettleFrame = null;
+	};
+
+	const resumeScrollTrackingAfterLayoutSettles = (
+		element: HTMLUListElement,
+	) => {
+		cancelScrollTrackingResume();
+		scrollResumeFrame = requestAnimationFrame(() => {
+			scrollSettleFrame = requestAnimationFrame(() => {
+				scrollDirectionTracker.resume(element.scrollTop);
+				compactHeaderLayoutSettling = false;
+				scrollResumeFrame = null;
+				scrollSettleFrame = null;
+			});
+		});
+	};
+
 	const handleListScroll = (event: Event) => {
-		const direction = scrollDirectionTracker.update(
-			(event.currentTarget as HTMLUListElement).scrollTop,
-		);
+		const element = event.currentTarget as HTMLUListElement;
+		const direction = scrollDirectionTracker.update(element.scrollTop);
+		if (direction === "down") {
+			compactHeaderLayoutSettling = true;
+			scrollDirectionTracker.pause(element.scrollTop);
+			resumeScrollTrackingAfterLayoutSettles(element);
+		}
 		if (direction) onScrollDirectionChange(direction);
 	};
+
+	$effect(() => {
+		const element = listElement;
+		if (!element || typeof ResizeObserver === "undefined") return;
+
+		const observer = new ResizeObserver(() => {
+			if (compactHeaderLayoutSettling) {
+				scrollDirectionTracker.pause(element.scrollTop);
+				resumeScrollTrackingAfterLayoutSettles(element);
+				return;
+			}
+
+			scrollDirectionTracker.rebase(element.scrollTop);
+		});
+		observer.observe(element);
+
+		return () => {
+			observer.disconnect();
+			cancelScrollTrackingResume();
+			compactHeaderLayoutSettling = false;
+		};
+	});
 
 	$effect(() => {
 		if (previousActiveList === null || previousResetKey === null) {
@@ -190,6 +240,8 @@
 
 		previousActiveList = activeList;
 		previousResetKey = resetKey;
+		cancelScrollTrackingResume();
+		compactHeaderLayoutSettling = false;
 		scrollDirectionTracker.reset();
 		onScrollDirectionChange("up");
 		requestAnimationFrame(() => {

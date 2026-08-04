@@ -48,7 +48,7 @@
 				label={pill.label}
 				onRemove={onRemove ? () => onRemove(pill.index) : undefined}
 				onRename={onRename ? () => onRename(pill.index) : undefined}
-				onSelect={() => onSelect && onSelect(pill.index)}
+				onSelect={onSelect ? () => onSelect(pill.index) : undefined}
 				{removable}
 				active={pill.active}
 				custom={pill.custom}

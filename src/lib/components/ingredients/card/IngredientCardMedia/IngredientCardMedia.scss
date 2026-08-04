@@ -7,6 +7,6 @@
 	height: 100%;
 	place-items: center;
 	font-size: $app-font-size-xl;
-	line-height: 1;
+	line-height: $app-line-height-tight;
 	text-align: center;
 }

@@ -5,6 +5,8 @@ const DISCLOSURE_EASING = "cubic-bezier(0.4, 0, 0.2, 1)";
 
 type AnimatedDetailsOptions = {
 	duration?: number;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
 };
 
 type AnimatedDetailsController = {
@@ -40,8 +42,9 @@ export const animatedDetails = (
 		return {};
 	}
 
-	const duration = options.duration ?? DEFAULT_DURATION_MS;
-	let expanded = element.open;
+	let duration = options.duration ?? DEFAULT_DURATION_MS;
+	let onOpenChange = options.onOpenChange;
+	let expanded = options.open ?? element.open;
 	let animation: Animation | null = null;
 
 	const reflectExpandedState = () => {
@@ -49,7 +52,7 @@ export const animatedDetails = (
 		summary.setAttribute("aria-expanded", String(expanded));
 	};
 
-	const setOpen = (nextOpen: boolean) => {
+	const setOpen = (nextOpen: boolean, notify = false) => {
 		if (nextOpen === expanded && animation === null) return;
 
 		const wasRendered = element.open;
@@ -60,6 +63,7 @@ export const animatedDetails = (
 		previousAnimation?.cancel();
 		expanded = nextOpen;
 		reflectExpandedState();
+		if (notify) onOpenChange?.(nextOpen);
 
 		const motionDuration = getMotionSafeDuration(duration);
 		if (motionDuration === 0 || typeof element.animate !== "function") {
@@ -117,20 +121,31 @@ export const animatedDetails = (
 
 	const handleSummaryClick = (event: Event) => {
 		event.preventDefault();
-		setOpen(!expanded);
+		setOpen(!expanded, true);
 	};
 
 	const handleToggle = () => {
 		if (element.open === expanded) return;
-		setOpen(element.open);
+		setOpen(element.open, true);
 	};
 
+	element.open = expanded;
 	reflectExpandedState();
 	summary.addEventListener("click", handleSummaryClick);
 	element.addEventListener("toggle", handleToggle);
 	controllers.set(element, { setOpen });
 
 	return {
+		update(nextOptions: AnimatedDetailsOptions = {}) {
+			duration = nextOptions.duration ?? DEFAULT_DURATION_MS;
+			onOpenChange = nextOptions.onOpenChange;
+			if (
+				typeof nextOptions.open === "boolean" &&
+				nextOptions.open !== expanded
+			) {
+				setOpen(nextOptions.open);
+			}
+		},
 		destroy() {
 			const activeAnimation = animation;
 			animation = null;

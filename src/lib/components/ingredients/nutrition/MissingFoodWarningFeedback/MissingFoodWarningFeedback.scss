@@ -14,7 +14,7 @@
 	margin: 0;
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
-	line-height: 1.45;
+	line-height: $app-line-height-body;
 }
 
 .missing-warning-feedback__field {
@@ -34,7 +34,6 @@
 	letter-spacing: inherit;
 }
 
-.missing-warning-feedback select,
 .missing-warning-feedback input,
 .missing-warning-feedback textarea {
 	width: 100%;
@@ -46,7 +45,6 @@
 	font: inherit;
 }
 
-.missing-warning-feedback select,
 .missing-warning-feedback input {
 	min-height: $app-shell-control-height;
 	padding-inline: $app-shell-control-padding-x;
@@ -58,7 +56,6 @@
 	resize: vertical;
 }
 
-.missing-warning-feedback select:focus-visible,
 .missing-warning-feedback input:focus-visible,
 .missing-warning-feedback textarea:focus-visible {
 	outline: $app-focus-outline;
@@ -70,7 +67,6 @@
 		gap: $app-gap-sm;
 	}
 
-	.missing-warning-feedback select,
 	.missing-warning-feedback input {
 		min-height: $app-shell-control-height-narrow;
 		padding-inline: $app-shell-control-padding-x-compact;

@@ -3,9 +3,11 @@
 	import { goto } from "$app/navigation";
 	import type { SubmitFunction } from "@sveltejs/kit";
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
+	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame/InputLoadingFrame.svelte";
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
 	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
 	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
@@ -263,8 +265,11 @@
 							onChange={(value) => setImageCrop(submission, value)}
 						/>
 					{/if}
-					<details use:animatedDetails>
-						<summary>Review {submission.nutrients.length} nutrition values</summary>
+					<details class="moderation-disclosure" use:animatedDetails>
+						<summary>
+							<span>Review {submission.nutrients.length} nutrition values</span>
+							<DisclosureChevron />
+						</summary>
 						<ul>
 							{#each submission.nutrients as nutrient}
 								<li>
@@ -383,8 +388,11 @@
 							</a>
 						</p>
 					{/if}
-					<details use:animatedDetails>
-						<summary>Review captured evidence</summary>
+					<details class="moderation-disclosure" use:animatedDetails>
+						<summary>
+							<span>Review captured evidence</span>
+							<DisclosureChevron />
+						</summary>
 						<pre>{JSON.stringify({
 							issueParams: feedback.issueParams,
 							facts: feedback.factSnapshot,
@@ -396,31 +404,41 @@
 						use:enhance={enhanceModerationAction}
 					>
 						<input type="hidden" name="feedbackId" value={feedback.id} />
-						<label>
-							<span>Outcome</span>
-							<select name="status" required>
-								<option value="confirmed">
-									{feedback.feedbackType === "missing_warning"
+						<SelectField
+							id={`compatibility-outcome-${feedback.id}`}
+							name="status"
+							label="Outcome"
+							value="confirmed"
+							options={[
+								{
+									value: "confirmed",
+									label: feedback.feedbackType === "missing_warning"
 										? "Confirm missing warning"
-										: "Confirm false positive"}
-								</option>
-								<option value="dismissed">
-									{feedback.feedbackType === "missing_warning"
+										: "Confirm false positive",
+								},
+								{
+									value: "dismissed",
+									label: feedback.feedbackType === "missing_warning"
 										? "Current warning coverage is supported"
-										: "Warning is supported"}
-								</option>
-							</select>
-						</label>
-						<label>
-							<span>Next step</span>
-							<select name="resolutionAction" required>
-								<option value="rule_review">Review matching rule</option>
-								<option value="source_correction">Correct source mapping</option>
-								<option value="product_correction">Correct product data</option>
-								<option value="duplicate">Duplicate report</option>
-								<option value="none">No change needed</option>
-							</select>
-						</label>
+										: "Warning is supported",
+								},
+							]}
+							required
+						/>
+						<SelectField
+							id={`compatibility-action-${feedback.id}`}
+							name="resolutionAction"
+							label="Next step"
+							value="rule_review"
+							options={[
+								{ value: "rule_review", label: "Review matching rule" },
+								{ value: "source_correction", label: "Correct source mapping" },
+								{ value: "product_correction", label: "Correct product data" },
+								{ value: "duplicate", label: "Duplicate report" },
+								{ value: "none", label: "No change needed" },
+							]}
+							required
+						/>
 						<label>
 							<span>Review note</span>
 							<textarea
@@ -495,16 +513,21 @@
 					{:else}
 						<form method="POST" action="?/ban" use:enhance={enhanceModerationAction} aria-busy={pendingTargetUserId === user.id}>
 							<input type="hidden" name="targetUserId" value={user.id} />
-							<label>
-								<span>Reason</span>
-								<select name="reason" required disabled={pendingTargetUserId !== null}>
-									<option value="profile_image_policy_violation">Profile image violation</option>
-									<option value="harassment_or_abuse">Harassment or abuse</option>
-									<option value="fraud_or_spam">Fraud or spam</option>
-									<option value="terms_violation">Other terms violation</option>
-								</select>
-								<small>This reason and its plain-language explanation will be emailed to the user.</small>
-							</label>
+							<SelectField
+								id={`account-ban-reason-${user.id}`}
+								name="reason"
+								label="Reason"
+								value="profile_image_policy_violation"
+								options={[
+									{ value: "profile_image_policy_violation", label: "Profile image violation" },
+									{ value: "harassment_or_abuse", label: "Harassment or abuse" },
+									{ value: "fraud_or_spam", label: "Fraud or spam" },
+									{ value: "terms_violation", label: "Other terms violation" },
+								]}
+								helper="This reason and its plain-language explanation will be emailed to the user."
+								required
+								disabled={pendingTargetUserId !== null}
+							/>
 							<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
 								{#if pendingTargetUserId === user.id}<LoadingSpinner size="small" decorative />{/if}
 								<span>Block account</span>

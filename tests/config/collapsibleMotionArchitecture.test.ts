@@ -7,6 +7,27 @@ const collapsibleStylesPath = join(
 	sourceRoot,
 	"lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.scss",
 );
+const collapsibleComponentPath = join(
+	sourceRoot,
+	"lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte",
+);
+const disclosureChevronPath = join(
+	sourceRoot,
+	"lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte",
+);
+const disclosureChevronStylesPath = join(
+	sourceRoot,
+	"lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.scss",
+);
+const specializedDisclosureConsumers = [
+	"lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte",
+	"lib/components/ingredients/manual-entry/ManualEntryToggle/ManualEntryToggle.svelte",
+	"lib/components/ingredients/manual-entry/NutritionLabelOcrInput/NutritionLabelOcrInput.svelte",
+	"lib/components/mix/ingredients/IngredientCard/IngredientCard.svelte",
+	"lib/components/saved/SavedDrinkIngredientPills/SavedDrinkIngredientPills.svelte",
+	"routes/moderation/+page.svelte",
+	"routes/profile/+page.svelte",
+];
 
 const getSvelteFiles = (directory: string): string[] =>
 	readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -31,5 +52,27 @@ describe("collapsible motion architecture", () => {
 		const source = readFileSync(collapsibleStylesPath, "utf8");
 
 		expect(source).toMatch(/\.collapsible-section\s*\{[^}]*overflow-anchor:\s*none;/s);
+	});
+
+	it("rotates the shared chevron from right when closed to down when open", () => {
+		const component = readFileSync(collapsibleComponentPath, "utf8");
+		const chevron = readFileSync(disclosureChevronPath, "utf8");
+		const styles = readFileSync(disclosureChevronStylesPath, "utf8");
+
+		expect(component).toContain("<DisclosureChevron");
+		expect(chevron).toContain('<Chevron direction="right"');
+		expect(styles).toMatch(
+			/\.disclosure-chevron\s*\{[^}]*transition:\s*transform\s+180ms\s+ease;/s,
+		);
+		expect(styles).toMatch(
+			/\[data-expanded="true"\][^}]*summary\)\s*\.disclosure-chevron[^}]*\{[^}]*transform:\s*rotate\(90deg\);/s,
+		);
+	});
+
+	it("uses the shared chevron in every specialized disclosure", () => {
+		for (const relativePath of specializedDisclosureConsumers) {
+			const source = readFileSync(join(sourceRoot, relativePath), "utf8");
+			expect(source, relativePath).toContain("DisclosureChevron");
+		}
 	});
 });

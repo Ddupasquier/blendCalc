@@ -1,4 +1,6 @@
 <script lang="ts">
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
+	import type { SelectFieldOption } from "$lib/components/common/forms/SelectField/types";
 	import { getFoodServings } from "$lib/utils/food/servings/foodServings";
 	import { formatViewingGrams } from "$lib/utils/food/nutrients/nutritionDisplay";
 	import { formatServingOrigin } from "$lib/utils/food/servings/servingDisplay";
@@ -19,9 +21,20 @@
 		if (Math.abs(viewingGrams - 100) < 0.01) return "standard-100g";
 		return "custom";
 	});
+	const servingOptions = $derived.by<SelectFieldOption[]>(() => [
+		...(selectedValue === "custom"
+			? [{ value: "custom", label: `Custom amount · ${formatViewingGrams(viewingGrams)}` }]
+			: []),
+		...servings.map((serving, index) => ({
+			value: `serving-${index}`,
+			label: `${serving.label} · ${formatViewingGrams(serving.gramWeight)} · ${formatServingOrigin(serving)}`,
+		})),
+		...(!servings.some((serving) => Math.abs(serving.gramWeight - 100) < 0.01)
+			? [{ value: "standard-100g", label: "100g standard" }]
+			: []),
+	]);
 
-	const handleChange = (event: Event) => {
-		const value = (event.currentTarget as HTMLSelectElement).value;
+	const handleChange = (value: string) => {
 		if (value === "standard-100g") {
 			onSelect(100);
 			return;
@@ -33,22 +46,16 @@
 </script>
 
 {#if servings.length > 0}
-	<label class="nutrition-serving-select">
-		<span>Serving</span>
-		<select value={selectedValue} onchange={handleChange}>
-			{#if selectedValue === "custom"}
-				<option value="custom">Custom amount · {formatViewingGrams(viewingGrams)}</option>
-			{/if}
-			{#each servings as serving, index}
-				<option value={`serving-${index}`}>
-					{serving.label} · {formatViewingGrams(serving.gramWeight)} · {formatServingOrigin(serving)}
-				</option>
-			{/each}
-			{#if !servings.some((serving) => Math.abs(serving.gramWeight - 100) < 0.01)}
-				<option value="standard-100g">100g standard</option>
-			{/if}
-		</select>
-	</label>
+	<div class="nutrition-serving-select">
+		<SelectField
+			id={`nutrition-serving-${food.fdcId}`}
+			label="Serving"
+			layout="inline"
+			value={selectedValue}
+			options={servingOptions}
+			onValueChange={handleChange}
+		/>
+	</div>
 {/if}
 
 <style lang="scss">

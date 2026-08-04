@@ -4,7 +4,6 @@ $pill-grid-gap: 0.28rem;
 $pill-padding-y: 0.22rem;
 $pill-padding-x: 0.62rem;
 $pill-fine-spacing: 0.1rem;
-$pill-rename-font-size: 0.9rem;
 
 .pill {
 	display: inline-grid;
@@ -22,15 +21,33 @@ $pill-rename-font-size: 0.9rem;
 	font-size: $app-font-size-md;
 	font-weight: $app-button-font-weight;
 	line-height: $app-button-line-height;
-	cursor: pointer;
 	transition: background 0.15s;
+}
+
+.pill-select,
+.pill-content {
+	display: inline-flex;
+	align-items: center;
+	gap: $app-gap-inline-compact;
+	min-width: 0;
+	padding: 0;
+	color: inherit;
+	background: transparent;
+	border: 0;
+	font: inherit;
+	line-height: inherit;
+	text-align: left;
+}
+
+.pill-select {
+	cursor: pointer;
 }
 
 .pill-label {
 	display: -webkit-box;
 	min-width: 0;
 	overflow: hidden;
-	line-height: 1.15;
+	line-height: $app-line-height-heading;
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: 2;
 	line-clamp: 2;
@@ -65,7 +82,7 @@ $pill-rename-font-size: 0.9rem;
 	border-color: $app-shell-surface-panel;
 }
 
-.pill:active {
+.pill:has(.pill-select:active) {
 	background: $app-shell-accent-primary;
 }
 
@@ -75,21 +92,28 @@ $pill-rename-font-size: 0.9rem;
 }
 
 .pill-action {
-	padding: 0 $pill-fine-spacing;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: $app-control-icon-size;
+	height: $app-control-icon-size;
+	padding: 0;
 	color: $app-primary;
 	background: none;
 	border: none;
 	font-size: $app-font-size-md;
-	line-height: 1;
+	line-height: $app-line-height-none;
 	cursor: pointer;
 }
 
-.pill-action:focus {
+.pill-select:focus-visible,
+.pill-action:focus-visible {
 	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
 }
 
 .pill-rename {
-	font-size: $pill-rename-font-size;
+	font-size: $app-font-size-sm;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
