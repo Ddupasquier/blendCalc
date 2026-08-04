@@ -1,6 +1,7 @@
 <script lang="ts">
-	import WarningTriangle from "$lib/assets/icons/WarningTriangle/WarningTriangle.svelte";
-	import StatusIconBadge from "$lib/components/common/badges/StatusIconBadge/StatusIconBadge.svelte";
+	import FoodSymbol from "$lib/assets/icons/FoodSymbol/FoodSymbol.svelte";
+	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
+	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import type {
 		NutrientAdjustment,
 		NutrientAdjustmentSuggestionsProps,
@@ -12,9 +13,9 @@
 		onAdd,
 		onReduce,
 		maxSuggestions = 3,
+		open = false,
+		onOpenChange,
 	}: NutrientAdjustmentSuggestionsProps = $props();
-
-	let isOpen = $state(false);
 
 	const formatAmount = (value: number) => {
 		if (value >= 100) return value.toFixed(0);
@@ -55,7 +56,6 @@
 			})
 			.slice(0, maxSuggestions),
 	);
-
 	const getActionLabel = (adjustment: NutrientAdjustment) => {
 		if (adjustment.type === "reduce") return "Use less";
 		return adjustment.suggestion.action === "increase" ? "Add more" : "Add";
@@ -131,38 +131,22 @@
 		class="nutrient-adjustments"
 		aria-label="Suggested ingredient adjustments"
 	>
-		<button
-			type="button"
-			class="nutrient-adjustments__header"
-			aria-expanded={isOpen}
-			onclick={() => (isOpen = !isOpen)}
+		<CollapsibleSection
+			title="Suggested adjustments"
+		badge={String(adjustments.length)}
+		{open}
+		{onOpenChange}
+			surface="panel"
 		>
-			<StatusIconBadge
-				class="nutrient-adjustments__alert"
-				label="Suggested adjustments available"
-				decorative
-			>
-				<WarningTriangle size="1em" />
-			</StatusIconBadge>
-			<span class="nutrient-adjustments__copy">
-				<span class="nutrient-adjustments__title">Suggested Adjustments</span>
-				<span class="nutrient-adjustments__summary">
-					{adjustments.length}
-					{adjustments.length === 1 ? "change" : "changes"} can help this smoothie.
-				</span>
-			</span>
-			<span class:open={isOpen} class="nutrient-adjustments__chevron" aria-hidden="true">
-				⌄
-			</span>
-		</button>
-
-		{#if isOpen}
 			<div class="nutrient-adjustments__list">
 				{#each adjustments as adjustment}
 					<article
 						class:has-warning={adjustment.suggestion.conflicts.length > 0}
 						class="nutrient-adjustment"
 					>
+						<span class="nutrient-adjustment__symbol" aria-hidden="true">
+							<FoodSymbol food={adjustment.suggestion.food} />
+						</span>
 						<div class="nutrient-adjustment__main">
 							<div class="nutrient-adjustment__title-row">
 								<div>
@@ -195,13 +179,13 @@
 							{/if}
 						</div>
 
-						<button type="button" onclick={() => applyAdjustment(adjustment)}>
+						<ActionButton size="small" variant="secondary" onclick={() => applyAdjustment(adjustment)}>
 							Apply
-						</button>
+						</ActionButton>
 					</article>
 				{/each}
 			</div>
-		{/if}
+		</CollapsibleSection>
 	</section>
 {/if}
 

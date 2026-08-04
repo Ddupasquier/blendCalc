@@ -1,12 +1,12 @@
 <script lang="ts">
 	import IngredientCard from "$lib/components/mix/ingredients/IngredientCard/IngredientCard.svelte";
+	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
+	import MixEmptyState from "$lib/components/mix/states/MixEmptyState/MixEmptyState.svelte";
 	import type { SelectedIngredientsPanelProps } from "./types";
 	import ListControls from "$lib/components/common/lists/ListControls/ListControls.svelte";
-	import Pagination from "$lib/components/common/lists/Pagination/Pagination.svelte";
+	import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls/PaginatedListControls.svelte";
 	import {
-		clampPage,
 		filterItemsByQuery,
-		paginateItems,
 	} from "$lib/utils/list/listNavigation";
 	import {
 		getFoodNutrientChips,
@@ -18,6 +18,7 @@
 		LIST_PAGE_SIZES,
 		LIST_SEARCH_THRESHOLDS,
 	} from "$lib/config/listPagination";
+	import { createScrollDirectionTracker } from "$lib/utils/navigation/scrollDirection";
 
 	let {
 		selectedFoods,
@@ -33,10 +34,18 @@
 		onCloseConversionDetails,
 		onRemove,
 		onServingChange,
+		onScrollDirectionChange = () => {},
+		open = true,
+		onOpenChange,
 	}: SelectedIngredientsPanelProps = $props();
 
 	let query = $state("");
-	let page = $state(1);
+	let visibleCount = $state<number>(LIST_PAGE_SIZES.selectedIngredients);
+	let listElement = $state<HTMLElement | null>(null);
+	const scrollDirectionTracker = createScrollDirectionTracker();
+	let scrollResumeFrame: number | null = null;
+	let scrollSettleFrame: number | null = null;
+	let compactHeaderLayoutSettling = false;
 	const filteredFoods = $derived(
 		filterItemsByQuery(
 			selectedFoods,
@@ -47,81 +56,143 @@
 					.join(" "),
 		),
 	);
-	const pagedFoods = $derived(
-		paginateItems(
-			filteredFoods,
-			page,
-			LIST_PAGE_SIZES.selectedIngredients,
-		),
-	);
+	const visibleFoods = $derived(filteredFoods.slice(0, visibleCount));
+	const hasMoreFoods = $derived(visibleFoods.length < filteredFoods.length);
 
 	const updateQuery = (value: string) => {
 		query = value;
-		page = 1;
+		visibleCount = LIST_PAGE_SIZES.selectedIngredients;
+	};
+
+	const revealMoreFoods = () => {
+		visibleCount = Math.min(
+			visibleCount + LIST_PAGE_SIZES.ingredientLoadMore,
+			filteredFoods.length,
+		);
+	};
+
+	const cancelScrollTrackingResume = () => {
+		if (scrollResumeFrame !== null) cancelAnimationFrame(scrollResumeFrame);
+		if (scrollSettleFrame !== null) cancelAnimationFrame(scrollSettleFrame);
+		scrollResumeFrame = null;
+		scrollSettleFrame = null;
+	};
+
+	const resumeScrollTrackingAfterLayoutSettles = (element: HTMLElement) => {
+		cancelScrollTrackingResume();
+		scrollResumeFrame = requestAnimationFrame(() => {
+			scrollSettleFrame = requestAnimationFrame(() => {
+				scrollDirectionTracker.resume(element.scrollTop);
+				compactHeaderLayoutSettling = false;
+				scrollResumeFrame = null;
+				scrollSettleFrame = null;
+			});
+		});
+	};
+
+	const handleListScroll = (event: Event) => {
+		const element = event.currentTarget as HTMLElement;
+		const direction = scrollDirectionTracker.update(element.scrollTop);
+		if (direction === "down") {
+			compactHeaderLayoutSettling = true;
+			scrollDirectionTracker.pause(element.scrollTop);
+			resumeScrollTrackingAfterLayoutSettles(element);
+		}
+		if (direction) onScrollDirectionChange(direction);
 	};
 
 	$effect(() => {
-		page = clampPage(
-			page,
-			filteredFoods.length,
-			LIST_PAGE_SIZES.selectedIngredients,
-		);
+		const element = listElement;
+		if (!element || typeof ResizeObserver === "undefined") return;
+
+		const observer = new ResizeObserver(() => {
+			if (compactHeaderLayoutSettling) {
+				scrollDirectionTracker.pause(element.scrollTop);
+				resumeScrollTrackingAfterLayoutSettles(element);
+				return;
+			}
+
+			scrollDirectionTracker.rebase(element.scrollTop);
+		});
+		observer.observe(element);
+
+		return () => {
+			observer.disconnect();
+			cancelScrollTrackingResume();
+			compactHeaderLayoutSettling = false;
+		};
 	});
 </script>
 
 <section class="selected-ingredients-panel" aria-label="Selected ingredients">
-	<div class="selected-ingredients-header">
-		<div>
-			<h4>Selected Ingredients</h4>
-			<p>Adjust amounts here. The graph updates from these values.</p>
+	<CollapsibleSection
+		title="Selected ingredients"
+		badge={`${selectedFoods.length} selected`}
+		{open}
+		{onOpenChange}
+		surface="panel"
+	>
+		<div class="selected-ingredients-panel__content">
+			{#if selectedFoods.length === 0}
+				<MixEmptyState />
+			{:else}
+				<p class="selected-ingredients-panel__help">Adjust amounts to update the chart.</p>
+				{#if selectedFoods.length >= LIST_SEARCH_THRESHOLDS.selectedIngredients || query}
+					<ListControls
+						id="selected-ingredient-search"
+						{query}
+						onQueryChange={updateQuery}
+						placeholder="Find a selected ingredient…"
+						label="Find selected ingredients"
+						totalCount={selectedFoods.length}
+						visibleCount={filteredFoods.length}
+						itemLabel="selected"
+					/>
+				{/if}
+				<div
+					class="selected-ingredient-cards"
+					bind:this={listElement}
+					onscroll={handleListScroll}
+					aria-label="Selected Mix ingredients"
+					data-tutorial-target="mix-selected-ingredients"
+				>
+					{#each visibleFoods as food (food.fdcId)}
+						{@const servingConversion = getServingConversion(food)}
+						<IngredientCard
+							{food}
+							sourceLabel={getFoodSourceLabel(food, fridgeItems)}
+							quantity={getServingQuantity(food)}
+							unit={getServingUnit(food)}
+							gramsLabel={getServingGramsLabel(servingConversion)}
+							conversionBasis={getServingConversionBasis(servingConversion)}
+							warning={getServingConversionWarning(food)}
+							conversionDetailsOpen={conversionDetailsFoodId === food.fdcId}
+							{onOpenConversionDetails}
+							{onCloseConversionDetails}
+							nutrientChips={getFoodNutrientChips(
+								food,
+								selectedNutrients,
+								servingGrams,
+							)}
+							onRemove={onRemove}
+							onServingChange={onServingChange}
+						/>
+					{/each}
+					<PaginatedListControls
+						scrollContainer={listElement}
+						hasMoreItems={hasMoreFoods}
+						loadMoreLabel="Load more selected ingredients"
+						contentVersion={`${query}:${visibleFoods.length}:${selectedFoods.length}`}
+						containerElement="div"
+						onLoadMore={revealMoreFoods}
+					/>
+				</div>
+				{#if filteredFoods.length === 0}
+					<p class="no-results">No selected ingredients match that search.</p>
+				{/if}
+			{/if}
 		</div>
-	</div>
-	{#if selectedFoods.length >= LIST_SEARCH_THRESHOLDS.selectedIngredients || query}
-		<ListControls
-			id="selected-ingredient-search"
-			{query}
-			onQueryChange={updateQuery}
-			placeholder="Find a selected ingredient…"
-			label="Find selected ingredients"
-			totalCount={selectedFoods.length}
-			visibleCount={filteredFoods.length}
-			itemLabel="selected"
-		/>
-	{/if}
-	<div class="selected-ingredient-cards">
-		{#each pagedFoods as food (food.fdcId)}
-			{@const servingConversion = getServingConversion(food)}
-			<IngredientCard
-				{food}
-				sourceLabel={getFoodSourceLabel(food, fridgeItems)}
-				quantity={getServingQuantity(food)}
-				unit={getServingUnit(food)}
-				gramsLabel={getServingGramsLabel(servingConversion)}
-				conversionBasis={getServingConversionBasis(servingConversion)}
-				warning={getServingConversionWarning(food)}
-				conversionDetailsOpen={conversionDetailsFoodId === food.fdcId}
-				{onOpenConversionDetails}
-				{onCloseConversionDetails}
-				nutrientChips={getFoodNutrientChips(
-					food,
-					selectedNutrients,
-					servingGrams,
-				)}
-				onRemove={onRemove}
-				onServingChange={onServingChange}
-			/>
-		{/each}
-	</div>
-	{#if filteredFoods.length === 0}
-		<p class="no-results">No selected ingredients match that search.</p>
-	{/if}
-	<Pagination
-		{page}
-		pageSize={LIST_PAGE_SIZES.selectedIngredients}
-		totalItems={filteredFoods.length}
-		onPageChange={(nextPage) => (page = nextPage)}
-		label="Selected ingredients"
-	/>
+	</CollapsibleSection>
 </section>
 
 <style lang="scss">

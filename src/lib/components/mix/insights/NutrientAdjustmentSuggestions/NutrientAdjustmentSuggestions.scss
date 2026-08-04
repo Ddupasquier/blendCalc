@@ -1,89 +1,50 @@
 @use "../../../../../styles/variables" as *;
 
 .nutrient-adjustments {
-	width: 100%;
-	margin-top: $app-gap-sm;
 	padding: $app-gap-sm;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-card-radius;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-card;
 }
 
-.nutrient-adjustments__header {
-	width: 100%;
+.nutrient-adjustments__list {
+	display: grid;
+	gap: $app-gap-xs;
+}
+
+.nutrient-adjustment {
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr) auto;
 	gap: $app-gap-sm;
 	align-items: center;
 	padding: $app-gap-sm;
-	color: inherit;
-	background: transparent;
-	border-radius: $app-radius;
-	text-align: left;
-
-	&:hover {
-		background: $app-section-bg;
-	}
+	background: $app-shell-surface-soft;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
 }
 
-:global(.nutrient-adjustments__alert) {
-	--circular-icon-frame-color: #{$app-highlight-text};
-	--circular-icon-frame-background: #{$app-highlight};
+.nutrient-adjustment.has-warning {
+	border-color: $app-warning-border-color;
 }
 
-.nutrient-adjustments__copy {
+.nutrient-adjustment__symbol {
 	display: grid;
-	gap: $app-gap-micro;
-	min-width: 0;
-}
-
-.nutrient-adjustments__title {
-	color: $app-primary;
-	font-size: $app-font-size-sm;
-	font-weight: $app-font-weight-bold;
-}
-
-.nutrient-adjustments__summary {
-	color: $app-muted;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-semibold;
-	line-height: 1.3;
-}
-
-.nutrient-adjustments__chevron {
-	color: $app-primary;
+	width: 2rem;
+	height: 2rem;
+	place-items: center;
+	overflow: hidden;
+	background: $app-shell-accent-soft;
+	border-radius: $app-radius-circle;
 	font-size: $app-font-size-lg;
-	font-weight: $app-font-weight-heavy;
-	line-height: 1;
-	transition: transform 0.16s ease;
-
-	&.open {
-		transform: rotate(180deg);
-	}
 }
 
-.nutrient-adjustments__list {
-	display: grid;
-	gap: $app-gap-sm;
-	margin-top: $app-gap-sm;
+:global(.nutrient-adjustment__symbol .food-symbol__image),
+:global(.nutrient-adjustment__symbol .food-symbol__fallback) {
+	width: 100%;
+	height: 100%;
 }
 
-.nutrient-adjustment {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
-	gap: $app-gap-sm;
-	align-items: end;
-	padding: $app-gap-sm;
-	background: $app-section-bg;
-	border: $app-border;
-	border-radius: $app-radius;
-
-	&.has-warning {
-		border-color: $app-warning-border-color;
-	}
-}
-
-.nutrient-adjustment__main {
+.nutrient-adjustment__main,
+.nutrient-adjustment__title-row > div {
 	display: grid;
 	gap: $app-gap-2xs;
 	min-width: 0;
@@ -93,103 +54,64 @@
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) auto;
 	gap: $app-gap-sm;
-	align-items: start;
-	min-width: 0;
-}
-
-.nutrient-adjustment__title-row > div {
-	display: grid;
-	gap: $app-gap-2xs;
 	min-width: 0;
 }
 
 .nutrient-adjustment__source,
 .nutrient-adjustment__impact {
 	width: fit-content;
-	max-width: 100%;
 	padding: $app-gap-2xs $app-gap-sm;
-	color: $app-primary;
-	background: $app-accent;
-	border-radius: $app-radius-pill;
+	color: $app-shell-text-primary;
+	background: $app-shell-accent-soft;
+	border-radius: $app-shell-radius-pill;
 	font-size: $app-font-size-2xs;
 	font-weight: $app-font-weight-bold;
-	line-height: 1.2;
 }
 
 .nutrient-adjustment__impact {
 	background: $app-success-bg;
+}
 
-	&.type-reduce {
-		background: $app-warning-bg;
-	}
+.nutrient-adjustment__impact.type-reduce {
+	background: $app-warning-bg;
 }
 
 strong {
-	color: $app-primary;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-bold;
 	overflow: hidden;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
 p {
-	color: $app-muted;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-semibold;
-	line-height: 1.28;
-}
-
-.nutrient-adjustment__action strong {
-	font-size: inherit;
-	white-space: normal;
-}
-
-.nutrient-adjustment__amount {
-	color: $app-primary;
-}
-
-.nutrient-adjustment__help {
-	font-size: $app-font-size-2xs;
+	line-height: $app-line-height-compact;
 }
 
 .nutrient-adjustment__warning {
-	margin-top: $app-gap-inline-compact;
 	padding: $app-gap-xs $app-gap-sm;
-	color: $app-primary;
+	color: $app-warning-text;
 	background: $app-warning-bg;
 	border-radius: $app-radius-sm;
-
-	span {
-		font-weight: $app-font-weight-heavy;
-	}
 }
 
-.nutrient-adjustment > button {
-	justify-self: end;
-	padding: $app-gap-xs $app-gap-sm;
-	color: $app-btn-text;
-	background: $app-btn-bg;
-	border-radius: $app-radius-pill;
-	font-size: $app-font-size-xs;
-	font-weight: $app-button-font-weight;
-	line-height: $app-button-line-height;
-
-	&:hover {
-		background: $app-btn-bg-hover;
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.nutrient-adjustments {
+		padding: $app-gap-xs;
 	}
-}
 
-@media (max-width: $app-breakpoint-sm) {
 	.nutrient-adjustment {
-		grid-template-columns: 1fr;
+		grid-template-columns: auto minmax(0, 1fr);
+		gap: $app-gap-xs;
+		padding: $app-gap-xs;
 	}
 
-	.nutrient-adjustment__title-row {
-		grid-template-columns: 1fr;
-	}
-
-	.nutrient-adjustment > button {
-		justify-self: stretch;
+	.nutrient-adjustment :global(.action-button) {
+		grid-column: 2;
+		justify-self: start;
 	}
 }

@@ -4,36 +4,29 @@
 	display: grid;
 	gap: $app-gap-sm;
 	padding: $app-gap-sm;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-card-radius;
-
-	h4 {
-		color: $app-primary;
-		font-size: $app-font-size-lg;
-		font-weight: $app-font-weight-bold;
-	}
-
-	p {
-		color: $app-muted;
-		font-size: $app-font-size-sm;
-	}
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-card;
 }
 
-.selected-ingredients-header {
-	display: flex;
-	justify-content: space-between;
+.selected-ingredients-panel__content {
+	display: grid;
 	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.selected-ingredients-panel__help {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
 }
 
 .selected-ingredient-cards {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-	gap: $app-gap-sm;
-	max-height: min(52vh, 30rem);
+	gap: $app-gap-xs;
+	max-height: 32rem;
+	padding: $app-focus-outline-offset;
 	overflow-y: auto;
-	overscroll-behavior: contain;
-	padding-right: $app-gap-inline-compact;
+	overscroll-behavior-y: auto;
 }
 
 .no-results {
@@ -41,29 +34,17 @@
 	text-align: center;
 }
 
-@media (max-width: $app-breakpoint-md) {
-	.selected-ingredient-cards {
-		grid-template-columns: 1fr;
-		max-height: 42vh;
-	}
-}
-
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.selected-ingredients-panel {
 		gap: $app-gap-xs;
 		padding: $app-gap-xs;
-
-		h4 {
-			font-size: $app-font-size-md;
-		}
-
-		p {
-			font-size: $app-font-size-xs;
-		}
 	}
 
-	.selected-ingredients-header,
-	.selected-ingredient-cards {
+	.selected-ingredients-panel__content {
 		gap: $app-gap-xs;
+	}
+
+	.selected-ingredient-cards {
+		max-height: 26rem;
 	}
 }

@@ -1,63 +1,34 @@
 @use "../../../../../styles/variables" as *;
 
 .contribution-breakdown {
-	width: 100%;
-	margin-top: $app-gap-sm;
 	padding: $app-gap-sm;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-card-radius;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-card;
 }
 
-.contribution-breakdown__header {
-	margin-bottom: $app-gap-sm;
-
-	h4 {
-		color: $app-primary;
-		font-size: $app-font-size-sm;
-		font-weight: $app-font-weight-bold;
-	}
-
-	p {
-		color: $app-muted;
-		font-size: $app-font-size-xs;
-		line-height: 1.35;
-	}
-}
-
-.contribution-breakdown__grid {
+.contribution-breakdown__grid,
+.contribution-card {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
-	gap: $app-gap-sm;
+	gap: $app-gap-md;
 }
 
 .contribution-card {
 	min-width: 0;
-	padding: $app-gap-sm;
-	background: $app-section-bg;
-	border: $app-border;
-	border-radius: $app-radius;
+	gap: $app-gap-sm;
 }
 
 .contribution-card__title {
 	display: flex;
 	justify-content: space-between;
 	gap: $app-gap-sm;
-	margin-bottom: $app-gap-sm;
-	color: $app-primary;
+	color: $app-shell-text-primary;
 	font-size: $app-font-size-xs;
 
-	strong {
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
 	span {
-		flex-shrink: 0;
-		color: $app-muted;
-		font-weight: $app-font-weight-bold;
+		flex: 0 0 auto;
+		color: $app-shell-text-muted;
+		font-family: $app-font-family-data;
+		font-variant-numeric: tabular-nums;
 	}
 }
 
@@ -75,9 +46,8 @@ li {
 }
 
 .contribution-card__food {
-	min-width: 0;
 	overflow: hidden;
-	color: $app-primary;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-semibold;
 	text-overflow: ellipsis;
@@ -85,7 +55,7 @@ li {
 }
 
 .contribution-card__value {
-	color: $app-primary;
+	color: $app-shell-text-primary;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-heavy;
 }
@@ -94,8 +64,8 @@ li {
 	grid-column: 1 / -1;
 	height: 0.35rem;
 	overflow: hidden;
-	background: $app-accent;
-	border-radius: $app-radius-pill;
+	background: $app-shell-border-subtle;
+	border-radius: $app-shell-radius-pill;
 
 	span {
 		display: block;
@@ -107,25 +77,12 @@ li {
 
 small {
 	grid-column: 1 / -1;
-	color: $app-muted;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-2xs;
-	font-weight: $app-font-weight-semibold;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.contribution-breakdown,
-	.contribution-card {
+	.contribution-breakdown {
 		padding: $app-gap-xs;
-	}
-
-	.contribution-breakdown__header,
-	.contribution-card__title {
-		margin-bottom: $app-gap-xs;
-	}
-
-	.contribution-breakdown__grid,
-	ul,
-	li {
-		gap: $app-gap-xs;
 	}
 }

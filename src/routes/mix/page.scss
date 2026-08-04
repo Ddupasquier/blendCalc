@@ -11,144 +11,38 @@
 	--mix-chart-danger-stroke: #{$app-shell-accent-danger};
 	--mix-chart-grid: color-mix(in srgb, #{$app-shell-text-muted} 22%, transparent);
 	--mix-chart-goal: color-mix(in srgb, #{$app-accent} 72%, #{$app-shell-text-muted});
-	--mix-chart-goal-fill: color-mix(in srgb, #{$app-accent} 42%, transparent);
-	--mix-chart-goal-stroke: color-mix(in srgb, #{$app-shell-text-muted} 72%, transparent);
-	box-sizing: border-box;
-	max-width: $app-max-width;
-	padding: $app-gap-sm 0;
-	margin: 0 auto;
-}
-
-.mix-header {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
+	display: grid;
+	flex: 1 1 auto;
+	align-content: start;
 	gap: $app-gap-md;
-	margin-bottom: $app-gap-md;
-
-	h2 {
-		margin-bottom: $app-gap-inline-compact;
-		color: $app-primary;
-		font-size: $app-font-size-xl;
-		font-weight: $app-font-weight-bold;
-	}
-
-	p {
-		color: $app-muted;
-		font-size: $app-font-size-md;
-	}
+	box-sizing: border-box;
+	width: min(100%, $app-max-width);
+	min-height: 0;
+	margin: 0 auto;
+	padding: $app-gap-sm 0 max($app-gap-lg, env(safe-area-inset-bottom));
+	overflow-y: auto;
+	overflow-anchor: none;
+	overscroll-behavior: contain;
+	scrollbar-gutter: stable;
+	-webkit-overflow-scrolling: touch;
 }
 
-.mix-header .mix-header__eyebrow {
-	margin-bottom: $app-gap-2xs;
-	color: $app-warning-strong;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-heavy;
-	letter-spacing: $app-gap-micro;
-	text-transform: uppercase;
-}
-
-.mix-header__title-row {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: $app-gap-xs;
-	margin-bottom: $app-gap-inline-compact;
-
-	h2 {
-		min-width: 0;
-		margin-bottom: 0;
-		overflow-wrap: anywhere;
-	}
-
-	span {
-		padding: $app-gap-2xs $app-gap-sm;
-		color: $app-warning-strong;
-		background: $app-warning-bg;
-		border-radius: $app-radius-pill;
-		font-size: $app-font-size-xs;
-		font-weight: $app-font-weight-heavy;
-		white-space: nowrap;
-	}
-}
-
-.reset-actions {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: flex-end;
-	gap: $app-gap-xs;
-	max-width: 22rem;
-}
-
-.mix-panel {
-	padding: $app-gap-sm;
-	background: $app-section-bg;
-	border: $app-border;
-	border-radius: $app-card-radius;
-}
-
+.mix-panel,
 .mix-builder {
 	display: grid;
-	grid-template-columns: 1fr;
-	align-items: stretch;
-	gap: $app-gap-sm;
-}
-
-.shape-panel {
-	display: grid;
-	place-items: center;
-	padding: $app-gap-sm;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-card-radius;
-}
-
-.shape-preview {
-	display: grid;
-	place-items: center;
-	width: 100%;
-	background: $app-section-bg;
-	border-radius: $app-card-radius;
-}
-
-@media (max-width: $app-breakpoint-md) {
-	.mix-page {
-		padding-top: $app-gap-sm;
-	}
-
-	.mix-header {
-		display: grid;
-	}
-
-	.reset-actions {
-		justify-content: flex-start;
-	}
+	align-content: start;
+	gap: $app-gap-md;
+	min-width: 0;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.mix-page,
+	.mix-panel,
+	.mix-builder {
+		gap: $app-gap-sm;
+	}
+
 	.mix-page {
 		padding-top: 0;
-	}
-
-	.mix-header {
-		gap: $app-gap-sm;
-		margin-bottom: $app-gap-sm;
-	}
-
-	.mix-panel,
-	.shape-panel {
-		padding: $app-gap-xs;
-	}
-
-	.mix-builder {
-		gap: $app-gap-xs;
-	}
-
-	.mix-header h2 {
-		font-size: $app-font-size-lg;
-	}
-
-	.mix-header p {
-		font-size: $app-font-size-sm;
 	}
 }

@@ -1,158 +1,171 @@
 @use "../../../../../styles/variables" as *;
 
-.setup-card {
+.goals-panel {
 	padding: $app-gap-sm;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-card-radius;
-}
-
-.section-heading {
-	display: flex;
-	justify-content: space-between;
-	align-items: flex-end;
-	gap: $app-gap-sm;
-	margin-bottom: $app-gap-sm;
-
-	> div:first-child {
-		min-width: 0;
-	}
-
-	h4 {
-		color: $app-primary;
-		font-size: $app-font-size-lg;
-		font-weight: $app-font-weight-bold;
-	}
-
-	p {
-		color: $app-muted;
-		font-size: $app-font-size-sm;
-		line-height: 1.35;
-	}
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-card;
 }
 
 .goal-template-controls {
 	display: grid;
-	grid-template-columns: minmax(8.5rem, 1fr) auto;
+	grid-template-columns: minmax(0, 1fr) auto;
 	gap: $app-gap-xs;
-	min-width: min(100%, 15rem);
+	margin-bottom: $app-gap-sm;
 
-	label {
-		grid-column: 1 / -1;
-		color: $app-muted;
-		font-size: $app-font-size-xs;
-		font-weight: $app-font-weight-bold;
-	}
+}
 
-	select {
-		width: 100%;
-		min-width: 0;
-		height: $app-control-height-sm;
-		padding: 0 $app-gap-sm;
-		color: $app-primary;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-radius-sm;
-		font-size: $app-font-size-sm;
-	}
+:global(.goal-template-controls__select) {
+	min-width: 0;
+}
 
-	button {
-		height: $app-control-height-sm;
-		padding: 0 $app-gap-sm;
-		color: $app-primary;
-		background: $app-btn-bg;
-		border-radius: $app-radius-sm;
-		font-size: $app-font-size-sm;
-		font-weight: $app-button-font-weight;
-		line-height: $app-button-line-height;
-
-		&:hover:not(:disabled) {
-			background: $app-btn-bg-hover;
-		}
-
-		&:disabled {
-			cursor: not-allowed;
-			background: $app-border-color;
-		}
-	}
+.goal-template-controls > :global(button) {
+	align-self: end;
 }
 
 .goal-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
-	gap: $app-gap-sm;
+	gap: $app-gap-xs;
+	margin-bottom: $app-gap-sm;
 }
 
 .goal-input {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	grid-template-areas:
+		"summary control remove"
+		"progress control remove";
+	gap: $app-gap-xs $app-gap-sm;
 	align-items: center;
-	gap: $app-gap-xs;
 	min-width: 0;
 	padding: $app-gap-sm;
-	background: $app-section-bg;
-	border: $app-border;
-	border-radius: $app-radius;
-	color: $app-primary;
-	font-size: $app-font-size-sm;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-control;
+}
+
+.goal-input__summary {
+	grid-area: summary;
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.goal-label {
+	min-width: 0;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-bold;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
 
-	.goal-label {
-		grid-column: 1;
-		grid-row: 1;
-		min-width: 0;
-		line-height: 1.2;
-		overflow-wrap: normal;
-		word-break: normal;
-	}
+.goal-total {
+	flex: 0 0 auto;
+	color: $app-shell-text-muted;
+	font-family: $app-font-family-data;
+	font-size: $app-font-size-xs;
+	font-variant-numeric: tabular-nums;
 
-	:global(.goal-input__number) {
-		width: 100%;
-		min-width: 0;
-		height: $app-control-height-sm;
-		padding: 0 $app-gap-sm;
-		color: $app-primary;
-		background: $app-bg;
-		border: $app-border;
-		border-radius: $app-radius-sm;
-		font-family: $app-font-family-data;
-		font-size: $app-font-size-md;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.goal-unit {
-		min-width: 0;
-		color: $app-muted;
-		font-size: $app-font-size-sm;
-	}
-
-	small {
-		grid-column: 2;
-		grid-row: 1;
-		align-self: start;
-		color: $app-muted;
-		font-family: $app-font-family-data;
-		font-size: $app-font-size-xs;
-		font-weight: $app-font-weight-medium;
-		font-variant-numeric: tabular-nums;
-		line-height: 1.2;
-		text-align: right;
-		white-space: nowrap;
+	strong {
+		color: $app-warning-strong;
 	}
 }
 
-@media (max-width: $app-breakpoint-md) {
-	.section-heading {
-		display: grid;
-	}
+.goal-input[data-status="near"] .goal-total strong {
+	color: $app-shell-accent-primary;
+}
 
-	.goal-template-controls {
-		min-width: 0;
+.goal-input[data-status="over"] .goal-total strong {
+	color: $app-shell-accent-danger;
+}
+
+.goal-progress {
+	grid-area: progress;
+	display: block;
+	height: 0.35rem;
+	overflow: hidden;
+	background: $app-shell-border-subtle;
+	border-radius: $app-shell-radius-pill;
+
+	span {
+		display: block;
+		height: 100%;
+		background: $app-warning-strong;
+		border-radius: inherit;
+		transition: width 180ms ease;
 	}
 }
 
-@media (max-width: $app-breakpoint-xs) {
-	.goal-grid {
-		grid-template-columns: 1fr;
+.goal-input[data-status="near"] .goal-progress span {
+	background: $app-shell-accent-primary;
+}
+
+.goal-input[data-status="over"] .goal-progress span {
+	background: $app-shell-accent-danger;
+}
+
+.goal-input__control {
+	grid-area: control;
+	display: grid;
+	grid-template-columns: minmax(3.4rem, 4.5rem) auto;
+	align-items: center;
+	gap: $app-gap-xs;
+}
+
+:global(.goal-input__number) {
+	width: 100%;
+	min-width: 0;
+	height: $app-control-height-sm;
+	padding-inline: $app-gap-sm;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-panel;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-pill;
+	font-family: $app-font-family-data;
+	font-size: $app-font-size-md;
+	font-variant-numeric: tabular-nums;
+}
+
+.goal-unit {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+}
+
+:global(.goal-input__remove) {
+	grid-area: remove;
+}
+
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.goals-panel {
+		padding: $app-gap-xs;
+	}
+
+	.goal-input {
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-areas:
+			"summary remove"
+			"progress remove"
+			"control control";
+		gap: $app-gap-xs;
+		padding: $app-gap-xs;
+	}
+
+	.goal-input__control {
+		justify-content: end;
 	}
 }

@@ -1,81 +1,56 @@
 @use "../../../../../styles/variables" as *;
 
-.setup-card {
+.ingredient-chooser {
+	display: grid;
+	gap: $app-gap-sm;
 	padding: $app-gap-sm;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-card-radius;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-card;
 }
 
-.section-heading {
-	display: flex;
-	justify-content: space-between;
-	align-items: flex-end;
-	gap: $app-gap-sm;
-	margin-bottom: $app-gap-sm;
-
-	h4 {
-		color: $app-primary;
-		font-size: $app-font-size-lg;
-		font-weight: $app-font-weight-bold;
-	}
-
-	p {
-		color: $app-muted;
-		font-size: $app-font-size-sm;
-		line-height: 1.35;
-	}
+.ingredient-chooser :global(.result-count) {
+	display: none;
 }
 
-.ingredient-list-controls {
+.ingredient-chooser__content {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) minmax(10rem, auto);
-	align-items: end;
 	gap: $app-gap-sm;
-	margin-bottom: $app-gap-sm;
+	min-width: 0;
 }
 
-.ingredient-lists {
+.ingredient-chooser__summary {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+}
+
+.ingredient-chooser__list {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: $app-gap-sm;
+	gap: $app-gap-xs;
+	max-height: 32rem;
+	padding: $app-focus-outline-offset;
+	overflow-y: auto;
+	overscroll-behavior-y: auto;
 }
 
-@media (max-width: $app-breakpoint-md) {
-	.ingredient-lists {
-		grid-template-columns: 1fr;
-	}
-
-	.section-heading {
-		display: grid;
-	}
-
-	.ingredient-list-controls {
-		grid-template-columns: 1fr;
-	}
+.ingredient-chooser__empty {
+	padding: $app-gap-md;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	text-align: center;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.setup-card {
+	.ingredient-chooser {
+		gap: $app-gap-xs;
 		padding: $app-gap-xs;
 	}
 
-	.section-heading,
-	.ingredient-list-controls,
-	.ingredient-lists {
+	.ingredient-chooser__content {
 		gap: $app-gap-xs;
 	}
 
-	.section-heading,
-	.ingredient-list-controls {
-		margin-bottom: $app-gap-xs;
-	}
-
-	.section-heading h4 {
-		font-size: $app-font-size-md;
-	}
-
-	.section-heading p {
-		font-size: $app-font-size-xs;
+	.ingredient-chooser__list {
+		max-height: 26rem;
 	}
 }

@@ -1,103 +1,73 @@
 @use "../../../../../styles/variables" as *;
 
 .smart-warnings {
-	width: 100%;
-	margin-top: $app-gap-sm;
+	display: grid;
+	gap: $app-gap-sm;
 	padding: $app-gap-sm;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-card-radius;
+	color: $app-warning-text;
+	background: $app-warning-bg;
+	border: $app-warning-border;
+	border-radius: $app-shell-radius-card;
+}
 
-	h4 {
-		margin-bottom: $app-gap-sm;
-		color: $app-primary;
-		font-size: $app-font-size-sm;
-		font-weight: $app-font-weight-bold;
-	}
+.smart-warnings[data-tone="danger"] {
+	color: $app-status-error-text;
+	background: $app-danger-bg;
+	border-color: $app-shell-accent-danger;
+}
+
+.smart-warnings :global(.smart-warnings__disclosure summary) {
+	color: inherit;
+	background: transparent;
 }
 
 .smart-warnings__list {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
 	gap: $app-gap-xs;
 }
 
 .smart-warning {
-	display: inline-grid;
+	display: grid;
 	grid-template-columns: auto minmax(0, 1fr) auto;
-	gap: $app-gap-sm;
 	align-items: center;
-	max-width: 100%;
-	min-height: $app-control-height;
-	padding: $app-gap-xs $app-gap-sm;
-	background: $app-section-bg;
-	border: $app-border;
-	border-radius: $app-radius;
+	gap: $app-gap-sm;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-panel;
+	border: $app-warning-border;
+	border-radius: $app-shell-radius-card;
 }
 
 :global(.smart-warning__symbol) {
 	--circular-icon-frame-size: #{$app-status-icon-badge-size};
-	--circular-icon-frame-icon-size: #{$app-font-size-xs};
-
-	font-weight: $app-font-weight-heavy;
-}
-
-.smart-warning__body {
-	min-width: 0;
+	--circular-icon-frame-icon-size: #{$app-status-icon-badge-icon-size};
+	--circular-icon-frame-color: #{$app-warning-strong};
+	--circular-icon-frame-background: transparent;
 }
 
 .smart-warning--danger {
-	border-color: $app-danger-bg;
+	border-color: $app-shell-accent-danger;
+}
 
-	:global(.smart-warning__symbol) {
-		--circular-icon-frame-color: #{$app-primary};
-		--circular-icon-frame-background: #{$app-danger-bg};
+.smart-warning__body {
+	display: grid;
+	gap: $app-gap-2xs;
+	min-width: 0;
+
+	strong {
+		color: $app-shell-text-primary;
+		font-size: $app-font-size-sm;
+		font-weight: $app-font-weight-bold;
 	}
-}
 
-.smart-warning--warning {
-	border-color: $app-warning-bg;
-
-	:global(.smart-warning__symbol) {
-		--circular-icon-frame-color: #{$app-primary};
-		--circular-icon-frame-background: #{$app-warning-bg};
+	p {
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-xs;
+		line-height: $app-line-height-ui;
 	}
-}
-
-.smart-warning--info {
-	border-color: $app-accent;
-
-	:global(.smart-warning__symbol) {
-		--circular-icon-frame-color: #{$app-primary};
-		--circular-icon-frame-background: #{$app-accent};
-	}
-}
-
-strong {
-	display: block;
-	color: $app-primary;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-bold;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-p {
-	color: $app-muted;
-	font-size: $app-font-size-2xs;
-	font-weight: $app-font-weight-medium;
-	line-height: 1.25;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .smart-warning__popover-summary {
 	margin-bottom: $app-gap-sm;
-	color: $app-muted;
-	font-size: $app-font-size-xs;
-	white-space: normal;
 }
 
 .smart-warning__details {
@@ -108,48 +78,21 @@ p {
 	li {
 		display: grid;
 		gap: $app-gap-micro;
-		padding-bottom: $app-gap-sm;
-		border-bottom: $app-border;
 	}
 
-	li:last-child {
-		padding-bottom: 0;
-		border-bottom: 0;
-	}
-
-	strong {
-		color: $app-primary;
-		font-size: $app-font-size-xs;
-		white-space: normal;
-	}
-
+	strong,
 	span {
-		color: $app-muted;
 		font-size: $app-font-size-xs;
-		font-weight: $app-font-weight-semibold;
 	}
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.smart-warnings {
 		padding: $app-gap-xs;
-
-		h4 {
-			margin-bottom: $app-gap-xs;
-			font-size: $app-font-size-xs;
-		}
 	}
 
 	.smart-warning {
 		gap: $app-gap-xs;
-		padding: $app-gap-inline-compact $app-gap-xs;
-	}
-
-	.smart-warning__details {
-		gap: $app-gap-xs;
-
-		li {
-			padding-bottom: $app-gap-xs;
-		}
+		padding: $app-gap-xs;
 	}
 }

@@ -61,16 +61,15 @@ describe("NutrientAdjustmentSuggestions", () => {
 			},
 		});
 
-		const toggle = screen.getByRole("button", {
-			name: /suggested adjustments/i,
-		});
+		const toggle = screen.getByText("Suggested adjustments").closest("summary");
+		expect(toggle).not.toBeNull();
+		const disclosure = toggle?.closest("details");
 
-		expect(toggle).toHaveAttribute("aria-expanded", "false");
-		expect(screen.queryByText("Banana, raw")).not.toBeInTheDocument();
+		expect(disclosure).not.toHaveAttribute("open");
 
-		await fireEvent.click(toggle);
+		await fireEvent.click(toggle as HTMLElement);
 
-		expect(toggle).toHaveAttribute("aria-expanded", "true");
+		expect(disclosure).toHaveAttribute("open");
 		expect(screen.getByText("Banana, raw")).toBeInTheDocument();
 	});
 
@@ -88,7 +87,7 @@ describe("NutrientAdjustmentSuggestions", () => {
 		});
 
 		await fireEvent.click(
-			screen.getByRole("button", { name: /suggested adjustments/i }),
+			screen.getByText("Suggested adjustments").closest("summary") as HTMLElement,
 		);
 		const applyButtons = screen.getAllByRole("button", { name: "Apply" });
 

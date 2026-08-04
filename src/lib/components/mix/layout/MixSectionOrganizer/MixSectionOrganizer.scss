@@ -1,0 +1,162 @@
+@use "../../../../../styles/variables" as *;
+
+.mix-section-organizer {
+	display: grid;
+	gap: $app-gap-md;
+	padding: $app-gap-md;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-card;
+}
+
+.mix-section-organizer--dragging {
+	user-select: none;
+}
+
+.mix-section-organizer__header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: $app-gap-md;
+}
+
+.mix-section-organizer__copy {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+
+	h2,
+	p {
+		margin: 0;
+	}
+
+	h2 {
+		color: $app-shell-text-primary;
+		font-family: $app-font-family-display;
+		font-size: $app-font-size-lg;
+		font-weight: $app-font-weight-heavy;
+		line-height: $app-line-height-tight;
+	}
+
+	p {
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-sm;
+		line-height: $app-line-height-ui;
+	}
+}
+
+.mix-section-organizer__list {
+	display: grid;
+	gap: $app-gap-xs;
+	margin: 0;
+	padding: 0;
+	overflow: clip;
+	overflow-clip-margin: $app-gap-xs;
+	list-style: none;
+}
+
+.mix-section-organizer__slot {
+	min-width: 0;
+}
+
+.mix-section-organizer__slot--dragging {
+	transform: none !important;
+}
+
+.mix-section-organizer__slot--displacing {
+	will-change: transform;
+}
+
+.mix-section-organizer__item {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: $app-gap-sm;
+	min-height: $app-shell-control-height;
+	padding: $app-gap-xs $app-gap-sm;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-control;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+	transition:
+		background-color 160ms ease,
+		border-color 160ms ease,
+		opacity 160ms ease,
+		transform 160ms ease;
+}
+
+.mix-section-organizer__item--dragging {
+	position: fixed;
+	box-sizing: border-box;
+	margin: 0;
+	pointer-events: none;
+	background: $app-shell-accent-soft;
+	border-color: $app-shell-accent-primary;
+	z-index: 3;
+}
+
+.mix-section-organizer__item--placeholder {
+	visibility: hidden;
+}
+
+.mix-section-organizer__label {
+	min-width: 0;
+	font-family: $app-font-family-display;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-bold;
+	line-height: $app-line-height-tight;
+}
+
+.mix-section-organizer__actions {
+	display: flex;
+	align-items: center;
+	gap: $app-gap-2xs;
+}
+
+:global(.mix-section-organizer__drag-handle.circle-icon-button) {
+	touch-action: none;
+	cursor: grab;
+}
+
+:global(.mix-section-organizer__drag-handle.circle-icon-button:active) {
+	cursor: grabbing;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.mix-section-organizer {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+	}
+
+	.mix-section-organizer__header {
+		align-items: center;
+		gap: $app-gap-sm;
+	}
+
+	.mix-section-organizer__copy {
+		gap: $app-gap-2xs;
+
+		h2 {
+			font-size: $app-font-size-md;
+		}
+
+		p {
+			font-size: $app-font-size-xs;
+		}
+	}
+
+	.mix-section-organizer__item {
+		gap: $app-gap-xs;
+		min-height: $app-shell-control-height-narrow;
+		padding: $app-gap-2xs $app-gap-xs;
+	}
+
+	.mix-section-organizer__label {
+		font-size: $app-font-size-sm;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.mix-section-organizer__item {
+		transition: none;
+	}
+}

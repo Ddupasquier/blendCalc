@@ -20,7 +20,7 @@
 .point-shape__value-label {
 	fill: $app-muted;
 	font-family: $app-font-family-data;
-	font-size: 0.62rem;
+	font-size: $app-font-size-2xs;
 	font-weight: $app-font-weight-bold;
 	font-variant-numeric: tabular-nums;
 	letter-spacing: $app-letter-spacing-data;
@@ -49,4 +49,10 @@
 
 .point-shape__value-fill {
 	opacity: 0.78;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.point-shape__value-label {
+		display: none;
+	}
 }

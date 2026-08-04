@@ -1,15 +1,14 @@
 import type { FdcFood } from "$lib/utils/food/types";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { MixSectionDisclosureProps } from "$lib/utils/mix/ui/mixSectionOrder";
+import type { ScrollDirection } from "$lib/utils/navigation/scrollDirection";
 
-export type IngredientChooserProps = {
+export type IngredientChooserProps = MixSectionDisclosureProps & {
 	fridgeItems: FdcFood[];
 	shoppingItems: FdcFood[];
 	selectedFoodIds: number[];
-	renameRoute?: {
-		listKey: SmoothieListKey;
-		foodId: number;
-	} | null;
-	onOpenRename: (listKey: SmoothieListKey, foodId: number) => void;
-	onCloseRename: () => void;
 	onToggleFood: (foodId: number) => void;
+	onScrollDirectionChange?: (direction: ScrollDirection) => void;
+	filtersOpen?: boolean;
+	onOpenFilters?: () => void;
+	onCloseFilters?: () => void;
 };

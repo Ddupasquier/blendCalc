@@ -1,10 +1,14 @@
 <script lang="ts">
-	import ChevronDown from "$lib/assets/icons/ChevronDown/ChevronDown.svelte";
+	import FoodSymbol from "$lib/assets/icons/FoodSymbol/FoodSymbol.svelte";
+	import Minus from "$lib/assets/icons/Minus/Minus.svelte";
+	import Plus from "$lib/assets/icons/Plus/Plus.svelte";
+	import X from "$lib/assets/icons/X/X.svelte";
+	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
+	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
 	import Popover from "$lib/components/common/display/Popover/Popover.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
-	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte";
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
-	import CloseButton from "$lib/components/common/buttons/CloseButton/CloseButton.svelte";
 	import type { IngredientCardProps } from "./types";
 	import {
 		FOOD_PREFERENCE_WARNING_TITLE,
@@ -35,131 +39,117 @@
 		onServingChange,
 	}: IngredientCardProps = $props();
 
-	let nutrientsOpen = $state(false);
+	let detailsOpen = $state(false);
 	const preferenceWarnings = $derived(food.preferenceWarnings ?? []);
-
-	const getDisplayName = (name: string, maxLength = 30): string => {
-		if (name.length <= maxLength) return name;
-
-		return `${name.slice(0, maxLength - 1).trimEnd()}…`;
-	};
+	const servingUnitOptions = $derived(
+		SERVING_MEASURE_OPTIONS
+			.filter((option) => canConvertServingUnit(option.value, food))
+			.map((option) => ({ value: option.value, label: option.shortLabel })),
+	);
+	const updateQuantity = (nextQuantity: number) =>
+		onServingChange(food, String(Math.max(0, nextQuantity)), unit);
 </script>
 
-<article
-	class="ingredient-card"
-	class:ingredient-card--custom={isPrivateCustomFood(food)}
->
-	<header class="ingredient-card__header">
-		<div>
-			<div class="ingredient-card__badges">
-				<span class="ingredient-card__source">{sourceLabel}</span>
-				{#if isPrivateCustomFood(food)}
-					<CustomBadge />
-				{/if}
-			</div>
-			<h5 title={food.description} aria-label={food.description}>
-				{getDisplayName(food.description)}
-			</h5>
+<article class="ingredient-card" class:ingredient-card--custom={isPrivateCustomFood(food)}>
+	<span class="ingredient-card__symbol" aria-hidden="true"><FoodSymbol {food} /></span>
+	<div class="ingredient-card__copy">
+		<div class="ingredient-card__title-row">
+			<h3 title={food.description}>{food.description}</h3>
+			{#if isPrivateCustomFood(food)}<CustomBadge />{/if}
 		</div>
-		<CloseButton
-			class="ingredient-card__remove"
+		<p>{gramsLabel}</p>
+	</div>
+	<div class="ingredient-card__amount" aria-label={`Amount for ${food.description}`}>
+		<CircleIconButton
+			class="ingredient-card__step"
+			label={`Use less ${food.description}`}
+			variant="soft"
 			size="small"
-			label={`Remove ${food.description}`}
-			onclick={() => onRemove(food.fdcId)}
+			disabled={quantity <= 0}
+			onclick={() => updateQuantity(quantity - 1)}
+		>
+			<Minus size={15} />
+		</CircleIconButton>
+		<NumberInput
+			id={`ingredient-${food.fdcId}-quantity`}
+			name={`ingredient-${food.fdcId}-quantity`}
+			class="ingredient-card__amount-input"
+			min="0"
+			step="any"
+			placeholder="Amount"
+			value={quantity}
+			ariaLabel={`Quantity for ${food.description}`}
+			onValueChange={(value) => onServingChange(food, value, unit)}
 		/>
-	</header>
-
-	<div class="ingredient-card__controls">
-		<label>
-			<span>Amount</span>
-			<NumberInput
-				id={`ingredient-${food.fdcId}-quantity`}
-				name={`ingredient-${food.fdcId}-quantity`}
-				class="ingredient-card__amount-input"
-				min="0"
-				step="any"
-				placeholder="Amount"
-				value={quantity}
-				ariaLabel={`Quantity for ${food.description}`}
-				onValueChange={(value) => onServingChange(food, value, unit)}
-			/>
-		</label>
-		<label>
-			<span>Unit</span>
-			<select
-				id={`ingredient-${food.fdcId}-unit`}
-				name={`ingredient-${food.fdcId}-unit`}
-				value={unit}
-				aria-label={`Measure for ${food.description}`}
-				onchange={(event) =>
-					onServingChange(
-						food,
-						String(quantity),
-						event.currentTarget.value as ServingMeasureUnit,
-					)}
-			>
-				{#each SERVING_MEASURE_OPTIONS.filter((option) => canConvertServingUnit(option.value, food)) as option}
-					<option value={option.value}>{option.label}</option>
-				{/each}
-			</select>
-		</label>
+		<CircleIconButton
+			class="ingredient-card__step ingredient-card__step--add"
+			label={`Use more ${food.description}`}
+			variant="primary"
+			size="small"
+			onclick={() => updateQuantity(quantity + 1)}
+		>
+			<Plus size={15} />
+		</CircleIconButton>
+		<SelectField
+			id={`ingredient-${food.fdcId}-unit`}
+			name={`ingredient-${food.fdcId}-unit`}
+			class="ingredient-card__unit-select"
+			label={`Measure for ${food.description}`}
+			labelVisibility="sr-only"
+			size="small"
+			width="content"
+			value={unit}
+			options={servingUnitOptions}
+			onValueChange={(value) =>
+				onServingChange(food, String(quantity), value as ServingMeasureUnit)}
+		/>
+	</div>
+	<div class="ingredient-card__actions">
+		<CircleIconButton
+			class="ingredient-card__details-toggle"
+			label={`${detailsOpen ? "Hide" : "Show"} details for ${food.description}`}
+			variant="soft"
+			size="small"
+			aria-expanded={detailsOpen}
+			onclick={() => (detailsOpen = !detailsOpen)}
+		>
+			<DisclosureChevron open={detailsOpen} size={15} />
+		</CircleIconButton>
+		<CircleIconButton
+			class="ingredient-card__remove"
+			label={`Remove ${food.description}`}
+			variant="danger-soft"
+			size="small"
+			onclick={() => onRemove(food.fdcId)}
+		>
+			<X size={15} />
+		</CircleIconButton>
 	</div>
 
-	<div class="ingredient-card__meta">
-		<span class="ingredient-card__grams">Converted <strong>{gramsLabel}</strong></span>
-		{#if conversionBasis}
-			<span class="ingredient-card__conversion-basis">{conversionBasis}</span>
-		{/if}
-		{#if warning}
-			<Popover
-				open={conversionDetailsOpen}
-				buttonLabel="⚠️ Estimate"
-				title="Volume conversion estimate"
-				onOpen={() => onOpenConversionDetails(food.fdcId)}
-				onClose={onCloseConversionDetails}
-			>
-				<p>{warning}</p>
-			</Popover>
-		{/if}
-	</div>
-
-	{#if preferenceWarnings.length > 0}
-		<div
-			class="ingredient-card__warning"
-			class:ingredient-card__warning--potential={!preferenceWarnings.some((item) => item.level === "warning")}
-			>
-				<strong>{FOOD_PREFERENCE_WARNING_TITLE}</strong>
-				<p>
-					{preferenceWarnings.map(getFoodPreferenceWarningMessage).join(" ")}
-				</p>
-		</div>
-	{/if}
-
-	{#if nutrientChips.length > 0}
-		<div class="ingredient-card__details">
-			<button
-				class="ingredient-card__details-toggle"
-				type="button"
-					aria-expanded={nutrientsOpen}
-					onclick={() => (nutrientsOpen = !nutrientsOpen)}
+	{#if detailsOpen}
+		<div class="ingredient-card__details" transition:slide={{ duration: getMotionSafeDuration(180) }}>
+			<p><strong>Source list:</strong> {sourceLabel}</p>
+			{#if conversionBasis}<p>{conversionBasis}</p>{/if}
+			{#if warning}
+				<Popover
+					open={conversionDetailsOpen}
+					buttonLabel="Review estimated conversion"
+					title="Volume conversion estimate"
+					onOpen={() => onOpenConversionDetails(food.fdcId)}
+					onClose={onCloseConversionDetails}
 				>
-					Top nutrients
-					<CircularIconFrame
-						class={`ingredient-card__chevron ${nutrientsOpen ? "ingredient-card__chevron--open" : ""}`}
-						decorative
-					>
-						<ChevronDown size="1em" />
-					</CircularIconFrame>
-				</button>
-			{#if nutrientsOpen}
-				<div
-					class="ingredient-card__chips"
-					aria-label="Top nutrient contributions"
-					transition:slide={{ duration: getMotionSafeDuration(160) }}
-				>
-					{#each nutrientChips as chip}
-						<span>{chip.label} {chip.value}</span>
-					{/each}
+					<p>{warning}</p>
+				</Popover>
+			{/if}
+			{#if preferenceWarnings.length > 0}
+				<div class="ingredient-card__warning">
+					<strong>{FOOD_PREFERENCE_WARNING_TITLE}</strong>
+					<p>{preferenceWarnings.map(getFoodPreferenceWarningMessage).join(" ")}</p>
+				</div>
+			{/if}
+			{#if nutrientChips.length > 0}
+				<div class="ingredient-card__chips" aria-label="Top nutrient contributions">
+					{#each nutrientChips as chip}<span>{chip.label} {chip.value}</span>{/each}
 				</div>
 			{/if}
 		</div>
