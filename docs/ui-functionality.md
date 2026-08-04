@@ -494,6 +494,9 @@ carrying the individual warning or danger severity. Empty conditional warning,
 suggestion, and contribution sections remain absent;
 organization mode still shows their stable headers so users can position them before
 content exists.
+Closed top-level sections occupy only the shared summary height and their boundary;
+expanded panel spacing belongs inside the disclosure body and must not make closed rows
+look like full content cards.
 
 At the compact width or height tier, Mix uses the shared `ViewFrame`, `ViewTop`, and
 `ViewBody` shell established by Ingredients. Downward scrolling in the main Mix surface

@@ -1,9 +1,12 @@
 @use "../../../../../styles/variables" as *;
 
 .nutrient-adjustments {
-	padding: $app-gap-sm;
 	background: $app-shell-surface-panel;
 	border-radius: $app-shell-radius-card;
+}
+
+.nutrient-adjustments > :global(.collapsible-section) > :global(.collapsible-section__content) {
+	padding: $app-gap-md $app-gap-sm $app-gap-sm;
 }
 
 .nutrient-adjustments__list {
@@ -100,8 +103,8 @@ p {
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.nutrient-adjustments {
-		padding: $app-gap-xs;
+	.nutrient-adjustments > :global(.collapsible-section) > :global(.collapsible-section__content) {
+		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
 	}
 
 	.nutrient-adjustment {

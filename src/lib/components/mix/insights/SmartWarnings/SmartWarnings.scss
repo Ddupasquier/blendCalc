@@ -3,11 +3,14 @@
 .smart-warnings {
 	display: grid;
 	gap: $app-gap-sm;
-	padding: $app-gap-sm;
 	color: $app-warning-text;
 	background: $app-warning-bg;
 	border: $app-warning-border;
 	border-radius: $app-shell-radius-card;
+}
+
+.smart-warnings > :global(.collapsible-section) > :global(.collapsible-section__content) {
+	padding: $app-gap-md $app-gap-sm $app-gap-sm;
 }
 
 .smart-warnings[data-tone="danger"] {
@@ -87,8 +90,8 @@
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.smart-warnings {
-		padding: $app-gap-xs;
+	.smart-warnings > :global(.collapsible-section) > :global(.collapsible-section__content) {
+		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
 	}
 
 	.smart-warning {

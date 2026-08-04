@@ -1,9 +1,12 @@
 @use "../../../../../styles/variables" as *;
 
 .goals-panel {
-	padding: $app-gap-sm;
 	background: $app-shell-surface-panel;
 	border-radius: $app-shell-radius-card;
+}
+
+.goals-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
+	padding: $app-gap-md $app-gap-sm $app-gap-sm;
 }
 
 .goal-template-controls {
@@ -151,8 +154,8 @@
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.goals-panel {
-		padding: $app-gap-xs;
+	.goals-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
+		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
 	}
 
 	.goal-input {

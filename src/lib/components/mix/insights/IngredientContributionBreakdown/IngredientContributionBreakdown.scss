@@ -1,9 +1,12 @@
 @use "../../../../../styles/variables" as *;
 
 .contribution-breakdown {
-	padding: $app-gap-sm;
 	background: $app-shell-surface-panel;
 	border-radius: $app-shell-radius-card;
+}
+
+.contribution-breakdown > :global(.collapsible-section) > :global(.collapsible-section__content) {
+	padding: $app-gap-md $app-gap-sm $app-gap-sm;
 }
 
 .contribution-breakdown__grid,
@@ -82,7 +85,7 @@ small {
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.contribution-breakdown {
-		padding: $app-gap-xs;
+	.contribution-breakdown > :global(.collapsible-section) > :global(.collapsible-section__content) {
+		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
 	}
 }

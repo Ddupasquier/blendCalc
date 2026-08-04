@@ -3,9 +3,12 @@
 .selected-ingredients-panel {
 	display: grid;
 	gap: $app-gap-sm;
-	padding: $app-gap-sm;
 	background: $app-shell-surface-panel;
 	border-radius: $app-shell-radius-card;
+}
+
+.selected-ingredients-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
+	padding: $app-gap-md $app-gap-sm $app-gap-sm;
 }
 
 .selected-ingredients-panel__content {
@@ -37,7 +40,10 @@
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.selected-ingredients-panel {
 		gap: $app-gap-xs;
-		padding: $app-gap-xs;
+	}
+
+	.selected-ingredients-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
+		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
 	}
 
 	.selected-ingredients-panel__content {

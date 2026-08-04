@@ -324,6 +324,11 @@ returns to its top. Every scroll owner pauses and rebases while the header geome
 settles so the animation cannot shudder or immediately reverse itself. Wider Mix layouts
 keep the header visible.
 
+Top-level Mix sections place panel padding inside the animated disclosure body rather
+than around the whole collapse. A closed section therefore occupies only the shared
+summary control height and section border; opening it restores the normal tokenized body
+inset without changing the summary target or introducing a second panel shell.
+
 The compact manual-entry action is one `44px` pencil-only button in the same toolbar row
 as Search, Barcode, and Filters. It uses the shared rounded icon-control shape and keeps
 the full accessible name `Enter a custom ingredient manually`; the larger launcher row

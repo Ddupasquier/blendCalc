@@ -3,9 +3,12 @@
 .ingredient-chooser {
 	display: grid;
 	gap: $app-gap-sm;
-	padding: $app-gap-sm;
 	background: $app-shell-surface-panel;
 	border-radius: $app-shell-radius-card;
+}
+
+.ingredient-chooser > :global(.collapsible-section) > :global(.collapsible-section__content) {
+	padding: $app-gap-md $app-gap-sm $app-gap-sm;
 }
 
 .ingredient-chooser :global(.result-count) {
@@ -43,7 +46,10 @@
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.ingredient-chooser {
 		gap: $app-gap-xs;
-		padding: $app-gap-xs;
+	}
+
+	.ingredient-chooser > :global(.collapsible-section) > :global(.collapsible-section__content) {
+		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
 	}
 
 	.ingredient-chooser__content {

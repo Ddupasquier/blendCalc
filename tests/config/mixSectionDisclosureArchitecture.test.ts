@@ -49,11 +49,18 @@ describe("Mix section disclosure architecture", () => {
 		expect(repository).toContain("save_mix_section_disclosure_state");
 	});
 
-	it("keeps top-level Mix disclosure shells compact without shrinking the shared target", () => {
+	it("keeps collapsed Mix shells at summary height and pads only expanded content", () => {
 		for (const path of sectionStyles) {
 			const source = readFileSync(path, "utf8");
-			expect(source, path).toContain("padding: $app-gap-sm;");
-			expect(source, path).toContain("padding: $app-gap-xs;");
+			const shellRule = source.match(/^\.[^{]+ \{[\s\S]*?\n\}/m)?.[0];
+			expect(shellRule, path).toBeDefined();
+			expect(shellRule, path).not.toMatch(/\bpadding:/);
+			expect(source, path).toMatch(
+				/> :global\(\.collapsible-section\) > :global\(\.collapsible-section__content\) \{\n\tpadding: \$app-gap-md \$app-gap-sm \$app-gap-sm;/,
+			);
+			expect(source, path).toMatch(
+				/> :global\(\.collapsible-section\) > :global\(\.collapsible-section__content\) \{\n\t\tpadding: \$app-gap-sm \$app-gap-xs \$app-gap-xs;/,
+			);
 			expect(source, path).not.toContain("padding: $app-shell-card-padding;");
 			expect(source, path).not.toContain("padding: $app-shell-card-padding-compact;");
 		}
