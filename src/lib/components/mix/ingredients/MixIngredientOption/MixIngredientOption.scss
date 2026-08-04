@@ -4,9 +4,7 @@
 
 .mix-ingredient-option {
 	@include ingredient-card-layout.frame;
-	@include ingredient-card-layout.action-button;
-
-	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-columns: minmax(0, 1fr);
 	min-height: calc($app-shell-control-height + $app-gap-sm);
 	padding-block: $app-gap-xs;
 	transition:
@@ -28,6 +26,15 @@
 	@include ingredient-card-layout.primary-action-focus;
 }
 
+.mix-ingredient-option__select-status {
+	position: absolute;
+	top: 50%;
+	right: $app-shell-card-padding-compact;
+	display: inline-flex;
+	transform: translateY(-50%);
+	pointer-events: none;
+}
+
 .mix-ingredient-option__copy {
 	@include ingredient-card-layout.copy(false);
 	@include ingredient-card-layout.presentation-layer;
@@ -41,27 +48,8 @@
 	@include ingredient-card-layout.title-row;
 }
 
-.mix-ingredient-option__actions {
-	@include ingredient-card-layout.action-row;
-
-	z-index: 2;
-}
-
-.mix-ingredient-option__status {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: var(--ingredient-card-action-size);
-	height: var(--ingredient-card-action-size);
-	flex: 0 0 auto;
-	color: $app-shell-text-on-accent;
-	background: transparent;
-	border: 1.5px solid $app-shell-text-muted;
-	border-radius: $app-radius-circle;
-	pointer-events: none;
-}
-
-.mix-ingredient-option--selected .mix-ingredient-option__status {
-	background: $app-shell-accent-primary;
-	border-color: $app-shell-accent-primary;
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.mix-ingredient-option__select-status {
+		right: $app-gap-sm;
+	}
 }

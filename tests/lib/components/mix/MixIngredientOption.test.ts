@@ -13,7 +13,7 @@ const food: FdcFood = {
 describe("MixIngredientOption", () => {
 	it("uses the whole card as the only selection action", async () => {
 		const onSelect = vi.fn();
-		render(MixIngredientOption, {
+		const { container } = render(MixIngredientOption, {
 			props: { food, selected: false, onSelect },
 		});
 
@@ -21,6 +21,15 @@ describe("MixIngredientOption", () => {
 			screen.getByRole("button", { name: /add pork chorizo to this mix/i }),
 		);
 		expect(onSelect).toHaveBeenCalledOnce();
+		const selectionButton = screen.getByRole("button", {
+			name: /add pork chorizo to this mix/i,
+		});
+		const selectionIndicator = container.querySelector(
+			".card-selection-indicator",
+		) as HTMLElement;
+		expect(selectionButton).toContainElement(selectionIndicator);
+		await fireEvent.click(selectionIndicator);
+		expect(onSelect).toHaveBeenCalledTimes(2);
 		expect(
 			screen.queryByRole("button", { name: /rename pork chorizo/i }),
 		).not.toBeInTheDocument();
