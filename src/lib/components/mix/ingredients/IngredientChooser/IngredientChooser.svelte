@@ -16,14 +16,12 @@
 	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
-	import { createScrollDirectionTracker } from "$lib/utils/navigation/scrollDirection";
 
 	let {
 		fridgeItems,
 		shoppingItems,
 		selectedFoodIds,
 		onToggleFood,
-		onScrollDirectionChange = () => {},
 		open = true,
 		onOpenChange,
 		filtersOpen = false,
@@ -37,10 +35,6 @@
 	let sort = $state<FoodListSort>("recent");
 	let visibleCount = $state<number>(LIST_PAGE_SIZES.mixChooser);
 	let listElement = $state<HTMLElement | null>(null);
-	const scrollDirectionTracker = createScrollDirectionTracker();
-	let scrollResumeFrame: number | null = null;
-	let scrollSettleFrame: number | null = null;
-	let compactHeaderLayoutSettling = false;
 
 	const activeItems = $derived(
 		activeListKey === MIX_STORAGE_KEYS.fridge ? fridgeItems : shoppingItems,
@@ -87,8 +81,6 @@
 	const setActiveList = (value: string) => {
 		activeListKey = value as SmoothieListKey;
 		resetVisibleItems();
-		scrollDirectionTracker.reset();
-		onScrollDirectionChange("up");
 		requestAnimationFrame(() => {
 			listElement?.scrollTo({ top: 0, behavior: "auto" });
 		});
@@ -99,58 +91,6 @@
 		resetVisibleItems();
 		onCloseFilters();
 	};
-
-	const cancelScrollTrackingResume = () => {
-		if (scrollResumeFrame !== null) cancelAnimationFrame(scrollResumeFrame);
-		if (scrollSettleFrame !== null) cancelAnimationFrame(scrollSettleFrame);
-		scrollResumeFrame = null;
-		scrollSettleFrame = null;
-	};
-
-	const resumeScrollTrackingAfterLayoutSettles = (element: HTMLElement) => {
-		cancelScrollTrackingResume();
-		scrollResumeFrame = requestAnimationFrame(() => {
-			scrollSettleFrame = requestAnimationFrame(() => {
-				scrollDirectionTracker.resume(element.scrollTop);
-				compactHeaderLayoutSettling = false;
-				scrollResumeFrame = null;
-				scrollSettleFrame = null;
-			});
-		});
-	};
-
-	const handleListScroll = (event: Event) => {
-		const element = event.currentTarget as HTMLElement;
-		const direction = scrollDirectionTracker.update(element.scrollTop);
-		if (direction === "down") {
-			compactHeaderLayoutSettling = true;
-			scrollDirectionTracker.pause(element.scrollTop);
-			resumeScrollTrackingAfterLayoutSettles(element);
-		}
-		if (direction) onScrollDirectionChange(direction);
-	};
-
-	$effect(() => {
-		const element = listElement;
-		if (!element || typeof ResizeObserver === "undefined") return;
-
-		const observer = new ResizeObserver(() => {
-			if (compactHeaderLayoutSettling) {
-				scrollDirectionTracker.pause(element.scrollTop);
-				resumeScrollTrackingAfterLayoutSettles(element);
-				return;
-			}
-
-			scrollDirectionTracker.rebase(element.scrollTop);
-		});
-		observer.observe(element);
-
-		return () => {
-			observer.disconnect();
-			cancelScrollTrackingResume();
-			compactHeaderLayoutSettling = false;
-		};
-	});
 </script>
 
 <ListSortSheet
@@ -203,7 +143,6 @@
 			<div
 				class="ingredient-chooser__list"
 				bind:this={listElement}
-				onscroll={handleListScroll}
 				aria-label={activeListKey === MIX_STORAGE_KEYS.fridge ? "Mix fridge ingredients" : "Mix shopping-list ingredients"}
 				data-tutorial-target="mix-ingredient-options"
 			>

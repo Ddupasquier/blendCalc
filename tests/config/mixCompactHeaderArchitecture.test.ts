@@ -10,9 +10,17 @@ const selectedIngredients = readFileSync(
 	"src/lib/components/mix/ingredients/SelectedIngredientsPanel/SelectedIngredientsPanel.svelte",
 	"utf8",
 );
+const ingredientChooserTypes = readFileSync(
+	"src/lib/components/mix/ingredients/IngredientChooser/types.ts",
+	"utf8",
+);
+const selectedIngredientsTypes = readFileSync(
+	"src/lib/components/mix/ingredients/SelectedIngredientsPanel/types.ts",
+	"utf8",
+);
 
 describe("Mix compact header architecture", () => {
-	it("uses the shared app-shell scroll-away contract", () => {
+	it("uses only the main Mix surface to control the compact header", () => {
 		expect(mixPage).toContain("<ViewFrame appShell>");
 		expect(mixPage).toContain("<ViewTop compactHidden={compactTopHidden}>");
 		expect(mixPage).toContain("<ViewBody>");
@@ -27,18 +35,18 @@ describe("Mix compact header architecture", () => {
 		expect(mixPage).toContain(
 			"mixPageScrollDirectionTracker.resume(element.scrollTop)",
 		);
-		expect(mixPage).toContain(
-			"onScrollDirectionChange={handleMixListScrollDirectionChange}",
-		);
+		expect(mixPage).not.toContain("handleMixListScrollDirectionChange");
+		expect(mixPage).not.toContain("onScrollDirectionChange=");
 		expect(mixPage).not.toContain("document.addEventListener(\"scroll\"");
 
-		for (const scrollOwner of [ingredientChooser, selectedIngredients]) {
-			expect(scrollOwner).toContain("createScrollDirectionTracker");
-			expect(scrollOwner).toContain("onscroll={handleListScroll}");
-			expect(scrollOwner).toContain("scrollDirectionTracker.pause(element.scrollTop)");
-			expect(scrollOwner).toContain("scrollDirectionTracker.rebase(element.scrollTop)");
-			expect(scrollOwner).toContain("scrollDirectionTracker.resume(element.scrollTop)");
-			expect(scrollOwner).toContain("new ResizeObserver");
+		for (const childList of [ingredientChooser, selectedIngredients]) {
+			expect(childList).not.toContain("createScrollDirectionTracker");
+			expect(childList).not.toContain("onscroll=");
+			expect(childList).not.toContain("onScrollDirectionChange");
+		}
+		for (const propsType of [ingredientChooserTypes, selectedIngredientsTypes]) {
+			expect(propsType).not.toContain("onScrollDirectionChange");
+			expect(propsType).not.toContain("ScrollDirection");
 		}
 	});
 

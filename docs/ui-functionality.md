@@ -501,12 +501,12 @@ look like full content cards.
 At the compact width or height tier, Mix uses the shared `ViewFrame`, `ViewTop`, and
 `ViewBody` shell established by Ingredients. Downward scrolling in the main Mix surface
 retracts the Mix title, supporting copy, status, and header actions. A short upward scroll
-reveals the complete header without requiring a return to the top. The bounded Add
-Ingredients and Selected Ingredients lists report the same direction changes while they
-own the gesture. Every scroll owner pauses and rebases its tracker while header geometry
-settles so the transition cannot interpret its own layout movement as a reverse scroll.
-Wider layouts keep the Mix header visible, and reduced-motion preference removes the
-transition without changing the visibility behavior.
+reveals the complete header without requiring a return to the top. Scrolling inside the
+bounded Add Ingredients and Selected Ingredients lists does not change Mix header
+visibility. The main Mix scroll tracker pauses and rebases while header geometry settles
+so the transition cannot interpret its own layout movement as a reverse scroll. Wider
+layouts keep the Mix header visible, and reduced-motion preference removes the transition
+without changing the visibility behavior.
 
 ### Loaded Mix State
 

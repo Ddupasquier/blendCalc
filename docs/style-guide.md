@@ -316,11 +316,11 @@ remove the transition without changing the visibility behavior. Wider layouts ke
 complete region visible.
 
 The compact Mix page uses the same `ViewFrame`, `ViewTop`, and `ViewBody` shell contract
-as Ingredients. Its main scroll surface owns header direction changes, while the bounded
-Add Ingredients and Selected Ingredients lists report the same direction when they own
-the gesture. Downward movement retracts the title, supporting copy, status, and header
-actions; a short upward movement reveals the complete header before any scroll surface
-returns to its top. Every scroll owner pauses and rebases while the header geometry
+as Ingredients. Only its main scroll surface owns header direction changes. Downward
+movement there retracts the title, supporting copy, status, and header actions; a short
+upward movement there reveals the complete header before the page returns to its top.
+Scrolling inside the bounded Add Ingredients and Selected Ingredients lists never
+changes header visibility. The main tracker pauses and rebases while header geometry
 settles so the animation cannot shudder or immediately reverse itself. Wider Mix layouts
 keep the header visible.
 

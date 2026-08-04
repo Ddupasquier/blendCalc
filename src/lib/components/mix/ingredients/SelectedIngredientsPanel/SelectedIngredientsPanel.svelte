@@ -18,7 +18,6 @@
 		LIST_PAGE_SIZES,
 		LIST_SEARCH_THRESHOLDS,
 	} from "$lib/config/listPagination";
-	import { createScrollDirectionTracker } from "$lib/utils/navigation/scrollDirection";
 
 	let {
 		selectedFoods,
@@ -34,7 +33,6 @@
 		onCloseConversionDetails,
 		onRemove,
 		onServingChange,
-		onScrollDirectionChange = () => {},
 		open = true,
 		onOpenChange,
 	}: SelectedIngredientsPanelProps = $props();
@@ -42,10 +40,6 @@
 	let query = $state("");
 	let visibleCount = $state<number>(LIST_PAGE_SIZES.selectedIngredients);
 	let listElement = $state<HTMLElement | null>(null);
-	const scrollDirectionTracker = createScrollDirectionTracker();
-	let scrollResumeFrame: number | null = null;
-	let scrollSettleFrame: number | null = null;
-	let compactHeaderLayoutSettling = false;
 	const filteredFoods = $derived(
 		filterItemsByQuery(
 			selectedFoods,
@@ -70,58 +64,6 @@
 			filteredFoods.length,
 		);
 	};
-
-	const cancelScrollTrackingResume = () => {
-		if (scrollResumeFrame !== null) cancelAnimationFrame(scrollResumeFrame);
-		if (scrollSettleFrame !== null) cancelAnimationFrame(scrollSettleFrame);
-		scrollResumeFrame = null;
-		scrollSettleFrame = null;
-	};
-
-	const resumeScrollTrackingAfterLayoutSettles = (element: HTMLElement) => {
-		cancelScrollTrackingResume();
-		scrollResumeFrame = requestAnimationFrame(() => {
-			scrollSettleFrame = requestAnimationFrame(() => {
-				scrollDirectionTracker.resume(element.scrollTop);
-				compactHeaderLayoutSettling = false;
-				scrollResumeFrame = null;
-				scrollSettleFrame = null;
-			});
-		});
-	};
-
-	const handleListScroll = (event: Event) => {
-		const element = event.currentTarget as HTMLElement;
-		const direction = scrollDirectionTracker.update(element.scrollTop);
-		if (direction === "down") {
-			compactHeaderLayoutSettling = true;
-			scrollDirectionTracker.pause(element.scrollTop);
-			resumeScrollTrackingAfterLayoutSettles(element);
-		}
-		if (direction) onScrollDirectionChange(direction);
-	};
-
-	$effect(() => {
-		const element = listElement;
-		if (!element || typeof ResizeObserver === "undefined") return;
-
-		const observer = new ResizeObserver(() => {
-			if (compactHeaderLayoutSettling) {
-				scrollDirectionTracker.pause(element.scrollTop);
-				resumeScrollTrackingAfterLayoutSettles(element);
-				return;
-			}
-
-			scrollDirectionTracker.rebase(element.scrollTop);
-		});
-		observer.observe(element);
-
-		return () => {
-			observer.disconnect();
-			cancelScrollTrackingResume();
-			compactHeaderLayoutSettling = false;
-		};
-	});
 </script>
 
 <section class="selected-ingredients-panel" aria-label="Selected ingredients">
@@ -152,7 +94,6 @@
 				<div
 					class="selected-ingredient-cards"
 					bind:this={listElement}
-					onscroll={handleListScroll}
 					aria-label="Selected Mix ingredients"
 					data-tutorial-target="mix-selected-ingredients"
 				>

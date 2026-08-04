@@ -20,8 +20,7 @@
 	min-height: $app-shell-header-height;
 	min-width: 0;
 	margin: 0 auto;
-	padding: $app-gap-sm max($app-shell-padding-x, env(safe-area-inset-right))
-		$app-gap-sm max($app-shell-padding-x, env(safe-area-inset-left));
+	padding: $app-gap-sm max($app-shell-padding-x, env(safe-area-inset-right)) $app-gap-sm max($app-shell-padding-x, env(safe-area-inset-left));
 	box-sizing: border-box;
 }
 
@@ -101,7 +100,9 @@
 	}
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+(max-height: $app-breakpoint-height-compact) {
+
 	.app-header,
 	.app-header__inner {
 		min-height: $app-shell-header-height-compact;
@@ -110,8 +111,7 @@
 	.app-header__inner {
 		gap: $app-gap-sm;
 		padding-block: $app-gap-xs;
-		padding-inline: max($app-gap-md, env(safe-area-inset-right))
-			max($app-gap-md, env(safe-area-inset-left));
+		padding-inline: max($app-gap-md, env(safe-area-inset-right)) max($app-gap-md, env(safe-area-inset-left));
 	}
 
 	.app-header__brand {

@@ -91,7 +91,6 @@
 	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 	import {
 		createScrollDirectionTracker,
-		type ScrollDirection,
 	} from "$lib/utils/navigation/scrollDirection";
 	import {
 		getDefaultMixFields,
@@ -835,11 +834,6 @@
 		saveMixState();
 	};
 
-	const handleMixListScrollDirectionChange = (direction: ScrollDirection) => {
-		if (mixRouteState.overlay !== null) return;
-		compactTopHidden = direction === "down";
-	};
-
 	const cancelMixScrollTrackingResume = () => {
 		if (mixScrollResumeFrame !== null) cancelAnimationFrame(mixScrollResumeFrame);
 		if (mixScrollSettleFrame !== null) cancelAnimationFrame(mixScrollSettleFrame);
@@ -1080,7 +1074,6 @@
 					onCloseConversionDetails={closeMixOverlay}
                     onRemove={toggleFood}
                     onServingChange={updateServingAmount}
-					onScrollDirectionChange={handleMixListScrollDirectionChange}
 					open={sectionDisclosureState[sectionId]}
 					onOpenChange={(open) => updateSectionDisclosureState(sectionId, open)}
                 />
@@ -1091,7 +1084,6 @@
 					{shoppingItems}
 					{selectedFoodIds}
 					onToggleFood={toggleFood}
-					onScrollDirectionChange={handleMixListScrollDirectionChange}
 					filtersOpen={ingredientFiltersOpen}
 					onOpenFilters={() =>
 						navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.ingredientFilters })}

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import IngredientChooser from "$lib/components/mix/ingredients/IngredientChooser/IngredientChooser.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
 
@@ -30,7 +30,6 @@ const defaultFridgeItems = [
 
 const renderChooser = (
 	fridgeItems = defaultFridgeItems,
-	onScrollDirectionChange = vi.fn(),
 	filtersOpen = false,
 ) =>
 	render(IngredientChooser, {
@@ -48,20 +47,15 @@ const renderChooser = (
 			],
 			selectedFoodIds: [],
 			onToggleFood: vi.fn(),
-			onScrollDirectionChange,
 			filtersOpen,
 			onOpenFilters: vi.fn(),
 			onCloseFilters: vi.fn(),
 		},
 	});
 
-afterEach(() => {
-	vi.unstubAllGlobals();
-});
-
 describe("IngredientChooser custom filtering", () => {
 	it("keeps catalog and pending foods out of Custom only", async () => {
-		renderChooser(defaultFridgeItems, vi.fn(), true);
+		renderChooser(defaultFridgeItems, true);
 
 		expect(screen.getByText("Catalog Jelly")).toBeInTheDocument();
 		expect(screen.getByText("Purple Homebrew")).toBeInTheDocument();
@@ -124,30 +118,5 @@ describe("IngredientChooser progressive loading", () => {
 		expect(screen.getByText("Ingredient 02")).toBeInTheDocument();
 		expect(screen.getByText("Ingredient 01")).toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: /next page/i })).not.toBeInTheDocument();
-	});
-
-	it("reports deliberate down and up scrolling without reaching the top", async () => {
-		vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
-			callback(0);
-			return 1;
-		});
-		vi.stubGlobal("cancelAnimationFrame", vi.fn());
-		const onScrollDirectionChange = vi.fn();
-		renderChooser(defaultFridgeItems, onScrollDirectionChange);
-
-		const list = screen.getByLabelText("Mix fridge ingredients");
-		let scrollTop = 0;
-		Object.defineProperty(list, "scrollTop", {
-			configurable: true,
-			get: () => scrollTop,
-		});
-
-		scrollTop = 30;
-		await fireEvent.scroll(list);
-		scrollTop = 15;
-		await fireEvent.scroll(list);
-
-		expect(onScrollDirectionChange).toHaveBeenNthCalledWith(1, "down");
-		expect(onScrollDirectionChange).toHaveBeenNthCalledWith(2, "up");
 	});
 });

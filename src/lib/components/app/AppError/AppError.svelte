@@ -3,11 +3,7 @@
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import type { AppErrorProps } from "./types";
 
-	let {
-		status,
-		title,
-		message,
-	}: AppErrorProps = $props();
+	let { status, title, message }: AppErrorProps = $props();
 </script>
 
 <section class="app-error">

@@ -3,7 +3,6 @@ import type { NutrientMeta } from "$lib/utils/mix/calculations";
 import type { ServingConversion } from "$lib/utils/serving/servingAmount";
 import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 import type { MixSectionDisclosureProps } from "$lib/utils/mix/ui/mixSectionOrder";
-import type { ScrollDirection } from "$lib/utils/navigation/scrollDirection";
 
 export type SelectedIngredientsPanelProps = MixSectionDisclosureProps & {
 	selectedFoods: FdcFood[];
@@ -23,5 +22,4 @@ export type SelectedIngredientsPanelProps = MixSectionDisclosureProps & {
 		quantityValue: string,
 		unit: ServingMeasureUnit,
 	) => void;
-	onScrollDirectionChange?: (direction: ScrollDirection) => void;
 };
