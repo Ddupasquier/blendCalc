@@ -24,4 +24,13 @@ describe("development rules documentation", () => {
 		expect(audit).not.toContain("## Audit Summary");
 		expect(audit).not.toContain("## Removed As Resolved");
 	});
+
+	it("documents accessible reordering and dependency supply-chain boundaries", () => {
+		expect(rules).toContain('id="rule-reorderable-collections"');
+		expect(rules).toContain("Arrow Up, Arrow Down,\nHome, and End");
+		expect(rules).toContain("one polite live region");
+		expect(rules).toContain('id="rule-dependency-supply-chain"');
+		expect(rules).toContain("version-pinned package scripts");
+		expect(rules).toContain("never approve\nall current or future scripts through a wildcard");
+	});
 });
