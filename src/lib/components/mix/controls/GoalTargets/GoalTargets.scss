@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
 .goals-panel {
 	background: $app-shell-surface-panel;
@@ -97,7 +98,7 @@
 		height: 100%;
 		background: $app-warning-strong;
 		border-radius: inherit;
-		transition: width 180ms ease;
+		transition: width motion.$duration-feedback motion.$easing-standard;
 	}
 }
 

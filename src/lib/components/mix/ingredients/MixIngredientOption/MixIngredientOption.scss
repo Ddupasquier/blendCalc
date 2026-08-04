@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 @use "../../../ingredients/card/IngredientCardMediaLane/IngredientCardLayout" as ingredient-card-layout;
 
 .mix-ingredient-option {
@@ -9,9 +10,9 @@
 	min-height: calc($app-shell-control-height + $app-gap-sm);
 	padding-block: $app-gap-xs;
 	transition:
-		background-color 160ms ease,
-		border-color 160ms ease,
-		opacity 160ms ease;
+		background-color motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard,
+		opacity motion.$duration-state motion.$easing-standard;
 }
 
 .mix-ingredient-option--selected {

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	animatedDetails,
 	setAnimatedDetailsOpen,
-} from "$lib/utils/accessibility/animatedDetails";
+} from "$lib/utils/animation/animatedDetails";
 
 type TestAnimation = Animation & {
 	keyframes: Keyframe[];

@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
 .point-shape {
 	display: block;
@@ -28,23 +29,23 @@
 
 .point-shape__value-circle {
 	transition:
-		r 0.32s ease-out,
-		fill 0.18s ease,
-		stroke 0.18s ease;
+		r motion.$duration-reflow ease-out,
+		fill motion.$duration-feedback motion.$easing-standard,
+		stroke motion.$duration-feedback motion.$easing-standard;
 }
 
 .point-shape__goal-shape {
 	transition:
-		r 0.32s ease-out,
-		fill 0.18s ease,
-		stroke 0.18s ease;
+		r motion.$duration-reflow ease-out,
+		fill motion.$duration-feedback motion.$easing-standard,
+		stroke motion.$duration-feedback motion.$easing-standard;
 }
 
 .point-shape__value-fill,
 .point-shape__value-stroke {
 	transition:
-		fill 0.18s ease,
-		stroke 0.18s ease;
+		fill motion.$duration-feedback motion.$easing-standard,
+		stroke motion.$duration-feedback motion.$easing-standard;
 }
 
 .point-shape__value-fill {

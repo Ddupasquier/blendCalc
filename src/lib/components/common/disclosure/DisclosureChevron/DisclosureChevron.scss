@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
 .disclosure-chevron {
 	display: inline-flex;
@@ -9,7 +10,7 @@
 	height: $app-shell-control-icon-size;
 	line-height: $app-line-height-none;
 	transform: rotate(0deg);
-	transition: transform 180ms ease;
+	transition: transform motion.$duration-feedback motion.$easing-standard;
 }
 
 .disclosure-chevron[data-open="true"],

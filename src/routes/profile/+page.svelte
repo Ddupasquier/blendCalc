@@ -11,7 +11,7 @@
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
-	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
+	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker/FoodPreferencePicker.svelte";
 	import ThemePreferenceControl from "$lib/components/profile/ThemePreferenceControl/ThemePreferenceControl.svelte";
 	import { APP_NAME } from "$lib/config/brand";

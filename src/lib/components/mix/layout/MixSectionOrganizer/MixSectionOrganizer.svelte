@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { flip } from "svelte/animate";
-	import { cubicOut } from "svelte/easing";
 	import Chevron from "$lib/assets/icons/Chevron/Chevron.svelte";
 	import GripVertical from "$lib/assets/icons/GripVertical/GripVertical.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
-	import { getMotionSafeDuration } from "$lib/utils/accessibility/motion";
+	import {
+		getMotionSafeDuration,
+		MOTION_DURATION_MS,
+	} from "$lib/utils/animation/motion";
+	import { MOTION_EASING_FUNCTION } from "$lib/utils/animation/transitions";
 	import {
 		getMixSectionLabel,
 		isMixSectionId,
@@ -221,7 +224,10 @@
 				style:height={draggedSectionId === sectionId && dragPosition
 					? `${dragPosition.height}px`
 					: undefined}
-				animate:flip={{ duration: getMotionSafeDuration(220), easing: cubicOut }}
+				animate:flip={{
+					duration: getMotionSafeDuration(MOTION_DURATION_MS.layout),
+					easing: MOTION_EASING_FUNCTION.spatial,
+				}}
 			>
 				<div
 					class="mix-section-organizer__item"

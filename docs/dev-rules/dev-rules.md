@@ -319,7 +319,11 @@ fallback, motion preference, card shell, control state, or layout pattern appear
 places, move it into a shared utility, primitive, mixin, or token-backed class instead
 of maintaining feature-local copies. Keep genuinely unique component presentation local;
 do not create abstractions with no second use. Shared utilities must use semantic SCSS
-tokens and must not become a dumping ground for unrelated feature styles.
+tokens and must not become a dumping ground for unrelated feature styles. Shared motion
+timing, easing, reduced-motion handling, disclosure behavior, and cross-feature Web
+Animations helpers belong in `src/lib/utils/animation`. Keep genuinely unique keyframes
+and movement geometry beside the reusable component that owns them; do not force
+semantically different motion into one generic sequence.
 
 **3c.** <a id="rule-theme-support"></a>Every app view and reusable component must
 support the shared light, dark, and device-following color themes. Use semantic
@@ -631,9 +635,10 @@ layouts follow the equivalent `+layout.svelte` and `layout.scss` convention. Loa
 SCSS only through the owner's scoped `<style lang="scss">` block. Do not use script-level
 stylesheet imports in components or pages because they bypass Svelte's normal scoping.
 Keep app-wide values in `_variables.scss`; keep component-only colors, dimensions,
-radii, timing, and layout details in the paired SCSS file. Do not create global one-off
-variables to make a local declaration look tokenized. `src/styles` must contain only
-true app-wide style infrastructure, never ingredient-card or other feature styles.
+radii, unique motion timing, and layout details in the paired SCSS file. Shared motion
+timing and easing belong in `src/lib/utils/animation/_motion.scss`. Do not create global
+one-off variables to make a local declaration look tokenized. `src/styles` must contain
+only true app-wide style infrastructure, never ingredient-card or other feature styles.
 Follow the complete ownership map in `docs/project-structure.md`. Do not create generic
 dumping folders such as `defaults`, `helpers`, `misc`, or `shared`; place configuration,
 constants, and utilities with the domain that owns them.

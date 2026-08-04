@@ -4,8 +4,8 @@
 		SERVING_MEASURE_OPTIONS,
 		type ServingMeasureUnit,
 	} from "$lib/utils/serving/servingMeasureCatalog";
-	import { getMotionSafeScrollBehavior } from "$lib/utils/accessibility/motion";
-	import { setAnimatedDetailsOpen } from "$lib/utils/accessibility/animatedDetails";
+	import { getMotionSafeScrollBehavior } from "$lib/utils/animation/motion";
+	import { setAnimatedDetailsOpen } from "$lib/utils/animation/animatedDetails";
 	import type { BarcodeScanResult } from "$lib/utils/barcode/types";
 	import type { FoodCategoryPickerOption } from "$lib/utils/food/categories/categoryPicker";
 	import BarcodeScannerDialog from "$lib/components/ingredients/barcode/BarcodeScannerDialog/BarcodeScannerDialog.svelte";

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
 	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
-	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
+	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
 	import type { CollapsibleSectionProps } from "./types";
 
 	let {

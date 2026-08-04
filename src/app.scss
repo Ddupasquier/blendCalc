@@ -1,4 +1,5 @@
 @use "./styles/variables" as *;
+@use "./lib/utils/animation/motion" as motion;
 @use "./styles/themes";
 
 /* ============================================================
@@ -116,8 +117,8 @@ button {
 	border-radius: $app-radius-sm;
 	padding: $app-gap-sm 0.85rem;
 	transition:
-		background 0.15s,
-		transform 0.1s;
+		background motion.$duration-state motion.$easing-standard,
+		transform motion.$duration-press motion.$easing-standard;
 	touch-action: manipulation;
 }
 

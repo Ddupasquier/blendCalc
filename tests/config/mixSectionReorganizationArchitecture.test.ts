@@ -26,7 +26,7 @@ describe("Mix section reorganization architecture", () => {
 		expect(organizer).toContain("dragPosition");
 		expect(organizer).toContain("dragCenterY");
 		expect(organizer).toContain("animate:flip");
-		expect(organizer).toContain("cubicOut");
+		expect(organizer).toContain("MOTION_EASING_FUNCTION.spatial");
 		expect(organizer).toContain("mix-section-organizer__slot--displacing");
 		expect(organizer).toContain("data-mix-drag-preview");
 		expect(organizer).toContain("mix-section-organizer__item--placeholder");

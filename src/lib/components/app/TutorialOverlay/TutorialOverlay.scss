@@ -1,4 +1,5 @@
 @use "../../../../styles/variables" as *;
+@use "../../../utils/animation/motion" as motion;
 
 .tutorial-tour {
   position: fixed;
@@ -39,11 +40,11 @@
   outline: 2px solid $app-shell-accent-primary;
   pointer-events: none;
   transition:
-    top 180ms ease,
-    left 180ms ease,
-    width 180ms ease,
-    height 180ms ease,
-    border-radius 180ms ease;
+    top motion.$duration-feedback motion.$easing-standard,
+    left motion.$duration-feedback motion.$easing-standard,
+    width motion.$duration-feedback motion.$easing-standard,
+    height motion.$duration-feedback motion.$easing-standard,
+    border-radius motion.$duration-feedback motion.$easing-standard;
 }
 
 .tutorial {
@@ -60,8 +61,8 @@
   border: 1px solid $app-shell-border-subtle;
   border-radius: $app-shell-radius-card;
   transition:
-    top 180ms ease,
-    left 180ms ease;
+    top motion.$duration-feedback motion.$easing-standard,
+    left motion.$duration-feedback motion.$easing-standard;
 }
 
 .tutorial:focus-visible {

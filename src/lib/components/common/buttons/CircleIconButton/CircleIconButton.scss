@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
 .circle-icon-button {
 	display: inline-flex;
@@ -15,10 +16,10 @@
 	line-height: $app-line-height-tight;
 	touch-action: manipulation;
 	transition:
-		background-color 160ms ease,
-		color 160ms ease,
-		transform 120ms ease,
-		opacity 160ms ease;
+		background-color motion.$duration-state motion.$easing-standard,
+		color motion.$duration-state motion.$easing-standard,
+		transform motion.$duration-press motion.$easing-standard,
+		opacity motion.$duration-state motion.$easing-standard;
 
 	&:active:not(:disabled) {
 		transform: scale(0.97);

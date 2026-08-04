@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	getMotionSafeDuration,
 	getMotionSafeScrollBehavior,
+	MOTION_DURATION_MS,
 	prefersReducedMotion,
-} from "$lib/utils/accessibility/motion";
+} from "$lib/utils/animation/motion";
 
 const setReducedMotion = (matches: boolean) => {
 	Object.defineProperty(window, "matchMedia", {
@@ -33,5 +34,17 @@ describe("motion accessibility", () => {
 
 	it("never returns a negative duration", () => {
 		expect(getMotionSafeDuration(-100)).toBe(0);
+	});
+
+	it("publishes the shared interaction timing scale", () => {
+		expect(MOTION_DURATION_MS).toEqual({
+			press: 120,
+			state: 160,
+			feedback: 180,
+			layout: 220,
+			sheetRight: 240,
+			sheetBottom: 260,
+			reflow: 320,
+		});
 	});
 });

@@ -1,5 +1,7 @@
 @use "../../../../styles/variables" as *;
 
+$welcome-timer-duration: 4s;
+
 .daily-welcome-region {
 	position: fixed;
 	right: $app-gap-md;
@@ -58,7 +60,7 @@
 	height: 0.22rem;
 	background: $app-highlight;
 	transform-origin: left;
-	animation: welcome-timer 4s linear forwards;
+	animation: welcome-timer $welcome-timer-duration linear forwards;
 }
 
 @keyframes welcome-timer {

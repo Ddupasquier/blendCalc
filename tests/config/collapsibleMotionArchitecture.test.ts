@@ -61,8 +61,9 @@ describe("collapsible motion architecture", () => {
 
 		expect(component).toContain("<DisclosureChevron");
 		expect(chevron).toContain('<Chevron direction="right"');
+		expect(styles).toContain('@use "../../../../utils/animation/motion" as motion;');
 		expect(styles).toMatch(
-			/\.disclosure-chevron\s*\{[^}]*transition:\s*transform\s+180ms\s+ease;/s,
+			/\.disclosure-chevron\s*\{[^}]*transition:\s*transform\s+motion\.\$duration-feedback\s+motion\.\$easing-standard;/s,
 		);
 		expect(styles).toMatch(
 			/\[data-expanded="true"\][^}]*summary\)\s*\.disclosure-chevron[^}]*\{[^}]*transform:\s*rotate\(90deg\);/s,

@@ -9,7 +9,7 @@
 	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame/InputLoadingFrame.svelte";
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
-	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
+	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
 	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 	import { canModerateTargetRole } from "$lib/utils/moderation/moderation";
 	import { formatDocumentTitle } from "$lib/config/pageMetadata";

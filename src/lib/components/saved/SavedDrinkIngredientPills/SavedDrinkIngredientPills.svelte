@@ -3,7 +3,7 @@
 	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
 	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
 	import MetadataPill from "$lib/components/common/display/MetadataPill/MetadataPill.svelte";
-	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
+	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import {

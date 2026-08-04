@@ -3,7 +3,10 @@
 	import { flip } from "svelte/animate";
 	import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls/PaginatedListControls.svelte";
 	import { animateDirectionalExit } from "$lib/utils/animation/directionalExit";
-	import { prefersReducedMotion } from "$lib/utils/accessibility/motion";
+	import {
+		getMotionSafeDuration,
+		MOTION_DURATION_MS,
+	} from "$lib/utils/animation/motion";
 	import {
 		getFoodDisplayCategory,
 		getIngredientActionKey,
@@ -64,8 +67,6 @@
 
 	const BULK_EXIT_STAGGER_MS = 100;
 	const BULK_EXIT_ANTICIPATION_PERCENT = 10;
-	const LIST_REFLOW_DURATION_MS = 320;
-
 	const selectedIdSet = $derived(new Set(selectedIds));
 	const selectedCount = $derived(selectedIds.length);
 	const moveTargetLabel = $derived(
@@ -93,7 +94,7 @@
 	};
 
 	const getListReflowDuration = () =>
-		prefersReducedMotion() ? 0 : LIST_REFLOW_DURATION_MS;
+		getMotionSafeDuration(MOTION_DURATION_MS.reflow);
 
 	const startCardExit = async (
 		foodIds: number[],

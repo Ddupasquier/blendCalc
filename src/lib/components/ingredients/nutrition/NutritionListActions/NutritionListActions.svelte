@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onDestroy } from "svelte";
-	import { cubicOut } from "svelte/easing";
 	import { fly } from "svelte/transition";
 	import Check from "$lib/assets/icons/Check/Check.svelte";
 	import X from "$lib/assets/icons/X/X.svelte";
@@ -16,7 +15,7 @@
 		moveFoodToSmoothieList,
 	} from "$lib/utils/storage/client/smoothieLists";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-	import { getMotionSafeDuration } from "$lib/utils/accessibility/motion";
+	import { getFeedbackFlyTransition } from "$lib/utils/animation/transitions";
 
 	let {
 		food,
@@ -176,11 +175,7 @@
 		class:nf-feedback--error={feedbackError}
 		role={feedbackError ? "alert" : "status"}
 		aria-live="polite"
-		transition:fly={{
-			y: 6,
-			duration: getMotionSafeDuration(180),
-			easing: cubicOut,
-		}}
+		transition:fly={getFeedbackFlyTransition()}
 	>
 		<CircularIconFrame class="nf-feedback__icon" decorative>
 			{#if feedbackError}

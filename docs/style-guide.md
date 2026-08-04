@@ -688,6 +688,14 @@ reporting interface for every warning in the default view.
 
 ## Motion And Interaction
 
+- Import shared durations, easing curves, reduced-motion helpers, and reusable motion
+  behaviors from `src/lib/utils/animation`. Equivalent state, press, feedback,
+  disclosure, and layout motion must not use independently typed timing literals.
+- Keep a genuinely unique sequence with the reusable component that owns it. Scanner
+  sweeps, loading rotation, liquid segmented-control movement, chart geometry, and
+  other single-purpose keyframes do not become one generic animation merely because
+  they move. Name their local timing values so the sequence remains internally
+  consistent.
 - Motion should explain change: sheet entry, list movement, selection, or loading.
 - Every disclosure animates both opening and closing through the shared
   `animatedDetails` behavior. Keep disclosure children mounted so closing a section
@@ -745,8 +753,9 @@ components/<domain>/<Component>/
 Only create the SCSS or type file when the component needs it.
 
 - `_variables.scss` owns values shared by independent components.
-- A component's paired SCSS owns its unique colors, dimensions, masks, radii, timing,
-  and layout calculations.
+- A component's paired SCSS owns its unique colors, dimensions, masks, radii, motion
+  sequence, and layout calculations. Shared motion timing and easing come from the
+  animation catalog rather than local literals.
 - A repeated value inside one component may be a clearly named local SCSS variable.
 - Promote a local value only when multiple independent components should change
   together.

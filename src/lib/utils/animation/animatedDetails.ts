@@ -1,7 +1,11 @@
-import { getMotionSafeDuration } from "./motion";
+import {
+	getMotionSafeDuration,
+	MOTION_DURATION_MS,
+	MOTION_EASING,
+} from "./motion";
 
-const DEFAULT_DURATION_MS = 180;
-const DISCLOSURE_EASING = "cubic-bezier(0.4, 0, 0.2, 1)";
+const DEFAULT_DURATION_MS = MOTION_DURATION_MS.feedback;
+const DISCLOSURE_EASING = MOTION_EASING.spatial;
 
 type AnimatedDetailsOptions = {
 	duration?: number;

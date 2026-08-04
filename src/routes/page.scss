@@ -1,4 +1,5 @@
 @use "../styles/variables" as *;
+@use "../lib/utils/animation/motion" as motion;
 
 .landing-page {
 	position: relative;
@@ -120,8 +121,8 @@ a {
 	line-height: $app-button-line-height;
 	text-decoration: none;
 	transition:
-		background 0.15s ease,
-		transform 0.15s ease;
+		background motion.$duration-state motion.$easing-standard,
+		transform motion.$duration-press motion.$easing-standard;
 
 	&:hover {
 		background: $app-highlight-hover;

@@ -21,7 +21,10 @@
 	} from "$lib/utils/serving/servingMeasureCatalog";
 	import { canConvertServingUnit } from "$lib/utils/serving/servingAmount";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
-	import { getMotionSafeDuration } from "$lib/utils/accessibility/motion";
+	import {
+		getMotionSafeDuration,
+		MOTION_DURATION_MS,
+	} from "$lib/utils/animation/motion";
 
 	let {
 		food,
@@ -127,7 +130,12 @@
 	</div>
 
 	{#if detailsOpen}
-		<div class="ingredient-card__details" transition:slide={{ duration: getMotionSafeDuration(180) }}>
+		<div
+			class="ingredient-card__details"
+			transition:slide={{
+				duration: getMotionSafeDuration(MOTION_DURATION_MS.feedback),
+			}}
+		>
 			<p><strong>Source list:</strong> {sourceLabel}</p>
 			{#if conversionBasis}<p>{conversionBasis}</p>{/if}
 			{#if warning}

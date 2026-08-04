@@ -1,4 +1,5 @@
 @use "../../styles/variables" as *;
+@use "../../lib/utils/animation/motion" as motion;
 
 .auth-page {
 	position: relative;
@@ -116,8 +117,8 @@
 		font-size: $app-font-size-md;
 		box-sizing: border-box;
 		transition:
-			border-color 0.15s ease,
-			background 0.15s ease;
+			border-color motion.$duration-state motion.$easing-standard,
+			background motion.$duration-state motion.$easing-standard;
 
 		&:focus {
 			background: $app-bg;

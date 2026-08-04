@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
 .list-controls {
 	display: grid;
@@ -27,8 +28,8 @@
 	border-radius: $app-shell-radius-control;
 	box-sizing: border-box;
 	transition:
-		background-color 0.15s ease,
-		border-color 0.15s ease;
+		background-color motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard;
 }
 
 .search-control:focus-within {

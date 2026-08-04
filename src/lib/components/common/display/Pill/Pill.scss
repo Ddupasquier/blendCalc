@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
 $pill-grid-gap: 0.28rem;
 $pill-padding-y: 0.22rem;
@@ -21,7 +22,7 @@ $pill-fine-spacing: 0.1rem;
 	font-size: $app-font-size-md;
 	font-weight: $app-button-font-weight;
 	line-height: $app-button-line-height;
-	transition: background 0.15s;
+	transition: background motion.$duration-state motion.$easing-standard;
 }
 
 .pill-select,
