@@ -29,6 +29,7 @@ import {
 	throwAppError,
 } from "$lib/server/errors/appError.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { hydrateFoodsWithCachedImages } from "$lib/utils/storage/supabase/foodImages";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const user = requireAppValue(
@@ -114,12 +115,17 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		const resultGroups = searchResults.map((result) =>
 			result.status === "fulfilled" ? result.value : [],
 		);
+		const mergedFoods = mergeIngredientSearchResults(...resultGroups).filter(
+			(food) =>
+				isUsableIngredientSearchResult(food) &&
+				matchesIngredientProvenance(food, sourceFilter, trustFilter),
+		);
+		const foodsWithCurrentImages = await hydrateFoodsWithCachedImages(
+			catalogClient,
+			mergedFoods,
+		);
 		const annotatedFoods = annotateFoodsWithFoodSafety(
-			mergeIngredientSearchResults(...resultGroups).filter(
-				(food) =>
-					isUsableIngredientSearchResult(food) &&
-					matchesIngredientProvenance(food, sourceFilter, trustFilter),
-			),
+			foodsWithCurrentImages,
 			foodSafetyContext,
 		);
 		const foods = sortIngredientSearchResults(
