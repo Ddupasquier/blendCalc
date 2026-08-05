@@ -128,4 +128,34 @@ describe("Mix section disclosure architecture", () => {
 		expect(goals).not.toContain('class="goal-input__summary"');
 		expect(goals).not.toContain('class="goal-total"');
 	});
+
+	it("keeps selected ingredient controls shared and free of duplicate custom borders", () => {
+		const card = readFileSync(
+			"src/lib/components/mix/ingredients/IngredientCard/IngredientCard.svelte",
+			"utf8",
+		);
+		const cardStyles = readFileSync(
+			"src/lib/components/mix/ingredients/IngredientCard/IngredientCard.scss",
+			"utf8",
+		);
+		const panel = readFileSync(
+			"src/lib/components/mix/ingredients/SelectedIngredientsPanel/SelectedIngredientsPanel.svelte",
+			"utf8",
+		);
+		const panelStyles = readFileSync(
+			"src/lib/components/mix/ingredients/SelectedIngredientsPanel/SelectedIngredientsPanel.scss",
+			"utf8",
+		);
+		const customRule = cardStyles.match(/\.ingredient-card--custom \{[\s\S]*?\n\}/)?.[0];
+
+		for (const component of ["AcceleratingStepButton", "NumberInput", "SelectField", "CircleIconButton", "StatusMessage"]) {
+			expect(card).toContain(component);
+		}
+		expect(customRule).toBeDefined();
+		expect(customRule).not.toMatch(/border(?:-color)?:/);
+		expect(panel).toContain('showCount={Boolean(query)}');
+		expect(panel).toContain('servingUnit === "g"');
+		expect(panelStyles).toContain("grid-auto-rows: max-content");
+		expect(panelStyles).toContain("align-content: start");
+	});
 });

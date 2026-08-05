@@ -1,22 +1,29 @@
 @use "../../../../../styles/variables" as *;
 
 .ingredient-card {
+	position: relative;
+	isolation: isolate;
 	display: grid;
-	grid-template-columns: auto minmax(0, 1fr) auto auto;
+	grid-template-columns: auto minmax(0, 1fr) auto;
 	grid-template-areas:
-		"symbol copy amount actions"
-		"details details details details";
+		"symbol copy actions"
+		". amount amount"
+		"details details details";
 	align-items: center;
 	gap: $app-gap-sm;
 	min-width: 0;
 	padding: $app-gap-sm;
-	background: $app-shell-surface-panel;
-	border: 1.5px solid transparent;
+	overflow: hidden;
+	background: $app-shell-surface-soft;
 	border-radius: $app-shell-radius-card;
 }
 
+.ingredient-card--warning {
+	padding-inline-start: $app-gap-md;
+}
+
 .ingredient-card--custom {
-	border-color: $app-custom-strong;
+	background: color-mix(in srgb, $app-custom-bg 24%, $app-shell-surface-soft);
 }
 
 .ingredient-card__symbol {
@@ -59,35 +66,49 @@
 	}
 }
 
-.ingredient-card__amount,
+.ingredient-card__amount {
+	grid-area: amount;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: $app-gap-xs;
+	min-width: 0;
+}
+
 .ingredient-card__actions {
+	grid-area: actions;
 	display: flex;
 	align-items: center;
 	gap: $app-gap-xs;
 }
 
-.ingredient-card__amount {
-	grid-area: amount;
-}
-
-.ingredient-card__actions {
-	grid-area: actions;
-	flex-direction: column;
-}
-
 :global(.ingredient-card__amount-input) {
-	width: 4.25rem;
+	width: 4rem;
 	height: $app-control-height-sm;
 	padding-inline: $app-gap-sm;
 	color: $app-shell-text-primary;
 	background: $app-shell-surface-control;
 	border: 1px solid $app-shell-border-subtle;
 	border-radius: $app-shell-radius-pill;
+	outline: none;
+	appearance: textfield;
 	font-family: $app-font-family-data;
-	font-size: $app-font-size-md;
+	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-semibold;
 	font-variant-numeric: tabular-nums;
 	text-align: center;
+}
+
+:global(.ingredient-card__amount-input::-webkit-inner-spin-button),
+:global(.ingredient-card__amount-input::-webkit-outer-spin-button) {
+	margin: 0;
+	appearance: none;
+}
+
+:global(.ingredient-card__amount-input:focus-visible) {
+	border-color: $app-shell-accent-primary;
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
 }
 
 :global(.ingredient-card__unit-select) {
@@ -102,16 +123,6 @@
 	border-top: 1px solid $app-shell-border-subtle;
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
-}
-
-.ingredient-card__warning {
-	display: grid;
-	gap: $app-gap-xs;
-	padding: $app-gap-sm;
-	color: $app-warning-text;
-	background: $app-warning-bg;
-	border: $app-warning-border;
-	border-radius: $app-radius-sm;
 }
 
 .ingredient-card__chips {
@@ -129,29 +140,14 @@
 	}
 }
 
-@media (max-width: $app-breakpoint-sm) {
-	.ingredient-card {
-		grid-template-columns: auto minmax(0, 1fr) auto;
-		grid-template-areas:
-			"symbol copy actions"
-			". amount amount"
-			"details details details";
-	}
-
-	.ingredient-card__amount {
-		min-width: 0;
-		justify-content: flex-start;
-	}
-
-	.ingredient-card__actions {
-		flex-direction: row;
-	}
-}
-
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.ingredient-card {
 		gap: $app-gap-xs;
 		padding: $app-gap-xs;
+	}
+
+	.ingredient-card--warning {
+		padding-inline-start: $app-gap-md;
 	}
 
 	.ingredient-card__symbol {
@@ -160,6 +156,6 @@
 	}
 
 	:global(.ingredient-card__amount-input) {
-		width: 3.65rem;
+		width: 3.5rem;
 	}
 }

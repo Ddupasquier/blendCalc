@@ -629,11 +629,17 @@ Preserve:
 - Selected ingredient card per food.
 - Amount input.
 - Unit selector.
-- Converted gram amount.
+- Converted gram amount when the selected unit is not already grams; do not repeat the
+  exact gram value beneath the food name and again in the amount control.
 - Top nutrient contribution summary.
 - Collapse/expand details with a chevron.
 - Remove ingredient action.
+- Preference conflicts use the shared compact warning edge; the expanded details own
+  the complete warning wording rather than crowding the resting card.
 - Scrollable selected ingredients area when there are many foods.
+- Show the selection count once in the section summary. When search narrows the list,
+  show the filtered result count with the search control instead of repeating the full
+  count at rest.
 - When that inner area reaches either vertical boundary, continued wheel or touch
   scrolling passes to the Mix page without requiring `Load more`.
 
@@ -641,6 +647,9 @@ On compact screens, use one identity row containing the food symbol, name, conve
 weight, and the paired details/remove actions. Place the amount stepper and short
 DB-provided unit label in one unobstructed row beneath it. Do not stack secondary
 actions beside the amount row or truncate a unit label to fit.
+Use the same identity-then-amount order at wider widths so long names and conversion
+labels cannot compete with the editable controls. The step controls compose the shared
+accelerating circular buttons, and the numeric field keeps the shared focus treatment.
 
 Units and conversions:
 

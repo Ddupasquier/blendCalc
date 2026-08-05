@@ -179,8 +179,8 @@ export const getDefaultServingAmount = (food?: FdcFood) => {
 
 export const getServingGramsLabel = (conversion: ServingConversion) => {
   return conversion.grams === null
-    ? "Unavailable"
-    : `${conversion.grams.toFixed(1)}g`;
+    ? "Gram conversion unavailable"
+    : `${conversion.grams.toFixed(1)} g equivalent`;
 };
 
 export const getServingConversionBasis = (conversion: ServingConversion) => {

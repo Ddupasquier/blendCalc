@@ -28,6 +28,7 @@ describe("Mix ingredient card", () => {
 			aliasEntries: [{ alias: "g", unit: "g" }],
 		});
 
+		const onServingChange = vi.fn();
 		const { container } = render(IngredientCard, {
 			props: {
 				food: {
@@ -42,7 +43,7 @@ describe("Mix ingredient card", () => {
 				onOpenConversionDetails: vi.fn(),
 				onCloseConversionDetails: vi.fn(),
 				onRemove: vi.fn(),
-				onServingChange: vi.fn(),
+				onServingChange,
 			},
 		});
 
@@ -55,7 +56,38 @@ describe("Mix ingredient card", () => {
 			container.querySelector(".ingredient-card__actions"),
 		).toContainElement(screen.getByRole("button", { name: "Remove Tomato, Roma" }));
 		expect(cardStyles).toContain('". amount amount"');
-		expect(cardStyles).toContain("flex-direction: row");
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Use more Tomato, Roma" }),
+		);
+		expect(onServingChange).toHaveBeenLastCalledWith(
+			expect.objectContaining({ fdcId: 1 }),
+			"86",
+			"g",
+		);
+	});
+
+	it("does not repeat a gram amount that is already editable in the amount row", () => {
+		render(IngredientCard, {
+			props: {
+				food: {
+					fdcId: 3,
+					description: "Kale, Raw",
+					foodNutrients: [],
+				},
+				sourceLabel: "Fridge",
+				quantity: 21,
+				unit: "g",
+				gramsLabel: null,
+				onOpenConversionDetails: vi.fn(),
+				onCloseConversionDetails: vi.fn(),
+				onRemove: vi.fn(),
+				onServingChange: vi.fn(),
+			},
+		});
+
+		expect(screen.getByRole("spinbutton", { name: "Quantity for Kale, Raw" })).toHaveValue(21);
+		expect(screen.queryByText(/g equivalent/i)).not.toBeInTheDocument();
 	});
 
 	it("does not label private foods with a compact custom badge", () => {
@@ -92,5 +124,48 @@ describe("Mix ingredient card", () => {
 		});
 
 		expect(screen.queryByText("Custom")).not.toBeInTheDocument();
+	});
+
+	it("marks preference conflicts without crowding the resting card", async () => {
+		const { container } = render(IngredientCard, {
+			props: {
+				food: {
+					fdcId: 4,
+					description: "Pork Chorizo",
+					foodNutrients: [],
+					preferenceWarnings: [{
+						id: "pork-warning",
+						level: "warning",
+						category: "restriction",
+						label: "Pork",
+						code: "FOOD_RESTRICTION_CONFLICT",
+						params: {
+							factLabel: "Pork",
+							restrictionLabel: "Vegan",
+							evidenceType: "intrinsic",
+						},
+					}],
+				},
+				sourceLabel: "Fridge",
+				quantity: 100,
+				unit: "g",
+				gramsLabel: null,
+				onOpenConversionDetails: vi.fn(),
+				onCloseConversionDetails: vi.fn(),
+				onRemove: vi.fn(),
+				onServingChange: vi.fn(),
+			},
+		});
+
+		expect(container.querySelector(".card-warning-edge")).toBeInTheDocument();
+		const detailsButton = screen.getByRole("button", {
+			name: "Show warning and details for Pork Chorizo",
+		});
+		expect(detailsButton).toHaveAttribute("aria-expanded", "false");
+
+		await fireEvent.click(detailsButton);
+		expect(screen.getByText("Check this ingredient")).toBeInTheDocument();
+		expect(detailsButton).toHaveAttribute("aria-expanded", "true");
+		expect(detailsButton).toHaveAttribute("aria-controls", "ingredient-4-details");
 	});
 });

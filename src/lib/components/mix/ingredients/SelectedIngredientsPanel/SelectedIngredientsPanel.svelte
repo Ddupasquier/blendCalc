@@ -69,7 +69,7 @@
 <section class="selected-ingredients-panel" aria-label="Selected ingredients">
 	<CollapsibleSection
 		title="Selected ingredients"
-		badge={`${selectedFoods.length} selected`}
+		badge={`${selectedFoods.length}`}
 		{open}
 		{onOpenChange}
 		surface="panel"
@@ -89,6 +89,7 @@
 						totalCount={selectedFoods.length}
 						visibleCount={filteredFoods.length}
 						itemLabel="selected"
+						showCount={Boolean(query)}
 					/>
 				{/if}
 				<div
@@ -99,12 +100,16 @@
 				>
 					{#each visibleFoods as food (food.fdcId)}
 						{@const servingConversion = getServingConversion(food)}
+						{@const servingQuantity = getServingQuantity(food)}
+						{@const servingUnit = getServingUnit(food)}
 						<IngredientCard
 							{food}
 							sourceLabel={getFoodSourceLabel(food, fridgeItems)}
-							quantity={getServingQuantity(food)}
-							unit={getServingUnit(food)}
-							gramsLabel={getServingGramsLabel(servingConversion)}
+							quantity={servingQuantity}
+							unit={servingUnit}
+							gramsLabel={servingUnit === "g"
+								? null
+								: getServingGramsLabel(servingConversion)}
 							conversionBasis={getServingConversionBasis(servingConversion)}
 							warning={getServingConversionWarning(food)}
 							conversionDetailsOpen={conversionDetailsFoodId === food.fdcId}

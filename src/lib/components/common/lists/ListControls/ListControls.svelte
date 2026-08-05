@@ -16,6 +16,7 @@
 		totalCount,
 		visibleCount,
 		itemLabel = "items",
+		showCount = true,
 		filterLabel = "Filter",
 		filterValue,
 		filterOptions = [],
@@ -93,7 +94,9 @@
 		/>
 	{/if}
 
-	<p class="result-count" aria-live="polite">{countText}</p>
+	{#if showCount}
+		<p class="result-count" aria-live="polite">{countText}</p>
+	{/if}
 </div>
 
 <style lang="scss">

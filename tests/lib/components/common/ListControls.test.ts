@@ -78,4 +78,24 @@ describe("ListControls", () => {
 		await fireEvent.click(trigger);
 		expect(onFilterOpen).toHaveBeenCalledOnce();
 	});
+
+	it("can omit a redundant resting count while preserving the search control", () => {
+		render(ListControls, {
+			props: {
+				id: "selected-ingredient-search",
+				query: "",
+				onQueryChange: vi.fn(),
+				label: "Find selected ingredients",
+				totalCount: 8,
+				visibleCount: 8,
+				itemLabel: "selected",
+				showCount: false,
+			},
+		});
+
+		expect(
+			screen.getByRole("searchbox", { name: "Find selected ingredients" }),
+		).toBeInTheDocument();
+		expect(screen.queryByText("8 selected")).not.toBeInTheDocument();
+	});
 });
