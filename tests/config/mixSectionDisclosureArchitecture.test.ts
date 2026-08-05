@@ -97,4 +97,30 @@ describe("Mix section disclosure architecture", () => {
 		expect(disclosureTag).not.toContain("badge=");
 		expect(source).toContain("nutrient-shape-panel__statuses");
 	});
+
+	it("builds Goals controls from shared app primitives instead of legacy local controls", () => {
+		const goals = readFileSync(
+			"src/lib/components/mix/controls/GoalTargets/GoalTargets.svelte",
+			"utf8",
+		);
+		const picker = readFileSync(
+			"src/lib/components/mix/controls/NutrientPicker/NutrientPicker.svelte",
+			"utf8",
+		);
+		const pickerStyles = readFileSync(
+			"src/lib/components/mix/controls/NutrientPicker/NutrientPicker.scss",
+			"utf8",
+		);
+
+		for (const component of ["SelectField", "RangeInput", "NumberInput", "MetadataPill"]) {
+			expect(goals).toContain(component);
+		}
+		for (const component of ["CollapsibleSection", "ListControls", "RoundedActionButton"]) {
+			expect(picker).toContain(component);
+		}
+		expect(picker).not.toMatch(/<(button|input)\b/);
+		expect(pickerStyles).not.toMatch(
+			/\$app-(primary|btn-bg|bg|section-bg|radius-sm|card-radius)\b/,
+		);
+	});
 });

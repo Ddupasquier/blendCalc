@@ -564,6 +564,9 @@ Preserve:
 - Units displayed clearly.
 - A draggable goal slider per nutrient, synchronized with the inline numeric goal input.
   The slider provides quick adjustment while the number input preserves exact entry.
+- Each compact goal row keeps the nutrient identity and its shared fixed-choice rule
+  selector together, with the current value, editable target, unit, slider, and circular
+  remove action following the established Mix control rhythm.
 - DB-backed goal presets:
   - High Protein.
   - Low Sugar.
@@ -589,6 +592,9 @@ Preserve:
 - Reset goals action.
 - The Goals section is collapsible and includes the DB-backed nutrient picker so users
   can add or stop tracking nutrients without opening a second setup surface.
+- The nutrient picker is an in-flow shared disclosure using the standard list-search
+  control and shared action rows. It must not use a feature-local input/button family or
+  overlap the Goals content as a floating panel.
 
 Mobile requirements:
 

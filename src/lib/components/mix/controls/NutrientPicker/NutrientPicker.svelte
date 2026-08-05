@@ -1,4 +1,7 @@
 <script lang="ts">
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
+	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
+	import ListControls from "$lib/components/common/lists/ListControls/ListControls.svelte";
 	import { searchNutrientCatalog } from "$lib/utils/mix/nutrients/nutrientSearch";
 	import type { NutrientMeta } from "$lib/utils/mix/calculations";
 	import type { NutrientPickerProps } from "./types";
@@ -42,47 +45,41 @@
 </script>
 
 <div class="nutrient-picker">
-	<button
-		class="nutrient-picker__toggle"
-		type="button"
-		aria-expanded={isOpen}
-		onclick={() => (isOpen = !isOpen)}
+	<CollapsibleSection
+		title="Add nutrient"
+		open={isOpen}
+		onOpenChange={(open) => (isOpen = open)}
 	>
-		<span>Add nutrient</span>
-		<span aria-hidden="true">{isOpen ? "▴" : "▾"}</span>
-	</button>
-
-	{#if isOpen}
-		<div class="nutrient-picker__panel">
-			<label for="nutrient-search">Find a nutrient</label>
-			<input
+		<div class="nutrient-picker__content">
+			<ListControls
 				id="nutrient-search"
-				name="nutrient-search"
-				type="search"
+				label="Find a nutrient"
 				placeholder="Search vitamins, minerals, fats…"
-				autocomplete="off"
-				bind:value={query}
+				query={query}
+				onQueryChange={(value) => (query = value)}
+				totalCount={availableNutrients.length}
+				visibleCount={visibleNutrients.length}
+				itemLabel="nutrients"
 			/>
-			<p class="nutrient-picker__hint">
-				{query.trim()
-					? `${searchResults.length} closest matches`
-					: "Popular choices — search to browse the full catalog"}
-			</p>
-
 			{#if visibleNutrients.length > 0}
-				<div class="nutrient-picker__results">
+				<div class="nutrient-picker__results" aria-label="Available nutrients">
 					{#each visibleNutrients as nutrient (nutrient.id)}
-						<button type="button" onclick={() => selectNutrient(nutrient.id)}>
-							<span>{nutrient.label}</span>
-							<small>{nutrient.unit}</small>
-						</button>
+						<RoundedActionButton
+							fullWidth
+							contentAlign="space-between"
+							variant="neutral"
+							onclick={() => selectNutrient(nutrient.id)}
+						>
+							<span class="nutrient-picker__label">{nutrient.label}</span>
+							<span class="nutrient-picker__unit">{nutrient.unit}</span>
+						</RoundedActionButton>
 					{/each}
 				</div>
 			{:else}
 				<p class="nutrient-picker__empty">No matching nutrients.</p>
 			{/if}
 		</div>
-	{/if}
+	</CollapsibleSection>
 </div>
 
 <style lang="scss">
