@@ -50,8 +50,9 @@ describe("GoalTargets", () => {
       "=350kcal goal; 555.9kcal current",
 		);
     expect(
-      screen.getByRole("spinbutton", { name: /Goal value for Calories/ }),
+      screen.getByRole("spinbutton", { name: "Goal value for Calories in kcal" }),
     ).toHaveValue(350);
+		expect(screen.getAllByRole("spinbutton")).toHaveLength(1);
 
 		await fireEvent.input(slider, { target: { value: "425" } });
 		expect(onPreviewGoal).toHaveBeenLastCalledWith(1008, "425");

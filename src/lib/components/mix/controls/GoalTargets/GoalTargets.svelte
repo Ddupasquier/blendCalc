@@ -178,7 +178,37 @@
 					<div class="goal-input__summary">
 						<span class="goal-label">{nutrient.label}</span>
 						<span class="goal-total">
-							<strong>{total.toFixed(1)}</strong> / {goalSummary(goal)}{nutrient.unit}
+							<strong>{total.toFixed(1)}</strong>
+							<span aria-hidden="true">/</span>
+							{#if goal.goalType !== "range"}
+								<span aria-hidden="true">{getMixGoalOperator(goal)}</span>
+							{/if}
+							<NumberInput
+								id={`goal-${nutrient.id}`}
+								name={`goal-${nutrient.id}`}
+								class="goal-input__number"
+								min="0"
+								step="any"
+								placeholder={`Target ${nutrient.unit}`}
+								ariaLabel={`${goal.goalType === "range" ? "Lower" : "Goal"} value for ${nutrient.label} in ${nutrient.unit}`}
+								value={goal.targetAmount}
+								onValueChange={(value) => onUpdateGoal(nutrient.id, value)}
+							/>
+							{#if goal.goalType === "range"}
+								<span class="goal-input__range-divider" aria-hidden="true">–</span>
+								<NumberInput
+									id={`goal-${nutrient.id}-upper`}
+									name={`goal-${nutrient.id}-upper`}
+									class="goal-input__number"
+									min={String(goal.targetAmount)}
+									step="any"
+									placeholder={`Upper ${nutrient.unit}`}
+									ariaLabel={`Upper goal for ${nutrient.label} in ${nutrient.unit}`}
+									value={goal.upperAmount ?? goal.targetAmount}
+									onValueChange={(value) => onUpdateUpperGoal(nutrient.id, value)}
+								/>
+							{/if}
+							<span class="goal-unit">{nutrient.unit}</span>
 						</span>
 					</div>
 					<SelectField
@@ -207,41 +237,6 @@
 						onValueChange={(value) => onPreviewGoal(nutrient.id, String(value))}
 						onValueCommit={(value) => onUpdateGoal(nutrient.id, String(value))}
 					/>
-					<div class="goal-input__values">
-						<label class="goal-input__control" for={`goal-${nutrient.id}`}>
-							<span class="visually-hidden">
-								{goal.goalType === "range" ? "Lower" : "Goal"} value for {nutrient.label}
-							</span>
-							<NumberInput
-								id={`goal-${nutrient.id}`}
-								name={`goal-${nutrient.id}`}
-								class="goal-input__number"
-								min="0"
-								step="any"
-								placeholder={`Target ${nutrient.unit}`}
-								value={goal.targetAmount}
-								onValueChange={(value) => onUpdateGoal(nutrient.id, value)}
-							/>
-							<span class="goal-unit">{nutrient.unit}</span>
-						</label>
-						{#if goal.goalType === "range"}
-							<span class="goal-input__range-divider" aria-hidden="true">to</span>
-							<label class="goal-input__control" for={`goal-${nutrient.id}-upper`}>
-								<span class="visually-hidden">Upper goal for {nutrient.label}</span>
-								<NumberInput
-									id={`goal-${nutrient.id}-upper`}
-									name={`goal-${nutrient.id}-upper`}
-									class="goal-input__number"
-									min={String(goal.targetAmount)}
-									step="any"
-									placeholder={`Upper ${nutrient.unit}`}
-									value={goal.upperAmount ?? goal.targetAmount}
-									onValueChange={(value) => onUpdateUpperGoal(nutrient.id, value)}
-								/>
-								<span class="goal-unit">{nutrient.unit}</span>
-							</label>
-						{/if}
-					</div>
 					<CircleIconButton
 						class="goal-input__remove"
 						label={`Stop tracking ${nutrient.label}`}

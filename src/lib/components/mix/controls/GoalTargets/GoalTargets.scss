@@ -96,7 +96,7 @@
 	grid-template-areas:
     "summary summary remove"
     "type type remove"
-    "slider values remove";
+    "slider slider remove";
 	gap: $app-gap-xs $app-gap-sm;
 	align-items: center;
 	min-width: 0;
@@ -125,7 +125,12 @@
 }
 
 .goal-total {
-	flex: 0 0 auto;
+	display: flex;
+	flex: 0 1 auto;
+	align-items: center;
+	justify-content: flex-end;
+	gap: $app-gap-2xs;
+	min-width: 0;
 	color: $app-shell-text-muted;
 	font-family: $app-font-family-data;
 	font-size: $app-font-size-xs;
@@ -153,21 +158,6 @@
   max-width: 10rem;
 }
 
-.goal-input__values {
-  grid-area: values;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: $app-gap-xs;
-}
-
-.goal-input__control {
-	display: grid;
-	grid-template-columns: minmax(3.4rem, 4.5rem) auto;
-	align-items: center;
-	gap: $app-gap-xs;
-}
-
 .goal-input__range-divider {
   color: $app-shell-text-muted;
   font-size: $app-font-size-xs;
@@ -175,16 +165,18 @@
 }
 
 :global(.goal-input__number) {
-	width: 100%;
+	width: clamp(3.25rem, 14vw, 4.5rem);
 	min-width: 0;
 	height: $app-control-height-sm;
-	padding-inline: $app-gap-sm;
+	padding-inline: $app-gap-xs;
 	color: $app-shell-text-primary;
 	background: $app-shell-surface-panel;
 	border: 1px solid $app-shell-border-subtle;
 	border-radius: $app-shell-radius-pill;
 	font-family: $app-font-family-data;
-	font-size: $app-font-size-md;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+	text-align: center;
 	font-variant-numeric: tabular-nums;
 }
 
@@ -198,18 +190,6 @@
 	grid-area: remove;
 }
 
-.visually-hidden {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	padding: 0;
-	margin: -1px;
-	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
-	white-space: nowrap;
-	border: 0;
-}
-
 @media (max-width: $app-breakpoint-xs),
   (max-height: $app-breakpoint-height-compact) {
 	.goals-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
@@ -221,13 +201,16 @@
 		grid-template-areas:
 			"summary remove"
       "type remove"
-			"slider remove"
-      "values values";
+      "slider remove";
 		gap: $app-gap-xs;
 		padding: $app-gap-xs;
 	}
 
-  .goal-input__values {
-		justify-content: end;
+	.goal-input__summary {
+		align-items: center;
+	}
+
+	.goal-total {
+		flex-wrap: wrap;
 	}
 }

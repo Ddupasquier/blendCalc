@@ -559,9 +559,10 @@ remain available in the status pills and the chart's accessible summary.
 Preserve:
 
 - Goal card per selected nutrient.
-- Current/goal value shown near nutrient name.
+- Current/goal value shown near nutrient name, with the goal number itself serving as
+  the exact-value input rather than repeating that number in a second control.
 - Units displayed clearly.
-- A draggable goal slider per nutrient, synchronized with the adjacent numeric input.
+- A draggable goal slider per nutrient, synchronized with the inline numeric goal input.
   The slider provides quick adjustment while the number input preserves exact entry.
 - DB-backed goal presets:
   - High Protein.
