@@ -9,6 +9,20 @@
 	padding: $app-gap-md $app-gap-sm $app-gap-sm;
 }
 
+.nutrient-adjustments__content {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.nutrient-adjustments__intro,
+.nutrient-adjustment__action,
+.nutrient-adjustment__basis {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+	line-height: $app-line-height-compact;
+}
+
 .nutrient-adjustments__list {
 	display: grid;
 	gap: $app-gap-xs;
@@ -25,14 +39,10 @@
 	border-radius: $app-shell-radius-control;
 }
 
-.nutrient-adjustment.has-warning {
-	border-color: $app-warning-border-color;
-}
-
 .nutrient-adjustment__symbol {
 	display: grid;
-	width: 2rem;
-	height: 2rem;
+	width: $app-shell-action-icon-size;
+	height: $app-shell-action-icon-size;
 	place-items: center;
 	overflow: hidden;
 	background: $app-shell-accent-soft;
@@ -46,40 +56,13 @@
 	height: 100%;
 }
 
-.nutrient-adjustment__main,
-.nutrient-adjustment__title-row > div {
+.nutrient-adjustment__main {
 	display: grid;
-	gap: $app-gap-2xs;
+	gap: $app-gap-xs;
 	min-width: 0;
 }
 
-.nutrient-adjustment__title-row {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
-	gap: $app-gap-sm;
-	min-width: 0;
-}
-
-.nutrient-adjustment__source,
-.nutrient-adjustment__impact {
-	width: fit-content;
-	padding: $app-gap-2xs $app-gap-sm;
-	color: $app-shell-text-primary;
-	background: $app-shell-accent-soft;
-	border-radius: $app-shell-radius-pill;
-	font-size: $app-font-size-2xs;
-	font-weight: $app-font-weight-bold;
-}
-
-.nutrient-adjustment__impact {
-	background: $app-success-bg;
-}
-
-.nutrient-adjustment__impact.type-reduce {
-	background: $app-warning-bg;
-}
-
-strong {
+.nutrient-adjustment__main > strong {
 	overflow: hidden;
 	color: $app-shell-text-primary;
 	font-size: $app-font-size-sm;
@@ -88,18 +71,10 @@ strong {
 	white-space: nowrap;
 }
 
-p {
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-semibold;
-	line-height: $app-line-height-compact;
-}
-
-.nutrient-adjustment__warning {
-	padding: $app-gap-xs $app-gap-sm;
-	color: $app-warning-text;
-	background: $app-warning-bg;
-	border-radius: $app-radius-sm;
+.nutrient-adjustment__impacts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-2xs;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {

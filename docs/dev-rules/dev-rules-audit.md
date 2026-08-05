@@ -246,24 +246,6 @@ totals, warnings, and suggestions.
 input provenance, uses a standards-backed applicable formula, and is never presented as
 reported energy; otherwise missing calories remain missing.
 
-### Mix Math Couples The 100-Gram Basis To A UX Default
-
-**Status:** High
-
-**Evidence:** `src/lib/utils/mix/calculations/nutrientTotals.ts` and
-`src/lib/utils/mix/calculations/nutrientSuggestions.ts` divide per-100-gram nutrient
-values by `mixRuntime.defaultServingGrams`. That setting currently happens to be `100`,
-but it is a user-experience default, not the immutable canonical nutrient basis.
-Changing the default serving in the database would silently change every Mix total and
-recommendation.
-
-**Affected areas:** Mix totals, goal progress, contributor breakdowns, warnings, and
-add/reduce suggestions.
-
-**Complete when:** Canonical scaling always divides by an immutable 100-gram basis
-constant; the configurable default controls only initial selected quantity; and a
-regression test changes the UX default without changing math for a fixed gram amount.
-
 ### Unit-Only Goal Fallbacks Invent Nutrient Targets
 
 **Status:** High
@@ -274,11 +256,13 @@ nutrient-specific target to `defaultGoalByUnit`, including the generic value see
 nutrients can therefore receive the same goal merely because they share `g`, `mg`,
 `mcg`, or another unit.
 
-**Affected areas:** Mix charts, progress, warnings, save summaries, and suggestions.
+**Affected areas:** Mix charts, progress, warnings, and save summaries. Suggested
+adjustments already require an explicit nutrient-specific goal and do not use this
+fallback.
 
 **Complete when:** A nutrient has a goal only through an explicit versioned
 nutrient-specific policy row; unsupported nutrients show no target and cannot generate
-goal-based warnings or suggestions.
+goal-based warnings.
 
 ### Imported Estimate Qualifiers Are Lost At Runtime
 

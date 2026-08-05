@@ -1,100 +1,85 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import NutrientAdjustmentSuggestions from "$lib/components/mix/insights/NutrientAdjustmentSuggestions/NutrientAdjustmentSuggestions.svelte";
-import type {
-	NutrientFoodSuggestion,
-	NutrientReductionSuggestion,
-} from "$lib/utils/mix/calculations";
+import type { NutrientAdjustmentSuggestion } from "$lib/utils/mix/calculations";
 import type { FdcFood } from "$lib/utils/food/types";
 
-const banana: FdcFood = {
+const milk: FdcFood = {
 	fdcId: 1,
-	description: "Banana, raw",
+	description: "Milk, reduced fat",
 	foodNutrients: [],
 };
 
-const oil: FdcFood = {
-	fdcId: 2,
-	description: "Oil, olive",
-	foodNutrients: [],
-};
-
-const foodSuggestion: NutrientFoodSuggestion = {
-	food: banana,
-	action: "add",
-	nutrientId: 1003,
-	nutrientLabel: "Protein",
-	unit: "g",
-	amountPer100g: 2,
-	remainingAmount: 6,
-	servingGramsToTarget: 300,
-	currentServingGrams: 0,
-	nextServingGrams: 300,
-	targetAddedAmount: 6,
-	conflicts: [],
-	sourceLabel: "Fridge",
-};
-
-const reductionSuggestion: NutrientReductionSuggestion = {
-	food: oil,
-	nutrientId: 1004,
-	nutrientLabel: "Total Fat",
-	unit: "g",
+const suggestion: NutrientAdjustmentSuggestion = {
+	food: milk,
+	direction: "increase",
 	currentServingGrams: 100,
-	nextServingGrams: 75,
-	reduceByGrams: 25,
-	targetReducedAmount: 20,
-	overageAmount: 20,
-	percentOfOverageResolved: 100,
-	conflicts: [],
-	sourceLabel: "Fridge",
+	nextServingGrams: 130,
+	changeGrams: 30,
+	incrementLabel: "1 fl oz",
+	incrementSource: "source-serving",
+	primaryImpact: {
+		nutrientId: 1003,
+		label: "Protein",
+		unit: "g",
+		amountChange: 1,
+		currentTotal: 3.3,
+		nextTotal: 4.3,
+		goal: 6,
+		distanceImprovement: 0.17,
+	},
+	impacts: [
+		{
+			nutrientId: 1003,
+			label: "Protein",
+			unit: "g",
+			amountChange: 1,
+			currentTotal: 3.3,
+			nextTotal: 4.3,
+			goal: 6,
+			distanceImprovement: 0.17,
+		},
+	],
+	goalDistanceImprovement: 0.17,
 };
 
 describe("NutrientAdjustmentSuggestions", () => {
-	it("starts collapsed and marks available suggestions", async () => {
+	it("starts collapsed and explains the safe selected-food adjustment", async () => {
 		render(NutrientAdjustmentSuggestions, {
 			props: {
-				foodSuggestions: [foodSuggestion],
-				reductionSuggestions: [],
-				onAdd: vi.fn(),
-				onReduce: vi.fn(),
+				suggestions: [suggestion],
+				onApply: vi.fn(),
 			},
 		});
 
 		const toggle = screen.getByText("Suggested adjustments").closest("summary");
-		expect(toggle).not.toBeNull();
 		const disclosure = toggle?.closest("details");
-
 		expect(disclosure).not.toHaveAttribute("open");
 
 		await fireEvent.click(toggle as HTMLElement);
 
 		expect(disclosure).toHaveAttribute("open");
-		expect(screen.getByText("Banana, raw")).toBeInTheDocument();
+		expect(screen.getByText("Milk, reduced fat")).toBeInTheDocument();
+		expect(screen.getByText("Increase to 130g")).toBeInTheDocument();
+		expect(screen.getByText("Protein +1g")).toBeInTheDocument();
+		expect(screen.getByText("Uses one reported serving: 1 fl oz")).toBeInTheDocument();
+		expect(screen.queryByText(/watch out/i)).not.toBeInTheDocument();
 	});
 
-	it("applies add and reduce suggestions with the next serving amount", async () => {
-		const onAdd = vi.fn();
-		const onReduce = vi.fn();
-
+	it("applies the recommended amount", async () => {
+		const onApply = vi.fn();
 		render(NutrientAdjustmentSuggestions, {
 			props: {
-				foodSuggestions: [foodSuggestion],
-				reductionSuggestions: [reductionSuggestion],
-				onAdd,
-				onReduce,
+				suggestions: [suggestion],
+				onApply,
 			},
 		});
 
 		await fireEvent.click(
 			screen.getByText("Suggested adjustments").closest("summary") as HTMLElement,
 		);
-		const applyButtons = screen.getAllByRole("button", { name: "Apply" });
+		await fireEvent.click(screen.getByRole("button", { name: "Apply" }));
 
-		await fireEvent.click(applyButtons[0]);
-		await fireEvent.click(applyButtons[1]);
-
-		expect(onReduce).toHaveBeenCalledWith(oil.fdcId, 75);
-		expect(onAdd).toHaveBeenCalledWith(banana.fdcId, 300);
+		expect(onApply).toHaveBeenCalledWith(milk.fdcId, 130);
 	});
 });

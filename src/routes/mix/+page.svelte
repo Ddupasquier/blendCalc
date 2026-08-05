@@ -48,7 +48,6 @@
 	import {
 		formatChartNumber,
 		getDefaultNutrientOptions,
-		getFoodSourceLabel,
 		getNutrientMeta,
 		type NutrientOption,
 		type SaveGoalDiff,
@@ -79,8 +78,7 @@
         getNutrientContributionBreakdowns,
         getNutrientChartMetrics,
         getNutrientContributors as calculateNutrientContributors,
-        getNutrientFoodSuggestions,
-        getNutrientReductionSuggestions,
+        getNutrientAdjustmentSuggestions,
         getPointColors,
 		getNutrientProgress,
 		getNutrientTotal as calculateNutrientTotal,
@@ -428,25 +426,14 @@
             servingGrams,
         ),
     );
-    const nutrientFoodSuggestions = $derived(
-        getNutrientFoodSuggestions({
-            nutrients: selectedNutrients,
-            availableFoods: allIngredientItems,
-            selectedFoodIds,
-            nutrientGoals,
-            servingGrams,
-            sourceLabelForFood: (food) => getFoodSourceLabel(food, fridgeItems),
-        }),
-    );
-    const nutrientReductionSuggestions = $derived(
-        getNutrientReductionSuggestions({
-            nutrients: selectedNutrients,
-            selectedFoods,
-            nutrientGoals,
-            servingGrams,
-            sourceLabelForFood: (food) => getFoodSourceLabel(food, fridgeItems),
-        }),
-    );
+	const nutrientAdjustmentSuggestions = $derived(
+		getNutrientAdjustmentSuggestions({
+			nutrients: selectedNutrients,
+			selectedFoods,
+			nutrientGoals,
+			servingGrams,
+		}),
+	);
     const nutrientOverages = $derived(
         selectedNutrients.flatMap((nutrient) => {
             const goal =
@@ -774,33 +761,26 @@
         saveMixState();
     };
 
-    const addSuggestedFood = (foodId: number, nextServingGrams: number) => {
+	const applySuggestedAdjustment = (
+		foodId: number,
+		nextServingGrams: number,
+	) => {
 		assignMixState(
-			getStateWithGramServing(
-				getCurrentMixState(),
-				foodId,
-				nextServingGrams,
-				true,
-			),
+			nextServingGrams <= 0
+				? getStateWithToggledFood(
+						getCurrentMixState(),
+						foodId,
+						allIngredientItems,
+					)
+				: getStateWithGramServing(
+						getCurrentMixState(),
+						foodId,
+						nextServingGrams,
+					),
 		);
-        markLoadedSavedDrinkDirty();
-        saveMixState();
-    };
-
-    const applySuggestedReduction = (
-        foodId: number,
-        nextServingGrams: number,
-    ) => {
-		assignMixState(
-			getStateWithGramServing(
-				getCurrentMixState(),
-				foodId,
-				nextServingGrams,
-			),
-		);
-        markLoadedSavedDrinkDirty();
-        saveMixState();
-    };
+		markLoadedSavedDrinkDirty();
+		saveMixState();
+	};
 
 	const getServingConversionWarning = (food: FdcFood) => {
         return getServingConversion(food).warning;
@@ -1103,12 +1083,10 @@
 				/>
 			{:else if sectionId === "suggested-adjustments"}
 				<NutrientAdjustmentSuggestions
-				foodSuggestions={nutrientFoodSuggestions}
-				reductionSuggestions={nutrientReductionSuggestions}
-				onAdd={addSuggestedFood}
-				onReduce={applySuggestedReduction}
-				open={sectionDisclosureState[sectionId]}
-				onOpenChange={(open) => updateSectionDisclosureState(sectionId, open)}
+					suggestions={nutrientAdjustmentSuggestions}
+					onApply={applySuggestedAdjustment}
+					open={sectionDisclosureState[sectionId]}
+					onOpenChange={(open) => updateSectionDisclosureState(sectionId, open)}
 				/>
 			{:else if sectionId === "nutrient-contributions"}
 				<IngredientContributionBreakdown

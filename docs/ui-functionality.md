@@ -686,17 +686,32 @@ Suggestions should be collapsed by default when present.
 Required behavior:
 
 - Collapsed section shows an alert indicator when suggestions exist.
-- Expanded view combines add and reduce/tweak suggestions into one coherent flow.
+- Expanded view combines increase and reduce suggestions for foods that are already in
+  the Mix into one coherent flow.
 - Suggestions should not flood the screen with repeated versions of the same ingredient.
-- Suggestions must consider other nutrient goals before recommending an amount.
-- If a suggestion will worsen another goal, show a clear caution.
+- Suggestions must evaluate every explicitly tracked nutrient goal before recommending
+  an amount and must improve the Mix overall without worsening another tracked goal.
+- Only foods with complete relevant nutrient data and no known food-preference conflict
+  may be recommended.
+- Prefer a source-reported serving increment. When none exists, use the versioned Mix
+  default amount as the practical increment; never invent an exact gram amount merely
+  to hit one target.
+- Unsafe, incomplete, or goal-regressing candidates remain absent rather than appearing
+  with a caution that asks the user to judge a recommendation the app already knows is
+  unsuitable.
 - Apply action updates the selected ingredient amount.
 
 Suggestion types:
 
-- Add more of a food to fill a missing nutrient.
+- Add more of a food already in the Mix when one practical increment improves all-goal
+  fit.
 - Reduce a food to bring an over-goal nutrient closer.
 - Adjust amount of an already selected food.
+
+New-food recommendations remain unavailable until versioned, DB-backed recipe context,
+ingredient roles, and reviewed pairing evidence can establish that an addition is both
+nutritionally useful and appropriate for what the user is making. Do not implement food
+pairings as client-side category or name lists.
 
 ### Ingredient Contribution Breakdown
 

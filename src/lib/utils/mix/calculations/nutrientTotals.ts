@@ -1,4 +1,5 @@
 import { getFdcNutrientValue } from "$lib/utils/food/nutrients/fdcNutrients";
+import { NUTRIENT_DATA_BASIS_GRAMS } from "$lib/utils/food/nutrients/nutritionDisplay";
 import {
 	getDefaultMixGoals,
 	getMixRuntimeConfiguration,
@@ -27,7 +28,7 @@ export const getFoodNutrientAmount = (
 
 	const defaultServingGrams = getMixRuntimeConfiguration().defaultServingGrams;
 	const grams = servingGrams[food.fdcId] ?? defaultServingGrams;
-	return (nutrientValue * grams) / defaultServingGrams;
+	return (nutrientValue * grams) / NUTRIENT_DATA_BASIS_GRAMS;
 };
 
 export const getNutrientTotal = (
