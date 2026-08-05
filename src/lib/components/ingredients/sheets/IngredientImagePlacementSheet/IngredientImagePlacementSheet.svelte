@@ -14,14 +14,17 @@
 
 <BottomSheet
 	{open}
-	title="Image placement"
+	title="Adjust image placement"
 	titleId="ingredient-image-placement-sheet-title"
 	label="Ingredient image placement"
+	fill
 	onClose={onClose}
 >
 	{#if food?.image}
 		<ProductImagePanel
 			{food}
+			mode="details"
+			placementPresentation="flat"
 			{canAdjustImagePlacement}
 			{onImagePlacementSave}
 		/>

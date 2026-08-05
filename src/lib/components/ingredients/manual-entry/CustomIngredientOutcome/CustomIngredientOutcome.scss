@@ -17,14 +17,14 @@
 	strong {
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-bold;
-		line-height: 1.35;
+		line-height: $app-line-height-ui;
 	}
 
 	small {
 		color: $app-muted;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-medium;
-		line-height: 1.4;
+		line-height: $app-line-height-ui;
 	}
 }
 

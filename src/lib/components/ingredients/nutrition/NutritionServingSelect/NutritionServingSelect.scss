@@ -1,48 +1,12 @@
 @use "../../../../../styles/variables" as *;
 
 .nutrition-serving-select {
-	display: grid;
-	grid-template-columns: auto minmax(0, 1fr);
-	align-items: center;
-	gap: $app-gap-md;
 	padding: $app-gap-md 0;
 	border-bottom: 2px solid $app-shell-text-primary;
-
-	span {
-		color: $app-shell-text-muted;
-		font-size: $app-font-size-sm;
-		font-weight: $app-font-weight-bold;
-		letter-spacing: $app-letter-spacing-label;
-		text-transform: uppercase;
-	}
-
-	select {
-		width: 100%;
-		min-width: 0;
-		min-height: $app-shell-control-height;
-		padding: 0 $app-shell-control-padding-x;
-		color: $app-shell-text-primary;
-		font: inherit;
-		font-weight: $app-font-weight-semibold;
-		background: $app-shell-surface-control;
-		border: 1px solid $app-shell-border-subtle;
-		border-radius: $app-shell-radius-control;
-	}
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.nutrition-serving-select {
-		gap: $app-gap-sm;
 		padding: $app-gap-sm 0;
-
-		span {
-			font-size: $app-font-size-xs;
-		}
-
-		select {
-			min-height: $app-shell-control-height-narrow;
-			padding-inline: $app-shell-control-padding-x-compact;
-			font-size: $app-font-size-sm;
-		}
 	}
 }

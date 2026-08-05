@@ -1,7 +1,7 @@
 <script lang="ts">
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import type { PaginatedListControlsProps } from "./types";
-	import { getMotionSafeScrollBehavior } from "$lib/utils/accessibility/motion";
+	import { getMotionSafeScrollBehavior } from "$lib/utils/animation/motion";
 
 	let {
 		scrollContainer,

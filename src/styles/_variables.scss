@@ -24,9 +24,25 @@ $app-font-size-sm: 0.88rem;
 $app-font-size-md: 1rem;
 $app-font-size-lg: 1.08rem;
 $app-font-size-xl: 1.25rem;
+$app-font-size-2xl: 1.5rem;
+$app-font-size-3xl: 2.1rem;
+$app-font-size-4xl: 2.75rem;
+$app-font-size-page-title: clamp(1.5rem, 7vw, 2.1rem);
+$app-font-size-hero-title: clamp(2.1rem, 7vw, 2.75rem);
 
+$app-line-height-none: 0;
+$app-line-height-tight: 1;
+$app-line-height-heading: 1.1;
+$app-line-height-compact: 1.2;
+$app-line-height-ui: 1.35;
+$app-line-height-body: 1.45;
+
+$app-letter-spacing-tight: -0.04em;
+$app-letter-spacing-normal: 0;
 $app-letter-spacing-label: 0.04em;
 $app-letter-spacing-data: 0.01em;
+$app-letter-spacing-wide: 0.08em;
+$app-letter-spacing-wider: 0.1em;
 
 $app-button-font-family: "DM Sans", "Segoe UI Variable Text", "Segoe UI",
 	system-ui, -apple-system, sans-serif;

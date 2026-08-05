@@ -94,6 +94,20 @@ const getFoodImageTimestamp = (image: FoodImageAsset) => {
 	return Number.isFinite(timestamp) ? timestamp : 0;
 };
 
+const deduplicateFoodImageAssets = (images: FoodImageAsset[]) => [
+	...new Map(
+		images.map((image) => [
+			[
+				image.source,
+				image.sourceReference ?? "",
+				image.role,
+				image.imageUrl,
+			].join(":"),
+			image,
+		]),
+	).values(),
+];
+
 export const selectPreferredFoodImageAsset = (
 	images: FoodImageAsset[],
 ): FoodImageAsset | null => {
@@ -212,13 +226,12 @@ export const hydrateFoodsWithCachedImages = async (
 	}
 
 	return foods.map((food) => {
-		const image =
-			selectPreferredFoodImageAsset(
-				imagesByBarcode.get(getFoodBarcode(food) ?? "") ?? [],
-			) ??
-			selectPreferredFoodImageAsset(
-				imagesBySharedProductId.get(food.sharedProductId ?? "") ?? [],
-			);
+		const image = selectPreferredFoodImageAsset(
+			deduplicateFoodImageAssets([
+				...(imagesByBarcode.get(getFoodBarcode(food) ?? "") ?? []),
+				...(imagesBySharedProductId.get(food.sharedProductId ?? "") ?? []),
+			]),
+		);
 		return image ? { ...food, image } : food;
 	});
 };

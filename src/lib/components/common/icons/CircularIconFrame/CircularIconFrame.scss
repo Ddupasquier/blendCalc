@@ -15,7 +15,7 @@
 	border: var(--circular-icon-frame-border, 1px solid transparent);
 	border-radius: $app-radius-circle;
 	font-size: var(--circular-icon-frame-icon-size, #{$app-status-icon-badge-icon-size});
-	line-height: 1;
+	line-height: $app-line-height-tight;
 	vertical-align: middle;
 }
 

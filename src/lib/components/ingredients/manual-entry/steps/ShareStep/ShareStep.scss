@@ -37,7 +37,7 @@
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-medium;
-	line-height: 1.35;
+	line-height: $app-line-height-ui;
 }
 
 .share-step__evidence p {
@@ -61,7 +61,7 @@
 
 .share-step__macro-row strong {
 	font-size: $app-font-size-md;
-	line-height: 1;
+	line-height: $app-line-height-tight;
 }
 
 .share-step__macro-row small {

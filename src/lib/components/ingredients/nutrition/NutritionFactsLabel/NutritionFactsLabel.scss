@@ -33,9 +33,9 @@ $facts-label-tight-gap: 0.13rem;
 }
 
 .nf-title {
-	font-size: 2.1rem;
+	font-size: $app-font-size-3xl;
 	font-weight: $app-font-weight-heavy;
-	line-height: 1.1;
+	line-height: $app-line-height-heading;
 	letter-spacing: $app-letter-spacing-data;
 	text-transform: uppercase;
 }
@@ -64,9 +64,9 @@ $facts-label-tight-gap: 0.13rem;
 	color: $nutrition-secondary-ink;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-bold;
-	line-height: 1.15;
+	line-height: $app-line-height-heading;
 	text-align: left;
-	letter-spacing: 0;
+	letter-spacing: $app-letter-spacing-normal;
 	text-transform: none;
 }
 
@@ -184,7 +184,7 @@ $facts-label-tight-gap: 0.13rem;
 .nf-unit {
 	margin-left: $facts-label-tight-gap;
 	color: $nutrition-secondary-ink;
-	font-size: 0.82em;
+	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-regular;
 	text-transform: uppercase;
 }
@@ -201,7 +201,7 @@ $facts-label-tight-gap: 0.13rem;
 	}
 
 	.nf-title {
-		font-size: clamp(1.75rem, 10vw, 2.1rem);
+		font-size: $app-font-size-page-title;
 	}
 
 	.nf-heading-top {
@@ -260,7 +260,7 @@ $facts-label-tight-gap: 0.13rem;
 	}
 
 	.nf-title {
-		font-size: 1.55rem;
+		font-size: $app-font-size-2xl;
 	}
 
 	.nf-basis {

@@ -14,7 +14,7 @@ and comparing them with personal goals.
 - 🥤 Saved food combinations with load, overwrite, save-as-new, and per-user name validation
 - 👤 Optional profile details, avatar policy confirmation, food preferences, allergens, and dietary restrictions
 - 🛡️ Admin moderation for users, profile images, and shared product submissions
-- 📱 Mobile-first responsive UI with pagination, filtering, sorting, and large-list handling
+- 📱 Mobile-first responsive UI with progressive loading, filtering, sorting, and large-list controls
 - 🚦 Rate-limit friendly API usage with cache layers and Supabase-backed product reuse
 
 ## Versioning
@@ -38,6 +38,10 @@ immediately if a terminal bypasses the repository selector.
 ```bash
 npm install
 ```
+
+Dependency install scripts are deny-by-default. Reviewed scripts are version-pinned in
+`package.json` under `allowScripts`; review a package again whenever that pinned version
+changes instead of approving new scripts globally.
 
 ### 2. Configure environment variables
 

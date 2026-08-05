@@ -1,6 +1,7 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
-$view-top-motion-duration: 220ms;
+$view-top-motion-duration: motion.$duration-layout;
 
 .view-top {
 	display: grid;
@@ -21,15 +22,15 @@ $view-top-motion-duration: 220ms;
 		opacity: 1;
 		visibility: visible;
 		transition:
-			grid-template-rows $view-top-motion-duration ease,
-			opacity 160ms ease,
+			grid-template-rows $view-top-motion-duration motion.$easing-standard,
+			opacity motion.$duration-state motion.$easing-standard,
 			visibility 0s linear;
 	}
 
 	.view-top__content {
 		gap: $app-gap-sm;
 		transform: translateY(0);
-		transition: transform $view-top-motion-duration ease;
+		transition: transform $view-top-motion-duration motion.$easing-standard;
 	}
 
 	.view-top--compact-hidden {
@@ -38,8 +39,8 @@ $view-top-motion-duration: 220ms;
 		visibility: hidden;
 		pointer-events: none;
 		transition:
-			grid-template-rows $view-top-motion-duration ease,
-			opacity 160ms ease,
+			grid-template-rows $view-top-motion-duration motion.$easing-standard,
+			opacity motion.$duration-state motion.$easing-standard,
 			visibility 0s linear $view-top-motion-duration;
 	}
 

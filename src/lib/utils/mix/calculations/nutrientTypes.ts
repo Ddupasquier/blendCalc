@@ -29,53 +29,26 @@ export type NutrientChartMetric = {
 	totalRatio: number;
 };
 
-export type NutrientFoodSuggestion = {
-	food: FdcFood;
-	action: "add" | "increase";
-	nutrientId: number;
-	nutrientLabel: string;
-	unit: string;
-	amountPer100g: number;
-	remainingAmount: number;
-	servingGramsToTarget: number;
-	currentServingGrams: number;
-	nextServingGrams: number;
-	targetAddedAmount: number;
-	conflicts: NutrientFoodSuggestionConflict[];
-	sourceLabel: string;
-};
-
-export type NutrientFoodSuggestionConflict = {
+export type NutrientAdjustmentImpact = {
 	nutrientId: number;
 	label: string;
 	unit: string;
-	amountAdded: number;
+	amountChange: number;
+	currentTotal: number;
 	nextTotal: number;
 	goal: number;
-	reason: "already-over" | "would-exceed";
+	distanceImprovement: number;
 };
 
-export type NutrientReductionSuggestion = {
+export type NutrientAdjustmentSuggestion = {
 	food: FdcFood;
-	nutrientId: number;
-	nutrientLabel: string;
-	unit: string;
+	direction: "increase" | "decrease";
 	currentServingGrams: number;
 	nextServingGrams: number;
-	reduceByGrams: number;
-	targetReducedAmount: number;
-	overageAmount: number;
-	percentOfOverageResolved: number;
-	conflicts: NutrientReductionSuggestionConflict[];
-	sourceLabel: string;
-};
-
-export type NutrientReductionSuggestionConflict = {
-	nutrientId: number;
-	label: string;
-	unit: string;
-	amountRemoved: number;
-	nextTotal: number;
-	goal: number;
-	reason: "already-under" | "would-drop-below";
+	changeGrams: number;
+	incrementLabel: string;
+	incrementSource: "source-serving" | "configured-default";
+	primaryImpact: NutrientAdjustmentImpact;
+	impacts: NutrientAdjustmentImpact[];
+	goalDistanceImprovement: number;
 };

@@ -10,7 +10,7 @@
 	margin: $app-gap-xs 0 0;
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
-	line-height: 1.35;
+	line-height: $app-line-height-ui;
 }
 
 .image-placement-editor__editing-preview {

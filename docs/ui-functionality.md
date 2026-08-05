@@ -427,7 +427,7 @@ Required controls:
   - Newest first by default.
   - Name A–Z.
   - Name Z–A.
-- Pagination for large lists.
+- Progressive `Load more` and `Return to top` controls for large lists.
 - Visible item count.
 
 Item behavior:
@@ -445,14 +445,68 @@ Item behavior:
 
 Route: `/mix`
 
-Meaningful Mix overlays use explicit child paths, including `/mix/save`,
-`/mix/reset-goals`, `/mix/clear-ingredients`, `/mix/reset-all`,
-`/mix/rename/{list}/{foodId}`, `/mix/warnings/{warningId}`, and
+Meaningful Mix overlays and modes use explicit child paths, including `/mix/save`,
+`/mix/options`, `/mix/reorganize`, `/mix/reset-goals`, `/mix/clear-ingredients`,
+`/mix/reset-all`, `/mix/warnings/{warningId}`, and
 `/mix/ingredients/{foodId}/conversion-details`. They use shallow history so the
 underlying Mix state stays mounted.
 
-The Mix page is the core smoothie builder. It combines selected foods, amounts, nutrient
+The Mix page is the core nutrition builder. It combines selected foods, amounts, nutrient
 goals, visual graph feedback, warnings, suggestions, and saving.
+
+### Section Organization
+
+The Mix options sheet includes `Reorganize`. It opens the route-backed
+`/mix/reorganize` mode without remounting or clearing the current Mix.
+
+In organization mode:
+
+- Replace every Mix section body with one compact header row.
+- Show every supported section so a currently empty warning or suggestion area still
+  has a stable place in the saved order.
+- Let pointer and touch users drag a dedicated handle. Keep pointer ownership on the
+  stable organizer while rows move so rapid motion across gaps or outside a handle does
+  not end the drag early. The active header follows the pointer continuously instead of
+  snapping into each candidate slot; its reserved slot changes only when the dragged
+  header's center crosses another header's center.
+- Let keyboard users reorder from the handle with Arrow Up, Arrow Down, Home, and End,
+  with explicit move-up and move-down controls as visible alternatives.
+- Animate only the other headers out of the dragged header's path while the active
+  header remains directly attached to pointer movement. Honor reduced-motion
+  preferences by keeping the reordering functional without sibling movement.
+- Announce the new position through a polite live region.
+- Save only a complete, validated set of stable section identifiers through the
+  authoritative Mix preference write. Never store visible labels as layout keys.
+- Apply the saved order to the normal Mix view and append newly introduced sections to
+  older saved orders rather than dropping them.
+- Keep the user in organization mode with friendly feedback if the order cannot be
+  saved.
+
+In the normal Mix view, every visible top-level section uses the shared animated
+collapse. `Warnings`, `Suggested adjustments`, and `What is driving this shape` default
+closed so the primary builder stays compact; the other established sections default
+open. A user's later open/closed choices persist across sessions. The complete Warnings
+section container uses the shared yellow warning treatment for low-severity warnings and
+the red danger treatment when any high-severity warning is present; its collapse header
+remains structurally neutral, and hidden urgency text ensures color is not the only
+signal. Expanded warning cards use the standard theme panel surface, with their border
+carrying the individual warning or danger severity. Empty conditional warning,
+suggestion, and contribution sections remain absent;
+organization mode still shows their stable headers so users can position them before
+content exists.
+Closed top-level sections occupy only the shared summary height and their boundary;
+expanded panel spacing belongs inside the disclosure body and must not make closed rows
+look like full content cards.
+
+At the compact width or height tier, Mix uses the shared `ViewFrame`, `ViewTop`, and
+`ViewBody` shell established by Ingredients. Downward scrolling in the main Mix surface
+retracts the Mix title, supporting copy, status, and header actions. A short upward scroll
+reveals the complete header without requiring a return to the top. Scrolling inside the
+bounded Add Ingredients and Selected Ingredients lists does not change Mix header
+visibility. The main Mix scroll tracker pauses and rebases while header geometry settles
+so the transition cannot interpret its own layout movement as a reverse scroll. Wider
+layouts keep the Mix header visible, and reduced-motion preference removes the transition
+without changing the visibility behavior.
 
 ### Loaded Mix State
 
@@ -496,6 +550,10 @@ Critical rule: The graph shape point count matches selected nutrient count:
 - 3 selected nutrients: triangle.
 - More nutrients: polygon/radar shape.
 
+At the shared compact width or compact-height breakpoints, keep nutrient names around
+the shape but hide the tiny actual/goal value line beneath each name. Exact values
+remain available in the status pills and the chart's accessible summary.
+
 ### Goal Targets
 
 Preserve:
@@ -512,6 +570,8 @@ Preserve:
   - Fiber Focused.
 - Apply template action.
 - Reset goals action.
+- The Goals section is collapsible and includes the DB-backed nutrient picker so users
+  can add or stop tracking nutrients without opening a second setup surface.
 
 Mobile requirements:
 
@@ -523,11 +583,16 @@ Mobile requirements:
 
 Preserve:
 
-- On Hand and Shopping List selection areas.
-- Search/filter.
-- Sort.
-- Pagination.
-- Pills/cards matching the Ingredients page list sections.
+- Fridge and Shopping List tabs with one active source list at a time.
+- One full-width shared search control with an adjacent shared filter/sort trigger.
+- A route-backed `/mix/ingredients/filters` bottom sheet owns the `Show` and `Sort`
+  choices; do not crowd native selects beside the search field.
+- Progressive `Load more` and `Return to top` controls; existing results remain mounted.
+- When the inner result list reaches either vertical boundary, continued wheel or touch
+  scrolling passes to the Mix page instead of trapping the user inside the section.
+- Compact selectable rows following the Ingredients card interaction hierarchy.
+- Chooser cards show identity, private-custom state, warning edge, and selection state;
+  category remains searchable but is not repeated as visible supporting text.
 - Selected state obvious.
 - Long names and custom badges must not break the layout.
 - Food preference conflict icons remain visible.
@@ -544,6 +609,13 @@ Preserve:
 - Collapse/expand details with a chevron.
 - Remove ingredient action.
 - Scrollable selected ingredients area when there are many foods.
+- When that inner area reaches either vertical boundary, continued wheel or touch
+  scrolling passes to the Mix page without requiring `Load more`.
+
+On compact screens, use one identity row containing the food symbol, name, converted
+weight, and the paired details/remove actions. Place the amount stepper and short
+DB-provided unit label in one unobstructed row beneath it. Do not stack secondary
+actions beside the amount row or truncate a unit label to fit.
 
 Units and conversions:
 
@@ -570,6 +642,10 @@ Behavior:
 - Current shape changes when ingredients or amounts change.
 - Current shape animates growth.
 - Numeric labels show current/goal value under or near each nutrient label.
+- Assign axes deterministically by label space demand so longer nutrient names use the
+  wider top and bottom positions while short names occupy the narrower side gutters.
+  Keep each nutrient's current value, goal, status color, and accessible summary attached
+  when its display axis moves.
 - Labels must not clip, overlap graph lines, or disappear at 1, 2, 3, 6, or more
   nutrients.
 
@@ -610,17 +686,32 @@ Suggestions should be collapsed by default when present.
 Required behavior:
 
 - Collapsed section shows an alert indicator when suggestions exist.
-- Expanded view combines add and reduce/tweak suggestions into one coherent flow.
+- Expanded view combines increase and reduce suggestions for foods that are already in
+  the Mix into one coherent flow.
 - Suggestions should not flood the screen with repeated versions of the same ingredient.
-- Suggestions must consider other nutrient goals before recommending an amount.
-- If a suggestion will worsen another goal, show a clear caution.
+- Suggestions must evaluate every explicitly tracked nutrient goal before recommending
+  an amount and must improve the Mix overall without worsening another tracked goal.
+- Only foods with complete relevant nutrient data and no known food-preference conflict
+  may be recommended.
+- Prefer a source-reported serving increment. When none exists, use the versioned Mix
+  default amount as the practical increment; never invent an exact gram amount merely
+  to hit one target.
+- Unsafe, incomplete, or goal-regressing candidates remain absent rather than appearing
+  with a caution that asks the user to judge a recommendation the app already knows is
+  unsuitable.
 - Apply action updates the selected ingredient amount.
 
 Suggestion types:
 
-- Add more of a food to fill a missing nutrient.
+- Add more of a food already in the Mix when one practical increment improves all-goal
+  fit.
 - Reduce a food to bring an over-goal nutrient closer.
 - Adjust amount of an already selected food.
+
+New-food recommendations remain unavailable until versioned, DB-backed recipe context,
+ingredient roles, and reviewed pairing evidence can establish that an addition is both
+nutritionally useful and appropriate for what the user is making. Do not implement food
+pairings as client-side category or name lists.
 
 ### Ingredient Contribution Breakdown
 

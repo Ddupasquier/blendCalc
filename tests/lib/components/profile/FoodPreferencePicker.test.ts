@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker/FoodPreferencePicker.svelte";
 
 const baseProps = {
+	id: "allergen-preference",
 	availableOptions: ["Milk"],
 	emptyLabel: "No allergens saved.",
 	filteredOptions: [],

@@ -43,7 +43,9 @@ declare global {
 			mixData?: MixPageInitialData;
 			savedData?: SavedPageInitialData;
 		}
-		// interface PageState {}
+		interface PageState {
+			mixRouteHref?: string;
+		}
 		interface Platform {
 			context?: RequestContext;
 		}

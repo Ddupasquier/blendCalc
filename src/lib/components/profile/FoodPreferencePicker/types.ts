@@ -1,4 +1,5 @@
 export type FoodPreferencePickerProps = {
+	id: string;
 	availableOptions: string[];
 	disabled?: boolean;
 	emptyLabel: string;

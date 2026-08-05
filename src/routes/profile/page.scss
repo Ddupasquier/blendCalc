@@ -11,8 +11,8 @@
 
 	h1 {
 		font-family: $app-font-family-display;
-		font-size: clamp(1.65rem, 6vw, 2.2rem);
-		letter-spacing: -0.035em;
+		font-size: $app-font-size-page-title;
+		letter-spacing: $app-letter-spacing-tight;
 	}
 
 	p:last-child {
@@ -24,8 +24,8 @@
 .profile-heading__eyebrow {
 	color: $app-muted;
 	font-size: $app-font-size-xs;
-	font-weight: 900;
-	letter-spacing: 0.1em;
+	font-weight: $app-font-weight-heavy;
+	letter-spacing: $app-letter-spacing-wider;
 	text-transform: uppercase;
 }
 
@@ -46,12 +46,11 @@
 	legend {
 		color: $app-primary;
 		font-size: $app-font-size-md;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 	}
 
 	input:not([type="checkbox"]),
-	textarea,
-	select {
+	textarea {
 		width: 100%;
 		padding: 0.65rem $app-gap-md;
 		color: $app-primary;
@@ -120,15 +119,15 @@
 		margin-bottom: 0.1rem;
 		color: $app-muted;
 		font-size: $app-font-size-xs;
-		font-weight: 900;
-		letter-spacing: 0.05em;
+		font-weight: $app-font-weight-heavy;
+		letter-spacing: $app-letter-spacing-label;
 		text-transform: uppercase;
 	}
 
 	p {
 		color: $app-primary;
 		font-size: $app-font-size-sm;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 		overflow-wrap: anywhere;
 	}
 }
@@ -137,11 +136,14 @@
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: $app-gap-sm;
+}
 
-	label {
-		display: grid;
-		gap: $app-gap-xs;
-	}
+.preference-field {
+	display: grid;
+	gap: $app-gap-xs;
+	color: $app-primary;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-bold;
 }
 
 .inline-fields {
@@ -248,7 +250,7 @@
 		gap: $app-gap-sm;
 		color: $app-primary;
 		font-size: $app-font-size-sm;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 		cursor: pointer;
 		list-style: none;
 
@@ -268,17 +270,8 @@
 
 }
 
-:global(
-	.avatar-policy__details[data-expanded="true"]
-		.avatar-policy__chevron
-) {
-	transform: rotate(180deg);
-}
-
-.avatar-policy__chevron {
-	font-size: $app-font-size-lg;
-	line-height: 1;
-	transition: transform 160ms ease;
+:global(.avatar-policy__chevron) {
+	color: $app-shell-text-muted;
 }
 
 .check-row {
@@ -347,7 +340,7 @@
 	}
 
 	.profile-heading h1 {
-		font-size: 1.45rem;
+		font-size: $app-font-size-2xl;
 	}
 
 	.profile-heading p:last-child,
@@ -359,7 +352,6 @@
 
 	.profile-card input:not([type="checkbox"]),
 	.profile-card textarea,
-	.profile-card select,
 	:global(.profile-serving-size-input) {
 		padding: $app-gap-xs $app-shell-control-padding-x-compact;
 		font-size: $app-font-size-sm;

@@ -32,7 +32,7 @@
 
 .data-health__header h1 {
 	font-family: $app-font-family-display;
-	font-size: clamp(1.8rem, 7vw, 2.4rem);
+	font-size: $app-font-size-page-title;
 }
 
 .data-health__header p,
@@ -47,7 +47,7 @@
 .data-health__eyebrow {
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-heavy;
-	letter-spacing: 0.1em;
+	letter-spacing: $app-letter-spacing-wider;
 	text-transform: uppercase;
 }
 
@@ -209,7 +209,7 @@
 		gap: $app-gap-sm;
 
 		h1 {
-			font-size: 1.45rem;
+			font-size: $app-font-size-2xl;
 		}
 	}
 

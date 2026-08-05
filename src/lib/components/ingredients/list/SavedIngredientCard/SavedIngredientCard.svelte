@@ -4,9 +4,9 @@
 	import TwoStepConfirmation from "$lib/components/common/actions/TwoStepConfirmation/TwoStepConfirmation.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
+	import CardSelectionIndicator from "$lib/components/common/display/CardSelectionIndicator/CardSelectionIndicator.svelte";
 	import IngredientCardMedia from "$lib/components/ingredients/card/IngredientCardMedia/IngredientCardMedia.svelte";
 	import IngredientMoveIcon from "$lib/components/ingredients/list/IngredientMoveIcon/IngredientMoveIcon.svelte";
-	import IngredientSelectionIndicator from "$lib/components/ingredients/list/IngredientSelectionIndicator/IngredientSelectionIndicator.svelte";
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import { longPress } from "$lib/utils/interaction/longPress";
@@ -78,7 +78,7 @@
 	</span>
 	{#if selectionMode}
 		<span class="saved-ingredient-card__selection-indicator">
-			<IngredientSelectionIndicator selected={checked} />
+			<CardSelectionIndicator selected={checked} />
 		</span>
 	{/if}
 	{#if !selectionMode}

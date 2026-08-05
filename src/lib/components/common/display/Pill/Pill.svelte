@@ -1,61 +1,70 @@
 <script lang="ts">
+	import Pencil from "$lib/assets/icons/Pencil/Pencil.svelte";
+	import X from "$lib/assets/icons/X/X.svelte";
 	import CustomBadge from "../CustomBadge/CustomBadge.svelte";
 	import type { PillProps } from "./types";
 
-    let {
-        label,
-        onRemove,
+	let {
+		label,
+		onRemove,
 		onRename,
-        onSelect,
+		onSelect,
 		removable = true,
-        active = false,
-        custom = false,
+		active = false,
+		custom = false,
 		disabled = false,
 	}: PillProps = $props();
 </script>
 
 <span
-    class="pill {active ? 'active' : ''}"
-    class:custom
-    role="button"
-    tabindex="0"
-    onclick={() => !disabled && onSelect?.()}
+	class="pill {active ? 'active' : ''}"
+	class:custom
 	aria-disabled={disabled}
-    onkeydown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-            if (!disabled) onSelect?.();
-        }
-    }}
 >
-    <span class="pill-label" title={label}>{label}</span>
-    {#if custom}
-        <CustomBadge />
-    {/if}
+	{#if onSelect}
+		<button
+			class="pill-select"
+			type="button"
+			aria-pressed={active}
+			disabled={disabled}
+			onclick={onSelect}
+		>
+			<span class="pill-label" title={label}>{label}</span>
+			{#if custom}<CustomBadge />{/if}
+		</button>
+	{:else}
+		<span class="pill-content">
+			<span class="pill-label" title={label}>{label}</span>
+			{#if custom}<CustomBadge />{/if}
+		</span>
+	{/if}
 	{#if onRename}
 		<button
 			class="pill-action pill-rename"
 			aria-label={`Rename ${label}`}
 			disabled={disabled}
-			tabindex="-1"
 			type="button"
 			onclick={(e) => {
 				e.stopPropagation();
 				if (!disabled) onRename();
 			}}
-		>✎</button>
+		>
+			<Pencil size={13} />
+		</button>
 	{/if}
 	{#if removable && onRemove}
 		<button
 			class="pill-action pill-remove"
 			aria-label={`Remove ${label}`}
 			disabled={disabled}
-			tabindex="-1"
 			type="button"
 			onclick={(e) => {
 				e.stopPropagation();
 				if (!disabled) onRemove();
-			}}>&times;</button
+			}}
 		>
+			<X size={13} />
+		</button>
 	{/if}
 </span>
 

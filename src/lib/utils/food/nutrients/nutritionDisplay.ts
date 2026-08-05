@@ -1,4 +1,5 @@
-export const DEFAULT_NUTRITION_VIEWING_GRAMS = 100;
+export const NUTRIENT_DATA_BASIS_GRAMS = 100;
+export const DEFAULT_NUTRITION_VIEWING_GRAMS = NUTRIENT_DATA_BASIS_GRAMS;
 export const MIN_NUTRITION_VIEWING_GRAMS = 1;
 export const MAX_NUTRITION_VIEWING_GRAMS = 1000;
 export const NUTRITION_VIEWING_GRAM_STEP = 1;
@@ -27,7 +28,9 @@ export const scalePer100gValue = (
 	viewingGrams: number,
 ): number | null => {
 	if (!Number.isFinite(valuePer100g ?? NaN)) return null;
-	return (Number(valuePer100g) * clampNutritionViewingGrams(viewingGrams)) / 100;
+	return (
+		Number(valuePer100g) * clampNutritionViewingGrams(viewingGrams)
+	) / NUTRIENT_DATA_BASIS_GRAMS;
 };
 
 export const formatNutritionAmount = (

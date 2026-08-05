@@ -1,0 +1,85 @@
+@use "../../../../../styles/variables" as *;
+
+.nutrient-shape-panel {
+	display: grid;
+	gap: $app-gap-md;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-card;
+}
+
+.nutrient-shape-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
+	padding: $app-gap-md $app-gap-sm $app-gap-sm;
+}
+
+.nutrient-shape-panel__meta {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: $app-gap-sm;
+}
+
+.nutrient-shape-panel__legend {
+	display: flex;
+	gap: $app-gap-sm;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-2xs;
+	font-weight: $app-font-weight-semibold;
+
+	span {
+		display: inline-flex;
+		align-items: center;
+		gap: $app-gap-xs;
+	}
+
+	i {
+		display: block;
+		width: 1rem;
+		border-top: 1.5px solid $app-shell-text-muted;
+	}
+
+	i.goal {
+		border-top-style: dashed;
+	}
+
+	i.actual {
+		border-color: $app-shell-accent-primary;
+	}
+}
+
+.nutrient-shape-panel__chart {
+	display: grid;
+	place-items: center;
+	width: min(100%, 30rem);
+	min-height: 13rem;
+	margin-inline: auto;
+}
+
+.nutrient-shape-panel__chart--simple {
+	width: min(100%, 24rem);
+}
+
+.nutrient-shape-panel__statuses {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-xs;
+	padding-top: $app-gap-md;
+	border-top: 1px solid $app-shell-border-subtle;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.nutrient-shape-panel {
+		gap: $app-gap-sm;
+	}
+
+	.nutrient-shape-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
+		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
+	}
+
+	.nutrient-shape-panel__chart {
+		min-height: 10.5rem;
+	}
+
+	.nutrient-shape-panel__statuses {
+		padding-top: $app-gap-sm;
+	}
+}

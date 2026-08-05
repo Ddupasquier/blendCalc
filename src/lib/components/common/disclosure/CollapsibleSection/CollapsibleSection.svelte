@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Chevron from "$lib/assets/icons/Chevron/Chevron.svelte";
 	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
-	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
+	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
+	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
 	import type { CollapsibleSectionProps } from "./types";
 
 	let {
@@ -10,7 +10,9 @@
 		badge,
 		open = false,
 		surface = "accent",
+		tone = "neutral",
 		class: className = "",
+		onOpenChange,
 		summaryEnd,
 		children,
 	}: CollapsibleSectionProps = $props();
@@ -19,16 +21,20 @@
 <details
 	class={`collapsible-section ${className}`.trim()}
 	data-surface={surface}
-	use:animatedDetails
+	data-tone={tone}
+	use:animatedDetails={{ open, onOpenChange }}
 	{open}
 >
 	<summary>
 		<span class="collapsible-section__heading">
-			<span class="collapsible-section__chevron" aria-hidden="true">
-				<Chevron direction="down" />
-			</span>
+			<DisclosureChevron class="collapsible-section__chevron" />
 			<span id={titleId} class="collapsible-section__title">
 				{title}
+				{#if tone === "danger"}
+					<span class="collapsible-section__attention">Urgent attention needed.</span>
+				{:else if tone === "warning"}
+					<span class="collapsible-section__attention">Attention needed.</span>
+				{/if}
 				{#if badge}
 					<TextBadge label={badge} tone="neutral" />
 				{/if}

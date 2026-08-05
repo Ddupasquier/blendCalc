@@ -33,14 +33,13 @@
 }
 
 :global(.manual-entry-field > input),
-:global(.manual-entry-field > select),
+:global(.manual-entry-field > .select-field),
 :global(.manual-entry-field > .input-loading-frame) {
 	width: 100%;
 	min-width: 0;
 }
 
 :global(.manual-entry-field > input),
-:global(.manual-entry-field > select),
 :global(.manual-entry-field > .input-loading-frame > input) {
 	min-height: $app-shell-control-height;
 	padding: 0 $app-shell-control-padding-x;
@@ -51,21 +50,6 @@
 	font: inherit;
 	font-size: $app-font-size-md;
 	font-weight: $app-font-weight-medium;
-}
-
-:global(.manual-entry-field > select) {
-	appearance: none;
-	padding-right: calc($app-gap-md * 3.6);
-	background-image:
-		linear-gradient(45deg, transparent 50%, $app-shell-text-muted 50%),
-		linear-gradient(135deg, $app-shell-text-muted 50%, transparent 50%);
-	background-position:
-		calc(100% - calc(calc($app-gap-md * 3.6) / 2)) 52%,
-		calc(100% - calc(calc($app-gap-md * 3.6) / 2.57)) 52%;
-	background-repeat: no-repeat;
-	background-size:
-		$app-gap-xs $app-gap-xs,
-		$app-gap-xs $app-gap-xs;
 }
 
 :global(.manual-entry-field input::placeholder) {
@@ -90,7 +74,7 @@
 	border-radius: $app-shell-radius-card;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-medium;
-	line-height: 1.35;
+	line-height: $app-line-height-ui;
 }
 
 :global(.manual-entry-field__status--error) {
@@ -102,5 +86,5 @@
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-medium;
-	line-height: 1.35;
+	line-height: $app-line-height-ui;
 }

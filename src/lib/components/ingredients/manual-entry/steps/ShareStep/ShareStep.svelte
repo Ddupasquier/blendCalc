@@ -1,6 +1,7 @@
 <script lang="ts">
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch/ToggleSwitch.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import CustomIngredientOutcome from "$lib/components/ingredients/manual-entry/CustomIngredientOutcome/CustomIngredientOutcome.svelte";
@@ -73,6 +74,10 @@
 	const catalogSubmissionComplete = $derived(
 		catalogSubmissionOnly && Boolean(catalogMessage),
 	);
+	const saveDestinationOptions = [
+		{ value: MIX_STORAGE_KEYS.fridge, label: "Fridge" },
+		{ value: MIX_STORAGE_KEYS.shoppingList, label: "Shopping List" },
+	];
 </script>
 
 <ManualEntryStepLayout>
@@ -204,17 +209,15 @@
 
 	{#if !catalogSubmissionOnly}
 		<ManualEntryField forId="custom-ingredient-save-destination" label="Add after saving">
-			<select
-				bind:this={saveDestinationSelect}
+			<SelectField
+				bind:element={saveDestinationSelect}
 				id="custom-ingredient-save-destination"
 				name="custom-ingredient-save-destination"
 				value={saveDestination}
-				onchange={(event) =>
-					onSaveDestinationChange(event.currentTarget.value as SmoothieListKey)}
-			>
-				<option value={MIX_STORAGE_KEYS.fridge}>Fridge</option>
-				<option value={MIX_STORAGE_KEYS.shoppingList}>Shopping List</option>
-			</select>
+				options={saveDestinationOptions}
+				onValueChange={(value) =>
+					onSaveDestinationChange(value as SmoothieListKey)}
+			/>
 		</ManualEntryField>
 	{/if}
 

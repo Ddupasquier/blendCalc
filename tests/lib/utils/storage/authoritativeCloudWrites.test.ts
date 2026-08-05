@@ -20,7 +20,11 @@ import {
 	deleteCloudSavedDrink,
 	saveCloudSavedDrinkWithResult,
 } from "$lib/utils/storage/supabase/savedDrinks";
-import { saveCloudMixPreferences } from "$lib/utils/storage/supabase/mixPreferences";
+import {
+	saveCloudMixPreferences,
+	saveCloudMixSectionDisclosureState,
+	saveCloudMixSectionOrder,
+} from "$lib/utils/storage/supabase/mixPreferences";
 
 const food = {
 	fdcId: 1,
@@ -128,5 +132,44 @@ describe("authoritative Supabase write adapters", () => {
 			p_nutrient_goals: { 1008: 2000 },
 			p_mix_state: undefined,
 		});
+	});
+
+	it("saves Mix section order through its validated preference function", async () => {
+		supabase.rpc.mockResolvedValue({ data: true, error: null });
+		const sectionOrder = [
+			"goals",
+			"nutrient-shape",
+			"selected-ingredients",
+			"add-ingredients",
+			"warnings",
+			"suggested-adjustments",
+			"nutrient-contributions",
+		];
+
+		await expect(saveCloudMixSectionOrder(sectionOrder)).resolves.toBe(true);
+		expect(supabase.rpc).toHaveBeenCalledWith("save_mix_section_order", {
+			p_section_order: sectionOrder,
+		});
+	});
+
+	it("saves the complete Mix disclosure state through its validated preference function", async () => {
+		supabase.rpc.mockResolvedValue({ data: true, error: null });
+		const sectionDisclosureState = {
+			"nutrient-shape": true,
+			goals: false,
+			"selected-ingredients": true,
+			"add-ingredients": true,
+			warnings: false,
+			"suggested-adjustments": false,
+			"nutrient-contributions": true,
+		};
+
+		await expect(
+			saveCloudMixSectionDisclosureState(sectionDisclosureState),
+		).resolves.toBe(true);
+		expect(supabase.rpc).toHaveBeenCalledWith(
+			"save_mix_section_disclosure_state",
+			{ p_section_disclosure_state: sectionDisclosureState },
+		);
 	});
 });

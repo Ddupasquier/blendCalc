@@ -107,5 +107,13 @@
 		"tesseract.js": "^7.0.0",
 		"utf-8-validate": "^6.0.6",
 		"ws": "^8.21.1"
+	},
+	"allowScripts": {
+		"@parcel/watcher@2.5.6": true,
+		"bufferutil@4.1.0": true,
+		"esbuild@0.28.1": true,
+		"fsevents@2.3.3": true,
+		"tesseract.js@7.0.0": true,
+		"utf-8-validate@6.0.6": true
 	}
 }

@@ -7,6 +7,14 @@ describe("nutrition serving selector spacing", () => {
 			"src/lib/components/ingredients/nutrition/NutritionServingSelect/NutritionServingSelect.scss",
 			"utf8",
 		);
+		const selectFieldStyles = readFileSync(
+			"src/lib/components/common/forms/SelectField/SelectField.scss",
+			"utf8",
+		);
+		const servingComponent = readFileSync(
+			"src/lib/components/ingredients/nutrition/NutritionServingSelect/NutritionServingSelect.svelte",
+			"utf8",
+		);
 		const detailViewComponent = readFileSync(
 			"src/lib/components/ingredients/nutrition/NutritionDetailView/NutritionDetailView.svelte",
 			"utf8",
@@ -16,10 +24,11 @@ describe("nutrition serving selector spacing", () => {
 			"utf8",
 		);
 
-		expect(componentStyles).toContain("gap: $app-gap-md");
 		expect(componentStyles).toContain("padding: $app-gap-md 0");
-		expect(componentStyles).toContain("padding: 0 $app-shell-control-padding-x");
 		expect(componentStyles).not.toContain("padding-block: $app-gap-sm");
+		expect(servingComponent).toContain("<SelectField");
+		expect(selectFieldStyles).toContain("$app-shell-control-padding-x");
+		expect(selectFieldStyles).toContain("$app-focus-outline");
 		expect(detailViewComponent).toContain(
 			'<div class="nutrition-detail-view__measurement-controls">',
 		);

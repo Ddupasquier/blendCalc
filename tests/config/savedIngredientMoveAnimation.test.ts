@@ -11,7 +11,7 @@ describe("saved ingredient move animation", () => {
 
 		expect(savedList).toContain('import { flip } from "svelte/animate"');
 		expect(savedList).toContain("animate:flip");
-		expect(savedList).toContain("prefersReducedMotion() ? 0");
+		expect(savedList).toContain("getMotionSafeDuration(MOTION_DURATION_MS.reflow)");
 	});
 
 	it("reconciles successful moves locally instead of refreshing both lists", () => {
