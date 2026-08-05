@@ -1,5 +1,4 @@
 @use "../../../../../styles/variables" as *;
-@use "../../../../utils/animation/motion" as motion;
 
 .goals-panel {
 	background: $app-shell-surface-panel;
@@ -37,7 +36,7 @@
 	grid-template-columns: minmax(0, 1fr) auto auto;
 	grid-template-areas:
 		"summary control remove"
-		"progress control remove";
+		"slider control remove";
 	gap: $app-gap-xs $app-gap-sm;
 	align-items: center;
 	min-width: 0;
@@ -85,29 +84,8 @@
 	color: $app-shell-accent-danger;
 }
 
-.goal-progress {
-	grid-area: progress;
-	display: block;
-	height: 0.35rem;
-	overflow: hidden;
-	background: $app-shell-border-subtle;
-	border-radius: $app-shell-radius-pill;
-
-	span {
-		display: block;
-		height: 100%;
-		background: $app-warning-strong;
-		border-radius: inherit;
-		transition: width motion.$duration-feedback motion.$easing-standard;
-	}
-}
-
-.goal-input[data-status="near"] .goal-progress span {
-	background: $app-shell-accent-primary;
-}
-
-.goal-input[data-status="over"] .goal-progress span {
-	background: $app-shell-accent-danger;
+:global(.goal-input__slider) {
+	grid-area: slider;
 }
 
 .goal-input__control {
@@ -163,7 +141,7 @@
 		grid-template-columns: minmax(0, 1fr) auto;
 		grid-template-areas:
 			"summary remove"
-			"progress remove"
+			"slider remove"
 			"control control";
 		gap: $app-gap-xs;
 		padding: $app-gap-xs;

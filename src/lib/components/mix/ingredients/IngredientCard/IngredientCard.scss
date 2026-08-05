@@ -59,13 +59,6 @@
 	}
 }
 
-.ingredient-card__title-row {
-	display: flex;
-	align-items: center;
-	gap: $app-gap-xs;
-	min-width: 0;
-}
-
 .ingredient-card__amount,
 .ingredient-card__actions {
 	display: flex;

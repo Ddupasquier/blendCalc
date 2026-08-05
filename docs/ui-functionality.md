@@ -561,7 +561,8 @@ Preserve:
 - Goal card per selected nutrient.
 - Current/goal value shown near nutrient name.
 - Units displayed clearly.
-- Goal input per nutrient.
+- A draggable goal slider per nutrient, synchronized with the adjacent numeric input.
+  The slider provides quick adjustment while the number input preserves exact entry.
 - Preset templates:
   - High Protein.
   - Low Sugar.
@@ -591,10 +592,11 @@ Preserve:
 - When the inner result list reaches either vertical boundary, continued wheel or touch
   scrolling passes to the Mix page instead of trapping the user inside the section.
 - Compact selectable rows following the Ingredients card interaction hierarchy.
-- Chooser cards show identity, private-custom state, warning edge, and selection state;
-  category remains searchable but is not repeated as visible supporting text.
+- Chooser cards show identity, warning edge, and selection state; category and
+  private-custom classification remain searchable/filterable but are not repeated as
+  visible compact-card metadata or badges.
 - Selected state obvious.
-- Long names and custom badges must not break the layout.
+- Long names must truncate before the selection control and never render beneath it.
 - Food preference conflict icons remain visible.
 
 ### Selected Ingredients and Amounts

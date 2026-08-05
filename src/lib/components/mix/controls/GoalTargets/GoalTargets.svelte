@@ -6,6 +6,8 @@
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import MetadataPill from "$lib/components/common/display/MetadataPill/MetadataPill.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
+	import RangeInput from "$lib/components/common/forms/RangeInput/RangeInput.svelte";
+	import type { RangeInputTone } from "$lib/components/common/forms/RangeInput/types";
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import NutrientPicker from "$lib/components/mix/controls/NutrientPicker/NutrientPicker.svelte";
 	import type { GoalTargetsProps } from "./types";
@@ -16,6 +18,7 @@
 		selectedGoalTemplateId,
 		onTemplateChange,
 		onApplyTemplate,
+		onPreviewGoal,
 		onUpdateGoal,
 		onAddNutrient,
 		onRemoveNutrient,
@@ -40,8 +43,19 @@
 		if (Math.abs(difference) <= tolerance) return "near";
 		return difference > 0 ? "over" : "under";
 	};
-	const getProgressWidth = (total: number, goal: number) =>
-		goal > 0 ? `${Math.min((total / goal) * 100, 100)}%` : "0%";
+	const getSliderStep = (defaultGoal: number) => {
+		if (defaultGoal >= 100) return 1;
+		if (defaultGoal >= 1) return 0.1;
+		return 0.01;
+	};
+	const getSliderMax = (defaultGoal: number, goal: number, step: number) =>
+		Math.max(defaultGoal * 2, goal, step * 10);
+	const getSliderTone = (status: ReturnType<typeof getStatus>): RangeInputTone => {
+		if (status === "near") return "success";
+		if (status === "over") return "danger";
+		if (status === "under") return "warning";
+		return "neutral";
+	};
 </script>
 
 <section class="goals-panel" data-tutorial-target="mix-goals">
@@ -73,8 +87,11 @@
 		<div class="goal-grid" aria-label="Nutrient goals">
 			{#each selectedNutrients as nutrient}
 				{@const total = getTotal(Number(nutrient.id))}
-				{@const goal = nutrientGoals[Number(nutrient.id)] ?? getGoal(nutrient)}
+				{@const defaultGoal = getGoal(nutrient)}
+				{@const goal = nutrientGoals[Number(nutrient.id)] ?? defaultGoal}
 				{@const status = getStatus(total, goal)}
+				{@const sliderStep = getSliderStep(defaultGoal)}
+				{@const sliderMax = getSliderMax(defaultGoal, goal, sliderStep)}
 				<div class="goal-input" data-status={status}>
 					<div class="goal-input__summary">
 						<span class="goal-label">{nutrient.label}</span>
@@ -82,21 +99,33 @@
 							<strong>{total.toFixed(1)}</strong> / {goal}{nutrient.unit}
 						</span>
 					</div>
-					<span class="goal-progress" aria-hidden="true">
-						<span style={`width: ${getProgressWidth(total, goal)}`}></span>
-					</span>
+					<RangeInput
+						id={`goal-${nutrient.id}-slider`}
+						name={`goal-${nutrient.id}-slider`}
+						class="goal-input__slider"
+						min={0}
+						max={sliderMax}
+						step={sliderStep}
+						value={goal}
+						fillValue={total}
+						tone={getSliderTone(status)}
+						ariaLabel={`Set ${nutrient.label} goal`}
+						ariaValueText={`${goal}${nutrient.unit} goal; ${total.toFixed(1)}${nutrient.unit} current`}
+						onValueChange={(value) => onPreviewGoal(nutrient.id, String(value))}
+						onValueCommit={(value) => onUpdateGoal(nutrient.id, String(value))}
+					/>
 					<label class="goal-input__control" for={`goal-${nutrient.id}`}>
 						<span class="visually-hidden">Goal for {nutrient.label}</span>
-				<NumberInput
-					id={`goal-${nutrient.id}`}
-					name={`goal-${nutrient.id}`}
-					class="goal-input__number"
-					min="0"
-					step="any"
-					placeholder={`Target ${nutrient.unit}`}
-					value={goal}
-					onValueChange={(value) => onUpdateGoal(nutrient.id, value)}
-				/>
+						<NumberInput
+							id={`goal-${nutrient.id}`}
+							name={`goal-${nutrient.id}`}
+							class="goal-input__number"
+							min="0"
+							step="any"
+							placeholder={`Target ${nutrient.unit}`}
+							value={goal}
+							onValueChange={(value) => onUpdateGoal(nutrient.id, value)}
+						/>
 						<span class="goal-unit">{nutrient.unit}</span>
 					</label>
 					<CircleIconButton

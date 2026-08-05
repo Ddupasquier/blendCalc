@@ -422,6 +422,7 @@ Check the existing primitive before writing markup or SCSS.
 | Repeated-tap safety                   | `TwoStepConfirmation`        | In-place double activation such as ingredient deletion                                              |
 | Privileged action container           | `PrivilegedActionGroup`      | Groups privileged moderator, admin, or developer actions and owns one crown                         |
 | Numeric amount                        | `NumberInput`                | Shared number semantics and control styling                                                         |
+| Draggable numeric range               | `RangeInput`                 | Native range semantics with shared track, fill, thumb, focus, disabled, and semantic-tone states    |
 | Accelerating amount control           | `AcceleratingStepButton`     | Tap-by-one and progressive hold behavior                                                            |
 | Full product image                    | `ProductImageFrame`          | Contained, non-stretched detailed image using any saved moderator orientation correction             |
 | Image placement                       | `ImagePlacementEditor`       | Shared preview, presets, drag/zoom, and restore flow                                                |

@@ -54,4 +54,40 @@ describe("Mix ingredient card", () => {
 		expect(cardStyles).toContain('". amount amount"');
 		expect(cardStyles).toContain("flex-direction: row");
 	});
+
+	it("does not label private foods with a compact custom badge", () => {
+		configureServingMeasureCatalog({
+			options: [{
+				value: "g",
+				label: "grams",
+				shortLabel: "g",
+				dimension: "weight",
+				conversionToBase: 1,
+				isDefault: true,
+			}],
+			aliases: { g: "g" },
+			aliasEntries: [{ alias: "g", unit: "g" }],
+		});
+
+		render(IngredientCard, {
+			props: {
+				food: {
+					fdcId: 2,
+					description: "Private recipe",
+					foodNutrients: [],
+					customFood: true,
+				},
+				sourceLabel: "Fridge",
+				quantity: 25,
+				unit: "g",
+				gramsLabel: "25g",
+				onOpenConversionDetails: vi.fn(),
+				onCloseConversionDetails: vi.fn(),
+				onRemove: vi.fn(),
+				onServingChange: vi.fn(),
+			},
+		});
+
+		expect(screen.queryByText("Custom")).not.toBeInTheDocument();
+	});
 });

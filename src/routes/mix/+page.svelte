@@ -723,6 +723,15 @@
 		handleChange(selected.filter((id) => id != nutrientId));
 	};
 
+	const previewGoal = (id: string | number, value: string) => {
+		nutrientGoals = {
+			...nutrientGoals,
+			[Number(id)]: Math.max(0, Number(value) || 0),
+		};
+		markLoadedSavedDrinkDirty();
+		selectedGoalTemplateId = "";
+	};
+
     const updateGoal = (id: string | number, value: string) => {
         const nextGoals = {
             ...nutrientGoals,
@@ -1030,6 +1039,7 @@
                 {selectedGoalTemplateId}
                 onTemplateChange={updateGoalTemplateSelection}
 				onApplyTemplate={applyGoalTemplate}
+				onPreviewGoal={previewGoal}
 				onUpdateGoal={updateGoal}
 				onAddNutrient={handleAddNutrient}
 				onRemoveNutrient={handleRemoveNutrient}

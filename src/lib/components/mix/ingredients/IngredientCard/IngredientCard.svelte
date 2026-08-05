@@ -8,7 +8,6 @@
 	import Popover from "$lib/components/common/display/Popover/Popover.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
-	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
 	import type { IngredientCardProps } from "./types";
 	import {
 		FOOD_PREFERENCE_WARNING_TITLE,
@@ -56,10 +55,7 @@
 <article class="ingredient-card" class:ingredient-card--custom={isPrivateCustomFood(food)}>
 	<span class="ingredient-card__symbol" aria-hidden="true"><FoodSymbol {food} /></span>
 	<div class="ingredient-card__copy">
-		<div class="ingredient-card__title-row">
-			<h3 title={food.description}>{food.description}</h3>
-			{#if isPrivateCustomFood(food)}<CustomBadge />{/if}
-		</div>
+		<h3 title={food.description}>{food.description}</h3>
 		<p>{gramsLabel}</p>
 	</div>
 	<div class="ingredient-card__amount" aria-label={`Amount for ${food.description}`}>
