@@ -18,7 +18,7 @@ export type GoalTargetsProps = MixSectionDisclosureProps & {
   error?: string;
 	onTemplateChange: (templateId: string) => void;
   onKeepExtraGoalsChange: (keepExtraGoals: boolean) => void;
-	onApplyTemplate: () => void;
+	onApplyTemplate: () => Promise<boolean>;
   onSaveCurrentTemplate: () => void;
   onDeleteTemplate: (templateId: string) => void;
 	onPreviewGoal: (id: string | number, value: string) => void;

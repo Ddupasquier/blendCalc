@@ -576,6 +576,9 @@ Preserve:
   alter that Mix.
 - Applying a preset replaces the current set by default. `Keep my other goals` retains
   tracked nutrients the selected preset does not define.
+- Selecting a preset opens its description and target preview. A successful Apply
+  dismisses that preview while the selector keeps the applied preset name visible; a
+  failed Apply leaves the preview open with the actionable error.
 - Users can save the current goals as a private reusable preset, apply it later, and
   delete it without deleting the active values already copied into a Mix.
 - Goal-preset save and delete flows use `/mix/goals/presets/save` and

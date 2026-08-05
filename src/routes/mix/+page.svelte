@@ -1025,12 +1025,12 @@
         selectedGoalTemplateId = templateId;
     };
 
-		const applyGoalTemplate = () => {
+		const applyGoalTemplate = async () => {
 			const template = goalTemplates.find(
 				(item) => item.selectionId === selectedGoalTemplateId,
 			);
-			if (!template) return;
-			void applySelectedGoalTemplate(template, keepExtraGoals);
+			if (!template) return false;
+			return applySelectedGoalTemplate(template, keepExtraGoals);
 		};
 
     const toggleFood = (foodId: number) => {

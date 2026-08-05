@@ -53,6 +53,7 @@
 			label: template.scope === "user" ? `${template.label} · Yours` : template.label,
 		})),
 	]);
+	let templatePreviewOpen = $state(false);
 	const selectedTemplate = $derived(
 		goalTemplates.find((template) => template.selectionId === selectedGoalTemplateId) ?? null,
 	);
@@ -86,6 +87,14 @@
 		}
 		return `${getMixGoalOperator(goal)}${goal.targetAmount}`;
 	};
+	const handleTemplateChange = (templateId: string) => {
+		templatePreviewOpen = Boolean(templateId);
+		onTemplateChange(templateId);
+	};
+	const handleApplyTemplate = async () => {
+		const applied = await onApplyTemplate();
+		if (applied) templatePreviewOpen = false;
+	};
 </script>
 
 <section class="goals-panel" data-tutorial-target="mix-goals">
@@ -106,17 +115,17 @@
 				size="small"
 				value={selectedGoalTemplateId}
 				options={goalTemplateOptions}
-				onValueChange={onTemplateChange}
+				onValueChange={handleTemplateChange}
 			/>
 			<ActionButton
 				size="small"
 				variant="secondary"
-				onclick={onApplyTemplate}
+				onclick={handleApplyTemplate}
 				disabled={!selectedGoalTemplateId || busy}
 				busy={busy}
 			>Apply</ActionButton>
 		</div>
-		{#if selectedTemplate}
+		{#if selectedTemplate && templatePreviewOpen}
 			<div class="goal-template-preview">
 				<div>
 					<div class="goal-template-preview__title">

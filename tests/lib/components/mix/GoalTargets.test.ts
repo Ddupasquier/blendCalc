@@ -63,7 +63,7 @@ describe("GoalTargets", () => {
 
   it("applies, explains, and manages DB-backed personal presets", async () => {
     const onTemplateChange = vi.fn();
-    const onApplyTemplate = vi.fn();
+    const onApplyTemplate = vi.fn().mockResolvedValue(true);
     const onDeleteTemplate = vi.fn();
     const onUpdateGoalType = vi.fn();
     const personalTemplate = {
@@ -108,17 +108,19 @@ describe("GoalTargets", () => {
       },
     });
 
-    expect(screen.getByText("Your saved nutrition goals.")).toBeInTheDocument();
-    expect(screen.getByText("Customized")).toBeInTheDocument();
+		expect(screen.queryByText("Your saved nutrition goals.")).not.toBeInTheDocument();
 
 		await fireEvent.click(screen.getByRole("combobox", { name: "Goal preset" }));
 		await fireEvent.click(
-			screen.getByRole("option", { name: "Choose a goal preset" }),
+			screen.getByRole("option", { name: "Weekday lunch · Yours" }),
 		);
-		expect(onTemplateChange).toHaveBeenCalledWith("");
+		expect(onTemplateChange).toHaveBeenCalledWith(personalTemplate.selectionId);
+		expect(screen.getByText("Your saved nutrition goals.")).toBeInTheDocument();
+		expect(screen.getByText("Customized")).toBeInTheDocument();
 
-    await fireEvent.click(screen.getByRole("button", { name: "Apply" }));
-    expect(onApplyTemplate).toHaveBeenCalledOnce();
+		await fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+		expect(onApplyTemplate).toHaveBeenCalledOnce();
+		expect(screen.queryByText("Your saved nutrition goals.")).not.toBeInTheDocument();
 
 		await fireEvent.click(
 			screen.getByRole("combobox", { name: "Goal rule for Calories" }),
@@ -126,9 +128,64 @@ describe("GoalTargets", () => {
 		await fireEvent.click(screen.getByRole("option", { name: "At least" }));
     expect(onUpdateGoalType).toHaveBeenCalledWith(1008, "minimum");
 
+		await fireEvent.click(screen.getByRole("combobox", { name: "Goal preset" }));
+		await fireEvent.click(
+			screen.getByRole("option", { name: "Weekday lunch · Yours" }),
+		);
     await fireEvent.click(
       screen.getByRole("button", { name: "Delete preset" }),
     );
-    expect(onDeleteTemplate).toHaveBeenCalledWith(personalTemplate.id);
-  });
+		expect(onDeleteTemplate).toHaveBeenCalledWith(personalTemplate.id);
+	});
+
+	it("keeps the preset preview available when applying fails", async () => {
+		const template = {
+			id: "00000000-0000-4000-8000-000000000003",
+			selectionId: "system:00000000-0000-4000-8000-000000000003",
+			scope: "system" as const,
+			versionId: "00000000-0000-4000-8000-000000000003",
+			version: 1,
+			label: "Balanced",
+			description: "Moderate calories, protein, carbs, fiber, and sugar.",
+			goalBasis: "per_mix" as const,
+			goals: { 1008: calorieGoal },
+			sourceKey: null,
+			sourceReference: null,
+			reviewedAt: null,
+			isDefault: true,
+		};
+
+		render(GoalTargets, {
+			props: {
+				selectedNutrients: [{ id: 1008, label: "Calories", unit: "kcal" }],
+				nutrientGoals: { 1008: calorieGoal },
+				goalTemplates: [template],
+				selectedGoalTemplateId: template.selectionId,
+				templateCustomized: false,
+				keepExtraGoals: false,
+				onTemplateChange: vi.fn(),
+				onKeepExtraGoalsChange: vi.fn(),
+				onApplyTemplate: vi.fn().mockResolvedValue(false),
+				onSaveCurrentTemplate: vi.fn(),
+				onDeleteTemplate: vi.fn(),
+				onPreviewGoal: vi.fn(),
+				onUpdateGoal: vi.fn(),
+				onUpdateUpperGoal: vi.fn(),
+				onUpdateGoalType: vi.fn(),
+				onAddNutrient: vi.fn(),
+				onRemoveNutrient: vi.fn(),
+				getGoal: () => calorieGoal,
+				getTotal: () => 350,
+				open: true,
+				onOpenChange: vi.fn(),
+			},
+		});
+
+		await fireEvent.click(screen.getByRole("combobox", { name: "Goal preset" }));
+		await fireEvent.click(screen.getByRole("option", { name: "Balanced" }));
+		expect(screen.getByText(template.description)).toBeInTheDocument();
+
+		await fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+		expect(screen.getByText(template.description)).toBeInTheDocument();
+	});
 });
