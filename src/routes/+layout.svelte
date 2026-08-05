@@ -79,9 +79,11 @@
 	let tutorialReplayActive = $state(
 		page.url.pathname === "/profile/tutorial",
 	);
-	const ingredientsRoute = $derived(
+	const appViewShellRoute = $derived(
 		Boolean(data.authUser) &&
-			(page.url.pathname === "/ingredients/fridge" ||
+			(page.url.pathname === "/mix" ||
+				page.url.pathname.startsWith("/mix/") ||
+				page.url.pathname === "/ingredients/fridge" ||
 				page.url.pathname.startsWith("/ingredients/fridge/") ||
 				page.url.pathname === "/ingredients/shopping" ||
 				page.url.pathname.startsWith("/ingredients/shopping/")),
@@ -216,7 +218,7 @@
 	class="app-main"
 	class:app-main--guest={!data.authUser}
 	class:app-main--authed={data.authUser}
-	class:app-main--ingredients={ingredientsRoute}
+	class:app-main--view-shell={appViewShellRoute}
 >
 	{@render children()}
 </main>

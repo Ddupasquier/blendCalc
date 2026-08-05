@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
 $checkbox-item-gap: 0.4rem;
 $checkbox-item-padding-y: 0.32rem;
@@ -31,9 +32,9 @@ $checkbox-corner-radius: 0.22rem;
 	line-height: $app-button-line-height;
 	cursor: pointer;
 	transition:
-		background 0.15s,
-		border-color 0.15s,
-		color 0.15s;
+		background motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard,
+		color motion.$duration-state motion.$easing-standard;
 }
 
 .checkbox-item:hover {
@@ -61,9 +62,9 @@ input {
 	border: 1.5px solid currentColor;
 	border-radius: $checkbox-corner-radius;
 	transition:
-		background 0.15s,
-		border-color 0.15s,
-		color 0.15s;
+		background motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard,
+		color motion.$duration-state motion.$easing-standard;
 }
 
 input::before {
@@ -74,7 +75,7 @@ input::before {
 	border-width: 0 $checkbox-mark-stroke $checkbox-mark-stroke 0;
 	transform: rotate(45deg) scale(0);
 	transform-origin: center;
-	transition: transform 0.12s ease;
+	transition: transform motion.$duration-press motion.$easing-standard;
 }
 
 input:checked::before {

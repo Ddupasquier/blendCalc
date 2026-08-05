@@ -193,14 +193,44 @@ For new work:
 | `$app-font-size-md`  | `1rem`    | Inputs, buttons, card names, normal UI      |
 | `$app-font-size-lg`  | `1.08rem` | Sheet and section headings                  |
 | `$app-font-size-xl`  | `1.25rem` | Prominent content and fallback food symbols |
+| `$app-font-size-2xl` | `1.5rem`  | Compact page titles and major card emphasis |
+| `$app-font-size-3xl` | `2.1rem`  | Large data headings such as Nutrition Facts |
+| `$app-font-size-4xl` | `2.75rem` | Maximum landing-page display size           |
+
+Page titles use `$app-font-size-page-title` (`clamp(1.5rem, 7vw, 2.1rem)`). The landing
+hero uses `$app-font-size-hero-title` (`clamp(2.1rem, 7vw, 2.75rem)`). These semantic
+roles preserve fluid scaling without allowing each route to invent a different clamp.
+
+### Line Heights
+
+| Token                       | Value  | Typical use                                      |
+| --------------------------- | ------ | ------------------------------------------------ |
+| `$app-line-height-none`     | `0`    | Inner wrappers that must contribute no text box  |
+| `$app-line-height-tight`    | `1`    | Icons, badges, and single-line compact data      |
+| `$app-line-height-heading`  | `1.1`  | Display headings and compact multiline labels    |
+| `$app-line-height-compact`  | `1.2`  | Dense metadata and short supporting information  |
+| `$app-line-height-ui`       | `1.35` | Standard interface copy, prompts, and form help  |
+| `$app-line-height-body`     | `1.45` | Longer reading content and descriptive paragraphs |
+
+### Tracking
+
+| Token                        | Value     | Typical use                                  |
+| ---------------------------- | --------- | -------------------------------------------- |
+| `$app-letter-spacing-tight`  | `-0.04em` | Display-heading optical tightening           |
+| `$app-letter-spacing-normal` | `0`       | Explicitly neutral tracking                  |
+| `$app-letter-spacing-data`   | `0.01em`  | Numeric and Nutrition Facts data             |
+| `$app-letter-spacing-label`  | `0.04em`  | Metadata labels                              |
+| `$app-letter-spacing-wide`   | `0.08em`  | Uppercase eyebrow and status emphasis        |
+| `$app-letter-spacing-wider`  | `0.1em`   | Rare high-emphasis uppercase section markers |
 
 The root size is `$app-font-size-base` (`16px`). Do not invent nearby font sizes to make
 one label fit. First use the existing scale, fix layout constraints, and allow safe
 wrapping or truncation where the context requires it.
 
-Buttons use the shared button family, `800` weight, and `1.1` line height. Labels that
-behave like metadata may use `$app-letter-spacing-label` (`0.04em`); numeric data may use
-`$app-letter-spacing-data` (`0.01em`).
+Every application `font-family`, `font-size`, `font-weight`, `line-height`, and
+`letter-spacing` declaration uses this semantic scale. Components may explicitly
+inherit typography, but they do not introduce raw substitute values. Buttons use the
+shared button family, `800` weight, and `1.1` line height.
 
 ## Spacing And Layout
 
@@ -285,6 +315,20 @@ remain available, switching lists restores the region, and reduced-motion prefer
 remove the transition without changing the visibility behavior. Wider layouts keep the
 complete region visible.
 
+The compact Mix page uses the same `ViewFrame`, `ViewTop`, and `ViewBody` shell contract
+as Ingredients. Only its main scroll surface owns header direction changes. Downward
+movement there retracts the title, supporting copy, status, and header actions; a short
+upward movement there reveals the complete header before the page returns to its top.
+Scrolling inside the bounded Add Ingredients and Selected Ingredients lists never
+changes header visibility. The main tracker pauses and rebases while header geometry
+settles so the animation cannot shudder or immediately reverse itself. Wider Mix layouts
+keep the header visible.
+
+Top-level Mix sections place panel padding inside the animated disclosure body rather
+than around the whole collapse. A closed section therefore occupies only the shared
+summary control height and section border; opening it restores the normal tokenized body
+inset without changing the summary target or introducing a second panel shell.
+
 The compact manual-entry action is one `44px` pencil-only button in the same toolbar row
 as Search, Barcode, and Filters. It uses the shared rounded icon-control shape and keeps
 the full accessible name `Enter a custom ingredient manually`; the larger launcher row
@@ -348,12 +392,13 @@ Check the existing primitive before writing markup or SCSS.
 | ------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------- |
 | Main rectangular CTA                  | `RoundedActionButton`        | Current Ingredients action shape; supports primary, outline, quiet, soft, neutral, and dashed roles |
 | Existing compact/general CTA contract | `ActionButton`               | Reuse where already established; do not create a third rectangular button family                    |
-| Circular icon action                  | `CircleIconButton`           | Owns size, loading, pressed/disabled state, and centering                                           |
-| Square icon control                   | `IconControlButton`          | Scanner, filters, and similar control-height actions                                                |
+| Circular icon action                  | `CircleIconButton`           | Default for every icon-only action; owns size, loading, pressed/disabled state, and centering       |
+| Clustered icon control                | `IconControlButton`          | Squarish exception for dense horizontal toolbar/input rows such as Search, Barcode, and Filters     |
 | Compact chip/filter action            | `PillButton`                 | Selected state must also be exposed through `aria-pressed`                                          |
 | Tabs or step progress                 | `SegmentedControl`           | Pill tabs for Fridge/Shopping; progress variant for manual entry                                    |
 | Back or close                         | `BackButton` / `CloseButton` | Do not recreate chevrons, circles, or hit areas                                                     |
 | Collapse                              | `CollapsibleSection`         | Chevron stays left; badges/actions stay right; shared open/close motion preserves mounted content   |
+| Specialized disclosure indicator      | `DisclosureChevron`          | Right when closed, animated down when open; use instead of local chevron rotation                    |
 | Bottom overlay                        | `BottomSheet`                | Owns handle, title, focus, close behavior, safe area, and navigation clearance                      |
 | Right-side data view                  | `RightSheet`                 | Search and full-content slide-in views                                                              |
 | Sheet action row                      | `BottomSheetAction`          | Owns row geometry and circular leading icon                                                         |
@@ -362,13 +407,15 @@ Check the existing primitive before writing markup or SCSS.
 | General loading                       | `LoadingSpinner`             | Never draw a feature-local spinner                                                                  |
 | Photo input                           | `PhotoUploadInput`           | Single/multiple photo prompt, count, status, and validation                                         |
 | Toggle                                | `ToggleSwitch`               | Boolean settings; do not use a checkbox as an on/off switch                                         |
+| Fixed-choice dropdown                 | `SelectField`                | Native select semantics with shared label, helper, chevron, focus, disabled, and responsive states  |
 | Compact metadata badge                | `TextBadge`                  | Owns centering, tone, padding, and truncation                                                       |
 | Structured metadata pill              | `MetadataPill`               | Ingredient labels, kcal, goal progress, and other compact label/value or label/icon metadata        |
 | Verified evidence                     | `VerifiedStatusBadge`        | Detail/search contexts where verification helps a decision                                          |
 | Privileged group marker               | `PrivilegedActionBadge`      | One crown in the owning group header, not every child action                                        |
 | Centered icon wrapper                 | `CenteredIcon`               | Required inner alignment layer for icon controls                                                    |
 | Noninteractive circular icon          | `CircularIconFrame`          | Compose through a focused component such as `StatusIconBadge`                                       |
-| Pagination footer                     | `PaginatedListControls`      | Explicit Load more and Return to top                                                                |
+| Progressive list footer               | `PaginatedListControls`      | Explicit Load more and Return to top; never numbered page navigation                                |
+| List filter/sort sheet                 | `ListSortSheet`              | Route-backed bottom sheet; may combine optional `Show` filters with sorting                          |
 | Confirmation modal                    | `ConfirmationDialog`         | Destructive or consequential decisions requiring explicit confirmation                              |
 | Text-entry modal                      | `TextInputDialog`            | Focused rename/edit prompt with shared validation and action layout                                 |
 | Guided feature tour                   | `TutorialOverlay`            | Route-aware modal guidance with one rounded spotlight and a collision-aware instruction card        |
@@ -564,7 +611,7 @@ placement previews remain identical.
 - Group long optional nutrient sets in `CollapsibleSection`.
 - Keep form state intact when the browser loses focus or the user returns from another
   window.
-- `FoodCategoryPicker`, `PhotoUploadInput`, `NutritionLabelOcrInput`,
+- `SelectField`, `FoodCategoryPicker`, `PhotoUploadInput`, `NutritionLabelOcrInput`,
   `BarcodeAutofillSuggestion`, validation lists, toggles, and image placement are part
   of the baseline and must use their shared components rather than raw native styling.
 
@@ -641,6 +688,14 @@ reporting interface for every warning in the default view.
 
 ## Motion And Interaction
 
+- Import shared durations, easing curves, reduced-motion helpers, and reusable motion
+  behaviors from `src/lib/utils/animation`. Equivalent state, press, feedback,
+  disclosure, and layout motion must not use independently typed timing literals.
+- Keep a genuinely unique sequence with the reusable component that owns it. Scanner
+  sweeps, loading rotation, liquid segmented-control movement, chart geometry, and
+  other single-purpose keyframes do not become one generic animation merely because
+  they move. Name their local timing values so the sequence remains internally
+  consistent.
 - Motion should explain change: sheet entry, list movement, selection, or loading.
 - Every disclosure animates both opening and closing through the shared
   `animatedDetails` behavior. Keep disclosure children mounted so closing a section
@@ -660,6 +715,9 @@ reporting interface for every warning in the default view.
 - State changes such as chevrons, toggles, and scanner expansion transition in both
   directions. Keep both visual states mounted when removing one would make the reverse
   transition impossible.
+- Shared collapse chevrons point right when closed and rotate downward when open. The
+  rotation transitions in both directions and becomes immediate under the global
+  reduced-motion preference.
 - Keep transitions short and calm. Avoid decorative looping motion in task flows.
 - Honor `prefers-reduced-motion`; CSS is covered globally and every Svelte or Web
   Animations API duration must use the shared motion helper or an equivalent explicit
@@ -668,6 +726,10 @@ reporting interface for every warning in the default view.
   while the process is active. They do not need a delayed outro that would make the UI
   feel slower.
 - Use pointer events for touch/mouse parity and keyboard equivalents for every action.
+- During pointer or touch reordering, keep the active surface continuously attached to
+  the pointer. Move its reserved insertion slot only after crossing a neighboring
+  surface's center, and animate displaced siblings rather than snapping the active
+  surface into every candidate slot.
 - Long press may enter ingredient selection mode, but the held card must also become
   selected and the interaction must not block normal navigation.
 - Multi-item movement uses a short top-to-bottom stagger. Each selected card makes a
@@ -691,8 +753,9 @@ components/<domain>/<Component>/
 Only create the SCSS or type file when the component needs it.
 
 - `_variables.scss` owns values shared by independent components.
-- A component's paired SCSS owns its unique colors, dimensions, masks, radii, timing,
-  and layout calculations.
+- A component's paired SCSS owns its unique colors, dimensions, masks, radii, motion
+  sequence, and layout calculations. Shared motion timing and easing come from the
+  animation catalog rather than local literals.
 - A repeated value inside one component may be a clearly named local SCSS variable.
 - Promote a local value only when multiple independent components should change
   together.

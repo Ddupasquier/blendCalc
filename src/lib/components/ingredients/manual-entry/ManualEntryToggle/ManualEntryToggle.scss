@@ -38,14 +38,7 @@
 }
 
 :global(.manual-entry-toggle__chevron) {
-	width: $app-shell-control-icon-size;
-	height: $app-shell-control-icon-size;
-	flex: 0 0 auto;
-	transition: transform 180ms ease;
-}
-
-:global(.custom-ingredient__manual[data-expanded="true"] .manual-entry-toggle__chevron) {
-	transform: rotate(180deg);
+	color: $app-shell-text-muted;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {

@@ -1,0 +1,36 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+
+.card-selection-indicator {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: $app-shell-control-icon-size;
+	height: $app-shell-control-icon-size;
+	flex: 0 0 auto;
+	color: transparent;
+	pointer-events: none;
+}
+
+.card-selection-indicator--selected {
+	color: $app-primary;
+}
+
+.card-selection-indicator--circle {
+	width: var(--ingredient-card-action-size, #{$app-shell-action-icon-size});
+	height: var(--ingredient-card-action-size, #{$app-shell-action-icon-size});
+	color: $app-shell-text-muted;
+	background: transparent;
+	border: 1.5px solid currentColor;
+	border-radius: $app-radius-circle;
+	transition:
+		color motion.$duration-state motion.$easing-standard,
+		background-color motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard;
+}
+
+.card-selection-indicator--circle.card-selection-indicator--selected {
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
+	border-color: $app-shell-accent-primary;
+}

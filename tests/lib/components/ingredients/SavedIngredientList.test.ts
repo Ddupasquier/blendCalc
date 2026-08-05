@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList/SavedIngredientList.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
 import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
@@ -35,6 +35,10 @@ const sempioGochuJang: FdcFood = {
 };
 
 describe("SavedIngredientList overlay behavior", () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
 	const renderList = (
 		activeList: SmoothieListKey = MIX_STORAGE_KEYS.fridge,
 		canRevealMore = false,
@@ -92,6 +96,55 @@ describe("SavedIngredientList overlay behavior", () => {
 		expect(
 			screen.getByRole("button", { name: "Load more" }),
 		).toBeDisabled();
+	});
+
+	it("does not swallow the compact-header gesture after an ordinary list resize", async () => {
+		let resizeCallback: ResizeObserverCallback = () => {};
+		let resizeObserverCreated = false;
+		class ResizeObserverMock {
+			constructor(callback: ResizeObserverCallback) {
+				resizeCallback = callback;
+				resizeObserverCreated = true;
+			}
+
+			observe() {}
+			disconnect() {}
+			unobserve() {}
+		}
+		vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+		const onScrollDirectionChange = vi.fn();
+
+		render(SavedIngredientList, {
+			props: {
+				activeList: MIX_STORAGE_KEYS.fridge,
+				foods: [food],
+				onSelectAll: vi.fn(),
+				onEnterSelection: vi.fn(),
+				onCancelSelection: vi.fn(),
+				onMoveSelection: vi.fn(),
+				onMoveItem: vi.fn(),
+				onToggle: vi.fn(),
+				onPreview: vi.fn(),
+				onActions: vi.fn(),
+				onRemove: vi.fn(),
+				onRevealMore: vi.fn(),
+				onScrollDirectionChange,
+			},
+		});
+
+		await waitFor(() => expect(resizeObserverCreated).toBe(true));
+		const list = screen.getByRole("list", { name: "Fridge ingredients" });
+		let scrollTop = 0;
+		Object.defineProperty(list, "scrollTop", {
+			configurable: true,
+			get: () => scrollTop,
+		});
+		resizeCallback([], {} as ResizeObserver);
+
+		scrollTop = 30;
+		await fireEvent.scroll(list);
+
+		expect(onScrollDirectionChange).toHaveBeenCalledWith("down");
 	});
 
 	it("keeps selection state out of normal cards and provides a visible entry action", async () => {

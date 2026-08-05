@@ -3,7 +3,7 @@
 	import ManualEntryStepTabs from "$lib/components/ingredients/manual-entry/ManualEntryStepTabs/ManualEntryStepTabs.svelte";
 	import ManualEntryToggle from "$lib/components/ingredients/manual-entry/ManualEntryToggle/ManualEntryToggle.svelte";
 	import type { ManualEntryStepId } from "$lib/components/ingredients/manual-entry/formTypes";
-	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
+	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
 	import type { ManualEntryFormShellProps } from "./types";
 
 	let {

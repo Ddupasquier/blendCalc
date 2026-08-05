@@ -231,7 +231,19 @@ describe.runIf(localTrackersAvailable)("QA and TODO task structure", () => {
 				const ids = [...task.body.matchAll(/`(QA-\d{3}-\d{3})`/g)].map(
 					(match) => match[1],
 				);
-				expect(ids.length, `${task.id} lists no remaining QA checks`).toBeGreaterThan(0);
+				if (ids.length === 0) {
+					for (const field of [
+						"- Type:",
+						"- Owner:",
+						"- Repro:",
+						"- Example input:",
+						"- Expected:",
+						"- Next action:",
+						"- Done when:",
+					]) {
+						expect(task.body, `${task.id} is missing ${field}`).toContain(field);
+					}
+				}
 				referencedIds.push(...ids);
 			}
 		}

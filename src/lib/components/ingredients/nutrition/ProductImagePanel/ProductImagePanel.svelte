@@ -21,6 +21,7 @@
 	let {
 		food,
 		mode = "all",
+		placementPresentation = "collapse",
 		canAdjustImagePlacement = false,
 		onImagePlacementSave,
 	}: ProductImagePanelProps = $props();
@@ -148,6 +149,49 @@
 	<PrivilegedActionBadge />
 {/snippet}
 
+{#snippet placementEditor()}
+	<div class="product-image-panel__placement-content">
+		<ImagePlacementEditor
+			imageUrl={imageUrl}
+			alt={imageAlt}
+			{foodName}
+			brandName={food?.brandOwner ?? ""}
+			category={food?.foodCategory ?? "Ingredient"}
+			title="Card image placement"
+			description="Drag the image in the card preview or use the controls below."
+			showIntro={placementPresentation !== "flat"}
+			{showWarningEdge}
+			value={draftPlacement}
+			onChange={(value) => {
+				draftPlacement = value;
+				placementMessage = "";
+				placementError = "";
+			}}
+		/>
+		<form
+			class="product-image-panel__placement-save"
+			onsubmit={handlePlacementSubmit}
+		>
+			<RoundedActionButton
+				type="submit"
+				variant="primary"
+				fullWidth
+				busy={savingPlacement}
+			>
+				{savingPlacement
+					? "Saving image placement…"
+					: "Save image placement"}
+			</RoundedActionButton>
+			{#if placementMessage}
+				<StatusMessage tone="success" message={placementMessage} />
+			{/if}
+			{#if placementError}
+				<StatusMessage tone="danger" message={placementError} />
+			{/if}
+		</form>
+	</div>
+{/snippet}
+
 {#if imageUrl && !imageFailed}
 	{#if showImage}
 		<section class="product-image-panel">
@@ -167,51 +211,17 @@
 
 	{#if showPlacementEditor && canEditPlacement}
 		<section class="product-image-panel">
-			<CollapsibleSection
-				title="Adjust card image placement"
-				summaryEnd={placementSummaryEnd}
-				class="product-image-panel__placement"
-			>
-				<div class="product-image-panel__placement-content">
-						<ImagePlacementEditor
-							imageUrl={imageUrl}
-							alt={imageAlt}
-							{foodName}
-							brandName={food?.brandOwner ?? ""}
-							category={food?.foodCategory ?? "Ingredient"}
-							title="Card image placement"
-							description="Drag the image in the card preview or use the controls below."
-							{showWarningEdge}
-							value={draftPlacement}
-						onChange={(value) => {
-							draftPlacement = value;
-							placementMessage = "";
-							placementError = "";
-						}}
-					/>
-					<form
-						class="product-image-panel__placement-save"
-						onsubmit={handlePlacementSubmit}
-					>
-						<RoundedActionButton
-							type="submit"
-							variant="primary"
-							fullWidth
-							busy={savingPlacement}
-						>
-							{savingPlacement
-								? "Saving image placement…"
-								: "Save image placement"}
-						</RoundedActionButton>
-						{#if placementMessage}
-							<StatusMessage tone="success" message={placementMessage} />
-						{/if}
-						{#if placementError}
-							<StatusMessage tone="danger" message={placementError} />
-						{/if}
-					</form>
-				</div>
-			</CollapsibleSection>
+			{#if placementPresentation === "flat"}
+				{@render placementEditor()}
+			{:else}
+				<CollapsibleSection
+					title="Adjust card image placement"
+					summaryEnd={placementSummaryEnd}
+					class="product-image-panel__placement"
+				>
+					{@render placementEditor()}
+				</CollapsibleSection>
+			{/if}
 		</section>
 	{/if}
 {/if}

@@ -36,4 +36,24 @@ describe("shared button loading states", () => {
 		expect(container.querySelector(".loading-spinner__ring")).toBeInTheDocument();
 		expect(container.querySelector("svg")).not.toBeInTheDocument();
 	});
+
+	it("forwards disclosure state from a circular icon action", () => {
+		render(CircleIconButton, {
+			props: {
+				label: "Open options",
+				"aria-expanded": true,
+				"aria-controls": "options-sheet",
+				children: icon,
+			},
+		});
+
+		expect(screen.getByRole("button", { name: "Open options" })).toHaveAttribute(
+			"aria-expanded",
+			"true",
+		);
+		expect(screen.getByRole("button", { name: "Open options" })).toHaveAttribute(
+			"aria-controls",
+			"options-sheet",
+		);
+	});
 });

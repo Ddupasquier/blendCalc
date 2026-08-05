@@ -38,4 +38,22 @@ describe("food compatibility evaluation architecture", () => {
 		expect(panel).toContain("food.compatibilityEvaluation");
 		expect(panel).toContain("getFoodCompatibilityEvaluationMessage");
 	});
+
+	it("hydrates merged search results with current database image placements", () => {
+		const searchRoute = readSource("src/routes/api/foods/search/+server.ts");
+		const mergeIndex = searchRoute.indexOf(
+			"const mergedFoods = mergeIngredientSearchResults",
+		);
+		const imageHydrationIndex = searchRoute.indexOf(
+			"await hydrateFoodsWithCachedImages",
+		);
+		const safetyEvaluationIndex = searchRoute.indexOf(
+			"annotateFoodsWithFoodSafety",
+			imageHydrationIndex,
+		);
+
+		expect(mergeIndex).toBeGreaterThan(-1);
+		expect(imageHydrationIndex).toBeGreaterThan(mergeIndex);
+		expect(safetyEvaluationIndex).toBeGreaterThan(imageHydrationIndex);
+	});
 });

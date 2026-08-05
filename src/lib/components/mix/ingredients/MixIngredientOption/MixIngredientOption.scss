@@ -1,0 +1,55 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+@use "../../../ingredients/card/IngredientCardMediaLane/IngredientCardLayout" as ingredient-card-layout;
+
+.mix-ingredient-option {
+	@include ingredient-card-layout.frame;
+	grid-template-columns: minmax(0, 1fr);
+	min-height: calc($app-shell-control-height + $app-gap-sm);
+	padding-block: $app-gap-xs;
+	transition:
+		background-color motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard,
+		opacity motion.$duration-state motion.$easing-standard;
+}
+
+.mix-ingredient-option--selected {
+	background: $app-shell-surface-panel;
+	border-color: $app-shell-accent-primary;
+}
+
+.mix-ingredient-option__select {
+	@include ingredient-card-layout.primary-action-target;
+}
+
+.mix-ingredient-option__select:focus-visible {
+	@include ingredient-card-layout.primary-action-focus;
+}
+
+.mix-ingredient-option__select-status {
+	position: absolute;
+	top: 50%;
+	right: $app-shell-card-padding-compact;
+	display: inline-flex;
+	transform: translateY(-50%);
+	pointer-events: none;
+}
+
+.mix-ingredient-option__copy {
+	@include ingredient-card-layout.copy(false);
+	@include ingredient-card-layout.presentation-layer;
+}
+
+.mix-ingredient-option--media .mix-ingredient-option__copy {
+	@include ingredient-card-layout.media-content-inset;
+}
+
+.mix-ingredient-option__title-row {
+	@include ingredient-card-layout.title-row;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.mix-ingredient-option__select-status {
+		right: $app-gap-sm;
+	}
+}

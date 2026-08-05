@@ -36,7 +36,7 @@
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-medium;
-	line-height: 1.35;
+	line-height: $app-line-height-ui;
 }
 
 .nutrition-label-ocr__progress,
@@ -64,10 +64,24 @@
 }
 
 .nutrition-label-ocr__raw-text summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
 	color: $app-shell-text-primary;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-bold;
+	list-style: none;
 	cursor: pointer;
+}
+
+.nutrition-label-ocr__raw-text summary::-webkit-details-marker {
+	display: none;
+}
+
+.nutrition-label-ocr__raw-text summary:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
 }
 
 .nutrition-label-ocr__raw-text pre {

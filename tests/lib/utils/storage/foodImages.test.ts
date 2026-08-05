@@ -19,9 +19,18 @@ const makeImage = (
 	...overrides,
 });
 
-const makeImageRow = (image: FoodImageAsset) => ({
-	barcode: "00021130493609",
-	shared_product_id: null,
+const makeImageRow = (
+	image: FoodImageAsset,
+	identity: {
+		barcode?: string | null;
+		sharedProductId?: string | null;
+	} = {},
+) => ({
+	barcode:
+		identity.barcode === undefined
+			? "00021130493609"
+			: identity.barcode,
+	shared_product_id: identity.sharedProductId ?? null,
 	source: image.source,
 	source_reference: image.sourceReference ?? null,
 	image_role: image.role,
@@ -53,8 +62,17 @@ const makeImageQueryClient = (rows: ReturnType<typeof makeImageRow>[]) => ({
 		select: () => ({
 			eq: () => ({
 				eq: () => ({
-					in: () => ({
-						order: async () => ({ data: rows, error: null }),
+					in: (
+						column: "barcode" | "shared_product_id",
+						values: string[],
+					) => ({
+						order: async () => ({
+							data: rows.filter((row) => {
+								const value = row[column];
+								return value !== null && values.includes(value);
+							}),
+							error: null,
+						}),
 					}),
 				}),
 			}),
@@ -137,6 +155,53 @@ describe("food image selection", () => {
 		expect(hydrated.image).toMatchObject({
 			imageUrl: moderated.imageUrl,
 			confidence: "moderator-reviewed",
+		});
+	});
+
+	it("chooses the best image across barcode and shared-product identities", async () => {
+		const imported = makeImage({
+			imageUrl: "https://example.com/imported/front.jpg",
+			cropX: 15,
+		});
+		const moderated = makeImage({
+			source: "community-reviewed",
+			sourceReference: "approved/product-1/front.jpg",
+			imageUrl: "https://example.com/approved/front.jpg",
+			confidence: "moderator-reviewed",
+			cropX: 32,
+			cropY: 44,
+			cropZoom: 2.25,
+			rotationDegrees: 90,
+			fitMode: "cover",
+			placementVersion: 2,
+		});
+		const client = makeImageQueryClient([
+			makeImageRow(imported),
+			makeImageRow(moderated, {
+				barcode: null,
+				sharedProductId: "product-1",
+			}),
+		]);
+		const food = {
+			fdcId: 1,
+			description: "Pork Chorizo, Pork",
+			foodNutrients: [],
+			barcode: "00021130493609",
+			sharedProductId: "product-1",
+			image: imported,
+		} satisfies FdcFood;
+
+		const [hydrated] = await hydrateFoodsWithCachedImages(client, [food]);
+
+		expect(hydrated.image).toMatchObject({
+			imageUrl: moderated.imageUrl,
+			confidence: "moderator-reviewed",
+			cropX: 32,
+			cropY: 44,
+			cropZoom: 2.25,
+			rotationDegrees: 90,
+			fitMode: "cover",
+			placementVersion: 2,
 		});
 	});
 });

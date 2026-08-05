@@ -47,6 +47,11 @@ correct theme before the page paints. The cookie is not a competing source of tr
 authenticated layout loads reconcile it from `profiles.appearance_theme`, and invalid
 or missing values resolve to the device theme.
 
+Mix section order and open/closed disclosure state are account-owned presentation
+preferences stored in `mix_preferences`. Authenticated RPCs validate the complete set
+of stable section identifiers before saving either preference; browser storage is not
+used as a fallback authority.
+
 ## External Sources
 
 External food APIs are enrichment inputs, not live UI databases. Server code checks

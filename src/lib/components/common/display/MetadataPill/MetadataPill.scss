@@ -14,7 +14,7 @@
 	font-family: $app-font-family-interface;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-semibold;
-	line-height: 1.15;
+	line-height: $app-line-height-heading;
 	vertical-align: middle;
 }
 
@@ -23,7 +23,7 @@
 	display: inline-grid;
 	flex: 0 0 auto;
 	place-items: center;
-	line-height: 0;
+	line-height: $app-line-height-none;
 }
 
 :global(.metadata-pill__label) {

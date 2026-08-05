@@ -2566,6 +2566,8 @@ export type Database = {
           created_at: string
           mix_state: Json
           nutrient_goals: Json
+          section_disclosure_state: Json
+          section_order: string[]
           updated_at: string
           user_id: string
         }
@@ -2573,6 +2575,8 @@ export type Database = {
           created_at?: string
           mix_state?: Json
           nutrient_goals?: Json
+          section_disclosure_state?: Json
+          section_order?: string[]
           updated_at?: string
           user_id: string
         }
@@ -2580,6 +2584,8 @@ export type Database = {
           created_at?: string
           mix_state?: Json
           nutrient_goals?: Json
+          section_disclosure_state?: Json
+          section_order?: string[]
           updated_at?: string
           user_id?: string
         }
@@ -5941,6 +5947,14 @@ export type Database = {
       }
       save_mix_preferences: {
         Args: { p_mix_state?: Json; p_nutrient_goals?: Json }
+        Returns: boolean
+      }
+      save_mix_section_disclosure_state: {
+        Args: { p_section_disclosure_state: Json }
+        Returns: boolean
+      }
+      save_mix_section_order: {
+        Args: { p_section_order: string[] }
         Returns: boolean
       }
       save_saved_drink: {

@@ -1,368 +1,292 @@
-import { getFdcNutrientValue } from "$lib/utils/food/nutrients/fdcNutrients";
+import { resolveFdcNutrient } from "$lib/utils/food/nutrients/fdcNutrients";
+import { NUTRIENT_DATA_BASIS_GRAMS } from "$lib/utils/food/nutrients/nutritionDisplay";
 import { getMixRuntimeConfiguration } from "$lib/utils/food/reference/appReferenceCatalog";
-import type { FdcFood } from "$lib/utils/food/types";
+import { getPrimaryFoodServing } from "$lib/utils/food/servings/foodServings";
+import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
 import type {
-	NutrientFoodSuggestion,
-	NutrientFoodSuggestionConflict,
+	NutrientAdjustmentImpact,
+	NutrientAdjustmentSuggestion,
 	NutrientMeta,
-	NutrientReductionSuggestion,
-	NutrientReductionSuggestionConflict,
 } from "./nutrientTypes";
-import { getDefaultNutrientGoal } from "./nutrientTotals";
 
-const createFoodNutrientLookup = () => {
-	const valuesByFood = new Map<number, Map<number, number | null>>();
-	return (food: FdcFood, nutrientId: number) => {
-		const foodValues = valuesByFood.get(food.fdcId) ?? new Map();
-		if (!valuesByFood.has(food.fdcId)) {
-			valuesByFood.set(food.fdcId, foodValues);
-		}
-		if (!foodValues.has(nutrientId)) {
-			foodValues.set(nutrientId, getFdcNutrientValue(food, nutrientId));
-		}
-		return foodValues.get(nutrientId) ?? null;
-	};
+type NutrientGoalState = {
+	nutrientId: number;
+	label: string;
+	unit: string;
+	goal: number;
+	total: number;
 };
 
-const createFoodNutrientAmountLookup = (defaultServingGrams: number) => {
-	const getNutrientValue = createFoodNutrientLookup();
-	return (
-		food: FdcFood,
-		nutrientId: number,
-		grams: Record<number, number>,
-	) => {
-		const value = getNutrientValue(food, nutrientId);
-		if (value === null) return 0;
-		return (
-			value * (grams[food.fdcId] ?? defaultServingGrams)
-		) / defaultServingGrams;
-	};
+type PracticalIncrement = {
+	grams: number;
+	label: string;
+	source: NutrientAdjustmentSuggestion["incrementSource"];
 };
 
-const takeBestSuggestionPerFood = <Suggestion extends { food: FdcFood }>(
-	suggestions: Suggestion[],
-	maxSuggestions: number,
+const NUMERIC_EPSILON = 1e-9;
+
+const isBlockedNutrient = (nutrient: FdcNutrient) =>
+	nutrient.valueStatus === "derived" ||
+	nutrient.valueStatus === "trace" ||
+	nutrient.valueStatus === "present-unquantified" ||
+	nutrient.valueStatus === "missing" ||
+	nutrient.valueStatus === "invalid" ||
+	nutrient.valueStatus === "unknown" ||
+	nutrient.valueOrigin === "derived" ||
+	nutrient.mappingStatus === "unmapped" ||
+	nutrient.mappingStatus === "excluded" ||
+	nutrient.mappingStatus === "unknown";
+
+const getRecommendationNutrientValue = (
+	food: FdcFood,
+	nutrientId: number,
 ) => {
-	const bestSuggestionByFood = new Map<number, Suggestion>();
-	for (const suggestion of suggestions) {
-		if (!bestSuggestionByFood.has(suggestion.food.fdcId)) {
-			bestSuggestionByFood.set(suggestion.food.fdcId, suggestion);
-		}
+	const resolved = resolveFdcNutrient(food, nutrientId);
+	if (
+		resolved.nutrient === null ||
+		resolved.value === null ||
+		!Number.isFinite(resolved.value) ||
+		resolved.value < 0 ||
+		isBlockedNutrient(resolved.nutrient)
+	) {
+		return null;
 	}
-	return [...bestSuggestionByFood.values()].slice(0, maxSuggestions);
+
+	return resolved.value;
 };
 
-export const getNutrientFoodSuggestions = ({
-	nutrients,
-	availableFoods,
-	selectedFoodIds,
-	nutrientGoals,
-	servingGrams,
-	sourceLabelForFood,
-	maxSuggestions = 3,
-}: {
-	nutrients: NutrientMeta[];
-	availableFoods: FdcFood[];
-	selectedFoodIds: number[];
-	nutrientGoals: Record<number, number>;
-	servingGrams: Record<number, number>;
-	sourceLabelForFood: (food: FdcFood) => string;
-	maxSuggestions?: number;
-}) => {
-	const { defaultServingGrams, pointGoalTolerance } = getMixRuntimeConfiguration();
-	const getNutrientValue = createFoodNutrientLookup();
-	const getNutrientAmount =
-		createFoodNutrientAmountLookup(defaultServingGrams);
-	const selectedFoods = availableFoods.filter((food) =>
-		selectedFoodIds.includes(food.fdcId),
-	);
-	const nutrientStates = nutrients.map((nutrient) => {
-		const nutrientId = Number(nutrient.id);
-		const goal = nutrientGoals[nutrientId] ?? getDefaultNutrientGoal(nutrient);
-		const total = selectedFoods.reduce(
-			(sum, food) =>
-				sum + getNutrientAmount(food, nutrientId, servingGrams),
-			0,
-		);
+const hasRecommendationSafetyBlocker = (food: FdcFood) =>
+	(food.preferenceWarnings?.length ?? 0) > 0 ||
+	food.compatibilityEvaluation?.status === "conflict";
 
+const hasRecommendationDataBlocker = (food: FdcFood) =>
+	food.sourceMetadata?.obsolete === true ||
+	(food.sourceMetadata?.qualityErrorTags?.some((tag) => tag.trim()) ?? false);
+
+const getGoalDistance = (
+	total: number,
+	goal: number,
+	tolerance: number,
+) => Math.max(0, Math.abs(total / goal - 1) - tolerance);
+
+const formatIncrementGrams = (grams: number) =>
+	`${Number(grams.toFixed(1))}g`;
+
+const getPracticalIncrement = (
+	food: FdcFood,
+	defaultServingGrams: number,
+): PracticalIncrement => {
+	const sourceServing = getPrimaryFoodServing(food);
+	if (
+		sourceServing &&
+		Number.isFinite(sourceServing.gramWeight) &&
+		sourceServing.gramWeight > 0 &&
+		(sourceServing.gramWeightMethod === "source-reported" ||
+			sourceServing.gramWeightMethod === "exact-unit-conversion" ||
+			sourceServing.gramWeightMethod === "user-reported")
+	) {
 		return {
+			grams: sourceServing.gramWeight,
+			label: sourceServing.label,
+			source: "source-serving",
+		};
+	}
+
+	return {
+		grams: defaultServingGrams,
+		label: formatIncrementGrams(defaultServingGrams),
+		source: "configured-default",
+	};
+};
+
+const buildGoalStates = (
+	nutrients: NutrientMeta[],
+	selectedFoods: FdcFood[],
+	nutrientGoals: Record<number, number>,
+	servingGrams: Record<number, number>,
+	defaultServingGrams: number,
+): NutrientGoalState[] | null => {
+	const states = nutrients.flatMap((nutrient): NutrientGoalState[] => {
+		const nutrientId = Number(nutrient.id);
+		const goal = nutrientGoals[nutrientId];
+		if (!Number.isFinite(nutrientId) || !Number.isFinite(goal) || goal <= 0) {
+			return [];
+		}
+
+		let total = 0;
+		for (const food of selectedFoods) {
+			const value = getRecommendationNutrientValue(food, nutrientId);
+			if (value === null) return [];
+			const grams = servingGrams[food.fdcId] ?? defaultServingGrams;
+			if (!Number.isFinite(grams) || grams < 0) return [];
+			total += (value * grams) / NUTRIENT_DATA_BASIS_GRAMS;
+		}
+
+		return [{
 			nutrientId,
 			label: nutrient.label ?? String(nutrient.id),
 			unit: nutrient.unit ?? "",
 			goal,
 			total,
-			remainingAmount: goal - total,
-		};
+		}];
 	});
 
-	const suggestions = nutrientStates
-		.flatMap((targetNutrient) => {
-			const { nutrientId, goal, remainingAmount } = targetNutrient;
+	const explicitGoalCount = nutrients.filter((nutrient) => {
+		const goal = nutrientGoals[Number(nutrient.id)];
+		return Number.isFinite(goal) && goal > 0;
+	}).length;
 
-			if (goal <= 0 || remainingAmount <= goal * 0.1) return [];
-
-			return availableFoods.flatMap((food) => {
-				const amountPer100g = getNutrientValue(food, nutrientId);
-				if (!amountPer100g || amountPer100g <= 0) return [];
-
-				const currentServingGrams = selectedFoodIds.includes(food.fdcId)
-					? (servingGrams[food.fdcId] ?? defaultServingGrams)
-					: 0;
-				const servingGramsToTarget = remainingAmount / (amountPer100g / 100);
-				if (!Number.isFinite(servingGramsToTarget) || servingGramsToTarget <= 0) {
-					return [];
-				}
-				const nextServingGrams = currentServingGrams + servingGramsToTarget;
-
-				const conflicts: NutrientFoodSuggestionConflict[] =
-					nutrientStates.flatMap(
-						(nutrientState): NutrientFoodSuggestionConflict[] => {
-							const nutrientAmountPer100g = getNutrientValue(
-								food,
-								nutrientState.nutrientId,
-							);
-							if (nutrientAmountPer100g === null) return [];
-							const amountAdded =
-								(nutrientAmountPer100g * servingGramsToTarget) /
-								defaultServingGrams;
-							const nextTotal = nutrientState.total + amountAdded;
-							const safeGoal =
-								nutrientState.goal > 0 ? nutrientState.goal : 1;
-							const overGoalLimit =
-								safeGoal * (1 + pointGoalTolerance);
-
-							if (amountAdded <= Math.max(safeGoal * 0.01, 0.05)) {
-								return [];
-							}
-
-							if (nutrientState.nutrientId === nutrientId) return [];
-
-							if (nutrientState.total > overGoalLimit) {
-								return [
-									{
-										nutrientId: nutrientState.nutrientId,
-										label: nutrientState.label,
-										unit: nutrientState.unit,
-										amountAdded,
-										nextTotal,
-										goal: nutrientState.goal,
-										reason: "already-over" as const,
-									},
-								];
-							}
-
-							if (nextTotal > overGoalLimit) {
-								return [
-									{
-										nutrientId: nutrientState.nutrientId,
-										label: nutrientState.label,
-										unit: nutrientState.unit,
-										amountAdded,
-										nextTotal,
-										goal: nutrientState.goal,
-										reason: "would-exceed" as const,
-									},
-								];
-							}
-
-							return [];
-						},
-					);
-
-				return [
-					{
-						food,
-						action: (currentServingGrams > 0 ? "increase" : "add") as
-							| "increase"
-							| "add",
-						nutrientId,
-						nutrientLabel: targetNutrient.label,
-						unit: targetNutrient.unit,
-						amountPer100g,
-						remainingAmount,
-						servingGramsToTarget,
-						currentServingGrams,
-						nextServingGrams,
-						targetAddedAmount: remainingAmount,
-						conflicts,
-						sourceLabel: sourceLabelForFood(food),
-					},
-				];
-			});
-		})
-		.sort((a, b) => {
-			const conflictDifference = a.conflicts.length - b.conflicts.length;
-			if (conflictDifference !== 0) return conflictDifference;
-			const servingDifference = a.servingGramsToTarget - b.servingGramsToTarget;
-			if (Math.abs(servingDifference) > 0.01) return servingDifference;
-			return b.amountPer100g - a.amountPer100g;
-		});
-
-	return takeBestSuggestionPerFood<NutrientFoodSuggestion>(
-		suggestions,
-		maxSuggestions,
-	);
+	return states.length === explicitGoalCount ? states : null;
 };
 
-export const getNutrientReductionSuggestions = ({
+const buildCandidate = ({
+	food,
+	direction,
+	currentServingGrams,
+	increment,
+	goalStates,
+	tolerance,
+}: {
+	food: FdcFood;
+	direction: NutrientAdjustmentSuggestion["direction"];
+	currentServingGrams: number;
+	increment: PracticalIncrement;
+	goalStates: NutrientGoalState[];
+	tolerance: number;
+}): NutrientAdjustmentSuggestion | null => {
+	const signedChange = direction === "increase"
+		? increment.grams
+		: -Math.min(increment.grams, currentServingGrams);
+	if (!Number.isFinite(signedChange) || Math.abs(signedChange) <= NUMERIC_EPSILON) {
+		return null;
+	}
+
+	const nextServingGrams = Math.max(0, currentServingGrams + signedChange);
+	const impacts: NutrientAdjustmentImpact[] = [];
+	let currentDistance = 0;
+	let nextDistance = 0;
+
+	for (const state of goalStates) {
+		const value = getRecommendationNutrientValue(food, state.nutrientId);
+		if (value === null) return null;
+
+		const amountChange =
+			(value * signedChange) / NUTRIENT_DATA_BASIS_GRAMS;
+		const candidateTotal = Math.max(0, state.total + amountChange);
+		const before = getGoalDistance(state.total, state.goal, tolerance);
+		const after = getGoalDistance(candidateTotal, state.goal, tolerance);
+
+		if (after > before + NUMERIC_EPSILON) return null;
+
+		currentDistance += before;
+		nextDistance += after;
+		const distanceImprovement = before - after;
+		if (distanceImprovement > NUMERIC_EPSILON) {
+			impacts.push({
+				nutrientId: state.nutrientId,
+				label: state.label,
+				unit: state.unit,
+				amountChange,
+				currentTotal: state.total,
+				nextTotal: candidateTotal,
+				goal: state.goal,
+				distanceImprovement,
+			});
+		}
+	}
+
+	const goalDistanceImprovement = currentDistance - nextDistance;
+	if (goalDistanceImprovement <= NUMERIC_EPSILON || impacts.length === 0) {
+		return null;
+	}
+
+	impacts.sort((left, right) =>
+		right.distanceImprovement - left.distanceImprovement ||
+		left.label.localeCompare(right.label),
+	);
+
+	return {
+		food,
+		direction,
+		currentServingGrams,
+		nextServingGrams,
+		changeGrams: Math.abs(signedChange),
+		incrementLabel: increment.label,
+		incrementSource: increment.source,
+		primaryImpact: impacts[0],
+		impacts,
+		goalDistanceImprovement,
+	};
+};
+
+export const getNutrientAdjustmentSuggestions = ({
 	nutrients,
 	selectedFoods,
 	nutrientGoals,
 	servingGrams,
-	sourceLabelForFood,
 	maxSuggestions = 3,
 }: {
 	nutrients: NutrientMeta[];
 	selectedFoods: FdcFood[];
 	nutrientGoals: Record<number, number>;
 	servingGrams: Record<number, number>;
-	sourceLabelForFood: (food: FdcFood) => string;
 	maxSuggestions?: number;
-}) => {
-	const { defaultServingGrams, pointGoalTolerance } = getMixRuntimeConfiguration();
-	const getNutrientAmount =
-		createFoodNutrientAmountLookup(defaultServingGrams);
-	const nutrientStates = nutrients.map((nutrient) => {
-		const nutrientId = Number(nutrient.id);
-		const goal = nutrientGoals[nutrientId] ?? getDefaultNutrientGoal(nutrient);
-		const total = selectedFoods.reduce(
-			(sum, food) =>
-				sum + getNutrientAmount(food, nutrientId, servingGrams),
-			0,
-		);
+}): NutrientAdjustmentSuggestion[] => {
+	if (
+		selectedFoods.length === 0 ||
+		selectedFoods.some(hasRecommendationDataBlocker)
+	) {
+		return [];
+	}
 
-		return {
-			nutrientId,
-			label: nutrient.label ?? String(nutrient.id),
-			unit: nutrient.unit ?? "",
-			goal,
-			total,
-			overageAmount: total - goal,
-		};
-	});
-
-	const suggestions = nutrientStates
-		.flatMap((targetNutrient) => {
-			const { nutrientId, goal, total, overageAmount } = targetNutrient;
-			if (goal <= 0 || total <= goal || overageAmount <= 0) return [];
-
-			return selectedFoods.flatMap((food) => {
-				const currentServingGrams =
-					servingGrams[food.fdcId] ?? defaultServingGrams;
-				const targetAmount = getNutrientAmount(
-					food,
-					nutrientId,
-					servingGrams,
-				);
-
-				if (currentServingGrams <= 0 || targetAmount === null || targetAmount <= 0) return [];
-
-				const targetReducedAmount = Math.min(overageAmount, targetAmount);
-				const percentOfOverageResolved =
-					(targetReducedAmount / overageAmount) * 100;
-				const reduceByGrams =
-					targetReducedAmount / (targetAmount / currentServingGrams);
-				const nextServingGrams = Math.max(
-					0,
-					currentServingGrams - reduceByGrams,
-				);
-				const minimumUsefulReductionAmount = Math.max(goal * 0.02, 0.25);
-
-				if (
-					!Number.isFinite(reduceByGrams) ||
-					reduceByGrams < 2 ||
-					targetReducedAmount < minimumUsefulReductionAmount ||
-					percentOfOverageResolved < 10
-				) {
-					return [];
-				}
-
-				const conflicts: NutrientReductionSuggestionConflict[] =
-					nutrientStates.flatMap(
-						(nutrientState): NutrientReductionSuggestionConflict[] => {
-							if (nutrientState.nutrientId === nutrientId) return [];
-							if (nutrientState.goal <= 0) return [];
-
-							const currentFoodAmount = getNutrientAmount(
-								food,
-								nutrientState.nutrientId,
-								servingGrams,
-							);
-							if (currentFoodAmount === null) return [];
-							const amountRemoved =
-								(currentFoodAmount * reduceByGrams) / currentServingGrams;
-							const nextTotal = nutrientState.total - amountRemoved;
-							const underGoalLimit =
-								nutrientState.goal * (1 - pointGoalTolerance);
-
-							if (
-								amountRemoved <=
-								Math.max(nutrientState.goal * 0.01, 0.05)
-							) {
-								return [];
-							}
-
-							if (nutrientState.total < underGoalLimit) {
-								return [
-									{
-										nutrientId: nutrientState.nutrientId,
-										label: nutrientState.label,
-										unit: nutrientState.unit,
-										amountRemoved,
-										nextTotal,
-										goal: nutrientState.goal,
-										reason: "already-under" as const,
-									},
-								];
-							}
-
-							if (nextTotal < underGoalLimit) {
-								return [
-									{
-										nutrientId: nutrientState.nutrientId,
-										label: nutrientState.label,
-										unit: nutrientState.unit,
-										amountRemoved,
-										nextTotal,
-										goal: nutrientState.goal,
-										reason: "would-drop-below" as const,
-									},
-								];
-							}
-
-							return [];
-						},
-					);
-
-				return [
-					{
-						food,
-						nutrientId,
-						nutrientLabel: targetNutrient.label,
-						unit: targetNutrient.unit,
-						currentServingGrams,
-						nextServingGrams,
-						reduceByGrams,
-						targetReducedAmount,
-						overageAmount,
-						percentOfOverageResolved,
-						conflicts,
-						sourceLabel: sourceLabelForFood(food),
-					},
-				];
-			});
-		})
-		.sort((a, b) => {
-			const conflictDifference = a.conflicts.length - b.conflicts.length;
-			if (conflictDifference !== 0) return conflictDifference;
-			const resolvedDifference =
-				b.percentOfOverageResolved - a.percentOfOverageResolved;
-			if (Math.abs(resolvedDifference) > 0.01) return resolvedDifference;
-			return a.reduceByGrams - b.reduceByGrams;
-		});
-
-	return takeBestSuggestionPerFood<NutrientReductionSuggestion>(
-		suggestions,
-		maxSuggestions,
+	const { defaultServingGrams, pointGoalTolerance } =
+		getMixRuntimeConfiguration();
+	const goalStates = buildGoalStates(
+		nutrients,
+		selectedFoods,
+		nutrientGoals,
+		servingGrams,
+		defaultServingGrams,
 	);
+	if (!goalStates || goalStates.length === 0) return [];
+
+	return selectedFoods
+		.flatMap((food): NutrientAdjustmentSuggestion[] => {
+			if (hasRecommendationSafetyBlocker(food)) return [];
+
+			const currentServingGrams =
+				servingGrams[food.fdcId] ?? defaultServingGrams;
+			if (!Number.isFinite(currentServingGrams) || currentServingGrams <= 0) {
+				return [];
+			}
+
+			const increment = getPracticalIncrement(food, defaultServingGrams);
+			const candidates = (["increase", "decrease"] as const).flatMap(
+				(direction): NutrientAdjustmentSuggestion[] => {
+					const candidate = buildCandidate({
+						food,
+						direction,
+						currentServingGrams,
+						increment,
+						goalStates,
+						tolerance: pointGoalTolerance,
+					});
+					return candidate ? [candidate] : [];
+				},
+			);
+
+			return candidates
+				.sort((left, right) =>
+					right.goalDistanceImprovement - left.goalDistanceImprovement,
+				)
+				.slice(0, 1);
+		})
+		.sort((left, right) =>
+			right.goalDistanceImprovement - left.goalDistanceImprovement ||
+			right.impacts.length - left.impacts.length ||
+			Number(right.incrementSource === "source-serving") -
+				Number(left.incrementSource === "source-serving") ||
+			left.food.description.localeCompare(right.food.description),
+		)
+		.slice(0, Math.max(0, maxSuggestions));
 };

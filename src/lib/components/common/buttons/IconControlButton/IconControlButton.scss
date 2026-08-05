@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
 .icon-control-button {
 	display: inline-flex;
@@ -14,10 +15,10 @@
 	border: 0;
 	border-radius: $app-shell-radius-control;
 	transition:
-		color 160ms ease,
-		background-color 160ms ease,
-		transform 120ms ease,
-		opacity 160ms ease;
+		color motion.$duration-state motion.$easing-standard,
+		background-color motion.$duration-state motion.$easing-standard,
+		transform motion.$duration-press motion.$easing-standard,
+		opacity motion.$duration-state motion.$easing-standard;
 
 	&:hover:not(:disabled),
 	&--active {

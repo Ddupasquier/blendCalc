@@ -23,6 +23,7 @@ src/
 │   ├── supabase/            Supabase client construction
 │   ├── types/               Generated or genuinely cross-domain types
 │   └── utils/               Pure domain logic grouped by feature
+│       └── animation/       Shared motion timing, accessibility, and reusable behaviors
 ├── routes/                  URL routes, loading, and high-level orchestration
 └── styles/
     ├── _themes.scss         Runtime light/dark semantic color values
@@ -75,6 +76,10 @@ real `404` and generated route types remain useful.
 
 - `src/lib/utils/<domain>` owns pure calculations, formatting, validation, and state
   helpers that can run without server secrets.
+- `src/lib/utils/animation` is the one cross-feature motion catalog. It owns shared
+  JavaScript timing, reduced-motion helpers, disclosure animation, reusable transition
+  builders, and SCSS timing/easing values. A component keeps only a genuinely unique
+  animation sequence or geometry in its paired stylesheet.
 - `src/lib/server/<domain>` owns database access, external API calls, privileged policy,
   and server-only orchestration.
 - `src/lib/config` is for stable shared configuration. Domain defaults, constants, and

@@ -30,6 +30,18 @@
 	background: $app-shell-surface-panel;
 }
 
+.collapsible-section:not([data-expanded="true"])[data-tone="warning"] summary {
+	color: $app-warning-text;
+	background: $app-warning-bg;
+	border: $app-warning-border;
+}
+
+.collapsible-section:not([data-expanded="true"])[data-tone="danger"] summary {
+	color: $app-status-error-text;
+	background: $app-danger-bg;
+	border: 1px solid $app-shell-accent-danger;
+}
+
 .collapsible-section summary::-webkit-details-marker {
 	display: none;
 }
@@ -41,10 +53,21 @@
 
 .collapsible-section__heading,
 .collapsible-section__title,
-.collapsible-section__actions,
-.collapsible-section__chevron {
+.collapsible-section__actions {
 	display: inline-flex;
 	align-items: center;
+}
+
+.collapsible-section__attention {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
 }
 
 .collapsible-section__heading {
@@ -63,18 +86,8 @@
 	gap: $app-gap-xs;
 }
 
-.collapsible-section__chevron {
-	justify-content: center;
-	width: $app-shell-control-icon-size;
-	height: $app-shell-control-icon-size;
+.collapsible-section :global(.collapsible-section__chevron) {
 	color: $app-shell-text-muted;
-	line-height: 0;
-	transform: rotate(0deg);
-	transition: transform 180ms ease;
-}
-
-:global(.collapsible-section[data-expanded="true"] .collapsible-section__chevron) {
-	transform: rotate(180deg);
 }
 
 .collapsible-section__content {

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Chevron from "$lib/assets/icons/Chevron/Chevron.svelte";
 	import Pencil from "$lib/assets/icons/Pencil/Pencil.svelte";
+	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte";
 	import type { ManualEntryToggleProps } from "./types";
 
@@ -17,7 +17,7 @@
 	<strong>{title}</strong>
 	<small>{description}</small>
 </span>
-<Chevron class="manual-entry-toggle__chevron" direction="down" />
+<DisclosureChevron class="manual-entry-toggle__chevron" />
 
 <style lang="scss">
 	@use "./ManualEntryToggle.scss";

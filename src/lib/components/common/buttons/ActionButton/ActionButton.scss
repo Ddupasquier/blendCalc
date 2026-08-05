@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
 .action-button {
 	display: inline-flex;
@@ -19,11 +20,11 @@
 	text-align: center;
 	text-decoration: none;
 	transition:
-		background 0.16s ease,
-		border-color 0.16s ease,
-		color 0.16s ease,
-		opacity 0.16s ease,
-		transform 0.1s ease;
+		background motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard,
+		color motion.$duration-state motion.$easing-standard,
+		opacity motion.$duration-state motion.$easing-standard,
+		transform motion.$duration-press motion.$easing-standard;
 }
 
 .action-button--full {

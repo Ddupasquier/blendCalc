@@ -31,6 +31,7 @@
 		category = "Ingredient category",
 		title = "Image placement",
 		description = "Adjust how the image appears in ingredient cards.",
+		showIntro = true,
 		editable = true,
 		showWarningEdge = false,
 		smartPlacementSource = imageUrl,
@@ -145,14 +146,16 @@
 </script>
 
 <section class="image-placement-editor" aria-label={title}>
-	<div class="image-placement-editor__copy">
-		<strong class="image-placement-editor__title">
-			<span>{title}</span>
-		</strong>
-		{#if description}
-			<p>{description}</p>
-		{/if}
-	</div>
+	{#if showIntro}
+		<div class="image-placement-editor__copy">
+			<strong class="image-placement-editor__title">
+				<span>{title}</span>
+			</strong>
+			{#if description}
+				<p>{description}</p>
+			{/if}
+		</div>
+	{/if}
 
 	<div class="image-placement-editor__editing-preview">
 		<ImagePlacementCardPreview
@@ -170,8 +173,8 @@
 		/>
 		{#if editable}
 			<p id={instructionsId}>
-				Drag left to shift the image, or drag right to return it. Pinch or
-				scroll over the preview to zoom.
+				Drag left to shift the image, or drag right to return it. Pinch to
+				zoom, or use the controls below.
 			</p>
 		{/if}
 	</div>

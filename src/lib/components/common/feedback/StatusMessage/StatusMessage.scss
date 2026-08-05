@@ -14,7 +14,7 @@
 	border-radius: $app-shell-radius-control;
 	font-family: $app-font-family-interface;
 	font-size: $app-font-size-sm;
-	line-height: 1.35;
+	line-height: $app-line-height-ui;
 }
 
 .status-message[data-tone="success"] {

@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 @use "../../card/IngredientCardMediaLane/IngredientCardLayout" as ingredient-card-layout;
 
 $selection-border-color: color-mix(
@@ -13,9 +14,9 @@ $selection-border-color: color-mix(
 
 	grid-template-columns: minmax(0, 1fr) auto auto;
 	transition:
-		border-color 160ms ease,
-		background-color 160ms ease,
-		opacity 160ms ease;
+		border-color motion.$duration-state motion.$easing-standard,
+		background-color motion.$duration-state motion.$easing-standard,
+		opacity motion.$duration-state motion.$easing-standard;
 }
 
 .saved-ingredient-card--active:not(.saved-ingredient-card--selection-mode) {

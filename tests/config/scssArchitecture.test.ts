@@ -30,6 +30,18 @@ const componentStyleFiles = [
 	(path) => extname(path) === ".scss",
 );
 const routeFiles = walkFiles("src/routes");
+const applicationStyleFiles = [
+	"src/app.scss",
+	...componentStyleFiles,
+	...routeFiles.filter((path) => extname(path) === ".scss"),
+];
+const measuredRawColorFiles = new Set([
+	"src/lib/components/ingredients/barcode/BarcodeScannerDialog/BarcodeScannerDialog.scss",
+	"src/lib/components/ingredients/barcode/BarcodeScannerIcon/BarcodeScannerIcon.scss",
+	"src/lib/components/ingredients/card/IngredientCardMediaLane/IngredientCardMediaLane.scss",
+	"src/lib/components/ingredients/nutrition/NutritionFactsLabel/NutritionFactsLabel.scss",
+	"src/lib/components/profile/ThemePreferenceControl/ThemePreferenceControl.scss",
+]);
 
 describe("SCSS architecture", () => {
 	it("keeps global tokens direct and free of obsolete namespaces", () => {
@@ -65,6 +77,51 @@ describe("SCSS architecture", () => {
 		}
 
 		expect(output).toBe("");
+	});
+
+	it("keeps application typography on the shared semantic scale", () => {
+		const declarationPattern =
+			/(font-size|font-family|font-weight|line-height|letter-spacing):\s*([^;]+);/g;
+		const allowedValuePattern = /^(?:\$[\w-]+|var\(|inherit$)/;
+		const violations = applicationStyleFiles.flatMap((path) => {
+			const source = readFileSync(path, "utf8");
+			return [...source.matchAll(declarationPattern)]
+				.filter((match) => !allowedValuePattern.test(match[2].trim()))
+				.map((match) => `${path}: ${match[0]}`);
+		});
+
+		expect(violations).toEqual([]);
+	});
+
+	it("keeps shared surfaces free of box shadows", () => {
+		const violations = applicationStyleFiles.filter((path) =>
+			/box-shadow\s*:/.test(readFileSync(path, "utf8")),
+		);
+
+		expect(violations).toEqual([]);
+	});
+
+	it("uses named responsive breakpoints instead of numeric media thresholds", () => {
+		const violations = applicationStyleFiles.flatMap((path) => {
+			const source = readFileSync(path, "utf8");
+			return [...source.matchAll(/@media[^\{]*(?:\d+(?:\.\d+)?(?:px|rem|em))/g)]
+				.map((match) => `${path}: ${match[0]}`);
+		});
+
+		expect(violations).toEqual([]);
+	});
+
+	it("limits raw colors to measured artifacts and explicit theme previews", () => {
+		const rawColorPattern = /#[0-9a-fA-F]{3,8}\b|rgba?\(/g;
+		const violations = applicationStyleFiles.flatMap((path) => {
+			if (measuredRawColorFiles.has(path)) return [];
+			const source = readFileSync(path, "utf8");
+			return [...source.matchAll(rawColorPattern)].map(
+				(match) => `${path}: ${match[0]}`,
+			);
+		});
+
+		expect(violations).toEqual([]);
 	});
 
 	it("keeps every component in a namesake folder", () => {

@@ -9,8 +9,8 @@
 	width: 1.72rem;
 	height: 1.72rem;
 	color: $app-highlight;
-	font-size: 1.18rem;
-	line-height: 1;
+	font-size: $app-font-size-xl;
+	line-height: $app-line-height-tight;
 }
 
 :global(.privileged-action-badge--profile) {

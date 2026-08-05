@@ -1,5 +1,7 @@
 @use "../../../../../styles/variables" as *;
 
+$spinner-duration: 700ms;
+
 .loading-spinner {
 	display: inline-flex;
 	align-items: center;
@@ -10,7 +12,7 @@
 	font-family: $app-font-family-interface;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-bold;
-	line-height: 1;
+	line-height: $app-line-height-tight;
 }
 
 .loading-spinner__ring {
@@ -23,7 +25,7 @@
 		color-mix(in srgb, currentColor 28%, transparent);
 	border-top-color: currentColor;
 	border-radius: $app-radius-circle;
-	animation: shared-loading-spin 700ms linear infinite;
+	animation: shared-loading-spin $spinner-duration linear infinite;
 }
 
 .loading-spinner[data-size="small"] .loading-spinner__ring {
@@ -48,6 +50,6 @@
 
 @media (prefers-reduced-motion: reduce) {
 	.loading-spinner__ring {
-		animation-duration: calc(700ms * 2);
+		animation-duration: calc($spinner-duration * 2);
 	}
 }

@@ -15,8 +15,6 @@ export type PointShapeProps = {
 	strokeColor?: string;
 	gridColor?: string;
 	goalColor?: string;
-	goalFillColor?: string;
-	goalStrokeColor?: string;
 	fullWidth?: boolean;
 	class?: string;
 };

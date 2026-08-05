@@ -172,6 +172,8 @@ describe("ingredient card media architecture", () => {
 		expect(placementPreview).toContain("createImagePlacementInteraction");
 		expect(placementPreview).toContain("onpointerdown=");
 		expect(placementInteraction).toContain("moveImagePlacement");
+		expect(placementPreviewStyles).toContain("touch-action: pan-y");
+		expect(placementPreviewStyles).not.toContain("touch-action: none");
 		expect(imageViewport).not.toContain("onpointerdown=");
 		expect(imageViewportStyles).not.toContain(
 			".image-placement-viewport--contained-inline-start",

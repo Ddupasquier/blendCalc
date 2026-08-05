@@ -4,19 +4,22 @@
 		replaceState as replaceNavigationState,
 	} from "$app/navigation";
 	import { page } from "$app/state";
-	import PillButton from "$lib/components/common/buttons/PillButton/PillButton.svelte";
 	import GoalTargets from "$lib/components/mix/controls/GoalTargets/GoalTargets.svelte";
 	import IngredientChooser from "$lib/components/mix/ingredients/IngredientChooser/IngredientChooser.svelte";
-	import MixEmptyState from "$lib/components/mix/states/MixEmptyState/MixEmptyState.svelte";
 	import NutrientAdjustmentSuggestions from "$lib/components/mix/insights/NutrientAdjustmentSuggestions/NutrientAdjustmentSuggestions.svelte";
-	import NutrientSelector from "$lib/components/mix/controls/NutrientSelector/NutrientSelector.svelte";
-	import PointShape from "$lib/components/mix/insights/PointShape/PointShape.svelte";
+	import MixHeader from "$lib/components/mix/layout/MixHeader/MixHeader.svelte";
+	import MixOptionsSheet from "$lib/components/mix/layout/MixOptionsSheet/MixOptionsSheet.svelte";
+	import MixSectionOrganizer from "$lib/components/mix/layout/MixSectionOrganizer/MixSectionOrganizer.svelte";
+	import NutrientShapePanel from "$lib/components/mix/insights/NutrientShapePanel/NutrientShapePanel.svelte";
 	import SaveGoalReview from "$lib/components/mix/save/SaveGoalReview/SaveGoalReview.svelte";
 	import SelectedIngredientsPanel from "$lib/components/mix/ingredients/SelectedIngredientsPanel/SelectedIngredientsPanel.svelte";
 	import SmartWarnings from "$lib/components/mix/insights/SmartWarnings/SmartWarnings.svelte";
 	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog/TextInputDialog.svelte";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
+	import ViewBody from "$lib/components/common/view/ViewBody/ViewBody.svelte";
+	import ViewFrame from "$lib/components/common/view/ViewFrame/ViewFrame.svelte";
+	import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
 	import {
 		getFoodPreferenceSmartWarnings,
 		getNutrientGoalWarnings,
@@ -28,6 +31,8 @@
     } from "$lib/utils/storage/client/smoothieLists";
 	    import {
 	        saveCloudMixPreferences,
+	        saveCloudMixSectionDisclosureState,
+	        saveCloudMixSectionOrder,
 	    } from "$lib/utils/storage/supabase";
 	import { readIngredientList } from "$lib/utils/ingredients/ingredientListApi";
     import IngredientContributionBreakdown from "$lib/components/mix/insights/IngredientContributionBreakdown/IngredientContributionBreakdown.svelte";
@@ -43,7 +48,6 @@
 	import {
 		formatChartNumber,
 		getDefaultNutrientOptions,
-		getFoodSourceLabel,
 		getNutrientMeta,
 		type NutrientOption,
 		type SaveGoalDiff,
@@ -74,8 +78,7 @@
         getNutrientContributionBreakdowns,
         getNutrientChartMetrics,
         getNutrientContributors as calculateNutrientContributors,
-        getNutrientFoodSuggestions,
-        getNutrientReductionSuggestions,
+        getNutrientAdjustmentSuggestions,
         getPointColors,
 		getNutrientProgress,
 		getNutrientTotal as calculateNutrientTotal,
@@ -85,6 +88,9 @@
     import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 	import {
+		createScrollDirectionTracker,
+	} from "$lib/utils/navigation/scrollDirection";
+	import {
 		getDefaultMixFields,
 		getDefaultMixGoals,
 		getMixGoalTemplates,
@@ -93,11 +99,17 @@
 	import type { MixResetAction } from "./types";
 	import {
 		buildMixRouteHref,
-		getMixRouteState,
+		getActiveMixRouteHref,
+		getActiveMixRouteState,
 		MIX_ROUTE_OVERLAYS,
 		type MixRouteTarget,
 	} from "$lib/utils/mix/navigation/mixRouteState";
-	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+	import {
+		normalizeMixSectionDisclosureState,
+		normalizeMixSectionOrder,
+		type MixSectionDisclosureState,
+		type MixSectionId,
+	} from "$lib/utils/mix/ui/mixSectionOrder";
 
 	const defaultMixFields = getDefaultMixFields();
 	const nutrientCatalog = getNutrientCatalog();
@@ -121,8 +133,33 @@
     let saveDialogError = $state("");
     let saveDialogBusy = $state(false);
 	let cloudLoadError = $state(initialMixData?.loadError ?? "");
+	let sectionOrder = $state<MixSectionId[]>(
+		normalizeMixSectionOrder(initialMixData?.preferences.sectionOrder),
+	);
+	let sectionDisclosureState = $state<MixSectionDisclosureState>(
+		normalizeMixSectionDisclosureState(
+			initialMixData?.preferences.sectionDisclosureState,
+		),
+	);
+	let sectionOrderSaveBusy = $state(false);
+	let sectionOrderSaveError = $state("");
+	let sectionDisclosureSaveError = $state("");
+	let sectionOrderSaveCount = 0;
+	let sectionOrderSaveQueue: Promise<boolean> = Promise.resolve(true);
+	let sectionDisclosureSaveQueue: Promise<boolean> = Promise.resolve(true);
 	let mixStateReady = $state(false);
-	const mixRouteState = $derived(getMixRouteState(page.url));
+	let compactTopHidden = $state(false);
+	let mixScrollContainer = $state<HTMLElement | null>(null);
+	const mixPageScrollDirectionTracker = createScrollDirectionTracker();
+	let mixScrollResumeFrame: number | null = null;
+	let mixScrollSettleFrame: number | null = null;
+	let compactHeaderLayoutSettling = false;
+	const activeMixRouteHref = $derived(
+		getActiveMixRouteHref(page.url, page.state.mixRouteHref),
+	);
+	const mixRouteState = $derived(
+		getActiveMixRouteState(page.url, page.state.mixRouteHref),
+	);
 	const pendingResetAction = $derived<MixResetAction | null>(
 		mixRouteState.overlay === MIX_ROUTE_OVERLAYS.resetGoals
 			? "goals"
@@ -135,15 +172,14 @@
 	const saveDialogOpen = $derived(
 		mixRouteState.overlay === MIX_ROUTE_OVERLAYS.save,
 	);
-	const renameRoute = $derived(
-		mixRouteState.overlay === MIX_ROUTE_OVERLAYS.renameIngredient &&
-			mixRouteState.listKey &&
-			mixRouteState.foodId !== null
-			? {
-					listKey: mixRouteState.listKey,
-					foodId: mixRouteState.foodId,
-				}
-			: null,
+	const optionsSheetOpen = $derived(
+		mixRouteState.overlay === MIX_ROUTE_OVERLAYS.options,
+	);
+	const reorganizeMode = $derived(
+		mixRouteState.overlay === MIX_ROUTE_OVERLAYS.reorganize,
+	);
+	const ingredientFiltersOpen = $derived(
+		mixRouteState.overlay === MIX_ROUTE_OVERLAYS.ingredientFilters,
 	);
 
 	const navigateMixRoute = (
@@ -151,9 +187,8 @@
 		{ replaceState = false } = {},
 	) => {
 		const href = buildMixRouteHref(page.url, target);
-		const currentHref = `${page.url.pathname}${page.url.search}${page.url.hash}`;
-		if (href === currentHref) return;
-		const nextPageState = { ...page.state };
+		if (href === activeMixRouteHref) return;
+		const nextPageState = { ...page.state, mixRouteHref: href };
 
 		if (replaceState) {
 			replaceNavigationState(href, nextPageState);
@@ -165,12 +200,61 @@
 	const closeMixOverlay = () =>
 		navigateMixRoute({ overlay: null }, { replaceState: true });
 
-	const openRenameRoute = (listKey: SmoothieListKey, foodId: number) => {
-		navigateMixRoute({
-			overlay: MIX_ROUTE_OVERLAYS.renameIngredient,
-			listKey,
-			foodId,
-		});
+	const queueSectionOrderSave = (nextOrder: MixSectionId[]) => {
+		const normalizedOrder = normalizeMixSectionOrder(nextOrder);
+		sectionOrderSaveCount += 1;
+		sectionOrderSaveBusy = true;
+		sectionOrderSaveError = "";
+		const saveRequest = sectionOrderSaveQueue.then(() =>
+			saveCloudMixSectionOrder(normalizedOrder),
+		);
+		sectionOrderSaveQueue = saveRequest.catch(() => false);
+		void saveRequest
+			.then((saved) => {
+				sectionOrderSaveError = saved
+					? ""
+					: "We could not save your section order. Check your connection and try again.";
+			})
+			.catch(() => {
+				sectionOrderSaveError =
+					"We could not save your section order. Check your connection and try again.";
+			})
+			.finally(() => {
+				sectionOrderSaveCount -= 1;
+				sectionOrderSaveBusy = sectionOrderSaveCount > 0;
+			});
+		return saveRequest;
+	};
+
+	const finishReorganizing = async () => {
+		const saved = await queueSectionOrderSave(sectionOrder);
+		if (saved) closeMixOverlay();
+	};
+
+	const updateSectionDisclosureState = (
+		sectionId: MixSectionId,
+		open: boolean,
+	) => {
+		if (sectionDisclosureState[sectionId] === open) return;
+		sectionDisclosureState = {
+			...sectionDisclosureState,
+			[sectionId]: open,
+		};
+		const nextState = { ...sectionDisclosureState };
+		const saveRequest = sectionDisclosureSaveQueue.then(() =>
+			saveCloudMixSectionDisclosureState(nextState),
+		);
+		sectionDisclosureSaveQueue = saveRequest.catch(() => false);
+		void saveRequest
+			.then((saved) => {
+				sectionDisclosureSaveError = saved
+					? ""
+					: "Your section layout could not be saved. Your current Mix is still safe.";
+			})
+			.catch(() => {
+				sectionDisclosureSaveError =
+					"Your section layout could not be saved. Your current Mix is still safe.";
+			});
 	};
 
 	const openWarningRoute = (warningId: string) => {
@@ -342,25 +426,14 @@
             servingGrams,
         ),
     );
-    const nutrientFoodSuggestions = $derived(
-        getNutrientFoodSuggestions({
-            nutrients: selectedNutrients,
-            availableFoods: allIngredientItems,
-            selectedFoodIds,
-            nutrientGoals,
-            servingGrams,
-            sourceLabelForFood: (food) => getFoodSourceLabel(food, fridgeItems),
-        }),
-    );
-    const nutrientReductionSuggestions = $derived(
-        getNutrientReductionSuggestions({
-            nutrients: selectedNutrients,
-            selectedFoods,
-            nutrientGoals,
-            servingGrams,
-            sourceLabelForFood: (food) => getFoodSourceLabel(food, fridgeItems),
-        }),
-    );
+	const nutrientAdjustmentSuggestions = $derived(
+		getNutrientAdjustmentSuggestions({
+			nutrients: selectedNutrients,
+			selectedFoods,
+			nutrientGoals,
+			servingGrams,
+		}),
+	);
     const nutrientOverages = $derived(
         selectedNutrients.flatMap((nutrient) => {
             const goal =
@@ -487,12 +560,17 @@
             loadNutrientGoals();
         }
 
-        if (hasCloudMixState) {
+		if (hasCloudMixState) {
             writeStoredRawMixState(cloudPreferences.mixState ?? {});
             loadMixState();
-        }
+		}
 
-    };
+		sectionOrder = normalizeMixSectionOrder(cloudPreferences.sectionOrder);
+		sectionDisclosureState = normalizeMixSectionDisclosureState(
+			cloudPreferences.sectionDisclosureState,
+		);
+
+	};
 
     const resetGoals = () => {
         detachLoadedSavedDrink();
@@ -630,15 +708,20 @@
         saveMixState();
     };
 
-    const handleAddNutrient = (nutrientId: string | number) => {
+	const handleAddNutrient = (nutrientId: string | number) => {
 		const nutrient = nutrientCatalog.find((n) => n.id == nutrientId);
-        if (nutrient && !options.some((opt) => opt.id == nutrient.id)) {
-            options = [...options, { id: nutrient.id, label: nutrient.label }];
-			selected = [...selected, nutrient.id];
-            markLoadedSavedDrinkDirty();
-            saveMixState();
-        }
-    };
+		if (!nutrient || selected.some((id) => id == nutrient.id)) return;
+		if (!options.some((option) => option.id == nutrient.id)) {
+			options = [...options, { id: nutrient.id, label: nutrient.label }];
+		}
+		selected = [...selected, nutrient.id];
+		markLoadedSavedDrinkDirty();
+		saveMixState();
+	};
+
+	const handleRemoveNutrient = (nutrientId: string | number) => {
+		handleChange(selected.filter((id) => id != nutrientId));
+	};
 
     const updateGoal = (id: string | number, value: string) => {
         const nextGoals = {
@@ -678,33 +761,26 @@
         saveMixState();
     };
 
-    const addSuggestedFood = (foodId: number, nextServingGrams: number) => {
+	const applySuggestedAdjustment = (
+		foodId: number,
+		nextServingGrams: number,
+	) => {
 		assignMixState(
-			getStateWithGramServing(
-				getCurrentMixState(),
-				foodId,
-				nextServingGrams,
-				true,
-			),
+			nextServingGrams <= 0
+				? getStateWithToggledFood(
+						getCurrentMixState(),
+						foodId,
+						allIngredientItems,
+					)
+				: getStateWithGramServing(
+						getCurrentMixState(),
+						foodId,
+						nextServingGrams,
+					),
 		);
-        markLoadedSavedDrinkDirty();
-        saveMixState();
-    };
-
-    const applySuggestedReduction = (
-        foodId: number,
-        nextServingGrams: number,
-    ) => {
-		assignMixState(
-			getStateWithGramServing(
-				getCurrentMixState(),
-				foodId,
-				nextServingGrams,
-			),
-		);
-        markLoadedSavedDrinkDirty();
-        saveMixState();
-    };
+		markLoadedSavedDrinkDirty();
+		saveMixState();
+	};
 
 	const getServingConversionWarning = (food: FdcFood) => {
         return getServingConversion(food).warning;
@@ -721,7 +797,7 @@
 			: null,
 	);
 
-    const updateServingAmount = (
+	const updateServingAmount = (
         food: FdcFood,
         quantityValue: string,
         unit: ServingMeasureUnit,
@@ -735,8 +811,39 @@
 			),
 		);
         markLoadedSavedDrinkDirty();
-        saveMixState();
-    };
+		saveMixState();
+	};
+
+	const cancelMixScrollTrackingResume = () => {
+		if (mixScrollResumeFrame !== null) cancelAnimationFrame(mixScrollResumeFrame);
+		if (mixScrollSettleFrame !== null) cancelAnimationFrame(mixScrollSettleFrame);
+		mixScrollResumeFrame = null;
+		mixScrollSettleFrame = null;
+	};
+
+	const resumeMixScrollTrackingAfterLayoutSettles = (element: HTMLElement) => {
+		cancelMixScrollTrackingResume();
+		mixScrollResumeFrame = requestAnimationFrame(() => {
+			mixScrollSettleFrame = requestAnimationFrame(() => {
+				mixPageScrollDirectionTracker.resume(element.scrollTop);
+				compactHeaderLayoutSettling = false;
+				mixScrollResumeFrame = null;
+				mixScrollSettleFrame = null;
+			});
+		});
+	};
+
+	const handleMixPageScroll = (event: Event) => {
+		if (mixRouteState.overlay !== null) return;
+		const element = event.currentTarget as HTMLElement;
+		const direction = mixPageScrollDirectionTracker.update(element.scrollTop);
+		if (direction === "down") {
+			compactHeaderLayoutSettling = true;
+			mixPageScrollDirectionTracker.pause(element.scrollTop);
+			resumeMixScrollTrackingAfterLayoutSettles(element);
+		}
+		if (direction) compactTopHidden = direction === "down";
+	};
 
     onMount(() => {
         const restoredSavedDrink = readLoadedSavedDrink();
@@ -756,6 +863,28 @@
             );
         };
     });
+
+	$effect(() => {
+		const element = mixScrollContainer;
+		if (!element || typeof ResizeObserver === "undefined") return;
+
+		const observer = new ResizeObserver(() => {
+			if (compactHeaderLayoutSettling) {
+				mixPageScrollDirectionTracker.pause(element.scrollTop);
+				resumeMixScrollTrackingAfterLayoutSettles(element);
+				return;
+			}
+
+			mixPageScrollDirectionTracker.rebase(element.scrollTop);
+		});
+		observer.observe(element);
+
+		return () => {
+			observer.disconnect();
+			cancelMixScrollTrackingResume();
+			compactHeaderLayoutSettling = false;
+		};
+	});
 
 	$effect(() => {
 		if (
@@ -782,7 +911,7 @@
 	});
 </script>
 
-<div class="mix-page">
+<ViewFrame appShell>
 	<ConfirmationDialog
 		open={pendingResetAction !== null}
 		title={resetDialogContent.title}
@@ -792,62 +921,32 @@
 		onConfirm={confirmReset}
 		onCancel={closeMixOverlay}
 	/>
-    <header class="mix-header">
-        <div>
-            {#if loadedSavedDrink}
-                <p class="mix-header__eyebrow">Loaded saved mix</p>
-                <div class="mix-header__title-row">
-                    <h2>{loadedSavedDrink.name}</h2>
-                    {#if loadedSavedDrink.isDirty}
-                        <span>Unsaved changes</span>
-                    {/if}
-                </div>
-                <p>
-                    {loadedSavedDrink.isDirty
-                        ? "Your saved mix has not changed. Save when this draft is ready."
-                        : "Adjust this draft, then overwrite it or save a new copy."}
-                </p>
-            {:else}
-                <h2>Mix</h2>
-                <p>Combine ingredients and see how the result compares with your nutrition goals.</p>
-            {/if}
-        </div>
-        <div class="reset-actions" aria-label="Mix reset actions">
-			<PillButton
-				variant="primary"
-				onclick={() => {
-					saveDialogError = "";
-					navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.save });
-				}}
-				disabled={!canSaveCurrentMix}
-			>
-				{loadedSavedDrink ? "Save Changes" : "Save"}
-			</PillButton>
-			<PillButton
-				onclick={() =>
-					navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.resetGoals })}
-				disabled={!hasCustomGoals}
-			>
-				Reset Goals
-			</PillButton>
-			<PillButton
-				onclick={() =>
-					navigateMixRoute({
-						overlay: MIX_ROUTE_OVERLAYS.clearIngredients,
-					})}
-				disabled={selectedFoodIds.length === 0}
-			>
-				Clear Ingredients
-			</PillButton>
-			<PillButton
-				onclick={() =>
-					navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.resetAll })}
-				disabled={!hasResettableMixState}
-			>
-				Reset All
-			</PillButton>
-        </div>
-    </header>
+	<ViewTop compactHidden={compactTopHidden}>
+		<MixHeader
+			loadedName={loadedSavedDrink?.name}
+			isDirty={loadedSavedDrink?.isDirty ?? selectedFoodIds.length > 0}
+			canSave={canSaveCurrentMix}
+			optionsOpen={optionsSheetOpen}
+			onSave={() => {
+				saveDialogError = "";
+				navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.save });
+			}}
+			onOpenOptions={() => navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.options })}
+		/>
+	</ViewTop>
+
+	<MixOptionsSheet
+		open={optionsSheetOpen}
+		canResetGoals={hasCustomGoals}
+		canClearIngredients={selectedFoodIds.length > 0}
+		canResetAll={hasResettableMixState}
+		onClose={closeMixOverlay}
+		onReorganize={() =>
+			navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.reorganize })}
+		onResetGoals={() => navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.resetGoals })}
+		onClearIngredients={() => navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.clearIngredients })}
+		onResetAll={() => navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.resetAll })}
+	/>
 
     <TextInputDialog
         open={saveDialogOpen}
@@ -868,48 +967,79 @@
             saveDialogError = "";
             closeMixOverlay();
         }}
-    >
-        <SaveGoalReview diffs={saveGoalDiffs} />
-    </TextInputDialog>
+	    >
+	        <SaveGoalReview diffs={saveGoalDiffs} />
+	    </TextInputDialog>
+
+	<ViewBody>
+		<div
+			class="mix-page"
+			bind:this={mixScrollContainer}
+			onscroll={handleMixPageScroll}
+		>
 
 	{#if cloudLoadError}
 		<StatusMessage tone="danger" title="Database lists unavailable">
 			{cloudLoadError}
 		</StatusMessage>
 	{/if}
+	{#if sectionDisclosureSaveError}
+		<StatusMessage tone="warning" title="Section layout not saved">
+			{sectionDisclosureSaveError}
+		</StatusMessage>
+	{/if}
 
-    <section class="mix-panel" aria-labelledby="nutrient-controls-title">
-        <div class="mix-builder">
-            <NutrientSelector
-                {options}
-                {selected}
-                {selectedCount}
-                onChange={handleChange}
-                onAddNutrient={handleAddNutrient}
-            />
+	{#if reorganizeMode}
+		<MixSectionOrganizer
+			order={sectionOrder}
+			busy={sectionOrderSaveBusy}
+			error={sectionOrderSaveError}
+			onOrderChange={(nextOrder) => {
+				sectionOrder = normalizeMixSectionOrder(nextOrder);
+			}}
+			onOrderCommit={(nextOrder) => {
+				void queueSectionOrderSave(nextOrder);
+			}}
+			onDone={() => {
+				void finishReorganizing();
+			}}
+		/>
+	{:else}
+	<section class="mix-panel" aria-label="Mix builder">
+		<div class="mix-builder">
+			{#each sectionOrder as sectionId (sectionId)}
+			{#if sectionId === "nutrient-shape"}
+				<NutrientShapePanel
+				points={selectedCount}
+				values={chartValues}
+				{goalValues}
+				labels={nutrientLabels}
+				valueLabels={nutrientValueLabels}
+				{pointColors}
+				fillColor={chartColors.fill}
+				strokeColor={chartColors.stroke}
+				diffs={saveGoalDiffs}
+				open={sectionDisclosureState[sectionId]}
+				onOpenChange={(open) => updateSectionDisclosureState(sectionId, open)}
+				/>
 
-            <GoalTargets
+			{:else if sectionId === "goals"}
+				<GoalTargets
                 {selectedNutrients}
                 {nutrientGoals}
                 {selectedGoalTemplateId}
                 onTemplateChange={updateGoalTemplateSelection}
-                onApplyTemplate={applyGoalTemplate}
-                onUpdateGoal={updateGoal}
-                getGoal={getDefaultNutrientGoal}
-                getTotal={getNutrientTotal}
-            />
+				onApplyTemplate={applyGoalTemplate}
+				onUpdateGoal={updateGoal}
+				onAddNutrient={handleAddNutrient}
+				onRemoveNutrient={handleRemoveNutrient}
+				getGoal={getDefaultNutrientGoal}
+				getTotal={getNutrientTotal}
+				open={sectionDisclosureState[sectionId]}
+				onOpenChange={(open) => updateSectionDisclosureState(sectionId, open)}
+				/>
 
-            <IngredientChooser
-                {fridgeItems}
-                {shoppingItems}
-                {selectedFoodIds}
-				{renameRoute}
-				onOpenRename={openRenameRoute}
-				onCloseRename={closeMixOverlay}
-                onToggleFood={toggleFood}
-            />
-
-            {#if selectedFoods.length > 0}
+			{:else if sectionId === "selected-ingredients"}
                 <SelectedIngredientsPanel
                     {selectedFoods}
                     {fridgeItems}
@@ -924,48 +1054,55 @@
 					onCloseConversionDetails={closeMixOverlay}
                     onRemove={toggleFood}
                     onServingChange={updateServingAmount}
+					open={sectionDisclosureState[sectionId]}
+					onOpenChange={(open) => updateSectionDisclosureState(sectionId, open)}
                 />
-            {:else}
-                <MixEmptyState />
-            {/if}
 
-            <div class="shape-panel" aria-label="Generated shape">
-                <div
-                    class="shape-preview"
-                    data-tutorial-target="mix-result-chart"
-                >
-                    <PointShape
-                        points={selectedCount}
-                        values={chartValues}
-                        {goalValues}
-                        labels={nutrientLabels}
-                        valueLabels={nutrientValueLabels}
-                        {pointColors}
-                        fillColor={chartColors.fill}
-                        strokeColor={chartColors.stroke}
-                        fullWidth
-                    />
-                </div>
-                <SmartWarnings
-					warnings={smartWarnings}
-					{openWarningId}
-					onOpenWarning={openWarningRoute}
-					onCloseWarning={closeMixOverlay}
+			{:else if sectionId === "add-ingredients"}
+				<IngredientChooser
+					{fridgeItems}
+					{shoppingItems}
+					{selectedFoodIds}
+					onToggleFood={toggleFood}
+					filtersOpen={ingredientFiltersOpen}
+					onOpenFilters={() =>
+						navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.ingredientFilters })}
+					onCloseFilters={closeMixOverlay}
+					open={sectionDisclosureState[sectionId]}
+					onOpenChange={(open) => updateSectionDisclosureState(sectionId, open)}
 				/>
-                <NutrientAdjustmentSuggestions
-                    foodSuggestions={nutrientFoodSuggestions}
-                    reductionSuggestions={nutrientReductionSuggestions}
-                    onAdd={addSuggestedFood}
-                    onReduce={applySuggestedReduction}
-                />
-                <IngredientContributionBreakdown
-                    breakdowns={contributionBreakdowns}
-                />
-            </div>
 
-        </div>
-    </section>
-</div>
+			{:else if sectionId === "warnings"}
+				<SmartWarnings
+				warnings={smartWarnings}
+				{openWarningId}
+				onOpenWarning={openWarningRoute}
+				onCloseWarning={closeMixOverlay}
+				open={sectionDisclosureState[sectionId]}
+				onOpenChange={(open) => updateSectionDisclosureState(sectionId, open)}
+				/>
+			{:else if sectionId === "suggested-adjustments"}
+				<NutrientAdjustmentSuggestions
+					suggestions={nutrientAdjustmentSuggestions}
+					onApply={applySuggestedAdjustment}
+					open={sectionDisclosureState[sectionId]}
+					onOpenChange={(open) => updateSectionDisclosureState(sectionId, open)}
+				/>
+			{:else if sectionId === "nutrient-contributions"}
+				<IngredientContributionBreakdown
+					breakdowns={contributionBreakdowns}
+					open={sectionDisclosureState[sectionId]}
+					onOpenChange={(open) => updateSectionDisclosureState(sectionId, open)}
+				/>
+			{/if}
+			{/each}
+
+		</div>
+	</section>
+	{/if}
+		</div>
+	</ViewBody>
+</ViewFrame>
 
 <style lang="scss">
 	@use "./page.scss";

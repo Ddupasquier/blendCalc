@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
 .search-wrap {
 	position: relative;
@@ -39,8 +40,8 @@
 	border: 1px solid transparent;
 	border-radius: $app-shell-radius-control;
 	transition:
-		background-color 0.15s ease,
-		border-color 0.15s ease;
+		background-color motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard;
 
 	&:focus-within {
 		background: $app-shell-accent-soft;
@@ -95,7 +96,7 @@
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-semibold;
-	line-height: 1.25;
+	line-height: $app-line-height-compact;
 
 	span + span::before {
 		content: "·";

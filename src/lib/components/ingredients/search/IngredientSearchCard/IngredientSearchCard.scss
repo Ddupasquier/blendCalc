@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 @use "../../card/IngredientCardMediaLane/IngredientCardLayout" as ingredient-card-layout;
 
 .ingredient-search-card {
@@ -7,8 +8,8 @@
 
 	grid-template-columns: minmax(0, 1fr) auto auto;
 	transition:
-		background-color 160ms ease,
-		opacity 160ms ease;
+		background-color motion.$duration-state motion.$easing-standard,
+		opacity motion.$duration-state motion.$easing-standard;
 }
 
 .ingredient-search-card--active {
@@ -59,7 +60,7 @@
 	pointer-events: none;
 	color: $app-shell-text-muted;
 	font-size: $app-shell-control-icon-size;
-	line-height: 1;
+	line-height: $app-line-height-tight;
 }
 
 :global(.ingredient-search-card__chevron) {

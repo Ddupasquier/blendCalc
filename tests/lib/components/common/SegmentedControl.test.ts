@@ -106,6 +106,33 @@ describe("SegmentedControl", () => {
 		expect(shoppingTab).toHaveFocus();
 	});
 
+	it("uses the liquid selection indicator for local two-option controls", async () => {
+		const onSelect = vi.fn();
+		const { container } = render(SegmentedControl, {
+			props: {
+				label: "Ingredient source",
+				value: "fridge",
+				options: [
+					{ value: "fridge", label: "Fridge" },
+					{ value: "shopping", label: "Shopping List" },
+				],
+				onSelect,
+			},
+		});
+
+		const shoppingTab = screen.getByRole("tab", { name: "Shopping List" });
+		await fireEvent.click(shoppingTab);
+
+		expect(onSelect).toHaveBeenCalledWith("shopping");
+		expect(container.querySelector(".segmented-control")).toHaveAttribute(
+			"data-active-index",
+			"1",
+		);
+		expect(
+			container.querySelector(".segmented-control__selection"),
+		).toHaveClass("segmented-control__selection--moving");
+	});
+
 	it("renders reusable progress steps with completion and current-step state", async () => {
 		const onSelect = vi.fn();
 		render(SegmentedControl, {
