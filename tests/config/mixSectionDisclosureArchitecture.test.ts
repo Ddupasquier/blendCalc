@@ -122,5 +122,10 @@ describe("Mix section disclosure architecture", () => {
 		expect(pickerStyles).not.toMatch(
 			/\$app-(primary|btn-bg|bg|section-bg|radius-sm|card-radius)\b/,
 		);
+		expect(goals).toContain('class="goal-input__header"');
+		expect(goals).toContain('class="goal-current"');
+		expect(goals).toContain('class="goal-input__target"');
+		expect(goals).not.toContain('class="goal-input__summary"');
+		expect(goals).not.toContain('class="goal-total"');
 	});
 });

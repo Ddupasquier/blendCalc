@@ -81,53 +81,40 @@
 
 .goal-input {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
-	grid-template-areas:
-		"summary remove"
-		"slider remove";
-	gap: $app-gap-xs $app-gap-sm;
-	align-items: center;
+	gap: $app-gap-sm;
 	min-width: 0;
 	padding: $app-gap-sm;
 	background: $app-shell-surface-soft;
 	border-radius: $app-shell-radius-control;
 }
 
-.goal-input__summary {
-	grid-area: summary;
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
-	align-items: center;
+.goal-input__header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
 	gap: $app-gap-sm;
 	min-width: 0;
 }
 
-.goal-input__identity {
-	display: flex;
-	flex: 1 1 auto;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: $app-gap-xs;
+.goal-input__heading {
+	display: grid;
+	gap: $app-gap-2xs;
 	min-width: 0;
 }
 
 .goal-label {
-	min-width: 0;
 	overflow: hidden;
 	color: $app-shell-text-primary;
-	font-size: $app-font-size-xs;
+	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-bold;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-.goal-total {
+.goal-current {
 	display: flex;
-	flex: 0 1 auto;
 	align-items: center;
-	justify-content: flex-end;
 	gap: $app-gap-2xs;
-	min-width: 0;
 	color: $app-shell-text-muted;
 	font-family: $app-font-family-data;
 	font-size: $app-font-size-xs;
@@ -138,21 +125,42 @@
 	}
 }
 
-.goal-input[data-status="met"] .goal-total strong {
+.goal-input[data-status="met"] .goal-current strong {
 	color: $app-shell-accent-primary;
 }
 
-.goal-input[data-status="over"] .goal-total strong {
+.goal-input[data-status="over"] .goal-current strong {
 	color: $app-shell-accent-danger;
+}
+
+.goal-input__target {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $app-gap-xs;
+	min-width: 0;
+}
+
+.goal-input__target-label {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+}
+
+.goal-input__amount {
+	display: inline-flex;
+	align-items: center;
+	gap: $app-gap-2xs;
+	min-width: 0;
 }
 
 :global(.goal-input__type) {
 	flex: 0 0 auto;
-	max-width: 7.5rem;
+	max-width: 8rem;
 }
 
 :global(.goal-input__slider) {
-	grid-area: slider;
+	width: 100%;
 }
 
 .goal-input__range-divider {
@@ -197,10 +205,6 @@
 	font-weight: $app-font-weight-semibold;
 }
 
-:global(.goal-input__remove) {
-	grid-area: remove;
-}
-
 @media (max-width: $app-breakpoint-xs),
 	(max-height: $app-breakpoint-height-compact) {
 	.goals-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
@@ -216,16 +220,8 @@
 		padding: $app-gap-xs;
 	}
 
-	.goal-input__summary {
-		grid-template-columns: 1fr;
+	.goal-input__header,
+	.goal-input__target {
 		gap: $app-gap-xs;
-	}
-
-	.goal-input__identity {
-		gap: $app-gap-2xs;
-	}
-
-	.goal-total {
-		justify-content: flex-start;
 	}
 }

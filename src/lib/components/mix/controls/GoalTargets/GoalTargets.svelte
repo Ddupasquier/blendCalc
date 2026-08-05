@@ -184,28 +184,40 @@
 					{@const sliderStep = getSliderStep(defaultGoal.targetAmount)}
 					{@const sliderMax = getSliderMax(defaultGoal.targetAmount, goal.targetAmount, sliderStep)}
 					<div class="goal-input" data-status={status}>
-						<div class="goal-input__summary">
-							<div class="goal-input__identity">
+						<div class="goal-input__header">
+							<div class="goal-input__heading">
 								<span class="goal-label">{nutrient.label}</span>
-								<SelectField
-									id={`goal-${nutrient.id}-type`}
-									name={`goal-${nutrient.id}-type`}
-									class="goal-input__type"
-									label={`Goal rule for ${nutrient.label}`}
-									labelVisibility="sr-only"
-									size="small"
-									width="content"
-									value={goal.goalType}
-									options={goalTypeOptions}
-									onValueChange={(value) => onUpdateGoalType(nutrient.id, value as MixGoalType)}
-								/>
+								<span class="goal-current">
+									<span>Current</span>
+									<strong>{total.toFixed(1)}</strong>
+									<span>{nutrient.unit}</span>
+								</span>
 							</div>
-							<span class="goal-total">
-								<strong>{total.toFixed(1)}</strong>
-								<span aria-hidden="true">/</span>
-								{#if goal.goalType !== "range"}
-									<span aria-hidden="true">{getMixGoalOperator(goal)}</span>
-								{/if}
+							<CircleIconButton
+								class="goal-input__remove"
+								label={`Stop tracking ${nutrient.label}`}
+								variant="soft"
+								size="small"
+								onclick={() => onRemoveNutrient(nutrient.id)}
+							>
+								<X size={15} />
+							</CircleIconButton>
+						</div>
+						<div class="goal-input__target">
+							<span class="goal-input__target-label">Goal</span>
+							<SelectField
+								id={`goal-${nutrient.id}-type`}
+								name={`goal-${nutrient.id}-type`}
+								class="goal-input__type"
+								label={`Goal rule for ${nutrient.label}`}
+								labelVisibility="sr-only"
+								size="small"
+								width="content"
+								value={goal.goalType}
+								options={goalTypeOptions}
+								onValueChange={(value) => onUpdateGoalType(nutrient.id, value as MixGoalType)}
+							/>
+							<span class="goal-input__amount">
 								<NumberInput
 									id={`goal-${nutrient.id}`}
 									name={`goal-${nutrient.id}`}
@@ -249,15 +261,6 @@
 							onValueChange={(value) => onPreviewGoal(nutrient.id, String(value))}
 							onValueCommit={(value) => onUpdateGoal(nutrient.id, String(value))}
 						/>
-						<CircleIconButton
-							class="goal-input__remove"
-							label={`Stop tracking ${nutrient.label}`}
-							variant="soft"
-							size="small"
-							onclick={() => onRemoveNutrient(nutrient.id)}
-						>
-							<X size={15} />
-						</CircleIconButton>
 					</div>
 				{/each}
 			</div>

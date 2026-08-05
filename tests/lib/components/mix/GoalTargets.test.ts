@@ -43,6 +43,9 @@ describe("GoalTargets", () => {
 		});
 
 		const slider = screen.getByRole("slider", { name: "Set Calories goal" });
+		expect(screen.getByText("Current")).toBeInTheDocument();
+		expect(screen.getByText("555.9")).toBeInTheDocument();
+		expect(screen.getByText("Goal")).toBeInTheDocument();
 		expect(slider).toHaveValue("350");
 		expect(slider).toHaveAttribute("max", "700");
 		expect(slider).toHaveAttribute(
@@ -53,6 +56,9 @@ describe("GoalTargets", () => {
       screen.getByRole("spinbutton", { name: "Goal value for Calories in kcal" }),
     ).toHaveValue(350);
 		expect(screen.getAllByRole("spinbutton")).toHaveLength(1);
+		expect(
+			screen.getByRole("button", { name: "Stop tracking Calories" }),
+		).toBeInTheDocument();
 
 		await fireEvent.input(slider, { target: { value: "425" } });
 		expect(onPreviewGoal).toHaveBeenLastCalledWith(1008, "425");

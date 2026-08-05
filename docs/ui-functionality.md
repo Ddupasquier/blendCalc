@@ -559,14 +559,15 @@ remain available in the status pills and the chart's accessible summary.
 Preserve:
 
 - Goal card per selected nutrient.
-- Current/goal value shown near nutrient name, with the goal number itself serving as
-  the exact-value input rather than repeating that number in a second control.
+- Each card labels the current amount beneath the nutrient name, then presents the goal
+  rule and editable target together before the synchronized slider. Do not present the
+  relationship as a compact equation that users must decode.
 - Units displayed clearly.
 - A draggable goal slider per nutrient, synchronized with the inline numeric goal input.
   The slider provides quick adjustment while the number input preserves exact entry.
-- Each compact goal row keeps the nutrient identity and its shared fixed-choice rule
-  selector together, with the current value, editable target, unit, slider, and circular
-  remove action following the established Mix control rhythm.
+- Each compact goal card keeps its circular remove action in the header and preserves
+  the same nutrient, current amount, shared fixed-choice rule, editable target, unit,
+  and slider hierarchy without duplicating values.
 - DB-backed goal presets:
   - High Protein.
   - Low Sugar.
