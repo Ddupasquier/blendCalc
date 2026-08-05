@@ -52,5 +52,5 @@ export type ShareStepProps = {
 	onBack: () => void;
 	onSubmit: () => void | Promise<void>;
 	onCatalogSubmissionComplete: () => void;
-	onSaveDestinationInput?: (element: HTMLSelectElement | null) => void;
+	onSaveDestinationControl?: (element: HTMLButtonElement | null) => void;
 };

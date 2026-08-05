@@ -25,7 +25,9 @@ describe("nutrient mappings", () => {
 				(nutrient) => Number(nutrient.id) === LEGACY_SODIUM_NUTRIENT_ID,
 			),
 		).toMatchObject({ label: "Saturated Fat", unit: "g" });
-		expect(getDefaultMixGoals()[NUTRIENT_IDS.SODIUM]).toBe(500);
+		expect(
+			getDefaultMixGoals()[NUTRIENT_IDS.SODIUM]?.targetAmount,
+		).toBe(500);
 	});
 
 	it("migrates legacy sodium selections, options, and goals", () => {

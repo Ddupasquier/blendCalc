@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import IngredientCard from "$lib/components/mix/ingredients/IngredientCard/IngredientCard.svelte";
 import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
@@ -12,7 +12,7 @@ const cardStyles = readFileSync(
 afterEach(() => configureServingMeasureCatalog(null));
 
 describe("Mix ingredient card", () => {
-	it("uses compact unit labels and keeps secondary actions out of the amount row", () => {
+	it("uses compact unit labels and keeps secondary actions out of the amount row", async () => {
 		configureServingMeasureCatalog({
 			options: [
 				{
@@ -46,6 +46,9 @@ describe("Mix ingredient card", () => {
 			},
 		});
 
+		await fireEvent.click(
+			screen.getByRole("combobox", { name: "Measure for Tomato, Roma" }),
+		);
 		expect(screen.getByRole("option", { name: "g" })).toBeInTheDocument();
 		expect(screen.queryByRole("option", { name: "grams" })).not.toBeInTheDocument();
 		expect(

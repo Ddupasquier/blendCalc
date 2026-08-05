@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import type { ConfirmationDialogProps } from "./types";
 
 	let {
@@ -10,6 +11,7 @@
 		cancelLabel = "Cancel",
 		busy = false,
 		danger = false,
+		error = "",
 		onConfirm,
 		onCancel,
 	}: ConfirmationDialogProps = $props();
@@ -35,6 +37,9 @@
 				<h2 id="confirmation-dialog-title">{title}</h2>
 				<p id="confirmation-dialog-description">{description}</p>
 			</div>
+			{#if error}
+				<StatusMessage tone="danger" message={error} />
+			{/if}
 			<div class="confirmation-dialog__actions">
 				<ActionButton variant="ghost" disabled={busy} onclick={onCancel}>
 					{cancelLabel}

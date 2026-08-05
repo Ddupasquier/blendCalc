@@ -29,11 +29,16 @@
 		preserveSelectedListItems,
         SMOOTHIE_LISTS_CHANGED_EVENT,
     } from "$lib/utils/storage/client/smoothieLists";
-	    import {
-	        saveCloudMixPreferences,
-	        saveCloudMixSectionDisclosureState,
-	        saveCloudMixSectionOrder,
-	    } from "$lib/utils/storage/supabase";
+		    import {
+				applyCloudMixGoalTemplate,
+				applyCloudUserMixGoalTemplate,
+				deleteCloudUserMixGoalTemplate,
+				saveCloudMixGoalConfiguration,
+		        saveCloudMixPreferences,
+		        saveCloudMixSectionDisclosureState,
+		        saveCloudMixSectionOrder,
+				saveCloudUserMixGoalTemplate,
+		    } from "$lib/utils/storage/supabase";
 	import { readIngredientList } from "$lib/utils/ingredients/ingredientListApi";
     import IngredientContributionBreakdown from "$lib/components/mix/insights/IngredientContributionBreakdown/IngredientContributionBreakdown.svelte";
     import {
@@ -62,26 +67,25 @@
 		getServingUnit as getServingUnitFromState,
 		getStateWithGramServing,
 		getStateWithServingAmount,
-		getStateWithToggledFood,
-		readStoredMixState,
-		readStoredNutrientGoals,
-		writeStoredMixState,
-		writeStoredRawMixState,
-		writeStoredNutrientGoals,
-		type MixStateSnapshot,
+			getStateWithToggledFood,
+			readStoredMixState,
+			writeStoredMixState,
+			writeStoredRawMixState,
+			type MixStateSnapshot,
 	} from "$lib/utils/mix/state/mixState";
     import {
-        getChartColors,
-        getChartValues,
-        getDefaultNutrientGoal,
-        getGoalValues,
-        getNutrientContributionBreakdowns,
-        getNutrientChartMetrics,
-        getNutrientContributors as calculateNutrientContributors,
-        getNutrientAdjustmentSuggestions,
-        getPointColors,
-		getNutrientProgress,
-		getNutrientTotal as calculateNutrientTotal,
+			getChartValues,
+			getDefaultNutrientGoal,
+			getEffectiveNutrientGoal,
+			getEvaluationChartColors,
+			getEvaluationPointColors,
+			getGoalValues,
+			getNutrientContributionBreakdowns,
+			getNutrientChartMetrics,
+			getNutrientGoalEvaluations,
+			getNutrientContributors as calculateNutrientContributors,
+			getNutrientAdjustmentSuggestions,
+			getNutrientTotal as calculateNutrientTotal,
 	} from "$lib/utils/mix/calculations";
     import type { FdcFood } from "$lib/utils/food/types";
     import { onMount } from "svelte";
@@ -91,11 +95,26 @@
 		createScrollDirectionTracker,
 	} from "$lib/utils/navigation/scrollDirection";
 	import {
-		getDefaultMixFields,
-		getDefaultMixGoals,
-		getMixGoalTemplates,
-		getNutrientCatalog,
-	} from "$lib/utils/food/reference/appReferenceCatalog";
+			getDefaultMixFields,
+			getDefaultMixGoalTemplate,
+			getDefaultMixGoals,
+			getMixGoalTemplates,
+			getMixRuntimeConfiguration,
+			getNutrientCatalog,
+		} from "$lib/utils/food/reference/appReferenceCatalog";
+		import {
+			areMixGoalsEqual,
+			createExactMixGoal,
+			withMixGoalTargetAmount,
+			type MixGoalBasis,
+			type MixGoalMap,
+			type MixGoalTemplate,
+			type MixGoalType,
+		} from "$lib/utils/mix/goals/types";
+		import {
+			evaluateMixGoal,
+			getMixGoalOperator,
+		} from "$lib/utils/mix/goals/goalEvaluation";
 	import type { MixResetAction } from "./types";
 	import {
 		buildMixRouteHref,
@@ -113,9 +132,23 @@
 
 	const defaultMixFields = getDefaultMixFields();
 	const nutrientCatalog = getNutrientCatalog();
-	const defaultNutrientGoals = getDefaultMixGoals();
-	const goalTemplates = getMixGoalTemplates();
-	const initialMixData = page.data.mixData;
+		const defaultNutrientGoals = getDefaultMixGoals();
+		const defaultGoalTemplate = getDefaultMixGoalTemplate();
+		const systemGoalTemplates = getMixGoalTemplates();
+		const initialMixData = page.data.mixData;
+		const initialCloudPreferences = initialMixData?.preferences;
+		const initialCloudGoals = initialCloudPreferences?.nutrientGoals ?? {};
+		const hasInitialGoalConfiguration =
+			initialCloudPreferences?.hasGoalConfiguration ?? false;
+		const initialGoalSourceSelectionId = initialCloudPreferences?.sourceGoalTemplateVersionId
+			? systemGoalTemplates.find(
+				(template) => template.versionId === initialCloudPreferences.sourceGoalTemplateVersionId,
+			)?.selectionId ?? ""
+			: initialCloudPreferences?.sourceUserGoalTemplateId
+				? `user:${initialCloudPreferences.sourceUserGoalTemplateId}`
+				: hasInitialGoalConfiguration
+					? ""
+					: defaultGoalTemplate?.selectionId ?? "";
 
     let selected = $state<(string | number)[]>(defaultMixFields.map((n) => n.id));
 	let options = $state<NutrientOption[]>(getDefaultNutrientOptions());
@@ -125,10 +158,42 @@
     let servingGrams = $state<Record<number, number>>({});
     let servingQuantities = $state<Record<number, number>>({});
     let servingUnits = $state<Record<number, ServingMeasureUnit>>({});
-    let nutrientGoals = $state<Record<number, number>>({
-		...defaultNutrientGoals,
-    });
-	let selectedGoalTemplateId = $state("");
+		let nutrientGoals = $state<MixGoalMap>({
+			...(hasInitialGoalConfiguration ? initialCloudGoals : defaultNutrientGoals),
+		});
+		let goalBasis = $state<MixGoalBasis>(
+			hasInitialGoalConfiguration
+				? initialCloudPreferences?.goalBasis ?? "per_mix"
+				: defaultGoalTemplate?.goalBasis ?? "per_mix",
+		);
+		let sourceGoalTemplateVersionId = $state<string | null>(
+			hasInitialGoalConfiguration
+				? initialCloudPreferences?.sourceGoalTemplateVersionId ?? null
+				: defaultGoalTemplate?.versionId ?? null,
+		);
+		let sourceUserGoalTemplateId = $state<string | null>(
+			hasInitialGoalConfiguration
+				? initialCloudPreferences?.sourceUserGoalTemplateId ?? null
+				: null,
+		);
+		let goalTemplateCustomized = $state(
+			hasInitialGoalConfiguration
+				? initialCloudPreferences?.goalTemplateCustomized ?? true
+				: !defaultGoalTemplate,
+		);
+		let userGoalTemplates = $state<MixGoalTemplate[]>(
+			initialCloudPreferences?.userGoalTemplates ?? [],
+		);
+		let selectedGoalTemplateId = $state(initialGoalSourceSelectionId);
+		let keepExtraGoals = $state(false);
+		let goalPresetBusy = $state(false);
+		let goalPresetError = $state("");
+		let goalPresetDialogError = $state("");
+		let goalPresetDialogBusy = $state(false);
+		const goalTemplates = $derived([
+			...systemGoalTemplates,
+			...userGoalTemplates,
+		]);
     let loadedSavedDrink = $state<LoadedSavedDrink | null>(null);
     let saveDialogError = $state("");
     let saveDialogBusy = $state(false);
@@ -178,9 +243,19 @@
 	const reorganizeMode = $derived(
 		mixRouteState.overlay === MIX_ROUTE_OVERLAYS.reorganize,
 	);
-	const ingredientFiltersOpen = $derived(
-		mixRouteState.overlay === MIX_ROUTE_OVERLAYS.ingredientFilters,
-	);
+		const ingredientFiltersOpen = $derived(
+			mixRouteState.overlay === MIX_ROUTE_OVERLAYS.ingredientFilters,
+		);
+		const saveGoalPresetDialogOpen = $derived(
+			mixRouteState.overlay === MIX_ROUTE_OVERLAYS.saveGoalPreset,
+		);
+		const goalPresetPendingDeletion = $derived(
+			mixRouteState.overlay === MIX_ROUTE_OVERLAYS.deleteGoalPreset
+				? userGoalTemplates.find(
+						(template) => template.id === mixRouteState.goalTemplateId,
+					) ?? null
+				: null,
+		);
 
 	const navigateMixRoute = (
 		target: MixRouteTarget,
@@ -342,15 +417,9 @@
         selectedFoods.length > 0 &&
             (!loadedSavedDrink || loadedSavedDrink.isDirty),
     );
-	const hasCustomGoals = $derived.by(() => {
-		const goalIds = new Set([
-			...Object.keys(defaultNutrientGoals),
-			...Object.keys(nutrientGoals),
-		]);
-		return [...goalIds].some(
-			(id) => nutrientGoals[Number(id)] !== defaultNutrientGoals[Number(id)],
-		);
-	});
+		const hasCustomGoals = $derived.by(() => {
+			return !areMixGoalsEqual(nutrientGoals, defaultNutrientGoals);
+		});
 	const hasCustomNutrientSelection = $derived.by(() => {
 		const defaultIds = defaultMixFields.map((nutrient) => String(nutrient.id));
 		return (
@@ -361,10 +430,10 @@
 	const hasResettableMixState = $derived(
 		hasCustomGoals || hasCustomNutrientSelection || selectedFoodIds.length > 0,
 	);
-    const nutrientProgress = $derived(
-        getNutrientProgress(
-            selectedNutrients,
-            selectedFoods,
+		const nutrientGoalEvaluations = $derived(
+			getNutrientGoalEvaluations(
+				selectedNutrients,
+				selectedFoods,
             nutrientGoals,
             servingGrams,
         ),
@@ -383,39 +452,35 @@
             (nutrient.label ?? String(nutrient.id)).replace("Total ", ""),
         ),
     );
-    const nutrientValueLabels = $derived(
-        selectedNutrients.map((nutrient) => {
-            const nutrientId = Number(nutrient.id);
-            const total = getNutrientTotal(nutrientId);
-            const goal =
-                nutrientGoals[nutrientId] ?? getDefaultNutrientGoal(nutrient);
-            return `${formatChartNumber(total)}/${formatChartNumber(goal)}${nutrient.unit ?? ""}`;
-        }),
-    );
+		const nutrientValueLabels = $derived(
+			selectedNutrients.map((nutrient) => {
+				const nutrientId = Number(nutrient.id);
+				const total = getNutrientTotal(nutrientId);
+				const goal = getEffectiveNutrientGoal(nutrient, nutrientGoals);
+				const target = goal.goalType === "range"
+					? `${formatChartNumber(goal.targetAmount)}–${formatChartNumber(goal.upperAmount ?? goal.targetAmount)}`
+					: `${getMixGoalOperator(goal)}${formatChartNumber(goal.targetAmount)}`;
+				return `${formatChartNumber(total)}/${target}${nutrient.unit ?? ""}`;
+			}),
+		);
     const saveGoalDiffs = $derived<SaveGoalDiff[]>(
         selectedNutrients.map((nutrient) => {
             const nutrientId = Number(nutrient.id);
             const total = getNutrientTotal(nutrientId);
-            const goal =
-                nutrientGoals[nutrientId] ?? getDefaultNutrientGoal(nutrient);
-            const difference = total - goal;
-            const tolerance = Math.max(goal * 0.05, 0.05);
-            const status =
-                Math.abs(difference) <= tolerance
-                    ? "near"
-                    : difference > 0
-                      ? "over"
-                      : "under";
+				const goal = getEffectiveNutrientGoal(nutrient, nutrientGoals);
+				const evaluation = evaluateMixGoal(goal, total);
 
-            return {
+				return {
                 label: nutrient.label ?? String(nutrient.id),
                 unit: nutrient.unit ?? "",
                 total,
-                goal,
-                difference,
-                percentOfGoal: goal > 0 ? (total / goal) * 100 : 0,
-                status,
-            };
+					goal: goal.targetAmount,
+					upperGoal: goal.upperAmount,
+					goalType: goal.goalType,
+					difference: evaluation.difference,
+					percentOfGoal: evaluation.percent,
+					status: evaluation.status,
+				};
         }),
     );
     const goalValues = $derived(getGoalValues(nutrientChartMetrics));
@@ -436,12 +501,11 @@
 	);
     const nutrientOverages = $derived(
         selectedNutrients.flatMap((nutrient) => {
-            const goal =
-                nutrientGoals[Number(nutrient.id)] ||
-                getDefaultNutrientGoal(nutrient);
-            const nutrientId = Number(nutrient.id);
-            const total = getNutrientTotal(nutrientId);
-            if (goal <= 0 || total <= goal) return [];
+			const goal = getEffectiveNutrientGoal(nutrient, nutrientGoals);
+			const nutrientId = Number(nutrient.id);
+			const total = getNutrientTotal(nutrientId);
+			const evaluation = evaluateMixGoal(goal, total);
+			if (evaluation.status !== "over") return [];
 
             return [
                 {
@@ -449,8 +513,8 @@
                     label: nutrient.label ?? String(nutrient.id),
                     unit: nutrient.unit ?? "",
                     total,
-                    goal,
-                    overage: total - goal,
+					goal: goal.upperAmount ?? goal.targetAmount,
+					overage: evaluation.difference,
                     contributors: getNutrientContributors(nutrientId),
                 },
             ];
@@ -465,20 +529,15 @@
                     label: nutrient.label ?? String(nutrient.id),
                     unit: nutrient.unit ?? "",
 					total: getNutrientTotal(nutrientId),
-                    goal:
-                        nutrientGoals[nutrientId] ??
-                        getDefaultNutrientGoal(nutrient),
+					goal: getEffectiveNutrientGoal(nutrient, nutrientGoals),
                 };
             }),
             { includeUnderTargets: selectedFoods.length > 0 },
         ).map((warning) => withOverageDetails(warning, nutrientOverages)),
 		...getFoodPreferenceSmartWarnings(selectedFoods),
     ]);
-    const maxNutrientProgress = $derived(
-        nutrientProgress.reduce((max, progress) => Math.max(max, progress), 0),
-    );
-    const chartColors = $derived(getChartColors(maxNutrientProgress));
-    const pointColors = $derived(getPointColors(nutrientProgress));
+		const chartColors = $derived(getEvaluationChartColors(nutrientGoalEvaluations));
+		const pointColors = $derived(getEvaluationPointColors(nutrientGoalEvaluations));
 
     const getNutrientTotal = (nutrientId: number) => {
         return calculateNutrientTotal(selectedFoods, nutrientId, servingGrams);
@@ -525,14 +584,35 @@
 		void loadCloudBackedIngredientLists();
 	};
 
-    const loadNutrientGoals = () => {
-        nutrientGoals = readStoredNutrientGoals();
-    };
+		const saveNutrientGoals = async (
+			nextGoals: MixGoalMap,
+			{
+				nextGoalBasis = goalBasis,
+				nextSourceTemplateVersionId = sourceGoalTemplateVersionId,
+				nextSourceUserTemplateId = sourceUserGoalTemplateId,
+				nextTemplateCustomized = true,
+			} = {},
+		) => {
+			goalPresetError = "";
+			const savedGoals = await saveCloudMixGoalConfiguration({
+				goals: nextGoals,
+				goalBasis: nextGoalBasis,
+				sourceTemplateVersionId: nextSourceTemplateVersionId,
+				sourceUserTemplateId: nextSourceUserTemplateId,
+				templateCustomized: nextTemplateCustomized,
+			});
+			if (!savedGoals) {
+				goalPresetError = "Your nutrition goals could not be saved. Check your connection and try again.";
+				return false;
+			}
 
-    const saveNutrientGoals = (nextGoals: Record<number, number>) => {
-        writeStoredNutrientGoals(nextGoals);
-        void saveCloudMixPreferences({ nutrientGoals: nextGoals });
-    };
+			nutrientGoals = savedGoals;
+			goalBasis = nextGoalBasis;
+			sourceGoalTemplateVersionId = nextSourceTemplateVersionId;
+			sourceUserGoalTemplateId = nextSourceUserTemplateId;
+			goalTemplateCustomized = nextTemplateCustomized;
+			return true;
+		};
 
     const loadMixState = () => {
         assignMixState(readStoredMixState(getCurrentMixState(), allIngredientItems));
@@ -548,17 +628,9 @@
         const cloudPreferences = initialMixData?.preferences;
         if (!cloudPreferences) return;
 
-        const hasCloudGoals =
-            cloudPreferences.nutrientGoals &&
-            Object.keys(cloudPreferences.nutrientGoals).length > 0;
-        const hasCloudMixState =
+		const hasCloudMixState =
             cloudPreferences.mixState &&
             Object.keys(cloudPreferences.mixState).length > 0;
-
-        if (hasCloudGoals) {
-            writeStoredNutrientGoals(cloudPreferences.nutrientGoals ?? {});
-            loadNutrientGoals();
-        }
 
 		if (hasCloudMixState) {
             writeStoredRawMixState(cloudPreferences.mixState ?? {});
@@ -572,12 +644,68 @@
 
 	};
 
-    const resetGoals = () => {
-        detachLoadedSavedDrink();
-		nutrientGoals = { ...defaultNutrientGoals };
-        selectedGoalTemplateId = "";
-        saveNutrientGoals(nutrientGoals);
-    };
+		const syncTrackedNutrientsToGoals = (
+			nextGoals: MixGoalMap,
+			keepExisting: boolean,
+		) => {
+			const goalIds = Object.values(nextGoals)
+				.sort((left, right) => left.sortOrder - right.sortOrder)
+				.map((goal) => goal.nutrientId);
+			const nextSelected = keepExisting
+				? [...new Set([...selected.map(Number), ...goalIds])]
+				: goalIds;
+			selected = nextSelected;
+			options = [
+				...options.filter((option) => nextSelected.includes(Number(option.id))),
+				...nextSelected.flatMap((nutrientId) => {
+					if (options.some((option) => Number(option.id) === nutrientId)) return [];
+					const nutrient = nutrientCatalog.find((item) => item.id === nutrientId);
+					return nutrient ? [{ id: nutrient.id, label: nutrient.label }] : [];
+				}),
+			];
+		};
+
+		const applySelectedGoalTemplate = async (
+			template: MixGoalTemplate,
+			keepExistingGoals: boolean,
+		) => {
+			goalPresetBusy = true;
+			goalPresetError = "";
+			const savedGoals = template.scope === "system" && template.versionId
+				? await applyCloudMixGoalTemplate(template.versionId, keepExistingGoals)
+				: await applyCloudUserMixGoalTemplate(template.id, keepExistingGoals);
+			goalPresetBusy = false;
+			if (!savedGoals) {
+				goalPresetError = "That goal preset could not be applied. Check your connection and try again.";
+				return false;
+			}
+
+			nutrientGoals = savedGoals;
+			goalBasis = template.goalBasis;
+			sourceGoalTemplateVersionId = template.scope === "system" ? template.versionId : null;
+			sourceUserGoalTemplateId = template.scope === "user" ? template.id : null;
+			goalTemplateCustomized = keepExistingGoals;
+			selectedGoalTemplateId = template.selectionId;
+			syncTrackedNutrientsToGoals(savedGoals, keepExistingGoals);
+			markLoadedSavedDrinkDirty();
+			saveMixState();
+			return true;
+		};
+
+		const resetGoals = async () => {
+			detachLoadedSavedDrink();
+			if (defaultGoalTemplate) {
+				await applySelectedGoalTemplate(defaultGoalTemplate, false);
+				return;
+			}
+			nutrientGoals = { ...defaultNutrientGoals };
+			selectedGoalTemplateId = "";
+			await saveNutrientGoals(nutrientGoals, {
+				nextSourceTemplateVersionId: null,
+				nextSourceUserTemplateId: null,
+				nextTemplateCustomized: true,
+			});
+		};
 
     const clearIngredients = () => {
         detachLoadedSavedDrink();
@@ -589,14 +717,12 @@
         saveMixState();
     };
 
-    const resetMix = () => {
-		detachLoadedSavedDrink();
-		assignMixState(getDefaultMixState());
-		nutrientGoals = { ...defaultNutrientGoals };
-        selectedGoalTemplateId = "";
-        saveNutrientGoals(nutrientGoals);
-        saveMixState();
-    };
+		const resetMix = async () => {
+			detachLoadedSavedDrink();
+			assignMixState(getDefaultMixState());
+			await resetGoals();
+			saveMixState();
+		};
 
 	const resetDialogContent = $derived.by(() => {
 		if (pendingResetAction === "goals") {
@@ -620,10 +746,10 @@
 		};
 	});
 
-	const confirmReset = () => {
-		if (pendingResetAction === "goals") resetGoals();
-		if (pendingResetAction === "ingredients") clearIngredients();
-		if (pendingResetAction === "all") resetMix();
+		const confirmReset = () => {
+			if (pendingResetAction === "goals") void resetGoals();
+			if (pendingResetAction === "ingredients") clearIngredients();
+			if (pendingResetAction === "all") void resetMix();
 		closeMixOverlay();
 	};
 
@@ -632,8 +758,9 @@
             name,
             foods: selectedFoods,
             selected,
-            options,
-            nutrientGoals,
+			options,
+			nutrientGoals,
+			goalBasis,
             servingGrams,
             servingQuantities,
             servingUnits,
@@ -708,59 +835,203 @@
         saveMixState();
     };
 
-	const handleAddNutrient = (nutrientId: string | number) => {
+		const handleAddNutrient = (nutrientId: string | number) => {
 		const nutrient = nutrientCatalog.find((n) => n.id == nutrientId);
 		if (!nutrient || selected.some((id) => id == nutrient.id)) return;
 		if (!options.some((option) => option.id == nutrient.id)) {
 			options = [...options, { id: nutrient.id, label: nutrient.label }];
 		}
-		selected = [...selected, nutrient.id];
-		markLoadedSavedDrinkDirty();
-		saveMixState();
-	};
-
-	const handleRemoveNutrient = (nutrientId: string | number) => {
-		handleChange(selected.filter((id) => id != nutrientId));
-	};
-
-	const previewGoal = (id: string | number, value: string) => {
-		nutrientGoals = {
-			...nutrientGoals,
-			[Number(id)]: Math.max(0, Number(value) || 0),
+			selected = [...selected, nutrient.id];
+			const nextGoals = {
+				...nutrientGoals,
+				[nutrient.id]: nutrientGoals[nutrient.id] ?? {
+					...getDefaultNutrientGoal(nutrient),
+					sortOrder: Object.keys(nutrientGoals).length + 1,
+				},
+			};
+			nutrientGoals = nextGoals;
+			goalTemplateCustomized = true;
+			markLoadedSavedDrinkDirty();
+			saveMixState();
+			void saveNutrientGoals(nextGoals);
 		};
-		markLoadedSavedDrinkDirty();
-		selectedGoalTemplateId = "";
-	};
 
-    const updateGoal = (id: string | number, value: string) => {
-        const nextGoals = {
-            ...nutrientGoals,
-            [Number(id)]: Math.max(0, Number(value) || 0),
-        };
-        nutrientGoals = nextGoals;
-        markLoadedSavedDrinkDirty();
-        saveNutrientGoals(nextGoals);
-        selectedGoalTemplateId = "";
-    };
+		const handleRemoveNutrient = (nutrientId: string | number) => {
+			const numericNutrientId = Number(nutrientId);
+			handleChange(selected.filter((id) => id != nutrientId));
+			const nextGoals = { ...nutrientGoals };
+			delete nextGoals[numericNutrientId];
+			nutrientGoals = Object.fromEntries(
+				Object.values(nextGoals)
+					.sort((left, right) => left.sortOrder - right.sortOrder)
+					.map((goal, index) => [goal.nutrientId, { ...goal, sortOrder: index + 1 }]),
+			);
+			goalTemplateCustomized = true;
+			void saveNutrientGoals(nutrientGoals);
+		};
+
+		const previewGoal = (id: string | number, value: string) => {
+			const nutrientId = Number(id);
+			const nutrient = nutrientCatalog.find((item) => item.id === nutrientId);
+			if (!nutrient) return;
+			const existingGoal = nutrientGoals[nutrientId] ?? {
+				...getDefaultNutrientGoal(nutrient),
+				sortOrder: Object.keys(nutrientGoals).length + 1,
+			};
+			nutrientGoals = {
+				...nutrientGoals,
+				[nutrientId]: withMixGoalTargetAmount(existingGoal, Number(value) || 0),
+			};
+			markLoadedSavedDrinkDirty();
+			goalTemplateCustomized = true;
+		};
+
+		const updateGoal = (id: string | number, value: string) => {
+			previewGoal(id, value);
+			const nextGoals = { ...nutrientGoals };
+			nutrientGoals = nextGoals;
+			markLoadedSavedDrinkDirty();
+			void saveNutrientGoals(nextGoals);
+		};
+
+		const updateUpperGoal = (id: string | number, value: string) => {
+			const nutrientId = Number(id);
+			const goal = nutrientGoals[nutrientId];
+			if (!goal || goal.goalType !== "range") return;
+			const parsedValue = Number(value);
+			const upperAmount = Number.isFinite(parsedValue)
+				? Math.max(goal.targetAmount, parsedValue)
+				: goal.targetAmount;
+			const nextGoals = {
+				...nutrientGoals,
+				[nutrientId]: { ...goal, upperAmount },
+			};
+			nutrientGoals = nextGoals;
+			markLoadedSavedDrinkDirty();
+			void saveNutrientGoals(nextGoals);
+		};
+
+		const updateGoalType = (
+			id: string | number,
+			goalType: MixGoalType,
+		) => {
+			const nutrientId = Number(id);
+			const goal = nutrientGoals[nutrientId];
+			if (!goal) return;
+			const nextGoals = {
+				...nutrientGoals,
+				[nutrientId]: {
+					...goal,
+					goalType,
+					upperAmount:
+						goalType === "range"
+							? Math.max(goal.upperAmount ?? goal.targetAmount, goal.targetAmount)
+							: null,
+				},
+			};
+			nutrientGoals = nextGoals;
+			markLoadedSavedDrinkDirty();
+			void saveNutrientGoals(nextGoals);
+		};
+
+		const openSaveGoalPresetDialog = () => {
+			goalPresetDialogError = "";
+			navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.saveGoalPreset });
+		};
+
+		const saveCurrentGoalPreset = async (displayName: string) => {
+			const normalizedName = displayName.trim();
+			if (!normalizedName) {
+				goalPresetDialogError = "Give this goal preset a name first.";
+				return;
+			}
+
+			goalPresetDialogBusy = true;
+			goalPresetDialogError = "";
+			const templateId = await saveCloudUserMixGoalTemplate({
+				displayName: normalizedName,
+				description: "Your saved nutrition goals.",
+				goalBasis,
+				goals: nutrientGoals,
+				sourceTemplateVersionId: sourceGoalTemplateVersionId,
+			});
+			if (!templateId) {
+				goalPresetDialogBusy = false;
+				goalPresetDialogError =
+					"That goal preset could not be saved. Check your connection and try again.";
+				return;
+			}
+
+			const template: MixGoalTemplate = {
+				id: templateId,
+				selectionId: `user:${templateId}`,
+				scope: "user",
+				versionId: null,
+				version: null,
+				label: normalizedName,
+				description: "Your saved nutrition goals.",
+				goalBasis,
+				goals: structuredClone(nutrientGoals),
+				sourceKey: null,
+				sourceReference: null,
+				reviewedAt: null,
+				isDefault: false,
+			};
+			userGoalTemplates = [
+				template,
+				...userGoalTemplates.filter((item) => item.id !== templateId),
+			];
+			goalPresetDialogBusy = false;
+			closeMixOverlay();
+			void applySelectedGoalTemplate(template, false);
+		};
+
+		const openDeleteGoalPresetDialog = (templateId: string) => {
+			goalPresetDialogError = "";
+			navigateMixRoute({
+				overlay: MIX_ROUTE_OVERLAYS.deleteGoalPreset,
+				goalTemplateId: templateId,
+			});
+		};
+
+		const deleteGoalPreset = async () => {
+			if (!goalPresetPendingDeletion) return;
+			goalPresetDialogBusy = true;
+			goalPresetDialogError = "";
+			const deleted = await deleteCloudUserMixGoalTemplate(
+				goalPresetPendingDeletion.id,
+			);
+			goalPresetDialogBusy = false;
+			if (!deleted) {
+				goalPresetDialogError =
+					"That goal preset could not be deleted. Check your connection and try again.";
+				return;
+			}
+
+			userGoalTemplates = userGoalTemplates.filter(
+				(template) => template.id !== goalPresetPendingDeletion.id,
+			);
+			if (sourceUserGoalTemplateId === goalPresetPendingDeletion.id) {
+				sourceUserGoalTemplateId = null;
+				goalTemplateCustomized = true;
+			}
+			if (selectedGoalTemplateId === goalPresetPendingDeletion.selectionId) {
+				selectedGoalTemplateId = "";
+			}
+			closeMixOverlay();
+		};
 
     const updateGoalTemplateSelection = (templateId: string) => {
         selectedGoalTemplateId = templateId;
     };
 
-    const applyGoalTemplate = () => {
-		const template = goalTemplates.find(
-            (item) => item.id === selectedGoalTemplateId,
-        );
-        if (!template) return;
-
-        const nextGoals = {
-            ...nutrientGoals,
-            ...template.goals,
-        };
-        nutrientGoals = nextGoals;
-        markLoadedSavedDrinkDirty();
-        saveNutrientGoals(nextGoals);
-    };
+		const applyGoalTemplate = () => {
+			const template = goalTemplates.find(
+				(item) => item.selectionId === selectedGoalTemplateId,
+			);
+			if (!template) return;
+			void applySelectedGoalTemplate(template, keepExtraGoals);
+		};
 
     const toggleFood = (foodId: number) => {
 		assignMixState(
@@ -854,12 +1125,11 @@
 		if (direction) compactTopHidden = direction === "down";
 	};
 
-    onMount(() => {
+		onMount(() => {
         const restoredSavedDrink = readLoadedSavedDrink();
         loadedSavedDrink = restoredSavedDrink;
         loadMixState();
-        loadNutrientGoals();
-		loadCloudBackedMixPreferences();
+			loadCloudBackedMixPreferences();
 		mixStateReady = true;
 		window.addEventListener(
             SMOOTHIE_LISTS_CHANGED_EVENT,
@@ -930,6 +1200,19 @@
 		onConfirm={confirmReset}
 		onCancel={closeMixOverlay}
 	/>
+	<ConfirmationDialog
+		open={goalPresetPendingDeletion !== null}
+		title="Delete goal preset?"
+		description={goalPresetPendingDeletion
+			? `Delete ${goalPresetPendingDeletion.label}? Your active goal values will stay in place.`
+			: "Delete this goal preset?"}
+		confirmLabel="Delete preset"
+		busy={goalPresetDialogBusy}
+		error={goalPresetDialogError}
+		danger
+		onConfirm={deleteGoalPreset}
+		onCancel={closeMixOverlay}
+	/>
 	<ViewTop compactHidden={compactTopHidden}>
 		<MixHeader
 			loadedName={loadedSavedDrink?.name}
@@ -979,6 +1262,23 @@
 	    >
 	        <SaveGoalReview diffs={saveGoalDiffs} />
 	    </TextInputDialog>
+
+	<TextInputDialog
+		open={saveGoalPresetDialogOpen}
+		title="Save goal preset"
+		description="Save these nutrition goals so you can use them again in another Mix."
+		label="Preset name"
+		placeholder="Weekday lunch, High protein…"
+		confirmLabel="Save preset"
+		error={goalPresetDialogError}
+		busy={goalPresetDialogBusy}
+		onConfirm={saveCurrentGoalPreset}
+		onValueChange={() => (goalPresetDialogError = "")}
+		onCancel={() => {
+			goalPresetDialogError = "";
+			closeMixOverlay();
+		}}
+	/>
 
 	<ViewBody>
 		<div
@@ -1034,20 +1334,30 @@
 
 			{:else if sectionId === "goals"}
 				<GoalTargets
-                {selectedNutrients}
-                {nutrientGoals}
-                {selectedGoalTemplateId}
-                onTemplateChange={updateGoalTemplateSelection}
-				onApplyTemplate={applyGoalTemplate}
-				onPreviewGoal={previewGoal}
-				onUpdateGoal={updateGoal}
-				onAddNutrient={handleAddNutrient}
-				onRemoveNutrient={handleRemoveNutrient}
-				getGoal={getDefaultNutrientGoal}
-				getTotal={getNutrientTotal}
-				open={sectionDisclosureState[sectionId]}
-				onOpenChange={(open) => updateSectionDisclosureState(sectionId, open)}
-				/>
+					{selectedNutrients}
+					{nutrientGoals}
+					{goalTemplates}
+					{selectedGoalTemplateId}
+					templateCustomized={goalTemplateCustomized}
+					{keepExtraGoals}
+					busy={goalPresetBusy}
+					error={goalPresetError}
+					onTemplateChange={updateGoalTemplateSelection}
+					onKeepExtraGoalsChange={(value) => (keepExtraGoals = value)}
+					onApplyTemplate={applyGoalTemplate}
+					onSaveCurrentTemplate={openSaveGoalPresetDialog}
+					onDeleteTemplate={openDeleteGoalPresetDialog}
+					onPreviewGoal={previewGoal}
+					onUpdateGoal={updateGoal}
+					onUpdateUpperGoal={updateUpperGoal}
+					onUpdateGoalType={updateGoalType}
+					onAddNutrient={handleAddNutrient}
+					onRemoveNutrient={handleRemoveNutrient}
+					getGoal={getDefaultNutrientGoal}
+					getTotal={getNutrientTotal}
+					open={sectionDisclosureState[sectionId]}
+					onOpenChange={(open) => updateSectionDisclosureState(sectionId, open)}
+					/>
 
 			{:else if sectionId === "selected-ingredients"}
                 <SelectedIngredientsPanel

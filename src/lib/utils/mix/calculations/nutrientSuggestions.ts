@@ -8,12 +8,14 @@ import type {
 	NutrientAdjustmentSuggestion,
 	NutrientMeta,
 } from "./nutrientTypes";
+import type { MixGoalMap, MixNutrientGoal } from "$lib/utils/mix/goals/types";
+import { evaluateMixGoal } from "$lib/utils/mix/goals/goalEvaluation";
 
 type NutrientGoalState = {
 	nutrientId: number;
 	label: string;
 	unit: string;
-	goal: number;
+  goal: MixNutrientGoal;
 	total: number;
 };
 
@@ -37,10 +39,7 @@ const isBlockedNutrient = (nutrient: FdcNutrient) =>
 	nutrient.mappingStatus === "excluded" ||
 	nutrient.mappingStatus === "unknown";
 
-const getRecommendationNutrientValue = (
-	food: FdcFood,
-	nutrientId: number,
-) => {
+const getRecommendationNutrientValue = (food: FdcFood, nutrientId: number) => {
 	const resolved = resolveFdcNutrient(food, nutrientId);
 	if (
 		resolved.nutrient === null ||
@@ -63,14 +62,10 @@ const hasRecommendationDataBlocker = (food: FdcFood) =>
 	food.sourceMetadata?.obsolete === true ||
 	(food.sourceMetadata?.qualityErrorTags?.some((tag) => tag.trim()) ?? false);
 
-const getGoalDistance = (
-	total: number,
-	goal: number,
-	tolerance: number,
-) => Math.max(0, Math.abs(total / goal - 1) - tolerance);
+const getGoalDistance = (total: number, goal: MixNutrientGoal) =>
+  1 - evaluateMixGoal(goal, total).score;
 
-const formatIncrementGrams = (grams: number) =>
-	`${Number(grams.toFixed(1))}g`;
+const formatIncrementGrams = (grams: number) => `${Number(grams.toFixed(1))}g`;
 
 const getPracticalIncrement = (
 	food: FdcFood,
@@ -102,14 +97,14 @@ const getPracticalIncrement = (
 const buildGoalStates = (
 	nutrients: NutrientMeta[],
 	selectedFoods: FdcFood[],
-	nutrientGoals: Record<number, number>,
+  nutrientGoals: MixGoalMap,
 	servingGrams: Record<number, number>,
 	defaultServingGrams: number,
 ): NutrientGoalState[] | null => {
 	const states = nutrients.flatMap((nutrient): NutrientGoalState[] => {
 		const nutrientId = Number(nutrient.id);
 		const goal = nutrientGoals[nutrientId];
-		if (!Number.isFinite(nutrientId) || !Number.isFinite(goal) || goal <= 0) {
+    if (!Number.isFinite(nutrientId) || !goal) {
 			return [];
 		}
 
@@ -122,18 +117,19 @@ const buildGoalStates = (
 			total += (value * grams) / NUTRIENT_DATA_BASIS_GRAMS;
 		}
 
-		return [{
+    return [
+      {
 			nutrientId,
 			label: nutrient.label ?? String(nutrient.id),
 			unit: nutrient.unit ?? "",
 			goal,
 			total,
-		}];
+      },
+    ];
 	});
 
 	const explicitGoalCount = nutrients.filter((nutrient) => {
-		const goal = nutrientGoals[Number(nutrient.id)];
-		return Number.isFinite(goal) && goal > 0;
+    return nutrientGoals[Number(nutrient.id)] !== undefined;
 	}).length;
 
 	return states.length === explicitGoalCount ? states : null;
@@ -145,19 +141,21 @@ const buildCandidate = ({
 	currentServingGrams,
 	increment,
 	goalStates,
-	tolerance,
 }: {
 	food: FdcFood;
 	direction: NutrientAdjustmentSuggestion["direction"];
 	currentServingGrams: number;
 	increment: PracticalIncrement;
 	goalStates: NutrientGoalState[];
-	tolerance: number;
 }): NutrientAdjustmentSuggestion | null => {
-	const signedChange = direction === "increase"
+  const signedChange =
+    direction === "increase"
 		? increment.grams
 		: -Math.min(increment.grams, currentServingGrams);
-	if (!Number.isFinite(signedChange) || Math.abs(signedChange) <= NUMERIC_EPSILON) {
+  if (
+    !Number.isFinite(signedChange) ||
+    Math.abs(signedChange) <= NUMERIC_EPSILON
+  ) {
 		return null;
 	}
 
@@ -170,16 +168,15 @@ const buildCandidate = ({
 		const value = getRecommendationNutrientValue(food, state.nutrientId);
 		if (value === null) return null;
 
-		const amountChange =
-			(value * signedChange) / NUTRIENT_DATA_BASIS_GRAMS;
+    const amountChange = (value * signedChange) / NUTRIENT_DATA_BASIS_GRAMS;
 		const candidateTotal = Math.max(0, state.total + amountChange);
-		const before = getGoalDistance(state.total, state.goal, tolerance);
-		const after = getGoalDistance(candidateTotal, state.goal, tolerance);
+    const before = getGoalDistance(state.total, state.goal);
+    const after = getGoalDistance(candidateTotal, state.goal);
 
 		if (after > before + NUMERIC_EPSILON) return null;
 
-		currentDistance += before;
-		nextDistance += after;
+    currentDistance += before * state.goal.importanceWeight;
+    nextDistance += after * state.goal.importanceWeight;
 		const distanceImprovement = before - after;
 		if (distanceImprovement > NUMERIC_EPSILON) {
 			impacts.push({
@@ -189,8 +186,10 @@ const buildCandidate = ({
 				amountChange,
 				currentTotal: state.total,
 				nextTotal: candidateTotal,
-				goal: state.goal,
+        goal: state.goal.targetAmount,
 				distanceImprovement,
+        weightedDistanceImprovement:
+          distanceImprovement * state.goal.importanceWeight,
 			});
 		}
 	}
@@ -200,8 +199,9 @@ const buildCandidate = ({
 		return null;
 	}
 
-	impacts.sort((left, right) =>
-		right.distanceImprovement - left.distanceImprovement ||
+  impacts.sort(
+    (left, right) =>
+      right.weightedDistanceImprovement - left.weightedDistanceImprovement ||
 		left.label.localeCompare(right.label),
 	);
 
@@ -228,7 +228,7 @@ export const getNutrientAdjustmentSuggestions = ({
 }: {
 	nutrients: NutrientMeta[];
 	selectedFoods: FdcFood[];
-	nutrientGoals: Record<number, number>;
+  nutrientGoals: MixGoalMap;
 	servingGrams: Record<number, number>;
 	maxSuggestions?: number;
 }): NutrientAdjustmentSuggestion[] => {
@@ -239,8 +239,7 @@ export const getNutrientAdjustmentSuggestions = ({
 		return [];
 	}
 
-	const { defaultServingGrams, pointGoalTolerance } =
-		getMixRuntimeConfiguration();
+  const { defaultServingGrams } = getMixRuntimeConfiguration();
 	const goalStates = buildGoalStates(
 		nutrients,
 		selectedFoods,
@@ -269,19 +268,20 @@ export const getNutrientAdjustmentSuggestions = ({
 						currentServingGrams,
 						increment,
 						goalStates,
-						tolerance: pointGoalTolerance,
 					});
 					return candidate ? [candidate] : [];
 				},
 			);
 
 			return candidates
-				.sort((left, right) =>
+        .sort(
+          (left, right) =>
 					right.goalDistanceImprovement - left.goalDistanceImprovement,
 				)
 				.slice(0, 1);
 		})
-		.sort((left, right) =>
+    .sort(
+      (left, right) =>
 			right.goalDistanceImprovement - left.goalDistanceImprovement ||
 			right.impacts.length - left.impacts.length ||
 			Number(right.incrementSource === "source-serving") -

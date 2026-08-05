@@ -28,6 +28,7 @@ const drink: SavedDrink = {
 	selected: [1008],
 	options: [{ id: 1008, label: "Calories" }],
 	nutrientGoals: {},
+  goalBasis: "per_mix",
 	servingGrams: { 1: 50 },
 	servingQuantities: { 1: 0.5 },
 	servingUnits: { 1: "cup" },

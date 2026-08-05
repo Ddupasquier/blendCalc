@@ -56,7 +56,7 @@
 	text-align: right;
 	white-space: nowrap;
 
-	&.near {
+  &.met {
 		color: $app-primary;
 		background: $app-success-bg;
 	}
@@ -72,7 +72,8 @@
 	}
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+  (max-height: $app-breakpoint-height-compact) {
 	.save-goal-review,
 	.save-goal-review__list,
 	.save-goal-review__row {

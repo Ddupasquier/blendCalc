@@ -1,7 +1,7 @@
 import type { FdcFood } from "$lib/utils/food/types";
-import {
-	getFoodPreferenceWarningMessage,
-} from "$lib/utils/profile/foodPreferenceWarnings";
+import { getFoodPreferenceWarningMessage } from "$lib/utils/profile/foodPreferenceWarnings";
+import type { MixNutrientGoal } from "$lib/utils/mix/goals/types";
+import { evaluateMixGoal } from "$lib/utils/mix/goals/goalEvaluation";
 
 export type SmartWarningTone = "danger" | "warning" | "info";
 
@@ -25,7 +25,7 @@ export type NutrientGoalWarningInput = {
 	label: string;
 	unit?: string;
 	total: number;
-	goal: number;
+  goal: MixNutrientGoal;
 };
 
 const formatAmount = (value: number) => {
@@ -41,12 +41,11 @@ export const getNutrientGoalWarnings = (
 ): SmartWarning[] => {
 	return nutrients.flatMap((nutrient): SmartWarning[] => {
 		const unit = nutrient.unit ?? "";
-		const goal = Math.max(0, nutrient.goal);
 		const total = Math.max(0, nutrient.total);
-		const difference = total - goal;
-		const tolerance = Math.max(goal * 0.05, 0.05);
+    const evaluation = evaluateMixGoal(nutrient.goal, total);
+    const difference = evaluation.difference;
 
-		if (difference > tolerance) {
+    if (evaluation.status === "over") {
 			return [
 				{
 					id: `over-${nutrient.id}`,
@@ -60,7 +59,7 @@ export const getNutrientGoalWarnings = (
 			];
 		}
 
-		if (includeUnderTargets && goal > 0 && difference < -tolerance) {
+    if (includeUnderTargets && evaluation.status === "under") {
 			return [
 				{
 					id: `under-${nutrient.id}`,

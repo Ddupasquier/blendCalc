@@ -48,9 +48,26 @@ const drink: SavedDrink = {
 		{ id: NUTRIENT_IDS.PROTEIN, label: "Protein" },
 	],
 	nutrientGoals: {
-		[NUTRIENT_IDS.CALORIES]: 100,
-		[NUTRIENT_IDS.PROTEIN]: 10,
+    [NUTRIENT_IDS.CALORIES]: {
+      nutrientId: NUTRIENT_IDS.CALORIES,
+      goalType: "exact",
+      targetAmount: 100,
+      upperAmount: null,
+      toleranceRatio: 0.1,
+      importanceWeight: 1,
+      sortOrder: 1,
+    },
+    [NUTRIENT_IDS.PROTEIN]: {
+      nutrientId: NUTRIENT_IDS.PROTEIN,
+      goalType: "minimum",
+      targetAmount: 10,
+      upperAmount: null,
+      toleranceRatio: 0.1,
+      importanceWeight: 1,
+      sortOrder: 2,
 	},
+  },
+  goalBasis: "per_mix",
 	servingGrams: Object.fromEntries(
 		Array.from({ length: 10 }, (_, index) => [index + 1, 100]),
 	),
@@ -135,9 +152,9 @@ describe("SavedDrinkCard", () => {
 		expect(
 			screen.getByRole("button", { name: "Load Morning Green" }),
 		).toBeInTheDocument();
-		expect(
-			screen.getByRole("button", { name: "Share recipe" }),
-		).toHaveClass("circle-icon-button");
+    expect(screen.getByRole("button", { name: "Share recipe" })).toHaveClass(
+      "circle-icon-button",
+    );
 
 		const ingredientSummary = screen
 			.getByText("+2 more ingredients")
@@ -156,7 +173,9 @@ describe("SavedDrinkCard", () => {
 			props: { drink, onLoad, onDelete },
 		});
 
-		await fireEvent.click(screen.getByText("Morning Green").closest("summary")!);
+    await fireEvent.click(
+      screen.getByText("Morning Green").closest("summary")!,
+    );
 		await fireEvent.click(
 			screen.getByRole("button", { name: "Load Morning Green" }),
 		);
@@ -175,8 +194,8 @@ describe("SavedDrinkCard", () => {
 			}),
 		);
 		expect(onDelete).toHaveBeenCalledWith(drink);
-		expect(
-			screen.getByRole("button", { name: "Share recipe" }),
-		).toHaveClass("circle-icon-button");
+    expect(screen.getByRole("button", { name: "Share recipe" })).toHaveClass(
+      "circle-icon-button",
+    );
 	});
 });

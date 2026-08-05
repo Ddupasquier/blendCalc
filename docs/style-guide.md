@@ -407,7 +407,7 @@ Check the existing primitive before writing markup or SCSS.
 | General loading                       | `LoadingSpinner`             | Never draw a feature-local spinner                                                                  |
 | Photo input                           | `PhotoUploadInput`           | Single/multiple photo prompt, count, status, and validation                                         |
 | Toggle                                | `ToggleSwitch`               | Boolean settings; do not use a checkbox as an on/off switch                                         |
-| Fixed-choice dropdown                 | `SelectField`                | Native select semantics with shared label, helper, chevron, focus, disabled, and responsive states  |
+| Fixed-choice dropdown                 | `SelectField`                | Accessible combobox and top-layer listbox with shared label, helper, keyboard/typeahead, focus, disabled, and responsive states; a hidden native select preserves required validation and form submission |
 | Compact metadata badge                | `TextBadge`                  | Owns centering, tone, padding, and truncation                                                       |
 | Structured metadata pill              | `MetadataPill`               | Ingredient labels, kcal, goal progress, and other compact label/value or label/icon metadata        |
 | Verified evidence                     | `VerifiedStatusBadge`        | Detail/search contexts where verification helps a decision                                          |

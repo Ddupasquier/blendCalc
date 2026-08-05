@@ -563,13 +563,25 @@ Preserve:
 - Units displayed clearly.
 - A draggable goal slider per nutrient, synchronized with the adjacent numeric input.
   The slider provides quick adjustment while the number input preserves exact entry.
-- Preset templates:
+- DB-backed goal presets:
   - High Protein.
   - Low Sugar.
   - Calorie Dense.
   - Balanced.
   - Fiber Focused.
-- Apply template action.
+- Each goal explicitly means `Target`, `At least`, `At most`, or `Range`; every chart,
+  warning, score, suggestion, and Saved summary uses that same meaning.
+- System presets have stable identities and immutable reviewed versions. Applying one
+  copies a snapshot into the user's active goals; future preset updates do not silently
+  alter that Mix.
+- Applying a preset replaces the current set by default. `Keep my other goals` retains
+  tracked nutrients the selected preset does not define.
+- Users can save the current goals as a private reusable preset, apply it later, and
+  delete it without deleting the active values already copied into a Mix.
+- Goal-preset save and delete flows use `/mix/goals/presets/save` and
+  `/mix/goals/presets/:templateId/delete` route-backed overlays.
+- Applying or directly editing goals persists through authoritative authenticated RPCs;
+  browser storage is not a goal-data fallback.
 - Reset goals action.
 - The Goals section is collapsible and includes the DB-backed nutrient picker so users
   can add or stop tracking nutrients without opening a second setup surface.

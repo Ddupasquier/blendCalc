@@ -1,10 +1,7 @@
-import {
-	MIX_STORAGE_KEYS,
-} from "$lib/utils/storage/storageKeys";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 import {
 	getDefaultMixFields,
-	getDefaultMixGoals,
 	getMixRuntimeConfiguration,
 	getNutrientCatalog,
 } from "$lib/utils/food/reference/appReferenceCatalog";
@@ -67,7 +64,10 @@ export const getServingQuantity = (
 	food: FdcFood,
 	servingQuantities: Record<number, number>,
 ) => {
-	return servingQuantities[food.fdcId] ?? getMixRuntimeConfiguration().defaultServingGrams;
+  return (
+    servingQuantities[food.fdcId] ??
+    getMixRuntimeConfiguration().defaultServingGrams
+  );
 };
 
 export const getServingUnit = (
@@ -86,43 +86,6 @@ export const getServingConversion = (
 		getServingQuantity(food, servingQuantities),
 		getServingUnit(food, servingUnits),
 		food,
-	);
-};
-
-export const readStoredNutrientGoals = () => {
-	const defaultGoals = getDefaultMixGoals();
-	const knownNutrientIds = new Set(
-		getNutrientCatalog().map((nutrient) => Number(nutrient.id)),
-	);
-	try {
-		const rawGoals = localStorage.getItem(
-			getScopedStorageKey(MIX_STORAGE_KEYS.nutrientGoals),
-		);
-		if (!rawGoals) return { ...defaultGoals };
-		const storedGoals = Object.entries(
-			JSON.parse(rawGoals) as Record<string, unknown>,
-		).flatMap(([nutrientId, value]) => {
-			const parsedNutrientId = Number(nutrientId);
-			const parsedValue = Number(value);
-			return knownNutrientIds.has(parsedNutrientId) &&
-				Number.isFinite(parsedValue) &&
-				parsedValue >= 0
-				? [[parsedNutrientId, parsedValue] as const]
-				: [];
-		});
-
-		return { ...defaultGoals, ...Object.fromEntries(storedGoals) };
-	} catch {
-		return { ...defaultGoals };
-	}
-};
-
-export const writeStoredNutrientGoals = (
-	nextGoals: Record<number, number>,
-) => {
-	localStorage.setItem(
-		getScopedStorageKey(MIX_STORAGE_KEYS.nutrientGoals),
-		JSON.stringify(nextGoals),
 	);
 };
 
@@ -150,7 +113,10 @@ export const readStoredMixState = (
 		const options = mergeNutrientOptions(
 			getDefaultNutrientOptions(),
 			normalizedSavedOptions,
-			optionsFromSelectedNutrientIds(selected, [defaultMixFields, nutrientCatalog]),
+      optionsFromSelectedNutrientIds(selected, [
+        defaultMixFields,
+        nutrientCatalog,
+      ]),
 		);
 		const selectedFoodIds = Array.isArray(savedState.selectedFoodIds)
 			? savedState.selectedFoodIds.filter((id) => Number.isFinite(id))
@@ -158,9 +124,7 @@ export const readStoredMixState = (
 		const storedServingGrams = Object.fromEntries(
 			Object.entries(savedState.servingGrams ?? {})
 				.map(([id, grams]) => [Number(id), Number(grams)])
-				.filter(
-					([id, grams]) => Number.isFinite(id) && Number.isFinite(grams),
-				),
+        .filter(([id, grams]) => Number.isFinite(id) && Number.isFinite(grams)),
 		);
 		const servingQuantities = Object.fromEntries(
 			selectedFoodIds.map((foodId) => {
@@ -287,7 +251,11 @@ export const getStateWithToggledFood = (
 			...state.servingGrams,
 			[foodId]:
 				state.servingGrams[foodId] ??
-				convertServingToGrams(defaultServing.quantity, defaultServing.unit, food) ??
+        convertServingToGrams(
+          defaultServing.quantity,
+          defaultServing.unit,
+          food,
+        ) ??
 				getMixRuntimeConfiguration().defaultServingGrams,
 		},
 		servingQuantities: {

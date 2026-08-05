@@ -37,10 +37,10 @@ describe("ListControls", () => {
 		await fireEvent.click(
 			screen.getByRole("button", { name: "Clear search saved mixes" }),
 		);
-		await fireEvent.change(
+		await fireEvent.click(
 			screen.getByRole("combobox", { name: "Sort saved mixes" }),
-			{ target: { value: "name" } },
 		);
+		await fireEvent.click(screen.getByRole("option", { name: "Name A–Z" }));
 
 		expect(onQueryChange).toHaveBeenNthCalledWith(1, "green");
 		expect(onQueryChange).toHaveBeenNthCalledWith(2, "");

@@ -9,14 +9,33 @@ import type {
 	NutrientContributionBreakdown,
 	NutrientMeta,
 } from "./nutrientTypes";
+import {
+  createExactMixGoal,
+  type MixGoalMap,
+  type MixNutrientGoal,
+} from "$lib/utils/mix/goals/types";
+import { evaluateMixGoal } from "$lib/utils/mix/goals/goalEvaluation";
 
-export const getDefaultNutrientGoal = (nutrient: NutrientMeta) => {
+export const getDefaultNutrientGoal = (
+  nutrient: NutrientMeta,
+): MixNutrientGoal => {
 	const id = Number(nutrient.id);
 	const configuredGoal = getDefaultMixGoals()[id];
 	if (configuredGoal !== undefined) return configuredGoal;
+  const runtime = getMixRuntimeConfiguration();
 	const goalsByUnit = getMixRuntimeConfiguration().defaultGoalByUnit;
-	return goalsByUnit[nutrient.unit ?? ""] ?? goalsByUnit.fallback;
+  return createExactMixGoal({
+    nutrientId: id,
+    targetAmount: goalsByUnit[nutrient.unit ?? ""] ?? goalsByUnit.fallback,
+    toleranceRatio: runtime.pointGoalTolerance,
+    sortOrder: 1,
+  });
 };
+
+export const getEffectiveNutrientGoal = (
+  nutrient: NutrientMeta,
+  nutrientGoals: MixGoalMap,
+) => nutrientGoals[Number(nutrient.id)] ?? getDefaultNutrientGoal(nutrient);
 
 export const getFoodNutrientAmount = (
 	food: FdcFood,
@@ -49,13 +68,16 @@ export const getNutrientContributors = (
 	servingGrams: Record<number, number>,
 ) => {
 	const defaultServingGrams = getMixRuntimeConfiguration().defaultServingGrams;
-	return foods.flatMap((food) => {
+  return foods
+    .flatMap((food) => {
 		const amount = getFoodNutrientAmount(food, nutrientId, servingGrams);
-		return [{
+      return [
+        {
 			label: food.description,
 			amount,
 			grams: servingGrams[food.fdcId] ?? defaultServingGrams,
-		}];
+        },
+      ];
 	})
 		.filter((contributor) => contributor.amount > 0)
 		.sort((a, b) => b.amount - a.amount);
@@ -101,13 +123,29 @@ export const getNutrientContributionBreakdowns = (
 export const getNutrientProgress = (
 	nutrients: NutrientMeta[],
 	foods: FdcFood[],
-	nutrientGoals: Record<number, number>,
+  nutrientGoals: MixGoalMap,
 	servingGrams: Record<number, number>,
 ) => {
 	return nutrients.map((nutrient) => {
-		const goal =
-			nutrientGoals[Number(nutrient.id)] ?? getDefaultNutrientGoal(nutrient);
-		if (goal <= 0) return 0;
-		return getNutrientTotal(foods, Number(nutrient.id), servingGrams) / goal;
+    const goal = getEffectiveNutrientGoal(nutrient, nutrientGoals);
+    if (goal.targetAmount <= 0) return 0;
+    return (
+      getNutrientTotal(foods, Number(nutrient.id), servingGrams) /
+      goal.targetAmount
+    );
 	});
 };
+
+export const getNutrientGoalEvaluations = (
+  nutrients: NutrientMeta[],
+  foods: FdcFood[],
+  nutrientGoals: MixGoalMap,
+  servingGrams: Record<number, number>,
+) =>
+  nutrients.map((nutrient) => {
+    const goal = getEffectiveNutrientGoal(nutrient, nutrientGoals);
+    return evaluateMixGoal(
+      goal,
+      getNutrientTotal(foods, Number(nutrient.id), servingGrams),
+    );
+  });

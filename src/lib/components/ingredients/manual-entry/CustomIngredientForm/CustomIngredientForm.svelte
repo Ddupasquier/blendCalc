@@ -62,7 +62,7 @@
 	let labelDetailsElement: HTMLDetailsElement | null = null;
 	let manualBodyElement: HTMLFieldSetElement | null = null;
 	let ingredientNameInput: HTMLInputElement | null = null;
-	let saveDestinationSelect: HTMLSelectElement | null = null;
+	let saveDestinationControl: HTMLButtonElement | null = null;
 	let lastCloseManualSignal: number | null = null;
 	let lastScanSignal: number | null = null;
 	let lastMovePromptOpen: boolean | null = null;
@@ -128,7 +128,7 @@
 	) => {
 		await new Promise((resolve) => requestAnimationFrame(resolve));
 		const target =
-			focusTarget === "name" ? ingredientNameInput : saveDestinationSelect;
+			focusTarget === "name" ? ingredientNameInput : saveDestinationControl;
 		(target ?? manualBodyElement)?.scrollIntoView({
 			behavior: getMotionSafeScrollBehavior(),
 			block: "center",
@@ -308,8 +308,8 @@
 		onSaveDestinationChange: (destination) => {
 			outcome.state.saveDestination = destination;
 		},
-		onSaveDestinationInput: (element) => {
-			saveDestinationSelect = element;
+		onSaveDestinationControl: (element) => {
+			saveDestinationControl = element;
 		},
 		onMoveToShopping: outcome.moveLastOutcomeToShopping,
 		onMoveToFridge: outcome.moveLastOutcomeToFridge,

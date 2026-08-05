@@ -12,9 +12,9 @@
 .goal-template-controls {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
 	gap: $app-gap-xs;
 	margin-bottom: $app-gap-sm;
-
 }
 
 :global(.goal-template-controls__select) {
@@ -22,7 +22,66 @@
 }
 
 .goal-template-controls > :global(button) {
-	align-self: end;
+	min-height: $app-control-height-sm;
+}
+
+.goal-template-preview {
+  display: grid;
+  gap: $app-gap-sm;
+  margin-bottom: $app-gap-sm;
+  padding: $app-gap-sm;
+  color: $app-shell-text-muted;
+  background: $app-shell-surface-soft;
+  border-radius: $app-shell-radius-control;
+  font-size: $app-font-size-xs;
+
+  strong {
+    color: $app-shell-text-primary;
+    font-size: $app-font-size-sm;
+  }
+
+  p {
+    margin: $app-gap-2xs 0 0;
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $app-gap-xs;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  li {
+    padding: $app-gap-2xs $app-gap-xs;
+    background: $app-shell-surface-panel;
+    border-radius: $app-shell-radius-pill;
+  }
+}
+
+.goal-template-preview__keep {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $app-gap-sm;
+
+  span {
+    display: grid;
+    gap: $app-gap-2xs;
+  }
+
+  small {
+    color: $app-shell-text-muted;
+    font-size: $app-font-size-xs;
+  }
+}
+
+.goal-template-preview__title {
+  display: flex;
+  align-items: center;
+  gap: $app-gap-xs;
+  flex-wrap: wrap;
 }
 
 .goal-grid {
@@ -35,8 +94,9 @@
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) auto auto;
 	grid-template-areas:
-		"summary control remove"
-		"slider control remove";
+    "summary summary remove"
+    "type type remove"
+    "slider values remove";
 	gap: $app-gap-xs $app-gap-sm;
 	align-items: center;
 	min-width: 0;
@@ -76,7 +136,7 @@
 	}
 }
 
-.goal-input[data-status="near"] .goal-total strong {
+.goal-input[data-status="met"] .goal-total strong {
 	color: $app-shell-accent-primary;
 }
 
@@ -88,12 +148,30 @@
 	grid-area: slider;
 }
 
+:global(.goal-input__type) {
+  grid-area: type;
+  max-width: 10rem;
+}
+
+.goal-input__values {
+  grid-area: values;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $app-gap-xs;
+}
+
 .goal-input__control {
-	grid-area: control;
 	display: grid;
 	grid-template-columns: minmax(3.4rem, 4.5rem) auto;
 	align-items: center;
 	gap: $app-gap-xs;
+}
+
+.goal-input__range-divider {
+  color: $app-shell-text-muted;
+  font-size: $app-font-size-xs;
+  font-weight: $app-font-weight-semibold;
 }
 
 :global(.goal-input__number) {
@@ -132,7 +210,8 @@
 	border: 0;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+  (max-height: $app-breakpoint-height-compact) {
 	.goals-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
 		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
 	}
@@ -141,13 +220,14 @@
 		grid-template-columns: minmax(0, 1fr) auto;
 		grid-template-areas:
 			"summary remove"
+      "type remove"
 			"slider remove"
-			"control control";
+      "values values";
 		gap: $app-gap-xs;
 		padding: $app-gap-xs;
 	}
 
-	.goal-input__control {
+  .goal-input__values {
 		justify-content: end;
 	}
 }

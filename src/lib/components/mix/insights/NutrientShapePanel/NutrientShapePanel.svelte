@@ -19,8 +19,8 @@
 		onOpenChange,
 	}: NutrientShapePanelProps = $props();
 
-	const toneFor = (status: "near" | "over" | "under") =>
-		status === "near" ? "success" : status === "over" ? "danger" : "warning";
+	const toneFor = (status: "met" | "over" | "under") =>
+		status === "met" ? "success" : status === "over" ? "danger" : "warning";
 </script>
 
 <section class="nutrient-shape-panel" aria-label="Nutrient shape">

@@ -6,7 +6,10 @@ import {
 	getDefaultMixFields,
 	getMixRuntimeConfiguration,
 } from "$lib/utils/food/reference/appReferenceCatalog";
-import { getFoodNutrientAmount, type NutrientMeta } from "$lib/utils/mix/calculations";
+import {
+  getFoodNutrientAmount,
+  type NutrientMeta,
+} from "$lib/utils/mix/calculations";
 import type { ServingConversion } from "$lib/utils/serving/servingAmount";
 import type { SmartWarning } from "$lib/utils/mix/warnings/smartWarnings";
 import type { FdcFood } from "$lib/utils/food/types";
@@ -48,9 +51,11 @@ export type SaveGoalDiff = {
 	unit: string;
 	total: number;
 	goal: number;
+  upperGoal: number | null;
+  goalType: "exact" | "minimum" | "maximum" | "range";
 	difference: number;
 	percentOfGoal: number;
-	status: "near" | "over" | "under";
+  status: "met" | "over" | "under";
 };
 
 export const getDefaultNutrientOptions = () => {
@@ -137,7 +142,10 @@ export const getFoodNutrientChips = (
 			amount: getFoodNutrientAmount(food, Number(nutrient.id), servingGrams),
 			unit: nutrient.unit ?? "",
 		}))
-		.filter((chip): chip is typeof chip & { amount: number } => chip.amount !== null && chip.amount > 0)
+    .filter(
+      (chip): chip is typeof chip & { amount: number } =>
+        chip.amount !== null && chip.amount > 0,
+    )
 		.sort((a, b) => b.amount - a.amount)
 		.slice(0, 3)
 		.map((chip) => ({
@@ -170,7 +178,9 @@ export const getDefaultServingAmount = (food?: FdcFood) => {
 };
 
 export const getServingGramsLabel = (conversion: ServingConversion) => {
-	return conversion.grams === null ? "Unavailable" : `${conversion.grams.toFixed(1)}g`;
+  return conversion.grams === null
+    ? "Unavailable"
+    : `${conversion.grams.toFixed(1)}g`;
 };
 
 export const getServingConversionBasis = (conversion: ServingConversion) => {

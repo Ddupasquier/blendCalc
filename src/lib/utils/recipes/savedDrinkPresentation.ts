@@ -1,18 +1,18 @@
 import {
-	getDefaultMixFields,
-	getMixRuntimeConfiguration,
+  getDefaultMixGoals,
 	getNutrientCatalog,
 } from "$lib/utils/food/reference/appReferenceCatalog";
 import { resolveFdcNutrient } from "$lib/utils/food/nutrients/fdcNutrients";
 import { NUTRIENT_IDS } from "$lib/utils/food/types";
 import { getNutrientTotal } from "$lib/utils/mix/calculations/nutrientTotals";
 import type { SavedDrink } from "$lib/utils/storage/client/savedDrinks";
+import {
+  evaluateMixGoal,
+  getWeightedMixGoalScore,
+} from "$lib/utils/mix/goals/goalEvaluation";
+import type { MixNutrientGoal } from "$lib/utils/mix/goals/types";
 
-export type SavedDrinkGoalTone =
-	| "neutral"
-	| "success"
-	| "warning"
-	| "danger";
+export type SavedDrinkGoalTone = "neutral" | "success" | "warning" | "danger";
 
 export type SavedDrinkGoalProgress = {
 	nutrientId: number;
@@ -26,23 +26,10 @@ export type SavedDrinkOverallGoalScore = {
 	goalCount: number;
 };
 
-const hasNutrientEvidence = (
-	drink: SavedDrink,
-	nutrientId: number,
-) =>
+const hasNutrientEvidence = (drink: SavedDrink, nutrientId: number) =>
 	drink.foods.some(
 		(food) => resolveFdcNutrient(food, nutrientId).value !== null,
 	);
-
-const getGoalTone = (ratio: number): SavedDrinkGoalTone => {
-	if (ratio <= 0) return "neutral";
-	if (ratio <= 1) return "success";
-
-	const { midwayOver } =
-		getMixRuntimeConfiguration().progressThresholds;
-	if (ratio <= midwayOver) return "warning";
-	return "danger";
-};
 
 export const getSavedDrinkCalories = (drink: SavedDrink) => {
 	if (!hasNutrientEvidence(drink, NUTRIENT_IDS.CALORIES)) return null;
@@ -67,38 +54,31 @@ const getAllSavedDrinkGoalProgress = (
 	const nutrientById = new Map(
 		getNutrientCatalog().map((nutrient) => [nutrient.id, nutrient]),
 	);
-	const defaultGoalById = new Map(
-		getDefaultMixFields().flatMap((field) =>
-			field.defaultGoal === null ? [] : [[field.id, field.defaultGoal]],
-		),
-	);
+  const defaultGoals = getDefaultMixGoals();
 
 	return selectedIds.flatMap((nutrientId) => {
 		if (!hasNutrientEvidence(drink, nutrientId)) return [];
 
-		const goal =
-			drink.nutrientGoals[nutrientId] ?? defaultGoalById.get(nutrientId);
-		if (!Number.isFinite(goal) || !goal || goal <= 0) return [];
+    const goal: MixNutrientGoal | undefined =
+      drink.nutrientGoals[nutrientId] ?? defaultGoals[nutrientId];
+    if (!goal) return [];
 
 		const label =
-			optionById.get(nutrientId)?.label ??
-			nutrientById.get(nutrientId)?.label;
+      optionById.get(nutrientId)?.label ?? nutrientById.get(nutrientId)?.label;
 		if (!label) return [];
 
-		const total = getNutrientTotal(
-			drink.foods,
-			nutrientId,
-			drink.servingGrams,
-		);
+    const total = getNutrientTotal(drink.foods, nutrientId, drink.servingGrams);
 		if (!Number.isFinite(total)) return [];
 
-		const ratio = total / goal;
-		return [{
+    const evaluation = evaluateMixGoal(goal, total);
+    return [
+      {
 			nutrientId,
 			label: label.replace(/^Total\s+/i, ""),
-			percent: Math.max(0, Math.round(ratio * 100)),
-			tone: getGoalTone(ratio),
-		}];
+        percent: Math.max(0, Math.round(evaluation.percent)),
+        tone: evaluation.tone,
+      },
+    ];
 	});
 };
 
@@ -113,16 +93,30 @@ export const getSavedDrinkGoalProgress = (
 export const getSavedDrinkOverallGoalScore = (
 	drink: SavedDrink,
 ): SavedDrinkOverallGoalScore | null => {
-	const goals = getAllSavedDrinkGoalProgress(drink);
-	if (goals.length === 0) return null;
-
-	const totalCloseness = goals.reduce(
-		(sum, goal) => sum + Math.max(0, 100 - Math.abs(100 - goal.percent)),
-		0,
+  const defaultGoals = getDefaultMixGoals();
+  const evaluatedGoals = [...new Set(drink.selected.map(Number))].flatMap(
+    (nutrientId) => {
+      if (
+        !Number.isFinite(nutrientId) ||
+        !hasNutrientEvidence(drink, nutrientId)
+      ) {
+        return [];
+      }
+      const goal = drink.nutrientGoals[nutrientId] ?? defaultGoals[nutrientId];
+      if (!goal) return [];
+      const actualAmount = getNutrientTotal(
+        drink.foods,
+        nutrientId,
+        drink.servingGrams,
+      );
+      return Number.isFinite(actualAmount) ? [{ goal, actualAmount }] : [];
+    },
 	);
+  const percent = getWeightedMixGoalScore(evaluatedGoals);
+  if (percent === null) return null;
 
 	return {
-		percent: Math.round(totalCloseness / goals.length),
-		goalCount: goals.length,
+    percent,
+    goalCount: evaluatedGoals.length,
 	};
 };

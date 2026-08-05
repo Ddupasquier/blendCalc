@@ -1,5 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { getNutrientGoalWarnings } from "$lib/utils/mix/warnings/smartWarnings";
+import type { MixGoalType, MixNutrientGoal } from "$lib/utils/mix/goals/types";
+
+const goal = (
+  nutrientId: number,
+  goalType: MixGoalType,
+  targetAmount: number,
+): MixNutrientGoal => ({
+  nutrientId,
+  goalType,
+  targetAmount,
+  upperAmount: null,
+  toleranceRatio: 0,
+  importanceWeight: 1,
+  sortOrder: 1,
+});
 
 describe("smart warnings", () => {
 	it("reports nutrients over goal", () => {
@@ -9,7 +24,7 @@ describe("smart warnings", () => {
 				label: "Sugar",
 				unit: "g",
 				total: 33,
-				goal: 25,
+        goal: goal(2000, "maximum", 25),
 			},
 		]);
 
@@ -29,7 +44,7 @@ describe("smart warnings", () => {
 				label: "Protein",
 				unit: "g",
 				total: 13,
-				goal: 25,
+        goal: goal(1003, "minimum", 25),
 			},
 		]);
 
@@ -50,7 +65,7 @@ describe("smart warnings", () => {
 					label: "Protein",
 					unit: "g",
 					total: 0,
-					goal: 25,
+          goal: goal(1003, "minimum", 25),
 				},
 			],
 			{ includeUnderTargets: false },
