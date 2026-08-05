@@ -93,7 +93,7 @@ $card-action-size-narrow: 2rem;
 	pointer-events: none;
 }
 
-@mixin copy {
+@mixin copy($supporting-copy: true) {
 	display: grid;
 	gap: $app-gap-2xs;
 	min-width: 0;
@@ -104,22 +104,24 @@ $card-action-size-narrow: 2rem;
 		color: $app-shell-text-primary;
 		font-size: $app-font-size-md;
 		font-weight: $app-font-weight-heavy;
-		line-height: 1.08;
+		line-height: $app-line-height-heading;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
-	small {
-		margin-inline-start: calc(
-			-#{$card-title-shift} + #{$card-supporting-copy-indent}
-		);
-		overflow: hidden;
-		color: $app-shell-text-muted;
-		font-size: $app-font-size-sm;
-		font-weight: $app-font-weight-medium;
-		line-height: 1.15;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+	@if $supporting-copy {
+		small {
+			margin-inline-start: calc(
+				-#{$card-title-shift} + #{$card-supporting-copy-indent}
+			);
+			overflow: hidden;
+			color: $app-shell-text-muted;
+			font-size: $app-font-size-sm;
+			font-weight: $app-font-weight-medium;
+			line-height: $app-line-height-heading;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
 	}
 
 	@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
@@ -127,8 +129,10 @@ $card-action-size-narrow: 2rem;
 			font-size: $app-font-size-sm;
 		}
 
-		small {
-			font-size: $app-font-size-xs;
+		@if $supporting-copy {
+			small {
+				font-size: $app-font-size-xs;
+			}
 		}
 	}
 }

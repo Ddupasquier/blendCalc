@@ -6,6 +6,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export type CloudMixPreferences = {
 	nutrientGoals?: Record<number, number>;
 	mixState?: Record<string, unknown>;
+	sectionOrder?: string[];
+	sectionDisclosureState?: Record<string, boolean>;
 };
 
 export const CLOUD_CURSOR_PAGE_SIZE = 500;

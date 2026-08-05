@@ -1,4 +1,5 @@
 @use "../styles/variables" as *;
+@use "../lib/utils/animation/motion" as motion;
 
 .landing-page {
 	position: relative;
@@ -55,25 +56,25 @@
 	background: $app-accent;
 	border-radius: $app-radius-pill;
 	font-size: $app-font-size-sm;
-	font-weight: 900;
+	font-weight: $app-font-weight-heavy;
 	text-transform: uppercase;
-	letter-spacing: 0.08em;
+	letter-spacing: $app-letter-spacing-wide;
 }
 
 h1 {
 	color: $app-primary;
 	font-family: $app-font-family-display;
-	font-size: clamp(2rem, 7vw, 2.75rem);
+	font-size: $app-font-size-hero-title;
 	font-weight: $app-font-weight-bold;
-	letter-spacing: -0.045em;
-	line-height: 1.02;
+	letter-spacing: $app-letter-spacing-tight;
+	line-height: $app-line-height-heading;
 }
 
 .landing-intro {
 	max-width: 30rem;
 	color: $app-muted;
-	font-size: clamp($app-font-size-md, 2.5vw, 0.95rem);
-	line-height: 1.55;
+	font-size: $app-font-size-md;
+	line-height: $app-line-height-body;
 }
 
 .landing-benefits {
@@ -87,7 +88,7 @@ h1 {
 		align-items: center;
 		color: $app-primary;
 		font-size: $app-font-size-md;
-		font-weight: 700;
+		font-weight: $app-font-weight-semibold;
 	}
 
 
@@ -120,8 +121,8 @@ a {
 	line-height: $app-button-line-height;
 	text-decoration: none;
 	transition:
-		background 0.15s ease,
-		transform 0.15s ease;
+		background motion.$duration-state motion.$easing-standard,
+		transform motion.$duration-press motion.$easing-standard;
 
 	&:hover {
 		background: $app-highlight-hover;
@@ -150,7 +151,7 @@ a {
 	}
 
 	h1 {
-		font-size: 1.75rem;
+		font-size: $app-font-size-2xl;
 	}
 
 	.landing-intro,

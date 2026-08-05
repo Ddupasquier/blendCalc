@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { cubicOut } from "svelte/easing";
 	import { fly } from "svelte/transition";
 	import { shouldShowDailyWelcome } from "$lib/utils/storage/client/dailyWelcome";
-	import { getMotionSafeDuration } from "$lib/utils/accessibility/motion";
+	import { getFeedbackFlyTransition } from "$lib/utils/animation/transitions";
 	import type { DailyWelcomeProps } from "./types";
 
 	const WELCOME_DURATION_MS = 4_000;
@@ -42,11 +41,7 @@
 			type="button"
 			onclick={dismiss}
 			aria-label={`Dismiss welcome message for ${name}`}
-			transition:fly={{
-				y: 12,
-				duration: getMotionSafeDuration(180),
-				easing: cubicOut,
-			}}
+			transition:fly={getFeedbackFlyTransition()}
 		>
 			<span class="daily-welcome__eyebrow">Welcome back,</span>
 			<strong>{name}</strong>

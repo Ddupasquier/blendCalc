@@ -1,26 +1,19 @@
 <script lang="ts">
-	import PillRow from "$lib/components/common/display/PillRow/PillRow.svelte";
-	import FoodListSection from "$lib/components/common/lists/FoodListSection/FoodListSection.svelte";
 	import ListControls from "$lib/components/common/lists/ListControls/ListControls.svelte";
-	import Pagination from "$lib/components/common/lists/Pagination/Pagination.svelte";
-	import SortSelect from "$lib/components/common/lists/SortSelect/SortSelect.svelte";
-	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog/TextInputDialog.svelte";
+	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
+	import ListSortSheet from "$lib/components/common/lists/ListSortSheet/ListSortSheet.svelte";
+	import PaginatedListControls from "$lib/components/common/navigation/PaginatedListControls/PaginatedListControls.svelte";
+	import SegmentedControl from "$lib/components/common/buttons/SegmentedControl/SegmentedControl.svelte";
+	import MixIngredientOption from "$lib/components/mix/ingredients/MixIngredientOption/MixIngredientOption.svelte";
 	import type { IngredientChooserProps } from "./types";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-	import type { FdcFood } from "$lib/utils/food/types";
-	import { getFoodWarningLabel } from "$lib/utils/profile/foodPreferenceWarnings";
 	import {
-		clampPage,
 		FOOD_LIST_SORT_OPTIONS,
 		filterItemsByQuery,
-		paginateItems,
 		sortFoodListItems,
 		type FoodListSort,
 	} from "$lib/utils/list/listNavigation";
-	import {
-		renameFoodInSmoothieList,
-		type SmoothieListKey,
-	} from "$lib/utils/storage/client/smoothieLists";
+	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
 	import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 
@@ -28,284 +21,155 @@
 		fridgeItems,
 		shoppingItems,
 		selectedFoodIds,
-		renameRoute = null,
-		onOpenRename,
-		onCloseRename,
 		onToggleFood,
+		open = true,
+		onOpenChange,
+		filtersOpen = false,
+		onOpenFilters = () => {},
+		onCloseFilters = () => {},
 	}: IngredientChooserProps = $props();
 
+	let activeListKey = $state<SmoothieListKey>(MIX_STORAGE_KEYS.fridge);
 	let query = $state("");
 	let filter = $state("all");
 	let sort = $state<FoodListSort>("recent");
-	let fridgePage = $state(1);
-	let shoppingPage = $state(1);
-	let renameBusy = $state(false);
-	let renameError = $state("");
-	const renamingItem = $derived.by(() => {
-		if (!renameRoute) return null;
-		const items =
-			renameRoute.listKey === MIX_STORAGE_KEYS.fridge
-				? fridgeItems
-				: shoppingItems;
-		const food = items.find((item) => item.fdcId === renameRoute.foodId);
-		return food ? { key: renameRoute.listKey, food } : null;
-	});
+	let visibleCount = $state<number>(LIST_PAGE_SIZES.mixChooser);
+	let listElement = $state<HTMLElement | null>(null);
 
+	const activeItems = $derived(
+		activeListKey === MIX_STORAGE_KEYS.fridge ? fridgeItems : shoppingItems,
+	);
+	const filteredItems = $derived.by(() => {
+		const filtered = filterItemsByQuery(
+			activeItems.filter((food) => {
+				if (filter === "selected") return selectedFoodIds.includes(food.fdcId);
+				if (filter === "custom") return isPrivateCustomFood(food);
+				return true;
+			}),
+			query,
+			(food) => [food.description, food.brandOwner, food.foodCategory].filter(Boolean).join(" "),
+		);
+		return sortFoodListItems(
+			filtered,
+			sort,
+			(food) => food.description,
+			(food) => food.listAddedAt,
+		);
+	});
+	const visibleItems = $derived(filteredItems.slice(0, visibleCount));
+	const hasMoreItems = $derived(visibleItems.length < filteredItems.length);
+	const selectedInActiveList = $derived(
+		activeItems.filter((food) => selectedFoodIds.includes(food.fdcId)).length,
+	);
+	const tabs = $derived([
+		{ value: MIX_STORAGE_KEYS.fridge, label: "Fridge", count: fridgeItems.length },
+		{ value: MIX_STORAGE_KEYS.shoppingList, label: "Shopping List", count: shoppingItems.length },
+	]);
 	const filterOptions = [
 		{ value: "all", label: "All ingredients" },
 		{ value: "selected", label: "Selected only" },
 		{ value: "custom", label: "Custom only" },
 	];
 
-	const filterFoods = (foods: FdcFood[]) => {
-		const filteredFoods = filterItemsByQuery(
-			foods.filter((food) => {
-				if (filter === "selected") {
-					return selectedFoodIds.includes(food.fdcId);
-				}
-				if (filter === "custom") return isPrivateCustomFood(food);
-				return true;
-			}),
-			query,
-			(food) =>
-				[food.description, food.brandOwner, food.foodCategory]
-					.filter(Boolean)
-					.join(" "),
-		);
-
-		return sortFoodListItems(
-			filteredFoods,
-			sort,
-			(food) => food.description,
-			(food) => food.listAddedAt,
+	const resetVisibleItems = () => (visibleCount = LIST_PAGE_SIZES.mixChooser);
+	const revealMoreItems = () => {
+		visibleCount = Math.min(
+			visibleCount + LIST_PAGE_SIZES.ingredientLoadMore,
+			filteredItems.length,
 		);
 	};
-
-	const filteredFridgeItems = $derived.by(() => filterFoods(fridgeItems));
-	const filteredShoppingItems = $derived.by(() => filterFoods(shoppingItems));
-	const pagedFridgeItems = $derived(
-		paginateItems(
-			filteredFridgeItems,
-			fridgePage,
-			LIST_PAGE_SIZES.mixChooser,
-		),
-	);
-	const pagedShoppingItems = $derived(
-		paginateItems(
-			filteredShoppingItems,
-			shoppingPage,
-			LIST_PAGE_SIZES.mixChooser,
-		),
-	);
-
-	const getActiveIndices = (items: FdcFood[]) => {
-		return items
-			.map((food, index) =>
-				selectedFoodIds.includes(food.fdcId) ? index : -1,
-			)
-			.filter((index) => index !== -1);
+	const setActiveList = (value: string) => {
+		activeListKey = value as SmoothieListKey;
+		resetVisibleItems();
+		requestAnimationFrame(() => {
+			listElement?.scrollTo({ top: 0, behavior: "auto" });
+		});
 	};
-
-	const getCustomIndices = (items: FdcFood[]) => {
-		return items
-			.map((food, index) => (isPrivateCustomFood(food) ? index : -1))
-			.filter((index) => index !== -1);
+	const applyListControls = (nextSort: string, nextFilter?: string) => {
+		sort = nextSort as FoodListSort;
+		filter = nextFilter ?? filter;
+		resetVisibleItems();
+		onCloseFilters();
 	};
-	const getFoodLabel = (food: FdcFood) => {
-		const warningLabel = getFoodWarningLabel(food);
-		return warningLabel ? `${warningLabel} ${food.description}` : food.description;
-	};
-
-	const updateQuery = (value: string) => {
-		query = value;
-		fridgePage = 1;
-		shoppingPage = 1;
-	};
-
-	const updateFilter = (value: string) => {
-		filter = value;
-		fridgePage = 1;
-		shoppingPage = 1;
-	};
-
-	const updateSort = (value: string) => {
-		sort = value as FoodListSort;
-		fridgePage = 1;
-		shoppingPage = 1;
-	};
-
-	const openRenameDialog = (key: SmoothieListKey, food: FdcFood) => {
-		renameError = "";
-		onOpenRename(key, food.fdcId);
-	};
-
-	const closeRenameDialog = () => {
-		if (renameBusy) return;
-		renameError = "";
-		onCloseRename();
-	};
-
-	const renameListItem = async (name: string) => {
-		if (!renamingItem || renameBusy) return;
-
-		renameBusy = true;
-		renameError = "";
-		const { key, food } = renamingItem;
-
-		try {
-			const result = await renameFoodInSmoothieList(key, food.fdcId, name);
-			if (result === "invalid") {
-				renameError = "Enter a name for this ingredient.";
-				return;
-			}
-			if (result === "duplicate") {
-				renameError = "Another ingredient in this list already uses that name.";
-				return;
-			}
-			if (result === "error") {
-				renameError = "That ingredient could not be renamed. Try again.";
-				return;
-			}
-			if (result === "missing") {
-				renameError = "That ingredient is no longer in this list.";
-				return;
-			}
-
-			onCloseRename();
-		} finally {
-			renameBusy = false;
-		}
-	};
-
-	$effect(() => {
-		fridgePage = clampPage(
-			fridgePage,
-			filteredFridgeItems.length,
-			LIST_PAGE_SIZES.mixChooser,
-		);
-		shoppingPage = clampPage(
-			shoppingPage,
-			filteredShoppingItems.length,
-			LIST_PAGE_SIZES.mixChooser,
-		);
-	});
-
-	$effect(() => {
-		if (renameRoute && !renamingItem) onCloseRename();
-	});
 </script>
 
-<section
-	class="setup-card setup-card--ingredients"
->
-	<div class="section-heading">
-		<h4>Choose Ingredients</h4>
-		<p>Select items from your fridge or shopping list.</p>
-	</div>
-	<div class="ingredient-list-controls">
-		<ListControls
-			id="mix-ingredient-search"
-			{query}
-			onQueryChange={updateQuery}
-			placeholder="Find an ingredient to add or remove…"
-			label="Find ingredients"
-			totalCount={fridgeItems.length + shoppingItems.length}
-			visibleCount={filteredFridgeItems.length + filteredShoppingItems.length}
-			itemLabel="ingredients"
-			filterLabel="Show"
-			filterValue={filter}
-			filterOptions={filterOptions}
-			onFilterChange={updateFilter}
-		/>
-		<SortSelect
-			id="mix-ingredient-sort"
-			value={sort}
-			options={FOOD_LIST_SORT_OPTIONS}
-			onChange={updateSort}
-		/>
-	</div>
-	<div
-		class="ingredient-lists"
-		aria-label="Mix ingredients"
-		data-tutorial-target="mix-ingredient-options"
+<ListSortSheet
+	open={filtersOpen}
+	title="Filter and sort ingredients"
+	titleId="mix-ingredient-filter-sheet-title"
+	label="Filter and sort ingredients available to this mix"
+	value={sort}
+	options={FOOD_LIST_SORT_OPTIONS}
+	filterValue={filter}
+	filterOptions={filterOptions}
+	onApply={applyListControls}
+	onClose={onCloseFilters}
+/>
+
+<section class="ingredient-chooser" aria-labelledby="add-ingredients-title">
+	<CollapsibleSection
+		title="Add ingredients"
+		titleId="add-ingredients-title"
+		{open}
+		{onOpenChange}
+		surface="panel"
 	>
-		<FoodListSection
-			title="Fridge"
-			count={filteredFridgeItems.length}
-			ariaLabel="Mix fridge ingredients"
-			hasItems={pagedFridgeItems.length > 0}
-			placeholder={fridgeItems.length > 0
-				? "No fridge ingredients match these filters."
-				: "No fridge items yet."}
-		>
-			{#if pagedFridgeItems.length > 0}
-				<PillRow
-					pills={pagedFridgeItems.map((food) => getFoodLabel(food))}
-					onRemove={(index) => onToggleFood(pagedFridgeItems[index].fdcId)}
-					onRename={(index) =>
-						openRenameDialog(MIX_STORAGE_KEYS.fridge, pagedFridgeItems[index])}
-					onSelect={(index) => onToggleFood(pagedFridgeItems[index].fdcId)}
-					activeIndices={getActiveIndices(pagedFridgeItems)}
-					customIndices={getCustomIndices(pagedFridgeItems)}
-					preserveOrder
+		<div class="ingredient-chooser__content">
+			<SegmentedControl
+				label="Ingredient source"
+				options={tabs}
+				value={activeListKey}
+				onSelect={setActiveList}
+			/>
+			<ListControls
+				id="mix-ingredient-search"
+				{query}
+				onQueryChange={(value) => { query = value; resetVisibleItems(); }}
+				placeholder={`Search ${activeListKey === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping list"}…`}
+				label="Find ingredients"
+				totalCount={activeItems.length}
+				visibleCount={filteredItems.length}
+				itemLabel="ingredients"
+				filterLabel="Filter and sort ingredients"
+				filterValue={filter}
+				filterOptions={filterOptions}
+				filtersActive={filtersOpen || filter !== "all" || sort !== "recent"}
+				filterControlsId="mix-ingredient-filter-sheet-title"
+				onFilterOpen={onOpenFilters}
+			/>
+			<p class="ingredient-chooser__summary">
+				{filteredItems.length} available · {selectedInActiveList} selected
+			</p>
+			<div
+				class="ingredient-chooser__list"
+				bind:this={listElement}
+				aria-label={activeListKey === MIX_STORAGE_KEYS.fridge ? "Mix fridge ingredients" : "Mix shopping-list ingredients"}
+				data-tutorial-target="mix-ingredient-options"
+			>
+				{#each visibleItems as food (food.fdcId)}
+					<MixIngredientOption
+						{food}
+						selected={selectedFoodIds.includes(food.fdcId)}
+						onSelect={() => onToggleFood(food.fdcId)}
+					/>
+				{/each}
+				{#if visibleItems.length === 0}
+					<p class="ingredient-chooser__empty">
+						{activeItems.length ? "No ingredients match these controls." : "This list is empty."}
+					</p>
+				{/if}
+				<PaginatedListControls
+					scrollContainer={listElement}
+					hasMoreItems={hasMoreItems}
+					loadMoreLabel="Load more ingredients"
+					contentVersion={`${activeListKey}:${query}:${filter}:${sort}:${visibleItems.length}`}
+					containerElement="div"
+					onLoadMore={revealMoreItems}
 				/>
-				<Pagination
-					page={fridgePage}
-					pageSize={LIST_PAGE_SIZES.mixChooser}
-					totalItems={filteredFridgeItems.length}
-					onPageChange={(page) => (fridgePage = page)}
-					label="Mix fridge ingredients"
-				/>
-			{/if}
-		</FoodListSection>
+			</div>
+		</div>
+	</CollapsibleSection>
 
-		<FoodListSection
-			title="Shopping List"
-			count={filteredShoppingItems.length}
-			ariaLabel="Mix shopping-list ingredients"
-			hasItems={pagedShoppingItems.length > 0}
-			placeholder={shoppingItems.length > 0
-				? "No shopping-list ingredients match these filters."
-				: "No shopping list items yet."}
-		>
-			{#if pagedShoppingItems.length > 0}
-				<PillRow
-					pills={pagedShoppingItems.map((food) => getFoodLabel(food))}
-					onRemove={(index) => onToggleFood(pagedShoppingItems[index].fdcId)}
-					onRename={(index) =>
-						openRenameDialog(
-							MIX_STORAGE_KEYS.shoppingList,
-							pagedShoppingItems[index],
-						)}
-					onSelect={(index) => onToggleFood(pagedShoppingItems[index].fdcId)}
-					activeIndices={getActiveIndices(pagedShoppingItems)}
-					customIndices={getCustomIndices(pagedShoppingItems)}
-					preserveOrder
-				/>
-				<Pagination
-					page={shoppingPage}
-					pageSize={LIST_PAGE_SIZES.mixChooser}
-					totalItems={filteredShoppingItems.length}
-					onPageChange={(page) => (shoppingPage = page)}
-					label="Mix shopping-list ingredients"
-				/>
-			{/if}
-		</FoodListSection>
-	</div>
-
-	<TextInputDialog
-		open={renamingItem !== null}
-		title="Rename ingredient"
-		description="This only changes the name in your own fridge or shopping list."
-		label="Ingredient name"
-		initialValue={renamingItem?.food.description ?? ""}
-		error={renameError}
-		busy={renameBusy}
-		confirmLabel="Save name"
-		onConfirm={renameListItem}
-		onValueChange={() => (renameError = "")}
-		onCancel={closeRenameDialog}
-	/>
 </section>
 
 <style lang="scss">

@@ -18,7 +18,7 @@ $move-prompt-min-width: 20rem;
 .prompt-title {
 	margin-bottom: $app-gap-md;
 	color: $app-primary;
-	font-size: 1.13em;
+	font-size: $app-font-size-lg;
 	font-weight: $app-font-weight-medium;
 	text-align: center;
 }

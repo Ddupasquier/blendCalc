@@ -1,3 +1,5 @@
+@use "../../../../../styles/variables" as *;
+
 .centered-icon {
 	display: inline-flex;
 	align-items: center;
@@ -8,7 +10,7 @@
 	height: 100%;
 	min-width: 0;
 	min-height: 0;
-	line-height: 0;
+	line-height: $app-line-height-none;
 }
 
 .centered-icon :global(svg),

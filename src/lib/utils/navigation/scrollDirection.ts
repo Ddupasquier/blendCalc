@@ -22,17 +22,37 @@ export const createScrollDirectionTracker = ({
 	let directionAnchor = 0;
 	let currentDirection: ScrollDirection | null = null;
 	let reportedDirection: ScrollDirection = "up";
+	let paused = false;
 
-	const reset = (scrollTop = 0) => {
+	const rebase = (scrollTop = 0) => {
 		const nextScrollTop = normalizeScrollTop(scrollTop);
 		previousScrollTop = nextScrollTop;
 		directionAnchor = nextScrollTop;
 		currentDirection = null;
+	};
+
+	const reset = (scrollTop = 0) => {
+		rebase(scrollTop);
 		reportedDirection = "up";
+		paused = false;
+	};
+
+	const pause = (scrollTop = previousScrollTop) => {
+		paused = true;
+		rebase(scrollTop);
+	};
+
+	const resume = (scrollTop = previousScrollTop) => {
+		rebase(scrollTop);
+		paused = false;
 	};
 
 	const update = (scrollTop: number): ScrollDirection | null => {
 		const nextScrollTop = normalizeScrollTop(scrollTop);
+		if (paused) {
+			rebase(nextScrollTop);
+			return null;
+		}
 
 		if (nextScrollTop <= topBoundary) {
 			previousScrollTop = nextScrollTop;
@@ -69,5 +89,5 @@ export const createScrollDirectionTracker = ({
 		return nextDirection;
 	};
 
-	return { reset, update };
+	return { pause, rebase, reset, resume, update };
 };

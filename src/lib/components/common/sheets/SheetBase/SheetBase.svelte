@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { cubicOut } from "svelte/easing";
 	import { fade, fly } from "svelte/transition";
 	import type { SheetBaseProps } from "./types";
 	import {
@@ -7,7 +6,11 @@
 		trapDialogFocus,
 	} from "$lib/utils/accessibility/dialogFocus";
 	import { createBackdropDismissal } from "$lib/utils/accessibility/backdropDismissal";
-	import { getMotionSafeDuration } from "$lib/utils/accessibility/motion";
+	import {
+		getMotionSafeDuration,
+		MOTION_DURATION_MS,
+	} from "$lib/utils/animation/motion";
+	import { MOTION_EASING_FUNCTION } from "$lib/utils/animation/transitions";
 
 	let {
 		open = false,
@@ -55,8 +58,16 @@
 
 	const transitionOptions = $derived(
 		placement === "right"
-			? { x: "100%", duration: getMotionSafeDuration(240), easing: cubicOut }
-			: { y: "100%", duration: getMotionSafeDuration(260), easing: cubicOut },
+			? {
+					x: "100%",
+					duration: getMotionSafeDuration(MOTION_DURATION_MS.sheetRight),
+					easing: MOTION_EASING_FUNCTION.spatial,
+				}
+			: {
+					y: "100%",
+					duration: getMotionSafeDuration(MOTION_DURATION_MS.sheetBottom),
+					easing: MOTION_EASING_FUNCTION.spatial,
+				},
 	);
 </script>
 
@@ -74,7 +85,9 @@
 			onpointercancel={backdropDismissal.handleBackdropPointerCancel}
 			onpointerdown={backdropDismissal.handleBackdropPointerDown}
 			onpointerup={backdropDismissal.handleBackdropPointerUp}
-			transition:fade={{ duration: getMotionSafeDuration(180) }}
+			transition:fade={{
+				duration: getMotionSafeDuration(MOTION_DURATION_MS.feedback),
+			}}
 		></div>
 	{/if}
 

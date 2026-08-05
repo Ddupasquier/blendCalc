@@ -9,7 +9,7 @@
 
 .image-placement-card-preview--interactive {
 	cursor: grab;
-	touch-action: none;
+	touch-action: pan-y;
 }
 
 .image-placement-card-preview--interactive:active {

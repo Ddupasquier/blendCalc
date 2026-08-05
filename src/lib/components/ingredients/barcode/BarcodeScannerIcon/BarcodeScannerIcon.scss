@@ -1,8 +1,12 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
 $scanner-laser-color: #e45f55;
 $scanner-bracket-border-width: 1.5px;
 $scanner-laser-start-position: 0.25rem;
+$scanner-resize-duration: 250ms;
+$scanner-color-duration: 280ms;
+$scanner-process-duration: 1.1s;
 
 .barcode-scanner {
 	position: relative;
@@ -16,12 +20,12 @@ $scanner-laser-start-position: 0.25rem;
 	overflow: hidden;
 	background-color: transparent;
 	border-radius: 0.5rem;
-	line-height: 0;
+	line-height: $app-line-height-none;
 	transition:
-		width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-		height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-		background-color 0.28s ease,
-		color 0.28s ease;
+		width $scanner-resize-duration motion.$easing-spatial,
+		height $scanner-resize-duration motion.$easing-spatial,
+		background-color $scanner-color-duration motion.$easing-standard,
+		color $scanner-color-duration motion.$easing-standard;
 }
 
 .barcode-scanner--active {
@@ -39,7 +43,7 @@ $scanner-laser-start-position: 0.25rem;
 	display: block;
 	fill: currentColor;
 	opacity: 1;
-	transition: opacity 0.18s ease;
+	transition: opacity motion.$duration-feedback motion.$easing-standard;
 }
 
 .barcode-scanner--active :global(.barcode-scanner__idle-bars) {
@@ -54,7 +58,7 @@ $scanner-laser-start-position: 0.25rem;
 	border-color: $scanner-laser-color;
 	border-style: solid;
 	opacity: 0;
-	transition: opacity 0.18s ease;
+	transition: opacity motion.$duration-feedback motion.$easing-standard;
 }
 
 .barcode-scanner__bracket--top-left {
@@ -91,7 +95,7 @@ $scanner-laser-start-position: 0.25rem;
 	display: block;
 	color: $app-shell-text-on-accent;
 	opacity: 0;
-	transition: opacity 0.18s ease;
+	transition: opacity motion.$duration-feedback motion.$easing-standard;
 }
 
 .barcode-scanner__glow {
@@ -107,7 +111,7 @@ $scanner-laser-start-position: 0.25rem;
 		rgba($scanner-laser-color, 0.18) 42%,
 		transparent 76%
 	);
-	transition: opacity 0.18s ease;
+	transition: opacity motion.$duration-feedback motion.$easing-standard;
 }
 
 .barcode-scanner__laser {
@@ -125,7 +129,7 @@ $scanner-laser-start-position: 0.25rem;
 		transparent 100%
 	);
 	filter: drop-shadow(0 0 3px rgba($scanner-laser-color, 0.9));
-	transition: opacity 0.18s ease;
+	transition: opacity motion.$duration-feedback motion.$easing-standard;
 }
 
 .barcode-scanner--active {
@@ -137,11 +141,11 @@ $scanner-laser-start-position: 0.25rem;
 	}
 
 	.barcode-scanner__glow {
-		animation: barcode-laser-glow 1.1s ease-in-out infinite;
+		animation: barcode-laser-glow $scanner-process-duration ease-in-out infinite;
 	}
 
 	.barcode-scanner__laser {
-		animation: barcode-laser-sweep 1.1s ease-in-out infinite;
+		animation: barcode-laser-sweep $scanner-process-duration ease-in-out infinite;
 	}
 }
 

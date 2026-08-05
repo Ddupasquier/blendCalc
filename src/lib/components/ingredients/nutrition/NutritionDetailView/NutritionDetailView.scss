@@ -15,7 +15,7 @@ h1 {
 	font-family: $app-font-family-interface;
 	font-size: $app-font-size-lg;
 	font-weight: $app-font-weight-bold;
-	line-height: 1.15;
+	line-height: $app-line-height-heading;
 	overflow-wrap: anywhere;
 }
 

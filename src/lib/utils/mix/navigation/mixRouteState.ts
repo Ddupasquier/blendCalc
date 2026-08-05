@@ -1,12 +1,11 @@
-import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
-
 export const MIX_ROUTE_OVERLAYS = {
+	options: "options",
+	reorganize: "reorganize",
+	ingredientFilters: "ingredient-filters",
 	save: "save",
 	resetGoals: "reset-goals",
 	clearIngredients: "clear-ingredients",
 	resetAll: "reset-all",
-	renameIngredient: "rename-ingredient",
 	warningDetails: "warning-details",
 	conversionDetails: "conversion-details",
 } as const;
@@ -17,21 +16,18 @@ export type MixRouteOverlay =
 export type MixRouteState = {
 	overlay: MixRouteOverlay | null;
 	foodId: number | null;
-	listKey: SmoothieListKey | null;
 	warningId: string | null;
 };
 
 export type MixRouteTarget =
 	| { overlay: null }
+	| { overlay: typeof MIX_ROUTE_OVERLAYS.options }
+	| { overlay: typeof MIX_ROUTE_OVERLAYS.reorganize }
+	| { overlay: typeof MIX_ROUTE_OVERLAYS.ingredientFilters }
 	| { overlay: typeof MIX_ROUTE_OVERLAYS.save }
 	| { overlay: typeof MIX_ROUTE_OVERLAYS.resetGoals }
 	| { overlay: typeof MIX_ROUTE_OVERLAYS.clearIngredients }
 	| { overlay: typeof MIX_ROUTE_OVERLAYS.resetAll }
-	| {
-			overlay: typeof MIX_ROUTE_OVERLAYS.renameIngredient;
-			foodId: number;
-			listKey: SmoothieListKey;
-	  }
 	| {
 			overlay: typeof MIX_ROUTE_OVERLAYS.warningDetails;
 			warningId: string;
@@ -44,29 +40,13 @@ export type MixRouteTarget =
 const EMPTY_MIX_ROUTE_STATE: MixRouteState = {
 	overlay: null,
 	foodId: null,
-	listKey: null,
 	warningId: null,
 };
-
-const MIX_LIST_ROUTE_SLUGS = {
-	[MIX_STORAGE_KEYS.fridge]: "fridge",
-	[MIX_STORAGE_KEYS.shoppingList]: "shopping",
-} as const;
 
 const parseFoodId = (value: string | undefined) => {
 	if (value === undefined || !/^-?\d+$/.test(value)) return null;
 	const foodId = Number(value);
 	return Number.isSafeInteger(foodId) ? foodId : null;
-};
-
-const getListKey = (value: string | undefined): SmoothieListKey | null => {
-	if (value === MIX_LIST_ROUTE_SLUGS[MIX_STORAGE_KEYS.fridge]) {
-		return MIX_STORAGE_KEYS.fridge;
-	}
-	if (value === MIX_LIST_ROUTE_SLUGS[MIX_STORAGE_KEYS.shoppingList]) {
-		return MIX_STORAGE_KEYS.shoppingList;
-	}
-	return null;
 };
 
 const getSegments = (pathname: string) =>
@@ -75,10 +55,43 @@ const getSegments = (pathname: string) =>
 		.filter(Boolean)
 		.map((segment) => decodeURIComponent(segment));
 
+export const getActiveMixRouteHref = (
+	url: URL,
+	shallowRouteHref?: string,
+) =>
+	shallowRouteHref ?? `${url.pathname}${url.search}${url.hash}`;
+
+export const getActiveMixRouteState = (
+	url: URL,
+	shallowRouteHref?: string,
+) =>
+	getMixRouteState(
+		new URL(getActiveMixRouteHref(url, shallowRouteHref), url),
+	);
+
 export const getMixRouteState = (url: URL): MixRouteState => {
 	const [root, first, second, third, ...remaining] = getSegments(url.pathname);
 	if (root !== "mix" || remaining.length > 0) return EMPTY_MIX_ROUTE_STATE;
 	if (first === undefined) return EMPTY_MIX_ROUTE_STATE;
+	if (first === MIX_ROUTE_OVERLAYS.options && second === undefined) {
+		return { ...EMPTY_MIX_ROUTE_STATE, overlay: MIX_ROUTE_OVERLAYS.options };
+	}
+	if (first === MIX_ROUTE_OVERLAYS.reorganize && second === undefined) {
+		return {
+			...EMPTY_MIX_ROUTE_STATE,
+			overlay: MIX_ROUTE_OVERLAYS.reorganize,
+		};
+	}
+	if (
+		first === "ingredients" &&
+		second === "filters" &&
+		third === undefined
+	) {
+		return {
+			...EMPTY_MIX_ROUTE_STATE,
+			overlay: MIX_ROUTE_OVERLAYS.ingredientFilters,
+		};
+	}
 
 	if (first === MIX_ROUTE_OVERLAYS.save && second === undefined) {
 		return { ...EMPTY_MIX_ROUTE_STATE, overlay: MIX_ROUTE_OVERLAYS.save };
@@ -100,19 +113,6 @@ export const getMixRouteState = (url: URL): MixRouteState => {
 			...EMPTY_MIX_ROUTE_STATE,
 			overlay: MIX_ROUTE_OVERLAYS.resetAll,
 		};
-	}
-
-	if (first === "rename") {
-		const listKey = getListKey(second);
-		const foodId = parseFoodId(third);
-		if (listKey && foodId !== null) {
-			return {
-				...EMPTY_MIX_ROUTE_STATE,
-				overlay: MIX_ROUTE_OVERLAYS.renameIngredient,
-				listKey,
-				foodId,
-			};
-		}
 	}
 
 	if (first === "warnings" && second && third === undefined) {
@@ -145,14 +145,16 @@ export const buildMixRouteHref = (url: URL, target: MixRouteTarget) => {
 		case null:
 			nextUrl.pathname = "/mix";
 			break;
+		case MIX_ROUTE_OVERLAYS.options:
+		case MIX_ROUTE_OVERLAYS.reorganize:
 		case MIX_ROUTE_OVERLAYS.save:
 		case MIX_ROUTE_OVERLAYS.resetGoals:
 		case MIX_ROUTE_OVERLAYS.clearIngredients:
 		case MIX_ROUTE_OVERLAYS.resetAll:
 			nextUrl.pathname = `/mix/${target.overlay}`;
 			break;
-		case MIX_ROUTE_OVERLAYS.renameIngredient:
-			nextUrl.pathname = `/mix/rename/${MIX_LIST_ROUTE_SLUGS[target.listKey]}/${target.foodId}`;
+		case MIX_ROUTE_OVERLAYS.ingredientFilters:
+			nextUrl.pathname = "/mix/ingredients/filters";
 			break;
 		case MIX_ROUTE_OVERLAYS.warningDetails:
 			nextUrl.pathname = `/mix/warnings/${encodeURIComponent(target.warningId)}`;
@@ -169,6 +171,12 @@ export const buildMixRouteHref = (url: URL, target: MixRouteTarget) => {
 export const getMixRouteTitle = (url: URL) => {
 	const state = getMixRouteState(url);
 	switch (state.overlay) {
+		case MIX_ROUTE_OVERLAYS.options:
+			return "Mix Options";
+		case MIX_ROUTE_OVERLAYS.reorganize:
+			return "Reorganize Mix";
+		case MIX_ROUTE_OVERLAYS.ingredientFilters:
+			return "Filter Mix Ingredients";
 		case MIX_ROUTE_OVERLAYS.save:
 			return "Save Mix";
 		case MIX_ROUTE_OVERLAYS.resetGoals:
@@ -177,8 +185,6 @@ export const getMixRouteTitle = (url: URL) => {
 			return "Clear Mix Ingredients";
 		case MIX_ROUTE_OVERLAYS.resetAll:
 			return "Reset Mix";
-		case MIX_ROUTE_OVERLAYS.renameIngredient:
-			return "Rename Mix Ingredient";
 		case MIX_ROUTE_OVERLAYS.warningDetails:
 			return "Mix Warning Details";
 		case MIX_ROUTE_OVERLAYS.conversionDetails:

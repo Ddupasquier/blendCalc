@@ -32,6 +32,7 @@ clickable navigation block instead.
 - [Core Engineering Rules](#rule-best-practices)
 - [Mandatory Rules Preflight](#rule-rules-preflight)
 - [Repository Hygiene](#rule-repository-hygiene)
+- [Dependency Supply-Chain Safety](#rule-dependency-supply-chain)
 - [Development Tooling Privacy](#rule-development-tooling-privacy)
 - [Cross-View Cohesion](#rule-cross-view-cohesion)
 - [Browser And Mobile Compatibility](#rule-browser-compatibility)
@@ -52,6 +53,7 @@ clickable navigation block instead.
 - [Verified Status Badge](#rule-verified-status-badge)
 - [Destructive Action Confirmation](#rule-destructive-action-confirmation)
 - [Primary Card Interactions](#rule-primary-card-interactions)
+- [Reorderable Collections](#rule-reorderable-collections)
 - [Component And Route Boundaries](#rule-component-boundaries)
 - [Manual Entry Modularization](#rule-manual-entry-modularization)
 - [Database And API-Driven Data](#rule-no-hardcoded-reference-data)
@@ -173,6 +175,17 @@ state that prompted the change. If a deliberate change establishes or replaces a
 reusable expectation, update the style guide and relevant tests in the same task.
 Cohesion is a completion requirement, not a later polish pass.
 
+**0e.** <a id="rule-dependency-supply-chain"></a>Treat dependency installation as a
+supply-chain boundary. Keep the lockfile tracked, run the maintained vulnerability
+audit after dependency changes, and resolve supported security updates before handoff.
+Review every package install script before allowing it to execute. Record only the
+reviewed, version-pinned package scripts in `package.json` `allowScripts`; never approve
+all current or future scripts through a wildcard, suppress the review prompt globally,
+or accept a script merely because it is transitive. Re-review a package when its pinned
+script version changes. Remove obsolete dependencies rather than preserving them as
+speculative compatibility, and stop when a required upgrade conflicts with the Node,
+SvelteKit, browser, or deployment compatibility floor.
+
 **1.** Build mobile-first. Every screen and component should work on narrow phones
 before wider layouts.
 
@@ -267,6 +280,9 @@ threshold or intersection observer; loading must require a deliberate user actio
 preserve the current scroll position. Show `Load more` only while another page exists.
 Show `Return to top` only when the list actually overflows its scroll area. Use
 `PaginatedListControls.svelte` instead of rebuilding these controls inside a feature.
+Do not expose numbered pages, Previous/Next page navigation, or replacement-page
+transitions anywhere in the user-facing application. API and database reads remain
+bounded and cursor/offset paginated behind the progressive list controls.
 
 **3.** <a id="rule-design-tokens"></a>Keep global design tokens genuinely app-wide.
 `src/styles/_variables.scss` owns values reused by independent components or shared UI
@@ -282,6 +298,12 @@ where one variable points to another variable that points to the real value.
 Use the maintained, Ingredients-derived implementation reference in
 `docs/style-guide.md` when selecting tokens, primitives, and established visual patterns.
 This development-rules file remains authoritative when the documents overlap.
+All application `font-family`, `font-size`, `font-weight`, `line-height`, and
+`letter-spacing` declarations must use the shared semantic typography scale or explicit
+inheritance. Do not add route-local clamps, nearby font sizes, numeric weights, or
+one-off tracking and line-height values. Fix layout constraints before shrinking type,
+and extend the app-wide scale only when multiple independent surfaces need a genuinely
+new role.
 
 **3a.** <a id="rule-spacing-tokens"></a>Use the shared `$app-gap-*` scale for spacing
 that establishes the app's repeated rhythm between controls, cards, sections, and
@@ -297,7 +319,11 @@ fallback, motion preference, card shell, control state, or layout pattern appear
 places, move it into a shared utility, primitive, mixin, or token-backed class instead
 of maintaining feature-local copies. Keep genuinely unique component presentation local;
 do not create abstractions with no second use. Shared utilities must use semantic SCSS
-tokens and must not become a dumping ground for unrelated feature styles.
+tokens and must not become a dumping ground for unrelated feature styles. Shared motion
+timing, easing, reduced-motion handling, disclosure behavior, and cross-feature Web
+Animations helpers belong in `src/lib/utils/animation`. Keep genuinely unique keyframes
+and movement geometry beside the reusable component that owns them; do not force
+semantically different motion into one generic sequence.
 
 **3c.** <a id="rule-theme-support"></a>Every app view and reusable component must
 support the shared light, dark, and device-following color themes. Use semantic
@@ -340,6 +366,14 @@ loading states, and typography stay consistent. Do not hardcode button dimension
 centering, icon wrappers, hover states, active states, disabled states, or one-off
 button layouts inside feature components. If a needed button shape or state does not
 already exist, extend or create the shared primitive first, then use it in the feature.
+An icon-only action defaults to the circular `CircleIconButton`. Reserve the squarish
+`IconControlButton` for a deliberate compact horizontal control cluster where several
+adjacent controls share one toolbar or input row, such as the Ingredients search,
+barcode, filter, and manual-entry controls. A lone icon-only action, floating action,
+or icon action placed beside ordinary content remains circular. A clustered row may
+still use circles when that is the established design; the row is an exception that
+permits the squarish control shape, not a requirement to use it. Never make a standalone
+icon action squarish through feature-local radius or dimension overrides.
 
 **8a.** <a id="rule-circular-icon-alignment"></a>Every icon inside a circular container
 must be centered both horizontally and vertically by the shared `CenteredIcon` layer.
@@ -437,6 +471,18 @@ Selection mode may change what the same full-card target does, but must not shri
 hit area. Do not apply this pattern to static information cards or forms containing
 multiple equal controls; those surfaces must remain non-clickable outside their actual
 controls.
+
+**9c.** <a id="rule-reorderable-collections"></a>Reorderable collections must use
+stable domain identifiers and keyed rendering, with one dedicated drag handle per item.
+Support pointer and touch dragging, keyboard movement through Arrow Up, Arrow Down,
+Home, and End, and visible move controls that remain usable without drag precision.
+Announce the moved item's new position through one polite live region, keep focus stable,
+disable every reorder control while persistence is pending, and animate displaced
+siblings so the spatial change is understandable. Reduced-motion mode must preserve the
+same controls and persistence while making displacement immediate. Persist only a
+server-validated permutation of the allowed identifiers through the authoritative data
+path; never trust an arbitrary client array or use HTML drag-and-drop as the sole input
+method.
 
 **10.** <a id="rule-supabase-source-of-truth"></a>Treat Supabase as the source of truth for authenticated users. Fridge, Shopping
 List, custom foods, saved drinks, profiles, and other durable account records must never
@@ -589,9 +635,10 @@ layouts follow the equivalent `+layout.svelte` and `layout.scss` convention. Loa
 SCSS only through the owner's scoped `<style lang="scss">` block. Do not use script-level
 stylesheet imports in components or pages because they bypass Svelte's normal scoping.
 Keep app-wide values in `_variables.scss`; keep component-only colors, dimensions,
-radii, timing, and layout details in the paired SCSS file. Do not create global one-off
-variables to make a local declaration look tokenized. `src/styles` must contain only
-true app-wide style infrastructure, never ingredient-card or other feature styles.
+radii, unique motion timing, and layout details in the paired SCSS file. Shared motion
+timing and easing belong in `src/lib/utils/animation/_motion.scss`. Do not create global
+one-off variables to make a local declaration look tokenized. `src/styles` must contain
+only true app-wide style infrastructure, never ingredient-card or other feature styles.
 Follow the complete ownership map in `docs/project-structure.md`. Do not create generic
 dumping folders such as `defaults`, `helpers`, `misc`, or `shared`; place configuration,
 constants, and utilities with the domain that owns them.

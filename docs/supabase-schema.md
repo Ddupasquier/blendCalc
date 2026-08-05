@@ -52,7 +52,7 @@ policies, or core data ownership changes.
 | `user_tutorial_preferences` | `user_id`   | One row per auth user   | Tracks tutorial seen/completed/remind-later state                                                          | `user_id → auth.users.id`                                            |
 | `user_food_preferences`     | `user_id`   | One row per auth user   | Optional unit system, allergens, dietary restrictions, nutrient priorities, and default serving preference | `user_id → auth.users.id`                                            |
 | `user_compatibility_rules`  | `id`        | Many rows per auth user | Server-derived exact resolution state for saved allergen and dietary preferences                            | User, active policy version, optional canonical tag/term/alias/mapping |
-| `mix_preferences`           | `user_id`   | One row per auth user   | Persisted smoothie goals and versioned Mix state                                                           | `user_id → auth.users.id`                                            |
+| `mix_preferences`           | `user_id`   | One row per auth user   | Persisted nutrient goals, versioned Mix state, and the user's validated Mix section order                  | `user_id → auth.users.id`                                            |
 
 ### `profiles`
 
@@ -96,6 +96,29 @@ Notes:
 - `validate_user_food_preference_regulatory_region()` rejects unsupported region codes
   at the database boundary. Regional context can explain labeling rules but cannot
   suppress a warning created by a user's allergen or dietary settings.
+
+### `mix_preferences`
+
+Stores durable account-level Mix configuration separately from saved recipes.
+
+| Table | Documented columns |
+| --- | --- |
+| `mix_preferences` | `user_id`, `nutrient_goals`, `mix_state`, `section_order`, `section_disclosure_state`, `created_at`, `updated_at` |
+
+Notes:
+
+- `mix_state` remains an independently versioned nutrition-builder snapshot.
+- `section_order` stores every supported stable Mix section identifier exactly once.
+  Its database constraint and `save_mix_section_order(text[])` reject unknown,
+  duplicate, or incomplete layouts.
+- `section_disclosure_state` stores one boolean open/closed preference for every stable
+  Mix section identifier. Its database constraint and
+  `save_mix_section_disclosure_state(jsonb)` reject missing, unknown, or non-boolean
+  entries so new sessions can restore the user's complete disclosure layout. Warnings,
+  suggested adjustments, and nutrient contributions begin closed; a user's later choices
+  remain authoritative across sessions.
+- Browser clients retain scoped reads but cannot bypass the authoritative preference
+  write functions.
 
 ## Ingredient Lists and Saved Mixes
 

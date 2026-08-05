@@ -1,5 +1,7 @@
 @use "../../../../styles/variables" as *;
 
+$welcome-timer-duration: 4s;
+
 .daily-welcome-region {
 	position: fixed;
 	right: $app-gap-md;
@@ -28,7 +30,7 @@
 	strong {
 		font-family: $app-font-family-display;
 		font-size: $app-font-size-xl;
-		line-height: 1.2;
+		line-height: $app-line-height-compact;
 		overflow-wrap: anywhere;
 	}
 
@@ -41,7 +43,7 @@
 .daily-welcome__eyebrow {
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-semibold;
-	letter-spacing: 0.04em;
+	letter-spacing: $app-letter-spacing-label;
 	text-transform: uppercase;
 }
 
@@ -58,7 +60,7 @@
 	height: 0.22rem;
 	background: $app-highlight;
 	transform-origin: left;
-	animation: welcome-timer 4s linear forwards;
+	animation: welcome-timer $welcome-timer-duration linear forwards;
 }
 
 @keyframes welcome-timer {

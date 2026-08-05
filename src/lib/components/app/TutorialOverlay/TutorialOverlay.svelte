@@ -8,7 +8,7 @@
 		manageDialogFocus,
 		trapDialogFocus,
 	} from "$lib/utils/accessibility/dialogFocus";
-	import { getMotionSafeScrollBehavior } from "$lib/utils/accessibility/motion";
+	import { getMotionSafeScrollBehavior } from "$lib/utils/animation/motion";
 	import {
 		getTutorialBorderRadius,
 		getTutorialCardPosition,

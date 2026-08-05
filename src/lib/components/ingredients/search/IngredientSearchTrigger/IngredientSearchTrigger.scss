@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
 .ingredient-search-trigger {
 	display: grid;
@@ -17,8 +18,8 @@
 	font-weight: $app-font-weight-regular;
 	text-align: left;
 	transition:
-		background-color 160ms ease,
-		border-color 160ms ease;
+		background-color motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard;
 
 	&:hover,
 	&:focus-visible {

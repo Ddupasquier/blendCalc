@@ -4,12 +4,14 @@
 	import User from "$lib/assets/icons/User/User.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
+	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
-	import { animatedDetails } from "$lib/utils/accessibility/animatedDetails";
+	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker/FoodPreferencePicker.svelte";
 	import ThemePreferenceControl from "$lib/components/profile/ThemePreferenceControl/ThemePreferenceControl.svelte";
 	import { APP_NAME } from "$lib/config/brand";
@@ -541,7 +543,7 @@
 				<details class="avatar-policy__details" use:animatedDetails>
 					<summary>
 						<span>Review image rules</span>
-						<span class="avatar-policy__chevron" aria-hidden="true">⌄</span>
+						<DisclosureChevron class="avatar-policy__chevron" />
 					</summary>
 					<ul>
 						{#each data.avatarPolicyItems as item}
@@ -626,54 +628,57 @@
 			aria-busy={foodPreferencesPending}
 		>
 			<div class="preference-grid">
-				<label>
-					<span>Package-label region</span>
-					<select
+				<div class="preference-field">
+					<SelectField
+						id="profile-regulatory-region"
 						name="regulatoryRegionCode"
+						label="Package-label region"
 						value={regulatoryRegionCode}
+						options={[
+							{ value: "", label: "Personal settings only" },
+							...(hasUnsupportedRegulatoryRegion
+								? [{
+									value: regulatoryRegionCode,
+									label: `Previously saved region unavailable (${regulatoryRegionCode})`,
+									disabled: true,
+								}]
+								: []),
+							...data.regulatoryRegionOptions.map((option) => ({
+								value: option.regionCode,
+								label: option.displayName,
+							})),
+						]}
+						helper={regulatoryRegionSource === "device"
+							? "Suggested from this device. Saving keeps it with your account."
+							: "Adds regional label context without removing any personal warning."}
 						disabled={foodPreferencesDisabled}
-						onchange={(event) =>
-							selectRegulatoryRegion(event.currentTarget.value)}
-					>
-						<option value="">Personal settings only</option>
-						{#if hasUnsupportedRegulatoryRegion}
-							<option value={regulatoryRegionCode} disabled>
-								Previously saved region unavailable ({regulatoryRegionCode})
-							</option>
-						{/if}
-						{#each data.regulatoryRegionOptions as option (option.regionCode)}
-							<option value={option.regionCode}>{option.displayName}</option>
-						{/each}
-					</select>
+						onValueChange={selectRegulatoryRegion}
+					/>
 					<input
 						type="hidden"
 						name="regulatoryRegionSource"
 						value={regulatoryRegionSource ?? ""}
 					/>
-					<small>
-						{regulatoryRegionSource === "device"
-							? "Suggested from this device. Saving keeps it with your account."
-							: "Adds regional label context without removing any personal warning."}
-					</small>
-				</label>
+				</div>
 
-				<label>
-					<span>Preferred units</span>
-					<select
+				<SelectField
+					id="profile-unit-system"
 						name="unitSystem"
+						label="Preferred units"
 						value={incomingFoodPreferenceValues.unitSystem}
+						options={[
+							{ value: "", label: "No preference" },
+							{ value: "metric", label: "Metric" },
+							{ value: "us", label: "US units" },
+						]}
 						disabled={foodPreferencesDisabled}
-					>
-						<option value="">No preference</option>
-						<option value="metric">Metric</option>
-						<option value="us">US units</option>
-					</select>
-				</label>
+				/>
 
-				<label>
+				<div class="preference-field">
 					<span>Default serving size</span>
 					<div class="inline-fields">
 						<NumberInput
+							id="profile-default-serving-size"
 							name="defaultSmoothieServingSize"
 							class="profile-serving-size-input"
 							min="0"
@@ -682,16 +687,20 @@
 							placeholder="Optional"
 							disabled={foodPreferencesDisabled}
 						/>
-						<select
+						<SelectField
+							id="profile-default-serving-unit"
 							name="defaultSmoothieServingUnit"
+							label="Default serving unit"
+							labelVisibility="sr-only"
 							value={incomingFoodPreferenceValues.defaultSmoothieServingUnit}
+							options={[
+								{ value: "g", label: "g" },
+								{ value: "oz", label: "oz" },
+							]}
 							disabled={foodPreferencesDisabled}
-						>
-							<option value="g">g</option>
-							<option value="oz">oz</option>
-						</select>
+						/>
 					</div>
-				</label>
+				</div>
 			</div>
 
 			<input type="hidden" name="allergens" value={allergens.join(", ")} />
@@ -703,6 +712,7 @@
 
 			<div class="preference-editor-grid">
 				<FoodPreferencePicker
+					id="profile-allergens"
 					title={preferenceGroupMeta.allergens.title}
 					helper={preferenceGroupMeta.allergens.helper}
 					searchLabel={preferenceGroupMeta.allergens.searchLabel}
@@ -722,6 +732,7 @@
 				/>
 
 				<FoodPreferencePicker
+					id="profile-dietary-restrictions"
 					title={preferenceGroupMeta.dietaryRestrictions.title}
 					helper={preferenceGroupMeta.dietaryRestrictions.helper}
 					searchLabel={preferenceGroupMeta.dietaryRestrictions.searchLabel}

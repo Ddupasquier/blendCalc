@@ -41,7 +41,7 @@
 			return;
 		}
 
-		onSelect?.(options[nextIndex].value);
+		nextTab?.click();
 	};
 
 	const isActive = (option: SegmentedControlOption) => value === option.value;
@@ -80,11 +80,30 @@
 			: { href: option.href, index };
 	};
 
+	const handleButtonClick = (
+		option: SegmentedControlOption,
+		index: number,
+	) => {
+		if (variant !== "pill" || options.length !== 2) {
+			onSelect?.(option.value);
+			return;
+		}
+		if (index === visualActiveIndex) return;
+
+		motionDirection = index > visualActiveIndex ? "forward" : "backward";
+		pendingVisualIndex = index;
+		motionSequence += 1;
+		onSelect?.(option.value);
+	};
+
 	const handleSelectionAnimationEnd = (event: AnimationEvent) => {
 		if (
-			event.currentTarget !== event.target ||
-			!pendingNavigation
+			event.currentTarget !== event.target
 		) return;
+		if (!pendingNavigation) {
+			pendingVisualIndex = null;
+			return;
+		}
 
 		const { href } = pendingNavigation;
 		pendingNavigation = null;
@@ -161,7 +180,7 @@
 				aria-current={variant === "progress" && isActive(option) ? "step" : undefined}
 				aria-controls={option.controlsId}
 				tabindex={isActive(option) ? 0 : -1}
-				onclick={() => onSelect?.(option.value)}
+				onclick={() => handleButtonClick(option, index)}
 				onkeydown={(event) => handleKeydown(event, index)}
 			>
 				{#if variant === "progress"}

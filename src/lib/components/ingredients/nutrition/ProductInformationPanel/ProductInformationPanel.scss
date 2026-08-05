@@ -65,7 +65,7 @@
 .product-information-panel p,
 .product-information-panel a {
 	font-size: $app-font-size-md;
-	line-height: 1.5;
+	line-height: $app-line-height-body;
 	overflow-wrap: anywhere;
 }
 

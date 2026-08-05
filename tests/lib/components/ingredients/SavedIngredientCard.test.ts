@@ -173,7 +173,7 @@ describe("SavedIngredientCard selection mode", () => {
 		expect(selectionButton).toHaveAttribute("aria-pressed", "true");
 		expect(
 			container.querySelector(
-				".ingredient-selection-indicator--selected svg",
+				".card-selection-indicator--selected svg",
 			),
 		).toBeInTheDocument();
 		expect(container.querySelector(".saved-ingredient-card--checked"))

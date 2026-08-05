@@ -102,7 +102,7 @@ $category-picker-focus-clearance: $app-gap-2xs;
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-medium;
-	line-height: 1.35;
+	line-height: $app-line-height-ui;
 }
 
 .food-category-picker__group-heading {

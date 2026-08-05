@@ -1,4 +1,5 @@
 @use "../../../../styles/variables" as *;
+@use "../../../utils/animation/motion" as motion;
 
 .theme-preference-control {
 	min-width: 0;
@@ -31,8 +32,8 @@
 	border-radius: $app-shell-radius-card;
 	cursor: pointer;
 	transition:
-		background-color 160ms ease,
-		border-color 160ms ease;
+		background-color motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard;
 }
 
 .theme-preference-control__option:hover {

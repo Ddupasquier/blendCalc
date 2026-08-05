@@ -9,7 +9,7 @@
 	margin: 0;
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-md;
-	line-height: 1.35;
+	line-height: $app-line-height-ui;
 }
 
 .text-input-sheet__content {

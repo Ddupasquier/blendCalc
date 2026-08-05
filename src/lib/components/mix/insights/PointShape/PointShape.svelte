@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { POINT_SHAPE_DEFAULTS } from "./config";
+	import { getPointShapeAxisOrder, POINT_SHAPE_DEFAULTS } from "./config";
 	import type { PointShapeProps } from "./types";
 
 	let {
@@ -14,30 +14,43 @@
 		strokeColor = POINT_SHAPE_DEFAULTS.strokeColor,
 		gridColor = POINT_SHAPE_DEFAULTS.gridColor,
 		goalColor = POINT_SHAPE_DEFAULTS.goalColor,
-		goalFillColor = POINT_SHAPE_DEFAULTS.goalFillColor,
-		goalStrokeColor = POINT_SHAPE_DEFAULTS.goalStrokeColor,
 		fullWidth = false,
 		class: className = "",
 	}: PointShapeProps = $props();
 
 	const ringCount = POINT_SHAPE_DEFAULTS.ringCount;
 	const center = $derived(size / 2);
-	const chartRadius = $derived(size * 0.3);
-	const labelRadius = $derived(size * 0.43);
+	const chartRadius = $derived(size * POINT_SHAPE_DEFAULTS.chartRadiusRatio);
+	const labelRadius = $derived(size * POINT_SHAPE_DEFAULTS.labelRadiusRatio);
 	const normalizedPoints = $derived(Math.max(0, Math.floor(points)));
 	const axisCount = $derived(normalizedPoints);
+	const axisOrder = $derived(getPointShapeAxisOrder(labels, axisCount));
+	const displayLabels = $derived(
+		axisOrder.map((sourceIndex) => labels[sourceIndex] ?? ""),
+	);
+	const displayValueLabels = $derived(
+		axisOrder.map((sourceIndex) => valueLabels[sourceIndex] ?? ""),
+	);
 	const normalizedValues = $derived(
-		Array.from({ length: axisCount }, (_, index) =>
-			Math.max(0, Math.min(values[index] ?? 0, 1)),
+		axisOrder.map((sourceIndex) =>
+			Math.max(0, Math.min(values[sourceIndex] ?? 0, 1)),
 		),
 	);
 	const normalizedPointColors = $derived(
-		Array.from({ length: axisCount }, (_value, index) => ({
-			fill: pointColors[index]?.fill ?? fillColor,
-			stroke: pointColors[index]?.stroke ?? strokeColor,
+		axisOrder.map((sourceIndex) => ({
+			fill: pointColors[sourceIndex]?.fill ?? fillColor,
+			stroke: pointColors[sourceIndex]?.stroke ?? strokeColor,
 		})),
 	);
 	const hasData = $derived(normalizedPoints > 0);
+	const accessibleSummary = $derived(
+		Array.from({ length: axisCount }, (_value, index) => {
+			const sourceIndex = axisOrder[index] ?? index;
+			const label = displayLabels[index]?.trim() || `Axis ${sourceIndex + 1}`;
+			const value = displayValueLabels[index]?.trim();
+			return value ? `${label}: ${value}` : label;
+		}).join("; "),
+	);
 
 	const pointAt = (
 		index: number,
@@ -81,17 +94,21 @@
 	);
 
 	const getTextAnchor = (x: number) => {
-		if (x < center - 4) return "start";
-		if (x > center + 4) return "end";
+		const centerThreshold = size * POINT_SHAPE_DEFAULTS.centerAnchorThresholdRatio;
+		if (x < center - centerThreshold) return "end";
+		if (x > center + centerThreshold) return "start";
 		return "middle";
 	};
 	const getLabelX = (x: number) => {
-		return Math.max(size * 0.08, Math.min(x, size * 0.92));
+		const horizontalInset = size * POINT_SHAPE_DEFAULTS.labelHorizontalInsetRatio;
+		return Math.max(horizontalInset, Math.min(x, size - horizontalInset));
 	};
 	const getLabelY = (y: number) => {
 		if (axisCount === 2) return center - size * 0.11;
 
-		return Math.max(size * 0.1, Math.min(y, size * 0.86));
+		const topInset = size * POINT_SHAPE_DEFAULTS.labelVerticalInsetRatio;
+		const bottomInset = size * POINT_SHAPE_DEFAULTS.labelBottomInsetRatio;
+		return Math.max(topInset, Math.min(y, size - bottomInset));
 	};
 	const getLabelAnchor = (x: number) => {
 		return getTextAnchor(x);
@@ -103,7 +120,7 @@
 
 		const words = cleanLabel.split(/\s+/);
 		if (words.length === 1) {
-			return [cleanLabel.length > 13 ? `${cleanLabel.slice(0, 12)}…` : cleanLabel];
+			return [cleanLabel];
 		}
 
 		const lines = words.reduce<string[]>((accumulator, word) => {
@@ -121,17 +138,14 @@
 
 		return lines.slice(0, 2);
 	};
-	const goalPoints = $derived(
-		Array.from({ length: axisCount }, (_value, index) => pointAt(index)),
-	);
 	const valuePoints = $derived(
 		Array.from({ length: axisCount }, (_value, index) =>
 			pointAt(index, normalizedValues[index]),
 		),
 	);
 	const normalizedGoalValues = $derived(
-		Array.from({ length: axisCount }, (_, index) =>
-			Math.max(0, Math.min(goalValues[index] ?? 1, 1)),
+		axisOrder.map((sourceIndex) =>
+			Math.max(0, Math.min(goalValues[sourceIndex] ?? 1, 1)),
 		),
 	);
 	const goalValuePoints = $derived(
@@ -160,7 +174,7 @@
 	height={size}
 	viewBox={`0 0 ${size} ${size}`}
 	role="img"
-	aria-label={`${normalizedPoints}-axis nutrient radar chart`}
+	aria-label={`${normalizedPoints}-axis nutrient radar chart${accessibleSummary ? `. ${accessibleSummary}` : ""}`}
 >
 	{#if hasData}
 		<defs>
@@ -210,23 +224,6 @@
 				stroke-width={size * 0.003}
 			/>
 			<circle
-				cx={center}
-				cy={center}
-				r={chartRadius}
-				fill="none"
-				stroke={goalColor}
-				stroke-width={size * 0.006}
-			/>
-			<circle
-				class="point-shape__goal-shape"
-				cx={center}
-				cy={center}
-				r={chartRadius * normalizedGoalValues[0]}
-				fill={goalFillColor}
-				stroke={goalStrokeColor}
-				stroke-width={size * 0.005}
-			/>
-			<circle
 				class="point-shape__value-circle"
 				cx={center}
 				cy={center}
@@ -234,6 +231,17 @@
 				fill={normalizedPointColors[0].fill}
 				stroke={normalizedPointColors[0].stroke}
 				stroke-width={size * 0.007}
+			/>
+			<circle
+				class="point-shape__goal-shape"
+				cx={center}
+				cy={center}
+				r={chartRadius * normalizedGoalValues[0]}
+				fill="none"
+				stroke={goalColor}
+				stroke-width={size * 0.006}
+				stroke-dasharray={POINT_SHAPE_DEFAULTS.goalDashPattern}
+				stroke-linecap="round"
 			/>
 		{:else if axisCount === 2}
 			{#each Array.from({ length: ringCount }) as _ring, index}
@@ -247,12 +255,12 @@
 				/>
 			{/each}
 			<line
-				x1={center - chartRadius}
+				x1={center - chartRadius * normalizedValues[0]}
 				y1={center}
-				x2={center + chartRadius}
+				x2={center + chartRadius * normalizedValues[1]}
 				y2={center}
-				stroke={goalColor}
-				stroke-width={size * 0.006}
+				stroke={`url(#${valueSegments[0].id})`}
+				stroke-width={size * 0.03}
 				stroke-linecap="round"
 			/>
 			<line
@@ -261,18 +269,9 @@
 				y1={center}
 				x2={center + chartRadius * normalizedGoalValues[1]}
 				y2={center}
-				stroke={goalStrokeColor}
-				stroke-width={size * 0.024}
-				stroke-linecap="round"
-				opacity="0.85"
-			/>
-			<line
-				x1={center - chartRadius * normalizedValues[0]}
-				y1={center}
-				x2={center + chartRadius * normalizedValues[1]}
-				y2={center}
-				stroke={`url(#${valueSegments[0].id})`}
-				stroke-width={size * 0.03}
+				stroke={goalColor}
+				stroke-width={size * 0.006}
+				stroke-dasharray={POINT_SHAPE_DEFAULTS.goalDashPattern}
 				stroke-linecap="round"
 			/>
 		{:else}
@@ -298,22 +297,6 @@
 				/>
 			{/each}
 
-			<polygon
-				class="point-shape__goal-shape"
-				points={pointsToString(goalValuePoints)}
-				fill={goalFillColor}
-				stroke={goalStrokeColor}
-				stroke-width={size * 0.005}
-			/>
-
-			<polygon
-				class="point-shape__goal"
-				points={pointsToString(goalPoints)}
-				fill="none"
-				stroke={goalColor}
-				stroke-width={size * 0.006}
-			/>
-
 			<g class="point-shape__value-fill">
 				{#each valueSegments as segment}
 					<polygon
@@ -336,12 +319,23 @@
 					/>
 				{/each}
 			</g>
+
+			<polygon
+				class="point-shape__goal-shape"
+				points={pointsToString(goalValuePoints)}
+				fill="none"
+				stroke={goalColor}
+				stroke-width={size * 0.006}
+				stroke-dasharray={POINT_SHAPE_DEFAULTS.goalDashPattern}
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
 		{/if}
 
 		{#each axisLines as axis, index}
 			{@const labelX = getLabelX(axis.label[0])}
 			{@const labelY = getLabelY(axis.label[1])}
-			{@const labelLines = getLabelLines(labels[index] ?? "")}
+			{@const labelLines = getLabelLines(displayLabels[index] ?? "")}
 			<text
 				class="point-shape__label"
 				x={labelX}
@@ -354,13 +348,13 @@
 						{labelLine}
 					</tspan>
 				{/each}
-				{#if valueLabels[index]}
+				{#if displayValueLabels[index]}
 					<tspan
 						class="point-shape__value-label"
 						x={labelX}
 						dy="1.2em"
 					>
-						{valueLabels[index]}
+						{displayValueLabels[index]}
 					</tspan>
 				{/if}
 			</text>

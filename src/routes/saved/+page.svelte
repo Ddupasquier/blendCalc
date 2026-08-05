@@ -20,7 +20,10 @@
 	import SavedDrinksEmptyState from "$lib/components/saved/SavedDrinksEmptyState/SavedDrinksEmptyState.svelte";
 	import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
 	import { getAppDocumentTitle } from "$lib/config/pageMetadata";
-	import { prefersReducedMotion } from "$lib/utils/accessibility/motion";
+	import {
+		getMotionSafeDuration,
+		MOTION_DURATION_MS,
+	} from "$lib/utils/animation/motion";
 	import { filterItemsByQuery } from "$lib/utils/list/listNavigation";
 	import { createScrollDirectionTracker } from "$lib/utils/navigation/scrollDirection";
 	import {
@@ -167,7 +170,8 @@
 		visibleCount += LIST_PAGE_SIZES.savedDrinks;
 	};
 
-	const getListReflowDuration = () => (prefersReducedMotion() ? 0 : 260);
+	const getListReflowDuration = () =>
+		getMotionSafeDuration(MOTION_DURATION_MS.reflow);
 
 	const handleSavedScroll = (event: Event) => {
 		if (sortSheetOpen) return;

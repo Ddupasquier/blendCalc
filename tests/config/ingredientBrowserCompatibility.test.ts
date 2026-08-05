@@ -29,9 +29,9 @@ describe("ingredient browser compatibility baseline", () => {
 			"src/routes/ingredients/fridge/+page.svelte",
 		);
 		expect(fridgePage).not.toContain(":has(");
-		expect(readSource("src/routes/+layout.svelte")).toContain(
-			"app-main--ingredients",
-		);
+		const layout = readSource("src/routes/+layout.svelte");
+		expect(layout).toContain("app-main--view-shell");
+		expect(layout).toContain('page.url.pathname === "/mix"');
 	});
 
 	it("does not refresh page data when the browser merely regains focus", () => {

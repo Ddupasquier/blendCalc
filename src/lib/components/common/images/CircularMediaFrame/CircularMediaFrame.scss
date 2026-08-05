@@ -14,5 +14,5 @@
 	border: var(--circular-media-frame-border, 1px solid transparent);
 	border-radius: $app-radius-circle;
 	font-size: var(--circular-media-frame-font-size, #{$app-font-size-xl});
-	line-height: 1;
+	line-height: $app-line-height-tight;
 }

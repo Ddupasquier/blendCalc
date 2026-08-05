@@ -23,7 +23,7 @@ label {
 
 header h1 {
 	font-family: $app-font-family-display;
-	font-size: clamp(1.8rem, 7vw, 2.4rem);
+	font-size: $app-font-size-page-title;
 }
 
 header > p:last-child,
@@ -35,8 +35,8 @@ header > p:last-child,
 
 .eyebrow {
 	font-size: $app-font-size-xs;
-	font-weight: 900;
-	letter-spacing: 0.1em;
+	font-weight: $app-font-weight-heavy;
+	letter-spacing: $app-letter-spacing-wider;
 	text-transform: uppercase;
 }
 
@@ -108,7 +108,7 @@ header > p:last-child,
 	}
 
 	dt {
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 	}
 
 	dd {
@@ -170,7 +170,7 @@ header > p:last-child,
 	}
 
 	dt {
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 	}
 
 	dd {
@@ -188,6 +188,27 @@ header > p:last-child,
 		overflow: auto;
 		list-style: none;
 	}
+}
+
+.moderation-disclosure summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	list-style: none;
+	cursor: pointer;
+}
+
+.moderation-disclosure summary::-webkit-details-marker {
+	display: none;
+}
+
+.moderation-disclosure summary:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
 }
 
 .product-card__actions {
@@ -223,7 +244,7 @@ header > p:last-child,
 		background: $app-accent;
 		border-radius: $app-radius-pill;
 		font-size: $app-font-size-xs;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 		text-transform: capitalize;
 	}
 
@@ -244,7 +265,7 @@ header > p:last-child,
 		min-width: 0;
 		color: $app-primary;
 		font-size: $app-font-size-sm;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 		text-decoration: none;
 	}
 
@@ -265,7 +286,7 @@ header > p:last-child,
 	border: $app-warning-border;
 	border-radius: $app-radius;
 	font-size: $app-font-size-sm;
-	font-weight: 700;
+	font-weight: $app-font-weight-semibold;
 }
 
 .product-card__notice ul {
@@ -314,7 +335,7 @@ header > p:last-child,
 }
 
 .account-search label {
-	font-weight: 800;
+	font-weight: $app-font-weight-bold;
 }
 
 .search-controls {
@@ -360,7 +381,7 @@ header > p:last-child,
 
 .result-count {
 	font-size: $app-font-size-sm;
-	font-weight: 700;
+	font-weight: $app-font-weight-semibold;
 }
 
 .account-card {
@@ -414,7 +435,7 @@ header > p:last-child,
 		background: $app-accent;
 		border-radius: $app-radius-pill;
 		font-size: $app-font-size-xs;
-		font-weight: 800;
+		font-weight: $app-font-weight-bold;
 		text-transform: capitalize;
 	}
 
@@ -439,22 +460,12 @@ header > p:last-child,
 	background: $app-highlight;
 	border-radius: $app-radius-pill;
 	font-size: $app-font-size-xs;
-	font-weight: 900;
+	font-weight: $app-font-weight-heavy;
 }
 
 .account-note {
-	font-weight: 700;
+	font-weight: $app-font-weight-semibold;
 	font-style: italic;
-}
-
-select {
-	min-width: 0;
-	width: 100%;
-	max-width: 100%;
-	padding: 0.6rem;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-radius-sm;
 }
 
 .danger-action {

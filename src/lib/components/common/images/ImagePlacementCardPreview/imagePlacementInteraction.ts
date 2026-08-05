@@ -15,8 +15,10 @@ type PointerCoordinates = {
 
 type DragState = {
 	pointerId: number;
+	pointerType: string;
 	startX: number;
 	startY: number;
+	active: boolean;
 	value: ImagePlacementValue;
 	geometry: ImagePlacementGeometry;
 };
@@ -33,6 +35,8 @@ type ImagePlacementInteractionOptions = {
 	getValue: () => ImagePlacementValue;
 	onChange: (value: ImagePlacementValue) => void;
 };
+
+const TOUCH_DRAG_THRESHOLD_PX = 8;
 
 export const createImagePlacementInteraction = ({
 	isEnabled,
@@ -53,12 +57,19 @@ export const createImagePlacementInteraction = ({
 		);
 	};
 
-	const beginDrag = (pointerId: number, x: number, y: number) => {
+	const beginDrag = (
+		pointerId: number,
+		pointerType: string,
+		x: number,
+		y: number,
+	) => {
 		const geometry = getGeometry();
 		dragState = {
 			pointerId,
+			pointerType,
 			startX: x,
 			startY: y,
+			active: pointerType !== "touch",
 			value: createCustomImagePlacement(getValue(), geometry.effectiveZoom),
 			geometry,
 		};
@@ -85,28 +96,36 @@ export const createImagePlacementInteraction = ({
 		) {
 			return;
 		}
-		event.preventDefault();
-		(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
+		if (event.pointerType !== "touch") {
+			event.preventDefault();
+			(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
+		}
 		pointers.set(event.pointerId, {
 			x: event.clientX,
 			y: event.clientY,
 		});
 		if (pointers.size === 1) {
-			beginDrag(event.pointerId, event.clientX, event.clientY);
+			beginDrag(
+				event.pointerId,
+				event.pointerType,
+				event.clientX,
+				event.clientY,
+			);
 		} else {
+			event.preventDefault();
 			beginPinch();
 		}
 	};
 
 	const handlePointerMove = (event: PointerEvent) => {
 		if (!isEnabled() || !pointers.has(event.pointerId)) return;
-		event.preventDefault();
 		pointers.set(event.pointerId, {
 			x: event.clientX,
 			y: event.clientY,
 		});
 
 		if (pointers.size >= 2) {
+			event.preventDefault();
 			if (!pinchState) beginPinch();
 			if (!pinchState) return;
 			const distance = pointerDistance();
@@ -116,16 +135,37 @@ export const createImagePlacementInteraction = ({
 		}
 
 		if (!dragState || dragState.pointerId !== event.pointerId) {
-			beginDrag(event.pointerId, event.clientX, event.clientY);
+			beginDrag(
+				event.pointerId,
+				event.pointerType,
+				event.clientX,
+				event.clientY,
+			);
 			return;
 		}
+
+		const deltaX = event.clientX - dragState.startX;
+		const deltaY = event.clientY - dragState.startY;
+		if (!dragState.active) {
+			if (
+				Math.max(Math.abs(deltaX), Math.abs(deltaY)) <
+				TOUCH_DRAG_THRESHOLD_PX
+			) {
+				return;
+			}
+			if (Math.abs(deltaY) > Math.abs(deltaX)) return;
+			dragState.active = true;
+			(event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
+		}
+
+		event.preventDefault();
 
 		onChange(
 			moveImagePlacement({
 				value: dragState.value,
 				geometry: dragState.geometry,
-				deltaX: event.clientX - dragState.startX,
-				deltaY: event.clientY - dragState.startY,
+				deltaX,
+				deltaY: dragState.pointerType === "touch" ? 0 : deltaY,
 			}),
 		);
 	};
@@ -143,6 +183,7 @@ export const createImagePlacementInteraction = ({
 		if (remainingPointer) {
 			beginDrag(
 				remainingPointer[0],
+				"touch",
 				remainingPointer[1].x,
 				remainingPointer[1].y,
 			);
@@ -151,7 +192,13 @@ export const createImagePlacementInteraction = ({
 
 	const handleWheel = (event: WheelEvent) => {
 		const geometry = getGeometry();
-		if (!isEnabled() || !geometry.ready) return;
+		if (
+			!isEnabled() ||
+			!geometry.ready ||
+			(!event.ctrlKey && !event.metaKey)
+		) {
+			return;
+		}
 		event.preventDefault();
 		const zoom = geometry.effectiveZoom * Math.exp(-event.deltaY * 0.002);
 		onChange(zoomImagePlacement(getValue(), zoom));

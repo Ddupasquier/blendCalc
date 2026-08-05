@@ -22,7 +22,7 @@
 	p {
 		color: $app-muted;
 		font-size: $app-font-size-sm;
-		line-height: 1.4;
+		line-height: $app-line-height-ui;
 	}
 }
 
@@ -30,7 +30,7 @@
 	color: $app-primary;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-heavy;
-	letter-spacing: calc($app-letter-spacing-label * 2);
+	letter-spacing: $app-letter-spacing-wide;
 	text-transform: uppercase;
 }
 
@@ -73,7 +73,7 @@ li p {
 	color: $app-muted;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-medium;
-	line-height: 1.3;
+	line-height: $app-line-height-compact;
 }
 
 .mix-empty-state__actions {
@@ -106,7 +106,7 @@ li p {
 		color: $app-muted;
 		font-size: $app-font-size-sm;
 		font-weight: $app-font-weight-medium;
-		line-height: 1.35;
+		line-height: $app-line-height-ui;
 	}
 }
 

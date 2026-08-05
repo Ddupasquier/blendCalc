@@ -1,6 +1,6 @@
 # Development Rules Audit
 
-Last audited: 2026-07-29
+Last audited: 2026-08-03
 
 ## Purpose
 
@@ -67,15 +67,37 @@ the browser and mobile QA matrices.
 
 **Evidence:** Ingredients defines the approved visual system, Mix has received a
 focused token pass, and Saved Drinks now uses the shared app shell and component-owned
-card/empty-state styles. Root, Authentication, Profile, and Moderation styles still
-contain older one-off spacing, font-weight, sizing, and layout values. Current examples
-include `src/routes/page.scss`, `src/routes/auth/page.scss`,
-`src/routes/profile/page.scss`, and `src/routes/moderation/page.scss`.
+card/empty-state styles. App typography now uses one guarded semantic scale across
+Root, Authentication, Profile, Moderation, Mix, Saved Drinks, and Ingredients. Those
+older routes still contain one-off spacing and layout values that require deliberate
+view-level migration rather than a mechanical typography pass. Current examples include
+`src/routes/page.scss`, `src/routes/auth/page.scss`, `src/routes/profile/page.scss`, and
+`src/routes/moderation/page.scss`. Repository guards currently reject raw application
+typography, box shadows, numeric media-query breakpoints, and unexplained raw colors;
+the remaining gap is deliberate view migration and direct-token spacing, not a missing
+global scale.
 
 **Complete when:** Each view is deliberately rebuilt against the Ingredients-derived
 style guide; app-wide decisions use direct global tokens, component-only decisions stay
 local, and raw values are retained only when they are genuine measured or standards
 constants rather than undocumented design choices.
+
+### Shared Control Primitive Migration
+
+**Status:** Open
+
+**Evidence:** Ingredients, Mix, and Saved Drinks largely compose actions through the
+shared button and input primitives. Authentication, Profile, and Moderation still render
+route-local submit buttons and action classes instead of delegating their loading,
+disabled, focus, sizing, and responsive behavior to the same primitives. Current
+examples include `src/routes/auth/+page.svelte`,
+`src/routes/auth/update-password/+page.svelte`, `src/routes/profile/+page.svelte`, and
+`src/routes/moderation/+page.svelte`.
+
+**Complete when:** Each remaining route-local action is migrated to the applicable
+shared button, icon-button, two-step confirmation, input, or status primitive; native
+form submission semantics and route actions remain intact; and focused interaction,
+loading, responsive, and accessibility tests cover each migrated flow.
 
 ### Moderation View Rebuild
 
@@ -224,24 +246,6 @@ totals, warnings, and suggestions.
 input provenance, uses a standards-backed applicable formula, and is never presented as
 reported energy; otherwise missing calories remain missing.
 
-### Mix Math Couples The 100-Gram Basis To A UX Default
-
-**Status:** High
-
-**Evidence:** `src/lib/utils/mix/calculations/nutrientTotals.ts` and
-`src/lib/utils/mix/calculations/nutrientSuggestions.ts` divide per-100-gram nutrient
-values by `mixRuntime.defaultServingGrams`. That setting currently happens to be `100`,
-but it is a user-experience default, not the immutable canonical nutrient basis.
-Changing the default serving in the database would silently change every Mix total and
-recommendation.
-
-**Affected areas:** Mix totals, goal progress, contributor breakdowns, warnings, and
-add/reduce suggestions.
-
-**Complete when:** Canonical scaling always divides by an immutable 100-gram basis
-constant; the configurable default controls only initial selected quantity; and a
-regression test changes the UX default without changing math for a fixed gram amount.
-
 ### Unit-Only Goal Fallbacks Invent Nutrient Targets
 
 **Status:** High
@@ -252,11 +256,13 @@ nutrient-specific target to `defaultGoalByUnit`, including the generic value see
 nutrients can therefore receive the same goal merely because they share `g`, `mg`,
 `mcg`, or another unit.
 
-**Affected areas:** Mix charts, progress, warnings, save summaries, and suggestions.
+**Affected areas:** Mix charts, progress, warnings, and save summaries. Suggested
+adjustments already require an explicit nutrient-specific goal and do not use this
+fallback.
 
 **Complete when:** A nutrient has a goal only through an explicit versioned
 nutrient-specific policy row; unsupported nutrients show no target and cannot generate
-goal-based warnings or suggestions.
+goal-based warnings.
 
 ### Imported Estimate Qualifiers Are Lost At Runtime
 
@@ -339,11 +345,15 @@ source text.
 
 **Evidence:** Several files remain large coordinators, including
 `src/routes/ingredients/fridge/+page.svelte`, `src/routes/mix/+page.svelte`,
+`src/routes/profile/+page.svelte`, `src/routes/moderation/+page.svelte`,
 `src/lib/server/products/catalog.server.ts`,
-`src/lib/utils/barcode/barcodeProductMappers.ts`, and
-`src/lib/components/ingredients/manual-entry/CustomIngredientForm/manualEntryBarcodeController.svelte.ts`.
-Their size is acceptable only while they continue to coordinate focused modules instead
-of absorbing reusable UI, persistence, validation, normalization, or source policy.
+`src/lib/utils/barcode/barcodeProductMappers.ts`,
+`src/lib/components/ingredients/manual-entry/CustomIngredientForm/manualEntryBarcodeController.svelte.ts`,
+and `src/lib/components/app/TutorialOverlay/TutorialOverlay.svelte`. The current route
+sizes are approximately 1,345 lines for Ingredients, 1,015 for Mix, 806 for Profile,
+and 527 for Moderation. `TutorialOverlay` is approximately 522 lines. Their size is
+acceptable only while they continue to coordinate focused modules instead of absorbing
+reusable UI, persistence, validation, normalization, or source policy.
 
 **Complete when:** Related feature work confirms each file remains orchestration-only,
 or extracts a focused owner with tests when a reusable behavior or business policy has
@@ -360,9 +370,14 @@ git status --short --branch
 find src/lib/components -maxdepth 4 -type f | sort
 find src/lib/utils src/lib/server -maxdepth 4 -type f | sort
 rg -n "box-shadow" src
+rg -n "<button(?:\\s|>)" src/routes --glob '*.svelte'
+rg -n "@media[^\\n]*[0-9]+(px|rem|em)" src --glob '*.scss'
 rg -n "localStorage|sessionStorage" src/lib src/routes --glob '!src/lib/types/database.types.ts'
 rg -n "\\.email|email" src/lib/components src/routes --glob '*.svelte' --glob '*.ts'
 rg -n "#[0-9a-fA-F]{3,8}|rgb\\(|rgba\\(" src --glob '*.svelte' --glob '*.ts' --glob '*.scss' --glob '!src/styles/_variables.scss'
 rg -n "(padding|margin|gap|font-size|font-weight|border-radius): [0-9]" src --glob '*.svelte' --glob '*.scss' --glob '!src/styles/_variables.scss'
 find src -type f \\( -name '*.svelte' -o -name '*.ts' -o -name '*.scss' \\) -print0 | xargs -0 wc -l | sort -nr
+npm audit
+npm run check:auth
+npm run db:lint
 ```

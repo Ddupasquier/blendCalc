@@ -74,7 +74,7 @@ $saved-ingredient-symbol-size: 1.15rem;
 	border-radius: $app-shell-radius-pill;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-bold;
-	line-height: 1.15;
+	line-height: $app-line-height-heading;
 	list-style: none;
 	cursor: pointer;
 	box-sizing: border-box;
@@ -102,22 +102,6 @@ $saved-ingredient-symbol-size: 1.15rem;
 		.saved-drink-ingredients__less-label
 ) {
 	display: inline;
-}
-
-.saved-drink-ingredients__chevron {
-	display: grid;
-	width: $app-shell-control-icon-size;
-	height: $app-shell-control-icon-size;
-	place-items: center;
-	line-height: 0;
-	transition: transform 180ms ease;
-}
-
-:global(
-	.saved-drink-ingredients__overflow[data-expanded="true"]
-		.saved-drink-ingredients__chevron
-) {
-	transform: rotate(180deg);
 }
 
 .saved-drink-ingredients__hidden {

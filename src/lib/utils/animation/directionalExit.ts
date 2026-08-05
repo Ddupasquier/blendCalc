@@ -1,4 +1,4 @@
-import { prefersReducedMotion } from "$lib/utils/accessibility/motion";
+import { prefersReducedMotion } from "./motion";
 
 export type DirectionalExitDirection = "left" | "right";
 

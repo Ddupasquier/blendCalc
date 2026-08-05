@@ -4,6 +4,7 @@
 	import X from "$lib/assets/icons/X/X.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import IconControlButton from "$lib/components/common/buttons/IconControlButton/IconControlButton.svelte";
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import type { ListControlsProps } from "./types";
 
 	let {
@@ -80,20 +81,16 @@
 			</IconControlButton>
 		</span>
 	{:else if filterOptions.length > 0 && filterValue !== undefined && onFilterChange}
-		<label class="filter-control" for={`${id}-filter`}>
-			<span class="sr-only">{filterLabel}</span>
-			<select
-				id={`${id}-filter`}
-				name={`${id}-filter`}
-				value={filterValue}
-				onchange={(event) =>
-					onFilterChange((event.currentTarget as HTMLSelectElement).value)}
-			>
-				{#each filterOptions as option (option.value)}
-					<option value={option.value}>{option.label}</option>
-				{/each}
-			</select>
-		</label>
+		<SelectField
+			id={`${id}-filter`}
+			name={`${id}-filter`}
+			class="filter-control"
+			label={filterLabel}
+			labelVisibility="sr-only"
+			value={filterValue}
+			options={filterOptions}
+			onValueChange={onFilterChange}
+		/>
 	{/if}
 
 	<p class="result-count" aria-live="polite">{countText}</p>

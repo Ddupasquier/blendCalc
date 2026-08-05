@@ -19,11 +19,14 @@ export type CircleIconButtonProps = {
 	pressed?: boolean;
 	class?: string;
 	"aria-describedby"?: string;
+	"aria-expanded"?: boolean | "true" | "false";
+	"aria-controls"?: string;
 	onclick?: ButtonClickHandler;
 	onfocus?: ButtonFocusHandler;
 	onkeydown?: ButtonKeyboardHandler;
 	onkeyup?: ButtonKeyboardHandler;
 	onpointerdown?: ButtonPointerHandler;
+	onpointermove?: ButtonPointerHandler;
 	onpointerup?: ButtonPointerHandler;
 	onpointercancel?: ButtonPointerHandler;
 	onlostpointercapture?: ButtonPointerHandler;

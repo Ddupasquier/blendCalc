@@ -1,0 +1,138 @@
+@use "../../../../../styles/variables" as *;
+
+.select-field {
+	display: grid;
+	gap: $app-gap-xs;
+	width: 100%;
+	min-width: 0;
+	color: $app-shell-text-primary;
+}
+
+.select-field[data-width="content"] {
+	width: max-content;
+	max-width: 100%;
+}
+
+.select-field[data-layout="inline"] {
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: center;
+	gap: $app-gap-md;
+}
+
+.select-field__label {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-label;
+	line-height: $app-line-height-ui;
+	text-transform: uppercase;
+}
+
+.select-field__label--sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.select-field__control {
+	position: relative;
+	display: grid;
+	min-width: 0;
+}
+
+.select-field__select {
+	width: 100%;
+	min-width: 0;
+	min-height: $app-shell-control-height;
+	padding: 0 calc($app-shell-control-padding-x + $app-shell-control-icon-size + $app-gap-sm)
+		0 $app-shell-control-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-control;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+	outline: none;
+	appearance: none;
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-semibold;
+	line-height: $app-line-height-ui;
+	cursor: pointer;
+}
+
+.select-field__select:hover:not(:disabled) {
+	border-color: $app-shell-accent-primary;
+}
+
+.select-field__select:focus-visible {
+	border-color: $app-shell-accent-primary;
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.select-field__select:disabled {
+	color: $app-shell-text-muted;
+	cursor: not-allowed;
+	opacity: 0.65;
+}
+
+.select-field__select option {
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-panel;
+}
+
+.select-field__icon {
+	position: absolute;
+	inset-inline-end: $app-shell-control-padding-x;
+	top: 50%;
+	display: grid;
+	place-items: center;
+	width: $app-shell-control-icon-size;
+	height: $app-shell-control-icon-size;
+	color: $app-shell-text-muted;
+	pointer-events: none;
+	transform: translateY(-50%);
+}
+
+.select-field__helper {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-body;
+}
+
+.select-field[data-layout="inline"] .select-field__helper {
+	grid-column: 2;
+}
+
+.select-field[data-size="compact"] .select-field__select {
+	min-height: $app-shell-control-height-narrow;
+	padding-inline-start: $app-shell-control-padding-x-compact;
+}
+
+.select-field[data-size="small"] .select-field__select {
+	height: $app-control-height-sm;
+	min-height: $app-control-height-sm;
+	padding-inline-start: $app-gap-sm;
+	font-size: $app-font-size-xs;
+}
+
+.select-field[data-size="small"] .select-field__icon {
+	inset-inline-end: $app-gap-xs;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.select-field[data-layout="inline"] {
+		gap: $app-gap-sm;
+	}
+
+	.select-field__select {
+		min-height: $app-shell-control-height-narrow;
+		padding-inline-start: $app-shell-control-padding-x-compact;
+	}
+}
