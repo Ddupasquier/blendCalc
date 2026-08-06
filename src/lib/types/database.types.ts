@@ -1467,6 +1467,7 @@ export type Database = {
           updated_at: string
           user_food_list_item_id: string | null
           value_origin: string
+          value_qualifier: string | null
           value_status: string
         }
         Insert: {
@@ -1495,6 +1496,7 @@ export type Database = {
           updated_at?: string
           user_food_list_item_id?: string | null
           value_origin: string
+          value_qualifier?: string | null
           value_status?: string
         }
         Update: {
@@ -1523,6 +1525,7 @@ export type Database = {
           updated_at?: string
           user_food_list_item_id?: string | null
           value_origin?: string
+          value_qualifier?: string | null
           value_status?: string
         }
         Relationships: [
@@ -2483,30 +2486,127 @@ export type Database = {
       }
       mix_goal_template_targets: {
         Row: {
+          goal_type: string
+          importance_weight: number
           nutrient_id: number
+          rationale: string
+          sort_order: number
+          source_key: string
+          source_reference: string
           target_amount: number
-          template_key: string
+          template_version_id: string
+          tolerance_ratio: number
+          upper_amount: number | null
         }
         Insert: {
+          goal_type: string
+          importance_weight?: number
           nutrient_id: number
+          rationale: string
+          sort_order: number
+          source_key: string
+          source_reference: string
           target_amount: number
-          template_key: string
+          template_version_id: string
+          tolerance_ratio?: number
+          upper_amount?: number | null
         }
         Update: {
+          goal_type?: string
+          importance_weight?: number
           nutrient_id?: number
+          rationale?: string
+          sort_order?: number
+          source_key?: string
+          source_reference?: string
           target_amount?: number
-          template_key?: string
+          template_version_id?: string
+          tolerance_ratio?: number
+          upper_amount?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "mix_goal_template_targets_nutrient_id_fkey"
+            foreignKeyName: "mix_goal_template_targets_nutrient_id_fkey1"
             columns: ["nutrient_id"]
             isOneToOne: false
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
           },
           {
-            foreignKeyName: "mix_goal_template_targets_template_key_fkey"
+            foreignKeyName: "mix_goal_template_targets_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "mix_goal_template_targets_template_version_id_fkey"
+            columns: ["template_version_id"]
+            isOneToOne: false
+            referencedRelation: "mix_goal_template_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mix_goal_template_versions: {
+        Row: {
+          created_at: string
+          description: string
+          display_name: string
+          goal_basis: string
+          id: string
+          published_at: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_key: string
+          source_reference: string
+          status: string
+          template_key: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          display_name: string
+          goal_basis: string
+          id?: string
+          published_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_key: string
+          source_reference: string
+          status: string
+          template_key: string
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_name?: string
+          goal_basis?: string
+          id?: string
+          published_at?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_key?: string
+          source_reference?: string
+          status?: string
+          template_key?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mix_goal_template_versions_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "mix_goal_template_versions_template_key_fkey"
             columns: ["template_key"]
             isOneToOne: false
             referencedRelation: "mix_goal_templates"
@@ -2517,79 +2617,97 @@ export type Database = {
       mix_goal_templates: {
         Row: {
           created_at: string
-          description: string
-          display_name: string
+          current_version_id: string | null
           enabled: boolean
+          is_default: boolean
           key: string
           sort_order: number
-          source_key: string
-          source_reference: string
           updated_at: string
-          version: number
         }
         Insert: {
           created_at?: string
-          description: string
-          display_name: string
+          current_version_id?: string | null
           enabled?: boolean
+          is_default?: boolean
           key: string
           sort_order: number
-          source_key: string
-          source_reference: string
           updated_at?: string
-          version: number
         }
         Update: {
           created_at?: string
-          description?: string
-          display_name?: string
+          current_version_id?: string | null
           enabled?: boolean
+          is_default?: boolean
           key?: string
           sort_order?: number
-          source_key?: string
-          source_reference?: string
           updated_at?: string
-          version?: number
         }
         Relationships: [
           {
-            foreignKeyName: "mix_goal_templates_source_key_fkey"
-            columns: ["source_key"]
+            foreignKeyName: "mix_goal_templates_current_version_id_fkey"
+            columns: ["current_version_id"]
             isOneToOne: false
-            referencedRelation: "product_data_sources"
-            referencedColumns: ["key"]
+            referencedRelation: "mix_goal_template_versions"
+            referencedColumns: ["id"]
           },
         ]
       }
       mix_preferences: {
         Row: {
           created_at: string
+          goal_basis: string
+          goal_configuration_initialized: boolean
+          goal_template_customized: boolean
           mix_state: Json
-          nutrient_goals: Json
           section_disclosure_state: Json
           section_order: string[]
+          source_goal_template_version_id: string | null
+          source_user_goal_template_id: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          goal_basis?: string
+          goal_configuration_initialized?: boolean
+          goal_template_customized?: boolean
           mix_state?: Json
-          nutrient_goals?: Json
           section_disclosure_state?: Json
           section_order?: string[]
+          source_goal_template_version_id?: string | null
+          source_user_goal_template_id?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          goal_basis?: string
+          goal_configuration_initialized?: boolean
+          goal_template_customized?: boolean
           mix_state?: Json
-          nutrient_goals?: Json
           section_disclosure_state?: Json
           section_order?: string[]
+          source_goal_template_version_id?: string | null
+          source_user_goal_template_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "mix_preferences_source_goal_template_version_id_fkey"
+            columns: ["source_goal_template_version_id"]
+            isOneToOne: false
+            referencedRelation: "mix_goal_template_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mix_preferences_source_user_goal_template_id_fkey"
+            columns: ["source_user_goal_template_id"]
+            isOneToOne: false
+            referencedRelation: "user_mix_goal_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mix_runtime_configuration: {
         Row: {
@@ -5181,6 +5299,162 @@ export type Database = {
         }
         Relationships: []
       }
+      user_mix_goal_template_targets: {
+        Row: {
+          goal_type: string
+          importance_weight: number
+          nutrient_id: number
+          sort_order: number
+          target_amount: number
+          template_id: string
+          tolerance_ratio: number
+          upper_amount: number | null
+        }
+        Insert: {
+          goal_type: string
+          importance_weight?: number
+          nutrient_id: number
+          sort_order: number
+          target_amount: number
+          template_id: string
+          tolerance_ratio?: number
+          upper_amount?: number | null
+        }
+        Update: {
+          goal_type?: string
+          importance_weight?: number
+          nutrient_id?: number
+          sort_order?: number
+          target_amount?: number
+          template_id?: string
+          tolerance_ratio?: number
+          upper_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_mix_goal_template_targets_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "user_mix_goal_template_targets_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "user_mix_goal_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_mix_goal_templates: {
+        Row: {
+          created_at: string
+          description: string
+          display_name: string
+          goal_basis: string
+          id: string
+          source_template_version_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          display_name: string
+          goal_basis: string
+          id?: string
+          source_template_version_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_name?: string
+          goal_basis?: string
+          id?: string
+          source_template_version_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_mix_goal_templates_source_template_version_id_fkey"
+            columns: ["source_template_version_id"]
+            isOneToOne: false
+            referencedRelation: "mix_goal_template_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_mix_nutrient_goals: {
+        Row: {
+          created_at: string
+          goal_type: string
+          importance_weight: number
+          nutrient_id: number
+          sort_order: number
+          source_template_version_id: string | null
+          source_user_template_id: string | null
+          target_amount: number
+          tolerance_ratio: number
+          updated_at: string
+          upper_amount: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          goal_type: string
+          importance_weight?: number
+          nutrient_id: number
+          sort_order: number
+          source_template_version_id?: string | null
+          source_user_template_id?: string | null
+          target_amount: number
+          tolerance_ratio?: number
+          updated_at?: string
+          upper_amount?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          goal_type?: string
+          importance_weight?: number
+          nutrient_id?: number
+          sort_order?: number
+          source_template_version_id?: string | null
+          source_user_template_id?: string | null
+          target_amount?: number
+          tolerance_ratio?: number
+          updated_at?: string
+          upper_amount?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_mix_nutrient_goals_nutrient_id_fkey"
+            columns: ["nutrient_id"]
+            isOneToOne: false
+            referencedRelation: "nutrient_definitions"
+            referencedColumns: ["nutrient_id"]
+          },
+          {
+            foreignKeyName: "user_mix_nutrient_goals_source_template_version_id_fkey"
+            columns: ["source_template_version_id"]
+            isOneToOne: false
+            referencedRelation: "mix_goal_template_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_mix_nutrient_goals_source_user_template_id_fkey"
+            columns: ["source_user_template_id"]
+            isOneToOne: false
+            referencedRelation: "user_mix_goal_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_tutorial_preferences: {
         Row: {
           completed_at: string | null
@@ -5642,6 +5916,10 @@ export type Database = {
         Args: never
         Returns: string
       }
+      apply_mix_goal_template: {
+        Args: { p_keep_extra_goals?: boolean; p_template_version_id: string }
+        Returns: Json
+      }
       apply_shared_product_external_enrichment: {
         Args: {
           p_barcode: string
@@ -5664,6 +5942,10 @@ export type Database = {
           p_shared_product_id: string
         }
         Returns: string[]
+      }
+      apply_user_mix_goal_template: {
+        Args: { p_keep_extra_goals?: boolean; p_template_id: string }
+        Returns: Json
       }
       authorize_app_permission: {
         Args: {
@@ -5724,6 +6006,10 @@ export type Database = {
         Returns: string
       }
       delete_saved_drink: { Args: { p_id: string }; Returns: boolean }
+      delete_user_mix_goal_template: {
+        Args: { p_template_id: string }
+        Returns: boolean
+      }
       extract_product_compatibility_facts: {
         Args: {
           p_food?: Json
@@ -5945,10 +6231,17 @@ export type Database = {
         Args: { p_fdc_id: number; p_food: Json }
         Returns: string
       }
-      save_mix_preferences: {
-        Args: { p_mix_state?: Json; p_nutrient_goals?: Json }
-        Returns: boolean
+      save_mix_goal_configuration: {
+        Args: {
+          p_customized?: boolean
+          p_goal_basis?: string
+          p_goals: Json
+          p_source_template_version_id?: string
+          p_source_user_template_id?: string
+        }
+        Returns: Json
       }
+      save_mix_preferences: { Args: { p_mix_state?: Json }; Returns: boolean }
       save_mix_section_disclosure_state: {
         Args: { p_section_disclosure_state: Json }
         Returns: boolean
@@ -5963,6 +6256,17 @@ export type Database = {
           p_drink: Json
           p_id: string
           p_name: string
+        }
+        Returns: string
+      }
+      save_user_mix_goal_template: {
+        Args: {
+          p_description: string
+          p_display_name: string
+          p_goal_basis: string
+          p_goals: Json
+          p_source_template_version_id?: string
+          p_template_id?: string
         }
         Returns: string
       }

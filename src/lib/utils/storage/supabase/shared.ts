@@ -2,9 +2,20 @@ import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import type { Database } from "$lib/types/database.types";
 import type { Json } from "$lib/types/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+  MixGoalBasis,
+  MixGoalMap,
+  MixGoalTemplate,
+} from "$lib/utils/mix/goals/types";
 
 export type CloudMixPreferences = {
-	nutrientGoals?: Record<number, number>;
+  nutrientGoals?: MixGoalMap;
+  hasGoalConfiguration?: boolean;
+  goalBasis?: MixGoalBasis;
+  sourceGoalTemplateVersionId?: string | null;
+  sourceUserGoalTemplateId?: string | null;
+  goalTemplateCustomized?: boolean;
+  userGoalTemplates?: MixGoalTemplate[];
 	mixState?: Record<string, unknown>;
 	sectionOrder?: string[];
 	sectionDisclosureState?: Record<string, boolean>;
@@ -68,16 +79,6 @@ export const resolveCloudClient = (
 
 export const toJson = (value: unknown): Json => {
 	return JSON.parse(JSON.stringify(value)) as Json;
-};
-
-export const getNumberRecord = (value: Json): Record<number, number> => {
-	if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-
-	return Object.fromEntries(
-		Object.entries(value)
-			.map(([key, item]) => [Number(key), Number(item)])
-			.filter(([key, item]) => Number.isFinite(key) && Number.isFinite(item)),
-	);
 };
 
 export const getObjectRecord = (value: Json): Record<string, unknown> => {

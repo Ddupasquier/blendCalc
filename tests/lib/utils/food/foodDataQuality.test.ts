@@ -13,8 +13,9 @@ const makeFood = (overrides: Partial<FdcFood> = {}): FdcFood => ({
 });
 
 const getCodes = (food: FdcFood) =>
-	(getFoodDataQualityDisclosure(food)?.notices ?? [])
-		.map((notice) => notice.code);
+	(getFoodDataQualityDisclosure(food)?.notices ?? []).map(
+		(notice) => notice.code,
+	);
 
 const expectCode = (food: FdcFood, code: FoodDataQualityCode) => {
 	expect(getCodes(food)).toContain(code);
@@ -24,29 +25,35 @@ describe("food data quality disclosure", () => {
 	it("stays hidden when no useful quality note exists", () => {
 		expect(getFoodDataQualityDisclosure(makeFood())).toBeNull();
 		expect(
-			getFoodDataQualityDisclosure(makeFood({
-				sourceMetadata: {
-					schemaVersion: 4,
-					completeness: 1,
-				},
-			})),
+			getFoodDataQualityDisclosure(
+				makeFood({
+					sourceMetadata: {
+						schemaVersion: 4,
+						completeness: 1,
+					},
+				}),
+			),
 		).toBeNull();
 	});
 
 	it("keeps source-reported completeness and format context distinct", () => {
-		const disclosure = getFoodDataQualityDisclosure(makeFood({
-			sourceMetadata: {
-				completeness: 0.734,
-				schemaVersion: 4,
-			},
-		}));
+		const disclosure = getFoodDataQualityDisclosure(
+			makeFood({
+				sourceMetadata: {
+					completeness: 0.734,
+					schemaVersion: 4,
+				},
+			}),
+		);
 
 		expect(disclosure).toMatchObject({
 			schemaVersion: 4,
-			notices: [{
-				code: "SOURCE_RECORD_PARTIAL",
-				percentage: 73,
-			}],
+			notices: [
+				{
+					code: "SOURCE_RECORD_PARTIAL",
+					percentage: 73,
+				},
+			],
 		});
 	});
 
@@ -90,15 +97,17 @@ describe("food data quality disclosure", () => {
 	});
 
 	it("explains when accepted product fields use multiple sources", () => {
-		const disclosure = getFoodDataQualityDisclosure(makeFood({
-			fieldProvenance: {
-				nutrition: { source: "usda", sourceReference: "123" },
-				image: {
-					source: "open-food-facts",
-					sourceReference: "00012345678905",
+		const disclosure = getFoodDataQualityDisclosure(
+			makeFood({
+				fieldProvenance: {
+					nutrition: { source: "usda", sourceReference: "123" },
+					image: {
+						source: "open-food-facts",
+						sourceReference: "00012345678905",
+					},
 				},
-			},
-		}));
+			}),
+		);
 
 		expect(disclosure?.notices).toContainEqual({
 			code: "ACCEPTED_FIELDS_COMBINE_SOURCES",
@@ -107,13 +116,15 @@ describe("food data quality disclosure", () => {
 	});
 
 	it("keeps source tag aggregation separate from field-level sources", () => {
-		const disclosure = getFoodDataQualityDisclosure(makeFood({
-			sourceMetadata: {
-				tagSources: {
-					labels: ["source-a", "source-b"],
+		const disclosure = getFoodDataQualityDisclosure(
+			makeFood({
+				sourceMetadata: {
+					tagSources: {
+						labels: ["source-a", "source-b"],
+					},
 				},
-			},
-		}));
+			}),
+		);
 
 		expect(disclosure?.notices).toContainEqual({
 			code: "SOURCE_METADATA_COMBINES_RECORDS",
@@ -122,56 +133,74 @@ describe("food data quality disclosure", () => {
 	});
 
 	it("keeps derived, uncertain, missing, trace, and unmapped nutrient states distinct", () => {
-		const disclosure = getFoodDataQualityDisclosure(makeFood({
-			foodNutrients: [
-				{
-					nutrientId: 1003,
-					nutrientName: "Protein",
-					nutrientNumber: "203",
-					unitName: "G",
-					value: 4,
-					valueOrigin: "derived",
-					valueStatus: "derived",
-					standardError: 0.2,
-				},
-			],
-			nutrientSourceReview: [
-				{
-					nutrientName: "Trace nutrient",
-					valueStatus: "trace",
-					mappingStatus: "canonical",
-				},
-				{
-					nutrientName: "Missing nutrient",
-					valueStatus: "missing",
-					mappingStatus: "canonical",
-				},
-				{
-					nutrientName: "Unmapped nutrient",
-					valueStatus: "unknown",
-					mappingStatus: "unmapped",
-				},
-			],
-		}));
+		const disclosure = getFoodDataQualityDisclosure(
+			makeFood({
+				foodNutrients: [
+					{
+						nutrientId: 1003,
+						nutrientName: "Protein",
+						nutrientNumber: "203",
+						unitName: "G",
+						value: 4,
+						valueOrigin: "derived",
+						valueStatus: "derived",
+						standardError: 0.2,
+					},
+					{
+						nutrientId: 1004,
+						nutrientName: "Total fat",
+						nutrientNumber: "204",
+						unitName: "G",
+						value: 2.5,
+						valueOrigin: "estimated",
+						valueStatus: "estimated",
+						valueQualifier: "source-estimate",
+					},
+				],
+				nutrientSourceReview: [
+					{
+						nutrientName: "Trace nutrient",
+						valueStatus: "trace",
+						mappingStatus: "canonical",
+					},
+					{
+						nutrientName: "Missing nutrient",
+						valueStatus: "missing",
+						mappingStatus: "canonical",
+					},
+					{
+						nutrientName: "Unmapped nutrient",
+						valueStatus: "unknown",
+						mappingStatus: "unmapped",
+					},
+				],
+			}),
+		);
 
-		expect(disclosure?.notices).toEqual(expect.arrayContaining([
-			expect.objectContaining({ code: "NUTRIENT_VALUES_DERIVED", count: 1 }),
-			expect.objectContaining({
-				code: "NUTRIENT_STANDARD_ERROR_REPORTED",
-				count: 1,
-			}),
-			expect.objectContaining({
-				code: "NUTRIENT_SOURCE_VALUES_UNQUANTIFIED",
-				count: 1,
-			}),
-			expect.objectContaining({
-				code: "NUTRIENT_SOURCE_VALUES_MISSING",
-				count: 1,
-			}),
-			expect.objectContaining({
-				code: "NUTRIENT_SOURCE_ROWS_UNMAPPED",
-				count: 1,
-			}),
-		]));
+		expect(disclosure?.notices).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ code: "NUTRIENT_VALUES_DERIVED", count: 1 }),
+				expect.objectContaining({
+					code: "NUTRIENT_VALUES_ESTIMATED",
+					count: 1,
+				}),
+				expect.objectContaining({
+					code: "NUTRIENT_STANDARD_ERROR_REPORTED",
+					count: 1,
+				}),
+				expect.objectContaining({
+					code: "NUTRIENT_SOURCE_VALUES_UNQUANTIFIED",
+					count: 1,
+				}),
+				expect.objectContaining({
+					code: "NUTRIENT_SOURCE_VALUES_MISSING",
+					count: 1,
+				}),
+				expect.objectContaining({
+					code: "NUTRIENT_SOURCE_ROWS_UNMAPPED",
+					count: 1,
+				}),
+			]),
+		);
 	});
 });

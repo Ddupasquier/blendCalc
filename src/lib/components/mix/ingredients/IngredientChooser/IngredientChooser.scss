@@ -1,34 +1,15 @@
 @use "../../../../../styles/variables" as *;
 
-.ingredient-chooser {
-	display: grid;
-	gap: $app-gap-sm;
-	background: $app-shell-surface-panel;
-	border-radius: $app-shell-radius-card;
-}
-
-.ingredient-chooser > :global(.collapsible-section) > :global(.collapsible-section__content) {
-	padding: $app-gap-md $app-gap-sm $app-gap-sm;
-}
-
-.ingredient-chooser :global(.result-count) {
-	display: none;
-}
-
 .ingredient-chooser__content {
 	display: grid;
 	gap: $app-gap-sm;
 	min-width: 0;
 }
 
-.ingredient-chooser__summary {
-	margin: 0;
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-xs;
-}
-
 .ingredient-chooser__list {
 	display: grid;
+	grid-auto-rows: max-content;
+	align-content: start;
 	gap: $app-gap-xs;
 	max-height: 32rem;
 	padding: $app-focus-outline-offset;
@@ -43,15 +24,8 @@
 	text-align: center;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.ingredient-chooser {
-		gap: $app-gap-xs;
-	}
-
-	.ingredient-chooser > :global(.collapsible-section) > :global(.collapsible-section__content) {
-		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
-	}
-
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.ingredient-chooser__content {
 		gap: $app-gap-xs;
 	}

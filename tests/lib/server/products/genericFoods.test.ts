@@ -3,34 +3,40 @@ import { searchGenericFoods } from "$lib/server/products/genericFoods.server";
 import type { Database } from "$lib/types/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-const createClient = (row: Record<string, unknown>) => ({
-	rpc: async () => ({ data: [row], error: null }),
-}) as unknown as SupabaseClient<Database>;
+const createClient = (row: Record<string, unknown>) =>
+	({
+		rpc: async () => ({ data: [row], error: null }),
+	}) as unknown as SupabaseClient<Database>;
 
 describe("generic food search", () => {
 	it("preserves dataset licence and attribution metadata in API-ready results", async () => {
-		const foods = await searchGenericFoods(createClient({
-			application_food_id: -123,
-			dataset_key: "cnf-2026",
-			source_food_key: "101",
-			description: "Blueberries, raw",
-			food_group_name: "Fruits and fruit juices",
-			external_reference: null,
-			source_updated_at: "2026-05-14",
-			source_key: "health-canada-cnf",
-			source_display_name: "Health Canada Canadian Nutrient File",
-			dataset_display_name: "Canadian Nutrient File 2026",
-			dataset_version: "2026",
-			source_url: "https://open.canada.ca/data/en/dataset/1b6139bd-ed7e-4043-bc28-ff00e10f3109",
-			license_name: "Open Government Licence – Canada",
-			license_url: "https://open.canada.ca/en/open-government-licence-canada",
-			attribution_text: "Contains information licensed under the Open Government Licence – Canada.",
-			metadata: {},
-			source_identifiers: [{
-				sourceKey: "usda",
-				identifierType: "ndb-number",
-				identifierValue: "09050",
-			}],
+		const foods = await searchGenericFoods(
+			createClient({
+				application_food_id: -123,
+				dataset_key: "cnf-2026",
+				source_food_key: "101",
+				description: "Blueberries, raw",
+				food_group_name: "Fruits and fruit juices",
+				external_reference: null,
+				source_updated_at: "2026-05-14",
+				source_key: "health-canada-cnf",
+				source_display_name: "Health Canada Canadian Nutrient File",
+				dataset_display_name: "Canadian Nutrient File 2026",
+				dataset_version: "2026",
+				source_url:
+					"https://open.canada.ca/data/en/dataset/1b6139bd-ed7e-4043-bc28-ff00e10f3109",
+				license_name: "Open Government Licence – Canada",
+				license_url: "https://open.canada.ca/en/open-government-licence-canada",
+				attribution_text:
+					"Contains information licensed under the Open Government Licence – Canada.",
+				metadata: {},
+				source_identifiers: [
+					{
+						sourceKey: "usda",
+						identifierType: "ndb-number",
+						identifierValue: "09050",
+					},
+				],
 				nutrients: [
 					{
 						nutrientId: 1003,
@@ -45,6 +51,7 @@ describe("generic food search", () => {
 						valueStatus: "measured",
 						mappingMethod: "standards_dataset",
 						mappingReviewReference: "cnf-2026",
+						metadata: { valueQualifier: "source-estimate" },
 					},
 					{
 						nutrientId: null,
@@ -56,42 +63,49 @@ describe("generic food search", () => {
 						valueStatus: "trace",
 					},
 				],
-			measures: [],
-		}), "blueberries");
+				measures: [],
+			}),
+			"blueberries",
+		);
 
 		expect(foods[0]?.sourceIdentifiers).toEqual({
 			datasetFoodKey: "cnf-2026:101",
 			usdaNdbNumber: "09050",
 		});
-			expect(foods[0]?.sourceAttribution).toEqual({
+		expect(foods[0]?.sourceAttribution).toEqual({
 			datasetKey: "cnf-2026",
 			datasetName: "Canadian Nutrient File 2026",
 			datasetVersion: "2026",
 			sourceName: "Health Canada Canadian Nutrient File",
-			sourceUrl: "https://open.canada.ca/data/en/dataset/1b6139bd-ed7e-4043-bc28-ff00e10f3109",
+			sourceUrl:
+				"https://open.canada.ca/data/en/dataset/1b6139bd-ed7e-4043-bc28-ff00e10f3109",
 			licenseName: "Open Government Licence – Canada",
 			licenseUrl: "https://open.canada.ca/en/open-government-licence-canada",
-			attributionText: "Contains information licensed under the Open Government Licence – Canada.",
-			});
-			expect(foods[0]?.foodNutrients).toEqual([
-				expect.objectContaining({
-					nutrientId: 1003,
-					value: 0,
-					valueStatus: "reported-zero",
-					standardError: 0.1,
-					mappingStatus: "canonical",
-				}),
-			]);
-			expect(foods[0]?.nutrientSourceReview).toEqual([
-				expect.objectContaining({
-					nutrientId: 1003,
-					valueStatus: "reported-zero",
-					mappingStatus: "canonical",
-				}),
-				expect.objectContaining({
-					valueStatus: "trace",
-					mappingStatus: "unmapped",
-				}),
-			]);
+			attributionText:
+				"Contains information licensed under the Open Government Licence – Canada.",
 		});
+		expect(foods[0]?.foodNutrients).toEqual([
+			expect.objectContaining({
+				nutrientId: 1003,
+				value: 0,
+				valueStatus: "estimated",
+				valueOrigin: "estimated",
+				valueQualifier: "source-estimate",
+				standardError: 0.1,
+				mappingStatus: "canonical",
+			}),
+		]);
+		expect(foods[0]?.nutrientSourceReview).toEqual([
+			expect.objectContaining({
+				nutrientId: 1003,
+				valueStatus: "estimated",
+				valueQualifier: "source-estimate",
+				mappingStatus: "canonical",
+			}),
+			expect.objectContaining({
+				valueStatus: "trace",
+				mappingStatus: "unmapped",
+			}),
+		]);
+	});
 });

@@ -7,6 +7,7 @@ const cloudData = vi.hoisted(() => ({
 	readCloudSavedDrinkById: vi.fn(),
 	readCloudSmoothieListIndex: vi.fn(),
 	saveCloudSavedDrinkWithResult: vi.fn(),
+  saveCloudMixGoalConfiguration: vi.fn(),
 	saveCloudMixPreferences: vi.fn(),
 }));
 const listData = vi.hoisted(() => ({
@@ -19,6 +20,7 @@ vi.mock("$lib/utils/storage/client/smoothieLists", () => listData);
 import {
 	clearLoadedSavedDrink,
 	deleteSavedDrink,
+	normalizeSavedDrink,
 	readLoadedSavedDrink,
 	restoreSavedDrinkToMix,
 	saveExistingSavedDrink,
@@ -39,7 +41,18 @@ const input = (name = "Post-workout"): SavedDrinkInput => ({
 	foods: [food],
 	selected: [1008],
 	options: [{ id: 1008, label: "Calories" }],
-	nutrientGoals: { 1008: 350 },
+  nutrientGoals: {
+    1008: {
+      nutrientId: 1008,
+      goalType: "exact",
+      targetAmount: 350,
+      upperAmount: null,
+      toleranceRatio: 0.1,
+      importanceWeight: 1,
+      sortOrder: 1,
+    },
+  },
+  goalBasis: "per_mix",
 	servingGrams: { 1: 100 },
 	servingQuantities: { 1: 1 },
 	servingUnits: { 1: "g" },
@@ -62,6 +75,9 @@ describe("database-backed saved drinks", () => {
 			},
 		});
 		cloudData.saveCloudSavedDrinkWithResult.mockResolvedValue("saved");
+    cloudData.saveCloudMixGoalConfiguration.mockResolvedValue(
+      input().nutrientGoals,
+    );
 		cloudData.saveCloudMixPreferences.mockResolvedValue(true);
 		listData.addFoodsToSmoothieList.mockResolvedValue("added");
 	});
@@ -83,6 +99,24 @@ describe("database-backed saved drinks", () => {
 		await expect(saveNewSavedDrink(input())).resolves.toEqual({
 			ok: false,
 			reason: "duplicate",
+		});
+	});
+
+	it("removes selected nutrients that do not have an explicit saved goal", () => {
+		const drink = {
+			...input(),
+			id: "drink-1",
+			createdAt: 123,
+			selected: [1008, 1090],
+			options: [
+				{ id: 1008, label: "Calories" },
+				{ id: 1090, label: "Magnesium" },
+			],
+		} satisfies SavedDrink;
+
+		expect(normalizeSavedDrink(drink)).toMatchObject({
+			selected: [1008],
+			options: [{ id: 1008, label: "Calories" }],
 		});
 	});
 
@@ -147,7 +181,8 @@ describe("database-backed saved drinks", () => {
 			MIX_STORAGE_KEYS.shoppingList,
 			[expect.objectContaining({ fdcId: kale.fdcId })],
 		);
-		expect(JSON.parse(localStorage.getItem(MIX_STORAGE_KEYS.mixState) ?? "{}"))
-			.toMatchObject({ selectedFoodIds: [food.fdcId, kale.fdcId] });
+    expect(
+      JSON.parse(localStorage.getItem(MIX_STORAGE_KEYS.mixState) ?? "{}"),
+    ).toMatchObject({ selectedFoodIds: [food.fdcId, kale.fdcId] });
 	});
 });

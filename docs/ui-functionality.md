@@ -454,6 +454,12 @@ underlying Mix state stays mounted.
 The Mix page is the core nutrition builder. It combines selected foods, amounts, nutrient
 goals, visual graph feedback, warnings, suggestions, and saving.
 
+Every user-facing Mix quantity uses the shared unit-aware formatter. It preserves
+reported zero, displays a nonzero magnitude below `0.001` as `<0.001` instead of zero,
+uses one precision policy across sections, and keeps the canonical unit attached to
+the value. Calculation precision remains unchanged; formatting affects presentation
+only.
+
 ### Section Organization
 
 The Mix options sheet includes `Reorganize`. It opens the route-backed
@@ -559,19 +565,49 @@ remain available in the status pills and the chart's accessible summary.
 Preserve:
 
 - Goal card per selected nutrient.
-- Current/goal value shown near nutrient name.
+- Each card labels the current amount beneath the nutrient name, then presents the goal
+  rule and editable target together before the synchronized slider. Do not present the
+  relationship as a compact equation that users must decode.
 - Units displayed clearly.
-- Goal input per nutrient.
-- Preset templates:
+- A draggable goal slider per nutrient, synchronized with the inline numeric goal input.
+  The slider provides quick adjustment while the number input preserves exact entry.
+- Each compact goal card keeps its circular remove action in the header and preserves
+  the same nutrient, current amount, shared fixed-choice rule, editable target, unit,
+  and slider hierarchy without duplicating values.
+- DB-backed goal presets:
   - High Protein.
   - Low Sugar.
   - Calorie Dense.
   - Balanced.
   - Fiber Focused.
-- Apply template action.
+- Each goal explicitly means `Target`, `At least`, `At most`, or `Range`; every chart,
+  warning, score, suggestion, and Saved summary uses that same meaning.
+- System presets have stable identities and immutable reviewed versions. Applying one
+  copies a snapshot into the user's active goals; future preset updates do not silently
+  alter that Mix.
+- Applying a preset replaces the current set by default. `Keep my other goals` retains
+  tracked nutrients the selected preset does not define.
+- Selecting a preset opens its description and target preview. A successful Apply
+  dismisses that preview while the selector keeps the applied preset name visible; a
+  failed Apply leaves the preview open with the actionable error.
+- Users can save the current goals as a private reusable preset, apply it later, and
+  delete it without deleting the active values already copied into a Mix.
+- Goal-preset save and delete flows use `/mix/goals/presets/save` and
+  `/mix/goals/presets/:templateId/delete` route-backed overlays.
+- Applying or directly editing goals persists through authoritative authenticated RPCs;
+  browser storage is not a goal-data fallback.
 - Reset goals action.
 - The Goals section is collapsible and includes the DB-backed nutrient picker so users
   can add or stop tracking nutrients without opening a second setup surface.
+- The nutrient picker is an in-flow shared disclosure using the standard list-search
+  control and shared action rows. It must not use a feature-local input/button family or
+  overlap the Goals content as a floating panel.
+- A nutrient joins the selected goal set immediately only when the active versioned
+  default template provides its nutrient-specific target. When no reviewed default
+  exists, the picker requires the user to enter a target before adding that nutrient.
+  Unit-wide and generic fallback targets are prohibited. Until an explicit target
+  exists, the nutrient does not join the chart, warnings, scoring, saved goal set, or
+  adjustment calculations.
 
 Mobile requirements:
 
@@ -591,10 +627,11 @@ Preserve:
 - When the inner result list reaches either vertical boundary, continued wheel or touch
   scrolling passes to the Mix page instead of trapping the user inside the section.
 - Compact selectable rows following the Ingredients card interaction hierarchy.
-- Chooser cards show identity, private-custom state, warning edge, and selection state;
-  category remains searchable but is not repeated as visible supporting text.
+- Chooser cards show identity, warning edge, and selection state; category and
+  private-custom classification remain searchable/filterable but are not repeated as
+  visible compact-card metadata or badges.
 - Selected state obvious.
-- Long names and custom badges must not break the layout.
+- Long names must truncate before the selection control and never render beneath it.
 - Food preference conflict icons remain visible.
 
 ### Selected Ingredients and Amounts
@@ -604,11 +641,17 @@ Preserve:
 - Selected ingredient card per food.
 - Amount input.
 - Unit selector.
-- Converted gram amount.
+- Converted gram amount when the selected unit is not already grams; do not repeat the
+  exact gram value beneath the food name and again in the amount control.
 - Top nutrient contribution summary.
 - Collapse/expand details with a chevron.
 - Remove ingredient action.
+- Preference conflicts use the shared compact warning edge; the expanded details own
+  the complete warning wording rather than crowding the resting card.
 - Scrollable selected ingredients area when there are many foods.
+- Show the selection count once in the section summary. When search narrows the list,
+  show the filtered result count with the search control instead of repeating the full
+  count at rest.
 - When that inner area reaches either vertical boundary, continued wheel or touch
   scrolling passes to the Mix page without requiring `Load more`.
 
@@ -616,6 +659,9 @@ On compact screens, use one identity row containing the food symbol, name, conve
 weight, and the paired details/remove actions. Place the amount stepper and short
 DB-provided unit label in one unobstructed row beneath it. Do not stack secondary
 actions beside the amount row or truncate a unit label to fit.
+Use the same identity-then-amount order at wider widths so long names and conversion
+labels cannot compete with the editable controls. The step controls compose the shared
+accelerating circular buttons, and the numeric field keeps the shared focus treatment.
 
 Units and conversions:
 

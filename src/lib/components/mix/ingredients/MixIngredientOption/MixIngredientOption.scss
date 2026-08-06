@@ -38,14 +38,15 @@
 .mix-ingredient-option__copy {
 	@include ingredient-card-layout.copy(false);
 	@include ingredient-card-layout.presentation-layer;
+
+	box-sizing: border-box;
+	padding-inline-end: calc(
+		var(--ingredient-card-action-size) + #{$app-gap-sm}
+	);
 }
 
 .mix-ingredient-option--media .mix-ingredient-option__copy {
 	@include ingredient-card-layout.media-content-inset;
-}
-
-.mix-ingredient-option__title-row {
-	@include ingredient-card-layout.title-row;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {

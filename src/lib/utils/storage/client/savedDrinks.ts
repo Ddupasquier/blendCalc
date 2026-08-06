@@ -1,28 +1,31 @@
-import {
-	MIX_STORAGE_KEYS,
-} from "$lib/utils/storage/storageKeys";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { getMixRuntimeConfiguration } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
-import {
-	addFoodsToSmoothieList,
-} from "$lib/utils/storage/client/smoothieLists";
+import { addFoodsToSmoothieList } from "$lib/utils/storage/client/smoothieLists";
 import { compactFood } from "$lib/utils/food/records/foodRecords";
 import {
 	deleteCloudSavedDrink,
 	readCloudSavedDrinkById,
 	readCloudSmoothieListIndex,
 	saveCloudSavedDrinkWithResult,
+  saveCloudMixGoalConfiguration,
 	saveCloudMixPreferences,
 } from "$lib/utils/storage/supabase";
-import type { FdcFood } from "$lib/utils/food/types";
+import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
 import { writeStoredMixState } from "$lib/utils/mix/state/mixState";
 import {
 	hasLegacySodiumOption,
-	migrateLegacyNutrientGoals,
+  LEGACY_SODIUM_NUTRIENT_ID,
 	migrateLegacyNutrientIds,
 	migrateLegacyNutrientOptions,
 } from "$lib/utils/mix/nutrients/nutrientMappings";
+import {
+  isMixGoalBasis,
+  normalizeMixGoalMap,
+  type MixGoalBasis,
+  type MixGoalMap,
+} from "$lib/utils/mix/goals/types";
 
 export const SAVED_DRINKS_CHANGED_EVENT = "smoothie-saved-drinks-changed";
 export const LOADED_SAVED_DRINK_STORAGE_KEY = "smoothie-loaded-saved-drink";
@@ -39,7 +42,8 @@ export type SavedDrink = {
 	foods: FdcFood[];
 	selected: (string | number)[];
 	options: SavedDrinkNutrientOption[];
-	nutrientGoals: Record<number, number>;
+  nutrientGoals: MixGoalMap;
+  goalBasis: MixGoalBasis;
 	servingGrams: Record<number, number>;
 	servingQuantities: Record<number, number>;
 	servingUnits: Record<number, ServingMeasureUnit>;
@@ -69,19 +73,36 @@ const dispatchSavedDrinksChanged = () => {
 export const normalizeSavedDrink = (value: SavedDrink): SavedDrink => {
 	const rawOptions = Array.isArray(value.options) ? value.options : [];
 	const shouldMigrateLegacySodium = hasLegacySodiumOption(rawOptions);
+  const normalizedGoals = normalizeMixGoalMap(
+    value.nutrientGoals,
+    getMixRuntimeConfiguration().pointGoalTolerance,
+  );
+	if (
+    shouldMigrateLegacySodium &&
+    normalizedGoals[LEGACY_SODIUM_NUTRIENT_ID] &&
+    !normalizedGoals[NUTRIENT_IDS.SODIUM]
+  ) {
+    normalizedGoals[NUTRIENT_IDS.SODIUM] = {
+      ...normalizedGoals[LEGACY_SODIUM_NUTRIENT_ID],
+      nutrientId: NUTRIENT_IDS.SODIUM,
+    };
+		delete normalizedGoals[LEGACY_SODIUM_NUTRIENT_ID];
+	}
+	const goalIds = new Set(Object.keys(normalizedGoals).map(Number));
+	const normalizedSelected = migrateLegacyNutrientIds(
+		Array.isArray(value.selected) ? value.selected : [],
+		shouldMigrateLegacySodium,
+	).filter((nutrientId) => goalIds.has(Number(nutrientId)));
 
 	return {
 		...value,
 		foods: (value.foods ?? []).map(compactFood),
-		selected: migrateLegacyNutrientIds(
-			Array.isArray(value.selected) ? value.selected : [],
-			shouldMigrateLegacySodium,
+		selected: normalizedSelected,
+		options: migrateLegacyNutrientOptions(rawOptions).filter((option) =>
+			goalIds.has(Number(option.id)),
 		),
-		options: migrateLegacyNutrientOptions(rawOptions),
-		nutrientGoals: migrateLegacyNutrientGoals(
-			value.nutrientGoals ?? {},
-			shouldMigrateLegacySodium,
-		),
+    nutrientGoals: normalizedGoals,
+    goalBasis: isMixGoalBasis(value.goalBasis) ? value.goalBasis : "per_mix",
 		servingGrams: value.servingGrams ?? {},
 		servingQuantities: value.servingQuantities ?? {},
 		servingUnits: value.servingUnits ?? {},
@@ -118,7 +139,9 @@ export const writeLoadedSavedDrink = (drink: LoadedSavedDrink) => {
 };
 
 export const clearLoadedSavedDrink = () => {
-	sessionStorage.removeItem(getScopedStorageKey(LOADED_SAVED_DRINK_STORAGE_KEY));
+  sessionStorage.removeItem(
+    getScopedStorageKey(LOADED_SAVED_DRINK_STORAGE_KEY),
+  );
 };
 
 const createSavedDrink = (input: SavedDrinkInput): SavedDrink => {
@@ -190,15 +213,10 @@ export const restoreSavedDrinkToMix = async (drink: SavedDrink) => {
 	const listIndex = await readCloudSmoothieListIndex();
 	if (!listIndex) return false;
 
-	const fridgeIds = new Set(
-		listIndex[MIX_STORAGE_KEYS.fridge].foodIds,
-	);
-	const shoppingIds = new Set(
-		listIndex[MIX_STORAGE_KEYS.shoppingList].foodIds,
-	);
+  const fridgeIds = new Set(listIndex[MIX_STORAGE_KEYS.fridge].foodIds);
+  const shoppingIds = new Set(listIndex[MIX_STORAGE_KEYS.shoppingList].foodIds);
 	const foodsMissingFromBothLists = normalizedDrink.foods.filter(
-		(food) =>
-			!fridgeIds.has(food.fdcId) && !shoppingIds.has(food.fdcId),
+    (food) => !fridgeIds.has(food.fdcId) && !shoppingIds.has(food.fdcId),
 	);
 
 	if (foodsMissingFromBothLists.length > 0) {
@@ -230,19 +248,22 @@ export const restoreSavedDrinkToMix = async (drink: SavedDrink) => {
 		),
 	};
 
-	localStorage.setItem(
-		getScopedStorageKey(MIX_STORAGE_KEYS.nutrientGoals),
-		JSON.stringify(normalizedDrink.nutrientGoals),
-	);
 	const persistedMixState = writeStoredMixState(mixState);
+  const [mixSaved, goalsSaved] = await Promise.all([
+    saveCloudMixPreferences({ mixState: persistedMixState }),
+    saveCloudMixGoalConfiguration({
+      goals: normalizedDrink.nutrientGoals,
+      goalBasis: normalizedDrink.goalBasis,
+      sourceTemplateVersionId: null,
+      sourceUserTemplateId: null,
+      templateCustomized: true,
+    }),
+  ]);
+  if (!mixSaved || !goalsSaved) return false;
 	writeLoadedSavedDrink({
 		id: normalizedDrink.id,
 		name: normalizedDrink.name,
 		isDirty: false,
-	});
-	void saveCloudMixPreferences({
-		nutrientGoals: normalizedDrink.nutrientGoals,
-		mixState: persistedMixState,
 	});
 	return true;
 };

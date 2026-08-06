@@ -43,6 +43,17 @@ describe("mix route state", () => {
 			overlay: MIX_ROUTE_OVERLAYS.conversionDetails,
 			foodId: 42,
 		});
+    expect(getMixRouteState(url("/mix/goals/presets/save"))).toMatchObject({
+      overlay: MIX_ROUTE_OVERLAYS.saveGoalPreset,
+    });
+    expect(
+      getMixRouteState(
+        url("/mix/goals/presets/00000000-0000-4000-8000-000000000001/delete"),
+      ),
+    ).toMatchObject({
+      overlay: MIX_ROUTE_OVERLAYS.deleteGoalPreset,
+      goalTemplateId: "00000000-0000-4000-8000-000000000001",
+    });
 	});
 
 	it("builds overlay paths without discarding supported query modifiers", () => {
@@ -66,6 +77,11 @@ describe("mix route state", () => {
 				overlay: MIX_ROUTE_OVERLAYS.ingredientFilters,
 			}),
 		).toBe("/mix/ingredients/filters?view=chart");
+    expect(
+      buildMixRouteHref(url("/mix?view=chart"), {
+        overlay: MIX_ROUTE_OVERLAYS.saveGoalPreset,
+      }),
+    ).toBe("/mix/goals/presets/save?view=chart");
 		expect(
 			buildMixRouteHref(url("/mix/reset-all?view=chart"), {
 				overlay: null,
@@ -90,6 +106,7 @@ describe("mix route state", () => {
 			overlay: null,
 			foodId: null,
 			warningId: null,
+      goalTemplateId: null,
 		});
 	});
 
@@ -104,5 +121,8 @@ describe("mix route state", () => {
 		expect(
 			getMixRouteTitle(url("/mix/ingredients/42/conversion-details")),
 		).toBe("Serving Conversion Details");
+    expect(getMixRouteTitle(url("/mix/goals/presets/save"))).toBe(
+      "Save Goal Preset",
+    );
 	});
 });

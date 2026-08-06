@@ -1,0 +1,102 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+
+.range-input {
+	--range-input-tone: #{$app-shell-accent-primary};
+
+	position: relative;
+	display: grid;
+	align-items: center;
+	width: 100%;
+	min-width: 0;
+	height: $app-control-height-sm;
+}
+
+.range-input--neutral {
+	--range-input-tone: #{$app-shell-text-muted};
+}
+
+.range-input--success {
+	--range-input-tone: #{$app-shell-accent-primary};
+}
+
+.range-input--warning {
+	--range-input-tone: #{$app-warning-strong};
+}
+
+.range-input--danger {
+	--range-input-tone: #{$app-shell-accent-danger};
+}
+
+.range-input__track {
+	position: absolute;
+	right: 0;
+	left: 0;
+	display: block;
+	height: 0.35rem;
+	overflow: hidden;
+	background: $app-shell-border-subtle;
+	border-radius: $app-shell-radius-pill;
+	pointer-events: none;
+}
+
+.range-input__fill {
+	display: block;
+	height: 100%;
+	background: var(--range-input-tone);
+	border-radius: inherit;
+	transition: width motion.$duration-feedback motion.$easing-standard;
+}
+
+.range-input__control {
+	position: relative;
+	z-index: 1;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	background: transparent;
+	cursor: pointer;
+	appearance: none;
+}
+
+.range-input__control::-webkit-slider-runnable-track {
+	height: 0.35rem;
+	background: transparent;
+}
+
+.range-input__control::-moz-range-track {
+	height: 0.35rem;
+	background: transparent;
+}
+
+.range-input__control::-webkit-slider-thumb {
+	width: 1.15rem;
+	height: 1.15rem;
+	margin-top: -0.4rem;
+	background: $app-shell-surface-panel;
+	border: 0.2rem solid var(--range-input-tone);
+	border-radius: 50%;
+	appearance: none;
+}
+
+.range-input__control::-moz-range-thumb {
+	width: 0.75rem;
+	height: 0.75rem;
+	background: $app-shell-surface-panel;
+	border: 0.2rem solid var(--range-input-tone);
+	border-radius: 50%;
+}
+
+.range-input__control:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-gap-xs;
+	border-radius: $app-shell-radius-pill;
+}
+
+.range-input--disabled {
+	opacity: 0.55;
+}
+
+.range-input--disabled .range-input__control {
+	cursor: not-allowed;
+}

@@ -1,14 +1,5 @@
 @use "../../../../../styles/variables" as *;
 
-.contribution-breakdown {
-	background: $app-shell-surface-panel;
-	border-radius: $app-shell-radius-card;
-}
-
-.contribution-breakdown > :global(.collapsible-section) > :global(.collapsible-section__content) {
-	padding: $app-gap-md $app-gap-sm $app-gap-sm;
-}
-
 .contribution-breakdown__grid,
 .contribution-card {
 	display: grid;
@@ -82,10 +73,4 @@ small {
 	grid-column: 1 / -1;
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-2xs;
-}
-
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.contribution-breakdown > :global(.collapsible-section) > :global(.collapsible-section__content) {
-		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
-	}
 }

@@ -12,7 +12,6 @@ configureAppReferenceCatalog({
 	nutrientEquivalences: [],
 	mixGoalTemplates: [],
 	mixRuntime: {
-		defaultGoalByUnit: {},
 		progressThresholds: {
 			atGoal: 1,
 			barelyOver: 1.1,

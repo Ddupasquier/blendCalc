@@ -3,12 +3,14 @@
 	import Minus from "$lib/assets/icons/Minus/Minus.svelte";
 	import Plus from "$lib/assets/icons/Plus/Plus.svelte";
 	import X from "$lib/assets/icons/X/X.svelte";
+	import AcceleratingStepButton from "$lib/components/common/buttons/AcceleratingStepButton/AcceleratingStepButton.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
+	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
 	import Popover from "$lib/components/common/display/Popover/Popover.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
-	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
 	import type { IngredientCardProps } from "./types";
 	import {
 		FOOD_PREFERENCE_WARNING_TITLE,
@@ -44,6 +46,7 @@
 
 	let detailsOpen = $state(false);
 	const preferenceWarnings = $derived(food.preferenceWarnings ?? []);
+	const detailsId = $derived(`ingredient-${food.fdcId}-details`);
 	const servingUnitOptions = $derived(
 		SERVING_MEASURE_OPTIONS
 			.filter((option) => canConvertServingUnit(option.value, food))
@@ -53,26 +56,27 @@
 		onServingChange(food, String(Math.max(0, nextQuantity)), unit);
 </script>
 
-<article class="ingredient-card" class:ingredient-card--custom={isPrivateCustomFood(food)}>
+<article
+	class="ingredient-card"
+	class:ingredient-card--custom={isPrivateCustomFood(food)}
+	class:ingredient-card--warning={preferenceWarnings.length > 0}
+>
+	{#if preferenceWarnings.length > 0}<CardWarningEdge />{/if}
 	<span class="ingredient-card__symbol" aria-hidden="true"><FoodSymbol {food} /></span>
 	<div class="ingredient-card__copy">
-		<div class="ingredient-card__title-row">
-			<h3 title={food.description}>{food.description}</h3>
-			{#if isPrivateCustomFood(food)}<CustomBadge />{/if}
-		</div>
-		<p>{gramsLabel}</p>
+		<h3 title={food.description}>{food.description}</h3>
+		{#if gramsLabel}<p>{gramsLabel}</p>{/if}
 	</div>
 	<div class="ingredient-card__amount" aria-label={`Amount for ${food.description}`}>
-		<CircleIconButton
-			class="ingredient-card__step"
+		<AcceleratingStepButton
 			label={`Use less ${food.description}`}
 			variant="soft"
 			size="small"
 			disabled={quantity <= 0}
-			onclick={() => updateQuantity(quantity - 1)}
+			onStep={(stepAmount) => updateQuantity(quantity - stepAmount)}
 		>
 			<Minus size={15} />
-		</CircleIconButton>
+		</AcceleratingStepButton>
 		<NumberInput
 			id={`ingredient-${food.fdcId}-quantity`}
 			name={`ingredient-${food.fdcId}-quantity`}
@@ -84,15 +88,14 @@
 			ariaLabel={`Quantity for ${food.description}`}
 			onValueChange={(value) => onServingChange(food, value, unit)}
 		/>
-		<CircleIconButton
-			class="ingredient-card__step ingredient-card__step--add"
+		<AcceleratingStepButton
 			label={`Use more ${food.description}`}
 			variant="primary"
 			size="small"
-			onclick={() => updateQuantity(quantity + 1)}
+			onStep={(stepAmount) => updateQuantity(quantity + stepAmount)}
 		>
 			<Plus size={15} />
-		</CircleIconButton>
+		</AcceleratingStepButton>
 		<SelectField
 			id={`ingredient-${food.fdcId}-unit`}
 			name={`ingredient-${food.fdcId}-unit`}
@@ -110,10 +113,13 @@
 	<div class="ingredient-card__actions">
 		<CircleIconButton
 			class="ingredient-card__details-toggle"
-			label={`${detailsOpen ? "Hide" : "Show"} details for ${food.description}`}
+			label={detailsOpen
+				? `Hide details for ${food.description}`
+				: `${preferenceWarnings.length > 0 ? "Show warning and details" : "Show details"} for ${food.description}`}
 			variant="soft"
 			size="small"
 			aria-expanded={detailsOpen}
+			aria-controls={detailsId}
 			onclick={() => (detailsOpen = !detailsOpen)}
 		>
 			<DisclosureChevron open={detailsOpen} size={15} />
@@ -131,6 +137,7 @@
 
 	{#if detailsOpen}
 		<div
+			id={detailsId}
 			class="ingredient-card__details"
 			transition:slide={{
 				duration: getMotionSafeDuration(MOTION_DURATION_MS.feedback),
@@ -150,10 +157,11 @@
 				</Popover>
 			{/if}
 			{#if preferenceWarnings.length > 0}
-				<div class="ingredient-card__warning">
-					<strong>{FOOD_PREFERENCE_WARNING_TITLE}</strong>
-					<p>{preferenceWarnings.map(getFoodPreferenceWarningMessage).join(" ")}</p>
-				</div>
+				<StatusMessage
+					tone="warning"
+					title={FOOD_PREFERENCE_WARNING_TITLE}
+					message={preferenceWarnings.map(getFoodPreferenceWarningMessage).join(" ")}
+				/>
 			{/if}
 			{#if nutrientChips.length > 0}
 				<div class="ingredient-card__chips" aria-label="Top nutrient contributions">

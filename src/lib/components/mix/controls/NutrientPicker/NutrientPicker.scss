@@ -1,64 +1,70 @@
 @use "../../../../../styles/variables" as *;
 
 .nutrient-picker {
-	position: relative;
+	min-width: 0;
 }
 
-.nutrient-picker__toggle {
-	display: flex;
-	gap: $app-gap-xs;
-	align-items: center;
-	justify-content: space-between;
-	width: 100%;
-	min-height: $app-control-height;
-	padding: 0 $app-gap-sm;
-	color: $app-primary;
-	background: $app-btn-bg;
-	border-radius: $app-radius-sm;
-	font-size: $app-font-size-sm;
-	font-weight: $app-font-weight-bold;
+.nutrient-picker__content {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
 }
 
-.nutrient-picker__panel {
-	position: absolute;
-	z-index: 20;
-	top: calc(100% + #{$app-gap-xs});
-	right: 0;
-	width: min(26rem, calc(100vw - #{$app-gap-lg}));
-	max-height: min(28rem, calc(100vh - 2 * $app-gap-md));
-	max-height: min(28rem, calc(100dvh - 2 * $app-gap-md));
-	padding: $app-gap-sm;
-	overflow-y: auto;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-card-radius;
-	overscroll-behavior: contain;
-
-	label {
-		display: block;
-		margin-bottom: $app-gap-xs;
-		color: $app-primary;
-		font-size: $app-font-size-sm;
-		font-weight: $app-font-weight-bold;
-	}
-
-	input {
-		width: 100%;
-		height: $app-control-height;
-		padding: 0 $app-gap-sm;
-		color: $app-primary;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-radius-sm;
-		font-size: $app-font-size-md;
-	}
+.nutrient-picker > :global(.collapsible-section) > :global(.collapsible-section__content) {
+	padding-top: $app-gap-sm;
 }
 
-.nutrient-picker__hint,
 .nutrient-picker__empty {
-	margin: $app-gap-xs 0;
-	color: $app-muted;
-	font-size: $app-font-size-xs;
+	margin: 0;
+	padding: $app-gap-sm;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	text-align: center;
+}
+
+.nutrient-picker__goal-setup {
+	display: grid;
+	gap: $app-gap-sm;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-control;
+	border: $app-border;
+	border-radius: $app-radius;
+}
+
+.nutrient-picker__goal-copy {
+	display: grid;
+	gap: $app-gap-2xs;
+	color: $app-shell-text-primary;
+
+	small {
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-sm;
+	}
+}
+
+.nutrient-picker__goal-controls {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: $app-gap-xs;
+
+	> :global(input) {
+		width: 100%;
+		min-width: 0;
+		height: $app-control-height-sm;
+		padding: 0 $app-gap-sm;
+		background: $app-shell-surface-control;
+		border: $app-border;
+		border-radius: $app-radius-pill;
+		color: $app-shell-text-primary;
+		font: inherit;
+	}
+
+	> span {
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-sm;
+		font-weight: $app-font-weight-semibold;
+	}
 }
 
 .nutrient-picker__results {
@@ -66,63 +72,41 @@
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: $app-gap-xs;
 	max-height: 18rem;
+	padding: $app-focus-outline-offset;
 	overflow-y: auto;
-	overscroll-behavior: contain;
-
-	button {
-		display: flex;
-		gap: $app-gap-xs;
-		align-items: center;
-		justify-content: space-between;
-		min-width: 0;
-		padding: $app-gap-xs $app-gap-sm;
-		color: $app-primary;
-		text-align: left;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-radius-sm;
-		font-size: $app-font-size-sm;
-		font-weight: $app-button-font-weight;
-		line-height: $app-button-line-height;
-
-		&:hover,
-		&:focus-visible {
-			background: $app-btn-bg;
-		}
-
-		span {
-			min-width: 0;
-			overflow-wrap: anywhere;
-		}
-
-		small {
-			flex: 0 0 auto;
-			color: $app-muted;
-			font-size: $app-font-size-xs;
-			font-weight: $app-font-weight-medium;
-		}
-	}
+	overscroll-behavior-y: auto;
 }
 
-@media (max-width: $app-breakpoint-sm) {
-	.nutrient-picker__panel {
-		position: static;
-		width: 100%;
-		margin-top: $app-gap-xs;
-	}
+.nutrient-picker__label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
 
+.nutrient-picker__unit {
+	flex: 0 0 auto;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.nutrient-picker__results {
 		grid-template-columns: 1fr;
 		max-height: 15rem;
 	}
-}
 
-@media (max-height: $app-breakpoint-height-compact) {
-	.nutrient-picker__panel {
-		max-height: calc(100dvh - 2 * $app-gap-sm);
+	.nutrient-picker__content {
+		gap: $app-gap-xs;
 	}
 
-	.nutrient-picker__results {
-		max-height: 10rem;
+	.nutrient-picker__goal-controls {
+		grid-template-columns: minmax(0, 1fr) auto;
+
+		> :global(.action-button) {
+			grid-column: 1 / -1;
+		}
 	}
 }
