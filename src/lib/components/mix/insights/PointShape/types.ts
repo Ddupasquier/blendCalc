@@ -9,6 +9,7 @@ export type PointShapeProps = {
 	goalValues?: number[];
 	labels?: string[];
 	valueLabels?: string[];
+	showValueLabels?: boolean;
 	pointColors?: PointColor[];
 	size?: number;
 	fillColor?: string;

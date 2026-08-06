@@ -1,6 +1,6 @@
 # Development Rules Audit
 
-Last audited: 2026-08-03
+Last audited: 2026-08-05
 
 ## Purpose
 
@@ -229,60 +229,6 @@ behavior, and source enrichment.
 unknown or is rejected from identity-dependent rules; and source expansion does not
 require editing a hidden datatype allowlist.
 
-### General Atwater Calories Are Presented As Resolved Data
-
-**Status:** High
-
-**Evidence:** `src/lib/utils/food/nutrients/fdcNutrients.ts` derives calories with
-`fat × 9 + carbohydrate × 4 + protein × 4` when energy is missing. The result is marked
-derived rather than reported, but the general factors can disagree with authoritative
-energy because of fiber, sugar alcohols, alcohol, organic acids, and food-specific
-factors.
-
-**Affected areas:** Nutrition completeness, search ranking, nutrition facts, Mix
-totals, warnings, and suggestions.
-
-**Complete when:** The derivation is an explicitly versioned policy with method and
-input provenance, uses a standards-backed applicable formula, and is never presented as
-reported energy; otherwise missing calories remain missing.
-
-### Unit-Only Goal Fallbacks Invent Nutrient Targets
-
-**Status:** High
-
-**Evidence:** `src/lib/utils/mix/calculations/nutrientTotals.ts` falls back from a
-nutrient-specific target to `defaultGoalByUnit`, including the generic value seeded in
-`supabase/migrations/20260719221000_reference_catalog_integrity.sql`. Unconfigured
-nutrients can therefore receive the same goal merely because they share `g`, `mg`,
-`mcg`, or another unit.
-
-**Affected areas:** Mix charts, progress, warnings, and save summaries. Suggested
-adjustments already require an explicit nutrient-specific goal and do not use this
-fallback.
-
-**Complete when:** A nutrient has a goal only through an explicit versioned
-nutrient-specific policy row; unsupported nutrients show no target and cannot generate
-goal-based warnings.
-
-### Imported Estimate Qualifiers Are Lost At Runtime
-
-**Status:** High
-
-**Evidence:** CoFID parenthesized values are stored by
-`scripts/imports/import_cofid_2021.mjs` with `valueQualifier: source-estimate`, while the
-generic search RPC includes nutrient metadata. `src/lib/server/products/genericFoods.server.ts`
-maps only the numeric amount and reports every returned value as `valueOrigin:
-reported`; the `FdcNutrient` model has no estimate/trace qualifier. Open Food Facts
-ingredient percentages similarly retain estimate fields without field-level estimate
-provenance.
-
-**Affected areas:** Search, saved foods, quality labels, nutrition facts, Mix,
-canonical enrichment, and public API value status.
-
-**Complete when:** The runtime and API models preserve measured, estimated, trace,
-present-unquantified, and derived status separately; estimated values never appear as
-ordinary reported measurements; and subfield provenance identifies provider estimates.
-
 ### Remaining Heuristic Product Policies
 
 **Status:** Open
@@ -299,8 +245,6 @@ ordinary reported measurements; and subfield provenance identifies provider esti
 - nutrition completeness weights required fields four times, scores source-resolution
   modes as 3/2/1/0, and uses a 60% partial threshold in
   `src/lib/utils/food/quality/foodQuality.ts`;
-- Mix warning and suggestion utilities use fixed 1%, 2%, 5%, and 10% significance
-  thresholds and minimum reduction amounts; and
 - category suggestions and source/search ranking use hardcoded scoring systems.
 
 These policies do not directly rewrite measured nutrient amounts, and category/search
@@ -310,19 +254,6 @@ verification, warnings, recommendations, and perceived quality.
 **Complete when:** Canonical and moderation decisions use versioned, validated policy
 rows with regression coverage; recommendation/search-only scores are clearly scoped as
 UX ranking rather than source authority; and duplicate thresholds are consolidated.
-
-### Trace Nutrients Can Display As Zero
-
-**Status:** Open
-
-**Evidence:** `src/lib/utils/food/nutrients/nutritionDisplay.ts` renders every nonzero
-absolute value below `0.005` as `0`. This is a presentation rule rather than a stored
-value mutation, but it visually converts a measured trace amount into zero without
-showing that rounding occurred.
-
-**Complete when:** Formatting is unit-aware and uses an explicit trace or less-than
-label where appropriate; the stored amount remains unchanged; and tests cover values
-around each display boundary.
 
 ### Allergen Declaration Parsing Is Language-Specific Evidence Extraction
 

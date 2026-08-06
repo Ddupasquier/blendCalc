@@ -1,4 +1,5 @@
 @use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
 
 .select-field {
 	display: grid;
@@ -46,12 +47,27 @@
 	min-width: 0;
 }
 
-.select-field__select {
+.select-field__native {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.select-field__trigger {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) $app-shell-control-icon-size;
+	align-items: center;
+	gap: $app-gap-sm;
 	width: 100%;
 	min-width: 0;
 	min-height: $app-shell-control-height;
-	padding: 0 calc($app-shell-control-padding-x + $app-shell-control-icon-size + $app-gap-sm)
-		0 $app-shell-control-padding-x;
+	padding: 0 $app-shell-control-padding-x;
 	color: $app-shell-text-primary;
 	background: $app-shell-surface-control;
 	border: 1px solid $app-shell-border-subtle;
@@ -62,41 +78,144 @@
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-semibold;
 	line-height: $app-line-height-ui;
+	text-align: start;
 	cursor: pointer;
+	transition:
+		background motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard;
 }
 
-.select-field__select:hover:not(:disabled) {
+.select-field__trigger:hover:not(:disabled),
+.select-field[data-open="true"] .select-field__trigger {
 	border-color: $app-shell-accent-primary;
 }
 
-.select-field__select:focus-visible {
+.select-field__trigger:focus-visible {
 	border-color: $app-shell-accent-primary;
 	outline: $app-focus-outline;
 	outline-offset: $app-focus-outline-offset;
 }
 
-.select-field__select:disabled {
+.select-field__trigger:disabled {
 	color: $app-shell-text-muted;
 	cursor: not-allowed;
 	opacity: 0.65;
 }
 
-.select-field__select option {
-	color: $app-shell-text-primary;
-	background: $app-shell-surface-panel;
+.select-field__trigger[data-placeholder="true"] .select-field__value {
+	color: $app-shell-text-muted;
+}
+
+.select-field__value {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .select-field__icon {
-	position: absolute;
-	inset-inline-end: $app-shell-control-padding-x;
-	top: 50%;
 	display: grid;
 	place-items: center;
 	width: $app-shell-control-icon-size;
 	height: $app-shell-control-icon-size;
 	color: $app-shell-text-muted;
 	pointer-events: none;
-	transform: translateY(-50%);
+	transition: transform motion.$duration-layout motion.$easing-spatial;
+}
+
+.select-field__icon[data-open="true"] {
+	transform: rotate(180deg);
+}
+
+.select-field__listbox {
+	position: fixed;
+	inset: unset;
+	inset-inline-start: clamp(
+		$app-gap-sm,
+		var(--select-field-trigger-left),
+		calc(100vw - min(12rem, calc(100vw - 2 * $app-gap-sm)) - $app-gap-sm)
+	);
+	top: calc(var(--select-field-trigger-bottom) + $app-gap-xs);
+	z-index: 120;
+	display: grid;
+	gap: $app-gap-2xs;
+	width: var(--select-field-trigger-width);
+	min-width: min(12rem, calc(100vw - 2 * $app-gap-sm));
+	max-width: calc(100vw - 2 * $app-gap-sm);
+	max-height: min(
+		18rem,
+		calc(100dvh - var(--select-field-trigger-bottom) - 2 * $app-gap-sm)
+	);
+	padding: $app-gap-xs;
+	margin: 0;
+	overflow-y: auto;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-panel;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+	overscroll-behavior: contain;
+}
+
+.select-field__listbox[data-placement="top"] {
+	top: auto;
+	bottom: calc(100dvh - var(--select-field-trigger-top) + $app-gap-xs);
+	max-height: min(
+		18rem,
+		calc(var(--select-field-trigger-top) - 2 * $app-gap-sm)
+	);
+}
+
+.select-field__listbox::backdrop {
+	background: transparent;
+}
+
+.select-field__option {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) $app-shell-control-icon-size;
+	align-items: center;
+	gap: $app-gap-sm;
+	width: 100%;
+	min-height: $app-shell-control-height-compact;
+	padding: $app-shell-control-padding-y-compact $app-shell-control-padding-x-compact;
+	color: $app-shell-text-primary;
+	background: transparent;
+	border: 0;
+	border-radius: $app-shell-radius-control;
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-semibold;
+	line-height: $app-line-height-ui;
+	text-align: start;
+	cursor: pointer;
+}
+
+.select-field__option > span:first-child {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.select-field__option--active,
+.select-field__option[aria-selected="true"] {
+	color: $app-shell-accent-primary;
+	background: $app-shell-accent-soft;
+}
+
+.select-field__option:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: -$app-focus-outline-offset;
+}
+
+.select-field__option:disabled {
+	color: $app-shell-text-muted;
+	cursor: not-allowed;
+	opacity: 0.65;
+}
+
+.select-field__check {
+	display: grid;
+	place-items: center;
+	width: $app-shell-control-icon-size;
+	height: $app-shell-control-icon-size;
 }
 
 .select-field__helper {
@@ -110,20 +229,16 @@
 	grid-column: 2;
 }
 
-.select-field[data-size="compact"] .select-field__select {
+.select-field[data-size="compact"] .select-field__trigger {
 	min-height: $app-shell-control-height-narrow;
 	padding-inline-start: $app-shell-control-padding-x-compact;
 }
 
-.select-field[data-size="small"] .select-field__select {
+.select-field[data-size="small"] .select-field__trigger {
 	height: $app-control-height-sm;
 	min-height: $app-control-height-sm;
-	padding-inline-start: $app-gap-sm;
+	padding-inline: $app-gap-sm;
 	font-size: $app-font-size-xs;
-}
-
-.select-field[data-size="small"] .select-field__icon {
-	inset-inline-end: $app-gap-xs;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
@@ -131,8 +246,19 @@
 		gap: $app-gap-sm;
 	}
 
-	.select-field__select {
+	.select-field__trigger {
 		min-height: $app-shell-control-height-narrow;
 		padding-inline-start: $app-shell-control-padding-x-compact;
+	}
+
+	.select-field__listbox {
+		font-size: $app-font-size-xs;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.select-field__trigger,
+	.select-field__icon {
+		transition: none;
 	}
 }

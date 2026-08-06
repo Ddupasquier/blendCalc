@@ -210,9 +210,10 @@ describe("NutritionDetailView", () => {
 		expect(screen.getByText("Serving Size")).toBeInTheDocument();
 		expect(screen.getByText("2 tbsp (32g)")).toBeInTheDocument();
 		expect(screen.getByText("Amount per serving")).toBeInTheDocument();
-		await fireEvent.change(screen.getByRole("combobox", { name: "Serving" }), {
-			target: { value: "standard-100g" },
-		});
+		await fireEvent.click(screen.getByRole("combobox", { name: "Serving" }));
+		await fireEvent.click(
+			screen.getByRole("option", { name: "100g standard" }),
+		);
 		expect(screen.getByText("100g")).toBeInTheDocument();
 		expect(screen.getByText("Per 100g food data")).toBeInTheDocument();
 		expect(screen.queryByText("Serving Size")).not.toBeInTheDocument();
@@ -330,9 +331,10 @@ describe("NutritionDetailView", () => {
 		expect(screen.getByText("Product image").closest("div"))
 			.toHaveTextContent("Open Food Facts · 021130493609");
 
-		await fireEvent.change(screen.getByRole("combobox", { name: "Serving" }), {
-			target: { value: "standard-100g" },
-		});
+		await fireEvent.click(screen.getByRole("combobox", { name: "Serving" }));
+		await fireEvent.click(
+			screen.getByRole("option", { name: "100g standard" }),
+		);
 		expect(screen.getByText("100g")).toBeInTheDocument();
 		expect(screen.getByText("Per 100g food data")).toBeInTheDocument();
 		expect(screen.queryByText("Serving Size")).not.toBeInTheDocument();

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import PillButton from "$lib/components/common/buttons/PillButton/PillButton.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
+	import RangeInput from "$lib/components/common/forms/RangeInput/RangeInput.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import ImagePlacementCardPreview from "$lib/components/common/images/ImagePlacementCardPreview/ImagePlacementCardPreview.svelte";
 	import type { ImagePlacementEditorProps } from "./types";
@@ -242,18 +243,19 @@
 					Shift image left
 					{#if !previewGeometry.ready}<small>Available after the image loads</small>{/if}
 				</span>
-				<input
-					type="range"
-					min="0"
-					max="100"
-					step="1"
+				<RangeInput
+					id="image-placement-horizontal-shift"
+					min={0}
+					max={100}
+					step={1}
 					value={horizontalShift}
 					disabled={!previewGeometry.ready}
-					oninput={(event) =>
+					ariaLabel="Shift image left"
+					onValueChange={(value) =>
 						updateCustomValue({
 							cropX:
 								CARD_IMAGE_PLACEMENT_MIN_X +
-								(Number(event.currentTarget.value) / 100) *
+								(value / 100) *
 									(CARD_IMAGE_PLACEMENT_MAX_X -
 										CARD_IMAGE_PLACEMENT_MIN_X),
 						})}
@@ -264,27 +266,29 @@
 					Vertical position
 					{#if !previewGeometry.canMoveY}<small>Centered at this zoom</small>{/if}
 				</span>
-				<input
-					type="range"
-					min="0"
-					max="100"
-					step="1"
+				<RangeInput
+					id="image-placement-vertical-position"
+					min={0}
+					max={100}
+					step={1}
 					value={value.cropY}
 					disabled={!previewGeometry.canMoveY}
-					oninput={(event) =>
-						updateCustomValue({ cropY: Number(event.currentTarget.value) })}
+					ariaLabel="Vertical image position"
+					onValueChange={(nextValue) =>
+						updateCustomValue({ cropY: nextValue })}
 				/>
 			</label>
 			<label>
 				<span>Zoom <output>{formatZoom(previewGeometry.effectiveZoom)}</output></span>
-				<input
-					type="range"
-					min="1"
+				<RangeInput
+					id="image-placement-zoom"
+					min={1}
 					max={IMAGE_PLACEMENT_MAX_ZOOM}
-					step="0.05"
+					step={0.05}
 					value={previewGeometry.effectiveZoom}
-					oninput={(event) =>
-						updateCustomValue({ cropZoom: Number(event.currentTarget.value) })}
+					ariaLabel="Image zoom"
+					onValueChange={(nextValue) =>
+						updateCustomValue({ cropZoom: nextValue })}
 				/>
 			</label>
 			<RoundedActionButton variant="neutral" onclick={restoreDefault}>

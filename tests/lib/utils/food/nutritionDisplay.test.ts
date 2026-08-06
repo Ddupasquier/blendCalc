@@ -41,6 +41,8 @@ describe("nutrition display helpers", () => {
 		expect(formatNutritionAmount(23)).toBe("23");
 		expect(formatNutritionAmount(34.5)).toBe("34.5");
 		expect(formatNutritionAmount(0.04)).toBe("0.04");
+		expect(formatNutritionAmount(0.004)).toBe("<0.005");
+		expect(formatNutritionAmount(0)).toBe("0");
 		expect(formatNutritionAmount(undefined)).toBe("—");
 		expect(formatViewingGrams(125)).toBe("125g");
 		expect(getNutritionBasisLabel(100)).toBe("Per 100g food data");

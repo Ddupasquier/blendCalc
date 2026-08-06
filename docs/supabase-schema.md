@@ -8,8 +8,9 @@ policies, or core data ownership changes.
 ## Schema Navigation
 
 | Domain | Tables and registries |
-| --- | --- |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | [Core User Data](#core-user-data) | `profiles`, `user_tutorial_preferences`, `user_food_preferences`, `user_compatibility_rules`, `mix_preferences` |
+| [Mix Goals](#mix-goal-presets-and-active-goals)                                               | Stable system presets, immutable versions, private user presets, and normalized active nutrient goals           |
 | [Ingredient Lists and Saved Mixes](#ingredient-lists-and-saved-mixes) | `user_food_list_items`, `custom_foods`, `saved_drinks`, `ingredient_provenance_options`, `app_issue_codes` |
 | [Nutrients and Validation](#nutrient-definitions-values-and-validation) | `nutrient_definitions`, `food_nutrients`, `nutrient_manual_entry_*`, `nutrient_relationship_rules` |
 | [Product Sources and Servings](#product-reference-data-and-serving-measures) | `product_data_sources`, source metrics/mappings/conversions, serving measures, `food_servings` |
@@ -47,19 +48,19 @@ policies, or core data ownership changes.
 ## Core User Data
 
 | Table                       | Primary Key | Owner Scope             | Purpose                                                                                                    | Key Relationships                                                    |
-| --------------------------- | ----------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| --------------------------- | ----------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | `profiles`                  | `user_id`   | One row per auth user   | Display/profile data, appearance preference, avatar metadata, and avatar policy state                       | `user_id → auth.users.id`                                            |
 | `user_tutorial_preferences` | `user_id`   | One row per auth user   | Tracks tutorial seen/completed/remind-later state                                                          | `user_id → auth.users.id`                                            |
 | `user_food_preferences`     | `user_id`   | One row per auth user   | Optional unit system, allergens, dietary restrictions, nutrient priorities, and default serving preference | `user_id → auth.users.id`                                            |
 | `user_compatibility_rules`  | `id`        | Many rows per auth user | Server-derived exact resolution state for saved allergen and dietary preferences                            | User, active policy version, optional canonical tag/term/alias/mapping |
-| `mix_preferences`           | `user_id`   | One row per auth user   | Persisted nutrient goals, versioned Mix state, and the user's validated Mix section order                  | `user_id → auth.users.id`                                            |
+| `mix_preferences`           | `user_id`   | One row per auth user   | Versioned Mix draft state, goal-configuration source, goal basis, and validated section presentation       | User, optional system preset version, optional private user preset     |
 
 ### `profiles`
 
 Stores app-facing profile information. Email should not be copied here.
 
 | Table | Documented columns |
-| --- | --- |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `profiles` | `user_id`, `display_name`, `bio`, `appearance_theme`, `avatar_path`, `avatar_alt_text`, `avatar_moderation_status`, `avatar_policy_acknowledged_at`, `created_at`, `updated_at` |
 
 Notes:
@@ -80,7 +81,7 @@ Stores optional, potentially sensitive preference inputs. These are user-owned a
 should not be required to use the app.
 
 | Table | Documented columns |
-| --- | --- |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `user_food_preferences` | `user_id`, `unit_system`, `allergens`, `dietary_restrictions`, `prioritized_nutrient_ids`, `default_smoothie_serving_grams`, `regulatory_region_code`, `regulatory_region_source`, `sensitive_acknowledged_at`, `created_at`, `updated_at` |
 
 Notes:
@@ -102,12 +103,15 @@ Notes:
 Stores durable account-level Mix configuration separately from saved recipes.
 
 | Table | Documented columns |
-| --- | --- |
-| `mix_preferences` | `user_id`, `nutrient_goals`, `mix_state`, `section_order`, `section_disclosure_state`, `created_at`, `updated_at` |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mix_preferences` | `user_id`, `mix_state`, `goal_basis`, `source_goal_template_version_id`, `source_user_goal_template_id`, `goal_configuration_initialized`, `goal_template_customized`, `section_order`, `section_disclosure_state`, `created_at`, `updated_at` |
 
 Notes:
 
 - `mix_state` remains an independently versioned nutrition-builder snapshot.
+- `goal_configuration_initialized` distinguishes an intentionally empty tracked-goal
+  set from an account that has never chosen goals, so the UI never invents defaults
+  after a user removes every goal.
 - `section_order` stores every supported stable Mix section identifier exactly once.
   Its database constraint and `save_mix_section_order(text[])` reject unknown,
   duplicate, or incomplete layouts.
@@ -119,6 +123,50 @@ Notes:
   remain authoritative across sessions.
 - Browser clients retain scoped reads but cannot bypass the authoritative preference
   write functions.
+
+## Mix Goal Presets and Active Goals
+
+System presets are reviewed reference data; personal presets and active goals are
+private user data. Applying any preset copies its current targets into the user's active
+goal rows, so a later system-version change never silently changes an in-progress Mix.
+
+| Table                            | Primary key                        | Owner scope               | Purpose                                                                                                           | Key relationships                                         |
+| -------------------------------- | ---------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `mix_goal_templates`             | `key`                              | Shared stable identity    | Stable key, ordering, enabled/default state, and pointer to the current reviewed version                          | Current version → `mix_goal_template_versions.id`         |
+| `mix_goal_template_versions`     | `id`                               | Shared reviewed reference | Immutable display copy, goal basis, publication state, review history, and source evidence for one preset version | Template key, product data source, optional reviewer      |
+| `mix_goal_template_targets`      | `template_version_id, nutrient_id` | Shared reviewed reference | Per-nutrient direction, target/range, tolerance, importance, order, rationale, and source evidence                | Version, nutrient definition, product data source         |
+| `user_mix_goal_templates`        | `id`                               | One user per preset       | Private reusable goal-preset identity, description, basis, and optional originating system version                | User, optional system preset version                      |
+| `user_mix_goal_template_targets` | `template_id, nutrient_id`         | Private preset targets    | Immutable-at-application snapshot values for a personal reusable preset                                           | Personal preset, nutrient definition                      |
+| `user_mix_nutrient_goals`        | `user_id, nutrient_id`             | Active goals for one user | Normalized goal rules currently driving Mix calculations, warnings, chart status, and scoring                     | User, nutrient, optional system or personal preset source |
+| `mix_runtime_configuration`      | `key`                              | Shared runtime policy     | Versioned chart thresholds, point tolerance, and default Mix serving amount                                       | Product data source                                       |
+
+Goal rows use one explicit `goal_type`: `exact`, `minimum`, `maximum`, or `range`.
+`target_amount` is the point, lower bound, or upper ceiling according to that type;
+`upper_amount` is populated only for a range. `tolerance_ratio` defines the accepted
+boundary around the configured target, while `importance_weight` affects aggregate goal
+scores without altering nutrient math. Numeric zero remains a real target value and is
+never a missing-value sentinel.
+
+A nutrient receives an automatic goal only from an explicit target in the active,
+versioned default template. Runtime configuration does not contain unit-wide or generic
+goal values. A nutrient without a reviewed default must receive a target entered by the
+user before it can join the chart, warnings, scoring, or adjustment calculations.
+
+The schema reserves both `per_mix` and `per_serving` bases so reviewed versions can
+evolve without another structural rewrite. Current authoritative save/apply functions
+accept only `per_mix`: Mix does not yet store a serving count, so evaluating a
+per-serving preset would be incorrect rather than merely incomplete.
+
+Published system versions and their targets are protected from in-place edits. A
+reviewed update creates another version and deliberately advances the stable template's
+`current_version_id`. Personal templates remain owner-readable and can be written only
+through authenticated functions. Active goal rows are also read-only to browser roles;
+`save_mix_goal_configuration`, `apply_mix_goal_template`,
+`apply_user_mix_goal_template`, `save_user_mix_goal_template`, and
+`delete_user_mix_goal_template` enforce ownership, validation, and atomic replacement.
+Only the apply functions may mark a configuration as an unmodified preset copy;
+ordinary goal saves are always recorded as customized so clients cannot fabricate
+canonical preset provenance.
 
 ## Ingredient Lists and Saved Mixes
 
@@ -134,7 +182,7 @@ Notes:
 Stores the user's active ingredient lists.
 
 | Table | Documented columns |
-| --- | --- |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `user_food_list_items` | `id`, `user_id`, `list_type`, `fdc_id`, `food`, `food_identity_key`, `shared_product_id`, `shared_product_submission_id`, `source_key`, `trust_status`, `created_at`, `updated_at` |
 
 Notes:
@@ -192,7 +240,7 @@ Stores private user custom foods. Shared/public review happens through
 `shared_product_submissions`, not by making every custom food public.
 
 | Table | Documented columns |
-| --- | --- |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `custom_foods` | `id`, `user_id`, `fdc_id`, `barcode`, `name_key`, `category_option_id`, `search_text`, `source_key`, `trust_status`, `food`, `created_at`, `updated_at` |
 
 Notes:
@@ -209,7 +257,7 @@ Notes:
 Stores a saved mix snapshot.
 
 | Table | Documented columns |
-| --- | --- |
+| -------------- | ------------------------------------------------------------ |
 | `saved_drinks` | `id`, `user_id`, `name`, `drink`, `created_at`, `updated_at` |
 
 Notes:
@@ -223,7 +271,7 @@ Stores app-ready origin and verification metadata. Provider rows remain availabl
 internal attribution; only actionable verification rows are enabled for compact badges.
 
 | Table | Documented columns |
-| --- | --- |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ingredient_provenance_options` | `dimension`, `value`, `filter_label`, `badge_label`, `badge_tone`, `display_order`, `filter_enabled`, `badge_enabled`, `description`, `created_at`, `updated_at` |
 
 Notes:
@@ -240,7 +288,7 @@ Stores stable machine-readable codes used by database-backed validation and busi
 rules.
 
 | Table | Documented columns |
-| --- | --- |
+| ----------------- | ------------------------------------------------------------------------------ |
 | `app_issue_codes` | `code`, `kind`, `domain`, `description`, `enabled`, `created_at`, `updated_at` |
 
 Notes:
@@ -270,7 +318,7 @@ Notes:
 Canonical nutrient lookup table.
 
 | Table | Documented columns |
-| --- | --- |
+| ---------------------- | -------------------------------------------------------------------------------------------------- |
 | `nutrient_definitions` | `nutrient_id`, `nutrient_name`, `nutrient_number`, `default_unit_name`, `created_at`, `updated_at` |
 
 Notes:
@@ -283,8 +331,8 @@ Notes:
 Stores normalized nutrient facts for any supported food parent.
 
 | Table | Documented columns |
-| --- | --- |
-| `food_nutrients` | `id`, food-parent and ownership ids, `nutrient_id`, `amount_per_100g`, `unit_name`, `value_origin`, `value_status`, `standard_error`, `source`, `source_reference`, `source_observation_id`, `source_nutrient_key`, `source_nutrient_code`, `mapping_status`, `mapping_method`, `mapping_review_reference`, `derivation_method`, `confidence`, timestamps |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `food_nutrients` | `id`, food-parent and ownership ids, `nutrient_id`, `amount_per_100g`, `unit_name`, `value_origin`, `value_status`, `value_qualifier`, `standard_error`, `source`, `source_reference`, `source_observation_id`, `source_nutrient_key`, `source_nutrient_code`, `mapping_status`, `mapping_method`, `mapping_review_reference`, `derivation_method`, `confidence`, timestamps |
 
 Notes:
 
@@ -293,9 +341,10 @@ Notes:
   user-owned.
 - Unique indexes prevent duplicate nutrient rows for the same parent.
 - `amount_per_100g` contains only accepted numeric values used by nutrition and Mix
-  math. `value_status` keeps reported, reported-zero, and derived values distinct;
+  math. `value_status` keeps reported, reported-zero, estimated, and derived values distinct;
   missing, trace, present-but-unquantified, invalid, and unmapped source facts never
-  become numeric rows.
+  become numeric rows. `value_qualifier` preserves an exact provider qualifier such as
+  `source-estimate` instead of presenting an estimate as reported data.
 - `standard_error` is source-reported review metadata. It never changes
   `amount_per_100g`. Source nutrient keys/codes and mapping/derivation metadata retain
   the exact normalization decision; `mapping_review_reference` is internal moderation
@@ -309,7 +358,7 @@ Notes:
 These tables make manual-entry UI DB-driven.
 
 | Table | Documented columns |
-| --- | --- |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `nutrient_manual_entry_groups` | `id`, `entry_step`, `title`, `sort_order`, `enabled`, `group_role`, `source_count`, `observation_count`, `verification_status`, `sources`, `last_observed_at`, timestamps |
 | `nutrient_manual_entry_fields` | `dedupe_key`, `nutrient_id`, `group_id`, `nutrient_type`, `display_label`, `required_for_manual_entry`, `sort_order`, `enabled`, `source_count`, `observation_count`, `verification_status`, `sources`, `last_observed_at`, `classification_status`, `classification_source_key`, `classification_reference`, `classification_version`, `classification_notes`, `replacement_nutrient_id`, `reviewed_at`, timestamps |
 | `nutrient_manual_entry_required_nutrients` | `nutrient_id`, `requirement_key`, `group_id`, `field_sort_order`, `reason`, `source`, `source_count`, `observation_count`, `sources`, `provenance`, `enabled`, timestamps |
@@ -343,7 +392,7 @@ Notes:
 Stores validation rules for nutrient math.
 
 | Table | Documented columns |
-| --- | --- |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `nutrient_relationship_rules` | `id`, `parent_nutrient_id`, `child_nutrient_id`, `relationship`, `severity`, `issue_code`, `requires_parent`, `tolerance`, `enabled`, `sort_order`, `source`, `source_count`, `observation_count`, `sources`, `provenance`, `created_at`, `updated_at` |
 
 Notes:
@@ -377,7 +426,7 @@ FoodData Central and Open Food Facts products.
 ### `product_data_sources`
 
 | Table | Documented columns |
-| --- | --- |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `product_data_sources` | `key`, `display_name`, `source_type`, `homepage_url`, `api_base_url`, `terms_url`, `attribution_text`, `enabled`, observation counts/timestamps, `provenance`, `canonical_storage_allowed`, `canonical_license_name`, `canonical_policy_reviewed_at`, `canonical_policy_notes`, `api_redistribution_allowed`, and timestamps |
 
 Canonical storage and API redistribution stay disabled until the provider's downstream
@@ -400,7 +449,7 @@ Notes:
 ### `product_source_daily_metrics`
 
 | Table | Documented columns |
-| --- | --- |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `product_source_daily_metrics` | `metric_date`, `source_key`, `source_data_type`, `lookup_kind`, `lookup_origin`, lookup/API/cache/error/match counters, evaluated product and reported nutrient totals, brand/category/serving/ingredient/image coverage counters, response milliseconds, and timestamps |
 
 Notes:
@@ -428,7 +477,7 @@ Notes:
 ### `nutrient_source_mappings`
 
 | Table | Documented columns |
-| --- | --- |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `nutrient_source_mappings` | `source_key`, `source_nutrient_key`, `source_unit_name`, `source_nutrient_name`, `nutrient_id`, `priority`, `mapping_method`, `review_status`, `review_reference`, `confidence`, `enabled`, observation counts/timestamps, `provenance`, and timestamps |
 
 Notes:
@@ -450,7 +499,7 @@ Notes:
 ### `nutrient_unit_conversions`
 
 | Table | Documented columns |
-| --- | --- |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `nutrient_unit_conversions` | `source_key`, `nutrient_id`, `from_unit_name`, `to_unit_name`, `multiplier`, `conversion_method`, `confidence`, `observation_count`, `provenance`, and timestamps |
 
 Notes:
@@ -463,7 +512,7 @@ Notes:
 ### `serving_measure_units` and `serving_measure_aliases`
 
 | Table | Documented columns |
-| --- | --- |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `serving_measure_units` | `key`, `display_label`, `short_label`, `dimension`, `base_unit_key`, `conversion_to_base`, `standards_code`, `display_order`, `is_default`, `enabled`, `source_key`, `source_reference`, `observed_at`, and timestamps |
 | `serving_measure_aliases` | `unit_key`, `alias`, `normalized_alias`, `source_key`, observation counts/timestamps, and timestamps |
 
@@ -485,7 +534,7 @@ Stores source-reported and user-entered serving sizes separately from each food'
 snapshot.
 
 | Table | Documented columns |
-| --- | --- |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `food_servings` | `id`, `owner_user_id`, `user_food_list_item_id`, `custom_food_id`, `shared_product_submission_id`, `shared_product_id`, `shared_product_revision_id`, `shared_product_observation_id`, `source_observation_id`, `serving_order`, `label`, `gram_weight`, optional `amount` and `unit_key`, `is_primary`, `measure_type`, `is_household_measure`, `source_measure_key`, `origin`, `gram_weight_method`, `calculation_basis`, `source`, `source_reference`, `confidence`, and timestamps |
 
 Notes:
@@ -521,7 +570,7 @@ Notes:
 ## Shared Product Catalog and Barcode Flow
 
 | Table                             | Primary Key             | Owner Scope                   | Purpose                                                                   | Key Relationships                                                   |
-| --------------------------------- | ----------------------- | ----------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| ---------------------------------- | ----------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
 | `shared_product_submissions`      | `id`                    | Submitted by one auth user    | Community product submissions awaiting review or already reviewed         | `submitted_by → auth.users.id`, optional reviewer                   |
 | `shared_products`                 | `id`                    | Shared catalog                | Approved active shared products searchable by all authenticated users     | Optional approved submission/reviewer                               |
 | `shared_product_revisions`        | `id`                    | Shared catalog                | Historical revisions for approved products                                | `shared_product_id → shared_products.id`                            |
@@ -541,7 +590,7 @@ Notes:
 Stores user-submitted products before/after moderation.
 
 | Table | Documented columns |
-| --- | --- |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `shared_product_submissions` | `id`, `submitted_by`, `barcode`, `product_name`, `brand_owner`, `category_option_id`, `food`, `consent_to_share`, `status`, `verification_status`, `matched_source`, `matched_reference`, `validation_report`, `evidence_paths`, `evidence_complete`, `submission_intent`, `submission_kind`, `target_shared_product_id`, `base_revision_id`, `change_summary`, `label_observed_at`, `reviewed_by`, `reviewed_at`, `review_note`, `created_at`, `updated_at` |
 
 Notes:
@@ -579,7 +628,7 @@ external API rows are evidence or missing-field candidates, not competing public
 product authorities.
 
 | Table | Documented columns |
-| --- | --- |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `shared_products` | `id`, `barcode`, `product_name`, `brand_owner`, `search_text`, `category_option_id`, `food`, `source`, `source_reference`, `confidence`, `status`, `approved_submission_id`, `approved_by`, `last_verified_at`, `canonical_provenance`, `compatibility_summary`, `created_at`, `updated_at` |
 
 Notes:
@@ -702,7 +751,7 @@ run `sync_product_ingredient_evidence` whenever a shared product, observation, o
 submission changes.
 
 | Table | Documented columns |
-| --- | --- |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `product_ingredient_statements` | `id`, exactly one owner id, `source_observation_id`, `source_field`, `extraction_method`, `language_code`, `source_key`, `raw_statement`, `source_value`, `content_hash`, `created_at`, `updated_at` |
 | `product_ingredient_components` | `id`, `statement_id`, `parent_component_id`, `ingredient_term_id`, `source_path`, `source_order`, `depth`, `source_component_id`, `source_text`, `normalized_text`, `language_code`, `percent_exact`, `percent_estimate`, `percent_min`, `percent_max`, `processing_state`, `vegan_status`, `vegetarian_status`, `source_payload`, `created_at`, `updated_at` |
 
@@ -734,7 +783,7 @@ reported. Normalized fields support filtering and policy evaluation without repl
 the exact source wording.
 
 | Table | Documented columns |
-| --- | --- |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `product_precautionary_statements` | `id`, exactly one owner id, `source_observation_id`, `shared_product_revision_id`, `statement_type`, `statement_text`, `normalized_allergens`, `language_code`, `source_field`, `source_key`, `source_reference`, `label_observed_at`, `source_payload`, `content_hash`, `created_at`, `updated_at` |
 
 Notes:
@@ -777,7 +826,7 @@ not replace private moderation evidence; it only stores source-backed or approve
 records that the app can safely render.
 
 | Table | Documented columns |
-| --- | --- |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `food_image_assets` | `id`, `barcode`, `shared_product_id`, `source`, `source_reference`, `image_role`, `image_url`, `thumbnail_url`, `storage_path`, `license_name`, `license_url`, `attribution_text`, `confidence`, `crop_x`, `crop_y`, `crop_zoom`, `rotation_degrees`, `fit_mode`, `placement_version`, `crop_source`, `placement_method`, `placement_suggestion_version`, `placement_suggestion_confidence`, `placement_suggestion_accepted_at`, `approved_by`, `approved_at`, `status`, `fetched_at`, `created_at`, `updated_at` |
 
 Notes:
@@ -804,14 +853,14 @@ Notes:
   metadata.
 
 | Storage bucket | Visibility | Purpose |
-| --- | --- | --- |
+| ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
 | `product-submission-evidence` | Private | Product evidence images scoped under the submitting user id |
 | `food-image-assets` | Public | Approved/source-backed product image files; private evidence must not move here before moderation approval |
 
 ## Compatibility, Allergens, and Dietary Restrictions
 
 | Table                              | Primary Key | Owner Scope                 | Purpose                                                                                            | Key Relationships                                                                   |
-| ---------------------------------- | ----------- | --------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| ---------------------------------------------------- | ----------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
 | `compatibility_tags`               | `id`        | Shared reference            | Canonical compatibility tags for allergens, dietary claims, ingredients, and avoidance concepts    | Referenced by user rules and product facts                                          |
 | `ingredient_terms`                 | `id`        | Shared reviewed taxonomy    | Canonical ingredient terms created only through reviewed evidence                                  | Optional source and reviewer                                                        |
 | `food_compatibility_policy_ingredient_aliases` | `id` | Versioned reviewed policy | Language-, region-, and source-specific aliases for a canonical ingredient term | Policy version and ingredient term |
@@ -832,7 +881,7 @@ Notes:
 ### `compatibility_tags`
 
 | Table | Documented columns |
-| --- | --- |
+| -------------------- | ------------------------------------------------------------- |
 | `compatibility_tags` | `id`, `slug`, `label`, `category`, `created_at`, `updated_at` |
 
 Notes:
@@ -842,7 +891,7 @@ Notes:
 ### Reviewed ingredient taxonomy and terminology policy
 
 | Table | Documented columns |
-| --- | --- |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ingredient_terms` | `id`, `canonical_key`, `display_name`, `default_language_code`, `review_status`, `source_key`, `source_reference`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` |
 | `food_compatibility_policy_ingredient_aliases` | `id`, `policy_version_id`, `ingredient_term_id`, `alias`, `normalized_alias`, `language_code`, `alias_type`, `review_status`, `source_key`, `source_reference`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` |
 | `food_compatibility_policy_ingredient_relationships` | `id`, `policy_version_id`, `child_term_id`, `parent_term_id`, `relationship_type`, `processing_state`, `jurisdiction_code`, `conflict_inheritance`, `review_status`, `source_key`, `source_reference`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at` |
@@ -874,7 +923,7 @@ Notes:
 ### Version-bound extraction and conflict policy
 
 | Table | Documented columns |
-| --- | --- |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `food_compatibility_policy_conflicts` | `policy_version_id`, `preference_tag_id`, `fact_tag_id`, `severity`, `warning_code`, `priority`, `created_at`, `updated_at` |
 | `food_compatibility_policy_match_rules` | `id`, `policy_version_id`, `tag_id`, `source_key`, `field_name`, `match_pattern`, `exclude_pattern`, `fact_type`, `source_type`, `confidence`, `priority`, `enabled`, `created_at`, `updated_at` |
 | `food_compatibility_policy_exemptions` | `id`, `policy_version_id`, `jurisdiction_code`, `ingredient_term_id`, `parent_term_id`, `fact_tag_id`, `processing_state`, `exemption_type`, `threshold_value`, `threshold_unit`, `product_context`, `warning_behavior`, `source_reference`, `reviewed_at`, `created_at`, `updated_at` |
@@ -923,7 +972,7 @@ Notes:
 ### `food_compatibility_policy_versions`
 
 | Table | Documented columns |
-| --- | --- |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `food_compatibility_policy_versions` | `id`, `version_number`, `status`, `change_summary`, `match_rule_snapshot`, `conflict_rule_snapshot`, `alias_snapshot`, `relationship_snapshot`, `exemption_snapshot`, `regional_profile_snapshot`, `preference_mapping_snapshot`, `bundle_content_hash`, `source_references`, `effective_at`, `reviewed_at`, `created_at`, `updated_at` |
 
 Notes:
@@ -946,7 +995,7 @@ Notes:
 ### Regional allergen profiles
 
 | Table | Documented columns |
-| --- | --- |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `food_allergen_regulatory_profiles` | `id`, `policy_version_id`, `profile_key`, `region_code`, `display_name`, `authority`, `policy_reference`, `source_url`, `reviewed_at`, `active`, `created_at`, `updated_at` |
 | `food_allergen_regulatory_profile_tags` | `profile_id`, `tag_id`, `classification`, `source_label`, `created_at` |
 
@@ -969,7 +1018,7 @@ Notes:
 ### `product_compatibility_facts`
 
 | Table | Documented columns |
-| --- | --- |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `product_compatibility_facts` | `id`, `shared_product_id`, `shared_product_observation_id`, `shared_product_submission_id`, `tag_id`, `policy_version_id`, `ingredient_component_id`, `precautionary_statement_id`, `match_rule_id`, `fact_type`, `source_type`, `source_text`, `confidence`, `created_at`, `updated_at` |
 
 Notes:
@@ -1003,7 +1052,7 @@ Notes:
 ### `food_compatibility_feedback`
 
 | Table | Documented columns |
-| --- | --- |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `food_compatibility_feedback` | `id`, `reported_by`, `policy_version_id`, `feedback_type`, `shared_product_id`, `shared_product_revision_id`, `source_key`, `source_id`, `barcode`, `food_description`, `warning_id`, `issue_code`, `issue_params`, `fact_snapshot`, `preference_type`, `preference_value`, `preference_tag_id`, `observed_label_date`, `evidence_path`, `evidence_sha256`, `report_reason`, `report_details`, `report_fingerprint`, `status`, `resolution_action`, `reviewed_by`, `reviewed_at`, `review_note`, `created_at`, `updated_at` |
 
 Notes:
@@ -1036,7 +1085,7 @@ and is intended for deployment checks and policy audits.
 ### `food_preference_option_catalog`
 
 | Table | Documented columns |
-| --- | --- |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `food_preference_option_catalog` | `id`, `category`, `label`, `normalized_value`, `source_type`, `tag_id`, `source_values`, `usage_count`, `created_at`, `updated_at` |
 
 Notes:
@@ -1050,7 +1099,7 @@ Notes:
 ### Saved preference resolution and review requests
 
 | Table | Documented columns |
-| --- | --- |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `user_compatibility_rules` | `id`, `user_id`, `tag_id`, `rule_type`, `severity`, `raw_value`, `normalized_value`, `active`, `resolution_status`, `resolution_method`, `resolution_policy_version_id`, `resolution_language_code`, `ingredient_term_id`, `ingredient_alias_id`, `preference_term_mapping_id`, `created_at`, `updated_at` |
 | `food_preference_mapping_requests` | `id`, `preference_rule_type`, `normalized_value`, `language_code`, `status`, `occurrence_count`, `resolved_mapping_id`, `resolved_ingredient_term_id`, `resolved_preference_tag_id`, `reviewed_by`, `reviewed_at`, `review_note`, `first_seen_at`, `last_seen_at`, `created_at`, `updated_at` |
 
@@ -1071,7 +1120,7 @@ Notes:
 ### `food_preference_api_observations`
 
 | Table | Documented columns |
-| --- | --- |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `food_preference_api_observations` | `id`, `category`, `fact_type`, `label`, `normalized_value`, `source`, `source_field`, `source_value`, `source_reference`, `source_payload`, `query`, `matched_name`, `brand_owner`, `observation_count`, `first_seen_at`, `last_seen_at` |
 
 Notes:
@@ -1090,7 +1139,7 @@ Notes:
 ### `custom_food_category_options`
 
 | Table | Documented columns |
-| --- | --- |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `custom_food_category_options` | `id`, `label`, `normalized_value`, `sources`, `source_count`, `observation_count`, `verification_status`, `enabled`, `first_seen_at`, `last_seen_at`, `created_at`, `updated_at` |
 
 Notes:
@@ -1106,7 +1155,7 @@ Notes:
 ### `custom_food_category_observations`
 
 | Table | Documented columns |
-| --- | --- |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `custom_food_category_observations` | `id`, `category_id`, `label`, `normalized_value`, `source`, `query`, `source_field`, `source_value`, `source_reference`, `source_payload`, `observation_count`, `first_seen_at`, `last_seen_at`, `created_at`, `updated_at` |
 
 Notes:
@@ -1118,7 +1167,7 @@ Notes:
 ### `custom_food_category_mappings`
 
 | Table | Documented columns |
-| --- | --- |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `custom_food_category_mappings` | `source_normalized_value`, `source_value`, `source_values`, `source_fields`, `sources`, `category_option_id`, `category_option_label`, `confidence`, `match_reason`, `source_count`, `observation_count`, `first_seen_at`, `last_seen_at`, `created_at`, `updated_at` |
 
 Notes:
@@ -1193,7 +1242,7 @@ Stores private, daily aggregate interaction counts synchronized from Vercel Web
 Analytics. It is an operational measurement table, not a user activity log.
 
 | Table | Documented columns |
-| --- | --- |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `app_interaction_daily_metrics` | `metric_date`, `metric_key`, `dimension_key`, `dimension_value`, `metric_source`, `environment`, `event_count`, `visitor_count`, `source_query_version`, `created_at`, `synced_at` |
 
 Notes:
@@ -1221,7 +1270,7 @@ Private fixed-window counters protect bounded application API scopes from abusiv
 accidental request volume. The table is not exposed through the browser Data API.
 
 | Table | Documented columns |
-| --- | --- |
+| --------------------- | ----------------------------------------------------------------------------------------- |
 | `request_rate_limits` | `scope`, `subject_hash`, `window_started_at`, `expires_at`, `request_count`, `updated_at` |
 
 Notes:
@@ -1254,7 +1303,7 @@ packaged barcode products. Imports are source-versioned, license-gated, and sear
 without calling the source again.
 
 | Table                                      | Primary Key                                         | Purpose                                                       | Important Columns / Rules                                                                                                                 |
-| ------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `nutrition_completeness_profiles`          | `key`                                               | Defines what complete nutrition means for a food scope/region | `food_scope` (`generic`, `manual`, or `packaged`), `region_code`, DB-owned labels, source reference, one enabled default per scope/region |
 | `nutrition_completeness_profile_nutrients` | `profile_key, nutrient_id`                          | Orders required and recommended nutrients for one profile     | `requirement_level`, `display_order`, `reason`; nutrient FK prevents invented definitions                                                 |
 | `blendcalc_api_publication_profiles`       | `key`                                               | Versions the hard gates for one API major and resource scope   | Linked nutrition profile, required/recommended fields, accepted nutrient states, conflict severities, verification age, reviewed policy source, and one enabled default per scope |
@@ -1308,7 +1357,7 @@ category, or serving fields.
 ## RPC / Database Functions
 
 | Function                                       | Purpose                                                                                                                                        |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `set_updated_at`                               | Shared updated-at trigger helper                                                                                                               |
 | `default_profile_display_name`                 | Builds a safe default display/profile name                                                                                                     |
 | `set_default_profile_display_name`             | Trigger helper that fills missing profile display names                                                                                        |
@@ -1321,6 +1370,12 @@ category, or serving fields.
 | `food_list_item_identity_key`                  | Produces the canonical barcode-or-FDC identity used to prevent cross-list duplicates                                                           |
 | `place_user_food_list_item`                    | Atomically adds an ingredient, reports a required cross-list move, or completes a confirmed move                                               |
 | `move_user_food_list_items`                    | Atomically moves a checked ingredient set between Fridge and Shopping List, rejecting stale or partial sets                                    |
+| `save_mix_preferences`                                 | Saves only the versioned active Mix draft; normalized goals use their dedicated functions                                                                                                              |
+| `save_mix_goal_configuration`                          | Atomically validates and replaces one user's normalized active goals and copied preset provenance                                                                                                      |
+| `apply_mix_goal_template`                              | Copies one enabled current reviewed system-preset version into the user's active goals, optionally retaining extra goals                                                                               |
+| `save_user_mix_goal_template`                          | Creates or updates one private reusable user preset after validating every goal rule                                                                                                                   |
+| `apply_user_mix_goal_template`                         | Copies one owner-scoped personal preset into active goals, optionally retaining extra goals                                                                                                            |
+| `delete_user_mix_goal_template`                        | Deletes one owner-scoped personal preset without deleting the already copied active goal values                                                                                                        |
 | `publish_shared_product_submission`            | Publishes an approved submission into the shared catalog and revisions/evidence tables                                                         |
 | `compatibility_normalize_text`                 | Normalizes compatibility labels/values for matching                                                                                            |
 | `active_food_compatibility_policy_version_id`  | Returns the sole active compatibility policy version used by active-only policy views and new facts                                            |
@@ -1359,7 +1414,7 @@ category, or serving fields.
 ## Storage Buckets
 
 | Bucket                        | Public | Purpose                                                     | Access Pattern                                                     |
-| ----------------------------- | ------ | ----------------------------------------------------------- | ------------------------------------------------------------------ |
+| ----------------------------- | ------ | ----------------------------------------------------------- | --------------------------------------------------------------------- |
 | `profile-avatars`             | No     | User avatar files                                           | Owner-scoped read; verified server actions write and delete         |
 | `product-submission-evidence` | No     | Product label/evidence images for shared catalog moderation | Owner-scoped read; verified server submission flow writes and deletes |
 | `food-image-assets`           | Yes    | Moderator-approved public product images                    | Public read; service-role publication and metadata persistence     |

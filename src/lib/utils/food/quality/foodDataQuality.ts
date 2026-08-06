@@ -1,7 +1,4 @@
-import type {
-	FdcFood,
-	FoodSourceRecordMetadata,
-} from "$lib/utils/food/types";
+import type { FdcFood, FoodSourceRecordMetadata } from "$lib/utils/food/types";
 
 export type FoodDataQualityCode =
 	| "SOURCE_RECORD_OBSOLETE"
@@ -12,6 +9,7 @@ export type FoodDataQualityCode =
 	| "ACCEPTED_FIELDS_COMBINE_SOURCES"
 	| "SOURCE_METADATA_COMBINES_RECORDS"
 	| "NUTRIENT_VALUES_DERIVED"
+	| "NUTRIENT_VALUES_ESTIMATED"
 	| "NUTRIENT_STANDARD_ERROR_REPORTED"
 	| "NUTRIENT_SOURCE_VALUES_UNQUANTIFIED"
 	| "NUTRIENT_SOURCE_VALUES_MISSING"
@@ -45,12 +43,11 @@ const getCompletenessPercentage = (
 
 const getAcceptedFieldSourceCount = (food: FdcFood) =>
 	new Set(
-		Object.values(food.fieldProvenance ?? {})
-			.flatMap((source) =>
-				source?.source && source.source !== "shared-catalog"
-					? [source.source]
-					: []
-			),
+		Object.values(food.fieldProvenance ?? {}).flatMap((source) =>
+			source?.source && source.source !== "shared-catalog"
+				? [source.source]
+				: [],
+		),
 	).size;
 
 const getSourceMetadataRecordCount = (
@@ -73,14 +70,24 @@ export const getFoodDataQualityDisclosure = (
 	const sourceMetadataRecordCount = getSourceMetadataRecordCount(metadata);
 	const hasSourceErrors = hasValues(metadata?.qualityErrorTags);
 	const hasSourceWarnings = hasValues(metadata?.qualityWarningTags);
-	const derivedNutrientCount = food.foodNutrients.filter((nutrient) =>
-		nutrient.valueStatus === "derived" || nutrient.valueOrigin === "derived"
+	const derivedNutrientCount = food.foodNutrients.filter(
+		(nutrient) =>
+			nutrient.valueStatus === "derived" || nutrient.valueOrigin === "derived",
 	).length;
-	const standardErrorCount = food.foodNutrients.filter((nutrient) =>
-		Number.isFinite(nutrient.standardError) && Number(nutrient.standardError) >= 0
+	const estimatedNutrientCount = food.foodNutrients.filter(
+		(nutrient) =>
+			nutrient.valueStatus === "estimated" ||
+			nutrient.valueOrigin === "estimated",
 	).length;
-	const unquantifiedCount = (food.nutrientSourceReview ?? []).filter((entry) =>
-		entry.valueStatus === "trace" || entry.valueStatus === "present-unquantified"
+	const standardErrorCount = food.foodNutrients.filter(
+		(nutrient) =>
+			Number.isFinite(nutrient.standardError) &&
+			Number(nutrient.standardError) >= 0,
+	).length;
+	const unquantifiedCount = (food.nutrientSourceReview ?? []).filter(
+		(entry) =>
+			entry.valueStatus === "trace" ||
+			entry.valueStatus === "present-unquantified",
 	).length;
 	const missingCount = (food.nutrientSourceReview ?? []).filter(
 		(entry) => entry.valueStatus === "missing",
@@ -123,7 +130,16 @@ export const getFoodDataQualityDisclosure = (
 		});
 	}
 	if (derivedNutrientCount > 0) {
-		notices.push({ code: "NUTRIENT_VALUES_DERIVED", count: derivedNutrientCount });
+		notices.push({
+			code: "NUTRIENT_VALUES_DERIVED",
+			count: derivedNutrientCount,
+		});
+	}
+	if (estimatedNutrientCount > 0) {
+		notices.push({
+			code: "NUTRIENT_VALUES_ESTIMATED",
+			count: estimatedNutrientCount,
+		});
 	}
 	if (standardErrorCount > 0) {
 		notices.push({
@@ -154,7 +170,7 @@ export const getFoodDataQualityDisclosure = (
 	return {
 		notices,
 		...(Number.isSafeInteger(metadata?.schemaVersion) &&
-				(metadata?.schemaVersion ?? 0) >= 0
+		(metadata?.schemaVersion ?? 0) >= 0
 			? { schemaVersion: metadata?.schemaVersion }
 			: {}),
 	};

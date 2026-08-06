@@ -1,16 +1,5 @@
 @use "../../../../../styles/variables" as *;
 
-.nutrient-shape-panel {
-	display: grid;
-	gap: $app-gap-md;
-	background: $app-shell-surface-panel;
-	border-radius: $app-shell-radius-card;
-}
-
-.nutrient-shape-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
-	padding: $app-gap-md $app-gap-sm $app-gap-sm;
-}
-
 .nutrient-shape-panel__meta {
 	display: flex;
 	align-items: center;
@@ -66,15 +55,8 @@
 	border-top: 1px solid $app-shell-border-subtle;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.nutrient-shape-panel {
-		gap: $app-gap-sm;
-	}
-
-	.nutrient-shape-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
-		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
-	}
-
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.nutrient-shape-panel__chart {
 		min-height: 10.5rem;
 	}

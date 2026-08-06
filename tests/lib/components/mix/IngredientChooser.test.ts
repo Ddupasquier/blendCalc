@@ -72,7 +72,7 @@ describe("IngredientChooser custom filtering", () => {
 
 		const fridge = screen.getByLabelText("Mix fridge ingredients");
 		expect(within(fridge).getByText("Purple Homebrew")).toBeInTheDocument();
-		expect(within(fridge).getByText("Custom")).toBeInTheDocument();
+		expect(within(fridge).queryByText("Custom")).not.toBeInTheDocument();
 		expect(screen.queryByText("Catalog Jelly")).not.toBeInTheDocument();
 		expect(screen.queryByText("Pending Pantry Product")).not.toBeInTheDocument();
 		expect(screen.getByText("1 available · 0 selected")).toBeInTheDocument();

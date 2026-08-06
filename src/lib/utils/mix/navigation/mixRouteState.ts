@@ -8,6 +8,8 @@ export const MIX_ROUTE_OVERLAYS = {
 	resetAll: "reset-all",
 	warningDetails: "warning-details",
 	conversionDetails: "conversion-details",
+  saveGoalPreset: "save-goal-preset",
+  deleteGoalPreset: "delete-goal-preset",
 } as const;
 
 export type MixRouteOverlay =
@@ -17,6 +19,7 @@ export type MixRouteState = {
 	overlay: MixRouteOverlay | null;
 	foodId: number | null;
 	warningId: string | null;
+  goalTemplateId: string | null;
 };
 
 export type MixRouteTarget =
@@ -35,12 +38,18 @@ export type MixRouteTarget =
 	| {
 			overlay: typeof MIX_ROUTE_OVERLAYS.conversionDetails;
 			foodId: number;
+    }
+  | { overlay: typeof MIX_ROUTE_OVERLAYS.saveGoalPreset }
+  | {
+      overlay: typeof MIX_ROUTE_OVERLAYS.deleteGoalPreset;
+      goalTemplateId: string;
 	  };
 
 const EMPTY_MIX_ROUTE_STATE: MixRouteState = {
 	overlay: null,
 	foodId: null,
 	warningId: null,
+  goalTemplateId: null,
 };
 
 const parseFoodId = (value: string | undefined) => {
@@ -55,23 +64,16 @@ const getSegments = (pathname: string) =>
 		.filter(Boolean)
 		.map((segment) => decodeURIComponent(segment));
 
-export const getActiveMixRouteHref = (
-	url: URL,
-	shallowRouteHref?: string,
-) =>
+export const getActiveMixRouteHref = (url: URL, shallowRouteHref?: string) =>
 	shallowRouteHref ?? `${url.pathname}${url.search}${url.hash}`;
 
-export const getActiveMixRouteState = (
-	url: URL,
-	shallowRouteHref?: string,
-) =>
-	getMixRouteState(
-		new URL(getActiveMixRouteHref(url, shallowRouteHref), url),
-	);
+export const getActiveMixRouteState = (url: URL, shallowRouteHref?: string) =>
+  getMixRouteState(new URL(getActiveMixRouteHref(url, shallowRouteHref), url));
 
 export const getMixRouteState = (url: URL): MixRouteState => {
-	const [root, first, second, third, ...remaining] = getSegments(url.pathname);
-	if (root !== "mix" || remaining.length > 0) return EMPTY_MIX_ROUTE_STATE;
+  const segments = getSegments(url.pathname);
+  const [root, first, second, third, fourth] = segments;
+  if (root !== "mix") return EMPTY_MIX_ROUTE_STATE;
 	if (first === undefined) return EMPTY_MIX_ROUTE_STATE;
 	if (first === MIX_ROUTE_OVERLAYS.options && second === undefined) {
 		return { ...EMPTY_MIX_ROUTE_STATE, overlay: MIX_ROUTE_OVERLAYS.options };
@@ -82,11 +84,7 @@ export const getMixRouteState = (url: URL): MixRouteState => {
 			overlay: MIX_ROUTE_OVERLAYS.reorganize,
 		};
 	}
-	if (
-		first === "ingredients" &&
-		second === "filters" &&
-		third === undefined
-	) {
+  if (first === "ingredients" && second === "filters" && third === undefined) {
 		return {
 			...EMPTY_MIX_ROUTE_STATE,
 			overlay: MIX_ROUTE_OVERLAYS.ingredientFilters,
@@ -126,7 +124,8 @@ export const getMixRouteState = (url: URL): MixRouteState => {
 	if (
 		first === "ingredients" &&
 		parseFoodId(second) !== null &&
-		third === MIX_ROUTE_OVERLAYS.conversionDetails
+    third === MIX_ROUTE_OVERLAYS.conversionDetails &&
+    segments.length === 4
 	) {
 		return {
 			...EMPTY_MIX_ROUTE_STATE,
@@ -134,6 +133,30 @@ export const getMixRouteState = (url: URL): MixRouteState => {
 			foodId: parseFoodId(second),
 		};
 	}
+  if (
+    first === "goals" &&
+    second === "presets" &&
+    third === "save" &&
+    segments.length === 4
+  ) {
+    return {
+      ...EMPTY_MIX_ROUTE_STATE,
+      overlay: MIX_ROUTE_OVERLAYS.saveGoalPreset,
+    };
+  }
+  if (
+    first === "goals" &&
+    second === "presets" &&
+    third &&
+    fourth === "delete" &&
+    segments.length === 5
+  ) {
+    return {
+      ...EMPTY_MIX_ROUTE_STATE,
+      overlay: MIX_ROUTE_OVERLAYS.deleteGoalPreset,
+      goalTemplateId: third,
+    };
+  }
 
 	return EMPTY_MIX_ROUTE_STATE;
 };
@@ -162,6 +185,12 @@ export const buildMixRouteHref = (url: URL, target: MixRouteTarget) => {
 		case MIX_ROUTE_OVERLAYS.conversionDetails:
 			nextUrl.pathname = `/mix/ingredients/${target.foodId}/${MIX_ROUTE_OVERLAYS.conversionDetails}`;
 			break;
+    case MIX_ROUTE_OVERLAYS.saveGoalPreset:
+      nextUrl.pathname = "/mix/goals/presets/save";
+      break;
+    case MIX_ROUTE_OVERLAYS.deleteGoalPreset:
+      nextUrl.pathname = `/mix/goals/presets/${encodeURIComponent(target.goalTemplateId)}/delete`;
+      break;
 	}
 
 	const query = nextUrl.searchParams.toString();
@@ -189,6 +218,10 @@ export const getMixRouteTitle = (url: URL) => {
 			return "Mix Warning Details";
 		case MIX_ROUTE_OVERLAYS.conversionDetails:
 			return "Serving Conversion Details";
+    case MIX_ROUTE_OVERLAYS.saveGoalPreset:
+      return "Save Goal Preset";
+    case MIX_ROUTE_OVERLAYS.deleteGoalPreset:
+      return "Delete Goal Preset";
 		default:
 			return "Mix";
 	}

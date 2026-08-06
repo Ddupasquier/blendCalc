@@ -407,7 +407,7 @@ Check the existing primitive before writing markup or SCSS.
 | General loading                       | `LoadingSpinner`             | Never draw a feature-local spinner                                                                  |
 | Photo input                           | `PhotoUploadInput`           | Single/multiple photo prompt, count, status, and validation                                         |
 | Toggle                                | `ToggleSwitch`               | Boolean settings; do not use a checkbox as an on/off switch                                         |
-| Fixed-choice dropdown                 | `SelectField`                | Native select semantics with shared label, helper, chevron, focus, disabled, and responsive states  |
+| Fixed-choice dropdown                 | `SelectField`                | Accessible combobox and top-layer listbox with shared label, helper, keyboard/typeahead, focus, disabled, and responsive states; a hidden native select preserves required validation and form submission |
 | Compact metadata badge                | `TextBadge`                  | Owns centering, tone, padding, and truncation                                                       |
 | Structured metadata pill              | `MetadataPill`               | Ingredient labels, kcal, goal progress, and other compact label/value or label/icon metadata        |
 | Verified evidence                     | `VerifiedStatusBadge`        | Detail/search contexts where verification helps a decision                                          |
@@ -422,6 +422,7 @@ Check the existing primitive before writing markup or SCSS.
 | Repeated-tap safety                   | `TwoStepConfirmation`        | In-place double activation such as ingredient deletion                                              |
 | Privileged action container           | `PrivilegedActionGroup`      | Groups privileged moderator, admin, or developer actions and owns one crown                         |
 | Numeric amount                        | `NumberInput`                | Shared number semantics and control styling                                                         |
+| Draggable numeric range               | `RangeInput`                 | Native range semantics with shared track, fill, thumb, focus, disabled, and semantic-tone states    |
 | Accelerating amount control           | `AcceleratingStepButton`     | Tap-by-one and progressive hold behavior                                                            |
 | Full product image                    | `ProductImageFrame`          | Contained, non-stretched detailed image using any saved moderator orientation correction             |
 | Image placement                       | `ImagePlacementEditor`       | Shared preview, presets, drag/zoom, and restore flow                                                |
@@ -770,23 +771,28 @@ Only create the SCSS or type file when the component needs it.
 - Runtime-measured placement may use component-owned CSS custom properties. Static
   styling remains in SCSS.
 
-## Applying The System To A New View
+## Applying The System To Any UI Change
 
-Before styling a new view:
+This is the UI-specific application of the
+[Canonical Change Lifecycle](dev-rules/dev-rules.md#canonical-change-lifecycle). Before
+editing a view or component:
 
-1. List the view's surfaces, actions, statuses, forms, lists, overlays, and detailed
-   data.
-2. Map each repeated need to the component-selection table.
-3. Start with the Ingredients shell palette, typography, and `$app-gap-md` rhythm.
-4. Reuse existing card, sheet, status, badge, loading, and control primitives.
-5. Keep unique layout details in the new component's paired SCSS.
-6. Check narrow mobile width, 200% text zoom, keyboard focus, reduced motion, and
+1. Map the complete affected state matrix, then list its surfaces, actions, statuses,
+   forms, lists, overlays, and detailed data.
+2. Classify the existing owners as keep, simplify, merge, replace, or delete before
+   adding another wrapper or component.
+3. Map each repeated need to the component-selection table.
+4. Start with the Ingredients shell palette, typography, and `$app-gap-md` rhythm.
+5. Reuse existing card, sheet, status, badge, loading, and control primitives.
+6. Keep unique layout details in the owning component's paired SCSS and remove replaced
+   styles in the same change.
+7. Check narrow mobile width, 200% text zoom, keyboard focus, reduced motion, and
    touch targets at the complete app-wide viewport matrix.
-7. Compare visual differences with the Ingredients baseline. Keep a difference only
+8. Compare visual differences with the Ingredients baseline. Keep a difference only
    when the view's purpose requires it.
-8. If the difference is likely to repeat, create or extend a reusable component and
+9. If the difference is likely to repeat, create or extend a reusable component and
    update this guide.
-9. If the difference establishes a new mandatory practice, propose or update a
+10. If the difference establishes a new mandatory practice, propose or update a
    development rule.
 
 Do not copy unfinished Mix or Saved Drinks markup/styles into a new view simply because

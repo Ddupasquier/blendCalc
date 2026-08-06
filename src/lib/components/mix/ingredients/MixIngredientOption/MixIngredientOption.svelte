@@ -1,9 +1,7 @@
 <script lang="ts">
 	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
 	import CardSelectionIndicator from "$lib/components/common/display/CardSelectionIndicator/CardSelectionIndicator.svelte";
-	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
 	import IngredientCardMedia from "$lib/components/ingredients/card/IngredientCardMedia/IngredientCardMedia.svelte";
-	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import { getPrimaryFoodWarning } from "$lib/utils/ingredients/ingredientListUi";
 	import type { MixIngredientOptionProps } from "./types";
 
@@ -31,10 +29,7 @@
 		</span>
 	</button>
 	<span class="mix-ingredient-option__copy">
-		<span class="mix-ingredient-option__title-row">
-			<strong title={food.description}>{food.description}</strong>
-			{#if isPrivateCustomFood(food)}<CustomBadge />{/if}
-		</span>
+		<strong title={food.description}>{food.description}</strong>
 	</span>
 </article>
 

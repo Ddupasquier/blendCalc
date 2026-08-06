@@ -21,6 +21,7 @@ import {
 	saveCloudSavedDrinkWithResult,
 } from "$lib/utils/storage/supabase/savedDrinks";
 import {
+  saveCloudMixGoalConfiguration,
 	saveCloudMixPreferences,
 	saveCloudMixSectionDisclosureState,
 	saveCloudMixSectionOrder,
@@ -42,7 +43,8 @@ describe("authoritative Supabase write adapters", () => {
 	});
 
 	it("uses authenticated server routes for list writes and database functions for remaining mutations", async () => {
-		const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
 			.mockResolvedValueOnce({
 				ok: true,
 				json: async () => ({ result: "added" }),
@@ -86,7 +88,7 @@ describe("authoritative Supabase write adapters", () => {
 			"/api/user-food-lists/fridge",
 			expect.objectContaining({
 				method: "POST",
-				body: expect.stringContaining("\"foods\""),
+        body: expect.stringContaining('"foods"'),
 			}),
 		);
 		expect(fetchMock).toHaveBeenNthCalledWith(
@@ -108,6 +110,7 @@ describe("authoritative Supabase write adapters", () => {
 			selected: [],
 			options: [],
 			nutrientGoals: {},
+      goalBasis: "per_mix" as const,
 			servingGrams: {},
 			servingQuantities: {},
 			servingUnits: {},
@@ -121,18 +124,71 @@ describe("authoritative Supabase write adapters", () => {
 		]);
 	});
 
-	it("updates one Mix preference field without a read-before-write request", async () => {
+  it("updates Mix draft state without a read-before-write request", async () => {
 		supabase.rpc.mockResolvedValue({ data: true, error: null });
 
 		await expect(
-			saveCloudMixPreferences({ nutrientGoals: { 1008: 2000 } }),
+      saveCloudMixPreferences({ mixState: { selectedFoodIds: [1] } }),
 		).resolves.toBe(true);
 		expect(supabase.rpc).toHaveBeenCalledOnce();
 		expect(supabase.rpc).toHaveBeenCalledWith("save_mix_preferences", {
-			p_nutrient_goals: { 1008: 2000 },
-			p_mix_state: undefined,
+      p_mix_state: { selectedFoodIds: [1] },
 		});
 	});
+
+  it("serializes normalized Mix goal semantics through the authoritative function", async () => {
+    supabase.rpc.mockResolvedValue({
+      data: [
+        {
+          nutrientId: 1003,
+          goalType: "minimum",
+          targetAmount: 25,
+          upperAmount: null,
+          toleranceRatio: 0.05,
+          importanceWeight: 2,
+          sortOrder: 1,
+        },
+      ],
+      error: null,
+    });
+
+    await expect(
+      saveCloudMixGoalConfiguration({
+        goals: {
+          1003: {
+            nutrientId: 1003,
+            goalType: "minimum",
+            targetAmount: 25,
+            upperAmount: null,
+            toleranceRatio: 0.05,
+            importanceWeight: 2,
+            sortOrder: 1,
+          },
+        },
+        goalBasis: "per_mix",
+        sourceTemplateVersionId: "template-version",
+        sourceUserTemplateId: null,
+        templateCustomized: true,
+      }),
+    ).resolves.toMatchObject({
+      1003: { goalType: "minimum", importanceWeight: 2 },
+    });
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "save_mix_goal_configuration",
+      expect.objectContaining({
+        p_goal_basis: "per_mix",
+        p_source_template_version_id: "template-version",
+        p_customized: true,
+        p_goals: [
+          expect.objectContaining({
+            nutrient_id: 1003,
+            goal_type: "minimum",
+            importance_weight: 2,
+          }),
+        ],
+      }),
+    );
+  });
 
 	it("saves Mix section order through its validated preference function", async () => {
 		supabase.rpc.mockResolvedValue({ data: true, error: null });

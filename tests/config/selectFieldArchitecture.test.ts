@@ -10,7 +10,7 @@ const collectSvelteFiles = (directory: string): string[] =>
 	});
 
 describe("select field architecture", () => {
-	it("keeps fixed-choice native select markup inside the shared primitive", () => {
+	it("keeps fixed-choice form semantics and custom listbox markup inside the shared primitive", () => {
 		const nativeSelectOwners = collectSvelteFiles("src")
 			.filter((path) => /<select\b/.test(readFileSync(path, "utf8")))
 			.map((path) => relative(".", path));
@@ -18,6 +18,11 @@ describe("select field architecture", () => {
 		expect(nativeSelectOwners).toEqual([
 			"src/lib/components/common/forms/SelectField/SelectField.svelte",
 		]);
+
+		const primitive = readFileSync(nativeSelectOwners[0], "utf8");
+		expect(primitive).toContain('role="combobox"');
+		expect(primitive).toContain('role="listbox"');
+		expect(primitive).toContain('popover={popoverSupported ? "manual" : undefined}');
 	});
 
 	it("documents the primitive and preserves specialized searchable pickers", () => {

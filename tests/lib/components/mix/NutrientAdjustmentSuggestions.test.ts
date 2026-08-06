@@ -27,6 +27,7 @@ const suggestion: NutrientAdjustmentSuggestion = {
 		nextTotal: 4.3,
 		goal: 6,
 		distanceImprovement: 0.17,
+    weightedDistanceImprovement: 0.17,
 	},
 	impacts: [
 		{
@@ -38,6 +39,7 @@ const suggestion: NutrientAdjustmentSuggestion = {
 			nextTotal: 4.3,
 			goal: 6,
 			distanceImprovement: 0.17,
+      weightedDistanceImprovement: 0.17,
 		},
 	],
 	goalDistanceImprovement: 0.17,
@@ -60,9 +62,11 @@ describe("NutrientAdjustmentSuggestions", () => {
 
 		expect(disclosure).toHaveAttribute("open");
 		expect(screen.getByText("Milk, reduced fat")).toBeInTheDocument();
-		expect(screen.getByText("Increase to 130g")).toBeInTheDocument();
-		expect(screen.getByText("Protein +1g")).toBeInTheDocument();
-		expect(screen.getByText("Uses one reported serving: 1 fl oz")).toBeInTheDocument();
+		expect(screen.getByText("Increase to 130 g")).toBeInTheDocument();
+		expect(screen.getByText("Protein +1 g")).toBeInTheDocument();
+    expect(
+      screen.getByText("Uses one reported serving: 1 fl oz"),
+    ).toBeInTheDocument();
 		expect(screen.queryByText(/watch out/i)).not.toBeInTheDocument();
 	});
 
@@ -76,7 +80,9 @@ describe("NutrientAdjustmentSuggestions", () => {
 		});
 
 		await fireEvent.click(
-			screen.getByText("Suggested adjustments").closest("summary") as HTMLElement,
+      screen
+        .getByText("Suggested adjustments")
+        .closest("summary") as HTMLElement,
 		);
 		await fireEvent.click(screen.getByRole("button", { name: "Apply" }));
 

@@ -5,7 +5,12 @@ import { NUTRIENT_IDS } from "$lib/utils/food/types";
 import type { NutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 import type { AppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
 
-const testNutrient = (id: number, label: string, unit: string, nutrientNumber = String(id)) => ({
+const testNutrient = (
+  id: number,
+  label: string,
+  unit: string,
+  nutrientNumber = String(id),
+) => ({
 	id,
 	label,
 	unit,
@@ -35,6 +40,18 @@ const mixFields = testNutrients.slice(0, 6).map((nutrient, index) => ({
 	defaultGoal: [350, 15, 60, 10, 25, 25][index],
 }));
 
+const defaultMixFields = [
+	...mixFields,
+	{
+		...testNutrients.find(
+			(nutrient) => nutrient.id === NUTRIENT_IDS.SODIUM,
+		)!,
+		sortOrder: 70,
+		highlight: false,
+		defaultGoal: 500,
+	},
+];
+
 export const appReferenceCatalogFixture: AppReferenceCatalog = {
 	nutrients: testNutrients,
 	nutrientDisplayProfiles: [
@@ -50,15 +67,7 @@ export const appReferenceCatalogFixture: AppReferenceCatalog = {
 			displayName: "Default Mix nutrients",
 			purpose: "mix_default",
 			version: 1,
-			fields: [
-				...mixFields,
-				{
-					...testNutrients.find((nutrient) => nutrient.id === NUTRIENT_IDS.SODIUM)!,
-					sortOrder: 70,
-					highlight: false,
-					defaultGoal: 500,
-				},
-			],
+			fields: defaultMixFields,
 		},
 		{
 			key: "mix-popular-v1",
@@ -74,21 +83,83 @@ export const appReferenceCatalogFixture: AppReferenceCatalog = {
 		},
 	],
 	nutrientEquivalences: [
-		{ canonicalNutrientId: NUTRIENT_IDS.CALORIES, sourceNutrientId: 2047, sourceNutrientNumber: null, sourceKey: "usda" },
-		{ canonicalNutrientId: NUTRIENT_IDS.CALORIES, sourceNutrientId: 2048, sourceNutrientNumber: null, sourceKey: "usda" },
-		{ canonicalNutrientId: NUTRIENT_IDS.FAT, sourceNutrientId: 1085, sourceNutrientNumber: null, sourceKey: "usda" },
-		{ canonicalNutrientId: NUTRIENT_IDS.SUGAR, sourceNutrientId: 1063, sourceNutrientNumber: null, sourceKey: "usda" },
-		{ canonicalNutrientId: NUTRIENT_IDS.CALORIES, sourceNutrientId: null, sourceNutrientNumber: "208", sourceKey: "usda" },
-		{ canonicalNutrientId: NUTRIENT_IDS.SUGAR, sourceNutrientId: null, sourceNutrientNumber: "269", sourceKey: "usda" },
+    {
+      canonicalNutrientId: NUTRIENT_IDS.CALORIES,
+      sourceNutrientId: 2047,
+      sourceNutrientNumber: null,
+      sourceKey: "usda",
+    },
+    {
+      canonicalNutrientId: NUTRIENT_IDS.CALORIES,
+      sourceNutrientId: 2048,
+      sourceNutrientNumber: null,
+      sourceKey: "usda",
+    },
+    {
+      canonicalNutrientId: NUTRIENT_IDS.FAT,
+      sourceNutrientId: 1085,
+      sourceNutrientNumber: null,
+      sourceKey: "usda",
+    },
+    {
+      canonicalNutrientId: NUTRIENT_IDS.SUGAR,
+      sourceNutrientId: 1063,
+      sourceNutrientNumber: null,
+      sourceKey: "usda",
+    },
+    {
+      canonicalNutrientId: NUTRIENT_IDS.CALORIES,
+      sourceNutrientId: null,
+      sourceNutrientNumber: "208",
+      sourceKey: "usda",
+    },
+    {
+      canonicalNutrientId: NUTRIENT_IDS.SUGAR,
+      sourceNutrientId: null,
+      sourceNutrientNumber: "269",
+      sourceKey: "usda",
+    },
 	],
-	mixGoalTemplates: [{
+  mixGoalTemplates: [
+    {
 		id: "balanced",
+      selectionId: "system:00000000-0000-4000-8000-000000000001",
+      scope: "system",
+      versionId: "00000000-0000-4000-8000-000000000001",
+      version: 1,
 		label: "Balanced",
 		description: "Balanced test goals.",
-		goals: Object.fromEntries(mixFields.map((field) => [field.id, field.defaultGoal ?? 0])),
-	}],
+      goalBasis: "per_mix",
+      goals: Object.fromEntries(
+        defaultMixFields.map((field, index) => [
+          field.id,
+          {
+            nutrientId: field.id,
+            goalType: new Set<number>([
+              NUTRIENT_IDS.PROTEIN,
+              NUTRIENT_IDS.FIBER,
+            ]).has(field.id)
+              ? "minimum"
+              : new Set<number>([NUTRIENT_IDS.FAT, NUTRIENT_IDS.SUGAR]).has(
+                    field.id,
+                  )
+                ? "maximum"
+                : "exact",
+            targetAmount: field.defaultGoal ?? 0,
+            upperAmount: null,
+            toleranceRatio: 0.1,
+            importanceWeight: 1,
+            sortOrder: index + 1,
+          },
+        ]),
+      ),
+      sourceKey: "blendcalc",
+      sourceReference: "fixture:balanced-v1",
+      reviewedAt: "2026-08-04T00:00:00.000Z",
+      isDefault: true,
+    },
+  ],
 	mixRuntime: {
-		defaultGoalByUnit: { g: 20, kcal: 350, fallback: 100 },
 		progressThresholds: { atGoal: 1, barelyOver: 1.1, midwayOver: 1.35 },
 		pointGoalTolerance: 0.1,
 		defaultServingGrams: 100,
@@ -125,20 +196,49 @@ export const appReferenceCatalogFixture: AppReferenceCatalog = {
 	],
 	foodSymbolCategoryRules: [
 		{ symbolKey: "protein-bar", matchPattern: "(protein bar)", priority: 10 },
-		{ symbolKey: "spreads-preserves", matchPattern: "(jelly|jam)", priority: 20 },
-		{ symbolKey: "sauces-condiments", matchPattern: "(sauce|salsa|dip)", priority: 30 },
-		{ symbolKey: "pasta-noodles", matchPattern: "(pasta|noodle|pizza)", priority: 40 },
-		{ symbolKey: "legumes", matchPattern: "(legume|bean|lentil)", priority: 50 },
-		{ symbolKey: "nuts-seeds", matchPattern: "(nut|seed|peanut)", priority: 55 },
-		{ symbolKey: "leafy-greens", matchPattern: "(leafy green|spinach|kale)", priority: 60 },
+    {
+      symbolKey: "spreads-preserves",
+      matchPattern: "(jelly|jam)",
+      priority: 20,
+    },
+    {
+      symbolKey: "sauces-condiments",
+      matchPattern: "(sauce|salsa|dip)",
+      priority: 30,
+    },
+    {
+      symbolKey: "pasta-noodles",
+      matchPattern: "(pasta|noodle|pizza)",
+      priority: 40,
+    },
+    {
+      symbolKey: "legumes",
+      matchPattern: "(legume|bean|lentil)",
+      priority: 50,
+    },
+    {
+      symbolKey: "nuts-seeds",
+      matchPattern: "(nut|seed|peanut)",
+      priority: 55,
+    },
+    {
+      symbolKey: "leafy-greens",
+      matchPattern: "(leafy green|spinach|kale)",
+      priority: 60,
+    },
 		{ symbolKey: "berries", matchPattern: "(berr)", priority: 70 },
-		{ symbolKey: "vegetables", matchPattern: "(vegetable|tomato)", priority: 80 },
+    {
+      symbolKey: "vegetables",
+      matchPattern: "(vegetable|tomato)",
+      priority: 80,
+    },
 		{ symbolKey: "fruit", matchPattern: "(fruit|apple|banana)", priority: 90 },
 		{ symbolKey: "sweets", matchPattern: "(sweet|candy|syrup)", priority: 100 },
 	],
 };
 
-export const nutritionCompletenessCatalogFixture: NutritionCompletenessCatalog = {
+export const nutritionCompletenessCatalogFixture: NutritionCompletenessCatalog =
+  {
 	profiles: [
 		{
 			key: "generic-core-v1",
@@ -154,13 +254,62 @@ export const nutritionCompletenessCatalogFixture: NutritionCompletenessCatalog =
 			sourceReference: "test",
 			isDefault: true,
 			nutrients: [
-				{ nutrientId: NUTRIENT_IDS.CALORIES, label: "Energy", unitName: "KCAL", requirementLevel: "required", displayOrder: 10, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.FAT, label: "Total Fat", unitName: "G", requirementLevel: "required", displayOrder: 20, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.CARBS, label: "Total Carbohydrate", unitName: "G", requirementLevel: "required", displayOrder: 30, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.PROTEIN, label: "Protein", unitName: "G", requirementLevel: "required", displayOrder: 40, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.SODIUM, label: "Sodium, Na", unitName: "MG", requirementLevel: "required", displayOrder: 50, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.FIBER, label: "Dietary Fiber", unitName: "G", requirementLevel: "recommended", displayOrder: 60, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.SUGAR, label: "Total Sugars", unitName: "G", requirementLevel: "recommended", displayOrder: 70, reason: "test" },
+          {
+            nutrientId: NUTRIENT_IDS.CALORIES,
+            label: "Energy",
+            unitName: "KCAL",
+            requirementLevel: "required",
+            displayOrder: 10,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.FAT,
+            label: "Total Fat",
+            unitName: "G",
+            requirementLevel: "required",
+            displayOrder: 20,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.CARBS,
+            label: "Total Carbohydrate",
+            unitName: "G",
+            requirementLevel: "required",
+            displayOrder: 30,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.PROTEIN,
+            label: "Protein",
+            unitName: "G",
+            requirementLevel: "required",
+            displayOrder: 40,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.SODIUM,
+            label: "Sodium, Na",
+            unitName: "MG",
+            requirementLevel: "required",
+            displayOrder: 50,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.FIBER,
+            label: "Dietary Fiber",
+            unitName: "G",
+            requirementLevel: "recommended",
+            displayOrder: 60,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.SUGAR,
+            label: "Total Sugars",
+            unitName: "G",
+            requirementLevel: "recommended",
+            displayOrder: 70,
+            reason: "test",
+          },
 			],
 		},
 		{
@@ -177,11 +326,46 @@ export const nutritionCompletenessCatalogFixture: NutritionCompletenessCatalog =
 			sourceReference: "test",
 			isDefault: true,
 			nutrients: [
-				{ nutrientId: NUTRIENT_IDS.CALORIES, label: "Energy", unitName: "KCAL", requirementLevel: "required", displayOrder: 10, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.FAT, label: "Total Fat", unitName: "G", requirementLevel: "required", displayOrder: 20, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.CARBS, label: "Total Carbohydrate", unitName: "G", requirementLevel: "required", displayOrder: 30, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.PROTEIN, label: "Protein", unitName: "G", requirementLevel: "required", displayOrder: 40, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.SODIUM, label: "Sodium, Na", unitName: "MG", requirementLevel: "required", displayOrder: 50, reason: "test" },
+          {
+            nutrientId: NUTRIENT_IDS.CALORIES,
+            label: "Energy",
+            unitName: "KCAL",
+            requirementLevel: "required",
+            displayOrder: 10,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.FAT,
+            label: "Total Fat",
+            unitName: "G",
+            requirementLevel: "required",
+            displayOrder: 20,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.CARBS,
+            label: "Total Carbohydrate",
+            unitName: "G",
+            requirementLevel: "required",
+            displayOrder: 30,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.PROTEIN,
+            label: "Protein",
+            unitName: "G",
+            requirementLevel: "required",
+            displayOrder: 40,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.SODIUM,
+            label: "Sodium, Na",
+            unitName: "MG",
+            requirementLevel: "required",
+            displayOrder: 50,
+            reason: "test",
+          },
 			],
 		},
 		{
@@ -198,12 +382,54 @@ export const nutritionCompletenessCatalogFixture: NutritionCompletenessCatalog =
 			sourceReference: "test",
 			isDefault: true,
 			nutrients: [
-				{ nutrientId: NUTRIENT_IDS.CALORIES, label: "Energy", unitName: "KCAL", requirementLevel: "required", displayOrder: 10, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.FAT, label: "Total Fat", unitName: "G", requirementLevel: "required", displayOrder: 20, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.CARBS, label: "Total Carbohydrate", unitName: "G", requirementLevel: "required", displayOrder: 30, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.PROTEIN, label: "Protein", unitName: "G", requirementLevel: "required", displayOrder: 40, reason: "test" },
-				{ nutrientId: NUTRIENT_IDS.SODIUM, label: "Sodium, Na", unitName: "MG", requirementLevel: "required", displayOrder: 50, reason: "test" },
-				{ nutrientId: 1235, label: "Added Sugars", unitName: "G", requirementLevel: "required", displayOrder: 60, reason: "test" },
+          {
+            nutrientId: NUTRIENT_IDS.CALORIES,
+            label: "Energy",
+            unitName: "KCAL",
+            requirementLevel: "required",
+            displayOrder: 10,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.FAT,
+            label: "Total Fat",
+            unitName: "G",
+            requirementLevel: "required",
+            displayOrder: 20,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.CARBS,
+            label: "Total Carbohydrate",
+            unitName: "G",
+            requirementLevel: "required",
+            displayOrder: 30,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.PROTEIN,
+            label: "Protein",
+            unitName: "G",
+            requirementLevel: "required",
+            displayOrder: 40,
+            reason: "test",
+          },
+          {
+            nutrientId: NUTRIENT_IDS.SODIUM,
+            label: "Sodium, Na",
+            unitName: "MG",
+            requirementLevel: "required",
+            displayOrder: 50,
+            reason: "test",
+          },
+          {
+            nutrientId: 1235,
+            label: "Added Sugars",
+            unitName: "G",
+            requirementLevel: "required",
+            displayOrder: 60,
+            reason: "test",
+          },
 			],
 		},
 	],
@@ -211,32 +437,134 @@ export const nutritionCompletenessCatalogFixture: NutritionCompletenessCatalog =
 
 export const servingMeasureCatalogFixture: ServingMeasureCatalog = {
 	options: [
-		{ value: "g", label: "grams (g)", shortLabel: "g", dimension: "weight", conversionToBase: 1, isDefault: true },
-		{ value: "mg", label: "milligrams (mg)", shortLabel: "mg", dimension: "weight", conversionToBase: 0.001, isDefault: false },
-		{ value: "oz", label: "ounces (oz)", shortLabel: "oz", dimension: "weight", conversionToBase: 28.349523, isDefault: false },
-		{ value: "kg", label: "kilograms (kg)", shortLabel: "kg", dimension: "weight", conversionToBase: 1000, isDefault: false },
-		{ value: "lb", label: "pounds (lb)", shortLabel: "lb", dimension: "weight", conversionToBase: 453.59237, isDefault: false },
-		{ value: "ml", label: "milliliters (ml)", shortLabel: "ml", dimension: "volume", conversionToBase: 1, isDefault: false },
-		{ value: "tsp", label: "teaspoons (tsp)", shortLabel: "tsp", dimension: "volume", conversionToBase: 4.9289216, isDefault: false },
-		{ value: "tbsp", label: "tablespoons (tbsp)", shortLabel: "tbsp", dimension: "volume", conversionToBase: 14.786765, isDefault: true },
-		{ value: "cup", label: "cups", shortLabel: "cup", dimension: "volume", conversionToBase: 236.58824, isDefault: false },
-		{ value: "floz", label: "fluid ounces (fl oz)", shortLabel: "fl oz", dimension: "volume", conversionToBase: 29.57353, isDefault: false },
+    {
+      value: "g",
+      label: "grams (g)",
+      shortLabel: "g",
+      dimension: "weight",
+      conversionToBase: 1,
+      isDefault: true,
+    },
+    {
+      value: "mg",
+      label: "milligrams (mg)",
+      shortLabel: "mg",
+      dimension: "weight",
+      conversionToBase: 0.001,
+      isDefault: false,
+    },
+    {
+      value: "oz",
+      label: "ounces (oz)",
+      shortLabel: "oz",
+      dimension: "weight",
+      conversionToBase: 28.349523,
+      isDefault: false,
+    },
+    {
+      value: "kg",
+      label: "kilograms (kg)",
+      shortLabel: "kg",
+      dimension: "weight",
+      conversionToBase: 1000,
+      isDefault: false,
+    },
+    {
+      value: "lb",
+      label: "pounds (lb)",
+      shortLabel: "lb",
+      dimension: "weight",
+      conversionToBase: 453.59237,
+      isDefault: false,
+    },
+    {
+      value: "ml",
+      label: "milliliters (ml)",
+      shortLabel: "ml",
+      dimension: "volume",
+      conversionToBase: 1,
+      isDefault: false,
+    },
+    {
+      value: "tsp",
+      label: "teaspoons (tsp)",
+      shortLabel: "tsp",
+      dimension: "volume",
+      conversionToBase: 4.9289216,
+      isDefault: false,
+    },
+    {
+      value: "tbsp",
+      label: "tablespoons (tbsp)",
+      shortLabel: "tbsp",
+      dimension: "volume",
+      conversionToBase: 14.786765,
+      isDefault: true,
+    },
+    {
+      value: "cup",
+      label: "cups",
+      shortLabel: "cup",
+      dimension: "volume",
+      conversionToBase: 236.58824,
+      isDefault: false,
+    },
+    {
+      value: "floz",
+      label: "fluid ounces (fl oz)",
+      shortLabel: "fl oz",
+      dimension: "volume",
+      conversionToBase: 29.57353,
+      isDefault: false,
+    },
 	],
 	aliases: {
-		g: "g", gram: "g", grams: "g", grm: "g", mg: "mg", milligram: "mg", milligrams: "mg",
-		oz: "oz", ounce: "oz", ounces: "oz", kg: "kg", kilogram: "kg", kilograms: "kg",
-		lb: "lb", lbs: "lb", pound: "lb", pounds: "lb", ml: "ml", milliliter: "ml",
-		milliliters: "ml", tsp: "tsp", teaspoon: "tsp", teaspoons: "tsp", tbsp: "tbsp",
-		tablespoon: "tbsp", tablespoons: "tbsp", cup: "cup", cups: "cup", floz: "floz",
-		fluidounce: "floz", fluidounces: "floz",
+    g: "g",
+    gram: "g",
+    grams: "g",
+    grm: "g",
+    mg: "mg",
+    milligram: "mg",
+    milligrams: "mg",
+    oz: "oz",
+    ounce: "oz",
+    ounces: "oz",
+    kg: "kg",
+    kilogram: "kg",
+    kilograms: "kg",
+    lb: "lb",
+    lbs: "lb",
+    pound: "lb",
+    pounds: "lb",
+    ml: "ml",
+    milliliter: "ml",
+    milliliters: "ml",
+    tsp: "tsp",
+    teaspoon: "tsp",
+    teaspoons: "tsp",
+    tbsp: "tbsp",
+    tablespoon: "tbsp",
+    tablespoons: "tbsp",
+    cup: "cup",
+    cups: "cup",
+    floz: "floz",
+    fluidounce: "floz",
+    fluidounces: "floz",
 	},
 	aliasEntries: [
-		{ alias: "g", unit: "g" }, { alias: "grams", unit: "g" }, { alias: "GRM", unit: "g" },
-		{ alias: "ml", unit: "ml" }, { alias: "milliliters", unit: "ml" },
-		{ alias: "tsp", unit: "tsp" }, { alias: "teaspoons", unit: "tsp" },
-		{ alias: "tbsp", unit: "tbsp" }, { alias: "tablespoons", unit: "tbsp" },
-		{ alias: "cup", unit: "cup" }, { alias: "cups", unit: "cup" },
-		{ alias: "fl oz", unit: "floz" }, { alias: "fluid ounces", unit: "floz" },
+    { alias: "g", unit: "g" },
+    { alias: "grams", unit: "g" },
+    { alias: "GRM", unit: "g" },
+    { alias: "ml", unit: "ml" },
+    { alias: "milliliters", unit: "ml" },
+    { alias: "tsp", unit: "tsp" },
+    { alias: "teaspoons", unit: "tsp" },
+    { alias: "tbsp", unit: "tbsp" },
+    { alias: "tablespoons", unit: "tbsp" },
+    { alias: "cup", unit: "cup" },
+    { alias: "cups", unit: "cup" },
+    { alias: "fl oz", unit: "floz" },
+    { alias: "fluid ounces", unit: "floz" },
 	],
 };
 
@@ -261,14 +589,32 @@ const mapping = (
 
 export const productReferenceDataFixture: ProductReferenceData = {
 	sources: {
-		usda: { key: "usda", displayName: "USDA FoodData Central", attributionText: null },
-		"open-food-facts": { key: "open-food-facts", displayName: "Open Food Facts", attributionText: null },
-		"shared-catalog": { key: "shared-catalog", displayName: "blendCalc verified catalog", attributionText: null },
+    usda: {
+      key: "usda",
+      displayName: "USDA FoodData Central",
+      attributionText: null,
+    },
+    "open-food-facts": {
+      key: "open-food-facts",
+      displayName: "Open Food Facts",
+      attributionText: null,
+    },
+    "shared-catalog": {
+      key: "shared-catalog",
+      displayName: "blendCalc verified catalog",
+      attributionText: null,
+    },
 	},
 	nutrientMappings: [
 		mapping("energy-kcal", NUTRIENT_IDS.CALORIES, "Energy", "208", "KCAL"),
 		mapping("fat", NUTRIENT_IDS.FAT, "Total lipid (fat)", "204", "G"),
-		mapping("carbohydrates", NUTRIENT_IDS.CARBS, "Carbohydrate, by difference", "205", "G"),
+    mapping(
+      "carbohydrates",
+      NUTRIENT_IDS.CARBS,
+      "Carbohydrate, by difference",
+      "205",
+      "G",
+    ),
 		mapping("fiber", NUTRIENT_IDS.FIBER, "Fiber, total dietary", "291", "G"),
 		mapping("sugars", NUTRIENT_IDS.SUGAR, "Total Sugars", "269", "G"),
 		mapping("proteins", NUTRIENT_IDS.PROTEIN, "Protein", "203", "G"),
@@ -277,19 +623,22 @@ export const productReferenceDataFixture: ProductReferenceData = {
 		mapping("calcium", NUTRIENT_IDS.CALCIUM, "Calcium, Ca", "301", "MG"),
 		mapping("vitamin-d", 1114, "Vitamin D (D2 + D3)", "328", "UG", "IU"),
 	],
-	nutrientConversions: [{
+  nutrientConversions: [
+    {
 		sourceKey: "open-food-facts",
 		nutrientId: NUTRIENT_IDS.SODIUM,
 		fromUnitName: "G",
 		toUnitName: "MG",
 		multiplier: 1000,
-	}, {
+    },
+    {
 		sourceKey: "open-food-facts",
 		nutrientId: 1114,
 		fromUnitName: "IU",
 		toUnitName: "UG",
 		multiplier: 0.025,
-	}],
+    },
+  ],
 	nutrientEquivalences: [
 		{
 			sourceKey: "usda",
@@ -312,7 +661,8 @@ export const productReferenceDataFixture: ProductReferenceData = {
 	],
 };
 
-export const ingredientProvenanceOptionsFixture: IngredientProvenanceOption[] = [
+export const ingredientProvenanceOptionsFixture: IngredientProvenanceOption[] =
+  [
 	{
 		dimension: "source",
 		value: "usda",

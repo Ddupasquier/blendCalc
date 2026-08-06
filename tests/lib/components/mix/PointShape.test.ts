@@ -22,11 +22,15 @@ describe("PointShape", () => {
 
 		const goalShape = container.querySelector(".point-shape__goal-shape");
 
-		expect(container.querySelectorAll(".point-shape__goal-shape")).toHaveLength(1);
+		expect(container.querySelectorAll(".point-shape__goal-shape")).toHaveLength(
+			1,
+		);
 		expect(goalShape).toHaveAttribute("fill", "none");
 		expect(goalShape).toHaveAttribute("stroke-dasharray", "1 6");
 		expect(goalShape).toHaveAttribute("stroke-linecap", "round");
-		expect(container.querySelector(".point-shape__goal")).not.toBeInTheDocument();
+		expect(
+			container.querySelector(".point-shape__goal"),
+		).not.toBeInTheDocument();
 	});
 
 	it("keeps dense side labels outside the chart while preserving exact values", () => {
@@ -67,15 +71,15 @@ describe("PointShape", () => {
 		expect(chartLabels[2]).toHaveAttribute("text-anchor", "start");
 		expect(chartLabels[5]).toHaveAttribute("text-anchor", "end");
 		expect(chartLabels[6]).toHaveAttribute("text-anchor", "end");
-		expect([chartLabels[2].textContent, chartLabels[5].textContent].join(" ")).toContain(
-			"Sugars",
-		);
-		expect([chartLabels[2].textContent, chartLabels[5].textContent].join(" ")).toContain(
-			"Fat",
-		);
-		expect(container.querySelectorAll(".point-shape__value-label")).toHaveLength(
-			valueLabels.length,
-		);
+		expect(
+			[chartLabels[2].textContent, chartLabels[5].textContent].join(" "),
+		).toContain("Sugars");
+		expect(
+			[chartLabels[2].textContent, chartLabels[5].textContent].join(" "),
+		).toContain("Fat");
+		expect(
+			container.querySelectorAll(".point-shape__value-label"),
+		).toHaveLength(valueLabels.length);
 		expect(container.querySelector("svg")).toHaveAccessibleName(
 			expect.stringContaining("Dietary Fiber: 2.5/10g"),
 		);
@@ -96,7 +100,11 @@ describe("PointShape", () => {
 
 		expect(displayedLabels[0]).toBe("Carbohydrates");
 		expect(displayedLabels.slice(2, 6)).not.toContain("Carbohydrates");
-		expect([displayedLabels[0], displayedLabels[3], displayedLabels[4]]).toEqual(
+		expect([
+			displayedLabels[0],
+			displayedLabels[3],
+			displayedLabels[4],
+		]).toEqual(
 			expect.arrayContaining(["Carbohydrates", "Dietary Fiber", "Potassium"]),
 		);
 		expect([displayedLabels[2], displayedLabels[5]]).toEqual(
@@ -112,7 +120,12 @@ describe("PointShape", () => {
 				labels,
 				values: [0.1, 0.2, 0.3, 0.4],
 				goalValues: [0.5, 0.6, 0.7, 0.8],
-				valueLabels: ["fat-value", "carb-value", "fiber-value", "protein-value"],
+				valueLabels: [
+					"fat-value",
+					"carb-value",
+					"fiber-value",
+					"protein-value",
+				],
 				pointColors: [
 					{ fill: "fat-fill", stroke: "fat-stroke" },
 					{ fill: "carb-fill", stroke: "carb-stroke" },
@@ -137,9 +150,28 @@ describe("PointShape", () => {
 		);
 	});
 
+	it("can keep exact values accessible without repeating them visually", () => {
+		const { container } = render(PointShape, {
+			props: {
+				points: 3,
+				labels: ["Calories", "Protein", "Fiber"],
+				values: [0.8, 1, 0.5],
+				valueLabels: ["280/350kcal", "25/25g", "5/10g"],
+				showValueLabels: false,
+			},
+		});
+
+		expect(
+			container.querySelectorAll(".point-shape__value-label"),
+		).toHaveLength(0);
+		expect(container.querySelector("svg")).toHaveAccessibleName(
+			expect.stringContaining("Calories: 280/350kcal"),
+		);
+	});
+
 	it("hides tiny value rows at the shared compact breakpoints", () => {
-		expect(pointShapeStyles).toContain(
-			"@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact)",
+		expect(pointShapeStyles).toMatch(
+			/@media \(max-width: \$app-breakpoint-xs\),\s+\(max-height: \$app-breakpoint-height-compact\)/,
 		);
 		expect(pointShapeStyles).toMatch(
 			/\.point-shape__value-label\s*\{\s*display:\s*none;/,

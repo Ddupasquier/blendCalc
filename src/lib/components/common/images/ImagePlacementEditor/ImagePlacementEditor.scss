@@ -88,16 +88,6 @@
 	font: inherit;
 }
 
-.image-placement-editor__controls input[type="range"] {
-	width: 100%;
-	accent-color: $app-shell-accent-primary;
-}
-
-.image-placement-editor__controls input[type="range"]:disabled {
-	cursor: not-allowed;
-	opacity: 0.45;
-}
-
 @media (max-width: $app-breakpoint-xs) {
 	.image-placement-editor,
 	.image-placement-editor__controls {

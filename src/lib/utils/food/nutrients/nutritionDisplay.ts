@@ -29,8 +29,9 @@ export const scalePer100gValue = (
 ): number | null => {
 	if (!Number.isFinite(valuePer100g ?? NaN)) return null;
 	return (
-		Number(valuePer100g) * clampNutritionViewingGrams(viewingGrams)
-	) / NUTRIENT_DATA_BASIS_GRAMS;
+		(Number(valuePer100g) * clampNutritionViewingGrams(viewingGrams)) /
+		NUTRIENT_DATA_BASIS_GRAMS
+	);
 };
 
 export const formatNutritionAmount = (
@@ -38,7 +39,10 @@ export const formatNutritionAmount = (
 ): string => {
 	if (!Number.isFinite(value ?? NaN)) return "—";
 	const numericValue = Number(value);
-	if (Math.abs(numericValue) < 0.005) return "0";
+	if (numericValue === 0) return "0";
+	if (Math.abs(numericValue) < 0.005) {
+		return numericValue > 0 ? "<0.005" : ">-0.005";
+	}
 	if (Math.abs(numericValue) >= 100) return Math.round(numericValue).toString();
 	const decimals = Math.abs(numericValue) < 1 ? 2 : 1;
 	return Number(numericValue.toFixed(decimals)).toString();

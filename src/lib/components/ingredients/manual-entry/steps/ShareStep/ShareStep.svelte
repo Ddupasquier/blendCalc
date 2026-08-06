@@ -60,13 +60,13 @@
 		onBack,
 		onSubmit,
 		onCatalogSubmissionComplete,
-		onSaveDestinationInput,
+		onSaveDestinationControl,
 	}: ShareStepProps = $props();
 
-	let saveDestinationSelect = $state<HTMLSelectElement | null>(null);
+	let saveDestinationControl = $state<HTMLButtonElement | null>(null);
 
 	$effect(() => {
-		if (saveDestinationSelect) onSaveDestinationInput?.(saveDestinationSelect);
+		if (saveDestinationControl) onSaveDestinationControl?.(saveDestinationControl);
 	});
 
 	const formatUnit = (unitName: string) =>
@@ -210,7 +210,7 @@
 	{#if !catalogSubmissionOnly}
 		<ManualEntryField forId="custom-ingredient-save-destination" label="Add after saving">
 			<SelectField
-				bind:element={saveDestinationSelect}
+				bind:element={saveDestinationControl}
 				id="custom-ingredient-save-destination"
 				name="custom-ingredient-save-destination"
 				value={saveDestination}

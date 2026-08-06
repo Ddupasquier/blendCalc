@@ -7,11 +7,27 @@ import {
 import { NUTRIENT_IDS } from "$lib/utils/food/types";
 import type { SavedDrink } from "$lib/utils/storage/client/savedDrinks";
 
+const goal = (
+  nutrientId: number,
+  targetAmount: number,
+  goalType: "exact" | "minimum" | "maximum" = "exact",
+  sortOrder = 1,
+) => ({
+  nutrientId,
+  goalType,
+  targetAmount,
+  upperAmount: null,
+  toleranceRatio: 0.1,
+  importanceWeight: 1,
+  sortOrder,
+});
+
 const drink: SavedDrink = {
 	id: "saved-1",
 	name: "Goal Mix",
 	createdAt: 1,
-	foods: [{
+  foods: [
+    {
 		fdcId: 1,
 		description: "Banana",
 		foodNutrients: [
@@ -30,22 +46,20 @@ const drink: SavedDrink = {
 				value: 8,
 			},
 		],
-	}],
-	selected: [
-		NUTRIENT_IDS.CALORIES,
-		NUTRIENT_IDS.PROTEIN,
-		NUTRIENT_IDS.FIBER,
+    },
 	],
+  selected: [NUTRIENT_IDS.CALORIES, NUTRIENT_IDS.PROTEIN, NUTRIENT_IDS.FIBER],
 	options: [
 		{ id: NUTRIENT_IDS.CALORIES, label: "Calories" },
 		{ id: NUTRIENT_IDS.PROTEIN, label: "Protein" },
 		{ id: NUTRIENT_IDS.FIBER, label: "Dietary Fiber" },
 	],
 	nutrientGoals: {
-		[NUTRIENT_IDS.CALORIES]: 100,
-		[NUTRIENT_IDS.PROTEIN]: 10,
-		[NUTRIENT_IDS.FIBER]: 5,
+    [NUTRIENT_IDS.CALORIES]: goal(NUTRIENT_IDS.CALORIES, 100),
+    [NUTRIENT_IDS.PROTEIN]: goal(NUTRIENT_IDS.PROTEIN, 10, "minimum", 2),
+    [NUTRIENT_IDS.FIBER]: goal(NUTRIENT_IDS.FIBER, 5, "minimum", 3),
 	},
+  goalBasis: "per_mix",
 	servingGrams: { 1: 100 },
 	servingQuantities: { 1: 100 },
 	servingUnits: { 1: "g" },
@@ -58,14 +72,14 @@ describe("saved drink presentation", () => {
 			{
 				nutrientId: NUTRIENT_IDS.CALORIES,
 				label: "Calories",
-				percent: 120,
-				tone: "warning",
+        percent: 80,
+        tone: "danger",
 			},
 			{
 				nutrientId: NUTRIENT_IDS.PROTEIN,
 				label: "Protein",
 				percent: 80,
-				tone: "success",
+        tone: "warning",
 			},
 		]);
 		expect(getSavedDrinkOverallGoalScore(drink)).toEqual({
@@ -85,7 +99,8 @@ describe("saved drink presentation", () => {
 	it("measures proximity to every reported goal without letting overages cancel deficits", () => {
 		const mixedGoalDrink = {
 			...drink,
-			foods: [{
+      foods: [
+        {
 				...drink.foods[0],
 				foodNutrients: drink.foods[0].foodNutrients.map((nutrient) => {
 					if (nutrient.nutrientId === NUTRIENT_IDS.CALORIES) {
@@ -93,7 +108,8 @@ describe("saved drink presentation", () => {
 					}
 					return { ...nutrient, value: 5 };
 				}),
-			}],
+        },
+      ],
 		};
 
 		expect(getSavedDrinkOverallGoalScore(mixedGoalDrink)).toEqual({
@@ -114,8 +130,11 @@ describe("saved drink presentation", () => {
 			...drink,
 			selected: nutrientIds,
 			options: nutrientIds.map((id) => ({ id, label: `Goal ${id}` })),
-			nutrientGoals: Object.fromEntries(nutrientIds.map((id) => [id, 10])),
-			foods: [{
+      nutrientGoals: Object.fromEntries(
+        nutrientIds.map((id, index) => [id, goal(id, 10, "exact", index + 1)]),
+      ),
+      foods: [
+        {
 				...drink.foods[0],
 				foodNutrients: nutrientIds.map((nutrientId) => ({
 					nutrientId,
@@ -124,7 +143,8 @@ describe("saved drink presentation", () => {
 					unitName: "G",
 					value: 10,
 				})),
-			}],
+        },
+      ],
 		};
 
 		expect(getSavedDrinkGoalProgress(allGoalsDrink)).toHaveLength(5);

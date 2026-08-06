@@ -8,6 +8,7 @@
 		goalValues = [],
 		labels = [],
 		valueLabels = [],
+		showValueLabels = true,
 		pointColors = [],
 		size = POINT_SHAPE_DEFAULTS.size,
 		fillColor = POINT_SHAPE_DEFAULTS.fillColor,
@@ -94,13 +95,15 @@
 	);
 
 	const getTextAnchor = (x: number) => {
-		const centerThreshold = size * POINT_SHAPE_DEFAULTS.centerAnchorThresholdRatio;
+		const centerThreshold =
+			size * POINT_SHAPE_DEFAULTS.centerAnchorThresholdRatio;
 		if (x < center - centerThreshold) return "end";
 		if (x > center + centerThreshold) return "start";
 		return "middle";
 	};
 	const getLabelX = (x: number) => {
-		const horizontalInset = size * POINT_SHAPE_DEFAULTS.labelHorizontalInsetRatio;
+		const horizontalInset =
+			size * POINT_SHAPE_DEFAULTS.labelHorizontalInsetRatio;
 		return Math.max(horizontalInset, Math.min(x, size - horizontalInset));
 	};
 	const getLabelY = (y: number) => {
@@ -123,18 +126,21 @@
 			return [cleanLabel];
 		}
 
-		const lines = words.reduce<string[]>((accumulator, word) => {
-			const currentLine = accumulator[accumulator.length - 1] ?? "";
-			const nextLine = `${currentLine} ${word}`.trim();
+		const lines = words.reduce<string[]>(
+			(accumulator, word) => {
+				const currentLine = accumulator[accumulator.length - 1] ?? "";
+				const nextLine = `${currentLine} ${word}`.trim();
 
-			if (!currentLine || nextLine.length <= 11) {
-				accumulator[accumulator.length - 1] = nextLine;
+				if (!currentLine || nextLine.length <= 11) {
+					accumulator[accumulator.length - 1] = nextLine;
+					return accumulator;
+				}
+
+				accumulator.push(word);
 				return accumulator;
-			}
-
-			accumulator.push(word);
-			return accumulator;
-		}, [""]);
+			},
+			[""],
+		);
 
 		return lines.slice(0, 2);
 	};
@@ -300,7 +306,11 @@
 			<g class="point-shape__value-fill">
 				{#each valueSegments as segment}
 					<polygon
-						points={pointsToString([[center, center], segment.start, segment.end])}
+						points={pointsToString([
+							[center, center],
+							segment.start,
+							segment.end,
+						])}
 						fill={`url(#${segment.fillId})`}
 					/>
 				{/each}
@@ -348,12 +358,8 @@
 						{labelLine}
 					</tspan>
 				{/each}
-				{#if displayValueLabels[index]}
-					<tspan
-						class="point-shape__value-label"
-						x={labelX}
-						dy="1.2em"
-					>
+				{#if showValueLabels && displayValueLabels[index]}
+					<tspan class="point-shape__value-label" x={labelX} dy="1.2em">
 						{displayValueLabels[index]}
 					</tspan>
 				{/if}

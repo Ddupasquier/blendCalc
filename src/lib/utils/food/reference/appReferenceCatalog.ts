@@ -1,3 +1,5 @@
+import type { MixGoalMap, MixGoalTemplate } from "$lib/utils/mix/goals/types";
+
 export type NutrientCatalogItem = {
 	id: number;
 	label: string;
@@ -26,15 +28,9 @@ export type NutrientEquivalence = {
 	sourceKey: string;
 };
 
-export type MixGoalTemplate = {
-	id: string;
-	label: string;
-	description: string;
-	goals: Record<number, number>;
-};
+export type { MixGoalTemplate };
 
 export type MixRuntimeConfiguration = {
-	defaultGoalByUnit: Record<string, number>;
 	progressThresholds: {
 		atGoal: number;
 		barelyOver: number;
@@ -75,7 +71,6 @@ export type AppReferenceCatalog = {
 };
 
 const EMPTY_MIX_RUNTIME: MixRuntimeConfiguration = {
-	defaultGoalByUnit: {},
 	progressThresholds: {
 		atGoal: 0,
 		barelyOver: 0,
@@ -108,7 +103,10 @@ export const getConfiguredAppReferenceCatalog = () => configuredCatalog;
 export const getNutrientDisplayProfile = (
 	purpose: NutrientDisplayProfile["purpose"],
 	catalog: AppReferenceCatalog = configuredCatalog,
-) => catalog.nutrientDisplayProfiles.find((profile) => profile.purpose === purpose) ?? null;
+) =>
+  catalog.nutrientDisplayProfiles.find(
+    (profile) => profile.purpose === purpose,
+  ) ?? null;
 
 export const getNutritionFactsFields = (
 	catalog: AppReferenceCatalog = configuredCatalog,
@@ -124,11 +122,11 @@ export const getPopularMixFields = (
 
 export const getDefaultMixGoals = (
 	catalog: AppReferenceCatalog = configuredCatalog,
-) => Object.fromEntries(
-	getDefaultMixFields(catalog).flatMap((field) =>
-		field.defaultGoal === null ? [] : [[field.id, field.defaultGoal]],
-	),
-);
+) => ({ ...(getDefaultMixGoalTemplate(catalog)?.goals ?? {}) }) as MixGoalMap;
+
+export const getDefaultMixGoalTemplate = (
+  catalog: AppReferenceCatalog = configuredCatalog,
+) => catalog.mixGoalTemplates.find((template) => template.isDefault) ?? null;
 
 export const getMixRuntimeConfiguration = (
 	catalog: AppReferenceCatalog = configuredCatalog,
