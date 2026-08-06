@@ -218,20 +218,21 @@
           "number": { "type": ["string", "null"] },
           "unit": { "type": "string" },
           "amountPer100g": { "type": ["number", "null"], "minimum": 0 },
-          "valueStatus": { "type": "string", "enum": ["reported", "derived", "missing", "unknown"] },
+          "valueStatus": { "type": "string", "enum": ["reported", "estimated", "derived", "missing", "unknown"] },
           "source": { "oneOf": [{ "$ref": "#/components/schemas/Source" }, { "type": "null" }] },
           "quality": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["sourceValueStatus", "standardError", "sourceNutrientKey", "sourceNutrientCode", "mappingStatus", "mappingMethod", "derivationMethod"],
+            "required": ["sourceValueStatus", "standardError", "sourceNutrientKey", "sourceNutrientCode", "mappingStatus", "mappingMethod", "derivationMethod", "valueQualifier"],
             "properties": {
-              "sourceValueStatus": { "type": "string", "enum": ["reported", "reported-zero", "derived", "trace", "present-unquantified", "missing", "invalid", "unknown"] },
+              "sourceValueStatus": { "type": "string", "enum": ["reported", "reported-zero", "estimated", "derived", "trace", "present-unquantified", "missing", "invalid", "unknown"] },
               "standardError": { "type": ["number", "null"], "minimum": 0 },
               "sourceNutrientKey": { "type": ["string", "null"] },
               "sourceNutrientCode": { "type": ["string", "null"] },
               "mappingStatus": { "type": "string", "enum": ["canonical", "unmapped", "excluded", "unknown"] },
               "mappingMethod": { "type": ["string", "null"] },
-              "derivationMethod": { "type": ["string", "null"] }
+              "derivationMethod": { "type": ["string", "null"] },
+              "valueQualifier": { "type": ["string", "null"], "enum": ["source-estimate", null] }
             }
           }
 		}

@@ -13,6 +13,7 @@ export type ListControlsProps = {
 	visibleCount: number;
 	itemLabel?: string;
 	showCount?: boolean;
+	resultSummary?: string;
 	filterLabel?: string;
 	filterValue?: string;
 	filterOptions?: ListFilterOption[];

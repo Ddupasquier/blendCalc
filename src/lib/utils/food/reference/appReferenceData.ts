@@ -41,10 +41,6 @@ const readRuntimeConfiguration = (
 		"Mix progress thresholds",
 	);
 	return {
-		defaultGoalByUnit: asNumberRecord(
-			values.get("default-goal-by-unit"),
-			"Mix default goals by unit",
-		),
 		progressThresholds: {
 			atGoal: asNumber(thresholds.atGoal, "Mix at-goal threshold"),
 			barelyOver: asNumber(thresholds.barelyOver, "Mix barely-over threshold"),

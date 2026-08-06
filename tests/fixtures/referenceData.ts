@@ -160,7 +160,6 @@ export const appReferenceCatalogFixture: AppReferenceCatalog = {
     },
   ],
 	mixRuntime: {
-		defaultGoalByUnit: { g: 20, kcal: 350, fallback: 100 },
 		progressThresholds: { atGoal: 1, barelyOver: 1.1, midwayOver: 1.35 },
 		pointGoalTolerance: 0.1,
 		defaultServingGrams: 100,

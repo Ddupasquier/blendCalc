@@ -12,6 +12,16 @@ const calorieGoal = {
   sortOrder: 1,
 };
 
+const proteinGoal = {
+  nutrientId: 1003,
+  goalType: "minimum" as const,
+  targetAmount: 25,
+  upperAmount: null,
+  toleranceRatio: 0.1,
+  importanceWeight: 1,
+  sortOrder: 2,
+};
+
 describe("GoalTargets", () => {
 	it("uses a synchronized slider and number input for each nutrient goal", async () => {
 		const onPreviewGoal = vi.fn();
@@ -44,13 +54,13 @@ describe("GoalTargets", () => {
 
 		const slider = screen.getByRole("slider", { name: "Set Calories goal" });
 		expect(screen.getByText("Current")).toBeInTheDocument();
-		expect(screen.getByText("555.9")).toBeInTheDocument();
+		expect(screen.getByText("555.9 kcal")).toBeInTheDocument();
 		expect(screen.getByText("Goal")).toBeInTheDocument();
 		expect(slider).toHaveValue("350");
 		expect(slider).toHaveAttribute("max", "700");
 		expect(slider).toHaveAttribute(
 			"aria-valuetext",
-      "=350kcal goal; 555.9kcal current",
+			"=350 kcal goal; 555.9 kcal current",
 		);
     expect(
       screen.getByRole("spinbutton", { name: "Goal value for Calories in kcal" }),
@@ -82,7 +92,7 @@ describe("GoalTargets", () => {
       label: "Weekday lunch",
       description: "Your saved nutrition goals.",
       goalBasis: "per_mix" as const,
-      goals: { 1008: calorieGoal },
+      goals: { 1008: calorieGoal, 1003: proteinGoal },
       sourceKey: null,
       sourceReference: null,
       reviewedAt: null,
@@ -124,6 +134,8 @@ describe("GoalTargets", () => {
 		expect(onTemplateChange).toHaveBeenCalledWith(personalTemplate.selectionId);
 		expect(screen.getByText("Your saved nutrition goals.")).toBeInTheDocument();
 		expect(screen.getByText("Customized")).toBeInTheDocument();
+		expect(screen.getByText("=350 kcal")).toBeInTheDocument();
+		expect(screen.getByText("≥25 g")).toBeInTheDocument();
 
 		await fireEvent.click(screen.getByRole("button", { name: "Apply" }));
 		expect(onApplyTemplate).toHaveBeenCalledOnce();

@@ -1,14 +1,5 @@
 @use "../../../../../styles/variables" as *;
 
-.nutrient-adjustments {
-	background: $app-shell-surface-panel;
-	border-radius: $app-shell-radius-card;
-}
-
-.nutrient-adjustments > :global(.collapsible-section) > :global(.collapsible-section__content) {
-	padding: $app-gap-md $app-gap-sm $app-gap-sm;
-}
-
 .nutrient-adjustments__content {
 	display: grid;
 	gap: $app-gap-sm;
@@ -77,11 +68,8 @@
 	gap: $app-gap-2xs;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.nutrient-adjustments > :global(.collapsible-section) > :global(.collapsible-section__content) {
-		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
-	}
-
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.nutrient-adjustment {
 		grid-template-columns: auto minmax(0, 1fr);
 		gap: $app-gap-xs;

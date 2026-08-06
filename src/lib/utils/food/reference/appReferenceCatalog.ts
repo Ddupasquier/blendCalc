@@ -31,7 +31,6 @@ export type NutrientEquivalence = {
 export type { MixGoalTemplate };
 
 export type MixRuntimeConfiguration = {
-	defaultGoalByUnit: Record<string, number>;
 	progressThresholds: {
 		atGoal: number;
 		barelyOver: number;
@@ -72,7 +71,6 @@ export type AppReferenceCatalog = {
 };
 
 const EMPTY_MIX_RUNTIME: MixRuntimeConfiguration = {
-	defaultGoalByUnit: {},
 	progressThresholds: {
 		atGoal: 0,
 		barelyOver: 0,

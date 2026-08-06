@@ -69,10 +69,7 @@ describe("ListControls", () => {
 			name: "Sort saved mixes",
 		});
 		expect(trigger).toHaveAttribute("aria-expanded", "true");
-		expect(trigger).toHaveAttribute(
-			"aria-controls",
-			"saved-sort-sheet-title",
-		);
+		expect(trigger).toHaveAttribute("aria-controls", "saved-sort-sheet-title");
 		expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
 
 		await fireEvent.click(trigger);
@@ -97,5 +94,21 @@ describe("ListControls", () => {
 			screen.getByRole("searchbox", { name: "Find selected ingredients" }),
 		).toBeInTheDocument();
 		expect(screen.queryByText("8 selected")).not.toBeInTheDocument();
+	});
+
+	it("can present a caller-defined result summary in the shared count position", () => {
+		render(ListControls, {
+			props: {
+				id: "mix-ingredient-search",
+				query: "",
+				onQueryChange: vi.fn(),
+				totalCount: 12,
+				visibleCount: 8,
+				resultSummary: "8 available · 3 selected",
+			},
+		});
+
+		expect(screen.getByText("8 available · 3 selected")).toBeInTheDocument();
+		expect(screen.queryByText("8 of 12 items")).not.toBeInTheDocument();
 	});
 });

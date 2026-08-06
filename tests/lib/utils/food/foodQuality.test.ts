@@ -63,24 +63,22 @@ describe("food quality", () => {
 		const quality = getFoodQuality(resolvedFood);
 
 		expect(quality.sourceCounts.fallback).toBe(1);
-		expect(quality.sourceCounts.derived).toBe(1);
-		expect(quality.sourceCounts.missing).toBe(3);
-		expect(quality.missingCount).toBe(1);
+		expect(quality.sourceCounts.derived).toBe(0);
+		expect(quality.sourceCounts.missing).toBe(4);
+		expect(quality.missingCount).toBe(2);
 		expect(quality.recommendedMissingCount).toBe(2);
 		expect(quality.needsDetails).toBe(true);
 		expect(
 			quality.details.filter((detail) => detail.source === "missing"),
 		).toEqual([
+			expect.objectContaining({ label: "Energy" }),
 			expect.objectContaining({ label: "Sodium, Na" }),
 			expect.objectContaining({ label: "Dietary Fiber" }),
 			expect.objectContaining({ label: "Total Sugars" }),
 		]);
-		expect(
-			quality.details.find((detail) => detail.source === "derived"),
-		).toMatchObject({
-			label: "Energy",
-			sourceLabel: "Derived",
-		});
+		expect(quality.details).not.toContainEqual(
+			expect.objectContaining({ source: "derived" }),
+		);
 	});
 
 	it("does not call generic food partial when only recommended nutrients are missing", () => {

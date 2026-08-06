@@ -202,6 +202,19 @@ const record: ApprovedCatalogRecord = {
 				unitName: "KCAL",
 				value: Number.NaN,
 			},
+			{
+				nutrientId: 1087,
+				nutrientName: "Calcium",
+				nutrientNumber: "301",
+				unitName: "MG",
+				value: 18,
+				valueOrigin: "estimated",
+				valueStatus: "estimated",
+				valueQualifier: "source-estimate",
+				source: "usda",
+				sourceReference: "123",
+				confidence: "source-verified",
+			},
 		],
 		foodServings: [{
 			label: "1/2 cup",
@@ -306,6 +319,14 @@ describe("blendCalc API v1 catalog mapping", () => {
 		expect(product.nutrients[1]?.quality).toMatchObject({
 			mappingStatus: "unknown",
 			standardError: null,
+		});
+		expect(product.nutrients[2]).toMatchObject({
+			amountPer100g: 18,
+			valueStatus: "estimated",
+			quality: {
+				sourceValueStatus: "estimated",
+				valueQualifier: "source-estimate",
+			},
 		});
 		expect(product.servings[0]).toMatchObject({
 			grams: 125,

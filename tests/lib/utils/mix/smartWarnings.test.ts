@@ -32,7 +32,7 @@ describe("smart warnings", () => {
 			expect.objectContaining({
 				id: "over-2000",
 				tone: "danger",
-				message: "Sugar exceeds goal by 8g.",
+				message: "Sugar exceeds goal by 8 g.",
 			}),
 		]);
 	});
@@ -52,7 +52,7 @@ describe("smart warnings", () => {
 			expect.objectContaining({
 				id: "under-1003",
 				tone: "warning",
-				message: "Protein is under target by 12g.",
+				message: "Protein is under target by 12 g.",
 			}),
 		]);
 	});

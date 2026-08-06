@@ -22,6 +22,51 @@
 	text-align: center;
 }
 
+.nutrient-picker__goal-setup {
+	display: grid;
+	gap: $app-gap-sm;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-control;
+	border: $app-border;
+	border-radius: $app-radius;
+}
+
+.nutrient-picker__goal-copy {
+	display: grid;
+	gap: $app-gap-2xs;
+	color: $app-shell-text-primary;
+
+	small {
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-sm;
+	}
+}
+
+.nutrient-picker__goal-controls {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: $app-gap-xs;
+
+	> :global(input) {
+		width: 100%;
+		min-width: 0;
+		height: $app-control-height-sm;
+		padding: 0 $app-gap-sm;
+		background: $app-shell-surface-control;
+		border: $app-border;
+		border-radius: $app-radius-pill;
+		color: $app-shell-text-primary;
+		font: inherit;
+	}
+
+	> span {
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-sm;
+		font-weight: $app-font-weight-semibold;
+	}
+}
+
 .nutrient-picker__results {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -55,5 +100,13 @@
 
 	.nutrient-picker__content {
 		gap: $app-gap-xs;
+	}
+
+	.nutrient-picker__goal-controls {
+		grid-template-columns: minmax(0, 1fr) auto;
+
+		> :global(.action-button) {
+			grid-column: 1 / -1;
+		}
 	}
 }

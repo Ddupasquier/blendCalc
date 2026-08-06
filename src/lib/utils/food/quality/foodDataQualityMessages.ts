@@ -39,8 +39,7 @@ export const getFoodDataQualityMessage = (
 			return {
 				tone: "warning",
 				title: "Some source details may be missing",
-				message:
-					`The source reports this record as ${notice.percentage ?? 0}% complete. blendCalc leaves unavailable values blank instead of guessing.`,
+				message: `The source reports this record as ${notice.percentage ?? 0}% complete. blendCalc leaves unavailable values blank instead of guessing.`,
 			};
 		case "SOURCE_RECORD_QUALITY_NOTES":
 			return {
@@ -53,50 +52,49 @@ export const getFoodDataQualityMessage = (
 			return {
 				tone: "info",
 				title: "Accepted fields come from more than one source",
-				message:
-					`blendCalc combined traceable fields from ${formatCount(notice.count)} sources instead of choosing one source for the whole product. Product details lists each field's source.`,
+				message: `blendCalc combined traceable fields from ${formatCount(notice.count)} sources instead of choosing one source for the whole product. Product details lists each field's source.`,
 			};
 		case "SOURCE_METADATA_COMBINES_RECORDS":
 			return {
 				tone: "info",
 				title: "Some source labels combine records",
-				message:
-					`The source assembled label metadata from ${formatCount(notice.count)} contributing records. This note does not replace field-level verification.`,
+				message: `The source assembled label metadata from ${formatCount(notice.count)} contributing records. This note does not replace field-level verification.`,
 			};
 		case "NUTRIENT_VALUES_DERIVED":
 			return {
 				tone: "info",
 				title: "Some nutrient values were calculated",
-				message:
-					`${formatCount(notice.count)} values were derived from other reported data. The calculation does not replace the original source values.`,
+				message: `${formatCount(notice.count)} values were derived from other reported data. The calculation does not replace the original source values.`,
+			};
+		case "NUTRIENT_VALUES_ESTIMATED":
+			return {
+				tone: "info",
+				title: "Some nutrient values are source estimates",
+				message: `${formatCount(notice.count)} nutrient values were estimated by the source. blendCalc keeps them distinct from measured values and does not use them for automatic adjustment suggestions.`,
 			};
 		case "NUTRIENT_STANDARD_ERROR_REPORTED":
 			return {
 				tone: "info",
 				title: "The source included measurement uncertainty",
-				message:
-					`${formatCount(notice.count)} nutrient values include a source-reported standard error. blendCalc keeps that context separate and does not alter the displayed amount.`,
+				message: `${formatCount(notice.count)} nutrient values include a source-reported standard error. blendCalc keeps that context separate and does not alter the displayed amount.`,
 			};
 		case "NUTRIENT_SOURCE_VALUES_UNQUANTIFIED":
 			return {
 				tone: "info",
 				title: "The source reported nutrients without exact amounts",
-				message:
-					`${formatCount(notice.count)} source values were marked as trace or present without a measured amount. They are not treated as zero.`,
+				message: `${formatCount(notice.count)} source values were marked as trace or present without a measured amount. They are not treated as zero.`,
 			};
 		case "NUTRIENT_SOURCE_VALUES_MISSING":
 			return {
 				tone: "info",
 				title: "The source marked some nutrient values as unavailable",
-				message:
-					`${formatCount(notice.count)} source values were explicitly missing. They remain unavailable instead of becoming zero.`,
+				message: `${formatCount(notice.count)} source values were explicitly missing. They remain unavailable instead of becoming zero.`,
 			};
 		case "NUTRIENT_SOURCE_ROWS_UNMAPPED":
 			return {
 				tone: "info",
 				title: "Some source nutrients are awaiting mapping review",
-				message:
-					`${formatCount(notice.count)} source nutrient rows are not mapped to a blendCalc nutrient. They are retained for review but excluded from nutrition math.`,
+				message: `${formatCount(notice.count)} source nutrient rows are not mapped to a blendCalc nutrient. They are retained for review but excluded from nutrition math.`,
 			};
 	}
 };

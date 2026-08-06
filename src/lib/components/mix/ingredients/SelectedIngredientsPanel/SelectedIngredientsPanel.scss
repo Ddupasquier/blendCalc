@@ -1,16 +1,5 @@
 @use "../../../../../styles/variables" as *;
 
-.selected-ingredients-panel {
-	display: grid;
-	gap: $app-gap-sm;
-	background: $app-shell-surface-panel;
-	border-radius: $app-shell-radius-card;
-}
-
-.selected-ingredients-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
-	padding: $app-gap-md $app-gap-sm $app-gap-sm;
-}
-
 .selected-ingredients-panel__content {
 	display: grid;
 	gap: $app-gap-sm;
@@ -43,15 +32,8 @@
 	text-align: center;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.selected-ingredients-panel {
-		gap: $app-gap-xs;
-	}
-
-	.selected-ingredients-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
-		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
-	}
-
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.selected-ingredients-panel__content {
 		gap: $app-gap-xs;
 	}

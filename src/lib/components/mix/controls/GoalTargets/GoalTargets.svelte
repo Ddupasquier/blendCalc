@@ -4,7 +4,7 @@
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
-	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
+	import MixPanelSection from "$lib/components/mix/layout/MixPanelSection/MixPanelSection.svelte";
 	import MetadataPill from "$lib/components/common/display/MetadataPill/MetadataPill.svelte";
 	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import RangeInput from "$lib/components/common/forms/RangeInput/RangeInput.svelte";
@@ -17,6 +17,7 @@
 		evaluateMixGoal,
 		getMixGoalOperator,
 	} from "$lib/utils/mix/goals/goalEvaluation";
+	import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
 	import type { MixGoalType } from "$lib/utils/mix/goals/types";
 	import type { GoalTargetsProps } from "./types";
 
@@ -51,18 +52,27 @@
 		{ value: "", label: "Choose a goal preset", placeholder: true },
 		...goalTemplates.map((template) => ({
 			value: template.selectionId,
-			label: template.scope === "user" ? `${template.label} · Yours` : template.label,
+			label:
+				template.scope === "user"
+					? `${template.label} · Yours`
+					: template.label,
 		})),
 	]);
 	let templatePreviewOpen = $state(false);
 	const selectedTemplate = $derived(
-		goalTemplates.find((template) => template.selectionId === selectedGoalTemplateId) ?? null,
+		goalTemplates.find(
+			(template) => template.selectionId === selectedGoalTemplateId,
+		) ?? null,
 	);
 	const getNutrientLabel = (nutrientId: number) =>
 		nutrientCatalog.find((nutrient) => nutrient.id === nutrientId)?.label ??
 		`Nutrient ${nutrientId}`;
-	const getStatus = (total: number, goal: Parameters<typeof evaluateMixGoal>[0]) =>
-		evaluateMixGoal(goal, total).status;
+	const getNutrientUnit = (nutrientId: number) =>
+		nutrientCatalog.find((nutrient) => nutrient.id === nutrientId)?.unit ?? "";
+	const getStatus = (
+		total: number,
+		goal: Parameters<typeof evaluateMixGoal>[0],
+	) => evaluateMixGoal(goal, total).status;
 	const getSliderStep = (defaultGoal: number) => {
 		if (defaultGoal >= 100) return 1;
 		if (defaultGoal >= 1) return 0.1;
@@ -70,7 +80,9 @@
 	};
 	const getSliderMax = (defaultGoal: number, goal: number, step: number) =>
 		Math.max(defaultGoal * 2, goal, step * 10);
-	const getSliderTone = (status: ReturnType<typeof getStatus>): RangeInputTone => {
+	const getSliderTone = (
+		status: ReturnType<typeof getStatus>,
+	): RangeInputTone => {
 		if (status === "met") return "success";
 		if (status === "over") return "danger";
 		if (status === "under") return "warning";
@@ -82,11 +94,19 @@
 		{ value: "maximum", label: "At most" },
 		{ value: "range", label: "Range" },
 	];
-	const goalSummary = (goal: Parameters<typeof evaluateMixGoal>[0]) => {
+	const goalSummary = (
+		goal: Parameters<typeof evaluateMixGoal>[0],
+		unit: string,
+	) => {
 		if (goal.goalType === "range") {
-			return `${goal.targetAmount}–${goal.upperAmount ?? goal.targetAmount}`;
+			return `${formatMixQuantity(goal.targetAmount)}–${formatMixQuantity(
+				goal.upperAmount ?? goal.targetAmount,
+				{ unit },
+			)}`;
 		}
-		return `${getMixGoalOperator(goal)}${goal.targetAmount}`;
+		return `${getMixGoalOperator(goal)}${formatMixQuantity(goal.targetAmount, {
+			unit,
+		})}`;
 	};
 	const handleTemplateChange = (templateId: string) => {
 		templatePreviewOpen = Boolean(templateId);
@@ -98,99 +118,113 @@
 	};
 </script>
 
-<section class="goals-panel" data-tutorial-target="mix-goals">
-	<CollapsibleSection
-		title="Goals"
-		badge={`${selectedNutrients.length} tracked`}
-		{open}
-		{onOpenChange}
-		surface="panel"
-	>
-		<div class="goals-content">
-			<div class="goal-template-controls">
-				<SelectField
-					id="goal-template"
-					name="goal-template"
-					class="goal-template-controls__select"
-					label="Goal preset"
-					labelVisibility="sr-only"
-					size="small"
-					value={selectedGoalTemplateId}
-					options={goalTemplateOptions}
-					onValueChange={handleTemplateChange}
-				/>
-				<ActionButton
-					size="small"
-					variant="success"
-					onclick={handleApplyTemplate}
-					disabled={!selectedGoalTemplateId || busy}
-					busy={busy}
-				>Apply</ActionButton>
-			</div>
-			{#if selectedTemplate && templatePreviewOpen}
-				<div class="goal-template-preview">
-					<div>
-						<div class="goal-template-preview__title">
-							<strong>{selectedTemplate.label}</strong>
-							{#if templateCustomized}
-								<MetadataPill label="Customized" tone="neutral" />
-							{/if}
-						</div>
-						<p>{selectedTemplate.description}</p>
+<MixPanelSection
+	class="goals-panel"
+	dataTutorialTarget="mix-goals"
+	title="Goals"
+	badge={`${selectedNutrients.length} tracked`}
+	{open}
+	{onOpenChange}
+>
+	<div class="goals-content">
+		<div class="goal-template-controls">
+			<SelectField
+				id="goal-template"
+				name="goal-template"
+				class="goal-template-controls__select"
+				label="Goal preset"
+				labelVisibility="sr-only"
+				size="small"
+				value={selectedGoalTemplateId}
+				options={goalTemplateOptions}
+				onValueChange={handleTemplateChange}
+			/>
+			<ActionButton
+				size="small"
+				variant="success"
+				onclick={handleApplyTemplate}
+				disabled={!selectedGoalTemplateId || busy}
+				{busy}>Apply</ActionButton
+			>
+		</div>
+		{#if selectedTemplate && templatePreviewOpen}
+			<div class="goal-template-preview">
+				<div>
+					<div class="goal-template-preview__title">
+						<strong>{selectedTemplate.label}</strong>
+						{#if templateCustomized}
+							<MetadataPill label="Customized" tone="neutral" />
+						{/if}
 					</div>
-					<div
-						class="goal-template-preview__goals"
-						aria-label={`${selectedTemplate.label} goals`}
-					>
-						{#each Object.values(selectedTemplate.goals).sort((left, right) => left.sortOrder - right.sortOrder) as goal (goal.nutrientId)}
-							<MetadataPill
-								label={getNutrientLabel(goal.nutrientId)}
-								value={goalSummary(goal)}
-								tone="soft"
-							/>
-						{/each}
-					</div>
-					<label class="goal-template-preview__keep">
-						<span>
-							<strong>Keep my other goals</strong>
-							<small>Preset goals update first; your extra tracked nutrients stay.</small>
-						</span>
-						<ToggleSwitch
-							id="keep-extra-mix-goals"
-							checked={keepExtraGoals}
-							ariaLabel="Keep goals not included in this preset"
-							onChange={onKeepExtraGoalsChange}
-						/>
-					</label>
-					{#if selectedTemplate.scope === "user"}
-						<ActionButton
-							size="small"
-							variant="danger"
-							onclick={() => onDeleteTemplate(selectedTemplate.id)}
-							disabled={busy}
-						>Delete preset</ActionButton>
-					{/if}
+					<p>{selectedTemplate.description}</p>
 				</div>
-			{/if}
-			{#if error}
-				<StatusMessage tone="danger" message={error} />
-			{/if}
-			<div class="goal-grid" aria-label="Nutrient goals">
-				{#each selectedNutrients as nutrient}
-					{@const total = getTotal(Number(nutrient.id))}
-					{@const defaultGoal = getGoal(nutrient)}
-					{@const goal = nutrientGoals[Number(nutrient.id)] ?? defaultGoal}
+				<div
+					class="goal-template-preview__goals"
+					aria-label={`${selectedTemplate.label} goals`}
+				>
+					{#each Object.values(selectedTemplate.goals).sort((left, right) => left.sortOrder - right.sortOrder) as goal (goal.nutrientId)}
+						<MetadataPill
+							label={getNutrientLabel(goal.nutrientId)}
+							value={goalSummary(
+								goal,
+								getNutrientUnit(goal.nutrientId),
+							)}
+							tone="soft"
+						/>
+					{/each}
+				</div>
+				<label class="goal-template-preview__keep">
+					<span>
+						<strong>Keep my other goals</strong>
+						<small
+							>Preset goals update first; your extra tracked nutrients stay.</small
+						>
+					</span>
+					<ToggleSwitch
+						id="keep-extra-mix-goals"
+						checked={keepExtraGoals}
+						ariaLabel="Keep goals not included in this preset"
+						onChange={onKeepExtraGoalsChange}
+					/>
+				</label>
+				{#if selectedTemplate.scope === "user"}
+					<ActionButton
+						size="small"
+						variant="danger"
+						onclick={() => onDeleteTemplate(selectedTemplate.id)}
+						disabled={busy}>Delete preset</ActionButton
+					>
+				{/if}
+			</div>
+		{/if}
+		{#if error}
+			<StatusMessage tone="danger" message={error} />
+		{/if}
+		<div class="goal-grid" aria-label="Nutrient goals">
+			{#each selectedNutrients as nutrient}
+				{@const total = getTotal(Number(nutrient.id))}
+				{@const defaultGoal = getGoal(nutrient)}
+				{@const goal = nutrientGoals[Number(nutrient.id)]}
+				{@const nutrientUnit =
+					nutrient.unit ?? getNutrientUnit(Number(nutrient.id))}
+				{#if goal}
+					{@const baselineTarget = defaultGoal?.targetAmount ?? goal.targetAmount}
 					{@const status = getStatus(total, goal)}
-					{@const sliderStep = getSliderStep(defaultGoal.targetAmount)}
-					{@const sliderMax = getSliderMax(defaultGoal.targetAmount, goal.targetAmount, sliderStep)}
+					{@const sliderStep = getSliderStep(baselineTarget)}
+					{@const sliderMax = getSliderMax(
+						baselineTarget,
+						goal.targetAmount,
+						sliderStep,
+					)}
 					<div class="goal-input" data-status={status}>
 						<div class="goal-input__header">
 							<div class="goal-input__heading">
 								<span class="goal-label">{nutrient.label}</span>
 								<span class="goal-current">
 									<span>Current</span>
-									<strong>{total.toFixed(1)}</strong>
-									<span>{nutrient.unit}</span>
+									<strong>{formatMixQuantity(total, {
+										unit: nutrientUnit,
+									})}</strong>
 								</span>
 							</div>
 							<CircleIconButton
@@ -215,7 +249,8 @@
 								width="content"
 								value={goal.goalType}
 								options={goalTypeOptions}
-								onValueChange={(value) => onUpdateGoalType(nutrient.id, value as MixGoalType)}
+								onValueChange={(value) =>
+									onUpdateGoalType(nutrient.id, value as MixGoalType)}
 							/>
 							<span class="goal-input__amount">
 								<NumberInput
@@ -224,26 +259,30 @@
 									class="goal-input__number"
 									min="0"
 									step="any"
-									placeholder={`Target ${nutrient.unit}`}
-									ariaLabel={`${goal.goalType === "range" ? "Lower" : "Goal"} value for ${nutrient.label} in ${nutrient.unit}`}
+									placeholder={`Target ${nutrientUnit}`}
+									ariaLabel={`${goal.goalType === "range" ? "Lower" : "Goal"} value for ${nutrient.label} in ${nutrientUnit}`}
 									value={goal.targetAmount}
 									onValueChange={(value) => onUpdateGoal(nutrient.id, value)}
 								/>
 								{#if goal.goalType === "range"}
-									<span class="goal-input__range-divider" aria-hidden="true">–</span>
+									<span
+										class="goal-input__range-divider"
+										aria-hidden="true">–</span
+									>
 									<NumberInput
 										id={`goal-${nutrient.id}-upper`}
 										name={`goal-${nutrient.id}-upper`}
 										class="goal-input__number"
 										min={String(goal.targetAmount)}
 										step="any"
-										placeholder={`Upper ${nutrient.unit}`}
-										ariaLabel={`Upper goal for ${nutrient.label} in ${nutrient.unit}`}
+										placeholder={`Upper ${nutrientUnit}`}
+										ariaLabel={`Upper goal for ${nutrient.label} in ${nutrientUnit}`}
 										value={goal.upperAmount ?? goal.targetAmount}
-										onValueChange={(value) => onUpdateUpperGoal(nutrient.id, value)}
+										onValueChange={(value) =>
+											onUpdateUpperGoal(nutrient.id, value)}
 									/>
 								{/if}
-								<span class="goal-unit">{nutrient.unit}</span>
+								<span class="goal-unit">{nutrientUnit}</span>
 							</span>
 						</div>
 						<RangeInput
@@ -257,29 +296,36 @@
 							fillValue={total}
 							tone={getSliderTone(status)}
 							ariaLabel={`Set ${nutrient.label} goal`}
-							ariaValueText={`${goalSummary(goal)}${nutrient.unit} goal; ${total.toFixed(1)}${nutrient.unit} current`}
-							onValueChange={(value) => onPreviewGoal(nutrient.id, String(value))}
-							onValueCommit={(value) => onUpdateGoal(nutrient.id, String(value))}
+							ariaValueText={`${goalSummary(goal, nutrientUnit)} goal; ${formatMixQuantity(total, { unit: nutrientUnit })} current`}
+							onValueChange={(value) =>
+								onPreviewGoal(nutrient.id, String(value))}
+							onValueCommit={(value) =>
+								onUpdateGoal(nutrient.id, String(value))}
 						/>
 					</div>
-				{/each}
-			</div>
-			<NutrientPicker
-				excludedIds={selectedNutrients.map((nutrient) => nutrient.id)}
-				onSelect={onAddNutrient}
-			/>
-			<RoundedActionButton
-				variant="outline"
-				fullWidth
-				onclick={onSaveCurrentTemplate}
-				disabled={selectedNutrients.length === 0 || busy}
-			>Save current goals as a preset</RoundedActionButton>
-			{#if selectedNutrients.length === 0}
-				<MetadataPill label="Add at least one nutrient to build a shape" tone="warning" />
-			{/if}
+				{/if}
+			{/each}
 		</div>
-	</CollapsibleSection>
-</section>
+		<NutrientPicker
+			excludedIds={selectedNutrients.map((nutrient) => nutrient.id)}
+			{getGoal}
+			onSelect={onAddNutrient}
+		/>
+		<RoundedActionButton
+			variant="outline"
+			fullWidth
+			onclick={onSaveCurrentTemplate}
+			disabled={selectedNutrients.length === 0 || busy}
+			>Save current goals as a preset</RoundedActionButton
+		>
+		{#if selectedNutrients.length === 0}
+			<MetadataPill
+				label="Add at least one nutrient to build a shape"
+				tone="warning"
+			/>
+		{/if}
+	</div>
+</MixPanelSection>
 
 <style lang="scss">
 	@use "./GoalTargets.scss";

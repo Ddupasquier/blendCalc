@@ -1,4 +1,4 @@
-import { NUTRIENT_IDS, type FdcFood, type FdcNutrient } from "$lib/utils/food/types";
+import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
 import { getConfiguredAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
 
 export type FdcNutrientSource = "exact" | "fallback" | "derived" | "missing";
@@ -43,18 +43,6 @@ export const resolveFdcNutrient = (
 		};
 	}
 
-	if (nutrientId === NUTRIENT_IDS.CALORIES) {
-		const calories = deriveCalories(food);
-
-		if (calories !== null) {
-			return {
-				nutrient: null,
-				value: calories,
-				source: "derived",
-			};
-		}
-	}
-
 	return { nutrient: null, value: null, source: "missing" };
 };
 
@@ -81,21 +69,7 @@ const matchesEquivalentNutrient = (
 			((equivalence.sourceNutrientId !== null &&
 				Number(nutrient.nutrientId) === equivalence.sourceNutrientId) ||
 				(equivalence.sourceNutrientNumber !== null &&
-					String(nutrient.nutrientNumber) === equivalence.sourceNutrientNumber)),
+					String(nutrient.nutrientNumber) ===
+						equivalence.sourceNutrientNumber)),
 	);
-};
-
-const deriveCalories = (food: FdcFood) => {
-	const fat = getMacroValue(food, NUTRIENT_IDS.FAT);
-	const carbs = getMacroValue(food, NUTRIENT_IDS.CARBS);
-	const protein = getMacroValue(food, NUTRIENT_IDS.PROTEIN);
-
-	if (fat === null || carbs === null || protein === null) return null;
-
-	return fat * 9 + carbs * 4 + protein * 4;
-};
-
-const getMacroValue = (food: FdcFood, nutrientId: number) => {
-	const nutrient = findFdcNutrient(food, nutrientId);
-	return nutrient?.value ?? null;
 };

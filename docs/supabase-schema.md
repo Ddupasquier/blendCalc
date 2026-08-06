@@ -138,6 +138,7 @@ goal rows, so a later system-version change never silently changes an in-progres
 | `user_mix_goal_templates`        | `id`                               | One user per preset       | Private reusable goal-preset identity, description, basis, and optional originating system version                | User, optional system preset version                      |
 | `user_mix_goal_template_targets` | `template_id, nutrient_id`         | Private preset targets    | Immutable-at-application snapshot values for a personal reusable preset                                           | Personal preset, nutrient definition                      |
 | `user_mix_nutrient_goals`        | `user_id, nutrient_id`             | Active goals for one user | Normalized goal rules currently driving Mix calculations, warnings, chart status, and scoring                     | User, nutrient, optional system or personal preset source |
+| `mix_runtime_configuration`      | `key`                              | Shared runtime policy     | Versioned chart thresholds, point tolerance, and default Mix serving amount                                       | Product data source                                       |
 
 Goal rows use one explicit `goal_type`: `exact`, `minimum`, `maximum`, or `range`.
 `target_amount` is the point, lower bound, or upper ceiling according to that type;
@@ -145,6 +146,11 @@ Goal rows use one explicit `goal_type`: `exact`, `minimum`, `maximum`, or `range
 boundary around the configured target, while `importance_weight` affects aggregate goal
 scores without altering nutrient math. Numeric zero remains a real target value and is
 never a missing-value sentinel.
+
+A nutrient receives an automatic goal only from an explicit target in the active,
+versioned default template. Runtime configuration does not contain unit-wide or generic
+goal values. A nutrient without a reviewed default must receive a target entered by the
+user before it can join the chart, warnings, scoring, or adjustment calculations.
 
 The schema reserves both `per_mix` and `per_serving` bases so reviewed versions can
 evolve without another structural rewrite. Current authoritative save/apply functions
@@ -326,7 +332,7 @@ Stores normalized nutrient facts for any supported food parent.
 
 | Table | Documented columns |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `food_nutrients` | `id`, food-parent and ownership ids, `nutrient_id`, `amount_per_100g`, `unit_name`, `value_origin`, `value_status`, `standard_error`, `source`, `source_reference`, `source_observation_id`, `source_nutrient_key`, `source_nutrient_code`, `mapping_status`, `mapping_method`, `mapping_review_reference`, `derivation_method`, `confidence`, timestamps |
+| `food_nutrients` | `id`, food-parent and ownership ids, `nutrient_id`, `amount_per_100g`, `unit_name`, `value_origin`, `value_status`, `value_qualifier`, `standard_error`, `source`, `source_reference`, `source_observation_id`, `source_nutrient_key`, `source_nutrient_code`, `mapping_status`, `mapping_method`, `mapping_review_reference`, `derivation_method`, `confidence`, timestamps |
 
 Notes:
 
@@ -335,9 +341,10 @@ Notes:
   user-owned.
 - Unique indexes prevent duplicate nutrient rows for the same parent.
 - `amount_per_100g` contains only accepted numeric values used by nutrition and Mix
-  math. `value_status` keeps reported, reported-zero, and derived values distinct;
+  math. `value_status` keeps reported, reported-zero, estimated, and derived values distinct;
   missing, trace, present-but-unquantified, invalid, and unmapped source facts never
-  become numeric rows.
+  become numeric rows. `value_qualifier` preserves an exact provider qualifier such as
+  `source-estimate` instead of presenting an estimate as reported data.
 - `standard_error` is source-reported review metadata. It never changes
   `amount_per_100g`. Source nutrient keys/codes and mapping/derivation metadata retain
   the exact normalization decision; `mapping_review_reference` is internal moderation

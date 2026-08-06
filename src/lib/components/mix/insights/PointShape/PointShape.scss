@@ -12,14 +12,14 @@
 }
 
 .point-shape__label {
-	fill: $app-primary;
+	fill: $app-shell-text-primary;
 	font-family: $app-font-family-interface;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-semibold;
 }
 
 .point-shape__value-label {
-	fill: $app-muted;
+	fill: $app-shell-text-muted;
 	font-family: $app-font-family-data;
 	font-size: $app-font-size-2xs;
 	font-weight: $app-font-weight-bold;
@@ -52,7 +52,8 @@
 	opacity: 0.78;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.point-shape__value-label {
 		display: none;
 	}

@@ -77,7 +77,7 @@ export const normalizeSavedDrink = (value: SavedDrink): SavedDrink => {
     value.nutrientGoals,
     getMixRuntimeConfiguration().pointGoalTolerance,
   );
-  if (
+	if (
     shouldMigrateLegacySodium &&
     normalizedGoals[LEGACY_SODIUM_NUTRIENT_ID] &&
     !normalizedGoals[NUTRIENT_IDS.SODIUM]
@@ -86,17 +86,21 @@ export const normalizeSavedDrink = (value: SavedDrink): SavedDrink => {
       ...normalizedGoals[LEGACY_SODIUM_NUTRIENT_ID],
       nutrientId: NUTRIENT_IDS.SODIUM,
     };
-    delete normalizedGoals[LEGACY_SODIUM_NUTRIENT_ID];
-  }
+		delete normalizedGoals[LEGACY_SODIUM_NUTRIENT_ID];
+	}
+	const goalIds = new Set(Object.keys(normalizedGoals).map(Number));
+	const normalizedSelected = migrateLegacyNutrientIds(
+		Array.isArray(value.selected) ? value.selected : [],
+		shouldMigrateLegacySodium,
+	).filter((nutrientId) => goalIds.has(Number(nutrientId)));
 
 	return {
 		...value,
 		foods: (value.foods ?? []).map(compactFood),
-		selected: migrateLegacyNutrientIds(
-			Array.isArray(value.selected) ? value.selected : [],
-			shouldMigrateLegacySodium,
+		selected: normalizedSelected,
+		options: migrateLegacyNutrientOptions(rawOptions).filter((option) =>
+			goalIds.has(Number(option.id)),
 		),
-		options: migrateLegacyNutrientOptions(rawOptions),
     nutrientGoals: normalizedGoals,
     goalBasis: isMixGoalBasis(value.goalBasis) ? value.goalBasis : "per_mix",
 		servingGrams: value.servingGrams ?? {},

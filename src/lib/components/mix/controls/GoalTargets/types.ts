@@ -25,8 +25,8 @@ export type GoalTargetsProps = MixSectionDisclosureProps & {
 	onUpdateGoal: (id: string | number, value: string) => void;
   onUpdateUpperGoal: (id: string | number, value: string) => void;
   onUpdateGoalType: (id: string | number, goalType: MixGoalType) => void;
-	onAddNutrient: (id: string | number) => void;
+	onAddNutrient: (id: string | number, targetAmount?: number) => boolean;
 	onRemoveNutrient: (id: string | number) => void;
-  getGoal: (nutrient: NutrientMeta) => MixNutrientGoal;
+	getGoal: (nutrient: NutrientMeta) => MixNutrientGoal | null;
 	getTotal: (nutrientId: number) => number;
 };

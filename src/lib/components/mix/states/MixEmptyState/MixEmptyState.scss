@@ -1,134 +1,38 @@
 @use "../../../../../styles/variables" as *;
 
 .mix-empty-state {
-	display: grid;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
 	gap: $app-gap-sm;
 	padding: $app-gap-sm;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-card-radius;
+	color: $app-shell-text-muted;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-control;
 }
 
-.mix-empty-state__intro {
+.mix-empty-state > div {
 	display: grid;
-	gap: $app-gap-xs;
-
-	h4 {
-		color: $app-primary;
-		font-size: $app-font-size-lg;
-		font-weight: $app-font-weight-bold;
-	}
-
-	p {
-		color: $app-muted;
-		font-size: $app-font-size-sm;
-		line-height: $app-line-height-ui;
-	}
+	gap: $app-gap-2xs;
+	min-width: min(100%, 14rem);
 }
 
-.mix-empty-state__intro .mix-empty-state__eyebrow {
-	color: $app-primary;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-heavy;
-	letter-spacing: $app-letter-spacing-wide;
-	text-transform: uppercase;
-}
-
-.mix-empty-state__steps {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
-	gap: $app-gap-sm;
-	list-style: none;
-}
-
-li {
-	display: grid;
-	grid-template-columns: auto minmax(0, 1fr);
-	gap: $app-gap-sm;
-	align-items: start;
-	min-width: 0;
-	padding: $app-gap-sm;
-	background: $app-section-bg;
-	border: $app-border;
-	border-radius: $app-radius;
-}
-
-:global(.mix-empty-state__step-number) {
-	--circular-icon-frame-size: #{$app-status-icon-badge-size};
-	--circular-icon-frame-icon-size: #{$app-font-size-xs};
-	--circular-icon-frame-color: #{$app-primary};
-	--circular-icon-frame-background: #{$app-accent};
-
-	font-weight: $app-font-weight-heavy;
-}
-
-strong {
-	display: block;
-	color: $app-primary;
+.mix-empty-state h4 {
+	color: $app-shell-text-primary;
 	font-size: $app-font-size-sm;
 	font-weight: $app-font-weight-bold;
 }
 
-li p {
-	color: $app-muted;
+.mix-empty-state p {
 	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-medium;
-	line-height: $app-line-height-compact;
+	line-height: $app-line-height-ui;
 }
 
-.mix-empty-state__actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: $app-gap-sm;
-	align-items: center;
-
-	 a {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		min-height: $app-control-height-sm;
-		padding: 0 $app-gap-md;
-		color: $app-btn-text;
-		background: $app-btn-bg;
-		border-radius: $app-radius;
-		font-size: $app-font-size-sm;
-		font-family: $app-button-font-family;
-		font-weight: $app-button-font-weight;
-		line-height: $app-button-line-height;
-		text-decoration: none;
-
-		&:hover {
-			background: $app-btn-bg-hover;
-		}
-	}
-
-	p {
-		color: $app-muted;
-		font-size: $app-font-size-sm;
-		font-weight: $app-font-weight-medium;
-		line-height: $app-line-height-ui;
-	}
-}
-
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.mix-empty-state,
-	.mix-empty-state__steps,
-	.mix-empty-state__actions,
-	li {
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.mix-empty-state {
 		gap: $app-gap-xs;
-	}
-
-	.mix-empty-state,
-	li {
 		padding: $app-gap-xs;
-	}
-
-	.mix-empty-state__intro h4 {
-		font-size: $app-font-size-md;
-	}
-
-	.mix-empty-state__intro p,
-	.mix-empty-state__actions p {
-		font-size: $app-font-size-xs;
 	}
 }

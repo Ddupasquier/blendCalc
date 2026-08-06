@@ -17,6 +17,7 @@
 		visibleCount,
 		itemLabel = "items",
 		showCount = true,
+		resultSummary,
 		filterLabel = "Filter",
 		filterValue,
 		filterOptions = [],
@@ -38,10 +39,7 @@
 	class:list-controls--search-only={filterOptions.length === 0 && !onFilterOpen}
 	class:list-controls--filter-trigger={Boolean(onFilterOpen)}
 >
-	<div
-		class="search-control"
-		class:search-control--active={Boolean(query)}
-	>
+	<div class="search-control" class:search-control--active={Boolean(query)}>
 		<label class="sr-only" for={id}>{label}</label>
 		<span class="search-control__icon" aria-hidden="true">
 			<Search size={17} />
@@ -95,7 +93,7 @@
 	{/if}
 
 	{#if showCount}
-		<p class="result-count" aria-live="polite">{countText}</p>
+		<p class="result-count" aria-live="polite">{resultSummary ?? countText}</p>
 	{/if}
 </div>
 

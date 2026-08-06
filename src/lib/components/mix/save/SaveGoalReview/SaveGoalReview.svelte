@@ -1,25 +1,35 @@
 <script lang="ts">
-	import {
-		formatChartNumber,
-	} from "$lib/utils/mix/ui/mixUi";
+	import MetadataPill from "$lib/components/common/display/MetadataPill/MetadataPill.svelte";
+	import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
 	import type { SaveGoalReviewProps } from "./types";
 
 	let { diffs }: SaveGoalReviewProps = $props();
 
 	const formatGoal = (diff: SaveGoalReviewProps["diffs"][number]) => {
-		if (diff.goalType === "minimum") return `At least ${formatChartNumber(diff.goal)}`;
-		if (diff.goalType === "maximum") return `At most ${formatChartNumber(diff.goal)}`;
+		if (diff.goalType === "minimum")
+			return `At least ${formatMixQuantity(diff.goal, { unit: diff.unit })}`;
+		if (diff.goalType === "maximum")
+			return `At most ${formatMixQuantity(diff.goal, { unit: diff.unit })}`;
 		if (diff.goalType === "range") {
-			return `${formatChartNumber(diff.goal)}–${formatChartNumber(diff.upperGoal ?? diff.goal)}`;
+			return `${formatMixQuantity(diff.goal)}–${formatMixQuantity(
+				diff.upperGoal ?? diff.goal,
+				{ unit: diff.unit },
+			)}`;
 		}
-		return formatChartNumber(diff.goal);
+		return formatMixQuantity(diff.goal, { unit: diff.unit });
 	};
 
 	const formatStatus = (diff: SaveGoalReviewProps["diffs"][number]) => {
 		if (diff.status === "met") return "On track";
-		const amount = `${formatChartNumber(Math.abs(diff.difference))}${diff.unit}`;
+		const amount = formatMixQuantity(Math.abs(diff.difference), {
+			unit: diff.unit,
+		});
 		return diff.status === "over" ? `${amount} over` : `${amount} short`;
 	};
+	const statusTone = (
+		status: SaveGoalReviewProps["diffs"][number]["status"],
+	) =>
+		status === "met" ? "success" : status === "over" ? "danger" : "warning";
 </script>
 
 <div class="save-goal-review">
@@ -30,12 +40,16 @@
 				<div>
 					<strong>{diff.label}</strong>
 					<span>
-						Actual {formatChartNumber(diff.total)}{diff.unit} · Goal {formatGoal(diff)}{diff.unit} · {Math.round(diff.percentOfGoal)}%
+						Actual {formatMixQuantity(diff.total, { unit: diff.unit })} · Goal
+						{formatGoal(diff)} · {formatMixQuantity(diff.percentOfGoal, {
+							unit: "%",
+						})}
 					</span>
 				</div>
-				<span class={`save-goal-review__badge ${diff.status}`}>
-					{formatStatus(diff)}
-				</span>
+				<MetadataPill
+					label={formatStatus(diff)}
+					tone={statusTone(diff.status)}
+				/>
 			</div>
 		{/each}
 	</div>

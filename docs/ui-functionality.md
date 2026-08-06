@@ -454,6 +454,12 @@ underlying Mix state stays mounted.
 The Mix page is the core nutrition builder. It combines selected foods, amounts, nutrient
 goals, visual graph feedback, warnings, suggestions, and saving.
 
+Every user-facing Mix quantity uses the shared unit-aware formatter. It preserves
+reported zero, displays a nonzero magnitude below `0.001` as `<0.001` instead of zero,
+uses one precision policy across sections, and keeps the canonical unit attached to
+the value. Calculation precision remains unchanged; formatting affects presentation
+only.
+
 ### Section Organization
 
 The Mix options sheet includes `Reorganize`. It opens the route-backed
@@ -596,6 +602,12 @@ Preserve:
 - The nutrient picker is an in-flow shared disclosure using the standard list-search
   control and shared action rows. It must not use a feature-local input/button family or
   overlap the Goals content as a floating panel.
+- A nutrient joins the selected goal set immediately only when the active versioned
+  default template provides its nutrient-specific target. When no reviewed default
+  exists, the picker requires the user to enter a target before adding that nutrient.
+  Unit-wide and generic fallback targets are prohibited. Until an explicit target
+  exists, the nutrient does not join the chart, warnings, scoring, saved goal set, or
+  adjustment calculations.
 
 Mobile requirements:
 

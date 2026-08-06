@@ -771,23 +771,28 @@ Only create the SCSS or type file when the component needs it.
 - Runtime-measured placement may use component-owned CSS custom properties. Static
   styling remains in SCSS.
 
-## Applying The System To A New View
+## Applying The System To Any UI Change
 
-Before styling a new view:
+This is the UI-specific application of the
+[Canonical Change Lifecycle](dev-rules/dev-rules.md#canonical-change-lifecycle). Before
+editing a view or component:
 
-1. List the view's surfaces, actions, statuses, forms, lists, overlays, and detailed
-   data.
-2. Map each repeated need to the component-selection table.
-3. Start with the Ingredients shell palette, typography, and `$app-gap-md` rhythm.
-4. Reuse existing card, sheet, status, badge, loading, and control primitives.
-5. Keep unique layout details in the new component's paired SCSS.
-6. Check narrow mobile width, 200% text zoom, keyboard focus, reduced motion, and
+1. Map the complete affected state matrix, then list its surfaces, actions, statuses,
+   forms, lists, overlays, and detailed data.
+2. Classify the existing owners as keep, simplify, merge, replace, or delete before
+   adding another wrapper or component.
+3. Map each repeated need to the component-selection table.
+4. Start with the Ingredients shell palette, typography, and `$app-gap-md` rhythm.
+5. Reuse existing card, sheet, status, badge, loading, and control primitives.
+6. Keep unique layout details in the owning component's paired SCSS and remove replaced
+   styles in the same change.
+7. Check narrow mobile width, 200% text zoom, keyboard focus, reduced motion, and
    touch targets at the complete app-wide viewport matrix.
-7. Compare visual differences with the Ingredients baseline. Keep a difference only
+8. Compare visual differences with the Ingredients baseline. Keep a difference only
    when the view's purpose requires it.
-8. If the difference is likely to repeat, create or extend a reusable component and
+9. If the difference is likely to repeat, create or extend a reusable component and
    update this guide.
-9. If the difference establishes a new mandatory practice, propose or update a
+10. If the difference establishes a new mandatory practice, propose or update a
    development rule.
 
 Do not copy unfinished Mix or Saved Drinks markup/styles into a new view simply because

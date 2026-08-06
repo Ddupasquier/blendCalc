@@ -5,6 +5,7 @@ import type {
 	FdcFood,
 	FdcNutrient,
 	FoodNutrientSourceReview,
+	FoodNutrientValueQualifier,
 	FoodNutrientValueStatus,
 	FoodServing,
 } from "$lib/utils/food/types";
@@ -27,6 +28,7 @@ type GenericNutrientRow = {
 	mappingMethod?: string | null;
 	mappingReviewReference?: string | null;
 	sourceUpdatedAt?: string | null;
+	metadata?: Json;
 };
 
 type GenericMeasureRow = {
@@ -69,7 +71,7 @@ type GenericFoodSearchRow = {
 };
 
 const asRecordArray = <Row>(value: Json): Row[] =>
-	Array.isArray(value) ? value as unknown as Row[] : [];
+	Array.isArray(value) ? (value as unknown as Row[]) : [];
 
 const createSourceReference = (datasetKey: string, sourceFoodKey: string) =>
 	`${datasetKey}:${sourceFoodKey}`;
@@ -95,15 +97,16 @@ const getApplicationIdentifierKey = (
 const mapSourceIdentifiers = (
 	rows: GenericSourceIdentifierRow[],
 	sourceReference: string,
-) => Object.fromEntries([
-	["datasetFoodKey", sourceReference],
-	...rows.flatMap((identifier) => {
-		const value = identifier.identifierValue?.trim();
-		return value
-			? [[getApplicationIdentifierKey(identifier), value] as const]
-			: [];
-	}),
-]);
+) =>
+	Object.fromEntries([
+		["datasetFoodKey", sourceReference],
+		...rows.flatMap((identifier) => {
+			const value = identifier.identifierValue?.trim();
+			return value
+				? [[getApplicationIdentifierKey(identifier), value] as const]
+				: [];
+		}),
+	]);
 
 const mapNutrients = (
 	rows: GenericNutrientRow[],
@@ -121,35 +124,66 @@ const mapNutrients = (
 			row.value === null ||
 			!Number.isSafeInteger(nutrientId) ||
 			!Number.isFinite(value)
-		) return [];
-		const standardError = row.standardError === null || row.standardError === undefined
-			? undefined
-			: Number(row.standardError);
-		return [{
-			nutrientId,
-			nutrientNumber: String(row.nutrientNumber),
-			nutrientName: row.nutrientName,
-			unitName: row.unitName,
-			value,
-			valueOrigin: "reported" as const,
-			valueStatus: value === 0 ? "reported-zero" as const : "reported" as const,
-			standardError: Number.isFinite(standardError) && Number(standardError) >= 0
-				? standardError
-				: undefined,
-			sourceNutrientKey: row.sourceNutrientKey?.trim() || undefined,
-			sourceNutrientCode: row.sourceNutrientCode?.trim() || undefined,
-			mappingStatus: "canonical" as const,
-			mappingMethod: row.mappingMethod?.trim() || undefined,
-			mappingReviewReference:
-				row.mappingReviewReference?.trim() || undefined,
-			source: sourceKey,
-			sourceReference,
-			confidence: "imported" as const,
-		}];
+		)
+			return [];
+		const standardError =
+			row.standardError === null || row.standardError === undefined
+				? undefined
+				: Number(row.standardError);
+		const valueQualifier = getGenericValueQualifier(row);
+		return [
+			{
+				nutrientId,
+				nutrientNumber: String(row.nutrientNumber),
+				nutrientName: row.nutrientName,
+				unitName: row.unitName,
+				value,
+				valueOrigin:
+					valueQualifier === "source-estimate"
+						? ("estimated" as const)
+						: ("reported" as const),
+				valueStatus:
+					valueQualifier === "source-estimate"
+						? ("estimated" as const)
+						: value === 0
+							? ("reported-zero" as const)
+							: ("reported" as const),
+				...(valueQualifier ? { valueQualifier } : {}),
+				standardError:
+					Number.isFinite(standardError) && Number(standardError) >= 0
+						? standardError
+						: undefined,
+				sourceNutrientKey: row.sourceNutrientKey?.trim() || undefined,
+				sourceNutrientCode: row.sourceNutrientCode?.trim() || undefined,
+				mappingStatus: "canonical" as const,
+				mappingMethod: row.mappingMethod?.trim() || undefined,
+				mappingReviewReference: row.mappingReviewReference?.trim() || undefined,
+				source: sourceKey,
+				sourceReference,
+				confidence: "imported" as const,
+			},
+		];
 	});
 
-const mapGenericValueStatus = (row: GenericNutrientRow): FoodNutrientValueStatus => {
+const getGenericValueQualifier = (
+	row: GenericNutrientRow,
+): FoodNutrientValueQualifier | undefined => {
+	if (
+		row.metadata &&
+		!Array.isArray(row.metadata) &&
+		typeof row.metadata === "object" &&
+		row.metadata.valueQualifier === "source-estimate"
+	) {
+		return "source-estimate";
+	}
+	return undefined;
+};
+
+const mapGenericValueStatus = (
+	row: GenericNutrientRow,
+): FoodNutrientValueStatus => {
 	if (row.valueStatus === "measured") {
+		if (getGenericValueQualifier(row) === "source-estimate") return "estimated";
 		return Number(row.value) === 0 ? "reported-zero" : "reported";
 	}
 	if (
@@ -167,47 +201,55 @@ const mapNutrientSourceReview = (
 	rows: GenericNutrientRow[],
 	sourceKey: GenericFoodSource,
 	sourceReference: string,
-): FoodNutrientSourceReview[] => rows.map((row) => {
-	const nutrientId = Number(row.nutrientId);
-	const amountPer100g = row.value === null ? Number.NaN : Number(row.value);
-	const standardError = row.standardError === null || row.standardError === undefined
-		? Number.NaN
-		: Number(row.standardError);
-	return {
-		...(Number.isSafeInteger(nutrientId) && nutrientId > 0 ? { nutrientId } : {}),
-		nutrientName: row.nutrientName?.trim() ||
-			row.sourceNutrientKey?.trim() ||
-			"Unmapped source nutrient",
-		...(row.unitName?.trim() ? { unitName: row.unitName.trim() } : {}),
-		...(Number.isFinite(amountPer100g) && amountPer100g >= 0
-			? { amountPer100g }
-			: {}),
-		...(Number.isFinite(standardError) && standardError >= 0
-			? { standardError }
-			: {}),
-		...(row.sourceNutrientKey?.trim()
-			? { sourceNutrientKey: row.sourceNutrientKey.trim() }
-			: {}),
-		...(row.sourceNutrientCode?.trim()
-			? { sourceNutrientCode: row.sourceNutrientCode.trim() }
-			: {}),
-		valueStatus: mapGenericValueStatus(row),
-		mappingStatus:
-			row.mappingStatus === "canonical" ||
-			row.mappingStatus === "unmapped" ||
-			row.mappingStatus === "excluded"
-				? row.mappingStatus
-				: "unknown",
-		...(row.mappingMethod?.trim()
-			? { mappingMethod: row.mappingMethod.trim() }
-			: {}),
-		...(row.mappingReviewReference?.trim()
-			? { mappingReviewReference: row.mappingReviewReference.trim() }
-			: {}),
-		source: sourceKey,
-		sourceReference,
-	};
-});
+): FoodNutrientSourceReview[] =>
+	rows.map((row) => {
+		const nutrientId = Number(row.nutrientId);
+		const amountPer100g = row.value === null ? Number.NaN : Number(row.value);
+		const standardError =
+			row.standardError === null || row.standardError === undefined
+				? Number.NaN
+				: Number(row.standardError);
+		return {
+			...(Number.isSafeInteger(nutrientId) && nutrientId > 0
+				? { nutrientId }
+				: {}),
+			nutrientName:
+				row.nutrientName?.trim() ||
+				row.sourceNutrientKey?.trim() ||
+				"Unmapped source nutrient",
+			...(row.unitName?.trim() ? { unitName: row.unitName.trim() } : {}),
+			...(Number.isFinite(amountPer100g) && amountPer100g >= 0
+				? { amountPer100g }
+				: {}),
+			...(Number.isFinite(standardError) && standardError >= 0
+				? { standardError }
+				: {}),
+			...(row.sourceNutrientKey?.trim()
+				? { sourceNutrientKey: row.sourceNutrientKey.trim() }
+				: {}),
+			...(row.sourceNutrientCode?.trim()
+				? { sourceNutrientCode: row.sourceNutrientCode.trim() }
+				: {}),
+			valueStatus: mapGenericValueStatus(row),
+			...(getGenericValueQualifier(row)
+				? { valueQualifier: getGenericValueQualifier(row) }
+				: {}),
+			mappingStatus:
+				row.mappingStatus === "canonical" ||
+				row.mappingStatus === "unmapped" ||
+				row.mappingStatus === "excluded"
+					? row.mappingStatus
+					: "unknown",
+			...(row.mappingMethod?.trim()
+				? { mappingMethod: row.mappingMethod.trim() }
+				: {}),
+			...(row.mappingReviewReference?.trim()
+				? { mappingReviewReference: row.mappingReviewReference.trim() }
+				: {}),
+			source: sourceKey,
+			sourceReference,
+		};
+	});
 
 const mapServings = (
 	rows: GenericMeasureRow[],
@@ -219,21 +261,23 @@ const mapServings = (
 		const label = row.description?.trim();
 		if (!label || !Number.isFinite(gramWeight) || gramWeight <= 0) return [];
 		const parsed = parseSourceServingMeasure(label);
-		return [{
-			label,
-			gramWeight,
-			amount: parsed?.quantity,
-			unitKey: parsed?.unit,
-			isPrimary: index === 0,
-			measureType: row.measureType?.trim() || undefined,
-			isHouseholdMeasure: true,
-			sourceMeasureKey: row.sourceMeasureKey?.trim() || undefined,
-			origin: "source-household-measure" as const,
-			gramWeightMethod: "source-reported" as const,
-			source: sourceKey,
-			sourceReference,
-			confidence: "imported" as const,
-		}];
+		return [
+			{
+				label,
+				gramWeight,
+				amount: parsed?.quantity,
+				unitKey: parsed?.unit,
+				isPrimary: index === 0,
+				measureType: row.measureType?.trim() || undefined,
+				isHouseholdMeasure: true,
+				sourceMeasureKey: row.sourceMeasureKey?.trim() || undefined,
+				origin: "source-household-measure" as const,
+				gramWeightMethod: "source-reported" as const,
+				source: sourceKey,
+				sourceReference,
+				confidence: "imported" as const,
+			},
+		];
 	});
 
 export const searchGenericFoods = async (
@@ -311,12 +355,12 @@ export const searchGenericFoods = async (
 				},
 				...(foodServings.length > 0
 					? {
-						serving: {
-							source: sourceKey,
-							sourceReference,
-							confidence: "imported" as const,
-						},
-					}
+							serving: {
+								source: sourceKey,
+								sourceReference,
+								confidence: "imported" as const,
+							},
+						}
 					: {}),
 			},
 		};

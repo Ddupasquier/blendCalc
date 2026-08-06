@@ -1467,6 +1467,7 @@ export type Database = {
           updated_at: string
           user_food_list_item_id: string | null
           value_origin: string
+          value_qualifier: string | null
           value_status: string
         }
         Insert: {
@@ -1495,6 +1496,7 @@ export type Database = {
           updated_at?: string
           user_food_list_item_id?: string | null
           value_origin: string
+          value_qualifier?: string | null
           value_status?: string
         }
         Update: {
@@ -1523,6 +1525,7 @@ export type Database = {
           updated_at?: string
           user_food_list_item_id?: string | null
           value_origin?: string
+          value_qualifier?: string | null
           value_status?: string
         }
         Relationships: [

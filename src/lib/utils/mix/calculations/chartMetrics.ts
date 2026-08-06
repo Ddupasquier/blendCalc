@@ -6,41 +6,45 @@ import type { MixGoalMap } from "$lib/utils/mix/goals/types";
 import type { MixGoalEvaluation } from "$lib/utils/mix/goals/goalEvaluation";
 
 const CHART_COLORS = {
-  atGoal: {
-    fill: "var(--mix-chart-success-fill)",
-    stroke: "var(--mix-chart-success-stroke)",
-  },
-  barelyOver: {
-    fill: "var(--mix-chart-caution-fill)",
-    stroke: "var(--mix-chart-caution-stroke)",
-  },
-  midwayOver: {
-    fill: "var(--mix-chart-warning-fill)",
-    stroke: "var(--mix-chart-warning-stroke)",
-  },
-  wayOver: {
-    fill: "var(--mix-chart-danger-fill)",
-    stroke: "var(--mix-chart-danger-stroke)",
-  },
+	atGoal: {
+		fill: "var(--mix-chart-success-fill)",
+		stroke: "var(--mix-chart-success-stroke)",
+	},
+	barelyOver: {
+		fill: "var(--mix-chart-caution-fill)",
+		stroke: "var(--mix-chart-caution-stroke)",
+	},
+	midwayOver: {
+		fill: "var(--mix-chart-warning-fill)",
+		stroke: "var(--mix-chart-warning-stroke)",
+	},
+	wayOver: {
+		fill: "var(--mix-chart-danger-fill)",
+		stroke: "var(--mix-chart-danger-stroke)",
+	},
 } as const;
 
 export const getNutrientChartMetrics = (
 	nutrients: NutrientMeta[],
 	foods: FdcFood[],
-  nutrientGoals: MixGoalMap,
+	nutrientGoals: MixGoalMap,
 	servingGrams: Record<number, number>,
 ): NutrientChartMetric[] => {
-	return nutrients.map((nutrient) => {
+	return nutrients.flatMap((nutrient) => {
 		const nutrientId = Number(nutrient.id);
-    const baselineGoal = getDefaultNutrientGoal(nutrient).targetAmount;
+		const goal = nutrientGoals[nutrientId];
+		if (!goal) return [];
+		const baselineGoal =
+			getDefaultNutrientGoal(nutrient)?.targetAmount ?? goal.targetAmount;
 		const safeBaselineGoal = baselineGoal > 0 ? baselineGoal : 1;
-    const goal = nutrientGoals[nutrientId]?.targetAmount ?? baselineGoal;
 		const total = getNutrientTotal(foods, nutrientId, servingGrams);
 
-		return {
-			goalRatio: goal / safeBaselineGoal,
-			totalRatio: total / safeBaselineGoal,
-		};
+		return [
+			{
+				goalRatio: goal.targetAmount / safeBaselineGoal,
+				totalRatio: total / safeBaselineGoal,
+			},
+		];
 	});
 };
 
@@ -95,21 +99,21 @@ export const getPointColors = (progressValues: number[]) => {
 };
 
 export const getEvaluationChartColors = (evaluations: MixGoalEvaluation[]) => {
-  if (evaluations.some((evaluation) => evaluation.tone === "danger")) {
-    return CHART_COLORS.wayOver;
-  }
-  if (evaluations.some((evaluation) => evaluation.tone === "warning")) {
-    return CHART_COLORS.barelyOver;
-  }
-  return CHART_COLORS.atGoal;
+	if (evaluations.some((evaluation) => evaluation.tone === "danger")) {
+		return CHART_COLORS.wayOver;
+	}
+	if (evaluations.some((evaluation) => evaluation.tone === "warning")) {
+		return CHART_COLORS.barelyOver;
+	}
+	return CHART_COLORS.atGoal;
 };
 
 export const getEvaluationPointColors = (evaluations: MixGoalEvaluation[]) =>
-  evaluations.map((evaluation) => {
-    if (evaluation.tone === "danger") return CHART_COLORS.wayOver;
-    if (evaluation.tone === "warning") return CHART_COLORS.barelyOver;
-    return CHART_COLORS.atGoal;
-  });
+	evaluations.map((evaluation) => {
+		if (evaluation.tone === "danger") return CHART_COLORS.wayOver;
+		if (evaluation.tone === "warning") return CHART_COLORS.barelyOver;
+		return CHART_COLORS.atGoal;
+	});
 
 export const clampChartValue = (value: number) => {
 	if (!Number.isFinite(value)) return 0;

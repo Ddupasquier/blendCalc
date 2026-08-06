@@ -1,29 +1,5 @@
 @use "../../../../../styles/variables" as *;
 
-.smart-warnings {
-	display: grid;
-	gap: $app-gap-sm;
-	color: $app-warning-text;
-	background: $app-warning-bg;
-	border: $app-warning-border;
-	border-radius: $app-shell-radius-card;
-}
-
-.smart-warnings > :global(.collapsible-section) > :global(.collapsible-section__content) {
-	padding: $app-gap-md $app-gap-sm $app-gap-sm;
-}
-
-.smart-warnings[data-tone="danger"] {
-	color: $app-status-error-text;
-	background: $app-danger-bg;
-	border-color: $app-shell-accent-danger;
-}
-
-.smart-warnings :global(.smart-warnings__disclosure summary) {
-	color: inherit;
-	background: transparent;
-}
-
 .smart-warnings__list {
 	display: grid;
 	gap: $app-gap-xs;
@@ -89,11 +65,8 @@
 	}
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.smart-warnings > :global(.collapsible-section) > :global(.collapsible-section__content) {
-		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
-	}
-
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
 	.smart-warning {
 		gap: $app-gap-xs;
 		padding: $app-gap-xs;

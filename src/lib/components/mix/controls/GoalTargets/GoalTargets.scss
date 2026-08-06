@@ -1,14 +1,5 @@
 @use "../../../../../styles/variables" as *;
 
-.goals-panel {
-	background: $app-shell-surface-panel;
-	border-radius: $app-shell-radius-card;
-}
-
-.goals-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
-	padding: $app-gap-md $app-gap-sm $app-gap-sm;
-}
-
 .goals-content {
 	display: grid;
 	gap: $app-gap-md;
@@ -207,10 +198,6 @@
 
 @media (max-width: $app-breakpoint-xs),
 	(max-height: $app-breakpoint-height-compact) {
-	.goals-panel > :global(.collapsible-section) > :global(.collapsible-section__content) {
-		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
-	}
-
 	.goals-content {
 		gap: $app-gap-sm;
 	}

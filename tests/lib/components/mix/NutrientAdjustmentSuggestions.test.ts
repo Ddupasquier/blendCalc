@@ -62,8 +62,8 @@ describe("NutrientAdjustmentSuggestions", () => {
 
 		expect(disclosure).toHaveAttribute("open");
 		expect(screen.getByText("Milk, reduced fat")).toBeInTheDocument();
-		expect(screen.getByText("Increase to 130g")).toBeInTheDocument();
-		expect(screen.getByText("Protein +1g")).toBeInTheDocument();
+		expect(screen.getByText("Increase to 130 g")).toBeInTheDocument();
+		expect(screen.getByText("Protein +1 g")).toBeInTheDocument();
     expect(
       screen.getByText("Uses one reported serving: 1 fl oz"),
     ).toBeInTheDocument();

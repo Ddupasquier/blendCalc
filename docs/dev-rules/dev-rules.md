@@ -1,6 +1,6 @@
 # Development Rules
 
-Last reviewed: 2026-08-01
+Last reviewed: 2026-08-06
 
 ## Purpose
 
@@ -8,21 +8,82 @@ These are the authoritative engineering and product-development requirements for
 blendCalc. They contain settled decisions and remain the source of truth when another
 document, an older implementation, or a current audit finding disagrees.
 
-## Required Preflight
+## Canonical Change Lifecycle
 
-Before any feature, fix, adjustment, refactor, migration, script, style change, or
-documentation behavior change:
+This lifecycle is mandatory for every feature, fix, adjustment, refactor, migration,
+script, style change, test change, and documentation behavior change. Apply each step at
+the scale of the request; a small correction may need a short inventory, but it may not
+skip the inventory.
 
-1. Read the applicable rules in this document.
-2. Read [the current development audit](dev-rules-audit.md) for unresolved findings that
-   may affect the work.
-3. Inspect the relevant implementation, schema, data flow, shared primitives, and QA
-   coverage before editing.
-4. Re-check touched files against both documents before handoff.
+### 1. Establish The Contract
 
-Maintain both documents as the project evolves. Add only settled, repeatable requirements
-here. Keep temporary observations and unresolved implementation gaps in the audit, and
-remove those audit entries once they are resolved.
+1. Read the applicable rules in this document and
+   [the current development audit](dev-rules-audit.md).
+2. Read every applicable domain source identified by `AGENTS.md` and `docs/README.md`.
+3. State the observable outcome, affected users and systems, explicit non-goals, and
+   completion evidence before editing.
+4. Compare the request with maintained contracts. Stop and ask which contract should
+   change when they conflict; never rewrite documentation merely to make an
+   implementation appear compliant.
+
+### 2. Map The Existing System
+
+1. Inspect the relevant implementation, tests, schema, data flow, shared primitives,
+   consumers, current Git changes, and indirect callers before choosing an approach.
+2. Map the complete affected state matrix rather than only the reported screenshot or
+   happy path. Include applicable empty, populated, loading, error, disabled, selected,
+   open/closed, permission, responsive, theme, motion, and persistence states.
+3. For UI work, identify the closest approved Ingredients pattern and compare its
+   structure, ownership, spacing, typography, controls, states, and responsive behavior.
+4. For data-backed work, map authority, provenance, missing-value semantics, reads,
+   writes, migrations, API exposure, security boundaries, and cleanup opportunities.
+
+### 3. Classify Before Coding
+
+Classify each affected implementation owner as **keep**, **simplify**, **merge**,
+**replace**, or **delete**. Define which route, component, utility, server service,
+table, or document owns each responsibility after the change. Do not preserve obsolete
+behavior merely because a component or test already exists. Do not treat file splitting,
+token use, a shared wrapper, passing string-presence tests, or a successful build as
+proof of clean architecture or a cohesive experience.
+
+### 4. Implement One Coherent Slice
+
+Fix the root cause through the smallest complete ownership boundary. Reuse or extend an
+appropriate primitive before creating a parallel one. When replacing a behavior,
+surface, fallback, or owner, remove the superseded implementation and tests in the same
+change unless a documented compatibility period is required. Do not stack a new shared
+shell around legacy padding, surfaces, interactions, or state logic without reconciling
+the duplicate responsibility. Preserve unrelated working-tree changes and stop to
+re-scope when the active diff becomes too broad to review confidently.
+
+### 5. Verify Outcomes
+
+1. Test observable behavior, state transitions, boundaries, negative controls, and
+   representative data—not only implementation text or component presence.
+2. Run the narrowest relevant checks first, followed by the broader regression checks
+   justified by the affected ownership boundary.
+3. For observable UI work, directly inspect the complete affected state matrix at the
+   required compact, wider, light, dark, keyboard, focus, text-zoom, and reduced-motion
+   conditions. A UI rebuild or visual adjustment is not complete based on compilation
+   and unit tests alone. If the required visual environment is unavailable, report the
+   change as visually unverified and incomplete rather than presenting it as finished.
+4. Regression-check every consumer of a changed shared primitive.
+
+### 6. Close Out Cleanly
+
+Re-read the touched code against the contract, rules, audit, domain documents, and
+current diff. Remove obsolete components, dead code, duplicate styles, stale tests,
+empty files and directories, and temporary artifacts. Update maintained documentation
+only when its owned contract, schema, structure, or reusable expectation changed. Record
+unfinished work once in the appropriate queue, update local recovery context, and state
+exactly what was and was not verified. Never claim completion from green automation
+alone when the requested outcome is visual, experiential, device-specific, or otherwise
+unobserved.
+
+Maintain the rules and audit as the project evolves. Add only settled, repeatable
+requirements here. Keep temporary observations and unresolved implementation gaps in
+the audit, and remove those audit entries once they are resolved.
 
 ## Navigation
 
@@ -30,6 +91,7 @@ Markdown cannot provide a true sticky sidebar in every editor, so this document 
 clickable navigation block instead.
 
 - [Core Engineering Rules](#rule-best-practices)
+- [Canonical Change Lifecycle](#canonical-change-lifecycle)
 - [Mandatory Rules Preflight](#rule-rules-preflight)
 - [Repository Hygiene](#rule-repository-hygiene)
 - [Dependency Supply-Chain Safety](#rule-dependency-supply-chain)
@@ -109,24 +171,13 @@ design tokens, tested behavior, clean architecture, or clear database ownership.
 requested implementation conflicts with these rules or a defensible best practice, stop
 and call out the conflict before writing code.
 
-**0a.** <a id="rule-rules-preflight"></a>Before starting any feature, fix,
-adjustment, refactor, migration, script, style change, documentation behavior change,
-or other implementation work, read the current development rules that apply to the
-affected area. Treat this as a required preflight, not an optional final audit. Inspect
-the relevant code, schema, data flow, shared primitives, and QA coverage before editing.
-If existing code or the requested approach conflicts with a rule, call it out
-immediately in plain language; do not silently copy, preserve, or work around the
-violation. If a request conflicts with any applicable maintained document, stop the
-active queue before editing, identify the exact conflict, and ask whether the request or
-the documented contract should change. Never resolve that conflict by opportunistically
-rewriting documentation. Fix small, clearly in-scope implementation violations while
-doing otherwise compatible work. For broader, risky, ambiguous, or product-level
-conflicts, explain the issue and ask before expanding scope. Re-check every touched file
-against the applicable rules before handoff. Update documentation only when an approved
-contract, structure, workflow, schema, or reusable expectation actually changes. Record
-settled, repeatable requirements in this rules file and unresolved implementation
-findings in the current development audit. Review both documents before work begins;
-this rules file is authoritative and an audit finding cannot override it.
+**0a.** <a id="rule-rules-preflight"></a>Execute the
+[Canonical Change Lifecycle](#canonical-change-lifecycle) for every change. It is a
+required design, implementation, verification, and cleanup process—not an optional
+handoff audit. The lifecycle scales with the task but no phase may be silently skipped.
+The rules remain authoritative over the audit. When a request conflicts with a
+maintained contract, stop the active queue, explain the conflict in plain language, and
+ask which contract should change before editing.
 
 **0b.** <a id="rule-repository-hygiene"></a>Keep the remote repository limited to
 deliberate product source, migrations, tests, required configuration and lockfiles,

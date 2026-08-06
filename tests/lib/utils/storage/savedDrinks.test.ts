@@ -20,6 +20,7 @@ vi.mock("$lib/utils/storage/client/smoothieLists", () => listData);
 import {
 	clearLoadedSavedDrink,
 	deleteSavedDrink,
+	normalizeSavedDrink,
 	readLoadedSavedDrink,
 	restoreSavedDrinkToMix,
 	saveExistingSavedDrink,
@@ -98,6 +99,24 @@ describe("database-backed saved drinks", () => {
 		await expect(saveNewSavedDrink(input())).resolves.toEqual({
 			ok: false,
 			reason: "duplicate",
+		});
+	});
+
+	it("removes selected nutrients that do not have an explicit saved goal", () => {
+		const drink = {
+			...input(),
+			id: "drink-1",
+			createdAt: 123,
+			selected: [1008, 1090],
+			options: [
+				{ id: 1008, label: "Calories" },
+				{ id: 1090, label: "Magnesium" },
+			],
+		} satisfies SavedDrink;
+
+		expect(normalizeSavedDrink(drink)).toMatchObject({
+			selected: [1008],
+			options: [{ id: 1008, label: "Calories" }],
 		});
 	});
 
