@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import MixIngredientOption from "$lib/components/mix/ingredients/MixIngredientOption/MixIngredientOption.svelte";
@@ -9,6 +10,11 @@ const food: FdcFood = {
 	foodCategory: "Sausages, Hotdogs & Brats",
 	foodNutrients: [],
 };
+
+const optionStyles = readFileSync(
+	"src/lib/components/mix/ingredients/MixIngredientOption/MixIngredientOption.scss",
+	"utf8",
+);
 
 describe("MixIngredientOption", () => {
 	it("uses the whole card as the only selection action", async () => {
@@ -65,5 +71,19 @@ describe("MixIngredientOption", () => {
 		expect(selectionButton).toHaveAttribute("aria-pressed", "true");
 		expect(container.querySelector(".ingredient-card-media-lane")).toBeInTheDocument();
 		expect(container.querySelector(".card-warning-edge")).toBeInTheDocument();
+	});
+
+	it("keeps private-custom classification out of compact card badges", () => {
+		render(MixIngredientOption, {
+			props: {
+				food: { ...food, customFood: true },
+				selected: false,
+				onSelect: vi.fn(),
+			},
+		});
+
+		expect(screen.queryByText("Custom")).not.toBeInTheDocument();
+		expect(optionStyles).toContain("padding-inline-end: calc(");
+		expect(optionStyles).toContain("var(--ingredient-card-action-size)");
 	});
 });

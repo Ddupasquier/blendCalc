@@ -6,6 +6,7 @@ export type ConfirmationDialogProps = {
 	cancelLabel?: string;
 	busy?: boolean;
 	danger?: boolean;
+  error?: string;
 	onConfirm: () => void;
 	onCancel: () => void;
 };

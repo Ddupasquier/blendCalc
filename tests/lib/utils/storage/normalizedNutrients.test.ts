@@ -19,18 +19,19 @@ const createSupabaseMock = (options?: { nutrientReadFails?: boolean }) => {
 									nutrient_id: 1003,
 									amount_per_100g: 8,
 									unit_name: "G",
-									value_origin: "reported",
+									value_origin: "estimated",
+									value_qualifier: "source-estimate",
 									source: "usda",
 									source_reference: "123",
-							confidence: "source-verified",
-							value_status: "reported",
-							standard_error: 0.2,
-							source_nutrient_key: "1003",
-							source_nutrient_code: "203",
-							mapping_status: "canonical",
-							mapping_method: "source-identifier",
-							mapping_review_reference: "usda-fdc",
-							derivation_method: null,
+									confidence: "source-verified",
+									value_status: "estimated",
+									standard_error: 0.2,
+									source_nutrient_key: "1003",
+									source_nutrient_code: "203",
+									mapping_status: "canonical",
+									mapping_method: "source-identifier",
+									mapping_review_reference: "usda-fdc",
+									derivation_method: null,
 									nutrient_definitions: {
 										nutrient_id: 1003,
 										nutrient_name: "Protein",
@@ -64,11 +65,13 @@ describe("normalized nutrient Supabase reads", () => {
 			expect.objectContaining({
 				nutrientId: 1003,
 				nutrientName: "Protein",
-					value: 8,
-					valueStatus: "reported",
-					standardError: 0.2,
-					sourceNutrientCode: "203",
-					mappingStatus: "canonical",
+				value: 8,
+				valueOrigin: "estimated",
+				valueQualifier: "source-estimate",
+				valueStatus: "estimated",
+				standardError: 0.2,
+				sourceNutrientCode: "203",
+				mappingStatus: "canonical",
 			}),
 		]);
 		expect(mock.from).toHaveBeenCalledWith("food_nutrients");
@@ -76,10 +79,14 @@ describe("normalized nutrient Supabase reads", () => {
 	});
 
 	it("throws when normalized reads fail instead of authorizing JSON snapshots", async () => {
-		await expect(readNormalizedNutrientsByParent(
-			createSupabaseMock({ nutrientReadFails: true }) as unknown as SupabaseClient<Database>,
-			"user_food_list_item_id",
-			["list-1"],
-		)).rejects.toMatchObject({ message: "missing relation" });
+		await expect(
+			readNormalizedNutrientsByParent(
+				createSupabaseMock({
+					nutrientReadFails: true,
+				}) as unknown as SupabaseClient<Database>,
+				"user_food_list_item_id",
+				["list-1"],
+			),
+		).rejects.toMatchObject({ message: "missing relation" });
 	});
 });

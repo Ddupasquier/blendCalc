@@ -20,9 +20,7 @@ import {
 import type { Database } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type { FoodCompatibilityFact } from "$lib/utils/food/quality/compatibility";
-import {
-	getFoodCompatibilityEvaluation,
-} from "$lib/utils/food/quality/foodCompatibilityEvaluation";
+import { getFoodCompatibilityEvaluation } from "$lib/utils/food/quality/foodCompatibilityEvaluation";
 import type { FoodImageAsset } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -75,23 +73,25 @@ const readSourceAttributionCatalog = async (
 	);
 };
 
-const collectSourceKeys = (record: ApprovedCatalogRecord) => new Set(
-	[
+const collectSourceKeys = (record: ApprovedCatalogRecord) =>
+	new Set(
+		[
 			...record.food.foodNutrients.map((nutrient) => nutrient.source),
 			...(record.food.foodServings ?? []).map((serving) => serving.source),
 			...Object.values(record.fieldProvenance).map((source) => source.source),
 		]
-		.filter(Boolean)
-		.map((source) => normalizeSourceKey(source as string)),
-);
+			.filter(Boolean)
+			.map((source) => normalizeSourceKey(source as string)),
+	);
 
 const selectSourceAttributions = (
 	record: ApprovedCatalogRecord,
 	catalog: SourceAttributionCatalog,
-) => [...collectSourceKeys(record)]
-	.map((sourceKey) => catalog[sourceKey])
-	.filter((source): source is ApiV1SourceAttribution => Boolean(source))
-	.sort((left, right) => left.source.localeCompare(right.source));
+) =>
+	[...collectSourceKeys(record)]
+		.map((sourceKey) => catalog[sourceKey])
+		.filter((source): source is ApiV1SourceAttribution => Boolean(source))
+		.sort((left, right) => left.source.localeCompare(right.source));
 
 const toSource = (
 	source: string,
@@ -120,11 +120,7 @@ const toImage = (image: FoodImageAsset): ApiV1Image => ({
 		rotationDegrees: image.rotationDegrees ?? 0,
 		version: image.placementVersion ?? 1,
 	},
-	source: toSource(
-		image.source,
-		image.sourceReference,
-		image.confidence,
-	),
+	source: toSource(image.source, image.sourceReference, image.confidence),
 	approvedAt: image.approvedAt ?? null,
 });
 
@@ -200,17 +196,19 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 		brand: record.brandOwner?.trim() || null,
 		category: record.category
 			? {
-				id: record.category.categoryOptionId,
-				name: record.category.label,
-				slug: record.category.sourceValue,
-				updatedAt: record.category.updatedAt ?? null,
-			}
+					id: record.category.categoryOptionId,
+					name: record.category.label,
+					slug: record.category.sourceValue,
+					updatedAt: record.category.updatedAt ?? null,
+				}
 			: null,
 		ingredients: {
 			text: ingredientsText,
 			items: uniqueStrings(record.food.ingredientList ?? []),
 			structured: (record.food.structuredIngredients ?? []).map(
-				function mapIngredient(ingredient): ApiV1Product["ingredients"]["structured"][number] {
+				function mapIngredient(
+					ingredient,
+				): ApiV1Product["ingredients"]["structured"][number] {
 					return {
 						id: ingredient.id ?? null,
 						text: ingredient.text ?? null,
@@ -226,24 +224,23 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 			),
 			analysis: record.food.ingredientAnalysis
 				? {
-					ingredientTags: uniqueStrings(
-						record.food.ingredientAnalysis.ingredientTags,
-					),
-					analysisTags: uniqueStrings(
-						record.food.ingredientAnalysis.analysisTags,
-					),
-					derivedTraceTags: uniqueStrings(
-						record.food.ingredientAnalysis.derivedTraceTags,
-					),
-					percentAnalysis:
-						record.food.ingredientAnalysis.percentAnalysis ?? null,
-					percentEstimate:
-						record.food.ingredientAnalysis.percentEstimate ?? null,
-					percentKnown:
-						record.food.ingredientAnalysis.percentKnown ?? null,
-					percentUnknown:
-						record.food.ingredientAnalysis.percentUnknown ?? null,
-				}
+						ingredientTags: uniqueStrings(
+							record.food.ingredientAnalysis.ingredientTags,
+						),
+						analysisTags: uniqueStrings(
+							record.food.ingredientAnalysis.analysisTags,
+						),
+						derivedTraceTags: uniqueStrings(
+							record.food.ingredientAnalysis.derivedTraceTags,
+						),
+						percentAnalysis:
+							record.food.ingredientAnalysis.percentAnalysis ?? null,
+						percentEstimate:
+							record.food.ingredientAnalysis.percentEstimate ?? null,
+						percentKnown: record.food.ingredientAnalysis.percentKnown ?? null,
+						percentUnknown:
+							record.food.ingredientAnalysis.percentUnknown ?? null,
+					}
 				: null,
 			additives: uniqueStrings(record.food.additives ?? []),
 			allergens: uniqueStrings(record.food.allergens ?? []),
@@ -266,45 +263,44 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 		},
 		packageQuantity: record.food.packageQuantity
 			? {
-				label: record.food.packageQuantity.label ?? null,
-				amount: record.food.packageQuantity.amount ?? null,
-				unit: record.food.packageQuantity.unit ?? null,
-			}
+					label: record.food.packageQuantity.label ?? null,
+					amount: record.food.packageQuantity.amount ?? null,
+					unit: record.food.packageQuantity.unit ?? null,
+				}
 			: null,
 		sourceRecord: record.food.sourceMetadata
 			? {
-				language: record.food.sourceMetadata.language ?? null,
-				languages: uniqueStrings(record.food.sourceMetadata.languages ?? []),
-				marketCountries: uniqueStrings(
-					record.food.sourceMetadata.marketCountries ?? [],
-				),
-				revision: record.food.sourceMetadata.revision ?? null,
-				schemaVersion: record.food.sourceMetadata.schemaVersion ?? null,
-				createdAt: record.food.sourceMetadata.createdAt ?? null,
-				publishedAt: record.food.sourceMetadata.publishedAt ?? null,
-				availableAt: record.food.sourceMetadata.availableAt ?? null,
-				modifiedAt: record.food.sourceMetadata.modifiedAt ?? null,
-				updatedAt: record.food.sourceMetadata.updatedAt ?? null,
-				discontinuedAt:
-					record.food.sourceMetadata.discontinuedAt ?? null,
-				completeness: record.food.sourceMetadata.completeness ?? null,
-				qualityTags: uniqueStrings(
-					record.food.sourceMetadata.qualityTags ?? [],
-				),
-				qualityErrorTags: uniqueStrings(
-					record.food.sourceMetadata.qualityErrorTags ?? [],
-				),
-				qualityWarningTags: uniqueStrings(
-					record.food.sourceMetadata.qualityWarningTags ?? [],
-				),
-				obsolete: record.food.sourceMetadata.obsolete ?? null,
-				obsoleteSince: record.food.sourceMetadata.obsoleteSince ?? null,
-				tagSources: Object.fromEntries(
-					Object.entries(record.food.sourceMetadata.tagSources ?? {}).map(
-						([field, sources]) => [field, uniqueStrings(sources)],
+					language: record.food.sourceMetadata.language ?? null,
+					languages: uniqueStrings(record.food.sourceMetadata.languages ?? []),
+					marketCountries: uniqueStrings(
+						record.food.sourceMetadata.marketCountries ?? [],
 					),
-				),
-			}
+					revision: record.food.sourceMetadata.revision ?? null,
+					schemaVersion: record.food.sourceMetadata.schemaVersion ?? null,
+					createdAt: record.food.sourceMetadata.createdAt ?? null,
+					publishedAt: record.food.sourceMetadata.publishedAt ?? null,
+					availableAt: record.food.sourceMetadata.availableAt ?? null,
+					modifiedAt: record.food.sourceMetadata.modifiedAt ?? null,
+					updatedAt: record.food.sourceMetadata.updatedAt ?? null,
+					discontinuedAt: record.food.sourceMetadata.discontinuedAt ?? null,
+					completeness: record.food.sourceMetadata.completeness ?? null,
+					qualityTags: uniqueStrings(
+						record.food.sourceMetadata.qualityTags ?? [],
+					),
+					qualityErrorTags: uniqueStrings(
+						record.food.sourceMetadata.qualityErrorTags ?? [],
+					),
+					qualityWarningTags: uniqueStrings(
+						record.food.sourceMetadata.qualityWarningTags ?? [],
+					),
+					obsolete: record.food.sourceMetadata.obsolete ?? null,
+					obsoleteSince: record.food.sourceMetadata.obsoleteSince ?? null,
+					tagSources: Object.fromEntries(
+						Object.entries(record.food.sourceMetadata.tagSources ?? {}).map(
+							([field, sources]) => [field, uniqueStrings(sources)],
+						),
+					),
+				}
 			: null,
 		nutrients: [...record.food.foodNutrients]
 			.sort((left, right) => left.nutrientId - right.nutrientId)
@@ -313,63 +309,60 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 				name: nutrient.nutrientName,
 				number: nutrient.nutrientNumber?.trim() || null,
 				unit: nutrient.unitName,
-				amountPer100g: Number.isFinite(nutrient.value)
-					? nutrient.value
-					: null,
-					valueStatus: nutrient.valueOrigin ?? "unknown",
+				amountPer100g: Number.isFinite(nutrient.value) ? nutrient.value : null,
+				valueStatus: nutrient.valueOrigin ?? "unknown",
 				source: nutrient.source
 					? toSource(
 							nutrient.source,
 							nutrient.sourceReference,
 							nutrient.confidence,
 						)
-						: null,
-					quality: {
-						sourceValueStatus:
-							nutrient.valueStatus ??
-							(nutrient.valueOrigin === "derived"
-								? "derived"
-								: nutrient.value === 0
-									? "reported-zero"
-									: nutrient.valueOrigin ?? "unknown"),
-						standardError:
-							Number.isFinite(nutrient.standardError) &&
-							Number(nutrient.standardError) >= 0
-								? Number(nutrient.standardError)
-								: null,
-						sourceNutrientKey:
-							nutrient.sourceNutrientKey?.trim() || null,
-						sourceNutrientCode:
-							nutrient.sourceNutrientCode?.trim() || null,
-						mappingStatus: nutrient.mappingStatus ?? "unknown",
-						mappingMethod: nutrient.mappingMethod?.trim() || null,
-						derivationMethod:
-							nutrient.derivationMethod?.trim() || null,
-					},
-				})),
+					: null,
+				quality: {
+					sourceValueStatus:
+						nutrient.valueStatus ??
+						(nutrient.valueOrigin === "derived"
+							? "derived"
+							: nutrient.value === 0
+								? "reported-zero"
+								: (nutrient.valueOrigin ?? "unknown")),
+					standardError:
+						Number.isFinite(nutrient.standardError) &&
+						Number(nutrient.standardError) >= 0
+							? Number(nutrient.standardError)
+							: null,
+					sourceNutrientKey: nutrient.sourceNutrientKey?.trim() || null,
+					sourceNutrientCode: nutrient.sourceNutrientCode?.trim() || null,
+					mappingStatus: nutrient.mappingStatus ?? "unknown",
+					mappingMethod: nutrient.mappingMethod?.trim() || null,
+					derivationMethod: nutrient.derivationMethod?.trim() || null,
+					valueQualifier: nutrient.valueQualifier ?? null,
+				},
+			})),
 		servings: (record.food.foodServings ?? []).map((serving) => {
-			const quantity = Number.isFinite(serving.amount) && Number(serving.amount) > 0
-				? Number(serving.amount)
-				: null;
-			const grams = Number.isFinite(serving.gramWeight) && serving.gramWeight > 0
-				? serving.gramWeight
-				: null;
+			const quantity =
+				Number.isFinite(serving.amount) && Number(serving.amount) > 0
+					? Number(serving.amount)
+					: null;
+			const grams =
+				Number.isFinite(serving.gramWeight) && serving.gramWeight > 0
+					? serving.gramWeight
+					: null;
 			return {
 				label: serving.label,
 				grams,
 				quantity,
 				unit: serving.unitKey?.trim() || null,
-					gramsPerUnit: grams !== null && quantity !== null
-						? grams / quantity
-						: null,
-					isPrimary: serving.isPrimary,
-					measureType: serving.measureType?.trim() || null,
-					isHouseholdMeasure: serving.isHouseholdMeasure === true,
-					sourceMeasureKey: serving.sourceMeasureKey?.trim() || null,
-					origin: serving.origin ?? "unknown",
-					gramWeightMethod: serving.gramWeightMethod ?? "unknown",
-					calculationBasis: serving.calculationBasis?.trim() || null,
-					source: serving.source
+				gramsPerUnit:
+					grams !== null && quantity !== null ? grams / quantity : null,
+				isPrimary: serving.isPrimary,
+				measureType: serving.measureType?.trim() || null,
+				isHouseholdMeasure: serving.isHouseholdMeasure === true,
+				sourceMeasureKey: serving.sourceMeasureKey?.trim() || null,
+				origin: serving.origin ?? "unknown",
+				gramWeightMethod: serving.gramWeightMethod ?? "unknown",
+				calculationBasis: serving.calculationBasis?.trim() || null,
+				source: serving.source
 					? toSource(
 							serving.source,
 							serving.sourceReference,
@@ -400,17 +393,14 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 				record,
 				"structuredIngredients",
 			),
-			ingredientAnalysis: toCanonicalFieldSource(
-				record,
-				"ingredientAnalysis",
-			),
+			ingredientAnalysis: toCanonicalFieldSource(record, "ingredientAnalysis"),
 			additives: toCanonicalFieldSource(record, "additives"),
 			allergens: toCanonicalFieldSource(record, "allergens"),
-				traces: toCanonicalFieldSource(record, "traces"),
-				precautionaryStatements: toCanonicalFieldSource(
-					record,
-					"precautionaryStatements",
-				),
+			traces: toCanonicalFieldSource(record, "traces"),
+			precautionaryStatements: toCanonicalFieldSource(
+				record,
+				"precautionaryStatements",
+			),
 			dietaryTags: toCanonicalFieldSource(record, "dietaryTags"),
 			labels: toCanonicalFieldSource(record, "labels"),
 			package: toCanonicalFieldSource(record, "package"),
@@ -449,18 +439,16 @@ const toRevisionChange = (
 		(changeType !== "added" &&
 			changeType !== "removed" &&
 			changeType !== "changed") ||
-		(severity !== "low" &&
-			severity !== "medium" &&
-			severity !== "high")
-	) return null;
+		(severity !== "low" && severity !== "medium" && severity !== "high")
+	)
+		return null;
 	return {
 		field: change.field,
 		label: change.label,
 		changeType,
 		previousValue:
 			change.previousValue as ApiV1ProductRevisionChange["previousValue"],
-		newValue:
-			change.newValue as ApiV1ProductRevisionChange["newValue"],
+		newValue: change.newValue as ApiV1ProductRevisionChange["newValue"],
 		severity,
 	};
 };
@@ -487,10 +475,12 @@ export const readApiV1ProductRevisionHistory = async (
 ) => {
 	const barcode = normalizeBarcode(barcodeValue);
 	if (!barcode) return null;
-	const readRows = (limit: number, offset: number) => supabase.rpc(
-		"get_blendcalc_product_revision_history_v1",
-		{ p_barcode: barcode, p_limit: limit, p_offset: offset },
-	);
+	const readRows = (limit: number, offset: number) =>
+		supabase.rpc("get_blendcalc_product_revision_history_v1", {
+			p_barcode: barcode,
+			p_limit: limit,
+			p_offset: offset,
+		});
 	const { data, error } = await readRows(input.limit, input.offset);
 	if (error) throw error;
 	const rows = (data ?? []) as RevisionHistoryRow[];
@@ -541,10 +531,7 @@ export const searchApiV1Products = async (
 	]);
 	return {
 		products: page.records.map((record) =>
-			mapApprovedCatalogRecordToApiV1Product(
-				record,
-				sourceAttributionCatalog,
-			)
+			mapApprovedCatalogRecordToApiV1Product(record, sourceAttributionCatalog),
 		),
 		pagination: createPagination(input.limit, input.offset, page.total),
 	};

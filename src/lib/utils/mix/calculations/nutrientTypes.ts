@@ -38,6 +38,7 @@ export type NutrientAdjustmentImpact = {
 	nextTotal: number;
 	goal: number;
 	distanceImprovement: number;
+  weightedDistanceImprovement: number;
 };
 
 export type NutrientAdjustmentSuggestion = {

@@ -1,7 +1,8 @@
 import type { FdcFood } from "$lib/utils/food/types";
-import {
-	getFoodPreferenceWarningMessage,
-} from "$lib/utils/profile/foodPreferenceWarnings";
+import { getFoodPreferenceWarningMessage } from "$lib/utils/profile/foodPreferenceWarnings";
+import type { MixNutrientGoal } from "$lib/utils/mix/goals/types";
+import { evaluateMixGoal } from "$lib/utils/mix/goals/goalEvaluation";
+import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
 
 export type SmartWarningTone = "danger" | "warning" | "info";
 
@@ -25,14 +26,7 @@ export type NutrientGoalWarningInput = {
 	label: string;
 	unit?: string;
 	total: number;
-	goal: number;
-};
-
-const formatAmount = (value: number) => {
-	const absoluteValue = Math.abs(value);
-	if (absoluteValue >= 100) return String(Math.round(value));
-	if (absoluteValue >= 10) return value.toFixed(1).replace(/\.0$/, "");
-	return value.toFixed(1).replace(/\.0$/, "");
+	goal: MixNutrientGoal;
 };
 
 export const getNutrientGoalWarnings = (
@@ -41,35 +35,36 @@ export const getNutrientGoalWarnings = (
 ): SmartWarning[] => {
 	return nutrients.flatMap((nutrient): SmartWarning[] => {
 		const unit = nutrient.unit ?? "";
-		const goal = Math.max(0, nutrient.goal);
 		const total = Math.max(0, nutrient.total);
-		const difference = total - goal;
-		const tolerance = Math.max(goal * 0.05, 0.05);
+		const evaluation = evaluateMixGoal(nutrient.goal, total);
+		const difference = evaluation.difference;
 
-		if (difference > tolerance) {
+		if (evaluation.status === "over") {
 			return [
 				{
 					id: `over-${nutrient.id}`,
 					tone: "danger",
 					symbol: "!",
 					title: `${nutrient.label} exceeds goal`,
-					message: `${nutrient.label} exceeds goal by ${formatAmount(
+					message: `${nutrient.label} exceeds goal by ${formatMixQuantity(
 						difference,
-					)}${unit}.`,
+						{ unit },
+					)}.`,
 				},
 			];
 		}
 
-		if (includeUnderTargets && goal > 0 && difference < -tolerance) {
+		if (includeUnderTargets && evaluation.status === "under") {
 			return [
 				{
 					id: `under-${nutrient.id}`,
 					tone: "warning",
 					symbol: "↓",
 					title: `${nutrient.label} under target`,
-					message: `${nutrient.label} is under target by ${formatAmount(
+					message: `${nutrient.label} is under target by ${formatMixQuantity(
 						Math.abs(difference),
-					)}${unit}.`,
+						{ unit },
+					)}.`,
 				},
 			];
 		}

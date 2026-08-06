@@ -453,9 +453,16 @@ const fillRequiredCustomIngredient = async (
 	await continueToNextStep();
 	await continueToNextStep();
 	if (options.destination) {
-		await fireEvent.change(
+		await fireEvent.click(
 			screen.getByRole("combobox", { name: /add after saving/i }),
-			{ target: { value: options.destination } },
+		);
+		await fireEvent.click(
+			screen.getByRole("option", {
+				name:
+					options.destination === MIX_STORAGE_KEYS.shoppingList
+						? "Shopping List"
+						: "Fridge",
+			}),
 		);
 	}
 };
@@ -669,6 +676,9 @@ describe("CustomIngredientForm", () => {
 
 		await fillRequiredCustomIngredient("List destination snack");
 
+		await fireEvent.click(
+			screen.getByRole("combobox", { name: /add after saving/i }),
+		);
 		expect(screen.getByRole("option", { name: "Fridge" })).toBeInTheDocument();
 		expect(
 			screen.getByRole("option", { name: "Shopping List" }),

@@ -18,23 +18,24 @@ const selectedIngredientsTypes = readFileSync(
 	"src/lib/components/mix/ingredients/SelectedIngredientsPanel/types.ts",
 	"utf8",
 );
+const headerController = readFileSync(
+	"src/lib/utils/mix/state/mixHeaderVisibilityController.svelte.ts",
+	"utf8",
+);
 
 describe("Mix compact header architecture", () => {
 	it("uses only the main Mix surface to control the compact header", () => {
 		expect(mixPage).toContain("<ViewFrame appShell>");
-		expect(mixPage).toContain("<ViewTop compactHidden={compactTopHidden}>");
+		expect(mixPage).toContain(
+			"<ViewTop compactHidden={headerVisibility.state.hidden}>",
+		);
 		expect(mixPage).toContain("<ViewBody>");
 		expect(mixPage).toContain("bind:this={mixScrollContainer}");
-		expect(mixPage).toContain("onscroll={handleMixPageScroll}");
-		expect(mixPage).toContain(
-			"mixPageScrollDirectionTracker.pause(element.scrollTop)",
-		);
-		expect(mixPage).toContain(
-			"mixPageScrollDirectionTracker.rebase(element.scrollTop)",
-		);
-		expect(mixPage).toContain(
-			"mixPageScrollDirectionTracker.resume(element.scrollTop)",
-		);
+		expect(mixPage).toContain("onscroll={headerVisibility.handleScroll}");
+		expect(mixPage).toContain("headerVisibility.observe(mixScrollContainer)");
+		expect(headerController).toContain("tracker.pause(element.scrollTop)");
+		expect(headerController).toContain("tracker.rebase(element.scrollTop)");
+		expect(headerController).toContain("tracker.resume(element.scrollTop)");
 		expect(mixPage).not.toContain("handleMixListScrollDirectionChange");
 		expect(mixPage).not.toContain("onScrollDirectionChange=");
 		expect(mixPage).not.toContain("document.addEventListener(\"scroll\"");

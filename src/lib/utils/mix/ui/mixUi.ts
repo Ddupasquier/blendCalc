@@ -6,10 +6,14 @@ import {
 	getDefaultMixFields,
 	getMixRuntimeConfiguration,
 } from "$lib/utils/food/reference/appReferenceCatalog";
-import { getFoodNutrientAmount, type NutrientMeta } from "$lib/utils/mix/calculations";
+import {
+	getFoodNutrientAmount,
+	type NutrientMeta,
+} from "$lib/utils/mix/calculations";
 import type { ServingConversion } from "$lib/utils/serving/servingAmount";
 import type { SmartWarning } from "$lib/utils/mix/warnings/smartWarnings";
 import type { FdcFood } from "$lib/utils/food/types";
+import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
 
 export type NutrientOption = { id: string | number; label: string };
 
@@ -48,9 +52,11 @@ export type SaveGoalDiff = {
 	unit: string;
 	total: number;
 	goal: number;
+	upperGoal: number | null;
+	goalType: "exact" | "minimum" | "maximum" | "range";
 	difference: number;
 	percentOfGoal: number;
-	status: "near" | "over" | "under";
+	status: "met" | "over" | "under";
 };
 
 export const getDefaultNutrientOptions = () => {
@@ -106,20 +112,6 @@ export const optionsFromSelectedNutrientIds = (
 	});
 };
 
-export const formatChartNumber = (value: number) => {
-	const absoluteValue = Math.abs(value);
-	if (absoluteValue >= 10000) return `${Math.round(value / 1000)}k`;
-	if (absoluteValue >= 1000) return `${(value / 1000).toFixed(1)}k`;
-	if (absoluteValue >= 10) return String(Math.round(value));
-	return value.toFixed(1).replace(/\.0$/, "");
-};
-
-export const formatSignedChartNumber = (value: number) => {
-	if (Math.abs(value) < 0.05) return "0";
-	const sign = value > 0 ? "+" : "-";
-	return `${sign}${formatChartNumber(Math.abs(value))}`;
-};
-
 export const getFoodSourceLabel = (food: FdcFood, fridgeItems: FdcFood[]) => {
 	return fridgeItems.some((item) => item.fdcId === food.fdcId)
 		? "Fridge"
@@ -137,12 +129,18 @@ export const getFoodNutrientChips = (
 			amount: getFoodNutrientAmount(food, Number(nutrient.id), servingGrams),
 			unit: nutrient.unit ?? "",
 		}))
-		.filter((chip): chip is typeof chip & { amount: number } => chip.amount !== null && chip.amount > 0)
+		.filter(
+			(chip): chip is typeof chip & { amount: number } =>
+				chip.amount !== null && chip.amount > 0,
+		)
 		.sort((a, b) => b.amount - a.amount)
 		.slice(0, 3)
 		.map((chip) => ({
 			label: chip.label,
-			value: `+${formatChartNumber(chip.amount)}${chip.unit}`,
+			value: formatMixQuantity(chip.amount, {
+				unit: chip.unit,
+				sign: "always",
+			}),
 		}));
 };
 
@@ -170,7 +168,9 @@ export const getDefaultServingAmount = (food?: FdcFood) => {
 };
 
 export const getServingGramsLabel = (conversion: ServingConversion) => {
-	return conversion.grams === null ? "Unavailable" : `${conversion.grams.toFixed(1)}g`;
+	return conversion.grams === null
+		? "Gram conversion unavailable"
+		: `${formatMixQuantity(conversion.grams, { unit: "g" })} equivalent`;
 };
 
 export const getServingConversionBasis = (conversion: ServingConversion) => {
@@ -192,12 +192,18 @@ export const withOverageDetails = (
 
 	return {
 		...warning,
-		detailSummary: `${formatChartNumber(overage.total)} / ${formatChartNumber(
+		detailSummary: `${formatMixQuantity(overage.total)} / ${formatMixQuantity(
 			overage.goal,
-		)}${overage.unit} (${formatSignedChartNumber(overage.overage)}${overage.unit})`,
+			{ unit: overage.unit },
+		)} (${formatMixQuantity(overage.overage, {
+			unit: overage.unit,
+			sign: "always",
+		})})`,
 		details: overage.contributors.map((contributor) => ({
 			label: contributor.label,
-			value: `${formatChartNumber(contributor.amount)}${overage.unit} from ${formatChartNumber(contributor.grams)}g`,
+			value: `${formatMixQuantity(contributor.amount, {
+				unit: overage.unit,
+			})} from ${formatMixQuantity(contributor.grams, { unit: "g" })}`,
 		})),
 	};
 };

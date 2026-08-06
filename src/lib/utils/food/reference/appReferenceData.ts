@@ -5,11 +5,18 @@ import type {
 	NutrientDisplayProfile,
 } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { NutrientDefinitionReferenceRecord } from "$lib/utils/food/nutrients/nutrientDefinitionRecord";
+import {
+  getGoalTemplateSelectionId,
+  isMixGoalBasis,
+  isMixGoalType,
+  type MixGoalMap,
+} from "$lib/utils/mix/goals/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const asNumber = (value: unknown, label: string) => {
 	const result = Number(value);
-	if (!Number.isFinite(result)) throw new Error(`${label} is not a valid number.`);
+  if (!Number.isFinite(result))
+    throw new Error(`${label} is not a valid number.`);
 	return result;
 };
 
@@ -18,7 +25,10 @@ const asNumberRecord = (value: Json | undefined, label: string) => {
 		throw new Error(`${label} is not a number map.`);
 	}
 	return Object.fromEntries(
-		Object.entries(value).map(([key, item]) => [key, asNumber(item, `${label}.${key}`)]),
+    Object.entries(value).map(([key, item]) => [
+      key,
+      asNumber(item, `${label}.${key}`),
+    ]),
 	);
 };
 
@@ -31,10 +41,6 @@ const readRuntimeConfiguration = (
 		"Mix progress thresholds",
 	);
 	return {
-		defaultGoalByUnit: asNumberRecord(
-			values.get("default-goal-by-unit"),
-			"Mix default goals by unit",
-		),
 		progressThresholds: {
 			atGoal: asNumber(thresholds.atGoal, "Mix at-goal threshold"),
 			barelyOver: asNumber(thresholds.barelyOver, "Mix barely-over threshold"),
@@ -69,6 +75,7 @@ export const readAppReferenceCatalog = async (
 		profileFieldsResult,
 		equivalencesResult,
 		templatesResult,
+    templateVersionsResult,
 		templateTargetsResult,
 			runtimeResult,
 			symbolsResult,
@@ -81,20 +88,33 @@ export const readAppReferenceCatalog = async (
 			.eq("enabled", true),
 		supabase
 			.from("nutrient_display_profile_fields")
-			.select("profile_key, nutrient_id, display_label, display_unit, sort_order, highlight, default_goal")
+      .select(
+        "profile_key, nutrient_id, display_label, display_unit, sort_order, highlight, default_goal",
+      )
 			.order("sort_order", { ascending: true }),
 		supabase
 			.from("nutrient_equivalences")
-			.select("canonical_nutrient_id, source_nutrient_id, source_nutrient_number, source_key")
+      .select(
+        "canonical_nutrient_id, source_nutrient_id, source_nutrient_number, source_key",
+      )
 			.eq("enabled", true),
 		supabase
 			.from("mix_goal_templates")
-			.select("key, display_name, description, sort_order")
+      .select("key, sort_order, current_version_id, is_default")
 			.eq("enabled", true)
 			.order("sort_order", { ascending: true }),
+    supabase
+      .from("mix_goal_template_versions")
+      .select(
+        "id, template_key, version, display_name, description, goal_basis, status, source_key, source_reference, reviewed_at",
+      )
+      .eq("status", "active"),
 		supabase
 			.from("mix_goal_template_targets")
-			.select("template_key, nutrient_id, target_amount"),
+      .select(
+        "template_version_id, nutrient_id, goal_type, target_amount, upper_amount, tolerance_ratio, importance_weight, sort_order, rationale, source_key, source_reference",
+      )
+      .order("sort_order", { ascending: true }),
 		supabase
 			.from("mix_runtime_configuration")
 			.select("key, value")
@@ -117,6 +137,7 @@ export const readAppReferenceCatalog = async (
 		profileFieldsResult,
 		equivalencesResult,
 		templatesResult,
+    templateVersionsResult,
 		templateTargetsResult,
 			runtimeResult,
 			symbolsResult,
@@ -131,11 +152,16 @@ export const readAppReferenceCatalog = async (
 		unit: definition.default_unit_name,
 		nutrientNumber: definition.nutrient_number ?? "",
 	}));
-	const nutrientsById = new Map(nutrients.map((nutrient) => [nutrient.id, nutrient]));
+  const nutrientsById = new Map(
+    nutrients.map((nutrient) => [nutrient.id, nutrient]),
+  );
 	const fieldsByProfile = new Map<string, NutrientDisplayProfile["fields"]>();
 	for (const row of profileFieldsResult.data ?? []) {
 		const nutrient = nutrientsById.get(row.nutrient_id);
-		if (!nutrient) throw new Error(`Display profile nutrient ${row.nutrient_id} has no definition.`);
+    if (!nutrient)
+      throw new Error(
+        `Display profile nutrient ${row.nutrient_id} has no definition.`,
+      );
 		const fields = fieldsByProfile.get(row.profile_key) ?? [];
 		fields.push({
 			...nutrient,
@@ -154,8 +180,12 @@ export const readAppReferenceCatalog = async (
 		"mix_popular",
 	]);
 	const nutrientDisplayProfiles = (profilesResult.data ?? []).map((profile) => {
-		if (!validPurposes.has(profile.purpose as NutrientDisplayProfile["purpose"])) {
-			throw new Error(`Unsupported nutrient display purpose ${profile.purpose}.`);
+    if (
+      !validPurposes.has(profile.purpose as NutrientDisplayProfile["purpose"])
+    ) {
+      throw new Error(
+        `Unsupported nutrient display purpose ${profile.purpose}.`,
+      );
 		}
 		return {
 			key: profile.key,
@@ -166,12 +196,31 @@ export const readAppReferenceCatalog = async (
 		};
 	});
 
-	const targetsByTemplate = new Map<string, Record<number, number>>();
+  const targetsByTemplateVersion = new Map<string, MixGoalMap>();
 	for (const target of templateTargetsResult.data ?? []) {
-		const goals = targetsByTemplate.get(target.template_key) ?? {};
-		goals[target.nutrient_id] = Number(target.target_amount);
-		targetsByTemplate.set(target.template_key, goals);
+    if (!isMixGoalType(target.goal_type)) {
+      throw new Error(`Unsupported Mix goal type ${target.goal_type}.`);
+    }
+    const goals =
+      targetsByTemplateVersion.get(target.template_version_id) ?? {};
+    goals[target.nutrient_id] = {
+      nutrientId: target.nutrient_id,
+      goalType: target.goal_type,
+      targetAmount: Number(target.target_amount),
+      upperAmount:
+        target.upper_amount === null ? null : Number(target.upper_amount),
+      toleranceRatio: Number(target.tolerance_ratio),
+      importanceWeight: Number(target.importance_weight),
+      sortOrder: target.sort_order,
+      rationale: target.rationale,
+      sourceKey: target.source_key,
+      sourceReference: target.source_reference,
+    };
+    targetsByTemplateVersion.set(target.template_version_id, goals);
 	}
+  const versionsById = new Map(
+    (templateVersionsResult.data ?? []).map((version) => [version.id, version]),
+  );
 
 	return {
 		nutrients,
@@ -182,12 +231,34 @@ export const readAppReferenceCatalog = async (
 			sourceNutrientNumber: row.source_nutrient_number,
 			sourceKey: row.source_key,
 		})),
-		mixGoalTemplates: (templatesResult.data ?? []).map((template) => ({
+    mixGoalTemplates: (templatesResult.data ?? []).map((template) => {
+      const version = template.current_version_id
+        ? versionsById.get(template.current_version_id)
+        : null;
+      if (!version || version.template_key !== template.key) {
+        throw new Error(
+          `Mix goal template ${template.key} has no active current version.`,
+        );
+      }
+      if (!isMixGoalBasis(version.goal_basis)) {
+        throw new Error(`Unsupported Mix goal basis ${version.goal_basis}.`);
+      }
+      return {
 			id: template.key,
-			label: template.display_name,
-			description: template.description,
-			goals: targetsByTemplate.get(template.key) ?? {},
-		})),
+        selectionId: getGoalTemplateSelectionId("system", version.id),
+        scope: "system" as const,
+        versionId: version.id,
+        version: version.version,
+        label: version.display_name,
+        description: version.description,
+        goalBasis: version.goal_basis,
+        goals: targetsByTemplateVersion.get(version.id) ?? {},
+        sourceKey: version.source_key,
+        sourceReference: version.source_reference,
+        reviewedAt: version.reviewed_at,
+        isDefault: template.is_default,
+      };
+    }),
 		mixRuntime: readRuntimeConfiguration(runtimeResult.data ?? []),
 		foodSymbols: (symbolsResult.data ?? []).map((symbol) => ({
 			key: symbol.key,

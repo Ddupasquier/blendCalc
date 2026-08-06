@@ -25,6 +25,26 @@ describe("development rules documentation", () => {
 		expect(audit).not.toContain("## Removed As Resolved");
 	});
 
+	it("requires one outcome-driven lifecycle for every change", () => {
+		expect(rules).toContain("## Canonical Change Lifecycle");
+		for (const phase of [
+			"Establish The Contract",
+			"Map The Existing System",
+			"Classify Before Coding",
+			"Implement One Coherent Slice",
+			"Verify Outcomes",
+			"Close Out Cleanly",
+		]) {
+			expect(rules).toContain(phase);
+		}
+		expect(rules).toContain(
+			"Do not treat file splitting,\ntoken use, a shared wrapper, passing string-presence tests, or a successful build as\nproof",
+		);
+		expect(rules).toMatch(
+			/A UI rebuild or visual adjustment is not complete based on compilation\s+and unit tests alone/,
+		);
+	});
+
 	it("documents accessible reordering and dependency supply-chain boundaries", () => {
 		expect(rules).toContain('id="rule-reorderable-collections"');
 		expect(rules).toContain("Arrow Up, Arrow Down,\nHome, and End");

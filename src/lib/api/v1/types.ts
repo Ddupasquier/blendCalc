@@ -10,11 +10,11 @@ export type ApiV1FieldSource = ApiV1Source & {
 	observationId: string;
 	observedAt: string;
 	verificationMethod:
-	| "exact-barcode"
-	| "package-label"
-	| "corroborated-sources"
-	| "moderator-reviewed"
-	| null;
+		| "exact-barcode"
+		| "package-label"
+		| "corroborated-sources"
+		| "moderator-reviewed"
+		| null;
 	reviewState: "accepted" | "moderator-reviewed";
 };
 
@@ -40,24 +40,26 @@ export type ApiV1Nutrient = {
 	number: string | null;
 	unit: string;
 	amountPer100g: number | null;
-	valueStatus: "reported" | "derived" | "missing" | "unknown";
+	valueStatus: "reported" | "estimated" | "derived" | "missing" | "unknown";
 	source: ApiV1Source | null;
 	quality: {
 		sourceValueStatus:
-		| "reported"
-		| "reported-zero"
-		| "derived"
-		| "trace"
-		| "present-unquantified"
-		| "missing"
-		| "invalid"
-		| "unknown";
+			| "reported"
+			| "reported-zero"
+			| "estimated"
+			| "derived"
+			| "trace"
+			| "present-unquantified"
+			| "missing"
+			| "invalid"
+			| "unknown";
 		standardError: number | null;
 		sourceNutrientKey: string | null;
 		sourceNutrientCode: string | null;
 		mappingStatus: "canonical" | "unmapped" | "excluded" | "unknown";
 		mappingMethod: string | null;
 		derivationMethod: string | null;
+		valueQualifier: "source-estimate" | null;
 	};
 };
 
@@ -130,22 +132,14 @@ export type ApiV1ProductRevision = {
 	id: string | null;
 	number: number | null;
 	currentSince: string | null;
-	currentSinceBasis:
-	| "manufacturer-effective"
-	| "blendcalc-observed"
-	| null;
+	currentSinceBasis: "manufacturer-effective" | "blendcalc-observed" | null;
 	labelObservedAt: string | null;
 	updatedAt: string;
 	lastVerifiedAt: string | null;
 };
 
 export type ApiV1Json =
-	| string
-	| number
-	| boolean
-	| null
-	| { [key: string]: ApiV1Json }
-	| ApiV1Json[];
+	string | number | boolean | null | { [key: string]: ApiV1Json } | ApiV1Json[];
 
 export type ApiV1ProductRevisionChange = {
 	field: string;
@@ -178,10 +172,10 @@ export type ApiV1StructuredIngredient = {
 
 export type ApiV1PrecautionaryStatement = {
 	type:
-	| "may_contain"
-	| "shared_equipment"
-	| "shared_facility"
-	| "other_precautionary";
+		| "may_contain"
+		| "shared_equipment"
+		| "shared_facility"
+		| "other_precautionary";
 	text: string;
 	allergens: string[];
 	languageCode: string | null;

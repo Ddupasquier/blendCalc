@@ -52,6 +52,15 @@ preferences stored in `mix_preferences`. Authenticated RPCs validate the complet
 of stable section identifiers before saving either preference; browser storage is not
 used as a fallback authority.
 
+Mix nutrient goals are normalized account data rather than browser preferences or a
+numeric JSON map. DB-owned presets use stable identities and immutable reviewed
+versions; private user presets are reusable snapshots. Applying a preset atomically
+copies its targets into `user_mix_nutrient_goals`, preserving explicit exact, minimum,
+maximum, or range semantics plus tolerance, weighting, basis, and source version. Later
+preset revisions never mutate active goals silently. The shared evaluation utility is
+the only app calculation path for chart status, warnings, adjustment scoring, Saved goal
+progress, and aggregate goal match.
+
 ## External Sources
 
 External food APIs are enrichment inputs, not live UI databases. Server code checks

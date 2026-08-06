@@ -37,10 +37,10 @@ describe("ListControls", () => {
 		await fireEvent.click(
 			screen.getByRole("button", { name: "Clear search saved mixes" }),
 		);
-		await fireEvent.change(
+		await fireEvent.click(
 			screen.getByRole("combobox", { name: "Sort saved mixes" }),
-			{ target: { value: "name" } },
 		);
+		await fireEvent.click(screen.getByRole("option", { name: "Name A–Z" }));
 
 		expect(onQueryChange).toHaveBeenNthCalledWith(1, "green");
 		expect(onQueryChange).toHaveBeenNthCalledWith(2, "");
@@ -69,13 +69,46 @@ describe("ListControls", () => {
 			name: "Sort saved mixes",
 		});
 		expect(trigger).toHaveAttribute("aria-expanded", "true");
-		expect(trigger).toHaveAttribute(
-			"aria-controls",
-			"saved-sort-sheet-title",
-		);
+		expect(trigger).toHaveAttribute("aria-controls", "saved-sort-sheet-title");
 		expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
 
 		await fireEvent.click(trigger);
 		expect(onFilterOpen).toHaveBeenCalledOnce();
+	});
+
+	it("can omit a redundant resting count while preserving the search control", () => {
+		render(ListControls, {
+			props: {
+				id: "selected-ingredient-search",
+				query: "",
+				onQueryChange: vi.fn(),
+				label: "Find selected ingredients",
+				totalCount: 8,
+				visibleCount: 8,
+				itemLabel: "selected",
+				showCount: false,
+			},
+		});
+
+		expect(
+			screen.getByRole("searchbox", { name: "Find selected ingredients" }),
+		).toBeInTheDocument();
+		expect(screen.queryByText("8 selected")).not.toBeInTheDocument();
+	});
+
+	it("can present a caller-defined result summary in the shared count position", () => {
+		render(ListControls, {
+			props: {
+				id: "mix-ingredient-search",
+				query: "",
+				onQueryChange: vi.fn(),
+				totalCount: 12,
+				visibleCount: 8,
+				resultSummary: "8 available · 3 selected",
+			},
+		});
+
+		expect(screen.getByText("8 available · 3 selected")).toBeInTheDocument();
+		expect(screen.queryByText("8 of 12 items")).not.toBeInTheDocument();
 	});
 });

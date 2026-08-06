@@ -29,8 +29,9 @@ describe("SmartWarnings", () => {
 		const section = title.closest("section");
 		expect(disclosure).not.toHaveAttribute("open");
 		expect(disclosure).toHaveAttribute("data-tone", "neutral");
-		expect(section).toHaveAttribute("data-tone", "warning");
-		expect(screen.getByText("Attention needed.")).toBeInTheDocument();
+		expect(section).toHaveAttribute("data-attention-tone", "warning");
+		expect(screen.getByRole("status")).toHaveTextContent("1 warning.");
+		expect(disclosure).not.toHaveAttribute("aria-live");
 	});
 
 	it("starts closed with a red section when any warning is high severity", () => {
@@ -56,7 +57,7 @@ describe("SmartWarnings", () => {
 		const section = title.closest("section");
 		expect(disclosure).not.toHaveAttribute("open");
 		expect(disclosure).toHaveAttribute("data-tone", "neutral");
-		expect(section).toHaveAttribute("data-tone", "danger");
-		expect(screen.getByText("Urgent attention needed.")).toBeInTheDocument();
+		expect(section).toHaveAttribute("data-attention-tone", "danger");
+		expect(screen.getByRole("status")).toHaveTextContent("2 urgent warnings.");
 	});
 });

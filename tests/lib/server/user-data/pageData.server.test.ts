@@ -76,14 +76,22 @@ describe("server-loaded user page data", () => {
 		serverLists.readCloudSmoothieListFood.mockResolvedValue(null);
 		catalog.getApprovedCatalogRecordByApplicationFoodId.mockResolvedValue(null);
 		genericFoods.readGenericFoodByApplicationId.mockResolvedValue(null);
-		supabaseAdmin.getSupabaseAdminClient.mockReturnValue(
-			supabaseAdmin.client,
-		);
+    supabaseAdmin.getSupabaseAdminClient.mockReturnValue(supabaseAdmin.client);
 		serverLists.readCloudSmoothieList.mockImplementation(async (key: string) =>
 			key === MIX_STORAGE_KEYS.fridge ? [{ fdcId: 1 }] : [{ fdcId: 2 }],
 		);
 		storage.readCloudMixPreferences.mockResolvedValue({
-			nutrientGoals: { 1008: 2000 },
+      nutrientGoals: {
+        1008: {
+          nutrientId: 1008,
+          goalType: "exact",
+          targetAmount: 2000,
+          upperAmount: null,
+          toleranceRatio: 0.1,
+          importanceWeight: 1,
+          sortOrder: 1,
+        },
+      },
 			mixState: {},
 		});
 		storage.readCloudSavedDrinks.mockResolvedValue([{ id: "drink-1" }]);
@@ -167,7 +175,7 @@ describe("server-loaded user page data", () => {
 
 		expect(result.fridge).toEqual([{ fdcId: 1 }]);
 		expect(result.shoppingList).toEqual([{ fdcId: 2 }]);
-		expect(result.preferences.nutrientGoals).toEqual({ 1008: 2000 });
+    expect(result.preferences.nutrientGoals?.[1008]?.targetAmount).toBe(2000);
 		expect(result.loadError).toBe("");
 	});
 

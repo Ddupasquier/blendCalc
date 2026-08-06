@@ -3,6 +3,7 @@ export type SelectFieldOption = {
 	label: string;
 	disabled?: boolean;
 	hidden?: boolean;
+	placeholder?: boolean;
 };
 
 export type SelectFieldProps = {
@@ -22,6 +23,6 @@ export type SelectFieldProps = {
 	layout?: "stacked" | "inline";
 	size?: "default" | "compact" | "small";
 	width?: "full" | "content";
-	element?: HTMLSelectElement | null;
+	element?: HTMLButtonElement | null;
 	onValueChange?: (value: string) => void;
 };
