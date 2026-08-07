@@ -1,6 +1,6 @@
 # Development Rules Audit
 
-Last audited: 2026-08-05
+Last audited: 2026-08-06
 
 ## Purpose
 
@@ -44,6 +44,45 @@ production Auth requires the approved email-confirmation and leaked-password con
 CAPTCHA thresholds are defined for public signup/recovery abuse; privileged accounts
 use an approved MFA policy; and the decisions are checked in a repeatable prelaunch
 security runbook without storing secrets in the repository.
+
+### Remote Release Verification Is Not Enforced
+
+**Status:** High
+
+**Evidence:** The repository has no GitHub Actions workflow or equivalent checked-in
+remote verification gate. `package.json` runs only the version consistency check before
+production builds, while the full tests, Svelte check, security audit, authentication
+check, and database verification remain separate opt-in commands. `vercel.json` defines
+the analytics cron but no build-time quality gate. A branch can therefore reach a
+deployment target without the canonical change lifecycle being independently proven.
+
+**Affected areas:** Pull requests, parent-branch merges, Vercel deployments, database
+migrations, and release confidence.
+
+**Complete when:** A Node.js 24 remote workflow performs a clean dependency install,
+version consistency check, dependency security audit, Svelte check, full test suite,
+and production build; migration changes additionally run the maintained database
+verification workflow; and the required checks protect the branches that feed staging
+and production.
+
+### General Source Linting And Formatting Are Not Enforced
+
+**Status:** Open
+
+**Evidence:** `package.json` has no general lint or format command, and the repository
+has no maintained ESLint, Prettier, or Stylelint configuration. Svelte check and the
+source-text architecture guards enforce important project-specific contracts, but they
+do not provide general TypeScript/Svelte diagnostics, deterministic formatting, or
+SCSS linting across the working tree.
+
+**Affected areas:** Svelte and TypeScript consistency, SCSS maintainability, review
+noise, dead or suspicious constructs not covered by project-specific tests, and remote
+release verification.
+
+**Complete when:** The repository adopts a Svelte/TypeScript-aware linter and a
+deterministic formatter with SCSS support; existing files are normalized deliberately;
+necessary exceptions are narrow and documented; and lint plus formatting checks run in
+the local verification commands and required remote workflow.
 
 ### Cross-View Browser, Mobile, And Accessibility Coverage
 
@@ -89,8 +128,9 @@ constants rather than undocumented design choices.
 **Evidence:** Ingredients, Mix, and Saved Drinks largely compose actions through the
 shared button and input primitives. Authentication, Profile, and Moderation still render
 route-local submit buttons and action classes instead of delegating their loading,
-disabled, focus, sizing, and responsive behavior to the same primitives. Current
-examples include `src/routes/auth/+page.svelte`,
+disabled, focus, sizing, and responsive behavior to the same primitives. No feature
+route still owns a native `<select>`, but 11 route-local submit buttons remain across
+Authentication, Profile, and Moderation. Current examples include `src/routes/auth/+page.svelte`,
 `src/routes/auth/update-password/+page.svelte`, `src/routes/profile/+page.svelte`, and
 `src/routes/moderation/+page.svelte`.
 
@@ -161,24 +201,6 @@ catalog nutrients, nutrition facts, Mix totals, and the public API.
 identity-preserving exact mapping with compatible units; semantic candidates always
 remain pending; dangerous ignored tokens are restored; and regression fixtures cover
 vitamin forms, fatty acids, parent/sub-nutrients, and incompatible units.
-
-### IU Conversions Are Inferred From Observed Food Ratios
-
-**Status:** Critical
-
-**Evidence:** `scripts/seeds/seed_product_reference_data.mjs` pairs USDA IU and
-microgram nutrients by normalized name, calculates ratios observed in foods, stores the
-median as `api_observed_ratio`, assigns `0.99` confidence, and reuses those ratios for
-Open Food Facts. IU conversion depends on the nutrient and chemical form; an observed
-median is not a conversion standard and can silently create incorrect nutrient values.
-
-**Affected areas:** `nutrient_unit_conversions`, barcode normalization, normalized
-nutrients, nutrition facts, Mix calculations, and API output.
-
-**Complete when:** Only reviewed nutrient-and-form-specific conversions from an
-authoritative standard can be enabled; observed ratios remain audit evidence rather
-than conversion rows; and a corrective migration disables or removes existing
-`api_observed_ratio` conversions before dependent data is rebuilt.
 
 ### Exact-Identity Search Dedupe Replaces Whole Records
 
@@ -281,8 +303,8 @@ source text.
 `src/lib/utils/barcode/barcodeProductMappers.ts`,
 `src/lib/components/ingredients/manual-entry/CustomIngredientForm/manualEntryBarcodeController.svelte.ts`,
 and `src/lib/components/app/TutorialOverlay/TutorialOverlay.svelte`. The current route
-sizes are approximately 1,345 lines for Ingredients, 1,015 for Mix, 806 for Profile,
-and 527 for Moderation. `TutorialOverlay` is approximately 522 lines. Their size is
+sizes are approximately 1,345 lines for Ingredients, 1,121 for Mix, 817 for Profile,
+and 550 for Moderation. `TutorialOverlay` is approximately 522 lines. Their size is
 acceptable only while they continue to coordinate focused modules instead of absorbing
 reusable UI, persistence, validation, normalization, or source policy.
 
@@ -298,8 +320,10 @@ These commands are evidence helpers, not substitutes for reviewing behavior:
 
 ```bash
 git status --short --branch
+find .github/workflows -maxdepth 1 -type f -print
 find src/lib/components -maxdepth 4 -type f | sort
 find src/lib/utils src/lib/server -maxdepth 4 -type f | sort
+rg -n '"(lint|format)(:[^"]+)?"' package.json
 rg -n "box-shadow" src
 rg -n "<button(?:\\s|>)" src/routes --glob '*.svelte'
 rg -n "@media[^\\n]*[0-9]+(px|rem|em)" src --glob '*.scss'
