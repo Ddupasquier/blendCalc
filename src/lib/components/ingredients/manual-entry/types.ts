@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 
 export type ManualEntryCreateContext = {
@@ -8,6 +8,6 @@ export type ManualEntryCreateContext = {
 };
 
 export type ManualEntryCreateHandler = (
-	food: FdcFood,
+	food: FoodItem,
 	context: ManualEntryCreateContext,
 ) => void | Promise<void>;

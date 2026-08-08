@@ -94,10 +94,10 @@ describe("ingredient overlay navigation", () => {
 	it("adds a search result to Fridge without opening nutrition", () => {
 		const source = readFileSync(ingredientsPagePath, "utf8");
 		const addSearchResult = source.match(
-			/const addSearchResultToFridge = async \(food: FdcFood\) => \{[\s\S]*?\n    \};/,
+			/const addSearchResultToFridge = async \(food: FoodItem\) => \{[\s\S]*?\n    \};/,
 		)?.[0];
 		const addFoodToListState = source.match(
-			/const addFoodToListState = \(key: IngredientListKey, food: FdcFood\) => \{[\s\S]*?\n    \};/,
+			/const addFoodToListState = \(key: IngredientListKey, food: FoodItem\) => \{[\s\S]*?\n    \};/,
 		)?.[0];
 
 		expect(addSearchResult).toContain("await addFoodToIngredientList(");

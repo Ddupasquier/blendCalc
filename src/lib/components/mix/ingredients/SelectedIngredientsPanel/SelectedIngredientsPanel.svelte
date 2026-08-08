@@ -1,5 +1,5 @@
 <script lang="ts">
-	import IngredientCard from "$lib/components/mix/ingredients/IngredientCard/IngredientCard.svelte";
+	import MixIngredientAmountCard from "$lib/components/mix/ingredients/MixIngredientAmountCard/MixIngredientAmountCard.svelte";
 	import MixEmptyState from "$lib/components/mix/states/MixEmptyState/MixEmptyState.svelte";
 	import MixPanelSection from "$lib/components/mix/layout/MixPanelSection/MixPanelSection.svelte";
 	import type { SelectedIngredientsPanelProps } from "./types";
@@ -99,20 +99,20 @@
 					{@const servingConversion = getServingConversion(food)}
 					{@const servingQuantity = getServingQuantity(food)}
 					{@const servingUnit = getServingUnit(food)}
-					<IngredientCard
+					<MixIngredientAmountCard
 						{food}
-						sourceLabel={getFoodSourceLabel(food, fridgeItems)}
-						quantity={servingQuantity}
-						unit={servingUnit}
-						gramsLabel={servingUnit === "g"
+						sourceListLabel={getFoodSourceLabel(food, fridgeItems)}
+						{servingQuantity}
+						{servingUnit}
+						convertedWeightLabel={servingUnit === "g"
 							? null
 							: getServingGramsLabel(servingConversion)}
-						conversionBasis={getServingConversionBasis(servingConversion)}
-						warning={getServingConversionWarning(food)}
-						conversionDetailsOpen={conversionDetailsFoodId === food.fdcId}
+						servingConversionBasis={getServingConversionBasis(servingConversion)}
+						servingConversionWarningMessage={getServingConversionWarning(food)}
+						isServingConversionDetailsOpen={conversionDetailsFoodId === food.fdcId}
 						{onOpenConversionDetails}
 						{onCloseConversionDetails}
-						nutrientChips={getFoodNutrientChips(
+						nutrientContributionChips={getFoodNutrientChips(
 							food,
 							selectedNutrients,
 							servingGrams,

@@ -2,14 +2,14 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import SavedRecipeCard from "$lib/components/saved/SavedRecipeCard/SavedRecipeCard.svelte";
 import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
+import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
 import type { SavedRecipe } from "$lib/utils/storage/client/savedRecipes";
 
 const food = (
 	fdcId: number,
 	description: string,
-	foodNutrients: FdcFood["foodNutrients"] = [],
-): FdcFood => ({ fdcId, description, foodNutrients });
+	foodNutrients: FoodItem["foodNutrients"] = [],
+): FoodItem => ({ fdcId, description, foodNutrients });
 
 const recipe: SavedRecipe = {
 	id: "saved-1",

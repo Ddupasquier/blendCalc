@@ -13,9 +13,9 @@ vi.mock("$lib/utils/storage/client/ingredientLists", () => ({
 
 import NutritionListActions from "$lib/components/ingredients/nutrition/NutritionListActions/NutritionListActions.svelte";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const spinach: FdcFood = {
+const spinach: FoodItem = {
 	fdcId: 168462,
 	description: "Spinach, raw",
 	foodNutrients: [],

@@ -3,21 +3,21 @@ import {
 	getFoodDataQualityDisclosure,
 	type FoodDataQualityCode,
 } from "$lib/utils/food/quality/foodDataQuality";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const makeFood = (overrides: Partial<FdcFood> = {}): FdcFood => ({
+const makeFood = (overrides: Partial<FoodItem> = {}): FoodItem => ({
 	fdcId: 1,
 	description: "Example food",
 	foodNutrients: [],
 	...overrides,
 });
 
-const getCodes = (food: FdcFood) =>
+const getCodes = (food: FoodItem) =>
 	(getFoodDataQualityDisclosure(food)?.notices ?? []).map(
 		(notice) => notice.code,
 	);
 
-const expectCode = (food: FdcFood, code: FoodDataQualityCode) => {
+const expectCode = (food: FoodItem, code: FoodDataQualityCode) => {
 	expect(getCodes(food)).toContain(code);
 };
 

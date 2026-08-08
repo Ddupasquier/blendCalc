@@ -11,13 +11,13 @@ import {
 	type NutrientMeta,
 } from "$lib/utils/mix/calculations";
 import type { ServingConversion } from "$lib/utils/serving/servingAmount";
-import type { SmartWarning } from "$lib/utils/mix/warnings/smartWarnings";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { MixWarning } from "$lib/utils/mix/warnings/mixWarnings";
+import type { FoodItem } from "$lib/utils/food/types";
 import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
 
 export type NutrientOption = { id: string | number; label: string };
 
-export type SavedMixState = {
+export type LegacyPersistedMixState = {
 	version?: number;
 	selected?: (string | number)[];
 	options?: NutrientOption[];
@@ -112,14 +112,14 @@ export const optionsFromSelectedNutrientIds = (
 	});
 };
 
-export const getFoodSourceLabel = (food: FdcFood, fridgeItems: FdcFood[]) => {
+export const getFoodSourceLabel = (food: FoodItem, fridgeItems: FoodItem[]) => {
 	return fridgeItems.some((item) => item.fdcId === food.fdcId)
 		? "Fridge"
 		: "Shopping";
 };
 
 export const getFoodNutrientChips = (
-	food: FdcFood,
+	food: FoodItem,
 	selectedNutrients: NutrientMeta[],
 	servingGrams: Record<number, number>,
 ): NutrientChip[] => {
@@ -152,7 +152,7 @@ export const normalizeServingUnit = (value: unknown) => {
 	);
 };
 
-export const getDefaultServingAmount = (food?: FdcFood) => {
+export const getDefaultServingAmount = (food?: FoodItem) => {
 	const servingUnit = normalizeServingUnit(food?.servingSizeUnit);
 	if (food?.servingSize && servingUnit) {
 		return {
@@ -181,9 +181,9 @@ export const getServingConversionBasis = (conversion: ServingConversion) => {
 };
 
 export const withOverageDetails = (
-	warning: SmartWarning,
+	warning: MixWarning,
 	overages: NutrientOverageDetail[],
-): SmartWarning => {
+): MixWarning => {
 	if (!warning.id.startsWith("over-")) return warning;
 
 	const nutrientId = Number(warning.id.replace("over-", ""));

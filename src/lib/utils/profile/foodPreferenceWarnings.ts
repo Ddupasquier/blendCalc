@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type {
 	FoodCompatibilityConfidence,
 	FoodCompatibilityFactType,
@@ -88,14 +88,14 @@ export const getFoodPreferenceWarningEvidenceReviewMessage = (
 };
 
 export const getFoodDownrankScore = (
-	food: FdcFood,
+	food: FoodItem,
 ): number =>
 	(food.preferenceWarnings ?? []).reduce(
 		(total, warning) => total + (warning.level === "warning" ? 6 : 3),
 		0,
 	);
 
-export const getFoodWarningLabel = (food: FdcFood) => {
+export const getFoodWarningLabel = (food: FoodItem) => {
 	const warnings = food.preferenceWarnings ?? [];
 	return warnings.length === 0 ? null : "⚠";
 };

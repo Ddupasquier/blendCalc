@@ -2,10 +2,10 @@ import {
 	buildFoodIngredientPresentation,
 	buildFoodPreferenceWarningEvidence,
 } from "$lib/server/food-safety/foodIngredientPresentation.server";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { describe, expect, it } from "vitest";
 
-const createFood = (overrides: Partial<FdcFood> = {}): FdcFood => ({
+const createFood = (overrides: Partial<FoodItem> = {}): FoodItem => ({
 	fdcId: 1,
 	description: "Test food",
 	foodNutrients: [],

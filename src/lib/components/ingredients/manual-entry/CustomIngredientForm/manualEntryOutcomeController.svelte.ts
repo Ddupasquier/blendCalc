@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 import {
@@ -36,7 +36,7 @@ export const createManualEntryOutcomeController = ({
 	});
 
 	const setOutcome = (
-		food: FdcFood,
+		food: FoodItem,
 		destination: IngredientListKey,
 		addedToList: boolean,
 		message: string,
@@ -87,7 +87,7 @@ export const createManualEntryOutcomeController = ({
 		currentPrompt.resolve(confirmed);
 	};
 
-	const useIngredient = async (food: FdcFood, alreadySaved = false) => {
+	const useIngredient = async (food: FoodItem, alreadySaved = false) => {
 		let result = await addManualEntryFoodToDestination({
 			food,
 			saveDestination: state.saveDestination,

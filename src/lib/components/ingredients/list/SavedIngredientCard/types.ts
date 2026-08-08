@@ -1,8 +1,8 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 
 export type SavedIngredientCardProps = {
-	food: FdcFood;
+	food: FoodItem;
 	active?: boolean;
 	checked?: boolean;
 	selectionMode?: boolean;

@@ -22,7 +22,7 @@ import {
 } from "$lib/server/user-data/foodListPlacement.server";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { Json } from "$lib/types/database.types";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { readLimitedJson } from "$lib/server/security/requestBody.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
@@ -45,9 +45,9 @@ const getListKey = (value: string): IngredientListKey | null => {
 const getListType = (listKey: IngredientListKey) =>
 	listKey === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping";
 
-const isFood = (value: unknown): value is FdcFood => {
+const isFood = (value: unknown): value is FoodItem => {
 	if (!value || typeof value !== "object") return false;
-	const food = value as Partial<FdcFood>;
+	const food = value as Partial<FoodItem>;
 	return Number.isSafeInteger(food.fdcId) &&
 		typeof food.description === "string" &&
 		food.description.trim().length > 0 &&

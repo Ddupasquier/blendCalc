@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
-	compactFood,
-	compactManagedFood,
+	normalizeFoodForStorage,
+	normalizeSourceManagedFoodForStorage,
 	getCanonicalFoodDescription,
 } from "$lib/utils/food/records/foodRecords";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 describe("compact food records", () => {
 	it("keeps field-level source tracking in saved food snapshots", () => {
-		const food: FdcFood = {
+		const food: FoodItem = {
 			fdcId: 2658692,
 			description: "Roasted Onion & Garlic Pasta Sauce",
 			foodNutrients: [],
@@ -31,11 +31,11 @@ describe("compact food records", () => {
 			},
 		};
 
-		expect(compactFood(food).fieldProvenance).toEqual(food.fieldProvenance);
+		expect(normalizeFoodForStorage(food).fieldProvenance).toEqual(food.fieldProvenance);
 	});
 
 	it("keeps safe barcode capture provenance in saved food snapshots", () => {
-		const food: FdcFood = {
+		const food: FoodItem = {
 			fdcId: -1,
 			description: "GS1 Test Product",
 			foodNutrients: [],
@@ -47,11 +47,11 @@ describe("compact food records", () => {
 			},
 		};
 
-		expect(compactFood(food).barcodeProvenance).toEqual(food.barcodeProvenance);
+		expect(normalizeFoodForStorage(food).barcodeProvenance).toEqual(food.barcodeProvenance);
 	});
 
 	it("keeps deep-dive source and category metadata in saved food snapshots", () => {
-		const food: FdcFood = {
+		const food: FoodItem = {
 			fdcId: 101,
 			description: "Blueberries",
 			foodNutrients: [],
@@ -68,16 +68,16 @@ describe("compact food records", () => {
 			},
 		};
 
-		expect(compactFood(food)).toMatchObject({
+		expect(normalizeFoodForStorage(food)).toMatchObject({
 			brandedFoodCategory: "Fresh fruit",
 			sourceAttribution: food.sourceAttribution,
 		});
-		expect(compactFood(food).sourceAttribution)
+		expect(normalizeFoodForStorage(food).sourceAttribution)
 			.not.toBe(food.sourceAttribution);
 	});
 
 	it("does not assume nutrients were reported when status is absent", () => {
-		const food: FdcFood = {
+		const food: FoodItem = {
 			fdcId: 2,
 			description: "Unknown nutrient status",
 			foodNutrients: [{
@@ -89,25 +89,25 @@ describe("compact food records", () => {
 			}],
 		};
 
-		expect(compactFood(food).reportedNutrientIds).toEqual([]);
+		expect(normalizeFoodForStorage(food).reportedNutrientIds).toEqual([]);
 	});
 
 	it("normalizes every catalog-bound name before persistence", () => {
-		const food: FdcFood = {
+		const food: FoodItem = {
 			fdcId: -3,
 			description: "ROASTED ONION AND GARLIC PASTA SAUCE",
 			nameProvenance: "user",
 			foodNutrients: [],
 		};
 
-		expect(compactManagedFood(food)).toMatchObject({
+		expect(normalizeSourceManagedFoodForStorage(food)).toMatchObject({
 			description: "Roasted Onion & Garlic Pasta Sauce",
 			nameProvenance: "source",
 		});
 	});
 
 	it("preserves the canonical name separately from a personal list name", () => {
-		const food: FdcFood = {
+		const food: FoodItem = {
 			fdcId: 3,
 			description: "My Breakfast Spinach",
 			canonicalDescription: "Spinach, Raw",
@@ -115,7 +115,7 @@ describe("compact food records", () => {
 			foodNutrients: [],
 		};
 
-		expect(compactFood(food)).toMatchObject({
+		expect(normalizeFoodForStorage(food)).toMatchObject({
 			description: "My Breakfast Spinach",
 			canonicalDescription: "Spinach, Raw",
 		});

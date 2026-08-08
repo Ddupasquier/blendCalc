@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 const cloudData = vi.hoisted(() => ({
 	deleteCloudSavedRecipe: vi.fn(),
@@ -34,7 +34,7 @@ const food = {
 	description: "Bananas, Raw",
 	nameProvenance: "source",
 	foodNutrients: [],
-} satisfies FdcFood;
+} satisfies FoodItem;
 
 const input = (name = "Post-workout"): SavedRecipeInput => ({
 	name,

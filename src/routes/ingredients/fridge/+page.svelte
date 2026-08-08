@@ -20,7 +20,7 @@
     import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList/SavedIngredientList.svelte";
     import SavedIngredientListLayout from "$lib/components/ingredients/list/SavedIngredientListLayout/SavedIngredientListLayout.svelte";
     import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
-    import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
+    import type { FoodItem, FoodImageAsset } from "$lib/utils/food/types";
     import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
     import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
     import {
@@ -76,9 +76,9 @@
 	const initialOnHand = initialIngredientData?.fridge.foods ?? [];
 	const initialShoppingList = initialIngredientData?.shoppingList.foods ?? [];
 	const initialCustomFoods = initialIngredientData?.customFoods ?? [];
-    let onHand = $state<FdcFood[]>(initialOnHand);
-    let shoppingList = $state<FdcFood[]>(initialShoppingList);
-	let customFoods = $state<FdcFood[]>(initialCustomFoods);
+    let onHand = $state<FoodItem[]>(initialOnHand);
+    let shoppingList = $state<FoodItem[]>(initialShoppingList);
+	let customFoods = $state<FoodItem[]>(initialCustomFoods);
 	const initialRouteFood = initialIngredientData?.routeFood ??
 		findIngredientRouteFood(
 			initialIngredientRouteState.foodId,
@@ -93,12 +93,12 @@
 			[MIX_STORAGE_KEYS.shoppingList]: { foodIds: [], foodIdentityKeys: [] },
 		},
 	);
-    let selectedFood = $state<FdcFood | null>(
+    let selectedFood = $state<FoodItem | null>(
 		initialIngredientRouteState.view === INGREDIENT_ROUTE_VIEWS.nutrition
 			? initialRouteFood
 			: null,
 	);
-    let correctionFood = $state<FdcFood | null>(null);
+    let correctionFood = $state<FoodItem | null>(null);
     let selectedFoodShowListActions = $state(
 		initialIngredientRouteState.view === INGREDIENT_ROUTE_VIEWS.nutrition
 			? initialIngredientRouteState.showListActions
@@ -145,7 +145,7 @@
     let imagePlacementItem = $state<IngredientActionItem | null>(null);
     let movingItem = $state<string | null>(null);
 	let removingItem = $state<string | null>(null);
-	let renamingItem = $state<{ key: IngredientListKey; food: FdcFood } | null>(null);
+	let renamingItem = $state<{ key: IngredientListKey; food: FoodItem } | null>(null);
 	let renameBusy = $state(false);
 	let renameError = $state("");
     let listActionError = $state("");
@@ -265,7 +265,7 @@
 
     const setListPage = (
         key: IngredientListKey,
-        foods: FdcFood[],
+        foods: FoodItem[],
         totalCount: number,
         replace: boolean,
         resetViewport: boolean,
@@ -489,7 +489,7 @@
         void closeRoutedPopin();
     };
 
-    const handleSelect = (food: FdcFood, listKey: IngredientListKey | null = null) => {
+    const handleSelect = (food: FoodItem, listKey: IngredientListKey | null = null) => {
         const showListActions = listKey === null;
         selectedFood = food;
         selectedFoodShowListActions = showListActions;
@@ -503,7 +503,7 @@
     };
 
     const handleCreate = (
-        food: FdcFood,
+        food: FoodItem,
         context: ManualEntryCreateContext,
     ) => {
         activeSheet = null;
@@ -518,7 +518,7 @@
         });
     };
 
-    const handleSearchSelect = (food: FdcFood) => {
+    const handleSearchSelect = (food: FoodItem) => {
         searchViewOpen = false;
         activeSheet = null;
         selectedFood = food;
@@ -532,7 +532,7 @@
         });
     };
 
-    const addFoodToListState = (key: IngredientListKey, food: FdcFood) => {
+    const addFoodToListState = (key: IngredientListKey, food: FoodItem) => {
         const currentFoods =
             key === MIX_STORAGE_KEYS.fridge ? onHand : shoppingList;
         if (!currentFoods.some((candidate) => candidate.fdcId === food.fdcId)) {
@@ -592,7 +592,7 @@
         foodId: number,
         description: string,
     ) => {
-        const rename = (foods: FdcFood[]) =>
+        const rename = (foods: FoodItem[]) =>
             foods.map((food) =>
                 food.fdcId === foodId
                     ? {
@@ -612,7 +612,7 @@
         }
     };
 
-    const addSearchResultToFridge = async (food: FdcFood) => {
+    const addSearchResultToFridge = async (food: FoodItem) => {
         if (searchAddFoodId !== null) return;
 
         searchAddFoodId = food.fdcId;
@@ -640,7 +640,7 @@
     };
 
     const updateFoodImageInList = (
-        foods: FdcFood[],
+        foods: FoodItem[],
         foodId: number,
         image: FoodImageAsset,
     ) =>
@@ -653,7 +653,7 @@
                 : food,
         );
 
-    const withUpdatedImage = (food: FdcFood, image: FoodImageAsset) => ({
+    const withUpdatedImage = (food: FoodItem, image: FoodImageAsset) => ({
         ...food,
         image,
     });
@@ -745,7 +745,7 @@
 		}
 	};
 
-	const openRenameDialog = (key: IngredientListKey, food: FdcFood) => {
+	const openRenameDialog = (key: IngredientListKey, food: FoodItem) => {
 		renamingItem = { key, food };
 		renameError = "";
         void navigateIngredientRoute({
@@ -860,7 +860,7 @@
 
 	const applyBulkListMove = (
 		sourceKey: IngredientListKey,
-		foods: FdcFood[],
+		foods: FoodItem[],
 	) => {
 		const movedIds = new Set(foods.map((food) => food.fdcId));
 		const movedAt = Date.now();
@@ -917,7 +917,7 @@
 
     const moveFoodBetweenLists = async (
         sourceKey: IngredientListKey,
-        food: FdcFood,
+        food: FoodItem,
     ) => {
         const targetKey = getOppositeIngredientListKey(sourceKey);
         const actionKey = getIngredientActionKey(sourceKey, food.fdcId);
@@ -984,7 +984,7 @@
 		}
     };
 
-    const openActionSheet = (key: IngredientListKey, food: FdcFood) => {
+    const openActionSheet = (key: IngredientListKey, food: FoodItem) => {
         actionSheetItem = { key, food };
         void navigateIngredientRoute({
             view: null,

@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import ProductCompatibilityPanel from "$lib/components/ingredients/nutrition/ProductCompatibilityPanel/ProductCompatibilityPanel.svelte";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const createFood = (overrides: Partial<FdcFood> = {}): FdcFood => ({
+const createFood = (overrides: Partial<FoodItem> = {}): FoodItem => ({
 	fdcId: 1,
 	description: "Test food",
 	foodNutrients: [],

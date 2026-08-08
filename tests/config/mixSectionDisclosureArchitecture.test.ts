@@ -6,7 +6,7 @@ const sectionComponents = [
 	"src/lib/components/mix/controls/GoalTargets/GoalTargets.svelte",
 	"src/lib/components/mix/ingredients/SelectedIngredientsPanel/SelectedIngredientsPanel.svelte",
 	"src/lib/components/mix/ingredients/IngredientChooser/IngredientChooser.svelte",
-	"src/lib/components/mix/insights/SmartWarnings/SmartWarnings.svelte",
+	"src/lib/components/mix/insights/MixWarnings/MixWarnings.svelte",
 	"src/lib/components/mix/insights/NutrientAdjustmentSuggestions/NutrientAdjustmentSuggestions.svelte",
 	"src/lib/components/mix/insights/IngredientContributionBreakdown/IngredientContributionBreakdown.svelte",
 ];
@@ -16,15 +16,15 @@ const sectionStyles = [
 	"src/lib/components/mix/controls/GoalTargets/GoalTargets.scss",
 	"src/lib/components/mix/ingredients/SelectedIngredientsPanel/SelectedIngredientsPanel.scss",
 	"src/lib/components/mix/ingredients/IngredientChooser/IngredientChooser.scss",
-	"src/lib/components/mix/insights/SmartWarnings/SmartWarnings.scss",
+	"src/lib/components/mix/insights/MixWarnings/MixWarnings.scss",
 	"src/lib/components/mix/insights/NutrientAdjustmentSuggestions/NutrientAdjustmentSuggestions.scss",
 	"src/lib/components/mix/insights/IngredientContributionBreakdown/IngredientContributionBreakdown.scss",
 ];
 
 const warningSection =
-	"src/lib/components/mix/insights/SmartWarnings/SmartWarnings.svelte";
+	"src/lib/components/mix/insights/MixWarnings/MixWarnings.svelte";
 const warningStyles =
-	"src/lib/components/mix/insights/SmartWarnings/SmartWarnings.scss";
+	"src/lib/components/mix/insights/MixWarnings/MixWarnings.scss";
 const sharedSection =
 	"src/lib/components/mix/layout/MixPanelSection/MixPanelSection.svelte";
 const sharedSectionStyles =
@@ -87,9 +87,9 @@ describe("Mix section disclosure architecture", () => {
 
 	it("uses the standard panel surface inside Warnings and borders cards by severity", () => {
 		const source = readFileSync(warningStyles, "utf8");
-		const warningCard = source.match(/\.smart-warning \{[\s\S]*?\n\}/)?.[0];
+		const warningCard = source.match(/\.mix-warning \{[\s\S]*?\n\}/)?.[0];
 		const dangerCard = source.match(
-			/\.smart-warning--danger \{[\s\S]*?\n\}/,
+			/\.mix-warning--danger \{[\s\S]*?\n\}/,
 		)?.[0];
 
 		expect(warningCard).toContain("background: $app-shell-surface-panel;");
@@ -148,11 +148,11 @@ describe("Mix section disclosure architecture", () => {
 
 	it("keeps selected ingredient controls shared and free of duplicate custom borders", () => {
 		const card = readFileSync(
-			"src/lib/components/mix/ingredients/IngredientCard/IngredientCard.svelte",
+			"src/lib/components/mix/ingredients/MixIngredientAmountCard/MixIngredientAmountCard.svelte",
 			"utf8",
 		);
 		const cardStyles = readFileSync(
-			"src/lib/components/mix/ingredients/IngredientCard/IngredientCard.scss",
+			"src/lib/components/mix/ingredients/MixIngredientAmountCard/MixIngredientAmountCard.scss",
 			"utf8",
 		);
 		const panel = readFileSync(
@@ -164,7 +164,7 @@ describe("Mix section disclosure architecture", () => {
 			"utf8",
 		);
 		const customRule = cardStyles.match(
-			/\.ingredient-card--custom \{[\s\S]*?\n\}/,
+			/\.mix-ingredient-amount-card--custom \{[\s\S]*?\n\}/,
 		)?.[0];
 
 		for (const component of [

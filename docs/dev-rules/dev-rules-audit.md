@@ -266,7 +266,7 @@ require editing a hidden datatype allowlist.
   `src/lib/utils/products/productIdentity.ts`;
 - nutrition completeness weights required fields four times, scores source-resolution
   modes as 3/2/1/0, and uses a 60% partial threshold in
-  `src/lib/utils/food/quality/foodQuality.ts`;
+  `src/lib/utils/food/quality/nutritionCompletenessAssessment.ts`;
 - category suggestions and source/search ranking use hardcoded scoring systems.
 
 These policies do not directly rewrite measured nutrient amounts, and category/search

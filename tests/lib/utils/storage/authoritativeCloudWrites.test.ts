@@ -9,7 +9,7 @@ vi.mock("$lib/supabase/client", () => ({
 }));
 
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
 	moveCloudIngredientListItems,
 	removeCloudIngredientListItem,
@@ -31,7 +31,7 @@ const food = {
 	fdcId: 1,
 	description: "Tomato, Roma",
 	foodNutrients: [],
-} satisfies FdcFood;
+} satisfies FoodItem;
 
 describe("authoritative Supabase write adapters", () => {
 	beforeEach(() => {

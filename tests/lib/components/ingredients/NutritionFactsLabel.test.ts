@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import NutritionFactsLabel from "$lib/components/ingredients/nutrition/NutritionFactsLabel/NutritionFactsLabel.svelte";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
+import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
 
-const food: FdcFood = {
+const food: FoodItem = {
 	fdcId: 1,
 	description: "Test food",
 	foodNutrients: [

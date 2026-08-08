@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 export type NutrientMeta = {
 	id: string | number;
@@ -42,7 +42,7 @@ export type NutrientAdjustmentImpact = {
 };
 
 export type NutrientAdjustmentSuggestion = {
-	food: FdcFood;
+	food: FoodItem;
 	direction: "increase" | "decrease";
 	currentServingGrams: number;
 	nextServingGrams: number;

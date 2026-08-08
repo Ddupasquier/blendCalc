@@ -4,7 +4,7 @@ import {
 	validateNutrientRelationshipRules,
 	type NutrientRelationshipRule,
 } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
+import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
 
 const rules: NutrientRelationshipRule[] = [
 	{
@@ -33,7 +33,7 @@ const rules: NutrientRelationshipRule[] = [
 	},
 ];
 
-const food: FdcFood = {
+const food: FoodItem = {
 	fdcId: 1,
 	description: "Test food",
 	foodNutrients: [

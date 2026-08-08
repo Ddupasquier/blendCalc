@@ -39,7 +39,7 @@ units are preserved; duplicate aliases yield to an already-present canonical nut
 
 ## Application reads
 
-The application hydrates the existing `FdcFood.foodNutrients` contract from the
+The application hydrates the source-neutral `FoodItem.foodNutrients` contract from the
 normalized tables for:
 
 - fridge and shopping-list items

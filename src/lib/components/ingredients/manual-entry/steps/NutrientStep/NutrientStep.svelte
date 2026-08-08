@@ -1,6 +1,6 @@
 <script lang="ts">
 	import ManualEntryActions from "$lib/components/ingredients/manual-entry/ManualEntryActions/ManualEntryActions.svelte";
-	import ManualEntryHelper from "$lib/components/ingredients/manual-entry/ManualEntryHelper/ManualEntryHelper.svelte";
+	import ManualEntryHelpText from "$lib/components/ingredients/manual-entry/ManualEntryHelpText/ManualEntryHelpText.svelte";
 	import ManualEntryStepLayout from "$lib/components/ingredients/manual-entry/ManualEntryStepLayout/ManualEntryStepLayout.svelte";
 	import ManualEntryValidationList from "$lib/components/ingredients/manual-entry/ManualEntryValidationList/ManualEntryValidationList.svelte";
 	import ManualEntryNutrientFields from "$lib/components/ingredients/manual-entry/ManualEntryNutrientFields/ManualEntryNutrientFields.svelte";
@@ -31,7 +31,7 @@
 </script>
 
 <ManualEntryStepLayout>
-	<ManualEntryHelper>{helper}</ManualEntryHelper>
+	<ManualEntryHelpText>{helper}</ManualEntryHelpText>
 
 	{#if labelOcrMappings && onNutritionPhotoChange && onApplyNutritionLabelOcr}
 		<NutritionLabelOcrInput

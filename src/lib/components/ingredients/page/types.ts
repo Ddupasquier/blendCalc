@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 
 export type IngredientRouteActiveSheet = "manual-entry" | "filters" | null;
@@ -9,5 +9,5 @@ export type IngredientRouteNavigationOptions = {
 
 export type IngredientRouteRenameItem = {
 	key: IngredientListKey;
-	food: FdcFood;
+	food: FoodItem;
 } | null;

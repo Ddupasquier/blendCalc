@@ -1,6 +1,6 @@
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
-import { getFdcNutrientValue } from "$lib/utils/food/nutrients/fdcNutrients";
+import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
+import { getFoodNutrientValue } from "$lib/utils/food/nutrients/foodNutrients";
 import {
 	getFoodPreferenceWarningMessage,
 } from "$lib/utils/profile/foodPreferenceWarnings";
@@ -8,7 +8,7 @@ import type { IngredientListKey } from "$lib/utils/storage/client/ingredientList
 
 export type IngredientActionItem = {
 	key: IngredientListKey;
-	food: FdcFood;
+	food: FoodItem;
 };
 
 export type IngredientListMembership = {
@@ -44,13 +44,13 @@ export const getIngredientMoveLabel = (key: IngredientListKey) =>
 export const areFoodIdsEqual = (left: number[], right: number[]) =>
 	left.length === right.length && left.every((id, index) => id === right[index]);
 
-export const getFoodCalories = (food: FdcFood) => {
-	const calories = getFdcNutrientValue(food, NUTRIENT_IDS.CALORIES);
+export const getFoodCalories = (food: FoodItem) => {
+	const calories = getFoodNutrientValue(food, NUTRIENT_IDS.CALORIES);
 	if (calories === null) return null;
 	return Math.round(calories);
 };
 
-export const getFoodDisplayCategory = (food: FdcFood) => {
+export const getFoodDisplayCategory = (food: FoodItem) => {
 	const storedCategory = food.foodCategory?.trim();
 	if (storedCategory?.toLowerCase() !== "custom ingredient") {
 		if (storedCategory) return storedCategory;
@@ -64,7 +64,7 @@ export const getFoodDisplayCategory = (food: FdcFood) => {
 	return "Category unavailable";
 };
 
-export const getPrimaryFoodWarning = (food: FdcFood) => {
+export const getPrimaryFoodWarning = (food: FoodItem) => {
 	const warnings = food.preferenceWarnings ?? [];
 	if (warnings.length === 0) return null;
 	const warning = warnings.find((item) => item.level === "warning") ?? warnings[0];

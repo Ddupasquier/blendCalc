@@ -1,4 +1,4 @@
-import type { FdcFood, FoodServing } from "$lib/utils/food/types";
+import type { FoodItem, FoodServing } from "$lib/utils/food/types";
 import {
 	getServingMeasureDimension,
 	parseSourceServingMeasure,
@@ -50,7 +50,7 @@ const isServingSource = (
 	typeof value === "string" &&
 	SERVING_SOURCES.has(value as NonNullable<FoodServing["source"]>);
 
-const getLegacyServingLineage = (food: FdcFood) => {
+const getLegacyServingLineage = (food: FoodItem) => {
 	const provenanceSource = food.fieldProvenance?.serving?.source;
 	const source = provenanceSource === "shared-catalog"
 		? "community-reviewed"
@@ -64,7 +64,7 @@ const getLegacyServingLineage = (food: FdcFood) => {
 	return { source, sourceReference, confidence } as const;
 };
 
-const getLegacyServing = (food: FdcFood): FoodServing | null => {
+const getLegacyServing = (food: FoodItem): FoodServing | null => {
 	if (food.hasSourceServing === false) return null;
 
 	const customWeight = toFinitePositiveNumber(food.customServingWeightGrams);
@@ -111,7 +111,7 @@ const getLegacyServing = (food: FdcFood): FoodServing | null => {
 	};
 };
 
-export const getFoodServings = (food?: FdcFood): FoodServing[] => {
+export const getFoodServings = (food?: FoodItem): FoodServing[] => {
 	if (!food) return [];
 	const explicit = (food.foodServings ?? []).flatMap((serving) => {
 		const normalized = normalizeServing(serving);
@@ -129,13 +129,13 @@ export const getFoodServings = (food?: FdcFood): FoodServing[] => {
 	return legacy ? [legacy] : [];
 };
 
-export const getPrimaryFoodServing = (food?: FdcFood): FoodServing | null => {
+export const getPrimaryFoodServing = (food?: FoodItem): FoodServing | null => {
 	const servings = getFoodServings(food);
 	return servings.find((serving) => serving.isPrimary) ?? servings[0] ?? null;
 };
 
 export const getFoodServingByGrams = (
-	food: FdcFood | undefined,
+	food: FoodItem | undefined,
 	gramWeight: number,
 ): FoodServing | null =>
 	getFoodServings(food).find(

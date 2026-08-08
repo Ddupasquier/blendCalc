@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
-	import type { FdcFood } from "$lib/utils/food/types";
+	import type { FoodItem } from "$lib/utils/food/types";
 	import { searchFoodPage } from "$lib/utils/food/sources/fdc";
 	import { getUserFacingErrorMessage } from "$lib/utils/errors/userFacingErrors";
 	import {
@@ -32,7 +32,7 @@
 		actions,
 	}: IngredientSearchProps = $props();
 	let query = $state("");
-	let results = $state<FdcFood[]>([]);
+	let results = $state<FoodItem[]>([]);
 	let loading = $state(false);
 	let loadingMore = $state(false);
 	let hasMoreResults = $state(false);
@@ -195,7 +195,7 @@
 		triggerSearch();
 	});
 
-	const select = (food: FdcFood) => {
+	const select = (food: FoodItem) => {
 		searchRequestVersion += 1;
 		onSelect(food);
 		query = "";

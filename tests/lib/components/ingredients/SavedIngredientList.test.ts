@@ -1,25 +1,25 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList/SavedIngredientList.svelte";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
-const food: FdcFood = {
+const food: FoodItem = {
 	fdcId: 1,
 	description: "Spinach, raw",
 	foodCategory: "Vegetables",
 	foodNutrients: [],
 };
 
-const secondFood: FdcFood = {
+const secondFood: FoodItem = {
 	fdcId: 2,
 	description: "Tomato, roma",
 	foodCategory: "Vegetables",
 	foodNutrients: [],
 };
 
-const sempioGochuJang: FdcFood = {
+const sempioGochuJang: FoodItem = {
 	fdcId: 3,
 	description: "Sempio, Gochu Jang Hot & Sweet Chili Sauce",
 	brandOwner: "Sempio",
@@ -277,7 +277,7 @@ describe("SavedIngredientList overlay behavior", () => {
 	});
 
 	it("keeps the warning edge above cards with feature images", () => {
-		const warningFood: FdcFood = {
+		const warningFood: FoodItem = {
 			...sempioGochuJang,
 			preferenceWarnings: [{
 				id: "allergen-warning",

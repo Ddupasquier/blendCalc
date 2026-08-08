@@ -1,4 +1,4 @@
-import { loadSavedPageData } from "$lib/server/user-data/pageData.server";
+import { loadSavedRecipesPageData } from "$lib/server/user-data/savedRecipesPageData.server";
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({ locals }) => {
@@ -6,7 +6,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	if (!user) return {};
 
 	return {
-		savedData: await loadSavedPageData({
+		savedData: await loadSavedRecipesPageData({
 			supabase: locals.supabase,
 			userId: user.id,
 		}),

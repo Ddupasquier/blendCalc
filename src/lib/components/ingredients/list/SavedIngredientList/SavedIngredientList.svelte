@@ -16,7 +16,7 @@
 		getPrimaryFoodWarning,
 	} from "$lib/utils/ingredients/ingredientListUi";
 	import { createScrollDirectionTracker } from "$lib/utils/navigation/scrollDirection";
-	import type { FdcFood } from "$lib/utils/food/types";
+	import type { FoodItem } from "$lib/utils/food/types";
 	import type { SavedIngredientListProps } from "./types";
 	import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
@@ -143,7 +143,7 @@
 		}
 	};
 
-	const moveSingleItem = async (food: FdcFood) => {
+	const moveSingleItem = async (food: FoodItem) => {
 		if (moveBusy) return;
 		const targetLabel = moveTargetLabel;
 		const exitDirection = bulkMoveDirection;

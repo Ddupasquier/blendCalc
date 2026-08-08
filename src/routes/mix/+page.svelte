@@ -16,7 +16,7 @@
 	import IngredientContributionBreakdown from "$lib/components/mix/insights/IngredientContributionBreakdown/IngredientContributionBreakdown.svelte";
 	import NutrientAdjustmentSuggestions from "$lib/components/mix/insights/NutrientAdjustmentSuggestions/NutrientAdjustmentSuggestions.svelte";
 	import NutrientShapePanel from "$lib/components/mix/insights/NutrientShapePanel/NutrientShapePanel.svelte";
-	import SmartWarnings from "$lib/components/mix/insights/SmartWarnings/SmartWarnings.svelte";
+	import MixWarnings from "$lib/components/mix/insights/MixWarnings/MixWarnings.svelte";
 	import MixHeader from "$lib/components/mix/layout/MixHeader/MixHeader.svelte";
 	import MixOptionsSheet from "$lib/components/mix/layout/MixOptionsSheet/MixOptionsSheet.svelte";
 	import MixSectionOrganizer from "$lib/components/mix/layout/MixSectionOrganizer/MixSectionOrganizer.svelte";
@@ -29,7 +29,7 @@
 		getMixGoalTemplates,
 		getMixRuntimeConfiguration,
 	} from "$lib/utils/food/reference/appReferenceCatalog";
-	import type { FdcFood } from "$lib/utils/food/types";
+	import type { FoodItem } from "$lib/utils/food/types";
 	import { readIngredientList } from "$lib/utils/ingredients/ingredientListApi";
 	import {
 		getDefaultNutrientGoal,
@@ -54,7 +54,7 @@
 	} from "$lib/utils/mix/navigation/mixRouteState";
 	import { createMixHeaderVisibilityController } from "$lib/utils/mix/state/mixHeaderVisibilityController.svelte";
 	import { createMixSectionPreferencesController } from "$lib/utils/mix/state/mixSectionPreferencesController.svelte";
-	import { createSavedMixController } from "$lib/utils/mix/state/savedMixController.svelte";
+	import { createSavedRecipeController } from "$lib/utils/mix/state/savedRecipeController.svelte";
 	import {
 		getDefaultMixState,
 		getEmptyServingState,
@@ -118,8 +118,8 @@
 
 	let selected = $state<(string | number)[]>(defaultMixFields.map((n) => n.id));
 	let options = $state<NutrientOption[]>(getDefaultNutrientOptions());
-	let fridgeItems = $state<FdcFood[]>(initialMixData?.fridge ?? []);
-	let shoppingItems = $state<FdcFood[]>(initialMixData?.shoppingList ?? []);
+	let fridgeItems = $state<FoodItem[]>(initialMixData?.fridge ?? []);
+	let shoppingItems = $state<FoodItem[]>(initialMixData?.shoppingList ?? []);
 	let selectedFoodIds = $state<number[]>([]);
 	let servingGrams = $state<Record<number, number>>({});
 	let servingQuantities = $state<Record<number, number>>({});
@@ -270,15 +270,15 @@
 		});
 	};
 
-	const getServingQuantity = (food: FdcFood) => {
+	const getServingQuantity = (food: FoodItem) => {
 		return getServingQuantityFromState(food, servingQuantities);
 	};
 
-	const getServingUnit = (food: FdcFood) => {
+	const getServingUnit = (food: FoodItem) => {
 		return getServingUnitFromState(food, servingUnits);
 	};
 
-	const getServingConversion = (food: FdcFood) => {
+	const getServingConversion = (food: FoodItem) => {
 		return getServingConversionFromState(food, servingQuantities, servingUnits);
 	};
 
@@ -292,8 +292,8 @@
 	const selectedFoods = $derived(
 		allIngredientItems.filter((item) => selectedFoodIds.includes(item.fdcId)),
 	);
-	const savedMix = createSavedMixController({
-		buildInput: (name): SavedRecipeInput => ({
+	const savedRecipeController = createSavedRecipeController({
+		buildSavedRecipeInput: (name): SavedRecipeInput => ({
 			name,
 			foods: selectedFoods,
 			selected,
@@ -304,11 +304,11 @@
 			servingQuantities,
 			servingUnits,
 		}),
-		onSaved: closeMixOverlay,
+		onRecipeSaved: closeMixOverlay,
 	});
-	const loadedSavedRecipe = $derived(savedMix.state.loaded);
-	const markLoadedSavedRecipeDirty = savedMix.markDirty;
-	const detachLoadedSavedRecipe = savedMix.detach;
+	const loadedSavedRecipe = $derived(savedRecipeController.state.loaded);
+	const markLoadedSavedRecipeDirty = savedRecipeController.markDirty;
+	const detachLoadedSavedRecipe = savedRecipeController.detach;
 	const canSaveCurrentMix = $derived(
 		selectedFoods.length > 0 && (!loadedSavedRecipe || loadedSavedRecipe.isDirty),
 	);
@@ -802,7 +802,7 @@
 		saveMixState();
 	};
 
-	const getServingConversionWarning = (food: FdcFood) => {
+	const getServingConversionWarning = (food: FoodItem) => {
 		return getServingConversion(food).warning;
 	};
 
@@ -818,7 +818,7 @@
 	);
 
 	const updateServingAmount = (
-		food: FdcFood,
+		food: FoodItem,
 		quantityValue: string,
 		unit: ServingMeasureUnit,
 	) => {
@@ -835,7 +835,7 @@
 	};
 
 	onMount(() => {
-		savedMix.restore();
+		savedRecipeController.restore();
 		loadMixState();
 		loadCloudBackedMixPreferences();
 		mixStateReady = true;
@@ -907,7 +907,7 @@
 			canSave={canSaveCurrentMix}
 			optionsOpen={optionsSheetOpen}
 			onSave={() => {
-				savedMix.clearError();
+				savedRecipeController.clearError();
 				navigateMixRoute({ overlay: MIX_ROUTE_OVERLAYS.save });
 			}}
 			onOpenOptions={() =>
@@ -938,16 +938,16 @@
 		label="Mix name"
 		placeholder="Post-workout, Low sugar, High fiber…"
 		initialValue={loadedSavedRecipe?.name ?? ""}
-		error={savedMix.state.error}
-		busy={savedMix.state.busy}
+		error={savedRecipeController.state.error}
+		busy={savedRecipeController.state.busy}
 		confirmLabel={loadedSavedRecipe ? "Overwrite Existing" : "Save Recipe"}
 		secondaryConfirmLabel={loadedSavedRecipe ? "Save as New" : ""}
 		cancelLabel="Cancel"
-		onConfirm={loadedSavedRecipe ? savedMix.overwrite : savedMix.saveAsNew}
-		onSecondaryConfirm={loadedSavedRecipe ? savedMix.saveAsNew : undefined}
-		onValueChange={savedMix.clearError}
+		onConfirm={loadedSavedRecipe ? savedRecipeController.overwrite : savedRecipeController.saveAsNew}
+		onSecondaryConfirm={loadedSavedRecipe ? savedRecipeController.saveAsNew : undefined}
+		onValueChange={savedRecipeController.clearError}
 		onCancel={() => {
-			savedMix.clearError();
+			savedRecipeController.clearError();
 			closeMixOverlay();
 		}}
 	>
@@ -1007,15 +1007,15 @@
 						{#each sectionPreferences.state.order as sectionId (sectionId)}
 							{#if sectionId === "nutrient-shape"}
 							<NutrientShapePanel
-								points={mixAnalysis.nutrientLabels.length}
-									values={mixAnalysis.chartValues}
-									goalValues={mixAnalysis.goalValues}
-									labels={mixAnalysis.nutrientLabels}
-									valueLabels={mixAnalysis.nutrientValueLabels}
-									pointColors={mixAnalysis.pointColors}
-									fillColor={mixAnalysis.chartColors.fill}
-									strokeColor={mixAnalysis.chartColors.stroke}
-									diffs={mixAnalysis.diffs}
+								nutrientAxisCount={mixAnalysis.nutrientLabels.length}
+									actualGoalRatios={mixAnalysis.chartValues}
+									targetGoalRatios={mixAnalysis.goalValues}
+									nutrientLabels={mixAnalysis.nutrientLabels}
+									nutrientValueLabels={mixAnalysis.nutrientValueLabels}
+									nutrientAxisColors={mixAnalysis.axisColors}
+									actualFillColor={mixAnalysis.chartColors.fill}
+									actualStrokeColor={mixAnalysis.chartColors.stroke}
+									nutrientGoalDifferences={mixAnalysis.diffs}
 									open={sectionPreferences.state.disclosureState[sectionId]}
 									onOpenChange={(open) =>
 										sectionPreferences.setDisclosure(sectionId, open)}
@@ -1083,7 +1083,7 @@
 										sectionPreferences.setDisclosure(sectionId, open)}
 								/>
 							{:else if sectionId === "warnings"}
-								<SmartWarnings
+								<MixWarnings
 									warnings={mixAnalysis.warnings}
 									{openWarningId}
 									onOpenWarning={openWarningRoute}

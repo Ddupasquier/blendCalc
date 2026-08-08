@@ -8,7 +8,7 @@
 	import DailyWelcome from "$lib/components/app/DailyWelcome/DailyWelcome.svelte";
 	import TabNavigation from "$lib/components/app/TabNavigation/TabNavigation.svelte";
 	import TutorialOverlay from "$lib/components/app/TutorialOverlay/TutorialOverlay.svelte";
-	import ThemeController from "$lib/components/app/ThemeController/ThemeController.svelte";
+	import ThemeSynchronizer from "$lib/components/app/ThemeSynchronizer/ThemeSynchronizer.svelte";
 	import {
 		APP_DESCRIPTION,
 		APP_NUTRITION_PREVIEW_ALT,
@@ -189,7 +189,7 @@
 	<meta name="twitter:image:alt" content={APP_NUTRITION_PREVIEW_ALT} />
 </svelte:head>
 
-<ThemeController preference={data.themePreference} />
+<ThemeSynchronizer preference={data.themePreference} />
 
 {#if data.authUser}
 	<AppHeader

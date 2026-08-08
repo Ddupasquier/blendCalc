@@ -1,7 +1,7 @@
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
-import { uniqueFoodsByIdentity } from "$lib/utils/food/records/foodIdentity";
-import type { FdcFood } from "$lib/utils/food/types";
+import { normalizeFoodForStorage, deduplicateFoodItemsByApplicationId } from "$lib/utils/food/records/foodRecords";
+import { deduplicateFoodItemsByIdentity } from "$lib/utils/food/records/foodIdentity";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import {
 	CLOUD_CURSOR_PAGE_SIZE,
@@ -117,14 +117,14 @@ export const readCloudIngredientListIndex = async (
 
 export const writeCloudIngredientList = async (
 	key: IngredientListKey,
-	foods: FdcFood[],
+	foods: FoodItem[],
 	context?: CloudDataContext,
 ) => {
 	if (foods.length === 0) return true;
 
 	const result = await placeFoodsThroughServer(key, {
-		foods: uniqueFoodsByIdentity(uniqueFoodsById(foods)).map((food) =>
-			compactFood(food),
+		foods: deduplicateFoodItemsByIdentity(deduplicateFoodItemsByApplicationId(foods)).map((food) =>
+			normalizeFoodForStorage(food),
 		),
 	});
 
@@ -161,13 +161,13 @@ export const renameCloudIngredientListItem = async (
 
 export const placeCloudIngredientListItem = async (
 	key: IngredientListKey,
-	food: FdcFood,
+	food: FoodItem,
 	allowMove = false,
 	context?: CloudDataContext,
 ): Promise<CloudListPlacementResult> => {
 	const result = await placeFoodsThroughServer(key, {
 		allowMove,
-		food: compactFood(food),
+		food: normalizeFoodForStorage(food),
 	});
 
 	if (

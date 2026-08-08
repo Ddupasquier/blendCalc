@@ -1,6 +1,6 @@
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type {
-	FdcNutrient,
+	FoodNutrient,
 	FoodFieldProvenance,
 	FoodFieldSource,
 	FoodImageAsset,
@@ -15,7 +15,7 @@ export type BarcodeProductSupplementPlan = MissingBarcodeProductFields & {
 	missingNutrientIds: number[];
 };
 
-const isValidNutrient = (nutrient: FdcNutrient) =>
+const isValidNutrient = (nutrient: FoodNutrient) =>
 	Number.isSafeInteger(nutrient.nutrientId) &&
 	nutrient.nutrientId > 0 &&
 	Number.isFinite(nutrient.value) &&
@@ -183,7 +183,7 @@ const getFieldSource = (
 ) => draft.fieldProvenance?.[field] ?? inferFieldSource(draft, field);
 
 const scaleNutrients = (
-	nutrients: FdcNutrient[],
+	nutrients: FoodNutrient[],
 	fromGrams: number,
 	toGrams: number,
 ) => {

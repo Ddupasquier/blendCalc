@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 const SOURCE_BACKED_KEYS = new Set([
 	"fdc",
@@ -13,7 +13,7 @@ const SOURCE_BACKED_KEYS = new Set([
 	"community",
 ]);
 
-export const isSourceBackedFood = (food: FdcFood) =>
+export const isSourceBackedFood = (food: FoodItem) =>
 	Boolean(
 		food.sharedProductId ||
 			food.sharedProductSubmissionId ||
@@ -21,10 +21,10 @@ export const isSourceBackedFood = (food: FdcFood) =>
 			(food.barcodeSource && food.barcodeSource !== "manual"),
 	);
 
-export const isPrivateCustomFood = (food: FdcFood) =>
+export const isPrivateCustomFood = (food: FoodItem) =>
 	food.customFood === true && !isSourceBackedFood(food);
 
-export const normalizePrivateCustomFoodFlag = (food: FdcFood): FdcFood => ({
+export const normalizePrivateCustomFoodFlag = (food: FoodItem): FoodItem => ({
 	...food,
 	customFood: isPrivateCustomFood(food),
 });

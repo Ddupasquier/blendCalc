@@ -296,7 +296,7 @@ vi.mock("$lib/utils/food/categories/categoryPicker", async (importOriginal) => {
 import CustomIngredientForm from "$lib/components/ingredients/manual-entry/CustomIngredientForm/CustomIngredientForm.svelte";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { createCustomFood } from "$lib/utils/food/custom/customFoods";
-import type { FdcNutrient } from "$lib/utils/food/types";
+import type { FoodNutrient } from "$lib/utils/food/types";
 
 type TestNutrition = {
 	calories: number;
@@ -308,7 +308,7 @@ type TestNutrition = {
 	sodium?: number;
 };
 
-const makeTestNutrients = (nutrition: TestNutrition): FdcNutrient[] => [
+const makeTestNutrients = (nutrition: TestNutrition): FoodNutrient[] => [
 	{
 		nutrientId: 1008,
 		nutrientName: "Calories",
@@ -1980,11 +1980,11 @@ describe("CustomIngredientForm", () => {
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
 		const savedNutrients = onCreate.mock.calls[0][0].foodNutrients;
 		expect(
-			savedNutrients.find((nutrient: FdcNutrient) => nutrient.nutrientId === 1005)
+			savedNutrients.find((nutrient: FoodNutrient) => nutrient.nutrientId === 1005)
 				?.value,
 		).toBeCloseTo((5 / 34) * 100);
 		expect(
-			savedNutrients.find((nutrient: FdcNutrient) => nutrient.nutrientId === 2000)
+			savedNutrients.find((nutrient: FoodNutrient) => nutrient.nutrientId === 2000)
 				?.value,
 		).toBeCloseTo((4 / 34) * 100);
 	});

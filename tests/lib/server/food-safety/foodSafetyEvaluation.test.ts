@@ -6,7 +6,7 @@ import type {
 	FoodPreferenceResolution,
 	FoodPreferenceRuleType,
 } from "$lib/utils/profile/foodPreferenceProfile";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { annotateFoodWithFoodSafety } from "$lib/server/food-safety/foodSafetyEvaluation.server";
 import type {
 	FoodCompatibilityIngredientAlias,
@@ -97,7 +97,7 @@ const resolveTestProfile = <Profile extends TestPreferenceProfile>(
 });
 
 const getFoodPreferenceWarnings = (
-	food: FdcFood,
+	food: FoodItem,
 	profile: TestPreferenceProfile,
 ) => annotateFoodWithFoodSafety(food, {
 	profile: resolveTestProfile(profile),
@@ -115,7 +115,7 @@ const getFoodPreferenceWarnings = (
 	},
 }).preferenceWarnings ?? [];
 
-const makeFood = (overrides: Partial<FdcFood>): FdcFood => ({
+const makeFood = (overrides: Partial<FoodItem>): FoodItem => ({
 	fdcId: 1,
 	description: "Whole milk",
 	foodCategory: "Dairy",

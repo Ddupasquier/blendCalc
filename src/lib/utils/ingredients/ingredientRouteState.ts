@@ -1,5 +1,5 @@
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 
 const ACTIONS_PARAM = "actions";
@@ -424,9 +424,9 @@ export const getIngredientRouteTitle = (
 export const findIngredientRouteFood = (
 	foodId: number | null,
 	listKey: IngredientListKey | null,
-	fridgeItems: FdcFood[],
-	shoppingListItems: FdcFood[],
-	customItems: FdcFood[] = [],
+	fridgeItems: FoodItem[],
+	shoppingListItems: FoodItem[],
+	customItems: FoodItem[] = [],
 ) => {
 	if (foodId === null) return null;
 	const lists = listKey === MIX_STORAGE_KEYS.fridge

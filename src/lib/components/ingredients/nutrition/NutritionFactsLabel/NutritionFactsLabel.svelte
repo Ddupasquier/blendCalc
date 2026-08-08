@@ -4,9 +4,9 @@
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
 	import NutritionServingStatement from "$lib/components/ingredients/nutrition/NutritionServingStatement/NutritionServingStatement.svelte";
 	import {
-		getFdcNutrientValue,
-		isFdcNutrientMatch,
-	} from "$lib/utils/food/nutrients/fdcNutrients";
+		getFoodNutrientValue,
+		isMatchingFoodNutrient,
+	} from "$lib/utils/food/nutrients/foodNutrients";
 	import {
 		formatNutritionAmount,
 		getNutritionBasisLabel,
@@ -32,7 +32,7 @@
 	const vitalRows = $derived(
 		food
 			? nutritionFactsFields.map((field) => {
-					const value = getFdcNutrientValue(food, field.id);
+					const value = getFoodNutrientValue(food, field.id);
 					const scaledValue = scalePer100gValue(value ?? 0, viewingGrams) ?? 0;
 					return {
 						label: field.label,
@@ -48,7 +48,7 @@
 			? food.foodNutrients
 					.filter(
 						(n) =>
-							!vitalIds.some((id) => isFdcNutrientMatch(n, id)),
+							!vitalIds.some((id) => isMatchingFoodNutrient(n, id)),
 					)
 					.flatMap((n) => {
 						const scaledValue = scalePer100gValue(n.value, viewingGrams);

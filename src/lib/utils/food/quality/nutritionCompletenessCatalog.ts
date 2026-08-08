@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 export type NutritionCompletenessScope = "generic" | "manual" | "packaged";
 export type NutritionRequirementLevel = "required" | "recommended";
@@ -42,7 +42,7 @@ export const configureNutritionCompletenessCatalog = (
 
 export const getNutritionCompletenessScope = (
 	food: Pick<
-		FdcFood,
+		FoodItem,
 		| "barcode"
 		| "gtinUpc"
 		| "dataType"
@@ -65,7 +65,7 @@ export const getNutritionCompletenessScope = (
 };
 
 export const getNutritionCompletenessProfile = (
-	food: FdcFood,
+	food: FoodItem,
 	catalog: NutritionCompletenessCatalog = configuredCatalog,
 ) => {
 	const scope = getNutritionCompletenessScope(food);

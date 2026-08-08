@@ -4,7 +4,7 @@ import { render } from "svelte/server";
 import { describe, expect, it } from "vitest";
 import SavedRecipeIngredientPills from "$lib/components/saved/SavedRecipeIngredientPills/SavedRecipeIngredientPills.svelte";
 import { configureAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 configureAppReferenceCatalog({
 	nutrients: [],
@@ -33,7 +33,7 @@ configureAppReferenceCatalog({
 	],
 });
 
-const foods: FdcFood[] = [
+const foods: FoodItem[] = [
 	"Banana",
 	"Spinach",
 	"Greek Yogurt",

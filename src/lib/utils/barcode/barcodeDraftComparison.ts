@@ -1,6 +1,6 @@
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { BarcodeVolumeEquivalent } from "$lib/utils/barcode/servingVolume";
-import type { FdcNutrient } from "$lib/utils/food/types";
+import type { FoodNutrient } from "$lib/utils/food/types";
 
 export type BarcodeProductDraftComparisonEntry = {
 	name: string;
@@ -9,7 +9,7 @@ export type BarcodeProductDraftComparisonEntry = {
 	servingLabel: string;
 	servingWeightGrams: number | null;
 	volumeEquivalent: { quantity: number; unit: string } | null;
-	nutrients: FdcNutrient[];
+	nutrients: FoodNutrient[];
 	ingredients: string;
 	ingredientList: string[];
 	allergens: string[];
@@ -43,7 +43,7 @@ const numbersMatch = (
 		Math.abs(leftNumber - rightNumber) < 0.001;
 };
 
-const nutrientsMatch = (left: FdcNutrient[], right: FdcNutrient[]) => {
+const nutrientsMatch = (left: FoodNutrient[], right: FoodNutrient[]) => {
 	const leftMap = new Map(left.map((nutrient) => [nutrient.nutrientId, nutrient.value]));
 	const rightMap = new Map(right.map((nutrient) => [nutrient.nutrientId, nutrient.value]));
 	const nutrientIds = new Set([...leftMap.keys(), ...rightMap.keys()]);

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const food: FdcFood = {
+const food: FoodItem = {
 	fdcId: 1,
 	description: "Private draft",
 	foodNutrients: [],

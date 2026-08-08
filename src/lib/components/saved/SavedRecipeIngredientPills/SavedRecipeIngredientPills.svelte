@@ -4,7 +4,7 @@
 	import CustomBadge from "$lib/components/common/display/CustomBadge/CustomBadge.svelte";
 	import MetadataPill from "$lib/components/common/display/MetadataPill/MetadataPill.svelte";
 	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
-	import type { FdcFood } from "$lib/utils/food/types";
+	import type { FoodItem } from "$lib/utils/food/types";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 	import {
 		packIngredientPills,

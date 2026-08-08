@@ -1,5 +1,5 @@
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { createIngredientSearchRelevanceComparator } from "$lib/utils/ingredients/ingredientSearchRelevance";
 
 const USDA_GENERIC_DATA_TYPE_PRIORITY: Record<string, number> = {
@@ -11,7 +11,7 @@ const USDA_GENERIC_DATA_TYPE_PRIORITY: Record<string, number> = {
 
 const normalizeDataType = (value?: string) => value?.trim().toLocaleLowerCase() ?? "";
 
-const getDataTypePriority = (food: FdcFood) =>
+const getDataTypePriority = (food: FoodItem) =>
 	USDA_GENERIC_DATA_TYPE_PRIORITY[normalizeDataType(food.dataType)] ?? 100;
 
 const parseSourceDate = (value?: string) => {
@@ -19,7 +19,7 @@ const parseSourceDate = (value?: string) => {
 	return Number.isFinite(milliseconds) ? milliseconds : 0;
 };
 
-const getNewestSourceDate = (food: FdcFood) =>
+const getNewestSourceDate = (food: FoodItem) =>
 	Math.max(
 		parseSourceDate(food.publishedDate),
 		parseSourceDate(food.publicationDate),
@@ -27,7 +27,7 @@ const getNewestSourceDate = (food: FdcFood) =>
 		parseSourceDate(food.availableDate),
 	);
 
-const compareNewestUsdaRecord = (left: FdcFood, right: FdcFood) =>
+const compareNewestUsdaRecord = (left: FoodItem, right: FoodItem) =>
 	Number(Boolean(left.discontinuedDate)) - Number(Boolean(right.discontinuedDate)) ||
 	getNewestSourceDate(right) - getNewestSourceDate(left) ||
 	parseSourceDate(right.modifiedDate) - parseSourceDate(left.modifiedDate) ||
@@ -35,7 +35,7 @@ const compareNewestUsdaRecord = (left: FdcFood, right: FdcFood) =>
 	right.fdcId - left.fdcId;
 
 export const selectPreferredUsdaBarcodeFood = (
-	foods: readonly FdcFood[],
+	foods: readonly FoodItem[],
 	barcode: string,
 ) => {
 	const canonicalBarcode = normalizeBarcode(barcode);
@@ -52,7 +52,7 @@ export const selectPreferredUsdaBarcodeFood = (
 };
 
 export const rankUsdaGenericFoods = (
-	foods: readonly FdcFood[],
+	foods: readonly FoodItem[],
 	query: string,
 ) => {
 	const compareRelevance = createIngredientSearchRelevanceComparator(query);

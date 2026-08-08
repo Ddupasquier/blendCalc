@@ -7,7 +7,7 @@ import type {
 	IngredientFilterApplyPayload,
 	IngredientSortOption,
 } from "$lib/components/ingredients/sheets/types";
-import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
+import type { FoodItem, FoodImageAsset } from "$lib/utils/food/types";
 import type {
 	IngredientActionItem,
 	IngredientListMembership,
@@ -33,12 +33,12 @@ export type IngredientRoutePopinsProps = {
 	savedFoodIdentityKeys: ReadonlySet<string>;
 	searchViewOpen: boolean;
 	provenanceOptions: readonly IngredientProvenanceOption[];
-	selectedFood: FdcFood | null;
+	selectedFood: FoodItem | null;
 	selectedFoodShowListActions: boolean;
-	correctionFood: FdcFood | null;
+	correctionFood: FoodItem | null;
 	sortOptions: readonly IngredientSortOption[];
 	canAdjustImagePlacement: boolean;
-	onAddSearchResult: (food: FdcFood) => void | Promise<void>;
+	onAddSearchResult: (food: FoodItem) => void | Promise<void>;
 	onApplyFilters: (filters: IngredientFilterApplyPayload) => void;
 	onCloseActionSheet: () => void;
 	onCloseImagePlacement: () => void;
@@ -53,7 +53,7 @@ export type IngredientRoutePopinsProps = {
 	onCloseRename: () => void;
 	onCloseSearch: () => void;
 	onCreateManualIngredient: (
-		food: FdcFood,
+		food: FoodItem,
 		context: ManualEntryCreateContext,
 	) => void;
 	onFilterFromSearch: () => void;
@@ -65,6 +65,6 @@ export type IngredientRoutePopinsProps = {
 	onRenameListItem: (name: string) => void | Promise<void>;
 	onRenameValueChange: () => void;
 	onScan: () => void;
-	onSearchSelect: (food: FdcFood) => void;
+	onSearchSelect: (food: FoodItem) => void;
 	onImagePlacementSave: (image: FoodImageAsset) => void | Promise<void>;
 };

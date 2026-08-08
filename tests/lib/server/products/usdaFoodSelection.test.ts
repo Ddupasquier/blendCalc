@@ -3,9 +3,9 @@ import {
 	rankUsdaGenericFoods,
 	selectPreferredUsdaBarcodeFood,
 } from "$lib/server/products/usdaFoodSelection";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const food = (overrides: Partial<FdcFood>): FdcFood => ({
+const food = (overrides: Partial<FoodItem>): FoodItem => ({
 	fdcId: 1,
 	description: "Test food",
 	dataType: "Branded",

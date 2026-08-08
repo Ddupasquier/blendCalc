@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
+import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
 import { compareCatalogSubmissionToExistingProduct } from "$lib/utils/products/catalogSubmissionComparison";
 import { mergeCatalogUpdateFood } from "$lib/utils/products/catalogUpdateMerge";
 
@@ -11,7 +11,7 @@ const nutrient = (nutrientId: number, value: number, unitName = "G") => ({
 	value,
 });
 
-const currentFood: FdcFood = {
+const currentFood: FoodItem = {
 	fdcId: 42,
 	description: "Example Oat Bar",
 	brandOwner: "Example Foods",
@@ -36,7 +36,7 @@ const currentFood: FdcFood = {
 
 describe("catalog update merging", () => {
 	it("updates reviewed fields without deleting unsubmitted canonical data", () => {
-		const submittedFood: FdcFood = {
+		const submittedFood: FoodItem = {
 			...currentFood,
 			customServingWeightGrams: 45,
 			householdServingFullText: "1 larger bar",
@@ -76,7 +76,7 @@ describe("catalog update merging", () => {
 	});
 
 	it("does not replace the canonical snapshot when no reviewed changes exist", () => {
-		const submittedFood: FdcFood = {
+		const submittedFood: FoodItem = {
 			...currentFood,
 			foodNutrients: [
 				nutrient(NUTRIENT_IDS.CALORIES, 350, "KCAL"),

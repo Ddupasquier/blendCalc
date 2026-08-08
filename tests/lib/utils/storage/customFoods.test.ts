@@ -27,7 +27,7 @@ import {
 	readCloudCustomFoodByNameKey,
 	saveCloudCustomFood,
 } from "$lib/utils/storage/supabase/customFoods";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 const food = {
 	fdcId: -101,
@@ -37,7 +37,7 @@ const food = {
 	categories: ["Fruit"],
 	categoryOptionId: "fruit",
 	foodNutrients: [],
-} satisfies FdcFood;
+} satisfies FoodItem;
 
 const createReadClient = () => {
 	const maybeSingle = vi.fn().mockResolvedValue({

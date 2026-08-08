@@ -1,4 +1,4 @@
-import type { UserFoodListPage } from "$lib/types/userData";
+import type { IngredientListPage } from "$lib/utils/ingredients/ingredientListPage";
 import { LIST_PAGE_LIMITS } from "$lib/config/listPagination";
 import type { FoodListSort } from "$lib/utils/list/listNavigation";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
@@ -12,7 +12,7 @@ export const readIngredientListPage = async (
 	key: IngredientListKey,
 	options: CloudIngredientListPageOptions,
 	fetcher: typeof fetch = fetch,
-): Promise<UserFoodListPage> => {
+): Promise<IngredientListPage> => {
 	const parameters = new URLSearchParams({
 		limit: String(options.limit),
 		offset: String(options.offset ?? 0),
@@ -28,15 +28,15 @@ export const readIngredientListPage = async (
 	if (!response.ok) {
 		throw new Error("Saved ingredients could not be loaded.");
 	}
-	return await response.json() as UserFoodListPage;
+	return await response.json() as IngredientListPage;
 };
 
 export const readIngredientListWindow = async (
 	key: IngredientListKey,
 	options: CloudIngredientListPageOptions,
 	fetcher: typeof fetch = fetch,
-): Promise<UserFoodListPage> => {
-	const foods: UserFoodListPage["foods"] = [];
+): Promise<IngredientListPage> => {
+	const foods: IngredientListPage["foods"] = [];
 	const targetCount = Math.max(1, options.limit);
 	const startingOffset = options.offset ?? 0;
 	let totalCount = Number.POSITIVE_INFINITY;
@@ -69,7 +69,7 @@ export const readIngredientList = async (
 	key: IngredientListKey,
 	fetcher: typeof fetch = fetch,
 ) => {
-	const foods: UserFoodListPage["foods"] = [];
+	const foods: IngredientListPage["foods"] = [];
 	let totalCount = Number.POSITIVE_INFINITY;
 
 	while (foods.length < totalCount) {

@@ -1,5 +1,5 @@
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
+import { normalizeFoodForStorage, deduplicateFoodItemsByApplicationId } from "$lib/utils/food/records/foodRecords";
 import {
 	placeCloudIngredientListItem,
 	readCloudIngredientListIndex,
@@ -8,10 +8,10 @@ import {
 	renameCloudIngredientListItem,
 	writeCloudIngredientList,
 } from "$lib/utils/storage/supabase";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
 	getFoodIdentityKey,
-	uniqueFoodsByIdentity,
+	deduplicateFoodItemsByIdentity,
 } from "$lib/utils/food/records/foodIdentity";
 
 export const INGREDIENT_LISTS_CHANGED_EVENT = "blendcalc-ingredient-lists-changed";
@@ -48,8 +48,8 @@ const getOppositeListKey = (key: IngredientListKey): IngredientListKey =>
 		: MIX_STORAGE_KEYS.fridge;
 
 export const preserveSelectedListItems = (
-	syncedList: FdcFood[],
-	loadedList: FdcFood[],
+	syncedList: FoodItem[],
+	loadedList: FoodItem[],
 	selectedFoodIds: number[],
 ) => {
 	const selectedFoodIdSet = new Set(selectedFoodIds);
@@ -57,15 +57,17 @@ export const preserveSelectedListItems = (
 		selectedFoodIdSet.has(food.fdcId),
 	);
 
-	return uniqueFoodsByIdentity(uniqueFoodsById([...syncedList, ...selectedLoadedFoods]));
+	return deduplicateFoodItemsByIdentity(
+		deduplicateFoodItemsByApplicationId([...syncedList, ...selectedLoadedFoods]),
+	);
 };
 
 export const addFoodToIngredientList = async (
 	key: IngredientListKey,
-	food: FdcFood,
+	food: FoodItem,
 	options: IngredientListMutationOptions = {},
 ): Promise<IngredientListMutationResult> => {
-	const foodRecord = compactFood({
+	const foodRecord = normalizeFoodForStorage({
 		...food,
 		listAddedAt: food.listAddedAt ?? Date.now(),
 	});
@@ -81,10 +83,10 @@ export const addFoodToIngredientList = async (
 
 export const moveFoodToIngredientList = async (
 	key: IngredientListKey,
-	food: FdcFood,
+	food: FoodItem,
 	options: IngredientListMutationOptions = {},
 ): Promise<IngredientListMutationResult> => {
-	const foodRecord = compactFood({
+	const foodRecord = normalizeFoodForStorage({
 		...food,
 		listAddedAt: Date.now(),
 	});
@@ -97,7 +99,7 @@ export const moveFoodToIngredientList = async (
 
 export const moveFoodsToIngredientList = async (
 	key: IngredientListKey,
-	foods: FdcFood[],
+	foods: FoodItem[],
 	options: IngredientListMutationOptions = {},
 ): Promise<IngredientListMutationResult> => {
 	const foodIds = [...new Set(foods.map((food) => food.fdcId))];
@@ -116,7 +118,7 @@ export const moveFoodsToIngredientList = async (
 
 export const addFoodsToIngredientList = async (
 	key: IngredientListKey,
-	foods: FdcFood[],
+	foods: FoodItem[],
 ): Promise<IngredientListMutationResult> => {
 	const listIndex = await readCloudIngredientListIndex();
 	if (!listIndex) return "error";
@@ -126,7 +128,7 @@ export const addFoodsToIngredientList = async (
 	const existingIds = new Set(currentList.foodIds);
 	const existingIdentityKeys = new Set(currentList.foodIdentityKeys);
 	const addedAt = Date.now();
-	const additions = uniqueFoodsById(foods)
+	const additions = deduplicateFoodItemsByApplicationId(foods)
 		.filter(
 			(food) =>
 				!existingIds.has(food.fdcId) &&
@@ -140,7 +142,7 @@ export const addFoodsToIngredientList = async (
 				) === index,
 		)
 		.map((food) =>
-			compactFood({
+			normalizeFoodForStorage({
 				...food,
 				listAddedAt: food.listAddedAt ?? addedAt,
 			}),
@@ -170,7 +172,7 @@ export const renameFoodInIngredientList = async (
 	key: IngredientListKey,
 	foodId: number,
 	nextDescription: string,
-	loadedFood?: FdcFood,
+	loadedFood?: FoodItem,
 	options: IngredientListMutationOptions = {},
 ): Promise<IngredientListMutationResult> => {
 	const trimmedDescription = nextDescription.trim().replace(/\s+/g, " ");

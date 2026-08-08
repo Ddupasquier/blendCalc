@@ -5,8 +5,8 @@ import {
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import type {
-	FdcFood,
-	FdcNutrient,
+	FoodItem,
+	FoodNutrient,
 	FoodFieldProvenance,
 	FoodImageAsset,
 	FoodBarcodeProvenance,
@@ -32,7 +32,7 @@ import { getPrimaryFoodServing } from "$lib/utils/food/servings/foodServings";
 export type ManualEntryFormResetState = {
 	activeStep: ManualEntryStepId;
 	name: string;
-	nameProvenance: NonNullable<FdcFood["nameProvenance"]>;
+	nameProvenance: NonNullable<FoodItem["nameProvenance"]>;
 	brandOwner: string;
 	category: string;
 	categoryOptionId: string;
@@ -46,9 +46,9 @@ export type ManualEntryFormResetState = {
 	manualNutrientValues: NutrientValueState;
 	manualTouchedNutrientIds: Record<number, true>;
 	validationAttemptedSteps: ValidationAttemptState;
-	importedNutrients: FdcNutrient[];
+	importedNutrients: FoodNutrient[];
 	barcode: string;
-	barcodeSource: FdcFood["barcodeSource"];
+	barcodeSource: FoodItem["barcodeSource"];
 	barcodeProvenance?: FoodBarcodeProvenance;
 	barcodeMessage: string;
 	checkingBarcodeReference: boolean;
@@ -138,7 +138,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 });
 
 export const getManualEntryFormStateFromFood = (
-	food: FdcFood,
+	food: FoodItem,
 	intent: CatalogSubmissionIntent,
 ): ManualEntryFormResetState => {
 	const state = getManualEntryFormResetState();

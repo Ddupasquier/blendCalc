@@ -6,9 +6,9 @@ import {
 	writeStoredMixState,
 } from "$lib/utils/mix/state/mixState";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const food: FdcFood = {
+const food: FoodItem = {
 	fdcId: 1,
 	description: "Test food",
 	foodNutrients: [],

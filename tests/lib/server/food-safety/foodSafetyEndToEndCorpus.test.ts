@@ -6,14 +6,14 @@ import type { ApprovedCatalogRecord } from "$lib/server/products/catalogRead.ser
 import { mapOpenFoodFactsProduct } from "$lib/utils/barcode/barcodeProductMappers";
 import { createCustomFood } from "$lib/utils/food/custom/customFoods";
 import { getFoodCompatibilityEvaluationMessage } from "$lib/utils/food/quality/foodCompatibilityEvaluationMessages";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
 import {
 	FOOD_SAFETY_END_TO_END_CORPUS,
 	FOOD_SAFETY_END_TO_END_POLICY,
 	FOOD_SAFETY_END_TO_END_REQUIRED_FEATURES,
 } from "../../../fixtures/foodSafetyEndToEndCorpus";
-import { productReferenceDataFixture } from "../../../fixtures/referenceData";
+import { productReferenceCatalogFixture } from "../../../fixtures/referenceCatalogs";
 
 const normalizePreference = (value: string) =>
 	value.toLocaleLowerCase().trim().replace(/\s+/g, "-");
@@ -73,7 +73,7 @@ const createProfile = (
 const createApprovedRecord = (
 	id: string,
 	barcode: string,
-	food: FdcFood,
+	food: FoodItem,
 ): ApprovedCatalogRecord => ({
 	id: `synthetic-${id}`,
 	barcode,
@@ -100,7 +100,7 @@ const createApprovedRecord = (
 
 const buildCorpusFood = (
 	corpusCase: (typeof FOOD_SAFETY_END_TO_END_CORPUS)[number],
-): FdcFood => {
+): FoodItem => {
 	if (corpusCase.kind === "private-custom") {
 		return createCustomFood(corpusCase.food);
 	}
@@ -109,7 +109,7 @@ const buildCorpusFood = (
 	const draft = mapOpenFoodFactsProduct(
 		corpusCase.product,
 		corpusCase.barcode,
-		productReferenceDataFixture,
+		productReferenceCatalogFixture,
 	);
 	if (!draft) throw new Error(`Unable to normalize corpus case ${corpusCase.id}.`);
 	return createCatalogFoodFromDraft(draft);

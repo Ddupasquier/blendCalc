@@ -12,7 +12,7 @@ describe("SavedRecipesEmptyState", () => {
 				name: "Save a favorite for next time",
 			}),
 		).toBeInTheDocument();
-		await fireEvent.click(screen.getByRole("button", { name: "Build a mix" }));
+		await fireEvent.click(screen.getByRole("button", { name: "Build a recipe" }));
 		expect(onAction).toHaveBeenCalledOnce();
 	});
 
@@ -23,7 +23,7 @@ describe("SavedRecipesEmptyState", () => {
 		});
 
 		expect(
-			screen.getByRole("heading", { name: "No saved mixes found" }),
+			screen.getByRole("heading", { name: "No saved recipes found" }),
 		).toBeInTheDocument();
 		await fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
 		expect(onAction).toHaveBeenCalledOnce();

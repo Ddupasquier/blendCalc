@@ -8,7 +8,7 @@ import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
 import {
 	formatSourceProductName,
@@ -55,12 +55,12 @@ const readSharedProductCompatibilityRows = async (
 };
 
 const hydrateFoodWithSharedProductMetadata = (
-	food: FdcFood,
+	food: FoodItem,
 	row: SharedProductCompatibilityRow | undefined,
 	fieldProvenance: Record<string, CatalogFieldSource>,
 ) => {
 	if (!row) return food;
-	const canonicalFood = row.food as unknown as FdcFood;
+	const canonicalFood = row.food as unknown as FoodItem;
 	const canonicalSummary =
 		row.compatibility_summary as unknown as FoodCompatibilitySummary;
 
@@ -128,11 +128,11 @@ export const hydrateCloudFoodListRows = async (
 	const baseFoods = rows.map((row) =>
 		hydrateFoodWithCatalogState(
 			normalizeFoodProductName({
-				...(row.food as unknown as FdcFood),
+				...(row.food as unknown as FoodItem),
 				listAddedAt:
-					(row.food as unknown as FdcFood).listAddedAt ??
+					(row.food as unknown as FoodItem).listAddedAt ??
 					new Date(row.created_at).getTime(),
-			}) as FdcFood,
+			}) as FoodItem,
 			row,
 		),
 	);

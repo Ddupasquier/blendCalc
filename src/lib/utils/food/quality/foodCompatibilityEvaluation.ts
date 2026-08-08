@@ -8,10 +8,10 @@ import type {
 	FoodCompatibilityPreferenceResolutionContext,
 	FoodCompatibilityRegulatoryContext,
 } from "$lib/utils/food/quality/compatibility";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 export type FoodCompatibilityEvaluationInput = {
-	food: FdcFood;
+	food: FoodItem;
 	policyVersion?: number | null;
 	hasActivePreferences: boolean;
 	policyCoversPreferences: boolean;
@@ -41,7 +41,7 @@ const hasValues = (values: unknown[] | null | undefined) =>
 	Boolean(values?.length);
 
 const getPackagedEvidenceState = (
-	food: FdcFood,
+	food: FoodItem,
 	field: "ingredients" | "allergens" | "traces",
 ): FoodCompatibilityEvidenceState => {
 	if (food.fieldProvenance?.[field]) return "available";
@@ -56,7 +56,7 @@ const getPackagedEvidenceState = (
 };
 
 export const getFoodCompatibilityEvidenceCoverage = (
-	food: FdcFood,
+	food: FoodItem,
 ): FoodCompatibilityEvaluation["coverage"] => {
 	const identityType = resolveFoodIdentityType(food);
 	if (identityType === "generic") {

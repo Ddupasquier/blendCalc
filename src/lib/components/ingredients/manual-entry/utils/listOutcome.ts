@@ -1,6 +1,6 @@
 import type { CustomIngredientOutcomeState } from "$lib/components/ingredients/manual-entry/formTypes";
 import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
 	addFoodToIngredientList,
 	moveFoodToIngredientList,
@@ -23,7 +23,7 @@ export const getListDestinationLabel = (destination: IngredientListKey) =>
 export type ManualEntryDestinationResult =
 	| {
 			ok: true;
-			food: FdcFood;
+			food: FoodItem;
 			destination: IngredientListKey;
 			addedToList: boolean;
 			message: string;
@@ -36,7 +36,7 @@ export type ManualEntryDestinationResult =
 	| {
 			ok: false;
 			moveRequired: true;
-			food: FdcFood;
+			food: FoodItem;
 			source: IngredientListKey;
 			destination: IngredientListKey;
 		};
@@ -60,7 +60,7 @@ export const addManualEntryFoodToDestination = async ({
 	onCreate,
 	allowMove = false,
 }: {
-	food: FdcFood;
+	food: FoodItem;
 	saveDestination: IngredientListKey;
 	alreadySaved: boolean;
 	onCreate: ManualEntryCreateHandler;

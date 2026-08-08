@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView/NutritionDetailView.svelte";
-import type { FdcFood } from "$lib/utils/food/types";
-import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceData";
+import type { FoodItem } from "$lib/utils/food/types";
+import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceCatalogs";
 
-const spinach: FdcFood = {
+const spinach: FoodItem = {
 	fdcId: 168462,
 	description: "Spinach, raw",
 	foodCategory: "Vegetables and Vegetable Products",

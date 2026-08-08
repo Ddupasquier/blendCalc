@@ -3,12 +3,12 @@ import { createCatalogFoodFromDraft } from "$lib/server/products/catalogFood.ser
 import { getUsdaFoodById } from "$lib/server/products/usdaCache.server";
 import type { Database } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
-import { compactFood } from "$lib/utils/food/records/foodRecords";
+import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
 import { mergeExactSourceFood } from "$lib/utils/food/records/sourceFoodEnrichment";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-const getFoodBarcode = (food: FdcFood) =>
+const getFoodBarcode = (food: FoodItem) =>
 	normalizeBarcode(food.barcode ?? food.gtinUpc ?? "");
 
 const getResolvedDraftCategory = (
@@ -25,7 +25,7 @@ const getResolvedDraftCategory = (
 
 const enrichBarcodeFood = async (
 	supabase: SupabaseClient<Database>,
-	food: FdcFood,
+	food: FoodItem,
 	barcode: string,
 ) => {
 	const draft = await lookupBarcodeProductDraft(supabase, barcode);
@@ -41,7 +41,7 @@ const enrichBarcodeFood = async (
 	};
 };
 
-const enrichUsdaGenericFood = async (food: FdcFood) => {
+const enrichUsdaGenericFood = async (food: FoodItem) => {
 	if (
 		food.sourceKey !== "usda" ||
 		!Number.isSafeInteger(food.fdcId) ||
@@ -55,15 +55,15 @@ const enrichUsdaGenericFood = async (food: FdcFood) => {
 
 export const enrichFoodForListPlacement = async (
 	supabase: SupabaseClient<Database>,
-	food: FdcFood,
+	food: FoodItem,
 ) => {
 	try {
 		const barcode = getFoodBarcode(food);
 		const enriched = barcode
 			? await enrichBarcodeFood(supabase, food, barcode)
 			: await enrichUsdaGenericFood(food);
-		return compactFood(enriched);
+		return normalizeFoodForStorage(enriched);
 	} catch {
-		return compactFood(food);
+		return normalizeFoodForStorage(food);
 	}
 };

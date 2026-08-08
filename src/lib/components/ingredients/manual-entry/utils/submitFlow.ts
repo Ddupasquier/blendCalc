@@ -3,7 +3,7 @@ import {
 	findCustomFoodByName,
 	saveCustomFood,
 } from "$lib/utils/food/custom/customFoods";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import { submitSharedProduct } from "$lib/utils/products/catalog";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
@@ -42,14 +42,14 @@ export const saveManualEntryCustomFood = async ({
 	submissionIntent = "catalog_share",
 	catalogSubmissionOnly = false,
 }: {
-	food: FdcFood;
+	food: FoodItem;
 	name: string;
 	normalizedBarcode: string | null;
 	shareWithCatalog: boolean;
 	submitForCatalog?: boolean;
 	photos: ManualEntrySharedProductPhotos;
 	reviewFlags: string[];
-	useIngredient: (food: FdcFood, alreadySaved?: boolean) => Promise<boolean>;
+	useIngredient: (food: FoodItem, alreadySaved?: boolean) => Promise<boolean>;
 	submissionIntent?: CatalogSubmissionIntent;
 	catalogSubmissionOnly?: boolean;
 }): Promise<ManualEntrySubmitFlowResult> => {

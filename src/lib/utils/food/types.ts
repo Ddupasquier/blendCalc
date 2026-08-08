@@ -24,8 +24,8 @@ export type FoodNutrientMappingStatus =
 
 export type FoodNutrientValueQualifier = "source-estimate";
 
-/** A single accepted numeric food nutrient. */
-export interface FdcNutrient {
+/** A single accepted numeric nutrient value from any supported food source. */
+export interface FoodNutrient {
 	nutrientId: number;
 	nutrientName: string;
 	nutrientNumber: string;
@@ -77,7 +77,7 @@ export type FoodNutrientSourceReview = {
 	mappingMethod?: string;
 	mappingReviewReference?: string;
 	derivationMethod?: string;
-	source?: FdcNutrient["source"];
+	source?: FoodNutrient["source"];
 	sourceReference?: string;
 };
 
@@ -135,9 +135,9 @@ export interface FoodServing {
 	origin?: FoodServingOrigin;
 	gramWeightMethod?: FoodServingGramWeightMethod;
 	calculationBasis?: string;
-	source?: FdcNutrient["source"];
+	source?: FoodNutrient["source"];
 	sourceReference?: string;
-	confidence?: FdcNutrient["confidence"];
+	confidence?: FoodNutrient["confidence"];
 }
 
 export type FoodIdentityType = "generic" | "packaged" | "private-custom";
@@ -244,11 +244,11 @@ export type FoodTrackedField =
 
 export type FoodFieldSource = {
 	source:
-		| NonNullable<FdcNutrient["source"]>
+		| NonNullable<FoodNutrient["source"]>
 		| FoodImageAsset["source"]
 		| "shared-catalog";
 	sourceReference?: string;
-	confidence?: NonNullable<FdcNutrient["confidence"]>;
+	confidence?: NonNullable<FoodNutrient["confidence"]>;
 };
 
 export type FoodFieldProvenance = Partial<
@@ -304,8 +304,8 @@ export type FoodPrecautionaryStatement = {
 	labelObservedAt?: string;
 };
 
-/** A food item returned from the FDC search endpoint */
-export interface FdcFood {
+/** A normalized food item assembled from catalog, provider, or user evidence. */
+export interface FoodItem {
 	fdcId: number;
 	description: string;
 	/** Source/catalog name retained when a user assigns a personal list name. */
@@ -315,7 +315,7 @@ export interface FdcFood {
 	brandOwner?: string;
 	foodCategory?: string;
 	brandedFoodCategory?: string;
-	foodNutrients: FdcNutrient[];
+	foodNutrients: FoodNutrient[];
 	/** Source rows retained for uncertainty and mapping review, never for nutrition math. */
 	nutrientSourceReview?: FoodNutrientSourceReview[];
 	/** Nutrient IDs explicitly reported by the source. Missing IDs are unknown, not zero. */
@@ -386,9 +386,9 @@ export interface FdcFood {
 	preferenceWarnings?: FoodPreferenceWarning[];
 }
 
-/** The FDC foods/search response envelope */
+/** The USDA FoodData Central foods/search response envelope. */
 export interface FdcSearchResponse {
-	foods: FdcFood[];
+	foods: FoodItem[];
 	totalHits: number;
 	currentPage: number;
 	totalPages: number;

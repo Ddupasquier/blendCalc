@@ -2,7 +2,7 @@ import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { getMixRuntimeConfiguration } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 import { addFoodsToIngredientList } from "$lib/utils/storage/client/ingredientLists";
-import { compactFood } from "$lib/utils/food/records/foodRecords";
+import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
 import {
 	deleteCloudSavedRecipe,
 	readCloudIngredientListIndex,
@@ -11,7 +11,7 @@ import {
   saveCloudMixGoalConfiguration,
 	saveCloudMixPreferences,
 } from "$lib/utils/storage/supabase";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
+import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
 import { writeStoredMixState } from "$lib/utils/mix/state/mixState";
 import {
@@ -39,7 +39,7 @@ export type SavedRecipe = {
 	id: string;
 	name: string;
 	createdAt: number;
-	foods: FdcFood[];
+	foods: FoodItem[];
 	selected: (string | number)[];
 	options: SavedRecipeNutrientOption[];
   nutrientGoals: MixGoalMap;
@@ -96,7 +96,7 @@ export const normalizeSavedRecipe = (value: SavedRecipe): SavedRecipe => {
 
 	return {
 		...value,
-		foods: (value.foods ?? []).map(compactFood),
+		foods: (value.foods ?? []).map(normalizeFoodForStorage),
 		selected: normalizedSelected,
 		options: migrateLegacyNutrientOptions(rawOptions).filter((option) =>
 			goalIds.has(Number(option.id)),
@@ -150,7 +150,7 @@ const createSavedRecipe = (input: SavedRecipeInput): SavedRecipe => {
 		id: crypto.randomUUID(),
 		name: input.name.trim() || "Untitled recipe",
 		createdAt: Date.now(),
-		foods: input.foods.map(compactFood),
+		foods: input.foods.map(normalizeFoodForStorage),
 	};
 };
 
@@ -163,7 +163,7 @@ const createUpdatedSavedRecipe = (
 		id: existingRecipe.id,
 		name: input.name.trim() || existingRecipe.name,
 		createdAt: existingRecipe.createdAt,
-		foods: input.foods.map(compactFood),
+		foods: input.foods.map(normalizeFoodForStorage),
 	});
 };
 

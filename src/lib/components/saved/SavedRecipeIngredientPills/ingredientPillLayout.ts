@@ -1,10 +1,10 @@
 import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 export type IngredientPillSpan = 5 | 6 | 7 | 12;
 
 export type PackedIngredientPill = {
-	food: FdcFood;
+	food: FoodItem;
 	span: IngredientPillSpan;
 };
 
@@ -22,7 +22,7 @@ const estimateLabelWidth = (label: string) =>
 		return width + 1;
 	}, 0);
 
-export const getIngredientPillSpan = (food: FdcFood): IngredientPillSpan => {
+export const getIngredientPillSpan = (food: FoodItem): IngredientPillSpan => {
 	const estimatedWidth =
 		estimateLabelWidth(food.description) + (isPrivateCustomFood(food) ? 8 : 0);
 
@@ -33,7 +33,7 @@ export const getIngredientPillSpan = (food: FdcFood): IngredientPillSpan => {
 };
 
 export const packIngredientPills = (
-	foods: FdcFood[],
+	foods: FoodItem[],
 ): PackedIngredientPill[] => {
 	const sizedFoods = foods
 		.map((food, originalIndex) => ({

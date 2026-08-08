@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
 	formatSourceProductName,
 	normalizeFoodProductName,
@@ -15,7 +15,7 @@ const cloneStructuredIngredients = (
 
 export const getCanonicalFoodDescription = (
 	food: Pick<
-		FdcFood,
+		FoodItem,
 		"canonicalDescription" | "description" | "foodIdentityType"
 	>,
 ) => {
@@ -26,16 +26,18 @@ export const getCanonicalFoodDescription = (
 		: formatSourceProductName(canonicalDescription);
 };
 
-export const compactFood = (food: FdcFood): FdcFood => {
-	const normalizedFood = normalizeFoodProductName(food) as FdcFood;
-	const foodNutrients = food.foodNutrients.filter((nutrient) =>
+export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
+	const normalizedFood = normalizeFoodProductName(food) as FoodItem;
+	const acceptedFoodNutrients = food.foodNutrients.filter((nutrient) =>
 		Number.isSafeInteger(nutrient.nutrientId) &&
 		nutrient.nutrientId > 0 &&
 		Number.isFinite(nutrient.value) &&
 		nutrient.value >= 0
 	);
-	const nutrientIds = new Set(foodNutrients.map((nutrient) => nutrient.nutrientId));
-	const reportedNutrientIds = food.reportedNutrientIds ?? foodNutrients
+	const acceptedNutrientIds = new Set(
+		acceptedFoodNutrients.map((nutrient) => nutrient.nutrientId),
+	);
+	const reportedNutrientIds = food.reportedNutrientIds ?? acceptedFoodNutrients
 		.filter((nutrient) => nutrient.valueOrigin === "reported")
 		.map((nutrient) => nutrient.nutrientId);
 	return {
@@ -114,7 +116,7 @@ export const compactFood = (food: FdcFood): FdcFood => {
 			: undefined,
 		categories: food.categories ? [...food.categories] : undefined,
 		categoryOptionId: food.categoryOptionId,
-			symbolKey: resolveFoodSymbolKey(normalizedFood),
+		symbolKey: resolveFoodSymbolKey(normalizedFood),
 		image: food.image,
 		fieldProvenance: food.fieldProvenance
 			? Object.fromEntries(
@@ -151,9 +153,9 @@ export const compactFood = (food: FdcFood): FdcFood => {
 		customDensityConfidence: food.customDensityConfidence,
 		compatibilitySummary: food.compatibilitySummary,
 		reportedNutrientIds: [...new Set(reportedNutrientIds)].filter((nutrientId) =>
-			nutrientIds.has(nutrientId)
+			acceptedNutrientIds.has(nutrientId)
 		),
-		foodNutrients: foodNutrients.map((nutrient) => ({
+		foodNutrients: acceptedFoodNutrients.map((nutrient) => ({
 			nutrientId: nutrient.nutrientId,
 			nutrientName: nutrient.nutrientName,
 			nutrientNumber: nutrient.nutrientNumber,
@@ -178,20 +180,20 @@ export const compactFood = (food: FdcFood): FdcFood => {
 	};
 };
 
-export const compactManagedFood = (food: FdcFood): FdcFood =>
-	compactFood({
+export const normalizeSourceManagedFoodForStorage = (food: FoodItem): FoodItem =>
+	normalizeFoodForStorage({
 		...food,
 		description: formatSourceProductName(food.description),
 		nameProvenance:
 			food.nameProvenance === "barcode" ? "barcode" : "source",
 	});
 
-export const uniqueFoodsById = (foods: FdcFood[]) => {
-	const seen = new Set<number>();
+export const deduplicateFoodItemsByApplicationId = (foods: FoodItem[]) => {
+	const seenApplicationFoodIds = new Set<number>();
 
 	return foods.filter((food) => {
-		if (seen.has(food.fdcId)) return false;
-		seen.add(food.fdcId);
+		if (seenApplicationFoodIds.has(food.fdcId)) return false;
+		seenApplicationFoodIds.add(food.fdcId);
 		return true;
 	});
 };

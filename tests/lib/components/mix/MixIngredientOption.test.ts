@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import MixIngredientOption from "$lib/components/mix/ingredients/MixIngredientOption/MixIngredientOption.svelte";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const food: FdcFood = {
+const food: FoodItem = {
 	fdcId: 1,
 	description: "Pork Chorizo",
 	foodCategory: "Sausages, Hotdogs & Brats",

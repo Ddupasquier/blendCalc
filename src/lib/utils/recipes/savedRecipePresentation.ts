@@ -2,7 +2,7 @@ import {
   getDefaultMixGoals,
 	getNutrientCatalog,
 } from "$lib/utils/food/reference/appReferenceCatalog";
-import { resolveFdcNutrient } from "$lib/utils/food/nutrients/fdcNutrients";
+import { resolveFoodNutrient } from "$lib/utils/food/nutrients/foodNutrients";
 import { NUTRIENT_IDS } from "$lib/utils/food/types";
 import { getNutrientTotal } from "$lib/utils/mix/calculations/nutrientTotals";
 import type { SavedRecipe } from "$lib/utils/storage/client/savedRecipes";
@@ -28,7 +28,7 @@ export type SavedRecipeOverallGoalScore = {
 
 const hasNutrientEvidence = (recipe: SavedRecipe, nutrientId: number) =>
 	recipe.foods.some(
-		(food) => resolveFdcNutrient(food, nutrientId).value !== null,
+		(food) => resolveFoodNutrient(food, nutrientId).value !== null,
 	);
 
 export const getSavedRecipeCalories = (recipe: SavedRecipe) => {

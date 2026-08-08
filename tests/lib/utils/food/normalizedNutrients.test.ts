@@ -4,7 +4,7 @@ import {
 	normalizedRowsToNutrients,
 	type NormalizedNutrientRow,
 } from "$lib/utils/food/nutrients/normalizedNutrients";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 const fallbackFood = {
 	fdcId: 1,
@@ -19,7 +19,7 @@ const fallbackFood = {
 			value: 4,
 		},
 	],
-} satisfies FdcFood;
+} satisfies FoodItem;
 
 const normalizedProtein = {
 	nutrientId: 1003,

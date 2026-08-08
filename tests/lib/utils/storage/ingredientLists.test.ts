@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 const cloudData = vi.hoisted(() => ({
 	moveCloudIngredientListItems: vi.fn(),
@@ -28,7 +28,7 @@ const food = {
 	fdcId: 1,
 	description: "Olive Oil",
 	foodNutrients: [],
-} satisfies FdcFood;
+} satisfies FoodItem;
 
 describe("database-backed ingredient lists", () => {
 	beforeEach(() => {

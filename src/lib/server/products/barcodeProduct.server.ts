@@ -5,7 +5,7 @@ import {
 	getRequiredPackagedNutrientIds,
 	lookupExternalBarcodeProduct,
 } from "$lib/server/products/externalProduct.server";
-import { getProductReferenceData } from "$lib/server/products/productReferenceData.server";
+import { getProductReferenceCatalog } from "$lib/server/products/productReferenceCatalog.server";
 import type { Database } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import {
@@ -33,11 +33,15 @@ export const lookupBarcodeProductDraft = async (
 
 	const sharedFood = await getSharedProductByBarcode(supabase, barcode);
 	if (sharedFood) {
-		const [referenceData, cachedImage] = await Promise.all([
-			getProductReferenceData(),
+		const [productReferenceCatalog, cachedImage] = await Promise.all([
+			getProductReferenceCatalog(),
 			cachedImagePromise,
 		]);
-		const mappedDraft = mapSharedCatalogFood(sharedFood, barcode, referenceData);
+		const mappedDraft = mapSharedCatalogFood(
+			sharedFood,
+			barcode,
+			productReferenceCatalog,
+		);
 		if (mappedDraft) {
 			const cachedDraft = applyCachedImageToBarcodeDraft(
 				mappedDraft,
@@ -52,7 +56,7 @@ export const lookupBarcodeProductDraft = async (
 				try {
 					const supplement = await lookupExternalBarcodeProduct(barcode, {
 						cachedImage,
-						getReferenceData: async () => referenceData,
+						getProductReferenceCatalog: async () => productReferenceCatalog,
 						requiredNutrientIds,
 					});
 					supplementedFields = getSupplementedBarcodeProductFields(
@@ -72,7 +76,7 @@ export const lookupBarcodeProductDraft = async (
 					currentFood: sharedFood,
 					enrichedDraft: resolvedDraft,
 					fields: supplementedFields,
-					referenceData,
+					productReferenceCatalog,
 				});
 			}
 			return resolvedDraft;

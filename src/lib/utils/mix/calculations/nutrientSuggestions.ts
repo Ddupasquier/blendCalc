@@ -1,8 +1,8 @@
-import { resolveFdcNutrient } from "$lib/utils/food/nutrients/fdcNutrients";
+import { resolveFoodNutrient } from "$lib/utils/food/nutrients/foodNutrients";
 import { NUTRIENT_DATA_BASIS_GRAMS } from "$lib/utils/food/nutrients/nutritionDisplay";
 import { getMixRuntimeConfiguration } from "$lib/utils/food/reference/appReferenceCatalog";
 import { getPrimaryFoodServing } from "$lib/utils/food/servings/foodServings";
-import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import type { FoodItem, FoodNutrient } from "$lib/utils/food/types";
 import type {
 	NutrientAdjustmentImpact,
 	NutrientAdjustmentSuggestion,
@@ -28,7 +28,7 @@ type PracticalIncrement = {
 
 const NUMERIC_EPSILON = 1e-9;
 
-const isBlockedNutrient = (nutrient: FdcNutrient) =>
+const isBlockedNutrient = (nutrient: FoodNutrient) =>
 	nutrient.valueStatus === "derived" ||
 	nutrient.valueStatus === "estimated" ||
 	nutrient.valueStatus === "trace" ||
@@ -42,8 +42,8 @@ const isBlockedNutrient = (nutrient: FdcNutrient) =>
 	nutrient.mappingStatus === "excluded" ||
 	nutrient.mappingStatus === "unknown";
 
-const getRecommendationNutrientValue = (food: FdcFood, nutrientId: number) => {
-	const resolved = resolveFdcNutrient(food, nutrientId);
+const getRecommendationNutrientValue = (food: FoodItem, nutrientId: number) => {
+	const resolved = resolveFoodNutrient(food, nutrientId);
 	if (
 		resolved.nutrient === null ||
 		resolved.value === null ||
@@ -57,11 +57,11 @@ const getRecommendationNutrientValue = (food: FdcFood, nutrientId: number) => {
 	return resolved.value;
 };
 
-const hasRecommendationSafetyBlocker = (food: FdcFood) =>
+const hasRecommendationSafetyBlocker = (food: FoodItem) =>
 	(food.preferenceWarnings?.length ?? 0) > 0 ||
 	food.compatibilityEvaluation?.status === "conflict";
 
-const hasRecommendationDataBlocker = (food: FdcFood) =>
+const hasRecommendationDataBlocker = (food: FoodItem) =>
 	food.sourceMetadata?.obsolete === true ||
 	(food.sourceMetadata?.qualityErrorTags?.some((tag) => tag.trim()) ?? false);
 
@@ -69,7 +69,7 @@ const getGoalDistance = (total: number, goal: MixNutrientGoal) =>
 	1 - evaluateMixGoal(goal, total).score;
 
 const getPracticalIncrement = (
-	food: FdcFood,
+	food: FoodItem,
 	defaultServingGrams: number,
 ): PracticalIncrement => {
 	const sourceServing = getPrimaryFoodServing(food);
@@ -97,7 +97,7 @@ const getPracticalIncrement = (
 
 const buildGoalStates = (
 	nutrients: NutrientMeta[],
-	selectedFoods: FdcFood[],
+	selectedFoods: FoodItem[],
 	nutrientGoals: MixGoalMap,
 	servingGrams: Record<number, number>,
 	defaultServingGrams: number,
@@ -143,7 +143,7 @@ const buildCandidate = ({
 	increment,
 	goalStates,
 }: {
-	food: FdcFood;
+	food: FoodItem;
 	direction: NutrientAdjustmentSuggestion["direction"];
 	currentServingGrams: number;
 	increment: PracticalIncrement;
@@ -228,7 +228,7 @@ export const getNutrientAdjustmentSuggestions = ({
 	maxSuggestions = 3,
 }: {
 	nutrients: NutrientMeta[];
-	selectedFoods: FdcFood[];
+	selectedFoods: FoodItem[];
 	nutrientGoals: MixGoalMap;
 	servingGrams: Record<number, number>;
 	maxSuggestions?: number;

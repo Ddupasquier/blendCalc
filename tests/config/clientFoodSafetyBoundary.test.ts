@@ -11,7 +11,7 @@ describe("client food-safety boundary", () => {
 			"src/lib/utils/food/reference/appReferenceCatalog.ts",
 		);
 		const loader = readSource(
-			"src/lib/utils/food/reference/appReferenceData.ts",
+			"src/lib/utils/food/reference/appReferenceCatalogReader.ts",
 		);
 		const layout = readSource("src/routes/+layout.server.ts");
 

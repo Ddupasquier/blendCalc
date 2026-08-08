@@ -1,4 +1,4 @@
-import type { FdcFood, FoodIdentityType } from "$lib/utils/food/types";
+import type { FoodItem, FoodIdentityType } from "$lib/utils/food/types";
 
 const GENERIC_DATA_TYPES = new Set([
 	"foundation",
@@ -16,7 +16,7 @@ const normalizeDataType = (value: string | null | undefined) =>
 
 export const resolveFoodIdentityType = (
 	food: Pick<
-		FdcFood,
+		FoodItem,
 		| "foodIdentityType"
 		| "dataType"
 		| "sourceDataType"
@@ -38,7 +38,7 @@ export const resolveFoodIdentityType = (
 
 export const isAuthoritativeGenericFood = (
 	food: Pick<
-		FdcFood,
+		FoodItem,
 		| "foodIdentityType"
 		| "dataType"
 		| "sourceDataType"
@@ -51,7 +51,7 @@ export const isAuthoritativeGenericFood = (
 
 export const getAuthoritativeGenericFoodIdentity = (
 	food: Pick<
-		FdcFood,
+		FoodItem,
 		| "description"
 		| "scientificName"
 		| "alternateDescription"

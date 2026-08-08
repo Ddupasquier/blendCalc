@@ -1,4 +1,4 @@
-import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import type { FoodItem, FoodNutrient } from "$lib/utils/food/types";
 import {
 	productNamesAreUnrelated,
 	productNamesDiffer,
@@ -19,8 +19,8 @@ export type NormalizedProductDifference = {
 	absoluteDifference?: number;
 	differenceRatio?: number;
 	unitMismatch?: boolean;
-	previousNutrient?: FdcNutrient;
-	submittedNutrient?: FdcNutrient;
+	previousNutrient?: FoodNutrient;
+	submittedNutrient?: FoodNutrient;
 };
 
 export type ProductDifferenceOptions = {
@@ -54,13 +54,13 @@ const getChangeType = (
 	return "changed" as const;
 };
 
-const getComparableCategoryText = (food: FdcFood) =>
+const getComparableCategoryText = (food: FoodItem) =>
 	[food.foodCategory, ...(food.categories ?? [])]
 		.map(normalizeComparisonText)
 		.filter(Boolean)
 		.join(" ");
 
-const getServingWeight = (food: FdcFood) =>
+const getServingWeight = (food: FoodItem) =>
 	food.customServingWeightGrams ?? food.servingSize ?? null;
 
 const normalizeTextList = (values?: string[]) =>
@@ -104,7 +104,7 @@ const addListDifference = (
 };
 
 const getNutrientMap = (
-	food: FdcFood,
+	food: FoodItem,
 	includedIds?: ReadonlySet<number>,
 ) =>
 	new Map(
@@ -113,14 +113,14 @@ const getNutrientMap = (
 			.map((nutrient) => [nutrient.nutrientId, nutrient]),
 	);
 
-const getNutrientValue = (nutrient?: FdcNutrient) =>
+const getNutrientValue = (nutrient?: FoodNutrient) =>
 	nutrient
 		? { value: nutrient.value, unit: nutrient.unitName.toLocaleUpperCase() }
 		: null;
 
 export const compareNormalizedFoods = (
-	submittedFood: FdcFood,
-	previousFood: FdcFood,
+	submittedFood: FoodItem,
+	previousFood: FoodItem,
 	options: ProductDifferenceOptions = {},
 ): NormalizedProductDifference[] => {
 	const differences: NormalizedProductDifference[] = [];

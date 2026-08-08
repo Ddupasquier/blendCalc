@@ -117,6 +117,7 @@ clickable navigation block instead.
 - [Primary Card Interactions](#rule-primary-card-interactions)
 - [Reorderable Collections](#rule-reorderable-collections)
 - [Component And Route Boundaries](#rule-component-boundaries)
+- [Semantic Naming](#rule-semantic-naming)
 - [Manual Entry Modularization](#rule-manual-entry-modularization)
 - [Database And API-Driven Data](#rule-no-hardcoded-reference-data)
 - [Schema Documentation Synchronization](#rule-schema-documentation)
@@ -577,6 +578,46 @@ whenever practical. Repeated UI, repeated functions, long route files, oversized
 component styles, and duplicated business logic are maintenance problems. Views should
 orchestrate; components should render focused UI; utilities should hold reusable
 calculations, formatting, filtering, sorting, validation, and storage helpers.
+
+**16aa.** <a id="rule-semantic-naming"></a>Name every application-owned file, folder,
+component, type, class, function, variable, property, collection, and test in plain
+domain language that explains its actual responsibility. Semantic precision outranks
+arbitrary identifier-length limits: do not abbreviate, generalize, or retain obsolete
+provider or feature terminology merely to keep a name short. A longer accurate name is
+preferred over a compact name that requires implementation knowledge to understand.
+Use the new-contributor test: a junior developer should be able to infer what the named
+thing represents, what responsibility it owns, and—when applicable—its unit or data
+basis from the name and nearby types without relying on tribal knowledge or a comment
+that merely translates an unclear identifier.
+
+Use `camelCase` for functions, methods, variables, and ordinary TypeScript properties;
+`PascalCase` for components, classes, types, interfaces, and enums; the established
+`UPPER_SNAKE_CASE` convention for immutable module constants; and the existing
+kebab/BEM-style casing for SCSS selectors. Boolean domain names should read as
+predicates such as `hasWarnings`, `canPublish`, or `shouldRefresh`, while conventional
+component state and props such as `open`, `disabled`, `selected`, and `busy` remain
+acceptable. Numeric names must identify their unit or basis when it is not already
+unambiguous from a typed contract, such as `durationMilliseconds`, `weightGrams`, or
+`amountPer100Grams`. Collections use plural names and include `Map` or `Set` when that
+structure is important to understanding the behavior.
+
+Names must describe business meaning rather than a stale implementation mechanism.
+Provider-specific names such as FDC remain only inside genuine provider adapters and
+payload contracts; normalized cross-source application models use source-neutral food,
+nutrient, catalog, and evidence terminology. Preserve established industry acronyms
+such as API, DB, URL, GTIN, USDA, OCR, RLS, and RPC when they improve recognition. Avoid
+unqualified names such as `data`, `info`, `helper`, `manager`, `processor`, `smart`,
+`result`, `payload`, `state`, or `context`; qualify them with the domain and exact job
+when the concept is genuinely needed. Files and folders should match their primary
+export or owned responsibility.
+
+External provider keys, generated database types, persisted storage keys, database
+identifiers, public API fields, SvelteKit-reserved exports, and versioned route segments
+are contract boundaries rather than ordinary rename targets. Translate those names at
+focused adapters instead of leaking obsolete or provider-specific vocabulary through
+the application. Perform semantic renames atomically within one ownership boundary,
+update tests and consumers in the same change, and do not preserve misleading aliases
+unless a documented external compatibility contract requires them.
 
 **16a.** <a id="rule-manual-entry-modularization"></a>Use the current manual entry split
 as the modularization standard for future feature work. Large flows should keep the

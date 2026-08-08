@@ -23,9 +23,9 @@ vi.mock("$lib/utils/storage/client/ingredientLists", () => ({
 }));
 
 import { saveManualEntryCustomFood } from "$lib/components/ingredients/manual-entry/utils/submitFlow";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const food: FdcFood = {
+const food: FoodItem = {
 	fdcId: -1,
 	description: "Trader Joe's Peanut Butter",
 	barcode: "00000000119993",
