@@ -18,7 +18,7 @@
 	import { createScrollDirectionTracker } from "$lib/utils/navigation/scrollDirection";
 	import type { FdcFood } from "$lib/utils/food/types";
 	import type { SavedIngredientListProps } from "./types";
-	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+	import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 	import IngredientBulkActions from "../IngredientBulkActions/IngredientBulkActions.svelte";
 	import IngredientEmptyState from "../IngredientEmptyState/IngredientEmptyState.svelte";
@@ -55,7 +55,7 @@
 
 	let listElement = $state<HTMLUListElement | null>(null);
 	const scrollDirectionTracker = createScrollDirectionTracker();
-	let previousActiveList: SmoothieListKey | null = null;
+	let previousActiveList: IngredientListKey | null = null;
 	let previousResetKey: number | null = null;
 	let bulkAnimating = $state(false);
 	let bulkMoveStatus = $state("");

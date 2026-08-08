@@ -1,16 +1,16 @@
 import type { UserFoodListPage } from "$lib/types/userData";
 import { LIST_PAGE_LIMITS } from "$lib/config/listPagination";
 import type { FoodListSort } from "$lib/utils/list/listNavigation";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
-import type { CloudSmoothieListPageOptions } from "$lib/utils/storage/supabase/lists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
+import type { CloudIngredientListPageOptions } from "$lib/utils/storage/supabase/lists";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
-const getListPath = (key: SmoothieListKey) =>
+const getListPath = (key: IngredientListKey) =>
 	key === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping-list";
 
 export const readIngredientListPage = async (
-	key: SmoothieListKey,
-	options: CloudSmoothieListPageOptions,
+	key: IngredientListKey,
+	options: CloudIngredientListPageOptions,
 	fetcher: typeof fetch = fetch,
 ): Promise<UserFoodListPage> => {
 	const parameters = new URLSearchParams({
@@ -32,8 +32,8 @@ export const readIngredientListPage = async (
 };
 
 export const readIngredientListWindow = async (
-	key: SmoothieListKey,
-	options: CloudSmoothieListPageOptions,
+	key: IngredientListKey,
+	options: CloudIngredientListPageOptions,
 	fetcher: typeof fetch = fetch,
 ): Promise<UserFoodListPage> => {
 	const foods: UserFoodListPage["foods"] = [];
@@ -66,7 +66,7 @@ export const readIngredientListWindow = async (
 };
 
 export const readIngredientList = async (
-	key: SmoothieListKey,
+	key: IngredientListKey,
 	fetcher: typeof fetch = fetch,
 ) => {
 	const foods: UserFoodListPage["foods"] = [];

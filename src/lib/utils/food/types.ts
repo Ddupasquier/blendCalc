@@ -412,30 +412,3 @@ export const NUTRIENT_IDS = {
 	VITAMIN_K1: 1185,
 	CHOLESTEROL: 1253,
 } as const;
-
-/** A smoothie ingredient derived from an FDC food item */
-export interface Ingredient {
-	fdcId: number;
-	name: string;
-	category?: string;
-	servingGrams: number; // grams to include in the smoothie
-	nutrients: FdcNutrient[];
-}
-
-/** A saved smoothie recipe */
-export interface Smoothie {
-	id: string;
-	name: string;
-	ingredients: Ingredient[];
-	createdAt: number;
-}
-
-/** Aggregated nutrition totals for a smoothie */
-export interface NutritionTotals {
-	calories: number;
-	protein: number;
-	carbs: number;
-	fat: number;
-	fiber: number;
-	sugar: number;
-}

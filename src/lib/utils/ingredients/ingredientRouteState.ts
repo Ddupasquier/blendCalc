@@ -1,6 +1,6 @@
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { FdcFood } from "$lib/utils/food/types";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 
 const ACTIONS_PARAM = "actions";
 const LIST_ROUTE_SLUGS = {
@@ -42,7 +42,7 @@ export type IngredientRouteState = {
 	sheet: IngredientRouteSheet | null;
 	modal: IngredientRouteModal | null;
 	foodId: number | null;
-	listKey: SmoothieListKey | null;
+	listKey: IngredientListKey | null;
 	showListActions: boolean;
 };
 
@@ -51,7 +51,7 @@ export type IngredientRoutePatch = Partial<{
 	sheet: IngredientRouteSheet | null;
 	modal: IngredientRouteModal | null;
 	foodId: number | null;
-	listKey: SmoothieListKey | null;
+	listKey: IngredientListKey | null;
 	showListActions: boolean;
 }>;
 
@@ -91,19 +91,19 @@ const getIngredientPathContext = (pathname: string) => {
 	};
 };
 
-const getIngredientListBasePath = (listKey: SmoothieListKey) => {
+const getIngredientListBasePath = (listKey: IngredientListKey) => {
 	return listKey === MIX_STORAGE_KEYS.shoppingList
 		? `/${LIST_ROUTE_SLUGS.ingredients}/${LIST_ROUTE_SLUGS.shoppingList}`
 		: `/${LIST_ROUTE_SLUGS.ingredients}/${LIST_ROUTE_SLUGS.fridge}`;
 };
 
-export const getIngredientListTab = (url: URL): SmoothieListKey => {
+export const getIngredientListTab = (url: URL): IngredientListKey => {
 	return getIngredientPathContext(url.pathname).listKey;
 };
 
 export const buildIngredientListTabHref = (
 	url: URL,
-	key: SmoothieListKey,
+	key: IngredientListKey,
 ) => {
 	const nextUrl = new URL(url);
 	nextUrl.pathname = getIngredientListBasePath(key);
@@ -423,7 +423,7 @@ export const getIngredientRouteTitle = (
 
 export const findIngredientRouteFood = (
 	foodId: number | null,
-	listKey: SmoothieListKey | null,
+	listKey: IngredientListKey | null,
 	fridgeItems: FdcFood[],
 	shoppingListItems: FdcFood[],
 	customItems: FdcFood[] = [],

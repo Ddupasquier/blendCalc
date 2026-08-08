@@ -81,12 +81,12 @@
 			form?.foodPreferenceValues?.prioritizedNutrientIds ??
 			data.foodPreferences?.prioritizedNutrientIds ??
 			[],
-		defaultSmoothieServingUnit:
-			form?.foodPreferenceValues?.defaultSmoothieServingUnit ?? storedServingUnit,
-		defaultSmoothieServingSize:
-			form?.foodPreferenceValues?.defaultSmoothieServingSize ??
+		defaultMixServingUnit:
+			form?.foodPreferenceValues?.defaultMixServingUnit ?? storedServingUnit,
+		defaultMixServingSize:
+			form?.foodPreferenceValues?.defaultMixServingSize ??
 			getServingSizeDisplayValue(
-				data.foodPreferences?.defaultSmoothieServingGrams,
+				data.foodPreferences?.defaultMixServingGrams,
 				storedServingUnit,
 			),
 		sensitiveAcknowledged:
@@ -345,10 +345,10 @@
 					value: incomingFoodPreferenceValues.unitSystem === "us" ? "US units" : "Metric",
 				}
 			: null,
-		incomingFoodPreferenceValues.defaultSmoothieServingSize
+		incomingFoodPreferenceValues.defaultMixServingSize
 			? {
 					label: "Serving",
-					value: `${incomingFoodPreferenceValues.defaultSmoothieServingSize}${incomingFoodPreferenceValues.defaultSmoothieServingUnit}`,
+					value: `${incomingFoodPreferenceValues.defaultMixServingSize}${incomingFoodPreferenceValues.defaultMixServingUnit}`,
 				}
 			: null,
 		incomingFoodPreferenceValues.allergens.length
@@ -679,20 +679,20 @@
 					<div class="inline-fields">
 						<NumberInput
 							id="profile-default-serving-size"
-							name="defaultSmoothieServingSize"
+							name="defaultMixServingSize"
 							class="profile-serving-size-input"
 							min="0"
 							step="0.1"
-							value={incomingFoodPreferenceValues.defaultSmoothieServingSize}
+							value={incomingFoodPreferenceValues.defaultMixServingSize}
 							placeholder="Optional"
 							disabled={foodPreferencesDisabled}
 						/>
 						<SelectField
 							id="profile-default-serving-unit"
-							name="defaultSmoothieServingUnit"
+							name="defaultMixServingUnit"
 							label="Default serving unit"
 							labelVisibility="sr-only"
-							value={incomingFoodPreferenceValues.defaultSmoothieServingUnit}
+							value={incomingFoodPreferenceValues.defaultMixServingUnit}
 							options={[
 								{ value: "g", label: "g" },
 								{ value: "oz", label: "oz" },

@@ -29,7 +29,7 @@ import { normalizeCustomFoodName } from "$lib/utils/food/custom/customFoodNames"
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
-export const CUSTOM_FOODS_CHANGED_EVENT = "smoothie-custom-foods-changed";
+export const CUSTOM_FOODS_CHANGED_EVENT = "blendcalc-custom-foods-changed";
 
 export type CustomFoodInput = {
 	name: string;

@@ -1,15 +1,15 @@
 import {
-	clearLoadedSavedDrink,
-	readLoadedSavedDrink,
-	saveExistingSavedDrink,
-	saveNewSavedDrink,
-	writeLoadedSavedDrink,
-	type LoadedSavedDrink,
-	type SavedDrinkInput,
-} from "$lib/utils/storage/client/savedDrinks";
+	clearLoadedSavedRecipe,
+	readLoadedSavedRecipe,
+	saveExistingSavedRecipe,
+	saveNewSavedRecipe,
+	writeLoadedSavedRecipe,
+	type LoadedSavedRecipe,
+	type SavedRecipeInput,
+} from "$lib/utils/storage/client/savedRecipes";
 
 type SavedMixControllerOptions = {
-	buildInput: (name: string) => SavedDrinkInput;
+	buildInput: (name: string) => SavedRecipeInput;
 	onSaved: () => void;
 };
 
@@ -30,22 +30,22 @@ export const createSavedMixController = ({
 	onSaved,
 }: SavedMixControllerOptions) => {
 	const state = $state({
-		loaded: null as LoadedSavedDrink | null,
+		loaded: null as LoadedSavedRecipe | null,
 		error: "",
 		busy: false,
 	});
 
-	const setLoaded = (mix: LoadedSavedDrink | null) => {
+	const setLoaded = (mix: LoadedSavedRecipe | null) => {
 		state.loaded = mix;
 		if (mix) {
-			writeLoadedSavedDrink(mix);
+			writeLoadedSavedRecipe(mix);
 			return;
 		}
-		clearLoadedSavedDrink();
+		clearLoadedSavedRecipe();
 	};
 
 	const restore = () => {
-		state.loaded = readLoadedSavedDrink();
+		state.loaded = readLoadedSavedRecipe();
 	};
 
 	const markDirty = () => {
@@ -67,13 +67,13 @@ export const createSavedMixController = ({
 		if (!validateName(name)) return;
 		state.busy = true;
 		state.error = "";
-		const result = await saveNewSavedDrink(buildInput(name));
+		const result = await saveNewSavedRecipe(buildInput(name));
 		state.busy = false;
 		if (!result.ok) {
 			state.error = getSaveErrorMessage(result.reason);
 			return;
 		}
-		setLoaded({ id: result.drink.id, name: result.drink.name, isDirty: false });
+		setLoaded({ id: result.recipe.id, name: result.recipe.name, isDirty: false });
 		onSaved();
 	};
 
@@ -81,7 +81,7 @@ export const createSavedMixController = ({
 		if (!state.loaded || !validateName(name)) return;
 		state.busy = true;
 		state.error = "";
-		const result = await saveExistingSavedDrink(
+		const result = await saveExistingSavedRecipe(
 			state.loaded.id,
 			buildInput(name),
 		);
@@ -90,7 +90,7 @@ export const createSavedMixController = ({
 			state.error = getSaveErrorMessage(result.reason);
 			return;
 		}
-		setLoaded({ id: result.drink.id, name: result.drink.name, isDirty: false });
+		setLoaded({ id: result.recipe.id, name: result.recipe.name, isDirty: false });
 		onSaved();
 	};
 

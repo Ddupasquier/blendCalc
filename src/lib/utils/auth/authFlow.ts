@@ -1,8 +1,8 @@
 import type { Cookies } from "@sveltejs/kit";
 
-const AUTH_NEXT_COOKIE = "smoothie-auth-next";
-const AUTH_ORIGIN_COOKIE = "smoothie-auth-origin";
-const AUTH_FLOW_ID_COOKIE = "smoothie-auth-flow-id";
+const AUTH_NEXT_COOKIE = "blendcalc-auth-next";
+const AUTH_ORIGIN_COOKIE = "blendcalc-auth-origin";
+const AUTH_FLOW_ID_COOKIE = "blendcalc-auth-flow-id";
 const AUTH_FLOW_MAX_AGE_SECONDS = 60 * 10;
 
 export const getSafeAuthNextPath = (

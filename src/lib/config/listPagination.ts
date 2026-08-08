@@ -4,7 +4,7 @@ export const LIST_PAGE_SIZES = {
 	ingredientLoadMore: 15,
 	mixChooser: 10,
 	selectedIngredients: 6,
-	savedDrinks: 6,
+	savedRecipes: 6,
 } as const;
 
 export const LIST_PAGE_LIMITS = {

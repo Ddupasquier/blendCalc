@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
 	annotateFoodsWithFoodSafety: vi.fn(),
 	enrichFoodForListPlacement: vi.fn(),
 	getUserFoodSafetyContext: vi.fn(),
-	readCloudSmoothieListPage: vi.fn(),
+	readCloudIngredientListPage: vi.fn(),
 }));
 
 vi.mock("$lib/server/food-safety/foodSafetyEvaluation.server", () => ({
@@ -14,7 +14,7 @@ vi.mock("$lib/server/food-safety/userFoodSafety.server", () => ({
 	getUserFoodSafetyContext: mocks.getUserFoodSafetyContext,
 }));
 vi.mock("$lib/server/user-data/foodLists.server", () => ({
-	readCloudSmoothieListPage: mocks.readCloudSmoothieListPage,
+	readCloudIngredientListPage: mocks.readCloudIngredientListPage,
 }));
 vi.mock("$lib/server/user-data/foodListPlacement.server", () => ({
 	enrichFoodForListPlacement: mocks.enrichFoodForListPlacement,
@@ -90,7 +90,7 @@ const createDeleteEvent = (
 describe("user food list route", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mocks.readCloudSmoothieListPage.mockResolvedValue({
+		mocks.readCloudIngredientListPage.mockResolvedValue({
 			foods: [{ fdcId: 1, description: "Milk", foodNutrients: [] }],
 			totalCount: 1,
 		});
@@ -144,7 +144,7 @@ describe("user food list route", () => {
 			}],
 			totalCount: 1,
 		});
-		expect(mocks.readCloudSmoothieListPage).toHaveBeenCalledWith(
+		expect(mocks.readCloudIngredientListPage).toHaveBeenCalledWith(
 			expect.any(String),
 			expect.objectContaining({
 				limit: 15,

@@ -44,7 +44,7 @@ describe("ingredient browser compatibility baseline", () => {
 			expect(page).not.toMatch(
 				/window\.addEventListener\(\s*["']focus["']/,
 			);
-			expect(page).toContain("SMOOTHIE_LISTS_CHANGED_EVENT");
+			expect(page).toContain("INGREDIENT_LISTS_CHANGED_EVENT");
 		}
 	});
 });

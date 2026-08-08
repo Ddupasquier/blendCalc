@@ -6,20 +6,20 @@ import type {
 	SavedPageInitialData,
 } from "$lib/types/userData";
 import { readIngredientProvenanceOptions } from "$lib/utils/ingredients/ingredientProvenance";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import {
 	readCloudCustomFoods,
 	readCloudCustomFoodByFdcId,
 	readCloudMixPreferences,
-	readCloudSavedDrinks,
-	readCloudSmoothieListIndex,
+	readCloudIngredientListIndex,
+	readCloudSavedRecipes,
 	type CloudDataContext,
-	type CloudSmoothieListIndex,
+	type CloudIngredientListIndex,
 } from "$lib/utils/storage/supabase";
 import {
-	readCloudSmoothieList,
-	readCloudSmoothieListFood,
-	readCloudSmoothieListPage,
+	readCloudIngredientList,
+	readCloudIngredientListFood,
+	readCloudIngredientListPage,
 } from "$lib/server/user-data/foodLists.server";
 import {
 	annotateFoodsWithFoodSafety,
@@ -32,16 +32,16 @@ import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 
 type IngredientPageDataOptions = {
 	routeFoodId?: number | null;
-	routeListKey?: SmoothieListKey | null;
+	routeListKey?: IngredientListKey | null;
 };
 
-const emptyListIndex = (): CloudSmoothieListIndex => ({
+const emptyListIndex = (): CloudIngredientListIndex => ({
 	[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
 	[MIX_STORAGE_KEYS.shoppingList]: { foodIds: [], foodIdentityKeys: [] },
 });
 
 const annotateListPage = (
-	page: NonNullable<Awaited<ReturnType<typeof readCloudSmoothieListPage>>>,
+	page: NonNullable<Awaited<ReturnType<typeof readCloudIngredientListPage>>>,
 	context: FoodSafetyEvaluationContext,
 ) => ({
 	...page,
@@ -50,9 +50,9 @@ const annotateListPage = (
 
 const readInitialListPage = (
 	context: CloudDataContext,
-	key: SmoothieListKey,
+	key: IngredientListKey,
 ) =>
-	readCloudSmoothieListPage(
+	readCloudIngredientListPage(
 		key,
 		{
 			limit: LIST_PAGE_SIZES.ingredientPills,
@@ -72,7 +72,7 @@ const readIngredientRouteFood = async (
 	if (!Number.isSafeInteger(foodId) || Number(foodId) <= 0) return null;
 
 	if (options.routeListKey) {
-		const listFood = await readCloudSmoothieListFood(
+		const listFood = await readCloudIngredientListFood(
 			options.routeListKey,
 			Number(foodId),
 			context,
@@ -110,7 +110,7 @@ export const loadIngredientPageData = async (
 				readInitialListPage(context, MIX_STORAGE_KEYS.fridge),
 				readInitialListPage(context, MIX_STORAGE_KEYS.shoppingList),
 				readCloudCustomFoods(context),
-				readCloudSmoothieListIndex(context),
+				readCloudIngredientListIndex(context),
 				readIngredientProvenanceOptions(context.supabase),
 				getUserFoodSafetyContext(context.supabase, context.userId),
 				readIngredientRouteFood(context, options),
@@ -157,8 +157,8 @@ export const loadMixPageData = async (
 ): Promise<MixPageInitialData> => {
 	try {
 		const [fridge, shoppingList, preferences, foodSafetyContext] = await Promise.all([
-			readCloudSmoothieList(MIX_STORAGE_KEYS.fridge, context),
-			readCloudSmoothieList(MIX_STORAGE_KEYS.shoppingList, context),
+			readCloudIngredientList(MIX_STORAGE_KEYS.fridge, context),
+			readCloudIngredientList(MIX_STORAGE_KEYS.shoppingList, context),
 			readCloudMixPreferences(context),
 			getUserFoodSafetyContext(context.supabase, context.userId),
 		]);
@@ -189,14 +189,14 @@ export const loadSavedPageData = async (
 	context: CloudDataContext,
 ): Promise<SavedPageInitialData> => {
 	try {
-		const drinks = await readCloudSavedDrinks(context);
-		if (!drinks) throw new Error("Authenticated saved drinks were unavailable.");
-		return { drinks, loadError: "" };
+		const recipes = await readCloudSavedRecipes(context);
+		if (!recipes) throw new Error("Authenticated saved recipes were unavailable.");
+		return { recipes, loadError: "" };
 	} catch (error) {
-		console.error("[user-data] Saved drink data could not load.", error);
+		console.error("[user-data] Saved recipe data could not load.", error);
 		return {
-			drinks: [],
-			loadError: "Your saved drinks could not be loaded. Try again.",
+			recipes: [],
+			loadError: "Your saved recipes could not be loaded. Try again.",
 		};
 	}
 };

@@ -15,6 +15,10 @@ const optionStyles = readFileSync(
 	"src/lib/components/mix/ingredients/MixIngredientOption/MixIngredientOption.scss",
 	"utf8",
 );
+const cardLayoutStyles = readFileSync(
+	"src/lib/components/ingredients/card/IngredientCardMediaLane/_IngredientCardLayout.scss",
+	"utf8",
+);
 
 describe("MixIngredientOption", () => {
 	it("uses the whole card as the only selection action", async () => {
@@ -33,13 +37,55 @@ describe("MixIngredientOption", () => {
 		const selectionIndicator = container.querySelector(
 			".card-selection-indicator",
 		) as HTMLElement;
-		expect(selectionButton).toContainElement(selectionIndicator);
-		await fireEvent.click(selectionIndicator);
+		expect(selectionButton).not.toContainElement(selectionIndicator);
+		await fireEvent.click(selectionButton);
 		expect(onSelect).toHaveBeenCalledTimes(2);
 		expect(
 			screen.queryByRole("button", { name: /rename pork chorizo/i }),
 		).not.toBeInTheDocument();
 		expect(screen.queryByText("Sausages, Hotdogs & Brats")).not.toBeInTheDocument();
+	});
+
+	it("reserves a separate layout column so long names cannot overlap selection", () => {
+		const description =
+			"Oscar Mayer, Wieners (Beef Franks), Extra Long Product Description";
+		const { container } = render(MixIngredientOption, {
+			props: {
+				food: { ...food, description },
+				selected: true,
+				onSelect: vi.fn(),
+			},
+		});
+
+		const card = container.querySelector(".mix-ingredient-option");
+		const selectionButton = screen.getByRole("button", {
+			name: /remove oscar mayer.*from this mix/i,
+		});
+		const selectionIndicator = container.querySelector(
+			".mix-ingredient-option__select-status",
+		);
+		const name = screen.getByText(description);
+		const selectionStatusRules = optionStyles.match(
+			/\.mix-ingredient-option__select-status\s*\{([\s\S]*?)\}/,
+		)?.[1];
+		const selectionIndicatorLayoutRules = cardLayoutStyles.match(
+			/@mixin selection-indicator-layer\s*\{([\s\S]*?)\n\}/,
+		)?.[1];
+
+		expect(card).toContainElement(selectionIndicator as HTMLElement);
+		expect(selectionButton).not.toContainElement(selectionIndicator as HTMLElement);
+		expect(name).toHaveAttribute("title", description);
+		expect(optionStyles).toContain(
+			"@include ingredient-card-layout.selection-layout",
+		);
+		expect(cardLayoutStyles).toMatch(
+			/grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto;/,
+		);
+		expect(selectionStatusRules).toContain(
+			"@include ingredient-card-layout.selection-indicator-layer",
+		);
+		expect(selectionIndicatorLayoutRules).toContain("justify-self: end");
+		expect(selectionIndicatorLayoutRules).not.toContain("position: absolute");
 	});
 
 	it("exposes selected state and warning context through the card action", () => {
@@ -83,7 +129,5 @@ describe("MixIngredientOption", () => {
 		});
 
 		expect(screen.queryByText("Custom")).not.toBeInTheDocument();
-		expect(optionStyles).toContain("padding-inline-end: calc(");
-		expect(optionStyles).toContain("var(--ingredient-card-action-size)");
 	});
 });

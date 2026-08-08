@@ -97,10 +97,10 @@ describe("ingredient overlay navigation", () => {
 			/const addSearchResultToFridge = async \(food: FdcFood\) => \{[\s\S]*?\n    \};/,
 		)?.[0];
 		const addFoodToListState = source.match(
-			/const addFoodToListState = \(key: SmoothieListKey, food: FdcFood\) => \{[\s\S]*?\n    \};/,
+			/const addFoodToListState = \(key: IngredientListKey, food: FdcFood\) => \{[\s\S]*?\n    \};/,
 		)?.[0];
 
-		expect(addSearchResult).toContain("await addFoodToSmoothieList(");
+		expect(addSearchResult).toContain("await addFoodToIngredientList(");
 		expect(addSearchResult).toContain("MIX_STORAGE_KEYS.fridge,");
 		expect(addSearchResult).toContain("{ notify: false },");
 		expect(addSearchResult).toContain('if (result === "added")');
@@ -121,7 +121,7 @@ describe("ingredient overlay navigation", () => {
 		const source = readFileSync(ingredientsPagePath, "utf8");
 
 		expect(source).toContain(
-			"let activeList = $derived<SmoothieListKey>(getIngredientListTab(page.url))",
+			"let activeList = $derived<IngredientListKey>(getIngredientListTab(page.url))",
 		);
 		expect(source).not.toContain("const selectList =");
 		expect(source).not.toContain("activeList = key");

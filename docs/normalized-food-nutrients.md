@@ -55,7 +55,7 @@ embedded snapshot, invent zeroes, or copy values from a similar food. Migration 
 backfill work must populate applicable rows before readers depend on a new normalized
 field.
 
-Saved drinks intentionally retain their embedded recipe snapshots. Loading a saved drink
+Saved recipes intentionally retain their embedded composition snapshots. Loading a saved recipe
 continues to reproduce what the user saved rather than silently changing historical
 recipe nutrition when catalog data changes.
 

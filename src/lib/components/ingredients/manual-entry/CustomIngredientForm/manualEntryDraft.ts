@@ -3,13 +3,13 @@ import { manualEntrySteps } from "$lib/components/ingredients/manual-entry/formT
 import type { ManualEntryFormResetState } from "$lib/components/ingredients/manual-entry/utils/formState";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import type { ManualEntryDraft, ManualEntryDraftData } from "./types";
 
 const MANUAL_ENTRY_DRAFT_KEY = "blendcalc-manual-entry-draft-v1";
 const MANUAL_ENTRY_DRAFT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const validSteps = new Set(manualEntrySteps.map((step) => step.id));
-const validDestinations = new Set<SmoothieListKey>([
+const validDestinations = new Set<IngredientListKey>([
 	MIX_STORAGE_KEYS.fridge,
 	MIX_STORAGE_KEYS.shoppingList,
 ]);
@@ -47,7 +47,7 @@ const getDraftData = (form: ManualEntryFormResetState): ManualEntryDraftData => 
 
 export const persistManualEntryDraft = (
 	form: ManualEntryFormResetState,
-	saveDestination: SmoothieListKey,
+	saveDestination: IngredientListKey,
 ) => {
 	if (!browser) return;
 	if (!hasMeaningfulDraft(form)) {

@@ -24,7 +24,7 @@ const specializedDisclosureConsumers = [
 	"lib/components/ingredients/manual-entry/ManualEntryToggle/ManualEntryToggle.svelte",
 	"lib/components/ingredients/manual-entry/NutritionLabelOcrInput/NutritionLabelOcrInput.svelte",
 	"lib/components/mix/ingredients/IngredientCard/IngredientCard.svelte",
-	"lib/components/saved/SavedDrinkIngredientPills/SavedDrinkIngredientPills.svelte",
+	"lib/components/saved/SavedRecipeIngredientPills/SavedRecipeIngredientPills.svelte",
 	"routes/moderation/+page.svelte",
 	"routes/profile/+page.svelte",
 ];

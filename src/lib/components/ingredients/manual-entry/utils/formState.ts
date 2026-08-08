@@ -3,7 +3,7 @@ import {
 	type ServingMeasureUnit,
 } from "$lib/utils/serving/servingMeasureCatalog";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import type {
 	FdcFood,
 	FdcNutrient,
@@ -206,4 +206,4 @@ export const getManualEntryFormStateFromFood = (
 	};
 };
 
-export const getInitialSaveDestination = (): SmoothieListKey => MIX_STORAGE_KEYS.fridge;
+export const getInitialSaveDestination = (): IngredientListKey => MIX_STORAGE_KEYS.fridge;

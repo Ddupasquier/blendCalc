@@ -39,12 +39,10 @@ only executable human checks; [`QA/completed-qa-tasks.md`](QA/completed-qa-tasks
 preserves completed verification history. Repeated local account and barcode fixtures
 inside priority files are intentional so each queue remains usable on its own.
 
-## TODO
-
-[`TODO/todo-tasks.md`](TODO/todo-tasks.md) is the local-only general work index. Its
-priority files own incomplete implementation, verification, decision, deployment, and
-research work. During the transition away from standalone QA queues, TODO items link to
-legacy QA groups without duplicating their detailed acceptance criteria.
+Observable verification created by feature work belongs directly in the applicable QA
+priority file. Verified unresolved implementation findings belong in the development
+audit; the active recovery checkpoint owns only the currently interrupted task. Do not
+create a second task queue that mirrors QA.
 
 ## Maintenance
 

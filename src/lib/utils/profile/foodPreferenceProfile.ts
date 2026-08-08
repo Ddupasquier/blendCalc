@@ -47,7 +47,7 @@ export type FoodPreferenceProfile = {
 	allergens: string[];
 	dietaryRestrictions: string[];
 	prioritizedNutrientIds: number[];
-	defaultSmoothieServingGrams: number | null;
+	defaultMixServingGrams: number | null;
 	sensitiveAcknowledgedAt: string | null;
 	regulatoryRegionCode: string | null;
 	regulatoryRegionSource: "account" | "device" | null;
@@ -65,7 +65,7 @@ export const getFoodPreferenceProfile = (
 		allergens: [...(record.allergens ?? [])],
 		dietaryRestrictions: [...(record.dietary_restrictions ?? [])],
 		prioritizedNutrientIds: [...(record.prioritized_nutrient_ids ?? [])],
-		defaultSmoothieServingGrams: record.default_smoothie_serving_grams,
+		defaultMixServingGrams: record.default_smoothie_serving_grams,
 		sensitiveAcknowledgedAt: record.sensitive_acknowledged_at,
 		regulatoryRegionCode: record.regulatory_region_code,
 		regulatoryRegionSource: record.regulatory_region_source as

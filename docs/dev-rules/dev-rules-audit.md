@@ -89,7 +89,7 @@ the local verification commands and required remote workflow.
 **Status:** Open
 
 **Evidence:** Ingredients has a detailed browser/device matrix and accessibility QA, but
-the unfinished Mix, Saved Drinks, Profile, Authentication, and Moderation experiences
+the unfinished Mix, Saved Recipes, Profile, Authentication, and Moderation experiences
 have not completed equivalent real-device and cross-browser passes.
 
 **Affected areas:** `src/routes/mix`, `src/routes/saved`,
@@ -105,9 +105,9 @@ the browser and mobile QA matrices.
 **Status:** Open
 
 **Evidence:** Ingredients defines the approved visual system, Mix has received a
-focused token pass, and Saved Drinks now uses the shared app shell and component-owned
+focused token pass, and Saved Recipes now uses the shared app shell and component-owned
 card/empty-state styles. App typography now uses one guarded semantic scale across
-Root, Authentication, Profile, Moderation, Mix, Saved Drinks, and Ingredients. Those
+Root, Authentication, Profile, Moderation, Mix, Saved Recipes, and Ingredients. Those
 older routes still contain one-off spacing and layout values that require deliberate
 view-level migration rather than a mechanical typography pass. Current examples include
 `src/routes/page.scss`, `src/routes/auth/page.scss`, `src/routes/profile/page.scss`, and
@@ -125,7 +125,7 @@ constants rather than undocumented design choices.
 
 **Status:** Open
 
-**Evidence:** Ingredients, Mix, and Saved Drinks largely compose actions through the
+**Evidence:** Ingredients, Mix, and Saved Recipes largely compose actions through the
 shared button and input primitives. Authentication, Profile, and Moderation still render
 route-local submit buttons and action classes instead of delegating their loading,
 disabled, focus, sizing, and responsive behavior to the same primitives. No feature
@@ -160,7 +160,7 @@ security, accessibility, and browser QA.
 
 **Evidence:** Individual flows are stronger, but the full path from ingredient search or
 barcode entry through nutrition review, list placement, Mix selection, result review,
-and saved-drink reuse still crosses several views and state transitions.
+and saved-recipe reuse still crosses several views and state transitions.
 
 **Complete when:** A prelaunch walkthrough confirms each successful action presents one
 clear next step, preserves state across URL-backed views, avoids duplicate confirmation

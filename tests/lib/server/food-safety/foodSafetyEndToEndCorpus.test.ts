@@ -26,7 +26,7 @@ const createProfile = (
 	allergens,
 	dietaryRestrictions,
 	prioritizedNutrientIds: [],
-	defaultSmoothieServingGrams: null,
+	defaultMixServingGrams: null,
 	sensitiveAcknowledgedAt: "2026-07-31T17:00:00.000Z",
 	regulatoryRegionCode: null,
 	regulatoryRegionSource: null,

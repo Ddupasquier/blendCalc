@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SmoothieCup from "$lib/assets/icons/SmoothieCup/SmoothieCup.svelte";
+	import BrandCup from "$lib/assets/icons/BrandCup/BrandCup.svelte";
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
 	import type { AppHeaderProps } from "./types";
@@ -30,7 +30,7 @@
 			aria-label={`Open ${APP_NAME} ingredients`}
 		>
 			<span class="app-header__mark" aria-hidden="true">
-				<SmoothieCup size={22} />
+				<BrandCup size={22} />
 			</span>
 			<span class="app-header__title">{APP_NAME}</span>
 		</a>

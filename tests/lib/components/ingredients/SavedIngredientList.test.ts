@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList/SavedIngredientList.svelte";
 import type { FdcFood } from "$lib/utils/food/types";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
 const food: FdcFood = {
@@ -40,7 +40,7 @@ describe("SavedIngredientList overlay behavior", () => {
 	});
 
 	const renderList = (
-		activeList: SmoothieListKey = MIX_STORAGE_KEYS.fridge,
+		activeList: IngredientListKey = MIX_STORAGE_KEYS.fridge,
 		canRevealMore = false,
 	) =>
 		render(SavedIngredientList, {

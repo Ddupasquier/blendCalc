@@ -4,10 +4,10 @@ import { getFdcNutrientValue } from "$lib/utils/food/nutrients/fdcNutrients";
 import {
 	getFoodPreferenceWarningMessage,
 } from "$lib/utils/profile/foodPreferenceWarnings";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 
 export type IngredientActionItem = {
-	key: SmoothieListKey;
+	key: IngredientListKey;
 	food: FdcFood;
 };
 
@@ -16,15 +16,15 @@ export type IngredientListMembership = {
 	inShoppingList: boolean;
 };
 
-export const getIngredientActionKey = (key: SmoothieListKey, foodId: number) =>
+export const getIngredientActionKey = (key: IngredientListKey, foodId: number) =>
 	`${key}:${foodId}`;
 
-export const getOppositeIngredientListKey = (key: SmoothieListKey) =>
+export const getOppositeIngredientListKey = (key: IngredientListKey) =>
 	key === MIX_STORAGE_KEYS.fridge
 		? MIX_STORAGE_KEYS.shoppingList
 		: MIX_STORAGE_KEYS.fridge;
 
-export const getIngredientListLabel = (key: SmoothieListKey) =>
+export const getIngredientListLabel = (key: IngredientListKey) =>
 	key === MIX_STORAGE_KEYS.fridge ? "Fridge" : "Shopping List";
 
 export const getIngredientMembershipLabel = (
@@ -38,7 +38,7 @@ export const getIngredientMembershipLabel = (
 	return "";
 };
 
-export const getIngredientMoveLabel = (key: SmoothieListKey) =>
+export const getIngredientMoveLabel = (key: IngredientListKey) =>
 	key === MIX_STORAGE_KEYS.fridge ? "Move to Shopping List" : "Move to Fridge";
 
 export const areFoodIdsEqual = (left: number[], right: number[]) =>

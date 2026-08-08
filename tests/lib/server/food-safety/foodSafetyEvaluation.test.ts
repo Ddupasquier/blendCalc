@@ -26,7 +26,7 @@ const baseProfile: TestPreferenceProfile = {
 	allergens: [],
 	dietaryRestrictions: [],
 	prioritizedNutrientIds: [],
-	defaultSmoothieServingGrams: null,
+	defaultMixServingGrams: null,
 	sensitiveAcknowledgedAt: null,
 	regulatoryRegionCode: null,
 	regulatoryRegionSource: null,

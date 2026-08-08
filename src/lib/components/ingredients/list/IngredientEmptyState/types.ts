@@ -1,6 +1,6 @@
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 
 export type IngredientEmptyStateProps = {
-	activeList: SmoothieListKey;
+	activeList: IngredientListKey;
 	hasItems: boolean;
 };

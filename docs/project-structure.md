@@ -125,8 +125,9 @@ checklist.
 Repository setup and the stable developer command surface remain in the root
 [`README.md`](../README.md). Script execution and organization remain in
 [`scripts/README.md`](../scripts/README.md). Recovery context under
-`docs/local-context/` and prioritized work under `docs/TODO/` are local workflow state,
-not product documentation.
+`docs/local-context/` and active verification under `docs/QA/` are local workflow state,
+not product documentation. Verified unresolved implementation findings remain in the
+maintained development audit instead of a parallel task folder.
 
 ## Ownership Check
 

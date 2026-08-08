@@ -76,11 +76,11 @@
 		type NutrientOption,
 	} from "$lib/utils/mix/ui/mixUi";
 	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
-	import type { SavedDrinkInput } from "$lib/utils/storage/client/savedDrinks";
+	import type { SavedRecipeInput } from "$lib/utils/storage/client/savedRecipes";
 	import {
 		preserveSelectedListItems,
-		SMOOTHIE_LISTS_CHANGED_EVENT,
-	} from "$lib/utils/storage/client/smoothieLists";
+		INGREDIENT_LISTS_CHANGED_EVENT,
+	} from "$lib/utils/storage/client/ingredientLists";
 	import {
 		applyCloudMixGoalTemplate,
 		applyCloudUserMixGoalTemplate,
@@ -293,7 +293,7 @@
 		allIngredientItems.filter((item) => selectedFoodIds.includes(item.fdcId)),
 	);
 	const savedMix = createSavedMixController({
-		buildInput: (name): SavedDrinkInput => ({
+		buildInput: (name): SavedRecipeInput => ({
 			name,
 			foods: selectedFoods,
 			selected,
@@ -306,11 +306,11 @@
 		}),
 		onSaved: closeMixOverlay,
 	});
-	const loadedSavedDrink = $derived(savedMix.state.loaded);
-	const markLoadedSavedDrinkDirty = savedMix.markDirty;
-	const detachLoadedSavedDrink = savedMix.detach;
+	const loadedSavedRecipe = $derived(savedMix.state.loaded);
+	const markLoadedSavedRecipeDirty = savedMix.markDirty;
+	const detachLoadedSavedRecipe = savedMix.detach;
 	const canSaveCurrentMix = $derived(
-		selectedFoods.length > 0 && (!loadedSavedDrink || loadedSavedDrink.isDirty),
+		selectedFoods.length > 0 && (!loadedSavedRecipe || loadedSavedRecipe.isDirty),
 	);
 	const hasCustomGoals = $derived.by(() => {
 		return !areMixGoalsEqual(nutrientGoals, defaultNutrientGoals);
@@ -480,13 +480,13 @@
 		goalTemplateCustomized = keepExistingGoals;
 		selectedGoalTemplateId = template.selectionId;
 		syncTrackedNutrientsToGoals(savedGoals, keepExistingGoals);
-		markLoadedSavedDrinkDirty();
+		markLoadedSavedRecipeDirty();
 		saveMixState();
 		return true;
 	};
 
 	const resetGoals = async () => {
-		detachLoadedSavedDrink();
+		detachLoadedSavedRecipe();
 		if (defaultGoalTemplate) {
 			await applySelectedGoalTemplate(defaultGoalTemplate, false);
 			return;
@@ -501,7 +501,7 @@
 	};
 
 	const clearIngredients = () => {
-		detachLoadedSavedDrink();
+		detachLoadedSavedRecipe();
 		selectedFoodIds = [];
 		const emptyServingState = getEmptyServingState();
 		servingGrams = emptyServingState.servingGrams;
@@ -511,7 +511,7 @@
 	};
 
 	const resetMix = async () => {
-		detachLoadedSavedDrink();
+		detachLoadedSavedRecipe();
 		assignMixState(getDefaultMixState());
 		await resetGoals();
 		saveMixState();
@@ -550,7 +550,7 @@
 
 	const handleChange = (next: (string | number)[]) => {
 		selected = next;
-		markLoadedSavedDrinkDirty();
+		markLoadedSavedRecipeDirty();
 		saveMixState();
 	};
 
@@ -591,7 +591,7 @@
 		};
 		nutrientGoals = nextGoals;
 		goalTemplateCustomized = true;
-		markLoadedSavedDrinkDirty();
+		markLoadedSavedRecipeDirty();
 		saveMixState();
 		void saveNutrientGoals(nextGoals);
 		return true;
@@ -625,7 +625,7 @@
 			...nutrientGoals,
 			[nutrientId]: withMixGoalTargetAmount(existingGoal, parsedValue),
 		};
-		markLoadedSavedDrinkDirty();
+		markLoadedSavedRecipeDirty();
 		goalTemplateCustomized = true;
 	};
 
@@ -633,7 +633,7 @@
 		previewGoal(id, value);
 		const nextGoals = { ...nutrientGoals };
 		nutrientGoals = nextGoals;
-		markLoadedSavedDrinkDirty();
+		markLoadedSavedRecipeDirty();
 		void saveNutrientGoals(nextGoals);
 	};
 
@@ -650,7 +650,7 @@
 			[nutrientId]: { ...goal, upperAmount },
 		};
 		nutrientGoals = nextGoals;
-		markLoadedSavedDrinkDirty();
+		markLoadedSavedRecipeDirty();
 		void saveNutrientGoals(nextGoals);
 	};
 
@@ -670,7 +670,7 @@
 			},
 		};
 		nutrientGoals = nextGoals;
-		markLoadedSavedDrinkDirty();
+		markLoadedSavedRecipeDirty();
 		void saveNutrientGoals(nextGoals);
 	};
 
@@ -777,7 +777,7 @@
 		assignMixState(
 			getStateWithToggledFood(getCurrentMixState(), foodId, allIngredientItems),
 		);
-		markLoadedSavedDrinkDirty();
+		markLoadedSavedRecipeDirty();
 		saveMixState();
 	};
 
@@ -798,7 +798,7 @@
 						nextServingGrams,
 					),
 		);
-		markLoadedSavedDrinkDirty();
+		markLoadedSavedRecipeDirty();
 		saveMixState();
 	};
 
@@ -830,7 +830,7 @@
 				unit,
 			),
 		);
-		markLoadedSavedDrinkDirty();
+		markLoadedSavedRecipeDirty();
 		saveMixState();
 	};
 
@@ -839,10 +839,10 @@
 		loadMixState();
 		loadCloudBackedMixPreferences();
 		mixStateReady = true;
-		window.addEventListener(SMOOTHIE_LISTS_CHANGED_EVENT, loadIngredientLists);
+		window.addEventListener(INGREDIENT_LISTS_CHANGED_EVENT, loadIngredientLists);
 		return () => {
 			window.removeEventListener(
-				SMOOTHIE_LISTS_CHANGED_EVENT,
+				INGREDIENT_LISTS_CHANGED_EVENT,
 				loadIngredientLists,
 			);
 		};
@@ -902,8 +902,8 @@
 	/>
 	<ViewTop compactHidden={headerVisibility.state.hidden}>
 		<MixHeader
-			loadedName={loadedSavedDrink?.name}
-			isDirty={loadedSavedDrink?.isDirty ?? selectedFoodIds.length > 0}
+			loadedName={loadedSavedRecipe?.name}
+			isDirty={loadedSavedRecipe?.isDirty ?? selectedFoodIds.length > 0}
 			canSave={canSaveCurrentMix}
 			optionsOpen={optionsSheetOpen}
 			onSave={() => {
@@ -937,14 +937,14 @@
 		description="Before saving, confirm these totals are close enough to your goals."
 		label="Mix name"
 		placeholder="Post-workout, Low sugar, High fiber…"
-		initialValue={loadedSavedDrink?.name ?? ""}
+		initialValue={loadedSavedRecipe?.name ?? ""}
 		error={savedMix.state.error}
 		busy={savedMix.state.busy}
-		confirmLabel={loadedSavedDrink ? "Overwrite Existing" : "Save Mix"}
-		secondaryConfirmLabel={loadedSavedDrink ? "Save as New" : ""}
+		confirmLabel={loadedSavedRecipe ? "Overwrite Existing" : "Save Recipe"}
+		secondaryConfirmLabel={loadedSavedRecipe ? "Save as New" : ""}
 		cancelLabel="Cancel"
-		onConfirm={loadedSavedDrink ? savedMix.overwrite : savedMix.saveAsNew}
-		onSecondaryConfirm={loadedSavedDrink ? savedMix.saveAsNew : undefined}
+		onConfirm={loadedSavedRecipe ? savedMix.overwrite : savedMix.saveAsNew}
+		onSecondaryConfirm={loadedSavedRecipe ? savedMix.saveAsNew : undefined}
 		onValueChange={savedMix.clearError}
 		onCancel={() => {
 			savedMix.clearError();

@@ -63,7 +63,7 @@ account-scoped unsaved drafts, device-only preferences, and short-lived session 
   - Decorative fruit should remain non-interactive and accessible as decoration.
 - Primary CTA: sign in/start mixing.
 - Landing copy should communicate:
-  - Build smoothies that fit goals.
+  - Build recipes that fit goals.
   - Track nutrients that matter.
   - Adjust ingredients with live feedback.
   - Save mixes for later.
@@ -516,19 +516,19 @@ without changing the visibility behavior.
 
 ### Loaded Mix State
 
-When a saved drink is loaded:
+When a saved recipe is loaded:
 
-- Display the saved drink name at the top.
+- Display the saved recipe name at the top.
 - If unchanged, Save is disabled.
 - If any Mix page value changes, Save becomes enabled.
-- Changes should not mutate the saved drink until user explicitly saves.
+- Changes should not mutate the saved recipe until the user explicitly saves.
 - Reset/clear should detach loaded saved state and start from scratch.
 - Saving supports:
   - Save as new.
   - Overwrite existing.
-- New saved drink names must be unique per user, not globally unique.
+- New saved recipe names must be unique per user, not globally unique.
 
-If a loaded drink contains ingredients no longer in On Hand:
+If a loaded recipe contains ingredients no longer in Fridge:
 
 - Add or route missing items to Shopping List rather than silently failing.
 - Show clear feedback if restore cannot complete.
@@ -780,33 +780,33 @@ Preserve:
 - Numerical comparison between actual totals and goals.
 - Under/near/over status per selected nutrient.
 - User confirmation before saving anyway.
-- Drink name input.
+- Recipe name input.
 - Save as new.
 - Overwrite loaded mix.
 - Cancel.
 - Duplicate name validation per user.
 - Loading state while saving.
 
-## Saved Drinks Page
+## Saved Recipes Page
 
 Routes: `/saved`, `/saved/sort`
 
 Preserve:
 
-- Search saved drinks by drink name or ingredient name.
+- Search saved recipes by recipe name or ingredient name.
 - Sort:
   - Newest first.
   - Oldest first.
   - Name A–Z.
-- Explicit load-more and return-to-top controls for large saved-drink collections.
-- Each saved drink is a shared collapse that starts closed.
-- The closed saved-drink header shows:
-  - Drink name.
+- Explicit load-more and return-to-top controls for large saved-recipe collections.
+- Each saved recipe is a shared collapse that starts closed.
+- The closed saved-recipe header shows:
+  - Recipe name.
   - Total calories when the saved food data supports that calculation.
   - One neutral overall-goal score calculated from every goal with nutrient evidence.
     The score averages each goal's proximity to 100%, so overages and deficits both
     lower it instead of cancelling each other out.
-- The expanded saved-drink body shows:
+- The expanded saved-recipe body shows:
   - Created date.
   - Ingredient count.
   - Up to eight compact ingredient pills using category symbols rather than product
@@ -819,9 +819,9 @@ Preserve:
     nutrients with no reported or derived evidence are omitted rather than displayed
     as zero.
   - One dominant Load action plus compact Share and confirmed Delete actions.
-- `Load` action that loads the drink into Mix.
+- `Load` action that loads the recipe into Mix.
 - Share recipe action.
-- Delete drink action using the shared two-step tap/click confirmation.
+- Delete recipe action using the shared two-step tap/click confirmation.
 - Loading/error states for load/delete.
 - Custom ingredient indicators.
 - Sorting uses the same URL-backed bottom-sheet and pill controls as Ingredients rather
@@ -833,7 +833,7 @@ Preserve:
 - Empty and initial loading states use the quiet open-page presentation and shared
   circular icon framing from Ingredients rather than bordered placeholder cards.
 
-When loading a drink:
+When loading a recipe:
 
 - Restore selected nutrients, goals, foods, serving amounts, and units.
 - Route missing On Hand ingredients to Shopping List where possible.
@@ -908,7 +908,7 @@ Preserve:
   - No preference.
   - Metric.
   - US units.
-- Default smoothie serving size, shown in user-friendly units.
+- Default Mix serving size, shown in user-friendly units.
 - Allergens.
 - Dietary restrictions.
 - Prioritized nutrients.

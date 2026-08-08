@@ -4,13 +4,13 @@ const storage = vi.hoisted(() => ({
 	readCloudCustomFoodByFdcId: vi.fn(),
 	readCloudCustomFoods: vi.fn(),
 	readCloudMixPreferences: vi.fn(),
-	readCloudSavedDrinks: vi.fn(),
-	readCloudSmoothieListIndex: vi.fn(),
+	readCloudSavedRecipes: vi.fn(),
+	readCloudIngredientListIndex: vi.fn(),
 }));
 const serverLists = vi.hoisted(() => ({
-	readCloudSmoothieList: vi.fn(),
-	readCloudSmoothieListFood: vi.fn(),
-	readCloudSmoothieListPage: vi.fn(),
+	readCloudIngredientList: vi.fn(),
+	readCloudIngredientListFood: vi.fn(),
+	readCloudIngredientListPage: vi.fn(),
 }));
 const catalog = vi.hoisted(() => ({
 	getApprovedCatalogRecordByApplicationFoodId: vi.fn(),
@@ -67,17 +67,17 @@ const listIndex = {
 describe("server-loaded user page data", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		serverLists.readCloudSmoothieListPage
+		serverLists.readCloudIngredientListPage
 			.mockResolvedValueOnce({ foods: [{ fdcId: 1 }], totalCount: 1 })
 			.mockResolvedValueOnce({ foods: [{ fdcId: 2 }], totalCount: 1 });
 		storage.readCloudCustomFoods.mockResolvedValue([{ fdcId: -1 }]);
 		storage.readCloudCustomFoodByFdcId.mockResolvedValue(null);
-		storage.readCloudSmoothieListIndex.mockResolvedValue(listIndex);
-		serverLists.readCloudSmoothieListFood.mockResolvedValue(null);
+		storage.readCloudIngredientListIndex.mockResolvedValue(listIndex);
+		serverLists.readCloudIngredientListFood.mockResolvedValue(null);
 		catalog.getApprovedCatalogRecordByApplicationFoodId.mockResolvedValue(null);
 		genericFoods.readGenericFoodByApplicationId.mockResolvedValue(null);
     supabaseAdmin.getSupabaseAdminClient.mockReturnValue(supabaseAdmin.client);
-		serverLists.readCloudSmoothieList.mockImplementation(async (key: string) =>
+		serverLists.readCloudIngredientList.mockImplementation(async (key: string) =>
 			key === MIX_STORAGE_KEYS.fridge ? [{ fdcId: 1 }] : [{ fdcId: 2 }],
 		);
 		storage.readCloudMixPreferences.mockResolvedValue({
@@ -94,7 +94,7 @@ describe("server-loaded user page data", () => {
       },
 			mixState: {},
 		});
-		storage.readCloudSavedDrinks.mockResolvedValue([{ id: "drink-1" }]);
+		storage.readCloudSavedRecipes.mockResolvedValue([{ id: "recipe-1" }]);
 		provenance.readIngredientProvenanceOptions.mockResolvedValue([
 			{ dimension: "trust", value: "source-verified" },
 		]);
@@ -119,11 +119,11 @@ describe("server-loaded user page data", () => {
 		expect(result.routeFood).toBeNull();
 		expect(result.listIndex).toEqual(listIndex);
 		expect(result.loadError).toBe("");
-		expect(serverLists.readCloudSmoothieListPage).toHaveBeenCalledTimes(2);
+		expect(serverLists.readCloudIngredientListPage).toHaveBeenCalledTimes(2);
 	});
 
 	it("hydrates the exact routed food even when it is outside the first page", async () => {
-		serverLists.readCloudSmoothieListFood.mockResolvedValueOnce({
+		serverLists.readCloudIngredientListFood.mockResolvedValueOnce({
 			fdcId: 99,
 			description: "Original Routed Food",
 		});
@@ -137,7 +137,7 @@ describe("server-loaded user page data", () => {
 			fdcId: 99,
 			description: "Original Routed Food",
 		});
-		expect(serverLists.readCloudSmoothieListFood).toHaveBeenCalledWith(
+		expect(serverLists.readCloudIngredientListFood).toHaveBeenCalledWith(
 			MIX_STORAGE_KEYS.fridge,
 			99,
 			context,
@@ -182,24 +182,24 @@ describe("server-loaded user page data", () => {
 	it("loads Saved data before rendering the page", async () => {
 		const result = await loadSavedPageData(context);
 
-		expect(result.drinks).toEqual([{ id: "drink-1" }]);
+		expect(result.recipes).toEqual([{ id: "recipe-1" }]);
 		expect(result.loadError).toBe("");
 	});
 
 	it("returns an honest empty error state instead of stale browser data", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => undefined);
-		storage.readCloudSavedDrinks.mockRejectedValueOnce(new Error("offline"));
+		storage.readCloudSavedRecipes.mockRejectedValueOnce(new Error("offline"));
 
 		await expect(loadSavedPageData(context)).resolves.toEqual({
-			drinks: [],
-			loadError: "Your saved drinks could not be loaded. Try again.",
+			recipes: [],
+			loadError: "Your saved recipes could not be loaded. Try again.",
 		});
 	});
 
 	it("returns an honest Ingredients error state without stale records", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => undefined);
-		serverLists.readCloudSmoothieListPage.mockReset();
-		serverLists.readCloudSmoothieListPage.mockRejectedValueOnce(
+		serverLists.readCloudIngredientListPage.mockReset();
+		serverLists.readCloudIngredientListPage.mockRejectedValueOnce(
 			new Error("offline"),
 		);
 
@@ -226,7 +226,7 @@ describe("server-loaded user page data", () => {
 
 	it("returns an honest Mix error state without stale records", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => undefined);
-		serverLists.readCloudSmoothieList.mockRejectedValueOnce(
+		serverLists.readCloudIngredientList.mockRejectedValueOnce(
 			new Error("offline"),
 		);
 

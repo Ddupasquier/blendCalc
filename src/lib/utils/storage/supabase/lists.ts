@@ -2,7 +2,7 @@ import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { compactFood, uniqueFoodsById } from "$lib/utils/food/records/foodRecords";
 import { uniqueFoodsByIdentity } from "$lib/utils/food/records/foodIdentity";
 import type { FdcFood } from "$lib/utils/food/types";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import {
 	CLOUD_CURSOR_PAGE_SIZE,
 	type CloudDataContext,
@@ -29,25 +29,25 @@ export type CloudListRenameResult =
 	| "invalid"
 	| "error";
 
-export type CloudSmoothieListIndex = Record<
-	SmoothieListKey,
+export type CloudIngredientListIndex = Record<
+	IngredientListKey,
 	{
 		foodIds: number[];
 		foodIdentityKeys: string[];
 	}
 >;
 
-const getCloudListType = (key: SmoothieListKey): CloudListType => {
+const getCloudListType = (key: IngredientListKey): CloudListType => {
 	return key === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping";
 };
 
-const getCloudListApiPath = (key: SmoothieListKey) =>
+const getCloudListApiPath = (key: IngredientListKey) =>
 	key === MIX_STORAGE_KEYS.fridge
 		? "/api/user-food-lists/fridge"
 		: "/api/user-food-lists/shopping-list";
 
 const placeFoodsThroughServer = async (
-	key: SmoothieListKey,
+	key: IngredientListKey,
 	body: Record<string, unknown>,
 ) => {
 	try {
@@ -69,7 +69,7 @@ const placeFoodsThroughServer = async (
 
 export type CloudListSort = "recent" | "oldest" | "name-asc" | "name-desc";
 
-export type CloudSmoothieListPageOptions = {
+export type CloudIngredientListPageOptions = {
 	limit: number;
 	offset?: number;
 	query?: string;
@@ -78,9 +78,9 @@ export type CloudSmoothieListPageOptions = {
 	trustFilter?: string;
 };
 
-export const readCloudSmoothieListIndex = async (
+export const readCloudIngredientListIndex = async (
 	context?: CloudDataContext,
-): Promise<CloudSmoothieListIndex | null> => {
+): Promise<CloudIngredientListIndex | null> => {
 	const cloud = await resolveCloudDataContext(context);
 	if (!cloud) return null;
 	const { supabase, userId } = cloud;
@@ -97,7 +97,7 @@ export const readCloudSmoothieListIndex = async (
 		return await query;
 	});
 
-	const index: CloudSmoothieListIndex = {
+	const index: CloudIngredientListIndex = {
 		[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
 		[MIX_STORAGE_KEYS.shoppingList]: { foodIds: [], foodIdentityKeys: [] },
 	};
@@ -115,8 +115,8 @@ export const readCloudSmoothieListIndex = async (
 	return index;
 };
 
-export const writeCloudSmoothieList = async (
-	key: SmoothieListKey,
+export const writeCloudIngredientList = async (
+	key: IngredientListKey,
 	foods: FdcFood[],
 	context?: CloudDataContext,
 ) => {
@@ -131,8 +131,8 @@ export const writeCloudSmoothieList = async (
 	return result === "added" || result === "duplicate";
 };
 
-export const renameCloudSmoothieListItem = async (
-	key: SmoothieListKey,
+export const renameCloudIngredientListItem = async (
+	key: IngredientListKey,
 	foodId: number,
 	description: string,
 	context?: CloudDataContext,
@@ -159,8 +159,8 @@ export const renameCloudSmoothieListItem = async (
 	return "error";
 };
 
-export const placeCloudSmoothieListItem = async (
-	key: SmoothieListKey,
+export const placeCloudIngredientListItem = async (
+	key: IngredientListKey,
 	food: FdcFood,
 	allowMove = false,
 	context?: CloudDataContext,
@@ -183,9 +183,9 @@ export const placeCloudSmoothieListItem = async (
 	return "error";
 };
 
-export const moveCloudSmoothieListItems = async (
-	sourceKey: SmoothieListKey,
-	targetKey: SmoothieListKey,
+export const moveCloudIngredientListItems = async (
+	sourceKey: IngredientListKey,
+	targetKey: IngredientListKey,
 	foodIds: number[],
 	context?: CloudDataContext,
 ) => {
@@ -204,8 +204,8 @@ export const moveCloudSmoothieListItems = async (
 	return !error && data === uniqueFoodIds.length;
 };
 
-export const removeCloudSmoothieListItem = async (
-	key: SmoothieListKey,
+export const removeCloudIngredientListItem = async (
+	key: IngredientListKey,
 	foodId: number,
 ) => {
 	try {

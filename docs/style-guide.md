@@ -10,7 +10,7 @@ buttons, dropdowns, popovers, sheets, dialogs/modals, scanner, loading and empty
 confirmation flows, nutrition details, and privileged controls.
 
 The current Ingredients page, ingredient search, manual entry, nutrition details, and
-their shared components are the only visual reference for this guide. Mix, Saved Drinks,
+their shared components are the only visual reference for this guide. Mix, Saved Recipes,
 Profile, and Moderation are not finished enough to define the system. Their current
 styles must not override or expand this guide unless a deliberate redesign brings them
 into the Ingredients system first.
@@ -35,7 +35,7 @@ All UI work must:
 6. Record intentional exceptions in the relevant component or feature documentation,
    including why the shared pattern does not fit and whether the difference should later
    become reusable.
-7. Never derive a new global rule from unfinished Mix, Saved Drinks, Profile, or
+7. Never derive a new global rule from unfinished Mix, Saved Recipes, Profile, or
    Moderation UI.
 8. Compare every UI change with the closest approved Ingredients pattern before and
    after implementation. Review all applicable states and every consumer of a changed
@@ -795,7 +795,7 @@ editing a view or component:
 10. If the difference establishes a new mandatory practice, propose or update a
    development rule.
 
-Do not copy unfinished Mix or Saved Drinks markup/styles into a new view simply because
+Do not copy unfinished Mix or Saved Recipes markup/styles into a new view simply because
 they already exist.
 
 ## Review Checklist

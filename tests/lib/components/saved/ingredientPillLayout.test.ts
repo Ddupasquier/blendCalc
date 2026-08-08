@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	getIngredientPillSpan,
 	packIngredientPills,
-} from "$lib/components/saved/SavedDrinkIngredientPills/ingredientPillLayout";
+} from "$lib/components/saved/SavedRecipeIngredientPills/ingredientPillLayout";
 import type { FdcFood } from "$lib/utils/food/types";
 
 const food = (

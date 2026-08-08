@@ -7,8 +7,8 @@ describe("Saved view architecture", () => {
 
 		expect(page).toContain("<ViewFrame appShell");
 		expect(page).toContain("<ViewHeader");
-		expect(page).toContain("<SavedDrinkCard");
-		expect(page).toContain("<SavedDrinksEmptyState");
+		expect(page).toContain("<SavedRecipeCard");
+		expect(page).toContain("<SavedRecipesEmptyState");
 		expect(page).toContain("<ListSortSheet");
 		expect(page).toContain("<PaginatedListControls");
 		expect(page).toContain("createScrollDirectionTracker");
@@ -21,37 +21,37 @@ describe("Saved view architecture", () => {
 	it("keeps component presentation with each component owner", () => {
 		const pageStyles = readFileSync("src/routes/saved/page.scss", "utf8");
 		const cardStyles = readFileSync(
-			"src/lib/components/saved/SavedDrinkCard/SavedDrinkCard.scss",
+			"src/lib/components/saved/SavedRecipeCard/SavedRecipeCard.scss",
 			"utf8",
 		);
 		const emptyStateStyles = readFileSync(
-			"src/lib/components/saved/SavedDrinksEmptyState/SavedDrinksEmptyState.scss",
+			"src/lib/components/saved/SavedRecipesEmptyState/SavedRecipesEmptyState.scss",
 			"utf8",
 		);
 
 		expect(pageStyles).toContain(".saved-page__scroll");
-		expect(pageStyles).not.toContain(".saved-drink-card");
-		expect(cardStyles).toContain(".saved-drink-card");
+		expect(pageStyles).not.toContain(".saved-recipe-card");
+		expect(cardStyles).toContain(".saved-recipe-card");
 		expect(cardStyles).not.toContain("box-shadow");
 		expect(emptyStateStyles).not.toContain("$app-shell-border-subtle");
 	});
 
 	it("shares metadata and compact action primitives instead of duplicating pills", () => {
 		const card = readFileSync(
-			"src/lib/components/saved/SavedDrinkCard/SavedDrinkCard.svelte",
+			"src/lib/components/saved/SavedRecipeCard/SavedRecipeCard.svelte",
 			"utf8",
 		);
 		const goals = readFileSync(
-			"src/lib/components/saved/SavedDrinkGoalPills/SavedDrinkGoalPills.svelte",
+			"src/lib/components/saved/SavedRecipeGoalPills/SavedRecipeGoalPills.svelte",
 			"utf8",
 		);
 		const ingredients = readFileSync(
-			"src/lib/components/saved/SavedDrinkIngredientPills/SavedDrinkIngredientPills.svelte",
+			"src/lib/components/saved/SavedRecipeIngredientPills/SavedRecipeIngredientPills.svelte",
 			"utf8",
 		);
 
 		expect(card).toContain("<MetadataPill");
-		expect(card).toContain("<SavedDrinkExportAction");
+		expect(card).toContain("<SavedRecipeExportAction");
 		expect(card).toContain("compact");
 		expect(goals).toContain("<MetadataPill");
 		expect(ingredients).toContain("<MetadataPill");

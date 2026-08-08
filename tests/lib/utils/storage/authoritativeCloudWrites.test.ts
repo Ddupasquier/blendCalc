@@ -11,15 +11,15 @@ vi.mock("$lib/supabase/client", () => ({
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { FdcFood } from "$lib/utils/food/types";
 import {
-	moveCloudSmoothieListItems,
-	removeCloudSmoothieListItem,
-	renameCloudSmoothieListItem,
-	writeCloudSmoothieList,
+	moveCloudIngredientListItems,
+	removeCloudIngredientListItem,
+	renameCloudIngredientListItem,
+	writeCloudIngredientList,
 } from "$lib/utils/storage/supabase/lists";
 import {
-	deleteCloudSavedDrink,
-	saveCloudSavedDrinkWithResult,
-} from "$lib/utils/storage/supabase/savedDrinks";
+	deleteCloudSavedRecipe,
+	saveCloudSavedRecipeWithResult,
+} from "$lib/utils/storage/supabase/savedRecipes";
 import {
   saveCloudMixGoalConfiguration,
 	saveCloudMixPreferences,
@@ -59,24 +59,24 @@ describe("authoritative Supabase write adapters", () => {
 			.mockResolvedValueOnce({ data: "renamed", error: null });
 
 		await expect(
-			writeCloudSmoothieList(MIX_STORAGE_KEYS.fridge, [food]),
+			writeCloudIngredientList(MIX_STORAGE_KEYS.fridge, [food]),
 		).resolves.toBe(true);
 		await expect(
-			moveCloudSmoothieListItems(
+			moveCloudIngredientListItems(
 				MIX_STORAGE_KEYS.fridge,
 				MIX_STORAGE_KEYS.shoppingList,
 				[food.fdcId],
 			),
 		).resolves.toBe(true);
 		await expect(
-			renameCloudSmoothieListItem(
+			renameCloudIngredientListItem(
 				MIX_STORAGE_KEYS.fridge,
 				food.fdcId,
 				"Roma Tomato",
 			),
 		).resolves.toBe("renamed");
 		await expect(
-			removeCloudSmoothieListItem(MIX_STORAGE_KEYS.fridge, food.fdcId),
+			removeCloudIngredientListItem(MIX_STORAGE_KEYS.fridge, food.fdcId),
 		).resolves.toBe(true);
 
 		expect(supabase.rpc.mock.calls.map(([name]) => name)).toEqual([
@@ -98,11 +98,11 @@ describe("authoritative Supabase write adapters", () => {
 		);
 	});
 
-	it("uses database functions for saved-drink writes and deletes", async () => {
+	it("uses database functions for saved-recipe writes and deletes", async () => {
 		supabase.rpc
 			.mockResolvedValueOnce({ data: "saved", error: null })
 			.mockResolvedValueOnce({ data: true, error: null });
-		const drink = {
+		const recipe = {
 			id: "a9c6baf0-350f-44c5-baad-343634db28a0",
 			name: "Tomato Test",
 			createdAt: 1_700_000_000_000,
@@ -116,8 +116,8 @@ describe("authoritative Supabase write adapters", () => {
 			servingUnits: {},
 		};
 
-		await expect(saveCloudSavedDrinkWithResult(drink)).resolves.toBe("saved");
-		await expect(deleteCloudSavedDrink(drink.id)).resolves.toBe(true);
+		await expect(saveCloudSavedRecipeWithResult(recipe)).resolves.toBe("saved");
+		await expect(deleteCloudSavedRecipe(recipe.id)).resolves.toBe(true);
 		expect(supabase.rpc.mock.calls.map(([name]) => name)).toEqual([
 			"save_saved_drink",
 			"delete_saved_drink",
