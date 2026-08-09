@@ -1,4 +1,4 @@
-import { expect, test, waitForAppReady } from "./support/browserTest";
+import { expect, test, waitForVisualStability } from "./support/browserTest";
 
 test("Ingredients keeps its approved desktop and phone composition", async ({
 	page,
@@ -9,19 +9,7 @@ test("Ingredients keeps its approved desktop and phone composition", async ({
 	);
 
 	await page.goto("/ingredients/fridge");
-	await waitForAppReady(page);
-	await page.evaluate(async () => {
-		await document.fonts.ready;
-		await Promise.all(
-			Array.from(document.images).map((image) => {
-				if (image.complete) return Promise.resolve();
-				return new Promise<void>((resolve) => {
-					image.addEventListener("load", () => resolve(), { once: true });
-					image.addEventListener("error", () => resolve(), { once: true });
-				});
-			}),
-		);
-	});
+	await waitForVisualStability(page);
 
 	await expect(page.locator(".view-frame")).toHaveScreenshot(
 		"ingredients-fridge.png",

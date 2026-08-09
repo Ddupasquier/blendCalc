@@ -28,6 +28,7 @@ describe("Playwright browser-testing architecture", () => {
 
 	it("exposes maintained local-database browser commands and documentation", () => {
 		const packageSource = readSource("package.json");
+		const testingStrategy = readSource("docs/testing.md");
 		const browserTestingGuide = readSource("docs/browser-testing.md");
 		const developmentRules = readSource("docs/dev-rules/dev-rules.md");
 
@@ -43,17 +44,26 @@ describe("Playwright browser-testing architecture", () => {
 		expect(packageSource).toContain("npm run db:test:start");
 		expect(packageSource).toContain("npm run free:test-port");
 		expect(packageSource).toContain("--port 5174 --strictPort");
+		expect(testingStrategy).toContain("## Ownership");
+		expect(testingStrategy).toContain("## Parallelism");
+		expect(testingStrategy).toContain("Migrating every test into Playwright");
 		expect(browserTestingGuide).toContain("## QA Evidence");
-		expect(developmentRules).toContain("npm run test:e2e:chromium");
+		expect(developmentRules).toContain("[Testing Strategy](../testing.md)");
 	});
 
 	it("owns rendered accessibility and responsive behavior in browser tests", () => {
 		const accessibilitySuite = readSource("tests/e2e/accessibility.spec.ts");
 		const responsiveSuite = readSource("tests/e2e/responsiveLayouts.spec.ts");
+		const applicationVisualSuite = readSource(
+			"tests/e2e/applicationVisualRegression.spec.ts",
+		);
 		expect(accessibilitySuite).toContain("@axe-core/playwright");
 		expect(accessibilitySuite).toContain('disableRules(["color-contrast"])');
 		expect(responsiveSuite).toContain("document.documentElement.scrollWidth");
 		expect(responsiveSuite).toContain('reducedMotion: "reduce"');
+		expect(applicationVisualSuite).toContain('route: "/mix"');
+		expect(applicationVisualSuite).toContain('route: "/saved"');
+		expect(applicationVisualSuite).not.toContain('route: "/profile"');
 	});
 
 	it("stores authentication and generated reports only under ignored test output", () => {

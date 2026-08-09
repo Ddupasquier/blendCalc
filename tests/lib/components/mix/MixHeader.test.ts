@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import MixHeader from "$lib/components/mix/layout/MixHeader/MixHeader.svelte";
 
 describe("MixHeader", () => {
-	it("uses circular icon actions and opens the options sheet trigger", async () => {
+	it("routes options and save actions through their callbacks", async () => {
 		const onOpenOptions = vi.fn();
 		const onSave = vi.fn();
 
@@ -20,12 +20,6 @@ describe("MixHeader", () => {
 		const saveButton = screen.getByRole("button", { name: "Save mix" });
 
 		expect(optionsButton).toHaveAttribute("aria-expanded", "false");
-		expect(optionsButton).toHaveClass("circle-icon-button", "mix-header__action");
-		expect(saveButton).toHaveClass(
-			"circle-icon-button",
-			"mix-header__action",
-			"mix-header__save",
-		);
 
 		await fireEvent.click(optionsButton);
 		await fireEvent.click(saveButton);

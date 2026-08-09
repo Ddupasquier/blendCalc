@@ -2,7 +2,8 @@
 
 blendCalc uses a resettable local Supabase stack for migration, RLS, Auth, Storage,
 and database-integration testing. The local stack is isolated from the linked production
-project and contains only disposable QA data.
+project and contains only disposable QA data. The [Testing Strategy](testing.md) decides
+which layer owns a test; this guide covers the local database environment.
 
 ## First Run
 
@@ -37,13 +38,13 @@ baseline records without moving a tester's existing list items. Use
 
 | Persona | Email | Deterministic state |
 |---|---|---|
-| Populated | `qa-user@blendcalc.local` | 60 Fridge items, 40 Shopping items, 4 Saved mixes, one active 10-food Mix, tutorial complete |
+| Populated | `qa-user@blendcalc.local` | 60 Fridge items, 40 Shopping items, 4 Saved Recipes, one active 10-food Mix, tutorial complete |
 | Warnings | `qa-preferences@blendcalc.local` | Vegan and gluten-free restrictions; peanut and shellfish allergies; 7 foods covering beef, shrimp, dairy, peanut, wheat/soy, egg, and tree nuts |
-| Empty | `qa-empty@blendcalc.local` | No list items, Saved mixes, or Mix state; tutorial complete |
+| Empty | `qa-empty@blendcalc.local` | No list items, Saved Recipes, or Mix state; tutorial complete |
 | Onboarding | `qa-onboarding@blendcalc.local` | Guided tour pending, 10 Fridge foods, `QA Morning Green`, and an active Mix so every tour target exists |
-| Moderator | `qa-moderator@blendcalc.local` | Moderator claim, 6 list items, one Saved mix, and access to two deterministic catalog-review cases |
-| Admin | `qa-admin@blendcalc.local` | Admin claim, 6 list items, one Saved mix, moderation access, and data-health access |
-| Developer | `qa-developer@blendcalc.local` | Developer claim, 6 list items, one Saved mix, full privileged capability coverage, and protected-account boundaries |
+| Moderator | `qa-moderator@blendcalc.local` | Moderator claim, 6 list items, one Saved Recipe, and access to two deterministic catalog-review cases |
+| Admin | `qa-admin@blendcalc.local` | Admin claim, 6 list items, one Saved Recipe, moderation access, and data-health access |
+| Developer | `qa-developer@blendcalc.local` | Developer claim, 6 list items, one Saved Recipe, full privileged capability coverage, and protected-account boundaries |
 
 The populated account includes `QA Morning Green` (10 ingredients), `QA Berry Repeat`,
 `QA Export Berry Mix`, and `QA Server Load`. The Saved view can therefore test collapsed
@@ -65,13 +66,12 @@ fixed-ID submissions are not recreated by `start` after they have been reviewed;
 | `npm run db:test:status` | Print local service URLs and status. |
 | `npm run db:test:stop` | Stop the local Supabase stack while retaining its Docker volume. |
 | `npm run dev:test` | Start SvelteKit in test mode against `.env.test.local` at `http://localhost:5174`. |
-| `npm run test:e2e:chromium` | Prepare the local stack and run focused desktop/phone Chromium browser coverage. |
-| `npm run test:e2e` | Prepare the local stack and run the complete Playwright Chromium, Firefox, and WebKit project matrix. |
 
 Playwright is the browser-facing consumer of this disposable environment. It signs in
 through the real local Auth UI, uses the seeded personas and catalog, and stores generated
 session state only under ignored test output. See [Browser Testing](browser-testing.md)
-for browser ownership, projects, visual baselines, and commands.
+for projects, snapshots, and commands, and [Testing Strategy](testing.md) for ownership
+and execution stages.
 
 ## Safety Boundary
 
@@ -130,7 +130,7 @@ npm run db:test:reset
 ```
 
 This reset deletes disposable local QA records, replays all migrations, and recreates
-the maintained reference fixtures, personas, Saved mixes, Mix state, preferences,
+the maintained reference fixtures, personas, Saved Recipes, Mix state, preferences,
 tutorial state, Storage evidence, and moderation queue.
 
 Resetting recreates Auth users with new IDs. A browser session created before the reset

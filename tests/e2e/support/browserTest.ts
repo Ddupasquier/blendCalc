@@ -52,4 +52,20 @@ export const waitForAppReady = async (page: Page) => {
 	);
 };
 
+export const waitForVisualStability = async (page: Page) => {
+	await waitForAppReady(page);
+	await page.evaluate(async () => {
+		await document.fonts.ready;
+		await Promise.all(
+			Array.from(document.images).map((image) => {
+				if (image.complete) return Promise.resolve();
+				return new Promise<void>((resolve) => {
+					image.addEventListener("load", () => resolve(), { once: true });
+					image.addEventListener("error", () => resolve(), { once: true });
+				});
+			}),
+		);
+	});
+};
+
 export { expect };

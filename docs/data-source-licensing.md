@@ -12,6 +12,16 @@ not replace professional legal review before a public API or commercial data pro
 launched. When source terms, integrations, storage, attribution, or API publication
 behavior change, update this document and the database policy in the same change.
 
+## Ledger Navigation
+
+| Area | Sections |
+| --- | --- |
+| Decision model | [Compliance model](#compliance-model) and [status summary](#status-summary) |
+| Food data | [USDA](#usda-fooddata-central), [Open Food Facts](#open-food-facts), [CNF](#canadian-nutrient-file-2026), [CoFID](#uk-cofid-2021), and [Australian data](#australian-food-composition-database-release-3) |
+| Standards and tools | [UCUM](#ucum-and-the-nlm-ucum-service), [GS1 Digital Link](#gs1-digital-link), and [label OCR](#nutrition-label-ocr-and-tesseractjs) |
+| Images and community data | [Product images](#product-images), [community submissions](#community-and-user-label-data), and [inactive sources](#retired-or-inactive-sources) |
+| Release work | [Known blockers](#known-gaps-and-release-blockers), [source changes](#adding-or-changing-a-source), [public API gate](#public-api-release-gate), and [repository locations](#authoritative-repository-locations) |
+
 ## Compliance Model
 
 blendCalc separates source evidence from canonical published data:

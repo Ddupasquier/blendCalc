@@ -94,8 +94,9 @@ primary route health, client navigation and history, URL-backed ingredient overl
 focus/draft persistence, manual-entry validation and category lookup, shared selects and
 segmented controls, Mix goal and ingredient interactions, nutrition amount controls,
 Saved recipe disclosures and confirmation, Profile controls, tutorial navigation,
-responsive overflow, reduced motion, structural WCAG scans, and approved Ingredients
-snapshots. Browser-owned component-test duplication has been removed while synthetic
+responsive overflow, reduced motion, structural WCAG scans, and deterministic
+Ingredients, Mix, and Saved Recipes snapshots. Browser-owned component-test duplication
+has been removed while synthetic
 failure, callback, data-policy, and calculation contracts remain focused in Vitest.
 Existing shared light-theme color contrast failures
 remain open, and the unfinished views have not completed equivalent real-device,

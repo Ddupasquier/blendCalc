@@ -2,7 +2,9 @@
 
 Playwright owns deterministic browser behavior and visual regression coverage. It runs
 the application against the disposable local Supabase test database so authenticated
-tests never depend on production data or external food providers.
+tests never depend on production data or external food providers. The
+[Testing Strategy](testing.md) decides which layer owns a test; this guide covers
+Playwright setup and authoring.
 
 ## Ownership
 
@@ -17,15 +19,9 @@ model, including:
 - automated WCAG structure checks through `@axe-core/playwright`;
 - approved, deterministic visual snapshots.
 
-Keep pure functions, isolated component state, server handlers, database contracts,
-source-code architecture, and migration assertions in Vitest or the database test
-suite. Do not preserve a source-string assertion after equivalent rendered behavior is
-covered by Playwright unless the source boundary itself is an intentional contract.
-Existing jsdom interaction tests must be migrated and removed whenever the same
-user-observable behavior is reachable deterministically through the real application.
-Keep a focused component test only when it proves an isolated callback, synthetic
-failure, data-policy branch, or calculation that the routed browser flow cannot create
-honestly without weakening determinism.
+Do not keep a source-string or jsdom interaction assertion after Playwright covers the
+same rendered behavior unless the source boundary is itself a contract. Keep
+non-browser behavior in the layer assigned by the [Testing Strategy](testing.md).
 
 Playwright does not replace physical-device camera and permission checks, VoiceOver,
 TalkBack, named installed-browser sign-off, or subjective visual approval. Those remain
@@ -59,6 +55,8 @@ production.
 Browser projects run serially because they intentionally share one deterministic QA
 account and one local database. Parallel projects could race persisted theme, Mix,
 selection, tutorial, and recipe state and make otherwise correct browser checks flaky.
+Do not raise the worker count until the isolation gates in
+[Testing Strategy: Parallelism](testing.md#parallelism) are met.
 
 ## Commands
 
@@ -76,6 +74,19 @@ npm run test:e2e:update
 - `test:e2e:headed` shows the desktop Chromium run.
 - `test:e2e:ui` opens Playwright's test explorer.
 - `test:e2e:update` deliberately refreshes tracked Chromium visual baselines.
+
+Tracked visual baselines currently cover the approved Ingredients composition plus the
+current Mix and Saved Recipes compositions at desktop Chromium and the shared 360×740
+phone viewport. Profile and Moderation remain outside snapshot approval until their
+planned visual rebuilds are complete.
+
+After `npm run db:test:start` prepares the database, use direct commands for focused
+iteration without repeating database setup:
+
+```bash
+npx playwright test tests/e2e/affectedInteractions.spec.ts --project=desktop-chromium
+npx playwright test --last-failed
+```
 
 Install browser binaries after a fresh dependency install or Playwright upgrade.
 Generated reports, traces, videos, authentication state, and failure screenshots remain
@@ -99,7 +110,11 @@ beside their test files and are tracked.
 - Test representative positive, negative, and boundary cases rather than one example.
 - Limit screenshot baselines to stable content and mask externally sourced image pixels
   when the image itself is not the contract.
+- Do not approve a snapshot for a view whose visual rebuild is knowingly incomplete;
+  doing so preserves debt instead of protecting an accepted design.
 - Update snapshots only after reviewing the rendered diff.
+- Use compact output for unattended successful runs. Open the retained HTML report,
+  trace, screenshot, or video only when a failure needs investigation.
 
 ## QA Evidence
 
