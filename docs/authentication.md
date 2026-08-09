@@ -42,6 +42,7 @@ In **Authentication → URL Configuration**:
 - Site URL: `https://blendcalc.vercel.app`
 - Redirect URL: `https://blendcalc.vercel.app/auth/callback`
 - Redirect URL: `http://localhost:5173/auth/callback`
+- Test Redirect URL: `http://localhost:5174/auth/callback`
 - Preview Redirect URL: `https://*-<vercel-account-slug>.vercel.app/auth/callback`
 
 Keep exact callback URLs for production and localhost. Restrict the Preview wildcard to
@@ -51,6 +52,7 @@ In **Authentication → Sign In / Providers → Google**, use the Google client 
 secret. In Google Cloud, configure:
 
 - JavaScript origin: `http://localhost:5173`
+- Test JavaScript origin: `http://localhost:5174`
 - JavaScript origin: `https://blendcalc.vercel.app`
 - Redirect URI: the Supabase callback displayed in the Google provider panel, such as
   `https://YOUR_PROJECT.supabase.co/auth/v1/callback`
