@@ -103,60 +103,6 @@ describe("SavedIngredientCard action controls", () => {
 });
 
 describe("SavedIngredientCard selection mode", () => {
-	it("enters selection mode after a deliberate hold", async () => {
-		vi.useFakeTimers();
-		const onEnterSelection = vi.fn();
-		try {
-			render(SavedIngredientCard, {
-				props: { ...baseProps, onEnterSelection },
-			});
-			const preview = screen.getByRole("button", { name: "Preview Ground Beef" });
-
-			await fireEvent.pointerDown(preview, {
-				button: 0,
-				isPrimary: true,
-				pointerId: 1,
-				pointerType: "touch",
-			});
-			vi.advanceTimersByTime(500);
-
-			expect(onEnterSelection).toHaveBeenCalledOnce();
-		} finally {
-			vi.useRealTimers();
-		}
-	});
-
-	it("uses card taps for selection and hides unrelated actions in selection mode", async () => {
-		const onToggle = vi.fn();
-		const { container } = render(SavedIngredientCard, {
-			props: {
-				...baseProps,
-				selectionMode: true,
-				onToggle,
-			},
-		});
-
-		const cardTarget = screen.getByRole("button", {
-			name: "Select Ground Beef",
-		});
-		const title = screen.getByText("Ground Beef");
-
-		expect(title.closest("button")).toBeNull();
-		expect(cardTarget).toHaveClass("saved-ingredient-card__select");
-		expect(container.querySelector(".saved-ingredient-card__copy"))
-			.toContainElement(title);
-
-		await fireEvent.click(cardTarget);
-
-		expect(onToggle).toHaveBeenCalledOnce();
-		expect(
-			screen.queryByRole("button", { name: "Move to Shopping List: Ground Beef" }),
-		).not.toBeInTheDocument();
-		expect(
-			screen.queryByRole("button", { name: "Remove Ground Beef" }),
-		).not.toBeInTheDocument();
-	});
-
 	it("uses one pressed card button and a non-color selected cue", () => {
 		const { container } = render(SavedIngredientCard, {
 			props: {

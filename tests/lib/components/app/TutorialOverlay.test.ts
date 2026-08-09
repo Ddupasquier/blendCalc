@@ -40,34 +40,6 @@ const clickReadyButton = async (name: string) => {
 };
 
 describe("TutorialOverlay", () => {
-	it("moves through concise route-aware tutorial steps", async () => {
-		const { onNavigate } = renderTutorial();
-
-    expect(
-      screen.getByRole("heading", { name: "Find the foods you use" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(`Step 1 of ${tutorialSteps.length}`),
-    ).toBeInTheDocument();
-
-		await clickReadyButton("Next");
-		await screen.findByRole("heading", { name: "Scan packaged foods" });
-
-		await clickReadyButton("Next");
-		await screen.findByRole("heading", { name: "Open one ingredient" });
-
-		await clickReadyButton("Next");
-		await screen.findByRole("heading", { name: "Manage that ingredient" });
-
-		await clickReadyButton("Next");
-		await waitFor(() => {
-			expect(onNavigate).toHaveBeenCalledWith("/mix");
-		});
-    expect(
-      screen.getByRole("heading", { name: "Choose what goes into Mix" }),
-    ).toBeInTheDocument();
-  });
-
   it("draws a rounded spotlight around the current feature", async () => {
     const viewFrame = document.createElement("main");
     viewFrame.className = "view-frame";
@@ -142,65 +114,6 @@ describe("TutorialOverlay", () => {
 		).toBeInTheDocument();
 
     viewFrame.remove();
-  });
-
-  it("locks scrolling and background interaction until the tour closes", async () => {
-    const header = document.createElement("header");
-    header.className = "app-header";
-    const opener = document.createElement("button");
-    opener.type = "button";
-    opener.textContent = "Open tutorial";
-    header.append(opener);
-    const navigation = document.createElement("nav");
-    navigation.className = "tab-nav";
-    const main = document.createElement("main");
-    main.className = "app-main";
-    document.body.append(header, navigation, main);
-    opener.focus();
-
-    const view = render(TutorialOverlay, {
-      props: {
-        open: true,
-        pathname: "/ingredients/fridge",
-        onNavigate: vi.fn(),
-        onFinish: vi.fn(() => true),
-      },
-    });
-
-    await waitFor(() => {
-      expect(main).toHaveAttribute("inert");
-    });
-    expect(header).toHaveAttribute("inert");
-    expect(navigation).toHaveAttribute("inert");
-    expect(document.documentElement.style.overflow).toBe("hidden");
-    expect(document.body.style.overflow).toBe("hidden");
-    await waitFor(() => {
-      expect(
-        screen.getByRole("dialog").contains(document.activeElement),
-      ).toBe(true);
-    });
-
-    await view.rerender({
-      open: false,
-      pathname: "/ingredients/fridge",
-      onNavigate: vi.fn(),
-      onFinish: vi.fn(() => true),
-    });
-
-    await waitFor(() => {
-      expect(main).not.toHaveAttribute("inert");
-    });
-    expect(header).not.toHaveAttribute("inert");
-    expect(navigation).not.toHaveAttribute("inert");
-    expect(document.documentElement.style.overflow).toBe("");
-    expect(document.body.style.overflow).toBe("");
-    await waitFor(() => {
-      expect(opener).toHaveFocus();
-    });
-
-    header.remove();
-    navigation.remove();
-    main.remove();
   });
 
   it("finishes after the final step", async () => {

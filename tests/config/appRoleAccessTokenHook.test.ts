@@ -36,6 +36,7 @@ describe("application-role access token hook", () => {
 			'"https://blendcalc.vercel.app/auth/callback"',
 		);
 		expect(config).toContain('"http://localhost:5173/auth/callback"');
+		expect(config).toContain('"http://localhost:5174/auth/callback"');
 		expect(config).toContain(
 			'"https://*-dylan-dupasquiers-projects.vercel.app/auth/callback"',
 		);

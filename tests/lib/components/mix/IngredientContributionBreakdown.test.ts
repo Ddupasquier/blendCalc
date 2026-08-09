@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import IngredientContributionBreakdown from "$lib/components/mix/insights/IngredientContributionBreakdown/IngredientContributionBreakdown.svelte";
 
 describe("IngredientContributionBreakdown", () => {
-	it("starts collapsed when contribution data is available", () => {
+	it("starts collapsed when deterministic contribution data is available", () => {
 		render(IngredientContributionBreakdown, {
 			props: {
 				breakdowns: [

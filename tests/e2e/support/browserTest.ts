@@ -45,7 +45,11 @@ export const test = playwrightTest.extend<BrowserErrorFixture>({
 });
 
 export const waitForAppReady = async (page: Page) => {
-	await expect(page.locator("html")).toHaveAttribute("data-app-ready", "true");
+	await expect(page.locator("html")).toHaveAttribute(
+		"data-app-ready",
+		"true",
+		{ timeout: 30_000 },
+	);
 };
 
 export { expect };

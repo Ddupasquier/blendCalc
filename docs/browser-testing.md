@@ -21,6 +21,11 @@ Keep pure functions, isolated component state, server handlers, database contrac
 source-code architecture, and migration assertions in Vitest or the database test
 suite. Do not preserve a source-string assertion after equivalent rendered behavior is
 covered by Playwright unless the source boundary itself is an intentional contract.
+Existing jsdom interaction tests must be migrated and removed whenever the same
+user-observable behavior is reachable deterministically through the real application.
+Keep a focused component test only when it proves an isolated callback, synthetic
+failure, data-policy branch, or calculation that the routed browser flow cannot create
+honestly without weakening determinism.
 
 Playwright does not replace physical-device camera and permission checks, VoiceOver,
 TalkBack, named installed-browser sign-off, or subjective visual approval. Those remain
@@ -33,10 +38,11 @@ the structural scan as complete accessibility certification.
 ## Local Test Environment
 
 Every public Playwright command first runs the shared E2E preparation command, which
-stops stale Vite processes, frees port `5173`, starts the isolated local Supabase stack,
-and repairs deterministic QA personas and fixtures. Playwright then starts the test-mode
-app through the internal `dev:test:server` command. Existing production-linked
-development servers are never reused.
+frees the dedicated test-app port `5174`, starts the isolated local Supabase stack, and
+repairs deterministic QA personas and fixtures. Playwright then starts the test-mode app
+through the internal `dev:test:server` command at `http://localhost:5174`. The normal
+development app remains available on `http://localhost:5173`; Playwright never reuses or
+stops that server.
 
 The authentication setup signs in the disposable `qa-user@blendcalc.local` persona and
 writes browser state beneath ignored `test-results/`. Override the local account only
@@ -49,6 +55,10 @@ PLAYWRIGHT_QA_EMAIL="..." PLAYWRIGHT_QA_PASSWORD="..." npm run test:e2e
 Set `PLAYWRIGHT_BASE_URL` and `PLAYWRIGHT_SKIP_WEB_SERVER=1` only for an explicitly
 prepared hosted test environment. Never point destructive or mutating browser tests at
 production.
+
+Browser projects run serially because they intentionally share one deterministic QA
+account and one local database. Parallel projects could race persisted theme, Mix,
+selection, tutorial, and recipe state and make otherwise correct browser checks flaky.
 
 ## Commands
 
@@ -75,6 +85,9 @@ beside their test files and are tracked.
 ## Writing Tests
 
 - Prefer role, label, and visible-name locators over internal selectors.
+- Before adding a jsdom interaction test, confirm the behavior cannot be exercised more
+  honestly through a routed Playwright scenario. Before adding a Playwright scenario,
+  remove any component interaction assertion it fully supersedes.
 - Use a component selector only when measuring a visual boundary that has no user-facing
   semantic equivalent.
 - Fail on unexpected browser console errors and uncaught page errors.

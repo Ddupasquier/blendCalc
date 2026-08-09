@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const readSource = (path: string) => readFileSync(path, "utf8");
@@ -21,7 +21,9 @@ describe("Playwright browser-testing architecture", () => {
 			expect(playwrightConfig).toContain(`name: "${project}"`);
 		}
 		expect(playwrightConfig).toContain('command: "npm run dev:test:server"');
+		expect(playwrightConfig).toContain('"http://localhost:5174"');
 		expect(playwrightConfig).toContain("reuseExistingServer: false");
+		expect(playwrightConfig).toContain("workers: 1");
 	});
 
 	it("exposes maintained local-database browser commands and documentation", () => {
@@ -39,6 +41,8 @@ describe("Playwright browser-testing architecture", () => {
 			expect(packageSource).toContain(command);
 		}
 		expect(packageSource).toContain("npm run db:test:start");
+		expect(packageSource).toContain("npm run free:test-port");
+		expect(packageSource).toContain("--port 5174 --strictPort");
 		expect(browserTestingGuide).toContain("## QA Evidence");
 		expect(developmentRules).toContain("npm run test:e2e:chromium");
 	});
@@ -64,5 +68,16 @@ describe("Playwright browser-testing architecture", () => {
 		const rootLayout = readSource("src/routes/+layout.svelte");
 		expect(rootLayout).toContain('dataset.appReady = "true"');
 		expect(rootLayout).toContain("delete document.documentElement.dataset.appReady");
+	});
+
+	it("does not duplicate migrated browser interactions in jsdom component tests", () => {
+		for (const migratedTestPath of [
+			"tests/lib/components/common/CollapsibleSection.test.ts",
+			"tests/lib/components/common/SegmentedControl.test.ts",
+			"tests/lib/components/mix/NutrientPicker.test.ts",
+			"tests/lib/components/mix/SelectedIngredientsPanel.test.ts",
+		]) {
+			expect(existsSync(migratedTestPath), migratedTestPath).toBe(false);
+		}
 	});
 });

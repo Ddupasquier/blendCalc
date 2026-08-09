@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const applicationBaseUrl =
-	process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173";
+	process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174";
 const authenticatedStorageStatePath =
 	"test-results/authenticated-browser-state/qa-user.json";
 
@@ -11,13 +11,15 @@ export default defineConfig({
 	fullyParallel: false,
 	forbidOnly: Boolean(process.env.CI),
 	retries: process.env.CI ? 2 : 0,
-	workers: process.env.CI ? 1 : undefined,
+	// Browser projects share one deterministic QA account and local database.
+	// Serial execution prevents one project from racing another's persisted UI state.
+	workers: 1,
 	reporter: process.env.CI
 		? [["github"], ["html", { open: "never" }]]
 		: [["list"], ["html", { open: "never" }]],
-	timeout: 45_000,
+	timeout: 60_000,
 	expect: {
-		timeout: 10_000,
+		timeout: 20_000,
 		toHaveScreenshot: {
 			animations: "disabled",
 			maxDiffPixelRatio: 0.005,

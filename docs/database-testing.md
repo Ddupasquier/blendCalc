@@ -64,7 +64,7 @@ fixed-ID submissions are not recreated by `start` after they have been reviewed;
 | `npm run db:test:verify` | Reset the local database and run all pgTAP database tests. |
 | `npm run db:test:status` | Print local service URLs and status. |
 | `npm run db:test:stop` | Stop the local Supabase stack while retaining its Docker volume. |
-| `npm run dev:test` | Start SvelteKit in test mode against `.env.test.local`. |
+| `npm run dev:test` | Start SvelteKit in test mode against `.env.test.local` at `http://localhost:5174`. |
 | `npm run test:e2e:chromium` | Prepare the local stack and run focused desktop/phone Chromium browser coverage. |
 | `npm run test:e2e` | Prepare the local stack and run the complete Playwright Chromium, Firefox, and WebKit project matrix. |
 
