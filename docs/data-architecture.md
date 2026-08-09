@@ -36,9 +36,9 @@ Browser storage is limited to data that can be discarded safely:
 
 - an unfinished, account-scoped Mix draft;
 - device-only preferences;
-- short-lived session context for the currently loaded saved drink.
+- short-lived session context for the currently loaded saved recipe.
 
-Fridge, Shopping List, custom foods, saved drinks, profiles, and canonical catalog data
+Fridge, Shopping List, custom foods, saved recipes, profiles, and canonical catalog data
 must not be mirrored into local storage.
 
 The account appearance theme is profile-owned durable data. A validated

@@ -2,6 +2,7 @@
 	import { fade, fly } from "svelte/transition";
 	import type { SheetBaseProps } from "./types";
 	import {
+		DIALOG_FOCUSABLE_SELECTOR,
 		manageDialogFocus,
 		trapDialogFocus,
 	} from "$lib/utils/accessibility/dialogFocus";
@@ -29,11 +30,26 @@
 		onClose = () => {},
 	}: SheetBaseProps = $props();
 	let sheetElement = $state<HTMLDivElement | null>(null);
+	let returnFocusTarget: HTMLElement | null = null;
+	let wasOpen = false;
 
 	const handleWindowKeydown = (event: KeyboardEvent) => {
 		if (!open || event.key !== "Escape" || event.defaultPrevented) return;
 		event.preventDefault();
 		onClose();
+	};
+
+	const rememberReturnFocusTarget = (event: FocusEvent) => {
+		if (open || !(event.target instanceof HTMLElement)) return;
+		returnFocusTarget = event.target;
+	};
+
+	const rememberInteractionTarget = (event: Event) => {
+		if (!(event.target instanceof Element)) return;
+		if (sheetElement?.contains(event.target)) return;
+		const focusableTarget = event.target.closest(DIALOG_FOCUSABLE_SELECTOR);
+		returnFocusTarget =
+			focusableTarget instanceof HTMLElement ? focusableTarget : null;
 	};
 
 	const handleDialogKeydown = (event: KeyboardEvent) => {
@@ -51,9 +67,23 @@
 		onDismiss: () => onClose(),
 	});
 
+	$effect.pre(() => {
+		if (open && !wasOpen) {
+			const activeElement = document.activeElement;
+			if (
+				activeElement instanceof HTMLElement &&
+				activeElement !== document.body &&
+				activeElement !== document.documentElement
+			) {
+				returnFocusTarget = activeElement;
+			}
+		}
+		wasOpen = open;
+	});
+
 	$effect(() => {
 		if (!open || !sheetElement) return;
-		return manageDialogFocus(sheetElement);
+		return manageDialogFocus(sheetElement, returnFocusTarget);
 	});
 
 	const transitionOptions = $derived(
@@ -73,7 +103,10 @@
 
 <svelte:window
 	onblur={backdropDismissal.handleWindowBlur}
+	onclick={rememberInteractionTarget}
+	onfocusin={rememberReturnFocusTarget}
 	onkeydown={handleWindowKeydown}
+	onpointerdown={rememberInteractionTarget}
 />
 
 {#if open}

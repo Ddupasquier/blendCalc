@@ -5,7 +5,7 @@ import {
 	mapSharedCatalogFood,
 } from "$lib/utils/barcode/barcodeProductMappers";
 import { NUTRIENT_IDS } from "$lib/utils/food/types";
-import { productReferenceDataFixture } from "../../../fixtures/referenceData";
+import { productReferenceCatalogFixture } from "../../../fixtures/referenceCatalogs";
 
 describe("barcode product mapping", () => {
 	it("converts Open Food Facts per-100g values to the label serving", () => {
@@ -31,7 +31,7 @@ describe("barcode product mapping", () => {
 				},
 			},
 			"4006381333931",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft).toMatchObject({
@@ -93,7 +93,7 @@ describe("barcode product mapping", () => {
 				},
 			},
 			"00011110129505",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft).toMatchObject({
@@ -129,9 +129,9 @@ describe("barcode product mapping", () => {
 	});
 
 	it("canonicalizes a drifted Open Food Facts total-fat mapping", () => {
-		const driftedReferenceData = {
-			...productReferenceDataFixture,
-			nutrientMappings: productReferenceDataFixture.nutrientMappings.map(
+		const driftedProductReferenceCatalog = {
+			...productReferenceCatalogFixture,
+			nutrientMappings: productReferenceCatalogFixture.nutrientMappings.map(
 				(mapping) =>
 					mapping.sourceNutrientKey === "fat"
 						? {
@@ -153,7 +153,7 @@ describe("barcode product mapping", () => {
 				},
 			},
 			"00011110129505",
-			driftedReferenceData,
+			driftedProductReferenceCatalog,
 		);
 
 		expect(draft?.nutrients).toContainEqual(
@@ -183,7 +183,7 @@ describe("barcode product mapping", () => {
 				},
 			},
 			"4006381333931",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft?.nutrients).toEqual(
@@ -214,7 +214,7 @@ describe("barcode product mapping", () => {
 				},
 			},
 			"4006381333931",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft?.nutrients).toEqual([
@@ -239,7 +239,7 @@ describe("barcode product mapping", () => {
 				},
 			},
 			"4006381333931",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft?.nutrients).toEqual(
@@ -259,7 +259,7 @@ describe("barcode product mapping", () => {
 				nutriments: { "energy-kcal_100g": 1 },
 			},
 			"049000042566",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft?.servingWeightGrams).toBe(100);
@@ -282,7 +282,7 @@ describe("barcode product mapping", () => {
 				nutriments: { "energy-kcal_100g": 100 },
 			},
 			"049000042566",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 			expect(draft).toMatchObject({
@@ -344,7 +344,7 @@ describe("barcode product mapping", () => {
 				nutriments: { "energy-kcal_100g": 100 },
 			},
 			"049000042566",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft).toMatchObject({
@@ -409,7 +409,7 @@ describe("barcode product mapping", () => {
 				nutriments: { "energy-kcal_100g": 50 },
 			},
 			"00021130462506",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft?.image).toMatchObject({
@@ -439,7 +439,7 @@ describe("barcode product mapping", () => {
 				image_front_url: "https://images.openfoodfacts.org/product.jpg",
 			},
 			"00021130493609",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft).toMatchObject({
@@ -497,7 +497,7 @@ describe("barcode product mapping", () => {
 				],
 			},
 			"4006381333931",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft?.nutrients).toEqual(
@@ -555,7 +555,7 @@ describe("barcode product mapping", () => {
 				],
 			},
 			"4006381333931",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft).toMatchObject({
@@ -602,7 +602,7 @@ describe("barcode product mapping", () => {
 				reportedNutrientIds: [1085, 1063],
 			},
 			"00021130462506",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft?.nutrients).toEqual(
@@ -654,7 +654,7 @@ describe("barcode product mapping", () => {
 				],
 			},
 			"00021130462506",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(
@@ -682,7 +682,7 @@ describe("barcode product mapping", () => {
 				foodNutrients: [],
 			},
 			"4006381333931",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 			expect(draft).toMatchObject({
@@ -708,7 +708,7 @@ describe("barcode product mapping", () => {
 				foodNutrients: [],
 			},
 			"4006381333931",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft).toMatchObject({
@@ -730,7 +730,7 @@ describe("barcode product mapping", () => {
 				foodNutrients: [],
 			},
 			"4006381333931",
-			productReferenceDataFixture,
+			productReferenceCatalogFixture,
 		);
 
 		expect(draft?.allergens).toEqual([]);

@@ -1,4 +1,4 @@
-import type { FdcFood, FoodSourceRecordMetadata } from "$lib/utils/food/types";
+import type { FoodItem, FoodSourceRecordMetadata } from "$lib/utils/food/types";
 
 export type FoodDataQualityCode =
 	| "SOURCE_RECORD_OBSOLETE"
@@ -41,7 +41,7 @@ const getCompletenessPercentage = (
 		: undefined;
 };
 
-const getAcceptedFieldSourceCount = (food: FdcFood) =>
+const getAcceptedFieldSourceCount = (food: FoodItem) =>
 	new Set(
 		Object.values(food.fieldProvenance ?? {}).flatMap((source) =>
 			source?.source && source.source !== "shared-catalog"
@@ -61,7 +61,7 @@ const getSourceMetadataRecordCount = (
 	).size;
 
 export const getFoodDataQualityDisclosure = (
-	food: FdcFood,
+	food: FoodItem,
 ): FoodDataQualityDisclosure | null => {
 	const metadata = food.sourceMetadata;
 	const notices: FoodDataQualityNotice[] = [];

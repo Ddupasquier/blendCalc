@@ -8,7 +8,7 @@ import {
 	type ServingMeasureDimension,
 	type ServingMeasureUnit,
 } from "$lib/utils/serving/servingMeasureCatalog";
-import type { FdcFood } from "../food/types";
+import type { FoodItem } from "../food/types";
 import type { FoodServingGramWeightMethod } from "../food/types";
 
 export type ParsedServingAmount = {
@@ -70,7 +70,7 @@ const parseQuantity = (value: string) => {
 export const convertServingToGrams = (
 	quantity: number,
 	unit: ServingMeasureUnit,
-	food?: FdcFood,
+	food?: FoodItem,
 ) => {
 	return convertServingAmount(quantity, unit, food).grams;
 };
@@ -78,7 +78,7 @@ export const convertServingToGrams = (
 export const convertServingAmount = (
 	quantity: number,
 	unit: ServingMeasureUnit,
-	food?: FdcFood,
+	food?: FoodItem,
 ): ServingConversion => {
 	const safeQuantity = Number.isFinite(quantity) && quantity >= 0 ? quantity : null;
 	if (isWeightServingMeasureUnit(unit)) {
@@ -146,7 +146,7 @@ export const getServingMeasureDimension = (
 	return getServingMeasureOption(unit)?.dimension ?? null;
 };
 
-export const getDensityConversion = (food?: FdcFood): DensityConversion | null => {
+export const getDensityConversion = (food?: FoodItem): DensityConversion | null => {
 	if (
 		food?.customDensityConfidence === "known" &&
 		Number.isFinite(food.customDensityGramsPerMilliliter) &&
@@ -188,7 +188,7 @@ export const getDensityConversion = (food?: FdcFood): DensityConversion | null =
 
 export const canConvertServingUnit = (
 	unit: ServingMeasureUnit,
-	food?: FdcFood,
+	food?: FoodItem,
 ) => isWeightServingMeasureUnit(unit) || (
 	getServingMeasureOption(unit)?.dimension === "volume" &&
 	Boolean(getDensityConversion(food))

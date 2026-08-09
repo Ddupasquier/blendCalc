@@ -2,8 +2,8 @@ import type { Database, Json } from "$lib/types/database.types";
 import { parseSourceServingMeasure } from "$lib/utils/serving/servingAmount";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 import type {
-	FdcFood,
-	FdcNutrient,
+	FoodItem,
+	FoodNutrient,
 	FoodNutrientSourceReview,
 	FoodNutrientValueQualifier,
 	FoodNutrientValueStatus,
@@ -12,7 +12,7 @@ import type {
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const GENERIC_FOOD_SEARCH_LIMIT = 100;
-type GenericFoodSource = NonNullable<FdcNutrient["source"]>;
+type GenericFoodSource = NonNullable<FoodNutrient["source"]>;
 
 type GenericNutrientRow = {
 	nutrientId: number | string | null;
@@ -112,7 +112,7 @@ const mapNutrients = (
 	rows: GenericNutrientRow[],
 	sourceKey: GenericFoodSource,
 	sourceReference: string,
-): FdcNutrient[] =>
+): FoodNutrient[] =>
 	rows.flatMap((row) => {
 		if (row.mappingStatus !== "canonical" || row.valueStatus !== "measured") {
 			return [];
@@ -283,7 +283,7 @@ const mapServings = (
 export const searchGenericFoods = async (
 	supabase: SupabaseClient<Database>,
 	query: string,
-): Promise<FdcFood[]> => {
+): Promise<FoodItem[]> => {
 	const { data, error } = await supabase.rpc("search_generic_food_records", {
 		p_query: query,
 		p_limit: GENERIC_FOOD_SEARCH_LIMIT,

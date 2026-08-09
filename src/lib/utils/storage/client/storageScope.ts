@@ -1,6 +1,6 @@
 import { browser } from "$app/environment";
 
-const ACTIVE_STORAGE_USER_KEY = "smoothie-active-storage-user";
+const ACTIVE_STORAGE_USER_KEY = "blendcalc-active-storage-user";
 const OBSOLETE_SERVER_BACKED_STORAGE_KEYS = [
 	"smoothie-fridge",
 	"smoothie-shopping-list",

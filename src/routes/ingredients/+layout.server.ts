@@ -1,4 +1,4 @@
-import { loadIngredientPageData } from "$lib/server/user-data/pageData.server";
+import { loadIngredientPageData } from "$lib/server/user-data/ingredientPageData.server";
 import { getIngredientListTab } from "$lib/utils/ingredients/ingredientRouteState";
 import type { LayoutServerLoad } from "./$types";
 

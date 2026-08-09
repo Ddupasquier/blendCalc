@@ -1,10 +1,10 @@
-import { getFdcNutrientValue } from "$lib/utils/food/nutrients/fdcNutrients";
+import { getFoodNutrientValue } from "$lib/utils/food/nutrients/foodNutrients";
 import { NUTRIENT_DATA_BASIS_GRAMS } from "$lib/utils/food/nutrients/nutritionDisplay";
 import {
 	getDefaultMixGoals,
 	getMixRuntimeConfiguration,
 } from "$lib/utils/food/reference/appReferenceCatalog";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type {
 	NutrientContributionBreakdown,
 	NutrientMeta,
@@ -28,11 +28,11 @@ export const getEffectiveNutrientGoal = (
 ) => nutrientGoals[Number(nutrient.id)] ?? null;
 
 export const getFoodNutrientAmount = (
-	food: FdcFood,
+	food: FoodItem,
 	nutrientId: number,
 	servingGrams: Record<number, number>,
 ) => {
-	const nutrientValue = getFdcNutrientValue(food, nutrientId);
+	const nutrientValue = getFoodNutrientValue(food, nutrientId);
 	if (nutrientValue === null) return 0;
 
 	const defaultServingGrams = getMixRuntimeConfiguration().defaultServingGrams;
@@ -41,7 +41,7 @@ export const getFoodNutrientAmount = (
 };
 
 export const getNutrientTotal = (
-	foods: FdcFood[],
+	foods: FoodItem[],
 	nutrientId: number,
 	servingGrams: Record<number, number>,
 ) => {
@@ -53,7 +53,7 @@ export const getNutrientTotal = (
 };
 
 export const getNutrientContributors = (
-	foods: FdcFood[],
+	foods: FoodItem[],
 	nutrientId: number,
 	servingGrams: Record<number, number>,
 ) => {
@@ -75,7 +75,7 @@ export const getNutrientContributors = (
 
 export const getNutrientContributionBreakdowns = (
 	nutrients: NutrientMeta[],
-	foods: FdcFood[],
+	foods: FoodItem[],
 	servingGrams: Record<number, number>,
 	maxContributors = 2,
 ): NutrientContributionBreakdown[] => {
@@ -112,7 +112,7 @@ export const getNutrientContributionBreakdowns = (
 
 export const getNutrientProgress = (
 	nutrients: NutrientMeta[],
-	foods: FdcFood[],
+	foods: FoodItem[],
 	nutrientGoals: MixGoalMap,
 	servingGrams: Record<number, number>,
 ) => {
@@ -129,7 +129,7 @@ export const getNutrientProgress = (
 
 export const getNutrientGoalEvaluations = (
 	nutrients: NutrientMeta[],
-	foods: FdcFood[],
+	foods: FoodItem[],
 	nutrientGoals: MixGoalMap,
 	servingGrams: Record<number, number>,
 ) =>

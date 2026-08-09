@@ -1,7 +1,7 @@
 import { APP_USER_AGENT } from "$lib/config/brand";
 import { findFirstBarcodeCandidateMatch } from "$lib/server/products/barcodeCandidateLookup";
 import { fetchCachedProductApiJson } from "$lib/server/products/productApiRequests.server";
-import { getProductReferenceData } from "$lib/server/products/productReferenceData.server";
+import { getProductReferenceCatalog } from "$lib/server/products/productReferenceCatalog.server";
 import {
 	createProductSourceRequestTrace,
 	recordProductSourceLookup,
@@ -12,7 +12,7 @@ import {
 	type BarcodeProductDraft,
 	type OpenFoodFactsResponse,
 } from "$lib/utils/barcode/barcodeProductMappers";
-import type { ProductReferenceData } from "$lib/utils/food/reference/productReferenceData";
+import type { ProductReferenceCatalog } from "$lib/utils/food/reference/productReferenceCatalog";
 import { summarizeBarcodeProductQuality } from "$lib/utils/food/sources/sourceQuality";
 
 const OPEN_FOOD_FACTS_URL = "https://world.openfoodfacts.org/api/v2/product";
@@ -84,7 +84,7 @@ const OPEN_FOOD_FACTS_STALE_FALLBACK_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
 
 export const lookupOpenFoodFactsBarcodeProduct = async (
 	barcode: string,
-	referenceData?: ProductReferenceData,
+	productReferenceCatalog?: ProductReferenceCatalog,
 ): Promise<BarcodeProductDraft | null> => {
 	const canonicalBarcode = normalizeBarcode(barcode);
 	if (!canonicalBarcode) return null;
@@ -123,7 +123,7 @@ export const lookupOpenFoodFactsBarcodeProduct = async (
 					draft: mapOpenFoodFactsProduct(
 						data.product,
 						canonicalBarcode,
-						referenceData ?? await getProductReferenceData(),
+						productReferenceCatalog ?? await getProductReferenceCatalog(),
 					),
 				};
 			},

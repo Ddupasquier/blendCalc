@@ -4,7 +4,7 @@
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import ManualEntryActions from "$lib/components/ingredients/manual-entry/ManualEntryActions/ManualEntryActions.svelte";
 	import ManualEntryField from "$lib/components/ingredients/manual-entry/ManualEntryField/ManualEntryField.svelte";
-	import ManualEntryHelper from "$lib/components/ingredients/manual-entry/ManualEntryHelper/ManualEntryHelper.svelte";
+	import ManualEntryHelpText from "$lib/components/ingredients/manual-entry/ManualEntryHelpText/ManualEntryHelpText.svelte";
 	import ManualEntryStepLayout from "$lib/components/ingredients/manual-entry/ManualEntryStepLayout/ManualEntryStepLayout.svelte";
 	import ManualEntryToggleRow from "$lib/components/ingredients/manual-entry/ManualEntryToggleRow/ManualEntryToggleRow.svelte";
 	import type { ServingsStepProps } from "./types";
@@ -37,9 +37,9 @@
 </script>
 
 <ManualEntryStepLayout>
-	<ManualEntryHelper>
+	<ManualEntryHelpText>
 		All nutrition values are stored per 100g. Serving sizes let users see scaled values.
-	</ManualEntryHelper>
+	</ManualEntryHelpText>
 
 	<section class="servings-step__card" aria-label="Primary serving">
 		<h3>Primary serving <em>*</em></h3>
@@ -92,11 +92,11 @@
 					/>
 				</ManualEntryField>
 			</div>
-			<ManualEntryHelper>
+			<ManualEntryHelpText>
 				This records the entered volume as weighing
 				<strong>{servingWeightCopy}</strong>. Turn off volume measurements if the package
 				does not provide both values.
-			</ManualEntryHelper>
+			</ManualEntryHelpText>
 		{/if}
 	</section>
 

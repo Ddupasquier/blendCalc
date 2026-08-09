@@ -5,7 +5,7 @@ import {
 	getMixRuntimeConfiguration,
 	getNutrientCatalog,
 } from "$lib/utils/food/reference/appReferenceCatalog";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { getScopedStorageKey } from "$lib/utils/storage/client/storageScope";
 import {
 	canConvertServingUnit,
@@ -21,7 +21,7 @@ import {
 	normalizeServingUnit,
 	optionsFromSelectedNutrientIds,
 	type NutrientOption,
-	type SavedMixState,
+	type LegacyPersistedMixState,
 } from "$lib/utils/mix/ui/mixUi";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
@@ -61,7 +61,7 @@ export const getEmptyServingState = (): ServingStateSnapshot => ({
 });
 
 export const getServingQuantity = (
-	food: FdcFood,
+	food: FoodItem,
 	servingQuantities: Record<number, number>,
 ) => {
   return (
@@ -71,14 +71,14 @@ export const getServingQuantity = (
 };
 
 export const getServingUnit = (
-	food: FdcFood,
+	food: FoodItem,
 	servingUnits: Record<number, ServingMeasureUnit>,
 ) => {
 	return normalizeServingUnit(servingUnits[food.fdcId]) ?? "g";
 };
 
 export const getServingConversion = (
-	food: FdcFood,
+	food: FoodItem,
 	servingQuantities: Record<number, number>,
 	servingUnits: Record<number, ServingMeasureUnit>,
 ) => {
@@ -91,7 +91,7 @@ export const getServingConversion = (
 
 export const readStoredMixState = (
 	fallbackState: MixStateSnapshot,
-	allIngredientItems: FdcFood[],
+	allIngredientItems: FoodItem[],
 ): MixStateSnapshot => {
 	const defaultMixFields = getDefaultMixFields();
 	const nutrientCatalog = getNutrientCatalog();
@@ -102,13 +102,13 @@ export const readStoredMixState = (
 		);
 		if (!rawState) return fallbackState;
 
-		const savedState = JSON.parse(rawState) as SavedMixState;
-		if (savedState.version !== MIX_STATE_STORAGE_VERSION) {
+		const persistedMixState = JSON.parse(rawState) as LegacyPersistedMixState;
+		if (persistedMixState.version !== MIX_STATE_STORAGE_VERSION) {
 			return fallbackState;
 		}
-		const normalizedSavedOptions = normalizeNutrientOptions(savedState.options);
-		const selected = Array.isArray(savedState.selected)
-			? savedState.selected
+		const normalizedSavedOptions = normalizeNutrientOptions(persistedMixState.options);
+		const selected = Array.isArray(persistedMixState.selected)
+			? persistedMixState.selected
 			: fallbackState.selected;
 		const options = mergeNutrientOptions(
 			getDefaultNutrientOptions(),
@@ -118,20 +118,20 @@ export const readStoredMixState = (
         nutrientCatalog,
       ]),
 		);
-		const selectedFoodIds = Array.isArray(savedState.selectedFoodIds)
-			? savedState.selectedFoodIds.filter((id) => Number.isFinite(id))
+		const selectedFoodIds = Array.isArray(persistedMixState.selectedFoodIds)
+			? persistedMixState.selectedFoodIds.filter((id) => Number.isFinite(id))
 			: [];
 		const storedServingGrams = Object.fromEntries(
-			Object.entries(savedState.servingGrams ?? {})
+			Object.entries(persistedMixState.servingGrams ?? {})
 				.map(([id, grams]) => [Number(id), Number(grams)])
         .filter(([id, grams]) => Number.isFinite(id) && Number.isFinite(grams)),
 		);
 		const servingQuantities = Object.fromEntries(
 			selectedFoodIds.map((foodId) => {
-				const parsedInput = savedState.servingInputs?.[foodId]
-					? parseServingAmount(savedState.servingInputs[foodId])
+				const parsedInput = persistedMixState.servingInputs?.[foodId]
+					? parseServingAmount(persistedMixState.servingInputs[foodId])
 					: null;
-				const savedQuantity = Number(savedState.servingQuantities?.[foodId]);
+				const savedQuantity = Number(persistedMixState.servingQuantities?.[foodId]);
 				return [
 					foodId,
 					Number.isFinite(savedQuantity)
@@ -145,11 +145,11 @@ export const readStoredMixState = (
 		const servingUnits = Object.fromEntries(
 			selectedFoodIds.map((foodId) => {
 				const food = allIngredientItems.find((item) => item.fdcId === foodId);
-				const parsedInput = savedState.servingInputs?.[foodId]
-					? parseServingAmount(savedState.servingInputs[foodId])
+				const parsedInput = persistedMixState.servingInputs?.[foodId]
+					? parseServingAmount(persistedMixState.servingInputs[foodId])
 					: null;
 				const requestedUnit =
-					normalizeServingUnit(savedState.servingUnits?.[foodId]) ??
+					normalizeServingUnit(persistedMixState.servingUnits?.[foodId]) ??
 					parsedInput?.unit ??
 					"g";
 				return [
@@ -232,7 +232,7 @@ export const getMixStateSnapshot = ({
 export const getStateWithToggledFood = (
 	state: MixStateSnapshot,
 	foodId: number,
-	allIngredientItems: FdcFood[],
+	allIngredientItems: FoodItem[],
 ): MixStateSnapshot => {
 	if (state.selectedFoodIds.includes(foodId)) {
 		return {
@@ -296,7 +296,7 @@ export const getStateWithGramServing = (
 
 export const getStateWithServingAmount = (
 	state: MixStateSnapshot,
-	food: FdcFood,
+	food: FoodItem,
 	quantityValue: string,
 	unit: ServingMeasureUnit,
 ): MixStateSnapshot => {

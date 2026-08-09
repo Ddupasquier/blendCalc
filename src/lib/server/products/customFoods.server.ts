@@ -1,7 +1,7 @@
 import type { Database } from "$lib/types/database.types";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
 import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredientProvenance";
 import { tokenizeIngredientSearchText } from "$lib/utils/ingredients/ingredientSearchRelevance";
@@ -54,12 +54,12 @@ export const searchUserCustomFoods = async (
 	]);
 	return rows.map((row) => {
 		const catalogFood = hydrateFoodWithCatalogState(
-			row.food as unknown as FdcFood,
+			row.food as unknown as FoodItem,
 			{
 				shared_product_id:
-					(row.food as unknown as FdcFood).sharedProductId ?? null,
+					(row.food as unknown as FoodItem).sharedProductId ?? null,
 				shared_product_submission_id:
-					(row.food as unknown as FdcFood).sharedProductSubmissionId ?? null,
+					(row.food as unknown as FoodItem).sharedProductSubmissionId ?? null,
 				source_key: row.source_key,
 				trust_status: row.trust_status,
 			},

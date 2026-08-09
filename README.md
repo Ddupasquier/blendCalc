@@ -99,6 +99,12 @@ adding one-off npm aliases.
 | `npm run preview` | Preview production build |
 | `npm test` | Run unit tests (Vitest) |
 | `npm run test:watch` | Watch-mode tests |
+| `npm run test:e2e` | Run authenticated Playwright tests in desktop and mobile Chromium, Firefox, and WebKit projects |
+| `npm run test:e2e:chromium` | Run the focused desktop and 360×740 phone Chromium projects |
+| `npm run test:e2e:headed` | Run desktop Chromium Playwright tests in a visible browser |
+| `npm run test:e2e:ui` | Open the Playwright test explorer |
+| `npm run test:e2e:update` | Review and update tracked Chromium visual snapshots |
+| `npm run test:e2e:install` | Install Playwright's Chromium, Firefox, and WebKit binaries |
 | `npm run check` | TypeScript + Svelte type-check |
 | `npm run check:auth` | Validate auth environment and endpoint health |
 | `npm run version:check` | Validate Node 24 and all application/API version sources |

@@ -1,7 +1,7 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 export type MixIngredientOptionProps = {
-	food: FdcFood;
+	food: FoodItem;
 	selected: boolean;
 	onSelect: () => void;
 };

@@ -17,8 +17,8 @@ export type FoodPreferenceFormValues = {
 	allergens: string[];
 	dietaryRestrictions: string[];
 	prioritizedNutrientIds: number[];
-	defaultSmoothieServingSize: string;
-	defaultSmoothieServingUnit: DefaultServingUnit;
+	defaultMixServingSize: string;
+	defaultMixServingUnit: DefaultServingUnit;
 	sensitiveAcknowledged: boolean;
 	regulatoryRegionCode: string;
 	regulatoryRegionSource: "account" | "device" | null;
@@ -96,7 +96,7 @@ export const hasFoodPreferenceValues = (values: FoodPreferenceFormValues) =>
 			values.allergens.length ||
 			values.dietaryRestrictions.length ||
 			values.prioritizedNutrientIds.length ||
-			values.defaultSmoothieServingSize.trim(),
+			values.defaultMixServingSize.trim(),
 	);
 
 const getLongPreferenceItem = (values: string[]) =>
@@ -131,14 +131,14 @@ export const getFoodPreferencesValidationError = (
 	}
 
 	const servingSizeGrams = getServingSizeGrams(
-		values.defaultSmoothieServingSize,
-		values.defaultSmoothieServingUnit,
+		values.defaultMixServingSize,
+		values.defaultMixServingUnit,
 	);
 	if (
-		values.defaultSmoothieServingSize.trim() &&
+		values.defaultMixServingSize.trim() &&
 		(!servingSizeGrams || servingSizeGrams > DEFAULT_SERVING_SIZE_MAX_GRAMS)
 	) {
-		return "Default smoothie serving size must be greater than 0 and no more than 5,000g.";
+		return "Default Mix serving size must be greater than 0 and no more than 5,000g.";
 	}
 
 	return "";

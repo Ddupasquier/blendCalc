@@ -1,6 +1,6 @@
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
-import { compactManagedFood } from "$lib/utils/food/records/foodRecords";
-import type { FdcFood } from "$lib/utils/food/types";
+import { normalizeSourceManagedFoodForStorage } from "$lib/utils/food/records/foodRecords";
+import type { FoodItem } from "$lib/utils/food/types";
 import { toJson } from "$lib/utils/storage/supabase/shared";
 import type {
 	CatalogConflict,
@@ -17,7 +17,7 @@ type CatalogConfidence =
 
 export const publishCatalogSubmission = async (input: {
 	submissionId: string;
-	food: FdcFood;
+	food: FoodItem;
 	productName: string;
 	brandOwner?: string;
 	source: CatalogSource;
@@ -29,7 +29,7 @@ export const publishCatalogSubmission = async (input: {
 	conflicts: CatalogConflict[];
 }) => {
 	const admin = getSupabaseAdminClient();
-	const normalizedFood = compactManagedFood({
+	const normalizedFood = normalizeSourceManagedFoodForStorage({
 		...input.food,
 		description: input.productName,
 	});

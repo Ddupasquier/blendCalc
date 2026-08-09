@@ -1,8 +1,8 @@
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import type {
 	CloudListSort,
-	CloudSmoothieListPageOptions,
+	CloudIngredientListPageOptions,
 } from "$lib/utils/storage/supabase/lists";
 import {
 	CLOUD_CURSOR_PAGE_SIZE,
@@ -21,12 +21,12 @@ type CloudListQuery = {
 	order: (column: string, options: { ascending: boolean }) => CloudListQuery;
 };
 
-const getCloudListType = (key: SmoothieListKey): CloudListType =>
+const getCloudListType = (key: IngredientListKey): CloudListType =>
 	key === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping";
 
 const applyFoodSearchFilters = <Query extends CloudListQuery>(
 	query: Query,
-	options: CloudSmoothieListPageOptions,
+	options: CloudIngredientListPageOptions,
 ) => {
 	let nextQuery: CloudListQuery = query;
 	const terms = options.query?.trim().split(/\s+/).filter(Boolean) ?? [];
@@ -72,9 +72,9 @@ const applyFoodSort = <Query extends CloudListQuery>(
 		.order("id", { ascending: false }) as Query;
 };
 
-export const readCloudSmoothieListPage = async (
-	key: SmoothieListKey,
-	options: CloudSmoothieListPageOptions,
+export const readCloudIngredientListPage = async (
+	key: IngredientListKey,
+	options: CloudIngredientListPageOptions,
 	context: CloudDataContext,
 ) => {
 	const cloud = await resolveCloudDataContext(context);
@@ -106,8 +106,8 @@ export const readCloudSmoothieListPage = async (
 	};
 };
 
-export const readCloudSmoothieListFood = async (
-	key: SmoothieListKey,
+export const readCloudIngredientListFood = async (
+	key: IngredientListKey,
 	foodId: number,
 	context: CloudDataContext,
 ) => {
@@ -130,8 +130,8 @@ export const readCloudSmoothieListFood = async (
 	return (await hydrateCloudFoodListRows(supabase, data))[0] ?? null;
 };
 
-export const readCloudSmoothieList = async (
-	key: SmoothieListKey,
+export const readCloudIngredientList = async (
+	key: IngredientListKey,
 	context: CloudDataContext,
 ) => {
 	const cloud = await resolveCloudDataContext(context);

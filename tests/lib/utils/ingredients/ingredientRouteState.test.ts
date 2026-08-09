@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
 	buildIngredientListTabHref,
 	buildIngredientRouteHref,
@@ -17,7 +17,7 @@ import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
 const url = (path: string) => new URL(path, "https://blendcalc.test");
 
-const food = (fdcId: number, description: string): FdcFood => ({
+const food = (fdcId: number, description: string): FoodItem => ({
 	fdcId,
 	description,
 	foodNutrients: [],

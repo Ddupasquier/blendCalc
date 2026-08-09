@@ -1,4 +1,4 @@
-const FOCUSABLE_SELECTOR = [
+export const DIALOG_FOCUSABLE_SELECTOR = [
 	"a[href]",
 	"button:not([disabled])",
 	"input:not([disabled])",
@@ -9,18 +9,23 @@ const FOCUSABLE_SELECTOR = [
 
 const getFocusableElements = (container: HTMLElement) =>
 	Array.from(
-		container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+		container.querySelectorAll<HTMLElement>(DIALOG_FOCUSABLE_SELECTOR),
 	).filter(
 		(element) =>
 			!element.closest("[hidden], [aria-hidden='true']") &&
 			element.getAttribute("aria-disabled") !== "true",
 	);
 
-export const manageDialogFocus = (dialog: HTMLElement) => {
+export const manageDialogFocus = (
+	dialog: HTMLElement,
+	returnTargetOverride?: HTMLElement | null,
+) => {
 	const returnTarget =
-		document.activeElement instanceof HTMLElement
-			? document.activeElement
-			: null;
+		returnTargetOverride === undefined
+			? document.activeElement instanceof HTMLElement
+				? document.activeElement
+				: null
+			: returnTargetOverride;
 	let cancelled = false;
 
 	queueMicrotask(() => {
@@ -31,8 +36,50 @@ export const manageDialogFocus = (dialog: HTMLElement) => {
 
 	return () => {
 		cancelled = true;
-		if (returnTarget?.isConnected) {
+		if (!returnTarget?.isConnected) return;
+
+		const restoreFocus = () => {
+			if (!returnTarget.isConnected) return;
+			if (dialog.isConnected) return;
+			const activeElement = document.activeElement;
+			if (
+				activeElement === returnTarget ||
+				(activeElement instanceof Node &&
+					activeElement !== document.body &&
+					!dialog.contains(activeElement))
+			) {
+				return;
+			}
 			returnTarget.focus({ preventScroll: true });
+		};
+
+		const scheduleFocusRestoration = () => {
+			queueMicrotask(() => {
+				if (typeof requestAnimationFrame === "function") {
+					requestAnimationFrame(restoreFocus);
+					return;
+				}
+				restoreFocus();
+			});
+		};
+
+		if (!dialog.isConnected) {
+			scheduleFocusRestoration();
+			return;
+		}
+
+		const dialogRemovalObserver = new MutationObserver(() => {
+			if (dialog.isConnected) return;
+			dialogRemovalObserver.disconnect();
+			scheduleFocusRestoration();
+		});
+		dialogRemovalObserver.observe(dialog.ownerDocument.documentElement, {
+			childList: true,
+			subtree: true,
+		});
+		if (!dialog.isConnected) {
+			dialogRemovalObserver.disconnect();
+			scheduleFocusRestoration();
 		}
 	};
 };

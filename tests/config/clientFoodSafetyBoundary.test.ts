@@ -11,7 +11,7 @@ describe("client food-safety boundary", () => {
 			"src/lib/utils/food/reference/appReferenceCatalog.ts",
 		);
 		const loader = readSource(
-			"src/lib/utils/food/reference/appReferenceData.ts",
+			"src/lib/utils/food/reference/appReferenceCatalogReader.ts",
 		);
 		const layout = readSource("src/routes/+layout.server.ts");
 
@@ -59,10 +59,10 @@ describe("client food-safety boundary", () => {
 
 	it("keeps list allergen hydration and evaluation behind server routes", () => {
 		const browserLists = readSource(
-			"src/lib/utils/storage/client/smoothieLists.ts",
+			"src/lib/utils/storage/client/ingredientLists.ts",
 		);
-		const browserSavedDrinks = readSource(
-			"src/lib/utils/storage/client/savedDrinks.ts",
+		const browserSavedRecipes = readSource(
+			"src/lib/utils/storage/client/savedRecipes.ts",
 		);
 		const cloudMutations = readSource(
 			"src/lib/utils/storage/supabase/lists.ts",
@@ -71,12 +71,12 @@ describe("client food-safety boundary", () => {
 			"src/lib/server/user-data/listHydration.server.ts",
 		);
 
-		for (const source of [browserLists, browserSavedDrinks, cloudMutations]) {
+		for (const source of [browserLists, browserSavedRecipes, cloudMutations]) {
 			expect(source).not.toContain("hydrateCloudFoodListRows");
 			expect(source).not.toMatch(/\.(?:allergens|traces|compatibilitySummary)\b/);
 		}
-		expect(browserLists).not.toContain("readCloudSmoothieList(");
-		expect(browserSavedDrinks).not.toContain("readCloudSmoothieList(");
+		expect(browserLists).not.toContain("readCloudIngredientList(");
+		expect(browserSavedRecipes).not.toContain("readCloudIngredientList(");
 		expect(
 			existsSync(
 				join(root, "src/lib/utils/storage/supabase/listHydration.ts"),

@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel/ProductImagePanel.svelte";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const foodWithImage: FdcFood = {
+const foodWithImage: FoodItem = {
   fdcId: 1,
   description: "Blue Diamond almond milk",
   foodCategory: "Verified Packaged Food",

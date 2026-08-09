@@ -1,0 +1,115 @@
+@use "../../../../styles/variables" as *;
+
+$saved-ingredient-symbol-size: 1.15rem;
+
+.saved-recipe-ingredients {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.saved-recipe-ingredients__pills {
+	display: grid;
+	grid-template-columns: repeat(12, minmax(0, 1fr));
+	grid-auto-flow: row;
+	gap: $app-gap-xs;
+	max-width: 100%;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.saved-recipe-ingredients__pills li {
+	display: inline-flex;
+	justify-self: start;
+	max-width: 100%;
+	min-width: 0;
+}
+
+.saved-recipe-ingredients__pills li[data-span="5"] {
+	grid-column: span 5;
+}
+
+.saved-recipe-ingredients__pills li[data-span="6"] {
+	grid-column: span 6;
+}
+
+.saved-recipe-ingredients__pills li[data-span="7"] {
+	grid-column: span 7;
+}
+
+.saved-recipe-ingredients__pills li[data-span="12"] {
+	grid-column: span 12;
+}
+
+:global(.saved-recipe-ingredients__pill) {
+	width: fit-content;
+	max-width: 100%;
+}
+
+.saved-recipe-ingredients__symbol {
+	display: grid;
+	flex: 0 0 $saved-ingredient-symbol-size;
+	width: $saved-ingredient-symbol-size;
+	height: $saved-ingredient-symbol-size;
+	place-items: center;
+	overflow: hidden;
+}
+
+.saved-recipe-ingredients__overflow {
+	display: grid;
+	min-width: 0;
+}
+
+.saved-recipe-ingredients__overflow summary {
+	display: inline-flex;
+	align-items: center;
+	justify-self: start;
+	gap: $app-gap-xs;
+	min-height: 1.7rem;
+	padding: $app-gap-xs $app-gap-sm;
+	color: $app-shell-accent-primary;
+	background: $app-shell-accent-soft;
+	border-radius: $app-shell-radius-pill;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	line-height: $app-line-height-heading;
+	list-style: none;
+	cursor: pointer;
+	box-sizing: border-box;
+}
+
+.saved-recipe-ingredients__overflow summary::-webkit-details-marker {
+	display: none;
+}
+
+.saved-recipe-ingredients__overflow summary:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.saved-recipe-ingredients__less-label,
+:global(
+	.saved-recipe-ingredients__overflow[data-expanded="true"]
+		.saved-recipe-ingredients__more-label
+) {
+	display: none;
+}
+
+:global(
+	.saved-recipe-ingredients__overflow[data-expanded="true"]
+		.saved-recipe-ingredients__less-label
+) {
+	display: inline;
+}
+
+.saved-recipe-ingredients__hidden {
+	padding-top: $app-gap-sm;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.saved-recipe-ingredients__overflow summary {
+		padding: $app-gap-xs $app-gap-sm;
+	}
+}

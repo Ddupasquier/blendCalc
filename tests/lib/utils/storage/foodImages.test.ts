@@ -4,7 +4,7 @@ import {
 	hydrateFoodsWithCachedImages,
 	selectPreferredFoodImageAsset,
 } from "$lib/utils/storage/supabase/foodImages";
-import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
+import type { FoodItem, FoodImageAsset } from "$lib/utils/food/types";
 
 const makeImage = (
 	overrides: Partial<FoodImageAsset>,
@@ -148,7 +148,7 @@ describe("food image selection", () => {
 			foodNutrients: [],
 			barcode: "00021130493609",
 			image: imported,
-		} satisfies FdcFood;
+		} satisfies FoodItem;
 
 		const [hydrated] = await hydrateFoodsWithCachedImages(client, [food]);
 
@@ -189,7 +189,7 @@ describe("food image selection", () => {
 			barcode: "00021130493609",
 			sharedProductId: "product-1",
 			image: imported,
-		} satisfies FdcFood;
+		} satisfies FoodItem;
 
 		const [hydrated] = await hydrateFoodsWithCachedImages(client, [food]);
 

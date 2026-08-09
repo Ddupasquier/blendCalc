@@ -1,5 +1,5 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 export type ProductDataQualityPanelProps = {
-	food: FdcFood;
+	food: FoodItem;
 };

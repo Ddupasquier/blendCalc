@@ -1,10 +1,10 @@
 import type { Snippet } from "svelte";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 
 export type IngredientSearchProps = {
-	onSelect: (food: FdcFood) => void;
-	onAdd?: (food: FdcFood) => void | Promise<void>;
+	onSelect: (food: FoodItem) => void;
+	onAdd?: (food: FoodItem) => void | Promise<void>;
 	addingFoodId?: number | null;
 	savedFoodIdentityKeys?: ReadonlySet<string>;
 	onSearchFocus?: () => void;

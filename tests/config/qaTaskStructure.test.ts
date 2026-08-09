@@ -17,21 +17,6 @@ const activeQueues = [
 	},
 ] as const;
 
-const todoQueues = [
-	{
-		file: "docs/TODO/launch-blocker-todo-tasks.md",
-		label: "Launch blockers",
-	},
-	{
-		file: "docs/TODO/before-launch-todo-tasks.md",
-		label: "Before launch",
-	},
-	{
-		file: "docs/TODO/post-launch-todo-tasks.md",
-		label: "Post-launch",
-	},
-] as const;
-
 const taskPattern = /^\s*- \[(?<state>[ x])\] \*\*(?<id>QA-\d{3}-\d{3}):\*\*$/;
 
 const readTasks = (file: string) => {
@@ -52,33 +37,10 @@ const readTasks = (file: string) => {
 	return tasks;
 };
 
-const todoTaskPattern = /^\s*- \[(?<state>[ x])\] \*\*(?<id>TODO-\d{3}-\d{3}):/;
-
-const readTodoTasks = (file: string) => {
-	const lines = readFileSync(file, "utf8").split("\n");
-	const tasks: Array<{ body: string; id: string; state: string }> = [];
-	for (let index = 0; index < lines.length; index += 1) {
-		const match = lines[index].match(todoTaskPattern);
-		if (!match?.groups) continue;
-		let end = index + 1;
-		while (end < lines.length && !todoTaskPattern.test(lines[end])) end += 1;
-		tasks.push({
-			body: lines.slice(index + 1, end).join("\n"),
-			id: match.groups.id,
-			state: match.groups.state,
-		});
-		index = end - 1;
-	}
-	return tasks;
-};
-
 const localTrackersAvailable = [
 	"docs/QA/qa-tasks.md",
 	"docs/QA/completed-qa-tasks.md",
 	...activeQueues.map((queue) => queue.file),
-	"docs/TODO/todo-tasks.md",
-	"docs/TODO/completed-todo-tasks.md",
-	...todoQueues.map((queue) => queue.file),
 ].every(existsSync);
 
 const readQaWorkflowCategories = (file: string) => {
@@ -98,21 +60,11 @@ const readQaWorkflowCategories = (file: string) => {
 		}));
 };
 
-const readTodoWorkflowCategories = (file: string) => {
-	const source = readFileSync(file, "utf8");
-	return source
-		.split(/^## /m)
-		.slice(1)
-		.filter((section) => !section.startsWith("Imported Verification Contract"))
-		.map((section) => ({
-			name: section.split("\n", 1)[0],
-			groups: [...section.matchAll(/^### (TODO-\d{3}) —/gm)].map(
-				(match) => match[1],
-			),
-		}));
-};
+describe.runIf(localTrackersAvailable)("QA task structure", () => {
+	it("keeps QA as the only task queue", () => {
+		expect(existsSync("docs/TODO")).toBe(false);
+	});
 
-describe.runIf(localTrackersAvailable)("QA and TODO task structure", () => {
 	it("keeps active tasks complete and uniquely owned by one queue", () => {
 		const seen = new Set<string>();
 		for (const queue of activeQueues) {
@@ -204,90 +156,6 @@ describe.runIf(localTrackersAvailable)("QA and TODO task structure", () => {
 			"docs/QA/qa-tasks.md",
 			...activeQueues.map((queue) => queue.file),
 			"docs/QA/completed-qa-tasks.md",
-		]) {
-			const source = readFileSync(file, "utf8");
-			for (const match of source.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
-				const target = match[1].split("#")[0];
-				if (!target || /^(?:https?:|mailto:)/.test(target)) continue;
-				const resolved = resolve(dirname(file), decodeURIComponent(target));
-				expect(existsSync(resolved), `${file} links to missing ${target}`).toBe(true);
-			}
-		}
-	});
-
-	it("keeps each legacy QA group represented once in the TODO transition queue", () => {
-		const activeIds = new Set(
-			activeQueues.flatMap((queue) => readTasks(queue.file).map((task) => task.id)),
-		);
-		const referencedIds: string[] = [];
-		const seenTodoIds = new Set<string>();
-
-		for (const queue of todoQueues) {
-			for (const task of readTodoTasks(queue.file)) {
-				expect(task.state, `${task.id} is checked inside an active TODO queue`).toBe(" ");
-				expect(seenTodoIds.has(task.id), `${task.id} is duplicated`).toBe(false);
-				seenTodoIds.add(task.id);
-				expect(task.body, `${task.id} is missing its QA source`).toContain("- Source:");
-				const ids = [...task.body.matchAll(/`(QA-\d{3}-\d{3})`/g)].map(
-					(match) => match[1],
-				);
-				if (ids.length === 0) {
-					for (const field of [
-						"- Type:",
-						"- Owner:",
-						"- Repro:",
-						"- Example input:",
-						"- Expected:",
-						"- Next action:",
-						"- Done when:",
-					]) {
-						expect(task.body, `${task.id} is missing ${field}`).toContain(field);
-					}
-				}
-				referencedIds.push(...ids);
-			}
-		}
-
-		expect(new Set(referencedIds).size).toBe(referencedIds.length);
-		expect(new Set(referencedIds)).toEqual(activeIds);
-	});
-
-	it("keeps the TODO index totals synchronized", () => {
-		const index = readFileSync("docs/TODO/todo-tasks.md", "utf8");
-		for (const queue of todoQueues) {
-			const tasks = readTodoTasks(queue.file);
-			const qaChecks = tasks.flatMap((task) => [
-				...task.body.matchAll(/`(QA-\d{3}-\d{3})`/g),
-			]).length;
-			expect(index).toContain(
-				`${queue.label}](./${queue.file.split("/").at(-1)}): ${tasks.length} groups, ${tasks.length} active TODOs covering ${qaChecks} remaining QA checks.`,
-			);
-		}
-	});
-
-	it("removes completed TODO groups and empty categories from active queues", () => {
-		for (const queue of todoQueues) {
-			const activeGroups = new Set(
-				readTodoTasks(queue.file).map((task) => task.id.slice(0, 8)),
-			);
-			const referencedGroups: string[] = [];
-			for (const category of readTodoWorkflowCategories(queue.file)) {
-				expect(
-					category.groups.length,
-					`${queue.file} retains empty category ${category.name}`,
-				).toBeGreaterThan(0);
-				referencedGroups.push(...category.groups);
-			}
-			expect(new Set(referencedGroups).size).toBe(referencedGroups.length);
-			expect(new Set(referencedGroups)).toEqual(activeGroups);
-		}
-	});
-
-	it("keeps local TODO documentation links valid", () => {
-		for (const file of [
-			"docs/TODO/todo-tasks.md",
-			...todoQueues.map((queue) => queue.file),
-			"docs/TODO/completed-todo-tasks.md",
 		]) {
 			const source = readFileSync(file, "utf8");
 			for (const match of source.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {

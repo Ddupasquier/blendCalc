@@ -95,8 +95,8 @@ export const tutorialSteps: TutorialStep[] = [
 		],
 		icon: "save",
 		route: "/saved",
-		target: "[data-tutorial-target='saved-mix'] .saved-drink-card summary",
-		targetLabel: "one saved Mix",
+		target: "[data-tutorial-target='saved-recipe'] .saved-recipe-card summary",
+		targetLabel: "one saved recipe",
 	},
 	{
 		title: "Make warnings relevant to you",

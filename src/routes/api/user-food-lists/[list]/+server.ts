@@ -13,16 +13,16 @@ import {
 	isIngredientTrustFilter,
 } from "$lib/utils/ingredients/ingredientProvenance";
 import type { FoodListSort } from "$lib/utils/list/listNavigation";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import {
-	readCloudSmoothieListPage,
+	readCloudIngredientListPage,
 } from "$lib/server/user-data/foodLists.server";
 import {
 	enrichFoodForListPlacement,
 } from "$lib/server/user-data/foodListPlacement.server";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { Json } from "$lib/types/database.types";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { readLimitedJson } from "$lib/server/security/requestBody.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
@@ -36,18 +36,18 @@ const VALID_SORTS = new Set<FoodListSort>([
 	"name-desc",
 ]);
 
-const getListKey = (value: string): SmoothieListKey | null => {
+const getListKey = (value: string): IngredientListKey | null => {
 	if (value === "fridge") return MIX_STORAGE_KEYS.fridge;
 	if (value === "shopping-list") return MIX_STORAGE_KEYS.shoppingList;
 	return null;
 };
 
-const getListType = (listKey: SmoothieListKey) =>
+const getListType = (listKey: IngredientListKey) =>
 	listKey === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping";
 
-const isFood = (value: unknown): value is FdcFood => {
+const isFood = (value: unknown): value is FoodItem => {
 	if (!value || typeof value !== "object") return false;
-	const food = value as Partial<FdcFood>;
+	const food = value as Partial<FoodItem>;
 	return Number.isSafeInteger(food.fdcId) &&
 		typeof food.description === "string" &&
 		food.description.trim().length > 0 &&
@@ -95,7 +95,7 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 
 	try {
 		const [page, foodSafetyContext] = await Promise.all([
-			readCloudSmoothieListPage(
+			readCloudIngredientListPage(
 				listKey,
 				{
 					limit,

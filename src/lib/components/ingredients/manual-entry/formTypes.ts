@@ -1,7 +1,7 @@
 import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { ManualEntryNutrientGroupsByStep } from "$lib/utils/food/nutrients/nutrientDefinitions";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import type {
 	NutritionLabelOcrCandidate,
 	NutritionLabelServingCandidate,
@@ -62,16 +62,16 @@ export type ManualEntryVolumeOption = {
 };
 
 export type CustomIngredientOutcomeState = {
-	food: FdcFood;
-	destination: SmoothieListKey;
+	food: FoodItem;
+	destination: IngredientListKey;
 	addedToList: boolean;
 	message: string;
 };
 
 export type ManualEntryListMovePromptState = {
-	food: FdcFood;
-	source: SmoothieListKey;
-	destination: SmoothieListKey;
+	food: FoodItem;
+	source: IngredientListKey;
+	destination: IngredientListKey;
 	resolve: (confirmed: boolean) => void;
 };
 

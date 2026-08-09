@@ -2,7 +2,7 @@ import {
 	type BarcodeProductDraft,
 } from "$lib/utils/barcode/productLookup";
 import type { FoodImageAsset } from "$lib/utils/food/types";
-import { getProductReferenceData } from "./productReferenceData.server";
+import { getProductReferenceCatalog } from "./productReferenceCatalog.server";
 import {
 	applyCachedImageToBarcodeDraft,
 	mergeMissingBarcodeProductFields,
@@ -31,7 +31,7 @@ export const lookupExternalBarcodeProduct = async (
 	lookups: {
 		usda?: typeof lookupUsdaBarcodeProduct;
 		openFoodFacts?: typeof lookupOpenFoodFactsBarcodeProduct;
-		getReferenceData?: typeof getProductReferenceData;
+		getProductReferenceCatalog?: typeof getProductReferenceCatalog;
 		requiredNutrientIds?: Iterable<number>;
 		cachedImage?: FoodImageAsset | null | PromiseLike<FoodImageAsset | null>;
 		externalLookupsEnabled?: boolean;
@@ -42,8 +42,8 @@ export const lookupExternalBarcodeProduct = async (
 		areExternalProductLookupsEnabled();
 	if (!hasInjectedProvider && !externalLookupsEnabled) return null;
 
-	const referenceData = await (
-		lookups.getReferenceData ?? getProductReferenceData
+	const productReferenceCatalog = await (
+		lookups.getProductReferenceCatalog ?? getProductReferenceCatalog
 	)();
 	const lookupUsda = lookups.usda ?? lookupUsdaBarcodeProduct;
 	const lookupOpenFoodFacts =
@@ -58,7 +58,7 @@ export const lookupExternalBarcodeProduct = async (
 	let firstError: unknown;
 	try {
 		const [usdaDraft, cachedImage] = await Promise.all([
-			lookupUsda(barcode, referenceData),
+			lookupUsda(barcode, productReferenceCatalog),
 			cachedImagePromise,
 		]);
 		if (usdaDraft) {
@@ -70,7 +70,7 @@ export const lookupExternalBarcodeProduct = async (
 				return primaryDraft;
 			}
 			try {
-				const supplement = await lookupOpenFoodFacts(barcode, referenceData);
+				const supplement = await lookupOpenFoodFacts(barcode, productReferenceCatalog);
 				return mergeMissingBarcodeProductFields(primaryDraft, supplement);
 			} catch {
 				return primaryDraft;
@@ -82,7 +82,7 @@ export const lookupExternalBarcodeProduct = async (
 
 	try {
 		const [openFoodFactsDraft, cachedImage] = await Promise.all([
-			lookupOpenFoodFacts(barcode, referenceData),
+			lookupOpenFoodFacts(barcode, productReferenceCatalog),
 			cachedImagePromise,
 		]);
 		return openFoodFactsDraft

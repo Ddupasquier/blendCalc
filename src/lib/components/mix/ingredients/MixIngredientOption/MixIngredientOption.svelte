@@ -23,13 +23,12 @@
 		aria-pressed={selected}
 		aria-label={`${selected ? "Remove" : "Add"} ${food.description} ${selected ? "from" : "to"} this mix${warning ? `. Warning: ${warning}` : ""}`}
 		onclick={onSelect}
-	>
-		<span class="mix-ingredient-option__select-status">
-			<CardSelectionIndicator {selected} variant="circle" />
-		</span>
-	</button>
+	></button>
 	<span class="mix-ingredient-option__copy">
 		<strong title={food.description}>{food.description}</strong>
+	</span>
+	<span class="mix-ingredient-option__select-status">
+		<CardSelectionIndicator {selected} variant="circle" />
 	</span>
 </article>
 

@@ -9,7 +9,7 @@ afterEach(() => {
 });
 
 describe("dialog focus management", () => {
-	it("moves focus into a dialog and returns it when the dialog closes", async () => {
+	it("moves focus into a dialog and returns it after the dialog leaves the document", async () => {
 		const trigger = document.createElement("button");
 		const dialog = document.createElement("div");
 		const firstButton = document.createElement("button");
@@ -25,6 +25,10 @@ describe("dialog focus management", () => {
 		expect(firstButton).toHaveFocus();
 
 		cleanup();
+		expect(firstButton).toHaveFocus();
+		dialog.remove();
+		await Promise.resolve();
+		await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 		expect(trigger).toHaveFocus();
 	});
 
@@ -54,5 +58,27 @@ describe("dialog focus management", () => {
 		trapDialogFocus(reverseTabEvent, dialog);
 		expect(reverseTabEvent.defaultPrevented).toBe(true);
 		expect(lastButton).toHaveFocus();
+	});
+
+	it("restores a trigger captured before the dialog enters the document", async () => {
+		const trigger = document.createElement("button");
+		const dialog = document.createElement("div");
+		const firstButton = document.createElement("button");
+		dialog.append(firstButton);
+		document.body.append(trigger);
+		trigger.focus();
+
+		const capturedTrigger = document.activeElement as HTMLElement;
+		document.body.append(dialog);
+		document.body.focus();
+		const cleanup = manageDialogFocus(dialog, capturedTrigger);
+		await Promise.resolve();
+		expect(firstButton).toHaveFocus();
+
+		cleanup();
+		dialog.remove();
+		await Promise.resolve();
+		await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+		expect(trigger).toHaveFocus();
 	});
 });

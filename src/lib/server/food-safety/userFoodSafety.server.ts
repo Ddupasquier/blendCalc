@@ -1,5 +1,5 @@
 import type { Database } from "$lib/types/database.types";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
 	getFoodPreferenceProfile,
 	isMissingFoodPreferencesTableError,
@@ -47,7 +47,7 @@ export const getUserFoodSafetyContext = async (
 export const annotateFoodsForUser = async (
 	supabase: SupabaseClient<Database>,
 	userId: string,
-	foods: FdcFood[],
+	foods: FoodItem[],
 ) => annotateFoodsWithFoodSafety(
 	foods,
 	await getUserFoodSafetyContext(supabase, userId),

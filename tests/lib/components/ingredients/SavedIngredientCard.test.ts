@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import SavedIngredientCard from "$lib/components/ingredients/list/SavedIngredientCard/SavedIngredientCard.svelte";
-import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceData";
+import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceCatalogs";
 
 const baseProps = {
 	food: {

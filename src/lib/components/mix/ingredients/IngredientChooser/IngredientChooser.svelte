@@ -13,7 +13,7 @@
 		sortFoodListItems,
 		type FoodListSort,
 	} from "$lib/utils/list/listNavigation";
-	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+	import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 	import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 
@@ -29,7 +29,7 @@
 		onCloseFilters = () => {},
 	}: IngredientChooserProps = $props();
 
-	let activeListKey = $state<SmoothieListKey>(MIX_STORAGE_KEYS.fridge);
+	let activeListKey = $state<IngredientListKey>(MIX_STORAGE_KEYS.fridge);
 	let query = $state("");
 	let filter = $state("all");
 	let sort = $state<FoodListSort>("recent");
@@ -90,7 +90,7 @@
 		);
 	};
 	const setActiveList = (value: string) => {
-		activeListKey = value as SmoothieListKey;
+		activeListKey = value as IngredientListKey;
 		resetVisibleItems();
 		requestAnimationFrame(() => {
 			listElement?.scrollTo({ top: 0, behavior: "auto" });

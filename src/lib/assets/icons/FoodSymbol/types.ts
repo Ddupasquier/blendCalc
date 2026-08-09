@@ -1,10 +1,10 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 export type FoodSymbolProps = {
-	food: Pick<FdcFood, "description" | "image"> &
+	food: Pick<FoodItem, "description" | "image"> &
 		Partial<
 			Pick<
-				FdcFood,
+				FoodItem,
 				"symbolKey" | "foodCategory" | "brandedFoodCategory" | "categories"
 			>
 		>;

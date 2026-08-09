@@ -10,7 +10,7 @@ const quantitySurfaces = [
 	"src/lib/utils/mix/calculations/mixAnalysis.ts",
 	"src/lib/utils/mix/calculations/nutrientSuggestions.ts",
 	"src/lib/utils/mix/ui/mixUi.ts",
-	"src/lib/utils/mix/warnings/smartWarnings.ts",
+	"src/lib/utils/mix/warnings/mixWarnings.ts",
 ];
 
 describe("Mix quantity formatting architecture", () => {

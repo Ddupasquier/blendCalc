@@ -26,17 +26,17 @@ describe("authentication flow", () => {
 			origin: "https://example.com",
 			flowId: expect.any(String),
 		});
-		expect(cookies.delete).toHaveBeenCalledWith("smoothie-auth-next", {
+		expect(cookies.delete).toHaveBeenCalledWith("blendcalc-auth-next", {
 			path: "/",
 		});
-		expect(cookies.delete).toHaveBeenCalledWith("smoothie-auth-origin", {
+		expect(cookies.delete).toHaveBeenCalledWith("blendcalc-auth-origin", {
 			path: "/",
 		});
-		expect(cookies.delete).toHaveBeenCalledWith("smoothie-auth-flow-id", {
+		expect(cookies.delete).toHaveBeenCalledWith("blendcalc-auth-flow-id", {
 			path: "/",
 		});
 		expect(cookies.set).toHaveBeenCalledWith(
-			"smoothie-auth-next",
+			"blendcalc-auth-next",
 			"/mix?loaded=true",
 			expect.objectContaining({
 				httpOnly: true,

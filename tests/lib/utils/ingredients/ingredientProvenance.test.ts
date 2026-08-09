@@ -6,9 +6,9 @@ import {
 	matchesIngredientProvenance,
 	type IngredientProvenanceOption,
 } from "$lib/utils/ingredients/ingredientProvenance";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const food = (values: Partial<FdcFood>): FdcFood => ({
+const food = (values: Partial<FoodItem>): FoodItem => ({
 	fdcId: 1,
 	description: "Test food",
 	foodNutrients: [],

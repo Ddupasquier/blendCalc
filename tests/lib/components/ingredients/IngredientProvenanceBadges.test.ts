@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
-import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceData";
+import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceCatalogs";
 
 describe("IngredientProvenanceBadges", () => {
 	it("shows evidence-backed verification without exposing provider hierarchy", () => {

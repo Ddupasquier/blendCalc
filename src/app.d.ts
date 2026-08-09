@@ -3,11 +3,9 @@ import type { Database } from "$lib/types/database.types";
 import type { VerifiedAuthUser } from "$lib/utils/auth/types";
 import type { AppRole } from "$lib/utils/moderation/moderation";
 import type { RequestContext } from "@sveltejs/adapter-vercel";
-import type {
-	IngredientPageInitialData,
-	MixPageInitialData,
-	SavedPageInitialData,
-} from "$lib/types/userData";
+import type { IngredientPageInitialData } from "$lib/types/pageData/ingredientPageData";
+import type { MixPageInitialData } from "$lib/types/pageData/mixPageData";
+import type { SavedRecipesPageInitialData } from "$lib/types/pageData/savedRecipesPageData";
 import type {
 	AppIssueCode,
 	AppIssueParams,
@@ -41,7 +39,7 @@ declare global {
 			themePreference: ThemePreference;
 			ingredientData?: IngredientPageInitialData;
 			mixData?: MixPageInitialData;
-			savedData?: SavedPageInitialData;
+			savedData?: SavedRecipesPageInitialData;
 		}
 		interface PageState {
 			mixRouteHref?: string;

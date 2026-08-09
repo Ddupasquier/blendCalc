@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import SelectedIngredientsPanel from "$lib/components/mix/ingredients/SelectedIngredientsPanel/SelectedIngredientsPanel.svelte";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { ServingConversion } from "$lib/utils/serving/servingAmount";
 
-const food = (fdcId: number): FdcFood => ({
+const food = (fdcId: number): FoodItem => ({
 	fdcId,
 	description: `Selected ingredient ${String(fdcId).padStart(2, "0")}`,
 	foodNutrients: [],

@@ -4,7 +4,7 @@ import {
 	getUniqueFoodMetadataTags,
 } from "$lib/utils/food/records/foodMetadataPresentation";
 import type {
-	FdcFood,
+	FoodItem,
 	FoodBarcodeProvenance,
 	FoodIdentityType,
 	FoodSourceAttribution,
@@ -76,7 +76,7 @@ const formatBarcodeCaptureMethod = (
 	}
 };
 
-const formatPackageQuantity = (food: FdcFood) => {
+const formatPackageQuantity = (food: FoodItem) => {
 	const label = cleanText(food.packageQuantity?.label);
 	if (label) return label;
 	const amount = food.packageQuantity?.amount;
@@ -95,7 +95,7 @@ const formatServing = (serving: FoodServing) => {
 		: label || grams;
 };
 
-const formatDensity = (food: FdcFood) => {
+const formatDensity = (food: FoodItem) => {
 	const density = food.customDensityGramsPerMilliliter;
 	if (!Number.isFinite(density) || density === undefined) return "";
 	const confidence = food.customDensityConfidence
@@ -109,7 +109,7 @@ const formatDensity = (food: FdcFood) => {
 	return `${formatNumber(density)} g/mL${variance}${confidence ? ` · ${confidence}` : ""}`;
 };
 
-const getProductRows = (food: FdcFood) => {
+const getProductRows = (food: FoodItem) => {
 	const barcode = cleanText(food.barcode) || cleanText(food.gtinUpc);
 	const categories = getUniqueFoodMetadataTags([
 		food.foodCategory,
@@ -145,7 +145,7 @@ const getProductRows = (food: FdcFood) => {
 	]);
 };
 
-const getServingRows = (food: FdcFood) => {
+const getServingRows = (food: FoodItem) => {
 	const normalizedServings = [...(food.foodServings ?? [])]
 		.filter(
 			(serving) =>
@@ -202,7 +202,7 @@ const getServingRows = (food: FdcFood) => {
 	]);
 };
 
-const getSourceRows = (food: FdcFood) => {
+const getSourceRows = (food: FoodItem) => {
 	const identifiers = food.sourceIdentifiers ?? {};
 	const attribution = food.sourceAttribution;
 	const barcode = cleanText(food.barcode) || cleanText(food.gtinUpc);
@@ -307,7 +307,7 @@ const FIELD_LABELS: Record<FoodTrackedField, string> = {
 };
 
 const formatFieldSource = (
-	source: NonNullable<FdcFood["fieldProvenance"]>[FoodTrackedField],
+	source: NonNullable<FoodItem["fieldProvenance"]>[FoodTrackedField],
 ) => {
 	if (!source?.source?.trim()) return "";
 	const sourceLabel = formatFoodMetadataKey(source.source);
@@ -317,9 +317,9 @@ const formatFieldSource = (
 		: sourceLabel;
 };
 
-const getFieldSourceRows = (food: FdcFood) =>
+const getFieldSourceRows = (food: FoodItem) =>
 	(Object.entries(food.fieldProvenance ?? {}) as Array<
-		[FoodTrackedField, NonNullable<FdcFood["fieldProvenance"]>[FoodTrackedField]]
+		[FoodTrackedField, NonNullable<FoodItem["fieldProvenance"]>[FoodTrackedField]]
 	>)
 		.filter(([, source]) => Boolean(source))
 		.map(([field, source]) => ({
@@ -328,7 +328,7 @@ const getFieldSourceRows = (food: FdcFood) =>
 		}))
 		.filter((row) => Boolean(row.label && row.value));
 
-export const getProductInformation = (food: FdcFood): ProductInformation => ({
+export const getProductInformation = (food: FoodItem): ProductInformation => ({
 	productRows: getProductRows(food),
 	servingRows: getServingRows(food),
 	sourceRows: getSourceRows(food),

@@ -13,7 +13,7 @@
 	import ManualEntryStepLayout from "$lib/components/ingredients/manual-entry/ManualEntryStepLayout/ManualEntryStepLayout.svelte";
 	import ManualEntryToggleRow from "$lib/components/ingredients/manual-entry/ManualEntryToggleRow/ManualEntryToggleRow.svelte";
 	import type { ShareStepProps } from "./types";
-	import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+	import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
 	let {
@@ -216,7 +216,7 @@
 				value={saveDestination}
 				options={saveDestinationOptions}
 				onValueChange={(value) =>
-					onSaveDestinationChange(value as SmoothieListKey)}
+					onSaveDestinationChange(value as IngredientListKey)}
 			/>
 		</ManualEntryField>
 	{/if}

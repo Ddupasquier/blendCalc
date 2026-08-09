@@ -15,7 +15,7 @@ describe("ListSortSheet", () => {
 					{ value: "name", label: "Name A–Z" },
 				],
 				titleId: "saved-sort-sheet-title",
-				label: "Sort saved drinks",
+				label: "Sort saved recipes",
 				onApply,
 				onClose: vi.fn(),
 			},

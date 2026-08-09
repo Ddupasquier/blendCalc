@@ -3,7 +3,7 @@ import {
 	getUniqueFoodMetadataTags,
 } from "$lib/utils/food/records/foodMetadataPresentation";
 import type {
-	FdcFood,
+	FoodItem,
 	FoodIngredientPresentation,
 	FoodIngredientPresentationClassification,
 	FoodIngredientPresentationMetric,
@@ -80,7 +80,7 @@ const getMetric = (
 };
 
 export const buildFoodIngredientPresentation = (
-	food: FdcFood,
+	food: FoodItem,
 ): FoodIngredientPresentation | undefined => {
 	const ingredientText = food.ingredients?.trim() ||
 		(food.ingredientList ?? [])

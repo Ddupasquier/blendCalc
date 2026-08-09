@@ -21,7 +21,7 @@ import WebSocket from "ws";
 import {
 	getLocalQaCatalogBarcodes,
 	localQaPersonas,
-	localQaSavedDrinks,
+	localQaSavedRecipes,
 } from "../lib/local_qa_personas.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
@@ -443,7 +443,7 @@ const createQaGoals = (goals, pointGoalTolerance) =>
     }),
   );
 
-const createSavedDrink = (
+const createSavedRecipe = (
   definition,
   catalogFoods,
   pointGoalTolerance,
@@ -478,13 +478,13 @@ const createSavedDrink = (
 	};
 };
 
-const seedTestSavedDrinks = async (
+const seedTestSavedRecipes = async (
   userClient,
   account,
   catalogFoods,
   pointGoalTolerance,
 ) => {
-	if (account.savedDrinkKeys.length === 0) return;
+	if (account.savedRecipeKeys.length === 0) return;
 	const existingRows = requireSuccessfulResult(
 		await userClient.from("saved_drinks").select("id, name"),
 		`Load saved mixes for ${account.email}`,
@@ -493,9 +493,9 @@ const seedTestSavedDrinks = async (
 		existingRows.map((row) => [row.name.toLowerCase(), row.id]),
 	);
 
-	for (const savedDrinkKey of account.savedDrinkKeys) {
-		const definition = localQaSavedDrinks[savedDrinkKey];
-		const drink = createSavedDrink(
+	for (const savedRecipeKey of account.savedRecipeKeys) {
+		const definition = localQaSavedRecipes[savedRecipeKey];
+		const recipe = createSavedRecipe(
 			definition,
 			catalogFoods,
       pointGoalTolerance,
@@ -503,12 +503,12 @@ const seedTestSavedDrinks = async (
 		);
 		const result = requireSuccessfulResult(
 			await userClient.rpc("save_saved_drink", {
-				p_created_at: new Date(drink.createdAt).toISOString(),
-				p_drink: drink,
-				p_id: drink.id,
-				p_name: drink.name,
+				p_created_at: new Date(recipe.createdAt).toISOString(),
+				p_drink: recipe,
+				p_id: recipe.id,
+				p_name: recipe.name,
 			}),
-			`Seed saved mix ${drink.name} for ${account.email}`,
+			`Seed saved recipe ${recipe.name} for ${account.email}`,
 		);
 		if (result !== "saved" && result !== "duplicate") {
 			throw new Error(
@@ -525,18 +525,18 @@ const seedTestMixPreferences = async (
   pointGoalTolerance,
 ) => {
 	if (!account.activeMixKey) return;
-	const definition = localQaSavedDrinks[account.activeMixKey];
-  const drink = createSavedDrink(definition, catalogFoods, pointGoalTolerance);
+	const definition = localQaSavedRecipes[account.activeMixKey];
+	const recipe = createSavedRecipe(definition, catalogFoods, pointGoalTolerance);
 	const result = requireSuccessfulResult(
 		await userClient.rpc("save_mix_preferences", {
 			p_mix_state: {
 				version: 1,
-				selected: drink.selected,
-				options: drink.options,
-				selectedFoodIds: drink.foods.map((food) => food.fdcId),
-				servingGrams: drink.servingGrams,
-				servingQuantities: drink.servingQuantities,
-				servingUnits: drink.servingUnits,
+				selected: recipe.selected,
+				options: recipe.options,
+				selectedFoodIds: recipe.foods.map((food) => food.fdcId),
+				servingGrams: recipe.servingGrams,
+				servingQuantities: recipe.servingQuantities,
+				servingUnits: recipe.servingUnits,
 			},
 		}),
 		`Seed Mix state for ${account.email}`,
@@ -544,7 +544,7 @@ const seedTestMixPreferences = async (
 	if (result !== true) {
 		throw new Error(`Mix state could not be seeded for ${account.email}.`);
 	}
-  const goals = Object.values(drink.nutrientGoals)
+	const goals = Object.values(recipe.nutrientGoals)
     .sort((left, right) => left.sortOrder - right.sortOrder)
     .map((goal) => ({
       nutrient_id: goal.nutrientId,
@@ -558,7 +558,7 @@ const seedTestMixPreferences = async (
   requireSuccessfulResult(
     await userClient.rpc("save_mix_goal_configuration", {
       p_goals: goals,
-      p_goal_basis: drink.goalBasis,
+		p_goal_basis: recipe.goalBasis,
       p_customized: true,
     }),
     `Seed Mix goals for ${account.email}`,
@@ -659,7 +659,7 @@ const seedTestAccountState = async (
   }
 
 	await seedTestFoodLists(userClient, account, catalogFoods);
-  await seedTestSavedDrinks(
+	await seedTestSavedRecipes(
     userClient,
     account,
     catalogFoods,

@@ -1,5 +1,5 @@
 import type { Database } from "$lib/types/database.types";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
 	getAppIssueMessage,
@@ -91,7 +91,7 @@ export const readNutrientRelationshipRules = async (
 	return (data ?? []).map((row) => toRule(row as NutrientRelationshipRuleRow));
 };
 
-export const createNutrientValueMapFromFood = (food: FdcFood) => {
+export const createNutrientValueMapFromFood = (food: FoodItem) => {
 	const values = new Map<number, number>();
 	for (const nutrient of food.foodNutrients ?? []) {
 		if (!Number.isFinite(nutrient.nutrientId) || !Number.isFinite(nutrient.value)) {

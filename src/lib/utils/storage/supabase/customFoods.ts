@@ -1,7 +1,7 @@
-import { compactFood } from "$lib/utils/food/records/foodRecords";
+import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
 import { normalizeFoodProductName } from "$lib/utils/products/productNameFormatting.js";
 import type { Database } from "$lib/types/database.types";
@@ -45,13 +45,13 @@ const hydrateCloudCustomFoods = async (
 	return rows.map((row) => {
 		const catalogFood = hydrateFoodWithCatalogState(
 			normalizeFoodProductName(
-				row.food as unknown as FdcFood,
-			) as FdcFood,
+				row.food as unknown as FoodItem,
+			) as FoodItem,
 			{
 				shared_product_id:
-					(row.food as unknown as FdcFood).sharedProductId ?? null,
+					(row.food as unknown as FoodItem).sharedProductId ?? null,
 				shared_product_submission_id:
-					(row.food as unknown as FdcFood).sharedProductSubmissionId ?? null,
+					(row.food as unknown as FoodItem).sharedProductSubmissionId ?? null,
 				source_key: row.source_key,
 				trust_status: row.trust_status,
 			},
@@ -118,7 +118,7 @@ export const readCloudCustomFoodByFdcId = (
 ) => readCloudCustomFoodByColumn("fdc_id", foodId, context);
 
 export const saveCloudCustomFood = async (
-	food: FdcFood,
+	food: FoodItem,
 	context?: CloudDataContext,
 ): Promise<CloudCustomFoodWriteResult> => {
 	const supabase = resolveCloudClient(context);
@@ -126,7 +126,7 @@ export const saveCloudCustomFood = async (
 
 	const { data, error } = await supabase.rpc("save_custom_food", {
 		p_fdc_id: food.fdcId,
-		p_food: toJson(compactFood(food)),
+		p_food: toJson(normalizeFoodForStorage(food)),
 	});
 
 	if (error) return "error";

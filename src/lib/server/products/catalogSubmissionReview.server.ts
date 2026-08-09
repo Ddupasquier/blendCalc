@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
 	compareCatalogSubmissionToExistingProduct,
 	type CatalogSubmissionComparison,
@@ -69,7 +69,7 @@ export const buildProductSubmissionReviewFlags = ({
 
 export type PreparedCatalogSubmissionReview = {
 	canonicalCategory: ResolvedFoodCategory;
-	canonicalSubmissionFood: FdcFood;
+	canonicalSubmissionFood: FoodItem;
 	catalogUpdateSummary: CatalogUpdateSummary | null;
 	evidenceComplete: boolean;
 	hasSourceMatchedImageEvidence: boolean;
@@ -81,9 +81,9 @@ export type PreparedCatalogSubmissionReview = {
 };
 
 export const prepareCatalogSubmissionReview = (input: {
-	submissionFood: FdcFood;
+	submissionFood: FoodItem;
 	selectedCategory: ResolvedFoodCategory;
-	existingCatalogFood: FdcFood | null;
+	existingCatalogFood: FoodItem | null;
 	existingComparison: CatalogSubmissionComparison | null;
 	updateTarget: CatalogUpdateTarget | null;
 	sourceAssessment: CatalogSourceAssessment;

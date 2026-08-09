@@ -1,5 +1,5 @@
-import { compactFood } from "$lib/utils/food/records/foodRecords";
-import type { FdcFood, FoodServing } from "$lib/utils/food/types";
+import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
+import type { FoodItem, FoodServing } from "$lib/utils/food/types";
 import { toFinitePositiveNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export type NormalizedServingRow = {
@@ -53,12 +53,12 @@ export const normalizedRowsToServings = (
 		);
 
 export const hydrateFoodWithNormalizedServings = (
-	food: FdcFood,
+	food: FoodItem,
 	rows: NormalizedServingRow[],
-): FdcFood => {
+): FoodItem => {
 	const foodServings = normalizedRowsToServings(rows);
 	if (foodServings.length === 0) {
-		return compactFood({
+		return normalizeFoodForStorage({
 			...food,
 			hasSourceServing: false,
 			foodServings: [],
@@ -75,7 +75,7 @@ export const hydrateFoodWithNormalizedServings = (
 	}
 	const primaryServing = foodServings.find((serving) => serving.isPrimary) ?? foodServings[0];
 
-	return compactFood({
+	return normalizeFoodForStorage({
 		...food,
 		hasSourceServing: true,
 		foodServings,

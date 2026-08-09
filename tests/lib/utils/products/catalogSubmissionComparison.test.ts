@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
+import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
 import { compareCatalogSubmissionToExistingProduct } from "$lib/utils/products/catalogSubmissionComparison";
 
-const createFood = (overrides: Partial<FdcFood> = {}): FdcFood => ({
+const createFood = (overrides: Partial<FoodItem> = {}): FoodItem => ({
 	fdcId: -1,
 	description: "Strawberry jelly, strawberry",
 	brandOwner: "Safeway, Inc.",
