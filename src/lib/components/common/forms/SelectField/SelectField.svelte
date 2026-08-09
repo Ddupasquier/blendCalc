@@ -210,6 +210,7 @@
 		}
 		if (event.key === "Escape" && open) {
 			event.preventDefault();
+			event.stopPropagation();
 			hideListbox();
 			return;
 		}

@@ -91,8 +91,13 @@ the local verification commands and required remote workflow.
 **Evidence:** Repository-owned Playwright now runs authenticated desktop and mobile
 Chromium, Firefox, and WebKit projects against the disposable local database. It covers
 primary route health, client navigation and history, URL-backed ingredient overlays,
-focus/draft persistence, responsive overflow, reduced motion, structural WCAG scans,
-and approved Ingredients snapshots. Existing shared light-theme color contrast failures
+focus/draft persistence, manual-entry validation and category lookup, shared selects and
+segmented controls, Mix goal and ingredient interactions, nutrition amount controls,
+Saved recipe disclosures and confirmation, Profile controls, tutorial navigation,
+responsive overflow, reduced motion, structural WCAG scans, and approved Ingredients
+snapshots. Browser-owned component-test duplication has been removed while synthetic
+failure, callback, data-policy, and calculation contracts remain focused in Vitest.
+Existing shared light-theme color contrast failures
 remain open, and the unfinished views have not completed equivalent real-device,
 installed-browser, assistive-technology, camera, or operating-system permission passes.
 

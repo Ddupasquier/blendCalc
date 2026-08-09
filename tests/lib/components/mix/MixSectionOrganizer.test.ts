@@ -40,27 +40,6 @@ describe("MixSectionOrganizer", () => {
 		expect(onOrderCommit).toHaveBeenCalledOnce();
 	});
 
-	it("supports keyboard reordering from the drag handle", async () => {
-		const onOrderCommit = vi.fn();
-		render(MixSectionOrganizer, {
-			props: {
-				order: [...DEFAULT_MIX_SECTION_ORDER],
-				onOrderChange: vi.fn(),
-				onOrderCommit,
-				onDone: vi.fn(),
-			},
-		});
-
-		await fireEvent.keyDown(
-			screen.getByRole("button", { name: "Drag Nutrient shape to reorder" }),
-			{ key: "End" },
-		);
-
-		expect(labels().at(-1)).toBe("Nutrient shape");
-		expect(onOrderCommit).toHaveBeenCalledOnce();
-		expect(screen.getByText(/moved to position 7 of 7/i)).toBeInTheDocument();
-	});
-
 	it("keeps a fast pointer drag captured by the stable organizer", async () => {
 		const onOrderChange = vi.fn();
 		const onOrderCommit = vi.fn();

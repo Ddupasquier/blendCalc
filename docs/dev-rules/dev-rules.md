@@ -251,8 +251,12 @@ non-device fallback when practical. Do not use browser-name checks when capabili
 checks can answer the real question. Run `npm run test:e2e:chromium` while developing a
 browser-facing change and run the complete `npm run test:e2e` project matrix before its
 final handoff or release. Move deterministic rendered behavior into Playwright instead
-of preserving source-text assertions or assigning reproducible browser checks to the
-user. Before handoff, also test the current and previous two
+of preserving source-text assertions, duplicate jsdom interaction tests, or assigning
+reproducible browser checks to the user. Audit existing component tests whenever a
+Playwright flow expands; remove every interaction assertion the routed browser scenario
+fully supersedes, while retaining isolated calculation, callback, failure-injection,
+and data-policy coverage that the real route cannot create deterministically. Before
+handoff, also test the current and previous two
 stable desktop releases plus real or emulated iOS Safari and Android Chrome at portrait
 and landscape sizes. Do not reload or refetch page data merely because the browser
 window regains focus; focus changes are not evidence that application data changed and

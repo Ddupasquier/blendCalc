@@ -117,55 +117,6 @@ describe("SavedRecipeCard", () => {
 		});
 	});
 
-	it("starts closed with calories and expands recipe details", async () => {
-		render(SavedRecipeCard, {
-			props: {
-				recipe,
-				onLoad: vi.fn(),
-				onDelete: vi.fn(),
-			},
-		});
-
-		const title = screen.getByText("Morning Green");
-		const summary = title.closest("summary");
-		const recipeDetails = summary?.closest("details");
-		expect(recipeDetails?.open).toBe(false);
-		expect(recipeDetails).toHaveAttribute("data-surface", "panel");
-		expect(screen.getByText("100 kcal")).toBeInTheDocument();
-		expect(screen.queryByText("Goal match")).not.toBeInTheDocument();
-		expect(screen.getByText("75%")).toBeInTheDocument();
-		expect(
-			screen.getByLabelText("Overall goal match 75% across 2 goals"),
-		).toBeInTheDocument();
-		expect(screen.getByText("Protein")).not.toBeVisible();
-		expect(
-			screen.queryByRole("button", { name: "Load Morning Green" }),
-		).not.toBeVisible();
-
-		await fireEvent.click(summary!);
-		expect(recipeDetails?.open).toBe(true);
-		expect(screen.getByText("10 ingredients")).toBeInTheDocument();
-		expect(screen.getByText("Calories")).toBeInTheDocument();
-		expect(screen.getByText("100%")).toBeInTheDocument();
-		expect(screen.getByText("Protein")).toBeInTheDocument();
-		expect(screen.getByText("50%")).toBeInTheDocument();
-		expect(
-			screen.getByRole("button", { name: "Load Morning Green" }),
-		).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Share recipe" })).toHaveClass(
-      "circle-icon-button",
-    );
-
-		const ingredientSummary = screen
-			.getByText("+2 more ingredients")
-			.closest("summary");
-		const ingredientDetails = ingredientSummary?.closest("details");
-		expect(ingredientDetails?.open).toBe(false);
-		await fireEvent.click(ingredientSummary!);
-		expect(ingredientDetails?.open).toBe(true);
-		expect(screen.getByText("Pineapple")).toBeInTheDocument();
-	});
-
 	it("loads directly and requires two delete activations", async () => {
 		const onLoad = vi.fn();
 		const onDelete = vi.fn();

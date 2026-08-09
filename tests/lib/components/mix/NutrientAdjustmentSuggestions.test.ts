@@ -46,7 +46,7 @@ const suggestion: NutrientAdjustmentSuggestion = {
 };
 
 describe("NutrientAdjustmentSuggestions", () => {
-	it("starts collapsed and explains the safe selected-food adjustment", async () => {
+	it("starts collapsed when deterministic suggestions are available", () => {
 		render(NutrientAdjustmentSuggestions, {
 			props: {
 				suggestions: [suggestion],
@@ -54,20 +54,10 @@ describe("NutrientAdjustmentSuggestions", () => {
 			},
 		});
 
-		const toggle = screen.getByText("Suggested adjustments").closest("summary");
-		const disclosure = toggle?.closest("details");
+		const disclosure = screen
+			.getByText("Suggested adjustments")
+			.closest("details");
 		expect(disclosure).not.toHaveAttribute("open");
-
-		await fireEvent.click(toggle as HTMLElement);
-
-		expect(disclosure).toHaveAttribute("open");
-		expect(screen.getByText("Milk, reduced fat")).toBeInTheDocument();
-		expect(screen.getByText("Increase to 130 g")).toBeInTheDocument();
-		expect(screen.getByText("Protein +1 g")).toBeInTheDocument();
-    expect(
-      screen.getByText("Uses one reported serving: 1 fl oz"),
-    ).toBeInTheDocument();
-		expect(screen.queryByText(/watch out/i)).not.toBeInTheDocument();
 	});
 
 	it("applies the recommended amount", async () => {

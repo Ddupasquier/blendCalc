@@ -20,14 +20,4 @@ describe("NumberInput", () => {
 		expect(onValueChange).toHaveBeenLastCalledWith("", null, expect.any(Event));
 	});
 
-	it("selects the existing value on focus", async () => {
-		const select = vi.spyOn(HTMLInputElement.prototype, "select");
-		render(NumberInput, { props: { value: 60, placeholder: "0" } });
-		const input = screen.getByRole("spinbutton") as HTMLInputElement;
-
-		await fireEvent.focus(input);
-
-		expect(select).toHaveBeenCalledOnce();
-		expect(select).toHaveBeenCalledWith();
-	});
 });

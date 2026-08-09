@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import MixIngredientOption from "$lib/components/mix/ingredients/MixIngredientOption/MixIngredientOption.svelte";
 import type { FoodItem } from "$lib/utils/food/types";
@@ -21,31 +21,6 @@ const cardLayoutStyles = readFileSync(
 );
 
 describe("MixIngredientOption", () => {
-	it("uses the whole card as the only selection action", async () => {
-		const onSelect = vi.fn();
-		const { container } = render(MixIngredientOption, {
-			props: { food, selected: false, onSelect },
-		});
-
-		await fireEvent.click(
-			screen.getByRole("button", { name: /add pork chorizo to this mix/i }),
-		);
-		expect(onSelect).toHaveBeenCalledOnce();
-		const selectionButton = screen.getByRole("button", {
-			name: /add pork chorizo to this mix/i,
-		});
-		const selectionIndicator = container.querySelector(
-			".card-selection-indicator",
-		) as HTMLElement;
-		expect(selectionButton).not.toContainElement(selectionIndicator);
-		await fireEvent.click(selectionButton);
-		expect(onSelect).toHaveBeenCalledTimes(2);
-		expect(
-			screen.queryByRole("button", { name: /rename pork chorizo/i }),
-		).not.toBeInTheDocument();
-		expect(screen.queryByText("Sausages, Hotdogs & Brats")).not.toBeInTheDocument();
-	});
-
 	it("reserves a separate layout column so long names cannot overlap selection", () => {
 		const description =
 			"Oscar Mayer, Wieners (Beef Franks), Extra Long Product Description";

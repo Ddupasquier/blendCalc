@@ -81,28 +81,6 @@ describe("NutritionDetailView", () => {
 			.toHaveAttribute("src", "https://example.com/spinach-front.jpg");
 	});
 
-	it("steps viewing amount in 1g increments", async () => {
-		render(NutritionDetailView, {
-			props: {
-				food: spinach,
-				onClose: vi.fn(),
-				showListActions: false,
-			},
-		});
-
-		expect(screen.getByText("100g")).toBeInTheDocument();
-
-		await fireEvent.click(
-			screen.getByRole("button", { name: /increase viewing amount by 1g/i }),
-		);
-		expect(screen.getByText("101g")).toBeInTheDocument();
-
-		await fireEvent.click(
-			screen.getByRole("button", { name: /decrease viewing amount by 1g/i }),
-		);
-		expect(screen.getByText("100g")).toBeInTheDocument();
-	});
-
 	it("accelerates a held amount control, rescales nutrition, and stops on release", async () => {
 		vi.useFakeTimers();
 		render(NutritionDetailView, {
