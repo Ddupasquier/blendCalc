@@ -73,6 +73,10 @@ const moderationPage = readFileSync(
 	"src/routes/moderation/+page.svelte",
 	"utf8",
 );
+const mixIngredientOptionStyles = readFileSync(
+	"src/lib/components/mix/ingredients/MixIngredientOption/MixIngredientOption.scss",
+	"utf8",
+);
 
 describe("ingredient card media architecture", () => {
 	it("uses one full-height media component across saved and search cards", () => {
@@ -155,6 +159,23 @@ describe("ingredient card media architecture", () => {
 			"@include ingredient-card-layout.copy",
 		);
 		expect(savedCard).not.toContain("IngredientCardActions");
+	});
+
+	it("reserves a shared trailing column for selection indicators", () => {
+		expect(cardLayoutStyles).toContain("@mixin selection-layout");
+		expect(cardLayoutStyles).toContain("@mixin selection-indicator-layer");
+		expect(savedCardStyles).toContain(
+			"@include ingredient-card-layout.selection-layout",
+		);
+		expect(savedCardStyles).toContain(
+			"@include ingredient-card-layout.selection-indicator-layer",
+		);
+		expect(mixIngredientOptionStyles).toContain(
+			"@include ingredient-card-layout.selection-layout",
+		);
+		expect(mixIngredientOptionStyles).toContain(
+			"@include ingredient-card-layout.selection-indicator-layer",
+		);
 	});
 
 	it("uses the exact card preview in user and privileged placement flows", () => {

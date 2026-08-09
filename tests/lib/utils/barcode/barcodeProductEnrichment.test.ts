@@ -7,12 +7,12 @@ import {
 	mergeMissingBarcodeProductFields,
 } from "$lib/utils/barcode/barcodeProductEnrichment";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import type { FdcNutrient, FoodImageAsset } from "$lib/utils/food/types";
+import type { FoodNutrient, FoodImageAsset } from "$lib/utils/food/types";
 
 const nutrient = (
 	value: number,
-	source: NonNullable<FdcNutrient["source"]>,
-): FdcNutrient => ({
+	source: NonNullable<FoodNutrient["source"]>,
+): FoodNutrient => ({
 	nutrientId: 1079,
 	nutrientName: "Fiber, total dietary",
 	nutrientNumber: "291",

@@ -1,7 +1,7 @@
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 
 export type IngredientListTabsProps = {
-	activeList: SmoothieListKey;
+	activeList: IngredientListKey;
 	fridgeCount: number;
 	shoppingListCount: number;
 };

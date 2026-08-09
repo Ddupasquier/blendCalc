@@ -14,10 +14,10 @@ describe("page metadata", () => {
 		);
 		expect(getAppDocumentTitle(url("/mix"))).toBe("Mix · blendCalc");
 		expect(getAppDocumentTitle(url("/saved"))).toBe(
-			"Saved Drinks · blendCalc",
+			"Saved Recipes · blendCalc",
 		);
 		expect(getAppDocumentTitle(url("/saved/sort"))).toBe(
-			"Sort Saved Drinks · blendCalc",
+			"Sort Saved Recipes · blendCalc",
 		);
 	});
 

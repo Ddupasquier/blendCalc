@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
 	findCustomFoodByBarcode: vi.fn(),
 	findCustomFoodByName: vi.fn(),
 	submitSharedProduct: vi.fn(),
-	notifySmoothieListsChanged: vi.fn(),
+	notifyIngredientListsChanged: vi.fn(),
 }));
 
 vi.mock("$lib/utils/food/custom/customFoods", () => ({
@@ -18,14 +18,14 @@ vi.mock("$lib/utils/products/catalog", () => ({
 	submitSharedProduct: mocks.submitSharedProduct,
 }));
 
-vi.mock("$lib/utils/storage/client/smoothieLists", () => ({
-	notifySmoothieListsChanged: mocks.notifySmoothieListsChanged,
+vi.mock("$lib/utils/storage/client/ingredientLists", () => ({
+	notifyIngredientListsChanged: mocks.notifyIngredientListsChanged,
 }));
 
 import { saveManualEntryCustomFood } from "$lib/components/ingredients/manual-entry/utils/submitFlow";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const food: FdcFood = {
+const food: FoodItem = {
 	fdcId: -1,
 	description: "Trader Joe's Peanut Butter",
 	barcode: "00000000119993",
@@ -68,7 +68,7 @@ describe("manual entry catalog submission", () => {
 		expect(useIngredient).toHaveBeenCalledOnce();
 		expect(useIngredient).toHaveBeenCalledWith(food);
 		expect(mocks.submitSharedProduct).not.toHaveBeenCalled();
-		expect(mocks.notifySmoothieListsChanged).not.toHaveBeenCalled();
+		expect(mocks.notifyIngredientListsChanged).not.toHaveBeenCalled();
 	});
 
 	it("submits only after the user explicitly enables sharing", async () => {
@@ -95,7 +95,7 @@ describe("manual entry catalog submission", () => {
 			reviewFlags: [],
 			intent: "catalog_share",
 		});
-		expect(mocks.notifySmoothieListsChanged).toHaveBeenCalledOnce();
+		expect(mocks.notifyIngredientListsChanged).toHaveBeenCalledOnce();
 	});
 
 	it("does not submit when destination placement is cancelled", async () => {
@@ -114,6 +114,6 @@ describe("manual entry catalog submission", () => {
 		expect(mocks.saveCustomFood).toHaveBeenCalledOnce();
 		expect(useIngredient).toHaveBeenCalledOnce();
 		expect(mocks.submitSharedProduct).not.toHaveBeenCalled();
-		expect(mocks.notifySmoothieListsChanged).not.toHaveBeenCalled();
+		expect(mocks.notifyIngredientListsChanged).not.toHaveBeenCalled();
 	});
 });

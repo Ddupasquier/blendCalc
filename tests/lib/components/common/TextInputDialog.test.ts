@@ -7,8 +7,8 @@ describe("TextInputDialog", () => {
 		render(TextInputDialog, {
 			props: {
 				open: false,
-				title: "Save Drink",
-				label: "Drink name",
+				title: "Save Recipe",
+				label: "Recipe name",
 				onConfirm: vi.fn(),
 				onCancel: vi.fn(),
 			},
@@ -24,9 +24,9 @@ describe("TextInputDialog", () => {
 		render(TextInputDialog, {
 			props: {
 				open: true,
-				title: "Save Drink",
+				title: "Save Recipe",
 				description: "Name this mix.",
-				label: "Drink name",
+				label: "Recipe name",
 				confirmLabel: "Save",
 				initialValue: "Draft",
 				onConfirm,
@@ -34,7 +34,7 @@ describe("TextInputDialog", () => {
 			},
 		});
 
-		const input = screen.getByLabelText(/drink name/i);
+		const input = screen.getByLabelText(/recipe name/i);
 		expect(input).toHaveValue("Draft");
 
 		await fireEvent.input(input, { target: { value: "Post-workout" } });
@@ -51,18 +51,18 @@ describe("TextInputDialog", () => {
 		render(TextInputDialog, {
 			props: {
 				open: true,
-				title: "Save Drink",
-				label: "Drink name",
-				error: "You already have a saved drink with this name.",
+				title: "Save Recipe",
+				label: "Recipe name",
+				error: "You already have a saved recipe with this name.",
 				onConfirm: vi.fn(),
 				onValueChange,
 				onCancel: vi.fn(),
 			},
 		});
 
-		const input = screen.getByLabelText(/drink name/i);
+		const input = screen.getByLabelText(/recipe name/i);
 		expect(screen.getByRole("alert")).toHaveTextContent(
-			"You already have a saved drink with this name.",
+			"You already have a saved recipe with this name.",
 		);
 		expect(input).toHaveAttribute("aria-invalid", "true");
 

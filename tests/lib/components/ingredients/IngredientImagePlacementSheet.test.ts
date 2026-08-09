@@ -2,9 +2,9 @@ import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
 import IngredientImagePlacementSheet from "$lib/components/ingredients/sheets/IngredientImagePlacementSheet/IngredientImagePlacementSheet.svelte";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const foodWithImage: FdcFood = {
+const foodWithImage: FoodItem = {
 	fdcId: 1,
 	description: "Gochujang",
 	foodCategory: "Dips and Salsa",

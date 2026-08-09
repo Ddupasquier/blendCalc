@@ -1,5 +1,5 @@
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 export type ProductSourceQualitySummary = {
 	reportedNutrientCount: number;
@@ -28,7 +28,7 @@ export const summarizeBarcodeProductQuality = (
 });
 
 export const summarizeUsdaFoodQuality = (
-	food: FdcFood,
+	food: FoodItem,
 ): ProductSourceQualitySummary => ({
 	reportedNutrientCount: new Set(
 		food.reportedNutrientIds

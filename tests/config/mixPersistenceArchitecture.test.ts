@@ -11,7 +11,7 @@ describe("Mix persistence architecture", () => {
 
 		expect(mountBlock).toContain("loadCloudBackedMixPreferences();");
 		expect(mountBlock).not.toContain(
-			"if (!restoredSavedDrink) loadCloudBackedMixPreferences();",
+			"if (!restoredSavedRecipe) loadCloudBackedMixPreferences();",
 		);
 	});
 });

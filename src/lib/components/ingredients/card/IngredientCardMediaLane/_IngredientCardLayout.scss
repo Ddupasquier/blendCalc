@@ -93,6 +93,17 @@ $card-action-size-narrow: 2rem;
 	pointer-events: none;
 }
 
+@mixin selection-layout {
+	grid-template-columns: minmax(0, 1fr) auto;
+}
+
+@mixin selection-indicator-layer {
+	@include presentation-layer;
+
+	display: inline-flex;
+	justify-self: end;
+}
+
 @mixin copy($supporting-copy: true) {
 	display: grid;
 	gap: $app-gap-2xs;

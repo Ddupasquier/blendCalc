@@ -90,11 +90,42 @@ real `404` and generated route types remain useful.
 Do not create generic dumping folders such as `defaults`, `helpers`, `misc`, or
 `shared`. Name the domain and responsibility instead.
 
+## Naming
+
+Application-owned names must explain their domain responsibility without requiring the
+reader to inspect the implementation. Prefer a longer exact name over an abbreviation,
+generic label, stale provider term, or arbitrary character limit.
+Use the new-contributor test: a junior developer should understand the name's domain,
+responsibility, and relevant unit or basis from the name and nearby types without a
+comment that only exists to explain an unclear identifier.
+
+- Use `camelCase` for functions, methods, variables, and ordinary TypeScript
+  properties.
+- Use `PascalCase` for components, classes, types, interfaces, and enums.
+- Keep immutable module constants in the established `UPPER_SNAKE_CASE` convention.
+- Keep SCSS selectors in the established kebab/BEM-style convention.
+- Name booleans as predicates when they represent domain decisions; conventional UI
+  state names such as `open`, `disabled`, `selected`, and `busy` remain valid.
+- Include units and calculation bases in numeric names when the type does not make them
+  unambiguous.
+- Use plural names for collections and identify `Map` or `Set` structures when that
+  distinction explains behavior.
+- Match a file or component folder to its primary export or owned responsibility.
+- Keep provider terminology inside genuine provider adapters. Cross-source application
+  models use source-neutral domain names.
+
+Database identifiers, generated types, external payload keys, persisted storage keys,
+public API fields, route contracts, and framework-reserved exports retain their
+contracted names until their owning contract is deliberately versioned or migrated.
+Translate them at focused boundaries instead of spreading legacy vocabulary through
+the application.
+
 ## Tests
 
 ```text
 tests/
 ├── config/                  Architecture, generated-contract, and migration guards
+├── e2e/                     Playwright browser behavior and visual regression tests
 ├── fixtures/                Shared deterministic test data
 ├── lib/                     Unit/component tests grouped by source domain
 ├── routes/                  Route contract tests
@@ -104,6 +135,11 @@ tests/
 Tests should follow the same domain vocabulary as `src`. A component test may remain in
 its domain test folder; it does not need a second namesake folder unless that component
 needs multiple test/support files.
+
+Vitest owns isolated logic, component, route, schema, and architecture checks.
+Playwright owns behavior that requires a real browser, including client navigation,
+focus persistence, responsive layout, keyboard interaction across rendered surfaces,
+and approved visual snapshots. Do not duplicate the same assertion in both runners.
 
 ## Scripts
 
@@ -125,8 +161,9 @@ checklist.
 Repository setup and the stable developer command surface remain in the root
 [`README.md`](../README.md). Script execution and organization remain in
 [`scripts/README.md`](../scripts/README.md). Recovery context under
-`docs/local-context/` and prioritized work under `docs/TODO/` are local workflow state,
-not product documentation.
+`docs/local-context/` and active verification under `docs/QA/` are local workflow state,
+not product documentation. Verified unresolved implementation findings remain in the
+maintained development audit instead of a parallel task folder.
 
 ## Ownership Check
 

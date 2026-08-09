@@ -1,12 +1,12 @@
 import { env } from "$env/dynamic/private";
 import { normalizeFdcFood } from "$lib/utils/food/sources/fdc";
-import type { FdcFood, FdcSearchResponse } from "$lib/utils/food/types";
+import type { FoodItem, FdcSearchResponse } from "$lib/utils/food/types";
 import {
 	buildUsdaExactSearchQuery,
 	buildUsdaPartialSearchQuery,
 } from "$lib/server/products/usdaSearchQuery";
-import { getProductReferenceData } from "$lib/server/products/productReferenceData.server";
-import { getProductDataSource } from "$lib/utils/food/reference/productReferenceData";
+import { getProductReferenceCatalog } from "$lib/server/products/productReferenceCatalog.server";
+import { getProductDataSource } from "$lib/utils/food/reference/productReferenceCatalog";
 import { rankUsdaGenericFoods } from "$lib/server/products/usdaFoodSelection";
 import {
 	createProductSourceRequestTrace,
@@ -67,17 +67,17 @@ const fetchUsdaJson = async <T>(input: {
 const searchUsdaFoodsWithTrace = async (
 	query: string,
 	trace: ProductSourceRequestTrace,
-): Promise<FdcFood[]> => {
+): Promise<FoodItem[]> => {
 	const normalizedQuery = query.trim().replace(/\s+/g, " ");
 	if (!normalizedQuery) return [];
 	const exactQuery = buildUsdaExactSearchQuery(normalizedQuery);
 	const partialQuery = buildUsdaPartialSearchQuery(normalizedQuery);
 	if (!exactQuery || !partialQuery) return [];
 	const usdaSource = getProductDataSource(
-		await getProductReferenceData(),
+		await getProductReferenceCatalog(),
 		"usda",
 	);
-	const addProvenance = (foods: FdcFood[]) => foods.map((food) => ({
+	const addProvenance = (foods: FoodItem[]) => foods.map((food) => ({
 		...food,
 		sourceKey: usdaSource.key,
 		sourceLabel: usdaSource.displayName,
@@ -132,7 +132,7 @@ const searchUsdaFoodsWithTrace = async (
 	).slice(0, SEARCH_RESULT_LIMIT);
 };
 
-export const searchUsdaFoods = async (query: string): Promise<FdcFood[]> => {
+export const searchUsdaFoods = async (query: string): Promise<FoodItem[]> => {
 	const normalizedQuery = query.trim().replace(/\s+/g, " ");
 	if (!normalizedQuery) return [];
 
@@ -180,8 +180,8 @@ export const searchUsdaBrandedFoods = async (
 export const getUsdaFoodById = async (
 	fdcId: number,
 	trace?: ProductSourceRequestTrace,
-): Promise<FdcFood> => {
-	const food = await fetchUsdaJson<FdcFood>({
+): Promise<FoodItem> => {
+	const food = await fetchUsdaJson<FoodItem>({
 		path: `/food/${fdcId}`,
 		requestKind: "food-detail",
 		cacheValue: { fdcId },
@@ -189,7 +189,7 @@ export const getUsdaFoodById = async (
 		trace,
 	});
 	const normalizedFood = normalizeFdcFood(food);
-	const source = getProductDataSource(await getProductReferenceData(), "usda");
+	const source = getProductDataSource(await getProductReferenceCatalog(), "usda");
 	return {
 		...normalizedFood,
 		sourceKey: source.key,

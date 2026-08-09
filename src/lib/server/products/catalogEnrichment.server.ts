@@ -3,10 +3,10 @@ import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import type { Database, Json } from "$lib/types/database.types";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import type { ProductReferenceData } from "$lib/utils/food/reference/productReferenceData";
-import { compactFood } from "$lib/utils/food/records/foodRecords";
+import type { ProductReferenceCatalog } from "$lib/utils/food/reference/productReferenceCatalog";
+import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
 import type {
-	FdcFood,
+	FoodItem,
 	FoodFieldSource,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
@@ -14,7 +14,7 @@ import { createCatalogFoodFromDraft } from "./catalogFood.server";
 
 const canPromoteSourceToCanonicalCatalog = (
 	fieldSource: FoodFieldSource | undefined,
-	referenceData: ProductReferenceData,
+	productReferenceCatalog: ProductReferenceCatalog,
 ): fieldSource is FoodFieldSource & {
 	source: "usda" | "open-food-facts";
 	sourceReference: string;
@@ -23,8 +23,8 @@ const canPromoteSourceToCanonicalCatalog = (
 		fieldSource.sourceReference?.trim() &&
 		(fieldSource.source === "usda" ||
 			fieldSource.source === "open-food-facts") &&
-		referenceData.sources[fieldSource.source]?.canonicalStorageAllowed &&
-		referenceData.sources[fieldSource.source]?.canonicalLicenseName,
+		productReferenceCatalog.sources[fieldSource.source]?.canonicalStorageAllowed &&
+		productReferenceCatalog.sources[fieldSource.source]?.canonicalLicenseName,
 );
 
 const SUPPLEMENTAL_ENRICHMENT_FIELDS = new Set<FoodTrackedField>([
@@ -108,10 +108,10 @@ const getCanonicalEvidenceConfidence = (
 };
 
 const preserveCanonicalIdentity = (
-	currentFood: FdcFood,
-	enrichedFood: FdcFood,
+	currentFood: FoodItem,
+	enrichedFood: FoodItem,
 	sharedProductId: string,
-): FdcFood => compactFood({
+): FoodItem => normalizeFoodForStorage({
 	...enrichedFood,
 	fdcId: currentFood.fdcId,
 	dataType: "Shared Product",
@@ -130,15 +130,15 @@ const preserveCanonicalIdentity = (
 export const persistSharedProductExternalEnrichment = async (input: {
 	sharedProductId: string;
 	barcode: string;
-	currentFood: FdcFood;
+	currentFood: FoodItem;
 	enrichedDraft: BarcodeProductDraft;
 	fields: FoodTrackedField[];
-	referenceData: ProductReferenceData;
+	productReferenceCatalog: ProductReferenceCatalog;
 }) => {
 	const supportedFields = input.fields.filter((field) =>
 		canPromoteSourceToCanonicalCatalog(
 			input.enrichedDraft.fieldProvenance?.[field],
-			input.referenceData,
+			input.productReferenceCatalog,
 		),
 	);
 	if (supportedFields.length === 0) return [];
@@ -165,12 +165,12 @@ export const persistSharedProductExternalEnrichment = async (input: {
 		const source = input.enrichedDraft.fieldProvenance?.[field];
 		if (
 			!source ||
-			!canPromoteSourceToCanonicalCatalog(source, input.referenceData)
+			!canPromoteSourceToCanonicalCatalog(source, input.productReferenceCatalog)
 		) {
 			throw new Error(`Unsupported enrichment source for ${field}.`);
 		}
 		const sourceLicense =
-			input.referenceData.sources[source.source]?.canonicalLicenseName;
+			input.productReferenceCatalog.sources[source.source]?.canonicalLicenseName;
 		if (!sourceLicense) {
 			throw new Error(`Canonical storage policy is missing for ${field}.`);
 		}

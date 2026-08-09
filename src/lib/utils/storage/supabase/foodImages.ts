@@ -1,5 +1,5 @@
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
-import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
+import type { FoodItem, FoodImageAsset } from "$lib/utils/food/types";
 
 type FoodImageAssetRow = {
 	barcode: string | null;
@@ -122,7 +122,7 @@ export const selectPreferredFoodImageAsset = (
 	})[0] ?? null;
 };
 
-const getFoodBarcode = (food: FdcFood) =>
+const getFoodBarcode = (food: FoodItem) =>
 	normalizeBarcode(food.barcode ?? food.gtinUpc ?? "");
 
 const toFoodImageAsset = (row: FoodImageAssetRow): FoodImageAsset => ({
@@ -195,7 +195,7 @@ export const getCachedFoodImageByBarcode = async (
 
 export const hydrateFoodsWithCachedImages = async (
 	supabase: unknown,
-	foods: FdcFood[],
+	foods: FoodItem[],
 ) => {
 	const barcodes = uniqueStrings(foods.map(getFoodBarcode));
 	const sharedProductIds = uniqueStrings(

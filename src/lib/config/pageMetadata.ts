@@ -12,7 +12,7 @@ export const getAppDocumentTitle = (
 	const { pathname } = url;
 
 	if (pathname === "/") {
-		return formatDocumentTitle("Smoothie Nutrition Calculator");
+		return formatDocumentTitle("Food & Nutrition Calculator");
 	}
 	if (pathname === "/auth") return formatDocumentTitle("Sign In");
 	if (pathname === "/auth/update-password") {
@@ -32,9 +32,9 @@ export const getAppDocumentTitle = (
 		return formatDocumentTitle(getMixRouteTitle(url));
 	}
 	if (pathname === "/saved/sort") {
-		return formatDocumentTitle("Sort Saved Drinks");
+		return formatDocumentTitle("Sort Saved Recipes");
 	}
-	if (pathname === "/saved") return formatDocumentTitle("Saved Drinks");
+	if (pathname === "/saved") return formatDocumentTitle("Saved Recipes");
 	if (pathname === "/profile/tutorial") {
 		return formatDocumentTitle("Quick Tutorial");
 	}

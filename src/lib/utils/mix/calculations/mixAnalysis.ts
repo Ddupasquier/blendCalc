@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
 	evaluateMixGoal,
 	getMixGoalOperator,
@@ -11,9 +11,9 @@ import {
 } from "$lib/utils/mix/ui/mixUi";
 import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
 import {
-	getFoodPreferenceSmartWarnings,
+	getFoodPreferenceWarningsForMix,
 	getNutrientGoalWarnings,
-} from "$lib/utils/mix/warnings/smartWarnings";
+} from "$lib/utils/mix/warnings/mixWarnings";
 import {
 	getChartValues,
 	getEvaluationChartColors,
@@ -32,7 +32,7 @@ import type { NutrientMeta } from "./nutrientTypes";
 
 type MixAnalysisInput = {
 	nutrients: NutrientMeta[];
-	foods: FdcFood[];
+	foods: FoodItem[];
 	goals: MixGoalMap;
 	servingGrams: Record<number, number>;
 };
@@ -113,14 +113,14 @@ export const getMixAnalysis = ({
 			}),
 			{ includeUnderTargets: foods.length > 0 },
 		).map((warning) => withOverageDetails(warning, overages)),
-		...getFoodPreferenceSmartWarnings(foods),
+		...getFoodPreferenceWarningsForMix(foods),
 	];
 
 	return {
 		chartValues: getChartValues(chartMetrics),
 		goalValues: getGoalValues(chartMetrics),
 		chartColors: getEvaluationChartColors(evaluations),
-		pointColors: getEvaluationPointColors(evaluations),
+		axisColors: getEvaluationPointColors(evaluations),
 		nutrientLabels: goalNutrients.map((nutrient) =>
 			(nutrient.label ?? String(nutrient.id)).replace("Total ", ""),
 		),

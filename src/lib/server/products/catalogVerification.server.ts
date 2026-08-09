@@ -1,10 +1,10 @@
 import { createHash } from "node:crypto";
 import type { Json } from "$lib/types/database.types";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import { compactFood } from "$lib/utils/food/records/foodRecords";
+import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
 import type {
-	FdcFood,
-	FdcNutrient,
+	FoodItem,
+	FoodNutrient,
 	FoodFieldSource,
 	FoodTrackedField,
 } from "$lib/utils/food/types";
@@ -59,7 +59,7 @@ export type CatalogConflict = {
 };
 
 export type CatalogVerificationBundle = {
-	canonicalFood: FdcFood;
+	canonicalFood: FoodItem;
 	observations: CatalogObservation[];
 	provenance: CatalogFieldProvenance[];
 	conflicts: CatalogConflict[];
@@ -70,7 +70,7 @@ const toJson = (value: unknown) => value as Json;
 const hashPayload = (value: unknown) =>
 	createHash("sha256").update(JSON.stringify(value)).digest("hex");
 
-const getReportedNutrientIds = (food: FdcFood) =>
+const getReportedNutrientIds = (food: FoodItem) =>
 	new Set(
 		food.reportedNutrientIds ?? food.foodNutrients
 			.filter((nutrient) => nutrient.valueOrigin === "reported")
@@ -82,10 +82,10 @@ const createObservation = (input: {
 	source: CatalogObservationSource;
 	sourceReference?: string;
 	sourceLicense: string;
-	food: FdcFood;
+	food: FoodItem;
 	rawPayload?: unknown;
 }): CatalogObservation => {
-	const normalizedFood = compactFood(input.food);
+	const normalizedFood = normalizeFoodForStorage(input.food);
 	const rawPayload = input.rawPayload ?? normalizedFood;
 	return {
 		key: input.key,
@@ -104,7 +104,7 @@ const createObservation = (input: {
 };
 
 const addFoodProvenance = (
-	food: FdcFood,
+	food: FoodItem,
 	observationKey: string,
 	confidence: CatalogFieldProvenance["confidence"],
 	verificationMethod: CatalogFieldProvenance["verificationMethod"],
@@ -254,8 +254,8 @@ const getNumericConflictSeverity = (left: number, right: number) => {
 };
 
 const findFoodConflicts = (
-	userFood: FdcFood,
-	sourceFood: FdcFood,
+	userFood: FoodItem,
+	sourceFood: FoodItem,
 	sourceKey: "usda" | "open-food-facts",
 ): CatalogConflict[] => {
 	const userReported = getReportedNutrientIds(userFood);
@@ -303,8 +303,8 @@ const findFoodConflicts = (
 	});
 };
 
-const preserveFoodMetadata = (food: FdcFood): FdcFood => ({
-	...compactFood(food),
+const preserveFoodMetadata = (food: FoodItem): FoodItem => ({
+	...normalizeFoodForStorage(food),
 	reportedNutrientIds: [...getReportedNutrientIds(food)],
 });
 
@@ -323,14 +323,14 @@ const getCanonicalFieldConfidence = (
 };
 
 export const buildUsdaVerifiedCatalogBundle = (
-	userFood: FdcFood,
+	userFood: FoodItem,
 	usdaDraft: BarcodeProductDraft,
 	category: ResolvedFoodCategory,
 ): CatalogVerificationBundle =>
 	buildCombinedSourceCatalogBundle(userFood, usdaDraft, [usdaDraft], category);
 
 export const buildOpenFoodFactsCatalogBundle = (
-	userFood: FdcFood,
+	userFood: FoodItem,
 	openFoodFactsDraft: BarcodeProductDraft,
 	category: ResolvedFoodCategory,
 ): CatalogVerificationBundle =>
@@ -342,7 +342,7 @@ export const buildOpenFoodFactsCatalogBundle = (
 	);
 
 export const buildCombinedSourceCatalogBundle = (
-	userFood: FdcFood,
+	userFood: FoodItem,
 	canonicalDraft: BarcodeProductDraft,
 	sourceDrafts: BarcodeProductDraft[],
 	category: ResolvedFoodCategory,
@@ -439,7 +439,7 @@ export const buildCombinedSourceCatalogBundle = (
 };
 
 export const buildModeratorReviewedCatalogBundle = (
-	userFood: FdcFood,
+	userFood: FoodItem,
 ): CatalogVerificationBundle => {
 	const canonicalFood = preserveFoodMetadata(userFood);
 	const observation = createObservation({
@@ -462,8 +462,8 @@ export const buildModeratorReviewedCatalogBundle = (
 };
 
 export const buildModeratorReviewedCatalogUpdateBundle = (
-	currentFood: FdcFood,
-	submittedFood: FdcFood,
+	currentFood: FoodItem,
+	submittedFood: FoodItem,
 	changes: readonly CatalogSubmissionFieldChange[],
 ): CatalogVerificationBundle => {
 	const canonicalFood = preserveFoodMetadata(
@@ -491,11 +491,11 @@ export const buildModeratorReviewedCatalogUpdateBundle = (
 };
 
 export const mergeMissingNutrients = (
-	primary: FdcFood,
-	supplement: FdcFood,
-): FdcFood => {
+	primary: FoodItem,
+	supplement: FoodItem,
+): FoodItem => {
 	const primaryReported = getReportedNutrientIds(primary);
-	const additions: FdcNutrient[] = supplement.foodNutrients.filter(
+	const additions: FoodNutrient[] = supplement.foodNutrients.filter(
 		(nutrient) => !primaryReported.has(nutrient.nutrientId),
 	);
 	return {

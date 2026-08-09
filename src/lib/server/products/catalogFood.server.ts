@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import { createCustomFood } from "$lib/utils/food/custom/customFoods";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
 	applyCanonicalFoodCategory,
 	mergeCanonicalFoodCategories,
@@ -22,7 +22,7 @@ export const createCatalogFoodFromDraft = (
 	draft: BarcodeProductDraft,
 	category?: ResolvedFoodCategory,
 	sharedProductId?: string,
-): FdcFood => {
+): FoodItem => {
 	const food = createCustomFood({
 		name: draft.name,
 		nameProvenance: draft.nameProvenance,
@@ -61,7 +61,7 @@ export const createCatalogFoodFromDraft = (
 		serving: draft.serving,
 	});
 
-	const catalogFood: FdcFood = {
+	const catalogFood: FoodItem = {
 		...food,
 		reportedNutrientIds: [...draft.reportedNutrientIds],
 		fdcId: getCatalogFoodId(draft),

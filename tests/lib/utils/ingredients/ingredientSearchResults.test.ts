@@ -3,9 +3,9 @@ import {
 	isUsableIngredientSearchResult,
 	mergeIngredientSearchResults,
 } from "$lib/utils/ingredients/ingredientSearchResults";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const food = (overrides: Partial<FdcFood> = {}): FdcFood => ({
+const food = (overrides: Partial<FoodItem> = {}): FoodItem => ({
 	fdcId: 1,
 	description: "Test Food",
 	foodNutrients: [{

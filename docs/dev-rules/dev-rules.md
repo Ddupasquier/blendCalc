@@ -117,6 +117,7 @@ clickable navigation block instead.
 - [Primary Card Interactions](#rule-primary-card-interactions)
 - [Reorderable Collections](#rule-reorderable-collections)
 - [Component And Route Boundaries](#rule-component-boundaries)
+- [Semantic Naming](#rule-semantic-naming)
 - [Manual Entry Modularization](#rule-manual-entry-modularization)
 - [Database And API-Driven Data](#rule-no-hardcoded-reference-data)
 - [Schema Documentation Synchronization](#rule-schema-documentation)
@@ -157,7 +158,7 @@ clickable navigation block instead.
 - [QA Process](#rule-qa-process)
 - [QA Task Consistency](#rule-qa-task-consistency)
 - [MVP QA Priorities](#rule-qa-priorities)
-- [General TODO Queue](#rule-general-todo-queue)
+- [Unfinished Work Ownership](#rule-unfinished-work-ownership)
 - [Current Development Audit](dev-rules-audit.md)
 
 ## Rules
@@ -247,7 +248,11 @@ provide `vh` before `dvh` fallbacks, account for device safe areas, and feature-
 optional browser APIs instead of assuming they exist. Camera, clipboard, sharing,
 storage, and other device-backed features must fail with useful guidance and preserve a
 non-device fallback when practical. Do not use browser-name checks when capability
-checks can answer the real question. Before handoff, test the current and previous two
+checks can answer the real question. Run `npm run test:e2e:chromium` while developing a
+browser-facing change and run the complete `npm run test:e2e` project matrix before its
+final handoff or release. Move deterministic rendered behavior into Playwright instead
+of preserving source-text assertions or assigning reproducible browser checks to the
+user. Before handoff, also test the current and previous two
 stable desktop releases plus real or emulated iOS Safari and Android Chrome at portrait
 and landscape sizes. Do not reload or refetch page data merely because the browser
 window regains focus; focus changes are not evidence that application data changed and
@@ -310,7 +315,7 @@ before persistence so file signatures alone never authorize malformed image stru
 embedded metadata, animation, or decompression-heavy payloads.
 
 **2.** Keep the user flow simple. Barcode scanning, search, manual entry, fridge,
-shopping, mix, and saved drinks should feel like a guided flow instead of disconnected
+shopping, Mix, and saved recipes should feel like a guided flow instead of disconnected
 tasks.
 
 **2a.** <a id="rule-search-relevance"></a>Search candidate gathering, cross-source
@@ -536,7 +541,7 @@ path; never trust an arbitrary client array or use HTML drag-and-drop as the sol
 method.
 
 **10.** <a id="rule-supabase-source-of-truth"></a>Treat Supabase as the source of truth for authenticated users. Fridge, Shopping
-List, custom foods, saved drinks, profiles, and other durable account records must never
+List, custom foods, saved recipes, profiles, and other durable account records must never
 be mirrored into `localStorage` or used from browser storage as a fallback authority.
 Browser storage is limited to account-scoped unsaved drafts, device-only preferences,
 and short-lived session context that can be safely discarded. Reads and duplicate
@@ -577,6 +582,46 @@ whenever practical. Repeated UI, repeated functions, long route files, oversized
 component styles, and duplicated business logic are maintenance problems. Views should
 orchestrate; components should render focused UI; utilities should hold reusable
 calculations, formatting, filtering, sorting, validation, and storage helpers.
+
+**16aa.** <a id="rule-semantic-naming"></a>Name every application-owned file, folder,
+component, type, class, function, variable, property, collection, and test in plain
+domain language that explains its actual responsibility. Semantic precision outranks
+arbitrary identifier-length limits: do not abbreviate, generalize, or retain obsolete
+provider or feature terminology merely to keep a name short. A longer accurate name is
+preferred over a compact name that requires implementation knowledge to understand.
+Use the new-contributor test: a junior developer should be able to infer what the named
+thing represents, what responsibility it owns, and—when applicable—its unit or data
+basis from the name and nearby types without relying on tribal knowledge or a comment
+that merely translates an unclear identifier.
+
+Use `camelCase` for functions, methods, variables, and ordinary TypeScript properties;
+`PascalCase` for components, classes, types, interfaces, and enums; the established
+`UPPER_SNAKE_CASE` convention for immutable module constants; and the existing
+kebab/BEM-style casing for SCSS selectors. Boolean domain names should read as
+predicates such as `hasWarnings`, `canPublish`, or `shouldRefresh`, while conventional
+component state and props such as `open`, `disabled`, `selected`, and `busy` remain
+acceptable. Numeric names must identify their unit or basis when it is not already
+unambiguous from a typed contract, such as `durationMilliseconds`, `weightGrams`, or
+`amountPer100Grams`. Collections use plural names and include `Map` or `Set` when that
+structure is important to understanding the behavior.
+
+Names must describe business meaning rather than a stale implementation mechanism.
+Provider-specific names such as FDC remain only inside genuine provider adapters and
+payload contracts; normalized cross-source application models use source-neutral food,
+nutrient, catalog, and evidence terminology. Preserve established industry acronyms
+such as API, DB, URL, GTIN, USDA, OCR, RLS, and RPC when they improve recognition. Avoid
+unqualified names such as `data`, `info`, `helper`, `manager`, `processor`, `smart`,
+`result`, `payload`, `state`, or `context`; qualify them with the domain and exact job
+when the concept is genuinely needed. Files and folders should match their primary
+export or owned responsibility.
+
+External provider keys, generated database types, persisted storage keys, database
+identifiers, public API fields, SvelteKit-reserved exports, and versioned route segments
+are contract boundaries rather than ordinary rename targets. Translate those names at
+focused adapters instead of leaking obsolete or provider-specific vocabulary through
+the application. Perform semantic renames atomically within one ownership boundary,
+update tests and consumers in the same change, and do not preserve misleading aliases
+unless a documented external compatibility contract requires them.
 
 **16a.** <a id="rule-manual-entry-modularization"></a>Use the current manual entry split
 as the modularization standard for future feature work. Large flows should keep the
@@ -1521,30 +1566,33 @@ index, split active manual checks into `launch-blocker-qa-tasks.md`,
 `before-launch-qa-tasks.md`, and `post-launch-qa-tasks.md`, and keep
 `completed-qa-tasks.md` as the completed QA archive. These files and screenshot assets
 are ignored by git and must not be committed. Every new feature, component, UI,
-data-flow, or behavior change must add
-concrete local QA notes before handoff unless it is clearly documentation-only and needs
-no user verification. QA notes should be created as part of the task, not after the
-fact. Give every QA section a stable `QA-GGG` group ID and every task a stable
-`QA-GGG-TTT` ID. Use the next unused number, never reuse or renumber existing IDs, and
-preserve IDs when archiving tasks. Active priority trackers are the remaining observable
-QA queue: keep only checks that require visual judgment, real-device/browser interaction,
+data-flow, or behavior change must add concrete local QA notes before handoff unless it
+is clearly documentation-only and needs no user verification. QA notes are part of the
+implementation slice: create or update them while the behavior changes, not after a
+later reminder or cleanup pass. Give every QA section a stable `QA-GGG` group ID and
+every task a stable `QA-GGG-TTT` ID. Use the next unused number, never reuse or renumber
+existing IDs, and preserve IDs when archiving tasks. Active priority trackers are the
+remaining observable QA queue: keep only checks that require visual judgment,
+real-device/browser interaction,
 assistive-technology verification, user-controlled deployment configuration, or another
-human decision. An available in-app browser may satisfy desktop visual and interaction
-checks only when the complete repro and expected outcome are directly observed in the
-required browser and viewport. It does not substitute for an unavailable named browser,
-a physical-device requirement, camera or operating-system permission behavior, or
-assistive-technology behavior that was not actually exercised. Deterministic code,
-schema, migration, API, data-integrity, RLS, build, lint, or test checks belong to the
-automated development workflow. Run those checks instead of assigning
-them to the user, record successful evidence in the completed archive, and keep any
-genuinely unfinished automation-owned work once in the appropriate gitignored
-`docs/TODO/` priority queue. Never duplicate one action between an active QA tracker and
-the TODO queue; a transition TODO may link to one QA group without copying its repro or
-expected outcome. Organize every active priority tracker with a
-workflow-category index that links related QA groups so a reviewer can complete one
-coherent area at a time without changing stable IDs or duplicating tasks. Begin every QA tracker and index with the current
-disposable local test-account credentials and the complete categorized barcode-reference
-catalog. Never place production credentials or private user data in those references.
+human decision. Interactive browser-control tooling is not part of the verification
+workflow. Repository-owned Playwright tests are deterministic development automation
+and may prove browser behavior or approved visual snapshots in their configured engines
+and viewports, but they do not substitute for an untested named installed browser,
+physical device, operating-system permission, assistive technology, or subjective visual
+approval. Keep remaining observable checks active for explicit user confirmation in the required
+browser, viewport, physical device, permission, or assistive-technology environment.
+Deterministic code, schema, migration, API, data-integrity, RLS, build, lint, or test
+checks belong to the automated development workflow. Run those checks instead of
+assigning them to the user and record successful evidence in the completed archive.
+Keep a verified systemic implementation gap in the maintained development audit and
+keep only the currently interrupted implementation state in the local recovery
+checkpoint. Do not create a parallel TODO or action queue that mirrors observable QA.
+Organize every active priority tracker with a workflow-category index that links related
+QA groups so a reviewer can complete one coherent area at a time without changing stable
+IDs or duplicating tasks. Begin every QA tracker and index with the current disposable
+local test-account credentials and the complete categorized barcode-reference catalog.
+Never place production credentials or private user data in those references.
 After a group's final active task moves to the completed archive or is retired, remove
 the empty group shell and its workflow-category link from the active tracker. The
 completed archive preserves its context; active trackers must not keep placeholder
@@ -1589,6 +1637,23 @@ an explicit `Retired` heading with the reason and replacement QA ID, as required
 than current instructions. Recalculate QA priority summaries after these changes so the
 tracker contains one clear, current expected outcome for each behavior.
 
+**41c.** <a id="rule-unfinished-work-ownership"></a>Do not maintain a general TODO
+folder or a second task list that mirrors QA. Observable visual, interaction, browser,
+device, accessibility, deployment, or user-decision verification belongs directly in
+the applicable QA priority file with its full repro, representative inputs, and expected
+outcome. Deterministic verification is executed during development and archived as
+completed QA evidence when it fully proves a stable task.
+
+Verified unresolved implementation or architecture gaps belong once in
+`docs/dev-rules/dev-rules-audit.md`, with evidence, affected ownership, and an exact
+completion condition. The gitignored working-context checkpoint may record only the
+currently active or interrupted implementation slice and its next safe action; it is not
+a backlog. Durable settled decisions belong in the decision log. External professional
+review or user-controlled launch configuration may remain active QA when it has an
+observable completion contract. Never preserve completed implementation history in a
+parallel completed-task archive; Git history, completed QA evidence, and maintained
+domain documentation already own that record.
+
 **42.** <a id="rule-qa-clearance"></a>Finished tasks must prompt the user to run the
 relevant QA checks from the active priority trackers linked by local
 `docs/QA/qa-tasks.md`. Keep each QA item active until the user explicitly confirms it
@@ -1596,12 +1661,12 @@ passed or automation directly proves its complete expected outcome; a checked ch
 counts as user confirmation. During an explicit user-requested QA pass, automation must
 complete and archive deterministic tasks whose full expected
 outcome was directly proven by current tests, database inspection, scripts, or build/lint
-output, and may complete observable browser tasks whose full repro and expected outcome
-were directly exercised in the in-app browser. Record the browser family, viewport,
-route, and observed evidence in the archived task. Mixed tasks remain active when any
+output. Observable browser, device, visual, permission, and assistive-technology tasks
+remain active until the user explicitly confirms the complete repro and expected
+outcome in the required environment. Mixed tasks remain active when any
 required device, browser, permission, assistive-technology, visual, or manual outcome was
 not actually exercised; emulation never proves a physical-device requirement. Evidence
-for every automated or browser-completed task must be written into the archived task.
+for every automated or user-confirmed task must be written into the archived task.
 Whenever automation verifies 100% of a task's stated repro and expected outcome, move
 that task to `docs/QA/completed-qa-tasks.md` immediately in the same pass; do not leave a
 fully proven task active or wait for a separate cleanup request. Remove it from the
@@ -1619,34 +1684,6 @@ superseded, remove its obsolete check from the appropriate active priority track
 record its stable ID
 in the completed archive under an explicit `Retired` heading with the reason and
 replacement QA ID; retired does not mean passed.
-
-**41c.** <a id="rule-general-todo-queue"></a>Maintain
-`docs/TODO/todo-tasks.md` as the local-only general work index. Split active work into
-`launch-blocker-todo-tasks.md`, `before-launch-todo-tasks.md`, and
-`post-launch-todo-tasks.md`, and preserve completed work in
-`completed-todo-tasks.md`. Keep the entire folder ignored by Git. This queue is the
-canonical home for actionable implementation, verification, decision, deployment, and
-research work that cannot be completed safely in the current pass.
-
-Every native TODO group and task needs a stable `TODO-GGG` and `TODO-GGG-TTT` ID, one
-explicit priority, a task type, an owner, concrete source references, an exact next
-action, a measurable completion condition, and completion or blocker evidence. Use the
-next unused ID and never renumber or reuse IDs. Place each action in exactly one active
-priority file. Search the rules, current audit, every active and completed TODO file,
-and every active and completed QA file before adding or changing work; merge duplicates,
-remove obsolete work, and stop for any conflicting contract instead of maintaining
-opposing tasks. Move completed tasks to the completed TODO archive immediately and
-remove newly empty groups and category links.
-
-During the transition away from standalone QA queues, existing QA IDs and their detailed
-reproduction instructions remain authoritative verification contracts. Represent each
-remaining QA group once in the TODO queue as a migration pointer containing only its
-source link and remaining QA IDs; do not copy the repro, examples, or expected outcomes.
-New work belongs in TODO. When new work needs observation, include its `Repro`,
-`Example input`, and `Expected` criteria directly in that TODO task. As legacy QA checks
-are completed or retired, update the pointer in the same pass. After the final active QA
-check is archived, remove the active QA priority files and retain the completed QA
-archive as historical evidence.
 
 **43.** <a id="rule-view-primitives"></a>Full-height app views and sheet views must use
 shared view layout primitives (`ViewFrame`, `ViewTop`, `ViewBody`,

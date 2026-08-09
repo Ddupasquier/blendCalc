@@ -1,12 +1,12 @@
 import type {
-	FdcFood,
-	FdcNutrient,
+	FoodItem,
+	FoodNutrient,
 	FoodServing,
 } from "$lib/utils/food/types";
 
 const mergeNutrients = (
-	current: FdcNutrient[],
-	source: FdcNutrient[],
+	current: FoodNutrient[],
+	source: FoodNutrient[],
 ) => {
 	const nutrients = new Map(
 		current.map((nutrient) => [nutrient.nutrientId, nutrient]),
@@ -18,7 +18,7 @@ const mergeNutrients = (
 };
 
 const mergeReportedNutrientIds = (
-	nutrients: FdcNutrient[],
+	nutrients: FoodNutrient[],
 	current: number[] | undefined,
 	source: number[] | undefined,
 ) => {
@@ -44,9 +44,9 @@ const preferSourceServings = (
 ) => source?.length ? source : current;
 
 export const mergeExactSourceFood = (
-	current: FdcFood,
-	source: FdcFood,
-): FdcFood => {
+	current: FoodItem,
+	source: FoodItem,
+): FoodItem => {
 	const foodNutrients = mergeNutrients(
 		current.foodNutrients,
 		source.foodNutrients,

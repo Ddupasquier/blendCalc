@@ -2,20 +2,20 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-	addFoodToSmoothieList: vi.fn(),
-	moveFoodToSmoothieList: vi.fn(),
+	addFoodToIngredientList: vi.fn(),
+	moveFoodToIngredientList: vi.fn(),
 }));
 
-vi.mock("$lib/utils/storage/client/smoothieLists", () => ({
-	addFoodToSmoothieList: mocks.addFoodToSmoothieList,
-	moveFoodToSmoothieList: mocks.moveFoodToSmoothieList,
+vi.mock("$lib/utils/storage/client/ingredientLists", () => ({
+	addFoodToIngredientList: mocks.addFoodToIngredientList,
+	moveFoodToIngredientList: mocks.moveFoodToIngredientList,
 }));
 
 import NutritionListActions from "$lib/components/ingredients/nutrition/NutritionListActions/NutritionListActions.svelte";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const spinach: FdcFood = {
+const spinach: FoodItem = {
 	fdcId: 168462,
 	description: "Spinach, raw",
 	foodNutrients: [],
@@ -24,7 +24,7 @@ const spinach: FdcFood = {
 describe("NutritionListActions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mocks.addFoodToSmoothieList.mockResolvedValue("added");
+		mocks.addFoodToIngredientList.mockResolvedValue("added");
 	});
 
 	it("adds an unsaved search result to either destination", async () => {
@@ -38,7 +38,7 @@ describe("NutritionListActions", () => {
 
 		await fireEvent.click(screen.getByRole("button", { name: "Add to Fridge" }));
 		await waitFor(() => {
-			expect(mocks.addFoodToSmoothieList).toHaveBeenCalledWith(
+			expect(mocks.addFoodToIngredientList).toHaveBeenCalledWith(
 				MIX_STORAGE_KEYS.fridge,
 				spinach,
 			);
@@ -46,12 +46,12 @@ describe("NutritionListActions", () => {
 
 		await fireEvent.click(screen.getByRole("button", { name: "Shopping List" }));
 		await waitFor(() => {
-			expect(mocks.addFoodToSmoothieList).toHaveBeenLastCalledWith(
+			expect(mocks.addFoodToIngredientList).toHaveBeenLastCalledWith(
 				MIX_STORAGE_KEYS.shoppingList,
 				spinach,
 			);
 		});
-		expect(mocks.addFoodToSmoothieList).toHaveBeenCalledTimes(2);
+		expect(mocks.addFoodToIngredientList).toHaveBeenCalledTimes(2);
 	});
 
 	it.each([

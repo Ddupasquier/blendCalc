@@ -5,9 +5,9 @@ import {
 	getPrimaryFoodServing,
 } from "$lib/utils/food/servings/foodServings";
 import { formatNutritionServingSize } from "$lib/utils/food/servings/servingDisplay";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const baseFood: FdcFood = {
+const baseFood: FoodItem = {
 	fdcId: 1,
 	description: "Test food",
 	foodNutrients: [],
@@ -15,7 +15,7 @@ const baseFood: FdcFood = {
 
 describe("food servings", () => {
 	it("orders stored source servings with the primary option first", () => {
-		const food: FdcFood = {
+		const food: FoodItem = {
 			...baseFood,
 			foodServings: [
 				{ label: "1 oz", gramWeight: 28, isPrimary: false, source: "usda" },

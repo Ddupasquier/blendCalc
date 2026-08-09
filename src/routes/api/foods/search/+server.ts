@@ -3,7 +3,7 @@ import { searchUserCustomFoods } from "$lib/server/products/customFoods.server";
 import { areExternalProductLookupsEnabled } from "$lib/server/products/externalProductPolicy.server";
 import { searchUsdaFoods } from "$lib/server/products/usdaCache.server";
 import { searchGenericFoods } from "$lib/server/products/genericFoods.server";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
 	isUsableIngredientSearchResult,
 	mergeIngredientSearchResults,
@@ -69,7 +69,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	}
 
 	try {
-		const searches: Promise<FdcFood[]>[] = [];
+		const searches: Promise<FoodItem[]>[] = [];
 		const catalogClient = getSupabaseAdminClient();
 		if (trustFilter === "any" || trustFilter === "user-private") {
 			searches.push(searchUserCustomFoods(locals.supabase, user.id, query, {

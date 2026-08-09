@@ -4,7 +4,7 @@ import {
 	normalizedRowsToServings,
 	type NormalizedServingRow,
 } from "$lib/utils/food/servings/normalizedServings";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 const legacyFood = {
 	fdcId: 1,
@@ -23,7 +23,7 @@ const legacyFood = {
 		source: "unknown",
 		confidence: "unknown",
 	}],
-} satisfies FdcFood;
+} satisfies FoodItem;
 
 const normalizedServing = {
 	servingOrder: 0,

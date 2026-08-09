@@ -8,8 +8,11 @@ describe("food compatibility evaluation architecture", () => {
 		const evaluation = readSource(
 			"src/lib/server/food-safety/foodSafetyEvaluation.server.ts",
 		);
-		const pageData = readSource(
-			"src/lib/server/user-data/pageData.server.ts",
+		const ingredientPageData = readSource(
+			"src/lib/server/user-data/ingredientPageData.server.ts",
+		);
+		const mixPageData = readSource(
+			"src/lib/server/user-data/mixPageData.server.ts",
 		);
 		const searchRoute = readSource("src/routes/api/foods/search/+server.ts");
 		const listRoute = readSource(
@@ -19,7 +22,8 @@ describe("food compatibility evaluation architecture", () => {
 		expect(evaluation).toContain(
 			"compatibilityEvaluation: getFoodCompatibilityEvaluation",
 		);
-		expect(pageData).toContain("annotateFoodsWithFoodSafety");
+		expect(ingredientPageData).toContain("annotateFoodsWithFoodSafety");
+		expect(mixPageData).toContain("annotateFoodsWithFoodSafety");
 		expect(searchRoute).toContain("annotateFoodsWithFoodSafety");
 		expect(listRoute).toContain("annotateFoodsWithFoodSafety");
 	});

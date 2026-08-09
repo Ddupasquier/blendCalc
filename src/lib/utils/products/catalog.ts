@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import {
@@ -82,7 +82,7 @@ export const validateBarcodeProductForSharing = async (
 };
 
 export const submitSharedProduct = async (
-	food: FdcFood,
+	food: FoodItem,
 	evidence: SharedProductEvidence = {},
 	context: SharedProductSubmissionContext = {},
 ): Promise<SharedProductSubmissionResult> => {

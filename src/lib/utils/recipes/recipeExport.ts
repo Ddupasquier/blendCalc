@@ -1,54 +1,54 @@
 import { getNutrientTotal } from "$lib/utils/mix/calculations/nutrientTotals";
 import { getServingMeasureOption } from "$lib/utils/serving/servingMeasureCatalog";
-import type { SavedDrink } from "$lib/utils/storage/client/savedDrinks";
+import type { SavedRecipe } from "$lib/utils/storage/client/savedRecipes";
 
 const formatAmount = (value: number) =>
 	new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(value);
 
-export const formatSavedDrinkIngredientAmount = (
-	drink: SavedDrink,
+export const formatSavedRecipeIngredientAmount = (
+	recipe: SavedRecipe,
 	foodId: number,
 ) => {
-	const quantity = drink.servingQuantities[foodId];
-	const unit = drink.servingUnits[foodId];
+	const quantity = recipe.servingQuantities[foodId];
+	const unit = recipe.servingUnits[foodId];
 	if (Number.isFinite(quantity) && quantity > 0 && unit) {
 		const unitLabel = getServingMeasureOption(unit)?.shortLabel ?? unit;
 		return `${formatAmount(quantity)} ${unitLabel}`;
 	}
 
-	const grams = drink.servingGrams[foodId];
+	const grams = recipe.servingGrams[foodId];
 	return Number.isFinite(grams) && grams > 0
 		? `${formatAmount(grams)} g`
 		: "Amount not saved";
 };
 
-const getNutrientUnit = (drink: SavedDrink, nutrientId: number) =>
-	drink.foods
+const getNutrientUnit = (recipe: SavedRecipe, nutrientId: number) =>
+	recipe.foods
 		.flatMap((food) => food.foodNutrients)
 		.find((nutrient) => nutrient.nutrientId === nutrientId)
 		?.unitName.toLowerCase() ?? "";
 
-export const buildSavedDrinkExportText = (drink: SavedDrink) => {
-	const ingredientLines = drink.foods.map(
+export const buildSavedRecipeExportText = (recipe: SavedRecipe) => {
+	const ingredientLines = recipe.foods.map(
 		(food) =>
-			`- ${formatSavedDrinkIngredientAmount(drink, food.fdcId)} ${food.description}`,
+			`- ${formatSavedRecipeIngredientAmount(recipe, food.fdcId)} ${food.description}`,
 	);
-	const selectedIds = [...new Set(drink.selected.map(Number))].filter(Number.isFinite);
+	const selectedIds = [...new Set(recipe.selected.map(Number))].filter(Number.isFinite);
 	const nutrientLines = selectedIds.flatMap((nutrientId) => {
-		const option = drink.options.find((item) => Number(item.id) === nutrientId);
+		const option = recipe.options.find((item) => Number(item.id) === nutrientId);
 		if (!option) return [];
 
 		const total = getNutrientTotal(
-			drink.foods,
+			recipe.foods,
 			nutrientId,
-			drink.servingGrams,
+			recipe.servingGrams,
 		);
-		const unit = getNutrientUnit(drink, nutrientId);
+		const unit = getNutrientUnit(recipe, nutrientId);
 		return [`- ${option.label}: ${formatAmount(total)}${unit ? ` ${unit}` : ""}`];
 	});
 
 	return [
-		drink.name,
+		recipe.name,
 		"",
 		"Ingredients",
 		...(ingredientLines.length > 0 ? ingredientLines : ["- No ingredients saved"]),

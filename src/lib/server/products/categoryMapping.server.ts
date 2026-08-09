@@ -1,7 +1,7 @@
 import type { Database } from "$lib/types/database.types";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import { normalizeFoodCategoryValue } from "$lib/utils/food/categories/categoryNormalization.js";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type ResolvedFoodCategory = {
@@ -27,9 +27,9 @@ export const mergeCanonicalFoodCategories = (
 };
 
 export const applyCanonicalFoodCategory = (
-	food: FdcFood,
+	food: FoodItem,
 	category: ResolvedFoodCategory,
-): FdcFood => ({
+): FoodItem => ({
 	...food,
 	foodCategory: category.label,
 	categories: mergeCanonicalFoodCategories(category.label, food.categories),

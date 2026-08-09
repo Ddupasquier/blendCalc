@@ -7,13 +7,13 @@ import {
 	parseSourceServingMeasure,
 	parseSourceWeightMeasure,
 } from "$lib/utils/serving/servingAmount";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 const unknownFood = {
 	fdcId: 3,
 	description: "Mystery ingredient",
 	foodNutrients: [],
-} satisfies FdcFood;
+} satisfies FoodItem;
 
 const foodWithReportedVolumeServing = {
 	fdcId: 4,
@@ -28,7 +28,7 @@ const foodWithReportedVolumeServing = {
 		source: "usda",
 		confidence: "unknown",
 	}],
-} satisfies FdcFood;
+} satisfies FoodItem;
 
 const customFood = {
 	fdcId: -1,
@@ -38,7 +38,7 @@ const customFood = {
 	customDensityVariancePercent: 0,
 	customDensityConfidence: "known",
 	foodNutrients: [],
-} satisfies FdcFood;
+} satisfies FoodItem;
 
 describe("serving amount conversion", () => {
 	it("keeps weight conversion exact", () => {

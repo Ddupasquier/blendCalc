@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { compareCatalogSubmissionToExistingProduct } from "$lib/utils/products/catalogSubmissionComparison";
 import {
 	createCatalogUpdateSourceCheck,
@@ -8,7 +8,7 @@ import {
 	readCatalogUpdateSummary,
 } from "$lib/utils/products/catalogUpdateReview";
 
-const createFood = (description: string, calories: number): FdcFood => ({
+const createFood = (description: string, calories: number): FoodItem => ({
 	fdcId: -1,
 	description,
 	foodNutrients: [{

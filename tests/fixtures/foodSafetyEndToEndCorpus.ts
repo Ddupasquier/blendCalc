@@ -6,7 +6,7 @@ import type {
 } from "$lib/server/food-safety/foodSafetyPolicy.server";
 import type { OpenFoodFactsProduct } from "$lib/utils/barcode/barcodeProductMappers";
 import type { CustomFoodInput } from "$lib/utils/food/custom/customFoods";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 export type FoodSafetyCorpusStage =
 	| "provider-normalization"
@@ -49,7 +49,7 @@ export type FoodSafetyCorpusCase = FoodSafetyCorpusBase & (
 	}
 	| {
 		kind: "generic";
-		food: FdcFood;
+		food: FoodItem;
 	}
 );
 

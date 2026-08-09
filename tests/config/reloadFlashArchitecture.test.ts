@@ -70,8 +70,8 @@ describe("reload-flash architecture", () => {
 		const savedMount = saved.slice(saved.indexOf("onMount(() =>"));
 
 		expect(fridgeMount).not.toContain("void loadLists();");
-		expect(mixMount).not.toContain("readCloudSmoothieList");
-		expect(savedMount).not.toContain("void loadSavedDrinks();");
+		expect(mixMount).not.toContain("readCloudIngredientList");
+		expect(savedMount).not.toContain("void loadSavedRecipes();");
 	});
 
 	it("hydrates direct nutrition routes with the selected food before SSR", () => {

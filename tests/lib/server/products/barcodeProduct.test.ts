@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
 	getSharedProductByBarcode: vi.fn(),
 	lookupExternalBarcodeProduct: vi.fn(),
 	getRequiredPackagedNutrientIds: vi.fn(),
-	getProductReferenceData: vi.fn(),
+	getProductReferenceCatalog: vi.fn(),
 	mapSharedCatalogFood: vi.fn(),
 	getCachedFoodImageByBarcode: vi.fn(),
 	resolveBarcodeDraftCategory: vi.fn(),
@@ -19,8 +19,8 @@ vi.mock("$lib/server/products/externalProduct.server", () => ({
 	lookupExternalBarcodeProduct: mocks.lookupExternalBarcodeProduct,
 	getRequiredPackagedNutrientIds: mocks.getRequiredPackagedNutrientIds,
 }));
-vi.mock("$lib/server/products/productReferenceData.server", () => ({
-	getProductReferenceData: mocks.getProductReferenceData,
+vi.mock("$lib/server/products/productReferenceCatalog.server", () => ({
+	getProductReferenceCatalog: mocks.getProductReferenceCatalog,
 }));
 vi.mock("$lib/utils/barcode/barcodeProductMappers", () => ({
 	mapSharedCatalogFood: mocks.mapSharedCatalogFood,
@@ -97,7 +97,7 @@ const makeDraft = (
 describe("barcode product DB-first enrichment", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mocks.getProductReferenceData.mockResolvedValue({});
+		mocks.getProductReferenceCatalog.mockResolvedValue({});
 		mocks.getRequiredPackagedNutrientIds.mockResolvedValue([1079]);
 		mocks.getCachedFoodImageByBarcode.mockResolvedValue(null);
 		mocks.resolveBarcodeDraftCategory.mockImplementation(

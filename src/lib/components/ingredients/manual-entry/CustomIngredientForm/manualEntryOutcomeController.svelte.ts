@@ -1,5 +1,5 @@
-import type { FdcFood } from "$lib/utils/food/types";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { FoodItem } from "$lib/utils/food/types";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
 import {
 	addManualEntryFoodToDestination,
@@ -36,8 +36,8 @@ export const createManualEntryOutcomeController = ({
 	});
 
 	const setOutcome = (
-		food: FdcFood,
-		destination: SmoothieListKey,
+		food: FoodItem,
+		destination: IngredientListKey,
 		addedToList: boolean,
 		message: string,
 	) => {
@@ -87,7 +87,7 @@ export const createManualEntryOutcomeController = ({
 		currentPrompt.resolve(confirmed);
 	};
 
-	const useIngredient = async (food: FdcFood, alreadySaved = false) => {
+	const useIngredient = async (food: FoodItem, alreadySaved = false) => {
 		let result = await addManualEntryFoodToDestination({
 			food,
 			saveDestination: state.saveDestination,
@@ -112,7 +112,7 @@ export const createManualEntryOutcomeController = ({
 
 	const runLastOutcomeAction = async (
 		action: ManualEntryOutcomeAction,
-		destination?: SmoothieListKey,
+		destination?: IngredientListKey,
 	) => {
 		const currentOutcome = state.lastOutcome;
 		if (
@@ -147,7 +147,7 @@ export const createManualEntryOutcomeController = ({
 		}
 	};
 
-	const moveLastOutcome = (destination: SmoothieListKey) =>
+	const moveLastOutcome = (destination: IngredientListKey) =>
 		runLastOutcomeAction("move", destination);
 
 	const resetBeforeSubmit = () => {

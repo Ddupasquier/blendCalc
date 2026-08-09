@@ -96,7 +96,7 @@ export const localQaUsdaCatalogBarcodes = [
   "00852945006063",
 ];
 
-export const localQaSavedDrinks = {
+export const localQaSavedRecipes = {
   morningGreen: {
     name: "QA Morning Green",
     createdAt: "2026-07-20T12:00:00.000Z",
@@ -182,7 +182,7 @@ const warningLists = {
 };
 
 const tourLists = {
-  fridge: localQaSavedDrinks.morningGreen.ingredients.map(
+	fridge: localQaSavedRecipes.morningGreen.ingredients.map(
     ([barcode]) => barcode,
   ),
   shopping: [],
@@ -202,7 +202,7 @@ export const localQaPersonas = [
     role: "user",
     tutorialState: "completed",
     lists: populatedLists,
-    savedDrinkKeys: [
+		savedRecipeKeys: [
       "morningGreen",
       "berryRepeat",
       "exportBerry",
@@ -228,7 +228,7 @@ export const localQaPersonas = [
     role: "user",
     tutorialState: "completed",
     lists: warningLists,
-    savedDrinkKeys: ["serverLoad"],
+		savedRecipeKeys: ["serverLoad"],
     activeMixKey: null,
     preferences: {
       unit_system: "us",
@@ -248,7 +248,7 @@ export const localQaPersonas = [
     role: "user",
     tutorialState: "completed",
     lists: { fridge: [], shopping: [] },
-    savedDrinkKeys: [],
+		savedRecipeKeys: [],
     activeMixKey: null,
     preferences: null,
   },
@@ -260,7 +260,7 @@ export const localQaPersonas = [
     role: "user",
     tutorialState: "pending",
     lists: tourLists,
-    savedDrinkKeys: ["morningGreen"],
+		savedRecipeKeys: ["morningGreen"],
     activeMixKey: "morningGreen",
     preferences: null,
   },
@@ -272,7 +272,7 @@ export const localQaPersonas = [
     role: "moderator",
     tutorialState: "completed",
     lists: roleLists,
-    savedDrinkKeys: ["serverLoad"],
+		savedRecipeKeys: ["serverLoad"],
     activeMixKey: null,
     preferences: null,
   },
@@ -284,7 +284,7 @@ export const localQaPersonas = [
     role: "admin",
     tutorialState: "completed",
     lists: roleLists,
-    savedDrinkKeys: ["serverLoad"],
+		savedRecipeKeys: ["serverLoad"],
     activeMixKey: null,
     preferences: null,
   },
@@ -297,19 +297,19 @@ export const localQaPersonas = [
     role: "developer",
     tutorialState: "completed",
     lists: roleLists,
-    savedDrinkKeys: ["serverLoad"],
+		savedRecipeKeys: ["serverLoad"],
     activeMixKey: null,
     preferences: null,
   },
 ].map((persona) => ({ ...persona, password: localQaPassword }));
 
 /** @param {string} key */
-const requireLocalQaSavedDrink = (key) => {
-  if (!Object.hasOwn(localQaSavedDrinks, key)) {
+const requireLocalQaSavedRecipe = (key) => {
+	if (!Object.hasOwn(localQaSavedRecipes, key)) {
     throw new Error(`Unknown local QA Saved fixture: ${key}.`);
   }
-  return localQaSavedDrinks[
-    /** @type {keyof typeof localQaSavedDrinks} */ (key)
+	return localQaSavedRecipes[
+		/** @type {keyof typeof localQaSavedRecipes} */ (key)
   ];
 };
 
@@ -318,8 +318,8 @@ export const getLocalQaCatalogBarcodes = () => [
     localQaPersonas.flatMap((persona) => [
       ...persona.lists.fridge,
       ...persona.lists.shopping,
-      ...persona.savedDrinkKeys.flatMap((key) =>
-        requireLocalQaSavedDrink(key).ingredients.map((ingredient) =>
+		...persona.savedRecipeKeys.flatMap((key) =>
+			requireLocalQaSavedRecipe(key).ingredients.map((ingredient) =>
           String(ingredient[0]),
         ),
       ),

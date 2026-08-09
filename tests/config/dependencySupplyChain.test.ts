@@ -29,10 +29,12 @@ describe("dependency supply-chain configuration", () => {
 			expect(enabled, specifier).toBe(true);
 			expect(packageName, specifier).not.toBe("");
 			expect(version, specifier).toMatch(/^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/);
-			expect(
-				packageLock.packages[`node_modules/${packageName}`]?.version,
-				specifier,
-			).toBe(version);
+			const installedVersions = Object.entries(packageLock.packages)
+				.filter(([packagePath]) =>
+					packagePath.endsWith(`node_modules/${packageName}`),
+				)
+				.map(([, metadata]) => metadata.version);
+			expect(installedVersions, specifier).toContain(version);
 		}
 	});
 

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 const mocks = vi.hoisted(() => ({
 	readNormalizedNutrientsByParent: vi.fn(),
@@ -102,7 +102,7 @@ describe("cloud food-list hydration", () => {
 			}]],
 		]));
 		mocks.hydrateFoodsWithCachedImages.mockImplementation(
-			async (_supabase: unknown, foods: FdcFood[]) => foods.map((food) => ({
+			async (_supabase: unknown, foods: FoodItem[]) => foods.map((food) => ({
 				...food,
 				image: {
 					source: "open-food-facts" as const,
@@ -159,7 +159,7 @@ describe("cloud food-list hydration", () => {
 	});
 
 	it("reconstructs canonical field sources after a list reload", async () => {
-		const staleSnapshot: FdcFood = {
+		const staleSnapshot: FoodItem = {
 			fdcId: 2032704,
 			description: "Roasted Onion & Garlic Pasta Sauce",
 			barcode: "00021130493609",
@@ -169,7 +169,7 @@ describe("cloud food-list hydration", () => {
 				nutrition: { source: "open-food-facts" },
 			},
 		};
-		const sharedProductFood: FdcFood = {
+		const sharedProductFood: FoodItem = {
 			...staleSnapshot,
 			foodCategory: "Dips And Salsa",
 			categories: ["Dips And Salsa"],

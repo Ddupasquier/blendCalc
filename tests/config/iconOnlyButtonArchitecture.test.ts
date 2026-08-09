@@ -23,7 +23,7 @@ describe("icon-only button architecture", () => {
 		for (const path of [
 			"src/lib/components/mix/layout/MixHeader/MixHeader.svelte",
 			"src/lib/components/mix/controls/GoalTargets/GoalTargets.svelte",
-			"src/lib/components/mix/ingredients/IngredientCard/IngredientCard.svelte",
+			"src/lib/components/mix/ingredients/MixIngredientAmountCard/MixIngredientAmountCard.svelte",
 		]) {
 			const source = readFileSync(path, "utf8");
 			expect(source, path).toContain("CircleIconButton");

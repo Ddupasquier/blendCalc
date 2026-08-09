@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
 	compareCatalogSubmissionToExistingProduct,
 	type CatalogSubmissionComparison,
@@ -31,9 +31,9 @@ export const createCatalogUpdateSourceCheck = (input: {
 	status: CatalogUpdateSourceCheckStatus;
 	checkedAt: string;
 	sourceReference?: string;
-	sourceFood?: FdcFood | null;
-	submittedFood: FdcFood;
-	currentFood: FdcFood;
+	sourceFood?: FoodItem | null;
+	submittedFood: FoodItem;
+	currentFood: FoodItem;
 }): CatalogUpdateSourceCheck => {
 	if (input.status !== "exact-match" || !input.sourceFood) {
 		return {

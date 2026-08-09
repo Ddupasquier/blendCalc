@@ -20,7 +20,7 @@
     import SavedIngredientList from "$lib/components/ingredients/list/SavedIngredientList/SavedIngredientList.svelte";
     import SavedIngredientListLayout from "$lib/components/ingredients/list/SavedIngredientListLayout/SavedIngredientListLayout.svelte";
     import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
-    import type { FdcFood, FoodImageAsset } from "$lib/utils/food/types";
+    import type { FoodItem, FoodImageAsset } from "$lib/utils/food/types";
     import { getFoodIdentityKey } from "$lib/utils/food/records/foodIdentity";
     import { getCanonicalFoodDescription } from "$lib/utils/food/records/foodRecords";
     import {
@@ -51,18 +51,18 @@
     } from "$lib/utils/list/listNavigation";
     import type { ScrollDirection } from "$lib/utils/navigation/scrollDirection";
     import {
-        addFoodToSmoothieList,
-		moveFoodToSmoothieList,
-		moveFoodsToSmoothieList,
-        removeFoodFromSmoothieList,
-        renameFoodInSmoothieList,
-        SMOOTHIE_LISTS_CHANGED_EVENT,
-        type SmoothieListKey,
-    } from "$lib/utils/storage/client/smoothieLists";
+        addFoodToIngredientList,
+		moveFoodToIngredientList,
+		moveFoodsToIngredientList,
+        removeFoodFromIngredientList,
+        renameFoodInIngredientList,
+        INGREDIENT_LISTS_CHANGED_EVENT,
+        type IngredientListKey,
+    } from "$lib/utils/storage/client/ingredientLists";
     import {
 		readCloudCustomFoods,
-		readCloudSmoothieListIndex,
-		type CloudSmoothieListIndex,
+		readCloudIngredientListIndex,
+		type CloudIngredientListIndex,
     } from "$lib/utils/storage/supabase";
 	import {
 		readIngredientListPage,
@@ -76,9 +76,9 @@
 	const initialOnHand = initialIngredientData?.fridge.foods ?? [];
 	const initialShoppingList = initialIngredientData?.shoppingList.foods ?? [];
 	const initialCustomFoods = initialIngredientData?.customFoods ?? [];
-    let onHand = $state<FdcFood[]>(initialOnHand);
-    let shoppingList = $state<FdcFood[]>(initialShoppingList);
-	let customFoods = $state<FdcFood[]>(initialCustomFoods);
+    let onHand = $state<FoodItem[]>(initialOnHand);
+    let shoppingList = $state<FoodItem[]>(initialShoppingList);
+	let customFoods = $state<FoodItem[]>(initialCustomFoods);
 	const initialRouteFood = initialIngredientData?.routeFood ??
 		findIngredientRouteFood(
 			initialIngredientRouteState.foodId,
@@ -87,18 +87,18 @@
 			initialShoppingList,
 			initialCustomFoods,
 		);
-	let listIndex = $state<CloudSmoothieListIndex>(
+	let listIndex = $state<CloudIngredientListIndex>(
 		initialIngredientData?.listIndex ?? {
 			[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
 			[MIX_STORAGE_KEYS.shoppingList]: { foodIds: [], foodIdentityKeys: [] },
 		},
 	);
-    let selectedFood = $state<FdcFood | null>(
+    let selectedFood = $state<FoodItem | null>(
 		initialIngredientRouteState.view === INGREDIENT_ROUTE_VIEWS.nutrition
 			? initialRouteFood
 			: null,
 	);
-    let correctionFood = $state<FdcFood | null>(null);
+    let correctionFood = $state<FoodItem | null>(null);
     let selectedFoodShowListActions = $state(
 		initialIngredientRouteState.view === INGREDIENT_ROUTE_VIEWS.nutrition
 			? initialIngredientRouteState.showListActions
@@ -111,8 +111,8 @@
     const sourceFilter = "all";
     const trustFilter = "any";
     let listSort = $state<FoodListSort>("recent");
-    let activeList = $derived<SmoothieListKey>(getIngredientListTab(page.url));
-    let previousActiveList = $state<SmoothieListKey>(
+    let activeList = $derived<IngredientListKey>(getIngredientListTab(page.url));
+    let previousActiveList = $state<IngredientListKey>(
 		getIngredientListTab(page.url),
 	);
     let activeSheet = $state<"manual-entry" | "filters" | null>(null);
@@ -134,9 +134,9 @@
 		initialIngredientData?.provenanceError ?? "",
 	);
     let listLoadRequestId = 0;
-    let loadingMoreList = $state<SmoothieListKey | null>(null);
+    let loadingMoreList = $state<IngredientListKey | null>(null);
     let listViewResetKey = $state(0);
-    let selectedListItemIds = $state<Record<SmoothieListKey, number[]>>({
+    let selectedListItemIds = $state<Record<IngredientListKey, number[]>>({
         [MIX_STORAGE_KEYS.fridge]: [],
         [MIX_STORAGE_KEYS.shoppingList]: [],
     });
@@ -145,7 +145,7 @@
     let imagePlacementItem = $state<IngredientActionItem | null>(null);
     let movingItem = $state<string | null>(null);
 	let removingItem = $state<string | null>(null);
-	let renamingItem = $state<{ key: SmoothieListKey; food: FdcFood } | null>(null);
+	let renamingItem = $state<{ key: IngredientListKey; food: FoodItem } | null>(null);
 	let renameBusy = $state(false);
 	let renameError = $state("");
     let listActionError = $state("");
@@ -161,8 +161,9 @@
         patch: IngredientRoutePatch,
         { replaceState = false }: IngredientRouteNavigationOptions = {},
     ) => {
-        const href = buildIngredientRouteHref(page.url, patch);
-        const currentHref = `${page.url.pathname}${page.url.search}${page.url.hash}`;
+        const currentUrl = new URL(window.location.href);
+        const href = buildIngredientRouteHref(currentUrl, patch);
+        const currentHref = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
         if (href === currentHref) return;
 
         const nextPageState = { ...page.state };
@@ -264,8 +265,8 @@
 	});
 
     const setListPage = (
-        key: SmoothieListKey,
-        foods: FdcFood[],
+        key: IngredientListKey,
+        foods: FoodItem[],
         totalCount: number,
         replace: boolean,
         resetViewport: boolean,
@@ -287,7 +288,7 @@
     };
 
     const loadListPage = async (
-        key: SmoothieListKey,
+        key: IngredientListKey,
         replace = false,
         requestId = listLoadRequestId,
         resetViewport = false,
@@ -338,7 +339,7 @@
         try {
             const [nextCustomFoods, nextListIndex] = await Promise.all([
 				readCloudCustomFoods(),
-				readCloudSmoothieListIndex(),
+				readCloudIngredientListIndex(),
                 loadListPage(
                     MIX_STORAGE_KEYS.fridge,
                     true,
@@ -371,7 +372,7 @@
         }
     };
 
-    const handleSmoothieListsChanged = () => {
+    const handleIngredientListsChanged = () => {
         void loadLists();
     };
 
@@ -489,7 +490,7 @@
         void closeRoutedPopin();
     };
 
-    const handleSelect = (food: FdcFood, listKey: SmoothieListKey | null = null) => {
+    const handleSelect = (food: FoodItem, listKey: IngredientListKey | null = null) => {
         const showListActions = listKey === null;
         selectedFood = food;
         selectedFoodShowListActions = showListActions;
@@ -503,7 +504,7 @@
     };
 
     const handleCreate = (
-        food: FdcFood,
+        food: FoodItem,
         context: ManualEntryCreateContext,
     ) => {
         activeSheet = null;
@@ -518,7 +519,7 @@
         });
     };
 
-    const handleSearchSelect = (food: FdcFood) => {
+    const handleSearchSelect = (food: FoodItem) => {
         searchViewOpen = false;
         activeSheet = null;
         selectedFood = food;
@@ -532,7 +533,7 @@
         });
     };
 
-    const addFoodToListState = (key: SmoothieListKey, food: FdcFood) => {
+    const addFoodToListState = (key: IngredientListKey, food: FoodItem) => {
         const currentFoods =
             key === MIX_STORAGE_KEYS.fridge ? onHand : shoppingList;
         if (!currentFoods.some((candidate) => candidate.fdcId === food.fdcId)) {
@@ -564,7 +565,7 @@
     };
 
     const removeFoodFromListState = (
-        key: SmoothieListKey,
+        key: IngredientListKey,
         foodId: number,
     ) => {
         if (key === MIX_STORAGE_KEYS.fridge) {
@@ -588,11 +589,11 @@
     };
 
     const renameFoodInListState = (
-        key: SmoothieListKey,
+        key: IngredientListKey,
         foodId: number,
         description: string,
     ) => {
-        const rename = (foods: FdcFood[]) =>
+        const rename = (foods: FoodItem[]) =>
             foods.map((food) =>
                 food.fdcId === foodId
                     ? {
@@ -612,13 +613,13 @@
         }
     };
 
-    const addSearchResultToFridge = async (food: FdcFood) => {
+    const addSearchResultToFridge = async (food: FoodItem) => {
         if (searchAddFoodId !== null) return;
 
         searchAddFoodId = food.fdcId;
         listActionError = "";
         try {
-            const result = await addFoodToSmoothieList(
+            const result = await addFoodToIngredientList(
                 MIX_STORAGE_KEYS.fridge,
                 food,
                 { notify: false },
@@ -640,7 +641,7 @@
     };
 
     const updateFoodImageInList = (
-        foods: FdcFood[],
+        foods: FoodItem[],
         foodId: number,
         image: FoodImageAsset,
     ) =>
@@ -653,7 +654,7 @@
                 : food,
         );
 
-    const withUpdatedImage = (food: FdcFood, image: FoodImageAsset) => ({
+    const withUpdatedImage = (food: FoodItem, image: FoodImageAsset) => ({
         ...food,
         image,
     });
@@ -717,14 +718,14 @@
         });
     };
 
-    const removeFromList = async (key: SmoothieListKey, foodId: number) => {
+    const removeFromList = async (key: IngredientListKey, foodId: number) => {
 		const actionKey = getIngredientActionKey(key, foodId);
 		if (removingItem) return;
 
 		removingItem = actionKey;
 		listActionError = "";
 		try {
-			const result = await removeFoodFromSmoothieList(key, foodId, {
+			const result = await removeFoodFromIngredientList(key, foodId, {
                 notify: false,
             });
 			if (result === "error") {
@@ -745,7 +746,7 @@
 		}
 	};
 
-	const openRenameDialog = (key: SmoothieListKey, food: FdcFood) => {
+	const openRenameDialog = (key: IngredientListKey, food: FoodItem) => {
 		renamingItem = { key, food };
 		renameError = "";
         void navigateIngredientRoute({
@@ -771,7 +772,7 @@
 		const { key, food } = renamingItem;
 
 		try {
-			const result = await renameFoodInSmoothieList(
+			const result = await renameFoodInIngredientList(
                 key,
                 food.fdcId,
                 name,
@@ -814,14 +815,14 @@
 		}
 	};
 
-    const setSelectedIds = (key: SmoothieListKey, foodIds: number[]) => {
+    const setSelectedIds = (key: IngredientListKey, foodIds: number[]) => {
         selectedListItemIds = {
             ...selectedListItemIds,
             [key]: [...new Set(foodIds)],
         };
     };
 
-    const toggleBulkSelection = (key: SmoothieListKey, foodId: number) => {
+    const toggleBulkSelection = (key: IngredientListKey, foodId: number) => {
         const currentIds = selectedListItemIds[key] ?? [];
         setSelectedIds(
             key,
@@ -859,8 +860,8 @@
 	};
 
 	const applyBulkListMove = (
-		sourceKey: SmoothieListKey,
-		foods: FdcFood[],
+		sourceKey: IngredientListKey,
+		foods: FoodItem[],
 	) => {
 		const movedIds = new Set(foods.map((food) => food.fdcId));
 		const movedAt = Date.now();
@@ -916,8 +917,8 @@
 	};
 
     const moveFoodBetweenLists = async (
-        sourceKey: SmoothieListKey,
-        food: FdcFood,
+        sourceKey: IngredientListKey,
+        food: FoodItem,
     ) => {
         const targetKey = getOppositeIngredientListKey(sourceKey);
         const actionKey = getIngredientActionKey(sourceKey, food.fdcId);
@@ -925,7 +926,7 @@
         listActionError = "";
 
         try {
-            const moveResult = await moveFoodToSmoothieList(targetKey, food, {
+            const moveResult = await moveFoodToIngredientList(targetKey, food, {
 				notify: false,
 			});
             if (moveResult === "error") {
@@ -967,7 +968,7 @@
 		movingItem = `${sourceKey}:bulk`;
 		listActionError = "";
 		try {
-			const moveResult = await moveFoodsToSmoothieList(targetKey, selectedFoods, {
+			const moveResult = await moveFoodsToIngredientList(targetKey, selectedFoods, {
 				notify: false,
 			});
 			if (moveResult === "error") {
@@ -984,7 +985,7 @@
 		}
     };
 
-    const openActionSheet = (key: SmoothieListKey, food: FdcFood) => {
+    const openActionSheet = (key: IngredientListKey, food: FoodItem) => {
         actionSheetItem = { key, food };
         void navigateIngredientRoute({
             view: null,
@@ -1215,13 +1216,13 @@
 
     onMount(() => {
 		window.addEventListener(
-            SMOOTHIE_LISTS_CHANGED_EVENT,
-            handleSmoothieListsChanged,
+            INGREDIENT_LISTS_CHANGED_EVENT,
+            handleIngredientListsChanged,
         );
         return () => {
             window.removeEventListener(
-                SMOOTHIE_LISTS_CHANGED_EVENT,
-                handleSmoothieListsChanged,
+                INGREDIENT_LISTS_CHANGED_EVENT,
+                handleIngredientListsChanged,
             );
         };
     });

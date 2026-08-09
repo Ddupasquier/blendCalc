@@ -7,7 +7,7 @@ import {
 } from "$lib/utils/food/nutrients/normalizedNutrients";
 import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
 import type {
-	FdcFood,
+	FoodItem,
 	FoodImageAsset,
 	FoodPrecautionaryStatement,
 } from "$lib/utils/food/types";
@@ -124,7 +124,7 @@ export type ApprovedCatalogRecord = {
 	updatedAt: string;
 	lastVerifiedAt: string | null;
 	revision: ProductRevision;
-	food: FdcFood;
+	food: FoodItem;
 	images: FoodImageAsset[];
 };
 
@@ -296,19 +296,19 @@ const hydrateCatalogRows = async (
 			: null;
 		const images = imagesByProduct.get(row.id) ?? [];
 		const baseFood = normalizeFoodProductName({
-			...(row.food as unknown as FdcFood),
+			...(row.food as unknown as FoodItem),
 			categoryOptionId: row.category_option_id ?? undefined,
 			compatibilitySummary:
 				(row.compatibility_summary as FoodCompatibilitySummary | null) ?? undefined,
 			sharedProductId: row.id,
 			sharedProductConfidence:
-				row.confidence as FdcFood["sharedProductConfidence"],
+				row.confidence as FoodItem["sharedProductConfidence"],
 			customFood: false,
 				image: images[0],
 				precautionaryStatements:
 					precautionaryStatementsByProduct.get(row.id) ??
-					(row.food as unknown as FdcFood).precautionaryStatements,
-		}) as FdcFood;
+					(row.food as unknown as FoodItem).precautionaryStatements,
+		}) as FoodItem;
 		const categorizedFood = category
 			? applyCanonicalFoodCategory(baseFood, category)
 			: baseFood;
