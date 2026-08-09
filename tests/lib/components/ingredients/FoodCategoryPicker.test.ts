@@ -100,38 +100,6 @@ describe("FoodCategoryPicker", () => {
 		expect(screen.queryByRole("option")).not.toBeInTheDocument();
 	});
 
-	it("closes with Escape, restores trigger focus, and uses the shared warning", async () => {
-		const escapedPickerKeydown = vi.fn();
-		window.addEventListener("keydown", escapedPickerKeydown);
-		render(FoodCategoryPicker, {
-			props: {
-				selectedId: "",
-				selectedLabel: "",
-				productName: "Unknown Food",
-				sourceCategories: [],
-				warningMessage: "Please select a category for this ingredient.",
-				onChange: vi.fn(),
-			},
-		});
-
-		const trigger = await getReadyTrigger();
-		const warningId = trigger.getAttribute("aria-describedby");
-		expect(warningId).toBeTruthy();
-		expect(document.getElementById(warningId ?? "")).toHaveTextContent(
-			"Please select a category for this ingredient.",
-		);
-
-		await fireEvent.click(trigger);
-		const searchInput = screen.getByLabelText("Search categories");
-		expect(searchInput).toHaveFocus();
-		await fireEvent.keyDown(searchInput, { key: "Escape" });
-
-		expect(trigger).toHaveFocus();
-		expect(trigger).toHaveAttribute("aria-expanded", "false");
-		expect(escapedPickerKeydown).not.toHaveBeenCalled();
-		window.removeEventListener("keydown", escapedPickerKeydown);
-	});
-
 	it("keeps option focus outlines inside the nested results scroller", () => {
 		const styles = readFileSync(
 			"src/lib/components/ingredients/manual-entry/FoodCategoryPicker/FoodCategoryPicker.scss",

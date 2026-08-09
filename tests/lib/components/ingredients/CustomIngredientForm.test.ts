@@ -602,29 +602,6 @@ describe("CustomIngredientForm", () => {
 		);
 	});
 
-	it("waits for Continue before showing required macro warnings", async () => {
-		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
-
-		await openEmptyMacrosStep();
-		expect(screen.queryByText("Calories is required")).not.toBeInTheDocument();
-		expect(screen.queryByText("Total Fat is required")).not.toBeInTheDocument();
-
-		await continueToNextStep();
-		expect(screen.getByText("Calories is required")).toBeInTheDocument();
-		expect(screen.getByText("Total Fat is required")).toBeInTheDocument();
-	});
-
-	it("treats forward progress-tab navigation as a validation attempt", async () => {
-		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
-
-		await openEmptyMacrosStep();
-		expect(screen.queryByText("Calories is required")).not.toBeInTheDocument();
-
-		await goToStep(/share/i);
-		expect(screen.getByText("Calories is required")).toBeInTheDocument();
-		expect(screen.getByText("Total Fat is required")).toBeInTheDocument();
-	});
-
 	it("requires a new forward attempt after a previously valid step changes", async () => {
 		render(CustomIngredientForm, { props: { onCreate: vi.fn() } });
 

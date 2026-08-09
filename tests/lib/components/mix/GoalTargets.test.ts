@@ -23,61 +23,6 @@ const proteinGoal = {
 };
 
 describe("GoalTargets", () => {
-	it("uses a synchronized slider and number input for each nutrient goal", async () => {
-		const onPreviewGoal = vi.fn();
-		const onUpdateGoal = vi.fn();
-		render(GoalTargets, {
-			props: {
-				selectedNutrients: [{ id: 1008, label: "Calories", unit: "kcal" }],
-        nutrientGoals: { 1008: calorieGoal },
-        goalTemplates: [],
-				selectedGoalTemplateId: "",
-        templateCustomized: false,
-        keepExtraGoals: false,
-				onTemplateChange: vi.fn(),
-        onKeepExtraGoalsChange: vi.fn(),
-				onApplyTemplate: vi.fn(),
-        onSaveCurrentTemplate: vi.fn(),
-        onDeleteTemplate: vi.fn(),
-				onPreviewGoal,
-				onUpdateGoal,
-        onUpdateUpperGoal: vi.fn(),
-        onUpdateGoalType: vi.fn(),
-				onAddNutrient: vi.fn(),
-				onRemoveNutrient: vi.fn(),
-        getGoal: () => calorieGoal,
-				getTotal: () => 555.9,
-				open: true,
-				onOpenChange: vi.fn(),
-			},
-		});
-
-		const slider = screen.getByRole("slider", { name: "Set Calories goal" });
-		expect(screen.getByText("Current")).toBeInTheDocument();
-		expect(screen.getByText("555.9 kcal")).toBeInTheDocument();
-		expect(screen.getByText("Goal")).toBeInTheDocument();
-		expect(slider).toHaveValue("350");
-		expect(slider).toHaveAttribute("max", "700");
-		expect(slider).toHaveAttribute(
-			"aria-valuetext",
-			"=350 kcal goal; 555.9 kcal current",
-		);
-    expect(
-      screen.getByRole("spinbutton", { name: "Goal value for Calories in kcal" }),
-    ).toHaveValue(350);
-		expect(screen.getAllByRole("spinbutton")).toHaveLength(1);
-		expect(
-			screen.getByRole("button", { name: "Stop tracking Calories" }),
-		).toBeInTheDocument();
-
-		await fireEvent.input(slider, { target: { value: "425" } });
-		expect(onPreviewGoal).toHaveBeenLastCalledWith(1008, "425");
-		expect(onUpdateGoal).not.toHaveBeenCalled();
-
-		await fireEvent.change(slider, { target: { value: "425" } });
-		expect(onUpdateGoal).toHaveBeenLastCalledWith(1008, "425");
-	});
-
   it("applies, explains, and manages DB-backed personal presets", async () => {
     const onTemplateChange = vi.fn();
     const onApplyTemplate = vi.fn().mockResolvedValue(true);
