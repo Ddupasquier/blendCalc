@@ -161,8 +161,9 @@
         patch: IngredientRoutePatch,
         { replaceState = false }: IngredientRouteNavigationOptions = {},
     ) => {
-        const href = buildIngredientRouteHref(page.url, patch);
-        const currentHref = `${page.url.pathname}${page.url.search}${page.url.hash}`;
+        const currentUrl = new URL(window.location.href);
+        const href = buildIngredientRouteHref(currentUrl, patch);
+        const currentHref = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
         if (href === currentHref) return;
 
         const nextPageState = { ...page.state };

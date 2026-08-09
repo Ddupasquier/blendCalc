@@ -16,6 +16,7 @@
 		"dev": "vite dev --host localhost --port 5173 --strictPort",
 		"predev:test": "npm run kill:vite && npm run free:dev-port && npm run version:check && npm run db:test:start",
 		"dev:test": "BLENDCALC_DATABASE_ENVIRONMENT=test vite dev --mode test --host localhost --port 5173 --strictPort",
+		"dev:test:server": "BLENDCALC_DATABASE_ENVIRONMENT=test vite dev --mode test --host localhost --port 5173 --strictPort",
 		"prebuild": "npm run version:check",
 		"build": "vite build",
 		"prepreview": "npm run version:check",
@@ -46,6 +47,13 @@
 		"test": "BLENDCALC_DATABASE_ENVIRONMENT=test vitest run",
 		"pretest:watch": "npm run version:check",
 		"test:watch": "BLENDCALC_DATABASE_ENVIRONMENT=test vitest",
+		"test:e2e:prepare": "npm run kill:vite && npm run free:dev-port && npm run version:check && npm run db:test:start",
+		"test:e2e": "npm run test:e2e:prepare && playwright test",
+		"test:e2e:chromium": "npm run test:e2e:prepare && playwright test --project=desktop-chromium --project=mobile-chromium",
+		"test:e2e:headed": "npm run test:e2e:prepare && playwright test --project=desktop-chromium --headed",
+		"test:e2e:ui": "npm run test:e2e:prepare && playwright test --ui",
+		"test:e2e:update": "npm run test:e2e:prepare && playwright test --project=desktop-chromium --project=mobile-chromium --update-snapshots",
+		"test:e2e:install": "playwright install chromium firefox webkit",
 		"kill:vite": "pkill -f \"node .*node_modules/.bin/vite dev\" 2>/dev/null || true",
 		"free:dev-port": "pids=$(lsof -ti :5173 2>/dev/null); if [ -n \"$pids\" ]; then kill -9 $pids; fi",
 		"predev": "npm run kill:vite && npm run free:dev-port && npm run version:check",
@@ -73,6 +81,8 @@
 		"seed:product-reference-data": "node scripts/seeds/seed_product_reference_data.mjs"
 	},
 	"devDependencies": {
+		"@axe-core/playwright": "^4.12.1",
+		"@playwright/test": "^1.62.1",
 		"@sveltejs/adapter-vercel": "^6.3.4",
 		"@sveltejs/kit": "^2.70.1",
 		"@sveltejs/vite-plugin-svelte": "^7.2.0",
@@ -113,6 +123,7 @@
 		"bufferutil@4.1.0": true,
 		"esbuild@0.28.1": true,
 		"fsevents@2.3.3": true,
+		"fsevents@2.3.2": true,
 		"tesseract.js@7.0.0": true,
 		"utf-8-validate@6.0.6": true
 	}

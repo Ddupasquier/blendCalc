@@ -248,7 +248,11 @@ provide `vh` before `dvh` fallbacks, account for device safe areas, and feature-
 optional browser APIs instead of assuming they exist. Camera, clipboard, sharing,
 storage, and other device-backed features must fail with useful guidance and preserve a
 non-device fallback when practical. Do not use browser-name checks when capability
-checks can answer the real question. Before handoff, test the current and previous two
+checks can answer the real question. Run `npm run test:e2e:chromium` while developing a
+browser-facing change and run the complete `npm run test:e2e` project matrix before its
+final handoff or release. Move deterministic rendered behavior into Playwright instead
+of preserving source-text assertions or assigning reproducible browser checks to the
+user. Before handoff, also test the current and previous two
 stable desktop releases plus real or emulated iOS Safari and Android Chrome at portrait
 and landscape sizes. Do not reload or refetch page data merely because the browser
 window regains focus; focus changes are not evidence that application data changed and
@@ -1571,8 +1575,12 @@ existing IDs, and preserve IDs when archiving tasks. Active priority trackers ar
 remaining observable QA queue: keep only checks that require visual judgment,
 real-device/browser interaction,
 assistive-technology verification, user-controlled deployment configuration, or another
-human decision. App-controlled browser automation is not part of the verification
-workflow. Keep observable checks active for explicit user confirmation in the required
+human decision. Interactive browser-control tooling is not part of the verification
+workflow. Repository-owned Playwright tests are deterministic development automation
+and may prove browser behavior or approved visual snapshots in their configured engines
+and viewports, but they do not substitute for an untested named installed browser,
+physical device, operating-system permission, assistive technology, or subjective visual
+approval. Keep remaining observable checks active for explicit user confirmation in the required
 browser, viewport, physical device, permission, or assistive-technology environment.
 Deterministic code, schema, migration, API, data-integrity, RLS, build, lint, or test
 checks belong to the automated development workflow. Run those checks instead of

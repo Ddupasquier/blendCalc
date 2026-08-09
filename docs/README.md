@@ -28,6 +28,7 @@ organization and script-specific execution guidance.
 | [`versioning.md`](versioning.md) | App, API, build, schema, product, placement, and transient-state version streams | Deployment setup |
 | [`authentication.md`](authentication.md) | Auth origins, callbacks, account-security configuration, and auth verification | General RLS/schema reference |
 | [`database-testing.md`](database-testing.md) | Disposable local database setup, commands, safety, and QA mutation procedure | Production migration policy |
+| [`browser-testing.md`](browser-testing.md) | Playwright projects, local authenticated browser setup, visual snapshots, and browser-test ownership | Manual physical-device or assistive-technology sign-off |
 | [`moderation.md`](moderation.md) | Role boundaries, account controls, notification setup, and moderation workflows | Catalog field mapping |
 | [`user-profiles.md`](user-profiles.md) | Profile identity, appearance, avatar storage, and profile privacy | General authentication setup |
 | [`barcode-scanning.md`](barcode-scanning.md) | Supported codes, scanner behavior, scan privacy, and native-scanner direction | Provider enrichment or catalog publication policy |

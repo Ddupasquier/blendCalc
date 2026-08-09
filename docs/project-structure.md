@@ -125,6 +125,7 @@ the application.
 ```text
 tests/
 ├── config/                  Architecture, generated-contract, and migration guards
+├── e2e/                     Playwright browser behavior and visual regression tests
 ├── fixtures/                Shared deterministic test data
 ├── lib/                     Unit/component tests grouped by source domain
 ├── routes/                  Route contract tests
@@ -134,6 +135,11 @@ tests/
 Tests should follow the same domain vocabulary as `src`. A component test may remain in
 its domain test folder; it does not need a second namesake folder unless that component
 needs multiple test/support files.
+
+Vitest owns isolated logic, component, route, schema, and architecture checks.
+Playwright owns behavior that requires a real browser, including client navigation,
+focus persistence, responsive layout, keyboard interaction across rendered surfaces,
+and approved visual snapshots. Do not duplicate the same assertion in both runners.
 
 ## Scripts
 

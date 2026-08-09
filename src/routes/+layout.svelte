@@ -66,6 +66,13 @@
 		}
 	});
 
+	onMount(() => {
+		document.documentElement.dataset.appReady = "true";
+		return () => {
+			delete document.documentElement.dataset.appReady;
+		};
+	});
+
 	let {
 		children,
 		data,

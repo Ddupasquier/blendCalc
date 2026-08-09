@@ -1,6 +1,6 @@
 # Development Rules Audit
 
-Last audited: 2026-08-06
+Last audited: 2026-08-08
 
 ## Purpose
 
@@ -88,9 +88,13 @@ the local verification commands and required remote workflow.
 
 **Status:** Open
 
-**Evidence:** Ingredients has a detailed browser/device matrix and accessibility QA, but
-the unfinished Mix, Saved Recipes, Profile, Authentication, and Moderation experiences
-have not completed equivalent real-device and cross-browser passes.
+**Evidence:** Repository-owned Playwright now runs authenticated desktop and mobile
+Chromium, Firefox, and WebKit projects against the disposable local database. It covers
+primary route health, client navigation and history, URL-backed ingredient overlays,
+focus/draft persistence, responsive overflow, reduced motion, structural WCAG scans,
+and approved Ingredients snapshots. Existing shared light-theme color contrast failures
+remain open, and the unfinished views have not completed equivalent real-device,
+installed-browser, assistive-technology, camera, or operating-system permission passes.
 
 **Affected areas:** `src/routes/mix`, `src/routes/saved`,
 `src/routes/profile`, `src/routes/auth`, and `src/routes/moderation`.

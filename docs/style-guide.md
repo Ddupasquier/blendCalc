@@ -740,6 +740,15 @@ reporting interface for every warning in the default view.
   full list overflow or crop the card as it exits.
 - Do not refetch or reset a view when the browser regains focus.
 
+## Visual Regression Review
+
+- Use the tracked Playwright snapshots described in
+  [Browser Testing](browser-testing.md) for stable, approved view composition.
+- Keep baselines narrow and intentional. Mask changing provider imagery when image pixels
+  are not the visual contract, and never update a snapshot without reviewing its diff.
+- Rendered browser checks complement this guide; they do not authorize changing approved
+  tokens, spacing, typography, or component contracts merely to make a snapshot pass.
+
 ## SCSS And File Ownership
 
 The canonical structure is:
