@@ -1,7 +1,7 @@
 import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-export const getFoodIdentityKey = (food: FdcFood) => {
+export const getFoodIdentityKey = (food: FoodItem) => {
 	const barcode = food.barcode ?? food.gtinUpc;
 	if (barcode) {
 		const digits = cleanBarcode(barcode);
@@ -13,7 +13,7 @@ export const getFoodIdentityKey = (food: FdcFood) => {
 	return `fdc:${food.fdcId}`;
 };
 
-export const uniqueFoodsByIdentity = (foods: FdcFood[]) => {
+export const deduplicateFoodItemsByIdentity = (foods: FoodItem[]) => {
 	const seen = new Set<string>();
 	return foods.filter((food) => {
 		const identityKey = getFoodIdentityKey(food);

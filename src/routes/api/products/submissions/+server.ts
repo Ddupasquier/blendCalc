@@ -9,7 +9,7 @@ import {
 	type ProductEvidenceFiles,
 	type ProductEvidencePaths,
 } from "$lib/server/products/productEvidence.server";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
 import {
 	CURRENT_IMAGE_PLACEMENT_VERSION,
@@ -54,9 +54,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 	);
 	const foodValue = formData.get("food");
 	const consentToShare = formData.get("consentToShare") === "true";
-	let food: FdcFood | null = null;
+	let food: FoodItem | null = null;
 	try {
-		food = foodValue ? JSON.parse(String(foodValue)) as FdcFood : null;
+		food = foodValue ? JSON.parse(String(foodValue)) as FoodItem : null;
 	} catch {
 		throwAppError(400, "CATALOG_SUBMISSION_INVALID");
 	}

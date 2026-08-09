@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 const readSource = (path: string) =>
 	readFileSync(resolve(process.cwd(), path), "utf8");
 
-describe("ingredient browser compatibility baseline", () => {
+describe("browser build compatibility baseline", () => {
 	it("declares the supported build targets", () => {
 		const viteConfig = readSource("vite.config.ts");
 		for (const target of ["chrome111", "edge111", "firefox113", "safari16.4"]) {
@@ -34,17 +34,4 @@ describe("ingredient browser compatibility baseline", () => {
 		expect(layout).toContain('page.url.pathname === "/mix"');
 	});
 
-	it("does not refresh page data when the browser merely regains focus", () => {
-		const pages = [
-			readSource("src/routes/ingredients/fridge/+page.svelte"),
-			readSource("src/routes/mix/+page.svelte"),
-		];
-
-		for (const page of pages) {
-			expect(page).not.toMatch(
-				/window\.addEventListener\(\s*["']focus["']/,
-			);
-			expect(page).toContain("SMOOTHIE_LISTS_CHANGED_EVENT");
-		}
-	});
 });

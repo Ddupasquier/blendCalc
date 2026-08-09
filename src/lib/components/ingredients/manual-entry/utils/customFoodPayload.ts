@@ -3,8 +3,8 @@ import type { NutrientValueState } from "$lib/components/ingredients/manual-entr
 import { createCustomFood } from "$lib/utils/food/custom/customFoods";
 import type { ManualEntryNutrientDefinition } from "$lib/utils/food/nutrients/nutrientDefinitions";
 import type {
-	FdcFood,
-	FdcNutrient,
+	FoodItem,
+	FoodNutrient,
 	FoodFieldProvenance,
 	FoodImageAsset,
 	FoodBarcodeProvenance,
@@ -19,7 +19,7 @@ import { buildSaveNutrients } from "$lib/components/ingredients/manual-entry/uti
 
 export type ManualEntryCustomFoodPayload = {
 	name: string;
-	nameProvenance: NonNullable<FdcFood["nameProvenance"]>;
+	nameProvenance: NonNullable<FoodItem["nameProvenance"]>;
 	brandOwner: string;
 	servingLabel: string;
 	servingWeightGrams: number | null;
@@ -28,7 +28,7 @@ export type ManualEntryCustomFoodPayload = {
 	volumeQuantity: number | null;
 	volumeUnit: ServingMeasureUnit;
 	barcode: string | null;
-	barcodeSource: FdcFood["barcodeSource"];
+	barcodeSource: FoodItem["barcodeSource"];
 	barcodeProvenance?: FoodBarcodeProvenance;
 	sourceKey?: string;
 	sourceLabel?: string;
@@ -55,7 +55,7 @@ export type ManualEntryCustomFoodPayload = {
 	fieldProvenance?: FoodFieldProvenance;
 	reportedNutrientIds: number[];
 	hasSourceServing?: boolean;
-	importedNutrients: FdcNutrient[];
+	importedNutrients: FoodNutrient[];
 	manualEntryNutrientFields: ManualEntryNutrientDefinition[];
 	manualNutrientValues: NutrientValueState;
 	manualTouchedNutrientIds: Record<number, true>;

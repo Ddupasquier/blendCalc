@@ -1,4 +1,4 @@
-import { loadMixPageData } from "$lib/server/user-data/pageData.server";
+import { loadMixPageData } from "$lib/server/user-data/mixPageData.server";
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({ locals }) => {

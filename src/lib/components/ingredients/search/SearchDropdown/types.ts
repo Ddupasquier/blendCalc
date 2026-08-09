@@ -1,8 +1,8 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
 
 export type SearchDropdownProps = {
-	results: FdcFood[];
+	results: FoodItem[];
 	activeResultIndex?: number;
 	addingFoodId?: number | null;
 	hasMoreResults?: boolean;
@@ -10,8 +10,8 @@ export type SearchDropdownProps = {
 	contentVersion?: string | number;
 	savedFoodIdentityKeys?: ReadonlySet<string>;
 	provenanceOptions?: readonly IngredientProvenanceOption[];
-	onSelect: (food: FdcFood) => void;
-	onAdd?: (food: FdcFood) => void | Promise<void>;
+	onSelect: (food: FoodItem) => void;
+	onAdd?: (food: FoodItem) => void | Promise<void>;
 	onActivate?: (index: number) => void;
 	onLoadMore?: () => void | Promise<void>;
 };

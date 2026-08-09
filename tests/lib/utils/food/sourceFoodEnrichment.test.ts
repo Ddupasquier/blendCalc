@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { mergeExactSourceFood } from "$lib/utils/food/records/sourceFoodEnrichment";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const current: FdcFood = {
+const current: FoodItem = {
 	fdcId: 171032,
 	description: "Oil, Apricot Kernel",
 	nameProvenance: "source",

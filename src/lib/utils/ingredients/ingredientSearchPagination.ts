@@ -1,5 +1,5 @@
 import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 export const INGREDIENT_SEARCH_PAGE_SIZE = LIST_PAGE_SIZES.foodSearch;
 export const INGREDIENT_SEARCH_LOAD_MORE_PAGE_SIZE =
@@ -14,14 +14,14 @@ export type IngredientSearchPageOptions = {
 };
 
 export type IngredientSearchPage = {
-	foods: FdcFood[];
+	foods: FoodItem[];
 	hasMore: boolean;
 	nextOffset: number | null;
 	total: number;
 };
 
 export const paginateIngredientSearchResults = (
-	foods: FdcFood[],
+	foods: FoodItem[],
 	offset: number,
 	limit: number,
 ): IngredientSearchPage => {

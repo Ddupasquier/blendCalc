@@ -1,5 +1,5 @@
 import type { AppIssueCode, AppIssueParams } from "$lib/utils/errors/appIssues";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { FoodPreferenceWarning } from "$lib/utils/profile/foodPreferenceWarnings";
 import type { FoodCompatibilityFact } from "./compatibility";
 
@@ -33,7 +33,7 @@ const normalizeComparable = (value: unknown) =>
 		: "";
 
 const getWarningFacts = (
-	food: FdcFood,
+	food: FoodItem,
 	warning: FoodPreferenceWarning,
 ) => {
 	const factLabel = normalizeComparable(warning.params.factLabel);
@@ -49,7 +49,7 @@ const getWarningFacts = (
 };
 
 export const createFoodCompatibilityFeedbackRequest = (
-	food: FdcFood,
+	food: FoodItem,
 	warning: FoodPreferenceWarning,
 	reportReason: FoodCompatibilityFeedbackReason = "incorrect_match",
 	reportDetails: string | null = null,

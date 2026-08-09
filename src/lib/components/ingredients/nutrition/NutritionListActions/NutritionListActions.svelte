@@ -11,9 +11,9 @@
 		getIngredientMembershipLabel,
 	} from "$lib/utils/ingredients/ingredientListUi";
 	import {
-		addFoodToSmoothieList,
-		moveFoodToSmoothieList,
-	} from "$lib/utils/storage/client/smoothieLists";
+		addFoodToIngredientList,
+		moveFoodToIngredientList,
+	} from "$lib/utils/storage/client/ingredientLists";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 	import { getFeedbackFlyTransition } from "$lib/utils/animation/transitions";
 
@@ -57,7 +57,7 @@
 		if (!food || pendingAction) return;
 		pendingAction = "move";
 		try {
-			const moveResult = await moveFoodToSmoothieList(to, food);
+			const moveResult = await moveFoodToIngredientList(to, food);
 			if (moveResult === "error") {
 				showFeedback("The item could not be moved. Try again.", true);
 				return;
@@ -74,7 +74,7 @@
 		if (pendingAction) return;
 		pendingAction = "fridge";
 		try {
-			const result = await addFoodToSmoothieList(MIX_STORAGE_KEYS.fridge, food);
+			const result = await addFoodToIngredientList(MIX_STORAGE_KEYS.fridge, food);
 			if (result === "move-required:shopping") {
 				movePrompt = {
 					message:
@@ -108,7 +108,7 @@
 		if (pendingAction) return;
 		pendingAction = "shopping";
 		try {
-			const result = await addFoodToSmoothieList(
+			const result = await addFoodToIngredientList(
 				MIX_STORAGE_KEYS.shoppingList,
 				food,
 			);

@@ -2,9 +2,9 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import NutrientAdjustmentSuggestions from "$lib/components/mix/insights/NutrientAdjustmentSuggestions/NutrientAdjustmentSuggestions.svelte";
 import type { NutrientAdjustmentSuggestion } from "$lib/utils/mix/calculations";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const milk: FdcFood = {
+const milk: FoodItem = {
 	fdcId: 1,
 	description: "Milk, reduced fat",
 	foodNutrients: [],

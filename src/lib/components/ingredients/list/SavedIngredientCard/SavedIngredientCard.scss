@@ -36,7 +36,7 @@ $selection-border-color: color-mix(
 }
 
 .saved-ingredient-card--selection-mode {
-	grid-template-columns: minmax(0, 1fr);
+	@include ingredient-card-layout.selection-layout;
 }
 
 .saved-ingredient-card--selection-mode.saved-ingredient-card--checked {
@@ -65,9 +65,7 @@ $selection-border-color: color-mix(
 }
 
 .saved-ingredient-card__selection-indicator {
-	@include ingredient-card-layout.presentation-layer;
-
-	display: inline-flex;
+	@include ingredient-card-layout.selection-indicator-layer;
 }
 
 .saved-ingredient-card__move-action {
@@ -85,9 +83,5 @@ $selection-border-color: color-mix(
 @media (max-width: $app-breakpoint-xs) {
 	.saved-ingredient-card {
 		grid-template-columns: minmax(0, 1fr) auto auto;
-	}
-
-	.saved-ingredient-card--selection-mode {
-		grid-template-columns: minmax(0, 1fr) auto;
 	}
 }

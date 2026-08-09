@@ -22,7 +22,7 @@ const foodSymbol = readFileSync(
 	"utf8",
 );
 const referenceData = readFileSync(
-	"src/lib/utils/food/reference/appReferenceData.ts",
+	"src/lib/utils/food/reference/appReferenceCatalogReader.ts",
 	"utf8",
 );
 

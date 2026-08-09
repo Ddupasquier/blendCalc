@@ -51,9 +51,6 @@ pnpm-debug.log*
 /docs/QA/*.md
 /docs/QA/assets/
 
-# Local prioritized work queue
-/docs/TODO/*.md
-
 # Local development recovery context
 /docs/local-context/
 

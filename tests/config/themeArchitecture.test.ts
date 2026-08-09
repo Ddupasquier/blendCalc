@@ -96,7 +96,7 @@ const contrastRatio = (foreground: string, background: string) => {
 describe("theme architecture", () => {
 	it("starts with a system theme before client hydration", () => {
 		expect(appHtml).toContain('data-theme="system"');
-		expect(layout).toContain("ThemeController");
+		expect(layout).toContain("ThemeSynchronizer");
 		expect(layout).toContain("preference={data.themePreference}");
 		expect(layoutServer).toContain("themePreference: cookieThemePreference");
 	});

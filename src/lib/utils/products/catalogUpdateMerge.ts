@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { CatalogSubmissionFieldChange } from "$lib/utils/products/catalogSubmissionComparison";
 
 const SERVING_FIELDS = [
@@ -33,9 +33,9 @@ const INGREDIENT_FIELDS = [
 	"allergenDisclosure",
 ] as const;
 
-const copyFields = <Key extends keyof FdcFood>(
-	target: FdcFood,
-	source: FdcFood,
+const copyFields = <Key extends keyof FoodItem>(
+	target: FoodItem,
+	source: FoodItem,
 	fields: readonly Key[],
 ) => {
 	for (const field of fields) {
@@ -99,11 +99,11 @@ export const getCatalogUpdateProvenancePaths = (
 };
 
 export const mergeCatalogUpdateFood = (
-	currentFood: FdcFood,
-	submittedFood: FdcFood,
+	currentFood: FoodItem,
+	submittedFood: FoodItem,
 	changes: readonly CatalogSubmissionFieldChange[],
-): FdcFood => {
-	const mergedFood: FdcFood = {
+): FoodItem => {
+	const mergedFood: FoodItem = {
 		...currentFood,
 		foodNutrients: [...currentFood.foodNutrients],
 		reportedNutrientIds: [...(currentFood.reportedNutrientIds ?? [])],

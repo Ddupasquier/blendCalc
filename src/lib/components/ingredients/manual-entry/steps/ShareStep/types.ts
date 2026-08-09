@@ -1,6 +1,6 @@
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { FoodImageAsset } from "$lib/utils/food/types";
-import type { SmoothieListKey } from "$lib/utils/storage/client/smoothieLists";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import type {
 	CustomIngredientOutcomeState,
 	ManualEntryBarcodeShareMismatch,
@@ -29,7 +29,7 @@ export type ShareStepProps = {
 	nutritionPhoto: File | null;
 	barcodePhoto: File | null;
 	imagePlacement: ImagePlacementValue;
-	saveDestination: SmoothieListKey;
+	saveDestination: IngredientListKey;
 	error: string;
 	lastOutcome: CustomIngredientOutcomeState | null;
 	outcomeAction: "move" | "undo" | null;
@@ -45,7 +45,7 @@ export type ShareStepProps = {
 	onImagePlacementChange: (value: ImagePlacementValue) => void;
 	onNutritionPhotoChange: (file: File | null) => void;
 	onBarcodePhotoChange: (file: File | null) => void;
-	onSaveDestinationChange: (destination: SmoothieListKey) => void;
+	onSaveDestinationChange: (destination: IngredientListKey) => void;
 	onMoveToShopping: () => void | Promise<void>;
 	onMoveToFridge: () => void | Promise<void>;
 	onUndo: () => void | Promise<void>;

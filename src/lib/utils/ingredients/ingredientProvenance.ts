@@ -1,6 +1,6 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import type { Database } from "$lib/types/database.types";
-import type { FdcFood, FoodTrustStatus } from "$lib/utils/food/types";
+import type { FoodItem, FoodTrustStatus } from "$lib/utils/food/types";
 import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -67,7 +67,7 @@ export const isIngredientSourceFilter = (value: string) =>
 export const isIngredientTrustFilter = (value: string) =>
 	value === "any" || TRUST_STATUSES.has(value as IngredientTrustStatus);
 
-export const getFoodSourceKey = (food: FdcFood): IngredientSourceKey => {
+export const getFoodSourceKey = (food: FoodItem): IngredientSourceKey => {
 	const sourceKey = food.sourceKey === "fdc"
 		? "usda"
 		: food.sourceKey === "health-canada-cnf" ||
@@ -92,7 +92,7 @@ export const getFoodSourceKey = (food: FdcFood): IngredientSourceKey => {
 	return "unknown";
 };
 
-export const getFoodTrustStatus = (food: FdcFood): IngredientTrustStatus => {
+export const getFoodTrustStatus = (food: FoodItem): IngredientTrustStatus => {
 	if (isIngredientTrustStatus(food.trustStatus)) {
 		return food.trustStatus === "imported" ? "unverified" : food.trustStatus;
 	}
@@ -126,7 +126,7 @@ export const readIngredientProvenanceOptions = async (
 };
 
 export const getIngredientTrustBadge = (
-	food: FdcFood,
+	food: FoodItem,
 	options: readonly IngredientProvenanceOption[],
 ) => {
 	const trustStatus = getFoodTrustStatus(food);
@@ -162,7 +162,7 @@ export const getIngredientTrustBadge = (
 };
 
 export const matchesIngredientProvenance = (
-	food: FdcFood,
+	food: FoodItem,
 	sourceFilter = "all",
 	trustFilter = "any",
 ) =>

@@ -28,6 +28,7 @@ organization and script-specific execution guidance.
 | [`versioning.md`](versioning.md) | App, API, build, schema, product, placement, and transient-state version streams | Deployment setup |
 | [`authentication.md`](authentication.md) | Auth origins, callbacks, account-security configuration, and auth verification | General RLS/schema reference |
 | [`database-testing.md`](database-testing.md) | Disposable local database setup, commands, safety, and QA mutation procedure | Production migration policy |
+| [`browser-testing.md`](browser-testing.md) | Playwright projects, local authenticated browser setup, visual snapshots, and browser-test ownership | Manual physical-device or assistive-technology sign-off |
 | [`moderation.md`](moderation.md) | Role boundaries, account controls, notification setup, and moderation workflows | Catalog field mapping |
 | [`user-profiles.md`](user-profiles.md) | Profile identity, appearance, avatar storage, and profile privacy | General authentication setup |
 | [`barcode-scanning.md`](barcode-scanning.md) | Supported codes, scanner behavior, scan privacy, and native-scanner direction | Provider enrichment or catalog publication policy |
@@ -39,12 +40,10 @@ only executable human checks; [`QA/completed-qa-tasks.md`](QA/completed-qa-tasks
 preserves completed verification history. Repeated local account and barcode fixtures
 inside priority files are intentional so each queue remains usable on its own.
 
-## TODO
-
-[`TODO/todo-tasks.md`](TODO/todo-tasks.md) is the local-only general work index. Its
-priority files own incomplete implementation, verification, decision, deployment, and
-research work. During the transition away from standalone QA queues, TODO items link to
-legacy QA groups without duplicating their detailed acceptance criteria.
+Observable verification created by feature work belongs directly in the applicable QA
+priority file. Verified unresolved implementation findings belong in the development
+audit; the active recovery checkpoint owns only the currently interrupted task. Do not
+create a second task queue that mirrors QA.
 
 ## Maintenance
 

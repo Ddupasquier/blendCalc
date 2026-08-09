@@ -1,6 +1,6 @@
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type {
-	FdcNutrient,
+	FoodNutrient,
 	FoodFieldProvenance,
 	FoodFieldSource,
 	FoodTrackedField,
@@ -118,7 +118,7 @@ const getFieldCompleteness = (
 	}
 };
 
-const isValidNutrient = (nutrient: FdcNutrient) =>
+const isValidNutrient = (nutrient: FoodNutrient) =>
 	Number.isSafeInteger(nutrient.nutrientId) &&
 	nutrient.nutrientId > 0 &&
 	Number.isFinite(nutrient.value) &&
@@ -244,7 +244,7 @@ const applySelectedField = (
 };
 
 const scaleNutrient = (
-	nutrient: FdcNutrient,
+	nutrient: FoodNutrient,
 	fromGrams: number,
 	toGrams: number,
 ) => {
@@ -265,16 +265,16 @@ const scaleNutrient = (
 
 type NutrientCandidate = {
 	draft: BarcodeProductDraft;
-	nutrient: FdcNutrient;
+	nutrient: FoodNutrient;
 	source: FoodFieldSource & {
-		source: NonNullable<FdcNutrient["source"]>;
+		source: NonNullable<FoodNutrient["source"]>;
 	};
 	timestamp: number;
 };
 
 const isNutrientSource = (
 	source: FoodFieldSource["source"],
-): source is NonNullable<FdcNutrient["source"]> =>
+): source is NonNullable<FoodNutrient["source"]> =>
 	source !== "wikimedia-commons" && source !== "shared-catalog";
 
 const compareNutrientCandidates = (

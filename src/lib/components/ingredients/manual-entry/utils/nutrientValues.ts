@@ -2,7 +2,7 @@ import type {
 	ManualEntryNutrientDefinition,
 	ManualEntryNutrientGroupsByStep,
 } from "$lib/utils/food/nutrients/nutrientDefinitions";
-import type { FdcNutrient } from "$lib/utils/food/types";
+import type { FoodNutrient } from "$lib/utils/food/types";
 import type {
 	ManualEntrySummaryItem,
 	NutrientValueState,
@@ -79,12 +79,12 @@ export const buildSaveNutrients = ({
 	manualNutrientValues,
 	manualTouchedNutrientIds,
 }: {
-	importedNutrients: FdcNutrient[];
+	importedNutrients: FoodNutrient[];
 	manualEntryNutrientFields: ManualEntryNutrientDefinition[];
 	manualNutrientValues: NutrientValueState;
 	manualTouchedNutrientIds: Record<number, true>;
 }) => {
-	const nutrientsById = new Map<number, FdcNutrient>();
+	const nutrientsById = new Map<number, FoodNutrient>();
 
 	for (const nutrient of importedNutrients) {
 		const nutrientId = Number(nutrient.nutrientId);
@@ -156,7 +156,7 @@ export const buildSaveNutrients = ({
 };
 
 export const getOptionalNutrientCount = (
-	saveNutrients: FdcNutrient[],
+	saveNutrients: FoodNutrient[],
 	requiredFields: ManualEntryNutrientDefinition[],
 ) => {
 	const requiredIds = new Set(requiredFields.map((field) => field.nutrientId));

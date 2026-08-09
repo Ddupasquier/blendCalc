@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
 	getIngredientPillSpan,
 	packIngredientPills,
-} from "$lib/components/saved/SavedDrinkIngredientPills/ingredientPillLayout";
-import type { FdcFood } from "$lib/utils/food/types";
+} from "$lib/components/saved/SavedRecipeIngredientPills/ingredientPillLayout";
+import type { FoodItem } from "$lib/utils/food/types";
 
 const food = (
 	fdcId: number,
 	description: string,
-	overrides: Partial<FdcFood> = {},
-): FdcFood => ({
+	overrides: Partial<FoodItem> = {},
+): FoodItem => ({
 	fdcId,
 	description,
 	foodNutrients: [],

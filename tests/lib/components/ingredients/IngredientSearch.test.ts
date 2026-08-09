@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 vi.mock("$lib/utils/food/sources/fdc", () => ({
 	FdcConfigurationError: class FdcConfigurationError extends Error {},
@@ -19,9 +19,9 @@ vi.mock("$lib/utils/products/catalog", () => ({
 import IngredientSearch from "$lib/components/ingredients/search/IngredientSearch/IngredientSearch.svelte";
 import { searchFoodPage } from "$lib/utils/food/sources/fdc";
 import type { IngredientSearchPage } from "$lib/utils/ingredients/ingredientSearchPagination";
-import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceData";
+import { ingredientProvenanceOptionsFixture } from "../../../fixtures/referenceCatalogs";
 
-const makeFood = (fdcId: number, description: string): FdcFood => ({
+const makeFood = (fdcId: number, description: string): FoodItem => ({
 	fdcId,
 	description,
 	foodCategory: "Fruit",
@@ -30,7 +30,7 @@ const makeFood = (fdcId: number, description: string): FdcFood => ({
 });
 
 const makePage = (
-	foods: FdcFood[],
+	foods: FoodItem[],
 	options: Partial<Omit<IngredientSearchPage, "foods">> = {},
 ): IngredientSearchPage => ({
 	foods,
@@ -211,7 +211,7 @@ describe("IngredientSearch", () => {
 	it("uses product images and warning edges without changing search actions", async () => {
 		const onSelect = vi.fn();
 		const onAdd = vi.fn();
-		const imageFood: FdcFood = {
+		const imageFood: FoodItem = {
 			...makeFood(303, "Peanut Butter, Smooth"),
 			image: {
 				source: "open-food-facts",
@@ -273,7 +273,7 @@ describe("IngredientSearch", () => {
 	});
 
 	it("keeps provider identity off compact cards while retaining evidence status", async () => {
-		const foods: FdcFood[] = [
+		const foods: FoodItem[] = [
 			{
 				...makeFood(305, "Spinach, Raw"),
 				sourceKey: "usda",

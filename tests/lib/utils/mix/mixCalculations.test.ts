@@ -11,9 +11,9 @@ import {
 	getNutrientTotal,
 } from "$lib/utils/mix/calculations";
 import { configureAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
-import { resolveFdcNutrient } from "$lib/utils/food/nutrients/fdcNutrients";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
-import { appReferenceCatalogFixture } from "../../../fixtures/referenceData";
+import { resolveFoodNutrient } from "$lib/utils/food/nutrients/foodNutrients";
+import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
+import { appReferenceCatalogFixture } from "../../../fixtures/referenceCatalogs";
 
 const sunflowerOil = {
 	fdcId: 1,
@@ -28,7 +28,7 @@ const sunflowerOil = {
 			value: 93.2,
 		},
 	],
-} satisfies FdcFood;
+} satisfies FoodItem;
 
 const milk = {
 	fdcId: 2,
@@ -42,7 +42,7 @@ const milk = {
 			value: 3.33,
 		},
 	],
-} satisfies FdcFood;
+} satisfies FoodItem;
 
 const exactGoal = (
 	nutrientId: number,
@@ -112,10 +112,10 @@ describe("mix calculations", () => {
 					value: 0,
 				},
 			],
-		} satisfies FdcFood;
+		} satisfies FoodItem;
 
 		expect(
-			resolveFdcNutrient(zeroProteinFood, NUTRIENT_IDS.PROTEIN),
+			resolveFoodNutrient(zeroProteinFood, NUTRIENT_IDS.PROTEIN),
 		).toMatchObject({
 			value: 0,
 			source: "exact",
@@ -133,7 +133,7 @@ describe("mix calculations", () => {
 		});
 
 		expect(total).toBe(0);
-		expect(resolveFdcNutrient(milk, NUTRIENT_IDS.FAT)).toMatchObject({
+		expect(resolveFoodNutrient(milk, NUTRIENT_IDS.FAT)).toMatchObject({
 			value: null,
 			source: "missing",
 		});
@@ -166,23 +166,23 @@ describe("mix calculations", () => {
 					value: 4,
 				},
 			],
-		} satisfies FdcFood;
+		} satisfies FoodItem;
 		const incompleteMacros = {
 			...completeMacros,
 			fdcId: 12,
 			foodNutrients: completeMacros.foodNutrients.filter(
 				(nutrient) => nutrient.nutrientId !== NUTRIENT_IDS.PROTEIN,
 			),
-		} satisfies FdcFood;
+		} satisfies FoodItem;
 
 		expect(
-			resolveFdcNutrient(completeMacros, NUTRIENT_IDS.CALORIES),
+			resolveFoodNutrient(completeMacros, NUTRIENT_IDS.CALORIES),
 		).toMatchObject({
 			value: null,
 			source: "missing",
 		});
 		expect(
-			resolveFdcNutrient(incompleteMacros, NUTRIENT_IDS.CALORIES),
+			resolveFoodNutrient(incompleteMacros, NUTRIENT_IDS.CALORIES),
 		).toMatchObject({
 			value: null,
 			source: "missing",
@@ -216,7 +216,7 @@ describe("mix calculations", () => {
 					value: 22.8,
 				},
 			],
-		} satisfies FdcFood;
+		} satisfies FoodItem;
 		const honey = {
 			fdcId: 4,
 			description: "Honey",
@@ -229,7 +229,7 @@ describe("mix calculations", () => {
 					value: 82.4,
 				},
 			],
-		} satisfies FdcFood;
+		} satisfies FoodItem;
 
 		const breakdowns = getNutrientContributionBreakdowns(
 			[
@@ -294,7 +294,7 @@ describe("mix calculations", () => {
 					value: 10,
 				},
 			],
-		} satisfies FdcFood;
+		} satisfies FoodItem;
 		const suggestions = getNutrientAdjustmentSuggestions({
 			nutrients: [{ id: NUTRIENT_IDS.PROTEIN, label: "Protein", unit: "g" }],
 			selectedFoods: [milk],
@@ -329,7 +329,7 @@ describe("mix calculations", () => {
 					gramWeightMethod: "source-reported",
 				},
 			],
-		} satisfies FdcFood;
+		} satisfies FoodItem;
 		const suggestions = getNutrientAdjustmentSuggestions({
 			nutrients: [{ id: NUTRIENT_IDS.PROTEIN, label: "Protein", unit: "g" }],
 			selectedFoods: [portionedMilk],
@@ -368,7 +368,7 @@ describe("mix calculations", () => {
 					value: 20,
 				},
 			],
-		} satisfies FdcFood;
+		} satisfies FoodItem;
 		const carbSource = {
 			fdcId: 8,
 			description: "Carb source",
@@ -397,7 +397,7 @@ describe("mix calculations", () => {
 					gramWeightMethod: "source-reported",
 				},
 			],
-		} satisfies FdcFood;
+		} satisfies FoodItem;
 
 		const suggestions = getNutrientAdjustmentSuggestions({
 			nutrients: [
@@ -457,7 +457,7 @@ describe("mix calculations", () => {
 					gramWeightMethod: "source-reported",
 				},
 			],
-		} satisfies FdcFood;
+		} satisfies FoodItem;
 
 		const suggestions = getNutrientAdjustmentSuggestions({
 			nutrients: [
@@ -508,14 +508,14 @@ describe("mix calculations", () => {
 			...milk,
 			compatibilityEvaluation: {
 				status: "conflict",
-			} as FdcFood["compatibilityEvaluation"],
-		} satisfies FdcFood;
+			} as FoodItem["compatibilityEvaluation"],
+		} satisfies FoodItem;
 		const sourceErrorFood = {
 			...milk,
 			fdcId: 31,
 			sourceMetadata: { qualityErrorTags: ["invalid-nutrition"] },
-		} satisfies FdcFood;
-		const request = (food: FdcFood) =>
+		} satisfies FoodItem;
+		const request = (food: FoodItem) =>
 			getNutrientAdjustmentSuggestions({
 				nutrients: [{ id: NUTRIENT_IDS.PROTEIN, label: "Protein", unit: "g" }],
 				selectedFoods: [food],
@@ -534,13 +534,13 @@ describe("mix calculations", () => {
 			...milk,
 			compatibilityEvaluation: {
 				status: "conflict",
-			} as FdcFood["compatibilityEvaluation"],
-		} satisfies FdcFood;
+			} as FoodItem["compatibilityEvaluation"],
+		} satisfies FoodItem;
 		const safeFood = {
 			...milk,
 			fdcId: 32,
 			description: "Safe protein food",
-		} satisfies FdcFood;
+		} satisfies FoodItem;
 
 		const suggestions = getNutrientAdjustmentSuggestions({
 			nutrients: [{ id: NUTRIENT_IDS.PROTEIN, label: "Protein", unit: "g" }],

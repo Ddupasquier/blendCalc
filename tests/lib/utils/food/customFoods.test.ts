@@ -15,8 +15,8 @@ import {
 	findCustomFoodByName,
 	saveCustomFood,
 } from "$lib/utils/food/custom/customFoods";
-import { NUTRIENT_IDS, type FdcNutrient } from "$lib/utils/food/types";
-import { getFdcNutrientValue } from "$lib/utils/food/nutrients/fdcNutrients";
+import { NUTRIENT_IDS, type FoodNutrient } from "$lib/utils/food/types";
+import { getFoodNutrientValue } from "$lib/utils/food/nutrients/foodNutrients";
 
 type TestNutrition = {
 	calories: number;
@@ -29,8 +29,8 @@ type TestNutrition = {
 
 const makeTestNutrients = (
 	nutrition: TestNutrition,
-	additionalNutrients: FdcNutrient[] = [],
-): FdcNutrient[] => [
+	additionalNutrients: FoodNutrient[] = [],
+): FoodNutrient[] => [
 	{
 		nutrientId: NUTRIENT_IDS.CALORIES,
 		nutrientName: "Energy",
@@ -183,11 +183,11 @@ describe("custom foods", () => {
 				source: "user-label",
 			}),
 		]);
-		expect(getFdcNutrientValue(food, NUTRIENT_IDS.CALORIES)).toBeCloseTo(
+		expect(getFoodNutrientValue(food, NUTRIENT_IDS.CALORIES)).toBeCloseTo(
 			470.59,
 		);
-		expect(getFdcNutrientValue(food, NUTRIENT_IDS.SUGAR)).toBeCloseTo(41.18);
-		expect(getFdcNutrientValue(food, NUTRIENT_IDS.SODIUM)).toBeCloseTo(397.06);
+		expect(getFoodNutrientValue(food, NUTRIENT_IDS.SUGAR)).toBeCloseTo(41.18);
+		expect(getFoodNutrientValue(food, NUTRIENT_IDS.SODIUM)).toBeCloseTo(397.06);
 	});
 
 	it("preserves source-backed personal records without marking them custom", () => {

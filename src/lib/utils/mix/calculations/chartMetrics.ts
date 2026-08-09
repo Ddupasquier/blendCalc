@@ -1,5 +1,5 @@
 import { getMixRuntimeConfiguration } from "$lib/utils/food/reference/appReferenceCatalog";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { NutrientChartMetric, NutrientMeta } from "./nutrientTypes";
 import { getDefaultNutrientGoal, getNutrientTotal } from "./nutrientTotals";
 import type { MixGoalMap } from "$lib/utils/mix/goals/types";
@@ -26,7 +26,7 @@ const CHART_COLORS = {
 
 export const getNutrientChartMetrics = (
 	nutrients: NutrientMeta[],
-	foods: FdcFood[],
+	foods: FoodItem[],
 	nutrientGoals: MixGoalMap,
 	servingGrams: Record<number, number>,
 ): NutrientChartMetric[] => {

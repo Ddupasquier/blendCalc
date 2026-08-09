@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { getNutritionFactsFields } from "$lib/utils/food/reference/appReferenceCatalog";
 import {
 	compareNormalizedFoods,
@@ -46,7 +46,7 @@ const getNutrientDifferenceSeverity = (
 		: null;
 };
 
-const getDifferences = (submittedFood: FdcFood, existingFood: FdcFood) => {
+const getDifferences = (submittedFood: FoodItem, existingFood: FoodItem) => {
 	return compareNormalizedFoods(submittedFood, existingFood).flatMap(
 		(difference): CatalogSubmissionFieldChange[] => {
 			const isNutrient = difference.field.startsWith("nutrient:");
@@ -100,8 +100,8 @@ const getDifferences = (submittedFood: FdcFood, existingFood: FdcFood) => {
 };
 
 export const compareCatalogSubmissionToExistingProduct = (
-	submittedFood: FdcFood,
-	existingFood: FdcFood,
+	submittedFood: FoodItem,
+	existingFood: FoodItem,
 ): CatalogSubmissionComparison => {
 	const differences = getDifferences(submittedFood, existingFood);
 	const severeDifferences = differences

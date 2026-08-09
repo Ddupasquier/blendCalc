@@ -1,6 +1,6 @@
 import type {
-	FdcFood,
-	FdcNutrient,
+	FoodItem,
+	FoodNutrient,
 	FoodServing,
 } from "$lib/utils/food/types";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
@@ -44,8 +44,8 @@ type FdcSearchMeasure = {
 	rank?: number;
 };
 
-type FdcFoodResponse = Omit<FdcFood, "foodNutrients"> & {
-	foodNutrients?: Array<FdcNutrient | FdcDetailNutrient>;
+type FdcFoodResponse = Omit<FoodItem, "foodNutrients"> & {
+	foodNutrients?: Array<FoodNutrient | FdcDetailNutrient>;
 	foodPortions?: FdcDetailPortion[];
 	foodMeasures?: FdcSearchMeasure[];
 	ndbNumber?: number | string;
@@ -69,8 +69,8 @@ export class FdcConfigurationError extends Error {
 }
 
 const normalizeFoodNutrient = (
-	nutrient: FdcNutrient | FdcDetailNutrient,
-): FdcNutrient | null => {
+	nutrient: FoodNutrient | FdcDetailNutrient,
+): FoodNutrient | null => {
 	if ("nutrientId" in nutrient) {
 		const nutrientId = Number(nutrient.nutrientId);
 		const nutrientName = nutrient.nutrientName?.trim();
@@ -308,7 +308,7 @@ const normalizeSourceRecordMetadata = (food: FdcFoodResponse) => {
 		: undefined;
 };
 
-export const normalizeFdcFood = (food: FdcFoodResponse): FdcFood => {
+export const normalizeFdcFood = (food: FdcFoodResponse): FoodItem => {
 	const foodNutrients = (food.foodNutrients ?? []).flatMap((nutrient) => {
 		const normalized = normalizeFoodNutrient(nutrient);
 		return normalized ? [normalized] : [];

@@ -19,7 +19,7 @@ import {
 	listPendingProductSubmissions,
 	rejectProductSubmission,
 } from "$lib/server/products/catalog.server";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { mapWithConcurrency } from "$lib/server/concurrency/mapWithConcurrency";
 import {
 	constrainCardImagePlacement,
@@ -260,7 +260,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const productSubmissions = pendingProductSubmissions.map(
 		(submission) => {
-			const food = submission.food as unknown as FdcFood;
+			const food = submission.food as unknown as FoodItem;
 			const validationReport = submission.validation_report as {
 				valid?: boolean;
 				issues?: unknown;

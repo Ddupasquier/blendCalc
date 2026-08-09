@@ -90,11 +90,11 @@ const getFoodPreferenceFormValues = (
 		prioritizedNutrientIds: parsePrioritizedNutrientIds(
 			formData.getAll("prioritizedNutrientIds"),
 		),
-		defaultSmoothieServingSize: String(
-			formData.get("defaultSmoothieServingSize") ?? "",
+		defaultMixServingSize: String(
+			formData.get("defaultMixServingSize") ?? "",
 		).trim(),
-		defaultSmoothieServingUnit: normalizeServingUnit(
-			formData.get("defaultSmoothieServingUnit"),
+		defaultMixServingUnit: normalizeServingUnit(
+			formData.get("defaultMixServingUnit"),
 		),
 		sensitiveAcknowledged: formData.get("sensitiveAcknowledged") === "on",
 		regulatoryRegionCode: normalizeRegulatoryRegionCode(
@@ -280,9 +280,9 @@ export const actions: Actions = {
 			});
 		}
 
-		const defaultSmoothieServingGrams = getServingSizeGrams(
-			values.defaultSmoothieServingSize,
-			values.defaultSmoothieServingUnit,
+		const defaultMixServingGrams = getServingSizeGrams(
+			values.defaultMixServingSize,
+			values.defaultMixServingUnit,
 		);
 		const sensitiveAcknowledgedAt = values.sensitiveAcknowledged
 			? new Date().toISOString()
@@ -295,7 +295,7 @@ export const actions: Actions = {
 				allergens: values.allergens,
 				dietary_restrictions: values.dietaryRestrictions,
 				prioritized_nutrient_ids: values.prioritizedNutrientIds,
-				default_smoothie_serving_grams: defaultSmoothieServingGrams,
+				default_smoothie_serving_grams: defaultMixServingGrams,
 				sensitive_acknowledged_at: sensitiveAcknowledgedAt,
 				regulatory_region_code: values.regulatoryRegionCode || null,
 				regulatory_region_source: values.regulatoryRegionSource,

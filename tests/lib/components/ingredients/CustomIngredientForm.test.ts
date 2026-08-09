@@ -17,20 +17,20 @@ vi.mock("$lib/utils/food/custom/customFoods", async (importOriginal) => {
 	};
 });
 
-const smoothieListMocks = vi.hoisted(() => ({
-	addFoodToSmoothieList: vi.fn().mockResolvedValue("added"),
-	moveFoodToSmoothieList: vi.fn().mockResolvedValue("moved"),
-	removeFoodFromSmoothieList: vi.fn().mockResolvedValue("removed"),
+const ingredientListMocks = vi.hoisted(() => ({
+	addFoodToIngredientList: vi.fn().mockResolvedValue("added"),
+	moveFoodToIngredientList: vi.fn().mockResolvedValue("moved"),
+	removeFoodFromIngredientList: vi.fn().mockResolvedValue("removed"),
 }));
 
-vi.mock("$lib/utils/storage/client/smoothieLists", async (importOriginal) => {
+vi.mock("$lib/utils/storage/client/ingredientLists", async (importOriginal) => {
 	const actual =
-		await importOriginal<typeof import("$lib/utils/storage/client/smoothieLists")>();
+		await importOriginal<typeof import("$lib/utils/storage/client/ingredientLists")>();
 	return {
 		...actual,
-		addFoodToSmoothieList: smoothieListMocks.addFoodToSmoothieList,
-		moveFoodToSmoothieList: smoothieListMocks.moveFoodToSmoothieList,
-		removeFoodFromSmoothieList: smoothieListMocks.removeFoodFromSmoothieList,
+		addFoodToIngredientList: ingredientListMocks.addFoodToIngredientList,
+		moveFoodToIngredientList: ingredientListMocks.moveFoodToIngredientList,
+		removeFoodFromIngredientList: ingredientListMocks.removeFoodFromIngredientList,
 	};
 });
 
@@ -296,7 +296,7 @@ vi.mock("$lib/utils/food/categories/categoryPicker", async (importOriginal) => {
 import CustomIngredientForm from "$lib/components/ingredients/manual-entry/CustomIngredientForm/CustomIngredientForm.svelte";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { createCustomFood } from "$lib/utils/food/custom/customFoods";
-import type { FdcNutrient } from "$lib/utils/food/types";
+import type { FoodNutrient } from "$lib/utils/food/types";
 
 type TestNutrition = {
 	calories: number;
@@ -308,7 +308,7 @@ type TestNutrition = {
 	sodium?: number;
 };
 
-const makeTestNutrients = (nutrition: TestNutrition): FdcNutrient[] => [
+const makeTestNutrients = (nutrition: TestNutrition): FoodNutrient[] => [
 	{
 		nutrientId: 1008,
 		nutrientName: "Calories",
@@ -495,9 +495,9 @@ describe("CustomIngredientForm", () => {
 		customFoodMocks.saveCustomFood.mockResolvedValue("saved");
 		customFoodMocks.findCustomFoodByBarcode.mockReturnValue(null);
 		customFoodMocks.findCustomFoodByName.mockReturnValue(null);
-		smoothieListMocks.addFoodToSmoothieList.mockResolvedValue("added");
-		smoothieListMocks.moveFoodToSmoothieList.mockResolvedValue("moved");
-		smoothieListMocks.removeFoodFromSmoothieList.mockResolvedValue("removed");
+		ingredientListMocks.addFoodToIngredientList.mockResolvedValue("added");
+		ingredientListMocks.moveFoodToIngredientList.mockResolvedValue("moved");
+		ingredientListMocks.removeFoodFromIngredientList.mockResolvedValue("removed");
 		submitSharedProduct.mockResolvedValue({
 			status: "pending",
 			message: "Waiting for review.",
@@ -711,7 +711,7 @@ describe("CustomIngredientForm", () => {
 			customServingLabel: "34g serving",
 			customServingWeightGrams: 34,
 		});
-		expect(smoothieListMocks.addFoodToSmoothieList).toHaveBeenCalledWith(
+		expect(ingredientListMocks.addFoodToIngredientList).toHaveBeenCalledWith(
 			MIX_STORAGE_KEYS.fridge,
 			expect.objectContaining({ description: "Chocolate cookies" }),
 		);
@@ -828,7 +828,7 @@ describe("CustomIngredientForm", () => {
 		);
 
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
-		expect(smoothieListMocks.addFoodToSmoothieList).toHaveBeenCalledWith(
+		expect(ingredientListMocks.addFoodToIngredientList).toHaveBeenCalledWith(
 			MIX_STORAGE_KEYS.shoppingList,
 			expect.objectContaining({ description: "Shelf stable snack" }),
 		);
@@ -836,7 +836,7 @@ describe("CustomIngredientForm", () => {
 
 	it("asks before moving an existing fridge item to shopping", async () => {
 		const onCreate = vi.fn();
-		smoothieListMocks.addFoodToSmoothieList.mockResolvedValue(
+		ingredientListMocks.addFoodToIngredientList.mockResolvedValue(
 			"move-required:fridge",
 		);
 		render(CustomIngredientForm, {
@@ -857,7 +857,7 @@ describe("CustomIngredientForm", () => {
 
 	it("moves a confirmed manual-entry item without leaving the old list copy", async () => {
 		const onCreate = vi.fn();
-		smoothieListMocks.addFoodToSmoothieList.mockResolvedValue(
+		ingredientListMocks.addFoodToIngredientList.mockResolvedValue(
 			"move-required:fridge",
 		);
 		render(CustomIngredientForm, {
@@ -873,11 +873,11 @@ describe("CustomIngredientForm", () => {
 		await fireEvent.click(await screen.findByRole("button", { name: "Move" }));
 
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
-		expect(smoothieListMocks.moveFoodToSmoothieList).toHaveBeenCalledWith(
+		expect(ingredientListMocks.moveFoodToIngredientList).toHaveBeenCalledWith(
 			MIX_STORAGE_KEYS.shoppingList,
 			expect.objectContaining({ description: "Confirmed list move" }),
 		);
-		expect(smoothieListMocks.removeFoodFromSmoothieList).not.toHaveBeenCalled();
+		expect(ingredientListMocks.removeFoodFromIngredientList).not.toHaveBeenCalled();
 	});
 
 	it("normalizes a manually entered barcode before saving", async () => {
@@ -1980,11 +1980,11 @@ describe("CustomIngredientForm", () => {
 		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
 		const savedNutrients = onCreate.mock.calls[0][0].foodNutrients;
 		expect(
-			savedNutrients.find((nutrient: FdcNutrient) => nutrient.nutrientId === 1005)
+			savedNutrients.find((nutrient: FoodNutrient) => nutrient.nutrientId === 1005)
 				?.value,
 		).toBeCloseTo((5 / 34) * 100);
 		expect(
-			savedNutrients.find((nutrient: FdcNutrient) => nutrient.nutrientId === 2000)
+			savedNutrients.find((nutrient: FoodNutrient) => nutrient.nutrientId === 2000)
 				?.value,
 		).toBeCloseTo((4 / 34) * 100);
 	});
@@ -2100,7 +2100,7 @@ describe("CustomIngredientForm", () => {
 				source: "manual-entry",
 			}),
 		);
-		expect(smoothieListMocks.addFoodToSmoothieList).toHaveBeenCalledWith(
+		expect(ingredientListMocks.addFoodToIngredientList).toHaveBeenCalledWith(
 			MIX_STORAGE_KEYS.fridge,
 			existingFood,
 		);
@@ -2201,7 +2201,7 @@ describe("CustomIngredientForm", () => {
 			intent: "catalog_correction",
 		});
 		expect(customFoodMocks.saveCustomFood).not.toHaveBeenCalled();
-		expect(smoothieListMocks.addFoodToSmoothieList).not.toHaveBeenCalled();
+		expect(ingredientListMocks.addFoodToIngredientList).not.toHaveBeenCalled();
 		expect(onCreate).not.toHaveBeenCalled();
 		expect(
 			screen.getByRole("button", { name: /done/i }),

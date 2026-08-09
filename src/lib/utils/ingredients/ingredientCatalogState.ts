@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { normalizePrivateCustomFoodFlag } from "$lib/utils/food/records/foodClassification";
 import { isIngredientTrustStatus } from "./ingredientProvenance";
 
@@ -10,9 +10,9 @@ export type IngredientCatalogStateRow = {
 };
 
 export const hydrateFoodWithCatalogState = (
-	food: FdcFood,
+	food: FoodItem,
 	state: IngredientCatalogStateRow,
-): FdcFood =>
+): FoodItem =>
 	normalizePrivateCustomFoodFlag({
 		...food,
 		sharedProductId: state.shared_product_id ?? undefined,

@@ -1,5 +1,5 @@
-import { compactFood } from "$lib/utils/food/records/foodRecords";
-import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
+import type { FoodItem, FoodNutrient } from "$lib/utils/food/types";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export type NormalizedNutrientRow = {
@@ -8,16 +8,16 @@ export type NormalizedNutrientRow = {
 	nutrientNumber: string | null;
 	unitName: string;
 	value: number;
-	valueOrigin: NonNullable<FdcNutrient["valueOrigin"]>;
-	source: NonNullable<FdcNutrient["source"]>;
+	valueOrigin: NonNullable<FoodNutrient["valueOrigin"]>;
+	source: NonNullable<FoodNutrient["source"]>;
 	sourceReference: string | null;
-	confidence: NonNullable<FdcNutrient["confidence"]>;
-	valueStatus: NonNullable<FdcNutrient["valueStatus"]>;
-	valueQualifier: FdcNutrient["valueQualifier"] | null;
+	confidence: NonNullable<FoodNutrient["confidence"]>;
+	valueStatus: NonNullable<FoodNutrient["valueStatus"]>;
+	valueQualifier: FoodNutrient["valueQualifier"] | null;
 	standardError: number | null;
 	sourceNutrientKey: string | null;
 	sourceNutrientCode: string | null;
-	mappingStatus: NonNullable<FdcNutrient["mappingStatus"]>;
+	mappingStatus: NonNullable<FoodNutrient["mappingStatus"]>;
 	mappingMethod: string | null;
 	mappingReviewReference: string | null;
 	derivationMethod: string | null;
@@ -25,8 +25,8 @@ export type NormalizedNutrientRow = {
 
 export const normalizedRowsToNutrients = (
 	rows: NormalizedNutrientRow[],
-): FdcNutrient[] => {
-	const nutrients = new Map<number, FdcNutrient>();
+): FoodNutrient[] => {
+	const nutrients = new Map<number, FoodNutrient>();
 
 	for (const row of rows) {
 		const value = toFiniteNonnegativeNumber(row.value);
@@ -72,12 +72,12 @@ export const normalizedRowsToNutrients = (
 };
 
 export const hydrateFoodWithNormalizedNutrients = (
-	food: FdcFood,
+	food: FoodItem,
 	rows: NormalizedNutrientRow[],
-): FdcFood => {
+): FoodItem => {
 	const normalizedNutrients = normalizedRowsToNutrients(rows);
 
-	return compactFood({
+	return normalizeFoodForStorage({
 		...food,
 		foodNutrients: normalizedNutrients,
 		reportedNutrientIds: normalizedNutrients

@@ -14,8 +14,8 @@ import {
 	type BarcodeLookupResult,
 } from "$lib/utils/barcode/productLookup";
 import type {
-	FdcFood,
-	FdcNutrient,
+	FoodItem,
+	FoodNutrient,
 	FoodFieldProvenance,
 	FoodImageAsset,
 	FoodIdentityType,
@@ -29,7 +29,7 @@ import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export type ManualEntryBarcodeDraftState = {
 	name: string;
-	nameProvenance: NonNullable<FdcFood["nameProvenance"]>;
+	nameProvenance: NonNullable<FoodItem["nameProvenance"]>;
 	brandOwner: string;
 	category: string;
 	categoryOptionId: string;
@@ -37,13 +37,13 @@ export type ManualEntryBarcodeDraftState = {
 	servingLabel: string;
 	servingWeightGrams: number;
 	serving?: FoodServing;
-	importedNutrients: FdcNutrient[];
+	importedNutrients: FoodNutrient[];
 	manualNutrientValues: Record<number, number>;
 	useVolumeEquivalent: boolean;
 	volumeQuantity: number | null;
 	volumeUnit: ServingMeasureUnit;
 	barcode: string;
-	barcodeSource: FdcFood["barcodeSource"];
+	barcodeSource: FoodItem["barcodeSource"];
 	reportedNutrientIds: number[];
 	foodIdentityType: FoodIdentityType;
 	ingredients: string;
@@ -331,7 +331,7 @@ export const getBarcodeReferenceReviewFlags = ({
 	barcode: string;
 	sourceDraft: BarcodeProductDraft | null;
 	currentEntry: BarcodeProductDraftComparisonEntry;
-	barcodeSource: FdcFood["barcodeSource"];
+	barcodeSource: FoodItem["barcodeSource"];
 	barcodeReferenceAcceptedBarcode: string;
 }) => {
 	const normalizedBarcode = normalizeBarcode(barcode);

@@ -1,4 +1,4 @@
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 const SEARCH_WORD_PATTERN = /[\p{L}\p{N}]+(?:[-'’][\p{L}\p{N}]+)*/gu;
 const EARLY_DESCRIPTION_WORD_LIMIT = 3;
@@ -75,8 +75,8 @@ const compareSearchRelevance = (
 
 export const createIngredientSearchRelevanceComparator = (query: string) => {
 	const searchWords = tokenizeIngredientSearchText(query);
-	const relevanceCache = new WeakMap<FdcFood, SearchRelevance>();
-	const readRelevance = (food: FdcFood) => {
+	const relevanceCache = new WeakMap<FoodItem, SearchRelevance>();
+	const readRelevance = (food: FoodItem) => {
 		const cached = relevanceCache.get(food);
 		if (cached) return cached;
 		const relevance = getSearchRelevance(food.description, searchWords);
@@ -84,14 +84,14 @@ export const createIngredientSearchRelevanceComparator = (query: string) => {
 		return relevance;
 	};
 
-	return (left: FdcFood, right: FdcFood) => {
+	return (left: FoodItem, right: FoodItem) => {
 		if (searchWords.length === 0) return 0;
 		return compareSearchRelevance(readRelevance(left), readRelevance(right));
 	};
 };
 
 export const rankIngredientSearchCandidates = (
-	foods: FdcFood[],
+	foods: FoodItem[],
 	query: string,
 ) => {
 	const compareRelevance = createIngredientSearchRelevanceComparator(query);

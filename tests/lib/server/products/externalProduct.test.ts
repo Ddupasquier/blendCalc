@@ -4,7 +4,7 @@ import {
 } from "$lib/server/products/externalProduct.server";
 import { areExternalProductLookupsEnabled } from "$lib/server/products/externalProductPolicy.server";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import type { ProductReferenceData } from "$lib/utils/food/reference/productReferenceData";
+import type { ProductReferenceCatalog } from "$lib/utils/food/reference/productReferenceCatalog";
 
 const makeDraft = (
 	source: BarcodeProductDraft["source"],
@@ -79,20 +79,20 @@ const cachedCommunityImage = {
 };
 
 describe("external barcode product lookup", () => {
-	const getReferenceData = vi
-		.fn<() => Promise<ProductReferenceData>>()
-		.mockResolvedValue({} as ProductReferenceData);
+	const getProductReferenceCatalog = vi
+		.fn<() => Promise<ProductReferenceCatalog>>()
+		.mockResolvedValue({} as ProductReferenceCatalog);
 
 	it("disables runtime provider calls for the isolated test database", async () => {
-		const getDisabledReferenceData = vi.fn();
+		const getDisabledProductReferenceCatalog = vi.fn();
 
 		const result = await lookupExternalBarcodeProduct("00021130493609", {
 			externalLookupsEnabled: false,
-			getReferenceData: getDisabledReferenceData,
+			getProductReferenceCatalog: getDisabledProductReferenceCatalog,
 		});
 
 		expect(result).toBeNull();
-		expect(getDisabledReferenceData).not.toHaveBeenCalled();
+		expect(getDisabledProductReferenceCatalog).not.toHaveBeenCalled();
 		expect(areExternalProductLookupsEnabled("test")).toBe(false);
 		expect(areExternalProductLookupsEnabled("production")).toBe(true);
 	});
@@ -106,7 +106,7 @@ describe("external barcode product lookup", () => {
 		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
 			usda: vi.fn().mockResolvedValue(usdaDraft),
 			openFoodFacts,
-			getReferenceData,
+			getProductReferenceCatalog,
 		});
 
 		expect(result).toMatchObject({
@@ -139,7 +139,7 @@ describe("external barcode product lookup", () => {
 		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
 			usda: vi.fn().mockResolvedValue(usdaDraft),
 			openFoodFacts,
-			getReferenceData,
+			getProductReferenceCatalog,
 			requiredNutrientIds: [1079, 1003],
 		});
 
@@ -157,7 +157,7 @@ describe("external barcode product lookup", () => {
 		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
 			usda: vi.fn().mockResolvedValue(usdaDraft),
 			openFoodFacts,
-			getReferenceData,
+			getProductReferenceCatalog,
 			cachedImage: Promise.resolve(cachedCommunityImage),
 		});
 
@@ -176,7 +176,7 @@ describe("external barcode product lookup", () => {
 			{
 				usda: vi.fn().mockResolvedValue(null),
 				openFoodFacts: vi.fn().mockResolvedValue(openFoodFactsDraft),
-				getReferenceData,
+				getProductReferenceCatalog,
 				cachedImage: Promise.resolve(cachedCommunityImage),
 			},
 		);
@@ -193,7 +193,7 @@ describe("external barcode product lookup", () => {
 		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
 			usda: vi.fn().mockResolvedValue(usdaDraft),
 			openFoodFacts: vi.fn().mockResolvedValue(makeDraft("open-food-facts")),
-			getReferenceData,
+			getProductReferenceCatalog,
 		});
 
 		expect(result).toBe(usdaDraft);
@@ -205,7 +205,7 @@ describe("external barcode product lookup", () => {
 		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
 			usda: vi.fn().mockResolvedValue(usdaDraft),
 			openFoodFacts: vi.fn().mockRejectedValue(new Error("Image source unavailable")),
-			getReferenceData,
+			getProductReferenceCatalog,
 		});
 
 		expect(result).toBe(usdaDraft);
@@ -220,7 +220,7 @@ describe("external barcode product lookup", () => {
 		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
 			usda: vi.fn().mockResolvedValue(usdaDraft),
 			openFoodFacts,
-			getReferenceData,
+			getProductReferenceCatalog,
 			cachedImage: Promise.reject(new Error("Image cache unavailable")),
 		});
 
@@ -258,7 +258,7 @@ describe("external barcode product lookup", () => {
 		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
 			usda: vi.fn().mockResolvedValue(usdaDraft),
 			openFoodFacts,
-			getReferenceData,
+			getProductReferenceCatalog,
 		});
 
 		expect(result).toBe(usdaDraft);
@@ -280,7 +280,7 @@ describe("external barcode product lookup", () => {
 		const result = await lookupExternalBarcodeProduct(usdaDraft.barcode, {
 			usda: vi.fn().mockResolvedValue(usdaDraft),
 			openFoodFacts,
-			getReferenceData,
+			getProductReferenceCatalog,
 			cachedImage: cachedCommunityImage,
 		});
 
@@ -324,7 +324,7 @@ describe("external barcode product lookup", () => {
 			{
 				usda,
 				openFoodFacts,
-				getReferenceData,
+				getProductReferenceCatalog,
 			},
 		);
 

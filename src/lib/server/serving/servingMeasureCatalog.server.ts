@@ -1,6 +1,6 @@
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { createServerCachedLoader } from "$lib/server/cache/serverCachedLoader";
-import { readServingMeasureCatalog } from "$lib/utils/serving/servingMeasureData";
+import { readServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalogReader";
 
 const CACHE_DURATION_MILLISECONDS = 10 * 60 * 1000;
 

@@ -1,9 +1,9 @@
-import type { FdcNutrient } from "$lib/utils/food/types";
+import type { FoodNutrient } from "$lib/utils/food/types";
 import type {
 	NutrientSourceMapping,
-	ProductReferenceData,
-} from "$lib/utils/food/reference/productReferenceData";
-import { canonicalizeProductNutrients } from "$lib/utils/food/reference/productReferenceData";
+	ProductReferenceCatalog,
+} from "$lib/utils/food/reference/productReferenceCatalog";
+import { canonicalizeProductNutrients } from "$lib/utils/food/reference/productReferenceCatalog";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export type OpenFoodFactsNutriments = Record<
@@ -52,18 +52,18 @@ const convertMappedValue = ({
 	value,
 	sourceUnit,
 	mapping,
-	referenceData,
+	productReferenceCatalog,
 }: {
 	value: number;
 	sourceUnit: string;
 	mapping: NutrientSourceMapping;
-	referenceData: ProductReferenceData;
+	productReferenceCatalog: ProductReferenceCatalog;
 }) => {
 	const fromUnit = normalizeNutrientUnit(sourceUnit || mapping.sourceUnitName);
 	const toUnit = normalizeNutrientUnit(mapping.unitName);
 	if (!fromUnit || fromUnit === toUnit) return value;
 
-	const conversion = referenceData.nutrientConversions.find(
+	const conversion = productReferenceCatalog.nutrientConversions.find(
 		(candidate) =>
 			candidate.sourceKey === mapping.sourceKey &&
 			candidate.nutrientId === mapping.nutrientId &&
@@ -77,13 +77,13 @@ export const mapOpenFoodFactsNutrients = (
 	nutriments: OpenFoodFactsNutriments,
 	servingWeightGrams: number,
 	useServingValues: boolean,
-	referenceData: ProductReferenceData,
-): FdcNutrient[] => {
-	const mappings = referenceData.nutrientMappings
+	productReferenceCatalog: ProductReferenceCatalog,
+): FoodNutrient[] => {
+	const mappings = productReferenceCatalog.nutrientMappings
 		.filter((mapping) => mapping.sourceKey === "open-food-facts")
 		.sort((left, right) => left.priority - right.priority);
 	const mappedNutrientIds = new Set<number>();
-	const nutrients: FdcNutrient[] = [];
+	const nutrients: FoodNutrient[] = [];
 
 	for (const mapping of mappings) {
 		if (mappedNutrientIds.has(mapping.nutrientId)) continue;
@@ -102,7 +102,7 @@ export const mapOpenFoodFactsNutrients = (
 			value: source.value,
 			sourceUnit,
 			mapping,
-			referenceData,
+			productReferenceCatalog,
 		});
 		if (value === null) continue;
 
@@ -125,5 +125,5 @@ export const mapOpenFoodFactsNutrients = (
 			});
 	}
 
-	return canonicalizeProductNutrients(nutrients, referenceData);
+	return canonicalizeProductNutrients(nutrients, productReferenceCatalog);
 };

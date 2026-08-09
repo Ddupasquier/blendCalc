@@ -107,7 +107,7 @@ describe("local test database management", () => {
     expect(script).toContain("loadTestCatalogFoods");
     expect(script).toContain("seedTestFoodLists");
     expect(script).toContain('userClient.rpc("place_user_food_list_items"');
-    expect(script).toContain("seedTestSavedDrinks");
+		expect(script).toContain("seedTestSavedRecipes");
     expect(script).toContain('userClient.rpc("save_saved_drink"');
     expect(script).toContain("seedTestMixPreferences");
     expect(script).toContain('userClient.rpc("save_mix_preferences"');

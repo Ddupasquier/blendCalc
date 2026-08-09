@@ -8,10 +8,10 @@ import {
 	type BarcodeVolumeEquivalent,
 } from "$lib/utils/barcode/servingVolume";
 import {
-	type FdcFood,
+	type FoodItem,
 	type FoodFieldProvenance,
 	type FoodFieldSource,
-	type FdcNutrient,
+	type FoodNutrient,
 	type FoodImageAsset,
 	type FoodIdentityType,
 	type FoodIngredientAnalysis,
@@ -29,8 +29,8 @@ import {
 	canonicalizeProductNutrients,
 	getCanonicalProductNutrientId,
 	getProductDataSource,
-	type ProductReferenceData,
-} from "$lib/utils/food/reference/productReferenceData";
+	type ProductReferenceCatalog,
+} from "$lib/utils/food/reference/productReferenceCatalog";
 import {
 	convertServingToGrams,
 	parseSourceWeightMeasure,
@@ -124,13 +124,13 @@ export type OpenFoodFactsResponse = {
 export type BarcodeProductDraft = {
 	barcode: string;
 	name: string;
-	nameProvenance: NonNullable<FdcFood["nameProvenance"]>;
+	nameProvenance: NonNullable<FoodItem["nameProvenance"]>;
 	brandOwner: string;
 	servingLabel: string;
 	servingWeightGrams: number;
 	hasSourceServing?: boolean;
 	serving?: FoodServing;
-	nutrients: FdcNutrient[];
+	nutrients: FoodNutrient[];
 	reportedNutrientIds: number[];
 	foodIdentityType?: FoodIdentityType;
 	ingredients?: string;
@@ -463,7 +463,7 @@ const parseOpenFoodFactsImage = (
 	};
 };
 
-const parseFdcMetadata = (food: FdcFood) => {
+const parseFdcMetadata = (food: FoodItem) => {
 	const declarations = extractExplicitAllergenDeclarations(food.ingredients);
 	return {
 		ingredients: food.ingredients?.trim() || undefined,
@@ -538,7 +538,7 @@ const createOpenFoodFactsFieldProvenance = ({
 	hasBrandOwner,
 }: {
 	barcode: string;
-	nutrients: FdcNutrient[];
+	nutrients: FoodNutrient[];
 	image?: FoodImageAsset;
 	metadata: ReturnType<typeof parseOpenFoodFactsMetadata>;
 	hasSourceServing: boolean;
@@ -592,8 +592,8 @@ const createFdcFieldProvenance = ({
 	hasSourceServing,
 	adapterSource,
 }: {
-	food: FdcFood;
-	nutrients: FdcNutrient[];
+	food: FoodItem;
+	nutrients: FoodNutrient[];
 	image?: FoodImageAsset;
 	metadata: ReturnType<typeof parseFdcMetadata>;
 	hasSourceServing: boolean;
@@ -762,7 +762,7 @@ const parseServingBasis = (product: OpenFoodFactsProduct) => {
 export const mapOpenFoodFactsProduct = (
 	product: OpenFoodFactsProduct,
 	barcode: string,
-	referenceData: ProductReferenceData,
+	productReferenceCatalog: ProductReferenceCatalog,
 ): BarcodeProductDraft | null => {
 	const canonicalBarcode = normalizeBarcode(barcode);
 	const sourceName = product.product_name?.trim() || product.generic_name?.trim();
@@ -775,7 +775,7 @@ export const mapOpenFoodFactsProduct = (
 		product.nutriments ?? {},
 		servingWeightGrams,
 		useServingValues,
-		referenceData,
+		productReferenceCatalog,
 	).map((nutrient) => ({ ...nutrient, sourceReference: canonicalBarcode }));
 	const metadata = parseOpenFoodFactsMetadata(product);
 	const image = parseOpenFoodFactsImage(product, canonicalBarcode);
@@ -785,7 +785,7 @@ export const mapOpenFoodFactsProduct = (
 		? parseVolumeEquivalent(product.serving_size) ?? undefined
 		: undefined;
 
-	const source = getProductDataSource(referenceData, "open-food-facts");
+	const source = getProductDataSource(productReferenceCatalog, "open-food-facts");
 
 	return {
 		barcode: canonicalBarcode,
@@ -835,9 +835,9 @@ export const mapOpenFoodFactsProduct = (
 };
 
 export const mapFdcBarcodeFood = (
-	food: FdcFood,
+	food: FoodItem,
 	barcode: string,
-	referenceData: ProductReferenceData,
+	productReferenceCatalog: ProductReferenceCatalog,
 	attributeMappedFields = true,
 ): BarcodeProductDraft | null => {
 	const canonicalBarcode = normalizeBarcode(barcode);
@@ -862,7 +862,7 @@ export const mapFdcBarcodeFood = (
 				value: value * servingScale,
 			}];
 		}),
-		referenceData,
+		productReferenceCatalog,
 	);
 	const nutrientIds = new Set(nutrients.map((nutrient) => nutrient.nutrientId));
 	const reportedNutrientIds = (
@@ -870,7 +870,7 @@ export const mapFdcBarcodeFood = (
 			.filter((nutrient) => nutrient.valueOrigin === "reported")
 			.map((nutrient) => nutrient.nutrientId)
 	).map((nutrientId) =>
-		getCanonicalProductNutrientId(referenceData, nutrientId)
+		getCanonicalProductNutrientId(productReferenceCatalog, nutrientId)
 	);
 
 	return {
@@ -929,7 +929,7 @@ export const mapFdcBarcodeFood = (
 			? parseVolumeEquivalent(food.householdServingFullText) ?? undefined
 			: undefined,
 		source: "usda",
-		sourceLabel: getProductDataSource(referenceData, "usda").displayName,
+		sourceLabel: getProductDataSource(productReferenceCatalog, "usda").displayName,
 		sourceReference: String(food.fdcId),
 		sourceKey: "usda",
 		sourceDataType: food.sourceDataType ?? food.dataType,
@@ -940,14 +940,14 @@ export const mapFdcBarcodeFood = (
 };
 
 export const mapSharedCatalogFood = (
-	food: FdcFood,
+	food: FoodItem,
 	barcode: string,
-	referenceData: ProductReferenceData,
+	productReferenceCatalog: ProductReferenceCatalog,
 ): BarcodeProductDraft | null => {
 	const draft = mapFdcBarcodeFood(
 		food,
 		barcode,
-		referenceData,
+		productReferenceCatalog,
 		false,
 	);
 	if (!draft) return null;
@@ -958,7 +958,7 @@ export const mapSharedCatalogFood = (
 				? "open-food-facts"
 				: "shared-catalog"
 	);
-	const source = getProductDataSource(referenceData, sourceKey);
+	const source = getProductDataSource(productReferenceCatalog, sourceKey);
 
 	return {
 		...draft,

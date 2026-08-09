@@ -2,7 +2,7 @@ import type {
 	FoodCompatibilityFact,
 	FoodCompatibilitySummary,
 } from "$lib/utils/food/quality/compatibility";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 // Evaluation-only fixtures intentionally start from prepared facts. Source intake,
 // relational extraction, API serialization, and user-copy coverage live in the
@@ -15,7 +15,7 @@ type RegressionPreference = {
 
 export type FoodCompatibilityRegressionCase = {
 	name: string;
-	food: FdcFood;
+	food: FoodItem;
 	preferences: RegressionPreference;
 	expectedWarningLabels: string[];
 	expectedIssueCodes?: string[];
@@ -55,7 +55,7 @@ const createFood = (
 	description: string,
 	barcode: string | null,
 	facts: FoodCompatibilityFact[],
-): FdcFood => ({
+): FoodItem => ({
 	fdcId: Number(barcode?.slice(-8) ?? 1),
 	description,
 	barcode: barcode ?? undefined,

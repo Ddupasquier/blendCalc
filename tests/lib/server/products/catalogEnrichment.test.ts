@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 const mocks = vi.hoisted(() => ({
 	rpc: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock("$lib/server/runtime/backgroundTask.server", () => ({
 	completeServerBackgroundTask: async (task: Promise<unknown>) => await task,
 }));
 vi.mock("$lib/utils/food/records/foodRecords", () => ({
-	compactFood: (food: FdcFood) => food,
+	normalizeFoodForStorage: (food: FoodItem) => food,
 }));
 vi.mock("$lib/server/products/catalogFood.server", () => ({
 	createCatalogFoodFromDraft: mocks.createCatalogFoodFromDraft,
@@ -22,7 +22,7 @@ vi.mock("$lib/server/products/catalogFood.server", () => ({
 
 import { persistSharedProductExternalEnrichment } from "$lib/server/products/catalogEnrichment.server";
 
-const currentFood: FdcFood = {
+const currentFood: FoodItem = {
 	fdcId: -1,
 	description: "Existing Product",
 	dataType: "Shared Product",
@@ -80,7 +80,7 @@ describe("canonical catalog enrichment persistence", () => {
 			currentFood,
 			enrichedDraft,
 			fields: ["brandOwner", "ingredients"],
-			referenceData: {
+			productReferenceCatalog: {
 				sources: {
 					usda: {
 						key: "usda",

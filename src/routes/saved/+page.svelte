@@ -16,8 +16,8 @@
 	import ViewFrame from "$lib/components/common/view/ViewFrame/ViewFrame.svelte";
 	import ViewHeader from "$lib/components/common/view/ViewHeader/ViewHeader.svelte";
 	import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
-	import SavedDrinkCard from "$lib/components/saved/SavedDrinkCard/SavedDrinkCard.svelte";
-	import SavedDrinksEmptyState from "$lib/components/saved/SavedDrinksEmptyState/SavedDrinksEmptyState.svelte";
+	import SavedRecipeCard from "$lib/components/saved/SavedRecipeCard/SavedRecipeCard.svelte";
+	import SavedRecipesEmptyState from "$lib/components/saved/SavedRecipesEmptyState/SavedRecipesEmptyState.svelte";
 	import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
 	import { getAppDocumentTitle } from "$lib/config/pageMetadata";
 	import {
@@ -27,26 +27,26 @@
 	import { filterItemsByQuery } from "$lib/utils/list/listNavigation";
 	import { createScrollDirectionTracker } from "$lib/utils/navigation/scrollDirection";
 	import {
-		deleteSavedDrink,
-		normalizeSavedDrink,
-		restoreSavedDrinkToMix,
-		SAVED_DRINKS_CHANGED_EVENT,
-		type SavedDrink,
-	} from "$lib/utils/storage/client/savedDrinks";
-	import { readCloudSavedDrinks } from "$lib/utils/storage/supabase";
+		deleteSavedRecipe,
+		normalizeSavedRecipe,
+		restoreSavedRecipeToMix,
+		SAVED_RECIPES_CHANGED_EVENT,
+		type SavedRecipe,
+	} from "$lib/utils/storage/client/savedRecipes";
+	import { readCloudSavedRecipes } from "$lib/utils/storage/supabase";
 
 	const initialSavedData = page.data.savedData;
-	let drinks = $state<SavedDrink[]>(
-		(initialSavedData?.drinks ?? []).map(normalizeSavedDrink),
+	let recipes = $state<SavedRecipe[]>(
+		(initialSavedData?.recipes ?? []).map(normalizeSavedRecipe),
 	);
 	let query = $state("");
 	let sort = $state("newest");
-	let visibleCount = $state<number>(LIST_PAGE_SIZES.savedDrinks);
-	let deletingDrinkId = $state<string | null>(null);
-	let loadingDrinkId = $state<string | null>(null);
+	let visibleCount = $state<number>(LIST_PAGE_SIZES.savedRecipes);
+	let deletingRecipeId = $state<string | null>(null);
+	let loadingRecipeId = $state<string | null>(null);
 	let deleteError = $state("");
 	let loadError = $state(initialSavedData?.loadError ?? "");
-	let loadingDrinks = $state(false);
+	let loadingRecipes = $state(false);
 	let scrollContainer = $state<HTMLElement | null>(null);
 	let compactTopHidden = $state(false);
 	const scrollDirectionTracker = createScrollDirectionTracker();
@@ -57,95 +57,95 @@
 		{ value: "name", label: "Name A–Z" },
 	];
 
-	const filteredDrinks = $derived.by(() => {
-		const matchingDrinks = filterItemsByQuery(
-			drinks,
+	const filteredRecipes = $derived.by(() => {
+		const matchingRecipes = filterItemsByQuery(
+			recipes,
 			query,
-			(drink) =>
-				[drink.name, ...drink.foods.map((food) => food.description)].join(
+			(recipe) =>
+				[recipe.name, ...recipe.foods.map((food) => food.description)].join(
 					" ",
 				),
 		);
 
-		return [...matchingDrinks].sort((first, second) => {
+		return [...matchingRecipes].sort((first, second) => {
 			if (sort === "oldest") return first.createdAt - second.createdAt;
 			if (sort === "name") return first.name.localeCompare(second.name);
 			return second.createdAt - first.createdAt;
 		});
 	});
-	const visibleDrinks = $derived(filteredDrinks.slice(0, visibleCount));
-	const hasMoreDrinks = $derived(
-		visibleDrinks.length < filteredDrinks.length,
+	const visibleRecipes = $derived(filteredRecipes.slice(0, visibleCount));
+	const hasMoreRecipes = $derived(
+		visibleRecipes.length < filteredRecipes.length,
 	);
 	const sortSheetOpen = $derived(page.url.pathname === "/saved/sort");
 	const documentTitle = $derived(getAppDocumentTitle(page.url));
 
-	const loadSavedDrinks = async () => {
-		loadingDrinks = true;
+	const loadSavedRecipes = async () => {
+		loadingRecipes = true;
 		try {
 			loadError = "";
-			const nextDrinks = await readCloudSavedDrinks();
-			if (!nextDrinks) throw new Error("Saved drinks are unavailable.");
-			drinks = nextDrinks.map(normalizeSavedDrink);
+			const nextRecipes = await readCloudSavedRecipes();
+			if (!nextRecipes) throw new Error("Saved recipes are unavailable.");
+			recipes = nextRecipes.map(normalizeSavedRecipe);
 		} catch {
-			drinks = [];
-			loadError = "Your saved drinks could not be loaded. Try again.";
+			recipes = [];
+			loadError = "Your saved recipes could not be loaded. Try again.";
 		} finally {
-			loadingDrinks = false;
+			loadingRecipes = false;
 		}
 	};
 
-	const loadDrink = async (drink: SavedDrink) => {
-		if (loadingDrinkId || deletingDrinkId) return;
+	const loadRecipe = async (recipe: SavedRecipe) => {
+		if (loadingRecipeId || deletingRecipeId) return;
 		loadError = "";
-		loadingDrinkId = drink.id;
+		loadingRecipeId = recipe.id;
 
 		try {
-			const restored = await restoreSavedDrinkToMix(drink);
+			const restored = await restoreSavedRecipeToMix(recipe);
 			if (!restored) {
 				loadError =
-					"This drink could not be loaded because its missing ingredients could not be added to your shopping list.";
+					"This recipe could not be loaded because its missing ingredients could not be added to your shopping list.";
 				return;
 			}
 			await goto("/mix");
 		} catch {
 			loadError = "We couldn't open that mix. Please try again.";
 		} finally {
-			loadingDrinkId = null;
+			loadingRecipeId = null;
 		}
 	};
 
-	const removeDrink = async (drink: SavedDrink) => {
-		if (deletingDrinkId) return;
+	const removeRecipe = async (recipe: SavedRecipe) => {
+		if (deletingRecipeId) return;
 
-		deletingDrinkId = drink.id;
+		deletingRecipeId = recipe.id;
 		deleteError = "";
 		try {
-			const deleted = await deleteSavedDrink(drink.id, {
+			const deleted = await deleteSavedRecipe(recipe.id, {
 				notify: false,
 			});
 			if (!deleted) {
 				deleteError = "We couldn't delete that mix. Please try again.";
 				return;
 			}
-			drinks = drinks.filter((savedDrink) => savedDrink.id !== drink.id);
+			recipes = recipes.filter((savedRecipe) => savedRecipe.id !== recipe.id);
 		} catch {
 			deleteError = "We couldn't delete that mix. Please try again.";
 		} finally {
-			deletingDrinkId = null;
+			deletingRecipeId = null;
 		}
 	};
 
 	const updateQuery = (value: string) => {
 		query = value;
-		visibleCount = LIST_PAGE_SIZES.savedDrinks;
+		visibleCount = LIST_PAGE_SIZES.savedRecipes;
 		compactTopHidden = false;
 		scrollDirectionTracker.reset(scrollContainer?.scrollTop ?? 0);
 	};
 
 	const updateSort = (value: string) => {
 		sort = value;
-		visibleCount = LIST_PAGE_SIZES.savedDrinks;
+		visibleCount = LIST_PAGE_SIZES.savedRecipes;
 		compactTopHidden = false;
 		scrollDirectionTracker.reset(scrollContainer?.scrollTop ?? 0);
 	};
@@ -166,8 +166,8 @@
 		closeSortSheet();
 	};
 
-	const revealMoreDrinks = () => {
-		visibleCount += LIST_PAGE_SIZES.savedDrinks;
+	const revealMoreRecipes = () => {
+		visibleCount += LIST_PAGE_SIZES.savedRecipes;
 	};
 
 	const getListReflowDuration = () =>
@@ -182,11 +182,11 @@
 	};
 
 	onMount(() => {
-		window.addEventListener(SAVED_DRINKS_CHANGED_EVENT, loadSavedDrinks);
+		window.addEventListener(SAVED_RECIPES_CHANGED_EVENT, loadSavedRecipes);
 		return () => {
 			window.removeEventListener(
-				SAVED_DRINKS_CHANGED_EVENT,
-				loadSavedDrinks,
+				SAVED_RECIPES_CHANGED_EVENT,
+				loadSavedRecipes,
 			);
 		};
 	});
@@ -201,7 +201,7 @@
 	value={sort}
 	options={sortOptions}
 	titleId="saved-sort-sheet-title"
-	label="Sort saved drinks"
+	label="Sort saved recipes"
 	onApply={applySort}
 	onClose={closeSortSheet}
 />
@@ -209,21 +209,21 @@
 <ViewFrame appShell className="saved-page">
 	<ViewTop compactHidden={compactTopHidden}>
 		<ViewHeader
-			title="Saved Drinks"
+			title="Saved Recipes"
 			subtitle="Revisit combinations you’ve saved and load them back into Mix whenever you need them."
 		/>
 
-		{#if drinks.length > 0}
+		{#if recipes.length > 0}
 			<ListControls
-				id="saved-drinks-search"
+				id="saved-recipes-search"
 					{query}
 					onQueryChange={updateQuery}
-					placeholder="Search saved drinks…"
-					label="Search saved drinks by name or ingredient"
-					totalCount={drinks.length}
-					visibleCount={filteredDrinks.length}
-					itemLabel="mixes"
-					filterLabel="Sort saved mixes"
+					placeholder="Search saved recipes…"
+					label="Search saved recipes by name or ingredient"
+					totalCount={recipes.length}
+					visibleCount={filteredRecipes.length}
+					itemLabel="recipes"
+					filterLabel="Sort saved recipes"
 					filterValue={sort}
 					filterOptions={sortOptions}
 					filtersActive={sortSheetOpen}
@@ -247,48 +247,48 @@
 					<StatusMessage tone="danger" message={loadError} />
 				{/if}
 
-				{#if loadingDrinks && drinks.length === 0}
+				{#if loadingRecipes && recipes.length === 0}
 					<section class="saved-page__loading" aria-busy="true">
-						<LoadingSpinner label="Loading saved mixes" showLabel />
+						<LoadingSpinner label="Loading saved recipes" showLabel />
 					</section>
-				{:else if drinks.length > 0}
-					{#if visibleDrinks.length > 0}
-						<ul class="saved-page__list" aria-label="Saved mixes">
-							{#each visibleDrinks as drink, index (drink.id)}
+				{:else if recipes.length > 0}
+					{#if visibleRecipes.length > 0}
+						<ul class="saved-page__list" aria-label="Saved recipes">
+							{#each visibleRecipes as recipe, index (recipe.id)}
 								<li
-									data-tutorial-target={index === 0 ? "saved-mix" : undefined}
+									data-tutorial-target={index === 0 ? "saved-recipe" : undefined}
 									animate:flip={{ duration: getListReflowDuration() }}
 								>
-									<SavedDrinkCard
-										{drink}
-										loading={loadingDrinkId === drink.id}
-										deleting={deletingDrinkId === drink.id}
-										disabled={loadingDrinkId !== null ||
-											deletingDrinkId !== null}
-										onLoad={(selectedDrink) =>
-											void loadDrink(selectedDrink)}
-										onDelete={(selectedDrink) =>
-											void removeDrink(selectedDrink)}
+									<SavedRecipeCard
+										{recipe}
+										loading={loadingRecipeId === recipe.id}
+										deleting={deletingRecipeId === recipe.id}
+										disabled={loadingRecipeId !== null ||
+											deletingRecipeId !== null}
+										onLoad={(selectedRecipe) =>
+											void loadRecipe(selectedRecipe)}
+										onDelete={(selectedRecipe) =>
+											void removeRecipe(selectedRecipe)}
 									/>
 								</li>
 							{/each}
 						</ul>
 						<PaginatedListControls
 							{scrollContainer}
-							hasMoreItems={hasMoreDrinks}
-							loadMoreLabel="Load more mixes"
-							contentVersion={`${query}:${sort}:${visibleDrinks.length}`}
+							hasMoreItems={hasMoreRecipes}
+							loadMoreLabel="Load more recipes"
+							contentVersion={`${query}:${sort}:${visibleRecipes.length}`}
 							containerElement="div"
-							onLoadMore={revealMoreDrinks}
+							onLoadMore={revealMoreRecipes}
 						/>
 					{:else}
-						<SavedDrinksEmptyState
+						<SavedRecipesEmptyState
 							filtered
 							onAction={() => updateQuery("")}
 						/>
 					{/if}
 				{:else}
-					<SavedDrinksEmptyState onAction={() => void goto("/mix")} />
+					<SavedRecipesEmptyState onAction={() => void goto("/mix")} />
 				{/if}
 			</div>
 		</div>

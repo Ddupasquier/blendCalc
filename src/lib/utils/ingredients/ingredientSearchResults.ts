@@ -1,10 +1,10 @@
-import type { FdcFood } from "$lib/utils/food/types";
-import { compareFoodQuality } from "$lib/utils/food/quality/foodQuality";
+import type { FoodItem } from "$lib/utils/food/types";
+import { compareNutritionCompleteness } from "$lib/utils/food/quality/nutritionCompletenessAssessment";
 import { createIngredientSearchRelevanceComparator } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import { getFoodDownrankScore } from "$lib/utils/profile/foodPreferenceWarnings";
 import type { NutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 
-const compareFoodSearchRichness = (left: FdcFood, right: FdcFood) =>
+const compareFoodSearchRichness = (left: FoodItem, right: FoodItem) =>
 	new Set(left.foodNutrients.map(({ nutrientId }) => nutrientId)).size -
 		new Set(right.foodNutrients.map(({ nutrientId }) => nutrientId)).size ||
 	(left.foodServings?.length ?? 0) - (right.foodServings?.length ?? 0) ||
@@ -13,10 +13,10 @@ const compareFoodSearchRichness = (left: FdcFood, right: FdcFood) =>
 		Number(Boolean(right.alternateDescription)) ||
 	Number(Boolean(left.preparation)) - Number(Boolean(right.preparation));
 
-const isCanonicalCatalogFood = (food: FdcFood) =>
+const isCanonicalCatalogFood = (food: FoodItem) =>
 	Boolean(food.sharedProductId) || food.dataType === "Shared Product";
 
-const getFoodSearchIdentityKeys = (food: FdcFood) => {
+const getFoodSearchIdentityKeys = (food: FoodItem) => {
 	const keys = [`food:${food.fdcId}`];
 	const barcode = food.barcode ?? food.gtinUpc;
 	if (barcode) keys.push(`barcode:${barcode}`);
@@ -27,11 +27,11 @@ const getFoodSearchIdentityKeys = (food: FdcFood) => {
 	return keys;
 };
 
-export const isUsableIngredientSearchResult = (food: FdcFood) =>
+export const isUsableIngredientSearchResult = (food: FoodItem) =>
 	food.description.trim().length > 0 && food.foodNutrients.length > 0;
 
-export const mergeIngredientSearchResults = (...resultGroups: FdcFood[][]) => {
-	const merged: FdcFood[] = [];
+export const mergeIngredientSearchResults = (...resultGroups: FoodItem[][]) => {
+	const merged: FoodItem[] = [];
 	const indexesByIdentity = new Map<string, number>();
 
 	for (const food of resultGroups.flat()) {
@@ -66,7 +66,7 @@ export const mergeIngredientSearchResults = (...resultGroups: FdcFood[][]) => {
 };
 
 export const sortIngredientSearchResults = (
-	results: FdcFood[],
+	results: FoodItem[],
 	query: string,
 	nutritionCompletenessCatalog?: NutritionCompletenessCatalog,
 ) => {
@@ -80,12 +80,12 @@ export const sortIngredientSearchResults = (
 			getFoodDownrankScore(right);
 		if (preferencePenalty !== 0) return preferencePenalty;
 
-		const qualitySort = compareFoodQuality(
+		const completenessSort = compareNutritionCompleteness(
 			left,
 			right,
 			nutritionCompletenessCatalog,
 		);
-		if (qualitySort !== 0) return qualitySort;
+		if (completenessSort !== 0) return completenessSort;
 		return (
 			left.description.localeCompare(right.description) ||
 			left.fdcId - right.fdcId

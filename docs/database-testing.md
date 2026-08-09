@@ -65,6 +65,13 @@ fixed-ID submissions are not recreated by `start` after they have been reviewed;
 | `npm run db:test:status` | Print local service URLs and status. |
 | `npm run db:test:stop` | Stop the local Supabase stack while retaining its Docker volume. |
 | `npm run dev:test` | Start SvelteKit in test mode against `.env.test.local`. |
+| `npm run test:e2e:chromium` | Prepare the local stack and run focused desktop/phone Chromium browser coverage. |
+| `npm run test:e2e` | Prepare the local stack and run the complete Playwright Chromium, Firefox, and WebKit project matrix. |
+
+Playwright is the browser-facing consumer of this disposable environment. It signs in
+through the real local Auth UI, uses the seeded personas and catalog, and stores generated
+session state only under ignored test output. See [Browser Testing](browser-testing.md)
+for browser ownership, projects, visual baselines, and commands.
 
 ## Safety Boundary
 

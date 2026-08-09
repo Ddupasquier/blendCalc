@@ -1,4 +1,4 @@
-import { getProductReferenceData } from "$lib/server/products/productReferenceData.server";
+import { getProductReferenceCatalog } from "$lib/server/products/productReferenceCatalog.server";
 import {
 	createProductSourceRequestTrace,
 	recordProductSourceLookup,
@@ -11,13 +11,13 @@ import {
 	mapFdcBarcodeFood,
 	type BarcodeProductDraft,
 } from "$lib/utils/barcode/barcodeProductMappers";
-import type { ProductReferenceData } from "$lib/utils/food/reference/productReferenceData";
+import type { ProductReferenceCatalog } from "$lib/utils/food/reference/productReferenceCatalog";
 import { summarizeBarcodeProductQuality } from "$lib/utils/food/sources/sourceQuality";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
 export const lookupUsdaBarcodeProduct = async (
 	barcode: string,
-	referenceData?: ProductReferenceData,
+	productReferenceCatalog?: ProductReferenceCatalog,
 ): Promise<BarcodeProductDraft | null> => {
 	const canonicalBarcode = normalizeBarcode(barcode);
 	if (!canonicalBarcode) return null;
@@ -48,7 +48,7 @@ export const lookupUsdaBarcodeProduct = async (
 			return null;
 		}
 
-		let food: FdcFood;
+		let food: FoodItem;
 		try {
 			food = await getUsdaFoodById(match.fdcId, trace);
 		} catch {
@@ -58,7 +58,7 @@ export const lookupUsdaBarcodeProduct = async (
 		const draft = mapFdcBarcodeFood(
 			food,
 			canonicalBarcode,
-			referenceData ?? await getProductReferenceData(),
+			productReferenceCatalog ?? await getProductReferenceCatalog(),
 		);
 		await recordProductSourceLookup({
 			sourceKey: "usda",

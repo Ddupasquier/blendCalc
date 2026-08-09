@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, within } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import IngredientChooser from "$lib/components/mix/ingredients/IngredientChooser/IngredientChooser.svelte";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const food = (values: Partial<FdcFood>): FdcFood => ({
+const food = (values: Partial<FoodItem>): FoodItem => ({
 	fdcId: 1,
 	description: "Test ingredient",
 	foodNutrients: [],

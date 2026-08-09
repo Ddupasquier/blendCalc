@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import NutritionPanel from "$lib/components/ingredients/nutrition/NutritionPanel/NutritionPanel.svelte";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 
-const peanutButter: FdcFood = {
+const peanutButter: FoodItem = {
 	fdcId: 172470,
 	description: "Peanut butter, smooth style, with salt",
 	foodCategory: "Legumes and Legume Products",

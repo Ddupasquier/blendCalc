@@ -18,7 +18,7 @@ import {
 	resolveFoodIdentityType,
 } from "$lib/utils/food/identity/foodIdentity";
 import type {
-	FdcFood,
+	FoodItem,
 	FoodAllergenDisclosure,
 } from "$lib/utils/food/types";
 import {
@@ -83,7 +83,7 @@ const getValueLanguageCode = (value: string) =>
 		/^([a-z]{2,3}(?:-[A-Z]{2})?):/i.exec(value.trim())?.[1],
 	);
 
-const getFoodLanguageCodes = (food: FdcFood) => [...new Set([
+const getFoodLanguageCodes = (food: FoodItem) => [...new Set([
 	food.sourceMetadata?.language,
 	...(food.sourceMetadata?.languages ?? []),
 ]
@@ -103,7 +103,7 @@ const aliasMatchesLanguage = (
 };
 
 const getAliasDerivedFacts = (
-	food: FdcFood,
+	food: FoodItem,
 	policy: FoodSafetyPolicy,
 ): FoodCompatibilityFact[] => {
 	const foodLanguages = getFoodLanguageCodes(food);
@@ -153,7 +153,7 @@ const getAliasDerivedFacts = (
 
 	const structuredIngredientTexts: string[] = [];
 	const visitStructuredIngredients = (
-		ingredients: NonNullable<FdcFood["structuredIngredients"]>,
+		ingredients: NonNullable<FoodItem["structuredIngredients"]>,
 	) => {
 		for (const ingredient of ingredients) {
 			const value = ingredient.text?.trim() || ingredient.id?.trim();
@@ -185,7 +185,7 @@ const getAliasDerivedFacts = (
 };
 
 const getDietaryClaimFacts = (
-	food: FdcFood,
+	food: FoodItem,
 	policy: FoodSafetyPolicy,
 ) => {
 	const dietaryClaims = new Map(
@@ -215,7 +215,7 @@ const isCurrentCompatibilityFact = (fact: FoodCompatibilityFact) => {
 };
 
 const getRuleFieldValue = (
-	food: FdcFood,
+	food: FoodItem,
 	rule: FoodCompatibilityMatchRule,
 ) => {
 	if (
@@ -265,7 +265,7 @@ const matchesPattern = (value: string, pattern: string) => {
 };
 
 const getRuleDerivedCompatibilityFacts = (
-	food: FdcFood,
+	food: FoodItem,
 	rules: FoodCompatibilityMatchRule[],
 ): FoodCompatibilityFact[] =>
 	[...rules]
@@ -295,7 +295,7 @@ const getRuleDerivedCompatibilityFacts = (
 		});
 
 const getCompatibilityFacts = (
-	food: FdcFood,
+	food: FoodItem,
 	policy: FoodSafetyPolicy,
 ) => {
 	const facts = [
@@ -425,7 +425,7 @@ const getFoodPreferenceWarnings = (
 	facts: FoodCompatibilityFact[],
 	profile: FoodPreferenceProfile | null,
 	policy: FoodSafetyPolicy,
-	ingredientPresentation: FdcFood["ingredientPresentation"],
+	ingredientPresentation: FoodItem["ingredientPresentation"],
 ): FoodPreferenceWarning[] => {
 	if (!profile) return [];
 
@@ -561,7 +561,7 @@ const policyCoversPreferences = (
 };
 
 const policyCoversFoodLanguages = (
-	food: FdcFood,
+	food: FoodItem,
 	policy: FoodSafetyPolicy,
 ) => {
 	if (resolveFoodIdentityType(food) === "generic") return true;
@@ -738,9 +738,9 @@ export type FoodSafetyEvaluationContext = {
 };
 
 export const annotateFoodWithFoodSafety = (
-	food: FdcFood,
+	food: FoodItem,
 	context: FoodSafetyEvaluationContext,
-): FdcFood => {
+): FoodItem => {
 	const facts = getCompatibilityFacts(food, context.policy);
 	const ingredientPresentation = buildFoodIngredientPresentation(food);
 	const preferenceWarnings = getFoodPreferenceWarnings(
@@ -783,6 +783,6 @@ export const annotateFoodWithFoodSafety = (
 };
 
 export const annotateFoodsWithFoodSafety = (
-	foods: FdcFood[],
+	foods: FoodItem[],
 	context: FoodSafetyEvaluationContext,
 ) => foods.map((food) => annotateFoodWithFoodSafety(food, context));

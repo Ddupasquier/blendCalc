@@ -174,7 +174,7 @@ canonical preset provenance.
 | ------------------------------- | -------------------- | ----------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `user_food_list_items`          | `id`                 | Many rows per auth user | User fridge and shopping-list items                                                 | `user_id → auth.users.id`, optional active shared product and pending submission |
 | `custom_foods`                  | `id`                 | Many rows per auth user | User-created custom foods and barcode/manual-entry payloads                         | `user_id → auth.users.id`                                                        |
-| `saved_drinks`                  | `id`                 | Many rows per auth user | Saved smoothie recipes/mixes                                                        | `user_id → auth.users.id`                                                        |
+| `saved_drinks`                  | `id`                 | Many rows per auth user | Saved recipe snapshots; table name retained for deployed compatibility              | `user_id → auth.users.id`                                                        |
 | `ingredient_provenance_options` | `(dimension, value)` | Shared reference        | DB-backed source/trust filters and badge presentation for ingredient list/search UI | No direct user ownership                                                         |
 
 ### `user_food_list_items`
@@ -254,7 +254,8 @@ Notes:
 
 ### `saved_drinks`
 
-Stores a saved mix snapshot.
+Stores a saved recipe snapshot. The table and JSON-column names are legacy deployed
+identifiers retained until a deliberate forward migration changes the database contract.
 
 | Table | Documented columns |
 | -------------- | ------------------------------------------------------------ |
@@ -262,8 +263,9 @@ Stores a saved mix snapshot.
 
 Notes:
 
-- Drink names are unique per user.
-- `drink` is JSON because saved mix composition has app-specific structure.
+- Recipe names are unique per user.
+- `drink` stores the recipe composition as JSON; the legacy column name is isolated to
+  the database adapter and does not define application terminology.
 
 ### `ingredient_provenance_options`
 

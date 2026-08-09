@@ -6,7 +6,7 @@ import {
 	mergeMissingNutrients,
 } from "$lib/server/products/catalogVerification.server";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
+import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
 
 const nutrient = (nutrientId: number, value: number, unitName = "G") => ({
 	nutrientId,
@@ -16,7 +16,7 @@ const nutrient = (nutrientId: number, value: number, unitName = "G") => ({
 	value,
 });
 
-const createUserFood = (): FdcFood => ({
+const createUserFood = (): FoodItem => ({
 	fdcId: -1,
 	description: "Submitted cereal",
 	brandOwner: "Submitted Brand",
@@ -185,7 +185,7 @@ describe("catalog verification", () => {
 
 	it("fills only nutrients that the primary source did not report", () => {
 		const primary = createUserFood();
-		const supplement: FdcFood = {
+		const supplement: FoodItem = {
 			...primary,
 			foodNutrients: [
 				nutrient(NUTRIENT_IDS.SUGAR, 99),

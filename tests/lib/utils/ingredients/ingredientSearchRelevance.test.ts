@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import { rankIngredientSearchCandidates } from "$lib/utils/ingredients/ingredientSearchRelevance";
 
-const food = (fdcId: number, description: string): FdcFood => ({
+const food = (fdcId: number, description: string): FoodItem => ({
 	fdcId,
 	description,
 	foodNutrients: [],

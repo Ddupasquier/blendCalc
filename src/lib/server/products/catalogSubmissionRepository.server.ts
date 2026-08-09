@@ -1,6 +1,6 @@
 import type { Database } from "$lib/types/database.types";
-import { compactManagedFood } from "$lib/utils/food/records/foodRecords";
-import type { FdcFood } from "$lib/utils/food/types";
+import { normalizeSourceManagedFoodForStorage } from "$lib/utils/food/records/foodRecords";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { CatalogSubmissionComparison } from "$lib/utils/products/catalogSubmissionComparison";
 import type { CatalogUpdateSummary } from "$lib/utils/products/catalogUpdateReview";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
@@ -41,7 +41,7 @@ export const recordAutoDeclinedCatalogSubmission = async (
 	input: {
 		userId: string;
 		barcode: string;
-		food: FdcFood;
+		food: FoodItem;
 		categoryOptionId: string;
 		comparison: CatalogSubmissionComparison;
 		updateTarget: CatalogUpdateTarget;
@@ -50,7 +50,7 @@ export const recordAutoDeclinedCatalogSubmission = async (
 	},
 ) => {
 	const now = new Date().toISOString();
-	const normalizedFood = compactManagedFood(input.food);
+	const normalizedFood = normalizeSourceManagedFoodForStorage(input.food);
 	const report: CatalogSubmissionValidationReport = {
 		valid: false,
 		issues: input.comparison.severeDifferences.length
@@ -95,7 +95,7 @@ export const createCatalogSubmission = async (
 		userId: string;
 		barcode: string;
 		categoryOptionId: string;
-		food: FdcFood;
+		food: FoodItem;
 		updateTarget: CatalogUpdateTarget | null;
 		updateSummary: CatalogUpdateSummary | null;
 		labelObservedAt: string;
@@ -108,7 +108,7 @@ export const createCatalogSubmission = async (
 		intent: CatalogSubmissionIntent;
 	},
 ) => {
-	const normalizedFood = compactManagedFood(input.food);
+	const normalizedFood = normalizeSourceManagedFoodForStorage(input.food);
 	const { data, error } = await supabase
 		.from("shared_product_submissions")
 		.insert({

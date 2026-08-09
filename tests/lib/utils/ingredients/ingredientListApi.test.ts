@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { LIST_PAGE_LIMITS } from "$lib/config/listPagination";
-import type { UserFoodListPage } from "$lib/types/userData";
+import type { IngredientListPage } from "$lib/utils/ingredients/ingredientListPage";
 import { readIngredientListWindow } from "$lib/utils/ingredients/ingredientListApi";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
@@ -21,7 +21,7 @@ describe("readIngredientListWindow", () => {
 				{ length: Math.min(limit, totalCount - offset) },
 				(_, index) => createFood(offset + index + 1),
 			);
-			const payload = { foods, totalCount } satisfies UserFoodListPage;
+			const payload = { foods, totalCount } satisfies IngredientListPage;
 
 			return new Response(JSON.stringify(payload), {
 				status: 200,
@@ -62,7 +62,7 @@ describe("readIngredientListWindow", () => {
 			const payload = {
 				foods: [createFood(1), createFood(2)],
 				totalCount: 2,
-			} satisfies UserFoodListPage;
+			} satisfies IngredientListPage;
 			return new Response(JSON.stringify(payload), { status: 200 });
 		});
 

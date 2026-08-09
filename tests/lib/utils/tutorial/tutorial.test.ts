@@ -33,7 +33,7 @@ describe("shouldAutomaticallyShowTutorial", () => {
 			"[data-tutorial-target='mix-ingredient-options'] .pill",
 			"[data-tutorial-target='mix-goals'] .goal-input input",
 			"[data-tutorial-target='mix-result-chart']",
-			"[data-tutorial-target='saved-mix'] .saved-drink-card summary",
+			"[data-tutorial-target='saved-recipe'] .saved-recipe-card summary",
 			"[data-tutorial-target='food-preferences'] .preference-editor-card:first-child",
 		]);
 	});

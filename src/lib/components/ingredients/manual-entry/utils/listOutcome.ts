@@ -1,30 +1,30 @@
 import type { CustomIngredientOutcomeState } from "$lib/components/ingredients/manual-entry/formTypes";
 import type { ManualEntryCreateHandler } from "$lib/components/ingredients/manual-entry/types";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
-	addFoodToSmoothieList,
-	moveFoodToSmoothieList,
-	removeFoodFromSmoothieList,
-	type SmoothieListKey,
-} from "$lib/utils/storage/client/smoothieLists";
+	addFoodToIngredientList,
+	moveFoodToIngredientList,
+	removeFoodFromIngredientList,
+	type IngredientListKey,
+} from "$lib/utils/storage/client/ingredientLists";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
 export const getDestinationLabel = (
-	destination: SmoothieListKey,
+	destination: IngredientListKey,
 ) => {
 	if (destination === MIX_STORAGE_KEYS.fridge) return "Fridge";
 	if (destination === MIX_STORAGE_KEYS.shoppingList) return "Shopping List";
 	return "Selected list";
 };
 
-export const getListDestinationLabel = (destination: SmoothieListKey) =>
+export const getListDestinationLabel = (destination: IngredientListKey) =>
 	destination === MIX_STORAGE_KEYS.fridge ? "Fridge" : "Shopping List";
 
 export type ManualEntryDestinationResult =
 	| {
 			ok: true;
-			food: FdcFood;
-			destination: SmoothieListKey;
+			food: FoodItem;
+			destination: IngredientListKey;
 			addedToList: boolean;
 			message: string;
 		}
@@ -36,9 +36,9 @@ export type ManualEntryDestinationResult =
 	| {
 			ok: false;
 			moveRequired: true;
-			food: FdcFood;
-			source: SmoothieListKey;
-			destination: SmoothieListKey;
+			food: FoodItem;
+			source: IngredientListKey;
+			destination: IngredientListKey;
 		};
 
 export type ManualEntryOutcomeAction = "move" | "undo";
@@ -60,8 +60,8 @@ export const addManualEntryFoodToDestination = async ({
 	onCreate,
 	allowMove = false,
 }: {
-	food: FdcFood;
-	saveDestination: SmoothieListKey;
+	food: FoodItem;
+	saveDestination: IngredientListKey;
 	alreadySaved: boolean;
 	onCreate: ManualEntryCreateHandler;
 	allowMove?: boolean;
@@ -69,8 +69,8 @@ export const addManualEntryFoodToDestination = async ({
 	const destinationLabel = getDestinationLabel(saveDestination);
 
 	const listResult = allowMove
-		? await moveFoodToSmoothieList(saveDestination, food)
-		: await addFoodToSmoothieList(saveDestination, food);
+		? await moveFoodToIngredientList(saveDestination, food)
+		: await addFoodToIngredientList(saveDestination, food);
 	if (
 		listResult === "move-required:fridge" ||
 		listResult === "move-required:shopping"
@@ -117,9 +117,9 @@ export const addManualEntryFoodToDestination = async ({
 
 export const moveManualEntryOutcome = async (
 	lastOutcome: CustomIngredientOutcomeState,
-	destination: SmoothieListKey,
+	destination: IngredientListKey,
 ): Promise<ManualEntryDestinationResult> => {
-	const addResult = await moveFoodToSmoothieList(destination, lastOutcome.food);
+	const addResult = await moveFoodToIngredientList(destination, lastOutcome.food);
 	if (addResult === "error") {
 		return {
 			ok: false,
@@ -139,7 +139,7 @@ export const moveManualEntryOutcome = async (
 export const undoManualEntryOutcomeAdd = async (
 	lastOutcome: CustomIngredientOutcomeState,
 ): Promise<ManualEntryDestinationResult> => {
-	const removeResult = await removeFoodFromSmoothieList(
+	const removeResult = await removeFoodFromIngredientList(
 		lastOutcome.destination,
 		lastOutcome.food.fdcId,
 	);
@@ -164,7 +164,7 @@ export const runManualEntryOutcomeAction = async (
 		| {
 				action: "move";
 				lastOutcome: CustomIngredientOutcomeState;
-				destination: SmoothieListKey;
+				destination: IngredientListKey;
 		  }
 		| {
 				action: "undo";

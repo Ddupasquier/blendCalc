@@ -29,7 +29,7 @@ describe("password policy", () => {
 
 	it("rejects the email name inside a password", () => {
 		expect(
-			getPasswordPolicyIssues("dylan-is-making-smoothies", "dylan@example.com"),
+			getPasswordPolicyIssues("dylan-is-making-recipes", "dylan@example.com"),
 		).toContainEqual(expect.objectContaining({ code: "contains_email" }));
 	});
 

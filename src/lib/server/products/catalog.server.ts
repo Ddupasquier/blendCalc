@@ -2,14 +2,14 @@ import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { getNutrientDefinitionCatalog } from "$lib/server/nutrition/nutrientDefinitionCatalog.server";
 import type { Database, Json } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
-import { compactFood } from "$lib/utils/food/records/foodRecords";
+import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
 import {
 	createNutrientValueMapFromFood,
 	readNutrientRelationshipRules,
 	validateNutrientRelationshipRules,
 	type NutrientRelationshipRule,
 } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredientProvenance";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
@@ -123,7 +123,7 @@ const formatBlockDate = (value: string) =>
 export { buildProductSubmissionReviewFlags };
 
 export const validateSharedProductFood = (
-	food: FdcFood,
+	food: FoodItem,
 	nutrientRelationshipRules: NutrientRelationshipRule[] = [],
 ) => {
 	const issues: string[] = [];
@@ -203,7 +203,7 @@ export const searchApprovedSharedProducts = async (
 	return records.map((record) => record.food);
 };
 
-const assertKnownSubmissionNutrients = async (food: FdcFood) => {
+const assertKnownSubmissionNutrients = async (food: FoodItem) => {
 	const nutrientIds = [
 		...new Set(food.foodNutrients.map((nutrient) => nutrient.nutrientId)),
 	];
@@ -292,7 +292,7 @@ export const assertCanSubmitSharedProduct = async (userId: string) => {
 
 export const submitProductForCatalog = async (
 	userId: string,
-	food: FdcFood,
+	food: FoodItem,
 	evidencePaths: ProductEvidencePaths = {},
 	context: ProductSubmissionContext = {},
 ): Promise<SharedProductSubmissionResult> => {
@@ -536,7 +536,7 @@ export const approveCommunityProductSubmission = async (
 		throw new Error("Complete label evidence is required before approval.");
 	}
 
-	const submittedFood = compactFood(submission.food as unknown as FdcFood);
+	const submittedFood = normalizeFoodForStorage(submission.food as unknown as FoodItem);
 	const category =
 		await readFoodCategoryOption(admin, submission.category_option_id)
 		?? await resolveFoodCategoryOption(admin, submittedFood.categories ?? []);

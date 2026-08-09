@@ -3,7 +3,7 @@ import {
 	SERVING_MEASURE_OPTIONS,
 	type ServingMeasureUnit,
 } from "$lib/utils/serving/servingMeasureCatalog";
-import { compactFood } from "$lib/utils/food/records/foodRecords";
+import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
 import {
 	readCloudCustomFoodByBarcode,
 	readCloudCustomFoodByNameKey,
@@ -11,8 +11,8 @@ import {
 } from "$lib/utils/storage/supabase";
 import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
 import type {
-	FdcFood,
-	FdcNutrient,
+	FoodItem,
+	FoodNutrient,
 	FoodFieldProvenance,
 	FoodFieldSource,
 	FoodImageAsset,
@@ -29,18 +29,18 @@ import { normalizeCustomFoodName } from "$lib/utils/food/custom/customFoodNames"
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
-export const CUSTOM_FOODS_CHANGED_EVENT = "smoothie-custom-foods-changed";
+export const CUSTOM_FOODS_CHANGED_EVENT = "blendcalc-custom-foods-changed";
 
 export type CustomFoodInput = {
 	name: string;
-	nameProvenance?: NonNullable<FdcFood["nameProvenance"]>;
+	nameProvenance?: NonNullable<FoodItem["nameProvenance"]>;
 	brandOwner?: string;
 	servingLabel?: string;
 	servingWeightGrams: number;
 	volumeQuantity?: number;
 	volumeUnit?: ServingMeasureUnit;
 	barcode?: string;
-	barcodeSource?: FdcFood["barcodeSource"];
+	barcodeSource?: FoodItem["barcodeSource"];
 	barcodeProvenance?: FoodBarcodeProvenance;
 	sourceKey?: string;
 	sourceLabel?: string;
@@ -68,7 +68,7 @@ export type CustomFoodInput = {
 	symbolKey?: string;
 	image?: FoodImageAsset;
 	fieldProvenance?: FoodFieldProvenance;
-	nutrients: FdcNutrient[];
+	nutrients: FoodNutrient[];
 	reportedNutrientIds?: number[];
 	hasSourceServing?: boolean;
 	serving?: FoodServing;
@@ -94,9 +94,9 @@ const getPer100GramValue = (valuePerServing: number, servingWeightGrams: number)
 };
 
 const createNutrients = (
-	nutrients: FdcNutrient[],
+	nutrients: FoodNutrient[],
 	servingWeightGrams: number,
-): FdcNutrient[] => {
+): FoodNutrient[] => {
 	const seenIds = new Set<number>();
 	return nutrients.flatMap((nutrient) => {
 		const nutrientId = Number(nutrient.nutrientId);
@@ -185,14 +185,14 @@ export const buildCustomServingLabel = ({
 
 const normalizeServingSource = (
 	source: FoodFieldSource["source"] | undefined,
-): FdcNutrient["source"] => {
+): FoodNutrient["source"] => {
 	if (source === "shared-catalog") return "community-reviewed";
 	if (source === "wikimedia-commons") return "unknown";
 	return source;
 };
 
 const getDefaultSourceKey = (
-	barcodeSource: FdcFood["barcodeSource"],
+	barcodeSource: FoodItem["barcodeSource"],
 ) => {
 	if (barcodeSource === "community") return "shared-catalog";
 	if (barcodeSource === "usda" || barcodeSource === "open-food-facts") {
@@ -201,7 +201,7 @@ const getDefaultSourceKey = (
 	return undefined;
 };
 
-export const createCustomFood = (input: CustomFoodInput): FdcFood => {
+export const createCustomFood = (input: CustomFoodInput): FoodItem => {
 	const servingWeightGrams = Number(input.servingWeightGrams);
 	if (!Number.isFinite(servingWeightGrams) || servingWeightGrams <= 0) {
 		throw new TypeError("Serving weight must be a number greater than zero.");
@@ -335,9 +335,9 @@ export const findCustomFoodByName = async (name: string) => {
 };
 
 export const saveCustomFood = async (
-	food: FdcFood,
+	food: FoodItem,
 ): Promise<CustomFoodSaveResult> => {
-	const foodRecord = compactFood(food);
+	const foodRecord = normalizeFoodForStorage(food);
 	const cloudResult = await saveCloudCustomFood(foodRecord);
 	if (cloudResult !== "saved") return cloudResult;
 
