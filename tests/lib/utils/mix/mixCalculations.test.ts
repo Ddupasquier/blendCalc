@@ -275,13 +275,77 @@ describe("mix calculations", () => {
 
 		expect(progress[0]).toBeCloseTo(1.864);
 		expect(progress[1]).toBeCloseTo(0.333);
-		expect(getGoalValues(metrics)[0]).toBeCloseTo(0.4877);
-		expect(getGoalValues(metrics)[1]).toBeCloseTo(0.4877);
-		expect(getChartValues(metrics)[0]).toBeCloseTo(0.9091);
-		expect(getChartValues(metrics)[1]).toBeCloseTo(0.1624);
+		expect(getGoalValues(metrics)[0]).toBeCloseTo(1);
+		expect(getGoalValues(metrics)[1]).toBeCloseTo(0.24);
+		expect(getChartValues(metrics)[0]).toBeCloseTo(1);
+		expect(getChartValues(metrics)[1]).toBeCloseTo(0.0799);
 		expect(getChartValues(metrics)[0]).toBeGreaterThan(
 			getChartValues(metrics)[1],
 		);
+	});
+
+	it("makes the highest relative goal touch the boundary and lets actual amounts match the goal shape", () => {
+		const nutrients = [
+			{ id: NUTRIENT_IDS.CALORIES, label: "Calories", unit: "kcal" },
+			{ id: NUTRIENT_IDS.PROTEIN, label: "Protein", unit: "g" },
+			{ id: NUTRIENT_IDS.CARBS, label: "Carbohydrates", unit: "g" },
+		];
+		const goalMatchingFood = {
+			fdcId: 5,
+			description: "Goal-matching food",
+			foodNutrients: [
+				{
+					nutrientId: NUTRIENT_IDS.CALORIES,
+					nutrientName: "Energy",
+					nutrientNumber: "208",
+					unitName: "KCAL",
+					value: 350,
+				},
+				{
+					nutrientId: NUTRIENT_IDS.PROTEIN,
+					nutrientName: "Protein",
+					nutrientNumber: "203",
+					unitName: "G",
+					value: 20,
+				},
+				{
+					nutrientId: NUTRIENT_IDS.CARBS,
+					nutrientName: "Carbohydrate, by difference",
+					nutrientNumber: "205",
+					unitName: "G",
+					value: 90,
+				},
+			],
+		} satisfies FoodItem;
+		const goals = {
+			[NUTRIENT_IDS.CALORIES]: exactGoal(NUTRIENT_IDS.CALORIES, 350),
+			[NUTRIENT_IDS.PROTEIN]: exactGoal(NUTRIENT_IDS.PROTEIN, 20, 2),
+			[NUTRIENT_IDS.CARBS]: exactGoal(NUTRIENT_IDS.CARBS, 90, 3),
+		};
+		const metrics = getNutrientChartMetrics(
+			nutrients,
+			[goalMatchingFood],
+			goals,
+			{ [goalMatchingFood.fdcId]: 100 },
+		);
+		const halfwayMetrics = getNutrientChartMetrics(
+			nutrients,
+			[goalMatchingFood],
+			goals,
+			{ [goalMatchingFood.fdcId]: 50 },
+		);
+
+		expect(getGoalValues(metrics)).toEqual(getChartValues(metrics));
+		expect(getGoalValues(metrics)[0]).toBeCloseTo(2 / 3);
+		expect(getGoalValues(metrics)[1]).toBeCloseTo(8 / 15);
+		expect(getGoalValues(metrics)[2]).toBe(1);
+		expect(new Set(getGoalValues(metrics))).toHaveLength(3);
+		expect(getGoalValues(halfwayMetrics)).toEqual(getGoalValues(metrics));
+		getChartValues(halfwayMetrics).forEach((currentRadius, index) => {
+			expect(currentRadius).toBeCloseTo(
+				(getGoalValues(halfwayMetrics)[index] ?? 0) / 2,
+			);
+		});
 	});
 
 	it("only adjusts foods already selected in the Mix", () => {
