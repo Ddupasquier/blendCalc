@@ -4,4 +4,5 @@ export type ProfileAppearanceSettingsProps = {
 	initialTheme: ThemePreference;
 	errorMessage?: string | null;
 	successMessage?: string | null;
+	onSaveSuccess?: () => void;
 };

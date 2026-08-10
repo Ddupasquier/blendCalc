@@ -1,0 +1,91 @@
+@use "../../../../styles/variables" as *;
+
+.profile-settings-sheet-launcher {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: $app-gap-sm;
+	width: 100%;
+	min-width: 0;
+	min-height: $app-shell-control-height;
+	padding: $app-gap-sm;
+	color: $app-shell-text-primary;
+	text-align: left;
+	background: $app-shell-surface-page;
+	border: 0;
+	border-radius: $app-shell-radius-card;
+	cursor: pointer;
+	touch-action: manipulation;
+
+	&:hover {
+		background: $app-shell-surface-control;
+	}
+
+	&:focus-visible {
+		position: relative;
+		z-index: 1;
+		outline: $app-focus-outline;
+		outline-offset: $app-focus-outline-offset;
+	}
+}
+
+:global(.profile-settings-sheet-launcher__icon) {
+	--circular-icon-frame-size: #{$app-shell-leading-icon-size};
+	--circular-icon-frame-icon-size: #{$app-control-icon-size};
+	--circular-icon-frame-color: #{$app-shell-accent-info};
+	--circular-icon-frame-background: #{$app-shell-accent-soft};
+	--circular-icon-frame-border: 0;
+}
+
+.profile-settings-sheet-launcher__copy {
+	display: grid;
+	gap: $app-gap-2xs;
+	min-width: 0;
+}
+
+.profile-settings-sheet-launcher__copy strong,
+.profile-settings-sheet-launcher__copy span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.profile-settings-sheet-launcher__copy strong {
+	font-family: $app-button-font-family;
+	font-size: $app-font-size-md;
+	font-weight: $app-button-font-weight;
+	line-height: $app-line-height-tight;
+}
+
+.profile-settings-sheet-launcher__copy span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-body;
+}
+
+:global(.profile-settings-sheet-launcher__chevron) {
+	flex: 0 0 auto;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-md;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.profile-settings-sheet-launcher {
+		min-height: $app-shell-control-height-narrow;
+		padding: $app-gap-xs;
+	}
+
+	:global(.profile-settings-sheet-launcher__icon) {
+		--circular-icon-frame-size: #{$app-shell-action-icon-size};
+		--circular-icon-frame-icon-size: #{$app-font-size-md};
+	}
+
+	.profile-settings-sheet-launcher__copy strong {
+		font-size: $app-font-size-sm;
+	}
+
+	.profile-settings-sheet-launcher__copy span {
+		font-size: $app-font-size-xs;
+	}
+}

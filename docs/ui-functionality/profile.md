@@ -6,6 +6,21 @@ Profile manages optional identity, appearance, avatar, food-preference, tutorial
 session settings. Detailed privacy and storage rules live in
 [User Profiles](../user-profiles.md).
 
+## Settings Surfaces
+
+- Keep the Profile route as a compact summary and settings menu rather than rendering
+  every form at once.
+- Open Appearance at `/profile/appearance`, Profile details at `/profile/details`, and
+  Profile image at `/profile/image` in the shared route-backed `BottomSheet`.
+- Open Food preferences at `/profile/food-preferences` in the shared route-backed
+  `RightSheet` because it is a long, independently scrollable settings workflow.
+- Each launcher summarizes the saved state without duplicating its complete form.
+- Escape, the shared Back control, browser history, direct loading, and refresh preserve
+  the documented sheet route and return to `/profile` without reloading the underlying
+  Profile page.
+- Successful saves close the active settings surface once and update its summary.
+  Validation failures stay visible in the open surface with the entered values intact.
+
 ## Identity
 
 - Show and edit preferred display name and optional bio.

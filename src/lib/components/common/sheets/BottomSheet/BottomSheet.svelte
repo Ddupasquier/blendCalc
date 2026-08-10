@@ -4,6 +4,7 @@
 	import type { BottomSheetProps } from "./types";
 
 	let {
+		id,
 		open,
 		title,
 		titleId = "bottom-sheet-title",
@@ -20,6 +21,7 @@
 </script>
 
 <SheetBase
+	{id}
 	{open}
 	placement="bottom"
 	label={title ? undefined : label}

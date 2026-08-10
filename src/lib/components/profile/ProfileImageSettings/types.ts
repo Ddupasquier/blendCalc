@@ -5,4 +5,5 @@ export type ProfileImageSettingsProps = {
 	requireHumanFace: boolean;
 	errorMessage?: string | null;
 	successMessage?: string | null;
+	onSaveSuccess?: () => void;
 };

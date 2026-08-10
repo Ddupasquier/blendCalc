@@ -45,6 +45,12 @@ describe("page metadata", () => {
 		expect(getAppDocumentTitle(url("/mix/reorganize"))).toBe(
 			"Reorganize Mix · blendCalc",
 		);
+		expect(getAppDocumentTitle(url("/profile/appearance"))).toBe(
+			"Appearance · blendCalc",
+		);
+		expect(getAppDocumentTitle(url("/profile/food-preferences"))).toBe(
+			"Food Preferences · blendCalc",
+		);
 	});
 
 	it("uses readable paths without transient query parameters as canonicals", () => {

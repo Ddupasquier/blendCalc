@@ -6,7 +6,6 @@
 	import CheckboxField from "$lib/components/common/forms/CheckboxField/CheckboxField.svelte";
 	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
 	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
-	import ProfileSettingsSection from "$lib/components/profile/ProfileSettingsSection/ProfileSettingsSection.svelte";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import type { ProfileImageSettingsProps } from "./types";
 
@@ -17,16 +16,20 @@
 		requireHumanFace,
 		errorMessage,
 		successMessage,
+		onSaveSuccess,
 	}: ProfileImageSettingsProps = $props();
 
 	let isSaving = $state(false);
-	const enhanceAvatar = createPendingSubmit((pending) => (isSaving = pending));
+	const enhanceAvatar = createPendingSubmit(
+		(pending) => (isSaving = pending),
+		(result) => {
+			if (result.type === "success") onSaveSuccess?.();
+		},
+	);
 </script>
 
-<ProfileSettingsSection
-	title="Profile image"
-	description="Add a private account image. Use a JPEG, PNG, or WebP file up to 5 MB."
->
+<div class="profile-image-settings">
+	<p>Add a private account image. Use a JPEG, PNG, or WebP file up to 5 MB.</p>
 	{#if errorMessage}
 		<StatusMessage tone="danger" message={errorMessage} />
 	{:else if successMessage}
@@ -35,7 +38,7 @@
 
 	<form
 		method="POST"
-		action="?/uploadAvatar"
+		action="/profile?/uploadAvatar"
 		enctype="multipart/form-data"
 		use:enhance={enhanceAvatar}
 		aria-busy={isSaving}
@@ -98,7 +101,7 @@
 				<RoundedActionButton
 					type="submit"
 					variant="neutral"
-					formAction="?/removeAvatar"
+					formAction="/profile?/removeAvatar"
 					formNoValidate
 					busy={isSaving}
 				>
@@ -107,7 +110,7 @@
 			{/if}
 		</div>
 	</form>
-</ProfileSettingsSection>
+</div>
 
 <style lang="scss">
 	@use "./ProfileImageSettings.scss";
