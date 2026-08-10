@@ -26,7 +26,6 @@ const specializedDisclosureConsumers = [
 	"lib/components/mix/ingredients/MixIngredientAmountCard/MixIngredientAmountCard.svelte",
 	"lib/components/saved/SavedRecipeIngredientPills/SavedRecipeIngredientPills.svelte",
 	"routes/moderation/+page.svelte",
-	"routes/profile/+page.svelte",
 ];
 
 const getSvelteFiles = (directory: string): string[] =>

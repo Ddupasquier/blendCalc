@@ -172,8 +172,14 @@ describe("theme architecture", () => {
 	});
 
 	it("exposes account-backed appearance controls from Profile", () => {
-		expect(profile).toContain("ThemePreferenceControl");
-		expect(profile).toContain('action="?/saveAppearance"');
-		expect(profile).toContain("Save appearance");
+		const appearanceSettings = readFileSync(
+			"src/lib/components/profile/ProfileAppearanceSettings/ProfileAppearanceSettings.svelte",
+			"utf8",
+		);
+
+		expect(profile).toContain("ProfileAppearanceSettings");
+		expect(appearanceSettings).toContain("ThemePreferenceControl");
+		expect(appearanceSettings).toContain('action="?/saveAppearance"');
+		expect(appearanceSettings).toContain("Save appearance");
 	});
 });
