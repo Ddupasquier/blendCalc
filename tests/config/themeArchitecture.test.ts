@@ -179,7 +179,7 @@ describe("theme architecture", () => {
 
 		expect(profile).toContain("ProfileAppearanceSettings");
 		expect(appearanceSettings).toContain("ThemePreferenceControl");
-		expect(appearanceSettings).toContain('action="?/saveAppearance"');
+		expect(appearanceSettings).toContain('action="/profile?/saveAppearance"');
 		expect(appearanceSettings).toContain("Save appearance");
 	});
 });

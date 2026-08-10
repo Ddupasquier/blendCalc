@@ -52,7 +52,7 @@
 		MIX_ROUTE_OVERLAYS,
 		type MixRouteTarget,
 	} from "$lib/utils/mix/navigation/mixRouteState";
-	import { createMixHeaderVisibilityController } from "$lib/utils/mix/state/mixHeaderVisibilityController.svelte";
+	import { createScrollAwareHeaderVisibilityController } from "$lib/utils/navigation/scrollAwareHeaderVisibilityController.svelte";
 	import { createMixSectionPreferencesController } from "$lib/utils/mix/state/mixSectionPreferencesController.svelte";
 	import { createSavedRecipeController } from "$lib/utils/mix/state/savedRecipeController.svelte";
 	import {
@@ -173,7 +173,7 @@
 	const mixRouteState = $derived(
 		getActiveMixRouteState(page.url, page.state.mixRouteHref),
 	);
-	const headerVisibility = createMixHeaderVisibilityController({
+	const headerVisibility = createScrollAwareHeaderVisibilityController({
 		isEnabled: () => mixRouteState.overlay === null,
 	});
 	const pendingResetAction = $derived<MixResetAction | null>(

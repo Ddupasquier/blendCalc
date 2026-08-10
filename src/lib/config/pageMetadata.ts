@@ -1,6 +1,7 @@
 import { APP_NAME, APP_PRODUCTION_ORIGIN } from "$lib/config/brand";
 import { getIngredientRouteTitle } from "$lib/utils/ingredients/ingredientRouteState";
 import { getMixRouteTitle } from "$lib/utils/mix/navigation/mixRouteState";
+import { getProfileSettingsRouteTitle } from "$lib/utils/profile/profileRouteState";
 
 export const formatDocumentTitle = (title: string) =>
 	`${title.trim()} · ${APP_NAME}`;
@@ -38,7 +39,9 @@ export const getAppDocumentTitle = (
 	if (pathname === "/profile/tutorial") {
 		return formatDocumentTitle("Quick Tutorial");
 	}
-	if (pathname === "/profile") return formatDocumentTitle("Profile");
+	if (pathname === "/profile" || pathname.startsWith("/profile/")) {
+		return formatDocumentTitle(getProfileSettingsRouteTitle(pathname));
+	}
 	if (pathname === "/moderation") return formatDocumentTitle("Moderation");
 
 	return APP_NAME;

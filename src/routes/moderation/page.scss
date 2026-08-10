@@ -468,6 +468,14 @@ header > p:last-child,
 	font-style: italic;
 }
 
+.account-sharing-suspension {
+	padding: $app-gap-xs;
+	color: $app-danger-action;
+	background: $app-danger-bg;
+	border-radius: $app-radius-sm;
+	font-weight: $app-font-weight-semibold;
+}
+
 .danger-action {
 	width: 100%;
 	color: $app-shell-text-on-danger;

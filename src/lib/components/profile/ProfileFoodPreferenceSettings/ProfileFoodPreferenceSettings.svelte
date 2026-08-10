@@ -7,7 +7,6 @@
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker/FoodPreferencePicker.svelte";
 	import ProfileFoodPreferenceBasics from "$lib/components/profile/ProfileFoodPreferenceBasics/ProfileFoodPreferenceBasics.svelte";
 	import ProfileNutrientPrioritySettings from "$lib/components/profile/ProfileNutrientPrioritySettings/ProfileNutrientPrioritySettings.svelte";
-	import ProfileSettingsSection from "$lib/components/profile/ProfileSettingsSection/ProfileSettingsSection.svelte";
 	import SavedFoodPreferenceSummary from "$lib/components/profile/SavedFoodPreferenceSummary/SavedFoodPreferenceSummary.svelte";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import {
@@ -34,6 +33,7 @@
 		submittedValues,
 		errorMessage,
 		successMessage,
+		onSaveSuccess,
 	}: ProfileFoodPreferenceSettingsProps = $props();
 
 	const storedServingUnit = $derived<DefaultServingUnit>(
@@ -264,18 +264,22 @@
 	].filter((item) => item !== null));
 
 	const isDisabled = $derived(isSaving || foodPreferencesUnavailable);
-	const enhanceFoodPreferences = createPendingSubmit((pending) => (isSaving = pending));
+	const enhanceFoodPreferences = createPendingSubmit(
+		(pending) => (isSaving = pending),
+		(result) => {
+			if (result.type === "success") onSaveSuccess?.();
+		},
+	);
 	const selectRegulatoryRegion = (value: string) => {
 		regulatoryRegionCode = value;
 		regulatoryRegionSource = value ? "account" : null;
 	};
 </script>
 
-<ProfileSettingsSection
-	title="Food preferences"
-	description="Save optional settings for clearer warnings and more useful Mix suggestions."
-	tutorialTarget="food-preferences"
->
+<div class="profile-food-preference-settings" data-tutorial-target="food-preferences">
+	<p class="profile-food-preference-settings__description">
+		Save optional settings for clearer warnings and more useful Mix suggestions.
+	</p>
 	<div class="food-preference-notice">
 		<strong>Optional and private</strong>
 		<span>These settings can include health-related information. They stay with your account and shape warnings and suggestions.</span>
@@ -297,7 +301,7 @@
 
 	<form
 		method="POST"
-		action="?/saveFoodPreferences"
+		action="/profile?/saveFoodPreferences"
 		use:enhance={enhanceFoodPreferences}
 		aria-busy={isSaving}
 	>
@@ -363,7 +367,7 @@
 			Save food preferences
 		</RoundedActionButton>
 	</form>
-</ProfileSettingsSection>
+</div>
 
 <style lang="scss">
 	@use "./ProfileFoodPreferenceSettings.scss";

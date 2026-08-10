@@ -27,3 +27,10 @@ export const createConnectSources = (mode = readViteMode()) => [
 	...SHARED_CONNECT_SOURCES,
 	...(mode === "test" ? LOCAL_TEST_DATABASE_CONNECT_SOURCES : []),
 ];
+
+export const createImageSources = (mode = readViteMode()) => [
+	"self",
+	"data:",
+	"https:",
+	...(mode === "test" ? ["http://127.0.0.1:54321"] : []),
+];

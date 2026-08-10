@@ -3,4 +3,5 @@ export type ProfileDetailsSettingsProps = {
 	bio: string;
 	errorMessage?: string | null;
 	successMessage?: string | null;
+	onSaveSuccess?: () => void;
 };

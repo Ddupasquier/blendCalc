@@ -1,7 +1,10 @@
 import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { readFileSync } from 'node:fs';
-import { createConnectSources } from './config/contentSecurityPolicy.js';
+import {
+	createConnectSources,
+	createImageSources
+} from './config/contentSecurityPolicy.js';
 
 const packageMetadata = JSON.parse(
 	readFileSync(new URL('./package.json', import.meta.url), 'utf8')
@@ -36,7 +39,7 @@ const config = {
 				'font-src': ['self', 'data:'],
 				'form-action': ['self'],
 				'frame-ancestors': ['none'],
-				'img-src': ['self', 'data:', 'https:'],
+				'img-src': createImageSources(),
 				'object-src': ['none'],
 				'script-src': ['self', 'wasm-unsafe-eval', 'https://cdn.jsdelivr.net'],
 				'worker-src': ['self', 'blob:', 'https://cdn.jsdelivr.net'],

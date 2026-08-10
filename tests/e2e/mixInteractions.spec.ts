@@ -1,4 +1,9 @@
-import { expect, test, waitForAppReady } from "./support/browserTest";
+import {
+	expect,
+	expectCompactHeaderHidesAndRevealsWithScroll,
+	test,
+	waitForAppReady,
+} from "./support/browserTest";
 
 const openMixGoals = async (page: import("@playwright/test").Page) => {
 	const goalsSection = page.locator("[data-tutorial-target='mix-goals']");
@@ -8,6 +13,22 @@ const openMixGoals = async (page: import("@playwright/test").Page) => {
 	await expect(details).toHaveAttribute("open", "");
 	return { details, goalsSection, summary };
 };
+
+test("compact Mix header follows main-page scroll direction", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		!testInfo.project.name.startsWith("mobile-"),
+		"Compact header behavior is a phone-layout contract.",
+	);
+
+	await page.goto("/mix");
+	await waitForAppReady(page);
+	await expectCompactHeaderHidesAndRevealsWithScroll(
+		page.locator(".view-top").first(),
+		page.locator(".mix-page"),
+	);
+});
 
 test("Mix disclosures expose animated open and closed state", async ({ page }) => {
 	await page.goto("/mix");

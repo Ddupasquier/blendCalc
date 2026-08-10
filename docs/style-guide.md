@@ -317,22 +317,18 @@ zoom. Content must remain reachable without horizontal page scrolling. Fixed con
 dialogs, sheets, popovers, and notifications preserve safe areas and never cover their
 own required actions.
 
-On those compact Ingredients layouts, downward saved-list scrolling retracts the page
-title, search toolbar, and manual-entry launcher upward so the list receives more usable
-space. A short upward scroll reveals that complete region by animating it downward
-without requiring the user to return to the first card. The Fridge/Shopping List tabs
-remain available, switching lists restores the region, and reduced-motion preferences
-remove the transition without changing the visibility behavior. Wider layouts keep the
-complete region visible.
-
-The compact Mix page uses the same `ViewFrame`, `ViewTop`, and `ViewBody` shell contract
-as Ingredients. Only its main scroll surface owns header direction changes. Downward
-movement there retracts the title, supporting copy, status, and header actions; a short
-upward movement there reveals the complete header before the page returns to its top.
-Scrolling inside the bounded Add Ingredients and Selected Ingredients lists never
-changes header visibility. The main tracker pauses and rebases while header geometry
-settles so the animation cannot shudder or immediately reverse itself. Wider Mix layouts
-keep the header visible.
+Every authenticated primary view—Ingredients, Mix, Saved Recipes, and Profile—uses the
+shared `ViewFrame`, `ViewTop`, and `ViewBody` shell contract. On compact layouts, only
+that view's main content scroller controls header direction: deliberate downward movement
+retracts its complete top region, and a short upward movement reveals it before returning
+to the top. Ingredients retracts its title, search toolbar, and manual-entry launcher;
+Mix retracts its title, supporting copy, status, and actions; Saved Recipes retracts its
+title and search/sort controls; Profile retracts its title and supporting copy. Switching
+an Ingredients list or changing a Saved filter restores the top region. Scrolling inside
+Mix child lists, bottom sheets, or right sheets never changes the underlying header.
+The shared tracker pauses and rebases while header geometry settles so it cannot shudder
+or immediately reverse itself. Wider layouts keep every complete header visible, and
+reduced motion preserves visibility behavior without animating the transition.
 
 Top-level Mix sections place panel padding inside the animated disclosure body rather
 than around the whole collapse. A closed section therefore occupies only the shared
@@ -409,7 +405,7 @@ Check the existing primitive before writing markup or SCSS.
 | Back or close                         | `BackButton` / `CloseButton` | Do not recreate chevrons, circles, or hit areas                                                     |
 | Collapse                              | `CollapsibleSection`         | Chevron stays left; badges/actions stay right; shared open/close motion preserves mounted content   |
 | Specialized disclosure indicator      | `DisclosureChevron`          | Right when closed, animated down when open; use instead of local chevron rotation                    |
-| Bottom overlay                        | `BottomSheet`                | Owns handle, title, focus, close behavior, safe area, and navigation clearance                      |
+| Bottom overlay                        | `BottomSheet`                | Owns handle, title, focus, close behavior, safe area, and navigation clearance; no duplicate top Back control |
 | Right-side data view                  | `RightSheet`                 | Search and full-content slide-in views                                                              |
 | Sheet action row                      | `BottomSheetAction`          | Owns row geometry and circular leading icon                                                         |
 | Status feedback                       | `StatusMessage`              | Info, success, warning, and danger; use approved friendly copy                                      |
@@ -419,6 +415,7 @@ Check the existing primitive before writing markup or SCSS.
 | Toggle                                | `ToggleSwitch`               | Boolean settings; do not use a checkbox as an on/off switch                                         |
 | Fixed-choice dropdown                 | `SelectField`                | Accessible combobox and top-layer listbox with shared label, helper, keyboard/typeahead, focus, disabled, and responsive states; a hidden native select preserves required validation and form submission |
 | Compact metadata badge                | `TextBadge`                  | Owns centering, tone, padding, and truncation                                                       |
+| Action-required count                 | `ActionRequiredCountBadge`   | Red circled count for pending privileged work; render only above zero                               |
 | Structured metadata pill              | `MetadataPill`               | Ingredient labels, kcal, goal progress, and other compact label/value or label/icon metadata        |
 | Verified evidence                     | `VerifiedStatusBadge`        | Detail/search contexts where verification helps a decision                                          |
 | Privileged group marker               | `PrivilegedActionBadge`      | One crown in the owning group header, not every child action                                        |
@@ -451,7 +448,7 @@ not only the default page.
 
 | Surface                    | Current Ingredients implementation              | Styling/behavior expectation                                                                             |
 | -------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Manual entry               | `ManualEntrySheet` → `BottomSheet`              | Full-height-capable bottom sheet, shared handle, no redundant top back arrow, state preserved while open |
+| Manual entry               | `ManualEntrySheet` → `BottomSheet`              | Full-height-capable bottom sheet, shared handle, no redundant top Back control, state preserved while open |
 | Sort/filter                | `IngredientFilterSheet` → `BottomSheet`         | Compact grouped controls, pill selections, one clear Apply action                                        |
 | Ingredient actions         | `IngredientActionSheet` → `BottomSheet`         | Reusable action rows; ordinary actions first and privileged group last                                   |
 | Image placement            | `IngredientImagePlacementSheet` → `BottomSheet` | Shared editor and exact card preview; privileged treatment comes from the owning group                   |
@@ -614,7 +611,8 @@ placement previews remain identical.
 
 ### Manual Entry
 
-- Use `BottomSheet` without the top back arrow; step controls already provide Back.
+- Use `BottomSheet` without a redundant top Back control; step controls may provide an
+  in-flow Back action when it navigates between steps instead of closing the sheet.
 - Use `SegmentedControl` progress tabs and validate navigation through both tabs and
   Continue.
 - Do not show required-field errors until the user attempts to advance.
@@ -698,6 +696,9 @@ reporting interface for every warning in the default view.
   every manual entry or every external-source record.
 - Use one crown at the header of the nearest privileged action group. Do not add a
   crown to every control inside it.
+- Pending privileged work uses `ActionRequiredCountBadge` in the action's top-right
+  corner. Keep the written action label and disabled state so urgency never depends on
+  the red color alone; do not render a zero badge.
 
 ## Motion And Interaction
 

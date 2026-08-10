@@ -1,9 +1,18 @@
 @use "../../../../styles/variables" as *;
 
+.profile-image-settings,
 form,
 .profile-image-policy {
 	display: grid;
 	gap: $app-gap-sm;
+}
+
+.profile-image-settings > p {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-body;
 }
 
 .profile-image-policy ul {
@@ -17,17 +26,16 @@ form,
 }
 
 .profile-image-actions {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
 	gap: $app-gap-sm;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.profile-image-actions {
-		display: grid;
-		grid-template-columns: 1fr;
-	}
+:global(.profile-image-actions .rounded-action-button) {
+	width: 100%;
+}
 
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.profile-image-settings > p,
 	.profile-image-policy ul {
 		font-size: $app-font-size-xs;
 	}

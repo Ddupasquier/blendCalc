@@ -86,14 +86,9 @@ type PendingProductSubmission = {
 	created_at: string;
 };
 
-const PRODUCT_SUBMISSION_REJECTION_THRESHOLD = 5;
-const PRODUCT_SUBMISSION_REJECTION_WINDOW_DAYS = 30;
-const PRODUCT_SUBMISSION_BLOCK_DAYS = 30;
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
-
-type ProductSubmissionBlock = {
-	blocked_until: string;
-	rejection_count: number;
+type CatalogSubmissionSuspension = {
+	sharing_suspended_until: string;
+	moderator_rejection_count: number;
 };
 
 export class ProductSubmissionBlockedError extends Error {
@@ -101,16 +96,13 @@ export class ProductSubmissionBlockedError extends Error {
 	blockedUntil: string;
 	displayBlockedUntil: string;
 
-	constructor(block: ProductSubmissionBlock) {
+	constructor(suspension: CatalogSubmissionSuspension) {
 		super("Catalog product submission is blocked.");
 		this.name = "ProductSubmissionBlockedError";
-		this.blockedUntil = block.blocked_until;
-		this.displayBlockedUntil = formatBlockDate(block.blocked_until);
+		this.blockedUntil = suspension.sharing_suspended_until;
+		this.displayBlockedUntil = formatBlockDate(suspension.sharing_suspended_until);
 	}
 }
-
-const addDays = (date: Date, days: number) =>
-	new Date(date.getTime() + days * DAY_IN_MS);
 
 const formatBlockDate = (value: string) =>
 	new Intl.DateTimeFormat("en", {
@@ -220,74 +212,27 @@ const assertKnownSubmissionNutrients = async (food: FoodItem) => {
 	}
 };
 
-export const getActiveProductSubmissionBlock = async (userId: string) => {
+export const getActiveCatalogSubmissionSuspension = async (userId: string) => {
 	const admin = getSupabaseAdminClient();
 	const now = new Date().toISOString();
 	const { data, error } = await admin
-		.from("product_submission_blocks")
-		.select("blocked_until, rejection_count")
+		.from("user_catalog_submission_enforcement")
+		.select("sharing_suspended_until, moderator_rejection_count")
 		.eq("user_id", userId)
-		.gt("blocked_until", now)
-		.order("blocked_until", { ascending: false })
-		.limit(1)
+		.gt("sharing_suspended_until", now)
 		.maybeSingle();
 	if (error) throw error;
 	return data;
 };
 
-const createProductSubmissionBlockIfNeeded = async (input: {
-	userId: string;
-	moderatorId?: string;
-	sourceSubmissionId?: string;
-}) => {
-	const activeBlock = await getActiveProductSubmissionBlock(input.userId);
-	if (activeBlock) return activeBlock;
-
-	const admin = getSupabaseAdminClient();
-	const now = new Date();
-	const windowStartedAt = addDays(now, -PRODUCT_SUBMISSION_REJECTION_WINDOW_DAYS);
-	const { data: recentRejections, error } = await admin
-		.from("shared_product_submissions")
-		.select("id, reviewed_at")
-		.eq("submitted_by", input.userId)
-		.eq("status", "rejected")
-		.gte("reviewed_at", windowStartedAt.toISOString())
-		.order("reviewed_at", { ascending: false })
-		.limit(PRODUCT_SUBMISSION_REJECTION_THRESHOLD);
-	if (error) throw error;
-	if ((recentRejections?.length ?? 0) < PRODUCT_SUBMISSION_REJECTION_THRESHOLD) {
-		return null;
-	}
-
-	const oldestCountedRejection = recentRejections?.at(-1)?.reviewed_at ?? windowStartedAt.toISOString();
-	const blockedUntil = addDays(now, PRODUCT_SUBMISSION_BLOCK_DAYS).toISOString();
-	const { data: block, error: blockError } = await admin
-		.from("product_submission_blocks")
-		.insert({
-			user_id: input.userId,
-			reason: "too_many_rejected_submissions",
-			rejection_count: recentRejections?.length ?? PRODUCT_SUBMISSION_REJECTION_THRESHOLD,
-			window_started_at: oldestCountedRejection,
-			window_ended_at: now.toISOString(),
-			blocked_until: blockedUntil,
-			source_submission_id: input.sourceSubmissionId ?? null,
-			created_by: input.moderatorId ?? null,
-			notes: `${PRODUCT_SUBMISSION_REJECTION_THRESHOLD} rejected product submissions in ${PRODUCT_SUBMISSION_REJECTION_WINDOW_DAYS} days.`,
-		})
-		.select("blocked_until, rejection_count")
-		.single();
-	if (blockError || !block) {
-		throw blockError ?? new Error("Product submission block could not be saved.");
-	}
-	return block;
-};
-
 export const assertCanSubmitSharedProduct = async (userId: string) => {
-	const activeBlock = await getActiveProductSubmissionBlock(userId);
-	if (activeBlock) throw new ProductSubmissionBlockedError(activeBlock);
-
-	const newBlock = await createProductSubmissionBlockIfNeeded({ userId });
-	if (newBlock) throw new ProductSubmissionBlockedError(newBlock);
+	const activeSuspension = await getActiveCatalogSubmissionSuspension(userId);
+	if (activeSuspension?.sharing_suspended_until) {
+		throw new ProductSubmissionBlockedError({
+			sharing_suspended_until: activeSuspension.sharing_suspended_until,
+			moderator_rejection_count: activeSuspension.moderator_rejection_count,
+		});
+	}
 };
 
 export const submitProductForCatalog = async (
@@ -626,15 +571,10 @@ export const rejectProductSubmission = async (
 		})
 		.eq("id", submissionId)
 		.eq("status", "pending")
-		.select("id, submitted_by")
+		.select("id")
 		.maybeSingle();
 	if (error) throw error;
 	if (!rejectedSubmission) {
 		throw new Error("This product submission has already been reviewed.");
 	}
-	await createProductSubmissionBlockIfNeeded({
-		userId: rejectedSubmission.submitted_by,
-		moderatorId,
-		sourceSubmissionId: rejectedSubmission.id,
-	});
 };

@@ -1,0 +1,22 @@
+@use "../../../../styles/variables" as *;
+
+.profile-food-preference-view__header {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: start;
+	gap: $app-gap-sm;
+}
+
+:global(.profile-food-preference-view__back) {
+	margin-top: 0;
+}
+
+:global(.profile-food-preference-view__body) {
+	padding-bottom: $app-gap-md;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	:global(.profile-food-preference-view__body) {
+		padding-bottom: $app-gap-sm;
+	}
+}

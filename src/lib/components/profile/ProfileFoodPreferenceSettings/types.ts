@@ -13,6 +13,7 @@ export type ProfileFoodPreferenceSettingsProps = {
 	submittedValues?: FoodPreferenceFormValues | null;
 	errorMessage?: string | null;
 	successMessage?: string | null;
+	onSaveSuccess?: () => void;
 };
 
 export type FoodPreferenceGroupKey = "allergens" | "dietaryRestrictions";

@@ -3,6 +3,7 @@ import {
 	test as playwrightTest,
 	type Browser,
 	type ConsoleMessage,
+	type Locator,
 	type Page,
 } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
@@ -133,6 +134,84 @@ export const waitForVisualStability = async (page: Page) => {
 			}),
 		);
 	});
+};
+
+export const expectFocusOutlineInsideBoundary = async (
+	focusTarget: Locator,
+	clippingBoundary: Locator,
+) => {
+	await focusTarget.page().keyboard.press("Tab");
+	await focusTarget.focus();
+	await expect(focusTarget).toBeFocused();
+
+	const [focusTargetBounds, clippingBoundaryBounds, focusOutline] = await Promise.all([
+		focusTarget.boundingBox(),
+		clippingBoundary.boundingBox(),
+		focusTarget.evaluate((element) => {
+			const styles = window.getComputedStyle(element);
+			const outlineWidthPixels = Number.parseFloat(styles.outlineWidth) || 0;
+			const outlineOffsetPixels = Number.parseFloat(styles.outlineOffset) || 0;
+
+			return {
+				extentPixels: Math.max(0, outlineWidthPixels + outlineOffsetPixels),
+				style: styles.outlineStyle,
+			};
+		}),
+	]);
+
+	expect(focusTargetBounds).not.toBeNull();
+	expect(clippingBoundaryBounds).not.toBeNull();
+	expect(focusOutline.style).not.toBe("none");
+	expect(focusOutline.extentPixels).toBeGreaterThan(0);
+
+	const tolerancePixels = 1;
+	const focusTargetRight = focusTargetBounds!.x + focusTargetBounds!.width;
+	const focusTargetBottom = focusTargetBounds!.y + focusTargetBounds!.height;
+	const clippingBoundaryRight =
+		clippingBoundaryBounds!.x + clippingBoundaryBounds!.width;
+	const clippingBoundaryBottom =
+		clippingBoundaryBounds!.y + clippingBoundaryBounds!.height;
+
+	expect(focusTargetBounds!.x - focusOutline.extentPixels).toBeGreaterThanOrEqual(
+		clippingBoundaryBounds!.x - tolerancePixels,
+	);
+	expect(focusTargetBounds!.y - focusOutline.extentPixels).toBeGreaterThanOrEqual(
+		clippingBoundaryBounds!.y - tolerancePixels,
+	);
+	expect(focusTargetRight + focusOutline.extentPixels).toBeLessThanOrEqual(
+		clippingBoundaryRight + tolerancePixels,
+	);
+	expect(focusTargetBottom + focusOutline.extentPixels).toBeLessThanOrEqual(
+		clippingBoundaryBottom + tolerancePixels,
+	);
+};
+
+export const expectCompactHeaderHidesAndRevealsWithScroll = async (
+	header: Locator,
+	scrollContainer: Locator,
+) => {
+	await scrollContainer.evaluate((element) => element.scrollTo({ top: 0 }));
+	await expect(header).not.toHaveClass(/view-top--compact-hidden/);
+	await expect(header).toBeVisible();
+	const maximumScrollTop = await scrollContainer.evaluate((element) => {
+		const nextScrollTop = element.scrollHeight - element.clientHeight;
+		element.scrollTo({ top: nextScrollTop });
+		return nextScrollTop;
+	});
+	expect(maximumScrollTop).toBeGreaterThan(0);
+	await expect(header).toHaveClass(/view-top--compact-hidden/);
+	await header.evaluate(async (element) => {
+		await Promise.all(
+			element
+				.getAnimations({ subtree: true })
+				.map((animation) => animation.finished.catch(() => undefined)),
+		);
+	});
+
+	await scrollContainer.evaluate((element) =>
+		element.scrollTo({ top: Math.max(0, element.scrollTop - 160) }),
+	);
+	await expect(header).not.toHaveClass(/view-top--compact-hidden/);
 };
 
 export { expect };

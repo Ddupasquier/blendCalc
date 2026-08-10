@@ -1,9 +1,18 @@
 @use "../../../../styles/variables" as *;
 
+.profile-food-preference-settings,
 form,
 .food-preference-editors {
 	display: grid;
 	gap: $app-gap-sm;
+}
+
+.profile-food-preference-settings__description {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-body;
 }
 
 .food-preference-notice {
@@ -19,16 +28,16 @@ form,
 }
 
 form > :global(.rounded-action-button) {
-	justify-self: start;
+	width: 100%;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.profile-food-preference-settings__description,
 	.food-preference-notice {
-		padding: $app-gap-xs;
 		font-size: $app-font-size-xs;
 	}
 
-	form > :global(.rounded-action-button) {
-		width: 100%;
+	.food-preference-notice {
+		padding: $app-gap-xs;
 	}
 }

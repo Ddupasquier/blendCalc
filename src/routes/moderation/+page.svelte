@@ -42,6 +42,14 @@
 		canModerateTargetRole(data.viewerRole, user.role)
 	);
 
+	const formatCatalogSharingSuspensionDate = (value: string) =>
+		new Intl.DateTimeFormat("en", {
+			month: "short",
+			day: "numeric",
+			year: "numeric",
+			timeZone: "UTC",
+		}).format(new Date(value));
+
 	const enhanceModerationAction: SubmitFunction = ({ formData, cancel }) => {
 		if (pendingTargetUserId) {
 			cancel();
@@ -465,7 +473,7 @@
 		</div>
 	</section>
 
-	<section class="account-list" aria-label="User accounts">
+	<section id="account-review" class="account-list" aria-label="User accounts">
 		{#each data.users as user (user.id)}
 			<article class:account-card--blocked={user.status === "banned"} class="account-card">
 				<div class="avatar">
@@ -491,6 +499,13 @@
 					<p class="account-email">{user.email}</p>
 					<p>Image: {user.avatarModerationStatus}</p>
 					{#if user.role}<p>Role: {user.role}</p>{/if}
+					<p>Rejected public submissions: {user.moderatorRejectedSubmissionCount}</p>
+					{#if user.catalogSharingSuspendedUntil}
+						<p class="account-sharing-suspension">
+							Public product sharing is suspended until
+							{formatCatalogSharingSuspensionDate(user.catalogSharingSuspendedUntil)}.
+						</p>
+					{/if}
 					{#if user.publicReason}<p>{user.publicReason}</p>{/if}
 					{#if user.id === data.viewerUserId}
 						<p class="account-note">You cannot moderate your own account.</p>

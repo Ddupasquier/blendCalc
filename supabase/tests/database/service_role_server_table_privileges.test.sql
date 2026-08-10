@@ -1,6 +1,6 @@
 begin;
 
-select plan(14);
+select plan(15);
 
 select ok(
 	has_table_privilege('service_role', 'public.account_moderation', 'select')
@@ -35,6 +35,13 @@ select ok(
 		and has_table_privilege('service_role', 'public.product_submission_blocks', 'insert')
 		and has_table_privilege('service_role', 'public.product_submission_blocks', 'update'),
 	'the server role can enforce product submission blocks'
+);
+
+select ok(
+	has_table_privilege('service_role', 'public.user_catalog_submission_enforcement', 'select')
+		and has_table_privilege('service_role', 'public.user_catalog_submission_enforcement', 'insert')
+		and has_table_privilege('service_role', 'public.user_catalog_submission_enforcement', 'update'),
+	'the server role can maintain current catalog submission enforcement state'
 );
 
 select ok(
