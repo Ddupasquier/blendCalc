@@ -1,0 +1,7 @@
+@use "../../../../styles/variables" as *;
+
+.profile-settings-menu {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+}

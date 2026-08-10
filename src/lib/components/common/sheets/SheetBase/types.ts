@@ -3,6 +3,7 @@ import type { Snippet } from "svelte";
 export type SheetPlacement = "bottom" | "right";
 
 export type SheetBaseProps = {
+	id?: string;
 	open?: boolean;
 	placement: SheetPlacement;
 	label?: string;

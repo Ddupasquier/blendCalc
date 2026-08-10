@@ -1,0 +1,25 @@
+@use "../../../../../styles/variables" as *;
+
+.action-required-count-badge {
+	display: inline-grid;
+	place-items: center;
+	box-sizing: border-box;
+	min-width: 1.4rem;
+	height: 1.4rem;
+	padding-inline: $app-gap-2xs;
+	color: $app-shell-text-on-danger;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-heavy;
+	line-height: 1;
+	white-space: nowrap;
+	background: $app-shell-accent-danger;
+	border-radius: $app-radius-pill;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.action-required-count-badge {
+		min-width: 1.2rem;
+		height: 1.2rem;
+		font-size: $app-font-size-2xs;
+	}
+}

@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { fail, redirect } from "@sveltejs/kit";
 import { dev } from "$app/environment";
-import type { Actions, PageServerLoad } from "./$types";
+import type { Actions } from "./$types";
 import {
 	PROFILE_AVATAR_POLICY_ITEMS,
 	PROFILE_AVATAR_POLICY_VERSION,
@@ -51,7 +51,6 @@ import {
 } from "$lib/server/food-safety/foodSafetyPolicy.server";
 import {
 	getRegulatoryRegionOptions,
-	loadProfilePageData,
 } from "$lib/server/profile/profilePageData.server";
 
 const PROFILE_TEXT_FORM_MAX_BYTES = 64 * 1024;
@@ -95,14 +94,6 @@ const getFoodPreferenceFormValues = (
 			formData.get("regulatoryRegionSource"),
 		),
 	};
-};
-
-export const load: PageServerLoad = async ({ locals }) => {
-	const user = await getAuthenticatedUser(locals);
-	return loadProfilePageData({
-		supabase: locals.supabase,
-		userId: user.id,
-	});
 };
 
 export const actions: Actions = {

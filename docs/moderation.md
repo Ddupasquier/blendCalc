@@ -243,6 +243,23 @@ Approval merges only the reviewed changed fields, preserves unsubmitted canonica
 and provenance, and appends the normal immutable revision. If the active product changed
 while the report waited, approval stops as stale and the report must be compared again.
 
+## Repeated Catalog Rejections
+
+Every transition to the moderator-owned `rejected` submission status atomically
+increments `user_catalog_submission_enforcement.moderator_rejection_count`. Automated
+validation outcomes use `auto_declined` and never increase this count.
+
+The 51st moderator rejection suspends new public catalog submissions for six calendar
+months. The user may continue saving private foods, using Ingredients, building Mixes,
+and managing Saved Recipes. If another moderator rejection occurs after the suspension
+expires, a new six-month suspension begins.
+
+`user_catalog_submission_enforcement` owns current count and suspension state.
+`product_submission_blocks` remains append-only suspension history. The account-review
+card on `/moderation` displays the cumulative count and active suspension end date so a
+reviewer can understand the account's catalog-sharing history without exposing those
+details to other users.
+
 ## Catalog Data Health
 
 `/moderation/data-health` is a privileged catalog health summary available to

@@ -25,7 +25,7 @@
 		MOTION_DURATION_MS,
 	} from "$lib/utils/animation/motion";
 	import { filterItemsByQuery } from "$lib/utils/list/listNavigation";
-	import { createScrollDirectionTracker } from "$lib/utils/navigation/scrollDirection";
+	import { createScrollAwareHeaderVisibilityController } from "$lib/utils/navigation/scrollAwareHeaderVisibilityController.svelte";
 	import {
 		deleteSavedRecipe,
 		normalizeSavedRecipe,
@@ -48,8 +48,9 @@
 	let loadError = $state(initialSavedData?.loadError ?? "");
 	let loadingRecipes = $state(false);
 	let scrollContainer = $state<HTMLElement | null>(null);
-	let compactTopHidden = $state(false);
-	const scrollDirectionTracker = createScrollDirectionTracker();
+	const headerVisibility = createScrollAwareHeaderVisibilityController({
+		isEnabled: () => !sortSheetOpen,
+	});
 
 	const sortOptions = [
 		{ value: "newest", label: "Newest first" },
@@ -139,20 +140,18 @@
 	const updateQuery = (value: string) => {
 		query = value;
 		visibleCount = LIST_PAGE_SIZES.savedRecipes;
-		compactTopHidden = false;
-		scrollDirectionTracker.reset(scrollContainer?.scrollTop ?? 0);
+		headerVisibility.show(scrollContainer?.scrollTop ?? 0);
 	};
 
 	const updateSort = (value: string) => {
 		sort = value;
 		visibleCount = LIST_PAGE_SIZES.savedRecipes;
-		compactTopHidden = false;
-		scrollDirectionTracker.reset(scrollContainer?.scrollTop ?? 0);
+		headerVisibility.show(scrollContainer?.scrollTop ?? 0);
 	};
 
 	const openSortSheet = () => {
 		if (sortSheetOpen) return;
-		compactTopHidden = false;
+		headerVisibility.show(scrollContainer?.scrollTop ?? 0);
 		pushState("/saved/sort", { ...page.state });
 	};
 
@@ -173,14 +172,6 @@
 	const getListReflowDuration = () =>
 		getMotionSafeDuration(MOTION_DURATION_MS.reflow);
 
-	const handleSavedScroll = (event: Event) => {
-		if (sortSheetOpen) return;
-		const direction = scrollDirectionTracker.update(
-			(event.currentTarget as HTMLElement).scrollTop,
-		);
-		if (direction) compactTopHidden = direction === "down";
-	};
-
 	onMount(() => {
 		window.addEventListener(SAVED_RECIPES_CHANGED_EVENT, loadSavedRecipes);
 		return () => {
@@ -190,6 +181,8 @@
 			);
 		};
 	});
+
+	$effect(() => headerVisibility.observe(scrollContainer));
 </script>
 
 <svelte:head>
@@ -207,7 +200,10 @@
 />
 
 <ViewFrame appShell className="saved-page">
-	<ViewTop compactHidden={compactTopHidden}>
+	<ViewTop
+		className="saved-page__top"
+		compactHidden={headerVisibility.state.hidden}
+	>
 		<ViewHeader
 			title="Saved Recipes"
 			subtitle="Revisit combinations you’ve saved and load them back into Mix whenever you need them."
@@ -237,7 +233,7 @@
 		<div
 			class="saved-page__scroll"
 			bind:this={scrollContainer}
-			onscroll={handleSavedScroll}
+			onscroll={headerVisibility.handleScroll}
 		>
 			<div class="saved-page__content">
 				{#if deleteError}

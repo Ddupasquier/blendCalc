@@ -1,4 +1,9 @@
-import { expect, test, waitForAppReady } from "./support/browserTest";
+import {
+	expect,
+	expectCompactHeaderHidesAndRevealsWithScroll,
+	test,
+	waitForAppReady,
+} from "./support/browserTest";
 
 test("the saved-list segmented control supports pointer and keyboard navigation", async ({
 	page,
@@ -141,26 +146,7 @@ test("compact Ingredients chrome leaves the viewport and returns with scroll dir
 	const viewTop = page.locator(".view-top");
 	const ingredientList = page.getByRole("list", { name: "Fridge ingredients" });
 
-	await expect(viewTop).toBeVisible();
-	const listBottom = await ingredientList.evaluate((element) => {
-		const maximumScrollTop = element.scrollHeight - element.clientHeight;
-		element.scrollTo({ top: maximumScrollTop });
-		return maximumScrollTop;
-	});
-	expect(listBottom).toBeGreaterThan(0);
-	await expect(viewTop).toHaveClass(/view-top--compact-hidden/);
-	await viewTop.evaluate(async (element) => {
-		await Promise.all(
-			element
-				.getAnimations({ subtree: true })
-				.map((animation) => animation.finished.catch(() => undefined)),
-		);
-	});
-
-	await ingredientList.evaluate((element) =>
-		element.scrollTo({ top: Math.max(0, element.scrollTop - 160) }),
-	);
-	await expect(viewTop).not.toHaveClass(/view-top--compact-hidden/);
+	await expectCompactHeaderHidesAndRevealsWithScroll(viewTop, ingredientList);
 });
 
 test("narrow layouts do not create page-level horizontal overflow", async ({

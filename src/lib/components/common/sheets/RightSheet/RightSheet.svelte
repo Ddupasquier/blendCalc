@@ -3,6 +3,7 @@
 	import type { RightSheetProps } from "./types";
 
 	let {
+		id,
 		open = false,
 		labelledby,
 		onClose = () => {},
@@ -11,6 +12,7 @@
 </script>
 
 <SheetBase
+	{id}
 	{open}
 	placement="right"
 	{labelledby}

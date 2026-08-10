@@ -1,12 +1,16 @@
 @use "../../../../../styles/variables" as *;
 
+$view-frame-focus-clearance: $app-gap-2xs;
+
 .view-frame {
 	display: flex;
 	flex-direction: column;
 	gap: $app-gap-md;
-	width: 100%;
-	height: 100%;
+	width: calc(100% + (2 * #{$view-frame-focus-clearance}));
+	height: calc(100% + (2 * #{$view-frame-focus-clearance}));
 	min-height: 0;
+	margin: calc(0rem - #{$view-frame-focus-clearance});
+	padding: $view-frame-focus-clearance;
 	overflow: hidden;
 	background: $app-shell-surface-page;
 	box-sizing: border-box;

@@ -14,6 +14,7 @@
 	import { MOTION_EASING_FUNCTION } from "$lib/utils/animation/transitions";
 
 	let {
+		id,
 		open = false,
 		placement,
 		label,
@@ -125,6 +126,7 @@
 	{/if}
 
 	<div
+		{id}
 		bind:this={sheetElement}
 		class={[
 			"sheet-base",
