@@ -25,8 +25,8 @@ export type NutrientContributionBreakdown = {
 };
 
 export type NutrientChartMetric = {
-	actualAmountToGoalRatio: number;
-	hasPositiveGoal: boolean;
+	configuredGoalToReferenceGoalRatio: number;
+	actualAmountToReferenceGoalRatio: number;
 };
 
 export type NutrientAdjustmentImpact = {
