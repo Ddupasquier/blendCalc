@@ -1,4 +1,10 @@
-import { expect, test, waitForAppReady } from "./support/browserTest";
+import {
+	expect,
+	expectCompactHeaderHidesAndRevealsWithScroll,
+	expectFocusOutlineInsideBoundary,
+	test,
+	waitForAppReady,
+} from "./support/browserTest";
 
 const tinyPng = Buffer.from(
 	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -72,6 +78,46 @@ test("profile selects support keyboard dismissal without changing the value", as
 	await expect(region).toContainText(originalLabel);
 });
 
+test("compact Profile header leaves and returns with main-page scroll direction", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		!testInfo.project.name.startsWith("mobile-"),
+		"Compact header behavior is a phone-layout contract.",
+	);
+
+	await page.goto("/profile");
+	await waitForAppReady(page);
+	const viewTop = page.locator(".profile-page__top");
+	const profileScrollContainer = page.locator(".profile-page");
+
+	await expectCompactHeaderHidesAndRevealsWithScroll(
+		viewTop,
+		profileScrollContainer,
+	);
+
+	await page.getByRole("button", { name: /Food preferences/ }).click();
+	const headerWasHiddenBeforeSheetScroll = await viewTop.evaluate((element) =>
+		element.classList.contains("view-top--compact-hidden"),
+	);
+	const foodPreferencesBody = page.locator(
+		".profile-food-preference-view__body",
+	);
+	const sheetMaximumScrollTop = await foodPreferencesBody.evaluate((element) => {
+		const nextScrollTop = element.scrollHeight - element.clientHeight;
+		element.scrollTo({ top: nextScrollTop });
+		return nextScrollTop;
+	});
+	expect(sheetMaximumScrollTop).toBeGreaterThan(0);
+	await expect
+		.poll(() =>
+			viewTop.evaluate((element) =>
+				element.classList.contains("view-top--compact-hidden"),
+			),
+		)
+		.toBe(headerWasHiddenBeforeSheetScroll);
+});
+
 test("Profile settings use routed sheets and restore launcher focus", async ({
 	page,
 }) => {
@@ -99,7 +145,15 @@ test("Profile settings use routed sheets and restore launcher focus", async ({
 	await expect(
 		page.getByRole("dialog", { name: "Food preferences" }),
 	).toBeVisible();
-	await page.getByRole("button", { name: "Back to profile" }).click();
+	const foodPreferenceView = page.locator(".profile-food-preference-view");
+	const backToProfileButton = page.getByRole("button", {
+		name: "Back to profile",
+	});
+	await expectFocusOutlineInsideBoundary(
+		backToProfileButton,
+		foodPreferenceView,
+	);
+	await backToProfileButton.click();
 	await expect(page).toHaveURL(/\/profile$/);
 });
 

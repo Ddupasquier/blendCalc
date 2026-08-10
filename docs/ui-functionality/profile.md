@@ -10,6 +10,12 @@ session settings. Detailed privacy and storage rules live in
 
 - Keep the Profile route as a compact summary and settings menu rather than rendering
   every form at once.
+- On compact phones and short screens, only the main Profile scroll surface controls
+  header retraction. Downward scrolling hides the title and supporting copy; a short
+  upward scroll reveals them before the page reaches the top. Scrolling inside a
+  bottom sheet or right sheet never changes the Profile header. Wider layouts keep the
+  header visible, and reduced motion removes the transition without changing the
+  visibility state.
 - Open Light/Dark Mode at `/profile/appearance`, Profile details at `/profile/details`, and
   Profile image at `/profile/image` in the shared route-backed `BottomSheet`.
 - Open Food preferences at `/profile/food-preferences` in the shared route-backed

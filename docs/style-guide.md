@@ -317,22 +317,18 @@ zoom. Content must remain reachable without horizontal page scrolling. Fixed con
 dialogs, sheets, popovers, and notifications preserve safe areas and never cover their
 own required actions.
 
-On those compact Ingredients layouts, downward saved-list scrolling retracts the page
-title, search toolbar, and manual-entry launcher upward so the list receives more usable
-space. A short upward scroll reveals that complete region by animating it downward
-without requiring the user to return to the first card. The Fridge/Shopping List tabs
-remain available, switching lists restores the region, and reduced-motion preferences
-remove the transition without changing the visibility behavior. Wider layouts keep the
-complete region visible.
-
-The compact Mix page uses the same `ViewFrame`, `ViewTop`, and `ViewBody` shell contract
-as Ingredients. Only its main scroll surface owns header direction changes. Downward
-movement there retracts the title, supporting copy, status, and header actions; a short
-upward movement there reveals the complete header before the page returns to its top.
-Scrolling inside the bounded Add Ingredients and Selected Ingredients lists never
-changes header visibility. The main tracker pauses and rebases while header geometry
-settles so the animation cannot shudder or immediately reverse itself. Wider Mix layouts
-keep the header visible.
+Every authenticated primary view—Ingredients, Mix, Saved Recipes, and Profile—uses the
+shared `ViewFrame`, `ViewTop`, and `ViewBody` shell contract. On compact layouts, only
+that view's main content scroller controls header direction: deliberate downward movement
+retracts its complete top region, and a short upward movement reveals it before returning
+to the top. Ingredients retracts its title, search toolbar, and manual-entry launcher;
+Mix retracts its title, supporting copy, status, and actions; Saved Recipes retracts its
+title and search/sort controls; Profile retracts its title and supporting copy. Switching
+an Ingredients list or changing a Saved filter restores the top region. Scrolling inside
+Mix child lists, bottom sheets, or right sheets never changes the underlying header.
+The shared tracker pauses and rebases while header geometry settles so it cannot shudder
+or immediately reverse itself. Wider layouts keep every complete header visible, and
+reduced motion preserves visibility behavior without animating the transition.
 
 Top-level Mix sections place panel padding inside the animated disclosure body rather
 than around the whole collapse. A closed section therefore occupies only the shared

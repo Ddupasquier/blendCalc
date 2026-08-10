@@ -8,7 +8,10 @@
 	import type { ActionData, PageData } from "./$types";
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 	import RightSheet from "$lib/components/common/sheets/RightSheet/RightSheet.svelte";
+	import ViewBody from "$lib/components/common/view/ViewBody/ViewBody.svelte";
+	import ViewFrame from "$lib/components/common/view/ViewFrame/ViewFrame.svelte";
 	import ViewHeader from "$lib/components/common/view/ViewHeader/ViewHeader.svelte";
+	import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
 	import ProfileAppearanceSettings from "$lib/components/profile/ProfileAppearanceSettings/ProfileAppearanceSettings.svelte";
 	import ProfileDetailsSettings from "$lib/components/profile/ProfileDetailsSettings/ProfileDetailsSettings.svelte";
 	import ProfileFoodPreferenceView from "$lib/components/profile/ProfileFoodPreferenceView/ProfileFoodPreferenceView.svelte";
@@ -28,6 +31,7 @@
 		PROFILE_SETTINGS_ROUTES,
 		type ProfileSettingsRoute,
 	} from "$lib/utils/profile/profileRouteState";
+	import { createScrollAwareHeaderVisibilityController } from "$lib/utils/navigation/scrollAwareHeaderVisibilityController.svelte";
 	import { normalizeThemePreference } from "$lib/utils/theme/themePreference";
 
 	const data = $derived(page.data as PageData);
@@ -35,6 +39,10 @@
 	let activeSettingsRoute = $state<ProfileSettingsRoute | null>(
 		getProfileSettingsRoute(page.url.pathname),
 	);
+	let profileScrollContainer = $state<HTMLElement | null>(null);
+	const headerVisibility = createScrollAwareHeaderVisibilityController({
+		isEnabled: () => activeSettingsRoute === null,
+	});
 	const documentTitle = $derived(
 		formatDocumentTitle(
 			activeSettingsRoute
@@ -48,6 +56,8 @@
 	$effect(() => {
 		activeSettingsRoute = getProfileSettingsRoute(page.url.pathname);
 	});
+
+	$effect(() => headerVisibility.observe(profileScrollContainer));
 
 	const displayName = $derived(
 		form?.profileValues?.displayName ??
@@ -162,39 +172,52 @@
 	/>
 {/if}
 
-<div class="profile-page">
-	<ViewHeader
-		title="Your profile"
-		subtitle="Manage your identity, food preferences, appearance, and account."
-	/>
-
-	<ProfileIdentitySummary
-		avatarUrl={data.avatarUrl}
-		avatarAltText={data.profile?.avatar_alt_text}
-		displayName={data.profile?.display_name ?? data.defaultDisplayName}
-	/>
-
-	<ProfileSettingsMenu
-		{appearanceTheme}
-		{displayName}
-		{bio}
-		hasProfileImage={Boolean(data.profile?.avatar_path)}
-		allergenCount={data.foodPreferences?.allergens.length ?? 0}
-		dietaryRestrictionCount={data.foodPreferences?.dietaryRestrictions.length ?? 0}
-		priorityNutrientCount={data.foodPreferences?.prioritizedNutrientIds.length ?? 0}
-		onOpen={openSettingsRoute}
-	/>
-
-	{#if data.moderatorActionSummary}
-		<ProfileModeratorActionLauncher
-			summary={data.moderatorActionSummary}
-			onOpen={() => openSettingsRoute(PROFILE_SETTINGS_ROUTES.moderatorActions)}
+<ViewFrame appShell>
+	<ViewTop
+		className="profile-page__top"
+		compactHidden={headerVisibility.state.hidden}
+	>
+		<ViewHeader
+			title="Your profile"
+			subtitle="Manage your identity, food preferences, appearance, and account."
 		/>
-	{/if}
+	</ViewTop>
 
-	<ProfileTutorialSettings />
-	<ProfileSessionSettings />
-</div>
+	<ViewBody>
+		<div
+			class="profile-page"
+			bind:this={profileScrollContainer}
+			onscroll={headerVisibility.handleScroll}
+		>
+			<ProfileIdentitySummary
+				avatarUrl={data.avatarUrl}
+				avatarAltText={data.profile?.avatar_alt_text}
+				displayName={data.profile?.display_name ?? data.defaultDisplayName}
+			/>
+
+			<ProfileSettingsMenu
+				{appearanceTheme}
+				{displayName}
+				{bio}
+				hasProfileImage={Boolean(data.profile?.avatar_path)}
+				allergenCount={data.foodPreferences?.allergens.length ?? 0}
+				dietaryRestrictionCount={data.foodPreferences?.dietaryRestrictions.length ?? 0}
+				priorityNutrientCount={data.foodPreferences?.prioritizedNutrientIds.length ?? 0}
+				onOpen={openSettingsRoute}
+			/>
+
+			{#if data.moderatorActionSummary}
+				<ProfileModeratorActionLauncher
+					summary={data.moderatorActionSummary}
+					onOpen={() => openSettingsRoute(PROFILE_SETTINGS_ROUTES.moderatorActions)}
+				/>
+			{/if}
+
+			<ProfileTutorialSettings />
+			<ProfileSessionSettings />
+		</div>
+	</ViewBody>
+</ViewFrame>
 
 <style lang="scss">
 	@use "./page.scss";
