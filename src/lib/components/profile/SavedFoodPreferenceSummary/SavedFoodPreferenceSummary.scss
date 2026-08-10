@@ -1,0 +1,56 @@
+@use "../../../../styles/variables" as *;
+
+.saved-food-preference-summary {
+	display: grid;
+	gap: $app-gap-xs;
+	padding-block: $app-gap-xs;
+	border-block: 1px solid $app-shell-border-subtle;
+}
+
+h3 {
+	margin: 0;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+}
+
+dl {
+	display: grid;
+	gap: $app-gap-xs;
+	margin: 0;
+}
+
+dl > div {
+	display: grid;
+	grid-template-columns: minmax(7rem, 0.35fr) minmax(0, 1fr);
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+dt {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-label;
+	text-transform: uppercase;
+}
+
+dd {
+	min-width: 0;
+	margin: 0;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	overflow-wrap: anywhere;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	dl > div {
+		grid-template-columns: 1fr;
+		gap: $app-gap-2xs;
+	}
+
+	dt,
+	dd {
+		font-size: $app-font-size-xs;
+	}
+}

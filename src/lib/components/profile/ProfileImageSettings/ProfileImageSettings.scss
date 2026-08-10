@@ -1,0 +1,34 @@
+@use "../../../../styles/variables" as *;
+
+form,
+.profile-image-policy {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.profile-image-policy ul {
+	display: grid;
+	gap: $app-gap-2xs;
+	margin: 0;
+	padding-inline-start: $app-gap-lg;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	line-height: $app-line-height-body;
+}
+
+.profile-image-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-sm;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.profile-image-actions {
+		display: grid;
+		grid-template-columns: 1fr;
+	}
+
+	.profile-image-policy ul {
+		font-size: $app-font-size-xs;
+	}
+}

@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { POST } from "../../src/routes/auth/logout/+server";
 
 const profilePage = readFileSync("src/routes/profile/+page.svelte", "utf8");
+const profileSessionSettings = readFileSync(
+	"src/lib/components/profile/ProfileSessionSettings/ProfileSessionSettings.svelte",
+	"utf8",
+);
 
 const createEvent = (signOutError: unknown = null) => {
 	const signOut = vi.fn().mockResolvedValue({ error: signOutError });
@@ -26,9 +30,10 @@ const createEvent = (signOutError: unknown = null) => {
 
 describe("logout route", () => {
 	it("is exposed from Profile through the shared button primitive", () => {
-		expect(profilePage).toContain("RoundedActionButton");
-		expect(profilePage).toContain('action="/auth/logout"');
-		expect(profilePage).toContain("Log out");
+		expect(profilePage).toContain("ProfileSessionSettings");
+		expect(profileSessionSettings).toContain("RoundedActionButton");
+		expect(profileSessionSettings).toContain('action="/auth/logout"');
+		expect(profileSessionSettings).toContain("Log out");
 	});
 
 	it("signs out, clears password-upgrade state, and redirects home", async () => {

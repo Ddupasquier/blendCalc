@@ -1,0 +1,65 @@
+@use "../../../../styles/variables" as *;
+
+.profile-identity-summary {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: center;
+	gap: $app-gap-sm;
+	min-width: 0;
+	padding: $app-gap-sm;
+	color: $app-shell-text-primary;
+	background: $app-shell-accent-soft;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-card;
+}
+
+:global(.profile-identity-summary__avatar) {
+	--circular-media-frame-size: #{3.75rem};
+	--circular-media-frame-color: #{$app-shell-text-primary};
+	--circular-media-frame-background: #{$app-shell-surface-panel};
+	--circular-media-frame-border: 1px solid #{$app-shell-border-subtle};
+
+	:global(img) {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	:global(.profile-identity-summary__avatar-icon) {
+		width: 55%;
+	}
+}
+
+.profile-identity-summary__copy {
+	display: grid;
+	gap: $app-gap-2xs;
+	min-width: 0;
+}
+
+.profile-identity-summary__copy strong,
+.profile-identity-summary__copy span {
+	overflow-wrap: anywhere;
+}
+
+.profile-identity-summary__copy strong {
+	font-size: $app-font-size-lg;
+}
+
+.profile-identity-summary__copy span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	:global(.profile-identity-summary__avatar) {
+		--circular-media-frame-size: #{3.25rem};
+	}
+
+	.profile-identity-summary__copy strong {
+		font-size: $app-font-size-md;
+	}
+
+	.profile-identity-summary__copy span {
+		font-size: $app-font-size-xs;
+	}
+}
