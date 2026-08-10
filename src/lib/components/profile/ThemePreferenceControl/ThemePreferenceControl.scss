@@ -55,16 +55,6 @@
 	opacity: 0.62;
 }
 
-.theme-preference-control__option input {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
-	clip-path: inset(50%);
-	white-space: nowrap;
-}
-
 .theme-preference-control__preview {
 	position: relative;
 	display: block;

@@ -1,7 +1,9 @@
 <script lang="ts">
 	import PillRow from "$lib/components/common/display/PillRow/PillRow.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
+	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
 	import type { FoodPreferencePickerProps } from "./types";
 
 	let {
@@ -53,14 +55,14 @@
 					]}
 					onValueChange={onSelectChange}
 				/>
-				<button
+				<RoundedActionButton
 					type="button"
-					class="search-add"
+					variant="neutral"
 					disabled={disabled || !selectValue}
 					onclick={() => onAdd(selectValue)}
 				>
 					Add
-				</button>
+				</RoundedActionButton>
 			</div>
 		</div>
 
@@ -68,10 +70,11 @@
 			<span>or</span>
 		</div>
 
-		<label class="preference-search">
-			<span>{searchLabel}</span>
+		<div class="preference-search">
 			<div class="preference-search__controls">
-				<input
+				<TextField
+					id={`${id}-custom-option`}
+					label={searchLabel}
 					type="search"
 					value={searchValue}
 					placeholder="Search catalog or add your own"
@@ -84,16 +87,16 @@
 						addSearchValue();
 					}}
 				/>
-				<button
+				<RoundedActionButton
 					type="button"
-					class="search-add"
+					variant="neutral"
 					disabled={disabled || !searchValue.trim()}
 					onclick={addSearchValue}
 				>
 					Add
-				</button>
+				</RoundedActionButton>
 			</div>
-		</label>
+		</div>
 	</div>
 
 	{#if filteredOptions.length}

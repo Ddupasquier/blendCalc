@@ -11,6 +11,8 @@
 		busy = false,
 		disabled = false,
 		ariaLabel,
+		formAction,
+		formNoValidate = false,
 		"aria-controls": ariaControls = undefined,
 		"aria-describedby": ariaDescribedBy = undefined,
 		"aria-expanded": ariaExpanded = undefined,
@@ -28,6 +30,8 @@
 	data-variant={variant}
 	data-content-align={contentAlign}
 	aria-label={ariaLabel}
+	formaction={formAction}
+	formnovalidate={formNoValidate}
 	aria-busy={busy}
 	aria-controls={ariaControls}
 	aria-describedby={ariaDescribedBy}

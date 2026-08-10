@@ -23,6 +23,8 @@ export type RoundedActionButtonProps = {
 	busy?: boolean;
 	disabled?: boolean;
 	ariaLabel?: string;
+	formAction?: string;
+	formNoValidate?: boolean;
 	"aria-controls"?: string;
 	"aria-describedby"?: string;
 	"aria-expanded"?: boolean | "true" | "false";

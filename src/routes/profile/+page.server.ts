@@ -8,7 +8,6 @@ import {
 	PROFILE_AVATAR_REQUIRE_HUMAN_FACE,
 } from "$lib/utils/profile/avatarPolicy";
 import {
-	getSignedAvatarUrl,
 	getUserProfile,
 	PROFILE_AVATAR_BUCKET,
 } from "$lib/utils/profile/profile";
@@ -33,18 +32,10 @@ import {
 import {
 	normalizeRegulatoryRegionCode,
 	normalizeRegulatoryRegionSource,
-	type RegulatoryRegionOption,
 } from "$lib/utils/profile/regulatoryRegion";
 import {
-	getFoodPreferenceProfile,
 	isMissingFoodPreferencesTableError,
 } from "$lib/utils/profile/foodPreferenceProfile";
-import {
-	getFoodPreferenceOptionSets,
-	isMissingFoodPreferenceOptionCatalogError,
-} from "$lib/utils/profile/foodPreferenceOptions";
-import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
-import { getDefaultMixFields } from "$lib/utils/food/reference/appReferenceCatalog";
 import {
 	getThemePreferenceCookieOptions,
 	isThemePreference,
@@ -57,11 +48,11 @@ import { consumeRequestRateLimit } from "$lib/server/security/requestRateLimit.s
 import { getAppIssueMessage } from "$lib/utils/errors/appIssues";
 import {
 	getFoodSafetyPolicy,
-	type FoodSafetyPolicy,
 } from "$lib/server/food-safety/foodSafetyPolicy.server";
 import {
-	getUserFoodPreferenceResolutions,
-} from "$lib/server/food-safety/userFoodPreferenceResolution.server";
+	getRegulatoryRegionOptions,
+	loadProfilePageData,
+} from "$lib/server/profile/profilePageData.server";
 
 const PROFILE_TEXT_FORM_MAX_BYTES = 64 * 1024;
 const PROFILE_AVATAR_FORM_MAX_BYTES = PROFILE_AVATAR_MAX_BYTES + 1024 * 1024;
@@ -106,78 +97,12 @@ const getFoodPreferenceFormValues = (
 	};
 };
 
-const getRegulatoryRegionOptions = (
-	policy: FoodSafetyPolicy,
-): RegulatoryRegionOption[] => policy.regionalProfiles.map((profile) => ({
-	regionCode: profile.regionCode,
-	displayName: profile.displayName,
-	authority: profile.authority,
-}));
-
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = await getAuthenticatedUser(locals);
-	const profileWithAvatarPromise = getUserProfile(locals.supabase, user.id)
-		.then(async (profile) => ({
-			profile,
-			avatarUrl: await getSignedAvatarUrl(
-				locals.supabase,
-				profile?.avatar_path,
-			),
-		}));
-	const [
-		{ profile, avatarUrl },
-		{ data: foodPreferences, error: foodPreferencesError },
-		{ data: foodPreferenceOptions, error: foodPreferenceOptionsError },
-		appReferenceCatalog,
-		foodSafetyPolicy,
-		preferenceResolutions,
-	] = await Promise.all([
-		profileWithAvatarPromise,
-		locals.supabase
-			.from("user_food_preferences")
-			.select(
-				"unit_system, allergens, dietary_restrictions, prioritized_nutrient_ids, default_smoothie_serving_grams, sensitive_acknowledged_at, regulatory_region_code, regulatory_region_source",
-			)
-			.eq("user_id", user.id)
-			.maybeSingle(),
-		locals.supabase
-			.from("food_preference_option_catalog")
-			.select(
-				"category, label, normalized_value, source_values, tag_id, usage_count",
-			)
-			.order("usage_count", { ascending: false })
-			.order("label", { ascending: true }),
-		getAppReferenceCatalog(),
-		getFoodSafetyPolicy(),
-		getUserFoodPreferenceResolutions(locals.supabase, user.id),
-	]);
-	const foodPreferencesUnavailable =
-		isMissingFoodPreferencesTableError(foodPreferencesError);
-
-	if (foodPreferencesError && !foodPreferencesUnavailable) throw foodPreferencesError;
-	const foodPreferenceOptionsUnavailable =
-		isMissingFoodPreferenceOptionCatalogError(foodPreferenceOptionsError);
-
-	if (foodPreferenceOptionsError && !foodPreferenceOptionsUnavailable) {
-		throw foodPreferenceOptionsError;
-	}
-
-	return {
-		profile,
-		avatarUrl,
-		foodPreferences: foodPreferencesUnavailable
-				? null
-				: getFoodPreferenceProfile(foodPreferences, preferenceResolutions),
-		foodPreferencesUnavailable,
-		foodPreferenceOptions: getFoodPreferenceOptionSets(
-			foodPreferenceOptionsUnavailable ? [] : foodPreferenceOptions,
-		),
-		priorityNutrientOptions: getDefaultMixFields(appReferenceCatalog),
-		regulatoryRegionOptions: getRegulatoryRegionOptions(foodSafetyPolicy),
-		defaultDisplayName: getDefaultDisplayName(user.id),
-		avatarPolicyItems: PROFILE_AVATAR_POLICY_ITEMS,
-		requireHumanFace: PROFILE_AVATAR_REQUIRE_HUMAN_FACE,
-	};
+	return loadProfilePageData({
+		supabase: locals.supabase,
+		userId: user.id,
+	});
 };
 
 export const actions: Actions = {
@@ -307,7 +232,7 @@ export const actions: Actions = {
 			if (isMissingFoodPreferencesTableError(error)) {
 				return fail(503, {
 					foodPreferencesError:
-						"Food preference storage is waiting on the latest database migration. Try again after migrations are applied.",
+						"Food preferences are temporarily unavailable. Try again soon.",
 					foodPreferenceValues: values,
 				});
 			}
