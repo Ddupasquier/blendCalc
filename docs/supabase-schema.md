@@ -589,7 +589,8 @@ Notes:
 | `shared_product_conflicts`        | `id`                    | Shared moderation/provenance  | Open/resolved conflicts between observed values                           | `shared_product_id → shared_products.id`                            |
 | `food_image_assets`               | `id`                    | Shared image reference        | Source-backed product/ingredient image metadata rendered by ingredient UI | Optional `shared_product_id → shared_products.id`, optional barcode |
 | `product_api_cache`               | `(provider, cache_key)` | Server cache                  | External API response cache for searches, barcode lookup, and food detail | No user ownership                                                   |
-| `product_submission_blocks`       | `id`                    | One auth user per block event | Temporary submission block after repeated rejected submissions            | `user_id → auth.users.id`, optional source submission               |
+| `user_catalog_submission_enforcement` | `user_id`              | One current row per auth user | Cumulative moderator rejection count and current public-sharing suspension | `user_id → auth.users.id`, optional latest submission/reviewer      |
+| `product_submission_blocks`       | `id`                    | One auth user per block event | Immutable history of public catalog submission suspensions                  | `user_id → auth.users.id`, optional source submission               |
 
 ### `shared_product_submissions`
 
@@ -625,6 +626,39 @@ Notes:
 - A user may have only one pending correction against a specific base revision.
   Different users may independently submit supporting or conflicting package evidence;
   approving one correction makes the others stale through the existing revision guard.
+
+### `user_catalog_submission_enforcement`
+
+Stores the current public-catalog sharing enforcement state for each user with at least
+one moderator-rejected submission.
+
+| Table | Documented columns |
+| --- | --- |
+| `user_catalog_submission_enforcement` | `user_id`, `moderator_rejection_count`, `sharing_suspended_until`, `latest_rejected_submission_id`, `latest_rejected_by`, `latest_rejected_at`, `created_at`, `updated_at` |
+
+Notes:
+
+- `moderator_rejection_count` is cumulative and increases only when a moderator changes
+  a submission from another state to `rejected`. `auto_declined` submissions do not
+  count.
+- The 51st moderator rejection starts a six-calendar-month public-sharing suspension.
+  A later rejection after an expired suspension starts another six-month suspension;
+  private food saving and every non-public catalog feature remain available.
+- `latest_rejected_submission_id`, `latest_rejected_by`, and `latest_rejected_at` retain
+  the latest review evidence without duplicating the complete submission or moderator
+  note.
+- `private.record_moderator_catalog_submission_rejection` updates the count and any new
+  suspension atomically in the same transaction as the review status change. Each new
+  suspension also appends a `product_submission_blocks` audit event.
+- Authenticated users may read only their own row and cannot alter it. Moderator account
+  review reads all current rows through the server-only service-role boundary.
+
+### `product_submission_blocks`
+
+Stores one audit event for every public catalog sharing suspension. Current submission
+eligibility comes from `user_catalog_submission_enforcement`; this table preserves the
+threshold count, first and latest rejection timestamps, suspension end, triggering
+submission, reviewer, and policy note used at that moment.
 
 ### `shared_products`
 

@@ -193,4 +193,12 @@ test("moderator actions stay hidden from regular accounts and use the shared she
 			moderatorActionsSheet.getByRole("button", { name: new RegExp(actionName) }),
 		).toBeVisible();
 	}
+
+	await moderatorActionsSheet
+		.getByRole("button", { name: /Account access/ })
+		.click();
+	await expect(page).toHaveURL(/\/moderation#account-review$/);
+	await expect(
+		page.getByText("Rejected public submissions: 0").first(),
+	).toBeVisible();
 });

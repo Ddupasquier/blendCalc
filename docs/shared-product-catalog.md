@@ -27,8 +27,8 @@ signed-in user without exposing the account that submitted it.
 7. Unknown labels stay pending until a moderator approves or rejects them.
 8. Approved products appear in ingredient text search and are checked before outside
    barcode services.
-9. Accounts with 5 rejected shared-product submissions in 30 days are paused from
-   sharing products for 30 days.
+9. The 51st moderator-rejected shared-product submission pauses public product sharing
+   for six calendar months. Automated declines do not increase that count.
 
 Barcode autofill and publication use two category layers: raw category values from the
 source APIs remain on the food payload for provenance, while `category_option_id` points
@@ -415,9 +415,12 @@ approval.
   clockwise quarter-turn rotation.
 - **Reject:** retains the private user ingredient, records the review note, and does not
   publish a shared product.
-- **Submission pause:** 5 rejected submissions in 30 days blocks new shared-catalog
-  submissions for 30 days. This prevents repeated bad catalog entries without blocking
-  private food tracking.
+- **Submission pause:** moderator-rejected submissions are counted cumulatively in
+  `user_catalog_submission_enforcement`. Rejection 51 starts a six-calendar-month pause
+  on new public catalog submissions. Automated validation declines do not count. A new
+  rejection after an expired pause starts another six-month pause, while private food
+  tracking remains available. `product_submission_blocks` preserves every suspension
+  as audit history.
 
 ## Submission And Moderation Improvement Plan
 

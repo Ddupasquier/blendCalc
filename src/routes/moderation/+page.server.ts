@@ -189,7 +189,12 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		userIdBatches,
 		MODERATION_DATABASE_BATCH_CONCURRENCY,
 		async (batch) => {
-			const [profileResult, moderationResult, roleResult] = await Promise.all([
+			const [
+				profileResult,
+				moderationResult,
+				roleResult,
+				catalogEnforcementResult,
+			] = await Promise.all([
 				admin
 					.from("profiles")
 					.select("user_id, display_name, avatar_path, avatar_moderation_status")
@@ -202,9 +207,18 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 					.from("app_role_assignments")
 					.select("user_id, role")
 					.in("user_id", batch),
+				admin
+					.from("user_catalog_submission_enforcement")
+					.select("user_id, moderator_rejection_count, sharing_suspended_until")
+					.in("user_id", batch),
 			]);
 
-			if (profileResult.error || moderationResult.error || roleResult.error) {
+			if (
+				profileResult.error ||
+				moderationResult.error ||
+				roleResult.error ||
+				catalogEnforcementResult.error
+			) {
 				throwAppError(502, "MODERATION_DATA_UNAVAILABLE");
 			}
 
@@ -212,18 +226,25 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				profiles: (profileResult.data ?? []).filter(isPresent),
 				moderation: (moderationResult.data ?? []).filter(isPresent),
 				roles: (roleResult.data ?? []).filter(isPresent),
+				catalogEnforcement: (catalogEnforcementResult.data ?? []).filter(isPresent),
 			};
 		},
 	);
 	const profiles = relatedRecordBatches.flatMap((batch) => batch.profiles);
 	const moderation = relatedRecordBatches.flatMap((batch) => batch.moderation);
 	const roles = relatedRecordBatches.flatMap((batch) => batch.roles);
+	const catalogEnforcement = relatedRecordBatches.flatMap(
+		(batch) => batch.catalogEnforcement,
+	);
 
 	const profileByUserId = new Map((profiles ?? []).map((profile) => [profile.user_id, profile]));
 	const moderationByUserId = new Map(
 		(moderation ?? []).map((record) => [record.user_id, record]),
 	);
 	const roleByUserId = new Map((roles ?? []).map((record) => [record.user_id, record.role]));
+	const catalogEnforcementByUserId = new Map(
+		catalogEnforcement.map((record) => [record.user_id, record]),
+	);
 	const avatarPaths = (profiles ?? [])
 		.map((profile) => profile.avatar_path)
 		.filter((path): path is string => Boolean(path));
@@ -244,6 +265,12 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		const profile = profileByUserId.get(user.id);
 		const moderationRecord = moderationByUserId.get(user.id);
 		const userRole = (roleByUserId.get(user.id) as AppRole | undefined) ?? null;
+		const catalogEnforcementRecord = catalogEnforcementByUserId.get(user.id);
+		const catalogSharingSuspendedUntil =
+			catalogEnforcementRecord?.sharing_suspended_until &&
+			new Date(catalogEnforcementRecord.sharing_suspended_until).getTime() > Date.now()
+				? catalogEnforcementRecord.sharing_suspended_until
+				: null;
 
 		return {
 			id: user.id,
@@ -257,6 +284,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			avatarUrl: profile?.avatar_path
 				? signedAvatarByPath.get(profile.avatar_path) ?? null
 				: null,
+			moderatorRejectedSubmissionCount:
+				catalogEnforcementRecord?.moderator_rejection_count ?? 0,
+			catalogSharingSuspendedUntil,
 		};
 	});
 

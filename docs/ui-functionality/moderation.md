@@ -17,7 +17,8 @@ available.
 - Show the viewer's current role.
 - Search accounts by preferred/display name, email, user ID, role, or status.
 - Account cards show avatar or placeholder, display name, moderator-only email, status,
-  role, image-review status, and public block reason.
+  role, image-review status, public block reason, cumulative moderator-rejected public
+  submission count, and any active public-sharing suspension date.
 - Prevent self-moderation.
 - Prevent moderators from acting on privileged accounts.
 - Keep administrators and developers protected from the web blocking flow.
@@ -30,8 +31,8 @@ available.
   count, lookup failures, review flags, private evidence images, and nutrition details.
 - Keep one clear Approve action and one Reject action that requires a note.
 - Preserve deterministic QA-fixture behavior in the disposable local environment.
-- Repeated rejected submissions may pause catalog sharing under the current catalog
-  policy without blocking private food tracking.
+- The 51st moderator rejection pauses public catalog sharing for six calendar months.
+  Automated declines do not count, and private food tracking remains available.
 
 ## Data Health
 
