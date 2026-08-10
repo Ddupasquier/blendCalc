@@ -14,6 +14,7 @@
 		actualFillColor = NUTRIENT_RADAR_CHART_DEFAULTS.actualFillColor,
 		actualStrokeColor = NUTRIENT_RADAR_CHART_DEFAULTS.actualStrokeColor,
 		gridLineColor = NUTRIENT_RADAR_CHART_DEFAULTS.gridLineColor,
+		referenceBoundaryColor = NUTRIENT_RADAR_CHART_DEFAULTS.referenceBoundaryColor,
 		targetOutlineColor = NUTRIENT_RADAR_CHART_DEFAULTS.targetOutlineColor,
 		fullWidth = false,
 		class: className = "",
@@ -213,12 +214,13 @@
 		{#if axisCount === 1}
 			{#each Array.from({ length: ringCount }) as _ring, index}
 				<circle
+					class:nutrient-radar-chart__reference-boundary={index === ringCount - 1}
 					cx={chartCenterCoordinate}
 					cy={chartCenterCoordinate}
 					r={chartRadiusPixels * ((index + 1) / ringCount)}
 					fill="none"
-					stroke={gridLineColor}
-					stroke-width={chartSizePixels * 0.003}
+					stroke={index === ringCount - 1 ? referenceBoundaryColor : gridLineColor}
+					stroke-width={chartSizePixels * (index === ringCount - 1 ? 0.0045 : 0.003)}
 				/>
 			{/each}
 			<line
@@ -252,12 +254,13 @@
 		{:else if axisCount === 2}
 			{#each Array.from({ length: ringCount }) as _ring, index}
 				<line
+					class:nutrient-radar-chart__reference-boundary={index === ringCount - 1}
 					x1={chartCenterCoordinate - chartRadiusPixels * ((index + 1) / ringCount)}
 					y1={chartCenterCoordinate}
 					x2={chartCenterCoordinate + chartRadiusPixels * ((index + 1) / ringCount)}
 					y2={chartCenterCoordinate}
-					stroke={gridLineColor}
-					stroke-width={chartSizePixels * 0.003}
+					stroke={index === ringCount - 1 ? referenceBoundaryColor : gridLineColor}
+					stroke-width={chartSizePixels * (index === ringCount - 1 ? 0.0045 : 0.003)}
 				/>
 			{/each}
 			<line
@@ -281,13 +284,14 @@
 				stroke-linecap="round"
 			/>
 		{:else}
-			{#each gridRingPoints as ringPoints}
+			{#each gridRingPoints as ringPoints, index}
 				<polygon
 					class="nutrient-radar-chart__ring"
+					class:nutrient-radar-chart__reference-boundary={index === ringCount - 1}
 					points={serializeSvgPointList(ringPoints)}
 					fill="none"
-					stroke={gridLineColor}
-					stroke-width={chartSizePixels * 0.003}
+					stroke={index === ringCount - 1 ? referenceBoundaryColor : gridLineColor}
+					stroke-width={chartSizePixels * (index === ringCount - 1 ? 0.0045 : 0.003)}
 				/>
 			{/each}
 
@@ -316,6 +320,17 @@
 				{/each}
 			</g>
 
+			<polygon
+				class="nutrient-radar-chart__goal-shape"
+				points={serializeSvgPointList(targetNutrientPoints)}
+				fill="none"
+				stroke={targetOutlineColor}
+				stroke-width={chartSizePixels * 0.006}
+				stroke-dasharray={NUTRIENT_RADAR_CHART_DEFAULTS.goalDashPattern}
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+
 			<g class="nutrient-radar-chart__value-stroke">
 				{#each actualNutrientSegments as segment}
 					<line
@@ -329,17 +344,6 @@
 					/>
 				{/each}
 			</g>
-
-			<polygon
-				class="nutrient-radar-chart__goal-shape"
-				points={serializeSvgPointList(targetNutrientPoints)}
-				fill="none"
-				stroke={targetOutlineColor}
-				stroke-width={chartSizePixels * 0.006}
-				stroke-dasharray={NUTRIENT_RADAR_CHART_DEFAULTS.goalDashPattern}
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			/>
 		{/if}
 
 		{#each nutrientAxisLineCoordinates as axis, index}

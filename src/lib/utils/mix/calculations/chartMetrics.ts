@@ -1,9 +1,11 @@
 import { getMixRuntimeConfiguration } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { FoodItem } from "$lib/utils/food/types";
 import type { NutrientChartMetric, NutrientMeta } from "./nutrientTypes";
-import { getDefaultNutrientGoal, getNutrientTotal } from "./nutrientTotals";
+import { getNutrientTotal } from "./nutrientTotals";
 import type { MixGoalMap } from "$lib/utils/mix/goals/types";
 import type { MixGoalEvaluation } from "$lib/utils/mix/goals/goalEvaluation";
+
+const NUTRIENT_CHART_BOUNDARY_HEADROOM_MULTIPLIER = 1.1;
 
 const CHART_COLORS = {
 	atGoal: {
@@ -34,35 +36,43 @@ export const getNutrientChartMetrics = (
 		const nutrientId = Number(nutrient.id);
 		const goal = nutrientGoals[nutrientId];
 		if (!goal) return [];
-		const baselineGoal =
-			getDefaultNutrientGoal(nutrient)?.targetAmount ?? goal.targetAmount;
-		const safeBaselineGoal = baselineGoal > 0 ? baselineGoal : 1;
 		const total = getNutrientTotal(foods, nutrientId, servingGrams);
+		const hasPositiveGoal = goal.targetAmount > 0;
+		const actualAmountToGoalRatio = hasPositiveGoal
+			? total / goal.targetAmount
+			: total > 0
+				? 1
+				: 0;
 
 		return [
 			{
-				goalRatio: goal.targetAmount / safeBaselineGoal,
-				totalRatio: total / safeBaselineGoal,
+				actualAmountToGoalRatio,
+				hasPositiveGoal,
 			},
 		];
 	});
 };
 
 export const getChartReferenceRatio = (metrics: NutrientChartMetric[]) => {
-	return Math.max(1, ...metrics.map((metric) => metric.goalRatio));
+	const highestGoalRelativeValue = Math.max(
+		1,
+		...metrics.map((metric) => metric.actualAmountToGoalRatio),
+	);
+
+	return highestGoalRelativeValue * NUTRIENT_CHART_BOUNDARY_HEADROOM_MULTIPLIER;
 };
 
 export const getChartValues = (metrics: NutrientChartMetric[]) => {
 	const referenceRatio = getChartReferenceRatio(metrics);
 	return metrics.map((metric) =>
-		clampChartValue(metric.totalRatio / referenceRatio),
+		clampChartValue(metric.actualAmountToGoalRatio / referenceRatio),
 	);
 };
 
 export const getGoalValues = (metrics: NutrientChartMetric[]) => {
 	const referenceRatio = getChartReferenceRatio(metrics);
 	return metrics.map((metric) =>
-		clampChartValue(metric.goalRatio / referenceRatio),
+		metric.hasPositiveGoal ? 1 / referenceRatio : 0,
 	);
 };
 

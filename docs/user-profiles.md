@@ -1,4 +1,4 @@
-# User profiles
+# User Profiles
 
 Profile details are optional. Authentication and the rest of the application do not
 depend on a `profiles` row existing.
@@ -8,7 +8,7 @@ This document owns profile behavior and privacy. Auth configuration belongs in
 [`style-guide.md`](style-guide.md), and profile table/storage shape in
 [`supabase-schema.md`](supabase-schema.md).
 
-## Identity and email privacy
+## Identity And Email Privacy
 
 - The application does not send the authenticated email address to the shared layout UI.
 - When no preferred name exists, the UI derives a temporary display fallback from the
@@ -31,7 +31,7 @@ This document owns profile behavior and privacy. Auth configuration belongs in
 - The app-wide semantic theme properties live in `src/styles/_themes.scss`; individual
   views must not maintain separate dark-mode overrides.
 
-## Food safety preferences
+## Food Safety Preferences
 
 - Food safety and dietary preferences remain optional account data. They include
   allergens, dietary restrictions, nutrient priorities, units, a default serving size,
@@ -60,7 +60,7 @@ This document owns profile behavior and privacy. Auth configuration belongs in
 - Activating a reviewed mapping re-resolves existing account settings without changing
   the wording the user entered.
 
-## Profile images
+## Profile Images
 
 - Images are stored in the private `profile-avatars` Supabase Storage bucket.
 - Row-level storage policies restrict each user to the folder named with their own user
@@ -71,7 +71,7 @@ This document owns profile behavior and privacy. Auth configuration belongs in
 - Replacing an image uploads the new object first, updates the profile, and then removes
   the old object. A failed profile update removes the newly uploaded object.
 
-## Content policy and moderation boundary
+## Content Policy And Moderation Boundary
 
 The upload form requires the user to confirm that the image contains no explicit nudity,
 sexual content, graphic violence, or hate imagery. Each confirmation is appended to
@@ -95,4 +95,5 @@ Account roles, blocks, audit history, and signup blocklists are documented in
 Profile schema and Storage changes follow
 [`database-testing.md`](database-testing.md) and the
 [`schema update checklist`](supabase-schema.md#update-checklist). Profile UI changes
-follow the Profile behavior contract in [`ui-functionality.md`](ui-functionality.md).
+follow the Profile behavior contract in
+[`ui-functionality/profile.md`](ui-functionality/profile.md).

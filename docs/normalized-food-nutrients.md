@@ -1,4 +1,4 @@
-# Normalized food nutrients
+# Normalized Food Nutrients
 
 This document owns nutrient normalization, synchronization, and application-read
 semantics. The complete table and column reference remains in
@@ -37,9 +37,9 @@ the same database-reviewed equivalences to existing list items, custom foods, ca
 submissions, catalog products, revisions, and source observations. Reported values and
 units are preserved; duplicate aliases yield to an already-present canonical nutrient.
 
-## Application reads
+## Application Reads
 
-The application hydrates the source-neutral `FoodItem.foodNutrients` contract from the
+The application fills the source-neutral `FoodItem.foodNutrients` contract from the
 normalized tables for:
 
 - fridge and shopping-list items
@@ -47,8 +47,8 @@ normalized tables for:
 - active shared catalog products returned by barcode lookup or search
 
 Reads are batched by parent ID and nutrient definitions are fetched once per batch.
-Existing graph, nutrition-total, warning, and nutrient-detail code then uses the
-hydrated values without needing a second data model.
+Existing graph, nutrition-total, warning, and nutrient-detail code then uses the loaded
+values without needing a second data model.
 
 An empty normalized result is an empty nutrient set, not permission to substitute an
 embedded snapshot, invent zeroes, or copy values from a similar food. Migration and
@@ -59,7 +59,7 @@ Saved recipes intentionally retain their embedded composition snapshots. Loading
 continues to reproduce what the user saved rather than silently changing historical
 recipe nutrition when catalog data changes.
 
-## Access control
+## Access Control
 
 - Users can read normalized rows owned by their account.
 - Authenticated users can read nutrients for active shared products.
@@ -70,7 +70,7 @@ recipe nutrition when catalog data changes.
 The trigger functions use `security definer`, an empty `search_path`, and revoked
 execute privileges so clients cannot invoke the synchronization path directly.
 
-## Example queries
+## Example Queries
 
 Find the current user's custom foods with the most protein per 100 grams:
 

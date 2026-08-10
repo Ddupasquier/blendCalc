@@ -85,16 +85,34 @@ Maintain the rules and audit as the project evolves. Add only settled, repeatabl
 requirements here. Keep temporary observations and unresolved implementation gaps in
 the audit, and remove those audit entries once they are resolved.
 
-## Navigation
+## Rule Groups
 
-Markdown cannot provide a true sticky sidebar in every editor, so this document uses a
-clickable navigation block instead.
+| Group | Covers |
+| --- | --- |
+| [Engineering Standards](#engineering-standards) | Change process, hygiene, dependencies, testing, privacy, and cohesion |
+| [Platform, Accessibility, And Security](#platform-accessibility-and-security) | Responsive/browser support, accessibility, CSP, and server boundaries |
+| [Product Flow And Search](#product-flow-and-search) | Core journeys, search relevance, and progressive results |
+| [Visual System And Interaction](#visual-system-and-interaction) | Tokens, components, buttons, cards, destructive actions, and reordering |
+| [State, Data, And Code Ownership](#state-data-and-code-ownership) | Supabase authority, validation, loading, component boundaries, and file ownership |
+| [Branch And Delivery Workflow](#branch-and-delivery-workflow) | Branches, commits, promotion, screenshots, and rebuild policy |
+| [Database And Reference Data](#database-and-reference-data) | Schema quality, migrations, reference catalogs, and seed workflows |
+| [External Sources And Catalog Evidence](#external-sources-and-catalog-evidence) | Provider requests, provenance, enrichment, licensing, allergens, and OCR |
+| [Catalog And API Product Features](#catalog-and-api-product-features) | Retained data, categories, images, servings, API reads, and versioning |
+| [Runtime And Responsive Behavior](#runtime-and-responsive-behavior) | Loading, SSR, mobile density, backend behavior, sheets, and route views |
+| [QA, Recovery, And Shared View Primitives](#qa-recovery-and-shared-view-primitives) | QA workflow, local recovery, shared view/sheet/icon primitives, and screenshots |
+| [Validation, Lists, And Routes](#validation-lists-and-routes) | DB validation, list movement, URL state, metadata, naming, and catalog divergence |
+
+## Rule Index
+
+Use this index when you need one specific rule. The groups above provide the shorter
+reading path for broad work.
 
 - [Core Engineering Rules](#rule-best-practices)
 - [Canonical Change Lifecycle](#canonical-change-lifecycle)
 - [Mandatory Rules Preflight](#rule-rules-preflight)
 - [Repository Hygiene](#rule-repository-hygiene)
 - [Dependency Supply-Chain Safety](#rule-dependency-supply-chain)
+- [Test Layer Ownership](#rule-test-layer-ownership)
 - [Development Tooling Privacy](#rule-development-tooling-privacy)
 - [Cross-View Cohesion](#rule-cross-view-cohesion)
 - [Browser And Mobile Compatibility](#rule-browser-compatibility)
@@ -164,6 +182,8 @@ clickable navigation block instead.
 ## Rules
 
 These are the working rules gathered from prior product and implementation decisions.
+
+### Engineering Standards
 
 **0.** <a id="rule-best-practices"></a>Best practices are mandatory across every layer
 of the app. Do not treat speed, visual iteration, or partial refactors as permission to
@@ -238,6 +258,16 @@ script version changes. Remove obsolete dependencies rather than preserving them
 speculative compatibility, and stop when a required upgrade conflicts with the Node,
 SvelteKit, browser, or deployment compatibility floor.
 
+**0f.** <a id="rule-test-layer-ownership"></a>Use the narrowest test layer that can
+prove a contract honestly. Database enforcement belongs in the local database suite,
+browser-dependent behavior belongs in Playwright, isolated logic and synthetic branches
+belong in Vitest, and physical-device or subjective judgment remains manual QA. Do not
+duplicate assertions across runners or move pure calculations, schema contracts,
+provider mappings, or injected failures into browser flows. Follow the execution,
+isolation, parallelism, and evidence rules in [Testing Strategy](../testing.md).
+
+### Platform, Accessibility, And Security
+
 **1.** Build mobile-first. Every screen and component should work on narrow phones
 before wider layouts.
 
@@ -248,9 +278,10 @@ provide `vh` before `dvh` fallbacks, account for device safe areas, and feature-
 optional browser APIs instead of assuming they exist. Camera, clipboard, sharing,
 storage, and other device-backed features must fail with useful guidance and preserve a
 non-device fallback when practical. Do not use browser-name checks when capability
-checks can answer the real question. Run `npm run test:e2e:chromium` while developing a
-browser-facing change and run the complete `npm run test:e2e` project matrix before its
-final handoff or release. Move deterministic rendered behavior into Playwright instead
+checks can answer the real question. Follow the staged browser workflow in
+[Testing Strategy](../testing.md) while developing a browser-facing change and run the
+complete `npm run test:e2e` project matrix before final browser-facing handoff or
+release. Move deterministic rendered behavior into Playwright instead
 of preserving source-text assertions, duplicate jsdom interaction tests, or assigning
 reproducible browser checks to the user. Audit existing component tests whenever a
 Playwright flow expands; remove every interaction assertion the routed browser scenario
@@ -318,6 +349,8 @@ Decode and re-encode accepted user images server-side with bounded pixel dimensi
 before persistence so file signatures alone never authorize malformed image structure,
 embedded metadata, animation, or decompression-heavy payloads.
 
+### Product Flow And Search
+
 **2.** Keep the user flow simple. Barcode scanning, search, manual entry, fridge,
 shopping, Mix, and saved recipes should feel like a guided flow instead of disconnected
 tasks.
@@ -343,6 +376,8 @@ Show `Return to top` only when the list actually overflows its scroll area. Use
 Do not expose numbered pages, Previous/Next page navigation, or replacement-page
 transitions anywhere in the user-facing application. API and database reads remain
 bounded and cursor/offset paginated behind the progressive list controls.
+
+### Visual System And Interaction
 
 **3.** <a id="rule-design-tokens"></a>Keep global design tokens genuinely app-wide.
 `src/styles/_variables.scss` owns values reused by independent components or shared UI
@@ -544,6 +579,8 @@ server-validated permutation of the allowed identifiers through the authoritativ
 path; never trust an arbitrary client array or use HTML drag-and-drop as the sole input
 method.
 
+### State, Data, And Code Ownership
+
 **10.** <a id="rule-supabase-source-of-truth"></a>Treat Supabase as the source of truth for authenticated users. Fridge, Shopping
 List, custom foods, saved recipes, profiles, and other durable account records must never
 be mirrored into `localStorage` or used from browser storage as a fallback authority.
@@ -584,7 +621,7 @@ and beautiful. Structure should make the UI location and domain purpose obvious.
 **16.** <a id="rule-component-boundaries"></a>Extract reusable components and utilities
 whenever practical. Repeated UI, repeated functions, long route files, oversized
 component styles, and duplicated business logic are maintenance problems. Views should
-orchestrate; components should render focused UI; utilities should hold reusable
+coordinate; components should render focused UI; utilities should hold reusable
 calculations, formatting, filtering, sorting, validation, and storage helpers.
 
 **16aa.** <a id="rule-semantic-naming"></a>Name every application-owned file, folder,
@@ -756,6 +793,8 @@ siblings' separate `*Props` types. Flow-wide files such as `formTypes.ts` may ho
 state and domain contracts, but component-specific prop contracts still stay with their
 component owner.
 
+### Branch And Delivery Workflow
+
 **17.** Use the branch gate. Every new feature, major addition, and big change gets its
 own branch from `staging`, merges into `staging` first, and only moves from `staging` to
 `main` after the staging preview is approved.
@@ -803,6 +842,8 @@ new design when a clean replacement is more maintainable. If the new Figma UI do
 show existing data, controls, warnings, states, or behavior currently rendered by the
 app, pause and confirm whether that functionality should move, be hidden, or be removed
 before dropping it.
+
+### Database And Reference Data
 
 **26.** Keep database tables and data flow clean, normalized, and maintainable.
 Canonical source tables should stay focused on canonical data; UI flow metadata,
@@ -897,6 +938,8 @@ form. Keep Macros limited to common nutrition-label values; move specialized
 carbohydrate, fat, carotenoid, mineral, vitamin, amino-acid, and other composition data
 to Extended. Preserve retired aliases and their canonical replacements so new provider
 terms can be adopted without losing history or creating duplicate inputs.
+
+### External Sources And Catalog Evidence
 
 **30.** <a id="rule-cross-reference-apis"></a>Cross-reference all relevant source APIs
 before treating seeded reference data as verified. Any script that writes reusable,
@@ -1172,7 +1215,7 @@ existing Nutrition Facts presentation, source-provided ingredients and structure
 percentages, additives, server-evaluated `Contains` and `May contain` disclosures,
 serving measures, legitimate weight-to-volume density with its qualifier, field-level
 source attribution, source record identifiers and dates, dataset/version attribution,
-and source/license links. Keep saved-list snapshots hydrated from the accepted canonical
+and source/license links. Keep saved-list snapshots populated from the accepted canonical
 record so search and saved nutrition views expose the same available details after a
 refresh. Render no empty headings or placeholder rows, and never invent a missing value,
 conversion, disclosure, source, identifier, or date. Do not expose private evidence,
@@ -1259,6 +1302,8 @@ licence metadata, app attribution, and API output must agree. A missing or contr
 approval defaults to blocked canonical/public use; do not turn uncertainty into
 permission. Update the ledger in the same change whenever the source terms or blendCalc
 usage changes, and distinguish repository policy review from professional legal advice.
+
+### Catalog And API Product Features
 
 **31.** <a id="rule-store-useful-api-data"></a>Design blendCalc's ingestion and storage
 as the foundation of a future incorporated, externally usable data API—not only as
@@ -1450,6 +1495,8 @@ and build runtime. Keep `.nvmrc`, `.node-version`, package engine metadata, runt
 checks, and local project-terminal selection aligned so new project shells select Node
 24 automatically and unsupported runtimes fail before substantive work begins.
 
+### Runtime And Responsive Behavior
+
 **32.** <a id="rule-loading-states"></a>Every fetch-backed, database-backed,
 camera-backed, or long-running action needs a clear loading state. While pending,
 prevent duplicate submissions or duplicate triggers, keep the user informed, and provide
@@ -1564,6 +1611,8 @@ the shared `RightSheet` primitive. Search views and future detail/data views tha
 in from the right should share the same shell bounds, right-to-left transition, Escape
 close behavior, content width, and between-header-and-nav layout instead of each feature
 hand-rolling its own slide-in panel.
+
+### QA, Recovery, And Shared View Primitives
 
 **41.** <a id="rule-qa-process"></a>Maintain `docs/QA/qa-tasks.md` as the local-only QA
 index, split active manual checks into `launch-blocker-qa-tasks.md`,
@@ -1793,11 +1842,13 @@ Never store passwords, tokens, environment values, private user data, or raw pri
 reasoning. Verify recovery notes against the current request, development rules, code,
 migrations, database, and QA tasks before resuming work.
 
-**47.** <a id="rule-qa-screenshot-assets"></a>If a QA task depends on a specific
+**47a.** <a id="rule-qa-screenshot-assets"></a>If a QA task depends on a specific
 screenshot reference, copy that screenshot into local-only `docs/QA/assets/` and link to
 that asset from the QA task. Screenshot-backed QA items must include both the clickable
 asset reference and the code references being verified. QA screenshots are working QA
 artifacts, not source-controlled product assets.
+
+### Validation, Lists, And Routes
 
 **48.** <a id="rule-db-backed-nutrient-validation"></a>Nutrient relationship validation
 must be database-backed and enforced on both client and server paths. Rules like child

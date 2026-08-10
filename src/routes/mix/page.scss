@@ -10,6 +10,7 @@
 	--mix-chart-danger-fill: color-mix(in srgb, #{$app-shell-accent-danger} 38%, transparent);
 	--mix-chart-danger-stroke: #{$app-shell-accent-danger};
 	--mix-chart-grid: color-mix(in srgb, #{$app-shell-text-muted} 22%, transparent);
+	--mix-chart-reference-boundary: color-mix(in srgb, #{$app-shell-text-muted} 52%, transparent);
 	--mix-chart-goal: color-mix(in srgb, #{$app-accent} 72%, #{$app-shell-text-muted});
 	display: grid;
 	flex: 1 1 auto;

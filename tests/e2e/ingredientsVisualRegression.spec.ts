@@ -1,8 +1,17 @@
-import { expect, test, waitForAppReady } from "./support/browserTest";
+import {
+	expect,
+	test,
+	waitForAppReady,
+	waitForVisualStability,
+} from "./support/browserTest";
 
 test("Ingredients keeps its approved desktop and phone composition", async ({
 	page,
 }, testInfo) => {
+	test.skip(
+		Boolean(process.env.CI),
+		"Reviewed macOS image baselines run locally; CI owns structural layout checks.",
+	);
 	test.skip(
 		!["desktop-chromium", "mobile-chromium"].includes(testInfo.project.name),
 		"Visual baselines are intentionally limited to deterministic Chromium projects.",
@@ -10,18 +19,25 @@ test("Ingredients keeps its approved desktop and phone composition", async ({
 
 	await page.goto("/ingredients/fridge");
 	await waitForAppReady(page);
-	await page.evaluate(async () => {
-		await document.fonts.ready;
-		await Promise.all(
-			Array.from(document.images).map((image) => {
-				if (image.complete) return Promise.resolve();
-				return new Promise<void>((resolve) => {
-					image.addEventListener("load", () => resolve(), { once: true });
-					image.addEventListener("error", () => resolve(), { once: true });
-				});
-			}),
-		);
-	});
+	await page
+		.getByRole("button", { name: "Sort saved ingredients", exact: true })
+		.click();
+	const sortDialog = page.getByRole("dialog", { name: "Sort", exact: true });
+	await sortDialog.getByRole("button", { name: "A → Z" }).click();
+	await sortDialog.getByRole("button", { name: "Apply" }).click();
+	await expect(sortDialog).toBeHidden();
+	await expect
+		.poll(async () => {
+			const names = await page
+				.locator(".saved-ingredient-card__title-row strong")
+				.allTextContents();
+			return names.join("|") ===
+				[...names]
+					.sort((left, right) => left.localeCompare(right))
+					.join("|");
+		})
+		.toBe(true);
+	await waitForVisualStability(page);
 
 	await expect(page.locator(".view-frame")).toHaveScreenshot(
 		"ingredients-fridge.png",
