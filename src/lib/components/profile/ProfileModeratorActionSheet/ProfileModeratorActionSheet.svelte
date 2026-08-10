@@ -34,7 +34,6 @@
 	{open}
 	title="Moderator actions"
 	titleId="profile-moderator-actions-sheet-title"
-	showBack={false}
 	onClose={onClose}
 >
 	<div class="profile-moderator-action-sheet">

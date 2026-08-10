@@ -1618,10 +1618,11 @@ the shared toggle component.
 `BottomSheet` chrome. Manual entry, filters, ingredient actions, rename/edit sheets, and
 future sheet content must share the same centered handle, title typography, top spacing,
 backdrop behavior, Escape/backdrop close behavior, max/min height rules, and bottom-nav
-anchoring. Back-arrow visibility must be configured through the shared sheet primitive
-rather than hand-rolled in feature content; manual entry omits the top back arrow
-because step navigation already provides its own Back controls. Do not hand-roll sheet
-headers inside individual sheet bodies. The shared handle's complete keyboard focus
+anchoring. Bottom sheets must not add a redundant top Back or close arrow: the shared
+handle, intentional backdrop press, Escape, and route history own sheet dismissal.
+Multi-step content may keep its own in-flow Back action when that action changes steps
+rather than closing the sheet. Do not hand-roll sheet headers inside individual sheet
+bodies. The shared handle's complete keyboard focus
 outline must remain visible inside the sheet's reserved top clearance; sheet chrome must
 not clip interactive focus indicators. After a successful submit, the sheet wrapper
 must close exactly once before forwarding to any next view; child forms must not issue a

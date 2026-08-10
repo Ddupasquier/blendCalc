@@ -18,9 +18,9 @@ session settings. Detailed privacy and storage rules live in
   moderator, administrator, or developer. Open it at
   `/profile/moderator-actions` in the shared route-backed `BottomSheet`.
 - Each launcher summarizes the saved state without duplicating its complete form.
-- Escape, the shared Back control, browser history, direct loading, and refresh preserve
-  the documented sheet route and return to `/profile` without reloading the underlying
-  Profile page.
+- The shared handle, intentional backdrop press, Escape, and browser history close a
+  bottom sheet and return to `/profile` without reloading the underlying Profile page.
+  Direct loading and refresh preserve the documented sheet route.
 - Successful saves close the active settings surface once and update its summary.
   Validation failures stay visible in the open surface with the entered values intact.
 

@@ -89,7 +89,6 @@
 	open={activeSettingsRoute === PROFILE_SETTINGS_ROUTES.appearance}
 	title="Light/Dark Mode"
 	titleId="profile-appearance-sheet-title"
-	backLabel="Close light and dark mode settings"
 	onClose={closeSettingsRoute}
 >
 	<ProfileAppearanceSettings
@@ -105,7 +104,6 @@
 	open={activeSettingsRoute === PROFILE_SETTINGS_ROUTES.details}
 	title="Profile details"
 	titleId="profile-details-sheet-title"
-	backLabel="Close profile details"
 	onClose={closeSettingsRoute}
 >
 	<ProfileDetailsSettings
@@ -122,7 +120,6 @@
 	open={activeSettingsRoute === PROFILE_SETTINGS_ROUTES.image}
 	title="Profile image"
 	titleId="profile-image-sheet-title"
-	backLabel="Close profile image settings"
 	fill
 	onClose={closeSettingsRoute}
 >

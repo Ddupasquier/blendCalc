@@ -409,7 +409,7 @@ Check the existing primitive before writing markup or SCSS.
 | Back or close                         | `BackButton` / `CloseButton` | Do not recreate chevrons, circles, or hit areas                                                     |
 | Collapse                              | `CollapsibleSection`         | Chevron stays left; badges/actions stay right; shared open/close motion preserves mounted content   |
 | Specialized disclosure indicator      | `DisclosureChevron`          | Right when closed, animated down when open; use instead of local chevron rotation                    |
-| Bottom overlay                        | `BottomSheet`                | Owns handle, title, focus, close behavior, safe area, and navigation clearance                      |
+| Bottom overlay                        | `BottomSheet`                | Owns handle, title, focus, close behavior, safe area, and navigation clearance; no duplicate top Back control |
 | Right-side data view                  | `RightSheet`                 | Search and full-content slide-in views                                                              |
 | Sheet action row                      | `BottomSheetAction`          | Owns row geometry and circular leading icon                                                         |
 | Status feedback                       | `StatusMessage`              | Info, success, warning, and danger; use approved friendly copy                                      |
@@ -452,7 +452,7 @@ not only the default page.
 
 | Surface                    | Current Ingredients implementation              | Styling/behavior expectation                                                                             |
 | -------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Manual entry               | `ManualEntrySheet` → `BottomSheet`              | Full-height-capable bottom sheet, shared handle, no redundant top back arrow, state preserved while open |
+| Manual entry               | `ManualEntrySheet` → `BottomSheet`              | Full-height-capable bottom sheet, shared handle, no redundant top Back control, state preserved while open |
 | Sort/filter                | `IngredientFilterSheet` → `BottomSheet`         | Compact grouped controls, pill selections, one clear Apply action                                        |
 | Ingredient actions         | `IngredientActionSheet` → `BottomSheet`         | Reusable action rows; ordinary actions first and privileged group last                                   |
 | Image placement            | `IngredientImagePlacementSheet` → `BottomSheet` | Shared editor and exact card preview; privileged treatment comes from the owning group                   |
@@ -615,7 +615,8 @@ placement previews remain identical.
 
 ### Manual Entry
 
-- Use `BottomSheet` without the top back arrow; step controls already provide Back.
+- Use `BottomSheet` without a redundant top Back control; step controls may provide an
+  in-flow Back action when it navigates between steps instead of closing the sheet.
 - Use `SegmentedControl` progress tabs and validate navigation through both tabs and
   Continue.
 - Do not show required-field errors until the user attempts to advance.

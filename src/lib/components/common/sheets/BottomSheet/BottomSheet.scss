@@ -1,6 +1,5 @@
 @use "../../../../../styles/variables" as *;
 
-$bottom-sheet-back-control-size: 2rem;
 $bottom-sheet-focus-clearance: $app-gap-2xs;
 
 .bottom-sheet {
@@ -62,20 +61,7 @@ $bottom-sheet-focus-clearance: $app-gap-2xs;
 }
 
 .bottom-sheet__header {
-	display: grid;
-	grid-template-columns: auto minmax(0, 1fr);
-	align-items: center;
-	gap: $app-gap-sm;
-	min-height: $bottom-sheet-back-control-size;
-}
-
-.bottom-sheet__header--without-back {
-	grid-template-columns: minmax(0, 1fr);
-}
-
-:global(.bottom-sheet__back) {
-	width: $bottom-sheet-back-control-size;
-	height: $bottom-sheet-back-control-size;
+	min-width: 0;
 }
 
 .bottom-sheet__content {

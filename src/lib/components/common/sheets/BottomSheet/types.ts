@@ -6,8 +6,6 @@ export type BottomSheetProps = {
 	title?: string;
 	titleId?: string;
 	label?: string;
-	backLabel?: string;
-	showBack?: boolean;
 	aboveNav?: boolean;
 	fill?: boolean;
 	comfortable?: boolean;

@@ -81,9 +81,14 @@ test("Profile settings use routed sheets and restore launcher focus", async ({
 	const detailsLauncher = page.getByRole("button", { name: /Profile details/ });
 	await detailsLauncher.click();
 	await expect(page).toHaveURL(/\/profile\/details$/);
+	const profileDetailsSheet = page.getByRole("dialog", { name: "Profile details" });
+	await expect(profileDetailsSheet).toBeVisible();
 	await expect(
-		page.getByRole("dialog", { name: "Profile details" }),
+		profileDetailsSheet.getByRole("button", { name: "Close sheet" }),
 	).toBeVisible();
+	await expect(
+		profileDetailsSheet.getByRole("button", { name: "Back", exact: true }),
+	).toHaveCount(0);
 	await page.keyboard.press("Escape");
 	await expect(page).toHaveURL(/\/profile$/);
 	await expect(detailsLauncher).toBeFocused();
