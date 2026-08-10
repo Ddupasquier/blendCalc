@@ -1,0 +1,49 @@
+@use "../../styles/variables" as *;
+
+.mix-page {
+	--mix-chart-success-fill: color-mix(in srgb, #{$app-shell-accent-primary} 34%, transparent);
+	--mix-chart-success-stroke: color-mix(in srgb, #{$app-shell-accent-primary} 95%, #{$app-shell-text-primary});
+	--mix-chart-caution-fill: color-mix(in srgb, #{$app-highlight} 38%, transparent);
+	--mix-chart-caution-stroke: color-mix(in srgb, #{$app-highlight-hover} 95%, #{$app-shell-text-primary});
+	--mix-chart-warning-fill: color-mix(in srgb, #{$app-warning-bg} 55%, transparent);
+	--mix-chart-warning-stroke: #{$app-warning-strong};
+	--mix-chart-danger-fill: color-mix(in srgb, #{$app-shell-accent-danger} 38%, transparent);
+	--mix-chart-danger-stroke: #{$app-shell-accent-danger};
+	--mix-chart-grid: color-mix(in srgb, #{$app-shell-text-muted} 22%, transparent);
+	--mix-chart-reference-boundary: color-mix(in srgb, #{$app-shell-text-muted} 52%, transparent);
+	--mix-chart-goal: color-mix(in srgb, #{$app-accent} 72%, #{$app-shell-text-muted});
+	display: grid;
+	flex: 1 1 auto;
+	align-content: start;
+	gap: $app-gap-md;
+	box-sizing: border-box;
+	width: min(100%, $app-max-width);
+	min-height: 0;
+	margin: 0 auto;
+	padding: $app-gap-sm 0 max($app-gap-lg, env(safe-area-inset-bottom));
+	overflow-y: auto;
+	overflow-anchor: none;
+	overscroll-behavior: contain;
+	scrollbar-gutter: stable;
+	-webkit-overflow-scrolling: touch;
+}
+
+.mix-panel,
+.mix-builder {
+	display: grid;
+	align-content: start;
+	gap: $app-gap-md;
+	min-width: 0;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.mix-page,
+	.mix-panel,
+	.mix-builder {
+		gap: $app-gap-sm;
+	}
+
+	.mix-page {
+		padding-top: 0;
+	}
+}

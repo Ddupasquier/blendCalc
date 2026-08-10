@@ -37,58 +37,6 @@ const FOOD_PREFERENCE_OPTION_LIMITS = {
 	ingredient: 48,
 } as const;
 
-const ALLERGEN_PRIORITY = [
-	"peanut",
-	"tree nut",
-	"tree-nut",
-	"dairy",
-	"milk",
-	"egg",
-	"soy",
-	"wheat",
-	"gluten",
-	"fish",
-	"shellfish",
-	"sesame",
-] as const;
-
-const DIETARY_PRIORITY = [
-	"vegan",
-	"vegetarian",
-	"gluten-free",
-	"dairy-free",
-	"nut-free",
-	"soy-free",
-	"egg-free",
-	"halal",
-	"kosher",
-] as const;
-
-const getPriorityIndex = (
-	option: FoodPreferenceOption,
-	priorityValues: readonly string[],
-) => {
-	const normalizedPriority = priorityValues.map((value) => value.toLocaleLowerCase());
-	const normalizedLabel = option.normalizedValue.toLocaleLowerCase();
-	const index = normalizedPriority.indexOf(normalizedLabel);
-	return index === -1 ? Number.MAX_SAFE_INTEGER : index;
-};
-
-const sortByPriorityUsageAndLabel = (
-	options: FoodPreferenceOption[],
-	priorityValues: readonly string[],
-) =>
-	[...options].sort((left, right) => {
-		const leftPriority = getPriorityIndex(left, priorityValues);
-		const rightPriority = getPriorityIndex(right, priorityValues);
-
-		if (leftPriority !== rightPriority) return leftPriority - rightPriority;
-		if (left.usageCount !== right.usageCount) {
-			return right.usageCount - left.usageCount;
-		}
-		return left.label.localeCompare(right.label);
-	});
-
 const sortByUsageAndLabel = (options: FoodPreferenceOption[]) =>
 	[...options].sort((left, right) => {
 		if (left.usageCount !== right.usageCount) {
@@ -114,14 +62,12 @@ export const getFoodPreferenceOptionSets = (
 	const options = (records ?? []).map(getFoodPreferenceOption);
 
 	return {
-		allergens: sortByPriorityUsageAndLabel(
+		allergens: sortByUsageAndLabel(
 			options.filter((option) => option.category === "allergen"),
-			ALLERGEN_PRIORITY,
 		)
 			.slice(0, FOOD_PREFERENCE_OPTION_LIMITS.allergen),
-		dietaryRestrictions: sortByPriorityUsageAndLabel(
+		dietaryRestrictions: sortByUsageAndLabel(
 			options.filter((option) => option.category === "dietary"),
-			DIETARY_PRIORITY,
 		)
 			.slice(0, FOOD_PREFERENCE_OPTION_LIMITS.dietary),
 		ingredients: sortByUsageAndLabel(

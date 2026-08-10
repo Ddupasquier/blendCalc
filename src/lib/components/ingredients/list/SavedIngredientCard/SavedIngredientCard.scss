@@ -1,0 +1,87 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+@use "../../card/IngredientCardMediaLane/IngredientCardLayout" as ingredient-card-layout;
+
+$selection-border-color: color-mix(
+	in srgb,
+	$app-shell-accent-primary 65%,
+	$app-primary
+);
+
+.saved-ingredient-card {
+	@include ingredient-card-layout.frame;
+	@include ingredient-card-layout.action-button;
+
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	transition:
+		border-color motion.$duration-state motion.$easing-standard,
+		background-color motion.$duration-state motion.$easing-standard,
+		opacity motion.$duration-state motion.$easing-standard;
+}
+
+.saved-ingredient-card--active:not(.saved-ingredient-card--selection-mode) {
+	background: $app-shell-surface-panel;
+}
+
+.saved-ingredient-card--custom:not(.saved-ingredient-card--selection-mode) {
+	background: color-mix(in srgb, $app-custom-bg 30%, $app-shell-surface-panel);
+}
+
+.saved-ingredient-card--checked {
+	background: color-mix(
+		in srgb,
+		$app-shell-accent-soft 65%,
+		$app-shell-surface-panel
+	);
+}
+
+.saved-ingredient-card--selection-mode {
+	@include ingredient-card-layout.selection-layout;
+}
+
+.saved-ingredient-card--selection-mode.saved-ingredient-card--checked {
+	border-color: $selection-border-color;
+}
+
+.saved-ingredient-card__select {
+	@include ingredient-card-layout.primary-action-target;
+}
+
+.saved-ingredient-card__select:focus-visible {
+	@include ingredient-card-layout.primary-action-focus;
+}
+
+.saved-ingredient-card__copy {
+	@include ingredient-card-layout.copy;
+	@include ingredient-card-layout.presentation-layer;
+}
+
+.saved-ingredient-card--media .saved-ingredient-card__copy {
+	@include ingredient-card-layout.media-content-inset;
+}
+
+.saved-ingredient-card__title-row {
+	@include ingredient-card-layout.title-row;
+}
+
+.saved-ingredient-card__selection-indicator {
+	@include ingredient-card-layout.selection-indicator-layer;
+}
+
+.saved-ingredient-card__move-action {
+	@include ingredient-card-layout.action-layer;
+
+	z-index: 2;
+}
+
+.saved-ingredient-card__actions {
+	@include ingredient-card-layout.action-row;
+
+	z-index: 2;
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.saved-ingredient-card {
+		grid-template-columns: minmax(0, 1fr) auto auto;
+	}
+}

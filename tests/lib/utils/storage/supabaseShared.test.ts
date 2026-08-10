@@ -25,9 +25,9 @@ describe("Supabase cursor pagination", () => {
 		expect(seenCursors).toEqual([null, "0499"]);
 	});
 
-	it("returns null when a page fails", async () => {
+	it("throws when a page fails instead of returning partial local-looking data", async () => {
 		await expect(
 			readAllCursorPages(async () => ({ data: null, error: new Error("failed") })),
-		).resolves.toBeNull();
+		).rejects.toThrow("failed");
 	});
 });

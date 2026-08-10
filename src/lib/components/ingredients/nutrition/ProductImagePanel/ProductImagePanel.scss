@@ -1,0 +1,25 @@
+@use "../../../../../styles/variables" as *;
+
+.product-image-panel {
+	display: grid;
+	gap: $app-gap-md;
+	width: 100%;
+	margin: 0;
+}
+
+.product-image-panel__placement-content {
+	display: grid;
+	gap: $app-gap-md;
+}
+
+.product-image-panel__placement-save {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.product-image-panel,
+	.product-image-panel__placement-content {
+		gap: $app-gap-sm;
+	}
+}

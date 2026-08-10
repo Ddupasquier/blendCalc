@@ -1,0 +1,148 @@
+@use "../../../../../styles/variables" as *;
+
+$category-picker-focus-clearance: $app-gap-2xs;
+
+.food-category-picker {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	text-transform: uppercase;
+}
+
+.food-category-picker__label {
+	display: inline-flex;
+	align-items: center;
+	gap: $app-gap-xs;
+	letter-spacing: $app-letter-spacing-label;
+}
+
+.food-category-picker__label em {
+	color: $app-shell-accent-danger;
+	font-style: normal;
+}
+
+.food-category-picker__trigger-label {
+	color: $app-shell-text-primary;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.food-category-picker__panel {
+	display: grid;
+	gap: $app-gap-md;
+	padding: $app-gap-md;
+	background: $app-shell-surface-panel;
+	border: $app-border;
+	border-radius: $app-shell-radius-card;
+	text-transform: none;
+}
+
+.food-category-picker__search,
+.food-category-picker__group {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.food-category-picker__search-label,
+.food-category-picker__group-heading h3 {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+}
+
+.food-category-picker__search-control {
+	position: relative;
+	display: block;
+}
+
+:global(.food-category-picker__search-icon) {
+	position: absolute;
+	top: 50%;
+	left: $app-shell-control-padding-x;
+	width: $app-shell-control-icon-size;
+	height: $app-shell-control-icon-size;
+	color: $app-shell-text-muted;
+	transform: translateY(-50%);
+	pointer-events: none;
+}
+
+.food-category-picker__search-control input {
+	width: 100%;
+	min-height: $app-shell-control-height;
+	padding-inline:
+		calc($app-shell-control-padding-x * 2.5)
+		$app-shell-control-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-soft;
+	border: 0;
+	border-radius: $app-shell-radius-pill;
+	font: inherit;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-medium;
+}
+
+.food-category-picker__search-control input::placeholder {
+	color: $app-shell-text-muted;
+}
+
+.food-category-picker__search-control input:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.food-category-picker__helper,
+.food-category-picker__empty,
+.food-category-picker__group-heading small {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-ui;
+}
+
+.food-category-picker__group-heading {
+	display: grid;
+	gap: $app-gap-2xs;
+}
+
+.food-category-picker__group-heading h3 {
+	margin: 0;
+}
+
+.food-category-picker__options {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, calc($app-shell-control-height * 3)), 1fr));
+	gap: $app-gap-sm;
+	max-height: calc($app-shell-control-height * 7);
+	margin: calc(0rem - #{$category-picker-focus-clearance});
+	padding: $category-picker-focus-clearance;
+	overflow-y: auto;
+	scroll-padding: $category-picker-focus-clearance;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.food-category-picker,
+	.food-category-picker__panel {
+		gap: $app-gap-xs;
+	}
+
+	.food-category-picker__panel {
+		padding: $app-gap-sm;
+	}
+
+	.food-category-picker__search-control input {
+		min-height: $app-shell-control-height-narrow;
+	}
+
+	.food-category-picker__options {
+		grid-template-columns: 1fr;
+		max-height: calc($app-shell-control-height * 5);
+	}
+}

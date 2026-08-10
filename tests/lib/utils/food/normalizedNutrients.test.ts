@@ -3,8 +3,8 @@ import {
 	hydrateFoodWithNormalizedNutrients,
 	normalizedRowsToNutrients,
 	type NormalizedNutrientRow,
-} from "$lib/utils/food/normalizedNutrients";
-import type { FdcFood } from "$lib/utils/food/types";
+} from "$lib/utils/food/nutrients/normalizedNutrients";
+import type { FoodItem } from "$lib/utils/food/types";
 
 const fallbackFood = {
 	fdcId: 1,
@@ -19,7 +19,7 @@ const fallbackFood = {
 			value: 4,
 		},
 	],
-} satisfies FdcFood;
+} satisfies FoodItem;
 
 const normalizedProtein = {
 	nutrientId: 1003,
@@ -31,6 +31,15 @@ const normalizedProtein = {
 	source: "usda",
 	sourceReference: "12345",
 	confidence: "source-verified",
+	valueStatus: "reported",
+	valueQualifier: null,
+	standardError: null,
+	sourceNutrientKey: "1003",
+	sourceNutrientCode: "203",
+	mappingStatus: "canonical",
+	mappingMethod: "source-identifier",
+	mappingReviewReference: "usda-fdc",
+	derivationMethod: null,
 } satisfies NormalizedNutrientRow;
 
 describe("normalized food nutrients", () => {
@@ -45,6 +54,8 @@ describe("normalized food nutrients", () => {
 				unitName: "kcal",
 				value: 90,
 				valueOrigin: "derived",
+				valueStatus: "derived",
+				derivationMethod: "Atwater calculation",
 			},
 		]);
 
@@ -55,31 +66,34 @@ describe("normalized food nutrients", () => {
 				value: 12.5,
 				source: "usda",
 				confidence: "source-verified",
+				sourceNutrientCode: "203",
+				mappingStatus: "canonical",
 			}),
 			expect.objectContaining({
 				nutrientId: 1008,
 				unitName: "KCAL",
 				valueOrigin: "derived",
+				valueStatus: "derived",
+				derivationMethod: "Atwater calculation",
 			}),
 		]);
 		expect(hydrated.reportedNutrientIds).toEqual([1003]);
 	});
 
-	it("keeps the JSON snapshot when normalized rows are unavailable", () => {
-		expect(hydrateFoodWithNormalizedNutrients(fallbackFood, undefined))
-			.toMatchObject({
-				foodNutrients: [expect.objectContaining({ value: 4 })],
-				reportedNutrientIds: [1003],
-			});
+	it("treats an empty normalized result as authoritative", () => {
+		expect(hydrateFoodWithNormalizedNutrients(fallbackFood, [])).toMatchObject({
+			foodNutrients: [],
+			reportedNutrientIds: [],
+		});
 	});
 
 	it("drops invalid and duplicate normalized rows", () => {
-		expect(normalizedRowsToNutrients([
-			normalizedProtein,
-			{ ...normalizedProtein, value: 99 },
-			{ ...normalizedProtein, nutrientId: 1004, value: Number.NaN },
-		])).toEqual([
-			expect.objectContaining({ nutrientId: 1003, value: 12.5 }),
-		]);
+		expect(
+			normalizedRowsToNutrients([
+				normalizedProtein,
+				{ ...normalizedProtein, value: 99 },
+				{ ...normalizedProtein, nutrientId: 1004, value: Number.NaN },
+			]),
+		).toEqual([expect.objectContaining({ nutrientId: 1003, value: 12.5 })]);
 	});
 });

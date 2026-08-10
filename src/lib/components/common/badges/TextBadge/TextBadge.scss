@@ -1,0 +1,54 @@
+@use "../../../../../styles/variables" as *;
+
+:global(.text-badge) {
+	display: inline-grid;
+	place-items: center;
+	box-sizing: border-box;
+	flex: 0 0 auto;
+	min-width: 0;
+	min-height: 1.25rem;
+	max-width: 8rem;
+	padding: $app-text-badge-padding-y $app-text-badge-padding-x;
+	overflow: hidden;
+	color: color-mix(in srgb, $app-shell-accent-info 72%, $app-primary);
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-heavy;
+	line-height: $app-line-height-tight;
+	text-align: center;
+	text-transform: uppercase;
+	vertical-align: middle;
+	white-space: nowrap;
+	background: color-mix(in srgb, $app-shell-accent-info 18%, $app-shell-surface-panel);
+	border-radius: $app-radius-pill;
+}
+
+:global(.text-badge__label) {
+	display: block;
+	max-width: 100%;
+	overflow: hidden;
+	line-height: inherit;
+	text-overflow: ellipsis;
+}
+
+:global(.text-badge[data-tone="custom"]) {
+	color: $app-custom-strong;
+	background: color-mix(in srgb, $app-custom-bg 55%, $app-shell-surface-panel);
+}
+
+:global(.text-badge[data-tone="success"]) {
+	color: $app-shell-accent-primary;
+	background: $app-shell-accent-soft;
+}
+
+:global(.text-badge[data-tone="neutral"]) {
+	color: $app-muted;
+	background: $app-shell-surface-control;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	:global(.text-badge) {
+		min-height: 1.05rem;
+		padding: $app-gap-2xs $app-gap-xs;
+		font-size: $app-font-size-2xs;
+	}
+}

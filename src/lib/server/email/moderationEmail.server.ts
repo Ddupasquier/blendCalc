@@ -1,4 +1,6 @@
 import { env } from "$env/dynamic/private";
+import { APP_NAME } from "$lib/config/brand";
+import { fetchWithExternalRequestPolicy } from "$lib/server/http/externalRequest.server";
 
 export type ModerationReason =
 	| "profile_image_policy_violation"
@@ -36,7 +38,7 @@ const REASON_DETAILS: Record<ModerationReason, { label: string; explanation: str
 	terms_violation: {
 		label: "Terms violation",
 		explanation:
-			"Activity associated with your account violated the Smoothie Mixer community rules or terms of use.",
+			`Activity associated with your account violated the ${APP_NAME} community rules or terms of use.`,
 	},
 };
 
@@ -97,7 +99,7 @@ export const sendAccountBlockedEmail = async ({
 	const text = [
 		`Hello ${greetingName},`,
 		"",
-		"Your Smoothie Mixer account has been blocked.",
+		`Your ${APP_NAME} account has been blocked.`,
 		"",
 		`Reason: ${reasonDetails.label}`,
 		reasonDetails.explanation,
@@ -105,7 +107,7 @@ export const sendAccountBlockedEmail = async ({
 		"You can no longer sign in or create another account with this email address.",
 		supportText,
 		"",
-		"Smoothie Mixer moderation",
+		`${APP_NAME} moderation`,
 	].join("\n");
 	const safeName = escapeHtml(greetingName);
 	const safeReasonLabel = escapeHtml(reasonDetails.label);
@@ -113,35 +115,40 @@ export const sendAccountBlockedEmail = async ({
 	const safeSupportText = escapeHtml(supportText);
 	let response: Response;
 	try {
-		response = await fetch("https://api.resend.com/emails", {
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${configuration.apiKey}`,
-				"Content-Type": "application/json",
-				"Idempotency-Key": `moderation-ban-${moderationActionId}`,
-			},
-			body: JSON.stringify({
-				from: configuration.from,
-				to: [email],
-				subject: "Your Smoothie Mixer account was blocked",
-				text,
-				html: `
+		response = await fetchWithExternalRequestPolicy(
+			"https://api.resend.com/emails",
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${configuration.apiKey}`,
+					"Content-Type": "application/json",
+					"Idempotency-Key": `moderation-ban-${moderationActionId}`,
+				},
+				body: JSON.stringify({
+					from: configuration.from,
+					to: [email],
+					subject: `Your ${APP_NAME} account was blocked`,
+					text,
+					html: `
 					<div style="margin:0 auto;max-width:560px;padding:24px;font-family:Arial,sans-serif;color:#514a45;line-height:1.55">
 					<p>Hello ${safeName},</p>
-					<h1 style="font-size:24px;line-height:1.2">Your Smoothie Mixer account has been blocked</h1>
+					<h1 style="font-size:24px;line-height:1.2">Your ${APP_NAME} account has been blocked</h1>
 					<div style="margin:20px 0;padding:16px;border-left:4px solid #a96647;background:#fcf9f4">
 						<strong>Reason: ${safeReasonLabel}</strong>
 						<p style="margin:8px 0 0">${safeExplanation}</p>
 					</div>
 					<p>You can no longer sign in or create another account with this email address.</p>
 					<p>${safeSupportText}</p>
-					<p style="margin-top:28px;color:#766f69">Smoothie Mixer moderation</p>
+					<p style="margin-top:28px;color:#766f69">${APP_NAME} moderation</p>
 				</div>
 				`,
-				reply_to: configuration.supportEmail,
-				tags: [{ name: "category", value: "account_blocked" }],
-			}),
-		});
+					reply_to: configuration.supportEmail,
+					tags: [{ name: "category", value: "account_blocked" }],
+				}),
+				timeoutMilliseconds: 10_000,
+				maxAttempts: 2,
+			},
+		);
 	} catch (error) {
 		return {
 			status: "failed",

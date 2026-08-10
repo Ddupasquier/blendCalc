@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
 	buildModeratorReviewedCatalogBundle,
+	buildModeratorReviewedCatalogUpdateBundle,
 	buildUsdaVerifiedCatalogBundle,
 	mergeMissingNutrients,
 } from "$lib/server/products/catalogVerification.server";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
+import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
 
 const nutrient = (nutrientId: number, value: number, unitName = "G") => ({
 	nutrientId,
@@ -15,7 +16,7 @@ const nutrient = (nutrientId: number, value: number, unitName = "G") => ({
 	value,
 });
 
-const createUserFood = (): FdcFood => ({
+const createUserFood = (): FoodItem => ({
 	fdcId: -1,
 	description: "Submitted cereal",
 	brandOwner: "Submitted Brand",
@@ -31,18 +32,24 @@ const createUserFood = (): FdcFood => ({
 const createUsdaDraft = (): BarcodeProductDraft => ({
 	barcode: "00012345678905",
 	name: "USDA cereal",
+	nameProvenance: "source",
 	brandOwner: "USDA Brand",
 	servingLabel: "30 g",
 	servingWeightGrams: 30,
-	nutrition: {
-		calories: 120,
-		fat: 2,
-		carbs: 15,
-		fiber: 2,
-		sugar: 3,
-		protein: 4,
-	},
-	additionalNutrients: [nutrient(NUTRIENT_IDS.SODIUM, 100, "MG")],
+		nutrients: [
+			nutrient(NUTRIENT_IDS.CALORIES, 120, "KCAL"),
+		nutrient(NUTRIENT_IDS.FAT, 2),
+		nutrient(NUTRIENT_IDS.CARBS, 15),
+		nutrient(NUTRIENT_IDS.FIBER, 2),
+		nutrient(NUTRIENT_IDS.SUGAR, 3),
+		nutrient(NUTRIENT_IDS.PROTEIN, 4),
+			nutrient(NUTRIENT_IDS.SODIUM, 100, "MG"),
+		].map((item) => ({
+			...item,
+			source: "usda" as const,
+			sourceReference: "12345",
+			confidence: "unknown" as const,
+		})),
 	reportedNutrientIds: [
 		NUTRIENT_IDS.CALORIES,
 		NUTRIENT_IDS.FAT,
@@ -55,16 +62,41 @@ const createUsdaDraft = (): BarcodeProductDraft => ({
 	source: "usda",
 	sourceLabel: "USDA FoodData Central",
 	sourceReference: "12345",
+	categories: ["Breakfast cereals"],
+	ingredients: "Whole grain oats, sugar, salt",
+	ingredientList: ["Whole grain oats", "sugar", "salt"],
+	fieldProvenance: {
+		categories: {
+			source: "usda",
+			sourceReference: "12345",
+			confidence: "unknown",
+		},
+		ingredients: {
+			source: "usda",
+			sourceReference: "12345",
+			confidence: "unknown",
+		},
+	},
 });
+
+const cerealCategory = {
+	categoryOptionId: "breakfast-cereals",
+	label: "Breakfast Cereals",
+	sourceValue: "breakfast cereals",
+	confidence: "exact",
+};
 
 describe("catalog verification", () => {
 	it("uses exact-barcode USDA data as canonical and records disagreements", () => {
 		const bundle = buildUsdaVerifiedCatalogBundle(
 			createUserFood(),
 			createUsdaDraft(),
+			cerealCategory,
 		);
 
-		expect(bundle.canonicalFood.description).toBe("USDA cereal");
+		expect(bundle.canonicalFood.description).toBe("USDA Cereal");
+		expect(bundle.canonicalFood.foodCategory).toBe("Breakfast Cereals");
+		expect(bundle.canonicalFood.categories).toContain("Breakfast Cereals");
 		expect(bundle.observations.map((item) => item.source)).toEqual([
 			"user-label",
 			"usda",
@@ -73,8 +105,23 @@ describe("catalog verification", () => {
 			expect.objectContaining({
 				fieldPath: `nutrient:${NUTRIENT_IDS.SUGAR}`,
 				observationKey: "usda",
+				confidence: "imported",
 				verificationMethod: "exact-barcode",
 			}),
+		);
+		expect(bundle.provenance).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					fieldPath: "categories",
+					observationKey: "usda",
+					verificationMethod: "exact-barcode",
+				}),
+				expect.objectContaining({
+					fieldPath: "ingredients",
+					observationKey: "usda",
+					verificationMethod: "exact-barcode",
+				}),
+			]),
 		);
 		expect(bundle.conflicts).toEqual(
 			expect.arrayContaining([
@@ -93,9 +140,52 @@ describe("catalog verification", () => {
 		expect(bundle.conflicts).toEqual([]);
 	});
 
+	it("attributes only reviewed update fields to the submitted label", () => {
+		const currentFood = createUserFood();
+		const submittedFood = {
+			...currentFood,
+			brandOwner: "Updated Brand",
+			foodNutrients: currentFood.foodNutrients.map((item) =>
+				item.nutrientId === NUTRIENT_IDS.SUGAR
+					? { ...item, value: 25 }
+					: item
+			),
+		};
+		const bundle = buildModeratorReviewedCatalogUpdateBundle(
+			currentFood,
+			submittedFood,
+			[
+				{
+					field: "brandOwner",
+					label: "Brand",
+					message: "Brand changed.",
+					severity: "medium",
+					changeType: "changed",
+					previousValue: currentFood.brandOwner ?? null,
+					submittedValue: submittedFood.brandOwner,
+				},
+				{
+					field: `nutrient:${NUTRIENT_IDS.SUGAR}`,
+					label: "Sugar",
+					message: "Sugar changed.",
+					severity: "medium",
+					changeType: "changed",
+					previousValue: { value: 30, unit: "G" },
+					submittedValue: { value: 25, unit: "G" },
+				},
+			],
+		);
+
+		expect(bundle.provenance.map((item) => item.fieldPath).sort()).toEqual([
+			"brandOwner",
+			`nutrient:${NUTRIENT_IDS.SUGAR}`,
+		].sort());
+		expect(bundle.canonicalFood.description).toBe("Submitted Cereal");
+	});
+
 	it("fills only nutrients that the primary source did not report", () => {
 		const primary = createUserFood();
-		const supplement: FdcFood = {
+		const supplement: FoodItem = {
 			...primary,
 			foodNutrients: [
 				nutrient(NUTRIENT_IDS.SUGAR, 99),

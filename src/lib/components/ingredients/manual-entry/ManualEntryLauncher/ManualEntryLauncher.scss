@@ -1,0 +1,63 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+
+.manual-entry-launcher {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: $app-gap-sm;
+	min-height: calc($app-shell-control-height + ($app-gap-xs * 2));
+	width: 100%;
+	padding: $app-shell-card-padding-compact $app-shell-control-padding-x;
+	color: $app-shell-text-primary;
+	text-align: left;
+	background: color-mix(in srgb, $app-shell-surface-panel 74%, $app-shell-surface-page);
+	border: 0;
+	border-radius: $app-shell-radius-card;
+	transition:
+		background-color motion.$duration-state motion.$easing-standard,
+		transform motion.$duration-press motion.$easing-standard;
+
+	&:hover {
+		background: $app-shell-surface-panel;
+	}
+
+	&:active {
+		transform: scale(0.99);
+	}
+
+	&:focus-visible {
+		outline: $app-focus-outline;
+		outline-offset: $app-gap-xs;
+	}
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.manual-entry-launcher {
+		justify-self: start;
+		grid-template-columns: 1fr;
+		place-items: center;
+		gap: 0;
+		width: $app-shell-control-height-narrow;
+		height: $app-shell-control-height-narrow;
+		min-height: $app-shell-control-height-narrow;
+		padding: 0;
+		background: $app-shell-surface-control;
+		border-radius: $app-shell-radius-control;
+
+		&:hover {
+			background: $app-shell-accent-soft;
+		}
+	}
+
+	.manual-entry-launcher :global(.manual-entry-toggle__icon) {
+		--circular-icon-frame-size: #{$app-shell-control-icon-size};
+		--circular-icon-frame-icon-size: #{$app-shell-control-icon-size};
+		--circular-icon-frame-background: transparent;
+	}
+
+	.manual-entry-launcher :global(.manual-entry-toggle__copy),
+	.manual-entry-launcher :global(.manual-entry-toggle__chevron) {
+		display: none;
+	}
+}

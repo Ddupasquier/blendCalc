@@ -1,12 +1,32 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
+import type { Database } from "$lib/types/database.types";
 import type { Json } from "$lib/types/database.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+  MixGoalBasis,
+  MixGoalMap,
+  MixGoalTemplate,
+} from "$lib/utils/mix/goals/types";
 
 export type CloudMixPreferences = {
-	nutrientGoals?: Record<number, number>;
+  nutrientGoals?: MixGoalMap;
+  hasGoalConfiguration?: boolean;
+  goalBasis?: MixGoalBasis;
+  sourceGoalTemplateVersionId?: string | null;
+  sourceUserGoalTemplateId?: string | null;
+  goalTemplateCustomized?: boolean;
+  userGoalTemplates?: MixGoalTemplate[];
 	mixState?: Record<string, unknown>;
+	sectionOrder?: string[];
+	sectionDisclosureState?: Record<string, boolean>;
 };
 
 export const CLOUD_CURSOR_PAGE_SIZE = 500;
+
+export type CloudDataContext = {
+	supabase: SupabaseClient<Database>;
+	userId: string;
+};
 
 type CursorPage<Row> = {
 	data: Row[] | null;
@@ -21,7 +41,9 @@ export const readAllCursorPages = async <Row extends { id: string }>(
 
 	while (true) {
 		const { data, error } = await readPage(cursorId);
-		if (error || !data) return null;
+		if (error || !data) {
+			throw error ?? new Error("Cloud data page could not be loaded.");
+		}
 
 		rows.push(...data);
 		if (data.length < CLOUD_CURSOR_PAGE_SIZE) return rows;
@@ -34,27 +56,29 @@ export const getCurrentUserId = async () => {
 	const supabase = getSupabaseBrowserClient();
 	if (!supabase) return null;
 
-	const {
-		data: { user },
-		error,
-	} = await supabase.auth.getUser();
-
-	if (error || !user) return null;
-	return user.id;
+	const { data, error } = await supabase.auth.getClaims();
+	if (error) throw error;
+	if (!data?.claims.sub) return null;
+	return data.claims.sub;
 };
+
+export const resolveCloudDataContext = async (
+	context?: CloudDataContext,
+): Promise<CloudDataContext | null> => {
+	if (context) return context;
+
+	const supabase = getSupabaseBrowserClient();
+	if (!supabase) return null;
+	const userId = await getCurrentUserId();
+	return userId ? { supabase, userId } : null;
+};
+
+export const resolveCloudClient = (
+	context?: Pick<CloudDataContext, "supabase">,
+) => context?.supabase ?? getSupabaseBrowserClient();
 
 export const toJson = (value: unknown): Json => {
 	return JSON.parse(JSON.stringify(value)) as Json;
-};
-
-export const getNumberRecord = (value: Json): Record<number, number> => {
-	if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-
-	return Object.fromEntries(
-		Object.entries(value)
-			.map(([key, item]) => [Number(key), Number(item)])
-			.filter(([key, item]) => Number.isFinite(key) && Number.isFinite(item)),
-	);
 };
 
 export const getObjectRecord = (value: Json): Record<string, unknown> => {

@@ -1,0 +1,12 @@
+@use "../../../../../styles/variables" as *;
+
+.ingredient-card-media__fallback {
+	display: grid;
+	box-sizing: border-box;
+	width: min(100%, var(--ingredient-card-copy-start-offset));
+	height: 100%;
+	place-items: center;
+	font-size: $app-font-size-xl;
+	line-height: $app-line-height-tight;
+	text-align: center;
+}

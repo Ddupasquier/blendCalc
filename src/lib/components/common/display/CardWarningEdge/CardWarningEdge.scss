@@ -1,0 +1,13 @@
+@use "../../../../../styles/variables" as *;
+
+.card-warning-edge {
+	position: absolute;
+	z-index: 5;
+	inset-block: 0;
+	inset-inline-start: 0;
+	display: block;
+	inline-size: 8px;
+	block-size: 100%;
+	background: $app-highlight;
+	pointer-events: none;
+}

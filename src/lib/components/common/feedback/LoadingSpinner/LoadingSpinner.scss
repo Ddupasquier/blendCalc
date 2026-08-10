@@ -1,0 +1,55 @@
+@use "../../../../../styles/variables" as *;
+
+$spinner-duration: 700ms;
+
+.loading-spinner {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: $app-gap-xs;
+	min-width: 0;
+	color: currentColor;
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	line-height: $app-line-height-tight;
+}
+
+.loading-spinner__ring {
+	display: block;
+	box-sizing: border-box;
+	flex: 0 0 auto;
+	width: 1.2rem;
+	height: 1.2rem;
+	border: 0.125rem solid
+		color-mix(in srgb, currentColor 28%, transparent);
+	border-top-color: currentColor;
+	border-radius: $app-radius-circle;
+	animation: shared-loading-spin $spinner-duration linear infinite;
+}
+
+.loading-spinner[data-size="small"] .loading-spinner__ring {
+	width: 0.9rem;
+	height: 0.9rem;
+}
+
+.loading-spinner[data-size="large"] .loading-spinner__ring {
+	width: 1.8rem;
+	height: 1.8rem;
+}
+
+.loading-spinner__label {
+	min-width: 0;
+}
+
+@keyframes shared-loading-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.loading-spinner__ring {
+		animation-duration: calc($spinner-duration * 2);
+	}
+}

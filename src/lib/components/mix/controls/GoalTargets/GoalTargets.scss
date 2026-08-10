@@ -1,0 +1,214 @@
+@use "../../../../../styles/variables" as *;
+
+.goals-content {
+	display: grid;
+	gap: $app-gap-md;
+	min-width: 0;
+}
+
+.goal-template-controls {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: $app-gap-xs;
+}
+
+:global(.goal-template-controls__select) {
+	min-width: 0;
+}
+
+.goal-template-controls > :global(button) {
+	min-height: $app-control-height-sm;
+}
+
+.goal-template-preview {
+	display: grid;
+	gap: $app-gap-sm;
+	padding: $app-gap-sm;
+	color: $app-shell-text-muted;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-control;
+	font-size: $app-font-size-xs;
+
+	strong {
+		color: $app-shell-text-primary;
+		font-size: $app-font-size-sm;
+	}
+
+	p {
+		margin: $app-gap-2xs 0 0;
+	}
+}
+
+.goal-template-preview__title,
+.goal-template-preview__goals {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $app-gap-xs;
+}
+
+.goal-template-preview__keep {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+
+	span {
+		display: grid;
+		gap: $app-gap-2xs;
+	}
+
+	small {
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-xs;
+	}
+}
+
+.goal-grid {
+	display: grid;
+	gap: $app-gap-xs;
+}
+
+.goal-input {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-control;
+}
+
+.goal-input__header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.goal-input__heading {
+	display: grid;
+	gap: $app-gap-2xs;
+	min-width: 0;
+}
+
+.goal-label {
+	overflow: hidden;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.goal-current {
+	display: flex;
+	align-items: center;
+	gap: $app-gap-2xs;
+	color: $app-shell-text-muted;
+	font-family: $app-font-family-data;
+	font-size: $app-font-size-xs;
+	font-variant-numeric: tabular-nums;
+
+	strong {
+		color: $app-warning-strong;
+	}
+}
+
+.goal-input[data-status="met"] .goal-current strong {
+	color: $app-shell-accent-primary;
+}
+
+.goal-input[data-status="over"] .goal-current strong {
+	color: $app-shell-accent-danger;
+}
+
+.goal-input__target {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $app-gap-xs;
+	min-width: 0;
+}
+
+.goal-input__target-label {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+}
+
+.goal-input__amount {
+	display: inline-flex;
+	align-items: center;
+	gap: $app-gap-2xs;
+	min-width: 0;
+}
+
+:global(.goal-input__type) {
+	flex: 0 0 auto;
+	max-width: 8rem;
+}
+
+:global(.goal-input__slider) {
+	width: 100%;
+}
+
+.goal-input__range-divider {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+}
+
+:global(.goal-input__number) {
+	width: clamp(3.25rem, 14vw, 4.5rem);
+	min-width: 0;
+	height: $app-control-height-sm;
+	padding-inline: $app-gap-xs;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-control;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-pill;
+	outline: none;
+	appearance: textfield;
+	font-family: $app-font-family-data;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+}
+
+:global(.goal-input__number::-webkit-inner-spin-button),
+:global(.goal-input__number::-webkit-outer-spin-button) {
+	margin: 0;
+	appearance: none;
+}
+
+:global(.goal-input__number:focus-visible) {
+	border-color: $app-shell-accent-primary;
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.goal-unit {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.goals-content {
+		gap: $app-gap-sm;
+	}
+
+	.goal-input {
+		gap: $app-gap-xs;
+		padding: $app-gap-xs;
+	}
+
+	.goal-input__header,
+	.goal-input__target {
+		gap: $app-gap-xs;
+	}
+}

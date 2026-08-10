@@ -1,0 +1,70 @@
+@use "../../../../../styles/variables" as *;
+
+.ingredient-search-panel {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: $app-gap-md;
+  min-height: 0;
+  margin-bottom: 0;
+  background: transparent;
+  border: 0;
+  border-radius: $app-shell-radius-control;
+}
+
+.search-toolbar {
+  display: grid;
+  grid-template-columns: minmax(
+      0,
+      1fr
+    ) $app-shell-control-height $app-shell-control-height;
+  align-items: center;
+  gap: $app-gap-md;
+}
+
+.search-toolbar__input {
+  min-width: 0;
+}
+
+.search-toolbar :global(.manual-entry-launcher) {
+  grid-column: 1 / -1;
+}
+
+.search-toolbar :global(.barcode-scan-button--compact) {
+  width: $app-shell-control-height;
+  height: $app-shell-control-height;
+  min-height: $app-shell-control-height;
+}
+
+:global(.filter-button__icon) {
+  width: $app-shell-control-icon-size;
+  height: $app-shell-control-icon-size;
+}
+
+@media (max-width: $app-breakpoint-xs),
+  (max-height: $app-breakpoint-height-compact) {
+  .ingredient-search-panel {
+    gap: 0;
+  }
+
+  .search-toolbar {
+    grid-template-columns:
+      minmax(0, 1fr)
+      $app-shell-control-height-narrow
+      $app-shell-control-height-narrow
+      $app-shell-control-height-narrow;
+    gap: $app-gap-sm;
+  }
+
+  .search-toolbar :global(.barcode-scan-button--compact),
+  .search-toolbar :global(.filter-button),
+  .search-toolbar :global(.manual-entry-launcher) {
+    width: $app-shell-control-height-narrow;
+    height: $app-shell-control-height-narrow;
+    min-height: $app-shell-control-height-narrow;
+  }
+
+  .search-toolbar :global(.manual-entry-launcher) {
+    grid-column: auto;
+  }
+}

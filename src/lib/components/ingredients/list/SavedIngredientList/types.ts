@@ -1,0 +1,33 @@
+import type { FoodItem } from "$lib/utils/food/types";
+import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
+import type { ScrollDirection } from "$lib/utils/navigation/scrollDirection";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
+
+export type SavedIngredientListProps = {
+	activeList: IngredientListKey;
+	foods: FoodItem[];
+	provenanceOptions?: readonly IngredientProvenanceOption[];
+	activeRawCount?: number;
+	listLoading?: boolean;
+	loadingMoreList?: IngredientListKey | null;
+	canRevealMore?: boolean;
+	selectedFoodId?: number | null;
+	selectedIds?: number[];
+	selectionMode?: boolean;
+	removingItem?: string | null;
+	movingItem?: string | null;
+	moving?: boolean;
+	revealPaused?: boolean;
+	resetKey?: number;
+	onSelectAll: () => void;
+	onEnterSelection: (foodId?: number) => void;
+	onCancelSelection: () => void;
+	onMoveSelection: () => boolean | Promise<boolean>;
+	onMoveItem: (food: FoodItem) => boolean | Promise<boolean>;
+	onToggle: (foodId: number) => void;
+	onPreview: (food: FoodItem) => void;
+	onActions: (food: FoodItem) => void;
+	onRemove: (foodId: number) => void;
+	onRevealMore: () => void | Promise<void>;
+	onScrollDirectionChange?: (direction: ScrollDirection) => void;
+};

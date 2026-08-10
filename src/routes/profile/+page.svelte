@@ -1,21 +1,45 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { invalidateAll } from "$app/navigation";
-	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker.svelte";
+	import { browser } from "$app/environment";
+	import User from "$lib/assets/icons/User/User.svelte";
+	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
+	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
+	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
+	import PhotoUploadInput from "$lib/components/common/forms/PhotoUploadInput/PhotoUploadInput.svelte";
+	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
+	import CircularMediaFrame from "$lib/components/common/images/CircularMediaFrame/CircularMediaFrame.svelte";
+	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
+	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker/FoodPreferencePicker.svelte";
+	import ThemePreferenceControl from "$lib/components/profile/ThemePreferenceControl/ThemePreferenceControl.svelte";
+	import { APP_NAME } from "$lib/config/brand";
+	import { formatDocumentTitle } from "$lib/config/pageMetadata";
 	import {
 		getServingSizeDisplayValue,
 		type DefaultServingUnit,
 	} from "$lib/utils/profile/foodPreferences";
+	import {
+		getDeviceRegulatoryRegionSuggestion,
+		type RegulatoryRegionSelectionSource,
+	} from "$lib/utils/profile/regulatoryRegion";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
-	import type { ActionData, PageData } from "./$types";
+	import {
+		applyThemePreference,
+		normalizeThemePreference,
+		type ThemePreference,
+	} from "$lib/utils/theme/themePreference";
+	import type {
+		PreferenceGroupKey,
+		PreferenceGroupMeta,
+		ProfilePageProps,
+	} from "./types";
 
 	let {
 		data,
 		form,
-	}: {
-		data: PageData;
-		form: ActionData;
-	} = $props();
+	}: ProfilePageProps = $props();
 
 	const profileValues = $derived({
 		displayName:
@@ -23,6 +47,19 @@
 			data.profile?.display_name ??
 			data.defaultDisplayName,
 		bio: form?.profileValues?.bio ?? data.profile?.bio ?? "",
+	});
+	const incomingAppearanceTheme = $derived(
+		normalizeThemePreference(
+			form?.appearanceTheme ?? data.profile?.appearance_theme,
+		),
+	);
+	let appearanceTheme = $state<ThemePreference>("system");
+	let lastAppearanceSeed = "";
+
+	$effect(() => {
+		if (incomingAppearanceTheme === lastAppearanceSeed) return;
+		lastAppearanceSeed = incomingAppearanceTheme;
+		appearanceTheme = incomingAppearanceTheme;
 	});
 	const storedServingUnit = $derived<DefaultServingUnit>(
 		data.foodPreferences?.unitSystem === "us" ? "oz" : "g",
@@ -44,18 +81,64 @@
 			form?.foodPreferenceValues?.prioritizedNutrientIds ??
 			data.foodPreferences?.prioritizedNutrientIds ??
 			[],
-		defaultSmoothieServingUnit:
-			form?.foodPreferenceValues?.defaultSmoothieServingUnit ?? storedServingUnit,
-		defaultSmoothieServingSize:
-			form?.foodPreferenceValues?.defaultSmoothieServingSize ??
+		defaultMixServingUnit:
+			form?.foodPreferenceValues?.defaultMixServingUnit ?? storedServingUnit,
+		defaultMixServingSize:
+			form?.foodPreferenceValues?.defaultMixServingSize ??
 			getServingSizeDisplayValue(
-				data.foodPreferences?.defaultSmoothieServingGrams,
+				data.foodPreferences?.defaultMixServingGrams,
 				storedServingUnit,
 			),
 		sensitiveAcknowledged:
 			form?.foodPreferenceValues?.sensitiveAcknowledged ??
 			Boolean(data.foodPreferences?.sensitiveAcknowledgedAt),
+		regulatoryRegionCode:
+			form?.foodPreferenceValues?.regulatoryRegionCode ??
+			data.foodPreferences?.regulatoryRegionCode ??
+			"",
+		regulatoryRegionSource:
+			form?.foodPreferenceValues?.regulatoryRegionSource ??
+			data.foodPreferences?.regulatoryRegionSource ??
+			null,
 	});
+	let regulatoryRegionCode = $state("");
+	let regulatoryRegionSource = $state<RegulatoryRegionSelectionSource | null>(null);
+	let lastRegulatoryRegionSeed = "";
+	const regulatoryRegionSeed = $derived(JSON.stringify({
+		code: incomingFoodPreferenceValues.regulatoryRegionCode,
+		source: incomingFoodPreferenceValues.regulatoryRegionSource,
+	}));
+
+	$effect(() => {
+		const seed = regulatoryRegionSeed;
+		if (seed === lastRegulatoryRegionSeed) return;
+		lastRegulatoryRegionSeed = seed;
+		regulatoryRegionCode = incomingFoodPreferenceValues.regulatoryRegionCode;
+		regulatoryRegionSource = incomingFoodPreferenceValues.regulatoryRegionSource;
+		if (!browser || regulatoryRegionCode) return;
+
+		const suggestion = getDeviceRegulatoryRegionSuggestion(
+			navigator.languages,
+			data.regulatoryRegionOptions,
+		);
+		if (suggestion) {
+			regulatoryRegionCode = suggestion;
+			regulatoryRegionSource = "device";
+		}
+	});
+
+	const selectRegulatoryRegion = (value: string) => {
+		regulatoryRegionCode = value;
+		regulatoryRegionSource = value ? "account" : null;
+	};
+	const selectedRegulatoryRegion = $derived(
+		data.regulatoryRegionOptions.find((option) =>
+			option.regionCode === regulatoryRegionCode
+		) ?? null,
+	);
+	const hasUnsupportedRegulatoryRegion = $derived(
+		Boolean(regulatoryRegionCode && !selectedRegulatoryRegion),
+	);
 	const normalizePreferenceValue = (value: string) =>
 		value.toLocaleLowerCase().trim().replace(/\s+/g, " ");
 	const uniquePreferenceValues = (values: string[]) => {
@@ -88,21 +171,21 @@
 		dietaryRestrictions = [...incomingFoodPreferenceValues.dietaryRestrictions];
 	});
 
-	type PreferenceGroupKey = "allergens" | "dietaryRestrictions";
-
 	const preferenceGroupMeta: Record<
 		PreferenceGroupKey,
-		{ title: string; helper: string; searchLabel: string; selectLabel: string }
+		PreferenceGroupMeta
 	> = {
 		allergens: {
 			title: "Allergens",
-			helper: "Adds warnings when metadata suggests a conflict.",
+			helper:
+				"Reviewed matches add warnings when food details conflict. New terms stay saved while their match is reviewed.",
 			searchLabel: "Type your own allergen",
 			selectLabel: "Common allergens",
 		},
 		dietaryRestrictions: {
 			title: "Dietary restrictions",
-			helper: "Warns on possible conflicts. It never prevents adding an item.",
+			helper:
+				"Reviewed matches warn on possible conflicts without preventing an item from being added.",
 			searchLabel: "Type your own restriction",
 			selectLabel: "Common restrictions",
 		},
@@ -233,17 +316,39 @@
 	const restrictionOptions = $derived(
 		getOptionRows(suggestedRestrictionLabels, dietaryRestrictions),
 	);
+	const unresolvedAllergens = $derived(
+		(data.foodPreferences?.preferenceResolutions ?? [])
+			.filter((resolution) =>
+				resolution.ruleType === "allergen" && resolution.status === "unresolved"
+			)
+			.map((resolution) => resolution.rawValue),
+	);
+	const unresolvedDietaryRestrictions = $derived(
+		(data.foodPreferences?.preferenceResolutions ?? [])
+			.filter((resolution) =>
+				resolution.ruleType === "dietary_restriction" &&
+				resolution.status === "unresolved"
+			)
+			.map((resolution) => resolution.rawValue),
+	);
 	const savedPreferenceSummary = $derived([
+		regulatoryRegionCode
+			? {
+					label: "Label region",
+					value: selectedRegulatoryRegion?.displayName ??
+						`Unavailable (${regulatoryRegionCode})`,
+				}
+			: null,
 		incomingFoodPreferenceValues.unitSystem
 			? {
 					label: "Units",
 					value: incomingFoodPreferenceValues.unitSystem === "us" ? "US units" : "Metric",
 				}
 			: null,
-		incomingFoodPreferenceValues.defaultSmoothieServingSize
+		incomingFoodPreferenceValues.defaultMixServingSize
 			? {
 					label: "Serving",
-					value: `${incomingFoodPreferenceValues.defaultSmoothieServingSize}${incomingFoodPreferenceValues.defaultSmoothieServingUnit}`,
+					value: `${incomingFoodPreferenceValues.defaultMixServingSize}${incomingFoodPreferenceValues.defaultMixServingUnit}`,
 				}
 			: null,
 		incomingFoodPreferenceValues.allergens.length
@@ -260,53 +365,102 @@
 			: null,
 	].filter((item) => item !== null));
 	let profilePending = $state(false);
+	let appearancePending = $state(false);
 	let avatarPending = $state(false);
 	let foodPreferencesPending = $state(false);
+	let logoutPending = $state(false);
 	const foodPreferencesDisabled = $derived(
 		foodPreferencesPending || data.foodPreferencesUnavailable,
 	);
 	const enhanceProfile = createPendingSubmit(
 		(pending) => (profilePending = pending),
 	);
+	const enhanceAppearance = createPendingSubmit(
+		(pending) => (appearancePending = pending),
+	);
+	const selectAppearanceTheme = (nextTheme: ThemePreference) => {
+		appearanceTheme = nextTheme;
+		if (!browser) return;
+		applyThemePreference(
+			nextTheme,
+			window.matchMedia("(prefers-color-scheme: dark)").matches,
+			document.documentElement,
+			document.querySelector<HTMLMetaElement>("meta[name='theme-color']"),
+		);
+	};
 	const enhanceAvatar = createPendingSubmit(
 		(pending) => (avatarPending = pending),
 	);
 	const enhanceFoodPreferences = createPendingSubmit(
 		(pending) => (foodPreferencesPending = pending),
-		async (result) => {
-			if (result.type !== "success") return;
-			if (!result.data?.foodPreferencesSuccess) return;
-			await invalidateAll();
-		},
 	);
 </script>
 
 <svelte:head>
-	<title>Profile · Smoothie Mixer</title>
-	<meta name="description" content="Manage your optional Smoothie Mixer profile details." />
+	<title>{formatDocumentTitle("Profile")}</title>
+	<meta
+		name="description"
+		content={`Manage your nutrition goals, dietary preferences, appearance, and ${APP_NAME} account.`}
+	/>
 </svelte:head>
 
 <div class="profile-page">
 	<header class="profile-heading">
 		<p class="profile-heading__eyebrow">Account</p>
 		<h1>Your profile</h1>
-		<p>Your profile is optional. Your login works without completing it.</p>
+		<p>Manage your nutrition goals, dietary preferences, appearance, and account.</p>
 	</header>
 
 	<section class="profile-card profile-card--identity">
-		<div class="avatar-preview" aria-label="Current profile image">
+		<CircularMediaFrame class="avatar-preview" label="Current profile image">
 			{#if data.avatarUrl}
 				<img src={data.avatarUrl} alt={data.profile?.avatar_alt_text ?? "Your profile"} />
 			{:else}
-				<svg viewBox="0 0 24 24" aria-hidden="true">
-					<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" />
-				</svg>
+				<User class="avatar-preview__icon" />
 			{/if}
-		</div>
+		</CircularMediaFrame>
 		<div>
 			<strong>{data.profile?.display_name ?? data.defaultDisplayName}</strong>
 			<span>Preferred name</span>
 		</div>
+	</section>
+
+	<section class="profile-card profile-card--action">
+		<div class="profile-card__heading">
+			<h2>Help &amp; tutorial</h2>
+			<p>Replay the quick tour whenever you want a refresher.</p>
+		</div>
+		<RoundedActionLink href="/profile/tutorial">Open quick tutorial</RoundedActionLink>
+	</section>
+
+	<section class="profile-card">
+		<div class="profile-card__heading">
+			<h2>Appearance</h2>
+			<p>Choose a light or dark look, or match this device automatically.</p>
+		</div>
+
+		{#if form?.appearanceError}
+			<StatusMessage tone="danger" message={form.appearanceError} />
+		{:else if form?.appearanceSuccess}
+			<StatusMessage tone="success" message={form.appearanceSuccess} />
+		{/if}
+
+		<form
+			method="POST"
+			action="?/saveAppearance"
+			use:enhance={enhanceAppearance}
+			aria-busy={appearancePending}
+		>
+			<ThemePreferenceControl
+				value={appearanceTheme}
+				disabled={appearancePending}
+				onSelect={selectAppearanceTheme}
+			/>
+			<button class="primary-action" type="submit" disabled={appearancePending}>
+				{#if appearancePending}<LoadingSpinner size="small" decorative />{/if}
+				Save appearance
+			</button>
+		</form>
 	</section>
 
 	<section class="profile-card">
@@ -316,9 +470,9 @@
 		</div>
 
 		{#if form?.profileError}
-			<p class="form-message form-message--error" role="alert">{form.profileError}</p>
+			<StatusMessage tone="danger" message={form.profileError} />
 		{:else if form?.profileSuccess}
-			<p class="form-message form-message--success" role="status">{form.profileSuccess}</p>
+			<StatusMessage tone="success" message={form.profileSuccess} />
 		{/if}
 
 		<form method="POST" action="?/saveProfile" use:enhance={enhanceProfile} aria-busy={profilePending}>
@@ -345,7 +499,8 @@
 			>{profileValues.bio}</textarea>
 
 			<button class="primary-action" type="submit" disabled={profilePending}>
-				{profilePending ? "Saving profile…" : "Save profile"}
+				{#if profilePending}<LoadingSpinner size="small" decorative />{/if}
+				Save profile
 			</button>
 		</form>
 	</section>
@@ -357,18 +512,18 @@
 		</div>
 
 		{#if form?.avatarError}
-			<p class="form-message form-message--error" role="alert">{form.avatarError}</p>
+			<StatusMessage tone="danger" message={form.avatarError} />
 		{:else if form?.avatarSuccess}
-			<p class="form-message form-message--success" role="status">{form.avatarSuccess}</p>
+			<StatusMessage tone="success" message={form.avatarSuccess} />
 		{/if}
 
 		<form method="POST" action="?/uploadAvatar" enctype="multipart/form-data" use:enhance={enhanceAvatar} aria-busy={avatarPending}>
-			<label for="profile-avatar">Choose image</label>
-			<input
+			<PhotoUploadInput
 				id="profile-avatar"
 				name="avatar"
-				type="file"
-				accept="image/jpeg,image/png,image/webp"
+				prompt="Profile photo"
+				description="Choose a JPEG, PNG, or WebP portrait up to 5 MB."
+				photoCount={1}
 				required
 				disabled={avatarPending}
 			/>
@@ -385,10 +540,10 @@
 
 			<fieldset class="avatar-policy">
 				<legend>Profile image rules</legend>
-				<details class="avatar-policy__details">
+				<details class="avatar-policy__details" use:animatedDetails>
 					<summary>
 						<span>Review image rules</span>
-						<span class="avatar-policy__chevron" aria-hidden="true">⌄</span>
+						<DisclosureChevron class="avatar-policy__chevron" />
 					</summary>
 					<ul>
 						{#each data.avatarPolicyItems as item}
@@ -410,18 +565,23 @@
 
 			<div class="form-actions">
 				<button class="primary-action" type="submit" disabled={avatarPending}>
-					{avatarPending ? "Saving image…" : "Upload image"}
+					{#if avatarPending}<LoadingSpinner size="small" decorative />{/if}
+					Upload image
 				</button>
 				{#if data.profile?.avatar_path}
 					<button class="secondary-action" type="submit" formaction="?/removeAvatar" formnovalidate disabled={avatarPending}>
-						{avatarPending ? "Working…" : "Remove image"}
+						{#if avatarPending}<LoadingSpinner size="small" decorative />{/if}
+						Remove image
 					</button>
 				{/if}
 			</div>
 		</form>
 	</section>
 
-	<section class="profile-card">
+	<section
+		class="profile-card"
+		data-tutorial-target="food-preferences"
+	>
 		<div class="profile-card__heading">
 			<h2>Food safety &amp; dietary restrictions</h2>
 			<p>Optional settings for safer suggestions and smoother mix planning.</p>
@@ -437,14 +597,15 @@
 		</div>
 
 		{#if form?.foodPreferencesError}
-			<p class="form-message form-message--error" role="alert">{form.foodPreferencesError}</p>
+			<StatusMessage tone="danger" message={form.foodPreferencesError} />
 		{:else if form?.foodPreferencesSuccess}
-			<p class="form-message form-message--success" role="status">{form.foodPreferencesSuccess}</p>
+			<StatusMessage tone="success" message={form.foodPreferencesSuccess} />
 		{/if}
 		{#if data.foodPreferencesUnavailable}
-			<p class="form-message form-message--warning" role="status">
-				Food preference storage is waiting on the latest database migration. Profile details and images still work.
-			</p>
+			<StatusMessage
+				tone="warning"
+				message="Food preference storage is waiting on the latest database migration. Profile details and images still work."
+			/>
 		{/if}
 		{#if savedPreferenceSummary.length}
 			<div class="saved-preferences" aria-label="Saved food preferences">
@@ -467,41 +628,79 @@
 			aria-busy={foodPreferencesPending}
 		>
 			<div class="preference-grid">
-				<label>
-					<span>Preferred units</span>
-					<select
-						name="unitSystem"
-						value={incomingFoodPreferenceValues.unitSystem}
+				<div class="preference-field">
+					<SelectField
+						id="profile-regulatory-region"
+						name="regulatoryRegionCode"
+						label="Package-label region"
+						value={regulatoryRegionCode}
+						options={[
+							{ value: "", label: "Personal settings only" },
+							...(hasUnsupportedRegulatoryRegion
+								? [{
+									value: regulatoryRegionCode,
+									label: `Previously saved region unavailable (${regulatoryRegionCode})`,
+									disabled: true,
+								}]
+								: []),
+							...data.regulatoryRegionOptions.map((option) => ({
+								value: option.regionCode,
+								label: option.displayName,
+							})),
+						]}
+						helper={regulatoryRegionSource === "device"
+							? "Suggested from this device. Saving keeps it with your account."
+							: "Adds regional label context without removing any personal warning."}
 						disabled={foodPreferencesDisabled}
-					>
-						<option value="">No preference</option>
-						<option value="metric">Metric</option>
-						<option value="us">US units</option>
-					</select>
-				</label>
+						onValueChange={selectRegulatoryRegion}
+					/>
+					<input
+						type="hidden"
+						name="regulatoryRegionSource"
+						value={regulatoryRegionSource ?? ""}
+					/>
+				</div>
 
-				<label>
-					<span>Default smoothie serving size</span>
+				<SelectField
+					id="profile-unit-system"
+						name="unitSystem"
+						label="Preferred units"
+						value={incomingFoodPreferenceValues.unitSystem}
+						options={[
+							{ value: "", label: "No preference" },
+							{ value: "metric", label: "Metric" },
+							{ value: "us", label: "US units" },
+						]}
+						disabled={foodPreferencesDisabled}
+				/>
+
+				<div class="preference-field">
+					<span>Default serving size</span>
 					<div class="inline-fields">
-						<input
-							name="defaultSmoothieServingSize"
-							type="number"
+						<NumberInput
+							id="profile-default-serving-size"
+							name="defaultMixServingSize"
+							class="profile-serving-size-input"
 							min="0"
 							step="0.1"
-							value={incomingFoodPreferenceValues.defaultSmoothieServingSize}
+							value={incomingFoodPreferenceValues.defaultMixServingSize}
 							placeholder="Optional"
 							disabled={foodPreferencesDisabled}
 						/>
-						<select
-							name="defaultSmoothieServingUnit"
-							value={incomingFoodPreferenceValues.defaultSmoothieServingUnit}
+						<SelectField
+							id="profile-default-serving-unit"
+							name="defaultMixServingUnit"
+							label="Default serving unit"
+							labelVisibility="sr-only"
+							value={incomingFoodPreferenceValues.defaultMixServingUnit}
+							options={[
+								{ value: "g", label: "g" },
+								{ value: "oz", label: "oz" },
+							]}
 							disabled={foodPreferencesDisabled}
-						>
-							<option value="g">g</option>
-							<option value="oz">oz</option>
-						</select>
+						/>
 					</div>
-				</label>
+				</div>
 			</div>
 
 			<input type="hidden" name="allergens" value={allergens.join(", ")} />
@@ -513,6 +712,7 @@
 
 			<div class="preference-editor-grid">
 				<FoodPreferencePicker
+					id="profile-allergens"
 					title={preferenceGroupMeta.allergens.title}
 					helper={preferenceGroupMeta.allergens.helper}
 					searchLabel={preferenceGroupMeta.allergens.searchLabel}
@@ -524,6 +724,7 @@
 					filteredOptions={getFilteredOptions("allergens")}
 					disabled={foodPreferencesDisabled}
 					emptyLabel="No allergens saved."
+					unresolvedValues={unresolvedAllergens}
 					onAdd={(value) => addPreferenceValue("allergens", value)}
 					onRemove={(value) => removePreferenceValue("allergens", value)}
 					onSearchChange={(value) => setPreferenceSearch("allergens", value)}
@@ -531,6 +732,7 @@
 				/>
 
 				<FoodPreferencePicker
+					id="profile-dietary-restrictions"
 					title={preferenceGroupMeta.dietaryRestrictions.title}
 					helper={preferenceGroupMeta.dietaryRestrictions.helper}
 					searchLabel={preferenceGroupMeta.dietaryRestrictions.searchLabel}
@@ -542,6 +744,7 @@
 					filteredOptions={getFilteredOptions("dietaryRestrictions")}
 					disabled={foodPreferencesDisabled}
 					emptyLabel="No restrictions saved."
+					unresolvedValues={unresolvedDietaryRestrictions}
 					onAdd={(value) => addPreferenceValue("dietaryRestrictions", value)}
 					onRemove={(value) =>
 						removePreferenceValue("dietaryRestrictions", value)}
@@ -581,363 +784,34 @@
 			</label>
 
 			<button class="primary-action" type="submit" disabled={foodPreferencesDisabled}>
-				{foodPreferencesPending ? "Saving preferences…" : "Save food preferences"}
+				{#if foodPreferencesPending}<LoadingSpinner size="small" decorative />{/if}
+				Save food preferences
 			</button>
+		</form>
+	</section>
+
+	<section class="profile-card profile-card--action">
+		<div class="profile-card__heading">
+			<h2>Account session</h2>
+			<p>Log out of this device. Your saved profile and foods will still be here next time.</p>
+		</div>
+		<form
+			method="POST"
+			action="/auth/logout"
+			aria-busy={logoutPending}
+			onsubmit={() => (logoutPending = true)}
+		>
+			<RoundedActionButton
+				type="submit"
+				variant="neutral"
+				busy={logoutPending}
+			>
+				Log out
+			</RoundedActionButton>
 		</form>
 	</section>
 </div>
 
 <style lang="scss">
-	@use "../../styles/variables" as *;
-
-	.profile-page {
-		display: grid;
-		gap: $app-gap-md;
-	}
-
-	.profile-heading {
-		display: grid;
-		gap: $app-gap-xs;
-
-		h1 {
-			font-family: $app-font-family-display;
-			font-size: clamp(1.65rem, 6vw, 2.2rem);
-			letter-spacing: -0.035em;
-		}
-
-		p:last-child {
-			color: $app-muted;
-			font-size: $app-font-size-md;
-		}
-	}
-
-	.profile-heading__eyebrow {
-		color: $app-muted;
-		font-size: $app-font-size-xs;
-		font-weight: 900;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-	}
-
-	.profile-card {
-		display: grid;
-		gap: $app-gap-md;
-		padding: $app-gap-md;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-card-radius;
-
-		form {
-			display: grid;
-			gap: $app-gap-sm;
-		}
-
-		label,
-		legend {
-			color: $app-primary;
-			font-size: $app-font-size-md;
-			font-weight: 800;
-		}
-
-		input:not([type="checkbox"]),
-		textarea,
-		select {
-			width: 100%;
-			padding: 0.65rem 0.75rem;
-			color: $app-primary;
-			background: $app-bg;
-			border: $app-border;
-			border-radius: $app-radius-sm;
-			font: inherit;
-		}
-
-		input[type="file"] {
-			font-size: $app-font-size-sm;
-		}
-
-		small {
-			color: $app-muted;
-			font-size: $app-font-size-sm;
-		}
-	}
-
-	.sensitive-notice {
-		display: grid;
-		gap: $app-gap-xs;
-		padding: $app-gap-sm;
-		color: $app-warning-text;
-		background: $app-warning-bg;
-		border: $app-warning-border;
-		border-radius: $app-radius-sm;
-		font-size: $app-font-size-sm;
-	}
-
-	.saved-preferences {
-		display: grid;
-		gap: $app-gap-sm;
-		padding: $app-gap-sm;
-		background: $app-bg;
-		border: $app-border;
-		border-radius: $app-radius-sm;
-
-		> strong {
-			color: $app-primary;
-			font-size: $app-font-size-md;
-		}
-	}
-
-	.saved-preferences__grid {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: $app-gap-xs;
-	}
-
-	.saved-preferences__item {
-		min-width: 0;
-		padding: $app-gap-xs;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-radius-sm;
-
-		span {
-			display: block;
-			margin-bottom: 0.1rem;
-			color: $app-muted;
-			font-size: $app-font-size-xs;
-			font-weight: 900;
-			letter-spacing: 0.05em;
-			text-transform: uppercase;
-		}
-
-		p {
-			color: $app-primary;
-			font-size: $app-font-size-sm;
-			font-weight: 800;
-			overflow-wrap: anywhere;
-		}
-	}
-
-	.preference-grid {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: $app-gap-sm;
-
-		label {
-			display: grid;
-			gap: $app-gap-xs;
-		}
-	}
-
-	.inline-fields {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) 5rem;
-		gap: $app-gap-xs;
-	}
-
-	.preference-editor-grid {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: $app-gap-sm;
-	}
-
-	.nutrient-priorities {
-		display: grid;
-		gap: $app-gap-sm;
-		padding: $app-gap-sm;
-		border: $app-border;
-		border-radius: $app-radius-sm;
-	}
-
-	.priority-options {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: $app-gap-xs $app-gap-sm;
-	}
-
-	.profile-card--identity {
-		grid-template-columns: auto minmax(0, 1fr);
-		align-items: center;
-
-		div:last-child {
-			display: grid;
-			min-width: 0;
-		}
-
-		strong,
-		span {
-			overflow-wrap: anywhere;
-		}
-
-		span {
-			color: $app-muted;
-			font-size: $app-font-size-sm;
-		}
-	}
-
-	.avatar-preview {
-		display: grid;
-		place-items: center;
-		width: 4.5rem;
-		height: 4.5rem;
-		overflow: hidden;
-		color: $app-primary;
-		background: $app-accent;
-		border: $app-border;
-		border-radius: 50%;
-
-		img {
-			width: 100%;
-			height: 100%;
-			object-fit: cover;
-		}
-
-		svg {
-			width: 55%;
-			fill: none;
-			stroke: currentColor;
-			stroke-linecap: round;
-			stroke-linejoin: round;
-			stroke-width: 1.8;
-		}
-	}
-
-	.profile-card__heading {
-		display: grid;
-		gap: $app-gap-xs;
-
-		h2 {
-			font-size: $app-font-size-xl;
-		}
-
-		p {
-			color: $app-muted;
-			font-size: $app-font-size-sm;
-		}
-	}
-
-	.avatar-policy {
-		display: grid;
-		gap: $app-gap-sm;
-		margin-top: $app-gap-xs;
-		padding: $app-gap-sm;
-		border: $app-border;
-		border-radius: $app-radius-sm;
-	}
-
-	.avatar-policy__details {
-		min-width: 0;
-		padding: $app-gap-sm;
-		background: $app-bg;
-		border: $app-border;
-		border-radius: $app-radius-sm;
-
-		summary {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			gap: $app-gap-sm;
-			color: $app-primary;
-			font-size: $app-font-size-sm;
-			font-weight: 800;
-			cursor: pointer;
-			list-style: none;
-
-			&::-webkit-details-marker {
-				display: none;
-			}
-		}
-
-		ul {
-			display: grid;
-			gap: 0.15rem;
-			margin-top: $app-gap-sm;
-			padding-left: 1.15rem;
-			color: $app-muted;
-			font-size: $app-font-size-sm;
-		}
-
-		&[open] .avatar-policy__chevron {
-			transform: rotate(180deg);
-		}
-	}
-
-	.avatar-policy__chevron {
-		font-size: $app-font-size-lg;
-		line-height: 1;
-		transition: transform 160ms ease;
-	}
-
-	.check-row {
-		display: grid;
-		grid-template-columns: auto minmax(0, 1fr);
-		gap: $app-gap-sm;
-		align-items: start;
-
-		input {
-			margin-top: 0.2rem;
-		}
-	}
-
-	.form-actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: $app-gap-sm;
-	}
-
-	.primary-action,
-	.secondary-action {
-		width: fit-content;
-		font-family: $app-button-font-family;
-		font-weight: $app-button-font-weight;
-		line-height: $app-button-line-height;
-	}
-
-	.primary-action {
-		color: $app-btn-text;
-		background: $app-btn-bg;
-
-		&:hover {
-			background: $app-btn-bg-hover;
-		}
-	}
-
-	.secondary-action {
-		color: $app-primary;
-		background: $app-accent;
-	}
-
-	.form-message {
-		padding: $app-gap-sm;
-		border-radius: $app-radius-sm;
-		font-size: $app-font-size-sm;
-		font-weight: 800;
-	}
-
-	.form-message--error {
-		background: $app-danger-bg;
-	}
-
-	.form-message--success {
-		background: $app-success-bg;
-	}
-
-	.form-message--warning {
-		color: $app-warning-text;
-		background: $app-warning-bg;
-		border: $app-warning-border;
-	}
-
-	@media (max-width: $app-breakpoint-xs) {
-		.preference-grid,
-		.preference-editor-grid,
-		.priority-options,
-		.saved-preferences__grid {
-			grid-template-columns: 1fr;
-		}
-
-		.form-actions button {
-			flex: 1 1 100%;
-			width: 100%;
-		}
-	}
+	@use "./page.scss";
 </style>

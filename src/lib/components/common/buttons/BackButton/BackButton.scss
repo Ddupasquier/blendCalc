@@ -1,0 +1,6 @@
+@use "../../../../../styles/variables" as *;
+
+:global(.back-button__icon) {
+	width: $app-control-icon-size;
+	height: $app-control-icon-size;
+}

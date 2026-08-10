@@ -1,0 +1,153 @@
+@use "../../../../../styles/variables" as *;
+
+.product-ingredients-panel {
+	display: grid;
+	gap: $app-gap-sm;
+	color: $app-shell-text-primary;
+}
+
+.product-ingredients-panel h2,
+.product-ingredients-panel h3,
+.product-ingredients-panel p,
+.product-ingredients-panel ul {
+	margin: 0;
+}
+
+.product-ingredients-panel h2 {
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-bold;
+}
+
+.product-ingredients-panel h3 {
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-label;
+	text-transform: uppercase;
+}
+
+.product-ingredients-panel p,
+.product-ingredients-panel li {
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-regular;
+	line-height: $app-line-height-body;
+	overflow-wrap: anywhere;
+}
+
+.product-ingredients-panel__details {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.product-ingredients-panel__content {
+	display: grid;
+	gap: $app-gap-lg;
+}
+
+.product-ingredients-panel ul {
+	display: grid;
+	gap: $app-gap-xs;
+	padding: 0;
+	list-style: none;
+}
+
+.product-ingredients-panel li {
+	display: flex;
+	justify-content: space-between;
+	align-items: start;
+	gap: $app-gap-md;
+}
+
+.product-ingredients-panel li > div {
+	display: grid;
+	min-width: 0;
+	gap: $app-gap-xs;
+}
+
+.product-ingredients-panel li strong {
+	flex: 0 0 auto;
+	font-weight: $app-font-weight-bold;
+}
+
+.product-ingredients-panel small,
+.product-ingredients-panel__note {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-ui;
+}
+
+.product-ingredients-panel dl,
+.product-ingredients-panel dd {
+	margin: 0;
+}
+
+.product-ingredients-panel dl {
+	display: grid;
+	gap: $app-gap-xs;
+}
+
+.product-ingredients-panel dl > div {
+	display: flex;
+	justify-content: space-between;
+	gap: $app-gap-md;
+}
+
+.product-ingredients-panel dt,
+.product-ingredients-panel dd {
+	font-size: $app-font-size-sm;
+}
+
+.product-ingredients-panel dt {
+	font-weight: $app-font-weight-medium;
+}
+
+.product-ingredients-panel dd {
+	flex: 0 0 auto;
+	font-weight: $app-font-weight-bold;
+}
+
+.product-ingredients-panel__depth-1 {
+	padding-left: $app-gap-md;
+}
+
+.product-ingredients-panel__depth-2 {
+	padding-left: $app-gap-lg;
+}
+
+.product-ingredients-panel__depth-3 {
+	padding-left: calc($app-gap-lg + $app-gap-md);
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.product-ingredients-panel,
+	.product-ingredients-panel__details {
+		gap: $app-gap-xs;
+	}
+
+	.product-ingredients-panel__content {
+		gap: $app-gap-md;
+	}
+
+	.product-ingredients-panel h2,
+	.product-ingredients-panel p,
+	.product-ingredients-panel li {
+		font-size: $app-font-size-sm;
+	}
+
+	.product-ingredients-panel li,
+	.product-ingredients-panel dl > div {
+		gap: $app-gap-sm;
+	}
+
+	.product-ingredients-panel__depth-1 {
+		padding-left: $app-gap-sm;
+	}
+
+	.product-ingredients-panel__depth-2 {
+		padding-left: $app-gap-md;
+	}
+
+	.product-ingredients-panel__depth-3 {
+		padding-left: $app-gap-lg;
+	}
+}

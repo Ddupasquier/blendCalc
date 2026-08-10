@@ -1,0 +1,19 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+
+.disclosure-chevron {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: $app-shell-control-icon-size;
+	height: $app-shell-control-icon-size;
+	line-height: $app-line-height-none;
+	transform: rotate(0deg);
+	transition: transform motion.$duration-feedback motion.$easing-standard;
+}
+
+.disclosure-chevron[data-open="true"],
+:global(details[data-expanded="true"] > summary) .disclosure-chevron {
+	transform: rotate(90deg);
+}

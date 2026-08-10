@@ -2,7 +2,9 @@ import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
 const getSafeNextPath = (value: string | null) => {
-	if (!value || !value.startsWith("/") || value.startsWith("//")) return "/fridge";
+	if (!value || !value.startsWith("/") || value.startsWith("//")) {
+		return "/ingredients/fridge";
+	}
 	return value;
 };
 
@@ -20,7 +22,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		throw redirect(303, `${callbackUrl.pathname}${callbackUrl.search}`);
 	}
 
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 
 	if (user) {
 		throw redirect(303, getSafeNextPath(url.searchParams.get("next")));

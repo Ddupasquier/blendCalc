@@ -1,0 +1,236 @@
+@use "../../../../styles/variables" as *;
+@use "../../../utils/animation/motion" as motion;
+
+.tutorial-tour {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  overflow: hidden;
+}
+
+.tutorial-shade,
+.tutorial-shade-fallback {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tutorial-shade {
+  display: block;
+}
+
+.tutorial-shade-fallback,
+.tutorial-shade__fill {
+  background: $app-shell-overlay-backdrop;
+  fill: $app-shell-overlay-backdrop;
+}
+
+.tutorial-shade__mask-base {
+  fill: white;
+}
+
+.tutorial-shade__mask-cutout {
+  fill: black;
+}
+
+.tutorial-spotlight {
+  position: fixed;
+  z-index: 1;
+  outline: 2px solid $app-shell-accent-primary;
+  pointer-events: none;
+  transition:
+    top motion.$duration-feedback motion.$easing-standard,
+    left motion.$duration-feedback motion.$easing-standard,
+    width motion.$duration-feedback motion.$easing-standard,
+    height motion.$duration-feedback motion.$easing-standard,
+    border-radius motion.$duration-feedback motion.$easing-standard;
+}
+
+.tutorial {
+  position: fixed;
+  z-index: 2;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(25rem, calc(100vw - 2 * $app-gap-sm));
+  max-height: calc(100vh - 2 * $app-gap-sm);
+  max-height: calc(100dvh - 2 * $app-gap-sm);
+  overflow: hidden;
+  color: $app-shell-text-primary;
+  background: $app-shell-surface-panel;
+  border: 1px solid $app-shell-border-subtle;
+  border-radius: $app-shell-radius-card;
+  transition:
+    top motion.$duration-feedback motion.$easing-standard,
+    left motion.$duration-feedback motion.$easing-standard;
+}
+
+.tutorial:focus-visible {
+  outline: $app-focus-outline;
+  outline-offset: $app-focus-outline-offset;
+}
+
+.tutorial__header,
+.tutorial__footer {
+  padding: $app-gap-sm $app-gap-md;
+  background: $app-shell-surface-panel;
+}
+
+.tutorial__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $app-gap-sm;
+  border-bottom: 1px solid $app-shell-border-subtle;
+}
+
+.tutorial__eyebrow {
+  color: $app-shell-text-primary;
+  font-size: $app-font-size-xs;
+  font-weight: $app-font-weight-heavy;
+  letter-spacing: $app-letter-spacing-label;
+  text-transform: uppercase;
+}
+
+.tutorial__progress {
+  margin-top: $app-gap-micro;
+  color: $app-shell-text-muted;
+  font-size: $app-font-size-xs;
+}
+
+.tutorial__dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: $app-gap-2xs;
+  max-width: 6rem;
+
+  span {
+    width: $app-gap-xs;
+    height: $app-gap-xs;
+    background: $app-shell-border-subtle;
+    border-radius: 50%;
+  }
+
+  .active {
+    background: $app-highlight;
+  }
+}
+
+.tutorial__body {
+  min-height: 0;
+  padding: $app-gap-md;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  > p {
+    margin-top: $app-gap-sm;
+    color: $app-shell-text-muted;
+    font-size: $app-font-size-sm;
+    line-height: $app-line-height-ui;
+  }
+
+  ul {
+    display: grid;
+    gap: $app-gap-xs;
+    margin-top: $app-gap-sm;
+    padding-left: 1.1rem;
+  }
+
+  li {
+    padding-left: $app-gap-2xs;
+    font-size: $app-font-size-sm;
+    line-height: $app-line-height-ui;
+  }
+
+  li::marker {
+    color: $app-highlight-hover;
+  }
+}
+
+.tutorial__title-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: $app-gap-sm;
+
+  h2 {
+    font-family: $app-font-family-display;
+    font-size: $app-font-size-xl;
+    font-weight: $app-font-weight-heavy;
+    line-height: $app-line-height-heading;
+    text-wrap: balance;
+  }
+}
+
+:global(.tutorial__illustration) {
+  --circular-icon-frame-size: #{2.75rem};
+  --circular-icon-frame-icon-size: #{1.6rem};
+  --circular-icon-frame-color: #{$app-shell-text-primary};
+  --circular-icon-frame-background: #{$app-highlight};
+}
+
+.tutorial__footer {
+  display: grid;
+  gap: $app-gap-sm;
+  border-top: 1px solid $app-shell-border-subtle;
+}
+
+.tutorial__dismissal,
+.tutorial__navigation {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $app-gap-xs;
+}
+
+.tutorial__navigation--replay {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: $app-breakpoint-sm) {
+  .tutorial__navigation--replay {
+    grid-template-columns: 1fr 1fr;
+
+    :global(.rounded-action-button:first-child) {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+  }
+}
+
+@media (max-width: $app-breakpoint-xs),
+  (max-height: $app-breakpoint-height-compact) {
+  .tutorial {
+    width: min(21rem, calc(100vw - 2 * $app-gap-sm));
+  }
+
+  .tutorial__header,
+  .tutorial__footer {
+    padding: $app-gap-xs $app-gap-sm;
+  }
+
+  .tutorial__body {
+    padding: $app-gap-xs $app-gap-sm;
+
+		> p,
+		li {
+			font-size: $app-font-size-xs;
+		}
+  }
+
+  .tutorial__title-row h2 {
+    font-size: $app-font-size-lg;
+  }
+
+  :global(.tutorial__illustration) {
+    --circular-icon-frame-size: #{$app-shell-action-icon-size};
+    --circular-icon-frame-icon-size: #{$app-font-size-lg};
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial,
+  .tutorial-spotlight {
+    transition: none;
+  }
+}

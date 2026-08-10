@@ -1,0 +1,230 @@
+@use "../../../../styles/variables" as *;
+
+.data-health,
+.data-health__header > div,
+.data-health__sections,
+.data-health__stack,
+.data-health__record,
+.data-health__issue-record,
+.data-health__evaluation {
+	display: grid;
+	min-width: 0;
+}
+
+.data-health {
+	gap: $app-gap-md;
+	width: 100%;
+}
+
+.data-health__header {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: $app-gap-md;
+}
+
+.data-health__header > div,
+.data-health__record,
+.data-health__issue-record,
+.data-health__evaluation {
+	gap: $app-gap-xs;
+}
+
+.data-health__header h1 {
+	font-family: $app-font-family-display;
+	font-size: $app-font-size-page-title;
+}
+
+.data-health__header p,
+.data-health__generated,
+.data-health__record span,
+.data-health__issue-record span,
+.data-health__evaluation span,
+.data-health__empty {
+	color: $app-shell-text-muted;
+}
+
+.data-health__eyebrow {
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-heavy;
+	letter-spacing: $app-letter-spacing-wider;
+	text-transform: uppercase;
+}
+
+.data-health__generated {
+	font-size: $app-font-size-sm;
+}
+
+.data-health__overview {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+	gap: $app-gap-sm;
+}
+
+.data-health__overview article {
+	display: flex;
+	align-items: center;
+	gap: $app-gap-sm;
+	min-width: 0;
+	padding: $app-shell-card-padding-compact;
+	background: $app-shell-surface-panel;
+	border: $app-border;
+	border-radius: $app-shell-radius-card;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-semibold;
+}
+
+.data-health__queue-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-sm;
+}
+
+.data-health__queue-links a,
+.data-health__record a,
+.data-health__issue-record a {
+	color: $app-shell-accent-primary;
+	font-weight: $app-font-weight-bold;
+}
+
+.data-health__queue-links a {
+	display: inline-flex;
+	align-items: center;
+	min-height: $app-shell-control-height-compact;
+	padding-inline: $app-shell-control-padding-x-compact;
+	background: $app-shell-accent-soft;
+	border-radius: $app-shell-radius-pill;
+	text-decoration: none;
+}
+
+.data-health__queue-links a:focus-visible,
+.data-health__record a:focus-visible,
+.data-health__issue-record a:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.data-health__sections,
+.data-health__stack {
+	gap: $app-gap-sm;
+}
+
+.data-health__record,
+.data-health__issue-record {
+	padding: $app-shell-card-padding-compact;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.data-health__record > header,
+.data-health__issue-record > div {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+}
+
+.data-health__record > header > div {
+	display: grid;
+	min-width: 0;
+}
+
+.data-health__metrics {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $app-gap-xs $app-gap-md;
+	margin: 0;
+}
+
+.data-health__metrics > div {
+	display: flex;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.data-health__metrics dt {
+	color: $app-shell-text-muted;
+}
+
+.data-health__metrics dd {
+	margin: 0;
+	font-weight: $app-font-weight-bold;
+	text-align: end;
+	overflow-wrap: anywhere;
+}
+
+.data-health__issues {
+	margin: 0;
+	padding-left: $app-gap-lg;
+	color: $app-warning-text;
+}
+
+.data-health__evaluation {
+	padding: $app-gap-sm;
+	background: $app-shell-surface-panel;
+	border-radius: $app-radius-sm;
+}
+
+.data-health__evaluation p,
+.data-health__issue-record p,
+.data-health__issue-record ul {
+	margin: 0;
+}
+
+.data-health__issue-record strong,
+.data-health__issue-record span {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.data-health__empty {
+	margin: 0;
+	padding: $app-gap-sm;
+	text-align: center;
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.data-health__overview,
+	.data-health__metrics {
+		grid-template-columns: 1fr;
+	}
+
+	.data-health__queue-links,
+	.data-health__queue-links a {
+		width: 100%;
+	}
+
+	.data-health__queue-links a {
+		justify-content: center;
+	}
+
+	.data-health,
+	.data-health__sections,
+	.data-health__stack {
+		gap: $app-gap-xs;
+	}
+
+	.data-health__header {
+		gap: $app-gap-sm;
+
+		h1 {
+			font-size: $app-font-size-2xl;
+		}
+	}
+
+	.data-health__overview article,
+	.data-health__record,
+	.data-health__issue-record,
+	.data-health__evaluation {
+		padding: $app-gap-xs;
+	}
+
+	.data-health__overview article,
+	.data-health__generated,
+	.data-health__record,
+	.data-health__issue-record,
+	.data-health__evaluation {
+		font-size: $app-font-size-xs;
+	}
+}

@@ -1,0 +1,115 @@
+@use "../../../../../styles/variables" as *;
+
+.nutrition-label-ocr {
+	display: grid;
+	gap: $app-gap-md;
+	min-width: 0;
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.nutrition-label-ocr__heading {
+	display: flex;
+	align-items: center;
+	gap: $app-gap-xs;
+}
+
+.nutrition-label-ocr__heading strong,
+.nutrition-label-ocr__review legend {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-bold;
+}
+
+.nutrition-label-ocr__heading span {
+	padding: $app-text-badge-padding-y $app-text-badge-padding-x;
+	color: $app-shell-text-muted;
+	background: $app-shell-surface-control;
+	border-radius: $app-shell-radius-pill;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+}
+
+.nutrition-label-ocr__review p {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-ui;
+}
+
+.nutrition-label-ocr__progress,
+.nutrition-label-ocr__review {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.nutrition-label-ocr__progress progress {
+	width: 100%;
+	accent-color: $app-shell-accent-primary;
+}
+
+.nutrition-label-ocr__progress span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+}
+
+.nutrition-label-ocr__review {
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.nutrition-label-ocr__raw-text summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	list-style: none;
+	cursor: pointer;
+}
+
+.nutrition-label-ocr__raw-text summary::-webkit-details-marker {
+	display: none;
+}
+
+.nutrition-label-ocr__raw-text summary:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.nutrition-label-ocr__raw-text pre {
+	max-height: 9.5rem;
+	margin: $app-gap-sm 0 0;
+	padding: $app-gap-sm;
+	overflow: auto;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-card;
+	font-size: $app-font-size-xs;
+	white-space: pre-wrap;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.nutrition-label-ocr {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+	}
+
+	.nutrition-label-ocr__heading strong,
+	.nutrition-label-ocr__review legend,
+	.nutrition-label-ocr__progress span,
+	.nutrition-label-ocr__raw-text summary {
+		font-size: $app-font-size-sm;
+	}
+
+	.nutrition-label-ocr__review p {
+		font-size: $app-font-size-xs;
+	}
+}

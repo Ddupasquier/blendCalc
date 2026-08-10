@@ -1,25 +1,37 @@
-# smoothie-mixer
+# blendCalc
 
-Mix and match ingredients for making well-balanced smoothies.
+A food and nutrition awareness tool for understanding ingredients, building combinations,
+and comparing them with personal goals.
 
 ## Features
 
-- 🔐 Account-gated smoothie workspace with Google and email/password sign-in
+- 🔐 Account-gated nutrition workspace with Google and email/password sign-in
 - 🔍 Ingredient search across FoodData Central, saved custom foods, and the shared product catalog
 - 🧾 Barcode scanning for packaged foods with reusable product data and moderation fallback
-- 🧪 Live nutrient goals, ingredient amounts, radar chart feedback, warnings, and suggestions
-- 🧊 Account-backed On Hand and Shopping List ingredient management
-- 🥤 Saved drinks with load, overwrite, save-as-new, and per-user name validation
+- 🖼️ Source-backed product images stored with license and attribution metadata before UI rendering
+- 🧪 Live nutrient goals, ingredient amounts, nutrient-shape feedback, warnings, and suggestions
+- 🧊 Account-backed Fridge and Shopping List ingredient management
+- 🥤 Saved food combinations with load, overwrite, save-as-new, and per-user name validation
 - 👤 Optional profile details, avatar policy confirmation, food preferences, allergens, and dietary restrictions
 - 🛡️ Admin moderation for users, profile images, and shared product submissions
-- 📱 Mobile-first responsive UI with pagination, filtering, sorting, and large-list handling
+- 📱 Mobile-first responsive UI with progressive loading, filtering, sorting, and large-list controls
 - 🚦 Rate-limit friendly API usage with cache layers and Supabase-backed product reuse
+
+## Versioning
+
+Application, API, build, database, catalog, placement, and transient-state versions are
+independent. [`docs/versioning.md`](docs/versioning.md) owns their sources of truth,
+compatibility rules, and release commands.
 
 ---
 
 ## Getting started
 
-This project uses Node.js 24. With `nvm`, run `nvm use` from the repository root.
+This project uses Node.js 24. `.nvmrc` and `.node-version` let compatible version
+managers select it automatically when a terminal enters the repository.
+`package.json` and `package-lock.json` enforce the same major; dependency installation
+is engine-strict, and development, test, check, preview, and build commands stop
+immediately if a terminal bypasses the repository selector.
 
 ### 1. Install dependencies
 
@@ -27,12 +39,17 @@ This project uses Node.js 24. With `nvm`, run `nvm use` from the repository root
 npm install
 ```
 
+Dependency install scripts are deny-by-default. Reviewed scripts are version-pinned in
+`package.json` under `allowScripts`; review a package again whenever that pinned version
+changes instead of approving new scripts globally.
+
 ### 2. Configure environment variables
 
 Copy the example env file:
 
 ```bash
 cp .env.example .env
+cp .env.moderation.example .env.moderation.local
 ```
 
 Then add the values needed for your environment:
@@ -40,21 +57,20 @@ Then add the values needed for your environment:
 - `VITE_FDC_API_KEY`: free [FoodData Central API key](https://fdc.nal.usda.gov/api-guide.html)
 - `PUBLIC_SUPABASE_URL`: Supabase project URL
 - `PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase publishable browser key
-- `PUBLIC_SITE_URL`: production origin, for example `https://smoothie-mixer.vercel.app`
+- `PUBLIC_SITE_URL`: production origin, for example `https://blendcalc.vercel.app`
 - `SUPABASE_SERVICE_ROLE_KEY`: server-only admin key for protected server work, moderation, and scripts
+- `SUPABASE_PROJECT_ID`: Supabase project ref for local admin scripts
+- `SUPABASE_DB_PASSWORD`: remote Postgres database password for `npm run db:push:auto`
 - `RESEND_API_KEY`, `MODERATION_EMAIL_FROM`, `MODERATION_SUPPORT_EMAIL`: optional moderation email delivery
+- `VERCEL_ANALYTICS_ACCESS_TOKEN`, `VERCEL_TEAM_ID`, and `CRON_SECRET`: server-only
+  production values for the daily aggregate Web Analytics sync; Vercel supplies
+  `VERCEL_PROJECT_ID` when System Environment Variables are enabled
+- `VERCEL_ANALYTICS_SYNC_LOOKBACK_DAYS`: optional 1–31 day aggregate resync window;
+  defaults to `3`
 
-> `.env` and `.env.moderation.local` are listed in `.gitignore` and must not be committed.
+Use `.env` for normal app/runtime values. Use `.env.moderation.local` for local admin scripts and database pushes.
 
-For production authentication, set `PUBLIC_SITE_URL` in the hosting environment
-to the deployed origin, for example `https://smoothie-mixer.vercel.app`. In
-Supabase **Authentication → URL Configuration**, set the Site URL to that same
-production origin and add both callback URLs to the redirect allow list:
-
-```text
-https://smoothie-mixer.vercel.app/auth/callback
-http://localhost:5173/auth/callback
-```
+> `.env` and `.env.moderation.local` are listed in `.gitignore` and must not be committed. Keep `.env.example` and `.env.moderation.example` as placeholders only.
 
 See [`docs/authentication.md`](docs/authentication.md) for the complete Supabase,
 Google, Vercel, security, and verification checklist.
@@ -71,28 +87,53 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## Scripts
 
+This table is the intentional developer-facing command surface. Other repository
+scripts document their direct `node scripts/...` command in the file header instead of
+adding one-off npm aliases.
+
 | Command | Description |
 |---|---|
 | `npm run dev` | Start dev server |
+| `npm run dev:test` | Start the app against the isolated local Supabase test database |
 | `npm run build` | Production build |
 | `npm run preview` | Preview production build |
-| `npm test` | Run unit tests (Vitest) |
-| `npm run test:watch` | Watch-mode tests |
+| `npm test` | Run the non-browser Vitest suite with the benchmarked local worker limit and compact output |
+| `npm run test:watch` | Run focused Vitest checks in watch mode |
+| `npm run test:e2e` | Run authenticated Playwright tests in desktop and mobile Chromium, Firefox, and WebKit projects |
+| `npm run test:e2e:chromium` | Run the focused desktop and 360×740 phone Chromium projects |
+| `npm run test:e2e:headed` | Run desktop Chromium Playwright tests in a visible browser |
+| `npm run test:e2e:ui` | Open the Playwright test explorer |
+| `npm run test:e2e:update` | Review and update tracked Chromium visual snapshots |
+| `npm run test:e2e:install` | Install Playwright's Chromium, Firefox, and WebKit binaries |
 | `npm run check` | TypeScript + Svelte type-check |
 | `npm run check:auth` | Validate auth environment and endpoint health |
-| `npm run audit:fdc-vitals` | Audit FDC output for vital nutrient coverage |
-| `npm run audit:fdc-allergens` | Sample FoodData Central allergen-related fields |
+| `npm run version:check` | Validate Node 24 and all application/API version sources |
+| `npm run version:bump -- patch\|minor\|major` | Update the application release without committing or tagging |
 | `npm run audit:usda-branded-allergens` | Sample USDA branded allergen-related fields |
 | `npm run audit:off-allergens` | Sample Open Food Facts allergen/restriction fields |
-| `npm run seed:food-preferences` | Store observed food preference metadata in Supabase |
-| `npm run discover:fdc-nutrients` | Generate the expanded FDC nutrient catalog |
-| `npm run compare:fdc -- "a" "b"` | Compare live FDC output for two product searches |
+| `npm run audit:api-catalog` | Audit every active shared-catalog row for API publication readiness and field lineage |
+| `npm run seed:food-preferences` | Store cross-source observed food preference metadata in Supabase |
+| `npm run seed:food-categories` | Store cross-source observed custom-food category metadata in Supabase |
+| `npm run seed:food-categories:deep` | Run the broader category API sweep and rebuild category mappings |
+| `npm run seed:food-categories:rebuild` | Rebuild category mappings from already-stored API observations |
+| `npm run seed:manual-entry-nutrients` | Store cross-source manual-entry nutrient grouping observations in Supabase |
+| `npm run seed:product-reference-data -- --sample-size=200` | Cross-check product sources and seed source identities, nutrient mappings/conversions, and serving measures |
+| `npm run generate:api-structures` | Generate docs-only reference types from observed external API payloads |
+| `npm run backfill:food-images` | Backfill DB-backed product image metadata for existing barcode foods |
 | `npm run db:push:dry` | Preview pending Supabase migrations |
-| `npm run db:push` | Push pending Supabase migrations |
+| `npm run db:push` | Push pending Supabase migrations with the Supabase CLI prompt |
+| `npm run db:push:auto` | Push pending Supabase migrations using `SUPABASE_DB_PASSWORD` from `.env.moderation.local` or macOS Keychain |
 | `npm run db:lint` | Run Supabase database linting |
 | `npm run db:types` | Regenerate Supabase TypeScript database types |
-| `npm run catalog:qa-seed` | Seed a fake product submission for moderation testing |
-| `npm run catalog:qa-clean` | Remove fake product submission fixtures |
+| `npm run db:test:start` | Start local Supabase and repair disposable QA personas across Ingredients, Saved, Mix, onboarding, warnings, and moderation |
+| `npm run db:test:reset` | Rebuild the local database from migrations and QA fixtures |
+| `npm run db:test:verify` | Rebuild locally and run pgTAP database tests |
+| `npm run db:test:status` | Show local Supabase service status |
+| `npm run db:test:stop` | Stop the local Supabase stack |
+| `npm run catalog:qa-seed` | Seed fake product submissions in the disposable local test database |
+| `npm run catalog:qa-clean` | Remove fake product submissions from the disposable local test database |
+| `npm run catalog:qa-image-seed` | Seed fake image submissions in the disposable local test database |
+| `npm run catalog:qa-image-clean` | Remove unapproved fake image submissions from the disposable local test database |
 | `npm run moderate -- ...` | Run moderation CLI role/block helpers |
 
 ---
@@ -103,77 +144,20 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 npm test
 ```
 
-Tests run entirely offline using mocked fetch — no API key required.
+Vitest runs without external food-provider calls. Browser and database integration tests
+use the isolated local Supabase environment instead of production data.
 
-See [`docs/shared-product-catalog.md`](docs/shared-product-catalog.md) for the
-barcode verification and shared-product moderation model.
-
-See [`docs/normalized-food-nutrients.md`](docs/normalized-food-nutrients.md) for
-the normalized nutrient query model, provenance fields, synchronization, and
-deployment steps.
-
-See [`docs/ui-functionality.md`](docs/ui-functionality.md) for the complete UI
-feature and functionality preservation brief used for large UI refactors.
-
-To compare live FDC product data while debugging nutrient mappings:
-
-```bash
-npm run compare:fdc -- "sunflower oil" "2% milk"
-npm run audit:fdc-vitals
-npm run discover:fdc-nutrients
-```
-
-`discover:fdc-nutrients` samples broad food categories and generates a
-deduplicated nutrient report in `scripts/output/` and refreshes the application
-catalog at `src/variables/fdcNutrients.generated.ts`. Pass food queries or options such as `--pages=1`,
-`--page-size=25`, and `--min-occurrences=3` to narrow the audit.
+Use [`docs/testing.md`](docs/testing.md) to choose the correct layer and execution stage,
+[`docs/browser-testing.md`](docs/browser-testing.md) for Playwright, and
+[`docs/database-testing.md`](docs/database-testing.md) for the isolated Supabase
+workflow. [`docs/README.md`](docs/README.md) maps every other project subject.
+Script-specific behavior lives in [`scripts/README.md`](scripts/README.md) or the
+executable file header.
 
 ---
 
 ## Project structure
 
-```
-src/
-├── app.scss                   # Global mobile-first styles
-├── app.html                   # HTML shell
-├── lib/
-│   ├── components/
-│   │   ├── app/               # App shell, nav, tutorial, welcome, landing animation
-│   │   ├── auth/              # Password requirement UI
-│   │   ├── common/            # Reusable buttons, dialogs, pills, lists, pagination
-│   │   ├── ingredients/       # Search, barcode scan, custom entry, nutrition facts
-│   │   ├── mix/               # Goals, graph, selected ingredients, warnings, suggestions
-│   │   └── profile/           # Food preference pickers
-│   ├── server/                # Server-only catalog, email, evidence, and API helpers
-│   ├── supabase/              # Browser/server Supabase clients
-│   ├── types/                 # Generated Supabase database types
-│   └── utils/
-│       ├── auth/              # Auth redirects, password policy, password upgrades
-│       ├── barcode/           # Barcode parsing, lookup, nutrients, scanner adapters
-│       ├── food/              # FDC, custom foods, compatibility, normalized nutrients
-│       ├── mix/               # Mix state, calculations, chart metrics, suggestions
-│       ├── profile/           # Profile validation, food preferences, warnings
-│       └── storage/           # Account-scoped local cache + Supabase sync helpers
-└── routes/
-    ├── +layout.svelte
-    ├── +page.svelte           # Auth-gated landing page
-    ├── auth/                  # Sign in, callback, logout, password update
-    ├── fridge/                # Ingredients, barcode scan, On Hand, Shopping List
-    ├── mix/                   # Smoothie builder
-    ├── moderation/            # Admin moderation tools
-    ├── profile/               # Profile, avatar, food preferences
-    └── saved/                 # Saved drinks
-```
-
----
-
-## API rate limits
-
-The FDC API allows **1000 requests/hour** with a free API key. This app mitigates usage by:
-
-- Debouncing search input (500 ms)
-- Reusing approved shared catalog products before users need to create duplicates
-- Caching USDA search responses in Supabase for **12 hours**
-- Caching USDA barcode/detail responses in Supabase for **30 days**
-- Keeping only account-scoped browser cache for signed-in users
-- Only fetching from external APIs when neither the shared catalog nor cache has a fresh result
+[`docs/project-structure.md`](docs/project-structure.md) is the canonical file and folder
+ownership map. [`docs/data-architecture.md`](docs/data-architecture.md) owns request,
+cache, persistence, and external-source runtime boundaries.

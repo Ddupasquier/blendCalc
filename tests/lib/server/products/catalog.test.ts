@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { validateSharedProductFood } from "$lib/server/products/catalog.server";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
+import {
+	buildProductSubmissionReviewFlags,
+	validateSharedProductFood,
+} from "$lib/server/products/catalog.server";
+import type { NutrientRelationshipRule } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
+import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
 
-const createFood = (overrides: Partial<FdcFood> = {}): FdcFood => ({
+const createFood = (overrides: Partial<FoodItem> = {}): FoodItem => ({
 	fdcId: -1,
 	description: "Test product",
 	barcode: "00012345678905",
@@ -26,9 +30,24 @@ const createFood = (overrides: Partial<FdcFood> = {}): FdcFood => ({
 	...overrides,
 });
 
+const relationshipRules: NutrientRelationshipRule[] = [
+	{
+		id: "total-sugars-lte-carbs",
+		parentNutrientId: NUTRIENT_IDS.CARBS,
+		childNutrientId: NUTRIENT_IDS.SUGAR,
+		parentLabel: "Total Carbohydrates",
+		childLabel: "Total Sugars",
+		relationship: "child_must_not_exceed_parent",
+		severity: "error",
+		issueCode: "NUTRIENT_CHILD_EXCEEDS_PARENT",
+		requiresParent: true,
+		tolerance: 0,
+	},
+];
+
 describe("shared product validation", () => {
 	it("accepts a valid normalized barcode and nutrition label", () => {
-		expect(validateSharedProductFood(createFood())).toEqual({
+		expect(validateSharedProductFood(createFood(), relationshipRules)).toEqual({
 			barcode: "00012345678905",
 			issues: [],
 			valid: true,
@@ -53,7 +72,7 @@ describe("shared product validation", () => {
 					value: 12,
 				},
 			],
-		}));
+		}), relationshipRules);
 
 		expect(result.valid).toBe(false);
 		expect(result.issues).toContain(
@@ -80,5 +99,35 @@ describe("shared product validation", () => {
 			"A product name is required.",
 			"Protein has an invalid value.",
 		]));
+	});
+
+	it("rejects private custom foods and duplicate nutrient identities", () => {
+		const duplicateNutrient = createFood().foodNutrients[0];
+		const result = validateSharedProductFood(createFood({
+			customFood: true,
+			foodNutrients: [duplicateNutrient, duplicateNutrient],
+		}));
+
+		expect(result.valid).toBe(false);
+		expect(result.issues).toEqual(expect.arrayContaining([
+			"Private custom foods cannot be submitted to the shared catalog.",
+			"Total Carbohydrate is duplicated.",
+		]));
+	});
+
+	it("forces source-reported differences into moderator review", () => {
+		const sourceComparison = {
+			matchesExisting: false,
+			shouldAutoDecline: false,
+			hasBlockingIdentityMismatch: false,
+			changedFields: ["nutrient:1008"],
+			changes: [],
+			issues: ["Calories differs from the source record."],
+			severeDifferences: [],
+		};
+
+		expect(buildProductSubmissionReviewFlags({ sourceComparison })).toContain(
+			"Calories differs from the source record.",
+		);
 	});
 });

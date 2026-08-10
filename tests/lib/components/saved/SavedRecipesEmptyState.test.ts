@@ -1,0 +1,31 @@
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
+import SavedRecipesEmptyState from "$lib/components/saved/SavedRecipesEmptyState/SavedRecipesEmptyState.svelte";
+
+describe("SavedRecipesEmptyState", () => {
+	it("guides an empty library back to Mix", async () => {
+		const onAction = vi.fn();
+		render(SavedRecipesEmptyState, { props: { onAction } });
+
+		expect(
+			screen.getByRole("heading", {
+				name: "Save a favorite for next time",
+			}),
+		).toBeInTheDocument();
+		await fireEvent.click(screen.getByRole("button", { name: "Build a recipe" }));
+		expect(onAction).toHaveBeenCalledOnce();
+	});
+
+	it("uses a focused recovery action for filtered results", async () => {
+		const onAction = vi.fn();
+		render(SavedRecipesEmptyState, {
+			props: { filtered: true, onAction },
+		});
+
+		expect(
+			screen.getByRole("heading", { name: "No saved recipes found" }),
+		).toBeInTheDocument();
+		await fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+		expect(onAction).toHaveBeenCalledOnce();
+	});
+});

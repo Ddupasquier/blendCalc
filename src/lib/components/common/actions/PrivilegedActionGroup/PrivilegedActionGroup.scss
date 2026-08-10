@@ -1,0 +1,41 @@
+@use "../../../../../styles/variables" as *;
+
+.privileged-action-group {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+	padding: $app-gap-sm;
+	background: $app-shell-accent-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.privileged-action-group__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	min-width: 0;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+}
+
+.privileged-action-group__content {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.privileged-action-group,
+	.privileged-action-group__content {
+		gap: $app-gap-xs;
+	}
+
+	.privileged-action-group {
+		padding: $app-gap-xs;
+	}
+
+	.privileged-action-group__header {
+		font-size: $app-font-size-xs;
+	}
+}

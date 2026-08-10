@@ -1,0 +1,150 @@
+@use "../../../../../styles/variables" as *;
+
+$scanner-viewport-background: #080909;
+$scanner-target-corner-length: 3rem;
+$scanner-target-line-width: 0.18rem;
+$scanner-target-corner-height: 2.3rem;
+
+.barcode-scanner-backdrop {
+	position: fixed;
+	z-index: 1000;
+	inset: 0;
+	display: grid;
+	place-items: stretch center;
+	padding: 0;
+	overflow: hidden;
+	background: rgba(0, 0, 0, 0.72);
+	overscroll-behavior: contain;
+}
+
+.barcode-scanner {
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	gap: $app-gap-md;
+	width: min(100%, $app-shell-content-max-width);
+	height: 100vh;
+	height: 100dvh;
+	min-height: 100vh;
+	min-height: 100dvh;
+	padding: calc($app-shell-padding-y + env(safe-area-inset-top))
+		$app-shell-padding-x calc($app-shell-padding-y + env(safe-area-inset-bottom));
+	background: $scanner-viewport-background;
+	border: 0;
+	border-radius: 0;
+
+	header {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		gap: $app-gap-sm;
+	}
+
+	h2 {
+		color: $app-shell-text-on-media;
+		font-family: $app-font-family-display;
+		font-size: $app-font-size-xl;
+		font-weight: $app-font-weight-heavy;
+	}
+
+	p {
+		color: color-mix(in srgb, $app-shell-text-on-media 72%, transparent);
+		font-size: $app-font-size-md;
+		line-height: $app-line-height-ui;
+	}
+}
+
+.barcode-scanner__camera {
+	position: relative;
+	min-width: 0;
+	min-height: 0;
+	overflow: hidden;
+	background: $scanner-viewport-background;
+	border-radius: 0;
+
+	video {
+		display: block;
+		width: 100%;
+		height: 100%;
+		min-height: 0;
+		object-fit: cover;
+	}
+}
+
+.barcode-scanner__target {
+	position: absolute;
+	inset: 50% auto auto 50%;
+	width: min(66%, 16rem);
+	height: 8.7rem;
+	border-radius: $app-shell-radius-card;
+	background:
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) top left /
+			$scanner-target-corner-length $scanner-target-line-width no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) top left /
+			$scanner-target-line-width $scanner-target-corner-height no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) top right /
+			$scanner-target-corner-length $scanner-target-line-width no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) top right /
+			$scanner-target-line-width $scanner-target-corner-height no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) bottom left /
+			$scanner-target-corner-length $scanner-target-line-width no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) bottom left /
+			$scanner-target-line-width $scanner-target-corner-height no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) bottom right /
+			$scanner-target-corner-length $scanner-target-line-width no-repeat,
+		linear-gradient($app-shell-accent-primary, $app-shell-accent-primary) bottom right /
+			$scanner-target-line-width $scanner-target-corner-height no-repeat,
+		color-mix(in srgb, $app-shell-accent-primary 6%, transparent);
+	transform: translate(-50%, -50%);
+}
+
+.barcode-scanner__status,
+.barcode-scanner__hint {
+	position: absolute;
+	inset: calc(50% + 5.6rem) 50% auto auto;
+	width: max-content;
+	max-width: 80%;
+	color: color-mix(in srgb, $app-shell-text-on-media 72%, transparent) !important;
+	text-align: center;
+	transform: translateX(50%);
+}
+
+.barcode-scanner__status {
+	padding: 0.55rem 0.85rem;
+	color: $app-shell-accent-primary !important;
+	background: color-mix(in srgb, $app-shell-text-on-media 8%, transparent);
+	border-radius: $app-shell-radius-pill;
+	font-weight: $app-font-weight-bold;
+}
+
+@media (max-width: $app-breakpoint-sm) {
+	.barcode-scanner {
+		padding: calc($app-shell-padding-x + env(safe-area-inset-top))
+			$app-shell-padding-x calc($app-shell-padding-x + env(safe-area-inset-bottom));
+	}
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.barcode-scanner {
+		gap: $app-gap-sm;
+		padding: calc($app-gap-sm + env(safe-area-inset-top)) $app-gap-sm
+			calc($app-gap-sm + env(safe-area-inset-bottom));
+
+		h2 {
+			font-size: $app-font-size-lg;
+		}
+
+		p {
+			font-size: $app-font-size-sm;
+		}
+	}
+
+	.barcode-scanner__target {
+		width: min(72%, 14rem);
+		height: 7.5rem;
+	}
+
+	.barcode-scanner__status,
+	.barcode-scanner__hint {
+		inset-block-start: calc(50% + 4.8rem);
+	}
+}

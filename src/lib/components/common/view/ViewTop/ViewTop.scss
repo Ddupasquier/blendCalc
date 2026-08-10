@@ -1,0 +1,58 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+
+$view-top-motion-duration: motion.$duration-layout;
+
+.view-top {
+	display: grid;
+	grid-template-rows: 1fr;
+	flex: 0 0 auto;
+	min-width: 0;
+}
+
+.view-top__content {
+	display: grid;
+	gap: $app-gap-md;
+	min-width: 0;
+	min-height: 0;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.view-top {
+		opacity: 1;
+		visibility: visible;
+		transition:
+			grid-template-rows $view-top-motion-duration motion.$easing-standard,
+			opacity motion.$duration-state motion.$easing-standard,
+			visibility 0s linear;
+	}
+
+	.view-top__content {
+		gap: $app-gap-sm;
+		transform: translateY(0);
+		transition: transform $view-top-motion-duration motion.$easing-standard;
+	}
+
+	.view-top--compact-hidden {
+		grid-template-rows: 0fr;
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+		transition:
+			grid-template-rows $view-top-motion-duration motion.$easing-standard,
+			opacity motion.$duration-state motion.$easing-standard,
+			visibility 0s linear $view-top-motion-duration;
+	}
+
+	.view-top--compact-hidden .view-top__content {
+		overflow: hidden;
+		transform: translateY(-100%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.view-top,
+	.view-top__content {
+		transition: none;
+	}
+}

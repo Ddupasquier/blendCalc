@@ -1,0 +1,153 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+
+.circle-icon-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	appearance: none;
+	padding: 0;
+	border: 1px solid transparent;
+	border-radius: $app-radius-circle;
+	font-family: $app-button-font-family;
+	font-size: $app-shell-control-icon-size;
+	font-weight: $app-button-font-weight;
+	line-height: $app-line-height-tight;
+	touch-action: manipulation;
+	transition:
+		background-color motion.$duration-state motion.$easing-standard,
+		color motion.$duration-state motion.$easing-standard,
+		transform motion.$duration-press motion.$easing-standard,
+		opacity motion.$duration-state motion.$easing-standard;
+
+	&:active:not(:disabled) {
+		transform: scale(0.97);
+	}
+
+	&:focus-visible {
+		outline: $app-focus-outline;
+		outline-offset: $app-focus-outline-offset;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.72;
+	}
+}
+
+.circle-icon-button[data-size="tiny"] {
+	width: 1.6rem;
+	height: 1.6rem;
+}
+
+.circle-icon-button[data-size="small"] {
+	width: $app-shell-action-icon-size;
+	height: $app-shell-action-icon-size;
+}
+
+.circle-icon-button[data-size="control"] {
+	width: $app-shell-control-height;
+	height: $app-shell-control-height;
+}
+
+.circle-icon-button[data-size="fab"] {
+	width: 3.6rem;
+	height: 3.6rem;
+}
+
+.circle-icon-button[data-variant="primary"] {
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
+
+	&:hover:not(:disabled) {
+		background: color-mix(
+			in srgb,
+			$app-shell-accent-primary 88%,
+			$app-shell-text-primary
+		);
+	}
+}
+
+.circle-icon-button[data-variant="soft"] {
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-control;
+
+	&:hover:not(:disabled) {
+		color: $app-shell-accent-primary;
+		background: $app-shell-accent-soft;
+	}
+}
+
+.circle-icon-button[data-variant="ghost"] {
+	color: $app-shell-text-muted;
+	background: transparent;
+
+	&:hover:not(:disabled),
+	&:focus-visible {
+		color: $app-shell-text-primary;
+		background: color-mix(in srgb, $app-shell-surface-panel 68%, transparent);
+	}
+}
+
+.circle-icon-button[data-variant="inverse"] {
+	color: $app-shell-text-on-media;
+	background: color-mix(in srgb, $app-shell-text-on-media 10%, transparent);
+
+	&:hover:not(:disabled),
+	&:focus-visible {
+		background: color-mix(in srgb, $app-shell-text-on-media 18%, transparent);
+	}
+}
+
+.circle-icon-button[data-variant="outline"] {
+	color: $app-shell-text-muted;
+	background: transparent;
+	border-color: color-mix(in srgb, $app-shell-text-muted 42%, transparent);
+
+	&:hover:not(:disabled),
+	&:focus-visible {
+		color: $app-shell-accent-primary;
+		border-color: $app-shell-accent-primary;
+		background: $app-shell-accent-soft;
+	}
+}
+
+.circle-icon-button[data-variant="danger"] {
+	color: $app-shell-text-on-danger;
+	background: $app-shell-accent-danger;
+
+	&:hover:not(:disabled) {
+		background: color-mix(
+			in srgb,
+			$app-shell-accent-danger 88%,
+			$app-shell-text-primary
+		);
+	}
+}
+
+.circle-icon-button[data-variant="danger-soft"] {
+	color: $app-shell-accent-danger;
+	background: $app-danger-bg;
+
+	&:hover:not(:disabled),
+	&:focus-visible {
+		background: color-mix(
+			in srgb,
+			$app-danger-bg 84%,
+			$app-shell-accent-danger
+		);
+	}
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.circle-icon-button[data-size="control"] {
+		width: $app-shell-control-height-narrow;
+		height: $app-shell-control-height-narrow;
+	}
+
+	.circle-icon-button[data-size="fab"] {
+		width: 3.25rem;
+		height: 3.25rem;
+	}
+}

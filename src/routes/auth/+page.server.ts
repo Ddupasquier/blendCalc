@@ -18,9 +18,14 @@ import {
 	clearPasswordUpgrade,
 	requirePasswordUpgrade,
 } from "$lib/utils/auth/passwordUpgrade";
+import { readLimitedFormData } from "$lib/server/security/requestBody.server";
+import { trackServerAppInteraction } from "$lib/server/analytics/appInteractionTracking.server";
+import { APP_INTERACTION_METRICS } from "$lib/utils/analytics/appInteractionMetrics";
+
+const AUTH_FORM_MAX_BYTES = 32 * 1024;
 
 const getEmailAuthFields = async (request: Request) => {
-	const formData = await request.formData();
+	const formData = await readLimitedFormData(request, AUTH_FORM_MAX_BYTES);
 	const email = String(formData.get("email") ?? "").trim().toLowerCase();
 	const password = String(formData.get("password") ?? "");
 	const passwordConfirmation = String(
@@ -32,7 +37,7 @@ const getEmailAuthFields = async (request: Request) => {
 };
 
 const getEmailField = async (request: Request) => {
-	const formData = await request.formData();
+	const formData = await readLimitedFormData(request, AUTH_FORM_MAX_BYTES);
 	return {
 		email: String(formData.get("email") ?? "").trim().toLowerCase(),
 		next: getSafeAuthNextPath(formData.get("next")),
@@ -70,7 +75,7 @@ const addNextToCallbackUrl = (callbackUrl: string, next: string) => {
 export const load: PageServerLoad = async ({ locals, request, url }) => {
 	const next = getSafeAuthNextPath(url.searchParams.get("next"));
 	redirectToCanonicalAuthPage(request, url, next);
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 
 	if (user) {
 		throw redirect(303, next);
@@ -110,6 +115,11 @@ export const actions: Actions = {
 				mode: "signIn" as const,
 			});
 		}
+
+		await trackServerAppInteraction(
+			APP_INTERACTION_METRICS.LOGIN_SUCCESS,
+			request,
+		);
 
 		if (!isPasswordPolicyCompliant(password, email)) {
 			requirePasswordUpgrade(cookies, next, url.protocol === "https:");
@@ -188,6 +198,10 @@ export const actions: Actions = {
 
 		if (data.session) {
 			clearAuthFlowContext(cookies);
+			await trackServerAppInteraction(
+				APP_INTERACTION_METRICS.LOGIN_SUCCESS,
+				request,
+			);
 			throw redirect(303, next);
 		}
 
@@ -242,7 +256,7 @@ export const actions: Actions = {
 		};
 	},
 	google: async ({ locals, request, url, cookies }) => {
-		const formData = await request.formData();
+		const formData = await readLimitedFormData(request, AUTH_FORM_MAX_BYTES);
 		const next = getSafeAuthNextPath(formData.get("next"));
 		redirectToCanonicalAuthPage(request, url, next);
 		const redirectTo = getAuthCallbackUrl(request, url);

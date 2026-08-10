@@ -1,0 +1,74 @@
+@use "../../../../../styles/variables" as *;
+
+.missing-warning-feedback form,
+.missing-warning-feedback__field {
+	display: grid;
+}
+
+.missing-warning-feedback form {
+	gap: $app-gap-md;
+}
+
+.missing-warning-feedback__intro,
+.missing-warning-feedback__note {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	line-height: $app-line-height-body;
+}
+
+.missing-warning-feedback__field {
+	gap: $app-gap-xs;
+}
+
+.missing-warning-feedback__field > span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-label;
+	text-transform: uppercase;
+}
+
+.missing-warning-feedback__field small {
+	font: inherit;
+	letter-spacing: inherit;
+}
+
+.missing-warning-feedback input,
+.missing-warning-feedback textarea {
+	width: 100%;
+	min-width: 0;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-control;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+	font: inherit;
+}
+
+.missing-warning-feedback input {
+	min-height: $app-shell-control-height;
+	padding-inline: $app-shell-control-padding-x;
+}
+
+.missing-warning-feedback textarea {
+	min-height: calc($app-shell-control-height * 2);
+	padding: $app-gap-md;
+	resize: vertical;
+}
+
+.missing-warning-feedback input:focus-visible,
+.missing-warning-feedback textarea:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.missing-warning-feedback form {
+		gap: $app-gap-sm;
+	}
+
+	.missing-warning-feedback input {
+		min-height: $app-shell-control-height-narrow;
+		padding-inline: $app-shell-control-padding-x-compact;
+	}
+}

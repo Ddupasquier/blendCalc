@@ -1,5 +1,17 @@
 import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { readFileSync } from 'node:fs';
+import { createConnectSources } from './config/contentSecurityPolicy.js';
+
+const packageMetadata = JSON.parse(
+	readFileSync(new URL('./package.json', import.meta.url), 'utf8')
+);
+const deploymentReference = (
+	process.env.VERCEL_GIT_COMMIT_SHA ??
+	process.env.GITHUB_SHA ??
+	'local'
+).slice(0, 12);
+const buildVersion = `${packageMetadata.version}+${deploymentReference}`;
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -9,6 +21,9 @@ const config = {
 		runes: ({ filename }) => (filename.split(/[/\\]/).includes('node_modules') ? undefined : true)
 	},
 	kit: {
+		version: {
+			name: buildVersion
+		},
 		adapter: adapter({
 			external: ['ws']
 		}),
@@ -17,20 +32,14 @@ const config = {
 			directives: {
 				'default-src': ['self'],
 				'base-uri': ['self'],
-				'connect-src': [
-					'self',
-					'https://api.nal.usda.gov',
-					'https://world.openfoodfacts.org',
-					'https://*.supabase.co',
-					'wss://*.supabase.co',
-					'https://vitals.vercel-insights.com'
-				],
+				'connect-src': createConnectSources(),
 				'font-src': ['self', 'data:'],
 				'form-action': ['self'],
 				'frame-ancestors': ['none'],
 				'img-src': ['self', 'data:', 'https:'],
 				'object-src': ['none'],
-				'script-src': ['self'],
+				'script-src': ['self', 'wasm-unsafe-eval', 'https://cdn.jsdelivr.net'],
+				'worker-src': ['self', 'blob:', 'https://cdn.jsdelivr.net'],
 				'style-src': ['self', 'unsafe-inline']
 			}
 		}

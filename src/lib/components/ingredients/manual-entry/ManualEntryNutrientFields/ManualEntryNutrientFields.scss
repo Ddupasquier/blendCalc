@@ -1,0 +1,78 @@
+@use "../../../../../styles/variables" as *;
+
+.manual-nutrients,
+.manual-nutrients__fields {
+	display: grid;
+	gap: $app-gap-md;
+}
+
+.manual-nutrients__group--static {
+	h3 {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		min-height: $app-shell-control-height;
+		padding: 0 $app-shell-control-padding-x;
+		margin: 0 0 $app-gap-md;
+		color: $app-shell-text-primary;
+		background: $app-shell-accent-soft;
+		border-radius: $app-shell-radius-pill;
+		font-family: $app-font-family-interface;
+		font-size: $app-font-size-md;
+		font-weight: $app-font-weight-bold;
+		list-style: none;
+		cursor: default;
+	}
+}
+
+.manual-nutrients__group-title {
+	display: inline-flex;
+	align-items: center;
+	gap: $app-gap-xs;
+
+	small {
+		padding: $app-text-badge-padding-y $app-text-badge-padding-x;
+		color: $app-shell-text-muted;
+		background: $app-shell-surface-control;
+		border-radius: $app-shell-radius-pill;
+		font-size: $app-font-size-xs;
+		font-weight: $app-font-weight-medium;
+		text-transform: none;
+	}
+}
+
+label {
+	display: grid;
+	gap: $app-gap-sm;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	text-transform: uppercase;
+
+	span {
+		display: inline-flex;
+		align-items: center;
+		gap: $app-gap-xs;
+		letter-spacing: $app-letter-spacing-data;
+	}
+
+	em {
+		color: $app-shell-accent-danger;
+		font-style: normal;
+	}
+}
+
+:global(.manual-nutrients__input) {
+	width: 100%;
+	min-width: 0;
+	min-height: $app-shell-control-height;
+	padding: 0 $app-shell-control-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-soft;
+	border: 0;
+	border-radius: $app-shell-radius-pill;
+	font: inherit;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-medium;
+	text-transform: none;
+}

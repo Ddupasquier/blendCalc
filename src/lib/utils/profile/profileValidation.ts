@@ -30,7 +30,7 @@ const getDisplayNameHashDigits = (value: string) => {
 
 export const getDefaultDisplayName = (userId: string | null | undefined) => {
 	const source = String(userId ?? "").trim();
-	const fallbackSource = source || "smoothie-user";
+	const fallbackSource = source || "blendcalc-user";
 	const hashDigits = `${getDisplayNameHashDigits(fallbackSource)}${getDisplayNameHashDigits(
 		[...fallbackSource].reverse().join(""),
 	)}`;

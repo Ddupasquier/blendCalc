@@ -16,7 +16,9 @@ describe("createPendingSubmit", () => {
 		expect(pendingStates).toEqual([true]);
 
 		if (finishFirst) {
-			await finishFirst({ update: vi.fn().mockResolvedValue(undefined) } as never);
+			const update = vi.fn().mockResolvedValue(undefined);
+			await finishFirst({ update } as never);
+			expect(update).toHaveBeenCalledWith({ reset: false });
 		}
 		expect(pendingStates).toEqual([true, false]);
 	});

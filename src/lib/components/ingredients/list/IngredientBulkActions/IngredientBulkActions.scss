@@ -1,0 +1,20 @@
+@use "../../../../../styles/variables" as *;
+
+.ingredient-bulk-actions {
+	display: flex;
+	flex: 0 0 auto;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $app-gap-md;
+	min-height: 0;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.ingredient-bulk-actions {
+		gap: $app-gap-sm;
+	}
+
+	.ingredient-bulk-actions :global(.pill-button[data-variant="primary"]) {
+		width: 100%;
+	}
+}

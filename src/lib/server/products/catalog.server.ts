@@ -1,51 +1,67 @@
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { getNutrientDefinitionCatalog } from "$lib/server/nutrition/nutrientDefinitionCatalog.server";
 import type { Database, Json } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
-import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import { compactFood } from "$lib/utils/food/foodRecords";
-import type { FoodCompatibilitySummary } from "$lib/utils/food/compatibility";
+import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
 import {
-	hydrateFoodWithNormalizedNutrients,
-	type NormalizedNutrientRow,
-} from "$lib/utils/food/normalizedNutrients";
-import { NUTRIENT_IDS, type FdcFood } from "$lib/utils/food/types";
+	createNutrientValueMapFromFood,
+	readNutrientRelationshipRules,
+	validateNutrientRelationshipRules,
+	type NutrientRelationshipRule,
+} from "$lib/utils/food/nutrients/nutrientRelationshipRules";
+import type { FoodItem } from "$lib/utils/food/types";
+import type { IngredientProvenanceFilters } from "$lib/utils/ingredients/ingredientProvenance";
 import type { SharedProductSubmissionResult } from "$lib/utils/products/catalog";
-import { toJson } from "$lib/utils/storage/supabase/shared";
-import { readNormalizedNutrientsByParent } from "$lib/utils/storage/supabase/normalizedNutrients";
+import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
+import {
+	compareCatalogSubmissionToExistingProduct,
+	type CatalogSubmissionComparison,
+} from "$lib/utils/products/catalogSubmissionComparison";
+import {
+	createCatalogUpdateSummary,
+	readCatalogUpdateSummary,
+} from "$lib/utils/products/catalogUpdateReview";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-	buildOpenFoodFactsCatalogBundle,
 	buildModeratorReviewedCatalogBundle,
-	buildUsdaVerifiedCatalogBundle,
-	type CatalogConflict,
-	type CatalogFieldProvenance,
-	type CatalogObservation,
+	buildModeratorReviewedCatalogUpdateBundle,
 } from "./catalogVerification.server";
+import { readCatalogUpdateTarget } from "./catalogUpdateReview.server";
 import {
-	lookupOpenFoodFactsBarcodeProduct,
-	lookupUsdaBarcodeProduct,
-} from "./externalProduct.server";
+	applyCanonicalFoodCategory,
+	readFoodCategoryOption,
+	resolveFoodCategoryOption,
+} from "./categoryMapping.server";
+import { assessCatalogProductSources } from "./catalogSourceAssessment.server";
+import { publishCatalogSubmission } from "./catalogPublishing.server";
 import {
-	createProductEvidenceSignedUrls,
-	hasCompleteProductEvidence,
+	createCatalogSubmission,
+	findPendingCatalogSubmission,
+	recordAutoDeclinedCatalogSubmission,
+} from "./catalogSubmissionRepository.server";
+import {
+	buildProductSubmissionReviewFlags,
+	prepareCatalogSubmissionReview,
+	type CatalogSubmissionValidationReport,
+} from "./catalogSubmissionReview.server";
+import {
+	createProductEvidenceSignedUrlBatches,
 	type ProductEvidencePaths,
 } from "./productEvidence.server";
+import {
+	persistFoodImageAsset,
+	publishModeratedFoodImageAsset,
+	type FoodImagePlacementValues,
+} from "./foodImages.server";
+import {
+	getApprovedCatalogRecordByBarcode,
+	searchApprovedCatalogRecords,
+} from "./catalogRead.server";
 
-type CatalogSource = "usda" | "open-food-facts" | "community-reviewed";
-type CatalogConfidence =
-	| "source-verified"
-	| "moderator-reviewed"
-	| "corroborated"
-	| "imported";
-
-type ValidationReport = {
-	valid: boolean;
-	issues: string[];
-	usdaMatch?: boolean;
-	openFoodFactsMatch?: boolean;
-	externalLookupFailed?: boolean;
-	evidenceComplete?: boolean;
-	conflictCount?: number;
+type ProductSubmissionContext = {
+	reviewFlags?: string[];
+	frontImageCrop?: FoodImagePlacementValues | null;
+	intent?: CatalogSubmissionIntent;
 };
 
 type PendingProductSubmission = {
@@ -54,12 +70,19 @@ type PendingProductSubmission = {
 	barcode: string;
 	product_name: string;
 	brand_owner: string | null;
+	category_option_id: string | null;
 	food: Json;
 	matched_source: string | null;
 	matched_reference: string | null;
 	validation_report: Json;
 	evidence_paths: Json;
 	evidence_complete: boolean;
+	submission_kind: string;
+	target_shared_product_id: string | null;
+	base_revision_id: string | null;
+	change_summary: Json;
+	submission_intent: string;
+	label_observed_at: string;
 	created_at: string;
 };
 
@@ -76,14 +99,13 @@ type ProductSubmissionBlock = {
 export class ProductSubmissionBlockedError extends Error {
 	status = 429;
 	blockedUntil: string;
+	displayBlockedUntil: string;
 
 	constructor(block: ProductSubmissionBlock) {
-		const blockedUntil = formatBlockDate(block.blocked_until);
-		super(
-			`Product sharing is paused until ${blockedUntil} because this account has ${block.rejection_count} rejected submissions in the last ${PRODUCT_SUBMISSION_REJECTION_WINDOW_DAYS} days. You can still save foods privately.`,
-		);
+		super("Catalog product submission is blocked.");
 		this.name = "ProductSubmissionBlockedError";
 		this.blockedUntil = block.blocked_until;
+		this.displayBlockedUntil = formatBlockDate(block.blocked_until);
 	}
 }
 
@@ -98,16 +120,34 @@ const formatBlockDate = (value: string) =>
 		timeZone: "UTC",
 	}).format(new Date(value));
 
-const getNutrientValue = (food: FdcFood, nutrientId: number) =>
-	food.foodNutrients.find((nutrient) => nutrient.nutrientId === nutrientId)?.value;
+export { buildProductSubmissionReviewFlags };
 
-export const validateSharedProductFood = (food: FdcFood) => {
+export const validateSharedProductFood = (
+	food: FoodItem,
+	nutrientRelationshipRules: NutrientRelationshipRule[] = [],
+) => {
 	const issues: string[] = [];
 	const barcode = normalizeBarcode(food.barcode ?? food.gtinUpc ?? "");
 	if (!barcode) issues.push("A valid GTIN barcode is required.");
-	if (!food.description?.trim()) issues.push("A product name is required.");
+	const productName = food.description?.trim() ?? "";
+	const brandOwner = food.brandOwner?.trim() ?? "";
+	if (!productName) issues.push("A product name is required.");
+	if (productName.length > 120) {
+		issues.push("Product name must be 120 characters or fewer.");
+	}
+	if (brandOwner.length > 120) {
+		issues.push("Brand must be 120 characters or fewer.");
+	}
+	if (food.customFood === true) {
+		issues.push(
+			"Private custom foods cannot be submitted to the shared catalog.",
+		);
+	}
 	if (!Array.isArray(food.foodNutrients) || food.foodNutrients.length === 0) {
 		issues.push("At least one nutrition value is required.");
+	}
+	if ((food.foodNutrients?.length ?? 0) > 300) {
+		issues.push("A product cannot contain more than 300 nutrition values.");
 	}
 	if (
 		food.customServingWeightGrams !== undefined &&
@@ -117,143 +157,67 @@ export const validateSharedProductFood = (food: FdcFood) => {
 		issues.push("Serving weight must be greater than zero.");
 	}
 
+	const nutrientIds = new Set<number>();
 	for (const nutrient of food.foodNutrients ?? []) {
+		if (
+			!Number.isSafeInteger(nutrient.nutrientId) ||
+			nutrient.nutrientId <= 0
+		) {
+			issues.push("Every nutrition value needs a valid nutrient identity.");
+			continue;
+		}
+		if (nutrientIds.has(nutrient.nutrientId)) {
+			issues.push(`${nutrient.nutrientName || "A nutrient"} is duplicated.`);
+			continue;
+		}
+		nutrientIds.add(nutrient.nutrientId);
 		if (!Number.isFinite(nutrient.value) || nutrient.value < 0) {
 			issues.push(`${nutrient.nutrientName || "A nutrient"} has an invalid value.`);
 		}
 	}
 
-	const carbs = getNutrientValue(food, NUTRIENT_IDS.CARBS);
-	const fiber = getNutrientValue(food, NUTRIENT_IDS.FIBER);
-	const sugar = getNutrientValue(food, NUTRIENT_IDS.SUGAR);
-	if (carbs !== undefined && fiber !== undefined && fiber > carbs) {
-		issues.push("Dietary fiber cannot exceed total carbohydrates.");
-	}
-	if (carbs !== undefined && sugar !== undefined && sugar > carbs) {
-		issues.push("Total sugars cannot exceed total carbohydrates.");
-	}
+	issues.push(
+		...validateNutrientRelationshipRules(
+			createNutrientValueMapFromFood(food),
+			nutrientRelationshipRules,
+		).map((issue) => issue.message),
+	);
 
 	return { barcode, issues, valid: issues.length === 0 };
 };
-
-const enrichCatalogFood = (
-	row: {
-		compatibility_summary?: Json;
-		id: string;
-		food: Json;
-		confidence: string;
-	},
-	nutrientRows?: NormalizedNutrientRow[],
-) =>
-	hydrateFoodWithNormalizedNutrients(
-		{
-			...(row.food as unknown as FdcFood),
-			compatibilitySummary:
-				(row.compatibility_summary as FoodCompatibilitySummary | null) ?? undefined,
-			sharedProductId: row.id,
-			sharedProductConfidence:
-				row.confidence as FdcFood["sharedProductConfidence"],
-			customFood: false,
-		},
-		nutrientRows,
-	);
 
 export const getSharedProductByBarcode = async (
 	supabase: SupabaseClient<Database>,
 	barcode: string,
 ) => {
-	const canonicalBarcode = normalizeBarcode(barcode);
-	if (!canonicalBarcode) return null;
-
-	const { data, error } = await supabase
-		.from("shared_products")
-		.select("id, food, confidence, compatibility_summary")
-		.eq("barcode", canonicalBarcode)
-		.eq("status", "active")
-		.maybeSingle();
-	if (error) throw error;
-	if (!data) return null;
-	const normalizedRows = await readNormalizedNutrientsByParent(
-		supabase,
-		"shared_product_id",
-		[data.id],
-	);
-	return enrichCatalogFood(data, normalizedRows?.get(data.id));
+	const record = await getApprovedCatalogRecordByBarcode(supabase, barcode);
+	return record?.food ?? null;
 };
 
 export const searchApprovedSharedProducts = async (
 	supabase: SupabaseClient<Database>,
 	query: string,
+	filters: IngredientProvenanceFilters = {},
 ) => {
-	const terms = query
-		.trim()
-		.toLocaleLowerCase()
-		.split(/\s+/)
-		.map((term) => term.replace(/[%_]/g, ""))
-		.filter(Boolean);
-	if (terms.length === 0) return [];
+	const records = await searchApprovedCatalogRecords(supabase, query, filters);
+	return records.map((record) => record.food);
+};
 
-	let request = supabase
-		.from("shared_products")
-		.select("id, food, confidence, compatibility_summary")
-		.eq("status", "active")
-		.limit(30);
-	for (const term of terms.slice(0, 6)) {
-		request = request.ilike("search_text", `%${term}%`);
-	}
-
-	const { data, error } = await request;
-	if (error) throw error;
-	const rows = data ?? [];
-	const normalizedRows = await readNormalizedNutrientsByParent(
-		supabase,
-		"shared_product_id",
-		rows.map((row) => row.id),
+const assertKnownSubmissionNutrients = async (food: FoodItem) => {
+	const nutrientIds = [
+		...new Set(food.foodNutrients.map((nutrient) => nutrient.nutrientId)),
+	];
+	const knownIds = new Set(
+		(await getNutrientDefinitionCatalog()).map(
+			(definition) => definition.nutrient_id,
+		),
 	);
-	return rows.map((row) => enrichCatalogFood(row, normalizedRows?.get(row.id)));
-};
-
-const publishSubmission = async (input: {
-	submissionId: string;
-	food: FdcFood;
-	productName: string;
-	brandOwner?: string;
-	source: CatalogSource;
-	sourceReference?: string;
-	confidence: CatalogConfidence;
-	approvedBy?: string;
-	observations: CatalogObservation[];
-	provenance: CatalogFieldProvenance[];
-	conflicts: CatalogConflict[];
-}) => {
-	const admin = getSupabaseAdminClient();
-	const { data, error } = await admin.rpc("publish_shared_product_submission", {
-		p_submission_id: input.submissionId,
-		p_food: toJson(compactFood(input.food)),
-		p_product_name: input.productName,
-		p_brand_owner: input.brandOwner ?? "",
-		p_source: input.source,
-		p_source_reference: input.sourceReference ?? "",
-		p_confidence: input.confidence,
-		p_observations: toJson(input.observations),
-		p_provenance: toJson(input.provenance),
-		p_conflicts: toJson(input.conflicts),
-		...(input.approvedBy ? { p_approved_by: input.approvedBy } : {}),
-	});
-	if (error) throw error;
-	return data;
-};
-
-const findExistingPendingSubmission = async (barcode: string) => {
-	const admin = getSupabaseAdminClient();
-	const { data, error } = await admin
-		.from("shared_product_submissions")
-		.select("id")
-		.eq("barcode", barcode)
-		.eq("status", "pending")
-		.maybeSingle();
-	if (error) throw error;
-	return data;
+	const unknownIds = nutrientIds.filter((nutrientId) => !knownIds.has(nutrientId));
+	if (unknownIds.length > 0) {
+		throw new Error(
+			`Unknown nutrient identifiers cannot be submitted: ${unknownIds.join(", ")}.`,
+		);
+	}
 };
 
 export const getActiveProductSubmissionBlock = async (userId: string) => {
@@ -328,33 +292,85 @@ export const assertCanSubmitSharedProduct = async (userId: string) => {
 
 export const submitProductForCatalog = async (
 	userId: string,
-	food: FdcFood,
+	food: FoodItem,
 	evidencePaths: ProductEvidencePaths = {},
+	context: ProductSubmissionContext = {},
 ): Promise<SharedProductSubmissionResult> => {
 	await assertCanSubmitSharedProduct(userId);
 
-	const validation = validateSharedProductFood(food);
+	const admin = getSupabaseAdminClient();
+	const nutrientRelationshipRules = await readNutrientRelationshipRules(admin);
+	if (!nutrientRelationshipRules?.length) {
+		throw new Error("Nutrition validation rules are not configured.");
+	}
+	const validation = validateSharedProductFood(food, nutrientRelationshipRules);
 	if (!validation.valid || !validation.barcode) {
 		throw new Error(validation.issues.join(" "));
 	}
+	await assertKnownSubmissionNutrients(food);
+	const selectedCategory = await resolveFoodCategoryOption(
+		admin,
+		food.categories ?? [],
+	);
+	if (!selectedCategory) {
+		throw new Error("Please select a valid category for this ingredient.");
+	}
+	const submissionFood = applyCanonicalFoodCategory(food, selectedCategory);
+	const submissionIntent = context.intent ?? "catalog_share";
 
-	const admin = getSupabaseAdminClient();
-	const { data: existingProduct, error: productLookupError } = await admin
-		.from("shared_products")
-		.select("id")
-		.eq("barcode", validation.barcode)
-		.eq("status", "active")
-		.maybeSingle();
-	if (productLookupError) throw productLookupError;
-	if (existingProduct) {
+	const existingCatalogFood = await getSharedProductByBarcode(admin, validation.barcode);
+	const existingCatalogComparison = existingCatalogFood
+		? compareCatalogSubmissionToExistingProduct(submissionFood, existingCatalogFood)
+		: null;
+	if (existingCatalogComparison?.matchesExisting) {
 		return {
 			status: "already-available",
 			message: "This product is already available to everyone.",
 			evidenceAccepted: false,
 		};
 	}
+	const labelObservedAt = new Date().toISOString();
+	const catalogUpdateTarget = existingCatalogFood?.sharedProductId && existingCatalogComparison
+		? await readCatalogUpdateTarget(admin, existingCatalogFood.sharedProductId)
+		: null;
+	if (
+		existingCatalogComparison?.shouldAutoDecline &&
+		submissionIntent !== "catalog_correction"
+	) {
+		if (!catalogUpdateTarget) {
+			throw new Error("The active catalog product could not be prepared for comparison.");
+		}
+		const changeSummary = createCatalogUpdateSummary({
+			comparison: existingCatalogComparison,
+			baseRevisionNumber: catalogUpdateTarget.baseRevisionNumber,
+			observedAt: labelObservedAt,
+			sourceChecks: [],
+		});
+		await recordAutoDeclinedCatalogSubmission(admin, {
+			userId,
+			barcode: validation.barcode,
+			food: submissionFood,
+			categoryOptionId: selectedCategory.categoryOptionId,
+			comparison: existingCatalogComparison,
+			updateTarget: catalogUpdateTarget,
+			changeSummary,
+			intent: submissionIntent,
+		});
+		return {
+			status: "already-available",
+			message: "This barcode already has a verified catalog item. Your private ingredient was saved, but it was not sent for shared review.",
+			evidenceAccepted: false,
+		};
+	}
 
-	const existingSubmission = await findExistingPendingSubmission(validation.barcode);
+	const existingSubmission = await findPendingCatalogSubmission(
+		admin,
+		{
+			barcode: validation.barcode,
+			userId,
+			updateTarget: catalogUpdateTarget,
+		},
+	);
 	if (existingSubmission) {
 		return {
 			status: "pending",
@@ -363,114 +379,117 @@ export const submitProductForCatalog = async (
 		};
 	}
 
-	let usdaDraft: BarcodeProductDraft | null = null;
-	let openFoodFactsDraft: BarcodeProductDraft | null = null;
-	let externalLookupFailed = false;
-	try {
-		usdaDraft = await lookupUsdaBarcodeProduct(validation.barcode);
-	} catch {
-		externalLookupFailed = true;
+	const sourceAssessment = await assessCatalogProductSources(
+		admin,
+		validation.barcode,
+	);
+	const preparedReview = prepareCatalogSubmissionReview({
+		submissionFood,
+		selectedCategory,
+		existingCatalogFood,
+		existingComparison: existingCatalogComparison,
+		updateTarget: catalogUpdateTarget,
+		sourceAssessment,
+		evidencePaths,
+		requestedReviewFlags: context.reviewFlags,
+		frontImageCrop: context.frontImageCrop,
+		labelObservedAt,
+	});
+	if (
+		preparedReview.sourceMismatchName &&
+		submissionIntent !== "catalog_correction"
+	) {
+		return {
+			status: "source-mismatch",
+			message:
+				`This barcode belongs to “${preparedReview.sourceMismatchName}”. Your ingredient was saved privately, but it was not shared.`,
+			evidenceAccepted: false,
+		};
 	}
-	if (!usdaDraft) {
-		try {
-			openFoodFactsDraft = await lookupOpenFoodFactsBarcodeProduct(
-				validation.barcode,
-			);
-		} catch {
-			externalLookupFailed = true;
-		}
-	}
+	const {
+		canonicalCategory,
+		canonicalSubmissionFood,
+		catalogUpdateSummary,
+		evidenceComplete,
+		hasSourceMatchedImageEvidence,
+		matchedDraft,
+		needsSourceComparisonReview,
+		report,
+		verificationBundle,
+	} = preparedReview;
 
-	const report: ValidationReport = {
-		valid: true,
-		issues: [],
-		usdaMatch: Boolean(usdaDraft),
-		openFoodFactsMatch: Boolean(openFoodFactsDraft),
-		externalLookupFailed,
-	};
-	const matchedDraft = usdaDraft ?? openFoodFactsDraft;
-
-	const evidenceComplete = hasCompleteProductEvidence(evidencePaths);
-	if (!matchedDraft && !evidenceComplete) {
-		throw new Error(
-			"Unknown products need front package, nutrition label, and barcode photos for verification.",
-		);
-	}
-	const verificationBundle = usdaDraft
-		? buildUsdaVerifiedCatalogBundle(food, usdaDraft)
-		: openFoodFactsDraft
-			? buildOpenFoodFactsCatalogBundle(food, openFoodFactsDraft)
-			: null;
-	report.evidenceComplete = evidenceComplete;
-	report.conflictCount = verificationBundle?.conflicts.length ?? 0;
-
-	const { data: submission, error: submissionError } = await admin
-		.from("shared_product_submissions")
-		.insert({
-			submitted_by: userId,
-			barcode: validation.barcode,
-			product_name: food.description.trim(),
-			brand_owner: food.brandOwner?.trim() || null,
-			food: toJson(compactFood(food)),
-			consent_to_share: true,
-			verification_status: usdaDraft ? "source_verified" : "manual_review",
-			matched_source: matchedDraft?.source === "open-food-facts"
-				? "open-food-facts"
-				: matchedDraft?.source === "usda"
-					? "usda"
-					: null,
-			matched_reference: matchedDraft?.sourceReference ?? null,
-			validation_report: toJson(report),
-			evidence_paths: toJson(evidencePaths),
-			evidence_complete: evidenceComplete,
-		})
-		.select("id")
-		.single();
-	if (submissionError || !submission) {
-		if (submissionError?.code === "23505") {
-			return {
-				status: "pending",
-				message: "This product is already waiting for review.",
-				evidenceAccepted: false,
-			};
-		}
-		throw submissionError ?? new Error("Product submission could not be saved.");
+	const submissionId = await createCatalogSubmission(admin, {
+		userId,
+		barcode: validation.barcode,
+		categoryOptionId: canonicalCategory.categoryOptionId,
+		food: canonicalSubmissionFood,
+		updateTarget: catalogUpdateTarget,
+		updateSummary: catalogUpdateSummary,
+		labelObservedAt,
+		hasExactSourceMatch: Boolean(matchedDraft && !needsSourceComparisonReview),
+		matchedSource: matchedDraft?.source === "open-food-facts"
+			? "open-food-facts"
+			: matchedDraft?.source === "usda"
+				? "usda"
+				: null,
+		matchedReference: matchedDraft?.sourceReference,
+		report,
+		evidencePaths,
+		evidenceComplete,
+		intent: submissionIntent,
+	});
+	if (!submissionId) {
+		return {
+			status: "pending",
+			message: "This product is already waiting for review.",
+			evidenceAccepted: false,
+		};
 	}
 
-	if (matchedDraft) {
+	if (matchedDraft && !needsSourceComparisonReview && !hasSourceMatchedImageEvidence) {
 		if (!verificationBundle) {
 			throw new Error("Product verification could not be prepared.");
 		}
-		const source = usdaDraft ? "usda" : "open-food-facts";
+		const source = matchedDraft.source === "open-food-facts"
+			? "open-food-facts"
+			: "usda";
 		try {
-			await publishSubmission({
-				submissionId: submission.id,
+			const sharedProductId = await publishCatalogSubmission({
+				submissionId,
 				food: verificationBundle.canonicalFood,
 				productName: matchedDraft.name,
 				brandOwner: matchedDraft.brandOwner,
 				source,
 				sourceReference: matchedDraft.sourceReference,
-				confidence: usdaDraft ? "source-verified" : "imported",
+				confidence: "imported",
 				observations: verificationBundle.observations,
 				provenance: verificationBundle.provenance,
 				conflicts: verificationBundle.conflicts,
 			});
+			await persistFoodImageAsset({
+				image: matchedDraft.image,
+				barcode: validation.barcode,
+				sharedProductId,
+			});
 		} catch (publishError) {
-			await admin.from("shared_product_submissions").delete().eq("id", submission.id);
+			await admin.from("shared_product_submissions").delete().eq("id", submissionId);
 			throw publishError;
 		}
 		return {
 			status: "approved",
-			message: usdaDraft
-				? "USDA verified this product, so it is now available to everyone."
-				: "Open Food Facts matched this barcode, so it is now available in shared search.",
+			message:
+				"An exact barcode match confirmed the product identity, so it is now available to everyone.",
 			evidenceAccepted: true,
 		};
 	}
 
 	return {
 		status: "pending",
-		message: "The product is saved privately and is waiting for a label review.",
+		message: hasSourceMatchedImageEvidence
+			? "The ingredient was saved privately. The product image is waiting for moderator review before it can be shared."
+			: needsSourceComparisonReview
+				? "The product is saved privately and is waiting for a source comparison review."
+				: "The product is saved privately and is waiting for a label review.",
 		evidenceAccepted: true,
 	};
 };
@@ -480,28 +499,33 @@ export const listPendingProductSubmissions = async () => {
 	const { data, error } = await admin
 		.from("shared_product_submissions")
 		.select(
-			"id, submitted_by, barcode, product_name, brand_owner, food, matched_source, matched_reference, validation_report, evidence_paths, evidence_complete, created_at",
+			"id, submitted_by, barcode, product_name, brand_owner, category_option_id, food, matched_source, matched_reference, validation_report, evidence_paths, evidence_complete, submission_kind, target_shared_product_id, base_revision_id, change_summary, submission_intent, label_observed_at, created_at",
 		)
 		.eq("status", "pending")
 		.order("created_at", { ascending: true })
 		.limit(100);
 	if (error) throw error;
-	return Promise.all(((data ?? []) as PendingProductSubmission[]).map(async (submission) => ({
-		...submission,
-		evidenceUrls: await createProductEvidenceSignedUrls(
-			submission.evidence_paths as ProductEvidencePaths,
+	const submissions = (data ?? []) as PendingProductSubmission[];
+	const signedUrlGroups = await createProductEvidenceSignedUrlBatches(
+		submissions.map(
+			(submission) => submission.evidence_paths as ProductEvidencePaths,
 		),
-	})));
+	);
+	return submissions.map((submission, index) => ({
+		...submission,
+		evidenceUrls: signedUrlGroups[index] ?? {},
+	}));
 };
 
 export const approveCommunityProductSubmission = async (
 	submissionId: string,
 	moderatorId: string,
+	imageCrop?: FoodImagePlacementValues,
 ) => {
 	const admin = getSupabaseAdminClient();
 	const { data: submission, error } = await admin
 		.from("shared_product_submissions")
-		.select("id, product_name, brand_owner, food, status, evidence_complete")
+		.select("id, barcode, product_name, brand_owner, category_option_id, food, status, evidence_complete, evidence_paths, validation_report, submission_kind, target_shared_product_id, change_summary")
 		.eq("id", submissionId)
 		.single();
 	if (error || !submission) throw error ?? new Error("Submission not found.");
@@ -512,19 +536,53 @@ export const approveCommunityProductSubmission = async (
 		throw new Error("Complete label evidence is required before approval.");
 	}
 
-	const food = compactFood(submission.food as unknown as FdcFood);
-	food.customFood = false;
-	food.dataType = "Shared Product";
-	food.foodCategory = "Verified Packaged Food";
-	food.barcodeSource = "community";
-	food.sharedProductConfidence = "moderator-reviewed";
-
-	const verificationBundle = buildModeratorReviewedCatalogBundle(food);
-	return publishSubmission({
+	const submittedFood = normalizeFoodForStorage(submission.food as unknown as FoodItem);
+	const category =
+		await readFoodCategoryOption(admin, submission.category_option_id)
+		?? await resolveFoodCategoryOption(admin, submittedFood.categories ?? []);
+	if (!category) {
+		throw new Error(
+			"Select a canonical food category before approving this product.",
+		);
+	}
+	if (submission.category_option_id !== category.categoryOptionId) {
+		const { error: categoryError } = await admin
+			.from("shared_product_submissions")
+			.update({ category_option_id: category.categoryOptionId })
+			.eq("id", submissionId);
+		if (categoryError) throw categoryError;
+	}
+	const categorizedFood = applyCanonicalFoodCategory(submittedFood, category);
+	categorizedFood.customFood = false;
+	categorizedFood.dataType = "Shared Product";
+	categorizedFood.barcodeSource = "community";
+	categorizedFood.sharedProductConfidence = "moderator-reviewed";
+	const parsedUpdateSummary = readCatalogUpdateSummary(
+		submission.change_summary,
+	);
+	const currentFood = submission.target_shared_product_id
+		? await getSharedProductByBarcode(admin, submission.barcode)
+		: null;
+	if (submission.submission_kind === "product_update" && !currentFood) {
+		throw new Error("The active catalog product could not be loaded for this update.");
+	}
+	const changes = parsedUpdateSummary?.changes ?? [];
+	if (submission.submission_kind === "product_update" && changes.length === 0) {
+		throw new Error("The catalog update does not include any reviewable changes.");
+	}
+	const verificationBundle =
+		submission.submission_kind === "product_update" && currentFood
+			? buildModeratorReviewedCatalogUpdateBundle(
+					currentFood,
+					categorizedFood,
+					changes,
+				)
+			: buildModeratorReviewedCatalogBundle(categorizedFood);
+	const sharedProductId = await publishCatalogSubmission({
 		submissionId,
 		food: verificationBundle.canonicalFood,
-		productName: submission.product_name,
-		brandOwner: submission.brand_owner ?? undefined,
+		productName: verificationBundle.canonicalFood.description,
+		brandOwner: verificationBundle.canonicalFood.brandOwner,
 		source: "community-reviewed",
 		confidence: "moderator-reviewed",
 		approvedBy: moderatorId,
@@ -532,6 +590,23 @@ export const approveCommunityProductSubmission = async (
 		provenance: verificationBundle.provenance,
 		conflicts: verificationBundle.conflicts,
 	});
+	const evidencePaths = submission.evidence_paths as ProductEvidencePaths;
+	const validationReport =
+		submission.validation_report as CatalogSubmissionValidationReport;
+	if (evidencePaths.front) {
+		await publishModeratedFoodImageAsset({
+			barcode: submission.barcode,
+			sharedProductId,
+			evidencePath: evidencePaths.front,
+			moderatorId,
+			crop: {
+				...validationReport.imageCrop,
+				...imageCrop,
+				cropSource: "moderator",
+			},
+		});
+	}
+	return sharedProductId;
 };
 
 export const rejectProductSubmission = async (

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { error, fail, redirect } from "@sveltejs/kit";
+import { fail } from "@sveltejs/kit";
 import type { User } from "@supabase/supabase-js";
 import type { Actions, PageServerLoad } from "./$types";
 import {
@@ -10,7 +10,6 @@ import {
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import {
 	canModerateTargetRole,
-	getUserAppRole,
 	type AppRole,
 } from "$lib/utils/moderation/moderation";
 import { PROFILE_AVATAR_BUCKET } from "$lib/utils/profile/profile";
@@ -20,27 +19,46 @@ import {
 	listPendingProductSubmissions,
 	rejectProductSubmission,
 } from "$lib/server/products/catalog.server";
-import type { FdcFood } from "$lib/utils/food/types";
+import type { FoodItem } from "$lib/utils/food/types";
+import { mapWithConcurrency } from "$lib/server/concurrency/mapWithConcurrency";
+import {
+	constrainCardImagePlacement,
+	getStoredImagePlacement,
+	isImageFitMode,
+	isImagePlacementMethod,
+	isImageRotationDegrees,
+} from "$lib/utils/food/images/imagePlacement";
+import type {
+	ImageFitMode,
+	ImagePlacementValue,
+} from "$lib/utils/food/images/types";
+import {
+	formatCatalogChangeValue,
+	readCatalogUpdateSummary,
+} from "$lib/utils/products/catalogUpdateReview";
+import {
+	requireAppValue,
+	throwAppError,
+} from "$lib/server/errors/appError.server";
+import {
+	listPendingFoodCompatibilityFeedback,
+	reviewFoodCompatibilityFeedback,
+} from "$lib/server/food-safety/foodCompatibilityFeedback.server";
+import { readLimitedFormData } from "$lib/server/security/requestBody.server";
+import { requireModeratorAccess } from "$lib/server/moderation/moderationAccess.server";
 
 const PERMANENT_BAN_DURATION = "876000h";
+const MODERATION_FORM_MAX_BYTES = 512 * 1024;
 const MODERATION_PAGE_SIZE = 100;
 const MODERATION_MAX_PAGES = 100;
+const MODERATION_DATABASE_BATCH_CONCURRENCY = 4;
 const ALLOWED_REASONS = new Set<ModerationReason>([
 	"profile_image_policy_violation",
 	"harassment_or_abuse",
 	"fraud_or_spam",
 	"terms_violation",
 ]);
-
-const requireModerator = async (locals: App.Locals) => {
-	const { user } = await locals.safeGetSession();
-	if (!user) throw redirect(303, "/auth?next=%2Fmoderation");
-
-	const role = await getUserAppRole(locals.supabase, user.id);
-	if (!role) throw error(403, "You do not have access to moderation tools.");
-
-	return { user, role };
-};
+const isPresent = <Value>(value: Value | null): value is Value => value !== null;
 
 const getReason = (formData: FormData) => {
 	const reason = String(formData.get("reason") ?? "") as ModerationReason;
@@ -61,7 +79,7 @@ const listAuthUsers = async () => {
 			perPage: MODERATION_PAGE_SIZE,
 		});
 
-		if (listError) throw error(502, "User accounts could not be loaded.");
+		if (listError) throwAppError(502, "MODERATION_DATA_UNAVAILABLE");
 
 		users.push(...data.users);
 		if (data.users.length < MODERATION_PAGE_SIZE) break;
@@ -99,7 +117,7 @@ const getTargetContext = async (
 	targetUserId: string,
 ) => {
 	if (!targetUserId || targetUserId === actorUserId) {
-		throw error(400, "You cannot moderate your own account.");
+		throwAppError(400, "MODERATION_SELF_ACTION_FORBIDDEN");
 	}
 
 	const admin = getSupabaseAdminClient();
@@ -122,26 +140,40 @@ const getTargetContext = async (
 				.maybeSingle(),
 		]);
 
-	if (targetAuthError || !targetAuth.user) {
-		throw error(404, "That account no longer exists.");
+	if (targetAuthError) {
+		throwAppError(404, "MODERATION_TARGET_NOT_FOUND");
 	}
+	const targetUser = requireAppValue(
+		targetAuth.user,
+		404,
+		"MODERATION_TARGET_NOT_FOUND",
+	);
 
 	const targetRole = (roleRecord?.role as AppRole | undefined) ?? null;
 	if (!canModerateTargetRole(actorRole, targetRole)) {
-		throw error(403, "Your role cannot moderate that account.");
+		throwAppError(403, "MODERATION_TARGET_FORBIDDEN");
 	}
 
 	return {
 		admin,
-		targetUser: targetAuth.user,
-		displayName: profile?.display_name ?? getDefaultDisplayName(targetAuth.user.id),
+		targetUser,
+		displayName: profile?.display_name ?? getDefaultDisplayName(targetUser.id),
 	};
 };
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	const { user: viewer, role } = await requireModerator(locals);
+	const { user: viewer, role } = await requireModeratorAccess(locals);
 	const query = url.searchParams.get("q")?.trim().toLocaleLowerCase() ?? "";
-	const { admin, users: authUsers } = await listAuthUsers();
+	const [
+		{ admin, users: authUsers },
+		pendingProductSubmissions,
+		pendingCompatibilityFeedback,
+	] =
+		await Promise.all([
+			listAuthUsers(),
+			listPendingProductSubmissions(),
+			listPendingFoodCompatibilityFeedback(),
+		]);
 	const userIds = authUsers.map((user) => user.id);
 	const userIdBatches = Array.from(
 		{ length: Math.ceil(userIds.length / MODERATION_PAGE_SIZE) },
@@ -151,8 +183,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				(index + 1) * MODERATION_PAGE_SIZE,
 			),
 	);
-	const relatedRecordBatches = await Promise.all(
-		userIdBatches.map(async (batch) => {
+	const relatedRecordBatches = await mapWithConcurrency(
+		userIdBatches,
+		MODERATION_DATABASE_BATCH_CONCURRENCY,
+		async (batch) => {
 			const [profileResult, moderationResult, roleResult] = await Promise.all([
 				admin
 					.from("profiles")
@@ -169,15 +203,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			]);
 
 			if (profileResult.error || moderationResult.error || roleResult.error) {
-				throw error(502, "Account details could not be loaded.");
+				throwAppError(502, "MODERATION_DATA_UNAVAILABLE");
 			}
 
 			return {
-				profiles: profileResult.data,
-				moderation: moderationResult.data,
-				roles: roleResult.data,
+				profiles: (profileResult.data ?? []).filter(isPresent),
+				moderation: (moderationResult.data ?? []).filter(isPresent),
+				roles: (roleResult.data ?? []).filter(isPresent),
 			};
-		}),
+		},
 	);
 	const profiles = relatedRecordBatches.flatMap((batch) => batch.profiles);
 	const moderation = relatedRecordBatches.flatMap((batch) => batch.moderation);
@@ -224,9 +258,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		};
 	});
 
-	const productSubmissions = (await listPendingProductSubmissions()).map(
+	const productSubmissions = pendingProductSubmissions.map(
 		(submission) => {
-			const food = submission.food as unknown as FdcFood;
+			const food = submission.food as unknown as FoodItem;
 			const validationReport = submission.validation_report as {
 				valid?: boolean;
 				issues?: unknown;
@@ -234,12 +268,24 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				conflictCount?: number;
 				externalLookupFailed?: boolean;
 				qaSeed?: boolean;
+				imageCrop?: {
+					cropX?: number;
+					cropY?: number;
+					cropZoom?: number;
+					rotationDegrees?: ImagePlacementValue["rotationDegrees"];
+					fitMode?: ImageFitMode;
+					placementVersion?: number;
+					placementMethod?: ImagePlacementValue["placementMethod"];
+					suggestionVersion?: string;
+					suggestionConfidence?: number;
+				} | null;
 			};
 			const validationIssues = Array.isArray(validationReport.issues)
 				? validationReport.issues.filter(
 						(issue): issue is string => typeof issue === "string" && Boolean(issue.trim()),
 					)
 				: [];
+			const updateSummary = readCatalogUpdateSummary(submission.change_summary);
 			return {
 				id: submission.id,
 				barcode: submission.barcode,
@@ -254,10 +300,57 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 					{ key: "nutrition", label: "Nutrition facts", url: submission.evidenceUrls.nutrition },
 					{ key: "barcode", label: "Barcode", url: submission.evidenceUrls.barcode },
 				].filter((item) => Boolean(item.url)),
+				frontEvidenceUrl: submission.evidenceUrls.front ?? null,
+				imageCrop: getStoredImagePlacement({
+					cropX: validationReport.imageCrop?.cropX ?? 50,
+					cropY: validationReport.imageCrop?.cropY ?? 50,
+					cropZoom: validationReport.imageCrop?.cropZoom ?? 1,
+					rotationDegrees:
+						validationReport.imageCrop?.rotationDegrees,
+					fitMode: validationReport.imageCrop?.fitMode,
+					placementVersion: validationReport.imageCrop?.placementVersion,
+					placementMethod:
+						validationReport.imageCrop?.placementMethod,
+					suggestionVersion:
+						validationReport.imageCrop?.suggestionVersion,
+					suggestionConfidence:
+						validationReport.imageCrop?.suggestionConfidence,
+				}),
 				conflictCount: validationReport.conflictCount ?? 0,
 				externalLookupFailed: validationReport.externalLookupFailed ?? false,
 				validationIssues,
 				isQaFixture: validationReport.qaSeed === true,
+				submissionKind: submission.submission_kind,
+				submissionIntent: submission.submission_intent,
+				labelObservedAt: submission.label_observed_at,
+				labelObservedDate: submission.label_observed_at.slice(0, 10),
+				updateReview: updateSummary
+					? {
+							baseRevisionNumber: updateSummary.baseRevisionNumber,
+							changes: updateSummary.changes.map((change) => ({
+								field: change.field,
+								label: change.label,
+								changeType: change.changeType,
+								previousValue: formatCatalogChangeValue(change.previousValue),
+								submittedValue: formatCatalogChangeValue(change.submittedValue),
+							})),
+							sourceChecks: updateSummary.sourceChecks.map((sourceCheck) => ({
+								source: sourceCheck.source === "usda"
+									? "USDA FoodData Central"
+									: "Open Food Facts",
+								status: sourceCheck.status === "error"
+									? "Check failed"
+									: sourceCheck.status === "not-found"
+										? "No exact barcode match"
+										: sourceCheck.supportsSubmittedValues
+											? "Matches proposed label"
+											: sourceCheck.supportsCurrentValues
+												? "Matches current catalog"
+												: "Exact barcode found; values differ",
+								sourceReference: sourceCheck.sourceReference,
+							})),
+						}
+					: null,
 				nutrients: (food.foodNutrients ?? []).map((nutrient) => ({
 					name: nutrient.nutrientName,
 					value: nutrient.value,
@@ -275,20 +368,160 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		totalCount: users.length,
 		users: users.filter((user) => matchesSearch(user, query)),
 		productSubmissions,
+		compatibilityFeedback: pendingCompatibilityFeedback.map((feedback) => {
+			const policyVersion = feedback.policy_version as unknown as
+				| { version_number: number }
+				| null;
+			return {
+				id: feedback.id,
+				feedbackType: feedback.feedback_type,
+				reportedBy: feedback.reported_by,
+				sharedProductId: feedback.shared_product_id,
+				sharedProductRevisionId: feedback.shared_product_revision_id,
+				sourceKey: feedback.source_key,
+				sourceId: feedback.source_id,
+				barcode: feedback.barcode,
+				foodDescription: feedback.food_description,
+				warningId: feedback.warning_id,
+				issueCode: feedback.issue_code,
+				issueParams: feedback.issue_params,
+				factSnapshot: feedback.fact_snapshot,
+				preferenceType: feedback.preference_type,
+				preferenceValue: feedback.preference_value,
+				observedLabelDate: feedback.observed_label_date,
+				evidenceUrl: feedback.evidence_signed_url,
+				reportReason: feedback.report_reason,
+				reportDetails: feedback.report_details,
+				createdAt: feedback.created_at,
+				policyVersion: policyVersion?.version_number ?? null,
+			};
+		}),
 	};
 };
 
 export const actions: Actions = {
+	reviewCompatibilityFeedback: async ({ locals, request }) => {
+		const { user } = await requireModeratorAccess(locals);
+		const formData = await readLimitedFormData(
+			request,
+			MODERATION_FORM_MAX_BYTES,
+		);
+		const feedbackId = String(formData.get("feedbackId") ?? "");
+		const status = String(formData.get("status") ?? "");
+		const resolutionAction = String(
+			formData.get("resolutionAction") ?? "none",
+		);
+		const reviewNote = String(formData.get("reviewNote") ?? "").trim();
+
+		if (
+			!feedbackId ||
+			(status !== "confirmed" && status !== "dismissed") ||
+			![
+				"none",
+				"rule_review",
+				"source_correction",
+				"product_correction",
+				"duplicate",
+			].includes(resolutionAction) ||
+			!reviewNote
+		) {
+			return fail(400, {
+				compatibilityReviewError:
+					"Choose an outcome, next step, and add a review note.",
+			});
+		}
+
+		try {
+			const reviewed = await reviewFoodCompatibilityFeedback(user.id, {
+				id: feedbackId,
+				status,
+				resolutionAction: resolutionAction as
+					| "none"
+					| "rule_review"
+					| "source_correction"
+					| "product_correction"
+					| "duplicate",
+				reviewNote,
+			});
+			return reviewed
+				? {
+					compatibilityReviewSuccess:
+						"Compatibility report reviewed.",
+				}
+				: fail(409, {
+					compatibilityReviewError:
+						"That report was already reviewed. Refresh the page.",
+				});
+		} catch {
+			return fail(500, {
+				compatibilityReviewError:
+					"We couldn’t save that compatibility review.",
+			});
+		}
+	},
 	approveProduct: async ({ locals, request }) => {
-		const { user } = await requireModerator(locals);
-		const formData = await request.formData();
+		const { user } = await requireModeratorAccess(locals);
+		const formData = await readLimitedFormData(
+			request,
+			MODERATION_FORM_MAX_BYTES,
+		);
 		const submissionId = String(formData.get("submissionId") ?? "");
+		const fitModeValue = String(formData.get("imageFitMode") ?? "");
+		const placementMethodValue = String(
+			formData.get("imagePlacementMethod") ?? "manual",
+		);
+		if (!isImageFitMode(fitModeValue)) {
+			return fail(400, { productReviewError: "Choose a valid image placement." });
+		}
+		if (!isImagePlacementMethod(placementMethodValue)) {
+			return fail(400, { productReviewError: "Choose a valid image placement method." });
+		}
+		const usesSmartSuggestion =
+			placementMethodValue === "smart-ocr" ||
+			placementMethodValue === "smart-ocr-adjusted";
+		const suggestionVersion = String(
+			formData.get("imageSuggestionVersion") ?? "",
+		).trim();
+		const suggestionConfidence = Number(
+			formData.get("imageSuggestionConfidence"),
+		);
+		const rotationDegrees = Number(
+			formData.get("imageRotationDegrees") ?? 0,
+		);
+		if (!isImageRotationDegrees(rotationDegrees)) {
+			return fail(400, {
+				productReviewError: "Choose a supported image rotation.",
+			});
+		}
+		if (
+			usesSmartSuggestion &&
+			(!suggestionVersion || !Number.isFinite(suggestionConfidence))
+		) {
+			return fail(400, {
+				productReviewError: "Smart image placement provenance is incomplete.",
+			});
+		}
+		const imageCrop = constrainCardImagePlacement({
+			cropX: Number(formData.get("imageCropX") ?? 50),
+			cropY: Number(formData.get("imageCropY") ?? 50),
+			cropZoom: Number(formData.get("imageCropZoom") ?? 1),
+			rotationDegrees,
+			fitMode: fitModeValue,
+			placementVersion: Number(formData.get("imagePlacementVersion") ?? 1),
+			placementMethod: placementMethodValue,
+			...(usesSmartSuggestion
+				? {
+					suggestionVersion,
+					suggestionConfidence,
+				}
+				: {}),
+		});
 		if (!submissionId) {
 			return fail(400, { productReviewError: "Choose a product submission." });
 		}
 
 		try {
-			await approveCommunityProductSubmission(submissionId, user.id);
+			await approveCommunityProductSubmission(submissionId, user.id, imageCrop);
 			return { productReviewSuccess: "Product approved for shared search." };
 		} catch {
 			return fail(500, {
@@ -297,8 +530,11 @@ export const actions: Actions = {
 		}
 	},
 	rejectProduct: async ({ locals, request }) => {
-		const { user } = await requireModerator(locals);
-		const formData = await request.formData();
+		const { user } = await requireModeratorAccess(locals);
+		const formData = await readLimitedFormData(
+			request,
+			MODERATION_FORM_MAX_BYTES,
+		);
 		const submissionId = String(formData.get("submissionId") ?? "");
 		const reviewNote = String(formData.get("reviewNote") ?? "").trim();
 		if (!submissionId || !reviewNote) {
@@ -317,8 +553,11 @@ export const actions: Actions = {
 		}
 	},
 	ban: async ({ locals, request }) => {
-		const { user: actor, role: actorRole } = await requireModerator(locals);
-		const formData = await request.formData();
+		const { user: actor, role: actorRole } = await requireModeratorAccess(locals);
+		const formData = await readLimitedFormData(
+			request,
+			MODERATION_FORM_MAX_BYTES,
+		);
 		const targetUserId = String(formData.get("targetUserId") ?? "");
 		const reason = getReason(formData);
 
@@ -487,8 +726,11 @@ export const actions: Actions = {
 		};
 	},
 	unban: async ({ locals, request }) => {
-		const { user: actor, role: actorRole } = await requireModerator(locals);
-		const formData = await request.formData();
+		const { user: actor, role: actorRole } = await requireModeratorAccess(locals);
+		const formData = await readLimitedFormData(
+			request,
+			MODERATION_FORM_MAX_BYTES,
+		);
 		const targetUserId = String(formData.get("targetUserId") ?? "");
 		const { admin } = await getTargetContext(actor.id, actorRole, targetUserId);
 		const { data: currentModeration, error: moderationLookupError } = await admin

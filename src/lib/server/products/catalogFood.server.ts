@@ -1,7 +1,12 @@
 import { createHash } from "node:crypto";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import { createCustomFood } from "$lib/utils/food/customFoods";
-import type { FdcFood } from "$lib/utils/food/types";
+import { createCustomFood } from "$lib/utils/food/custom/customFoods";
+import type { FoodItem } from "$lib/utils/food/types";
+import {
+	applyCanonicalFoodCategory,
+	mergeCanonicalFoodCategories,
+	type ResolvedFoodCategory,
+} from "./categoryMapping.server";
 
 const getCatalogFoodId = (draft: BarcodeProductDraft) => {
 	if (draft.source === "usda") {
@@ -15,10 +20,12 @@ const getCatalogFoodId = (draft: BarcodeProductDraft) => {
 
 export const createCatalogFoodFromDraft = (
 	draft: BarcodeProductDraft,
+	category?: ResolvedFoodCategory,
 	sharedProductId?: string,
-): FdcFood => {
+): FoodItem => {
 	const food = createCustomFood({
 		name: draft.name,
+		nameProvenance: draft.nameProvenance,
 		brandOwner: draft.brandOwner,
 		servingLabel: draft.servingLabel,
 		servingWeightGrams: draft.servingWeightGrams,
@@ -30,32 +37,48 @@ export const createCatalogFoodFromDraft = (
 			: draft.source === "usda"
 				? "usda"
 				: "community",
+		foodIdentityType: "packaged",
 		ingredients: draft.ingredients,
 		ingredientList: draft.ingredientList,
+		structuredIngredients: draft.structuredIngredients,
+		ingredientAnalysis: draft.ingredientAnalysis,
+		additives: draft.additives,
 		allergens: draft.allergens,
-		traces: draft.traces,
+			traces: draft.traces,
+			precautionaryStatements: draft.precautionaryStatements,
 		dietaryTags: draft.dietaryTags,
 		labels: draft.labels,
-		categories: draft.categories,
-		nutrition: draft.nutrition,
-		additionalNutrients: draft.additionalNutrients,
+		packageQuantity: draft.packageQuantity,
+		sourceMetadata: draft.sourceMetadata,
+		categories: category
+			? mergeCanonicalFoodCategories(category.label, draft.categories)
+			: draft.categories,
+		image: draft.image,
+		fieldProvenance: draft.fieldProvenance,
+		nutrients: draft.nutrients,
 		reportedNutrientIds: draft.reportedNutrientIds,
+		hasSourceServing: draft.hasSourceServing,
+		serving: draft.serving,
 	});
 
-	return {
+	const catalogFood: FoodItem = {
 		...food,
 		reportedNutrientIds: [...draft.reportedNutrientIds],
 		fdcId: getCatalogFoodId(draft),
 		dataType: "Shared Product",
-		foodCategory: "Verified Packaged Food",
+		foodIdentityType: "packaged",
 		customFood: false,
 		gtinUpc: draft.barcode,
 		sharedProductId,
-		sharedProductConfidence:
-			draft.source === "usda"
-				? "source-verified"
-				: draft.source === "open-food-facts"
-					? "imported"
-					: "moderator-reviewed",
+		sharedProductConfidence: "imported",
+		sourceKey: draft.sourceKey,
+		sourceLabel: draft.sourceLabel,
+		sourceDataType: draft.sourceDataType,
+		sourcePublishedDate: draft.sourcePublishedDate,
+		sourceModifiedDate: draft.sourceModifiedDate,
 	};
+
+	return category
+		? applyCanonicalFoodCategory(catalogFood, category)
+		: catalogFood;
 };

@@ -1,0 +1,63 @@
+@use "../../../../../styles/variables" as *;
+
+.mix-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: $app-gap-md;
+}
+
+.mix-header__copy {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+
+	p {
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-sm;
+		line-height: $app-line-height-ui;
+	}
+
+	strong {
+		color: $app-shell-text-primary;
+	}
+
+	h1 {
+		margin: 0;
+		color: $app-shell-text-primary;
+		font-family: $app-font-family-display;
+		font-size: $app-font-size-xl;
+		font-weight: $app-font-weight-heavy;
+		line-height: $app-line-height-tight;
+	}
+}
+
+.mix-header__status {
+	justify-self: start;
+}
+
+.mix-header__actions {
+	display: flex;
+	align-items: center;
+	gap: $app-gap-xs;
+	flex: 0 0 auto;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.mix-header {
+		align-items: center;
+		gap: $app-gap-xs;
+	}
+
+	.mix-header__copy {
+		gap: $app-gap-2xs;
+
+		p {
+			font-size: $app-font-size-xs;
+		}
+	}
+
+	.mix-header__copy h1 {
+		font-size: $app-font-size-lg;
+	}
+}

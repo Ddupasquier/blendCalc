@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { fail, redirect } from "@sveltejs/kit";
+import { dev } from "$app/environment";
 import type { Actions, PageServerLoad } from "./$types";
 import {
 	PROFILE_AVATAR_POLICY_ITEMS,
@@ -12,7 +13,6 @@ import {
 	PROFILE_AVATAR_BUCKET,
 } from "$lib/utils/profile/profile";
 import {
-	getAvatarExtension,
 	getDefaultDisplayName,
 	getProfileValidationError,
 	isProfileAvatarType,
@@ -31,6 +31,11 @@ import {
 	type FoodPreferenceFormValues,
 } from "$lib/utils/profile/foodPreferences";
 import {
+	normalizeRegulatoryRegionCode,
+	normalizeRegulatoryRegionSource,
+	type RegulatoryRegionOption,
+} from "$lib/utils/profile/regulatoryRegion";
+import {
 	getFoodPreferenceProfile,
 	isMissingFoodPreferencesTableError,
 } from "$lib/utils/profile/foodPreferenceProfile";
@@ -38,10 +43,32 @@ import {
 	getFoodPreferenceOptionSets,
 	isMissingFoodPreferenceOptionCatalogError,
 } from "$lib/utils/profile/foodPreferenceOptions";
-import { vitalNutrients } from "../../variables/vitalNutrients";
+import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
+import { getDefaultMixFields } from "$lib/utils/food/reference/appReferenceCatalog";
+import {
+	getThemePreferenceCookieOptions,
+	isThemePreference,
+	THEME_PREFERENCE_COOKIE,
+} from "$lib/utils/theme/themePreference";
+import { readLimitedFormData } from "$lib/server/security/requestBody.server";
+import { normalizeImageUpload } from "$lib/server/uploads/normalizeImageUpload.server";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { consumeRequestRateLimit } from "$lib/server/security/requestRateLimit.server";
+import { getAppIssueMessage } from "$lib/utils/errors/appIssues";
+import {
+	getFoodSafetyPolicy,
+	type FoodSafetyPolicy,
+} from "$lib/server/food-safety/foodSafetyPolicy.server";
+import {
+	getUserFoodPreferenceResolutions,
+} from "$lib/server/food-safety/userFoodPreferenceResolution.server";
+
+const PROFILE_TEXT_FORM_MAX_BYTES = 64 * 1024;
+const PROFILE_AVATAR_FORM_MAX_BYTES = PROFILE_AVATAR_MAX_BYTES + 1024 * 1024;
+const PROFILE_AVATAR_MAX_DIMENSION = 2048;
 
 const getAuthenticatedUser = async (locals: App.Locals) => {
-	const { user } = await locals.safeGetSession();
+	const user = await locals.getVerifiedUser();
 	if (!user) throw redirect(303, "/auth?next=%2Fprofile");
 	return user;
 };
@@ -63,40 +90,71 @@ const getFoodPreferenceFormValues = (
 		prioritizedNutrientIds: parsePrioritizedNutrientIds(
 			formData.getAll("prioritizedNutrientIds"),
 		),
-		defaultSmoothieServingSize: String(
-			formData.get("defaultSmoothieServingSize") ?? "",
+		defaultMixServingSize: String(
+			formData.get("defaultMixServingSize") ?? "",
 		).trim(),
-		defaultSmoothieServingUnit: normalizeServingUnit(
-			formData.get("defaultSmoothieServingUnit"),
+		defaultMixServingUnit: normalizeServingUnit(
+			formData.get("defaultMixServingUnit"),
 		),
 		sensitiveAcknowledged: formData.get("sensitiveAcknowledged") === "on",
+		regulatoryRegionCode: normalizeRegulatoryRegionCode(
+			formData.get("regulatoryRegionCode"),
+		),
+		regulatoryRegionSource: normalizeRegulatoryRegionSource(
+			formData.get("regulatoryRegionSource"),
+		),
 	};
 };
 
+const getRegulatoryRegionOptions = (
+	policy: FoodSafetyPolicy,
+): RegulatoryRegionOption[] => policy.regionalProfiles.map((profile) => ({
+	regionCode: profile.regionCode,
+	displayName: profile.displayName,
+	authority: profile.authority,
+}));
+
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = await getAuthenticatedUser(locals);
-	const profile = await getUserProfile(locals.supabase, user.id);
-	const avatarUrl = await getSignedAvatarUrl(locals.supabase, profile?.avatar_path);
-	const {
-		data: foodPreferences,
-		error: foodPreferencesError,
-	} = await locals.supabase
-		.from("user_food_preferences")
-		.select("*")
-		.eq("user_id", user.id)
-		.maybeSingle();
+	const profileWithAvatarPromise = getUserProfile(locals.supabase, user.id)
+		.then(async (profile) => ({
+			profile,
+			avatarUrl: await getSignedAvatarUrl(
+				locals.supabase,
+				profile?.avatar_path,
+			),
+		}));
+	const [
+		{ profile, avatarUrl },
+		{ data: foodPreferences, error: foodPreferencesError },
+		{ data: foodPreferenceOptions, error: foodPreferenceOptionsError },
+		appReferenceCatalog,
+		foodSafetyPolicy,
+		preferenceResolutions,
+	] = await Promise.all([
+		profileWithAvatarPromise,
+		locals.supabase
+			.from("user_food_preferences")
+			.select(
+				"unit_system, allergens, dietary_restrictions, prioritized_nutrient_ids, default_smoothie_serving_grams, sensitive_acknowledged_at, regulatory_region_code, regulatory_region_source",
+			)
+			.eq("user_id", user.id)
+			.maybeSingle(),
+		locals.supabase
+			.from("food_preference_option_catalog")
+			.select(
+				"category, label, normalized_value, source_values, tag_id, usage_count",
+			)
+			.order("usage_count", { ascending: false })
+			.order("label", { ascending: true }),
+		getAppReferenceCatalog(),
+		getFoodSafetyPolicy(),
+		getUserFoodPreferenceResolutions(locals.supabase, user.id),
+	]);
 	const foodPreferencesUnavailable =
 		isMissingFoodPreferencesTableError(foodPreferencesError);
 
 	if (foodPreferencesError && !foodPreferencesUnavailable) throw foodPreferencesError;
-	const {
-		data: foodPreferenceOptions,
-		error: foodPreferenceOptionsError,
-	} = await locals.supabase
-		.from("food_preference_option_catalog")
-		.select("category, label, normalized_value, source_values, tag_id, usage_count")
-		.order("usage_count", { ascending: false })
-		.order("label", { ascending: true });
 	const foodPreferenceOptionsUnavailable =
 		isMissingFoodPreferenceOptionCatalogError(foodPreferenceOptionsError);
 
@@ -108,13 +166,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 		profile,
 		avatarUrl,
 		foodPreferences: foodPreferencesUnavailable
-			? null
-			: getFoodPreferenceProfile(foodPreferences),
+				? null
+				: getFoodPreferenceProfile(foodPreferences, preferenceResolutions),
 		foodPreferencesUnavailable,
 		foodPreferenceOptions: getFoodPreferenceOptionSets(
 			foodPreferenceOptionsUnavailable ? [] : foodPreferenceOptions,
 		),
-		priorityNutrientOptions: vitalNutrients,
+		priorityNutrientOptions: getDefaultMixFields(appReferenceCatalog),
+		regulatoryRegionOptions: getRegulatoryRegionOptions(foodSafetyPolicy),
 		defaultDisplayName: getDefaultDisplayName(user.id),
 		avatarPolicyItems: PROFILE_AVATAR_POLICY_ITEMS,
 		requireHumanFace: PROFILE_AVATAR_REQUIRE_HUMAN_FACE,
@@ -122,9 +181,50 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
+	saveAppearance: async ({ locals, request, cookies }) => {
+		const user = await getAuthenticatedUser(locals);
+		const formData = await readLimitedFormData(request, PROFILE_TEXT_FORM_MAX_BYTES);
+		const appearanceTheme = formData.get("appearanceTheme");
+
+		if (!isThemePreference(appearanceTheme)) {
+			return fail(400, {
+				appearanceError: "Choose a color theme and try again.",
+			});
+		}
+
+		const existingProfile = await getUserProfile(locals.supabase, user.id);
+		const { error } = await getSupabaseAdminClient().from("profiles").upsert(
+			{
+				user_id: user.id,
+				display_name:
+					existingProfile?.display_name ?? getDefaultDisplayName(user.id),
+				appearance_theme: appearanceTheme,
+			},
+			{ onConflict: "user_id" },
+		);
+
+		if (error) {
+			return fail(500, {
+				appearanceError: "Your color theme could not be saved. Try again.",
+			});
+		}
+
+		cookies.set(
+			THEME_PREFERENCE_COOKIE,
+			appearanceTheme,
+			getThemePreferenceCookieOptions(!dev),
+		);
+
+		return {
+			appearanceSuccess: "Color theme saved.",
+			appearanceTheme,
+		};
+	},
 	saveProfile: async ({ locals, request }) => {
 		const user = await getAuthenticatedUser(locals);
-		const values = getProfileFormValues(await request.formData());
+		const values = getProfileFormValues(
+			await readLimitedFormData(request, PROFILE_TEXT_FORM_MAX_BYTES),
+		);
 		const displayName = values.displayName ?? getDefaultDisplayName(user.id);
 		const validationError = getProfileValidationError(values);
 
@@ -143,7 +243,7 @@ export const actions: Actions = {
 			};
 		}
 
-		const { error } = await locals.supabase.from("profiles").upsert(
+		const { error } = await getSupabaseAdminClient().from("profiles").upsert(
 			{
 				user_id: user.id,
 				display_name: displayName,
@@ -163,8 +263,15 @@ export const actions: Actions = {
 	},
 	saveFoodPreferences: async ({ locals, request }) => {
 		const user = await getAuthenticatedUser(locals);
-		const values = getFoodPreferenceFormValues(await request.formData());
-		const validationError = getFoodPreferencesValidationError(values);
+		const foodSafetyPolicy = await getFoodSafetyPolicy();
+		const regulatoryRegionOptions = getRegulatoryRegionOptions(foodSafetyPolicy);
+		const values = getFoodPreferenceFormValues(
+			await readLimitedFormData(request, PROFILE_TEXT_FORM_MAX_BYTES),
+		);
+		const validationError = getFoodPreferencesValidationError(
+			values,
+			regulatoryRegionOptions,
+		);
 
 		if (validationError) {
 			return fail(400, {
@@ -173,9 +280,9 @@ export const actions: Actions = {
 			});
 		}
 
-		const defaultSmoothieServingGrams = getServingSizeGrams(
-			values.defaultSmoothieServingSize,
-			values.defaultSmoothieServingUnit,
+		const defaultMixServingGrams = getServingSizeGrams(
+			values.defaultMixServingSize,
+			values.defaultMixServingUnit,
 		);
 		const sensitiveAcknowledgedAt = values.sensitiveAcknowledged
 			? new Date().toISOString()
@@ -188,8 +295,10 @@ export const actions: Actions = {
 				allergens: values.allergens,
 				dietary_restrictions: values.dietaryRestrictions,
 				prioritized_nutrient_ids: values.prioritizedNutrientIds,
-				default_smoothie_serving_grams: defaultSmoothieServingGrams,
+				default_smoothie_serving_grams: defaultMixServingGrams,
 				sensitive_acknowledged_at: sensitiveAcknowledgedAt,
+				regulatory_region_code: values.regulatoryRegionCode || null,
+				regulatory_region_source: values.regulatoryRegionSource,
 			},
 			{ onConflict: "user_id" },
 		);
@@ -216,7 +325,26 @@ export const actions: Actions = {
 	},
 	uploadAvatar: async ({ locals, request }) => {
 		const user = await getAuthenticatedUser(locals);
-		const formData = await request.formData();
+		try {
+			const rateLimit = await consumeRequestRateLimit({
+				policy: {
+					scope: "profile:avatar-upload",
+					limit: 20,
+					windowSeconds: 3600,
+				},
+				subject: `user:${user.id}`,
+			});
+			if (!rateLimit.allowed) {
+				return fail(429, {
+					avatarError: getAppIssueMessage("RATE_LIMITED"),
+				});
+			}
+		} catch {
+			return fail(503, {
+				avatarError: getAppIssueMessage("SERVICE_UNAVAILABLE"),
+			});
+		}
+		const formData = await readLimitedFormData(request, PROFILE_AVATAR_FORM_MAX_BYTES);
 		const avatar = formData.get("avatar");
 		const altText = normalizeOptionalProfileText(formData.get("avatarAltText"));
 		const policyAccepted = formData.get("avatarPolicyAccepted") === "on";
@@ -253,10 +381,27 @@ export const actions: Actions = {
 				avatarError: "The selected file does not match its reported image type.",
 			});
 		}
+		let normalizedAvatar;
+		try {
+			normalizedAvatar = await normalizeImageUpload({
+				bytes,
+				maximumOutputBytes: PROFILE_AVATAR_MAX_BYTES,
+				maximumWidth: PROFILE_AVATAR_MAX_DIMENSION,
+				maximumHeight: PROFILE_AVATAR_MAX_DIMENSION,
+			});
+		} catch {
+			return fail(400, {
+				avatarError: "We couldn’t read that image. Choose another JPEG, PNG, or WebP file.",
+			});
+		}
 
 		const existingProfile = await getUserProfile(locals.supabase, user.id);
-		const avatarPath = `${user.id}/avatar-${randomUUID()}.${getAvatarExtension(avatar.type)}`;
-		const fileSha256 = createHash("sha256").update(bytes).digest("hex");
+		const admin = getSupabaseAdminClient();
+		const avatarPath =
+			`${user.id}/avatar-${randomUUID()}.${normalizedAvatar.extension}`;
+		const fileSha256 = createHash("sha256")
+			.update(normalizedAvatar.bytes)
+			.digest("hex");
 
 		if (existingProfile?.avatar_path) {
 			const { data: existingAcceptance, error: acceptanceLookupError } =
@@ -280,10 +425,10 @@ export const actions: Actions = {
 			}
 		}
 
-		const { error: uploadError } = await locals.supabase.storage
+		const { error: uploadError } = await admin.storage
 			.from(PROFILE_AVATAR_BUCKET)
-			.upload(avatarPath, bytes, {
-				contentType: avatar.type,
+			.upload(avatarPath, normalizedAvatar.bytes, {
+				contentType: normalizedAvatar.contentType,
 				cacheControl: "3600",
 				upsert: false,
 			});
@@ -292,7 +437,7 @@ export const actions: Actions = {
 			return fail(500, { avatarError: "The image could not be uploaded. Try again." });
 		}
 
-		const { error: acceptanceError } = await locals.supabase
+		const { error: acceptanceError } = await admin
 			.from("profile_image_policy_acceptances")
 			.insert({
 				user_id: user.id,
@@ -303,13 +448,13 @@ export const actions: Actions = {
 			});
 
 		if (acceptanceError) {
-			await locals.supabase.storage.from(PROFILE_AVATAR_BUCKET).remove([avatarPath]);
+			await admin.storage.from(PROFILE_AVATAR_BUCKET).remove([avatarPath]);
 			return fail(500, {
 				avatarError: "Your policy confirmation could not be recorded. Try again.",
 			});
 		}
 
-		const { error: profileError } = await locals.supabase.from("profiles").upsert(
+		const { error: profileError } = await admin.from("profiles").upsert(
 			{
 				user_id: user.id,
 				display_name: existingProfile?.display_name ?? getDefaultDisplayName(user.id),
@@ -322,12 +467,12 @@ export const actions: Actions = {
 		);
 
 		if (profileError) {
-			await locals.supabase.storage.from(PROFILE_AVATAR_BUCKET).remove([avatarPath]);
+			await admin.storage.from(PROFILE_AVATAR_BUCKET).remove([avatarPath]);
 			return fail(500, { avatarError: "The profile image could not be saved. Try again." });
 		}
 
 		if (existingProfile?.avatar_path) {
-			await locals.supabase.storage
+			await admin.storage
 				.from(PROFILE_AVATAR_BUCKET)
 				.remove([existingProfile.avatar_path]);
 		}
@@ -339,7 +484,8 @@ export const actions: Actions = {
 		const profile = await getUserProfile(locals.supabase, user.id);
 		if (!profile?.avatar_path) return { avatarSuccess: "No profile image to remove." };
 
-		const { error } = await locals.supabase
+		const admin = getSupabaseAdminClient();
+		const { error } = await admin
 			.from("profiles")
 			.update({
 				avatar_path: null,
@@ -353,7 +499,7 @@ export const actions: Actions = {
 			return fail(500, { avatarError: "The profile image could not be removed." });
 		}
 
-		await locals.supabase.storage
+		await admin.storage
 			.from(PROFILE_AVATAR_BUCKET)
 			.remove([profile.avatar_path]);
 

@@ -1,0 +1,16 @@
+@use "../../../../styles/variables" as *;
+
+.saved-recipe-export {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+}
+
+.saved-recipe-export--compact {
+	display: contents;
+}
+
+.saved-recipe-export__status {
+	grid-column: 1 / -1;
+	min-width: 0;
+}

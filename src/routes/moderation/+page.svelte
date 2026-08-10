@@ -1,11 +1,46 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import { goto } from "$app/navigation";
 	import type { SubmitFunction } from "@sveltejs/kit";
-	import type { ActionData, PageData } from "./$types";
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
+	import DisclosureChevron from "$lib/components/common/disclosure/DisclosureChevron/DisclosureChevron.svelte";
+	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
+	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
+	import InputLoadingFrame from "$lib/components/common/forms/InputLoadingFrame/InputLoadingFrame.svelte";
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
+	import ImagePlacementEditor from "$lib/components/common/images/ImagePlacementEditor/ImagePlacementEditor.svelte";
+	import { animatedDetails } from "$lib/utils/animation/animatedDetails";
+	import type { ImagePlacementValue } from "$lib/utils/food/images/types";
+	import { canModerateTargetRole } from "$lib/utils/moderation/moderation";
+	import { formatDocumentTitle } from "$lib/config/pageMetadata";
+	import type { PageData } from "./$types";
+	import type { ModerationPageProps } from "./types";
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
+	let { data, form }: ModerationPageProps = $props();
 	let pendingTargetUserId = $state<string | null>(null);
 	let searching = $state(false);
+	let imageCropBySubmission = $state<Record<string, ImagePlacementValue>>({});
+
+	const getImageCrop = (
+		submission: PageData["productSubmissions"][number],
+	) => imageCropBySubmission[submission.id] ?? submission.imageCrop;
+
+	const setImageCrop = (
+		submission: PageData["productSubmissions"][number],
+		value: ImagePlacementValue,
+	) => {
+		imageCropBySubmission = {
+			...imageCropBySubmission,
+			[submission.id]: value,
+		};
+	};
+
+	const hasAccountModerationAction = (
+		user: PageData["users"][number],
+	) => (
+		user.id !== data.viewerUserId &&
+		canModerateTargetRole(data.viewerRole, user.role)
+	);
 
 	const enhanceModerationAction: SubmitFunction = ({ formData, cancel }) => {
 		if (pendingTargetUserId) {
@@ -14,20 +49,44 @@
 		}
 
 		pendingTargetUserId = String(
-			formData.get("targetUserId") ?? formData.get("submissionId") ?? "",
+			formData.get("targetUserId") ??
+			formData.get("submissionId") ??
+			formData.get("feedbackId") ??
+			"",
 		);
 		return async ({ update }) => {
 			try {
-				await update();
+				await update({ reset: false });
 			} finally {
 				pendingTargetUserId = null;
 			}
 		};
 	};
+
+	const submitAccountSearch = async (event: SubmitEvent) => {
+		event.preventDefault();
+		if (searching) return;
+
+		searching = true;
+		const form = event.currentTarget as HTMLFormElement;
+		const query = String(new FormData(form).get("q") ?? "").trim();
+		const href = query
+			? `/moderation?q=${encodeURIComponent(query)}`
+			: "/moderation";
+
+		try {
+			await goto(href, {
+				keepFocus: true,
+				noScroll: true,
+			});
+		} finally {
+			searching = false;
+		}
+	};
 </script>
 
 <svelte:head>
-	<title>Moderation · Smoothie Mixer</title>
+	<title>{formatDocumentTitle("Moderation")}</title>
 	<meta name="robots" content="noindex,nofollow" />
 </svelte:head>
 
@@ -36,6 +95,7 @@
 		<p class="eyebrow">{data.viewerRole}</p>
 		<h1>Moderation</h1>
 		<p>Review profile images and block accounts that violate the community rules.</p>
+		<a class="data-health-link" href="/moderation/data-health">Review catalog data health</a>
 	</header>
 
 	<section class="account-search" aria-labelledby="account-search-title">
@@ -43,20 +103,23 @@
 			<h2 id="account-search-title">Find an account</h2>
 			<p>Search by preferred name, email address, user ID, role, or status.</p>
 		</div>
-		<form method="GET" role="search" onsubmit={() => (searching = true)}>
+		<form method="GET" role="search" onsubmit={submitAccountSearch}>
 			<label for="moderation-search">Account search</label>
 			<div class="search-controls">
-				<input
-					id="moderation-search"
-					type="search"
-					name="q"
-					value={data.query}
-					placeholder="Name, email, user ID..."
-					autocomplete="off"
-					disabled={searching}
-				/>
+				<InputLoadingFrame loading={searching} loadingLabel="Searching accounts">
+					<input
+						id="moderation-search"
+						type="search"
+						name="q"
+						value={data.query}
+						placeholder="Name, email, user ID..."
+						autocomplete="off"
+						disabled={searching}
+					/>
+				</InputLoadingFrame>
 				<button class="search-action" type="submit" disabled={searching}>
-					{searching ? "Searching…" : "Search"}
+					{#if searching}<LoadingSpinner size="small" decorative />{/if}
+					Search
 				</button>
 				{#if data.query}
 					<a class="clear-search" href="/moderation">Clear</a>
@@ -73,14 +136,14 @@
 	</section>
 
 	{#if form?.moderationError}
-		<p class="message message--error" role="alert">{form.moderationError}</p>
+		<StatusMessage tone="danger" message={form.moderationError} />
 	{:else if form?.moderationWarning}
-		<p class="message message--warning" role="status">{form.moderationWarning}</p>
+		<StatusMessage tone="warning" message={form.moderationWarning} />
 	{:else if form?.moderationSuccess}
-		<p class="message message--success" role="status">{form.moderationSuccess}</p>
+		<StatusMessage tone="success" message={form.moderationSuccess} />
 	{/if}
 
-	<section class="product-review" aria-labelledby="product-review-title">
+	<section id="product-review" class="product-review" aria-labelledby="product-review-title">
 		<div>
 			<p class="eyebrow">Shared catalog</p>
 			<h2 id="product-review-title">Product submissions</h2>
@@ -88,9 +151,9 @@
 		</div>
 
 		{#if form?.productReviewError}
-			<p class="message message--error" role="alert">{form.productReviewError}</p>
+			<StatusMessage tone="danger" message={form.productReviewError} />
 		{:else if form?.productReviewSuccess}
-			<p class="message message--success" role="status">{form.productReviewSuccess}</p>
+			<StatusMessage tone="success" message={form.productReviewSuccess} />
 		{/if}
 
 		<div class="product-review__list">
@@ -103,7 +166,15 @@
 						</div>
 						<div class="product-card__statuses">
 							{#if submission.isQaFixture}<span class="status status--qa">QA fixture</span>{/if}
+							{#if submission.updateReview}
+								<span class="status">
+									{submission.submissionIntent === "catalog_correction"
+										? "correction report"
+										: "product update"}
+								</span>
+							{/if}
 							<span class="status">pending</span>
+							<PrivilegedActionBadge />
 						</div>
 					</header>
 					<dl>
@@ -115,9 +186,43 @@
 						<div><dt>Evidence</dt><dd>{submission.evidenceComplete ? "Complete" : "Incomplete"}</dd></div>
 						<div><dt>Detected conflicts</dt><dd>{submission.conflictCount}</dd></div>
 					</dl>
+					{#if submission.updateReview}
+						<section class="product-card__update" aria-label="Proposed catalog update">
+							<div>
+								<strong>
+									{submission.submissionIntent === "catalog_correction"
+										? "Reported product correction"
+										: "Existing product update"}
+								</strong>
+								<p>
+									Compared with blendCalc revision {submission.updateReview.baseRevisionNumber} from the active catalog. Label observed {submission.labelObservedDate}.
+								</p>
+							</div>
+							<ul>
+								{#each submission.updateReview.changes as change (change.field)}
+									<li>
+										<strong>{change.label}</strong>
+										<span>{change.previousValue} → {change.submittedValue}</span>
+									</li>
+								{/each}
+							</ul>
+							<div>
+								<strong>External checks</strong>
+								<ul>
+									{#each submission.updateReview.sourceChecks as sourceCheck (sourceCheck.source)}
+										<li>
+											<span>{sourceCheck.source}</span>
+											<strong>{sourceCheck.status}</strong>
+										</li>
+									{/each}
+								</ul>
+							</div>
+						</section>
+					{/if}
 					{#if submission.externalLookupFailed}
 						<p class="product-card__notice">
-							An outside source could not be checked. Review the label carefully.
+							We couldn't compare this submission with an outside food database.
+							Review the package label carefully.
 						</p>
 					{/if}
 					{#if submission.validationIssues.length > 0}
@@ -147,8 +252,24 @@
 							This older submission has no label evidence and cannot be approved.
 						</p>
 					{/if}
-					<details>
-						<summary>Review {submission.nutrients.length} nutrition values</summary>
+					{#if submission.frontEvidenceUrl}
+							<ImagePlacementEditor
+								imageUrl={submission.frontEvidenceUrl}
+								alt="Product image preview"
+								foodName={submission.productName}
+								brandName={submission.brandOwner ?? ""}
+								category="Catalog product"
+								title="Card image preview"
+								description="Drag the image in the card preview or use the controls before approving."
+								value={getImageCrop(submission)}
+							onChange={(value) => setImageCrop(submission, value)}
+						/>
+					{/if}
+					<details class="moderation-disclosure" use:animatedDetails>
+						<summary>
+							<span>Review {submission.nutrients.length} nutrition values</span>
+							<DisclosureChevron />
+						</summary>
 						<ul>
 							{#each submission.nutrients as nutrient}
 								<li>
@@ -161,11 +282,21 @@
 					<div class="product-card__actions">
 						<form method="POST" action="?/approveProduct" use:enhance={enhanceModerationAction}>
 							<input type="hidden" name="submissionId" value={submission.id} />
+							<input type="hidden" name="imageCropX" value={getImageCrop(submission).cropX} />
+							<input type="hidden" name="imageCropY" value={getImageCrop(submission).cropY} />
+							<input type="hidden" name="imageCropZoom" value={getImageCrop(submission).cropZoom} />
+							<input type="hidden" name="imageRotationDegrees" value={getImageCrop(submission).rotationDegrees} />
+							<input type="hidden" name="imageFitMode" value={getImageCrop(submission).fitMode} />
+							<input type="hidden" name="imagePlacementVersion" value={getImageCrop(submission).placementVersion} />
+							<input type="hidden" name="imagePlacementMethod" value={getImageCrop(submission).placementMethod ?? "manual"} />
+							<input type="hidden" name="imageSuggestionVersion" value={getImageCrop(submission).suggestionVersion ?? ""} />
+							<input type="hidden" name="imageSuggestionConfidence" value={getImageCrop(submission).suggestionConfidence ?? ""} />
 							<button
 								type="submit"
 								disabled={pendingTargetUserId !== null || !submission.evidenceComplete || submission.isQaFixture}
 							>
-								{pendingTargetUserId === submission.id ? "Approving…" : "Approve"}
+								{#if pendingTargetUserId === submission.id}<LoadingSpinner size="small" decorative />{/if}
+								<span>Approve</span>
 							</button>
 						</form>
 						<form method="POST" action="?/rejectProduct" use:enhance={enhanceModerationAction}>
@@ -175,13 +306,161 @@
 								<input name="reviewNote" maxlength="1000" required placeholder="What needs correction?" />
 							</label>
 							<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
-								{pendingTargetUserId === submission.id ? "Rejecting…" : "Reject"}
+								{#if pendingTargetUserId === submission.id}<LoadingSpinner size="small" decorative />{/if}
+								<span>Reject</span>
 							</button>
 						</form>
 					</div>
 				</article>
 			{:else}
 				<p class="empty-results">No products are waiting for review.</p>
+			{/each}
+		</div>
+	</section>
+
+	<section id="compatibility-review" class="compatibility-review" aria-labelledby="compatibility-review-title">
+		<header>
+			<div>
+				<p class="eyebrow">Food compatibility</p>
+				<h2 id="compatibility-review-title">Food warning reports</h2>
+				<p>
+					Review warnings users believe are incorrect or missing.
+					A confirmed report records the next investigation step; it does not
+					silently change product or policy data.
+				</p>
+			</div>
+			<PrivilegedActionBadge />
+		</header>
+
+		{#if form?.compatibilityReviewError}
+			<StatusMessage tone="danger" message={form.compatibilityReviewError} />
+		{:else if form?.compatibilityReviewSuccess}
+			<StatusMessage tone="success" message={form.compatibilityReviewSuccess} />
+		{/if}
+
+		<div class="compatibility-review__list">
+			{#each data.compatibilityFeedback as feedback (feedback.id)}
+				<article class="compatibility-review__card">
+					<header>
+						<div>
+							<strong>{feedback.foodDescription}</strong>
+							<span>
+								{feedback.feedbackType === "missing_warning"
+									? "Missing warning"
+									: "Incorrect warning"}
+								· Policy v{feedback.policyVersion ?? "unknown"}
+							</span>
+						</div>
+						<span class="status">pending</span>
+					</header>
+					<dl>
+						{#if feedback.feedbackType === "missing_warning"}
+							<div>
+								<dt>Affected setting</dt>
+								<dd>{feedback.preferenceValue ?? "Unknown"}</dd>
+							</div>
+							<div>
+								<dt>Setting type</dt>
+								<dd>{feedback.preferenceType?.replaceAll("_", " ") ?? "Unknown"}</dd>
+							</div>
+						{:else}
+							<div><dt>Warning</dt><dd>{feedback.issueCode}</dd></div>
+						{/if}
+						<div><dt>Reason</dt><dd>{feedback.reportReason.replaceAll("_", " ")}</dd></div>
+						<div><dt>Source</dt><dd>{feedback.sourceKey ?? "Shared catalog"} · {feedback.sourceId}</dd></div>
+						{#if feedback.barcode}
+							<div><dt>Barcode</dt><dd>{feedback.barcode}</dd></div>
+						{/if}
+						{#if feedback.sharedProductRevisionId}
+							<div><dt>Catalog revision</dt><dd>{feedback.sharedProductRevisionId}</dd></div>
+						{/if}
+						{#if feedback.observedLabelDate}
+							<div><dt>Package checked</dt><dd>{feedback.observedLabelDate}</dd></div>
+						{/if}
+					</dl>
+					{#if feedback.reportDetails}
+						<p>{feedback.reportDetails}</p>
+					{/if}
+					{#if feedback.evidenceUrl}
+						<p>
+							<a href={feedback.evidenceUrl} target="_blank" rel="noopener noreferrer">
+								View private package-label evidence
+							</a>
+						</p>
+					{/if}
+					<details class="moderation-disclosure" use:animatedDetails>
+						<summary>
+							<span>Review captured evidence</span>
+							<DisclosureChevron />
+						</summary>
+						<pre>{JSON.stringify({
+							issueParams: feedback.issueParams,
+							facts: feedback.factSnapshot,
+						}, null, 2)}</pre>
+					</details>
+					<form
+						method="POST"
+						action="?/reviewCompatibilityFeedback"
+						use:enhance={enhanceModerationAction}
+					>
+						<input type="hidden" name="feedbackId" value={feedback.id} />
+						<SelectField
+							id={`compatibility-outcome-${feedback.id}`}
+							name="status"
+							label="Outcome"
+							value="confirmed"
+							options={[
+								{
+									value: "confirmed",
+									label: feedback.feedbackType === "missing_warning"
+										? "Confirm missing warning"
+										: "Confirm false positive",
+								},
+								{
+									value: "dismissed",
+									label: feedback.feedbackType === "missing_warning"
+										? "Current warning coverage is supported"
+										: "Warning is supported",
+								},
+							]}
+							required
+						/>
+						<SelectField
+							id={`compatibility-action-${feedback.id}`}
+							name="resolutionAction"
+							label="Next step"
+							value="rule_review"
+							options={[
+								{ value: "rule_review", label: "Review matching rule" },
+								{ value: "source_correction", label: "Correct source mapping" },
+								{ value: "product_correction", label: "Correct product data" },
+								{ value: "duplicate", label: "Duplicate report" },
+								{ value: "none", label: "No change needed" },
+							]}
+							required
+						/>
+						<label>
+							<span>Review note</span>
+							<textarea
+								name="reviewNote"
+								maxlength="2000"
+								required
+								placeholder="What evidence supports this decision?"
+							></textarea>
+						</label>
+						<button
+							type="submit"
+							disabled={pendingTargetUserId !== null}
+						>
+							{#if pendingTargetUserId === feedback.id}
+								<LoadingSpinner size="small" decorative />
+							{/if}
+							<span>Save review</span>
+						</button>
+					</form>
+				</article>
+			{:else}
+				<p class="empty-results">No food warning reports are waiting for review.</p>
 			{/each}
 		</div>
 	</section>
@@ -205,6 +484,9 @@
 							{/if}
 						</div>
 						<span class="status">{user.status}</span>
+						{#if hasAccountModerationAction(user)}
+							<PrivilegedActionBadge />
+						{/if}
 					</div>
 					<p class="account-email">{user.email}</p>
 					<p>Image: {user.avatarModerationStatus}</p>
@@ -212,37 +494,46 @@
 					{#if user.publicReason}<p>{user.publicReason}</p>{/if}
 					{#if user.id === data.viewerUserId}
 						<p class="account-note">You cannot moderate your own account.</p>
-					{:else if user.role === "admin"}
-						<p class="account-note">Admin accounts cannot be blocked here.</p>
-					{:else if data.viewerRole === "moderator" && user.role}
-						<p class="account-note">Only an admin can moderate another moderator.</p>
+					{:else if user.role === "admin" || user.role === "developer"}
+						<p class="account-note">{user.role === "admin" ? "Admin" : "Developer"} accounts cannot be blocked here.</p>
+					{:else if !canModerateTargetRole(data.viewerRole, user.role)}
+						<p class="account-note">Only an admin or developer can moderate another privileged account.</p>
 					{/if}
 				</div>
 
-				{#if user.status === "banned"}
-					<form method="POST" action="?/unban" use:enhance={enhanceModerationAction} aria-busy={pendingTargetUserId === user.id}>
-						<input type="hidden" name="targetUserId" value={user.id} />
-						<button class="secondary-action" type="submit" disabled={pendingTargetUserId !== null}>
-							{pendingTargetUserId === user.id ? "Restoring…" : "Restore access"}
-						</button>
-					</form>
-				{:else if user.id !== data.viewerUserId && user.role !== "admin" && !(data.viewerRole === "moderator" && user.role)}
-					<form method="POST" action="?/ban" use:enhance={enhanceModerationAction} aria-busy={pendingTargetUserId === user.id}>
-						<input type="hidden" name="targetUserId" value={user.id} />
-						<label>
-							<span>Reason</span>
-							<select name="reason" required disabled={pendingTargetUserId !== null}>
-								<option value="profile_image_policy_violation">Profile image violation</option>
-								<option value="harassment_or_abuse">Harassment or abuse</option>
-								<option value="fraud_or_spam">Fraud or spam</option>
-								<option value="terms_violation">Other terms violation</option>
-							</select>
-							<small>This reason and its plain-language explanation will be emailed to the user.</small>
-						</label>
-						<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
-							{pendingTargetUserId === user.id ? "Blocking…" : "Block account"}
-						</button>
-					</form>
+				{#if user.id !== data.viewerUserId && canModerateTargetRole(data.viewerRole, user.role)}
+					{#if user.status === "banned"}
+						<form method="POST" action="?/unban" use:enhance={enhanceModerationAction} aria-busy={pendingTargetUserId === user.id}>
+							<input type="hidden" name="targetUserId" value={user.id} />
+							<button class="secondary-action" type="submit" disabled={pendingTargetUserId !== null}>
+								{#if pendingTargetUserId === user.id}<LoadingSpinner size="small" decorative />{/if}
+								<span>Restore access</span>
+							</button>
+						</form>
+					{:else}
+						<form method="POST" action="?/ban" use:enhance={enhanceModerationAction} aria-busy={pendingTargetUserId === user.id}>
+							<input type="hidden" name="targetUserId" value={user.id} />
+							<SelectField
+								id={`account-ban-reason-${user.id}`}
+								name="reason"
+								label="Reason"
+								value="profile_image_policy_violation"
+								options={[
+									{ value: "profile_image_policy_violation", label: "Profile image violation" },
+									{ value: "harassment_or_abuse", label: "Harassment or abuse" },
+									{ value: "fraud_or_spam", label: "Fraud or spam" },
+									{ value: "terms_violation", label: "Other terms violation" },
+								]}
+								helper="This reason and its plain-language explanation will be emailed to the user."
+								required
+								disabled={pendingTargetUserId !== null}
+							/>
+							<button class="danger-action" type="submit" disabled={pendingTargetUserId !== null}>
+								{#if pendingTargetUserId === user.id}<LoadingSpinner size="small" decorative />{/if}
+								<span>Block account</span>
+							</button>
+						</form>
+					{/if}
 				{/if}
 			</article>
 		{:else}
@@ -255,395 +546,5 @@
 </div>
 
 <style lang="scss">
-	@use "../../styles/variables" as *;
-
-	.moderation-page,
-	.account-list,
-	header,
-	.account-search,
-	.product-review,
-	.product-review__list,
-	.account-details,
-	form,
-	label {
-		display: grid;
-		gap: $app-gap-sm;
-		min-width: 0;
-	}
-
-	.moderation-page {
-		width: 100%;
-		max-width: 100%;
-	}
-
-	header h1 {
-		font-family: $app-font-family-display;
-		font-size: clamp(1.8rem, 7vw, 2.4rem);
-	}
-
-	header > p:last-child,
-	.account-details p,
-	.account-search p,
-	.empty-results p {
-		color: $app-muted;
-	}
-
-	.eyebrow {
-		font-size: $app-font-size-xs;
-		font-weight: 900;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-	}
-
-	.account-search,
-	.product-review,
-	.empty-results {
-		padding: $app-gap-md;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-card-radius;
-	}
-
-	.product-review h2,
-	.account-search h2 {
-		font-size: $app-font-size-lg;
-	}
-
-	.product-review {
-		padding: $app-gap-md;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-card-radius;
-	}
-
-	.product-card {
-		display: grid;
-		gap: $app-gap-sm;
-		min-width: 0;
-		padding: $app-gap-md;
-		background: $app-bg;
-		border: $app-border;
-		border-radius: $app-radius;
-
-		header,
-		dl > div,
-		li {
-			display: flex;
-			justify-content: space-between;
-			gap: $app-gap-sm;
-		}
-
-		header > div {
-			display: grid;
-			min-width: 0;
-		}
-
-		dl {
-			display: grid;
-			gap: $app-gap-xs;
-			margin: 0;
-		}
-
-		dt {
-			font-weight: 800;
-		}
-
-		dd {
-			min-width: 0;
-			margin: 0;
-			overflow-wrap: anywhere;
-		}
-
-		ul {
-			display: grid;
-			gap: $app-gap-xs;
-			max-height: 16rem;
-			margin: $app-gap-sm 0 0;
-			padding: 0;
-			overflow: auto;
-			list-style: none;
-		}
-	}
-
-	.product-card__actions {
-		display: grid;
-		grid-template-columns: auto minmax(0, 1fr);
-		gap: $app-gap-sm;
-		align-items: end;
-
-		form:last-child {
-			display: grid;
-			grid-template-columns: minmax(0, 1fr) auto;
-			gap: $app-gap-xs;
-			align-items: end;
-		}
-	}
-
-	.product-card__statuses {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: flex-end;
-		gap: $app-gap-xs;
-
-		.status {
-			padding: 0.2rem 0.45rem;
-			background: $app-accent;
-			border-radius: $app-radius-pill;
-			font-size: $app-font-size-xs;
-			font-weight: 800;
-			text-transform: capitalize;
-		}
-
-		.status--qa {
-			color: $app-warning-strong;
-			background: $app-warning-bg;
-		}
-	}
-
-	.product-card__evidence {
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: $app-gap-sm;
-
-		a {
-			display: grid;
-			gap: $app-gap-xs;
-			min-width: 0;
-			color: $app-primary;
-			font-size: $app-font-size-sm;
-			font-weight: 800;
-			text-decoration: none;
-		}
-
-		img {
-			width: 100%;
-			aspect-ratio: 4 / 3;
-			object-fit: cover;
-			background: $app-section-bg;
-			border: $app-border;
-			border-radius: $app-radius;
-		}
-	}
-
-	.product-card__notice {
-		padding: $app-gap-sm;
-		color: $app-warning-strong;
-		background: $app-warning-bg;
-		border: $app-warning-border;
-		border-radius: $app-radius;
-		font-size: $app-font-size-sm;
-		font-weight: 700;
-	}
-
-	.product-card__notice ul {
-		display: grid;
-		gap: $app-gap-xs;
-		margin: $app-gap-xs 0 0;
-		padding-left: $app-gap-md;
-	}
-
-	.product-card__notice--danger {
-		color: $app-warning-strong;
-	}
-
-	.account-search label {
-		font-weight: 800;
-	}
-
-	.search-controls {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto auto;
-		gap: $app-gap-xs;
-		min-width: 0;
-	}
-
-	.search-controls input {
-		min-width: 0;
-		width: 100%;
-		padding: 0.7rem;
-		background: $app-bg;
-		border: $app-border;
-		border-radius: $app-radius-sm;
-	}
-
-	.search-action,
-	.clear-search {
-		display: inline-grid;
-		place-items: center;
-		min-width: 0;
-		padding-inline: $app-gap-sm;
-		border-radius: $app-radius-sm;
-		font-family: $app-button-font-family;
-		font-weight: $app-button-font-weight;
-		line-height: $app-button-line-height;
-		text-decoration: none;
-	}
-
-	.search-action {
-		color: $app-btn-text;
-		background: $app-primary;
-	}
-
-	.clear-search {
-		color: $app-primary;
-		background: $app-accent;
-	}
-
-	.result-count {
-		font-size: $app-font-size-sm;
-		font-weight: 700;
-	}
-
-	.account-card {
-		display: grid;
-		grid-template-columns: 4.5rem minmax(0, 1fr);
-		gap: $app-gap-sm;
-		min-width: 0;
-		width: 100%;
-		max-width: 100%;
-		padding: $app-gap-md;
-		overflow: hidden;
-		background: $app-section-bg;
-		border: $app-border;
-		border-radius: $app-card-radius;
-
-		form {
-			grid-column: 1 / -1;
-			min-width: 0;
-		}
-	}
-
-	.account-card--blocked {
-		border-color: $app-danger-action;
-	}
-
-	.avatar {
-		display: grid;
-		place-items: center;
-		width: 4.5rem;
-		height: 4.5rem;
-		overflow: hidden;
-		background: $app-accent;
-		border-radius: $app-radius-sm;
-
-		img {
-			width: 100%;
-			height: 100%;
-			object-fit: cover;
-		}
-	}
-
-	.account-title {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: start;
-		justify-content: space-between;
-		gap: $app-gap-xs;
-
-		> .status {
-			padding: 0.2rem 0.45rem;
-			background: $app-accent;
-			border-radius: $app-radius-pill;
-			font-size: $app-font-size-xs;
-			font-weight: 800;
-			text-transform: capitalize;
-		}
-
-		> div {
-			display: flex;
-			flex-wrap: wrap;
-			align-items: center;
-			min-width: 0;
-			gap: $app-gap-xs;
-		}
-	}
-
-	.account-title strong,
-	.account-email,
-	.account-note {
-		overflow-wrap: anywhere;
-	}
-
-	.current-account {
-		padding: 0.15rem 0.4rem;
-		color: $app-highlight-text;
-		background: $app-highlight;
-		border-radius: $app-radius-pill;
-		font-size: $app-font-size-xs;
-		font-weight: 900;
-	}
-
-	.account-note {
-		font-weight: 700;
-		font-style: italic;
-	}
-
-	select {
-		min-width: 0;
-		width: 100%;
-		max-width: 100%;
-		padding: 0.6rem;
-		background: $app-bg;
-		border: $app-border;
-		border-radius: $app-radius-sm;
-	}
-
-	.danger-action {
-		width: 100%;
-		color: $app-btn-text;
-		background: $app-danger-action;
-	}
-
-	.secondary-action {
-		width: 100%;
-		color: $app-primary;
-		background: $app-accent;
-	}
-
-	.message {
-		padding: $app-gap-sm;
-		border-radius: $app-radius-sm;
-		font-weight: 700;
-	}
-
-	.message--error {
-		background: $app-danger-bg;
-	}
-
-	.message--success {
-		background: $app-success-bg;
-	}
-
-	.message--warning {
-		background: $app-warning-bg;
-	}
-
-	@media (max-width: $app-breakpoint-xs) {
-		.product-card__evidence {
-			grid-template-columns: 1fr;
-		}
-
-		.search-controls {
-			grid-template-columns: minmax(0, 1fr) auto;
-
-			.clear-search {
-				grid-column: 1 / -1;
-			}
-		}
-
-		.account-card {
-			grid-template-columns: 3.5rem minmax(0, 1fr);
-			padding: $app-gap-sm;
-		}
-
-		.avatar {
-			width: 3.5rem;
-			height: 3.5rem;
-		}
-
-		.product-card__actions,
-		.product-card__actions form:last-child {
-			grid-template-columns: 1fr;
-		}
-	}
+	@use "./page.scss";
 </style>

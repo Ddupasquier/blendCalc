@@ -1,38 +1,141 @@
+import { searchApprovedSharedProducts } from "$lib/server/products/catalog.server";
+import { searchUserCustomFoods } from "$lib/server/products/customFoods.server";
+import { areExternalProductLookupsEnabled } from "$lib/server/products/externalProductPolicy.server";
 import { searchUsdaFoods } from "$lib/server/products/usdaCache.server";
+import { searchGenericFoods } from "$lib/server/products/genericFoods.server";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
-	getFoodPreferenceProfile,
-	isMissingFoodPreferencesTableError,
-} from "$lib/utils/profile/foodPreferenceProfile";
-import { annotateFoodWithPreferenceWarnings } from "$lib/utils/profile/foodPreferenceWarnings";
-import { error, json } from "@sveltejs/kit";
+	isUsableIngredientSearchResult,
+	mergeIngredientSearchResults,
+	sortIngredientSearchResults,
+} from "$lib/utils/ingredients/ingredientSearchResults";
+import {
+	isIngredientSourceFilter,
+	isIngredientTrustFilter,
+	matchesIngredientProvenance,
+} from "$lib/utils/ingredients/ingredientProvenance";
+import {
+	INGREDIENT_SEARCH_MAX_PAGE_SIZE,
+	INGREDIENT_SEARCH_PAGE_SIZE,
+	paginateIngredientSearchResults,
+} from "$lib/utils/ingredients/ingredientSearchPagination";
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { getNutritionCompletenessCatalog } from "$lib/server/nutrition/nutritionCompletenessCatalog.server";
+import { getUserFoodSafetyContext } from "$lib/server/food-safety/userFoodSafety.server";
+import { annotateFoodsWithFoodSafety } from "$lib/server/food-safety/foodSafetyEvaluation.server";
+import {
+	requireAppValue,
+	throwAppError,
+} from "$lib/server/errors/appError.server";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { hydrateFoodsWithCachedImages } from "$lib/utils/storage/supabase/foodImages";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
-	const { user } = await locals.safeGetSession();
-	if (!user) throw error(401, "Sign in to search foods.");
+	const user = requireAppValue(
+		await locals.getVerifiedUser(),
+		401,
+		"AUTH_REQUIRED",
+	);
 
 	const query = url.searchParams.get("q")?.trim() ?? "";
-	if (query.length < 2) return json({ foods: [] });
-	if (query.length > 120) throw error(400, "Search is too long.");
+	const sourceFilter = url.searchParams.get("source")?.trim() || "all";
+	const trustFilter = url.searchParams.get("trust")?.trim() || "any";
+	const offset = Number(url.searchParams.get("offset") ?? 0);
+	const limit = Number(
+		url.searchParams.get("limit") ?? INGREDIENT_SEARCH_PAGE_SIZE,
+	);
+	if (!Number.isInteger(offset) || offset < 0) {
+		throwAppError(400, "SEARCH_PAGINATION_INVALID");
+	}
+	if (
+		!Number.isInteger(limit) ||
+		limit < 1 ||
+		limit > INGREDIENT_SEARCH_MAX_PAGE_SIZE
+	) {
+		throwAppError(400, "SEARCH_PAGINATION_INVALID");
+	}
+	if (query.length < 2) {
+		return json({ foods: [], hasMore: false, nextOffset: null, total: 0 });
+	}
+	if (query.length > 120) {
+		throwAppError(400, "SEARCH_QUERY_TOO_LONG", { maximum: 120 });
+	}
+	if (!isIngredientSourceFilter(sourceFilter)) {
+		throwAppError(400, "SEARCH_FILTER_INVALID");
+	}
+	if (!isIngredientTrustFilter(trustFilter)) {
+		throwAppError(400, "SEARCH_FILTER_INVALID");
+	}
 
 	try {
-		const foods = await searchUsdaFoods(query);
-		const foodPreferencesResult = await locals.supabase
-			.from("user_food_preferences")
-			.select("*")
-			.eq("user_id", user.id)
-			.maybeSingle();
-		if (
-			foodPreferencesResult.error &&
-			!isMissingFoodPreferencesTableError(foodPreferencesResult.error)
-		) {
-			throw foodPreferencesResult.error;
+		const searches: Promise<FoodItem[]>[] = [];
+		const catalogClient = getSupabaseAdminClient();
+		if (trustFilter === "any" || trustFilter === "user-private") {
+			searches.push(searchUserCustomFoods(locals.supabase, user.id, query, {
+				sourceFilter,
+				trustFilter,
+			}));
 		}
-		const profile = getFoodPreferenceProfile(foodPreferencesResult.data);
-		return json({
-			foods: foods.map((food) => annotateFoodWithPreferenceWarnings(food, profile)),
-		});
+		if (sourceFilter !== "custom" && trustFilter !== "user-private") {
+			searches.push(searchApprovedSharedProducts(catalogClient, query, {
+				sourceFilter,
+				trustFilter,
+			}));
+		}
+		if (
+			areExternalProductLookupsEnabled() &&
+			(sourceFilter === "all" || sourceFilter === "usda") &&
+			(trustFilter === "any" || trustFilter === "source-verified")
+		) {
+			searches.push(searchUsdaFoods(query));
+		}
+		if (
+			(sourceFilter === "all" || sourceFilter === "national-dataset") &&
+			(trustFilter === "any" || trustFilter === "imported")
+		) {
+			searches.push(searchGenericFoods(locals.supabase, query));
+		}
+		const searchPromise = Promise.allSettled(searches);
+		const [
+			searchResults,
+			nutritionCompletenessCatalog,
+			foodSafetyContext,
+		] = await Promise.all([
+			searchPromise,
+			getNutritionCompletenessCatalog(),
+			getUserFoodSafetyContext(locals.supabase, user.id),
+		]);
+		if (
+			searchResults.length > 0 &&
+			searchResults.every((result) => result.status === "rejected")
+		) {
+			throw new Error("Every ingredient search source failed.");
+		}
+		const resultGroups = searchResults.map((result) =>
+			result.status === "fulfilled" ? result.value : [],
+		);
+		const mergedFoods = mergeIngredientSearchResults(...resultGroups).filter(
+			(food) =>
+				isUsableIngredientSearchResult(food) &&
+				matchesIngredientProvenance(food, sourceFilter, trustFilter),
+		);
+		const foodsWithCurrentImages = await hydrateFoodsWithCachedImages(
+			catalogClient,
+			mergedFoods,
+		);
+		const annotatedFoods = annotateFoodsWithFoodSafety(
+			foodsWithCurrentImages,
+			foodSafetyContext,
+		);
+		const foods = sortIngredientSearchResults(
+			annotatedFoods,
+			query,
+			nutritionCompletenessCatalog,
+		);
+		const page = paginateIngredientSearchResults(foods, offset, limit);
+		return json(page);
 	} catch {
-		throw error(503, "Food search is temporarily unavailable.");
+		return throwAppError(503, "FOOD_SEARCH_UNAVAILABLE");
 	}
 };

@@ -1,0 +1,39 @@
+@use "../../../../../styles/variables" as *;
+
+.close-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	appearance: none;
+	padding: 0;
+	color: $app-primary;
+	background: $app-accent;
+	border-radius: $app-radius-circle;
+
+	&:focus-visible {
+		outline: $app-focus-outline;
+		outline-offset: 2px;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.55;
+	}
+
+	:global(.close-button__icon) {
+		display: block;
+		width: 52%;
+		height: 52%;
+	}
+}
+
+.close-button--small {
+	width: 1.75rem;
+	height: 1.75rem;
+}
+
+.close-button--medium {
+	width: $app-shell-control-height-compact;
+	height: $app-shell-control-height-compact;
+}

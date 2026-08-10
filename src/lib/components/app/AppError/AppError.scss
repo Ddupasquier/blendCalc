@@ -1,0 +1,65 @@
+@use "../../../../styles/variables" as *;
+
+.app-error {
+	display: grid;
+	place-items: center;
+	min-height: 100vh;
+	min-height: 100dvh;
+	padding: max($app-shell-padding-y, env(safe-area-inset-top)) max($app-shell-padding-x, env(safe-area-inset-right)) max($app-shell-padding-y, env(safe-area-inset-bottom)) max($app-shell-padding-x, env(safe-area-inset-left));
+	overflow-x: hidden;
+	overflow-y: auto;
+	background: $app-shell-surface-page;
+}
+
+.app-error__panel {
+	display: grid;
+	gap: $app-gap-md;
+	width: min(100%, 32rem);
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-panel;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-sheet;
+}
+
+.app-error__eyebrow {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-label;
+	text-transform: uppercase;
+}
+
+h1 {
+	margin: 0;
+	color: $app-shell-text-primary;
+	font-family: $app-font-family-display;
+	font-size: $app-font-size-xl;
+	font-weight: $app-font-weight-heavy;
+	line-height: $app-line-height-compact;
+}
+
+.app-error__actions {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $app-gap-sm;
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.app-error__actions {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: $app-breakpoint-xs),
+(max-height: $app-breakpoint-height-compact) {
+	.app-error {
+		place-items: start center;
+		padding-block: max($app-gap-sm, env(safe-area-inset-top)) max($app-gap-sm, env(safe-area-inset-bottom));
+	}
+
+	.app-error__panel {
+		gap: $app-gap-sm;
+		padding: $app-gap-md;
+	}
+}

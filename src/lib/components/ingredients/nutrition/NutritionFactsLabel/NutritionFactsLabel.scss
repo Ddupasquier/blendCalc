@@ -1,0 +1,284 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../../styles/themes";
+
+$nutrition-paper: #fff;
+$nutrition-ink: #111;
+$nutrition-secondary-ink: #222;
+$facts-label-inset: 1.0875rem;
+$facts-label-heavy-rule: 3.5px;
+$facts-label-tight-gap: 0.13rem;
+
+.nf-label {
+	@include themes.light-theme;
+
+	width: 100%;
+	max-width: 100%;
+	padding: $app-gap-md $facts-label-inset
+		$facts-label-inset;
+	margin: 0 auto;
+	overflow: hidden;
+	color: $nutrition-ink;
+	font-family: $app-font-family-data;
+	background: $nutrition-paper;
+	border: $facts-label-heavy-rule solid $nutrition-ink;
+	border-radius: 0;
+}
+
+.nf-heading {
+	display: grid;
+	gap: $app-gap-2xs;
+	padding-bottom: $facts-label-tight-gap;
+	margin-bottom: $app-gap-micro;
+	border-bottom: 8px solid $nutrition-ink;
+}
+
+.nf-title {
+	font-size: $app-font-size-3xl;
+	font-weight: $app-font-weight-heavy;
+	line-height: $app-line-height-heading;
+	letter-spacing: $app-letter-spacing-data;
+	text-transform: uppercase;
+}
+
+.nf-heading-top {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: start;
+	gap: $app-gap-sm;
+}
+
+.nf-heading-badges {
+	display: flex;
+	justify-content: flex-end;
+	min-width: 0;
+}
+
+:global(.nf-heading-badges .ingredient-provenance-badges) {
+	justify-content: flex-end;
+	width: auto;
+}
+
+.nf-basis {
+	max-width: none;
+	padding-top: 0;
+	color: $nutrition-secondary-ink;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	line-height: $app-line-height-heading;
+	text-align: left;
+	letter-spacing: $app-letter-spacing-normal;
+	text-transform: none;
+}
+
+.nf-food-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: $app-gap-xs;
+}
+
+.nf-food-details {
+	display: grid;
+	gap: $app-gap-2xs;
+}
+
+.nf-food {
+	min-width: 0;
+	overflow-wrap: anywhere;
+	color: $nutrition-secondary-ink;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-medium;
+}
+
+.nf-thick-divider {
+	margin: $app-gap-2xs 0 $app-gap-xs;
+	border-bottom: 4px solid $nutrition-ink;
+}
+
+.nf-divider {
+	margin: $app-gap-micro 0;
+	border-bottom: 2px solid $nutrition-ink;
+}
+
+.nf-columns {
+	display: flex;
+	align-items: stretch;
+	gap: $facts-label-inset;
+	min-width: 0;
+	min-height: 7.5rem;
+	margin-bottom: $app-gap-2xs;
+}
+
+.vital-list {
+	flex: 0 0 13.75rem;
+	min-width: 11.25rem;
+	max-width: 13.75rem;
+	padding: 0;
+	padding-right: $facts-label-inset;
+	margin: 0;
+}
+
+.nf-scroll-wrap {
+	display: flex;
+	align-items: stretch;
+	flex: 1 1 0;
+	min-width: 0;
+	max-height: 100%;
+	padding-left: $facts-label-inset;
+	overflow-x: hidden;
+	overflow-y: auto;
+	border-left: $facts-label-heavy-rule solid $nutrition-ink;
+}
+
+.nf-list {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.nf-row {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	padding: $facts-label-tight-gap
+		0.1rem;
+	color: $nutrition-ink;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-medium;
+	background: none;
+}
+
+.nf-highlight {
+	font-size: $app-font-size-lg;
+	font-weight: $app-font-weight-heavy;
+}
+
+.nf-label-text {
+	min-width: 0;
+	overflow-wrap: anywhere;
+	color: $nutrition-ink;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-semibold;
+	letter-spacing: $app-letter-spacing-data;
+	text-transform: uppercase;
+}
+
+.nf-calories-label {
+	font-size: $app-font-size-lg;
+	font-weight: $app-font-weight-heavy;
+}
+
+.nf-value {
+	flex: 0 0 auto;
+	color: $nutrition-ink;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-heavy;
+}
+
+.nf-calories-value {
+	font-size: $app-font-size-lg;
+	font-weight: $app-font-weight-heavy;
+}
+
+.nf-unit {
+	margin-left: $facts-label-tight-gap;
+	color: $nutrition-secondary-ink;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-regular;
+	text-transform: uppercase;
+}
+
+@media (max-width: $app-breakpoint-sm) {
+	.nf-label {
+		padding: 0.65rem
+			0.85rem
+			0.95rem;
+	}
+
+	.nf-heading {
+		gap: $app-gap-sm;
+	}
+
+	.nf-title {
+		font-size: $app-font-size-page-title;
+	}
+
+	.nf-heading-top {
+		gap: $app-gap-xs;
+	}
+
+	.nf-basis {
+		max-width: none;
+		font-size: $app-font-size-sm;
+	}
+
+	.nf-columns {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: $app-gap-sm;
+		min-height: 0;
+	}
+
+	.vital-list {
+		flex: none;
+		width: 100%;
+		min-width: 0;
+		max-width: none;
+		padding-right: 0;
+	}
+
+	.nf-scroll-wrap {
+		width: 100%;
+		max-height: 9.5rem !important;
+		padding-top: $app-gap-sm;
+		padding-left: 0;
+		border-top: $facts-label-heavy-rule solid $nutrition-ink;
+		border-left: 0;
+	}
+
+	.nf-row,
+	.nf-label-text,
+	.nf-value {
+		font-size: $app-font-size-md;
+	}
+
+	.nf-highlight,
+	.nf-calories-label,
+	.nf-calories-value {
+		font-size: $app-font-size-md;
+	}
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.nf-label {
+		padding: $app-gap-sm $app-gap-sm $app-gap-md;
+	}
+
+	.nf-heading {
+		gap: $app-gap-xs;
+	}
+
+	.nf-title {
+		font-size: $app-font-size-2xl;
+	}
+
+	.nf-basis {
+		font-size: $app-font-size-xs;
+	}
+
+	.nf-food,
+	.nf-row,
+	.nf-label-text,
+	.nf-value {
+		font-size: $app-font-size-sm;
+	}
+
+	.nf-columns {
+		gap: $app-gap-xs;
+	}
+
+	.nf-scroll-wrap {
+		padding-top: $app-gap-xs;
+	}
+}

@@ -28,11 +28,33 @@ describe("food preference helpers", () => {
 				allergens: ["peanuts"],
 				dietaryRestrictions: [],
 				prioritizedNutrientIds: [],
-				defaultSmoothieServingSize: "",
-				defaultSmoothieServingUnit: "g",
+				defaultMixServingSize: "",
+				defaultMixServingUnit: "g",
 				sensitiveAcknowledged: false,
+				regulatoryRegionCode: "",
+				regulatoryRegionSource: null,
 			}),
 		).toBe("Confirm that you want these optional preferences saved to your account.");
+	});
+
+	it("rejects an unsupported regional label profile", () => {
+		expect(
+			getFoodPreferencesValidationError({
+				unitSystem: null,
+				allergens: [],
+				dietaryRestrictions: [],
+				prioritizedNutrientIds: [],
+				defaultMixServingSize: "",
+				defaultMixServingUnit: "g",
+				sensitiveAcknowledged: true,
+				regulatoryRegionCode: "ZZ",
+				regulatoryRegionSource: "account",
+			}, [{
+				regionCode: "US",
+				displayName: "United States",
+				authority: "FDA",
+			}]),
+		).toBe("Choose a supported label region and try again.");
 	});
 
 	it("deduplicates nutrient priority ids", () => {

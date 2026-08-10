@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import DailyWelcome from "$lib/components/app/DailyWelcome.svelte";
+import DailyWelcome from "$lib/components/app/DailyWelcome/DailyWelcome.svelte";
 
 describe("DailyWelcome", () => {
 	beforeEach(() => {
@@ -45,6 +45,7 @@ describe("DailyWelcome", () => {
 		expect(screen.getByText("dylan@example.com")).toBeInTheDocument();
 
 		vi.advanceTimersByTime(4_000);
+		await vi.runAllTimersAsync();
 		await tick();
 
 		expect(screen.queryByText("dylan@example.com")).not.toBeInTheDocument();

@@ -1,0 +1,57 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+
+.pill-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: $app-gap-xs;
+	min-width: 0;
+	min-height: $app-shell-control-height-compact;
+	padding: $app-shell-control-padding-y-compact $app-shell-control-padding-x-compact;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-panel;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-pill;
+	font-family: $app-button-font-family;
+	font-size: $app-font-size-sm;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
+	text-align: center;
+	transition:
+		background-color motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard,
+		color motion.$duration-state motion.$easing-standard,
+		opacity motion.$duration-state motion.$easing-standard,
+		transform motion.$duration-press motion.$easing-standard;
+
+	&:active:not(:disabled) {
+		transform: scale(0.98);
+	}
+
+	&:focus-visible {
+		outline: $app-focus-outline;
+		outline-offset: $app-focus-outline-offset;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.55;
+	}
+}
+
+.pill-button--full {
+	width: 100%;
+}
+
+.pill-button[data-variant="primary"] {
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
+	border-color: transparent;
+}
+
+.pill-button[data-variant="danger"] {
+	color: $app-danger-action;
+	background: color-mix(in srgb, $app-danger-action 10%, $app-shell-surface-panel);
+	border-color: color-mix(in srgb, $app-danger-action 22%, transparent);
+}

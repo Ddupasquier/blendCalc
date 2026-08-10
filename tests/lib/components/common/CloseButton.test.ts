@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-import CloseButton from "$lib/components/common/CloseButton.svelte";
+import CloseButton from "$lib/components/common/buttons/CloseButton/CloseButton.svelte";
 
 describe("CloseButton", () => {
 	it("provides a consistent accessible close action", async () => {

@@ -1,0 +1,120 @@
+@use "../../../../../styles/variables" as *;
+
+.product-information-panel {
+	display: grid;
+	min-width: 0;
+	color: $app-shell-text-primary;
+}
+
+.product-information-panel__correction {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.product-information-panel__correction p {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+.product-information-panel__content {
+	display: grid;
+	gap: $app-gap-lg;
+	min-width: 0;
+}
+
+.product-information-panel__section {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.product-information-panel h2,
+.product-information-panel dl,
+.product-information-panel dt,
+.product-information-panel dd,
+.product-information-panel p {
+	margin: 0;
+}
+
+.product-information-panel h2 {
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-bold;
+}
+
+.product-information-panel dl {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.product-information-panel__row {
+	display: grid;
+	grid-template-columns: minmax(7.5rem, 0.42fr) minmax(0, 1fr);
+	align-items: start;
+	gap: $app-gap-md;
+}
+
+.product-information-panel dt {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-label;
+	text-transform: uppercase;
+}
+
+.product-information-panel dd,
+.product-information-panel p,
+.product-information-panel a {
+	font-size: $app-font-size-md;
+	line-height: $app-line-height-body;
+	overflow-wrap: anywhere;
+}
+
+.product-information-panel dd,
+.product-information-panel p {
+	font-weight: $app-font-weight-regular;
+}
+
+.product-information-panel__attribution {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.product-information-panel__links {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: $app-gap-md;
+}
+
+.product-information-panel a {
+	color: $app-shell-accent-info;
+	font-weight: $app-font-weight-bold;
+}
+
+.product-information-panel a:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.product-information-panel__content {
+		gap: $app-gap-md;
+	}
+
+	.product-information-panel__section,
+	.product-information-panel dl,
+	.product-information-panel__attribution {
+		gap: $app-gap-xs;
+	}
+
+	.product-information-panel__row {
+		grid-template-columns: minmax(0, 1fr);
+		gap: $app-gap-2xs;
+	}
+
+	.product-information-panel dd,
+	.product-information-panel p,
+	.product-information-panel a {
+		font-size: $app-font-size-sm;
+	}
+}

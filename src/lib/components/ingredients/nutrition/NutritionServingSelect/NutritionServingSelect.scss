@@ -1,0 +1,12 @@
+@use "../../../../../styles/variables" as *;
+
+.nutrition-serving-select {
+	padding: $app-gap-md 0;
+	border-bottom: 2px solid $app-shell-text-primary;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.nutrition-serving-select {
+		padding: $app-gap-sm 0;
+	}
+}

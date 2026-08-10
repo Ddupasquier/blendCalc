@@ -1,0 +1,31 @@
+@use "../../../../../styles/variables" as *;
+$media-lane-fade-solid: 35%;
+$media-lane-fade-soft: 55%;
+$media-lane-fade-end: 80%;
+$media-lane-mask-horizontal-radius: 100%;
+$media-lane-mask-vertical-radius: 140%;
+$media-lane-mask: radial-gradient(
+	ellipse $media-lane-mask-horizontal-radius $media-lane-mask-vertical-radius at left center,
+	#000 0%,
+	#000 $media-lane-fade-solid,
+	rgb(0 0 0 / 35%) $media-lane-fade-soft,
+	transparent $media-lane-fade-end
+);
+
+.ingredient-card-media-lane {
+	position: absolute;
+	z-index: 0;
+	inset-block: 0;
+	inset-inline-start: 0;
+	display: block;
+	width: var(--ingredient-card-media-lane-width);
+	overflow: hidden;
+	pointer-events: none;
+	border-radius: $app-shell-radius-card 0 0 0;
+	mask-image: $media-lane-mask;
+	-webkit-mask-image: $media-lane-mask;
+}
+
+.ingredient-card-media-lane--fallback {
+	background: $app-shell-accent-soft;
+}

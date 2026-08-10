@@ -1,0 +1,44 @@
+@use "../../../../../styles/variables" as *;
+
+.selected-ingredients-panel__content {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.selected-ingredients-panel__help {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+}
+
+.selected-ingredient-cards {
+	display: grid;
+	grid-auto-rows: max-content;
+	align-content: start;
+	gap: $app-gap-xs;
+	max-height: 32rem;
+	padding: $app-focus-outline-offset;
+	overflow-y: auto;
+	overscroll-behavior-y: auto;
+	scrollbar-gutter: stable;
+}
+
+.no-results {
+	padding: $app-gap-sm;
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	text-align: center;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.selected-ingredients-panel__content {
+		gap: $app-gap-xs;
+	}
+
+	.selected-ingredient-cards {
+		max-height: 26rem;
+	}
+}

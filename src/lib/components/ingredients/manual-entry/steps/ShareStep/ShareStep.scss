@@ -1,0 +1,97 @@
+@use "../../../../../../styles/variables" as *;
+
+.share-step__summary,
+.share-step__evidence {
+	display: grid;
+	gap: $app-gap-md;
+	min-width: 0;
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.share-step__summary strong {
+	margin: 0;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-lg;
+	font-weight: $app-font-weight-bold;
+}
+
+.share-step__summary > div:first-child {
+	display: grid;
+	gap: $app-gap-xs;
+}
+
+.share-step__summary > div:first-child span {
+	width: fit-content;
+	padding: $app-text-badge-padding-y $app-text-badge-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-pill;
+	font-size: $app-font-size-xs;
+}
+
+.share-step__summary p,
+.share-step__evidence p {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-ui;
+}
+
+.share-step__evidence p {
+	margin-top: $app-gap-xs;
+}
+
+.share-step__macro-row {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: $app-gap-sm;
+}
+
+.share-step__macro-row span {
+	display: grid;
+	justify-items: center;
+	gap: $app-gap-xs;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-card;
+}
+
+.share-step__macro-row strong {
+	font-size: $app-font-size-md;
+	line-height: $app-line-height-tight;
+}
+
+.share-step__macro-row small {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.share-step__summary,
+	.share-step__evidence {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+	}
+
+	.share-step__summary strong {
+		font-size: $app-font-size-md;
+	}
+
+	.share-step__summary p,
+	.share-step__evidence p {
+		font-size: $app-font-size-xs;
+	}
+
+	.share-step__macro-row {
+		gap: $app-gap-xs;
+	}
+
+	.share-step__macro-row span {
+		gap: $app-gap-2xs;
+		padding: $app-gap-xs;
+	}
+}

@@ -1,0 +1,90 @@
+@use "../../../../../styles/variables" as *;
+
+.status-message {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: $app-gap-sm;
+	align-items: flex-start;
+	width: 100%;
+	min-width: 0;
+	padding: $app-status-padding-y $app-status-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-panel;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-sm;
+	line-height: $app-line-height-ui;
+}
+
+.status-message[data-tone="success"] {
+	background: $app-shell-accent-soft;
+	border-color: color-mix(
+		in srgb,
+		$app-shell-accent-primary 35%,
+		$app-shell-surface-panel
+	);
+}
+
+.status-message[data-tone="warning"] {
+	background: $app-status-warning-bg;
+	border-color: color-mix(
+		in srgb,
+		$app-status-warning-icon 36%,
+		$app-shell-surface-panel
+	);
+}
+
+.status-message[data-tone="danger"] {
+	background: $app-status-error-bg;
+	border-color: color-mix(
+		in srgb,
+		$app-status-error-icon 34%,
+		$app-shell-surface-panel
+	);
+}
+
+.status-message__icon {
+	display: flex;
+	grid-column: 1;
+	grid-row: 1;
+	align-items: center;
+	justify-content: center;
+}
+
+.status-message__copy {
+	grid-column: 2;
+	grid-row: 1;
+	min-width: 0;
+}
+
+.status-message[data-icon-placement="top-end"] {
+	grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.status-message[data-icon-placement="top-end"] .status-message__icon {
+	grid-column: 2;
+	justify-self: end;
+}
+
+.status-message[data-icon-placement="top-end"] .status-message__copy {
+	grid-column: 1;
+}
+
+strong {
+	display: block;
+	font-weight: $app-font-weight-bold;
+}
+
+.status-message__body {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-weight: $app-font-weight-medium;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.status-message {
+		gap: $app-gap-xs;
+		padding: $app-gap-xs $app-gap-sm;
+	}
+}

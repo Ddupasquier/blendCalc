@@ -1,0 +1,101 @@
+/**
+ * Purpose: Resolve source nutrient keys and units through enabled DB-derived mapping rows,
+ * preferring explicit unit matches and refusing ambiguous nutrient identities. It also
+ * protects reviewed semantic mappings when a later API-observation seed refreshes counts.
+ * This is a pure shared module and does not query or mutate Supabase itself.
+ * Do not run directly; use `npm run seed:manual-entry-nutrients`.
+ */
+
+const normalizeKey = (value) =>
+	String(value ?? "")
+		.trim()
+		.toLowerCase()
+		.replace(/_100g$/i, "")
+		.replace(/_/g, "-");
+
+const normalizeUnit = (value) =>
+	String(value ?? "")
+		.trim()
+		.toUpperCase()
+		.replaceAll("Μ", "U")
+		.replaceAll("µ", "U")
+		.replace("MCG", "UG");
+
+const compareMappings = (left, right) =>
+	Number(left.priority ?? 1000) - Number(right.priority ?? 1000) ||
+	Number(right.confidence ?? 0) - Number(left.confidence ?? 0);
+
+const getMappingIdentity = (mapping) =>
+	[
+		mapping.source_key,
+		normalizeKey(mapping.source_nutrient_key),
+		normalizeUnit(mapping.source_unit_name),
+	].join("\u0000");
+
+const REVIEWED_STATUSES = new Set(["approved", "rejected"]);
+
+export const preserveReviewedSourceNutrientMappings = ({
+	existingMappings,
+	observedMappings,
+}) => {
+	const existingByIdentity = new Map(
+		existingMappings.map((mapping) => [getMappingIdentity(mapping), mapping]),
+	);
+
+	return observedMappings.map((observed) => {
+		const existing = existingByIdentity.get(getMappingIdentity(observed));
+		if (!existing || !REVIEWED_STATUSES.has(existing.review_status)) {
+			return observed;
+		}
+
+		return {
+			...observed,
+			source_nutrient_name:
+				existing.source_nutrient_name ?? observed.source_nutrient_name,
+			nutrient_id: existing.nutrient_id,
+			priority: existing.priority,
+			mapping_method: existing.mapping_method,
+			confidence: existing.confidence,
+			enabled: existing.enabled,
+			review_status: existing.review_status,
+			review_reference: existing.review_reference,
+			reviewed_at: existing.reviewed_at,
+			first_observed_at:
+				existing.first_observed_at ?? observed.first_observed_at,
+			provenance: {
+				...(existing.provenance ?? {}),
+				...(observed.provenance ?? {}),
+				reviewedMappingPreserved: true,
+			},
+		};
+	});
+};
+
+export const createSourceNutrientMappingCatalog = (mappings) => {
+	const mappingsByKey = new Map();
+
+	for (const mapping of mappings.filter((candidate) => candidate.enabled)) {
+		const sourceKey = normalizeKey(mapping.source_nutrient_key);
+		if (!sourceKey) continue;
+		const candidates = mappingsByKey.get(sourceKey) ?? [];
+		candidates.push(mapping);
+		candidates.sort(compareMappings);
+		mappingsByKey.set(sourceKey, candidates);
+	}
+
+	return {
+		resolve({ sourceNutrientKey, sourceUnitName }) {
+			const candidates = mappingsByKey.get(normalizeKey(sourceNutrientKey)) ?? [];
+			if (candidates.length === 0) return null;
+
+			const sourceUnit = normalizeUnit(sourceUnitName);
+			const exactUnit = candidates.find(
+				(candidate) => normalizeUnit(candidate.source_unit_name) === sourceUnit,
+			);
+			if (exactUnit) return exactUnit;
+
+			const nutrientIds = new Set(candidates.map((candidate) => candidate.nutrient_id));
+			return nutrientIds.size === 1 ? candidates[0] : null;
+		},
+	};
+};

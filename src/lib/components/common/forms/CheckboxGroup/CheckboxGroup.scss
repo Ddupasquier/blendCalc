@@ -1,0 +1,101 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+
+$checkbox-item-gap: 0.4rem;
+$checkbox-item-padding-y: 0.32rem;
+$checkbox-item-padding-x: 0.62rem;
+$checkbox-size: 0.85rem;
+$checkbox-mark-width: 0.28rem;
+$checkbox-mark-height: 0.5rem;
+$checkbox-mark-stroke: 0.14rem;
+$checkbox-corner-radius: 0.22rem;
+
+.checkbox-group {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-sm;
+}
+
+.checkbox-item {
+	display: inline-flex;
+	align-items: center;
+	gap: $checkbox-item-gap;
+	min-height: $app-control-height-sm;
+	padding: $checkbox-item-padding-y $checkbox-item-padding-x;
+	color: $app-primary;
+	background: $app-section-bg;
+	border: $app-border;
+	border-radius: $app-radius-pill;
+	font-family: $app-button-font-family;
+	font-size: $app-font-size-md;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
+	cursor: pointer;
+	transition:
+		background motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard,
+		color motion.$duration-state motion.$easing-standard;
+}
+
+.checkbox-item:hover {
+	background: $app-accent;
+	border-color: $app-accent;
+}
+
+.checkbox-item.selected {
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
+	border-color: $app-shell-accent-primary;
+}
+
+input {
+	position: relative;
+	display: inline-grid;
+	flex: 0 0 auto;
+	place-content: center;
+	width: $checkbox-size;
+	height: $checkbox-size;
+	margin: 0;
+	appearance: none;
+	color: $app-primary;
+	background: $app-section-bg;
+	border: 1.5px solid currentColor;
+	border-radius: $checkbox-corner-radius;
+	transition:
+		background motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard,
+		color motion.$duration-state motion.$easing-standard;
+}
+
+input::before {
+	content: "";
+	width: $checkbox-mark-width;
+	height: $checkbox-mark-height;
+	border: solid currentColor;
+	border-width: 0 $checkbox-mark-stroke $checkbox-mark-stroke 0;
+	transform: rotate(45deg) scale(0);
+	transform-origin: center;
+	transition: transform motion.$duration-press motion.$easing-standard;
+}
+
+input:checked::before {
+	transform: rotate(45deg) scale(1);
+}
+
+.selected input {
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
+	border-color: currentColor;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.checkbox-group {
+		gap: $app-gap-xs;
+	}
+
+	.checkbox-item {
+		gap: $app-gap-xs;
+		padding: $app-gap-inline-compact $app-gap-sm;
+		font-size: $app-font-size-sm;
+	}
+}

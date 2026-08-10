@@ -1,0 +1,37 @@
+<script lang="ts">
+	import ImagePlacementViewport from "$lib/components/common/images/ImagePlacementViewport/ImagePlacementViewport.svelte";
+	import type { IngredientCardMediaLaneProps } from "./types";
+
+	let {
+		imageUrl,
+		alt,
+		value,
+		fallback,
+		decorative = false,
+		onGeometryChange,
+		onError,
+	}: IngredientCardMediaLaneProps = $props();
+</script>
+
+<span
+	class="ingredient-card-media-lane"
+	class:ingredient-card-media-lane--fallback={!imageUrl || !value}
+	aria-hidden={decorative ? "true" : undefined}
+>
+	{#if imageUrl && value}
+		<ImagePlacementViewport
+			{imageUrl}
+			alt={alt ?? ""}
+			{value}
+			horizontalMovement="left-only"
+			{onGeometryChange}
+			{onError}
+		/>
+	{:else if fallback}
+		{@render fallback()}
+	{/if}
+</span>
+
+<style lang="scss">
+	@use "./IngredientCardMediaLane.scss";
+</style>

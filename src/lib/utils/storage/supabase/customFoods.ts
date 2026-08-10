@@ -1,10 +1,18 @@
-import { getSupabaseBrowserClient } from "$lib/supabase/client";
-import { compactFood, uniqueFoodsById } from "$lib/utils/food/foodRecords";
-import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/normalizedNutrients";
-import type { FdcFood } from "$lib/utils/food/types";
-import { normalizeCustomFoodName } from "$lib/utils/food/customFoodNames";
+import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
+import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
+import { hydrateFoodWithNormalizedServings } from "$lib/utils/food/servings/normalizedServings";
+import type { FoodItem } from "$lib/utils/food/types";
+import { hydrateFoodWithCatalogState } from "$lib/utils/ingredients/ingredientCatalogState";
+import { normalizeFoodProductName } from "$lib/utils/products/productNameFormatting.js";
+import type { Database } from "$lib/types/database.types";
 import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
-import { getCurrentUserId, toJson } from "./shared";
+import { readFoodServingsByParent } from "./servings";
+import {
+	type CloudDataContext,
+	resolveCloudClient,
+	resolveCloudDataContext,
+	toJson,
+} from "./shared";
 
 export type CloudCustomFoodWriteResult =
 	| "saved"
@@ -12,95 +20,119 @@ export type CloudCustomFoodWriteResult =
 	| "duplicate-barcode"
 	| "error";
 
-export const readCloudCustomFoods = async () => {
-	const userId = await getCurrentUserId();
-	if (!userId) return null;
-	const supabase = getSupabaseBrowserClient();
-	if (!supabase) return null;
+type CloudCustomFoodRow = Pick<
+	Database["public"]["Tables"]["custom_foods"]["Row"],
+	"id" | "food" | "source_key" | "trust_status"
+>;
 
-	const { data, error } = await supabase
+const hydrateCloudCustomFoods = async (
+	rows: CloudCustomFoodRow[],
+	context: CloudDataContext,
+) => {
+	const [normalizedRows, servingRows] = await Promise.all([
+		readNormalizedNutrientsByParent(
+			context.supabase,
+			"custom_food_id",
+			rows.map((row) => row.id),
+		),
+		readFoodServingsByParent(
+			context.supabase,
+			"custom_food_id",
+			rows.map((row) => row.id),
+		),
+	]);
+
+	return rows.map((row) => {
+		const catalogFood = hydrateFoodWithCatalogState(
+			normalizeFoodProductName(
+				row.food as unknown as FoodItem,
+			) as FoodItem,
+			{
+				shared_product_id:
+					(row.food as unknown as FoodItem).sharedProductId ?? null,
+				shared_product_submission_id:
+					(row.food as unknown as FoodItem).sharedProductSubmissionId ?? null,
+				source_key: row.source_key,
+				trust_status: row.trust_status,
+			},
+		);
+		const food = hydrateFoodWithNormalizedNutrients(
+			catalogFood,
+			normalizedRows.get(row.id) ?? [],
+		);
+		return hydrateFoodWithNormalizedServings(
+			food,
+			servingRows.get(row.id) ?? [],
+		);
+	});
+};
+
+export const readCloudCustomFoods = async (context?: CloudDataContext) => {
+	const cloud = await resolveCloudDataContext(context);
+	if (!cloud) return null;
+
+	const { data, error } = await cloud.supabase
 		.from("custom_foods")
-		.select("id, food")
-		.eq("user_id", userId)
+		.select("id, food, source_key, trust_status")
+		.eq("user_id", cloud.userId)
 		.order("created_at", { ascending: false });
 
-	if (error) return null;
-	const normalizedRows = await readNormalizedNutrientsByParent(
-		supabase,
-		"custom_food_id",
-		data.map((row) => row.id),
-	);
-	return data.map((row) =>
-		hydrateFoodWithNormalizedNutrients(
-			row.food as unknown as FdcFood,
-			normalizedRows?.get(row.id),
-		),
-	);
+	if (error) throw error;
+	return hydrateCloudCustomFoods(data, cloud);
 };
 
-export const writeCloudCustomFoods = async (foods: FdcFood[]) => {
-	const userId = await getCurrentUserId();
-	if (!userId) return false;
-	const supabase = getSupabaseBrowserClient();
-	if (!supabase) return false;
+const readCloudCustomFoodByColumn = async (
+	column: "barcode" | "fdc_id" | "name_key",
+	value: number | string,
+	context?: CloudDataContext,
+) => {
+	const cloud = await resolveCloudDataContext(context);
+	if (!cloud) return null;
 
-	if (foods.length === 0) return true;
+	const { data, error } = await cloud.supabase
+		.from("custom_foods")
+		.select("id, food, source_key, trust_status")
+		.eq("user_id", cloud.userId)
+		.eq(column, value)
+		.maybeSingle();
 
-	const { error } = await supabase.from("custom_foods").upsert(
-		uniqueFoodsById(foods).map((food) => ({
-			user_id: userId,
-			fdc_id: food.fdcId,
-			name_key: normalizeCustomFoodName(food.description),
-			barcode: food.barcode ?? null,
-			food: toJson(compactFood(food)),
-		})),
-		{ onConflict: "user_id,fdc_id" },
-	);
-
-	return !error;
+	if (error) throw error;
+	if (!data) return null;
+	const [food] = await hydrateCloudCustomFoods([data], cloud);
+	return food ?? null;
 };
+
+export const readCloudCustomFoodByBarcode = (
+	barcode: string,
+	context?: CloudDataContext,
+) => readCloudCustomFoodByColumn("barcode", barcode, context);
+
+export const readCloudCustomFoodByNameKey = (
+	nameKey: string,
+	context?: CloudDataContext,
+) => readCloudCustomFoodByColumn("name_key", nameKey, context);
+
+export const readCloudCustomFoodByFdcId = (
+	foodId: number,
+	context?: CloudDataContext,
+) => readCloudCustomFoodByColumn("fdc_id", foodId, context);
 
 export const saveCloudCustomFood = async (
-	food: FdcFood,
+	food: FoodItem,
+	context?: CloudDataContext,
 ): Promise<CloudCustomFoodWriteResult> => {
-	const userId = await getCurrentUserId();
-	if (!userId) return "error";
-	const supabase = getSupabaseBrowserClient();
+	const supabase = resolveCloudClient(context);
 	if (!supabase) return "error";
-	if (food.barcode) {
-		const { data, error: barcodeLookupError } = await supabase
-			.from("custom_foods")
-			.select("id")
-			.eq("user_id", userId)
-			.eq("barcode", food.barcode)
-			.maybeSingle();
-		if (barcodeLookupError) return "error";
-		if (data) return "duplicate-barcode";
-	}
 
-	const { error } = await supabase.from("custom_foods").upsert(
-		{
-			user_id: userId,
-			fdc_id: food.fdcId,
-			name_key: normalizeCustomFoodName(food.description),
-			barcode: food.barcode ?? null,
-			food: toJson(compactFood(food)),
-		},
-		{ onConflict: "user_id,fdc_id" },
-	);
+	const { data, error } = await supabase.rpc("save_custom_food", {
+		p_fdc_id: food.fdcId,
+		p_food: toJson(normalizeFoodForStorage(food)),
+	});
 
-	if (!error) return "saved";
-	if (error.code === "23505") {
-		const errorText = `${error.message} ${error.details ?? ""}`;
-		return errorText.includes("custom_foods_user_barcode_unique")
-			? "duplicate-barcode"
-			: "duplicate-name";
-	}
-	return "error";
-};
-
-export const reconcileCloudCustomFoods = async (localFoods: FdcFood[]) => {
-	const cloudFoods = await readCloudCustomFoods();
-	if (!cloudFoods) return localFoods;
-	return cloudFoods;
+	if (error) return "error";
+	return data === "saved" ||
+		data === "duplicate-name" ||
+		data === "duplicate-barcode"
+		? data
+		: "error";
 };

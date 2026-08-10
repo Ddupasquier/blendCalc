@@ -1,35 +1,95 @@
-import { MIX_STORAGE_KEYS } from "../../../../defaults/mixDefaults";
-import { getSupabaseBrowserClient } from "$lib/supabase/client";
-import { compactFood, uniqueFoodsById } from "$lib/utils/food/foodRecords";
-import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/normalizedNutrients";
-import type { FdcFood } from "$lib/utils/food/types";
-import type { SmoothieListKey } from "$lib/utils/storage/smoothieLists";
-import { readNormalizedNutrientsByParent } from "./normalizedNutrients";
+import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
+import { normalizeFoodForStorage, deduplicateFoodItemsByApplicationId } from "$lib/utils/food/records/foodRecords";
+import { deduplicateFoodItemsByIdentity } from "$lib/utils/food/records/foodIdentity";
+import type { FoodItem } from "$lib/utils/food/types";
+import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
 import {
 	CLOUD_CURSOR_PAGE_SIZE,
-	getCurrentUserId,
+	type CloudDataContext,
 	readAllCursorPages,
-	toJson,
+	resolveCloudClient,
+	resolveCloudDataContext,
 } from "./shared";
 
 type CloudListType = "fridge" | "shopping";
 
-const getCloudListType = (key: SmoothieListKey): CloudListType => {
+export type CloudListPlacementResult =
+	| "added"
+	| "duplicate"
+	| "moved"
+	| "move-required:fridge"
+	| "move-required:shopping"
+	| "error";
+
+export type CloudListRenameResult =
+	| "renamed"
+	| "duplicate"
+	| "missing"
+	| "unchanged"
+	| "invalid"
+	| "error";
+
+export type CloudIngredientListIndex = Record<
+	IngredientListKey,
+	{
+		foodIds: number[];
+		foodIdentityKeys: string[];
+	}
+>;
+
+const getCloudListType = (key: IngredientListKey): CloudListType => {
 	return key === MIX_STORAGE_KEYS.fridge ? "fridge" : "shopping";
 };
 
-export const readCloudSmoothieList = async (key: SmoothieListKey) => {
-	const userId = await getCurrentUserId();
-	if (!userId) return null;
-	const supabase = getSupabaseBrowserClient();
-	if (!supabase) return null;
+const getCloudListApiPath = (key: IngredientListKey) =>
+	key === MIX_STORAGE_KEYS.fridge
+		? "/api/user-food-lists/fridge"
+		: "/api/user-food-lists/shopping-list";
+
+const placeFoodsThroughServer = async (
+	key: IngredientListKey,
+	body: Record<string, unknown>,
+) => {
+	try {
+		const response = await fetch(getCloudListApiPath(key), {
+			method: "POST",
+			headers: {
+				accept: "application/json",
+				"content-type": "application/json",
+			},
+			body: JSON.stringify(body),
+		});
+		if (!response.ok) return null;
+		const payload = await response.json() as { result?: unknown };
+		return payload.result;
+	} catch {
+		return null;
+	}
+};
+
+export type CloudListSort = "recent" | "oldest" | "name-asc" | "name-desc";
+
+export type CloudIngredientListPageOptions = {
+	limit: number;
+	offset?: number;
+	query?: string;
+	sort?: CloudListSort;
+	sourceFilter?: string;
+	trustFilter?: string;
+};
+
+export const readCloudIngredientListIndex = async (
+	context?: CloudDataContext,
+): Promise<CloudIngredientListIndex | null> => {
+	const cloud = await resolveCloudDataContext(context);
+	if (!cloud) return null;
+	const { supabase, userId } = cloud;
 
 	const rows = await readAllCursorPages(async (cursorId) => {
 		let query = supabase
 			.from("user_food_list_items")
-			.select("id, food, created_at")
+			.select("id, list_type, fdc_id, food_identity_key")
 			.eq("user_id", userId)
-			.eq("list_type", getCloudListType(key))
 			.order("id", { ascending: true })
 			.limit(CLOUD_CURSOR_PAGE_SIZE);
 
@@ -37,96 +97,127 @@ export const readCloudSmoothieList = async (key: SmoothieListKey) => {
 		return await query;
 	});
 
-	if (!rows) return null;
-	const normalizedRows = await readNormalizedNutrientsByParent(
-		supabase,
-		"user_food_list_item_id",
-		rows.map((row) => row.id),
-	);
-	return rows
-		.map((row) => {
-			const food = row.food as unknown as FdcFood;
-			return hydrateFoodWithNormalizedNutrients(
-				{
-					...food,
-					listAddedAt: food.listAddedAt ?? new Date(row.created_at).getTime(),
-				},
-				normalizedRows?.get(row.id),
-			);
-		});
+	const index: CloudIngredientListIndex = {
+		[MIX_STORAGE_KEYS.fridge]: { foodIds: [], foodIdentityKeys: [] },
+		[MIX_STORAGE_KEYS.shoppingList]: { foodIds: [], foodIdentityKeys: [] },
+	};
+
+	for (const row of rows) {
+		const key = row.list_type === "fridge"
+			? MIX_STORAGE_KEYS.fridge
+			: MIX_STORAGE_KEYS.shoppingList;
+		index[key].foodIds.push(Number(row.fdc_id));
+		index[key].foodIdentityKeys.push(
+			row.food_identity_key ?? `fdc:${row.fdc_id}`,
+		);
+	}
+
+	return index;
 };
 
-export const writeCloudSmoothieList = async (
-	key: SmoothieListKey,
-	foods: FdcFood[],
+export const writeCloudIngredientList = async (
+	key: IngredientListKey,
+	foods: FoodItem[],
+	context?: CloudDataContext,
 ) => {
-	const userId = await getCurrentUserId();
-	if (!userId) return false;
-	const supabase = getSupabaseBrowserClient();
-	if (!supabase) return false;
-
-	const listType = getCloudListType(key);
 	if (foods.length === 0) return true;
 
-	const { error } = await supabase.from("user_food_list_items").upsert(
-		uniqueFoodsById(foods).map((food) => ({
-			user_id: userId,
-			list_type: listType,
-			fdc_id: food.fdcId,
-			food: toJson(compactFood(food)),
-		})),
-		{ onConflict: "user_id,list_type,fdc_id" },
-	);
+	const result = await placeFoodsThroughServer(key, {
+		foods: deduplicateFoodItemsByIdentity(deduplicateFoodItemsByApplicationId(foods)).map((food) =>
+			normalizeFoodForStorage(food),
+		),
+	});
 
-	return !error;
+	return result === "added" || result === "duplicate";
 };
 
-export const upsertCloudSmoothieListItem = async (
-	key: SmoothieListKey,
-	food: FdcFood,
+export const renameCloudIngredientListItem = async (
+	key: IngredientListKey,
+	foodId: number,
+	description: string,
+	context?: CloudDataContext,
+): Promise<CloudListRenameResult> => {
+	const supabase = resolveCloudClient(context);
+	if (!supabase) return "error";
+
+	const { data, error } = await supabase.rpc("rename_user_food_list_item", {
+		p_description: description,
+		p_fdc_id: foodId,
+		p_list_type: getCloudListType(key),
+	});
+	if (error) return "error";
+	if (
+		data === "renamed" ||
+		data === "duplicate" ||
+		data === "missing" ||
+		data === "unchanged" ||
+		data === "invalid"
+	) {
+		return data;
+	}
+
+	return "error";
+};
+
+export const placeCloudIngredientListItem = async (
+	key: IngredientListKey,
+	food: FoodItem,
+	allowMove = false,
+	context?: CloudDataContext,
+): Promise<CloudListPlacementResult> => {
+	const result = await placeFoodsThroughServer(key, {
+		allowMove,
+		food: normalizeFoodForStorage(food),
+	});
+
+	if (
+		result === "added" ||
+		result === "duplicate" ||
+		result === "moved" ||
+		result === "move-required:fridge" ||
+		result === "move-required:shopping"
+	) {
+		return result;
+	}
+
+	return "error";
+};
+
+export const moveCloudIngredientListItems = async (
+	sourceKey: IngredientListKey,
+	targetKey: IngredientListKey,
+	foodIds: number[],
+	context?: CloudDataContext,
 ) => {
-	const userId = await getCurrentUserId();
-	if (!userId) return false;
-	const supabase = getSupabaseBrowserClient();
+	const supabase = resolveCloudClient(context);
 	if (!supabase) return false;
 
-	const { error } = await supabase.from("user_food_list_items").upsert(
-		{
-			user_id: userId,
-			list_type: getCloudListType(key),
-			fdc_id: food.fdcId,
-			food: toJson(compactFood(food)),
-		},
-		{ onConflict: "user_id,list_type,fdc_id" },
-	);
+	const uniqueFoodIds = [...new Set(foodIds)].filter(Number.isSafeInteger);
+	if (uniqueFoodIds.length === 0 || sourceKey === targetKey) return false;
 
-	return !error;
+	const { data, error } = await supabase.rpc("move_user_food_list_items", {
+		p_source_list_type: getCloudListType(sourceKey),
+		p_target_list_type: getCloudListType(targetKey),
+		p_fdc_ids: uniqueFoodIds,
+	});
+
+	return !error && data === uniqueFoodIds.length;
 };
 
-export const removeCloudSmoothieListItem = async (
-	key: SmoothieListKey,
+export const removeCloudIngredientListItem = async (
+	key: IngredientListKey,
 	foodId: number,
 ) => {
-	const userId = await getCurrentUserId();
-	if (!userId) return false;
-	const supabase = getSupabaseBrowserClient();
-	if (!supabase) return false;
-
-	const { error } = await supabase
-		.from("user_food_list_items")
-		.delete()
-		.eq("user_id", userId)
-		.eq("list_type", getCloudListType(key))
-		.eq("fdc_id", foodId);
-
-	return !error;
-};
-
-export const reconcileCloudSmoothieList = async (
-	key: SmoothieListKey,
-	localFoods: FdcFood[],
-) => {
-	const cloudFoods = await readCloudSmoothieList(key);
-	if (!cloudFoods) return localFoods;
-	return cloudFoods;
+	try {
+		const path = `${getCloudListApiPath(key)}?foodId=${encodeURIComponent(foodId)}`;
+		const response = await fetch(path, {
+			method: "DELETE",
+			headers: { accept: "application/json" },
+		});
+		if (!response.ok) return false;
+		const payload = await response.json() as { removed?: unknown };
+		return payload.removed === true;
+	} catch {
+		return false;
+	}
 };

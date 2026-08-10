@@ -1,13 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-import PillRow from "$lib/components/common/PillRow.svelte";
+import PillRow from "$lib/components/common/display/PillRow/PillRow.svelte";
 
 const getPillLabels = () =>
-	screen
-		.getAllByRole("button")
-		.filter((button) => button.classList.contains("pill"))
-		.map((button) => button.textContent?.replace("×", "").trim());
+	Array.from(document.querySelectorAll(".pill-label")).map((label) =>
+		label.textContent?.trim(),
+	);
 
 describe("PillRow", () => {
 	it("keeps the existing compact arrangement by default", () => {
@@ -60,5 +59,17 @@ describe("PillRow", () => {
 		);
 
 		expect(onRename).toHaveBeenCalledWith(0);
+	});
+
+	it("does not create a no-op selection control when only removal is available", () => {
+		render(PillRow, {
+			props: {
+				pills: ["Apple"],
+				onRemove: vi.fn(),
+			},
+		});
+
+		expect(screen.getByText("Apple").closest("button")).toBeNull();
+		expect(screen.getByRole("button", { name: "Remove Apple" })).toBeInTheDocument();
 	});
 });

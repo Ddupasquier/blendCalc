@@ -1,0 +1,44 @@
+name: Database Verification
+
+on:
+  pull_request:
+    paths:
+      - "supabase/**"
+      - "scripts/operations/manage_test_database.mjs"
+      - "scripts/lib/local_qa_personas.mjs"
+      - "src/lib/types/database.types.ts"
+      - ".github/workflows/database-verification.yml"
+  push:
+    branches:
+      - main
+      - staging
+      - mobile-ui-rebuild
+      - "ui-rebuild/**"
+    paths:
+      - "supabase/**"
+      - "scripts/operations/manage_test_database.mjs"
+      - "scripts/lib/local_qa_personas.mjs"
+      - "src/lib/types/database.types.ts"
+      - ".github/workflows/database-verification.yml"
+
+concurrency:
+  group: database-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  database:
+    name: Local Supabase And pgTAP
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Rebuild and verify database
+        run: npm run db:test:verify

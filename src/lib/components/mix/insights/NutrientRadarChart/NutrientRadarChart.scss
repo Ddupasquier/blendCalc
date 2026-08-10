@@ -1,0 +1,60 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+
+.nutrient-radar-chart {
+	display: block;
+	overflow: hidden;
+}
+
+.nutrient-radar-chart--full {
+	width: 100%;
+	height: auto;
+}
+
+.nutrient-radar-chart__label {
+	fill: $app-shell-text-primary;
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+}
+
+.nutrient-radar-chart__value-label {
+	fill: $app-shell-text-muted;
+	font-family: $app-font-family-data;
+	font-size: $app-font-size-2xs;
+	font-weight: $app-font-weight-bold;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: $app-letter-spacing-data;
+}
+
+.nutrient-radar-chart__value-circle {
+	transition:
+		r motion.$duration-reflow ease-out,
+		fill motion.$duration-feedback motion.$easing-standard,
+		stroke motion.$duration-feedback motion.$easing-standard;
+}
+
+.nutrient-radar-chart__goal-shape {
+	transition:
+		r motion.$duration-reflow ease-out,
+		fill motion.$duration-feedback motion.$easing-standard,
+		stroke motion.$duration-feedback motion.$easing-standard;
+}
+
+.nutrient-radar-chart__value-fill,
+.nutrient-radar-chart__value-stroke {
+	transition:
+		fill motion.$duration-feedback motion.$easing-standard,
+		stroke motion.$duration-feedback motion.$easing-standard;
+}
+
+.nutrient-radar-chart__value-fill {
+	opacity: 0.78;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.nutrient-radar-chart__value-label {
+		display: none;
+	}
+}

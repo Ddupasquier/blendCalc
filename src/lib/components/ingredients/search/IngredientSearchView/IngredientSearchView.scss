@@ -1,0 +1,38 @@
+@use "../../../../../styles/variables" as *;
+
+.ingredient-search-view__header {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: start;
+	gap: $app-gap-sm;
+}
+
+:global(.ingredient-search-view__back) {
+	margin-top: 0;
+}
+
+:global(.ingredient-search-view .search-wrap) {
+	display: grid;
+	grid-template-rows: auto auto auto minmax(0, 1fr);
+	height: 100%;
+	min-height: 0;
+	align-content: stretch;
+}
+
+:global(.ingredient-search-view .results-panel) {
+	min-height: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding-bottom: $app-gap-md;
+}
+
+:global(.ingredient-search-view .barcode-scan-button--compact) {
+	width: $app-shell-control-height;
+	height: $app-shell-control-height;
+	min-height: $app-shell-control-height;
+}
+
+:global(.ingredient-search-view__filter-icon) {
+	width: $app-shell-control-icon-size;
+	height: $app-shell-control-icon-size;
+}

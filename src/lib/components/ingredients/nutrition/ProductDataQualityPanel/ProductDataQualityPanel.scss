@@ -1,0 +1,50 @@
+@use "../../../../../styles/variables" as *;
+
+.product-data-quality-panel {
+	min-width: 0;
+	color: $app-shell-text-primary;
+}
+
+.product-data-quality-panel__content,
+.product-data-quality-panel__notices {
+	display: grid;
+	min-width: 0;
+}
+
+.product-data-quality-panel__content {
+	gap: $app-gap-md;
+}
+
+.product-data-quality-panel__notices {
+	gap: $app-gap-sm;
+}
+
+.product-data-quality-panel p {
+	margin: 0;
+}
+
+.product-data-quality-panel__intro,
+.product-data-quality-panel__context {
+	font-size: $app-font-size-sm;
+	line-height: $app-line-height-body;
+}
+
+.product-data-quality-panel__intro,
+.product-data-quality-panel__context {
+	color: $app-shell-text-muted;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.product-data-quality-panel__content {
+		gap: $app-gap-sm;
+	}
+
+	.product-data-quality-panel__notices {
+		gap: $app-gap-xs;
+	}
+
+	.product-data-quality-panel__intro,
+	.product-data-quality-panel__context {
+		font-size: $app-font-size-xs;
+	}
+}

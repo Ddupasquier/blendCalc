@@ -1,4 +1,5 @@
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
+import { parseGs1DigitalLink } from "$lib/utils/barcode/gs1DigitalLink";
 import type {
 	BarcodeScanResult,
 	BarcodeScannerCallbacks,
@@ -16,13 +17,25 @@ type BarcodeDetectorConstructor = new (options?: {
 	detect: (source: ImageBitmapSource) => Promise<DetectedBarcode[]>;
 };
 
-const BARCODE_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e"];
+const BARCODE_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e", "qr_code"];
 
-const createResult = (
+export const createBarcodeScanResult = (
 	value: string,
 	format: string,
 	platform: BarcodeScanResult["platform"],
 ): BarcodeScanResult | null => {
+	const digitalLink = parseGs1DigitalLink(value);
+	if (digitalLink) {
+		return {
+			value,
+			canonicalValue: digitalLink.canonicalValue,
+			format,
+			platform,
+			captureMethod: "gs1-digital-link",
+			sourceReference: digitalLink.productReference,
+		};
+	}
+
 	const canonicalValue = normalizeBarcode(value);
 	if (!canonicalValue) return null;
 
@@ -31,17 +44,40 @@ const createResult = (
 		canonicalValue,
 		format,
 		platform,
+		captureMethod: "linear-scan",
 	};
 };
 
-const getCameraErrorMessage = (error: unknown) => {
+export const getCameraErrorMessage = (error: unknown) => {
 	if (error instanceof DOMException && error.name === "NotAllowedError") {
 		return "Camera access was denied. Allow camera access or enter the barcode manually.";
 	}
 	if (error instanceof DOMException && error.name === "NotFoundError") {
 		return "No camera was found on this device.";
 	}
+	if (error instanceof DOMException && error.name === "NotReadableError") {
+		return "The camera is already in use by another app or browser tab. Close it there and try again.";
+	}
+	if (error instanceof DOMException && error.name === "OverconstrainedError") {
+		return "This camera does not support the requested scan mode. Enter the barcode manually.";
+	}
+	if (error instanceof DOMException && error.name === "SecurityError") {
+		return "This browser blocked camera access. Use a secure connection or enter the barcode manually.";
+	}
+	if (error instanceof DOMException && error.name === "AbortError") {
+		return "Camera startup was interrupted. Close other camera views and try again.";
+	}
 	return "The camera could not start. Enter the barcode manually or try again.";
+};
+
+export const getWebCameraSupportMessage = () => {
+	if (window.isSecureContext === false) {
+		return "Camera scanning requires a secure connection. Enter the barcode manually instead.";
+	}
+	if (!navigator.mediaDevices?.getUserMedia) {
+		return "Camera scanning is not supported by this browser. Enter the barcode manually instead.";
+	}
+	return null;
 };
 
 export const isNativeBarcodePlatform = async () => {
@@ -61,7 +97,7 @@ export const scanNativeBarcode = async (): Promise<BarcodeScanResult | null> => 
 		scanInstructions: "Place the product barcode inside the frame.",
 	});
 
-	return createResult(scan.ScanResult, String(scan.format), "capacitor");
+	return createBarcodeScanResult(scan.ScanResult, String(scan.format), "capacitor");
 };
 
 const startNativeWebScanner = async (
@@ -102,7 +138,7 @@ const startNativeWebScanner = async (
 		try {
 			const [barcode] = await detector.detect(video);
 			if (barcode) {
-				const result = createResult(
+				const result = createBarcodeScanResult(
 					barcode.rawValue,
 					barcode.format ?? "unknown",
 					"web-native",
@@ -135,6 +171,7 @@ const startZxingScanner = async (
 		BarcodeFormat.EAN_8,
 		BarcodeFormat.UPC_A,
 		BarcodeFormat.UPC_E,
+		BarcodeFormat.QR_CODE,
 	]);
 	const reader = new BrowserMultiFormatReader(hints, {
 		delayBetweenScanAttempts: 180,
@@ -148,7 +185,7 @@ const startZxingScanner = async (
 		video,
 		(result) => {
 			if (!result) return;
-			const scanResult = createResult(
+			const scanResult = createBarcodeScanResult(
 				result.getText(),
 				String(result.getBarcodeFormat()),
 				"web-zxing",
@@ -166,6 +203,12 @@ export const startWebBarcodeScanner = async (
 	video: HTMLVideoElement,
 	callbacks: BarcodeScannerCallbacks,
 ): Promise<BarcodeScannerStop> => {
+	const supportMessage = getWebCameraSupportMessage();
+	if (supportMessage) {
+		callbacks.onError(supportMessage);
+		return () => undefined;
+	}
+
 	try {
 		const nativeStop = await startNativeWebScanner(video, callbacks);
 		if (nativeStop) return nativeStop;

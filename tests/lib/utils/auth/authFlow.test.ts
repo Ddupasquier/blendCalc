@@ -26,17 +26,17 @@ describe("authentication flow", () => {
 			origin: "https://example.com",
 			flowId: expect.any(String),
 		});
-		expect(cookies.delete).toHaveBeenCalledWith("smoothie-auth-next", {
+		expect(cookies.delete).toHaveBeenCalledWith("blendcalc-auth-next", {
 			path: "/",
 		});
-		expect(cookies.delete).toHaveBeenCalledWith("smoothie-auth-origin", {
+		expect(cookies.delete).toHaveBeenCalledWith("blendcalc-auth-origin", {
 			path: "/",
 		});
-		expect(cookies.delete).toHaveBeenCalledWith("smoothie-auth-flow-id", {
+		expect(cookies.delete).toHaveBeenCalledWith("blendcalc-auth-flow-id", {
 			path: "/",
 		});
 		expect(cookies.set).toHaveBeenCalledWith(
-			"smoothie-auth-next",
+			"blendcalc-auth-next",
 			"/mix?loaded=true",
 			expect.objectContaining({
 				httpOnly: true,
@@ -49,7 +49,11 @@ describe("authentication flow", () => {
 
 	it("clears an abandoned authentication flow", () => {
 		const cookies = createCookies();
-		storeAuthFlowContext(cookies as never, "/fridge", new URL("http://localhost:5173/auth"));
+		storeAuthFlowContext(
+			cookies as never,
+			"/ingredients/fridge",
+			new URL("http://localhost:5173/auth"),
+		);
 		clearAuthFlowContext(cookies as never);
 
 		expect(consumeAuthFlowContext(cookies as never)).toEqual({
@@ -65,8 +69,13 @@ describe("authentication flow", () => {
 	});
 
 	it("builds an encoded callback failure URL", () => {
-		expect(getAuthCallbackFailureUrl("callback_exchange", "/fridge")).toBe(
-			"/auth?error=callback_exchange&next=%2Ffridge",
+		expect(
+			getAuthCallbackFailureUrl(
+				"callback_exchange",
+				"/ingredients/fridge",
+			),
+		).toBe(
+			"/auth?error=callback_exchange&next=%2Fingredients%2Ffridge",
 		);
 	});
 });

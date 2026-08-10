@@ -1,0 +1,76 @@
+@use "../../../../../styles/variables" as *;
+
+.contribution-breakdown__grid,
+.contribution-card {
+	display: grid;
+	gap: $app-gap-md;
+}
+
+.contribution-card {
+	min-width: 0;
+	gap: $app-gap-sm;
+}
+
+.contribution-card__title {
+	display: flex;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-xs;
+
+	span {
+		flex: 0 0 auto;
+		color: $app-shell-text-muted;
+		font-family: $app-font-family-data;
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+ul {
+	display: grid;
+	gap: $app-gap-sm;
+	list-style: none;
+}
+
+li {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: $app-gap-2xs $app-gap-sm;
+	align-items: center;
+}
+
+.contribution-card__food {
+	overflow: hidden;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.contribution-card__value {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-heavy;
+}
+
+.contribution-card__bar {
+	grid-column: 1 / -1;
+	height: 0.35rem;
+	overflow: hidden;
+	background: $app-shell-border-subtle;
+	border-radius: $app-shell-radius-pill;
+
+	span {
+		display: block;
+		height: 100%;
+		background: $app-shell-accent-primary;
+		border-radius: inherit;
+	}
+}
+
+small {
+	grid-column: 1 / -1;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-2xs;
+}

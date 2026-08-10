@@ -1,0 +1,48 @@
+@use "../../../../../styles/variables" as *;
+
+$move-prompt-min-width: 20rem;
+
+.move-prompt {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	min-width: $move-prompt-min-width;
+	max-width: 90vw;
+	margin: $app-gap-md 0;
+	padding: $app-gap-lg;
+	background: $app-section-bg;
+	border: $app-border;
+	border-radius: $app-radius;
+}
+
+.prompt-title {
+	margin-bottom: $app-gap-md;
+	color: $app-primary;
+	font-size: $app-font-size-lg;
+	font-weight: $app-font-weight-medium;
+	text-align: center;
+}
+
+.prompt-actions {
+	display: flex;
+	gap: $app-gap-md;
+	margin-top: $app-gap-md;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.move-prompt {
+		min-width: 0;
+		margin-block: $app-gap-sm;
+		padding: $app-gap-md;
+	}
+
+	.prompt-title {
+		margin-bottom: $app-gap-sm;
+		font-size: $app-font-size-md;
+	}
+
+	.prompt-actions {
+		gap: $app-gap-sm;
+		margin-top: $app-gap-sm;
+	}
+}

@@ -11,6 +11,9 @@ describe("security response headers", () => {
 			"max-age=31536000",
 		);
 		expect(response.headers.get("x-frame-options")).toBe("DENY");
+		expect(response.headers.get("cross-origin-opener-policy")).toBe("same-origin");
+		expect(response.headers.get("cross-origin-resource-policy")).toBe("same-origin");
+		expect(response.headers.get("origin-agent-cluster")).toBe("?1");
 	});
 
 	it("allows first-party camera use while blocking unrelated sensitive capabilities", () => {

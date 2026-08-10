@@ -5,23 +5,29 @@ import {
 	migrateLegacyNutrientGoals,
 	migrateLegacyNutrientIds,
 	migrateLegacyNutrientOptions,
-} from "$lib/utils/mix/nutrientMappings";
-import { ALL_NUTRIENTS } from "../../../../src/variables/allNutrients";
-import { DEFAULT_NUTRIENT_GOALS } from "../../../../src/defaults/mixDefaults";
+} from "$lib/utils/mix/nutrients/nutrientMappings";
+import {
+	getDefaultMixGoals,
+	getNutrientCatalog,
+} from "$lib/utils/food/reference/appReferenceCatalog";
 
 describe("nutrient mappings", () => {
 	it("uses the FDC sodium ID rather than saturated fat", () => {
-		expect(ALL_NUTRIENTS).toContainEqual({
+		const nutrientCatalog = getNutrientCatalog();
+		expect(nutrientCatalog).toContainEqual({
 			id: NUTRIENT_IDS.SODIUM,
 			label: "Sodium",
 			unit: "mg",
+			nutrientNumber: "307",
 		});
 		expect(
-			ALL_NUTRIENTS.find(
+			nutrientCatalog.find(
 				(nutrient) => Number(nutrient.id) === LEGACY_SODIUM_NUTRIENT_ID,
 			),
 		).toMatchObject({ label: "Saturated Fat", unit: "g" });
-		expect(DEFAULT_NUTRIENT_GOALS[NUTRIENT_IDS.SODIUM]).toBe(500);
+		expect(
+			getDefaultMixGoals()[NUTRIENT_IDS.SODIUM]?.targetAmount,
+		).toBe(500);
 	});
 
 	it("migrates legacy sodium selections, options, and goals", () => {

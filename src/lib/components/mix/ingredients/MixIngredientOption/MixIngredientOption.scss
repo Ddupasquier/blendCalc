@@ -1,0 +1,42 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+@use "../../../ingredients/card/IngredientCardMediaLane/IngredientCardLayout" as ingredient-card-layout;
+
+.mix-ingredient-option {
+	@include ingredient-card-layout.frame;
+	@include ingredient-card-layout.selection-layout;
+	min-height: calc($app-shell-control-height + $app-gap-sm);
+	padding-block: $app-gap-xs;
+	transition:
+		background-color motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard,
+		opacity motion.$duration-state motion.$easing-standard;
+}
+
+.mix-ingredient-option--selected {
+	background: $app-shell-surface-panel;
+	border-color: $app-shell-accent-primary;
+}
+
+.mix-ingredient-option__select {
+	@include ingredient-card-layout.primary-action-target;
+}
+
+.mix-ingredient-option__select:focus-visible {
+	@include ingredient-card-layout.primary-action-focus;
+}
+
+.mix-ingredient-option__select-status {
+	@include ingredient-card-layout.selection-indicator-layer;
+}
+
+.mix-ingredient-option__copy {
+	@include ingredient-card-layout.copy(false);
+	@include ingredient-card-layout.presentation-layer;
+
+	box-sizing: border-box;
+}
+
+.mix-ingredient-option--media .mix-ingredient-option__copy {
+	@include ingredient-card-layout.media-content-inset;
+}

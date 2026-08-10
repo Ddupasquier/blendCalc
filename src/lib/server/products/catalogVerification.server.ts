@@ -1,9 +1,24 @@
 import { createHash } from "node:crypto";
 import type { Json } from "$lib/types/database.types";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
-import { compactFood } from "$lib/utils/food/foodRecords";
-import type { FdcFood, FdcNutrient } from "$lib/utils/food/types";
+import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
+import type {
+	FoodItem,
+	FoodNutrient,
+	FoodFieldSource,
+	FoodTrackedField,
+} from "$lib/utils/food/types";
+import {
+	compareNormalizedFoods,
+	normalizeComparisonText,
+} from "$lib/utils/products/productDifferenceEngine";
+import {
+	getCatalogUpdateProvenancePaths,
+	mergeCatalogUpdateFood,
+} from "$lib/utils/products/catalogUpdateMerge";
+import type { CatalogSubmissionFieldChange } from "$lib/utils/products/catalogSubmissionComparison";
 import { createCatalogFoodFromDraft } from "./catalogFood.server";
+import type { ResolvedFoodCategory } from "./categoryMapping.server";
 
 export type CatalogObservationSource =
 	| "usda"
@@ -44,7 +59,7 @@ export type CatalogConflict = {
 };
 
 export type CatalogVerificationBundle = {
-	canonicalFood: FdcFood;
+	canonicalFood: FoodItem;
 	observations: CatalogObservation[];
 	provenance: CatalogFieldProvenance[];
 	conflicts: CatalogConflict[];
@@ -55,24 +70,22 @@ const toJson = (value: unknown) => value as Json;
 const hashPayload = (value: unknown) =>
 	createHash("sha256").update(JSON.stringify(value)).digest("hex");
 
-const normalizeText = (value?: string) =>
-	value?.trim().toLocaleLowerCase().replace(/[^a-z0-9]+/g, " ").trim() ?? "";
-
-const getReportedNutrientIds = (food: FdcFood) =>
-	new Set(food.reportedNutrientIds ?? food.foodNutrients.map((nutrient) => nutrient.nutrientId));
-
-const getNutrientMap = (food: FdcFood) =>
-	new Map(food.foodNutrients.map((nutrient) => [nutrient.nutrientId, nutrient]));
+const getReportedNutrientIds = (food: FoodItem) =>
+	new Set(
+		food.reportedNutrientIds ?? food.foodNutrients
+			.filter((nutrient) => nutrient.valueOrigin === "reported")
+			.map((nutrient) => nutrient.nutrientId),
+	);
 
 const createObservation = (input: {
 	key: string;
 	source: CatalogObservationSource;
 	sourceReference?: string;
 	sourceLicense: string;
-	food: FdcFood;
+	food: FoodItem;
 	rawPayload?: unknown;
 }): CatalogObservation => {
-	const normalizedFood = compactFood(input.food);
+	const normalizedFood = normalizeFoodForStorage(input.food);
 	const rawPayload = input.rawPayload ?? normalizedFood;
 	return {
 		key: input.key,
@@ -91,7 +104,7 @@ const createObservation = (input: {
 };
 
 const addFoodProvenance = (
-	food: FdcFood,
+	food: FoodItem,
 	observationKey: string,
 	confidence: CatalogFieldProvenance["confidence"],
 	verificationMethod: CatalogFieldProvenance["verificationMethod"],
@@ -101,7 +114,7 @@ const addFoodProvenance = (
 			fieldPath: "productName",
 			observationKey,
 			sourceValue: food.description,
-			normalizedValue: normalizeText(food.description),
+			normalizedValue: normalizeComparisonText(food.description),
 			confidence,
 			verificationMethod,
 		},
@@ -112,7 +125,7 @@ const addFoodProvenance = (
 			fieldPath: "brandOwner",
 			observationKey,
 			sourceValue: food.brandOwner,
-			normalizedValue: normalizeText(food.brandOwner),
+			normalizedValue: normalizeComparisonText(food.brandOwner),
 			confidence,
 			verificationMethod,
 		});
@@ -145,6 +158,90 @@ const addFoodProvenance = (
 		});
 	}
 
+	const trackedFields: Array<{
+		fieldPath: FoodTrackedField;
+		include: boolean;
+		value: Json;
+	}> = [
+		{
+			fieldPath: "categories",
+			include: Boolean(food.foodCategory?.trim() || food.categories?.length),
+			value: toJson({
+				foodCategory: food.foodCategory ?? null,
+				categories: food.categories ?? [],
+			}),
+		},
+		{
+			fieldPath: "ingredients",
+			include: Boolean(food.ingredients?.trim() || food.ingredientList?.length),
+			value: toJson({
+				ingredients: food.ingredients ?? null,
+				ingredientList: food.ingredientList ?? [],
+			}),
+		},
+		{
+			fieldPath: "allergens",
+			include: Boolean(food.allergens?.length),
+			value: toJson(food.allergens ?? []),
+		},
+		{
+			fieldPath: "traces",
+			include: Boolean(food.traces?.length),
+			value: toJson(food.traces ?? []),
+		},
+		{
+			fieldPath: "precautionaryStatements",
+			include: Boolean(food.precautionaryStatements?.length),
+			value: toJson(food.precautionaryStatements ?? []),
+		},
+		{
+			fieldPath: "dietaryTags",
+			include: Boolean(food.dietaryTags?.length),
+			value: toJson(food.dietaryTags ?? []),
+		},
+		{
+			fieldPath: "labels",
+			include: Boolean(food.labels?.length),
+			value: toJson(food.labels ?? []),
+		},
+		{
+			fieldPath: "structuredIngredients",
+			include: Boolean(food.structuredIngredients?.length),
+			value: toJson(food.structuredIngredients ?? []),
+		},
+		{
+			fieldPath: "ingredientAnalysis",
+			include: Boolean(food.ingredientAnalysis),
+			value: toJson(food.ingredientAnalysis ?? null),
+		},
+		{
+			fieldPath: "additives",
+			include: Boolean(food.additives?.length),
+			value: toJson(food.additives ?? []),
+		},
+		{
+			fieldPath: "package",
+			include: Boolean(food.packageQuantity),
+			value: toJson(food.packageQuantity ?? null),
+		},
+		{
+			fieldPath: "sourceMetadata",
+			include: Boolean(food.sourceMetadata),
+			value: toJson(food.sourceMetadata ?? null),
+		},
+	];
+	for (const field of trackedFields) {
+		if (!field.include) continue;
+		fields.push({
+			fieldPath: field.fieldPath,
+			observationKey,
+			sourceValue: field.value,
+			normalizedValue: field.value,
+			confidence,
+			verificationMethod,
+		});
+	}
+
 	return fields;
 };
 
@@ -157,119 +254,101 @@ const getNumericConflictSeverity = (left: number, right: number) => {
 };
 
 const findFoodConflicts = (
-	userFood: FdcFood,
-	sourceFood: FdcFood,
-	sourceKey: "usda" | "open-food-facts" = "usda",
+	userFood: FoodItem,
+	sourceFood: FoodItem,
+	sourceKey: "usda" | "open-food-facts",
 ): CatalogConflict[] => {
-	const conflicts: CatalogConflict[] = [];
-	const userBrand = normalizeText(userFood.brandOwner);
-	const sourceBrand = normalizeText(sourceFood.brandOwner);
-	if (userBrand && sourceBrand && userBrand !== sourceBrand) {
-		conflicts.push({
-			fieldPath: "brandOwner",
-			observedValues: [
-				toJson({ source: "user-label", value: userFood.brandOwner }),
-				toJson({ source: sourceKey, value: sourceFood.brandOwner }),
-			],
-			severity: "medium",
-		});
-	}
-
-	const userServing = userFood.customServingWeightGrams ?? userFood.servingSize;
-	const sourceServing = sourceFood.customServingWeightGrams ?? sourceFood.servingSize;
-	if (userServing && sourceServing) {
-		const severity = getNumericConflictSeverity(userServing, sourceServing);
-		if (severity) {
-			conflicts.push({
-				fieldPath: "servingWeightGrams",
-				observedValues: [
-					toJson({ source: "user-label", value: userServing }),
-					toJson({ source: sourceKey, value: sourceServing }),
-				],
-				severity,
-			});
-		}
-	}
-
-	const userNutrients = getNutrientMap(userFood);
-	const sourceNutrients = getNutrientMap(sourceFood);
 	const userReported = getReportedNutrientIds(userFood);
 	const sourceReported = getReportedNutrientIds(sourceFood);
-	for (const nutrientId of userReported) {
-		if (!sourceReported.has(nutrientId)) continue;
-		const userNutrient = userNutrients.get(nutrientId);
-		const sourceNutrient = sourceNutrients.get(nutrientId);
-		if (!userNutrient || !sourceNutrient) continue;
-		if (userNutrient.unitName.toUpperCase() !== sourceNutrient.unitName.toUpperCase()) {
-			conflicts.push({
-				fieldPath: `nutrient:${nutrientId}`,
-				observedValues: [
-					toJson({ source: "user-label", ...userNutrient }),
-					toJson({ source: sourceKey, ...sourceNutrient }),
-				],
-				severity: "high",
-			});
-			continue;
+	return compareNormalizedFoods(userFood, sourceFood, {
+		submittedNutrientIds: userReported,
+		previousNutrientIds: sourceReported,
+		includeAddedNutrients: false,
+	}).flatMap((difference): CatalogConflict[] => {
+		if (![
+			"brandOwner",
+			"servingWeightGrams",
+		].includes(difference.field) && !difference.field.startsWith("nutrient:")) {
+			return [];
 		}
-		const severity = getNumericConflictSeverity(userNutrient.value, sourceNutrient.value);
-		if (!severity) continue;
-		conflicts.push({
-			fieldPath: `nutrient:${nutrientId}`,
+		const severity = difference.field === "brandOwner"
+			? "medium"
+			: difference.unitMismatch
+				? "high"
+				: typeof difference.submittedValue === "number" &&
+						typeof difference.previousValue === "number"
+					? getNumericConflictSeverity(
+						difference.submittedValue,
+						difference.previousValue,
+					)
+					: difference.submittedNutrient && difference.previousNutrient
+						? getNumericConflictSeverity(
+							difference.submittedNutrient.value,
+							difference.previousNutrient.value,
+						)
+						: null;
+		if (!severity) return [];
+		const submittedValue = difference.submittedNutrient ??
+			difference.submittedValue;
+		const previousValue = difference.previousNutrient ??
+			difference.previousValue;
+		return [{
+			fieldPath: difference.field,
 			observedValues: [
-				toJson({ source: "user-label", ...userNutrient }),
-				toJson({ source: sourceKey, ...sourceNutrient }),
+				toJson({ source: "user-label", value: submittedValue }),
+				toJson({ source: sourceKey, value: previousValue }),
 			],
 			severity,
-		});
-	}
-
-	return conflicts;
+		}];
+	});
 };
 
-const preserveFoodMetadata = (food: FdcFood): FdcFood => ({
-	...compactFood(food),
+const preserveFoodMetadata = (food: FoodItem): FoodItem => ({
+	...normalizeFoodForStorage(food),
 	reportedNutrientIds: [...getReportedNutrientIds(food)],
 });
 
-export const buildUsdaVerifiedCatalogBundle = (
-	userFood: FdcFood,
-	usdaDraft: BarcodeProductDraft,
-): CatalogVerificationBundle => {
-	const usdaFood = preserveFoodMetadata(createCatalogFoodFromDraft(usdaDraft));
-	const userObservation = createObservation({
-		key: "user-label",
-		source: "user-label",
-		sourceLicense: "submitted-with-consent",
-		food: preserveFoodMetadata(userFood),
-	});
-	const usdaObservation = createObservation({
-		key: "usda",
-		source: "usda",
-		sourceReference: usdaDraft.sourceReference,
-		sourceLicense: "CC0-1.0",
-		food: usdaFood,
-		rawPayload: usdaDraft,
-	});
-
-	return {
-		canonicalFood: usdaFood,
-		observations: [userObservation, usdaObservation],
-		provenance: addFoodProvenance(
-			usdaFood,
-			"usda",
-			"source-verified",
-			"exact-barcode",
-		),
-		conflicts: findFoodConflicts(userFood, usdaFood),
-	};
+const getCanonicalFieldConfidence = (
+	confidence: FoodFieldSource["confidence"] | undefined,
+): CatalogFieldProvenance["confidence"] => {
+	switch (confidence) {
+		case "source-verified":
+		case "moderator-reviewed":
+		case "corroborated":
+		case "imported":
+			return confidence;
+		default:
+			return "imported";
+	}
 };
 
+export const buildUsdaVerifiedCatalogBundle = (
+	userFood: FoodItem,
+	usdaDraft: BarcodeProductDraft,
+	category: ResolvedFoodCategory,
+): CatalogVerificationBundle =>
+	buildCombinedSourceCatalogBundle(userFood, usdaDraft, [usdaDraft], category);
+
 export const buildOpenFoodFactsCatalogBundle = (
-	userFood: FdcFood,
+	userFood: FoodItem,
 	openFoodFactsDraft: BarcodeProductDraft,
+	category: ResolvedFoodCategory,
+): CatalogVerificationBundle =>
+	buildCombinedSourceCatalogBundle(
+		userFood,
+		openFoodFactsDraft,
+		[openFoodFactsDraft],
+		category,
+	);
+
+export const buildCombinedSourceCatalogBundle = (
+	userFood: FoodItem,
+	canonicalDraft: BarcodeProductDraft,
+	sourceDrafts: BarcodeProductDraft[],
+	category: ResolvedFoodCategory,
 ): CatalogVerificationBundle => {
-	const openFoodFactsFood = preserveFoodMetadata(
-		createCatalogFoodFromDraft(openFoodFactsDraft),
+	const canonicalFood = preserveFoodMetadata(
+		createCatalogFoodFromDraft(canonicalDraft, category),
 	);
 	const userObservation = createObservation({
 		key: "user-label",
@@ -277,34 +356,90 @@ export const buildOpenFoodFactsCatalogBundle = (
 		sourceLicense: "submitted-with-consent",
 		food: preserveFoodMetadata(userFood),
 	});
-	const openFoodFactsObservation = createObservation({
-		key: "open-food-facts",
-		source: "open-food-facts",
-		sourceReference: openFoodFactsDraft.sourceReference,
-		sourceLicense: "ODbL-1.0",
-		food: openFoodFactsFood,
-		rawPayload: openFoodFactsDraft,
+	const sourceObservations = sourceDrafts.map((draft) => {
+		const source = draft.source === "open-food-facts"
+			? "open-food-facts" as const
+			: "usda" as const;
+		return createObservation({
+			key: source,
+			source,
+			sourceReference: draft.sourceReference,
+			sourceLicense: source === "usda" ? "CC0-1.0" : "ODbL-1.0",
+			food: preserveFoodMetadata(createCatalogFoodFromDraft(draft, category)),
+			rawPayload: draft,
+		});
+	});
+	const primaryObservationKey = canonicalDraft.source === "open-food-facts"
+		? "open-food-facts"
+		: "usda";
+	const supportedObservationKeys = new Set(
+		sourceObservations.map((observation) => observation.key),
+	);
+	const canonicalProvenance = addFoodProvenance(
+		canonicalFood,
+		primaryObservationKey,
+		"imported",
+		"exact-barcode",
+	).flatMap((entry): CatalogFieldProvenance[] => {
+		if (entry.fieldPath === "productName" || entry.fieldPath === "brandOwner") {
+			const source = canonicalDraft.fieldProvenance?.[entry.fieldPath];
+			return source && supportedObservationKeys.has(source.source)
+				? [{
+						...entry,
+						observationKey: source.source,
+						confidence: getCanonicalFieldConfidence(source.confidence),
+					}]
+				: [{ ...entry, confidence: "imported" }];
+		}
+		if (entry.fieldPath === "servingWeightGrams") {
+			const source = canonicalDraft.fieldProvenance?.serving;
+			return source && supportedObservationKeys.has(source.source)
+				? [{
+						...entry,
+						observationKey: source.source,
+						confidence: getCanonicalFieldConfidence(source.confidence),
+					}]
+				: [];
+		}
+		if (entry.fieldPath.startsWith("nutrient:")) {
+			const nutrientId = Number(entry.fieldPath.split(":")[1]);
+			const nutrient = canonicalFood.foodNutrients.find(
+				(item) => item.nutrientId === nutrientId,
+			);
+			return nutrient?.source && supportedObservationKeys.has(nutrient.source)
+				? [{
+						...entry,
+						observationKey: nutrient.source,
+						confidence: getCanonicalFieldConfidence(nutrient.confidence),
+					}]
+				: [];
+		}
+
+		const trackedField = entry.fieldPath as FoodTrackedField;
+		const source = canonicalDraft.fieldProvenance?.[trackedField];
+		return source && supportedObservationKeys.has(source.source)
+			? [{
+					...entry,
+					observationKey: source.source,
+					confidence: getCanonicalFieldConfidence(source.confidence),
+				}]
+			: [];
 	});
 
 	return {
-		canonicalFood: openFoodFactsFood,
-		observations: [userObservation, openFoodFactsObservation],
-		provenance: addFoodProvenance(
-			openFoodFactsFood,
-			"open-food-facts",
-			"imported",
-			"exact-barcode",
-		),
+		canonicalFood,
+		observations: [userObservation, ...sourceObservations],
+		provenance: canonicalProvenance,
 		conflicts: findFoodConflicts(
 			userFood,
-			openFoodFactsFood,
-			"open-food-facts",
+			canonicalFood,
+			primaryObservationKey,
 		),
 	};
 };
 
 export const buildModeratorReviewedCatalogBundle = (
-	userFood: FdcFood,
+	userFood: FoodItem,
 ): CatalogVerificationBundle => {
 	const canonicalFood = preserveFoodMetadata(userFood);
 	const observation = createObservation({
@@ -326,12 +461,41 @@ export const buildModeratorReviewedCatalogBundle = (
 	};
 };
 
+export const buildModeratorReviewedCatalogUpdateBundle = (
+	currentFood: FoodItem,
+	submittedFood: FoodItem,
+	changes: readonly CatalogSubmissionFieldChange[],
+): CatalogVerificationBundle => {
+	const canonicalFood = preserveFoodMetadata(
+		mergeCatalogUpdateFood(currentFood, submittedFood, changes),
+	);
+	const submittedObservationFood = preserveFoodMetadata(submittedFood);
+	const observation = createObservation({
+		key: "user-label",
+		source: "user-label",
+		sourceLicense: "submitted-with-consent",
+		food: submittedObservationFood,
+	});
+	const changedPaths = getCatalogUpdateProvenancePaths(changes);
+	return {
+		canonicalFood,
+		observations: [observation],
+		provenance: addFoodProvenance(
+			submittedObservationFood,
+			"user-label",
+			"moderator-reviewed",
+			"label-review",
+		).filter((entry) => changedPaths.has(entry.fieldPath)),
+		conflicts: [],
+	};
+};
+
 export const mergeMissingNutrients = (
-	primary: FdcFood,
-	supplement: FdcFood,
-): FdcFood => {
+	primary: FoodItem,
+	supplement: FoodItem,
+): FoodItem => {
 	const primaryReported = getReportedNutrientIds(primary);
-	const additions: FdcNutrient[] = supplement.foodNutrients.filter(
+	const additions: FoodNutrient[] = supplement.foodNutrients.filter(
 		(nutrient) => !primaryReported.has(nutrient.nutrientId),
 	);
 	return {

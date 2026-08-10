@@ -1,0 +1,28 @@
+@use "../../../../../styles/variables" as *;
+
+.add-ingredient-fab {
+	position: fixed;
+	right: max(
+		$app-shell-padding-x,
+		calc((100vw - $app-shell-content-max-width) / 2 + $app-shell-padding-x)
+	);
+	bottom: calc($app-shell-nav-height + $app-gap-md);
+	z-index: 12;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.add-ingredient-fab {
+		right: $app-gap-sm;
+		bottom: calc($app-shell-nav-height-compact + $app-gap-sm);
+	}
+
+	.add-ingredient-fab :global(.circle-icon-button[data-size="fab"]) {
+		width: 3.25rem;
+		height: 3.25rem;
+	}
+
+	.add-ingredient-fab :global(svg) {
+		width: $app-gap-lg;
+		height: $app-gap-lg;
+	}
+}

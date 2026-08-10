@@ -1,0 +1,107 @@
+@use "../../../../../styles/variables" as *;
+
+.collapsible-section {
+	display: block;
+	min-width: 0;
+	padding: 0;
+	overflow-anchor: none;
+	background: transparent;
+	border: 0;
+}
+
+.collapsible-section summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	min-height: $app-shell-control-height;
+	padding: 0 $app-shell-control-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-accent-soft;
+	border-radius: $app-shell-radius-pill;
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-bold;
+	list-style: none;
+	cursor: pointer;
+}
+
+.collapsible-section[data-surface="panel"] summary {
+	background: $app-shell-surface-panel;
+}
+
+.collapsible-section:not([data-expanded="true"])[data-tone="warning"] summary {
+	color: $app-warning-text;
+	background: $app-warning-bg;
+	border: $app-warning-border;
+}
+
+.collapsible-section:not([data-expanded="true"])[data-tone="danger"] summary {
+	color: $app-status-error-text;
+	background: $app-danger-bg;
+	border: 1px solid $app-shell-accent-danger;
+}
+
+.collapsible-section summary::-webkit-details-marker {
+	display: none;
+}
+
+.collapsible-section summary:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.collapsible-section__heading,
+.collapsible-section__title,
+.collapsible-section__actions {
+	display: inline-flex;
+	align-items: center;
+}
+
+.collapsible-section__attention {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.collapsible-section__heading {
+	min-width: 0;
+	gap: $app-gap-xs;
+}
+
+.collapsible-section__title {
+	min-width: 0;
+	gap: $app-gap-xs;
+}
+
+.collapsible-section__actions {
+	justify-content: flex-end;
+	flex: 0 0 auto;
+	gap: $app-gap-xs;
+}
+
+.collapsible-section :global(.collapsible-section__chevron) {
+	color: $app-shell-text-muted;
+}
+
+.collapsible-section__content {
+	padding-top: $app-gap-md;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.collapsible-section summary {
+		min-height: $app-shell-control-height-narrow;
+		padding-inline: $app-shell-control-padding-x-compact;
+		font-size: $app-font-size-sm;
+	}
+
+	.collapsible-section__content {
+		padding-top: $app-gap-sm;
+	}
+}

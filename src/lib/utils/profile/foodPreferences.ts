@@ -1,3 +1,5 @@
+import type { RegulatoryRegionOption } from "./regulatoryRegion";
+
 export const FOOD_PREFERENCE_MAX_ITEMS = 30;
 export const FOOD_PREFERENCE_MAX_LENGTH = 60;
 export const DEFAULT_SERVING_SIZE_MAX_GRAMS = 5000;
@@ -15,13 +17,12 @@ export type FoodPreferenceFormValues = {
 	allergens: string[];
 	dietaryRestrictions: string[];
 	prioritizedNutrientIds: number[];
-	defaultSmoothieServingSize: string;
-	defaultSmoothieServingUnit: DefaultServingUnit;
+	defaultMixServingSize: string;
+	defaultMixServingUnit: DefaultServingUnit;
 	sensitiveAcknowledged: boolean;
+	regulatoryRegionCode: string;
+	regulatoryRegionSource: "account" | "device" | null;
 };
-
-export const getJoinedPreferenceList = (values: string[] | null | undefined) =>
-	(values ?? []).join(", ");
 
 export const normalizeUnitSystem = (
 	value: FormDataEntryValue | null,
@@ -91,10 +92,11 @@ export const getServingSizeDisplayValue = (
 export const hasFoodPreferenceValues = (values: FoodPreferenceFormValues) =>
 	Boolean(
 		values.unitSystem ||
+			values.regulatoryRegionCode ||
 			values.allergens.length ||
 			values.dietaryRestrictions.length ||
 			values.prioritizedNutrientIds.length ||
-			values.defaultSmoothieServingSize.trim(),
+			values.defaultMixServingSize.trim(),
 	);
 
 const getLongPreferenceItem = (values: string[]) =>
@@ -102,7 +104,22 @@ const getLongPreferenceItem = (values: string[]) =>
 
 export const getFoodPreferencesValidationError = (
 	values: FoodPreferenceFormValues,
+	regulatoryRegionOptions: RegulatoryRegionOption[] = [],
 ) => {
+	if (
+		values.regulatoryRegionCode &&
+		!regulatoryRegionOptions.some((option) =>
+			option.regionCode === values.regulatoryRegionCode
+		)
+	) {
+		return "Choose a supported label region and try again.";
+	}
+	if (
+		Boolean(values.regulatoryRegionCode) !==
+		Boolean(values.regulatoryRegionSource)
+	) {
+		return "Choose a label region again so we can save it correctly.";
+	}
 	const preferenceGroups = [values.allergens, values.dietaryRestrictions];
 	const longItem = preferenceGroups.map(getLongPreferenceItem).find(Boolean);
 	if (longItem) {
@@ -114,14 +131,14 @@ export const getFoodPreferencesValidationError = (
 	}
 
 	const servingSizeGrams = getServingSizeGrams(
-		values.defaultSmoothieServingSize,
-		values.defaultSmoothieServingUnit,
+		values.defaultMixServingSize,
+		values.defaultMixServingUnit,
 	);
 	if (
-		values.defaultSmoothieServingSize.trim() &&
+		values.defaultMixServingSize.trim() &&
 		(!servingSizeGrams || servingSizeGrams > DEFAULT_SERVING_SIZE_MAX_GRAMS)
 	) {
-		return "Default smoothie serving size must be greater than 0 and no more than 5,000g.";
+		return "Default Mix serving size must be greater than 0 and no more than 5,000g.";
 	}
 
 	return "";

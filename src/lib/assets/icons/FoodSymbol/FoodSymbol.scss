@@ -1,0 +1,21 @@
+@use "../../../../styles/variables" as *;
+
+.food-symbol__image {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.food-symbol__fallback {
+	display: grid;
+	width: 100%;
+	height: 100%;
+	place-items: center;
+	font-size: $app-font-size-xl;
+	line-height: $app-line-height-tight;
+}
+
+.food-symbol__emoji {
+	display: block;
+	line-height: $app-line-height-tight;
+}

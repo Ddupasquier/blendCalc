@@ -1,56 +1,132 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import favicon from "$lib/assets/favicon.svg";
+	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
+	import { onMount } from "svelte";
 	import "../app.scss";
-	import DailyWelcome from "$lib/components/app/DailyWelcome.svelte";
-	import TabNavigation from "$lib/components/app/TabNavigation.svelte";
-	import TutorialOverlay from "$lib/components/app/TutorialOverlay.svelte";
-	import type { FoodPreferenceProfile } from "$lib/utils/profile/foodPreferenceProfile";
-	import { setFoodPreferenceContext } from "$lib/utils/profile/foodPreferenceContext.svelte";
+	import AppHeader from "$lib/components/app/AppHeader/AppHeader.svelte";
+	import DailyWelcome from "$lib/components/app/DailyWelcome/DailyWelcome.svelte";
+	import TabNavigation from "$lib/components/app/TabNavigation/TabNavigation.svelte";
+	import TutorialOverlay from "$lib/components/app/TutorialOverlay/TutorialOverlay.svelte";
+	import ThemeSynchronizer from "$lib/components/app/ThemeSynchronizer/ThemeSynchronizer.svelte";
 	import {
-		clearLegacyAppStorage,
+		APP_DESCRIPTION,
+		APP_NUTRITION_PREVIEW_ALT,
+		APP_OG_IMAGE_URL,
+	} from "$lib/config/brand";
+	import { APP_BUILD_VERSION, APP_VERSION } from "$lib/config/version";
+	import { LIGHT_THEME_COLOR } from "$lib/utils/theme/themePreference";
+	import {
+		getAppDocumentTitle,
+		getCanonicalAppUrl,
+	} from "$lib/config/pageMetadata";
+	import {
+		clearObsoleteAppStorage,
 		setActiveStorageUserId,
-	} from "$lib/utils/storage/storageScope";
-	import { saveTutorialChoice } from "$lib/utils/tutorial/tutorial";
-	import type { LayoutData } from "./$types";
+	} from "$lib/utils/storage/client/storageScope";
+	import type { TutorialChoice } from "$lib/utils/tutorial/tutorial";
+	import { saveTutorialChoice } from "$lib/utils/tutorial/tutorialClient";
+	import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
+	import { configureNutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
+	import { configureAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
+	import { injectAnalytics } from "@vercel/analytics/sveltekit";
+	import { track } from "@vercel/analytics/sveltekit";
 	import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
+	import { APP_INTERACTION_METRICS } from "$lib/utils/analytics/appInteractionMetrics";
+	import type { AppLayoutProps } from "./types";
+
+	const redactObservabilityUrl = <Event extends { url: string }>(
+		event: Event,
+	): Event => {
+		const url = new URL(event.url);
+		url.search = "";
+		url.hash = "";
+		return { ...event, url: url.toString() };
+	};
 
 	if (!dev) {
+		injectAnalytics({
+			mode: "production",
+			debug: false,
+			beforeSend: redactObservabilityUrl,
+		});
 		injectSpeedInsights({
 			debug: false,
-			scriptSrc: "/_vercel/speed-insights/script.js",
-			endpoint: "/_vercel/speed-insights/vitals",
-			beforeSend: (event) => {
-				const url = new URL(event.url);
-				url.search = "";
-				url.hash = "";
-				return { ...event, url: url.toString() };
-			},
+			beforeSend: redactObservabilityUrl,
 		});
 	}
+
+	onMount(() => {
+		if (dev) return;
+		const navigationEntry = performance.getEntriesByType(
+			"navigation",
+		)[0] as PerformanceNavigationTiming | undefined;
+		if (navigationEntry?.type === "reload") {
+			track(APP_INTERACTION_METRICS.PAGE_RELOAD);
+		}
+	});
+
+	onMount(() => {
+		document.documentElement.dataset.appReady = "true";
+		return () => {
+			delete document.documentElement.dataset.appReady;
+		};
+	});
 
 	let {
 		children,
 		data,
-	}: {
-		children: import("svelte").Snippet;
-		data: LayoutData;
-	} = $props();
+	}: AppLayoutProps = $props();
 
-	let tutorialOpen = $state(false);
+	let tutorialOpen = $state(page.url.pathname === "/profile/tutorial");
 	let tutorialUserId = $state<string | null>(null);
-	let signingOut = $state(false);
-	let foodPreferenceContext: { current: FoodPreferenceProfile | null } = $state({
-		current: null,
-	});
-	setFoodPreferenceContext(foodPreferenceContext);
+	let tutorialMode = $state<"onboarding" | "replay">(
+		page.url.pathname === "/profile/tutorial" ? "replay" : "onboarding",
+	);
+	let tutorialReplayActive = $state(
+		page.url.pathname === "/profile/tutorial",
+	);
+	const appViewShellRoute = $derived(
+		Boolean(data.authUser) &&
+			(page.url.pathname === "/mix" ||
+				page.url.pathname.startsWith("/mix/") ||
+				page.url.pathname === "/ingredients/fridge" ||
+				page.url.pathname.startsWith("/ingredients/fridge/") ||
+				page.url.pathname === "/ingredients/shopping" ||
+				page.url.pathname.startsWith("/ingredients/shopping/")),
+	);
+	const tutorialRouteOpen = $derived(page.url.pathname === "/profile/tutorial");
+	const tutorialVisible = $derived(tutorialOpen || tutorialRouteOpen);
+	const documentTitle = $derived(getAppDocumentTitle(page.url));
+	const canonicalUrl = $derived(getCanonicalAppUrl(page.url));
 
-	const recordTutorialChoice = async (choice: "later" | "never") => {
+	$effect.pre(() => {
+		configureServingMeasureCatalog(data.servingMeasureCatalog);
+		configureNutritionCompletenessCatalog(data.nutritionCompletenessCatalog);
+		configureAppReferenceCatalog(data.appReferenceCatalog);
+	});
+
+	const navigateTutorial = async (href: string) => {
+		await goto(href, {
+			replaceState: true,
+			noScroll: true,
+			keepFocus: true,
+		});
+	};
+
+	const finishTutorial = async (choice: TutorialChoice) => {
 		if (!data.authUser) return false;
 
-		const saved = await saveTutorialChoice(data.authUser.id, choice);
-		if (saved) tutorialOpen = false;
-		return saved;
+		if (tutorialMode === "replay") {
+			tutorialOpen = false;
+			await goto("/profile", { replaceState: true });
+			return true;
+		}
+
+		const saved = await saveTutorialChoice(choice);
+		if (!saved) return false;
+		tutorialOpen = false;
+		return true;
 	};
 
 	$effect(() => {
@@ -58,123 +134,98 @@
 		if (nextUserId === tutorialUserId) return;
 
 		tutorialUserId = nextUserId;
-		tutorialOpen = data.authUser?.showTutorial ?? false;
+		if (tutorialRouteOpen) {
+			tutorialMode = "replay";
+			tutorialReplayActive = true;
+			tutorialOpen = true;
+		} else {
+			tutorialMode = "onboarding";
+			tutorialOpen = data.authUser?.showTutorial ?? false;
+		}
+	});
+
+	$effect(() => {
+		if (tutorialRouteOpen && !tutorialReplayActive) {
+			tutorialReplayActive = true;
+			tutorialMode = "replay";
+			tutorialOpen = true;
+		} else if (!tutorialRouteOpen && !tutorialOpen) {
+			tutorialReplayActive = false;
+		}
 	});
 
 	$effect.pre(() => {
 		setActiveStorageUserId(data.authUser?.id ?? null);
-		foodPreferenceContext.current = data.foodPreferences ?? null;
-
 		if (data.authUser) {
-			clearLegacyAppStorage();
+			clearObsoleteAppStorage();
 		}
 	});
 </script>
 
 <svelte:head>
-	<title>Smoothie Mixer</title>
+	<title>{documentTitle}</title>
 	<meta
 		name="description"
-		content="Build, compare, and save smoothie recipes with nutrition goals, ingredient amounts, custom foods, and visual nutrient tracking."
+		content={APP_DESCRIPTION}
 	/>
-	<meta name="theme-color" content="#5f564f" />
-	<link rel="icon" href={favicon} />
-	<link rel="canonical" href="https://smoothie-mixer.vercel.app/" />
+	<meta name="theme-color" content={LIGHT_THEME_COLOR} />
+	<meta name="application-version" content={APP_VERSION} />
+	<meta name="application-build" content={APP_BUILD_VERSION} />
+	<link rel="icon" type="image/svg+xml" sizes="any" href="/favicon.ico" />
+	<link rel="shortcut icon" href="/favicon.ico" />
+	<link rel="canonical" href={canonicalUrl} />
 	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://smoothie-mixer.vercel.app/" />
-	<meta property="og:title" content="Smoothie Mixer" />
+	<meta property="og:url" content={canonicalUrl} />
+	<meta property="og:title" content={documentTitle} />
 	<meta
 		property="og:description"
-		content="Build, compare, and save smoothie recipes with nutrition goals, ingredient amounts, custom foods, and visual nutrient tracking."
+		content={APP_DESCRIPTION}
 	/>
-	<meta
-		property="og:image"
-		content="https://smoothie-mixer.vercel.app/og-image.png"
-	/>
+	<meta property="og:image" content={APP_OG_IMAGE_URL} />
 	<meta property="og:image:type" content="image/png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
-	<meta
-		property="og:image:alt"
-		content="Smoothie Mixer nutrition graph preview"
-	/>
+	<meta property="og:image:alt" content={APP_NUTRITION_PREVIEW_ALT} />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Smoothie Mixer" />
+	<meta name="twitter:title" content={documentTitle} />
 	<meta
 		name="twitter:description"
-		content="Build, compare, and save smoothie recipes with nutrition goals, ingredient amounts, custom foods, and visual nutrient tracking."
+		content={APP_DESCRIPTION}
 	/>
-	<meta
-		name="twitter:image"
-		content="https://smoothie-mixer.vercel.app/og-image.png"
-	/>
-	<meta
-		name="twitter:image:alt"
-		content="Smoothie Mixer nutrition graph preview"
-	/>
+	<meta name="twitter:image" content={APP_OG_IMAGE_URL} />
+	<meta name="twitter:image:alt" content={APP_NUTRITION_PREVIEW_ALT} />
 </svelte:head>
 
+<ThemeSynchronizer preference={data.themePreference} />
+
 {#if data.authUser}
-	<header class="app-header">
-		<span class="logo">🥤 Smoothie Mixer</span>
-		<div class="auth-status">
-			{#if data.authUser.role}
-				<a class="moderation-link" href="/moderation" aria-label="Open moderation tools">
-					<svg viewBox="0 0 24 24" aria-hidden="true">
-						<path d="M12 3 5 6v5c0 4.4 2.8 8.3 7 10 4.2-1.7 7-5.6 7-10V6l-7-3Z" />
-						<path d="m9 12 2 2 4-5" />
-					</svg>
-				</a>
-			{/if}
-			<button
-				class="tutorial-link"
-				type="button"
-				aria-label="Open app tutorial"
-				title="App tutorial"
-				onclick={() => (tutorialOpen = true)}
-			>
-				<svg viewBox="0 0 24 24" aria-hidden="true">
-					<circle cx="12" cy="12" r="9" />
-					<path d="M12 10v6M12 7.5h.01" />
-				</svg>
-			</button>
-			<a
-				class="profile-link"
-				href="/profile"
-				aria-label={`Open profile for ${data.authUser.displayName}`}
-			>
-				{#if data.authUser.avatarUrl}
-					<img
-						src={data.authUser.avatarUrl}
-						alt={data.authUser.avatarAltText ?? ""}
-					/>
-				{:else}
-					<svg viewBox="0 0 24 24" aria-hidden="true">
-						<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0" />
-					</svg>
-				{/if}
-			</a>
-			<form method="POST" action="/auth/logout" onsubmit={() => (signingOut = true)}>
-				<button type="submit" disabled={signingOut}>
-					{signingOut ? "Signing out…" : "Sign out"}
-				</button>
-			</form>
-		</div>
-	</header>
+	<AppHeader
+		displayName={data.authUser.displayName}
+		avatarUrl={data.authUser.avatarUrl}
+		avatarAltText={data.authUser.avatarAltText}
+		role={data.authUser.role}
+	/>
 	<TabNavigation />
-	{#if !tutorialOpen}
+	{#if !tutorialVisible}
 		<DailyWelcome
 			userId={data.authUser.id}
 			name={data.authUser.welcomeName}
 		/>
 	{/if}
-	<TutorialOverlay
-		open={tutorialOpen}
-		onRemindLater={() => recordTutorialChoice("later")}
-		onDontShowAgain={() => recordTutorialChoice("never")}
-	/>
+		<TutorialOverlay
+			open={tutorialVisible}
+			mode={tutorialMode}
+			pathname={page.url.pathname}
+			onNavigate={navigateTutorial}
+			onFinish={finishTutorial}
+		/>
 {/if}
 
-<main class="app-main" class:app-main--guest={!data.authUser}>
+<main
+	class="app-main"
+	class:app-main--guest={!data.authUser}
+	class:app-main--authed={data.authUser}
+	class:app-main--view-shell={appViewShellRoute}
+>
 	{@render children()}
 </main>

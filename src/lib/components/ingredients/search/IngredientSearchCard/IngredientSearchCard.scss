@@ -1,0 +1,68 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+@use "../../card/IngredientCardMediaLane/IngredientCardLayout" as ingredient-card-layout;
+
+.ingredient-search-card {
+	@include ingredient-card-layout.frame;
+	@include ingredient-card-layout.action-button;
+
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	transition:
+		background-color motion.$duration-state motion.$easing-standard,
+		opacity motion.$duration-state motion.$easing-standard;
+}
+
+.ingredient-search-card--active {
+	background: $app-shell-surface-soft;
+}
+
+.ingredient-search-card--saved {
+	grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.ingredient-search-card__main-cell {
+	min-width: 0;
+}
+
+.ingredient-search-card__main {
+	@include ingredient-card-layout.primary-action-target;
+}
+
+.ingredient-search-card__main:focus-visible {
+	@include ingredient-card-layout.primary-action-focus;
+}
+
+.ingredient-search-card__copy {
+	@include ingredient-card-layout.copy;
+	@include ingredient-card-layout.presentation-layer;
+}
+
+.ingredient-search-card--media .ingredient-search-card__copy {
+	@include ingredient-card-layout.media-content-inset;
+}
+
+.ingredient-search-card__title-row {
+	@include ingredient-card-layout.title-row;
+}
+
+.ingredient-search-card__add-cell,
+.ingredient-search-card__open {
+	@include ingredient-card-layout.action-layer;
+}
+
+.ingredient-search-card__add-cell {
+	z-index: 2;
+}
+
+.ingredient-search-card__open {
+	width: var(--ingredient-card-action-size);
+	height: var(--ingredient-card-action-size);
+	pointer-events: none;
+	color: $app-shell-text-muted;
+	font-size: $app-shell-control-icon-size;
+	line-height: $app-line-height-tight;
+}
+
+:global(.ingredient-search-card__chevron) {
+	color: currentColor;
+}

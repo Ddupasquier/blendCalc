@@ -1,0 +1,26 @@
+@use "../../../../../styles/variables" as *;
+
+.circular-icon-frame {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	flex: 0 0 auto;
+	width: var(--circular-icon-frame-size, #{$app-status-icon-badge-size});
+	height: var(--circular-icon-frame-size, #{$app-status-icon-badge-size});
+	padding: 0;
+	overflow: hidden;
+	color: var(--circular-icon-frame-color, currentColor);
+	background: var(--circular-icon-frame-background, transparent);
+	border: var(--circular-icon-frame-border, 1px solid transparent);
+	border-radius: $app-radius-circle;
+	font-size: var(--circular-icon-frame-icon-size, #{$app-status-icon-badge-icon-size});
+	line-height: $app-line-height-tight;
+	vertical-align: middle;
+}
+
+.circular-icon-frame :global(svg) {
+	width: 1em;
+	height: 1em;
+	transform: var(--circular-icon-frame-icon-transform, none);
+}

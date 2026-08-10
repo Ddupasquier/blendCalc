@@ -1,0 +1,125 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+
+.action-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: $app-gap-xs;
+	min-width: 0;
+	min-height: $app-shell-control-height-narrow;
+	appearance: none;
+	color: $app-btn-text;
+	background: $app-btn-bg;
+	border: 1.5px solid transparent;
+	border-radius: $app-radius-pill;
+	font-family: $app-button-font-family;
+	font-size: $app-font-size-md;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
+	text-align: center;
+	text-decoration: none;
+	transition:
+		background motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard,
+		color motion.$duration-state motion.$easing-standard,
+		opacity motion.$duration-state motion.$easing-standard,
+		transform motion.$duration-press motion.$easing-standard;
+}
+
+.action-button--full {
+	width: 100%;
+}
+
+.action-button[data-size="small"] {
+	min-height: $app-control-height-sm;
+	padding: 0.38rem 0.72rem;
+	font-size: $app-font-size-sm;
+}
+
+.action-button[data-size="medium"] {
+	padding: 0.52rem 0.95rem;
+}
+
+.action-button[data-size="large"] {
+	min-height: $app-shell-control-height;
+	padding: 0.68rem 1.15rem;
+	font-size: $app-font-size-lg;
+}
+
+.action-button[data-variant="primary"] {
+	color: $app-btn-text;
+	background: $app-btn-bg;
+
+	&:hover:not(:disabled) {
+		background: $app-btn-bg-hover;
+	}
+}
+
+.action-button[data-variant="secondary"] {
+	color: $app-primary;
+	background: $app-accent;
+	border-color: $app-accent;
+}
+
+.action-button[data-variant="highlight"] {
+	color: $app-highlight-text;
+	background: $app-highlight;
+
+	&:hover:not(:disabled) {
+		background: $app-highlight-hover;
+	}
+}
+
+.action-button[data-variant="success"] {
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
+}
+
+.action-button[data-variant="danger"] {
+	color: $app-shell-text-on-danger;
+	background: $app-danger-action;
+}
+
+.action-button[data-variant="ghost"] {
+	color: $app-primary;
+	background: transparent;
+	border-color: $app-border-color;
+}
+
+.action-button:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: 2px;
+}
+
+.action-button:active:not(:disabled) {
+	transform: scale(0.98);
+}
+
+.action-button:disabled,
+.action-button--busy {
+	cursor: not-allowed;
+	opacity: 0.65;
+}
+
+.action-button__label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+:global(.action-button__icon) {
+	flex: 0 0 auto;
+	width: 1em;
+	height: 1em;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.action-button[data-size="medium"],
+	.action-button[data-size="large"] {
+		min-height: $app-shell-control-height-narrow;
+		padding-inline: $app-shell-control-padding-x-compact;
+		font-size: $app-font-size-sm;
+	}
+}

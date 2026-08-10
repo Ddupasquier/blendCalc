@@ -1,0 +1,44 @@
+@use "../../../../../../styles/variables" as *;
+
+.servings-step__card {
+	display: grid;
+	gap: $app-gap-md;
+	min-width: 0;
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.servings-step__card h3 {
+	margin: 0;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-lg;
+	font-weight: $app-font-weight-bold;
+}
+
+.servings-step__card h3 em {
+	color: $app-shell-accent-danger;
+	font-style: normal;
+}
+
+.servings-step__inline-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $app-gap-md;
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.servings-step__card {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+	}
+
+	.servings-step__card h3 {
+		font-size: $app-font-size-md;
+	}
+
+	.servings-step__inline-grid {
+		grid-template-columns: 1fr;
+		gap: $app-gap-sm;
+	}
+}

@@ -1,0 +1,6 @@
+@use "../../../../../styles/variables" as *;
+
+.ingredient-action-sheet__actions {
+	display: grid;
+	gap: $app-gap-sm;
+}

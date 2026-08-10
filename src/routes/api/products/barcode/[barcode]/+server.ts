@@ -1,26 +1,39 @@
+import { lookupBarcodeProductDraft } from "$lib/server/products/barcodeProduct.server";
+import { persistFoodImageAsset } from "$lib/server/products/foodImages.server";
 import {
-	getSharedProductByBarcode,
-} from "$lib/server/products/catalog.server";
-import { lookupExternalBarcodeProduct } from "$lib/server/products/externalProduct.server";
+	requireAppValue,
+	throwAppError,
+} from "$lib/server/errors/appError.server";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
-import { mapSharedCatalogFood } from "$lib/utils/barcode/productLookup";
-import { error, json } from "@sveltejs/kit";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ locals, params }) => {
-	const { user } = await locals.safeGetSession();
-	if (!user) throw error(401, "Sign in to scan products.");
+	const user = await locals.getVerifiedUser();
+	if (!user) throwAppError(401, "AUTH_REQUIRED");
 
-	const barcode = normalizeBarcode(params.barcode);
-	if (!barcode) throw error(400, "Invalid barcode.");
+	const barcode = requireAppValue(
+		normalizeBarcode(params.barcode),
+		400,
+		"INVALID_BARCODE",
+	);
 
-	const sharedFood = await getSharedProductByBarcode(locals.supabase, barcode);
-	if (sharedFood) {
-		const draft = mapSharedCatalogFood(sharedFood, barcode);
-		if (draft) return json({ status: "found", draft });
-	}
-
-	const draft = await lookupExternalBarcodeProduct(barcode);
-	if (!draft) throw error(404, "Product not found.");
-	return json({ status: "found", draft });
+	const draft = requireAppValue(
+		await lookupBarcodeProductDraft(getSupabaseAdminClient(), barcode),
+		404,
+		"PRODUCT_NOT_FOUND",
+	);
+	await persistFoodImageAsset({
+		image: draft.image,
+		barcode,
+		sharedProductId:
+			draft.source === "shared-catalog"
+				? draft.sourceReference
+				: undefined,
+	});
+	return json({
+		status: "found",
+		draft,
+	});
 };

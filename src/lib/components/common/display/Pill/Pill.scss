@@ -1,0 +1,131 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+
+$pill-grid-gap: 0.28rem;
+$pill-padding-y: 0.22rem;
+$pill-padding-x: 0.62rem;
+$pill-fine-spacing: 0.1rem;
+
+.pill {
+	display: inline-grid;
+	grid-template-columns: minmax(0, 1fr) repeat(3, auto);
+	align-items: center;
+	gap: $pill-grid-gap;
+	max-width: 100%;
+	margin-bottom: $pill-fine-spacing;
+	padding: $pill-padding-y $pill-padding-x;
+	color: $app-primary;
+	background: $app-accent;
+	border: 1px solid $app-accent;
+	border-radius: $app-radius-pill;
+	font-family: $app-button-font-family;
+	font-size: $app-font-size-md;
+	font-weight: $app-button-font-weight;
+	line-height: $app-button-line-height;
+	transition: background motion.$duration-state motion.$easing-standard;
+}
+
+.pill-select,
+.pill-content {
+	display: inline-flex;
+	align-items: center;
+	gap: $app-gap-inline-compact;
+	min-width: 0;
+	padding: 0;
+	color: inherit;
+	background: transparent;
+	border: 0;
+	font: inherit;
+	line-height: inherit;
+	text-align: left;
+}
+
+.pill-select {
+	cursor: pointer;
+}
+
+.pill-label {
+	display: -webkit-box;
+	min-width: 0;
+	overflow: hidden;
+	line-height: $app-line-height-heading;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow-wrap: anywhere;
+}
+
+.pill.active {
+	color: $app-shell-text-on-accent;
+	background: $app-shell-accent-primary;
+	border-color: $app-shell-accent-primary;
+}
+
+.pill.active .pill-action,
+.pill.custom.active .pill-action {
+	color: inherit;
+}
+
+.pill.custom {
+	background: $app-custom-bg;
+	border-color: $app-custom-strong;
+}
+
+.pill.custom.active {
+	color: $app-shell-text-on-custom;
+	background: $app-custom-strong;
+	border-color: $app-custom-strong;
+}
+
+.pill.custom.active :global(.custom-badge) {
+	color: $app-custom-strong;
+	background: $app-shell-surface-panel;
+	border-color: $app-shell-surface-panel;
+}
+
+.pill:has(.pill-select:active) {
+	background: $app-shell-accent-primary;
+}
+
+.pill[aria-disabled="true"] {
+	cursor: wait;
+	opacity: 0.65;
+}
+
+.pill-action {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: $app-control-icon-size;
+	height: $app-control-icon-size;
+	padding: 0;
+	color: $app-primary;
+	background: none;
+	border: none;
+	font-size: $app-font-size-md;
+	line-height: $app-line-height-none;
+	cursor: pointer;
+}
+
+.pill-select:focus-visible,
+.pill-action:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.pill-rename {
+	font-size: $app-font-size-sm;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.pill {
+		gap: $app-gap-inline-compact;
+		padding: $app-gap-inline-compact $app-gap-sm;
+		font-size: $app-font-size-sm;
+	}
+
+	.pill-action,
+	.pill-rename {
+		font-size: $app-font-size-sm;
+	}
+}

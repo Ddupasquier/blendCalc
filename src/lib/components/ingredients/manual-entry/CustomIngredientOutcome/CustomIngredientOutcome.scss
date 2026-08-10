@@ -1,0 +1,64 @@
+@use "../../../../../styles/variables" as *;
+
+.custom-ingredient-outcome {
+	display: grid;
+	gap: $app-gap-sm;
+	padding: $app-gap-sm;
+	color: $app-primary;
+	background: $app-success-bg;
+	border: $app-border;
+	border-radius: $app-radius;
+
+	div:first-child {
+		display: grid;
+		gap: $app-gap-xs;
+	}
+
+	strong {
+		font-size: $app-font-size-sm;
+		font-weight: $app-font-weight-bold;
+		line-height: $app-line-height-ui;
+	}
+
+	small {
+		color: $app-muted;
+		font-size: $app-font-size-sm;
+		font-weight: $app-font-weight-medium;
+		line-height: $app-line-height-ui;
+	}
+}
+
+.custom-ingredient-outcome__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-xs;
+
+	a {
+		width: fit-content;
+		min-height: $app-shell-control-height-compact;
+		padding: $app-shell-control-padding-y-compact $app-shell-control-padding-x-compact;
+		border-radius: $app-radius-pill;
+		font-family: $app-button-font-family;
+		font-size: $app-font-size-sm;
+		font-weight: $app-button-font-weight;
+		line-height: $app-button-line-height;
+		text-decoration: none;
+	}
+
+	a {
+		color: $app-highlight-text;
+		background: $app-highlight;
+	}
+}
+
+@media (max-width: $app-breakpoint-sm) {
+	.custom-ingredient-outcome__actions {
+		display: grid;
+		grid-template-columns: 1fr;
+
+		a {
+			width: 100%;
+			text-align: center;
+		}
+	}
+}

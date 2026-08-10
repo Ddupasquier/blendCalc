@@ -1,0 +1,69 @@
+@use "../../../../../styles/variables" as *;
+
+:global(.metadata-pill) {
+	display: inline-flex;
+	align-items: center;
+	box-sizing: border-box;
+	gap: $app-gap-xs;
+	max-width: 100%;
+	min-width: 0;
+	padding: $app-text-badge-padding-y $app-text-badge-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-control;
+	border-radius: $app-shell-radius-pill;
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+	line-height: $app-line-height-heading;
+	vertical-align: middle;
+}
+
+:global(.metadata-pill__leading),
+:global(.metadata-pill__trailing) {
+	display: inline-grid;
+	flex: 0 0 auto;
+	place-items: center;
+	line-height: $app-line-height-none;
+}
+
+:global(.metadata-pill__label) {
+	min-width: 0;
+	overflow: hidden;
+	line-height: inherit;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+:global(.metadata-pill__value) {
+	flex: 0 0 auto;
+	font-weight: $app-font-weight-heavy;
+	line-height: inherit;
+	white-space: nowrap;
+}
+
+:global(.metadata-pill[data-tone="soft"]) {
+	background: $app-shell-surface-soft;
+}
+
+:global(.metadata-pill[data-tone="success"]) {
+	color: $app-shell-accent-primary;
+	background: $app-success-bg;
+}
+
+:global(.metadata-pill[data-tone="warning"]) {
+	color: $app-warning-strong;
+	background: $app-status-warning-bg;
+}
+
+:global(.metadata-pill[data-tone="danger"]) {
+	color: $app-status-error-text;
+	background: $app-status-error-bg;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	:global(.metadata-pill) {
+		gap: $app-gap-inline-compact;
+		padding: $app-gap-2xs $app-gap-xs;
+		font-size: $app-font-size-2xs;
+	}
+}

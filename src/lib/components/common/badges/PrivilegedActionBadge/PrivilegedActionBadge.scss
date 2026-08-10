@@ -1,0 +1,33 @@
+@use "../../../../../styles/variables" as *;
+
+:global(.privileged-action-badge) {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	flex: 0 0 auto;
+	width: 1.72rem;
+	height: 1.72rem;
+	color: $app-highlight;
+	font-size: $app-font-size-xl;
+	line-height: $app-line-height-tight;
+}
+
+:global(.privileged-action-badge--profile) {
+	width: $app-privileged-badge-size;
+	height: $app-privileged-badge-size;
+	font-size: $app-font-size-md;
+}
+
+:global(.privileged-action-badge svg) {
+	width: 1em;
+	height: 1em;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	:global(.privileged-action-badge) {
+		width: $app-privileged-badge-size;
+		height: $app-privileged-badge-size;
+		font-size: $app-font-size-md;
+	}
+}

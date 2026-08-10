@@ -1,0 +1,40 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../ingredients/card/IngredientCardMediaLane/IngredientCardLayout" as ingredient-card-layout;
+
+.image-placement-card-preview {
+	@include ingredient-card-layout.frame;
+
+	grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.image-placement-card-preview--interactive {
+	cursor: grab;
+	touch-action: pan-y;
+}
+
+.image-placement-card-preview--interactive:active {
+	cursor: grabbing;
+}
+
+.image-placement-card-preview__copy {
+	position: relative;
+	z-index: 1;
+	@include ingredient-card-layout.copy;
+	@include ingredient-card-layout.media-content-inset;
+}
+
+.image-placement-card-preview__actions {
+	@include ingredient-card-layout.action-row;
+}
+
+:global(.image-placement-card-preview__action) {
+	--circular-icon-frame-size: #{$app-shell-action-icon-size};
+	--circular-icon-frame-icon-size: #{$app-shell-control-icon-size};
+	--circular-icon-frame-color: #{$app-shell-text-primary};
+	--circular-icon-frame-background: #{$app-shell-surface-soft};
+}
+
+:global(.image-placement-card-preview__action--primary) {
+	--circular-icon-frame-color: #{$app-shell-text-on-accent};
+	--circular-icon-frame-background: #{$app-shell-accent-primary};
+}

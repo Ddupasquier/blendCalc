@@ -1,0 +1,29 @@
+@use "../../../../../styles/variables" as *;
+
+.product-image-evidence {
+	display: grid;
+	gap: $app-gap-md;
+	min-width: 0;
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-panel;
+	border: 2px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-card;
+}
+
+.product-image-evidence p {
+	margin: $app-gap-xs 0 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	line-height: $app-line-height-ui;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.product-image-evidence {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+	}
+
+	.product-image-evidence p {
+		font-size: $app-font-size-xs;
+	}
+}

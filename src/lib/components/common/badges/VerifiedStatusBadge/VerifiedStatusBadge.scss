@@ -1,0 +1,10 @@
+$verified-icon-optical-offset-x: 0.04em;
+$verified-icon-optical-offset-y: -0.04em;
+
+:global(.verified-status-badge) {
+	--circular-icon-frame-icon-transform:
+		translate(
+			#{$verified-icon-optical-offset-x},
+			#{$verified-icon-optical-offset-y}
+		);
+}

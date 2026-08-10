@@ -1,0 +1,44 @@
+@use "../../../../../styles/variables" as *;
+
+.mix-panel-section {
+	min-width: 0;
+	background: $app-shell-surface-panel;
+	border: 1px solid transparent;
+	border-radius: $app-shell-radius-card;
+}
+
+.mix-panel-section[data-attention-tone="warning"] {
+	border-color: $app-warning-border-color;
+}
+
+.mix-panel-section[data-attention-tone="danger"] {
+	border-color: $app-shell-accent-danger;
+}
+
+.mix-panel-section > :global(.collapsible-section) > :global(.collapsible-section__content) {
+	padding: $app-gap-md $app-gap-sm $app-gap-sm;
+}
+
+.mix-panel-section[data-attention-tone]:not([data-attention-tone="neutral"])
+	> :global(.collapsible-section)
+	> :global(summary) {
+	background: transparent;
+}
+
+.mix-panel-section[data-attention-tone="warning"]
+	> :global(.collapsible-section)
+	> :global(summary) {
+	color: $app-warning-text;
+}
+
+.mix-panel-section[data-attention-tone="danger"]
+	> :global(.collapsible-section)
+	> :global(summary) {
+	color: $app-status-error-text;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.mix-panel-section > :global(.collapsible-section) > :global(.collapsible-section__content) {
+		padding: $app-gap-sm $app-gap-xs $app-gap-xs;
+	}
+}

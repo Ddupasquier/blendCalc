@@ -1,0 +1,112 @@
+@use "../../../../../styles/variables" as *;
+
+.nutrient-picker {
+	min-width: 0;
+}
+
+.nutrient-picker__content {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.nutrient-picker > :global(.collapsible-section) > :global(.collapsible-section__content) {
+	padding-top: $app-gap-sm;
+}
+
+.nutrient-picker__empty {
+	margin: 0;
+	padding: $app-gap-sm;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	text-align: center;
+}
+
+.nutrient-picker__goal-setup {
+	display: grid;
+	gap: $app-gap-sm;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-control;
+	border: $app-border;
+	border-radius: $app-radius;
+}
+
+.nutrient-picker__goal-copy {
+	display: grid;
+	gap: $app-gap-2xs;
+	color: $app-shell-text-primary;
+
+	small {
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-sm;
+	}
+}
+
+.nutrient-picker__goal-controls {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: $app-gap-xs;
+
+	> :global(input) {
+		width: 100%;
+		min-width: 0;
+		height: $app-control-height-sm;
+		padding: 0 $app-gap-sm;
+		background: $app-shell-surface-control;
+		border: $app-border;
+		border-radius: $app-radius-pill;
+		color: $app-shell-text-primary;
+		font: inherit;
+	}
+
+	> span {
+		color: $app-shell-text-muted;
+		font-size: $app-font-size-sm;
+		font-weight: $app-font-weight-semibold;
+	}
+}
+
+.nutrient-picker__results {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $app-gap-xs;
+	max-height: 18rem;
+	padding: $app-focus-outline-offset;
+	overflow-y: auto;
+	overscroll-behavior-y: auto;
+}
+
+.nutrient-picker__label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.nutrient-picker__unit {
+	flex: 0 0 auto;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.nutrient-picker__results {
+		grid-template-columns: 1fr;
+		max-height: 15rem;
+	}
+
+	.nutrient-picker__content {
+		gap: $app-gap-xs;
+	}
+
+	.nutrient-picker__goal-controls {
+		grid-template-columns: minmax(0, 1fr) auto;
+
+		> :global(.action-button) {
+			grid-column: 1 / -1;
+		}
+	}
+}

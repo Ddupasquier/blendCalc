@@ -1,0 +1,83 @@
+@use "../../../../../styles/variables" as *;
+
+.nutrient-adjustments__content {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.nutrient-adjustments__intro,
+.nutrient-adjustment__action,
+.nutrient-adjustment__basis {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-semibold;
+	line-height: $app-line-height-compact;
+}
+
+.nutrient-adjustments__list {
+	display: grid;
+	gap: $app-gap-xs;
+}
+
+.nutrient-adjustment {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	gap: $app-gap-sm;
+	align-items: center;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-soft;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+}
+
+.nutrient-adjustment__symbol {
+	display: grid;
+	width: $app-shell-action-icon-size;
+	height: $app-shell-action-icon-size;
+	place-items: center;
+	overflow: hidden;
+	background: $app-shell-accent-soft;
+	border-radius: $app-radius-circle;
+	font-size: $app-font-size-lg;
+}
+
+:global(.nutrient-adjustment__symbol .food-symbol__image),
+:global(.nutrient-adjustment__symbol .food-symbol__fallback) {
+	width: 100%;
+	height: 100%;
+}
+
+.nutrient-adjustment__main {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+}
+
+.nutrient-adjustment__main > strong {
+	overflow: hidden;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.nutrient-adjustment__impacts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: $app-gap-2xs;
+}
+
+@media (max-width: $app-breakpoint-xs),
+	(max-height: $app-breakpoint-height-compact) {
+	.nutrient-adjustment {
+		grid-template-columns: auto minmax(0, 1fr);
+		gap: $app-gap-xs;
+		padding: $app-gap-xs;
+	}
+
+	.nutrient-adjustment :global(.action-button) {
+		grid-column: 2;
+		justify-self: start;
+	}
+}
