@@ -188,6 +188,7 @@ test("Mix ingredient cards use their full surface for selection and restore stat
 	if ((await details.getAttribute("open")) === null) {
 		await details.locator(":scope > summary").click();
 	}
+	await chooser.getByRole("searchbox", { name: "Find ingredients" }).fill("Mango");
 	const mango = chooser.getByRole("button", {
 		name: "Remove Mango, Raw from this mix",
 	});
@@ -217,6 +218,9 @@ test("selected ingredient amount controls change once and restore the original v
 	if ((await details.getAttribute("open")) === null) {
 		await details.locator(":scope > summary").click();
 	}
+	await selectedSection
+		.getByRole("searchbox", { name: "Find selected ingredients" })
+		.fill("Mango");
 	const quantity = selectedSection.getByRole("spinbutton", {
 		name: "Quantity for Mango, Raw",
 	});
@@ -283,11 +287,37 @@ test("Mix options expose keyboard reorganization and restore the section order",
 	const nutrientShapeHandle = organizer.getByRole("button", {
 		name: "Drag Nutrient shape to reorder",
 	});
+	const readSectionOrder = () =>
+		organizer.locator("[data-mix-section-id]").evaluateAll((elements) =>
+			elements.map((element) =>
+				element.getAttribute("data-mix-section-id"),
+			),
+		);
+	const initialOrder = await readSectionOrder();
+	const initialPosition = initialOrder.indexOf("nutrient-shape");
+	expect(initialPosition).toBeGreaterThanOrEqual(0);
+	const movementKey =
+		initialPosition === initialOrder.length - 1 ? "ArrowUp" : "ArrowDown";
+	const returnKey = movementKey === "ArrowDown" ? "ArrowUp" : "ArrowDown";
+	const movedPosition = initialPosition + (movementKey === "ArrowDown" ? 1 : -1);
 	await nutrientShapeHandle.focus();
-	await nutrientShapeHandle.press("ArrowDown");
-	await expect(organizer.getByText(/moved to position 2/i)).toBeVisible();
-	await nutrientShapeHandle.press("ArrowUp");
-	await expect(organizer.getByText(/moved to position 1/i)).toBeVisible();
+	await nutrientShapeHandle.press(movementKey);
+	await expect(
+		organizer.getByText(
+			new RegExp(`moved to position ${movedPosition + 1} of`, "i"),
+		),
+	).toBeVisible();
+	await expect
+		.poll(async () => (await readSectionOrder()).indexOf("nutrient-shape"))
+		.toBe(movedPosition);
+	await nutrientShapeHandle.focus();
+	await nutrientShapeHandle.press(returnKey);
+	await expect(
+		organizer.getByText(
+			new RegExp(`moved to position ${initialPosition + 1} of`, "i"),
+		),
+	).toBeVisible();
+	await expect.poll(readSectionOrder).toEqual(initialOrder);
 	await organizer.getByRole("button", { name: "Done" }).click();
 	await expect(page).toHaveURL(/\/mix$/);
 });

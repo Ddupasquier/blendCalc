@@ -7,6 +7,7 @@ node_modules
 .wrangler
 /.svelte-kit
 /build
+/dist/
 /coverage/
 /.nyc_output/
 /playwright-report/
@@ -42,6 +43,8 @@ pnpm-debug.log*
 /.stylelintcache
 /.parcel-cache/
 /.turbo/
+/.vite/
+*.tsbuildinfo
 
 # Generated API audit output
 /scripts/output/

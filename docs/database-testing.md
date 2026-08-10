@@ -13,10 +13,10 @@ npm run db:test:start
 
 This command starts the Docker-compatible runtime when Colima is installed, starts the
 local Supabase services, writes local credentials to the gitignored
-`.env.test.local`, applies deterministic runtime reference fixtures, and repairs six
+`.env.test.local`, applies deterministic runtime reference fixtures, and repairs ten
 purpose-built QA personas. The personas cover populated everyday use, food warnings,
-empty states, guided onboarding, moderation, and administration without requiring
-manual setup before each pass.
+empty states, guided onboarding, privileged roles, and three isolated browser workers
+without requiring manual setup before each pass.
 The local Auth service also runs the production-shaped blocked-signup and Custom Access
 Token hooks, so regular, moderator, and administrator QA sessions receive the same
 database-owned `app_role` claims that hosted sessions receive.
@@ -45,6 +45,7 @@ baseline records without moving a tester's existing list items. Use
 | Moderator | `qa-moderator@blendcalc.local` | Moderator claim, 6 list items, one Saved Recipe, and access to two deterministic catalog-review cases |
 | Admin | `qa-admin@blendcalc.local` | Admin claim, 6 list items, one Saved Recipe, moderation access, and data-health access |
 | Developer | `qa-developer@blendcalc.local` | Developer claim, 6 list items, one Saved Recipe, full privileged capability coverage, and protected-account boundaries |
+| Browser workers 1–3 | `qa-browser-1@blendcalc.local` through `qa-browser-3@blendcalc.local` | Equivalent populated state isolated by Playwright worker; not intended for manual QA |
 
 The populated account includes `QA Morning Green` (10 ingredients), `QA Berry Repeat`,
 `QA Export Berry Mix`, and `QA Server Load`. The Saved view can therefore test collapsed
@@ -72,6 +73,10 @@ through the real local Auth UI, uses the seeded personas and catalog, and stores
 session state only under ignored test output. See [Browser Testing](browser-testing.md)
 for projects, snapshots, and commands, and [Testing Strategy](testing.md) for ownership
 and execution stages.
+
+Migration and database-test ownership changes also trigger the checked-in Database
+Verification workflow. Each remote run creates its own Supabase stack before pgTAP, so
+it does not share mutable state with browser jobs or another workflow run.
 
 ## Safety Boundary
 

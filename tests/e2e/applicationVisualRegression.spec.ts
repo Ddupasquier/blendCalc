@@ -14,6 +14,10 @@ for (const view of stableViewSnapshots) {
 		page,
 	}, testInfo) => {
 		test.skip(
+			Boolean(process.env.CI),
+			"Reviewed macOS image baselines run locally; CI owns structural layout checks.",
+		);
+		test.skip(
 			!["desktop-chromium", "mobile-chromium"].includes(testInfo.project.name),
 			"Visual baselines are intentionally limited to deterministic Chromium projects.",
 		);

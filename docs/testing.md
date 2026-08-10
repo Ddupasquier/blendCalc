@@ -32,7 +32,7 @@ different boundaries:
 | A browser test checks source text or migration SQL | It starts the slowest layer without proving browser behavior | Use a focused Vitest architecture guard or the local database suite |
 | A component test tries to prove layout, focus clipping, or responsive behavior | jsdom does not perform real layout or browser focus painting | Use Playwright at the required viewport |
 | Playwright creates impossible provider or database failures through UI hacks | The setup becomes brittle and less honest than the contract | Inject the failure in a server/unit test; keep one real user-facing failure flow in Playwright when deterministic |
-| Several browser workers share one mutable account | Tests race persisted state and become flaky | Keep one worker until every worker has isolated users, storage state, and durable fixtures |
+| Several browser workers share one mutable account | Tests race persisted state and become flaky | Give every worker an isolated user and storage state; isolate each remote job's database |
 | Manual QA repeats a deterministic browser flow | Regressions rely on memory and consume repeated human effort | Move the reproducible flow to Playwright and keep manual QA for hardware or judgment |
 
 When adding Playwright coverage, inspect the older component and route tests for the
@@ -118,39 +118,53 @@ only the focused architecture and documentation checks that govern the changed t
 
 ## Parallelism
 
-Vitest already runs files in parallel. Increase its worker count only after recording a
-wall-clock benchmark and checking memory use and repeated stability. More workers can be
-slower when each worker initializes Svelte and jsdom.
+On the current 8-core, 16 GiB development machine, full-suite samples completed in
+113.73 seconds with four Vitest workers, 97.12 seconds with six, and 98.62 seconds with
+eight. The maintained local maximum is therefore six; CI uses two workers to match the
+smaller hosted runner. Rebenchmark after major dependency, hardware, or suite changes
+instead of treating six as a universal optimum.
 
-Playwright currently uses one worker because all projects share a QA account and local
-database state. Raising the count now could race theme, Mix, tutorial, selection, and
-Saved Recipe persistence.
+Playwright defaults to two local workers. Three equivalent browser-worker personas are
+seeded in the disposable database, and every worker creates its own authenticated
+storage state. Set `PLAYWRIGHT_WORKERS=3` for an intentional local comparison. A hosted
+test run must provide one comma-separated `PLAYWRIGHT_QA_EMAILS` value per worker; one
+shared account is not parallel-safe.
 
-Playwright can run concurrently only after:
-
-1. each worker has its own user and browser storage state;
-2. durable mutations are isolated or restored deterministically;
-3. shared catalog and reference fixtures stay read-only;
-4. no test depends on execution order;
-5. repeated parallel runs show no state leakage or intermittent failures.
-
-For remote verification, prefer one isolated job per browser project, each with its own
-local Supabase stack. Use Playwright sharding only when each shard has an independent
-test environment. Several workers sharing one mutable database are not a useful speedup.
+Remote browser verification uses one job per Playwright project. Every job creates its
+own local Supabase stack, so Chromium, Firefox, WebKit, and compact projects cannot race
+one another. The jobs may use their isolated worker accounts internally, but sharding
+still requires one independent database environment per shard.
 
 ## Quiet Output
 
 Keep successful runs compact and preserve full diagnostics for failures:
 
 ```bash
-npm test -- --reporter=dot
-npx playwright test --reporter=dot
+npm test
+npx playwright test
 ```
 
 Reports, traces, screenshots, videos, and logs belong in ignored test-output folders.
 Routine evidence needs the command, exit status, pass/fail/skip counts, and relevant
 failure block—not a complete successful log. Never truncate the diagnostic that explains
 a failure.
+
+The maintained Vitest and Playwright configurations use compact dot output by default.
+Redirect a long unattended run to `test-results/` when only its summary is needed; that
+directory is ignored. Open retained HTML reports, traces, screenshots, videos, or logs
+only when a failure needs investigation.
+
+## Remote Verification
+
+The checked-in workflows use Node.js 24 and a clean dependency install:
+
+- `.github/workflows/verify.yml` runs version consistency, dependency auditing, Svelte
+  checks, Vitest, the production build, and one isolated job per browser project;
+- `.github/workflows/database-verification.yml` rebuilds the local Supabase stack and
+  runs pgTAP whenever migrations or database-test ownership files change.
+
+The workflow files make verification repeatable. Repository settings must still mark
+the appropriate workflow checks as required before a protected branch can rely on them.
 
 ## Browser Matrix
 

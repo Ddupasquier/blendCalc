@@ -9,8 +9,13 @@ describe("Playwright browser-testing architecture", () => {
 		expect(viteConfig).toContain("exclude: ['tests/e2e/**']");
 	});
 
-	it("runs authenticated desktop and mobile browser projects against the test app", () => {
+	it("runs authenticated desktop and mobile projects with isolated parallel workers", () => {
 		const playwrightConfig = readSource("playwright.config.ts");
+		const browserTestSupport = readSource("tests/e2e/support/browserTest.ts");
+		const localQaAccounts = readSource(
+			"tests/e2e/support/localQaAccounts.ts",
+		);
+		const localQaPersonas = readSource("scripts/lib/local_qa_personas.mjs");
 		for (const project of [
 			"desktop-chromium",
 			"desktop-firefox",
@@ -23,7 +28,18 @@ describe("Playwright browser-testing architecture", () => {
 		expect(playwrightConfig).toContain('command: "npm run dev:test:server"');
 		expect(playwrightConfig).toContain('"http://localhost:5174"');
 		expect(playwrightConfig).toContain("reuseExistingServer: false");
-		expect(playwrightConfig).toContain("workers: 1");
+		expect(playwrightConfig).toContain('process.env.PLAYWRIGHT_WORKERS ?? "2"');
+		expect(playwrightConfig).toContain("workers: localPlaywrightWorkerCount");
+		expect(browserTestSupport).toContain('scope: "worker"');
+		expect(browserTestSupport).toContain("workerInfo.parallelIndex");
+		expect(localQaAccounts).toContain("PLAYWRIGHT_QA_EMAILS");
+		expect(localQaPersonas).toContain(
+			"const browserWorkerPersonas = [1, 2, 3]",
+		);
+		expect(localQaPersonas).toContain(
+			"email: `qa-browser-${workerNumber}@blendcalc.local`",
+		);
+		expect(existsSync("tests/e2e/authentication.setup.ts")).toBe(false);
 	});
 
 	it("exposes maintained local-database browser commands and documentation", () => {
@@ -66,12 +82,45 @@ describe("Playwright browser-testing architecture", () => {
 		expect(applicationVisualSuite).not.toContain('route: "/profile"');
 	});
 
-	it("stores authentication and generated reports only under ignored test output", () => {
-		const playwrightConfig = readSource("playwright.config.ts");
+	it("keeps generated test and build artifacts out of source control", () => {
+		const localQaAccounts = readSource(
+			"tests/e2e/support/localQaAccounts.ts",
+		);
 		const gitignore = readSource(".gitignore");
-		expect(playwrightConfig).toContain('"test-results/authenticated-browser-state/qa-user.json"');
+		expect(localQaAccounts).toContain(
+			"test-results/authenticated-browser-state/",
+		);
 		expect(gitignore).toContain("/playwright-report/");
 		expect(gitignore).toContain("/test-results/");
+		expect(gitignore).toContain("/blob-report/");
+		expect(gitignore).toContain("/coverage/");
+		expect(gitignore).toContain("/dist/");
+		expect(gitignore).toContain("*.tsbuildinfo");
+	});
+
+	it("runs remote browser projects and database verification in isolated jobs", () => {
+		const verificationWorkflow = readSource(".github/workflows/verify.yml");
+		const databaseWorkflow = readSource(
+			".github/workflows/database-verification.yml",
+		);
+		const viteConfig = readSource("vite.config.ts");
+
+		expect(verificationWorkflow).toContain("matrix:");
+		for (const project of [
+			"desktop-chromium",
+			"desktop-firefox",
+			"desktop-webkit",
+			"mobile-chromium",
+			"mobile-webkit",
+		]) {
+			expect(verificationWorkflow).toContain(`project: ${project}`);
+		}
+		expect(verificationWorkflow).toContain("npm audit --audit-level=high");
+		expect(verificationWorkflow).toContain("npm run check");
+		expect(verificationWorkflow).toContain("npm test");
+		expect(verificationWorkflow).toContain("npm run build");
+		expect(databaseWorkflow).toContain("npm run db:test:verify");
+		expect(viteConfig).toContain("maxWorkers: process.env.CI ? 2 : 6");
 	});
 
 	it("exposes one deterministic client-readiness signal before browser interaction", () => {

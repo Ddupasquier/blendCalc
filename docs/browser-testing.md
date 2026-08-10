@@ -40,23 +40,24 @@ through the internal `dev:test:server` command at `http://localhost:5174`. The n
 development app remains available on `http://localhost:5173`; Playwright never reuses or
 stops that server.
 
-The authentication setup signs in the disposable `qa-user@blendcalc.local` persona and
-writes browser state beneath ignored `test-results/`. Override the local account only
-when a deliberate hosted test run requires it:
+Three populated `qa-browser-*` personas isolate local browser workers. Each worker signs
+in once and writes its own browser state beneath ignored `test-results/`. Two workers
+run by default; set `PLAYWRIGHT_WORKERS=3` for an intentional local comparison. Override
+the local accounts only when a deliberate hosted test run requires it:
 
 ```bash
-PLAYWRIGHT_QA_EMAIL="..." PLAYWRIGHT_QA_PASSWORD="..." npm run test:e2e
+PLAYWRIGHT_QA_EMAILS="first@example.test,second@example.test" \
+PLAYWRIGHT_QA_PASSWORD="..." PLAYWRIGHT_WORKERS=2 npm run test:e2e
 ```
 
 Set `PLAYWRIGHT_BASE_URL` and `PLAYWRIGHT_SKIP_WEB_SERVER=1` only for an explicitly
 prepared hosted test environment. Never point destructive or mutating browser tests at
 production.
 
-Browser projects run serially because they intentionally share one deterministic QA
-account and one local database. Parallel projects could race persisted theme, Mix,
-selection, tutorial, and recipe state and make otherwise correct browser checks flaky.
-Do not raise the worker count until the isolation gates in
-[Testing Strategy: Parallelism](testing.md#parallelism) are met.
+Workers never share an account or browser state. Tests that mutate durable data must
+still restore it before finishing because later files may reuse that worker's account.
+The complete remote matrix runs each browser project in a separate job with its own
+local Supabase stack. See [Testing Strategy: Parallelism](testing.md#parallelism).
 
 ## Commands
 
@@ -74,6 +75,10 @@ npm run test:e2e:update
 - `test:e2e:headed` shows the desktop Chromium run.
 - `test:e2e:ui` opens Playwright's test explorer.
 - `test:e2e:update` deliberately refreshes tracked Chromium visual baselines.
+
+Reviewed image snapshots are macOS baselines and run locally. Remote Linux jobs own
+structural layout, responsive bounds, accessibility, and interaction checks; they skip
+platform-specific pixel comparisons rather than approving unreviewed Linux images.
 
 Tracked visual baselines currently cover the approved Ingredients composition plus the
 current Mix and Saved Recipes compositions at desktop Chromium and the shared 360×740

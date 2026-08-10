@@ -45,25 +45,24 @@ CAPTCHA thresholds are defined for public signup/recovery abuse; privileged acco
 use an approved MFA policy; and the decisions are checked in a repeatable prelaunch
 security runbook without storing secrets in the repository.
 
-### Remote Release Verification Is Not Enforced
+### Remote Release Verification Is Not Yet Required
 
-**Status:** High
+**Status:** Open
 
-**Evidence:** The repository has no GitHub Actions workflow or equivalent checked-in
-remote verification gate. `package.json` runs only the version consistency check before
-production builds, while the full tests, Svelte check, security audit, authentication
-check, and database verification remain separate opt-in commands. `vercel.json` defines
-the analytics cron but no build-time quality gate. A branch can therefore reach a
-deployment target without the canonical change lifecycle being independently proven.
+**Evidence:** Checked-in workflows now run Node.js 24 source checks, dependency auditing,
+Vitest, production packaging, isolated browser-project jobs, and path-scoped local
+Supabase/pgTAP verification. Repository configuration cannot prove that GitHub branch
+protection requires those checks before staging or production merges. The separate
+hosted authentication check also still depends on deployment environment values and is
+not part of the secret-free source job.
 
 **Affected areas:** Pull requests, parent-branch merges, Vercel deployments, database
 migrations, and release confidence.
 
-**Complete when:** A Node.js 24 remote workflow performs a clean dependency install,
-version consistency check, dependency security audit, Svelte check, full test suite,
-and production build; migration changes additionally run the maintained database
-verification workflow; and the required checks protect the branches that feed staging
-and production.
+**Complete when:** The source, applicable browser, and applicable database checks are
+required on branches that feed staging and production, and the hosted authentication
+check runs in an appropriately protected deployment environment without exposing
+secrets.
 
 ### General Source Linting And Formatting Are Not Enforced
 

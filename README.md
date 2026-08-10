@@ -97,7 +97,7 @@ adding one-off npm aliases.
 | `npm run dev:test` | Start the app against the isolated local Supabase test database |
 | `npm run build` | Production build |
 | `npm run preview` | Preview production build |
-| `npm test` | Run the non-browser Vitest suite |
+| `npm test` | Run the non-browser Vitest suite with the benchmarked local worker limit and compact output |
 | `npm run test:watch` | Run focused Vitest checks in watch mode |
 | `npm run test:e2e` | Run authenticated Playwright tests in desktop and mobile Chromium, Firefox, and WebKit projects |
 | `npm run test:e2e:chromium` | Run the focused desktop and 360×740 phone Chromium projects |
