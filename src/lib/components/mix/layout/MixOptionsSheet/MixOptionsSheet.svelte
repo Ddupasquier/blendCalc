@@ -20,7 +20,7 @@
 	}: MixOptionsSheetProps = $props();
 </script>
 
-<BottomSheet {open} title="Mix options" showBack={false} onClose={onClose}>
+<BottomSheet {open} title="Mix options" onClose={onClose}>
 	<div class="mix-options-sheet__actions">
 		<BottomSheetAction label="Reorganize" onSelect={onReorganize}>
 			{#snippet icon()}<GripVertical size={19} />{/snippet}

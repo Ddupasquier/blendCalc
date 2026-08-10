@@ -1,12 +1,12 @@
 import { createScrollDirectionTracker } from "$lib/utils/navigation/scrollDirection";
 
-type MixHeaderVisibilityControllerOptions = {
+type ScrollAwareHeaderVisibilityControllerOptions = {
 	isEnabled: () => boolean;
 };
 
-export const createMixHeaderVisibilityController = ({
+export const createScrollAwareHeaderVisibilityController = ({
 	isEnabled,
-}: MixHeaderVisibilityControllerOptions) => {
+}: ScrollAwareHeaderVisibilityControllerOptions) => {
 	const state = $state({ hidden: false });
 	const tracker = createScrollDirectionTracker();
 	let resumeFrame: number | null = null;
@@ -44,6 +44,11 @@ export const createMixHeaderVisibilityController = ({
 		if (direction) state.hidden = direction === "down";
 	};
 
+	const show = (scrollTop = 0) => {
+		state.hidden = false;
+		tracker.reset(scrollTop);
+	};
+
 	const observe = (element: HTMLElement | null) => {
 		if (!element || typeof ResizeObserver === "undefined") return () => {};
 		const observer = new ResizeObserver(() => {
@@ -62,9 +67,9 @@ export const createMixHeaderVisibilityController = ({
 		};
 	};
 
-	return { state, handleScroll, observe };
+	return { state, handleScroll, observe, show };
 };
 
-export type MixHeaderVisibilityController = ReturnType<
-	typeof createMixHeaderVisibilityController
+export type ScrollAwareHeaderVisibilityController = ReturnType<
+	typeof createScrollAwareHeaderVisibilityController
 >;

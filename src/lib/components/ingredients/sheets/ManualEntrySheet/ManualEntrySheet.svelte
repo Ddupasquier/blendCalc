@@ -40,7 +40,6 @@
 	label={submissionIntent === "catalog_correction"
 		? "Submit corrected product information for review"
 		: "Enter a custom ingredient manually"}
-	showBack={false}
 	fill
 	onClose={handleClose}
 >

@@ -19,7 +19,7 @@ const selectedIngredientsTypes = readFileSync(
 	"utf8",
 );
 const headerController = readFileSync(
-	"src/lib/utils/mix/state/mixHeaderVisibilityController.svelte.ts",
+	"src/lib/utils/navigation/scrollAwareHeaderVisibilityController.svelte.ts",
 	"utf8",
 );
 

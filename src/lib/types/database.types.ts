@@ -5073,6 +5073,47 @@ export type Database = {
           },
         ]
       }
+      user_catalog_submission_enforcement: {
+        Row: {
+          created_at: string
+          latest_rejected_at: string | null
+          latest_rejected_by: string | null
+          latest_rejected_submission_id: string | null
+          moderator_rejection_count: number
+          sharing_suspended_until: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          latest_rejected_at?: string | null
+          latest_rejected_by?: string | null
+          latest_rejected_submission_id?: string | null
+          moderator_rejection_count?: number
+          sharing_suspended_until?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          latest_rejected_at?: string | null
+          latest_rejected_by?: string | null
+          latest_rejected_submission_id?: string | null
+          moderator_rejection_count?: number
+          sharing_suspended_until?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_catalog_submission_enfor_latest_rejected_submission_i_fkey"
+            columns: ["latest_rejected_submission_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_compatibility_rules: {
         Row: {
           active: boolean

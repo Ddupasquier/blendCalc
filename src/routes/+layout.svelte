@@ -93,7 +93,11 @@
 				page.url.pathname === "/ingredients/fridge" ||
 				page.url.pathname.startsWith("/ingredients/fridge/") ||
 				page.url.pathname === "/ingredients/shopping" ||
-				page.url.pathname.startsWith("/ingredients/shopping/")),
+				page.url.pathname.startsWith("/ingredients/shopping/") ||
+				page.url.pathname === "/saved" ||
+				page.url.pathname.startsWith("/saved/") ||
+				page.url.pathname === "/profile" ||
+				page.url.pathname.startsWith("/profile/")),
 	);
 	const tutorialRouteOpen = $derived(page.url.pathname === "/profile/tutorial");
 	const tutorialVisible = $derived(tutorialOpen || tutorialRouteOpen);

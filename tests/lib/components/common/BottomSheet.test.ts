@@ -59,13 +59,15 @@ describe("BottomSheet shared chrome", () => {
 		);
 	});
 
-	it("allows a flow to hide the shared back control", () => {
+	it("does not duplicate close behavior with a back control", () => {
 		const source = readFileSync(componentPath, "utf8");
 		const manualEntrySource = readFileSync(manualEntrySheetPath, "utf8");
 
-		expect(source).toContain("showBack = true");
-		expect(source).toContain("{#if showBack}");
-		expect(manualEntrySource).toContain("showBack={false}");
+		expect(source).toContain('aria-label="Close sheet"');
+		expect(source).not.toContain("BackButton");
+		expect(source).not.toContain("showBack");
+		expect(source).not.toContain("backLabel");
+		expect(manualEntrySource).not.toContain("showBack");
 	});
 
 	it("closes manual entry once before forwarding a successful creation", () => {

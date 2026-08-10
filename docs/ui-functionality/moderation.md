@@ -1,16 +1,24 @@
 # Moderation
 
-Routes: `/moderation` and `/moderation/data-health`
+Routes: `/moderation`, `/moderation/data-health`, and the Profile gateway at
+`/profile/moderator-actions`
 
 Only authorized moderators, administrators, and developers may enter these views. Role,
 account-control, and notification rules live in [Moderation](../moderation.md).
+
+The elevated-role-only Profile launcher opens one shared bottom sheet containing every
+current moderation destination. It may summarize pending queues, but it never replaces
+the authorization, evidence, or mutation rules of the destination route. Queue rows
+remain visible and disabled at zero; standing account and data-health tools remain
+available.
 
 ## Account Review
 
 - Show the viewer's current role.
 - Search accounts by preferred/display name, email, user ID, role, or status.
 - Account cards show avatar or placeholder, display name, moderator-only email, status,
-  role, image-review status, and public block reason.
+  role, image-review status, public block reason, cumulative moderator-rejected public
+  submission count, and any active public-sharing suspension date.
 - Prevent self-moderation.
 - Prevent moderators from acting on privileged accounts.
 - Keep administrators and developers protected from the web blocking flow.
@@ -23,8 +31,8 @@ account-control, and notification rules live in [Moderation](../moderation.md).
   count, lookup failures, review flags, private evidence images, and nutrition details.
 - Keep one clear Approve action and one Reject action that requires a note.
 - Preserve deterministic QA-fixture behavior in the disposable local environment.
-- Repeated rejected submissions may pause catalog sharing under the current catalog
-  policy without blocking private food tracking.
+- The 51st moderator rejection pauses public catalog sharing for six calendar months.
+  Automated declines do not count, and private food tracking remains available.
 
 ## Data Health
 

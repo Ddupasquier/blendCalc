@@ -26,6 +26,10 @@ import {
 import type { RegulatoryRegionOption } from "$lib/utils/profile/regulatoryRegion";
 import { getDefaultMixFields } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { ProfilePageDataReaderOptions } from "./types";
+import {
+	getUnavailableModeratorActionSummary,
+	readModeratorActionSummary,
+} from "$lib/server/moderation/moderatorActionSummary.server";
 
 export const getRegulatoryRegionOptions = (
 	policy: FoodSafetyPolicy,
@@ -38,12 +42,17 @@ export const getRegulatoryRegionOptions = (
 export const loadProfilePageData = async ({
 	supabase,
 	userId,
+	appRole,
 }: ProfilePageDataReaderOptions) => {
 	const profileWithAvatarPromise = getUserProfile(supabase, userId)
 		.then(async (profile) => ({
 			profile,
 			avatarUrl: await getSignedAvatarUrl(supabase, profile?.avatar_path),
 		}));
+	const moderatorActionSummaryPromise = appRole
+		? readModeratorActionSummary().catch(() =>
+			getUnavailableModeratorActionSummary())
+		: Promise.resolve(null);
 
 	const [
 		{ profile, avatarUrl },
@@ -52,6 +61,7 @@ export const loadProfilePageData = async ({
 		appReferenceCatalog,
 		foodSafetyPolicy,
 		preferenceResolutions,
+		moderatorActionSummary,
 	] = await Promise.all([
 		profileWithAvatarPromise,
 		supabase
@@ -71,6 +81,7 @@ export const loadProfilePageData = async ({
 		getAppReferenceCatalog(),
 		getFoodSafetyPolicy(),
 		getUserFoodPreferenceResolutions(supabase, userId),
+		moderatorActionSummaryPromise,
 	]);
 
 	const foodPreferencesUnavailable =
@@ -100,5 +111,6 @@ export const loadProfilePageData = async ({
 		defaultDisplayName: getDefaultDisplayName(userId),
 		avatarPolicyItems: PROFILE_AVATAR_POLICY_ITEMS,
 		requireHumanFace: PROFILE_AVATAR_REQUIRE_HUMAN_FACE,
+		moderatorActionSummary,
 	};
 };

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
 	createConnectSources,
+	createImageSources,
 	readViteMode,
 } from "../../config/contentSecurityPolicy.js";
 
@@ -40,6 +41,13 @@ describe("content security policy", () => {
 		);
 		expect(createConnectSources("production")).not.toContain(
 			"ws://127.0.0.1:54321",
+		);
+	});
+
+	it("allows local Supabase images only in test mode", () => {
+		expect(createImageSources("test")).toContain("http://127.0.0.1:54321");
+		expect(createImageSources("production")).not.toContain(
+			"http://127.0.0.1:54321",
 		);
 	});
 

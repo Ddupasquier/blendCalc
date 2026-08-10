@@ -1,4 +1,9 @@
-import { expect, test, waitForAppReady } from "./support/browserTest";
+import {
+	expect,
+	expectFocusOutlineInsideBoundary,
+	test,
+	waitForAppReady,
+} from "./support/browserTest";
 
 test("URL-backed ingredient overlays close through Escape and browser history", async ({
 	page,
@@ -75,4 +80,30 @@ test("modal sheet focus wraps without reaching the underlying page", async ({
 		.toBe(true);
 	await page.keyboard.press("Tab");
 	await expect(closeButton).toBeFocused();
+});
+
+test("right-sheet view frames keep edge focus outlines inside their clipping boundary", async ({
+	page,
+}) => {
+	await page.goto("/ingredients/fridge/search");
+	await waitForAppReady(page);
+	const ingredientSearchView = page.locator(".ingredient-search-view");
+	await expectFocusOutlineInsideBoundary(
+		ingredientSearchView.getByRole("button", { name: "Back to ingredients" }),
+		ingredientSearchView,
+	);
+
+	const searchInput = page.getByRole("combobox", { name: "Search ingredients" });
+	await searchInput.fill("spinach");
+	const nutritionButton = page
+		.getByRole("button", { name: /^View nutrition for / })
+		.first();
+	await expect(nutritionButton).toBeVisible();
+	await nutritionButton.click();
+	await expect(page).toHaveURL(/\/nutrition\//);
+	const nutritionDetailView = page.locator(".nutrition-detail-view");
+	await expectFocusOutlineInsideBoundary(
+		nutritionDetailView.getByRole("button", { name: "Back to ingredients" }),
+		nutritionDetailView,
+	);
 });
