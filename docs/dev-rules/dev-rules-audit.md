@@ -119,8 +119,9 @@ card/empty-state styles. App typography now uses one guarded semantic scale acro
 Root, Authentication, Profile, Moderation, Mix, Saved Recipes, and Ingredients. Those
 older routes still contain one-off spacing and layout values that require deliberate
 view-level migration rather than a mechanical typography pass. Current examples include
-`src/routes/page.scss`, `src/routes/auth/page.scss`, `src/routes/profile/page.scss`, and
-`src/routes/moderation/page.scss`. Repository guards currently reject raw application
+`src/routes/page.scss`, `src/routes/auth/page.scss`, and
+`src/routes/moderation/page.scss`. Profile now uses the Ingredients-derived semantic
+shell tokens and component-owned styles. Repository guards currently reject raw application
 typography, box shadows, numeric media-query breakpoints, and unexplained raw colors;
 the remaining gap is deliberate view migration and direct-token spacing, not a missing
 global scale.
@@ -135,12 +136,12 @@ constants rather than undocumented design choices.
 **Status:** Open
 
 **Evidence:** Ingredients, Mix, and Saved Recipes largely compose actions through the
-shared button and input primitives. Authentication, Profile, and Moderation still render
+shared button and input primitives. Authentication and Moderation still render
 route-local submit buttons and action classes instead of delegating their loading,
 disabled, focus, sizing, and responsive behavior to the same primitives. No feature
 route still owns a native `<select>`, but 11 route-local submit buttons remain across
-Authentication, Profile, and Moderation. Current examples include `src/routes/auth/+page.svelte`,
-`src/routes/auth/update-password/+page.svelte`, `src/routes/profile/+page.svelte`, and
+Authentication and Moderation. Current examples include `src/routes/auth/+page.svelte`,
+`src/routes/auth/update-password/+page.svelte`, and
 `src/routes/moderation/+page.svelte`.
 
 **Complete when:** Each remaining route-local action is migrated to the applicable

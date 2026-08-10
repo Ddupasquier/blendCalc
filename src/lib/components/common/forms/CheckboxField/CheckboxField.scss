@@ -1,0 +1,55 @@
+@use "../../../../../styles/variables" as *;
+@use "../../../../utils/animation/motion" as motion;
+
+.checkbox-field {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: start;
+	gap: $app-gap-sm;
+	min-width: 0;
+	padding: $app-gap-xs;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-soft;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-body;
+	cursor: pointer;
+	transition:
+		background-color motion.$duration-state motion.$easing-standard,
+		border-color motion.$duration-state motion.$easing-standard;
+}
+
+.checkbox-field:hover {
+	background: $app-shell-accent-soft;
+}
+
+.checkbox-field:has(input:focus-visible) {
+	border-color: $app-shell-accent-primary;
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.checkbox-field:has(input:disabled) {
+	cursor: not-allowed;
+	opacity: 0.65;
+}
+
+input {
+	width: 1rem;
+	height: 1rem;
+	margin: $app-gap-inline-compact 0 0;
+	accent-color: $app-shell-accent-primary;
+}
+
+span {
+	min-width: 0;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.checkbox-field {
+		gap: $app-gap-xs;
+		font-size: $app-font-size-xs;
+	}
+}

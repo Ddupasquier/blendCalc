@@ -1,0 +1,16 @@
+@use "../../../../styles/variables" as *;
+
+form {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+:global(.rounded-action-button) {
+	justify-self: start;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	:global(.rounded-action-button) {
+		width: 100%;
+	}
+}

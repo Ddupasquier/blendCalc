@@ -1,0 +1,79 @@
+@use "../../../../../styles/variables" as *;
+
+.text-field {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+	color: $app-shell-text-primary;
+}
+
+.text-field__label {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-label;
+	line-height: $app-line-height-ui;
+	text-transform: uppercase;
+}
+
+input,
+textarea {
+	width: 100%;
+	min-width: 0;
+	padding: $app-gap-sm $app-shell-control-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-control;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+	outline: none;
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-body;
+}
+
+input {
+	min-height: $app-shell-control-height;
+	padding-block: 0;
+}
+
+textarea {
+	resize: vertical;
+}
+
+input:hover:not(:disabled),
+textarea:hover:not(:disabled),
+input:focus,
+textarea:focus {
+	border-color: $app-shell-accent-primary;
+}
+
+input:focus-visible,
+textarea:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+input:disabled,
+textarea:disabled {
+	cursor: not-allowed;
+	opacity: 0.65;
+}
+
+.text-field__helper {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-body;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	input {
+		min-height: $app-shell-control-height-narrow;
+	}
+
+	input,
+	textarea {
+		padding: $app-shell-control-padding-y-compact $app-shell-control-padding-x-compact;
+	}
+}

@@ -40,6 +40,7 @@
 				class:theme-preference-control__option--selected={value === option.value}
 			>
 				<input
+					class="sr-only"
 					type="radio"
 					name="appearanceTheme"
 					value={option.value}

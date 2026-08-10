@@ -1,0 +1,59 @@
+@use "../../../../styles/variables" as *;
+
+.profile-food-preference-basics {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: $app-gap-sm;
+}
+
+.profile-food-preference-basics__serving {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+}
+
+.profile-food-preference-basics__serving > span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-label;
+	line-height: $app-line-height-ui;
+	text-transform: uppercase;
+}
+
+.profile-food-preference-basics__serving > div {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 5rem;
+	gap: $app-gap-xs;
+}
+
+.profile-food-preference-basics__serving :global(input) {
+	width: 100%;
+	min-width: 0;
+	min-height: $app-shell-control-height;
+	padding: 0 $app-shell-control-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-control;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-sm;
+}
+
+.profile-food-preference-basics__serving :global(input:focus-visible) {
+	border-color: $app-shell-accent-primary;
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.profile-food-preference-basics,
+	.profile-food-preference-basics__serving > div {
+		grid-template-columns: 1fr;
+	}
+
+	.profile-food-preference-basics__serving :global(input) {
+		min-height: $app-shell-control-height-narrow;
+		padding-inline: $app-shell-control-padding-x-compact;
+	}
+}

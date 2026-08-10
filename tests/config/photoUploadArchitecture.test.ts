@@ -12,7 +12,7 @@ describe("photo upload architecture", () => {
 			"src/lib/components/ingredients/manual-entry/NutritionLabelOcrInput/NutritionLabelOcrInput.svelte",
 			"src/lib/components/ingredients/manual-entry/ProductImageEvidenceInput/ProductImageEvidenceInput.svelte",
 			"src/lib/components/ingredients/manual-entry/steps/ShareStep/ShareStep.svelte",
-			"src/routes/profile/+page.svelte",
+			"src/lib/components/profile/ProfileImageSettings/ProfileImageSettings.svelte",
 		];
 
 		expect(uploader).toContain('type="file"');
