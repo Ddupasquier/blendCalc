@@ -140,6 +140,14 @@ Render three layers:
 2. one dotted goal outline;
 3. the current Mix shape.
 
+The containing boundary stays visually distinct from the interior grid. Each current
+point is normalized against that nutrient's configured goal, then the goal and current
+shapes share one scale based on the highest goal-relative value in the graph. Reserve a
+small amount of boundary headroom so the largest point remains visible. This keeps the
+boundary, goal, and current amount legible as three separate layers without comparing
+incompatible raw units or changing stored goals and nutrient calculations. Exact values
+remain in the status summaries and accessible chart description.
+
 The shape uses one point as a circle, two as a thick line, three as a triangle, and more
 as a polygon. Goal and current values respond immediately to goal, food, and amount
 changes. Each point keeps its own under/near/over status color; lines and fill blend the

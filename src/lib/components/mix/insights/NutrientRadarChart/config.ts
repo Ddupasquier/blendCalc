@@ -3,6 +3,7 @@ export const NUTRIENT_RADAR_CHART_DEFAULTS = {
 	actualFillColor: "var(--mix-chart-success-fill)",
 	actualStrokeColor: "var(--mix-chart-success-stroke)",
 	gridLineColor: "var(--mix-chart-grid)",
+	referenceBoundaryColor: "var(--mix-chart-reference-boundary)",
 	targetOutlineColor: "var(--mix-chart-goal)",
 	goalDashPattern: "1 6",
 	ringCount: 3,
