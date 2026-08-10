@@ -95,6 +95,7 @@ const matchesSearch = (
 		email: string;
 		role: AppRole | null;
 		status: string;
+		avatarModerationStatus: string;
 	},
 	query: string,
 ) => {
@@ -106,6 +107,7 @@ const matchesSearch = (
 		user.id,
 		user.role ?? "user",
 		user.status,
+		user.avatarModerationStatus,
 	];
 
 	return searchableValues.some((value) => value.toLocaleLowerCase().includes(query));

@@ -46,10 +46,13 @@ describe("page metadata", () => {
 			"Reorganize Mix · blendCalc",
 		);
 		expect(getAppDocumentTitle(url("/profile/appearance"))).toBe(
-			"Appearance · blendCalc",
+			"Light/Dark Mode · blendCalc",
 		);
 		expect(getAppDocumentTitle(url("/profile/food-preferences"))).toBe(
 			"Food Preferences · blendCalc",
+		);
+		expect(getAppDocumentTitle(url("/profile/moderator-actions"))).toBe(
+			"Moderator Actions · blendCalc",
 		);
 	});
 

@@ -465,7 +465,7 @@
 		</div>
 	</section>
 
-	<section class="account-list" aria-label="User accounts">
+	<section id="account-review" class="account-list" aria-label="User accounts">
 		{#each data.users as user (user.id)}
 			<article class:account-card--blocked={user.status === "banned"} class="account-card">
 				<div class="avatar">

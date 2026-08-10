@@ -20,11 +20,17 @@ describe("Profile settings routes", () => {
 	});
 
 	it("provides concise titles for direct settings routes", () => {
+		expect(getProfileSettingsRouteTitle("/profile/appearance")).toBe(
+			"Light/Dark Mode",
+		);
 		expect(getProfileSettingsRouteTitle("/profile/details")).toBe(
 			"Profile Details",
 		);
 		expect(getProfileSettingsRouteTitle("/profile/image")).toBe(
 			"Profile Image",
+		);
+		expect(getProfileSettingsRouteTitle("/profile/moderator-actions")).toBe(
+			"Moderator Actions",
 		);
 		expect(getProfileSettingsRouteTitle("/profile")).toBe("Profile");
 	});

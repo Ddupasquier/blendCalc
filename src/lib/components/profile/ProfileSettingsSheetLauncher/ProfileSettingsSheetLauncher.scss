@@ -29,6 +29,23 @@
 	}
 }
 
+.profile-settings-sheet-launcher--has-count {
+	grid-template-columns: auto minmax(0, 1fr) auto auto;
+}
+
+.profile-settings-sheet-launcher--privileged {
+	background: $app-shell-accent-soft;
+}
+
+:global(.profile-settings-sheet-launcher--privileged .profile-settings-sheet-launcher__icon) {
+	--circular-icon-frame-color: #{$app-highlight};
+	--circular-icon-frame-background: color-mix(
+		in srgb,
+		#{$app-highlight} 14%,
+		#{$app-shell-surface-panel}
+	);
+}
+
 :global(.profile-settings-sheet-launcher__icon) {
 	--circular-icon-frame-size: #{$app-shell-leading-icon-size};
 	--circular-icon-frame-icon-size: #{$app-control-icon-size};

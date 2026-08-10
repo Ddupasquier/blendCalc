@@ -419,6 +419,7 @@ Check the existing primitive before writing markup or SCSS.
 | Toggle                                | `ToggleSwitch`               | Boolean settings; do not use a checkbox as an on/off switch                                         |
 | Fixed-choice dropdown                 | `SelectField`                | Accessible combobox and top-layer listbox with shared label, helper, keyboard/typeahead, focus, disabled, and responsive states; a hidden native select preserves required validation and form submission |
 | Compact metadata badge                | `TextBadge`                  | Owns centering, tone, padding, and truncation                                                       |
+| Action-required count                 | `ActionRequiredCountBadge`   | Red circled count for pending privileged work; render only above zero                               |
 | Structured metadata pill              | `MetadataPill`               | Ingredient labels, kcal, goal progress, and other compact label/value or label/icon metadata        |
 | Verified evidence                     | `VerifiedStatusBadge`        | Detail/search contexts where verification helps a decision                                          |
 | Privileged group marker               | `PrivilegedActionBadge`      | One crown in the owning group header, not every child action                                        |
@@ -698,6 +699,9 @@ reporting interface for every warning in the default view.
   every manual entry or every external-source record.
 - Use one crown at the header of the nearest privileged action group. Do not add a
   crown to every control inside it.
+- Pending privileged work uses `ActionRequiredCountBadge` in the action's top-right
+  corner. Keep the written action label and disabled state so urgency never depends on
+  the red color alone; do not render a zero badge.
 
 ## Motion And Interaction
 

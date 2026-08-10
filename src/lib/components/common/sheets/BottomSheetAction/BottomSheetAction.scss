@@ -1,6 +1,7 @@
 @use "../../../../../styles/variables" as *;
 
 .bottom-sheet-action {
+	position: relative;
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr);
 	align-items: center;
@@ -30,6 +31,10 @@
 	}
 }
 
+.bottom-sheet-action--has-count {
+	padding-right: calc(#{$app-gap-sm} + 1.4rem + #{$app-gap-xs});
+}
+
 .bottom-sheet-action--move {
 	color: $app-warning-strong;
 }
@@ -51,10 +56,31 @@
 }
 
 .bottom-sheet-action__label {
-	display: inline-flex;
-	align-items: center;
-	gap: $app-gap-xs;
+	display: grid;
+	gap: $app-gap-2xs;
 	min-width: 0;
+}
+
+.bottom-sheet-action__label strong,
+.bottom-sheet-action__label span {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.bottom-sheet-action__label span {
+	color: $app-shell-text-muted;
+	font-family: $app-font-family-interface;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-body;
+}
+
+:global(.bottom-sheet-action__count) {
+	position: absolute;
+	top: $app-gap-xs;
+	right: $app-gap-xs;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
@@ -62,6 +88,14 @@
 		min-height: $app-shell-control-height-narrow;
 		padding: $app-gap-xs;
 		font-size: $app-font-size-sm;
+	}
+
+	.bottom-sheet-action--has-count {
+		padding-right: calc(#{$app-gap-xs} + 1.2rem + #{$app-gap-xs});
+	}
+
+	.bottom-sheet-action__label span {
+		font-size: $app-font-size-xs;
 	}
 
 	:global(.bottom-sheet-action__icon) {

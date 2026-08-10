@@ -38,7 +38,7 @@
 >
 	<div class="profile-settings-menu">
 		<ProfileSettingsSheetLauncher
-			title="Appearance"
+			title="Light/Dark Mode"
 			description={appearanceDescription}
 			controls="profile-appearance-sheet"
 			onOpen={() => onOpen(PROFILE_SETTINGS_ROUTES.appearance)}

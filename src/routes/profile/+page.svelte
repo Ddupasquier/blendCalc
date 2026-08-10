@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		goto,
 		pushState,
 		replaceState as replaceNavigationState,
 	} from "$app/navigation";
@@ -13,14 +14,17 @@
 	import ProfileFoodPreferenceView from "$lib/components/profile/ProfileFoodPreferenceView/ProfileFoodPreferenceView.svelte";
 	import ProfileIdentitySummary from "$lib/components/profile/ProfileIdentitySummary/ProfileIdentitySummary.svelte";
 	import ProfileImageSettings from "$lib/components/profile/ProfileImageSettings/ProfileImageSettings.svelte";
+	import ProfileModeratorActionLauncher from "$lib/components/profile/ProfileModeratorActionLauncher/ProfileModeratorActionLauncher.svelte";
+	import ProfileModeratorActionSheet from "$lib/components/profile/ProfileModeratorActionSheet/ProfileModeratorActionSheet.svelte";
 	import ProfileSettingsMenu from "$lib/components/profile/ProfileSettingsMenu/ProfileSettingsMenu.svelte";
 	import ProfileSessionSettings from "$lib/components/profile/ProfileSessionSettings/ProfileSessionSettings.svelte";
 	import ProfileTutorialSettings from "$lib/components/profile/ProfileTutorialSettings/ProfileTutorialSettings.svelte";
 	import { APP_NAME } from "$lib/config/brand";
-	import { getAppDocumentTitle } from "$lib/config/pageMetadata";
+	import { formatDocumentTitle } from "$lib/config/pageMetadata";
 	import {
 		getProfileSettingsRoute,
 		getProfileSettingsRouteHref,
+		getProfileSettingsRouteTitle,
 		PROFILE_SETTINGS_ROUTES,
 		type ProfileSettingsRoute,
 	} from "$lib/utils/profile/profileRouteState";
@@ -31,7 +35,15 @@
 	let activeSettingsRoute = $state<ProfileSettingsRoute | null>(
 		getProfileSettingsRoute(page.url.pathname),
 	);
-	const documentTitle = $derived(getAppDocumentTitle(page.url));
+	const documentTitle = $derived(
+		formatDocumentTitle(
+			activeSettingsRoute
+				? getProfileSettingsRouteTitle(
+					getProfileSettingsRouteHref(activeSettingsRoute),
+				)
+				: "Profile",
+		),
+	);
 
 	$effect(() => {
 		activeSettingsRoute = getProfileSettingsRoute(page.url.pathname);
@@ -58,6 +70,10 @@
 		activeSettingsRoute = null;
 		replaceNavigationState("/profile", { ...page.state });
 	};
+
+	const navigateToModeratorDestination = (href: string) => {
+		void goto(href);
+	};
 </script>
 
 <svelte:head>
@@ -71,9 +87,9 @@
 <BottomSheet
 	id="profile-appearance-sheet"
 	open={activeSettingsRoute === PROFILE_SETTINGS_ROUTES.appearance}
-	title="Appearance"
+	title="Light/Dark Mode"
 	titleId="profile-appearance-sheet-title"
-	backLabel="Close appearance settings"
+	backLabel="Close light and dark mode settings"
 	onClose={closeSettingsRoute}
 >
 	<ProfileAppearanceSettings
@@ -140,6 +156,15 @@
 	/>
 </RightSheet>
 
+{#if data.moderatorActionSummary}
+	<ProfileModeratorActionSheet
+		open={activeSettingsRoute === PROFILE_SETTINGS_ROUTES.moderatorActions}
+		summary={data.moderatorActionSummary}
+		onClose={closeSettingsRoute}
+		onNavigate={navigateToModeratorDestination}
+	/>
+{/if}
+
 <div class="profile-page">
 	<ViewHeader
 		title="Your profile"
@@ -162,6 +187,13 @@
 		priorityNutrientCount={data.foodPreferences?.prioritizedNutrientIds.length ?? 0}
 		onOpen={openSettingsRoute}
 	/>
+
+	{#if data.moderatorActionSummary}
+		<ProfileModeratorActionLauncher
+			summary={data.moderatorActionSummary}
+			onOpen={() => openSettingsRoute(PROFILE_SETTINGS_ROUTES.moderatorActions)}
+		/>
+	{/if}
 
 	<ProfileTutorialSettings />
 	<ProfileSessionSettings />

@@ -1,9 +1,16 @@
 # Moderation
 
-Routes: `/moderation` and `/moderation/data-health`
+Routes: `/moderation`, `/moderation/data-health`, and the Profile gateway at
+`/profile/moderator-actions`
 
 Only authorized moderators, administrators, and developers may enter these views. Role,
 account-control, and notification rules live in [Moderation](../moderation.md).
+
+The elevated-role-only Profile launcher opens one shared bottom sheet containing every
+current moderation destination. It may summarize pending queues, but it never replaces
+the authorization, evidence, or mutation rules of the destination route. Queue rows
+remain visible and disabled at zero; standing account and data-health tools remain
+available.
 
 ## Account Review
 

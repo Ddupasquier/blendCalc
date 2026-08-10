@@ -10,11 +10,11 @@ test("appearance choices use native radios and preview the selected theme", asyn
 }) => {
 	await page.goto("/profile");
 	await waitForAppReady(page);
-	await page.getByRole("button", { name: /Appearance/ }).click();
+	await page.getByRole("button", { name: /Light\/Dark Mode/ }).click();
 	await expect(page).toHaveURL(/\/profile\/appearance$/);
-	await expect(page).toHaveTitle("Appearance · blendCalc");
+	await expect(page).toHaveTitle("Light/Dark Mode · blendCalc");
 
-	const appearanceSheet = page.getByRole("dialog", { name: "Appearance" });
+	const appearanceSheet = page.getByRole("dialog", { name: "Light/Dark Mode" });
 	const themeGroup = appearanceSheet.getByRole("group", { name: "Color theme" });
 	const deviceTheme = themeGroup.getByRole("radio", { name: /Device/ });
 	const darkTheme = themeGroup.getByRole("radio", { name: /Dark/ });
@@ -96,4 +96,42 @@ test("Profile settings use routed sheets and restore launcher focus", async ({
 	).toBeVisible();
 	await page.getByRole("button", { name: "Back to profile" }).click();
 	await expect(page).toHaveURL(/\/profile$/);
+});
+
+test("moderator actions stay hidden from regular accounts and use the shared sheet for elevated accounts", async ({
+	page,
+}) => {
+	await page.goto("/profile");
+	await waitForAppReady(page);
+	await expect(
+		page.getByRole("button", { name: /Moderator actions/ }),
+	).toHaveCount(0);
+
+	await page.context().clearCookies();
+	await page.goto("/auth?next=/profile");
+	await page.getByLabel("Email").fill("qa-moderator@blendcalc.local");
+	await page.getByLabel("Password", { exact: true }).fill(
+		process.env.PLAYWRIGHT_QA_PASSWORD ?? "BlendCalc-Local-QA-2026!",
+	);
+	await page.getByRole("button", { name: "Sign in", exact: true }).click();
+	await expect(page).toHaveURL(/\/profile$/);
+	await waitForAppReady(page);
+
+	await page.getByRole("button", { name: /Moderator actions/ }).click();
+	await expect(page).toHaveURL(/\/profile\/moderator-actions$/);
+	const moderatorActionsSheet = page.getByRole("dialog", {
+		name: "Moderator actions",
+	});
+	await expect(moderatorActionsSheet).toBeVisible();
+	for (const actionName of [
+		"Product submissions",
+		"Food warning reports",
+		"Profile images",
+		"Account access",
+		"Catalog data health",
+	]) {
+		await expect(
+			moderatorActionsSheet.getByRole("button", { name: new RegExp(actionName) }),
+		).toBeVisible();
+	}
 });

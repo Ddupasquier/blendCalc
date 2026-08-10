@@ -2,7 +2,7 @@
 
 Route: `/profile`
 
-Profile manages optional identity, appearance, avatar, food-preference, tutorial, and
+Profile manages optional identity, display theme, avatar, food-preference, tutorial, and
 session settings. Detailed privacy and storage rules live in
 [User Profiles](../user-profiles.md).
 
@@ -10,10 +10,13 @@ session settings. Detailed privacy and storage rules live in
 
 - Keep the Profile route as a compact summary and settings menu rather than rendering
   every form at once.
-- Open Appearance at `/profile/appearance`, Profile details at `/profile/details`, and
+- Open Light/Dark Mode at `/profile/appearance`, Profile details at `/profile/details`, and
   Profile image at `/profile/image` in the shared route-backed `BottomSheet`.
 - Open Food preferences at `/profile/food-preferences` in the shared route-backed
   `RightSheet` because it is a long, independently scrollable settings workflow.
+- Show the Moderator actions launcher only when the current server-verified role is
+  moderator, administrator, or developer. Open it at
+  `/profile/moderator-actions` in the shared route-backed `BottomSheet`.
 - Each launcher summarizes the saved state without duplicating its complete form.
 - Escape, the shared Back control, browser history, direct loading, and refresh preserve
   the documented sheet route and return to `/profile` without reloading the underlying
@@ -28,7 +31,7 @@ session settings. Detailed privacy and storage rules live in
 - Do not require or expose the account email as a public identity.
 - Show clear validation, pending, success, and failure states.
 
-## Appearance
+## Light/Dark Mode
 
 - Offer Device, Light, and Dark choices through accessible selection controls.
 - Preview changes immediately and save them explicitly to the account.
@@ -83,3 +86,19 @@ server policy and source evidence, not naive client text matching.
 - Submit logout through the server authentication endpoint so the Supabase session and
   password-upgrade state clear together.
 - Logging out never deletes profile, food, list, recipe, or Mix data.
+
+## Moderator Actions
+
+- Treat Profile as a privileged navigation gateway, not as a second moderation
+  implementation. Every destination retains its own server and database authorization.
+- Show one aggregate red count on the Profile launcher only when one or more review
+  items are waiting.
+- Keep every supported moderator option visible in the sheet. Product submissions,
+  food-warning reports, and profile-image review rows are disabled when their verified
+  queue count is zero; a nonzero queue displays its own red count in the row's top-right
+  corner.
+- Keep standing tools such as Account access and Catalog data health enabled because
+  they remain useful without a pending queue.
+- If queue counts cannot be read, preserve unknown as unknown, disable queue actions,
+  explain the temporary limitation with friendly copy, and leave standing tools
+  available. Never present an unavailable count as zero.
