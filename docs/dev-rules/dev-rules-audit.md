@@ -1,6 +1,6 @@
 # Development Rules Audit
 
-Last audited: 2026-08-08
+Last audited: 2026-08-09
 
 ## Purpose
 
@@ -302,26 +302,57 @@ stored, unsupported languages remain unparsed, multilingual and nested-statement
 fixtures are covered, and parsed declarations never claim stronger evidence than their
 source text.
 
-### Coordinator And Domain Boundary Watchlist
+### Overbuilt Component And Route Responsibilities
+
+**Status:** High
+
+**Evidence:** The component audit inventoried all 221 Svelte component and route files,
+then reviewed every file at or above 300 lines plus the prop-heavy and request-owning
+components. Fourteen Svelte files are at least 300 lines and four exceed 500 lines; line
+count alone was not treated as a failure. The following files combine independently
+changeable responsibilities or expose catch-all contracts:
+
+| Owner | Current mixed responsibilities | Target boundary |
+| --- | --- | --- |
+| `src/routes/ingredients/fridge/+page.svelte` | Its 1,230-line script owns route overlays, two list repositories, pagination, search intake, barcode/manual-entry state, list CRUD, renaming, image placement, selection, bulk movement, and local optimistic reconciliation. | Keep the route as a typed coordinator; extract focused list-data, list-action, selection/movement, and routed-overlay controllers. |
+| `src/routes/mix/+page.svelte` | Its 878-line script owns goal templates and persistence, tracked nutrients, ingredient-list loading and selection, serving conversion state, saved-recipe state, reset flows, route overlays, section preferences, warnings, and suggestions. | Keep composition in the route; move goal editing, ingredient amounts, reset/overlay flow, and cloud synchronization into separate domain controllers. |
+| `src/lib/components/ingredients/page/IngredientRoutePopins/IngredientRoutePopins.svelte` | One 50-field prop contract wires action, image-placement, manual-entry, filter, rename, search, nutrition, and catalog-correction overlays. | Split overlays by flow and pass each focused owner only its own state and actions. |
+| `src/lib/components/ingredients/manual-entry/steps/ShareStep/ShareStep.svelte` | One 44-field prop contract combines review summary, validation, barcode conflict resolution, catalog-sharing eligibility, three evidence uploads, save destination, post-save outcomes, and final submission actions. | Compose focused review, sharing decision, evidence, destination, and outcome components behind one step-level contract. |
+| `src/lib/components/mix/controls/GoalTargets/GoalTargets.svelte` | Goal-template selection/preview/deletion, individual nutrient-goal editing, nutrient discovery, and saving a new template share one 21-field callback-heavy contract. | Separate template controls, reusable goal rows/list, tracked-nutrient selection, and preset-save actions. |
+| `src/lib/components/app/TutorialOverlay/TutorialOverlay.svelte` | Route navigation, step activation, target lookup and scrolling, spotlight geometry, focus trapping, background inertness, scroll locking, completion persistence, and tutorial-card presentation live together. | Split the step/navigation controller, spotlight geometry/viewport, modal interaction boundary, and card presentation. |
+| `src/lib/components/profile/ProfileFoodPreferenceSettings/ProfileFoodPreferenceSettings.svelte` | Region and unit state, preference normalization/search, allergen and dietary editors, nutrient priorities, saved-summary derivation, sensitive-data acknowledgment, and form submission are coordinated in one component. | Retain one form coordinator while moving preference collection state and summary derivation into focused controllers/utilities. |
+| `src/lib/components/ingredients/list/SavedIngredientList/SavedIngredientList.svelte` | List rendering, bulk selection, single and staggered movement animation, live announcements, pagination, empty/loading states, and parent-header scroll tracking share one component. | Extract movement/announcement and scroll-tracking controllers; leave list composition and card rendering in the component. |
+| `src/lib/components/ingredients/search/IngredientSearch/IngredientSearch.svelte` | Debounced remote search, stale-request control, pagination, custom-food refresh, combobox keyboard navigation, focus management, and search presentation share one owner. | Move query/request lifecycle and combobox navigation into focused controllers while preserving one search UI. |
+| `src/lib/components/ingredients/nutrition/NutritionPreferenceConflict/NutritionPreferenceConflict.svelte` and `src/lib/components/ingredients/nutrition/MissingFoodWarningFeedback/MissingFoodWarningFeedback.svelte` | User-facing warning/report forms perform their own API requests and response translation inside presentation components. | Move feedback submission into a focused client service/controller; keep components responsible for rendering and form interaction. |
+
+The deferred Moderation route has the same route-level ownership problem and remains
+covered by the dedicated Moderation finding. Large cohesive owners such as
+`SelectField`, `NutrientRadarChart`, `MixSectionOrganizer`, `ImagePlacementEditor`, and
+the controller-composed `CustomIngredientForm` were reviewed but are not findings based
+on size alone.
+
+**Complete when:** Each listed owner can describe one responsibility without joining
+unrelated jobs; route files coordinate focused state owners; component contracts no
+longer flatten unrelated flows; presentation components do not own request policy; all
+consumers and state matrices remain covered; and superseded props, branches, and styles
+are removed rather than hidden behind wrapper components.
+
+### Large Domain Coordinator Watchlist
 
 **Status:** Review during related changes; do not split by line count alone
 
-**Evidence:** Several files remain large coordinators, including
-`src/routes/ingredients/fridge/+page.svelte`, `src/routes/mix/+page.svelte`,
-`src/routes/profile/+page.svelte`, `src/routes/moderation/+page.svelte`,
-`src/lib/server/products/catalog.server.ts`,
-`src/lib/utils/barcode/barcodeProductMappers.ts`,
-`src/lib/components/ingredients/manual-entry/CustomIngredientForm/manualEntryBarcodeController.svelte.ts`,
-and `src/lib/components/app/TutorialOverlay/TutorialOverlay.svelte`. The current route
-sizes are approximately 1,345 lines for Ingredients, 1,121 for Mix, 817 for Profile,
-and 550 for Moderation. `TutorialOverlay` is approximately 522 lines. Their size is
-acceptable only while they continue to coordinate focused modules instead of absorbing
-reusable UI, persistence, validation, normalization, or source policy.
+**Evidence:** `src/lib/server/products/catalog.server.ts`,
+`src/lib/utils/barcode/barcodeProductMappers.ts`, and
+`src/lib/components/ingredients/manual-entry/CustomIngredientForm/manualEntryBarcodeController.svelte.ts`
+remain large domain coordinators. They are approximately 640, 986, and 660 lines. Their
+size is acceptable only while each continues to coordinate one cohesive domain instead
+of absorbing independently changeable source policy, persistence, validation,
+normalization, or UI state.
 
-**Complete when:** Related feature work confirms each file remains orchestration-only,
-or extracts a focused owner with tests when a reusable behavior or business policy has
-actually accumulated. Pure food models, shared product policy, barcode adapters, and
-Supabase persistence must keep the ownership boundaries documented in
+**Complete when:** Related work confirms each file remains a cohesive coordinator or
+extracts a focused owner with tests when a separate responsibility has accumulated.
+Pure food models, shared product policy, barcode adapters, and Supabase persistence must
+keep the ownership boundaries documented in
 [the project structure](../project-structure.md).
 
 ## Audit Commands
