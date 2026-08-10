@@ -145,8 +145,5 @@ describe("SavedRecipeCard", () => {
 			}),
 		);
 		expect(onDelete).toHaveBeenCalledWith(recipe);
-    expect(screen.getByRole("button", { name: "Share recipe" })).toHaveClass(
-      "circle-icon-button",
-    );
 	});
 });

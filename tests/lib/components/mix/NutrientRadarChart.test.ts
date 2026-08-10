@@ -33,6 +33,46 @@ describe("NutrientRadarChart", () => {
 		).not.toBeInTheDocument();
 	});
 
+	it("keeps the containing boundary, goal, fill, and current outline as distinct layers", () => {
+		const { container } = render(NutrientRadarChart, {
+			props: {
+				nutrientAxisCount: 5,
+				actualGoalRatios: [0.9, 0.55, 0.8, 0.35, 1],
+				targetGoalRatios: [0.7, 0.7, 0.7, 0.7, 0.7],
+				nutrientLabels: ["Calories", "Protein", "Fiber", "Fat", "Sugars"],
+			},
+		});
+
+		const referenceBoundary = container.querySelector(
+			".nutrient-radar-chart__reference-boundary",
+		);
+		const goalShape = container.querySelector(
+			".nutrient-radar-chart__goal-shape",
+		);
+		const expectedLayerOrder = [
+			"nutrient-radar-chart__reference-boundary",
+			"nutrient-radar-chart__value-fill",
+			"nutrient-radar-chart__goal-shape",
+			"nutrient-radar-chart__value-stroke",
+		];
+		const renderedLayerOrder = Array.from(
+			container.querySelectorAll(
+				".nutrient-radar-chart__reference-boundary, .nutrient-radar-chart__value-fill, .nutrient-radar-chart__goal-shape, .nutrient-radar-chart__value-stroke",
+			),
+		).map((element) =>
+			expectedLayerOrder.find((className) => element.classList.contains(className)),
+		);
+
+		expect(referenceBoundary).toHaveAttribute(
+			"stroke",
+			"var(--mix-chart-reference-boundary)",
+		);
+		expect(goalShape?.getAttribute("points")).not.toBe(
+			referenceBoundary?.getAttribute("points"),
+		);
+		expect(renderedLayerOrder).toEqual(expectedLayerOrder);
+	});
+
 	it("keeps dense side labels outside the chart while preserving exact values", () => {
 		const nutrientLabels = [
 			"Calories",

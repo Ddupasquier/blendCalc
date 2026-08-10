@@ -1,4 +1,4 @@
-# Barcode scanning
+# Barcode Scanning
 
 The custom ingredient form supports UPC-A, UPC-E, EAN-8, EAN-13, GTIN-14, and
 uncompressed GS1 Digital Link product QR codes.
@@ -10,7 +10,7 @@ boundaries belong in the
 [`source data inventory`](api-structures/source-data-inventory.md) and
 [`licensing ledger`](data-source-licensing.md).
 
-## Current web flow
+## Current Web Flow
 
 1. The browser uses `BarcodeDetector` when the API is available.
 2. Other supported browsers fall back to `@zxing/browser`.
@@ -22,7 +22,7 @@ boundaries belong in the
 Camera access requires HTTPS outside local development. Users can always type the
 barcode and nutrition label manually.
 
-## Data and accuracy
+## Data And Accuracy
 
 - Barcode and custom-food name uniqueness are enforced per user, not globally.
 - Eligible user-entered labels can be submitted to the shared catalog only through an
@@ -36,7 +36,7 @@ barcode and nutrition label manually.
 Missing-value, nutrient-mapping, serving, source-review, caching, and evidence rules are
 defined by the catalog and data-architecture documents linked above.
 
-## Future native app
+## Future Native App
 
 The scanner UI already routes native Capacitor builds through
 `@capacitor/barcode-scanner`. When the native shell is created:

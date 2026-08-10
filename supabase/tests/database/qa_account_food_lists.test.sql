@@ -4,8 +4,8 @@ select plan(32);
 
 select is(
 	(select count(*) from auth.users where email like 'qa-%@blendcalc.local'),
-	7::bigint,
-	'the isolated database contains all seven QA personas'
+	10::bigint,
+	'the isolated database contains all ten QA personas'
 );
 
 select ok(
@@ -32,6 +32,9 @@ select ok(
 		with expected(email, fridge_count, shopping_count) as (
 			values
 				('qa-user@blendcalc.local', 60, 40),
+				('qa-browser-1@blendcalc.local', 60, 40),
+				('qa-browser-2@blendcalc.local', 60, 40),
+				('qa-browser-3@blendcalc.local', 60, 40),
 				('qa-preferences@blendcalc.local', 4, 3),
 				('qa-empty@blendcalc.local', 0, 0),
 				('qa-onboarding@blendcalc.local', 10, 0),

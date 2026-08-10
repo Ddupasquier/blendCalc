@@ -275,7 +275,10 @@ describe("mix calculations", () => {
 
 		expect(progress[0]).toBeCloseTo(1.864);
 		expect(progress[1]).toBeCloseTo(0.333);
-		expect(Math.max(...getGoalValues(metrics))).toBe(1);
+		expect(getGoalValues(metrics)[0]).toBeCloseTo(0.4877);
+		expect(getGoalValues(metrics)[1]).toBeCloseTo(0.4877);
+		expect(getChartValues(metrics)[0]).toBeCloseTo(0.9091);
+		expect(getChartValues(metrics)[1]).toBeCloseTo(0.1624);
 		expect(getChartValues(metrics)[0]).toBeGreaterThan(
 			getChartValues(metrics)[1],
 		);

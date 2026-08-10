@@ -193,6 +193,32 @@ const roleLists = {
   shopping: ["00869759000149", "00011110904416", "09000000000162"],
 };
 
+const browserWorkerPersonas = [1, 2, 3].map((workerNumber) => ({
+  key: `browserWorker${workerNumber}`,
+  purpose: `Isolated Playwright worker ${workerNumber}`,
+  email: `qa-browser-${workerNumber}@blendcalc.local`,
+  displayName: `QA Browser Worker ${workerNumber}`,
+  role: "user",
+  tutorialState: "completed",
+  lists: populatedLists,
+  savedRecipeKeys: [
+    "morningGreen",
+    "berryRepeat",
+    "exportBerry",
+    "serverLoad",
+  ],
+  activeMixKey: "morningGreen",
+  preferences: {
+    unit_system: "us",
+    allergens: [],
+    dietary_restrictions: [],
+    prioritized_nutrient_ids: [1008, 1003, 1079],
+    default_smoothie_serving_grams: 350,
+    regulatory_region_code: "US",
+    regulatory_region_source: "account",
+  },
+}));
+
 export const localQaPersonas = [
   {
     key: "user",
@@ -219,6 +245,7 @@ export const localQaPersonas = [
       regulatory_region_source: "account",
     },
   },
+  ...browserWorkerPersonas,
   {
     key: "preferences",
     purpose:

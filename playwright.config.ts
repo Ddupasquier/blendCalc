@@ -2,8 +2,14 @@ import { defineConfig, devices } from "@playwright/test";
 
 const applicationBaseUrl =
 	process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174";
-const authenticatedStorageStatePath =
-	"test-results/authenticated-browser-state/qa-user.json";
+const localPlaywrightWorkerCount = Number.parseInt(
+	process.env.PLAYWRIGHT_WORKERS ?? "2",
+	10,
+);
+
+if (!Number.isInteger(localPlaywrightWorkerCount) || localPlaywrightWorkerCount < 1) {
+	throw new Error("PLAYWRIGHT_WORKERS must be a positive integer.");
+}
 
 export default defineConfig({
 	testDir: "./tests/e2e",
@@ -11,12 +17,10 @@ export default defineConfig({
 	fullyParallel: false,
 	forbidOnly: Boolean(process.env.CI),
 	retries: process.env.CI ? 2 : 0,
-	// Browser projects share one deterministic QA account and local database.
-	// Serial execution prevents one project from racing another's persisted UI state.
-	workers: 1,
+	workers: localPlaywrightWorkerCount,
 	reporter: process.env.CI
-		? [["github"], ["html", { open: "never" }]]
-		: [["list"], ["html", { open: "never" }]],
+		? [["github"], ["dot"], ["html", { open: "never" }]]
+		: [["dot"], ["html", { open: "never" }]],
 	timeout: 60_000,
 	expect: {
 		timeout: 20_000,
@@ -41,57 +45,38 @@ export default defineConfig({
 			},
 	projects: [
 		{
-			name: "authenticate",
-			testMatch: /authentication\.setup\.ts/,
-		},
-		{
 			name: "desktop-chromium",
 			use: {
 				...devices["Desktop Chrome"],
 				viewport: { width: 1280, height: 900 },
-				storageState: authenticatedStorageStatePath,
 			},
-			dependencies: ["authenticate"],
-			testIgnore: /authentication\.setup\.ts/,
 		},
 		{
 			name: "desktop-firefox",
 			use: {
 				...devices["Desktop Firefox"],
 				viewport: { width: 1280, height: 900 },
-				storageState: authenticatedStorageStatePath,
 			},
-			dependencies: ["authenticate"],
-			testIgnore: /authentication\.setup\.ts/,
 		},
 		{
 			name: "desktop-webkit",
 			use: {
 				...devices["Desktop Safari"],
 				viewport: { width: 1280, height: 900 },
-				storageState: authenticatedStorageStatePath,
 			},
-			dependencies: ["authenticate"],
-			testIgnore: /authentication\.setup\.ts/,
 		},
 		{
 			name: "mobile-chromium",
 			use: {
 				...devices["Pixel 7"],
 				viewport: { width: 360, height: 740 },
-				storageState: authenticatedStorageStatePath,
 			},
-			dependencies: ["authenticate"],
-			testIgnore: /authentication\.setup\.ts/,
 		},
 		{
 			name: "mobile-webkit",
 			use: {
 				...devices["iPhone 13"],
-				storageState: authenticatedStorageStatePath,
 			},
-			dependencies: ["authenticate"],
-			testIgnore: /authentication\.setup\.ts/,
 		},
 	],
 });

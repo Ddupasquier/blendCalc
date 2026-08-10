@@ -44,7 +44,7 @@
 		"generate:api-structures": "node scripts/generators/generate_api_structures.mjs",
 		"backfill:food-images": "node scripts/backfills/backfill_food_images.mjs",
 		"pretest": "npm run version:check",
-		"test": "BLENDCALC_DATABASE_ENVIRONMENT=test vitest run",
+		"test": "BLENDCALC_DATABASE_ENVIRONMENT=test vitest run --reporter=dot",
 		"pretest:watch": "npm run version:check",
 		"test:watch": "BLENDCALC_DATABASE_ENVIRONMENT=test vitest",
 		"test:e2e:prepare": "npm run free:test-port && npm run version:check && npm run db:test:start",

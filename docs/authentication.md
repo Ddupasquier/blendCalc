@@ -1,4 +1,4 @@
-# Authentication and deployment checklist
+# Authentication And Deployment
 
 The app uses Supabase Auth with server-side PKCE cookies. Authentication must start and
 finish on the same origin. Production uses `PUBLIC_SITE_URL`, Vercel previews use the
@@ -9,7 +9,7 @@ This document owns Auth and deployment-origin configuration. General server/data
 boundaries live in [`data-architecture.md`](data-architecture.md), and table policies
 live in [`supabase-schema.md`](supabase-schema.md).
 
-## Environment variables
+## Environment Variables
 
 Local `.env`:
 
@@ -35,7 +35,7 @@ Successful login and logout boundaries emit only anonymous, property-free operat
 event names. Their storage and privacy boundary is documented in
 [`data-architecture.md`](data-architecture.md#operational-analytics).
 
-## Supabase dashboard
+## Supabase Dashboard
 
 In **Authentication → URL Configuration**:
 
@@ -57,7 +57,7 @@ secret. In Google Cloud, configure:
 - Redirect URI: the Supabase callback displayed in the Google provider panel, such as
   `https://YOUR_PROJECT.supabase.co/auth/v1/callback`
 
-## Account security settings
+## Account Security Settings
 
 The tracked Supabase configuration currently enforces:
 
@@ -84,14 +84,14 @@ Before public launch, also:
 CAPTCHA requires dashboard secrets and a public site key, so it must not be enabled in
 Supabase until those values and the token widget are configured.
 
-## Database security
+## Database Security
 
 Every user-data table has RLS enabled and policies scoped to `(select auth.uid())`.
 Anonymous table privileges are revoked by migration. Follow the database change and
 verification workflow in [`database-testing.md`](database-testing.md) rather than
 maintaining an authentication-specific migration sequence.
 
-### Application role claims
+### Application Role Claims
 
 Supabase's `anon`, `authenticated`, and `service_role` claims remain infrastructure
 roles. blendCalc moderator, administrator, and developer access is instead assigned in

@@ -136,10 +136,9 @@ Tests should follow the same domain vocabulary as `src`. A component test may re
 its domain test folder; it does not need a second namesake folder unless that component
 needs multiple test/support files.
 
-Vitest owns isolated logic, component, route, schema, and architecture checks.
-Playwright owns behavior that requires a real browser, including client navigation,
-focus persistence, responsive layout, keyboard interaction across rendered surfaces,
-and approved visual snapshots. Do not duplicate the same assertion in both runners.
+The [Testing Strategy](testing.md) owns the boundary between Vitest, database tests,
+Playwright, and manual QA. Keep each test in the folder for its assigned layer and do
+not duplicate the same assertion across runners.
 
 ## Scripts
 
@@ -164,6 +163,12 @@ Repository setup and the stable developer command surface remain in the root
 `docs/local-context/` and active verification under `docs/QA/` are local workflow state,
 not product documentation. Verified unresolved implementation findings remain in the
 maintained development audit instead of a parallel task folder.
+
+Keep a focused document as one file. When a long document contains independently owned
+domains, preserve its established path as a short index and move each domain into a
+clearly named child file. Do not split one rule set, one visual token system, one legal
+ledger, or one cross-table schema map merely to reduce line count. Every child file must
+have one subject, be reachable from the parent index, and avoid repeating parent text.
 
 ## Ownership Check
 

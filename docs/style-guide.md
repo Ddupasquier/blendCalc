@@ -45,6 +45,16 @@ All UI work must:
 Keep this guide focused on current decisions. Remove superseded guidance when a pattern
 changes; do not preserve competing generations of the same visual system.
 
+## Guide Navigation
+
+| Area | Sections |
+| --- | --- |
+| Foundations | [Visual direction](#visual-direction), [color](#color-system), and [typography](#typography) |
+| Layout | [Spacing and layout](#spacing-and-layout), [borders and focus](#borders-focus-and-depth), and responsive rules |
+| Reusable UI | [Component selection](#component-selection), [feedback](#feedback-and-user-facing-messages), [badges](#badges-and-privileged-actions), and [motion](#motion-and-interaction) |
+| Ingredients reference | [Ingredients page patterns](#ingredients-page-patterns), including cards, media, search, manual entry, and nutrition details |
+| Implementation | [SCSS ownership](#scss-and-file-ownership), [applying the system](#applying-the-system-to-any-ui-change), and the [review checklist](#review-checklist) |
+
 ## Sources Of Truth
 
 Use this order when implementing or reviewing styling:
@@ -56,8 +66,8 @@ Use this order when implementing or reviewing styling:
 4. The reusable component and its paired SCSS file for component behavior and local
    geometry.
 5. [`project-structure.md`](project-structure.md) for file ownership.
-6. [`ui-functionality.md`](ui-functionality.md) for behavior that a redesign must
-   preserve.
+6. [`ui-functionality.md`](ui-functionality.md) and its matching view contract for
+   behavior that a redesign must preserve.
 
 Do not copy a screenshot measurement into code when an existing component or semantic
 token already owns the decision.
