@@ -1,6 +1,6 @@
 # Development Rules
 
-Last reviewed: 2026-08-06
+Last reviewed: 2026-08-09
 
 ## Purpose
 
@@ -135,6 +135,7 @@ reading path for broad work.
 - [Primary Card Interactions](#rule-primary-card-interactions)
 - [Reorderable Collections](#rule-reorderable-collections)
 - [Component And Route Boundaries](#rule-component-boundaries)
+- [Targeted Component Responsibilities](#rule-targeted-component-responsibilities)
 - [Semantic Naming](#rule-semantic-naming)
 - [Manual Entry Modularization](#rule-manual-entry-modularization)
 - [Database And API-Driven Data](#rule-no-hardcoded-reference-data)
@@ -792,6 +793,26 @@ live in their nearest parent `types.ts`; that parent file must not merely collec
 siblings' separate `*Props` types. Flow-wide files such as `formTypes.ts` may hold shared
 state and domain contracts, but component-specific prop contracts still stay with their
 component owner.
+
+**16f.** <a id="rule-targeted-component-responsibilities"></a>Do not build or preserve
+overbuilt components. A component must have one clear user-facing or composition
+responsibility that can be stated without joining unrelated jobs with “and.” Split it
+into targeted components, controllers, or utilities when it accumulates independent
+feature flows, unrelated display modes, feature-specific branches for distant
+consumers, or a mixture of reusable presentation with routing, persistence, requests,
+validation, normalization, or business policy. Shared primitives own the smallest
+stable behavior common to their consumers; they must not become catch-all components
+whose growing prop and conditional surface configures unrelated products across the
+app.
+
+Line count is an audit signal, not an automatic verdict. A large component may remain
+when its markup is one cohesive visual responsibility and its behavior is delegated; a
+small component can still be overbuilt when it mixes unrelated ownership. Do not split
+cohesive markup into pass-through wrappers merely to reduce file size. Before extending
+a component, state its existing responsibility, decide whether the new behavior belongs
+to that responsibility, inspect every consumer, and create a focused owner when the
+answer is no. Remove superseded branches and props during the split so the old catch-all
+API does not survive behind the new components.
 
 ### Branch And Delivery Workflow
 

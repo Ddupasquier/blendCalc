@@ -140,13 +140,23 @@ Render three layers:
 2. one dotted goal outline;
 3. the current Mix shape.
 
-The containing boundary stays visually distinct from the interior grid. Each current
-point is normalized against that nutrient's configured goal, then the goal and current
-shapes share one scale based on the highest goal-relative value in the graph. Reserve a
-small amount of boundary headroom so the largest point remains visible. This keeps the
-boundary, goal, and current amount legible as three separate layers without comparing
-incompatible raw units or changing stored goals and nutrient calculations. Exact values
-remain in the status summaries and accessible chart description.
+The containing boundary stays visually distinct from the interior grid. The dotted goal
+outline is a unit-safe target silhouette: each configured nutrient target is divided by
+that same nutrient's reviewed target in the active default template, then all resulting
+values are normalized by the largest configured-goal ratio. The highest relative goal
+therefore touches the containing boundary and the remaining points preserve the shape
+of the user's goals. If a tracked nutrient has no reviewed default, its own configured
+target is its reference rather than borrowing a value from another nutrient or unit.
+The goal outline is equilateral only when every configured target is proportionally
+identical to its same-nutrient reviewed reference.
+
+The current Mix uses the same per-nutrient references and the same shared scale. A
+current point meets the dotted point exactly when its measured amount reaches that
+configured goal. Values above the visible boundary remain communicated through point
+color, status summaries, warnings, and the accessible chart description rather than
+rescaling the target silhouette. Changing ingredients or amounts must never reshape,
+resize, or otherwise alter the goal outline; only a goal change may do that. Never
+compare raw kcal, gram, milligram, or other incompatible goal amounts directly.
 
 The shape uses one point as a circle, two as a thick line, three as a triangle, and more
 as a polygon. Goal and current values respond immediately to goal, food, and amount
