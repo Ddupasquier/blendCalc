@@ -9,7 +9,7 @@ and comparing them with personal goals.
 - 🔍 Ingredient search across FoodData Central, saved custom foods, and the shared product catalog
 - 🧾 Barcode scanning for packaged foods with reusable product data and moderation fallback
 - 🖼️ Source-backed product images stored with license and attribution metadata before UI rendering
-- 🧪 Live nutrient goals, ingredient amounts, radar chart feedback, warnings, and suggestions
+- 🧪 Live nutrient goals, ingredient amounts, nutrient-shape feedback, warnings, and suggestions
 - 🧊 Account-backed Fridge and Shopping List ingredient management
 - 🥤 Saved food combinations with load, overwrite, save-as-new, and per-user name validation
 - 👤 Optional profile details, avatar policy confirmation, food preferences, allergens, and dietary restrictions
@@ -97,8 +97,8 @@ adding one-off npm aliases.
 | `npm run dev:test` | Start the app against the isolated local Supabase test database |
 | `npm run build` | Production build |
 | `npm run preview` | Preview production build |
-| `npm test` | Run unit tests (Vitest) |
-| `npm run test:watch` | Watch-mode tests |
+| `npm test` | Run the non-browser Vitest suite with the benchmarked local worker limit and compact output |
+| `npm run test:watch` | Run focused Vitest checks in watch mode |
 | `npm run test:e2e` | Run authenticated Playwright tests in desktop and mobile Chromium, Firefox, and WebKit projects |
 | `npm run test:e2e:chromium` | Run the focused desktop and 360×740 phone Chromium projects |
 | `npm run test:e2e:headed` | Run desktop Chromium Playwright tests in a visible browser |
@@ -144,12 +144,15 @@ adding one-off npm aliases.
 npm test
 ```
 
-Tests run entirely offline using mocked fetch — no API key required.
+Vitest runs without external food-provider calls. Browser and database integration tests
+use the isolated local Supabase environment instead of production data.
 
-Use [`docs/database-testing.md`](docs/database-testing.md) for the isolated Supabase
-workflow and [`docs/README.md`](docs/README.md) to find the single authoritative
-document for every other project area. Script-specific behavior lives in
-[`scripts/README.md`](scripts/README.md) or the executable file header.
+Use [`docs/testing.md`](docs/testing.md) to choose the correct layer and execution stage,
+[`docs/browser-testing.md`](docs/browser-testing.md) for Playwright, and
+[`docs/database-testing.md`](docs/database-testing.md) for the isolated Supabase
+workflow. [`docs/README.md`](docs/README.md) maps every other project subject.
+Script-specific behavior lives in [`scripts/README.md`](scripts/README.md) or the
+executable file header.
 
 ---
 

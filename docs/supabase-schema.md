@@ -124,7 +124,7 @@ Notes:
 - Browser clients retain scoped reads but cannot bypass the authoritative preference
   write functions.
 
-## Mix Goal Presets and Active Goals
+## Mix Goal Presets And Active Goals
 
 System presets are reviewed reference data; personal presets and active goals are
 private user data. Applying any preset copies its current targets into the user's active
@@ -168,7 +168,11 @@ Only the apply functions may mark a configuration as an unmodified preset copy;
 ordinary goal saves are always recorded as customized so clients cannot fabricate
 canonical preset provenance.
 
-## Ingredient Lists and Saved Mixes
+## Ingredient Lists And Saved Mixes
+
+The product UI calls these **Saved Recipes**. The `saved_drinks` table name is a legacy
+database contract and remains unchanged until a deliberate migration updates every
+reader, writer, policy, generated type, and persisted reference.
 
 | Table                           | Primary Key          | Owner Scope             | Purpose                                                                             | Key Relationships                                                                |
 | ------------------------------- | -------------------- | ----------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
@@ -303,7 +307,7 @@ Notes:
   available during database outages and can be tested, revised, and translated.
 - Direct table access is restricted to the service role.
 
-## Nutrient Definitions, Values, and Validation
+## Nutrient Definitions, Values, And Validation
 
 | Table                                      | Primary Key   | Owner Scope                              | Purpose                                                                                                                     | Key Relationships                                                               |
 | ------------------------------------------ | ------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -351,7 +355,7 @@ Notes:
   `amount_per_100g`. Source nutrient keys/codes and mapping/derivation metadata retain
   the exact normalization decision; `mapping_review_reference` is internal moderation
   evidence and is not serialized by the public API.
-- `apply_food_nutrient_uncertainty` hydrates these columns only from the exact parent
+- `apply_food_nutrient_uncertainty` populates these columns only from the exact parent
   food snapshot. It does not infer uncertainty from provider identity or a similar
   nutrient.
 
@@ -404,7 +408,7 @@ Notes:
 - `issue_code → app_issue_codes.code`; the client message catalog combines that code
   with the joined nutrient labels to produce friendly wording.
 
-## Product Reference Data and Serving Measures
+## Product Reference Data And Serving Measures
 
 The source responsibilities, useful field inventory, legal-storage boundary, and
 provider-module map are documented in
@@ -569,7 +573,7 @@ Notes:
 - Authenticated users may read their own serving rows and servings attached to active
   shared products. Only server/service-role paths may write them.
 
-## Shared Product Catalog and Barcode Flow
+## Shared Product Catalog And Barcode Flow
 
 | Table                             | Primary Key             | Owner Scope                   | Purpose                                                                   | Key Relationships                                                   |
 | ---------------------------------- | ----------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
@@ -724,7 +728,7 @@ Unsubmitted nutrients and metadata remain canonical, unchanged selected provenan
 retained, and the shared row keeps its existing whole-product source identity. New
 label-review provenance replaces only the approved field paths.
 
-### Product evidence and cache tables
+### Product Evidence And Cache Tables
 
 `shared_product_observations`, `shared_product_field_provenance`, and
 `shared_product_conflicts` hold the evidence trail behind shared catalog data.
@@ -859,7 +863,7 @@ Notes:
 | `product-submission-evidence` | Private | Product evidence images scoped under the submitting user id |
 | `food-image-assets` | Public | Approved/source-backed product image files; private evidence must not move here before moderation approval |
 
-## Compatibility, Allergens, and Dietary Restrictions
+## Compatibility, Allergens, And Dietary Restrictions
 
 | Table                              | Primary Key | Owner Scope                 | Purpose                                                                                            | Key Relationships                                                                   |
 | ---------------------------------------------------- | ----------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
@@ -890,7 +894,7 @@ Notes:
 
 - `category` is `allergen`, `dietary`, `ingredient`, or `avoidance`.
 
-### Reviewed ingredient taxonomy and terminology policy
+### Reviewed Ingredient Taxonomy And Terminology Policy
 
 | Table | Documented columns |
 | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -922,7 +926,7 @@ Notes:
   but the original source wording and language remain evidence. An explicitly reported
   unsupported language remains incomplete rather than being treated as checked.
 
-### Version-bound extraction and conflict policy
+### Version-Bound Extraction And Conflict Policy
 
 | Table | Documented columns |
 | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1098,7 +1102,7 @@ Notes:
   `ingredient_list`. Canonical tags keep required selectable safety preferences
   available before any product happens to report them.
 
-### Saved preference resolution and review requests
+### Saved Preference Resolution And Review Requests
 
 | Table | Documented columns |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1187,7 +1191,7 @@ Notes:
 - `npm run backfill:shared-product-categories` checks USDA FoodData Central and Open
   Food Facts, records category provenance, and repairs legacy catalog rows.
 
-## Moderation and Access Control
+## Moderation And Access Control
 
 | Table                              | Primary Key  | Owner Scope                | Purpose                                                   | Key Relationships                                  |
 | ---------------------------------- | ------------ | -------------------------- | --------------------------------------------------------- | -------------------------------------------------- |
@@ -1264,7 +1268,7 @@ Notes:
   `replace_app_interaction_daily_metrics` function atomically replaces at most 32 days
   and 500 aggregate rows per run.
 
-## Request Security and Least Privilege
+## Request Security And Least Privilege
 
 ### `request_rate_limits`
 

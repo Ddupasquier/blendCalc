@@ -6,7 +6,24 @@ const openIngredientNutrition = async (
 ) => {
 	await page.goto("/ingredients/fridge");
 	await waitForAppReady(page);
-	await page.getByRole("button", { name: previewButtonName }).first().click();
+	const previewButton = page
+		.getByRole("button", { name: previewButtonName })
+		.first();
+	for (let revealAttempt = 0; revealAttempt < 10; revealAttempt += 1) {
+		if (await previewButton.isVisible()) break;
+		const loadMoreButton = page.getByRole("button", {
+			name: "Load more",
+			exact: true,
+		});
+		await expect(loadMoreButton).toBeVisible();
+		const visibleCardCount = await page.locator(".saved-ingredient-card").count();
+		await loadMoreButton.click();
+		await expect
+			.poll(() => page.locator(".saved-ingredient-card").count())
+			.toBeGreaterThan(visibleCardCount);
+	}
+	await expect(previewButton).toBeVisible();
+	await previewButton.click();
 	await expect(page).toHaveURL(/\/ingredients\/fridge\/nutrition\//);
 };
 

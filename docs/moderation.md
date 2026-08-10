@@ -1,4 +1,4 @@
-# Moderation and account access
+# Moderation And Account Access
 
 This document owns privileged role, account-control, notification, and review
 workflows. Profile upload behavior belongs in
@@ -6,7 +6,16 @@ workflows. Profile upload behavior belongs in
 [`shared-product-catalog.md`](shared-product-catalog.md), and database objects in
 [`supabase-schema.md`](supabase-schema.md).
 
-## Security model
+## Guide Navigation
+
+| Area | Sections |
+| --- | --- |
+| Access and setup | [Security model](#security-model) and [apply and configure](#apply-and-configure) |
+| Account actions | [Notification emails](#block-notification-emails), [blocking and restoring](#blocking-and-restoring-accounts), and [future-signup blocking](#enable-future-signup-blocking) |
+| Data review | [Food warnings](#food-warning-reports), [preference mappings](#custom-food-preference-mapping-requests), [nutrient mappings](#nutrient-mapping-and-uncertainty-review), [product corrections](#product-correction-reports), and [catalog health](#catalog-data-health) |
+| Media and privacy | [Profile image moderation](#profile-image-moderation) and [IP addresses](#ip-addresses) |
+
+## Security Model
 
 - Normal users have no row in `app_role_assignments`.
 - `moderator` can block and restore normal user accounts.
@@ -27,7 +36,7 @@ workflows. Profile upload behavior belongs in
 - `SUPABASE_SERVICE_ROLE_KEY` must exist only in server environments. Never prefix it
   with `PUBLIC_` or import it into a client component.
 
-## Apply and configure
+## Apply And Configure
 
 Apply moderation migrations and regenerate database types through the shared database
 change workflow in [`database-testing.md`](database-testing.md) and
@@ -66,7 +75,7 @@ Add `SUPABASE_SERVICE_ROLE_KEY` to the Vercel project as a sensitive **Productio
 environment variable, then redeploy. Do not expose this key to arbitrary preview
 branches; preview code can change before review and the service role bypasses RLS.
 
-## Block notification emails
+## Block Notification Emails
 
 Blocking through `/moderation` sends the affected user a transactional email that
 includes the selected public reason. The message never includes internal moderator
@@ -139,7 +148,7 @@ Direct service-role writes to `app_role_assignments` are revoked. Newly issued t
 reflect the change through the Auth hook; privileged requests enforce the database
 change immediately.
 
-## Blocking and restoring accounts
+## Blocking And Restoring Accounts
 
 Use `/moderation` while signed in with a moderator, admin, or developer role, or use the
 emergency CLI:
@@ -161,7 +170,7 @@ A block performs four separate operations:
 Every action is appended to `moderation_actions`. Do not delete moderation evidence as
 part of normal operations.
 
-## Food warning reports
+## Food Warning Reports
 
 Signed-in users can report a food compatibility warning when the match appears
 incorrect, relies on outdated source data, or uses the wrong evidence type. They can
@@ -189,7 +198,7 @@ uses its own reviewed workflow and, for policy changes, a new compatibility poli
 version. Private package evidence is viewed through short-lived signed URLs and never
 enters public catalog or API responses.
 
-## Custom food preference mapping requests
+## Custom Food Preference Mapping Requests
 
 Custom allergen and dietary text without one exact reviewed match enters
 `food_preference_mapping_requests`. The shared queue contains normalized text, rule
@@ -210,7 +219,7 @@ Reviewers must:
 Reject requests that cannot be mapped safely. Never edit an active mapping in place or
 create a client-side synonym to bypass review.
 
-## Nutrient mapping and uncertainty review
+## Nutrient Mapping And Uncertainty Review
 
 The moderator-only product provenance read contains every accepted normalized nutrient
 and the retained source nutrient review trail. Reviewers can compare the normalized
@@ -224,7 +233,7 @@ source-review rows never enter ordinary product pages or the public API. A revie
 correct an inaccurate mapping through the reviewed mapping workflow; the moderation
 read itself cannot rewrite nutrient math or silently approve a source row.
 
-## Product correction reports
+## Product Correction Reports
 
 Explicit product-correction reports are identified separately from ordinary catalog
 updates. Reviewers compare the submitted package evidence with the active product and
@@ -234,7 +243,7 @@ Approval merges only the reviewed changed fields, preserves unsubmitted canonica
 and provenance, and appends the normal immutable revision. If the active product changed
 while the report waited, approval stops as stale and the report must be compared again.
 
-## Catalog data health
+## Catalog Data Health
 
 `/moderation/data-health` is a privileged catalog health summary available to
 moderators, admins, and developers. Its server
@@ -261,7 +270,7 @@ submissions and warning reports link to their established reviewed queues. Mappi
 dataset, and policy corrections remain deliberate reviewed database/policy workflows;
 the health dashboard must not become an unreviewed direct-edit surface.
 
-## Enable future-signup blocking
+## Enable Future-Signup Blocking
 
 The migration creates `public.reject_blocked_signup(event jsonb)`, but Supabase must be
 told to use it:
@@ -274,13 +283,13 @@ told to use it:
 Without this hook, existing-account bans still work, but a user could register a new
 account using the same email after the original account is removed.
 
-## Profile image moderation
+## Profile Image Moderation
 
 Profile uploads retain immutable policy-acceptance evidence, but that self-attestation
 does not replace moderation. The upload, storage, replacement, and consent contract is
 maintained in [`user-profiles.md`](user-profiles.md).
 
-## IP addresses
+## IP Addresses
 
 Do not use a permanent application-level IP ban as the primary identity block. Home and
 mobile IPs rotate, VPNs bypass them, and shared networks can cause unrelated people to

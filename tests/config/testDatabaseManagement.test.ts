@@ -103,6 +103,21 @@ describe("local test database management", () => {
     expect(personas).toContain('name: "QA Export Berry Mix"');
   });
 
+  it("gives every Playwright worker equivalent isolated account state", () => {
+    const browserWorkerPersonas = localQaPersonas.filter(({ key }) =>
+      key.startsWith("browserWorker"),
+    );
+
+    expect(browserWorkerPersonas).toHaveLength(3);
+    for (const [index, persona] of browserWorkerPersonas.entries()) {
+      expect(persona.email).toBe(`qa-browser-${index + 1}@blendcalc.local`);
+      expect(persona.lists.fridge).toHaveLength(60);
+      expect(persona.lists.shopping).toHaveLength(40);
+      expect(persona.savedRecipeKeys).toHaveLength(4);
+      expect(persona.activeMixKey).toBe("morningGreen");
+    }
+  });
+
   it("seeds useful list, Saved, Mix, preference, and moderation state", () => {
     expect(script).toContain("loadTestCatalogFoods");
     expect(script).toContain("seedTestFoodLists");

@@ -15,6 +15,7 @@ export type NutrientRadarChartProps = {
 	actualFillColor?: string;
 	actualStrokeColor?: string;
 	gridLineColor?: string;
+	referenceBoundaryColor?: string;
 	targetOutlineColor?: string;
 	fullWidth?: boolean;
 	class?: string;

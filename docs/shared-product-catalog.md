@@ -1,9 +1,19 @@
-# Shared product catalog
+# Shared Product Catalog
 
 The shared catalog lets one verified packaged product become searchable for every
 signed-in user without exposing the account that submitted it.
 
-## User flow
+## Guide Navigation
+
+| Area | Sections |
+| --- | --- |
+| Intake and evidence | [User flow](#user-flow), [source policy](#source-policy), and [provenance and merging](#provenance-and-merging) |
+| Product changes | [Existing barcodes and label changes](#existing-barcodes-and-label-changes), [serving data](#serving-data), and [source lifecycle](#source-lifecycle) |
+| Runtime and quality | [Runtime source boundary](#runtime-source-boundary), [source quality monitoring](#source-quality-monitoring), and [verification rules](#verification-rules) |
+| Safety and review | [Catalog security](#catalog-security-boundary), [moderation](#moderation), and the [submission improvement plan](#submission-and-moderation-improvement-plan) |
+| Supporting features | [Nutrition completeness](#nutrition-completeness-flow), [product identifier QR codes](#product-identifier-qr-codes), and [QA fixtures](#qa-moderation-fixtures) |
+
+## User Flow
 
 1. A user scans or enters a valid UPC/EAN barcode.
 2. The ingredient is always saved to that user's private custom-food list first.
@@ -29,7 +39,7 @@ Submitting is optional. A failed catalog submission never rolls back the user's 
 ingredient. Submission pauses only affect shared catalog submissions. Users can still
 save private custom foods, use their fridge, and build mixes.
 
-## Source policy
+## Source Policy
 
 - **blendCalc shared catalog:** the active `shared_products` row plus its normalized
   nutrient, serving, image, category, provenance, and revision records is the canonical
@@ -59,7 +69,7 @@ Provider capabilities are maintained in the
 requirements, current handling, and compliance blockers are maintained only in
 [`data-source-licensing.md`](data-source-licensing.md).
 
-## Provenance and merging
+## Provenance And Merging
 
 Every published field records the observation that supplied it. Source observations,
 selected field provenance, and disagreements are stored separately from the canonical
@@ -96,7 +106,7 @@ explicit source trace/advisory fields populate `May contain`. Applicable existin
 products are backfilled through the same canonical enrichment transaction so recovered
 data, provenance, normalized rows, and revisions remain consistent with future writes.
 Historical submissions remain immutable evidence of what was actually submitted.
-User-linked list reads hydrate the current accepted canonical record instead of
+User-linked list reads load the current accepted canonical record instead of
 rewriting those historical submissions or duplicating canonical metadata into every
 saved snapshot.
 
@@ -232,7 +242,7 @@ view shows the exact block reasons. See
 [`api-structures/catalog-field-lineage.md`](api-structures/catalog-field-lineage.md)
 for the response-field map and row audit.
 
-## Existing barcodes and label changes
+## Existing Barcodes And Label Changes
 
 An existing barcode does not make the catalog permanent or make a new label
 automatically correct. Packaging, serving sizes, ingredients, allergens, and nutrition
@@ -266,7 +276,7 @@ as the date the manufacturer changed the product unless a separate source provid
 date. Revision history is retained for the future public API, while private evidence
 paths remain moderator-only.
 
-### Catalog date and evidence semantics
+### Catalog Date And Evidence Semantics
 
 Run `node scripts/audits/audit_catalog_transparency.mjs` to measure current population
 across canonical products, selected source observations, normalized rows, API v1
@@ -311,7 +321,7 @@ it never changes product facts or suppresses personal conflict warnings. Unsuppo
 regions remain explicitly unchecked. Public API v1 reads have no account preference
 context and therefore do not serialize this personalized regional evaluation.
 
-## Serving data
+## Serving Data
 
 Reported serving sizes are normalized into `food_servings` when products are saved,
 submitted, approved, revised, or observed. Each row keeps the readable label, gram
@@ -328,7 +338,7 @@ existing catalog and user food records only when an exact serving or user-entere
 supports it. Provider identity, food identity, names, and categories do not establish a
 serving origin or weight-to-volume relationship.
 
-## Runtime source boundary
+## Runtime Source Boundary
 
 Provider requests and caches are server-only enrichment inputs. The catalog checks
 canonical data first, requests only missing permitted fields, coalesces identical
@@ -361,7 +371,7 @@ older JSON snapshot. This means an approved product cannot continue to display a
 state, and a pending catalog update can display `Pending` without pretending the
 underlying active product has disappeared.
 
-## Source quality monitoring
+## Source Quality Monitoring
 
 External source usage is measured in privacy-safe daily aggregates. Runtime metrics
 separate logical lookups from real outbound requests and USDA cache hits, then track
@@ -376,7 +386,7 @@ and calls per lookup as operational evidence—not blanket trust.
 The maintained report and benchmark commands, options, and interpretation notes belong
 in [`../scripts/README.md`](../scripts/README.md#source-quality-audits).
 
-## Catalog security boundary
+## Catalog Security Boundary
 
 Authenticated users may read active catalog products and their own submissions, but
 browser clients cannot publish, review, reject, or mutate canonical catalog rows.
@@ -409,14 +419,14 @@ approval.
   submissions for 30 days. This prevents repeated bad catalog entries without blocking
   private food tracking.
 
-## Submit and moderation improvement plan
+## Submission And Moderation Improvement Plan
 
 The current schema already gives us useful pieces: private custom foods, shared product
 submissions, approved shared products, observations, field provenance, conflicts,
 validation reports, evidence photos, and rejection blocks. New catalog features should
 use those pieces first.
 
-### Intake outcomes
+### Intake Outcomes
 
 When a user tries to share a barcoded manual entry, route it into one of these clear
 outcomes:
@@ -437,7 +447,7 @@ outcomes:
    verified barcode match. Offer verified autofill or remove the barcode and save the
    user-authored item privately; do not create a normal moderation item.
 
-### Suggested checks
+### Suggested Checks
 
 - **Barcode:** valid GTIN format, duplicate active product, duplicate pending
   submission, trusted-source match, and source mismatch.
@@ -453,14 +463,14 @@ outcomes:
 - **User history:** repeated human rejections pause sharing, but silent machine blocks
   should be tracked separately unless we explicitly decide they should count.
 
-### Auto-accept candidates
+### Auto-Accept Candidates
 
 - Exact trusted barcode source match with no material conflicts.
 - Existing shared product match with no changes.
 - Missing optional nutrients filled from a trusted source without changing user-entered
   required label data.
 
-### Auto-block candidates
+### Auto-Block Candidates
 
 These should not show as normal moderation rows unless we intentionally want moderators
 to audit them:
@@ -472,7 +482,7 @@ to audit them:
 - Submission appears to reuse a barcode for a different product.
 - Required evidence is absent after the flow already told the user it is required.
 
-### Schema note
+### Schema Note
 
 Normal `rejected` submissions count toward the 5-rejection sharing pause. Silent machine
 blocks use `shared_product_submissions.status = 'auto_declined'` and do not count as
@@ -488,7 +498,7 @@ product before deciding the outcome:
 - wildly unrelated data is stored as `auto_declined` for audit and never appears in the
   normal moderation queue.
 
-## Verification rules
+## Verification Rules
 
 Current automatic checks reject:
 
@@ -544,7 +554,7 @@ planned benchmark is recorded as not run rather than misreported as poor coverag
 Active providers must be tested on the same representative barcode sample before source
 priority changes.
 
-## QA moderation fixtures
+## QA Moderation Fixtures
 
 Create clearly marked pending submissions in the disposable local test database without
 calling outside product APIs. Run `npm run db:test:start` first so the local credentials

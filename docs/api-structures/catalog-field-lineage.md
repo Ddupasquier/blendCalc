@@ -11,7 +11,7 @@ The read path is:
 
 1. `get_blendcalc_product_v1` or `search_blendcalc_products_v1` selects an active
    `shared_products` row that passes the publication-readiness gate.
-2. `catalogRead.server.ts` hydrates that row with its latest revision, enabled canonical
+2. `catalogRead.server.ts` adds its latest revision, enabled canonical
    category, selected field provenance, normalized nutrients, normalized servings, and
    active image assets.
 3. `catalogApi.server.ts` serializes only the versioned API contract.
