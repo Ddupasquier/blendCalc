@@ -28,7 +28,7 @@ automatically part of the public developer command surface.
 - `operations/releases/`: application/API version consistency and release bumps.
 - `operations/users/`: privileged role and account operations.
 - `qa/catalog/`: disposable catalog and image moderation fixtures.
-- `qa/database/`: deterministic database/API QA checks and temporary data fixtures.
+- `qa/database/`: deterministic hosted database and API integrity checks.
 - `seeds/catalog/`: category, source identity, serving, and product reference discovery.
 - `seeds/food-safety/`: ingredient, allergen, trace, and dietary preference evidence.
 - `seeds/nutrition/`: manual-entry nutrient policy observations.

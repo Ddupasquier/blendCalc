@@ -76,7 +76,6 @@
 		"catalog:qa-image-seed": "BLENDCALC_DATABASE_ENVIRONMENT=test node scripts/qa/catalog/seed_image_moderation_submission.mjs seed",
 		"catalog:qa-image-clean": "BLENDCALC_DATABASE_ENVIRONMENT=test node scripts/qa/catalog/seed_image_moderation_submission.mjs cleanup",
 		"qa:deterministic": "node scripts/qa/database/run_deterministic_qa.mjs",
-		"qa:no-serving-fixture": "node scripts/qa/database/check_no_serving_fixture.mjs",
 		"moderate": "node scripts/operations/users/moderate_user.mjs",
 		"seed:manual-entry-nutrients": "node scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs",
 		"seed:product-reference-data": "node scripts/seeds/catalog/seed_product_reference_data.mjs"
