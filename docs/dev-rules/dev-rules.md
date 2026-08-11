@@ -17,8 +17,9 @@ skip the inventory.
 
 ### 1. Establish The Contract
 
-1. Read the applicable rules in this document and
-   [the current development audit](dev-rules-audit.md).
+1. Read the applicable rules in this document and the centralized
+   [work queue](../work-queue.md). Read the
+   [development-audit method](dev-rules-audit.md) when performing or updating an audit.
 2. Read every applicable domain source identified by `AGENTS.md` and `docs/README.md`.
 3. State the observable outcome, affected users and systems, explicit non-goals, and
    completion evidence before editing.
@@ -76,14 +77,15 @@ Re-read the touched code against the contract, rules, audit, domain documents, a
 current diff. Remove obsolete components, dead code, duplicate styles, stale tests,
 empty files and directories, and temporary artifacts. Update maintained documentation
 only when its owned contract, schema, structure, or reusable expectation changed. Record
-unfinished work once in the appropriate queue, update local recovery context, and state
+unfinished work once in `docs/work-queue.md`, update local recovery context, and state
 exactly what was and was not verified. Never claim completion from green automation
 alone when the requested outcome is visual, experiential, device-specific, or otherwise
 unobserved.
 
-Maintain the rules and audit as the project evolves. Add only settled, repeatable
-requirements here. Keep temporary observations and unresolved implementation gaps in
-the audit, and remove those audit entries once they are resolved.
+Maintain the rules, central queue, and audit method as the project evolves. Add only
+settled, repeatable requirements here. Put verified unresolved implementation gaps in
+the work queue and remove them when resolved; the audit document remains a procedure,
+not a findings list.
 
 ## Rule Groups
 
@@ -178,7 +180,8 @@ reading path for broad work.
 - [QA Task Consistency](#rule-qa-task-consistency)
 - [MVP QA Priorities](#rule-qa-priorities)
 - [Unfinished Work Ownership](#rule-unfinished-work-ownership)
-- [Current Development Audit](dev-rules-audit.md)
+- [Central Work Queue](../work-queue.md)
+- [Development Audit Method](dev-rules-audit.md)
 
 ## Rules
 
@@ -197,9 +200,9 @@ and call out the conflict before writing code.
 [Canonical Change Lifecycle](#canonical-change-lifecycle) for every change. It is a
 required design, implementation, verification, and cleanup process—not an optional
 handoff audit. The lifecycle scales with the task but no phase may be silently skipped.
-The rules remain authoritative over the audit. When a request conflicts with a
-maintained contract, stop the active queue, explain the conflict in plain language, and
-ask which contract should change before editing.
+The rules remain authoritative over the work queue and audit method. When a request
+conflicts with a maintained contract, stop the active queue, explain the conflict in
+plain language, and ask which contract should change before editing.
 
 **0b.** <a id="rule-repository-hygiene"></a>Keep the remote repository limited to
 deliberate product source, migrations, tests, required configuration and lockfiles,
@@ -889,7 +892,16 @@ linked dry run and pending migration list, then apply only the expected migratio
 the linked and local migration histories agree before handoff. Stop instead of applying
 when local verification fails, the dry run includes an unexpected migration, or the
 linked state differs from the reviewed chain. This standing database-migration workflow
-does not grant permission to commit or push Git changes.
+does not grant permission to commit, push, merge, or deploy Git changes.
+
+Deploy migrations independently from application-branch promotion only when the
+currently deployed `main` application can continue reading and writing safely against
+the changed schema and database behavior. Prefer additive expansion migrations: add the
+new structure, backfill safely, and preserve the old contract until compatible
+application code is live. Renames, removals, restrictive constraints, changed write
+semantics, and other coupled changes must use an expand-migrate-switch-contract rollout;
+do not deploy the incompatible contract phase ahead of its application release. This
+compatibility gate prevents automatic migration delivery from disrupting production.
 
 **26c.** <a id="rule-database-api-hygiene"></a>Treat database and blendCalc API hygiene
 as a continuous responsibility, not a one-time cleanup project. Whenever work touches a
@@ -911,9 +923,8 @@ authority, access policy, retention, and cardinality genuinely align; fewer tabl
 not inherently cleaner. Keep naming consistent with the canonical domain vocabulary,
 and keep the public API deliberately narrower and more stable than the internal schema.
 Fix small, clearly safe findings within the active task. Record broader, destructive,
-or uncertain findings in the maintained development audit or implementation-owned todo
-with evidence and a completion condition instead of silently expanding scope or leaving
-the finding undocumented.
+or uncertain findings once in `docs/work-queue.md`, with evidence and a completion
+condition, instead of silently expanding scope or creating another task list.
 
 **27.** <a id="rule-no-hardcoded-reference-data"></a>Do not hardcode DB-backed catalog
 data, API-derived reference data, nutrient definitions, allergens, dietary restrictions,
@@ -1636,42 +1647,43 @@ hand-rolling its own slide-in panel.
 
 ### QA, Recovery, And Shared View Primitives
 
-**41.** <a id="rule-qa-process"></a>Maintain `docs/QA/qa-tasks.md` as the local-only QA
-index, split active manual checks into `launch-blocker-qa-tasks.md`,
-`before-launch-qa-tasks.md`, and `post-launch-qa-tasks.md`, and keep
-`completed-qa-tasks.md` as the completed QA archive. These files and screenshot assets
-are ignored by git and must not be committed. Every new feature, component, UI,
-data-flow, or behavior change must add concrete local QA notes before handoff unless it
-is clearly documentation-only and needs no user verification. QA notes are part of the
-implementation slice: create or update them while the behavior changes, not after a
-later reminder or cleanup pass. Give every QA section a stable `QA-GGG` group ID and
-every task a stable `QA-GGG-TTT` ID. Use the next unused number, never reuse or renumber
-existing IDs, and preserve IDs when archiving tasks. Active priority trackers are the
-remaining observable QA queue: keep only checks that require visual judgment,
-real-device/browser interaction,
-assistive-technology verification, user-controlled deployment configuration, or another
-human decision. Interactive browser-control tooling is not part of the verification
-workflow. Repository-owned Playwright tests are deterministic development automation
-and may prove browser behavior or approved visual snapshots in their configured engines
-and viewports, but they do not substitute for an untested named installed browser,
-physical device, operating-system permission, assistive technology, or subjective visual
-approval. Keep remaining observable checks active for explicit user confirmation in the required
-browser, viewport, physical device, permission, or assistive-technology environment.
-Deterministic code, schema, migration, API, data-integrity, RLS, build, lint, or test
-checks belong to the automated development workflow. Run those checks instead of
-assigning them to the user and record successful evidence in the completed archive.
-Keep a verified systemic implementation gap in the maintained development audit and
-keep only the currently interrupted implementation state in the local recovery
-checkpoint. Do not create a parallel TODO or action queue that mirrors observable QA.
-Organize every active priority tracker with a workflow-category index that links related
-QA groups so a reviewer can complete one coherent area at a time without changing stable
-IDs or duplicating tasks. Begin every QA tracker and index with the current disposable
-local test-account credentials and the complete categorized barcode-reference catalog.
-Never place production credentials or private user data in those references.
-After a group's final active task moves to the completed archive or is retired, remove
-the empty group shell and its workflow-category link from the active tracker. The
-completed archive preserves its context; active trackers must not keep placeholder
-groups for possible future additions.
+**41.** <a id="rule-qa-process"></a>Maintain local-only QA execution material under
+`docs/QA/`: `qa-tasks.md` owns shared fixtures and execution guidance,
+`launch-blocker-qa-tasks.md`, `before-launch-qa-tasks.md`, and
+`post-launch-qa-tasks.md` own detailed active repro packets, and
+`completed-qa-tasks.md` owns completed and retired QA evidence. These files and
+screenshot assets are ignored by Git and must not be committed. They do not own global
+priority, work order, status summaries, or the next action; the centralized
+`docs/work-queue.md` owns those concerns for both implementation findings and QA.
+
+Every new feature, component, UI, data-flow, or behavior change must add concrete local
+QA notes before handoff unless it is clearly documentation-only and needs no user
+verification. Add or update the detailed repro packet and its one work-queue reference
+in the same change. QA notes are part of the implementation slice: create or update them
+while the behavior changes, not after a later reminder or cleanup pass. Give every QA
+section a stable `QA-GGG` group ID and every task a stable `QA-GGG-TTT` ID. Use the next
+unused number, never reuse or renumber existing IDs, and preserve IDs when archiving
+tasks.
+
+Active QA packets contain only checks that require visual judgment, real-device or
+named-browser interaction, assistive-technology verification, user-controlled
+deployment configuration, or another human decision. Interactive browser-control
+tooling is not part of the verification workflow. Repository-owned Playwright tests are
+deterministic development automation and may prove browser behavior or approved visual
+snapshots in their configured engines and viewports, but they do not substitute for an
+untested named installed browser, physical device, operating-system permission,
+assistive technology, or subjective visual approval. Keep remaining observable checks
+active for explicit user confirmation in the required environment. Deterministic code,
+schema, migration, API, data-integrity, RLS, build, lint, or test checks belong to the
+automated development workflow. Run those checks instead of assigning them to the user
+and record successful evidence in the completed archive.
+
+Begin the QA execution guide and each packet with the current disposable local
+test-account credentials and complete categorized barcode-reference catalog. Never
+place production credentials or private user data in those references. After a group's
+final active task moves to the completed archive or is retired, remove its empty packet
+section and its work-queue row. The completed archive preserves context; active files
+must not keep placeholders for possible future additions.
 
 At the end of every requested QA run, make one deliberate closeout pass over every task
 that remains marked as a failure, blocker, partial result, or input-needed state. Retry
@@ -1685,9 +1697,10 @@ If the named browser, physical device, assistive technology, external service, u
 decision, or other required dependency remains unavailable, do not simulate success or
 loop pointlessly; preserve the honest active status and the exact remaining blocker.
 
-**41a.** <a id="rule-qa-priorities"></a>Assign every active QA group one explicit MVP
-priority, place the whole group in the matching active priority tracker, and keep that
-priority visible in the group. `Launch blocker`
+**41a.** <a id="rule-qa-priorities"></a>Assign every active implementation item and QA
+group one explicit MVP priority in `docs/work-queue.md`. Keep a QA group's detailed
+repro in the matching priority packet, but never use packet order or headings as a
+second priority list. `Launch blocker`
 means the behavior can produce wrong calculations, data loss or corruption, duplicate
 records, a security or privacy failure, a broken core save/navigation flow, unusable
 mobile behavior, an accessibility blocker, or a failed required build, migration, or
@@ -1700,38 +1713,39 @@ priority whenever scope or behavior changes; never downgrade a correctness, secu
 privacy, data-integrity, mobile-usability, or accessibility problem merely to keep moving.
 
 **41b.** <a id="rule-qa-task-consistency"></a>Before adding or changing any QA task,
-automatically search all active priority trackers and the completed QA archive for the same route, component,
-control, data flow, behavior, and expected outcome. Compare the proposed task against
-every matching active task before writing it. Do not leave two active tasks that expect
-opposing behavior, test a removed control, repeat the same coverage, or describe an old
-version of the feature. Update an existing task when its stable ID still represents the
-same behavior; merge duplicate coverage; and remove superseded tasks from the active
-tracker immediately. Preserve a removed task's stable ID in the completed archive under
-an explicit `Retired` heading with the reason and replacement QA ID, as required by
-[QA clearance](#rule-qa-clearance). Completed tasks remain historical records rather
-than current instructions. Recalculate QA priority summaries after these changes so the
-tracker contains one clear, current expected outcome for each behavior.
+automatically search `docs/work-queue.md`, every active QA packet, and the completed QA
+archive for the same route, component, control, data flow, behavior, and expected
+outcome. Compare the proposed task against every match before writing it. Do not leave
+two active tasks that expect opposing behavior, test a removed control, repeat the same
+coverage, or describe an old version of the feature. Update an existing task when its
+stable ID still represents the same behavior; merge duplicate coverage; and remove
+superseded tasks from both the packet and work queue immediately. Preserve a removed
+task's stable ID in the completed archive under an explicit `Retired` heading with the
+reason and replacement QA ID, as required by [QA clearance](#rule-qa-clearance).
+Completed tasks remain historical records rather than current instructions. Recalculate
+the single work-queue priority summary after these changes.
 
-**41c.** <a id="rule-unfinished-work-ownership"></a>Do not maintain a general TODO
-folder or a second task list that mirrors QA. Observable visual, interaction, browser,
-device, accessibility, deployment, or user-decision verification belongs directly in
-the applicable QA priority file with its full repro, representative inputs, and expected
-outcome. Deterministic verification is executed during development and archived as
-completed QA evidence when it fully proves a stable task.
+**41c.** <a id="rule-unfinished-work-ownership"></a>`docs/work-queue.md` is the only
+active priority, task-order, status-summary, and next-action list. Every verified
+unresolved implementation or architecture finding belongs there once with a stable
+`DEV-###` ID, evidence, affected ownership, next action, and exact completion condition.
+Every active observable QA group is represented there once by its stable `QA-GGG` ID.
+Do not maintain a general TODO folder, an audit findings list, or another action queue.
 
-Verified unresolved implementation or architecture gaps belong once in
-`docs/dev-rules/dev-rules-audit.md`, with evidence, affected ownership, and an exact
-completion condition. The gitignored working-context checkpoint may record only the
-currently active or interrupted implementation slice and its next safe action; it is not
-a backlog. Durable settled decisions belong in the decision log. External professional
-review or user-controlled launch configuration may remain active QA when it has an
-observable completion contract. Never preserve completed implementation history in a
-parallel completed-task archive; Git history, completed QA evidence, and maintained
-domain documentation already own that record.
+QA packets own detailed repro steps, representative inputs, expected outcomes, and
+evidence—not global ordering. Deterministic verification is executed during development
+and archived as completed QA evidence when it fully proves a stable task. The
+development audit document owns the audit method, not findings. The working-context
+checkpoint may record only the current or interrupted work-queue item and its next safe
+action; it is not a backlog. Durable settled decisions belong in the decision log.
+External professional review or user-controlled launch configuration may remain active
+QA when it has an observable completion contract. Never preserve completed
+implementation history in another completed-task archive; Git history, completed QA
+evidence, and maintained domain documentation already own that record.
 
 **42.** <a id="rule-qa-clearance"></a>Finished tasks must prompt the user to run the
-relevant QA checks from the active priority trackers linked by local
-`docs/QA/qa-tasks.md`. Keep each QA item active until the user explicitly confirms it
+relevant QA checks referenced by `docs/work-queue.md` and detailed in the applicable QA
+packet. Keep each QA item active until the user explicitly confirms it
 passed or automation directly proves its complete expected outcome; a checked checkbox
 counts as user confirmation. During an explicit user-requested QA pass, automation must
 complete and archive deterministic tasks whose full expected
@@ -1744,18 +1758,18 @@ not actually exercised; emulation never proves a physical-device requirement. Ev
 for every automated or user-confirmed task must be written into the archived task.
 Whenever automation verifies 100% of a task's stated repro and expected outcome, move
 that task to `docs/QA/completed-qa-tasks.md` immediately in the same pass; do not leave a
-fully proven task active or wait for a separate cleanup request. Remove it from the
-active tracker, update active and completed counts, and remove any newly empty group
-heading and workflow-category link. Whenever QA is updated and before every handoff,
-automatically scan all active priority trackers and move confirmed, checked items to the
-completed archive. Every QA cleanup or archive pass must also audit the
+fully proven task active or wait for a separate cleanup request. Remove it from the QA
+packet and work queue, update active and completed counts, and remove any newly empty
+group heading and queue row. Whenever QA is updated and before every handoff,
+automatically scan the work queue and all active QA packets and move confirmed, checked
+items to the completed archive. Every QA cleanup or archive pass must also audit the
 remaining active tasks for stale routes, controls, labels, components, files, expected
 outcomes, superseded behavior, and duplicate coverage. When a whole section is complete,
 move its section context with those items. If a checked item needs clarification before
 archiving, add an unchecked `QA note needed:` prompt under the active section instead of
 guessing. Never mark an unproven item passed on the user's behalf, and do not silently
 delete active QA coverage. When a feature or behavior has intentionally been removed or
-superseded, remove its obsolete check from the appropriate active priority tracker and
+superseded, remove its obsolete check from the applicable QA packet and work queue and
 record its stable ID
 in the completed archive under an explicit `Retired` heading with the reason and
 replacement QA ID; retired does not mean passed.

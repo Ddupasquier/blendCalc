@@ -159,10 +159,11 @@ checklist.
 
 Repository setup and the stable developer command surface remain in the root
 [`README.md`](../README.md). Script execution and organization remain in
-[`scripts/README.md`](../scripts/README.md). Recovery context under
-`docs/local-context/` and active verification under `docs/QA/` are local workflow state,
-not product documentation. Verified unresolved implementation findings remain in the
-maintained development audit instead of a parallel task folder.
+[`scripts/README.md`](../scripts/README.md). `docs/work-queue.md` is the only active
+priority and task list. Detailed QA reproduction packets under `docs/QA/`, recovery
+context under `docs/local-context/`, and the audit method under `docs/dev-rules/`
+support that queue without owning another backlog. Settled decisions remain in the
+decision log and completed verification remains in the QA archive.
 
 Keep a focused document as one file. When a long document contains independently owned
 domains, preserve its established path as a short index and move each domain into a
