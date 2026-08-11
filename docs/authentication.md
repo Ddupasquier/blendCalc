@@ -7,7 +7,9 @@ local. Unrecognized hosted origins fall back to the canonical production origin.
 
 This document owns Auth and deployment-origin configuration. General server/database
 boundaries live in [`data-architecture.md`](data-architecture.md), and table policies
-live in [`supabase-schema.md`](supabase-schema.md).
+live in [`supabase-schema.md`](supabase-schema.md). Production network restrictions,
+backups, recovery, hosted audits, and incident response live in
+[`hosted-security.md`](hosted-security.md).
 
 ## Environment Variables
 
@@ -68,14 +70,16 @@ The tracked Supabase configuration currently enforces:
   accepts long passphrases, spaces, Unicode, and password-manager values.
 - Secure password changes. Recently authenticated users and password recovery
   sessions can update directly; older sessions must reauthenticate.
+- Hosted breached-password screening against known compromised credentials.
 - Eight-character email OTPs with a one-minute resend interval.
 - Optional TOTP enrollment and verification.
 
 Before public launch, also:
 
-- Enable leaked-password protection when the project plan supports it.
 - Before enabling Cloudflare Turnstile or hCaptcha, add its browser widget and pass the
   resulting token to Supabase sign-up and recovery calls.
+- Add TOTP enrollment, challenge, and recovery screens, then require AAL2 for
+  moderator, administrator, and developer actions.
 - Review Auth rate limits; lower them if automated abuse appears.
 - Configure custom SMTP before depending on confirmation or recovery emails.
 - Keep refresh-token reuse detection enabled.
@@ -120,6 +124,7 @@ potentially stale JWT alone.
 
 ```bash
 npm run check:auth
+node scripts/audits/security/audit_hosted_security.mjs
 supabase config push
 npm run check
 npm test

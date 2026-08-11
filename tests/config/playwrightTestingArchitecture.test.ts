@@ -15,7 +15,9 @@ describe("Playwright browser-testing architecture", () => {
 		const localQaAccounts = readSource(
 			"tests/e2e/support/localQaAccounts.ts",
 		);
-		const localQaPersonas = readSource("scripts/lib/local_qa_personas.mjs");
+		const localQaPersonas = readSource(
+			"scripts/lib/qa/local_qa_personas.mjs",
+		);
 		for (const project of [
 			"desktop-chromium",
 			"desktop-firefox",

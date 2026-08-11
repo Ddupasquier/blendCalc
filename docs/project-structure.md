@@ -142,9 +142,16 @@ not duplicate the same assertion across runners.
 
 ## Scripts
 
-- Executable maintenance commands live in purpose directories under `scripts/`, such
-  as `audits`, `backfills`, `generators`, `imports`, `operations`, `qa`, and `seeds`.
-- Reusable script code and shared reference catalogs live under `scripts/lib`.
+- Executable maintenance commands use a two-part ownership path under `scripts/`: the
+  first folder names the operation (`audits`, `backfills`, `generators`, `imports`,
+  `operations`, `qa`, or `seeds`) and the child folder names its domain (`catalog`,
+  `database`, `food-safety`, `food-sources`, `images`, `nutrition`, `recovery`,
+  `releases`, `security`, or `users`).
+- Reusable script code lives under the matching domain in `scripts/lib`; maintained
+  reference catalogs remain in `scripts/lib/reference-data`.
+- Do not add executable scripts directly inside a broad operation folder. Add another
+  domain folder only when it owns a real script, and remove it when its final file is
+  removed.
 - Runtime/reference data belongs in canonical database tables rather than generated
   repository-local output or cache directories.
 - Remove obsolete scripts instead of keeping undocumented alternatives.

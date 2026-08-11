@@ -4,7 +4,7 @@ import {
 	createCoverageRow,
 	hasSourceQualityMetadata,
 	hasStructuredIngredientAnalysis,
-} from "../../scripts/lib/catalogTransparency.mjs";
+} from "../../scripts/lib/catalog/catalogTransparency.mjs";
 import { describe, expect, it } from "vitest";
 
 describe("catalog transparency audit helpers", () => {

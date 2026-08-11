@@ -4,8 +4,8 @@ on:
   pull_request:
     paths:
       - "supabase/**"
-      - "scripts/operations/manage_test_database.mjs"
-      - "scripts/lib/local_qa_personas.mjs"
+      - "scripts/operations/database/manage_test_database.mjs"
+      - "scripts/lib/qa/local_qa_personas.mjs"
       - "src/lib/types/database.types.ts"
       - ".github/workflows/database-verification.yml"
   push:
@@ -16,8 +16,8 @@ on:
       - "ui-rebuild/**"
     paths:
       - "supabase/**"
-      - "scripts/operations/manage_test_database.mjs"
-      - "scripts/lib/local_qa_personas.mjs"
+      - "scripts/operations/database/manage_test_database.mjs"
+      - "scripts/lib/qa/local_qa_personas.mjs"
       - "src/lib/types/database.types.ts"
       - ".github/workflows/database-verification.yml"
 

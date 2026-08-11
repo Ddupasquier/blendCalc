@@ -87,5 +87,5 @@ These files represent observed response shapes from sampled payloads, not a
 vendor-guaranteed complete contract.
 
 When new external food APIs are added to the app, update
-`scripts/generators/generate_api_structures.mjs` so this folder continues to reflect every active
+`scripts/generators/api/generate_api_structures.mjs` so this folder continues to reflect every active
 external data source.

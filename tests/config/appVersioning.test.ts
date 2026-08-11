@@ -103,14 +103,14 @@ describe("blendCalc versioning", () => {
 
 	it("does not leave literal product versions in outbound scripts", () => {
 		const scriptFiles = [
-			"scripts/audits/audit_openfoodfacts_allergen_fields.mjs",
-			"scripts/backfills/backfill_food_images.mjs",
-			"scripts/backfills/backfill_shared_product_categories.mjs",
-			"scripts/audits/benchmark_product_sources.mjs",
-			"scripts/generators/generate_api_structures.mjs",
-			"scripts/seeds/seed_custom_food_categories.mjs",
-			"scripts/seeds/seed_food_preference_api_observations.mjs",
-			"scripts/seeds/seed_manual_entry_nutrients.mjs",
+			"scripts/audits/food-sources/audit_openfoodfacts_allergen_fields.mjs",
+			"scripts/backfills/images/backfill_food_images.mjs",
+			"scripts/backfills/catalog/backfill_shared_product_categories.mjs",
+			"scripts/audits/food-sources/benchmark_product_sources.mjs",
+			"scripts/generators/api/generate_api_structures.mjs",
+			"scripts/seeds/catalog/seed_custom_food_categories.mjs",
+			"scripts/seeds/food-safety/seed_food_preference_api_observations.mjs",
+			"scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs",
 		];
 		for (const file of scriptFiles) {
 			expect(readFileSync(file, "utf8")).not.toMatch(/blendCalc\/\d+\.\d+/);

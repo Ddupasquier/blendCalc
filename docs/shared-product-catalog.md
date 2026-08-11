@@ -278,7 +278,8 @@ paths remain moderator-only.
 
 ### Catalog Date And Evidence Semantics
 
-Run `node scripts/audits/audit_catalog_transparency.mjs` to measure current population
+Run `node scripts/audits/catalog/audit_catalog_transparency.mjs` to measure current
+population
 across canonical products, selected source observations, normalized rows, API v1
 publication, and the app read model. Add `--json` for machine-readable output. The
 report classifies each field as populated, sparse, or empty and prints representative

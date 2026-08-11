@@ -9,20 +9,32 @@ The privileged `npm run moderate -- role` operation accepts `moderator`, `admin`
 `developer`, or `none`. Add `--user-id=<expected-user-uuid>` when assigning a sensitive
 role so the email and Auth identifier must agree before the write.
 
-The folders below organize implementation files by purpose. Their contents are not
+Scripts use two ownership levels: the first directory identifies what the workflow
+does, and the second identifies the domain it affects. Their contents are not
 automatically part of the public developer command surface.
 
 ## Directory Map
 
-- `audits/`: read-only source coverage, quality, and compatibility checks.
-- `backfills/`: idempotent repairs or enrichment of existing database records.
-- `generators/`: generated documentation and repository artifacts.
-- `imports/`: licensed external dataset ingestion into canonical database tables.
-- `operations/`: authentication, database deployment, release-version checks/bumps, and
-  privileged user operations.
-- `qa/`: deterministic data checks and moderation fixtures with matching cleanup commands.
-- `seeds/`: repeatable reference-data discovery and database seeding.
-- `lib/`: shared script-only utilities; these files are not executable workflows.
+- `audits/catalog/`: catalog publication, transparency, and barcode-nutrition audits.
+- `audits/food-sources/`: provider field-coverage, quality, and benchmark audits.
+- `audits/security/`: hosted infrastructure and authentication audits.
+- `backfills/catalog/`: idempotent canonical catalog and saved-source enrichment.
+- `backfills/images/`: image discovery and asset metadata repair.
+- `generators/api/`: documentation-only external API structure generation.
+- `imports/nutrition/`: licensed national nutrition dataset ingestion.
+- `operations/auth/`: authentication environment checks.
+- `operations/database/`: local test database management and linked migration delivery.
+- `operations/recovery/`: protected hosted backups and offline backup verification.
+- `operations/releases/`: application/API version consistency and release bumps.
+- `operations/users/`: privileged role and account operations.
+- `qa/catalog/`: disposable catalog and image moderation fixtures.
+- `qa/database/`: deterministic database/API QA checks and temporary data fixtures.
+- `seeds/catalog/`: category, source identity, serving, and product reference discovery.
+- `seeds/food-safety/`: ingredient, allergen, trace, and dietary preference evidence.
+- `seeds/nutrition/`: manual-entry nutrient policy observations.
+- `lib/<domain>/`: shared script-only utilities; these files are not executable.
+- `lib/reference-data/`: maintained source queries, unit standards, and cautious matching
+  catalogs shared by seed workflows.
 
 ## Maintenance Rules
 
@@ -48,10 +60,11 @@ automatically part of the public developer command surface.
 
 ## Local Test Database
 
-`scripts/operations/manage_test_database.mjs` owns the stable `db:test:*` commands. It
+`scripts/operations/database/manage_test_database.mjs` owns the stable `db:test:*`
+commands. It
 starts or resets only localhost Supabase, applies `supabase/seed.sql`, writes the
 gitignored test environment, and creates the maintained personas defined in
-`scripts/lib/local_qa_personas.mjs`. Those personas cover populated, warning-heavy,
+`scripts/lib/qa/local_qa_personas.mjs`. Those personas cover populated, warning-heavy,
 empty, onboarding, moderator, and admin workflows across Ingredients, Saved, Mix,
 profiles, Storage evidence, and catalog review.
 
@@ -59,6 +72,34 @@ Use `npm run db:test:start` to repair missing baseline fixtures while preserving
 local tester changes. Use `npm run db:test:reset` for the exact deterministic baseline,
 or `npm run db:test:verify` to recreate it and run every database test. The complete
 persona inventory and recovery behavior live in `docs/database-testing.md`.
+
+## Hosted Security And Recovery
+
+Run `node scripts/audits/security/audit_hosted_security.mjs` for a secret-safe,
+read-only report
+of the linked project's health, trusted-network restriction, managed backups, callback
+URLs, password and refresh-token protections, Auth rate limits, CAPTCHA status, TOTP
+capability, and custom SMTP readiness. Add `--strict` to fail while launch controls are
+missing or blocked, or `--json` for a machine-readable report. The script never prints
+trusted CIDRs or hosted secrets.
+
+Create a private logical database and Storage backup outside the repository with:
+
+```bash
+node scripts/operations/recovery/create_protected_hosted_backup.mjs
+```
+
+Verify its required files, owner-only permissions, Storage manifest, and every SHA-256
+checksum without contacting Supabase:
+
+```bash
+node scripts/operations/recovery/verify_protected_hosted_backup.mjs \
+  "/absolute/path/to/the/backup"
+```
+
+The complete policy, recovery drill, retention guidance, and incident procedures live
+in `docs/hosted-security.md`. These direct commands intentionally do not add one-off npm
+aliases.
 
 ## Catalog API Audit
 
@@ -73,7 +114,8 @@ required to pass the API publication gate.
 
 ## Catalog Transparency Audit
 
-Run `node scripts/audits/audit_catalog_transparency.mjs` for the internal read-only
+Run `node scripts/audits/catalog/audit_catalog_transparency.mjs` for the internal
+read-only
 population report covering verification dates, revision history, selected observations,
 source quality, structured ingredients, normalized provenance, nutrient uncertainty,
 policy snapshots, compatibility evidence, API exposure, and app reads. Add `--json`
@@ -101,7 +143,7 @@ provider-wide trust or alter field-level catalog selection policy.
 ## Barcode Nutrition Accuracy Audit
 
 Run
-`node scripts/audits/audit_barcode_nutrition_accuracy.mjs --limit=300`
+`node scripts/audits/catalog/audit_barcode_nutrition_accuracy.mjs --limit=300`
 for a read-only, deterministic audit of at least 300 unique exact GTINs plus every active
 shared-catalog product. The audit checks source nutrient relationships, per-100g and
 serving round trips, USDA label consistency, Open Food Facts serving consistency,
@@ -115,13 +157,14 @@ are never promoted into the canonical catalog merely to make the audit appear co
 
 ## Catalog Metadata Backfill
 
-Run `node scripts/backfills/backfill_catalog_metadata.mjs --dry-run --cached-only` to
+Run `node scripts/backfills/catalog/backfill_catalog_metadata.mjs --dry-run --cached-only`
+to
 preview exact-barcode enrichment from the existing licensed provider cache without
 making external requests or database writes. Remove `--dry-run` to apply only missing
 USDA fields whose database source policy permits canonical storage:
 
 ```bash
-node scripts/backfills/backfill_catalog_metadata.mjs --cached-only
+node scripts/backfills/catalog/backfill_catalog_metadata.mjs --cached-only
 ```
 
 The workflow can recover a missing brand, ingredient statements, explicit allergen and

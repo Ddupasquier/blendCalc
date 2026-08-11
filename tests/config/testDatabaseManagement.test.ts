@@ -5,17 +5,20 @@ import {
   getLocalQaCatalogBarcodes,
   localQaPersonas,
   localQaUsdaCatalogBarcodes,
-} from "../../scripts/lib/local_qa_personas.mjs";
+} from "../../scripts/lib/qa/local_qa_personas.mjs";
 
 const script = readFileSync(
-  "scripts/operations/manage_test_database.mjs",
+  "scripts/operations/database/manage_test_database.mjs",
   "utf8",
 );
 const tutorialUtility = readFileSync(
   "src/lib/utils/tutorial/tutorial.ts",
   "utf8",
 );
-const personas = readFileSync("scripts/lib/local_qa_personas.mjs", "utf8");
+const personas = readFileSync(
+  "scripts/lib/qa/local_qa_personas.mjs",
+  "utf8",
+);
 
 describe("local test database management", () => {
   it("applies pending migrations before seeding QA accounts", () => {

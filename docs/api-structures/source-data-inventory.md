@@ -27,8 +27,8 @@ coalescing, caching, request counts, and source-policy checks.
 | --- | --- | --- |
 | USDA FoodData Central | Exact GTIN, source food id/type, names, brand, ingredients, nutrients, units, serving size, household serving, package weight, market country, publication/availability/update/discontinued dates, and categories | `src/lib/server/products/sources/usdaBarcodeProduct.server.ts` |
 | Open Food Facts | Exact GTIN, names, brand, raw and recursive structured ingredients, ingredient analysis, additives, explicit allergens, explicit traces, labels, categories, nutrients, serving text/weight/volume, package quantity, package images, language, market countries, record/schema revisions, source timestamps, completeness, quality/obsolete state, and tag-source metadata | `src/lib/server/products/sources/openFoodFactsBarcodeProduct.server.ts` |
-| Canadian Nutrient File 2026 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/import_cnf_2026.mjs` |
-| UK CoFID 2021 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/import_cofid_2021.mjs` |
+| Canadian Nutrient File 2026 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/nutrition/import_cnf_2026.mjs` |
+| UK CoFID 2021 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/nutrition/import_cofid_2021.mjs` |
 | User nutrition-label OCR | Text and nutrient candidates from a user-provided label | Tesseract runs on the client; no value is accepted until the user confirms it; shared-submission images remain private evidence |
 | Community review | User-observed product identity, label values, serving information, ingredients, warnings, and images | Moderation may create a versioned canonical revision; evidence stays private and approved public images use separate storage |
 | GS1 Digital Link | Normalized GTIN and standards-safe identifier parsing | Used only to resolve identifiers unless a separately approved data source supplies product fields |

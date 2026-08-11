@@ -28,6 +28,7 @@ organization and script-specific execution guidance.
 | [`api-structures/README.md`](api-structures/README.md) | API v1 endpoint overview, contract status, and generated provider-reference instructions | Field-level lineage details |
 | [`versioning.md`](versioning.md) | App, API, build, schema, product, placement, and transient-state version streams | Deployment setup |
 | [`authentication.md`](authentication.md) | Auth origins, callbacks, account-security configuration, and auth verification | General RLS/schema reference |
+| [`hosted-security.md`](hosted-security.md) | Production network restrictions, hosted Auth baseline, backups, recovery drills, and incident procedures | Application Auth screen behavior or table-level policies |
 | [`testing.md`](testing.md) | Test-layer ownership, execution stages, parallelism, and efficient verification | Playwright setup, database fixtures, or active QA tasks |
 | [`database-testing.md`](database-testing.md) | Disposable local database setup, commands, safety, and QA mutation procedure | Production migration policy |
 | [`browser-testing.md`](browser-testing.md) | Playwright projects, local authenticated browser setup, visual snapshots, and browser-test ownership | Manual physical-device or assistive-technology sign-off |
