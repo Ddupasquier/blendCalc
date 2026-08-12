@@ -111,6 +111,7 @@
 	);
     let scanSignal = $state(0);
     let barcodeScannerRouteOpen = $state(false);
+    let barcodeScannerReturnFocusTarget: HTMLElement | null = null;
     let barcodeLookupBusy = $state(false);
     let listQuery = $state("");
     const sourceFilter = "all";
@@ -416,7 +417,11 @@
 	        void closeRoutedPopin();
 	    };
 
-    const startBarcodeScan = () => {
+	const startBarcodeScan = (event?: MouseEvent) => {
+		barcodeScannerReturnFocusTarget =
+			event?.currentTarget instanceof HTMLElement
+				? event.currentTarget
+				: null;
 	        const routePatch = getBarcodeScannerOpenRoutePatch(activeIngredientRouteUrl);
 	        searchViewOpen = routePatch.view === INGREDIENT_ROUTE_VIEWS.search;
 	        barcodeScannerRouteOpen = true;
@@ -425,11 +430,20 @@
     };
 
     const closeBarcodeScanner = () => {
+	        const returnFocusTarget = barcodeScannerReturnFocusTarget;
 	        const routePatch = getBarcodeScannerCloseRoutePatch(activeIngredientRouteUrl);
 	        barcodeScannerRouteOpen = false;
 	        scanSignal = 0;
 	        searchViewOpen = routePatch.view === INGREDIENT_ROUTE_VIEWS.search;
 	        void navigateIngredientRoute(routePatch);
+		barcodeScannerReturnFocusTarget = null;
+		queueMicrotask(() => {
+			requestAnimationFrame(() => {
+				if (returnFocusTarget?.isConnected) {
+					returnFocusTarget.focus({ preventScroll: true });
+				}
+			});
+		});
     };
 
 	const openMoveConfirmation = () => {

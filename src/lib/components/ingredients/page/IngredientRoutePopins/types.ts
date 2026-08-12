@@ -64,7 +64,7 @@ export type IngredientRoutePopinsProps = {
 	onSelectFromActionSheet: () => void;
 	onRenameListItem: (name: string) => void | Promise<void>;
 	onRenameValueChange: () => void;
-	onScan: () => void;
+	onScan: (event?: MouseEvent) => void;
 	onSearchSelect: (food: FoodItem) => void;
 	onImagePlacementSave: (image: FoodImageAsset) => void | Promise<void>;
 };

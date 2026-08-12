@@ -20,8 +20,9 @@ export const manageDialogFocus = (
 	dialog: HTMLElement,
 	returnTargetOverride?: HTMLElement | null,
 ) => {
+	const hasExplicitReturnTarget = returnTargetOverride !== undefined;
 	const returnTarget =
-		returnTargetOverride === undefined
+		!hasExplicitReturnTarget
 			? document.activeElement instanceof HTMLElement
 				? document.activeElement
 				: null
@@ -44,7 +45,8 @@ export const manageDialogFocus = (
 			const activeElement = document.activeElement;
 			if (
 				activeElement === returnTarget ||
-				(activeElement instanceof Node &&
+				(!hasExplicitReturnTarget &&
+					activeElement instanceof Node &&
 					activeElement !== document.body &&
 					!dialog.contains(activeElement))
 			) {
