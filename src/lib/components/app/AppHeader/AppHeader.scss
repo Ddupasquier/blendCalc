@@ -20,7 +20,11 @@
 	min-height: $app-shell-header-height;
 	min-width: 0;
 	margin: 0 auto;
-	padding: $app-gap-sm max($app-shell-padding-x, env(safe-area-inset-right)) $app-gap-sm max($app-shell-padding-x, env(safe-area-inset-left));
+	padding-block: calc(
+		($app-shell-header-height - $app-shell-leading-icon-size) / 2
+	);
+	padding-inline: max($app-shell-padding-x, env(safe-area-inset-right))
+		max($app-shell-padding-x, env(safe-area-inset-left));
 	box-sizing: border-box;
 }
 
@@ -110,7 +114,12 @@
 
 	.app-header__inner {
 		gap: $app-gap-sm;
-		padding-block: $app-gap-xs;
+		padding-block: calc(
+			(
+				$app-shell-header-height-compact -
+					$app-shell-leading-icon-size-narrow
+			) / 2
+		);
 		padding-inline: max($app-gap-md, env(safe-area-inset-right)) max($app-gap-md, env(safe-area-inset-left));
 	}
 

@@ -189,8 +189,8 @@ const clickThroughCardSurface = async (
 	expect(bounds).not.toBeNull();
 	const clickPoint = target === "empty-padding"
 		? {
-			x: bounds!.x + bounds!.width - 8,
-			y: bounds!.y + bounds!.height / 2,
+			x: bounds!.x + bounds!.width / 2,
+			y: bounds!.y + 6,
 		}
 		: {
 			x: bounds!.x + bounds!.width / 2,
@@ -214,6 +214,24 @@ const readCardDimensions = (page: Page, count: number) =>
 			}),
 		count,
 	);
+
+const focusWithKeyboard = async (
+	page: Page,
+	target: Locator,
+	allowSafariKeyboardPreferenceFallback: boolean,
+) => {
+	for (let tabIndex = 0; tabIndex < 20; tabIndex += 1) {
+		await page.keyboard.press("Tab");
+		if (await target.evaluate((element) => element === document.activeElement)) {
+			return;
+		}
+	}
+	if (allowSafariKeyboardPreferenceFallback) {
+		await target.focus();
+		return;
+	}
+	throw new Error("Keyboard traversal did not reach the ingredient card.");
+};
 
 const readVisibleIngredientFoodIds = async (page: Page, count: number) => {
 	const foodIds = await page
@@ -308,7 +326,7 @@ test("ingredient-card copy never occupies the trailing action area", async ({
 
 test("selection mode exposes the complete card surface, stable geometry, keyboard focus, and announcements", async ({
 	page,
-}) => {
+}, testInfo) => {
 	await page.goto("/ingredients/fridge");
 	await waitForAppReady(page);
 	const cards = page.locator(".saved-ingredient-card");
@@ -320,6 +338,11 @@ test("selection mode exposes the complete card surface, stable geometry, keyboar
 	).toHaveCount(0);
 	await expect(cards.locator(".card-selection-indicator--circle")).toHaveCount(0);
 	await page.getByRole("button", { name: "Select items" }).click();
+	const selectionStatus = page.getByRole("status");
+	await expect(selectionStatus).toHaveAttribute("aria-live", "polite");
+	await expect(selectionStatus).toHaveAttribute("aria-atomic", "true");
+	await expect(cards.locator(".saved-ingredient-card__actions")).toHaveCount(0);
+	await expect(cards.locator(".saved-ingredient-card__move-action")).toHaveCount(0);
 
 	const selectedCards = [cards.nth(0), cards.nth(1), cards.nth(2), cards.nth(3)];
 	await clickThroughCardSurface(
@@ -345,7 +368,7 @@ test("selection mode exposes the complete card surface, stable geometry, keyboar
 		await expect(card).toHaveClass(/saved-ingredient-card--checked/);
 		await expect(card.locator(".card-selection-indicator svg")).toHaveCount(1);
 	}
-	await expect(page.getByRole("status")).toContainText(
+	await expect(selectionStatus).toContainText(
 		"Selection mode. 4 ingredients selected.",
 	);
 	const selectedBorderColor = await selectedCards[0].evaluate(
@@ -374,7 +397,7 @@ test("selection mode exposes the complete card surface, stable geometry, keyboar
 	await expect(
 		page.locator('.saved-ingredient-card__select[aria-pressed="true"]'),
 	).toHaveCount(visibleCardCount);
-	await expect(page.getByRole("status")).toContainText(
+	await expect(selectionStatus).toContainText(
 		`Selection mode. ${visibleCardCount} ingredients selected.`,
 	);
 	expect(await readCardDimensions(page, 4)).toEqual(initialDimensions);
@@ -382,13 +405,19 @@ test("selection mode exposes the complete card surface, stable geometry, keyboar
 	await page.getByRole("button", { name: "Cancel" }).click();
 	await expect(page.getByRole("button", { name: "Select items" })).toBeVisible();
 	await expect(cards.locator(".saved-ingredient-card__selection-indicator")).toHaveCount(0);
-	await expect(cards.locator(".saved-ingredient-card__move-action")).toHaveCount(12);
+	await expect(cards.locator(".saved-ingredient-card__move-action")).toHaveCount(
+		visibleCardCount,
+	);
 
 	await page.getByRole("button", { name: "Select items" }).click();
 	const keyboardSelectionButton = cards
 		.first()
 		.locator(".saved-ingredient-card__select");
-	await keyboardSelectionButton.focus();
+	await focusWithKeyboard(
+		page,
+		keyboardSelectionButton,
+		testInfo.project.name.includes("webkit"),
+	);
 	await expect(keyboardSelectionButton).toBeFocused();
 	await keyboardSelectionButton.press("Space");
 	await expect(keyboardSelectionButton).toHaveAttribute("aria-pressed", "true");
@@ -397,14 +426,14 @@ test("selection mode exposes the complete card surface, stable geometry, keyboar
 		const focusStyles = getComputedStyle(button, "::before");
 		return {
 			cardBorderColor: card ? getComputedStyle(card).borderColor : "",
-			focusOutlineColor: focusStyles.outlineColor,
-			focusOutlineStyle: focusStyles.outlineStyle,
-			focusOutlineWidth: Number.parseFloat(focusStyles.outlineWidth) || 0,
+			focusBorderColor: focusStyles.borderColor,
+			focusBorderStyle: focusStyles.borderStyle,
+			focusBorderWidth: Number.parseFloat(focusStyles.borderWidth) || 0,
 		};
 	});
-	expect(focusAndSelectionColors.focusOutlineStyle).not.toBe("none");
-	expect(focusAndSelectionColors.focusOutlineWidth).toBeGreaterThan(0);
-	expect(focusAndSelectionColors.focusOutlineColor).not.toBe(
+	expect(focusAndSelectionColors.focusBorderStyle).not.toBe("none");
+	expect(focusAndSelectionColors.focusBorderWidth).toBeGreaterThan(0);
+	expect(focusAndSelectionColors.focusBorderColor).not.toBe(
 		focusAndSelectionColors.cardBorderColor,
 	);
 	await keyboardSelectionButton.press("Enter");
@@ -418,7 +447,9 @@ test("selection mode exposes the complete card surface, stable geometry, keyboar
 	await page
 		.getByRole("button", { name: `Open actions for ${firstFoodName}` })
 		.click();
-	await page.getByRole("button", { name: "Select item" }).click();
+	await page
+		.getByRole("button", { name: "Select item", exact: true })
+		.click();
 	await expect(
 		cards.first().getByRole("button", { name: `Unselect ${firstFoodName}` }),
 	).toHaveAttribute("aria-pressed", "true");
@@ -527,7 +558,9 @@ test("normal card actions retain priority over preview and selection", async ({
 			.getByRole("button", { name: `Open actions for ${firstFoodName}` })
 			.click();
 		await expect(page).toHaveURL(/\/ingredients\/fridge\/actions\//);
-		await expect(page.getByRole("button", { name: "Select item" })).toBeVisible();
+		await expect(
+			page.getByRole("button", { name: "Select item", exact: true }),
+		).toBeVisible();
 		await expect(page.getByRole("button", { name: "Close sheet" })).toBeVisible();
 		await page.getByRole("button", { name: "Close sheet" }).click();
 		await expect(page).toHaveURL(/\/ingredients\/fridge$/);

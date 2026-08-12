@@ -41,24 +41,43 @@ const createAuthenticatedBrowserState = async ({
 		parallelWorkerIndex,
 	);
 	const page = await browser.newPage({ baseURL });
+	let latestAuthenticationError: unknown = null;
 
 	try {
-		await page.goto("/auth?next=/ingredients/fridge");
-		await page.getByLabel("Email").fill(account.email);
-		await page.getByLabel("Password", { exact: true }).fill(account.password);
-		await page.getByRole("button", { name: "Sign in", exact: true }).click();
-		await expect(page).toHaveURL(/\/ingredients\/fridge(?:[/?#]|$)/);
-		await expect(
-			page.getByRole("heading", { name: "Ingredients", exact: true }),
-		).toBeVisible();
-		await waitForAppReady(page);
-		await mkdir(dirname(storageStatePath), { recursive: true });
-		await page.context().storageState({ path: storageStatePath });
+		for (let attempt = 0; attempt < 2; attempt += 1) {
+			try {
+				await page.goto("/auth?next=/ingredients/fridge");
+				if (!/\/ingredients\/fridge(?:[/?#]|$)/.test(page.url())) {
+					await page.getByLabel("Email").fill(account.email);
+					await page
+						.getByLabel("Password", { exact: true })
+						.fill(account.password);
+					await page
+						.getByRole("button", { name: "Sign in", exact: true })
+						.click();
+				}
+				await expect(page).toHaveURL(/\/ingredients\/fridge(?:[/?#]|$)/);
+				await waitForAppReady(page);
+				await expect(
+					page.getByRole("heading", { name: "Ingredients", exact: true }),
+				).toBeVisible({ timeout: 10_000 });
+				await mkdir(dirname(storageStatePath), { recursive: true });
+				await page.context().storageState({ path: storageStatePath });
+				return storageStatePath;
+			} catch (error) {
+				latestAuthenticationError = error;
+			}
+		}
+
+		throw new Error(
+			`Authenticated browser state did not reach the Ingredients view after two attempts. ` +
+				`URL: ${page.url()}; title: ${await page.title()}; ` +
+				`body: ${(await page.locator("body").innerText()).slice(0, 500)}`,
+			{ cause: latestAuthenticationError },
+		);
 	} finally {
 		await page.close();
 	}
-
-	return storageStatePath;
 };
 
 export const test = playwrightTest.extend<
