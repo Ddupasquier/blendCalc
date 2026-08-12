@@ -27,9 +27,11 @@ import type { RegulatoryRegionOption } from "$lib/utils/profile/regulatoryRegion
 import { getDefaultMixFields } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { ProfilePageDataReaderOptions } from "./types";
 import {
+	getIdentityVerificationRequiredModeratorActionSummary,
 	getUnavailableModeratorActionSummary,
 	readModeratorActionSummary,
 } from "$lib/server/moderation/moderatorActionSummary.server";
+import { readMfaSecurityStatus } from "$lib/server/auth/mfaAccess.server";
 
 export const getRegulatoryRegionOptions = (
 	policy: FoodSafetyPolicy,
@@ -50,8 +52,12 @@ export const loadProfilePageData = async ({
 			avatarUrl: await getSignedAvatarUrl(supabase, profile?.avatar_path),
 		}));
 	const moderatorActionSummaryPromise = appRole
-		? readModeratorActionSummary().catch(() =>
-			getUnavailableModeratorActionSummary())
+		? readMfaSecurityStatus(supabase)
+			.then((status) => status.currentLevel === "aal2"
+				? readModeratorActionSummary().catch(() =>
+					getUnavailableModeratorActionSummary())
+				: getIdentityVerificationRequiredModeratorActionSummary())
+			.catch(() => getUnavailableModeratorActionSummary())
 		: Promise.resolve(null);
 
 	const [
@@ -106,6 +112,7 @@ export const loadProfilePageData = async ({
 		foodPreferenceOptions: getFoodPreferenceOptionSets(
 			foodPreferenceOptionsUnavailable ? [] : foodPreferenceOptions,
 		),
+		foodPreferenceOptionsUnavailable,
 		priorityNutrientOptions: getDefaultMixFields(appReferenceCatalog),
 		regulatoryRegionOptions: getRegulatoryRegionOptions(foodSafetyPolicy),
 		defaultDisplayName: getDefaultDisplayName(userId),

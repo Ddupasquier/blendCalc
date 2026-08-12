@@ -2,7 +2,7 @@
 
 .profile-food-preference-basics {
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
 	gap: $app-gap-sm;
 }
 
@@ -10,6 +10,10 @@
 	display: grid;
 	gap: $app-gap-xs;
 	min-width: 0;
+}
+
+:global(.profile-food-preference-basics__region) {
+	grid-column: 1 / -1;
 }
 
 .profile-food-preference-basics__serving > span {
@@ -23,7 +27,7 @@
 
 .profile-food-preference-basics__serving > div {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) 5rem;
+	grid-template-columns: minmax(0, 1fr) 6rem;
 	gap: $app-gap-xs;
 }
 
@@ -47,8 +51,7 @@
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.profile-food-preference-basics,
-	.profile-food-preference-basics__serving > div {
+	.profile-food-preference-basics {
 		grid-template-columns: 1fr;
 	}
 

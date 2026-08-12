@@ -2,32 +2,52 @@ name: Database Verification
 
 on:
   pull_request:
-    paths:
-      - "supabase/**"
-      - "scripts/operations/manage_test_database.mjs"
-      - "scripts/lib/local_qa_personas.mjs"
-      - "src/lib/types/database.types.ts"
-      - ".github/workflows/database-verification.yml"
   push:
     branches:
       - main
       - staging
       - mobile-ui-rebuild
       - "ui-rebuild/**"
-    paths:
-      - "supabase/**"
-      - "scripts/operations/manage_test_database.mjs"
-      - "scripts/lib/local_qa_personas.mjs"
-      - "src/lib/types/database.types.ts"
-      - ".github/workflows/database-verification.yml"
 
 concurrency:
   group: database-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  database-changes:
+    name: Detect Database Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      changed: ${{ steps.changes.outputs.changed }}
+    steps:
+      - name: Check out repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect database-owned changes
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- \
+            supabase \
+            scripts/operations/database/manage_test_database.mjs \
+            scripts/lib/qa/local_qa_personas.mjs \
+            src/lib/types/database.types.ts \
+            .github/workflows/database-verification.yml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
   database:
     name: Local Supabase And pgTAP
+    needs: database-changes
+    if: needs.database-changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -42,3 +62,31 @@ jobs:
         run: npm ci
       - name: Rebuild and verify database
         run: npm run db:test:verify
+
+  database-gate:
+    name: Database Verification
+    if: always()
+    needs:
+      - database-changes
+      - database
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Confirm required database verification passed
+        env:
+          DATABASE_CHANGED: ${{ needs.database-changes.outputs.changed }}
+          DATABASE_RESULT: ${{ needs.database.result }}
+          DETECTION_RESULT: ${{ needs.database-changes.result }}
+        run: |
+          if [[ "$DETECTION_RESULT" != "success" ]]; then
+            echo "Database change detection failed: $DETECTION_RESULT"
+            exit 1
+          fi
+          if [[ "$DATABASE_CHANGED" == "true" && "$DATABASE_RESULT" != "success" ]]; then
+            echo "Database verification did not pass: $DATABASE_RESULT"
+            exit 1
+          fi
+          if [[ "$DATABASE_CHANGED" == "false" && "$DATABASE_RESULT" != "skipped" ]]; then
+            echo "Unexpected database verification result: $DATABASE_RESULT"
+            exit 1
+          fi

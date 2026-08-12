@@ -1,4 +1,4 @@
-import { readdir, readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -16,8 +16,89 @@ const collectScriptFiles = async (directory) => {
 };
 
 const scriptFiles = await collectScriptFiles(scriptsRoot);
+const executableDomainsByOperation = {
+	audits: ["catalog", "food-sources", "security"],
+	backfills: ["catalog", "images"],
+	generators: ["api"],
+	imports: ["nutrition"],
+	operations: ["api", "auth", "database", "recovery", "releases", "users"],
+	qa: ["catalog", "database"],
+	seeds: ["catalog", "food-safety", "nutrition"],
+};
+const sharedLibraryDomains = [
+	"barcode",
+	"catalog",
+	"nutrition",
+	"qa",
+	"reference-data",
+	"releases",
+	"security",
+];
 
 describe("repository script headers", () => {
+	it("keeps executable workflows in operation and domain folders", () => {
+		const executableScriptPaths = scriptFiles
+			.map((filePath) => path.relative(scriptsRoot, filePath))
+			.filter((relativePath) => !relativePath.startsWith(`lib${path.sep}`));
+
+		for (const relativePath of executableScriptPaths) {
+			const [operation, domain, fileName, ...unexpectedSegments] =
+				relativePath.split(path.sep);
+			expect(
+				Object.keys(executableDomainsByOperation),
+				`${relativePath} must use a recognized operation folder`,
+			).toContain(operation);
+			expect(
+				executableDomainsByOperation[operation],
+				`${relativePath} must use a recognized ${operation} domain folder`,
+			).toContain(domain);
+			expect(fileName, `${relativePath} must include a script filename`).toMatch(
+				/\.mjs$/u,
+			);
+			expect(
+				unexpectedSegments,
+				`${relativePath} is nested more deeply than operation/domain/file`,
+			).toHaveLength(0);
+		}
+	});
+
+	it("keeps shared script libraries in named domain folders", () => {
+		const sharedLibraryPaths = scriptFiles
+			.map((filePath) => path.relative(scriptsRoot, filePath))
+			.filter((relativePath) => relativePath.startsWith(`lib${path.sep}`));
+
+		for (const relativePath of sharedLibraryPaths) {
+			const [libraryFolder, domain, fileName, ...unexpectedSegments] =
+				relativePath.split(path.sep);
+			expect(libraryFolder).toBe("lib");
+			expect(
+				sharedLibraryDomains,
+				`${relativePath} must use a recognized shared-library domain`,
+			).toContain(domain);
+			expect(fileName, `${relativePath} must include a module filename`).toMatch(
+				/\.mjs$/u,
+			);
+			expect(
+				unexpectedSegments,
+				`${relativePath} is nested more deeply than lib/domain/file`,
+			).toHaveLength(0);
+		}
+	});
+
+	it("keeps every package script entry point on disk", async () => {
+		for (const [command, definition] of Object.entries(packageMetadata.scripts)) {
+			const scriptPaths = [
+				...definition.matchAll(/(?:^|\s)node\s+(scripts\/[^\s"'`]+\.mjs)/gu),
+			].map((match) => match[1]);
+			for (const scriptPath of scriptPaths) {
+				await expect(
+					access(path.resolve(scriptPath)),
+					`${command} references missing ${scriptPath}`,
+				).resolves.toBeUndefined();
+			}
+		}
+	});
+
 	it.each(scriptFiles)("documents purpose and execution for %s", async (filePath) => {
 		const source = await readFile(filePath, "utf8");
 		const header = source.match(/^\/\*\*[\s\S]*?\*\//u)?.[0] ?? "";

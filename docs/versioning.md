@@ -77,6 +77,12 @@ The response contract uses `major.minor`; OpenAPI uses the matching full semanti
 version. Preview status is stored separately in `info.x-blendcalc-status` instead of
 being appended to the version.
 
+Access status is independent from contract versioning. The source-controlled policy in
+`src/lib/api/v1/accessPolicy.ts` and matching OpenAPI metadata keep API v1 limited to
+signed-in app sessions while public terms remain unapproved. Public release requires
+the reviewed procedure in [`public-api-release.md`](public-api-release.md); changing an
+environment variable or version number cannot enable it.
+
 API changes remain deliberate:
 
 1. Compatible additions may update the contract minor and OpenAPI version while staying

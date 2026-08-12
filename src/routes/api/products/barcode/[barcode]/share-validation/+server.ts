@@ -6,6 +6,7 @@ import {
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { productNamesDiffer } from "$lib/utils/products/productIdentity";
 import { readLimitedJson } from "$lib/server/security/requestBody.server";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
@@ -32,7 +33,10 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		: "";
 	if (!productName) throwAppError(400, "PRODUCT_NAME_REQUIRED");
 
-	const draft = await lookupBarcodeProductDraft(locals.supabase, barcode);
+	const draft = await lookupBarcodeProductDraft(
+		getSupabaseAdminClient(),
+		barcode,
+	);
 	if (!draft) {
 		return json({ status: "not-found", barcode });
 	}

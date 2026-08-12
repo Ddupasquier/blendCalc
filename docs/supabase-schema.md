@@ -65,6 +65,10 @@ Stores app-facing profile information. Email should not be copied here.
 
 Notes:
 
+- `MFA_REQUIRED` is the stable authentication code returned when an elevated action
+  requires an AAL2 session. Friendly wording remains in the application message
+  catalog.
+
 - `display_name` is required and auto-filled with a safe `User##########` style value if
   the user has not chosen one.
 - `appearance_theme` is constrained to `system`, `light`, or `dark` and defaults to
@@ -97,6 +101,10 @@ Notes:
 - `validate_user_food_preference_regulatory_region()` rejects unsupported region codes
   at the database boundary. Regional context can explain labeling rules but cannot
   suppress a warning created by a user's allergen or dietary settings.
+- `validate_user_food_preference_inputs()` rejects empty, oversized, or duplicate
+  preference wording; duplicate or unsupported priority nutrients; serving defaults
+  above 5,000 grams; and preference values saved without acknowledgement. Priority
+  nutrients must belong to the enabled database-owned `mix_default` display profile.
 
 ### `mix_preferences`
 
@@ -372,7 +380,7 @@ These tables make manual-entry UI DB-driven.
 
 Notes:
 
-- Seeded by `scripts/seeds/seed_manual_entry_nutrients.mjs` through the current approved DB
+- Seeded by `scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs` through the current approved DB
   catalog. The script records new source nutrients but does not invent their UI group.
 - Groups/fields render from enabled, approved DB rows only. Macros contains common
   nutrition-label fields; specialized carbohydrates, fats, carotenoids, vitamins,
@@ -451,6 +459,10 @@ Notes:
   provenance.
 - `api_redistribution_allowed` is the separate API-publication decision. API v1 never
   infers it from the provider name or from canonical storage alone.
+- `blendcalc_api_v1_source_attribution_is_complete` additionally requires every
+  represented field, nutrient, and serving source to retain complete reviewed source
+  attribution. Sources backed by `generic_food_datasets` must reference an exact active,
+  approved, imported release with complete release metadata.
 
 ### `product_source_daily_metrics`
 
@@ -494,8 +506,17 @@ Notes:
 - Runtime barcode mapping resolves enabled `nutrient_equivalences` before form
   autofill, so source aliases such as USDA `1085` cannot bypass the canonical Total Fat
   field. Exact canonical rows take precedence if a response contains both forms.
-- Reviewed mappings are semantic decisions. API-observation seed runs may refresh
-  observation metadata but cannot replace an approved or rejected nutrient identity.
+- Enabled mappings are reviewed identity decisions, not name-similarity decisions.
+  Exact provider nutrient IDs, reviewed source keys, and approved dataset identities
+  retain review evidence. Taxonomy/name similarity remains disabled and pending until
+  reviewed into an identity-bearing method; seed runs may refresh only its observation
+  metadata and cannot replace an approved or rejected identity.
+- Runtime lookup requires the exact normalized `(source key, nutrient key, source unit)`
+  row. Equivalent unit spellings normalize to the same unit, while a genuinely different
+  unit requires its own approved mapping plus a nutrient-specific reviewed conversion.
+- Database constraints prevent pending mappings from being enabled, require evidence on
+  approved rows, preserve reviewed semantic rejections, and prevent legacy semantic
+  metadata from becoming canonical `food_nutrients` lineage.
 - The lookup index starts with source and source nutrient key so barcode mapping does
   not scan the full table.
 - `20260727120000_canonical_barcode_nutrient_mappings.sql` restores the reviewed Open
@@ -514,6 +535,9 @@ Notes:
   IU values cannot be safely treated as universal unit math.
 - The seed script stores standards-API or paired API-observation provenance with each
   multiplier.
+- A source mapping with a different unit cannot rely on same-family mass or energy
+  assumptions. It remains unusable until this table contains the exact reviewed
+  source/nutrient/from-unit/to-unit conversion.
 
 ### `serving_measure_units` and `serving_measure_aliases`
 
@@ -575,6 +599,27 @@ Notes:
 
 ## Shared Product Catalog And Barcode Flow
 
+### API Publication Concerns And Holds
+
+`api_publication_concerns` stores private evidence-backed reports from users,
+providers, brands, rights holders, or other reporters. Each row targets exactly one
+`shared_products`, `food_image_assets`, `generic_food_datasets`, or
+`product_data_sources` row and retains normalized reporter contact, concern type,
+bounded HTTPS evidence references, urgency, status, and reviewed resolution. A partial
+unique fingerprint makes repeated unresolved submissions idempotent.
+
+`api_publication_holds` stores reversible public-API holds for one exact product,
+image, dataset release, or source. Partial unique indexes permit only one active hold
+per subject. Each row records a reason code, safe public message, private note,
+optional concern, placing actor/time, and release actor/time/note. Releasing updates
+rather than deletes the row.
+
+Product holds are mirrored into a high-severity `shared_product_conflicts` row by
+`sync_product_publication_hold_conflict`, so the established readiness gate withholds
+the product. `blendcalc_api_v1_source_has_active_hold` makes source/dataset attribution
+fail closed. The trusted API image reader filters active image holds independently.
+Both tables force RLS and grant table access only to `service_role`.
+
 | Table                             | Primary Key             | Owner Scope                   | Purpose                                                                   | Key Relationships                                                   |
 | ---------------------------------- | ----------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
 | `shared_product_submissions`      | `id`                    | Submitted by one auth user    | Community product submissions awaiting review or already reviewed         | `submitted_by → auth.users.id`, optional reviewer                   |
@@ -587,6 +632,8 @@ Notes:
 | `product_ingredient_components`   | `id`                    | Shared evidence projection    | Ordered relational ingredient tree preserving source text, nesting, reported percentages, and source payload | `statement_id`, optional parent component and reviewed ingredient term |
 | `product_precautionary_statements` | `id`                   | Shared evidence projection    | Exact package precautionary wording plus normalized statement type and allergens | Exactly one owner; optional observation and revision links           |
 | `shared_product_conflicts`        | `id`                    | Shared moderation/provenance  | Open/resolved conflicts between observed values                           | `shared_product_id → shared_products.id`                            |
+| `api_publication_concerns`        | `id`                    | Private API review            | Evidence-backed correction, rights, attribution, privacy, and source concerns | Exactly one product, image, dataset release, or source target       |
+| `api_publication_holds`           | `id`                    | Private API operations        | Reversible public-output holds with placing and release audit history      | Exactly one product, image, dataset release, or source target       |
 | `food_image_assets`               | `id`                    | Shared image reference        | Source-backed product/ingredient image metadata rendered by ingredient UI | Optional `shared_product_id → shared_products.id`, optional barcode |
 | `product_api_cache`               | `(provider, cache_key)` | Server cache                  | External API response cache for searches, barcode lookup, and food detail | No user ownership                                                   |
 | `user_catalog_submission_enforcement` | `user_id`              | One current row per auth user | Cumulative moderator rejection count and current public-sharing suspension | `user_id → auth.users.id`, optional latest submission/reviewer      |
@@ -689,10 +736,11 @@ Notes:
   USDA-backed products this includes `sourceKey`, the DB-provided `sourceLabel`,
   `sourceDataType` (`Branded`, `Foundation`, `SR Legacy`, or `Survey (FNDDS)`), and
   available source publication/modification dates.
-- Canonical food snapshots distinguish `foodIdentityType` as `packaged`, `generic`, or
-  `private-custom`. Existing shared products/submissions are backfilled as packaged;
-  existing custom/list snapshots use their explicit custom state and strict source data
-  type to recover the applicable identity.
+- Canonical food snapshots distinguish `foodIdentityType` as `packaged`, `generic`,
+  `private-custom`, or `unknown`. Existing shared products/submissions are backfilled as
+  packaged. Provider adapters assign source-specific identity; exact GTIN or brand
+  evidence can identify a package, and all other unclassified snapshots remain unknown
+  instead of interpreting provider datatype strings in shared application code.
 - When a source supplies them and source policy permits canonical storage, `food`
   preserves the raw ingredient statement, normalized `ingredientList`, recursive
   `structuredIngredients`, `ingredientAnalysis`, `additives`, explicit `allergens`,
@@ -715,8 +763,10 @@ Notes:
   remain separately preserved in `food.categories`.
 - `shared_product_revisions.category_option_id` copies the published product category so
   historical revisions retain the category used at publication.
-- API v1 reads this table through `get_blendcalc_product_v1` and
-  `search_blendcalc_products_v1`. Both RPCs require an empty result from
+- Trusted API v1 server code reads this table through `get_blendcalc_product_v1` and
+  `search_blendcalc_products_v1`. These raw RPCs are executable only by `service_role`;
+  browser `anon` and `authenticated` roles must use the versioned HTTP routes and cannot
+  bypass their public-safe serializer. Both RPCs require an empty result from
   `blendcalc_api_v1_product_readiness_reasons`; therefore an active catalog row is not
   automatically an API-publishable row.
 - `blendcalc_api_v1_product_readiness` is a service-role-only diagnostic view over every
@@ -751,11 +801,13 @@ the migration does not invent historical field differences.
 `catalog_change_summary_is_valid` requires each new product-update submission to carry
 at least one uniquely named, typed change with both previous and submitted values.
 The revision trigger rejects malformed update summaries and writes the complete
-structured set in the same publication transaction. `get_blendcalc_product_revision_history_v1`
-is the authenticated, bounded API read over publication-ready products; it returns only
-revision metadata and structured changes, never revision snapshots, private evidence,
-or reviewer identities. Historical rows are left with empty changes when no retained
-evidence can prove the difference.
+structured set in the same publication transaction. Trusted server code calls
+`get_blendcalc_product_revision_history_v1`, which is a bounded service-role-only raw
+reader over publication-ready products. The versioned HTTP serializer further allowlists
+field paths, replaces stored labels with API-owned wording, and reduces values to bounded
+public shapes. Browser roles cannot execute the RPC directly. Revision snapshots,
+private evidence, arbitrary JSON, and reviewer identities are never returned. Historical
+rows are left with empty changes when no retained evidence can prove the difference.
 
 Product updates merge only the fields named in the reviewed `change_summary`.
 Unsubmitted nutrients and metadata remain canonical, unchanged selected provenance is
@@ -891,6 +943,10 @@ Notes:
 - Community images stay private until a moderator approves them. Approval writes a
   `community-reviewed` image row with `moderator-reviewed` confidence and approval
   metadata.
+- API v1 emits an image only when its active row retains a licence name and URL,
+  attribution text, and retrieval date and its source registry row supplies the public
+  source name and URL. Missing asset attribution omits the image without withholding an
+  otherwise eligible product.
 
 | Storage bucket | Visibility | Purpose |
 | ----------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
@@ -1185,7 +1241,7 @@ Notes:
 Notes:
 
 - UI category dropdowns should sort by `label`.
-- Seeded by `scripts/seeds/seed_custom_food_categories.mjs`.
+- Seeded by `scripts/seeds/catalog/seed_custom_food_categories.mjs`.
 - The dropdown renders these app-ready options, not raw source payload strings.
 - Trusted server-side catalog hydration has read access to these labels; authenticated
   browser access remains governed independently by RLS.
@@ -1215,7 +1271,7 @@ Notes:
 - Barcode/manual-entry autofill should use this table to pick the visible app category.
 - Raw API category values remain stored in `custom_food_category_observations` and on
   product payloads for proof and moderation.
-- Seeded by `scripts/seeds/seed_custom_food_categories.mjs`; use
+- Seeded by `scripts/seeds/catalog/seed_custom_food_categories.mjs`; use
   `npm run seed:food-categories:deep` for a broader API sample.
 - Use `npm run seed:food-categories:rebuild` when observations already exist and only
   mappings need to be refreshed.
@@ -1259,14 +1315,19 @@ Notes:
   includes `insert` on `shared_product_submissions` because the trusted server creates
   pending submissions before moderator review; ordinary authenticated clients still
   cannot insert, update, or delete those rows directly.
-- `get_moderator_data_health(p_days, p_issue_limit)` is an authenticated
-  moderator/admin/developer security-definer aggregate. It clamps the metric window to
+- `get_moderator_data_health(p_days, p_issue_limit)` is an authenticated,
+  MFA-verified moderator/admin/developer security-definer aggregate. It clamps the
+  metric window to
   1–90 days and each issue queue to 1–50 rows. It returns catalog/publication counts,
   source metrics and safe latest-evaluation summaries, dataset import/licence/checksum
   state, active compatibility-policy coverage, and bounded conflict, publication,
   mapping, and revision gaps. It deliberately excludes raw provider payloads, private
   evidence, user identities, secrets, source-evaluation `details`, dataset `metadata`,
   and dataset download URLs.
+- `private.build_moderator_data_health_summary(p_days, p_issue_limit)` builds the
+  bounded payload behind that public RPC. Direct execution is revoked from client and
+  service roles; the public wrapper enforces AAL2 permission before calling it, and the
+  private builder independently verifies the current role assignment.
 - `blocked_signup_emails` stores hashes, not raw email addresses.
 - `reject_blocked_signup` is the auth hook function for blocking signups.
 - `set_app_user_role` is the only service-role write path for role assignments; it
@@ -1438,17 +1499,19 @@ category, or serving fields.
 | `apply_shared_product_external_enrichment`     | Atomically fills legally reusable missing canonical fields, including structured package metadata, while recording observations, provenance, normalized projections, and a revision |
 | `apply_shared_product_supplemental_enrichment` | Atomically fills a missing product identity field or exact package precautionary statement from a legally reusable exact source while recording observations, provenance, projections, and a revision |
 | `blendcalc_api_v1_source_is_eligible`           | Tests a stored source against the DB-owned API redistribution, licence, attribution, and policy-review gate |
+| `blendcalc_api_v1_source_attribution_is_complete` | Tests a represented source/reference pair for complete provider attribution and, when applicable, an exact active imported dataset release; service role only |
+| `blendcalc_api_v1_source_has_active_hold`         | Tests whether an exact provider or imported dataset release has an unreleased public-API hold; service role only |
 | `blendcalc_api_v1_product_readiness_reasons`    | Applies the enabled DB-backed profile and returns the service-only reasons an active shared product is withheld from API v1 |
-| `get_blendcalc_product_v1`                      | Reads one active, publication-ready shared product and its latest revision by GTIN-14 |
-| `get_blendcalc_product_revision_history_v1`     | Reads bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14 |
-| `search_blendcalc_products_v1`                  | Searches only active, publication-ready shared products with bounded pagination and stable relevance |
-| `get_moderator_data_health`                     | Returns bounded moderator/admin/developer catalog, source, dataset, policy, mapping, revision, conflict, and publication-readiness summaries after independently verifying the caller's role |
+| `get_blendcalc_product_v1`                      | Service-role-only raw reader for one active, publication-ready shared product and its latest revision by GTIN-14 |
+| `get_blendcalc_product_revision_history_v1`     | Service-role-only raw reader for bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14 |
+| `search_blendcalc_products_v1`                  | Service-role-only raw search for active, publication-ready shared products with bounded pagination and stable relevance |
+| `get_moderator_data_health`                     | Returns bounded moderator/admin/developer catalog, source, dataset, policy, mapping, revision, conflict, and publication-readiness summaries after verifying an AAL2 permission and the caller's current role assignment |
 | `catalog_change_summary_is_valid`               | Validates unique structured old/new field changes before a catalog product update can be accepted |
 | `consume_request_rate_limit`                    | Atomically consumes one private server-side request quota unit; service role only |
 | `replace_app_interaction_daily_metrics`         | Atomically replaces a bounded production date range of private Vercel interaction aggregates; service role only |
 | `reject_blocked_signup`                        | Supabase Auth hook for hashed email signup blocks                                                                                              |
 | `custom_access_token_hook`                     | Supabase Auth hook that adds the current database-owned `user`, `moderator`, `admin`, or `developer` role to newly issued JWTs as `app_role`     |
-| `authorize_app_permission`                     | Checks the signed `app_role` claim against database-owned role permissions for RLS policies                                                     |
+| `authorize_app_permission`                     | Requires an AAL2 session, then checks the signed `app_role` claim against database-owned role permissions for protected RLS policies             |
 | `set_app_user_role`                            | Service-only atomic role assignment/revocation with a matching moderation audit action                                                         |
 
 ## Storage Buckets

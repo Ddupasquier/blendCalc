@@ -6,7 +6,7 @@ const migration = readFileSync(
 	"utf8",
 );
 const categoryBackfill = readFileSync(
-	"scripts/backfills/backfill_shared_product_categories.mjs",
+	"scripts/backfills/catalog/backfill_shared_product_categories.mjs",
 	"utf8",
 );
 

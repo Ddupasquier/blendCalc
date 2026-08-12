@@ -79,11 +79,11 @@ $card-action-size-narrow: 2rem;
 
 	&::before {
 		inset: $app-focus-outline-offset;
+		box-sizing: border-box;
 		border-radius: calc(
 			#{$app-shell-radius-card} - #{$app-focus-outline-offset}
 		);
-		outline: $app-focus-outline;
-		outline-offset: 0;
+		border: $app-focus-outline;
 	}
 }
 

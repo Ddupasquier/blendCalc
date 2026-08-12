@@ -1,0 +1,43 @@
+name: Hosted Authentication Verification
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+      - mobile-ui-rebuild
+  push:
+    branches:
+      - main
+      - staging
+      - mobile-ui-rebuild
+      - "ui-rebuild/**"
+
+concurrency:
+  group: hosted-auth-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  hosted-auth:
+    name: Hosted Auth Health
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PUBLIC_SUPABASE_URL: ${{ vars.BLENDCALC_HOSTED_SUPABASE_URL }}
+      PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.BLENDCALC_HOSTED_SUPABASE_PUBLISHABLE_KEY }}
+      PUBLIC_SITE_URL: ${{ vars.BLENDCALC_HOSTED_SITE_URL }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify public hosted authentication endpoints
+        run: npm run check:auth

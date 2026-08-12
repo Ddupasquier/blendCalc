@@ -1,4 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiV1RequestError } from "$lib/api/v1/request";
+import { BLENDCALC_API_V1 } from "$lib/api/v1/types";
+import {
+	apiV1CategoryFixture,
+	apiV1PaginationFixture,
+	apiV1ProductFixture,
+	apiV1ProductRevisionFixture,
+} from "../fixtures/apiV1Catalog";
+import { expectApiV1ResponseToMatchOpenApi } from "../lib/api/v1/openApiResponseValidation";
 
 const mocks = vi.hoisted(() => ({
 	adminClient: { source: "trusted-server" },
@@ -24,130 +33,182 @@ import { GET as getCategories } from "../../src/routes/api/v1/categories/+server
 import { GET as searchFoods } from "../../src/routes/api/v1/foods/search/+server";
 import { GET as getProduct } from "../../src/routes/api/v1/products/[barcode]/+server";
 import { GET as getProductRevisions } from "../../src/routes/api/v1/products/[barcode]/revisions/+server";
-import { BLENDCALC_API_V1 } from "$lib/api/v1/types";
+
+const PRODUCT_PATH = "/api/v1/products/{barcode}";
+const REVISION_PATH = "/api/v1/products/{barcode}/revisions";
+const SEARCH_PATH = "/api/v1/foods/search";
+const CATEGORY_PATH = "/api/v1/categories";
 
 const createLocals = (signedIn = true) => ({
 	getVerifiedUser: vi.fn().mockResolvedValue(signedIn ? { id: "user-id" } : null),
 	supabase: { source: "test" },
 });
 
-describe("blendCalc API v1 routes", () => {
+const createPagination = (overrides: Partial<typeof apiV1PaginationFixture> = {}) => ({
+	...apiV1PaginationFixture,
+	...overrides,
+});
+
+describe("blendCalc API v1 route responses", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mocks.getSupabaseAdminClient.mockReturnValue(mocks.adminClient);
 	});
 
-	it("requires a signed-in account", async () => {
-		const response = await searchFoods({
-			locals: createLocals(false),
-			url: new URL("http://localhost/api/v1/foods/search?q=tomato"),
-		} as never);
-
+	it.each([
+		{
+			path: PRODUCT_PATH,
+			request: () => getProduct({ locals: createLocals(false), params: { barcode: apiV1ProductFixture.barcode } } as never),
+		},
+		{
+			path: REVISION_PATH,
+			request: () => getProductRevisions({
+				locals: createLocals(false),
+				params: { barcode: apiV1ProductFixture.barcode },
+				url: new URL(`http://localhost/api/v1/products/${apiV1ProductFixture.barcode}/revisions`),
+			} as never),
+		},
+		{
+			path: SEARCH_PATH,
+			request: () => searchFoods({
+				locals: createLocals(false),
+				url: new URL("http://localhost/api/v1/foods/search?q=tomato"),
+			} as never),
+		},
+		{
+			path: CATEGORY_PATH,
+			request: () => getCategories({
+				locals: createLocals(false),
+				url: new URL("http://localhost/api/v1/categories"),
+			} as never),
+		},
+	])("matches the documented 401 response for $path", async ({ path, request }) => {
+		const response = await request();
 		expect(response.status).toBe(401);
-		expect(await response.json()).toMatchObject({
+		const payload = await expectApiV1ResponseToMatchOpenApi({ path, response });
+		expect(payload).toMatchObject({
 			apiVersion: BLENDCALC_API_V1,
 			error: { code: "authentication_required" },
 		});
-		expect(mocks.searchApiV1Products).not.toHaveBeenCalled();
 		expect(mocks.getSupabaseAdminClient).not.toHaveBeenCalled();
 	});
 
-	it("returns an approved product with a stable envelope", async () => {
-		mocks.readApiV1ProductByBarcode.mockResolvedValue({
-			id: "product-id",
-			barcode: "00021130493609",
-		});
-		const locals = createLocals();
+	it("returns a complete approved product matching ProductResponse", async () => {
+		mocks.readApiV1ProductByBarcode.mockResolvedValue(apiV1ProductFixture);
 		const response = await getProduct({
-			locals,
-			params: { barcode: "00021130493609" },
+			locals: createLocals(),
+			params: { barcode: apiV1ProductFixture.barcode },
 		} as never);
 
 		expect(response.status).toBe(200);
-		expect(response.headers.get("x-blendcalc-api-version")).toBe(
-			BLENDCALC_API_V1,
-		);
-		expect(await response.json()).toEqual({
-			apiVersion: BLENDCALC_API_V1,
-			data: { id: "product-id", barcode: "00021130493609" },
+		expect(response.headers.get("x-blendcalc-api-version")).toBe(BLENDCALC_API_V1);
+		const payload = await expectApiV1ResponseToMatchOpenApi({
+			path: PRODUCT_PATH,
+			response,
 		});
+		expect(payload).toEqual({ apiVersion: BLENDCALC_API_V1, data: apiV1ProductFixture });
 		expect(mocks.readApiV1ProductByBarcode).toHaveBeenCalledWith(
 			mocks.adminClient,
-			"00021130493609",
+			apiV1ProductFixture.barcode,
 		);
 	});
 
-	it("validates search input before reading the catalog", async () => {
-		const response = await searchFoods({
+	it.each([
+		{ barcode: "not-a-barcode", path: PRODUCT_PATH, request: getProduct },
+		{ barcode: "123", path: REVISION_PATH, request: getProductRevisions },
+	])("matches the documented 400 response for $path", async ({ barcode, path, request }) => {
+		const response = await request({
 			locals: createLocals(),
-			url: new URL("http://localhost/api/v1/foods/search?q=t"),
+			params: { barcode },
+			url: new URL(`http://localhost/api/v1/products/${barcode}/revisions`),
 		} as never);
-
 		expect(response.status).toBe(400);
-		expect(await response.json()).toMatchObject({
-			error: { code: "invalid_query" },
-		});
-		expect(mocks.searchApiV1Products).not.toHaveBeenCalled();
+		const payload = await expectApiV1ResponseToMatchOpenApi({ path, response });
+		expect(payload).toMatchObject({ error: { code: "invalid_barcode" } });
 	});
 
-	it("returns revision history through a separate paginated contract", async () => {
+	it.each([
+		{
+			path: SEARCH_PATH,
+			request: () => searchFoods({
+				locals: createLocals(),
+				url: new URL("http://localhost/api/v1/foods/search?q=t"),
+			} as never),
+			reader: mocks.searchApiV1Products,
+		},
+		{
+			path: CATEGORY_PATH,
+			request: () => getCategories({
+				locals: createLocals(),
+				url: new URL("http://localhost/api/v1/categories?limit=101"),
+			} as never),
+			reader: mocks.readApiV1Categories,
+		},
+		{
+			path: REVISION_PATH,
+			request: () => getProductRevisions({
+				locals: createLocals(),
+				params: { barcode: apiV1ProductFixture.barcode },
+				url: new URL(`http://localhost/api/v1/products/${apiV1ProductFixture.barcode}/revisions?limit=101`),
+			} as never),
+			reader: mocks.readApiV1ProductRevisionHistory,
+		},
+	])("validates request input against the documented 400 response for $path", async ({ path, request, reader }) => {
+		const response = await request();
+		expect(response.status).toBe(400);
+		await expectApiV1ResponseToMatchOpenApi({ path, response });
+		expect(reader).not.toHaveBeenCalled();
+	});
+
+	it.each([
+		{
+			path: PRODUCT_PATH,
+			reader: mocks.readApiV1ProductByBarcode,
+			request: () => getProduct({
+				locals: createLocals(),
+				params: { barcode: apiV1ProductFixture.barcode },
+			} as never),
+		},
+		{
+			path: REVISION_PATH,
+			reader: mocks.readApiV1ProductRevisionHistory,
+			request: () => getProductRevisions({
+				locals: createLocals(),
+				params: { barcode: apiV1ProductFixture.barcode },
+				url: new URL(`http://localhost/api/v1/products/${apiV1ProductFixture.barcode}/revisions`),
+			} as never),
+		},
+	])("matches the documented 404 response for $path", async ({ path, reader, request }) => {
+		reader.mockResolvedValue(null);
+		const response = await request();
+		expect(response.status).toBe(404);
+		const payload = await expectApiV1ResponseToMatchOpenApi({ path, response });
+		expect(payload).toMatchObject({ error: { code: "product_not_found" } });
+	});
+
+	it("returns revision history matching ProductRevisionListResponse", async () => {
 		mocks.readApiV1ProductRevisionHistory.mockResolvedValue({
-			revisions: [{
-				id: "revision-id",
-				number: 2,
-				publishedAt: "2026-07-29T12:00:00.000Z",
-				labelObservedAt: "2026-07-28T12:00:00.000Z",
-				changes: [{
-					field: "ingredients",
-					label: "Ingredient statement",
-					changeType: "changed",
-					previousValue: "Old ingredients",
-					newValue: "New ingredients",
-					severity: "medium",
-				}],
-			}],
-			pagination: {
-				limit: 25,
-				offset: 0,
-				total: 2,
-				hasMore: true,
-				nextOffset: 25,
-			},
+			revisions: [apiV1ProductRevisionFixture],
+			pagination: createPagination({ limit: 25 }),
 		});
-		const locals = createLocals();
 		const response = await getProductRevisions({
-			locals,
-			params: { barcode: "00021130493609" },
-			url: new URL(
-				"http://localhost/api/v1/products/00021130493609/revisions",
-			),
+			locals: createLocals(),
+			params: { barcode: apiV1ProductFixture.barcode },
+			url: new URL(`http://localhost/api/v1/products/${apiV1ProductFixture.barcode}/revisions`),
 		} as never);
 
 		expect(response.status).toBe(200);
-		expect(await response.json()).toMatchObject({
-			data: [{
-				number: 2,
-				changes: [{ field: "ingredients" }],
-			}],
-			meta: { pagination: { total: 2 } },
+		const payload = await expectApiV1ResponseToMatchOpenApi({ path: REVISION_PATH, response });
+		expect(payload).toMatchObject({
+			data: [{ number: 2, changes: [{ field: "ingredients" }] }],
+			meta: { pagination: { total: 1 } },
 		});
-		expect(mocks.readApiV1ProductRevisionHistory).toHaveBeenCalledWith(
-			mocks.adminClient,
-			"00021130493609",
-			{ limit: 25, offset: 0 },
-		);
 	});
 
-	it("returns search pagination from the canonical read service", async () => {
+	it("returns search results matching ProductListResponse", async () => {
 		mocks.searchApiV1Products.mockResolvedValue({
-			products: [{ id: "product-id" }],
-			pagination: {
-				limit: 15,
-				offset: 0,
-				total: 20,
-				hasMore: true,
-				nextOffset: 15,
-			},
+			products: [apiV1ProductFixture],
+			pagination: apiV1PaginationFixture,
 		});
 		const response = await searchFoods({
 			locals: createLocals(),
@@ -155,27 +216,17 @@ describe("blendCalc API v1 routes", () => {
 		} as never);
 
 		expect(response.status).toBe(200);
-		expect(await response.json()).toMatchObject({
-			apiVersion: BLENDCALC_API_V1,
-			data: [{ id: "product-id" }],
-			meta: { pagination: { nextOffset: 15 } },
-		});
+		await expectApiV1ResponseToMatchOpenApi({ path: SEARCH_PATH, response });
 		expect(mocks.searchApiV1Products).toHaveBeenCalledWith(
 			mocks.adminClient,
 			{ limit: 15, offset: 0, query: "tomato" },
 		);
 	});
 
-	it("lists enabled categories with bounded pagination", async () => {
+	it("returns categories matching CategoryListResponse", async () => {
 		mocks.readApiV1Categories.mockResolvedValue({
-			categories: [{ id: "sauces", name: "Sauces", slug: "sauces" }],
-			pagination: {
-				limit: 25,
-				offset: 0,
-				total: 1,
-				hasMore: false,
-				nextOffset: null,
-			},
+			categories: [apiV1CategoryFixture],
+			pagination: createPagination({ limit: 25 }),
 		});
 		const response = await getCategories({
 			locals: createLocals(),
@@ -183,13 +234,58 @@ describe("blendCalc API v1 routes", () => {
 		} as never);
 
 		expect(response.status).toBe(200);
-		expect(await response.json()).toMatchObject({
-			data: [{ id: "sauces", name: "Sauces" }],
-			meta: { pagination: { limit: 25 } },
-		});
+		await expectApiV1ResponseToMatchOpenApi({ path: CATEGORY_PATH, response });
 		expect(mocks.readApiV1Categories).toHaveBeenCalledWith(
 			mocks.adminClient,
 			{ limit: 25, offset: 0 },
 		);
+	});
+
+	it.each([
+		{ path: PRODUCT_PATH, reader: mocks.readApiV1ProductByBarcode, request: () => getProduct({ locals: createLocals(), params: { barcode: apiV1ProductFixture.barcode } } as never) },
+		{ path: REVISION_PATH, reader: mocks.readApiV1ProductRevisionHistory, request: () => getProductRevisions({ locals: createLocals(), params: { barcode: apiV1ProductFixture.barcode }, url: new URL(`http://localhost/api/v1/products/${apiV1ProductFixture.barcode}/revisions`) } as never) },
+		{ path: SEARCH_PATH, reader: mocks.searchApiV1Products, request: () => searchFoods({ locals: createLocals(), url: new URL("http://localhost/api/v1/foods/search?q=tomato") } as never) },
+		{ path: CATEGORY_PATH, reader: mocks.readApiV1Categories, request: () => getCategories({ locals: createLocals(), url: new URL("http://localhost/api/v1/categories") } as never) },
+	])("matches the documented 503 response for $path", async ({ path, reader, request }) => {
+		reader.mockRejectedValue(new Error("synthetic catalog outage"));
+		const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+		const response = await request();
+		consoleError.mockRestore();
+		expect(response.status).toBe(503);
+		const payload = await expectApiV1ResponseToMatchOpenApi({ path, response });
+		expect(payload).toMatchObject({ error: { code: "catalog_unavailable" } });
+	});
+
+	it("does not expose request-like errors thrown by the catalog service", async () => {
+		mocks.readApiV1ProductByBarcode.mockRejectedValue(
+			new ApiV1RequestError("invalid_request", "private provider detail"),
+		);
+		const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+		const response = await getProduct({
+			locals: createLocals(),
+			params: { barcode: apiV1ProductFixture.barcode },
+		} as never);
+		consoleError.mockRestore();
+		expect(response.status).toBe(503);
+		const payload = await expectApiV1ResponseToMatchOpenApi({
+			path: PRODUCT_PATH,
+			response,
+		});
+		expect(payload).toMatchObject({ error: { code: "catalog_unavailable" } });
+		expect(JSON.stringify(payload)).not.toContain("private provider detail");
+	});
+
+	it("rejects response fields that are not present in OpenAPI", async () => {
+		mocks.readApiV1ProductByBarcode.mockResolvedValue({
+			...apiV1ProductFixture,
+			privateEvidencePath: "must-not-leak",
+		});
+		const response = await getProduct({
+			locals: createLocals(),
+			params: { barcode: apiV1ProductFixture.barcode },
+		} as never);
+		await expect(
+			expectApiV1ResponseToMatchOpenApi({ path: PRODUCT_PATH, response }),
+		).rejects.toThrow("Response drift");
 	});
 });

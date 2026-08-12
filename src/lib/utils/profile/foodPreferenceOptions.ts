@@ -32,8 +32,6 @@ export type FoodPreferenceOptionSets = {
 };
 
 const FOOD_PREFERENCE_OPTION_LIMITS = {
-	allergen: 24,
-	dietary: 24,
 	ingredient: 48,
 } as const;
 
@@ -64,12 +62,10 @@ export const getFoodPreferenceOptionSets = (
 	return {
 		allergens: sortByUsageAndLabel(
 			options.filter((option) => option.category === "allergen"),
-		)
-			.slice(0, FOOD_PREFERENCE_OPTION_LIMITS.allergen),
+		),
 		dietaryRestrictions: sortByUsageAndLabel(
 			options.filter((option) => option.category === "dietary"),
-		)
-			.slice(0, FOOD_PREFERENCE_OPTION_LIMITS.dietary),
+		),
 		ingredients: sortByUsageAndLabel(
 			options.filter((option) => option.category === "ingredient"),
 		)

@@ -7,6 +7,7 @@
 	import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker/FoodPreferencePicker.svelte";
 	import ProfileFoodPreferenceBasics from "$lib/components/profile/ProfileFoodPreferenceBasics/ProfileFoodPreferenceBasics.svelte";
 	import ProfileNutrientPrioritySettings from "$lib/components/profile/ProfileNutrientPrioritySettings/ProfileNutrientPrioritySettings.svelte";
+	import ProfileSettingsSection from "$lib/components/profile/ProfileSettingsSection/ProfileSettingsSection.svelte";
 	import SavedFoodPreferenceSummary from "$lib/components/profile/SavedFoodPreferenceSummary/SavedFoodPreferenceSummary.svelte";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
 	import {
@@ -18,6 +19,7 @@
 		getDeviceRegulatoryRegionSuggestion,
 		type RegulatoryRegionSelectionSource,
 	} from "$lib/utils/profile/regulatoryRegion";
+	import { getSavedFoodPreferenceSummaryItems } from "$lib/utils/profile/foodPreferenceSummary";
 	import type {
 		FoodPreferenceGroupKey,
 		FoodPreferenceGroupPresentation,
@@ -28,6 +30,7 @@
 		foodPreferences,
 		foodPreferencesUnavailable,
 		foodPreferenceOptions,
+		foodPreferenceOptionsUnavailable,
 		priorityNutrientOptions,
 		regulatoryRegionOptions,
 		submittedValues,
@@ -80,15 +83,6 @@
 	let dietaryRestrictions = $state<string[]>([]);
 	let prioritizedNutrientIds = $state<number[]>([]);
 	let previousSeed = "";
-	let preferenceSearch = $state<Record<FoodPreferenceGroupKey, string>>({
-		allergens: "",
-		dietaryRestrictions: "",
-	});
-	let preferenceSelect = $state<Record<FoodPreferenceGroupKey, string>>({
-		allergens: "",
-		dietaryRestrictions: "",
-	});
-
 	const valuesSeed = $derived(JSON.stringify(incomingValues));
 	$effect(() => {
 		const seed = valuesSeed;
@@ -121,9 +115,6 @@
 			return true;
 		});
 	};
-	const getOptionRows = (optionLabels: string[], selectedValues: string[]) =>
-		uniquePreferenceValues([...optionLabels, ...selectedValues]);
-
 	const groupPresentation: Record<
 		FoodPreferenceGroupKey,
 		FoodPreferenceGroupPresentation
@@ -132,15 +123,13 @@
 			title: "Allergens",
 			helper:
 				"Reviewed matches add warnings when food details conflict. New terms stay saved while their match is reviewed.",
-			searchLabel: "Type your own allergen",
-			selectLabel: "Common allergens",
+			customEntryLabel: "Add a specific allergen",
 		},
 		dietaryRestrictions: {
 			title: "Dietary restrictions",
 			helper:
 				"Reviewed matches warn on possible conflicts without preventing an item from being added.",
-			searchLabel: "Type your own restriction",
-			selectLabel: "Common restrictions",
+			customEntryLabel: "Add a specific restriction",
 		},
 	};
 
@@ -151,20 +140,6 @@
 		if (group === "allergens") allergens = nextValues;
 		else dietaryRestrictions = nextValues;
 	};
-	const getOptionPool = (group: FoodPreferenceGroupKey) =>
-		group === "allergens" ? allergenOptions : restrictionOptions;
-	const getAvailableOptions = (group: FoodPreferenceGroupKey) => {
-		const selectedValues = new Set(readGroup(group).map(normalizePreferenceValue));
-		return getOptionPool(group).filter(
-			(option) => !selectedValues.has(normalizePreferenceValue(option)),
-		);
-	};
-	const getFilteredOptions = (group: FoodPreferenceGroupKey) => {
-		const query = normalizePreferenceValue(preferenceSearch[group]);
-		return getAvailableOptions(group).filter((option) =>
-			!query || normalizePreferenceValue(option).includes(query)
-		);
-	};
 	const addPreference = (group: FoodPreferenceGroupKey, value: string) => {
 		const cleanedValue = value.trim().replace(/\s+/g, " ");
 		if (!cleanedValue) return;
@@ -174,8 +149,6 @@
 			)
 		) return;
 		writeGroup(group, [...readGroup(group), cleanedValue]);
-		preferenceSearch = { ...preferenceSearch, [group]: "" };
-		preferenceSelect = { ...preferenceSelect, [group]: "" };
 	};
 	const removePreference = (group: FoodPreferenceGroupKey, value: string) => {
 		const valueKey = normalizePreferenceValue(value);
@@ -191,18 +164,6 @@
 	const hasUnsupportedRegion = $derived(
 		Boolean(regulatoryRegionCode && !selectedRegion),
 	);
-	const allergenOptions = $derived(
-		getOptionRows(
-			foodPreferenceOptions.allergens.map((option) => option.label),
-			allergens,
-		),
-	);
-	const restrictionOptions = $derived(
-		getOptionRows(
-			foodPreferenceOptions.dietaryRestrictions.map((option) => option.label),
-			dietaryRestrictions,
-		),
-	);
 	const unresolvedAllergens = $derived(
 		(foodPreferences?.preferenceResolutions ?? [])
 			.filter((resolution) =>
@@ -217,51 +178,13 @@
 			)
 			.map((resolution) => resolution.rawValue),
 	);
-	const savedPriorityNutrientLabels = $derived(
-		(foodPreferences?.prioritizedNutrientIds ?? [])
-			.map((nutrientId) =>
-				priorityNutrientOptions.find((nutrient) => nutrient.id === nutrientId)?.label
-			)
-			.filter((label): label is string => Boolean(label)),
+	const savedSummaryItems = $derived(
+		getSavedFoodPreferenceSummaryItems({
+			foodPreferences,
+			priorityNutrientOptions,
+			regulatoryRegionOptions,
+		}),
 	);
-	const savedSummaryItems = $derived([
-		foodPreferences?.regulatoryRegionCode
-			? {
-					label: "Label region",
-					value:
-						regulatoryRegionOptions.find(
-							(option) => option.regionCode === foodPreferences.regulatoryRegionCode,
-						)?.displayName ?? `Unavailable (${foodPreferences.regulatoryRegionCode})`,
-				}
-			: null,
-		foodPreferences?.unitSystem
-			? {
-					label: "Units",
-					value: foodPreferences.unitSystem === "us" ? "US units" : "Metric",
-				}
-			: null,
-		foodPreferences?.defaultMixServingGrams
-			? {
-					label: "Serving",
-					value: `${getServingSizeDisplayValue(
-						foodPreferences.defaultMixServingGrams,
-						foodPreferences.unitSystem === "us" ? "oz" : "g",
-					)}${foodPreferences.unitSystem === "us" ? "oz" : "g"}`,
-				}
-			: null,
-		foodPreferences?.allergens.length
-			? { label: "Allergens", value: foodPreferences.allergens.join(", ") }
-			: null,
-		foodPreferences?.dietaryRestrictions.length
-			? {
-					label: "Dietary restrictions",
-					value: foodPreferences.dietaryRestrictions.join(", "),
-				}
-			: null,
-		savedPriorityNutrientLabels.length
-			? { label: "Priority nutrients", value: savedPriorityNutrientLabels.join(", ") }
-			: null,
-	].filter((item) => item !== null));
 
 	const isDisabled = $derived(isSaving || foodPreferencesUnavailable);
 	const enhanceFoodPreferences = createPendingSubmit(
@@ -277,13 +200,9 @@
 </script>
 
 <div class="profile-food-preference-settings" data-tutorial-target="food-preferences">
-	<p class="profile-food-preference-settings__description">
-		Save optional settings for clearer warnings and more useful Mix suggestions.
-	</p>
-	<div class="food-preference-notice">
-		<strong>Optional and private</strong>
-		<span>These settings can include health-related information. They stay with your account and shape warnings and suggestions.</span>
-	</div>
+	<StatusMessage tone="info" title="Optional and private">
+		These settings can include health-related information. They stay with your account and shape warnings and suggestions.
+	</StatusMessage>
 
 	{#if errorMessage}
 		<StatusMessage tone="danger" message={errorMessage} />
@@ -305,54 +224,68 @@
 		use:enhance={enhanceFoodPreferences}
 		aria-busy={isSaving}
 	>
-		<ProfileFoodPreferenceBasics
-			{regulatoryRegionCode}
-			{regulatoryRegionSource}
-			{regulatoryRegionOptions}
-			{hasUnsupportedRegion}
-			unitSystem={selectedUnitSystem}
-			defaultServingSize={incomingValues.defaultMixServingSize}
-			defaultServingUnit={incomingValues.defaultMixServingUnit}
-			disabled={isDisabled}
-			onRegulatoryRegionChange={selectRegulatoryRegion}
-		/>
+		<ProfileSettingsSection
+			title="Everyday defaults"
+			description="Choose how measurements appear and set the serving amount Mix starts with."
+		>
+			<ProfileFoodPreferenceBasics
+				{regulatoryRegionCode}
+				{regulatoryRegionSource}
+				{regulatoryRegionOptions}
+				{hasUnsupportedRegion}
+				unitSystem={selectedUnitSystem}
+				defaultServingSize={incomingValues.defaultMixServingSize}
+				defaultServingUnit={incomingValues.defaultMixServingUnit}
+				disabled={isDisabled}
+				onRegulatoryRegionChange={selectRegulatoryRegion}
+			/>
+		</ProfileSettingsSection>
 
-		<input type="hidden" name="allergens" value={allergens.join(", ")} />
-		<input type="hidden" name="dietaryRestrictions" value={dietaryRestrictions.join(", ")} />
+		{#each allergens as allergen (allergen)}
+			<input type="hidden" name="allergens" value={allergen} />
+		{/each}
+		{#each dietaryRestrictions as restriction (restriction)}
+			<input type="hidden" name="dietaryRestrictions" value={restriction} />
+		{/each}
 
-		<div class="food-preference-editors">
-			{#each ["allergens", "dietaryRestrictions"] as group (group)}
-				{@const groupKey = group as FoodPreferenceGroupKey}
-				<FoodPreferencePicker
-					id={`profile-${groupKey}`}
-					title={groupPresentation[groupKey].title}
-					helper={groupPresentation[groupKey].helper}
-					searchLabel={groupPresentation[groupKey].searchLabel}
-					selectLabel={groupPresentation[groupKey].selectLabel}
-					selectedValues={readGroup(groupKey)}
-					selectValue={preferenceSelect[groupKey]}
-					searchValue={preferenceSearch[groupKey]}
-					availableOptions={getAvailableOptions(groupKey)}
-					filteredOptions={getFilteredOptions(groupKey)}
-					disabled={isDisabled}
-					emptyLabel={groupKey === "allergens" ? "No allergens saved." : "No restrictions saved."}
-					unresolvedValues={groupKey === "allergens" ? unresolvedAllergens : unresolvedDietaryRestrictions}
-					onAdd={(value) => addPreference(groupKey, value)}
-					onRemove={(value) => removePreference(groupKey, value)}
-					onSearchChange={(value) =>
-						(preferenceSearch = { ...preferenceSearch, [groupKey]: value })}
-					onSelectChange={(value) =>
-						(preferenceSelect = { ...preferenceSelect, [groupKey]: value })}
-				/>
-			{/each}
-		</div>
+		<ProfileSettingsSection
+			title="Food warnings"
+			description="Pick reviewed choices for immediate checks, or save exact wording for review."
+		>
+			<div class="food-preference-editors">
+				{#each ["allergens", "dietaryRestrictions"] as group (group)}
+					{@const groupKey = group as FoodPreferenceGroupKey}
+					<FoodPreferencePicker
+						id={`profile-${groupKey}`}
+						title={groupPresentation[groupKey].title}
+						helper={groupPresentation[groupKey].helper}
+						customEntryLabel={groupPresentation[groupKey].customEntryLabel}
+						selectedValues={readGroup(groupKey)}
+						options={groupKey === "allergens"
+							? foodPreferenceOptions.allergens
+							: foodPreferenceOptions.dietaryRestrictions}
+						disabled={isDisabled}
+						referenceDataUnavailable={foodPreferenceOptionsUnavailable}
+						emptyLabel={groupKey === "allergens" ? "No allergens saved." : "No restrictions saved."}
+						unresolvedValues={groupKey === "allergens" ? unresolvedAllergens : unresolvedDietaryRestrictions}
+						onAdd={(value) => addPreference(groupKey, value)}
+						onRemove={(value) => removePreference(groupKey, value)}
+					/>
+				{/each}
+			</div>
+		</ProfileSettingsSection>
 
-		<ProfileNutrientPrioritySettings
-			options={priorityNutrientOptions}
-			selectedNutrientIds={prioritizedNutrientIds}
-			disabled={isDisabled}
-			onSelectionChange={(values) => (prioritizedNutrientIds = values)}
-		/>
+		<ProfileSettingsSection
+			title="Mix guidance"
+			description="Choose the nutrients you want emphasized while building a Mix."
+		>
+			<ProfileNutrientPrioritySettings
+				options={priorityNutrientOptions}
+				selectedNutrientIds={prioritizedNutrientIds}
+				disabled={isDisabled}
+				onSelectionChange={(values) => (prioritizedNutrientIds = values)}
+			/>
+		</ProfileSettingsSection>
 
 		<CheckboxField
 			id="profile-sensitive-preferences"
@@ -363,9 +296,11 @@
 			I understand these optional preferences may affect warnings and suggestion ranking.
 		</CheckboxField>
 
-		<RoundedActionButton type="submit" busy={isSaving} disabled={foodPreferencesUnavailable}>
-			Save food preferences
-		</RoundedActionButton>
+		<div class="profile-food-preference-settings__actions">
+			<RoundedActionButton type="submit" busy={isSaving} disabled={foodPreferencesUnavailable}>
+				Save food preferences
+			</RoundedActionButton>
+		</div>
 	</form>
 </div>
 

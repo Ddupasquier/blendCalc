@@ -37,7 +37,6 @@ import {
 } from "$lib/utils/serving/servingAmount";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
-import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
 
 export type { OpenFoodFactsNutriments } from "$lib/utils/barcode/barcodeNutrients";
 
@@ -907,7 +906,7 @@ export const mapFdcBarcodeFood = (
 		reportedNutrientIds: [
 			...new Set(reportedNutrientIds),
 		].filter((nutrientId) => nutrientIds.has(nutrientId)),
-		foodIdentityType: resolveFoodIdentityType(food),
+		foodIdentityType: "packaged",
 		...metadata,
 		structuredIngredients: food.structuredIngredients,
 		ingredientAnalysis: food.ingredientAnalysis,

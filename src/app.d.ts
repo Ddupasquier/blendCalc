@@ -42,6 +42,7 @@ declare global {
 			savedData?: SavedRecipesPageInitialData;
 		}
 		interface PageState {
+			ingredientRouteHref?: string;
 			mixRouteHref?: string;
 		}
 		interface Platform {

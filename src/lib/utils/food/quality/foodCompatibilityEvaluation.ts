@@ -71,6 +71,16 @@ export const getFoodCompatibilityEvidenceCoverage = (
 			policy: "missing",
 		};
 	}
+	if (identityType === "unknown") {
+		return {
+			basis: "unknown-identity",
+			identity: "missing",
+			ingredients: getPackagedEvidenceState(food, "ingredients"),
+			allergens: getPackagedEvidenceState(food, "allergens"),
+			traces: getPackagedEvidenceState(food, "traces"),
+			policy: "missing",
+		};
+	}
 
 	return {
 		basis: identityType === "private-custom"

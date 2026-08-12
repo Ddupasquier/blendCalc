@@ -28,17 +28,103 @@ const uniqueStrings = (values: Array<string | null | undefined>) => [
 	...new Set(values.map((value) => value?.trim()).filter(Boolean) as string[]),
 ];
 
-type SourceAttributionRow = {
+export type SourceAttributionRow = {
 	key: string;
 	display_name: string;
 	homepage_url: string | null;
 	terms_url: string | null;
 	attribution_text: string | null;
 	canonical_license_name: string | null;
+	canonical_policy_reviewed_at: string | null;
+	canonical_storage_allowed: boolean;
 	api_redistribution_allowed: boolean;
 };
 
-type SourceAttributionCatalog = Record<string, ApiV1SourceAttribution>;
+export type DatasetAttributionRow = {
+	key: string;
+	source_key: string;
+	display_name: string;
+	version: string;
+	source_url: string;
+	license_name: string;
+	license_url: string;
+	attribution_text: string;
+	imported_at: string | null;
+	active: boolean;
+	import_enabled: boolean;
+	license_review_status: string;
+};
+
+type ApiV1AssetSourceIdentity = {
+	displayName: string;
+	sourceUrl: string;
+};
+
+export type ApiV1SourceAttributionCatalog = {
+	sources: Record<string, ApiV1SourceAttribution>;
+	datasetsBySource: Record<string, Record<string, ApiV1SourceAttribution>>;
+	datasetSourceKeys: Set<string>;
+	assetSources: Record<string, ApiV1AssetSourceIdentity>;
+};
+
+const readRequiredAttributionText = (
+	value: string | null,
+	field: string,
+) => {
+	const normalized = value?.trim();
+	if (!normalized) {
+		throw new Error(`Required API source ${field} is unavailable.`);
+	}
+	return normalized;
+};
+
+const hasRequiredAttributionText = (
+	value: string | null,
+): value is string => Boolean(value?.trim());
+
+const hasCompleteSourceAttribution = (source: SourceAttributionRow) =>
+	hasRequiredAttributionText(source.display_name) &&
+	hasRequiredAttributionText(source.homepage_url) &&
+	hasRequiredAttributionText(source.canonical_license_name) &&
+	hasRequiredAttributionText(source.terms_url) &&
+	hasRequiredAttributionText(source.attribution_text) &&
+	hasRequiredAttributionText(source.canonical_policy_reviewed_at);
+
+const hasCompleteDatasetAttribution = (dataset: DatasetAttributionRow) =>
+	hasRequiredAttributionText(dataset.display_name) &&
+	hasRequiredAttributionText(dataset.version) &&
+	hasRequiredAttributionText(dataset.source_url) &&
+	hasRequiredAttributionText(dataset.license_name) &&
+	hasRequiredAttributionText(dataset.license_url) &&
+	hasRequiredAttributionText(dataset.attribution_text) &&
+	hasRequiredAttributionText(dataset.imported_at);
+
+const mapSourceAttributionRow = (
+	source: SourceAttributionRow,
+): ApiV1SourceAttribution => ({
+	source: source.key,
+	displayName: readRequiredAttributionText(source.display_name, "name"),
+	sourceUrl: readRequiredAttributionText(source.homepage_url, "URL"),
+	licenseName: readRequiredAttributionText(
+		source.canonical_license_name,
+		"license",
+	),
+	licenseUrl: readRequiredAttributionText(source.terms_url, "license URL"),
+	attribution: readRequiredAttributionText(source.attribution_text, "credit"),
+	redistributionPolicyReviewedAt: readRequiredAttributionText(
+		source.canonical_policy_reviewed_at,
+		"policy review date",
+	),
+	dataset: null,
+});
+
+const mapAssetSourceIdentity = (
+	source: SourceAttributionRow,
+): ApiV1AssetSourceIdentity | null => {
+	const displayName = source.display_name.trim();
+	const sourceUrl = source.homepage_url?.trim();
+	return displayName && sourceUrl ? { displayName, sourceUrl } : null;
+};
 
 const normalizeSourceKey = (source: string) => {
 	if (source === "community" || source === "community-reviewed") {
@@ -47,70 +133,261 @@ const normalizeSourceKey = (source: string) => {
 	return source;
 };
 
-const readSourceAttributionCatalog = async (
-	supabase: SupabaseClient<Database>,
-): Promise<SourceAttributionCatalog> => {
-	const { data, error } = await supabase
-		.from("product_data_sources")
-		.select(
-			"key, display_name, homepage_url, terms_url, attribution_text, canonical_license_name, api_redistribution_allowed",
+const PUBLIC_SOURCE_TAG_FIELDS = new Set([
+	"additives",
+	"allergens",
+	"categories",
+	"countries",
+	"ingredients",
+	"labels",
+	"languages",
+	"nutrients",
+	"packaging",
+	"traces",
+]);
+
+const PUBLIC_REVISION_TEXT_FIELDS = new Set([
+	"productName",
+	"brandOwner",
+	"category",
+	"householdServing",
+	"ingredients",
+	"allergens",
+	"traces",
+]);
+
+const PUBLIC_REVISION_FIELD_LABELS: Record<string, string> = {
+	productName: "Product name",
+	brandOwner: "Brand",
+	category: "Category",
+	householdServing: "Household serving",
+	servingWeightGrams: "Serving weight",
+	ingredients: "Ingredients",
+	allergens: "Allergens",
+	traces: "Precautionary allergen statement",
+};
+
+const toPublicSourceReference = (
+	source: string,
+	reference: string | null | undefined,
+) => {
+	if (normalizeSourceKey(source) === "shared-catalog") return null;
+	const value = reference?.trim();
+	if (
+		!value ||
+		value.length > 240 ||
+		/[\\/?#]/.test(value) ||
+		/^\w+:\/\//i.test(value)
+	) {
+		return null;
+	}
+	return value;
+};
+
+const toPublicSourceTagReferences = (references: unknown) =>
+	Array.isArray(references)
+		? uniqueStrings(
+			references.filter(
+				(reference): reference is string =>
+					typeof reference === "string" &&
+					reference.length <= 120 &&
+					!/[\\/?#]/.test(reference) &&
+					!/\b(?:token|secret|password|authorization)\b/i.test(reference),
+			),
 		)
-		.eq("enabled", true)
-		.eq("api_redistribution_allowed", true);
-	if (error) throw error;
-	return Object.fromEntries(
-		((data ?? []) as SourceAttributionRow[]).map((source) => [
-			source.key,
-			{
-				source: source.key,
-				displayName: source.display_name,
-				sourceUrl: source.homepage_url,
-				licenseName: source.canonical_license_name,
-				licenseUrl: source.terms_url,
-				attribution: source.attribution_text,
+		: [];
+
+export const mapApiV1SourceAttributionCatalog = (
+	sourceRows: SourceAttributionRow[],
+	datasetRows: DatasetAttributionRow[],
+): ApiV1SourceAttributionCatalog => {
+	const sources: ApiV1SourceAttributionCatalog["sources"] = {};
+	const assetSources: ApiV1SourceAttributionCatalog["assetSources"] = {};
+	for (const source of sourceRows) {
+		const assetSource = mapAssetSourceIdentity(source);
+		if (assetSource) assetSources[source.key] = assetSource;
+		if (
+			source.canonical_storage_allowed &&
+			source.api_redistribution_allowed &&
+			hasCompleteSourceAttribution(source)
+		) {
+			sources[source.key] = mapSourceAttributionRow(source);
+		}
+	}
+	const datasetsBySource: ApiV1SourceAttributionCatalog["datasetsBySource"] = {};
+	const datasetSourceKeys = new Set<string>();
+	for (const dataset of datasetRows) {
+		datasetSourceKeys.add(dataset.source_key);
+		if (
+			!dataset.active ||
+			!dataset.import_enabled ||
+			dataset.license_review_status !== "approved" ||
+			!hasCompleteDatasetAttribution(dataset)
+		) {
+			continue;
+		}
+		const source = sources[dataset.source_key];
+		if (!source) continue;
+		const sourceDatasets = datasetsBySource[dataset.source_key] ?? {};
+		sourceDatasets[dataset.key] = {
+			...source,
+			sourceUrl: dataset.source_url.trim(),
+			licenseName: dataset.license_name.trim(),
+			licenseUrl: dataset.license_url.trim(),
+			attribution: dataset.attribution_text.trim(),
+			dataset: {
+				key: dataset.key,
+				name: dataset.display_name.trim(),
+				version: dataset.version.trim(),
+				importedAt: dataset.imported_at!.trim(),
 			},
-		]),
+		};
+		datasetsBySource[dataset.source_key] = sourceDatasets;
+	}
+
+	return { sources, datasetsBySource, datasetSourceKeys, assetSources };
+};
+
+export const readApiV1SourceAttributionCatalog = async (
+	supabase: SupabaseClient<Database>,
+): Promise<ApiV1SourceAttributionCatalog> => {
+	const [sourceResult, datasetResult] = await Promise.all([
+		supabase
+			.from("product_data_sources")
+			.select(
+				"key, display_name, homepage_url, terms_url, attribution_text, canonical_license_name, canonical_policy_reviewed_at, canonical_storage_allowed, api_redistribution_allowed",
+			)
+			.eq("enabled", true),
+		supabase
+			.from("generic_food_datasets")
+			.select(
+				"key, source_key, display_name, version, source_url, license_name, license_url, attribution_text, imported_at, active, import_enabled, license_review_status",
+			),
+	]);
+	if (sourceResult.error) throw sourceResult.error;
+	if (datasetResult.error) throw datasetResult.error;
+
+	return mapApiV1SourceAttributionCatalog(
+		(sourceResult.data ?? []) as SourceAttributionRow[],
+		(datasetResult.data ?? []) as DatasetAttributionRow[],
 	);
 };
 
-const collectSourceKeys = (record: ApprovedCatalogRecord) =>
-	new Set(
-		[
-			...record.food.foodNutrients.map((nutrient) => nutrient.source),
-			...(record.food.foodServings ?? []).map((serving) => serving.source),
-			...Object.values(record.fieldProvenance).map((source) => source.source),
-		]
-			.filter(Boolean)
-			.map((source) => normalizeSourceKey(source as string)),
-	);
+type RepresentedSource = {
+	source: string;
+	references: Set<string>;
+};
+
+const collectRepresentedSources = (record: ApprovedCatalogRecord) => {
+	const representedSources = new Map<string, RepresentedSource>();
+	for (const source of [
+		...record.food.foodNutrients.map((nutrient) => ({
+			source: nutrient.source,
+			reference: nutrient.sourceReference,
+		})),
+		...(record.food.foodServings ?? []).map((serving) => ({
+			source: serving.source,
+			reference: serving.sourceReference,
+		})),
+		...Object.values(record.fieldProvenance).map((fieldSource) => ({
+			source: fieldSource.source,
+			reference: fieldSource.sourceReference,
+		})),
+	]) {
+		if (!source.source) continue;
+		const sourceKey = normalizeSourceKey(source.source);
+		const represented = representedSources.get(sourceKey) ?? {
+			source: sourceKey,
+			references: new Set<string>(),
+		};
+		if (source.reference?.trim()) represented.references.add(source.reference.trim());
+		representedSources.set(sourceKey, represented);
+	}
+	return [...representedSources.values()];
+};
+
+const readDatasetKeyFromSourceReference = (reference: string) => {
+	const separatorIndex = reference.indexOf(":");
+	return separatorIndex > 0 ? reference.slice(0, separatorIndex) : null;
+};
 
 const selectSourceAttributions = (
 	record: ApprovedCatalogRecord,
-	catalog: SourceAttributionCatalog,
-) =>
-	[...collectSourceKeys(record)]
-		.map((sourceKey) => catalog[sourceKey])
-		.filter((source): source is ApiV1SourceAttribution => Boolean(source))
-		.sort((left, right) => left.source.localeCompare(right.source));
+	catalog: ApiV1SourceAttributionCatalog,
+) => {
+	const attributions = new Map<string, ApiV1SourceAttribution>();
+	const representedSources = collectRepresentedSources(record);
+	if (representedSources.length === 0) {
+		throw new Error("Required API source attribution is unavailable.");
+	}
+	for (const representedSource of representedSources) {
+		const providerAttribution = catalog.sources[representedSource.source];
+		if (!providerAttribution) {
+			throw new Error("Required API source attribution is unavailable.");
+		}
+		if (!catalog.datasetSourceKeys.has(representedSource.source)) {
+			attributions.set(representedSource.source, providerAttribution);
+			continue;
+		}
+		const representedDatasetKeys = new Set(
+			[...representedSource.references]
+				.map(readDatasetKeyFromSourceReference)
+				.filter((key): key is string => Boolean(key)),
+		);
+		if (representedDatasetKeys.size === 0) {
+			throw new Error("Required API dataset attribution is unavailable.");
+		}
+		const datasetCatalog = catalog.datasetsBySource[representedSource.source];
+		if (!datasetCatalog) {
+			throw new Error("Required API dataset attribution is unavailable.");
+		}
+		for (const datasetKey of representedDatasetKeys) {
+			const datasetAttribution = datasetCatalog[datasetKey];
+			if (!datasetAttribution) {
+				throw new Error("Required API dataset attribution is unavailable.");
+			}
+			attributions.set(
+				`${representedSource.source}:${datasetKey}`,
+				datasetAttribution,
+			);
+		}
+	}
+	return [...attributions.values()].sort((left, right) =>
+		`${left.source}:${left.dataset?.key ?? ""}`.localeCompare(
+			`${right.source}:${right.dataset?.key ?? ""}`,
+		),
+	);
+};
 
 const toSource = (
 	source: string,
 	reference: string | null | undefined,
 	confidence: string | null | undefined,
 ): ApiV1Source => ({
-	source,
-	reference: reference?.trim() || null,
+	source: normalizeSourceKey(source),
+	reference: toPublicSourceReference(source, reference),
 	confidence: confidence?.trim() || null,
 });
 
-const toImage = (image: FoodImageAsset): ApiV1Image => ({
+type PublicApiImage = FoodImageAsset & {
+	licenseUrl: string;
+	attributionText: string;
+	fetchedAt: string;
+};
+
+const toImage = (
+	image: PublicApiImage,
+	assetSource: ApiV1AssetSourceIdentity,
+): ApiV1Image => ({
 	role: image.role,
 	url: image.imageUrl,
 	thumbnailUrl: image.thumbnailUrl ?? null,
+	sourceName: assetSource.displayName,
+	sourceUrl: assetSource.sourceUrl,
 	license: {
 		name: image.licenseName,
-		url: image.licenseUrl ?? null,
-		attribution: image.attributionText ?? null,
+		url: image.licenseUrl,
+		attribution: image.attributionText,
 	},
 	placement: {
 		fitMode: image.fitMode ?? "cover",
@@ -122,6 +399,7 @@ const toImage = (image: FoodImageAsset): ApiV1Image => ({
 	},
 	source: toSource(image.source, image.sourceReference, image.confidence),
 	approvedAt: image.approvedAt ?? null,
+	retrievedAt: image.fetchedAt,
 });
 
 const toWarning = (fact: FoodCompatibilityFact): ApiV1Warning => ({
@@ -134,11 +412,12 @@ const toWarning = (fact: FoodCompatibilityFact): ApiV1Warning => ({
 	sourceText: fact.sourceText,
 });
 
-const hasCompleteImageRights = (image: FoodImageAsset) =>
+const hasCompleteImageRights = (image: FoodImageAsset): image is PublicApiImage =>
 	Boolean(
 		image.licenseName.trim() &&
 		image.licenseUrl?.trim() &&
-		image.attributionText?.trim(),
+		image.attributionText?.trim() &&
+		image.fetchedAt?.trim(),
 	);
 
 const toCanonicalFieldSource = (
@@ -164,9 +443,11 @@ const toCanonicalFieldSource = (
 
 export const mapApprovedCatalogRecordToApiV1Product = (
 	record: ApprovedCatalogRecord,
-	sourceAttributionCatalog: SourceAttributionCatalog = {},
+	sourceAttributionCatalog: ApiV1SourceAttributionCatalog,
 ): ApiV1Product => {
 	const ingredientsText = record.food.ingredients?.trim() || null;
+	const precautionarySource =
+		record.fieldProvenance.traces ?? record.fieldProvenance.allergens ?? null;
 	const categorySource = record.category
 		? toCanonicalFieldSource(record, "categories")
 		: null;
@@ -252,7 +533,12 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 					allergens: uniqueStrings(statement.allergens),
 					languageCode: statement.languageCode ?? null,
 					sourceField: statement.sourceField,
-					sourceReference: statement.sourceReference ?? null,
+					sourceReference: precautionarySource
+						? toPublicSourceReference(
+								precautionarySource.source,
+								statement.sourceReference,
+							)
+						: null,
 					observationId: statement.observationId ?? null,
 					revisionId: statement.revisionId ?? null,
 					labelObservedAt: statement.labelObservedAt ?? null,
@@ -296,9 +582,12 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 					obsolete: record.food.sourceMetadata.obsolete ?? null,
 					obsoleteSince: record.food.sourceMetadata.obsoleteSince ?? null,
 					tagSources: Object.fromEntries(
-						Object.entries(record.food.sourceMetadata.tagSources ?? {}).map(
-							([field, sources]) => [field, uniqueStrings(sources)],
-						),
+						Object.entries(record.food.sourceMetadata.tagSources ?? [])
+							.filter(([field]) => PUBLIC_SOURCE_TAG_FIELDS.has(field))
+							.map(([field, sources]) => [
+								field,
+								toPublicSourceTagReferences(sources),
+							]),
 					),
 				}
 			: null,
@@ -371,7 +660,12 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 					: null,
 			};
 		}),
-		images: record.images.filter(hasCompleteImageRights).map(toImage),
+		images: record.images.flatMap((image) => {
+			if (!hasCompleteImageRights(image)) return [];
+			const assetSource =
+				sourceAttributionCatalog.assetSources[normalizeSourceKey(image.source)];
+			return assetSource ? [toImage(image, assetSource)] : [];
+		}),
 		warnings: (record.food.compatibilitySummary?.allFacts ?? []).map(toWarning),
 		compatibilityEvaluation,
 		sourceAttributions,
@@ -431,10 +725,11 @@ const toRevisionChange = (
 ): ApiV1ProductRevisionChange | null => {
 	if (!value || typeof value !== "object" || Array.isArray(value)) return null;
 	const change = value as Record<string, unknown>;
+	const field = change.field;
 	const changeType = change.changeType;
 	const severity = change.severity;
 	if (
-		typeof change.field !== "string" ||
+		typeof field !== "string" ||
 		typeof change.label !== "string" ||
 		(changeType !== "added" &&
 			changeType !== "removed" &&
@@ -442,13 +737,56 @@ const toRevisionChange = (
 		(severity !== "low" && severity !== "medium" && severity !== "high")
 	)
 		return null;
+	const readValue = (candidate: unknown) => {
+		if (candidate === null) return null;
+		if (PUBLIC_REVISION_TEXT_FIELDS.has(field)) {
+			return typeof candidate === "string" && candidate.length <= 20_000
+				? candidate
+				: undefined;
+		}
+		if (field === "servingWeightGrams") {
+			return typeof candidate === "number" &&
+				Number.isFinite(candidate) &&
+				candidate >= 0
+				? candidate
+				: undefined;
+		}
+		if (/^nutrient:[1-9]\d*$/.test(field)) {
+			if (
+				typeof candidate !== "object" ||
+				Array.isArray(candidate) ||
+				candidate === null
+			) {
+				return undefined;
+			}
+			const nutrient = candidate as Record<string, unknown>;
+			const unit = typeof nutrient.unit === "string"
+				? nutrient.unit.trim()
+				: "";
+			return typeof nutrient.value === "number" &&
+				Number.isFinite(nutrient.value) &&
+				nutrient.value >= 0 &&
+				unit.length > 0 &&
+				unit.length <= 32 &&
+				/^[A-Za-zµμ%]+$/.test(unit)
+				? { value: nutrient.value, unit }
+				: undefined;
+		}
+		return undefined;
+	};
+	const previousValue = readValue(change.previousValue);
+	const newValue = readValue(change.newValue);
+	if (previousValue === undefined || newValue === undefined) return null;
+	const publicLabel = field.startsWith("nutrient:")
+		? `Nutrient ${field.slice("nutrient:".length)}`
+		: PUBLIC_REVISION_FIELD_LABELS[field];
+	if (!publicLabel) return null;
 	return {
-		field: change.field,
-		label: change.label,
+		field,
+		label: publicLabel,
 		changeType,
-		previousValue:
-			change.previousValue as ApiV1ProductRevisionChange["previousValue"],
-		newValue: change.newValue as ApiV1ProductRevisionChange["newValue"],
+		previousValue,
+		newValue,
 		severity,
 	};
 };
@@ -513,8 +851,10 @@ export const readApiV1ProductByBarcode = async (
 	barcode: string,
 ) => {
 	const [record, sourceAttributionCatalog] = await Promise.all([
-		getApprovedCatalogRecordByBarcode(supabase, barcode),
-		readSourceAttributionCatalog(supabase),
+		getApprovedCatalogRecordByBarcode(supabase, barcode, {
+			imageAssociationScope: "canonical-product-only",
+		}),
+		readApiV1SourceAttributionCatalog(supabase),
 	]);
 	return record
 		? mapApprovedCatalogRecordToApiV1Product(record, sourceAttributionCatalog)
@@ -526,8 +866,11 @@ export const searchApiV1Products = async (
 	input: { query: string; limit: number; offset: number },
 ) => {
 	const [page, sourceAttributionCatalog] = await Promise.all([
-		searchApprovedCatalogRecordsPage(supabase, input.query, input),
-		readSourceAttributionCatalog(supabase),
+		searchApprovedCatalogRecordsPage(supabase, input.query, {
+			...input,
+			imageAssociationScope: "canonical-product-only",
+		}),
+		readApiV1SourceAttributionCatalog(supabase),
 	]);
 	return {
 		products: page.records.map((record) =>

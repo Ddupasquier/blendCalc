@@ -37,7 +37,11 @@ export type FoodCompatibilityEvaluation = {
 	profileApplied: boolean;
 	conflictCount: number;
 	coverage: {
-		basis: "generic-taxonomy" | "packaged-label" | "private-entry";
+		basis:
+			| "generic-taxonomy"
+			| "packaged-label"
+			| "private-entry"
+			| "unknown-identity";
 		identity: FoodCompatibilityEvidenceState;
 		ingredients: FoodCompatibilityEvidenceState;
 		allergens: FoodCompatibilityEvidenceState;

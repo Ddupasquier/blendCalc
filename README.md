@@ -135,6 +135,7 @@ adding one-off npm aliases.
 | `npm run catalog:qa-image-seed` | Seed fake image submissions in the disposable local test database |
 | `npm run catalog:qa-image-clean` | Remove unapproved fake image submissions from the disposable local test database |
 | `npm run moderate -- ...` | Run moderation CLI role/block helpers |
+| `npm run api:publication -- ...` | Review API concerns and place, release, or resolve reversible publication holds |
 
 ---
 

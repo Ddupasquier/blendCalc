@@ -72,6 +72,7 @@
 		if (open && !wasOpen) {
 			const activeElement = document.activeElement;
 			if (
+				!returnFocusTarget?.isConnected &&
 				activeElement instanceof HTMLElement &&
 				activeElement !== document.body &&
 				activeElement !== document.documentElement

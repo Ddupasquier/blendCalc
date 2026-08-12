@@ -11,9 +11,9 @@ describe("Saved view architecture", () => {
 		expect(page).toContain("<SavedRecipesEmptyState");
 		expect(page).toContain("<ListSortSheet");
 		expect(page).toContain("<PaginatedListControls");
-		expect(page).toContain("createScrollDirectionTracker");
-		expect(page).toContain("<ViewTop compactHidden={compactTopHidden}>");
-		expect(page).toContain("onscroll={handleSavedScroll}");
+		expect(page).toContain("createScrollAwareHeaderVisibilityController");
+		expect(page).toContain("compactHidden={headerVisibility.state.hidden}");
+		expect(page).toContain("onscroll={headerVisibility.handleScroll}");
 		expect(page).not.toContain("<Pagination");
 		expect(page).not.toContain('class="saved-card"');
 	});

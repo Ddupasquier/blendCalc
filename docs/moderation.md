@@ -33,6 +33,9 @@ workflows. Profile upload behavior belongs in
   signed-in user's current database role before using server-only capabilities. They do
   not authorize from the JWT claim alone because claims remain valid until token
   refresh.
+- Those same boundaries require a current `aal2` session. Elevated users without a
+  verified TOTP factor are sent through enrollment; enrolled users complete an
+  authenticator challenge before protected pages or actions become available.
 - `SUPABASE_SERVICE_ROLE_KEY` must exist only in server environments. Never prefix it
   with `PUBLIC_` or import it into a client component.
 
@@ -52,9 +55,10 @@ linked project. Do not use a custom PostgreSQL login role, overwrite the require
 `app_role_permissions` owns capability mapping. Moderators receive account, catalog,
 warning, and data-health permissions. Admins and developers receive those capabilities
 plus role management.
-The `authorize_app_permission` helper is suitable for RLS policy checks. Sensitive
-server actions continue to re-read `app_role_assignments` so revocations apply without
-waiting for JWT expiry.
+The `authorize_app_permission` helper is suitable for RLS policy checks and requires
+both an allowed signed `app_role` and the JWT `aal2` claim. Sensitive server actions
+continue to re-read `app_role_assignments` so revocations apply without waiting for JWT
+expiry.
 
 | Capability | User | Moderator | Admin | Developer |
 | --- | --- | --- | --- | --- |
@@ -243,6 +247,27 @@ Approval merges only the reviewed changed fields, preserves unsubmitted canonica
 and provenance, and appends the normal immutable revision. If the active product changed
 while the report waited, approval stops as stale and the report must be compared again.
 
+## API Publication Concerns And Holds
+
+`POST /api/publication-concerns` is the shared intake for provider, brand, user,
+rights-holder, attribution, privacy, source-retirement, and other public-data concerns.
+It supplements rather than replaces product corrections: a changed label still enters
+the immutable product-update workflow, while a concern records why public output may
+need correction or temporary removal.
+
+Moderators, administrators, and developers with AAL2 can read unresolved concerns from
+`GET /api/moderation/publication-concerns`. They may link a concern to an ordinary
+product/image correction, correct reviewed source policy, place a reversible hold on
+the exact subject, dismiss it with evidence, or resolve it when corrective work is
+complete.
+
+A hold must include safe public wording and a private internal reason. Product holds
+block the existing publication-readiness gate, source/dataset holds block attributed
+fields, and image holds remove only the held asset from API output. Releasing a hold
+records who released it and why; neither action deletes canonical rows, observations,
+revisions, assets, or evidence. Use `npm run api:publication -- ...` when a rapid
+operator action is needed before a dedicated moderation surface is available.
+
 ## Repeated Catalog Rejections
 
 Every transition to the moderator-owned `rejected` submission status atomically
@@ -264,8 +289,9 @@ details to other users.
 
 `/moderation/data-health` is a privileged catalog health summary available to
 moderators, admins, and developers. Its server
-load calls `get_moderator_data_health` through the signed-in user's Supabase client, and
-the database function independently verifies the caller's role. The browser receives
+load calls `get_moderator_data_health` through the signed-in user's Supabase client. The
+RPC requires both a signed AAL2 permission and a current database role assignment. The
+browser receives
 only bounded aggregates and issue summaries; it never receives raw provider payloads,
 private evidence, user identifiers, secrets, source-evaluation details, dataset import
 metadata, or download URLs.

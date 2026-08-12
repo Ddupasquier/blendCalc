@@ -96,6 +96,23 @@ field evidence, field completeness, observation recency, and a neutral determini
 tie-break. It does not give a provider blanket priority. Nutrients are resolved by
 canonical nutrient ID, and differently sourced nutrients retain their own lineage.
 
+Fridge and Shopping List placement applies that policy through a user-owned boundary.
+An exact source match may fill a missing snapshot field, but it does not authorize a
+source record to replace the entire saved item. A populated field changes only when the
+new candidate has stronger accepted review state or confidence, more complete evidence
+at the same evidence level, or a newer observation after the other factors tie. User
+names, user-label fields and nutrients, canonical categories, and fully private foods
+remain untouched. Each accepted list enrichment stores the selected source and the
+specific reason for the change so later audits do not have to infer why it happened.
+
+Generic-food search uses the same evidence rules for records connected by exact source
+identifiers. Category, household measures, scientific name, alternate description,
+preparation, source-record metadata, and each canonical nutrient are selected
+independently. Similar names never create an identity link. Complete source and licence
+attributions from every represented dataset stay on the read model. This transient
+search merge never changes an accepted shared-catalog product; catalog improvements
+still require persisted observations, selected field provenance, and a new revision.
+
 The missing-field plan covers nutrition, images, categories, servings, ingredient text
 and lists, recursive structured ingredients, ingredient analysis, additives, explicit
 allergens, explicit traces, dietary tags, labels, package quantity, and provider
@@ -276,9 +293,18 @@ as the date the manufacturer changed the product unless a separate source provid
 date. Revision history is retained for the future public API, while private evidence
 paths remain moderator-only.
 
+Public API removal is separate from canonical deletion. A credible rights,
+attribution, privacy, accuracy, or source-retirement concern can place a reversible
+publication hold on one product, image, dataset release, or provider. The affected
+public output fails closed immediately while the shared product, accepted revisions,
+observations, and private evidence remain available for review. Product data changes
+still require the normal immutable correction/revision workflow; releasing a hold never
+silently changes canonical fields.
+
 ### Catalog Date And Evidence Semantics
 
-Run `node scripts/audits/audit_catalog_transparency.mjs` to measure current population
+Run `node scripts/audits/catalog/audit_catalog_transparency.mjs` to measure current
+population
 across canonical products, selected source observations, normalized rows, API v1
 publication, and the app read model. Add `--json` for machine-readable output. The
 report classifies each field as populated, sparse, or empty and prints representative
@@ -312,6 +338,12 @@ mapping, and derivation metadata; internal mapping review references remain
 moderator-only. The app keeps ordinary nutrition concise and translates only useful
 bounded uncertainty summaries into the closed Data quality disclosure. Policy snapshots
 and broader history remain future presentations rather than inferred UI claims.
+
+Canonical nutrient lineage cannot come from provider-name similarity alone. Exact
+provider identifiers and explicitly reviewed source keys own nutrient identity, exact
+normalized units own lookup, and any unit change requires a reviewed nutrient-specific
+conversion. Semantic taxonomy candidates remain pending moderation evidence and are
+excluded from catalog/API publication until reviewed.
 
 Authenticated app reads may additionally resolve an account's optional regulatory
 region against the regional profile in that same immutable policy version. The result
@@ -539,6 +571,12 @@ ingredient, allergen, trace, precautionary-statement, label, additive, package, 
 source-metadata fields. A fuller
 secondary record may supplement missing fields but cannot silently overwrite an
 authoritative reported value or zero.
+
+Source adapters assign food identity from their own reviewed contracts. Exact GTIN or
+brand evidence may independently identify a packaged product, but an unrecognized
+provider datatype does not. Unclassified records remain explicitly unknown and are
+excluded from packaged-label and authoritative-generic completeness conclusions until
+their adapter or canonical review supplies an identity.
 
 ## Product Identifier QR Codes
 

@@ -65,13 +65,13 @@ select is(
 set local role authenticated;
 select set_config(
 	'request.jwt.claims',
-	'{"sub":"73000000-0000-4000-8000-000000000001","role":"authenticated","app_role":"developer"}',
+	'{"sub":"73000000-0000-4000-8000-000000000001","role":"authenticated","app_role":"developer","aal":"aal2"}',
 	true
 );
 
 select ok(
 	public.authorize_app_permission('moderation.roles.manage'),
-	'the developer claim receives its explicitly mapped role-management capability'
+	'the MFA-verified developer claim receives its explicitly mapped role-management capability'
 );
 
 select lives_ok(

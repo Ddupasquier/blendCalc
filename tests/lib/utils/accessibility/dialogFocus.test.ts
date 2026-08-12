@@ -81,4 +81,24 @@ describe("dialog focus management", () => {
 		await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 		expect(trigger).toHaveFocus();
 	});
+
+	it("restores an explicit trigger after a parent dialog temporarily takes focus", async () => {
+		const trigger = document.createElement("button");
+		const parentDialogButton = document.createElement("button");
+		const dialog = document.createElement("div");
+		const firstButton = document.createElement("button");
+		dialog.append(firstButton);
+		document.body.append(trigger, parentDialogButton, dialog);
+
+		const cleanup = manageDialogFocus(dialog, trigger);
+		await Promise.resolve();
+		expect(firstButton).toHaveFocus();
+
+		cleanup();
+		dialog.remove();
+		parentDialogButton.focus();
+		await Promise.resolve();
+		await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+		expect(trigger).toHaveFocus();
+	});
 });

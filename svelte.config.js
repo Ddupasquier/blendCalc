@@ -39,9 +39,15 @@ const config = {
 				'font-src': ['self', 'data:'],
 				'form-action': ['self'],
 				'frame-ancestors': ['none'],
+				'frame-src': ['self', 'https://challenges.cloudflare.com'],
 				'img-src': createImageSources(),
 				'object-src': ['none'],
-				'script-src': ['self', 'wasm-unsafe-eval', 'https://cdn.jsdelivr.net'],
+				'script-src': [
+					'self',
+					'wasm-unsafe-eval',
+					'https://cdn.jsdelivr.net',
+					'https://challenges.cloudflare.com'
+				],
 				'worker-src': ['self', 'blob:', 'https://cdn.jsdelivr.net'],
 				'style-src': ['self', 'unsafe-inline']
 			}

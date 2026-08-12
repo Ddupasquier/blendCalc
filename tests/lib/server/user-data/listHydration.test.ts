@@ -238,6 +238,10 @@ describe("cloud food-list hydration", () => {
 			nutrition: expect.objectContaining({
 				source: "usda",
 				sourceReference: "2032704",
+				observationId: "82000000-0000-4000-8000-000000000001",
+				observedAt: "2026-08-01T00:00:00.000Z",
+				verificationMethod: "exact-barcode",
+				reviewState: "accepted",
 			}),
 			categories: expect.objectContaining({
 				source: "usda",

@@ -11,7 +11,7 @@ export type IngredientSearchViewProps = {
 	provenanceOptions?: readonly IngredientProvenanceOption[];
 	sourceFilter?: string;
 	trustFilter?: string;
-	onScan: () => void;
+	onScan: (event?: MouseEvent) => void;
 	onFilter: () => void;
 	onClose: () => void;
 };

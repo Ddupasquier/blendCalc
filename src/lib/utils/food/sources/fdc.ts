@@ -1,5 +1,6 @@
 import type {
 	FoodItem,
+	FoodIdentityType,
 	FoodNutrient,
 	FoodServing,
 } from "$lib/utils/food/types";
@@ -10,7 +11,6 @@ import {
 	type IngredientSearchPageOptions,
 } from "$lib/utils/ingredients/ingredientSearchPagination";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
-import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
 import { parseSourceServingMeasure } from "$lib/utils/serving/servingAmount";
 
 type FdcDetailNutrient = {
@@ -154,19 +154,33 @@ const getSearchMeasureLabel = (measure: FdcSearchMeasure) =>
 		measure.measureUnitName?.trim(),
 	].filter(Boolean).join(" ");
 
-const getFdcServingOrigin = (food: FdcFoodResponse): FoodServing["origin"] => {
-	if (food.foodIdentityType === "packaged") return "package-label";
-	if (food.foodIdentityType === "generic") return "source-household-measure";
+const getFdcFoodIdentityType = (food: FdcFoodResponse): FoodIdentityType => {
+	if (food.foodIdentityType) return food.foodIdentityType;
 	const dataType = food.dataType?.trim().toLocaleLowerCase("en-US");
-	if (dataType === "branded") return "package-label";
+	if (dataType === "branded") return "packaged";
 	if (
 		dataType === "foundation" ||
 		dataType === "sr legacy" ||
 		dataType === "survey (fndds)" ||
 		dataType === "experimental"
 	) {
-		return "source-household-measure";
+		return "generic";
 	}
+	if (
+		food.barcode ||
+		food.gtinUpc ||
+		food.brandOwner?.trim() ||
+		food.brandName?.trim()
+	) {
+		return "packaged";
+	}
+	return "unknown";
+};
+
+const getFdcServingOrigin = (food: FdcFoodResponse): FoodServing["origin"] => {
+	const identityType = getFdcFoodIdentityType(food);
+	if (identityType === "packaged") return "package-label";
+	if (identityType === "generic") return "source-household-measure";
 	return "unknown";
 };
 
@@ -317,6 +331,19 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FoodItem => {
 	const foodServings = normalizeFoodServings(food);
 	const packageLabel = food.packageWeight?.trim();
 	const brandOwner = food.brandOwner?.trim() || food.brandName?.trim();
+	const sourceMetadata = normalizeSourceRecordMetadata(food);
+	const sourceReference = String(food.fdcId);
+	const hasCategory = Boolean(
+		food.foodCategory?.trim() ||
+		food.brandedFoodCategory?.trim() ||
+		food.categories?.some((category) => category.trim()),
+	);
+	const hasSourceMetadata = Boolean(
+		food.scientificName?.trim() ||
+		food.alternateDescription?.trim() ||
+		food.preparation?.trim() ||
+		sourceMetadata,
+	);
 	return {
 		...food,
 		description: formatSourceProductName(food.description),
@@ -329,14 +356,95 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FoodItem => {
 		},
 		nameProvenance: "source",
 		brandOwner: brandOwner || undefined,
-		foodIdentityType: resolveFoodIdentityType(food),
+		foodIdentityType: getFdcFoodIdentityType(food),
 		foodNutrients,
 		reportedNutrientIds: foodNutrients.map((nutrient) => nutrient.nutrientId),
 		foodServings,
 		hasSourceServing: foodServings.length > 0,
 		packageQuantity:
 			food.packageQuantity ?? (packageLabel ? { label: packageLabel } : undefined),
-		sourceMetadata: normalizeSourceRecordMetadata(food),
+		sourceMetadata,
+		fieldProvenance: {
+			...food.fieldProvenance,
+			productName: food.fieldProvenance?.productName ?? {
+				source: "usda",
+				sourceReference,
+				confidence: "imported",
+			},
+			...(brandOwner
+				? {
+						brandOwner: food.fieldProvenance?.brandOwner ?? {
+							source: "usda" as const,
+							sourceReference,
+							confidence: "imported" as const,
+						},
+					}
+				: {}),
+			...(foodNutrients.length > 0
+				? {
+						nutrition: food.fieldProvenance?.nutrition ?? {
+							source: "usda" as const,
+							sourceReference,
+							confidence: "imported" as const,
+						},
+					}
+				: {}),
+			...(hasCategory
+				? {
+						categories: food.fieldProvenance?.categories ?? {
+							source: "usda" as const,
+							sourceReference,
+							confidence: "imported" as const,
+						},
+					}
+				: {}),
+			...(foodServings.length > 0
+				? {
+						serving: food.fieldProvenance?.serving ?? {
+							source: "usda" as const,
+							sourceReference,
+							confidence: "imported" as const,
+						},
+					}
+				: {}),
+			...(hasSourceMetadata
+				? {
+						sourceMetadata: food.fieldProvenance?.sourceMetadata ?? {
+							source: "usda" as const,
+							sourceReference,
+							confidence: "imported" as const,
+						},
+					}
+				: {}),
+			...(food.scientificName?.trim()
+				? {
+						scientificName: food.fieldProvenance?.scientificName ?? {
+							source: "usda" as const,
+							sourceReference,
+							confidence: "imported" as const,
+						},
+					}
+				: {}),
+			...(food.alternateDescription?.trim()
+				? {
+						alternateDescription:
+							food.fieldProvenance?.alternateDescription ?? {
+								source: "usda" as const,
+								sourceReference,
+								confidence: "imported" as const,
+							},
+					}
+				: {}),
+			...(food.preparation?.trim()
+				? {
+						preparation: food.fieldProvenance?.preparation ?? {
+							source: "usda" as const,
+							sourceReference,
+							confidence: "imported" as const,
+						},
+					}
+				: {}),
+		},
 	};
 };
 

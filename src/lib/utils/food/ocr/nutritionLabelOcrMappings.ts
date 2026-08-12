@@ -31,6 +31,7 @@ export const readNutritionLabelOcrMappings = async (
 		.select("source_nutrient_key, source_unit_name, nutrient_id, priority")
 		.eq("source_key", OCR_SOURCE_KEY)
 		.eq("enabled", true)
+		.eq("review_status", "approved")
 		.order("priority", { ascending: true });
 	if (mappingError || !mappings?.length) return null;
 
