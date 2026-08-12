@@ -5,6 +5,19 @@
 blendCalc uses Supabase as the permanent source of truth for account data and the
 canonical food catalog. Browser storage is not a second database.
 
+## API Correction Boundary
+
+Public-data concerns are accepted only by the server route and stored in private
+`api_publication_concerns`; browser roles have no direct table privileges. Exact targets
+resolve against canonical IDs before storage, while contact details and evidence remain
+outside API responses. Elevated AAL2 moderation routes read and resolve the queue.
+
+`api_publication_holds` is a reversible publication control, not another canonical-data
+store. Product holds feed the existing material-conflict readiness gate, source and
+dataset holds feed field-level attribution eligibility, and image holds are filtered
+during public API image hydration. App reads may retain canonical records for review,
+but API v1 omits held output. No hold path deletes revision or evidence history.
+
 ## Read Flow
 
 1. A protected route verifies the current user through `locals.getVerifiedUser()`.
@@ -89,6 +102,12 @@ and only canonical revisions satisfying the active DB-backed publication profile
 API v1. Publication fails closed on incomplete identity, nutrition, serving, provenance,
 source policy, recency, or unresolved material conflicts. Withholding never deletes the
 underlying evidence or revision history.
+
+API v1 database readers are server-service-role-only. Browser sessions reach catalog
+data through the versioned HTTP routes, whose serializers rebuild explicit public
+objects and reject undeclared fields. Private foods, user-list state, pending review
+records, identities, evidence paths, secrets, package-instance data, arbitrary revision
+JSON, and unrelated same-barcode image assets cannot bypass that boundary.
 
 The provider capability map, legal policy, and catalog merge behavior are maintained in
 the [`source data inventory`](api-structures/source-data-inventory.md),

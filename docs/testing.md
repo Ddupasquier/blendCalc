@@ -159,12 +159,24 @@ only when a failure needs investigation.
 The checked-in workflows use Node.js 24 and a clean dependency install:
 
 - `.github/workflows/verify.yml` runs version consistency, dependency auditing, Svelte
-  checks, Vitest, the production build, and one isolated job per browser project;
+  checks, Vitest, the production build, and one isolated job per browser project. Its
+  source job supplies compile-only local public Supabase placeholders so Svelte can
+  generate `$env/static/public` types without production credentials or database
+  access;
 - `.github/workflows/database-verification.yml` rebuilds the local Supabase stack and
-  runs pgTAP whenever migrations or database-test ownership files change.
+  runs pgTAP whenever migrations or database-test ownership files change. Its stable
+  `Database Verification` conclusion still reports success when those files are
+  unchanged, so GitHub can safely require the check without leaving a pull request
+  pending;
+- `.github/workflows/hosted-auth-verification.yml` checks the public production site and
+  Supabase Auth health endpoint using repository variables. The publishable browser key
+  is public configuration; the workflow receives no database password, service-role
+  key, management token, or other protected credential.
 
-The workflow files make verification repeatable. Repository settings must still mark
-the appropriate workflow checks as required before a protected branch can rely on them.
+The stable required conclusions are `Source, Tests, And Build`, `Browser Matrix`,
+`Database Verification`, and `Hosted Auth Health`. Repository protection must require
+all four on `mobile-ui-rebuild`, `staging`, and `main`; feature branches are verified
+through pull requests into the first protected parent they feed.
 
 ## Browser Matrix
 

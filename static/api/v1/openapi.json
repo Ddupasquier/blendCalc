@@ -4,6 +4,8 @@
     "title": "blendCalc Catalog API",
     "version": "1.0.0",
     "x-blendcalc-status": "internal",
+    "x-blendcalc-access": "internal-authenticated",
+    "x-blendcalc-public-release": "blocked-pending-professional-terms-review",
     "description": "Read-only internal preview of approved blendCalc catalog data. This contract never performs live provider lookups and never returns private foods or moderation evidence."
   },
   "servers": [{ "url": "/" }],
@@ -26,7 +28,11 @@
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
+          "405": { "$ref": "#/components/responses/MethodNotAllowed" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/UnexpectedError" },
           "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
@@ -60,7 +66,11 @@
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
           "404": { "$ref": "#/components/responses/NotFound" },
+          "405": { "$ref": "#/components/responses/MethodNotAllowed" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/UnexpectedError" },
           "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
@@ -94,6 +104,10 @@
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "405": { "$ref": "#/components/responses/MethodNotAllowed" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/UnexpectedError" },
           "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
@@ -121,6 +135,10 @@
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "405": { "$ref": "#/components/responses/MethodNotAllowed" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/UnexpectedError" },
           "503": { "$ref": "#/components/responses/Unavailable" }
         }
       }
@@ -144,8 +162,28 @@
         "description": "A signed-in blendCalc account is required",
         "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
       },
+      "Forbidden": {
+        "description": "The signed-in account cannot access the requested resource",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
       "NotFound": {
         "description": "No approved catalog record matched",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "MethodNotAllowed": {
+        "description": "The resource does not support the request method",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "RateLimited": {
+        "description": "The request rate limit was reached",
+        "headers": {
+          "Retry-After": { "schema": { "type": "integer", "minimum": 0 } },
+          "X-RateLimit-Remaining": { "schema": { "type": "integer", "minimum": 0 } }
+        },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+      },
+      "UnexpectedError": {
+        "description": "The request could not be completed safely",
         "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
       },
       "Unavailable": {
@@ -187,14 +225,31 @@
       "SourceAttribution": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["source", "displayName", "sourceUrl", "licenseName", "licenseUrl", "attribution"],
+        "required": ["source", "displayName", "sourceUrl", "licenseName", "licenseUrl", "attribution", "redistributionPolicyReviewedAt", "dataset"],
         "properties": {
           "source": { "type": "string" },
           "displayName": { "type": "string" },
-          "sourceUrl": { "type": ["string", "null"], "format": "uri" },
-          "licenseName": { "type": ["string", "null"] },
-          "licenseUrl": { "type": ["string", "null"], "format": "uri" },
-          "attribution": { "type": ["string", "null"] }
+          "sourceUrl": { "type": "string", "format": "uri" },
+          "licenseName": { "type": "string" },
+          "licenseUrl": { "type": "string", "format": "uri" },
+          "attribution": { "type": "string" },
+          "redistributionPolicyReviewedAt": { "type": "string", "format": "date-time" },
+          "dataset": {
+            "oneOf": [
+              { "type": "null" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["key", "name", "version", "importedAt"],
+                "properties": {
+                  "key": { "type": "string" },
+                  "name": { "type": "string" },
+                  "version": { "type": "string" },
+                  "importedAt": { "type": "string", "format": "date-time" }
+                }
+              }
+            ]
+          }
         }
       },
       "Category": {
@@ -260,19 +315,21 @@
       "Image": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["role", "url", "thumbnailUrl", "license", "placement", "source", "approvedAt"],
+        "required": ["role", "url", "thumbnailUrl", "sourceName", "sourceUrl", "license", "placement", "source", "approvedAt", "retrievedAt"],
         "properties": {
           "role": { "type": "string" },
           "url": { "type": "string", "format": "uri" },
           "thumbnailUrl": { "type": ["string", "null"], "format": "uri" },
+          "sourceName": { "type": "string" },
+          "sourceUrl": { "type": "string", "format": "uri" },
           "license": {
             "type": "object",
             "additionalProperties": false,
             "required": ["name", "url", "attribution"],
             "properties": {
               "name": { "type": "string" },
-              "url": { "type": ["string", "null"], "format": "uri" },
-              "attribution": { "type": ["string", "null"] }
+              "url": { "type": "string", "format": "uri" },
+              "attribution": { "type": "string" }
             }
           },
           "placement": {
@@ -289,7 +346,8 @@
             }
           },
           "source": { "$ref": "#/components/schemas/Source" },
-          "approvedAt": { "type": ["string", "null"], "format": "date-time" }
+          "approvedAt": { "type": ["string", "null"], "format": "date-time" },
+          "retrievedAt": { "type": "string", "format": "date-time" }
         }
       },
       "Warning": {
@@ -390,13 +448,37 @@
         "additionalProperties": false,
         "required": ["field", "label", "changeType", "previousValue", "newValue", "severity"],
         "properties": {
-          "field": { "type": "string" },
-          "label": { "type": "string" },
+          "field": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": ["productName", "brandOwner", "category", "householdServing", "servingWeightGrams", "ingredients", "allergens", "traces"]
+              },
+              { "type": "string", "pattern": "^nutrient:[1-9][0-9]*$" }
+            ]
+          },
+          "label": { "type": "string", "maxLength": 120 },
           "changeType": { "type": "string", "enum": ["added", "removed", "changed"] },
-          "previousValue": {},
-          "newValue": {},
+          "previousValue": { "$ref": "#/components/schemas/ProductRevisionValue" },
+          "newValue": { "$ref": "#/components/schemas/ProductRevisionValue" },
           "severity": { "type": "string", "enum": ["low", "medium", "high"] }
         }
+      },
+      "ProductRevisionValue": {
+        "oneOf": [
+          { "type": "string", "maxLength": 20000 },
+          { "type": "number", "minimum": 0 },
+          { "type": "null" },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["value", "unit"],
+            "properties": {
+              "value": { "type": "number", "minimum": 0 },
+              "unit": { "type": "string", "pattern": "^[A-Za-zµμ%]+$", "minLength": 1, "maxLength": 32 }
+            }
+          }
+        ]
       },
       "ProductRevisionHistoryItem": {
         "type": "object",
@@ -484,9 +566,18 @@
           "obsoleteSince": { "type": ["string", "null"] },
           "tagSources": {
             "type": "object",
-            "additionalProperties": {
-              "type": "array",
-              "items": { "type": "string" }
+            "additionalProperties": false,
+            "properties": {
+              "additives": { "type": "array", "items": { "type": "string", "maxLength": 120 } },
+              "allergens": { "type": "array", "items": { "type": "string", "maxLength": 120 } },
+              "categories": { "type": "array", "items": { "type": "string", "maxLength": 120 } },
+              "countries": { "type": "array", "items": { "type": "string", "maxLength": 120 } },
+              "ingredients": { "type": "array", "items": { "type": "string", "maxLength": 120 } },
+              "labels": { "type": "array", "items": { "type": "string", "maxLength": 120 } },
+              "languages": { "type": "array", "items": { "type": "string", "maxLength": 120 } },
+              "nutrients": { "type": "array", "items": { "type": "string", "maxLength": 120 } },
+              "packaging": { "type": "array", "items": { "type": "string", "maxLength": 120 } },
+              "traces": { "type": "array", "items": { "type": "string", "maxLength": 120 } }
             }
           }
         }
@@ -565,7 +656,7 @@
           "images": { "type": "array", "items": { "$ref": "#/components/schemas/Image" } },
           "warnings": { "type": "array", "items": { "$ref": "#/components/schemas/Warning" } },
           "compatibilityEvaluation": { "$ref": "#/components/schemas/CompatibilityEvaluation" },
-          "sourceAttributions": { "type": "array", "items": { "$ref": "#/components/schemas/SourceAttribution" } },
+          "sourceAttributions": { "type": "array", "minItems": 1, "items": { "$ref": "#/components/schemas/SourceAttribution" } },
           "catalog": { "$ref": "#/components/schemas/CatalogMetadata" },
           "fieldSources": {
             "type": "object",
@@ -611,6 +702,7 @@
       },
       "ProductResponse": {
         "type": "object",
+        "additionalProperties": false,
         "required": ["apiVersion", "data"],
         "properties": {
           "apiVersion": { "type": "string", "const": "1.0" },
@@ -619,12 +711,14 @@
       },
       "ProductListResponse": {
         "type": "object",
+        "additionalProperties": false,
         "required": ["apiVersion", "data", "meta"],
         "properties": {
           "apiVersion": { "type": "string", "const": "1.0" },
           "data": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } },
           "meta": {
             "type": "object",
+            "additionalProperties": false,
             "required": ["pagination"],
             "properties": { "pagination": { "$ref": "#/components/schemas/Pagination" } }
           }
@@ -632,6 +726,7 @@
       },
       "ProductRevisionListResponse": {
         "type": "object",
+        "additionalProperties": false,
         "required": ["apiVersion", "data", "meta"],
         "properties": {
           "apiVersion": { "type": "string", "const": "1.0" },
@@ -641,6 +736,7 @@
           },
           "meta": {
             "type": "object",
+            "additionalProperties": false,
             "required": ["pagination"],
             "properties": { "pagination": { "$ref": "#/components/schemas/Pagination" } }
           }
@@ -648,12 +744,14 @@
       },
       "CategoryListResponse": {
         "type": "object",
+        "additionalProperties": false,
         "required": ["apiVersion", "data", "meta"],
         "properties": {
           "apiVersion": { "type": "string", "const": "1.0" },
           "data": { "type": "array", "items": { "$ref": "#/components/schemas/Category" } },
           "meta": {
             "type": "object",
+            "additionalProperties": false,
             "required": ["pagination"],
             "properties": { "pagination": { "$ref": "#/components/schemas/Pagination" } }
           }
@@ -661,14 +759,33 @@
       },
       "ErrorResponse": {
         "type": "object",
+        "additionalProperties": false,
         "required": ["apiVersion", "error"],
         "properties": {
           "apiVersion": { "type": "string", "const": "1.0" },
           "error": {
             "type": "object",
+            "additionalProperties": false,
             "required": ["code", "message"],
             "properties": {
-              "code": { "type": "string" },
+              "code": {
+                "type": "string",
+                "enum": [
+                  "authentication_required",
+                  "access_denied",
+                  "invalid_request",
+                  "invalid_barcode",
+                  "invalid_query",
+                  "invalid_pagination",
+                  "product_not_found",
+                  "resource_not_found",
+                  "method_not_allowed",
+                  "rate_limited",
+                  "catalog_unavailable",
+                  "service_unavailable",
+                  "unexpected_error"
+                ]
+              },
               "message": { "type": "string" }
             }
           }

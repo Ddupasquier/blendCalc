@@ -247,6 +247,27 @@ Approval merges only the reviewed changed fields, preserves unsubmitted canonica
 and provenance, and appends the normal immutable revision. If the active product changed
 while the report waited, approval stops as stale and the report must be compared again.
 
+## API Publication Concerns And Holds
+
+`POST /api/publication-concerns` is the shared intake for provider, brand, user,
+rights-holder, attribution, privacy, source-retirement, and other public-data concerns.
+It supplements rather than replaces product corrections: a changed label still enters
+the immutable product-update workflow, while a concern records why public output may
+need correction or temporary removal.
+
+Moderators, administrators, and developers with AAL2 can read unresolved concerns from
+`GET /api/moderation/publication-concerns`. They may link a concern to an ordinary
+product/image correction, correct reviewed source policy, place a reversible hold on
+the exact subject, dismiss it with evidence, or resolve it when corrective work is
+complete.
+
+A hold must include safe public wording and a private internal reason. Product holds
+block the existing publication-readiness gate, source/dataset holds block attributed
+fields, and image holds remove only the held asset from API output. Releasing a hold
+records who released it and why; neither action deletes canonical rows, observations,
+revisions, assets, or evidence. Use `npm run api:publication -- ...` when a rapid
+operator action is needed before a dedicated moderation surface is available.
+
 ## Repeated Catalog Rejections
 
 Every transition to the moderator-owned `rejected` submission status atomically

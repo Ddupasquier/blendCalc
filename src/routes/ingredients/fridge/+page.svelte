@@ -34,9 +34,12 @@
     import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredientProvenance";
     import { isModerationAppRole } from "$lib/utils/moderation/moderation";
     import {
-        buildIngredientRouteHref,
-        findIngredientRouteFood,
-        getBarcodeScannerCloseRoutePatch,
+	        buildIngredientRouteHref,
+	        findIngredientRouteFood,
+	        getActiveIngredientRouteHref,
+	        getActiveIngredientRouteState,
+	        getActiveIngredientRouteUrl,
+	        getBarcodeScannerCloseRoutePatch,
         getBarcodeScannerOpenRoutePatch,
         getIngredientListTab,
         getIngredientRouteState,
@@ -111,12 +114,19 @@
     const sourceFilter = "all";
     const trustFilter = "any";
     let listSort = $state<FoodListSort>("recent");
-    let activeList = $derived<IngredientListKey>(getIngredientListTab(page.url));
+	    const activeIngredientRouteHref = $derived(
+		getActiveIngredientRouteHref(page.url, page.state.ingredientRouteHref),
+	);
+	    const activeIngredientRouteUrl = $derived(
+		getActiveIngredientRouteUrl(page.url, page.state.ingredientRouteHref),
+	);
+	    let activeList = $derived<IngredientListKey>(
+		getIngredientListTab(activeIngredientRouteUrl),
+	);
     let previousActiveList = $state<IngredientListKey>(
 		getIngredientListTab(page.url),
 	);
-    let activeSheet = $state<"manual-entry" | "filters" | null>(null);
-    let searchViewOpen = $state(false);
+	    let searchViewOpen = $state(false);
     let compactTopHidden = $state(false);
     let searchAddFoodId = $state<number | null>(null);
     let onHandVisibleCount = $state<number>(LIST_PAGE_SIZES.ingredientPills);
@@ -148,11 +158,19 @@
 	let renamingItem = $state<{ key: IngredientListKey; food: FoodItem } | null>(null);
 	let renameBusy = $state(false);
 	let renameError = $state("");
-    let listActionError = $state("");
-    const ingredientRouteState = $derived(getIngredientRouteState(page.url));
+	    let listActionError = $state("");
+	    const ingredientRouteState = $derived(
+		getActiveIngredientRouteState(page.url, page.state.ingredientRouteHref),
+	);
+	    const activeSheet = $derived<"manual-entry" | "filters" | null>(
+		ingredientRouteState.sheet === INGREDIENT_ROUTE_SHEETS.manualEntry ||
+			ingredientRouteState.sheet === INGREDIENT_ROUTE_SHEETS.filters
+			? ingredientRouteState.sheet
+			: null,
+	);
     const documentTitle = $derived(
         getAppDocumentTitle(
-			page.url,
+			activeIngredientRouteUrl,
 			selectedFood ? getCanonicalFoodDescription(selectedFood) : undefined,
 		),
     );
@@ -161,12 +179,11 @@
         patch: IngredientRoutePatch,
         { replaceState = false }: IngredientRouteNavigationOptions = {},
     ) => {
-        const currentUrl = new URL(window.location.href);
-        const href = buildIngredientRouteHref(currentUrl, patch);
-        const currentHref = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
-        if (href === currentHref) return;
+	        const currentUrl = new URL(window.location.href);
+	        const href = buildIngredientRouteHref(currentUrl, patch);
+	        if (href === activeIngredientRouteHref) return;
 
-        const nextPageState = { ...page.state };
+	        const nextPageState = { ...page.state, ingredientRouteHref: href };
         if (replaceState) {
             replaceNavigationState(href, nextPageState);
             return;
@@ -385,32 +402,26 @@
 			customFoods,
         );
 
-    const closeIngredientSheet = () => {
-        barcodeScannerRouteOpen = false;
-        scanSignal = 0;
-        activeSheet = null;
-        void closeRoutedPopin();
-    };
+	    const closeIngredientSheet = () => {
+	        barcodeScannerRouteOpen = false;
+	        scanSignal = 0;
+	        void closeRoutedPopin();
+	    };
 
     const startBarcodeScan = () => {
-        const routePatch = getBarcodeScannerOpenRoutePatch(page.url);
-        searchViewOpen = routePatch.view === INGREDIENT_ROUTE_VIEWS.search;
-        activeSheet = "manual-entry";
-        barcodeScannerRouteOpen = true;
+	        const routePatch = getBarcodeScannerOpenRoutePatch(activeIngredientRouteUrl);
+	        searchViewOpen = routePatch.view === INGREDIENT_ROUTE_VIEWS.search;
+	        barcodeScannerRouteOpen = true;
         scanSignal += 1;
         void navigateIngredientRoute(routePatch);
     };
 
     const closeBarcodeScanner = () => {
-        const routePatch = getBarcodeScannerCloseRoutePatch(page.url);
-        barcodeScannerRouteOpen = false;
-        scanSignal = 0;
-        searchViewOpen = routePatch.view === INGREDIENT_ROUTE_VIEWS.search;
-        activeSheet =
-            routePatch.sheet === INGREDIENT_ROUTE_SHEETS.manualEntry
-                ? INGREDIENT_ROUTE_SHEETS.manualEntry
-                : null;
-        void navigateIngredientRoute(routePatch);
+	        const routePatch = getBarcodeScannerCloseRoutePatch(activeIngredientRouteUrl);
+	        barcodeScannerRouteOpen = false;
+	        scanSignal = 0;
+	        searchViewOpen = routePatch.view === INGREDIENT_ROUTE_VIEWS.search;
+	        void navigateIngredientRoute(routePatch);
     };
 
 	const openMoveConfirmation = () => {
@@ -439,11 +450,10 @@
 		});
 	};
 
-    const openManualEntry = () => {
-        barcodeScannerRouteOpen = false;
-        scanSignal = 0;
-        activeSheet = "manual-entry";
-        void navigateIngredientRoute({
+	    const openManualEntry = () => {
+	        barcodeScannerRouteOpen = false;
+	        scanSignal = 0;
+	        void navigateIngredientRoute({
             view: null,
             sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
             modal: null,
@@ -452,11 +462,10 @@
         });
     };
 
-    const toggleFilters = () => {
-        searchViewOpen = false;
-        const nextSheet = activeSheet === "filters" ? null : "filters";
-        activeSheet = nextSheet;
-        if (nextSheet) {
+	    const toggleFilters = () => {
+	        searchViewOpen = false;
+	        const nextSheet = activeSheet === "filters" ? null : "filters";
+	        if (nextSheet) {
             void navigateIngredientRoute({
                 view: null,
                 sheet: INGREDIENT_ROUTE_SHEETS.filters,
@@ -468,10 +477,9 @@
         void closeRoutedPopin();
     };
 
-    const openSearchView = () => {
-        activeSheet = null;
-        searchViewOpen = true;
-        void navigateIngredientRoute({
+	    const openSearchView = () => {
+	        searchViewOpen = true;
+	        void navigateIngredientRoute({
             view: INGREDIENT_ROUTE_VIEWS.search,
             sheet: null,
             foodId: null,
@@ -507,7 +515,6 @@
         food: FoodItem,
         context: ManualEntryCreateContext,
     ) => {
-        activeSheet = null;
         selectedFood = food;
         selectedFoodShowListActions = !context.addedToList;
         void navigateIngredientRoute({
@@ -515,14 +522,13 @@
             sheet: null,
             foodId: food.fdcId,
             listKey: null,
-            showListActions: !context.addedToList,
-        });
-    };
+	            showListActions: !context.addedToList,
+	        });
+	    };
 
-    const handleSearchSelect = (food: FoodItem) => {
-        searchViewOpen = false;
-        activeSheet = null;
-        selectedFood = food;
+	    const handleSearchSelect = (food: FoodItem) => {
+	        searchViewOpen = false;
+	        selectedFood = food;
         selectedFoodShowListActions = true;
         void navigateIngredientRoute({
             view: INGREDIENT_ROUTE_VIEWS.nutrition,
@@ -1089,10 +1095,9 @@
             listQuery === query &&
             listSort === nextSort;
 
-        listQuery = query;
-        listSort = nextSort;
-        activeSheet = null;
-        void closeRoutedPopin();
+	        listQuery = query;
+	        listSort = nextSort;
+	        void closeRoutedPopin();
 
         if (unchanged) return;
         void loadLists({ resetViewport: true });
@@ -1104,13 +1109,7 @@
 
         searchViewOpen = routeState.view === INGREDIENT_ROUTE_VIEWS.search;
 
-        activeSheet =
-            routeState.sheet === INGREDIENT_ROUTE_SHEETS.manualEntry ||
-            routeState.sheet === INGREDIENT_ROUTE_SHEETS.filters
-                ? routeState.sheet
-                : null;
-
-        if (routeState.modal === INGREDIENT_ROUTE_MODALS.barcodeScanner) {
+	        if (routeState.modal === INGREDIENT_ROUTE_MODALS.barcodeScanner) {
             if (!barcodeScannerRouteOpen) {
                 barcodeScannerRouteOpen = true;
                 scanSignal += 1;

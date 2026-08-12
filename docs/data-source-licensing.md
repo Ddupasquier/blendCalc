@@ -11,6 +11,9 @@ This is an engineering compliance record, not legal advice. A repository review 
 not replace professional legal review before a public API or commercial data product is
 launched. When source terms, integrations, storage, attribution, or API publication
 behavior change, update this document and the database policy in the same change.
+The cross-source terms packet and public-access approval procedure are maintained in
+[`public-api-release.md`](public-api-release.md); this ledger remains the authority for
+each individual source and asset licence.
 
 ## Ledger Navigation
 
@@ -36,11 +39,12 @@ blendCalc separates source evidence from canonical published data:
 4. `generic_food_datasets` records release-specific source URLs, hashes, licences,
    attribution, import approval, and activation.
 5. `food_image_assets` records per-image source, source reference, licence, licence URL,
-   attribution, approval, and public/private storage state.
+   attribution, retrieval date, approval, and public/private storage state.
 6. Raw provider cache rows and private moderation evidence are not public catalog rows.
 7. API v1 reads the blendCalc database only. It does not call external providers during
-   a public read, and product responses preserve represented sources in
-   `sourceAttributions`.
+   a public read. Product responses preserve represented provider policy dates and any
+   exact imported dataset release in `sourceAttributions`; image responses preserve
+   their independent source, licence, credit, and retrieval date.
 8. `blendcalc_api_v1_product_readiness` evaluates every active `shared_products` row.
    Product API reads include only rows whose populated fields, normalized nutrients, and
    normalized servings have complete, API-approved source evidence.
@@ -136,7 +140,8 @@ Official references:
 - API v1 excludes products or populated fields that depend on Open Food Facts database
   content because its source row is not approved for canonical/API redistribution.
 - Open Food Facts images remain a separate asset class. API v1 may return an image only
-  when the asset row contains its CC BY-SA licence, licence URL, and attribution; image
+  when the asset row contains its CC BY-SA licence, licence URL, attribution, and
+  retrieval date and the source registry supplies its public name and URL; image
   provenance does not make Open Food Facts a source of the product-data row.
 
 ### Known Policy Mismatch
@@ -410,11 +415,26 @@ Do not include a source in a public blendCalc API response unless:
 - required credits are returned in the API and available in the app's attribution view;
 - private users, evidence, storage paths, and rejected submissions are excluded;
 - corrections, removal requests, source retirement, and revision history have an
-  operational process; and
+  operational process through private `api_publication_concerns`, reversible
+  `api_publication_holds`, and immutable product revisions; and
 - the current implementation matches the written policy.
 
 If metadata or rights are uncertain, exclude the affected source or field from public
 output. Do not convert uncertainty into permission.
+
+### Correction And Withholding Operations
+
+Publication concerns resolve exactly one canonical product, image asset, imported
+dataset release, or provider identity before storage. The trusted server retains the
+reporter's contact details, evidence links, concern type, urgency, and target in private
+tables; browser roles cannot query or write those rows directly.
+
+Use the ordinary catalog-correction workflow when reviewed label data should replace
+specific canonical fields. Use a publication hold when a rights, attribution, privacy,
+accuracy, or source-retirement concern requires immediate public withholding while the
+evidence is reviewed. Holds are reversible and do not erase source or revision history.
+Use `npm run api:publication -- list` for the bounded operator queue and the documented
+`hold`, `release`, and `resolve` subcommands for emergency action.
 
 ## Authoritative Repository Locations
 

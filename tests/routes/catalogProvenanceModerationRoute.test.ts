@@ -1,14 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  getUserAppRole: vi.fn(),
+  requireModeratorApiAccess: vi.fn(),
   readCatalogProvenanceReviewRecord: vi.fn(),
 }));
 
-vi.mock("$lib/utils/moderation/moderation", () => ({
-  getUserAppRole: mocks.getUserAppRole,
-  isModerationAppRole: (role: string | null) =>
-    role === "moderator" || role === "admin" || role === "developer",
+vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
+  requireModeratorApiAccess: mocks.requireModeratorApiAccess,
 }));
 
 vi.mock("$lib/server/products/catalogProvenanceReview.server", () => ({
@@ -85,7 +83,10 @@ describe("catalog provenance moderation route", () => {
         },
       ],
     };
-    mocks.getUserAppRole.mockResolvedValue("moderator");
+    mocks.requireModeratorApiAccess.mockResolvedValue({
+      user: { id: "moderator-id" },
+      role: "moderator",
+    });
     mocks.readCatalogProvenanceReviewRecord.mockResolvedValue(record);
 
     const response = await GET(createEvent("moderator-id") as never);
@@ -96,11 +97,12 @@ describe("catalog provenance moderation route", () => {
   });
 
   it("blocks signed-out and ordinary users", async () => {
+    mocks.requireModeratorApiAccess.mockRejectedValueOnce({ status: 401 });
     await expect(GET(createEvent(null) as never)).rejects.toMatchObject({
       status: 401,
     });
 
-    mocks.getUserAppRole.mockResolvedValue(null);
+    mocks.requireModeratorApiAccess.mockRejectedValueOnce({ status: 403 });
     await expect(GET(createEvent("user-id") as never)).rejects.toMatchObject({
       status: 403,
     });
@@ -108,7 +110,10 @@ describe("catalog provenance moderation route", () => {
   });
 
   it("returns not found for an unknown catalog product", async () => {
-    mocks.getUserAppRole.mockResolvedValue("developer");
+    mocks.requireModeratorApiAccess.mockResolvedValue({
+      user: { id: "developer-id" },
+      role: "developer",
+    });
     mocks.readCatalogProvenanceReviewRecord.mockResolvedValue(null);
 
     await expect(

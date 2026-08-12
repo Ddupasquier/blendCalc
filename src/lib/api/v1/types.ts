@@ -1,3 +1,5 @@
+import type { ApiV1ErrorCode } from "$lib/api/v1/errors";
+
 export const BLENDCALC_API_V1 = "1.0" as const;
 
 export type ApiV1Source = {
@@ -21,10 +23,17 @@ export type ApiV1FieldSource = ApiV1Source & {
 export type ApiV1SourceAttribution = {
 	source: string;
 	displayName: string;
-	sourceUrl: string | null;
-	licenseName: string | null;
-	licenseUrl: string | null;
-	attribution: string | null;
+	sourceUrl: string;
+	licenseName: string;
+	licenseUrl: string;
+	attribution: string;
+	redistributionPolicyReviewedAt: string;
+	dataset: {
+		key: string;
+		name: string;
+		version: string;
+		importedAt: string;
+	} | null;
 };
 
 export type ApiV1Category = {
@@ -92,14 +101,17 @@ export type ApiV1Image = {
 	role: string;
 	url: string;
 	thumbnailUrl: string | null;
+	sourceName: string;
+	sourceUrl: string;
 	license: {
 		name: string;
-		url: string | null;
-		attribution: string | null;
+		url: string;
+		attribution: string;
 	};
 	placement: ApiV1ImagePlacement;
 	source: ApiV1Source;
 	approvedAt: string | null;
+	retrievedAt: string;
 };
 
 export type ApiV1Warning = {
@@ -142,15 +154,18 @@ export type ApiV1ProductRevision = {
 	lastVerifiedAt: string | null;
 };
 
-export type ApiV1Json =
-	string | number | boolean | null | { [key: string]: ApiV1Json } | ApiV1Json[];
+export type ApiV1ProductRevisionValue =
+	| string
+	| number
+	| null
+	| { value: number; unit: string };
 
 export type ApiV1ProductRevisionChange = {
 	field: string;
 	label: string;
 	changeType: "added" | "removed" | "changed";
-	previousValue: ApiV1Json;
-	newValue: ApiV1Json;
+	previousValue: ApiV1ProductRevisionValue;
+	newValue: ApiV1ProductRevisionValue;
 	severity: "low" | "medium" | "high";
 };
 
@@ -239,7 +254,19 @@ export type ApiV1Product = {
 		qualityWarningTags: string[];
 		obsolete: boolean | null;
 		obsoleteSince: string | null;
-		tagSources: Record<string, string[]>;
+		tagSources: Partial<Record<
+			| "additives"
+			| "allergens"
+			| "categories"
+			| "countries"
+			| "ingredients"
+			| "labels"
+			| "languages"
+			| "nutrients"
+			| "packaging"
+			| "traces",
+			string[]
+		>>;
 	} | null;
 	nutrients: ApiV1Nutrient[];
 	servings: ApiV1Serving[];
@@ -295,7 +322,7 @@ export type ApiV1Success<Data> = {
 export type ApiV1Error = {
 	apiVersion: typeof BLENDCALC_API_V1;
 	error: {
-		code: string;
+		code: ApiV1ErrorCode;
 		message: string;
 	};
 };

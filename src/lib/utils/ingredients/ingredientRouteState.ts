@@ -101,6 +101,22 @@ export const getIngredientListTab = (url: URL): IngredientListKey => {
 	return getIngredientPathContext(url.pathname).listKey;
 };
 
+export const getActiveIngredientRouteHref = (
+	url: URL,
+	shallowRouteHref?: string,
+) => shallowRouteHref ?? `${url.pathname}${url.search}${url.hash}`;
+
+export const getActiveIngredientRouteUrl = (
+	url: URL,
+	shallowRouteHref?: string,
+) => new URL(getActiveIngredientRouteHref(url, shallowRouteHref), url);
+
+export const getActiveIngredientRouteState = (
+	url: URL,
+	shallowRouteHref?: string,
+) =>
+	getIngredientRouteState(getActiveIngredientRouteUrl(url, shallowRouteHref));
+
 export const buildIngredientListTabHref = (
 	url: URL,
 	key: IngredientListKey,
@@ -269,12 +285,12 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 
 export const getIngredientRouteState = (url: URL): IngredientRouteState => {
 	return getPathRouteState(url) ?? {
-		view: null,
-		sheet: null,
-		modal: null,
-		foodId: null,
-		listKey: null,
-		showListActions: true,
+			view: null,
+			sheet: null,
+			modal: null,
+			foodId: null,
+			listKey: null,
+			showListActions: true,
 	};
 };
 
@@ -308,13 +324,13 @@ export const buildIngredientRouteHref = (
 	if (nextView) {
 		nextUrl.pathname =
 			nextView === INGREDIENT_ROUTE_VIEWS.nutrition &&
-				nextSheet === INGREDIENT_ROUTE_SHEETS.catalogCorrection
+			nextSheet === INGREDIENT_ROUTE_SHEETS.catalogCorrection
 				? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}/${INGREDIENT_ROUTE_SHEETS.catalogCorrection}`
 				: nextView === INGREDIENT_ROUTE_VIEWS.search
 					? nextModal === INGREDIENT_ROUTE_MODALS.barcodeScanner
 						? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}/${INGREDIENT_ROUTE_MODALS.barcodeScanner}`
 						: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}`
-				: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}`;
+					: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}`;
 		if (nextView === INGREDIENT_ROUTE_VIEWS.nutrition) {
 			if (!nextShowListActions) params.set(ACTIONS_PARAM, "hide");
 		}
@@ -430,10 +446,10 @@ export const findIngredientRouteFood = (
 ) => {
 	if (foodId === null) return null;
 	const lists = listKey === MIX_STORAGE_KEYS.fridge
-		? [fridgeItems, customItems]
-		: listKey === MIX_STORAGE_KEYS.shoppingList
-			? [shoppingListItems, customItems]
-			: [fridgeItems, shoppingListItems, customItems];
+			? [fridgeItems, customItems]
+			: listKey === MIX_STORAGE_KEYS.shoppingList
+				? [shoppingListItems, customItems]
+				: [fridgeItems, shoppingListItems, customItems];
 
 	for (const list of lists) {
 		const food = list.find((item) => item.fdcId === foodId);

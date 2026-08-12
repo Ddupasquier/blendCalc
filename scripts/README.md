@@ -23,6 +23,7 @@ automatically part of the public developer command surface.
 - `generators/api/`: documentation-only external API structure generation.
 - `imports/nutrition/`: licensed national nutrition dataset ingestion.
 - `operations/auth/`: authentication environment checks.
+- `operations/api/`: public API correction review and reversible publication controls.
 - `operations/database/`: local test database management and linked migration delivery.
 - `operations/recovery/`: protected hosted backups and offline backup verification.
 - `operations/releases/`: application/API version consistency and release bumps.
@@ -104,6 +105,16 @@ node scripts/operations/recovery/verify_protected_hosted_backup.mjs \
 The complete policy, recovery drill, retention guidance, and incident procedures live
 in `docs/hosted-security.md`. These direct commands intentionally do not add one-off npm
 aliases.
+
+## API Publication Corrections
+
+Use `npm run api:publication -- list` to read the bounded private concern queue and
+active holds. `hold` immediately withholds one exact product, image, dataset release,
+or source; `release` restores eligibility after review; `resolve` records the concern
+outcome. Each write requires `--actor-email` for an account with a current moderator,
+admin, or developer database role. The command never deletes canonical products,
+revisions, images, observations, or concern evidence. Exact examples are maintained in
+the script header at `scripts/operations/api/manage_api_publication.mjs`.
 
 ## Catalog API Audit
 

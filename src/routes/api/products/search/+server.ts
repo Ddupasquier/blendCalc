@@ -5,6 +5,7 @@ import {
 } from "$lib/server/errors/appError.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { annotateFoodsForUser } from "$lib/server/food-safety/userFoodSafety.server";
 
 export const GET: RequestHandler = async ({ locals, url }) => {
@@ -16,7 +17,10 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
 	const query = url.searchParams.get("q")?.trim() ?? "";
 	if (query.length < 2) return json({ foods: [] });
-	const foods = await searchApprovedSharedProducts(locals.supabase, query);
+	const foods = await searchApprovedSharedProducts(
+		getSupabaseAdminClient(),
+		query,
+	);
 	return json({
 		foods: await annotateFoodsForUser(
 			locals.supabase,

@@ -138,6 +138,13 @@ confirming the requested recovery point and expected downtime.
 | After role or Auth changes | Review elevated assignments, callback URLs, MFA capability, and Auth audit events |
 | After an incident | Preserve relevant hosted logs, rotate affected credentials, run the audit, and record the recovery result |
 
+GitHub's required `Hosted Auth Health` check is deliberately narrower than the operator
+audit: it proves that the canonical site and public Auth endpoint are reachable using
+only public client configuration. It never receives a Supabase management token,
+database password, or service-role key. Backup recency, network restrictions, protected
+Auth settings, and unresolved provider controls remain part of the operator audit and
+release runbook rather than untrusted pull-request execution.
+
 Delete superseded protected backups according to the approved retention period only
 after a newer backup has passed checksum verification. Do not leave incomplete backup
 directories in the protected backup root.

@@ -21,7 +21,7 @@ const executableDomainsByOperation = {
 	backfills: ["catalog", "images"],
 	generators: ["api"],
 	imports: ["nutrition"],
-	operations: ["auth", "database", "recovery", "releases", "users"],
+	operations: ["api", "auth", "database", "recovery", "releases", "users"],
 	qa: ["catalog", "database"],
 	seeds: ["catalog", "food-safety", "nutrition"],
 };

@@ -94,6 +94,14 @@ type FoodImageRow = Pick<
 	| "fetched_at"
 >;
 
+export type CatalogImageAssociationScope =
+	| "canonical-product-only"
+	| "canonical-and-barcode-fallback";
+
+type CatalogReadOptions = {
+	imageAssociationScope?: CatalogImageAssociationScope;
+};
+
 type PrecautionaryStatementRow = Pick<
 	Database["public"]["Tables"]["product_precautionary_statements"]["Row"],
 	| "shared_product_id"
@@ -169,21 +177,26 @@ const toFoodImageAsset = (row: FoodImageRow): FoodImageAsset => ({
 const readActiveFoodImages = async (
 	supabase: SupabaseClient<Database>,
 	rows: CatalogProductRow[],
+	options: CatalogReadOptions = {},
 ) => {
 	if (rows.length === 0) return new Map<string, FoodImageAsset[]>();
 	const ids = rows.map((row) => row.id);
 	const barcodes = rows.map((row) => row.barcode);
+	const includeBarcodeFallbacks =
+		options.imageAssociationScope !== "canonical-product-only";
 	const [byProductResponse, byBarcodeResponse] = await Promise.all([
 		supabase
 			.from("food_image_assets")
 			.select(FOOD_IMAGE_COLUMNS)
 			.eq("status", "active")
 			.in("shared_product_id", ids),
-		supabase
-			.from("food_image_assets")
-			.select(FOOD_IMAGE_COLUMNS)
-			.eq("status", "active")
-			.in("barcode", barcodes),
+		!includeBarcodeFallbacks
+			? Promise.resolve({ data: [], error: null })
+			: supabase
+					.from("food_image_assets")
+					.select(FOOD_IMAGE_COLUMNS)
+					.eq("status", "active")
+					.in("barcode", barcodes),
 	]);
 	if (byProductResponse.error) throw byProductResponse.error;
 	if (byBarcodeResponse.error) throw byBarcodeResponse.error;
@@ -195,9 +208,45 @@ const readActiveFoodImages = async (
 	] as FoodImageRow[]) {
 		imageRows.set(row.id, row);
 	}
+	if (options.imageAssociationScope === "canonical-product-only" && imageRows.size > 0) {
+		const { data: activeHolds, error: holdError } = await supabase
+			.from("api_publication_holds")
+			.select("food_image_asset_id")
+			.is("released_at", null)
+			.in("food_image_asset_id", [...imageRows.keys()]);
+		if (holdError) throw holdError;
+		removeHeldImagesFromPublicCatalog(
+			imageRows,
+			(activeHolds ?? []).map((hold) => hold.food_image_asset_id),
+		);
+	}
+	return associateCatalogImagesWithProducts(
+		rows,
+		[...imageRows.values()],
+		options.imageAssociationScope,
+	);
+};
+
+export const removeHeldImagesFromPublicCatalog = (
+	imageRows: Map<string, FoodImageRow>,
+	heldImageIds: Array<string | null>,
+) => {
+	for (const heldImageId of heldImageIds) {
+		if (heldImageId) imageRows.delete(heldImageId);
+	}
+};
+
+export const associateCatalogImagesWithProducts = (
+	products: CatalogProductRow[],
+	images: FoodImageRow[],
+	imageAssociationScope: CatalogImageAssociationScope =
+		"canonical-and-barcode-fallback",
+) => {
+	const includeBarcodeFallbacks =
+		imageAssociationScope !== "canonical-product-only";
 	const imageRowsByProductId = new Map<string, FoodImageRow[]>();
 	const imageRowsByBarcode = new Map<string, FoodImageRow[]>();
-	for (const image of imageRows.values()) {
+	for (const image of images) {
 		if (image.shared_product_id) {
 			const productImages =
 				imageRowsByProductId.get(image.shared_product_id) ?? [];
@@ -212,11 +261,13 @@ const readActiveFoodImages = async (
 	}
 
 	const imagesByProduct = new Map<string, FoodImageAsset[]>();
-	for (const product of rows) {
+	for (const product of products) {
 		const matchingRows = new Map(
 			[
 				...(imageRowsByProductId.get(product.id) ?? []),
-				...(imageRowsByBarcode.get(product.barcode) ?? []),
+				...(includeBarcodeFallbacks
+					? imageRowsByBarcode.get(product.barcode) ?? []
+					: []),
 			].map((image) => [image.id, image]),
 		);
 		const images = [...matchingRows.values()]
@@ -268,6 +319,7 @@ const readPrecautionaryStatements = async (
 const hydrateCatalogRows = async (
 	supabase: SupabaseClient<Database>,
 	rows: CatalogProductRow[],
+	options: CatalogReadOptions = {},
 ): Promise<ApprovedCatalogRecord[]> => {
 	if (rows.length === 0) return [];
 	const ids = rows.map((row) => row.id);
@@ -285,7 +337,7 @@ const hydrateCatalogRows = async (
 			supabase,
 			rows.map((row) => row.category_option_id),
 		),
-		readActiveFoodImages(supabase, rows),
+		readActiveFoodImages(supabase, rows, options),
 		readSelectedCatalogFieldProvenance(supabase, ids),
 		readPrecautionaryStatements(supabase, ids),
 	]);
@@ -352,6 +404,7 @@ const hydrateCatalogRows = async (
 export const getApprovedCatalogRecordByBarcode = async (
 	supabase: SupabaseClient<Database>,
 	barcodeValue: string,
+	options: CatalogReadOptions = {},
 ) => {
 	const barcode = normalizeBarcode(barcodeValue);
 	if (!barcode) return null;
@@ -361,7 +414,7 @@ export const getApprovedCatalogRecordByBarcode = async (
 	if (error) throw error;
 	const row = data?.[0] as CatalogProductRow | undefined;
 	if (!row) return null;
-	return (await hydrateCatalogRows(supabase, [row]))[0] ?? null;
+	return (await hydrateCatalogRows(supabase, [row], options))[0] ?? null;
 };
 
 export const getApprovedCatalogRecordByApplicationFoodId = async (
@@ -384,7 +437,11 @@ export const getApprovedCatalogRecordByApplicationFoodId = async (
 export const searchApprovedCatalogRecordsPage = async (
 	supabase: SupabaseClient<Database>,
 	query: string,
-	options: { limit: number; offset: number },
+	options: {
+		limit: number;
+		offset: number;
+		imageAssociationScope?: CatalogImageAssociationScope;
+	},
 ): Promise<ApprovedCatalogPage> => {
 	const terms = tokenizeIngredientSearchText(query).slice(0, 6);
 	if (terms.length === 0) return { records: [], total: 0 };
@@ -397,7 +454,7 @@ export const searchApprovedCatalogRecordsPage = async (
 	if (error) throw error;
 	const rows = (data ?? []) as CatalogProductRow[];
 	return {
-		records: await hydrateCatalogRows(supabase, rows),
+		records: await hydrateCatalogRows(supabase, rows, options),
 		total: Number(rows[0]?.total_count ?? 0),
 	};
 };

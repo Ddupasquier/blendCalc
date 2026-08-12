@@ -32,6 +32,8 @@ const openApi = JSON.parse(
 	info: {
 		version: string;
 		"x-blendcalc-status"?: string;
+		"x-blendcalc-access"?: string;
+		"x-blendcalc-public-release"?: string;
 	};
 	paths: Record<string, unknown>;
 };
@@ -87,6 +89,10 @@ describe("blendCalc versioning", () => {
 		expect(BLENDCALC_API_V1).not.toBe(APP_VERSION);
 		expect(openApi.info.version.startsWith(`${BLENDCALC_API_V1}.`)).toBe(true);
 		expect(openApi.info["x-blendcalc-status"]).toBe("internal");
+		expect(openApi.info["x-blendcalc-access"]).toBe("internal-authenticated");
+		expect(openApi.info["x-blendcalc-public-release"]).toBe(
+			"blocked-pending-professional-terms-review",
+		);
 		expect(
 			Object.keys(openApi.paths).every((path) =>
 				path.startsWith("/api/v1/"),

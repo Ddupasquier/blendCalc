@@ -77,6 +77,7 @@
 		"catalog:qa-image-clean": "BLENDCALC_DATABASE_ENVIRONMENT=test node scripts/qa/catalog/seed_image_moderation_submission.mjs cleanup",
 		"qa:deterministic": "node scripts/qa/database/run_deterministic_qa.mjs",
 		"moderate": "node scripts/operations/users/moderate_user.mjs",
+		"api:publication": "node scripts/operations/api/manage_api_publication.mjs",
 		"seed:manual-entry-nutrients": "node scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs",
 		"seed:product-reference-data": "node scripts/seeds/catalog/seed_product_reference_data.mjs"
 	},
@@ -90,6 +91,8 @@
 		"@testing-library/svelte": "^5.4.2",
 		"@types/node": "^24.13.3",
 		"@types/ws": "^8.18.1",
+		"ajv": "^8.20.0",
+		"ajv-formats": "^3.0.1",
 		"csv-parse": "^7.0.1",
 		"jsdom": "^30.0.0",
 		"read-excel-file": "^9.3.5",

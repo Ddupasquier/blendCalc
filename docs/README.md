@@ -26,6 +26,7 @@ organization and script-specific execution guidance.
 | [`api-structures/source-data-inventory.md`](api-structures/source-data-inventory.md) | Active provider capabilities, preserved fields, and intake-module boundaries | Legal interpretation |
 | [`api-structures/catalog-field-lineage.md`](api-structures/catalog-field-lineage.md) | API v1 field population, publication readiness, and public lineage | General catalog moderation workflow |
 | [`api-structures/README.md`](api-structures/README.md) | API v1 endpoint overview, contract status, and generated provider-reference instructions | Field-level lineage details |
+| [`public-api-release.md`](public-api-release.md) | Public API terms-review packet, required decisions, approval evidence, and release procedure | Final approved legal terms or privileged legal advice |
 | [`versioning.md`](versioning.md) | App, API, build, schema, product, placement, and transient-state version streams | Deployment setup |
 | [`authentication.md`](authentication.md) | Auth origins, callbacks, account-security configuration, and auth verification | General RLS/schema reference |
 | [`hosted-security.md`](hosted-security.md) | Production network restrictions, hosted Auth baseline, backups, recovery drills, and incident procedures | Application Auth screen behavior or table-level policies |

@@ -293,6 +293,14 @@ as the date the manufacturer changed the product unless a separate source provid
 date. Revision history is retained for the future public API, while private evidence
 paths remain moderator-only.
 
+Public API removal is separate from canonical deletion. A credible rights,
+attribution, privacy, accuracy, or source-retirement concern can place a reversible
+publication hold on one product, image, dataset release, or provider. The affected
+public output fails closed immediately while the shared product, accepted revisions,
+observations, and private evidence remain available for review. Product data changes
+still require the normal immutable correction/revision workflow; releasing a hold never
+silently changes canonical fields.
+
 ### Catalog Date And Evidence Semantics
 
 Run `node scripts/audits/catalog/audit_catalog_transparency.mjs` to measure current

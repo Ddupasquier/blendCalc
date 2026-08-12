@@ -7,19 +7,25 @@ That table is the canonical blendCalc catalog authority. External APIs and impor
 datasets supply evidence for individual fields; no provider becomes the winner for an
 entire product.
 
-The read path is:
+The server-only read path is:
 
-1. `get_blendcalc_product_v1` or `search_blendcalc_products_v1` selects an active
-   `shared_products` row that passes the publication-readiness gate.
+1. A trusted server service-role client calls `get_blendcalc_product_v1` or
+   `search_blendcalc_products_v1` to select an active `shared_products` row that passes
+   the publication-readiness gate. Browser roles cannot execute these raw RPCs.
 2. `catalogRead.server.ts` adds its latest revision, enabled canonical
    category, selected field provenance, normalized nutrients, normalized servings, and
-   active image assets.
-3. `catalogApi.server.ts` serializes only the versioned API contract.
+   explicitly linked active image assets. Same-barcode image fallback remains available
+   to the private app read model but is disabled for API v1.
+3. `catalogApi.server.ts` rebuilds and sanitizes only the versioned API contract. It
+   allowlists revision fields and value shapes, source tag keys, source references, and
+   category columns rather than spreading raw database or JSON objects.
 4. The response identifies `blendcalc-shared-catalog` as its authority and lists the
    underlying accepted data sources separately in `sourceAttributions`.
 
 Private custom foods, user-list rows, submissions, rejected evidence, moderator
-identities, and private Storage paths never enter this read path.
+identities, private evidence and Storage paths, secrets, and package-instance data never
+enter this read path. Pending, incomplete, and otherwise publication-ineligible catalog
+records are withheld without deleting their evidence.
 
 ## Field Resolution
 
@@ -53,8 +59,9 @@ packaged-product profile requires:
   at least one immutable revision;
 - product name, brand, enabled canonical category, ingredient statement, market, and
   source metadata, each with selected field evidence;
-- only database-approved sources with reviewed storage, licence, terms, and attribution
-  metadata;
+- only database-approved sources with reviewed storage, source name and URL, licence
+  name and URL, attribution credit, and policy-review date; dataset-backed fields must
+  also identify one active imported release with complete release attribution;
 - every required nutrient from the linked completeness profile, with a nonnegative
   `reported`, `reported-zero`, or exactly explained `derived` value, approved canonical
   mapping, selected nutrient provenance, source reference, and confidence;
@@ -73,8 +80,8 @@ ingredient/allergen, provenance, source-agreement, recency, and redistribution
 dimensions for audit and moderation.
 
 Images are evaluated independently. An otherwise publishable product remains available
-when it has no image, but an image is omitted unless its asset row contains a licence
-name, licence URL, and attribution text.
+when it has no image, but an image is omitted unless its asset row contains a source
+identity and URL, licence name and URL, attribution text, and retrieval date.
 
 This gate records and enforces the repository's reviewed publication policy. It is an
 engineering safeguard, not a substitute for professional legal review before a public
@@ -102,12 +109,12 @@ API launch.
 | `sourceRecord` | `shared_products.food.sourceMetadata` | Preserves accepted provider record language(s), market countries, created/published/available/modified/updated/discontinued timestamps, schema/revision, quality tags, completeness, obsolescence, and per-field tag-source metadata. |
 | `nutrients[]` | `food_nutrients` + `nutrient_definitions` | Normalized per-100g values, canonical names/numbers/units, source reference, confidence, and safe quality metadata: source value status, source-reported standard error, source nutrient key/code, mapping status/method, and derivation method. Missing is `null`/absent, never invented zero; internal mapping review references are excluded. |
 | `servings[]` | `food_servings` | Normalized label, gram weight, quantity, unit, primary state, measure type, household flag, source measure key, serving origin, gram-weight method, measured calculation basis, source reference, and confidence. No serving produces an empty array and an honest 100g basis. |
-| `images[]` | active `food_image_assets` | Public URL, thumbnail, role, placement, source, approval time, and asset-level licence/attribution. Private paths and reviewer IDs are excluded. |
+| `images[]` | explicitly linked active `food_image_assets` + `product_data_sources` | Public URL, thumbnail, role, placement, source name and URL, approval time, retrieval date, and asset-level licence/attribution. Private paths and reviewer IDs are excluded; an unrelated same-barcode image is never attached as an API fallback. |
 | `warnings[]` | `shared_products.compatibility_summary` | DB-derived compatibility facts with stable code, friendly label, category, fact type, evidence source type, confidence, and source text. |
 | `compatibilityEvaluation` | API serializer + canonical food evidence | Shared four-state compatibility contract and evidence coverage. Public API reads have no user profile, so they remain `not_checked`; authenticated app reads apply the same contract with the user's current policy and preferences. |
-| `sourceAttributions[]` | `product_data_sources` | Deduplicated underlying sources actually represented by accepted fields, nutrients, or servings. Image credits stay on each image rather than changing product-data licensing. |
+| `sourceAttributions[]` | `product_data_sources` + `generic_food_datasets` | Deduplicated underlying sources actually represented by accepted fields, nutrients, or servings, including source name/URL, licence name/URL, credit, and policy-review date. Dataset-backed records additionally expose the exact imported release name, version, source URL, credit, and import date. Missing attribution withholds the product rather than inventing a fallback. Image credits stay on each image rather than changing product-data licensing. |
 | `catalog` | API serializer + canonical row | Identifies `blendcalc-shared-catalog` as authority and reports active status, canonical verification state, reviewed redistribution policy, and represented source count. |
-| `fieldSources` | selected `shared_product_field_provenance` → `shared_product_observations` | Field-by-field selected observation ID, neutral source/reference, confidence, observation date, bounded evidence method, and review state for identity, category, ingredients, allergens, labels, package, and source metadata. Missing lineage remains `null`; raw payloads, submissions, users, and evidence paths are excluded. |
+| `fieldSources` | selected `shared_product_field_provenance` → `shared_product_observations` | Field-by-field selected observation ID, neutral source/reference, confidence, observation date, bounded evidence method, and review state for identity, category, ingredients, allergens, labels, package, and source metadata. Missing lineage remains `null`; raw payloads, submissions, users, evidence paths, URLs, path-like references, and shared-catalog submission references are excluded. |
 | `revision` | latest `shared_product_revisions` + `shared_products` timestamps | Current revision ID/number, current-since time, observed label date, canonical update time, and verification time. |
 | `links.self` | API serializer | Stable API v1 product URL using the canonical GTIN-14. |
 
@@ -140,6 +147,18 @@ An unrecognized verification method remains `null`.
 | `name` | `custom_food_category_options.label` |
 | `slug` | `custom_food_category_options.normalized_value` |
 | `updatedAt` | `custom_food_category_options.updated_at` |
+
+Additional database columns cannot enter the category response because the server query
+selects and remaps only these four fields and OpenAPI rejects undeclared properties.
+
+## Revision History Boundary
+
+`get_blendcalc_product_revision_history_v1` is also server-service-role-only. The HTTP
+serializer publishes immutable revision metadata plus only approved identity, serving,
+ingredient, allergen, trace, and canonical nutrient changes. Stored moderator labels are
+replaced with API-owned labels, unknown field paths are dropped, and nested objects are
+reduced to bounded nutrient value/unit pairs. Revision snapshots, submission links,
+reviewer identities, private evidence, and arbitrary stored JSON never cross the API.
 
 ## What blendCalc Adds
 

@@ -41,12 +41,12 @@ select ok(
 	'duplicate field changes are rejected'
 );
 select ok(
-	has_function_privilege(
-		'authenticated',
-		'public.get_blendcalc_product_revision_history_v1(text,integer,integer)',
-		'EXECUTE'
-	),
-	'authenticated API consumers can use the safe history read'
+		not has_function_privilege(
+			'authenticated',
+			'public.get_blendcalc_product_revision_history_v1(text,integer,integer)',
+			'EXECUTE'
+		),
+	'authenticated clients cannot bypass the API revision sanitizer'
 );
 select ok(
 	not has_function_privilege(

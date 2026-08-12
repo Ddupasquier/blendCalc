@@ -31,6 +31,8 @@ export const APP_ISSUE_CODES = [
 	"CATALOG_REVIEW_FLAGS_INVALID",
 	"CATALOG_SUBMISSION_BLOCKED",
 	"CATALOG_SUBMISSION_FAILED",
+	"PUBLICATION_CONCERN_INVALID",
+	"PUBLICATION_CONCERN_FAILED",
 	"TUTORIAL_CHOICE_INVALID",
 	"TUTORIAL_SAVE_FAILED",
 	"NUTRIENT_CHILD_EXCEEDS_PARENT",
@@ -257,6 +259,16 @@ export const APP_ISSUE_DEFINITIONS: Record<AppIssueCode, AppIssueDefinition> = {
 		kind: "error",
 		title: "Product wasn’t shared",
 		message: "Your ingredient is still saved to your profile. You can try sharing it again later.",
+	},
+	PUBLICATION_CONCERN_INVALID: {
+		kind: "error",
+		title: "Check the report",
+		message: "Choose the affected item and tell us what needs attention.",
+	},
+	PUBLICATION_CONCERN_FAILED: {
+		kind: "error",
+		title: "Report wasn’t sent",
+		message: "We couldn’t save this report. Please try again shortly.",
 	},
 	TUTORIAL_CHOICE_INVALID: {
 		kind: "error",
