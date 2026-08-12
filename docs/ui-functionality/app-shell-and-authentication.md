@@ -23,7 +23,23 @@ welcome, and guided tutorial. Auth configuration and security details remain in
   accounts through the required update flow.
 - Disable duplicate submissions while a request is pending.
 - Translate failures into clear, nontechnical guidance.
+- Render the explicit Cloudflare Turnstile challenge only when its public site key is
+  configured, and submit its one-time token with supported Supabase email Auth calls.
 - Keep authenticated routes unavailable to signed-out visitors.
+
+## Privileged Identity Verification
+
+- Require moderator, administrator, and developer sessions to reach AAL2 before any
+  protected page, server action, JSON endpoint, review count, or database permission is
+  available.
+- Send an elevated user without a verified TOTP factor to authenticator enrollment;
+  send an enrolled AAL1 user to the six-digit challenge.
+- Return the user to the originally requested internal route after successful
+  verification. Never accept an external return URL.
+- Keep setup QR codes, setup secrets, and verification responses private and
+  non-cacheable. Do not log them.
+- Explain lost-factor recovery honestly: a password reset does not remove MFA, and an
+  administrator must verify identity before removing an inaccessible factor.
 
 ## Authenticated Shell
 

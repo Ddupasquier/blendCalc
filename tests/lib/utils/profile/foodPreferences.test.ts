@@ -2,16 +2,21 @@ import { describe, expect, it } from "vitest";
 import {
 	getFoodPreferencesValidationError,
 	getServingSizeGrams,
-	parsePreferenceList,
+	parseRepeatedFoodPreferenceValues,
 	parsePrioritizedNutrientIds,
 } from "$lib/utils/profile/foodPreferences";
 
 describe("food preference helpers", () => {
-	it("normalizes comma-separated preference lists", () => {
-		expect(parsePreferenceList(" dairy, peanut, Dairy,  shellfish ")).toEqual([
+	it("normalizes repeated preference values without splitting exact wording", () => {
+		expect(parseRepeatedFoodPreferenceValues([
+			" dairy ",
+			"peanut",
+			"Dairy",
+			"shellfish, molluscs",
+		])).toEqual([
 			"dairy",
 			"peanut",
-			"shellfish",
+			"shellfish, molluscs",
 		]);
 	});
 
@@ -49,12 +54,32 @@ describe("food preference helpers", () => {
 				sensitiveAcknowledged: true,
 				regulatoryRegionCode: "ZZ",
 				regulatoryRegionSource: "account",
-			}, [{
-				regionCode: "US",
-				displayName: "United States",
-				authority: "FDA",
-			}]),
+			}, {
+				regulatoryRegionOptions: [{
+					regionCode: "US",
+					displayName: "United States",
+					authority: "FDA",
+				}],
+			}),
 		).toBe("Choose a supported label region and try again.");
+	});
+
+	it("rejects priority nutrients outside the database-provided choices", () => {
+		expect(
+			getFoodPreferencesValidationError({
+				unitSystem: null,
+				allergens: [],
+				dietaryRestrictions: [],
+				prioritizedNutrientIds: [999999],
+				defaultMixServingSize: "",
+				defaultMixServingUnit: "g",
+				sensitiveAcknowledged: true,
+				regulatoryRegionCode: "",
+				regulatoryRegionSource: null,
+			}, {
+				allowedPriorityNutrientIds: [1003, 1008],
+			}),
+		).toBe("Choose priority nutrients from the available list and try again.");
 	});
 
 	it("deduplicates nutrient priority ids", () => {

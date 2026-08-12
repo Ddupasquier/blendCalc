@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "$lib/types/database.types";
 import type { NutrientDefinitionReferenceRecord } from "$lib/utils/food/nutrients/nutrientDefinitionRecord";
+import { normalizeNutrientUnitName } from "$lib/utils/food/nutrients/nutrientUnitNames";
 import type { FoodNutrient } from "$lib/utils/food/types";
 
 export type ProductDataSource = {
@@ -50,14 +51,6 @@ export type ProductReferenceCatalog = {
 };
 
 const CANONICAL_NUTRIENT_NAMESPACE = "usda";
-
-const normalizeUnit = (value: string) =>
-	value
-		.trim()
-		.toUpperCase()
-		.replaceAll("Μ", "U")
-		.replaceAll("µ", "U")
-		.replace("MCG", "UG");
 
 const findCanonicalNutrientDefinition = (
 	equivalences: ProductNutrientEquivalence[],
@@ -122,7 +115,8 @@ export const canonicalizeProductNutrients = (
 
 		if (
 			equivalence &&
-			normalizeUnit(equivalence.unitName) !== normalizeUnit(nutrient.unitName)
+			normalizeNutrientUnitName(equivalence.unitName) !==
+				normalizeNutrientUnitName(nutrient.unitName)
 		) {
 			return [nutrient];
 		}

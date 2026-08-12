@@ -40,17 +40,22 @@ The linked production project was verified on **August 11, 2026**:
 - Email confirmation, 15-character passwords, breached-password screening, secure
   password changes, refresh-token rotation/reuse detection, hosted rate limits, and
   TOTP capability are enabled.
+- The application includes Turnstile token handling for email Auth plus TOTP
+  enrollment, challenge, safe lost-factor guidance, and AAL2 enforcement at every
+  current privileged application and database boundary.
 - Production, local development, isolated browser testing, and restricted Vercel
   preview Auth callbacks are allowed.
 
 The following launch gates remain intentionally blocked rather than partially enabled:
 
-- Cloudflare Turnstile needs a site key, secret key, browser token flow, and approved
-  Auth-screen presentation before hosted CAPTCHA can be enabled.
+- Cloudflare Turnstile still needs production site/secret keys and a deployed-origin
+  verification pass before hosted CAPTCHA can be enabled. The browser token flow and
+  Auth-screen presentation are implemented.
 - Custom SMTP needs verified provider credentials before confirmation and recovery
   email delivery can be treated as production-ready.
-- Elevated accounts need enrollment, challenge, and recovery screens before moderator,
-  administrator, and developer actions can require AAL2 without locking out operators.
+- Every elevated production account must complete TOTP enrollment and one protected
+  challenge before launch. Lost-factor removal remains a trusted, identity-verified
+  administrator recovery procedure rather than a password-only self-service action.
 - Hosted Auth log retention must be confirmed against the active Supabase plan.
 
 ## Read-Only Hosted Audit

@@ -15,6 +15,7 @@ describe("Profile moderator action sheet", () => {
 					pendingProfileImageReviews: 0,
 					totalPendingReviews: 4,
 					unavailable: false,
+					identityVerificationRequired: false,
 				},
 				onClose,
 				onNavigate,

@@ -121,6 +121,7 @@ const { data: mappingRows, error: mappingError } = await supabase
 	.select("source_nutrient_key, source_unit_name, nutrient_id")
 	.eq("source_key", SOURCE_KEY)
 	.eq("enabled", true)
+	.eq("review_status", "approved")
 	.order("priority", { ascending: true });
 if (mappingError) throw mappingError;
 const nutrientMappings = new Map(

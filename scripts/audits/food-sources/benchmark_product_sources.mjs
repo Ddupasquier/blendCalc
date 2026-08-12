@@ -298,11 +298,12 @@ productQuery = requestedBarcodes.length > 0
 const [productResult, { data: nutrientMappings, error: mappingError }] =
 	await Promise.all([
 		productQuery,
-		supabase
-			.from("nutrient_source_mappings")
-			.select("source_nutrient_key, nutrient_id")
-			.eq("source_key", "open-food-facts")
-			.eq("enabled", true),
+			supabase
+				.from("nutrient_source_mappings")
+				.select("source_nutrient_key, nutrient_id")
+				.eq("source_key", "open-food-facts")
+				.eq("enabled", true)
+				.eq("review_status", "approved"),
 	]);
 
 const { error: productError } = productResult;

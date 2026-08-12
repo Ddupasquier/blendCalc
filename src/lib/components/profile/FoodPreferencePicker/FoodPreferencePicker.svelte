@@ -1,33 +1,75 @@
 <script lang="ts">
-	import PillRow from "$lib/components/common/display/PillRow/PillRow.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
+	import PillRow from "$lib/components/common/display/PillRow/PillRow.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
-	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
+	import CheckboxGroup from "$lib/components/common/forms/CheckboxGroup/CheckboxGroup.svelte";
 	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
+	import { FOOD_PREFERENCE_MAX_LENGTH } from "$lib/utils/profile/foodPreferences";
 	import type { FoodPreferencePickerProps } from "./types";
 
 	let {
 		id,
-		availableOptions,
+		options,
 		disabled = false,
 		emptyLabel,
-		filteredOptions,
 		helper,
 		onAdd,
 		onRemove,
-		onSearchChange,
-		onSelectChange,
-		searchLabel,
-		searchValue,
+		customEntryLabel,
 		selectedValues,
-		selectLabel,
-		selectValue,
 		title,
 		unresolvedValues = [],
+		referenceDataUnavailable = false,
 	}: FoodPreferencePickerProps = $props();
 
-	const addSearchValue = () => {
-		onAdd(searchValue);
+	let customEntry = $state("");
+	const normalizeValue = (value: string) =>
+		value.toLocaleLowerCase().trim().replace(/\s+/g, " ");
+	const optionValueSet = $derived(
+		new Set(options.map((option) => option.normalizedValue)),
+	);
+	const selectedOptionValues = $derived(
+		selectedValues
+			.map(normalizeValue)
+			.filter((value) => optionValueSet.has(value)),
+	);
+	const customValues = $derived(
+		selectedValues.filter(
+			(value) => !optionValueSet.has(normalizeValue(value)),
+		),
+	);
+
+	const updateReviewedSelections = (
+		selectedNormalizedValues: (string | number)[],
+	) => {
+		const nextSelection = new Set(selectedNormalizedValues.map(String));
+		const previousSelection = new Set(selectedOptionValues);
+		const addedValue = [...nextSelection].find(
+			(value) => !previousSelection.has(value),
+		);
+		if (addedValue) {
+			const option = options.find(
+				(candidate) => candidate.normalizedValue === addedValue,
+			);
+			if (option) onAdd(option.label);
+			return;
+		}
+
+		const removedValue = [...previousSelection].find(
+			(value) => !nextSelection.has(value),
+		);
+		if (!removedValue) return;
+		const savedValue = selectedValues.find(
+			(value) => normalizeValue(value) === removedValue,
+		);
+		if (savedValue) onRemove(savedValue);
+	};
+
+	const addCustomEntry = () => {
+		const value = customEntry.trim().replace(/\s+/g, " ");
+		if (!value) return;
+		onAdd(value);
+		customEntry = "";
 	};
 </script>
 
@@ -39,82 +81,74 @@
 		</div>
 	</div>
 
-	<div class="preference-add-flow">
-		<p class="preference-add-flow__label">Add a saved option or type your own.</p>
-
-		<div class="preference-picker">
-			<div class="preference-picker__controls">
-				<SelectField
-					id={`${id}-saved-option`}
-					label={selectLabel}
-					value={selectValue}
-					disabled={disabled}
-					options={[
-						{ value: "", label: "Select an option" },
-						...availableOptions.map((option) => ({ value: option, label: option })),
-					]}
-					onValueChange={onSelectChange}
-				/>
-				<RoundedActionButton
-					type="button"
-					variant="neutral"
-					disabled={disabled || !selectValue}
-					onclick={() => onAdd(selectValue)}
-				>
-					Add
-				</RoundedActionButton>
-			</div>
-		</div>
-
-		<div class="preference-add-flow__divider" aria-hidden="true">
-			<span>or</span>
-		</div>
-
-		<div class="preference-search">
-			<div class="preference-search__controls">
-				<TextField
-					id={`${id}-custom-option`}
-					label={searchLabel}
-					type="search"
-					value={searchValue}
-					placeholder="Search catalog or add your own"
-					disabled={disabled}
-					oninput={(event) =>
-						onSearchChange((event.currentTarget as HTMLInputElement).value)}
-					onkeydown={(event) => {
-						if (event.key !== "Enter") return;
-						event.preventDefault();
-						addSearchValue();
-					}}
-				/>
-				<RoundedActionButton
-					type="button"
-					variant="neutral"
-					disabled={disabled || !searchValue.trim()}
-					onclick={addSearchValue}
-				>
-					Add
-				</RoundedActionButton>
-			</div>
-		</div>
-	</div>
-
-	{#if filteredOptions.length}
-		<PillRow
-			pills={filteredOptions}
-			onSelect={(index) => onAdd(filteredOptions[index])}
-			removable={false}
+	{#if referenceDataUnavailable}
+		<StatusMessage
+			tone="warning"
+			title="Reviewed choices are unavailable"
+			message="Your saved choices are still here, but this list could not load. Try again before changing it."
+		/>
+	{:else if options.length}
+		<fieldset class="preference-reviewed-options">
+			<legend>Reviewed choices</legend>
+			<CheckboxGroup
+				id={`${id}-reviewed-option`}
+				options={options.map((option) => ({
+					id: option.normalizedValue,
+					label: option.label,
+				}))}
+				selected={selectedOptionValues}
+				{disabled}
+				onChange={updateReviewedSelections}
+			/>
+		</fieldset>
+	{:else}
+		<StatusMessage
+			tone="info"
+			message="No reviewed choices are available yet. You can still add your own wording below."
 		/>
 	{/if}
 
-	{#if selectedValues.length}
-		<hr class="preference-divider" aria-hidden="true" />
-		<PillRow
-			pills={selectedValues}
-			onRemove={(index) => onRemove(selectedValues[index])}
-			preserveOrder
-		/>
-	{:else}
+	<div class="preference-custom-entry">
+		<div class="preference-custom-entry__controls">
+			<TextField
+				id={`${id}-custom-option`}
+				label={customEntryLabel}
+				value={customEntry}
+				placeholder="Type a specific preference"
+				maxlength={FOOD_PREFERENCE_MAX_LENGTH}
+				disabled={disabled || referenceDataUnavailable}
+				oninput={(event) =>
+					(customEntry = (event.currentTarget as HTMLInputElement).value)}
+				onkeydown={(event) => {
+					if (event.key !== "Enter") return;
+					event.preventDefault();
+					addCustomEntry();
+				}}
+			/>
+			<RoundedActionButton
+				type="button"
+				variant="neutral"
+				disabled={disabled || referenceDataUnavailable || !customEntry.trim()}
+				onclick={addCustomEntry}
+			>
+				Add
+			</RoundedActionButton>
+		</div>
+	</div>
+
+	{#if customValues.length}
+		<div class="preference-custom-values">
+			<strong>Your wording</strong>
+			<PillRow
+				pills={customValues}
+				onRemove={(index) => onRemove(customValues[index])}
+				disabledIndices={disabled || referenceDataUnavailable
+					? customValues.map((_, index) => index)
+					: []}
+				preserveOrder
+			/>
+		</div>
+	{:else if !selectedOptionValues.length}
 		<p class="preference-empty">{emptyLabel}</p>
 	{/if}
 

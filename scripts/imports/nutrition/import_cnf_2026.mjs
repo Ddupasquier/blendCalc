@@ -16,6 +16,7 @@ import WebSocket from "ws";
 import {
 	createTemporaryDownloadDirectory,
 	downloadTemporaryFile,
+	normalizeDatasetUnit,
 } from "../../lib/nutrition/nutrition_dataset_import.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
@@ -307,10 +308,17 @@ const nutrientMappingWriter = createBatchWriter(
 	"source_key,source_nutrient_key,source_unit_name",
 );
 const mappingObservedAt = new Date().toISOString();
+const compatibleCanonicalNutrientKeys = new Set();
 for (const row of nutrientNameRows) {
 	const sourceNutrientKey = String(row.Nutrient_Code);
 	const canonicalDefinition = canonicalNutrients.get(sourceNutrientKey);
 	if (!canonicalDefinition) continue;
+	const sourceUnitName = normalizeDatasetUnit(row.Nutrient_Unit);
+	const canonicalUnitName = normalizeDatasetUnit(
+		canonicalDefinition.default_unit_name,
+	);
+	const hasCompatibleUnit = sourceUnitName === canonicalUnitName;
+	if (hasCompatibleUnit) compatibleCanonicalNutrientKeys.add(sourceNutrientKey);
 	await nutrientMappingWriter.add({
 		source_key: SOURCE_KEY,
 		source_nutrient_key: sourceNutrientKey,
@@ -320,12 +328,18 @@ for (const row of nutrientNameRows) {
 		priority: 10,
 		mapping_method: "standards_dataset",
 		confidence: 1,
-		enabled: true,
+		enabled: hasCompatibleUnit,
+		review_status: hasCompatibleUnit ? "approved" : "pending_review",
+		review_reference: hasCompatibleUnit
+			? "CNF nutrient-code identity with exact normalized unit"
+			: null,
+		reviewed_at: hasCompatibleUnit ? mappingObservedAt : null,
 		observation_count: 0,
 		first_observed_at: mappingObservedAt,
 		last_observed_at: mappingObservedAt,
 		provenance: {
 			datasetKey: DATASET_KEY,
+			candidateUnitCompatibility: hasCompatibleUnit ? "exact" : "incompatible",
 			nutrientSymbol: textOrNull(row.Nutrient_Symbol),
 			tagname: textOrNull(row.Tagname),
 		},
@@ -416,7 +430,9 @@ for await (const row of csvRows(downloadedPaths.nutrientAmounts)) {
 		invalidNutrientCount += 1;
 		continue;
 	}
-	const nutrientId = canonicalNutrients.get(sourceNutrientKey)?.nutrient_id ?? null;
+	const nutrientId = compatibleCanonicalNutrientKeys.has(sourceNutrientKey)
+		? canonicalNutrients.get(sourceNutrientKey)?.nutrient_id ?? null
+		: null;
 	if (!nutrientId) unmappedNutrientKeys.add(sourceNutrientKey);
 	await nutrientWriter.add({
 		dataset_key: DATASET_KEY,

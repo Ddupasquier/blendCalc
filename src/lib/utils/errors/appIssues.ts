@@ -1,6 +1,7 @@
 export const APP_ISSUE_CODES = [
 	"AUTH_REQUIRED",
 	"ACCESS_DENIED",
+	"MFA_REQUIRED",
 	"INVALID_REQUEST",
 	"REQUEST_TOO_LARGE",
 	"RATE_LIMITED",
@@ -103,6 +104,11 @@ export const APP_ISSUE_DEFINITIONS: Record<AppIssueCode, AppIssueDefinition> = {
 		kind: "error",
 		title: "Access unavailable",
 		message: "Your account doesn’t have permission to do that.",
+	},
+	MFA_REQUIRED: {
+		kind: "error",
+		title: "One more security step",
+		message: "Verify your authenticator code before using this protected action.",
 	},
 	INVALID_REQUEST: {
 		kind: "error",

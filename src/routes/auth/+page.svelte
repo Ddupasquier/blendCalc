@@ -2,6 +2,7 @@
 	import { enhance } from "$app/forms";
 	import FloatingFruitBackground from "$lib/components/app/FloatingFruitBackground/FloatingFruitBackground.svelte";
 	import PasswordRequirements from "$lib/components/auth/PasswordRequirements/PasswordRequirements.svelte";
+	import TurnstileChallenge from "$lib/components/auth/TurnstileChallenge/TurnstileChallenge.svelte";
 	import LoadingSpinner from "$lib/components/common/feedback/LoadingSpinner/LoadingSpinner.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import { APP_NAME } from "$lib/config/brand";
@@ -21,9 +22,13 @@
 	let authMode = $state<AuthMode>("signIn");
 	let isSubmitting = $state(false);
 	let authCard = $state<HTMLDivElement>();
+	let captchaResetVersion = $state(0);
 
 	const preventDuplicateSubmit = createPendingSubmit(
 		(pending) => (isSubmitting = pending),
+		(result) => {
+			if (result.type !== "redirect") captchaResetVersion += 1;
+		},
 	);
 
 	const authErrorMessages: Record<string, string> = {
@@ -48,6 +53,7 @@
 		authMode = mode;
 		password = "";
 		passwordConfirmation = "";
+		captchaResetVersion += 1;
 	};
 
 </script>
@@ -154,6 +160,12 @@
 					{password}
 					{email}
 					confirmation={passwordConfirmation}
+				/>
+			{/if}
+			{#if data.turnstileSiteKey}
+				<TurnstileChallenge
+					siteKey={data.turnstileSiteKey}
+					resetVersion={captchaResetVersion}
 				/>
 			{/if}
 			<div class="email-form__actions">

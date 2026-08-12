@@ -78,6 +78,73 @@ test("profile selects support keyboard dismissal without changing the value", as
 	await expect(region).toContainText(originalLabel);
 });
 
+test("food preferences use database choices and preserve exact custom wording", async ({
+	page,
+}) => {
+	const customAllergen = "Molluscs, shellfish sensitivity";
+	await page.goto("/profile/food-preferences");
+	await waitForAppReady(page);
+
+	let foodPreferencesView = page.getByRole("dialog", {
+		name: "Food preferences",
+	});
+	const allergenSection = foodPreferencesView
+		.locator(".preference-editor-card")
+		.filter({ has: page.getByRole("heading", { name: "Allergens" }) });
+	const dietarySection = foodPreferencesView
+		.locator(".preference-editor-card")
+		.filter({ has: page.getByRole("heading", { name: "Dietary restrictions" }) });
+
+	for (const allergenName of ["Peanut", "Shellfish", "Sesame"]) {
+		await expect(
+			allergenSection.getByRole("checkbox", { name: allergenName }),
+		).toBeVisible();
+	}
+	for (const restrictionName of ["Vegan", "Gluten-free"]) {
+		await expect(
+			dietarySection.getByRole("checkbox", { name: restrictionName }),
+		).toBeVisible();
+	}
+
+	await allergenSection.getByRole("checkbox", { name: "Peanut" }).check();
+	await allergenSection.getByLabel("Add a specific allergen").fill(customAllergen);
+	await allergenSection.getByRole("button", { name: "Add", exact: true }).click();
+	await dietarySection.getByRole("checkbox", { name: "Vegan" }).check();
+	await foodPreferencesView
+		.getByRole("checkbox", { name: /I understand these optional preferences/ })
+		.check();
+	await foodPreferencesView
+		.getByRole("button", { name: "Save food preferences" })
+		.click();
+	await expect(page).toHaveURL(/\/profile$/);
+
+	await page.getByRole("button", { name: /Food preferences/ }).click();
+	await expect(page).toHaveURL(/\/profile\/food-preferences$/);
+	foodPreferencesView = page.getByRole("dialog", { name: "Food preferences" });
+	await foodPreferencesView
+		.locator("summary")
+		.filter({ hasText: "Saved preferences" })
+		.click();
+	await expect(foodPreferencesView.getByText(customAllergen, { exact: true }))
+		.toBeVisible();
+	await expect(
+		foodPreferencesView.getByRole("checkbox", { name: "Peanut" }),
+	).toBeChecked();
+	await expect(
+		foodPreferencesView.getByRole("checkbox", { name: "Vegan" }),
+	).toBeChecked();
+
+	await foodPreferencesView
+		.getByRole("button", { name: `Remove ${customAllergen}` })
+		.click();
+	await foodPreferencesView.getByRole("checkbox", { name: "Peanut" }).uncheck();
+	await foodPreferencesView.getByRole("checkbox", { name: "Vegan" }).uncheck();
+	await foodPreferencesView
+		.getByRole("button", { name: "Save food preferences" })
+		.click();
+	await expect(page).toHaveURL(/\/profile$/);
+});
+
 test("compact Profile header leaves and returns with main-page scroll direction", async ({
 	page,
 }, testInfo) => {

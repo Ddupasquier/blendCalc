@@ -1,7 +1,4 @@
-export type SavedFoodPreferenceSummaryItem = {
-	label: string;
-	value: string;
-};
+import type { SavedFoodPreferenceSummaryItem } from "$lib/utils/profile/foodPreferenceSummary";
 
 export type SavedFoodPreferenceSummaryProps = {
 	items: SavedFoodPreferenceSummaryItem[];

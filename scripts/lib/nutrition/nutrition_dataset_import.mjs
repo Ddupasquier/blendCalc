@@ -153,10 +153,30 @@ export const deleteGenericDatasetRows = async (supabase, datasetKey) => {
 	}
 };
 
+const NORMALIZED_DATASET_UNIT_ALIASES = new Map([
+	["GRAM", "G"],
+	["GRAMS", "G"],
+	["MILLIGRAM", "MG"],
+	["MILLIGRAMS", "MG"],
+	["MICROGRAM", "UG"],
+	["MICROGRAMS", "UG"],
+	["MCG", "UG"],
+	["KILOCALORIE", "KCAL"],
+	["KILOCALORIES", "KCAL"],
+	["KILOJOULE", "KJ"],
+	["KILOJOULES", "KJ"],
+	["INTERNATIONAL UNIT", "IU"],
+	["INTERNATIONAL UNITS", "IU"],
+	["NIACIN EQUIVALENTS", "NE"],
+]);
+
 export const normalizeDatasetUnit = (value) => {
-	const unit = String(value ?? "").trim();
-	if (/^(?:µg|μg|ug|mcg)$/iu.test(unit)) return "UG";
-	return unit.toLocaleUpperCase("en-US");
+	const normalized = String(value ?? "")
+		.trim()
+		.toLocaleUpperCase("en-US")
+		.replaceAll("Μ", "U")
+		.replaceAll("µ", "U");
+	return NORMALIZED_DATASET_UNIT_ALIASES.get(normalized) ?? normalized;
 };
 
 export const normalizeDatasetSearchText = (...values) =>

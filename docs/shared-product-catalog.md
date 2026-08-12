@@ -314,6 +314,12 @@ moderator-only. The app keeps ordinary nutrition concise and translates only use
 bounded uncertainty summaries into the closed Data quality disclosure. Policy snapshots
 and broader history remain future presentations rather than inferred UI claims.
 
+Canonical nutrient lineage cannot come from provider-name similarity alone. Exact
+provider identifiers and explicitly reviewed source keys own nutrient identity, exact
+normalized units own lookup, and any unit change requires a reviewed nutrient-specific
+conversion. Semantic taxonomy candidates remain pending moderation evidence and are
+excluded from catalog/API publication until reviewed.
+
 Authenticated app reads may additionally resolve an account's optional regulatory
 region against the regional profile in that same immutable policy version. The result
 records the authority and policy reference plus which selected allergen settings use

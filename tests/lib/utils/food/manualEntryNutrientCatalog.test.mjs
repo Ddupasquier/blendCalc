@@ -4,7 +4,7 @@ import {
 	createSourceNutrientMappingCatalog,
 	preserveReviewedSourceNutrientMappings,
 } from "../../../../scripts/lib/nutrition/source_nutrient_mapping_catalog.mjs";
-import { findCanonicalNutrientMatch } from "../../../../scripts/lib/reference-data/nutrientMatching.mjs";
+import { findCanonicalNutrientCandidate } from "../../../../scripts/lib/reference-data/nutrientMatching.mjs";
 
 const groups = [
 	{
@@ -114,6 +114,10 @@ describe("source nutrient mapping catalog", () => {
 				priority: 10,
 				confidence: 1,
 				enabled: true,
+				mapping_method: "db_reviewed_api_key_match",
+				review_status: "approved",
+				review_reference: "reviewed-vitamin-d-micrograms",
+				reviewed_at: "2026-08-11T00:00:00.000Z",
 			},
 			{
 				source_nutrient_key: "vitamin-d",
@@ -122,6 +126,10 @@ describe("source nutrient mapping catalog", () => {
 				priority: 10,
 				confidence: 1,
 				enabled: true,
+				mapping_method: "db_reviewed_api_key_match",
+				review_status: "approved",
+				review_reference: "reviewed-vitamin-d-iu",
+				reviewed_at: "2026-08-11T00:00:00.000Z",
 			},
 		]);
 
@@ -131,6 +139,70 @@ describe("source nutrient mapping catalog", () => {
 				sourceUnitName: "µg",
 			}),
 		).toMatchObject({ nutrient_id: 1114 });
+	});
+
+	it("does not resolve pending semantic candidates", () => {
+		const catalog = createSourceNutrientMappingCatalog([{
+			source_nutrient_key: "vitamin-a",
+			source_unit_name: "UG",
+			nutrient_id: 1106,
+			priority: 10,
+			confidence: 1,
+			enabled: false,
+			mapping_method: "api_taxonomy_match",
+			review_status: "pending_review",
+		}]);
+
+		expect(
+			catalog.resolve({
+				sourceNutrientKey: "vitamin-a",
+				sourceUnitName: "UG",
+			}),
+		).toBeNull();
+	});
+
+	it("does not reuse an approved mapping from a different unit", () => {
+		const catalog = createSourceNutrientMappingCatalog([{
+			source_nutrient_key: "vitamin-d",
+			source_unit_name: "UG",
+			nutrient_id: 1114,
+			priority: 10,
+			confidence: 1,
+			enabled: true,
+			mapping_method: "db_reviewed_api_key_match",
+			review_status: "approved",
+			review_reference: "reviewed-vitamin-d-micrograms",
+			reviewed_at: "2026-08-11T00:00:00.000Z",
+		}]);
+
+		expect(
+			catalog.resolve({
+				sourceNutrientKey: "vitamin-d",
+				sourceUnitName: "IU",
+			}),
+		).toBeNull();
+	});
+
+	it("normalizes equivalent source unit spellings before exact lookup", () => {
+		const catalog = createSourceNutrientMappingCatalog([{
+			source_nutrient_key: "vitamin-a",
+			source_unit_name: "UG",
+			nutrient_id: 1106,
+			priority: 10,
+			confidence: 1,
+			enabled: true,
+			mapping_method: "db_reviewed_api_key_match",
+			review_status: "approved",
+			review_reference: "reviewed-vitamin-a-micrograms",
+			reviewed_at: "2026-08-11T00:00:00.000Z",
+		}]);
+
+		expect(
+			catalog.resolve({
+				sourceNutrientKey: "vitamin-a",
+				sourceUnitName: "micrograms",
+			}),
+		).toMatchObject({ nutrient_id: 1106 });
 	});
 
 	it("does not let a later API observation overwrite a reviewed mapping", () => {
@@ -202,12 +274,79 @@ describe("canonical nutrient matching", () => {
 		};
 
 		expect(
-			findCanonicalNutrientMatch({
+			findCanonicalNutrientCandidate({
 				sourceName: "Saturated fat",
 				sourceUnit: "G",
 				definitions: [totalFat, saturatedFat],
 				preferredNutrientIds: new Set([1004]),
 			})?.definition.nutrient_id,
 		).toBe(1258);
+	});
+
+	it("keeps an exact vitamin name as a review candidate instead of approval", () => {
+		const candidate = findCanonicalNutrientCandidate({
+			sourceName: "Vitamin A",
+			sourceUnit: "micrograms",
+			definitions: [{
+				nutrient_id: 1106,
+				nutrient_name: "Vitamin A",
+				default_unit_name: "UG",
+			}],
+		});
+
+		expect(candidate).toMatchObject({
+			nameMatchKind: "exact-name",
+			unitCompatibility: "exact",
+		});
+		expect(candidate).not.toHaveProperty("automaticApproval");
+	});
+
+	it("marks mass-unit changes as requiring a reviewed conversion", () => {
+		expect(
+			findCanonicalNutrientCandidate({
+				sourceName: "Vitamin E",
+				sourceUnit: "G",
+				definitions: [{
+					nutrient_id: 1109,
+					nutrient_name: "Vitamin E",
+					default_unit_name: "MG",
+				}],
+			}),
+		).toMatchObject({ unitCompatibility: "conversion-required" });
+	});
+
+	it("marks dimensionally incompatible units instead of approving them", () => {
+		expect(
+			findCanonicalNutrientCandidate({
+				sourceName: "Vitamin K",
+				sourceUnit: "KCAL",
+				definitions: [{
+					nutrient_id: 1184,
+					nutrient_name: "Vitamin K",
+					default_unit_name: "UG",
+				}],
+			}),
+		).toMatchObject({ unitCompatibility: "incompatible" });
+	});
+
+	it("does not substitute a parent fatty-acid nutrient for a specific child", () => {
+		const candidate = findCanonicalNutrientCandidate({
+			sourceName: "Fatty acids, total trans-monoenoic",
+			sourceUnit: "G",
+			definitions: [
+				{
+					nutrient_id: 1257,
+					nutrient_name: "Fatty acids, total trans",
+					default_unit_name: "G",
+				},
+				{
+					nutrient_id: 1259,
+					nutrient_name: "Fatty acids, total trans-monoenoic",
+					default_unit_name: "G",
+				},
+			],
+		});
+
+		expect(candidate?.definition.nutrient_id).toBe(1259);
 	});
 });

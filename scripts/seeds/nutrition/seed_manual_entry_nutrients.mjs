@@ -438,9 +438,10 @@ try {
 			supabase
 				.from("nutrient_source_mappings")
 				.select(
-					"source_nutrient_key, source_unit_name, nutrient_id, priority, confidence, enabled",
+					"source_nutrient_key, source_unit_name, nutrient_id, priority, confidence, enabled, mapping_method, review_status, review_reference, reviewed_at",
 				)
 				.eq("source_key", "open-food-facts")
+				.eq("review_status", "approved")
 				.limit(5000),
 		]);
 	for (const result of [

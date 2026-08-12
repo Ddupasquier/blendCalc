@@ -97,6 +97,10 @@ Notes:
 - `validate_user_food_preference_regulatory_region()` rejects unsupported region codes
   at the database boundary. Regional context can explain labeling rules but cannot
   suppress a warning created by a user's allergen or dietary settings.
+- `validate_user_food_preference_inputs()` rejects empty, oversized, or duplicate
+  preference wording; duplicate or unsupported priority nutrients; serving defaults
+  above 5,000 grams; and preference values saved without acknowledgement. Priority
+  nutrients must belong to the enabled database-owned `mix_default` display profile.
 
 ### `mix_preferences`
 
@@ -494,8 +498,17 @@ Notes:
 - Runtime barcode mapping resolves enabled `nutrient_equivalences` before form
   autofill, so source aliases such as USDA `1085` cannot bypass the canonical Total Fat
   field. Exact canonical rows take precedence if a response contains both forms.
-- Reviewed mappings are semantic decisions. API-observation seed runs may refresh
-  observation metadata but cannot replace an approved or rejected nutrient identity.
+- Enabled mappings are reviewed identity decisions, not name-similarity decisions.
+  Exact provider nutrient IDs, reviewed source keys, and approved dataset identities
+  retain review evidence. Taxonomy/name similarity remains disabled and pending until
+  reviewed into an identity-bearing method; seed runs may refresh only its observation
+  metadata and cannot replace an approved or rejected identity.
+- Runtime lookup requires the exact normalized `(source key, nutrient key, source unit)`
+  row. Equivalent unit spellings normalize to the same unit, while a genuinely different
+  unit requires its own approved mapping plus a nutrient-specific reviewed conversion.
+- Database constraints prevent pending mappings from being enabled, require evidence on
+  approved rows, preserve reviewed semantic rejections, and prevent legacy semantic
+  metadata from becoming canonical `food_nutrients` lineage.
 - The lookup index starts with source and source nutrient key so barcode mapping does
   not scan the full table.
 - `20260727120000_canonical_barcode_nutrient_mappings.sql` restores the reviewed Open
@@ -514,6 +527,9 @@ Notes:
   IU values cannot be safely treated as universal unit math.
 - The seed script stores standards-API or paired API-observation provenance with each
   multiplier.
+- A source mapping with a different unit cannot rely on same-family mass or energy
+  assumptions. It remains unusable until this table contains the exact reviewed
+  source/nutrient/from-unit/to-unit conversion.
 
 ### `serving_measure_units` and `serving_measure_aliases`
 
@@ -1259,14 +1275,19 @@ Notes:
   includes `insert` on `shared_product_submissions` because the trusted server creates
   pending submissions before moderator review; ordinary authenticated clients still
   cannot insert, update, or delete those rows directly.
-- `get_moderator_data_health(p_days, p_issue_limit)` is an authenticated
-  moderator/admin/developer security-definer aggregate. It clamps the metric window to
+- `get_moderator_data_health(p_days, p_issue_limit)` is an authenticated,
+  MFA-verified moderator/admin/developer security-definer aggregate. It clamps the
+  metric window to
   1–90 days and each issue queue to 1–50 rows. It returns catalog/publication counts,
   source metrics and safe latest-evaluation summaries, dataset import/licence/checksum
   state, active compatibility-policy coverage, and bounded conflict, publication,
   mapping, and revision gaps. It deliberately excludes raw provider payloads, private
   evidence, user identities, secrets, source-evaluation `details`, dataset `metadata`,
   and dataset download URLs.
+- `private.build_moderator_data_health_summary(p_days, p_issue_limit)` builds the
+  bounded payload behind that public RPC. Direct execution is revoked from client and
+  service roles; the public wrapper enforces AAL2 permission before calling it, and the
+  private builder independently verifies the current role assignment.
 - `blocked_signup_emails` stores hashes, not raw email addresses.
 - `reject_blocked_signup` is the auth hook function for blocking signups.
 - `set_app_user_role` is the only service-role write path for role assignments; it
@@ -1442,13 +1463,13 @@ category, or serving fields.
 | `get_blendcalc_product_v1`                      | Reads one active, publication-ready shared product and its latest revision by GTIN-14 |
 | `get_blendcalc_product_revision_history_v1`     | Reads bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14 |
 | `search_blendcalc_products_v1`                  | Searches only active, publication-ready shared products with bounded pagination and stable relevance |
-| `get_moderator_data_health`                     | Returns bounded moderator/admin/developer catalog, source, dataset, policy, mapping, revision, conflict, and publication-readiness summaries after independently verifying the caller's role |
+| `get_moderator_data_health`                     | Returns bounded moderator/admin/developer catalog, source, dataset, policy, mapping, revision, conflict, and publication-readiness summaries after verifying an AAL2 permission and the caller's current role assignment |
 | `catalog_change_summary_is_valid`               | Validates unique structured old/new field changes before a catalog product update can be accepted |
 | `consume_request_rate_limit`                    | Atomically consumes one private server-side request quota unit; service role only |
 | `replace_app_interaction_daily_metrics`         | Atomically replaces a bounded production date range of private Vercel interaction aggregates; service role only |
 | `reject_blocked_signup`                        | Supabase Auth hook for hashed email signup blocks                                                                                              |
 | `custom_access_token_hook`                     | Supabase Auth hook that adds the current database-owned `user`, `moderator`, `admin`, or `developer` role to newly issued JWTs as `app_role`     |
-| `authorize_app_permission`                     | Checks the signed `app_role` claim against database-owned role permissions for RLS policies                                                     |
+| `authorize_app_permission`                     | Requires an AAL2 session, then checks the signed `app_role` claim against database-owned role permissions for protected RLS policies             |
 | `set_app_user_role`                            | Service-only atomic role assignment/revocation with a matching moderation audit action                                                         |
 
 ## Storage Buckets

@@ -45,6 +45,10 @@ automatically part of the public developer command surface.
   normalization implementation.
 - Database-backed reference data is authoritative. Do not add repository-local cache
   files or generated data fallbacks.
+- Nutrient taxonomy/name matching may create disabled review candidates only. It must
+  not enable a mapping, fabricate review evidence, reuse another source unit, or create
+  unit conversions from same-family assumptions. Exact provider identifiers and
+  explicitly reviewed source-key/unit decisions remain authoritative.
 - Every external request must be bounded, rate-limit aware, attributable, and safe to
   rerun.
 - Every database-writing script must fail loudly on invalid configuration and document

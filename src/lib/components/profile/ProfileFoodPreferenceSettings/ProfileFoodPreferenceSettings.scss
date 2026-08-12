@@ -1,43 +1,33 @@
 @use "../../../../styles/variables" as *;
 
 .profile-food-preference-settings,
-form,
+form {
+	display: grid;
+	gap: $app-gap-md;
+}
+
 .food-preference-editors {
 	display: grid;
-	gap: $app-gap-sm;
+	gap: $app-gap-md;
 }
 
-.profile-food-preference-settings__description {
-	margin: 0;
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-sm;
-	font-weight: $app-font-weight-medium;
-	line-height: $app-line-height-body;
+.food-preference-editors > :global(.preference-editor-card + .preference-editor-card) {
+	padding-top: $app-gap-md;
+	border-top: 1px solid $app-shell-border-subtle;
 }
 
-.food-preference-notice {
-	display: grid;
-	gap: $app-gap-2xs;
-	padding: $app-gap-sm;
-	color: $app-warning-text;
-	background: $app-warning-bg;
-	border: $app-warning-border;
-	border-radius: $app-shell-radius-control;
-	font-size: $app-font-size-sm;
-	line-height: $app-line-height-body;
-}
-
-form > :global(.rounded-action-button) {
+.profile-food-preference-settings__actions > :global(.rounded-action-button) {
 	width: 100%;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.profile-food-preference-settings__description,
-	.food-preference-notice {
-		font-size: $app-font-size-xs;
+	.profile-food-preference-settings,
+	form,
+	.food-preference-editors {
+		gap: $app-gap-sm;
 	}
 
-	.food-preference-notice {
-		padding: $app-gap-xs;
+	.food-preference-editors > :global(.preference-editor-card + .preference-editor-card) {
+		padding-top: $app-gap-sm;
 	}
 }

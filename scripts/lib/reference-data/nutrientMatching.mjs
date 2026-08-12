@@ -4,15 +4,31 @@
  * Do not run directly; it is imported by reference-data seed workflows.
  */
 
-export const normalizeUnitName = (value) =>
-	String(value ?? "")
+const NORMALIZED_UNIT_ALIASES = new Map([
+	["GRAM", "G"],
+	["GRAMS", "G"],
+	["MILLIGRAM", "MG"],
+	["MILLIGRAMS", "MG"],
+	["MICROGRAM", "UG"],
+	["MICROGRAMS", "UG"],
+	["MCG", "UG"],
+	["KILOCALORIE", "KCAL"],
+	["KILOCALORIES", "KCAL"],
+	["KILOJOULE", "KJ"],
+	["KILOJOULES", "KJ"],
+	["INTERNATIONAL UNIT", "IU"],
+	["INTERNATIONAL UNITS", "IU"],
+	["NIACIN EQUIVALENTS", "NE"],
+]);
+
+export const normalizeUnitName = (value) => {
+	const normalized = String(value ?? "")
 		.trim()
 		.toUpperCase()
 		.replaceAll("Μ", "U")
-		.replaceAll("µ", "U")
-		.replace("MCG", "UG")
-		.replace("KILOCALORIES", "KCAL")
-		.replace("KILOJOULES", "KJ");
+		.replaceAll("µ", "U");
+	return NORMALIZED_UNIT_ALIASES.get(normalized) ?? normalized;
+};
 
 const normalizeToken = (token) => {
 	if (token === "fatty") return "fat";
@@ -36,7 +52,7 @@ const IGNORED_NUTRIENT_TOKENS = new Set([
 	"d3",
 ]);
 
-export const getNutrientTokens = (value) =>
+export const getSemanticNutrientTokens = (value) =>
 	[...new Set(
 		String(value ?? "")
 			.toLowerCase()
@@ -65,32 +81,49 @@ const getTokenScore = (sourceTokens, candidateTokens) => {
 const areMassUnits = (unit) => ["G", "MG", "UG"].includes(unit);
 const areEnergyUnits = (unit) => ["KCAL", "KJ"].includes(unit);
 
-const getUnitScore = (sourceUnit, targetUnit) => {
-	if (!sourceUnit || !targetUnit) return 0;
-	if (sourceUnit === targetUnit) return 0.08;
-	if (areMassUnits(sourceUnit) && areMassUnits(targetUnit)) return 0.04;
-	if (areEnergyUnits(sourceUnit) && areEnergyUnits(targetUnit)) return 0.04;
-	return -0.12;
+const classifyUnitCompatibility = (sourceUnit, targetUnit) => {
+	if (!sourceUnit || !targetUnit) return "unspecified";
+	if (sourceUnit === targetUnit) return "exact";
+	if (areMassUnits(sourceUnit) && areMassUnits(targetUnit)) return "conversion-required";
+	if (areEnergyUnits(sourceUnit) && areEnergyUnits(targetUnit)) return "conversion-required";
+	return "incompatible";
 };
 
-export const findCanonicalNutrientMatch = ({
+const getUnitCandidateScore = (unitCompatibility) => {
+	if (unitCompatibility === "exact") return 0.08;
+	if (unitCompatibility === "conversion-required") return 0.02;
+	if (unitCompatibility === "incompatible") return -0.12;
+	return 0;
+};
+
+const normalizeNutrientIdentity = (value) =>
+	String(value ?? "")
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, " ")
+		.trim()
+		.replace(/\s+/g, " ");
+
+export const findCanonicalNutrientCandidate = ({
 	sourceName,
 	sourceUnit,
 	definitions,
 	preferredNutrientIds = new Set(),
 }) => {
-	const sourceTokens = getNutrientTokens(sourceName);
+	const sourceTokens = getSemanticNutrientTokens(sourceName);
+	const sourceIdentity = normalizeNutrientIdentity(sourceName);
 	const normalizedSourceUnit = normalizeUnitName(sourceUnit);
 	const candidates = definitions
 		.map((definition) => {
-			const candidateTokens = getNutrientTokens(definition.nutrient_name);
+			const candidateTokens = getSemanticNutrientTokens(definition.nutrient_name);
+			const normalizedTargetUnit = normalizeUnitName(definition.default_unit_name);
+			const unitCompatibility = classifyUnitCompatibility(
+				normalizedSourceUnit,
+				normalizedTargetUnit,
+			);
 			const semanticScore = Math.min(
 				1,
 				getTokenScore(sourceTokens, candidateTokens) +
-					getUnitScore(
-						normalizedSourceUnit,
-						normalizeUnitName(definition.default_unit_name),
-					),
+					getUnitCandidateScore(unitCompatibility),
 			);
 			const preferred = preferredNutrientIds.has(definition.nutrient_id);
 			const score = semanticScore;
@@ -98,6 +131,11 @@ export const findCanonicalNutrientMatch = ({
 				definition,
 				score,
 				preferred,
+				nameMatchKind:
+					sourceIdentity === normalizeNutrientIdentity(definition.nutrient_name)
+						? "exact-name"
+						: "semantic-candidate",
+				unitCompatibility,
 				observationCount: Number(definition.observation_count ?? 0),
 			};
 		})
@@ -112,9 +150,5 @@ export const findCanonicalNutrientMatch = ({
 	const second = candidates[1];
 	if (!best || best.score < 0.7) return null;
 	if (second && best.score - second.score < 0.025 && best.score < 0.98) return null;
-	const bestTokens = getNutrientTokens(best.definition.nutrient_name);
-	const automaticApproval =
-		sourceTokens.length === bestTokens.length &&
-		sourceTokens.every((token) => bestTokens.includes(token));
-	return { ...best, automaticApproval };
+	return best;
 };

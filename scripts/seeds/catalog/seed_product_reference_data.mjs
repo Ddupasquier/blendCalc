@@ -20,7 +20,7 @@ import {
 	readHtmlTitle,
 } from "../../lib/reference-data/api.mjs";
 import {
-	findCanonicalNutrientMatch,
+	findCanonicalNutrientCandidate,
 	normalizeUnitName,
 } from "../../lib/reference-data/nutrientMatching.mjs";
 import { preserveReviewedSourceNutrientMappings } from "../../lib/nutrition/source_nutrient_mapping_catalog.mjs";
@@ -321,7 +321,7 @@ const seedNutrientMappings = async ({
 		const sourceKey = taxonomyKey.replace(/^[a-z]{2}:/i, "");
 		const sourceName = entry?.name?.en ?? entry?.name?.xx ?? sourceKey;
 		const taxonomyUnit = normalizeUnitName(entry?.unit?.en);
-		const match = findCanonicalNutrientMatch({
+		const match = findCanonicalNutrientCandidate({
 			sourceName,
 			sourceUnit: taxonomyUnit,
 			definitions,
@@ -340,15 +340,13 @@ const seedNutrientMappings = async ({
 				source_unit_name: sourceUnit,
 				source_nutrient_name: sourceName,
 				nutrient_id: match.definition.nutrient_id,
-					priority: observationCount > 0 ? 10 : 50,
-					mapping_method: "api_taxonomy_match",
-					confidence: Number(match.score.toFixed(4)),
-					enabled: match.automaticApproval,
-					review_status: match.automaticApproval ? "approved" : "pending_review",
-					review_reference: match.automaticApproval
-						? "Exact normalized taxonomy name and compatible unit"
-						: null,
-					reviewed_at: match.automaticApproval ? observedAt : null,
+				priority: observationCount > 0 ? 10 : 50,
+				mapping_method: "api_taxonomy_match",
+				confidence: Number(match.score.toFixed(4)),
+				enabled: false,
+				review_status: "pending_review",
+				review_reference: null,
+				reviewed_at: null,
 				observation_count: observationCount,
 				first_observed_at: observedAt,
 				last_observed_at: observedAt,
@@ -357,6 +355,8 @@ const seedNutrientMappings = async ({
 					taxonomyKey,
 					taxonomyName: sourceName,
 					taxonomyUnit,
+					candidateNameMatchKind: match.nameMatchKind,
+					candidateUnitCompatibility: match.unitCompatibility,
 					sampleSize: offFoods.length,
 				},
 			});
@@ -385,7 +385,9 @@ const getUcumCode = (unit) => UNIT_STANDARDS_CODES[normalizeUnitName(unit)];
 
 const seedNutrientConversions = async ({ mappings, definitions }) => {
 	const conversionRequests = new Map();
-	for (const mapping of mappings.filter((candidate) => candidate.enabled)) {
+	for (const mapping of mappings.filter(
+		(candidate) => candidate.enabled && candidate.review_status === "approved",
+	)) {
 		const fromUnit = normalizeUnitName(mapping.source_unit_name);
 		const definition = definitions.find(
 			(candidate) => candidate.nutrient_id === mapping.nutrient_id,

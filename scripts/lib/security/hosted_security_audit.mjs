@@ -203,7 +203,7 @@ const evaluateAuthConfiguration = (authConfiguration) => {
 			"privileged-mfa-enforcement",
 			"Privileged-account MFA",
 			"blocked",
-			"Moderator, administrator, and developer actions still need an enrollment flow and verified AAL2 enforcement.",
+			"Application enrollment, challenge, recovery guidance, and AAL2 enforcement are implemented; every elevated production account still needs verified factor enrollment.",
 		),
 		createFinding(
 			"custom-smtp",

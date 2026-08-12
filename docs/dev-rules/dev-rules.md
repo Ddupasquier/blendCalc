@@ -971,6 +971,17 @@ carbohydrate, fat, carotenoid, mineral, vitamin, amino-acid, and other compositi
 to Extended. Preserve retired aliases and their canonical replacements so new provider
 terms can be adopted without losing history or creating duplicate inputs.
 
+**29b.** <a id="rule-nutrient-source-mapping-review"></a>Treat source nutrient names,
+taxonomy labels, and observation similarity as candidate discovery only. They must never
+become enabled canonical mappings automatically, even when simplified tokens or units
+appear to match. An enabled mapping requires an exact source identifier or an explicit
+reviewed source-key decision, an approved review state, durable review evidence, and an
+exact normalized source unit. A different unit is a separate mapping and may normalize
+only through a nutrient-specific reviewed conversion. Preserve ambiguous, parent/child,
+and incompatible-unit candidates as disabled pending observations; preserve reviewed
+rejections; and prevent legacy semantic metadata from reappearing as canonical normalized
+lineage.
+
 ### External Sources And Catalog Evidence
 
 **30.** <a id="rule-cross-reference-apis"></a>Cross-reference all relevant source APIs
