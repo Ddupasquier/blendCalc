@@ -1,6 +1,13 @@
 import type { FoodItem } from "$lib/utils/food/types";
+import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
 
-export type NutritionCompletenessScope = "generic" | "manual" | "packaged";
+export type NutritionCompletenessProfileScope =
+	| "generic"
+	| "manual"
+	| "packaged";
+export type NutritionCompletenessScope =
+	| NutritionCompletenessProfileScope
+	| "unknown";
 export type NutritionRequirementLevel = "required" | "recommended";
 
 export type NutritionCompletenessNutrient = {
@@ -15,7 +22,7 @@ export type NutritionCompletenessNutrient = {
 export type NutritionCompletenessProfile = {
 	key: string;
 	displayName: string;
-	foodScope: NutritionCompletenessScope;
+	foodScope: NutritionCompletenessProfileScope;
 	regionCode: string;
 	completeLabel: string;
 	resolvedLabel: string;
@@ -47,7 +54,9 @@ export const getNutritionCompletenessScope = (
 		| "gtinUpc"
 		| "dataType"
 		| "sourceDataType"
+		| "foodIdentityType"
 		| "customFood"
+		| "brandOwner"
 		| "trustStatus"
 	>,
 ): NutritionCompletenessScope => {
@@ -58,10 +67,8 @@ export const getNutritionCompletenessScope = (
 		return "manual";
 	}
 
-	const dataType = `${food.dataType ?? ""} ${food.sourceDataType ?? ""}`.toLowerCase();
-	return food.barcode || food.gtinUpc || dataType.includes("branded")
-		? "packaged"
-		: "generic";
+	const identityType = resolveFoodIdentityType(food);
+	return identityType === "private-custom" ? "manual" : identityType;
 };
 
 export const getNutritionCompletenessProfile = (
@@ -69,6 +76,7 @@ export const getNutritionCompletenessProfile = (
 	catalog: NutritionCompletenessCatalog = configuredCatalog,
 ) => {
 	const scope = getNutritionCompletenessScope(food);
+	if (scope === "unknown") return null;
 	const scopedProfiles = catalog.profiles.filter(
 		(profile) => profile.foodScope === scope,
 	);

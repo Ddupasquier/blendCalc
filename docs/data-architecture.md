@@ -190,6 +190,14 @@ explicit allergen/trace fields may create canonical facts only through those rev
 rows. Unsupported declared languages make policy coverage incomplete; ordinary client
 code never translates, fuzzily matches, or supplies a synonym fallback.
 
+Food identity also fails closed. A provider adapter translates only its own reviewed
+record vocabulary into `packaged` or `generic`; private manual entries use
+`private-custom`. The source-neutral resolver may recognize concrete package evidence
+such as an exact GTIN or brand, but it never interprets provider datatype strings.
+Records without explicit identity remain `unknown`, receive no generic or packaged
+nutrition-completeness profile, and cannot be reported as fully checked by
+identity-dependent food-safety policy.
+
 Package precautionary statements use the same evidence-first boundary. Source adapters
 preserve exact wording and classify only the statement form (`may contain`, shared
 equipment, shared facility, or another precautionary form). Database projections attach

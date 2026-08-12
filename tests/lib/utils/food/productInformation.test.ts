@@ -62,4 +62,18 @@ describe("product information", () => {
 			firstAttribution,
 		]);
 	});
+
+	it("presents unconfirmed identity without calling it packaged", () => {
+		const information = getProductInformation({
+			fdcId: 123,
+			description: "Future source record",
+			dataType: "Future source type",
+			foodNutrients: [],
+		});
+
+		expect(information.productRows).toContainEqual({
+			label: "Food type",
+			value: "Not confirmed",
+		});
+	});
 });

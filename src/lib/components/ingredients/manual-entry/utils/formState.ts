@@ -28,6 +28,7 @@ import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement"
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { CatalogSubmissionIntent } from "$lib/utils/products/catalog";
 import { getPrimaryFoodServing } from "$lib/utils/food/servings/foodServings";
+import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
 
 export type ManualEntryFormResetState = {
 	activeStep: ManualEntryStepId;
@@ -187,7 +188,7 @@ export const getManualEntryFormStateFromFood = (
 			...(food.reportedNutrientIds ??
 				food.foodNutrients.map((nutrient) => nutrient.nutrientId)),
 		],
-		foodIdentityType: food.foodIdentityType ?? "packaged",
+		foodIdentityType: resolveFoodIdentityType(food),
 		ingredients: food.ingredients ?? "",
 		ingredientList: [...(food.ingredientList ?? [])],
 		structuredIngredients: [...(food.structuredIngredients ?? [])],

@@ -140,7 +140,11 @@ export interface FoodServing {
 	confidence?: FoodNutrient["confidence"];
 }
 
-export type FoodIdentityType = "generic" | "packaged" | "private-custom";
+export type FoodIdentityType =
+	| "generic"
+	| "packaged"
+	| "private-custom"
+	| "unknown";
 
 export type FoodStructuredIngredient = {
 	id?: string;

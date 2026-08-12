@@ -705,10 +705,11 @@ Notes:
   USDA-backed products this includes `sourceKey`, the DB-provided `sourceLabel`,
   `sourceDataType` (`Branded`, `Foundation`, `SR Legacy`, or `Survey (FNDDS)`), and
   available source publication/modification dates.
-- Canonical food snapshots distinguish `foodIdentityType` as `packaged`, `generic`, or
-  `private-custom`. Existing shared products/submissions are backfilled as packaged;
-  existing custom/list snapshots use their explicit custom state and strict source data
-  type to recover the applicable identity.
+- Canonical food snapshots distinguish `foodIdentityType` as `packaged`, `generic`,
+  `private-custom`, or `unknown`. Existing shared products/submissions are backfilled as
+  packaged. Provider adapters assign source-specific identity; exact GTIN or brand
+  evidence can identify a package, and all other unclassified snapshots remain unknown
+  instead of interpreting provider datatype strings in shared application code.
 - When a source supplies them and source policy permits canonical storage, `food`
   preserves the raw ingredient statement, normalized `ingredientList`, recursive
   `structuredIngredients`, `ingredientAnalysis`, `additives`, explicit `allergens`,

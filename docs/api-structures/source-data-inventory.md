@@ -100,6 +100,10 @@ may become canonical or public.
 2. Add a focused server-only module under `src/lib/server/products/sources/`.
 3. Use the shared request boundary; do not call `fetch` directly.
 4. Preserve raw observations and map fields independently.
-5. Add request-count, exact-match, missing-field, outage, cache, and legal-storage tests.
-6. Update this inventory and generated API structure samples; update the licensing,
+5. Translate the provider's identity vocabulary inside that provider adapter. Unknown
+   record types must remain unknown rather than inheriting a packaged or generic
+   fallback from shared application code.
+6. Add request-count, exact-match, unknown-identity, missing-field, outage, cache, and
+   legal-storage tests.
+7. Update this inventory and generated API structure samples; update the licensing,
    catalog, API-lineage, or schema document only when its owned contract also changes.

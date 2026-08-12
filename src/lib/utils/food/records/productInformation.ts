@@ -15,6 +15,7 @@ import {
 	formatServingGramWeightMethod,
 	formatServingOrigin,
 } from "$lib/utils/food/servings/servingDisplay";
+import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
 
 export type ProductInformationRow = {
 	label: string;
@@ -57,6 +58,8 @@ const formatIdentityType = (value: FoodIdentityType | undefined) => {
 			return "Packaged product";
 		case "private-custom":
 			return "Personal ingredient";
+		case "unknown":
+			return "Not confirmed";
 		default:
 			return "";
 	}
@@ -136,7 +139,10 @@ const getProductRows = (food: FoodItem) => {
 		},
 		{ label: "Category", value: categories.join(", ") },
 		{ label: "Package size", value: formatPackageQuantity(food) },
-		{ label: "Food type", value: formatIdentityType(food.foodIdentityType) },
+		{
+			label: "Food type",
+			value: formatIdentityType(resolveFoodIdentityType(food)),
+		},
 		{ label: "Scientific name", value: cleanText(food.scientificName) },
 		{ label: "Also known as", value: cleanText(food.alternateDescription) },
 		{ label: "Preparation", value: cleanText(food.preparation) },

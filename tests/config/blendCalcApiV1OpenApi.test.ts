@@ -65,6 +65,7 @@ describe("blendCalc API v1 OpenAPI contract", () => {
 		expect(serialized).toContain("compatibilityEvaluation");
 		expect(serialized).toContain("not_checked");
 		expect(serialized).toContain("packaged-label");
+		expect(serialized).toContain("unknown-identity");
 	});
 
 	it("never documents private storage or moderation fields", () => {

@@ -1,5 +1,6 @@
 import type {
 	FoodItem,
+	FoodIdentityType,
 	FoodNutrient,
 	FoodServing,
 } from "$lib/utils/food/types";
@@ -10,7 +11,6 @@ import {
 	type IngredientSearchPageOptions,
 } from "$lib/utils/ingredients/ingredientSearchPagination";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
-import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
 import { parseSourceServingMeasure } from "$lib/utils/serving/servingAmount";
 
 type FdcDetailNutrient = {
@@ -154,19 +154,33 @@ const getSearchMeasureLabel = (measure: FdcSearchMeasure) =>
 		measure.measureUnitName?.trim(),
 	].filter(Boolean).join(" ");
 
-const getFdcServingOrigin = (food: FdcFoodResponse): FoodServing["origin"] => {
-	if (food.foodIdentityType === "packaged") return "package-label";
-	if (food.foodIdentityType === "generic") return "source-household-measure";
+const getFdcFoodIdentityType = (food: FdcFoodResponse): FoodIdentityType => {
+	if (food.foodIdentityType) return food.foodIdentityType;
 	const dataType = food.dataType?.trim().toLocaleLowerCase("en-US");
-	if (dataType === "branded") return "package-label";
+	if (dataType === "branded") return "packaged";
 	if (
 		dataType === "foundation" ||
 		dataType === "sr legacy" ||
 		dataType === "survey (fndds)" ||
 		dataType === "experimental"
 	) {
-		return "source-household-measure";
+		return "generic";
 	}
+	if (
+		food.barcode ||
+		food.gtinUpc ||
+		food.brandOwner?.trim() ||
+		food.brandName?.trim()
+	) {
+		return "packaged";
+	}
+	return "unknown";
+};
+
+const getFdcServingOrigin = (food: FdcFoodResponse): FoodServing["origin"] => {
+	const identityType = getFdcFoodIdentityType(food);
+	if (identityType === "packaged") return "package-label";
+	if (identityType === "generic") return "source-household-measure";
 	return "unknown";
 };
 
@@ -342,7 +356,7 @@ export const normalizeFdcFood = (food: FdcFoodResponse): FoodItem => {
 		},
 		nameProvenance: "source",
 		brandOwner: brandOwner || undefined,
-		foodIdentityType: resolveFoodIdentityType(food),
+		foodIdentityType: getFdcFoodIdentityType(food),
 		foodNutrients,
 		reportedNutrientIds: foodNutrients.map((nutrient) => nutrient.nutrientId),
 		foodServings,

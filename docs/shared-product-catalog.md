@@ -564,6 +564,12 @@ source-metadata fields. A fuller
 secondary record may supplement missing fields but cannot silently overwrite an
 authoritative reported value or zero.
 
+Source adapters assign food identity from their own reviewed contracts. Exact GTIN or
+brand evidence may independently identify a packaged product, but an unrecognized
+provider datatype does not. Unclassified records remain explicitly unknown and are
+excluded from packaged-label and authoritative-generic completeness conclusions until
+their adapter or canonical review supplies an identity.
+
 ## Product Identifier QR Codes
 
 The scanner supports uncompressed GS1 Digital Link product QR codes containing

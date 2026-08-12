@@ -3,7 +3,7 @@ import type { Database } from "$lib/types/database.types";
 import type {
 	NutritionCompletenessCatalog,
 	NutritionCompletenessProfile,
-	NutritionCompletenessScope,
+	NutritionCompletenessProfileScope,
 	NutritionRequirementLevel,
 } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 import type { NutrientDefinitionReferenceRecord } from "$lib/utils/food/nutrients/nutrientDefinitionRecord";
@@ -103,7 +103,7 @@ export const readNutritionCompletenessCatalog = async (
 		return {
 			key: row.key,
 			displayName: row.display_name,
-			foodScope: row.food_scope as NutritionCompletenessScope,
+			foodScope: row.food_scope as NutritionCompletenessProfileScope,
 			regionCode: row.region_code,
 			completeLabel: row.complete_label,
 			resolvedLabel: row.resolved_label,

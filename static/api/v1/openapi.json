@@ -326,7 +326,7 @@
             "properties": {
               "basis": {
                 "type": "string",
-                "enum": ["generic-taxonomy", "packaged-label", "private-entry"]
+                "enum": ["generic-taxonomy", "packaged-label", "private-entry", "unknown-identity"]
               },
               "identity": {
                 "type": "string",

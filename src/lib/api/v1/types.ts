@@ -119,7 +119,11 @@ export type ApiV1CompatibilityEvaluation = {
 	profileApplied: boolean;
 	conflictCount: number;
 	coverage: {
-		basis: "generic-taxonomy" | "packaged-label" | "private-entry";
+		basis:
+			| "generic-taxonomy"
+			| "packaged-label"
+			| "private-entry"
+			| "unknown-identity";
 		identity: "available" | "missing" | "not_required";
 		ingredients: "available" | "missing" | "not_required";
 		allergens: "available" | "missing" | "not_required";
