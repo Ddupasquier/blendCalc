@@ -4,6 +4,7 @@ import type {
 	ProductReferenceCatalog,
 } from "$lib/utils/food/reference/productReferenceCatalog";
 import { canonicalizeProductNutrients } from "$lib/utils/food/reference/productReferenceCatalog";
+import { normalizeNutrientUnitName } from "$lib/utils/food/nutrients/nutrientUnitNames";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
 export type OpenFoodFactsNutriments = Record<
@@ -11,13 +12,7 @@ export type OpenFoodFactsNutriments = Record<
 	number | string | undefined
 >;
 
-export const normalizeNutrientUnit = (unit: unknown) =>
-	String(unit ?? "")
-		.trim()
-		.toUpperCase()
-		.replaceAll("Μ", "U")
-		.replaceAll("µ", "U")
-		.replace("MCG", "UG");
+export const normalizeNutrientUnit = normalizeNutrientUnitName;
 
 const toOptionalNumber = (value: unknown) => {
 	if (value === undefined || value === null || value === "") return null;
@@ -95,9 +90,17 @@ export const mapOpenFoodFactsNutrients = (
 		);
 		if (!source) continue;
 
-		const sourceUnit = String(
-			nutriments[`${source.key}_unit`] ?? mapping.sourceUnitName,
+		const reportedSourceUnit = String(
+			nutriments[`${source.key}_unit`] ?? "",
 		);
+		if (
+			reportedSourceUnit.trim() &&
+			normalizeNutrientUnit(reportedSourceUnit) !==
+				normalizeNutrientUnit(mapping.sourceUnitName)
+		) {
+			continue;
+		}
+		const sourceUnit = reportedSourceUnit || mapping.sourceUnitName;
 		const value = convertMappedValue({
 			value: source.value,
 			sourceUnit,

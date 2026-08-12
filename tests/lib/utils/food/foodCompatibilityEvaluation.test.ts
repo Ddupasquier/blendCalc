@@ -113,6 +113,36 @@ describe("food compatibility evaluation", () => {
 		}).status).toBe("checked");
 	});
 
+	it("keeps an unknown identity incomplete instead of treating it as packaged", () => {
+		const food = makeFood({
+			foodIdentityType: "unknown",
+			dataType: "Future source type",
+			ingredients: "Water, salt",
+			allergens: [],
+			traces: [],
+			fieldProvenance: {
+				ingredients: { source: "manufacturer" },
+				allergens: { source: "manufacturer" },
+				traces: { source: "manufacturer" },
+			},
+		});
+
+		expect(getFoodCompatibilityEvidenceCoverage(food)).toMatchObject({
+			basis: "unknown-identity",
+			identity: "missing",
+			ingredients: "available",
+			allergens: "available",
+			traces: "available",
+		});
+		expect(getFoodCompatibilityEvaluation({
+			food,
+			policyVersion: 4,
+			hasActivePreferences: true,
+			policyCoversPreferences: true,
+			conflictCount: 0,
+		}).status).toBe("incomplete");
+	});
+
 	it("keeps uncovered custom preferences incomplete", () => {
 		expect(getFoodCompatibilityEvaluation({
 			food: completePackagedFood,

@@ -37,7 +37,12 @@
 	onClose={onClose}
 >
 	<div class="profile-moderator-action-sheet">
-		{#if summary.unavailable}
+		{#if summary.identityVerificationRequired}
+			<StatusMessage
+				tone="info"
+				message="Verify with your authenticator when you open a protected tool. Review counts stay private until then."
+			/>
+		{:else if summary.unavailable}
 			<StatusMessage
 				tone="warning"
 				message="Review counts are temporarily unavailable. Account and data-health tools still work."

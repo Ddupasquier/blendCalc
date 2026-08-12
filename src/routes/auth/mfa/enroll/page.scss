@@ -1,0 +1,70 @@
+@use "../../../../styles/variables" as *;
+
+.mfa-enrollment,
+.mfa-form {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.mfa-enrollment__instructions {
+	color: $app-muted;
+	font-size: $app-font-size-sm;
+	line-height: $app-line-height-ui;
+}
+
+.mfa-enrollment__qr {
+	display: grid;
+	place-items: center;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-panel;
+	border-radius: $app-radius;
+}
+
+.mfa-enrollment__qr img {
+	display: block;
+	width: min(100%, 15rem);
+	height: auto;
+}
+
+.mfa-enrollment__secret {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+	padding: $app-gap-sm;
+	background: $app-bg;
+	border-radius: $app-radius;
+}
+
+.mfa-enrollment__secret span {
+	color: $app-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-label;
+	text-transform: uppercase;
+}
+
+.mfa-enrollment__secret code {
+	min-width: 0;
+	overflow-wrap: anywhere;
+	color: $app-primary;
+}
+
+.mfa-form label {
+	display: grid;
+	gap: $app-gap-xs;
+	color: $app-primary;
+	font-weight: $app-font-weight-bold;
+}
+
+.mfa-form input:not([type="hidden"]) {
+	width: 100%;
+	height: $app-control-height;
+	padding: 0 $app-gap-md;
+	color: $app-primary;
+	background: $app-bg;
+	border: $app-border;
+	border-radius: $app-radius;
+	font: inherit;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: $app-letter-spacing-label;
+}

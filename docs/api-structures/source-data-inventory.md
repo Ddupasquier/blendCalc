@@ -27,8 +27,8 @@ coalescing, caching, request counts, and source-policy checks.
 | --- | --- | --- |
 | USDA FoodData Central | Exact GTIN, source food id/type, names, brand, ingredients, nutrients, units, serving size, household serving, package weight, market country, publication/availability/update/discontinued dates, and categories | `src/lib/server/products/sources/usdaBarcodeProduct.server.ts` |
 | Open Food Facts | Exact GTIN, names, brand, raw and recursive structured ingredients, ingredient analysis, additives, explicit allergens, explicit traces, labels, categories, nutrients, serving text/weight/volume, package quantity, package images, language, market countries, record/schema revisions, source timestamps, completeness, quality/obsolete state, and tag-source metadata | `src/lib/server/products/sources/openFoodFactsBarcodeProduct.server.ts` |
-| Canadian Nutrient File 2026 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/import_cnf_2026.mjs` |
-| UK CoFID 2021 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/import_cofid_2021.mjs` |
+| Canadian Nutrient File 2026 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/nutrition/import_cnf_2026.mjs` |
+| UK CoFID 2021 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/nutrition/import_cofid_2021.mjs` |
 | User nutrition-label OCR | Text and nutrient candidates from a user-provided label | Tesseract runs on the client; no value is accepted until the user confirms it; shared-submission images remain private evidence |
 | Community review | User-observed product identity, label values, serving information, ingredients, warnings, and images | Moderation may create a versioned canonical revision; evidence stays private and approved public images use separate storage |
 | GS1 Digital Link | Normalized GTIN and standards-safe identifier parsing | Used only to resolve identifiers unless a separately approved data source supplies product fields |
@@ -69,6 +69,13 @@ Missing values stay missing. A source omission is never converted to zero, and r
 from different foods or preparations are never merged only because their names are
 similar.
 
+When imported generic records declare an exact shared identifier, ingredient search may
+assemble one read result per field. The strongest evidenced category, serving,
+preparation detail, safety field, and canonical nutrient can come from different linked
+records. The result preserves each selected field source and every complete dataset
+attribution; it does not grant publication rights or alter the canonical catalog.
+Private unmatched user foods do not participate in this provider-record merge.
+
 ## Ownership Boundaries
 
 This inventory records provider capabilities and intake locations, not legal
@@ -93,6 +100,10 @@ may become canonical or public.
 2. Add a focused server-only module under `src/lib/server/products/sources/`.
 3. Use the shared request boundary; do not call `fetch` directly.
 4. Preserve raw observations and map fields independently.
-5. Add request-count, exact-match, missing-field, outage, cache, and legal-storage tests.
-6. Update this inventory and generated API structure samples; update the licensing,
+5. Translate the provider's identity vocabulary inside that provider adapter. Unknown
+   record types must remain unknown rather than inheriting a packaged or generic
+   fallback from shared application code.
+6. Add request-count, exact-match, unknown-identity, missing-field, outage, cache, and
+   legal-storage tests.
+7. Update this inventory and generated API structure samples; update the licensing,
    catalog, API-lineage, or schema document only when its owned contract also changes.

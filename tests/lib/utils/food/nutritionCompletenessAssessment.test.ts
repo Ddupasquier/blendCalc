@@ -5,6 +5,7 @@ import { NUTRIENT_IDS, type FoodItem } from "$lib/utils/food/types";
 const completeFood = {
 	fdcId: 1,
 	description: "Complete food",
+	foodIdentityType: "generic",
 	foodNutrients: [
 		[NUTRIENT_IDS.CALORIES, "Energy", "208", "KCAL", 100],
 		[NUTRIENT_IDS.FAT, "Total lipid (fat)", "204", "G", 1],
@@ -26,6 +27,7 @@ const resolvedFood = {
 	fdcId: 2,
 	description: "Oil",
 	sourceKey: "usda",
+	foodIdentityType: "generic",
 	foodNutrients: [
 		{
 			nutrientId: 1085,
@@ -102,6 +104,7 @@ describe("nutrition completeness assessment", () => {
 	it("uses the packaged profile when a barcode is present", () => {
 		const packagedFood = {
 			...completeFood,
+			foodIdentityType: "packaged" as const,
 			barcode: "00021130462506",
 		};
 
@@ -132,6 +135,7 @@ describe("nutrition completeness assessment", () => {
 	it("keeps the packaged profile for a custom food submitted for review", () => {
 		const pendingFood = {
 			...completeFood,
+			foodIdentityType: "packaged" as const,
 			barcode: "00021130462506",
 			customFood: true,
 			trustStatus: "pending-review" as const,
@@ -141,6 +145,19 @@ describe("nutrition completeness assessment", () => {
 			label: "Partial label",
 			profileKey: "us-packaged-label-v1",
 			missingCount: 1,
+		});
+	});
+
+	it("does not invent a completeness profile for unknown food identity", () => {
+		const assessment = assessNutritionCompleteness({
+			...completeFood,
+			foodIdentityType: "unknown",
+			dataType: "Future source type",
+		});
+
+		expect(assessment).toMatchObject({
+			status: "unavailable",
+			profileKey: null,
 		});
 	});
 });

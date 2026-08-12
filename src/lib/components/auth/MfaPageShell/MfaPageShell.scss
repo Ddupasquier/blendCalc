@@ -1,0 +1,77 @@
+@use "../../../../styles/variables" as *;
+
+.mfa-page {
+	display: grid;
+	place-items: center;
+	min-height: 100vh;
+	min-height: 100svh;
+	min-height: 100dvh;
+	padding: max($app-gap-md, env(safe-area-inset-top))
+		max($app-gap-sm, env(safe-area-inset-right))
+		max($app-gap-md, env(safe-area-inset-bottom))
+		max($app-gap-sm, env(safe-area-inset-left));
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+
+.mfa-card {
+	display: grid;
+	gap: $app-gap-md;
+	width: min(100%, 28rem);
+	padding: $app-gap-md;
+	background: $app-section-bg;
+	border: $app-border;
+	border-radius: $app-card-radius;
+}
+
+.mfa-card__header,
+.mfa-card__content {
+	display: grid;
+	gap: $app-gap-sm;
+}
+
+.mfa-card__brand,
+.mfa-card__header h1 {
+	color: $app-primary;
+	font-family: $app-font-family-display;
+	font-weight: $app-font-weight-heavy;
+}
+
+.mfa-card__brand {
+	width: fit-content;
+	text-decoration: none;
+}
+
+.mfa-card__header h1 {
+	font-size: $app-font-size-xl;
+}
+
+.mfa-card__header > p:not(.mfa-card__eyebrow) {
+	color: $app-muted;
+	line-height: $app-line-height-ui;
+}
+
+.mfa-card__eyebrow {
+	width: fit-content;
+	padding: 0.18rem $app-gap-sm;
+	color: $app-primary;
+	background: $app-accent;
+	border-radius: $app-radius-pill;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-heavy;
+	letter-spacing: $app-letter-spacing-label;
+	text-transform: uppercase;
+}
+
+@media (max-height: $app-breakpoint-height-compact) {
+	.mfa-page {
+		place-items: start center;
+		padding-block: max($app-gap-sm, env(safe-area-inset-top))
+			max($app-gap-sm, env(safe-area-inset-bottom));
+	}
+
+	.mfa-card {
+		gap: $app-gap-sm;
+		padding: $app-gap-sm;
+	}
+}

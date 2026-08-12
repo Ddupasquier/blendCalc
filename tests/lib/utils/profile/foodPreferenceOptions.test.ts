@@ -125,4 +125,17 @@ describe("food preference option sets", () => {
 		expect(options.dietaryRestrictions).toEqual([]);
 		expect(options.ingredients).toEqual([]);
 	});
+
+	it("does not hide reviewed allergen options as the database catalog grows", () => {
+		const records = Array.from({ length: 30 }, (_, index) => ({
+			category: "allergen" as const,
+			label: `Allergen ${index + 1}`,
+			normalized_value: `allergen-${index + 1}`,
+			source_values: [`allergen-${index + 1}`],
+			tag_id: `tag-${index + 1}`,
+			usage_count: 30 - index,
+		}));
+
+		expect(getFoodPreferenceOptionSets(records).allergens).toHaveLength(30);
+	});
 });

@@ -3,19 +3,23 @@ import { describe, expect, it } from "vitest";
 import { hasValidGtinCheckDigit } from "$lib/utils/barcode/barcode";
 import {
   getLocalQaCatalogBarcodes,
+  localQaPrivateFoods,
   localQaPersonas,
   localQaUsdaCatalogBarcodes,
-} from "../../scripts/lib/local_qa_personas.mjs";
+} from "../../scripts/lib/qa/local_qa_personas.mjs";
 
 const script = readFileSync(
-  "scripts/operations/manage_test_database.mjs",
+  "scripts/operations/database/manage_test_database.mjs",
   "utf8",
 );
 const tutorialUtility = readFileSync(
   "src/lib/utils/tutorial/tutorial.ts",
   "utf8",
 );
-const personas = readFileSync("scripts/lib/local_qa_personas.mjs", "utf8");
+const personas = readFileSync(
+  "scripts/lib/qa/local_qa_personas.mjs",
+  "utf8",
+);
 
 describe("local test database management", () => {
   it("applies pending migrations before seeding QA accounts", () => {
@@ -115,14 +119,24 @@ describe("local test database management", () => {
       expect(persona.lists.shopping).toHaveLength(40);
       expect(persona.savedRecipeKeys).toHaveLength(4);
       expect(persona.activeMixKey).toBe("morningGreen");
+      expect(persona.privateFoodKeys).toEqual(["greenTomatoPantryPreserve"]);
     }
+
+    expect(localQaPrivateFoods.greenTomatoPantryPreserve).toMatchObject({
+      description: "Green Tomato Pantry Preserve",
+      customFood: true,
+      foodIdentityType: "private-custom",
+      sourceKey: "custom",
+    });
   });
 
   it("seeds useful list, Saved, Mix, preference, and moderation state", () => {
     expect(script).toContain("loadTestCatalogFoods");
     expect(script).toContain("seedTestFoodLists");
     expect(script).toContain('userClient.rpc("place_user_food_list_items"');
-		expect(script).toContain("seedTestSavedRecipes");
+    expect(script).toContain("seedTestPrivateFoods");
+    expect(script).toContain('userClient.rpc("save_custom_food"');
+    expect(script).toContain("seedTestSavedRecipes");
     expect(script).toContain('userClient.rpc("save_saved_drink"');
     expect(script).toContain("seedTestMixPreferences");
     expect(script).toContain('userClient.rpc("save_mix_preferences"');

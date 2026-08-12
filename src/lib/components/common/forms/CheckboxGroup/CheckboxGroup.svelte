@@ -22,7 +22,7 @@
 	{#each options as option (option.id)}
 		<label class="checkbox-item" class:checkbox-item--selected={selected.includes(option.id)}>
 			<input
-				class="sr-only"
+				class="checkbox-item__control"
 				id={`${id}-${option.id}`}
 				{name}
 				type="checkbox"

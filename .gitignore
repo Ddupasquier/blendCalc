@@ -50,6 +50,7 @@ pnpm-debug.log*
 /scripts/output/
 
 # Local QA task tracker and screenshot references
+/docs/work-queue.md
 /docs/qa-tasks.md
 /docs/QA/*.md
 /docs/QA/assets/

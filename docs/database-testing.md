@@ -38,14 +38,14 @@ baseline records without moving a tester's existing list items. Use
 
 | Persona | Email | Deterministic state |
 |---|---|---|
-| Populated | `qa-user@blendcalc.local` | 60 Fridge items, 40 Shopping items, 4 Saved Recipes, one active 10-food Mix, tutorial complete |
+| Populated | `qa-user@blendcalc.local` | 60 Fridge items, 40 Shopping items, one private food, 4 Saved Recipes, one active 10-food Mix, tutorial complete |
 | Warnings | `qa-preferences@blendcalc.local` | Vegan and gluten-free restrictions; peanut and shellfish allergies; 7 foods covering beef, shrimp, dairy, peanut, wheat/soy, egg, and tree nuts |
 | Empty | `qa-empty@blendcalc.local` | No list items, Saved Recipes, or Mix state; tutorial complete |
 | Onboarding | `qa-onboarding@blendcalc.local` | Guided tour pending, 10 Fridge foods, `QA Morning Green`, and an active Mix so every tour target exists |
 | Moderator | `qa-moderator@blendcalc.local` | Moderator claim, 6 list items, one Saved Recipe, and access to two deterministic catalog-review cases |
 | Admin | `qa-admin@blendcalc.local` | Admin claim, 6 list items, one Saved Recipe, moderation access, and data-health access |
 | Developer | `qa-developer@blendcalc.local` | Developer claim, 6 list items, one Saved Recipe, full privileged capability coverage, and protected-account boundaries |
-| Browser workers 1–3 | `qa-browser-1@blendcalc.local` through `qa-browser-3@blendcalc.local` | Equivalent populated state isolated by Playwright worker; not intended for manual QA |
+| Browser workers 1–3 | `qa-browser-1@blendcalc.local` through `qa-browser-3@blendcalc.local` | Equivalent populated state, including one private food, isolated by Playwright worker; not intended for manual QA |
 
 The populated account includes `QA Morning Green` (10 ingredients), `QA Berry Repeat`,
 `QA Export Berry Mix`, and `QA Server Load`. The Saved view can therefore test collapsed
@@ -104,6 +104,10 @@ it does not share mutable state with browser jobs or another workflow run.
   filtering, movement, and list-performance QA.
   `Tomatoes, Green, Raw` preserves USDA SR Legacy identity `170456` and provides a
   deterministic multi-word partial-search result for `green tomat`.
+- The populated and browser-worker accounts each own the private custom fixture
+  `Green Tomato Pantry Preserve`, so combined search can prove that account-only foods,
+  approved catalog foods, and USDA-backed catalog records participate while every
+  parallel worker retains an independently owned record.
 - Focused local catalog products include normalized nutrients, servings, categories,
   ingredients, allergen declarations, traces, package metadata, and field-level
   provenance. USDA snapshots normalize only reported nutrient values and exact

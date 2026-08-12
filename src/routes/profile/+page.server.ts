@@ -25,7 +25,7 @@ import {
 	getServingSizeGrams,
 	normalizeServingUnit,
 	normalizeUnitSystem,
-	parsePreferenceList,
+	parseRepeatedFoodPreferenceValues,
 	parsePrioritizedNutrientIds,
 	type FoodPreferenceFormValues,
 } from "$lib/utils/profile/foodPreferences";
@@ -52,6 +52,8 @@ import {
 import {
 	getRegulatoryRegionOptions,
 } from "$lib/server/profile/profilePageData.server";
+import { getAppReferenceCatalog } from "$lib/server/reference/appReferenceCatalog.server";
+import { getDefaultMixFields } from "$lib/utils/food/reference/appReferenceCatalog";
 
 const PROFILE_TEXT_FORM_MAX_BYTES = 64 * 1024;
 const PROFILE_AVATAR_FORM_MAX_BYTES = PROFILE_AVATAR_MAX_BYTES + 1024 * 1024;
@@ -75,8 +77,10 @@ const getFoodPreferenceFormValues = (
 ): FoodPreferenceFormValues => {
 	return {
 		unitSystem: normalizeUnitSystem(formData.get("unitSystem")),
-		allergens: parsePreferenceList(formData.get("allergens")),
-		dietaryRestrictions: parsePreferenceList(formData.get("dietaryRestrictions")),
+		allergens: parseRepeatedFoodPreferenceValues(formData.getAll("allergens")),
+		dietaryRestrictions: parseRepeatedFoodPreferenceValues(
+			formData.getAll("dietaryRestrictions"),
+		),
 		prioritizedNutrientIds: parsePrioritizedNutrientIds(
 			formData.getAll("prioritizedNutrientIds"),
 		),
@@ -179,14 +183,30 @@ export const actions: Actions = {
 	},
 	saveFoodPreferences: async ({ locals, request }) => {
 		const user = await getAuthenticatedUser(locals);
-		const foodSafetyPolicy = await getFoodSafetyPolicy();
-		const regulatoryRegionOptions = getRegulatoryRegionOptions(foodSafetyPolicy);
 		const values = getFoodPreferenceFormValues(
 			await readLimitedFormData(request, PROFILE_TEXT_FORM_MAX_BYTES),
 		);
+		let regulatoryRegionOptions: ReturnType<typeof getRegulatoryRegionOptions>;
+		let allowedPriorityNutrientIds: number[];
+		try {
+			const [foodSafetyPolicy, appReferenceCatalog] = await Promise.all([
+				getFoodSafetyPolicy(),
+				getAppReferenceCatalog(),
+			]);
+			regulatoryRegionOptions = getRegulatoryRegionOptions(foodSafetyPolicy);
+			allowedPriorityNutrientIds = getDefaultMixFields(appReferenceCatalog).map(
+				(nutrient) => nutrient.id,
+			);
+		} catch {
+			return fail(503, {
+				foodPreferencesError:
+					"The latest food-preference choices could not be checked. Try again in a moment.",
+				foodPreferenceValues: values,
+			});
+		}
 		const validationError = getFoodPreferencesValidationError(
 			values,
-			regulatoryRegionOptions,
+			{ regulatoryRegionOptions, allowedPriorityNutrientIds },
 		);
 
 		if (validationError) {

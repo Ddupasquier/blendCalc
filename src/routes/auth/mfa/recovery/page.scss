@@ -1,0 +1,6 @@
+@use "../../../../styles/variables" as *;
+
+.mfa-recovery {
+	display: grid;
+	gap: $app-gap-sm;
+}

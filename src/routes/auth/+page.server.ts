@@ -21,6 +21,7 @@ import {
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 import { trackServerAppInteraction } from "$lib/server/analytics/appInteractionTracking.server";
 import { APP_INTERACTION_METRICS } from "$lib/utils/analytics/appInteractionMetrics";
+import { env as publicEnvironment } from "$env/dynamic/public";
 
 const AUTH_FORM_MAX_BYTES = 32 * 1024;
 
@@ -31,18 +32,31 @@ const getEmailAuthFields = async (request: Request) => {
 	const passwordConfirmation = String(
 		formData.get("passwordConfirmation") ?? "",
 	);
+	const captchaToken = String(formData.get("captchaToken") ?? "").trim();
 	const next = getSafeAuthNextPath(formData.get("next"));
 
-	return { email, password, passwordConfirmation, next };
+	return { email, password, passwordConfirmation, captchaToken, next };
 };
 
 const getEmailField = async (request: Request) => {
 	const formData = await readLimitedFormData(request, AUTH_FORM_MAX_BYTES);
 	return {
 		email: String(formData.get("email") ?? "").trim().toLowerCase(),
+		captchaToken: String(formData.get("captchaToken") ?? "").trim(),
 		next: getSafeAuthNextPath(formData.get("next")),
 	};
 };
+
+const getTurnstileSiteKey = () =>
+	publicEnvironment.PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
+
+const getCaptchaValidationError = (captchaToken: string) =>
+	getTurnstileSiteKey() && !captchaToken
+		? "Complete the security check and try again."
+		: "";
+
+const isCaptchaAuthError = (code: string | undefined) =>
+	Boolean(code?.toLocaleLowerCase().includes("captcha"));
 
 const getEmailValidationError = (email: string) => {
 	if (!email) return "Enter your email address.";
@@ -83,15 +97,19 @@ export const load: PageServerLoad = async ({ locals, request, url }) => {
 
 	return {
 		authError: url.searchParams.get("error") ?? "",
+		turnstileSiteKey: getTurnstileSiteKey(),
 		next,
 	};
 };
 
 export const actions: Actions = {
 	emailSignIn: async ({ locals, request, url, cookies }) => {
-		const { email, password, next } = await getEmailAuthFields(request);
+		const { email, password, captchaToken, next } =
+			await getEmailAuthFields(request);
 		redirectToCanonicalAuthPage(request, url, next);
-		const validationError = getEmailSignInValidationError(email, password);
+		const validationError =
+			getEmailSignInValidationError(email, password) ||
+			getCaptchaValidationError(captchaToken);
 
 		if (validationError) {
 			return fail(400, {
@@ -105,11 +123,14 @@ export const actions: Actions = {
 		const { data, error } = await locals.supabase.auth.signInWithPassword({
 			email,
 			password,
+			options: captchaToken ? { captchaToken } : undefined,
 		});
 
 		if (error) {
 			return fail(400, {
-				message: "Email or password was not accepted.",
+				message: isCaptchaAuthError(error.code)
+					? "The security check was not accepted. Try it again."
+					: "Email or password was not accepted.",
 				email,
 				next,
 				mode: "signIn" as const,
@@ -148,12 +169,13 @@ export const actions: Actions = {
 		throw redirect(303, next);
 	},
 	emailSignUp: async ({ locals, request, url, cookies }) => {
-		const { email, password, passwordConfirmation, next } =
+		const { email, password, passwordConfirmation, captchaToken, next } =
 			await getEmailAuthFields(request);
 		redirectToCanonicalAuthPage(request, url, next);
 		const validationError =
 			getEmailValidationError(email) ||
-			getPasswordValidationMessage(password, passwordConfirmation, email);
+			getPasswordValidationMessage(password, passwordConfirmation, email) ||
+			getCaptchaValidationError(captchaToken);
 
 		if (validationError) {
 			return fail(400, {
@@ -175,6 +197,7 @@ export const actions: Actions = {
 					password_policy_version: PASSWORD_POLICY_VERSION,
 				},
 				emailRedirectTo: redirectTo,
+				...(captchaToken ? { captchaToken } : {}),
 			},
 		});
 
@@ -186,8 +209,9 @@ export const actions: Actions = {
 				status: error.status,
 			});
 			return fail(400, {
-				message:
-					error.code === "weak_password"
+				message: isCaptchaAuthError(error.code)
+					? "The security check was not accepted. Try it again."
+					: error.code === "weak_password"
 						? "That password was rejected as too weak. Choose a longer, unique passphrase."
 						: "Unable to create that account. Try again in a moment.",
 				email,
@@ -214,12 +238,15 @@ export const actions: Actions = {
 		};
 	},
 	requestPasswordReset: async ({ locals, request, url, cookies }) => {
-		const { email, next } = await getEmailField(request);
+		const { email, captchaToken, next } = await getEmailField(request);
 		redirectToCanonicalAuthPage(request, url, next);
 
-		if (!email || !email.includes("@")) {
+		const validationError =
+			getEmailValidationError(email) ||
+			getCaptchaValidationError(captchaToken);
+		if (validationError) {
 			return fail(400, {
-				message: "Enter a valid email address.",
+				message: validationError,
 				email,
 				next,
 			});
@@ -237,6 +264,7 @@ export const actions: Actions = {
 		);
 		const { error } = await locals.supabase.auth.resetPasswordForEmail(email, {
 			redirectTo,
+			...(captchaToken ? { captchaToken } : {}),
 		});
 
 		if (error) {

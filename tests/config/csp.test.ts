@@ -33,6 +33,18 @@ describe("content security policy", () => {
 		expect(configSource).toContain("'wasm-unsafe-eval'");
 	});
 
+	it("allows only the official Turnstile origin for the Auth challenge", () => {
+		const configSource = readFileSync("svelte.config.js", "utf8");
+
+		expect(createConnectSources("production")).toContain(
+			"https://challenges.cloudflare.com",
+		);
+		expect(configSource).toContain(
+			"'frame-src': ['self', 'https://challenges.cloudflare.com']",
+		);
+		expect(configSource).toContain("'https://challenges.cloudflare.com'");
+	});
+
 	it("allows the local Supabase stack only in test mode", () => {
 		expect(createConnectSources("test")).toContain("http://127.0.0.1:54321");
 		expect(createConnectSources("test")).toContain("ws://127.0.0.1:54321");

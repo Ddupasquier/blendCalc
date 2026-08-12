@@ -4,8 +4,6 @@
 	display: grid;
 	gap: $app-gap-sm;
 	min-width: 0;
-	padding-block: $app-gap-sm;
-	border-block-start: 1px solid $app-shell-border-subtle;
 }
 
 .preference-editor-card__heading h3 {
@@ -22,23 +20,36 @@
 	line-height: $app-line-height-body;
 }
 
-.preference-add-flow,
-.preference-picker,
-.preference-search {
+.preference-reviewed-options,
+.preference-custom-entry,
+.preference-custom-values {
 	display: grid;
 	gap: $app-gap-xs;
 	min-width: 0;
 }
 
-.preference-add-flow__label,
 .preference-empty {
 	margin: 0;
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 }
 
-.preference-picker__controls,
-.preference-search__controls {
+.preference-reviewed-options {
+	padding: 0;
+	border: 0;
+}
+
+.preference-reviewed-options legend,
+.preference-custom-values > strong {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-label;
+	line-height: $app-line-height-ui;
+	text-transform: uppercase;
+}
+
+.preference-custom-entry__controls {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) auto;
 	align-items: end;
@@ -46,56 +57,21 @@
 	min-width: 0;
 }
 
-.preference-add-flow__divider {
-	position: relative;
-	display: grid;
-	place-items: center;
-}
-
-.preference-add-flow__divider::before {
-	content: "";
-	position: absolute;
-	inset-inline: 0;
-	top: 50%;
-	border-top: 1px solid $app-shell-border-subtle;
-}
-
-.preference-add-flow__divider span {
-	position: relative;
-	padding-inline: $app-gap-xs;
-	color: $app-shell-text-muted;
-	background: $app-shell-surface-panel;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-bold;
-	letter-spacing: $app-letter-spacing-label;
-	text-transform: uppercase;
-}
-
-.preference-divider {
+.preference-custom-values :global(.pill-row) {
 	margin: 0;
-	border: 0;
-	border-top: 1px solid $app-shell-border-subtle;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.preference-editor-card {
-		gap: $app-gap-xs;
-		padding-block: $app-gap-xs;
-	}
-
-	.preference-picker__controls,
-	.preference-search__controls {
+	.preference-custom-entry__controls {
 		grid-template-columns: 1fr;
 	}
 
-	.preference-picker__controls > :global(.rounded-action-button),
-	.preference-search__controls > :global(.rounded-action-button) {
+	.preference-custom-entry__controls > :global(.rounded-action-button) {
 		width: 100%;
 	}
 
 	.preference-editor-card__heading h3,
 	.preference-editor-card__heading p,
-	.preference-add-flow__label,
 	.preference-empty {
 		font-size: $app-font-size-xs;
 	}

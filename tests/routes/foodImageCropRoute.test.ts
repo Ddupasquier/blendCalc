@@ -1,14 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  getUserAppRole: vi.fn(),
+  requireModeratorApiAccess: vi.fn(),
   updateFoodImageAssetPlacement: vi.fn(),
 }));
 
-vi.mock("$lib/utils/moderation/moderation", () => ({
-  getUserAppRole: mocks.getUserAppRole,
-  isModerationAppRole: (role: string | null) =>
-    role === "moderator" || role === "admin" || role === "developer",
+vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
+  requireModeratorApiAccess: mocks.requireModeratorApiAccess,
 }));
 
 vi.mock("$lib/server/products/foodImages.server", () => ({
@@ -72,7 +70,10 @@ describe("food image crop route", () => {
   it.each(["moderator", "admin", "developer"] as const)(
     "saves valid %s placement through the server",
     async (role) => {
-      mocks.getUserAppRole.mockResolvedValue(role);
+      mocks.requireModeratorApiAccess.mockResolvedValue({
+        user: { id: `${role}-id` },
+        role,
+      });
       mocks.updateFoodImageAssetPlacement.mockResolvedValue(savedImage);
 
       const response = await PATCH(createEvent(`${role}-id`) as never);
@@ -101,6 +102,7 @@ describe("food image crop route", () => {
   );
 
   it("blocks placement changes without a signed-in user", async () => {
+    mocks.requireModeratorApiAccess.mockRejectedValue({ status: 401 });
     await expect(PATCH(createEvent(null) as never)).rejects.toMatchObject({
       status: 401,
     });
@@ -108,7 +110,10 @@ describe("food image crop route", () => {
   });
 
   it("rejects rotations outside supported quarter turns", async () => {
-    mocks.getUserAppRole.mockResolvedValue("moderator");
+    mocks.requireModeratorApiAccess.mockResolvedValue({
+      user: { id: "moderator-id" },
+      role: "moderator",
+    });
 
     await expect(
       PATCH(

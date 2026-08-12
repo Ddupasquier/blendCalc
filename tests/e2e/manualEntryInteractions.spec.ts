@@ -1,4 +1,148 @@
 import { expect, test, waitForAppReady } from "./support/browserTest";
+import type { Locator } from "@playwright/test";
+import { createAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
+import {
+	readApprovedManualEntryNutrientCatalog,
+	type ExpectedManualEntryNutrientGroup,
+} from "./support/localManualEntryNutrientCatalog";
+
+const canonicalCategoryDisplayTestName = "Canonical Category Display Test";
+const canonicalCategoryDisplayTestNameKey =
+	canonicalCategoryDisplayTestName.toLocaleLowerCase("en-US");
+const escapeRegularExpression = (value: string) =>
+	value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const cleanUpCanonicalCategoryDisplayTestFood = async (
+	parallelWorkerIndex: number,
+) => {
+	const supabase = await createAuthenticatedLocalQaDatabaseClient(
+		parallelWorkerIndex,
+	);
+
+	try {
+		const { data: customFoods, error: customFoodsError } = await supabase
+			.from("custom_foods")
+			.select("id, fdc_id")
+			.eq("name_key", canonicalCategoryDisplayTestNameKey);
+		if (customFoodsError) throw customFoodsError;
+
+		for (const customFood of customFoods ?? []) {
+			for (const listType of ["fridge", "shopping"] as const) {
+				const { error: listRemovalError } = await supabase.rpc(
+					"remove_user_food_list_item",
+					{ p_list_type: listType, p_fdc_id: customFood.fdc_id },
+				);
+				if (listRemovalError) throw listRemovalError;
+			}
+		}
+
+		if ((customFoods ?? []).length > 0) {
+			const { error: customFoodRemovalError } = await supabase
+				.from("custom_foods")
+				.delete()
+				.in(
+					"id",
+					(customFoods ?? []).map((customFood) => customFood.id),
+				);
+			if (customFoodRemovalError) throw customFoodRemovalError;
+		}
+	} finally {
+		await supabase.auth.signOut({ scope: "local" });
+	}
+};
+
+const readRenderedManualEntryNutrientGroups = async (
+	dialog: Locator,
+) =>
+	dialog.locator(".manual-nutrients__group").evaluateAll((groupElements) =>
+		groupElements.map((groupElement) => {
+			const titleElement = groupElement.querySelector(
+				".collapsible-section__title",
+			);
+			const title = Array.from(titleElement?.childNodes ?? [])
+				.find((node) => node.nodeType === Node.TEXT_NODE)
+				?.textContent?.trim();
+			const fields = Array.from(
+				groupElement.querySelectorAll<HTMLLabelElement>(
+					".manual-nutrients__fields label",
+				),
+			).map((labelElement) => {
+				const input = labelElement.querySelector("input");
+				const label = labelElement
+					.querySelector("span")
+					?.textContent?.replace(/\s*\*\s*$/, "")
+					.replace(/\s+/g, " ")
+					.trim();
+				return {
+					label: label ?? "",
+					required: input?.getAttribute("aria-required") === "true",
+				};
+			});
+
+			return { title: title ?? "", fields };
+		}),
+	);
+
+const expectRenderedManualEntryNutrientGroups = async (
+	dialog: Locator,
+	expectedGroups: ExpectedManualEntryNutrientGroup[],
+) => {
+	const renderedGroups = dialog.locator(".manual-nutrients__group");
+	await expect(renderedGroups).toHaveCount(expectedGroups.length);
+
+	for (let index = 0; index < expectedGroups.length; index += 1) {
+		const renderedGroup = renderedGroups.nth(index);
+		const isOpen = await renderedGroup.evaluate(
+			(element) => (element as HTMLDetailsElement).open,
+		);
+		if (!isOpen) {
+			await renderedGroup.locator("summary").click();
+			await expect(renderedGroup).toHaveAttribute("open", "");
+		}
+	}
+
+	await expect.poll(
+		() => readRenderedManualEntryNutrientGroups(dialog),
+	).toEqual(expectedGroups);
+};
+
+const findSavedIngredientCard = async (
+	page: Parameters<typeof waitForAppReady>[0],
+	foodId: number,
+) => {
+	const card = page.locator(`li[data-food-id="${foodId}"]`);
+	for (let attempt = 0; attempt < 10; attempt += 1) {
+		if (await card.isVisible().catch(() => false)) return card;
+		const loadMoreButton = page.getByRole("button", { name: "Load more" });
+		if (!(await loadMoreButton.isVisible().catch(() => false))) break;
+		await loadMoreButton.click();
+		await expect(loadMoreButton).not.toHaveAttribute("aria-busy", "true");
+	}
+	await expect(card).toBeVisible();
+	return card;
+};
+
+const expectNutritionCategory = async (
+	page: Parameters<typeof waitForAppReady>[0],
+	expectedCategory: string,
+) => {
+	const moreAboutFoodSummary = page
+		.locator("summary")
+		.filter({ hasText: "More about this food" });
+	await expect(moreAboutFoodSummary).toBeVisible();
+	await moreAboutFoodSummary.click();
+	const productDetailsSummary = page
+		.locator("summary")
+		.filter({ hasText: "Product details" });
+	await expect(productDetailsSummary).toBeVisible();
+	await productDetailsSummary.click();
+	const categoryValue = page
+		.locator("dt")
+		.filter({ hasText: /^Category$/ })
+		.locator("xpath=following-sibling::dd[1]");
+	await expect(categoryValue).toContainText(expectedCategory);
+	await expect(categoryValue).not.toContainText("Custom Ingredient");
+};
 
 test("manual entry defers required warnings until a forward attempt", async ({
 	page,
@@ -62,4 +206,321 @@ test("the DB-backed category picker searches, selects, and restores focus", asyn
 	await page.keyboard.press("Escape");
 	await expect(categoryTrigger).toHaveAttribute("aria-expanded", "false");
 	await expect(categoryTrigger).toBeFocused();
+});
+
+test("the category picker remains keyboard-operable and unclipped at 200% zoom", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"The deterministic 200%-zoom reflow check runs once in Chromium.",
+	);
+	let releaseInitialCategoryRequest = () => {};
+	const initialCategoryRequestMayContinue = new Promise<void>((resolve) => {
+		releaseInitialCategoryRequest = resolve;
+	});
+	let heldInitialCategoryRequest = false;
+	await page.route("**/api/food-categories?**", async (route) => {
+		if (!heldInitialCategoryRequest) {
+			heldInitialCategoryRequest = true;
+			await initialCategoryRequestMayContinue;
+		}
+		await route.continue();
+	});
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto("/ingredients/fridge/manual-entry");
+	await waitForAppReady(page);
+	await page.evaluate(() => {
+		document.documentElement.style.zoom = "2";
+	});
+
+	const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+	await dialog.getByLabel("Food name").fill("Chocolate Dough Protein Bar");
+	const brandInput = dialog.getByLabel("Brand");
+	const categoryTrigger = dialog.getByRole("button", { name: "Category" });
+	await expect(categoryTrigger).toHaveCount(1);
+	await expect(categoryTrigger).toHaveAttribute("aria-busy", "true");
+	await expect(categoryTrigger.locator(".loading-spinner")).toHaveCount(1);
+	releaseInitialCategoryRequest();
+	await expect(categoryTrigger).toBeEnabled();
+	await expect(categoryTrigger).toHaveAttribute("aria-expanded", "false");
+	await brandInput.focus();
+	await page.keyboard.press("Tab");
+	await expect(categoryTrigger).toBeFocused();
+	await page.keyboard.press("Enter");
+	await expect(categoryTrigger).toHaveAttribute("aria-expanded", "true");
+
+	const categorySearch = dialog.getByRole("searchbox", {
+		name: "Search categories",
+	});
+	await expect(categorySearch).toBeFocused();
+	await categorySearch.fill("protein bar");
+	await expect(
+		dialog.getByRole("status", { name: "Searching categories" }),
+	).toBeHidden({ timeout: 20_000 });
+	const categoryResult = dialog
+		.getByRole("button", { name: "Protein Bars", exact: true })
+		.first();
+	await expect(categoryResult).toBeVisible();
+	await page.keyboard.press("Tab");
+	await expect(categoryResult).toBeFocused();
+	const categoryResultBounds = await categoryResult.boundingBox();
+	expect(categoryResultBounds).not.toBeNull();
+	expect(categoryResultBounds!.height).toBeGreaterThanOrEqual(88);
+	await page.keyboard.press("Enter");
+	await expect(categoryTrigger).toContainText("Protein Bars");
+	await expect(categoryTrigger).toBeFocused();
+
+	await page.keyboard.press("Enter");
+	await page.keyboard.press("Escape");
+	await expect(categoryTrigger).toHaveAttribute("aria-expanded", "false");
+	await expect(categoryTrigger).toBeFocused();
+
+	await page.keyboard.press("Enter");
+	await expect(categorySearch).toBeFocused();
+	const pickerPanel = dialog.locator(".food-category-picker__panel");
+	const pickerControls = [categoryTrigger, categorySearch];
+	for (const control of pickerControls) {
+		const bounds = await control.boundingBox();
+		expect(bounds).not.toBeNull();
+		expect(bounds!.height).toBeGreaterThanOrEqual(88);
+	}
+	const pickerLayout = await pickerPanel.evaluate((panel) => {
+		const panelBounds = panel.getBoundingClientRect();
+		const controls = Array.from(
+			panel.querySelectorAll<HTMLElement>("input, button"),
+		).map((control) => {
+			const bounds = control.getBoundingClientRect();
+			return {
+				left: bounds.left,
+				right: bounds.right,
+			};
+		});
+		const textBlocks = Array.from(
+			panel.querySelectorAll<HTMLElement>("h3, small, p, button"),
+		)
+			.filter(
+				(element) =>
+					!element.classList.contains("sr-only")
+					&& element.getClientRects().length > 0
+					&& element.clientWidth > 1,
+			)
+			.map((element) => ({
+				clientWidth: element.clientWidth,
+				scrollWidth: element.scrollWidth,
+			}));
+		return {
+			controls,
+			documentClientWidth: document.documentElement.clientWidth,
+			documentScrollWidth: document.documentElement.scrollWidth,
+			panelLeft: panelBounds.left,
+			panelRight: panelBounds.right,
+			textBlocks,
+		};
+	});
+	expect(pickerLayout.documentScrollWidth).toBeLessThanOrEqual(
+		pickerLayout.documentClientWidth,
+	);
+	for (const control of pickerLayout.controls) {
+		expect(control.left).toBeGreaterThanOrEqual(pickerLayout.panelLeft - 1);
+		expect(control.right).toBeLessThanOrEqual(pickerLayout.panelRight + 1);
+	}
+	for (const textBlock of pickerLayout.textBlocks) {
+		expect(textBlock.scrollWidth).toBeLessThanOrEqual(textBlock.clientWidth + 1);
+	}
+});
+
+test("manual entry renders every approved DB nutrient group and field", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"The complete DB-to-browser nutrient catalog comparison runs once in Chromium.",
+	);
+	const baseUrl = new URL(
+		String(testInfo.project.use.baseURL ?? "http://localhost:5174"),
+	);
+	test.skip(
+		!["127.0.0.1", "localhost"].includes(baseUrl.hostname),
+		"The authoritative catalog comparison is restricted to disposable local infrastructure.",
+	);
+
+	const supabase = await createAuthenticatedLocalQaDatabaseClient(
+		testInfo.parallelIndex,
+	);
+	let nutrientCatalog;
+	try {
+		nutrientCatalog = await readApprovedManualEntryNutrientCatalog(supabase);
+	} finally {
+		await supabase.auth.signOut({ scope: "local" });
+	}
+
+	expect(nutrientCatalog.macros).toHaveLength(3);
+	expect(nutrientCatalog.extended).toHaveLength(7);
+	expect(
+		nutrientCatalog.macros.flatMap((group) => group.fields),
+	).toHaveLength(13);
+	expect(
+		nutrientCatalog.extended.flatMap((group) => group.fields),
+	).toHaveLength(55);
+
+	await page.goto("/ingredients/fridge/manual-entry");
+	await waitForAppReady(page);
+	const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+	await dialog.getByLabel("Food name").fill("DB Nutrient Group Test");
+	await dialog.getByRole("button", { name: "Category" }).click();
+	const categorySearch = dialog.getByRole("searchbox", {
+		name: "Search categories",
+	});
+	await categorySearch.fill("protein bar");
+	await expect(
+		dialog.getByRole("status", { name: "Searching categories" }),
+	).toBeHidden({ timeout: 20_000 });
+	await dialog
+		.getByRole("button", { name: "Protein Bars", exact: true })
+		.first()
+		.click();
+	await dialog.getByRole("button", { name: "Continue" }).click();
+	await dialog.getByLabel("Weight (g)").fill("100");
+	await expect(dialog.getByLabel("Label includes volume")).not.toBeChecked();
+	await dialog.getByRole("button", { name: "Continue" }).click();
+
+	await expectRenderedManualEntryNutrientGroups(
+		dialog,
+		nutrientCatalog.macros,
+	);
+	await expect(
+		dialog.locator(".manual-nutrients__group", { hasText: "Mineral details" }),
+	).toHaveCount(0);
+	await expect(dialog.getByLabel(/^Total Sugars \(g\)/)).toHaveCount(1);
+
+	for (const requiredField of nutrientCatalog.macros
+		.flatMap((group) => group.fields)
+		.filter((field) => field.required)) {
+		await dialog
+			.getByLabel(
+				new RegExp(`^${escapeRegularExpression(requiredField.label)}`),
+			)
+			.fill("1");
+	}
+	await dialog.getByRole("button", { name: "Continue" }).click();
+	await expect(dialog.getByRole("tab", { name: "Extended" })).toHaveAttribute(
+		"aria-current",
+		"step",
+	);
+	await expectRenderedManualEntryNutrientGroups(
+		dialog,
+		nutrientCatalog.extended,
+	);
+	await expect(dialog.getByLabel(/^Total Sugars \(g\)/)).toHaveCount(0);
+});
+
+test("canonical categories persist across saved cards and nutrition details", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"The disposable write-and-cleanup corpus runs once in Chromium.",
+	);
+	const baseUrl = new URL(
+		String(testInfo.project.use.baseURL ?? "http://localhost:5174"),
+	);
+	test.skip(
+		!["127.0.0.1", "localhost"].includes(baseUrl.hostname),
+		"The write-and-cleanup corpus is restricted to disposable local infrastructure.",
+	);
+	test.slow();
+	await cleanUpCanonicalCategoryDisplayTestFood(testInfo.parallelIndex);
+
+	try {
+		await page.goto("/ingredients/fridge");
+		await waitForAppReady(page);
+		const existingFoods = [
+			{
+				fdcId: 9_100_001,
+				name: "Strawberry Jelly, Strawberry",
+				category: "Jams",
+			},
+			{
+				fdcId: 9_100_003,
+				name: "Gochu Jang Hot & Sweet Chili Sauce",
+				category: "Dips and Salsa",
+			},
+		];
+
+		for (const existingFood of existingFoods) {
+			const card = await findSavedIngredientCard(page, existingFood.fdcId);
+			await expect(card.locator("small")).toHaveText(existingFood.category);
+			await card
+				.getByRole("button", { name: `Preview ${existingFood.name}` })
+				.click();
+			await expect(page).toHaveURL(
+				new RegExp(
+					`/ingredients/fridge/nutrition/${existingFood.fdcId}(?:\\?actions=hide)?$`,
+				),
+			);
+			await expectNutritionCategory(page, existingFood.category);
+			await page.getByRole("button", { name: "Back to ingredients" }).click();
+			await expect(page).toHaveURL(/\/ingredients\/fridge$/);
+		}
+
+		await page.goto("/ingredients/fridge/manual-entry");
+		await waitForAppReady(page);
+		const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+		await dialog.getByLabel("Food name").fill(canonicalCategoryDisplayTestName);
+		await dialog.getByRole("button", { name: "Category" }).click();
+		const categorySearch = dialog.getByRole("searchbox", {
+			name: "Search categories",
+		});
+		await categorySearch.fill("protein bar");
+		await expect(
+			dialog.getByRole("status", { name: "Searching categories" }),
+		).toBeHidden({ timeout: 20_000 });
+		await dialog
+			.getByRole("button", { name: "Protein Bars", exact: true })
+			.first()
+			.click();
+		await dialog.getByRole("button", { name: "Continue" }).click();
+		await dialog.getByLabel("Weight (g)").fill("50");
+		await dialog.getByRole("button", { name: "Continue" }).click();
+
+		const requiredNutrients = [
+			{ label: /^Calories \(kcal\)/, value: "200" },
+			{ label: /^Total Fat \(g\)/, value: "5" },
+			{ label: /^Total Carbohydrates \(g\)/, value: "20" },
+			{ label: /^Protein \(g\)/, value: "10" },
+			{ label: /^Sodium.*\(mg\)/, value: "100" },
+		];
+		for (const nutrient of requiredNutrients) {
+			await dialog.getByLabel(nutrient.label).fill(nutrient.value);
+		}
+		await dialog.getByRole("button", { name: "Continue" }).click();
+		await dialog.getByRole("button", { name: "Continue" }).click();
+		await dialog.getByRole("button", { name: "Add Ingredient" }).click();
+		await expect(page).toHaveURL(
+			/\/ingredients\/fridge\/nutrition\/-\d+(?:\?actions=hide)?$/,
+		);
+		await expect(
+			page.getByRole("heading", {
+				name: canonicalCategoryDisplayTestName,
+				exact: true,
+			}),
+		).toBeVisible();
+		await expect(dialog).toBeHidden();
+
+		await page.reload();
+		await waitForAppReady(page);
+		await expectNutritionCategory(page, "Protein Bars");
+		await page.getByRole("button", { name: "Back to ingredients" }).click();
+		await expect(page).toHaveURL(/\/ingredients\/fridge$/);
+		const savedCard = page
+			.locator("li[data-food-id]")
+			.filter({ hasText: canonicalCategoryDisplayTestName })
+			.first();
+		await expect(savedCard).toBeVisible();
+		await expect(savedCard.locator("small")).toHaveText("Protein Bars");
+		await expect(savedCard).not.toContainText("Custom Ingredient");
+	} finally {
+		await cleanUpCanonicalCategoryDisplayTestFood(testInfo.parallelIndex);
+	}
 });

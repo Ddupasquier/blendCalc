@@ -19,6 +19,11 @@
 		submissionIntent = "catalog_share",
 		catalogSubmissionOnly = false,
 	}: ManualEntrySheetProps = $props();
+	let closingAfterSuccessfulCreate = $state(false);
+
+	$effect(() => {
+		if (!open) closingAfterSuccessfulCreate = false;
+	});
 
 	const handleClose = () => {
 		clearManualEntryDraft();
@@ -26,13 +31,19 @@
 	};
 
 	const handleCreate: ManualEntryCreateHandler = async (food, context) => {
-		handleClose();
-		await onCreate(food, context);
+		closingAfterSuccessfulCreate = true;
+		clearManualEntryDraft();
+		try {
+			await onCreate(food, context);
+		} catch (error) {
+			closingAfterSuccessfulCreate = false;
+			throw error;
+		}
 	};
 </script>
 
 <BottomSheet
-	{open}
+	open={open && !closingAfterSuccessfulCreate}
 	title={submissionIntent === "catalog_correction"
 		? "Correct Product Information"
 		: "Enter Manually"}

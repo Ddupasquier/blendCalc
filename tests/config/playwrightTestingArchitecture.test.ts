@@ -15,7 +15,9 @@ describe("Playwright browser-testing architecture", () => {
 		const localQaAccounts = readSource(
 			"tests/e2e/support/localQaAccounts.ts",
 		);
-		const localQaPersonas = readSource("scripts/lib/local_qa_personas.mjs");
+		const localQaPersonas = readSource(
+			"scripts/lib/qa/local_qa_personas.mjs",
+		);
 		for (const project of [
 			"desktop-chromium",
 			"desktop-firefox",
@@ -32,6 +34,8 @@ describe("Playwright browser-testing architecture", () => {
 		expect(playwrightConfig).toContain("workers: localPlaywrightWorkerCount");
 		expect(browserTestSupport).toContain('scope: "worker"');
 		expect(browserTestSupport).toContain("workerInfo.parallelIndex");
+		expect(browserTestSupport).toContain("playwrightRequest.newContext");
+		expect(browserTestSupport).not.toContain("browser.newPage");
 		expect(localQaAccounts).toContain("PLAYWRIGHT_QA_EMAILS");
 		expect(localQaPersonas).toContain(
 			"const browserWorkerPersonas = [1, 2, 3]",
@@ -103,6 +107,9 @@ describe("Playwright browser-testing architecture", () => {
 		const databaseWorkflow = readSource(
 			".github/workflows/database-verification.yml",
 		);
+		const hostedAuthWorkflow = readSource(
+			".github/workflows/hosted-auth-verification.yml",
+		);
 		const viteConfig = readSource("vite.config.ts");
 
 		expect(verificationWorkflow).toContain("matrix:");
@@ -116,10 +123,23 @@ describe("Playwright browser-testing architecture", () => {
 			expect(verificationWorkflow).toContain(`project: ${project}`);
 		}
 		expect(verificationWorkflow).toContain("npm audit --audit-level=high");
+		expect(verificationWorkflow).toContain(
+			"PUBLIC_SUPABASE_URL: http://127.0.0.1:54321",
+		);
+		expect(verificationWorkflow).toContain(
+			"PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_compile_only",
+		);
 		expect(verificationWorkflow).toContain("npm run check");
 		expect(verificationWorkflow).toContain("npm test");
 		expect(verificationWorkflow).toContain("npm run build");
+		expect(verificationWorkflow).toContain("name: Browser Matrix");
 		expect(databaseWorkflow).toContain("npm run db:test:verify");
+		expect(databaseWorkflow).toContain("name: Database Verification");
+		expect(databaseWorkflow).not.toMatch(/pull_request:\s*\n\s+paths:/);
+		expect(hostedAuthWorkflow).toContain("name: Hosted Auth Health");
+		expect(hostedAuthWorkflow).toContain("npm run check:auth");
+		expect(hostedAuthWorkflow).toContain("vars.BLENDCALC_HOSTED_SUPABASE_URL");
+		expect(hostedAuthWorkflow).not.toContain("secrets.");
 		expect(viteConfig).toContain("maxWorkers: process.env.CI ? 2 : 6");
 	});
 

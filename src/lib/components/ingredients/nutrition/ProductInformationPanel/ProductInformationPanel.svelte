@@ -13,7 +13,7 @@
 	information.servingRows.length > 0 ||
 	information.sourceRows.length > 0 ||
 	information.fieldSourceRows.length > 0 ||
-	information.sourceAttribution ||
+	information.sourceAttributions.length > 0 ||
 	(onReportIncorrectInformation && (food.barcode || food.gtinUpc))}
 	<div class="product-information-panel">
 		<CollapsibleSection title="Product details" surface="panel">
@@ -63,7 +63,7 @@
 					</section>
 				{/if}
 
-				{#if information.sourceRows.length > 0 || information.sourceAttribution}
+				{#if information.sourceRows.length > 0 || information.sourceAttributions.length > 0}
 					<section
 						class="product-information-panel__section"
 						aria-labelledby="source-details-title"
@@ -79,29 +79,32 @@
 								{/each}
 							</dl>
 						{/if}
-						{#if information.sourceAttribution}
+						{#each information.sourceAttributions as sourceAttribution}
 							<div class="product-information-panel__attribution">
-								<p>{information.sourceAttribution.attributionText}</p>
+								<p>{sourceAttribution.attributionText}</p>
 								<div class="product-information-panel__links">
 									<a
-										href={information.sourceAttribution.sourceUrl}
+										href={sourceAttribution.sourceUrl}
 										target="_blank"
 										rel="noopener noreferrer"
 									>
-										View source<span class="sr-only"> (opens in a new tab)</span>
+										<span aria-hidden="true">View source</span>
+										<span class="sr-only">
+											View source for {sourceAttribution.datasetName} (opens in a new tab)
+										</span>
 									</a>
 									<a
-										href={information.sourceAttribution.licenseUrl}
+										href={sourceAttribution.licenseUrl}
 										target="_blank"
 										rel="noopener noreferrer"
 									>
-										{information.sourceAttribution.licenseName}<span class="sr-only">
+										{sourceAttribution.licenseName}<span class="sr-only">
 											(opens in a new tab)</span
 										>
 									</a>
 								</div>
 							</div>
-						{/if}
+						{/each}
 					</section>
 				{/if}
 

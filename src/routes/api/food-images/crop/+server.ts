@@ -5,10 +5,7 @@ import {
   requireAppValue,
   throwAppError,
 } from "$lib/server/errors/appError.server";
-import {
-  getUserAppRole,
-  isModerationAppRole,
-} from "$lib/utils/moderation/moderation";
+import { requireModeratorApiAccess } from "$lib/server/moderation/moderationAccess.server";
 import type { FoodImageAsset } from "$lib/utils/food/types";
 import {
   CURRENT_IMAGE_PLACEMENT_VERSION,
@@ -47,16 +44,7 @@ const clamp = (value: unknown, min: number, max: number, fallback: number) => {
 };
 
 export const PATCH: RequestHandler = async ({ locals, request }) => {
-  const user = requireAppValue(
-    await locals.getVerifiedUser(),
-    401,
-    "AUTH_REQUIRED",
-  );
-
-  const role = await getUserAppRole(locals.supabase, user.id);
-  if (!isModerationAppRole(role)) {
-    throwAppError(403, "ACCESS_DENIED");
-  }
+  const { user } = await requireModeratorApiAccess(locals);
 
   const body = requireAppValue(
     (await readLimitedJson(

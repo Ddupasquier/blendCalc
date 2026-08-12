@@ -24,6 +24,7 @@ import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { Json } from "$lib/types/database.types";
 import type { FoodItem } from "$lib/utils/food/types";
 import { readLimitedJson } from "$lib/server/security/requestBody.server";
+import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
@@ -156,7 +157,9 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 	}
 
 	const enrichedFoods = await Promise.all(
-		foods.map((food) => enrichFoodForListPlacement(locals.supabase, food)),
+		foods.map((food) =>
+			enrichFoodForListPlacement(getSupabaseAdminClient(), food),
+		),
 	);
 	const listType = getListType(listKey);
 

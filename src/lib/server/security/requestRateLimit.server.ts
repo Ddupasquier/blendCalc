@@ -58,6 +58,13 @@ export const getRequestRateLimitPolicy = (
 			windowSeconds: 3600,
 		};
 	}
+	if (pathname === "/api/publication-concerns" && requestMethod === "POST") {
+		return {
+			scope: "api:publication-concern",
+			limit: 10,
+			windowSeconds: 60 * 60,
+		};
+	}
 	if (pathname.startsWith("/api/products/barcode/")) {
 		return {
 			scope: "catalog:barcode",

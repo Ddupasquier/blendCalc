@@ -18,6 +18,8 @@ describe("ingredient overlay navigation", () => {
 			"src/routes/ingredients/shopping/+page.svelte",
 			"src/routes/ingredients/fridge/search/+page.svelte",
 			"src/routes/ingredients/shopping/search/+page.svelte",
+			"src/routes/ingredients/fridge/search/filters/+page.svelte",
+			"src/routes/ingredients/shopping/search/filters/+page.svelte",
 			"src/routes/ingredients/fridge/manual-entry/+page.svelte",
 			"src/routes/ingredients/shopping/manual-entry/+page.svelte",
 			"src/routes/ingredients/fridge/nutrition/[foodId=signedInteger]/+page.svelte",
@@ -70,8 +72,8 @@ describe("ingredient overlay navigation", () => {
 			/const handleCreate = \([\s\S]*?\n    };/,
 		)?.[0];
 
-		expect(handleCreate).toContain('activeSheet = null;');
 		expect(handleCreate).toContain('view: INGREDIENT_ROUTE_VIEWS.nutrition');
+		expect(handleCreate).toContain('sheet: null');
 		expect(handleCreate).toContain('foodId: food.fdcId');
 		expect(handleCreate).not.toContain('view: INGREDIENT_ROUTE_VIEWS.manualEntry');
 		expect(handleCreate).not.toContain('activeSheet = "manual-entry"');
@@ -121,7 +123,7 @@ describe("ingredient overlay navigation", () => {
 		const source = readFileSync(ingredientsPagePath, "utf8");
 
 		expect(source).toContain(
-			"let activeList = $derived<IngredientListKey>(getIngredientListTab(page.url))",
+			"getIngredientListTab(activeIngredientRouteUrl)",
 		);
 		expect(source).not.toContain("const selectList =");
 		expect(source).not.toContain("activeList = key");

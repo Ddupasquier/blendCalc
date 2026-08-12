@@ -154,6 +154,7 @@
 		foodPreferences={data.foodPreferences}
 		foodPreferencesUnavailable={data.foodPreferencesUnavailable}
 		foodPreferenceOptions={data.foodPreferenceOptions}
+		foodPreferenceOptionsUnavailable={data.foodPreferenceOptionsUnavailable}
 		priorityNutrientOptions={data.priorityNutrientOptions}
 		regulatoryRegionOptions={data.regulatoryRegionOptions}
 		submittedValues={form?.foodPreferenceValues}
