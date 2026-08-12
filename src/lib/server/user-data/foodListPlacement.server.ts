@@ -3,8 +3,9 @@ import { createCatalogFoodFromDraft } from "$lib/server/products/catalogFood.ser
 import { getUsdaFoodById } from "$lib/server/products/usdaCache.server";
 import type { Database } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
+import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
-import { mergeExactSourceFood } from "$lib/utils/food/records/sourceFoodEnrichment";
+import { enrichListFoodWithExactSourceEvidence } from "$lib/utils/food/records/exactSourceListEnrichment";
 import type { FoodItem } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -35,10 +36,7 @@ const enrichBarcodeFood = async (
 		getResolvedDraftCategory(draft),
 		draft.source === "shared-catalog" ? draft.sourceReference : undefined,
 	);
-	return {
-		...mergeExactSourceFood(food, sourceFood),
-		customFood: false,
-	};
+	return enrichListFoodWithExactSourceEvidence(food, sourceFood);
 };
 
 const enrichUsdaGenericFood = async (food: FoodItem) => {
@@ -50,7 +48,7 @@ const enrichUsdaGenericFood = async (food: FoodItem) => {
 		return food;
 	}
 	const detail = await getUsdaFoodById(food.fdcId);
-	return mergeExactSourceFood(food, detail);
+	return enrichListFoodWithExactSourceEvidence(food, detail);
 };
 
 export const enrichFoodForListPlacement = async (
@@ -58,6 +56,7 @@ export const enrichFoodForListPlacement = async (
 	food: FoodItem,
 ) => {
 	try {
+		if (isPrivateCustomFood(food)) return normalizeFoodForStorage(food);
 		const barcode = getFoodBarcode(food);
 		const enriched = barcode
 			? await enrichBarcodeFood(supabase, food, barcode)

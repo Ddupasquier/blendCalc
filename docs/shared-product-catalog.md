@@ -96,6 +96,15 @@ field evidence, field completeness, observation recency, and a neutral determini
 tie-break. It does not give a provider blanket priority. Nutrients are resolved by
 canonical nutrient ID, and differently sourced nutrients retain their own lineage.
 
+Fridge and Shopping List placement applies that policy through a user-owned boundary.
+An exact source match may fill a missing snapshot field, but it does not authorize a
+source record to replace the entire saved item. A populated field changes only when the
+new candidate has stronger accepted review state or confidence, more complete evidence
+at the same evidence level, or a newer observation after the other factors tie. User
+names, user-label fields and nutrients, canonical categories, and fully private foods
+remain untouched. Each accepted list enrichment stores the selected source and the
+specific reason for the change so later audits do not have to infer why it happened.
+
 Generic-food search uses the same evidence rules for records connected by exact source
 identifiers. Category, household measures, scientific name, alternate description,
 preparation, source-record metadata, and each canonical nutrient are selected

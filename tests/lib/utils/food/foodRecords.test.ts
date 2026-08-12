@@ -29,9 +29,24 @@ describe("compact food records", () => {
 					confidence: "imported",
 				},
 			},
+			sourceEnrichmentDecisions: [{
+				field: "serving",
+				reason: "missing-current-value",
+				selectedSource: {
+					source: "open-food-facts",
+					sourceReference: "00021130493609",
+					confidence: "imported",
+					observedAt: "2026-08-01T00:00:00.000Z",
+				},
+			}],
 		};
 
-		expect(normalizeFoodForStorage(food).fieldProvenance).toEqual(food.fieldProvenance);
+		const storedFood = normalizeFoodForStorage(food);
+		expect(storedFood.fieldProvenance).toEqual(food.fieldProvenance);
+		expect(storedFood.sourceEnrichmentDecisions)
+			.toEqual(food.sourceEnrichmentDecisions);
+		expect(storedFood.sourceEnrichmentDecisions?.[0].selectedSource)
+			.not.toBe(food.sourceEnrichmentDecisions?.[0].selectedSource);
 	});
 
 	it("keeps safe barcode capture provenance in saved food snapshots", () => {

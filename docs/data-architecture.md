@@ -213,6 +213,13 @@ live outside the public schema so database helpers do not silently expand the Da
 - `src/lib/server/user-data`: page-level server coordination.
 - `src/lib/server/user-data/foodListPlacement.server.ts`: exact-source enrichment before
   authoritative Fridge or Shopping List placement.
+- `src/lib/utils/food/records/exactSourceListEnrichment.ts`: evidence-aware list
+  snapshot resolution. Exact identity permits field comparison, not whole-record
+  replacement. Missing fields may be filled, while populated fields change only for
+  stronger accepted evidence after review state, confidence, completeness, and
+  observation time are compared. Private foods and user-label fields remain owned by
+  the user, and every accepted change stores its field, source, and selection reason in
+  the saved snapshot.
 - `src/lib/server/food-safety`: cached DB policy loading, compatibility evaluation,
   allergen disclosure normalization, and personalized warning annotation.
 - `src/lib/utils/storage/supabase`: browser-safe identity reads and authoritative RPC

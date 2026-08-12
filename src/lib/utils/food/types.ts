@@ -258,11 +258,35 @@ export type FoodFieldSource = {
 		| "shared-catalog";
 	sourceReference?: string;
 	confidence?: NonNullable<FoodNutrient["confidence"]>;
+	observationId?: string;
+	observedAt?: string;
+	verificationMethod?:
+		| "exact-barcode"
+		| "exact-source-record"
+		| "package-label"
+		| "corroborated-sources"
+		| "moderator-reviewed";
+	reviewState?: "unreviewed" | "accepted" | "moderator-reviewed";
 };
 
 export type FoodFieldProvenance = Partial<
 	Record<FoodProvenanceField, FoodFieldSource>
 >;
+
+export type FoodSourceEnrichmentReason =
+	| "missing-current-value"
+	| "stronger-review-state"
+	| "stronger-confidence"
+	| "more-complete-evidence"
+	| "newer-observation";
+
+export type FoodSourceEnrichmentDecision = {
+	field: FoodProvenanceField;
+	nutrientId?: number;
+	reason: FoodSourceEnrichmentReason;
+	selectedSource: FoodFieldSource;
+	previousSource?: FoodFieldSource;
+};
 
 export type FoodTrustStatus =
 	| "source-verified"
@@ -366,6 +390,8 @@ export interface FoodItem {
 	symbolKey?: string;
 	image?: FoodImageAsset;
 	fieldProvenance?: FoodFieldProvenance;
+	/** Evidence decisions made while safely enriching a user-owned list snapshot. */
+	sourceEnrichmentDecisions?: FoodSourceEnrichmentDecision[];
 	customFood?: boolean;
 	barcode?: string;
 	barcodeSource?: "open-food-facts" | "usda" | "manual" | "community";

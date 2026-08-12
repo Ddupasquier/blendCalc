@@ -7,7 +7,7 @@ import type {
 	FoodSourceAttribution,
 } from "$lib/utils/food/types";
 
-const RESOLVED_FIELDS: FoodProvenanceField[] = [
+export const EXACT_IDENTITY_RESOLVABLE_FIELDS: FoodProvenanceField[] = [
 	"productName",
 	"brandOwner",
 	"image",
@@ -29,7 +29,7 @@ const RESOLVED_FIELDS: FoodProvenanceField[] = [
 	"sourceMetadata",
 ];
 
-const CONFIDENCE_RANK: Record<
+export const FOOD_FIELD_CONFIDENCE_RANK: Record<
 	NonNullable<FoodFieldSource["confidence"]>,
 	number
 > = {
@@ -46,8 +46,12 @@ const toTimestamp = (value?: string) => {
 	return Number.isFinite(timestamp) ? timestamp : 0;
 };
 
-const getFoodTimestamp = (food: FoodItem) =>
+export const getFoodEvidenceTimestamp = (
+	food: FoodItem,
+	source?: FoodFieldSource,
+) =>
 	Math.max(
+		toTimestamp(source?.observedAt),
 		toTimestamp(food.sourceModifiedDate),
 		toTimestamp(food.modifiedDate),
 		toTimestamp(food.sourceMetadata?.modifiedAt),
@@ -59,7 +63,7 @@ const getFoodTimestamp = (food: FoodItem) =>
 
 const getArrayCompleteness = (values?: unknown[]) => values?.length ?? 0;
 
-const getFieldCompleteness = (
+export const getFoodFieldCompleteness = (
 	food: FoodItem,
 	field: FoodProvenanceField,
 ) => {
@@ -142,8 +146,8 @@ const compareFieldCandidates = (
 	right: FieldCandidate,
 ) => {
 	const confidenceDifference =
-		CONFIDENCE_RANK[right.source.confidence ?? "unknown"] -
-		CONFIDENCE_RANK[left.source.confidence ?? "unknown"];
+			FOOD_FIELD_CONFIDENCE_RANK[right.source.confidence ?? "unknown"] -
+			FOOD_FIELD_CONFIDENCE_RANK[left.source.confidence ?? "unknown"];
 	if (confidenceDifference !== 0) return confidenceDifference;
 	const completenessDifference = right.completeness - left.completeness;
 	if (completenessDifference !== 0) return completenessDifference;
@@ -160,14 +164,19 @@ const selectFieldCandidate = (
 ) => foods
 	.flatMap((food): FieldCandidate[] => {
 		const source = food.fieldProvenance?.[field];
-		const completeness = getFieldCompleteness(food, field);
+		const completeness = getFoodFieldCompleteness(food, field);
 		return source && completeness > 0
-			? [{ food, source, completeness, timestamp: getFoodTimestamp(food) }]
+			? [{
+				food,
+				source,
+				completeness,
+				timestamp: getFoodEvidenceTimestamp(food, source),
+			}]
 			: [];
 	})
 	.sort(compareFieldCandidates)[0];
 
-const applySelectedField = (
+export const applySelectedFoodField = (
 	result: FoodItem,
 	field: FoodProvenanceField,
 	selected: FoodItem,
@@ -295,8 +304,8 @@ const compareNutrientCandidates = (
 	right: NutrientCandidate,
 ) => {
 	const confidenceDifference =
-		CONFIDENCE_RANK[right.source.confidence ?? "unknown"] -
-		CONFIDENCE_RANK[left.source.confidence ?? "unknown"];
+			FOOD_FIELD_CONFIDENCE_RANK[right.source.confidence ?? "unknown"] -
+			FOOD_FIELD_CONFIDENCE_RANK[left.source.confidence ?? "unknown"];
 	if (confidenceDifference !== 0) return confidenceDifference;
 	const evidenceDifference =
 		getNutrientEvidenceRank(right.nutrient) -
@@ -339,7 +348,7 @@ const resolveNutrients = (foods: FoodItem[], baseFood: FoodItem) => {
 				food,
 				nutrient,
 				source,
-				timestamp: getFoodTimestamp(food),
+				timestamp: getFoodEvidenceTimestamp(food, source),
 			});
 			candidatesByNutrientId.set(nutrient.nutrientId, candidates);
 		}
@@ -480,10 +489,10 @@ export const resolveExactIdentityFoodFields = (foods: FoodItem[]): FoodItem => {
 		...base.fieldProvenance,
 	};
 
-	for (const field of RESOLVED_FIELDS) {
+	for (const field of EXACT_IDENTITY_RESOLVABLE_FIELDS) {
 		const candidate = selectFieldCandidate(foods, field);
 		if (!candidate) continue;
-		result = applySelectedField(result, field, candidate.food);
+		result = applySelectedFoodField(result, field, candidate.food);
 		fieldProvenance[field] = candidate.source;
 	}
 
