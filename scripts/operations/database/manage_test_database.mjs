@@ -20,6 +20,7 @@ import { createClient } from "@supabase/supabase-js";
 import WebSocket from "ws";
 import {
 	getLocalQaCatalogBarcodes,
+	localQaPrivateFoods,
 	localQaPersonas,
 	localQaSavedRecipes,
 } from "../../lib/qa/local_qa_personas.mjs";
@@ -419,6 +420,27 @@ const seedTestFoodLists = async (userClient, account, catalogFoods) => {
 	}
 };
 
+const seedTestPrivateFoods = async (userClient, account) => {
+	for (const privateFoodKey of account.privateFoodKeys) {
+		const food = localQaPrivateFoods[privateFoodKey];
+		if (!food) {
+			throw new Error(`Unknown local QA private food: ${privateFoodKey}.`);
+		}
+		const result = requireSuccessfulResult(
+			await userClient.rpc("save_custom_food", {
+				p_fdc_id: food.fdcId,
+				p_food: food,
+			}),
+			`Seed private food ${food.description} for ${account.email}`,
+		);
+		if (result !== "saved") {
+			throw new Error(
+				`Unexpected private-food result for ${account.email}: ${result}.`,
+			);
+		}
+	}
+};
+
 const createQaGoals = (goals, pointGoalTolerance) =>
   Object.fromEntries(
     Object.entries(goals).map(([nutrientId, targetAmount], index) => {
@@ -659,6 +681,7 @@ const seedTestAccountState = async (
   }
 
 	await seedTestFoodLists(userClient, account, catalogFoods);
+	await seedTestPrivateFoods(userClient, account);
 	await seedTestSavedRecipes(
     userClient,
     account,

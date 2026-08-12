@@ -143,6 +143,115 @@ export const localQaSavedRecipes = {
   },
 };
 
+export const localQaPrivateFoods = {
+  greenTomatoPantryPreserve: {
+    fdcId: -9818016,
+    description: "Green Tomato Pantry Preserve",
+    nameProvenance: "user",
+    foodCategory: "Vegetables and Vegetable Products",
+    categories: ["Vegetables and Vegetable Products"],
+    categoryOptionId: "qa-vegetables",
+    dataType: "Custom",
+    foodIdentityType: "private-custom",
+    servingSize: 100,
+    servingSizeUnit: "g",
+    hasSourceServing: true,
+    foodServings: [
+      {
+        label: "100 g",
+        gramWeight: 100,
+        isPrimary: true,
+        measureType: "User serving",
+        isHouseholdMeasure: false,
+        origin: "user-entered",
+        gramWeightMethod: "user-reported",
+        source: "user-label",
+        confidence: "user-reported",
+      },
+    ],
+    ingredients: "Green tomatoes, vinegar, and salt.",
+    ingredientList: ["Green tomatoes", "Vinegar", "Salt"],
+    customFood: true,
+    customServingLabel: "100 g",
+    customServingWeightGrams: 100,
+    barcodeSource: "manual",
+    sourceKey: "custom",
+    foodNutrients: [
+      {
+        nutrientId: 1008,
+        nutrientName: "Energy",
+        nutrientNumber: "208",
+        unitName: "KCAL",
+        value: 42,
+        valueOrigin: "reported",
+        valueStatus: "reported",
+        mappingStatus: "canonical",
+      },
+      {
+        nutrientId: 1004,
+        nutrientName: "Total lipid (fat)",
+        nutrientNumber: "204",
+        unitName: "G",
+        value: 0.3,
+        valueOrigin: "reported",
+        valueStatus: "reported",
+        mappingStatus: "canonical",
+      },
+      {
+        nutrientId: 1005,
+        nutrientName: "Carbohydrate, by difference",
+        nutrientNumber: "205",
+        unitName: "G",
+        value: 8.4,
+        valueOrigin: "reported",
+        valueStatus: "reported",
+        mappingStatus: "canonical",
+      },
+      {
+        nutrientId: 1079,
+        nutrientName: "Fiber, total dietary",
+        nutrientNumber: "291",
+        unitName: "G",
+        value: 1.8,
+        valueOrigin: "reported",
+        valueStatus: "reported",
+        mappingStatus: "canonical",
+      },
+      {
+        nutrientId: 2000,
+        nutrientName: "Total Sugars",
+        nutrientNumber: "269",
+        unitName: "G",
+        value: 5.1,
+        valueOrigin: "reported",
+        valueStatus: "reported",
+        mappingStatus: "canonical",
+      },
+      {
+        nutrientId: 1003,
+        nutrientName: "Protein",
+        nutrientNumber: "203",
+        unitName: "G",
+        value: 1.1,
+        valueOrigin: "reported",
+        valueStatus: "reported",
+        mappingStatus: "canonical",
+      },
+      {
+        nutrientId: 1093,
+        nutrientName: "Sodium, Na",
+        nutrientNumber: "307",
+        unitName: "MG",
+        value: 280,
+        valueOrigin: "reported",
+        valueStatus: "reported",
+        mappingStatus: "canonical",
+      },
+    ],
+    reportedNutrientIds: [1008, 1004, 1005, 1079, 2000, 1003, 1093],
+  },
+};
+
 const populatedLists = {
   fridge: [
     "00021130462506",
@@ -182,7 +291,7 @@ const warningLists = {
 };
 
 const tourLists = {
-	fridge: localQaSavedRecipes.morningGreen.ingredients.map(
+  fridge: localQaSavedRecipes.morningGreen.ingredients.map(
     ([barcode]) => barcode,
   ),
   shopping: [],
@@ -208,6 +317,7 @@ const browserWorkerPersonas = [1, 2, 3].map((workerNumber) => ({
     "serverLoad",
   ],
   activeMixKey: "morningGreen",
+  privateFoodKeys: ["greenTomatoPantryPreserve"],
   preferences: {
     unit_system: "us",
     allergens: [],
@@ -228,13 +338,14 @@ export const localQaPersonas = [
     role: "user",
     tutorialState: "completed",
     lists: populatedLists,
-		savedRecipeKeys: [
+    savedRecipeKeys: [
       "morningGreen",
       "berryRepeat",
       "exportBerry",
       "serverLoad",
     ],
     activeMixKey: "morningGreen",
+    privateFoodKeys: ["greenTomatoPantryPreserve"],
     preferences: {
       unit_system: "us",
       allergens: [],
@@ -255,8 +366,9 @@ export const localQaPersonas = [
     role: "user",
     tutorialState: "completed",
     lists: warningLists,
-		savedRecipeKeys: ["serverLoad"],
+    savedRecipeKeys: ["serverLoad"],
     activeMixKey: null,
+    privateFoodKeys: [],
     preferences: {
       unit_system: "us",
       allergens: ["peanut", "shellfish"],
@@ -275,8 +387,9 @@ export const localQaPersonas = [
     role: "user",
     tutorialState: "completed",
     lists: { fridge: [], shopping: [] },
-		savedRecipeKeys: [],
+    savedRecipeKeys: [],
     activeMixKey: null,
+    privateFoodKeys: [],
     preferences: null,
   },
   {
@@ -287,8 +400,9 @@ export const localQaPersonas = [
     role: "user",
     tutorialState: "pending",
     lists: tourLists,
-		savedRecipeKeys: ["morningGreen"],
+    savedRecipeKeys: ["morningGreen"],
     activeMixKey: "morningGreen",
+    privateFoodKeys: [],
     preferences: null,
   },
   {
@@ -299,8 +413,9 @@ export const localQaPersonas = [
     role: "moderator",
     tutorialState: "completed",
     lists: roleLists,
-		savedRecipeKeys: ["serverLoad"],
+    savedRecipeKeys: ["serverLoad"],
     activeMixKey: null,
+    privateFoodKeys: [],
     preferences: null,
   },
   {
@@ -311,8 +426,9 @@ export const localQaPersonas = [
     role: "admin",
     tutorialState: "completed",
     lists: roleLists,
-		savedRecipeKeys: ["serverLoad"],
+    savedRecipeKeys: ["serverLoad"],
     activeMixKey: null,
+    privateFoodKeys: [],
     preferences: null,
   },
   {
@@ -324,8 +440,9 @@ export const localQaPersonas = [
     role: "developer",
     tutorialState: "completed",
     lists: roleLists,
-		savedRecipeKeys: ["serverLoad"],
+    savedRecipeKeys: ["serverLoad"],
     activeMixKey: null,
+    privateFoodKeys: [],
     preferences: null,
   },
 ].map((persona) => ({ ...persona, password: localQaPassword }));

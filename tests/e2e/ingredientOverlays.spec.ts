@@ -552,6 +552,105 @@ test("search scanner and saved-list sort return to the active search context", a
 	}
 });
 
+test("partial ingredient words combine every eligible source and remain selectable", async ({
+	page,
+}) => {
+	await page.goto("/ingredients/fridge/search");
+	await waitForAppReady(page);
+
+	const searchDialog = page.getByRole("dialog", { name: "Ingredients" });
+	const searchInput = searchDialog.getByRole("combobox", {
+		name: "Search ingredients",
+	});
+	const searchResults = searchDialog.getByRole("grid", {
+		name: "Search results",
+	});
+
+	const search = async (query: string) => {
+		const responsePromise = page.waitForResponse((response) => {
+			const url = new URL(response.url());
+			return url.pathname === "/api/foods/search" && url.searchParams.get("q") === query;
+		});
+		await searchInput.fill(query);
+		const response = await responsePromise;
+		expect(response.status()).toBe(200);
+		return response.json() as Promise<{
+			foods: Array<{
+				description: string;
+				fdcId: number;
+				sourceKey?: string;
+				trustStatus?: string;
+			}>;
+			total: number;
+		}>;
+	};
+
+	const partialTomatoResults = await search("tomat");
+	const partialTomatoSourceKeys = new Set(
+		partialTomatoResults.foods.map((food) => food.sourceKey),
+	);
+	expect(partialTomatoSourceKeys.has("custom")).toBe(true);
+	expect(partialTomatoSourceKeys.has("shared-catalog")).toBe(true);
+	expect(partialTomatoSourceKeys.has("usda")).toBe(true);
+	await expect(
+		searchResults.getByRole("row", {
+			name: /^Green Tomato Pantry Preserve,/,
+		}),
+	).toBeVisible();
+	await expect(
+		searchResults.getByRole("row", { name: /^Tomato, Roma, Raw,/ }),
+	).toBeVisible();
+	await expect(
+		searchResults.getByRole("row", {
+			name: /^Tomato, Vegetables and Vegetable Products/,
+		}),
+	).toBeVisible();
+
+	const multiWordResults = await search("green tomat");
+	expect(multiWordResults.foods.map((food) => food.description)).toEqual([
+		"Green Tomato Pantry Preserve",
+		"Tomatoes, Green, Raw",
+	]);
+	await expect(searchResults.getByRole("row")).toHaveCount(2);
+
+	const completedWordResults = await search("tomato");
+	expect(completedWordResults.total).toBeGreaterThanOrEqual(6);
+	await expect(
+		searchResults.getByRole("row", { name: /^Tomatoes, Green, Raw,/ }),
+	).toBeVisible();
+
+	for (const [query, expectedResultName] of [
+		["tomatoes green", /^Tomatoes, Green, Raw,/],
+		["spin", /^Spinach, Raw,/],
+		["strawb", /^Strawberries, Raw,/],
+	] as const) {
+		const results = await search(query);
+		expect(results.total).toBeGreaterThan(0);
+		await expect(
+			searchResults.getByRole("row", { name: expectedResultName }),
+		).toBeVisible();
+	}
+
+	for (const query of ["zzzz-no-match", "t"]) {
+		const results = await search(query);
+		expect(results).toMatchObject({ foods: [], total: 0 });
+		await expect(searchDialog.getByRole("row")).toHaveCount(0);
+		await expect(searchInput).toHaveAttribute("aria-expanded", "false");
+	}
+
+	await search("green tomat");
+	const sharedCatalogResult = searchResults.getByRole("row", {
+		name: /^Tomatoes, Green, Raw,/,
+	});
+	await sharedCatalogResult
+		.getByRole("button", { name: /^View nutrition for Tomatoes, Green, Raw/ })
+		.click();
+	await expect(page).toHaveURL(/\/ingredients\/fridge\/nutrition\/170456$/);
+	await expect(page.locator("#nutrition-detail-view-title")).toContainText(
+		"Tomatoes, Green, Raw",
+	);
+});
+
 test("shared ingredient bottom sheets enter from below and preserve app chrome boundaries", async ({
 	page,
 }) => {
