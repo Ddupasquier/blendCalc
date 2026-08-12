@@ -51,6 +51,16 @@ describe("compact food records", () => {
 	});
 
 	it("keeps deep-dive source and category metadata in saved food snapshots", () => {
+		const secondAttribution = {
+			datasetKey: "cofid-2021",
+			datasetName: "CoFID 2021",
+			datasetVersion: "2021",
+			sourceName: "UK Government",
+			sourceUrl: "https://example.com/cofid",
+			licenseName: "Open Government Licence",
+			licenseUrl: "https://example.com/ogl",
+			attributionText: "Contains licensed UK data.",
+		};
 		const food: FoodItem = {
 			fdcId: 101,
 			description: "Blueberries",
@@ -66,14 +76,18 @@ describe("compact food records", () => {
 				licenseUrl: "https://example.com/license",
 				attributionText: "Contains licensed Canadian data.",
 			},
+			sourceAttributions: [secondAttribution],
 		};
 
 		expect(normalizeFoodForStorage(food)).toMatchObject({
 			brandedFoodCategory: "Fresh fruit",
 			sourceAttribution: food.sourceAttribution,
+			sourceAttributions: [secondAttribution],
 		});
 		expect(normalizeFoodForStorage(food).sourceAttribution)
 			.not.toBe(food.sourceAttribution);
+		expect(normalizeFoodForStorage(food).sourceAttributions?.[0])
+			.not.toBe(secondAttribution);
 	});
 
 	it("does not assume nutrients were reported when status is absent", () => {

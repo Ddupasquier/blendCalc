@@ -37,6 +37,12 @@ describe("FoodData Central normalization", () => {
 			modifiedAt: "2024-08-01T12:30:00.000Z",
 			marketCountries: ["United States"],
 		});
+		expect(food.fieldProvenance).toMatchObject({
+			productName: { source: "usda", sourceReference: "123" },
+			brandOwner: { source: "usda", sourceReference: "123" },
+			nutrition: { source: "usda", sourceReference: "123" },
+			sourceMetadata: { source: "usda", sourceReference: "123" },
+		});
 		expect(food.foodNutrients).toEqual([
 			{
 				nutrientId: 1092,

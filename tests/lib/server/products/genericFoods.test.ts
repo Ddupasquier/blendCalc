@@ -84,6 +84,14 @@ describe("generic food search", () => {
 			attributionText:
 				"Contains information licensed under the Open Government Licence – Canada.",
 		});
+		expect(foods[0]?.sourceAttributions).toEqual([
+			foods[0]?.sourceAttribution,
+		]);
+		expect(foods[0]?.fieldProvenance).toMatchObject({
+			productName: { source: "health-canada-cnf" },
+			nutrition: { source: "health-canada-cnf" },
+			categories: { source: "health-canada-cnf" },
+		});
 		expect(foods[0]?.foodNutrients).toEqual([
 			expect.objectContaining({
 				nutrientId: 1003,

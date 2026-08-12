@@ -439,6 +439,28 @@ describe("NutritionPanel", () => {
 						licenseUrl: "https://example.com/license",
 						attributionText: "Example food data attribution.",
 					},
+					sourceAttributions: [
+						{
+							datasetKey: "example-2026",
+							datasetName: "Example Food Dataset",
+							datasetVersion: "2026",
+							sourceName: "Example Agency",
+							sourceUrl: "https://example.com/data",
+							licenseName: "Example Open License",
+							licenseUrl: "https://example.com/license",
+							attributionText: "Example food data attribution.",
+						},
+						{
+							datasetKey: "second-2026",
+							datasetName: "Second Food Dataset",
+							datasetVersion: "2026",
+							sourceName: "Second Agency",
+							sourceUrl: "https://example.com/second-data",
+							licenseName: "Second Open License",
+							licenseUrl: "https://example.com/second-license",
+							attributionText: "Second food data attribution.",
+						},
+					],
 				},
 				viewingGrams: 100,
 				showListActions: false,
@@ -500,10 +522,21 @@ describe("NutritionPanel", () => {
 		expect(screen.getByText("Jan 5, 2026")).toBeInTheDocument();
 		expect(screen.getByText("Feb 6, 2026")).toBeInTheDocument();
 		expect(screen.getByText("Example food data attribution.")).toBeInTheDocument();
-		expect(screen.getByRole("link", { name: /view source/i }))
-			.toHaveAttribute("href", "https://example.com/data");
+		expect(screen.getByText("Second food data attribution.")).toBeInTheDocument();
+		expect(
+			screen.getByRole("link", {
+				name: /view source for example food dataset/i,
+			}),
+		).toHaveAttribute("href", "https://example.com/data");
+		expect(
+			screen.getByRole("link", {
+				name: /view source for second food dataset/i,
+			}),
+		).toHaveAttribute("href", "https://example.com/second-data");
 		expect(screen.getByRole("link", { name: /example open license/i }))
 			.toHaveAttribute("href", "https://example.com/license");
+		expect(screen.getByRole("link", { name: /second open license/i }))
+			.toHaveAttribute("href", "https://example.com/second-license");
 	});
 
 	it("shows zero instead of a partial-data warning for missing ingredient nutrients", () => {

@@ -140,6 +140,9 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 		sourceAttribution: food.sourceAttribution
 			? { ...food.sourceAttribution }
 			: undefined,
+		sourceAttributions: food.sourceAttributions?.map((attribution) => ({
+			...attribution,
+		})),
 		sharedProductId: food.sharedProductId,
 		sharedProductSubmissionId: food.sharedProductSubmissionId,
 		sharedProductConfidence: food.sharedProductConfidence,

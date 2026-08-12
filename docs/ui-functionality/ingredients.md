@@ -76,6 +76,11 @@ imported generic-food sources through the server-owned search flow.
 
 - Search and manual entry do not compete for attention; starting search closes the
   manual-entry launcher state.
+- Exact linked noncatalog records resolve useful fields and nutrients independently;
+  similarly named foods remain separate, and a canonical catalog match remains the
+  untouched result until accepted evidence creates a revision. A deliberately private,
+  unmatched user food also remains separate even if a retained identifier resembles a
+  provider record.
 - Rank with current food-preference conflicts, data completeness, and name relevance
   without turning a provider name into blanket trust.
 - Keep saved/private results available when an external provider fails.
@@ -87,6 +92,8 @@ imported generic-food sources through the server-owned search flow.
   verification state, completeness state, and warning edge when available.
 - Keep provider hierarchy badges off compact cards. Private custom classification may
   support filtering and details but does not create a resting-card badge or border.
+- Product details preserve all complete source and licence attributions represented by
+  merged search data instead of showing only one provider notice.
 - Long text reserves the trailing action column and never overlaps its control.
 
 ## Nutrition Details

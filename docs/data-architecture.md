@@ -74,6 +74,15 @@ observations remain in their licensed cache/evidence boundary, while accepted ca
 fields retain their own provenance. Existing records receive the same applicable
 backfill as future writes.
 
+Ingredient search follows the same boundary. Exact normalized GTIN, USDA FDC, or
+reviewed legacy-source identifiers may connect noncanonical search records. The search
+read model then resolves names, categories, servings, preparation details, safety data,
+and each canonical nutrient independently from field provenance; it never averages
+values or joins records by title similarity. Every complete dataset attribution remains
+attached to the merged result. If a shared-catalog product is present, its accepted
+canonical revision remains untouched—transient provider data cannot enrich it without a
+persisted observation and revision.
+
 Catalog storage and API publication are separate trust boundaries. Useful immutable
 observations may be retained broadly, accepted fields may enter the canonical catalog,
 and only canonical revisions satisfying the active DB-backed publication profile enter

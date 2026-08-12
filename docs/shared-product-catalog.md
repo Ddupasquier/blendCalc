@@ -96,6 +96,14 @@ field evidence, field completeness, observation recency, and a neutral determini
 tie-break. It does not give a provider blanket priority. Nutrients are resolved by
 canonical nutrient ID, and differently sourced nutrients retain their own lineage.
 
+Generic-food search uses the same evidence rules for records connected by exact source
+identifiers. Category, household measures, scientific name, alternate description,
+preparation, source-record metadata, and each canonical nutrient are selected
+independently. Similar names never create an identity link. Complete source and licence
+attributions from every represented dataset stay on the read model. This transient
+search merge never changes an accepted shared-catalog product; catalog improvements
+still require persisted observations, selected field provenance, and a new revision.
+
 The missing-field plan covers nutrition, images, categories, servings, ingredient text
 and lists, recursive structured ingredients, ingredient analysis, additives, explicit
 allergens, explicit traces, dietary tags, labels, package quantity, and provider

@@ -242,6 +242,15 @@ export type FoodTrackedField =
 	| "package"
 	| "sourceMetadata";
 
+export type FoodDescriptiveSourceField =
+	| "scientificName"
+	| "alternateDescription"
+	| "preparation";
+
+export type FoodProvenanceField =
+	| FoodTrackedField
+	| FoodDescriptiveSourceField;
+
 export type FoodFieldSource = {
 	source:
 		| NonNullable<FoodNutrient["source"]>
@@ -252,7 +261,7 @@ export type FoodFieldSource = {
 };
 
 export type FoodFieldProvenance = Partial<
-	Record<FoodTrackedField, FoodFieldSource>
+	Record<FoodProvenanceField, FoodFieldSource>
 >;
 
 export type FoodTrustStatus =
@@ -367,6 +376,7 @@ export interface FoodItem {
 	sourcePublishedDate?: string;
 	sourceModifiedDate?: string;
 	sourceAttribution?: FoodSourceAttribution;
+	sourceAttributions?: FoodSourceAttribution[];
 	sharedProductId?: string;
 	sharedProductSubmissionId?: string;
 	trustStatus?: FoodTrustStatus;

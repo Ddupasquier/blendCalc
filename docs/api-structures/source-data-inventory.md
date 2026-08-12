@@ -69,6 +69,13 @@ Missing values stay missing. A source omission is never converted to zero, and r
 from different foods or preparations are never merged only because their names are
 similar.
 
+When imported generic records declare an exact shared identifier, ingredient search may
+assemble one read result per field. The strongest evidenced category, serving,
+preparation detail, safety field, and canonical nutrient can come from different linked
+records. The result preserves each selected field source and every complete dataset
+attribution; it does not grant publication rights or alter the canonical catalog.
+Private unmatched user foods do not participate in this provider-record merge.
+
 ## Ownership Boundaries
 
 This inventory records provider capabilities and intake locations, not legal
