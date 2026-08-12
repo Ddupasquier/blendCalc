@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { enrichListFoodWithExactSourceEvidence } from "$lib/utils/food/records/exactSourceListEnrichment";
+import {
+	addFoodFieldEvidenceContext,
+	enrichListFoodWithExactSourceEvidence,
+} from "$lib/utils/food/records/exactSourceListEnrichment";
 import type {
 	FoodFieldSource,
 	FoodItem,
@@ -58,6 +61,34 @@ const current: FoodItem = {
 };
 
 describe("exact-source list enrichment", () => {
+	it("adds lookup evidence context without replacing stronger field metadata", () => {
+		const result = addFoodFieldEvidenceContext({
+			...current,
+			fieldProvenance: {
+				productName: {
+					source: "usda",
+					sourceReference: "171032",
+					confidence: "imported",
+				},
+				categories: current.fieldProvenance?.categories,
+			},
+		}, {
+			observedAt: "2026-02-01T00:00:00.000Z",
+			verificationMethod: "exact-source-record",
+			reviewState: "unreviewed",
+		});
+
+		expect(result.fieldProvenance?.productName).toMatchObject({
+			observedAt: "2026-02-01T00:00:00.000Z",
+			verificationMethod: "exact-source-record",
+			reviewState: "unreviewed",
+		});
+		expect(result.fieldProvenance?.categories).toMatchObject({
+			observedAt: "2026-01-01T00:00:00.000Z",
+			reviewState: "moderator-reviewed",
+		});
+	});
+
 	it("fills missing fields without replacing equal-evidence values", () => {
 		const result = enrichListFoodWithExactSourceEvidence(current, {
 			...current,

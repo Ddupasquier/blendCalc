@@ -5,7 +5,10 @@ import type { Database } from "$lib/types/database.types";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 import { normalizeFoodForStorage } from "$lib/utils/food/records/foodRecords";
-import { enrichListFoodWithExactSourceEvidence } from "$lib/utils/food/records/exactSourceListEnrichment";
+import {
+	addFoodFieldEvidenceContext,
+	enrichListFoodWithExactSourceEvidence,
+} from "$lib/utils/food/records/exactSourceListEnrichment";
 import type { FoodItem } from "$lib/utils/food/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -31,10 +34,17 @@ const enrichBarcodeFood = async (
 ) => {
 	const draft = await lookupBarcodeProductDraft(supabase, barcode);
 	if (!draft) return food;
-	const sourceFood = createCatalogFoodFromDraft(
-		draft,
-		getResolvedDraftCategory(draft),
-		draft.source === "shared-catalog" ? draft.sourceReference : undefined,
+	const sourceFood = addFoodFieldEvidenceContext(
+		createCatalogFoodFromDraft(
+			draft,
+			getResolvedDraftCategory(draft),
+			draft.source === "shared-catalog" ? draft.sourceReference : undefined,
+		),
+		{
+			observedAt: draft.sourceModifiedDate ?? draft.sourcePublishedDate,
+			verificationMethod: "exact-barcode",
+			reviewState: draft.source === "shared-catalog" ? "accepted" : "unreviewed",
+		},
 	);
 	return enrichListFoodWithExactSourceEvidence(food, sourceFood);
 };
@@ -47,7 +57,14 @@ const enrichUsdaGenericFood = async (food: FoodItem) => {
 	) {
 		return food;
 	}
-	const detail = await getUsdaFoodById(food.fdcId);
+	const detail = addFoodFieldEvidenceContext(
+		await getUsdaFoodById(food.fdcId),
+		{
+			observedAt: food.sourceModifiedDate ?? food.sourcePublishedDate,
+			verificationMethod: "exact-source-record",
+			reviewState: "unreviewed",
+		},
+	);
 	return enrichListFoodWithExactSourceEvidence(food, detail);
 };
 

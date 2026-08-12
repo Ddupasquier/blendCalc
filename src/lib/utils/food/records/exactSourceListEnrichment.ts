@@ -242,6 +242,30 @@ const mergeAttributions = (current: FoodItem, source: FoodItem) => {
 	).values()];
 };
 
+export const addFoodFieldEvidenceContext = (
+	food: FoodItem,
+	context: Pick<
+		FoodFieldSource,
+		"observedAt" | "verificationMethod" | "reviewState"
+	>,
+): FoodItem => ({
+	...food,
+	fieldProvenance: food.fieldProvenance
+		? Object.fromEntries(
+			Object.entries(food.fieldProvenance).map(([field, source]) => [
+				field,
+				{
+					...source,
+					observedAt: source.observedAt ?? context.observedAt,
+					verificationMethod:
+						source.verificationMethod ?? context.verificationMethod,
+					reviewState: source.reviewState ?? context.reviewState,
+				},
+			]),
+		)
+		: undefined,
+});
+
 export const enrichListFoodWithExactSourceEvidence = (
 	current: FoodItem,
 	source: FoodItem,
