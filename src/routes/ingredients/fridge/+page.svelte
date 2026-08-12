@@ -41,6 +41,8 @@
 	        getActiveIngredientRouteUrl,
 	        getBarcodeScannerCloseRoutePatch,
         getBarcodeScannerOpenRoutePatch,
+		getIngredientFiltersCloseRoutePatch,
+		getIngredientFiltersOpenRoutePatch,
         getIngredientListTab,
         getIngredientRouteState,
         INGREDIENT_ROUTE_MODALS,
@@ -405,6 +407,12 @@
 	    const closeIngredientSheet = () => {
 	        barcodeScannerRouteOpen = false;
 	        scanSignal = 0;
+		if (activeSheet === INGREDIENT_ROUTE_SHEETS.filters) {
+			void navigateIngredientRoute(
+				getIngredientFiltersCloseRoutePatch(activeIngredientRouteUrl),
+			);
+			return;
+		}
 	        void closeRoutedPopin();
 	    };
 
@@ -463,19 +471,11 @@
     };
 
 	    const toggleFilters = () => {
-	        searchViewOpen = false;
-	        const nextSheet = activeSheet === "filters" ? null : "filters";
-	        if (nextSheet) {
-            void navigateIngredientRoute({
-                view: null,
-                sheet: INGREDIENT_ROUTE_SHEETS.filters,
-                foodId: null,
-                listKey: null,
-            });
-            return;
-        }
-        void closeRoutedPopin();
-    };
+		const routePatch = activeSheet === INGREDIENT_ROUTE_SHEETS.filters
+			? getIngredientFiltersCloseRoutePatch(activeIngredientRouteUrl)
+			: getIngredientFiltersOpenRoutePatch(activeIngredientRouteUrl);
+		void navigateIngredientRoute(routePatch);
+	    };
 
 	    const openSearchView = () => {
 	        searchViewOpen = true;
@@ -495,7 +495,7 @@
 
     const closeSearchView = () => {
         searchViewOpen = false;
-        void closeRoutedPopin();
+		void closeRoutedPopin();
     };
 
     const handleSelect = (food: FoodItem, listKey: IngredientListKey | null = null) => {
@@ -1097,7 +1097,7 @@
 
 	        listQuery = query;
 	        listSort = nextSort;
-	        void closeRoutedPopin();
+	        void closeIngredientSheet();
 
         if (unchanged) return;
         void loadLists({ resetViewport: true });

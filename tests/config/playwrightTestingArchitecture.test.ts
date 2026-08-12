@@ -34,6 +34,8 @@ describe("Playwright browser-testing architecture", () => {
 		expect(playwrightConfig).toContain("workers: localPlaywrightWorkerCount");
 		expect(browserTestSupport).toContain('scope: "worker"');
 		expect(browserTestSupport).toContain("workerInfo.parallelIndex");
+		expect(browserTestSupport).toContain("playwrightRequest.newContext");
+		expect(browserTestSupport).not.toContain("browser.newPage");
 		expect(localQaAccounts).toContain("PLAYWRIGHT_QA_EMAILS");
 		expect(localQaPersonas).toContain(
 			"const browserWorkerPersonas = [1, 2, 3]",

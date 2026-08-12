@@ -70,7 +70,7 @@ describe("BottomSheet shared chrome", () => {
 		expect(manualEntrySource).not.toContain("showBack");
 	});
 
-	it("closes manual entry once before forwarding a successful creation", () => {
+	it("hides manual entry while forwarding successful creation to the routed owner", () => {
 		const manualEntrySource = readFileSync(manualEntrySheetPath, "utf8");
 		const manualEntryOutcomeSource = readFileSync(
 			manualEntryOutcomeControllerPath,
@@ -83,11 +83,17 @@ describe("BottomSheet shared chrome", () => {
 			/const useIngredient[\s\S]*?\n\t};/,
 		)?.[0];
 
-		expect(completionHandler).toContain("handleClose();");
+		expect(completionHandler).toContain(
+			"closingAfterSuccessfulCreate = true;",
+		);
+		expect(completionHandler).toContain("clearManualEntryDraft();");
 		expect(completionHandler).toContain("await onCreate(food, context);");
-		expect(completionHandler?.indexOf("handleClose();")).toBeLessThan(
+		expect(
+			completionHandler?.indexOf("closingAfterSuccessfulCreate = true;"),
+		).toBeLessThan(
 			completionHandler?.indexOf("await onCreate(food, context);") ?? -1,
 		);
+		expect(completionHandler).not.toContain("onClose()");
 		expect(useIngredient).not.toContain("onClose?.()");
 	});
 });

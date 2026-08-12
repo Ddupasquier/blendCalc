@@ -138,6 +138,8 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 	if (
 		routeSlug === INGREDIENT_ROUTE_VIEWS.search &&
 		(secondSegment === undefined ||
+			(secondSegment === INGREDIENT_ROUTE_SHEETS.filters &&
+				remainingSegments.length === 0) ||
 			(secondSegment === INGREDIENT_ROUTE_MODALS.barcodeScanner &&
 				remainingSegments.length === 0))
 	) {
@@ -146,7 +148,9 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 			sheet:
 				secondSegment === INGREDIENT_ROUTE_MODALS.barcodeScanner
 					? INGREDIENT_ROUTE_SHEETS.manualEntry
-					: null,
+					: secondSegment === INGREDIENT_ROUTE_SHEETS.filters
+						? INGREDIENT_ROUTE_SHEETS.filters
+						: null,
 			modal:
 				secondSegment === INGREDIENT_ROUTE_MODALS.barcodeScanner
 					? INGREDIENT_ROUTE_MODALS.barcodeScanner
@@ -329,7 +333,9 @@ export const buildIngredientRouteHref = (
 				: nextView === INGREDIENT_ROUTE_VIEWS.search
 					? nextModal === INGREDIENT_ROUTE_MODALS.barcodeScanner
 						? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}/${INGREDIENT_ROUTE_MODALS.barcodeScanner}`
-						: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}`
+						: nextSheet === INGREDIENT_ROUTE_SHEETS.filters
+							? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}/${INGREDIENT_ROUTE_SHEETS.filters}`
+							: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}`
 					: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}`;
 		if (nextView === INGREDIENT_ROUTE_VIEWS.nutrition) {
 			if (!nextShowListActions) params.set(ACTIONS_PARAM, "hide");
@@ -371,6 +377,36 @@ export const getBarcodeScannerOpenRoutePatch = (
 		view: preserveSearch ? INGREDIENT_ROUTE_VIEWS.search : null,
 		sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
 		modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
+		foodId: null,
+		listKey: null,
+	};
+};
+
+export const getIngredientFiltersOpenRoutePatch = (
+	url: URL,
+): IngredientRoutePatch => {
+	const preserveSearch =
+		getIngredientRouteState(url).view === INGREDIENT_ROUTE_VIEWS.search;
+
+	return {
+		view: preserveSearch ? INGREDIENT_ROUTE_VIEWS.search : null,
+		sheet: INGREDIENT_ROUTE_SHEETS.filters,
+		modal: null,
+		foodId: null,
+		listKey: null,
+	};
+};
+
+export const getIngredientFiltersCloseRoutePatch = (
+	url: URL,
+): IngredientRoutePatch => {
+	const restoreSearch =
+		getIngredientRouteState(url).view === INGREDIENT_ROUTE_VIEWS.search;
+
+	return {
+		view: restoreSearch ? INGREDIENT_ROUTE_VIEWS.search : null,
+		sheet: null,
+		modal: null,
 		foodId: null,
 		listKey: null,
 	};

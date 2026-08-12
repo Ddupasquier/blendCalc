@@ -233,6 +233,131 @@ const focusWithKeyboard = async (
 	throw new Error("Keyboard traversal did not reach the ingredient card.");
 };
 
+const readSearchCardPresentation = (card: Locator) =>
+	card.evaluate((element) => {
+		const bounds = element.getBoundingClientRect();
+		const mediaBounds = element
+			.querySelector(".ingredient-card-media-lane")
+			?.getBoundingClientRect();
+		const titleElement = element.querySelector("strong");
+		const titleBounds = titleElement?.getBoundingClientRect();
+		const categoryBounds = element.querySelector("small")?.getBoundingClientRect();
+		const badgeBounds = element
+			.querySelector(".ingredient-provenance-badges")
+			?.getBoundingClientRect();
+		const addButton = element.querySelector<HTMLElement>(
+			".ingredient-search-card__add",
+		);
+		const addBounds = addButton?.getBoundingClientRect();
+		const openBounds = element
+			.querySelector(".ingredient-search-card__open")
+			?.getBoundingClientRect();
+		const cardStyles = window.getComputedStyle(element);
+		const titleStyles = titleElement
+			? window.getComputedStyle(titleElement)
+			: null;
+		const addStyles = addButton ? window.getComputedStyle(addButton) : null;
+		const themeColorProbe = document.createElement("span");
+		themeColorProbe.style.position = "fixed";
+		themeColorProbe.style.background = "var(--app-shell-surface-panel)";
+		document.body.append(themeColorProbe);
+		const panelBackgroundColor = window.getComputedStyle(
+			themeColorProbe,
+		).backgroundColor;
+		themeColorProbe.style.background = "var(--app-shell-accent-primary)";
+		const primaryBackgroundColor = window.getComputedStyle(
+			themeColorProbe,
+		).backgroundColor;
+		themeColorProbe.remove();
+		const firstTrailingBoundary = Math.min(
+			addBounds?.left ?? Number.POSITIVE_INFINITY,
+			openBounds?.left ?? Number.POSITIVE_INFINITY,
+		);
+
+		return {
+			addBackgroundColor: addStyles?.backgroundColor ?? null,
+			addHeight: addBounds?.height ?? null,
+			addRadius: addStyles ? Number.parseFloat(addStyles.borderRadius) : null,
+			addWidth: addBounds?.width ?? null,
+			backgroundColor: cardStyles.backgroundColor,
+			badgeEndsBeforeActions:
+				!badgeBounds || badgeBounds.right <= firstTrailingBoundary,
+			borderColor: cardStyles.borderTopColor,
+			categoryEndsBeforeActions:
+				!categoryBounds || categoryBounds.right <= firstTrailingBoundary,
+			cardBottom: bounds.bottom,
+			cardLeft: bounds.left,
+			cardRight: bounds.right,
+			cardTop: bounds.top,
+			documentWidth: document.documentElement.scrollWidth,
+			mediaHeight: mediaBounds?.height ?? null,
+			panelBackgroundColor,
+			primaryBackgroundColor,
+			titleEndsBeforeActions:
+				!titleBounds || titleBounds.right <= firstTrailingBoundary,
+			titleFontWeight: Number.parseInt(titleStyles?.fontWeight ?? "0", 10),
+			titleUsesEllipsisStyles:
+				titleStyles?.overflow === "hidden" &&
+				titleStyles?.textOverflow === "ellipsis" &&
+				titleStyles?.whiteSpace === "nowrap",
+			viewportHeight: window.innerHeight,
+			viewportWidth: window.innerWidth,
+		};
+	});
+
+const expectSearchCardGeometry = async (
+	card: Locator,
+	options: { expectAdd: boolean; expectEllipsis?: boolean },
+) => {
+	await card.evaluate(async (element) => {
+		window.getComputedStyle(element).backgroundColor;
+		await Promise.all(
+			element
+				.getAnimations({ subtree: true })
+				.map((animation) => animation.finished.catch(() => undefined)),
+		);
+	});
+	const presentation = await readSearchCardPresentation(card);
+
+	expect(presentation.backgroundColor).toBe(
+		presentation.panelBackgroundColor,
+	);
+	expect(presentation.borderColor).toMatch(
+		/^rgba\(0, 0, 0, 0\)$|^transparent$/,
+	);
+	expect(presentation.cardLeft).toBeGreaterThanOrEqual(0);
+	expect(presentation.cardRight).toBeLessThanOrEqual(
+		presentation.viewportWidth + 1,
+	);
+	expect(presentation.documentWidth).toBeLessThanOrEqual(
+		presentation.viewportWidth,
+	);
+	expect(presentation.mediaHeight).toBeGreaterThanOrEqual(
+		(presentation.cardBottom - presentation.cardTop) * 0.9,
+	);
+	expect(presentation.titleFontWeight).toBeGreaterThanOrEqual(700);
+	expect(presentation.titleEndsBeforeActions).toBe(true);
+	expect(presentation.categoryEndsBeforeActions).toBe(true);
+	expect(presentation.badgeEndsBeforeActions).toBe(true);
+
+	if (options.expectAdd) {
+		expect(presentation.addWidth).toBeGreaterThan(0);
+		expect(Math.abs(presentation.addWidth! - presentation.addHeight!)).toBeLessThanOrEqual(1);
+		expect(presentation.addRadius).toBeGreaterThanOrEqual(
+			presentation.addWidth! / 2 - 1,
+		);
+		expect(presentation.addBackgroundColor).toBe(
+			presentation.primaryBackgroundColor,
+		);
+	} else {
+		expect(presentation.addWidth).toBeNull();
+	}
+
+	if (options.expectEllipsis !== undefined) {
+		expect(presentation.titleUsesEllipsisStyles).toBe(options.expectEllipsis);
+	}
+};
+
 const readVisibleIngredientFoodIds = async (page: Page, count: number) => {
 	const foodIds = await page
 		.locator("li[data-food-id]")
@@ -843,6 +968,121 @@ test("ingredient search uses keyboard selection without turning the add action i
 	await search.press("ArrowDown");
 	await search.press("Enter");
 	await expect(page).toHaveURL(/\/nutrition\//);
+});
+
+test("ingredient search cards preserve media, copy, status, and action geometry", async ({
+	page,
+}) => {
+	await page.goto("/ingredients/fridge/search");
+	await waitForAppReady(page);
+	const search = page.getByRole("combobox", { name: "Search ingredients" });
+
+	await search.fill("strawberries");
+	const unsavedStrawberries = page.getByRole("row", {
+		name: /^Strawberries, Raw,/,
+	});
+	await expect(unsavedStrawberries).toBeVisible();
+	await expect(unsavedStrawberries.getByText("Fruits and Fruit Juices")).toBeVisible();
+	await expect(
+		unsavedStrawberries.getByLabel("Verification status: Verified"),
+	).toBeVisible();
+	await expect(
+		unsavedStrawberries.getByRole("button", {
+			name: "Add Strawberries, Raw to fridge",
+		}),
+	).toBeVisible();
+	await expect(
+		unsavedStrawberries.locator(".ingredient-card-media-lane"),
+	).toBeVisible();
+	await expectSearchCardGeometry(unsavedStrawberries, { expectAdd: true });
+
+	const savedStrawberryJelly = page.getByRole("row", {
+		name: /^Strawberry Jelly, Strawberry,/,
+	});
+	await expect(savedStrawberryJelly).toBeVisible();
+	await expect(savedStrawberryJelly.getByText("Jams", { exact: true })).toBeVisible();
+	await expect(
+		savedStrawberryJelly.getByRole("button", { name: /^Add / }),
+	).toHaveCount(0);
+	await expectSearchCardGeometry(savedStrawberryJelly, { expectAdd: false });
+
+	for (const providerLabel of [
+		"USDA",
+		"USDA FoodData Central",
+		"Open Food Facts",
+		"Imported",
+	]) {
+		await expect(page.getByText(providerLabel, { exact: true })).toHaveCount(0);
+	}
+
+	await search.fill("tomato");
+	const longUnsavedResult = page.getByRole("row", {
+		name: /^Babyfood, Dinner, Macaroni & Tomato,/,
+	});
+	await expect(longUnsavedResult).toBeVisible();
+	await expect(
+		longUnsavedResult.getByText("Meals, Entrees, and Side Dishes"),
+	).toBeVisible();
+	await expectSearchCardGeometry(longUnsavedResult, {
+		expectAdd: true,
+		expectEllipsis: true,
+	});
+
+	await page.evaluate(() => {
+		document.documentElement.dataset.theme = "dark";
+	});
+	await expectSearchCardGeometry(longUnsavedResult, {
+		expectAdd: true,
+		expectEllipsis: true,
+	});
+});
+
+test("search-card presentation reflows through the complete responsive matrix", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One deterministic Chromium project owns the complete viewport and text-zoom matrix.",
+	);
+
+	for (const viewport of [
+		{ width: 320, height: 568 },
+		{ width: 360, height: 740 },
+		{ width: 390, height: 844 },
+		{ width: 420, height: 844 },
+		{ width: 740, height: 360 },
+		{ width: 768, height: 1024 },
+		{ width: 1280, height: 900 },
+	]) {
+		await page.setViewportSize(viewport);
+		await page.goto("/ingredients/fridge/search");
+		await waitForAppReady(page);
+		await page.getByRole("combobox", { name: "Search ingredients" }).fill("tomato");
+		const longUnsavedResult = page.getByRole("row", {
+			name: /^Babyfood, Dinner, Macaroni & Tomato,/,
+		});
+		await expect(longUnsavedResult).toBeVisible();
+		await expectSearchCardGeometry(longUnsavedResult, {
+			expectAdd: true,
+			expectEllipsis: true,
+		});
+	}
+
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto("/ingredients/fridge/search");
+	await waitForAppReady(page);
+	await page.evaluate(() => {
+		document.documentElement.style.zoom = "2";
+	});
+	await page.getByRole("combobox", { name: "Search ingredients" }).fill("tomato");
+	const zoomedLongResult = page.getByRole("row", {
+		name: /^Babyfood, Dinner, Macaroni & Tomato,/,
+	});
+	await expect(zoomedLongResult).toBeVisible();
+	await expectSearchCardGeometry(zoomedLongResult, {
+		expectAdd: true,
+		expectEllipsis: true,
+	});
 });
 
 test("compact Ingredients chrome leaves the viewport and returns with scroll direction", async ({

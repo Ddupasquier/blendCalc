@@ -9,6 +9,8 @@ import {
 	getActiveIngredientRouteUrl,
 	getBarcodeScannerCloseRoutePatch,
 	getBarcodeScannerOpenRoutePatch,
+	getIngredientFiltersCloseRoutePatch,
+	getIngredientFiltersOpenRoutePatch,
 	getIngredientListTab,
 	getIngredientRouteState,
 	getIngredientRouteTitle,
@@ -120,6 +122,15 @@ describe("ingredient route state", () => {
 		});
 		expect(
 			getIngredientRouteState(
+				url("/ingredients/shopping/search/filters"),
+			),
+		).toMatchObject({
+			view: INGREDIENT_ROUTE_VIEWS.search,
+			sheet: INGREDIENT_ROUTE_SHEETS.filters,
+			modal: null,
+		});
+		expect(
+			getIngredientRouteState(
 				url("/ingredients/shopping/manual-entry/move-ingredient"),
 			),
 		).toMatchObject({
@@ -146,10 +157,19 @@ describe("ingredient route state", () => {
 		).toBe("/ingredients/fridge/search");
 		expect(
 			buildIngredientRouteHref(url("/ingredients/shopping/search"), {
-				view: null,
-				sheet: INGREDIENT_ROUTE_SHEETS.filters,
+				...getIngredientFiltersOpenRoutePatch(
+					url("/ingredients/shopping/search"),
+				),
 			}),
-		).toBe("/ingredients/shopping/filters");
+		).toBe("/ingredients/shopping/search/filters");
+		expect(
+			buildIngredientRouteHref(
+				url("/ingredients/shopping/search/filters"),
+				getIngredientFiltersCloseRoutePatch(
+					url("/ingredients/shopping/search/filters"),
+				),
+			),
+		).toBe("/ingredients/shopping/search");
 		expect(
 			buildIngredientRouteHref(url("/ingredients/fridge/filters"), {
 				view: INGREDIENT_ROUTE_VIEWS.nutrition,
