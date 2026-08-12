@@ -5,6 +5,19 @@
 blendCalc uses Supabase as the permanent source of truth for account data and the
 canonical food catalog. Browser storage is not a second database.
 
+## API Correction Boundary
+
+Public-data concerns are accepted only by the server route and stored in private
+`api_publication_concerns`; browser roles have no direct table privileges. Exact targets
+resolve against canonical IDs before storage, while contact details and evidence remain
+outside API responses. Elevated AAL2 moderation routes read and resolve the queue.
+
+`api_publication_holds` is a reversible publication control, not another canonical-data
+store. Product holds feed the existing material-conflict readiness gate, source and
+dataset holds feed field-level attribution eligibility, and image holds are filtered
+during public API image hydration. App reads may retain canonical records for review,
+but API v1 omits held output. No hold path deletes revision or evidence history.
+
 ## Read Flow
 
 1. A protected route verifies the current user through `locals.getVerifiedUser()`.
@@ -74,12 +87,27 @@ observations remain in their licensed cache/evidence boundary, while accepted ca
 fields retain their own provenance. Existing records receive the same applicable
 backfill as future writes.
 
+Ingredient search follows the same boundary. Exact normalized GTIN, USDA FDC, or
+reviewed legacy-source identifiers may connect noncanonical search records. The search
+read model then resolves names, categories, servings, preparation details, safety data,
+and each canonical nutrient independently from field provenance; it never averages
+values or joins records by title similarity. Every complete dataset attribution remains
+attached to the merged result. If a shared-catalog product is present, its accepted
+canonical revision remains untouched—transient provider data cannot enrich it without a
+persisted observation and revision.
+
 Catalog storage and API publication are separate trust boundaries. Useful immutable
 observations may be retained broadly, accepted fields may enter the canonical catalog,
 and only canonical revisions satisfying the active DB-backed publication profile enter
 API v1. Publication fails closed on incomplete identity, nutrition, serving, provenance,
 source policy, recency, or unresolved material conflicts. Withholding never deletes the
 underlying evidence or revision history.
+
+API v1 database readers are server-service-role-only. Browser sessions reach catalog
+data through the versioned HTTP routes, whose serializers rebuild explicit public
+objects and reject undeclared fields. Private foods, user-list state, pending review
+records, identities, evidence paths, secrets, package-instance data, arbitrary revision
+JSON, and unrelated same-barcode image assets cannot bypass that boundary.
 
 The provider capability map, legal policy, and catalog merge behavior are maintained in
 the [`source data inventory`](api-structures/source-data-inventory.md),
@@ -181,6 +209,14 @@ explicit allergen/trace fields may create canonical facts only through those rev
 rows. Unsupported declared languages make policy coverage incomplete; ordinary client
 code never translates, fuzzily matches, or supplies a synonym fallback.
 
+Food identity also fails closed. A provider adapter translates only its own reviewed
+record vocabulary into `packaged` or `generic`; private manual entries use
+`private-custom`. The source-neutral resolver may recognize concrete package evidence
+such as an exact GTIN or brand, but it never interprets provider datatype strings.
+Records without explicit identity remain `unknown`, receive no generic or packaged
+nutrition-completeness profile, and cannot be reported as fully checked by
+identity-dependent food-safety policy.
+
 Package precautionary statements use the same evidence-first boundary. Source adapters
 preserve exact wording and classify only the statement form (`may contain`, shared
 equipment, shared facility, or another precautionary form). Database projections attach
@@ -204,6 +240,13 @@ live outside the public schema so database helpers do not silently expand the Da
 - `src/lib/server/user-data`: page-level server coordination.
 - `src/lib/server/user-data/foodListPlacement.server.ts`: exact-source enrichment before
   authoritative Fridge or Shopping List placement.
+- `src/lib/utils/food/records/exactSourceListEnrichment.ts`: evidence-aware list
+  snapshot resolution. Exact identity permits field comparison, not whole-record
+  replacement. Missing fields may be filled, while populated fields change only for
+  stronger accepted evidence after review state, confidence, completeness, and
+  observation time are compared. Private foods and user-label fields remain owned by
+  the user, and every accepted change stores its field, source, and selection reason in
+  the saved snapshot.
 - `src/lib/server/food-safety`: cached DB policy loading, compatibility evaluation,
   allergen disclosure normalization, and personalized warning annotation.
 - `src/lib/utils/storage/supabase`: browser-safe identity reads and authoritative RPC

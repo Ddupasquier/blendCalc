@@ -82,6 +82,10 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 		additives: food.additives ? [...food.additives] : undefined,
 		allergens: food.allergens ? [...food.allergens] : undefined,
 		traces: food.traces ? [...food.traces] : undefined,
+		precautionaryStatements: food.precautionaryStatements?.map((statement) => ({
+			...statement,
+			allergens: [...statement.allergens],
+		})),
 		dietaryTags: food.dietaryTags ? [...food.dietaryTags] : undefined,
 		labels: food.labels ? [...food.labels] : undefined,
 		packageQuantity: food.packageQuantity
@@ -126,6 +130,13 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 				]),
 			)
 			: undefined,
+		sourceEnrichmentDecisions: food.sourceEnrichmentDecisions?.map((decision) => ({
+			...decision,
+			selectedSource: { ...decision.selectedSource },
+			previousSource: decision.previousSource
+				? { ...decision.previousSource }
+				: undefined,
+		})),
 		customFood: food.customFood,
 		barcode: food.barcode,
 		barcodeSource: food.barcodeSource,
@@ -140,6 +151,9 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 		sourceAttribution: food.sourceAttribution
 			? { ...food.sourceAttribution }
 			: undefined,
+		sourceAttributions: food.sourceAttributions?.map((attribution) => ({
+			...attribution,
+		})),
 		sharedProductId: food.sharedProductId,
 		sharedProductSubmissionId: food.sharedProductSubmissionId,
 		sharedProductConfidence: food.sharedProductConfidence,
@@ -152,6 +166,14 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 		customDensityVariancePercent: food.customDensityVariancePercent,
 		customDensityConfidence: food.customDensityConfidence,
 		compatibilitySummary: food.compatibilitySummary,
+		compatibilityEvaluation: food.compatibilityEvaluation,
+		allergenDisclosure: food.allergenDisclosure
+			? {
+				contains: [...food.allergenDisclosure.contains],
+				mayContain: [...food.allergenDisclosure.mayContain],
+			}
+			: undefined,
+		preferenceWarnings: food.preferenceWarnings?.map((warning) => ({ ...warning })),
 		reportedNutrientIds: [...new Set(reportedNutrientIds)].filter((nutrientId) =>
 			acceptedNutrientIds.has(nutrientId)
 		),
@@ -166,6 +188,7 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 			sourceReference: nutrient.sourceReference,
 			confidence: nutrient.confidence,
 			valueStatus: nutrient.valueStatus,
+			valueQualifier: nutrient.valueQualifier,
 			standardError: nutrient.standardError,
 			sourceNutrientKey: nutrient.sourceNutrientKey,
 			sourceNutrientCode: nutrient.sourceNutrientCode,

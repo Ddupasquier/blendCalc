@@ -13,7 +13,8 @@ organization and script-specific execution guidance.
 | Document | Owns | Does not own |
 | --- | --- | --- |
 | [`dev-rules/dev-rules.md`](dev-rules/dev-rules.md) | Mandatory development requirements and non-negotiable boundaries | Implementation inventories, open findings, or feature walkthroughs |
-| [`dev-rules/dev-rules-audit.md`](dev-rules/dev-rules-audit.md) | Verified unresolved findings that still need implementation work | Settled rules or completed history |
+| [`work-queue.md`](work-queue.md) | The only active implementation and QA priority, order, status, and next-action list | Completed history, settled decisions, or detailed QA repro steps |
+| [`dev-rules/dev-rules-audit.md`](dev-rules/dev-rules-audit.md) | The repeatable method for auditing implementation against the rules | A second active findings list |
 | [`project-structure.md`](project-structure.md) | File, folder, route, test, and script ownership | Visual design or runtime data policy |
 | [`style-guide.md`](style-guide.md) | Ingredients-derived visual system, tokens, component presentation, responsive behavior, and interaction styling | Feature business logic |
 | [`ui-functionality.md`](ui-functionality.md) and [`ui-functionality/`](ui-functionality/) | Short behavior index plus one focused contract for each view and shared flow | Schema inventories, legal terms, or styling token definitions |
@@ -25,8 +26,10 @@ organization and script-specific execution guidance.
 | [`api-structures/source-data-inventory.md`](api-structures/source-data-inventory.md) | Active provider capabilities, preserved fields, and intake-module boundaries | Legal interpretation |
 | [`api-structures/catalog-field-lineage.md`](api-structures/catalog-field-lineage.md) | API v1 field population, publication readiness, and public lineage | General catalog moderation workflow |
 | [`api-structures/README.md`](api-structures/README.md) | API v1 endpoint overview, contract status, and generated provider-reference instructions | Field-level lineage details |
+| [`public-api-release.md`](public-api-release.md) | Public API terms-review packet, required decisions, approval evidence, and release procedure | Final approved legal terms or privileged legal advice |
 | [`versioning.md`](versioning.md) | App, API, build, schema, product, placement, and transient-state version streams | Deployment setup |
 | [`authentication.md`](authentication.md) | Auth origins, callbacks, account-security configuration, and auth verification | General RLS/schema reference |
+| [`hosted-security.md`](hosted-security.md) | Production network restrictions, hosted Auth baseline, backups, recovery drills, and incident procedures | Application Auth screen behavior or table-level policies |
 | [`testing.md`](testing.md) | Test-layer ownership, execution stages, parallelism, and efficient verification | Playwright setup, database fixtures, or active QA tasks |
 | [`database-testing.md`](database-testing.md) | Disposable local database setup, commands, safety, and QA mutation procedure | Production migration policy |
 | [`browser-testing.md`](browser-testing.md) | Playwright projects, local authenticated browser setup, visual snapshots, and browser-test ownership | Manual physical-device or assistive-technology sign-off |
@@ -34,17 +37,15 @@ organization and script-specific execution guidance.
 | [`user-profiles.md`](user-profiles.md) | Profile identity, appearance, avatar storage, and profile privacy | General authentication setup |
 | [`barcode-scanning.md`](barcode-scanning.md) | Supported codes, scanner behavior, scan privacy, and native-scanner direction | Provider enrichment or catalog publication policy |
 
-## QA
+## Work And QA
 
-[`QA/qa-tasks.md`](QA/qa-tasks.md) is the active QA index. Its priority files contain
-only executable human checks; [`QA/completed-qa-tasks.md`](QA/completed-qa-tasks.md)
-preserves completed verification history. Repeated local account and barcode fixtures
-inside priority files are intentional so each queue remains usable on its own.
-
-Observable verification created by feature work belongs directly in the applicable QA
-priority file. Verified unresolved implementation findings belong in the development
-audit; the active recovery checkpoint owns only the currently interrupted task. Do not
-create a second task queue that mirrors QA.
+[`work-queue.md`](work-queue.md) is the one place to determine what remains, its
+priority, and what comes next. [`QA/qa-tasks.md`](QA/qa-tasks.md) owns reusable QA setup
+and links to detailed repro packets; [`QA/completed-qa-tasks.md`](QA/completed-qa-tasks.md)
+preserves completed verification history. The development audit defines how verified
+findings enter the work queue, while the ignored recovery checkpoint records only the
+currently interrupted slice. None of these supporting records may become another
+priority or task list.
 
 ## Maintenance
 

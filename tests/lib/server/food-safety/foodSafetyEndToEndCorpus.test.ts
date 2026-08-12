@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { mapApprovedCatalogRecordToApiV1Product } from "$lib/server/api/v1/catalogApi.server";
+import {
+	mapApprovedCatalogRecordToApiV1Product,
+	type ApiV1SourceAttributionCatalog,
+} from "$lib/server/api/v1/catalogApi.server";
 import { annotateFoodWithFoodSafety } from "$lib/server/food-safety/foodSafetyEvaluation.server";
 import { createCatalogFoodFromDraft } from "$lib/server/products/catalogFood.server";
 import type { ApprovedCatalogRecord } from "$lib/server/products/catalogRead.server";
@@ -17,6 +20,29 @@ import { productReferenceCatalogFixture } from "../../../fixtures/referenceCatal
 
 const normalizePreference = (value: string) =>
 	value.toLocaleLowerCase().trim().replace(/\s+/g, "-");
+
+const openFoodFactsAttributionCatalog: ApiV1SourceAttributionCatalog = {
+	sources: {
+		"open-food-facts": {
+			source: "open-food-facts",
+			displayName: "Open Food Facts",
+			sourceUrl: "https://world.openfoodfacts.org",
+			licenseName: "Open Database Licence 1.0",
+			licenseUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
+			attribution: "Open Food Facts contributors",
+			redistributionPolicyReviewedAt: "2026-07-26T00:00:00.000Z",
+			dataset: null,
+		},
+	},
+	datasetsBySource: {},
+	datasetSourceKeys: new Set(),
+	assetSources: {
+		"open-food-facts": {
+			displayName: "Open Food Facts",
+			sourceUrl: "https://world.openfoodfacts.org",
+		},
+	},
+};
 
 const createProfile = (
 	allergens: string[] = [],
@@ -159,6 +185,7 @@ describe("synthetic end-to-end food-safety corpus", () => {
 						corpusCase.barcode,
 						evaluatedFood,
 					),
+					openFoodFactsAttributionCatalog,
 				);
 				expect(apiProduct.ingredients.text)
 					.toBe(normalizedFood.ingredients ?? null);

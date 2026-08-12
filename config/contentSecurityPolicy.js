@@ -4,6 +4,7 @@ const SHARED_CONNECT_SOURCES = [
 	"https://world.openfoodfacts.org",
 	"https://images.openfoodfacts.org",
 	"https://cdn.jsdelivr.net",
+	"https://challenges.cloudflare.com",
 	"https://*.supabase.co",
 	"wss://*.supabase.co",
 	"https://vitals.vercel-insights.com",

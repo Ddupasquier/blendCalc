@@ -6,7 +6,9 @@
 	let { summary, onOpen }: ProfileModeratorActionLauncherProps = $props();
 
 	const description = $derived(
-		summary.unavailable
+		summary.identityVerificationRequired
+			? "Verify your identity to view protected reviews"
+			: summary.unavailable
 			? "Review tools available"
 			: summary.totalPendingReviews === 0
 				? "No reviews are waiting"

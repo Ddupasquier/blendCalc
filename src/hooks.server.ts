@@ -4,6 +4,11 @@ import { applySecurityHeaders } from "$lib/utils/http/securityHeaders";
 import { isActiveAccountBlock } from "$lib/utils/moderation/moderation";
 import { APP_BUILD_VERSION, APP_VERSION } from "$lib/config/version";
 import { createAppIssuePayload } from "$lib/utils/errors/appIssues";
+import { isApiV1Pathname } from "$lib/api/v1/errors";
+import {
+	apiV1Error,
+	normalizeApiV1BoundaryResponse,
+} from "$lib/server/api/v1/http.server";
 import {
 	consumeRequestRateLimit,
 	getRequestRateLimitPolicy,
@@ -34,15 +39,34 @@ const finalizeResponse = (
 	return response;
 };
 
-export const handleError: HandleServerError = ({ error, event, status }) => {
-	const technicalError = error instanceof Error
-		? { name: error.name, message: error.message }
-		: { type: typeof error };
+const logUnexpectedRequestError = ({
+	error: requestError,
+	method,
+	path,
+	status,
+}: {
+	error: unknown;
+	method: string;
+	path: string;
+	status: number;
+}) => {
+	const technicalError = requestError instanceof Error
+		? { name: requestError.name, message: requestError.message }
+		: { type: typeof requestError };
 	console.error("[request] Unexpected server error", {
+		method,
+		path,
+		status,
+		error: technicalError,
+	});
+};
+
+export const handleError: HandleServerError = ({ error, event, status }) => {
+	logUnexpectedRequestError({
+		error,
 		method: event.request.method,
 		path: event.url.pathname,
 		status,
-		error: technicalError,
 	});
 	return createAppIssuePayload("UNEXPECTED_ERROR");
 };
@@ -78,6 +102,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 				event.url.pathname !== "/auth/logout" ||
 				event.request.method !== "POST"
 			) {
+				if (isApiV1Pathname(event.url.pathname)) {
+					return finalizeResponse(
+						apiV1Error("service_unavailable"),
+						event.url,
+						true,
+					);
+				}
 				throw error(
 					503,
 					createAppIssuePayload("MODERATION_DATA_UNAVAILABLE"),
@@ -88,6 +119,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 			isActiveAccountBlock(moderation.status, moderation.expires_at)
 		) {
 			await event.locals.supabase.auth.signOut({ scope: "local" });
+			if (isApiV1Pathname(event.url.pathname)) {
+				return finalizeResponse(
+					apiV1Error("access_denied"),
+					event.url,
+					true,
+				);
+			}
 			throw redirect(303, "/auth?error=account_blocked");
 		}
 	}
@@ -112,13 +150,18 @@ export const handle: Handle = async ({ event, resolve }) => {
 				subject,
 			});
 			if (!rateLimit.allowed) {
-				const response = json(createAppIssuePayload("RATE_LIMITED"), {
-					status: 429,
-					headers: {
+				const response = isApiV1Pathname(event.url.pathname)
+					? apiV1Error("rate_limited", undefined, {
 						"retry-after": String(rateLimit.retryAfterSeconds),
 						"x-ratelimit-remaining": "0",
-					},
-				});
+					})
+					: json(createAppIssuePayload("RATE_LIMITED"), {
+						status: 429,
+						headers: {
+							"retry-after": String(rateLimit.retryAfterSeconds),
+							"x-ratelimit-remaining": "0",
+						},
+					});
 				return finalizeResponse(response, event.url, Boolean(user));
 			}
 		} catch (rateLimitError) {
@@ -129,14 +172,18 @@ export const handle: Handle = async ({ event, resolve }) => {
 					? rateLimitError.message
 					: typeof rateLimitError,
 			});
-			const response = json(createAppIssuePayload("SERVICE_UNAVAILABLE"), {
-				status: 503,
-			});
+			const response = isApiV1Pathname(event.url.pathname)
+				? apiV1Error("service_unavailable")
+				: json(createAppIssuePayload("SERVICE_UNAVAILABLE"), {
+					status: 503,
+				});
 			return finalizeResponse(response, event.url, Boolean(user));
 		}
 	}
 
-	const response = await resolve(event, {
+	let response: Response;
+	try {
+		response = await resolve(event, {
 		filterSerializedResponseHeaders: (name) => {
 			return name === "content-encoding" || name === "content-range";
 		},
@@ -155,7 +202,21 @@ export const handle: Handle = async ({ event, resolve }) => {
 					)
 				: themedHtml;
 		},
-	});
+		});
+	} catch (requestError) {
+		if (!isApiV1Pathname(event.url.pathname)) throw requestError;
+		logUnexpectedRequestError({
+			error: requestError,
+			method: event.request.method,
+			path: event.url.pathname,
+			status: 500,
+		});
+		response = apiV1Error("unexpected_error");
+	}
 
-	return finalizeResponse(response, event.url, Boolean(user));
+	return finalizeResponse(
+		normalizeApiV1BoundaryResponse(event.url.pathname, response),
+		event.url,
+		Boolean(user),
+	);
 };

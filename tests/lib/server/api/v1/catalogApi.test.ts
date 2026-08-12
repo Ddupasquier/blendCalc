@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import {
 	createPagination,
+	mapApiV1SourceAttributionCatalog,
 	mapApprovedCatalogRecordToApiV1Product,
+	readApiV1Categories,
 	readApiV1ProductRevisionHistory,
+	type ApiV1SourceAttributionCatalog,
 } from "$lib/server/api/v1/catalogApi.server";
 import type { ApprovedCatalogRecord } from "$lib/server/products/catalogRead.server";
 
@@ -16,6 +19,55 @@ const openFoodFactsObservation = {
 	observedAt: "2026-07-17T09:30:00.000Z",
 	reviewState: "accepted" as const,
 };
+
+const sourceAttribution = (
+	source: string,
+	displayName: string,
+	licenseName: string,
+) => ({
+	source,
+	displayName,
+	sourceUrl: `https://example.com/${source}`,
+	licenseName,
+	licenseUrl: `https://example.com/${source}/license`,
+	attribution: `${displayName} attribution`,
+	redistributionPolicyReviewedAt: "2026-07-22T00:00:00.000Z",
+	dataset: null,
+});
+
+const attributionCatalog = (
+	sources: ApiV1SourceAttributionCatalog["sources"],
+	datasetsBySource: ApiV1SourceAttributionCatalog["datasetsBySource"] = {},
+	assetSources: ApiV1SourceAttributionCatalog["assetSources"] = Object.fromEntries(
+		Object.entries(sources).map(([key, source]) => [
+			key,
+			{ displayName: source.displayName, sourceUrl: source.sourceUrl },
+		]),
+	),
+): ApiV1SourceAttributionCatalog => ({
+	sources,
+	datasetsBySource,
+	datasetSourceKeys: new Set(Object.keys(datasetsBySource)),
+	assetSources,
+});
+
+const defaultAttributionCatalog = () => attributionCatalog({
+	usda: sourceAttribution(
+		"usda",
+		"USDA FoodData Central",
+		"CC0-1.0",
+	),
+	"open-food-facts": sourceAttribution(
+		"open-food-facts",
+		"Open Food Facts",
+		"ODbL-1.0",
+	),
+	"shared-catalog": sourceAttribution(
+		"shared-catalog",
+		"blendCalc Shared Catalog",
+		"blendCalc submission terms",
+	),
+});
 
 const record: ApprovedCatalogRecord = {
 	id: "8dd47c75-17f7-4458-bb24-63cff946a716",
@@ -294,12 +346,16 @@ const record: ApprovedCatalogRecord = {
 		placementVersion: 2,
 		approvedBy: "moderator-never-returned",
 		approvedAt: "2026-07-19T10:00:00.000Z",
+		fetchedAt: "2026-07-17T09:30:00.000Z",
 	}],
 };
 
 describe("blendCalc API v1 catalog mapping", () => {
 	it("preserves real zeroes and represents unavailable values as null", () => {
-		const product = mapApprovedCatalogRecordToApiV1Product(record);
+		const product = mapApprovedCatalogRecordToApiV1Product(
+			record,
+			defaultAttributionCatalog(),
+		);
 
 		expect(product.nutrients[0]?.amountPer100g).toBe(0);
 		expect(product.nutrients[0]?.quality.sourceValueStatus).toBe("reported-zero");
@@ -352,24 +408,20 @@ describe("blendCalc API v1 catalog mapping", () => {
 	});
 
 	it("returns field sources, revision dates, and licensed images without private paths", () => {
-		const product = mapApprovedCatalogRecordToApiV1Product(record, {
-			usda: {
-				source: "usda",
-				displayName: "USDA FoodData Central",
-				sourceUrl: "https://fdc.nal.usda.gov/",
-				licenseName: "CC0-1.0",
-				licenseUrl: "https://www.usa.gov/government-copyright",
-				attribution: "USDA FoodData Central",
-			},
-			"open-food-facts": {
-				source: "open-food-facts",
-				displayName: "Open Food Facts",
-				sourceUrl: "https://world.openfoodfacts.org/",
-				licenseName: null,
-				licenseUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
-				attribution: "Open Food Facts contributors",
-			},
-		});
+		const product = mapApprovedCatalogRecordToApiV1Product(record,
+			attributionCatalog({
+				usda: sourceAttribution(
+					"usda",
+					"USDA FoodData Central",
+					"CC0-1.0",
+				),
+				"open-food-facts": sourceAttribution(
+					"open-food-facts",
+					"Open Food Facts",
+					"ODbL-1.0",
+				),
+			}),
+		);
 
 		expect(product.fieldSources.category).toMatchObject({
 			observationId: openFoodFactsObservation.observationId,
@@ -443,6 +495,8 @@ describe("blendCalc API v1 catalog mapping", () => {
 			labelObservedAt: "2026-07-17T10:00:00.000Z",
 		});
 		expect(product.images[0]).toMatchObject({
+			sourceName: "Open Food Facts",
+			sourceUrl: "https://example.com/open-food-facts",
 			license: {
 				name: "CC BY-SA 3.0",
 				attribution: "Open Food Facts contributors",
@@ -450,6 +504,7 @@ describe("blendCalc API v1 catalog mapping", () => {
 			placement: {
 				rotationDegrees: 90,
 			},
+			retrievedAt: "2026-07-17T09:30:00.000Z",
 		});
 		expect(product.images[0]).not.toHaveProperty("storagePath");
 		expect(product.images[0]).not.toHaveProperty("approvedBy");
@@ -463,13 +518,131 @@ describe("blendCalc API v1 catalog mapping", () => {
 		expect(product.sourceAttributions).toEqual([
 			expect.objectContaining({
 				source: "open-food-facts",
-				attribution: "Open Food Facts contributors",
+				attribution: "Open Food Facts attribution",
 			}),
 			expect.objectContaining({
 				source: "usda",
 				licenseName: "CC0-1.0",
 			}),
 		]);
+	});
+
+	it("strips hostile private fields, paths, secrets, and package-instance data", () => {
+		const privateSentinel = "PRIVATE-SENTINEL-DO-NOT-PUBLISH";
+		const hostileRecord = structuredClone(record) as ApprovedCatalogRecord &
+			Record<string, unknown>;
+		Object.assign(hostileRecord, {
+			submittedBy: privateSentinel,
+			reviewedBy: privateSentinel,
+			moderationEvidence: privateSentinel,
+		});
+		Object.assign(hostileRecord.food, {
+			userId: privateSentinel,
+			ownerId: privateSentinel,
+			privateLabel: privateSentinel,
+			packageInstance: {
+				lotCode: privateSentinel,
+				serialNumber: privateSentinel,
+				expirationDate: privateSentinel,
+			},
+		});
+		hostileRecord.source = "community-reviewed";
+		hostileRecord.sourceReference = `private/submissions/${privateSentinel}`;
+		hostileRecord.fieldProvenance.productName = {
+			...hostileRecord.fieldProvenance.productName!,
+			source: "community-reviewed",
+			sourceReference: `private/evidence/${privateSentinel}`,
+		};
+		hostileRecord.food.precautionaryStatements![0].sourceReference =
+			`private/evidence/${privateSentinel}`;
+		hostileRecord.food.sourceMetadata!.tagSources = {
+			allergens: [
+				"ingredients",
+				`private/evidence/${privateSentinel}`,
+				`token=${privateSentinel}`,
+			],
+			privateEvidence: [privateSentinel],
+		};
+		Object.assign(hostileRecord.images[0], {
+			storagePath: `private/${privateSentinel}.jpg`,
+			approvedBy: privateSentinel,
+		});
+
+		const product = mapApprovedCatalogRecordToApiV1Product(
+			hostileRecord,
+			defaultAttributionCatalog(),
+		);
+		const serialized = JSON.stringify(product);
+
+		expect(product.fieldSources.name?.reference).toBeNull();
+		expect(product.ingredients.precautionaryStatements[0]?.sourceReference).toBeNull();
+		expect(product.sourceRecord?.tagSources).toEqual({
+			allergens: ["ingredients"],
+		});
+		expect(serialized).not.toContain(privateSentinel);
+		for (const privateField of [
+			"submittedBy",
+			"reviewedBy",
+			"userId",
+			"ownerId",
+			"privateLabel",
+			"packageInstance",
+			"lotCode",
+			"serialNumber",
+			"expirationDate",
+			"storagePath",
+			"approvedBy",
+			"privateEvidence",
+		]) {
+			expect(serialized).not.toContain(`"${privateField}"`);
+		}
+	});
+
+	it("publishes only the category contract when database rows contain private fields", async () => {
+		const privateSentinel = "PRIVATE-CATEGORY-SENTINEL";
+		const range = vi.fn().mockResolvedValue({
+			data: [{
+				id: "sauces",
+				label: "Sauces",
+				normalized_value: "sauces",
+				updated_at: "2026-07-19T10:00:00.000Z",
+				owner_id: privateSentinel,
+				reviewed_by: privateSentinel,
+			}],
+			error: null,
+			count: 1,
+		});
+		const secondOrder = vi.fn().mockReturnValue({ range });
+		const firstOrder = vi.fn().mockReturnValue({ order: secondOrder });
+		const eq = vi.fn().mockReturnValue({ order: firstOrder });
+		const select = vi.fn().mockReturnValue({ eq });
+		const from = vi.fn().mockReturnValue({ select });
+
+		const result = await readApiV1Categories(
+			{ from } as never,
+			{ limit: 25, offset: 0 },
+		);
+
+		expect(result).toEqual({
+			categories: [{
+				id: "sauces",
+				name: "Sauces",
+				slug: "sauces",
+				updatedAt: "2026-07-19T10:00:00.000Z",
+			}],
+			pagination: {
+				limit: 25,
+				offset: 0,
+				total: 1,
+				hasMore: false,
+				nextOffset: null,
+			},
+		});
+		expect(JSON.stringify(result)).not.toContain(privateSentinel);
+		expect(select).toHaveBeenCalledWith(
+			"id, label, normalized_value, updated_at",
+			{ count: "exact" },
+		);
 	});
 
 	it("keeps image licensing separate from product-field attribution", () => {
@@ -481,24 +654,24 @@ describe("blendCalc API v1 catalog mapping", () => {
 			brandOwner: record.fieldProvenance.brandOwner,
 			ingredients: record.fieldProvenance.ingredients,
 		};
-		const product = mapApprovedCatalogRecordToApiV1Product(imageOnlyRecord, {
-			usda: {
-				source: "usda",
-				displayName: "USDA FoodData Central",
-				sourceUrl: "https://fdc.nal.usda.gov/",
-				licenseName: "CC0-1.0",
-				licenseUrl: "https://www.usa.gov/government-copyright",
-				attribution: "USDA FoodData Central",
-			},
-			"open-food-facts": {
-				source: "open-food-facts",
-				displayName: "Open Food Facts",
-				sourceUrl: "https://world.openfoodfacts.org/",
-				licenseName: "ODbL-1.0",
-				licenseUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
-				attribution: "Open Food Facts contributors",
-			},
-		});
+		const product = mapApprovedCatalogRecordToApiV1Product(imageOnlyRecord,
+			attributionCatalog(
+				{
+					usda: sourceAttribution(
+						"usda",
+						"USDA FoodData Central",
+						"CC0-1.0",
+					),
+				},
+				{},
+				{
+					"open-food-facts": {
+						displayName: "Open Food Facts",
+						sourceUrl: "https://world.openfoodfacts.org",
+					},
+				},
+			),
+		);
 
 		expect(product.images).toHaveLength(1);
 		expect(product.sourceAttributions.map((source) => source.source)).toEqual([
@@ -513,24 +686,15 @@ describe("blendCalc API v1 catalog mapping", () => {
 			brandOwner: record.fieldProvenance.brandOwner,
 			ingredients: record.fieldProvenance.ingredients,
 		};
-		const product = mapApprovedCatalogRecordToApiV1Product(legacyRecord, {
-			usda: {
-				source: "usda",
-				displayName: "USDA FoodData Central",
-				sourceUrl: "https://fdc.nal.usda.gov/",
-				licenseName: "CC0-1.0",
-				licenseUrl: "https://www.usa.gov/government-copyright",
-				attribution: "USDA FoodData Central",
-			},
-			"open-food-facts": {
-				source: "open-food-facts",
-				displayName: "Open Food Facts",
-				sourceUrl: "https://world.openfoodfacts.org/",
-				licenseName: "ODbL-1.0",
-				licenseUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
-				attribution: "Open Food Facts contributors",
-			},
-		});
+		const product = mapApprovedCatalogRecordToApiV1Product(legacyRecord,
+			attributionCatalog({
+				usda: sourceAttribution(
+					"usda",
+					"USDA FoodData Central",
+					"CC0-1.0",
+				),
+			}),
+		);
 
 		expect(product.fieldSources.category).toBeNull();
 		expect(product.fieldSources.structuredIngredients).toBeNull();
@@ -539,16 +703,24 @@ describe("blendCalc API v1 catalog mapping", () => {
 		]);
 	});
 
-	it("withholds images that lack complete asset-level rights metadata", () => {
-		const incompleteImageRecord = structuredClone(record);
-		delete incompleteImageRecord.images[0].attributionText;
+	it.each([
+		["license URL", "licenseUrl"],
+		["attribution credit", "attributionText"],
+		["retrieval date", "fetchedAt"],
+	] as const)(
+		"withholds images that lack their asset-level %s",
+		(_description, field) => {
+			const incompleteImageRecord = structuredClone(record);
+			delete incompleteImageRecord.images[0][field];
 
-		const product = mapApprovedCatalogRecordToApiV1Product(
-			incompleteImageRecord,
-		);
+			const product = mapApprovedCatalogRecordToApiV1Product(
+				incompleteImageRecord,
+				defaultAttributionCatalog(),
+			);
 
-		expect(product.images).toEqual([]);
-	});
+			expect(product.images).toEqual([]);
+		},
+	);
 
 	it("creates predictable pagination", () => {
 		expect(createPagination(15, 15, 31)).toEqual({
@@ -570,7 +742,7 @@ describe("blendCalc API v1 catalog mapping", () => {
 				label_observed_at: "2026-07-17T10:00:00.000Z",
 				changes: [{
 					field: "ingredients",
-					label: "Ingredient statement",
+					label: "Ingredients",
 					changeType: "changed",
 					previousValue: "Tomatoes",
 					newValue: "Tomatoes, onion",
@@ -595,7 +767,7 @@ describe("blendCalc API v1 catalog mapping", () => {
 				labelObservedAt: "2026-07-17T10:00:00.000Z",
 				changes: [{
 					field: "ingredients",
-					label: "Ingredient statement",
+					label: "Ingredients",
 					changeType: "changed",
 					previousValue: "Tomatoes",
 					newValue: "Tomatoes, onion",
@@ -612,6 +784,72 @@ describe("blendCalc API v1 catalog mapping", () => {
 		});
 		expect(result?.revisions[0]).not.toHaveProperty("food");
 		expect(result?.revisions[0]).not.toHaveProperty("evidencePaths");
+	});
+
+	it("publishes only allowlisted revision fields, labels, and value shapes", async () => {
+		const privateSentinel = "PRIVATE-REVISION-SENTINEL";
+		const rpc = vi.fn().mockResolvedValue({
+			data: [{
+				id: "a89fc15f-ffcd-4d03-92e9-2b511bb300ca",
+				revision_number: 3,
+				published_at: "2026-07-20T10:00:00.000Z",
+				label_observed_at: "2026-07-20T09:00:00.000Z",
+				changes: [
+					{
+						field: "ingredients",
+						label: privateSentinel,
+						changeType: "changed",
+						previousValue: "Tomatoes",
+						newValue: "Tomatoes, onion",
+						severity: "medium",
+					},
+					{
+						field: "nutrient:1003",
+						label: privateSentinel,
+						changeType: "changed",
+						previousValue: { value: 2, unit: "g", evidencePath: privateSentinel },
+						newValue: { value: 3, unit: "g", reviewedBy: privateSentinel },
+						severity: "low",
+					},
+					{
+						field: "moderatorEvidence",
+						label: privateSentinel,
+						changeType: "added",
+						previousValue: null,
+						newValue: { path: privateSentinel },
+						severity: "high",
+					},
+				],
+				total_count: 1,
+			}],
+			error: null,
+		});
+
+		const result = await readApiV1ProductRevisionHistory(
+			{ rpc } as never,
+			"00021130493609",
+			{ limit: 25, offset: 0 },
+		);
+
+		expect(result?.revisions[0]?.changes).toEqual([
+			{
+				field: "ingredients",
+				label: "Ingredients",
+				changeType: "changed",
+				previousValue: "Tomatoes",
+				newValue: "Tomatoes, onion",
+				severity: "medium",
+			},
+			{
+				field: "nutrient:1003",
+				label: "Nutrient 1003",
+				changeType: "changed",
+				previousValue: { value: 2, unit: "g" },
+				newValue: { value: 3, unit: "g" },
+				severity: "low",
+			},
+		]);
+		expect(JSON.stringify(result)).not.toContain(privateSentinel);
 	});
 
 	it("returns an empty page instead of a false not-found result", async () => {
@@ -664,32 +902,198 @@ describe("blendCalc API v1 catalog mapping", () => {
 			"Open Government Licence v3.0",
 		],
 	] as const)(
-		"preserves %s attribution when its fields enter the canonical API",
+		"preserves release-specific %s attribution when its fields enter the canonical API",
 		(sourceKey, displayName, licenseName) => {
 			const attributedRecord = structuredClone(record);
-			attributedRecord.food.foodNutrients[0].source = sourceKey;
-			const product = mapApprovedCatalogRecordToApiV1Product(
-				attributedRecord,
-				{
-					[sourceKey]: {
-						source: sourceKey,
-						displayName,
-						sourceUrl: "https://example.com/dataset",
-						licenseName,
-						licenseUrl: "https://example.com/licence",
-						attribution: "Required source attribution",
-					},
-				},
-			);
-
-			expect(product.sourceAttributions).toContainEqual({
-				source: sourceKey,
+			const datasetKey = sourceKey === "health-canada-cnf"
+				? "cnf-2026"
+				: "cofid-2021";
+			for (const fieldSource of Object.values(
+				attributedRecord.fieldProvenance,
+			)) {
+				fieldSource.source = sourceKey;
+				fieldSource.sourceReference = `${datasetKey}:101`;
+			}
+			for (const nutrient of attributedRecord.food.foodNutrients) {
+				nutrient.source = sourceKey;
+				nutrient.sourceReference = `${datasetKey}:101`;
+			}
+			for (const serving of attributedRecord.food.foodServings ?? []) {
+				serving.source = sourceKey;
+				serving.sourceReference = `${datasetKey}:101`;
+			}
+			const providerAttribution = sourceAttribution(
+				sourceKey,
 				displayName,
-				sourceUrl: "https://example.com/dataset",
 				licenseName,
+			);
+			const datasetAttribution = {
+				...providerAttribution,
+				sourceUrl: "https://example.com/dataset",
 				licenseUrl: "https://example.com/licence",
 				attribution: "Required source attribution",
-			});
+				dataset: {
+					key: datasetKey,
+					name: `${displayName} 2026`,
+					version: datasetKey.endsWith("2026") ? "2026" : "2021",
+					importedAt: "2026-07-26T00:00:00.000Z",
+				},
+			};
+			const product = mapApprovedCatalogRecordToApiV1Product(
+				attributedRecord,
+				attributionCatalog(
+					{ [sourceKey]: providerAttribution },
+					{ [sourceKey]: { [datasetKey]: datasetAttribution } },
+				),
+			);
+
+			expect(product.sourceAttributions).toContainEqual(datasetAttribution);
 		},
 	);
+
+	it("fails closed when represented source attribution is unavailable", () => {
+		expect(() => mapApprovedCatalogRecordToApiV1Product(
+			record,
+			attributionCatalog({}),
+		)).toThrow("Required API source attribution is unavailable.");
+	});
+
+	it("fails closed when a product has no canonical source lineage", () => {
+		const unattributedRecord = structuredClone(record);
+		unattributedRecord.fieldProvenance = {};
+		unattributedRecord.food.foodNutrients = [];
+		unattributedRecord.food.foodServings = [];
+
+		expect(() => mapApprovedCatalogRecordToApiV1Product(
+			unattributedRecord,
+			defaultAttributionCatalog(),
+		)).toThrow("Required API source attribution is unavailable.");
+	});
+
+	it("builds a complete provider and release attribution catalog", () => {
+		const catalog = mapApiV1SourceAttributionCatalog(
+			[{
+				key: "health-canada-cnf",
+				display_name: "Health Canada Canadian Nutrient File",
+				homepage_url: "https://example.com/cnf",
+				terms_url: "https://example.com/cnf/license",
+				attribution_text: "Required Canada attribution",
+				canonical_license_name: "Open Government Licence – Canada",
+				canonical_policy_reviewed_at: "2026-07-22T00:00:00.000Z",
+				canonical_storage_allowed: true,
+				api_redistribution_allowed: true,
+			}],
+			[{
+				key: "cnf-2026",
+				source_key: "health-canada-cnf",
+				display_name: "Canadian Nutrient File 2026",
+				version: "2026",
+				source_url: "https://example.com/cnf-2026",
+				license_name: "Open Government Licence – Canada",
+				license_url: "https://example.com/cnf/license",
+				attribution_text: "Contains information licensed by Canada.",
+				imported_at: "2026-07-26T00:00:00.000Z",
+				active: true,
+				import_enabled: true,
+				license_review_status: "approved",
+			}],
+		);
+
+		expect(catalog.sources["health-canada-cnf"]).toMatchObject({
+			licenseName: "Open Government Licence – Canada",
+			redistributionPolicyReviewedAt: "2026-07-22T00:00:00.000Z",
+		});
+		expect(catalog.datasetsBySource["health-canada-cnf"]?.["cnf-2026"])
+			.toMatchObject({
+				dataset: {
+					key: "cnf-2026",
+					version: "2026",
+					importedAt: "2026-07-26T00:00:00.000Z",
+				},
+			});
+	});
+
+	it("withholds an approved dataset whose import date is missing", () => {
+		const catalog = mapApiV1SourceAttributionCatalog(
+			[{
+				key: "health-canada-cnf",
+				display_name: "Health Canada Canadian Nutrient File",
+				homepage_url: "https://example.com/cnf",
+				terms_url: "https://example.com/cnf/license",
+				attribution_text: "Required Canada attribution",
+				canonical_license_name: "Open Government Licence – Canada",
+				canonical_policy_reviewed_at: "2026-07-22T00:00:00.000Z",
+				canonical_storage_allowed: true,
+				api_redistribution_allowed: true,
+			}],
+			[{
+				key: "cnf-2026",
+				source_key: "health-canada-cnf",
+				display_name: "Canadian Nutrient File 2026",
+				version: "2026",
+				source_url: "https://example.com/cnf-2026",
+				license_name: "Open Government Licence – Canada",
+				license_url: "https://example.com/cnf/license",
+				attribution_text: "Contains information licensed by Canada.",
+				imported_at: null,
+				active: true,
+				import_enabled: true,
+				license_review_status: "approved",
+			}],
+		);
+
+		expect(catalog.datasetsBySource["health-canada-cnf"]).toBeUndefined();
+		expect(catalog.datasetSourceKeys.has("health-canada-cnf")).toBe(true);
+	});
+
+	it("withholds an API-approved source whose legal attribution is incomplete", () => {
+		const catalog = mapApiV1SourceAttributionCatalog(
+			[{
+				key: "incomplete-source",
+				display_name: "Incomplete source",
+				homepage_url: "https://example.com/incomplete",
+				terms_url: null,
+				attribution_text: "Required credit",
+				canonical_license_name: "Example licence",
+				canonical_policy_reviewed_at: "2026-07-22T00:00:00.000Z",
+				canonical_storage_allowed: true,
+				api_redistribution_allowed: true,
+			}],
+			[],
+		);
+
+		expect(catalog.sources["incomplete-source"]).toBeUndefined();
+	});
+
+	it("fails closed when a represented dataset release cannot be resolved", () => {
+		const attributedRecord = structuredClone(record);
+		for (const fieldSource of Object.values(
+			attributedRecord.fieldProvenance,
+		)) {
+			fieldSource.source = "health-canada-cnf";
+			fieldSource.sourceReference = "cnf-2026:101";
+		}
+		for (const nutrient of attributedRecord.food.foodNutrients) {
+			nutrient.source = "health-canada-cnf";
+			nutrient.sourceReference = "cnf-2026:101";
+		}
+		for (const serving of attributedRecord.food.foodServings ?? []) {
+			serving.source = "health-canada-cnf";
+			serving.sourceReference = "cnf-2026:101";
+		}
+
+		expect(() => mapApprovedCatalogRecordToApiV1Product(
+			attributedRecord,
+			attributionCatalog(
+				{
+					"health-canada-cnf": sourceAttribution(
+						"health-canada-cnf",
+						"Health Canada Canadian Nutrient File",
+						"Open Government Licence – Canada",
+					),
+				},
+				{ "health-canada-cnf": {} },
+			),
+		)).toThrow("Required API dataset attribution is unavailable.");
+	});
 });

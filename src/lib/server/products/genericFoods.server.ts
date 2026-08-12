@@ -315,6 +315,27 @@ export const searchGenericFoods = async (
 			asRecordArray<GenericSourceIdentifierRow>(row.source_identifiers),
 			sourceReference,
 		);
+		const sourceAttribution = {
+			datasetKey: row.dataset_key,
+			datasetName: row.dataset_display_name,
+			datasetVersion: row.dataset_version,
+			sourceName: row.source_display_name,
+			sourceUrl: row.source_url,
+			licenseName: row.license_name,
+			licenseUrl: row.license_url,
+			attributionText: row.attribution_text,
+		};
+		const sourceField = {
+			source: sourceKey,
+			sourceReference,
+			confidence: "imported" as const,
+		};
+		const hasSourceMetadata = Boolean(
+			row.alternate_description?.trim() ||
+			row.scientific_name?.trim() ||
+			row.preparation?.trim() ||
+			row.source_updated_at,
+		);
 
 		return {
 			fdcId: Number(row.application_food_id),
@@ -334,33 +355,33 @@ export const searchGenericFoods = async (
 			sourceLabel: row.source_display_name,
 			sourceDataType: row.dataset_display_name,
 			sourcePublishedDate: row.source_updated_at ?? undefined,
-			sourceAttribution: {
-				datasetKey: row.dataset_key,
-				datasetName: row.dataset_display_name,
-				datasetVersion: row.dataset_version,
-				sourceName: row.source_display_name,
-				sourceUrl: row.source_url,
-				licenseName: row.license_name,
-				licenseUrl: row.license_url,
-				attributionText: row.attribution_text,
-			},
+			sourceAttribution,
+			sourceAttributions: [sourceAttribution],
 			trustStatus: "imported",
 			foodServings,
 			hasSourceServing: foodServings.length > 0,
 			fieldProvenance: {
-				nutrition: {
-					source: sourceKey,
-					sourceReference,
-					confidence: "imported",
-				},
+				productName: sourceField,
+				...(foodNutrients.length > 0
+					? { nutrition: sourceField }
+					: {}),
+				...(row.food_group_name?.trim()
+					? { categories: sourceField }
+					: {}),
 				...(foodServings.length > 0
-					? {
-							serving: {
-								source: sourceKey,
-								sourceReference,
-								confidence: "imported" as const,
-							},
-						}
+					? { serving: sourceField }
+					: {}),
+				...(hasSourceMetadata
+					? { sourceMetadata: sourceField }
+					: {}),
+				...(row.scientific_name?.trim()
+					? { scientificName: sourceField }
+					: {}),
+				...(row.alternate_description?.trim()
+					? { alternateDescription: sourceField }
+					: {}),
+				...(row.preparation?.trim()
+					? { preparation: sourceField }
 					: {}),
 			},
 		};

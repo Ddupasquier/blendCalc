@@ -18,6 +18,14 @@ const securityMigration = readFileSync(
 	"supabase/migrations/20260729180000_security_least_privilege_and_rate_limits.sql",
 	"utf8",
 );
+const mfaIssueCodeMigration = readFileSync(
+	"supabase/migrations/20260811150000_register_mfa_required_issue_code.sql",
+	"utf8",
+);
+const publicationConcernMigration = readFileSync(
+	"supabase/migrations/20260812110000_api_publication_corrections_and_holds.sql",
+	"utf8",
+);
 const retiredIssueCodes = [
 	"FOOD_IDENTITY_CONFIRMED",
 	"FOOD_IDENTITY_POSSIBLE",
@@ -42,6 +50,15 @@ describe("application issue code migration", () => {
 			/'([A-Z][A-Z0-9_]*)',\s*'error',\s*'request'/g,
 		)) {
 			migrationCodes.add(match[1]);
+		}
+		expect(mfaIssueCodeMigration).toContain("'MFA_REQUIRED'");
+		migrationCodes.add("MFA_REQUIRED");
+		for (const code of [
+			"PUBLICATION_CONCERN_INVALID",
+			"PUBLICATION_CONCERN_FAILED",
+		]) {
+			expect(publicationConcernMigration).toContain(`'${code}'`);
+			migrationCodes.add(code);
 		}
 
 		expect([...migrationCodes].sort()).toEqual([...APP_ISSUE_CODES].sort());

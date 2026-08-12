@@ -30,6 +30,16 @@ describe("request rate-limit policies", () => {
 		});
 	});
 
+	it("limits signed-out publication concerns separately", () => {
+		expect(
+			getRequestRateLimitPolicy("POST", "/api/publication-concerns"),
+		).toEqual({
+			scope: "api:publication-concern",
+			limit: 10,
+			windowSeconds: 3600,
+		});
+	});
+
 	it("limits authentication and privileged form actions", () => {
 		expect(getRequestRateLimitPolicy("POST", "/auth")).toMatchObject({
 			scope: "auth:action",

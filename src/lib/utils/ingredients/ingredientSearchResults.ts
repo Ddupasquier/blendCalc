@@ -3,26 +3,38 @@ import { compareNutritionCompleteness } from "$lib/utils/food/quality/nutritionC
 import { createIngredientSearchRelevanceComparator } from "$lib/utils/ingredients/ingredientSearchRelevance";
 import { getFoodDownrankScore } from "$lib/utils/profile/foodPreferenceWarnings";
 import type { NutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
-
-const compareFoodSearchRichness = (left: FoodItem, right: FoodItem) =>
-	new Set(left.foodNutrients.map(({ nutrientId }) => nutrientId)).size -
-		new Set(right.foodNutrients.map(({ nutrientId }) => nutrientId)).size ||
-	(left.foodServings?.length ?? 0) - (right.foodServings?.length ?? 0) ||
-	Number(Boolean(left.scientificName)) - Number(Boolean(right.scientificName)) ||
-	Number(Boolean(left.alternateDescription)) -
-		Number(Boolean(right.alternateDescription)) ||
-	Number(Boolean(left.preparation)) - Number(Boolean(right.preparation));
+import { resolveExactIdentityFoodFields } from "$lib/utils/food/records/exactIdentityFoodResolution";
+import { cleanBarcode, normalizeBarcode } from "$lib/utils/barcode/barcode";
+import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
 
 const isCanonicalCatalogFood = (food: FoodItem) =>
 	Boolean(food.sharedProductId) || food.dataType === "Shared Product";
 
+const normalizeUsdaFdcId = (value: string) => {
+	const digits = value.trim();
+	if (!/^\d+$/.test(digits)) return digits;
+	return String(BigInt(digits));
+};
+
+const normalizeLegacyUsdaNdbNumber = (value: string) => {
+	const digits = value.replace(/\D/g, "");
+	return digits ? digits.padStart(5, "0") : value.trim();
+};
+
 const getFoodSearchIdentityKeys = (food: FoodItem) => {
+	if (isPrivateCustomFood(food)) return [`private-food:${food.fdcId}`];
 	const keys = [`food:${food.fdcId}`];
 	const barcode = food.barcode ?? food.gtinUpc;
-	if (barcode) keys.push(`barcode:${barcode}`);
+	if (barcode) {
+		keys.push(`barcode:${normalizeBarcode(barcode) ?? cleanBarcode(barcode)}`);
+	}
+	const usdaFdcId = food.sourceIdentifiers?.usdaFdcId;
+	if (usdaFdcId) keys.push(`usda-fdc:${normalizeUsdaFdcId(usdaFdcId)}`);
 	const legacyUsdaNdbNumber = food.sourceIdentifiers?.usdaNdbNumber;
 	if (legacyUsdaNdbNumber) {
-		keys.push(`usda-ndb:${legacyUsdaNdbNumber}`);
+		keys.push(
+			`usda-ndb:${normalizeLegacyUsdaNdbNumber(legacyUsdaNdbNumber)}`,
+		);
 	}
 	return keys;
 };
@@ -31,38 +43,51 @@ export const isUsableIngredientSearchResult = (food: FoodItem) =>
 	food.description.trim().length > 0 && food.foodNutrients.length > 0;
 
 export const mergeIngredientSearchResults = (...resultGroups: FoodItem[][]) => {
-	const merged: FoodItem[] = [];
-	const indexesByIdentity = new Map<string, number>();
+	const foods = resultGroups.flat();
+	const parentIndexes = foods.map((_, index) => index);
+	const findRootIndex = (index: number): number => {
+		const parentIndex = parentIndexes[index];
+		if (parentIndex === index) return index;
+		const rootIndex = findRootIndex(parentIndex);
+		parentIndexes[index] = rootIndex;
+		return rootIndex;
+	};
+	const connectIndexes = (leftIndex: number, rightIndex: number) => {
+		const leftRootIndex = findRootIndex(leftIndex);
+		const rightRootIndex = findRootIndex(rightIndex);
+		if (leftRootIndex === rightRootIndex) return;
+		parentIndexes[Math.max(leftRootIndex, rightRootIndex)] = Math.min(
+			leftRootIndex,
+			rightRootIndex,
+		);
+	};
+	const firstIndexByIdentity = new Map<string, number>();
 
-	for (const food of resultGroups.flat()) {
-		const identityKeys = getFoodSearchIdentityKeys(food);
-		const existingIndex = identityKeys
-			.map((key) => indexesByIdentity.get(key))
-			.find((index): index is number => index !== undefined);
-		if (existingIndex === undefined) {
-			const nextIndex = merged.push(food) - 1;
-			for (const key of identityKeys) indexesByIdentity.set(key, nextIndex);
-			continue;
+	foods.forEach((food, index) => {
+		for (const identityKey of getFoodSearchIdentityKeys(food)) {
+			const linkedIndex = firstIndexByIdentity.get(identityKey);
+			if (linkedIndex === undefined) {
+				firstIndexByIdentity.set(identityKey, index);
+			} else {
+				connectIndexes(index, linkedIndex);
+			}
 		}
+	});
 
-		const existingFood = merged[existingIndex];
-		const existingIsCanonical = isCanonicalCatalogFood(existingFood);
-		const candidateIsCanonical = isCanonicalCatalogFood(food);
-		if (existingIsCanonical !== candidateIsCanonical) {
-			if (!candidateIsCanonical) continue;
-			merged[existingIndex] = food;
-			for (const key of identityKeys) indexesByIdentity.set(key, existingIndex);
-			continue;
-		}
+	const clustersByRootIndex = new Map<number, FoodItem[]>();
+	foods.forEach((food, index) => {
+		const rootIndex = findRootIndex(index);
+		const cluster = clustersByRootIndex.get(rootIndex) ?? [];
+		cluster.push(food);
+		clustersByRootIndex.set(rootIndex, cluster);
+	});
 
-		if (compareFoodSearchRichness(food, existingFood) <= 0) {
-			continue;
-		}
-		merged[existingIndex] = food;
-		for (const key of identityKeys) indexesByIdentity.set(key, existingIndex);
-	}
-
-	return merged;
+	return [...clustersByRootIndex.entries()]
+		.sort(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
+		.map(([, cluster]) => {
+			const canonicalFood = cluster.find(isCanonicalCatalogFood);
+			return canonicalFood ?? resolveExactIdentityFoodFields(cluster);
+		});
 };
 
 export const sortIngredientSearchResults = (

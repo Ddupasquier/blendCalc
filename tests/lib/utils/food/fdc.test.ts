@@ -37,6 +37,12 @@ describe("FoodData Central normalization", () => {
 			modifiedAt: "2024-08-01T12:30:00.000Z",
 			marketCountries: ["United States"],
 		});
+		expect(food.fieldProvenance).toMatchObject({
+			productName: { source: "usda", sourceReference: "123" },
+			brandOwner: { source: "usda", sourceReference: "123" },
+			nutrition: { source: "usda", sourceReference: "123" },
+			sourceMetadata: { source: "usda", sourceReference: "123" },
+		});
 		expect(food.foodNutrients).toEqual([
 			{
 				nutrientId: 1092,
@@ -124,6 +130,7 @@ describe("FoodData Central normalization", () => {
 		});
 
 		expect(food.hasSourceServing).toBe(true);
+		expect(food.foodIdentityType).toBe("generic");
 		expect(food.foodServings).toEqual([
 			{
 				label: "1 tablespoon",
@@ -156,5 +163,26 @@ describe("FoodData Central normalization", () => {
 				confidence: "unknown",
 			},
 		]);
+	});
+
+	it("maps USDA source-owned identity types without a shared allowlist", () => {
+		expect(normalizeFdcFood({
+			fdcId: 200,
+			description: "Branded product",
+			dataType: "Branded",
+			foodNutrients: [],
+		}).foodIdentityType).toBe("packaged");
+		expect(normalizeFdcFood({
+			fdcId: 201,
+			description: "Experimental generic food",
+			dataType: "Experimental",
+			foodNutrients: [],
+		}).foodIdentityType).toBe("generic");
+		expect(normalizeFdcFood({
+			fdcId: 202,
+			description: "Future source record",
+			dataType: "Future source type",
+			foodNutrients: [],
+		}).foodIdentityType).toBe("unknown");
 	});
 });

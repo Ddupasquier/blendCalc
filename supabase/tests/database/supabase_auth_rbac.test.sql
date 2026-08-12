@@ -1,6 +1,6 @@
 begin;
 
-select plan(36);
+select plan(37);
 
 select has_type('public', 'app_role', 'application roles use a database enum');
 select has_type('public', 'app_permission', 'application permissions use a database enum');
@@ -260,8 +260,19 @@ select set_config(
 );
 
 select ok(
+	not public.authorize_app_permission('moderation.catalog.review'),
+	'elevated roles cannot use protected permissions before MFA verification'
+);
+
+select set_config(
+	'request.jwt.claims',
+	'{"sub":"72000000-0000-4000-8000-000000000002","role":"authenticated","app_role":"moderator","aal":"aal2"}',
+	true
+);
+
+select ok(
 	public.authorize_app_permission('moderation.catalog.review'),
-	'moderators can review catalog submissions'
+	'MFA-verified moderators can review catalog submissions'
 );
 
 select ok(
@@ -271,13 +282,13 @@ select ok(
 
 select set_config(
 	'request.jwt.claims',
-	'{"sub":"72000000-0000-4000-8000-000000000003","role":"authenticated","app_role":"admin"}',
+	'{"sub":"72000000-0000-4000-8000-000000000003","role":"authenticated","app_role":"admin","aal":"aal2"}',
 	true
 );
 
 select ok(
 	public.authorize_app_permission('moderation.roles.manage'),
-	'admins can manage application roles'
+	'MFA-verified admins can manage application roles'
 );
 
 reset role;

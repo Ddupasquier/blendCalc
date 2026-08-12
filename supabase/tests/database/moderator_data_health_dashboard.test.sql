@@ -1,6 +1,6 @@
 begin;
 
-select plan(13);
+select plan(14);
 
 select ok(
 	not has_function_privilege(
@@ -53,17 +53,40 @@ select set_config(
 	'71000000-0000-4000-8000-000000000001',
 	true
 );
+select set_config(
+	'request.jwt.claims',
+	'{"sub":"71000000-0000-4000-8000-000000000001","role":"authenticated","app_role":"user","aal":"aal1"}',
+	true
+);
 
 select throws_ok(
 	$$select public.get_moderator_data_health(30, 20)$$,
 	'42501',
-	'Moderator access is required.',
+	'MFA-verified moderator access is required.',
 	'ordinary authenticated users cannot read moderator data health'
 );
 
 select set_config(
 	'request.jwt.claim.sub',
 	'71000000-0000-4000-8000-000000000002',
+	true
+);
+select set_config(
+	'request.jwt.claims',
+	'{"sub":"71000000-0000-4000-8000-000000000002","role":"authenticated","app_role":"moderator","aal":"aal1"}',
+	true
+);
+
+select throws_ok(
+	$$select public.get_moderator_data_health(30, 20)$$,
+	'42501',
+	'MFA-verified moderator access is required.',
+	'elevated roles cannot read moderator data health before MFA verification'
+);
+
+select set_config(
+	'request.jwt.claims',
+	'{"sub":"71000000-0000-4000-8000-000000000002","role":"authenticated","app_role":"moderator","aal":"aal2"}',
 	true
 );
 

@@ -26,4 +26,54 @@ describe("product information", () => {
 			]),
 		);
 	});
+
+	it("retains every distinct attribution available for merged food data", () => {
+		const firstAttribution = {
+			datasetKey: "usda-sr-legacy",
+			datasetName: "USDA SR Legacy",
+			datasetVersion: "2018",
+			sourceName: "USDA",
+			sourceUrl: "https://example.com/usda",
+			licenseName: "Public domain",
+			licenseUrl: "https://example.com/usda-license",
+			attributionText: "USDA attribution",
+		};
+		const secondAttribution = {
+			datasetKey: "cnf-2026",
+			datasetName: "Canadian Nutrient File",
+			datasetVersion: "2026",
+			sourceName: "Health Canada",
+			sourceUrl: "https://example.com/cnf",
+			licenseName: "Open Government Licence",
+			licenseUrl: "https://example.com/cnf-license",
+			attributionText: "Health Canada attribution",
+		};
+
+		const information = getProductInformation({
+			fdcId: 123,
+			description: "Test Product",
+			foodNutrients: [],
+			sourceAttribution: firstAttribution,
+			sourceAttributions: [firstAttribution, secondAttribution],
+		});
+
+		expect(information.sourceAttributions).toEqual([
+			secondAttribution,
+			firstAttribution,
+		]);
+	});
+
+	it("presents unconfirmed identity without calling it packaged", () => {
+		const information = getProductInformation({
+			fdcId: 123,
+			description: "Future source record",
+			dataType: "Future source type",
+			foodNutrients: [],
+		});
+
+		expect(information.productRows).toContainEqual({
+			label: "Food type",
+			value: "Not confirmed",
+		});
+	});
 });

@@ -9,6 +9,7 @@ vi.mock("$lib/supabase/admin.server", () => ({
 }));
 
 import {
+	getIdentityVerificationRequiredModeratorActionSummary,
 	getUnavailableModeratorActionSummary,
 	readModeratorActionSummary,
 } from "$lib/server/moderation/moderatorActionSummary.server";
@@ -43,6 +44,7 @@ describe("Profile moderator action summary", () => {
 			pendingProfileImageReviews: 1,
 			totalPendingReviews: 6,
 			unavailable: false,
+			identityVerificationRequired: false,
 		});
 		expect(from).toHaveBeenCalledTimes(3);
 		for (const query of Object.values(queries)) {
@@ -78,6 +80,18 @@ describe("Profile moderator action summary", () => {
 			pendingProfileImageReviews: null,
 			totalPendingReviews: null,
 			unavailable: true,
+			identityVerificationRequired: false,
+		});
+	});
+
+	it("withholds privileged review counts until identity verification", () => {
+		expect(getIdentityVerificationRequiredModeratorActionSummary()).toEqual({
+			pendingProductSubmissions: null,
+			pendingFoodWarningReports: null,
+			pendingProfileImageReviews: null,
+			totalPendingReviews: null,
+			unavailable: false,
+			identityVerificationRequired: true,
 		});
 	});
 });

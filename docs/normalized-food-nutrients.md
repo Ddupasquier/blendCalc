@@ -37,6 +37,13 @@ the same database-reviewed equivalences to existing list items, custom foods, ca
 submissions, catalog products, revisions, and source observations. Reported values and
 units are preserved; duplicate aliases yield to an already-present canonical nutrient.
 
+Source nutrient mappings are active only after a source identifier or exact source key
+and unit receive an explicit reviewed decision. Taxonomy and name similarity can suggest
+a candidate for review, but cannot mark a nutrient canonical. Runtime mapping requires
+the exact normalized source unit; a different unit requires a reviewed nutrient-specific
+conversion. Legacy semantic mapping metadata remains noncanonical lineage rather than
+being deleted or silently trusted.
+
 ## Application Reads
 
 The application fills the source-neutral `FoodItem.foodNutrients` contract from the

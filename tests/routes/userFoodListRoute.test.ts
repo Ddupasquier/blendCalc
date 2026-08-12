@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+	adminClient: { source: "trusted-server" },
 	annotateFoodsWithFoodSafety: vi.fn(),
 	enrichFoodForListPlacement: vi.fn(),
+	getSupabaseAdminClient: vi.fn(),
 	getUserFoodSafetyContext: vi.fn(),
 	readCloudIngredientListPage: vi.fn(),
 }));
@@ -18,6 +20,9 @@ vi.mock("$lib/server/user-data/foodLists.server", () => ({
 }));
 vi.mock("$lib/server/user-data/foodListPlacement.server", () => ({
 	enrichFoodForListPlacement: mocks.enrichFoodForListPlacement,
+}));
+vi.mock("$lib/supabase/admin.server", () => ({
+	getSupabaseAdminClient: mocks.getSupabaseAdminClient,
 }));
 
 import {
@@ -90,6 +95,7 @@ const createDeleteEvent = (
 describe("user food list route", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mocks.getSupabaseAdminClient.mockReturnValue(mocks.adminClient);
 		mocks.readCloudIngredientListPage.mockResolvedValue({
 			foods: [{ fdcId: 1, description: "Milk", foodNutrients: [] }],
 			totalCount: 1,
@@ -184,6 +190,10 @@ describe("user food list route", () => {
 		expect(response.status).toBe(200);
 		expect(await response.json()).toEqual({ result: "added" });
 		expect(mocks.enrichFoodForListPlacement).toHaveBeenCalledWith(
+			mocks.adminClient,
+			food,
+		);
+		expect(mocks.enrichFoodForListPlacement).not.toHaveBeenCalledWith(
 			event.locals.supabase,
 			food,
 		);

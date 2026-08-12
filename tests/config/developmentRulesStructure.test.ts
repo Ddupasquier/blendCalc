@@ -14,8 +14,8 @@ describe("development rules documentation", () => {
 		expect(existsSync(legacyCombinedPath)).toBe(false);
 		expect(rules).toContain("source of truth");
 		expect(rules).toContain("dev-rules-audit.md");
-		expect(audit).toContain("[the development rules](dev-rules.md)");
-		expect(audit).toMatch(/An audit\s+finding never overrides a rule\./);
+		expect(audit).toContain("[development rules](dev-rules.md)");
+		expect(audit).toMatch(/An audit finding never\s+overrides a (?:settled )?rule\./);
 	});
 
 	it("keeps completed audit summaries out of the active documents", () => {

@@ -6,6 +6,7 @@ export type ModeratorActionSummary = {
 	pendingProfileImageReviews: number | null;
 	totalPendingReviews: number | null;
 	unavailable: boolean;
+	identityVerificationRequired: boolean;
 };
 
 const readCount = (
@@ -47,6 +48,7 @@ export const readModeratorActionSummary = async (): Promise<ModeratorActionSumma
 			pendingFoodWarningReports +
 			pendingProfileImageReviews,
 		unavailable: false,
+		identityVerificationRequired: false,
 	};
 };
 
@@ -56,4 +58,15 @@ export const getUnavailableModeratorActionSummary = (): ModeratorActionSummary =
 	pendingProfileImageReviews: null,
 	totalPendingReviews: null,
 	unavailable: true,
+	identityVerificationRequired: false,
 });
+
+export const getIdentityVerificationRequiredModeratorActionSummary =
+	(): ModeratorActionSummary => ({
+		pendingProductSubmissions: null,
+		pendingFoodWarningReports: null,
+		pendingProfileImageReviews: null,
+		totalPendingReviews: null,
+		unavailable: false,
+		identityVerificationRequired: true,
+	});

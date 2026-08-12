@@ -7,14 +7,15 @@ import type {
 	FoodItem,
 	FoodBarcodeProvenance,
 	FoodIdentityType,
+	FoodProvenanceField,
 	FoodSourceAttribution,
 	FoodServing,
-	FoodTrackedField,
 } from "$lib/utils/food/types";
 import {
 	formatServingGramWeightMethod,
 	formatServingOrigin,
 } from "$lib/utils/food/servings/servingDisplay";
+import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
 
 export type ProductInformationRow = {
 	label: string;
@@ -26,7 +27,7 @@ export type ProductInformation = {
 	servingRows: ProductInformationRow[];
 	sourceRows: ProductInformationRow[];
 	fieldSourceRows: ProductInformationRow[];
-	sourceAttribution?: FoodSourceAttribution;
+	sourceAttributions: FoodSourceAttribution[];
 };
 
 const numberFormatter = new Intl.NumberFormat("en-US", {
@@ -57,6 +58,8 @@ const formatIdentityType = (value: FoodIdentityType | undefined) => {
 			return "Packaged product";
 		case "private-custom":
 			return "Personal ingredient";
+		case "unknown":
+			return "Not confirmed";
 		default:
 			return "";
 	}
@@ -136,7 +139,10 @@ const getProductRows = (food: FoodItem) => {
 		},
 		{ label: "Category", value: categories.join(", ") },
 		{ label: "Package size", value: formatPackageQuantity(food) },
-		{ label: "Food type", value: formatIdentityType(food.foodIdentityType) },
+		{
+			label: "Food type",
+			value: formatIdentityType(resolveFoodIdentityType(food)),
+		},
 		{ label: "Scientific name", value: cleanText(food.scientificName) },
 		{ label: "Also known as", value: cleanText(food.alternateDescription) },
 		{ label: "Preparation", value: cleanText(food.preparation) },
@@ -204,7 +210,7 @@ const getServingRows = (food: FoodItem) => {
 
 const getSourceRows = (food: FoodItem) => {
 	const identifiers = food.sourceIdentifiers ?? {};
-	const attribution = food.sourceAttribution;
+	const attribution = food.sourceAttribution ?? food.sourceAttributions?.[0];
 	const barcode = cleanText(food.barcode) || cleanText(food.gtinUpc);
 	const identifierRows = Object.entries(identifiers)
 		.filter(([, value]) => {
@@ -286,7 +292,7 @@ const getSourceRows = (food: FoodItem) => {
 	]);
 };
 
-const FIELD_LABELS: Record<FoodTrackedField, string> = {
+const FIELD_LABELS: Record<FoodProvenanceField, string> = {
 	productName: "Product name",
 	brandOwner: "Brand",
 	nutrition: "Nutrition data",
@@ -303,11 +309,14 @@ const FIELD_LABELS: Record<FoodTrackedField, string> = {
 	ingredientAnalysis: "Ingredient analysis",
 	additives: "Additives",
 	package: "Package details",
+	scientificName: "Scientific name",
+	alternateDescription: "Alternate description",
+	preparation: "Preparation",
 	sourceMetadata: "Source record details",
 };
 
 const formatFieldSource = (
-	source: NonNullable<FoodItem["fieldProvenance"]>[FoodTrackedField],
+	source: NonNullable<FoodItem["fieldProvenance"]>[FoodProvenanceField],
 ) => {
 	if (!source?.source?.trim()) return "";
 	const sourceLabel = formatFoodMetadataKey(source.source);
@@ -319,7 +328,10 @@ const formatFieldSource = (
 
 const getFieldSourceRows = (food: FoodItem) =>
 	(Object.entries(food.fieldProvenance ?? {}) as Array<
-		[FoodTrackedField, NonNullable<FoodItem["fieldProvenance"]>[FoodTrackedField]]
+		[
+			FoodProvenanceField,
+			NonNullable<FoodItem["fieldProvenance"]>[FoodProvenanceField],
+		]
 	>)
 		.filter(([, source]) => Boolean(source))
 		.map(([field, source]) => ({
@@ -333,5 +345,19 @@ export const getProductInformation = (food: FoodItem): ProductInformation => ({
 	servingRows: getServingRows(food),
 	sourceRows: getSourceRows(food),
 	fieldSourceRows: getFieldSourceRows(food),
-	sourceAttribution: food.sourceAttribution,
+	sourceAttributions: [
+		...new Map(
+			[
+				...(food.sourceAttributions ?? []),
+				...(food.sourceAttribution ? [food.sourceAttribution] : []),
+			].map((attribution) => [
+				`${attribution.datasetKey}:${attribution.datasetVersion}:${attribution.sourceUrl}`,
+				attribution,
+			]),
+		).values(),
+	].sort((left, right) =>
+		`${left.datasetName}:${left.datasetVersion}:${left.sourceUrl}`.localeCompare(
+			`${right.datasetName}:${right.datasetVersion}:${right.sourceUrl}`,
+		)
+	),
 });

@@ -18,6 +18,9 @@ jobs:
     name: Source, Tests, And Build
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_compile_only
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -86,3 +89,23 @@ jobs:
             test-results/playwright/
           if-no-files-found: ignore
           retention-days: 7
+
+  browser-gate:
+    name: Browser Matrix
+    if: always()
+    needs:
+      - source
+      - browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Confirm every browser project passed
+        env:
+          SOURCE_RESULT: ${{ needs.source.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+        run: |
+          if [[ "$SOURCE_RESULT" != "success" || "$BROWSER_RESULT" != "success" ]]; then
+            echo "Source result: $SOURCE_RESULT"
+            echo "Browser matrix result: $BROWSER_RESULT"
+            exit 1
+          fi

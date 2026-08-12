@@ -32,6 +32,8 @@ const openApi = JSON.parse(
 	info: {
 		version: string;
 		"x-blendcalc-status"?: string;
+		"x-blendcalc-access"?: string;
+		"x-blendcalc-public-release"?: string;
 	};
 	paths: Record<string, unknown>;
 };
@@ -87,6 +89,10 @@ describe("blendCalc versioning", () => {
 		expect(BLENDCALC_API_V1).not.toBe(APP_VERSION);
 		expect(openApi.info.version.startsWith(`${BLENDCALC_API_V1}.`)).toBe(true);
 		expect(openApi.info["x-blendcalc-status"]).toBe("internal");
+		expect(openApi.info["x-blendcalc-access"]).toBe("internal-authenticated");
+		expect(openApi.info["x-blendcalc-public-release"]).toBe(
+			"blocked-pending-professional-terms-review",
+		);
 		expect(
 			Object.keys(openApi.paths).every((path) =>
 				path.startsWith("/api/v1/"),
@@ -103,14 +109,14 @@ describe("blendCalc versioning", () => {
 
 	it("does not leave literal product versions in outbound scripts", () => {
 		const scriptFiles = [
-			"scripts/audits/audit_openfoodfacts_allergen_fields.mjs",
-			"scripts/backfills/backfill_food_images.mjs",
-			"scripts/backfills/backfill_shared_product_categories.mjs",
-			"scripts/audits/benchmark_product_sources.mjs",
-			"scripts/generators/generate_api_structures.mjs",
-			"scripts/seeds/seed_custom_food_categories.mjs",
-			"scripts/seeds/seed_food_preference_api_observations.mjs",
-			"scripts/seeds/seed_manual_entry_nutrients.mjs",
+			"scripts/audits/food-sources/audit_openfoodfacts_allergen_fields.mjs",
+			"scripts/backfills/images/backfill_food_images.mjs",
+			"scripts/backfills/catalog/backfill_shared_product_categories.mjs",
+			"scripts/audits/food-sources/benchmark_product_sources.mjs",
+			"scripts/generators/api/generate_api_structures.mjs",
+			"scripts/seeds/catalog/seed_custom_food_categories.mjs",
+			"scripts/seeds/food-safety/seed_food_preference_api_observations.mjs",
+			"scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs",
 		];
 		for (const file of scriptFiles) {
 			expect(readFileSync(file, "utf8")).not.toMatch(/blendCalc\/\d+\.\d+/);

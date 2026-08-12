@@ -44,14 +44,15 @@ export const normalizeServingUnit = (
 	return "g";
 };
 
-export const parsePreferenceList = (
-	value: FormDataEntryValue | null,
+export const parseRepeatedFoodPreferenceValues = (
+	values: FormDataEntryValue[],
 	maxItems = FOOD_PREFERENCE_MAX_ITEMS,
 ) => {
 	const seen = new Set<string>();
-	const parsed = String(value ?? "")
-		.split(",")
+	const parsed = values
+		.map((value) => String(value))
 		.map((item) => item.trim())
+		.map((item) => item.replace(/\s+/g, " "))
 		.filter(Boolean)
 		.filter((item) => {
 			const key = item.toLocaleLowerCase();
@@ -104,7 +105,13 @@ const getLongPreferenceItem = (values: string[]) =>
 
 export const getFoodPreferencesValidationError = (
 	values: FoodPreferenceFormValues,
-	regulatoryRegionOptions: RegulatoryRegionOption[] = [],
+	{
+		regulatoryRegionOptions = [],
+		allowedPriorityNutrientIds = [],
+	}: {
+		regulatoryRegionOptions?: RegulatoryRegionOption[];
+		allowedPriorityNutrientIds?: number[];
+	} = {},
 ) => {
 	if (
 		values.regulatoryRegionCode &&
@@ -119,6 +126,14 @@ export const getFoodPreferencesValidationError = (
 		Boolean(values.regulatoryRegionSource)
 	) {
 		return "Choose a label region again so we can save it correctly.";
+	}
+	const allowedPriorityNutrientIdSet = new Set(allowedPriorityNutrientIds);
+	if (
+		values.prioritizedNutrientIds.some(
+			(nutrientId) => !allowedPriorityNutrientIdSet.has(nutrientId),
+		)
+	) {
+		return "Choose priority nutrients from the available list and try again.";
 	}
 	const preferenceGroups = [values.allergens, values.dietaryRestrictions];
 	const longItem = preferenceGroups.map(getLongPreferenceItem).find(Boolean);

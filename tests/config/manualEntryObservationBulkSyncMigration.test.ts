@@ -6,7 +6,7 @@ const migration = readFileSync(
 	"utf8",
 );
 const seeder = readFileSync(
-	"scripts/seeds/seed_manual_entry_nutrients.mjs",
+	"scripts/seeds/nutrition/seed_manual_entry_nutrients.mjs",
 	"utf8",
 );
 

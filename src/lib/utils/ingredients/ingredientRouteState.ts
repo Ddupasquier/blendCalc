@@ -101,6 +101,22 @@ export const getIngredientListTab = (url: URL): IngredientListKey => {
 	return getIngredientPathContext(url.pathname).listKey;
 };
 
+export const getActiveIngredientRouteHref = (
+	url: URL,
+	shallowRouteHref?: string,
+) => shallowRouteHref ?? `${url.pathname}${url.search}${url.hash}`;
+
+export const getActiveIngredientRouteUrl = (
+	url: URL,
+	shallowRouteHref?: string,
+) => new URL(getActiveIngredientRouteHref(url, shallowRouteHref), url);
+
+export const getActiveIngredientRouteState = (
+	url: URL,
+	shallowRouteHref?: string,
+) =>
+	getIngredientRouteState(getActiveIngredientRouteUrl(url, shallowRouteHref));
+
 export const buildIngredientListTabHref = (
 	url: URL,
 	key: IngredientListKey,
@@ -122,6 +138,8 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 	if (
 		routeSlug === INGREDIENT_ROUTE_VIEWS.search &&
 		(secondSegment === undefined ||
+			(secondSegment === INGREDIENT_ROUTE_SHEETS.filters &&
+				remainingSegments.length === 0) ||
 			(secondSegment === INGREDIENT_ROUTE_MODALS.barcodeScanner &&
 				remainingSegments.length === 0))
 	) {
@@ -130,7 +148,9 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 			sheet:
 				secondSegment === INGREDIENT_ROUTE_MODALS.barcodeScanner
 					? INGREDIENT_ROUTE_SHEETS.manualEntry
-					: null,
+					: secondSegment === INGREDIENT_ROUTE_SHEETS.filters
+						? INGREDIENT_ROUTE_SHEETS.filters
+						: null,
 			modal:
 				secondSegment === INGREDIENT_ROUTE_MODALS.barcodeScanner
 					? INGREDIENT_ROUTE_MODALS.barcodeScanner
@@ -269,12 +289,12 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 
 export const getIngredientRouteState = (url: URL): IngredientRouteState => {
 	return getPathRouteState(url) ?? {
-		view: null,
-		sheet: null,
-		modal: null,
-		foodId: null,
-		listKey: null,
-		showListActions: true,
+			view: null,
+			sheet: null,
+			modal: null,
+			foodId: null,
+			listKey: null,
+			showListActions: true,
 	};
 };
 
@@ -308,13 +328,15 @@ export const buildIngredientRouteHref = (
 	if (nextView) {
 		nextUrl.pathname =
 			nextView === INGREDIENT_ROUTE_VIEWS.nutrition &&
-				nextSheet === INGREDIENT_ROUTE_SHEETS.catalogCorrection
+			nextSheet === INGREDIENT_ROUTE_SHEETS.catalogCorrection
 				? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}/${INGREDIENT_ROUTE_SHEETS.catalogCorrection}`
 				: nextView === INGREDIENT_ROUTE_VIEWS.search
 					? nextModal === INGREDIENT_ROUTE_MODALS.barcodeScanner
 						? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}/${INGREDIENT_ROUTE_MODALS.barcodeScanner}`
-						: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}`
-				: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}`;
+						: nextSheet === INGREDIENT_ROUTE_SHEETS.filters
+							? `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}/${INGREDIENT_ROUTE_SHEETS.filters}`
+							: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.search}`
+					: `${listBasePath}/${INGREDIENT_ROUTE_VIEWS.nutrition}/${nextFoodId ?? ""}`;
 		if (nextView === INGREDIENT_ROUTE_VIEWS.nutrition) {
 			if (!nextShowListActions) params.set(ACTIONS_PARAM, "hide");
 		}
@@ -355,6 +377,36 @@ export const getBarcodeScannerOpenRoutePatch = (
 		view: preserveSearch ? INGREDIENT_ROUTE_VIEWS.search : null,
 		sheet: INGREDIENT_ROUTE_SHEETS.manualEntry,
 		modal: INGREDIENT_ROUTE_MODALS.barcodeScanner,
+		foodId: null,
+		listKey: null,
+	};
+};
+
+export const getIngredientFiltersOpenRoutePatch = (
+	url: URL,
+): IngredientRoutePatch => {
+	const preserveSearch =
+		getIngredientRouteState(url).view === INGREDIENT_ROUTE_VIEWS.search;
+
+	return {
+		view: preserveSearch ? INGREDIENT_ROUTE_VIEWS.search : null,
+		sheet: INGREDIENT_ROUTE_SHEETS.filters,
+		modal: null,
+		foodId: null,
+		listKey: null,
+	};
+};
+
+export const getIngredientFiltersCloseRoutePatch = (
+	url: URL,
+): IngredientRoutePatch => {
+	const restoreSearch =
+		getIngredientRouteState(url).view === INGREDIENT_ROUTE_VIEWS.search;
+
+	return {
+		view: restoreSearch ? INGREDIENT_ROUTE_VIEWS.search : null,
+		sheet: null,
+		modal: null,
 		foodId: null,
 		listKey: null,
 	};
@@ -430,10 +482,10 @@ export const findIngredientRouteFood = (
 ) => {
 	if (foodId === null) return null;
 	const lists = listKey === MIX_STORAGE_KEYS.fridge
-		? [fridgeItems, customItems]
-		: listKey === MIX_STORAGE_KEYS.shoppingList
-			? [shoppingListItems, customItems]
-			: [fridgeItems, shoppingListItems, customItems];
+			? [fridgeItems, customItems]
+			: listKey === MIX_STORAGE_KEYS.shoppingList
+				? [shoppingListItems, customItems]
+				: [fridgeItems, shoppingListItems, customItems];
 
 	for (const list of lists) {
 		const food = list.find((item) => item.fdcId === foodId);

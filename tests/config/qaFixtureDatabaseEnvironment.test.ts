@@ -5,7 +5,7 @@ const packageMetadata = JSON.parse(readFileSync("package.json", "utf8")) as {
 	scripts: Record<string, string>;
 };
 const environmentHelper = readFileSync(
-	"scripts/lib/qa_database_environment.mjs",
+	"scripts/lib/qa/qa_database_environment.mjs",
 	"utf8",
 );
 

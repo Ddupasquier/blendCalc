@@ -142,9 +142,16 @@ not duplicate the same assertion across runners.
 
 ## Scripts
 
-- Executable maintenance commands live in purpose directories under `scripts/`, such
-  as `audits`, `backfills`, `generators`, `imports`, `operations`, `qa`, and `seeds`.
-- Reusable script code and shared reference catalogs live under `scripts/lib`.
+- Executable maintenance commands use a two-part ownership path under `scripts/`: the
+  first folder names the operation (`audits`, `backfills`, `generators`, `imports`,
+  `operations`, `qa`, or `seeds`) and the child folder names its domain (`catalog`,
+  `database`, `food-safety`, `food-sources`, `images`, `nutrition`, `recovery`,
+  `releases`, `security`, or `users`).
+- Reusable script code lives under the matching domain in `scripts/lib`; maintained
+  reference catalogs remain in `scripts/lib/reference-data`.
+- Do not add executable scripts directly inside a broad operation folder. Add another
+  domain folder only when it owns a real script, and remove it when its final file is
+  removed.
 - Runtime/reference data belongs in canonical database tables rather than generated
   repository-local output or cache directories.
 - Remove obsolete scripts instead of keeping undocumented alternatives.
@@ -159,10 +166,11 @@ checklist.
 
 Repository setup and the stable developer command surface remain in the root
 [`README.md`](../README.md). Script execution and organization remain in
-[`scripts/README.md`](../scripts/README.md). Recovery context under
-`docs/local-context/` and active verification under `docs/QA/` are local workflow state,
-not product documentation. Verified unresolved implementation findings remain in the
-maintained development audit instead of a parallel task folder.
+[`scripts/README.md`](../scripts/README.md). `docs/work-queue.md` is the only active
+priority and task list. Detailed QA reproduction packets under `docs/QA/`, recovery
+context under `docs/local-context/`, and the audit method under `docs/dev-rules/`
+support that queue without owning another backlog. Settled decisions remain in the
+decision log and completed verification remains in the QA archive.
 
 Keep a focused document as one file. When a long document contains independently owned
 domains, preserve its established path as a short index and move each domain into a

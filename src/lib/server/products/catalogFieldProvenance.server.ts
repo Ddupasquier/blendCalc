@@ -117,12 +117,16 @@ export const toFoodFieldProvenance = (
 				? [
 						[
 							fieldPath,
-							{
-								source: source.source as FoodFieldSource["source"],
-								sourceReference: source.sourceReference ?? undefined,
-								confidence:
-									source.confidence as FoodFieldSource["confidence"],
-							},
+								{
+									source: source.source as FoodFieldSource["source"],
+									sourceReference: source.sourceReference ?? undefined,
+									confidence:
+										source.confidence as FoodFieldSource["confidence"],
+									observationId: source.observationId,
+									observedAt: source.observedAt,
+									verificationMethod: source.verificationMethod ?? undefined,
+									reviewState: source.reviewState,
+								},
 						],
 					]
 				: [],

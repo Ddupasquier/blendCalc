@@ -105,6 +105,8 @@ const hydrateFoodWithSharedProductMetadata = (
 			canonicalFood.sourceModifiedDate ?? food.sourceModifiedDate,
 		sourceAttribution:
 			canonicalFood.sourceAttribution ?? food.sourceAttribution,
+		sourceAttributions:
+			canonicalFood.sourceAttributions ?? food.sourceAttributions,
 		publishedDate: canonicalFood.publishedDate ?? food.publishedDate,
 		publicationDate:
 			canonicalFood.publicationDate ?? food.publicationDate,

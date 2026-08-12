@@ -8,6 +8,7 @@ export type ProfileFoodPreferenceSettingsProps = {
 	foodPreferences: FoodPreferenceProfile | null;
 	foodPreferencesUnavailable: boolean;
 	foodPreferenceOptions: FoodPreferenceOptionSets;
+	foodPreferenceOptionsUnavailable: boolean;
 	priorityNutrientOptions: NutrientDisplayField[];
 	regulatoryRegionOptions: RegulatoryRegionOption[];
 	submittedValues?: FoodPreferenceFormValues | null;
@@ -21,6 +22,5 @@ export type FoodPreferenceGroupKey = "allergens" | "dietaryRestrictions";
 export type FoodPreferenceGroupPresentation = {
 	title: string;
 	helper: string;
-	searchLabel: string;
-	selectLabel: string;
+	customEntryLabel: string;
 };

@@ -10,7 +10,7 @@ import {
 	mapOpenFoodFactsPer100Nutrients,
 	normalizeAuditUnit,
 	valuesAgree,
-} from "../../scripts/lib/barcodeNutritionAudit.mjs";
+} from "../../scripts/lib/barcode/barcodeNutritionAudit.mjs";
 
 const referenceData = {
 	definitions: [

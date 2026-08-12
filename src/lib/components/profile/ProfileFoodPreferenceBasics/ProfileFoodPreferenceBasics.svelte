@@ -19,6 +19,7 @@
 <div class="profile-food-preference-basics">
 	<SelectField
 		id="profile-regulatory-region"
+		class="profile-food-preference-basics__region"
 		name="regulatoryRegionCode"
 		label="Package-label region"
 		value={regulatoryRegionCode}
@@ -64,7 +65,7 @@
 				id="profile-default-serving-size"
 				name="defaultMixServingSize"
 				min="0"
-				step="0.1"
+				step="0.01"
 				value={defaultServingSize}
 				placeholder="Optional"
 				{disabled}
