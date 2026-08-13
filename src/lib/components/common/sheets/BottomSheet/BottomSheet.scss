@@ -61,7 +61,22 @@ $bottom-sheet-focus-clearance: $app-gap-2xs;
 }
 
 .bottom-sheet__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $app-gap-sm;
 	min-width: 0;
+}
+
+.bottom-sheet__header h2 {
+	min-width: 0;
+}
+
+.bottom-sheet__title-accessory {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
 }
 
 .bottom-sheet__content {

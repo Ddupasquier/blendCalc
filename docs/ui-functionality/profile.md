@@ -18,6 +18,9 @@ session settings. Detailed privacy and storage rules live in
   visibility state.
 - Open Light/Dark Mode at `/profile/appearance`, Profile details at `/profile/details`, and
   Profile image at `/profile/image` in the shared route-backed `BottomSheet`.
+- Let each bottom-sheet title own the visible heading. Keep control-level semantic
+  labels available to assistive technology without repeating the same visible wording
+  inside the sheet.
 - Open Food preferences at `/profile/food-preferences` in the shared route-backed
   `RightSheet` because it is a long, independently scrollable settings workflow.
 - Show the Moderator actions launcher only when the current server-verified role is
@@ -103,6 +106,12 @@ server policy and source evidence, not naive client text matching.
   food-warning reports, and profile-image review rows are disabled when their verified
   queue count is zero; a nonzero queue displays its own red count in the row's top-right
   corner.
+- Show one crown beside the Moderator actions sheet title. The action region retains its
+  accessible group name without repeating `Moderator actions` as a second visible
+  heading.
+- Before identity verification, keep review counts private but leave the protected
+  review rows available as entry points into the authenticator flow. Explain that
+  verification is required instead of making the actions look permanently unavailable.
 - Keep standing tools such as Account access and Catalog data health enabled because
   they remain useful without a pending queue.
 - If queue counts cannot be read, preserve unknown as unknown, disable queue actions,
