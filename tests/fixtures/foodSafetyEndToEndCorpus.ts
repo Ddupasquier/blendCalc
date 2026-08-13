@@ -241,7 +241,7 @@ export const FOOD_SAFETY_END_TO_END_CORPUS: FoodSafetyCorpusCase[] = [
 		expected: {
 			status: "conflict",
 			warningLabels: ["Peanut"],
-			mayContain: ["Peanut"],
+			mayContain: ["Peanuts"],
 			precautionaryTypes: ["may_contain"],
 		},
 		stages: [...defaultStages, "precautionary-preservation"],
@@ -275,7 +275,7 @@ export const FOOD_SAFETY_END_TO_END_CORPUS: FoodSafetyCorpusCase[] = [
 		expected: {
 			status: "conflict",
 			warningLabels: ["Peanut"],
-			mayContain: ["Peanut"],
+			mayContain: ["Peanuts"],
 			precautionaryTypes: ["shared_facility"],
 		},
 		stages: [...defaultStages, "precautionary-preservation"],

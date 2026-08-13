@@ -145,6 +145,43 @@ describe("food preference warnings", () => {
 		expect(warnings).toEqual([]);
 	});
 
+	it("keeps explicit allergens out of the separate may-contain disclosure", () => {
+		const evaluatedFood = annotateFoodWithFoodSafety(
+			makeFood({
+				allergens: ["Peanut", "Milk"],
+				traces: ["Peanuts", "Tree nuts"],
+			}),
+			{
+				profile: null,
+				policy: {
+					...emptyPolicyDetails,
+					ingredientAliases: [{
+						ingredientTermId: "term-peanut",
+						termKey: "peanut",
+						termLabel: "Peanut",
+						alias: "peanuts",
+						normalizedAlias: "peanuts",
+						languageCode: "en",
+						tagSlug: "peanut",
+						tagLabel: "Peanut",
+						tagCategory: "allergen",
+						preferenceRuleType: "allergen",
+					}],
+					version: 1,
+					reviewedAt: "2026-07-29T00:00:00.000Z",
+					preferenceConflictRules: [],
+					compatibilityMatchRules: [],
+					regionalProfiles: [],
+				},
+			},
+		);
+
+		expect(evaluatedFood.allergenDisclosure).toEqual({
+			contains: ["Peanut", "Milk"],
+			mayContain: ["Tree nuts"],
+		});
+	});
+
 	it("does not flag plant milk as dairy or milk", () => {
 		const warnings = getFoodPreferenceWarnings(
 			makeFood({

@@ -138,9 +138,16 @@ select is(
 
 select is(
 	(
-		select percent_exact::numeric
-		from public.product_ingredient_components
-		where source_text = 'Milk chocolate'
+		select component.percent_exact::numeric
+		from public.product_ingredient_components component
+		join public.product_ingredient_statements statement
+			on statement.id = component.statement_id
+		where component.source_text = 'Milk chocolate'
+			and statement.shared_product_observation_id = (
+				select id
+				from public.shared_product_observations
+				where source_reference = 'qa-relational-ingredients'
+			)
 	),
 	60::numeric,
 	'an explicitly reported exact percentage is retained'
@@ -148,9 +155,16 @@ select is(
 
 select is(
 	(
-		select percent_estimate::numeric
-		from public.product_ingredient_components
-		where source_text = 'Milk'
+		select component.percent_estimate::numeric
+		from public.product_ingredient_components component
+		join public.product_ingredient_statements statement
+			on statement.id = component.statement_id
+		where component.source_text = 'Milk'
+			and statement.shared_product_observation_id = (
+				select id
+				from public.shared_product_observations
+				where source_reference = 'qa-relational-ingredients'
+			)
 	),
 	35::numeric,
 	'a source estimate remains distinguishable from an exact percentage'

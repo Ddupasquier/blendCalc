@@ -145,6 +145,30 @@ describe("loadIngredientPageData", () => {
 		);
 	});
 
+	it("reloads a negative application ID from the normalized generic-food catalog", async () => {
+		genericFoods.readGenericFoodByApplicationId.mockResolvedValueOnce({
+			fdcId: -123,
+			description: "Authoritative Generic Food",
+		});
+
+		const result = await loadIngredientPageData(cloudDataContext, {
+			routeFoodId: -123,
+			routeListKey: MIX_STORAGE_KEYS.fridge,
+		});
+
+		expect(result.routeFood).toMatchObject({
+			fdcId: -123,
+			description: "Authoritative Generic Food",
+		});
+		expect(
+			productCatalog.getApprovedCatalogRecordByApplicationFoodId,
+		).toHaveBeenCalledWith(supabaseAdmin.client, -123);
+		expect(genericFoods.readGenericFoodByApplicationId).toHaveBeenCalledWith(
+			supabaseAdmin.client,
+			-123,
+		);
+	});
+
 	it("returns an honest empty state when authenticated ingredient data is unavailable", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => undefined);
 		ingredientLists.readCloudIngredientListPage.mockReset();

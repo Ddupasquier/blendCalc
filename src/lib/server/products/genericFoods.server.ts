@@ -392,7 +392,7 @@ export const readGenericFoodByApplicationId = async (
 	supabase: SupabaseClient<Database>,
 	foodId: number,
 ) => {
-	if (!Number.isSafeInteger(foodId) || foodId <= 0) return null;
+	if (!Number.isSafeInteger(foodId) || foodId === 0) return null;
 	const { data, error } = await supabase
 		.from("generic_food_records")
 		.select("description")

@@ -298,6 +298,9 @@ export const actions: Actions = {
 			provider: "google",
 			options: {
 				redirectTo,
+				queryParams: {
+					prompt: "select_account",
+				},
 			},
 		});
 

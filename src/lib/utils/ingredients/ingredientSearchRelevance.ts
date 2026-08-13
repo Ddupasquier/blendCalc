@@ -7,7 +7,6 @@ type SearchRelevance = {
 	tier: number;
 	firstMatchPosition: number;
 	lastMatchPosition: number;
-	prefixOnlyMatchCount: number;
 	descriptionWordCount: number;
 };
 
@@ -55,10 +54,6 @@ const getSearchRelevance = (
 		lastMatchPosition: matchedPositions.length > 0
 			? Math.max(...matchedPositions)
 			: Number.MAX_SAFE_INTEGER,
-		prefixOnlyMatchCount: matchPositions.reduce((count, position, index) => {
-			if (position < 0) return count;
-			return count + Number(descriptionWords[position] !== searchWords[index]);
-		}, 0),
 		descriptionWordCount: descriptionWords.length,
 	};
 };
@@ -70,7 +65,6 @@ const compareSearchRelevance = (
 	left.tier - right.tier ||
 	left.firstMatchPosition - right.firstMatchPosition ||
 	left.lastMatchPosition - right.lastMatchPosition ||
-	left.prefixOnlyMatchCount - right.prefixOnlyMatchCount ||
 	left.descriptionWordCount - right.descriptionWordCount;
 
 export const createIngredientSearchRelevanceComparator = (query: string) => {

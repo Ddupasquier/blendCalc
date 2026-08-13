@@ -17,6 +17,7 @@ import {
 	INGREDIENT_ROUTE_MODALS,
 	INGREDIENT_ROUTE_SHEETS,
 	INGREDIENT_ROUTE_VIEWS,
+	parseIngredientApplicationFoodId,
 } from "$lib/utils/ingredients/ingredientRouteState";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 
@@ -29,6 +30,13 @@ const food = (fdcId: number, description: string): FoodItem => ({
 });
 
 describe("ingredient route state", () => {
+	it("accepts positive and normalized negative food IDs but rejects zero", () => {
+		expect(parseIngredientApplicationFoodId("42")).toBe(42);
+		expect(parseIngredientApplicationFoodId("-42")).toBe(-42);
+		expect(parseIngredientApplicationFoodId("0")).toBeNull();
+		expect(parseIngredientApplicationFoodId("not-a-food")).toBeNull();
+	});
+
 	it("uses explicit list paths and preserves supported query modifiers", () => {
 		expect(getIngredientListTab(url("/ingredients/fridge"))).toBe(
 			MIX_STORAGE_KEYS.fridge,
@@ -70,6 +78,13 @@ describe("ingredient route state", () => {
 	});
 
 	it("parses explicit search, sheet, modal, and nutrition routes", () => {
+		expect(
+			getIngredientRouteState(url("/ingredients/fridge/nutrition/-123")),
+		).toMatchObject({
+			view: INGREDIENT_ROUTE_VIEWS.nutrition,
+			foodId: -123,
+			listKey: MIX_STORAGE_KEYS.fridge,
+		});
 		expect(
 			getIngredientRouteState(url("/ingredients/fridge/search")),
 		).toMatchObject({

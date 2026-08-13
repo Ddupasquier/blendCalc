@@ -461,8 +461,10 @@ Notes:
   infers it from the provider name or from canonical storage alone.
 - `blendcalc_api_v1_source_attribution_is_complete` additionally requires every
   represented field, nutrient, and serving source to retain complete reviewed source
-  attribution. Sources backed by `generic_food_datasets` must reference an exact active,
-  approved, imported release with complete release metadata.
+  attribution. A source such as USDA may retain a direct provider record identifier even
+  when the same provider also owns imported composition datasets. Dataset-derived rows
+  must instead reference an exact active, approved, imported release with complete
+  release metadata.
 
 ### `product_source_daily_metrics`
 

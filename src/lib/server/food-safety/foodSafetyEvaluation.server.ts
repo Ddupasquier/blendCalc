@@ -684,35 +684,48 @@ const formatAllergenLabel = (value: string) => {
 		: "";
 };
 
-const uniqueAllergenLabels = (facts: FoodCompatibilityFact[]) => {
+const getUniqueAllergenDisclosureEntries = (facts: FoodCompatibilityFact[]) => {
+	const canonicalKeyBySource = new Map<string, string>();
+	for (const fact of facts) {
+		const sourceKey = normalizeKey(fact.sourceText || fact.label || fact.slug);
+		const sourceSlug = normalizeKey(fact.sourceText || fact.label || fact.slug);
+		const factSlug = normalizeKey(fact.slug);
+		if (factSlug && factSlug !== sourceSlug) {
+			canonicalKeyBySource.set(sourceKey, factSlug);
+		}
+	}
+
 	const seen = new Set<string>();
 	return facts.flatMap((fact) => {
-		const label = formatAllergenLabel(fact.label || fact.sourceText || "");
-		const key = label.toLocaleLowerCase();
+		const sourceValue = fact.sourceText || fact.label || fact.slug;
+		const sourceKey = normalizeKey(sourceValue);
+		const key = canonicalKeyBySource.get(sourceKey) ?? normalizeKey(fact.slug);
+		const label = formatAllergenLabel(fact.label || sourceValue);
 		if (!label || seen.has(key)) return [];
 		seen.add(key);
-		return [label];
+		return [{ key, label }];
 	});
 };
 
 const getAllergenDisclosure = (
 	facts: FoodCompatibilityFact[],
 ): FoodAllergenDisclosure => {
-	const contains = uniqueAllergenLabels(
+	const containsEntries = getUniqueAllergenDisclosureEntries(
 		facts.filter((fact) =>
 			fact.category === "allergen" && fact.factType === "contains"
 		),
 	);
-	const containsKeys = new Set(
-		contains.map((label) => label.toLocaleLowerCase()),
-	);
-	const mayContain = uniqueAllergenLabels(
+	const containsKeys = new Set(containsEntries.map(({ key }) => key));
+	const mayContainEntries = getUniqueAllergenDisclosureEntries(
 		facts.filter((fact) =>
 			fact.category === "allergen" && fact.factType === "may_contain"
 		),
-	).filter((label) => !containsKeys.has(label.toLocaleLowerCase()));
+	).filter(({ key }) => !containsKeys.has(key));
 
-	return { contains, mayContain };
+	return {
+		contains: containsEntries.map(({ label }) => label),
+		mayContain: mayContainEntries.map(({ label }) => label),
+	};
 };
 
 const buildCompatibilitySummary = (
