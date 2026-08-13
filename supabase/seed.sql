@@ -18,16 +18,16 @@ insert into public.serving_measure_units (
 	observed_at
 )
 values
-	('g', 'grams (g)', 'g', 'weight', 'g', 1, 'g', 10, true, true, 'ucum-nlm', 'https://ucum.nlm.nih.gov/ucum-service/v1/ucumtransform/1/from/g/to/g', '2026-07-23T00:17:19.133Z'),
-	('mg', 'milligrams (mg)', 'mg', 'weight', 'g', 0.001, '10*-3.g', 20, false, true, 'ucum-nlm', 'https://ucum.nlm.nih.gov/ucum-service/v1/ucumtransform/1/from/10*-3.g/to/g', '2026-07-23T00:17:19.133Z'),
-	('oz', 'ounces (oz)', 'oz', 'weight', 'g', 28.349523, '[oz_av]', 30, false, true, 'ucum-nlm', 'https://ucum.nlm.nih.gov/ucum-service/v1/ucumtransform/1/from/%5Boz_av%5D/to/g', '2026-07-23T00:17:19.133Z'),
-	('kg', 'kilograms (kg)', 'kg', 'weight', 'g', 1000, 'kg', 40, false, true, 'ucum-nlm', 'https://ucum.nlm.nih.gov/ucum-service/v1/ucumtransform/1/from/kg/to/g', '2026-07-23T00:17:19.133Z'),
-	('lb', 'pounds (lb)', 'lb', 'weight', 'g', 453.59237, '[lb_av]', 50, false, true, 'ucum-nlm', 'https://ucum.nlm.nih.gov/ucum-service/v1/ucumtransform/1/from/%5Blb_av%5D/to/g', '2026-07-23T00:17:19.133Z'),
-	('ml', 'milliliters (ml)', 'ml', 'volume', 'ml', 1, 'mL', 60, false, true, 'ucum-nlm', 'https://ucum.nlm.nih.gov/ucum-service/v1/ucumtransform/1/from/mL/to/mL', '2026-07-23T00:17:19.133Z'),
-	('tsp', 'teaspoons (tsp)', 'tsp', 'volume', 'ml', 4.9289216, '[tsp_us]', 70, false, true, 'ucum-nlm', 'https://ucum.nlm.nih.gov/ucum-service/v1/ucumtransform/1/from/%5Btsp_us%5D/to/mL', '2026-07-23T00:17:19.133Z'),
-	('tbsp', 'tablespoons (tbsp)', 'tbsp', 'volume', 'ml', 14.786765, '[tbs_us]', 80, false, true, 'ucum-nlm', 'https://ucum.nlm.nih.gov/ucum-service/v1/ucumtransform/1/from/%5Btbs_us%5D/to/mL', '2026-07-23T00:17:19.133Z'),
-	('cup', 'cups', 'cup', 'volume', 'ml', 236.58824, '[cup_us]', 90, true, true, 'ucum-nlm', 'https://ucum.nlm.nih.gov/ucum-service/v1/ucumtransform/1/from/%5Bcup_us%5D/to/mL', '2026-07-23T00:17:19.133Z'),
-	('floz', 'fluid ounces (fl oz)', 'fl oz', 'volume', 'ml', 29.57353, '[foz_us]', 100, false, true, 'ucum-nlm', 'https://ucum.nlm.nih.gov/ucum-service/v1/ucumtransform/1/from/%5Bfoz_us%5D/to/mL', '2026-07-23T00:17:19.133Z')
+	('g', 'grams (g)', 'g', 'weight', 'g', 1, 'g', 10, true, true, 'ucum-standard', 'https://ucum.org/ucum', '2026-08-12T00:00:00Z'),
+	('mg', 'milligrams (mg)', 'mg', 'weight', 'g', 0.001, '10*-3.g', 20, false, true, 'ucum-standard', 'https://ucum.org/ucum', '2026-08-12T00:00:00Z'),
+	('oz', 'ounces (oz)', 'oz', 'weight', 'g', 28.349523, '[oz_av]', 30, false, true, 'ucum-standard', 'https://ucum.org/ucum', '2026-08-12T00:00:00Z'),
+	('kg', 'kilograms (kg)', 'kg', 'weight', 'g', 1000, 'kg', 40, false, true, 'ucum-standard', 'https://ucum.org/ucum', '2026-08-12T00:00:00Z'),
+	('lb', 'pounds (lb)', 'lb', 'weight', 'g', 453.59237, '[lb_av]', 50, false, true, 'ucum-standard', 'https://ucum.org/ucum', '2026-08-12T00:00:00Z'),
+	('ml', 'milliliters (ml)', 'ml', 'volume', 'ml', 1, 'mL', 60, false, true, 'ucum-standard', 'https://ucum.org/ucum', '2026-08-12T00:00:00Z'),
+	('tsp', 'teaspoons (tsp)', 'tsp', 'volume', 'ml', 4.9289216, '[tsp_us]', 70, false, true, 'ucum-standard', 'https://ucum.org/ucum', '2026-08-12T00:00:00Z'),
+	('tbsp', 'tablespoons (tbsp)', 'tbsp', 'volume', 'ml', 14.786765, '[tbs_us]', 80, false, true, 'ucum-standard', 'https://ucum.org/ucum', '2026-08-12T00:00:00Z'),
+	('cup', 'cups', 'cup', 'volume', 'ml', 236.58824, '[cup_us]', 90, true, true, 'ucum-standard', 'https://ucum.org/ucum', '2026-08-12T00:00:00Z'),
+	('floz', 'fluid ounces (fl oz)', 'fl oz', 'volume', 'ml', 29.57353, '[foz_us]', 100, false, true, 'ucum-standard', 'https://ucum.org/ucum', '2026-08-12T00:00:00Z')
 on conflict (key) do update set
 	display_label = excluded.display_label,
 	short_label = excluded.short_label,
@@ -69,7 +69,7 @@ select
 	unit_key,
 	alias,
 	regexp_replace(lower(alias), '\s+', '', 'g'),
-	'ucum-nlm',
+	'ucum-standard',
 	1,
 	'2026-07-23T00:17:19.133Z',
 	'2026-07-23T00:17:19.133Z'

@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 describe("readVerifiedAuthUser", () => {
 	it("builds the app user from locally verified JWT claims", async () => {
+		const getSession = vi.fn();
 		const getClaims = vi.fn().mockResolvedValue({
 			data: {
 				claims: {
@@ -17,7 +18,9 @@ describe("readVerifiedAuthUser", () => {
 			},
 			error: null,
 		});
-		const supabase = { auth: { getClaims } } as unknown as SupabaseClient<Database>;
+		const supabase = {
+			auth: { getClaims, getSession },
+		} as unknown as SupabaseClient<Database>;
 
 		await expect(readVerifiedAuthUser(supabase)).resolves.toEqual({
 			id: "user-1",
@@ -27,6 +30,7 @@ describe("readVerifiedAuthUser", () => {
 			appRoleClaim: "moderator",
 		});
 		expect(getClaims).toHaveBeenCalledTimes(1);
+		expect(getSession).not.toHaveBeenCalled();
 	});
 
 	it("rejects missing or unverified claims", async () => {

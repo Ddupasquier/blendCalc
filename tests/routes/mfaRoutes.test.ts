@@ -81,11 +81,13 @@ describe("MFA browser routes", () => {
 			status: createStatus(),
 		});
 		const unenroll = vi.fn().mockResolvedValue({ data: {}, error: null });
+		const qrCodeDataUrl =
+			"data:image/svg+xml;utf-8,%3Csvg%3Eprivate%20QR%3C%2Fsvg%3E";
 		const enroll = vi.fn().mockResolvedValue({
 			data: {
 				id: "new-factor",
 				totp: {
-					qr_code: "<svg>private QR</svg>",
+					qr_code: qrCodeDataUrl,
 					secret: "PRIVATESETUPKEY",
 				},
 			},
@@ -128,10 +130,12 @@ describe("MFA browser routes", () => {
 			next: "/moderation",
 			enrollment: {
 				factorId: "new-factor",
-				qrCodeDataUrl: expect.stringMatching(/^data:image\/svg\+xml;utf-8,/),
+				qrCodeDataUrl,
 				secret: "PRIVATESETUPKEY",
 			},
 		});
+		expect(result.enrollment.qrCodeDataUrl.match(/data:image\/svg\+xml/g))
+			.toHaveLength(1);
 	});
 
 	it("loads only a server-verified factor into the challenge", async () => {

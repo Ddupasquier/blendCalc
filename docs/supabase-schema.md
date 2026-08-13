@@ -533,8 +533,9 @@ Notes:
 
 - Conversion rows are source- and nutrient-specific because conversions such as vitamin
   IU values cannot be safely treated as universal unit math.
-- The seed script stores standards-API or paired API-observation provenance with each
-  multiplier.
+- The seed script stores `reviewed_standard`, moderator-reviewed, or paired
+  API-observation provenance with each multiplier. `reviewed_standard` rows reference
+  the official UCUM specification and licence rather than a live conversion service.
 - A source mapping with a different unit cannot rely on same-family mass or energy
   assumptions. It remains unusable until this table contains the exact reviewed
   source/nutrient/from-unit/to-unit conversion.
@@ -554,9 +555,14 @@ Notes:
   enabled state, and conversion factors are database-owned.
 - Authenticated users can read all five reference tables. Only service-role scripts can
   write them.
-- Run `npm run seed:product-reference-data -- --sample-size=200` after the migration to
-  sample USDA FoodData Central, Open Food Facts, and the UCUM standards service and
-  refresh these rows.
+- Run `npm run seed:product-reference-data -- --sample-size=200` to sample USDA FoodData
+  Central and Open Food Facts, then refresh mappings and serving observations against
+  the reviewed local UCUM reference catalog. The workflow makes no NLM UCUM request.
+
+`product_data_sources.ucum-standard` is the active reviewed unit-standard identity.
+`product_data_sources.ucum-nlm` remains disabled as historical provenance. Existing
+serving units and aliases reference `ucum-standard`; prior NLM conversion URLs remain
+only in nutrient-conversion provenance as `previousServiceReference`.
 
 ### `food_servings`
 
@@ -940,6 +946,16 @@ Notes:
   version 2.
 - Automatic API image metadata refreshes omit placement columns so they cannot overwrite
   a user- or moderator-selected position.
+- New uploads may carry a high-confidence on-device OCR placement proposal through
+  private submission evidence. Existing-image backfills update only active front-image
+  rows whose placement remains the untouched default, including legacy centered source
+  imports that were never approved or adjusted; manual, moderator-approved, and
+  previously accepted smart placements remain unchanged. When OCR is ambiguous, an
+  untouched legacy import may move only to the version 2 full-image default.
+- `placement_method = automatic-ocr` distinguishes a confident automated backfill from
+  a suggestion accepted during upload or moderation. It retains algorithm version and
+  confidence while leaving `placement_suggestion_accepted_at` null because no person
+  accepted that draft individually.
 - Community images stay private until a moderator approves them. Approval writes a
   `community-reviewed` image row with `moderator-reviewed` confidence and approval
   metadata.
@@ -1447,6 +1463,8 @@ the two policies cannot drift.
 | ------------------------------------------ | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
 | `product_source_evaluations`               | Auditable provider benchmark/lifecycle decisions | Records sample target, run state, legal/operational findings, result summary, and decision                    |
 | `product_data_sources.foodrepo`            | Retired barcode provider record                  | Disabled; retirement and Open Food Facts replacement are documented; no benchmark traffic is sent             |
+| `product_data_sources.ucum-standard`       | Reviewed unit-standard identity                  | Active bounded UCUM codes/conversions with official licence metadata; no network request                       |
+| `product_data_sources.ucum-nlm`            | Historical standards-service identity            | Disabled; prior service references remain only as immutable provenance                                        |
 | `product_data_sources.nutrition-label-ocr` | Label-reading helper identity                    | Nutrient aliases/conversions are DB-backed; values require explicit user confirmation and remain `user-label` |
 | `product_data_sources.gs1-digital-link`    | GS1 product QR identifier standard               | GTIN is extracted locally; arbitrary scanned URLs are never fetched; lot/serial/query data is not persisted   |
 
@@ -1535,14 +1553,22 @@ When schema changes:
 2. Add RLS and grants intentionally.
 3. Add indexes for expected filtering, sorting, joins, and lookup paths.
 4. Verify the complete migration chain against the resettable local database.
-5. Inspect `npm run db:push:dry`, apply the verified migration with
-   `npm run db:push:auto`, and confirm the local/linked migration lists match.
-6. Regenerate `src/lib/types/database.types.ts` after migration is applied.
-7. Backfill applicable existing rows whenever a new accepted field can be recovered
+5. Prove the currently deployed `main` application remains compatible with the expanded
+   schema, then promote the exact additive migration source, this schema map, generated
+   types, and database tests to remote `main` without dependent application code.
+6. Inspect `npm run db:push:dry`, apply the promoted migration with the guarded
+   `npm run db:push` or `npm run db:push:auto`, and confirm the local/linked migration
+   lists match. Never bypass the promotion guard with a direct linked CLI push.
+7. Regenerate `src/lib/types/database.types.ts` after migration is applied and verify it
+   matches the promoted contract.
+8. Backfill applicable existing rows whenever a new accepted field can be recovered
    from canonical data, normalized child rows, or legally reusable exact-source
    observations.
-8. Update this document with table purpose, owner scope, key columns, and relationships.
-9. Add or update focused tests for migration expectations when practical.
-10. Add a local-only QA item to the appropriate priority tracker linked from
+9. Update this document with table purpose, owner scope, key columns, and relationships.
+10. Add or update focused tests for migration expectations when practical.
+11. Promote application code that requires the new schema only after the production
+    migration and current `main` application are verified. Delay destructive contract
+    cleanup to a later release.
+12. Add a local-only QA item to the appropriate priority tracker linked from
    `docs/QA/qa-tasks.md` if the change affects user-visible data, moderation behavior,
    or data-entry flow.

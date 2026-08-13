@@ -121,8 +121,8 @@ adding one-off npm aliases.
 | `npm run generate:api-structures` | Generate docs-only reference types from observed external API payloads |
 | `npm run backfill:food-images` | Backfill DB-backed product image metadata for existing barcode foods |
 | `npm run db:push:dry` | Preview pending Supabase migrations |
-| `npm run db:push` | Push pending Supabase migrations with the Supabase CLI prompt |
-| `npm run db:push:auto` | Push pending Supabase migrations using `SUPABASE_DB_PASSWORD` from `.env.moderation.local` or macOS Keychain |
+| `npm run db:push` | Prompt before pushing migrations whose exact source is already on remote `main` |
+| `npm run db:push:auto` | Push migrations already on remote `main` using protected local credentials without an extra prompt |
 | `npm run db:lint` | Run Supabase database linting |
 | `npm run db:types` | Regenerate Supabase TypeScript database types |
 | `npm run db:test:start` | Start local Supabase and repair disposable QA personas across Ingredients, Saved, Mix, onboarding, warnings, and moderation |
