@@ -23,9 +23,9 @@ jobs:
       PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_compile_only
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Use Node.js 24
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -65,9 +65,9 @@ jobs:
       PLAYWRIGHT_WORKERS: 2
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Use Node.js 24
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
