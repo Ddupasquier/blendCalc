@@ -16,6 +16,8 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 ## Sign-In
 
 - Support Google OAuth and email/password sign-in and registration.
+- Ask Google to show its account chooser for every OAuth attempt so the user controls
+  which Google profile is connected.
 - Return authentication to the origin that started it: localhost, production, or the
   exact preview deployment.
 - Use `/auth/callback` for the callback route.

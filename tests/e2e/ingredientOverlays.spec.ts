@@ -5,6 +5,7 @@ import {
 	waitForAppReady,
 } from "./support/browserTest";
 import type { Locator, Page } from "@playwright/test";
+import { createAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
 
 const expectBottomSheetPlacement = async (
 	page: Page,
@@ -603,6 +604,25 @@ test("partial ingredient words combine every eligible source and remain selectab
 	};
 
 	const partialTomatoResults = await search("tomat");
+	const partialTomatoNames = partialTomatoResults.foods.map(
+		(food) => food.description,
+	);
+	expect(partialTomatoNames.slice(0, 5)).toEqual([
+		"Tomato",
+		"Tomato, Roma, Raw",
+		"Tomatoes, Green, Raw",
+		"Diced Tomatoes, Tomatoes",
+		"Green Tomato Pantry Preserve",
+	]);
+	await expect(searchResults.getByRole("row")).toHaveCount(
+		partialTomatoNames.length,
+	);
+	expect(
+		await searchResults.locator(".ingredient-search-card__copy strong").allTextContents(),
+	).toEqual(partialTomatoNames);
+	expect(new Set(partialTomatoResults.foods.map((food) => food.fdcId)).size).toBe(
+		partialTomatoResults.foods.length,
+	);
 	const partialTomatoSourceKeys = new Set(
 		partialTomatoResults.foods.map((food) => food.sourceKey),
 	);
@@ -622,6 +642,11 @@ test("partial ingredient words combine every eligible source and remain selectab
 			name: /^Tomato, Vegetables and Vegetable Products/,
 		}),
 	).toBeVisible();
+	const latePartialMatch = searchResults.getByRole("row", {
+		name: /^Babyfood, Dinner, Macaroni & Tomato,/,
+	});
+	await latePartialMatch.scrollIntoViewIfNeeded();
+	await expect(latePartialMatch).toBeVisible();
 
 	const multiWordResults = await search("green tomat");
 	expect(multiWordResults.foods.map((food) => food.description)).toEqual([
@@ -632,6 +657,30 @@ test("partial ingredient words combine every eligible source and remain selectab
 
 	const completedWordResults = await search("tomato");
 	expect(completedWordResults.total).toBeGreaterThanOrEqual(6);
+	expect(completedWordResults.foods.map((food) => food.description)).toEqual(
+		partialTomatoNames,
+	);
+	await expect(searchResults.getByRole("row")).toHaveCount(
+		partialTomatoNames.length,
+	);
+	expect(
+		await searchResults.locator(".ingredient-search-card__copy strong").allTextContents(),
+	).toEqual(partialTomatoNames);
+	const completedTomatoNames = completedWordResults.foods.map(
+		(food) => food.description,
+	);
+	for (const strongMatch of [
+		"Tomato",
+		"Tomato, Roma, Raw",
+		"Tomatoes, Green, Raw",
+		"Diced Tomatoes, Tomatoes",
+		"Green Tomato Pantry Preserve",
+	]) {
+		expect(completedTomatoNames.indexOf(strongMatch)).toBeGreaterThanOrEqual(0);
+		expect(completedTomatoNames.indexOf(strongMatch)).toBeLessThan(
+			completedTomatoNames.indexOf("Babyfood, Dinner, Macaroni & Tomato"),
+		);
+	}
 	await expect(
 		searchResults.getByRole("row", { name: /^Tomatoes, Green, Raw,/ }),
 	).toBeVisible();
@@ -666,6 +715,174 @@ test("partial ingredient words combine every eligible source and remain selectab
 	await expect(page.locator("#nutrition-detail-view-title")).toContainText(
 		"Tomatoes, Green, Raw",
 	);
+});
+
+test("phone search pagination loads only on request and preserves ordered results", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		!testInfo.project.name.startsWith("mobile-"),
+		"Search pagination is verified in the phone-sized browser projects.",
+	);
+
+	const searchRequests: Array<{
+		limit: number;
+		offset: number;
+		query: string;
+	}> = [];
+	page.on("request", (request) => {
+		const url = new URL(request.url());
+		if (url.pathname !== "/api/foods/search") return;
+		searchRequests.push({
+			limit: Number(url.searchParams.get("limit")),
+			offset: Number(url.searchParams.get("offset")),
+			query: url.searchParams.get("q") ?? "",
+		});
+	});
+
+	await page.goto("/ingredients/fridge/search");
+	await waitForAppReady(page);
+
+	const searchDialog = page.getByRole("dialog", { name: "Ingredients" });
+	const searchInput = searchDialog.getByRole("combobox", {
+		name: "Search ingredients",
+	});
+	const searchResults = searchDialog.getByRole("grid", {
+		name: "Search results",
+	});
+	const resultsPanel = searchDialog.locator(".results-panel");
+	const waitForSearchPage = (query: string, offset: number) =>
+		page.waitForResponse((response) => {
+			const url = new URL(response.url());
+			return (
+				url.pathname === "/api/foods/search" &&
+				url.searchParams.get("q") === query &&
+				Number(url.searchParams.get("offset")) === offset
+			);
+		});
+	const readRenderedFoodIds = () =>
+		searchResults.locator(".ingredient-search-card").evaluateAll((cards) =>
+			cards.map((card) => card.id.replace("ingredient-search-result-", "")),
+		);
+
+	const firstPageResponsePromise = waitForSearchPage("food", 0);
+	await searchInput.fill("food");
+	const firstPageResponse = await firstPageResponsePromise;
+	expect(firstPageResponse.status()).toBe(200);
+	const firstPage = await firstPageResponse.json() as {
+		foods: Array<{ fdcId: number }>;
+		hasMore: boolean;
+		nextOffset: number | null;
+		total: number;
+	};
+	expect(firstPage).toMatchObject({ hasMore: true, nextOffset: 15 });
+	expect(firstPage.total).toBeGreaterThan(30);
+	expect(firstPage.foods).toHaveLength(15);
+	await expect(searchResults.getByRole("row")).toHaveCount(15);
+	const firstPageIds = await readRenderedFoodIds();
+	expect(firstPageIds).toEqual(firstPage.foods.map((food) => String(food.fdcId)));
+
+	await resultsPanel.evaluate((element) => {
+		element.scrollTop = element.scrollHeight;
+		element.dispatchEvent(new Event("scroll"));
+	});
+	await page.waitForTimeout(3_000);
+	expect(
+		searchRequests.filter(({ query }) => query === "food"),
+	).toEqual([{ limit: 15, offset: 0, query: "food" }]);
+
+	let loadMoreButton = searchDialog.getByRole("button", { name: "Load more" });
+	await expect(loadMoreButton).toBeVisible();
+	await expect(
+		searchDialog.getByRole("button", { name: "Return to top" }),
+	).toBeVisible();
+	const scrollTopBeforeAppend = await resultsPanel.evaluate(
+		(element) => element.scrollTop,
+	);
+	const secondPageResponsePromise = waitForSearchPage("food", 15);
+	await loadMoreButton.evaluate((button) => {
+		(button as HTMLButtonElement).click();
+		(button as HTMLButtonElement).click();
+	});
+	const secondPageResponse = await secondPageResponsePromise;
+	expect(secondPageResponse.status()).toBe(200);
+	const secondPage = await secondPageResponse.json() as {
+		foods: Array<{ fdcId: number }>;
+		hasMore: boolean;
+		nextOffset: number | null;
+		total: number;
+	};
+	expect(secondPage).toMatchObject({
+		hasMore: true,
+		nextOffset: 30,
+		total: firstPage.total,
+	});
+	expect(secondPage.foods).toHaveLength(15);
+	await expect(searchResults.getByRole("row")).toHaveCount(30);
+	const firstTwoPageIds = await readRenderedFoodIds();
+	expect(firstTwoPageIds.slice(0, 15)).toEqual(firstPageIds);
+	expect(new Set(firstTwoPageIds).size).toBe(firstTwoPageIds.length);
+	expect(
+		searchRequests.filter(
+			({ query, offset }) => query === "food" && offset === 15,
+		),
+	).toHaveLength(1);
+	expect(await resultsPanel.evaluate((element) => element.scrollTop)).toBeGreaterThanOrEqual(
+		scrollTopBeforeAppend - 2,
+	);
+
+	loadMoreButton = searchDialog.getByRole("button", { name: "Load more" });
+	await loadMoreButton.scrollIntoViewIfNeeded();
+	const finalPageResponsePromise = waitForSearchPage("food", 30);
+	await loadMoreButton.click();
+	const finalPageResponse = await finalPageResponsePromise;
+	expect(finalPageResponse.status()).toBe(200);
+	const finalPage = await finalPageResponse.json() as {
+		foods: Array<{ fdcId: number }>;
+		hasMore: boolean;
+		nextOffset: number | null;
+		total: number;
+	};
+	expect(finalPage).toMatchObject({
+		hasMore: false,
+		nextOffset: null,
+		total: firstPage.total,
+	});
+	await expect(searchResults.getByRole("row")).toHaveCount(firstPage.total);
+	const allFoodIds = await readRenderedFoodIds();
+	expect(allFoodIds.slice(0, 30)).toEqual(firstTwoPageIds);
+	expect(new Set(allFoodIds).size).toBe(allFoodIds.length);
+	await expect(loadMoreButton).toHaveCount(0);
+
+	const returnToTopButton = searchDialog.getByRole("button", {
+		name: "Return to top",
+	});
+	await expect(returnToTopButton).toBeVisible();
+	await returnToTopButton.click();
+	await expect.poll(
+		() => resultsPanel.evaluate((element) => element.scrollTop),
+	).toBeLessThanOrEqual(1);
+
+	const resetQueryResponsePromise = waitForSearchPage("tomato", 0);
+	await searchInput.fill("tomato");
+	const resetQueryResponse = await resetQueryResponsePromise;
+	expect(resetQueryResponse.status()).toBe(200);
+	const resetQueryPage = await resetQueryResponse.json() as {
+		foods: Array<{ fdcId: number }>;
+		hasMore: boolean;
+		total: number;
+	};
+	await expect(searchResults.getByRole("row")).toHaveCount(
+		resetQueryPage.foods.length,
+	);
+	expect(await readRenderedFoodIds()).toEqual(
+		resetQueryPage.foods.map((food) => String(food.fdcId)),
+	);
+	expect(resetQueryPage.total).toBeLessThan(15);
+	expect(resetQueryPage.hasMore).toBe(false);
+	await expect(
+		searchDialog.getByRole("button", { name: "Load more" }),
+	).toHaveCount(0);
 });
 
 test("shared ingredient bottom sheets enter from below and preserve app chrome boundaries", async ({
@@ -812,7 +1029,10 @@ test("modal sheet focus wraps without reaching the underlying page", async ({
 
 test("right-sheet view frames keep edge focus outlines inside their clipping boundary", async ({
 	page,
-}) => {
+}, testInfo) => {
+	if (testInfo.project.name === "desktop-chromium") {
+		await page.setViewportSize({ width: 390, height: 844 });
+	}
 	await page.goto("/ingredients/fridge/search");
 	await waitForAppReady(page);
 	const ingredientSearchView = page.locator(".ingredient-search-view");
@@ -830,8 +1050,417 @@ test("right-sheet view frames keep edge focus outlines inside their clipping bou
 	await nutritionButton.click();
 	await expect(page).toHaveURL(/\/nutrition\//);
 	const nutritionDetailView = page.locator(".nutrition-detail-view");
-	await expectFocusOutlineInsideBoundary(
-		nutritionDetailView.getByRole("button", { name: "Back to ingredients" }),
-		nutritionDetailView,
+	const nutritionBackButton = nutritionDetailView.getByRole("button", {
+		name: "Back to ingredients",
+	});
+	await expectFocusOutlineInsideBoundary(nutritionBackButton, nutritionDetailView);
+	const nutritionBackButtonPresentation = await nutritionBackButton.evaluate(
+		(element) => {
+			const styles = window.getComputedStyle(element);
+			return {
+				borderRadius: styles.borderRadius,
+				height: element.getBoundingClientRect().height,
+				width: element.getBoundingClientRect().width,
+			};
+		},
 	);
+	expect(Math.abs(
+		nutritionBackButtonPresentation.width - nutritionBackButtonPresentation.height,
+	)).toBeLessThanOrEqual(1);
+	expect(nutritionBackButtonPresentation.width).toBeLessThan(40);
+	expect(Number.parseFloat(nutritionBackButtonPresentation.borderRadius)).toBeGreaterThanOrEqual(
+		nutritionBackButtonPresentation.width / 2 - 1,
+	);
+	await nutritionBackButton.press("Enter");
+	await expect(page).toHaveURL(/\/ingredients\/fridge$/);
+	await expect(
+		page.getByRole("region", { name: "Saved ingredients", exact: true }),
+	).toBeVisible();
+});
+
+test("nutrition details separate personalized warnings from source allergen disclosures", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"The DB-backed food-disclosure contract runs once in Chromium.",
+	);
+	const baseUrl = new URL(
+		String(testInfo.project.use.baseURL ?? "http://localhost:5174"),
+	);
+	test.skip(
+		!["127.0.0.1", "localhost"].includes(baseUrl.hostname),
+		"Preference mutation is restricted to disposable local infrastructure.",
+	);
+
+	const supabase = await createAuthenticatedLocalQaDatabaseClient(
+		testInfo.parallelIndex,
+	);
+	const { data: authenticatedUserData, error: authenticatedUserError } =
+		await supabase.auth.getUser();
+	if (authenticatedUserError || !authenticatedUserData.user) {
+		throw authenticatedUserError ?? new Error("The QA user could not be authenticated.");
+	}
+	const userId = authenticatedUserData.user.id;
+	const { data: originalPreferences, error: preferenceReadError } = await supabase
+		.from("user_food_preferences")
+		.select("allergens,dietary_restrictions")
+		.eq("user_id", userId)
+		.single();
+	if (preferenceReadError) throw preferenceReadError;
+
+	try {
+		const { error: preferenceUpdateError } = await supabase
+			.from("user_food_preferences")
+			.update({
+				allergens: ["peanut"],
+				dietary_restrictions: ["gluten-free"],
+			})
+			.eq("user_id", userId);
+		if (preferenceUpdateError) throw preferenceUpdateError;
+
+		await page.goto("/ingredients/fridge/nutrition/9100003");
+		await waitForAppReady(page);
+		const nutritionDetails = page.locator(".nutrition-detail-view");
+		await expect(
+			nutritionDetails.getByText("Check this ingredient"),
+		).toBeVisible();
+		await expect(
+			nutritionDetails.getByText(/current package label is the final authority/i),
+		).toBeVisible();
+
+		const ingredientsHeading = nutritionDetails.getByRole("heading", {
+			name: "Ingredients",
+		});
+		const containsHeading = nutritionDetails.getByRole("heading", {
+			name: "Contains",
+		});
+		const mayContainHeading = nutritionDetails.getByRole("heading", {
+			name: "May contain",
+		});
+		const dietaryLabelsHeading = nutritionDetails.getByRole("heading", {
+			name: "Dietary labels",
+		});
+		await expect(ingredientsHeading).toBeVisible();
+		await expect(
+			nutritionDetails.getByText(/red pepper paste \(wheat flour/i),
+		).toBeVisible();
+		await expect(containsHeading).toBeVisible();
+		await expect(nutritionDetails.getByText("Soy, Wheat")).toBeVisible();
+		await expect(mayContainHeading).toBeVisible();
+		await expect(
+			mayContainHeading.locator("xpath=..").getByText("Peanut", { exact: true }),
+		).toBeVisible();
+		await expect(dietaryLabelsHeading).toBeVisible();
+		await expect(
+			dietaryLabelsHeading.locator("xpath=..").getByText("Vegetarian", {
+				exact: true,
+			}),
+		).toBeVisible();
+		await expect(
+			nutritionDetails.getByRole("heading", {
+				name: "Dietary considerations",
+			}),
+		).toHaveCount(0);
+
+		const summaryOrder = await nutritionDetails.evaluate((element) => {
+			const headingOrder = [
+				"Ingredients",
+				"Contains",
+				"May contain",
+				"Dietary labels",
+			].map((name) =>
+				Array.from(element.querySelectorAll("h2")).find(
+					(heading) => heading.textContent?.trim() === name,
+				),
+			);
+			return headingOrder.every((heading, index) => {
+				if (!heading) return false;
+				if (index === 0) return true;
+				const previousHeading = headingOrder[index - 1];
+				return Boolean(
+					previousHeading &&
+						previousHeading.compareDocumentPosition(heading) &
+							Node.DOCUMENT_POSITION_FOLLOWING,
+				);
+			});
+		});
+		expect(summaryOrder).toBe(true);
+	} finally {
+		await supabase
+			.from("user_food_preferences")
+			.update({
+				allergens: originalPreferences.allergens,
+				dietary_restrictions: originalPreferences.dietary_restrictions,
+			})
+			.eq("user_id", userId);
+		await supabase.auth.signOut({ scope: "local" });
+	}
+});
+
+test("nutrition details preserve the complete source-backed food record", async ({
+	page,
+}, testInfo) => {
+	test.setTimeout(300_000);
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"The complete DB-backed nutrition record contract runs once in Chromium.",
+	);
+	const baseUrl = new URL(
+		String(testInfo.project.use.baseURL ?? "http://localhost:5174"),
+	);
+	test.skip(
+		!["127.0.0.1", "localhost"].includes(baseUrl.hostname),
+		"Preference mutation is restricted to disposable local infrastructure.",
+	);
+
+	const supabase = await createAuthenticatedLocalQaDatabaseClient(
+		testInfo.parallelIndex,
+	);
+	const { data: authenticatedUserData, error: authenticatedUserError } =
+		await supabase.auth.getUser();
+	if (authenticatedUserError || !authenticatedUserData.user) {
+		throw authenticatedUserError ?? new Error("The QA user could not be authenticated.");
+	}
+	const userId = authenticatedUserData.user.id;
+	const { data: originalPreferences, error: preferenceReadError } = await supabase
+		.from("user_food_preferences")
+		.select("allergens,dietary_restrictions")
+		.eq("user_id", userId)
+		.single();
+	if (preferenceReadError) throw preferenceReadError;
+
+	const replacePreferences = async (
+		allergens: string[],
+		dietaryRestrictions: string[],
+	) => {
+		const { error } = await supabase
+			.from("user_food_preferences")
+			.update({
+				allergens,
+				dietary_restrictions: dietaryRestrictions,
+			})
+			.eq("user_id", userId);
+		if (error) throw error;
+	};
+	const searchAndOpenNutrition = async (
+		query: string,
+		resultName: RegExp,
+	) => {
+		await page.goto("/ingredients/fridge/search");
+		await waitForAppReady(page);
+		const searchDialog = page.getByRole("dialog", { name: "Ingredients" });
+		const searchInput = searchDialog.getByRole("combobox", {
+			name: "Search ingredients",
+		});
+		const responsePromise = page.waitForResponse((response) => {
+			const url = new URL(response.url());
+			return url.pathname === "/api/foods/search" &&
+				url.searchParams.get("q") === query &&
+				response.ok();
+		});
+		await searchInput.fill(query);
+		await responsePromise;
+		const result = searchDialog.getByRole("row", { name: resultName }).first();
+		await expect(result).toBeVisible();
+		await result.getByRole("button", { name: /^View nutrition for / }).click();
+		await expect(page).toHaveURL(/\/ingredients\/fridge\/nutrition\/-?\d+$/);
+		await expect(page.locator("#nutrition-detail-view-title")).toBeVisible();
+		return page.locator(".nutrition-detail-view");
+	};
+	const expectAllDisclosuresClosed = async (nutritionDetails: Locator) => {
+		const disclosures = nutritionDetails.locator(
+			".nutrition-panel__disclosures details",
+		);
+		await expect(disclosures.first()).toBeVisible();
+		expect(await disclosures.count()).toBeGreaterThan(0);
+		expect(await disclosures.evaluateAll((elements) =>
+			elements.every((element) => !(element as HTMLDetailsElement).open),
+		)).toBe(true);
+	};
+	const openDisclosure = async (nutritionDetails: Locator, title: string) => {
+		const summary = nutritionDetails.locator("summary").filter({
+			hasText: title,
+		}).first();
+		const details = summary.locator("..");
+		await summary.click();
+		await expect(details).toHaveAttribute("open", "");
+		return details;
+	};
+	const openDisclosureWithKeyboard = async (
+		nutritionDetails: Locator,
+		title: string,
+	) => {
+		const summary = nutritionDetails.locator("summary").filter({
+			hasText: title,
+		}).first();
+		const details = summary.locator("..");
+		await summary.focus();
+		await expect(summary).toBeFocused();
+		await summary.press("Enter");
+		await expect(details).toHaveAttribute("open", "");
+		return details;
+	};
+
+	try {
+		await replacePreferences([], []);
+		const gochuDetails = await searchAndOpenNutrition(
+			"Sempio",
+			/^Gochu Jang Hot & Sweet Chili Sauce,/,
+		);
+		await expect(gochuDetails.getByRole("heading", { name: "Ingredients" })).toBeVisible();
+		await expect(gochuDetails.getByText(/red pepper paste \(wheat flour/i)).toBeVisible();
+		await expect(gochuDetails.getByRole("heading", { name: "Contains" })).toBeVisible();
+		await expect(gochuDetails.getByText("Soy, Wheat", { exact: true })).toBeVisible();
+		await expect(gochuDetails.getByRole("heading", { name: "May contain" })).toBeVisible();
+		await expect(gochuDetails.getByText("Peanut", { exact: true })).toBeVisible();
+		await expect(gochuDetails.getByRole("heading", { name: "Dietary labels" })).toBeVisible();
+		await expect(gochuDetails.getByText("Vegetarian", { exact: true })).toBeVisible();
+		await expectAllDisclosuresClosed(gochuDetails);
+		await expect(gochuDetails.getByText("Adjust card image placement")).toHaveCount(0);
+
+		const moreAboutGochu = await openDisclosure(gochuDetails, "More about this food");
+		const productDetails = await openDisclosureWithKeyboard(
+			moreAboutGochu,
+			"Product details",
+		);
+		for (const expectedText of [
+			"Sempio Foods Company",
+			"08801005523455",
+			"Dips and Salsa",
+			"500 g",
+			"Packaged product",
+			"2 tbsp (30 g)",
+		]) {
+			await expect(productDetails.getByText(expectedText, { exact: true }).first()).toBeVisible();
+		}
+		expect(await productDetails.locator("dd").allTextContents()).not.toContain("");
+
+		const snickersDetails = await searchAndOpenNutrition(
+			"05000159461122",
+			/^Snickers,/,
+		);
+		await expect(snickersDetails.getByText("Not checked against food settings")).toBeVisible();
+		await expect(snickersDetails.getByRole("heading", { name: "Contains" })).toBeVisible();
+		await expect(snickersDetails.getByText(/Egg.*Milk.*Peanut.*Soy/i)).toBeVisible();
+		await expect(snickersDetails.getByRole("heading", { name: "May contain" })).toBeVisible();
+		await expect(snickersDetails.getByText("May contain nuts.", { exact: true })).toBeVisible();
+		const snickersIngredientDetails = await openDisclosure(
+			snickersDetails,
+			"Ingredient details",
+		);
+		await expect(snickersIngredientDetails.getByRole("heading", { name: "Additives" })).toBeVisible();
+		await expect(snickersIngredientDetails.getByText("E322, E322i", { exact: true })).toBeVisible();
+
+		await replacePreferences([], ["gluten-free"]);
+		const blueberryDetails = await searchAndOpenNutrition(
+			"Blueberries",
+			/^Blueberries, Raw,/i,
+		);
+		const blueberryNutritionUrl = page.url();
+		await expect(
+			blueberryDetails.getByText("No conflict found in available information"),
+		).toBeVisible();
+		const blueberryMoreAbout = await openDisclosure(
+			blueberryDetails,
+			"More about this food",
+		);
+		const blueberryProductDetails = await openDisclosure(
+			blueberryMoreAbout,
+			"Product details",
+		);
+		for (const expectedText of [
+			"Generic food",
+			"Vaccinium spp.",
+			"Blueberries",
+			"Raw",
+			"1 cup · 148g",
+			"50 berries · 68g",
+			"USDA FoodData Central",
+			"USDA FoodData Central SR Legacy",
+			"2018",
+			"171711",
+			"09050",
+			"Source: USDA FoodData Central.",
+		]) {
+			await expect(
+				blueberryProductDetails.getByText(expectedText, { exact: true }).first(),
+			).toBeVisible();
+		}
+		await expect(
+			blueberryProductDetails.getByRole("link", { name: /View source for/i }),
+		).toHaveAttribute("href", "https://fdc.nal.usda.gov/");
+		await expect(
+			blueberryProductDetails.getByRole("link", { name: /CC0 1\.0/i }),
+		).toHaveAttribute("href", "https://creativecommons.org/publicdomain/zero/1.0/");
+		expect((await blueberryProductDetails.locator("dd").allTextContents()).every(
+			(value) => value.trim().length > 0,
+		)).toBe(true);
+		await expect(blueberryProductDetails).not.toContainText(/observationId|policyVersion|sharedProductId/i);
+
+		await page.goto("/ingredients/fridge/nutrition/-9818016");
+		await waitForAppReady(page);
+		await expect(
+			page.getByText("Some food details could not be checked"),
+		).toBeVisible();
+
+		await replacePreferences([], []);
+		await page.goto(blueberryNutritionUrl);
+		await waitForAppReady(page);
+		await expect(page.getByText("Not checked against food settings")).toBeVisible();
+
+		const shrimpDetails = await searchAndOpenNutrition(
+			"Crustaceans, Shrimp",
+			/^Crustaceans, Shrimp, Mixed Species, Raw \(May Contain Additives To Retain Moisture\),/i,
+		);
+		const shrimpNutritionFacts = shrimpDetails.locator(".nf-label");
+		await expect(shrimpNutritionFacts.locator(".vital-list .nf-row")).toHaveCount(6);
+		expect(await shrimpNutritionFacts.locator(".extra-list .nf-row").count()).toBeGreaterThan(0);
+		const secondaryValues = await shrimpNutritionFacts
+			.locator(".extra-list .nf-value")
+			.allTextContents();
+		expect(secondaryValues.every((value) => Number.parseFloat(value) !== 0)).toBe(true);
+		await expect(
+			shrimpNutritionFacts.locator(".vital-list .nf-row").filter({ hasText: "Dietary Fiber" }),
+		).toContainText("0");
+		await expect(
+			shrimpNutritionFacts.locator(".vital-list .nf-row").filter({ hasText: "Total Sugars" }),
+		).toContainText("0");
+
+		await page.goto("/ingredients/fridge");
+		await waitForAppReady(page);
+		await page.reload();
+		await waitForAppReady(page);
+		const fridgeList = page.getByRole("list", { name: "Fridge ingredients" });
+		await expect(fridgeList).toHaveAttribute("aria-busy", "false");
+		const savedGochuButton = page.getByRole("button", {
+			name: /^Preview Gochu Jang Hot & Sweet Chili Sauce/,
+		});
+		for (let attempt = 0; attempt < 20 && !(await savedGochuButton.isVisible().catch(() => false)); attempt += 1) {
+			const loadMoreButton = page.getByRole("button", { name: "Load more" });
+			if (!(await loadMoreButton.isVisible().catch(() => false))) break;
+			await expect(loadMoreButton).toBeEnabled();
+			const renderedCardCount = await fridgeList.locator("li[data-food-id]").count();
+			await loadMoreButton.click();
+			await expect.poll(async () =>
+				(await savedGochuButton.isVisible().catch(() => false)) ||
+				(await fridgeList.locator("li[data-food-id]").count()) > renderedCardCount,
+			).toBe(true);
+		}
+		await expect(savedGochuButton).toBeVisible();
+		await savedGochuButton.click();
+		await expect(page).toHaveURL(/\/ingredients\/fridge\/nutrition\/9100003(?:\?actions=hide)?$/);
+		const savedGochuDetails = page.locator(".nutrition-detail-view");
+		await expect(savedGochuDetails.getByRole("heading", { name: "Ingredients" })).toBeVisible();
+		await expect(savedGochuDetails.getByText("Soy, Wheat", { exact: true })).toBeVisible();
+	} finally {
+		await supabase
+			.from("user_food_preferences")
+			.update({
+				allergens: originalPreferences.allergens,
+				dietary_restrictions: originalPreferences.dietary_restrictions,
+			})
+			.eq("user_id", userId);
+		await supabase.auth.signOut({ scope: "local" });
+	}
 });

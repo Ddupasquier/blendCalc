@@ -4,7 +4,7 @@ select plan(8);
 
 select ok(
 	public.blendcalc_api_v1_source_attribution_is_complete('usda', '123'),
-	'an approved provider source with complete policy metadata is eligible'
+	'a direct external API record remains eligible when its provider also owns imported datasets'
 );
 
 insert into public.product_data_sources (
