@@ -1,19 +1,46 @@
 /**
- * Purpose: Push pending Supabase migrations using the configured project and DB password,
- * loading credentials from the local environment or macOS Keychain without printing them.
+ * Purpose: Preview or push linked Supabase migrations using protected local credentials.
+ * A real push fails closed unless every local migration exactly matches origin/main so
+ * unfinished branch-only schema cannot change the production database.
  * Preview: `npm run db:push:dry`
- * Execute: `npm run db:push:auto`
+ * Execute with confirmation: `npm run db:push`
+ * Execute without confirmation: `npm run db:push:auto`
  */
 
 import { execFileSync, spawn } from "node:child_process";
 import { config } from "dotenv";
+import {
+	findMigrationsNotIdenticalToRemoteMain,
+	formatMigrationPromotionFailure,
+	refreshRemoteMainReference,
+} from "../../lib/releases/databaseMigrationPromotion.mjs";
 
 config({ path: ".env.moderation.local", quiet: true });
 config({ path: ".env", quiet: true });
 
-const args = ["supabase", "db", "push", "--yes"];
-if (process.argv.includes("--dry-run")) args.push("--dry-run");
+const isDryRun = process.argv.includes("--dry-run");
+const shouldConfirmAutomatically = process.argv.includes("--yes");
+const args = ["supabase", "db", "push"];
+if (shouldConfirmAutomatically) args.push("--yes");
+if (isDryRun) args.push("--dry-run");
 const keychainService = "blendcalc-supabase-db-password";
+
+if (!isDryRun) {
+	try {
+		refreshRemoteMainReference();
+	} catch {
+		console.error(
+			"Unable to refresh origin/main. No linked migration was applied. Check the Git remote connection and try again.",
+		);
+		process.exit(1);
+	}
+
+	const migrationFailures = findMigrationsNotIdenticalToRemoteMain();
+	if (migrationFailures.length > 0) {
+		console.error(formatMigrationPromotionFailure(migrationFailures));
+		process.exit(1);
+	}
+}
 
 const getKeychainPassword = () => {
 	try {

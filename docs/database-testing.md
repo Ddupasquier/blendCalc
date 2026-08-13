@@ -68,6 +68,31 @@ fixed-ID submissions are not recreated by `start` after they have been reviewed;
 | `npm run db:test:stop` | Stop the local Supabase stack while retaining its Docker volume. |
 | `npm run dev:test` | Start SvelteKit in test mode against `.env.test.local` at `http://localhost:5174`. |
 
+## Production Migration Promotion
+
+Local verification and production delivery are separate gates. A migration can be
+tested from a feature branch, but it cannot change the linked database until its exact
+source is reviewed and present on `origin/main`.
+
+Use this release order:
+
+1. Write an additive expansion migration and update the schema map, generated types,
+   database tests, and recovery reasoning.
+2. Rebuild the disposable local database and prove the current production application
+   contract still works against the expanded schema.
+3. Promote that migration-only compatibility slice to `main`. Do not include application
+   code that requires the new structure.
+4. Run `npm run db:push:dry`, then `npm run db:push` or `npm run db:push:auto`. The real
+   push refreshes `origin/main` and fails before reading credentials when a local
+   migration is absent from or differs from remote `main`.
+5. Verify linked migration history, database lint, generated linked types, and the
+   production application before promoting dependent application code.
+6. Remove or tighten the old contract only in a later contract migration after the
+   compatible application is live and no supported instance uses the old structure.
+
+Do not run `supabase db push` directly against the linked project. The guarded npm
+commands are the only maintained production migration entry points.
+
 Playwright is the browser-facing consumer of this disposable environment. It signs in
 through the real local Auth UI, uses the seeded personas and catalog, and stores generated
 session state only under ignored test output. See [Browser Testing](browser-testing.md)
