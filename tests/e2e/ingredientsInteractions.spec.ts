@@ -400,11 +400,17 @@ const revealIngredientCards = async (page: Page, foodIds: number[]) => {
 		if (!(await loadMoreButton.isVisible().catch(() => false))) break;
 		await loadMoreButton.click();
 		await expect
-			.poll(async () =>
-				(await loadMoreButton.count()) === 0
-					? false
-					: (await loadMoreButton.getAttribute("aria-busy")) ===
-						"true",
+			.poll(
+				async () =>
+					(await loadMoreButton.count()) === 0
+						? false
+						: (await loadMoreButton.getAttribute("aria-busy")) ===
+							"true",
+				{
+					message:
+						"The next saved-ingredient page should finish hydrating before another page is requested.",
+					timeout: 45_000,
+				},
 			)
 			.toBe(false);
 	}

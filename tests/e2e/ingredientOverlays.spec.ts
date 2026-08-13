@@ -7,31 +7,114 @@ import {
 import type { Locator, Page } from "@playwright/test";
 import { createAuthenticatedLocalQaDatabaseClient } from "./support/localQaDatabase";
 
+type CapturedEntryAnimation = {
+	duration: number | undefined;
+	keyframes: Array<{
+		opacity: string | null | undefined;
+		transform: string | null | undefined;
+	}>;
+};
+
+type EntryAnimationCaptureWindow = Window & {
+	__blendCalcEntryAnimationCapture?: CapturedEntryAnimation[] | null;
+	__blendCalcEntryAnimationFrame?: number;
+};
+
+const installEntryAnimationCapture = async (
+	page: Page,
+	elementSelector: string,
+) => {
+	await page.evaluate((selector) => {
+		const captureWindow = window as EntryAnimationCaptureWindow;
+		if (captureWindow.__blendCalcEntryAnimationFrame !== undefined) {
+			cancelAnimationFrame(captureWindow.__blendCalcEntryAnimationFrame);
+		}
+		captureWindow.__blendCalcEntryAnimationCapture = null;
+		let remainingFrameCount = 180;
+		const existingElements = new Set(document.querySelectorAll(selector));
+
+		const captureAnimation = () => {
+			const element = Array.from(
+				document.querySelectorAll<HTMLElement>(selector),
+			).find((candidate) => !existingElements.has(candidate));
+			const animations = element?.getAnimations() ?? [];
+			if (animations.length > 0) {
+				captureWindow.__blendCalcEntryAnimationCapture = animations.map(
+					(animation) => {
+						const effect = animation.effect;
+						const rawDuration = effect?.getTiming().duration;
+						const numericDuration = Number.parseFloat(String(rawDuration));
+						return {
+							duration: Number.isFinite(numericDuration)
+								? numericDuration
+								: undefined,
+							keyframes:
+								effect instanceof KeyframeEffect
+									? effect.getKeyframes().map((keyframe) => ({
+											opacity:
+												keyframe.opacity == null
+													? keyframe.opacity
+													: String(keyframe.opacity),
+											transform:
+												keyframe.transform == null
+													? keyframe.transform
+													: String(keyframe.transform),
+										}))
+									: [],
+						};
+					},
+				);
+				captureWindow.__blendCalcEntryAnimationFrame = undefined;
+				return;
+			}
+
+			remainingFrameCount -= 1;
+			if (remainingFrameCount <= 0) {
+				captureWindow.__blendCalcEntryAnimationFrame = undefined;
+				return;
+			}
+			captureWindow.__blendCalcEntryAnimationFrame = requestAnimationFrame(
+				captureAnimation,
+			);
+		};
+
+		captureWindow.__blendCalcEntryAnimationFrame = requestAnimationFrame(
+			captureAnimation,
+		);
+	}, elementSelector);
+};
+
+const readCapturedEntryAnimation = async (page: Page) => {
+	await expect
+		.poll(() =>
+			page.evaluate(
+				() =>
+					(window as EntryAnimationCaptureWindow)
+						.__blendCalcEntryAnimationCapture ?? null,
+			),
+		)
+		.not.toBeNull();
+
+	return page.evaluate(
+		() =>
+			(window as EntryAnimationCaptureWindow)
+				.__blendCalcEntryAnimationCapture ?? [],
+	);
+};
+
 const expectBottomSheetPlacement = async (
 	page: Page,
 	dialog: Locator,
 	openSheet: () => Promise<void>,
 ) => {
+	const panelSelector = ".sheet-base__panel--bottom";
+	await installEntryAnimationCapture(page, panelSelector);
 	await openSheet();
 	await expect(dialog).toBeVisible();
-	const panel = dialog.locator(".sheet-base__panel--bottom");
+	const panel = dialog.locator(panelSelector);
 	await expect(panel).toHaveCount(1);
 
-	const entryAnimation = await panel.evaluate((element) =>
-		element.getAnimations().map((animation) => {
-			const effect = animation.effect;
-			return {
-				duration: effect?.getTiming().duration,
-				keyframes:
-					effect instanceof KeyframeEffect
-						? effect.getKeyframes().map((keyframe) => ({
-								opacity: keyframe.opacity,
-								transform: keyframe.transform,
-							}))
-						: [],
-			};
-		}),
-	);
+	const entryAnimation = await readCapturedEntryAnimation(page);
 	expect(entryAnimation).toHaveLength(1);
 	expect(entryAnimation[0]?.duration).toBeGreaterThan(0);
 	expect(entryAnimation[0]?.keyframes?.at(0)).toMatchObject({
@@ -168,6 +251,10 @@ const expectIngredientSearchEntersFromRight = async (
 ) => {
 	await page.goto(listRoute);
 	await waitForAppReady(page);
+	await installEntryAnimationCapture(
+		page,
+		".sheet-base__panel--right",
+	);
 	await page
 		.getByRole("button", { name: "Open ingredient search" })
 		.click({ noWaitAfter: true });
@@ -176,21 +263,7 @@ const expectIngredientSearchEntersFromRight = async (
 	await expect(searchDialog).toBeVisible();
 	await expect(page).toHaveURL(new RegExp(`${listRoute}/search$`));
 	const panel = searchDialog.locator(".sheet-base__panel--right");
-	const entryAnimation = await panel.evaluate((element) =>
-		element.getAnimations().map((animation) => {
-			const effect = animation.effect;
-			return {
-				duration: effect?.getTiming().duration,
-				keyframes:
-					effect instanceof KeyframeEffect
-						? effect.getKeyframes().map((keyframe) => ({
-								opacity: keyframe.opacity,
-								transform: keyframe.transform,
-							}))
-						: [],
-			};
-		}),
-	);
+	const entryAnimation = await readCapturedEntryAnimation(page);
 
 	expect(entryAnimation).toHaveLength(1);
 	expect(entryAnimation[0]?.duration).toBeGreaterThan(0);
