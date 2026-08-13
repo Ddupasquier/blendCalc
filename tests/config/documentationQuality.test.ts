@@ -15,7 +15,6 @@ const collectMarkdownFiles = (directory: string): string[] =>
 
 const maintainedDocumentationFiles = [
 	"README.md",
-	"AGENTS.md",
 	"scripts/README.md",
 	...collectMarkdownFiles("docs"),
 ];
