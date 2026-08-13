@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import MfaPageShell from "$lib/components/auth/MfaPageShell/MfaPageShell.svelte";
+	import AuthenticatorVerificationCodeField from "$lib/components/auth/AuthenticatorVerificationCodeField/AuthenticatorVerificationCodeField.svelte";
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
@@ -10,6 +11,7 @@
 
 	let { data, form }: MfaChallengePageProps = $props();
 	let isSubmitting = $state(false);
+	const returnPath = $derived(form?.next ?? data.next);
 	const preventDuplicateSubmit = createPendingSubmit(
 		(pending) => (isSubmitting = pending),
 	);
@@ -28,20 +30,12 @@
 		<StatusMessage tone="danger" message={form.message} />
 	{/if}
 	<form class="mfa-form" method="POST" use:enhance={preventDuplicateSubmit}>
+		<input type="hidden" name="next" value={returnPath} />
 		<input type="hidden" name="factorId" value={data.factorId} />
-		<label>
-			<span>Six-digit code</span>
-			<input
-				type="text"
-				name="code"
-				inputmode="numeric"
-				autocomplete="one-time-code"
-				pattern="[0-9]{6}"
-				maxlength="6"
-				required
-				disabled={isSubmitting}
-			/>
-		</label>
+		<AuthenticatorVerificationCodeField
+			disabled={isSubmitting}
+			invalid={Boolean(form?.message)}
+		/>
 		{#if data.factorName}
 			<p class="mfa-form__help">Using {data.factorName}</p>
 		{/if}
@@ -49,7 +43,7 @@
 			Verify and continue
 		</ActionButton>
 		<RoundedActionLink
-			href={`/auth/mfa/recovery?next=${encodeURIComponent(data.next)}`}
+			href={`/auth/mfa/recovery?next=${encodeURIComponent(returnPath)}`}
 			variant="neutral"
 			fullWidth
 		>

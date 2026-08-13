@@ -1,0 +1,51 @@
+@use "../../../../styles/variables" as *;
+
+.authenticator-code-field {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+}
+
+.authenticator-code-field__label {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+}
+
+.authenticator-code-field input {
+	width: 100%;
+	min-width: 0;
+	height: $app-shell-control-height;
+	padding: 0 $app-shell-control-padding-x;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-control;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+	font-family: $app-font-family-data;
+	font-size: $app-font-size-lg;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.16em;
+	text-align: center;
+}
+
+.authenticator-code-field input::placeholder {
+	color: $app-shell-text-muted;
+	opacity: 0.7;
+}
+
+.authenticator-code-field input[aria-invalid="true"] {
+	border-color: $app-shell-accent-danger;
+}
+
+.authenticator-code-field small {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	line-height: $app-line-height-ui;
+}
+
+@media (max-width: $app-breakpoint-xs) {
+	.authenticator-code-field input {
+		height: $app-shell-control-height-narrow;
+		padding-inline: $app-shell-control-padding-x-compact;
+	}
+}
