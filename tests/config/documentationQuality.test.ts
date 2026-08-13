@@ -1,8 +1,22 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { dirname, extname, resolve } from "node:path";
+import { dirname, extname, relative, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const excludedDocumentationDirectories = new Set(["QA", "local-context"]);
+const localOnlyRepositoryPathPrefixes = [
+	"docs/QA/",
+	"docs/local-context/",
+	"scripts/output/",
+];
+const localOnlyRepositoryPaths = new Set(["docs/work-queue.md", "scripts/output"]);
+
+const isLocalOnlyRepositoryPath = (path: string): boolean => {
+	const repositoryPath = relative(process.cwd(), resolve(path)).replaceAll("\\", "/");
+	return (
+		localOnlyRepositoryPaths.has(repositoryPath) ||
+		localOnlyRepositoryPathPrefixes.some((prefix) => repositoryPath.startsWith(prefix))
+	);
+};
 
 const collectMarkdownFiles = (directory: string): string[] =>
 	readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -17,7 +31,7 @@ const maintainedDocumentationFiles = [
 	"README.md",
 	"scripts/README.md",
 	...collectMarkdownFiles("docs"),
-];
+].filter((path) => !isLocalOnlyRepositoryPath(path));
 
 const removeFencedCode = (source: string) => source.replace(/```[\s\S]*?```/g, "");
 
@@ -35,7 +49,9 @@ describe("documentation quality", () => {
 				if (!target) continue;
 
 				const targetPath = resolve(dirname(documentationFile), decodeURIComponent(target));
-				if (!existsSync(targetPath)) brokenLinks.push(`${documentationFile}: ${link}`);
+				if (!existsSync(targetPath) && !isLocalOnlyRepositoryPath(targetPath)) {
+					brokenLinks.push(`${documentationFile}: ${link}`);
+				}
 			}
 		}
 
@@ -71,7 +87,9 @@ describe("documentation quality", () => {
 				let target = match[1].replace(/[.,;:]$/, "").replace(/:\d+(?::\d+)?$/, "");
 				if (/[<{*]|\.\.\./.test(target)) continue;
 				target = target.split("#")[0];
-				if (!existsSync(target)) missingPaths.push(`${documentationFile}: ${target}`);
+				if (!existsSync(target) && !isLocalOnlyRepositoryPath(target)) {
+					missingPaths.push(`${documentationFile}: ${target}`);
+				}
 			}
 		}
 
@@ -85,6 +103,18 @@ describe("documentation quality", () => {
 		for (const viewContract of viewContracts) {
 			expect(uiBehaviorIndex).toContain(viewContract.replace("docs/", ""));
 		}
+	});
+
+	it("distinguishes intentionally local workflow artifacts from tracked documentation", () => {
+		for (const localOnlyPath of [
+			"docs/work-queue.md",
+			"docs/QA/qa-tasks.md",
+			"docs/local-context/working-context.md",
+			"scripts/output/audit.json",
+		]) {
+			expect(isLocalOnlyRepositoryPath(localOnlyPath), localOnlyPath).toBe(true);
+		}
+		expect(isLocalOnlyRepositoryPath("docs/testing.md")).toBe(false);
 	});
 
 	it("keeps current user-facing behavior docs free of retired product terms", () => {
