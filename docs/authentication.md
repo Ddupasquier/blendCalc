@@ -5,6 +5,11 @@ finish on the same origin. Production uses `PUBLIC_SITE_URL`, Vercel previews us
 exact `VERCEL_URL` or `VERCEL_BRANCH_URL` supplied by Vercel, and localhost remains
 local. Unrecognized hosted origins fall back to the canonical production origin.
 
+Every server request establishes identity from verified JWT claims through
+`locals.getVerifiedUser()`. Server authorization must not read `session.user` from the
+cookie-backed session object. Operations that require the current Auth record, such as
+test-fixture identity checks or Auth-account mutations, call `auth.getUser()` instead.
+
 This document owns Auth and deployment-origin configuration. General server/database
 boundaries live in [`data-architecture.md`](data-architecture.md), and table policies
 live in [`supabase-schema.md`](supabase-schema.md). Production network restrictions,
