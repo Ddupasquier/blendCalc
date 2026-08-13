@@ -620,17 +620,21 @@ const seedTestAccountState = async (
 			realtime: { transport: WebSocket },
 		},
 	);
-	const session = requireSuccessfulResult(
+	requireSuccessfulResult(
 		await userClient.auth.signInWithPassword({
 			email: account.email,
 			password: account.password,
 		}),
 		`Sign in ${account.email} for tutorial setup`,
 	);
-	if (session.user.id !== expectedUserId) {
-    throw new Error(
-      `Tutorial setup resolved the wrong user for ${account.email}.`,
-    );
+	const authenticatedUser = requireSuccessfulResult(
+		await userClient.auth.getUser(),
+		`Verify ${account.email} after sign-in`,
+	);
+	if (authenticatedUser.user.id !== expectedUserId) {
+		throw new Error(
+			`Tutorial setup resolved the wrong user for ${account.email}.`,
+		);
 	}
 
 	if (account.tutorialState === "pending") {

@@ -146,6 +146,12 @@ describe("local test database management", () => {
     expect(script).toContain("QA Missing Evidence Pantry Crisps");
   });
 
+	it("verifies signed-in fixture identities instead of trusting session storage", () => {
+		expect(script).toContain("await userClient.auth.getUser()");
+		expect(script).toContain("authenticatedUser.user.id");
+		expect(script).not.toContain("session.user.id");
+	});
+
   it("loads a broad catalog into the populated QA persona", () => {
     const populatedPersona = localQaPersonas.find(({ key }) => key === "user");
     const populatedBarcodes = new Set([

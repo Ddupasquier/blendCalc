@@ -6,9 +6,6 @@ import { getSafeAuthNextPath } from "$lib/utils/auth/authFlow";
 
 const MFA_FORM_MAX_BYTES = 8 * 1024;
 
-const createQrCodeDataUrl = (svg: string) =>
-	`data:image/svg+xml;utf-8,${encodeURIComponent(svg)}`;
-
 const readNext = (url: URL) => getSafeAuthNextPath(url.searchParams.get("next"));
 
 export const load: PageServerLoad = async ({ locals, url, setHeaders }) => {
@@ -64,9 +61,7 @@ export const actions: Actions = {
 			next,
 			enrollment: {
 				factorId: enrollmentResult.data.id,
-				qrCodeDataUrl: createQrCodeDataUrl(
-					enrollmentResult.data.totp.qr_code,
-				),
+				qrCodeDataUrl: enrollmentResult.data.totp.qr_code,
 				secret: enrollmentResult.data.totp.secret,
 			},
 		};
