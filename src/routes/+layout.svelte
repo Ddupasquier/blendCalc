@@ -24,8 +24,7 @@
 		clearObsoleteAppStorage,
 		setActiveStorageUserId,
 	} from "$lib/utils/storage/client/storageScope";
-	import type { TutorialChoice } from "$lib/utils/tutorial/tutorial";
-	import { saveTutorialChoice } from "$lib/utils/tutorial/tutorialClient";
+	import { saveTutorialCompletion } from "$lib/utils/tutorial/tutorialClient";
 	import { configureServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 	import { configureNutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 	import { configureAppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
@@ -118,7 +117,7 @@
 		});
 	};
 
-	const finishTutorial = async (choice: TutorialChoice) => {
+	const finishTutorial = async () => {
 		if (!data.authUser) return false;
 
 		if (tutorialMode === "replay") {
@@ -127,7 +126,7 @@
 			return true;
 		}
 
-		const saved = await saveTutorialChoice(choice);
+		const saved = await saveTutorialCompletion();
 		if (!saved) return false;
 		tutorialOpen = false;
 		return true;

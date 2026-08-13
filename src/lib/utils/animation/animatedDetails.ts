@@ -129,6 +129,7 @@ export const animatedDetails = (
 	};
 
 	const handleToggle = () => {
+		if (animation !== null) return;
 		if (element.open === expanded) return;
 		setOpen(element.open, true);
 	};
