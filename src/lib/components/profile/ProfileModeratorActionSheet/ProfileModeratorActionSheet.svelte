@@ -5,6 +5,7 @@
 	import User from "$lib/assets/icons/User/User.svelte";
 	import WarningTriangle from "$lib/assets/icons/WarningTriangle/WarningTriangle.svelte";
 	import PrivilegedActionGroup from "$lib/components/common/actions/PrivilegedActionGroup/PrivilegedActionGroup.svelte";
+	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 	import BottomSheetAction from "$lib/components/common/sheets/BottomSheetAction/BottomSheetAction.svelte";
@@ -18,10 +19,17 @@
 	}: ProfileModeratorActionSheetProps = $props();
 
 	const describeQueue = (count: number | null) => {
+		if (summary.identityVerificationRequired) {
+			return "Verify your identity to check this queue";
+		}
 		if (count === null) return "Review count is temporarily unavailable";
 		if (count === 0) return "Nothing is waiting for review";
 		return count === 1 ? "1 item is waiting for review" : `${count} items are waiting for review`;
 	};
+
+	const isQueueActionDisabled = (count: number | null) =>
+		summary.unavailable ||
+		(!summary.identityVerificationRequired && count === 0);
 
 	const openModeratorDestination = (href: string) => {
 		onClose();
@@ -36,6 +44,9 @@
 	titleId="profile-moderator-actions-sheet-title"
 	onClose={onClose}
 >
+	{#snippet titleAccessory()}
+		<PrivilegedActionBadge label="Moderator actions" />
+	{/snippet}
 	<div class="profile-moderator-action-sheet">
 		{#if summary.identityVerificationRequired}
 			<StatusMessage
@@ -49,11 +60,11 @@
 			/>
 		{/if}
 
-		<PrivilegedActionGroup title="Moderator actions">
+		<PrivilegedActionGroup title="Moderator actions" showHeader={false}>
 			<BottomSheetAction
 				label="Product submissions"
 				description={describeQueue(summary.pendingProductSubmissions)}
-				disabled={!summary.pendingProductSubmissions}
+				disabled={isQueueActionDisabled(summary.pendingProductSubmissions)}
 				actionRequiredCount={summary.pendingProductSubmissions ?? 0}
 				actionRequiredLabel="product submissions requiring review"
 				onSelect={() => openModeratorDestination("/moderation#product-review")}
@@ -63,7 +74,7 @@
 			<BottomSheetAction
 				label="Food warning reports"
 				description={describeQueue(summary.pendingFoodWarningReports)}
-				disabled={!summary.pendingFoodWarningReports}
+				disabled={isQueueActionDisabled(summary.pendingFoodWarningReports)}
 				actionRequiredCount={summary.pendingFoodWarningReports ?? 0}
 				actionRequiredLabel="food warning reports requiring review"
 				onSelect={() => openModeratorDestination("/moderation#compatibility-review")}
@@ -73,7 +84,7 @@
 			<BottomSheetAction
 				label="Profile images"
 				description={describeQueue(summary.pendingProfileImageReviews)}
-				disabled={!summary.pendingProfileImageReviews}
+				disabled={isQueueActionDisabled(summary.pendingProfileImageReviews)}
 				actionRequiredCount={summary.pendingProfileImageReviews ?? 0}
 				actionRequiredLabel="profile images requiring review"
 				onSelect={() => openModeratorDestination("/moderation?q=pending#account-review")}

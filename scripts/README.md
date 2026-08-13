@@ -54,6 +54,10 @@ automatically part of the public developer command surface.
   rerun.
 - Every database-writing script must fail loudly on invalid configuration and document
   whether it is idempotent, destructive, or paired with cleanup.
+- Linked production migrations must use `npm run db:push` or
+  `npm run db:push:auto`. Both commands fail closed unless every local migration exactly
+  matches remote `main`; do not bypass this promotion guard with a direct linked CLI
+  push.
 - Local test-database operations must reject non-local Supabase URLs and pass `--local`
   explicitly for resets and pgTAP execution. Never add a linked-project reset to an
   automated test workflow.
@@ -77,6 +81,19 @@ Use `npm run db:test:start` to repair missing baseline fixtures while preserving
 local tester changes. Use `npm run db:test:reset` for the exact deterministic baseline,
 or `npm run db:test:verify` to recreate it and run every database test. The complete
 persona inventory and recovery behavior live in `docs/database-testing.md`.
+
+## Linked Migration Delivery
+
+`scripts/operations/database/push_supabase_db.mjs` owns both maintained production
+migration commands. Dry runs may inspect branch-local pending migrations. A real push
+first refreshes `origin/main` and compares every local migration byte-for-byte with the
+reviewed remote version. Missing or changed migration source stops the command before
+credentials are loaded or Supabase is called.
+
+This guard supports schema-first rollout without production downtime: promote one
+backward-compatible expansion slice, apply and verify it, then release application code
+that uses it. Renames, removals, new restrictive constraints, and changed write
+semantics require a later contract migration after compatible application code is live.
 
 ## Hosted Security And Recovery
 
@@ -155,6 +172,17 @@ unnecessary detail requests, and retry leaks are visible.
 Interpret these reports as coverage and efficiency evidence. They do not establish
 provider-wide trust or alter field-level catalog selection policy.
 
+Run
+`node scripts/audits/food-sources/audit_generic_dataset_contribution.mjs --queries=100`
+to compare active imported generic-food datasets using stored food, nutrient, measure,
+and exact-identifier counts plus a balanced search corpus. Add `--json` for structured
+output. The read-only report distinguishes exact identity evidence from normalized-name
+and search contribution, which must never be used to merge foods.
+
+Product-reference seeding no longer calls the NLM UCUM service. Reviewed UCUM codes and
+bounded conversion factors live in `scripts/lib/reference-data/` and Supabase with the
+official specification, licence, review date, and historical service provenance.
+
 ## Barcode Nutrition Accuracy Audit
 
 Run
@@ -169,6 +197,14 @@ The detailed machine-readable report is written to the gitignored `scripts/outpu
 directory. Source anomalies and cross-source disagreements remain separate from app-math
 or canonical-storage defects. Legally blocked source fields are reported separately and
 are never promoted into the canonical catalog merely to make the audit appear complete.
+
+Run `node scripts/backfills/images/backfill_food_image_placements.mjs --dry-run` to
+preview OCR-based placement repairs for active front images that still use an untouched
+automatic placement. The live command removes `--dry-run`; it is idempotent, requires
+moderator environment credentials, updates only confident matches, and never overwrites
+manual, moderator-approved, or previously accepted smart placements. Untouched legacy
+cover placements that remain ambiguous are upgraded only to the current Full image
+default.
 
 ## Catalog Metadata Backfill
 

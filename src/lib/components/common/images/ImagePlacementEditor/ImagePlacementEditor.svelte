@@ -36,6 +36,8 @@
 		editable = true,
 		showWarningEdge = false,
 		smartPlacementSource = imageUrl,
+		automaticallyPlaceNewImage = false,
+		onPlacementProcessingStateChange,
 		onChange,
 	}: ImagePlacementEditorProps = $props();
 
@@ -48,6 +50,8 @@
 	let suggestionProgress = $state(0);
 	let suggestionMessage = $state("");
 	let suggestionError = $state("");
+	let lastAutomaticallyProcessedSource: Blob | string | null = null;
+	let placementEditRevision = 0;
 	const activeFitMode = $derived<ImageFitMode>(
 		value.placementVersion <= 1 ? "custom" : value.fitMode,
 	);
@@ -64,6 +68,7 @@
 	);
 
 	const updateCustomValue = (patch: Partial<ImagePlacementValue>) => {
+		placementEditRevision += 1;
 		onChange?.(
 			constrainCardImagePlacement({
 				...createCustomImagePlacement(value, previewGeometry.effectiveZoom),
@@ -74,10 +79,12 @@
 	};
 
 	const handlePreviewChange = (nextValue: ImagePlacementValue) => {
+		placementEditRevision += 1;
 		onChange?.(constrainCardImagePlacement(nextValue));
 	};
 
 	const selectFitMode = (fitMode: Exclude<ImageFitMode, "custom">) => {
+		placementEditRevision += 1;
 		if (fitMode === "contain") {
 			onChange?.(createFullImagePlacement(value.rotationDegrees));
 			return;
@@ -96,22 +103,30 @@
 		suggestionError = "";
 	};
 	const restoreDefault = () => {
+		placementEditRevision += 1;
 		clearSuggestionFeedback();
 		onChange?.(createFullImagePlacement());
 	};
 	const rotateClockwise = () => {
+		placementEditRevision += 1;
 		clearSuggestionFeedback();
 		onChange?.(rotateImagePlacement(value));
 	};
-	const suggestPlacement = async () => {
+	const suggestPlacement = async ({ automatic = false } = {}) => {
 		if (!previewGeometry.ready || suggestingPlacement) return;
+		const startingEditRevision = placementEditRevision;
+		const placementSource = smartPlacementSource;
 		suggestingPlacement = true;
+		onPlacementProcessingStateChange?.(true);
 		suggestionProgress = 0;
 		clearSuggestionFeedback();
 
 		try {
 			const { suggestImagePlacement } = await import(
 				"$lib/utils/food/images/smartImagePlacement.client"
+			);
+			const { isConfidentAutomaticImagePlacementSuggestion } = await import(
+				"$lib/utils/food/images/smartImagePlacement"
 			);
 			const suggestion = await suggestImagePlacement({
 				image: smartPlacementSource,
@@ -124,12 +139,27 @@
 			});
 			if (!suggestion) {
 				suggestionError =
-					"We couldn't confidently find the product name in this photo. Nothing changed, and you can still position it by hand.";
+					"We couldn't confidently place this photo, so the full image is still showing. You can adjust it by hand or try again.";
+				return;
+			}
+			if (
+				automatic &&
+				(
+					startingEditRevision !== placementEditRevision ||
+					placementSource !== smartPlacementSource
+				)
+			) return;
+			if (
+				automatic &&
+				!isConfidentAutomaticImagePlacementSuggestion(suggestion)
+			) {
+				suggestionError =
+					"We kept the full image because the product label wasn't clear enough to place automatically. You can adjust it by hand or try again.";
 				return;
 			}
 			onChange?.(constrainCardImagePlacement(suggestion.placement));
 			suggestionMessage =
-				"We found the likely product name and updated the preview. Check it before saving.";
+				"We found the product label and placed it in the card. You can fine-tune it before saving.";
 		} catch (error) {
 			console.error("[image placement] Automatic placement failed", error);
 			suggestionError = getUserFacingErrorMessage(error, {
@@ -142,8 +172,23 @@
 			});
 		} finally {
 			suggestingPlacement = false;
+			onPlacementProcessingStateChange?.(false);
 		}
 	};
+
+	$effect(() => {
+		const placementSource = smartPlacementSource;
+		if (
+			!automaticallyPlaceNewImage ||
+			!editable ||
+			!previewGeometry.ready ||
+			suggestingPlacement ||
+			lastAutomaticallyProcessedSource === placementSource
+		) return;
+
+		lastAutomaticallyProcessedSource = placementSource;
+		void suggestPlacement({ automatic: true });
+	});
 </script>
 
 <section class="image-placement-editor" aria-label={title}>
@@ -186,18 +231,13 @@
 				variant="soft"
 				fullWidth
 				busy={suggestingPlacement}
-				disabled={!previewGeometry.ready || value.rotationDegrees !== 0}
-				onclick={suggestPlacement}
+				disabled={!previewGeometry.ready}
+				onclick={() => suggestPlacement()}
 			>
 				{suggestingPlacement
-					? `Finding product text ${Math.round(suggestionProgress * 100)}%`
-					: "Suggest placement"}
+					? `Placing product label ${Math.round(suggestionProgress * 100)}%`
+					: "Place automatically"}
 			</RoundedActionButton>
-			{#if value.rotationDegrees !== 0}
-				<p class="image-placement-editor__control-note">
-					Automatic placement is available when rotation is set to 0°.
-				</p>
-			{/if}
 			{#if suggestionMessage || suggestionError}
 				{#if suggestionMessage}
 					<StatusMessage tone="success" message={suggestionMessage} />

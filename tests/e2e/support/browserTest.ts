@@ -123,6 +123,11 @@ export const waitForAppReady = async (page: Page) => {
 		"true",
 		{ timeout: 30_000 },
 	);
+	const dailyWelcome = page.locator(".daily-welcome");
+	if (await dailyWelcome.isVisible()) {
+		await dailyWelcome.click();
+		await expect(dailyWelcome).toBeHidden();
+	}
 };
 
 export const waitForVisualStability = async (page: Page) => {

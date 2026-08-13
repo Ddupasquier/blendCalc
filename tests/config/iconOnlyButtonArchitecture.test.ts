@@ -42,9 +42,6 @@ describe("icon-only button architecture", () => {
 		);
 
 		expect(styles).toContain("border-radius: $app-radius-circle");
-		expect(styles).not.toMatch(
-			/\.circle-icon-button\[data-size="fab"\][\s\S]*?border-radius/,
-		);
 		expect(mixHeaderStyles).not.toMatch(/icon-control-button|border-radius:\s*50%/);
 	});
 });

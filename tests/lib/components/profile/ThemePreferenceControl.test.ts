@@ -16,4 +16,21 @@ describe("ThemePreferenceControl", () => {
 			expect(radio).toBeDisabled();
 		}
 	});
+
+	it("can preserve its accessible name without repeating a sheet title visibly", () => {
+		render(ThemePreferenceControl, {
+			props: {
+				value: "system",
+				visuallyHideLegend: true,
+				onSelect: vi.fn(),
+			},
+		});
+
+		expect(
+			screen.getByRole("group", { name: "Color theme" }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText("Color theme", { selector: "legend.sr-only" }),
+		).toBeInTheDocument();
+	});
 });

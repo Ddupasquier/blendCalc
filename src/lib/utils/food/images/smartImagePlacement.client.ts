@@ -5,16 +5,23 @@ import type {
 	SmartImagePlacementSuggestion,
 } from "$lib/utils/food/images/types";
 import { UserFacingError } from "$lib/utils/errors/userFacingErrors";
-import { suggestImagePlacementFromText } from "./smartImagePlacement";
+import { selectBestImagePlacementSuggestion } from "./smartImagePlacement";
 
 const MAX_URL_CACHE_ENTRIES = 12;
+const MAX_OCR_IMAGE_DIMENSION = 1800;
+const QUARTER_TURN_RECOGNITION_ATTEMPTS = [
+	0 as const,
+	90 as const,
+	270 as const,
+	180 as const,
+];
 const blobRecognitionCache = new WeakMap<
 	Blob,
-	Promise<SmartImagePlacementDocument>
+	Promise<SmartImagePlacementDocument[]>
 >();
 const urlRecognitionCache = new Map<
 	string,
-	Promise<SmartImagePlacementDocument>
+	Promise<SmartImagePlacementDocument[]>
 >();
 
 const loadBitmap = async (blob: Blob) => {
@@ -77,9 +84,13 @@ const prepareImage = async (image: Blob | string) => {
 		? await loadRemoteImage(image)
 		: image;
 	const bitmap = await loadBitmap(blob);
+	const scale = Math.min(
+		1,
+		MAX_OCR_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height),
+	);
 	const canvas = document.createElement("canvas");
-	canvas.width = bitmap.width;
-	canvas.height = bitmap.height;
+	canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+	canvas.height = Math.max(1, Math.round(bitmap.height * scale));
 	const context = canvas.getContext("2d");
 	if (!context) {
 		bitmap.dispose();
@@ -87,53 +98,96 @@ const prepareImage = async (image: Blob | string) => {
 			"We couldn't prepare this photo for automatic placement. You can still adjust it by hand.",
 		);
 	}
-	context.drawImage(bitmap.source, 0, 0);
+	context.drawImage(bitmap.source, 0, 0, canvas.width, canvas.height);
 	bitmap.dispose();
+	return canvas;
+};
+
+const rotateImageCanvas = (
+	source: HTMLCanvasElement,
+	rotationDegrees: 0 | 90 | 180 | 270,
+) => {
+	if (rotationDegrees === 0) return source;
+	const swapsDimensions = rotationDegrees === 90 || rotationDegrees === 270;
+	const canvas = document.createElement("canvas");
+	canvas.width = swapsDimensions ? source.height : source.width;
+	canvas.height = swapsDimensions ? source.width : source.height;
+	const context = canvas.getContext("2d");
+	if (!context) {
+		throw new UserFacingError(
+			"We couldn't prepare this photo for automatic placement. You can still adjust it by hand.",
+		);
+	}
+	context.translate(canvas.width / 2, canvas.height / 2);
+	context.rotate((rotationDegrees * Math.PI) / 180);
+	context.drawImage(source, -source.width / 2, -source.height / 2);
 	return canvas;
 };
 
 const recognizeImage = async (
 	image: Blob | string,
 	onProgress?: (progress: SmartImagePlacementProgress) => void,
-): Promise<SmartImagePlacementDocument> => {
+): Promise<SmartImagePlacementDocument[]> => {
 	const canvas = await prepareImage(image);
-	const { createWorker } = await import("tesseract.js");
+	const { createWorker, PSM } = await import("tesseract.js");
 	let worker: Awaited<ReturnType<typeof createWorker>> | null = null;
+	let recognitionAttemptIndex = -1;
 
 	try {
 		worker = await createWorker("eng", 1, {
 			logger: (message) => {
+				const initializationProgress = Math.max(
+					0,
+					Math.min(1, message.progress ?? 0),
+				);
+				const progress = recognitionAttemptIndex < 0
+					? initializationProgress * 0.15
+					: 0.15 +
+						((recognitionAttemptIndex + initializationProgress) /
+							QUARTER_TURN_RECOGNITION_ATTEMPTS.length) *
+							0.85;
 				onProgress?.({
 					status: message.status,
-					progress: Math.max(0, Math.min(1, message.progress ?? 0)),
+					progress: Math.max(0, Math.min(1, progress)),
 				});
 			},
 		});
-		const result = await worker.recognize(
-			canvas,
-			{ rotateAuto: true },
-			{ blocks: true, text: true },
-		);
-		const regions =
-			result.data.blocks?.flatMap((block) =>
-				block.paragraphs.flatMap((paragraph) =>
-					paragraph.lines.map((line) => ({
-						text: line.text,
-						confidence: line.confidence,
-						bounds: {
-							x0: line.bbox.x0,
-							y0: line.bbox.y0,
-							x1: line.bbox.x1,
-							y1: line.bbox.y1,
-						},
-					}))
-				)
-			) ?? [];
-		return {
-			width: canvas.width,
-			height: canvas.height,
-			regions,
-		};
+		await worker.setParameters({
+			tessedit_pageseg_mode: PSM.SPARSE_TEXT,
+			preserve_interword_spaces: "1",
+		});
+		const documents: SmartImagePlacementDocument[] = [];
+		for (const [attemptIndex, rotationDegrees] of QUARTER_TURN_RECOGNITION_ATTEMPTS.entries()) {
+			recognitionAttemptIndex = attemptIndex;
+			const orientedCanvas = rotateImageCanvas(canvas, rotationDegrees);
+			const result = await worker.recognize(
+				orientedCanvas,
+				{ rotateAuto: true },
+				{ blocks: true, text: true },
+			);
+			const regions =
+				result.data.blocks?.flatMap((block) =>
+					block.paragraphs.flatMap((paragraph) =>
+						paragraph.lines.map((line) => ({
+							text: line.text,
+							confidence: line.confidence,
+							bounds: {
+								x0: line.bbox.x0,
+								y0: line.bbox.y0,
+								x1: line.bbox.x1,
+								y1: line.bbox.y1,
+							},
+						}))
+					)
+				) ?? [];
+			documents.push({
+				width: orientedCanvas.width,
+				height: orientedCanvas.height,
+				rotationDegrees,
+				regions,
+			});
+		}
+		return documents;
 	} catch (error) {
 		if (error instanceof UserFacingError) throw error;
 		throw new UserFacingError(
@@ -147,7 +201,7 @@ const recognizeImage = async (
 
 const rememberUrlRecognition = (
 	url: string,
-	promise: Promise<SmartImagePlacementDocument>,
+	promise: Promise<SmartImagePlacementDocument[]>,
 ) => {
 	urlRecognitionCache.set(url, promise);
 	while (urlRecognitionCache.size > MAX_URL_CACHE_ENTRIES) {
@@ -199,10 +253,10 @@ export const suggestImagePlacement = async ({
 	brandName?: string;
 	onProgress?: (progress: SmartImagePlacementProgress) => void;
 }): Promise<SmartImagePlacementSuggestion | null> => {
-	const document = await getRecognition(image, onProgress);
+	const documents = await getRecognition(image, onProgress);
 	onProgress?.({ status: "scoring product label text", progress: 1 });
-	return suggestImagePlacementFromText({
-		document,
+	return selectBestImagePlacementSuggestion({
+		documents,
 		geometry,
 		productName,
 		brandName,

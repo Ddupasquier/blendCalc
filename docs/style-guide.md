@@ -338,7 +338,9 @@ inset without changing the summary target or introducing a second panel shell.
 The compact manual-entry action is one `44px` pencil-only button in the same toolbar row
 as Search, Barcode, and Filters. It uses the shared rounded icon-control shape and keeps
 the full accessible name `Enter a custom ingredient manually`; the larger launcher row
-is not shown at that tier. The compact Fridge/Shopping List segmented control uses
+is not shown at that tier. The toolbar launcher is the only page-level manual-entry
+action; Ingredients does not repeat it as a floating add button. The compact
+Fridge/Shopping List segmented control uses
 shorter visual pills, smaller labels, and tighter count badges. The outer track uses
 the same pill radius as its child tabs. Its outer padding and expanded hit area keep
 each tab's combined touch target at least `44px`. Switching lists slides one shared
@@ -477,6 +479,12 @@ Overlay rules:
 - Modal focus moves inside, remains trapped, and returns to the opening control.
 - Bottom sheets use `BottomSheet`; right-side full-content views use `RightSheet`;
   focused modal questions use the dialog primitives.
+- A bottom sheet has one visible title. Do not repeat that title as a body heading,
+  fieldset legend, or action-group heading. Keep the semantic label available to
+  assistive technology through a visually hidden label when the enclosed control still
+  requires its own accessible name. Nested headings remain visible only when they
+  distinguish multiple meaningful groups. A right sheet renders no title chrome, so
+  its content owns one visible view heading.
 - Do not use a modal when an inline status or ordinary navigation is sufficient.
 - Do not put major navigation flows in an anchored popover. If a genuinely lightweight
   anchored popover is needed, use the common `Popover` primitive and keep focus,

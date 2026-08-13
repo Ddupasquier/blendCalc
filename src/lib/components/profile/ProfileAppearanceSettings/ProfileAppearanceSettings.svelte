@@ -78,6 +78,7 @@
 		<ThemePreferenceControl
 			value={selectedTheme}
 			disabled={isSaving}
+			visuallyHideLegend
 			onSelect={selectTheme}
 		/>
 		<RoundedActionButton type="submit" busy={isSaving}>

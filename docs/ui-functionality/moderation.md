@@ -10,7 +10,9 @@ The elevated-role-only Profile launcher opens one shared bottom sheet containing
 current moderation destination. It may summarize pending queues, but it never replaces
 the authorization, evidence, or mutation rules of the destination route. Queue rows
 remain visible and disabled at zero; standing account and data-health tools remain
-available.
+available. The sheet title is the single visible `Moderator actions` heading and owns
+the single crown; the enclosed action region keeps the same accessible name without a
+second visible label.
 
 ## Account Review
 

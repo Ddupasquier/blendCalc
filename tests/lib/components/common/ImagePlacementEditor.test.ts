@@ -24,7 +24,7 @@ describe("ImagePlacementEditor", () => {
 
 		expect(screen.getByRole("button", { name: "Full image" })).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Fill card" })).toBeDisabled();
-		expect(screen.getByRole("button", { name: "Suggest placement" })).toBeDisabled();
+		expect(screen.getByRole("button", { name: "Place automatically" })).toBeDisabled();
 		expect(screen.queryByRole("button", { name: "Custom" })).not.toBeInTheDocument();
 		expect(screen.getByRole("group", { name: "Interactive card image preview" }))
 			.toBeInTheDocument();

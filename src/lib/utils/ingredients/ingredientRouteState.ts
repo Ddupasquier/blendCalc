@@ -1,6 +1,10 @@
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { FoodItem } from "$lib/utils/food/types";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
+import {
+	getActiveShallowRouteHref,
+	getActiveShallowRouteUrl,
+} from "$lib/utils/navigation/shallowRouteState";
 
 const ACTIONS_PARAM = "actions";
 const LIST_ROUTE_SLUGS = {
@@ -104,12 +108,12 @@ export const getIngredientListTab = (url: URL): IngredientListKey => {
 export const getActiveIngredientRouteHref = (
 	url: URL,
 	shallowRouteHref?: string,
-) => shallowRouteHref ?? `${url.pathname}${url.search}${url.hash}`;
+) => getActiveShallowRouteHref(url, shallowRouteHref);
 
 export const getActiveIngredientRouteUrl = (
 	url: URL,
 	shallowRouteHref?: string,
-) => new URL(getActiveIngredientRouteHref(url, shallowRouteHref), url);
+) => getActiveShallowRouteUrl(url, shallowRouteHref);
 
 export const getActiveIngredientRouteState = (
 	url: URL,

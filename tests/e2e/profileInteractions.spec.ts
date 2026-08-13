@@ -22,6 +22,10 @@ test("appearance choices use native radios and preview the selected theme", asyn
 
 	const appearanceSheet = page.getByRole("dialog", { name: "Light/Dark Mode" });
 	const themeGroup = appearanceSheet.getByRole("group", { name: "Color theme" });
+	await expect(
+		appearanceSheet.getByRole("heading", { name: "Light/Dark Mode" }),
+	).toHaveCount(1);
+	await expect(themeGroup.locator("legend")).toHaveClass(/sr-only/);
 	const deviceTheme = themeGroup.getByRole("radio", { name: /Device/ });
 	const darkTheme = themeGroup.getByRole("radio", { name: /Dark/ });
 	await expect(deviceTheme).toBeChecked();
@@ -249,6 +253,14 @@ test("moderator actions stay hidden from regular accounts and use the shared she
 		name: "Moderator actions",
 	});
 	await expect(moderatorActionsSheet).toBeVisible();
+	await expect(
+		moderatorActionsSheet.getByRole("heading", { name: "Moderator actions" }),
+	).toHaveCount(1);
+	await expect(
+		moderatorActionsSheet.locator(
+			".bottom-sheet__title-accessory .privileged-action-badge",
+		),
+	).toHaveCount(1);
 	for (const actionName of [
 		"Product submissions",
 		"Food warning reports",
@@ -258,14 +270,24 @@ test("moderator actions stay hidden from regular accounts and use the shared she
 	]) {
 		await expect(
 			moderatorActionsSheet.getByRole("button", { name: new RegExp(actionName) }),
-		).toBeVisible();
+		).toBeEnabled();
 	}
+	await expect(
+		moderatorActionsSheet.getByText(
+			"Verify with your authenticator when you open a protected tool. Review counts stay private until then.",
+		),
+	).toBeVisible();
+	await expect(
+		moderatorActionsSheet.getByText(
+			"Verify your identity to check this queue",
+		),
+	).toHaveCount(3);
 
 	await moderatorActionsSheet
-		.getByRole("button", { name: /Account access/ })
+		.getByRole("button", { name: /Product submissions/ })
 		.click();
-	await expect(page).toHaveURL(/\/moderation#account-review$/);
+	await expect(page).toHaveURL(/\/auth\/mfa\/enroll\?next=%2Fmoderation$/);
 	await expect(
-		page.getByText("Rejected public submissions: 0").first(),
+		page.getByRole("heading", { name: "Set up your authenticator." }),
 	).toBeVisible();
 });

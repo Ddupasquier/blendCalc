@@ -30,6 +30,7 @@ const normalizePlacement = (
 ) => {
 	const placement = constrainCardImagePlacement(value);
 	const usesSmartSuggestion =
+		placement.placementMethod === "automatic-ocr" ||
 		placement.placementMethod === "smart-ocr" ||
 		placement.placementMethod === "smart-ocr-adjusted";
 	return {
@@ -78,6 +79,10 @@ export const persistFoodImageAsset = async ({
 		license_url: image.licenseUrl ?? null,
 		attribution_text: image.attributionText ?? null,
 		confidence: image.confidence,
+		...normalizePlacement({
+			...image,
+			cropSource: image.cropSource ?? "auto",
+		}),
 		approved_by: image.approvedBy ?? null,
 		approved_at: image.approvedAt ?? null,
 		status: "active",

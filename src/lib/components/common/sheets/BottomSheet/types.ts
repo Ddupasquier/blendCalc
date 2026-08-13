@@ -9,6 +9,7 @@ export type BottomSheetProps = {
 	aboveNav?: boolean;
 	fill?: boolean;
 	comfortable?: boolean;
+	titleAccessory?: Snippet;
 	children: Snippet;
 	onClose: () => void;
 };

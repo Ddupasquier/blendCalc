@@ -20,6 +20,7 @@ const rotationDegrees = new Set<ImageRotationDegrees>([0, 90, 180, 270]);
 const placementMethods = new Set<ImagePlacementMethod>([
 	"default",
 	"manual",
+	"automatic-ocr",
 	"smart-ocr",
 	"smart-ocr-adjusted",
 ]);
@@ -137,7 +138,7 @@ export const normalizeImagePlacement = (
 		fitMode,
 		placementVersion,
 		placementMethod,
-		...(placementMethod.startsWith("smart-ocr") && suggestionVersion
+		...((placementMethod === "automatic-ocr" || placementMethod.startsWith("smart-ocr")) && suggestionVersion
 			? {
 				suggestionVersion,
 				suggestionConfidence,
@@ -353,6 +354,7 @@ export const createCustomImagePlacement = (
 ): ImagePlacementValue => {
 	const placement = normalizeImagePlacement(value);
 	const followsSmartSuggestion =
+		placement.placementMethod === "automatic-ocr" ||
 		placement.placementMethod === "smart-ocr" ||
 		placement.placementMethod === "smart-ocr-adjusted";
 	return {

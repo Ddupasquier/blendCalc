@@ -5,6 +5,7 @@ export type ImageRotationDegrees = 0 | 90 | 180 | 270;
 export type ImagePlacementMethod =
 	| "default"
 	| "manual"
+	| "automatic-ocr"
 	| "smart-ocr"
 	| "smart-ocr-adjusted";
 
@@ -66,6 +67,7 @@ export type SmartImageTextRegion = {
 export type SmartImagePlacementDocument = {
 	width: number;
 	height: number;
+	rotationDegrees?: ImageRotationDegrees;
 	regions: SmartImageTextRegion[];
 };
 
@@ -73,6 +75,8 @@ export type SmartImagePlacementSuggestion = {
 	placement: ImagePlacementValue;
 	confidence: number;
 	matchedText: string;
+	productTokenOverlap: number;
+	brandTokenOverlap: number;
 };
 
 export type SmartImagePlacementProgress = {

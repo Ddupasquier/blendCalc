@@ -72,6 +72,8 @@
 
 	$effect(() => {
 		imageUrl;
+		naturalWidth = 0;
+		naturalHeight = 0;
 		const image = imageElement;
 		if (!image) return;
 		return observeImageEvents(image, {

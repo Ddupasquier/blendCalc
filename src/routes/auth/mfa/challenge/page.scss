@@ -5,28 +5,9 @@
 	gap: $app-gap-sm;
 }
 
-.mfa-form label {
-	display: grid;
-	gap: $app-gap-xs;
-	color: $app-primary;
-	font-weight: $app-font-weight-bold;
-}
-
-.mfa-form input {
-	width: 100%;
-	height: $app-control-height;
-	padding: 0 $app-gap-md;
-	color: $app-primary;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-radius;
-	font: inherit;
-	font-variant-numeric: tabular-nums;
-	letter-spacing: $app-letter-spacing-label;
-}
-
 .mfa-form__help {
-	color: $app-muted;
+	margin: 0;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 	line-height: $app-line-height-ui;
 }

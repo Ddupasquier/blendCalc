@@ -11,6 +11,7 @@
 		aboveNav = true,
 		fill = false,
 		comfortable = false,
+		titleAccessory,
 		children,
 		onClose,
 	}: BottomSheetProps = $props();
@@ -35,6 +36,11 @@
 			<div class="bottom-sheet__header">
 				{#if title}
 					<h2 id={titleId}>{title}</h2>
+				{/if}
+				{#if titleAccessory}
+					<div class="bottom-sheet__title-accessory">
+						{@render titleAccessory()}
+					</div>
 				{/if}
 			</div>
 		</div>

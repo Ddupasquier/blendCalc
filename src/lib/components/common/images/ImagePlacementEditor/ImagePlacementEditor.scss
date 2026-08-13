@@ -40,12 +40,6 @@
 	gap: $app-gap-md;
 }
 
-.image-placement-editor__control-note {
-	margin: -$app-gap-sm 0 0;
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-xs;
-}
-
 .image-placement-editor__presets {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));

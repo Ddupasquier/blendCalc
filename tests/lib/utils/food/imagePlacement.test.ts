@@ -195,6 +195,24 @@ describe("image placement geometry", () => {
 		expect(zoomed.suggestionConfidence).toBe(82);
 	});
 
+	it("turns an automatic OCR placement into an adjusted smart placement", () => {
+		const adjusted = zoomImagePlacement({
+			cropX: 65,
+			cropY: 45,
+			cropZoom: 2,
+			rotationDegrees: 90,
+			fitMode: "custom",
+			placementVersion: 2,
+			placementMethod: "automatic-ocr",
+			suggestionVersion: "tesseract-product-label-v2",
+			suggestionConfidence: 79,
+		}, 2.25);
+
+		expect(adjusted.placementMethod).toBe("smart-ocr-adjusted");
+		expect(adjusted.suggestionVersion).toBe("tesseract-product-label-v2");
+		expect(adjusted.suggestionConfidence).toBe(79);
+	});
+
 	it("rotates clockwise in supported quarter turns", () => {
 		const firstTurn = rotateImagePlacement(createFullImagePlacement());
 		const secondTurn = rotateImagePlacement(firstTurn);

@@ -1,8 +1,4 @@
 <script lang="ts">
-	import {
-		pushState,
-		replaceState as replaceNavigationState,
-	} from "$app/navigation";
 	import { page } from "$app/state";
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
 	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog/TextInputDialog.svelte";
@@ -53,6 +49,8 @@
 		type MixRouteTarget,
 	} from "$lib/utils/mix/navigation/mixRouteState";
 	import { createScrollAwareHeaderVisibilityController } from "$lib/utils/navigation/scrollAwareHeaderVisibilityController.svelte";
+	import { navigateShallowRoute } from "$lib/utils/navigation/shallowRouteNavigation";
+	import { SHALLOW_ROUTE_PAGE_STATE_KEYS } from "$lib/utils/navigation/shallowRouteState";
 	import { createMixSectionPreferencesController } from "$lib/utils/mix/state/mixSectionPreferencesController.svelte";
 	import { createSavedRecipeController } from "$lib/utils/mix/state/savedRecipeController.svelte";
 	import {
@@ -214,13 +212,12 @@
 	) => {
 		const href = buildMixRouteHref(page.url, target);
 		if (href === activeMixRouteHref) return;
-		const nextPageState = { ...page.state, mixRouteHref: href };
-
-		if (replaceState) {
-			replaceNavigationState(href, nextPageState);
-			return;
-		}
-		pushState(href, nextPageState);
+		navigateShallowRoute({
+			href,
+			pageState: page.state,
+			routeStateKey: SHALLOW_ROUTE_PAGE_STATE_KEYS.mix,
+			replace: replaceState,
+		});
 	};
 
 	const closeMixOverlay = () =>

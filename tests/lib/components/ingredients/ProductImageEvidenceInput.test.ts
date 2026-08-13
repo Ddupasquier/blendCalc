@@ -35,4 +35,28 @@ describe("ProductImageEvidenceInput", () => {
 			expect(screen.getByText("Blue Diamond Almond Milk")).toBeInTheDocument();
 			expect(screen.getByText("Dairy Alternatives")).toBeInTheDocument();
 		});
+
+	it("marks newly selected photos for automatic placement while retaining manual controls", () => {
+		const frontPhoto = new File(["photo"], "package.jpg", {
+			type: "image/jpeg",
+		});
+		render(ProductImageEvidenceInput, {
+			props: {
+				frontPhoto,
+				placement: createFullImagePlacement(),
+				foodName: "Sempio Gochu Jang",
+				brandName: "Sempio",
+				category: "Dips and Salsa",
+				onFrontPhotoChange: vi.fn(),
+				onPlacementChange: vi.fn(),
+			},
+		});
+
+		expect(screen.getByRole("button", { name: "Place automatically" }))
+			.toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Rotate 90° clockwise" }))
+			.toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Restore default" }))
+			.toBeInTheDocument();
+	});
 });

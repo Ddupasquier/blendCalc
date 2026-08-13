@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const scriptsRoot = path.resolve("scripts");
+const ignoredOutputDirectory = `${path.sep}output${path.sep}`;
 const packageMetadata = JSON.parse(await readFile("package.json", "utf8"));
 
 const collectScriptFiles = async (directory) => {
@@ -15,7 +16,8 @@ const collectScriptFiles = async (directory) => {
 	return files.flat().sort();
 };
 
-const scriptFiles = await collectScriptFiles(scriptsRoot);
+const scriptFiles = (await collectScriptFiles(scriptsRoot))
+	.filter((filePath) => !filePath.includes(ignoredOutputDirectory));
 const executableDomainsByOperation = {
 	audits: ["catalog", "food-sources", "security"],
 	backfills: ["catalog", "images"],
@@ -28,6 +30,7 @@ const executableDomainsByOperation = {
 const sharedLibraryDomains = [
 	"barcode",
 	"catalog",
+	"images",
 	"nutrition",
 	"qa",
 	"reference-data",

@@ -155,6 +155,13 @@ test("selected ingredients progressively load and can be filtered", async ({ pag
 	if ((await details.getAttribute("open")) === null) {
 		await details.locator(":scope > summary").click();
 	}
+	await selectedSection.evaluate(async (element) => {
+		await Promise.all(
+			element
+				.getAnimations({ subtree: true })
+				.map((animation) => animation.finished.catch(() => undefined)),
+		);
+	});
 
 	const cards = selectedSection.locator(".mix-ingredient-amount-card");
 	const initialCardCount = await cards.count();
@@ -162,6 +169,7 @@ test("selected ingredients progressively load and can be filtered", async ({ pag
 		name: "Load more selected ingredients",
 	});
 	await expect(loadMore).toBeVisible();
+	await expect(loadMore).toBeEnabled();
 	await loadMore.click();
 	await expect.poll(() => cards.count()).toBeGreaterThan(initialCardCount);
 
