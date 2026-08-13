@@ -572,14 +572,14 @@ values
 		'81000000-0000-4000-8000-000000000023',
 		'08801005523455',
 		'Gochu Jang Hot & Sweet Chili Sauce',
-		'QA Pantry',
+		'Sempio Foods Company',
 		'qa-dips',
 		'local-qa-label:08801005523455',
 		'{
 			"fdcId": 9100003,
 			"description": "Gochu Jang Hot & Sweet Chili Sauce",
 			"nameProvenance": "source",
-			"brandOwner": "QA Pantry",
+			"brandOwner": "Sempio Foods Company",
 			"foodNutrients": [
 				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":100,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
 				{"nutrientId":1004,"nutrientName":"Total lipid (fat)","nutrientNumber":"204","unitName":"G","value":1.67,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
@@ -714,7 +714,94 @@ values
 			"trustStatus": "moderator-reviewed",
 			"sharedProductConfidence": "moderator-reviewed"
 		}'::jsonb
+	),
+	(
+		'81000000-0000-4000-8000-000000000051',
+		'81000000-0000-4000-8000-000000000052',
+		'81000000-0000-4000-8000-000000000053',
+		'05000159461122',
+		'Snickers',
+		'Mars, Incorporated',
+		'qa-sweets',
+		'https://world.openfoodfacts.org/product/5000159461122',
+		'{
+			"fdcId": 9100006,
+			"description": "Snickers",
+			"nameProvenance": "source",
+			"brandOwner": "Mars, Incorporated",
+			"foodNutrients": [
+				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":481,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1004,"nutrientName":"Total lipid (fat)","nutrientNumber":"204","unitName":"G","value":22.5,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1258,"nutrientName":"Fatty acids, total saturated","nutrientNumber":"606","unitName":"G","value":7.9,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1005,"nutrientName":"Carbohydrate, by difference","nutrientNumber":"205","unitName":"G","value":60.5,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1079,"nutrientName":"Fiber, total dietary","nutrientNumber":"291","unitName":"G","value":4.3,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":2000,"nutrientName":"Sugars, total including NLEA","nutrientNumber":"269","unitName":"G","value":51.8,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1235,"nutrientName":"Sugars, added","nutrientNumber":"539","unitName":"G","value":46.96,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1003,"nutrientName":"Protein","nutrientNumber":"203","unitName":"G","value":8.6,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1253,"nutrientName":"Cholesterol","nutrientNumber":"601","unitName":"MG","value":6.7,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1093,"nutrientName":"Sodium, Na","nutrientNumber":"307","unitName":"MG","value":251.5,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"}
+			],
+			"reportedNutrientIds": [1008,1004,1258,1005,1079,2000,1235,1003,1253,1093],
+			"dataType": "Branded",
+			"foodIdentityType": "packaged",
+			"servingSize": 50,
+			"servingSizeUnit": "g",
+			"householdServingFullText": "1 bar (50 g)",
+			"hasSourceServing": true,
+			"foodServings": [{"label":"1 bar (50 g)","gramWeight":50,"isPrimary":true,"measureType":"Package serving","isHouseholdMeasure":true,"sourceMeasureKey":"serving_size","origin":"package-label","gramWeightMethod":"source-reported"}],
+			"gtinUpc": "05000159461122",
+			"barcode": "05000159461122",
+			"ingredients": "Milk chocolate (sugar, cocoa butter, chocolate, skim milk, lactose, milkfat, soy lecithin), peanuts, corn syrup, sugar, palm oil, skim milk, lactose, salt, egg whites, artificial flavor.",
+			"ingredientList": ["Milk chocolate","Sugar","Cocoa butter","Chocolate","Skim milk","Lactose","Milkfat","Soy lecithin","Peanuts","Corn syrup","Palm oil","Salt","Egg whites","Artificial flavor"],
+			"structuredIngredients": [
+				{"id":"milk-chocolate","text":"Milk chocolate","percentEstimate":56.22,"vegan":"no","vegetarian":"yes","ingredients":[{"id":"sugar","text":"Sugar","percentEstimate":32.95,"vegan":"maybe","vegetarian":"yes"},{"id":"cocoa-butter","text":"Cocoa butter","percentEstimate":10.14,"vegan":"yes","vegetarian":"yes"},{"id":"skimmed-milk","text":"Skim milk","percentEstimate":3.12,"vegan":"no","vegetarian":"yes"},{"id":"soya-lecithin","text":"Soy lecithin","percentEstimate":1.21,"vegan":"yes","vegetarian":"yes"}]},
+				{"id":"peanut","text":"Peanuts","percentEstimate":17.3,"vegan":"yes","vegetarian":"yes"},
+				{"id":"corn-syrup","text":"Corn syrup","percentEstimate":8.68,"vegan":"yes","vegetarian":"yes"}
+			],
+			"ingredientAnalysis": {"ingredientTags":["milk-chocolate","peanut","corn-syrup","palm-oil","egg-white"],"analysisTags":["palm-oil-content","non-vegan"],"derivedTraceTags":[],"percentEstimate":100,"percentKnown":0,"percentUnknown":100},
+			"additives": ["E322","E322i"],
+			"allergens": ["eggs","milk","peanuts","soybeans"],
+			"traces": ["nuts"],
+			"precautionaryStatements": [{"type":"may_contain","text":"May contain nuts.","allergens":["nuts"],"languageCode":"en","sourceField":"traces","sourceReference":"5000159461122"}],
+			"dietaryTags": ["kosher","contains-milk","contains-soy"],
+			"labels": ["Kosher","Contains milk","Contains soy"],
+			"packageQuantity": {"label":"50 g","amount":50,"unit":"g"},
+			"sourceMetadata": {"language":"en","marketCountries":["United States","United Kingdom","France"],"revision":1,"schemaVersion":1,"createdAt":"2014-01-08T15:24:39.000Z","modifiedAt":"2026-08-12T12:03:06.000Z","completeness":0.9},
+			"categories": ["Candy chocolate bars","Chocolate candies"],
+			"categoryOptionId": "qa-sweets",
+			"barcodeSource": "open-food-facts",
+			"sourceKey": "open-food-facts",
+			"sourceLabel": "Open Food Facts",
+			"sourceDataType": "packaged-food",
+			"trustStatus": "imported",
+			"sharedProductConfidence": "imported"
+		}'::jsonb
 	);
+
+update private.qa_catalog_product_fixtures
+set
+	catalog_source = 'open-food-facts',
+	catalog_confidence = 'imported',
+	evidence_source = 'open-food-facts',
+	evidence_reference = '5000159461122',
+	evidence_license = 'Open Database License 1.0',
+	evidence_confidence = 'imported',
+	evidence_method = 'exact-barcode',
+	source_category = 'Candy chocolate bars',
+	raw_source_payload = jsonb_build_object(
+		'source', 'Open Food Facts',
+		'code', '5000159461122',
+		'product_name', 'Snickers',
+		'brands', 'Snickers',
+		'ingredients_text', food -> 'ingredients',
+		'additives_tags', food -> 'additives',
+		'allergens_tags', food -> 'allergens',
+		'traces_tags', food -> 'traces',
+		'serving', jsonb_build_object('servingSize', 50, 'servingSizeUnit', 'g', 'householdServingFullText', '1 bar (50 g)'),
+		'foodNutrients', food -> 'foodNutrients',
+		'fixtureSnapshotVersion', 1
+	)
+where barcode = '05000159461122';
 
 update private.qa_catalog_product_fixtures
 set
@@ -1327,6 +1414,10 @@ with selected_fields as (
 			('traces', fixture.food -> 'traces', fixture.food -> 'traces'),
 			('dietaryTags', fixture.food -> 'dietaryTags', fixture.food -> 'dietaryTags'),
 			('labels', fixture.food -> 'labels', fixture.food -> 'labels'),
+			('structuredIngredients', fixture.food -> 'structuredIngredients', fixture.food -> 'structuredIngredients'),
+			('ingredientAnalysis', fixture.food -> 'ingredientAnalysis', fixture.food -> 'ingredientAnalysis'),
+			('additives', fixture.food -> 'additives', fixture.food -> 'additives'),
+			('precautionaryStatements', fixture.food -> 'precautionaryStatements', fixture.food -> 'precautionaryStatements'),
 			('package', fixture.food -> 'packageQuantity', fixture.food -> 'packageQuantity'),
 			('sourceMetadata', fixture.raw_source_payload, fixture.food -> 'sourceMetadata'),
 			('serving', coalesce(fixture.raw_source_payload -> 'serving', fixture.food -> 'foodServings'), fixture.food -> 'foodServings'),
@@ -1551,6 +1642,256 @@ on conflict (source, source_reference, image_role) do update set
 drop table private.qa_catalog_product_fixtures;
 end
 $catalog_fixtures$;
+
+insert into public.generic_food_datasets (
+	key,
+	source_key,
+	display_name,
+	version,
+	region_code,
+	source_url,
+	download_url,
+	license_name,
+	license_url,
+	attribution_text,
+	license_review_status,
+	import_enabled,
+	active,
+	imported_at,
+	food_count,
+	nutrient_value_count,
+	measure_count,
+	metadata
+)
+values (
+	'qa-usda-sr-legacy',
+	'usda',
+	'USDA FoodData Central SR Legacy',
+	'2018',
+	'US',
+	'https://fdc.nal.usda.gov/',
+	'https://fdc.nal.usda.gov/download-datasets/',
+	'CC0 1.0 / U.S. public domain',
+	'https://creativecommons.org/publicdomain/zero/1.0/',
+	'Source: USDA FoodData Central.',
+	'approved',
+	true,
+	true,
+	'2026-08-13T00:00:00Z',
+	2,
+	52,
+	6,
+	'{"fixture":true,"fixturePurpose":"authoritative generic-food nutrition detail QA"}'::jsonb
+)
+on conflict (key) do update set
+	import_enabled = excluded.import_enabled,
+	active = excluded.active,
+	food_count = excluded.food_count,
+	nutrient_value_count = excluded.nutrient_value_count,
+	measure_count = excluded.measure_count,
+	metadata = excluded.metadata;
+
+insert into public.generic_food_records (
+	dataset_key,
+	source_food_key,
+	description,
+	alternate_description,
+	food_group_key,
+	food_group_name,
+	source_food_code,
+	external_reference,
+	scientific_name,
+	preparation,
+	search_text,
+	source_updated_at,
+	metadata
+)
+values
+	(
+		'qa-usda-sr-legacy',
+		'171711',
+		'Blueberries, raw',
+		'Blueberries',
+		'0900',
+		'Fruits and Fruit Juices',
+		'09050',
+		'https://fdc.nal.usda.gov/food-details/171711/nutrients',
+		'Vaccinium spp.',
+		'Raw',
+		'blueberries raw vaccinium fruit 09050 171711',
+		'2019-04-01',
+		'{"fixture":true,"sourceDataType":"SR Legacy"}'::jsonb
+	),
+	(
+		'qa-usda-sr-legacy',
+		'174210',
+		'Crustaceans, shrimp, mixed species, raw (may contain additives to retain moisture)',
+		'Shrimp, mixed species',
+		'1500',
+		'Finfish and Shellfish Products',
+		'15149',
+		'https://fdc.nal.usda.gov/food-details/174210/nutrients',
+		'Penaeidae and Pandalidae',
+		'Raw',
+		'crustaceans shrimp mixed species raw additives retain moisture penaeidae pandalidae shellfish 15149 174210',
+		'2019-04-01',
+		'{"fixture":true,"sourceDataType":"SR Legacy"}'::jsonb
+	)
+on conflict (dataset_key, source_food_key) do update set
+	description = excluded.description,
+	alternate_description = excluded.alternate_description,
+	food_group_key = excluded.food_group_key,
+	food_group_name = excluded.food_group_name,
+	source_food_code = excluded.source_food_code,
+	external_reference = excluded.external_reference,
+	scientific_name = excluded.scientific_name,
+	preparation = excluded.preparation,
+	search_text = excluded.search_text,
+	source_updated_at = excluded.source_updated_at,
+	metadata = excluded.metadata;
+
+with qa_usda_generic_nutrients (
+	source_food_key,
+	nutrient_id,
+	nutrient_number,
+	nutrient_name,
+	unit_name,
+	amount_per_100g
+) as (
+	values
+		('171711', 1008, '208', 'Energy', 'KCAL', 57),
+		('171711', 1003, '203', 'Protein', 'G', 0.74),
+		('171711', 1004, '204', 'Total lipid (fat)', 'G', 0.33),
+		('171711', 1005, '205', 'Carbohydrate, by difference', 'G', 14.49),
+		('171711', 1079, '291', 'Fiber, total dietary', 'G', 2.4),
+		('171711', 2000, '269', 'Total Sugars', 'G', 9.96),
+		('171711', 1087, '301', 'Calcium, Ca', 'MG', 6),
+		('171711', 1089, '303', 'Iron, Fe', 'MG', 0.28),
+		('171711', 1090, '304', 'Magnesium, Mg', 'MG', 6),
+		('171711', 1091, '305', 'Phosphorus, P', 'MG', 12),
+		('171711', 1092, '306', 'Potassium, K', 'MG', 77),
+		('171711', 1093, '307', 'Sodium, Na', 'MG', 1),
+		('171711', 1095, '309', 'Zinc, Zn', 'MG', 0.16),
+		('171711', 1098, '312', 'Copper, Cu', 'MG', 0.057),
+		('171711', 1101, '315', 'Manganese, Mn', 'MG', 0.336),
+		('171711', 1103, '317', 'Selenium, Se', 'UG', 0.1),
+		('171711', 1162, '401', 'Vitamin C, total ascorbic acid', 'MG', 9.7),
+		('171711', 1165, '404', 'Thiamin', 'MG', 0.037),
+		('171711', 1166, '405', 'Riboflavin', 'MG', 0.041),
+		('171711', 1167, '406', 'Niacin', 'MG', 0.418),
+		('171711', 1175, '415', 'Vitamin B-6', 'MG', 0.052),
+		('171711', 1177, '417', 'Folate, total', 'UG', 6),
+		('171711', 1106, '320', 'Vitamin A, RAE', 'UG', 3),
+		('171711', 1109, '323', 'Vitamin E (alpha-tocopherol)', 'MG', 0.57),
+		('171711', 1185, '430', 'Vitamin K (phylloquinone)', 'UG', 19.3),
+		('171711', 1258, '606', 'Fatty acids, total saturated', 'G', 0.028),
+		('174210', 1008, '208', 'Energy', 'KCAL', 71),
+		('174210', 1003, '203', 'Protein', 'G', 13.61),
+		('174210', 1004, '204', 'Total lipid (fat)', 'G', 1.01),
+		('174210', 1005, '205', 'Carbohydrate, by difference', 'G', 0.91),
+		('174210', 1079, '291', 'Fiber, total dietary', 'G', 0),
+		('174210', 2000, '269', 'Total Sugars', 'G', 0),
+		('174210', 1087, '301', 'Calcium, Ca', 'MG', 54),
+		('174210', 1089, '303', 'Iron, Fe', 'MG', 0.21),
+		('174210', 1090, '304', 'Magnesium, Mg', 'MG', 22),
+		('174210', 1091, '305', 'Phosphorus, P', 'MG', 244),
+		('174210', 1092, '306', 'Potassium, K', 'MG', 113),
+		('174210', 1093, '307', 'Sodium, Na', 'MG', 566),
+		('174210', 1095, '309', 'Zinc, Zn', 'MG', 0.97),
+		('174210', 1098, '312', 'Copper, Cu', 'MG', 0.182),
+		('174210', 1103, '317', 'Selenium, Se', 'UG', 29.6),
+		('174210', 1165, '404', 'Thiamin', 'MG', 0.02),
+		('174210', 1167, '406', 'Niacin', 'MG', 1.778),
+		('174210', 1175, '415', 'Vitamin B-6', 'MG', 0.161),
+		('174210', 1177, '417', 'Folate, total', 'UG', 19),
+		('174210', 1178, '418', 'Vitamin B-12', 'UG', 1.11),
+		('174210', 1106, '320', 'Vitamin A, RAE', 'UG', 54),
+		('174210', 1109, '323', 'Vitamin E (alpha-tocopherol)', 'MG', 1.32),
+		('174210', 1110, '324', 'Vitamin D (D2 + D3), International Units', 'IU', 2),
+		('174210', 1114, '328', 'Vitamin D (D2 + D3)', 'UG', 0.1),
+		('174210', 1258, '606', 'Fatty acids, total saturated', 'G', 0.261),
+		('174210', 1253, '601', 'Cholesterol', 'MG', 126)
+)
+insert into public.generic_food_nutrients (
+	dataset_key,
+	source_food_key,
+	source_nutrient_key,
+	nutrient_id,
+	source_nutrient_name,
+	unit_name,
+	amount_per_100g,
+	nutrient_source_code,
+	source_updated_at,
+	mapping_status,
+	value_status,
+	metadata
+)
+select
+	'qa-usda-sr-legacy',
+	source_food_key,
+	nutrient_id::text,
+	nutrient_id,
+	nutrient_name,
+	unit_name,
+	amount_per_100g,
+	nutrient_number,
+	'2019-04-01'::date,
+	'canonical',
+	'measured',
+	jsonb_build_object('fixture', true, 'sourceDataType', 'SR Legacy')
+from qa_usda_generic_nutrients
+on conflict (dataset_key, source_food_key, source_nutrient_key) do update set
+	nutrient_id = excluded.nutrient_id,
+	source_nutrient_name = excluded.source_nutrient_name,
+	unit_name = excluded.unit_name,
+	amount_per_100g = excluded.amount_per_100g,
+	nutrient_source_code = excluded.nutrient_source_code,
+	source_updated_at = excluded.source_updated_at,
+	mapping_status = excluded.mapping_status,
+	value_status = excluded.value_status,
+	metadata = excluded.metadata;
+
+insert into public.generic_food_measures (
+	dataset_key,
+	source_food_key,
+	source_measure_key,
+	measure_type,
+	description,
+	gram_weight,
+	is_household_measure,
+	source_updated_at,
+	metadata
+)
+values
+	('qa-usda-sr-legacy', '171711', 'fdc-portion-89238', 'USDA food portion', '1 cup', 148, true, '2019-04-01', '{"fixture":true}'::jsonb),
+	('qa-usda-sr-legacy', '171711', 'fdc-portion-89239', 'USDA food portion', '50 berries', 68, true, '2019-04-01', '{"fixture":true}'::jsonb),
+	('qa-usda-sr-legacy', '174210', 'fdc-portion-93942', 'USDA food portion', '4 large', 28, true, '2019-04-01', '{"fixture":true}'::jsonb),
+	('qa-usda-sr-legacy', '174210', 'fdc-portion-93939', 'USDA food portion', '1 medium', 6, true, '2019-04-01', '{"fixture":true}'::jsonb),
+	('qa-usda-sr-legacy', '174210', 'fdc-portion-93940', 'USDA food portion', '1 small', 5, true, '2019-04-01', '{"fixture":true}'::jsonb),
+	('qa-usda-sr-legacy', '174210', 'fdc-portion-93941', 'USDA food portion', '3 oz', 85, true, '2019-04-01', '{"fixture":true}'::jsonb)
+on conflict (dataset_key, source_food_key, source_measure_key, measure_type) do update set
+	description = excluded.description,
+	gram_weight = excluded.gram_weight,
+	is_household_measure = excluded.is_household_measure,
+	source_updated_at = excluded.source_updated_at,
+	metadata = excluded.metadata;
+
+insert into public.generic_food_source_identifiers (
+	dataset_key,
+	source_food_key,
+	source_key,
+	identifier_type,
+	identifier_value,
+	source_field,
+	verification_method,
+	metadata
+)
+values
+	('qa-usda-sr-legacy', '171711', 'usda', 'fdc-id', '171711', 'fdcId', 'exact-identifier', '{"fixture":true}'::jsonb),
+	('qa-usda-sr-legacy', '171711', 'usda', 'ndb-number', '09050', 'ndbNumber', 'exact-identifier', '{"fixture":true}'::jsonb),
+	('qa-usda-sr-legacy', '174210', 'usda', 'fdc-id', '174210', 'fdcId', 'exact-identifier', '{"fixture":true}'::jsonb),
+	('qa-usda-sr-legacy', '174210', 'usda', 'ndb-number', '15149', 'ndbNumber', 'exact-identifier', '{"fixture":true}'::jsonb)
+on conflict do nothing;
 
 insert into public.food_preference_option_catalog (
 	category,

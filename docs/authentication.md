@@ -162,7 +162,8 @@ npm run build
 
 Manually verify both localhost and production:
 
-1. Google sign-in returns to the same origin where it started.
+1. Every Google sign-in opens Google's account chooser and returns to the same origin
+   where it started instead of silently reusing whichever Google account is active.
 2. Email sign-in, sign-out, confirmation, and password recovery work.
 3. A second user cannot read or change the first user's rows.
 4. Opening two tabs and clicking Google sign-in quickly does not create two submissions;

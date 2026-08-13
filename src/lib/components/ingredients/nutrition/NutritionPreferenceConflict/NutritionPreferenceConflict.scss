@@ -23,6 +23,14 @@
 	overflow-wrap: anywhere;
 }
 
+.preference-conflict__package-reminder {
+	margin: $app-gap-sm 0 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-ui;
+}
+
 .preference-conflict__detail-list {
 	gap: 0;
 }
