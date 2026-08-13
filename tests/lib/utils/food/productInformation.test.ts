@@ -76,4 +76,25 @@ describe("product information", () => {
 			value: "Not confirmed",
 		});
 	});
+
+	it("labels estimated and rough densities instead of presenting them as exact", () => {
+		for (const [confidence, expectedLabel] of [
+			["estimated", "Estimated"],
+			["rough", "Rough"],
+		] as const) {
+			const information = getProductInformation({
+				fdcId: 123,
+				description: "Density example",
+				foodNutrients: [],
+				customDensityGramsPerMilliliter: 0.92,
+				customDensityConfidence: confidence,
+				customDensityVariancePercent: 5,
+			});
+
+			expect(information.servingRows).toContainEqual({
+				label: "Weight-to-volume density",
+				value: `0.92 g/mL ± 5% · ${expectedLabel}`,
+			});
+		}
+	});
 });

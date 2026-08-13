@@ -21,13 +21,30 @@ describe("ingredient search relevance", () => {
 	});
 
 	it("uses the same ordering for unfinished words", () => {
-		const ranked = rankIngredientSearchCandidates([
+		const candidates = [
 			food(3, "Babyfood, dinner, macaroni and tomato"),
-			food(2, "CAMPBELL'S, Tomato Soup, condensed"),
+			food(4, "Green Tomato Pantry Preserve"),
+			food(2, "Diced Tomatoes, Tomatoes"),
 			food(1, "Tomato powder"),
-		], "tomat");
+		];
+		const unfinishedWordOrder = rankIngredientSearchCandidates(
+			candidates,
+			"tomat",
+		);
+		const completedWordOrder = rankIngredientSearchCandidates(
+			candidates,
+			"tomato",
+		);
 
-		expect(ranked.map(({ fdcId }) => fdcId)).toEqual([1, 2, 3]);
+		expect(unfinishedWordOrder.map(({ fdcId }) => fdcId)).toEqual([
+			1,
+			2,
+			4,
+			3,
+		]);
+		expect(completedWordOrder.map(({ fdcId }) => fdcId)).toEqual(
+			unfinishedWordOrder.map(({ fdcId }) => fdcId),
+		);
 	});
 
 	it("prioritizes multi-word matches concentrated near the name start", () => {

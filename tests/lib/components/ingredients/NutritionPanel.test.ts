@@ -53,6 +53,9 @@ describe("NutritionPanel", () => {
 				/the label lists peanut as an allergen\./i,
 			),
 		);
+		expect(statusMessage).toContainElement(
+			screen.getByText(/current package label is the final authority/i),
+		);
 		const reviewTitle = screen.getByText("Review these warnings");
 		const reviewDetails = reviewTitle.closest("details");
 		const disclosureGroup = reviewTitle.closest(".nutrition-panel__disclosures");

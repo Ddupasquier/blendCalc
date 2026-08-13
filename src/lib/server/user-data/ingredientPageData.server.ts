@@ -62,7 +62,7 @@ const readIngredientRouteFoodByApplicationId = async (
 	options: LoadIngredientPageDataOptions,
 ) => {
 	const applicationFoodId = options.routeFoodId;
-	if (!Number.isSafeInteger(applicationFoodId) || Number(applicationFoodId) <= 0) {
+	if (!Number.isSafeInteger(applicationFoodId) || Number(applicationFoodId) === 0) {
 		return null;
 	}
 

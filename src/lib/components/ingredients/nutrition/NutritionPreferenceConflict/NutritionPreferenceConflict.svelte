@@ -7,6 +7,9 @@
 		type FoodCompatibilityFeedbackResponse,
 	} from "$lib/utils/food/quality/compatibilityFeedback";
 	import {
+		CURRENT_PACKAGE_LABEL_REMINDER,
+	} from "$lib/utils/food/quality/foodCompatibilityEvaluationMessages";
+	import {
 		FOOD_PREFERENCE_WARNING_TITLE,
 		getFoodPreferenceWarningEvidenceMessage,
 		getFoodPreferenceWarningEvidenceReviewMessage,
@@ -74,6 +77,9 @@
 						<li>{getFoodPreferenceWarningMessage(warning)}</li>
 					{/each}
 				</ul>
+				<p class="preference-conflict__package-reminder">
+					{CURRENT_PACKAGE_LABEL_REMINDER}
+				</p>
 			</StatusMessage>
 		{/if}
 

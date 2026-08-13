@@ -59,10 +59,12 @@ export type IngredientRoutePatch = Partial<{
 	showListActions: boolean;
 }>;
 
-const parseFoodId = (value: string | null) => {
+export const parseIngredientApplicationFoodId = (
+	value: string | null | undefined,
+) => {
 	if (!value) return null;
 	const foodId = Number(value);
-	return Number.isSafeInteger(foodId) ? foodId : null;
+	return Number.isSafeInteger(foodId) && foodId !== 0 ? foodId : null;
 };
 
 const getDecodedPathSegments = (pathname: string) =>
@@ -167,14 +169,14 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 
 	if (
 		routeSlug === INGREDIENT_ROUTE_VIEWS.nutrition &&
-		parseFoodId(secondSegment ?? null) !== null &&
+		parseIngredientApplicationFoodId(secondSegment) !== null &&
 		remainingSegments.length === 0
 	) {
 		return {
 			view: INGREDIENT_ROUTE_VIEWS.nutrition,
 			sheet: null,
 			modal: null,
-			foodId: parseFoodId(secondSegment ?? null),
+			foodId: parseIngredientApplicationFoodId(secondSegment),
 			listKey: pathContext.listKey,
 			showListActions: url.searchParams.get(ACTIONS_PARAM) !== "hide",
 		};
@@ -182,7 +184,7 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 
 	if (
 		routeSlug === INGREDIENT_ROUTE_VIEWS.nutrition &&
-		parseFoodId(secondSegment ?? null) !== null &&
+		parseIngredientApplicationFoodId(secondSegment) !== null &&
 		remainingSegments.length === 1 &&
 		remainingSegments[0] === INGREDIENT_ROUTE_SHEETS.catalogCorrection
 	) {
@@ -190,7 +192,7 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 			view: INGREDIENT_ROUTE_VIEWS.nutrition,
 			sheet: INGREDIENT_ROUTE_SHEETS.catalogCorrection,
 			modal: null,
-			foodId: parseFoodId(secondSegment ?? null),
+			foodId: parseIngredientApplicationFoodId(secondSegment),
 			listKey: pathContext.listKey,
 			showListActions: url.searchParams.get(ACTIONS_PARAM) !== "hide",
 		};
@@ -245,14 +247,14 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 
 	if (
 		routeSlug === "actions" &&
-		parseFoodId(secondSegment ?? null) !== null &&
+		parseIngredientApplicationFoodId(secondSegment) !== null &&
 		remainingSegments.length === 0
 	) {
 		return {
 			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.ingredientActions,
 			modal: null,
-			foodId: parseFoodId(secondSegment ?? null),
+			foodId: parseIngredientApplicationFoodId(secondSegment),
 			listKey: pathContext.listKey,
 			showListActions: true,
 		};
@@ -260,14 +262,14 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 
 	if (
 		routeSlug === "rename" &&
-		parseFoodId(secondSegment ?? null) !== null &&
+		parseIngredientApplicationFoodId(secondSegment) !== null &&
 		remainingSegments.length === 0
 	) {
 		return {
 			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.renameIngredient,
 			modal: null,
-			foodId: parseFoodId(secondSegment ?? null),
+			foodId: parseIngredientApplicationFoodId(secondSegment),
 			listKey: pathContext.listKey,
 			showListActions: true,
 		};
@@ -275,14 +277,14 @@ const getPathRouteState = (url: URL): IngredientRouteState | null => {
 
 	if (
 		routeSlug === INGREDIENT_ROUTE_SHEETS.imagePlacement &&
-		parseFoodId(secondSegment ?? null) !== null &&
+		parseIngredientApplicationFoodId(secondSegment) !== null &&
 		remainingSegments.length === 0
 	) {
 		return {
 			view: null,
 			sheet: INGREDIENT_ROUTE_SHEETS.imagePlacement,
 			modal: null,
-			foodId: parseFoodId(secondSegment ?? null),
+			foodId: parseIngredientApplicationFoodId(secondSegment),
 			listKey: pathContext.listKey,
 			showListActions: true,
 		};

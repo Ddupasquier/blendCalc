@@ -10,6 +10,9 @@ export type FoodCompatibilityEvaluationMessage = {
 	message: string;
 };
 
+export const CURRENT_PACKAGE_LABEL_REMINDER =
+	"Ingredients and labels can change. The current package label is the final authority—check it before eating.";
+
 const messages: Record<
 	FoodCompatibilityEvaluationStatus,
 	FoodCompatibilityEvaluationMessage
@@ -23,8 +26,7 @@ const messages: Record<
 	checked: {
 		tone: "success",
 		title: "No conflict found in available information",
-		message:
-			"Ingredients and labels can change. When this food is packaged, the current package label is always the final authority.",
+		message: CURRENT_PACKAGE_LABEL_REMINDER,
 	},
 	incomplete: {
 		tone: "warning",
