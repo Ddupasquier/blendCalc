@@ -5,7 +5,11 @@ export type TutorialStep = {
 	description: string;
 	points: string[];
 	icon: TutorialStepIconName;
-	route: "/ingredients/fridge" | "/mix" | "/saved" | "/profile";
+	route:
+		| "/ingredients/fridge"
+		| "/mix"
+		| "/saved"
+		| "/profile/food-preferences";
 	target: string;
 	targetLabel: string;
 };

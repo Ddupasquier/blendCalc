@@ -99,6 +99,10 @@ describe("animatedDetails", () => {
 			{ height: "240px", overflow: "hidden" },
 			{ height: "48px", overflow: "hidden" },
 		]);
+		details.dispatchEvent(new Event("toggle"));
+		expect(details).toHaveAttribute("data-expanded", "false");
+		expect(summary).toHaveAttribute("aria-expanded", "false");
+		expect(animations).toHaveLength(2);
 		animations[1].onfinish?.();
 		expect(details.open).toBe(false);
 

@@ -1,4 +1,4 @@
-import { writeTutorialChoice } from "$lib/utils/tutorial/tutorial";
+import { writeTutorialCompletion } from "$lib/utils/tutorial/tutorial";
 import { appIssueJson } from "$lib/server/errors/appError.server";
 import { readLimitedJson } from "$lib/server/security/requestBody.server";
 import { json } from "@sveltejs/kit";
@@ -18,15 +18,11 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		typeof body === "object" && body !== null && "choice" in body
 			? (body as { choice?: unknown }).choice
 			: null;
-	if (choice !== "complete" && choice !== "later") {
+	if (choice !== "complete") {
 		return appIssueJson(400, "TUTORIAL_CHOICE_INVALID");
 	}
 
-	const saved = await writeTutorialChoice(
-		locals.supabase,
-		user.id,
-		choice,
-	);
+	const saved = await writeTutorialCompletion(locals.supabase, user.id);
 	return saved
 		? json({ saved: true })
 		: appIssueJson(500, "TUTORIAL_SAVE_FAILED");
