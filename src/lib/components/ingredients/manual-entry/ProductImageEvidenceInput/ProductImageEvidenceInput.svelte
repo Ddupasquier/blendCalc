@@ -20,6 +20,7 @@
 		description = "",
 		onFrontPhotoChange,
 		onPlacementChange,
+		onPlacementProcessingStateChange,
 	}: ProductImageEvidenceInputProps = $props();
 
 	let objectUrl = $state("");
@@ -76,6 +77,8 @@
 				: "Drag the image in the card preview or use the controls below."}
 			editable={Boolean(objectUrl)}
 			smartPlacementSource={frontPhoto ?? previewUrl}
+			automaticallyPlaceNewImage={Boolean(frontPhoto)}
+			{onPlacementProcessingStateChange}
 			value={placement}
 			onChange={onPlacementChange}
 		/>

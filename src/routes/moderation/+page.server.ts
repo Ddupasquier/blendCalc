@@ -509,6 +509,7 @@ export const actions: Actions = {
 			return fail(400, { productReviewError: "Choose a valid image placement method." });
 		}
 		const usesSmartSuggestion =
+			placementMethodValue === "automatic-ocr" ||
 			placementMethodValue === "smart-ocr" ||
 			placementMethodValue === "smart-ocr-adjusted";
 		const suggestionVersion = String(

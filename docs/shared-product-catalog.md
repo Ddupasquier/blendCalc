@@ -376,6 +376,10 @@ Provider requests and caches are server-only enrichment inputs. The catalog chec
 canonical data first, requests only missing permitted fields, coalesces identical
 requests, and may use an explicitly stale cache only during a provider outage.
 Provider credentials and raw licensed caches never enter public catalog responses.
+USDA exact-barcode lookup retains one bounded detail read because the detail record adds
+source category and availability fields omitted by search results. Shared caching and
+request coalescing prevent repeated outbound detail calls. Open Food Facts remains a
+missing-field supplement rather than a whole-product winner.
 
 The full read/write/cache boundary is maintained in
 [`data-architecture.md`](data-architecture.md), provider behavior in the
@@ -417,6 +421,9 @@ and calls per lookup as operational evidence—not blanket trust.
 
 The maintained report and benchmark commands, options, and interpretation notes belong
 in [`../scripts/README.md`](../scripts/README.md#source-quality-audits).
+The generic-dataset contribution audit uses exact identifiers for identity evidence and
+a balanced search corpus only to measure CNF/CoFID usefulness. It cannot create an
+identity link or source-priority decision from similar names.
 
 ## Catalog Security Boundary
 
@@ -442,9 +449,11 @@ approval.
   revision. Existing-product updates also preserve the superseded revision and
   structured before/after fields.
 - **Approve image:** if the submission has a front-package image, the moderator can
-  adjust the card crop. Approval copies that image into public product image storage and
-  records it in `food_image_assets`, including the accepted fit, crop, zoom, and
-  clockwise quarter-turn rotation.
+  review the automatic card placement and adjust it when needed. Approval copies that
+  image into public product image storage and records it in `food_image_assets`,
+  including the accepted fit, crop, zoom, clockwise quarter-turn rotation, placement
+  method, algorithm version, and confidence. Automatic placement never bypasses image
+  approval.
 - **Reject:** retains the private user ingredient, records the review note, and does not
   publish a shared product.
 - **Submission pause:** moderator-rejected submissions are counted cumulatively in

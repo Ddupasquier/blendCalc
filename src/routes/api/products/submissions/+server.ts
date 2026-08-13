@@ -118,6 +118,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 				? parsedCrop.placementMethod
 				: "manual";
 			const usesSmartSuggestion =
+				placementMethod === "automatic-ocr" ||
 				placementMethod === "smart-ocr" ||
 				placementMethod === "smart-ocr-adjusted";
 			const suggestionVersion =
