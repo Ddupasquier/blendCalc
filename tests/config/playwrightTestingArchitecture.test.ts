@@ -133,6 +133,13 @@ describe("Playwright browser-testing architecture", () => {
 		expect(verificationWorkflow).toContain("npm test");
 		expect(verificationWorkflow).toContain("npm run build");
 		expect(verificationWorkflow).toContain("name: Browser Matrix");
+		for (const workflow of [
+			verificationWorkflow,
+			databaseWorkflow,
+			hostedAuthWorkflow,
+		]) {
+			expect(workflow).not.toMatch(/actions\/(?:checkout|setup-node)@v[1-4]\b/);
+		}
 		expect(databaseWorkflow).toContain("npm run db:test:verify");
 		expect(databaseWorkflow).toContain("name: Database Verification");
 		expect(databaseWorkflow).not.toMatch(/pull_request:\s*\n\s+paths:/);
