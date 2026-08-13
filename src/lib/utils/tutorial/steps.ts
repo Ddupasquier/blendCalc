@@ -59,7 +59,8 @@ export const tutorialSteps: TutorialStep[] = [
 		],
 		icon: "ingredients",
 		route: "/mix",
-		target: "[data-tutorial-target='mix-ingredient-options'] .pill",
+		target:
+			"[data-tutorial-target='mix-ingredient-options'] .mix-ingredient-option:first-child",
 		targetLabel: "one Mix ingredient option",
 	},
 	{
@@ -106,9 +107,9 @@ export const tutorialSteps: TutorialStep[] = [
 			"Warnings depend on available data; they are helpful prompts, not medical guarantees.",
 		],
 		icon: "goals",
-		route: "/profile",
+		route: "/profile/food-preferences",
 		target:
-			"[data-tutorial-target='food-preferences'] .preference-editor-card:first-child",
+			"[data-tutorial-target='food-preferences'] .preference-reviewed-options:first-of-type label:first-child",
 		targetLabel: "one food-safety preference editor",
 	},
 ];

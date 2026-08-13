@@ -81,8 +81,9 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 - `Previous` and `Next` navigate and focus the correct route target automatically.
 - While open, trap keyboard focus in the tutorial and prevent interaction or scrolling
   in the underlying application.
-- Support `Remind me in 7 days`, `Don't show again`, and completion. Persist the choice
-  for the current tutorial version.
+- Support `Don't show again` and completion. Either choice stops automatic prompts for
+  the current tutorial version; users can replay the tour from Profile whenever needed.
+- Do not reopen legacy reminder rows or offer a scheduled reminder action.
 - Let Profile reopen the tutorial without changing the stored onboarding choice.
 - Keep actions visible while long tutorial copy scrolls internally.
 - Preserve the tour across its own route changes. If a target is unavailable, show a
