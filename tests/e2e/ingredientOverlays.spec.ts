@@ -512,7 +512,15 @@ test("search scanner and saved-list sort return to the active search context", a
 			name: "Sort ingredients",
 		});
 
-		await searchInput.fill(query.slice(0, 4));
+		const partialQuery = query.slice(0, 4);
+		const initialSearchResponse = page.waitForResponse((response) => {
+			const responseUrl = new URL(response.url());
+			return responseUrl.pathname === "/api/foods/search"
+				&& responseUrl.searchParams.get("q") === partialQuery
+				&& response.ok();
+		});
+		await searchInput.fill(partialQuery);
+		await initialSearchResponse;
 		await scannerButton.click();
 		await expect(page).toHaveURL(
 			new RegExp(`${listRoute}/search/barcode-scanner$`),
@@ -524,7 +532,7 @@ test("search scanner and saved-list sort return to the active search context", a
 			.click();
 		await expect(page).toHaveURL(new RegExp(`${listRoute}/search$`));
 		await expect(searchDialog).toBeVisible();
-		await expect(searchInput).toHaveValue(query.slice(0, 4));
+		await expect(searchInput).toHaveValue(partialQuery);
 		await expect(scannerButton).toBeFocused();
 
 		await sortButton.click();
@@ -534,16 +542,25 @@ test("search scanner and saved-list sort return to the active search context", a
 		await sortDialog.getByRole("button", { name: "Close sheet" }).click();
 		await expect(page).toHaveURL(new RegExp(`${listRoute}/search$`));
 		await expect(searchDialog).toBeVisible();
-		await expect(searchInput).toHaveValue(query.slice(0, 4));
+		await expect(searchInput).toHaveValue(partialQuery);
 		await expect(sortButton).toBeFocused();
 
 		await sortButton.click();
 		await sortDialog.getByRole("button", { name: "A → Z" }).click();
 		await sortDialog.getByRole("button", { name: "Apply" }).click();
 		await expect(page).toHaveURL(new RegExp(`${listRoute}/search$`));
-		await expect(searchInput).toHaveValue(query.slice(0, 4));
+		await expect(searchInput).toHaveValue(partialQuery);
 
+		const completeSearchResponse = query === partialQuery
+			? Promise.resolve()
+			: page.waitForResponse((response) => {
+					const responseUrl = new URL(response.url());
+					return responseUrl.pathname === "/api/foods/search"
+						&& responseUrl.searchParams.get("q") === query
+						&& response.ok();
+				});
 		await searchInput.fill(query);
+		await completeSearchResponse;
 		const result = searchDialog.getByRole("row", { name: resultName });
 		await expect(result).toBeVisible();
 		await result.getByRole("button", { name: /^View nutrition for / }).click();

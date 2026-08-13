@@ -81,6 +81,13 @@ The tracked Supabase configuration currently enforces:
 - Eight-character email OTPs with a one-minute resend interval.
 - TOTP enrollment and verification through `/auth/mfa/enroll` and
   `/auth/mfa/challenge`.
+- Authenticator setup renders Supabase's standard TOTP URI as a local, high-contrast
+  QR code with error correction and a full quiet zone. The URI, setup secret, QR code,
+  and one-time codes remain private, uncached, and absent from logs.
+- Enrollment and challenge accept the current six-digit TOTP code shown by Google
+  Authenticator or another standards-compatible app. Spaces, common separators, and
+  compatible full-width digits are normalized before server verification; every
+  request still must resolve to exactly six digits.
 - AAL2 session enforcement for moderator, administrator, and developer pages,
   server actions, JSON endpoints, review counts, and database-owned permissions.
 - An explicit Cloudflare Turnstile widget that passes one-time tokens to Supabase
@@ -165,3 +172,6 @@ Manually verify both localhost and production:
    with an actionable message.
 7. An existing account with a legacy password can sign in, is immediately sent to
    `/auth/update-password`, and cannot continue until the update succeeds.
+8. An elevated account can scan the setup QR code, submit the current six-digit code
+   with or without a display space, and retry a rejected or expired code without losing
+   the active setup screen.

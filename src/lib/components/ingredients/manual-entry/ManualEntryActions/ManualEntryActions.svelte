@@ -7,6 +7,7 @@
 		onNext,
 		nextLabel = "Continue",
 		busy = false,
+		nextDisabled = false,
 		showBack = true,
 	}: ManualEntryActionsProps = $props();
 </script>
@@ -18,7 +19,7 @@
 	{#if showBack}
 		<RoundedActionButton variant="neutral" onclick={onBack}>Back</RoundedActionButton>
 	{/if}
-	<RoundedActionButton onclick={onNext} {busy}>{nextLabel}</RoundedActionButton>
+	<RoundedActionButton onclick={onNext} {busy} disabled={nextDisabled}>{nextLabel}</RoundedActionButton>
 </div>
 
 <style lang="scss">

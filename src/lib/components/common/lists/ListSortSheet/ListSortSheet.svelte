@@ -61,12 +61,17 @@
 			</section>
 		{/if}
 
-		<section class="list-sort-sheet__section" aria-labelledby={`${titleId}-options`}>
-			<h3 id={`${titleId}-options`}>Sort</h3>
+		<section
+			class="list-sort-sheet__section"
+			aria-labelledby={hasFilterOptions ? `${titleId}-options` : titleId}
+		>
+			{#if hasFilterOptions}
+				<h3 id={`${titleId}-options`}>Sort</h3>
+			{/if}
 			<div
 				class="list-sort-sheet__options"
 				role="group"
-				aria-labelledby={`${titleId}-options`}
+				aria-labelledby={hasFilterOptions ? `${titleId}-options` : titleId}
 			>
 				{#each options as option (option.value)}
 					<PillButton

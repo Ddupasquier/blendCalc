@@ -64,9 +64,18 @@ test("saved recipe deletion requires two deliberate activations", async (
 		.locator(".saved-recipe-card")
 		.filter({ has: page.getByText("QA Morning Green", { exact: true }) });
 	await card.locator("summary").first().click();
+	await card.evaluate(async (element) => {
+		await Promise.all(
+			element
+				.getAnimations({ subtree: true })
+				.map((animation) => animation.finished.catch(() => undefined)),
+		);
+	});
 	const deleteButton = card.getByRole("button", {
 		name: "Delete QA Morning Green",
 	});
+	await expect(deleteButton).toBeVisible();
+	await expect(deleteButton).toBeEnabled();
 	if (testInfo.project.name.startsWith("mobile-")) {
 		await deleteButton.tap();
 	} else {

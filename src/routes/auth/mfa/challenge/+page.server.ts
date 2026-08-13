@@ -3,9 +3,17 @@ import type { Actions, PageServerLoad } from "./$types";
 import { requireMfaAuthenticatedUser } from "$lib/server/auth/mfaAccess.server";
 import { readLimitedFormData } from "$lib/server/security/requestBody.server";
 import { getSafeAuthNextPath } from "$lib/utils/auth/authFlow";
+import { normalizeAuthenticatorVerificationCode } from "$lib/utils/auth/authenticatorVerificationCode";
 
 const MFA_FORM_MAX_BYTES = 8 * 1024;
-const readNext = (url: URL) => getSafeAuthNextPath(url.searchParams.get("next"));
+const readNext = (url: URL, formData?: FormData) => {
+	const submittedNext = formData?.get("next");
+	return getSafeAuthNextPath(
+		typeof submittedNext === "string"
+			? submittedNext
+			: url.searchParams.get("next"),
+	);
+};
 
 export const load: PageServerLoad = async ({ locals, url, setHeaders }) => {
 	setHeaders({ "cache-control": "private, no-store" });
@@ -26,16 +34,16 @@ export const load: PageServerLoad = async ({ locals, url, setHeaders }) => {
 
 export const actions: Actions = {
 	default: async ({ locals, request, url }) => {
-		const next = readNext(url);
-		const { status } = await requireMfaAuthenticatedUser(locals, next);
 		const formData = await readLimitedFormData(request, MFA_FORM_MAX_BYTES);
-		const code = String(formData.get("code") ?? "").replace(/\s/g, "");
+		const next = readNext(url, formData);
+		const { status } = await requireMfaAuthenticatedUser(locals, next);
+		const code = normalizeAuthenticatorVerificationCode(formData.get("code"));
 		const factorId = String(formData.get("factorId") ?? "").trim();
 		const verifiedFactor = status.verifiedTotpFactors.find(
 			(factor) => factor.id === factorId,
 		);
 
-		if (!verifiedFactor || !/^\d{6}$/.test(code)) {
+		if (!verifiedFactor || !code) {
 			return fail(400, {
 				message: "Enter the six-digit code from your authenticator app.",
 				next,
@@ -48,7 +56,7 @@ export const actions: Actions = {
 		});
 		if (result.error) {
 			return fail(400, {
-				message: "That code wasn’t accepted. Check your authenticator and try again.",
+				message: "That code didn’t match. Wait for a fresh code, make sure your device time is automatic, and try again.",
 				next,
 			});
 		}

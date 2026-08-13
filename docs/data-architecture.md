@@ -87,6 +87,12 @@ observations remain in their licensed cache/evidence boundary, while accepted ca
 fields retain their own provenance. Existing records receive the same applicable
 backfill as future writes.
 
+Exact USDA barcode lookup preserves its bounded detail read because the detail record
+adds category and availability metadata omitted by search results. Shared caching and
+request coalescing prevent repeated outbound detail calls. Stable UCUM unit codes and
+bounded reviewed conversion factors are database reference data; seeding and runtime
+reads do not depend on a remote unit-conversion service.
+
 Ingredient search follows the same boundary. Exact normalized GTIN, USDA FDC, or
 reviewed legacy-source identifiers may connect noncanonical search records. The search
 read model then resolves names, categories, servings, preparation details, safety data,

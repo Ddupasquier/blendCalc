@@ -12,7 +12,8 @@ import type {
 	SmartImageTextRegion,
 } from "$lib/utils/food/images/types";
 
-export const SMART_IMAGE_PLACEMENT_VERSION = "tesseract-product-label-v1";
+export const SMART_IMAGE_PLACEMENT_VERSION = "tesseract-product-label-v2";
+export const AUTOMATIC_IMAGE_PLACEMENT_MINIMUM_CONFIDENCE = 68;
 
 const MAX_SUGGESTED_ZOOM = Math.min(4.5, IMAGE_PLACEMENT_MAX_ZOOM);
 const STOP_WORDS = new Set([
@@ -217,7 +218,23 @@ const buildPlacement = ({
 	region: SmartImageTextRegion;
 	confidence: number;
 }): ImagePlacementValue => {
-	const scale = geometry.baseWidth / document.width;
+	const rotationDegrees = document.rotationDegrees ?? 0;
+	const orientedGeometry = getImagePlacementGeometry({
+		naturalWidth: geometry.naturalWidth,
+		naturalHeight: geometry.naturalHeight,
+		frameWidth: geometry.frameWidth,
+		frameHeight: geometry.frameHeight,
+		horizontalMovement: geometry.horizontalMovement,
+		value: {
+			cropX: 50,
+			cropY: 50,
+			cropZoom: 1,
+			rotationDegrees,
+			fitMode: "custom",
+			placementVersion: 2,
+		},
+	});
+	const scale = orientedGeometry.baseWidth / document.width;
 	const paddedWidth = Math.min(
 		document.width,
 		getBoundsWidth(region.bounds) * 1.45,
@@ -227,11 +244,11 @@ const buildPlacement = ({
 		getBoundsHeight(region.bounds) * 2.2,
 	);
 	const widthZoom =
-		(geometry.frameWidth * 0.78) / Math.max(1, paddedWidth * scale);
+		(orientedGeometry.frameWidth * 0.78) / Math.max(1, paddedWidth * scale);
 	const heightZoom =
-		(geometry.frameHeight * 0.72) / Math.max(1, paddedHeight * scale);
+		(orientedGeometry.frameHeight * 0.72) / Math.max(1, paddedHeight * scale);
 	const minimumUsefulZoom = Math.min(
-		Math.max(1, geometry.coverZoom * 1.15),
+		Math.max(1, orientedGeometry.coverZoom * 1.15),
 		MAX_SUGGESTED_ZOOM,
 	);
 	const cropZoom = round(
@@ -244,14 +261,14 @@ const buildPlacement = ({
 	const suggestionGeometry = getImagePlacementGeometry({
 		naturalWidth: document.width,
 		naturalHeight: document.height,
-		frameWidth: geometry.frameWidth,
-		frameHeight: geometry.frameHeight,
-		horizontalMovement: geometry.horizontalMovement,
+		frameWidth: orientedGeometry.frameWidth,
+		frameHeight: orientedGeometry.frameHeight,
+		horizontalMovement: orientedGeometry.horizontalMovement,
 		value: {
 			cropX: 50,
 			cropY: 50,
 			cropZoom,
-			rotationDegrees: 0,
+			rotationDegrees,
 			fitMode: "custom",
 			placementVersion: 2,
 		},
@@ -273,7 +290,7 @@ const buildPlacement = ({
 			suggestionGeometry.maxOffsetY,
 		),
 		cropZoom,
-		rotationDegrees: 0,
+		rotationDegrees,
 		fitMode: "custom",
 		placementVersion: 2,
 		placementMethod: "smart-ocr",
@@ -281,6 +298,46 @@ const buildPlacement = ({
 		suggestionConfidence: round(confidence, 2),
 	};
 };
+
+export const selectBestImagePlacementSuggestion = ({
+	documents,
+	geometry,
+	productName,
+	brandName,
+}: {
+	documents: SmartImagePlacementDocument[];
+	geometry: ImagePlacementGeometry;
+	productName: string;
+	brandName?: string;
+}): SmartImagePlacementSuggestion | null => {
+	let bestSuggestion: SmartImagePlacementSuggestion | null = null;
+
+	for (const document of documents) {
+		const suggestion = suggestImagePlacementFromText({
+			document,
+			geometry,
+			productName,
+			brandName,
+		});
+		if (
+			suggestion &&
+			(!bestSuggestion || suggestion.confidence > bestSuggestion.confidence)
+		) {
+			bestSuggestion = suggestion;
+		}
+	}
+
+	return bestSuggestion;
+};
+
+export const isConfidentAutomaticImagePlacementSuggestion = (
+	suggestion: SmartImagePlacementSuggestion | null,
+): suggestion is SmartImagePlacementSuggestion =>
+	Boolean(
+		suggestion &&
+			suggestion.confidence >= AUTOMATIC_IMAGE_PLACEMENT_MINIMUM_CONFIDENCE &&
+			suggestion.productTokenOverlap > 0,
+	);
 
 export const suggestImagePlacementFromText = ({
 	document,
@@ -342,5 +399,7 @@ export const suggestImagePlacementFromText = ({
 		}),
 		confidence: round(confidence, 2),
 		matchedText: winner.region.text.trim(),
+		productTokenOverlap: round(winner.productOverlap),
+		brandTokenOverlap: round(winner.brandOverlap),
 	};
 };

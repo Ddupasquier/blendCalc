@@ -80,6 +80,7 @@ export const PATCH: RequestHandler = async ({ locals, request }) => {
     throwAppError(400, "IMAGE_PLACEMENT_INVALID");
   }
   const usesSmartSuggestion =
+    requestedPlacementMethod === "automatic-ocr" ||
     requestedPlacementMethod === "smart-ocr" ||
     requestedPlacementMethod === "smart-ocr-adjusted";
   if (

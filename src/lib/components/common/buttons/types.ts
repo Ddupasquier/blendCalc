@@ -9,7 +9,7 @@ export type CircleIconButtonVariant =
 	| "danger-soft"
 	| "danger";
 
-export type CircleIconButtonSize = "tiny" | "small" | "control" | "fab";
+export type CircleIconButtonSize = "tiny" | "small" | "control";
 
 export type ButtonClickHandler = (event: MouseEvent) => void;
 

@@ -13,5 +13,7 @@ export type ImagePlacementEditorProps = {
 	editable?: boolean;
 	showWarningEdge?: boolean;
 	smartPlacementSource?: Blob | string;
+	automaticallyPlaceNewImage?: boolean;
+	onPlacementProcessingStateChange?: (busy: boolean) => void;
 	onChange?: (value: ImagePlacementValue) => void;
 };

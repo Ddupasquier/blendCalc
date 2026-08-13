@@ -1,7 +1,8 @@
 /**
- * Purpose: Sample USDA and Open Food Facts products plus NLM UCUM conversions to upsert
- * source identities, nutrient mappings, unit conversions, serving units, and observed
- * serving aliases. Writes are idempotent and provenance-backed; there is no dry-run mode.
+ * Purpose: Sample USDA and Open Food Facts products, then combine those observations
+ * with reviewed UCUM reference data to upsert source identities, nutrient mappings,
+ * unit conversions, serving units, and observed aliases. Writes are idempotent and
+ * provenance-backed; there is no dry-run mode.
  * Run: `npm run seed:product-reference-data -- --sample-size=200`
  */
 
@@ -15,10 +16,13 @@ import {
 	UNIT_STANDARDS_CODES,
 } from "../../lib/reference-data/catalog.mjs";
 import {
-	convertUcumUnit,
 	fetchWithRetry,
 	readHtmlTitle,
 } from "../../lib/reference-data/api.mjs";
+import {
+	getReviewedUcumConversion,
+	UCUM_STANDARD_REFERENCE,
+} from "../../lib/reference-data/reviewedUnitConversions.mjs";
 import {
 	findCanonicalNutrientCandidate,
 	normalizeUnitName,
@@ -206,7 +210,7 @@ const seedSources = async ({ usdaCount, offCount, sharedSource, sharedProductCou
 	const observationCounts = {
 		usda: usdaCount,
 		"open-food-facts": offCount,
-		"ucum-nlm": SERVING_MEASURE_REQUESTS.length,
+		"ucum-standard": SERVING_MEASURE_REQUESTS.length,
 		"shared-catalog": sharedProductCount,
 	};
 	const rows = [];
@@ -214,7 +218,9 @@ const seedSources = async ({ usdaCount, offCount, sharedSource, sharedProductCou
 		const isShared = request.key === "shared-catalog";
 		const observedTitle = isShared
 			? sharedSource.filter_label
-			: await readHtmlTitle(request.homepageUrl, request.displayName);
+			: request.observeHomepageTitle === false
+				? request.displayName
+				: await readHtmlTitle(request.homepageUrl, request.displayName);
 		rows.push({
 			key: request.key,
 			display_name: getSourceDisplayName(observedTitle, request.displayName),
@@ -405,25 +411,26 @@ const seedNutrientConversions = async ({ mappings, definitions }) => {
 		const fromCode = getUcumCode(request.fromUnit);
 		const toCode = getUcumCode(request.toUnit);
 		if (fromCode && toCode) {
-			try {
-				const conversion = await convertUcumUnit({ fromCode, toCode });
+			const conversion = getReviewedUcumConversion({ fromCode, toCode });
+			if (conversion) {
 				rows.push({
 					source_key: request.mapping.source_key,
 					nutrient_id: request.mapping.nutrient_id,
 					from_unit_name: request.fromUnit,
 					to_unit_name: request.toUnit,
 					multiplier: conversion.value,
-					conversion_method: "standards_api",
+					conversion_method: "reviewed_standard",
 					confidence: 1,
 					observation_count: 1,
 					provenance: {
 						seed: "scripts/seeds/catalog/seed_product_reference_data.mjs",
 						sourceReference: conversion.sourceReference,
+						specificationVersion: conversion.specificationVersion,
+						licenseName: UCUM_STANDARD_REFERENCE.licenseName,
+						licenseUrl: UCUM_STANDARD_REFERENCE.licenseUrl,
 					},
 				});
 				continue;
-			} catch (error) {
-				console.warn(`UCUM skipped ${request.fromUnit} → ${request.toUnit}: ${error.message}`);
 			}
 		}
 
@@ -531,23 +538,19 @@ const seedServingMeasures = async (usdaFoods, offFoods) => {
 	const unitRows = [];
 	const aliasRows = [];
 	for (const request of SERVING_MEASURE_REQUESTS) {
-		const conversion = await convertUcumUnit({
-			fromCode: request.standardsCode,
-			toCode: request.baseUnitKey === "g" ? "g" : "mL",
-		});
 		unitRows.push({
 			key: request.key,
 			display_label: request.displayLabel,
 			short_label: request.shortLabel,
 			dimension: request.dimension,
 			base_unit_key: request.baseUnitKey,
-			conversion_to_base: conversion.value,
+			conversion_to_base: request.conversionToBase,
 			standards_code: request.standardsCode,
 			display_order: request.displayOrder,
 			is_default: defaultByDimension.get(request.dimension) === request.key,
 			enabled: true,
-			source_key: "ucum-nlm",
-			source_reference: conversion.sourceReference,
+			source_key: "ucum-standard",
+			source_reference: UCUM_STANDARD_REFERENCE.specificationUrl,
 			observed_at: observedAt,
 		});
 		for (const alias of new Set([request.key, request.shortLabel, ...request.aliases])) {
@@ -557,7 +560,7 @@ const seedServingMeasures = async (usdaFoods, offFoods) => {
 				unit_key: request.key,
 				alias,
 				normalized_alias: normalizedAlias,
-				source_key: "ucum-nlm",
+				source_key: "ucum-standard",
 				observation_count: observations.get(request.key) ?? 0,
 				first_observed_at: observedAt,
 				last_observed_at: observedAt,

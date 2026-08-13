@@ -47,6 +47,10 @@ $selection-border-color: color-mix(
 	@include ingredient-card-layout.primary-action-target;
 }
 
+.saved-ingredient-card--selection-mode .saved-ingredient-card__select {
+	z-index: 3;
+}
+
 .saved-ingredient-card__select:focus-visible {
 	@include ingredient-card-layout.primary-action-focus;
 }
@@ -66,6 +70,8 @@ $selection-border-color: color-mix(
 
 .saved-ingredient-card__selection-indicator {
 	@include ingredient-card-layout.selection-indicator-layer;
+
+	z-index: 4;
 }
 
 .saved-ingredient-card__move-action {

@@ -5,6 +5,7 @@
 	let {
 		value,
 		disabled = false,
+		visuallyHideLegend = false,
 		onSelect,
 	}: ThemePreferenceControlProps = $props();
 
@@ -32,7 +33,7 @@
 </script>
 
 <fieldset class="theme-preference-control">
-	<legend>Color theme</legend>
+	<legend class:sr-only={visuallyHideLegend}>Color theme</legend>
 	<div class="theme-preference-control__options">
 		{#each options as option (option.value)}
 			<label

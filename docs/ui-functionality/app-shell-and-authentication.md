@@ -34,6 +34,11 @@ welcome, and guided tutorial. Auth configuration and security details remain in
   available.
 - Send an elevated user without a verified TOTP factor to authenticator enrollment;
   send an enrolled AAL1 user to the six-digit challenge.
+- Accept the current six-digit authenticator code as plain digits or with the display
+  spacing used by authenticator apps. Normalize harmless separators before server
+  verification instead of relying on browser pattern validation.
+- Keep the active setup QR code and setup key visible after an incorrect or expired
+  code so the user can enter a fresh code without restarting enrollment.
 - Return the user to the originally requested internal route after successful
   verification. Never accept an external return URL.
 - Keep setup QR codes, setup secrets, and verification responses private and
