@@ -1,8 +1,4 @@
 <script lang="ts">
-    import {
-        pushState,
-        replaceState as replaceNavigationState,
-    } from "$app/navigation";
     import { page } from "$app/state";
     import ViewBody from "$lib/components/common/view/ViewBody/ViewBody.svelte";
     import ViewFrame from "$lib/components/common/view/ViewFrame/ViewFrame.svelte";
@@ -10,7 +6,6 @@
     import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
     import { getAppDocumentTitle } from "$lib/config/pageMetadata";
     import type { ManualEntryCreateContext } from "$lib/components/ingredients/manual-entry/types";
-    import IngredientsFloatingAddButton from "$lib/components/ingredients/page/IngredientsFloatingAddButton/IngredientsFloatingAddButton.svelte";
     import IngredientsSearchPanel from "$lib/components/ingredients/page/IngredientsSearchPanel/IngredientsSearchPanel.svelte";
     import IngredientRoutePopins from "$lib/components/ingredients/page/IngredientRoutePopins/IngredientRoutePopins.svelte";
     import type {
@@ -55,6 +50,8 @@
         type FoodListSort,
     } from "$lib/utils/list/listNavigation";
     import type { ScrollDirection } from "$lib/utils/navigation/scrollDirection";
+    import { navigateShallowRoute } from "$lib/utils/navigation/shallowRouteNavigation";
+    import { SHALLOW_ROUTE_PAGE_STATE_KEYS } from "$lib/utils/navigation/shallowRouteState";
     import {
         addFoodToIngredientList,
 		moveFoodToIngredientList,
@@ -186,13 +183,12 @@
 	        const href = buildIngredientRouteHref(currentUrl, patch);
 	        if (href === activeIngredientRouteHref) return;
 
-	        const nextPageState = { ...page.state, ingredientRouteHref: href };
-        if (replaceState) {
-            replaceNavigationState(href, nextPageState);
-            return;
-        }
-
-        pushState(href, nextPageState);
+	        navigateShallowRoute({
+				href,
+				pageState: page.state,
+				routeStateKey: SHALLOW_ROUTE_PAGE_STATE_KEYS.ingredients,
+				replace: replaceState,
+			});
     };
 
     const closeRoutedPopin = (replaceState = true) =>
@@ -1303,8 +1299,6 @@
         </SavedIngredientListLayout>
     </ViewBody>
 </ViewFrame>
-
-<IngredientsFloatingAddButton onClick={openManualEntry} />
 
 <IngredientRoutePopins
     {activeSheet}

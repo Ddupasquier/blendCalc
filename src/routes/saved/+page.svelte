@@ -1,9 +1,5 @@
 <script lang="ts">
-	import {
-		goto,
-		pushState,
-		replaceState as replaceNavigationState,
-	} from "$app/navigation";
+	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { flip } from "svelte/animate";
 	import { onMount } from "svelte";
@@ -26,6 +22,11 @@
 	} from "$lib/utils/animation/motion";
 	import { filterItemsByQuery } from "$lib/utils/list/listNavigation";
 	import { createScrollAwareHeaderVisibilityController } from "$lib/utils/navigation/scrollAwareHeaderVisibilityController.svelte";
+	import { navigateShallowRoute } from "$lib/utils/navigation/shallowRouteNavigation";
+	import {
+		getActiveShallowRouteUrl,
+		SHALLOW_ROUTE_PAGE_STATE_KEYS,
+	} from "$lib/utils/navigation/shallowRouteState";
 	import {
 		deleteSavedRecipe,
 		normalizeSavedRecipe,
@@ -78,8 +79,18 @@
 	const hasMoreRecipes = $derived(
 		visibleRecipes.length < filteredRecipes.length,
 	);
-	const sortSheetOpen = $derived(page.url.pathname === "/saved/sort");
-	const documentTitle = $derived(getAppDocumentTitle(page.url));
+	const activeSavedRecipesRouteUrl = $derived(
+		getActiveShallowRouteUrl(
+			page.url,
+			page.state.savedRecipesRouteHref,
+		),
+	);
+	const sortSheetOpen = $derived(
+		activeSavedRecipesRouteUrl.pathname === "/saved/sort",
+	);
+	const documentTitle = $derived(
+		getAppDocumentTitle(activeSavedRecipesRouteUrl),
+	);
 
 	const loadSavedRecipes = async () => {
 		loadingRecipes = true;
@@ -152,12 +163,23 @@
 	const openSortSheet = () => {
 		if (sortSheetOpen) return;
 		headerVisibility.show(scrollContainer?.scrollTop ?? 0);
-		pushState("/saved/sort", { ...page.state });
+		const href = "/saved/sort";
+		navigateShallowRoute({
+			href,
+			pageState: page.state,
+			routeStateKey: SHALLOW_ROUTE_PAGE_STATE_KEYS.savedRecipes,
+		});
 	};
 
 	const closeSortSheet = () => {
 		if (!sortSheetOpen) return;
-		replaceNavigationState("/saved", { ...page.state });
+		const href = "/saved";
+		navigateShallowRoute({
+			href,
+			pageState: page.state,
+			routeStateKey: SHALLOW_ROUTE_PAGE_STATE_KEYS.savedRecipes,
+			replace: true,
+		});
 	};
 
 	const applySort = (value: string) => {

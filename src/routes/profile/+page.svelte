@@ -1,9 +1,5 @@
 <script lang="ts">
-	import {
-		goto,
-		pushState,
-		replaceState as replaceNavigationState,
-	} from "$app/navigation";
+	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import type { ActionData, PageData } from "./$types";
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
@@ -32,12 +28,20 @@
 		type ProfileSettingsRoute,
 	} from "$lib/utils/profile/profileRouteState";
 	import { createScrollAwareHeaderVisibilityController } from "$lib/utils/navigation/scrollAwareHeaderVisibilityController.svelte";
+	import { navigateShallowRoute } from "$lib/utils/navigation/shallowRouteNavigation";
+	import {
+		getActiveShallowRouteUrl,
+		SHALLOW_ROUTE_PAGE_STATE_KEYS,
+	} from "$lib/utils/navigation/shallowRouteState";
 	import { normalizeThemePreference } from "$lib/utils/theme/themePreference";
 
 	const data = $derived(page.data as PageData);
 	const form = $derived(page.form as ActionData | null);
-	let activeSettingsRoute = $state<ProfileSettingsRoute | null>(
-		getProfileSettingsRoute(page.url.pathname),
+	const activeProfileRouteUrl = $derived(
+		getActiveShallowRouteUrl(page.url, page.state.profileRouteHref),
+	);
+	const activeSettingsRoute = $derived<ProfileSettingsRoute | null>(
+		getProfileSettingsRoute(activeProfileRouteUrl.pathname),
 	);
 	let profileScrollContainer = $state<HTMLElement | null>(null);
 	const headerVisibility = createScrollAwareHeaderVisibilityController({
@@ -53,10 +57,6 @@
 		),
 	);
 
-	$effect(() => {
-		activeSettingsRoute = getProfileSettingsRoute(page.url.pathname);
-	});
-
 	$effect(() => headerVisibility.observe(profileScrollContainer));
 
 	const displayName = $derived(
@@ -71,14 +71,23 @@
 
 	const openSettingsRoute = (settingsRoute: ProfileSettingsRoute) => {
 		if (activeSettingsRoute === settingsRoute) return;
-		activeSettingsRoute = settingsRoute;
-		pushState(getProfileSettingsRouteHref(settingsRoute), { ...page.state });
+		const href = getProfileSettingsRouteHref(settingsRoute);
+		navigateShallowRoute({
+			href,
+			pageState: page.state,
+			routeStateKey: SHALLOW_ROUTE_PAGE_STATE_KEYS.profile,
+		});
 	};
 
 	const closeSettingsRoute = () => {
 		if (!activeSettingsRoute) return;
-		activeSettingsRoute = null;
-		replaceNavigationState("/profile", { ...page.state });
+		const href = "/profile";
+		navigateShallowRoute({
+			href,
+			pageState: page.state,
+			routeStateKey: SHALLOW_ROUTE_PAGE_STATE_KEYS.profile,
+			replace: true,
+		});
 	};
 
 	const navigateToModeratorDestination = (href: string) => {

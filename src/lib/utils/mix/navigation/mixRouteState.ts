@@ -1,3 +1,5 @@
+import { getActiveShallowRouteHref } from "$lib/utils/navigation/shallowRouteState";
+
 export const MIX_ROUTE_OVERLAYS = {
 	options: "options",
 	reorganize: "reorganize",
@@ -65,7 +67,7 @@ const getSegments = (pathname: string) =>
 		.map((segment) => decodeURIComponent(segment));
 
 export const getActiveMixRouteHref = (url: URL, shallowRouteHref?: string) =>
-	shallowRouteHref ?? `${url.pathname}${url.search}${url.hash}`;
+	getActiveShallowRouteHref(url, shallowRouteHref);
 
 export const getActiveMixRouteState = (url: URL, shallowRouteHref?: string) =>
   getMixRouteState(new URL(getActiveMixRouteHref(url, shallowRouteHref), url));

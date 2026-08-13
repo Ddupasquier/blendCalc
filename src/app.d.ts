@@ -44,6 +44,8 @@ declare global {
 		interface PageState {
 			ingredientRouteHref?: string;
 			mixRouteHref?: string;
+			profileRouteHref?: string;
+			savedRecipesRouteHref?: string;
 		}
 		interface Platform {
 			context?: RequestContext;
