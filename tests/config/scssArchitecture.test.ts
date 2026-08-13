@@ -5,7 +5,6 @@ import {
 	statSync,
 } from "node:fs";
 import { basename, dirname, extname, join } from "node:path";
-import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 
 const variablesPath = "src/styles/_variables.scss";
@@ -30,6 +29,9 @@ const componentStyleFiles = [
 	(path) => extname(path) === ".scss",
 );
 const routeFiles = walkFiles("src/routes");
+const applicationStyleSourceFiles = walkFiles("src").filter((path) =>
+	[".scss", ".svelte"].includes(extname(path)),
+);
 const applicationStyleFiles = [
 	"src/app.scss",
 	...componentStyleFiles,
@@ -56,27 +58,17 @@ describe("SCSS architecture", () => {
 	});
 
 	it("does not use retired token namespaces in application styles", () => {
-		let output = "";
-		try {
-			output = execFileSync(
-				"rg",
-				[
-					"-n",
-					"\\$(color-|app-rebuild|app-mobile-shell-width|app-vertical-stack-gap|app-horizontal-control-gap|ingredient-|mix-|nutrition-label-)",
-					"src",
-					"--glob",
-					"*.svelte",
-					"--glob",
-					"*.scss",
-				],
-				{ encoding: "utf8" },
-			);
-		} catch (error) {
-			const status = (error as { status?: number }).status;
-			if (status !== 1) throw error;
-		}
+		const retiredTokenPattern =
+			/\$(?:color-|app-rebuild|app-mobile-shell-width|app-vertical-stack-gap|app-horizontal-control-gap|ingredient-|mix-|nutrition-label-)/;
+		const violations = applicationStyleSourceFiles.flatMap((path) =>
+			readFileSync(path, "utf8")
+				.split("\n")
+				.flatMap((line, index) =>
+					retiredTokenPattern.test(line) ? [`${path}:${index + 1}: ${line.trim()}`] : [],
+				),
+		);
 
-		expect(output).toBe("");
+		expect(violations).toEqual([]);
 	});
 
 	it("keeps application typography on the shared semantic scale", () => {
