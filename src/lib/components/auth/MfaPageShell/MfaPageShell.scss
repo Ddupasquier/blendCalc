@@ -2,26 +2,31 @@
 
 .mfa-page {
 	display: grid;
-	place-items: center;
-	min-height: 100vh;
-	min-height: 100svh;
-	min-height: 100dvh;
+	place-items: start center;
+	min-height: calc(100vh - $app-shell-header-height - $app-shell-nav-height);
+	min-height: calc(100svh - $app-shell-header-height - $app-shell-nav-height);
+	min-height: calc(100dvh - $app-shell-header-height - $app-shell-nav-height);
 	padding: max($app-gap-md, env(safe-area-inset-top))
 		max($app-gap-sm, env(safe-area-inset-right))
-		max($app-gap-md, env(safe-area-inset-bottom))
+		max(
+			calc($app-shell-nav-height + $app-gap-md),
+			calc($app-shell-nav-height + env(safe-area-inset-bottom))
+		)
 		max($app-gap-sm, env(safe-area-inset-left));
 	overflow-x: hidden;
 	overflow-y: auto;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-page;
 }
 
 .mfa-card {
 	display: grid;
 	gap: $app-gap-md;
 	width: min(100%, 28rem);
-	padding: $app-gap-md;
-	background: $app-section-bg;
-	border: $app-border;
-	border-radius: $app-card-radius;
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-panel;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-sheet;
 }
 
 .mfa-card__header,
@@ -30,33 +35,28 @@
 	gap: $app-gap-sm;
 }
 
-.mfa-card__brand,
 .mfa-card__header h1 {
-	color: $app-primary;
+	margin: 0;
+	color: $app-shell-text-primary;
 	font-family: $app-font-family-display;
+	font-size: $app-font-size-page-title;
 	font-weight: $app-font-weight-heavy;
-}
-
-.mfa-card__brand {
-	width: fit-content;
-	text-decoration: none;
-}
-
-.mfa-card__header h1 {
-	font-size: $app-font-size-xl;
+	line-height: $app-line-height-heading;
 }
 
 .mfa-card__header > p:not(.mfa-card__eyebrow) {
-	color: $app-muted;
+	margin: 0;
+	color: $app-shell-text-muted;
 	line-height: $app-line-height-ui;
 }
 
 .mfa-card__eyebrow {
 	width: fit-content;
 	padding: 0.18rem $app-gap-sm;
-	color: $app-primary;
-	background: $app-accent;
-	border-radius: $app-radius-pill;
+	margin: 0;
+	color: $app-shell-accent-primary;
+	background: $app-shell-accent-soft;
+	border-radius: $app-shell-radius-pill;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-heavy;
 	letter-spacing: $app-letter-spacing-label;
@@ -66,12 +66,21 @@
 @media (max-height: $app-breakpoint-height-compact) {
 	.mfa-page {
 		place-items: start center;
+		min-height: calc(
+			100vh - $app-shell-header-height-compact - $app-shell-nav-height-compact
+		);
+		min-height: calc(
+			100dvh - $app-shell-header-height-compact - $app-shell-nav-height-compact
+		);
 		padding-block: max($app-gap-sm, env(safe-area-inset-top))
-			max($app-gap-sm, env(safe-area-inset-bottom));
+			max(
+				calc($app-shell-nav-height-compact + $app-gap-sm),
+				calc($app-shell-nav-height-compact + env(safe-area-inset-bottom))
+			);
 	}
 
 	.mfa-card {
 		gap: $app-gap-sm;
-		padding: $app-gap-sm;
+		padding: $app-shell-card-padding-compact;
 	}
 }

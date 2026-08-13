@@ -264,6 +264,10 @@ const readSearchCardPresentation = (card: Locator) =>
 		const panelBackgroundColor = window.getComputedStyle(
 			themeColorProbe,
 		).backgroundColor;
+		themeColorProbe.style.background = "var(--app-shell-surface-soft)";
+		const activeBackgroundColor = window.getComputedStyle(
+			themeColorProbe,
+		).backgroundColor;
 		themeColorProbe.style.background = "var(--app-shell-accent-primary)";
 		const primaryBackgroundColor = window.getComputedStyle(
 			themeColorProbe,
@@ -275,6 +279,8 @@ const readSearchCardPresentation = (card: Locator) =>
 		);
 
 		return {
+			activeBackgroundColor,
+			active: element.getAttribute("aria-selected") === "true",
 			addBackgroundColor: addStyles?.backgroundColor ?? null,
 			addHeight: addBounds?.height ?? null,
 			addRadius: addStyles ? Number.parseFloat(addStyles.borderRadius) : null,
@@ -320,7 +326,9 @@ const expectSearchCardGeometry = async (
 	const presentation = await readSearchCardPresentation(card);
 
 	expect(presentation.backgroundColor).toBe(
-		presentation.panelBackgroundColor,
+		presentation.active
+			? presentation.activeBackgroundColor
+			: presentation.panelBackgroundColor,
 	);
 	expect(presentation.borderColor).toMatch(
 		/^rgba\(0, 0, 0, 0\)$|^transparent$/,
@@ -425,6 +433,30 @@ test("the saved-list segmented control supports pointer and keyboard navigation"
 	await shoppingTab.press("ArrowLeft");
 	await expect(page).toHaveURL(/\/ingredients\/fridge$/);
 	await expect(fridgeTab).toHaveAttribute("aria-selected", "true");
+});
+
+test("Ingredients exposes one page-level manual-entry action without a duplicate floating add button", async ({
+	page,
+}) => {
+	await page.goto("/ingredients/fridge");
+	await waitForAppReady(page);
+
+	const manualEntryAction = page.getByRole("button", {
+		name: "Enter a custom ingredient manually",
+	});
+	await expect(manualEntryAction).toHaveCount(1);
+	await expect(manualEntryAction).toBeVisible();
+	await expect(
+		page.getByRole("button", { name: "Add ingredient manually" }),
+	).toHaveCount(0);
+	await expect(
+		page.locator(".search-toolbar").getByRole("button", {
+			name: "Enter a custom ingredient manually",
+		}),
+	).toHaveCount(1);
+
+	await manualEntryAction.click();
+	await expect(page).toHaveURL(/\/ingredients\/fridge\/manual-entry$/);
 });
 
 test("ingredient-card copy never occupies the trailing action area", async ({

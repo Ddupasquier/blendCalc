@@ -1,6 +1,6 @@
 /**
- * Purpose: Share bounded HTTP retry, settled-concurrency, page-title, and UCUM conversion
- * helpers across reference-data scripts. Permanent HTTP failures are not retried.
+ * Purpose: Share bounded HTTP retry, settled-concurrency, and page-title helpers across
+ * reference-data scripts. Permanent HTTP failures are not retried.
  * Do not run directly; it is imported by the maintained seed workflows.
  */
 
@@ -99,17 +99,4 @@ export const readHtmlTitle = async (url, fallback) => {
 	} catch {
 		return fallback;
 	}
-};
-
-export const convertUcumUnit = async ({ quantity = 1, fromCode, toCode }) => {
-	const url = new URL(
-		`https://ucum.nlm.nih.gov/ucum-service/v1/ucumtransform/${quantity}/from/${encodeURIComponent(fromCode)}/to/${encodeURIComponent(toCode)}`,
-	);
-	const response = await fetchWithRetry(url);
-	const xml = await response.text();
-	const value = Number(xml.match(/<ResultQuantity>([^<]+)<\/ResultQuantity>/i)?.[1]);
-	if (!Number.isFinite(value) || value <= 0) {
-		throw new Error(`UCUM could not convert ${fromCode} to ${toCode}.`);
-	}
-	return { value, sourceReference: url.toString(), response: xml };
 };

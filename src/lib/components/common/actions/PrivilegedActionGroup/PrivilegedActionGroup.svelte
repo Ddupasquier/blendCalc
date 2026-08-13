@@ -4,6 +4,7 @@
 
 	let {
 		title = "Moderator actions",
+		showHeader = true,
 		class: className = "",
 		children,
 	}: PrivilegedActionGroupProps = $props();
@@ -13,10 +14,12 @@
 	class={`privileged-action-group ${className}`.trim()}
 	aria-label={title}
 >
-	<header class="privileged-action-group__header">
-		<strong>{title}</strong>
-		<PrivilegedActionBadge />
-	</header>
+	{#if showHeader}
+		<header class="privileged-action-group__header">
+			<strong>{title}</strong>
+			<PrivilegedActionBadge />
+		</header>
+	{/if}
 	<div class="privileged-action-group__content">
 		{@render children()}
 	</div>

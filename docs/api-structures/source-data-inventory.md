@@ -32,6 +32,7 @@ coalescing, caching, request counts, and source-policy checks.
 | User nutrition-label OCR | Text and nutrient candidates from a user-provided label | Tesseract runs on the client; no value is accepted until the user confirms it; shared-submission images remain private evidence |
 | Community review | User-observed product identity, label values, serving information, ingredients, warnings, and images | Moderation may create a versioned canonical revision; evidence stays private and approved public images use separate storage |
 | GS1 Digital Link | Normalized GTIN and standards-safe identifier parsing | Used only to resolve identifiers unless a separately approved data source supplies product fields |
+| UCUM | Reviewed unit codes and bounded mass, energy, and serving-measure conversion factors | Stored in Supabase and the maintained local reference catalog; no runtime or seed-time standards service request |
 
 ## Registered But Inactive Sources
 
@@ -43,6 +44,17 @@ coalescing, caching, request counts, and source-policy checks.
 
 The licensing document owns the reason and release conditions for every disabled or
 restricted source. This inventory records only capability and intake state.
+
+USDA exact-barcode lookup normally uses one bounded search plus one cached/coalesced
+detail read. The detail record is retained because it adds source category and
+availability metadata that search results omit. Open Food Facts remains the field-level
+supplement for missing package images, ingredients, allergens, traces, labels,
+categories, servings, and nutrition rather than a whole-product replacement.
+
+Run `node scripts/audits/food-sources/audit_generic_dataset_contribution.mjs` to measure
+CNF and CoFID records, nutrients, measures, exact identifiers, and a balanced search
+corpus. Exact source identifiers are identity evidence; normalized-name or search
+overlap is contribution evidence only and never merges foods.
 
 ## Useful Fields To Preserve
 

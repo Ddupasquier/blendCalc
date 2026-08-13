@@ -21,7 +21,7 @@ each individual source and asset licence.
 | --- | --- |
 | Decision model | [Compliance model](#compliance-model) and [status summary](#status-summary) |
 | Food data | [USDA](#usda-fooddata-central), [Open Food Facts](#open-food-facts), [CNF](#canadian-nutrient-file-2026), [CoFID](#uk-cofid-2021), and [Australian data](#australian-food-composition-database-release-3) |
-| Standards and tools | [UCUM](#ucum-and-the-nlm-ucum-service), [GS1 Digital Link](#gs1-digital-link), and [label OCR](#nutrition-label-ocr-and-tesseractjs) |
+| Standards and tools | [UCUM](#ucum-unit-standard), [GS1 Digital Link](#gs1-digital-link), and [label OCR](#nutrition-label-ocr-and-tesseractjs) |
 | Images and community data | [Product images](#product-images), [community submissions](#community-and-user-label-data), and [inactive sources](#retired-or-inactive-sources) |
 | Release work | [Known blockers](#known-gaps-and-release-blockers), [source changes](#adding-or-changing-a-source), [public API gate](#public-api-release-gate), and [repository locations](#authoritative-repository-locations) |
 
@@ -63,7 +63,7 @@ future public API.
 | Canadian Nutrient File 2026 | Imported generic-food composition data | Open Government Licence – Canada | Canonical and API reuse approved in the registry with attribution |
 | UK CoFID 2021 | Imported generic-food composition data | Open Government Licence v3.0 | Canonical and API reuse approved in the registry with attribution |
 | Australian Food Composition Database Release 3 | Candidate generic-food dataset | FSANZ agreement based on CC BY-SA 3.0 Australia | Import and canonical use blocked |
-| UCUM | Seed-time unit conversion standard/service | UCUM Licence v1.1; NLM service policy also applies | Active for reference seeding; registry terms link needs correction |
+| UCUM | Reviewed local unit reference standard | UCUM Licence v1.1 | Active as bounded database reference data; no NLM service request |
 | GS1 Digital Link | Local GTIN extraction from supported QR identifiers | GS1 standards terms and trademark/IP notices | Identifier parsing only; no GS1 product-data redistribution |
 | Tesseract.js label OCR | On-device label text recognition | Apache License 2.0 | Allowed as a software dependency; output remains user-confirmed label data |
 | Wikimedia Commons | Schema-supported image source | Per-file licence and attribution | No general import approval; each asset must be reviewed individually |
@@ -245,26 +245,34 @@ and API use with the stored attribution and basis semantics.
 
 Current status: correctly blocked.
 
-## UCUM And The NLM UCUM Service
+## UCUM Unit Standard
 
 ### Requirements And Limitations
 
 - UCUM is distributed under the [UCUM Licence](https://ucum.org/license). Redistribution
   of UCUM material must preserve the licence notice and comply with its origin and
   trademark provisions.
-- Calls to the NLM-hosted service may also be subject to NLM service and website policy.
+- blendCalc uses a bounded reviewed subset of UCUM codes and conversion factors rather
+  than reproducing or modifying the complete standard.
 
 ### Current blendCalc Handling
 
-- UCUM is used by `seed_product_reference_data.mjs` to validate or obtain bounded unit
-  conversions. It is not called during normal app rendering.
-- Persisted mappings retain `ucum-nlm` as their source.
-- The current source-registry row points to NLM's general web policy rather than the
-  official UCUM licence and does not contain a completed canonical/public reuse decision.
+- `product_data_sources.ucum-standard` records UCUM specification version 2.2, UCUM
+  Licence v1.1, the official licence URL, required attribution, and the engineering
+  policy review date.
+- Serving units and reviewed mass/energy conversion rows use the bounded factors stored
+  in Supabase and the maintained local reference catalog. Seeding makes no NLM UCUM
+  service request.
+- `product_data_sources.ucum-nlm` remains disabled as historical provenance for the
+  service that originally supplied the reviewed values; it is never deleted or called.
+- Canonical storage is approved for the bounded reference subset. Direct public API
+  redistribution remains disabled until API v1 has a dedicated unit-standard
+  attribution contract carrying the stored UCUM origin, licence, and warranty
+  disclaimer. UCUM codes retain their published meaning.
 
-Current status: acceptable for internal reference seeding, but the registry terms URL,
-licence identity, required notice, and public reuse decision must be corrected before
-UCUM-derived reference data is represented as publicly redistributable API material.
+Current status: approved by the repository's engineering policy review for the bounded
+stored reference subset; direct API redistribution remains conservatively blocked. This
+is not independent legal advice.
 
 ## GS1 Digital Link
 
@@ -366,15 +374,13 @@ Only deliberately selected, per-file-reviewed assets may be stored and rendered.
    compact cards.
 3. **Community submission grant:** write and review user-facing submission terms that
    cover future public API redistribution and correction/version history.
-4. **UCUM registry metadata:** replace the generic NLM policy link with the official
-   UCUM licence, record the required notice, and make an explicit public reuse decision.
-5. **AFCD:** remain disabled unless blendCalc accepts and implements the FSANZ
+4. **AFCD:** remain disabled unless blendCalc accepts and implements the FSANZ
    share-alike, notice, and limitation-statement requirements.
-6. **Wikimedia Commons:** do not start bulk image ingestion without per-asset licence and
+5. **Wikimedia Commons:** do not start bulk image ingestion without per-asset licence and
    attribution enforcement.
-7. **Third-party software notices:** verify that production distributions preserve
+6. **Third-party software notices:** verify that production distributions preserve
    required notices for Tesseract.js and all other redistributed dependencies.
-8. **Periodic review:** terms can change. Review enabled external sources before major
+7. **Periodic review:** terms can change. Review enabled external sources before major
    integration changes and before every public API launch milestone.
 
 ## Adding Or Changing A Source

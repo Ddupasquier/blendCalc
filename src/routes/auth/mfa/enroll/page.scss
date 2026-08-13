@@ -7,7 +7,8 @@
 }
 
 .mfa-enrollment__instructions {
-	color: $app-muted;
+	margin: 0;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
 	line-height: $app-line-height-ui;
 }
@@ -16,14 +17,15 @@
 	display: grid;
 	place-items: center;
 	padding: $app-gap-sm;
-	background: $app-shell-surface-panel;
-	border-radius: $app-radius;
+	background: $app-shell-text-on-accent;
+	border-radius: $app-shell-radius-card;
 }
 
 .mfa-enrollment__qr img {
 	display: block;
-	width: min(100%, 15rem);
+	width: min(100%, 18rem);
 	height: auto;
+	aspect-ratio: 1;
 }
 
 .mfa-enrollment__secret {
@@ -31,12 +33,13 @@
 	gap: $app-gap-xs;
 	min-width: 0;
 	padding: $app-gap-sm;
-	background: $app-bg;
-	border-radius: $app-radius;
+	background: $app-shell-surface-control;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
 }
 
 .mfa-enrollment__secret span {
-	color: $app-muted;
+	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-bold;
 	letter-spacing: $app-letter-spacing-label;
@@ -46,25 +49,8 @@
 .mfa-enrollment__secret code {
 	min-width: 0;
 	overflow-wrap: anywhere;
-	color: $app-primary;
-}
-
-.mfa-form label {
-	display: grid;
-	gap: $app-gap-xs;
-	color: $app-primary;
-	font-weight: $app-font-weight-bold;
-}
-
-.mfa-form input:not([type="hidden"]) {
-	width: 100%;
-	height: $app-control-height;
-	padding: 0 $app-gap-md;
-	color: $app-primary;
-	background: $app-bg;
-	border: $app-border;
-	border-radius: $app-radius;
-	font: inherit;
+	color: $app-shell-text-primary;
+	font-family: $app-font-family-data;
 	font-variant-numeric: tabular-nums;
-	letter-spacing: $app-letter-spacing-label;
+	letter-spacing: $app-letter-spacing-data;
 }

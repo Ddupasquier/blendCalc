@@ -894,14 +894,26 @@ when local verification fails, the dry run includes an unexpected migration, or 
 linked state differs from the reviewed chain. This standing database-migration workflow
 does not grant permission to commit, push, merge, or deploy Git changes.
 
-Deploy migrations independently from application-branch promotion only when the
-currently deployed `main` application can continue reading and writing safely against
-the changed schema and database behavior. Prefer additive expansion migrations: add the
-new structure, backfill safely, and preserve the old contract until compatible
-application code is live. Renames, removals, restrictive constraints, changed write
-semantics, and other coupled changes must use an expand-migrate-switch-contract rollout;
-do not deploy the incompatible contract phase ahead of its application release. This
-compatibility gate prevents automatic migration delivery from disrupting production.
+The linked production database may receive only migration source whose exact reviewed
+contents already exist on remote `main`. The maintained `db:push` commands enforce this
+promotion boundary and must not be bypassed with a direct linked Supabase CLI push.
+Before promoting an expansion migration to `main`, prove that the application currently
+deployed from `main` continues reading and writing safely both before and after the
+change. The promotion must include the migration's schema map, generated types, database
+tests, and recovery reasoning, but it must not include application code that requires
+the new schema. Apply and verify that promoted migration only after those checks pass;
+then promote dependent application code in a later release.
+
+Prefer additive expansion migrations: add nullable or safely defaulted structures,
+write-compatible functions and policies, and idempotent bounded backfills while
+preserving the old contract. Renames, removals, restrictive constraints, changed write
+semantics, and other coupled changes must use separate
+expand-migrate-switch-contract releases. The contract migration may run only after the
+compatible application release is deployed and older supported application instances
+no longer use the old contract. Never make a production database change that leaves the
+currently deployed `main` application unable to load, authenticate, read, or write.
+This sequencing is mandatory even when the migration itself has already passed local
+tests.
 
 **26c.** <a id="rule-database-api-hygiene"></a>Treat database and blendCalc API hygiene
 as a continuous responsibility, not a one-time cleanup project. Whenever work touches a
@@ -1425,7 +1437,7 @@ hardcode, or infer attribution in a component.
 
 **31c.** <a id="rule-image-placement-editor"></a>Image zoom and placement must be
 non-destructive and versioned. Keep the original image unchanged; placement only
-controls card rendering. Every new image defaults to version 2 `Full image`: contain the
+controls card rendering. Every new image starts from version 2 `Full image`: contain the
 complete orientation-corrected image, center it, and treat `1×` as the full-image size.
 Offer the shared `Full image` and `Fill card` presets plus a plainly labeled
 clockwise `Rotate 90°` control and a plainly labeled `Restore default` action that
@@ -1454,14 +1466,21 @@ once in the surrounding flow through the shared `ProductImageFrame` or existing 
 evidence gallery; it must use contained scaling, a compact content-led frame, semantic
 SCSS tokens, and no large full-width outlined area around narrow images. Preserve
 existing records as version 1 until a person edits them; new or newly edited records use
-version 2. Automatic API refreshes must never overwrite a saved placement. Any future
-smart-placement revision may only offer an optional suggestion and must never silently
-replace the selected placement. The current smart-placement flow runs Tesseract.js
-on-device, caches OCR results in bounded browser memory, scores text against the known
-product and brand names, penalizes nutrition/disclaimer text, and applies a draft only
-after the person chooses `Suggest placement`. Keep manual drag, zoom, sliders, presets,
-and restore available after every suggestion. Persist the accepted placement method,
-algorithm version, and bounded confidence, but do not store raw OCR text. Do not rebuild
+version 2. Automatic API refreshes must never overwrite a saved placement. For a newly
+chosen image, smart placement runs automatically as a non-blocking, reversible draft.
+It normalizes encoded phone orientation, evaluates clockwise quarter-turns, runs
+Tesseract.js on-device, caches OCR results in bounded browser memory, scores text
+against the known product and brand names, and penalizes nutrition/disclaimer text.
+Apply the draft only when the result clears the reviewed confidence threshold; otherwise
+leave `Full image` unchanged. Never automatically replace an existing manual,
+moderator-approved, or previously accepted smart placement. Keep manual drag, zoom,
+sliders, presets, restore, and an explicit retry available after automatic placement.
+Persist the accepted placement method, algorithm version, and bounded confidence, but do
+not store raw OCR text. Existing-image backfills may update only untouched default rows
+or legacy centered imports that remain explicitly source-automatic and unapproved.
+They must leave ambiguous, manually adjusted, or moderator-approved images unchanged
+for review. An ambiguous untouched legacy import may be upgraded only to the current
+full-image default; it must not receive an invented custom crop. Do not rebuild
 one-off full-image frames, sliders, placement math, crop CSS, OCR scoring, or preview
 boxes in feature components.
 
@@ -1642,6 +1661,12 @@ future sheet content must share the same centered handle, title typography, top 
 backdrop behavior, Escape/backdrop close behavior, max/min height rules, and bottom-nav
 anchoring. Bottom sheets must not add a redundant top Back or close arrow: the shared
 handle, intentional backdrop press, Escape, and route history own sheet dismissal.
+The shared sheet title is the only visible heading when it already names the enclosed
+control or action group. Preserve any required fieldset, region, or group name for
+assistive technology with an explicit visually hidden label rather than repeating the
+same wording in the sheet body. Keep visible nested headings only when they distinguish
+multiple meaningful sections. Right-sheet content owns one visible view heading because
+the shared right-sheet shell intentionally renders no title chrome.
 Multi-step content may keep its own in-flow Back action when that action changes steps
 rather than closing the sheet. Do not hand-roll sheet headers inside individual sheet
 bodies. The shared handle's complete keyboard focus
@@ -1979,7 +2004,11 @@ Opening, closing, refreshing, direct loading, app-name/base-route navigation, an
 must go through navigation-aware handlers. When an overlay belongs on top of the current
 page, update its path with shallow history rather than remounting the page. Opening or
 closing an overlay must not reload, reset, reorder, repaginate, or move the underlying
-page content.
+page content. SvelteKit can preserve the underlying server-loaded `page.url` during
+shallow navigation, so every shallow route must store its active href in `page.state`
+and derive route state, browser titles, open state, and Back/Forward restoration through
+the shared shallow-route state utility. Never make a shallow overlay depend only on
+`page.url` or an optimistic feature-local boolean.
 
 **50a.** <a id="rule-page-metadata"></a>Every routable page, list tab, full-screen view,
 and meaningful overlay must provide a concise, descriptive browser title that updates

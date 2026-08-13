@@ -13,4 +13,5 @@ export type ProductImageEvidenceInputProps = {
 	description?: string;
 	onFrontPhotoChange: (file: File | null) => void;
 	onPlacementChange: (value: ImagePlacementValue) => void;
+	onPlacementProcessingStateChange?: (busy: boolean) => void;
 };

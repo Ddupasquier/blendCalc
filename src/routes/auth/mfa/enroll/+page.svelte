@@ -1,17 +1,25 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import MfaPageShell from "$lib/components/auth/MfaPageShell/MfaPageShell.svelte";
+	import AuthenticatorVerificationCodeField from "$lib/components/auth/AuthenticatorVerificationCodeField/AuthenticatorVerificationCodeField.svelte";
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import { formatDocumentTitle } from "$lib/config/pageMetadata";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
-	import type { MfaEnrollmentPageProps } from "./types";
+	import type { MfaEnrollmentPageProps, MfaEnrollmentSetup } from "./types";
 
 	let { data, form }: MfaEnrollmentPageProps = $props();
 	let isSubmitting = $state(false);
+	let activeEnrollment = $state<MfaEnrollmentSetup | null>(null);
+	const enrollment = $derived(form?.enrollment ?? activeEnrollment);
+	const returnPath = $derived(form?.next ?? data.next);
 	const preventDuplicateSubmit = createPendingSubmit(
 		(pending) => (isSubmitting = pending),
 	);
+
+	$effect(() => {
+		if (form?.enrollment) activeEnrollment = form.enrollment;
+	});
 </script>
 
 <svelte:head>
@@ -27,17 +35,17 @@
 		<StatusMessage tone="danger" message={form.message} />
 	{/if}
 
-	{#if form?.enrollment}
+	{#if enrollment}
 		<div class="mfa-enrollment">
 			<p class="mfa-enrollment__instructions">
-				Scan this code with your authenticator app, then enter the six-digit code it creates.
+				Scan this code with Google Authenticator or another authenticator app. Use the current six-digit code it creates below.
 			</p>
 			<div class="mfa-enrollment__qr">
-				<img src={form.enrollment.qrCodeDataUrl} alt="Authenticator setup QR code" />
+				<img src={enrollment.qrCodeDataUrl} alt="Authenticator setup QR code" />
 			</div>
 			<div class="mfa-enrollment__secret">
 				<span>Can’t scan it? Enter this setup key</span>
-				<code>{form.enrollment.secret}</code>
+				<code>{enrollment.secret}</code>
 			</div>
 			<form
 				class="mfa-form"
@@ -45,20 +53,12 @@
 				action="?/verifyEnrollment"
 				use:enhance={preventDuplicateSubmit}
 			>
-				<input type="hidden" name="factorId" value={form.enrollment.factorId} />
-				<label>
-					<span>Six-digit code</span>
-					<input
-						type="text"
-						name="code"
-						inputmode="numeric"
-						autocomplete="one-time-code"
-						pattern="[0-9]{6}"
-						maxlength="6"
-						required
-						disabled={isSubmitting}
-					/>
-				</label>
+				<input type="hidden" name="next" value={returnPath} />
+				<input type="hidden" name="factorId" value={enrollment.factorId} />
+				<AuthenticatorVerificationCodeField
+					disabled={isSubmitting}
+					invalid={Boolean(form?.message)}
+				/>
 				<ActionButton type="submit" busy={isSubmitting} fullWidth>
 					Finish setup
 				</ActionButton>
@@ -72,6 +72,7 @@
 				message="Have an authenticator app ready. Setup stays private and the QR code is shown only during this step."
 			/>
 			<form method="POST" action="?/beginEnrollment" use:enhance={preventDuplicateSubmit}>
+				<input type="hidden" name="next" value={returnPath} />
 				<ActionButton type="submit" busy={isSubmitting} fullWidth>
 					Start setup
 				</ActionButton>
