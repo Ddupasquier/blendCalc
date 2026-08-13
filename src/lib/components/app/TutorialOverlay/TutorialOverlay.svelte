@@ -19,7 +19,6 @@
 		parseTutorialCornerRadius,
 	} from "$lib/utils/tutorial/spotlight";
 	import { tutorialSteps } from "$lib/utils/tutorial/steps";
-	import type { TutorialChoice } from "$lib/utils/tutorial/tutorial";
 	import type {
 		TutorialCornerRadii,
 		TutorialRect,
@@ -230,7 +229,7 @@
 		}
 	};
 
-	const finishTutorial = async (choice: TutorialChoice) => {
+	const finishTutorial = async () => {
 		if (controlsBusy) return;
 
 		saving = true;
@@ -238,7 +237,7 @@
 
 		let saved = false;
 		try {
-			saved = await onFinish(choice);
+			saved = await onFinish();
 		} catch {
 			saved = false;
 		}
@@ -459,14 +458,7 @@
 						<RoundedActionButton
 							variant="neutral"
 							disabled={controlsBusy}
-							onclick={() => void finishTutorial("later")}
-						>
-							Remind me in 7 days
-						</RoundedActionButton>
-						<RoundedActionButton
-							variant="neutral"
-							disabled={controlsBusy}
-							onclick={() => void finishTutorial("complete")}
+							onclick={() => void finishTutorial()}
 						>
 							Don’t show again
 						</RoundedActionButton>
@@ -481,7 +473,7 @@
 						<RoundedActionButton
 							variant="neutral"
 							disabled={controlsBusy}
-							onclick={() => void finishTutorial("complete")}
+							onclick={() => void finishTutorial()}
 						>
 							Exit tour
 						</RoundedActionButton>
@@ -496,7 +488,7 @@
 					{#if isLastStep}
 						<RoundedActionButton
 							busy={saving}
-							onclick={() => void finishTutorial("complete")}
+							onclick={() => void finishTutorial()}
 						>
 							{mode === "replay"
 								? "Close tutorial"

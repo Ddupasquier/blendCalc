@@ -53,10 +53,9 @@ test("saved recipes default closed and expose their complete details on demand",
 	await expect(remainingIngredients).toHaveAttribute("open", "");
 });
 
-test("saved recipe deletion requires two deliberate activations", async (
-	{ page },
-	testInfo,
-) => {
+test("saved recipe deletion requires two deliberate activations", async ({
+	page,
+}) => {
 	await page.goto("/saved");
 	await waitForAppReady(page);
 
@@ -76,11 +75,7 @@ test("saved recipe deletion requires two deliberate activations", async (
 	});
 	await expect(deleteButton).toBeVisible();
 	await expect(deleteButton).toBeEnabled();
-	if (testInfo.project.name.startsWith("mobile-")) {
-		await deleteButton.tap();
-	} else {
-		await deleteButton.click();
-	}
+	await deleteButton.click();
 
 	await expect(
 		card.getByText("Tap or click delete again to confirm."),

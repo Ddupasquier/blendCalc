@@ -125,16 +125,7 @@ describe("TutorialOverlay", () => {
     }
     await clickReadyButton("Finish tutorial");
     expect(onFinish).toHaveBeenCalledOnce();
-    expect(onFinish).toHaveBeenCalledWith("complete");
-  });
-
-  it("allows the user to postpone the onboarding tour", async () => {
-    const onFinish = vi.fn(() => true);
-    renderTutorial(onFinish);
-
-    await clickReadyButton("Remind me in 7 days");
-    expect(onFinish).toHaveBeenCalledOnce();
-    expect(onFinish).toHaveBeenCalledWith("later");
+    expect(onFinish).toHaveBeenCalledWith();
   });
 
   it("allows the user to skip without completing every step", async () => {
@@ -143,7 +134,9 @@ describe("TutorialOverlay", () => {
 
     await clickReadyButton("Don’t show again");
     expect(onFinish).toHaveBeenCalledOnce();
-    expect(onFinish).toHaveBeenCalledWith("complete");
+    expect(onFinish).toHaveBeenCalledWith();
+    expect(screen.queryByRole("button", { name: "Remind me in 7 days" }))
+      .not.toBeInTheDocument();
   });
 
   it("keeps the tutorial open and explains a failed preference save", async () => {

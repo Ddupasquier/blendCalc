@@ -11,6 +11,9 @@ const openMixGoals = async (page: import("@playwright/test").Page) => {
 	const summary = details.locator(":scope > summary");
 	if ((await details.getAttribute("open")) === null) await summary.click();
 	await expect(details).toHaveAttribute("open", "");
+	await expect
+		.poll(() => details.evaluate((element) => element.getAnimations().length))
+		.toBe(0);
 	return { details, goalsSection, summary };
 };
 
@@ -339,6 +342,7 @@ test("Mix options expose keyboard reorganization and restore the section order",
 	await expect
 		.poll(async () => (await readSectionOrder()).indexOf("nutrient-shape"))
 		.toBe(movedPosition);
+	await expect(nutrientShapeHandle).toBeEnabled();
 	await nutrientShapeHandle.focus();
 	await nutrientShapeHandle.press(returnKey);
 	await expect(
@@ -347,6 +351,7 @@ test("Mix options expose keyboard reorganization and restore the section order",
 		),
 	).toBeVisible();
 	await expect.poll(readSectionOrder).toEqual(initialOrder);
+	await expect(nutrientShapeHandle).toBeEnabled();
 	await organizer.getByRole("button", { name: "Done" }).click();
 	await expect(page).toHaveURL(/\/mix$/);
 });

@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-	writeTutorialChoice: vi.fn(),
+	writeTutorialCompletion: vi.fn(),
 }));
 
 vi.mock("$lib/utils/tutorial/tutorial", () => ({
-	writeTutorialChoice: mocks.writeTutorialChoice,
+	writeTutorialCompletion: mocks.writeTutorialCompletion,
 }));
 
 import { POST } from "../../src/routes/api/tutorial-preference/+server";
@@ -25,7 +25,7 @@ const createEvent = (userId: string | null, body: unknown) => ({
 describe("tutorial preference route", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mocks.writeTutorialChoice.mockResolvedValue(true);
+		mocks.writeTutorialCompletion.mockResolvedValue(true);
 	});
 
 	it("derives tutorial ownership from the signed-in user", async () => {
@@ -34,23 +34,18 @@ describe("tutorial preference route", () => {
 
 		expect(response.status).toBe(200);
 		expect(await response.json()).toEqual({ saved: true });
-		expect(mocks.writeTutorialChoice).toHaveBeenCalledWith(
+		expect(mocks.writeTutorialCompletion).toHaveBeenCalledWith(
 			event.locals.supabase,
 			"user-1",
-			"complete",
 		);
 	});
 
-	it("accepts a reminder-later choice", async () => {
+	it("rejects the retired reminder-later choice", async () => {
 		const event = createEvent("user-1", { choice: "later" });
 		const response = await POST(event as never);
 
-		expect(response.status).toBe(200);
-		expect(mocks.writeTutorialChoice).toHaveBeenCalledWith(
-			event.locals.supabase,
-			"user-1",
-			"later",
-		);
+		expect(response.status).toBe(400);
+		expect(mocks.writeTutorialCompletion).not.toHaveBeenCalled();
 	});
 
 	it("rejects unsupported choices", async () => {
@@ -59,13 +54,13 @@ describe("tutorial preference route", () => {
 		);
 
 		expect(response.status).toBe(400);
-		expect(mocks.writeTutorialChoice).not.toHaveBeenCalled();
+		expect(mocks.writeTutorialCompletion).not.toHaveBeenCalled();
 	});
 
 	it("rejects signed-out writes", async () => {
 		const response = await POST(createEvent(null, { choice: "complete" }) as never);
 
 		expect(response.status).toBe(401);
-		expect(mocks.writeTutorialChoice).not.toHaveBeenCalled();
+		expect(mocks.writeTutorialCompletion).not.toHaveBeenCalled();
 	});
 });
