@@ -16,6 +16,8 @@ the baseline for other views.
   reaches the top.
 - At the compact tier, manual entry is a pencil-only rounded icon control in the same
   row as Search, Barcode, and Filters. Its accessible name remains complete.
+- The toolbar manual-entry control is the only page-level manual-entry action. Do not
+  duplicate it with a floating add button.
 - Keep Fridge/Shopping List tabs available. Compact visual pills still provide at least
   a `44px` combined target.
 - Wider layouts keep the complete page controls visible.
@@ -64,6 +66,9 @@ Required behavior:
 - use the searchable DB-backed category picker when no canonical category is known;
 - allow destination choice between Fridge and Shopping List;
 - offer shared-catalog submission only for eligible, explicitly shared product data;
+- automatically orient and frame each newly chosen product image when OCR confidently
+  matches its product or brand text, while keeping the exact card preview, manual
+  controls, retry, and restore available before submission;
 - close the form after a successful add instead of opening another blank form;
 - reuse an existing matching private food rather than ending in a duplicate-name error;
 - keep private saving available after detaching a barcode that belongs to a different
