@@ -40,8 +40,9 @@ describe("ingredient overlay navigation", () => {
 	it("uses shallow history so sheets do not remount the ingredient list", () => {
 		const source = readFileSync(ingredientsPagePath, "utf8");
 
-		expect(source).toContain("pushState(href, nextPageState)");
-		expect(source).toContain("replaceNavigationState(href, nextPageState)");
+		expect(source).toContain("navigateShallowRoute({");
+		expect(source).toContain("routeStateKey: SHALLOW_ROUTE_PAGE_STATE_KEYS.ingredients");
+		expect(source).toContain("replace: replaceState");
 		expect(source).not.toContain("goto(href");
 	});
 

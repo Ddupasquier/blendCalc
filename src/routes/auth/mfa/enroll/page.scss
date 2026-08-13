@@ -13,13 +13,11 @@
 	line-height: $app-line-height-ui;
 }
 
-$authenticator-qr-background: #fff;
-
 .mfa-enrollment__qr {
 	display: grid;
 	place-items: center;
 	padding: $app-gap-sm;
-	background: $authenticator-qr-background;
+	background: $app-shell-text-on-accent;
 	border-radius: $app-shell-radius-card;
 }
 
