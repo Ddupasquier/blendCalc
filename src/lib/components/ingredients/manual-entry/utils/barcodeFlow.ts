@@ -40,6 +40,7 @@ export type ManualEntryBarcodeDraftState = {
 	categorySymbolKey: string;
 	servingLabel: string;
 	servingWeightGrams: number;
+	usesInternal100GramBasis: boolean;
 	serving?: FoodServing;
 	importedNutrients: FoodNutrient[];
 	manualNutrientValues: Record<number, number>;
@@ -221,6 +222,8 @@ export const getBarcodeDraftState = (
 		return value === null ? [] : [{ ...nutrient, value }];
 	});
 
+	const usesInternal100GramBasis = draft.hasSourceServing === false;
+
 	return {
 		name: draft.name,
 		nameProvenance: draft.nameProvenance,
@@ -228,9 +231,10 @@ export const getBarcodeDraftState = (
 		category: draft.resolvedCategory ?? "",
 		categoryOptionId: draft.categoryResolution?.categoryOptionId ?? "",
 		categorySymbolKey: draft.categoryResolution?.symbolKey ?? "generic",
-		servingLabel: draft.servingLabel,
+		servingLabel: usesInternal100GramBasis ? "" : draft.servingLabel,
 		servingWeightGrams: draft.servingWeightGrams,
-		serving: draft.serving,
+		usesInternal100GramBasis,
+		serving: usesInternal100GramBasis ? undefined : draft.serving,
 		importedNutrients: validNutrients,
 		manualNutrientValues: Object.fromEntries(
 			validNutrients.map((nutrient) => [
@@ -317,11 +321,14 @@ export const getBarcodeImportMessage = (
 	optionalNutrientCount: number,
 	mode: "autofill" | "scan",
 ) => {
-	const nutrientSummary = optionalNutrientCount > 0
-		? ` ${optionalNutrientCount} additional reported nutrients were included.`
-		: " No additional vitamin or mineral values were reported by this source.";
+	const reportedNutrientCount = new Set(draft.reportedNutrientIds).size;
+	const nutrientSummary = reportedNutrientCount === 0
+		? " This source did not report nutrition values, so missing values remain unknown."
+		: ` ${reportedNutrientCount} nutrition ${reportedNutrientCount === 1 ? "value was" : "values were"} reported${optionalNutrientCount > 0 ? `, including ${optionalNutrientCount} additional vitamin or mineral ${optionalNutrientCount === 1 ? "value" : "values"}` : ""}. Missing values remain unknown.`;
 	const volumeSummary = draft.volumeEquivalent
 		? " The package's volume-to-weight serving was also included."
+		: draft.hasSourceServing === false
+			? " No package serving weight was reported."
 		: "";
 	const prefix =
 		mode === "autofill"

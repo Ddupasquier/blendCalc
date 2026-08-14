@@ -706,8 +706,10 @@ describe("CustomIngredientForm", () => {
 		const onCreate = vi.fn();
 		render(CustomIngredientForm, { props: { onCreate } });
 
-		await fillRequiredCustomIngredient("Test hard lemonade");
-		const labelFormat = screen.getByRole("combobox", {
+		await openManualForm();
+		await fillIdentityStep("Test hard lemonade");
+		await continueToNextStep();
+		const labelFormat = await screen.findByRole("combobox", {
 			name: "Label format optional",
 		});
 		await fireEvent.click(labelFormat);
@@ -716,13 +718,18 @@ describe("CustomIngredientForm", () => {
 		);
 
 		expect(screen.getByLabelText(/alcohol by volume/i)).toBeRequired();
+		await continueToNextStep();
 		expect(
-			screen.getByRole("button", { name: /add ingredient/i }),
-		).toBeDisabled();
+			screen.getByText("Add the alcohol percentage shown on the package"),
+		).toBeInTheDocument();
 
 		await fireEvent.input(screen.getByLabelText(/alcohol by volume/i), {
 			target: { value: "6.5" },
 		});
+		await continueToNextStep();
+		expect(screen.getByText(/legally omit standard nutrition/i)).toBeInTheDocument();
+		await continueToNextStep();
+		await continueToNextStep();
 		await fireEvent.click(
 			screen.getByRole("button", { name: /add ingredient/i }),
 		);
@@ -738,6 +745,8 @@ describe("CustomIngredientForm", () => {
 				profileKey: "us-ttb-alcohol-beverage-v1",
 				evidenceStatus: "user-reported",
 			},
+			hasSourceServing: false,
+			foodNutrients: [],
 		});
 	});
 

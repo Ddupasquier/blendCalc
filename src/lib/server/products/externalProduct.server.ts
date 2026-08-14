@@ -6,6 +6,7 @@ import { getProductReferenceCatalog } from "./productReferenceCatalog.server";
 import {
 	applyCachedImageToBarcodeDraft,
 	mergeMissingBarcodeProductFields,
+	needsAlcoholBarcodeProductSupplement,
 	needsBarcodeProductSupplement,
 } from "$lib/utils/barcode/barcodeProductEnrichment";
 import { getNutritionCompletenessCatalog } from "$lib/server/nutrition/nutritionCompletenessCatalog.server";
@@ -37,6 +38,13 @@ export const getRequiredPackagedNutrientIds = async (food?: FoodItem) => {
 		.map((nutrient) => nutrient.nutrientId) ?? [];
 };
 
+const getRegulatedAlcoholDisclosureProfileKeys = async () => {
+	const catalog = await getNutritionCompletenessCatalog();
+	return (catalog.regulatoryDisclosureProfiles ?? [])
+		.filter((profile) => profile.disclosureKind === "regulated-alcohol")
+		.map((profile) => profile.key);
+};
+
 export const lookupExternalBarcodeProduct = async (
 	barcode: string,
 	lookups: {
@@ -48,6 +56,9 @@ export const lookupExternalBarcodeProduct = async (
 			| Iterable<number>
 			| PromiseLike<Iterable<number>>;
 		cachedImage?: FoodImageAsset | null | PromiseLike<FoodImageAsset | null>;
+		regulatedAlcoholProfileKeys?:
+			| Iterable<string>
+			| PromiseLike<Iterable<string>>;
 		externalLookupsEnabled?: boolean;
 	} = {},
 ): Promise<BarcodeProductDraft | null> => {
@@ -71,6 +82,13 @@ export const lookupExternalBarcodeProduct = async (
 	const cachedImagePromise = Promise.resolve(lookups.cachedImage ?? null).catch(
 		() => null,
 	);
+	const regulatedAlcoholProfileKeysPromise: Promise<Iterable<string>> =
+		lookups.regulatedAlcoholProfileKeys !== undefined
+			? Promise.resolve(lookups.regulatedAlcoholProfileKeys)
+			: hasInjectedProvider
+				? Promise.resolve([])
+				: getRegulatedAlcoholDisclosureProfileKeys();
+	void regulatedAlcoholProfileKeysPromise.catch(() => undefined);
 	const productReferenceCatalog = await productReferenceCatalogPromise;
 	const lookupUsda = lookups.usda ?? lookupUsdaBarcodeProduct;
 	const lookupOpenFoodFacts =
@@ -83,6 +101,26 @@ export const lookupExternalBarcodeProduct = async (
 	const applyCachedImage = async (draft: BarcodeProductDraft | null) => {
 		if (!draft) return null;
 		return applyCachedImageToBarcodeDraft(draft, await cachedImagePromise);
+	};
+	const applyAlcoholSupplement = async (draft: BarcodeProductDraft) => {
+		const regulatedAlcoholProfileKeys =
+			await regulatedAlcoholProfileKeysPromise.catch(() => []);
+		if (
+			!needsAlcoholBarcodeProductSupplement(
+				draft,
+				regulatedAlcoholProfileKeys,
+			)
+		) {
+			return draft;
+		}
+		try {
+			return mergeMissingBarcodeProductFields(
+				draft,
+				await lookupColaCloud(barcode, productReferenceCatalog),
+			);
+		} catch {
+			return draft;
+		}
 	};
 	let firstError: unknown;
 	try {
@@ -97,13 +135,15 @@ export const lookupExternalBarcodeProduct = async (
 			);
 			const requiredNutrientIds = await requiredNutrientIdsPromise;
 			if (!needsBarcodeProductSupplement(primaryDraft, requiredNutrientIds)) {
-				return primaryDraft;
+				return applyAlcoholSupplement(primaryDraft);
 			}
 			try {
 				const supplement = await lookupOpenFoodFacts(barcode, productReferenceCatalog);
-				return mergeMissingBarcodeProductFields(primaryDraft, supplement);
+				return applyAlcoholSupplement(
+					mergeMissingBarcodeProductFields(primaryDraft, supplement),
+				);
 			} catch {
-				return primaryDraft;
+				return applyAlcoholSupplement(primaryDraft);
 			}
 		}
 	} catch (error) {
@@ -115,7 +155,12 @@ export const lookupExternalBarcodeProduct = async (
 			barcode,
 			productReferenceCatalog,
 		);
-		if (openFoodFactsDraft) return applyCachedImage(openFoodFactsDraft);
+		if (openFoodFactsDraft) {
+			const draftWithCachedImage = await applyCachedImage(openFoodFactsDraft);
+			return draftWithCachedImage
+				? applyAlcoholSupplement(draftWithCachedImage)
+				: null;
+		}
 	} catch (error) {
 		firstError ??= error;
 	}

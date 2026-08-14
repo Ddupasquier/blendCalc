@@ -68,9 +68,16 @@ unfinished state until the user closes or completes it.
 
 Required behavior:
 
-- collect food name, optional brand, serving weight, optional source-backed or
-  user-confirmed volume, required nutrition, optional extended nutrients, category,
-  and available ingredient/allergen metadata;
+- collect food name, optional brand, category, DB-reviewed package-label context,
+  source-backed serving data, reported nutrition, optional extended nutrients, and
+  available ingredient/allergen metadata;
+- select package-label context on Servings before nutrition validation. Standard labels
+  retain required serving and nutrient fields. Reviewed alcohol, kombucha, exempt, and
+  case-specific profiles allow legal omissions to remain unknown; regulated alcohol
+  still requires the explicit package ABV;
+- keep a provider's technical per-100g normalization basis internal when no package
+  serving was reported. Never display it as a package serving, and require an exact gram
+  serving before normalizing any new user-entered nutrient value;
 - keep volume conversion off unless an exact source or the user supplies both weight
   and volume;
 - validate the current step only after a forward attempt through Continue or the step

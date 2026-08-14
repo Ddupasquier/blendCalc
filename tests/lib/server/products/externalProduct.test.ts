@@ -417,4 +417,120 @@ describe("external barcode product lookup", () => {
 		expect(result).toEqual(openFoodFactsDraft);
 		expect(colaCloud).not.toHaveBeenCalled();
 	});
+
+	it("uses COLA Cloud to complete alcohol fields after an alcohol-aware provider match", async () => {
+		const openFoodFactsDraft = makeDraft("open-food-facts", undefined, {
+			barcode: "850027056715",
+			name: "Espresso Martini",
+			brandOwner: "Straightaway",
+			alcoholByVolume: {
+				percent: 20,
+				valueStatus: "reported",
+				basis: "volume-percent",
+				sourceUnit: "% vol",
+			},
+			packageQuantity: undefined,
+			regulatoryDisclosure: undefined,
+			sourceMetadata: undefined,
+		});
+		const colaCloudDraft = makeDraft("cola-cloud", undefined, {
+			...openFoodFactsDraft,
+			source: "cola-cloud",
+			sourceLabel: "COLA Cloud",
+			sourceReference: "24134001000441",
+			nutrients: [],
+			reportedNutrientIds: [],
+			packageQuantity: { label: "100 mL", amount: 100, unit: "mL" },
+			regulatoryDisclosure: {
+				profileKey: "us-ttb-alcohol-beverage-v1",
+				evidenceStatus: "source-reported",
+			},
+			sourceMetadata: { marketCountries: ["US"] },
+			fieldProvenance: {
+				...openFoodFactsDraft.fieldProvenance,
+				package: {
+					source: "cola-cloud",
+					sourceReference: "24134001000441",
+				},
+				regulatoryDisclosure: {
+					source: "cola-cloud",
+					sourceReference: "24134001000441",
+				},
+				sourceMetadata: {
+					source: "cola-cloud",
+					sourceReference: "24134001000441",
+				},
+			},
+		});
+		const colaCloud = vi.fn().mockResolvedValue(colaCloudDraft);
+
+		const result = await lookupExternalBarcodeProduct(
+			openFoodFactsDraft.barcode,
+			{
+				usda: vi.fn().mockResolvedValue(null),
+				openFoodFacts: vi.fn().mockResolvedValue(openFoodFactsDraft),
+				colaCloud,
+				getProductReferenceCatalog,
+			},
+		);
+
+		expect(colaCloud).toHaveBeenCalledOnce();
+		expect(result).toMatchObject({
+			barcode: "850027056715",
+			alcoholByVolume: { percent: 20 },
+			packageQuantity: { label: "100 mL" },
+			regulatoryDisclosure: {
+				profileKey: "us-ttb-alcohol-beverage-v1",
+			},
+		});
+	});
+
+	it("does not infer alcohol context from a sparse provider record", async () => {
+		const openFoodFactsDraft = makeDraft("open-food-facts", undefined, {
+			barcode: "851017006055",
+			name: "Buoy Beer",
+			brandOwner: "",
+			servingLabel: "100 g",
+			servingWeightGrams: 100,
+			hasSourceServing: false,
+			nutrients: [
+				{
+					nutrientId: 1258,
+					nutrientName: "Fatty acids, total saturated",
+					nutrientNumber: "606",
+					unitName: "g",
+					value: 0,
+					valueStatus: "reported-zero",
+					source: "open-food-facts",
+				},
+				{
+					nutrientId: 2000,
+					nutrientName: "Total Sugars",
+					nutrientNumber: "269",
+					unitName: "g",
+					value: 0,
+					valueStatus: "reported-zero",
+					source: "open-food-facts",
+				},
+			],
+			reportedNutrientIds: [1258, 2000],
+			alcoholByVolume: undefined,
+			regulatoryDisclosure: undefined,
+		});
+		const colaCloud = vi.fn();
+
+		const result = await lookupExternalBarcodeProduct(
+			openFoodFactsDraft.barcode,
+			{
+				usda: vi.fn().mockResolvedValue(null),
+				openFoodFacts: vi.fn().mockResolvedValue(openFoodFactsDraft),
+				colaCloud,
+				getProductReferenceCatalog,
+			},
+		);
+
+		expect(colaCloud).not.toHaveBeenCalled();
+		expect(result?.nutrients).toHaveLength(2);
+		expect(result?.nutrients.every((nutrient) => nutrient.value === 0)).toBe(true);
+	});
 });

@@ -153,11 +153,27 @@
 	};
 
 	const handleServingWeightChange = (value: number) => {
-		form.data.servingWeightGrams = Number.isFinite(value) ? value : null;
+		if (Number.isFinite(value) && value > 0) {
+			form.data.servingWeightGrams = value;
+			form.markFieldAsUserEntered("serving");
+			return;
+		}
+		if (validation.disclosurePolicy.allowsMissingServingWeight) {
+			form.data.servingWeightGrams = 100;
+			form.data.servingLabel = "";
+			form.data.serving = undefined;
+			form.data.usesInternal100GramBasis = true;
+			return;
+		}
+		form.data.servingWeightGrams = null;
 		form.markFieldAsUserEntered("serving");
 	};
 
 	const handleUseVolumeChange = (value: boolean) => {
+		if (value && form.data.usesInternal100GramBasis) {
+			form.data.servingWeightGrams = null;
+			form.data.servingLabel = "";
+		}
 		form.data.useVolumeEquivalent = value;
 		form.markFieldAsUserEntered("serving");
 	};
@@ -170,6 +186,66 @@
 	const handleVolumeUnitChange = (value: ServingMeasureUnit) => {
 		form.data.volumeUnit = value;
 		form.markFieldAsUserEntered("serving");
+	};
+
+	const handleRegulatoryDisclosureChange = (profileKey: string) => {
+		const selectedProfile = referenceData.state.regulatoryDisclosureProfiles.find(
+			(profile) => profile.key === profileKey,
+		);
+		if (!selectedProfile) {
+			form.data.regulatoryDisclosure = undefined;
+			if (form.data.usesInternal100GramBasis) {
+				form.data.servingWeightGrams = null;
+				form.data.usesInternal100GramBasis = false;
+			}
+			if (form.data.fieldProvenance) {
+				const fieldProvenance = { ...form.data.fieldProvenance };
+				delete fieldProvenance.regulatoryDisclosure;
+				form.data.fieldProvenance = fieldProvenance;
+			}
+			return;
+		}
+
+		form.data.regulatoryDisclosure = {
+			profileKey,
+			evidenceStatus: "user-reported",
+		};
+		form.markFieldAsUserEntered("regulatoryDisclosure");
+		if (selectedProfile.nutritionEvaluationMode === "profile") {
+			if (form.data.usesInternal100GramBasis) {
+				form.data.servingWeightGrams = null;
+				form.data.servingLabel = "";
+				form.data.serving = undefined;
+				form.data.usesInternal100GramBasis = false;
+			}
+			return;
+		}
+		if (
+			form.data.usesInternal100GramBasis ||
+			!Number.isFinite(form.data.servingWeightGrams) ||
+			(form.data.servingWeightGrams ?? 0) <= 0
+		) {
+			form.data.servingWeightGrams = 100;
+			form.data.servingLabel = "";
+			form.data.serving = undefined;
+			form.data.useVolumeEquivalent = false;
+			form.data.volumeQuantity = null;
+			form.data.usesInternal100GramBasis = true;
+		}
+	};
+
+	const handleAlcoholByVolumeChange = (percent: number | null) => {
+		if (percent === null || percent < 0 || percent > 100) {
+			form.data.alcoholByVolume = undefined;
+			return;
+		}
+		form.data.alcoholByVolume = {
+			percent,
+			valueStatus: percent === 0 ? "reported-zero" : "reported",
+			basis: "volume-percent",
+			sourceUnit: "% vol",
+		};
+		form.markFieldAsUserEntered("alcoholByVolume");
 	};
 
 	const identityStep = $derived<IdentityStepProps>({
@@ -201,14 +277,27 @@
 
 	const servingsStep = $derived<ServingsStepProps>({
 		servingWeightGrams: form.data.servingWeightGrams,
+		usesInternal100GramBasis: form.data.usesInternal100GramBasis,
+		requiresServingWeight: validation.requiresServingWeight,
 		useVolumeEquivalent: form.data.useVolumeEquivalent,
 		volumeQuantity: form.data.volumeQuantity,
 		volumeUnit: form.data.volumeUnit,
 		volumeOptions,
+		regulatoryDisclosureProfiles:
+			referenceData.state.regulatoryDisclosureProfiles,
+		regulatoryDisclosureProfileError:
+			referenceData.state.regulatoryDisclosureProfileError,
+		regulatoryDisclosureProfileKey:
+			form.data.regulatoryDisclosure?.profileKey ?? "",
+		alcoholByVolumePercent: form.data.alcoholByVolume?.percent ?? null,
+		requiresAlcoholByVolume:
+			validation.disclosurePolicy.requiresAlcoholByVolume,
 		onServingWeightChange: handleServingWeightChange,
 		onUseVolumeChange: handleUseVolumeChange,
 		onVolumeQuantityChange: handleVolumeQuantityChange,
 		onVolumeUnitChange: handleVolumeUnitChange,
+		onRegulatoryDisclosureChange: handleRegulatoryDisclosureChange,
+		onAlcoholByVolumeChange: handleAlcoholByVolumeChange,
 		onBack: validation.goBack,
 		onNext: goNext,
 	});
@@ -218,7 +307,11 @@
 		loading: referenceData.state.loadingNutrients,
 		error: referenceData.state.nutrientError,
 		helper:
-			"Enter values from the nutrition label for the serving above. The app stores normalized per-100g values. Fields marked * are required.",
+			validation.disclosurePolicy.requiresStandardNutrition
+				? "Enter values from the nutrition label for the serving above. The app stores normalized per-100g values. Fields marked * are required."
+				: form.data.usesInternal100GramBasis
+					? "This label may legally omit standard nutrition. Imported values stay on their reported per-100g basis. Add package values only after entering the package's exact gram serving; everything else stays unknown."
+					: "This label may legally omit standard nutrition. Enter only values the package actually reports; everything else stays unknown.",
 		hideUnavailableStatus: validation.hideMacroUnavailableStatus,
 		validationItems: validation.getAttemptedValidationItems(
 			validation.validationItems.filter((item) => item.step === "macros"),
@@ -232,7 +325,9 @@
 			form.applyNutritionLabelOcr(payload, validation.nutrientFields),
 		getValue: form.getNutrientValue,
 		onValueChange: form.setNutrientValue,
-		isRequired: (field) => field.requiredForManualEntry,
+		isRequired: (field) =>
+			validation.disclosurePolicy.requiresStandardNutrition &&
+			field.requiredForManualEntry,
 		onBack: validation.goBack,
 		onNext: goNext,
 	});
@@ -246,7 +341,9 @@
 		defaultOpenFirst: false,
 		getValue: form.getNutrientValue,
 		onValueChange: form.setNutrientValue,
-		isRequired: (field) => field.requiredForManualEntry,
+		isRequired: (field) =>
+			validation.disclosurePolicy.requiresStandardNutrition &&
+			field.requiredForManualEntry,
 		onBack: validation.goBack,
 		onNext: goNext,
 	});
@@ -281,18 +378,11 @@
 		nutritionPhoto: form.data.nutritionPhoto,
 		barcodePhoto: form.data.barcodePhoto,
 		imagePlacement: form.data.imagePlacement,
-		regulatoryDisclosureProfiles:
-			referenceData.state.regulatoryDisclosureProfiles,
-		regulatoryDisclosureProfileError:
-			referenceData.state.regulatoryDisclosureProfileError,
-		regulatoryDisclosureProfileKey:
-			form.data.regulatoryDisclosure?.profileKey ?? "",
+		regulatoryDisclosureProfile: validation.disclosurePolicy.profile,
 		alcoholByVolumePercent: form.data.alcoholByVolume?.percent ?? null,
-		requiresAlcoholByVolume:
-			referenceData.state.regulatoryDisclosureProfiles.find(
-				(profile) =>
-					profile.key === form.data.regulatoryDisclosure?.profileKey,
-			)?.requiresAlcoholByVolume ?? false,
+		packageQuantityLabel: form.data.packageQuantity?.label ?? "",
+		usesNonstandardNutritionDisclosure:
+			!validation.disclosurePolicy.requiresStandardNutrition,
 		saveDestination: outcome.state.saveDestination,
 		error: submission.state.error,
 		lastOutcome: outcome.state.lastOutcome,
@@ -311,35 +401,6 @@
 		},
 		onImagePlacementChange: (value) => {
 			form.data.imagePlacement = value;
-		},
-		onRegulatoryDisclosureChange: (profileKey) => {
-			if (!profileKey) {
-				form.data.regulatoryDisclosure = undefined;
-				if (form.data.fieldProvenance) {
-					const fieldProvenance = { ...form.data.fieldProvenance };
-					delete fieldProvenance.regulatoryDisclosure;
-					form.data.fieldProvenance = fieldProvenance;
-				}
-				return;
-			}
-			form.data.regulatoryDisclosure = {
-				profileKey,
-				evidenceStatus: "user-reported",
-			};
-			form.markFieldAsUserEntered("regulatoryDisclosure");
-		},
-		onAlcoholByVolumeChange: (percent) => {
-			if (percent === null || percent < 0 || percent > 100) {
-				form.data.alcoholByVolume = undefined;
-				return;
-			}
-			form.data.alcoholByVolume = {
-				percent,
-				valueStatus: percent === 0 ? "reported-zero" : "reported",
-				basis: "volume-percent",
-				sourceUnit: "% vol",
-			};
-			form.markFieldAsUserEntered("alcoholByVolume");
 		},
 		onNutritionPhotoChange: (file) => {
 			form.data.nutritionPhoto = file;

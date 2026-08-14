@@ -60,9 +60,12 @@ cannot. Explicit declarations remain available for personalized checks; a missin
 declaration never means allergen-free.
 
 Open Food Facts ABV is accepted only when the provider supplies an explicit percentage
-unit. COLA Cloud is a final server-only exact-barcode fallback after blendCalc, USDA,
-and Open Food Facts do not identify the product. It selects one newest approved U.S.
-TTB label and accepts only explicit identity, ABV, package volume, and approval
+unit. COLA Cloud is a bounded server-only exact-barcode fallback after blendCalc, USDA,
+and Open Food Facts do not identify the product. It may also supplement an identified
+product when an explicit positive ABV or a DB-reviewed regulated-alcohol disclosure
+profile proves alcohol context and alcohol-specific fields remain missing. Sparse
+nutrition alone never triggers a COLA request. The lookup selects one newest approved
+U.S. TTB label and accepts only explicit identity, ABV, package volume, and approval
 evidence. Its response is not cached in blendCalc, promoted to the canonical catalog,
 or exposed through API v1 under the current source policy.
 
