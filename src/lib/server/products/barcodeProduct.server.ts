@@ -33,9 +33,14 @@ export const lookupBarcodeProductDraft = async (
 
 	const sharedFood = await getSharedProductByBarcode(supabase, barcode);
 	if (sharedFood) {
-		const [productReferenceCatalog, cachedImage] = await Promise.all([
+		const [
+			productReferenceCatalog,
+			cachedImage,
+			requiredNutrientIds,
+		] = await Promise.all([
 			getProductReferenceCatalog(),
 			cachedImagePromise,
+			getRequiredPackagedNutrientIds(sharedFood),
 		]);
 		const mappedDraft = mapSharedCatalogFood(
 			sharedFood,
@@ -51,7 +56,6 @@ export const lookupBarcodeProductDraft = async (
 			let supplementedFields = [] as ReturnType<
 				typeof getSupplementedBarcodeProductFields
 			>;
-			const requiredNutrientIds = await getRequiredPackagedNutrientIds();
 			if (needsBarcodeProductSupplement(cachedDraft, requiredNutrientIds)) {
 				try {
 					const supplement = await lookupExternalBarcodeProduct(barcode, {

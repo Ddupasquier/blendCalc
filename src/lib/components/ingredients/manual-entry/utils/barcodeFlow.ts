@@ -24,6 +24,8 @@ import type {
 	FoodSourceRecordMetadata,
 	FoodStructuredIngredient,
 	FoodServing,
+	FoodAlcoholByVolume,
+	FoodRegulatoryDisclosure,
 } from "$lib/utils/food/types";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
 
@@ -56,6 +58,8 @@ export type ManualEntryBarcodeDraftState = {
 	dietaryTags: string[];
 	labels: string[];
 	packageQuantity?: FoodPackageQuantity;
+	alcoholByVolume?: FoodAlcoholByVolume;
+	regulatoryDisclosure?: FoodRegulatoryDisclosure;
 	sourceMetadata?: FoodSourceRecordMetadata;
 	categories: string[];
 	image?: FoodImageAsset;
@@ -254,6 +258,12 @@ export const getBarcodeDraftState = (
 		labels: [...(draft.labels ?? [])],
 		packageQuantity: draft.packageQuantity
 			? { ...draft.packageQuantity }
+			: undefined,
+		alcoholByVolume: draft.alcoholByVolume
+			? { ...draft.alcoholByVolume }
+			: undefined,
+		regulatoryDisclosure: draft.regulatoryDisclosure
+			? { ...draft.regulatoryDisclosure }
 			: undefined,
 		sourceMetadata: draft.sourceMetadata
 			? { ...draft.sourceMetadata }

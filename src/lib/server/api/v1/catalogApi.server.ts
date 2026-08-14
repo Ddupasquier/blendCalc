@@ -451,6 +451,14 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 	const categorySource = record.category
 		? toCanonicalFieldSource(record, "categories")
 		: null;
+	const alcoholByVolumeSource = toCanonicalFieldSource(
+		record,
+		"alcoholByVolume",
+	);
+	const regulatoryDisclosureSource = toCanonicalFieldSource(
+		record,
+		"regulatoryDisclosure",
+	);
 	const sourceAttributions = selectSourceAttributions(
 		record,
 		sourceAttributionCatalog,
@@ -554,6 +562,23 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 					unit: record.food.packageQuantity.unit ?? null,
 				}
 			: null,
+		alcoholByVolume:
+			record.food.alcoholByVolume && alcoholByVolumeSource
+				? {
+						percent: record.food.alcoholByVolume.percent,
+						valueStatus: record.food.alcoholByVolume.valueStatus,
+						basis: record.food.alcoholByVolume.basis,
+						sourceUnit: record.food.alcoholByVolume.sourceUnit,
+					}
+				: null,
+		regulatoryDisclosure:
+			record.food.regulatoryDisclosure && regulatoryDisclosureSource
+				? {
+						profileKey: record.food.regulatoryDisclosure.profileKey,
+						evidenceStatus:
+							record.food.regulatoryDisclosure.evidenceStatus,
+					}
+				: null,
 		sourceRecord: record.food.sourceMetadata
 			? {
 					language: record.food.sourceMetadata.language ?? null,
@@ -698,6 +723,8 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 			dietaryTags: toCanonicalFieldSource(record, "dietaryTags"),
 			labels: toCanonicalFieldSource(record, "labels"),
 			package: toCanonicalFieldSource(record, "package"),
+			alcoholByVolume: alcoholByVolumeSource,
+			regulatoryDisclosure: regulatoryDisclosureSource,
 			sourceMetadata: toCanonicalFieldSource(record, "sourceMetadata"),
 		},
 		revision: {

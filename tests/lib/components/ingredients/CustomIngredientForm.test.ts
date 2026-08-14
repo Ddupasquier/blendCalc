@@ -261,6 +261,48 @@ vi.mock("$lib/utils/food/ocr/nutritionLabelOcrMappings", () => ({
 	]),
 }));
 
+const regulatoryDisclosureMocks = vi.hoisted(() => ({
+	readProductRegulatoryDisclosureProfiles: vi.fn().mockResolvedValue([
+		{
+			key: "us-standard-nutrition-facts-v1",
+			displayName: "Standard Nutrition Facts",
+			userDescription: "The package uses standard U.S. nutrition labeling.",
+			disclosureKind: "standard-nutrition",
+			nutritionEvaluationMode: "profile",
+			nutritionProfileKey: "us-packaged-label-v1",
+			regionCode: "US",
+			authorityName: "U.S. Food and Drug Administration",
+			requiresAlcoholByVolume: false,
+			requiresModeratorReview: false,
+			userSelectable: true,
+			sourceReference: "test",
+			sortOrder: 10,
+			isDefault: true,
+		},
+		{
+			key: "us-ttb-alcohol-beverage-v1",
+			displayName: "Alcohol beverage label",
+			userDescription: "This package uses U.S. alcohol-beverage labeling.",
+			disclosureKind: "regulated-alcohol",
+			nutritionEvaluationMode: "sparse-accepted",
+			nutritionProfileKey: null,
+			regionCode: "US",
+			authorityName: "U.S. Alcohol and Tobacco Tax and Trade Bureau",
+			requiresAlcoholByVolume: true,
+			requiresModeratorReview: true,
+			userSelectable: true,
+			sourceReference: "test",
+			sortOrder: 20,
+			isDefault: false,
+		},
+	]),
+}));
+
+vi.mock(
+	"$lib/utils/food/quality/productRegulatoryDisclosureProfiles",
+	() => regulatoryDisclosureMocks,
+);
+
 const categoryPickerMocks = vi.hoisted(() => ({
 	loadFoodCategoryPickerData: vi.fn().mockResolvedValue({
 		suggestions: [],
@@ -297,6 +339,11 @@ import CustomIngredientForm from "$lib/components/ingredients/manual-entry/Custo
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import { createCustomFood } from "$lib/utils/food/custom/customFoods";
 import type { FoodNutrient } from "$lib/utils/food/types";
+import type { BarcodeLookupResult } from "$lib/utils/barcode/productLookup";
+import type {
+	BarcodeScanResult,
+	BarcodeScannerCallbacks,
+} from "$lib/utils/barcode/types";
 
 type TestNutrition = {
 	calories: number;
@@ -570,6 +617,128 @@ describe("CustomIngredientForm", () => {
 				screen.queryByRole("dialog", { name: "Scan Barcode" }),
 			).not.toBeInTheDocument(),
 		);
+	});
+
+	it("shows product lookup progress before scanned product details", async () => {
+		const scrollIntoView = vi.fn();
+		Object.defineProperty(Element.prototype, "scrollIntoView", {
+			configurable: true,
+			value: scrollIntoView,
+		});
+		let scannerCallbacks: BarcodeScannerCallbacks | undefined;
+		let resolveLookup!: (result: BarcodeLookupResult) => void;
+		const lookupPromise = new Promise<BarcodeLookupResult>((resolve) => {
+			resolveLookup = resolve;
+		});
+		barcodeScannerMocks.startWebBarcodeScanner.mockImplementation(
+			async (
+				_video: HTMLVideoElement,
+				callbacks: BarcodeScannerCallbacks,
+			) => {
+				scannerCallbacks = callbacks;
+				return vi.fn();
+			},
+		);
+		barcodeLookupMocks.lookupBarcodeProduct.mockReturnValueOnce(lookupPromise);
+
+		render(CustomIngredientForm, {
+			props: { onCreate: vi.fn(), scanSignal: 1 },
+		});
+
+		await waitFor(() =>
+			expect(barcodeScannerMocks.startWebBarcodeScanner).toHaveBeenCalledOnce(),
+		);
+		const scanResult: BarcodeScanResult = {
+			value: "4006381333931",
+			canonicalValue: "04006381333931",
+			format: "ean_13",
+			platform: "web-zxing",
+			captureMethod: "linear-scan",
+		};
+		scannerCallbacks?.onDetected(scanResult);
+
+		expect(
+			await screen.findByRole("status", { name: /finding product details/i }),
+		).toBeInTheDocument();
+		expect(screen.queryByLabelText("Ingredient summary")).not.toBeInTheDocument();
+		expect(screen.getByLabelText(/share with community/i)).toBeDisabled();
+
+		resolveLookup({
+			status: "found",
+			draft: {
+				barcode: scanResult.canonicalValue,
+				name: "Reference tomato product",
+				nameProvenance: "source",
+				brandOwner: "Reference brand",
+				servingLabel: "100g serving",
+				servingWeightGrams: 100,
+				nutrients: makeTestNutrients({
+					calories: 18,
+					fat: 0.2,
+					carbs: 3.9,
+					fiber: 1.2,
+					sugar: 2.6,
+					protein: 0.9,
+					sodium: 5,
+				}),
+				reportedNutrientIds: [1008, 1004, 1005, 1079, 2000, 1003, 1093],
+				categories: ["Other"],
+				resolvedCategory: "Other",
+				categoryResolution: createTestCategoryResolution("other", "Other"),
+				source: "usda",
+				sourceLabel: "USDA FDC",
+				sourceReference: "12345",
+			},
+		});
+
+		await waitFor(() =>
+			expect(
+				screen.queryByRole("status", { name: /finding product details/i }),
+			).not.toBeInTheDocument(),
+		);
+		expect(screen.getByLabelText("Ingredient summary")).toHaveTextContent(
+			"Reference tomato product",
+		);
+		await waitFor(() => expect(scrollIntoView).toHaveBeenCalledOnce());
+	});
+
+	it("requires explicit package ABV for a regulated alcohol label", async () => {
+		const onCreate = vi.fn();
+		render(CustomIngredientForm, { props: { onCreate } });
+
+		await fillRequiredCustomIngredient("Test hard lemonade");
+		const labelFormat = screen.getByRole("combobox", {
+			name: "Label format optional",
+		});
+		await fireEvent.click(labelFormat);
+		await fireEvent.click(
+			screen.getByRole("option", { name: "Alcohol beverage label" }),
+		);
+
+		expect(screen.getByLabelText(/alcohol by volume/i)).toBeRequired();
+		expect(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		).toBeDisabled();
+
+		await fireEvent.input(screen.getByLabelText(/alcohol by volume/i), {
+			target: { value: "6.5" },
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: /add ingredient/i }),
+		);
+
+		await waitFor(() => expect(onCreate).toHaveBeenCalledOnce());
+		expect(onCreate.mock.calls[0][0]).toMatchObject({
+			alcoholByVolume: {
+				percent: 6.5,
+				valueStatus: "reported",
+				basis: "volume-percent",
+			},
+			regulatoryDisclosure: {
+				profileKey: "us-ttb-alcohol-beverage-v1",
+				evidenceStatus: "user-reported",
+			},
+		});
 	});
 
 	it("restores an unsaved draft after the form remounts", async () => {

@@ -24,6 +24,8 @@ import type {
 	FoodSourceRecordMetadata,
 	FoodStructuredIngredient,
 	FoodServing,
+	FoodAlcoholByVolume,
+	FoodRegulatoryDisclosure,
 } from "$lib/utils/food/types";
 import { normalizeCustomFoodName } from "$lib/utils/food/custom/customFoodNames";
 import { formatSourceProductName } from "$lib/utils/products/productNameFormatting.js";
@@ -62,6 +64,8 @@ export type CustomFoodInput = {
 	dietaryTags?: string[];
 	labels?: string[];
 	packageQuantity?: FoodPackageQuantity;
+	alcoholByVolume?: FoodAlcoholByVolume;
+	regulatoryDisclosure?: FoodRegulatoryDisclosure;
 	sourceMetadata?: FoodSourceRecordMetadata;
 	categories?: string[];
 	categoryOptionId?: string;
@@ -195,7 +199,11 @@ const getDefaultSourceKey = (
 	barcodeSource: FoodItem["barcodeSource"],
 ) => {
 	if (barcodeSource === "community") return "shared-catalog";
-	if (barcodeSource === "usda" || barcodeSource === "open-food-facts") {
+	if (
+		barcodeSource === "usda" ||
+		barcodeSource === "open-food-facts" ||
+		barcodeSource === "cola-cloud"
+	) {
 		return barcodeSource;
 	}
 	return undefined;
@@ -292,6 +300,8 @@ export const createCustomFood = (input: CustomFoodInput): FoodItem => {
 		dietaryTags: input.dietaryTags,
 		labels: input.labels,
 		packageQuantity: input.packageQuantity,
+		alcoholByVolume: input.alcoholByVolume,
+		regulatoryDisclosure: input.regulatoryDisclosure,
 		sourceMetadata: input.sourceMetadata,
 		categories: input.categories,
 		categoryOptionId: input.categoryOptionId,
