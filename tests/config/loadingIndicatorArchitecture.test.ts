@@ -52,4 +52,15 @@ describe("loading indicator architecture", () => {
 		expect(categoryPicker).toContain("InputLoadingFrame");
 		expect(categoryPicker).toContain('loadingLabel="Searching categories"');
 	});
+
+	it("uses the shared spinner while a scanned product is loading", () => {
+		const shareStep = read(
+			"src/lib/components/ingredients/manual-entry/steps/ShareStep/ShareStep.svelte",
+		);
+
+		expect(shareStep).toContain("LoadingSpinner");
+		expect(shareStep).toContain("Finding product details");
+		expect(shareStep).not.toMatch(/class=["'][^"']*spinner/);
+		expect(shareStep).not.toMatch(/@keyframes[^\n]*spin/i);
+	});
 });

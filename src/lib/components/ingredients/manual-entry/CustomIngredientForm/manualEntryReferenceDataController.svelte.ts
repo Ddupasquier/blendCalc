@@ -2,6 +2,7 @@ import { emptyManualEntryNutrientGroups } from "$lib/components/ingredients/manu
 import { loadManualEntryReferenceData } from "$lib/utils/food/nutrients/manualEntryReferenceData";
 import type { NutrientRelationshipRule } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
 import type { NutritionLabelOcrMapping } from "$lib/utils/food/ocr/nutritionLabelOcr";
+import type { ProductRegulatoryDisclosureProfile } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 
 export const createManualEntryReferenceDataController = () => {
 	const state = $state({
@@ -13,6 +14,8 @@ export const createManualEntryReferenceDataController = () => {
 		nutrientRelationshipRuleError: "",
 		nutritionLabelOcrMappings: [] as NutritionLabelOcrMapping[],
 		nutritionLabelOcrMappingError: "",
+		regulatoryDisclosureProfiles: [] as ProductRegulatoryDisclosureProfile[],
+		regulatoryDisclosureProfileError: "",
 	});
 	let loadGeneration = 0;
 
@@ -37,6 +40,10 @@ export const createManualEntryReferenceDataController = () => {
 			referenceData.nutritionLabelOcrMappings;
 		state.nutritionLabelOcrMappingError =
 			referenceData.nutritionLabelOcrMappingError;
+		state.regulatoryDisclosureProfiles =
+			referenceData.regulatoryDisclosureProfiles;
+		state.regulatoryDisclosureProfileError =
+			referenceData.regulatoryDisclosureProfileError;
 		state.loadingNutrients = false;
 		state.loadingNutrientRelationshipRules = false;
 	};

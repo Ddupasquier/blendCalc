@@ -2,7 +2,9 @@ import { resolveFoodNutrient, type NutrientResolutionMethod } from "$lib/utils/f
 import type { FoodItem } from "$lib/utils/food/types";
 import {
 	getNutritionCompletenessProfile,
+	getProductRegulatoryDisclosureProfile,
 	type NutritionCompletenessCatalog,
+	type ProductRegulatoryDisclosureProfile,
 	type NutritionRequirementLevel,
 } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 
@@ -44,10 +46,55 @@ const sourceScores: Record<NutrientResolutionMethod, number> = {
 	missing: 0,
 };
 
+const hasReportedAlcoholByVolume = (food: FoodItem) =>
+	food.alcoholByVolume !== undefined &&
+	Number.isFinite(food.alcoholByVolume.percent) &&
+	food.alcoholByVolume.percent >= 0 &&
+	food.alcoholByVolume.percent <= 100;
+
+const assessNonstandardDisclosure = (
+	food: FoodItem,
+	profile: ProductRegulatoryDisclosureProfile,
+): NutritionCompletenessAssessment => {
+	const missingRequiredAlcoholByVolume =
+		profile.requiresAlcoholByVolume && !hasReportedAlcoholByVolume(food);
+	const requiresIndividualReview =
+		profile.nutritionEvaluationMode === "case-specific" ||
+		profile.nutritionEvaluationMode === "unknown";
+
+	return {
+		status: requiresIndividualReview ? "unavailable" : "limited",
+		label: profile.displayName,
+		title: missingRequiredAlcoholByVolume
+			? "The package's alcohol percentage has not been reported yet."
+			: profile.userDescription,
+		score: 0,
+		completeCount: 0,
+		missingCount: 0,
+		recommendedMissingCount: 0,
+		profileKey: profile.key,
+		profileName: profile.displayName,
+		sourceCounts: createSourceCounts(),
+		details: [],
+		needsDetails: missingRequiredAlcoholByVolume || requiresIndividualReview,
+	};
+};
+
 export const assessNutritionCompleteness = (
 	food: FoodItem,
 	catalog?: NutritionCompletenessCatalog,
 ): NutritionCompletenessAssessment => {
+	const disclosureProfile = getProductRegulatoryDisclosureProfile(
+		food.regulatoryDisclosure?.profileKey,
+		catalog,
+	);
+	if (
+		disclosureProfile &&
+		disclosureProfile.nutritionEvaluationMode !== "profile"
+	) {
+		return assessNonstandardDisclosure(food, disclosureProfile);
+	}
+
 	const profile = getNutritionCompletenessProfile(food, catalog);
 	if (!profile) {
 		return {

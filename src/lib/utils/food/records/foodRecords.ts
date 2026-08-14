@@ -91,6 +91,12 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 		packageQuantity: food.packageQuantity
 			? { ...food.packageQuantity }
 			: undefined,
+		alcoholByVolume: food.alcoholByVolume
+			? { ...food.alcoholByVolume }
+			: undefined,
+		regulatoryDisclosure: food.regulatoryDisclosure
+			? { ...food.regulatoryDisclosure }
+			: undefined,
 		sourceMetadata: food.sourceMetadata
 			? {
 				...food.sourceMetadata,

@@ -236,6 +236,16 @@ export type ApiV1Product = {
 		amount: number | null;
 		unit: string | null;
 	} | null;
+	alcoholByVolume: {
+		percent: number;
+		valueStatus: "reported" | "reported-zero";
+		basis: "volume-percent";
+		sourceUnit: string;
+	} | null;
+	regulatoryDisclosure: {
+		profileKey: string;
+		evidenceStatus: "source-reported" | "user-reported" | "moderator-reviewed";
+	} | null;
 	sourceRecord: {
 		language: string | null;
 		languages: string[];
@@ -295,6 +305,8 @@ export type ApiV1Product = {
 		dietaryTags: ApiV1FieldSource | null;
 		labels: ApiV1FieldSource | null;
 		package: ApiV1FieldSource | null;
+		alcoholByVolume: ApiV1FieldSource | null;
+		regulatoryDisclosure: ApiV1FieldSource | null;
 		sourceMetadata: ApiV1FieldSource | null;
 	};
 	revision: ApiV1ProductRevision;

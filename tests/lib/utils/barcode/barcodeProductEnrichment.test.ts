@@ -80,6 +80,8 @@ describe("barcode product field enrichment", () => {
 			ingredientAnalysis: true,
 			additives: true,
 			package: true,
+			alcoholByVolume: true,
+			regulatoryDisclosure: true,
 			sourceMetadata: true,
 		});
 	});
@@ -112,9 +114,37 @@ describe("barcode product field enrichment", () => {
 			ingredientAnalysis: true,
 			additives: true,
 			package: true,
+			alcoholByVolume: true,
+			regulatoryDisclosure: true,
 			sourceMetadata: true,
 			missingNutrientIds: [1003],
 		});
+	});
+
+	it("fills explicit ABV without inventing a regulatory label context", () => {
+		const primary = makeDraft("usda");
+		const supplement = makeDraft("open-food-facts", {
+			alcoholByVolume: {
+				percent: 5.5,
+				valueStatus: "reported",
+				basis: "volume-percent",
+				sourceUnit: "% vol",
+			},
+			fieldProvenance: {
+				alcoholByVolume: {
+					source: "open-food-facts",
+					sourceReference: "00021130493609",
+					confidence: "unknown",
+				},
+			},
+		});
+
+		const result = mergeMissingBarcodeProductFields(primary, supplement);
+		expect(result.alcoholByVolume).toMatchObject({ percent: 5.5 });
+		expect(result.regulatoryDisclosure).toBeUndefined();
+		expect(result.fieldProvenance?.alcoholByVolume?.source).toBe(
+			"open-food-facts",
+		);
 	});
 
 	it("fills a missing brand from an exact field-attributed supplement", () => {

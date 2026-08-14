@@ -29,6 +29,8 @@ const FOOD_TRACKED_FIELD_PATHS = new Set<FoodTrackedField>([
 	"ingredientAnalysis",
 	"additives",
 	"package",
+	"alcoholByVolume",
+	"regulatoryDisclosure",
 	"sourceMetadata",
 ]);
 

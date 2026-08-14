@@ -601,10 +601,33 @@
           "labelObservedAt": { "type": ["string", "null"], "format": "date-time" }
         }
       },
+      "AlcoholByVolume": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["percent", "valueStatus", "basis", "sourceUnit"],
+        "properties": {
+          "percent": { "type": "number", "minimum": 0, "maximum": 100 },
+          "valueStatus": { "type": "string", "enum": ["reported", "reported-zero"] },
+          "basis": { "type": "string", "const": "volume-percent" },
+          "sourceUnit": { "type": "string" }
+        }
+      },
+      "RegulatoryDisclosure": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["profileKey", "evidenceStatus"],
+        "properties": {
+          "profileKey": { "type": "string" },
+          "evidenceStatus": {
+            "type": "string",
+            "enum": ["source-reported", "user-reported", "moderator-reviewed"]
+          }
+        }
+      },
       "Product": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "barcode", "name", "brand", "category", "ingredients", "packageQuantity", "sourceRecord", "nutrients", "servings", "images", "warnings", "compatibilityEvaluation", "sourceAttributions", "catalog", "fieldSources", "revision", "links"],
+        "required": ["id", "barcode", "name", "brand", "category", "ingredients", "packageQuantity", "alcoholByVolume", "regulatoryDisclosure", "sourceRecord", "nutrients", "servings", "images", "warnings", "compatibilityEvaluation", "sourceAttributions", "catalog", "fieldSources", "revision", "links"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "barcode": { "type": "string", "pattern": "^[0-9]{14}$" },
@@ -645,6 +668,18 @@
               { "type": "null" }
             ]
           },
+          "alcoholByVolume": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/AlcoholByVolume" },
+              { "type": "null" }
+            ]
+          },
+          "regulatoryDisclosure": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/RegulatoryDisclosure" },
+              { "type": "null" }
+            ]
+          },
           "sourceRecord": {
             "oneOf": [
               { "$ref": "#/components/schemas/SourceRecord" },
@@ -661,7 +696,7 @@
           "fieldSources": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["name", "brand", "category", "ingredients", "structuredIngredients", "ingredientAnalysis", "additives", "allergens", "traces", "precautionaryStatements", "dietaryTags", "labels", "package", "sourceMetadata"],
+            "required": ["name", "brand", "category", "ingredients", "structuredIngredients", "ingredientAnalysis", "additives", "allergens", "traces", "precautionaryStatements", "dietaryTags", "labels", "package", "alcoholByVolume", "regulatoryDisclosure", "sourceMetadata"],
             "properties": {
               "name": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
               "brand": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
@@ -676,6 +711,8 @@
               "dietaryTags": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
               "labels": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
               "package": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "alcoholByVolume": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
+              "regulatoryDisclosure": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] },
               "sourceMetadata": { "oneOf": [{ "$ref": "#/components/schemas/FieldSource" }, { "type": "null" }] }
             }
           },

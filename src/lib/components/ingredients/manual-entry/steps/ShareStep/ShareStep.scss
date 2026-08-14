@@ -1,13 +1,40 @@
 @use "../../../../../../styles/variables" as *;
 
 .share-step__summary,
-.share-step__evidence {
+.share-step__lookup-status,
+.share-step__evidence,
+.share-step__disclosure {
 	display: grid;
 	gap: $app-gap-md;
 	min-width: 0;
 	padding: $app-shell-card-padding;
 	background: $app-shell-surface-soft;
 	border-radius: $app-shell-radius-card;
+}
+
+.share-step__lookup-status {
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: center;
+	color: $app-shell-accent-primary;
+}
+
+.share-step__lookup-status > div {
+	display: grid;
+	gap: $app-gap-xs;
+}
+
+.share-step__lookup-status strong {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-bold;
+}
+
+.share-step__lookup-status p {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-ui;
 }
 
 .share-step__summary strong {
@@ -32,7 +59,8 @@
 }
 
 .share-step__summary p,
-.share-step__evidence p {
+.share-step__evidence p,
+.share-step__disclosure p {
 	margin: 0;
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
@@ -42,6 +70,16 @@
 
 .share-step__evidence p {
 	margin-top: $app-gap-xs;
+}
+
+.share-step__disclosure > div {
+	display: grid;
+	gap: $app-gap-xs;
+}
+
+.share-step__disclosure > div > strong {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-md;
 }
 
 .share-step__macro-row {
@@ -72,7 +110,9 @@
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.share-step__summary,
-	.share-step__evidence {
+	.share-step__lookup-status,
+	.share-step__evidence,
+	.share-step__disclosure {
 		gap: $app-gap-sm;
 		padding: $app-gap-sm;
 	}
@@ -82,7 +122,9 @@
 	}
 
 	.share-step__summary p,
-	.share-step__evidence p {
+	.share-step__lookup-status p,
+	.share-step__evidence p,
+	.share-step__disclosure p {
 		font-size: $app-font-size-xs;
 	}
 

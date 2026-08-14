@@ -10,6 +10,7 @@
 	import BarcodeAutofillSuggestion from "$lib/components/ingredients/manual-entry/BarcodeAutofillSuggestion/BarcodeAutofillSuggestion.svelte";
 	import ManualEntryActions from "$lib/components/ingredients/manual-entry/ManualEntryActions/ManualEntryActions.svelte";
 	import ManualEntryField from "$lib/components/ingredients/manual-entry/ManualEntryField/ManualEntryField.svelte";
+	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import ManualEntryStepLayout from "$lib/components/ingredients/manual-entry/ManualEntryStepLayout/ManualEntryStepLayout.svelte";
 	import ManualEntryToggleRow from "$lib/components/ingredients/manual-entry/ManualEntryToggleRow/ManualEntryToggleRow.svelte";
 	import type { ShareStepProps } from "./types";
@@ -29,6 +30,7 @@
 		shareHelpMessage,
 		shareWithCatalog,
 		barcodeShareMismatch,
+		lookingUpBarcode,
 		validatingBarcodeShare,
 		requiresCatalogEvidence,
 		showOptionalProductImageUpload,
@@ -37,6 +39,11 @@
 		nutritionPhoto,
 		barcodePhoto,
 		imagePlacement,
+		regulatoryDisclosureProfiles,
+		regulatoryDisclosureProfileError,
+		regulatoryDisclosureProfileKey,
+		alcoholByVolumePercent,
+		requiresAlcoholByVolume,
 		saveDestination,
 		error,
 		lastOutcome,
@@ -51,6 +58,8 @@
 		onSubmitBarcodeCorrection,
 		onFrontPhotoChange,
 		onImagePlacementChange,
+		onRegulatoryDisclosureChange,
+		onAlcoholByVolumeChange,
 		onNutritionPhotoChange,
 		onBarcodePhotoChange,
 		onSaveDestinationChange,
@@ -79,49 +88,105 @@
 		{ value: MIX_STORAGE_KEYS.fridge, label: "Fridge" },
 		{ value: MIX_STORAGE_KEYS.shoppingList, label: "Shopping List" },
 	];
+	const regulatoryDisclosureOptions = $derived([
+		{
+			value: "",
+			label: "No label context selected",
+			placeholder: true,
+		},
+		...regulatoryDisclosureProfiles.map((profile) => ({
+			value: profile.key,
+			label: profile.displayName,
+		})),
+	]);
+	const selectedDisclosureProfile = $derived(
+		regulatoryDisclosureProfiles.find(
+			(profile) => profile.key === regulatoryDisclosureProfileKey,
+		) ?? null,
+	);
+	const missingRequiredAlcoholByVolume = $derived(
+		requiresAlcoholByVolume && alcoholByVolumePercent === null,
+	);
 </script>
 
 <ManualEntryStepLayout>
-	<section class="share-step__summary" aria-label="Ingredient summary">
-		<div>
-			<strong>{normalizedName || "Unnamed ingredient"}</strong>
-			<span>{activeCategory}</span>
-		</div>
-		<div class="share-step__macro-row">
-			{#each summaryNutrients as nutrient}
-				<span>
-					<strong>{nutrient.value === null ? "—" : `${nutrient.value.toFixed(1)}${formatUnit(nutrient.unitName)}`}</strong>
-					<small>{nutrient.label}</small>
-				</span>
-			{/each}
-		</div>
-		<p>{optionalNutrientCount} optional nutrients filled</p>
-	</section>
+	{#if lookingUpBarcode}
+		<section
+			class="share-step__lookup-status"
+			aria-labelledby="barcode-product-lookup-title"
+			aria-live="polite"
+			role="status"
+		>
+			<LoadingSpinner
+				size="large"
+				label="Finding product details"
+				decorative
+			/>
+			<div>
+				<strong id="barcode-product-lookup-title">Finding product details</strong>
+				<p>
+					Checking blendCalc and available product sources. New products can
+					take a moment.
+				</p>
+			</div>
+		</section>
+	{:else}
+		<section class="share-step__summary" aria-label="Ingredient summary">
+			<div>
+				<strong>{normalizedName || "Unnamed ingredient"}</strong>
+				<span>{activeCategory}</span>
+			</div>
+			<div class="share-step__macro-row">
+				{#each summaryNutrients as nutrient}
+					<span>
+						<strong>{nutrient.value === null ? "—" : `${nutrient.value.toFixed(1)}${formatUnit(nutrient.unitName)}`}</strong>
+						<small>{nutrient.label}</small>
+					</span>
+				{/each}
+			</div>
+			<p>{optionalNutrientCount} optional nutrients filled</p>
+		</section>
 
-	<ManualEntryValidationList items={validationItems} />
+		<ManualEntryValidationList items={validationItems} />
 
-	{#if barcodeMessage}
-		<StatusMessage message={barcodeMessage} />
+		{#if barcodeMessage}
+			<StatusMessage message={barcodeMessage} />
+		{/if}
+
+		{#if barcodeShareMismatch}
+			<BarcodeAutofillSuggestion
+				name={barcodeShareMismatch.name}
+				brandOwner={barcodeShareMismatch.brandOwner}
+				sourceLabel={barcodeShareMismatch.sourceLabel}
+				heading="Product name does not match this barcode"
+				description={barcodeShareMismatch.message}
+				applyLabel="Use verified information"
+				keepLabel="Remove barcode & keep private"
+				tone="error"
+				onApply={onApplyVerifiedBarcode}
+				onKeepManual={onDetachBarcodeForPrivateSave}
+				extraLabel="Submit a correction"
+				onExtra={onSubmitBarcodeCorrection}
+			/>
+		{/if}
 	{/if}
 
-	{#if barcodeShareMismatch}
-		<BarcodeAutofillSuggestion
-			name={barcodeShareMismatch.name}
-			brandOwner={barcodeShareMismatch.brandOwner}
-			sourceLabel={barcodeShareMismatch.sourceLabel}
-			heading="Product name does not match this barcode"
-			description={barcodeShareMismatch.message}
-			applyLabel="Use verified information"
-			keepLabel="Remove barcode & keep private"
-			tone="error"
-			onApply={onApplyVerifiedBarcode}
-			onKeepManual={onDetachBarcodeForPrivateSave}
-			extraLabel="Submit a correction"
-			onExtra={onSubmitBarcodeCorrection}
-		/>
-	{/if}
-
-	{#if catalogSubmissionOnly}
+	{#if lookingUpBarcode}
+		<ManualEntryToggleRow
+			title="Share with community"
+			description="Available when the product check finishes."
+			disabled
+		>
+			<ToggleSwitch
+				id="custom-ingredient-share-product"
+				name="custom-ingredient-share-product"
+				ariaLabel="Share with community"
+				disabled
+				checked={false}
+				onChange={onShareChange}
+			/>
+		</ManualEntryToggleRow>
+	{:else if catalogSubmissionOnly}
 		<StatusMessage
 			message="Your correction will stay pending until a moderator compares it with the current product and package evidence."
 		/>
@@ -147,6 +212,58 @@
 			{/if}
 		</ManualEntryToggleRow>
 	{/if}
+
+	<section class="share-step__disclosure" aria-labelledby="package-label-context-title">
+		<div>
+			<strong id="package-label-context-title">Package label context</strong>
+			<p>
+				Use this when the package follows an alcohol, kombucha, or permitted
+				sparse-label format. Missing values stay unknown and shared selections
+				are reviewed before they become authoritative.
+			</p>
+		</div>
+		<ManualEntryField forId="custom-ingredient-label-context" label="Label format" optional>
+			<SelectField
+				id="custom-ingredient-label-context"
+				name="custom-ingredient-label-context"
+				value={regulatoryDisclosureProfileKey}
+				options={regulatoryDisclosureOptions}
+				onValueChange={onRegulatoryDisclosureChange}
+			/>
+			{#if selectedDisclosureProfile}
+				<small>{selectedDisclosureProfile.userDescription}</small>
+			{:else if regulatoryDisclosureProfileError}
+				<small>{regulatoryDisclosureProfileError}</small>
+			{/if}
+		</ManualEntryField>
+		{#if alcoholByVolumePercent !== null || requiresAlcoholByVolume}
+			<ManualEntryField
+				forId="custom-ingredient-alcohol-by-volume"
+				label="Alcohol by volume (%)"
+				optional={!requiresAlcoholByVolume}
+				required={requiresAlcoholByVolume}
+			>
+				<NumberInput
+					id="custom-ingredient-alcohol-by-volume"
+					name="custom-ingredient-alcohol-by-volume"
+					value={alcoholByVolumePercent}
+					min={0}
+					max={100}
+					step="0.1"
+					placeholder="ABV shown on the package"
+					required={requiresAlcoholByVolume}
+					onValueChange={(_value, percent) => onAlcoholByVolumeChange(percent)}
+				/>
+				<small>Enter the package's volume percentage. This is not alcohol grams.</small>
+			</ManualEntryField>
+		{/if}
+		{#if missingRequiredAlcoholByVolume}
+			<StatusMessage
+				tone="warning"
+				message="Add the alcohol percentage shown on the package before saving this label context."
+			/>
+		{/if}
+	</section>
 
 	{#if requiresCatalogEvidence}
 		<section class="share-step__evidence" aria-labelledby="product-evidence-title">
@@ -253,7 +370,7 @@
 				? "Submit Correction"
 				: "Add Ingredient"}
 		busy={saving}
-		nextDisabled={automaticImagePlacementBusy}
+		nextDisabled={automaticImagePlacementBusy || missingRequiredAlcoholByVolume}
 		showBack={!catalogSubmissionComplete}
 	/>
 </ManualEntryStepLayout>

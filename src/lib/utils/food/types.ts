@@ -35,6 +35,7 @@ export interface FoodNutrient {
 	source?:
 		| "usda"
 		| "open-food-facts"
+		| "cola-cloud"
 		| "health-canada-cnf"
 		| "uk-cofid"
 		| "fsanz-afcd"
@@ -227,6 +228,18 @@ export type FoodSourceRecordMetadata = {
 	tagSources?: Record<string, string[]>;
 };
 
+export type FoodAlcoholByVolume = {
+	percent: number;
+	valueStatus: "reported" | "reported-zero";
+	basis: "volume-percent";
+	sourceUnit: string;
+};
+
+export type FoodRegulatoryDisclosure = {
+	profileKey: string;
+	evidenceStatus: "source-reported" | "user-reported" | "moderator-reviewed";
+};
+
 export type FoodTrackedField =
 	| "productName"
 	| "brandOwner"
@@ -244,6 +257,8 @@ export type FoodTrackedField =
 	| "ingredientAnalysis"
 	| "additives"
 	| "package"
+	| "alcoholByVolume"
+	| "regulatoryDisclosure"
 	| "sourceMetadata";
 
 export type FoodDescriptiveSourceField =
@@ -388,6 +403,8 @@ export interface FoodItem {
 	dietaryTags?: string[];
 	labels?: string[];
 	packageQuantity?: FoodPackageQuantity;
+	alcoholByVolume?: FoodAlcoholByVolume;
+	regulatoryDisclosure?: FoodRegulatoryDisclosure;
 	sourceMetadata?: FoodSourceRecordMetadata;
 	categories?: string[];
 	categoryOptionId?: string;
@@ -398,7 +415,12 @@ export interface FoodItem {
 	sourceEnrichmentDecisions?: FoodSourceEnrichmentDecision[];
 	customFood?: boolean;
 	barcode?: string;
-	barcodeSource?: "open-food-facts" | "usda" | "manual" | "community";
+	barcodeSource?:
+		| "open-food-facts"
+		| "cola-cloud"
+		| "usda"
+		| "manual"
+		| "community";
 	barcodeProvenance?: FoodBarcodeProvenance;
 	sourceKey?: string;
 	sourceLabel?: string;

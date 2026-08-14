@@ -16,6 +16,7 @@ import {
 	formatServingOrigin,
 } from "$lib/utils/food/servings/servingDisplay";
 import { resolveFoodIdentityType } from "$lib/utils/food/identity/foodIdentity";
+import { getProductRegulatoryDisclosureProfile } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 
 export type ProductInformationRow = {
 	label: string;
@@ -123,6 +124,9 @@ const getProductRows = (food: FoodItem) => {
 		...(food.labels ?? []),
 		...(food.dietaryTags ?? []),
 	]);
+	const disclosureProfile = getProductRegulatoryDisclosureProfile(
+		food.regulatoryDisclosure?.profileKey,
+	);
 
 	return presentRows([
 		{ label: "Brand", value: cleanText(food.brandOwner) },
@@ -139,6 +143,16 @@ const getProductRows = (food: FoodItem) => {
 		},
 		{ label: "Category", value: categories.join(", ") },
 		{ label: "Package size", value: formatPackageQuantity(food) },
+		{
+			label: "Alcohol by volume",
+			value: food.alcoholByVolume
+				? `${formatNumber(food.alcoholByVolume.percent)}% ABV`
+				: "",
+		},
+		{
+			label: "Package label context",
+			value: disclosureProfile?.displayName ?? "",
+		},
 		{
 			label: "Food type",
 			value: formatIdentityType(resolveFoodIdentityType(food)),
@@ -309,6 +323,8 @@ const FIELD_LABELS: Record<FoodProvenanceField, string> = {
 	ingredientAnalysis: "Ingredient analysis",
 	additives: "Additives",
 	package: "Package details",
+	alcoholByVolume: "Alcohol by volume",
+	regulatoryDisclosure: "Package label context",
 	scientificName: "Scientific name",
 	alternateDescription: "Alternate description",
 	preparation: "Preparation",
