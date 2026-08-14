@@ -77,6 +77,9 @@ Required behavior:
   progress control;
 - accept explicit reported zero without treating an empty field as zero;
 - use the searchable DB-backed category picker when no canonical category is known;
+- show the shared spinner inside the barcode input as soon as a complete valid barcode
+  queues a lookup, keep it visible through the request, and block forward navigation
+  until that lookup settles;
 - allow destination choice between Fridge and Shopping List;
 - offer shared-catalog submission only for eligible, explicitly shared product data;
 - automatically orient and frame each newly chosen product image when OCR confidently
@@ -184,6 +187,16 @@ The server returns one result for the current account and food:
 No state is a safety guarantee. A card warning edge means `conflict`; no edge does not
 mean `checked`. Product names, brands, and categories never provide packaged-food
 allergen evidence.
+
+When a DB-backed regulated-alcohol disclosure profile applies, including when an
+explicit positive ABV resolves that profile for an older record, and ingredient,
+allergen, or cross-contact evidence is missing, Nutrition details show one explicit
+alcohol-label gap warning even when the account has no saved food preferences. The
+warning explains that federal alcohol-label rules may omit major-allergen disclosure,
+identifies the unverified safety details, and directs the user to the current package
+and manufacturer. Missing evidence remains `unknown`; it never creates a false
+allergen-free claim or a compact-card conflict edge. Explicit package declarations
+continue through the normal personalized warning path.
 
 When warnings exist, show short plain-language reasons near the main content. Put exact
 source text, policy context, and reporting actions in `Review these warnings`. Do not

@@ -27,6 +27,8 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 	await persistFoodImageAsset({
 		image: draft.image,
 		barcode,
+		productName: draft.name,
+		brandName: draft.brandOwner,
 		sharedProductId:
 			draft.source === "shared-catalog"
 				? draft.sourceReference

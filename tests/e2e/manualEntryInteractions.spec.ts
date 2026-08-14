@@ -174,6 +174,54 @@ test("manual-entry progress tabs perform the same forward validation", async ({
 	await expect(dialog.getByText("Name must be at least 3 characters")).toBeVisible();
 });
 
+test("manual barcode entry shows input-bound progress until lookup finishes", async ({
+	page,
+}) => {
+	let markLookupStarted = () => {};
+	const lookupStarted = new Promise<void>((resolve) => {
+		markLookupStarted = resolve;
+	});
+	let releaseLookup = () => {};
+	const lookupMayFinish = new Promise<void>((resolve) => {
+		releaseLookup = resolve;
+	});
+	await page.route("**/api/products/barcode/04006381333931", async (route) => {
+		markLookupStarted();
+		await lookupMayFinish;
+		await route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({
+				status: "not-found",
+				barcode: "04006381333931",
+			}),
+		});
+	});
+
+	await page.goto("/ingredients/fridge/manual-entry");
+	await waitForAppReady(page);
+
+	const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+	const barcodeInput = dialog.getByLabel("UPC / Barcode");
+	const loadingFrame = barcodeInput.locator("xpath=parent::span");
+	const continueButton = dialog.getByRole("button", { name: "Continue" });
+	await barcodeInput.fill("4006381333931");
+
+	await expect(loadingFrame).toHaveAttribute("aria-busy", "true");
+	await expect(
+		loadingFrame.getByRole("status", { name: "Checking barcode sources" }),
+	).toBeVisible();
+	await expect(continueButton).toBeDisabled();
+
+	await lookupStarted;
+	releaseLookup();
+	await expect(loadingFrame).toHaveAttribute("aria-busy", "false");
+	await expect(
+		loadingFrame.getByRole("status", { name: "Checking barcode sources" }),
+	).toHaveCount(0);
+	await expect(continueButton).toBeEnabled();
+});
+
 test("the DB-backed category picker searches, selects, and restores focus", async ({
 	page,
 }) => {

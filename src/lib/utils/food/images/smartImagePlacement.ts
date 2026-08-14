@@ -12,7 +12,7 @@ import type {
 	SmartImageTextRegion,
 } from "$lib/utils/food/images/types";
 
-export const SMART_IMAGE_PLACEMENT_VERSION = "tesseract-product-label-v2";
+export const SMART_IMAGE_PLACEMENT_VERSION = "tesseract-product-label-v3";
 export const AUTOMATIC_IMAGE_PLACEMENT_MINIMUM_CONFIDENCE = 68;
 
 const MAX_SUGGESTED_ZOOM = Math.min(4.5, IMAGE_PLACEMENT_MAX_ZOOM);
@@ -119,11 +119,38 @@ const buildCandidates = (regions: SmartImageTextRegion[]) => {
 	return candidates;
 };
 
+const getTokenEditDistance = (left: string, right: string) => {
+	const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+	for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+		const current = [leftIndex];
+		for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+			current[rightIndex] = Math.min(
+				current[rightIndex - 1] + 1,
+				previous[rightIndex] + 1,
+				previous[rightIndex - 1] +
+					(left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1),
+			);
+		}
+		previous.splice(0, previous.length, ...current);
+	}
+	return previous[right.length];
+};
+
+const tokensLikelyMatch = (candidate: string, expected: string) => {
+	if (candidate === expected) return true;
+	if (candidate.length < 4 || expected.length < 4) return false;
+	const maximumDistance = Math.max(candidate.length, expected.length) <= 6 ? 1 : 2;
+	return getTokenEditDistance(candidate, expected) <= maximumDistance;
+};
+
 const getTokenOverlap = (candidate: string[], expected: string[]) => {
 	if (expected.length === 0) return 0;
-	const candidateTokens = new Set(candidate);
 	return (
-		expected.filter((token) => candidateTokens.has(token)).length /
+		expected.filter((expectedToken) =>
+			candidate.some((candidateToken) =>
+				tokensLikelyMatch(candidateToken, expectedToken)
+			)
+		).length /
 		expected.length
 	);
 };

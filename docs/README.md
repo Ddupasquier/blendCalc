@@ -1,63 +1,110 @@
-# Documentation Map
+# blendCalc Documentation
 
-This directory separates project rules, implementation contracts, operational
-procedures, and QA so each subject has one maintained home. Follow links to the
-authoritative document instead of copying its guidance into another file.
+This directory contains the maintained rules, contracts, architecture, operations, and
+QA references for blendCalc. Each subject has one owner. Supporting documents should
+link to that owner instead of repeating its content.
 
-The root [`README.md`](../README.md) owns repository setup and the intentional
-developer-facing command index. [`scripts/README.md`](../scripts/README.md) owns script
-organization and script-specific execution guidance.
+The root [README](../README.md) owns repository setup and the stable command guide.
+[Repository Scripts](../scripts/README.md) owns script organization and script-specific
+execution guidance.
 
-## Authority And Ownership
+## Start Here
 
-| Document | Owns | Does not own |
-| --- | --- | --- |
-| [`dev-rules/dev-rules.md`](dev-rules/dev-rules.md) | Mandatory development requirements and non-negotiable boundaries | Implementation inventories, open findings, or feature walkthroughs |
-| [`work-queue.md`](work-queue.md) | The only active implementation and QA priority, order, status, and next-action list | Completed history, settled decisions, or detailed QA repro steps |
-| [`dev-rules/dev-rules-audit.md`](dev-rules/dev-rules-audit.md) | The repeatable method for auditing implementation against the rules | A second active findings list |
-| [`project-structure.md`](project-structure.md) | File, folder, route, test, and script ownership | Visual design or runtime data policy |
-| [`style-guide.md`](style-guide.md) | Ingredients-derived visual system, tokens, component presentation, responsive behavior, and interaction styling | Feature business logic |
-| [`ui-functionality.md`](ui-functionality.md) and [`ui-functionality/`](ui-functionality/) | Short behavior index plus one focused contract for each view and shared flow | Schema inventories, legal terms, or styling token definitions |
-| [`data-architecture.md`](data-architecture.md) | Runtime read/write boundaries, browser state, server ownership, external-source intake, and operational analytics architecture | Table-by-table schema reference |
-| [`supabase-schema.md`](supabase-schema.md) | Navigable table, column, relationship, function, policy, and Storage map | Feature walkthroughs or provider licensing analysis |
-| [`shared-product-catalog.md`](shared-product-catalog.md) | Catalog intake, canonicalization, revision, verification, moderation, and publication lifecycle | Complete API response fields or source licence terms |
-| [`normalized-food-nutrients.md`](normalized-food-nutrients.md) | Nutrient normalization, synchronization, read semantics, and query examples | The complete nutrient table catalog |
-| [`data-source-licensing.md`](data-source-licensing.md) | Source-specific licence, attribution, storage, rendering, and redistribution requirements | Provider payload inventory or catalog workflow |
-| [`api-structures/source-data-inventory.md`](api-structures/source-data-inventory.md) | Active provider capabilities, preserved fields, and intake-module boundaries | Legal interpretation |
-| [`api-structures/catalog-field-lineage.md`](api-structures/catalog-field-lineage.md) | API v1 field population, publication readiness, and public lineage | General catalog moderation workflow |
-| [`api-structures/README.md`](api-structures/README.md) | API v1 endpoint overview, contract status, and generated provider-reference instructions | Field-level lineage details |
-| [`public-api-release.md`](public-api-release.md) | Public API terms-review packet, required decisions, approval evidence, and release procedure | Final approved legal terms or privileged legal advice |
-| [`versioning.md`](versioning.md) | App, API, build, schema, product, placement, and transient-state version streams | Deployment setup |
-| [`authentication.md`](authentication.md) | Auth origins, callbacks, account-security configuration, and auth verification | General RLS/schema reference |
-| [`hosted-security.md`](hosted-security.md) | Production network restrictions, hosted Auth baseline, backups, recovery drills, and incident procedures | Application Auth screen behavior or table-level policies |
-| [`testing.md`](testing.md) | Test-layer ownership, execution stages, parallelism, and efficient verification | Playwright setup, database fixtures, or active QA tasks |
-| [`database-testing.md`](database-testing.md) | Disposable local database setup, commands, safety, and QA mutation procedure | Production migration policy |
-| [`browser-testing.md`](browser-testing.md) | Playwright projects, local authenticated browser setup, visual snapshots, and browser-test ownership | Manual physical-device or assistive-technology sign-off |
-| [`moderation.md`](moderation.md) | Role boundaries, account controls, notification setup, and moderation workflows | Catalog field mapping |
-| [`user-profiles.md`](user-profiles.md) | Profile identity, appearance, avatar storage, and profile privacy | General authentication setup |
-| [`barcode-scanning.md`](barcode-scanning.md) | Supported codes, scanner behavior, scan privacy, and native-scanner direction | Provider enrichment or catalog publication policy |
+| If you are... | Read first |
+| --- | --- |
+| Starting any change | [Development Rules](dev-rules/dev-rules.md), [Work Queue](work-queue.md), then the matching subject documents below |
+| Adding or moving files | [Project Structure](project-structure.md) |
+| Changing UI or behavior | [Style Guide](style-guide.md), [UI Functionality](ui-functionality.md), and the matching view contract |
+| Changing durable data | [Data Architecture](data-architecture.md), [Supabase Schema](supabase-schema.md), and [Database Testing](database-testing.md) |
+| Changing food, catalog, or provider data | [Shared Product Catalog](shared-product-catalog.md), [Source Data Inventory](api-structures/source-data-inventory.md), and [Data Source Licensing](data-source-licensing.md) |
+| Changing API v1 | [API Structures](api-structures/README.md), [Catalog Field Lineage](api-structures/catalog-field-lineage.md), OpenAPI, and versioned TypeScript contracts |
+| Adding or changing tests | [Testing Strategy](testing.md) plus the browser or database guide when applicable |
+| Running or updating QA | [QA Guide](QA/qa-tasks.md), the packet linked by the [Work Queue](work-queue.md), and the completed archive |
 
-## Work And QA
+## Authority
 
-[`work-queue.md`](work-queue.md) is the one place to determine what remains, its
-priority, and what comes next. [`QA/qa-tasks.md`](QA/qa-tasks.md) owns reusable QA setup
-and links to detailed repro packets; [`QA/completed-qa-tasks.md`](QA/completed-qa-tasks.md)
-preserves completed verification history. The development audit defines how verified
-findings enter the work queue, while the ignored recovery checkpoint records only the
-currently interrupted slice. None of these supporting records may become another
-priority or task list.
+Use the most direct source of truth for the question being answered:
 
-## Maintenance
+1. **Executable contracts** own what the application can actually run: migrations and
+   generated database types, route and API types, OpenAPI, `package.json`, and source
+   code.
+2. **Development Rules** own mandatory engineering requirements and the change
+   lifecycle.
+3. **The subject document** owns the maintained explanation of one domain.
+4. **The Work Queue** owns active priority, status, and next action. QA packets provide
+   repro steps and evidence; the audit provides a repeatable review method.
 
-When documentation changes:
+If implementation and documentation disagree, do not invent a compromise. Verify the
+intended contract, then update the owning source and its maintained explanation together.
 
-1. Update the document that owns the subject.
-2. Replace supporting explanations elsewhere with a direct link and only the local
-   context needed to understand that document.
-3. Do not duplicate rules, schema columns, provider terms, API field maps, commands, or
-   QA acceptance criteria.
-4. Keep executable sources authoritative: migrations and generated database types for
-   schema, route types and OpenAPI for API contracts, package files for versions, and
-   application code for current behavior.
-5. Remove superseded statements rather than preserving contradictory historical
-   guidance in active documents.
+## Development And Product Contracts
+
+| Document | Responsibility |
+| --- | --- |
+| [Development Rules](dev-rules/dev-rules.md) | Mandatory workflow, safety, quality, naming, styling, database, API, testing, documentation, and handoff rules |
+| [Development Rules Audit](dev-rules/dev-rules-audit.md) | Repeatable audit method; not a second backlog |
+| [Work Queue](work-queue.md) | The only active implementation and QA priority list |
+| [Project Structure](project-structure.md) | File, folder, component, route, test, script, and documentation ownership |
+| [Style Guide](style-guide.md) | Ingredients-derived visual language, semantic tokens, responsive behavior, motion, and component presentation |
+| [UI Functionality](ui-functionality.md) | Short index for view and shared-flow behavior contracts |
+| [App Shell And Authentication UI](ui-functionality/app-shell-and-authentication.md) | Navigation shell, authentication screens, error pages, and guided-tour behavior |
+| [Ingredients UI](ui-functionality/ingredients.md) | Fridge, Shopping List, search, manual entry, barcode, nutrition details, and ingredient overlays |
+| [Mix UI](ui-functionality/mix.md) | Mix composition, goals, selected foods, warnings, suggestions, and reorganization |
+| [Saved Recipes UI](ui-functionality/saved-recipes.md) | Recipe search, sort, disclosure, load, share, and delete behavior |
+| [Profile UI](ui-functionality/profile.md) | Profile overview, appearance, details, food preferences, tutorial, and elevated actions |
+| [Moderation UI](ui-functionality/moderation.md) | Moderator routes, review surfaces, and privileged interaction behavior |
+
+## Data, Catalog, And API
+
+| Document | Responsibility |
+| --- | --- |
+| [Data Architecture](data-architecture.md) | Runtime reads, writes, caching, browser state, server boundaries, source intake, analytics, and durable-data rules |
+| [Supabase Schema](supabase-schema.md) | Navigable map of tables, columns, relationships, functions, policies, and Storage |
+| [Shared Product Catalog](shared-product-catalog.md) | Product intake, observations, canonical fields, revisions, verification, moderation, and publication lifecycle |
+| [Normalized Food Nutrients](normalized-food-nutrients.md) | Nutrient normalization, synchronization, read semantics, and query examples |
+| [Barcode Scanning](barcode-scanning.md) | Supported codes, scanner behavior, scan privacy, and native-scanner direction |
+| [Data Source Licensing](data-source-licensing.md) | Source-specific licence, attribution, storage, rendering, and redistribution requirements |
+| [Source Data Inventory](api-structures/source-data-inventory.md) | Provider capabilities, preserved fields, and intake ownership |
+| [Catalog Field Lineage](api-structures/catalog-field-lineage.md) | API v1 field population, publication readiness, and public lineage |
+| [API Structures](api-structures/README.md) | API v1 status and endpoints plus generated provider-reference guidance |
+| [Public API Release](public-api-release.md) | Terms-review packet, approval evidence, release requirements, and public-access procedure |
+
+## Accounts, Security, And Operations
+
+| Document | Responsibility |
+| --- | --- |
+| [Authentication](authentication.md) | Origins, callbacks, OAuth, password policy, MFA, Auth configuration, and verification |
+| [Hosted Security](hosted-security.md) | Production network controls, backups, recovery drills, hosted Auth baseline, and incident procedures |
+| [User Profiles](user-profiles.md) | Profile identity, appearance, avatars, privacy, and food-preference persistence |
+| [Moderation](moderation.md) | Roles, account controls, review workflows, notifications, and privileged boundaries |
+| [Versioning](versioning.md) | Independent app, API, build, schema, catalog, image-placement, and browser-state versions |
+
+## Testing And QA
+
+| Document | Responsibility |
+| --- | --- |
+| [Testing Strategy](testing.md) | Test ownership, execution stages, parallelism, and efficient verification |
+| [Browser Testing](browser-testing.md) | Playwright projects, authenticated setup, visual snapshots, and browser-test conventions |
+| [Database Testing](database-testing.md) | Disposable local Supabase, seeded personas, safety boundaries, and pgTAP workflows |
+| [QA Guide](QA/qa-tasks.md) | Shared setup, example data, status notation, and links to active execution packets |
+| [Launch Blockers](QA/launch-blocker-qa-tasks.md) | Detailed release-blocking repros and evidence |
+| [Before Launch](QA/before-launch-qa-tasks.md) | Detailed prelaunch repros and evidence |
+| [Post Launch](QA/post-launch-qa-tasks.md) | Deferred postlaunch repros and evidence |
+| [Completed QA](QA/completed-qa-tasks.md) | Archived tasks with successful evidence |
+
+## Documentation Maintenance
+
+When a subject changes:
+
+1. Update the implementation or executable contract that owns the behavior.
+2. Update the one document that explains that subject.
+3. Replace duplicate explanations elsewhere with a link and only the local context
+   needed by that file.
+4. Keep schema, API, provider, command, QA, and policy details out of unrelated docs.
+5. Remove superseded instructions instead of keeping contradictory history in active
+   documentation.
+6. Keep private credentials, private user data, temporary output, and personal workflow
+   material out of tracked documentation.
+
+Long documents should split only when their sections have genuinely independent owners.
+An established parent path should remain as the short index for any child documents.

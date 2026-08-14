@@ -28,6 +28,8 @@ import type {
 	FoodRegulatoryDisclosure,
 } from "$lib/utils/food/types";
 import { toFiniteNonnegativeNumber } from "$lib/utils/numbers/finiteNumbers";
+import { getStoredImagePlacement } from "$lib/utils/food/images/imagePlacement";
+import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 
 export type ManualEntryBarcodeDraftState = {
 	name: string;
@@ -63,6 +65,7 @@ export type ManualEntryBarcodeDraftState = {
 	sourceMetadata?: FoodSourceRecordMetadata;
 	categories: string[];
 	image?: FoodImageAsset;
+	imagePlacement: ImagePlacementValue;
 	fieldProvenance?: FoodFieldProvenance;
 	checkedBarcodeReferenceKey: string;
 };
@@ -275,6 +278,7 @@ export const getBarcodeDraftState = (
 			].filter(isStringValue)),
 		],
 		image: draft.image,
+		imagePlacement: getStoredImagePlacement(draft.image),
 		fieldProvenance: draft.fieldProvenance
 			? { ...draft.fieldProvenance }
 			: undefined,

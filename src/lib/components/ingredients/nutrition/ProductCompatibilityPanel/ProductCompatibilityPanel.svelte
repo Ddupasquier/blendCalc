@@ -3,6 +3,7 @@
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import {
 		getFoodCompatibilityEvaluationMessage,
+		getRegulatedAlcoholMissingSafetyDetailsMessage,
 	} from "$lib/utils/food/quality/foodCompatibilityEvaluationMessages";
 	import {
 		getUniqueFoodMetadataTags,
@@ -38,6 +39,9 @@
 			? getFoodCompatibilityEvaluationMessage(food.compatibilityEvaluation)
 			: null,
 	);
+	const regulatedAlcoholSafetyMessage = $derived(
+		getRegulatedAlcoholMissingSafetyDetailsMessage(food),
+	);
 	const regulatoryContext = $derived(
 		food.compatibilityEvaluation?.regulatoryContext ?? null,
 	);
@@ -46,6 +50,7 @@
 	);
 	const showEvaluationMessage = $derived(Boolean(
 		evaluationMessage &&
+		!regulatedAlcoholSafetyMessage &&
 		(
 			food.compatibilityEvaluation?.status !== "conflict" ||
 			(food.preferenceWarnings ?? []).length === 0
@@ -58,10 +63,11 @@
 	));
 	const hasSummaryContent = $derived(
 		Boolean(
+			regulatedAlcoholSafetyMessage ||
 			showEvaluationMessage ||
-				allergenDisplay?.contains.length ||
-					allergenDisplay?.mayContain.length ||
-					precautionaryStatements.length ||
+			allergenDisplay?.contains.length ||
+			allergenDisplay?.mayContain.length ||
+			precautionaryStatements.length ||
 				dietaryLabels.length ||
 				dietaryConsiderations.length,
 		),
@@ -70,6 +76,14 @@
 
 {#if showSummary && hasSummaryContent}
 	<div class="product-compatibility-panel">
+		{#if regulatedAlcoholSafetyMessage}
+			<StatusMessage
+				tone={regulatedAlcoholSafetyMessage.tone}
+				title={regulatedAlcoholSafetyMessage.title}
+				message={regulatedAlcoholSafetyMessage.message}
+			/>
+		{/if}
+
 		{#if evaluationMessage && showEvaluationMessage}
 			<StatusMessage
 				tone={evaluationMessage.tone}
