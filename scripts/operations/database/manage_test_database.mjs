@@ -827,7 +827,7 @@ const seedModerationFixtures = async (admin, submittingUserId) => {
 		]),
 	);
 	const evidenceImage = await readFile(
-		new URL("../../../static/og-image.png", import.meta.url),
+		new URL("../../../static/social-preview.png", import.meta.url),
 	);
 	for (const path of Object.values(completeEvidencePaths)) {
 		requireSuccessfulResult(

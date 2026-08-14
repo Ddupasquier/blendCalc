@@ -1,0 +1,101 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+	<title>blendCalc social preview</title>
+	<desc>blendCalc branding beside ingredient, nutrition goal, and nutrient shape visuals.</desc>
+	<defs>
+		<linearGradient id="canvas" x1="94" y1="44" x2="1112" y2="630" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#F8F8FB"/>
+			<stop offset="1" stop-color="#EEF6F1"/>
+		</linearGradient>
+		<linearGradient id="actualShape" x1="786" y1="159" x2="1044" y2="408" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#57A773" stop-opacity="0.52"/>
+			<stop offset="0.58" stop-color="#57A773" stop-opacity="0.2"/>
+			<stop offset="1" stop-color="#F4B942" stop-opacity="0.32"/>
+		</linearGradient>
+		<filter id="panelShadow" x="640" y="34" width="550" height="570" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+			<feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#1A1A2E" flood-opacity="0.12"/>
+		</filter>
+	</defs>
+
+	<rect width="1200" height="630" fill="url(#canvas)"/>
+	<circle cx="1160" cy="28" r="220" fill="#E8F5EE"/>
+	<circle cx="42" cy="650" r="205" fill="#F5E9D1" fill-opacity="0.76"/>
+	<path d="M0 514C168 424 356 439 522 540C612 595 700 620 804 630H0V514Z" fill="#E8F5EE" fill-opacity="0.66"/>
+
+	<g transform="translate(78 64)">
+		<rect width="58" height="58" rx="16" fill="#57A773"/>
+		<path d="M17 20H41L38.6 48H19.4L17 20Z" fill="#F5F2EB" stroke="#1A1A2E" stroke-width="2.8"/>
+		<path d="M19.5 28H38.5L37 44H21L19.5 28Z" fill="#F7A6A1"/>
+		<path d="M20 12H43M33 20L38 12M15 20H43" stroke="#1A1A2E" stroke-width="2.8" stroke-linecap="round"/>
+	</g>
+	<text x="154" y="106" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="800" letter-spacing="-1.6">blendCalc</text>
+
+	<text x="80" y="182" fill="#57A773" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="800" letter-spacing="2.4">FOOD &amp; NUTRITION AWARENESS</text>
+	<text x="78" y="258" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800" letter-spacing="-2.2">Understand ingredients.</text>
+	<text x="78" y="325" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800" letter-spacing="-2.2">Build with your goals.</text>
+	<text x="80" y="378" fill="#70758D" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="600">Explore detailed nutrition, shape recipes, and keep</text>
+	<text x="80" y="412" fill="#70758D" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="600">the foods that work for you.</text>
+
+	<g transform="translate(80 464)">
+		<rect width="156" height="48" rx="24" fill="#E8F5EE"/>
+		<circle cx="25" cy="24" r="9" fill="#57A773"/>
+		<path d="M21 25C25 17 31 17 33 16C32 24 28 29 21 29" stroke="#F8F8FB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+		<text x="45" y="31" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="800">Ingredients</text>
+	</g>
+	<g transform="translate(246 464)">
+		<rect width="190" height="48" rx="24" fill="#EEF1F6"/>
+		<circle cx="25" cy="24" r="9" fill="#347B99"/>
+		<path d="M21 27L24 22L27 25L31 18" stroke="#F8F8FB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+		<text x="45" y="31" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="800">Nutrition goals</text>
+	</g>
+	<g transform="translate(446 464)">
+		<rect width="166" height="48" rx="24" fill="#FFF2D9"/>
+		<circle cx="25" cy="24" r="9" fill="#F4B942"/>
+		<path d="M21 19H29V29H21V19ZM23 19V23H27V19" stroke="#1A1A2E" stroke-width="1.6" stroke-linejoin="round"/>
+		<text x="45" y="31" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="800">Saved recipes</text>
+	</g>
+
+	<g filter="url(#panelShadow)">
+		<rect x="684" y="56" width="438" height="518" rx="36" fill="#FFFFFF"/>
+		<rect x="684.75" y="56.75" width="436.5" height="516.5" rx="35.25" stroke="#1A1A2E" stroke-opacity="0.08" stroke-width="1.5"/>
+	</g>
+
+	<g transform="translate(714 84)">
+		<circle cx="18" cy="18" r="18" fill="#E8F5EE"/>
+		<path d="M11 21C14 12 22 11 27 10C26 19 21 25 12 26M18 18L13 26" stroke="#57A773" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+		<text x="48" y="17" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="800">Nutrient shape</text>
+		<text x="48" y="38" fill="#70758D" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600">Compare your recipe with your goals</text>
+	</g>
+
+	<g transform="translate(724 142)">
+		<line x1="0" y1="16" x2="24" y2="16" stroke="#8396B5" stroke-width="2.5" stroke-dasharray="4 5"/>
+		<text x="31" y="21" fill="#70758D" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700">Goal</text>
+		<line x1="91" y1="16" x2="115" y2="16" stroke="#57A773" stroke-width="3"/>
+		<text x="122" y="21" fill="#70758D" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700">Current</text>
+	</g>
+
+	<g>
+		<polygon points="903,175 1016,240 1016,370 903,435 790,370 790,240" fill="#FAFBFC" stroke="#CCD5E2" stroke-width="3"/>
+		<polygon points="903,219 978,262 978,348 903,391 828,348 828,262" stroke="#DCE2E8" stroke-width="2"/>
+		<polygon points="903,262 941,284 941,326 903,348 865,326 865,284" stroke="#E7EBEF" stroke-width="2"/>
+		<path d="M903 175V435M790 240L1016 370M1016 240L790 370" stroke="#E0E5EA" stroke-width="2"/>
+		<polygon points="903,211 984,258 992,356 903,383 831,347 816,255" fill="none" stroke="#8396B5" stroke-width="3" stroke-dasharray="6 7" stroke-linejoin="round"/>
+		<polygon points="903,235 1001,249 974,346 903,408 839,342 806,270" fill="url(#actualShape)" stroke="#57A773" stroke-width="4" stroke-linejoin="round"/>
+		<path d="M903 235L1001 249L974 346" stroke="#D86B60" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+		<path d="M974 346L903 408" stroke="#F4B942" stroke-width="4" stroke-linecap="round"/>
+
+		<text x="903" y="157" text-anchor="middle" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="800">Protein</text>
+		<text x="1030" y="232" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="800">Carbs</text>
+		<text x="1028" y="387" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="800">Fiber</text>
+		<text x="903" y="460" text-anchor="middle" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="800">Fat</text>
+		<text x="776" y="387" text-anchor="end" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="800">Sugars</text>
+		<text x="776" y="232" text-anchor="end" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="800">Calories</text>
+	</g>
+
+	<g transform="translate(712 496)">
+		<rect width="382" height="54" rx="18" fill="#F8F8FB"/>
+		<circle cx="28" cy="27" r="16" fill="#E8F5EE"/>
+		<path d="M23 30C26 22 32 21 35 20C34 27 30 32 23 34M28 27L24 34" stroke="#57A773" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+		<text x="56" y="24" fill="#1A1A2E" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="800">Spinach, Raw + Greek Yogurt + Oats</text>
+		<text x="56" y="43" fill="#70758D" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="600">Ingredient details become a recipe you can revisit</text>
+	</g>
+</svg>

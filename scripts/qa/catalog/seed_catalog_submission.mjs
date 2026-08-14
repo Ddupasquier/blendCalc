@@ -115,7 +115,7 @@ const createFood = (barcode, mode) => ({
 
 const uploadQaEvidence = async (userId) => {
 	const image = await readFile(
-		new URL("../../../static/og-image.png", import.meta.url),
+		new URL("../../../static/social-preview.png", import.meta.url),
 	);
 	const uploadId = randomUUID();
 	const paths = {};
