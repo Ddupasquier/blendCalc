@@ -27,6 +27,7 @@ coalescing, caching, request counts, and source-policy checks.
 | --- | --- | --- |
 | USDA FoodData Central | Exact GTIN, source food id/type, names, brand, ingredients, nutrients, units, serving size, household serving, package weight, market country, publication/availability/update/discontinued dates, and categories | `src/lib/server/products/sources/usdaBarcodeProduct.server.ts` |
 | Open Food Facts | Exact GTIN, names, brand, raw and recursive structured ingredients, ingredient analysis, additives, explicit allergens, explicit traces, labels, categories, nutrients, serving text/weight/volume, package quantity, package images, language, market countries, record/schema revisions, source timestamps, completeness, quality/obsolete state, and tag-source metadata | `src/lib/server/products/sources/openFoodFactsBarcodeProduct.server.ts` |
+| COLA Cloud | Exact UPC/EAN match to U.S. TTB approvals, label name, brand, TTB product type/class/origin, explicit ABV, package volume, approval/update dates, and TTB record identity | `src/lib/server/products/sources/colaCloudBarcodeProduct.server.ts`; server-key trial only, with canonical storage and API redistribution blocked |
 | Canadian Nutrient File 2026 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/nutrition/import_cnf_2026.mjs` |
 | UK CoFID 2021 | Generic-food identity, groups, preparations, nutrients, units, measures, release metadata | `scripts/imports/nutrition/import_cofid_2021.mjs` |
 | User nutrition-label OCR | Text and nutrient candidates from a user-provided label | Tesseract runs on the client; no value is accepted until the user confirms it; shared-submission images remain private evidence |
@@ -49,7 +50,10 @@ USDA exact-barcode lookup normally uses one bounded search plus one cached/coale
 detail read. The detail record is retained because it adds source category and
 availability metadata that search results omit. Open Food Facts remains the field-level
 supplement for missing package images, ingredients, allergens, traces, labels,
-categories, servings, and nutrition rather than a whole-product replacement.
+categories, servings, nutrition, and source-reported ABV rather than a whole-product
+replacement. COLA Cloud is queried only as a final exact-barcode U.S. alcohol fallback
+while ABV remains missing. Its barcode response selects one newest approval before one
+dependent detail request; model-generated categories and descriptions are ignored.
 
 Run `node scripts/audits/food-sources/audit_generic_dataset_contribution.mjs` to measure
 CNF and CoFID records, nutrients, measures, exact identifiers, and a balanced search

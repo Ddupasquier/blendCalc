@@ -455,6 +455,9 @@ Notes:
 
 - Source names shown by barcode lookup come from this table. Runtime lookup code does
   not invent vendor labels.
+- `cola-cloud` is an enabled server-key trial for exact U.S. alcohol-label lookup, but
+  both canonical storage and API redistribution remain disabled pending a separate
+  rights review and representative benchmark.
 - Source rows are maintained by the reference-data seed script, with API-observed
   provenance.
 - `api_redistribution_allowed` is the separate API-publication decision. API v1 never
