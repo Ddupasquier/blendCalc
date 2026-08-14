@@ -20,7 +20,7 @@ each individual source and asset licence.
 | Area | Sections |
 | --- | --- |
 | Decision model | [Compliance model](#compliance-model) and [status summary](#status-summary) |
-| Food data | [USDA](#usda-fooddata-central), [Open Food Facts](#open-food-facts), [CNF](#canadian-nutrient-file-2026), [CoFID](#uk-cofid-2021), and [Australian data](#australian-food-composition-database-release-3) |
+| Food data | [USDA](#usda-fooddata-central), [Open Food Facts](#open-food-facts), [COLA Cloud](#cola-cloud), [CNF](#canadian-nutrient-file-2026), [CoFID](#uk-cofid-2021), and [Australian data](#australian-food-composition-database-release-3) |
 | Standards and tools | [UCUM](#ucum-unit-standard), [GS1 Digital Link](#gs1-digital-link), and [label OCR](#nutrition-label-ocr-and-tesseractjs) |
 | Images and community data | [Product images](#product-images), [community submissions](#community-and-user-label-data), and [inactive sources](#retired-or-inactive-sources) |
 | Release work | [Known blockers](#known-gaps-and-release-blockers), [source changes](#adding-or-changing-a-source), [public API gate](#public-api-release-gate), and [repository locations](#authoritative-repository-locations) |
@@ -60,6 +60,7 @@ future public API.
 | --- | --- | --- | --- |
 | USDA FoodData Central | Runtime barcode/product data and nutrition | CC0 1.0/public domain | Canonical and API reuse allowed |
 | Open Food Facts | Runtime barcode lookup, licensed cache, package images | ODbL/Database Contents Licence; images under CC BY-SA | Product fields are excluded from API v1; individually licensed images remain eligible |
+| COLA Cloud | Optional exact-barcode U.S. alcohol-label lookup | Proprietary API terms over public TTB records and provider enrichments | Server-only trial; canonical storage, label-image use, and API redistribution blocked |
 | Canadian Nutrient File 2026 | Imported generic-food composition data | Open Government Licence – Canada | Canonical and API reuse approved in the registry with attribution |
 | UK CoFID 2021 | Imported generic-food composition data | Open Government Licence v3.0 | Canonical and API reuse approved in the registry with attribution |
 | Australian Food Composition Database Release 3 | Candidate generic-food dataset | FSANZ agreement based on CC BY-SA 3.0 Australia | Import and canonical use blocked |
@@ -163,6 +164,53 @@ Before public API release, blendCalc must choose and implement one model:
 Until that decision is implemented, Open Food Facts-backed canonical fields remain
 withheld by the database publication gate. Their existence in `shared_products` does
 not silently authorize or expose them.
+
+## COLA Cloud
+
+### Requirements And Limitations
+
+- COLA Cloud provides an authenticated API over the U.S. TTB COLA Public Registry and
+  adds proprietary normalization, barcode extraction, OCR, and model-generated
+  enrichments.
+- The provider states that the underlying U.S. government records are public-domain
+  source material. That does not automatically grant rights to copy or redistribute
+  COLA Cloud's compiled database, OCR output, normalized fields, API responses, or
+  hosted image delivery.
+- Barcode coverage is approximately 30% of COLA records because a barcode must be
+  visible in the submitted label artwork. A miss is not proof that a product lacks a
+  U.S. approval.
+- ABV may come from structured source material or automated label extraction. Automated
+  extraction can be wrong, so an exact barcode and explicit numeric value remain
+  reviewable evidence rather than automatic verification.
+- The self-service API uses a server-only key and plan-based monthly and per-minute
+  quotas. The key must never reach browser code.
+
+Official references:
+
+- [COLA Cloud API](https://colacloud.us/api)
+- [API barcode lookup](https://docs.colacloud.us/api-reference/barcodes/lookup-by-barcode)
+- [Data provenance and limitations](https://docs.colacloud.us/trust/data-provenance)
+- [COLA Cloud terms](https://colacloud.us/terms)
+- [TTB Public COLA Registry](https://www.ttb.gov/regulated-commodities/labeling/cola-public-registry)
+
+### Current blendCalc Handling
+
+- `product_data_sources.cola-cloud` is an enabled trial lookup source only when the
+  server has `COLA_CLOUD_API_KEY`.
+- Runtime lookup uses an exact normalized barcode, selects the newest returned approval,
+  and fetches no more than one selected detail record.
+- Only explicitly returned ABV, volume, identity, approval date, and TTB reference are
+  eligible as temporary field-level lookup evidence. Probabilistic categories,
+  descriptions, tasting notes, and other model-generated fields are not accepted.
+- Provider responses are not promoted into the canonical catalog, exposed through API
+  v1, or used as public label images. `canonical_storage_allowed` and
+  `api_redistribution_allowed` remain false.
+- A one-record smoke check proves endpoint compatibility only. A representative
+  cross-source benchmark and written storage/redistribution review remain required
+  before changing provider priority or retention.
+
+Current status: suitable as a guarded U.S. alcohol fallback, not as a global alcohol
+catalog or public blendCalc API source.
 
 ## Canadian Nutrient File 2026
 
