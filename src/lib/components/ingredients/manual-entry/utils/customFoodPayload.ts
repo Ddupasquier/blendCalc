@@ -14,6 +14,8 @@ import type {
 	FoodSourceRecordMetadata,
 	FoodStructuredIngredient,
 	FoodServing,
+	FoodAlcoholByVolume,
+	FoodRegulatoryDisclosure,
 } from "$lib/utils/food/types";
 import { buildSaveNutrients } from "$lib/components/ingredients/manual-entry/utils/nutrientValues";
 
@@ -46,6 +48,8 @@ export type ManualEntryCustomFoodPayload = {
 	dietaryTags: string[];
 	labels: string[];
 	packageQuantity?: FoodPackageQuantity;
+	alcoholByVolume?: FoodAlcoholByVolume;
+	regulatoryDisclosure?: FoodRegulatoryDisclosure;
 	sourceMetadata?: FoodSourceRecordMetadata;
 	activeCategory: string;
 	categoryOptionId: string;
@@ -145,6 +149,8 @@ export const createManualEntryCustomFood = (
 		dietaryTags: payload.dietaryTags,
 		labels: payload.labels,
 		packageQuantity: payload.packageQuantity,
+		alcoholByVolume: payload.alcoholByVolume,
+		regulatoryDisclosure: payload.regulatoryDisclosure,
 		sourceMetadata:
 			payload.barcode && !payload.customFood
 				? payload.sourceMetadata

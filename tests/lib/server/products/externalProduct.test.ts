@@ -340,4 +340,64 @@ describe("external barcode product lookup", () => {
 		expect(usda).toHaveBeenCalledOnce();
 		expect(openFoodFacts).toHaveBeenCalledOnce();
 	});
+
+	it("uses COLA Cloud only after USDA and Open Food Facts have no match", async () => {
+		const providerOrder: string[] = [];
+		const colaCloudDraft = makeDraft("cola-cloud", undefined, {
+			name: "Hard Lemonade",
+			brandOwner: "Trillium",
+			nutrients: [],
+			reportedNutrientIds: [],
+			alcoholByVolume: {
+				percent: 6.5,
+				valueStatus: "reported",
+				basis: "volume-percent",
+				sourceUnit: "% ABV",
+			},
+			regulatoryDisclosure: {
+				profileKey: "us-ttb-alcohol-beverage-v1",
+				evidenceStatus: "source-reported",
+			},
+			sourceLabel: "COLA Cloud",
+			sourceReference: "26188001000045",
+		});
+
+		const result = await lookupExternalBarcodeProduct(colaCloudDraft.barcode, {
+			usda: vi.fn(async () => {
+				providerOrder.push("usda");
+				return null;
+			}),
+			openFoodFacts: vi.fn(async () => {
+				providerOrder.push("open-food-facts");
+				return null;
+			}),
+			colaCloud: vi.fn(async () => {
+				providerOrder.push("cola-cloud");
+				return colaCloudDraft;
+			}),
+			getProductReferenceCatalog,
+		});
+
+		expect(result).toEqual(colaCloudDraft);
+		expect(providerOrder).toEqual([
+			"usda",
+			"open-food-facts",
+			"cola-cloud",
+		]);
+	});
+
+	it("does not spend COLA Cloud quota when an existing provider matches", async () => {
+		const openFoodFactsDraft = makeDraft("open-food-facts");
+		const colaCloud = vi.fn();
+
+		const result = await lookupExternalBarcodeProduct(openFoodFactsDraft.barcode, {
+			usda: vi.fn().mockResolvedValue(null),
+			openFoodFacts: vi.fn().mockResolvedValue(openFoodFactsDraft),
+			colaCloud,
+			getProductReferenceCatalog,
+		});
+
+		expect(result).toEqual(openFoodFactsDraft);
+		expect(colaCloud).not.toHaveBeenCalled();
+	});
 });

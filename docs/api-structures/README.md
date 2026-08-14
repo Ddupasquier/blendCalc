@@ -38,6 +38,10 @@ fail remain in the catalog for enrichment or review but are absent from API v1 r
 Numeric zero is accepted only when its stored state is explicitly `reported-zero`;
 missing never becomes zero.
 
+Product responses include nullable explicit alcohol-by-volume and package-disclosure
+fields only when the approved canonical revision has redistributable selected-field
+provenance. Restricted temporary provider evidence is never substituted into API v1.
+
 [`catalog-field-lineage.md`](./catalog-field-lineage.md) owns the canonical read path,
 publication gate, product/category response mapping, missing-value semantics, revision
 meaning, and moderator evidence boundary. The OpenAPI document and

@@ -96,6 +96,8 @@ export const getMissingBarcodeProductFields = (
 	ingredientAnalysis: !hasIngredientAnalysis(draft.ingredientAnalysis),
 	additives: !hasValues(draft.additives),
 	package: !draft.packageQuantity,
+	alcoholByVolume: !draft.alcoholByVolume,
+	regulatoryDisclosure: !draft.regulatoryDisclosure,
 	sourceMetadata: !draft.sourceMetadata,
 });
 
@@ -122,7 +124,11 @@ export const needsBarcodeProductSupplement = (
 	const plan = getBarcodeProductSupplementPlan(draft, requiredNutrientIds);
 	return plan.missingNutrientIds.length > 0 ||
 		Object.entries(plan).some(
-			([field, missing]) => field !== "missingNutrientIds" && missing === true,
+			([field, missing]) =>
+				field !== "missingNutrientIds" &&
+				field !== "alcoholByVolume" &&
+				field !== "regulatoryDisclosure" &&
+				missing === true,
 		);
 };
 
@@ -267,6 +273,8 @@ export const mergeMissingBarcodeProductFields = (
 	const useSupplementAdditives = supplementedFields.has("additives");
 	const useSupplementPackage = supplementedFields.has("package");
 	const useSupplementSourceMetadata = supplementedFields.has("sourceMetadata");
+	const useSupplementAlcoholByVolume = supplementedFields.has("alcoholByVolume");
+	const useSupplementRegulatoryDisclosure = supplementedFields.has("regulatoryDisclosure");
 	if (
 		!useSupplementProductName &&
 		!useSupplementBrandOwner &&
@@ -284,7 +292,9 @@ export const mergeMissingBarcodeProductFields = (
 		!useSupplementIngredientAnalysis &&
 		!useSupplementAdditives &&
 		!useSupplementPackage &&
-		!useSupplementSourceMetadata
+		!useSupplementSourceMetadata &&
+		!useSupplementAlcoholByVolume &&
+		!useSupplementRegulatoryDisclosure
 	) {
 		return primary;
 	}
@@ -372,6 +382,12 @@ export const mergeMissingBarcodeProductFields = (
 	if (useSupplementSourceMetadata) {
 		provenance = withFieldSource(provenance, "sourceMetadata", supplement);
 	}
+	if (useSupplementAlcoholByVolume) {
+		provenance = withFieldSource(provenance, "alcoholByVolume", supplement);
+	}
+	if (useSupplementRegulatoryDisclosure) {
+		provenance = withFieldSource(provenance, "regulatoryDisclosure", supplement);
+	}
 
 	return {
 		...primary,
@@ -426,6 +442,12 @@ export const mergeMissingBarcodeProductFields = (
 			packageQuantity:
 				primary.packageQuantity ?? supplement.packageQuantity,
 			sourceMetadata: primary.sourceMetadata ?? supplement.sourceMetadata,
+			alcoholByVolume: useSupplementAlcoholByVolume
+				? supplement.alcoholByVolume
+				: primary.alcoholByVolume,
+			regulatoryDisclosure: useSupplementRegulatoryDisclosure
+				? supplement.regulatoryDisclosure
+				: primary.regulatoryDisclosure,
 		image: useSupplementImage
 			? supplement.image
 			: primary.image,

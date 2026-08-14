@@ -29,6 +29,10 @@ the baseline for other views.
 - Use the browser-native detector when available and the supported scanner fallback
   otherwise.
 - Look up the normalized identifier immediately after a valid scan.
+- While a scanned identifier is being resolved, replace the pre-share summary,
+  validation, and source result area with one announced shared-spinner status. Keep
+  `Share with community` visible but disabled until the check finishes so the form
+  never appears frozen or prematurely shareable.
 - On success, fill the review form and move focus to the next required decision.
 - On failure or incomplete data, preserve the user's work and offer manual completion.
 - Never leave the user in an error-only state.
@@ -44,6 +48,15 @@ Preserve every source-supported field that the application can legally retain:
 - product image source, licence, attribution, role, and approved placement;
 - source record identifiers, dates, quality metadata, confidence, and field lineage;
 - private package, nutrition-label, and barcode evidence when moderation requires it.
+
+Sparse labels remain honest. A nutrient omitted from an alcohol, kombucha, exempt, or
+otherwise limited package disclosure stays unknown; it never becomes reported zero or
+an estimated value. Users may save the available facts and complete only fields the
+package actually reports. Reviewed database-backed disclosure profiles select the
+applicable completeness behavior instead of assuming every packaged product follows the
+same label requirements. Regulated alcohol labels require an explicit package ABV;
+case-specific and unknown contexts remain reviewable rather than being declared
+complete.
 
 A moderator-approved rotation corrects both detailed and card images. Card crop, zoom,
 and position remain card-only placement.

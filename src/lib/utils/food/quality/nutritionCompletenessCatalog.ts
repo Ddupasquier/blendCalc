@@ -35,8 +35,31 @@ export type NutritionCompletenessProfile = {
 	nutrients: NutritionCompletenessNutrient[];
 };
 
+export type ProductRegulatoryDisclosureProfile = {
+	key: string;
+	displayName: string;
+	userDescription: string;
+	disclosureKind:
+		| "standard-nutrition"
+		| "regulated-alcohol"
+		| "permitted-sparse"
+		| "case-specific"
+		| "unknown";
+	nutritionEvaluationMode: "profile" | "sparse-accepted" | "case-specific" | "unknown";
+	nutritionProfileKey: string | null;
+	regionCode: string;
+	authorityName: string;
+	requiresAlcoholByVolume: boolean;
+	requiresModeratorReview: boolean;
+	userSelectable: boolean;
+	sourceReference: string;
+	sortOrder: number;
+	isDefault: boolean;
+};
+
 export type NutritionCompletenessCatalog = {
 	profiles: NutritionCompletenessProfile[];
+	regulatoryDisclosureProfiles?: ProductRegulatoryDisclosureProfile[];
 };
 
 let configuredCatalog: NutritionCompletenessCatalog = { profiles: [] };
@@ -75,6 +98,17 @@ export const getNutritionCompletenessProfile = (
 	food: FoodItem,
 	catalog: NutritionCompletenessCatalog = configuredCatalog,
 ) => {
+	const disclosureProfile = getProductRegulatoryDisclosureProfile(
+		food.regulatoryDisclosure?.profileKey,
+		catalog,
+	);
+	if (disclosureProfile) {
+		if (disclosureProfile.nutritionEvaluationMode !== "profile") return null;
+		return catalog.profiles.find(
+			(profile) => profile.key === disclosureProfile.nutritionProfileKey,
+		) ?? null;
+	}
+
 	const scope = getNutritionCompletenessScope(food);
 	if (scope === "unknown") return null;
 	const scopedProfiles = catalog.profiles.filter(
@@ -90,3 +124,11 @@ export const getNutritionCompletenessProfile = (
 		scopedProfiles[0] ??
 		null;
 };
+
+export const getProductRegulatoryDisclosureProfile = (
+	profileKey: string | null | undefined,
+	catalog: NutritionCompletenessCatalog = configuredCatalog,
+) =>
+	catalog.regulatoryDisclosureProfiles?.find(
+		(profile) => profile.key === profileKey,
+	) ?? null;

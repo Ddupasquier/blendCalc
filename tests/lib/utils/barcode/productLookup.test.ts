@@ -8,6 +8,62 @@ import { NUTRIENT_IDS } from "$lib/utils/food/types";
 import { productReferenceCatalogFixture } from "../../../fixtures/referenceCatalogs";
 
 describe("barcode product mapping", () => {
+	it("keeps Open Food Facts ABV separate from nutrient math", () => {
+		const draft = mapOpenFoodFactsProduct(
+			{
+				product_name: "Example lager",
+				nutriments: {
+					alcohol_100g: 4.5,
+					alcohol_unit: "% vol",
+					"energy-kcal_100g": 42,
+				},
+			},
+			"75041670",
+			productReferenceCatalogFixture,
+		);
+
+		expect(draft?.alcoholByVolume).toEqual({
+			percent: 4.5,
+			valueStatus: "reported",
+			basis: "volume-percent",
+			sourceUnit: "% vol",
+		});
+		expect(draft?.fieldProvenance?.alcoholByVolume).toMatchObject({
+			source: "open-food-facts",
+			sourceReference: "00000075041670",
+		});
+		expect(draft?.nutrients).not.toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ sourceNutrientKey: "alcohol" }),
+			]),
+		);
+	});
+
+	it("distinguishes reported zero ABV and rejects unknown alcohol units", () => {
+		const alcoholFree = mapOpenFoodFactsProduct(
+			{
+				product_name: "Alcohol-free example",
+				nutriments: { alcohol_value: 0, alcohol_unit: "% vol" },
+			},
+			"3080216055428",
+			productReferenceCatalogFixture,
+		);
+		const wrongUnit = mapOpenFoodFactsProduct(
+			{
+				product_name: "Ambiguous example",
+				nutriments: { alcohol_100g: 5, alcohol_unit: "g" },
+			},
+			"3080216052885",
+			productReferenceCatalogFixture,
+		);
+
+		expect(alcoholFree?.alcoholByVolume).toMatchObject({
+			percent: 0,
+			valueStatus: "reported-zero",
+		});
+		expect(wrongUnit?.alcoholByVolume).toBeUndefined();
+	});
+
 	it("converts Open Food Facts per-100g values to the label serving", () => {
 		const draft = mapOpenFoodFactsProduct(
 			{

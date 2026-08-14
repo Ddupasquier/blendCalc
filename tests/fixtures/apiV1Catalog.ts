@@ -39,6 +39,8 @@ export const apiV1ProductFixture: ApiV1Product = {
 		labels: [],
 	},
 	packageQuantity: null,
+	alcoholByVolume: null,
+	regulatoryDisclosure: null,
 	sourceRecord: null,
 	nutrients: [],
 	servings: [],
@@ -90,6 +92,8 @@ export const apiV1ProductFixture: ApiV1Product = {
 		dietaryTags: null,
 		labels: null,
 		package: null,
+		alcoholByVolume: null,
+		regulatoryDisclosure: null,
 		sourceMetadata: null,
 	},
 	revision: {

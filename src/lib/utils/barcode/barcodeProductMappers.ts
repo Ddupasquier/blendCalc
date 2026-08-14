@@ -20,6 +20,8 @@ import {
 	type FoodSourceRecordMetadata,
 	type FoodStructuredIngredient,
 	type FoodServing,
+	type FoodAlcoholByVolume,
+	type FoodRegulatoryDisclosure,
 } from "$lib/utils/food/types";
 import { OPEN_FOOD_FACTS_IMAGE_LICENSE } from "$lib/utils/food/images/foodImages";
 import { createFullImagePlacement } from "$lib/utils/food/images/imagePlacement";
@@ -143,6 +145,8 @@ export type BarcodeProductDraft = {
 	dietaryTags?: string[];
 	labels?: string[];
 	packageQuantity?: FoodPackageQuantity;
+	alcoholByVolume?: FoodAlcoholByVolume;
+	regulatoryDisclosure?: FoodRegulatoryDisclosure;
 	sourceMetadata?: FoodSourceRecordMetadata;
 	categories?: string[];
 	resolvedCategory?: string;
@@ -156,7 +160,7 @@ export type BarcodeProductDraft = {
 	image?: FoodImageAsset;
 	fieldProvenance?: FoodFieldProvenance;
 	volumeEquivalent?: BarcodeVolumeEquivalent;
-	source: "open-food-facts" | "usda" | "shared-catalog";
+	source: "open-food-facts" | "cola-cloud" | "usda" | "shared-catalog";
 	sourceLabel: string;
 	sourceReference?: string;
 	sourceKey?: string;
@@ -199,6 +203,33 @@ const toOptionalNumber = (value: unknown) => {
 const toOptionalInteger = (value: unknown) => {
 	const number = Number(value);
 	return Number.isSafeInteger(number) && number >= 0 ? number : undefined;
+};
+
+const normalizeAlcoholByVolumeUnit = (value: unknown) =>
+	String(value ?? "")
+		.trim()
+		.toLocaleLowerCase()
+		.replace(/\s+/g, "");
+
+export const parseOpenFoodFactsAlcoholByVolume = (
+	nutriments: OpenFoodFactsNutriments | undefined,
+): FoodAlcoholByVolume | undefined => {
+	if (!nutriments) return undefined;
+	const percent = toOptionalNumber(
+		nutriments.alcohol_100g ?? nutriments.alcohol_value ?? nutriments.alcohol,
+	);
+	if (percent === undefined || percent > 100) return undefined;
+	const sourceUnit = String(nutriments.alcohol_unit ?? "").trim();
+	if (!["%vol", "%alc/vol"].includes(normalizeAlcoholByVolumeUnit(sourceUnit))) {
+		return undefined;
+	}
+
+	return {
+		percent,
+		valueStatus: percent === 0 ? "reported-zero" : "reported",
+		basis: "volume-percent",
+		sourceUnit,
+	};
 };
 
 const toIsoTimestamp = (value: unknown) => {
@@ -507,6 +538,7 @@ const normalizeFieldSource = (
 	switch (source) {
 		case "usda":
 		case "open-food-facts":
+		case "cola-cloud":
 		case "user-label":
 		case "manufacturer":
 		case "gs1":
@@ -535,6 +567,7 @@ const createOpenFoodFactsFieldProvenance = ({
 	metadata,
 	hasSourceServing,
 	hasBrandOwner,
+	alcoholByVolume,
 }: {
 	barcode: string;
 	nutrients: FoodNutrient[];
@@ -542,6 +575,7 @@ const createOpenFoodFactsFieldProvenance = ({
 	metadata: ReturnType<typeof parseOpenFoodFactsMetadata>;
 	hasSourceServing: boolean;
 	hasBrandOwner: boolean;
+	alcoholByVolume?: FoodAlcoholByVolume;
 }): FoodFieldProvenance => {
 	const source = createFieldSource("open-food-facts", barcode, "unknown");
 	return {
@@ -579,6 +613,7 @@ const createOpenFoodFactsFieldProvenance = ({
 			: {}),
 		...(metadata.additives.length > 0 ? { additives: source } : {}),
 		...(metadata.packageQuantity ? { package: source } : {}),
+		...(alcoholByVolume ? { alcoholByVolume: source } : {}),
 		...(metadata.sourceMetadata ? { sourceMetadata: source } : {}),
 	};
 };
@@ -708,6 +743,16 @@ const createFdcFieldProvenance = ({
 			? { package: mappedSource }
 			: {}),
 		...(mappedSource &&
+				food.alcoholByVolume &&
+				!food.fieldProvenance?.alcoholByVolume
+			? { alcoholByVolume: mappedSource }
+			: {}),
+		...(mappedSource &&
+				food.regulatoryDisclosure &&
+				!food.fieldProvenance?.regulatoryDisclosure
+			? { regulatoryDisclosure: mappedSource }
+			: {}),
+		...(mappedSource &&
 				food.sourceMetadata &&
 				!food.fieldProvenance?.sourceMetadata
 			? { sourceMetadata: mappedSource }
@@ -778,6 +823,7 @@ export const mapOpenFoodFactsProduct = (
 	).map((nutrient) => ({ ...nutrient, sourceReference: canonicalBarcode }));
 	const metadata = parseOpenFoodFactsMetadata(product);
 	const image = parseOpenFoodFactsImage(product, canonicalBarcode);
+	const alcoholByVolume = parseOpenFoodFactsAlcoholByVolume(product.nutriments);
 	const servingLabel =
 		(useServingValues && product.serving_size?.trim()) || `${servingWeightGrams} g`;
 	const volumeEquivalent = hasExactGramWeight
@@ -815,6 +861,7 @@ export const mapOpenFoodFactsProduct = (
 		reportedNutrientIds: [...new Set(nutrients.map((nutrient) => nutrient.nutrientId))],
 		foodIdentityType: "packaged",
 		...metadata,
+		alcoholByVolume,
 		image,
 		fieldProvenance: createOpenFoodFactsFieldProvenance({
 			barcode: canonicalBarcode,
@@ -823,6 +870,7 @@ export const mapOpenFoodFactsProduct = (
 			metadata,
 			hasSourceServing: hasExactGramWeight,
 			hasBrandOwner: Boolean(product.brands?.trim()),
+			alcoholByVolume,
 		}),
 		volumeEquivalent,
 		source: "open-food-facts",
@@ -912,6 +960,8 @@ export const mapFdcBarcodeFood = (
 		ingredientAnalysis: food.ingredientAnalysis,
 		additives: food.additives,
 		packageQuantity: food.packageQuantity,
+		alcoholByVolume: food.alcoholByVolume,
+		regulatoryDisclosure: food.regulatoryDisclosure,
 		sourceMetadata: food.sourceMetadata,
 		image: food.image,
 		fieldProvenance: createFdcFieldProvenance({

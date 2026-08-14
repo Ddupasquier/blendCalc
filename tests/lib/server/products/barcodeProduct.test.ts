@@ -124,6 +124,40 @@ describe("barcode product DB-first enrichment", () => {
 		).not.toHaveBeenCalled();
 	});
 
+	it("loads independent catalog references concurrently", async () => {
+		const sharedDraft = makeDraft();
+		let resolveReferenceCatalog!: (value: object) => void;
+		let resolveRequiredNutrients!: (value: number[]) => void;
+		mocks.getSharedProductByBarcode.mockResolvedValue({
+			id: "shared-product-id",
+		});
+		mocks.mapSharedCatalogFood.mockReturnValue(sharedDraft);
+		mocks.getProductReferenceCatalog.mockReturnValueOnce(
+			new Promise((resolve) => {
+				resolveReferenceCatalog = resolve;
+			}),
+		);
+		mocks.getRequiredPackagedNutrientIds.mockReturnValueOnce(
+			new Promise((resolve) => {
+				resolveRequiredNutrients = resolve;
+			}),
+		);
+
+		const lookupPromise = lookupBarcodeProductDraft(
+			{} as never,
+			sharedDraft.barcode,
+		);
+		await vi.waitFor(() => {
+			expect(mocks.getProductReferenceCatalog).toHaveBeenCalledOnce();
+			expect(mocks.getRequiredPackagedNutrientIds).toHaveBeenCalledOnce();
+		});
+
+		resolveReferenceCatalog({});
+		resolveRequiredNutrients([1079]);
+
+		await expect(lookupPromise).resolves.toBe(sharedDraft);
+	});
+
 	it("uses APIs only to fill fields missing from the DB product", async () => {
 		const sharedDraft = makeDraft({ categories: [], image: undefined });
 		const supplement = makeDraft({

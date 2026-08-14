@@ -2,6 +2,35 @@ import { describe, expect, it } from "vitest";
 import { getProductInformation } from "$lib/utils/food/records/productInformation";
 
 describe("product information", () => {
+	it("presents explicit ABV while leaving missing alcohol unknown", () => {
+		const reported = getProductInformation({
+			fdcId: 123,
+			description: "Example lager",
+			foodNutrients: [],
+			alcoholByVolume: {
+				percent: 4.5,
+				valueStatus: "reported",
+				basis: "volume-percent",
+				sourceUnit: "% vol",
+			},
+		});
+		const unknown = getProductInformation({
+			fdcId: 124,
+			description: "Unknown beverage",
+			foodNutrients: [],
+		});
+
+		expect(reported.productRows).toContainEqual({
+			label: "Alcohol by volume",
+			value: "4.5% ABV",
+		});
+		expect(unknown.productRows).not.toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ label: "Alcohol by volume" }),
+			]),
+		);
+	});
+
 	it("presents accepted source dates and markets from source metadata", () => {
 		const information = getProductInformation({
 			fdcId: 123,

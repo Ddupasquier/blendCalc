@@ -125,6 +125,7 @@ export const createManualEntryBarcodeController = ({
 				hasAcceptedSourceBarcode &&
 				!hasTrustedProductImage &&
 				(form.data.barcodeSource === "open-food-facts" ||
+					form.data.barcodeSource === "cola-cloud" ||
 					form.data.barcodeSource === "usda"),
 		),
 	);
@@ -305,6 +306,12 @@ export const createManualEntryBarcodeController = ({
 				}
 			: undefined;
 		form.data.sourceMetadata = undefined;
+		form.data.regulatoryDisclosure = form.data.regulatoryDisclosure
+			? {
+					...form.data.regulatoryDisclosure,
+					evidenceStatus: "user-reported",
+				}
+			: undefined;
 		form.data.fieldProvenance = undefined;
 		form.data.image = undefined;
 	};
@@ -539,6 +546,8 @@ export const createManualEntryBarcodeController = ({
 			form.data.dietaryTags = [];
 			form.data.labels = [];
 			form.data.packageQuantity = undefined;
+			form.data.alcoholByVolume = undefined;
+			form.data.regulatoryDisclosure = undefined;
 			form.data.sourceMetadata = undefined;
 			form.data.categories = [];
 			return { focusTarget };

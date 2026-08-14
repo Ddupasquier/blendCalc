@@ -34,6 +34,8 @@ export const createCatalogFoodFromDraft = (
 		barcode: draft.barcode,
 		barcodeSource: draft.source === "open-food-facts"
 			? "open-food-facts"
+			: draft.source === "cola-cloud"
+				? "cola-cloud"
 			: draft.source === "usda"
 				? "usda"
 				: "community",
@@ -49,6 +51,8 @@ export const createCatalogFoodFromDraft = (
 		dietaryTags: draft.dietaryTags,
 		labels: draft.labels,
 		packageQuantity: draft.packageQuantity,
+		alcoholByVolume: draft.alcoholByVolume,
+		regulatoryDisclosure: draft.regulatoryDisclosure,
 		sourceMetadata: draft.sourceMetadata,
 		categories: category
 			? mergeCanonicalFoodCategories(category.label, draft.categories)

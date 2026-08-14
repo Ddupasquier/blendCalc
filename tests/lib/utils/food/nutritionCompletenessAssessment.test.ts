@@ -115,6 +115,44 @@ describe("nutrition completeness assessment", () => {
 		});
 	});
 
+	it("does not judge a regulated alcohol label against ordinary packaged nutrients", () => {
+		const regulatedAlcohol = {
+			fdcId: 7,
+			description: "Hard lemonade",
+			foodIdentityType: "packaged" as const,
+			barcode: "00649754706570",
+			foodNutrients: [],
+			regulatoryDisclosure: {
+				profileKey: "us-ttb-alcohol-beverage-v1",
+				evidenceStatus: "source-reported" as const,
+			},
+			alcoholByVolume: {
+				percent: 6.5,
+				valueStatus: "reported" as const,
+				basis: "volume-percent" as const,
+				sourceUnit: "% ABV",
+			},
+		} satisfies FoodItem;
+
+		expect(assessNutritionCompleteness(regulatedAlcohol)).toMatchObject({
+			status: "limited",
+			label: "Alcohol beverage label",
+			profileKey: "us-ttb-alcohol-beverage-v1",
+			missingCount: 0,
+			needsDetails: false,
+		});
+
+		const missingAlcoholByVolume = {
+			...regulatedAlcohol,
+			alcoholByVolume: undefined,
+		};
+		expect(assessNutritionCompleteness(missingAlcoholByVolume)).toMatchObject({
+			status: "limited",
+			needsDetails: true,
+			title: "The package's alcohol percentage has not been reported yet.",
+		});
+	});
+
 	it("uses the private manual profile for a private custom food with a barcode", () => {
 		const privateManualFood = {
 			...completeFood,
