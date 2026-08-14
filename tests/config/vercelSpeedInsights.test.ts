@@ -14,7 +14,12 @@ describe("Vercel Speed Insights", () => {
 		expect(appLayout).toContain(
 			'import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";',
 		);
-		expect(appLayout).toContain("if (!dev)");
+		expect(appLayout).toContain(
+			'window.location.hostname.endsWith(".vercel.app")',
+		);
+		expect(appLayout).toContain(
+			"if (!dev && isVercelObservabilityAvailable)",
+		);
 		expect(appLayout).toContain("injectSpeedInsights({");
 	});
 

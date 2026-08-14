@@ -27,4 +27,13 @@ describe("nutrient catalog search", () => {
 			label: "Added Sugars",
 		});
 	});
+
+	it("matches familiar nutrient wording across punctuation differences", () => {
+		expect(
+			searchNutrientCatalog(
+				[{ id: 1178, label: "Vitamin B-12", unit: "mcg" }],
+				"Vitamin B12",
+			),
+		).toEqual([{ id: 1178, label: "Vitamin B-12", unit: "mcg" }]);
+	});
 });

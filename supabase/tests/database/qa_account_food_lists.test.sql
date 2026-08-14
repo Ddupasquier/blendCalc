@@ -1,6 +1,6 @@
 begin;
 
-select plan(32);
+select plan(33);
 
 select is(
 	(select count(*) from auth.users where email like 'qa-%@blendcalc.local'),
@@ -35,7 +35,7 @@ select ok(
 				('qa-browser-1@blendcalc.local', 60, 40),
 				('qa-browser-2@blendcalc.local', 60, 40),
 				('qa-browser-3@blendcalc.local', 60, 40),
-				('qa-preferences@blendcalc.local', 4, 3),
+				('qa-preferences@blendcalc.local', 7, 3),
 				('qa-empty@blendcalc.local', 0, 0),
 				('qa-onboarding@blendcalc.local', 10, 0),
 				('qa-moderator@blendcalc.local', 3, 3),
@@ -224,6 +224,43 @@ select ok(
 	'the warning persona has deterministic allergen, dietary, and region preferences'
 );
 
+select ok(
+	(
+		select count(*)
+		from public.user_food_list_items item
+		join auth.users user_row on user_row.id = item.user_id
+		where user_row.email = 'qa-preferences@blendcalc.local'
+			and public.food_normalized_barcode(item.food) in (
+				'09000000000209',
+				'09000000000216',
+				'09000000000223'
+			)
+	) = 3
+	and exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '09000000000209'
+			and product.food #>> '{regulatoryDisclosure,profileKey}' =
+				'us-ttb-alcohol-beverage-v1'
+			and not product.food ? 'ingredients'
+			and not product.food ? 'allergens'
+			and not product.food ? 'traces'
+	)
+	and exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '09000000000216'
+			and product.food -> 'allergens' @> '["wheat"]'::jsonb
+	)
+	and exists (
+		select 1
+		from public.shared_products product
+		where product.barcode = '09000000000223'
+			and product.food -> 'allergens' @> '["sulfites"]'::jsonb
+	),
+	'the warning persona includes sparse and explicit alcohol-label safety fixtures'
+);
+
 select is(
 	(
 		select count(*) from public.user_compatibility_rules rule
@@ -287,7 +324,7 @@ select is(
 			or product.source_reference like 'local-qa:%'
 			or product.source = 'usda'
 	),
-		107::bigint,
+		111::bigint,
 	'the local catalog contains all focused and source-shaped QA foods'
 );
 

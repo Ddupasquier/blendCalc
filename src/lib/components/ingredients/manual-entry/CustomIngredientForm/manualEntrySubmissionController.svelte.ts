@@ -7,6 +7,7 @@ import type { ManualEntryReferenceDataController } from "./manualEntryReferenceD
 import type { ManualEntryValidationController } from "./manualEntryValidationController.svelte";
 import type { ManualEntryBarcodeController } from "./manualEntryBarcodeController.svelte";
 import type { ManualEntryOutcomeController } from "./manualEntryOutcomeController.svelte";
+import { applyCardImagePlacementToFoodImage } from "$lib/utils/food/images/foodImages";
 
 type ManualEntrySubmissionControllerOptions = {
 	form: ManualEntryFormState;
@@ -126,7 +127,12 @@ export const createManualEntrySubmissionController = ({
 			categoryOptionId: form.data.categoryOptionId,
 			categorySymbolKey: form.data.categorySymbolKey,
 			categories: form.data.categories,
-			image: form.data.image,
+			image: form.data.image
+				? applyCardImagePlacementToFoodImage(
+					form.data.image,
+					form.data.imagePlacement,
+				)
+				: undefined,
 			fieldProvenance: form.data.fieldProvenance,
 			reportedNutrientIds: form.data.reportedNutrientIds,
 			hasSourceServing:

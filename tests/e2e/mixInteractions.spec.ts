@@ -4,6 +4,11 @@ import {
 	test,
 	waitForAppReady,
 } from "./support/browserTest";
+import {
+	captureLocalQaMixGoalConfiguration,
+	restoreLocalQaMixGoalConfiguration,
+} from "./support/localQaDatabase";
+import { getLocalQaAccountForWorker } from "./support/localQaAccounts";
 
 const openMixGoals = async (page: import("@playwright/test").Page) => {
 	const goalsSection = page.locator("[data-tutorial-target='mix-goals']");
@@ -15,6 +20,92 @@ const openMixGoals = async (page: import("@playwright/test").Page) => {
 		.poll(() => details.evaluate((element) => element.getAnimations().length))
 		.toBe(0);
 	return { details, goalsSection, summary };
+};
+
+const selectGoalPreset = async (
+	page: import("@playwright/test").Page,
+	presetName: string,
+) => {
+	const preset = page.getByRole("combobox", { name: "Goal preset" });
+	await preset.click();
+	await page.getByRole("option", { name: presetName, exact: true }).click();
+	await expect(preset).toContainText(presetName);
+};
+
+const readRenderedMixGoals = (
+	goalsSection: import("@playwright/test").Locator,
+) =>
+	goalsSection.locator(".goal-input").evaluateAll((goalCards) =>
+		goalCards.map((goalCard) => ({
+			name:
+				goalCard.querySelector(".goal-label")?.textContent?.trim() ?? "",
+			rule:
+				(goalCard.querySelector(
+					".goal-input__type .select-field__native",
+				) as HTMLSelectElement | null)?.value ?? "",
+			target:
+				(goalCard.querySelector(
+					".goal-input__number",
+				) as HTMLInputElement | null)?.value ?? "",
+			unit:
+				goalCard.querySelector(".goal-unit")?.textContent?.trim() ?? "",
+		})),
+	);
+
+const addExplicitNutrientGoal = async ({
+	goalsSection,
+	search,
+	searchTerm,
+	nutrientLabel,
+	unit,
+	targetAmount,
+}: {
+	goalsSection: import("@playwright/test").Locator;
+	search: import("@playwright/test").Locator;
+	searchTerm: string;
+	nutrientLabel: string;
+	unit: string;
+	targetAmount: string;
+}) => {
+	await search.fill(searchTerm);
+	const result = goalsSection
+		.locator(".nutrient-picker__results button")
+		.filter({ hasText: nutrientLabel })
+		.first();
+	await expect(result).toBeVisible();
+	await expect(result).toContainText(unit);
+	await result.click();
+	await expect(
+		goalsSection.getByText(
+			`There is no reviewed default for this nutrient. Enter the target you want Mix to track.`,
+		),
+	).toBeVisible();
+	const addGoal = goalsSection.getByRole("button", { name: "Add goal" });
+	await expect(addGoal).toBeDisabled();
+	const target = goalsSection.getByRole("spinbutton", {
+		name: new RegExp(`Goal value for ${nutrientLabel} in ${unit}`, "i"),
+	});
+	await target.fill(targetAmount);
+	await expect(target).toHaveValue(targetAmount);
+	await expect(addGoal).toBeEnabled();
+	await addGoal.click();
+	await expect(
+		goalsSection.getByRole("slider", {
+			name: `Set ${nutrientLabel} goal`,
+		}),
+	).toBeVisible();
+};
+
+const selectGoalRule = async (
+	goalsSection: import("@playwright/test").Locator,
+	nutrientLabel: string,
+	ruleLabel: string,
+) => {
+	const rule = goalsSection.getByRole("combobox", {
+		name: `Goal rule for ${nutrientLabel}`,
+	});
+	await rule.click();
+	await goalsSection.getByRole("option", { name: ruleLabel, exact: true }).click();
 };
 
 test("compact Mix header follows main-page scroll direction", async ({
@@ -81,6 +172,130 @@ test("the shared styled select supports keyboard navigation and Escape", async (
 		await nativePreset.locator("option:checked").textContent(),
 	).toContain("Balanced");
 	await expect(page.getByText("Moderate calories, protein, carbs, fiber, and sugar.")).toBeVisible();
+});
+
+test("goal presets preserve explicit extras only when requested and survive a new session", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated browser worker owns this durable goal mutation.",
+	);
+
+	const originalGoalConfiguration =
+		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	try {
+		await page.goto("/mix");
+		await waitForAppReady(page);
+		const { goalsSection } = await openMixGoals(page);
+
+		await selectGoalPreset(page, "Balanced");
+		const balancedPreview = goalsSection.locator(".goal-template-preview");
+		await expect(balancedPreview).toContainText(
+			"Moderate calories, protein, carbs, fiber, and sugar.",
+		);
+		const balancedTargetPills = balancedPreview.locator(
+			".goal-template-preview__goals .metadata-pill",
+		);
+		const balancedTargetCount = await balancedTargetPills.count();
+		expect(balancedTargetCount).toBeGreaterThan(0);
+		for (const targetText of await balancedTargetPills.allTextContents()) {
+			expect(targetText).toMatch(/(?:=|≥|≤|–)/);
+			expect(targetText).toMatch(/\b(?:kcal|g|mg|mcg|iu)\b/i);
+		}
+		await goalsSection.getByRole("button", { name: "Apply", exact: true }).click();
+		await expect(balancedPreview).toBeHidden();
+		const balancedGoals = await readRenderedMixGoals(goalsSection);
+		expect(balancedGoals).toHaveLength(balancedTargetCount);
+		for (const goal of balancedGoals) {
+			expect(goal.name).not.toBe("");
+			expect(goal.rule).toMatch(/^(?:exact|minimum|maximum|range)$/);
+			expect(Number(goal.target)).toBeGreaterThanOrEqual(0);
+			expect(goal.unit).toMatch(/^(?:kcal|g|mg|mcg|iu)$/i);
+		}
+
+		await goalsSection.getByText("Add nutrient", { exact: true }).click();
+		const nutrientSearch = goalsSection.getByRole("searchbox", {
+			name: "Find a nutrient",
+		});
+		await nutrientSearch.fill("potassium");
+		await goalsSection
+			.getByRole("button", { name: /Potassium.*MG/i })
+			.first()
+			.click();
+		const potassiumGoalInput = goalsSection.getByRole("spinbutton", {
+			name: /Goal value for Potassium.* in (?:MG|mg)/,
+		});
+		await potassiumGoalInput.fill("975");
+		await expect(potassiumGoalInput).toHaveValue("975");
+		await goalsSection.getByRole("button", { name: "Add goal" }).click();
+		await expect(
+			goalsSection.getByRole("slider", { name: /Set Potassium.* goal/ }),
+		).toBeVisible();
+
+		await selectGoalPreset(page, "Low Sugar");
+		const keepOtherGoals = goalsSection.getByRole("switch", {
+			name: "Keep goals not included in this preset",
+		});
+		await keepOtherGoals.check();
+		await goalsSection.getByRole("button", { name: "Apply", exact: true }).click();
+		await expect(
+			goalsSection.getByRole("slider", { name: /Set Potassium.* goal/ }),
+		).toBeVisible();
+
+		await selectGoalPreset(page, "Low Sugar");
+		await keepOtherGoals.uncheck();
+		await goalsSection.getByRole("button", { name: "Apply", exact: true }).click();
+		await expect(
+			goalsSection.getByRole("slider", { name: /Set Potassium.* goal/ }),
+		).toHaveCount(0);
+		const replacementGoals = await readRenderedMixGoals(goalsSection);
+
+		await page.reload();
+		await waitForAppReady(page);
+		let reopenedGoals = await openMixGoals(page);
+		await expect(
+			reopenedGoals.goalsSection.getByRole("combobox", {
+				name: "Goal preset",
+			}),
+		).toContainText("Low Sugar");
+		expect(await readRenderedMixGoals(reopenedGoals.goalsSection)).toEqual(
+			replacementGoals,
+		);
+
+		await page.context().clearCookies();
+		await page.goto("/auth?next=/mix");
+		const qaAccount = getLocalQaAccountForWorker(testInfo.parallelIndex);
+		await page.getByLabel("Email").fill(qaAccount.email);
+		await page.getByLabel("Password", { exact: true }).fill(qaAccount.password);
+		await page.getByRole("button", { name: "Sign in", exact: true }).click();
+		await expect(page).toHaveURL(/\/mix$/);
+		await waitForAppReady(page);
+		reopenedGoals = await openMixGoals(page);
+		await expect(
+			reopenedGoals.goalsSection.getByRole("combobox", {
+				name: "Goal preset",
+			}),
+		).toContainText("Low Sugar");
+		expect(await readRenderedMixGoals(reopenedGoals.goalsSection)).toEqual(
+			replacementGoals,
+		);
+
+		const persistedGoalConfiguration =
+			await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+		expect(persistedGoalConfiguration.goalTemplateCustomized).toBe(false);
+		expect(persistedGoalConfiguration.sourceGoalTemplateVersionId).not.toBeNull();
+		expect(
+			persistedGoalConfiguration.goals.some(
+				(goal) => goal.nutrient_id === 1092,
+			),
+		).toBe(false);
+	} finally {
+		await restoreLocalQaMixGoalConfiguration(
+			testInfo.parallelIndex,
+			originalGoalConfiguration,
+		);
+	}
 });
 
 test("goal sliders and number inputs stay synchronized", async ({ page }, testInfo) => {
@@ -263,42 +478,140 @@ test("selected ingredient amount controls change once and restore the original v
 	await expect(quantity).toHaveValue(originalValue);
 });
 
-test("the nutrient picker searches the complete DB-backed catalog and requires an explicit target", async ({
+test("explicit nutrient goals preserve zero, units, independent rules, and synchronized controls", async ({
 	page,
 }, testInfo) => {
 	test.skip(
 		testInfo.project.name !== "desktop-chromium",
-		"A single deterministic browser owns this temporary goal mutation.",
+		"One isolated browser worker owns this durable goal mutation.",
 	);
 
-	await page.goto("/mix");
-	await waitForAppReady(page);
-	const { goalsSection } = await openMixGoals(page);
-	await goalsSection.getByText("Add nutrient", { exact: true }).click();
-	await expect(
-		goalsSection.getByRole("button", { name: /Magnesium, Mg MG/i }),
-	).toBeVisible();
-	await expect(goalsSection.getByText(/\d+ nutrients$/)).toBeVisible();
-	const search = goalsSection.getByRole("searchbox", { name: "Find a nutrient" });
-	await search.fill("magnesium");
-	await goalsSection.getByRole("button", { name: /Magnesium, Mg MG/i }).click();
-	await expect(
-		goalsSection.getByText(/There is no reviewed default for this nutrient/i),
-	).toBeVisible();
-	const target = goalsSection.getByRole("spinbutton", {
-		name: /Goal value for Magnesium, Mg in MG/i,
-	});
-	await target.fill("125");
-	await goalsSection.getByRole("button", { name: "Add goal" }).click();
-	await expect(
-		goalsSection.getByRole("slider", { name: "Set Magnesium, Mg goal" }),
-	).toBeVisible();
+	const originalGoalConfiguration =
+		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	try {
+		await page.goto("/mix");
+		await waitForAppReady(page);
+		const { goalsSection } = await openMixGoals(page);
+		await goalsSection.getByText("Add nutrient", { exact: true }).click();
+		await expect(goalsSection.getByText(/\d+ nutrients$/)).toBeVisible();
+		const search = goalsSection.getByRole("searchbox", {
+			name: "Find a nutrient",
+		});
 
-	await search.fill("magnesium");
-	await expect(goalsSection.getByText("No matching nutrients.")).toBeVisible();
-	await goalsSection
-		.getByRole("button", { name: "Stop tracking Magnesium, Mg" })
-		.click();
+		await addExplicitNutrientGoal({
+			goalsSection,
+			search,
+			searchTerm: "vitamin b12",
+			nutrientLabel: "Vitamin B12",
+			unit: "mcg",
+			targetAmount: "2.4",
+		});
+		await addExplicitNutrientGoal({
+			goalsSection,
+			search,
+			searchTerm: "magnesium",
+			nutrientLabel: "Magnesium",
+			unit: "mg",
+			targetAmount: "125",
+		});
+		await addExplicitNutrientGoal({
+			goalsSection,
+			search,
+			searchTerm: "added sugars",
+			nutrientLabel: "Added Sugars",
+			unit: "g",
+			targetAmount: "0",
+		});
+
+		await selectGoalRule(goalsSection, "Vitamin B12", "At least");
+		await selectGoalRule(goalsSection, "Added Sugars", "At most");
+
+		const vitaminB12Input = goalsSection.getByRole("spinbutton", {
+			name: "Goal value for Vitamin B12 in mcg",
+		});
+		const vitaminB12Slider = goalsSection.getByRole("slider", {
+			name: "Set Vitamin B12 goal",
+		});
+		const magnesiumInput = goalsSection.getByRole("spinbutton", {
+			name: "Goal value for Magnesium in mg",
+		});
+		const magnesiumSlider = goalsSection.getByRole("slider", {
+			name: "Set Magnesium goal",
+		});
+		const addedSugarsInput = goalsSection.getByRole("spinbutton", {
+			name: "Goal value for Added Sugars in g",
+		});
+		const addedSugarsSlider = goalsSection.getByRole("slider", {
+			name: "Set Added Sugars goal",
+		});
+
+		await vitaminB12Slider.focus();
+		await vitaminB12Slider.press("ArrowRight");
+		await expect(vitaminB12Input).not.toHaveValue("2.4");
+		await expect(magnesiumInput).toHaveValue("125");
+		await expect(addedSugarsInput).toHaveValue("0");
+		await vitaminB12Input.fill("2.4");
+		await expect(vitaminB12Slider).toHaveValue("2.4");
+
+		await magnesiumSlider.focus();
+		await magnesiumSlider.press("ArrowRight");
+		await expect(magnesiumInput).toHaveValue("126");
+		await expect(vitaminB12Input).toHaveValue("2.4");
+		await expect(addedSugarsInput).toHaveValue("0");
+		await magnesiumInput.fill("130");
+		await expect(magnesiumSlider).toHaveValue("130");
+
+		await addedSugarsSlider.focus();
+		await addedSugarsSlider.press("ArrowRight");
+		await expect(addedSugarsInput).toHaveValue("0.01");
+		await expect(vitaminB12Input).toHaveValue("2.4");
+		await expect(magnesiumInput).toHaveValue("130");
+		await addedSugarsInput.fill("0");
+		await expect(addedSugarsSlider).toHaveValue("0");
+
+		for (const [nutrientLabel, unit] of [
+			["Vitamin B12", "mcg"],
+			["Magnesium", "mg"],
+			["Added Sugars", "g"],
+		] as const) {
+			await expect(
+				goalsSection.locator(".goal-input").filter({ hasText: nutrientLabel }),
+			).toContainText(unit);
+		}
+
+		await expect
+			.poll(async () => {
+				const configuration = await captureLocalQaMixGoalConfiguration(
+					testInfo.parallelIndex,
+				);
+				return configuration.goals
+					.filter((goal) => [1090, 1178, 1235].includes(goal.nutrient_id))
+					.map((goal) => ({
+						goalType: goal.goal_type,
+						nutrientId: goal.nutrient_id,
+						targetAmount: goal.target_amount,
+					}))
+					.sort((left, right) => left.nutrientId - right.nutrientId);
+			})
+			.toEqual([
+				{ goalType: "exact", nutrientId: 1090, targetAmount: 130 },
+				{ goalType: "minimum", nutrientId: 1178, targetAmount: 2.4 },
+				{ goalType: "maximum", nutrientId: 1235, targetAmount: 0 },
+			]);
+
+		const expectedGoals = await readRenderedMixGoals(goalsSection);
+		await page.reload();
+		await waitForAppReady(page);
+		const reopenedGoals = await openMixGoals(page);
+		expect(await readRenderedMixGoals(reopenedGoals.goalsSection)).toEqual(
+			expectedGoals,
+		);
+	} finally {
+		await restoreLocalQaMixGoalConfiguration(
+			testInfo.parallelIndex,
+			originalGoalConfiguration,
+		);
+	}
 });
 
 test("Mix options expose keyboard reorganization and restore the section order", async ({

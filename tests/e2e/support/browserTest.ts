@@ -38,7 +38,10 @@ const createAuthenticatedBrowserState = async ({
 		projectName,
 		parallelWorkerIndex,
 	);
-	const authenticationRequest = await playwrightRequest.newContext({ baseURL });
+	const authenticationRequest = await playwrightRequest.newContext({
+		baseURL,
+		extraHTTPHeaders: { origin: baseURL },
+	});
 
 	try {
 		const response = await authenticationRequest.post("/auth?/emailSignIn", {

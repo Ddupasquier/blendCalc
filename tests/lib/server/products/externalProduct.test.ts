@@ -97,6 +97,23 @@ describe("external barcode product lookup", () => {
 		expect(areExternalProductLookupsEnabled("production")).toBe(true);
 	});
 
+	it("starts provider lookup without waiting on unrelated completeness metadata", async () => {
+		const openFoodFactsDraft = makeDraft(
+			"open-food-facts",
+			openFoodFactsImage,
+		);
+		const usda = vi.fn().mockResolvedValue(null);
+		const lookup = lookupExternalBarcodeProduct(openFoodFactsDraft.barcode, {
+			usda,
+			openFoodFacts: vi.fn().mockResolvedValue(openFoodFactsDraft),
+			getProductReferenceCatalog,
+			requiredNutrientIds: new Promise<Iterable<number>>(() => undefined),
+		});
+
+		await vi.waitFor(() => expect(usda).toHaveBeenCalledOnce());
+		await expect(lookup).resolves.toEqual(openFoodFactsDraft);
+	});
+
 	it("keeps USDA nutrition while adding an available trusted source image", async () => {
 		const usdaDraft = makeDraft("usda");
 		const openFoodFacts = vi

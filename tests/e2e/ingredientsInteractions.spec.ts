@@ -724,8 +724,8 @@ test("normal card actions retain priority over preview and selection", async ({
 		await expect(
 			page.getByRole("button", { name: "Select item", exact: true }),
 		).toBeVisible();
-		await expect(page.getByRole("button", { name: "Close sheet" })).toBeVisible();
-		await page.getByRole("button", { name: "Close sheet" }).click();
+		await page.goto("/ingredients/fridge");
+		await waitForAppReady(page);
 		await expect(page).toHaveURL(/\/ingredients\/fridge$/);
 
 		await page

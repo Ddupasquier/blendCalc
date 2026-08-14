@@ -46,6 +46,13 @@ test("saved recipes default closed and expose their complete details on demand",
 	await expect(details).toHaveAttribute("open", "");
 	await expect(card.getByText(/10 ingredients/)).toBeVisible();
 	await expect(card.getByRole("button", { name: "Load QA Morning Green" })).toBeVisible();
+	await card.evaluate(async (element) => {
+		await Promise.all(
+			element
+				.getAnimations({ subtree: true })
+				.map((animation) => animation.finished.catch(() => undefined)),
+		);
+	});
 
 	const remainingIngredients = card.locator("details").nth(1);
 	await expect(remainingIngredients).not.toHaveAttribute("open", "");

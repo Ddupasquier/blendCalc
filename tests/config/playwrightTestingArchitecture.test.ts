@@ -27,7 +27,7 @@ describe("Playwright browser-testing architecture", () => {
 		]) {
 			expect(playwrightConfig).toContain(`name: "${project}"`);
 		}
-		expect(playwrightConfig).toContain('command: "npm run dev:test:server"');
+		expect(playwrightConfig).toContain('command: "npm run test:e2e:server"');
 		expect(playwrightConfig).toContain('"http://localhost:5174"');
 		expect(playwrightConfig).toContain("reuseExistingServer: false");
 		expect(playwrightConfig).toContain('process.env.PLAYWRIGHT_WORKERS ?? "2"');

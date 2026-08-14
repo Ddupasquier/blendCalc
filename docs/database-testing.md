@@ -39,7 +39,7 @@ baseline records without moving a tester's existing list items. Use
 | Persona | Email | Deterministic state |
 |---|---|---|
 | Populated | `qa-user@blendcalc.local` | 60 Fridge items, 40 Shopping items, one private food, 4 Saved Recipes, one active 10-food Mix, tutorial complete |
-| Warnings | `qa-preferences@blendcalc.local` | Vegan and gluten-free restrictions; peanut and shellfish allergies; 7 foods covering beef, shrimp, dairy, peanut, wheat/soy, egg, and tree nuts |
+| Warnings | `qa-preferences@blendcalc.local` | Vegan and gluten-free restrictions; peanut and shellfish allergies; 10 foods covering beef, shrimp, dairy, peanut, wheat/soy, egg, tree nuts, sparse alcohol labels, wheat beer, and sulfite disclosure |
 | Empty | `qa-empty@blendcalc.local` | No list items, Saved Recipes, or Mix state; tutorial complete |
 | Onboarding | `qa-onboarding@blendcalc.local` | Guided tour pending, 10 Fridge foods, `QA Morning Green`, and an active Mix so every tour target exists |
 | Moderator | `qa-moderator@blendcalc.local` | Moderator claim, 6 list items, one Saved Recipe, and access to two deterministic catalog-review cases |
@@ -117,14 +117,14 @@ it does not share mutable state with browser jobs or another workflow run.
   intentionally exceeds 1,000 enabled rows so server-side category search and selection
   persistence can be tested beyond the former client-list cutoff without copying
   production data.
-- The local catalog contains 105 approved foods: five focused package-label fixtures,
-  seventeen generic fixtures, and eighty-three source-shaped USDA FoodData Central
+- The local catalog contains 111 approved foods: nine focused package-label fixtures,
+  nineteen generic fixtures, and eighty-three source-shaped USDA FoodData Central
   Branded snapshots. The snapshots retain their exact GTIN, FDC ID, source category,
   raw ingredient statement when reported, selected source nutrient records, source
   dates, and CC0 attribution. Every record is publishable through the local blendCalc
   API without making a live provider request.
 - The populated QA user starts with 100 distinct catalog products: 60 in Fridge and 40
-  in Shopping List. The remaining five catalog products stay searchable but unsaved,
+  in Shopping List. The remaining eleven catalog products stay searchable but unsaved,
   preserving add-item coverage while providing enough saved data for pagination,
   filtering, movement, and list-performance QA.
   `Tomatoes, Green, Raw` preserves USDA SR Legacy identity `170456` and provides a

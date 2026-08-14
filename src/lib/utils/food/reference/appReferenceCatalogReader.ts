@@ -5,6 +5,7 @@ import type {
 	NutrientDisplayProfile,
 } from "$lib/utils/food/reference/appReferenceCatalog";
 import type { NutrientDefinitionReferenceRecord } from "$lib/utils/food/nutrients/nutrientDefinitionRecord";
+import { formatNutrientUnitNameForDisplay } from "$lib/utils/food/nutrients/nutrientUnitNames";
 import {
   getGoalTemplateSelectionId,
   isMixGoalBasis,
@@ -85,7 +86,8 @@ export const readAppReferenceCatalog = async (
 		supabase
 			.from("nutrient_display_profiles")
 			.select("key, display_name, purpose, version")
-			.eq("enabled", true),
+			.eq("enabled", true)
+			.order("version", { ascending: false }),
 		supabase
 			.from("nutrient_display_profile_fields")
       .select(
@@ -146,14 +148,14 @@ export const readAppReferenceCatalog = async (
 		if (result.error) throw result.error;
 	}
 
-	const nutrients = (definitionsResult.data ?? []).map((definition) => ({
+	const baseNutrients = (definitionsResult.data ?? []).map((definition) => ({
 		id: definition.nutrient_id,
 		label: definition.nutrient_name,
-		unit: definition.default_unit_name,
+		unit: formatNutrientUnitNameForDisplay(definition.default_unit_name),
 		nutrientNumber: definition.nutrient_number ?? "",
 	}));
   const nutrientsById = new Map(
-    nutrients.map((nutrient) => [nutrient.id, nutrient]),
+    baseNutrients.map((nutrient) => [nutrient.id, nutrient]),
   );
 	const fieldsByProfile = new Map<string, NutrientDisplayProfile["fields"]>();
 	for (const row of profileFieldsResult.data ?? []) {
@@ -194,6 +196,34 @@ export const readAppReferenceCatalog = async (
 			version: profile.version,
 			fields: fieldsByProfile.get(profile.key) ?? [],
 		};
+	});
+	const reviewedNutrientDisplayOverrides = new Map<
+		number,
+		NutrientDisplayProfile["fields"][number]
+	>();
+	for (const purpose of [
+		"mix_popular",
+		"mix_default",
+		"nutrition_facts",
+	] satisfies NutrientDisplayProfile["purpose"][]) {
+		const profile = nutrientDisplayProfiles.find(
+			(candidate) => candidate.purpose === purpose,
+		);
+		for (const field of profile?.fields ?? []) {
+			if (!reviewedNutrientDisplayOverrides.has(field.id)) {
+				reviewedNutrientDisplayOverrides.set(field.id, field);
+			}
+		}
+	}
+	const nutrients = baseNutrients.map((nutrient) => {
+		const displayOverride = reviewedNutrientDisplayOverrides.get(nutrient.id);
+		return displayOverride
+			? {
+					...nutrient,
+					label: displayOverride.label,
+					unit: formatNutrientUnitNameForDisplay(displayOverride.unit),
+				}
+			: nutrient;
 	});
 
   const targetsByTemplateVersion = new Map<string, MixGoalMap>();
