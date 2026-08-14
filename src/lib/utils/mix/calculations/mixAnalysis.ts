@@ -1,15 +1,12 @@
 import type { FoodItem } from "$lib/utils/food/types";
-import {
-	evaluateMixGoal,
-	getMixGoalOperator,
-} from "$lib/utils/mix/goals/goalEvaluation";
+import { evaluateMixGoal } from "$lib/utils/mix/goals/goalEvaluation";
 import type { MixGoalMap } from "$lib/utils/mix/goals/types";
 import {
 	type NutrientOverageDetail,
 	type SaveGoalDiff,
 	withOverageDetails,
 } from "$lib/utils/mix/ui/mixUi";
-import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
+import { formatMixGoalValueComparison } from "$lib/utils/mix/formatting/mixGoalPresentation";
 import {
 	getFoodPreferenceWarningsForMix,
 	getNutrientGoalWarnings,
@@ -128,18 +125,12 @@ export const getMixAnalysis = ({
 			const goal = goals[Number(nutrient.id)];
 			if (!goal) return [];
 			const unit = nutrient.unit ?? "";
-			const target =
-				goal.goalType === "range"
-					? `${formatMixQuantity(goal.targetAmount)}–${formatMixQuantity(
-							goal.upperAmount ?? goal.targetAmount,
-							{ unit },
-						)}`
-					: `${getMixGoalOperator(goal)}${formatMixQuantity(
-							goal.targetAmount,
-							{ unit },
-						)}`;
 			return [
-				`${formatMixQuantity(totalFor(Number(nutrient.id)))} / ${target}`,
+				formatMixGoalValueComparison(
+					totalFor(Number(nutrient.id)),
+					goal,
+					unit,
+				),
 			];
 		}),
 		diffs,

@@ -52,6 +52,9 @@ welcome, and guided tutorial. Auth configuration and security details remain in
 
 - Show the blendCalc identity, profile access, tutorial access, role-appropriate
   moderation access, and primary navigation for Ingredients, Mix, and Saved.
+- Use a current, accessible link preview that represents ingredient exploration,
+  nutrition comparison, and saved recipes without reviving retired smoothie or drink
+  terminology.
 - Do not show the full account email in ordinary app chrome. Prefer a display name or
   generated username.
 - Keep the active navigation state obvious and the header readable at compact widths.

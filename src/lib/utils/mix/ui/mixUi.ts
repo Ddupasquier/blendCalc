@@ -14,6 +14,7 @@ import type { ServingConversion } from "$lib/utils/serving/servingAmount";
 import type { MixWarning } from "$lib/utils/mix/warnings/mixWarnings";
 import type { FoodItem } from "$lib/utils/food/types";
 import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
+import { formatMixGoalValueComparison } from "$lib/utils/mix/formatting/mixGoalPresentation";
 
 export type NutrientOption = { id: string | number; label: string };
 
@@ -192,9 +193,14 @@ export const withOverageDetails = (
 
 	return {
 		...warning,
-		detailSummary: `${formatMixQuantity(overage.total)} / ${formatMixQuantity(
-			overage.goal,
-			{ unit: overage.unit },
+		detailSummary: `${formatMixGoalValueComparison(
+			overage.total,
+			{
+				goalType: "maximum",
+				targetAmount: overage.goal,
+				upperAmount: null,
+			},
+			overage.unit,
 		)} (${formatMixQuantity(overage.overage, {
 			unit: overage.unit,
 			sign: "always",

@@ -26,6 +26,11 @@ export type NumberInputProps = {
 		valueAsNumber: number | null,
 		event: Event & { currentTarget: HTMLInputElement },
 	) => void;
+	onValueCommit?: (
+		value: string,
+		valueAsNumber: number | null,
+		event: Event & { currentTarget: HTMLInputElement },
+	) => void;
 	onfocus?: FocusEventHandler<HTMLInputElement>;
 	oninput?: FormEventHandler<HTMLInputElement>;
 };

@@ -21,7 +21,10 @@
 	>
 		<div class="contribution-breakdown__grid">
 			{#each breakdowns as breakdown}
-				<article class="contribution-card">
+				<article
+					class="contribution-card"
+					data-nutrient-label={breakdown.label}
+				>
 					<div class="contribution-card__title">
 						<strong>{breakdown.label}</strong>
 						<span>

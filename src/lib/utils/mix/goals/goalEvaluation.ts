@@ -155,7 +155,9 @@ export const getWeightedMixGoalScore = (
   );
 };
 
-export const getMixGoalOperator = (goal: MixNutrientGoal) => {
+export const getMixGoalOperator = (
+  goal: Pick<MixNutrientGoal, "goalType">,
+) => {
   if (goal.goalType === "minimum") return "≥";
   if (goal.goalType === "maximum") return "≤";
   if (goal.goalType === "range") return "–";

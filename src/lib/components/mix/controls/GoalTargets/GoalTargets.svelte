@@ -15,8 +15,8 @@
 	import NutrientPicker from "$lib/components/mix/controls/NutrientPicker/NutrientPicker.svelte";
 	import {
 		evaluateMixGoal,
-		getMixGoalOperator,
 	} from "$lib/utils/mix/goals/goalEvaluation";
+	import { formatMixGoalTarget } from "$lib/utils/mix/formatting/mixGoalPresentation";
 	import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
 	import type { MixGoalType } from "$lib/utils/mix/goals/types";
 	import type { GoalTargetsProps } from "./types";
@@ -36,6 +36,7 @@
 		onSaveCurrentTemplate,
 		onDeleteTemplate,
 		onPreviewGoal,
+		onPreviewUpperGoal,
 		onUpdateGoal,
 		onUpdateUpperGoal,
 		onUpdateGoalType,
@@ -94,20 +95,6 @@
 		{ value: "maximum", label: "At most" },
 		{ value: "range", label: "Range" },
 	];
-	const goalSummary = (
-		goal: Parameters<typeof evaluateMixGoal>[0],
-		unit: string,
-	) => {
-		if (goal.goalType === "range") {
-			return `${formatMixQuantity(goal.targetAmount)}–${formatMixQuantity(
-				goal.upperAmount ?? goal.targetAmount,
-				{ unit },
-			)}`;
-		}
-		return `${getMixGoalOperator(goal)}${formatMixQuantity(goal.targetAmount, {
-			unit,
-		})}`;
-	};
 	const handleTemplateChange = (templateId: string) => {
 		templatePreviewOpen = Boolean(templateId);
 		onTemplateChange(templateId);
@@ -165,7 +152,7 @@
 					{#each Object.values(selectedTemplate.goals).sort((left, right) => left.sortOrder - right.sortOrder) as goal (goal.nutrientId)}
 						<MetadataPill
 							label={getNutrientLabel(goal.nutrientId)}
-							value={goalSummary(
+							value={formatMixGoalTarget(
 								goal,
 								getNutrientUnit(goal.nutrientId),
 							)}
@@ -216,7 +203,11 @@
 						goal.targetAmount,
 						sliderStep,
 					)}
-					<div class="goal-input" data-status={status}>
+					<div
+						class="goal-input"
+						data-status={status}
+						data-nutrient-label={nutrient.label}
+					>
 						<div class="goal-input__header">
 							<div class="goal-input__heading">
 								<span class="goal-label">{nutrient.label}</span>
@@ -262,7 +253,8 @@
 									placeholder={`Target ${nutrientUnit}`}
 									ariaLabel={`${goal.goalType === "range" ? "Lower" : "Goal"} value for ${nutrient.label} in ${nutrientUnit}`}
 									value={goal.targetAmount}
-									onValueChange={(value) => onUpdateGoal(nutrient.id, value)}
+									onValueChange={(value) => onPreviewGoal(nutrient.id, value)}
+									onValueCommit={(value) => onUpdateGoal(nutrient.id, value)}
 								/>
 								{#if goal.goalType === "range"}
 									<span
@@ -279,6 +271,8 @@
 										ariaLabel={`Upper goal for ${nutrient.label} in ${nutrientUnit}`}
 										value={goal.upperAmount ?? goal.targetAmount}
 										onValueChange={(value) =>
+											onPreviewUpperGoal(nutrient.id, value)}
+										onValueCommit={(value) =>
 											onUpdateUpperGoal(nutrient.id, value)}
 									/>
 								{/if}
@@ -296,7 +290,7 @@
 							fillValue={total}
 							tone={getSliderTone(status)}
 							ariaLabel={`Set ${nutrient.label} goal`}
-							ariaValueText={`${goalSummary(goal, nutrientUnit)} goal; ${formatMixQuantity(total, { unit: nutrientUnit })} current`}
+							ariaValueText={`${formatMixGoalTarget(goal, nutrientUnit)} goal; ${formatMixQuantity(total, { unit: nutrientUnit })} current`}
 							onValueChange={(value) =>
 								onPreviewGoal(nutrient.id, String(value))}
 							onValueCommit={(value) =>

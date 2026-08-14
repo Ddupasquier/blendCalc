@@ -154,6 +154,8 @@
 	let goalPresetError = $state("");
 	let goalPresetDialogError = $state("");
 	let goalPresetDialogBusy = $state(false);
+	let nutrientGoalSaveRequestId = 0;
+	let nutrientGoalSaveQueue: Promise<void> = Promise.resolve();
 	const goalTemplates = $derived([
 		...systemGoalTemplates,
 		...userGoalTemplates,
@@ -377,19 +379,28 @@
 			nextTemplateCustomized = true,
 		} = {},
 	) => {
+		const requestId = ++nutrientGoalSaveRequestId;
 		goalPresetError = "";
-		const savedGoals = await saveCloudMixGoalConfiguration({
-			goals: nextGoals,
-			goalBasis: nextGoalBasis,
-			sourceTemplateVersionId: nextSourceTemplateVersionId,
-			sourceUserTemplateId: nextSourceUserTemplateId,
-			templateCustomized: nextTemplateCustomized,
+		let savedGoals: MixGoalMap | null = null;
+		const saveRequest = nutrientGoalSaveQueue.then(async () => {
+			savedGoals = await saveCloudMixGoalConfiguration({
+				goals: nextGoals,
+				goalBasis: nextGoalBasis,
+				sourceTemplateVersionId: nextSourceTemplateVersionId,
+				sourceUserTemplateId: nextSourceUserTemplateId,
+				templateCustomized: nextTemplateCustomized,
+			});
 		});
+		nutrientGoalSaveQueue = saveRequest.catch(() => undefined);
+		await saveRequest;
 		if (!savedGoals) {
-			goalPresetError =
-				"Your nutrition goals could not be saved. Check your connection and try again.";
+			if (requestId === nutrientGoalSaveRequestId) {
+				goalPresetError =
+					"Your nutrition goals could not be saved. Check your connection and try again.";
+			}
 			return false;
 		}
+		if (requestId !== nutrientGoalSaveRequestId) return true;
 
 		nutrientGoals = savedGoals;
 		goalBasis = nextGoalBasis;
@@ -618,6 +629,7 @@
 		if (!existingGoal || value.trim() === "" || !Number.isFinite(parsedValue)) {
 			return;
 		}
+		nutrientGoalSaveRequestId += 1;
 		nutrientGoals = {
 			...nutrientGoals,
 			[nutrientId]: withMixGoalTargetAmount(existingGoal, parsedValue),
@@ -634,18 +646,27 @@
 		void saveNutrientGoals(nextGoals);
 	};
 
-	const updateUpperGoal = (id: string | number, value: string) => {
+	const previewUpperGoal = (id: string | number, value: string) => {
 		const nutrientId = Number(id);
 		const goal = nutrientGoals[nutrientId];
 		if (!goal || goal.goalType !== "range") return;
 		const parsedValue = Number(value);
-		const upperAmount = Number.isFinite(parsedValue)
-			? Math.max(goal.targetAmount, parsedValue)
-			: goal.targetAmount;
-		const nextGoals = {
+		if (value.trim() === "" || !Number.isFinite(parsedValue)) return;
+		nutrientGoalSaveRequestId += 1;
+		nutrientGoals = {
 			...nutrientGoals,
-			[nutrientId]: { ...goal, upperAmount },
+			[nutrientId]: {
+				...goal,
+				upperAmount: Math.max(goal.targetAmount, parsedValue),
+			},
 		};
+		markLoadedSavedRecipeDirty();
+		goalTemplateCustomized = true;
+	};
+
+	const updateUpperGoal = (id: string | number, value: string) => {
+		previewUpperGoal(id, value);
+		const nextGoals = { ...nutrientGoals };
 		nutrientGoals = nextGoals;
 		markLoadedSavedRecipeDirty();
 		void saveNutrientGoals(nextGoals);
@@ -1033,6 +1054,7 @@
 									onSaveCurrentTemplate={openSaveGoalPresetDialog}
 									onDeleteTemplate={openDeleteGoalPresetDialog}
 									onPreviewGoal={previewGoal}
+									onPreviewUpperGoal={previewUpperGoal}
 									onUpdateGoal={updateGoal}
 									onUpdateUpperGoal={updateUpperGoal}
 									onUpdateGoalType={updateGoalType}
