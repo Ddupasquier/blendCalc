@@ -51,10 +51,14 @@ export const createManualEntryBarcodeController = ({
 		scannerOpen: false,
 	});
 	let barcodeLookupDebounce: ReturnType<typeof setTimeout> | null = null;
+	let manualBarcodeLookupQueued = $state(false);
 	let lookupGeneration = 0;
 	let shareValidationGeneration = 0;
 
 	const normalizedBarcode = $derived(normalizeBarcode(form.data.barcode));
+	const barcodeReferenceLookupPending = $derived(
+		manualBarcodeLookupQueued || form.data.checkingBarcodeReference,
+	);
 	const barcodeValidationMessage = $derived(
 		getBarcodeInputValidationMessage(form.data.barcode),
 	);
@@ -173,9 +177,11 @@ export const createManualEntryBarcodeController = ({
 	);
 
 	const clearBarcodeLookupDebounce = () => {
-		if (!barcodeLookupDebounce) return;
-		clearTimeout(barcodeLookupDebounce);
-		barcodeLookupDebounce = null;
+		if (barcodeLookupDebounce) {
+			clearTimeout(barcodeLookupDebounce);
+			barcodeLookupDebounce = null;
+		}
+		manualBarcodeLookupQueued = false;
 	};
 
 	const invalidateBarcodeLookup = () => {
@@ -257,6 +263,7 @@ export const createManualEntryBarcodeController = ({
 	const scheduleManualBarcodeReferenceCheck = () => {
 		clearBarcodeLookupDebounce();
 		if (!normalizeBarcode(form.data.barcode.trim())) return;
+		manualBarcodeLookupQueued = true;
 		barcodeLookupDebounce = setTimeout(() => {
 			void checkManualBarcodeReference();
 		}, 650);
@@ -595,7 +602,7 @@ export const createManualEntryBarcodeController = ({
 	$effect(() => {
 		onLookupStateChange(
 			state.lookingUpBarcode ||
-				form.data.checkingBarcodeReference ||
+				barcodeReferenceLookupPending ||
 				form.data.validatingBarcodeShare,
 		);
 	});
@@ -608,6 +615,9 @@ export const createManualEntryBarcodeController = ({
 		state,
 		get barcodeValidationMessage() {
 			return barcodeValidationMessage;
+		},
+		get barcodeReferenceLookupPending() {
+			return barcodeReferenceLookupPending;
 		},
 		get hasValidBarcode() {
 			return Boolean(normalizedBarcode);

@@ -1468,9 +1468,14 @@ SCSS tokens, and no large full-width outlined area around narrow images. Preserv
 existing records as version 1 until a person edits them; new or newly edited records use
 version 2. Automatic API refreshes must never overwrite a saved placement. For a newly
 chosen image, smart placement runs automatically as a non-blocking, reversible draft.
+For a newly discovered trusted DB/API front image, the server must schedule the same
+bounded placement analysis after caching the untouched image so subsequent hydration
+uses one canonical card placement instead of leaving each user with a different default.
 It normalizes encoded phone orientation, evaluates clockwise quarter-turns, runs
-Tesseract.js on-device, caches OCR results in bounded browser memory, scores text
-against the known product and brand names, and penalizes nutrition/disclaimer text.
+Tesseract.js, caches browser OCR results in bounded memory, retries low-resolution
+package fronts with a reviewed single-block pass, tolerates only small OCR token errors,
+scores text against the known product and brand names, and penalizes
+nutrition/disclaimer text.
 Apply the draft only when the result clears the reviewed confidence threshold; otherwise
 leave `Full image` unchanged. Never automatically replace an existing manual,
 moderator-approved, or previously accepted smart placement. Keep manual drag, zoom,

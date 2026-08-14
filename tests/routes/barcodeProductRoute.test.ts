@@ -30,6 +30,8 @@ describe("barcode product route", () => {
 	it("reads protected catalog data through the trusted server boundary", async () => {
 		mocks.lookupBarcodeProductDraft.mockResolvedValue({
 			image: undefined,
+			name: "Strawberry Jelly",
+			brandOwner: "Example Brand",
 			source: "shared-catalog",
 			sourceReference: "shared-product-id",
 		});
@@ -52,5 +54,12 @@ describe("barcode product route", () => {
 			locals.supabase,
 			"00021130493609",
 		);
+		expect(mocks.persistFoodImageAsset).toHaveBeenCalledWith({
+			image: undefined,
+			barcode: "00021130493609",
+			productName: "Strawberry Jelly",
+			brandName: "Example Brand",
+			sharedProductId: "shared-product-id",
+		});
 	});
 });

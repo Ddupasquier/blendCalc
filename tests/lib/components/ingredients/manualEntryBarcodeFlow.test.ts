@@ -75,6 +75,36 @@ describe("manual entry barcode flow", () => {
 		]);
 	});
 
+	it("carries the canonical image placement into the saved manual-entry draft", () => {
+		const state = getBarcodeDraftState(createDraft({
+			image: {
+				source: "open-food-facts",
+				sourceReference: "00021130462506",
+				role: "front",
+				imageUrl: "https://images.openfoodfacts.org/example.jpg",
+				licenseName: "Example license",
+				confidence: "source-verified",
+				cropX: 62,
+				cropY: 44,
+				cropZoom: 2.4,
+				rotationDegrees: 0,
+				fitMode: "custom",
+				placementVersion: 2,
+				placementMethod: "automatic-ocr",
+				suggestionVersion: "tesseract-product-label-v3",
+				suggestionConfidence: 78,
+			},
+		}));
+
+		expect(state.imagePlacement).toMatchObject({
+			cropX: 62,
+			cropY: 44,
+			cropZoom: 2.4,
+			fitMode: "custom",
+			placementMethod: "automatic-ocr",
+		});
+	});
+
 	it("warns when a valid barcode match has no trusted DB category", () => {
 		const warning = getBarcodeCategoryWarningMessage({
 			barcode: "00021130462506",

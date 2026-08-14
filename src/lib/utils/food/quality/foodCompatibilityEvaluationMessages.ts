@@ -3,6 +3,9 @@ import type {
 	FoodCompatibilityEvaluation,
 	FoodCompatibilityEvaluationStatus,
 } from "$lib/utils/food/quality/compatibility";
+import { getFoodCompatibilityEvidenceCoverage } from "$lib/utils/food/quality/foodCompatibilityEvaluation";
+import { getRegulatedAlcoholDisclosureProfileForFood } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
+import type { FoodItem } from "$lib/utils/food/types";
 
 export type FoodCompatibilityEvaluationMessage = {
 	tone: StatusMessageTone;
@@ -45,3 +48,26 @@ const messages: Record<
 export const getFoodCompatibilityEvaluationMessage = (
 	evaluation: FoodCompatibilityEvaluation,
 ) => messages[evaluation.status];
+
+export const getRegulatedAlcoholMissingSafetyDetailsMessage = (
+	food: FoodItem,
+): FoodCompatibilityEvaluationMessage | null => {
+	const disclosureProfile = getRegulatedAlcoholDisclosureProfileForFood(food);
+	if (!disclosureProfile) return null;
+
+	const coverage = food.compatibilityEvaluation?.coverage ??
+		getFoodCompatibilityEvidenceCoverage(food);
+	const isSafetyDetailMissing = [
+		coverage.ingredients,
+		coverage.allergens,
+		coverage.traces,
+	].some((state) => state === "missing");
+	if (!isSafetyDetailMissing) return null;
+
+	return {
+		tone: "warning",
+		title: "Federal alcohol labels leave gaps",
+		message:
+			"Federal alcohol-label rules let most alcoholic beverages skip major-allergen disclosure, and we couldn't verify every ingredient, allergen, or cross-contact detail for this drink. Check the current package and contact the maker before drinking.",
+	};
+};

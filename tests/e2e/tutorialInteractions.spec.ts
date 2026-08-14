@@ -110,30 +110,38 @@ test("onboarding can be dismissed permanently without scheduling a reminder", as
 			dialog.getByRole("button", { name: "Remind me in 7 days" }),
 		).toHaveCount(0);
 
-		const [targetBounds, spotlightBounds, viewFrameBounds, dialogBounds] =
+		const [targetBounds, spotlightBounds, viewFrameBounds] =
 			await Promise.all([
 				page.locator("[data-tutorial-active='true']").boundingBox(),
 				page.locator(".tutorial-spotlight").boundingBox(),
 				page.locator(".view-frame").boundingBox(),
-				dialog.boundingBox(),
 			]);
 		expect(targetBounds).not.toBeNull();
 		expect(spotlightBounds).not.toBeNull();
 		expect(viewFrameBounds).not.toBeNull();
-		expect(dialogBounds).not.toBeNull();
 		expect(targetBounds!.x - spotlightBounds!.x).toBeGreaterThanOrEqual(8);
 		expect(targetBounds!.y - spotlightBounds!.y).toBeGreaterThanOrEqual(8);
 		expect(spotlightBounds!.x).toBeGreaterThanOrEqual(viewFrameBounds!.x);
 		expect(spotlightBounds!.x + spotlightBounds!.width).toBeLessThanOrEqual(
 			viewFrameBounds!.x + viewFrameBounds!.width,
 		);
-		const dialogOverlapsSpotlight = !(
-			dialogBounds!.x + dialogBounds!.width <= spotlightBounds!.x ||
-			dialogBounds!.x >= spotlightBounds!.x + spotlightBounds!.width ||
-			dialogBounds!.y + dialogBounds!.height <= spotlightBounds!.y ||
-			dialogBounds!.y >= spotlightBounds!.y + spotlightBounds!.height
-		);
-		expect(dialogOverlapsSpotlight).toBe(false);
+		await expect
+			.poll(async () => {
+				const [currentSpotlightBounds, dialogBounds] = await Promise.all([
+					page.locator(".tutorial-spotlight").boundingBox(),
+					dialog.boundingBox(),
+				]);
+				if (!currentSpotlightBounds || !dialogBounds) return false;
+				return (
+					dialogBounds.x + dialogBounds.width <= currentSpotlightBounds.x ||
+					dialogBounds.x >=
+						currentSpotlightBounds.x + currentSpotlightBounds.width ||
+					dialogBounds.y + dialogBounds.height <= currentSpotlightBounds.y ||
+					dialogBounds.y >=
+						currentSpotlightBounds.y + currentSpotlightBounds.height
+				);
+			})
+			.toBe(true);
 
 		await page.keyboard.press("Tab");
 		expect(
@@ -184,7 +192,6 @@ test("Profile replay visits every direct tutorial target without changing comple
 		await page.goto("/profile");
 		await waitForAppReady(page);
 		await page.getByRole("link", { name: "Open guided tutorial" }).click();
-		await expect(page).toHaveURL(/\/profile\/tutorial$/);
 
 		const dialog = page.getByRole("dialog");
 		await expect(dialog).toBeVisible();

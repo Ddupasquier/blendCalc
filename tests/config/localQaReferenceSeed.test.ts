@@ -74,6 +74,19 @@ describe("local QA reference seed", () => {
 		expect(seed).toContain("'Babyfood, Dinner, Macaroni And Tomato'");
 	});
 
+	it("provides regulated alcohol safety fixtures and a non-alcoholic control", () => {
+		expect(seed).toContain("'09000000000209'");
+		expect(seed).toContain("'QA Federal Label Mystery Beer'");
+		expect(seed).toContain("'09000000000216'");
+		expect(seed).toContain('"allergens": ["wheat"]');
+		expect(seed).toContain("'09000000000223'");
+		expect(seed).toContain('"allergens": ["sulfites"]');
+		expect(seed).toContain("'09000000000230'");
+		expect(seed).toContain('"profileKey":"us-ttb-alcohol-beverage-v1"');
+		expect(seed).toContain("('alcoholByVolume', fixture.food -> 'alcoholByVolume'");
+		expect(seed).toContain("('regulatoryDisclosure', fixture.food -> 'regulatoryDisclosure'");
+	});
+
 	it("provides authoritative generic-food deep-dive fixtures", () => {
 		expect(seed).toContain("'qa-usda-sr-legacy'");
 		expect(seed).toContain("'Blueberries, raw'");

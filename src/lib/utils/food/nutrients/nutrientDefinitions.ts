@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from "$lib/supabase/client";
 import type { Database } from "$lib/types/database.types";
+import { formatNutrientUnitNameForDisplay } from "$lib/utils/food/nutrients/nutrientUnitNames";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type ManualEntryNutrientStep = "macros" | "extended";
@@ -69,20 +70,6 @@ type RequiredManualEntryNutrientRecord = Pick<
 	"nutrient_id" | "group_id" | "field_sort_order"
 >;
 
-const UNIT_LABELS: Record<string, string> = {
-	G: "g",
-	MG: "mg",
-	UG: "mcg",
-	MCG: "mcg",
-	KCAL: "kcal",
-	IU: "IU",
-};
-
-const toDisplayUnit = (unitName: string) => {
-	const normalizedUnit = unitName.trim().toUpperCase();
-	return UNIT_LABELS[normalizedUnit] ?? normalizedUnit.toLowerCase();
-};
-
 const normalizeDedupePart = (value: string) =>
 	value
 		.toLowerCase()
@@ -101,7 +88,12 @@ const buildFallbackDedupeKey = ({
 	ManualEntryNutrientDefinition,
 	"step" | "group" | "label" | "unitName"
 >) =>
-	[step, normalizeDedupePart(group), normalizeDedupePart(label), toDisplayUnit(unitName)]
+	[
+		step,
+		normalizeDedupePart(group),
+		normalizeDedupePart(label),
+		formatNutrientUnitNameForDisplay(unitName),
+	]
 		.filter(Boolean)
 		.join(":");
 
@@ -109,7 +101,7 @@ export const formatNutrientDefinitionLabel = (
 	nutrientName: string,
 	unitName: string,
 ) => {
-	const displayUnit = toDisplayUnit(unitName);
+	const displayUnit = formatNutrientUnitNameForDisplay(unitName);
 	return displayUnit ? `${nutrientName} (${displayUnit})` : nutrientName;
 };
 

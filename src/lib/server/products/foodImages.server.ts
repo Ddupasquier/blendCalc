@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { fetchWithExternalRequestPolicy } from "$lib/server/http/externalRequest.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask.server";
 import { normalizeImageUpload } from "$lib/server/uploads/normalizeImageUpload.server";
 import {
 	constrainCardImagePlacement,
@@ -15,9 +17,12 @@ import {
 	PRODUCT_EVIDENCE_BUCKET,
 	PRODUCT_EVIDENCE_MAX_BYTES,
 } from "./productEvidence.server";
+import { suggestAutomaticFoodImagePlacement } from "./automaticFoodImagePlacement.server";
 
 export const PUBLIC_FOOD_IMAGE_BUCKET = "food-image-assets";
 const PUBLIC_FOOD_IMAGE_MAX_DIMENSION = 4096;
+const AUTOMATIC_PLACEMENT_MAX_IMAGE_BYTES = 12 * 1024 * 1024;
+const AUTOMATIC_PLACEMENT_TIMEOUT_MILLISECONDS = 20_000;
 
 export type FoodImagePlacementValues = Partial<ImagePlacementValue> & {
 	cropSource?: FoodImageAsset["cropSource"] | null;
@@ -54,14 +59,122 @@ const normalizePlacement = (
 	};
 };
 
+const getOpenFoodFactsFullImageUrl = (imageUrl: string) => {
+	const parsedUrl = new URL(imageUrl);
+	if (parsedUrl.hostname !== "images.openfoodfacts.org") {
+		throw new Error("Open Food Facts image host was not recognized.");
+	}
+	parsedUrl.pathname = parsedUrl.pathname.replace(
+		/\.(?:100|200|400)\.jpg$/i,
+		".full.jpg",
+	);
+	return parsedUrl.toString();
+};
+
+const fetchAutomaticPlacementImage = async (imageUrl: string) => {
+	const response = await fetchWithExternalRequestPolicy(
+		getOpenFoodFactsFullImageUrl(imageUrl),
+		{
+			redirect: "follow",
+			timeoutMilliseconds: AUTOMATIC_PLACEMENT_TIMEOUT_MILLISECONDS,
+		},
+	);
+	if (!response.ok) {
+		throw new Error(`Image request failed with ${response.status}.`);
+	}
+	const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+	if (!contentType.startsWith("image/")) {
+		throw new Error("Image URL did not return an image.");
+	}
+	const contentLength = Number(response.headers.get("content-length"));
+	if (
+		Number.isFinite(contentLength) &&
+		contentLength > AUTOMATIC_PLACEMENT_MAX_IMAGE_BYTES
+	) {
+		throw new Error("Image exceeds the automatic-placement size limit.");
+	}
+	const imageBytes = new Uint8Array(await response.arrayBuffer());
+	if (imageBytes.byteLength > AUTOMATIC_PLACEMENT_MAX_IMAGE_BYTES) {
+		throw new Error("Image exceeds the automatic-placement size limit.");
+	}
+	return imageBytes;
+};
+
+const isUntouchedAutomaticPlacementCandidate = (image: FoodImageAsset) => {
+	const placement = constrainCardImagePlacement(image);
+	return (
+		image.source === "open-food-facts" &&
+		image.role === "front" &&
+		Boolean(image.sourceReference) &&
+		!image.approvedBy &&
+		placement.placementMethod === "default" &&
+		placement.placementVersion === 2 &&
+		placement.fitMode === "contain" &&
+		placement.cropX === 50 &&
+		placement.cropY === 50 &&
+		placement.cropZoom === 1 &&
+		placement.rotationDegrees === 0
+	);
+};
+
+const automaticallyPlacePersistedFoodImage = async ({
+	image,
+	productName,
+	brandName,
+}: {
+	image: FoodImageAsset;
+	productName: string;
+	brandName?: string;
+}) => {
+	try {
+		const imageBytes = await fetchAutomaticPlacementImage(image.imageUrl);
+		const placement = await suggestAutomaticFoodImagePlacement({
+			imageBytes,
+			productName,
+			brandName,
+		});
+		if (!placement || !image.sourceReference) return;
+		const payload = normalizePlacement({
+			...placement,
+			cropSource: "auto",
+		});
+		const { error } = await getSupabaseAdminClient()
+			.from("food_image_assets")
+			.update(payload)
+			.eq("source", image.source)
+			.eq("source_reference", image.sourceReference)
+			.eq("image_role", image.role)
+			.eq("status", "active")
+			.eq("placement_method", "default")
+			.eq("placement_version", 2)
+			.eq("fit_mode", "contain")
+			.eq("crop_x", 50)
+			.eq("crop_y", 50)
+			.eq("crop_zoom", 1)
+			.eq("rotation_degrees", 0)
+			.eq("crop_source", "auto")
+			.is("approved_by", null);
+		if (error) throw error;
+	} catch (error) {
+		console.warn(
+			"Automatic product-image placement could not be completed.",
+			error instanceof Error ? error.message : error,
+		);
+	}
+};
+
 export const persistFoodImageAsset = async ({
 	image,
 	barcode,
 	sharedProductId,
+	productName,
+	brandName,
 }: {
 	image?: FoodImageAsset | null;
 	barcode?: string | null;
 	sharedProductId?: string | null;
+	productName?: string;
+	brandName?: string;
 }) => {
 	if (!image?.imageUrl || !image.sourceReference) return;
 
@@ -96,6 +209,16 @@ export const persistFoodImageAsset = async ({
 		});
 
 	if (error) throw error;
+
+	if (productName?.trim() && isUntouchedAutomaticPlacementCandidate(image)) {
+		void completeServerBackgroundTask(
+			automaticallyPlacePersistedFoodImage({
+				image,
+				productName: productName.trim(),
+				brandName: brandName?.trim(),
+			}),
+		);
+	}
 };
 
 export const publishModeratedFoodImageAsset = async ({

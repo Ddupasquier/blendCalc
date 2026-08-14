@@ -12,7 +12,12 @@ describe("Vercel Web Analytics", () => {
 		expect(appLayout).toContain(
 			'import { injectAnalytics } from "@vercel/analytics/sveltekit";',
 		);
-		expect(appLayout).toContain("if (!dev)");
+		expect(appLayout).toContain(
+			'window.location.hostname.endsWith(".vercel.app")',
+		);
+		expect(appLayout).toContain(
+			"if (!dev && isVercelObservabilityAvailable)",
+		);
 		expect(appLayout).toContain("injectAnalytics({");
 		expect(appLayout).toContain('mode: "production"');
 	});

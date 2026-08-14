@@ -35,10 +35,11 @@ the structural scan as complete accessibility certification.
 
 Every public Playwright command first runs the shared E2E preparation command, which
 frees the dedicated test-app port `5174`, starts the isolated local Supabase stack, and
-repairs deterministic QA personas and fixtures. Playwright then starts the test-mode app
-through the internal `dev:test:server` command at `http://localhost:5174`. The normal
-development app remains available on `http://localhost:5173`; Playwright never reuses or
-stops that server.
+repairs deterministic QA personas and fixtures. Playwright then builds the application
+in test mode and serves that fixed build at `http://localhost:5174`. Release browser
+checks never use the hot-reloading development server, so a long cross-browser run
+cannot invalidate modules underneath active tests. The normal development app remains
+available on `http://localhost:5173`; Playwright never reuses or stops that server.
 
 Three populated `qa-browser-*` personas isolate local browser workers. Each worker signs
 in once and writes its own browser state beneath ignored `test-results/`. Two workers

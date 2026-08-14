@@ -5,6 +5,7 @@ import {
 	test,
 	waitForAppReady,
 } from "./support/browserTest";
+import { getLocalQaAccountForWorker } from "./support/localQaAccounts";
 
 const tinyPng = Buffer.from(
 	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
@@ -226,6 +227,146 @@ test("Profile settings use routed sheets and restore launcher focus", async ({
 	);
 	await backToProfileButton.click();
 	await expect(page).toHaveURL(/\/profile$/);
+});
+
+test("logout ends the session without deleting durable account data", async ({
+	page,
+}, testInfo) => {
+	const qaAccount = getLocalQaAccountForWorker(testInfo.parallelIndex);
+	const isolatedSessionResponse = await page.request.post(
+		"/auth?/emailSignIn",
+		{
+			headers: {
+				origin:
+					process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174",
+			},
+			form: {
+				email: qaAccount.email,
+				next: "/profile",
+				password: qaAccount.password,
+			},
+		},
+	);
+	expect(
+		isolatedSessionResponse.ok(),
+		"The logout test could not create an isolated browser session.",
+	).toBe(true);
+	await page.goto("/profile");
+	await waitForAppReady(page);
+
+	const profileDisplayName = (
+		await page.locator(".profile-identity-summary__copy strong").innerText()
+	).trim();
+	const foodPreferenceSummary = (
+		await page
+			.getByRole("button", { name: /Food preferences/ })
+			.locator(".profile-settings-sheet-launcher__copy span")
+			.innerText()
+	).trim();
+
+	await page.goto("/ingredients/fridge");
+	await waitForAppReady(page);
+	const fridgeTabText = (
+		await page.getByRole("tab", { name: /Fridge/ }).innerText()
+	).trim();
+	const shoppingListTabText = (
+		await page.getByRole("tab", { name: /Shopping List/ }).innerText()
+	).trim();
+
+	await page.goto("/profile");
+	await waitForAppReady(page);
+	const accountSessionSection = page
+		.locator(".profile-settings-section")
+		.filter({ has: page.getByRole("heading", { name: "Account session" }) });
+	const logoutButton = accountSessionSection.getByRole("button", {
+		name: "Log out",
+		exact: true,
+	});
+	const logoutForm = accountSessionSection.locator("form");
+
+	await expect(logoutButton).toHaveCount(1);
+	await expect(logoutButton).toHaveAttribute("data-variant", "neutral");
+	await expectFocusOutlineInsideBoundary(logoutButton, accountSessionSection);
+	const logoutButtonBounds = await logoutButton.boundingBox();
+	expect(logoutButtonBounds).not.toBeNull();
+	expect(logoutButtonBounds!.width).toBeGreaterThanOrEqual(44);
+	expect(logoutButtonBounds!.height).toBeGreaterThanOrEqual(44);
+
+	await logoutForm.evaluate((form) => {
+		form.addEventListener("submit", (event) => event.preventDefault(), {
+			once: true,
+		});
+	});
+	if (testInfo.project.name.startsWith("mobile-")) {
+		await logoutButton.tap();
+	} else {
+		await logoutButton.press("Enter");
+	}
+	await expect(logoutForm).toHaveAttribute("aria-busy", "true");
+	await expect(logoutButton).toHaveAttribute("aria-busy", "true");
+	await expect(logoutButton).toBeDisabled();
+	await expect(logoutButton.locator(".loading-spinner")).toBeVisible();
+
+	await page.reload();
+	await waitForAppReady(page);
+	const logoutPostRequest = page.waitForRequest((request) => {
+		return (
+			request.method() === "POST" &&
+			new URL(request.url()).pathname === "/auth/logout"
+		);
+	});
+	const logoutAfterReload = page
+		.locator(".profile-settings-section")
+		.filter({ has: page.getByRole("heading", { name: "Account session" }) })
+		.getByRole("button", { name: "Log out", exact: true });
+	if (testInfo.project.name.startsWith("mobile-")) {
+		await logoutAfterReload.tap();
+	} else {
+		await logoutAfterReload.click();
+	}
+	await logoutPostRequest;
+	await expect(page).toHaveURL(/\/$/);
+	await waitForAppReady(page);
+
+	const protectedProfileResponse = await page.request.get("/profile", {
+		maxRedirects: 0,
+	});
+	expect(protectedProfileResponse.status()).toBe(303);
+	const protectedProfileLocation = protectedProfileResponse.headers().location;
+	if (!protectedProfileLocation) {
+		throw new Error("The protected Profile route did not return a redirect location.");
+	}
+	const protectedProfileRedirect = new URL(
+		protectedProfileLocation,
+		page.url(),
+	);
+	expect(`${protectedProfileRedirect.pathname}${protectedProfileRedirect.search}`).toBe(
+		"/?next=%2Fprofile",
+	);
+	await page.goto("/auth?next=/profile");
+	await page.getByLabel("Email").fill(qaAccount.email);
+	await page.getByLabel("Password", { exact: true }).fill(qaAccount.password);
+	await page.getByRole("button", { name: "Sign in", exact: true }).click();
+	await expect(page).toHaveURL(/\/profile$/);
+	await waitForAppReady(page);
+
+	await expect(
+		page.locator(".profile-identity-summary__copy strong"),
+	).toHaveText(profileDisplayName);
+	await expect(
+		page
+			.getByRole("button", { name: /Food preferences/ })
+			.locator(".profile-settings-sheet-launcher__copy span"),
+	).toHaveText(foodPreferenceSummary);
+
+	await page.goto("/ingredients/fridge");
+	await waitForAppReady(page);
+	await expect(page.getByRole("tab", { name: /Fridge/ })).toHaveText(
+		fridgeTabText,
+	);
+	await expect(page.getByRole("tab", { name: /Shopping List/ })).toHaveText(
+		shoppingListTabText,
+	);
 });
 
 test("moderator actions stay hidden from regular accounts and use the shared sheet for elevated accounts", async ({
