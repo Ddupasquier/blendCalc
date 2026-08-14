@@ -55,6 +55,8 @@ cp .env.moderation.example .env.moderation.local
 Then add the values needed for your environment:
 
 - `VITE_FDC_API_KEY`: free [FoodData Central API key](https://fdc.nal.usda.gov/api-guide.html)
+- `COLA_CLOUD_API_KEY`: optional server-only COLA Cloud key for exact-barcode U.S.
+  alcohol-label fallback; never expose it through a public or `VITE_` variable
 - `PUBLIC_SUPABASE_URL`: Supabase project URL
 - `PUBLIC_SUPABASE_PUBLISHABLE_KEY`: Supabase publishable browser key
 - `PUBLIC_SITE_URL`: production origin, for example `https://blendcalc.vercel.app`
