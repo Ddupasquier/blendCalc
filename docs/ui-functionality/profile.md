@@ -94,6 +94,7 @@ server policy and source evidence, not naive client text matching.
 - Provide a clear Log out action.
 - Submit logout through the server authentication endpoint so the Supabase session and
   password-upgrade state clear together.
+- Log out only the current browser session; other signed-in devices remain active.
 - Logging out never deletes profile, food, list, recipe, or Mix data.
 
 ## Moderator Actions

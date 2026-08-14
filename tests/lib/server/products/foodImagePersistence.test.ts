@@ -16,4 +16,15 @@ describe("food image persistence", () => {
 		expect(persistenceBody).toContain("...normalizePlacement({");
 		expect(persistenceBody).toContain('cropSource: image.cropSource ?? "auto"');
 	});
+
+	it("schedules OCR only for untouched trusted front images", () => {
+		expect(foodImagePersistence).toContain(
+			"isUntouchedAutomaticPlacementCandidate(image)",
+		);
+		expect(foodImagePersistence).toContain("completeServerBackgroundTask(");
+		expect(foodImagePersistence).toContain(
+			'.eq("placement_method", "default")',
+		);
+		expect(foodImagePersistence).toContain('.is("approved_by", null)');
+	});
 });

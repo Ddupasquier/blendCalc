@@ -38,7 +38,7 @@ export default defineConfig({
 	webServer: process.env.PLAYWRIGHT_SKIP_WEB_SERVER
 		? undefined
 		: {
-				command: "npm run dev:test:server",
+				command: "npm run test:e2e:server",
 				url: applicationBaseUrl,
 				reuseExistingServer: false,
 				timeout: 180_000,

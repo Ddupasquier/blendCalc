@@ -132,3 +132,30 @@ export const getProductRegulatoryDisclosureProfile = (
 	catalog.regulatoryDisclosureProfiles?.find(
 		(profile) => profile.key === profileKey,
 	) ?? null;
+
+export const getRegulatedAlcoholDisclosureProfileForFood = (
+	food: Pick<FoodItem, "alcoholByVolume" | "regulatoryDisclosure">,
+	catalog: NutritionCompletenessCatalog = configuredCatalog,
+) => {
+	const selectedProfile = getProductRegulatoryDisclosureProfile(
+		food.regulatoryDisclosure?.profileKey,
+		catalog,
+	);
+	if (selectedProfile?.disclosureKind === "regulated-alcohol") {
+		return selectedProfile;
+	}
+
+	const alcoholByVolume = food.alcoholByVolume;
+	if (
+		!alcoholByVolume ||
+		alcoholByVolume.valueStatus !== "reported" ||
+		!Number.isFinite(alcoholByVolume.percent) ||
+		alcoholByVolume.percent <= 0
+	) {
+		return null;
+	}
+
+	return catalog.regulatoryDisclosureProfiles?.find(
+		(profile) => profile.disclosureKind === "regulated-alcohol",
+	) ?? null;
+};

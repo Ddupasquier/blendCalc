@@ -7,6 +7,7 @@
  * Preview: `node scripts/backfills/images/backfill_food_image_placements.mjs --dry-run`
  * Execute: `node scripts/backfills/images/backfill_food_image_placements.mjs`
  * Limit: `node scripts/backfills/images/backfill_food_image_placements.mjs --dry-run --limit=25`
+ * One barcode: `node scripts/backfills/images/backfill_food_image_placements.mjs --dry-run --barcode=00000000119993`
  */
 
 import { config } from "dotenv";
@@ -33,6 +34,15 @@ const limitArgument = process.argv.find((argument) => argument.startsWith("--lim
 const limit = limitArgument
 	? Number.parseInt(limitArgument.split("=")[1] ?? "", 10)
 	: null;
+const barcodeArgument = process.argv.find((argument) =>
+	argument.startsWith("--barcode="),
+);
+const requestedBarcode = barcodeArgument
+	? normalizeBarcode(barcodeArgument.split("=")[1] ?? "")
+	: "";
+if (barcodeArgument && !requestedBarcode) {
+	throw new Error("--barcode must contain a valid GTIN, UPC, or EAN value.");
+}
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 const PAGE_SIZE = 250;
 const OPEN_FOOD_FACTS_PRODUCT_ENDPOINTS = [
@@ -248,7 +258,11 @@ const loadCandidates = async () => {
 			);
 		}
 	}
-	const namedCandidates = candidates.filter((image) => image.productName);
+	const namedCandidates = candidates.filter(
+		(image) =>
+			image.productName &&
+			(!requestedBarcode || normalizeBarcode(image.barcode) === requestedBarcode),
+	);
 	return Number.isFinite(limit) && limit > 0
 		? namedCandidates.slice(0, limit)
 		: namedCandidates;

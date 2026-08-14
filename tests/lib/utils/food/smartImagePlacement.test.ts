@@ -82,6 +82,27 @@ describe("smart image placement", () => {
 		expect(suggestion).toBeNull();
 	});
 
+	it("tolerates a small OCR error when a low-resolution package still identifies the product", () => {
+		const suggestion = suggestImagePlacementFromText({
+			document: {
+				width: 904,
+				height: 1600,
+				regions: [{
+					text: "LEANUT BUTT from unblanched peanuts",
+					confidence: 43,
+					bounds: { x0: 80, y0: 180, x1: 830, y1: 1420 },
+				}],
+			},
+			geometry,
+			productName: "Peanut Butter",
+		});
+
+		expect(suggestion).not.toBeNull();
+		expect(suggestion?.productTokenOverlap).toBe(0.5);
+		expect(isConfidentAutomaticImagePlacementSuggestion(suggestion)).toBe(true);
+		expect(suggestion?.placement.fitMode).toBe("custom");
+	});
+
 	it("chooses the quarter-turn orientation with the strongest product match", () => {
 		const suggestion = selectBestImagePlacementSuggestion({
 			documents: [

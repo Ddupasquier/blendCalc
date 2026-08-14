@@ -850,6 +850,180 @@ set
 	}'::jsonb
 where barcode = '00021130493609';
 
+-- Synthetic local-only alcohol-label fixtures exercise regulated disclosure,
+-- incomplete allergen evidence, explicit package declarations, and a non-alcoholic
+-- negative control without depending on mutable provider records.
+insert into private.qa_catalog_product_fixtures (
+	product_id,
+	revision_id,
+	observation_id,
+	barcode,
+	product_name,
+	brand_owner,
+	category_option_id,
+	source_reference,
+	food
+)
+values
+	(
+		'82500000-0000-4000-8000-000000000001',
+		'82500000-0000-4000-8000-000000000002',
+		'82500000-0000-4000-8000-000000000003',
+		'09000000000209',
+		'QA Federal Label Mystery Beer',
+		'blendCalc QA Beverage Lab',
+		'qa-beverages',
+		'local-qa-alcohol-label:09000000000209',
+		'{
+			"fdcId": 9250001,
+			"description": "QA Federal Label Mystery Beer",
+			"nameProvenance": "source",
+			"brandOwner": "blendCalc QA Beverage Lab",
+			"foodNutrients": [
+				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":43,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"}
+			],
+			"reportedNutrientIds": [1008],
+			"dataType": "Branded",
+			"foodIdentityType": "packaged",
+			"gtinUpc": "09000000000209",
+			"barcode": "09000000000209",
+			"alcoholByVolume": {"percent":5.2,"valueStatus":"reported","basis":"volume-percent","sourceUnit":"% ABV"},
+			"regulatoryDisclosure": {"profileKey":"us-ttb-alcohol-beverage-v1","evidenceStatus":"moderator-reviewed"},
+			"packageQuantity": {"label":"12 fl oz","amount":12,"unit":"fl oz"},
+			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"completeness":0.35},
+			"categories": ["Beverages"],
+			"categoryOptionId": "qa-beverages",
+			"barcodeSource": "community",
+			"sourceKey": "shared-catalog",
+			"sourceLabel": "blendCalc Community",
+			"sourceDataType": "local-qa-alcohol-label",
+			"trustStatus": "moderator-reviewed",
+			"sharedProductConfidence": "moderator-reviewed"
+		}'::jsonb
+	),
+	(
+		'82500000-0000-4000-8000-000000000011',
+		'82500000-0000-4000-8000-000000000012',
+		'82500000-0000-4000-8000-000000000013',
+		'09000000000216',
+		'QA Wheat Beer',
+		'blendCalc QA Beverage Lab',
+		'qa-beverages',
+		'local-qa-alcohol-label:09000000000216',
+		'{
+			"fdcId": 9250002,
+			"description": "QA Wheat Beer",
+			"nameProvenance": "source",
+			"brandOwner": "blendCalc QA Beverage Lab",
+			"foodNutrients": [
+				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":45,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1005,"nutrientName":"Carbohydrate, by difference","nutrientNumber":"205","unitName":"G","value":3.8,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1003,"nutrientName":"Protein","nutrientNumber":"203","unitName":"G","value":0.5,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"}
+			],
+			"reportedNutrientIds": [1008,1005,1003],
+			"dataType": "Branded",
+			"foodIdentityType": "packaged",
+			"gtinUpc": "09000000000216",
+			"barcode": "09000000000216",
+			"ingredients": "Water, malted barley, wheat, hops, yeast.",
+			"ingredientList": ["Water","Malted barley","Wheat","Hops","Yeast"],
+			"allergens": ["wheat"],
+			"traces": [],
+			"alcoholByVolume": {"percent":5.4,"valueStatus":"reported","basis":"volume-percent","sourceUnit":"% ABV"},
+			"regulatoryDisclosure": {"profileKey":"us-ttb-alcohol-beverage-v1","evidenceStatus":"moderator-reviewed"},
+			"packageQuantity": {"label":"12 fl oz","amount":12,"unit":"fl oz"},
+			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"completeness":0.8},
+			"categories": ["Beverages"],
+			"categoryOptionId": "qa-beverages",
+			"barcodeSource": "community",
+			"sourceKey": "shared-catalog",
+			"sourceLabel": "blendCalc Community",
+			"sourceDataType": "local-qa-alcohol-label",
+			"trustStatus": "moderator-reviewed",
+			"sharedProductConfidence": "moderator-reviewed"
+		}'::jsonb
+	),
+	(
+		'82500000-0000-4000-8000-000000000021',
+		'82500000-0000-4000-8000-000000000022',
+		'82500000-0000-4000-8000-000000000023',
+		'09000000000223',
+		'QA Cabernet Sauvignon',
+		'blendCalc QA Beverage Lab',
+		'qa-beverages',
+		'local-qa-alcohol-label:09000000000223',
+		'{
+			"fdcId": 9250003,
+			"description": "QA Cabernet Sauvignon",
+			"nameProvenance": "source",
+			"brandOwner": "blendCalc QA Beverage Lab",
+			"foodNutrients": [
+				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":85,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"},
+				{"nutrientId":1005,"nutrientName":"Carbohydrate, by difference","nutrientNumber":"205","unitName":"G","value":2.6,"valueOrigin":"reported","valueStatus":"reported","mappingStatus":"canonical"}
+			],
+			"reportedNutrientIds": [1008,1005],
+			"dataType": "Branded",
+			"foodIdentityType": "packaged",
+			"gtinUpc": "09000000000223",
+			"barcode": "09000000000223",
+			"ingredients": "Grapes, yeast, sulfites.",
+			"ingredientList": ["Grapes","Yeast","Sulfites"],
+			"allergens": ["sulfites"],
+			"traces": [],
+			"alcoholByVolume": {"percent":13.5,"valueStatus":"reported","basis":"volume-percent","sourceUnit":"% ABV"},
+			"regulatoryDisclosure": {"profileKey":"us-ttb-alcohol-beverage-v1","evidenceStatus":"moderator-reviewed"},
+			"packageQuantity": {"label":"750 mL","amount":750,"unit":"mL"},
+			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"completeness":0.8},
+			"categories": ["Beverages"],
+			"categoryOptionId": "qa-beverages",
+			"barcodeSource": "community",
+			"sourceKey": "shared-catalog",
+			"sourceLabel": "blendCalc Community",
+			"sourceDataType": "local-qa-alcohol-label",
+			"trustStatus": "moderator-reviewed",
+			"sharedProductConfidence": "moderator-reviewed"
+		}'::jsonb
+	),
+	(
+		'82500000-0000-4000-8000-000000000031',
+		'82500000-0000-4000-8000-000000000032',
+		'82500000-0000-4000-8000-000000000033',
+		'09000000000230',
+		'QA Sparkling Water',
+		'blendCalc QA Beverage Lab',
+		'qa-beverages',
+		'local-qa-standard-label:09000000000230',
+		'{
+			"fdcId": 9250004,
+			"description": "QA Sparkling Water",
+			"nameProvenance": "source",
+			"brandOwner": "blendCalc QA Beverage Lab",
+			"foodNutrients": [
+				{"nutrientId":1008,"nutrientName":"Energy","nutrientNumber":"208","unitName":"KCAL","value":0,"valueOrigin":"reported","valueStatus":"reported-zero","mappingStatus":"canonical"}
+			],
+			"reportedNutrientIds": [1008],
+			"dataType": "Branded",
+			"foodIdentityType": "packaged",
+			"gtinUpc": "09000000000230",
+			"barcode": "09000000000230",
+			"ingredients": "Carbonated water.",
+			"ingredientList": ["Carbonated water"],
+			"allergens": [],
+			"traces": [],
+			"regulatoryDisclosure": {"profileKey":"us-standard-nutrition-facts-v1","evidenceStatus":"moderator-reviewed"},
+			"packageQuantity": {"label":"12 fl oz","amount":12,"unit":"fl oz"},
+			"sourceMetadata": {"language":"en","marketCountries":["United States"],"revision":1,"schemaVersion":1,"completeness":1},
+			"categories": ["Beverages"],
+			"categoryOptionId": "qa-beverages",
+			"barcodeSource": "community",
+			"sourceKey": "shared-catalog",
+			"sourceLabel": "blendCalc Community",
+			"sourceDataType": "local-qa-standard-label",
+			"trustStatus": "moderator-reviewed",
+			"sharedProductConfidence": "moderator-reviewed"
+		}'::jsonb
+	);
+
 with qa_generic_foods (
 	fixture_number,
 	barcode,
@@ -1419,6 +1593,8 @@ with selected_fields as (
 			('additives', fixture.food -> 'additives', fixture.food -> 'additives'),
 			('precautionaryStatements', fixture.food -> 'precautionaryStatements', fixture.food -> 'precautionaryStatements'),
 			('package', fixture.food -> 'packageQuantity', fixture.food -> 'packageQuantity'),
+			('alcoholByVolume', fixture.food -> 'alcoholByVolume', fixture.food -> 'alcoholByVolume'),
+			('regulatoryDisclosure', fixture.food -> 'regulatoryDisclosure', fixture.food -> 'regulatoryDisclosure'),
 			('sourceMetadata', fixture.raw_source_payload, fixture.food -> 'sourceMetadata'),
 			('serving', coalesce(fixture.raw_source_payload -> 'serving', fixture.food -> 'foodServings'), fixture.food -> 'foodServings'),
 			(

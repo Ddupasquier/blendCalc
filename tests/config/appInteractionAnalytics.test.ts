@@ -37,7 +37,9 @@ describe("app interaction analytics", () => {
 	it("records browser reloads without treating initial navigation as a reload", () => {
 		expect(layout).toContain('navigationEntry?.type === "reload"');
 		expect(layout).toContain("APP_INTERACTION_METRICS.PAGE_RELOAD");
-		expect(layout).toContain("if (dev) return");
+		expect(layout).toContain(
+			"if (dev || !isVercelObservabilityAvailable) return",
+		);
 	});
 
 	it("protects and schedules the aggregate synchronization route", () => {

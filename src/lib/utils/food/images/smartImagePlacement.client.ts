@@ -9,12 +9,15 @@ import { selectBestImagePlacementSuggestion } from "./smartImagePlacement";
 
 const MAX_URL_CACHE_ENTRIES = 12;
 const MAX_OCR_IMAGE_DIMENSION = 1800;
+const MIN_OCR_IMAGE_DIMENSION = 1200;
 const QUARTER_TURN_RECOGNITION_ATTEMPTS = [
 	0 as const,
 	90 as const,
 	270 as const,
 	180 as const,
 ];
+const TOTAL_RECOGNITION_ATTEMPTS =
+	QUARTER_TURN_RECOGNITION_ATTEMPTS.length + 1;
 const blobRecognitionCache = new WeakMap<
 	Blob,
 	Promise<SmartImagePlacementDocument[]>
@@ -84,9 +87,10 @@ const prepareImage = async (image: Blob | string) => {
 		? await loadRemoteImage(image)
 		: image;
 	const bitmap = await loadBitmap(blob);
+	const largestDimension = Math.max(bitmap.width, bitmap.height);
 	const scale = Math.min(
-		1,
-		MAX_OCR_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height),
+		MAX_OCR_IMAGE_DIMENSION / largestDimension,
+		Math.max(1, MIN_OCR_IMAGE_DIMENSION / largestDimension),
 	);
 	const canvas = document.createElement("canvas");
 	canvas.width = Math.max(1, Math.round(bitmap.width * scale));
@@ -144,7 +148,7 @@ const recognizeImage = async (
 					? initializationProgress * 0.15
 					: 0.15 +
 						((recognitionAttemptIndex + initializationProgress) /
-							QUARTER_TURN_RECOGNITION_ATTEMPTS.length) *
+							TOTAL_RECOGNITION_ATTEMPTS) *
 							0.85;
 				onProgress?.({
 					status: message.status,
@@ -187,6 +191,37 @@ const recognizeImage = async (
 				regions,
 			});
 		}
+		await worker.setParameters({
+			tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
+			preserve_interword_spaces: "1",
+		});
+		recognitionAttemptIndex = QUARTER_TURN_RECOGNITION_ATTEMPTS.length;
+		const fallbackResult = await worker.recognize(
+			canvas,
+			{ rotateAuto: true },
+			{ blocks: true, text: true },
+		);
+		const fallbackRegions =
+			fallbackResult.data.blocks?.flatMap((block) =>
+				block.paragraphs.flatMap((paragraph) =>
+					paragraph.lines.map((line) => ({
+						text: line.text,
+						confidence: line.confidence,
+						bounds: {
+							x0: line.bbox.x0,
+							y0: line.bbox.y0,
+							x1: line.bbox.x1,
+							y1: line.bbox.y1,
+						},
+					})),
+				),
+			) ?? [];
+		documents.push({
+			width: canvas.width,
+			height: canvas.height,
+			rotationDegrees: 0,
+			regions: fallbackRegions,
+		});
 		return documents;
 	} catch (error) {
 		if (error instanceof UserFacingError) throw error;

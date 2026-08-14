@@ -10,7 +10,7 @@ import { resolve } from "node:path";
 import sharp from "sharp";
 import { createWorker, PSM } from "tesseract.js";
 
-export const SMART_IMAGE_PLACEMENT_VERSION = "tesseract-product-label-v2";
+export const SMART_IMAGE_PLACEMENT_VERSION = "tesseract-product-label-v3";
 export const AUTOMATIC_IMAGE_PLACEMENT_MINIMUM_CONFIDENCE = 68;
 
 const MAX_OCR_IMAGE_DIMENSION = 1800;
@@ -99,10 +99,37 @@ const buildCandidates = (regions) => {
 	return candidates;
 };
 
+const getTokenEditDistance = (left, right) => {
+	const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+	for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+		const current = [leftIndex];
+		for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+			current[rightIndex] = Math.min(
+				current[rightIndex - 1] + 1,
+				previous[rightIndex] + 1,
+				previous[rightIndex - 1] +
+					(left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1),
+			);
+		}
+		previous.splice(0, previous.length, ...current);
+	}
+	return previous[right.length];
+};
+
+const tokensLikelyMatch = (candidate, expected) => {
+	if (candidate === expected) return true;
+	if (candidate.length < 4 || expected.length < 4) return false;
+	const maximumDistance = Math.max(candidate.length, expected.length) <= 6 ? 1 : 2;
+	return getTokenEditDistance(candidate, expected) <= maximumDistance;
+};
+
 const getTokenOverlap = (candidate, expected) => {
 	if (expected.length === 0) return 0;
-	const candidateTokens = new Set(candidate);
-	return expected.filter((token) => candidateTokens.has(token)).length / expected.length;
+	return expected.filter((expectedToken) =>
+		candidate.some((candidateToken) =>
+			tokensLikelyMatch(candidateToken, expectedToken)
+		)
+	).length / expected.length;
 };
 
 const scoreCandidate = ({ region, document, productName, brandName }) => {
@@ -250,9 +277,13 @@ const createPlacement = ({ document, region, confidence, originalWidth, original
 	};
 };
 
-const recognizeQuarterTurns = async ({ worker, imageBuffer }) => {
+const recognizeQuarterTurns = async ({
+	worker,
+	imageBuffer,
+	rotationDegreesToCheck = QUARTER_TURN_RECOGNITION_ATTEMPTS,
+}) => {
 	const documents = [];
-	for (const rotationDegrees of QUARTER_TURN_RECOGNITION_ATTEMPTS) {
+	for (const rotationDegrees of rotationDegreesToCheck) {
 		const { data: orientedBuffer, info } = await sharp(imageBuffer)
 			.rotate(rotationDegrees)
 			.png()
@@ -309,38 +340,53 @@ export const suggestStoredImagePlacement = async ({
 		width: MAX_OCR_IMAGE_DIMENSION,
 		height: MAX_OCR_IMAGE_DIMENSION,
 		fit: "inside",
-		withoutEnlargement: true,
-	});
+		withoutEnlargement: false,
+	}).sharpen();
 	const { data, info } = await prepared.png().toBuffer({ resolveWithObject: true });
-	const documents = await recognizeQuarterTurns({
-		worker,
-		imageBuffer: data,
-	});
 	let best = null;
 
-	for (const document of documents) {
-		const ranked = buildCandidates(document.regions)
-			.map((region) => scoreCandidate({ region, document, productName, brandName }))
-			.sort((left, right) => right.score - left.score);
-		const winner = ranked[0];
-		if (!winner) continue;
-		const hasProductTextMatch = winner.productOverlap > 0;
-		const hasKnownTextMatch = hasProductTextMatch || winner.brandOverlap > 0;
-		if (
-			(hasKnownTextMatch && winner.score < 25) ||
-			(!hasKnownTextMatch && winner.score < 42)
-		) continue;
-		const confidence = clamp(
-			(hasKnownTextMatch ? 48 : 30) +
-				winner.productOverlap * 30 +
-				winner.brandOverlap * 15 +
-				clamp(winner.region.confidence, 0, 100) * 0.12,
-			0,
-			100,
-		);
-		if (!best || confidence > best.confidence) {
-			best = { document, winner, confidence };
+	for (const pageSegmentationMode of [PSM.SPARSE_TEXT, PSM.SINGLE_BLOCK]) {
+		await worker.setParameters({
+			tessedit_pageseg_mode: pageSegmentationMode,
+			preserve_interword_spaces: "1",
+		});
+		const documents = await recognizeQuarterTurns({
+			worker,
+			imageBuffer: data,
+			rotationDegreesToCheck:
+				pageSegmentationMode === PSM.SINGLE_BLOCK
+					? [0]
+					: QUARTER_TURN_RECOGNITION_ATTEMPTS,
+		});
+		for (const document of documents) {
+			const ranked = buildCandidates(document.regions)
+				.map((region) => scoreCandidate({ region, document, productName, brandName }))
+				.sort((left, right) => right.score - left.score);
+			const winner = ranked[0];
+			if (!winner) continue;
+			const hasProductTextMatch = winner.productOverlap > 0;
+			const hasKnownTextMatch = hasProductTextMatch || winner.brandOverlap > 0;
+			if (
+				(hasKnownTextMatch && winner.score < 25) ||
+				(!hasKnownTextMatch && winner.score < 42)
+			) continue;
+			const confidence = clamp(
+				(hasKnownTextMatch ? 48 : 30) +
+					winner.productOverlap * 30 +
+					winner.brandOverlap * 15 +
+					clamp(winner.region.confidence, 0, 100) * 0.12,
+				0,
+				100,
+			);
+			if (!best || confidence > best.confidence) {
+				best = { document, winner, confidence };
+			}
 		}
+		if (
+			best &&
+			best.confidence >= AUTOMATIC_IMAGE_PLACEMENT_MINIMUM_CONFIDENCE &&
+			best.winner.productOverlap > 0
+		) break;
 	}
 
 	if (

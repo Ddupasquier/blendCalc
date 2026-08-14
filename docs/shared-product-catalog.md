@@ -454,6 +454,11 @@ approval.
   including the accepted fit, crop, zoom, clockwise quarter-turn rotation, placement
   method, algorithm version, and confidence. Automatic placement never bypasses image
   approval.
+- **Trusted source image placement:** when an exact-barcode provider supplies a new
+  licensed front image, the server caches it with the honest Full image default and
+  schedules bounded OCR placement. A confident result may update only that untouched,
+  unapproved placement metadata; it does not verify the product, approve a community
+  image, or overwrite any user-adjusted or moderator-approved crop.
 - **Reject:** retains the private user ingredient, records the review note, and does not
   publish a shared product.
 - **Submission pause:** moderator-rejected submissions are counted cumulatively in

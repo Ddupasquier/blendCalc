@@ -184,7 +184,7 @@
 			form.data.categories,
 		barcodeMessage: form.data.barcodeMessage,
 		barcodeValidationMessage: barcode.barcodeValidationMessage,
-		checkingBarcodeReference: form.data.checkingBarcodeReference,
+		checkingBarcodeReference: barcode.barcodeReferenceLookupPending,
 		barcodeSuggestion: barcode.barcodeSuggestion,
 		onNameChange: barcode.setManualName,
 		onBrandChange: (value) => (form.data.brandOwner = value),
@@ -434,7 +434,7 @@
 			<ManualEntryScanOption
 				scanning={barcode.state.lookingUpBarcode}
 				disabled={submission.state.saving ||
-					form.data.checkingBarcodeReference}
+					barcode.barcodeReferenceLookupPending}
 				onScan={barcode.openBarcodeScanner}
 			/>
 		{/if}

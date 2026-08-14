@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { dev } from "$app/environment";
+	import { browser, dev } from "$app/environment";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { onMount } from "svelte";
@@ -42,8 +42,10 @@
 		url.hash = "";
 		return { ...event, url: url.toString() };
 	};
+	const isVercelObservabilityAvailable =
+		browser && window.location.hostname.endsWith(".vercel.app");
 
-	if (!dev) {
+	if (!dev && isVercelObservabilityAvailable) {
 		injectAnalytics({
 			mode: "production",
 			debug: false,
@@ -56,7 +58,7 @@
 	}
 
 	onMount(() => {
-		if (dev) return;
+		if (dev || !isVercelObservabilityAvailable) return;
 		const navigationEntry = performance.getEntriesByType(
 			"navigation",
 		)[0] as PerformanceNavigationTiming | undefined;

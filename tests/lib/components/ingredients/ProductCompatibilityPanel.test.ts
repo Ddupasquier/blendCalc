@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import ProductCompatibilityPanel from "$lib/components/ingredients/nutrition/ProductCompatibilityPanel/ProductCompatibilityPanel.svelte";
+import { configureNutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 import type { FoodItem } from "$lib/utils/food/types";
 
 const createFood = (overrides: Partial<FoodItem> = {}): FoodItem => ({
@@ -24,6 +25,25 @@ const resolvedPreferenceContext = {
 	resolvedPreferences: [],
 	unresolvedPreferences: [],
 };
+
+const regulatedAlcoholDisclosureProfile = {
+	key: "test-alcohol-label",
+	displayName: "Alcohol beverage label",
+	userDescription: "Test profile",
+	disclosureKind: "regulated-alcohol" as const,
+	nutritionEvaluationMode: "sparse-accepted" as const,
+	nutritionProfileKey: null,
+	regionCode: "US",
+	authorityName: "Test authority",
+	requiresAlcoholByVolume: true,
+	requiresModeratorReview: true,
+	userSelectable: true,
+	sourceReference: "https://example.com/alcohol-labeling",
+	sortOrder: 1,
+	isDefault: false,
+};
+
+afterEach(() => configureNutritionCompletenessCatalog({ profiles: [] }));
 
 describe("ProductCompatibilityPanel", () => {
 	it("renders explicit and possible allergen disclosures separately", () => {
@@ -190,6 +210,109 @@ describe("ProductCompatibilityPanel", () => {
 			},
 		});
 		expect(screen.getByText("Not checked against food settings"))
+			.toBeInTheDocument();
+	});
+
+	it("warns when regulated alcohol is missing ingredient or allergen evidence", () => {
+		configureNutritionCompletenessCatalog({
+			profiles: [],
+			regulatoryDisclosureProfiles: [regulatedAlcoholDisclosureProfile],
+		});
+
+		render(ProductCompatibilityPanel, {
+			props: {
+				food: createFood({
+					foodIdentityType: "packaged",
+					regulatoryDisclosure: {
+						profileKey: "test-alcohol-label",
+						evidenceStatus: "source-reported",
+					},
+					compatibilityEvaluation: {
+						version: 1,
+						status: "not_checked",
+						policyVersion: null,
+						profileApplied: false,
+						conflictCount: 0,
+						coverage: {
+							basis: "packaged-label",
+							identity: "not_required",
+							ingredients: "missing",
+							allergens: "missing",
+							traces: "missing",
+							policy: "missing",
+						},
+						regulatoryContext: notSelectedRegulatoryContext,
+						preferenceResolution: resolvedPreferenceContext,
+					},
+				}),
+			},
+		});
+
+		expect(screen.getByText("Federal alcohol labels leave gaps"))
+			.toBeInTheDocument();
+		expect(screen.getByText(/skip major-allergen disclosure/i))
+			.toBeInTheDocument();
+		expect(screen.queryByText("Not checked against food settings"))
+			.not.toBeInTheDocument();
+	});
+
+	it("uses explicit positive ABV to cover older alcohol records without a saved profile", () => {
+		configureNutritionCompletenessCatalog({
+			profiles: [],
+			regulatoryDisclosureProfiles: [regulatedAlcoholDisclosureProfile],
+		});
+
+		render(ProductCompatibilityPanel, {
+			props: {
+				food: createFood({
+					foodIdentityType: "packaged",
+					alcoholByVolume: {
+						percent: 4.8,
+						valueStatus: "reported",
+						basis: "volume-percent",
+						sourceUnit: "% ABV",
+					},
+				}),
+			},
+		});
+
+		expect(screen.getByText("Federal alcohol labels leave gaps"))
+			.toBeInTheDocument();
+	});
+
+	it("does not invent a missing-data warning when alcohol safety fields are covered", () => {
+		configureNutritionCompletenessCatalog({
+			profiles: [],
+			regulatoryDisclosureProfiles: [regulatedAlcoholDisclosureProfile],
+		});
+
+		render(ProductCompatibilityPanel, {
+			props: {
+				food: createFood({
+					foodIdentityType: "packaged",
+					ingredients: "Water, wheat, hops, yeast.",
+					allergens: ["wheat"],
+					traces: [],
+					allergenDisclosure: {
+						contains: ["Wheat"],
+						mayContain: [],
+					},
+					fieldProvenance: {
+						ingredients: { source: "shared-catalog" },
+						allergens: { source: "shared-catalog" },
+						traces: { source: "shared-catalog" },
+					},
+					regulatoryDisclosure: {
+						profileKey: "test-alcohol-label",
+						evidenceStatus: "moderator-reviewed",
+					},
+				}),
+			},
+		});
+
+		expect(screen.queryByText("Federal alcohol labels leave gaps"))
+			.not.toBeInTheDocument();
+		expect(screen.getByRole("heading", { name: "Contains" }))
 			.toBeInTheDocument();
 	});
 

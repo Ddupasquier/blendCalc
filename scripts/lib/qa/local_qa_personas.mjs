@@ -286,6 +286,9 @@ const warningLists = {
     "09000000000124",
     "09000000000131",
     "09000000000032",
+    "09000000000209",
+    "09000000000216",
+    "09000000000223",
   ],
   shopping: ["00869759000149", "09000000000063", "09000000000148"],
 };
@@ -360,7 +363,7 @@ export const localQaPersonas = [
   {
     key: "preferences",
     purpose:
-      "Food-warning coverage for vegan, gluten, peanut, and shellfish rules",
+      "Food-warning coverage for vegan, gluten, peanut, shellfish, and alcohol-label rules",
     email: "qa-preferences@blendcalc.local",
     displayName: "QA Food Warnings",
     role: "user",

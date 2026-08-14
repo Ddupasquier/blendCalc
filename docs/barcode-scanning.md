@@ -52,6 +52,13 @@ alcohol labels, permitted sparse labels, case-specific labels, and unknown label
 context. They determine which nutrition completeness policy applies without
 product-name or category heuristics.
 
+Regulated alcohol records with missing ingredient, allergen, or cross-contact evidence
+must retain that absence as unknown and show the dedicated alcohol-label gap warning in
+Nutrition details. An explicit positive ABV can resolve the DB-backed regulated-alcohol
+profile for an older record that predates saved disclosure context; names and categories
+cannot. Explicit declarations remain available for personalized checks; a missing
+declaration never means allergen-free.
+
 Open Food Facts ABV is accepted only when the provider supplies an explicit percentage
 unit. COLA Cloud is a final server-only exact-barcode fallback after blendCalc, USDA,
 and Open Food Facts do not identify the product. It selects one newest approved U.S.

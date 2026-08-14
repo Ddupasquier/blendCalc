@@ -44,7 +44,9 @@ export const lookupExternalBarcodeProduct = async (
 		openFoodFacts?: typeof lookupOpenFoodFactsBarcodeProduct;
 		colaCloud?: typeof lookupColaCloudBarcodeProduct;
 		getProductReferenceCatalog?: typeof getProductReferenceCatalog;
-		requiredNutrientIds?: Iterable<number>;
+		requiredNutrientIds?:
+			| Iterable<number>
+			| PromiseLike<Iterable<number>>;
 		cachedImage?: FoodImageAsset | null | PromiseLike<FoodImageAsset | null>;
 		externalLookupsEnabled?: boolean;
 	} = {},
@@ -65,13 +67,11 @@ export const lookupExternalBarcodeProduct = async (
 			: hasInjectedProvider
 				? Promise.resolve([])
 				: getRequiredPackagedNutrientIds();
+	void requiredNutrientIdsPromise.catch(() => undefined);
 	const cachedImagePromise = Promise.resolve(lookups.cachedImage ?? null).catch(
 		() => null,
 	);
-	const [productReferenceCatalog, requiredNutrientIds] = await Promise.all([
-		productReferenceCatalogPromise,
-		requiredNutrientIdsPromise,
-	]);
+	const productReferenceCatalog = await productReferenceCatalogPromise;
 	const lookupUsda = lookups.usda ?? lookupUsdaBarcodeProduct;
 	const lookupOpenFoodFacts =
 		lookups.openFoodFacts ?? lookupOpenFoodFactsBarcodeProduct;
@@ -95,6 +95,7 @@ export const lookupExternalBarcodeProduct = async (
 				usdaDraft,
 				cachedImage,
 			);
+			const requiredNutrientIds = await requiredNutrientIdsPromise;
 			if (!needsBarcodeProductSupplement(primaryDraft, requiredNutrientIds)) {
 				return primaryDraft;
 			}
