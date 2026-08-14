@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { fetchWithExternalRequestPolicy } from "$lib/server/http/externalRequest.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask.server";
 import { normalizeImageUpload } from "$lib/server/uploads/normalizeImageUpload.server";
@@ -71,10 +72,13 @@ const getOpenFoodFactsFullImageUrl = (imageUrl: string) => {
 };
 
 const fetchAutomaticPlacementImage = async (imageUrl: string) => {
-	const response = await fetch(getOpenFoodFactsFullImageUrl(imageUrl), {
-		redirect: "follow",
-		signal: AbortSignal.timeout(AUTOMATIC_PLACEMENT_TIMEOUT_MILLISECONDS),
-	});
+	const response = await fetchWithExternalRequestPolicy(
+		getOpenFoodFactsFullImageUrl(imageUrl),
+		{
+			redirect: "follow",
+			timeoutMilliseconds: AUTOMATIC_PLACEMENT_TIMEOUT_MILLISECONDS,
+		},
+	);
 	if (!response.ok) {
 		throw new Error(`Image request failed with ${response.status}.`);
 	}

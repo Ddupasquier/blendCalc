@@ -36,6 +36,7 @@ export const createAuthenticatedLocalQaDatabaseClient = async (
 type LocalQaMixGoalConfigurationSnapshot = {
 	goalBasis: string;
 	goalTemplateCustomized: boolean;
+	mixState: Json;
 	sourceGoalTemplateVersionId: string | null;
 	sourceUserGoalTemplateId: string | null;
 	goals: Array<{
@@ -68,7 +69,7 @@ export const captureLocalQaMixGoalConfiguration = async (
 				supabase
 					.from("mix_preferences")
 					.select(
-						"goal_basis, goal_template_customized, source_goal_template_version_id, source_user_goal_template_id",
+						"goal_basis, goal_template_customized, mix_state, source_goal_template_version_id, source_user_goal_template_id",
 					)
 					.eq("user_id", authenticatedUser.user.id)
 					.single(),
@@ -86,6 +87,7 @@ export const captureLocalQaMixGoalConfiguration = async (
 		return {
 			goalBasis: preferences.goal_basis,
 			goalTemplateCustomized: preferences.goal_template_customized,
+			mixState: preferences.mix_state,
 			sourceGoalTemplateVersionId:
 				preferences.source_goal_template_version_id,
 			sourceUserGoalTemplateId: preferences.source_user_goal_template_id,
@@ -105,21 +107,27 @@ export const restoreLocalQaMixGoalConfiguration = async (
 	);
 
 	try {
-		const { error } = await supabase.rpc("save_mix_goal_configuration", {
-			p_customized: snapshot.goalTemplateCustomized,
-			p_goal_basis: snapshot.goalBasis,
-			p_goals: snapshot.goals as Json,
-			...(snapshot.sourceGoalTemplateVersionId
-				? {
-						p_source_template_version_id:
-							snapshot.sourceGoalTemplateVersionId,
-					}
-				: {}),
-			...(snapshot.sourceUserGoalTemplateId
-				? { p_source_user_template_id: snapshot.sourceUserGoalTemplateId }
-				: {}),
-		});
-		if (error) throw error;
+		const [goalResult, stateResult] = await Promise.all([
+			supabase.rpc("save_mix_goal_configuration", {
+				p_customized: snapshot.goalTemplateCustomized,
+				p_goal_basis: snapshot.goalBasis,
+				p_goals: snapshot.goals as Json,
+				...(snapshot.sourceGoalTemplateVersionId
+					? {
+							p_source_template_version_id:
+								snapshot.sourceGoalTemplateVersionId,
+						}
+					: {}),
+				...(snapshot.sourceUserGoalTemplateId
+					? { p_source_user_template_id: snapshot.sourceUserGoalTemplateId }
+					: {}),
+			}),
+			supabase.rpc("save_mix_preferences", {
+				p_mix_state: snapshot.mixState,
+			}),
+		]);
+		if (goalResult.error) throw goalResult.error;
+		if (stateResult.error) throw stateResult.error;
 	} finally {
 		await supabase.auth.signOut({ scope: "local" });
 	}

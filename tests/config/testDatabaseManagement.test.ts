@@ -164,7 +164,7 @@ describe("local test database management", () => {
     expect(populatedBarcodes).toHaveLength(100);
     expect(populatedPersona?.lists.fridge).toHaveLength(60);
     expect(populatedPersona?.lists.shopping).toHaveLength(40);
-    expect(getLocalQaCatalogBarcodes()).toHaveLength(102);
+    expect(getLocalQaCatalogBarcodes()).toHaveLength(105);
   });
 
   it("uses valid GTINs for every USDA barcode fixture", () => {

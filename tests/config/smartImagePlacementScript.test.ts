@@ -1,5 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import {
+	AUTOMATIC_IMAGE_PLACEMENT_MINIMUM_CONFIDENCE,
+	SMART_IMAGE_PLACEMENT_VERSION,
+} from "$lib/utils/food/images/smartImagePlacement";
 
 const scriptUtility = readFileSync(
 	"scripts/lib/images/smart_image_placement.mjs",
@@ -8,8 +12,10 @@ const scriptUtility = readFileSync(
 
 describe("script smart image placement", () => {
 	it("uses the same algorithm version, threshold, and quarter-turn set as the app", () => {
-		expect(scriptUtility).toContain('"tesseract-product-label-v2"');
-		expect(scriptUtility).toContain("AUTOMATIC_IMAGE_PLACEMENT_MINIMUM_CONFIDENCE = 68");
+		expect(scriptUtility).toContain(`"${SMART_IMAGE_PLACEMENT_VERSION}"`);
+		expect(scriptUtility).toContain(
+			`AUTOMATIC_IMAGE_PLACEMENT_MINIMUM_CONFIDENCE = ${AUTOMATIC_IMAGE_PLACEMENT_MINIMUM_CONFIDENCE}`,
+		);
 		expect(scriptUtility).toContain("[0, 90, 270, 180]");
 		expect(scriptUtility).toContain("best.winner.productOverlap <= 0");
 	});

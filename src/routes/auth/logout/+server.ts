@@ -5,7 +5,7 @@ import { trackServerAppInteraction } from "$lib/server/analytics/appInteractionT
 import { APP_INTERACTION_METRICS } from "$lib/utils/analytics/appInteractionMetrics";
 
 export const POST: RequestHandler = async ({ locals, cookies, request }) => {
-	const { error } = await locals.supabase.auth.signOut();
+	const { error } = await locals.supabase.auth.signOut({ scope: "local" });
 	clearPasswordUpgrade(cookies);
 	if (error) {
 		console.warn("[auth] Sign out failed", {

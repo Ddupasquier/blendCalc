@@ -232,6 +232,25 @@ test("Profile settings use routed sheets and restore launcher focus", async ({
 test("logout ends the session without deleting durable account data", async ({
 	page,
 }, testInfo) => {
+	const qaAccount = getLocalQaAccountForWorker(testInfo.parallelIndex);
+	const isolatedSessionResponse = await page.request.post(
+		"/auth?/emailSignIn",
+		{
+			headers: {
+				origin:
+					process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5174",
+			},
+			form: {
+				email: qaAccount.email,
+				next: "/profile",
+				password: qaAccount.password,
+			},
+		},
+	);
+	expect(
+		isolatedSessionResponse.ok(),
+		"The logout test could not create an isolated browser session.",
+	).toBe(true);
 	await page.goto("/profile");
 	await waitForAppReady(page);
 
@@ -307,12 +326,24 @@ test("logout ends the session without deleting durable account data", async ({
 	}
 	await logoutPostRequest;
 	await expect(page).toHaveURL(/\/$/);
-	await page.waitForLoadState("load");
+	await waitForAppReady(page);
 
-	await page.goto("/profile");
-	await expect(page).toHaveURL(/\/\?next=%2Fprofile$/);
+	const protectedProfileResponse = await page.request.get("/profile", {
+		maxRedirects: 0,
+	});
+	expect(protectedProfileResponse.status()).toBe(303);
+	const protectedProfileLocation = protectedProfileResponse.headers().location;
+	if (!protectedProfileLocation) {
+		throw new Error("The protected Profile route did not return a redirect location.");
+	}
+	const protectedProfileRedirect = new URL(
+		protectedProfileLocation,
+		page.url(),
+	);
+	expect(`${protectedProfileRedirect.pathname}${protectedProfileRedirect.search}`).toBe(
+		"/?next=%2Fprofile",
+	);
 	await page.goto("/auth?next=/profile");
-	const qaAccount = getLocalQaAccountForWorker(testInfo.parallelIndex);
 	await page.getByLabel("Email").fill(qaAccount.email);
 	await page.getByLabel("Password", { exact: true }).fill(qaAccount.password);
 	await page.getByRole("button", { name: "Sign in", exact: true }).click();
