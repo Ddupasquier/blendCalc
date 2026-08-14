@@ -4369,6 +4369,87 @@ export type Database = {
           },
         ]
       }
+      product_regulatory_disclosure_profiles: {
+        Row: {
+          authority_name: string
+          created_at: string
+          disclosure_kind: string
+          display_name: string
+          enabled: boolean
+          is_default: boolean
+          key: string
+          nutrition_evaluation_mode: string
+          nutrition_profile_key: string | null
+          region_code: string
+          requires_alcohol_by_volume: boolean
+          requires_moderator_review: boolean
+          reviewed_at: string
+          sort_order: number
+          source_key: string
+          source_reference: string
+          updated_at: string
+          user_description: string
+          user_selectable: boolean
+        }
+        Insert: {
+          authority_name: string
+          created_at?: string
+          disclosure_kind: string
+          display_name: string
+          enabled?: boolean
+          is_default?: boolean
+          key: string
+          nutrition_evaluation_mode: string
+          nutrition_profile_key?: string | null
+          region_code?: string
+          requires_alcohol_by_volume?: boolean
+          requires_moderator_review?: boolean
+          reviewed_at: string
+          sort_order: number
+          source_key: string
+          source_reference: string
+          updated_at?: string
+          user_description: string
+          user_selectable?: boolean
+        }
+        Update: {
+          authority_name?: string
+          created_at?: string
+          disclosure_kind?: string
+          display_name?: string
+          enabled?: boolean
+          is_default?: boolean
+          key?: string
+          nutrition_evaluation_mode?: string
+          nutrition_profile_key?: string | null
+          region_code?: string
+          requires_alcohol_by_volume?: boolean
+          requires_moderator_review?: boolean
+          reviewed_at?: string
+          sort_order?: number
+          source_key?: string
+          source_reference?: string
+          updated_at?: string
+          user_description?: string
+          user_selectable?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_regulatory_disclosure_profil_nutrition_profile_key_fkey"
+            columns: ["nutrition_profile_key"]
+            isOneToOne: false
+            referencedRelation: "nutrition_completeness_profiles"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "product_regulatory_disclosure_profiles_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       product_source_daily_metrics: {
         Row: {
           api_error_count: number
@@ -6289,6 +6370,10 @@ export type Database = {
           p_shared_product_submission_id?: string
         }
         Returns: undefined
+      }
+      food_alcohol_disclosure_is_valid: {
+        Args: { p_food: Json }
+        Returns: boolean
       }
       food_list_item_identity_key: {
         Args: { p_fdc_id: number; p_food: Json }
