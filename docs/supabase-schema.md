@@ -789,6 +789,15 @@ Notes:
   fields, accepts only reported/reported-zero/exactly derived nutrient states, blocks
   unreviewed nutrient mappings and medium/high open conflicts, and expires stale
   verification. A failed row remains canonical but is omitted from API reads.
+- `product_regulatory_disclosure_profiles` stores reviewed label contexts separately
+  from product observations. Standard Nutrition Facts, regulated alcohol, permitted
+  sparse, case-specific kombucha, and unknown contexts each retain authority, region,
+  policy source, review date, and whether moderator review is required. Product JSON may
+  reference only a known profile; no trigger infers one from a product name or category.
+- `food.alcoholByVolume` is optional and valid only as an explicit `volume-percent`
+  observation between 0 and 100. A reported zero uses `reported-zero`; an omitted ABV
+  remains absent and unknown. The same validation protects submissions, canonical rows,
+  and revisions.
 
 ### `shared_product_revisions` and `shared_product_revision_changes`
 
@@ -1426,6 +1435,7 @@ without calling the source again.
 | `nutrition_completeness_profiles`          | `key`                                               | Defines what complete nutrition means for a food scope/region | `food_scope` (`generic`, `manual`, or `packaged`), `region_code`, DB-owned labels, source reference, one enabled default per scope/region |
 | `nutrition_completeness_profile_nutrients` | `profile_key, nutrient_id`                          | Orders required and recommended nutrients for one profile     | `requirement_level`, `display_order`, `reason`; nutrient FK prevents invented definitions                                                 |
 | `blendcalc_api_publication_profiles`       | `key`                                               | Versions the hard gates for one API major and resource scope   | Linked nutrition profile, required/recommended fields, accepted nutrient states, conflict severities, verification age, reviewed policy source, and one enabled default per scope |
+| `product_regulatory_disclosure_profiles`  | `key`                                               | Defines reviewed package-label contexts without product-name inference | Disclosure kind, nutrition evaluation mode, optional completeness profile, region, authority, ABV requirement, review gate, source reference, and enabled/default state |
 | `generic_food_datasets`                    | `key`                                               | Records each national release and its legal/import state      | Source/license URLs, attribution, file SHA-256, review status, import/active gates, imported row counts                                   |
 | `generic_food_records`                     | `dataset_key, source_food_key`                      | Stores one source-owned generic food/preparation              | Raw description, group, preparation, searchable text, source reference and dates                                                          |
 | `generic_food_source_identifiers`          | Dataset food plus source, type, and value           | Stores exact source-declared cross-dataset identifiers        | Supports exact joins such as CNF `USDA_NDB_Code` to USDA NDB without fuzzy name matching; includes source field and verification method   |
