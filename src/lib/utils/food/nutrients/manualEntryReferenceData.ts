@@ -11,6 +11,8 @@ import {
 	readNutritionLabelOcrMappings,
 	type NutritionLabelOcrMapping,
 } from "$lib/utils/food/ocr/nutritionLabelOcrMappings";
+import { readProductRegulatoryDisclosureProfiles } from "$lib/utils/food/quality/productRegulatoryDisclosureProfiles";
+import type { ProductRegulatoryDisclosureProfile } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 
 export type ManualEntryReferenceData = {
 	nutrientGroups: ManualEntryNutrientGroupsByStep | null;
@@ -19,6 +21,8 @@ export type ManualEntryReferenceData = {
 	nutrientRelationshipRuleError: string;
 	nutritionLabelOcrMappings: NutritionLabelOcrMapping[];
 	nutritionLabelOcrMappingError: string;
+	regulatoryDisclosureProfiles: ProductRegulatoryDisclosureProfile[];
+	regulatoryDisclosureProfileError: string;
 };
 
 export const loadManualEntryReferenceData =
@@ -27,11 +31,13 @@ export const loadManualEntryReferenceData =
 			nutrientGroupsResult,
 			relationshipRulesResult,
 			nutritionLabelOcrMappingsResult,
+			regulatoryDisclosureProfilesResult,
 		] =
 			await Promise.allSettled([
 				readManualEntryNutrientGroups(),
 				readNutrientRelationshipRules(getSupabaseBrowserClient()),
 				readNutritionLabelOcrMappings(getSupabaseBrowserClient()),
+				readProductRegulatoryDisclosureProfiles(getSupabaseBrowserClient()),
 			]);
 
 		const nutrientGroups =
@@ -45,6 +51,12 @@ export const loadManualEntryReferenceData =
 		const nutritionLabelOcrMappings =
 			nutritionLabelOcrMappingsResult.status === "fulfilled"
 				? nutritionLabelOcrMappingsResult.value
+				: null;
+		const regulatoryDisclosureProfiles =
+			regulatoryDisclosureProfilesResult.status === "fulfilled"
+				? regulatoryDisclosureProfilesResult.value.filter(
+					(profile) => profile.userSelectable,
+				)
 				: null;
 
 		return {
@@ -60,5 +72,9 @@ export const loadManualEntryReferenceData =
 			nutritionLabelOcrMappingError: nutritionLabelOcrMappings?.length
 				? ""
 				: "Nutrition label scanning is unavailable. Enter the label values manually.",
+			regulatoryDisclosureProfiles: regulatoryDisclosureProfiles ?? [],
+			regulatoryDisclosureProfileError: regulatoryDisclosureProfiles?.length
+				? ""
+				: "Package label options could not load. You can still save this ingredient and add the context later.",
 		};
 	};

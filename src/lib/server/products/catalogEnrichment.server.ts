@@ -31,6 +31,8 @@ const SUPPLEMENTAL_ENRICHMENT_FIELDS = new Set<FoodTrackedField>([
 	"productName",
 	"brandOwner",
 	"precautionaryStatements",
+	"alcoholByVolume",
+	"regulatoryDisclosure",
 ]);
 
 const getFieldValue = (
@@ -85,6 +87,10 @@ const getFieldValue = (
 			return (draft.additives ?? []) as Json;
 		case "package":
 			return (draft.packageQuantity ?? null) as unknown as Json;
+		case "alcoholByVolume":
+			return (draft.alcoholByVolume ?? null) as unknown as Json;
+		case "regulatoryDisclosure":
+			return (draft.regulatoryDisclosure ?? null) as unknown as Json;
 		case "sourceMetadata":
 			return (draft.sourceMetadata ?? null) as unknown as Json;
 	}

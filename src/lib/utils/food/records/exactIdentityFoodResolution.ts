@@ -23,6 +23,8 @@ export const EXACT_IDENTITY_RESOLVABLE_FIELDS: FoodProvenanceField[] = [
 	"ingredientAnalysis",
 	"additives",
 	"package",
+	"alcoholByVolume",
+	"regulatoryDisclosure",
 	"scientificName",
 	"alternateDescription",
 	"preparation",
@@ -115,6 +117,14 @@ export const getFoodFieldCompleteness = (
 					(value) => value !== undefined && value !== null && value !== "",
 				).length
 				: 0;
+		case "alcoholByVolume":
+			return food.alcoholByVolume &&
+				Number.isFinite(food.alcoholByVolume.percent) &&
+				food.alcoholByVolume.percent >= 0
+				? 1
+				: 0;
+		case "regulatoryDisclosure":
+			return food.regulatoryDisclosure?.profileKey.trim() ? 1 : 0;
 		case "scientificName":
 			return food.scientificName?.trim().length ?? 0;
 		case "alternateDescription":
@@ -248,6 +258,10 @@ export const applySelectedFoodField = (
 				packageQuantity: selected.packageQuantity,
 				packageWeight: selected.packageWeight,
 			};
+		case "alcoholByVolume":
+			return { ...result, alcoholByVolume: selected.alcoholByVolume };
+		case "regulatoryDisclosure":
+			return { ...result, regulatoryDisclosure: selected.regulatoryDisclosure };
 		case "scientificName":
 			return { ...result, scientificName: selected.scientificName };
 		case "alternateDescription":

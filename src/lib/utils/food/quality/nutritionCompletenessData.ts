@@ -6,6 +6,7 @@ import type {
 	NutritionCompletenessProfileScope,
 	NutritionRequirementLevel,
 } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
+import { readProductRegulatoryDisclosureProfiles } from "$lib/utils/food/quality/productRegulatoryDisclosureProfiles";
 import type { NutrientDefinitionReferenceRecord } from "$lib/utils/food/nutrients/nutrientDefinitionRecord";
 
 export const readNutritionCompletenessCatalog = async (
@@ -17,7 +18,7 @@ export const readNutritionCompletenessCatalog = async (
 		: supabase
 				.from("nutrient_definitions")
 				.select("nutrient_id, nutrient_name, default_unit_name");
-	const [profilesResult, profileNutrientsResult, definitionsResult] =
+	const [profilesResult, profileNutrientsResult, definitionsResult, disclosureProfilesResult] =
 		await Promise.all([
 			supabase
 				.from("nutrition_completeness_profiles")
@@ -36,6 +37,7 @@ export const readNutritionCompletenessCatalog = async (
 				.order("profile_key", { ascending: true })
 				.order("display_order", { ascending: true }),
 			definitionsPromise,
+			readProductRegulatoryDisclosureProfiles(supabase),
 		]);
 
 	if (profilesResult.error) throw profilesResult.error;
@@ -121,5 +123,7 @@ export const readNutritionCompletenessCatalog = async (
 		throw new Error("No enabled nutrition completeness profiles are available.");
 	}
 
-	return { profiles };
+	const regulatoryDisclosureProfiles = disclosureProfilesResult;
+
+	return { profiles, regulatoryDisclosureProfiles };
 };

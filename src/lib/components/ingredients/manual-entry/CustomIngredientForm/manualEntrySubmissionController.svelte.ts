@@ -119,6 +119,8 @@ export const createManualEntrySubmissionController = ({
 			dietaryTags: form.data.dietaryTags,
 			labels: form.data.labels,
 			packageQuantity: form.data.packageQuantity,
+			alcoholByVolume: form.data.alcoholByVolume,
+			regulatoryDisclosure: form.data.regulatoryDisclosure,
 			sourceMetadata: form.data.sourceMetadata,
 			activeCategory: form.data.category,
 			categoryOptionId: form.data.categoryOptionId,

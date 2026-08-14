@@ -24,6 +24,8 @@ const TRACKED_FIELDS: FoodTrackedField[] = [
 	"ingredientAnalysis",
 	"additives",
 	"package",
+	"alcoholByVolume",
+	"regulatoryDisclosure",
 	"sourceMetadata",
 ];
 
@@ -105,6 +107,14 @@ const getFieldCompleteness = (
 					(value) => value !== undefined && value !== null && value !== "",
 				).length
 				: 0;
+		case "alcoholByVolume":
+			return draft.alcoholByVolume &&
+				Number.isFinite(draft.alcoholByVolume.percent) &&
+				draft.alcoholByVolume.percent >= 0
+				? 1
+				: 0;
+		case "regulatoryDisclosure":
+			return draft.regulatoryDisclosure?.profileKey.trim() ? 1 : 0;
 		case "sourceMetadata":
 			return draft.sourceMetadata
 				? Object.values(draft.sourceMetadata).filter((value) =>
@@ -236,6 +246,10 @@ const applySelectedField = (
 			return { ...result, additives: selected.additives };
 		case "package":
 			return { ...result, packageQuantity: selected.packageQuantity };
+		case "alcoholByVolume":
+			return { ...result, alcoholByVolume: selected.alcoholByVolume };
+		case "regulatoryDisclosure":
+			return { ...result, regulatoryDisclosure: selected.regulatoryDisclosure };
 		case "sourceMetadata":
 			return { ...result, sourceMetadata: selected.sourceMetadata };
 		case "nutrition":

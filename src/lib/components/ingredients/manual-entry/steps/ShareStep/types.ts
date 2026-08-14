@@ -1,6 +1,7 @@
 import type { ImagePlacementValue } from "$lib/utils/food/images/types";
 import type { FoodImageAsset } from "$lib/utils/food/types";
 import type { IngredientListKey } from "$lib/utils/storage/client/ingredientLists";
+import type { ProductRegulatoryDisclosureProfile } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
 import type {
 	CustomIngredientOutcomeState,
 	ManualEntryBarcodeShareMismatch,
@@ -21,6 +22,7 @@ export type ShareStepProps = {
 	shareHelpMessage: string;
 	shareWithCatalog: boolean;
 	barcodeShareMismatch: ManualEntryBarcodeShareMismatch;
+	lookingUpBarcode: boolean;
 	validatingBarcodeShare: boolean;
 	requiresCatalogEvidence: boolean;
 	showOptionalProductImageUpload: boolean;
@@ -29,6 +31,11 @@ export type ShareStepProps = {
 	nutritionPhoto: File | null;
 	barcodePhoto: File | null;
 	imagePlacement: ImagePlacementValue;
+	regulatoryDisclosureProfiles: ProductRegulatoryDisclosureProfile[];
+	regulatoryDisclosureProfileError: string;
+	regulatoryDisclosureProfileKey: string;
+	alcoholByVolumePercent: number | null;
+	requiresAlcoholByVolume: boolean;
 	saveDestination: IngredientListKey;
 	error: string;
 	lastOutcome: CustomIngredientOutcomeState | null;
@@ -43,6 +50,8 @@ export type ShareStepProps = {
 	onSubmitBarcodeCorrection: () => void;
 	onFrontPhotoChange: (file: File | null) => void;
 	onImagePlacementChange: (value: ImagePlacementValue) => void;
+	onRegulatoryDisclosureChange: (profileKey: string) => void;
+	onAlcoholByVolumeChange: (percent: number | null) => void;
 	onNutritionPhotoChange: (file: File | null) => void;
 	onBarcodePhotoChange: (file: File | null) => void;
 	onSaveDestinationChange: (destination: IngredientListKey) => void;

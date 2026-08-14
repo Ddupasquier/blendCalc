@@ -160,6 +160,20 @@ const record: ApprovedCatalogRecord = {
 			confidence: "imported",
 			verificationMethod: "exact-barcode",
 		},
+		alcoholByVolume: {
+			...usdaObservation,
+			source: "usda",
+			sourceReference: "123",
+			confidence: "source-verified",
+			verificationMethod: "exact-barcode",
+		},
+		regulatoryDisclosure: {
+			...usdaObservation,
+			source: "usda",
+			sourceReference: "123",
+			confidence: "source-verified",
+			verificationMethod: "exact-barcode",
+		},
 		sourceMetadata: {
 			...openFoodFactsObservation,
 			source: "open-food-facts",
@@ -215,6 +229,16 @@ const record: ApprovedCatalogRecord = {
 			label: "24 oz",
 			amount: 24,
 			unit: "oz",
+		},
+		alcoholByVolume: {
+			percent: 6.5,
+			valueStatus: "reported",
+			basis: "volume-percent",
+			sourceUnit: "% ABV",
+		},
+		regulatoryDisclosure: {
+			profileKey: "us-ttb-alcohol-beverage-v1",
+			evidenceStatus: "moderator-reviewed",
 		},
 		sourceMetadata: {
 			language: "en",
@@ -469,6 +493,20 @@ describe("blendCalc API v1 catalog mapping", () => {
 			label: "24 oz",
 			amount: 24,
 			unit: "oz",
+		});
+		expect(product.alcoholByVolume).toEqual({
+			percent: 6.5,
+			valueStatus: "reported",
+			basis: "volume-percent",
+			sourceUnit: "% ABV",
+		});
+		expect(product.regulatoryDisclosure).toEqual({
+			profileKey: "us-ttb-alcohol-beverage-v1",
+			evidenceStatus: "moderator-reviewed",
+		});
+		expect(product.fieldSources.alcoholByVolume).toMatchObject({
+			source: "usda",
+			reference: "123",
 		});
 		expect(product.sourceRecord).toMatchObject({
 			language: "en",

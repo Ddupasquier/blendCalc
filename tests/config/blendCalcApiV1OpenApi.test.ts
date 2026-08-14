@@ -67,6 +67,10 @@ describe("blendCalc API v1 OpenAPI contract", () => {
 			"IngredientAnalysis",
 		);
 		expect(specification.components.schemas).toHaveProperty("PackageQuantity");
+		expect(specification.components.schemas).toHaveProperty("AlcoholByVolume");
+		expect(specification.components.schemas).toHaveProperty(
+			"RegulatoryDisclosure",
+		);
 		expect(specification.components.schemas).toHaveProperty("SourceRecord");
 		expect(specification.components.schemas).toHaveProperty("CatalogMetadata");
 		expect(specification.components.schemas).toHaveProperty(

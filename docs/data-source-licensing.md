@@ -197,8 +197,9 @@ Official references:
 
 - `product_data_sources.cola-cloud` is an enabled trial lookup source only when the
   server has `COLA_CLOUD_API_KEY`.
-- Runtime lookup uses an exact normalized barcode, selects the newest returned approval,
-  and fetches no more than one selected detail record.
+- Runtime lookup uses an exact normalized barcode, selects the newest approved label,
+  verifies the same GTIN again in the detail response, and fetches no more than one
+  selected detail record.
 - Only explicitly returned ABV, volume, identity, approval date, and TTB reference are
   eligible as temporary field-level lookup evidence. Probabilistic categories,
   descriptions, tasting notes, and other model-generated fields are not accepted.

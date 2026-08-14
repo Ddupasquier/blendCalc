@@ -271,6 +271,7 @@
 		shareHelpMessage: barcode.shareHelpMessage,
 		shareWithCatalog: form.data.shareWithCatalog,
 		barcodeShareMismatch: barcode.barcodeShareMismatch,
+		lookingUpBarcode: barcode.state.lookingUpBarcode,
 		validatingBarcodeShare: form.data.validatingBarcodeShare,
 		requiresCatalogEvidence: barcode.requiresCatalogEvidence,
 		showOptionalProductImageUpload:
@@ -280,6 +281,18 @@
 		nutritionPhoto: form.data.nutritionPhoto,
 		barcodePhoto: form.data.barcodePhoto,
 		imagePlacement: form.data.imagePlacement,
+		regulatoryDisclosureProfiles:
+			referenceData.state.regulatoryDisclosureProfiles,
+		regulatoryDisclosureProfileError:
+			referenceData.state.regulatoryDisclosureProfileError,
+		regulatoryDisclosureProfileKey:
+			form.data.regulatoryDisclosure?.profileKey ?? "",
+		alcoholByVolumePercent: form.data.alcoholByVolume?.percent ?? null,
+		requiresAlcoholByVolume:
+			referenceData.state.regulatoryDisclosureProfiles.find(
+				(profile) =>
+					profile.key === form.data.regulatoryDisclosure?.profileKey,
+			)?.requiresAlcoholByVolume ?? false,
 		saveDestination: outcome.state.saveDestination,
 		error: submission.state.error,
 		lastOutcome: outcome.state.lastOutcome,
@@ -298,6 +311,35 @@
 		},
 		onImagePlacementChange: (value) => {
 			form.data.imagePlacement = value;
+		},
+		onRegulatoryDisclosureChange: (profileKey) => {
+			if (!profileKey) {
+				form.data.regulatoryDisclosure = undefined;
+				if (form.data.fieldProvenance) {
+					const fieldProvenance = { ...form.data.fieldProvenance };
+					delete fieldProvenance.regulatoryDisclosure;
+					form.data.fieldProvenance = fieldProvenance;
+				}
+				return;
+			}
+			form.data.regulatoryDisclosure = {
+				profileKey,
+				evidenceStatus: "user-reported",
+			};
+			form.markFieldAsUserEntered("regulatoryDisclosure");
+		},
+		onAlcoholByVolumeChange: (percent) => {
+			if (percent === null || percent < 0 || percent > 100) {
+				form.data.alcoholByVolume = undefined;
+				return;
+			}
+			form.data.alcoholByVolume = {
+				percent,
+				valueStatus: percent === 0 ? "reported-zero" : "reported",
+				basis: "volume-percent",
+				sourceUnit: "% vol",
+			};
+			form.markFieldAsUserEntered("alcoholByVolume");
 		},
 		onNutritionPhotoChange: (file) => {
 			form.data.nutritionPhoto = file;

@@ -16,6 +16,8 @@ import type {
 	FoodSourceRecordMetadata,
 	FoodStructuredIngredient,
 	FoodServing,
+	FoodAlcoholByVolume,
+	FoodRegulatoryDisclosure,
 } from "$lib/utils/food/types";
 import type {
 	ManualEntryStepId,
@@ -77,6 +79,8 @@ export type ManualEntryFormResetState = {
 	dietaryTags: string[];
 	labels: string[];
 	packageQuantity?: FoodPackageQuantity;
+	alcoholByVolume?: FoodAlcoholByVolume;
+	regulatoryDisclosure?: FoodRegulatoryDisclosure;
 	sourceMetadata?: FoodSourceRecordMetadata;
 	categories: string[];
 	image?: FoodImageAsset;
@@ -131,6 +135,8 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	dietaryTags: [],
 	labels: [],
 	packageQuantity: undefined,
+	alcoholByVolume: undefined,
+	regulatoryDisclosure: undefined,
 	sourceMetadata: undefined,
 	categories: [],
 	image: undefined,
@@ -199,6 +205,8 @@ export const getManualEntryFormStateFromFood = (
 		dietaryTags: [...(food.dietaryTags ?? [])],
 		labels: [...(food.labels ?? [])],
 		packageQuantity: food.packageQuantity,
+		alcoholByVolume: food.alcoholByVolume,
+		regulatoryDisclosure: food.regulatoryDisclosure,
 		sourceMetadata: food.sourceMetadata,
 		categories: [...(food.categories ?? [])],
 		image: food.image,
