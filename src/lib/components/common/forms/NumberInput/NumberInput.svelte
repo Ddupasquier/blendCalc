@@ -19,6 +19,7 @@
 		ariaDescribedBy,
 		selectOnFocus = true,
 		onValueChange,
+		onValueCommit,
 		onfocus,
 		oninput,
 	}: NumberInputProps = $props();
@@ -36,6 +37,15 @@
 			event,
 		);
 		oninput?.(event);
+	};
+
+	const handleChange = (event: Event & { currentTarget: HTMLInputElement }) => {
+		const numberValue = event.currentTarget.valueAsNumber;
+		onValueCommit?.(
+			event.currentTarget.value,
+			Number.isFinite(numberValue) ? numberValue : null,
+			event,
+		);
 	};
 </script>
 
@@ -58,4 +68,5 @@
 	value={value ?? ""}
 	onfocus={handleFocus}
 	oninput={handleInput}
+	onchange={handleChange}
 />

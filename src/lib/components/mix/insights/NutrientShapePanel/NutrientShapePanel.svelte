@@ -2,7 +2,10 @@
 	import MetadataPill from "$lib/components/common/display/MetadataPill/MetadataPill.svelte";
 	import NutrientRadarChart from "$lib/components/mix/insights/NutrientRadarChart/NutrientRadarChart.svelte";
 	import MixPanelSection from "$lib/components/mix/layout/MixPanelSection/MixPanelSection.svelte";
-	import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
+	import {
+		formatMixGoalValueComparison,
+		getMixGoalStatusTone,
+	} from "$lib/utils/mix/formatting/mixGoalPresentation";
 	import type { NutrientShapePanelProps } from "./types";
 
 	let {
@@ -19,8 +22,6 @@
 		onOpenChange,
 	}: NutrientShapePanelProps = $props();
 
-	const getGoalStatusTone = (status: "met" | "over" | "under") =>
-		status === "met" ? "success" : status === "over" ? "danger" : "warning";
 </script>
 
 <MixPanelSection
@@ -60,14 +61,24 @@
 			aria-label="Nutrient goal status"
 		>
 			{#each nutrientGoalDifferences as diff}
-				<MetadataPill
-					label={diff.label.replace("Total ", "")}
-					value={`${formatMixQuantity(diff.total)} / ${formatMixQuantity(
-						diff.goal,
-						{ unit: diff.unit },
-					)}`}
-					tone={getGoalStatusTone(diff.status)}
-				/>
+				<span
+					data-nutrient-label={diff.label}
+					data-goal-status={diff.status}
+				>
+					<MetadataPill
+						label={diff.label.replace("Total ", "")}
+						value={formatMixGoalValueComparison(
+							diff.total,
+							{
+								goalType: diff.goalType,
+								targetAmount: diff.goal,
+								upperAmount: diff.upperGoal,
+							},
+							diff.unit,
+						)}
+						tone={getMixGoalStatusTone(diff.status)}
+					/>
+				</span>
 			{/each}
 		</div>
 	{/if}

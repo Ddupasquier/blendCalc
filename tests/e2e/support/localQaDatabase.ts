@@ -132,3 +132,21 @@ export const restoreLocalQaMixGoalConfiguration = async (
 		await supabase.auth.signOut({ scope: "local" });
 	}
 };
+
+export const saveLocalQaMixState = async (
+	parallelWorkerIndex: number,
+	mixState: Json,
+) => {
+	const supabase = await createAuthenticatedLocalQaDatabaseClient(
+		parallelWorkerIndex,
+	);
+
+	try {
+		const { error } = await supabase.rpc("save_mix_preferences", {
+			p_mix_state: mixState,
+		});
+		if (error) throw error;
+	} finally {
+		await supabase.auth.signOut({ scope: "local" });
+	}
+};
