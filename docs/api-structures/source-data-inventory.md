@@ -51,10 +51,13 @@ detail read. The detail record is retained because it adds source category and
 availability metadata that search results omit. Open Food Facts remains the field-level
 supplement for missing package images, ingredients, allergens, traces, labels,
 categories, servings, nutrition, and explicit source-reported ABV rather than a
-whole-product replacement. COLA Cloud is queried only as a final exact-barcode U.S.
-alcohol fallback when USDA and Open Food Facts do not identify the product. Its barcode
-response selects one newest approved label before one dependent detail request;
-model-generated categories and descriptions are ignored.
+whole-product replacement. COLA Cloud is queried as a final exact-barcode U.S. alcohol
+fallback when USDA and Open Food Facts do not identify the product. It may also fill
+missing alcohol-specific fields after another provider match only when explicit ABV or
+a DB-reviewed regulated-alcohol profile already establishes alcohol context. An
+ordinary sparse record never spends COLA quota. Its barcode response selects one newest
+approved label before one dependent detail request; model-generated categories and
+descriptions are ignored.
 
 Run `node scripts/audits/food-sources/audit_generic_dataset_contribution.mjs` to measure
 CNF and CoFID records, nutrients, measures, exact identifiers, and a balanced search

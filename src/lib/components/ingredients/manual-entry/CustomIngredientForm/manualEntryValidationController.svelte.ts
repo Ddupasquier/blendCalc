@@ -25,6 +25,7 @@ import {
 } from "$lib/components/ingredients/manual-entry/utils/stepNavigation";
 import { getBarcodeCategoryWarningMessage } from "$lib/components/ingredients/manual-entry/utils/barcodeFlow";
 import { validateNutrientRelationshipRules } from "$lib/utils/food/nutrients/nutrientRelationshipRules";
+import { getManualEntryDisclosurePolicy } from "$lib/components/ingredients/manual-entry/utils/manualEntryDisclosurePolicy";
 import type { ManualEntryFormState } from "./manualEntryFormState.svelte";
 import type { ManualEntryReferenceDataController } from "./manualEntryReferenceDataController.svelte";
 
@@ -51,8 +52,28 @@ export const createManualEntryValidationController = ({
 	const nutrientFields = $derived(
 		getManualEntryNutrientFields(referenceData.state.nutrientGroups),
 	);
+	const disclosurePolicy = $derived(
+		getManualEntryDisclosurePolicy({
+			profileKey: form.data.regulatoryDisclosure?.profileKey,
+			profiles: referenceData.state.regulatoryDisclosureProfiles,
+		}),
+	);
 	const requiredNutrientFields = $derived(
-		getRequiredManualEntryNutrientFields(nutrientFields),
+		disclosurePolicy.requiresStandardNutrition
+			? getRequiredManualEntryNutrientFields(nutrientFields)
+			: [],
+	);
+	const hasUserEnteredNutrients = $derived(
+		Object.keys(form.data.manualTouchedNutrientIds).length > 0,
+	);
+	const requiresNutrientRelationshipValidation = $derived(
+		hasUserEnteredNutrients || form.data.importedNutrients.length > 0,
+	);
+	const requiresServingWeight = $derived(
+		(!form.data.usesInternal100GramBasis &&
+			disclosurePolicy.requiresStandardNutrition) ||
+			hasUserEnteredNutrients ||
+			form.data.useVolumeEquivalent,
 	);
 	const nutrientRelationshipValidationItems = $derived<StepValidationItem[]>(
 		validateNutrientRelationshipRules(
@@ -74,7 +95,10 @@ export const createManualEntryValidationController = ({
 		buildManualEntryNutrientAvailabilityItems({
 			loadingManualEntryNutrients: referenceData.state.loadingNutrients,
 			manualEntryNutrientError: referenceData.state.nutrientError,
-			requiredFieldCount: requiredNutrientFields.length,
+			requiredFieldCount: disclosurePolicy.requiresStandardNutrition
+				? requiredNutrientFields.length
+				: 1,
+			requiresNutritionFields: disclosurePolicy.requiresStandardNutrition,
 		}),
 	);
 	const normalizedName = $derived(form.data.name.trim());
@@ -88,7 +112,12 @@ export const createManualEntryValidationController = ({
 	const validationItems = $derived<StepValidationItem[]>(
 		buildManualEntryValidationItems({
 			normalizedName,
-			servingWeightGrams: form.data.servingWeightGrams,
+			servingWeightGrams: form.data.usesInternal100GramBasis
+				? null
+				: form.data.servingWeightGrams,
+			requiresServingWeight,
+			requiresAlcoholByVolume: disclosurePolicy.requiresAlcoholByVolume,
+			alcoholByVolumePercent: form.data.alcoholByVolume?.percent ?? null,
 			useVolumeEquivalent: form.data.useVolumeEquivalent,
 			volumeQuantity: form.data.volumeQuantity,
 			volumeAmountRequiredMessage,
@@ -98,9 +127,12 @@ export const createManualEntryValidationController = ({
 			categoryOptionsError: state.categoryOptionsError,
 			categoryOptionsAvailable: state.categoryOptionsAvailable,
 			loadingNutrientRelationshipRules:
+				requiresNutrientRelationshipValidation &&
 				referenceData.state.loadingNutrientRelationshipRules,
 			nutrientRelationshipRuleError:
-				referenceData.state.nutrientRelationshipRuleError,
+				requiresNutrientRelationshipValidation
+					? referenceData.state.nutrientRelationshipRuleError
+					: "",
 			manualEntryNutrientAvailabilityItems: nutrientAvailabilityItems,
 			requiredManualNutrientValidationItems:
 				requiredNutrientValidationItems,
@@ -255,6 +287,12 @@ export const createManualEntryValidationController = ({
 		},
 		get requiredNutrientFields() {
 			return requiredNutrientFields;
+		},
+		get disclosurePolicy() {
+			return disclosurePolicy;
+		},
+		get requiresServingWeight() {
+			return requiresServingWeight;
 		},
 		get normalizedName() {
 			return normalizedName;

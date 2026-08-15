@@ -42,6 +42,7 @@ export type ManualEntryFormResetState = {
 	categorySymbolKey: string;
 	servingLabel: string;
 	servingWeightGrams: number | null;
+	usesInternal100GramBasis: boolean;
 	serving?: FoodServing;
 	volumeQuantity: number | null;
 	volumeUnit: ServingMeasureUnit;
@@ -98,6 +99,7 @@ export const getManualEntryFormResetState = (): ManualEntryFormResetState => ({
 	categorySymbolKey: "generic",
 	servingLabel: "",
 	servingWeightGrams: null,
+	usesInternal100GramBasis: false,
 	serving: undefined,
 	volumeQuantity: null,
 	volumeUnit: getDefaultServingMeasureUnit("volume") ?? "",
@@ -155,6 +157,7 @@ export const getManualEntryFormStateFromFood = (
 		food.customServingWeightGrams ??
 		food.servingSize ??
 		100;
+	const usesInternal100GramBasis = food.hasSourceServing === false;
 	const nutrientsPerServing = food.foodNutrients.map((nutrient) => ({
 		...nutrient,
 		value: (nutrient.value * servingWeightGrams) / 100,
@@ -172,13 +175,15 @@ export const getManualEntryFormStateFromFood = (
 		category: primaryCategory,
 		categoryOptionId: food.categoryOptionId ?? "",
 		categorySymbolKey: food.symbolKey ?? "generic",
-		servingLabel:
-			serving?.label ??
-			food.customServingLabel ??
-			food.householdServingFullText ??
-			`${servingWeightGrams}g`,
+		servingLabel: usesInternal100GramBasis
+			? ""
+			: serving?.label ??
+				food.customServingLabel ??
+				food.householdServingFullText ??
+				`${servingWeightGrams}g`,
 		servingWeightGrams,
-		serving: serving ?? undefined,
+		usesInternal100GramBasis,
+		serving: usesInternal100GramBasis ? undefined : serving ?? undefined,
 		importedNutrients: nutrientsPerServing,
 		manualNutrientValues: Object.fromEntries(
 			nutrientsPerServing.map((nutrient) => [

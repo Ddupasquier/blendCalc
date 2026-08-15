@@ -38,6 +38,7 @@ export const createManualEntryFormState = () => {
 			},
 		};
 		if (field === "serving") {
+			data.usesInternal100GramBasis = false;
 			data.serving = {
 				label: data.servingLabel.trim() || "Serving",
 				gramWeight: data.servingWeightGrams ?? 0,
@@ -120,7 +121,9 @@ export const createManualEntryFormState = () => {
 		});
 
 	const getResolvedServingLabel = () =>
-		buildCustomServingLabel({
+		data.usesInternal100GramBasis
+			? "100g nutrition basis"
+			: buildCustomServingLabel({
 			servingLabel: data.servingLabel,
 			servingWeightGrams:
 				Number.isFinite(data.servingWeightGrams) &&
@@ -131,7 +134,7 @@ export const createManualEntryFormState = () => {
 				? data.volumeQuantity ?? undefined
 				: undefined,
 			volumeUnit: data.useVolumeEquivalent ? data.volumeUnit : undefined,
-		});
+			});
 
 	return {
 		data,
