@@ -3,6 +3,7 @@
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
 	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog/TextInputDialog.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
+	import { resolveMixDelightMessage } from "$lib/utils/delight/delightMessages";
 	import ViewBody from "$lib/components/common/view/ViewBody/ViewBody.svelte";
 	import ViewFrame from "$lib/components/common/view/ViewFrame/ViewFrame.svelte";
 	import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
@@ -330,6 +331,16 @@
 			foods: selectedFoods,
 			goals: nutrientGoals,
 			servingGrams,
+		}),
+	);
+	const mixDelightMessage = $derived(
+		resolveMixDelightMessage({
+			foods: selectedFoods,
+			servingGrams,
+			goalDifferences: mixAnalysis.diffs,
+			hasDangerWarning: mixAnalysis.warnings.some(
+				(warning) => warning.severity === "danger",
+			),
 		}),
 	);
 
@@ -1034,6 +1045,7 @@
 									actualFillColor={mixAnalysis.chartColors.fill}
 									actualStrokeColor={mixAnalysis.chartColors.stroke}
 									nutrientGoalDifferences={mixAnalysis.diffs}
+									delightMessage={mixDelightMessage}
 									open={sectionPreferences.state.disclosureState[sectionId]}
 									onOpenChange={(open) =>
 										sectionPreferences.setDisclosure(sectionId, open)}

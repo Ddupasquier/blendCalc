@@ -30,6 +30,12 @@ describe("food symbol resolution", () => {
 		expect(
 			resolveFoodSymbolKey({ foodCategory: "Legumes and Legume Products" }),
 		).toBe("legumes");
+		expect(
+			resolveFoodSymbolKey({
+				description: "Banana",
+				foodCategory: "Nut & Seed Butters",
+			}),
+		).toBe("nuts-seeds");
 	});
 
 	it("replaces a stored generic fallback when a DB category rule now matches", () => {
@@ -38,7 +44,7 @@ describe("food symbol resolution", () => {
 				symbolKey: "generic",
 				foodCategory: "Pasta and Noodle Products",
 			}),
-		).toBe("pasta");
+		).toBe("pasta-noodles");
 	});
 
 	it("replaces an older broad stored symbol with a more specific DB match", () => {
@@ -56,6 +62,47 @@ describe("food symbol resolution", () => {
 				foodCategory: "Fruits and Fruit Juices",
 			}),
 		).toBe("banana");
+	});
+
+	it("restricts name refinement to the reviewed category family", () => {
+		expect(
+			resolveFoodSymbolKey({
+				description: "Tuna steak",
+				foodCategory: "Finfish and Shellfish Products",
+			}),
+		).toBe("tuna");
+		expect(
+			resolveFoodSymbolKey({
+				description: "Tuna steak",
+				foodCategory: "Meat Products",
+			}),
+		).toBe("beef");
+		expect(
+			resolveFoodSymbolKey({
+				symbolKey: "beef",
+				description: "Tuna",
+				foodCategory: "Finfish and Shellfish Products",
+			}),
+		).toBe("tuna");
+	});
+
+	it("lets recognizable prepared forms override the ingredient family", () => {
+		expect(
+			resolveFoodSymbolKey({
+				description: "Tuna sandwich",
+				foodCategory: "Finfish and Shellfish Products",
+			}),
+		).toBe("sandwich");
+	});
+
+	it("uses bounded name rules when no reviewed category family matches", () => {
+		expect(resolveFoodSymbolKey({ description: "Tuna steak" })).toBe("tuna");
+		expect(
+			resolveFoodSymbolKey({
+				description: "Tuna steak",
+				foodCategory: "Unknown category",
+			}),
+		).toBe("tuna");
 	});
 
 	it("uses specific symbols for alcohol, soups, produce, and assorted meats", () => {

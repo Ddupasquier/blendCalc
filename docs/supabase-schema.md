@@ -17,6 +17,7 @@ policies, or core data ownership changes.
 | [Shared Product Catalog](#shared-product-catalog-and-barcode-flow) | submissions, products, revisions, observations, provenance, conflicts, images, caches, and submission blocks |
 | [Compatibility and Allergens](#compatibility-allergens-and-dietary-restrictions) | tags, conflict rules, product facts, preference options, and API observations |
 | [Food Categories](#custom-food-category-reference) | category options, source observations, canonical mappings, and reusable food-symbol fallbacks |
+| [Catalog Monitoring and Food Safety](#catalog-monitoring-and-food-safety) | Product revalidation, immutable provider snapshots, official recall evidence, conservative product matches, and delivery history |
 | [Moderation](#moderation-and-access-control) | roles, account moderation, action logs, email delivery, blocked signups, and image-policy acceptance |
 | [Operational Analytics](#operational-analytics) | Private daily Vercel page-view, visitor, login, logout, and reload aggregates |
 | [Request Security](#request-security-and-least-privilege) | Private request quotas, deny-by-default grants, and protected maintenance functions |
@@ -1261,8 +1262,9 @@ Notes:
 | `custom_food_category_options`      | `id`                      | Shared reference            | DB-backed dropdown options for manual custom-food categories                                           | Built from observations                                |
 | `custom_food_category_observations` | `id`                      | Shared reference/provenance | External API category observations used to build options                                               | No direct user ownership                               |
 | `custom_food_category_mappings`     | `source_normalized_value` | Shared reference/provenance | Maps raw observed API category strings to clean app category options for barcode/manual-entry autofill | `category_option_id → custom_food_category_options.id` |
-| `food_symbol_definitions`           | `key`                     | Shared presentation reference | Reusable emoji fallbacks for specific common foods and broader food groups when no image is available | Referenced by categories and ordered symbol rules      |
-| `food_symbol_category_rules`        | `id`                      | Shared presentation policy | Ordered, reviewed food-name and category patterns that choose a reusable symbol                        | Symbol definition and product-data source              |
+| `food_symbol_definitions`           | `key`                     | Shared presentation reference | Reusable emoji fallbacks with reviewed family membership for foods without an image                    | Referenced by categories and scoped symbol rules       |
+| `food_symbol_category_rules`        | `id`                      | Shared presentation policy | Ordered, scoped category, name-refinement, prepared-form, and uncategorized-name patterns              | Symbol definition and product-data source              |
+| `app_delight_messages`              | `key`                     | Shared presentation reference | Optional broad-audience secondary copy selected by reviewed semantic triggers                          | Loaded through the application reference catalog       |
 
 ### `custom_food_category_options`
 
@@ -1284,31 +1286,54 @@ Notes:
 
 | Table | Documented columns |
 | --- | --- |
-| `food_symbol_definitions` | `key`, `display_name`, `emoji`, `sort_order`, `enabled`, `created_at`, `updated_at` |
-| `food_symbol_category_rules` | `id`, `symbol_key`, `match_pattern`, `priority`, `enabled`, `source_key`, `source_reference`, `created_at`, `updated_at` |
+| `food_symbol_definitions` | `key`, `display_name`, `emoji`, `family_key`, `sort_order`, `enabled`, `created_at`, `updated_at` |
+| `food_symbol_category_rules` | `id`, `symbol_key`, `match_pattern`, `match_scopes`, `priority`, `enabled`, `source_key`, `source_reference`, `created_at`, `updated_at` |
 
 Notes:
 
 - One database-owned catalog supplies fallback media to Ingredients, search, Mix, and
   Saved. Components do not maintain their own keyword or emoji lists.
-- Ordered rules prefer the food's specific name before its broader canonical category.
-  A banana can therefore use the banana symbol even when its category is simply fruit;
-  unknown foods retain the generic bowl.
+- Every symbol belongs to a reviewed `family_key`. A trusted canonical category selects
+  that family first, and the food name can choose a more specific child symbol only
+  within it. For example, `tuna steak` can resolve to tuna in a seafood category but
+  cannot jump to beef because its name contains `steak`.
+- `match_scopes` separates prepared-form overrides, broad category classifiers,
+  within-family name refinements, and bounded name-only fallbacks. Name-only fallback
+  runs only when no reviewed category matches; unknown foods retain the generic bowl.
 - The curated catalog contains at least 150 enabled choices spanning alcoholic and
   nonalcoholic beverages, soups, produce, meat species and preparations, seafood,
   dairy, grains, pantry staples, desserts, and prepared-food forms. It remains a
   reusable taxonomy rather than attempting to assign a unique symbol to every product.
-- Prepared forms take precedence over their ingredients when that is what users will
-  recognize at a glance: a turkey sandwich uses the sandwich symbol, beer bread uses
-  bread, chocolate milk uses milk, and chicken curry uses curry. Specific raw foods
-  still beat broad groups, so salmon, duck, mango, spinach, and potatoes do not collapse
-  into generic seafood, poultry, fruit, greens, or vegetables.
+- Prepared forms take precedence when that is what users recognize at a glance: a
+  turkey sandwich uses the sandwich symbol, beer bread uses bread, chocolate milk uses
+  milk, and chicken curry uses curry. Inside a reviewed family, specific raw foods still
+  beat broad groups, so salmon, duck, mango, spinach, and potatoes do not collapse into
+  generic seafood, poultry, fruit, greens, or vegetables.
 - Whole-word boundaries protect short mappings from accidental substring matches. For
   example, the intentionally playful feces-synonym fallback never matches `shiitake`
   or `cacao`.
-- The symbol resolver and category-sync triggers update future writes. The expansion
-  migration also refreshes existing custom foods, catalog submissions, canonical
-  products, revisions, and user-list snapshots so older items receive the same rules.
+- The compatibility name resolver remains available for uncategorized records, while
+  the category resolver and full-food resolver own new durable writes. Category-sync
+  triggers use the category resolver. The category-led migration also refreshes existing
+  custom foods, catalog submissions, canonical products, revisions, and user-list
+  snapshots so older items receive the same rules.
+
+### Application delight copy
+
+| Table | Documented columns |
+| --- | --- |
+| `app_delight_messages` | `key`, `context_key`, `trigger_key`, `match_key`, `message`, `minimum_value`, `maximum_value`, `priority`, `enabled`, `created_at`, `updated_at` |
+
+Notes:
+
+- The catalog contains optional, concise food, workout, and widely recognizable gamer
+  humor. Niche developer references are deliberately excluded from the initial set.
+- Application code supplies reviewed context, trigger, semantic match, and optional
+  numeric values. The lowest-priority matching enabled row supplies at most one line.
+- Delight copy is secondary presentation only. It never replaces or appears inside
+  allergen, medical, authentication, validation, warning, or failure instructions.
+- Authenticated users may read enabled rows. Writes remain service-only so ordinary
+  clients cannot change copy or trigger behavior.
 
 ### `custom_food_category_observations`
 
@@ -1342,6 +1367,60 @@ Notes:
   resolution using enabled options and observed mappings.
 - `npm run backfill:shared-product-categories` checks USDA FoodData Central and Open
   Food Facts, records category provenance, and repairs legacy catalog rows.
+
+## Catalog Monitoring And Food Safety
+
+The catalog monitor is a bounded, server-only maintenance pipeline. Supabase Cron asks
+one Edge Function to process due work; the function claims small database-owned batches,
+records immutable evidence, and schedules the next attempt. The monitor is disabled by
+default so applying the migration cannot make outbound requests before its function and
+secrets are configured and verified.
+
+| Table | Primary key | Purpose |
+| --- | --- | --- |
+| `catalog_monitor_settings` | Singleton boolean `id` | Enables the worker and bounds product batches, recall pages, retry claims, and recall intervals |
+| `catalog_monitor_runs` | `id` | Records each cron, manual, or test run with bounded result counts and safe error codes |
+| `catalog_revalidation_queue` | `id` | Schedules one product/provider check with priority, reason, interval, claim token, attempts, and result |
+| `catalog_provider_product_snapshots` | `id` | Immutable normalized provider snapshots linked to the exact stored source observation |
+| `catalog_provider_change_reviews` | `id` | Holds material provider changes without changing the canonical product |
+| `catalog_safety_alert_ingestion_cursors` | `provider_key` | Schedules and retries each official recall source independently |
+| `official_food_safety_alerts` | `id` | Stores the current normalized official recall or public-health-alert record |
+| `official_food_safety_alert_revisions` | `id` | Preserves immutable raw and normalized evidence for every changed alert payload |
+| `official_food_safety_alert_identifiers` | Composite | Preserves exact GTIN, UPC, lot, use-by, and package identifiers stated by the source |
+| `official_food_safety_alert_matches` | `id` | Links an alert to a canonical product through exact, probable, or reviewed evidence |
+| `product_safety_alert_notifications` | `id` | Records per-user in-app, email, or push delivery state without exposing another user's alerts |
+
+Important behavior:
+
+- Active catalog products receive Open Food Facts checks and receive USDA checks only
+  when an exact USDA source identifier is known. Recent Fridge and Shopping List use
+  raises priority; inactive products pause instead of consuming provider traffic.
+- Open Food Facts metadata is checked before a full record is downloaded. USDA detail
+  checks use the known FDC id. Normalized SHA-256 hashes make unchanged responses cheap
+  and deterministic.
+- A new provider snapshot creates a source observation. A material change creates a
+  pending review; it never overwrites `shared_products`. Accepting that review requires
+  the id of a real approved `shared_product_revisions` row.
+- Official alert revisions and provider snapshots are immutable. Current alert rows may
+  advance as an official source corrects or closes a record without deleting history.
+- An exact normalized GTIN match becomes visible immediately. A strong identity match
+  without an exact identifier remains `needs_review`; title-only similarity never
+  creates a match. Package, lot, and use-by evidence can require the user to check the
+  current package rather than implying every package is affected.
+- Closing an official alert supersedes active and pending matches. Exact or confirmed
+  active matches enqueue one notification per affected user and remain visible on the
+  user's current catalog-backed food.
+- Direct browser reads of monitor, raw alert, identifier, match, revision, and snapshot
+  tables are denied. Users may read only their own notification rows and may mark one
+  as read through the owner-scoped function. Worker writes remain service-role-only;
+  moderator review functions require AAL2 and a current database permission.
+
+The hourly cron call requires Vault secrets named `blendcalc_project_url` and
+`blendcalc_catalog_monitor_cron_secret`. The Edge Function separately requires
+`CATALOG_MONITOR_CRON_SECRET`, `USDA_API_KEY`, and the platform-provided Supabase URL and
+service key; `OPENFDA_API_KEY` is optional but recommended for regular use. Enable
+`catalog_monitor_settings.enabled` only after the deployed function and matching secret
+have passed an authenticated dry run.
 
 ## Moderation And Access Control
 
@@ -1571,6 +1650,18 @@ category, or serving fields.
 | `get_blendcalc_product_revision_history_v1`     | Service-role-only raw reader for bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14 |
 | `search_blendcalc_products_v1`                  | Service-role-only raw search for active, publication-ready shared products with bounded pagination and stable relevance |
 | `get_moderator_data_health`                     | Returns bounded moderator/admin/developer catalog, source, dataset, policy, mapping, revision, conflict, and publication-readiness summaries after verifying an AAL2 permission and the caller's current role assignment |
+| `claim_catalog_revalidation_jobs`               | Service-only bounded claim of due product/provider jobs using expiring claim tokens |
+| `complete_catalog_revalidation_job`             | Service-only completion and retry scheduling for one claimed product check |
+| `record_catalog_provider_snapshot`              | Service-only immutable observation/snapshot write that creates a review for material changes |
+| `confirm_catalog_provider_metadata_unchanged`   | Service-only metadata short-circuit that reschedules an unchanged provider record without downloading its full payload |
+| `claim_safety_alert_ingestion_sources`          | Service-only bounded claim of due official recall feeds |
+| `complete_safety_alert_ingestion_source`        | Service-only independent success or retry scheduling for one recall source |
+| `record_official_food_safety_alert`             | Service-only versioned alert upsert, identifier refresh, and conservative product matching |
+| `request_catalog_monitor_run`                   | Requests the secret-authenticated monitor Edge Function through the configured Vault values |
+| `get_catalog_monitor_moderation_summary`        | Returns bounded monitor status, runs, provider changes, and probable recall matches after an AAL2 permission check |
+| `review_official_food_safety_alert_match`        | Confirms or dismisses one probable recall match after an AAL2 permission check |
+| `review_catalog_provider_change`                | Rejects/supersedes a provider change or links acceptance to an existing approved catalog revision after an AAL2 permission check |
+| `mark_product_safety_alert_notification_read`   | Lets an authenticated owner mark exactly one of their alert notifications as read |
 | `catalog_change_summary_is_valid`               | Validates unique structured old/new field changes before a catalog product update can be accepted |
 | `consume_request_rate_limit`                    | Atomically consumes one private server-side request quota unit; service role only |
 | `replace_app_interaction_daily_metrics`         | Atomically replaces a bounded production date range of private Vercel interaction aggregates; service role only |

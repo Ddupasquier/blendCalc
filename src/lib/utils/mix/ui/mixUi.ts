@@ -49,6 +49,7 @@ export type NutrientOverageDetail = {
 };
 
 export type SaveGoalDiff = {
+	nutrientId: number;
 	label: string;
 	unit: string;
 	total: number;

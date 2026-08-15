@@ -120,12 +120,8 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 				isUsableIngredientSearchResult(food) &&
 				matchesIngredientProvenance(food, sourceFilter, trustFilter),
 		);
-		const annotatedFoods = annotateFoodsWithFoodSafety(
-			mergedFoods,
-			foodSafetyContext,
-		);
 		const foods = sortIngredientSearchResults(
-			annotatedFoods,
+			mergedFoods,
 			query,
 			nutritionCompletenessCatalog,
 		);
@@ -134,7 +130,11 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			catalogClient,
 			page.foods,
 		);
-		return json({ ...page, foods: visibleFoodsWithCurrentImages });
+		const visibleFoodsWithSafetyEvaluation = annotateFoodsWithFoodSafety(
+			visibleFoodsWithCurrentImages,
+			foodSafetyContext,
+		);
+		return json({ ...page, foods: visibleFoodsWithSafetyEvaluation });
 	} catch {
 		return throwAppError(503, "FOOD_SEARCH_UNAVAILABLE");
 	}

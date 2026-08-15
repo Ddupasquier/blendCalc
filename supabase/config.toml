@@ -383,6 +383,11 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
+[functions.catalog-monitor]
+# The function authenticates scheduled calls with a dedicated high-entropy secret
+# shared between Vault and the Edge Function environment.
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

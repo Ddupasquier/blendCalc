@@ -565,6 +565,54 @@ describe("blendCalc API v1 catalog mapping", () => {
 		]);
 	});
 
+	it("publishes active official safety notices without private match evidence", () => {
+		const product = mapApprovedCatalogRecordToApiV1Product({
+			...record,
+			food: {
+				...record.food,
+				safetyAlerts: [{
+					id: "f7e73167-d6eb-4753-921c-b2a799029e53",
+					providerKey: "open-fda-food-enforcement",
+					sourceName: "openFDA Food Enforcement",
+					sourceAttribution: "U.S. Food and Drug Administration",
+					alertType: "recall",
+					classification: "Class I",
+					status: "Ongoing",
+					productDescription: "Example product",
+					reason: "Possible undeclared milk",
+					recallingOrganization: "Example Foods",
+					sourceUrl: "https://api.fda.gov/food/enforcement.json",
+					reportDate: "2026-08-14",
+					recallInitiatedAt: "2026-08-13",
+					matchType: "exact_gtin",
+					requiresPackageCheck: true,
+					detectedAt: "2026-08-14T12:00:00.000Z",
+				}],
+			},
+		}, defaultAttributionCatalog());
+
+		expect(product.safetyAlerts).toEqual([{
+			id: "f7e73167-d6eb-4753-921c-b2a799029e53",
+			type: "recall",
+			classification: "Class I",
+			status: "Ongoing",
+			productDescription: "Example product",
+			reason: "Possible undeclared milk",
+			recallingOrganization: "Example Foods",
+			requiresPackageCheck: true,
+			reportDate: "2026-08-14",
+			recallInitiatedAt: "2026-08-13",
+			source: {
+				key: "open-fda-food-enforcement",
+				name: "openFDA Food Enforcement",
+				url: "https://api.fda.gov/food/enforcement.json",
+				attribution: "U.S. Food and Drug Administration",
+			},
+		}]);
+		expect(product.safetyAlerts[0]).not.toHaveProperty("matchType");
+		expect(product.safetyAlerts[0]).not.toHaveProperty("detectedAt");
+	});
+
 	it("strips hostile private fields, paths, secrets, and package-instance data", () => {
 		const privateSentinel = "PRIVATE-SENTINEL-DO-NOT-PUBLISH";
 		const hostileRecord = structuredClone(record) as ApprovedCatalogRecord &

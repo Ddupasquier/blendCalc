@@ -1,5 +1,6 @@
 <script lang="ts">
 	import MetadataPill from "$lib/components/common/display/MetadataPill/MetadataPill.svelte";
+	import SecondaryDelightMessage from "$lib/components/common/feedback/SecondaryDelightMessage/SecondaryDelightMessage.svelte";
 	import NutrientRadarChart from "$lib/components/mix/insights/NutrientRadarChart/NutrientRadarChart.svelte";
 	import MixPanelSection from "$lib/components/mix/layout/MixPanelSection/MixPanelSection.svelte";
 	import {
@@ -18,6 +19,7 @@
 		actualFillColor,
 		actualStrokeColor,
 		nutrientGoalDifferences,
+		delightMessage = null,
 		open = true,
 		onOpenChange,
 	}: NutrientShapePanelProps = $props();
@@ -81,6 +83,12 @@
 				</span>
 			{/each}
 		</div>
+	{/if}
+	{#if delightMessage}
+		<SecondaryDelightMessage
+			class="nutrient-shape-panel__delight"
+			message={delightMessage}
+		/>
 	{/if}
 </MixPanelSection>
 

@@ -218,6 +218,22 @@ Coverage is reported separately by
 false negatives, statement forms, supported languages, derivative rules, and
 formulation changes must become source-shaped cases in the applicable layer.
 
+The scheduled monitoring layer has a separate pgTAP and TypeScript corpus:
+
+- `supabase/tests/database/catalog_revalidation_and_food_safety_monitoring.test.sql`
+  proves deny-by-default grants, owner-only notifications, bounded worker claims,
+  immutable snapshots/revisions, exact GTIN activation, package checks, deactivation,
+  and superseding behavior.
+- `tests/supabase/catalogMonitorNormalization.test.ts` proves stable normalization and
+  hashing, reported-zero versus missing values, exact official identifiers, strong
+  probable identity, package mismatch rejection, title-only rejection, and both FDA
+  and FSIS payload adapters.
+
+Provider availability is not a database assertion. Before enabling the hosted monitor,
+perform one secret-authenticated deployed-function smoke run with each configured
+source and confirm that a failed source records an isolated retry without clearing
+stored alerts or blocking other work.
+
 A separate remote staging project can be added later for real-device and hosted-preview
 QA. It should use the same migrations and synthetic fixtures, never a production data
 copy.

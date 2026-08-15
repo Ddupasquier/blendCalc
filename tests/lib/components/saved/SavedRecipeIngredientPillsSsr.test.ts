@@ -21,16 +21,18 @@ configureAppReferenceCatalog({
 		defaultServingGrams: 100,
 	},
 	foodSymbols: [
-		{ key: "fruit", label: "Fruit", emoji: "🍓" },
-		{ key: "generic", label: "Ingredient", emoji: "🥣" },
+		{ key: "fruit", label: "Fruit", emoji: "🍓", familyKey: "fruit" },
+		{ key: "generic", label: "Ingredient", emoji: "🥣", familyKey: "generic" },
 	],
-	foodSymbolCategoryRules: [
+	foodSymbolResolutionRules: [
 		{
 			symbolKey: "fruit",
 			matchPattern: "(banana|mango|pineapple)",
 			priority: 10,
+			matchScopes: ["uncategorized_name"],
 		},
 	],
+	delightMessages: [],
 });
 
 const foods: FoodItem[] = [

@@ -3,6 +3,7 @@ import {
 	getFoodCalories,
 	getFoodDisplayCategory,
 	getIngredientMembershipLabel,
+	getPrimaryFoodWarning,
 } from "$lib/utils/ingredients/ingredientListUi";
 
 describe("ingredient list UI helpers", () => {
@@ -69,5 +70,34 @@ describe("ingredient list UI helpers", () => {
 				foodNutrients: [],
 			}),
 		).toBe("Category unavailable");
+	});
+
+	it("prioritizes an active official recall over preference warnings", () => {
+		expect(getPrimaryFoodWarning({
+			fdcId: 9,
+			description: "Recalled product",
+			foodNutrients: [],
+			preferenceWarnings: [{
+				id: "preference-warning",
+				level: "warning",
+				category: "allergen",
+				label: "milk",
+				code: "FOOD_ALLERGEN_CONTAINS",
+				params: {},
+			}],
+			safetyAlerts: [{
+				id: "ea81b720-5e12-46a9-89cc-f6795aa68d08",
+				providerKey: "open-fda-food-enforcement",
+				sourceName: "openFDA Food Enforcement",
+				sourceAttribution: "U.S. Food and Drug Administration",
+				alertType: "recall",
+				status: "Ongoing",
+				productDescription: "Recalled product",
+				sourceUrl: "https://api.fda.gov/food/enforcement.json",
+				matchType: "exact_gtin",
+				requiresPackageCheck: false,
+				detectedAt: "2026-08-14T12:00:00.000Z",
+			}],
+		})).toBe("This product appears in an active official recall.");
 	});
 });

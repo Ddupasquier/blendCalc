@@ -163,6 +163,12 @@ as a polygon. Goal and current values respond immediately to goal, food, and amo
 changes. Each point keeps its own under/near/over status color; lines and fill blend the
 connected statuses.
 
+The Nutrient Shape summary may show one quiet, DB-backed secondary line for a reviewed
+non-safety state such as all tracked goals being met, a very small or large total
+serving, or an intentionally simple water/ice recipe. Composition messages outrank goal
+and serving messages, and the lowest-priority matching row wins. Any danger warning
+suppresses the line completely; jokes never alter math or appear inside Warnings.
+
 Assign axes deterministically by label space so long names use the wider top and bottom
 positions. Keep each nutrient's value, goal, status, and accessible summary attached
 when its axis moves. Labels must remain readable at all supported point counts. At

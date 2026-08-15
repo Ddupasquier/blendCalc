@@ -9,6 +9,7 @@
 	import ProductImagePanel from "$lib/components/ingredients/nutrition/ProductImagePanel/ProductImagePanel.svelte";
 	import ProductInformationPanel from "$lib/components/ingredients/nutrition/ProductInformationPanel/ProductInformationPanel.svelte";
 	import ProductIngredientsPanel from "$lib/components/ingredients/nutrition/ProductIngredientsPanel/ProductIngredientsPanel.svelte";
+	import ProductSafetyAlerts from "$lib/components/ingredients/nutrition/ProductSafetyAlerts/ProductSafetyAlerts.svelte";
 	import {
 		DEFAULT_NUTRITION_VIEWING_GRAMS,
 	} from "$lib/utils/food/nutrients/nutritionDisplay";
@@ -29,6 +30,9 @@
 
 <section class="nutrition-panel">
 	<ProductImagePanel {food} mode="summary" />
+	{#if food}
+		<ProductSafetyAlerts {food} mode="summary" />
+	{/if}
 	<NutritionPreferenceConflict {food} mode="summary" />
 	<NutritionFactsLabel {food} {viewingGrams} {viewingServing} {provenanceOptions} />
 	{#if food}
@@ -38,6 +42,7 @@
 	<NutritionListActions {food} {showListActions} {listMembership} />
 	{#if food}
 		<div class="nutrition-panel__disclosures" aria-label="Additional food information">
+			<ProductSafetyAlerts {food} mode="details" />
 			<NutritionPreferenceConflict {food} mode="details" />
 			<ProductIngredientsPanel {food} mode="details" />
 			<ProductCompatibilityPanel {food} mode="details" />

@@ -45,6 +45,7 @@ export const apiV1ProductFixture: ApiV1Product = {
 	nutrients: [],
 	servings: [],
 	images: [],
+	safetyAlerts: [],
 	warnings: [],
 	compatibilityEvaluation: {
 		version: 1,

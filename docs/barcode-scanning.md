@@ -22,6 +22,11 @@ boundaries belong in the
    lookup finishes.
 6. Imported values stay in the form until the user reviews and saves them.
 
+The scan itself never waits for scheduled catalog maintenance. Once a canonical product
+exists, its exact Open Food Facts and known USDA identifiers can enter the independent
+revalidation queue. Later provider changes become evidence and review candidates rather
+than silently changing the food a user previously saved.
+
 Camera access requires HTTPS outside local development. Users can always type the
 barcode and nutrition label manually.
 
@@ -58,6 +63,13 @@ Nutrition details. An explicit positive ABV can resolve the DB-backed regulated-
 profile for an older record that predates saved disclosure context; names and categories
 cannot. Explicit declarations remain available for personalized checks; a missing
 declaration never means allergen-free.
+
+Catalog-backed scan results also carry current exact or moderator-confirmed official
+recall notices. Exact GTIN evidence may display immediately. A brand/product/package
+similarity without an exact identifier is held for review, and title-only similarity is
+ignored. When the official notice identifies only certain packages, lots, or dates, the
+result asks the user to check that package information rather than claiming a definite
+match or safety.
 
 Open Food Facts ABV is accepted only when the provider supplies an explicit percentage
 unit. COLA Cloud is a bounded server-only exact-barcode fallback after blendCalc, USDA,

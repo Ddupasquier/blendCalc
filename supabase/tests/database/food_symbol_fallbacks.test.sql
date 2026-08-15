@@ -1,10 +1,71 @@
 begin;
 
-select plan(37);
+select plan(50);
 
 select ok(
 	(select count(*) from public.food_symbol_definitions where enabled) >= 158,
 	'the curated food symbol catalog covers at least 158 specific foods, prepared forms, and broad fallbacks'
+);
+
+select ok(
+	not exists (
+		select 1
+		from public.food_symbol_definitions
+		where enabled
+			and family_key not in (
+				'generic', 'beverage', 'sweets', 'oils-fats', 'dairy', 'meat',
+				'seafood', 'grains', 'nuts-seeds', 'vegetables', 'fruit', 'legumes',
+				'sauces-condiments', 'soup', 'protein-supplement', 'prepared-food',
+				'novelty'
+			)
+	),
+	'every enabled fallback belongs to one reviewed symbol family'
+);
+
+select ok(
+	not exists (
+		select 1
+		from public.food_symbol_category_rules
+		where enabled
+			and (
+				cardinality(match_scopes) = 0
+				or not match_scopes <@ array[
+					'prepared_override',
+					'category',
+					'name_refinement',
+					'uncategorized_name'
+				]::text[]
+			)
+	),
+	'every enabled symbol rule declares only reviewed resolution scopes'
+);
+
+select ok(
+	(
+		select count(*)
+		from public.food_symbol_category_rules
+		where enabled
+			and match_scopes @> array['category']::text[]
+	) >= 20,
+	'the category-led policy includes broad reviewed category-family classifiers'
+);
+
+select is(
+	public.resolve_food_symbol_key_for_category('Fruits and Fruit Juices'),
+	'fruit',
+	'a reviewed fruit category resolves to the broad fruit family fallback'
+);
+
+select is(
+	public.resolve_food_symbol_key_for_category('Dairy and Egg Products'),
+	'dairy',
+	'a mixed dairy category stays broad instead of being guessed as eggs'
+);
+
+select is(
+	public.resolve_food_symbol_key_for_category('Nut & Seed Butters'),
+	'nuts-seeds',
+	'category labels containing ampersands normalize to the reviewed category family'
 );
 
 select ok(
@@ -94,23 +155,47 @@ select is(
 	(
 		select food ->> 'symbolKey'
 		from public.shared_products
-		where lower(food ->> 'description') = 'banana'
-		order by id
-		limit 1
+		where barcode = '00016459200441'
 	),
-	'banana',
-	'a pre-existing canonical banana uses the specific backfilled symbol'
+	'nuts-seeds',
+	'a pre-existing canonical banana respects its reviewed Nut and Seed Butters category family'
 );
 select is(
 	(
 		select food ->> 'symbolKey'
-		from public.user_food_list_items
-		where lower(food ->> 'description') = 'banana'
-		order by id
-		limit 1
+		from public.shared_products
+		where barcode = '00609207617761'
 	),
-	'banana',
-	'a pre-existing user-list banana uses the same specific backfilled symbol'
+	'packaged',
+	'a pre-existing canonical banana respects its reviewed Snacks category family'
+);
+select ok(
+	exists (
+		select 1
+		from public.user_food_list_items
+		where food ->> 'barcode' = '00016459200441'
+	)
+	and not exists (
+		select 1
+		from public.user_food_list_items
+		where food ->> 'barcode' = '00016459200441'
+			and food ->> 'symbolKey' is distinct from 'nuts-seeds'
+	),
+	'all pre-existing user-list copies respect the reviewed Nut and Seed Butters category family'
+);
+select ok(
+	exists (
+		select 1
+		from public.user_food_list_items
+		where food ->> 'barcode' = '00609207617761'
+	)
+	and not exists (
+		select 1
+		from public.user_food_list_items
+		where food ->> 'barcode' = '00609207617761'
+			and food ->> 'symbolKey' is distinct from 'packaged'
+	),
+	'all pre-existing user-list copies respect the reviewed Snacks category family'
 );
 
 create temporary table expected_food_symbol_resolution (
@@ -282,7 +367,55 @@ select is(
 		)
 	),
 	'banana',
-	'the durable food resolver prefers a specific food-name match over a broad category'
+	'the durable food resolver refines a broad category within the same family'
+);
+select is(
+	public.resolve_food_symbol_key_for_food(
+		jsonb_build_object(
+			'description', 'Tuna steak',
+			'foodCategory', 'Finfish and Shellfish Products'
+		)
+	),
+	'tuna',
+	'tuna steak stays in the reviewed seafood family instead of becoming beef'
+);
+select is(
+	public.resolve_food_symbol_key_for_food(
+		jsonb_build_object(
+			'description', 'Tuna steak',
+			'foodCategory', 'Meat Products'
+		)
+	),
+	'beef',
+	'a reviewed meat category permits the steak refinement while blocking tuna'
+);
+select is(
+	public.resolve_food_symbol_key_for_food(
+		jsonb_build_object(
+			'description', 'Tuna sandwich',
+			'foodCategory', 'Finfish and Shellfish Products'
+		)
+	),
+	'sandwich',
+	'a recognizable prepared sandwich overrides the ingredient family'
+);
+select is(
+	public.resolve_food_symbol_key_for_food(
+		jsonb_build_object('description', 'Tuna steak')
+	),
+	'tuna',
+	'a missing category uses the bounded reviewed name fallback'
+);
+select is(
+	public.resolve_food_symbol_key_for_food(
+		jsonb_build_object(
+			'symbolKey', 'beef',
+			'description', 'Tuna',
+			'foodCategory', 'Finfish and Shellfish Products'
+		)
+	),
+	'tuna',
+	'a stale cross-family stored key cannot override current category-led resolution'
 );
 select is(
 	public.resolve_food_symbol_key_for_food(

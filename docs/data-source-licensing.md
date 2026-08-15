@@ -61,6 +61,8 @@ future public API.
 | USDA FoodData Central | Runtime barcode/product data and nutrition | CC0 1.0/public domain | Canonical and API reuse allowed |
 | Open Food Facts | Runtime barcode lookup, licensed cache, package images | ODbL/Database Contents Licence; images under CC BY-SA | Product fields are excluded from API v1; individually licensed images remain eligible |
 | COLA Cloud | Optional exact-barcode U.S. alcohol-label lookup | Proprietary API terms over public TTB records and provider enrichments | Server-only trial; canonical storage, label-image use, and API redistribution blocked |
+| FDA Food Enforcement Reports | Scheduled official food-recall evidence | openFDA terms; generally public domain under CC0 1.0 with stated exceptions and disclaimers | Normalized current notices and attribution may be retained; raw evidence stays private and matches are never medical advice |
+| USDA FSIS Recalls and Public Health Alerts | Scheduled official meat, poultry, and egg safety evidence | U.S. government source with USDA website policy and source attribution | Normalized current notices may be retained; provider failures retry independently and conservative matching is required |
 | Canadian Nutrient File 2026 | Imported generic-food composition data | Open Government Licence – Canada | Canonical and API reuse approved in the registry with attribution |
 | UK CoFID 2021 | Imported generic-food composition data | Open Government Licence v3.0 | Canonical and API reuse approved in the registry with attribution |
 | Australian Food Composition Database Release 3 | Candidate generic-food dataset | FSANZ agreement based on CC BY-SA 3.0 Australia | Import and canonical use blocked |
@@ -212,6 +214,69 @@ Official references:
 
 Current status: suitable as a guarded U.S. alcohol fallback, not as a global alcohol
 catalog or public blendCalc API source.
+
+## FDA Food Enforcement Reports
+
+### Requirements And Limitations
+
+- The [openFDA terms](https://open.fda.gov/terms/) place the service's content and data
+  in the public domain under CC0 1.0 unless a record is specifically marked otherwise.
+  FDA requests attribution even though it is not generally required.
+- The [food enforcement endpoint](https://open.fda.gov/apis/food/enforcement/) contains
+  publicly releasable Recall Enterprise System records and may revise older records.
+  Its update cadence is not a real-time guarantee.
+- The service may rate-limit or terminate access. A key is optional for trial requests
+  but recommended for scheduled use.
+- FDA states that the endpoint must not be relied on for medical decisions and warns
+  against treating it as a complete public-alert or recall-lifecycle system. An absent,
+  late, or unmatched record is never proof of safety.
+
+### Current blendCalc Handling
+
+- `product_data_sources.open-fda-food-enforcement` records CC0, FDA attribution, terms,
+  the policy review date, and the medical-decision disclaimer requirement.
+- The scheduled server worker retrieves bounded pages with an optional
+  `OPENFDA_API_KEY`; browsers never call the endpoint.
+- Raw and normalized changed payloads are immutable private evidence. Public API and
+  app surfaces receive only the current normalized notice, FDA attribution, official
+  link, and package-check guidance.
+- Exact GTIN evidence can activate a product notice. Strong non-GTIN identity remains
+  under moderation, and weak title-only similarity is discarded.
+- blendCalc does not claim complete recall coverage, provide medical advice, or tell a
+  user that an unmatched package is safe. It presents a source-linked official record
+  that the user must verify against the current package and official notice.
+
+Current status: approved for bounded official-notice evidence with attribution and
+disclaimers; external policy review remains appropriate before positioning this as a
+public alerting product.
+
+## USDA FSIS Recalls And Public Health Alerts
+
+### Requirements And Limitations
+
+- The [FSIS Recall API](https://www.fsis.usda.gov/science-data/developer-resources/recall-api)
+  is a read-only official JSON source for meat, poultry, and egg recalls and public
+  health alerts. The source page and API must remain linked and attributed to USDA FSIS.
+- U.S. government source status does not justify copying unrelated third-party material
+  that may appear on linked pages. blendCalc stores only the normalized official fields
+  and the exact response evidence needed for review.
+- Provider availability is not guaranteed. A failed FSIS request must not stop FDA or
+  product revalidation work and cannot clear an existing notice.
+
+### Current blendCalc Handling
+
+- `product_data_sources.usda-fsis-recalls` records the official API, USDA policy page,
+  source attribution, government-work status, and public-notice role.
+- The server worker processes FSIS through its own cursor, backoff, and error code. It
+  stores immutable alert revisions and retains current status without exposing raw
+  payloads to browsers or API consumers.
+- Exact GTIN evidence may activate a match. Strong identity without an exact identifier
+  is reviewed, title-only similarity is ignored, and package/lot/date information is
+  retained for a required package check.
+
+Current status: approved as an official safety-notice source; production enablement
+still requires a successful deployed endpoint smoke check and ongoing availability
+monitoring.
 
 ## Canadian Nutrient File 2026
 
