@@ -3761,7 +3761,7 @@ export type Database = {
           {
             foreignKeyName: "nutrient_manual_entry_fields_nutrient_id_fkey"
             columns: ["nutrient_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
           },
