@@ -120,12 +120,8 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 				isUsableIngredientSearchResult(food) &&
 				matchesIngredientProvenance(food, sourceFilter, trustFilter),
 		);
-		const foodsWithCurrentImages = await hydrateFoodsWithCachedImages(
-			catalogClient,
-			mergedFoods,
-		);
 		const annotatedFoods = annotateFoodsWithFoodSafety(
-			foodsWithCurrentImages,
+			mergedFoods,
 			foodSafetyContext,
 		);
 		const foods = sortIngredientSearchResults(
@@ -134,7 +130,11 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			nutritionCompletenessCatalog,
 		);
 		const page = paginateIngredientSearchResults(foods, offset, limit);
-		return json(page);
+		const visibleFoodsWithCurrentImages = await hydrateFoodsWithCachedImages(
+			catalogClient,
+			page.foods,
+		);
+		return json({ ...page, foods: visibleFoodsWithCurrentImages });
 	} catch {
 		return throwAppError(503, "FOOD_SEARCH_UNAVAILABLE");
 	}

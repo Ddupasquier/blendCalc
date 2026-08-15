@@ -16,7 +16,7 @@ policies, or core data ownership changes.
 | [Product Sources and Servings](#product-reference-data-and-serving-measures) | `product_data_sources`, source metrics/mappings/conversions, serving measures, `food_servings` |
 | [Shared Product Catalog](#shared-product-catalog-and-barcode-flow) | submissions, products, revisions, observations, provenance, conflicts, images, caches, and submission blocks |
 | [Compatibility and Allergens](#compatibility-allergens-and-dietary-restrictions) | tags, conflict rules, product facts, preference options, and API observations |
-| [Food Categories](#custom-food-category-reference) | category options, source observations, and canonical mappings |
+| [Food Categories](#custom-food-category-reference) | category options, source observations, canonical mappings, and reusable food-symbol fallbacks |
 | [Moderation](#moderation-and-access-control) | roles, account moderation, action logs, email delivery, blocked signups, and image-policy acceptance |
 | [Operational Analytics](#operational-analytics) | Private daily Vercel page-view, visitor, login, logout, and reload aggregates |
 | [Request Security](#request-security-and-least-privilege) | Private request quotas, deny-by-default grants, and protected maintenance functions |
@@ -1261,12 +1261,14 @@ Notes:
 | `custom_food_category_options`      | `id`                      | Shared reference            | DB-backed dropdown options for manual custom-food categories                                           | Built from observations                                |
 | `custom_food_category_observations` | `id`                      | Shared reference/provenance | External API category observations used to build options                                               | No direct user ownership                               |
 | `custom_food_category_mappings`     | `source_normalized_value` | Shared reference/provenance | Maps raw observed API category strings to clean app category options for barcode/manual-entry autofill | `category_option_id → custom_food_category_options.id` |
+| `food_symbol_definitions`           | `key`                     | Shared presentation reference | Reusable emoji fallbacks for specific common foods and broader food groups when no image is available | Referenced by categories and ordered symbol rules      |
+| `food_symbol_category_rules`        | `id`                      | Shared presentation policy | Ordered, reviewed food-name and category patterns that choose a reusable symbol                        | Symbol definition and product-data source              |
 
 ### `custom_food_category_options`
 
 | Table | Documented columns |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `custom_food_category_options` | `id`, `label`, `normalized_value`, `sources`, `source_count`, `observation_count`, `verification_status`, `enabled`, `first_seen_at`, `last_seen_at`, `created_at`, `updated_at` |
+| `custom_food_category_options` | `id`, `label`, `normalized_value`, `sources`, `source_count`, `observation_count`, `verification_status`, `symbol_key`, `enabled`, `first_seen_at`, `last_seen_at`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -1277,6 +1279,36 @@ Notes:
   browser access remains governed independently by RLS.
 - `shared_product_submissions`, `shared_products`, and `shared_product_revisions`
   reference this table through `category_option_id`.
+
+### Food-symbol fallbacks
+
+| Table | Documented columns |
+| --- | --- |
+| `food_symbol_definitions` | `key`, `display_name`, `emoji`, `sort_order`, `enabled`, `created_at`, `updated_at` |
+| `food_symbol_category_rules` | `id`, `symbol_key`, `match_pattern`, `priority`, `enabled`, `source_key`, `source_reference`, `created_at`, `updated_at` |
+
+Notes:
+
+- One database-owned catalog supplies fallback media to Ingredients, search, Mix, and
+  Saved. Components do not maintain their own keyword or emoji lists.
+- Ordered rules prefer the food's specific name before its broader canonical category.
+  A banana can therefore use the banana symbol even when its category is simply fruit;
+  unknown foods retain the generic bowl.
+- The curated catalog contains at least 150 enabled choices spanning alcoholic and
+  nonalcoholic beverages, soups, produce, meat species and preparations, seafood,
+  dairy, grains, pantry staples, desserts, and prepared-food forms. It remains a
+  reusable taxonomy rather than attempting to assign a unique symbol to every product.
+- Prepared forms take precedence over their ingredients when that is what users will
+  recognize at a glance: a turkey sandwich uses the sandwich symbol, beer bread uses
+  bread, chocolate milk uses milk, and chicken curry uses curry. Specific raw foods
+  still beat broad groups, so salmon, duck, mango, spinach, and potatoes do not collapse
+  into generic seafood, poultry, fruit, greens, or vegetables.
+- Whole-word boundaries protect short mappings from accidental substring matches. For
+  example, the intentionally playful feces-synonym fallback never matches `shiitake`
+  or `cacao`.
+- The symbol resolver and category-sync triggers update future writes. The expansion
+  migration also refreshes existing custom foods, catalog submissions, canonical
+  products, revisions, and user-list snapshots so older items receive the same rules.
 
 ### `custom_food_category_observations`
 

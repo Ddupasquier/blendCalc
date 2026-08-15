@@ -235,6 +235,13 @@ Both lists share the same card and list behavior:
   copies in both lists.
 - Cards show the accepted image or centered category symbol with the shared media lane,
   warning edge, title, category, and actionable status without exposing provider rank.
+- Missing-image symbols come from the shared database catalog. Specific food-name rules
+  take precedence over broad category symbols, while unmatched foods use the honest
+  generic fallback; Ingredients, search, Mix, and Saved do not maintain separate symbol
+  guesses.
+- The shared fallback catalog covers common ingredients and recognizable prepared-food
+  forms across produce, proteins, seafood, drinks, pantry foods, meals, and desserts.
+  Compound foods use the recognizable final form rather than an incidental ingredient.
 - User renames remain personal. Nutrition details continue to show the canonical food
   name.
 - Remove uses the shared two-step confirmation. Rename and item actions use the shared

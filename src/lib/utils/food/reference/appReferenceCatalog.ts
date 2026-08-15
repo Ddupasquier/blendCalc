@@ -165,14 +165,6 @@ export const resolveFoodSymbolKey = (
 	food: FoodSymbolSubject,
 	catalog: AppReferenceCatalog = configuredCatalog,
 ) => {
-	if (
-		food.symbolKey &&
-		food.symbolKey !== "generic" &&
-		catalog.foodSymbols.some((symbol) => symbol.key === food.symbolKey)
-	) {
-		return food.symbolKey;
-	}
-
 	const categoryText = [
 		food.foodCategory,
 		food.brandedFoodCategory,
@@ -185,5 +177,15 @@ export const resolveFoodSymbolKey = (
 		.sort((left, right) => left.priority - right.priority)
 		.find((rule) => matchesFoodSymbolRule(categoryText, rule.matchPattern));
 
-	return matchedRule?.symbolKey ?? "generic";
+	if (matchedRule) return matchedRule.symbolKey;
+
+	if (
+		food.symbolKey &&
+		food.symbolKey !== "generic" &&
+		catalog.foodSymbols.some((symbol) => symbol.key === food.symbolKey)
+	) {
+		return food.symbolKey;
+	}
+
+	return "generic";
 };
