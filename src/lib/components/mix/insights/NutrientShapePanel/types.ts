@@ -11,4 +11,5 @@ export type NutrientShapePanelProps = MixSectionDisclosureProps & {
 	actualFillColor: string;
 	actualStrokeColor: string;
 	nutrientGoalDifferences: SaveGoalDiff[];
+	delightMessage?: string | null;
 };

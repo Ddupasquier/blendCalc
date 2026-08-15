@@ -166,6 +166,45 @@
 	border-radius: $app-radius-sm;
 }
 
+.data-health__review-record,
+.data-health__review-record > div > div,
+.data-health__review-record form,
+.data-health__review-record label {
+	display: grid;
+	min-width: 0;
+}
+
+.data-health__review-record,
+.data-health__review-record form,
+.data-health__review-record label {
+	gap: $app-gap-sm;
+}
+
+.data-health__review-record > div > div {
+	gap: $app-gap-inline-compact;
+}
+
+.data-health__review-record textarea {
+	min-height: calc($app-shell-control-height * 2);
+	padding: $app-gap-sm;
+	color: $app-shell-text-primary;
+	background: $app-shell-surface-panel;
+	border: $app-border;
+	border-radius: $app-shell-radius-control;
+	font: inherit;
+	resize: vertical;
+}
+
+.data-health__review-record textarea:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.data-health__review-guidance {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
 .data-health__evaluation p,
 .data-health__issue-record p,
 .data-health__issue-record ul {

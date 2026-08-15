@@ -468,7 +468,10 @@ export const searchFoodPage = async (
 
 	const response = await fetch(
 		`/api/foods/search?${searchParams.toString()}`,
-		{ headers: { accept: "application/json" } },
+		{
+			headers: { accept: "application/json" },
+			signal: options.signal,
+		},
 	);
 	if (!response.ok) {
 		throw new FdcConfigurationError();

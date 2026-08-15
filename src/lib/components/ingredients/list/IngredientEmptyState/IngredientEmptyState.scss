@@ -28,3 +28,7 @@ p {
 	max-width: 22rem;
 	line-height: $app-line-height-ui;
 }
+
+:global(.ingredient-empty-state__delight) {
+	max-width: 22rem;
+}

@@ -2,12 +2,14 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import DataHealthDashboard from "$lib/components/moderation/DataHealthDashboard/DataHealthDashboard.svelte";
 import { moderatorDataHealthFixture } from "../../../fixtures/moderatorDataHealth";
+import { catalogMonitorModerationFixture } from "../../../fixtures/catalogMonitorModeration";
 
 describe("DataHealthDashboard", () => {
 	it("shows bounded summaries and keeps detailed sections closed initially", async () => {
 		render(DataHealthDashboard, {
 			props: {
 				dashboard: moderatorDataHealthFixture,
+				catalogMonitor: catalogMonitorModerationFixture,
 				viewerRole: "moderator",
 			},
 		});

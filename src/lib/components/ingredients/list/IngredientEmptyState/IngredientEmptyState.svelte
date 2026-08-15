@@ -2,6 +2,8 @@
 	import Leaf from "$lib/assets/icons/Leaf/Leaf.svelte";
 	import ShoppingBag from "$lib/assets/icons/ShoppingBag/ShoppingBag.svelte";
 	import CircularIconFrame from "$lib/components/common/icons/CircularIconFrame/CircularIconFrame.svelte";
+	import SecondaryDelightMessage from "$lib/components/common/feedback/SecondaryDelightMessage/SecondaryDelightMessage.svelte";
+	import { resolveDelightMessage } from "$lib/utils/delight/delightMessages";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 	import { getIngredientListLabel } from "$lib/utils/ingredients/ingredientListUi";
 	import type { IngredientEmptyStateProps } from "./types";
@@ -25,6 +27,17 @@
 		}
 		return "Search above or scan a barcode to add shopping items.";
 	});
+	const delightMessage = $derived(
+		!hasItems && activeList === MIX_STORAGE_KEYS.fridge
+			? resolveDelightMessage([
+					{
+						contextKey: "ingredients",
+						triggerKey: "empty-list",
+						matchKeys: ["fridge"],
+					},
+				])
+			: null,
+	);
 </script>
 
 <div class="ingredient-empty-state">
@@ -37,6 +50,10 @@
 	</CircularIconFrame>
 	<h2>{title}</h2>
 	<p>{message}</p>
+	<SecondaryDelightMessage
+		class="ingredient-empty-state__delight"
+		message={delightMessage}
+	/>
 </div>
 
 <style lang="scss">

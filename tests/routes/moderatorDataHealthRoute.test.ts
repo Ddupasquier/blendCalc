@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { moderatorDataHealthFixture } from "../fixtures/moderatorDataHealth";
+import { catalogMonitorModerationFixture } from "../fixtures/catalogMonitorModeration";
 
 const mocks = vi.hoisted(() => ({
   requireModeratorAccess: vi.fn(),
   readModeratorDataHealth: vi.fn(),
+  readCatalogMonitorModerationSummary: vi.fn(),
 }));
 
 vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
@@ -12,6 +14,7 @@ vi.mock("$lib/server/moderation/moderationAccess.server", () => ({
 
 vi.mock("$lib/server/moderation/catalogDataHealth.server", () => ({
   readModeratorDataHealth: mocks.readModeratorDataHealth,
+  readCatalogMonitorModerationSummary: mocks.readCatalogMonitorModerationSummary,
 }));
 
 import { load } from "../../src/routes/moderation/data-health/+page.server";
@@ -25,17 +28,20 @@ describe("moderator data-health page", () => {
       role: "moderator",
     });
     mocks.readModeratorDataHealth.mockResolvedValue(moderatorDataHealthFixture);
+	mocks.readCatalogMonitorModerationSummary.mockResolvedValue(catalogMonitorModerationFixture);
     const supabase = {};
 
     await expect(load({ locals: { supabase } } as never)).resolves.toEqual({
       viewerRole: "moderator",
       dashboard: moderatorDataHealthFixture,
+	  catalogMonitor: catalogMonitorModerationFixture,
     });
     expect(mocks.requireModeratorAccess).toHaveBeenCalledWith(
       expect.anything(),
       "/moderation/data-health",
     );
     expect(mocks.readModeratorDataHealth).toHaveBeenCalledWith(supabase);
+	expect(mocks.readCatalogMonitorModerationSummary).toHaveBeenCalledWith(supabase);
   });
 
   it("does not read dashboard data when the access guard fails", async () => {
@@ -45,6 +51,7 @@ describe("moderator data-health page", () => {
       load({ locals: { supabase: {} } } as never),
     ).rejects.toMatchObject({ status: 403 });
     expect(mocks.readModeratorDataHealth).not.toHaveBeenCalled();
+	expect(mocks.readCatalogMonitorModerationSummary).not.toHaveBeenCalled();
   });
 
   it("passes the developer role through to the privileged dashboard", async () => {
@@ -53,10 +60,12 @@ describe("moderator data-health page", () => {
       role: "developer",
     });
     mocks.readModeratorDataHealth.mockResolvedValue(moderatorDataHealthFixture);
+	mocks.readCatalogMonitorModerationSummary.mockResolvedValue(catalogMonitorModerationFixture);
 
     await expect(load({ locals: { supabase: {} } } as never)).resolves.toEqual({
       viewerRole: "developer",
       dashboard: moderatorDataHealthFixture,
+	  catalogMonitor: catalogMonitorModerationFixture,
     });
   });
 });

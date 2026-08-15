@@ -180,6 +180,7 @@ export const normalizeFoodForStorage = (food: FoodItem): FoodItem => {
 			}
 			: undefined,
 		preferenceWarnings: food.preferenceWarnings?.map((warning) => ({ ...warning })),
+		safetyAlerts: food.safetyAlerts?.map((alert) => ({ ...alert })),
 		reportedNutrientIds: [...new Set(reportedNutrientIds)].filter((nutrientId) =>
 			acceptedNutrientIds.has(nutrientId)
 		),
