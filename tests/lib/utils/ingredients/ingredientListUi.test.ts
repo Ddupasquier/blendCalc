@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
+import type { FoodItem } from "$lib/utils/food/types";
 import {
 	getFoodCalories,
 	getFoodDisplayCategory,
+	getFoodWarningEdgeTone,
 	getIngredientMembershipLabel,
 	getPrimaryFoodWarning,
 } from "$lib/utils/ingredients/ingredientListUi";
@@ -73,7 +75,7 @@ describe("ingredient list UI helpers", () => {
 	});
 
 	it("prioritizes an active official recall over preference warnings", () => {
-		expect(getPrimaryFoodWarning({
+		const food = {
 			fdcId: 9,
 			description: "Recalled product",
 			foodNutrients: [],
@@ -98,6 +100,27 @@ describe("ingredient list UI helpers", () => {
 				requiresPackageCheck: false,
 				detectedAt: "2026-08-14T12:00:00.000Z",
 			}],
-		})).toBe("This product appears in an active official recall.");
+		} satisfies FoodItem;
+
+		expect(getPrimaryFoodWarning(food)).toBe(
+			"This product appears in an active official recall.",
+		);
+		expect(getFoodWarningEdgeTone(food)).toBe("danger");
+	});
+
+	it("keeps ordinary preference conflicts on the warning edge", () => {
+		expect(getFoodWarningEdgeTone({
+			fdcId: 10,
+			description: "Preference conflict",
+			foodNutrients: [],
+			preferenceWarnings: [{
+				id: "preference-warning",
+				level: "warning",
+				category: "allergen",
+				label: "milk",
+				code: "FOOD_ALLERGEN_CONTAINS",
+				params: {},
+			}],
+		})).toBe("warning");
 	});
 });

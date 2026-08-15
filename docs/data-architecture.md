@@ -161,8 +161,10 @@ Product revalidation follows this sequence:
 5. An accepted correction still uses the ordinary catalog revision workflow. A monitor
    review cannot claim acceptance without linking the approved revision it produced.
 
-Official FDA enforcement and USDA FSIS recall feeds use independent cursors, retries,
-and histories so one unavailable source does not stop the other or product revalidation.
+Official FDA recall announcements and enforcement records share one FDA-owned cursor
+with independent bounded offsets; USDA FSIS uses its own cursor, retry, and history.
+An unchanged FDA announcement index is skipped with conditional requests, and an
+unavailable safety source does not stop the other source or product revalidation.
 The database matches exact normalized GTINs automatically, sends strong brand/product/
 package identity matches to moderation, and ignores weak title-only similarity. Exact
 and confirmed active matches are hydrated onto catalog-backed foods, enqueue owner-only
@@ -225,6 +227,12 @@ coerced to zero and are not discarded. Ordinary nutrition details translate only
 bounded useful summaries into the closed Data quality disclosure. The public API omits
 internal mapping review references; moderator-only provenance reads receive the exact
 normalized rows and complete source review trail.
+
+Nutrition-detail routes may attach fresh canonical catalog metadata to the hydrated food
+read model for the closed Food passport. That route-only metadata includes accepted
+record creation, last verification, latest revision, and label-observation dates. It is
+read from normalized catalog tables, is not copied into user list snapshots or browser
+storage, and remains absent for private or generic foods when the concepts do not apply.
 
 ## Server-Owned Compatibility Policy
 

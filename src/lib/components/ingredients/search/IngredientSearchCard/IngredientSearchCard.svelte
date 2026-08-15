@@ -7,6 +7,7 @@
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
 	import {
 		getFoodDisplayCategory,
+		getFoodWarningEdgeTone,
 		getPrimaryFoodWarning,
 	} from "$lib/utils/ingredients/ingredientListUi";
 	import type { IngredientSearchCardProps } from "./types";
@@ -25,6 +26,7 @@
 
 	const category = $derived(getFoodDisplayCategory(food));
 	const warning = $derived(getPrimaryFoodWarning(food));
+	const warningEdgeTone = $derived(getFoodWarningEdgeTone(food));
 </script>
 
 <div
@@ -39,8 +41,8 @@
 	onmouseenter={() => onActivate(index)}
 >
 	<IngredientCardMedia {food} />
-	{#if warning}
-		<CardWarningEdge />
+	{#if warning && warningEdgeTone}
+		<CardWarningEdge tone={warningEdgeTone} />
 	{/if}
 	<span class="ingredient-search-card__main-cell" role="gridcell">
 		<button

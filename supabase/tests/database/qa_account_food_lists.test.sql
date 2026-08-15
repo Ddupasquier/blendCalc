@@ -1,6 +1,6 @@
 begin;
 
-select plan(33);
+select plan(34);
 
 select is(
 	(select count(*) from auth.users where email like 'qa-%@blendcalc.local'),
@@ -35,7 +35,7 @@ select ok(
 				('qa-browser-1@blendcalc.local', 60, 40),
 				('qa-browser-2@blendcalc.local', 60, 40),
 				('qa-browser-3@blendcalc.local', 60, 40),
-				('qa-preferences@blendcalc.local', 7, 3),
+				('qa-preferences@blendcalc.local', 8, 3),
 				('qa-empty@blendcalc.local', 0, 0),
 				('qa-onboarding@blendcalc.local', 10, 0),
 				('qa-moderator@blendcalc.local', 3, 3),
@@ -85,13 +85,18 @@ select ok(
 		select 1
 		from public.user_food_list_items item
 		join auth.users user_row on user_row.id = item.user_id
-		where user_row.email like 'qa-%@blendcalc.local'
-			and not exists (
-				select 1 from public.food_nutrients nutrient
-				where nutrient.user_food_list_item_id = item.id
-			)
-	),
-	'all QA list ingredients have normalized nutrient rows'
+			where user_row.email like 'qa-%@blendcalc.local'
+				and not exists (
+					select 1 from public.food_nutrients nutrient
+					where nutrient.user_food_list_item_id = item.id
+				)
+				and not coalesce(
+					item.food #> '{sourceMetadata,qualityWarningTags}'
+						@> '["nutrition-not-reported"]'::jsonb,
+					false
+				)
+		),
+		'all QA list ingredients have normalized nutrient rows or an explicit missing-nutrition state'
 );
 
 select ok(
@@ -225,6 +230,25 @@ select ok(
 );
 
 select ok(
+	exists (
+		select 1
+		from auth.users user_row
+		join public.user_food_list_items item on item.user_id = user_row.id
+		join public.shared_products product on product.id = item.shared_product_id
+		join public.official_food_safety_alert_matches alert_match
+			on alert_match.shared_product_id = product.id
+		join public.official_food_safety_alerts alert on alert.id = alert_match.alert_id
+		where user_row.email = 'qa-preferences@blendcalc.local'
+			and product.barcode = '00681131328944'
+			and alert_match.match_type = 'exact_gtin'
+			and alert_match.status = 'active'
+			and alert.is_active
+			and alert.reason ilike '%Cyclospora%'
+	),
+	'the warning persona includes a current exact FDA recall fixture'
+);
+
+select ok(
 	(
 		select count(*)
 		from public.user_food_list_items item
@@ -324,7 +348,7 @@ select is(
 			or product.source_reference like 'local-qa:%'
 			or product.source = 'usda'
 	),
-		111::bigint,
+			115::bigint,
 	'the local catalog contains all focused and source-shaped QA foods'
 );
 
@@ -419,13 +443,18 @@ select ok(
 select ok(
 	not exists (
 		select 1 from public.shared_products product
-		where (product.source_reference like 'local-qa-%' or product.source_reference like 'local-qa:%' or product.source = 'usda')
-			and not exists (
-				select 1 from public.food_nutrients nutrient
-				where nutrient.shared_product_id = product.id
-			)
-	),
-	'every local catalog product has normalized nutrient data'
+			where (product.source_reference like 'local-qa-%' or product.source_reference like 'local-qa:%' or product.source = 'usda')
+				and not exists (
+					select 1 from public.food_nutrients nutrient
+					where nutrient.shared_product_id = product.id
+				)
+				and not coalesce(
+					product.food #> '{sourceMetadata,qualityWarningTags}'
+						@> '["nutrition-not-reported"]'::jsonb,
+					false
+				)
+		),
+		'every local catalog product has normalized nutrient data or an explicit missing-nutrition state'
 );
 
 select ok(

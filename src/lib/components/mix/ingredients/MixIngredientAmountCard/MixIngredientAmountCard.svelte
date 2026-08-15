@@ -23,6 +23,7 @@
 	} from "$lib/utils/serving/servingMeasureCatalog";
 	import { canConvertServingUnit } from "$lib/utils/serving/servingAmount";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
+	import { getFoodWarningEdgeTone } from "$lib/utils/ingredients/ingredientListUi";
 	import {
 		getMotionSafeDuration,
 		MOTION_DURATION_MS,
@@ -46,6 +47,7 @@
 
 	let detailsOpen = $state(false);
 	const preferenceWarnings = $derived(food.preferenceWarnings ?? []);
+	const warningEdgeTone = $derived(getFoodWarningEdgeTone(food));
 	const detailsElementId = $derived(`mix-ingredient-${food.fdcId}-details`);
 	const servingUnitOptions = $derived(
 		SERVING_MEASURE_OPTIONS
@@ -59,9 +61,9 @@
 <article
 	class="mix-ingredient-amount-card"
 	class:mix-ingredient-amount-card--custom={isPrivateCustomFood(food)}
-	class:mix-ingredient-amount-card--warning={preferenceWarnings.length > 0}
+	class:mix-ingredient-amount-card--warning={warningEdgeTone !== null}
 >
-	{#if preferenceWarnings.length > 0}<CardWarningEdge />{/if}
+	{#if warningEdgeTone}<CardWarningEdge tone={warningEdgeTone} />{/if}
 	<span class="mix-ingredient-amount-card__symbol" aria-hidden="true"><FoodSymbol {food} /></span>
 	<div class="mix-ingredient-amount-card__copy">
 		<h3 title={food.description}>{food.description}</h3>

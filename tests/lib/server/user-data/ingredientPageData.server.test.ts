@@ -13,6 +13,9 @@ const ingredientLists = vi.hoisted(() => ({
 const productCatalog = vi.hoisted(() => ({
 	getApprovedCatalogRecordByApplicationFoodId: vi.fn(),
 }));
+const catalogRecordMetadata = vi.hoisted(() => ({
+	readCanonicalFoodCatalogMetadata: vi.fn(),
+}));
 const genericFoods = vi.hoisted(() => ({
 	readGenericFoodByApplicationId: vi.fn(),
 }));
@@ -31,6 +34,7 @@ const foodSafety = vi.hoisted(() => ({
 vi.mock("$lib/utils/storage/supabase", () => cloudStorage);
 vi.mock("$lib/server/user-data/foodLists.server", () => ingredientLists);
 vi.mock("$lib/server/products/catalogRead.server", () => productCatalog);
+vi.mock("$lib/server/products/catalogRecordMetadata.server", () => catalogRecordMetadata);
 vi.mock("$lib/server/products/genericFoods.server", () => genericFoods);
 vi.mock("$lib/supabase/admin.server", () => ({
 	getSupabaseAdminClient: supabaseAdmin.getSupabaseAdminClient,
@@ -68,6 +72,7 @@ describe("loadIngredientPageData", () => {
 		cloudStorage.readCloudIngredientListIndex.mockResolvedValue(ingredientListIndex);
 		ingredientLists.readCloudIngredientListFood.mockResolvedValue(null);
 		productCatalog.getApprovedCatalogRecordByApplicationFoodId.mockResolvedValue(null);
+		catalogRecordMetadata.readCanonicalFoodCatalogMetadata.mockResolvedValue(null);
 		genericFoods.readGenericFoodByApplicationId.mockResolvedValue(null);
 		supabaseAdmin.getSupabaseAdminClient.mockReturnValue(supabaseAdmin.client);
 		ingredientProvenance.readIngredientProvenanceOptions.mockResolvedValue([
@@ -82,6 +87,32 @@ describe("loadIngredientPageData", () => {
 				compatibilityMatchRules: [],
 				regionalProfiles: [],
 			},
+		});
+	});
+
+	it("adds current catalog history only to a routed shared food", async () => {
+		ingredientLists.readCloudIngredientListFood.mockResolvedValueOnce({
+			fdcId: 99,
+			description: "Shared Routed Food",
+			sharedProductId: "shared-product-1",
+		});
+		catalogRecordMetadata.readCanonicalFoodCatalogMetadata.mockResolvedValueOnce({
+			recordCreatedAt: "2026-07-01T00:00:00.000Z",
+			recordUpdatedAt: "2026-08-10T00:00:00.000Z",
+			lastVerifiedAt: "2026-08-11T00:00:00.000Z",
+			currentRevisionNumber: 3,
+		});
+
+		const result = await loadIngredientPageData(cloudDataContext, {
+			routeFoodId: 99,
+			routeListKey: MIX_STORAGE_KEYS.fridge,
+		});
+
+		expect(catalogRecordMetadata.readCanonicalFoodCatalogMetadata)
+			.toHaveBeenCalledWith(supabaseAdmin.client, "shared-product-1");
+		expect(result.routeFood?.canonicalCatalogMetadata).toMatchObject({
+			currentRevisionNumber: 3,
+			lastVerifiedAt: "2026-08-11T00:00:00.000Z",
 		});
 	});
 

@@ -148,7 +148,7 @@ theme surface as permanent black-label paper.
 
 | Role                  | Token                  | Value     | Use                                               |
 | --------------------- | ---------------------- | --------- | ------------------------------------------------- |
-| Warning amber         | `$app-highlight`       | `#f4b942` | Ingredient-card warning edge and privileged crown |
+| Warning amber         | `$app-highlight`       | `#f4b942` | Ordinary ingredient-card warning edge and privileged crown |
 | Warning hover/strong  | `$app-highlight-hover` | `#d99a24` | Strong warning emphasis, not ordinary copy        |
 | Error base            | `$app-danger-bg`       | `#e7b0b8` | Source color for error surfaces                   |
 | Destructive brown-red | `$app-danger-action`   | `#9c5f46` | Destructive/strong error treatment                |
@@ -647,9 +647,16 @@ placement previews remain identical.
   cleanly rather than adding empty rows or placeholders.
 - Keep the default reading path focused on the product image, current official safety
   notice, current personalized warning, Nutrition Facts, ingredients, and explicit
-  package disclosures. Group
-  supporting data quality, product/source metadata, and user-reporting tools under one
-  closed `More about this food` disclosure.
+  package disclosures. Group record history, information coverage, supporting data
+  quality, product/source metadata, and user-reporting tools under one closed
+  `Food passport` disclosure.
+- Keep the closed Food passport compact: title, chevron, and one bounded status badge.
+  Its open state uses a short summary and readable label/value rows before any nested
+  technical disclosures. Do not put current recalls, personalized warnings, Ingredients,
+  `Contains`, or `May contain` inside it.
+- Present absent passport data as `Not provided` and explain once that this does not mean
+  zero, none, allergen-free, or safe. Do not fill missing history with product update
+  timestamps, provider fetch dates, inferred verification, or the current time.
 - Group product, serving, and source metadata inside the shared `Product details`
   collapse within that supporting area and keep it closed by default.
 - Show the shared `Data quality` collapse only when bounded source-record metadata has
@@ -673,6 +680,9 @@ placement previews remain identical.
   payloads, internal matching evidence, or language that claims an unmatched product is
   safe. Official-notice presentation never replaces medical advice or checking the
   current package.
+- Compact cards use the danger-red warning edge for a current exact or confirmed
+  official recall or similarly major safety alert. Ordinary dietary and preference
+  conflicts retain the amber warning edge.
 - Ingredients, `Contains`, `May contain`, source-backed dietary labels, and reviewed
   dietary considerations remain plain text against the app background unless
   interaction or status requires a surface. Do not expose internal match expressions,

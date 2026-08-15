@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
 	compareProviderSnapshots,
 	hashJson,
@@ -7,6 +7,8 @@ import {
 } from "../../supabase/functions/catalog-monitor/providerProducts.ts";
 import {
 	buildProbableSafetyAlertMatches,
+	fetchOpenFdaAlertPage,
+	normalizeFdaRecallAnnouncement,
 	normalizeFsisAlert,
 	normalizeOpenFdaAlert,
 } from "../../supabase/functions/catalog-monitor/officialSafetyAlerts.ts";
@@ -166,5 +168,131 @@ describe("official food safety alert normalization and matching", () => {
 		expect(alert?.identifiers).toEqual([
 			expect.objectContaining({ type: "lot_code", normalizedValue: "CHK-44" }),
 		]);
+	});
+
+	it("ingests the current FDA Taylor Farms Cyclospora announcement without inventing UPCs", () => {
+		const alert = normalizeFdaRecallAnnouncement({
+			path: "/safety/recalls-market-withdrawals-safety-alerts/taylor-fresh-foods-recalls-iceberg-lettuce-central-mexico-because-possible-health-risk",
+			field_change_date_2: "07/18/2026",
+			field_brand_name: '<a href="/recall">CV, JB, Mark and more</a>',
+			field_product_description: "Iceberg lettuce",
+			field_recall_reason_description: "Possible Cyclospora Contamination",
+			field_company_name: "Taylor Fresh Foods",
+			field_regulated_product_field: "Food &amp; Beverages",
+			field_terminated_recall: null,
+			changed: '<time datetime="2026-07-18T07:40:32-04:00">July 18</time>',
+		}, `
+			<table>
+				<tr><th>Brand</th><th>Description</th><th>Best if Used By</th></tr>
+				<tr><td>MKTSD</td><td>Iceberg Salad 12 oz, 24 oz</td><td>7/18/2026 to 8/3/2026</td></tr>
+			</table>
+		`);
+
+		expect(alert).toMatchObject({
+			externalAlertId: "announcement:taylor-fresh-foods-recalls-iceberg-lettuce-central-mexico-because-possible-health-risk",
+			productDescription: "Iceberg lettuce",
+			reason: "Possible Cyclospora Contamination",
+			recallingOrganization: "Taylor Fresh Foods",
+			reportDate: "2026-07-18",
+			isActive: true,
+		});
+		expect(alert?.identifiers).toEqual([]);
+	});
+
+	it("accepts only valid explicitly labeled UPCs from FDA announcement details", () => {
+		const alert = normalizeFdaRecallAnnouncement({
+			path: "/safety/recalls-market-withdrawals-safety-alerts/example-food-recall",
+			field_change_date_2: "08/14/2026",
+			field_brand_name: "Marketside",
+			field_product_description: "Shredded iceberg lettuce",
+			field_recall_reason_description: "Possible contamination",
+			field_company_name: "Example Foods",
+			field_regulated_product_field: "Food &amp; Beverages",
+		}, `
+			<p>UPC: 681131328944</p>
+			<p>UPC: 681131328951</p>
+			<p>UPC: 681131328968</p>
+			<p>UPC: 681131532099</p>
+			<p>UPC: 681131532999</p>
+			<p>Lot code: LETTUCE-26</p>
+		`);
+
+		const values = alert?.identifiers.map(({ normalizedValue }) => normalizedValue) ?? [];
+		expect(values).toEqual(expect.arrayContaining([
+			"00681131328944",
+			"00681131328951",
+			"00681131328968",
+			"00681131532099",
+			"LETTUCE-26",
+		]));
+		expect(values).not.toContain("00681131532999");
+	});
+
+	it("filters non-human-food announcements and closes terminated notices", () => {
+		const nonFood = normalizeFdaRecallAnnouncement({
+			path: "/safety/recalls-market-withdrawals-safety-alerts/example-pet-food-recall",
+			field_change_date_2: "08/14/2026",
+			field_product_description: "Canine food",
+			field_regulated_product_field: "Animal &amp; Veterinary, Pet Food, Food &amp; Beverages",
+		});
+		const terminated = normalizeFdaRecallAnnouncement({
+			path: "/safety/recalls-market-withdrawals-safety-alerts/example-terminated-food-recall",
+			field_change_date_2: "08/14/2026",
+			field_product_description: "Example food",
+			field_regulated_product_field: "Food &amp; Beverages",
+			field_terminated_recall: "Terminated",
+		});
+
+		expect(nonFood).toBeNull();
+		expect(terminated).toMatchObject({ isActive: false, status: "terminated" });
+	});
+
+	it("ingests a current FDA announcement even when openFDA has no enforcement record", async () => {
+		const fetchMock = vi.fn(async (input: string | URL | Request) => {
+			const url = String(input);
+			if (url.startsWith("https://api.fda.gov/food/enforcement.json")) {
+				return new Response("", { status: 404 });
+			}
+			if (url.includes("datatables-json/recalls-market-withdrawals.json")) {
+				return new Response(JSON.stringify([{
+					path: "/safety/recalls-market-withdrawals-safety-alerts/taylor-fresh-foods-recalls-iceberg-lettuce-central-mexico-because-possible-health-risk",
+					field_change_date_2: "07/18/2026",
+					field_brand_name: "CV, JB, Mark and more",
+					field_product_description: "Iceberg lettuce",
+					field_recall_reason_description: "Possible Cyclospora Contamination",
+					field_company_name: "Taylor Fresh Foods",
+					field_regulated_product_field: "Food &amp; Beverages",
+					field_terminated_recall: null,
+				}]), {
+					status: 200,
+					headers: {
+						"content-type": "application/json",
+						etag: '"taylor-fixture"',
+					},
+				});
+			}
+			return new Response("<p>Current official recall notice.</p>", { status: 200 });
+		});
+		vi.stubGlobal("fetch", fetchMock);
+
+		try {
+			const page = await fetchOpenFdaAlertPage(
+				"2026-08-14T00:00:00.000Z",
+				{},
+				100,
+			);
+
+			expect(page.alerts).toHaveLength(1);
+			expect(page.alerts[0].normalizedAlert).toMatchObject({
+				productDescription: "Iceberg lettuce",
+				reason: "Possible Cyclospora Contamination",
+			});
+			expect(page.nextCursor).toMatchObject({
+				fdaAnnouncementSweepComplete: true,
+				fdaAnnouncementEtag: '"taylor-fixture"',
+			});
+		} finally {
+			vi.unstubAllGlobals();
+		}
 	});
 });

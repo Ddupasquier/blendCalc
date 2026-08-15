@@ -53,6 +53,36 @@ describe("SavedIngredientCard warning treatment", () => {
 			screen.getByRole("button", { name: "Preview Ground Beef" }),
 		).toBeInTheDocument();
 	});
+
+	it("uses the danger edge for active official recalls", () => {
+		const { container } = render(SavedIngredientCard, {
+			props: {
+				...baseProps,
+				food: {
+					...baseProps.food,
+					safetyAlerts: [{
+						id: "ea81b720-5e12-46a9-89cc-f6795aa68d08",
+						providerKey: "open-fda-food-enforcement",
+						sourceName: "FDA Food Safety Notices",
+						sourceAttribution: "U.S. Food and Drug Administration",
+						alertType: "recall" as const,
+						status: "active",
+						productDescription: "Recalled product",
+						sourceUrl: "https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts",
+						matchType: "exact_gtin" as const,
+						requiresPackageCheck: false,
+						detectedAt: "2026-08-14T12:00:00.000Z",
+					}],
+				},
+				warning: "This product appears in an active official recall.",
+			},
+		});
+
+		expect(container.querySelector(".card-warning-edge")).toHaveAttribute(
+			"data-tone",
+			"danger",
+		);
+	});
 });
 
 describe("SavedIngredientCard move action", () => {
