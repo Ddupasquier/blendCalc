@@ -23,6 +23,9 @@ describe("Profile settings routes", () => {
 		expect(getProfileSettingsRouteTitle("/profile/appearance")).toBe(
 			"Light/Dark Mode",
 		);
+		expect(getProfileSettingsRouteTitle("/profile/cheeky-messages")).toBe(
+			"Cheeky Messages",
+		);
 		expect(getProfileSettingsRouteTitle("/profile/details")).toBe(
 			"Profile Details",
 		);

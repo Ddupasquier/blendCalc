@@ -30,6 +30,7 @@
 		shareWithCatalog,
 		barcodeShareMismatch,
 		lookingUpBarcode,
+		allowCheekyMessages = false,
 		validatingBarcodeShare,
 		requiresCatalogEvidence,
 		showOptionalProductImageUpload,
@@ -305,6 +306,7 @@
 		<CustomIngredientOutcome
 			outcome={lastOutcome}
 			action={outcomeAction}
+			{allowCheekyMessages}
 			onMoveToShopping={onMoveToShopping}
 			onMoveToFridge={onMoveToFridge}
 			onUndo={onUndo}

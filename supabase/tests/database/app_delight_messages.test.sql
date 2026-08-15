@@ -1,6 +1,6 @@
 begin;
 
-select plan(10);
+select plan(15);
 
 select ok(
 	(select count(*) from public.app_delight_messages where enabled) >= 20,
@@ -26,6 +26,56 @@ select ok(
 			and minimum_value > maximum_value
 	),
 	'numeric trigger boundaries are valid'
+);
+
+select ok(
+	not exists (
+		select 1
+		from public.app_delight_messages
+		where tone not in ('standard', 'cheeky')
+	),
+	'every delight row has a supported tone'
+);
+
+select ok(
+	(select count(*) from public.app_delight_messages where tone = 'cheeky' and enabled) >= 10,
+	'the opt-in cheeky catalog contains the reviewed initial set'
+);
+
+select ok(
+	not exists (
+		select 1
+		from public.app_delight_messages
+		where tone = 'cheeky'
+			and not (
+				(context_key = 'ingredients' and trigger_key = 'food-added')
+				or (context_key = 'mix' and trigger_key = 'goal-progress')
+				or (context_key = 'saved' and trigger_key = 'recipe-saved')
+			)
+	),
+	'cheeky copy is restricted to eligible non-safety success triggers'
+);
+
+select ok(
+	not exists (
+		select 1
+		from public.app_delight_messages
+		where tone = 'cheeky'
+			and match_key in ('beer', 'wine', 'spirits', 'cocktail', 'alcoholic-beverage')
+	),
+	'the cheeky catalog does not target alcohol products'
+);
+
+select is(
+	(
+		select column_default
+		from information_schema.columns
+		where table_schema = 'public'
+			and table_name = 'profiles'
+			and column_name = 'cheeky_messages_enabled'
+	),
+	'false',
+	'the account preference defaults off'
 );
 
 select ok(

@@ -15,4 +15,5 @@ export type ManualEntrySheetProps = {
 	initialFood?: FoodItem;
 	submissionIntent?: CatalogSubmissionIntent;
 	catalogSubmissionOnly?: boolean;
+	allowCheekyMessages?: boolean;
 };

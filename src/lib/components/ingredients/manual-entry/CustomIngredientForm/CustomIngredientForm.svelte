@@ -48,6 +48,7 @@
 		initialFood,
 		submissionIntent = "catalog_share",
 		catalogSubmissionOnly = false,
+		allowCheekyMessages = false,
 	}: CustomIngredientFormProps = $props();
 
 	const volumeOptions = SERVING_MEASURE_OPTIONS.filter(
@@ -369,6 +370,7 @@
 		shareWithCatalog: form.data.shareWithCatalog,
 		barcodeShareMismatch: barcode.barcodeShareMismatch,
 		lookingUpBarcode: barcode.state.lookingUpBarcode,
+		allowCheekyMessages,
 		validatingBarcodeShare: form.data.validatingBarcodeShare,
 		requiresCatalogEvidence: barcode.requiresCatalogEvidence,
 		showOptionalProductImageUpload:

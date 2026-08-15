@@ -3,7 +3,10 @@
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
 	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog/TextInputDialog.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
-	import { resolveMixDelightMessage } from "$lib/utils/delight/delightMessages";
+	import {
+		resolveDelightMessage,
+		resolveMixDelightMessage,
+	} from "$lib/utils/delight/delightMessages";
 	import ViewBody from "$lib/components/common/view/ViewBody/ViewBody.svelte";
 	import ViewFrame from "$lib/components/common/view/ViewFrame/ViewFrame.svelte";
 	import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
@@ -89,8 +92,13 @@
 		saveCloudUserMixGoalTemplate,
 	} from "$lib/utils/storage/supabase";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
+
 	import { onMount } from "svelte";
 	import type { MixResetAction } from "./types";
+
+	const allowCheekyMessages = $derived(
+		page.data.authUser?.cheekyMessagesEnabled ?? false,
+	);
 
 	const defaultMixFields = getDefaultMixFields();
 	const nutrientCatalog = getNutrientCatalog();
@@ -292,6 +300,18 @@
 	const selectedFoods = $derived(
 		allIngredientItems.filter((item) => selectedFoodIds.includes(item.fdcId)),
 	);
+	let recipeSavedDelightMessage = $state<string | null>(null);
+	const handleRecipeSaved = () => {
+		recipeSavedDelightMessage = mixAnalysis.warnings.length === 0
+			? resolveDelightMessage([
+				{
+					contextKey: "saved",
+					triggerKey: "recipe-saved",
+				},
+			], { allowCheekyMessages })
+			: null;
+		closeMixOverlay();
+	};
 	const savedRecipeController = createSavedRecipeController({
 		buildSavedRecipeInput: (name): SavedRecipeInput => ({
 			name,
@@ -304,11 +324,17 @@
 			servingQuantities,
 			servingUnits,
 		}),
-		onRecipeSaved: closeMixOverlay,
+		onRecipeSaved: handleRecipeSaved,
 	});
 	const loadedSavedRecipe = $derived(savedRecipeController.state.loaded);
-	const markLoadedSavedRecipeDirty = savedRecipeController.markDirty;
-	const detachLoadedSavedRecipe = savedRecipeController.detach;
+	const markLoadedSavedRecipeDirty = () => {
+		recipeSavedDelightMessage = null;
+		savedRecipeController.markDirty();
+	};
+	const detachLoadedSavedRecipe = () => {
+		recipeSavedDelightMessage = null;
+		savedRecipeController.detach();
+	};
 	const canSaveCurrentMix = $derived(
 		selectedFoods.length > 0 && (!loadedSavedRecipe || loadedSavedRecipe.isDirty),
 	);
@@ -338,10 +364,11 @@
 			foods: selectedFoods,
 			servingGrams,
 			goalDifferences: mixAnalysis.diffs,
-			hasDangerWarning: mixAnalysis.warnings.some(
-				(warning) => warning.severity === "danger",
-			),
-		}),
+				hasDangerWarning: mixAnalysis.warnings.some(
+					(warning) => warning.severity === "danger",
+				),
+				allowCheekyMessages,
+			}),
 	);
 
 	const getNutrientTotal = (nutrientId: number) => {
@@ -932,6 +959,7 @@
 	<ViewTop compactHidden={headerVisibility.state.hidden}>
 		<MixHeader
 			loadedName={loadedSavedRecipe?.name}
+			delightMessage={recipeSavedDelightMessage}
 			isDirty={loadedSavedRecipe?.isDirty ?? selectedFoodIds.length > 0}
 			canSave={canSaveCurrentMix}
 			optionsOpen={optionsSheetOpen}

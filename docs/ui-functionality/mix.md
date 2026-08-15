@@ -168,6 +168,10 @@ non-safety state such as all tracked goals being met, a very small or large tota
 serving, or an intentionally simple water/ice recipe. Composition messages outrank goal
 and serving messages, and the lowest-priority matching row wins. Any danger warning
 suppresses the line completely; jokes never alter math or appear inside Warnings.
+When the account has explicitly enabled Cheeky messages, an eligible reviewed goal-match
+row may replace the standard line. Saving a recipe may likewise show one quiet reviewed
+line in the Mix header until the next edit. Both remain absent when the preference is
+off, and no texture or viscosity state is guessed from serving amounts.
 
 Assign axes deterministically by label space so long names use the wider top and bottom
 positions. Keep each nutrient's value, goal, status, and accessible summary attached

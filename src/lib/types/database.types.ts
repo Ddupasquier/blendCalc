@@ -297,6 +297,7 @@ export type Database = {
           message: string
           minimum_value: number | null
           priority: number
+          tone: string
           trigger_key: string
           updated_at: string
         }
@@ -310,6 +311,7 @@ export type Database = {
           message: string
           minimum_value?: number | null
           priority?: number
+          tone?: string
           trigger_key: string
           updated_at?: string
         }
@@ -323,6 +325,7 @@ export type Database = {
           message?: string
           minimum_value?: number | null
           priority?: number
+          tone?: string
           trigger_key?: string
           updated_at?: string
         }
@@ -5416,6 +5419,7 @@ export type Database = {
           avatar_path: string | null
           avatar_policy_acknowledged_at: string | null
           bio: string | null
+          cheeky_messages_enabled: boolean
           created_at: string
           display_name: string
           updated_at: string
@@ -5428,6 +5432,7 @@ export type Database = {
           avatar_path?: string | null
           avatar_policy_acknowledged_at?: string | null
           bio?: string | null
+          cheeky_messages_enabled?: boolean
           created_at?: string
           display_name: string
           updated_at?: string
@@ -5440,6 +5445,7 @@ export type Database = {
           avatar_path?: string | null
           avatar_policy_acknowledged_at?: string | null
           bio?: string | null
+          cheeky_messages_enabled?: boolean
           created_at?: string
           display_name?: string
           updated_at?: string

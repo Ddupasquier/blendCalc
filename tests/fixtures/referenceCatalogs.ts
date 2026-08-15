@@ -474,6 +474,7 @@ export const appReferenceCatalogFixture: AppReferenceCatalog = {
 			minimumValue: null,
 			maximumValue: null,
 			priority: 100,
+			tone: "standard",
 		},
 		{
 			key: "food-added-eggs",
@@ -484,6 +485,7 @@ export const appReferenceCatalogFixture: AppReferenceCatalog = {
 			minimumValue: null,
 			maximumValue: null,
 			priority: 100,
+			tone: "standard",
 		},
 		{
 			key: "mix-goals-all-met",
@@ -494,6 +496,7 @@ export const appReferenceCatalogFixture: AppReferenceCatalog = {
 			minimumValue: null,
 			maximumValue: null,
 			priority: 10,
+			tone: "standard",
 		},
 	],
 };

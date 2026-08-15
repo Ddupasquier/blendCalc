@@ -19,6 +19,42 @@ describe("profile request efficiency", () => {
 		expect(select).toHaveBeenCalledWith(expect.not.stringContaining("*"));
 	});
 
+	it("keeps profile reads usable before the optional preference column rolls out", async () => {
+		const maybeSingle = vi.fn()
+			.mockResolvedValueOnce({
+				data: null,
+				error: {
+					code: "PGRST204",
+					message: "Could not find the 'cheeky_messages_enabled' column",
+				},
+			})
+			.mockResolvedValueOnce({
+				data: {
+					user_id: "user-1",
+					display_name: "Test User",
+					bio: null,
+					appearance_theme: "system",
+					avatar_path: null,
+					avatar_alt_text: null,
+					avatar_moderation_status: "not_submitted",
+					avatar_policy_acknowledged_at: null,
+					created_at: "2026-08-15T00:00:00Z",
+					updated_at: "2026-08-15T00:00:00Z",
+				},
+				error: null,
+			});
+		const eq = vi.fn(() => ({ maybeSingle }));
+		const select = vi.fn(() => ({ eq }));
+		const supabase = {
+			from: vi.fn(() => ({ select })),
+		} as unknown as SupabaseClient<Database>;
+
+		await expect(getUserProfile(supabase, "user-1")).resolves.toMatchObject({
+			cheeky_messages_enabled: false,
+		});
+		expect(select).toHaveBeenCalledTimes(2);
+	});
+
 	it("coalesces and caches repeated avatar signing requests", async () => {
 		const createSignedUrl = vi.fn().mockResolvedValue({
 			data: { signedUrl: "https://example.com/avatar" },

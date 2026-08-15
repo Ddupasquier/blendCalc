@@ -1,5 +1,6 @@
 export const PROFILE_SETTINGS_ROUTES = {
 	appearance: "appearance",
+	cheekyMessages: "cheeky-messages",
 	details: "details",
 	image: "image",
 	foodPreferences: "food-preferences",
@@ -13,6 +14,7 @@ const PROFILE_BASE_PATH = "/profile";
 
 const PROFILE_SETTINGS_ROUTE_TITLES: Record<ProfileSettingsRoute, string> = {
 	[PROFILE_SETTINGS_ROUTES.appearance]: "Light/Dark Mode",
+	[PROFILE_SETTINGS_ROUTES.cheekyMessages]: "Cheeky Messages",
 	[PROFILE_SETTINGS_ROUTES.details]: "Profile Details",
 	[PROFILE_SETTINGS_ROUTES.image]: "Profile Image",
 	[PROFILE_SETTINGS_ROUTES.foodPreferences]: "Food Preferences",

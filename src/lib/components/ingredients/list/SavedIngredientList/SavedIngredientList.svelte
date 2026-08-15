@@ -40,6 +40,7 @@
 		moving = false,
 		revealPaused = false,
 		resetKey = 0,
+		allowCheekyMessages = false,
 		onSelectAll,
 		onEnterSelection,
 		onCancelSelection,
@@ -341,6 +342,7 @@
 			<IngredientEmptyState
 				{activeList}
 				hasItems={activeRawCount > 0}
+				{allowCheekyMessages}
 			/>
 		{/if}
 	</div>

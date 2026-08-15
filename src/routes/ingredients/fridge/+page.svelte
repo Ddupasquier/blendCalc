@@ -78,6 +78,9 @@
 	const initialOnHand = initialIngredientData?.fridge.foods ?? [];
 	const initialShoppingList = initialIngredientData?.shoppingList.foods ?? [];
 	const initialCustomFoods = initialIngredientData?.customFoods ?? [];
+	const allowCheekyMessages = $derived(
+		page.data.authUser?.cheekyMessagesEnabled ?? false,
+	);
     let onHand = $state<FoodItem[]>(initialOnHand);
     let shoppingList = $state<FoodItem[]>(initialShoppingList);
 	let customFoods = $state<FoodItem[]>(initialCustomFoods);
@@ -1283,8 +1286,9 @@
                 {movingItem}
                 moving={movingItem !== null}
                 revealPaused={ingredientOverlayOpen}
-                resetKey={listViewResetKey}
-                onSelectAll={selectAllActiveItems}
+				resetKey={listViewResetKey}
+				{allowCheekyMessages}
+				onSelectAll={selectAllActiveItems}
 				onEnterSelection={enterSelectionMode}
 				onCancelSelection={cancelSelectionMode}
                 onMoveSelection={moveSelectedItems}
@@ -1301,7 +1305,8 @@
 </ViewFrame>
 
 <IngredientRoutePopins
-    {activeSheet}
+	{allowCheekyMessages}
+	{activeSheet}
     {actionSheetItem}
     {barcodeLookupBusy}
     {listLoading}

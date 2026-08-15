@@ -115,8 +115,11 @@ imported generic-food sources through the server-owned search flow.
   without turning a provider name into blanket trust.
 - Search real stored metadata as well as names. Direct product-name matches rank first,
   followed by brand or responsible organization, category, and supporting package or
-  ingredient metadata. Linked active official safety notices may supply an organization
-  match without rewriting the product's canonical brand.
+  ingredient metadata. Partial fragments follow the same field order across canonical
+  and alternate names, brands, categories, package and serving descriptions, structured
+  ingredients, explicit allergen and precautionary statements, labels, markets, and
+  retained source identifiers. Linked active official safety notices may supply an
+  organization match without rewriting the product's canonical brand.
 - Require every query word for the first result set. If that set is empty, use a wider
   partial-word fallback and keep those weaker matches below complete matches; never
   maintain hardcoded company or spelling correction lists.

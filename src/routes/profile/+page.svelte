@@ -9,6 +9,7 @@
 	import ViewHeader from "$lib/components/common/view/ViewHeader/ViewHeader.svelte";
 	import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
 	import ProfileAppearanceSettings from "$lib/components/profile/ProfileAppearanceSettings/ProfileAppearanceSettings.svelte";
+	import ProfileCheekyMessageSettings from "$lib/components/profile/ProfileCheekyMessageSettings/ProfileCheekyMessageSettings.svelte";
 	import ProfileDetailsSettings from "$lib/components/profile/ProfileDetailsSettings/ProfileDetailsSettings.svelte";
 	import ProfileFoodPreferenceView from "$lib/components/profile/ProfileFoodPreferenceView/ProfileFoodPreferenceView.svelte";
 	import ProfileIdentitySummary from "$lib/components/profile/ProfileIdentitySummary/ProfileIdentitySummary.svelte";
@@ -68,6 +69,11 @@
 	const appearanceTheme = $derived(
 		normalizeThemePreference(form?.appearanceTheme ?? data.profile?.appearance_theme),
 	);
+	const cheekyMessagesEnabled = $derived(
+		form?.cheekyMessagesEnabled ??
+			data.profile?.cheeky_messages_enabled ??
+			false,
+	);
 
 	const openSettingsRoute = (settingsRoute: ProfileSettingsRoute) => {
 		if (activeSettingsRoute === settingsRoute) return;
@@ -80,7 +86,6 @@
 	};
 
 	const closeSettingsRoute = () => {
-		if (!activeSettingsRoute) return;
 		const href = "/profile";
 		navigateShallowRoute({
 			href,
@@ -114,6 +119,21 @@
 		initialTheme={appearanceTheme}
 		errorMessage={form?.appearanceError}
 		successMessage={form?.appearanceSuccess}
+		onSaveSuccess={closeSettingsRoute}
+	/>
+</BottomSheet>
+
+<BottomSheet
+	id="profile-cheeky-messages-sheet"
+	open={activeSettingsRoute === PROFILE_SETTINGS_ROUTES.cheekyMessages}
+	title="Cheeky messages"
+	titleId="profile-cheeky-messages-sheet-title"
+	onClose={closeSettingsRoute}
+>
+	<ProfileCheekyMessageSettings
+		initiallyEnabled={cheekyMessagesEnabled}
+		errorMessage={form?.cheekyMessagesError}
+		successMessage={form?.cheekyMessagesSuccess}
 		onSaveSuccess={closeSettingsRoute}
 	/>
 </BottomSheet>
@@ -207,6 +227,7 @@
 
 			<ProfileSettingsMenu
 				{appearanceTheme}
+				{cheekyMessagesEnabled}
 				{displayName}
 				{bio}
 				hasProfileImage={Boolean(data.profile?.avatar_path)}

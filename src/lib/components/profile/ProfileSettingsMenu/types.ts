@@ -3,6 +3,7 @@ import type { ProfileSettingsRoute } from "$lib/utils/profile/profileRouteState"
 
 export type ProfileSettingsMenuProps = {
 	appearanceTheme: ThemePreference;
+	cheekyMessagesEnabled: boolean;
 	displayName: string;
 	bio: string;
 	hasProfileImage: boolean;

@@ -9,6 +9,7 @@ import {
 } from "$lib/utils/profile/avatarPolicy";
 import {
 	getUserProfile,
+	isMissingCheekyMessagesPreferenceColumn,
 	PROFILE_AVATAR_BUCKET,
 } from "$lib/utils/profile/profile";
 import {
@@ -101,6 +102,36 @@ const getFoodPreferenceFormValues = (
 };
 
 export const actions: Actions = {
+	saveCheekyMessages: async ({ locals, request }) => {
+		const user = await getAuthenticatedUser(locals);
+		const formData = await readLimitedFormData(request, PROFILE_TEXT_FORM_MAX_BYTES);
+		const cheekyMessagesEnabled =
+			formData.get("cheekyMessagesEnabled") === "on";
+		const existingProfile = await getUserProfile(locals.supabase, user.id);
+		const { error } = await getSupabaseAdminClient().from("profiles").upsert(
+			{
+				user_id: user.id,
+				display_name:
+					existingProfile?.display_name ?? getDefaultDisplayName(user.id),
+				cheeky_messages_enabled: cheekyMessagesEnabled,
+			},
+			{ onConflict: "user_id" },
+		);
+
+		if (error) {
+			return fail(isMissingCheekyMessagesPreferenceColumn(error) ? 503 : 500, {
+				cheekyMessagesError: isMissingCheekyMessagesPreferenceColumn(error)
+					? "This preference is still being prepared. Try again shortly."
+					: "Your message preference could not be saved. Try again.",
+				cheekyMessagesEnabled,
+			});
+		}
+
+		return {
+			cheekyMessagesSuccess: "Message preference saved.",
+			cheekyMessagesEnabled,
+		};
+	},
 	saveAppearance: async ({ locals, request, cookies }) => {
 		const user = await getAuthenticatedUser(locals);
 		const formData = await readLimitedFormData(request, PROFILE_TEXT_FORM_MAX_BYTES);

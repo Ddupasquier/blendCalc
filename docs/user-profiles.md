@@ -31,6 +31,19 @@ This document owns profile behavior and privacy. Auth configuration belongs in
 - The app-wide semantic theme properties live in `src/styles/_themes.scss`; individual
   views must not maintain separate dark-mode overrides.
 
+## Optional Message Tone
+
+- `cheeky_messages_enabled` is an account-level opt-in and defaults off.
+- Enabling it permits occasional PG-13 secondary food copy after eligible successful
+  actions. It does not replace factual outcomes or primary actions.
+- The message text and tone are reviewed database reference data. The server filters
+  the reference catalog for the authenticated account, and the resolver separately
+  enforces eligible trigger contexts.
+- Cheeky copy never appears in allergen, recall, alcohol-safety, medical,
+  authentication, validation, warning, error, body-weight, or minor-related contexts.
+- Disabling the preference takes effect across devices after the account setting is
+  saved.
+
 ## Food Safety Preferences
 
 - Food safety and dietary preferences remain optional account data. They include

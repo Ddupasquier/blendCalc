@@ -3,10 +3,12 @@
 	import Save from "$lib/assets/icons/Save/Save.svelte";
 	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import MetadataPill from "$lib/components/common/display/MetadataPill/MetadataPill.svelte";
+	import SecondaryDelightMessage from "$lib/components/common/feedback/SecondaryDelightMessage/SecondaryDelightMessage.svelte";
 	import type { MixHeaderProps } from "./types";
 
 	let {
 		loadedName = null,
+		delightMessage = null,
 		isDirty = false,
 		canSave,
 		optionsOpen = false,
@@ -33,6 +35,7 @@
 				shape.
 			</p>
 		{/if}
+		<SecondaryDelightMessage message={delightMessage} />
 	</div>
 	<div class="mix-header__actions">
 		<CircleIconButton

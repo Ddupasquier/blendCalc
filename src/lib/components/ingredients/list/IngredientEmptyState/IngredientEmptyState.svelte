@@ -11,6 +11,7 @@
 	let {
 		activeList,
 		hasItems,
+		allowCheekyMessages = false,
 	}: IngredientEmptyStateProps = $props();
 
 	const title = $derived(
@@ -30,12 +31,12 @@
 	const delightMessage = $derived(
 		!hasItems && activeList === MIX_STORAGE_KEYS.fridge
 			? resolveDelightMessage([
-					{
+				{
 						contextKey: "ingredients",
 						triggerKey: "empty-list",
 						matchKeys: ["fridge"],
 					},
-				])
+			], { allowCheekyMessages })
 			: null,
 	);
 </script>

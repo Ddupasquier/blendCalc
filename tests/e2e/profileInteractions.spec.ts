@@ -40,6 +40,33 @@ test("appearance choices use native radios and preview the selected theme", asyn
 	await expect(page).toHaveTitle("Profile · blendCalc");
 });
 
+test("cheeky messages require an explicit saved account preference", async ({
+	page,
+}) => {
+	await page.goto("/profile");
+	await waitForAppReady(page);
+	await page.getByRole("button", { name: /Cheeky messages/ }).click();
+	await expect(page).toHaveURL(/\/profile\/cheeky-messages$/);
+
+	let sheet = page.getByRole("dialog", { name: "Cheeky messages" });
+	let preference = sheet.getByRole("switch", {
+		name: "Allow cheeky messages",
+	});
+	const initiallyEnabled = await preference.isChecked();
+	await preference.click();
+	await sheet.getByRole("button", { name: "Save message preference" }).click();
+	await expect(page).toHaveURL(/\/profile$/);
+
+	await page.getByRole("button", { name: /Cheeky messages/ }).click();
+	sheet = page.getByRole("dialog", { name: "Cheeky messages" });
+	preference = sheet.getByRole("switch", { name: "Allow cheeky messages" });
+	await expect(preference).toBeChecked({ checked: !initiallyEnabled });
+
+	await preference.click();
+	await sheet.getByRole("button", { name: "Save message preference" }).click();
+	await expect(page).toHaveURL(/\/profile$/);
+});
+
 test("profile photo selection uses the shared accessible upload control", async ({
 	page,
 }) => {

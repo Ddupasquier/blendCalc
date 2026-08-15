@@ -55,6 +55,7 @@ describe("delight messages", () => {
 					minimumValue: null,
 					maximumValue: null,
 					priority: 200,
+					tone: "standard",
 				},
 				{
 					key: "first",
@@ -65,6 +66,7 @@ describe("delight messages", () => {
 					minimumValue: null,
 					maximumValue: null,
 					priority: 10,
+					tone: "standard",
 				},
 			],
 		});
@@ -78,6 +80,71 @@ describe("delight messages", () => {
 				},
 			]),
 		).toBe("First");
+	});
+
+	it("requires an explicit opt-in before selecting cheeky copy", () => {
+		const catalog = {
+			...appReferenceCatalogFixture,
+			delightMessages: [
+				{
+					key: "standard-bread",
+					contextKey: "ingredients" as const,
+					triggerKey: "food-added",
+					matchKey: "bread",
+					message: "Standard bread message.",
+					minimumValue: null,
+					maximumValue: null,
+					priority: 100,
+					tone: "standard" as const,
+				},
+				{
+					key: "cheeky-bread",
+					contextKey: "ingredients" as const,
+					triggerKey: "food-added",
+					matchKey: "bread",
+					message: "Nice buns. Nutritionally speaking.",
+					minimumValue: null,
+					maximumValue: null,
+					priority: 10,
+					tone: "cheeky" as const,
+				},
+			],
+		};
+		const selection = [{
+			contextKey: "ingredients" as const,
+			triggerKey: "food-added",
+			matchKeys: ["bread"],
+		}];
+
+		expect(resolveDelightMessage(selection, { catalog })).toBe(
+			"Standard bread message.",
+		);
+		expect(resolveDelightMessage(selection, {
+			catalog,
+			allowCheekyMessages: true,
+		})).toBe("Nice buns. Nutritionally speaking.");
+	});
+
+	it("rejects cheeky copy outside explicitly eligible success triggers", () => {
+		expect(resolveDelightMessage([
+			{ contextKey: "app", triggerKey: "error" },
+		], {
+			allowCheekyMessages: true,
+			catalog: {
+				...appReferenceCatalogFixture,
+				delightMessages: [{
+					key: "unsafe-error-copy",
+					contextKey: "app",
+					triggerKey: "error",
+					matchKey: null,
+					message: "Not eligible.",
+					minimumValue: null,
+					maximumValue: null,
+					priority: 1,
+					tone: "cheeky",
+				}],
+			},
+		})).toBeNull();
 	});
 
 	it("matches food puns through the reviewed food-symbol catalog", () => {
@@ -114,6 +181,7 @@ describe("delight messages", () => {
 					minimumValue: null,
 					maximumValue: null,
 					priority: 5,
+					tone: "standard",
 				},
 			],
 		});

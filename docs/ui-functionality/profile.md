@@ -16,8 +16,9 @@ session settings. Detailed privacy and storage rules live in
   bottom sheet or right sheet never changes the Profile header. Wider layouts keep the
   header visible, and reduced motion removes the transition without changing the
   visibility state.
-- Open Light/Dark Mode at `/profile/appearance`, Profile details at `/profile/details`, and
-  Profile image at `/profile/image` in the shared route-backed `BottomSheet`.
+- Open Light/Dark Mode at `/profile/appearance`, Cheeky messages at
+  `/profile/cheeky-messages`, Profile details at `/profile/details`, and Profile image
+  at `/profile/image` in the shared route-backed `BottomSheet`.
 - Let each bottom-sheet title own the visible heading. Keep control-level semantic
   labels available to assistive technology without repeating the same visible wording
   inside the sheet.
@@ -47,6 +48,16 @@ session settings. Detailed privacy and storage rules live in
 - `Device` follows operating-system changes while selected.
 - Apply the saved theme before first paint to avoid a light/dark flash.
 - Theme changes must not reload the route, close overlays, or reset forms.
+
+## Cheeky Messages
+
+- Keep the setting off until the account explicitly enables and saves it.
+- Summarize the current state as `On` or `Off` in the Profile settings menu.
+- Explain the tone as occasional PG-13 food humor, not adult content.
+- State the safety exclusions in the setting itself. Never place cheeky copy near
+  allergens, recalls, alcohol safety, medical guidance, authentication, validation,
+  errors, body weight, or anything involving minors.
+- Use the shared toggle, bottom sheet, status message, and submit-button primitives.
 
 ## Avatar
 

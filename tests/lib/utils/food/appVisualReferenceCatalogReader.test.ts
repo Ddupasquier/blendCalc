@@ -97,4 +97,56 @@ describe("app visual reference catalog rollout", () => {
 			error: permissionError,
 		})) as never)).rejects.toEqual(permissionError);
 	});
+
+	it("treats legacy delight rows as standard while the tone column rolls out", async () => {
+		const getResponse = vi.fn((table: string, columns: string): QueryResponse => {
+			if (table === "food_symbol_definitions") {
+				return {
+					data: [{
+						key: "bread",
+						display_name: "Bread",
+						emoji: "🍞",
+						family_key: "grain",
+						sort_order: 1,
+					}],
+					error: null,
+				};
+			}
+			if (table === "food_symbol_category_rules") {
+				return { data: [], error: null };
+			}
+			if (columns.includes("tone")) {
+				return {
+					data: null,
+					error: {
+						code: "PGRST204",
+						message: "Could not find the 'tone' column in the schema cache",
+					},
+				};
+			}
+			return {
+				data: [{
+					key: "food-added-bread",
+					context_key: "ingredients",
+					trigger_key: "food-added",
+					match_key: "bread",
+					message: "You’re on a roll.",
+					minimum_value: null,
+					maximum_value: null,
+					priority: 100,
+				}],
+				error: null,
+			};
+		});
+
+		const catalog = await readAppVisualReferenceCatalog(
+			createSupabaseClient(getResponse) as never,
+		);
+		expect(catalog.delightMessages).toEqual([
+			expect.objectContaining({
+				key: "food-added-bread",
+				tone: "standard",
+			}),
+		]);
+	});
 });

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Leaf from "$lib/assets/icons/Leaf/Leaf.svelte";
+	import Bolt from "$lib/assets/icons/Bolt/Bolt.svelte";
 	import Pencil from "$lib/assets/icons/Pencil/Pencil.svelte";
 	import Sliders from "$lib/assets/icons/Sliders/Sliders.svelte";
 	import User from "$lib/assets/icons/User/User.svelte";
@@ -10,6 +11,7 @@
 
 	let {
 		appearanceTheme,
+		cheekyMessagesEnabled,
 		displayName,
 		bio,
 		hasProfileImage,
@@ -44,6 +46,14 @@
 			onOpen={() => onOpen(PROFILE_SETTINGS_ROUTES.appearance)}
 		>
 			{#snippet icon()}<Sliders />{/snippet}
+		</ProfileSettingsSheetLauncher>
+		<ProfileSettingsSheetLauncher
+			title="Cheeky messages"
+			description={cheekyMessagesEnabled ? "On" : "Off"}
+			controls="profile-cheeky-messages-sheet"
+			onOpen={() => onOpen(PROFILE_SETTINGS_ROUTES.cheekyMessages)}
+		>
+			{#snippet icon()}<Bolt />{/snippet}
 		</ProfileSettingsSheetLauncher>
 		<ProfileSettingsSheetLauncher
 			title="Profile details"
