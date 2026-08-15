@@ -33,7 +33,9 @@ signed-in user without exposing the account that submitted it.
 Barcode autofill and publication use two category layers: raw category values from the
 source APIs remain on the food payload for provenance, while `category_option_id` points
 to the clean DB-backed category shown in the app. Publication is blocked if a canonical
-category cannot be resolved.
+category cannot be resolved. That reviewed category also bounds missing-image symbol
+selection: a product name may refine its symbol only inside the category family, apart
+from reviewed prepared-food overrides.
 
 Submitting is optional. A failed catalog submission never rolls back the user's private
 ingredient. Submission pauses only affect shared catalog submissions. Users can still
@@ -424,6 +426,40 @@ in [`../scripts/README.md`](../scripts/README.md#source-quality-audits).
 The generic-dataset contribution audit uses exact identifiers for identity evidence and
 a balanced search corpus only to measure CNF/CoFID usefulness. It cannot create an
 identity link or source-priority decision from similar names.
+
+### Scheduled Product Revalidation
+
+Active canonical products are checked outside user requests through the bounded catalog
+monitor. The database owns provider identity, due time, priority, retry state, and
+result. Open Food Facts checks revision/update metadata before downloading a full
+record; USDA checks only a known FDC id. Recently used products move forward in the
+queue, while inactive products pause.
+
+Every changed response becomes an immutable source observation and normalized snapshot.
+Identity, serving, nutrient, ingredient, allergen, image, and ABV differences are
+compared field by field. Material differences create a review record while the last
+approved canonical revision remains active. A moderator may dismiss a provider change,
+or complete the existing catalog correction workflow and link the resulting approved
+revision; the monitor never overwrites `shared_products` directly.
+
+### Official Recall Matching
+
+FDA enforcement reports and USDA FSIS recalls/public-health alerts are independently
+ingested with immutable revisions and exact identifiers. Match policy is deliberately
+conservative:
+
+- an exact normalized GTIN can become visible immediately;
+- a strong brand, product, and package identity match requires moderation;
+- title-only similarity creates no match;
+- lot, use-by, and package evidence stays attached so the UI can ask the user to check
+  the current package instead of claiming every package is affected; and
+- a closed official notice supersedes current matches without deleting its history.
+
+An official notice does not modify the product record or imply that products without a
+match are safe. Active exact and confirmed matches are shown on catalog-backed foods and
+exposed through the public product contract with source attribution and an official
+link. Raw source payloads, private match evidence, moderator identity, and per-user
+delivery state remain outside public reads.
 
 ## Catalog Security Boundary
 

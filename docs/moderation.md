@@ -305,13 +305,25 @@ The dashboard includes:
 - source request, cache, reliability, match, response-time, and field-coverage counts
   for a bounded 30-day window;
 - dataset import counts, checksum state, licence review state, and policy gaps; and
-- active food-compatibility policy coverage.
+- active food-compatibility policy coverage;
+- catalog-monitor enablement, queue state, recent bounded runs, and safe provider error
+  counts;
+- material provider changes awaiting a catalog correction decision; and
+- probable official recall matches awaiting confirmation or dismissal.
 
 Issue queues are bounded to 20 rows in the application and the RPC enforces a maximum
 of 50. Product issues link to the existing moderator provenance read, while pending
 submissions and warning reports link to their established reviewed queues. Mapping,
 dataset, and policy corrections remain deliberate reviewed database/policy workflows;
 the health dashboard must not become an unreviewed direct-edit surface.
+
+Catalog-monitor review follows the same rule. Dismissing a provider change records that
+the current canonical revision remains authoritative. Accepting a correct provider
+change requires completing the existing product-correction workflow and linking the
+new approved catalog revision; a monitor result cannot overwrite a canonical product.
+Probable recall matches can be confirmed or dismissed only by an elevated AAL2 session.
+Exact GTIN matches are visible immediately, while title-only similarity never enters
+the queue.
 
 ## Enable Future-Signup Blocking
 

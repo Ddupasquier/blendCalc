@@ -286,6 +286,48 @@ export type Database = {
           },
         ]
       }
+      app_delight_messages: {
+        Row: {
+          context_key: string
+          created_at: string
+          enabled: boolean
+          key: string
+          match_key: string | null
+          maximum_value: number | null
+          message: string
+          minimum_value: number | null
+          priority: number
+          trigger_key: string
+          updated_at: string
+        }
+        Insert: {
+          context_key: string
+          created_at?: string
+          enabled?: boolean
+          key: string
+          match_key?: string | null
+          maximum_value?: number | null
+          message: string
+          minimum_value?: number | null
+          priority?: number
+          trigger_key: string
+          updated_at?: string
+        }
+        Update: {
+          context_key?: string
+          created_at?: string
+          enabled?: boolean
+          key?: string
+          match_key?: string | null
+          maximum_value?: number | null
+          message?: string
+          minimum_value?: number | null
+          priority?: number
+          trigger_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_interaction_daily_metrics: {
         Row: {
           created_at: string
@@ -516,6 +558,412 @@ export type Database = {
           source_user_id?: string | null
         }
         Relationships: []
+      }
+      catalog_monitor_runs: {
+        Row: {
+          created_at: string
+          error_summary: Json
+          finished_at: string | null
+          id: string
+          invocation_source: string
+          product_jobs_changed: number
+          product_jobs_claimed: number
+          product_jobs_failed: number
+          product_jobs_unchanged: number
+          safety_alerts_changed: number
+          safety_alerts_observed: number
+          safety_matches_activated: number
+          started_at: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_summary?: Json
+          finished_at?: string | null
+          id?: string
+          invocation_source: string
+          product_jobs_changed?: number
+          product_jobs_claimed?: number
+          product_jobs_failed?: number
+          product_jobs_unchanged?: number
+          safety_alerts_changed?: number
+          safety_alerts_observed?: number
+          safety_matches_activated?: number
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error_summary?: Json
+          finished_at?: string | null
+          id?: string
+          invocation_source?: string
+          product_jobs_changed?: number
+          product_jobs_claimed?: number
+          product_jobs_failed?: number
+          product_jobs_unchanged?: number
+          safety_alerts_changed?: number
+          safety_alerts_observed?: number
+          safety_matches_activated?: number
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      catalog_monitor_settings: {
+        Row: {
+          enabled: boolean
+          id: boolean
+          last_invocation_error: string | null
+          last_invocation_request_id: number | null
+          last_invocation_requested_at: string | null
+          product_batch_size: number
+          product_claim_timeout: string
+          safety_alert_interval: string
+          safety_alert_page_size: number
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          id?: boolean
+          last_invocation_error?: string | null
+          last_invocation_request_id?: number | null
+          last_invocation_requested_at?: string | null
+          product_batch_size?: number
+          product_claim_timeout?: string
+          safety_alert_interval?: string
+          safety_alert_page_size?: number
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: boolean
+          last_invocation_error?: string | null
+          last_invocation_request_id?: number | null
+          last_invocation_requested_at?: string | null
+          product_batch_size?: number
+          product_claim_timeout?: string
+          safety_alert_interval?: string
+          safety_alert_page_size?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      catalog_provider_change_reviews: {
+        Row: {
+          accepted_revision_id: string | null
+          change_summary: Json
+          created_at: string
+          id: string
+          material_field_paths: string[]
+          provider_key: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shared_product_id: string
+          snapshot_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_revision_id?: string | null
+          change_summary: Json
+          created_at?: string
+          id?: string
+          material_field_paths: string[]
+          provider_key: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shared_product_id: string
+          snapshot_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_revision_id?: string | null
+          change_summary?: Json
+          created_at?: string
+          id?: string
+          material_field_paths?: string[]
+          provider_key?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shared_product_id?: string
+          snapshot_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_provider_change_reviews_accepted_revision_id_fkey"
+            columns: ["accepted_revision_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_revisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_provider_change_reviews_provider_key_fkey"
+            columns: ["provider_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "catalog_provider_change_reviews_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "catalog_provider_change_reviews_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_provider_change_reviews_snapshot_id_fkey"
+            columns: ["snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_provider_product_snapshots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_provider_product_snapshots: {
+        Row: {
+          content_hash: string
+          created_at: string
+          id: string
+          normalized_snapshot: Json
+          observation_id: string
+          observed_at: string
+          provider_key: string
+          provider_revision: string | null
+          provider_updated_at: string | null
+          shared_product_id: string
+          source_reference: string
+        }
+        Insert: {
+          content_hash: string
+          created_at?: string
+          id?: string
+          normalized_snapshot: Json
+          observation_id: string
+          observed_at: string
+          provider_key: string
+          provider_revision?: string | null
+          provider_updated_at?: string | null
+          shared_product_id: string
+          source_reference: string
+        }
+        Update: {
+          content_hash?: string
+          created_at?: string
+          id?: string
+          normalized_snapshot?: Json
+          observation_id?: string
+          observed_at?: string
+          provider_key?: string
+          provider_revision?: string | null
+          provider_updated_at?: string | null
+          shared_product_id?: string
+          source_reference?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_provider_product_snapshots_observation_id_fkey"
+            columns: ["observation_id"]
+            isOneToOne: false
+            referencedRelation: "shared_product_observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_provider_product_snapshots_provider_key_fkey"
+            columns: ["provider_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "catalog_provider_product_snapshots_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "catalog_provider_product_snapshots_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_revalidation_queue: {
+        Row: {
+          attempt_count: number
+          claim_token: string | null
+          claimed_at: string | null
+          claimed_by_run_id: string | null
+          consecutive_failures: number
+          created_at: string
+          id: string
+          last_checked_at: string | null
+          last_error_code: string | null
+          last_result: string | null
+          next_check_at: string
+          priority: number
+          provider_key: string
+          recheck_interval: string
+          revalidation_reason: string
+          shared_product_id: string
+          source_reference: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          claim_token?: string | null
+          claimed_at?: string | null
+          claimed_by_run_id?: string | null
+          consecutive_failures?: number
+          created_at?: string
+          id?: string
+          last_checked_at?: string | null
+          last_error_code?: string | null
+          last_result?: string | null
+          next_check_at?: string
+          priority?: number
+          provider_key: string
+          recheck_interval?: string
+          revalidation_reason?: string
+          shared_product_id: string
+          source_reference: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          claim_token?: string | null
+          claimed_at?: string | null
+          claimed_by_run_id?: string | null
+          consecutive_failures?: number
+          created_at?: string
+          id?: string
+          last_checked_at?: string | null
+          last_error_code?: string | null
+          last_result?: string | null
+          next_check_at?: string
+          priority?: number
+          provider_key?: string
+          recheck_interval?: string
+          revalidation_reason?: string
+          shared_product_id?: string
+          source_reference?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_revalidation_queue_claimed_by_run_id_fkey"
+            columns: ["claimed_by_run_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_monitor_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_revalidation_queue_provider_key_fkey"
+            columns: ["provider_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "catalog_revalidation_queue_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "catalog_revalidation_queue_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_safety_alert_ingestion_cursors: {
+        Row: {
+          attempt_count: number
+          claim_token: string | null
+          claimed_at: string | null
+          claimed_by_run_id: string | null
+          consecutive_failures: number
+          created_at: string
+          cursor_value: Json
+          last_error_code: string | null
+          last_source_updated_at: string | null
+          last_successful_at: string | null
+          next_check_at: string
+          provider_key: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          claim_token?: string | null
+          claimed_at?: string | null
+          claimed_by_run_id?: string | null
+          consecutive_failures?: number
+          created_at?: string
+          cursor_value?: Json
+          last_error_code?: string | null
+          last_source_updated_at?: string | null
+          last_successful_at?: string | null
+          next_check_at?: string
+          provider_key: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          claim_token?: string | null
+          claimed_at?: string | null
+          claimed_by_run_id?: string | null
+          consecutive_failures?: number
+          created_at?: string
+          cursor_value?: Json
+          last_error_code?: string | null
+          last_source_updated_at?: string | null
+          last_successful_at?: string | null
+          next_check_at?: string
+          provider_key?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_safety_alert_ingestion_cursors_claimed_by_run_id_fkey"
+            columns: ["claimed_by_run_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_monitor_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_safety_alert_ingestion_cursors_provider_key_fkey"
+            columns: ["provider_key"]
+            isOneToOne: true
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       compatibility_tags: {
         Row: {
@@ -2172,6 +2620,7 @@ export type Database = {
           enabled: boolean
           id: number
           match_pattern: string
+          match_scopes: string[]
           priority: number
           source_key: string
           source_reference: string
@@ -2183,6 +2632,7 @@ export type Database = {
           enabled?: boolean
           id?: never
           match_pattern: string
+          match_scopes?: string[]
           priority: number
           source_key: string
           source_reference: string
@@ -2194,6 +2644,7 @@ export type Database = {
           enabled?: boolean
           id?: never
           match_pattern?: string
+          match_scopes?: string[]
           priority?: number
           source_key?: string
           source_reference?: string
@@ -2223,6 +2674,7 @@ export type Database = {
           display_name: string
           emoji: string
           enabled: boolean
+          family_key: string
           key: string
           sort_order: number
           updated_at: string
@@ -2232,6 +2684,7 @@ export type Database = {
           display_name: string
           emoji: string
           enabled?: boolean
+          family_key?: string
           key: string
           sort_order: number
           updated_at?: string
@@ -2241,6 +2694,7 @@ export type Database = {
           display_name?: string
           emoji?: string
           enabled?: boolean
+          family_key?: string
           key?: string
           sort_order?: number
           updated_at?: string
@@ -3307,7 +3761,7 @@ export type Database = {
           {
             foreignKeyName: "nutrient_manual_entry_fields_nutrient_id_fkey"
             columns: ["nutrient_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "nutrient_definitions"
             referencedColumns: ["nutrient_id"]
           },
@@ -3845,6 +4299,238 @@ export type Database = {
           {
             foreignKeyName: "nutrition_completeness_profiles_source_key_fkey"
             columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "product_data_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      official_food_safety_alert_identifiers: {
+        Row: {
+          alert_id: string
+          created_at: string
+          identifier_type: string
+          normalized_value: string
+          source_text: string | null
+        }
+        Insert: {
+          alert_id: string
+          created_at?: string
+          identifier_type: string
+          normalized_value: string
+          source_text?: string | null
+        }
+        Update: {
+          alert_id?: string
+          created_at?: string
+          identifier_type?: string
+          normalized_value?: string
+          source_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "official_food_safety_alert_identifiers_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "official_food_safety_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      official_food_safety_alert_matches: {
+        Row: {
+          alert_id: string
+          created_at: string
+          detected_at: string
+          id: string
+          match_evidence: Json
+          match_type: string
+          requires_package_check: boolean
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shared_product_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          alert_id: string
+          created_at?: string
+          detected_at?: string
+          id?: string
+          match_evidence?: Json
+          match_type: string
+          requires_package_check?: boolean
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shared_product_id: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          alert_id?: string
+          created_at?: string
+          detected_at?: string
+          id?: string
+          match_evidence?: Json
+          match_type?: string
+          requires_package_check?: boolean
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shared_product_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "official_food_safety_alert_matches_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "official_food_safety_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "official_food_safety_alert_matches_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "blendcalc_api_v1_product_readiness"
+            referencedColumns: ["shared_product_id"]
+          },
+          {
+            foreignKeyName: "official_food_safety_alert_matches_shared_product_id_fkey"
+            columns: ["shared_product_id"]
+            isOneToOne: false
+            referencedRelation: "shared_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      official_food_safety_alert_revisions: {
+        Row: {
+          alert_id: string
+          content_hash: string
+          created_at: string
+          id: string
+          normalized_payload: Json
+          observed_at: string
+          raw_payload: Json
+        }
+        Insert: {
+          alert_id: string
+          content_hash: string
+          created_at?: string
+          id?: string
+          normalized_payload: Json
+          observed_at: string
+          raw_payload: Json
+        }
+        Update: {
+          alert_id?: string
+          content_hash?: string
+          created_at?: string
+          id?: string
+          normalized_payload?: Json
+          observed_at?: string
+          raw_payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "official_food_safety_alert_revisions_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "official_food_safety_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      official_food_safety_alerts: {
+        Row: {
+          alert_type: string
+          classification: string | null
+          code_information: string | null
+          created_at: string
+          current_content_hash: string
+          distribution_pattern: string | null
+          event_id: string | null
+          external_alert_id: string
+          first_seen_at: string
+          id: string
+          is_active: boolean
+          last_seen_at: string
+          package_description: string | null
+          product_description: string
+          provider_key: string
+          reason: string | null
+          recall_initiated_at: string | null
+          recall_number: string | null
+          recalling_organization: string | null
+          report_date: string | null
+          source_updated_at: string | null
+          source_url: string
+          status: string
+          terminated_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          alert_type: string
+          classification?: string | null
+          code_information?: string | null
+          created_at?: string
+          current_content_hash: string
+          distribution_pattern?: string | null
+          event_id?: string | null
+          external_alert_id: string
+          first_seen_at?: string
+          id?: string
+          is_active: boolean
+          last_seen_at?: string
+          package_description?: string | null
+          product_description: string
+          provider_key: string
+          reason?: string | null
+          recall_initiated_at?: string | null
+          recall_number?: string | null
+          recalling_organization?: string | null
+          report_date?: string | null
+          source_updated_at?: string | null
+          source_url: string
+          status: string
+          terminated_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          classification?: string | null
+          code_information?: string | null
+          created_at?: string
+          current_content_hash?: string
+          distribution_pattern?: string | null
+          event_id?: string | null
+          external_alert_id?: string
+          first_seen_at?: string
+          id?: string
+          is_active?: boolean
+          last_seen_at?: string
+          package_description?: string | null
+          product_description?: string
+          provider_key?: string
+          reason?: string | null
+          recall_initiated_at?: string | null
+          recall_number?: string | null
+          recalling_organization?: string | null
+          report_date?: string | null
+          source_updated_at?: string | null
+          source_url?: string
+          status?: string
+          terminated_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "official_food_safety_alerts_provider_key_fkey"
+            columns: ["provider_key"]
             isOneToOne: false
             referencedRelation: "product_data_sources"
             referencedColumns: ["key"]
@@ -4447,6 +5133,59 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "product_data_sources"
             referencedColumns: ["key"]
+          },
+        ]
+      }
+      product_safety_alert_notifications: {
+        Row: {
+          alert_match_id: string
+          attempt_count: number
+          channel: string
+          created_at: string
+          delivered_at: string | null
+          failure_code: string | null
+          id: string
+          last_attempted_at: string | null
+          read_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_match_id: string
+          attempt_count?: number
+          channel?: string
+          created_at?: string
+          delivered_at?: string | null
+          failure_code?: string | null
+          id?: string
+          last_attempted_at?: string | null
+          read_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_match_id?: string
+          attempt_count?: number
+          channel?: string
+          created_at?: string
+          delivered_at?: string | null
+          failure_code?: string | null
+          id?: string
+          last_attempted_at?: string | null
+          read_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_safety_alert_notifications_alert_match_id_fkey"
+            columns: ["alert_match_id"]
+            isOneToOne: false
+            referencedRelation: "official_food_safety_alert_matches"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -6316,6 +7055,29 @@ export type Database = {
         Args: { p_require_changes?: boolean; p_summary: Json }
         Returns: boolean
       }
+      claim_catalog_revalidation_jobs: {
+        Args: { p_limit?: number; p_run_id: string }
+        Returns: {
+          barcode: string
+          brand_owner: string
+          claim_token: string
+          food: Json
+          id: string
+          product_name: string
+          provider_key: string
+          shared_product_id: string
+          source_reference: string
+        }[]
+      }
+      claim_safety_alert_ingestion_sources: {
+        Args: { p_limit?: number; p_run_id: string }
+        Returns: {
+          claim_token: string
+          cursor_value: Json
+          last_successful_at: string
+          provider_key: string
+        }[]
+      }
       compatibility_first_regex_match: {
         Args: { p_pattern: string; p_value: string }
         Returns: string
@@ -6327,6 +7089,36 @@ export type Database = {
       compatibility_normalize_text: {
         Args: { p_value: string }
         Returns: string
+      }
+      complete_catalog_revalidation_job: {
+        Args: {
+          p_claim_token: string
+          p_error_code?: string
+          p_queue_id: string
+          p_result: string
+        }
+        Returns: undefined
+      }
+      complete_safety_alert_ingestion_source: {
+        Args: {
+          p_claim_token: string
+          p_cursor_value?: Json
+          p_error_code?: string
+          p_provider_key: string
+          p_source_updated_at?: string
+          p_success: boolean
+        }
+        Returns: undefined
+      }
+      confirm_catalog_provider_metadata_unchanged: {
+        Args: {
+          p_claim_token: string
+          p_observed_at: string
+          p_provider_revision: string
+          p_provider_updated_at: string
+          p_queue_id: string
+        }
+        Returns: boolean
       }
       consume_request_rate_limit: {
         Args: {
@@ -6417,12 +7209,20 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_catalog_monitor_moderation_summary: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
       get_moderator_data_health: {
         Args: { p_days?: number; p_issue_limit?: number }
         Returns: Json
       }
       is_valid_gtin: { Args: { p_value: string }; Returns: boolean }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
+      mark_product_safety_alert_notification_read: {
+        Args: { p_notification_id: string }
+        Returns: undefined
+      }
       move_user_food_list_items: {
         Args: {
           p_fdc_ids: number[]
@@ -6472,6 +7272,38 @@ export type Database = {
       rebuild_shared_product_compatibility_summary: {
         Args: { p_shared_product_id: string }
         Returns: undefined
+      }
+      record_catalog_provider_snapshot: {
+        Args: {
+          p_changes?: Json
+          p_claim_token: string
+          p_content_hash: string
+          p_normalized_snapshot: Json
+          p_observed_at: string
+          p_provider_revision: string
+          p_provider_updated_at: string
+          p_queue_id: string
+          p_raw_payload: Json
+        }
+        Returns: string
+      }
+      record_official_food_safety_alert: {
+        Args: {
+          p_alert: Json
+          p_content_hash: string
+          p_identifiers?: Json
+          p_normalized_payload: Json
+          p_observed_at?: string
+          p_probable_matches?: Json
+          p_provider_key: string
+          p_raw_payload: Json
+        }
+        Returns: {
+          alert_id: string
+          content_changed: boolean
+          exact_matches_activated: number
+          probable_matches_queued: number
+        }[]
       }
       record_product_source_daily_metric: {
         Args: {
@@ -6555,6 +7387,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      request_catalog_monitor_run: { Args: never; Returns: number }
       resolve_custom_food_category_option: {
         Args: { p_source_values: string[] }
         Returns: {
@@ -6578,9 +7411,26 @@ export type Database = {
         Args: { category_value: string }
         Returns: string
       }
+      resolve_food_symbol_key_for_category: {
+        Args: { category_value: string }
+        Returns: string
+      }
       resolve_food_symbol_key_for_food: {
         Args: { p_category_option_id?: string; p_food: Json }
         Returns: string
+      }
+      review_catalog_provider_change: {
+        Args: {
+          p_accepted_revision_id?: string
+          p_outcome: string
+          p_review_id: string
+          p_review_note: string
+        }
+        Returns: undefined
+      }
+      review_official_food_safety_alert_match: {
+        Args: { p_match_id: string; p_outcome: string; p_review_note: string }
+        Returns: undefined
       }
       save_custom_food: {
         Args: { p_fdc_id: number; p_food: Json }
