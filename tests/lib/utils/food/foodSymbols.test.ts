@@ -30,6 +30,12 @@ describe("food symbol resolution", () => {
 		expect(
 			resolveFoodSymbolKey({ foodCategory: "Legumes and Legume Products" }),
 		).toBe("legumes");
+		expect(
+			resolveFoodSymbolKey({
+				description: "Banana",
+				foodCategory: "Nut & Seed Butters",
+			}),
+		).toBe("nuts-seeds");
 	});
 
 	it("replaces a stored generic fallback when a DB category rule now matches", () => {
@@ -39,6 +45,132 @@ describe("food symbol resolution", () => {
 				foodCategory: "Pasta and Noodle Products",
 			}),
 		).toBe("pasta-noodles");
+	});
+
+	it("replaces an older broad stored symbol with a more specific DB match", () => {
+		expect(
+			resolveFoodSymbolKey({
+				symbolKey: "meat",
+				description: "Pork chorizo",
+				foodCategory: "Meat products",
+			}),
+		).toBe("sausage");
+		expect(
+			resolveFoodSymbolKey({
+				symbolKey: "fruit",
+				description: "Banana, raw",
+				foodCategory: "Fruits and Fruit Juices",
+			}),
+		).toBe("banana");
+	});
+
+	it("restricts name refinement to the reviewed category family", () => {
+		expect(
+			resolveFoodSymbolKey({
+				description: "Tuna steak",
+				foodCategory: "Finfish and Shellfish Products",
+			}),
+		).toBe("tuna");
+		expect(
+			resolveFoodSymbolKey({
+				description: "Tuna steak",
+				foodCategory: "Meat Products",
+			}),
+		).toBe("beef");
+		expect(
+			resolveFoodSymbolKey({
+				symbolKey: "beef",
+				description: "Tuna",
+				foodCategory: "Finfish and Shellfish Products",
+			}),
+		).toBe("tuna");
+	});
+
+	it("lets recognizable prepared forms override the ingredient family", () => {
+		expect(
+			resolveFoodSymbolKey({
+				description: "Tuna sandwich",
+				foodCategory: "Finfish and Shellfish Products",
+			}),
+		).toBe("sandwich");
+	});
+
+	it("uses bounded name rules when no reviewed category family matches", () => {
+		expect(resolveFoodSymbolKey({ description: "Tuna steak" })).toBe("tuna");
+		expect(
+			resolveFoodSymbolKey({
+				description: "Tuna steak",
+				foodCategory: "Unknown category",
+			}),
+		).toBe("tuna");
+	});
+
+	it("uses specific symbols for alcohol, soups, produce, and assorted meats", () => {
+		const examples = [
+			["Cabernet Sauvignon wine", "wine"],
+			["Craft lager beer", "beer"],
+			["Small batch whiskey", "spirits"],
+			["Ginger kombucha", "kombucha"],
+			["Chicken noodle soup", "noodle-soup"],
+			["Avocado, raw", "avocado"],
+			["Tomatoes, roma", "tomato"],
+			["Beef ribeye steak", "beef"],
+			["Shrimp, canned", "shellfish"],
+		] as const;
+
+		for (const [description, symbolKey] of examples) {
+			expect(resolveFoodSymbolKey({ description })).toBe(symbolKey);
+		}
+	});
+
+	it("distinguishes prepared forms and specific foods from broad categories", () => {
+		const examples = [
+			["Turkey sandwich", "sandwich"],
+			["Tomato salad", "salad"],
+			["Tortilla chips", "chips"],
+			["Ahi salmon poke", "food-bowl"],
+			["Classic hummus", "hummus"],
+			["Beer bread", "bread"],
+			["Chicken pasta", "pasta"],
+			["Atlantic salmon", "salmon"],
+			["Roasted duck", "duck"],
+			["Espresso coffee", "coffee"],
+			["Whole milk", "milk"],
+			["Baby spinach", "spinach"],
+			["Russet potato", "potato"],
+		] as const;
+
+		for (const [description, symbolKey] of examples) {
+			expect(resolveFoodSymbolKey({ description })).toBe(symbolKey);
+		}
+	});
+
+	it("uses the poop symbol only for whole-word feces synonyms", () => {
+		for (const description of ["poop", "shit", "caca", "a tiny turd"]) {
+			expect(resolveFoodSymbolKey({ description })).toBe("poop");
+		}
+
+		expect(resolveFoodSymbolKey({ description: "Shiitake mushrooms" })).toBe(
+			"mushrooms",
+		);
+		expect(resolveFoodSymbolKey({ description: "Cacao powder" })).not.toBe(
+			"poop",
+		);
+	});
+
+	it("keeps short food terms from matching letters inside unrelated words", () => {
+		expect(resolveFoodSymbolKey({ description: "Beef ribeye steak" })).toBe(
+			"beef",
+		);
+		expect(resolveFoodSymbolKey({ description: "Spinach, boiled" })).toBe(
+			"spinach",
+		);
+		expect(resolveFoodSymbolKey({ description: "Goat meat" })).toBe(
+			"lamb-game",
+		);
+		expect(resolveFoodSymbolKey({ description: "Coconut, raw" })).toBe(
+			"coconut",
+		);
 	});
 
 	it("uses the food name when a generic category has no useful match", () => {

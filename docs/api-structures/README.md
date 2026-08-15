@@ -72,6 +72,10 @@ Important semantics:
 - Derived values require their exact derivation evidence.
 - Alcohol-by-volume and package-disclosure fields are included only when approved,
   redistributable field provenance exists.
+- `safetyAlerts` contains only current exact or moderator-confirmed official notices
+  with classification, reason, status, package-check guidance, source attribution, and
+  the official link. An empty array means no current match was found in available data;
+  it never means the product is guaranteed safe.
 - Restricted provider evidence may support internal review without entering API v1.
 - A record can remain useful in the catalog while being withheld from public reads.
 
@@ -94,6 +98,9 @@ API v1 excludes:
 - private evidence, internal notes, and private Storage paths;
 - secrets and provider credentials;
 - package-instance details such as lot, serial, and expiration values.
+
+Official safety output also excludes raw recall payloads, private matching evidence,
+probable matches awaiting review, moderator identity, and per-user notification state.
 
 Each represented source must have reviewed database policy for its name, URL, licence,
 required credit, and redistribution status. Each image must independently carry complete

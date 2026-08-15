@@ -45,13 +45,22 @@
 	let composing = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout>;
 	let searchRequestVersion = 0;
+	let activeSearchAbortController: AbortController | null = null;
+	let loadMoreAbortController: AbortController | null = null;
 	let activeFilterSignature = "";
 	const dispatch = createEventDispatcher();
 	const sortedResults = () => results;
+	const abortPendingSearchRequests = () => {
+		activeSearchAbortController?.abort();
+		activeSearchAbortController = null;
+		loadMoreAbortController?.abort();
+		loadMoreAbortController = null;
+	};
 
 	const triggerSearch = () => {
 		if (!browser || !searchReady) return;
 		clearTimeout(debounceTimer);
+		abortPendingSearchRequests();
 		const requestVersion = ++searchRequestVersion;
 		error = "";
 		loading = false;
@@ -65,6 +74,8 @@
 			return;
 		}
 		debounceTimer = setTimeout(async () => {
+			const abortController = new AbortController();
+			activeSearchAbortController = abortController;
 			loading = true;
 			try {
 				const page = await searchFoodPage(searchString, {
@@ -72,6 +83,7 @@
 					limit: INGREDIENT_SEARCH_PAGE_SIZE,
 					sourceFilter,
 					trustFilter,
+					signal: abortController.signal,
 				});
 				if (requestVersion !== searchRequestVersion) return;
 				results = page.foods;
@@ -80,7 +92,10 @@
 				activeResultIndex = -1;
 				dispatch("results", { results, query: searchString });
 			} catch (searchError) {
-				if (requestVersion !== searchRequestVersion) return;
+				if (
+					abortController.signal.aborted ||
+					requestVersion !== searchRequestVersion
+				) return;
 				results = [];
 				hasMoreResults = false;
 				nextOffset = null;
@@ -96,6 +111,9 @@
 						"Food search took too long. Check your connection and try again.",
 				});
 			} finally {
+				if (activeSearchAbortController === abortController) {
+					activeSearchAbortController = null;
+				}
 				if (requestVersion === searchRequestVersion) {
 					loading = false;
 				}
@@ -115,6 +133,8 @@
 		) return;
 
 		const requestVersion = searchRequestVersion;
+		const abortController = new AbortController();
+		loadMoreAbortController = abortController;
 		loadingMore = true;
 		error = "";
 		try {
@@ -123,6 +143,7 @@
 				limit: INGREDIENT_SEARCH_LOAD_MORE_PAGE_SIZE,
 				sourceFilter,
 				trustFilter,
+				signal: abortController.signal,
 			});
 			if (
 				requestVersion !== searchRequestVersion ||
@@ -134,9 +155,15 @@
 			nextOffset = page.nextOffset;
 			dispatch("results", { results, query: searchString });
 		} catch {
-			if (requestVersion !== searchRequestVersion) return;
+			if (
+				abortController.signal.aborted ||
+				requestVersion !== searchRequestVersion
+			) return;
 			error = "More search results could not be loaded. Try again.";
 		} finally {
+			if (loadMoreAbortController === abortController) {
+				loadMoreAbortController = null;
+			}
 			if (requestVersion === searchRequestVersion) {
 				loadingMore = false;
 			}
@@ -159,6 +186,7 @@
 
 	const clearSearch = () => {
 		clearTimeout(debounceTimer);
+		abortPendingSearchRequests();
 		searchRequestVersion += 1;
 		query = "";
 		results = [];
@@ -196,6 +224,7 @@
 	});
 
 	const select = (food: FoodItem) => {
+		abortPendingSearchRequests();
 		searchRequestVersion += 1;
 		onSelect(food);
 		query = "";
@@ -294,6 +323,7 @@
 			searchReady = false;
 			searchRequestVersion += 1;
 			clearTimeout(debounceTimer);
+			abortPendingSearchRequests();
 			window.removeEventListener(
 				CUSTOM_FOODS_CHANGED_EVENT,
 				refreshCustomResults,

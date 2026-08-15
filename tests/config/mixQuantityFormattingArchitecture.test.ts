@@ -17,10 +17,19 @@ describe("Mix quantity formatting architecture", () => {
 	it("routes every user-facing Mix quantity through one unit-aware formatter", () => {
 		for (const path of quantitySurfaces) {
 			const source = readFileSync(path, "utf8");
-			expect(source, path).toContain("formatMixQuantity");
+			expect(source, path).toMatch(
+				/formatMixQuantity|formatMixGoalValueComparison/,
+			);
 			expect(source, path).not.toContain("formatChartNumber");
 			expect(source, path).not.toContain("formatSignedChartNumber");
 			expect(source, path).not.toMatch(/\.toFixed\(|Math\.round\(/);
 		}
+
+		const goalPresentation = readFileSync(
+			"src/lib/utils/mix/formatting/mixGoalPresentation.ts",
+			"utf8",
+		);
+		expect(goalPresentation).toContain('import { formatMixQuantity } from "./mixQuantity"');
+		expect(goalPresentation).not.toMatch(/\.toFixed\(|Math\.round\(/);
 	});
 });

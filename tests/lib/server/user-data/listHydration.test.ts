@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
 	readFoodServingsByParent: vi.fn(),
 	hydrateFoodsWithCachedImages: vi.fn(),
 	readSelectedCatalogFieldProvenance: vi.fn(),
+	readActiveProductSafetyAlertsByProduct: vi.fn(),
 	getSupabaseAdminClient: vi.fn(),
 }));
 
@@ -30,6 +31,10 @@ vi.mock("$lib/server/products/catalogFieldProvenance.server", async (importOrigi
 });
 vi.mock("$lib/supabase/admin.server", () => ({
 	getSupabaseAdminClient: mocks.getSupabaseAdminClient,
+}));
+vi.mock("$lib/server/products/productSafetyAlerts.server", () => ({
+	readActiveProductSafetyAlertsByProduct:
+		mocks.readActiveProductSafetyAlertsByProduct,
 }));
 
 import { hydrateCloudFoodListRows } from "$lib/server/user-data/listHydration.server";
@@ -101,6 +106,7 @@ describe("cloud food-list hydration", () => {
 				confidence: "source-verified",
 			}]],
 		]));
+		mocks.readActiveProductSafetyAlertsByProduct.mockResolvedValue(new Map());
 		mocks.hydrateFoodsWithCachedImages.mockImplementation(
 			async (_supabase: unknown, foods: FoodItem[]) => foods.map((food) => ({
 				...food,

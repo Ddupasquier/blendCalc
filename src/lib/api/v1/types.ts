@@ -205,6 +205,25 @@ export type ApiV1PrecautionaryStatement = {
 	labelObservedAt: string | null;
 };
 
+export type ApiV1SafetyAlert = {
+	id: string;
+	type: "recall" | "public_health_alert";
+	classification: string | null;
+	status: string;
+	productDescription: string;
+	reason: string | null;
+	recallingOrganization: string | null;
+	requiresPackageCheck: boolean;
+	reportDate: string | null;
+	recallInitiatedAt: string | null;
+	source: {
+		key: string;
+		name: string;
+		url: string;
+		attribution: string;
+	};
+};
+
 export type ApiV1Product = {
 	id: string;
 	barcode: string;
@@ -281,6 +300,7 @@ export type ApiV1Product = {
 	nutrients: ApiV1Nutrient[];
 	servings: ApiV1Serving[];
 	images: ApiV1Image[];
+	safetyAlerts: ApiV1SafetyAlert[];
 	warnings: ApiV1Warning[];
 	compatibilityEvaluation: ApiV1CompatibilityEvaluation;
 	sourceAttributions: ApiV1SourceAttribution[];

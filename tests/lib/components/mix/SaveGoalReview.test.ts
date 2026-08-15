@@ -8,6 +8,7 @@ describe("SaveGoalReview", () => {
 			props: {
 				diffs: [
 					{
+						nutrientId: 1003,
 						label: "Protein",
 						unit: "g",
 						total: 22,

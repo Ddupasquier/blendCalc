@@ -1,5 +1,7 @@
 <script lang="ts">
 	import PillButton from "$lib/components/common/buttons/PillButton/PillButton.svelte";
+	import SecondaryDelightMessage from "$lib/components/common/feedback/SecondaryDelightMessage/SecondaryDelightMessage.svelte";
+	import { resolveFoodAddedDelightMessage } from "$lib/utils/delight/delightMessages";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 	import type { CustomIngredientOutcomeProps } from "./types";
 
@@ -10,6 +12,10 @@
 		onMoveToFridge,
 		onUndo,
 	}: CustomIngredientOutcomeProps = $props();
+
+	const delightMessage = $derived(
+		outcome.addedToList ? resolveFoodAddedDelightMessage(outcome.food) : null,
+	);
 </script>
 
 <section class="custom-ingredient-outcome" role="status" aria-live="polite">
@@ -22,6 +28,7 @@
 				Next: preview the nutrition or open Mix when you are ready.
 			{/if}
 		</small>
+		<SecondaryDelightMessage message={delightMessage} />
 	</div>
 	<div class="custom-ingredient-outcome__actions">
 		<a href="/mix">Open Mix</a>

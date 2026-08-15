@@ -72,4 +72,27 @@ describe("CustomIngredientOutcome", () => {
 
 		expect(onMoveToFridge).toHaveBeenCalledOnce();
 	});
+
+	it("shows optional reviewed food copy beneath a successful outcome", () => {
+		render(CustomIngredientOutcome, {
+			props: {
+				outcome: {
+					food: {
+						...outcomeFood,
+						description: "Scrambled eggs",
+						symbolKey: "eggs",
+					},
+					destination: MIX_STORAGE_KEYS.fridge,
+					addedToList: true,
+					message: "Scrambled eggs saved and added to Fridge.",
+				},
+				action: null,
+				onMoveToShopping: vi.fn(),
+				onMoveToFridge: vi.fn(),
+				onUndo: vi.fn(),
+			},
+		});
+
+		expect(screen.getByText("Eggcellent choice.")).toBeInTheDocument();
+	});
 });

@@ -624,10 +624,38 @@
           }
         }
       },
+      "SafetyAlert": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "classification", "status", "productDescription", "reason", "recallingOrganization", "requiresPackageCheck", "reportDate", "recallInitiatedAt", "source"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "type": { "type": "string", "enum": ["recall", "public_health_alert"] },
+          "classification": { "type": ["string", "null"] },
+          "status": { "type": "string" },
+          "productDescription": { "type": "string" },
+          "reason": { "type": ["string", "null"] },
+          "recallingOrganization": { "type": ["string", "null"] },
+          "requiresPackageCheck": { "type": "boolean" },
+          "reportDate": { "type": ["string", "null"], "format": "date" },
+          "recallInitiatedAt": { "type": ["string", "null"] },
+          "source": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "name", "url", "attribution"],
+            "properties": {
+              "key": { "type": "string" },
+              "name": { "type": "string" },
+              "url": { "type": "string", "format": "uri" },
+              "attribution": { "type": "string" }
+            }
+          }
+        }
+      },
       "Product": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "barcode", "name", "brand", "category", "ingredients", "packageQuantity", "alcoholByVolume", "regulatoryDisclosure", "sourceRecord", "nutrients", "servings", "images", "warnings", "compatibilityEvaluation", "sourceAttributions", "catalog", "fieldSources", "revision", "links"],
+        "required": ["id", "barcode", "name", "brand", "category", "ingredients", "packageQuantity", "alcoholByVolume", "regulatoryDisclosure", "sourceRecord", "nutrients", "servings", "images", "safetyAlerts", "warnings", "compatibilityEvaluation", "sourceAttributions", "catalog", "fieldSources", "revision", "links"],
         "properties": {
           "id": { "type": "string", "format": "uuid" },
           "barcode": { "type": "string", "pattern": "^[0-9]{14}$" },
@@ -689,6 +717,7 @@
           "nutrients": { "type": "array", "items": { "$ref": "#/components/schemas/Nutrient" } },
           "servings": { "type": "array", "items": { "$ref": "#/components/schemas/Serving" } },
           "images": { "type": "array", "items": { "$ref": "#/components/schemas/Image" } },
+          "safetyAlerts": { "type": "array", "items": { "$ref": "#/components/schemas/SafetyAlert" } },
           "warnings": { "type": "array", "items": { "$ref": "#/components/schemas/Warning" } },
           "compatibilityEvaluation": { "$ref": "#/components/schemas/CompatibilityEvaluation" },
           "sourceAttributions": { "type": "array", "minItems": 1, "items": { "$ref": "#/components/schemas/SourceAttribution" } },

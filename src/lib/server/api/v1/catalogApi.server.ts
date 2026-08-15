@@ -691,6 +691,24 @@ export const mapApprovedCatalogRecordToApiV1Product = (
 				sourceAttributionCatalog.assetSources[normalizeSourceKey(image.source)];
 			return assetSource ? [toImage(image, assetSource)] : [];
 		}),
+		safetyAlerts: (record.food.safetyAlerts ?? []).map((alert) => ({
+			id: alert.id,
+			type: alert.alertType,
+			classification: alert.classification ?? null,
+			status: alert.status,
+			productDescription: alert.productDescription,
+			reason: alert.reason ?? null,
+			recallingOrganization: alert.recallingOrganization ?? null,
+			requiresPackageCheck: alert.requiresPackageCheck,
+			reportDate: alert.reportDate ?? null,
+			recallInitiatedAt: alert.recallInitiatedAt ?? null,
+			source: {
+				key: alert.providerKey,
+				name: alert.sourceName,
+				url: alert.sourceUrl,
+				attribution: alert.sourceAttribution,
+			},
+		})),
 		warnings: (record.food.compatibilitySummary?.allFacts ?? []).map(toWarning),
 		compatibilityEvaluation,
 		sourceAttributions,

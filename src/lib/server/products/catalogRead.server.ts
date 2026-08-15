@@ -28,6 +28,7 @@ import {
 	toFoodFieldProvenance,
 	type CatalogFieldSource,
 } from "./catalogFieldProvenance.server";
+import { readActiveProductSafetyAlertsByProduct } from "./productSafetyAlerts.server";
 
 const SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT = 100;
 const SHARED_PRODUCT_COLUMNS = "id, barcode, product_name, brand_owner, category_option_id, compatibility_summary, canonical_provenance, food, source, source_reference, confidence, created_at, updated_at, last_verified_at";
@@ -330,6 +331,7 @@ const hydrateCatalogRows = async (
 		imagesByProduct,
 		fieldProvenanceByProduct,
 		precautionaryStatementsByProduct,
+		safetyAlertsByProduct,
 	] = await Promise.all([
 		readNormalizedNutrientsByParent(supabase, "shared_product_id", ids),
 		readFoodServingsByParent(supabase, "shared_product_id", ids),
@@ -340,6 +342,7 @@ const hydrateCatalogRows = async (
 		readActiveFoodImages(supabase, rows, options),
 		readSelectedCatalogFieldProvenance(supabase, ids),
 		readPrecautionaryStatements(supabase, ids),
+		readActiveProductSafetyAlertsByProduct(ids),
 	]);
 	return rows.map((row) => {
 		const fieldProvenance = fieldProvenanceByProduct.get(row.id) ?? {};
@@ -360,6 +363,7 @@ const hydrateCatalogRows = async (
 				precautionaryStatements:
 					precautionaryStatementsByProduct.get(row.id) ??
 					(row.food as unknown as FoodItem).precautionaryStatements,
+				safetyAlerts: safetyAlertsByProduct.get(row.id) ?? [],
 		}) as FoodItem;
 		const categorizedFood = category
 			? applyCanonicalFoodCategory(baseFood, category)

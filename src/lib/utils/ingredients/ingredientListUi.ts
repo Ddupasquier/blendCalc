@@ -65,6 +65,12 @@ export const getFoodDisplayCategory = (food: FoodItem) => {
 };
 
 export const getPrimaryFoodWarning = (food: FoodItem) => {
+	const safetyAlert = food.safetyAlerts?.[0];
+	if (safetyAlert) {
+		return safetyAlert.requiresPackageCheck
+			? "This product may be affected by an active recall. Check the lot or date code on your package."
+			: "This product appears in an active official recall.";
+	}
 	const warnings = food.preferenceWarnings ?? [];
 	if (warnings.length === 0) return null;
 	const warning = warnings.find((item) => item.level === "warning") ?? warnings[0];

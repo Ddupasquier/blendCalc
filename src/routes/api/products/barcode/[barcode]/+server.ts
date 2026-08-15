@@ -6,6 +6,7 @@ import {
 } from "$lib/server/errors/appError.server";
 import { normalizeBarcode } from "$lib/utils/barcode/barcode";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
+import { completeServerBackgroundTask } from "$lib/server/runtime/backgroundTask.server";
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 
@@ -24,7 +25,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 		404,
 		"PRODUCT_NOT_FOUND",
 	);
-	await persistFoodImageAsset({
+	await completeServerBackgroundTask(persistFoodImageAsset({
 		image: draft.image,
 		barcode,
 		productName: draft.name,
@@ -33,7 +34,12 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 			draft.source === "shared-catalog"
 				? draft.sourceReference
 				: undefined,
-	});
+	}).catch((error) => {
+		console.warn(
+			"Food image cache could not be updated after barcode lookup.",
+			error instanceof Error ? error.message : error,
+		);
+	}));
 	return json({
 		status: "found",
 		draft,

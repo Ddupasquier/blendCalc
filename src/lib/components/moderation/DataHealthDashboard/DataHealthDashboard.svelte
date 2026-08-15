@@ -1,10 +1,15 @@
 <script lang="ts">
+	import { enhance } from "$app/forms";
+	import type { SubmitFunction } from "@sveltejs/kit";
+	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
+	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import type { DataHealthDashboardProps } from "./types";
 
-	let { dashboard, viewerRole }: DataHealthDashboardProps = $props();
+	let { dashboard, catalogMonitor, viewerRole }: DataHealthDashboardProps = $props();
+	let pendingReviewId = $state<string | null>(null);
 
 	const numberFormatter = new Intl.NumberFormat();
 	const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -24,6 +29,9 @@
 		{ label: "Dataset review gaps", value: dashboard.overview.datasetReviewGaps, tone: "neutral" as const },
 		{ label: "Source policy gaps", value: dashboard.overview.sourcePolicyGaps, tone: "neutral" as const },
 		{ label: "Food policy coverage gaps", value: dashboard.overview.compatibilityCoverageGaps, tone: "neutral" as const },
+		{ label: "Provider changes", value: catalogMonitor.queue.pendingProviderChanges, tone: "info" as const },
+		{ label: "Recall matches to review", value: catalogMonitor.queue.pendingSafetyMatches, tone: "info" as const },
+		{ label: "Active recall matches", value: catalogMonitor.queue.activeSafetyMatches, tone: "info" as const },
 	]);
 
 	const formatNumber = (value: number) => numberFormatter.format(value);
@@ -34,6 +42,20 @@
 	};
 	const formatIssue = (value: string) =>
 		value.replaceAll("_", " ").replace(/^./u, (letter) => letter.toLocaleUpperCase());
+	const enhanceMonitorReview: SubmitFunction = ({ formData, cancel }) => {
+		if (pendingReviewId) {
+			cancel();
+			return;
+		}
+		pendingReviewId = String(formData.get("matchId") ?? formData.get("reviewId") ?? "");
+		return async ({ update }) => {
+			try {
+				await update({ reset: false });
+			} finally {
+				pendingReviewId = null;
+			}
+		};
+	};
 </script>
 
 <section class="data-health" aria-labelledby="data-health-title">
@@ -69,6 +91,129 @@
 	</nav>
 
 	<div class="data-health__sections">
+		<CollapsibleSection
+			title="Automated catalog monitoring"
+			badge={catalogMonitor.settings.enabled ? "Running" : "Paused"}
+			surface="panel"
+		>
+			<div class="data-health__stack">
+				<article class="data-health__record">
+					<header>
+						<div>
+							<strong>Bounded scheduled checks</strong>
+							<span>Product changes and official food safety notices are collected as evidence before catalog data changes.</span>
+						</div>
+						<TextBadge
+							label={catalogMonitor.settings.enabled ? "Enabled" : "Disabled"}
+							tone={catalogMonitor.settings.enabled ? "success" : "neutral"}
+						/>
+					</header>
+					<dl class="data-health__metrics">
+						<div><dt>Product batch</dt><dd>{formatNumber(catalogMonitor.settings.productBatchSize)}</dd></div>
+						<div><dt>Alert page</dt><dd>{formatNumber(catalogMonitor.settings.safetyAlertPageSize)}</dd></div>
+						<div><dt>Products due</dt><dd>{formatNumber(catalogMonitor.queue.dueProducts)}</dd></div>
+						<div><dt>Products retrying</dt><dd>{formatNumber(catalogMonitor.queue.retryingProducts)}</dd></div>
+						<div><dt>Last request</dt><dd>{formatDate(catalogMonitor.settings.lastInvocationRequestedAt)}</dd></div>
+						<div><dt>Last request error</dt><dd>{catalogMonitor.settings.lastInvocationError ?? "None"}</dd></div>
+					</dl>
+				</article>
+				{#each catalogMonitor.recentRuns as run (run.id)}
+					<article class="data-health__issue-record">
+						<div>
+							<strong>{formatDate(run.startedAt)}</strong>
+							<TextBadge label={formatIssue(run.status)} tone={run.status === "completed" ? "success" : "neutral"} />
+						</div>
+						<p>
+							{formatNumber(run.productJobsClaimed)} products · {formatNumber(run.productJobsChanged)} changed · {formatNumber(run.safetyAlertsObserved)} alerts · {formatNumber(run.safetyMatchesActivated)} matches
+						</p>
+					</article>
+				{:else}
+					<p class="data-health__empty">No monitor run has been recorded yet.</p>
+				{/each}
+			</div>
+		</CollapsibleSection>
+
+		<CollapsibleSection title="Official recall matches" badge={`${catalogMonitor.safetyMatches.length}`} surface="panel">
+			<div class="data-health__stack">
+				{#each catalogMonitor.safetyMatches as match (match.id)}
+					<article class="data-health__issue-record data-health__review-record">
+						<div>
+							<div>
+								<strong>{match.productName}</strong>
+								<span>{match.brandOwner ?? "Brand unavailable"} · {match.barcode}</span>
+							</div>
+							<TextBadge label={match.classification ?? "Official notice"} tone="info" />
+						</div>
+						<p><strong>Official notice:</strong> {match.alertProductDescription}</p>
+						{#if match.reason}<p>{match.reason}</p>{/if}
+						{#if match.packageDescription}<p><strong>Package:</strong> {match.packageDescription}</p>{/if}
+						{#if match.codeInformation}<p><strong>Codes:</strong> {match.codeInformation}</p>{/if}
+						<a href={match.sourceUrl} target="_blank" rel="noreferrer">Read the official {match.sourceName} notice</a>
+						<form method="POST" action="?/reviewSafetyMatch" use:enhance={enhanceMonitorReview}>
+							<input type="hidden" name="matchId" value={match.id} />
+							<SelectField
+								id={`safety-match-outcome-${match.id}`}
+								name="outcome"
+								label="Outcome"
+								value="confirmed"
+								options={[
+									{ value: "confirmed", label: "Confirm this product match" },
+									{ value: "dismissed", label: "Not the affected product" },
+								]}
+								required
+							/>
+							<label>
+								<span>Evidence note</span>
+								<textarea name="reviewNote" maxlength="2000" required placeholder="What proves or disproves this match?"></textarea>
+							</label>
+							<ActionButton
+								type="submit"
+								variant="success"
+								size="small"
+								busy={pendingReviewId === match.id}
+								disabled={pendingReviewId !== null}
+							>Save recall review</ActionButton>
+						</form>
+					</article>
+				{:else}<p class="data-health__empty">No probable recall matches need review.</p>{/each}
+			</div>
+		</CollapsibleSection>
+
+		<CollapsibleSection title="Provider changes" badge={`${catalogMonitor.providerChanges.length}`} surface="panel">
+			<div class="data-health__stack">
+				{#each catalogMonitor.providerChanges as change (change.id)}
+					<article class="data-health__issue-record data-health__review-record">
+						<div>
+							<div><strong>{change.productName}</strong><span>{change.barcode}</span></div>
+							<TextBadge label={change.sourceName} tone="info" />
+						</div>
+						<p>Observed {formatDate(change.observedAt)}. The current catalog revision stays live while this evidence is reviewed.</p>
+						<ul>
+							{#each change.changeSummary.changes as detail (detail.field)}
+								<li>{detail.label} · {formatIssue(detail.severity)}</li>
+							{/each}
+						</ul>
+						<a href={`/api/moderation/catalog/products/${encodeURIComponent(change.sharedProductId)}/provenance`} target="_blank" rel="noreferrer">Review current field provenance</a>
+						<p class="data-health__review-guidance">If the provider is correct, submit the supported values through the existing catalog-correction workflow so approval creates a new revision. Dismissing this evidence never changes the current product.</p>
+						<form method="POST" action="?/dismissProviderChange" use:enhance={enhanceMonitorReview}>
+							<input type="hidden" name="reviewId" value={change.id} />
+							<label>
+								<span>Keep-current note</span>
+								<textarea name="reviewNote" maxlength="2000" required placeholder="Why is the current catalog revision still supported?"></textarea>
+							</label>
+							<ActionButton
+								type="submit"
+								variant="success"
+								size="small"
+								busy={pendingReviewId === change.id}
+								disabled={pendingReviewId !== null}
+							>Keep current catalog data</ActionButton>
+						</form>
+					</article>
+				{:else}<p class="data-health__empty">No provider changes need review.</p>{/each}
+			</div>
+		</CollapsibleSection>
+
 		<CollapsibleSection title="Source activity" badge={`${dashboard.sources.length}`} surface="panel">
 			<div class="data-health__stack">
 				{#each dashboard.sources as source (source.key)}
