@@ -5,6 +5,7 @@ import {
 	getMissingBarcodeProductFields,
 	getSupplementedBarcodeProductFields,
 	mergeMissingBarcodeProductFields,
+	needsAlcoholBarcodeProductSupplement,
 } from "$lib/utils/barcode/barcodeProductEnrichment";
 import type { BarcodeProductDraft } from "$lib/utils/barcode/productLookup";
 import type { FoodNutrient, FoodImageAsset } from "$lib/utils/food/types";
@@ -62,6 +63,35 @@ const openFoodFactsImage: FoodImageAsset = {
 };
 
 describe("barcode product field enrichment", () => {
+	it("requests alcohol-specific enrichment only from explicit alcohol evidence", () => {
+		expect(
+			needsAlcoholBarcodeProductSupplement(
+				makeDraft("open-food-facts", {
+					alcoholByVolume: {
+						percent: 6.5,
+						valueStatus: "reported",
+						basis: "volume-percent",
+						sourceUnit: "% vol",
+					},
+				}),
+			),
+		).toBe(true);
+		expect(
+			needsAlcoholBarcodeProductSupplement(
+				makeDraft("open-food-facts", {
+					regulatoryDisclosure: {
+						profileKey: "reviewed-alcohol-profile",
+						evidenceStatus: "source-reported",
+					},
+				}),
+				["reviewed-alcohol-profile"],
+			),
+		).toBe(true);
+		expect(needsAlcoholBarcodeProductSupplement(makeDraft("open-food-facts"))).toBe(
+			false,
+		);
+	});
+
 	it("tracks missing nutrition, image, category, and serving independently", () => {
 		expect(getMissingBarcodeProductFields(makeDraft("usda"))).toEqual({
 			productName: false,

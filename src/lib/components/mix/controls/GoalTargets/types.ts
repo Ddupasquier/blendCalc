@@ -22,6 +22,7 @@ export type GoalTargetsProps = MixSectionDisclosureProps & {
   onSaveCurrentTemplate: () => void;
   onDeleteTemplate: (templateId: string) => void;
 	onPreviewGoal: (id: string | number, value: string) => void;
+	onPreviewUpperGoal: (id: string | number, value: string) => void;
 	onUpdateGoal: (id: string | number, value: string) => void;
   onUpdateUpperGoal: (id: string | number, value: string) => void;
   onUpdateGoalType: (id: string | number, goalType: MixGoalType) => void;

@@ -13,6 +13,9 @@ const buildItems = ({
 	buildManualEntryValidationItems({
 		normalizedName: "QA Missing Reference Data",
 		servingWeightGrams: 100,
+		requiresServingWeight: true,
+		requiresAlcoholByVolume: false,
+		alcoholByVolumePercent: null,
 		useVolumeEquivalent: false,
 		volumeQuantity: null,
 		volumeAmountRequiredMessage: "Volume is required",

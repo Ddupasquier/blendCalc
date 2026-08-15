@@ -132,6 +132,29 @@ export const needsBarcodeProductSupplement = (
 		);
 };
 
+export const needsAlcoholBarcodeProductSupplement = (
+	draft: BarcodeProductDraft,
+	regulatedAlcoholProfileKeys: Iterable<string> = [],
+) => {
+	const confirmedAlcoholContext =
+		(Number.isFinite(draft.alcoholByVolume?.percent) &&
+			(draft.alcoholByVolume?.percent ?? 0) > 0) ||
+		(Boolean(draft.regulatoryDisclosure?.profileKey) &&
+			new Set(regulatedAlcoholProfileKeys).has(
+				draft.regulatoryDisclosure?.profileKey ?? "",
+			));
+	if (!confirmedAlcoholContext) return false;
+
+	const missing = getMissingBarcodeProductFields(draft);
+	return (
+		missing.brandOwner ||
+		missing.package ||
+		missing.alcoholByVolume ||
+		missing.regulatoryDisclosure ||
+		missing.sourceMetadata
+	);
+};
+
 export const getSupplementedBarcodeProductFields = (
 	primary: BarcodeProductDraft,
 	supplement: BarcodeProductDraft | null | undefined,

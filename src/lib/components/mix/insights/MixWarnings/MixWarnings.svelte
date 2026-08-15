@@ -39,7 +39,10 @@
 		</span>
 		<div class="mix-warnings__list">
 			{#each warnings as warning}
-				<article class={`mix-warning mix-warning--${warning.severity}`}>
+				<article
+					class={`mix-warning mix-warning--${warning.severity}`}
+					data-warning-id={warning.id}
+				>
 					<CircularIconFrame class="mix-warning__symbol" decorative>
 						{warning.symbol}
 					</CircularIconFrame>

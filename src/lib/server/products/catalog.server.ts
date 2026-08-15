@@ -54,7 +54,7 @@ import {
 	type FoodImagePlacementValues,
 } from "./foodImages.server";
 import {
-	getApprovedCatalogRecordByBarcode,
+	getActiveCanonicalCatalogRecordByBarcode,
 	searchApprovedCatalogRecords,
 } from "./catalogRead.server";
 
@@ -182,7 +182,10 @@ export const getSharedProductByBarcode = async (
 	supabase: SupabaseClient<Database>,
 	barcode: string,
 ) => {
-	const record = await getApprovedCatalogRecordByBarcode(supabase, barcode);
+	const record = await getActiveCanonicalCatalogRecordByBarcode(
+		supabase,
+		barcode,
+	);
 	return record?.food ?? null;
 };
 

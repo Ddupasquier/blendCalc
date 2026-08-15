@@ -30,13 +30,15 @@ export const buildManualEntryNutrientAvailabilityItems = ({
 	loadingManualEntryNutrients,
 	manualEntryNutrientError,
 	requiredFieldCount,
+	requiresNutritionFields,
 }: {
 	loadingManualEntryNutrients: boolean;
 	manualEntryNutrientError: string;
 	requiredFieldCount: number;
+	requiresNutritionFields: boolean;
 }): StepValidationItem[] =>
 	[
-		loadingManualEntryNutrients
+		requiresNutritionFields && loadingManualEntryNutrients
 			? {
 					message: "Nutrient fields are still loading. Try again in a moment.",
 					tone: "error",
@@ -44,7 +46,7 @@ export const buildManualEntryNutrientAvailabilityItems = ({
 					showImmediately: true,
 				}
 			: null,
-		manualEntryNutrientError
+		requiresNutritionFields && manualEntryNutrientError
 			? {
 					message: manualEntryNutrientError,
 					tone: "error",
@@ -52,6 +54,7 @@ export const buildManualEntryNutrientAvailabilityItems = ({
 					showImmediately: true,
 				}
 			: null,
+		requiresNutritionFields &&
 		!loadingManualEntryNutrients &&
 		!manualEntryNutrientError &&
 		requiredFieldCount === 0
@@ -68,6 +71,9 @@ export const buildManualEntryNutrientAvailabilityItems = ({
 export const buildManualEntryValidationItems = ({
 	normalizedName,
 	servingWeightGrams,
+	requiresServingWeight,
+	requiresAlcoholByVolume,
+	alcoholByVolumePercent,
 	useVolumeEquivalent,
 	volumeQuantity,
 	volumeAmountRequiredMessage,
@@ -84,6 +90,9 @@ export const buildManualEntryValidationItems = ({
 }: {
 	normalizedName: string;
 	servingWeightGrams: number | null;
+	requiresServingWeight: boolean;
+	requiresAlcoholByVolume: boolean;
+	alcoholByVolumePercent: number | null;
 	useVolumeEquivalent: boolean;
 	volumeQuantity: number | null;
 	volumeAmountRequiredMessage: string;
@@ -106,9 +115,21 @@ export const buildManualEntryValidationItems = ({
 					step: "identity",
 				}
 			: null,
-		!Number.isFinite(servingWeightGrams) || (servingWeightGrams ?? 0) <= 0
+		requiresServingWeight &&
+		(!Number.isFinite(servingWeightGrams) || (servingWeightGrams ?? 0) <= 0)
 			? {
 					message: "Serving weight is required",
+					tone: "error",
+					step: "servings",
+				}
+			: null,
+		requiresAlcoholByVolume &&
+		(alcoholByVolumePercent === null ||
+			!Number.isFinite(alcoholByVolumePercent) ||
+			alcoholByVolumePercent < 0 ||
+			alcoholByVolumePercent > 100)
+			? {
+					message: "Add the alcohol percentage shown on the package",
 					tone: "error",
 					step: "servings",
 				}

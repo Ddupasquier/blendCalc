@@ -31,11 +31,10 @@ export type ShareStepProps = {
 	nutritionPhoto: File | null;
 	barcodePhoto: File | null;
 	imagePlacement: ImagePlacementValue;
-	regulatoryDisclosureProfiles: ProductRegulatoryDisclosureProfile[];
-	regulatoryDisclosureProfileError: string;
-	regulatoryDisclosureProfileKey: string;
+	regulatoryDisclosureProfile: ProductRegulatoryDisclosureProfile | null;
 	alcoholByVolumePercent: number | null;
-	requiresAlcoholByVolume: boolean;
+	packageQuantityLabel: string;
+	usesNonstandardNutritionDisclosure: boolean;
 	saveDestination: IngredientListKey;
 	error: string;
 	lastOutcome: CustomIngredientOutcomeState | null;
@@ -50,8 +49,6 @@ export type ShareStepProps = {
 	onSubmitBarcodeCorrection: () => void;
 	onFrontPhotoChange: (file: File | null) => void;
 	onImagePlacementChange: (value: ImagePlacementValue) => void;
-	onRegulatoryDisclosureChange: (profileKey: string) => void;
-	onAlcoholByVolumeChange: (percent: number | null) => void;
 	onNutritionPhotoChange: (file: File | null) => void;
 	onBarcodePhotoChange: (file: File | null) => void;
 	onSaveDestinationChange: (destination: IngredientListKey) => void;

@@ -222,6 +222,97 @@ test("manual barcode entry shows input-bound progress until lookup finishes", as
 	await expect(continueButton).toBeEnabled();
 });
 
+test("regulated alcohol lookup keeps sparse nutrition honest before Share", async ({
+	page,
+}) => {
+	await page.route(/\/api\/products\/barcode\/(?:850027056715|00850027056715)$/, async (route) => {
+		await route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({
+				status: "found",
+				draft: {
+					barcode: "00850027056715",
+					name: "Straightaway Espresso Martini",
+					nameProvenance: "source",
+					brandOwner: "Straightaway",
+					servingLabel: "100 g",
+					servingWeightGrams: 100,
+					hasSourceServing: false,
+					nutrients: [],
+					reportedNutrientIds: [],
+					categories: ["Cocktails"],
+					resolvedCategory: "Other",
+					categoryResolution: {
+						categoryOptionId: "other",
+						label: "Other",
+						sourceValue: "Cocktails",
+						confidence: "reviewed",
+					},
+					packageQuantity: {
+						label: "100 mL",
+						amount: 100,
+						unit: "mL",
+					},
+					alcoholByVolume: {
+						percent: 20,
+						valueStatus: "reported",
+						basis: "volume-percent",
+						sourceUnit: "% ABV",
+					},
+					regulatoryDisclosure: {
+						profileKey: "us-ttb-alcohol-beverage-v1",
+						evidenceStatus: "source-reported",
+					},
+					source: "cola-cloud",
+					sourceLabel: "COLA Cloud",
+					sourceReference: "24134001000441",
+				},
+			}),
+		});
+	});
+
+	await page.goto("/ingredients/fridge/manual-entry");
+	await waitForAppReady(page);
+
+	const dialog = page.getByRole("dialog", { name: "Enter Manually" });
+	const barcodeInput = dialog.getByLabel("UPC / Barcode");
+	await barcodeInput.fill("850027056715");
+	await barcodeInput.press("Tab");
+	await expect(
+		dialog.getByText("Straightaway Espresso Martini · Straightaway"),
+	).toBeVisible();
+	await dialog.getByRole("button", { name: "Autofill" }).click();
+	await expect(
+		dialog.getByText("Straightaway Espresso Martini", { exact: true }),
+	).toBeVisible();
+	await dialog.getByRole("tab", { name: "Servings" }).click();
+
+	await expect(dialog.getByLabel("Label format optional")).toHaveText(
+		"Alcohol beverage label",
+	);
+	await expect(dialog.getByLabel("Alcohol by volume (%) *")).toHaveValue("20");
+	await expect(dialog.getByLabel("Weight (g) optional")).toHaveValue("");
+	await expect(dialog.getByText("No package serving was reported")).toBeVisible();
+
+	await dialog.getByRole("button", { name: "Continue" }).click();
+	await expect(dialog.getByText(/legally omit standard nutrition/i)).toBeVisible();
+	await expect(dialog.getByLabel("Calories (kcal)")).not.toHaveAttribute(
+		"aria-required",
+		"true",
+	);
+	await dialog.getByRole("button", { name: "Continue" }).click();
+	await dialog.getByRole("button", { name: "Continue" }).click();
+	await expect(
+		dialog.getByText(
+			"No nutrition values were reported; missing values remain unknown",
+		),
+	).toBeVisible();
+	await expect(
+		dialog.getByText("Alcohol beverage label · 20% ABV · 100 mL"),
+	).toBeVisible();
+});
+
 test("the DB-backed category picker searches, selects, and restores focus", async ({
 	page,
 }) => {

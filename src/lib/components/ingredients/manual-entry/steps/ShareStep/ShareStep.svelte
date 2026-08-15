@@ -10,7 +10,6 @@
 	import BarcodeAutofillSuggestion from "$lib/components/ingredients/manual-entry/BarcodeAutofillSuggestion/BarcodeAutofillSuggestion.svelte";
 	import ManualEntryActions from "$lib/components/ingredients/manual-entry/ManualEntryActions/ManualEntryActions.svelte";
 	import ManualEntryField from "$lib/components/ingredients/manual-entry/ManualEntryField/ManualEntryField.svelte";
-	import NumberInput from "$lib/components/common/forms/NumberInput/NumberInput.svelte";
 	import ManualEntryStepLayout from "$lib/components/ingredients/manual-entry/ManualEntryStepLayout/ManualEntryStepLayout.svelte";
 	import ManualEntryToggleRow from "$lib/components/ingredients/manual-entry/ManualEntryToggleRow/ManualEntryToggleRow.svelte";
 	import type { ShareStepProps } from "./types";
@@ -39,11 +38,10 @@
 		nutritionPhoto,
 		barcodePhoto,
 		imagePlacement,
-		regulatoryDisclosureProfiles,
-		regulatoryDisclosureProfileError,
-		regulatoryDisclosureProfileKey,
+		regulatoryDisclosureProfile,
 		alcoholByVolumePercent,
-		requiresAlcoholByVolume,
+		packageQuantityLabel,
+		usesNonstandardNutritionDisclosure,
 		saveDestination,
 		error,
 		lastOutcome,
@@ -58,8 +56,6 @@
 		onSubmitBarcodeCorrection,
 		onFrontPhotoChange,
 		onImagePlacementChange,
-		onRegulatoryDisclosureChange,
-		onAlcoholByVolumeChange,
 		onNutritionPhotoChange,
 		onBarcodePhotoChange,
 		onSaveDestinationChange,
@@ -88,24 +84,22 @@
 		{ value: MIX_STORAGE_KEYS.fridge, label: "Fridge" },
 		{ value: MIX_STORAGE_KEYS.shoppingList, label: "Shopping List" },
 	];
-	const regulatoryDisclosureOptions = $derived([
-		{
-			value: "",
-			label: "No label context selected",
-			placeholder: true,
-		},
-		...regulatoryDisclosureProfiles.map((profile) => ({
-			value: profile.key,
-			label: profile.displayName,
-		})),
-	]);
-	const selectedDisclosureProfile = $derived(
-		regulatoryDisclosureProfiles.find(
-			(profile) => profile.key === regulatoryDisclosureProfileKey,
-		) ?? null,
+	const labelEvidencePrompt = $derived(
+		usesNonstandardNutritionDisclosure
+			? "Available label details"
+			: "Nutrition facts label",
 	);
-	const missingRequiredAlcoholByVolume = $derived(
-		requiresAlcoholByVolume && alcoholByVolumePercent === null,
+	const labelEvidenceDescription = $derived(
+		usesNonstandardNutritionDisclosure
+			? "Show every nutrition, ingredient, allergen, alcohol, and package detail the label provides."
+			: "Show the entire nutrition label with every value readable.",
+	);
+	const nutritionSummaryCopy = $derived(
+		usesNonstandardNutritionDisclosure
+			? optionalNutrientCount > 0
+				? `${optionalNutrientCount} reported nutrition ${optionalNutrientCount === 1 ? "value" : "values"}`
+				: "No nutrition values were reported; missing values remain unknown"
+			: `${optionalNutrientCount} optional nutrients filled`,
 	);
 </script>
 
@@ -136,15 +130,30 @@
 				<strong>{normalizedName || "Unnamed ingredient"}</strong>
 				<span>{activeCategory}</span>
 			</div>
-			<div class="share-step__macro-row">
-				{#each summaryNutrients as nutrient}
-					<span>
-						<strong>{nutrient.value === null ? "—" : `${nutrient.value.toFixed(1)}${formatUnit(nutrient.unitName)}`}</strong>
-						<small>{nutrient.label}</small>
-					</span>
-				{/each}
-			</div>
-			<p>{optionalNutrientCount} optional nutrients filled</p>
+			{#if summaryNutrients.length > 0}
+				<div class="share-step__macro-row">
+					{#each summaryNutrients as nutrient}
+						<span>
+							<strong>{nutrient.value === null ? "—" : `${nutrient.value.toFixed(1)}${formatUnit(nutrient.unitName)}`}</strong>
+							<small>{nutrient.label}</small>
+						</span>
+					{/each}
+				</div>
+			{/if}
+			<p>{nutritionSummaryCopy}</p>
+			{#if regulatoryDisclosureProfile || packageQuantityLabel}
+				<p>
+					{[
+						regulatoryDisclosureProfile?.displayName,
+						alcoholByVolumePercent !== null
+							? `${alcoholByVolumePercent}% ABV`
+							: "",
+						packageQuantityLabel,
+					]
+						.filter(Boolean)
+						.join(" · ")}
+				</p>
+			{/if}
 		</section>
 
 		<ManualEntryValidationList items={validationItems} />
@@ -213,65 +222,13 @@
 		</ManualEntryToggleRow>
 	{/if}
 
-	<section class="share-step__disclosure" aria-labelledby="package-label-context-title">
-		<div>
-			<strong id="package-label-context-title">Package label context</strong>
-			<p>
-				Use this when the package follows an alcohol, kombucha, or permitted
-				sparse-label format. Missing values stay unknown and shared selections
-				are reviewed before they become authoritative.
-			</p>
-		</div>
-		<ManualEntryField forId="custom-ingredient-label-context" label="Label format" optional>
-			<SelectField
-				id="custom-ingredient-label-context"
-				name="custom-ingredient-label-context"
-				value={regulatoryDisclosureProfileKey}
-				options={regulatoryDisclosureOptions}
-				onValueChange={onRegulatoryDisclosureChange}
-			/>
-			{#if selectedDisclosureProfile}
-				<small>{selectedDisclosureProfile.userDescription}</small>
-			{:else if regulatoryDisclosureProfileError}
-				<small>{regulatoryDisclosureProfileError}</small>
-			{/if}
-		</ManualEntryField>
-		{#if alcoholByVolumePercent !== null || requiresAlcoholByVolume}
-			<ManualEntryField
-				forId="custom-ingredient-alcohol-by-volume"
-				label="Alcohol by volume (%)"
-				optional={!requiresAlcoholByVolume}
-				required={requiresAlcoholByVolume}
-			>
-				<NumberInput
-					id="custom-ingredient-alcohol-by-volume"
-					name="custom-ingredient-alcohol-by-volume"
-					value={alcoholByVolumePercent}
-					min={0}
-					max={100}
-					step="0.1"
-					placeholder="ABV shown on the package"
-					required={requiresAlcoholByVolume}
-					onValueChange={(_value, percent) => onAlcoholByVolumeChange(percent)}
-				/>
-				<small>Enter the package's volume percentage. This is not alcohol grams.</small>
-			</ManualEntryField>
-		{/if}
-		{#if missingRequiredAlcoholByVolume}
-			<StatusMessage
-				tone="warning"
-				message="Add the alcohol percentage shown on the package before saving this label context."
-			/>
-		{/if}
-	</section>
-
 	{#if requiresCatalogEvidence}
 		<section class="share-step__evidence" aria-labelledby="product-evidence-title">
 			<div>
 				<strong id="product-evidence-title">Photos for catalog review</strong>
 				<p>
-					These private photos let a moderator confirm the package, nutrition facts,
-					and barcode before other users can find the product.
+					These private photos let a moderator confirm the package, available label
+					details, and barcode before other users can find the product.
 				</p>
 			</div>
 				<ProductImageEvidenceInput
@@ -290,8 +247,8 @@
 			<PhotoUploadInput
 				id="custom-product-nutrition-photo"
 				name="custom-product-nutrition-photo"
-				prompt="Nutrition facts label"
-				description="Show the entire nutrition label with every value readable."
+				prompt={labelEvidencePrompt}
+				description={labelEvidenceDescription}
 				photoCount={1}
 				files={nutritionPhoto ? [nutritionPhoto] : []}
 				capture="environment"
@@ -370,7 +327,7 @@
 				? "Submit Correction"
 				: "Add Ingredient"}
 		busy={saving}
-		nextDisabled={automaticImagePlacementBusy || missingRequiredAlcoholByVolume}
+		nextDisabled={automaticImagePlacementBusy}
 		showBack={!catalogSubmissionComplete}
 	/>
 </ManualEntryStepLayout>
