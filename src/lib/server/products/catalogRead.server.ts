@@ -417,6 +417,30 @@ export const getApprovedCatalogRecordByBarcode = async (
 	return (await hydrateCatalogRows(supabase, [row], options))[0] ?? null;
 };
 
+export const getActiveCanonicalCatalogRecordByBarcode = async (
+	supabase: SupabaseClient<Database>,
+	barcodeValue: string,
+	options: CatalogReadOptions = {},
+) => {
+	const barcode = normalizeBarcode(barcodeValue);
+	if (!barcode) return null;
+	const { data, error } = await supabase
+		.from("shared_products")
+		.select(SHARED_PRODUCT_COLUMNS)
+		.eq("status", "active")
+		.eq("barcode", barcode)
+		.maybeSingle();
+	if (error) throw error;
+	if (!data) return null;
+	return (
+		(await hydrateCatalogRows(
+			supabase,
+			[data as CatalogProductRow],
+			options,
+		))[0] ?? null
+	);
+};
+
 export const getApprovedCatalogRecordByApplicationFoodId = async (
 	supabase: SupabaseClient<Database>,
 	foodId: number,

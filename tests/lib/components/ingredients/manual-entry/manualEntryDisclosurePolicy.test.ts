@@ -1,0 +1,79 @@
+import { describe, expect, it } from "vitest";
+import { getManualEntryDisclosurePolicy } from "$lib/components/ingredients/manual-entry/utils/manualEntryDisclosurePolicy";
+import type { ProductRegulatoryDisclosureProfile } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
+
+const profiles: ProductRegulatoryDisclosureProfile[] = [
+	{
+		key: "us-standard-nutrition-facts-v1",
+		displayName: "Standard Nutrition Facts",
+		userDescription: "Standard label",
+		disclosureKind: "standard-nutrition",
+		nutritionEvaluationMode: "profile",
+		nutritionProfileKey: "us-packaged-label-v1",
+		regionCode: "US",
+		authorityName: "FDA",
+		requiresAlcoholByVolume: false,
+		requiresModeratorReview: false,
+		userSelectable: true,
+		sourceReference: "test",
+		sortOrder: 10,
+		isDefault: true,
+	},
+	{
+		key: "us-ttb-alcohol-beverage-v1",
+		displayName: "Alcohol beverage label",
+		userDescription: "Sparse alcohol label",
+		disclosureKind: "regulated-alcohol",
+		nutritionEvaluationMode: "sparse-accepted",
+		nutritionProfileKey: null,
+		regionCode: "US",
+		authorityName: "TTB",
+		requiresAlcoholByVolume: true,
+		requiresModeratorReview: true,
+		userSelectable: true,
+		sourceReference: "test",
+		sortOrder: 20,
+		isDefault: false,
+	},
+];
+
+describe("manual-entry regulatory disclosure policy", () => {
+	it("keeps standard nutrition and serving requirements for ordinary labels", () => {
+		expect(
+			getManualEntryDisclosurePolicy({
+				profileKey: "us-standard-nutrition-facts-v1",
+				profiles,
+			}),
+		).toMatchObject({
+			requiresStandardNutrition: true,
+			allowsMissingServingWeight: false,
+			requiresAlcoholByVolume: false,
+		});
+	});
+
+	it("accepts honest nutrition omissions while requiring ABV for alcohol labels", () => {
+		expect(
+			getManualEntryDisclosurePolicy({
+				profileKey: "us-ttb-alcohol-beverage-v1",
+				profiles,
+			}),
+		).toMatchObject({
+			requiresStandardNutrition: false,
+			allowsMissingServingWeight: true,
+			requiresAlcoholByVolume: true,
+		});
+	});
+
+	it("does not weaken requirements for an unknown profile key", () => {
+		expect(
+			getManualEntryDisclosurePolicy({
+				profileKey: "unreviewed-profile",
+				profiles,
+			}),
+		).toMatchObject({
+			profile: null,
+			requiresStandardNutrition: true,
+			allowsMissingServingWeight: false,
+		});
+	});
+});

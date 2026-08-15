@@ -7,6 +7,7 @@ import {
 import {
 	captureLocalQaMixGoalConfiguration,
 	restoreLocalQaMixGoalConfiguration,
+	saveLocalQaMixState,
 } from "./support/localQaDatabase";
 import { getLocalQaAccountForWorker } from "./support/localQaAccounts";
 
@@ -30,6 +31,22 @@ const selectGoalPreset = async (
 	await preset.click();
 	await page.getByRole("option", { name: presetName, exact: true }).click();
 	await expect(preset).toContainText(presetName);
+};
+
+const openMixSection = async (
+	page: import("@playwright/test").Page,
+	selector: string,
+) => {
+	const section = page.locator(selector);
+	const details = section.locator(":scope > details");
+	if ((await details.getAttribute("open")) === null) {
+		await details.locator(":scope > summary").click();
+	}
+	await expect(details).toHaveAttribute("open", "");
+	await expect
+		.poll(() => details.evaluate((element) => element.getAnimations().length))
+		.toBe(0);
+	return section;
 };
 
 const readRenderedMixGoals = (
@@ -338,8 +355,20 @@ test("goal sliders and number inputs stay synchronized", async ({ page }, testIn
 	await page.keyboard.type("475");
 	await expect(input).toHaveValue("475");
 	await expect(slider).toHaveValue("475");
+	await input.blur();
 	await input.fill(originalValue);
+	await input.blur();
 	await expect(slider).toHaveValue(originalValue);
+	await expect
+		.poll(async () => {
+			const configuration = await captureLocalQaMixGoalConfiguration(
+				testInfo.parallelIndex,
+			);
+			return configuration.goals.find(
+				(goal) => goal.nutrient_id === 1008,
+			)?.target_amount;
+		})
+		.toBe(Number(originalValue));
 });
 
 test("closed Mix warnings retain visible severity and open on demand", async ({
@@ -551,6 +580,7 @@ test("explicit nutrient goals preserve zero, units, independent rules, and synch
 		await expect(magnesiumInput).toHaveValue("125");
 		await expect(addedSugarsInput).toHaveValue("0");
 		await vitaminB12Input.fill("2.4");
+		await vitaminB12Input.blur();
 		await expect(vitaminB12Slider).toHaveValue("2.4");
 
 		await magnesiumSlider.focus();
@@ -559,6 +589,7 @@ test("explicit nutrient goals preserve zero, units, independent rules, and synch
 		await expect(vitaminB12Input).toHaveValue("2.4");
 		await expect(addedSugarsInput).toHaveValue("0");
 		await magnesiumInput.fill("130");
+		await magnesiumInput.blur();
 		await expect(magnesiumSlider).toHaveValue("130");
 
 		await addedSugarsSlider.focus();
@@ -567,6 +598,7 @@ test("explicit nutrient goals preserve zero, units, independent rules, and synch
 		await expect(vitaminB12Input).toHaveValue("2.4");
 		await expect(magnesiumInput).toHaveValue("130");
 		await addedSugarsInput.fill("0");
+		await addedSugarsInput.blur();
 		await expect(addedSugarsSlider).toHaveValue("0");
 
 		for (const [nutrientLabel, unit] of [
@@ -607,6 +639,177 @@ test("explicit nutrient goals preserve zero, units, independent rules, and synch
 			expectedGoals,
 		);
 	} finally {
+		await restoreLocalQaMixGoalConfiguration(
+			testInfo.parallelIndex,
+			originalGoalConfiguration,
+		);
+	}
+});
+
+test("Mix goal values, units, trace precision, and statuses stay synchronized across every summary", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated browser worker owns this temporary Mix-state mutation.",
+	);
+
+	const originalGoalConfiguration =
+		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	try {
+		await saveLocalQaMixState(testInfo.parallelIndex, {
+			version: 1,
+			selected: [1008, 1003, 1079, 1005, 1004],
+			options: [
+				{ id: 1008, label: "Calories" },
+				{ id: 1003, label: "Protein" },
+				{ id: 1079, label: "Dietary Fiber" },
+				{ id: 1005, label: "Total Carbohydrates" },
+				{ id: 1004, label: "Total Fat" },
+			],
+			selectedFoodIds: [9200001],
+			servingGrams: { 9200001: 0.01 },
+			servingQuantities: { 9200001: 0.01 },
+			servingUnits: { 9200001: "g" },
+		});
+
+		await page.goto("/mix");
+		await waitForAppReady(page);
+		const goalsSection = await openMixSection(page, ".goals-panel");
+		const shapeSection = await openMixSection(
+			page,
+			".nutrient-shape-panel",
+		);
+		const contributionsSection = await openMixSection(
+			page,
+			".contribution-breakdown",
+		);
+		const suggestionsSection = await openMixSection(
+			page,
+			".nutrient-adjustments",
+		);
+		const selectedSection = await openMixSection(
+			page,
+			".selected-ingredients-panel",
+		);
+
+		const expectedTraceValues = new Map<
+			string,
+			{ currentValue: string; status: "under" | "met" }
+		>([
+			["Calories", { currentValue: "0.002 kcal", status: "under" }],
+			["Protein", { currentValue: "<0.001 g", status: "under" }],
+			["Dietary Fiber", { currentValue: "<0.001 g", status: "under" }],
+			["Total Fat", { currentValue: "<0.001 g", status: "met" }],
+		]);
+		for (const [
+			nutrientLabel,
+			{ currentValue: expectedCurrentValue, status: expectedStatus },
+		] of expectedTraceValues) {
+			const goalCard = goalsSection.locator(
+				`.goal-input[data-nutrient-label="${nutrientLabel}"]`,
+			);
+			await expect(goalCard.locator(".goal-current strong")).toHaveText(
+				expectedCurrentValue,
+			);
+			await expect(goalCard).toHaveAttribute("data-status", expectedStatus);
+
+			const shapeStatus = shapeSection.locator(
+				`[data-nutrient-label="${nutrientLabel}"]`,
+			);
+			await expect(shapeStatus).toHaveAttribute(
+				"data-goal-status",
+				expectedStatus,
+			);
+			await expect(shapeStatus.locator(".metadata-pill__value")).toContainText(
+				expectedCurrentValue,
+			);
+
+			const contribution = contributionsSection.locator(
+				`.contribution-card[data-nutrient-label="${nutrientLabel}"]`,
+			);
+			await expect(
+				contribution.locator(".contribution-card__title span"),
+			).toHaveText(expectedCurrentValue);
+		}
+
+		const impactValues = await suggestionsSection
+			.locator(".nutrient-adjustment__impacts .metadata-pill")
+			.allTextContents();
+		expect(impactValues.length).toBeGreaterThan(0);
+		for (const impactValue of impactValues) {
+			expect(impactValue).toMatch(/[+−](?:<0\.001|\d[\d,.]*)\s(?:kcal|g|mg|mcg|iu)/i);
+		}
+
+		const readGoalStatus = async (nutrientLabel: string) => {
+			const goalStatus = await goalsSection
+				.locator(`.goal-input[data-nutrient-label="${nutrientLabel}"]`)
+				.getAttribute("data-status");
+			const shapeStatus = await shapeSection
+				.locator(`[data-nutrient-label="${nutrientLabel}"]`)
+				.getAttribute("data-goal-status");
+			return { goalStatus, shapeStatus };
+		};
+
+		const inspectSaveReview = async (
+			expectedCurrentValue: string,
+			expectedStatus: "under" | "met" | "over",
+		) => {
+			await page.getByRole("button", { name: "Save mix" }).click();
+			const dialog = page.getByRole("dialog", { name: "Review & Save Mix" });
+			await expect(dialog).toBeVisible();
+			const caloriesRow = dialog.locator(
+				'.save-goal-review__row[data-nutrient-label="Calories"]',
+			);
+			await expect(caloriesRow).toHaveAttribute(
+				"data-goal-status",
+				expectedStatus,
+			);
+			await expect(caloriesRow).toContainText(`Actual ${expectedCurrentValue}`);
+			await expect(caloriesRow).toContainText("Goal =350 kcal");
+			await dialog.getByRole("button", { name: "Cancel" }).click();
+			await expect(dialog).toBeHidden();
+		};
+
+		expect(await readGoalStatus("Calories")).toEqual({
+			goalStatus: "under",
+			shapeStatus: "under",
+		});
+		await expect(page.locator('[data-warning-id="under-1008"]')).toHaveCount(1);
+		await inspectSaveReview("0.002 kcal", "under");
+
+		const spinachQuantity = selectedSection.getByRole("spinbutton", {
+			name: "Quantity for Spinach, Raw",
+		});
+		await spinachQuantity.fill("1520");
+		await expect(
+			goalsSection.locator(
+				'.goal-input[data-nutrient-label="Calories"] .goal-current strong',
+			),
+		).toHaveText("349.6 kcal");
+		expect(await readGoalStatus("Calories")).toEqual({
+			goalStatus: "met",
+			shapeStatus: "met",
+		});
+		await expect(page.locator('[data-warning-id="under-1008"]')).toHaveCount(0);
+		await expect(page.locator('[data-warning-id="over-1008"]')).toHaveCount(0);
+		await inspectSaveReview("349.6 kcal", "met");
+
+		await spinachQuantity.fill("3000");
+		await expect(
+			goalsSection.locator(
+				'.goal-input[data-nutrient-label="Calories"] .goal-current strong',
+			),
+		).toHaveText("690 kcal");
+		expect(await readGoalStatus("Calories")).toEqual({
+			goalStatus: "over",
+			shapeStatus: "over",
+		});
+		await expect(page.locator('[data-warning-id="over-1008"]')).toHaveCount(1);
+		await inspectSaveReview("690 kcal", "over");
+		await expect(spinachQuantity).toHaveValue("3000");
+	} finally {
+		if (!page.isClosed()) await page.close();
 		await restoreLocalQaMixGoalConfiguration(
 			testInfo.parallelIndex,
 			originalGoalConfiguration,

@@ -11,8 +11,8 @@
 	import ThemeSynchronizer from "$lib/components/app/ThemeSynchronizer/ThemeSynchronizer.svelte";
 	import {
 		APP_DESCRIPTION,
-		APP_NUTRITION_PREVIEW_ALT,
-		APP_OG_IMAGE_URL,
+		APP_SOCIAL_PREVIEW_ALT,
+		APP_SOCIAL_PREVIEW_URL,
 	} from "$lib/config/brand";
 	import { APP_BUILD_VERSION, APP_VERSION } from "$lib/config/version";
 	import { LIGHT_THEME_COLOR } from "$lib/utils/theme/themePreference";
@@ -186,19 +186,19 @@
 		property="og:description"
 		content={APP_DESCRIPTION}
 	/>
-	<meta property="og:image" content={APP_OG_IMAGE_URL} />
+	<meta property="og:image" content={APP_SOCIAL_PREVIEW_URL} />
 	<meta property="og:image:type" content="image/png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
-	<meta property="og:image:alt" content={APP_NUTRITION_PREVIEW_ALT} />
+	<meta property="og:image:alt" content={APP_SOCIAL_PREVIEW_ALT} />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content={documentTitle} />
 	<meta
 		name="twitter:description"
 		content={APP_DESCRIPTION}
 	/>
-	<meta name="twitter:image" content={APP_OG_IMAGE_URL} />
-	<meta name="twitter:image:alt" content={APP_NUTRITION_PREVIEW_ALT} />
+	<meta name="twitter:image" content={APP_SOCIAL_PREVIEW_URL} />
+	<meta name="twitter:image:alt" content={APP_SOCIAL_PREVIEW_ALT} />
 </svelte:head>
 
 <ThemeSynchronizer preference={data.themePreference} />

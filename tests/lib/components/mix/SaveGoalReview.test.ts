@@ -27,7 +27,7 @@ describe("SaveGoalReview", () => {
 			screen.getByText("3 g short").closest(".metadata-pill"),
 		).toHaveAttribute("data-tone", "warning");
 		expect(
-			screen.getByText("Actual 22 g · Goal At least 25 g · 88%"),
+			screen.getByText("Actual 22 g · Goal ≥25 g · 88%"),
 		).toBeInTheDocument();
 	});
 });

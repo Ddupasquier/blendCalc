@@ -126,6 +126,7 @@ separate findings; the audit never promotes data merely to improve its pass rate
 | `npm run benchmark:source-quality -- --limit=10` | Controlled same-barcode provider comparison recorded as benchmark metrics |
 | `npm run report:source-quality -- --days=30 --origin=runtime` | Stored runtime coverage, reliability, cache efficiency, and request cost |
 | `npm run report:source-quality -- --days=30 --origin=benchmark` | Stored controlled-benchmark metrics |
+| `node scripts/audits/food-sources/audit_barcode_provider_experience.mjs --sample-size=50` | Read-only USDA, Open Food Facts, and COLA Cloud exact-barcode coverage, latency, source math, and manual-entry experience audit |
 | `node scripts/audits/food-sources/audit_generic_dataset_contribution.mjs --queries=100` | Read-only imported-dataset record, nutrient, measure, identity, and bounded search contribution |
 
 These reports measure coverage and efficiency. They do not establish provider-wide
