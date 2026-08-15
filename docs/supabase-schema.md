@@ -1392,6 +1392,9 @@ secrets are configured and verified.
 
 Important behavior:
 
+- `20260814233000_fix_catalog_monitor_summary_ordering.sql` corrects the projected
+  recent-run ordering used by the moderator summary without changing its response
+  contract or any stored data.
 - Active catalog products receive Open Food Facts checks and receive USDA checks only
   when an exact USDA source identifier is known. Recent Fridge and Shopping List use
   raises priority; inactive products pause instead of consuming provider traffic.

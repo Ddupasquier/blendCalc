@@ -1,6 +1,6 @@
 begin;
 
-select plan(34);
+select plan(35);
 
 select has_table('public', 'catalog_monitor_settings', 'catalog monitor settings exist');
 select has_table('public', 'catalog_monitor_runs', 'catalog monitor run history exists');
@@ -76,6 +76,21 @@ select ok(
 	not has_function_privilege('authenticated', 'public.record_official_food_safety_alert(text,jsonb,jsonb,jsonb,text,jsonb,jsonb,timestamptz)', 'EXECUTE')
 		and not has_function_privilege('authenticated', 'public.claim_catalog_revalidation_jobs(uuid,integer)', 'EXECUTE'),
 	'authenticated clients cannot invoke worker-only functions'
+);
+select ok(
+	position(
+		'run_row."startedAt"'
+		in pg_get_functiondef(
+			'public.get_catalog_monitor_moderation_summary(integer)'::regprocedure
+		)
+	) > 0
+	and position(
+		'run_row.started_at'
+		in pg_get_functiondef(
+			'public.get_catalog_monitor_moderation_summary(integer)'::regprocedure
+		)
+	) = 0,
+	'the moderator summary orders recent runs by the projected JSON field without a stale SQL alias'
 );
 select ok(
 	has_function_privilege('authenticated', 'public.get_catalog_monitor_moderation_summary(integer)', 'EXECUTE')
