@@ -11,3 +11,7 @@
 	background: $app-highlight;
 	pointer-events: none;
 }
+
+.card-warning-edge[data-tone="danger"] {
+	background: $app-shell-accent-danger;
+}

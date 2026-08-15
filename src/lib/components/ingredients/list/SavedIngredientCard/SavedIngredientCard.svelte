@@ -9,6 +9,7 @@
 	import IngredientMoveIcon from "$lib/components/ingredients/list/IngredientMoveIcon/IngredientMoveIcon.svelte";
 	import IngredientProvenanceBadges from "$lib/components/ingredients/provenance/IngredientProvenanceBadges/IngredientProvenanceBadges.svelte";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
+	import { getFoodWarningEdgeTone } from "$lib/utils/ingredients/ingredientListUi";
 	import { longPress } from "$lib/utils/interaction/longPress";
 	import type { SavedIngredientCardProps } from "./types";
 
@@ -39,6 +40,9 @@
 		}
 		onPreview();
 	};
+	const warningEdgeTone = $derived(
+		getFoodWarningEdgeTone(food) ?? (warning ? "warning" : null),
+	);
 </script>
 
 <article
@@ -49,8 +53,8 @@
 	class:saved-ingredient-card--selection-mode={selectionMode}
 >
 	<IngredientCardMedia {food} />
-	{#if warning}
-		<CardWarningEdge />
+	{#if warning && warningEdgeTone}
+		<CardWarningEdge tone={warningEdgeTone} />
 	{/if}
 	<button
 		class="saved-ingredient-card__select"

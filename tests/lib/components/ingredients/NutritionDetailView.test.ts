@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, within } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import NutritionDetailView from "$lib/components/ingredients/nutrition/NutritionDetailView/NutritionDetailView.svelte";
 import type { FoodItem } from "$lib/utils/food/types";
@@ -296,17 +296,18 @@ describe("NutritionDetailView", () => {
 		expect(screen.getByText("Total Fat").closest("li")).toHaveTextContent("0 g");
 		expect(screen.queryByText(/partial nutrition data/i)).not.toBeInTheDocument();
 
-		await fireEvent.click(screen.getByText("More about this food"));
+		await fireEvent.click(screen.getByText("Food passport"));
+		const productDetails = screen.getByText("Product details").closest("details");
 		await fireEvent.click(screen.getByText("Product details"));
-		expect(screen.getByRole("heading", { name: "Data sources" }))
+		expect(within(productDetails as HTMLElement).getByRole("heading", { name: "Data sources" }))
 			.toBeInTheDocument();
-		expect(screen.getByText("Nutrition data").closest("div"))
+		expect(within(productDetails as HTMLElement).getByText("Nutrition data").closest("div"))
 			.toHaveTextContent("USDA · 2032704");
-		expect(screen.getByText("Categories").closest("div"))
+		expect(within(productDetails as HTMLElement).getByText("Categories").closest("div"))
 			.toHaveTextContent("USDA · 2032704");
-		expect(screen.getByText("Serving data").closest("div"))
+		expect(within(productDetails as HTMLElement).getByText("Serving data").closest("div"))
 			.toHaveTextContent("USDA · 2032704");
-		expect(screen.getByText("Product image").closest("div"))
+		expect(within(productDetails as HTMLElement).getByText("Product image").closest("div"))
 			.toHaveTextContent("Open Food Facts · 021130493609");
 
 		await fireEvent.click(screen.getByRole("combobox", { name: "Serving" }));

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
+	import FoodPassportPanel from "$lib/components/ingredients/nutrition/FoodPassportPanel/FoodPassportPanel.svelte";
 	import NutritionFactsLabel from "$lib/components/ingredients/nutrition/NutritionFactsLabel/NutritionFactsLabel.svelte";
 	import NutritionListActions from "$lib/components/ingredients/nutrition/NutritionListActions/NutritionListActions.svelte";
 	import MissingFoodWarningFeedback from "$lib/components/ingredients/nutrition/MissingFoodWarningFeedback/MissingFoodWarningFeedback.svelte";
@@ -46,13 +46,13 @@
 			<NutritionPreferenceConflict {food} mode="details" />
 			<ProductIngredientsPanel {food} mode="details" />
 			<ProductCompatibilityPanel {food} mode="details" />
-			<CollapsibleSection title="More about this food" surface="panel">
+			<FoodPassportPanel {food}>
 				<div class="nutrition-panel__supplemental">
-					<ProductDataQualityPanel {food} />
 					<ProductInformationPanel {food} {onReportIncorrectInformation} />
+					<ProductDataQualityPanel {food} />
 					<MissingFoodWarningFeedback {food} />
 				</div>
-			</CollapsibleSection>
+			</FoodPassportPanel>
 			<ProductImagePanel
 				{food}
 				mode="details"

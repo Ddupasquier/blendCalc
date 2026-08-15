@@ -174,6 +174,8 @@ Official safety-notice behavior:
 
 - An exact or moderator-confirmed active FDA/FSIS match takes visual priority over a
   preference warning without replacing it.
+- The compact card edge is danger red for that current official notice and amber for an
+  ordinary dietary or preference conflict.
 - Show the official classification, reason, source attribution, source link, and
   package-check instruction. Keep lot, package, and date wording exact when available.
 - Never describe an absent match as safe, expose a probable match before moderation,
@@ -187,14 +189,22 @@ Supporting disclosures appear together at the bottom, in this order when present
 2. `Review these warnings`;
 3. `Ingredient details`;
 4. food-check details;
-5. `More about this food`, containing `Product details`, Data quality, correction, and
+5. `Food passport`, containing the current record status, available catalog history,
+   information-coverage summary, `Product details`, Data quality, correction, and
    missing-warning tools;
 6. moderator image placement.
 
-All supporting disclosures start closed. They must not interrupt Ingredients,
-`Contains`, `May contain`, dietary labels, or dietary considerations. Privileged
-controls stay last and are absent for ordinary users. Opening or closing a disclosure
-must preserve the current scroll position.
+All supporting disclosures start closed. The closed Food passport shows only its title
+and a bounded status such as `Verified`, `Shared record`, `Personal`, or `Unverified`.
+Opening it may show database-backed verification dates, accepted revision identity,
+label-observation dates, and a concise inventory of available information. Missing
+passport information remains `Not provided`; it never means zero, none, allergen-free,
+or safe. Technical source, quality, and reporting details remain nested and closed so a
+user can ignore them. Supporting disclosures must not interrupt Ingredients,
+`Contains`, `May contain`, dietary labels, dietary considerations, current recalls, or
+current personalized warnings. Privileged controls stay last and are absent for
+ordinary users. Opening or closing a disclosure must preserve the current scroll
+position.
 
 ## Food-Preference Results
 

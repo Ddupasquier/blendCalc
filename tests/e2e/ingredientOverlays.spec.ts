@@ -1271,6 +1271,42 @@ test("nutrition details separate personalized warnings from source allergen disc
 	}
 });
 
+test("the Food passport keeps catalog depth optional and responsive", async ({
+	page,
+}) => {
+	await page.goto("/ingredients/fridge/nutrition/9100003");
+	await waitForAppReady(page);
+
+	const nutritionDetails = page.locator(".nutrition-detail-view");
+	const passportSummary = nutritionDetails.locator("summary").filter({
+		hasText: "Food passport",
+	});
+	const passportDetails = passportSummary.locator("..");
+	await expect(passportSummary).toBeVisible();
+	await expect(passportSummary).toContainText(/Verified|Shared record/);
+	await expect(passportDetails).not.toHaveAttribute("open", "");
+	await expect(
+		passportDetails.getByRole("heading", { name: "Information available" }),
+	).toBeHidden();
+
+	await passportSummary.focus();
+	await expect(passportSummary).toBeFocused();
+	await passportSummary.press("Enter");
+	await expect(passportDetails).toHaveAttribute("open", "");
+	await expect(
+		passportDetails.getByRole("heading", { name: "Information available" }),
+	).toBeVisible();
+	await expect(
+		passportDetails.getByText(/does not mean zero, none, or allergen-free/i),
+	).toBeVisible();
+	await expect(passportDetails.locator("summary").filter({
+		hasText: "Product details",
+	})).toBeVisible();
+	expect(await passportDetails.evaluate(
+		(element) => element.scrollWidth <= element.clientWidth + 1,
+	)).toBe(true);
+});
+
 test("nutrition details preserve the complete source-backed food record", async ({
 	page,
 }, testInfo) => {
@@ -1391,10 +1427,19 @@ test("nutrition details preserve the complete source-backed food record", async 
 		await expect(gochuDetails.getByText("Vegetarian", { exact: true })).toBeVisible();
 		await expectAllDisclosuresClosed(gochuDetails);
 		await expect(gochuDetails.getByText("Adjust card image placement")).toHaveCount(0);
+		await expect(
+			gochuDetails.locator("summary").filter({ hasText: "Food passport" }),
+		).toContainText(/Verified|Shared record/);
 
-		const moreAboutGochu = await openDisclosure(gochuDetails, "More about this food");
+		const gochuFoodPassport = await openDisclosure(gochuDetails, "Food passport");
+		await expect(
+			gochuFoodPassport.getByRole("heading", { name: "Information available" }),
+		).toBeVisible();
+		await expect(
+			gochuFoodPassport.getByText(/does not mean zero, none, or allergen-free/i),
+		).toBeVisible();
 		const productDetails = await openDisclosureWithKeyboard(
-			moreAboutGochu,
+			gochuFoodPassport,
 			"Product details",
 		);
 		for (const expectedText of [
@@ -1434,12 +1479,12 @@ test("nutrition details preserve the complete source-backed food record", async 
 		await expect(
 			blueberryDetails.getByText("No conflict found in available information"),
 		).toBeVisible();
-		const blueberryMoreAbout = await openDisclosure(
+		const blueberryFoodPassport = await openDisclosure(
 			blueberryDetails,
-			"More about this food",
+			"Food passport",
 		);
 		const blueberryProductDetails = await openDisclosure(
-			blueberryMoreAbout,
+			blueberryFoodPassport,
 			"Product details",
 		);
 		for (const expectedText of [

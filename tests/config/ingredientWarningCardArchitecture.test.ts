@@ -28,12 +28,14 @@ const warningEdgeStyles = readFileSync(
 
 describe("ingredient warning card architecture", () => {
 	it("uses the shared edge treatment on saved and search cards", () => {
-		expect(savedCard).toContain("<CardWarningEdge />");
-		expect(searchCards).toContain("<CardWarningEdge />");
+		expect(savedCard).toContain("<CardWarningEdge tone={warningEdgeTone} />");
+		expect(searchCards).toContain("<CardWarningEdge tone={warningEdgeTone} />");
 		expect(warningEdge).toContain('class="card-warning-edge"');
+		expect(warningEdge).toContain("data-tone={tone}");
 		expect(warningEdgeStyles).toMatch(/inline-size:\s*[^;]+;/);
 		expect(warningEdgeStyles).toContain("block-size: 100%");
 		expect(warningEdgeStyles).toContain("background: $app-highlight");
+		expect(warningEdgeStyles).toContain("background: $app-shell-accent-danger");
 	});
 
 	it("does not render warning icons inside compact card badges", () => {

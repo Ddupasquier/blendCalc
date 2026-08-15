@@ -61,7 +61,7 @@ future public API.
 | USDA FoodData Central | Runtime barcode/product data and nutrition | CC0 1.0/public domain | Canonical and API reuse allowed |
 | Open Food Facts | Runtime barcode lookup, licensed cache, package images | ODbL/Database Contents Licence; images under CC BY-SA | Product fields are excluded from API v1; individually licensed images remain eligible |
 | COLA Cloud | Optional exact-barcode U.S. alcohol-label lookup | Proprietary API terms over public TTB records and provider enrichments | Server-only trial; canonical storage, label-image use, and API redistribution blocked |
-| FDA Food Enforcement Reports | Scheduled official food-recall evidence | openFDA terms; generally public domain under CC0 1.0 with stated exceptions and disclaimers | Normalized current notices and attribution may be retained; raw evidence stays private and matches are never medical advice |
+| FDA Food Safety Notices | Scheduled FDA recall announcements plus enforcement evidence | openFDA terms and FDA website policy; generally U.S. government information, with stated third-party exceptions and disclaimers | Normalized index/enforcement facts and attribution may be retained; company-authored announcement prose is not copied, raw evidence stays private, and matches are never medical advice |
 | USDA FSIS Recalls and Public Health Alerts | Scheduled official meat, poultry, and egg safety evidence | U.S. government source with USDA website policy and source attribution | Normalized current notices may be retained; provider failures retry independently and conservative matching is required |
 | Canadian Nutrient File 2026 | Imported generic-food composition data | Open Government Licence – Canada | Canonical and API reuse approved in the registry with attribution |
 | UK CoFID 2021 | Imported generic-food composition data | Open Government Licence v3.0 | Canonical and API reuse approved in the registry with attribution |
@@ -215,7 +215,7 @@ Official references:
 Current status: suitable as a guarded U.S. alcohol fallback, not as a global alcohol
 catalog or public blendCalc API source.
 
-## FDA Food Enforcement Reports
+## FDA Food Safety Notices
 
 ### Requirements And Limitations
 
@@ -225,6 +225,10 @@ catalog or public blendCalc API source.
 - The [food enforcement endpoint](https://open.fda.gov/apis/food/enforcement/) contains
   publicly releasable Recall Enterprise System records and may revise older records.
   Its update cadence is not a real-time guarantee.
+- The [FDA recall-announcement index](https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts)
+  can publish a current notice before the corresponding enforcement record reaches
+  openFDA. Company-authored announcement prose and third-party images are not assumed to
+  be government works merely because FDA hosts the page.
 - The service may rate-limit or terminate access. A key is optional for trial requests
   but recommended for scheduled use.
 - FDA states that the endpoint must not be relied on for medical decisions and warns
@@ -233,13 +237,18 @@ catalog or public blendCalc API source.
 
 ### Current blendCalc Handling
 
-- `product_data_sources.open-fda-food-enforcement` records CC0, FDA attribution, terms,
-  the policy review date, and the medical-decision disclaimer requirement.
-- The scheduled server worker retrieves bounded pages with an optional
-  `OPENFDA_API_KEY`; browsers never call the endpoint.
+- `product_data_sources.open-fda-food-enforcement` records both official FDA channels,
+  FDA attribution, terms, the policy review date, and the medical-decision disclaimer
+  requirement.
+- The scheduled server worker retrieves bounded enforcement pages with an optional
+  `OPENFDA_API_KEY` and bounded recent announcement batches. Conditional ETag and
+  last-modified requests avoid downloading an unchanged announcement index. Browsers
+  never call either source.
 - Raw and normalized changed payloads are immutable private evidence. Public API and
   app surfaces receive only the current normalized notice, FDA attribution, official
   link, and package-check guidance.
+- Announcement evidence stores index facts and explicitly labeled package identifiers;
+  it does not persist full company press-release prose or page HTML.
 - Exact GTIN evidence can activate a product notice. Strong non-GTIN identity remains
   under moderation, and weak title-only similarity is discarded.
 - blendCalc does not claim complete recall coverage, provide medical advice, or tell a

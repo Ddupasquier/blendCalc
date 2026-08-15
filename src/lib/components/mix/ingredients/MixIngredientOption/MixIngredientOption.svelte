@@ -2,11 +2,15 @@
 	import CardWarningEdge from "$lib/components/common/display/CardWarningEdge/CardWarningEdge.svelte";
 	import CardSelectionIndicator from "$lib/components/common/display/CardSelectionIndicator/CardSelectionIndicator.svelte";
 	import IngredientCardMedia from "$lib/components/ingredients/card/IngredientCardMedia/IngredientCardMedia.svelte";
-	import { getPrimaryFoodWarning } from "$lib/utils/ingredients/ingredientListUi";
+	import {
+		getFoodWarningEdgeTone,
+		getPrimaryFoodWarning,
+	} from "$lib/utils/ingredients/ingredientListUi";
 	import type { MixIngredientOptionProps } from "./types";
 
 	let { food, selected, onSelect }: MixIngredientOptionProps = $props();
 	const warning = $derived(getPrimaryFoodWarning(food));
+	const warningEdgeTone = $derived(getFoodWarningEdgeTone(food));
 </script>
 
 <article
@@ -14,8 +18,8 @@
 	class:mix-ingredient-option--selected={selected}
 >
 	<IngredientCardMedia {food} />
-	{#if warning}
-		<CardWarningEdge />
+	{#if warning && warningEdgeTone}
+		<CardWarningEdge tone={warningEdgeTone} />
 	{/if}
 	<button
 		type="button"
