@@ -11,6 +11,7 @@ export type IngredientSearchPageOptions = {
 	limit?: number;
 	sourceFilter?: string;
 	trustFilter?: string;
+	signal?: AbortSignal;
 };
 
 export type IngredientSearchPage = {

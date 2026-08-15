@@ -240,6 +240,25 @@ export type FoodRegulatoryDisclosure = {
 	evidenceStatus: "source-reported" | "user-reported" | "moderator-reviewed";
 };
 
+export type FoodSafetyAlert = {
+	id: string;
+	providerKey: string;
+	sourceName: string;
+	sourceAttribution: string;
+	alertType: "recall" | "public_health_alert";
+	classification?: string;
+	status: string;
+	productDescription: string;
+	reason?: string;
+	recallingOrganization?: string;
+	sourceUrl: string;
+	reportDate?: string;
+	recallInitiatedAt?: string;
+	matchType: "exact_gtin" | "probable_identity" | "manual";
+	requiresPackageCheck: boolean;
+	detectedAt: string;
+};
+
 export type FoodTrackedField =
 	| "productName"
 	| "brandOwner"
@@ -405,6 +424,7 @@ export interface FoodItem {
 	packageQuantity?: FoodPackageQuantity;
 	alcoholByVolume?: FoodAlcoholByVolume;
 	regulatoryDisclosure?: FoodRegulatoryDisclosure;
+	safetyAlerts?: FoodSafetyAlert[];
 	sourceMetadata?: FoodSourceRecordMetadata;
 	categories?: string[];
 	categoryOptionId?: string;

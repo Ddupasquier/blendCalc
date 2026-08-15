@@ -243,6 +243,48 @@ describe("NutritionPanel", () => {
 		expect(screen.getByText("Tree nuts")).toBeInTheDocument();
 	});
 
+	it("shows active official recalls before nutrition details and keeps evidence collapsed", async () => {
+		render(NutritionPanel, {
+			props: {
+				food: {
+					...peanutButter,
+					safetyAlerts: [{
+						id: "4db4c85d-91d1-48c3-bd2f-fc777fc98d76",
+						providerKey: "open-fda-food-enforcement",
+						sourceName: "openFDA Food Enforcement",
+						sourceAttribution: "U.S. Food and Drug Administration",
+						alertType: "recall",
+						classification: "Class I",
+						status: "Ongoing",
+						productDescription: "Peanut butter in 16 oz jars",
+						reason: "Possible undeclared milk",
+						sourceUrl: "https://api.fda.gov/food/enforcement.json",
+						reportDate: "2026-08-14",
+						matchType: "exact_gtin",
+						requiresPackageCheck: true,
+						detectedAt: "2026-08-14T12:00:00.000Z",
+					}],
+				},
+				viewingGrams: 100,
+				showListActions: false,
+			},
+		});
+
+		const warning = screen.getByText("Check your package").closest(".status-message");
+		const nutritionFacts = screen.getByText("Nutrition Facts");
+		expect(warning).toHaveAttribute("data-tone", "danger");
+		expect(warning?.compareDocumentPosition(nutritionFacts))
+			.toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+		const disclosureTitle = screen.getByText("Official food safety notices");
+		const disclosure = disclosureTitle.closest("details");
+		expect(disclosure).not.toHaveAttribute("open");
+
+		await fireEvent.click(disclosureTitle.closest("summary") as HTMLElement);
+		expect(screen.getByText("Possible undeclared milk")).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: "Read the official notice" }))
+			.toHaveAttribute("href", "https://api.fda.gov/food/enforcement.json");
+	});
+
 	it("groups every disclosure at the bottom and keeps moderator actions last", () => {
 		const { container } = render(NutritionPanel, {
 			props: {

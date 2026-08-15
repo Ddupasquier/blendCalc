@@ -44,20 +44,40 @@ export type FoodSymbolDefinition = {
 	key: string;
 	label: string;
 	emoji: string;
+	familyKey: string;
 };
 
-export type FoodSymbolCategoryRule = {
+export type FoodSymbolRuleScope =
+	| "prepared_override"
+	| "category"
+	| "name_refinement"
+	| "uncategorized_name";
+
+export type FoodSymbolResolutionRule = {
 	symbolKey: string;
 	matchPattern: string;
 	priority: number;
+	matchScopes: FoodSymbolRuleScope[];
 };
 
 export type FoodSymbolSubject = {
 	symbolKey?: string;
 	description?: string;
+	canonicalDescription?: string;
 	foodCategory?: string;
 	brandedFoodCategory?: string;
 	categories?: string[];
+};
+
+export type AppDelightMessage = {
+	key: string;
+	contextKey: "app" | "ingredients" | "mix" | "saved";
+	triggerKey: string;
+	matchKey: string | null;
+	message: string;
+	minimumValue: number | null;
+	maximumValue: number | null;
+	priority: number;
 };
 
 export type AppReferenceCatalog = {
@@ -67,7 +87,8 @@ export type AppReferenceCatalog = {
 	mixGoalTemplates: MixGoalTemplate[];
 	mixRuntime: MixRuntimeConfiguration;
 	foodSymbols: FoodSymbolDefinition[];
-	foodSymbolCategoryRules: FoodSymbolCategoryRule[];
+	foodSymbolResolutionRules: FoodSymbolResolutionRule[];
+	delightMessages: AppDelightMessage[];
 };
 
 const EMPTY_MIX_RUNTIME: MixRuntimeConfiguration = {
@@ -87,7 +108,8 @@ const EMPTY_CATALOG: AppReferenceCatalog = {
 	mixGoalTemplates: [],
 	mixRuntime: EMPTY_MIX_RUNTIME,
 	foodSymbols: [],
-	foodSymbolCategoryRules: [],
+	foodSymbolResolutionRules: [],
+	delightMessages: [],
 };
 
 let configuredCatalog = EMPTY_CATALOG;
@@ -153,18 +175,123 @@ export const getFoodSymbolDefinition = (
 	catalog.foodSymbols.find((symbol) => symbol.key === "generic") ??
 	null;
 
-const matchesFoodSymbolRule = (value: string, matchPattern: string) => {
+const compileFoodSymbolRulePattern = (matchPattern: string) => {
 	try {
-		return new RegExp(matchPattern, "i").test(value);
+		return new RegExp(matchPattern, "i");
 	} catch {
-		return false;
+		return null;
 	}
 };
+
+const normalizeFoodSymbolCategoryText = (value: string) =>
+	value.replaceAll("&", " and ").replace(/\s+/g, " ").trim();
+
+type IndexedFoodSymbolResolutionRule = {
+	rule: FoodSymbolResolutionRule;
+	matcher: RegExp | null;
+};
+
+type FoodSymbolResolutionIndex = {
+	sortedRules: IndexedFoodSymbolResolutionRule[];
+	symbolFamilyByKey: ReadonlyMap<string, string>;
+};
+
+const foodSymbolResolutionIndexes = new WeakMap<
+	AppReferenceCatalog,
+	FoodSymbolResolutionIndex
+>();
+
+const getFoodSymbolResolutionIndex = (
+	catalog: AppReferenceCatalog,
+): FoodSymbolResolutionIndex => {
+	const existingIndex = foodSymbolResolutionIndexes.get(catalog);
+	if (existingIndex) return existingIndex;
+
+	const index = {
+		sortedRules: [...(catalog.foodSymbolResolutionRules ?? [])]
+			.sort((left, right) => left.priority - right.priority)
+			.map((rule) => ({
+				rule,
+				matcher: compileFoodSymbolRulePattern(rule.matchPattern),
+			})),
+		symbolFamilyByKey: new Map(
+			catalog.foodSymbols.map((symbol) => [symbol.key, symbol.familyKey]),
+		),
+	};
+	foodSymbolResolutionIndexes.set(catalog, index);
+	return index;
+};
+
+const findMatchingFoodSymbolRule = (
+	value: string,
+	rules: readonly IndexedFoodSymbolResolutionRule[],
+	scope: FoodSymbolRuleScope,
+	allowedFamilyKey: string | null,
+	symbolFamilyByKey: ReadonlyMap<string, string>,
+) =>
+	rules.find(({ rule, matcher }) => {
+		if (!rule.matchScopes.includes(scope)) return false;
+		if (!matcher?.test(value)) return false;
+		if (!allowedFamilyKey) return true;
+		return symbolFamilyByKey.get(rule.symbolKey) === allowedFamilyKey;
+	})?.rule;
 
 export const resolveFoodSymbolKey = (
 	food: FoodSymbolSubject,
 	catalog: AppReferenceCatalog = configuredCatalog,
 ) => {
+	const nameText = [food.canonicalDescription, food.description]
+		.filter(Boolean)
+		.join(" ");
+	const categoryText = [
+		food.foodCategory,
+		food.brandedFoodCategory,
+		...(food.categories ?? []),
+	]
+		.filter(Boolean)
+		.join(" ");
+	const normalizedCategoryText = normalizeFoodSymbolCategoryText(categoryText);
+	const { sortedRules, symbolFamilyByKey } =
+		getFoodSymbolResolutionIndex(catalog);
+	const preparedRule = findMatchingFoodSymbolRule(
+		nameText,
+		sortedRules,
+		"prepared_override",
+		null,
+		symbolFamilyByKey,
+	);
+	if (preparedRule) return preparedRule.symbolKey;
+
+	const categoryRule = findMatchingFoodSymbolRule(
+		normalizedCategoryText,
+		sortedRules,
+		"category",
+		null,
+		symbolFamilyByKey,
+	);
+	if (categoryRule) {
+		const categoryFamilyKey = symbolFamilyByKey.get(categoryRule.symbolKey);
+		const nameRule = categoryFamilyKey
+			? findMatchingFoodSymbolRule(
+					nameText,
+					sortedRules,
+					"name_refinement",
+					categoryFamilyKey,
+					symbolFamilyByKey,
+				)
+			: null;
+		return nameRule?.symbolKey ?? categoryRule.symbolKey;
+	}
+
+	const uncategorizedNameRule = findMatchingFoodSymbolRule(
+		nameText,
+		sortedRules,
+		"uncategorized_name",
+		null,
+		symbolFamilyByKey,
+	);
+	if (uncategorizedNameRule) return uncategorizedNameRule.symbolKey;
+
 	if (
 		food.symbolKey &&
 		food.symbolKey !== "generic" &&
@@ -173,17 +300,5 @@ export const resolveFoodSymbolKey = (
 		return food.symbolKey;
 	}
 
-	const categoryText = [
-		food.foodCategory,
-		food.brandedFoodCategory,
-		...(food.categories ?? []),
-		food.description,
-	]
-		.filter(Boolean)
-		.join(" ");
-	const matchedRule = [...(catalog.foodSymbolCategoryRules ?? [])]
-		.sort((left, right) => left.priority - right.priority)
-		.find((rule) => matchesFoodSymbolRule(categoryText, rule.matchPattern));
-
-	return matchedRule?.symbolKey ?? "generic";
+	return "generic";
 };

@@ -4,6 +4,7 @@ import {
 	toFoodFieldProvenance,
 	type CatalogFieldSource,
 } from "$lib/server/products/catalogFieldProvenance.server";
+import { readActiveProductSafetyAlertsByProduct } from "$lib/server/products/productSafetyAlerts.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 import { hydrateFoodWithNormalizedNutrients } from "$lib/utils/food/nutrients/normalizedNutrients";
 import type { FoodCompatibilitySummary } from "$lib/utils/food/quality/compatibility";
@@ -58,6 +59,7 @@ const hydrateFoodWithSharedProductMetadata = (
 	food: FoodItem,
 	row: SharedProductCompatibilityRow | undefined,
 	fieldProvenance: Record<string, CatalogFieldSource>,
+	safetyAlerts: FoodItem["safetyAlerts"],
 ) => {
 	if (!row) return food;
 	const canonicalFood = row.food as unknown as FoodItem;
@@ -116,6 +118,7 @@ const hydrateFoodWithSharedProductMetadata = (
 			canonicalFood.discontinuedDate ?? food.discontinuedDate,
 		fieldProvenance: toFoodFieldProvenance(fieldProvenance),
 		compatibilitySummary: canonicalSummary,
+		safetyAlerts,
 	};
 };
 
@@ -127,6 +130,9 @@ export const hydrateCloudFoodListRows = async (
 	const sharedProductIds = [
 		...new Set(rows.map((row) => row.shared_product_id).filter(Boolean)),
 	] as string[];
+	const catalogReadClient = sharedProductIds.length > 0
+		? catalogSupabase ?? getSupabaseAdminClient()
+		: null;
 	const baseFoods = rows.map((row) =>
 		hydrateFoodWithCatalogState(
 			normalizeFoodProductName({
@@ -144,6 +150,7 @@ export const hydrateCloudFoodListRows = async (
 		foodsWithImages,
 		sharedProductCompatibilityRows,
 		sharedProductFieldProvenanceRows,
+		safetyAlertsByProduct,
 	] = await Promise.all([
 		readNormalizedNutrientsByParent(
 			supabase,
@@ -157,12 +164,15 @@ export const hydrateCloudFoodListRows = async (
 		),
 		hydrateFoodsWithCachedImages(supabase, baseFoods),
 		readSharedProductCompatibilityRows(supabase, rows),
-		sharedProductIds.length > 0
+		catalogReadClient
 			? readSelectedCatalogFieldProvenance(
-				catalogSupabase ?? getSupabaseAdminClient(),
+				catalogReadClient,
 				sharedProductIds,
 			)
 			: Promise.resolve(new Map<string, Record<string, CatalogFieldSource>>()),
+		catalogReadClient
+			? readActiveProductSafetyAlertsByProduct(sharedProductIds, catalogReadClient)
+			: Promise.resolve(new Map()),
 	]);
 
 	return foodsWithImages.map((food, index) => {
@@ -175,6 +185,9 @@ export const hydrateCloudFoodListRows = async (
 			row.shared_product_id
 				? sharedProductFieldProvenanceRows.get(row.shared_product_id) ?? {}
 				: {},
+			row.shared_product_id
+				? safetyAlertsByProduct.get(row.shared_product_id) ?? []
+				: [],
 		);
 		const foodWithNutrients = hydrateFoodWithNormalizedNutrients(
 			foodWithMetadata,

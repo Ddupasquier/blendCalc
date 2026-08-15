@@ -1,5 +1,12 @@
-import { describe, expect, it } from "vitest";
-import { normalizeFdcFood } from "$lib/utils/food/sources/fdc";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+	normalizeFdcFood,
+	searchFoodPage,
+} from "$lib/utils/food/sources/fdc";
+
+afterEach(() => {
+	vi.unstubAllGlobals();
+});
 
 describe("FoodData Central normalization", () => {
 	it("normalizes full food-detail nutrient records", () => {
@@ -184,5 +191,28 @@ describe("FoodData Central normalization", () => {
 			dataType: "Future source type",
 			foodNutrients: [],
 		}).foodIdentityType).toBe("unknown");
+	});
+});
+
+describe("ingredient search request", () => {
+	it("forwards the cancellation signal to the internal search endpoint", async () => {
+		const abortController = new AbortController();
+		const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+			foods: [],
+			hasMore: false,
+			nextOffset: null,
+			total: 0,
+		}), {
+			status: 200,
+			headers: { "content-type": "application/json" },
+		}));
+		vi.stubGlobal("fetch", fetcher);
+
+		await searchFoodPage("tomato", { signal: abortController.signal });
+
+		expect(fetcher).toHaveBeenCalledWith(
+			expect.stringContaining("/api/foods/search?q=tomato"),
+			expect.objectContaining({ signal: abortController.signal }),
+		);
 	});
 });

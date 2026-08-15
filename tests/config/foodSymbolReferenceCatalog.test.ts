@@ -22,7 +22,7 @@ const foodSymbol = readFileSync(
 	"utf8",
 );
 const referenceData = readFileSync(
-	"src/lib/utils/food/reference/appReferenceCatalogReader.ts",
+	"src/lib/utils/food/reference/appVisualReferenceCatalogReader.ts",
 	"utf8",
 );
 
@@ -50,7 +50,12 @@ describe("food symbol reference catalog", () => {
 
 	it("loads DB-owned emoji definitions and resolves keys without hardcoded keywords", () => {
 		expect(referenceData).toContain('from("food_symbol_category_rules")');
-		expect(referenceData).toContain('select("key, display_name, emoji, sort_order")');
+		expect(referenceData).toContain(
+			'select("key, display_name, emoji, family_key, sort_order")',
+		);
+		expect(referenceData).toContain(
+			'select("symbol_key, match_pattern, priority, match_scopes")',
+		);
 		expect(foodSymbol).toContain("resolveFoodSymbolKey(food)");
 		expect(foodSymbol).toContain("symbolDefinition?.emoji");
 		expect(emojiMigration).toContain("add column if not exists emoji text");

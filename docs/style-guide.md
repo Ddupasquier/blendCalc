@@ -411,6 +411,7 @@ Check the existing primitive before writing markup or SCSS.
 | Right-side data view                  | `RightSheet`                 | Search and full-content slide-in views                                                              |
 | Sheet action row                      | `BottomSheetAction`          | Owns row geometry and circular leading icon                                                         |
 | Status feedback                       | `StatusMessage`              | Info, success, warning, and danger; use approved friendly copy                                      |
+| Optional delight copy                 | `SecondaryDelightMessage`    | One quiet DB-backed secondary line in an already successful, empty, or non-danger summary; never critical instructions |
 | Input-bound loading                   | `InputLoadingFrame`          | Spinner appears inside the related input/select                                                     |
 | General loading                       | `LoadingSpinner`             | Never draw a feature-local spinner                                                                  |
 | Photo input                           | `PhotoUploadInput`           | Single/multiple photo prompt, count, status, and validation                                         |
@@ -644,8 +645,9 @@ placement previews remain identical.
 - Treat the detail view as the complete user-facing food record: show every available
   useful product, serving, disclosure, and neutral source field; hide absent fields
   cleanly rather than adding empty rows or placeholders.
-- Keep the default reading path focused on the product image, current personalized
-  warning, Nutrition Facts, ingredients, and explicit package disclosures. Group
+- Keep the default reading path focused on the product image, current official safety
+  notice, current personalized warning, Nutrition Facts, ingredients, and explicit
+  package disclosures. Group
   supporting data quality, product/source metadata, and user-reporting tools under one
   closed `More about this food` disclosure.
 - Group product, serving, and source metadata inside the shared `Product details`
@@ -664,6 +666,13 @@ placement previews remain identical.
   not repeat a generic conflict status directly below them. Keep evidence, policy
   context, and per-warning report controls in one closed `Review these warnings`
   disclosure inside the warning surface.
+- A current exact or moderator-confirmed official recall uses the shared danger surface
+  before personalized warnings. Keep one concise summary in the primary reading path
+  and one closed detail disclosure with classification, reason, package-check wording,
+  source attribution, and the official link. Do not expose probable matches, raw source
+  payloads, internal matching evidence, or language that claims an unmatched product is
+  safe. Official-notice presentation never replaces medical advice or checking the
+  current package.
 - Ingredients, `Contains`, `May contain`, source-backed dietary labels, and reviewed
   dietary considerations remain plain text against the app background unless
   interaction or status requires a surface. Do not expose internal match expressions,
@@ -685,6 +694,13 @@ Use `StatusMessage` for visible status, validation, warning, and error content.
 Business rules and evidence may come from the database, and server responses should use
 stable safe codes. The client message catalog owns friendly wording. Never render raw
 provider, database, stack, or network messages.
+
+Optional broad-audience humor uses the shared `SecondaryDelightMessage` component and
+the database-backed delight catalog. Render no more than one line, keep it visually
+quieter than the owning outcome, and omit it when no reviewed trigger matches. Food and
+workout jokes plus a small number of widely recognizable gamer references are
+appropriate. Deep developer references and jokes inside allergen, medical,
+authentication, validation, warning, or failure instructions are not.
 
 Compact ingredient conflicts do not use `StatusMessage`; they use `CardWarningEdge` and
 an accessible action label. The full warning appears in the detailed view.

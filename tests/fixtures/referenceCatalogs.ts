@@ -3,7 +3,81 @@ import type { IngredientProvenanceOption } from "$lib/utils/ingredients/ingredie
 import type { ServingMeasureCatalog } from "$lib/utils/serving/servingMeasureCatalog";
 import { NUTRIENT_IDS } from "$lib/utils/food/types";
 import type { NutritionCompletenessCatalog } from "$lib/utils/food/quality/nutritionCompletenessCatalog";
-import type { AppReferenceCatalog } from "$lib/utils/food/reference/appReferenceCatalog";
+import type {
+	AppReferenceCatalog,
+	FoodSymbolDefinition,
+	FoodSymbolResolutionRule,
+	FoodSymbolRuleScope,
+} from "$lib/utils/food/reference/appReferenceCatalog";
+
+const TEST_SYMBOL_FAMILY_GROUPS: Record<string, string[]> = {
+	fruit: [
+		"fruit", "berries", "citrus", "apple", "banana", "grapes", "melon",
+		"tropical-fruit", "stone-fruit", "avocado", "coconut",
+	],
+	vegetables: [
+		"vegetables", "leafy-greens", "root-vegetables", "tomato", "corn",
+		"peppers", "mushrooms", "alliums", "potatoes", "cruciferous-vegetables",
+		"cucumber", "squash", "spinach", "potato",
+	],
+	dairy: ["dairy", "milk", "cheese", "eggs"],
+	meat: ["meat", "beef", "pork", "bacon", "sausage", "lamb-game", "poultry", "duck"],
+	seafood: ["seafood", "shellfish", "salmon", "tuna"],
+	grains: ["grains", "rice", "bread", "pasta", "bread-bakery", "pasta-noodles"],
+	legumes: ["legumes", "hummus"],
+	"nuts-seeds": ["nuts-seeds"],
+	beverage: [
+		"beverage", "coffee-tea", "alcoholic-beverage", "beer", "wine",
+		"sparkling-wine", "spirits", "cocktail", "cider", "kombucha", "coffee",
+	],
+	sweets: ["sweets", "frozen-dessert", "spreads-preserves"],
+	"oils-fats": ["oils-fats"],
+	"sauces-condiments": ["sauces-condiments"],
+	soup: ["soup", "noodle-soup"],
+	"protein-supplement": ["protein-powder", "protein-bar"],
+	"prepared-food": ["packaged", "salad", "sandwich", "chips", "food-bowl"],
+	novelty: ["poop"],
+	generic: ["generic"],
+};
+
+const getTestFoodSymbolFamilyKey = (symbolKey: string) =>
+	Object.entries(TEST_SYMBOL_FAMILY_GROUPS).find(([, keys]) =>
+		keys.includes(symbolKey),
+	)?.[0] ?? "generic";
+
+const TEST_PREPARED_SYMBOL_KEYS = new Set([
+	"salad",
+	"sandwich",
+	"chips",
+	"food-bowl",
+	"bread",
+	"pasta",
+	"noodle-soup",
+	"hummus",
+	"protein-bar",
+	"spreads-preserves",
+	"sauces-condiments",
+]);
+
+const completeTestFoodSymbolDefinition = (
+	symbol: Omit<FoodSymbolDefinition, "familyKey">,
+): FoodSymbolDefinition => ({
+	...symbol,
+	familyKey: getTestFoodSymbolFamilyKey(symbol.key),
+});
+
+const completeTestFoodSymbolResolutionRule = (
+	rule: Omit<FoodSymbolResolutionRule, "matchScopes"> & {
+		matchScopes?: FoodSymbolRuleScope[];
+	},
+): FoodSymbolResolutionRule => ({
+	...rule,
+	matchScopes:
+		rule.matchScopes ??
+		(TEST_PREPARED_SYMBOL_KEYS.has(rule.symbolKey)
+			? ["prepared_override", "name_refinement", "uncategorized_name"]
+			: ["name_refinement", "uncategorized_name"]),
+});
 
 const testNutrient = (
   id: number,
@@ -166,18 +240,57 @@ export const appReferenceCatalogFixture: AppReferenceCatalog = {
 	},
 	foodSymbols: [
 		{ key: "generic", label: "Food", emoji: "🥣" },
+		{ key: "poop", label: "Poop", emoji: "💩" },
 		{ key: "fruit", label: "Fruit", emoji: "🍓" },
 		{ key: "berries", label: "Berries", emoji: "🫐" },
 		{ key: "citrus", label: "Citrus", emoji: "🍊" },
+		{ key: "apple", label: "Apple", emoji: "🍎" },
+		{ key: "banana", label: "Banana", emoji: "🍌" },
+		{ key: "grapes", label: "Grapes", emoji: "🍇" },
+		{ key: "melon", label: "Melon", emoji: "🍉" },
+		{ key: "tropical-fruit", label: "Tropical fruit", emoji: "🥭" },
+		{ key: "stone-fruit", label: "Stone fruit", emoji: "🍑" },
+		{ key: "avocado", label: "Avocado", emoji: "🥑" },
+		{ key: "coconut", label: "Coconut", emoji: "🥥" },
 		{ key: "vegetables", label: "Vegetables", emoji: "🥦" },
 		{ key: "leafy-greens", label: "Leafy greens", emoji: "🥬" },
 		{ key: "root-vegetables", label: "Root vegetables", emoji: "🥕" },
+		{ key: "tomato", label: "Tomato", emoji: "🍅" },
+		{ key: "corn", label: "Corn", emoji: "🌽" },
+		{ key: "peppers", label: "Peppers", emoji: "🫑" },
+		{ key: "mushrooms", label: "Mushrooms", emoji: "🍄" },
+		{ key: "alliums", label: "Onions and garlic", emoji: "🧅" },
+		{ key: "potatoes", label: "Potatoes", emoji: "🥔" },
+		{ key: "cruciferous-vegetables", label: "Cruciferous vegetables", emoji: "🥦" },
+		{ key: "cucumber", label: "Cucumber", emoji: "🥒" },
+		{ key: "squash", label: "Squash", emoji: "🎃" },
+		{ key: "spinach", label: "Spinach", emoji: "🥬" },
+		{ key: "potato", label: "Potato", emoji: "🥔" },
 		{ key: "dairy", label: "Dairy", emoji: "🥛" },
+		{ key: "milk", label: "Milk", emoji: "🥛" },
+		{ key: "cheese", label: "Cheese", emoji: "🧀" },
 		{ key: "eggs", label: "Eggs", emoji: "🥚" },
 		{ key: "meat", label: "Meat", emoji: "🥩" },
+		{ key: "beef", label: "Beef", emoji: "🥩" },
+		{ key: "pork", label: "Pork", emoji: "🍖" },
+		{ key: "bacon", label: "Bacon", emoji: "🥓" },
+		{ key: "sausage", label: "Sausage", emoji: "🌭" },
+		{ key: "lamb-game", label: "Lamb and game meat", emoji: "🍖" },
 		{ key: "poultry", label: "Poultry", emoji: "🍗" },
+		{ key: "duck", label: "Duck", emoji: "🦆" },
 		{ key: "seafood", label: "Fish and seafood", emoji: "🐟" },
+		{ key: "shellfish", label: "Shellfish", emoji: "🦐" },
+		{ key: "salmon", label: "Salmon", emoji: "🐟" },
+		{ key: "tuna", label: "Tuna", emoji: "🐟" },
 		{ key: "grains", label: "Grains", emoji: "🌾" },
+		{ key: "rice", label: "Rice", emoji: "🍚" },
+		{ key: "bread", label: "Bread", emoji: "🍞" },
+		{ key: "pasta", label: "Pasta", emoji: "🍝" },
+		{ key: "salad", label: "Salad", emoji: "🥗" },
+		{ key: "sandwich", label: "Sandwich", emoji: "🥪" },
+		{ key: "chips", label: "Chips and crisps", emoji: "🥔" },
+		{ key: "hummus", label: "Hummus", emoji: "🧆" },
+		{ key: "food-bowl", label: "Food bowl", emoji: "🥣" },
 		{ key: "bread-bakery", label: "Bread and bakery", emoji: "🍞" },
 		{ key: "pasta-noodles", label: "Pasta and noodles", emoji: "🍝" },
 		{ key: "legumes", label: "Legumes", emoji: "🫘" },
@@ -190,12 +303,104 @@ export const appReferenceCatalogFixture: AppReferenceCatalog = {
 		{ key: "oils-fats", label: "Oils and fats", emoji: "🧈" },
 		{ key: "sauces-condiments", label: "Sauces and condiments", emoji: "🌶️" },
 		{ key: "soup", label: "Soup and stew", emoji: "🍲" },
+		{ key: "noodle-soup", label: "Noodle soup", emoji: "🍜" },
+		{ key: "alcoholic-beverage", label: "Alcoholic beverage", emoji: "🍸" },
+		{ key: "beer", label: "Beer", emoji: "🍺" },
+		{ key: "wine", label: "Wine", emoji: "🍷" },
+		{ key: "sparkling-wine", label: "Sparkling wine", emoji: "🍾" },
+		{ key: "spirits", label: "Spirits", emoji: "🥃" },
+		{ key: "cocktail", label: "Cocktail", emoji: "🍹" },
+		{ key: "cider", label: "Cider", emoji: "🍎" },
+		{ key: "kombucha", label: "Kombucha", emoji: "🫙" },
+		{ key: "coffee", label: "Coffee", emoji: "☕" },
 		{ key: "protein-powder", label: "Protein powder", emoji: "💪" },
 		{ key: "protein-bar", label: "Protein and nutrition bars", emoji: "🍫" },
 		{ key: "packaged", label: "Packaged food", emoji: "📦" },
-	],
-	foodSymbolCategoryRules: [
+	].map(completeTestFoodSymbolDefinition),
+	foodSymbolResolutionRules: ([
+		{
+			symbolKey: "fruit",
+			matchPattern: "(^|[^a-z])(fruits and fruit juices|fruit products)([^a-z]|$)",
+			priority: 1000,
+			matchScopes: ["category"],
+		},
+		{
+			symbolKey: "vegetables",
+			matchPattern: "(^|[^a-z])(vegetables and vegetable products|vegetable products)([^a-z]|$)",
+			priority: 1010,
+			matchScopes: ["category"],
+		},
+		{
+			symbolKey: "meat",
+			matchPattern: "(^|[^a-z])(meat products|beef products|pork products)([^a-z]|$)",
+			priority: 1020,
+			matchScopes: ["category"],
+		},
+		{
+			symbolKey: "seafood",
+			matchPattern: "(^|[^a-z])(finfish and shellfish products|seafood products)([^a-z]|$)",
+			priority: 1030,
+			matchScopes: ["category"],
+		},
+		{
+			symbolKey: "protein-bar",
+			matchPattern: "(^|[^a-z])protein bars([^a-z]|$)",
+			priority: 1040,
+			matchScopes: ["category"],
+		},
+		{
+			symbolKey: "spreads-preserves",
+			matchPattern: "(^|[^a-z])jams and preserves([^a-z]|$)",
+			priority: 1050,
+			matchScopes: ["category"],
+		},
+		{
+			symbolKey: "sauces-condiments",
+			matchPattern: "(^|[^a-z])dips and salsa([^a-z]|$)",
+			priority: 1060,
+			matchScopes: ["category"],
+		},
+		{
+			symbolKey: "legumes",
+			matchPattern: "(^|[^a-z])legumes and legume products([^a-z]|$)",
+			priority: 1070,
+			matchScopes: ["category"],
+		},
+		{
+			symbolKey: "pasta-noodles",
+			matchPattern: "(^|[^a-z])pasta and noodle products([^a-z]|$)",
+			priority: 1080,
+			matchScopes: ["category"],
+		},
+		{
+			symbolKey: "nuts-seeds",
+			matchPattern:
+				"(^|[^a-z])(nut and seed products|nuts and seeds|nut and seed butters)([^a-z]|$)",
+			priority: 1090,
+			matchScopes: ["category"],
+		},
+		{
+			symbolKey: "poop",
+			matchPattern: "(^|[^a-z])(poop|poo|shit|caca|feces|faeces|excrement|turd|dung|manure|crap)([^a-z]|$)",
+			priority: 1,
+		},
+		{ symbolKey: "salad", matchPattern: "(^|[^a-z])salad([^a-z]|$)", priority: 2 },
+		{ symbolKey: "sandwich", matchPattern: "(^|[^a-z])sandwich([^a-z]|$)", priority: 3 },
+		{ symbolKey: "chips", matchPattern: "(^|[^a-z])(tortilla chips|potato chips)([^a-z]|$)", priority: 3 },
+		{ symbolKey: "food-bowl", matchPattern: "(^|[^a-z])(poke|grain bowl)([^a-z]|$)", priority: 3 },
+		{ symbolKey: "bread", matchPattern: "(^|[^a-z])(bread|toast)([^a-z]|$)", priority: 4 },
+		{ symbolKey: "pasta", matchPattern: "(^|[^a-z])(pasta|spaghetti)([^a-z]|$)", priority: 5 },
+		{ symbolKey: "noodle-soup", matchPattern: "(ramen|pho|noodle soup)", priority: 5 },
+		{ symbolKey: "nuts-seeds", matchPattern: "(peanut butter|nut butter|seed butter)", priority: 9 },
+		{ symbolKey: "hummus", matchPattern: "(^|[^a-z])hummus([^a-z]|$)", priority: 9 },
 		{ symbolKey: "protein-bar", matchPattern: "(protein bar)", priority: 10 },
+		{ symbolKey: "oils-fats", matchPattern: "(^|[^a-z])(oil|butter)([^a-z]|$)", priority: 11 },
+		{ symbolKey: "beer", matchPattern: "(^|[^a-z])(beer|lager|stout)([^a-z]|$)", priority: 12 },
+		{ symbolKey: "wine", matchPattern: "(^|[^a-z])(wine|merlot|chardonnay)([^a-z]|$)", priority: 13 },
+		{ symbolKey: "spirits", matchPattern: "(^|[^a-z])(whiskey|vodka|rum|gin)([^a-z]|$)", priority: 14 },
+		{ symbolKey: "kombucha", matchPattern: "(^|[^a-z])kombucha([^a-z]|$)", priority: 15 },
+		{ symbolKey: "coffee", matchPattern: "(^|[^a-z])(coffee|espresso)([^a-z]|$)", priority: 16 },
+		{ symbolKey: "coffee-tea", matchPattern: "(^|[^a-z])tea([^a-z]|$)", priority: 17 },
     {
       symbolKey: "spreads-preserves",
       matchPattern: "(jelly|jam)",
@@ -217,16 +422,36 @@ export const appReferenceCatalogFixture: AppReferenceCatalog = {
       priority: 50,
     },
     {
+		symbolKey: "coconut",
+		matchPattern: "(^|[^a-z])coconut([^a-z]|$)",
+		priority: 54,
+	},
+    {
       symbolKey: "nuts-seeds",
-      matchPattern: "(nut|seed|peanut)",
+      matchPattern: "(^|[^a-z])(nut|nuts|seed|seeds|peanut)([^a-z]|$)",
       priority: 55,
     },
+		{ symbolKey: "sausage", matchPattern: "(sausage|chorizo)", priority: 56 },
+		{ symbolKey: "beef", matchPattern: "(beef|steak)", priority: 57 },
+		{ symbolKey: "pork", matchPattern: "(pork|ham)", priority: 58 },
+		{ symbolKey: "shellfish", matchPattern: "(shellfish|shrimp|crab)", priority: 59 },
+		{ symbolKey: "salmon", matchPattern: "(^|[^a-z])salmon([^a-z]|$)", priority: 51 },
+		{ symbolKey: "tuna", matchPattern: "(^|[^a-z])tuna([^a-z]|$)", priority: 50 },
+		{ symbolKey: "duck", matchPattern: "(^|[^a-z])duck([^a-z]|$)", priority: 51 },
+		{ symbolKey: "milk", matchPattern: "(^|[^a-z])milk([^a-z]|$)", priority: 51 },
+		{ symbolKey: "spinach", matchPattern: "(^|[^a-z])spinach([^a-z]|$)", priority: 51 },
+		{ symbolKey: "potato", matchPattern: "(^|[^a-z])potato([^a-z]|$)", priority: 51 },
+		{ symbolKey: "lamb-game", matchPattern: "(^|[^a-z])(lamb|goat|venison)([^a-z]|$)", priority: 60 },
     {
       symbolKey: "leafy-greens",
       matchPattern: "(leafy green|spinach|kale)",
       priority: 60,
     },
 		{ symbolKey: "berries", matchPattern: "(berr)", priority: 70 },
+		{ symbolKey: "banana", matchPattern: "(^|[^a-z])banana([^a-z]|$)", priority: 71 },
+		{ symbolKey: "avocado", matchPattern: "(^|[^a-z])avocado([^a-z]|$)", priority: 72 },
+		{ symbolKey: "mushrooms", matchPattern: "(mushroom|shiitake)", priority: 73 },
+		{ symbolKey: "tomato", matchPattern: "(tomato|tomatoes)", priority: 74 },
     {
       symbolKey: "vegetables",
       matchPattern: "(vegetable|tomato)",
@@ -234,6 +459,42 @@ export const appReferenceCatalogFixture: AppReferenceCatalog = {
     },
 		{ symbolKey: "fruit", matchPattern: "(fruit|apple|banana)", priority: 90 },
 		{ symbolKey: "sweets", matchPattern: "(sweet|candy|syrup)", priority: 100 },
+	] satisfies Array<
+		Omit<FoodSymbolResolutionRule, "matchScopes"> & {
+			matchScopes?: FoodSymbolRuleScope[];
+		}
+	>).map(completeTestFoodSymbolResolutionRule),
+	delightMessages: [
+		{
+			key: "empty-fridge-meal-prep",
+			contextKey: "ingredients",
+			triggerKey: "empty-list",
+			matchKey: "fridge",
+			message: "Your fridge skipped meal-prep day.",
+			minimumValue: null,
+			maximumValue: null,
+			priority: 100,
+		},
+		{
+			key: "food-added-eggs",
+			contextKey: "ingredients",
+			triggerKey: "food-added",
+			matchKey: "eggs",
+			message: "Eggcellent choice.",
+			minimumValue: null,
+			maximumValue: null,
+			priority: 100,
+		},
+		{
+			key: "mix-goals-all-met",
+			contextKey: "mix",
+			triggerKey: "goal-progress",
+			matchKey: "all-met",
+			message: "Achievement unlocked: numerically delicious.",
+			minimumValue: null,
+			maximumValue: null,
+			priority: 10,
+		},
 	],
 };
 

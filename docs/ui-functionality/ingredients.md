@@ -93,6 +93,8 @@ Required behavior:
   matches its product or brand text, while keeping the exact card preview, manual
   controls, retry, and restore available before submission;
 - close the form after a successful add instead of opening another blank form;
+- after a successful add, an applicable reviewed food-symbol trigger may add one quiet
+  broad-audience line beneath the factual outcome; unknown foods simply omit it;
 - reuse an existing matching private food rather than ending in a duplicate-name error;
 - keep private saving available after detaching a barcode that belongs to a different
   product.
@@ -129,12 +131,13 @@ imported generic-food sources through the server-owned search flow.
 The nutrition view is the food deep dive. Keep the first reading path focused on:
 
 1. canonical food identity and image;
-2. current personalized warnings;
-3. Nutrition Facts and serving selection;
-4. ingredient text;
-5. explicit `Contains` and `May contain` statements;
-6. source-backed dietary labels and considerations;
-7. Fridge/Shopping actions when applicable.
+2. a current exact or confirmed official recall notice when present;
+3. current personalized warnings;
+4. Nutrition Facts and serving selection;
+5. ingredient text;
+6. explicit `Contains` and `May contain` statements;
+7. source-backed dietary labels and considerations;
+8. Fridge/Shopping actions when applicable.
 
 Display all useful accepted data without guessing or showing empty sections:
 
@@ -167,14 +170,26 @@ Nutrition Facts behavior:
 - Keep source and basis visible without exposing provider errors or internal mapping
   terminology.
 
+Official safety-notice behavior:
+
+- An exact or moderator-confirmed active FDA/FSIS match takes visual priority over a
+  preference warning without replacing it.
+- Show the official classification, reason, source attribution, source link, and
+  package-check instruction. Keep lot, package, and date wording exact when available.
+- Never describe an absent match as safe, expose a probable match before moderation,
+  or present the notice as medical advice.
+- Put the compact danger summary in the primary reading path and the complete official
+  notice in the bottom disclosure area.
+
 Supporting disclosures appear together at the bottom, in this order when present:
 
-1. `Review these warnings`;
-2. `Ingredient details`;
-3. food-check details;
-4. `More about this food`, containing `Product details`, Data quality, correction, and
+1. official safety-notice details;
+2. `Review these warnings`;
+3. `Ingredient details`;
+4. food-check details;
+5. `More about this food`, containing `Product details`, Data quality, correction, and
    missing-warning tools;
-5. moderator image placement.
+6. moderator image placement.
 
 All supporting disclosures start closed. They must not interrupt Ingredients,
 `Contains`, `May contain`, dietary labels, or dietary considerations. Privileged
@@ -235,10 +250,23 @@ Both lists share the same card and list behavior:
   copies in both lists.
 - Cards show the accepted image or centered category symbol with the shared media lane,
   warning edge, title, category, and actionable status without exposing provider rank.
+- Missing-image symbols come from the shared database catalog. A reviewed category
+  selects the broad symbol family, then the canonical food name may select a more
+  specific symbol only inside that family. Recognizable prepared forms such as pizza,
+  curry, or a sandwich may override the family because the prepared form is what users
+  recognize. Missing or untrusted categories use bounded food-name rules before the
+  honest generic fallback; Ingredients, search, Mix, and Saved do not maintain separate
+  symbol guesses.
+- The shared fallback catalog covers common ingredients and recognizable prepared-food
+  forms across produce, proteins, seafood, drinks, pantry foods, meals, and desserts.
+  Compound foods use the recognizable final form rather than an incidental ingredient.
 - User renames remain personal. Nutrition details continue to show the canonical food
   name.
 - Remove uses the shared two-step confirmation. Rename and item actions use the shared
   routed overlays.
+- A truly empty Fridge may show one optional DB-backed meal-prep line beneath the normal
+  empty-state guidance. Shopping, filtered-empty, error, and safety states retain only
+  their factual copy.
 
 ## Responsive And Accessibility Checks
 

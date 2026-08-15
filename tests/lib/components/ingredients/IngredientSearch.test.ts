@@ -409,6 +409,7 @@ describe("IngredientSearch", () => {
 				limit: 15,
 				sourceFilter: "all",
 				trustFilter: "any",
+				signal: expect.any(AbortSignal),
 			}),
 			{ timeout: 2000 },
 		);
@@ -470,6 +471,7 @@ describe("IngredientSearch", () => {
 			limit: 15,
 			sourceFilter: "all",
 			trustFilter: "any",
+			signal: expect.any(AbortSignal),
 		});
 
 		const returnButton = await screen.findByRole("button", {
@@ -477,5 +479,42 @@ describe("IngredientSearch", () => {
 		});
 		await fireEvent.click(returnButton);
 		expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+	});
+
+	it("aborts a superseded search before requesting the new query", async () => {
+		let firstRequestSignal: AbortSignal | undefined;
+		vi.mocked(searchFoodPage)
+			.mockImplementationOnce((_query, options) => {
+				firstRequestSignal = options?.signal;
+				return new Promise((_resolve, reject) => {
+					firstRequestSignal?.addEventListener(
+						"abort",
+						() => reject(new DOMException("Aborted", "AbortError")),
+						{ once: true },
+					);
+				});
+			})
+			.mockResolvedValueOnce(makePage([makeFood(601, "Tomatoes, raw")]));
+
+		render(IngredientSearch, {
+			props: {
+				onSelect: vi.fn(),
+				onSearchFocus: vi.fn(),
+			},
+		});
+
+		const searchInput = screen.getByRole("combobox", {
+			name: /search ingredients/i,
+		});
+		await fireEvent.input(searchInput, { target: { value: "tomato" } });
+		await waitFor(() => expect(searchFoodPage).toHaveBeenCalledTimes(1), {
+			timeout: 2000,
+		});
+
+		await fireEvent.input(searchInput, { target: { value: "tomatoes" } });
+		expect(firstRequestSignal?.aborted).toBe(true);
+		await waitFor(() => expect(searchFoodPage).toHaveBeenCalledTimes(2), {
+			timeout: 2000,
+		});
 	});
 });

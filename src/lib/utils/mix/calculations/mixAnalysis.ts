@@ -64,6 +64,7 @@ export const getMixAnalysis = ({
 		if (!goal) return [];
 		const evaluation = evaluateMixGoal(goal, total);
 		return [{
+			nutrientId,
 			label: nutrient.label ?? String(nutrient.id),
 			unit: nutrient.unit ?? "",
 			total,
