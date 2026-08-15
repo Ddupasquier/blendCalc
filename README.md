@@ -66,6 +66,7 @@ Use `.env` for browser-safe and normal runtime configuration. Use the ignored
 | `PUBLIC_SITE_URL` | Production authentication callbacks and canonical links |
 | `PUBLIC_TURNSTILE_SITE_KEY` | Auth bot protection after the matching hosted secret is configured |
 | `COLA_CLOUD_API_KEY` | Optional server-only U.S. alcohol-label enrichment |
+| `USDA_API_KEY`, `OPENFDA_API_KEY`, `CATALOG_MONITOR_CRON_SECRET` | Deployed catalog-monitor Edge Function; openFDA key is optional but recommended |
 | `SUPABASE_SERVICE_ROLE_KEY` | Protected server work, moderation, and trusted scripts |
 | `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD` | Linked Supabase administration and guarded migration delivery |
 | `RESEND_API_KEY`, `MODERATION_EMAIL_FROM`, `MODERATION_SUPPORT_EMAIL` | Optional moderation email delivery |
@@ -74,6 +75,12 @@ Use `.env` for browser-safe and normal runtime configuration. Use the ignored
 Never prefix a server secret with `PUBLIC_` or `VITE_`. Both local env files are
 ignored and must not be committed. See [Authentication](docs/authentication.md) for the
 complete hosted configuration and verification checklist.
+
+The scheduled catalog monitor also requires Vault values named
+`blendcalc_project_url` and `blendcalc_catalog_monitor_cron_secret`. Keep the monitor's
+database setting disabled until the deployed Edge Function and matching secret pass a
+manual smoke run. The full table, retry, and enablement contract is documented in
+[Supabase Schema](docs/supabase-schema.md#catalog-monitoring-and-food-safety).
 
 ### 3. Run The App
 
