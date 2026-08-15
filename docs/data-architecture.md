@@ -31,6 +31,19 @@ but API v1 omits held output. No hold path deletes revision or evidence history.
 Fridge, Mix, and Saved follow this flow. They must not start their first durable-data
 read from `onMount` or display a browser-storage mirror while Supabase is unavailable.
 
+The same server-loaded application reference catalog owns fallback food symbols and
+their reviewed resolution rules. Category rules select a broad symbol family; name
+rules may refine only within that family. Prepared-food overrides run first, while a
+bounded name-only fallback is reserved for missing or untrusted categories. Durable
+food writes and backfills use the equivalent database resolver so stored snapshots and
+rendered cards cannot drift into separate symbol policies.
+
+The server-loaded application reference catalog also owns optional delight copy from
+`app_delight_messages`. Client resolvers provide reviewed semantic trigger keys and may
+render at most one matching line as secondary presentation. This catalog never owns or
+replaces authentication, safety, validation, warning, or failure instructions; those
+remain stable code-based messages backed by server and database evidence.
+
 ## Write Flow
 
 Durable writes use narrowly scoped Supabase functions. The database function:
@@ -119,6 +132,47 @@ The provider capability map, legal policy, and catalog merge behavior are mainta
 the [`source data inventory`](api-structures/source-data-inventory.md),
 [`licensing ledger`](data-source-licensing.md), and
 [`shared product catalog`](shared-product-catalog.md), respectively.
+
+### Scheduled Revalidation And Official Safety Notices
+
+External data maintenance is asynchronous. An hourly Supabase Cron request invokes the
+secret-authenticated `catalog-monitor` Edge Function, which claims small due batches
+from Supabase rather than scanning the catalog or calling providers during a user read.
+The monitor is disabled by default until its deployment and secrets are verified.
+During the additive rollout, current application readers recognize only the exact
+missing-table, missing-column, or missing-function errors introduced by this migration.
+They omit optional delight copy and recall data, preserve the existing food-symbol
+catalog, and leave monitoring paused until the expanded schema is present. Permission
+errors and unrelated database failures still fail closed. This keeps every established
+view usable before, during, and after migration delivery without disguising access or
+integrity failures.
+
+Product revalidation follows this sequence:
+
+1. The database prioritizes recently used products and queues only exact known Open
+   Food Facts or USDA source identities.
+2. Open Food Facts revision/update metadata is checked before a full payload. USDA
+   re-fetches only the known FDC id under the configured request budget.
+3. The provider response is normalized and hashed. Unchanged records are rescheduled
+   without creating duplicate evidence.
+4. A changed response creates an immutable source observation and normalized snapshot.
+   Material identity, serving, nutrient, ingredient, allergen, image, or ABV differences
+   become a review candidate; the active catalog product is not overwritten.
+5. An accepted correction still uses the ordinary catalog revision workflow. A monitor
+   review cannot claim acceptance without linking the approved revision it produced.
+
+Official FDA enforcement and USDA FSIS recall feeds use independent cursors, retries,
+and histories so one unavailable source does not stop the other or product revalidation.
+The database matches exact normalized GTINs automatically, sends strong brand/product/
+package identity matches to moderation, and ignores weak title-only similarity. Exact
+and confirmed active matches are hydrated onto catalog-backed foods, enqueue owner-only
+notification records, and tell the user when package, lot, or use-by details still need
+checking. Closed official records supersede visible matches without deleting evidence.
+
+The safety surface is an official-data aid, not proof that an unmatched package is safe
+and not medical advice. Public responses expose only current normalized notice fields,
+source attribution, and the official link; raw provider payloads, match evidence,
+moderator identity, and user notification state stay private.
 
 ## Operational Analytics
 
