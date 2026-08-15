@@ -28,7 +28,10 @@ import {
 	toFoodFieldProvenance,
 	type CatalogFieldSource,
 } from "./catalogFieldProvenance.server";
-import { readActiveProductSafetyAlertsByProduct } from "./productSafetyAlerts.server";
+import {
+	readActiveProductIdsMatchingSafetyAlertMetadata,
+	readActiveProductSafetyAlertsByProduct,
+} from "./productSafetyAlerts.server";
 
 const SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT = 100;
 const SHARED_PRODUCT_COLUMNS = "id, barcode, product_name, brand_owner, category_option_id, compatibility_summary, canonical_provenance, food, source, source_reference, confidence, created_at, updated_at, last_verified_at";
@@ -494,25 +497,96 @@ export const searchApprovedCatalogRecords = async (
 ) => {
 	const terms = tokenizeIngredientSearchText(query).slice(0, 6);
 	if (terms.length === 0) return [];
-	let request = supabase
+	const applyFilters = <Request extends {
+		eq: (column: string, value: string) => Request;
+	}>(request: Request) => {
+		let filteredRequest = request;
+		if (filters.sourceFilter === "usda") {
+			filteredRequest = filteredRequest.eq("source", "usda");
+		}
+		if (filters.sourceFilter === "open-food-facts") {
+			filteredRequest = filteredRequest.eq("source", "open-food-facts");
+		}
+		if (filters.sourceFilter === "shared-catalog") {
+			filteredRequest = filteredRequest.eq("source", "community-reviewed");
+		}
+		if (filters.trustFilter && filters.trustFilter !== "any") {
+			filteredRequest = filteredRequest.eq("confidence", filters.trustFilter);
+		}
+		return filteredRequest;
+	};
+	if (filters.sourceFilter === "custom") return [];
+
+	let metadataRequest = applyFilters(supabase
 		.from("shared_products")
 		.select(SHARED_PRODUCT_COLUMNS)
 		.eq("status", "active")
 		.order("product_name", { ascending: true })
-		.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT);
-	if (filters.sourceFilter === "usda") request = request.eq("source", "usda");
-	if (filters.sourceFilter === "open-food-facts") {
-		request = request.eq("source", "open-food-facts");
+		.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT));
+	for (const term of terms) {
+		metadataRequest = metadataRequest.ilike("search_text", `%${term}%`);
 	}
-	if (filters.sourceFilter === "shared-catalog") {
-		request = request.eq("source", "community-reviewed");
+
+	const matchingSafetyProductIds =
+		await readActiveProductIdsMatchingSafetyAlertMetadata(terms, supabase);
+	const safetyProductRequest = matchingSafetyProductIds.length === 0
+		? Promise.resolve({ data: [], error: null })
+		: applyFilters(supabase
+			.from("shared_products")
+			.select(SHARED_PRODUCT_COLUMNS)
+			.eq("status", "active")
+			.in("id", matchingSafetyProductIds)
+			.order("product_name", { ascending: true })
+			.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT));
+	const [metadataResponse, safetyResponse] = await Promise.all([
+		metadataRequest,
+		safetyProductRequest,
+	]);
+	if (metadataResponse.error) throw metadataResponse.error;
+	if (safetyResponse.error) throw safetyResponse.error;
+
+	const rowsById = new Map<string, CatalogProductRow>();
+	for (const row of [
+		...(metadataResponse.data ?? []),
+		...(safetyResponse.data ?? []),
+	] as CatalogProductRow[]) {
+		rowsById.set(row.id, row);
 	}
-	if (filters.sourceFilter === "custom") return [];
-	if (filters.trustFilter && filters.trustFilter !== "any") {
-		request = request.eq("confidence", filters.trustFilter);
+	if (rowsById.size === 0) {
+		const partialSafetyProductIds =
+			await readActiveProductIdsMatchingSafetyAlertMetadata(
+				terms,
+				supabase,
+				"any",
+			);
+		const partialMetadataRequest = applyFilters(supabase
+			.from("shared_products")
+			.select(SHARED_PRODUCT_COLUMNS)
+			.eq("status", "active")
+			.or(terms.map((term) => `search_text.ilike.%${term}%`).join(","))
+			.order("product_name", { ascending: true })
+			.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT));
+		const partialSafetyRequest = partialSafetyProductIds.length === 0
+			? Promise.resolve({ data: [], error: null })
+			: applyFilters(supabase
+				.from("shared_products")
+				.select(SHARED_PRODUCT_COLUMNS)
+				.eq("status", "active")
+				.in("id", partialSafetyProductIds)
+				.order("product_name", { ascending: true })
+				.limit(SHARED_PRODUCT_SEARCH_CANDIDATE_LIMIT));
+		const [partialMetadataResponse, partialSafetyResponse] = await Promise.all([
+			partialMetadataRequest,
+			partialSafetyRequest,
+		]);
+		if (partialMetadataResponse.error) throw partialMetadataResponse.error;
+		if (partialSafetyResponse.error) throw partialSafetyResponse.error;
+		for (const row of [
+			...(partialMetadataResponse.data ?? []),
+			...(partialSafetyResponse.data ?? []),
+		] as CatalogProductRow[]) {
+			rowsById.set(row.id, row);
+		}
 	}
-	for (const term of terms) request = request.ilike("search_text", `%${term}%`);
-	const { data, error } = await request;
-	if (error) throw error;
-	return hydrateCatalogRows(supabase, (data ?? []) as CatalogProductRow[]);
+	return hydrateCatalogRows(supabase, [...rowsById.values()]);
 };

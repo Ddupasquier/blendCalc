@@ -4,10 +4,16 @@ const SEARCH_WORD_PATTERN = /[\p{L}\p{N}]+(?:[-'’][\p{L}\p{N}]+)*/gu;
 const EARLY_DESCRIPTION_WORD_LIMIT = 3;
 
 type SearchRelevance = {
+	fieldPriority: number;
 	tier: number;
 	firstMatchPosition: number;
 	lastMatchPosition: number;
-	descriptionWordCount: number;
+	fieldWordCount: number;
+};
+
+type SearchableFoodField = {
+	priority: number;
+	value: string;
 };
 
 export const tokenizeIngredientSearchText = (value: string) =>
@@ -17,19 +23,19 @@ export const tokenizeIngredientSearchText = (value: string) =>
 		.match(SEARCH_WORD_PATTERN) ?? [];
 
 const getSearchRelevance = (
-	description: string,
+	value: string,
 	searchWords: string[],
-): SearchRelevance => {
-	const descriptionWords = tokenizeIngredientSearchText(description);
+): Omit<SearchRelevance, "fieldPriority"> => {
+	const fieldWords = tokenizeIngredientSearchText(value);
 	const matchPositions = searchWords.map((searchWord) =>
-		descriptionWords.findIndex((descriptionWord) =>
-			descriptionWord.startsWith(searchWord),
+		fieldWords.findIndex((fieldWord) =>
+			fieldWord.startsWith(searchWord),
 		),
 	);
 	const matchedPositions = matchPositions.filter((position) => position >= 0);
 	const allWordsMatched = matchedPositions.length === searchWords.length;
 	const startsWithSearch = allWordsMatched && searchWords.every(
-		(searchWord, index) => (descriptionWords[index] ?? "").startsWith(searchWord),
+		(searchWord, index) => (fieldWords[index] ?? "").startsWith(searchWord),
 	);
 	const allMatchesAreEarly = allWordsMatched && matchPositions.every(
 		(position) => position < EARLY_DESCRIPTION_WORD_LIMIT,
@@ -54,7 +60,81 @@ const getSearchRelevance = (
 		lastMatchPosition: matchedPositions.length > 0
 			? Math.max(...matchedPositions)
 			: Number.MAX_SAFE_INTEGER,
-		descriptionWordCount: descriptionWords.length,
+		fieldWordCount: fieldWords.length,
+	};
+};
+
+const joinSearchValues = (values: Array<string | undefined>) =>
+	values
+		.map((value) => value?.trim() ?? "")
+		.filter(Boolean)
+		.join(" ");
+
+const getSearchableFoodFields = (food: FoodItem): SearchableFoodField[] => {
+	const categoryText = joinSearchValues([
+		food.foodCategory,
+		food.brandedFoodCategory,
+		...(food.categories ?? []),
+	]);
+	const organizationText = joinSearchValues(
+		(food.safetyAlerts ?? []).map((alert) => alert.recallingOrganization),
+	);
+	const supportingMetadataText = joinSearchValues([
+		food.alternateDescription,
+		food.scientificName,
+		food.preparation,
+		food.marketCountry,
+		food.packageWeight,
+		food.ingredients,
+		...(food.ingredientList ?? []),
+		...(food.additives ?? []),
+		...(food.allergens ?? []),
+		...(food.traces ?? []),
+		...(food.dietaryTags ?? []),
+		...(food.labels ?? []),
+		...(food.safetyAlerts ?? []).flatMap((alert) => [
+			alert.productDescription,
+			alert.reason,
+		]),
+	]);
+
+	return [
+		{ priority: 0, value: food.description },
+		{ priority: 1, value: food.brandOwner ?? "" },
+		{ priority: 2, value: organizationText },
+		{ priority: 3, value: categoryText },
+		{
+			priority: 4,
+			value: joinSearchValues([
+				food.description,
+				food.brandOwner,
+				organizationText,
+				categoryText,
+				supportingMetadataText,
+			]),
+		},
+		{ priority: 5, value: supportingMetadataText },
+	].filter((field) => field.value.length > 0);
+};
+
+const getFoodSearchRelevance = (
+	food: FoodItem,
+	searchWords: string[],
+): SearchRelevance => {
+	const fieldMatches = getSearchableFoodFields(food)
+		.map((field) => ({
+			fieldPriority: field.priority,
+			...getSearchRelevance(field.value, searchWords),
+		}))
+		.filter((match) => match.tier < 6)
+		.sort(compareSearchRelevance);
+
+	return fieldMatches[0] ?? {
+		fieldPriority: Number.MAX_SAFE_INTEGER,
+		tier: 6,
+		firstMatchPosition: Number.MAX_SAFE_INTEGER,
+		lastMatchPosition: Number.MAX_SAFE_INTEGER,
+		fieldWordCount: Number.MAX_SAFE_INTEGER,
 	};
 };
 
@@ -62,10 +142,11 @@ const compareSearchRelevance = (
 	left: SearchRelevance,
 	right: SearchRelevance,
 ) =>
+	left.fieldPriority - right.fieldPriority ||
 	left.tier - right.tier ||
 	left.firstMatchPosition - right.firstMatchPosition ||
 	left.lastMatchPosition - right.lastMatchPosition ||
-	left.descriptionWordCount - right.descriptionWordCount;
+	left.fieldWordCount - right.fieldWordCount;
 
 export const createIngredientSearchRelevanceComparator = (query: string) => {
 	const searchWords = tokenizeIngredientSearchText(query);
@@ -73,7 +154,7 @@ export const createIngredientSearchRelevanceComparator = (query: string) => {
 	const readRelevance = (food: FoodItem) => {
 		const cached = relevanceCache.get(food);
 		if (cached) return cached;
-		const relevance = getSearchRelevance(food.description, searchWords);
+		const relevance = getFoodSearchRelevance(food, searchWords);
 		relevanceCache.set(food, relevance);
 		return relevance;
 	};

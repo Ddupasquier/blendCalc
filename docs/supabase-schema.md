@@ -732,7 +732,13 @@ product authorities.
 
 Notes:
 
-- Search uses indexed `search_text`.
+- Search uses indexed `search_text` assembled from the product name, canonical
+  brand/owner value, barcode, categories, alternate identity, package context,
+  ingredients, allergens, labels, and other retained source metadata. Server ranking
+  keeps direct names ahead of brand or responsible organization, then category and
+  supporting metadata. Active official safety-alert relationships are searched
+  separately so a recalling supplier can find affected products without becoming the
+  product's canonical brand.
 - Barcode lookup reads the active canonical row before source caches or external APIs.
   Complete rows make no external product request. A legally reusable exact-source value
   may fill only a field that is still missing through
