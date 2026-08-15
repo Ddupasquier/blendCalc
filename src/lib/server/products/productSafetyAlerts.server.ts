@@ -32,6 +32,8 @@ type SafetyAlertSourceRow = {
 	attribution_text: string | null;
 };
 
+const SAFETY_ALERT_SEARCH_LIMIT = 100;
+
 const getClassificationPriority = (classification?: string) => {
 	if (/class\s*i\b/i.test(classification ?? "")) return 0;
 	if (/class\s*ii\b/i.test(classification ?? "")) return 1;
@@ -43,17 +45,65 @@ export const isCatalogSafetyMonitoringSchemaUnavailable = (
 	error: { code?: string; message?: string } | null | undefined,
 ) => {
 	const message = error?.message?.toLowerCase() ?? "";
-	const namesSafetyAlertMatchTable = message.includes(
-		"official_food_safety_alert_matches",
-	);
+	const namesSafetyMonitoringTable =
+		message.includes("official_food_safety_alert_matches") ||
+		message.includes("official_food_safety_alerts");
 
 	return (
-		namesSafetyAlertMatchTable &&
+		namesSafetyMonitoringTable &&
 		(error?.code === "42P01" ||
 			error?.code === "PGRST205" ||
 			message.includes("does not exist") ||
 			message.includes("could not find the table"))
 	);
+};
+
+export const readActiveProductIdsMatchingSafetyAlertMetadata = async (
+	searchTerms: string[],
+	supabase: SupabaseClient<Database> = getSupabaseAdminClient(),
+	matchMode: "all" | "any" = "all",
+) => {
+	const terms = [...new Set(searchTerms.map((term) => term.trim()).filter(Boolean))];
+	if (terms.length === 0) return [];
+
+	let alertRequest = supabase
+		.from("official_food_safety_alerts")
+		.select("id")
+		.eq("is_active", true)
+		.limit(SAFETY_ALERT_SEARCH_LIMIT);
+	const searchExpressions = terms.flatMap((term) => [
+			`recalling_organization.ilike.%${term}%`,
+			`product_description.ilike.%${term}%`,
+			`reason.ilike.%${term}%`,
+	]);
+	if (matchMode === "all") {
+		for (const term of terms) {
+			alertRequest = alertRequest.or([
+				`recalling_organization.ilike.%${term}%`,
+				`product_description.ilike.%${term}%`,
+				`reason.ilike.%${term}%`,
+			].join(","));
+		}
+	} else {
+		alertRequest = alertRequest.or(searchExpressions.join(","));
+	}
+	const { data: alertData, error: alertError } = await alertRequest;
+	if (isCatalogSafetyMonitoringSchemaUnavailable(alertError)) return [];
+	if (alertError) throw alertError;
+	const alertIds = (alertData ?? []).map((alert) => alert.id);
+	if (alertIds.length === 0) return [];
+
+	const { data: matchData, error: matchError } = await supabase
+		.from("official_food_safety_alert_matches")
+		.select("shared_product_id")
+		.in("alert_id", alertIds)
+		.in("status", ["active", "confirmed"])
+		.limit(SAFETY_ALERT_SEARCH_LIMIT);
+	if (isCatalogSafetyMonitoringSchemaUnavailable(matchError)) return [];
+	if (matchError) throw matchError;
+	return [
+		...new Set((matchData ?? []).map((match) => match.shared_product_id)),
+	];
 };
 
 export const readActiveProductSafetyAlertsByProduct = async (

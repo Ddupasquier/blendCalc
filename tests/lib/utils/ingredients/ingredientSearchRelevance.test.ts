@@ -8,6 +8,12 @@ const food = (fdcId: number, description: string): FoodItem => ({
 	foodNutrients: [],
 });
 
+const foodWithMetadata = (
+	fdcId: number,
+	description: string,
+	metadata: Partial<FoodItem>,
+): FoodItem => ({ ...food(fdcId, description), ...metadata });
+
 describe("ingredient search relevance", () => {
 	it("puts first-word and first-three-word matches before late mentions", () => {
 		const ranked = rankIngredientSearchCandidates([
@@ -55,5 +61,58 @@ describe("ingredient search relevance", () => {
 		], "green tomat");
 
 		expect(ranked.map(({ fdcId }) => fdcId)).toEqual([1, 2, 3]);
+	});
+
+	it("ranks product names before brands, organizations, and categories", () => {
+		const ranked = rankIngredientSearchCandidates([
+			foodWithMetadata(4, "Garden Salad", {
+				foodCategory: "Taylor Farms Produce",
+			}),
+			foodWithMetadata(3, "Marketside Iceberg Salad", {
+				safetyAlerts: [{
+					id: "alert-1",
+					providerKey: "fda-food-enforcement",
+					sourceName: "FDA",
+					sourceAttribution: "FDA",
+					alertType: "recall",
+					status: "ongoing",
+					productDescription: "Marketside iceberg lettuce",
+					recallingOrganization: "Taylor Farms",
+					sourceUrl: "https://www.fda.gov/example",
+					matchType: "exact_gtin",
+					requiresPackageCheck: true,
+					detectedAt: "2026-08-14T12:00:00.000Z",
+				}],
+			}),
+			foodWithMetadata(2, "Iceberg Salad", { brandOwner: "Taylor Farms" }),
+			food(1, "Taylor Farms Salad Kit"),
+		], "taylor farms");
+
+		expect(ranked.map(({ fdcId }) => fdcId)).toEqual([1, 2, 3, 4]);
+	});
+
+	it("keeps every matching brand product ahead of category-only matches", () => {
+		const ranked = rankIngredientSearchCandidates([
+			foodWithMetadata(3, "Shredded Lettuce", {
+				foodCategory: "Taylor Farms Produce",
+			}),
+			foodWithMetadata(2, "Iceberg Salad, 24 Ounce", {
+				brandOwner: "Taylor Farms",
+			}),
+			foodWithMetadata(1, "Iceberg Salad, 12 Ounce", {
+				brandOwner: "Taylor Farms",
+			}),
+		], "taylor farms");
+
+		expect(ranked.map(({ fdcId }) => fdcId)).toEqual([1, 2, 3]);
+	});
+
+	it("matches supporting identity metadata after names, brands, and categories", () => {
+		const ranked = rankIngredientSearchCandidates([
+			foodWithMetadata(2, "Plain Crackers", { ingredients: "Whole wheat flour" }),
+			foodWithMetadata(1, "Whole Wheat Bread", {}),
+		], "whole wheat");
+
+		expect(ranked.map(({ fdcId }) => fdcId)).toEqual([1, 2]);
 	});
 });

@@ -1008,6 +1008,26 @@ test("ingredient search uses keyboard selection without turning the add action i
 	await expect(page).toHaveURL(/\/nutrition\//);
 });
 
+test("ingredient search finds every product linked to a matching recall supplier", async ({
+	page,
+}) => {
+	await page.goto("/ingredients/fridge/search");
+	await waitForAppReady(page);
+	const search = page.getByRole("combobox", { name: "Search ingredients" });
+	await search.fill("Taylor Farms");
+
+	for (const productName of [
+		"Marketside Iceberg Salad, 12 Ounce",
+		"Marketside Iceberg Salad, 24 Ounce",
+		"Marketside Shredded Iceberg Lettuce, 8 Ounce",
+		"Marketside Shredded Iceberg Lettuce, 16 Ounce",
+	]) {
+		await expect(page.getByRole("row", {
+			name: new RegExp(`^${productName},`),
+		})).toBeVisible();
+	}
+});
+
 test("ingredient search cards preserve media, copy, status, and action geometry", async ({
 	page,
 }) => {

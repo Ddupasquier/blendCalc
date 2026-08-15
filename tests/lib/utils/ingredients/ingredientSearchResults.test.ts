@@ -509,8 +509,24 @@ describe("ingredient search result merging", () => {
 });
 
 describe("usable ingredient search results", () => {
-	it("keeps nutrient-bearing foods and rejects nutritionally empty records", () => {
+	it("keeps nutrient-bearing foods and safety-alert records without invented nutrition", () => {
 		expect(isUsableIngredientSearchResult(food())).toBe(true);
 		expect(isUsableIngredientSearchResult(food({ foodNutrients: [] }))).toBe(false);
+		expect(isUsableIngredientSearchResult(food({
+			foodNutrients: [],
+			safetyAlerts: [{
+				id: "alert-1",
+				providerKey: "fda-food-enforcement",
+				sourceName: "FDA",
+				sourceAttribution: "FDA",
+				alertType: "recall",
+				status: "ongoing",
+				productDescription: "Recalled lettuce",
+				sourceUrl: "https://www.fda.gov/example",
+				matchType: "exact_gtin",
+				requiresPackageCheck: true,
+				detectedAt: "2026-08-14T12:00:00.000Z",
+			}],
+		}))).toBe(true);
 	});
 });
