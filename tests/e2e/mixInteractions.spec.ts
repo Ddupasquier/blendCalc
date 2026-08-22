@@ -52,6 +52,22 @@ const openMixSection = async (
 	return section;
 };
 
+const signInAsLocalQaPersona = async (
+	page: import("@playwright/test").Page,
+	email: string,
+	nextPath: string,
+) => {
+	await page.context().clearCookies();
+	await page.goto(`/auth?next=${encodeURIComponent(nextPath)}`);
+	await page.getByLabel("Email").fill(email);
+	await page.getByLabel("Password", { exact: true }).fill(
+		process.env.PLAYWRIGHT_QA_PASSWORD ?? "BlendCalc-Local-QA-2026!",
+	);
+	await page.getByRole("button", { name: "Sign in", exact: true }).click();
+	await expect(page).toHaveURL(new RegExp(`${escapeRegularExpression(nextPath)}$`));
+	await waitForAppReady(page);
+};
+
 const expectInnerListScrollPassesToMixPage = async ({
 	page,
 	list,
@@ -440,7 +456,235 @@ test("closed Mix warnings retain visible severity and open on demand", async ({
 	await expect(summary).toHaveAttribute("aria-expanded", "false");
 	await summary.click();
 	await expect(details).toHaveAttribute("open", "");
-	if (!initiallyOpen) await summary.click();
+	await summary.click();
+	await expect(details).not.toHaveAttribute("open", "");
+	await page.reload();
+	await waitForAppReady(page);
+	const persistedWarningsSection = page.locator(".mix-warnings");
+	const persistedDetails = persistedWarningsSection.locator(":scope > details");
+	const persistedSummary = persistedDetails.locator(":scope > summary");
+	await expect(persistedDetails).not.toHaveAttribute("open", "");
+	await expect(persistedWarningsSection).toHaveAttribute(
+		"data-attention-tone",
+		/warning|danger/,
+	);
+	await persistedSummary.click();
+	await expect(persistedDetails).toHaveAttribute("open", "");
+	if (!initiallyOpen) await persistedSummary.click();
+});
+
+test("Mix warning severity follows under-target and over-target goal states", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated browser worker owns this temporary goal and Mix state.",
+	);
+
+	const originalGoalConfiguration =
+		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	try {
+		await saveLocalQaMixState(testInfo.parallelIndex, {
+			version: 1,
+			selected: [1008, 1003, 1079, 1005, 1004],
+			options: [
+				{ id: 1008, label: "Calories" },
+				{ id: 1003, label: "Protein" },
+				{ id: 1079, label: "Dietary Fiber" },
+				{ id: 1005, label: "Total Carbohydrates" },
+				{ id: 1004, label: "Total Fat" },
+			],
+			selectedFoodIds: [9200001],
+			servingGrams: { 9200001: 0.01 },
+			servingQuantities: { 9200001: 0.01 },
+			servingUnits: { 9200001: "g" },
+		});
+
+		await page.goto("/mix");
+		await waitForAppReady(page);
+		const { goalsSection } = await openMixGoals(page);
+		await selectGoalRule(goalsSection, "Calories", "At least");
+		const caloriesGoal = goalsSection.getByRole("spinbutton", {
+			name: "Goal value for Calories in kcal",
+		});
+		await caloriesGoal.fill("350");
+		await caloriesGoal.blur();
+
+		let warningsSection = page.locator(".mix-warnings");
+		await expect(warningsSection).toHaveAttribute(
+			"data-attention-tone",
+			"warning",
+		);
+		await expect(warningsSection.locator('[data-warning-id="under-1008"]')).toHaveCount(1);
+		await expect(warningsSection.locator('[role="status"]')).not.toContainText("urgent");
+
+		await selectGoalRule(goalsSection, "Calories", "At most");
+		await caloriesGoal.fill("0");
+		await caloriesGoal.blur();
+
+		warningsSection = page.locator(".mix-warnings");
+		await expect(warningsSection).toHaveAttribute(
+			"data-attention-tone",
+			"danger",
+		);
+		await expect(warningsSection.locator('[data-warning-id="over-1008"]')).toHaveCount(1);
+		await expect(warningsSection.locator('[role="status"]')).toContainText("urgent");
+	} finally {
+		await restoreLocalQaMixGoalConfiguration(
+			testInfo.parallelIndex,
+			originalGoalConfiguration,
+		);
+	}
+});
+
+test("Mix preference warnings preserve evidence and clear independently", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"The dedicated preference persona is mutated by one deterministic browser.",
+	);
+
+	await signInAsLocalQaPersona(
+		page,
+		"qa-preferences@blendcalc.local",
+		"/mix",
+	);
+	const chooser = await openMixSection(page, ".ingredient-chooser");
+	const search = chooser.getByRole("searchbox", { name: "Find ingredients" });
+	const originalSelectionState = new Map<string, boolean>();
+	const conflictCorpus = [
+		{
+			fdcId: 9200012,
+			name: "Ground Beef, 85% Lean, Cooked",
+			query: "ground beef",
+			expectedExplanation: /vegan|meat|beef/i,
+		},
+		{
+			fdcId: 9200013,
+			name: "Shrimp, Cooked",
+			query: "shrimp",
+			expectedExplanation: /shellfish|vegan/i,
+		},
+		{
+			fdcId: 1890854,
+			name: "Creamy Peanut Butter, Peanut Butter",
+			query: "creamy peanut butter",
+			expectedExplanation: /peanut/i,
+		},
+		{
+			fdcId: 9100003,
+			name: "Gochu Jang Hot & Sweet Chili Sauce",
+			query: "gochu jang",
+			expectedExplanation: /gluten|wheat/i,
+		},
+		{
+			fdcId: 9200003,
+			name: "Greek Yogurt, Plain",
+			query: "greek yogurt",
+			expectedExplanation: /milk|dairy|vegan/i,
+		},
+	] as const;
+	const negativeControl = {
+		fdcId: 9200002,
+		name: "Banana, Raw",
+		query: "banana",
+	} as const;
+	const completeCorpus = [...conflictCorpus, negativeControl];
+
+	const getSelectionAction = async (name: string, query: string) => {
+		await search.fill(query);
+		const action = chooser.getByRole("button", {
+			name: new RegExp(
+				`^(?:Add|Remove) ${escapeRegularExpression(name)} (?:to|from) this mix`,
+			),
+		});
+		await expect(action).toHaveCount(1);
+		return action;
+	};
+
+	try {
+		for (const food of completeCorpus) {
+			const action = await getSelectionAction(food.name, food.query);
+			const selected = (await action.getAttribute("aria-pressed")) === "true";
+			originalSelectionState.set(food.name, selected);
+			if (selected) {
+				await action.click();
+				await expect(action).toHaveAttribute("aria-pressed", "false");
+			}
+		}
+
+		const retainedWarningSelectors: string[] = [];
+		for (const food of conflictCorpus) {
+			const action = await getSelectionAction(food.name, food.query);
+			await action.click();
+			await expect(action).toHaveAttribute("aria-pressed", "true");
+
+			const warningsSection = await openMixSection(page, ".mix-warnings");
+			const foodWarnings = warningsSection.locator(
+				`[data-warning-id^="food-preference-${food.fdcId}-"]`,
+			);
+			await expect.poll(() => foodWarnings.count()).toBeGreaterThan(0);
+			const firstWarning = foodWarnings
+				.filter({ hasText: food.expectedExplanation })
+				.first();
+			await expect(firstWarning).toBeVisible();
+			const warningId = await firstWarning.getAttribute("data-warning-id");
+			expect(warningId).not.toBeNull();
+			retainedWarningSelectors.push(`[data-warning-id="${warningId}"]`);
+
+			await firstWarning.getByRole("button", { name: "Why?" }).click();
+			await expect(page).toHaveURL(
+				new RegExp(`/mix/warnings/${escapeRegularExpression(warningId!)}$`),
+			);
+			const explanation = page.getByRole("dialog", { name: food.name });
+			await expect(explanation).toBeVisible();
+			await expect(explanation).toContainText(food.expectedExplanation);
+			await explanation
+				.getByRole("button", { name: `Close ${food.name}` })
+				.click();
+			await expect(page).toHaveURL(/\/mix$/);
+
+			for (const selector of retainedWarningSelectors) {
+				await expect(page.locator(selector)).toHaveCount(1);
+			}
+		}
+
+		const bananaAction = await getSelectionAction(
+			negativeControl.name,
+			negativeControl.query,
+		);
+		await bananaAction.click();
+		await expect(bananaAction).toHaveAttribute("aria-pressed", "true");
+		await expect(
+			page.locator(
+				`[data-warning-id^="food-preference-${negativeControl.fdcId}-"]`,
+			),
+		).toHaveCount(0);
+		for (const selector of retainedWarningSelectors) {
+			await expect(page.locator(selector)).toHaveCount(1);
+		}
+
+		for (const [index, food] of conflictCorpus.entries()) {
+			const action = await getSelectionAction(food.name, food.query);
+			await action.click();
+			await expect(action).toHaveAttribute("aria-pressed", "false");
+			await expect(
+				page.locator(`[data-warning-id^="food-preference-${food.fdcId}-"]`),
+			).toHaveCount(0);
+			for (const selector of retainedWarningSelectors.slice(index + 1)) {
+				await expect(page.locator(selector)).toHaveCount(1);
+			}
+		}
+	} finally {
+		for (const food of completeCorpus) {
+			const originalSelected = originalSelectionState.get(food.name);
+			if (originalSelected === undefined || page.isClosed()) continue;
+			const action = await getSelectionAction(food.name, food.query);
+			const selected = (await action.getAttribute("aria-pressed")) === "true";
+			if (selected !== originalSelected) await action.click();
+		}
+	}
 });
 
 test("an empty Mix leads with one open Add ingredients path", async ({ page }) => {

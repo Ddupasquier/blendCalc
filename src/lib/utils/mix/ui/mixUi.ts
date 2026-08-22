@@ -230,11 +230,14 @@ export const withOverageDetails = (
 			unit: overage.unit,
 			sign: "always",
 		})})`,
-		details: overage.contributors.map((contributor) => ({
-			label: contributor.label,
-			value: `${formatMixQuantity(contributor.amount, {
-				unit: overage.unit,
-			})} from ${formatMixQuantity(contributor.grams, { unit: "g" })}`,
-		})),
+		details: [
+			...(warning.details ?? []),
+			...overage.contributors.map((contributor) => ({
+				label: `From ${contributor.label}`,
+				value: `${formatMixQuantity(contributor.amount, {
+					unit: overage.unit,
+				})} from ${formatMixQuantity(contributor.grams, { unit: "g" })}`,
+			})),
+		],
 	};
 };

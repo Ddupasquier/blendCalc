@@ -35,7 +35,7 @@ select ok(
 				('qa-browser-1@blendcalc.local', 60, 40),
 				('qa-browser-2@blendcalc.local', 60, 40),
 				('qa-browser-3@blendcalc.local', 60, 40),
-				('qa-preferences@blendcalc.local', 8, 3),
+				('qa-preferences@blendcalc.local', 10, 3),
 				('qa-empty@blendcalc.local', 0, 0),
 				('qa-onboarding@blendcalc.local', 10, 0),
 				('qa-moderator@blendcalc.local', 3, 3),
@@ -222,7 +222,7 @@ select ok(
 		select 1 from public.user_food_preferences preference
 		join auth.users user_row on user_row.id = preference.user_id
 		where user_row.email = 'qa-preferences@blendcalc.local'
-			and preference.allergens @> array['peanut', 'shellfish']::text[]
+			and preference.allergens @> array['peanut', 'shellfish', 'milk']::text[]
 			and preference.dietary_restrictions @> array['vegan', 'gluten-free']::text[]
 			and preference.regulatory_region_code = 'US'
 	),
@@ -291,8 +291,8 @@ select is(
 		join auth.users user_row on user_row.id = rule.user_id
 		where user_row.email = 'qa-preferences@blendcalc.local'
 	),
-	4::bigint,
-	'the warning persona resolves all four preference rules'
+	5::bigint,
+	'the warning persona resolves all five preference rules'
 );
 
 select ok(
