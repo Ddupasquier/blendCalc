@@ -832,6 +832,18 @@ feature branch or working tree until explicitly approved for staging.
 **20.** Do not auto commit. Show the diff and get explicit approval before committing or
 pushing changes.
 
+**20a.** Every commit must represent one coherent responsibility and use a meaningful,
+specific message that states the delivered outcome. Prefer the established
+`type(scope): imperative outcome` format; do not use vague messages such as `updates`,
+`fix stuff`, or `work in progress`. Split unrelated features, fixes, dependency updates,
+schema changes, and cleanup into separate commits. Keep the implementation, tests,
+documentation, generated artifacts, and lockfile changes required to make one
+responsibility complete in that responsibility's commit rather than separating files by
+type. Stage by path or hunk when the working tree contains unrelated work, and never
+absorb another person's or another task's changes merely to make the tree clean. Merge
+commits may retain their generated merge description when it clearly names the branches
+or responsibility being integrated.
+
 **21.** Verify meaningful changes with `npm run check`, focused tests, and builds when
 scope warrants it.
 
