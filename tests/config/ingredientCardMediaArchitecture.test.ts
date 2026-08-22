@@ -69,8 +69,8 @@ const productImagePanel = readFileSync(
 	"src/lib/components/ingredients/nutrition/ProductImagePanel/ProductImagePanel.svelte",
 	"utf8",
 );
-const moderationPage = readFileSync(
-	"src/lib/components/moderation/ModerationWorkspace/ModerationWorkspace.svelte",
+const productSubmissionReviewList = readFileSync(
+	"src/lib/components/moderation/ProductSubmissionReviewList/ProductSubmissionReviewList.svelte",
 	"utf8",
 );
 const mixIngredientOptionStyles = readFileSync(
@@ -184,7 +184,7 @@ describe("ingredient card media architecture", () => {
 		expect(productImageEvidenceInput).toContain("<ImagePlacementEditor");
 		expect(productImagePanel).toContain("<ImagePlacementEditor");
 		expect(productImagePanel).toContain("{showWarningEdge}");
-		expect(moderationPage).toContain("<ImagePlacementEditor");
+		expect(productSubmissionReviewList).toContain("<ImagePlacementEditor");
 	});
 
 	it("uses shared left-only geometry for card rendering and placement previews", () => {
