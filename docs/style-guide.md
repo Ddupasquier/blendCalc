@@ -148,7 +148,7 @@ theme surface as permanent black-label paper.
 
 | Role                  | Token                  | Value     | Use                                               |
 | --------------------- | ---------------------- | --------- | ------------------------------------------------- |
-| Warning amber         | `$app-highlight`       | `#f4b942` | Ingredient-card warning edge and privileged crown |
+| Warning amber         | `$app-highlight`       | `#f4b942` | Ordinary ingredient-card warning edge and privileged crown |
 | Warning hover/strong  | `$app-highlight-hover` | `#d99a24` | Strong warning emphasis, not ordinary copy        |
 | Error base            | `$app-danger-bg`       | `#e7b0b8` | Source color for error surfaces                   |
 | Destructive brown-red | `$app-danger-action`   | `#9c5f46` | Destructive/strong error treatment                |
@@ -336,7 +336,8 @@ summary control height and section border; opening it restores the normal tokeni
 inset without changing the summary target or introducing a second panel shell.
 
 The compact manual-entry action is one `44px` pencil-only button in the same toolbar row
-as Search, Barcode, and Filters. It uses the shared rounded icon-control shape and keeps
+after Search and Barcode and before Filters. It uses the shared rounded icon-control
+shape and keeps
 the full accessible name `Enter a custom ingredient manually`; the larger launcher row
 is not shown at that tier. The toolbar launcher is the only page-level manual-entry
 action; Ingredients does not repeat it as a floating add button. The compact
@@ -431,6 +432,9 @@ Check the existing primitive before writing markup or SCSS.
 | Guided feature tour                   | `TutorialOverlay`            | Route-aware modal guidance with one rounded spotlight and a collision-aware instruction card        |
 | Repeated-tap safety                   | `TwoStepConfirmation`        | In-place double activation such as ingredient deletion                                              |
 | Privileged action container           | `PrivilegedActionGroup`      | Groups privileged moderator, admin, or developer actions and owns one crown                         |
+| Moderator review list                 | `ModeratorReviewList`        | Shared queue count, record spacing, and calm empty state for privileged review work                 |
+| Moderator review card                 | `ModeratorReviewCard`        | Identity/status header followed by evidence and decision content in one consistent card shell       |
+| Moderator tool help                   | `ModeratorActionInformationSheet` | Contextual purpose, review flow, decision effect, and guardrail opened from one circular info action |
 | Numeric amount                        | `NumberInput`                | Shared number semantics and control styling                                                         |
 | Text or multiline entry               | `TextField`                  | Shared label, helper, focus, disabled, text, search, and textarea presentation                       |
 | Single checkbox                       | `CheckboxField`              | Full-row checkbox target with shared focus, disabled, and responsive behavior                        |
@@ -647,9 +651,16 @@ placement previews remain identical.
   cleanly rather than adding empty rows or placeholders.
 - Keep the default reading path focused on the product image, current official safety
   notice, current personalized warning, Nutrition Facts, ingredients, and explicit
-  package disclosures. Group
-  supporting data quality, product/source metadata, and user-reporting tools under one
-  closed `More about this food` disclosure.
+  package disclosures. Group record history, information coverage, supporting data
+  quality, product/source metadata, and user-reporting tools under one closed
+  `Food passport` disclosure.
+- Keep the closed Food passport compact: title, chevron, and one bounded status badge.
+  Its open state uses a short summary and readable label/value rows before any nested
+  technical disclosures. Do not put current recalls, personalized warnings, Ingredients,
+  `Contains`, or `May contain` inside it.
+- Present absent passport data as `Not provided` and explain once that this does not mean
+  zero, none, allergen-free, or safe. Do not fill missing history with product update
+  timestamps, provider fetch dates, inferred verification, or the current time.
 - Group product, serving, and source metadata inside the shared `Product details`
   collapse within that supporting area and keep it closed by default.
 - Show the shared `Data quality` collapse only when bounded source-record metadata has
@@ -673,6 +684,9 @@ placement previews remain identical.
   payloads, internal matching evidence, or language that claims an unmatched product is
   safe. Official-notice presentation never replaces medical advice or checking the
   current package.
+- Compact cards use the danger-red warning edge for a current exact or confirmed
+  official recall or similarly major safety alert. Ordinary dietary and preference
+  conflicts retain the amber warning edge.
 - Ingredients, `Contains`, `May contain`, source-backed dietary labels, and reviewed
   dietary considerations remain plain text against the app background unless
   interaction or status requires a surface. Do not expose internal match expressions,
@@ -702,6 +716,13 @@ workout jokes plus a small number of widely recognizable gamer references are
 appropriate. Deep developer references and jokes inside allergen, medical,
 authentication, validation, warning, or failure instructions are not.
 
+Playful messages are a separate database-backed tone that defaults on and remains
+user-disableable. Keep them PG-13 and limited to approved successful food-add,
+goal-match, and recipe-save moments. They never appear around allergens, recalls, alcohol safety,
+medical guidance, authentication, validation, errors, body weight, or minors. Do not
+infer playful triggers from unreviewed food names, density, texture, or other guessed
+properties.
+
 Compact ingredient conflicts do not use `StatusMessage`; they use `CardWarningEdge` and
 an accessible action label. The full warning appears in the detailed view.
 Detailed ingredient preference conflicts use the shared `StatusMessage` top-end icon
@@ -713,6 +734,12 @@ reporting interface for every warning in the default view.
 ## Badges And Privileged Actions
 
 - Use badges only when the state helps the current decision.
+- Focused moderator tools use one crown and one circular information action in the view
+  header. Do not repeat the crown on each review card or leave full workflow instructions
+  permanently expanded in the action body.
+- Moderator review cards read from identity and status to key facts, supporting evidence,
+  and finally the decision. Long evidence and technical details use shared closed
+  disclosures; the decision itself stays easy to find after those disclosures.
 - Compact ingredient cards do not show provider-origin badges.
 - Search may show verification because it affects whether a user adds a result.
 - Nutrition detail may show verification and neutral source attribution.

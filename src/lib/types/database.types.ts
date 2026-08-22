@@ -297,6 +297,7 @@ export type Database = {
           message: string
           minimum_value: number | null
           priority: number
+          tone: string
           trigger_key: string
           updated_at: string
         }
@@ -310,6 +311,7 @@ export type Database = {
           message: string
           minimum_value?: number | null
           priority?: number
+          tone?: string
           trigger_key: string
           updated_at?: string
         }
@@ -323,6 +325,7 @@ export type Database = {
           message?: string
           minimum_value?: number | null
           priority?: number
+          tone?: string
           trigger_key?: string
           updated_at?: string
         }
@@ -5408,6 +5411,59 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_image_reports: {
+        Row: {
+          avatar_path: string
+          created_at: string
+          details: string | null
+          id: string
+          reason_code: string
+          reported_by: string
+          reported_profile_user_id: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_path: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason_code: string
+          reported_by: string
+          reported_profile_user_id: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_path?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason_code?: string
+          reported_by?: string
+          reported_profile_user_id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_image_reports_reported_profile_user_id_fkey"
+            columns: ["reported_profile_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           appearance_theme: string
@@ -5416,6 +5472,7 @@ export type Database = {
           avatar_path: string | null
           avatar_policy_acknowledged_at: string | null
           bio: string | null
+          cheeky_messages_enabled: boolean
           created_at: string
           display_name: string
           updated_at: string
@@ -5428,6 +5485,7 @@ export type Database = {
           avatar_path?: string | null
           avatar_policy_acknowledged_at?: string | null
           bio?: string | null
+          cheeky_messages_enabled?: boolean
           created_at?: string
           display_name: string
           updated_at?: string
@@ -5440,6 +5498,7 @@ export type Database = {
           avatar_path?: string | null
           avatar_policy_acknowledged_at?: string | null
           bio?: string | null
+          cheeky_messages_enabled?: boolean
           created_at?: string
           display_name?: string
           updated_at?: string
@@ -7217,6 +7276,7 @@ export type Database = {
         Args: { p_days?: number; p_issue_limit?: number }
         Returns: Json
       }
+      get_pending_profile_image_review_count: { Args: never; Returns: number }
       is_valid_gtin: { Args: { p_value: string }; Returns: boolean }
       jsonb_text_array_search_text: { Args: { p_value: Json }; Returns: string }
       mark_product_safety_alert_notification_read: {

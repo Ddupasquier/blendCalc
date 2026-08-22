@@ -40,7 +40,8 @@ const getFoodSearchIdentityKeys = (food: FoodItem) => {
 };
 
 export const isUsableIngredientSearchResult = (food: FoodItem) =>
-	food.description.trim().length > 0 && food.foodNutrients.length > 0;
+	food.description.trim().length > 0 &&
+	(food.foodNutrients.length > 0 || (food.safetyAlerts?.length ?? 0) > 0);
 
 export const mergeIngredientSearchResults = (...resultGroups: FoodItem[][]) => {
 	const foods = resultGroups.flat();

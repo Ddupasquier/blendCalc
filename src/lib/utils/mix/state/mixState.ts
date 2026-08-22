@@ -20,6 +20,7 @@ import {
 	normalizeNutrientOptions,
 	normalizeServingUnit,
 	optionsFromSelectedNutrientIds,
+	type MixDefaultServingPreferences,
 	type NutrientOption,
 	type LegacyPersistedMixState,
 } from "$lib/utils/mix/ui/mixUi";
@@ -45,14 +46,32 @@ export type ServingStateSnapshot = Pick<
 	"servingGrams" | "servingQuantities" | "servingUnits"
 >;
 
-export const getDefaultMixState = (): MixStateSnapshot => ({
-	selected: getDefaultMixFields().map((nutrient) => nutrient.id),
-	options: getDefaultNutrientOptions(),
-	selectedFoodIds: [],
-	servingGrams: {},
-	servingQuantities: {},
-	servingUnits: {},
-});
+export const getDefaultMixState = (
+	prioritizedNutrientIds: number[] = [],
+): MixStateSnapshot => {
+	const defaultMixFields = getDefaultMixFields();
+	const defaultNutrientIdSet = new Set(
+		defaultMixFields.map((nutrient) => nutrient.id),
+	);
+	const validPrioritizedNutrientIds = [...new Set(prioritizedNutrientIds)].filter(
+		(nutrientId) => defaultNutrientIdSet.has(nutrientId),
+	);
+	const orderedNutrientIds = [
+		...validPrioritizedNutrientIds,
+		...defaultMixFields
+			.map((nutrient) => nutrient.id)
+			.filter((nutrientId) => !validPrioritizedNutrientIds.includes(nutrientId)),
+	];
+
+	return {
+		selected: orderedNutrientIds,
+		options: optionsFromSelectedNutrientIds(orderedNutrientIds, [defaultMixFields]),
+		selectedFoodIds: [],
+		servingGrams: {},
+		servingQuantities: {},
+		servingUnits: {},
+	};
+};
 
 export const getEmptyServingState = (): ServingStateSnapshot => ({
 	servingGrams: {},
@@ -74,7 +93,7 @@ export const getServingUnit = (
 	food: FoodItem,
 	servingUnits: Record<number, ServingMeasureUnit>,
 ) => {
-	return normalizeServingUnit(servingUnits[food.fdcId]) ?? "g";
+	return normalizeServingUnit(servingUnits[food.fdcId], food) ?? "g";
 };
 
 export const getServingConversion = (
@@ -149,7 +168,10 @@ export const readStoredMixState = (
 					? parseServingAmount(persistedMixState.servingInputs[foodId])
 					: null;
 				const requestedUnit =
-					normalizeServingUnit(persistedMixState.servingUnits?.[foodId]) ??
+						normalizeServingUnit(
+							persistedMixState.servingUnits?.[foodId],
+							food,
+						) ??
 					parsedInput?.unit ??
 					"g";
 				return [
@@ -233,6 +255,7 @@ export const getStateWithToggledFood = (
 	state: MixStateSnapshot,
 	foodId: number,
 	allIngredientItems: FoodItem[],
+	defaultServingPreferences: MixDefaultServingPreferences = {},
 ): MixStateSnapshot => {
 	if (state.selectedFoodIds.includes(foodId)) {
 		return {
@@ -242,7 +265,7 @@ export const getStateWithToggledFood = (
 	}
 
 	const food = allIngredientItems.find((item) => item.fdcId === foodId);
-	const defaultServing = getDefaultServingAmount(food);
+	const defaultServing = getDefaultServingAmount(food, defaultServingPreferences);
 
 	return {
 		...state,

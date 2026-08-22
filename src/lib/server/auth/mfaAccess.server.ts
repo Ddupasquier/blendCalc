@@ -26,32 +26,39 @@ export type MfaAuthenticatedUserContext = {
 };
 
 const normalizeAuthenticatorLevel = (
-	value: string | null,
+	value: unknown,
 ): MfaAuthenticatorLevel =>
 	value === "aal1" || value === "aal2" ? value : null;
 
 export const readMfaSecurityStatus = async (
 	supabase: SupabaseClient<Database>,
 ): Promise<MfaSecurityStatus> => {
-	const [assuranceResult, factorsResult] = await Promise.all([
-		supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
-		supabase.auth.mfa.listFactors(),
-	]);
+	const verifiedUserResult = await supabase.auth.getUser();
+	if (verifiedUserResult.error) throw verifiedUserResult.error;
+	if (!verifiedUserResult.data.user) {
+		throw new Error("Verified Auth user is unavailable.");
+	}
 
-	if (assuranceResult.error) throw assuranceResult.error;
-	if (factorsResult.error) throw factorsResult.error;
+	const claimsResult = await supabase.auth.getClaims();
+	if (claimsResult.error) throw claimsResult.error;
 
-	return {
-		currentLevel: normalizeAuthenticatorLevel(
-			assuranceResult.data.currentLevel,
-		),
-		nextLevel: normalizeAuthenticatorLevel(assuranceResult.data.nextLevel),
-		verifiedTotpFactors: factorsResult.data.totp.map((factor) => ({
+	const currentLevel = normalizeAuthenticatorLevel(
+		claimsResult.data?.claims.aal,
+	);
+	const verifiedTotpFactors = (verifiedUserResult.data.user.factors ?? [])
+		.filter((factor) =>
+			factor.factor_type === "totp" && factor.status === "verified")
+		.map((factor) => ({
 			id: factor.id,
 			friendlyName: factor.friendly_name ?? null,
 			createdAt: factor.created_at,
 			updatedAt: factor.updated_at,
-		})),
+		}));
+
+	return {
+		currentLevel,
+		nextLevel: verifiedTotpFactors.length > 0 ? "aal2" : currentLevel,
+		verifiedTotpFactors,
 	};
 };
 

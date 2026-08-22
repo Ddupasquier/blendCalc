@@ -1,4 +1,5 @@
 import { LIST_PAGE_SIZES } from "$lib/config/listPagination";
+import type { FoodItem } from "$lib/utils/food/types";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { IngredientPageInitialData } from "$lib/types/pageData/ingredientPageData";
 import { readIngredientProvenanceOptions } from "$lib/utils/ingredients/ingredientProvenance";
@@ -20,6 +21,7 @@ import {
 } from "$lib/server/food-safety/foodSafetyEvaluation.server";
 import { getUserFoodSafetyContext } from "$lib/server/food-safety/userFoodSafety.server";
 import { getApprovedCatalogRecordByApplicationFoodId } from "$lib/server/products/catalogRead.server";
+import { readCanonicalFoodCatalogMetadata } from "$lib/server/products/catalogRecordMetadata.server";
 import { readGenericFoodByApplicationId } from "$lib/server/products/genericFoods.server";
 import { getSupabaseAdminClient } from "$lib/supabase/admin.server";
 
@@ -66,25 +68,38 @@ const readIngredientRouteFoodByApplicationId = async (
 		return null;
 	}
 
+	let routeFood: FoodItem | null = null;
 	if (options.routeListKey) {
-		const foodFromRequestedList = await readCloudIngredientListFood(
+		routeFood = await readCloudIngredientListFood(
 			options.routeListKey,
 			Number(applicationFoodId),
 			cloudDataContext,
 		);
-		if (foodFromRequestedList) return foodFromRequestedList;
 	}
 
+	if (routeFood && !routeFood.sharedProductId) return routeFood;
+
 	const catalogClient = getSupabaseAdminClient();
-	const [customFood, approvedCatalogRecord, genericFood] = await Promise.all([
-		readCloudCustomFoodByFdcId(Number(applicationFoodId), cloudDataContext),
-		getApprovedCatalogRecordByApplicationFoodId(
-			catalogClient,
-			Number(applicationFoodId),
-		),
-		readGenericFoodByApplicationId(catalogClient, Number(applicationFoodId)),
-	]);
-	return customFood ?? approvedCatalogRecord?.food ?? genericFood;
+	if (!routeFood) {
+		const [customFood, approvedCatalogRecord, genericFood] = await Promise.all([
+			readCloudCustomFoodByFdcId(Number(applicationFoodId), cloudDataContext),
+			getApprovedCatalogRecordByApplicationFoodId(
+				catalogClient,
+				Number(applicationFoodId),
+			),
+			readGenericFoodByApplicationId(catalogClient, Number(applicationFoodId)),
+		]);
+		routeFood = customFood ?? approvedCatalogRecord?.food ?? genericFood;
+	}
+	if (!routeFood?.sharedProductId) return routeFood;
+
+	const canonicalCatalogMetadata = await readCanonicalFoodCatalogMetadata(
+		catalogClient,
+		routeFood.sharedProductId,
+	);
+	return canonicalCatalogMetadata
+		? { ...routeFood, canonicalCatalogMetadata }
+		: routeFood;
 };
 
 export const loadIngredientPageData = async (

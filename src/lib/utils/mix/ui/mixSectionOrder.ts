@@ -50,6 +50,19 @@ export const normalizeMixSectionOrder = (value: unknown): MixSectionId[] => {
 	];
 };
 
+export const getMixSectionOrderForIngredientAvailability = (
+	order: readonly MixSectionId[],
+	hasAvailableIngredients: boolean,
+): MixSectionId[] => {
+	const normalizedOrder = normalizeMixSectionOrder(order);
+	if (hasAvailableIngredients) return normalizedOrder;
+
+	return [
+		"add-ingredients",
+		...normalizedOrder.filter((sectionId) => sectionId !== "add-ingredients"),
+	];
+};
+
 export const normalizeMixSectionDisclosureState = (
 	value: unknown,
 ): MixSectionDisclosureState => {

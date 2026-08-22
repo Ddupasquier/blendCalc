@@ -76,3 +76,9 @@ export const getPrimaryFoodWarning = (food: FoodItem) => {
 	const warning = warnings.find((item) => item.level === "warning") ?? warnings[0];
 	return getFoodPreferenceWarningMessage(warning);
 };
+
+export const getFoodWarningEdgeTone = (food: FoodItem) => {
+	if ((food.safetyAlerts?.length ?? 0) > 0) return "danger" as const;
+	if ((food.preferenceWarnings?.length ?? 0) > 0) return "warning" as const;
+	return null;
+};

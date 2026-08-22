@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	getExactServingSizeConversionPreview,
 	getFoodPreferencesValidationError,
 	getServingSizeGrams,
 	parseRepeatedFoodPreferenceValues,
@@ -24,6 +25,16 @@ describe("food preference helpers", () => {
 		expect(getServingSizeGrams("2", "oz")).toBeCloseTo(56.699);
 		expect(getServingSizeGrams("150", "g")).toBe(150);
 		expect(getServingSizeGrams("0", "g")).toBeNull();
+	});
+
+	it("previews exact weight conversions without estimating food density", () => {
+		expect(getExactServingSizeConversionPreview("28.349523125", "g")).toBe(
+			"28.3495 g = 1 oz · Exact unit conversion",
+		);
+		expect(getExactServingSizeConversionPreview("2", "oz")).toBe(
+			"2 oz = 56.699 g · Exact unit conversion",
+		);
+		expect(getExactServingSizeConversionPreview("", "g")).toBeNull();
 	});
 
 	it("validates acknowledgement before saving sensitive preferences", () => {

@@ -383,6 +383,17 @@ describe("NutritionPanel", () => {
 			props: {
 				food: {
 					...peanutButter,
+					sharedProductId: "shared-product-1",
+					trustStatus: "moderator-reviewed",
+					canonicalCatalogMetadata: {
+						recordCreatedAt: "2026-07-01T00:00:00.000Z",
+						recordUpdatedAt: "2026-08-10T00:00:00.000Z",
+						lastVerifiedAt: "2026-08-11T00:00:00.000Z",
+						currentRevisionId: "revision-3",
+						currentRevisionNumber: 3,
+						currentRevisionCreatedAt: "2026-08-10T00:00:00.000Z",
+						currentLabelObservedAt: "2026-08-09T00:00:00.000Z",
+					},
 					brandOwner: "Example Foods",
 					barcode: "00012345678905",
 					barcodeProvenance: {
@@ -512,11 +523,18 @@ describe("NutritionPanel", () => {
 			},
 		});
 
-		const moreTitle = screen.getByText("More about this food");
-		const moreDetails = moreTitle.closest("details");
-		expect(moreDetails).not.toHaveAttribute("open");
-		await fireEvent.click(moreTitle.closest("summary") as HTMLElement);
-		expect(moreDetails).toHaveAttribute("open");
+		const passportTitle = screen.getByText("Food passport");
+		const passportDetails = passportTitle.closest("details");
+		expect(passportDetails).not.toHaveAttribute("open");
+		expect(passportDetails?.querySelector("summary")).toHaveTextContent("Verified");
+		await fireEvent.click(passportTitle.closest("summary") as HTMLElement);
+		expect(passportDetails).toHaveAttribute("open");
+		expect(screen.getByText("Revision 3")).toBeInTheDocument();
+		expect(screen.getByText("Aug 11, 2026")).toBeInTheDocument();
+		expect(screen.getByRole("heading", { name: "Information available" }))
+			.toBeInTheDocument();
+		expect(screen.getByText(/does not mean zero, none, or allergen-free/i))
+			.toBeInTheDocument();
 
 		const productDetailsTitle = screen.getByText("Product details");
 		const productDetailsSummary = productDetailsTitle.closest("summary");

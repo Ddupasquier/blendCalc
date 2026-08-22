@@ -9,6 +9,10 @@
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import BottomSheet from "$lib/components/common/sheets/BottomSheet/BottomSheet.svelte";
 	import BottomSheetAction from "$lib/components/common/sheets/BottomSheetAction/BottomSheetAction.svelte";
+	import {
+		getProfileSettingsRouteHref,
+		PROFILE_SETTINGS_ROUTES,
+	} from "$lib/utils/profile/profileRouteState";
 	import type { ProfileModeratorActionSheetProps } from "./types";
 
 	let {
@@ -67,7 +71,7 @@
 				disabled={isQueueActionDisabled(summary.pendingProductSubmissions)}
 				actionRequiredCount={summary.pendingProductSubmissions ?? 0}
 				actionRequiredLabel="product submissions requiring review"
-				onSelect={() => openModeratorDestination("/moderation#product-review")}
+				onSelect={() => openModeratorDestination(getProfileSettingsRouteHref(PROFILE_SETTINGS_ROUTES.moderatorProductSubmissions))}
 			>
 				{#snippet icon()}<BrandCup />{/snippet}
 			</BottomSheetAction>
@@ -77,7 +81,7 @@
 				disabled={isQueueActionDisabled(summary.pendingFoodWarningReports)}
 				actionRequiredCount={summary.pendingFoodWarningReports ?? 0}
 				actionRequiredLabel="food warning reports requiring review"
-				onSelect={() => openModeratorDestination("/moderation#compatibility-review")}
+				onSelect={() => openModeratorDestination(getProfileSettingsRouteHref(PROFILE_SETTINGS_ROUTES.moderatorFoodWarningReports))}
 			>
 				{#snippet icon()}<WarningTriangle />{/snippet}
 			</BottomSheetAction>
@@ -87,21 +91,21 @@
 				disabled={isQueueActionDisabled(summary.pendingProfileImageReviews)}
 				actionRequiredCount={summary.pendingProfileImageReviews ?? 0}
 				actionRequiredLabel="profile images requiring review"
-				onSelect={() => openModeratorDestination("/moderation?q=pending#account-review")}
+				onSelect={() => openModeratorDestination(getProfileSettingsRouteHref(PROFILE_SETTINGS_ROUTES.moderatorProfileImages))}
 			>
 				{#snippet icon()}<User />{/snippet}
 			</BottomSheetAction>
 			<BottomSheetAction
 				label="Account access"
 				description="Search accounts, block access, or restore access"
-				onSelect={() => openModeratorDestination("/moderation#account-review")}
+				onSelect={() => openModeratorDestination(getProfileSettingsRouteHref(PROFILE_SETTINGS_ROUTES.moderatorAccountAccess))}
 			>
 				{#snippet icon()}<ShieldCheck />{/snippet}
 			</BottomSheetAction>
 			<BottomSheetAction
 				label="Catalog data health"
 				description="Review source, mapping, policy, and API readiness"
-				onSelect={() => openModeratorDestination("/moderation/data-health")}
+				onSelect={() => openModeratorDestination(getProfileSettingsRouteHref(PROFILE_SETTINGS_ROUTES.moderatorCatalogDataHealth))}
 			>
 				{#snippet icon()}<Sliders />{/snippet}
 			</BottomSheetAction>

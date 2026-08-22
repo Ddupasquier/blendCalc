@@ -50,6 +50,12 @@ type LocalQaMixGoalConfigurationSnapshot = {
 	}>;
 };
 
+export type LocalQaSavedRecipeRecord = {
+	id: string;
+	name: string;
+	recipe: Record<string, Json | undefined>;
+};
+
 export const captureLocalQaMixGoalConfiguration = async (
 	parallelWorkerIndex: number,
 ): Promise<LocalQaMixGoalConfigurationSnapshot> => {
@@ -97,7 +103,6 @@ export const captureLocalQaMixGoalConfiguration = async (
 		await supabase.auth.signOut({ scope: "local" });
 	}
 };
-
 export const restoreLocalQaMixGoalConfiguration = async (
 	parallelWorkerIndex: number,
 	snapshot: LocalQaMixGoalConfigurationSnapshot,
@@ -146,6 +151,82 @@ export const saveLocalQaMixState = async (
 			p_mix_state: mixState,
 		});
 		if (error) throw error;
+	} finally {
+		await supabase.auth.signOut({ scope: "local" });
+	}
+};
+
+export const saveLocalQaMixGoalConfiguration = async (
+	parallelWorkerIndex: number,
+	goals: LocalQaMixGoalConfigurationSnapshot["goals"],
+) => {
+	const supabase = await createAuthenticatedLocalQaDatabaseClient(
+		parallelWorkerIndex,
+	);
+
+	try {
+		const { error } = await supabase.rpc("save_mix_goal_configuration", {
+			p_customized: true,
+			p_goal_basis: "per_mix",
+			p_goals: goals as Json,
+		});
+		if (error) throw error;
+	} finally {
+		await supabase.auth.signOut({ scope: "local" });
+	}
+};
+
+export const readLocalQaSavedRecipesByNamePrefix = async (
+	parallelWorkerIndex: number,
+	namePrefix: string,
+): Promise<LocalQaSavedRecipeRecord[]> => {
+	const supabase = await createAuthenticatedLocalQaDatabaseClient(
+		parallelWorkerIndex,
+	);
+
+	try {
+		const { data, error } = await supabase
+			.from("saved_drinks")
+			.select("id, name, drink")
+			.ilike("name", `${namePrefix}%`)
+			.order("created_at", { ascending: true });
+		if (error) throw error;
+
+		return (data ?? []).map((row) => ({
+			id: row.id,
+			name: row.name,
+			recipe: row.drink as Record<string, Json | undefined>,
+		}));
+	} finally {
+		await supabase.auth.signOut({ scope: "local" });
+	}
+};
+
+export const deleteLocalQaSavedRecipesByNamePrefix = async (
+	parallelWorkerIndex: number,
+	namePrefix: string,
+) => {
+	const supabase = await createAuthenticatedLocalQaDatabaseClient(
+		parallelWorkerIndex,
+	);
+
+	try {
+		const { data, error } = await supabase
+			.from("saved_drinks")
+			.select("id")
+			.ilike("name", `${namePrefix}%`);
+		if (error) throw error;
+
+		for (const row of data ?? []) {
+			const { data: deleted, error: deleteError } = await supabase.rpc(
+				"delete_saved_drink",
+				{ p_id: row.id },
+			);
+			if (deleteError) throw deleteError;
+			if (deleted !== true) {
+				throw new Error(`Local QA recipe ${row.id} could not be deleted.`);
+			}
+		}
 	} finally {
 		await supabase.auth.signOut({ scope: "local" });
 	}

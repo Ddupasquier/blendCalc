@@ -1886,7 +1886,12 @@ source attribution.
 
 **46.** <a id="rule-qa-links"></a>QA tasks must include exact reproduction steps,
 concrete example inputs, observable expected outcomes, exact code references, and links
-to the relevant development rules. Every task must use the `Repro`, `Example input`, and
+to the relevant development rules. Every task heading must keep its stable ID and add a
+concise, outcome-focused title in the form
+`QA-GROUP-TASK — Descriptive Task Title`. The title must identify the specific behavior
+being proved rather than repeat only the surrounding group name, and it must remain with
+the task when the task moves to the completed archive. Update the title when the task's
+real scope changes. Every task must use the `Repro`, `Example input`, and
 `Expected` labels. `Repro` must be a numbered bullet list with one exact action per
 step. Whenever a repro step names a static application or API route that can be opened
 directly, render that route as a clickable absolute localhost link, such as

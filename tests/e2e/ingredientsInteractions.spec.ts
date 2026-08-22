@@ -460,6 +460,19 @@ test("Ingredients exposes one page-level manual-entry action without a duplicate
 			name: "Enter a custom ingredient manually",
 		}),
 	).toHaveCount(1);
+	const filterAction = page.getByRole("button", {
+		name: "Sort saved ingredients",
+		exact: true,
+	});
+	const manualEntryBounds = await manualEntryAction.boundingBox();
+	const filterBounds = await filterAction.boundingBox();
+	expect(manualEntryBounds).not.toBeNull();
+	expect(filterBounds).not.toBeNull();
+	expect(Math.abs(
+		manualEntryBounds!.y + manualEntryBounds!.height / 2 -
+			(filterBounds!.y + filterBounds!.height / 2),
+	)).toBeLessThanOrEqual(1);
+	expect(manualEntryBounds!.x).toBeLessThan(filterBounds!.x);
 
 	await manualEntryAction.click();
 	await expect(page).toHaveURL(/\/ingredients\/fridge\/manual-entry$/);
@@ -1006,6 +1019,26 @@ test("ingredient search uses keyboard selection without turning the add action i
 	await search.press("ArrowDown");
 	await search.press("Enter");
 	await expect(page).toHaveURL(/\/nutrition\//);
+});
+
+test("ingredient search finds every product linked to a matching recall supplier", async ({
+	page,
+}) => {
+	await page.goto("/ingredients/fridge/search");
+	await waitForAppReady(page);
+	const search = page.getByRole("combobox", { name: "Search ingredients" });
+	await search.fill("Taylor Farms");
+
+	for (const productName of [
+		"Marketside Iceberg Salad, 12 Ounce",
+		"Marketside Iceberg Salad, 24 Ounce",
+		"Marketside Shredded Iceberg Lettuce, 8 Ounce",
+		"Marketside Shredded Iceberg Lettuce, 16 Ounce",
+	]) {
+		await expect(page.getByRole("row", {
+			name: new RegExp(`^${productName},`),
+		})).toBeVisible();
+	}
 });
 
 test("ingredient search cards preserve media, copy, status, and action geometry", async ({

@@ -98,6 +98,8 @@ describe("ingredient search route", () => {
 		} as never);
 
 		expect(response.status).toBe(200);
+		expect(mocks.annotateFoodsWithFoodSafety).toHaveBeenCalledTimes(1);
+		expect(mocks.annotateFoodsWithFoodSafety.mock.calls[0][0]).toHaveLength(3);
 		expect(mocks.hydrateFoodsWithCachedImages).toHaveBeenCalledTimes(1);
 		expect(mocks.hydrateFoodsWithCachedImages.mock.calls[0][0]).toBe(
 			mocks.adminClient,

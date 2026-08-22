@@ -75,6 +75,22 @@ the admin capability at its live server boundary. Separate moderation rules stil
 prevent self-actions, prevent moderators from acting on elevated users, and prevent the
 web workflow from blocking administrators or developers.
 
+## Review Interface
+
+Profile links to five focused moderator right sheets: product submissions, food-warning
+reports, reported profile images, account access, and catalog data health. Each sheet
+uses the same review order: concise queue or result status, record identity and key facts,
+closed supporting-evidence disclosures, then the decision controls. One shared
+information action explains the purpose, review steps, effect, and guardrail for the
+current tool without mixing instructions into every record.
+
+Product submissions, food-warning reports, and reported profile images share the same
+review-list and card shells. Account access remains search-led and keeps account evidence
+plus destructive controls behind deliberate disclosures. Catalog data health keeps its
+readiness snapshot and specialized operational sections collapsed until requested. The
+visual consistency never replaces each route's independent server, database, AAL2, and
+permission checks.
+
 Add `SUPABASE_SERVICE_ROLE_KEY` to the Vercel project as a sensitive **Production-only**
 environment variable, then redeploy. Do not expose this key to arbitrary preview
 branches; preview code can change before review and the service role bypasses RLS.
@@ -287,7 +303,8 @@ details to other users.
 
 ## Catalog Data Health
 
-`/moderation/data-health` is a privileged catalog health summary available to
+`/profile/moderator-actions/catalog-data-health` is the primary privileged catalog
+health summary available to
 moderators, admins, and developers. Its server
 load calls `get_moderator_data_health` through the signed-in user's Supabase client. The
 RPC requires both a signed AAL2 permission and a current database role assignment. The
@@ -325,6 +342,19 @@ Probable recall matches can be confirmed or dismissed only by an elevated AAL2 s
 Exact GTIN matches are visible immediately, while title-only similarity never enters
 the queue.
 
+Profile is the moderator navigation gateway. `/profile/moderator-actions` opens the
+compact action list, while the following direct routes own focused right sheets:
+
+- `/profile/moderator-actions/product-submissions`;
+- `/profile/moderator-actions/food-warning-reports`;
+- `/profile/moderator-actions/profile-images`;
+- `/profile/moderator-actions/account-access`; and
+- `/profile/moderator-actions/catalog-data-health`.
+
+Every direct route repeats the current role and AAL2 checks on the server. Legacy
+`/moderation` routes remain compatibility entry points while links and Profile flows use
+the focused routes.
+
 ## Enable Future-Signup Blocking
 
 The migration creates `public.reject_blocked_signup(event jsonb)`, but Supabase must be
@@ -340,9 +370,21 @@ account using the same email after the original account is removed.
 
 ## Profile Image Moderation
 
-Profile uploads retain immutable policy-acceptance evidence, but that self-attestation
-does not replace moderation. The upload, storage, replacement, and consent contract is
-maintained in [`user-profiles.md`](user-profiles.md).
+Profile uploads retain immutable policy-acceptance evidence and become usable without a
+default moderator review. Ordinary uploads therefore do not increase the Profile images
+queue count.
+
+`profile_image_reports` stores reports against an exact current private Storage path.
+Only trusted server workflows may create, read, or review those reports. The focused
+moderator queue groups multiple pending reports about the same image into one action.
+The image remains visible while review is pending; a report alone cannot censor an
+account. Dismissing a report keeps the image. Removing it clears only the exact reported
+current image, preserves the report history, and does not block the account. Replacing
+an image supersedes pending reports about the old path.
+
+User-facing report intake belongs to the future social surface that exposes another
+user's profile image. The upload, storage, replacement, consent, and future reporting
+contract is maintained in [`user-profiles.md`](user-profiles.md).
 
 ## IP Addresses
 

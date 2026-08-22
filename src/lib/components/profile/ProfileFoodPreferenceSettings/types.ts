@@ -19,8 +19,14 @@ export type ProfileFoodPreferenceSettingsProps = {
 
 export type FoodPreferenceGroupKey = "allergens" | "dietaryRestrictions";
 
+export type FoodPreferenceDisclosureKey =
+	| "region"
+	| "measurements"
+	| FoodPreferenceGroupKey
+	| "priorityNutrients";
+
 export type FoodPreferenceGroupPresentation = {
 	title: string;
-	helper: string;
+	description: string;
 	customEntryLabel: string;
 };

@@ -8,6 +8,11 @@ export default defineConfig({
 		target: ['chrome111', 'edge111', 'firefox113', 'safari16.4'],
 		cssTarget: ['chrome111', 'edge111', 'firefox113', 'safari16.4']
 	},
+	server: {
+		watch: {
+			ignored: ['**/playwright-report/**', '**/test-results/**']
+		}
+	},
 	test: {
 		include: ['tests/**/*.{test,spec}.{js,mjs,ts}'],
 		exclude: ['tests/e2e/**'],

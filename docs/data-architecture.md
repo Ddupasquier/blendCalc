@@ -40,9 +40,12 @@ rendered cards cannot drift into separate symbol policies.
 
 The server-loaded application reference catalog also owns optional delight copy from
 `app_delight_messages`. Client resolvers provide reviewed semantic trigger keys and may
-render at most one matching line as secondary presentation. This catalog never owns or
-replaces authentication, safety, validation, warning, or failure instructions; those
-remain stable code-based messages backed by server and database evidence.
+render at most one matching line as secondary presentation. Standard and reviewed
+playful copy are available by default to signed-in accounts, and the account can turn
+playful messages off. The resolver independently restricts playful rows to approved
+non-safety success triggers. This catalog never owns or replaces
+authentication, safety, validation, warning, or failure instructions; those remain
+stable code-based messages backed by server and database evidence.
 
 ## Write Flow
 
@@ -72,6 +75,12 @@ The account appearance theme is profile-owned durable data. A validated
 correct theme before the page paints. The cookie is not a competing source of truth:
 authenticated layout loads reconcile it from `profiles.appearance_theme`, and invalid
 or missing values resolve to the device theme.
+
+Profile-image policy acceptances preserve upload consent, while
+`profile_image_reports` owns private, exact-image report and review history. Ordinary
+uploads remain active and outside the moderation queue. Future social report intake and
+current moderator reads/writes cross trusted server boundaries; browser clients receive
+neither the report table nor reporter identity.
 
 Mix section order and open/closed disclosure state are account-owned presentation
 preferences stored in `mix_preferences`. Authenticated RPCs validate the complete set
@@ -161,8 +170,10 @@ Product revalidation follows this sequence:
 5. An accepted correction still uses the ordinary catalog revision workflow. A monitor
    review cannot claim acceptance without linking the approved revision it produced.
 
-Official FDA enforcement and USDA FSIS recall feeds use independent cursors, retries,
-and histories so one unavailable source does not stop the other or product revalidation.
+Official FDA recall announcements and enforcement records share one FDA-owned cursor
+with independent bounded offsets; USDA FSIS uses its own cursor, retry, and history.
+An unchanged FDA announcement index is skipped with conditional requests, and an
+unavailable safety source does not stop the other source or product revalidation.
 The database matches exact normalized GTINs automatically, sends strong brand/product/
 package identity matches to moderation, and ignores weak title-only similarity. Exact
 and confirmed active matches are hydrated onto catalog-backed foods, enqueue owner-only
@@ -225,6 +236,12 @@ coerced to zero and are not discarded. Ordinary nutrition details translate only
 bounded useful summaries into the closed Data quality disclosure. The public API omits
 internal mapping review references; moderator-only provenance reads receive the exact
 normalized rows and complete source review trail.
+
+Nutrition-detail routes may attach fresh canonical catalog metadata to the hydrated food
+read model for the closed Food passport. That route-only metadata includes accepted
+record creation, last verification, latest revision, and label-observation dates. It is
+read from normalized catalog tables, is not copied into user list snapshots or browser
+storage, and remains absent for private or generic foods when the concepts do not apply.
 
 ## Server-Owned Compatibility Policy
 

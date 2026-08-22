@@ -40,6 +40,11 @@
 	background: $app-shell-accent-soft;
 }
 
+:global(.text-badge[data-tone="warning"]) {
+	color: $app-warning-text;
+	background: $app-warning-bg;
+}
+
 :global(.text-badge[data-tone="neutral"]) {
 	color: $app-muted;
 	background: $app-shell-surface-control;

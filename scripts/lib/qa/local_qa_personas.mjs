@@ -283,12 +283,15 @@ const populatedLists = {
 const warningLists = {
   fridge: [
     "08801005523455",
+    "00041290355296",
+    "09000000000025",
     "09000000000124",
     "09000000000131",
     "09000000000032",
     "09000000000209",
     "09000000000216",
     "09000000000223",
+    "00681131328944",
   ],
   shopping: ["00869759000149", "09000000000063", "09000000000148"],
 };
@@ -363,7 +366,7 @@ export const localQaPersonas = [
   {
     key: "preferences",
     purpose:
-      "Food-warning coverage for vegan, gluten, peanut, shellfish, and alcohol-label rules",
+      "Food-warning coverage for vegan, gluten, peanut, shellfish, milk, and alcohol-label rules",
     email: "qa-preferences@blendcalc.local",
     displayName: "QA Food Warnings",
     role: "user",
@@ -374,7 +377,7 @@ export const localQaPersonas = [
     privateFoodKeys: [],
     preferences: {
       unit_system: "us",
-      allergens: ["peanut", "shellfish"],
+      allergens: ["peanut", "shellfish", "milk"],
       dietary_restrictions: ["vegan", "gluten-free"],
       prioritized_nutrient_ids: [1008, 1003, 1079],
       default_smoothie_serving_grams: 350,

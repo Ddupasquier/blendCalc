@@ -8,8 +8,11 @@ import {
 	type ServingMeasureDimension,
 	type ServingMeasureUnit,
 } from "$lib/utils/serving/servingMeasureCatalog";
-import type { FoodItem } from "../food/types";
-import type { FoodServingGramWeightMethod } from "../food/types";
+import type {
+	FoodItem,
+	FoodServing,
+	FoodServingGramWeightMethod,
+} from "../food/types";
 
 export type ParsedServingAmount = {
 	grams: number;
@@ -39,6 +42,72 @@ export type ServingConversion = {
 	method: FoodServingGramWeightMethod;
 	basis: string | null;
 };
+
+export type SourceServingMeasureOption = {
+	value: ServingMeasureUnit;
+	label: string;
+	gramWeight: number;
+	serving: FoodServing;
+};
+
+const SOURCE_SERVING_MEASURE_PREFIX = "source-serving:";
+
+const isPositiveNumber = (value: unknown): value is number =>
+	typeof value === "number" && Number.isFinite(value) && value > 0;
+
+const normalizeCalculatedAmount = (value: number) =>
+	Number(value.toFixed(9));
+
+const getSourceServingIdentity = (serving: FoodServing) =>
+	JSON.stringify([
+		serving.sourceMeasureKey?.trim() ?? "",
+		serving.label.trim(),
+		serving.gramWeight,
+	]);
+
+const getSourceServingMeasureValue = (serving: FoodServing) =>
+	`${SOURCE_SERVING_MEASURE_PREFIX}${encodeURIComponent(getSourceServingIdentity(serving))}`;
+
+const getSourceServingMeasureLabel = (serving: FoodServing) => {
+	const labelWithoutWeight = serving.label
+		.replace(/\s*\(\s*\d+(?:\.\d+)?\s*(?:g|gram|grams)\s*\)\s*$/i, "")
+		.trim();
+	const singularLabel = labelWithoutWeight.replace(/^1(?:\.0+)?\s+/, "").trim();
+	if (singularLabel !== labelWithoutWeight) return singularLabel;
+	return /^\d/.test(labelWithoutWeight)
+		? `${labelWithoutWeight} serving`
+		: labelWithoutWeight;
+};
+
+const hasCatalogMeasure = (serving: FoodServing) =>
+	isPositiveNumber(serving.amount) &&
+	typeof serving.unitKey === "string" &&
+	Boolean(getServingMeasureOption(serving.unitKey.trim()));
+
+export const getSourceServingMeasureOptions = (
+	food?: FoodItem,
+): SourceServingMeasureOption[] =>
+	(food?.foodServings ?? [])
+		.filter(
+			(serving) =>
+				serving.label.trim().length > 0 &&
+				isPositiveNumber(serving.gramWeight) &&
+				!hasCatalogMeasure(serving),
+		)
+		.map((serving) => ({
+			value: getSourceServingMeasureValue(serving),
+			label: getSourceServingMeasureLabel(serving),
+			gramWeight: serving.gramWeight,
+			serving,
+		}));
+
+export const getSourceServingMeasureOption = (
+	unit: ServingMeasureUnit,
+	food?: FoodItem,
+) =>
+	unit.startsWith(SOURCE_SERVING_MEASURE_PREFIX)
+		? getSourceServingMeasureOptions(food).find((option) => option.value === unit) ?? null
+		: null;
 
 const isWeightServingMeasureUnit = (
 	unit: ServingMeasureUnit,
@@ -75,17 +144,53 @@ export const convertServingToGrams = (
 	return convertServingAmount(quantity, unit, food).grams;
 };
 
+export const convertServingQuantityToUnit = (
+	quantity: number,
+	currentUnit: ServingMeasureUnit,
+	nextUnit: ServingMeasureUnit,
+	food?: FoodItem,
+) => {
+	const currentGrams = convertServingToGrams(quantity, currentUnit, food);
+	const nextUnitGrams = convertServingToGrams(1, nextUnit, food);
+	if (
+		currentGrams === null ||
+		nextUnitGrams === null ||
+		nextUnitGrams <= 0
+	) return null;
+	return currentGrams / nextUnitGrams;
+};
+
 export const convertServingAmount = (
 	quantity: number,
 	unit: ServingMeasureUnit,
 	food?: FoodItem,
 ): ServingConversion => {
 	const safeQuantity = Number.isFinite(quantity) && quantity >= 0 ? quantity : null;
+	const sourceServingOption = getSourceServingMeasureOption(unit, food);
+	if (sourceServingOption) {
+		const grams = safeQuantity === null
+			? null
+			: normalizeCalculatedAmount(
+				safeQuantity * sourceServingOption.gramWeight,
+			);
+		return {
+			grams,
+			milliliters: null,
+			dimension: "weight",
+			density: null,
+			available: grams !== null,
+			warning: null,
+			method: sourceServingOption.serving.gramWeightMethod ?? "source-reported",
+			basis: grams === null
+				? null
+				: `${safeQuantity} × ${sourceServingOption.serving.label} at ${sourceServingOption.gramWeight}g per serving`,
+		};
+	}
 	if (isWeightServingMeasureUnit(unit)) {
 		const conversion = DEFAULT_GRAMS_PER_WEIGHT_MEASURE[unit];
 		return {
 			grams: safeQuantity !== null && typeof conversion === "number"
-				? safeQuantity * conversion
+				? normalizeCalculatedAmount(safeQuantity * conversion)
 				: null,
 			milliliters: null,
 			dimension: "weight",
@@ -112,7 +217,9 @@ export const convertServingAmount = (
 			basis: null,
 		};
 	}
-	const milliliters = safeQuantity === null ? null : safeQuantity * volumeConversion;
+	const milliliters = safeQuantity === null
+		? null
+		: normalizeCalculatedAmount(safeQuantity * volumeConversion);
 	const density = getDensityConversion(food);
 	if (milliliters === null || !density) {
 		return {
@@ -126,7 +233,9 @@ export const convertServingAmount = (
 			basis: null,
 		};
 	}
-	const grams = milliliters * density.gramsPerMilliliter;
+	const grams = normalizeCalculatedAmount(
+		milliliters * density.gramsPerMilliliter,
+	);
 
 	return {
 		grams,
@@ -189,7 +298,7 @@ export const getDensityConversion = (food?: FoodItem): DensityConversion | null 
 export const canConvertServingUnit = (
 	unit: ServingMeasureUnit,
 	food?: FoodItem,
-) => isWeightServingMeasureUnit(unit) || (
+) => Boolean(getSourceServingMeasureOption(unit, food)) || isWeightServingMeasureUnit(unit) || (
 	getServingMeasureOption(unit)?.dimension === "volume" &&
 	Boolean(getDensityConversion(food))
 );

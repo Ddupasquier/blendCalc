@@ -30,6 +30,7 @@
 		shareWithCatalog,
 		barcodeShareMismatch,
 		lookingUpBarcode,
+		allowPlayfulMessages = true,
 		validatingBarcodeShare,
 		requiresCatalogEvidence,
 		showOptionalProductImageUpload,
@@ -305,6 +306,7 @@
 		<CustomIngredientOutcome
 			outcome={lastOutcome}
 			action={outcomeAction}
+			{allowPlayfulMessages}
 			onMoveToShopping={onMoveToShopping}
 			onMoveToFridge={onMoveToFridge}
 			onUndo={onUndo}

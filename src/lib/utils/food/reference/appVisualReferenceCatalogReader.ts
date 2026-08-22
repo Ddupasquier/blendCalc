@@ -101,21 +101,19 @@ const readFoodSymbolResolutionRules = async (
 };
 
 const readDelightMessages = async (supabase: SupabaseClient<Database>) => {
-	const result = await supabase
-		.from("app_delight_messages")
-		.select(
-			"key, context_key, trigger_key, match_key, message, minimum_value, maximum_value, priority",
-		)
-		.eq("enabled", true)
-		.order("priority", { ascending: true })
-		.order("key", { ascending: true });
-	if (result.error) {
-		if (isMissingAppVisualReferenceExpansion(result.error, ["app_delight_messages"])) {
-			return [];
-		}
-		throw result.error;
-	}
-	return (result.data ?? []).map((row) => ({
+	const mapDelightMessages = (
+		rows: Array<{
+			key: string;
+			context_key: string;
+			trigger_key: string;
+			match_key: string | null;
+			message: string;
+			minimum_value: number | null;
+			maximum_value: number | null;
+			priority: number;
+			tone?: string;
+		}>,
+	): AppDelightMessage[] => rows.map((row) => ({
 		key: row.key,
 		contextKey: row.context_key as AppDelightMessage["contextKey"],
 		triggerKey: row.trigger_key,
@@ -124,7 +122,40 @@ const readDelightMessages = async (supabase: SupabaseClient<Database>) => {
 		minimumValue: row.minimum_value === null ? null : Number(row.minimum_value),
 		maximumValue: row.maximum_value === null ? null : Number(row.maximum_value),
 		priority: row.priority,
+		tone: row.tone === "cheeky" ? "cheeky" : "standard",
 	}));
+	const currentResult = await supabase
+		.from("app_delight_messages")
+		.select(
+			"key, context_key, trigger_key, match_key, message, minimum_value, maximum_value, priority, tone",
+		)
+		.eq("enabled", true)
+		.order("priority", { ascending: true })
+		.order("key", { ascending: true });
+	if (!currentResult.error) {
+		return mapDelightMessages(currentResult.data ?? []);
+	}
+	if (isMissingAppVisualReferenceExpansion(currentResult.error, [
+		"app_delight_messages",
+		"tone",
+	])) {
+		if (currentResult.error.message?.toLowerCase().includes("tone")) {
+			const legacyResult = await supabase
+				.from("app_delight_messages")
+				.select(
+					"key, context_key, trigger_key, match_key, message, minimum_value, maximum_value, priority",
+				)
+				.eq("enabled", true)
+				.order("priority", { ascending: true })
+				.order("key", { ascending: true });
+			if (legacyResult.error) throw legacyResult.error;
+			return mapDelightMessages(legacyResult.data ?? []);
+		}
+		if (currentResult.error.message?.toLowerCase().includes("app_delight_messages")) {
+			return [];
+		}
+	}
+	throw currentResult.error;
 };
 
 export const readAppVisualReferenceCatalog = async (

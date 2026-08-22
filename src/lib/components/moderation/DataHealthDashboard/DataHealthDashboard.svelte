@@ -2,13 +2,20 @@
 	import { enhance } from "$app/forms";
 	import type { SubmitFunction } from "@sveltejs/kit";
 	import ActionButton from "$lib/components/common/buttons/ActionButton/ActionButton.svelte";
+	import RoundedActionLink from "$lib/components/common/buttons/RoundedActionLink/RoundedActionLink.svelte";
 	import PrivilegedActionBadge from "$lib/components/common/badges/PrivilegedActionBadge/PrivilegedActionBadge.svelte";
 	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
 	import CollapsibleSection from "$lib/components/common/disclosure/CollapsibleSection/CollapsibleSection.svelte";
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
+	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
 	import type { DataHealthDashboardProps } from "./types";
 
-	let { dashboard, catalogMonitor, viewerRole }: DataHealthDashboardProps = $props();
+	let {
+		dashboard,
+		catalogMonitor,
+		viewerRole,
+		showHeader = true,
+	}: DataHealthDashboardProps = $props();
 	let pendingReviewId = $state<string | null>(null);
 
 	const numberFormatter = new Intl.NumberFormat();
@@ -58,7 +65,12 @@
 	};
 </script>
 
-<section class="data-health" aria-labelledby="data-health-title">
+<section
+	class="data-health"
+	aria-labelledby={showHeader ? "data-health-title" : undefined}
+	aria-label={showHeader ? undefined : "Catalog data health"}
+>
+	{#if showHeader}
 	<header class="data-health__header">
 		<div>
 			<p class="data-health__eyebrow">{viewerRole} tools</p>
@@ -70,24 +82,35 @@
 		</div>
 		<PrivilegedActionBadge label="Moderator data health" />
 	</header>
+	{/if}
 
 	<p class="data-health__generated">
 		Updated {formatDate(dashboard.generatedAt)} · Source activity covers the last
 		{dashboard.metricWindowDays} days.
 	</p>
 
-	<section class="data-health__overview" aria-label="Data health overview">
-		{#each overviewItems as item (item.label)}
-			<article>
-				<TextBadge label={formatNumber(item.value)} tone={item.tone} />
-				<span>{item.label}</span>
-			</article>
-		{/each}
-	</section>
+	<CollapsibleSection
+		title="Catalog readiness snapshot"
+		badge={`${dashboard.overview.publicationReadyProducts}/${dashboard.overview.activeProducts} API ready`}
+		surface="panel"
+	>
+		<section class="data-health__overview" aria-label="Data health overview">
+			{#each overviewItems as item (item.label)}
+				<article>
+					<TextBadge label={formatNumber(item.value)} tone={item.tone} />
+					<span>{item.label}</span>
+				</article>
+			{/each}
+		</section>
+	</CollapsibleSection>
 
 	<nav class="data-health__queue-links" aria-label="Moderation queues">
-		<a href="/moderation#product-review">Review product submissions</a>
-		<a href="/moderation#compatibility-review">Review food warning reports</a>
+		<RoundedActionLink href="/profile/moderator-actions/product-submissions" variant="soft" fullWidth>
+			Review product submissions
+		</RoundedActionLink>
+		<RoundedActionLink href="/profile/moderator-actions/food-warning-reports" variant="soft" fullWidth>
+			Review food warning reports
+		</RoundedActionLink>
 	</nav>
 
 	<div class="data-health__sections">
@@ -162,10 +185,16 @@
 								]}
 								required
 							/>
-							<label>
-								<span>Evidence note</span>
-								<textarea name="reviewNote" maxlength="2000" required placeholder="What proves or disproves this match?"></textarea>
-							</label>
+							<TextField
+								id={`safety-match-review-note-${match.id}`}
+								name="reviewNote"
+								label="Evidence note"
+								placeholder="What proves or disproves this match?"
+								maxlength={2000}
+								multiline
+								rows={3}
+								required
+							/>
 							<ActionButton
 								type="submit"
 								variant="success"
@@ -197,10 +226,16 @@
 						<p class="data-health__review-guidance">If the provider is correct, submit the supported values through the existing catalog-correction workflow so approval creates a new revision. Dismissing this evidence never changes the current product.</p>
 						<form method="POST" action="?/dismissProviderChange" use:enhance={enhanceMonitorReview}>
 							<input type="hidden" name="reviewId" value={change.id} />
-							<label>
-								<span>Keep-current note</span>
-								<textarea name="reviewNote" maxlength="2000" required placeholder="Why is the current catalog revision still supported?"></textarea>
-							</label>
+							<TextField
+								id={`provider-change-review-note-${change.id}`}
+								name="reviewNote"
+								label="Keep-current note"
+								placeholder="Why is the current catalog revision still supported?"
+								maxlength={2000}
+								multiline
+								rows={3}
+								required
+							/>
 							<ActionButton
 								type="submit"
 								variant="success"
@@ -214,8 +249,16 @@
 			</div>
 		</CollapsibleSection>
 
-		<CollapsibleSection title="Source activity" badge={`${dashboard.sources.length}`} surface="panel">
+		<CollapsibleSection
+			title="Source activity"
+			badge={`${dashboard.sources.length}`}
+			surface="panel"
+		>
 			<div class="data-health__stack">
+				<p class="data-health__source-order">
+					Most-used sources appear first, based on lookups during this
+					{dashboard.metricWindowDays}-day window.
+				</p>
 				{#each dashboard.sources as source (source.key)}
 					<article class="data-health__record">
 						<header>
@@ -226,7 +269,10 @@
 							<TextBadge label={source.enabled ? "Enabled" : "Paused"} tone={source.enabled ? "success" : "neutral"} />
 						</header>
 						<dl class="data-health__metrics">
-							<div><dt>Lookups</dt><dd>{formatNumber(source.metrics.lookups)}</dd></div>
+							<div>
+								<dt>Lookups in window</dt>
+								<dd>{formatNumber(source.metrics.lookups)}</dd>
+							</div>
 							<div><dt>API requests</dt><dd>{formatNumber(source.metrics.apiRequests)}</dd></div>
 							<div><dt>Cache hits</dt><dd>{formatNumber(source.metrics.cacheHits)}</dd></div>
 							<div><dt>API errors</dt><dd>{formatNumber(source.metrics.apiErrors)}</dd></div>

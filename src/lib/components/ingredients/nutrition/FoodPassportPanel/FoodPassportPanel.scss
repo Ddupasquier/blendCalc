@@ -1,0 +1,101 @@
+@use "../../../../../styles/variables" as *;
+
+.food-passport-panel,
+.food-passport-panel__content,
+.food-passport-panel__section,
+.food-passport-panel__rows,
+.food-passport-panel__details {
+	display: grid;
+	min-width: 0;
+}
+
+.food-passport-panel__content {
+	gap: $app-gap-lg;
+}
+
+.food-passport-panel__section,
+.food-passport-panel__rows,
+.food-passport-panel__details {
+	gap: $app-gap-sm;
+}
+
+.food-passport-panel__summary,
+.food-passport-panel__note,
+.food-passport-panel h2,
+.food-passport-panel dl,
+.food-passport-panel dt,
+.food-passport-panel dd {
+	margin: 0;
+}
+
+.food-passport-panel__summary,
+.food-passport-panel__note {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	line-height: $app-line-height-body;
+}
+
+.food-passport-panel h2 {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-md;
+	font-weight: $app-font-weight-bold;
+}
+
+.food-passport-panel__row {
+	display: grid;
+	grid-template-columns: minmax(7.5rem, 0.42fr) minmax(0, 1fr);
+	align-items: start;
+	gap: $app-gap-md;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-control;
+	border: $app-border;
+	border-radius: $app-shell-radius-control;
+}
+
+.food-passport-panel dt {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	letter-spacing: $app-letter-spacing-label;
+	text-transform: uppercase;
+}
+
+.food-passport-panel dd {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-md;
+	line-height: $app-line-height-body;
+	overflow-wrap: anywhere;
+}
+
+.food-passport-panel__row[data-available="false"] dd {
+	color: $app-shell-text-muted;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.food-passport-panel__content {
+		gap: $app-gap-md;
+	}
+
+	.food-passport-panel__section,
+	.food-passport-panel__rows,
+	.food-passport-panel__details {
+		gap: $app-gap-xs;
+	}
+
+	.food-passport-panel__row {
+		grid-template-columns: minmax(0, 1fr);
+		gap: $app-gap-2xs;
+		padding: $app-gap-xs;
+	}
+
+	.food-passport-panel h2,
+	.food-passport-panel dd {
+		font-size: $app-font-size-sm;
+	}
+
+	.food-passport-panel__summary,
+	.food-passport-panel__note,
+	.food-passport-panel dt {
+		font-size: $app-font-size-xs;
+	}
+}

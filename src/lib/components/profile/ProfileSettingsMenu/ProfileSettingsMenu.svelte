@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Leaf from "$lib/assets/icons/Leaf/Leaf.svelte";
+	import Bolt from "$lib/assets/icons/Bolt/Bolt.svelte";
 	import Pencil from "$lib/assets/icons/Pencil/Pencil.svelte";
 	import Sliders from "$lib/assets/icons/Sliders/Sliders.svelte";
 	import User from "$lib/assets/icons/User/User.svelte";
@@ -10,11 +11,12 @@
 
 	let {
 		appearanceTheme,
+		playfulMessagesEnabled,
 		displayName,
 		bio,
 		hasProfileImage,
-		allergenCount,
-		dietaryRestrictionCount,
+		activeFoodPreferenceCount,
+		pendingFoodPreferenceCount,
 		priorityNutrientCount,
 		onOpen,
 	}: ProfileSettingsMenuProps = $props();
@@ -27,8 +29,17 @@
 	const profileDetailsDescription = $derived(
 		bio ? `${displayName} · Bio added` : `${displayName} · No bio added`,
 	);
-	const savedFoodPreferenceCount = $derived(
-		allergenCount + dietaryRestrictionCount + priorityNutrientCount,
+	const foodPreferenceDescription = $derived(
+		activeFoodPreferenceCount || pendingFoodPreferenceCount
+			? [
+					`${activeFoodPreferenceCount} active`,
+					pendingFoodPreferenceCount
+						? `${pendingFoodPreferenceCount} pending`
+						: null,
+				].filter(Boolean).join(" · ")
+			: priorityNutrientCount
+				? `${priorityNutrientCount} nutrient priorities`
+				: "Optional warnings and Mix guidance",
 	);
 </script>
 
@@ -44,6 +55,14 @@
 			onOpen={() => onOpen(PROFILE_SETTINGS_ROUTES.appearance)}
 		>
 			{#snippet icon()}<Sliders />{/snippet}
+		</ProfileSettingsSheetLauncher>
+		<ProfileSettingsSheetLauncher
+			title="Playful messages"
+			description={playfulMessagesEnabled ? "On" : "Off"}
+			controls="profile-playful-messages-sheet"
+			onOpen={() => onOpen(PROFILE_SETTINGS_ROUTES.playfulMessages)}
+		>
+			{#snippet icon()}<Bolt />{/snippet}
 		</ProfileSettingsSheetLauncher>
 		<ProfileSettingsSheetLauncher
 			title="Profile details"
@@ -63,9 +82,7 @@
 		</ProfileSettingsSheetLauncher>
 		<ProfileSettingsSheetLauncher
 			title="Food preferences"
-			description={savedFoodPreferenceCount
-				? `${savedFoodPreferenceCount} saved choices`
-				: "Optional warnings and Mix guidance"}
+			description={foodPreferenceDescription}
 			controls="profile-food-preferences-view"
 			onOpen={() => onOpen(PROFILE_SETTINGS_ROUTES.foodPreferences)}
 		>

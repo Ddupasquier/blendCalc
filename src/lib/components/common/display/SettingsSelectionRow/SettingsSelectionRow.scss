@@ -1,0 +1,57 @@
+@use "../../../../../styles/variables" as *;
+
+.settings-selection-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: $app-gap-xs;
+	min-width: 0;
+	padding: $app-gap-xs $app-gap-sm;
+	background: $app-shell-surface-control;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+}
+
+.settings-selection-row__content {
+	display: grid;
+	gap: $app-gap-2xs;
+	min-width: 0;
+}
+
+.settings-selection-row__content strong,
+.settings-selection-row__content small {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.settings-selection-row__content strong {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	line-height: $app-line-height-ui;
+}
+
+.settings-selection-row__content small {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	line-height: $app-line-height-body;
+}
+
+.settings-selection-row__status,
+.settings-selection-row__actions {
+	display: inline-flex;
+	align-items: center;
+	gap: $app-gap-2xs;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.settings-selection-row {
+		gap: $app-gap-2xs;
+		padding: $app-gap-xs;
+	}
+
+	.settings-selection-row__content strong,
+	.settings-selection-row__content small {
+		font-size: $app-font-size-xs;
+	}
+}

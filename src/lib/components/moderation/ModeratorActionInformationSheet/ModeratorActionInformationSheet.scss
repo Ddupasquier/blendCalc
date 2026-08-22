@@ -1,0 +1,45 @@
+@use "../../../../styles/variables" as *;
+
+.moderator-action-information,
+.moderator-action-information section {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.moderator-action-information {
+	padding-top: $app-gap-xs;
+}
+
+.moderator-action-information section {
+	padding: $app-gap-sm;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.moderator-action-information h3 {
+	font-size: $app-font-size-md;
+}
+
+.moderator-action-information p,
+.moderator-action-information ol {
+	margin: 0;
+	color: $app-shell-text-muted;
+}
+
+.moderator-action-information ol {
+	display: grid;
+	gap: $app-gap-xs;
+	padding-left: $app-gap-lg;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.moderator-action-information,
+	.moderator-action-information section {
+		gap: $app-gap-xs;
+	}
+
+	.moderator-action-information section {
+		padding: $app-gap-xs;
+	}
+}

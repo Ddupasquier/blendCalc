@@ -1,0 +1,28 @@
+@use "../../../../styles/variables" as *;
+
+.profile-regulatory-region-settings {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.profile-regulatory-region-settings__policy {
+	display: grid;
+	gap: $app-gap-2xs;
+	padding: $app-gap-xs $app-gap-sm;
+	background: $app-shell-surface-control;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+}
+
+.profile-regulatory-region-settings__policy strong {
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	line-height: $app-line-height-ui;
+}
+
+.profile-regulatory-region-settings__policy span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	line-height: $app-line-height-body;
+}

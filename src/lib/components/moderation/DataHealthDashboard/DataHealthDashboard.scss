@@ -40,8 +40,14 @@
 .data-health__record span,
 .data-health__issue-record span,
 .data-health__evaluation span,
-.data-health__empty {
+.data-health__empty,
+.data-health__source-order {
 	color: $app-shell-text-muted;
+}
+
+.data-health__source-order {
+	margin: 0;
+	font-size: $app-font-size-sm;
 }
 
 .data-health__eyebrow {
@@ -75,29 +81,17 @@
 }
 
 .data-health__queue-links {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: $app-gap-sm;
 }
 
-.data-health__queue-links a,
 .data-health__record a,
 .data-health__issue-record a {
 	color: $app-shell-accent-primary;
 	font-weight: $app-font-weight-bold;
 }
 
-.data-health__queue-links a {
-	display: inline-flex;
-	align-items: center;
-	min-height: $app-shell-control-height-compact;
-	padding-inline: $app-shell-control-padding-x-compact;
-	background: $app-shell-accent-soft;
-	border-radius: $app-shell-radius-pill;
-	text-decoration: none;
-}
-
-.data-health__queue-links a:focus-visible,
 .data-health__record a:focus-visible,
 .data-health__issue-record a:focus-visible {
 	outline: $app-focus-outline;
@@ -168,36 +162,18 @@
 
 .data-health__review-record,
 .data-health__review-record > div > div,
-.data-health__review-record form,
-.data-health__review-record label {
+.data-health__review-record form {
 	display: grid;
 	min-width: 0;
 }
 
 .data-health__review-record,
-.data-health__review-record form,
-.data-health__review-record label {
+.data-health__review-record form {
 	gap: $app-gap-sm;
 }
 
 .data-health__review-record > div > div {
 	gap: $app-gap-inline-compact;
-}
-
-.data-health__review-record textarea {
-	min-height: calc($app-shell-control-height * 2);
-	padding: $app-gap-sm;
-	color: $app-shell-text-primary;
-	background: $app-shell-surface-panel;
-	border: $app-border;
-	border-radius: $app-shell-radius-control;
-	font: inherit;
-	resize: vertical;
-}
-
-.data-health__review-record textarea:focus-visible {
-	outline: $app-focus-outline;
-	outline-offset: $app-focus-outline-offset;
 }
 
 .data-health__review-guidance {
@@ -229,13 +205,9 @@
 		grid-template-columns: 1fr;
 	}
 
-	.data-health__queue-links,
-	.data-health__queue-links a {
+	.data-health__queue-links {
 		width: 100%;
-	}
-
-	.data-health__queue-links a {
-		justify-content: center;
+		grid-template-columns: 1fr;
 	}
 
 	.data-health,

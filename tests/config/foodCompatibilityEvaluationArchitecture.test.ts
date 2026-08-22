@@ -43,7 +43,7 @@ describe("food compatibility evaluation architecture", () => {
 		expect(panel).toContain("getFoodCompatibilityEvaluationMessage");
 	});
 
-	it("hydrates merged search results with current database image placements", () => {
+	it("evaluates safety before ranking and hydrates only the visible images", () => {
 		const searchRoute = readSource("src/routes/api/foods/search/+server.ts");
 		const mergeIndex = searchRoute.indexOf(
 			"const mergedFoods = mergeIngredientSearchResults",
@@ -52,12 +52,17 @@ describe("food compatibility evaluation architecture", () => {
 			"await hydrateFoodsWithCachedImages",
 		);
 		const safetyEvaluationIndex = searchRoute.indexOf(
-			"annotateFoodsWithFoodSafety",
-			imageHydrationIndex,
+			"const foodsWithSafetyEvaluation = annotateFoodsWithFoodSafety",
+			mergeIndex,
+		);
+		const rankingIndex = searchRoute.indexOf(
+			"const foods = sortIngredientSearchResults",
+			safetyEvaluationIndex,
 		);
 
 		expect(mergeIndex).toBeGreaterThan(-1);
-		expect(imageHydrationIndex).toBeGreaterThan(mergeIndex);
-		expect(safetyEvaluationIndex).toBeGreaterThan(imageHydrationIndex);
+		expect(safetyEvaluationIndex).toBeGreaterThan(mergeIndex);
+		expect(rankingIndex).toBeGreaterThan(safetyEvaluationIndex);
+		expect(imageHydrationIndex).toBeGreaterThan(rankingIndex);
 	});
 });

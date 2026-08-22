@@ -1,0 +1,55 @@
+@use "../../../../styles/variables" as *;
+
+.moderator-review-card,
+.moderator-review-card__identity,
+.moderator-review-card__body {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.moderator-review-card {
+	padding: $app-shell-card-padding;
+	background: $app-shell-surface-panel;
+	border: $app-border;
+	border-radius: $app-shell-radius-card;
+}
+
+.moderator-review-card__header {
+	display: flex;
+	align-items: start;
+	justify-content: space-between;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.moderator-review-card__identity strong,
+.moderator-review-card__identity span {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.moderator-review-card__identity span {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+.moderator-review-card__status {
+	display: flex;
+	flex: 0 0 auto;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: $app-gap-xs;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.moderator-review-card,
+	.moderator-review-card__identity,
+	.moderator-review-card__body {
+		gap: $app-gap-xs;
+	}
+
+	.moderator-review-card {
+		padding: $app-shell-card-padding-compact;
+	}
+}

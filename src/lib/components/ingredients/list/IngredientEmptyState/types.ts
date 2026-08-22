@@ -3,4 +3,5 @@ import type { IngredientListKey } from "$lib/utils/storage/client/ingredientList
 export type IngredientEmptyStateProps = {
 	activeList: IngredientListKey;
 	hasItems: boolean;
+	allowPlayfulMessages?: boolean;
 };

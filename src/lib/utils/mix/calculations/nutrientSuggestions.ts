@@ -65,8 +65,24 @@ const hasRecommendationDataBlocker = (food: FoodItem) =>
 	food.sourceMetadata?.obsolete === true ||
 	(food.sourceMetadata?.qualityErrorTags?.some((tag) => tag.trim()) ?? false);
 
-const getGoalDistance = (total: number, goal: MixNutrientGoal) =>
-	1 - evaluateMixGoal(goal, total).score;
+const getGoalDistance = (total: number, goal: MixNutrientGoal) => {
+	const evaluation = evaluateMixGoal(goal, total);
+	if (evaluation.status === "met") return 0;
+
+	const normalizationAmount = Math.max(
+		goal.targetAmount,
+		goal.upperAmount ?? 0,
+		1,
+	);
+	if (evaluation.status === "under") {
+		return Math.max(0, evaluation.lowerBoundary - total) / normalizationAmount;
+	}
+
+	return (
+		Math.max(0, total - (evaluation.upperBoundary ?? goal.targetAmount)) /
+		normalizationAmount
+	);
+};
 
 const getPracticalIncrement = (
 	food: FoodItem,
@@ -289,5 +305,5 @@ export const getNutrientAdjustmentSuggestions = ({
 					Number(left.incrementSource === "source-serving") ||
 				left.food.description.localeCompare(right.food.description),
 		)
-		.slice(0, Math.max(0, maxSuggestions));
+			.slice(0, Math.max(0, maxSuggestions));
 };

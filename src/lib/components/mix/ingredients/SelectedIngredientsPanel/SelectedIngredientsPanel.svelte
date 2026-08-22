@@ -1,6 +1,5 @@
 <script lang="ts">
 	import MixIngredientAmountCard from "$lib/components/mix/ingredients/MixIngredientAmountCard/MixIngredientAmountCard.svelte";
-	import MixEmptyState from "$lib/components/mix/states/MixEmptyState/MixEmptyState.svelte";
 	import MixPanelSection from "$lib/components/mix/layout/MixPanelSection/MixPanelSection.svelte";
 	import type { SelectedIngredientsPanelProps } from "./types";
 	import ListControls from "$lib/components/common/lists/ListControls/ListControls.svelte";
@@ -70,9 +69,7 @@
 	{onOpenChange}
 >
 	<div class="selected-ingredients-panel__content">
-		{#if selectedFoods.length === 0}
-			<MixEmptyState />
-		{:else}
+		{#if selectedFoods.length > 0}
 			<p class="selected-ingredients-panel__help">
 				Adjust amounts to update the chart.
 			</p>

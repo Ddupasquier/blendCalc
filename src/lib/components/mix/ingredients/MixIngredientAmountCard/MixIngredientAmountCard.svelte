@@ -21,8 +21,13 @@
 		SERVING_MEASURE_OPTIONS,
 		type ServingMeasureUnit,
 	} from "$lib/utils/serving/servingMeasureCatalog";
-	import { canConvertServingUnit } from "$lib/utils/serving/servingAmount";
+	import {
+		canConvertServingUnit,
+		convertServingQuantityToUnit,
+		getSourceServingMeasureOptions,
+	} from "$lib/utils/serving/servingAmount";
 	import { isPrivateCustomFood } from "$lib/utils/food/records/foodClassification";
+	import { getFoodWarningEdgeTone } from "$lib/utils/ingredients/ingredientListUi";
 	import {
 		getMotionSafeDuration,
 		MOTION_DURATION_MS,
@@ -46,22 +51,43 @@
 
 	let detailsOpen = $state(false);
 	const preferenceWarnings = $derived(food.preferenceWarnings ?? []);
+	const warningEdgeTone = $derived(getFoodWarningEdgeTone(food));
 	const detailsElementId = $derived(`mix-ingredient-${food.fdcId}-details`);
 	const servingUnitOptions = $derived(
-		SERVING_MEASURE_OPTIONS
-			.filter((option) => canConvertServingUnit(option.value, food))
-			.map((option) => ({ value: option.value, label: option.shortLabel })),
+		[
+			...SERVING_MEASURE_OPTIONS
+				.filter((option) => canConvertServingUnit(option.value, food))
+				.map((option) => ({ value: option.value, label: option.shortLabel })),
+			...getSourceServingMeasureOptions(food).map((option) => ({
+				value: option.value,
+				label: option.label,
+			})),
+		],
 	);
 	const updateQuantity = (nextQuantity: number) =>
 		onServingChange(food, String(Math.max(0, nextQuantity)), servingUnit);
+	const updateServingUnit = (nextUnit: ServingMeasureUnit) => {
+		const convertedQuantity = convertServingQuantityToUnit(
+			servingQuantity,
+			servingUnit,
+			nextUnit,
+			food,
+		);
+		if (convertedQuantity === null) return;
+		onServingChange(
+			food,
+			String(Number(convertedQuantity.toFixed(6))),
+			nextUnit,
+		);
+	};
 </script>
 
 <article
 	class="mix-ingredient-amount-card"
 	class:mix-ingredient-amount-card--custom={isPrivateCustomFood(food)}
-	class:mix-ingredient-amount-card--warning={preferenceWarnings.length > 0}
+	class:mix-ingredient-amount-card--warning={warningEdgeTone !== null}
 >
-	{#if preferenceWarnings.length > 0}<CardWarningEdge />{/if}
+	{#if warningEdgeTone}<CardWarningEdge tone={warningEdgeTone} />{/if}
 	<span class="mix-ingredient-amount-card__symbol" aria-hidden="true"><FoodSymbol {food} /></span>
 	<div class="mix-ingredient-amount-card__copy">
 		<h3 title={food.description}>{food.description}</h3>
@@ -106,8 +132,7 @@
 			width="content"
 			value={servingUnit}
 			options={servingUnitOptions}
-			onValueChange={(value) =>
-				onServingChange(food, String(servingQuantity), value as ServingMeasureUnit)}
+			onValueChange={(value) => updateServingUnit(value as ServingMeasureUnit)}
 		/>
 	</div>
 	<div class="mix-ingredient-amount-card__actions">

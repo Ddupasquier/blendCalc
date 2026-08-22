@@ -15,12 +15,14 @@ describe("reload-flash architecture", () => {
 	});
 
 	it("uses client navigation for moderation search instead of a document reload", () => {
-		const moderation = readSource("src/routes/moderation/+page.svelte");
+		const accountAccessReviewList = readSource(
+			"src/lib/components/moderation/AccountAccessReviewList/AccountAccessReviewList.svelte",
+		);
 
-		expect(moderation).toContain('import { goto } from "$app/navigation"');
-		expect(moderation).toContain("onsubmit={submitAccountSearch}");
-		expect(moderation).toContain("event.preventDefault()");
-		expect(moderation).toContain("await goto(href");
+		expect(accountAccessReviewList).toContain('import { goto } from "$app/navigation"');
+		expect(accountAccessReviewList).toContain("onsubmit={submitAccountSearch}");
+		expect(accountAccessReviewList).toContain("event.preventDefault()");
+		expect(accountAccessReviewList).toContain("await goto(href");
 	});
 
 	it("refreshes ingredient data without remounting or shrinking the visible list", () => {

@@ -126,11 +126,11 @@ const expectNutritionCategory = async (
 	page: Parameters<typeof waitForAppReady>[0],
 	expectedCategory: string,
 ) => {
-	const moreAboutFoodSummary = page
+	const foodPassportSummary = page
 		.locator("summary")
-		.filter({ hasText: "More about this food" });
-	await expect(moreAboutFoodSummary).toBeVisible();
-	await moreAboutFoodSummary.click();
+		.filter({ hasText: "Food passport" });
+	await expect(foodPassportSummary).toBeVisible();
+	await foodPassportSummary.click();
 	const productDetailsSummary = page
 		.locator("summary")
 		.filter({ hasText: "Product details" });

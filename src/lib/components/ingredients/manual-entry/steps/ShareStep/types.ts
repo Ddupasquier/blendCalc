@@ -23,6 +23,7 @@ export type ShareStepProps = {
 	shareWithCatalog: boolean;
 	barcodeShareMismatch: ManualEntryBarcodeShareMismatch;
 	lookingUpBarcode: boolean;
+	allowPlayfulMessages?: boolean;
 	validatingBarcodeShare: boolean;
 	requiresCatalogEvidence: boolean;
 	showOptionalProductImageUpload: boolean;

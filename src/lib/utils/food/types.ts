@@ -341,6 +341,16 @@ export type FoodBarcodeProvenance = {
 	format?: string;
 };
 
+export type CanonicalFoodCatalogMetadata = {
+	recordCreatedAt: string;
+	recordUpdatedAt: string;
+	lastVerifiedAt?: string;
+	currentRevisionId?: string;
+	currentRevisionNumber?: number;
+	currentRevisionCreatedAt?: string;
+	currentLabelObservedAt?: string;
+};
+
 export type FoodSourceAttribution = {
 	datasetKey: string;
 	datasetName: string;
@@ -451,6 +461,7 @@ export interface FoodItem {
 	sourceAttributions?: FoodSourceAttribution[];
 	sharedProductId?: string;
 	sharedProductSubmissionId?: string;
+	canonicalCatalogMetadata?: CanonicalFoodCatalogMetadata;
 	trustStatus?: FoodTrustStatus;
 	sharedProductConfidence?:
 		"source-verified" | "moderator-reviewed" | "corroborated" | "imported";

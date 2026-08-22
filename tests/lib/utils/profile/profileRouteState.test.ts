@@ -23,6 +23,9 @@ describe("Profile settings routes", () => {
 		expect(getProfileSettingsRouteTitle("/profile/appearance")).toBe(
 			"Light/Dark Mode",
 		);
+		expect(getProfileSettingsRouteTitle("/profile/playful-messages")).toBe(
+			"Playful Messages",
+		);
 		expect(getProfileSettingsRouteTitle("/profile/details")).toBe(
 			"Profile Details",
 		);
@@ -32,6 +35,16 @@ describe("Profile settings routes", () => {
 		expect(getProfileSettingsRouteTitle("/profile/moderator-actions")).toBe(
 			"Moderator Actions",
 		);
+		expect(
+			getProfileSettingsRouteTitle(
+				"/profile/moderator-actions/product-submissions",
+			),
+		).toBe("Product Submissions");
+		expect(
+			getProfileSettingsRouteTitle(
+				"/profile/moderator-actions/catalog-data-health",
+			),
+		).toBe("Catalog Data Health");
 		expect(getProfileSettingsRouteTitle("/profile")).toBe("Profile");
 	});
 });

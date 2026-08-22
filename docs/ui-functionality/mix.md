@@ -168,6 +168,10 @@ non-safety state such as all tracked goals being met, a very small or large tota
 serving, or an intentionally simple water/ice recipe. Composition messages outrank goal
 and serving messages, and the lowest-priority matching row wins. Any danger warning
 suppresses the line completely; jokes never alter math or appear inside Warnings.
+When the account allows Playful messages, an eligible reviewed goal-match row may
+replace the standard line. Saving a recipe may likewise show one quiet reviewed line in
+the Mix header until the next edit. Both remain absent when the preference is off, and
+no texture or viscosity state is guessed from serving amounts.
 
 Assign axes deterministically by label space so long names use the wider top and bottom
 positions. Keep each nutrient's value, goal, status, and accessible summary attached
@@ -200,6 +204,10 @@ remain in status summaries and accessible text.
   editable amount.
 - Weight is primary. Volume is available only with explicit, evidence-backed conversion
   data; estimated conversion must remain clearly identified.
+- Exact household servings remain selectable when a source reports their gram weight
+  without a reusable unit conversion. The selector represents one complete reported
+  serving, such as one medium banana at 118 grams; it must not invent a generic item,
+  density, or volume unit.
 - Nutrition math uses normalized per-100g values scaled by the selected gram amount.
 - Use one identity row followed by one amount-control row on compact and wider layouts.
   Names, actions, units, and inputs must not compete for the same space.

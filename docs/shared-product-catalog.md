@@ -341,6 +341,15 @@ moderator-only. The app keeps ordinary nutrition concise and translates only use
 bounded uncertainty summaries into the closed Data quality disclosure. Policy snapshots
 and broader history remain future presentations rather than inferred UI claims.
 
+Authenticated Nutrition details present the accepted record as a closed Food passport.
+Its concise summary may use `shared_products.last_verified_at`, the latest accepted
+`shared_product_revisions` row, `label_observed_at`, selected field provenance, and the
+information already present in the hydrated food read model. It never substitutes
+`updated_at` for verification or label history, never treats absent package evidence as
+safe, and never hides current recalls or personalized warnings. Product/source metadata,
+quality context, and correction tools remain available as nested disclosures for users
+who want the deeper record without making that detail part of the default reading path.
+
 Canonical nutrient lineage cannot come from provider-name similarity alone. Exact
 provider identifiers and explicitly reviewed source keys own nutrient identity, exact
 normalized units own lookup, and any unit change requires a reviewed nutrient-specific
@@ -444,9 +453,10 @@ revision; the monitor never overwrites `shared_products` directly.
 
 ### Official Recall Matching
 
-FDA enforcement reports and USDA FSIS recalls/public-health alerts are independently
-ingested with immutable revisions and exact identifiers. Match policy is deliberately
-conservative:
+FDA recall announcements, FDA enforcement records, and USDA FSIS recalls/public-health
+alerts are ingested with immutable revisions and exact identifiers. The announcement
+channel closes the gap where FDA has published a current notice that has not yet reached
+openFDA enforcement data. Match policy is deliberately conservative:
 
 - an exact normalized GTIN can become visible immediately;
 - a strong brand, product, and package identity match requires moderation;

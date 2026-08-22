@@ -1,0 +1,51 @@
+@use "../../../../styles/variables" as *;
+
+.moderation-workspace,
+.moderation-workspace__header {
+	display: grid;
+	gap: $app-gap-md;
+	min-width: 0;
+}
+
+.moderation-workspace {
+	width: 100%;
+	max-width: 100%;
+}
+
+.moderation-workspace__header {
+	gap: $app-gap-sm;
+}
+
+.moderation-workspace__header h1 {
+	font-family: $app-font-family-display;
+	font-size: $app-font-size-page-title;
+}
+
+.moderation-workspace__header > p:last-of-type {
+	color: $app-shell-text-muted;
+}
+
+.moderation-workspace__header a {
+	justify-self: start;
+	color: $app-shell-accent-primary;
+	font-weight: $app-font-weight-bold;
+}
+
+.moderation-workspace__header a:focus-visible {
+	outline: $app-focus-outline;
+	outline-offset: $app-focus-outline-offset;
+}
+
+.moderation-workspace__eyebrow {
+	font-size: $app-font-size-xs;
+	font-weight: $app-font-weight-heavy;
+	letter-spacing: $app-letter-spacing-wider;
+	text-transform: uppercase;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.moderation-workspace,
+	.moderation-workspace__header {
+		gap: $app-gap-sm;
+	}
+}

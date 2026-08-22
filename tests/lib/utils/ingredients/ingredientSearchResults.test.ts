@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	isUsableIngredientSearchResult,
 	mergeIngredientSearchResults,
+	sortIngredientSearchResults,
 } from "$lib/utils/ingredients/ingredientSearchResults";
 import type { FoodItem } from "$lib/utils/food/types";
 
@@ -19,6 +20,27 @@ const food = (overrides: Partial<FoodItem> = {}): FoodItem => ({
 });
 
 describe("ingredient search result merging", () => {
+	it("downranks equal-relevance foods with preference conflicts", () => {
+		const safeFood = food({ fdcId: 1, description: "Apple" });
+		const conflictingFood = food({
+			fdcId: 2,
+			description: "Apple",
+			preferenceWarnings: [{
+				id: "restriction-conflict",
+				level: "warning",
+				category: "restriction",
+				label: "Vegan",
+				code: "FOOD_RESTRICTION_CONFLICT",
+				params: { preference: "Vegan", fact: "Meat" },
+			}],
+		});
+
+		expect(
+			sortIngredientSearchResults([conflictingFood, safeFood], "apple")
+				.map((result) => result.fdcId),
+		).toEqual([1, 2]);
+	});
+
 	it("merges exact legacy records per field instead of choosing one whole record", () => {
 		const usda = food({
 			fdcId: 171032,
@@ -509,8 +531,24 @@ describe("ingredient search result merging", () => {
 });
 
 describe("usable ingredient search results", () => {
-	it("keeps nutrient-bearing foods and rejects nutritionally empty records", () => {
+	it("keeps nutrient-bearing foods and safety-alert records without invented nutrition", () => {
 		expect(isUsableIngredientSearchResult(food())).toBe(true);
 		expect(isUsableIngredientSearchResult(food({ foodNutrients: [] }))).toBe(false);
+		expect(isUsableIngredientSearchResult(food({
+			foodNutrients: [],
+			safetyAlerts: [{
+				id: "alert-1",
+				providerKey: "fda-food-enforcement",
+				sourceName: "FDA",
+				sourceAttribution: "FDA",
+				alertType: "recall",
+				status: "ongoing",
+				productDescription: "Recalled lettuce",
+				sourceUrl: "https://www.fda.gov/example",
+				matchType: "exact_gtin",
+				requiresPackageCheck: true,
+				detectedAt: "2026-08-14T12:00:00.000Z",
+			}],
+		}))).toBe(true);
 	});
 });
