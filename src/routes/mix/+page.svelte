@@ -73,7 +73,6 @@
 		type MixStateSnapshot,
 	} from "$lib/utils/mix/state/mixState";
 	import {
-		getDefaultNutrientOptions,
 		getNutrientMeta,
 		type NutrientOption,
 	} from "$lib/utils/mix/ui/mixUi";
@@ -99,8 +98,8 @@
 	import { onMount } from "svelte";
 	import type { MixResetAction } from "./types";
 
-	const allowCheekyMessages = $derived(
-		page.data.authUser?.cheekyMessagesEnabled ?? false,
+	const allowPlayfulMessages = $derived(
+		page.data.authUser?.playfulMessagesEnabled ?? true,
 	);
 
 	const defaultMixFields = getDefaultMixFields();
@@ -110,6 +109,11 @@
 	const systemGoalTemplates = getMixGoalTemplates();
 	const initialMixData = page.data.mixData;
 	const initialCloudPreferences = initialMixData?.preferences;
+	const initialFoodPreferences = initialMixData?.foodPreferences;
+	const prioritizedNutrientIds = initialFoodPreferences?.prioritizedNutrientIds ?? [];
+	const preferredServingGrams = initialFoodPreferences?.defaultMixServingGrams;
+	const preferredWeightUnit = initialFoodPreferences?.unitSystem === "us" ? "oz" : "g";
+	const initialDefaultMixState = getDefaultMixState(prioritizedNutrientIds);
 	const initialCloudGoals = initialCloudPreferences?.nutrientGoals ?? {};
 	const hasInitialGoalConfiguration =
 		initialCloudPreferences?.hasGoalConfiguration ?? false;
@@ -126,8 +130,8 @@
 					? ""
 					: (defaultGoalTemplate?.selectionId ?? "");
 
-	let selected = $state<(string | number)[]>(defaultMixFields.map((n) => n.id));
-	let options = $state<NutrientOption[]>(getDefaultNutrientOptions());
+	let selected = $state<(string | number)[]>(initialDefaultMixState.selected);
+	let options = $state<NutrientOption[]>(initialDefaultMixState.options);
 	let fridgeItems = $state<FoodItem[]>(initialMixData?.fridge ?? []);
 	let shoppingItems = $state<FoodItem[]>(initialMixData?.shoppingList ?? []);
 	let selectedFoodIds = $state<number[]>([]);
@@ -322,7 +326,7 @@
 					contextKey: "saved",
 					triggerKey: "recipe-saved",
 				},
-			], { allowCheekyMessages })
+			], { allowPlayfulMessages })
 			: null;
 		closeMixOverlay();
 	};
@@ -381,7 +385,7 @@
 				hasDangerWarning: mixAnalysis.warnings.some(
 					(warning) => warning.severity === "danger",
 				),
-				allowCheekyMessages,
+				allowPlayfulMessages,
 			}),
 	);
 
@@ -575,7 +579,7 @@
 	const resetMix = async () => {
 		suggestedAdjustmentUndo = null;
 		detachLoadedSavedRecipe();
-		assignMixState(getDefaultMixState());
+		assignMixState(getDefaultMixState(prioritizedNutrientIds));
 		await resetGoals();
 		saveMixState();
 	};
@@ -849,7 +853,15 @@
 	const toggleFood = (foodId: number) => {
 		suggestedAdjustmentUndo = null;
 		assignMixState(
-			getStateWithToggledFood(getCurrentMixState(), foodId, allIngredientItems),
+			getStateWithToggledFood(
+				getCurrentMixState(),
+				foodId,
+				allIngredientItems,
+				{
+					preferredServingGrams,
+					preferredWeightUnit,
+				},
+			),
 		);
 		markLoadedSavedRecipeDirty();
 		saveMixState();

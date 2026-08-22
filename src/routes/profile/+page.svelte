@@ -9,7 +9,7 @@
 	import ViewHeader from "$lib/components/common/view/ViewHeader/ViewHeader.svelte";
 	import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
 	import ProfileAppearanceSettings from "$lib/components/profile/ProfileAppearanceSettings/ProfileAppearanceSettings.svelte";
-	import ProfileCheekyMessageSettings from "$lib/components/profile/ProfileCheekyMessageSettings/ProfileCheekyMessageSettings.svelte";
+	import ProfilePlayfulMessageSettings from "$lib/components/profile/ProfilePlayfulMessageSettings/ProfilePlayfulMessageSettings.svelte";
 	import ProfileDetailsSettings from "$lib/components/profile/ProfileDetailsSettings/ProfileDetailsSettings.svelte";
 	import ProfileFoodPreferenceView from "$lib/components/profile/ProfileFoodPreferenceView/ProfileFoodPreferenceView.svelte";
 	import ProfileIdentitySummary from "$lib/components/profile/ProfileIdentitySummary/ProfileIdentitySummary.svelte";
@@ -69,10 +69,22 @@
 	const appearanceTheme = $derived(
 		normalizeThemePreference(form?.appearanceTheme ?? data.profile?.appearance_theme),
 	);
-	const cheekyMessagesEnabled = $derived(
-		form?.cheekyMessagesEnabled ??
+	const playfulMessagesEnabled = $derived(
+		form?.playfulMessagesEnabled ??
 			data.profile?.cheeky_messages_enabled ??
-			false,
+			true,
+	);
+	const savedFoodSafetyPreferenceCount = $derived(
+		(data.foodPreferences?.allergens.length ?? 0) +
+		(data.foodPreferences?.dietaryRestrictions.length ?? 0),
+	);
+	const pendingFoodPreferenceCount = $derived(
+		(data.foodPreferences?.preferenceResolutions ?? []).filter(
+			(resolution) => resolution.status === "unresolved",
+		).length,
+	);
+	const activeFoodPreferenceCount = $derived(
+		Math.max(0, savedFoodSafetyPreferenceCount - pendingFoodPreferenceCount),
 	);
 
 	const openSettingsRoute = (settingsRoute: ProfileSettingsRoute) => {
@@ -92,6 +104,14 @@
 			pageState: page.state,
 			routeStateKey: SHALLOW_ROUTE_PAGE_STATE_KEYS.profile,
 			replace: true,
+		});
+	};
+
+	const closeSettingsRouteAfterSave = () => {
+		void goto("/profile", {
+			keepFocus: true,
+			noScroll: true,
+			replaceState: true,
 		});
 	};
 
@@ -119,22 +139,22 @@
 		initialTheme={appearanceTheme}
 		errorMessage={form?.appearanceError}
 		successMessage={form?.appearanceSuccess}
-		onSaveSuccess={closeSettingsRoute}
+		onSaveSuccess={closeSettingsRouteAfterSave}
 	/>
 </BottomSheet>
 
 <BottomSheet
-	id="profile-cheeky-messages-sheet"
-	open={activeSettingsRoute === PROFILE_SETTINGS_ROUTES.cheekyMessages}
-	title="Cheeky messages"
-	titleId="profile-cheeky-messages-sheet-title"
+	id="profile-playful-messages-sheet"
+	open={activeSettingsRoute === PROFILE_SETTINGS_ROUTES.playfulMessages}
+	title="Playful messages"
+	titleId="profile-playful-messages-sheet-title"
 	onClose={closeSettingsRoute}
 >
-	<ProfileCheekyMessageSettings
-		initiallyEnabled={cheekyMessagesEnabled}
-		errorMessage={form?.cheekyMessagesError}
-		successMessage={form?.cheekyMessagesSuccess}
-		onSaveSuccess={closeSettingsRoute}
+	<ProfilePlayfulMessageSettings
+		initiallyEnabled={playfulMessagesEnabled}
+		errorMessage={form?.playfulMessagesError}
+		successMessage={form?.playfulMessagesSuccess}
+		onSaveSuccess={closeSettingsRouteAfterSave}
 	/>
 </BottomSheet>
 
@@ -150,7 +170,7 @@
 		{bio}
 		errorMessage={form?.profileError}
 		successMessage={form?.profileSuccess}
-		onSaveSuccess={closeSettingsRoute}
+		onSaveSuccess={closeSettingsRouteAfterSave}
 	/>
 </BottomSheet>
 
@@ -169,7 +189,7 @@
 		requireHumanFace={data.requireHumanFace}
 		errorMessage={form?.avatarError}
 		successMessage={form?.avatarSuccess}
-		onSaveSuccess={closeSettingsRoute}
+		onSaveSuccess={closeSettingsRouteAfterSave}
 	/>
 </BottomSheet>
 
@@ -190,6 +210,7 @@
 		errorMessage={form?.foodPreferencesError}
 		successMessage={form?.foodPreferencesSuccess}
 		onClose={closeSettingsRoute}
+		onSaveSuccess={closeSettingsRouteAfterSave}
 	/>
 </RightSheet>
 
@@ -227,12 +248,12 @@
 
 			<ProfileSettingsMenu
 				{appearanceTheme}
-				{cheekyMessagesEnabled}
+				{playfulMessagesEnabled}
 				{displayName}
 				{bio}
 				hasProfileImage={Boolean(data.profile?.avatar_path)}
-				allergenCount={data.foodPreferences?.allergens.length ?? 0}
-				dietaryRestrictionCount={data.foodPreferences?.dietaryRestrictions.length ?? 0}
+				{activeFoodPreferenceCount}
+				{pendingFoodPreferenceCount}
 				priorityNutrientCount={data.foodPreferences?.prioritizedNutrientIds.length ?? 0}
 				onOpen={openSettingsRoute}
 			/>

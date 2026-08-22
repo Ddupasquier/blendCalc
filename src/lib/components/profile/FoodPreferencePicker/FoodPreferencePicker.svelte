@@ -1,8 +1,10 @@
 <script lang="ts">
+	import X from "$lib/assets/icons/X/X.svelte";
+	import TextBadge from "$lib/components/common/badges/TextBadge/TextBadge.svelte";
+	import CircleIconButton from "$lib/components/common/buttons/CircleIconButton/CircleIconButton.svelte";
 	import RoundedActionButton from "$lib/components/common/buttons/RoundedActionButton/RoundedActionButton.svelte";
-	import PillRow from "$lib/components/common/display/PillRow/PillRow.svelte";
+	import SettingsSelectionRow from "$lib/components/common/display/SettingsSelectionRow/SettingsSelectionRow.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
-	import CheckboxGroup from "$lib/components/common/forms/CheckboxGroup/CheckboxGroup.svelte";
 	import TextField from "$lib/components/common/forms/TextField/TextField.svelte";
 	import { FOOD_PREFERENCE_MAX_LENGTH } from "$lib/utils/profile/foodPreferences";
 	import type { FoodPreferencePickerProps } from "./types";
@@ -13,7 +15,9 @@
 		disabled = false,
 		emptyLabel,
 		onAdd,
+		onClear,
 		onRemove,
+		clearLabel,
 		customEntryLabel,
 		selectedValues,
 		title,
@@ -26,16 +30,15 @@
 	let reviewedChoiceSearch = $state("");
 	const normalizeValue = (value: string) =>
 		value.toLocaleLowerCase().trim().replace(/\s+/g, " ");
-	const optionValueSet = $derived(
-		new Set(options.map((option) => option.normalizedValue)),
+	const selectedValueKeys = $derived(
+		new Set(selectedValues.map(normalizeValue)),
 	);
-	const selectedOptionValues = $derived(
-		selectedValues
-			.map(normalizeValue)
-			.filter((value) => optionValueSet.has(value)),
+	const unresolvedValueKeys = $derived(
+		new Set(unresolvedValues.map(normalizeValue)),
 	);
 	const filteredOptions = $derived(
 		options.filter((option) => {
+			if (selectedValueKeys.has(option.normalizedValue)) return false;
 			const search = normalizeValue(reviewedChoiceSearch);
 			if (!search) return true;
 			return [
@@ -43,39 +46,13 @@
 				option.normalizedValue,
 				...option.sourceValues,
 			].some((value) => normalizeValue(value).includes(search));
-		}),
+		}).slice(0, 6),
 	);
-	const customValues = $derived(
-		selectedValues.filter(
-			(value) => !optionValueSet.has(normalizeValue(value)),
-		),
+	const reviewedResultLabel = $derived(
+		reviewedChoiceSearch.trim()
+			? "Matching reviewed choices"
+			: "Suggested reviewed choices",
 	);
-
-	const updateReviewedSelections = (
-		selectedNormalizedValues: (string | number)[],
-	) => {
-		const nextSelection = new Set(selectedNormalizedValues.map(String));
-		const previousSelection = new Set(selectedOptionValues);
-		const addedValue = [...nextSelection].find(
-			(value) => !previousSelection.has(value),
-		);
-		if (addedValue) {
-			const option = options.find(
-				(candidate) => candidate.normalizedValue === addedValue,
-			);
-			if (option) onAdd(option.label);
-			return;
-		}
-
-		const removedValue = [...previousSelection].find(
-			(value) => !nextSelection.has(value),
-		);
-		if (!removedValue) return;
-		const savedValue = selectedValues.find(
-			(value) => normalizeValue(value) === removedValue,
-		);
-		if (savedValue) onRemove(savedValue);
-	};
 
 	const addCustomEntry = () => {
 		const value = customEntry.trim().replace(/\s+/g, " ");
@@ -83,9 +60,51 @@
 		onAdd(value);
 		customEntry = "";
 	};
+
+	const addReviewedOption = (label: string) => {
+		onAdd(label);
+		reviewedChoiceSearch = "";
+	};
 </script>
 
 <section class="preference-editor-card" aria-labelledby={labelledBy}>
+	{#if selectedValues.length}
+		<div
+			class="preference-selections"
+			aria-label={`Selected ${title.toLocaleLowerCase()}`}
+		>
+			{#each selectedValues as value (normalizeValue(value))}
+				{@const waitingForReview = unresolvedValueKeys.has(normalizeValue(value))}
+				<SettingsSelectionRow
+					title={value}
+					description={waitingForReview
+						? "Saved, but not used for automatic checks yet."
+						: "Used for automatic checks."}
+				>
+					{#snippet status()}
+						<TextBadge
+							label={waitingForReview ? "Waiting for review" : "Active"}
+							tone={waitingForReview ? "warning" : "success"}
+						/>
+					{/snippet}
+					{#snippet actions()}
+						<CircleIconButton
+							label={`Remove ${value}`}
+							variant="ghost"
+							size="tiny"
+							disabled={disabled || referenceDataUnavailable}
+							onclick={() => onRemove(value)}
+						>
+							<X size={14} />
+						</CircleIconButton>
+					{/snippet}
+				</SettingsSelectionRow>
+			{/each}
+		</div>
+	{:else}
+		<p class="preference-empty">{emptyLabel}</p>
+	{/if}
+
 	{#if referenceDataUnavailable}
 		<StatusMessage
 			tone="warning"
@@ -93,34 +112,40 @@
 			message="Your saved choices are still here, but this list could not load. Try again before changing it."
 		/>
 	{:else if options.length}
-		<fieldset class="preference-reviewed-options">
-			<legend>Reviewed choices</legend>
-			{#if options.length > 12}
-				<TextField
-					id={`${id}-reviewed-search`}
-					label={`Find reviewed ${title.toLocaleLowerCase()}`}
-					value={reviewedChoiceSearch}
-					placeholder="Search reviewed choices"
-					disabled={disabled}
-					oninput={(event) =>
-						(reviewedChoiceSearch = (event.currentTarget as HTMLInputElement).value)}
-				/>
-			{/if}
+		<div class="preference-reviewed-options">
+			<TextField
+				id={`${id}-reviewed-search`}
+				label={`Find reviewed ${title.toLocaleLowerCase()}`}
+				type="search"
+				value={reviewedChoiceSearch}
+				placeholder={`Search and add ${title.toLocaleLowerCase()}`}
+				disabled={disabled}
+				oninput={(event) =>
+					(reviewedChoiceSearch = (event.currentTarget as HTMLInputElement).value)}
+			/>
 			{#if filteredOptions.length}
-				<CheckboxGroup
-					id={`${id}-reviewed-option`}
-					options={filteredOptions.map((option) => ({
-						id: option.normalizedValue,
-						label: option.label,
-					}))}
-					selected={selectedOptionValues}
-					{disabled}
-					onChange={updateReviewedSelections}
-				/>
-			{:else}
+				<div class="preference-reviewed-results">
+					<strong>{reviewedResultLabel}</strong>
+					{#each filteredOptions as option (option.normalizedValue)}
+						<RoundedActionButton
+							type="button"
+							variant="neutral"
+							contentAlign="space-between"
+							fullWidth
+							{disabled}
+							onclick={() => addReviewedOption(option.label)}
+						>
+							<span>{option.label}</span>
+							<span aria-hidden="true">+</span>
+						</RoundedActionButton>
+					{/each}
+				</div>
+			{:else if reviewedChoiceSearch.trim()}
 				<p class="preference-empty">No reviewed choices match that search.</p>
+			{:else}
+				<p class="preference-empty">Every reviewed choice shown here is already active.</p>
 			{/if}
-		</fieldset>
+		</div>
 	{:else}
 		<StatusMessage
 			tone="info"
@@ -156,28 +181,17 @@
 		</div>
 	</div>
 
-	{#if customValues.length}
-		<div class="preference-custom-values">
-			<strong>Your wording</strong>
-			<PillRow
-				pills={customValues}
-				onRemove={(index) => onRemove(customValues[index])}
-				disabledIndices={disabled || referenceDataUnavailable
-					? customValues.map((_, index) => index)
-					: []}
-				preserveOrder
-			/>
+	{#if selectedValues.length}
+		<div class="preference-editor-card__actions">
+			<RoundedActionButton
+				type="button"
+				variant="quiet"
+				disabled={disabled || referenceDataUnavailable}
+				onclick={onClear}
+			>
+				{clearLabel}
+			</RoundedActionButton>
 		</div>
-	{:else if !selectedOptionValues.length}
-		<p class="preference-empty">{emptyLabel}</p>
-	{/if}
-
-	{#if unresolvedValues.length}
-		<StatusMessage
-			tone="warning"
-			title="Waiting for review"
-			message={`${unresolvedValues.join(", ")} ${unresolvedValues.length === 1 ? "is" : "are"} saved, but warnings will not use ${unresolvedValues.length === 1 ? "it" : "them"} until there is an exact reviewed match.`}
-		/>
 	{/if}
 </section>
 

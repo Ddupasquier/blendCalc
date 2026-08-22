@@ -8,7 +8,7 @@
 	let {
 		outcome,
 		action,
-		allowCheekyMessages = false,
+		allowPlayfulMessages = true,
 		onMoveToShopping,
 		onMoveToFridge,
 		onUndo,
@@ -16,7 +16,7 @@
 
 	const delightMessage = $derived(
 		outcome.addedToList
-			? resolveFoodAddedDelightMessage(outcome.food, allowCheekyMessages)
+			? resolveFoodAddedDelightMessage(outcome.food, allowPlayfulMessages)
 			: null,
 	);
 </script>

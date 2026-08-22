@@ -70,7 +70,7 @@ const productImagePanel = readFileSync(
 	"utf8",
 );
 const moderationPage = readFileSync(
-	"src/routes/moderation/+page.svelte",
+	"src/lib/components/moderation/ModerationWorkspace/ModerationWorkspace.svelte",
 	"utf8",
 );
 const mixIngredientOptionStyles = readFileSync(

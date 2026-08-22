@@ -33,7 +33,7 @@
 		correctionFood,
 		sortOptions,
 		canAdjustImagePlacement,
-		allowCheekyMessages = false,
+		allowPlayfulMessages = true,
 		onAddSearchResult,
 		onApplyFilters,
 		onCloseActionSheet,
@@ -92,7 +92,7 @@
 	onClose={onCloseIngredientSheet}
 	onScannerClose={onCloseBarcodeScanner}
 	{moveConfirmationRouteOpen}
-	{allowCheekyMessages}
+	{allowPlayfulMessages}
 	onMoveConfirmationOpen={onOpenMoveConfirmation}
 	onMoveConfirmationClose={onCloseMoveConfirmation}
 	onCreate={onCreateManualIngredient}
@@ -166,7 +166,7 @@
 	initialFood={correctionFood ?? undefined}
 	submissionIntent="catalog_correction"
 	catalogSubmissionOnly
-	{allowCheekyMessages}
+	{allowPlayfulMessages}
 	onClose={onCloseCorrection}
 	onCreate={onCreateManualIngredient}
 	onLookupStateChange={onLookupStateChange}

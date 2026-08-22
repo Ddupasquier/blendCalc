@@ -6,7 +6,9 @@ export type FoodPreferencePickerProps = {
 	disabled?: boolean;
 	emptyLabel: string;
 	onAdd: (value: string) => void;
+	onClear: () => void;
 	onRemove: (value: string) => void;
+	clearLabel: string;
 	customEntryLabel: string;
 	selectedValues: string[];
 	title: string;

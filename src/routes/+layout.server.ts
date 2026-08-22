@@ -92,8 +92,8 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	configureServingMeasureCatalog(servingMeasureCatalog);
 	configureNutritionCompletenessCatalog(nutritionCompletenessCatalog);
 	configureAppReferenceCatalog(appReferenceCatalog);
-	const cheekyMessagesEnabled = profile?.cheeky_messages_enabled ?? false;
-	const userAppReferenceCatalog = cheekyMessagesEnabled
+	const playfulMessagesEnabled = profile?.cheeky_messages_enabled ?? true;
+	const userAppReferenceCatalog = playfulMessagesEnabled
 		? appReferenceCatalog
 		: {
 			...appReferenceCatalog,
@@ -120,7 +120,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			role,
 			showTutorial: shouldAutomaticallyShowTutorial(tutorialPreference),
 			themePreference,
-			cheekyMessagesEnabled,
+			playfulMessagesEnabled,
 		},
 		servingMeasureCatalog,
 		nutritionCompletenessCatalog,

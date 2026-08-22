@@ -11,4 +11,5 @@ export type ProfileMeasurementDefaultsProps = {
 	onUnitSystemChange: (unitSystem: FoodPreferenceUnitSystem | "") => void;
 	onDefaultServingSizeChange: (value: string) => void;
 	onDefaultServingUnitChange: (unit: DefaultServingUnit) => void;
+	onRestoreDefaults: () => void;
 };

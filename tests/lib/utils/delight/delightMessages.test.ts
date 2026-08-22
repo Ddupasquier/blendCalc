@@ -82,7 +82,7 @@ describe("delight messages", () => {
 		).toBe("First");
 	});
 
-	it("requires an explicit opt-in before selecting cheeky copy", () => {
+	it("uses reviewed playful copy by default and respects an explicit opt-out", () => {
 		const catalog = {
 			...appReferenceCatalogFixture,
 			delightMessages: [
@@ -117,19 +117,19 @@ describe("delight messages", () => {
 		}];
 
 		expect(resolveDelightMessage(selection, { catalog })).toBe(
-			"Standard bread message.",
+			"Nice buns. Nutritionally speaking.",
 		);
 		expect(resolveDelightMessage(selection, {
 			catalog,
-			allowCheekyMessages: true,
-		})).toBe("Nice buns. Nutritionally speaking.");
+			allowPlayfulMessages: false,
+		})).toBe("Standard bread message.");
 	});
 
-	it("rejects cheeky copy outside explicitly eligible success triggers", () => {
+	it("rejects playful copy outside explicitly eligible success triggers", () => {
 		expect(resolveDelightMessage([
 			{ contextKey: "app", triggerKey: "error" },
 		], {
-			allowCheekyMessages: true,
+			allowPlayfulMessages: true,
 			catalog: {
 				...appReferenceCatalogFixture,
 				delightMessages: [{

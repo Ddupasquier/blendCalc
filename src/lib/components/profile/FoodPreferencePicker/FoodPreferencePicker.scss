@@ -8,7 +8,8 @@
 
 .preference-reviewed-options,
 .preference-custom-entry,
-.preference-custom-values {
+.preference-selections,
+.preference-reviewed-results {
 	display: grid;
 	gap: $app-gap-xs;
 	min-width: 0;
@@ -20,13 +21,7 @@
 	font-size: $app-font-size-sm;
 }
 
-.preference-reviewed-options {
-	padding: 0;
-	border: 0;
-}
-
-.preference-reviewed-options legend,
-.preference-custom-values > strong {
+.preference-reviewed-results > strong {
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-bold;
@@ -43,8 +38,9 @@
 	min-width: 0;
 }
 
-.preference-custom-values :global(.pill-row) {
-	margin: 0;
+.preference-editor-card__actions {
+	display: flex;
+	justify-content: flex-start;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {

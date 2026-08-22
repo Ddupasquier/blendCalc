@@ -47,7 +47,9 @@ describe("Profile moderator action sheet", () => {
 
 		await fireEvent.click(screen.getByRole("button", { name: /Product submissions/ }));
 		expect(onClose).toHaveBeenCalledOnce();
-		expect(onNavigate).toHaveBeenCalledWith("/moderation#product-review");
+		expect(onNavigate).toHaveBeenCalledWith(
+			"/profile/moderator-actions/product-submissions",
+		);
 	});
 
 	it("keeps protected queues available as identity-verification entry points", async () => {
@@ -83,7 +85,9 @@ describe("Profile moderator action sheet", () => {
 
 		await fireEvent.click(screen.getByRole("button", { name: /Product submissions/ }));
 		expect(onClose).toHaveBeenCalledOnce();
-		expect(onNavigate).toHaveBeenCalledWith("/moderation#product-review");
+		expect(onNavigate).toHaveBeenCalledWith(
+			"/profile/moderator-actions/product-submissions",
+		);
 	});
 
 	it("keeps review queues disabled when their counts cannot be read", () => {
@@ -115,5 +119,39 @@ describe("Profile moderator action sheet", () => {
 			.toBeEnabled();
 		expect(screen.getByRole("button", { name: /Catalog data health/ }))
 			.toBeEnabled();
+	});
+
+	it("routes every moderator responsibility to its focused Profile view", async () => {
+		const onNavigate = vi.fn();
+		render(ProfileModeratorActionSheet, {
+			props: {
+				open: true,
+				summary: {
+					pendingProductSubmissions: 1,
+					pendingFoodWarningReports: 1,
+					pendingProfileImageReviews: 1,
+					totalPendingReviews: 3,
+					unavailable: false,
+					identityVerificationRequired: false,
+				},
+				onClose: vi.fn(),
+				onNavigate,
+			},
+		});
+
+		const destinations = [
+			["Product submissions", "/profile/moderator-actions/product-submissions"],
+			["Food warning reports", "/profile/moderator-actions/food-warning-reports"],
+			["Profile images", "/profile/moderator-actions/profile-images"],
+			["Account access", "/profile/moderator-actions/account-access"],
+			["Catalog data health", "/profile/moderator-actions/catalog-data-health"],
+		] as const;
+
+		for (const [label, href] of destinations) {
+			await fireEvent.click(
+				screen.getByRole("button", { name: new RegExp(label) }),
+			);
+			expect(onNavigate).toHaveBeenLastCalledWith(href);
+		}
 	});
 });

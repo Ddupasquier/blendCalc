@@ -713,11 +713,11 @@ workout jokes plus a small number of widely recognizable gamer references are
 appropriate. Deep developer references and jokes inside allergen, medical,
 authentication, validation, warning, or failure instructions are not.
 
-Cheeky messages are a separate database tone with an explicit account opt-in that
-defaults off. Keep them PG-13 and limited to approved successful food-add, goal-match,
-and recipe-save moments. They never appear around allergens, recalls, alcohol safety,
+Playful messages are a separate database-backed tone that defaults on and remains
+user-disableable. Keep them PG-13 and limited to approved successful food-add,
+goal-match, and recipe-save moments. They never appear around allergens, recalls, alcohol safety,
 medical guidance, authentication, validation, errors, body weight, or minors. Do not
-infer cheeky triggers from unreviewed food names, density, texture, or other guessed
+infer playful triggers from unreviewed food names, density, texture, or other guessed
 properties.
 
 Compact ingredient conflicts do not use `StatusMessage`; they use `CardWarningEdge` and

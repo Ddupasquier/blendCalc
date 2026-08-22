@@ -199,14 +199,38 @@ export const createProfileFoodPreferenceFormState = (
 	const measurementSummary = $derived(
 		[
 			form.unitSystem === "metric"
-				? "Metric"
+				? "Metric display"
 				: form.unitSystem === "us"
-					? "US"
+					? "US display"
 					: null,
 			form.defaultServingSize
-				? `${form.defaultServingSize} ${form.defaultServingUnit}`
+				? `${form.defaultServingSize} ${form.defaultServingUnit} Mix start`
 				: null,
-		].filter(Boolean).join(" · ") || undefined,
+		].filter(Boolean).join(" · ") || "App defaults",
+	);
+	const getGroupPendingValues = (group: FoodPreferenceGroupKey) =>
+		group === "allergens"
+			? unresolvedAllergens
+			: unresolvedDietaryRestrictions;
+	const getGroupSummary = (group: FoodPreferenceGroupKey) => {
+		const selectedCount = readGroup(group).length;
+		const pendingCount = getGroupPendingValues(group).length;
+		const activeCount = Math.max(0, selectedCount - pendingCount);
+		if (selectedCount === 0) return "None saved";
+		return [
+			activeCount ? `${activeCount} active` : null,
+			pendingCount ? `${pendingCount} pending` : null,
+		].filter(Boolean).join(" · ");
+	};
+	const regionSummary = $derived(
+		selectedRegion
+			? [
+					selectedRegion.regionCode,
+					selectedRegion.policyVersion
+						? `policy v${selectedRegion.policyVersion}`
+						: null,
+				].filter(Boolean).join(" · ")
+			: "Personal settings only",
 	);
 
 	const readGroup = (group: FoodPreferenceGroupKey) =>
@@ -233,6 +257,14 @@ export const createProfileFoodPreferenceFormState = (
 			readGroup(group).filter((item) => normalizePreferenceValue(item) !== valueKey),
 		);
 	};
+	const clearPreferenceGroup = (group: FoodPreferenceGroupKey) => {
+		writeGroup(group, []);
+	};
+	const restoreMeasurementDefaults = () => {
+		form.unitSystem = "";
+		form.defaultServingSize = "";
+		form.defaultServingUnit = "g";
+	};
 	const setSectionOpen = (
 		section: FoodPreferenceDisclosureKey,
 		open: boolean,
@@ -250,6 +282,9 @@ export const createProfileFoodPreferenceFormState = (
 		readGroup,
 		addPreference,
 		removePreference,
+		clearPreferenceGroup,
+		restoreMeasurementDefaults,
+		getGroupSummary,
 		setSectionOpen,
 		selectRegulatoryRegion,
 		get selectedRegion() {
@@ -266,6 +301,9 @@ export const createProfileFoodPreferenceFormState = (
 		},
 		get measurementSummary() {
 			return measurementSummary;
+		},
+		get regionSummary() {
+			return regionSummary;
 		},
 	};
 };

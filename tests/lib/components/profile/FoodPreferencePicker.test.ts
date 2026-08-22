@@ -14,7 +14,9 @@ const baseProps = {
 	}],
 	emptyLabel: "No allergens saved.",
 	onAdd: vi.fn(),
+	onClear: vi.fn(),
 	onRemove: vi.fn(),
+	clearLabel: "Clear allergens",
 	customEntryLabel: "Add a specific allergen",
 	selectedValues: ["Banana sensitivity"],
 	title: "Allergens",
@@ -31,17 +33,19 @@ describe("FoodPreferencePicker", () => {
 		});
 
 		expect(screen.getByText("Waiting for review")).toBeInTheDocument();
-		expect(screen.getByText(/Banana sensitivity is saved/i))
-			.toBeInTheDocument();
-		expect(screen.getByText(/warnings will not use it/i))
+		expect(screen.getByText(/Saved, but not used for automatic checks yet/i))
 			.toBeInTheDocument();
 	});
 
-	it("renders database options as accessible reviewed choices", () => {
-		render(FoodPreferencePicker, { props: baseProps });
+	it("renders database options as accessible add actions", async () => {
+		const onAdd = vi.fn();
+		render(FoodPreferencePicker, { props: { ...baseProps, onAdd } });
 
-		expect(screen.getByRole("checkbox", { name: "Milk" })).toBeInTheDocument();
+		const milkButton = screen.getByRole("button", { name: /Milk/ });
+		expect(milkButton).toBeInTheDocument();
 		expect(screen.getByLabelText("Add a specific allergen")).toBeInTheDocument();
+		await fireEvent.click(milkButton);
+		expect(onAdd).toHaveBeenCalledWith("Milk");
 	});
 
 	it("preserves saved custom wording when reviewed reference data is unavailable", () => {
@@ -53,6 +57,16 @@ describe("FoodPreferencePicker", () => {
 			screen.getByRole("button", { name: "Remove Banana sensitivity" }),
 		).toBeDisabled();
 		expect(screen.getByLabelText("Add a specific allergen")).toBeDisabled();
+	});
+
+	it("provides a scoped clear action for the selected group", async () => {
+		const onClear = vi.fn();
+		render(FoodPreferencePicker, {
+			props: { ...baseProps, onClear },
+		});
+
+		await fireEvent.click(screen.getByRole("button", { name: "Clear allergens" }));
+		expect(onClear).toHaveBeenCalledOnce();
 	});
 
 	it("filters larger database-provided choice sets without discarding selections", async () => {
@@ -74,8 +88,8 @@ describe("FoodPreferencePicker", () => {
 			{ target: { value: "sesame" } },
 		);
 
-		expect(screen.getByRole("checkbox", { name: "Sesame" })).toBeInTheDocument();
-		expect(screen.queryByRole("checkbox", { name: "Allergen 1" }))
+		expect(screen.getByRole("button", { name: /Sesame/ })).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: /Allergen 1/ }))
 			.not.toBeInTheDocument();
 	});
 });

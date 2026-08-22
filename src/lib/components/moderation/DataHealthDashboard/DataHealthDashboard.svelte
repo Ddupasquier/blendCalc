@@ -8,7 +8,12 @@
 	import SelectField from "$lib/components/common/forms/SelectField/SelectField.svelte";
 	import type { DataHealthDashboardProps } from "./types";
 
-	let { dashboard, catalogMonitor, viewerRole }: DataHealthDashboardProps = $props();
+	let {
+		dashboard,
+		catalogMonitor,
+		viewerRole,
+		showHeader = true,
+	}: DataHealthDashboardProps = $props();
 	let pendingReviewId = $state<string | null>(null);
 
 	const numberFormatter = new Intl.NumberFormat();
@@ -58,7 +63,12 @@
 	};
 </script>
 
-<section class="data-health" aria-labelledby="data-health-title">
+<section
+	class="data-health"
+	aria-labelledby={showHeader ? "data-health-title" : undefined}
+	aria-label={showHeader ? undefined : "Catalog data health"}
+>
+	{#if showHeader}
 	<header class="data-health__header">
 		<div>
 			<p class="data-health__eyebrow">{viewerRole} tools</p>
@@ -70,6 +80,7 @@
 		</div>
 		<PrivilegedActionBadge label="Moderator data health" />
 	</header>
+	{/if}
 
 	<p class="data-health__generated">
 		Updated {formatDate(dashboard.generatedAt)} · Source activity covers the last
@@ -86,8 +97,8 @@
 	</section>
 
 	<nav class="data-health__queue-links" aria-label="Moderation queues">
-		<a href="/moderation#product-review">Review product submissions</a>
-		<a href="/moderation#compatibility-review">Review food warning reports</a>
+		<a href="/profile/moderator-actions/product-submissions">Review product submissions</a>
+		<a href="/profile/moderator-actions/food-warning-reports">Review food warning reports</a>
 	</nav>
 
 	<div class="data-health__sections">

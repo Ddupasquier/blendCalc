@@ -1,12 +1,12 @@
 @use "../../../../styles/variables" as *;
 
-.profile-cheeky-message-settings,
+.profile-playful-message-settings,
 form {
 	display: grid;
 	gap: $app-gap-sm;
 }
 
-.profile-cheeky-message-settings > p {
+.profile-playful-message-settings > p {
 	margin: 0;
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-sm;
@@ -14,7 +14,7 @@ form {
 	line-height: $app-line-height-body;
 }
 
-.profile-cheeky-message-settings__toggle {
+.profile-playful-message-settings__toggle {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -26,18 +26,18 @@ form {
 	cursor: pointer;
 }
 
-.profile-cheeky-message-settings__toggle > span {
+.profile-playful-message-settings__toggle > span {
 	display: grid;
 	gap: $app-gap-2xs;
 	min-width: 0;
 }
 
-.profile-cheeky-message-settings__toggle strong,
-.profile-cheeky-message-settings__toggle small {
+.profile-playful-message-settings__toggle strong,
+.profile-playful-message-settings__toggle small {
 	line-height: $app-line-height-ui;
 }
 
-.profile-cheeky-message-settings__toggle small {
+.profile-playful-message-settings__toggle small {
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-medium;
@@ -48,7 +48,7 @@ form {
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.profile-cheeky-message-settings > p {
+	.profile-playful-message-settings > p {
 		font-size: $app-font-size-xs;
 	}
 }

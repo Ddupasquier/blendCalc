@@ -11,6 +11,7 @@ import {
 	type NutrientMeta,
 } from "$lib/utils/mix/calculations";
 import {
+	convertServingQuantityToUnit,
 	getSourceServingMeasureOption,
 	getSourceServingMeasureOptions,
 	type ServingConversion,
@@ -160,7 +161,15 @@ export const normalizeServingUnit = (value: unknown, food?: FoodItem) => {
 	);
 };
 
-export const getDefaultServingAmount = (food?: FoodItem) => {
+export type MixDefaultServingPreferences = {
+	preferredServingGrams?: number | null;
+	preferredWeightUnit?: "g" | "oz";
+};
+
+export const getDefaultServingAmount = (
+	food?: FoodItem,
+	preferences: MixDefaultServingPreferences = {},
+) => {
 	const servingUnit = normalizeServingUnit(food?.servingSizeUnit);
 	if (food?.servingSize && servingUnit) {
 		return {
@@ -180,9 +189,23 @@ export const getDefaultServingAmount = (food?: FoodItem) => {
 		};
 	}
 
+	const preferredServingGrams =
+		preferences.preferredServingGrams && preferences.preferredServingGrams > 0
+			? preferences.preferredServingGrams
+			: getMixRuntimeConfiguration().defaultServingGrams;
+	const preferredWeightUnit = preferences.preferredWeightUnit ?? "g";
+	const preferredQuantity =
+		preferredWeightUnit === "oz"
+			? convertServingQuantityToUnit(
+					preferredServingGrams,
+					"g",
+					"oz",
+				) ?? preferredServingGrams
+			: preferredServingGrams;
+
 	return {
-		quantity: getMixRuntimeConfiguration().defaultServingGrams,
-		unit: "g" as ServingMeasureUnit,
+		quantity: preferredQuantity,
+		unit: preferredWeightUnit as ServingMeasureUnit,
 	};
 };
 

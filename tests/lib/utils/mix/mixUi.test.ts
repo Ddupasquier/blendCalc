@@ -44,11 +44,24 @@ describe("mix UI utilities", () => {
 	});
 
 	it("uses an exact primary household serving as the default", () => {
-		const serving = getDefaultServingAmount(banana);
+		const serving = getDefaultServingAmount(banana, {
+			preferredServingGrams: 250,
+			preferredWeightUnit: "oz",
+		});
 
 		expect(serving.quantity).toBe(1);
 		expect(serving.unit).toMatch(/^source-serving:/);
 		expect(normalizeServingUnit(serving.unit, banana)).toBe(serving.unit);
 		expect(normalizeServingUnit(serving.unit)).toBeNull();
+	});
+
+	it("uses the account starting amount only when no exact serving exists", () => {
+		const serving = getDefaultServingAmount(undefined, {
+			preferredServingGrams: 56.69904625,
+			preferredWeightUnit: "oz",
+		});
+
+		expect(serving.quantity).toBeCloseTo(2);
+		expect(serving.unit).toBe("oz");
 	});
 });

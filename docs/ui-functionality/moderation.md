@@ -1,18 +1,20 @@
 # Moderation
 
-Routes: `/moderation`, `/moderation/data-health`, and the Profile gateway at
-`/profile/moderator-actions`
+Routes: the Profile gateway at `/profile/moderator-actions`, focused moderator views
+under `/profile/moderator-actions/*`, and the legacy compatibility routes
+`/moderation` and `/moderation/data-health`.
 
 Only authorized moderators, administrators, and developers may enter these views. Role,
 account-control, and notification rules live in [Moderation](../moderation.md).
 
-The elevated-role-only Profile launcher opens one shared bottom sheet containing every
-current moderation destination. It may summarize pending queues, but it never replaces
-the authorization, evidence, or mutation rules of the destination route. Queue rows
-remain visible and disabled at zero; standing account and data-health tools remain
-available. The sheet title is the single visible `Moderator actions` heading and owns
-the single crown; the enclosed action region keeps the same accessible name without a
-second visible label.
+The elevated-role-only Profile launcher opens one compact bottom sheet containing every
+current moderation destination. Each destination opens a route-backed right sheet with
+one focused responsibility: product submissions, food-warning reports, profile images,
+account access, or catalog data health. The focused route retains its own server and
+database authorization, evidence, mutations, browser title, history entry, and direct-
+load behavior. Queue rows remain visible and disabled at zero; standing account and
+data-health tools remain available. The bottom-sheet title and each right-sheet heading
+own one crown without repeating the same visible label inside their content.
 
 ## Account Review
 
@@ -38,7 +40,8 @@ second visible label.
 
 ## Data Health
 
-`/moderation/data-health` starts with bounded overview counts. Keep source activity,
+`/profile/moderator-actions/catalog-data-health` starts with bounded overview counts.
+The legacy `/moderation/data-health` route remains a compatibility entry point. Keep source activity,
 dataset/licence state, food-warning policy coverage, conflicts, API publication gaps,
 nutrient mapping review, and revision gaps in closed shared disclosures. Product issues
 link to their existing provenance review.

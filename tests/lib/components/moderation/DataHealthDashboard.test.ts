@@ -18,7 +18,10 @@ describe("DataHealthDashboard", () => {
 			.toBeInTheDocument();
 		expect(screen.getByText("16")).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: "Review product submissions" }))
-			.toHaveAttribute("href", "/moderation#product-review");
+			.toHaveAttribute(
+				"href",
+				"/profile/moderator-actions/product-submissions",
+			);
 
 		const sourceSummary = screen.getByText("Source activity").closest("summary");
 		expect(sourceSummary?.closest("details")).not.toHaveAttribute("open");

@@ -3,12 +3,12 @@ import type { ProfileSettingsRoute } from "$lib/utils/profile/profileRouteState"
 
 export type ProfileSettingsMenuProps = {
 	appearanceTheme: ThemePreference;
-	cheekyMessagesEnabled: boolean;
+	playfulMessagesEnabled: boolean;
 	displayName: string;
 	bio: string;
 	hasProfileImage: boolean;
-	allergenCount: number;
-	dietaryRestrictionCount: number;
+	activeFoodPreferenceCount: number;
+	pendingFoodPreferenceCount: number;
 	priorityNutrientCount: number;
 	onOpen: (settingsRoute: ProfileSettingsRoute) => void;
 };

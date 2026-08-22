@@ -4,14 +4,14 @@
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
 	import ToggleSwitch from "$lib/components/common/forms/ToggleSwitch/ToggleSwitch.svelte";
 	import { createPendingSubmit } from "$lib/utils/forms/pendingSubmit";
-	import type { ProfileCheekyMessageSettingsProps } from "./types";
+	import type { ProfilePlayfulMessageSettingsProps } from "./types";
 
 	let {
 		initiallyEnabled,
 		errorMessage,
 		successMessage,
 		onSaveSuccess,
-	}: ProfileCheekyMessageSettingsProps = $props();
+	}: ProfilePlayfulMessageSettingsProps = $props();
 
 	let enabled = $state(false);
 	let previousInitialValue = $state<boolean | null>(null);
@@ -31,10 +31,10 @@
 	);
 </script>
 
-<div class="profile-cheeky-message-settings">
+<div class="profile-playful-message-settings">
 	<p>
-		Allow an occasional PG-13 food joke after successful, non-safety actions.
-		This is off by default and never appears in warnings, recalls, health guidance,
+		Show an occasional playful food joke after successful, non-safety actions.
+		This is on by default and never appears in warnings, recalls, health guidance,
 		authentication, or errors.
 	</p>
 	{#if errorMessage}
@@ -45,30 +45,31 @@
 
 	<form
 		method="POST"
-		action="/profile?/saveCheekyMessages"
+		action="/profile?/savePlayfulMessages"
 		use:enhance={enhancePreference}
 		aria-busy={isSaving}
 	>
-		<label class="profile-cheeky-message-settings__toggle" for="cheeky-messages-enabled">
+		<input type="hidden" name="playfulMessagesEnabled" value={enabled ? "true" : "false"} />
+		<label class="profile-playful-message-settings__toggle" for="playful-messages-enabled">
 			<span>
-				<strong>Cheeky messages</strong>
+				<strong>Playful messages</strong>
 				<small>{enabled ? "On" : "Off"}</small>
 			</span>
 			<ToggleSwitch
-				id="cheeky-messages-enabled"
-				name="cheekyMessagesEnabled"
+				id="playful-messages-enabled"
+				name="playfulMessagesToggle"
 				checked={enabled}
 				disabled={isSaving}
-				ariaLabel="Allow cheeky messages"
+				ariaLabel="Allow playful messages"
 				onChange={(checked) => (enabled = checked)}
 			/>
 		</label>
 		<RoundedActionButton type="submit" busy={isSaving}>
-			Save message preference
+			Save playful messages
 		</RoundedActionButton>
 	</form>
 </div>
 
 <style lang="scss">
-	@use "./ProfileCheekyMessageSettings.scss";
+	@use "./ProfilePlayfulMessageSettings.scss";
 </style>

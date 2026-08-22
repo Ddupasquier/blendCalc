@@ -32,7 +32,7 @@ export const readModeratorActionSummary = async (): Promise<ModeratorActionSumma
 				.from("profiles")
 				.select("user_id", { count: "exact", head: true })
 				.not("avatar_path", "is", null)
-				.eq("avatar_moderation_status", "pending"),
+				.eq("avatar_moderation_status", "self_attested"),
 		]);
 
 	const pendingProductSubmissions = readCount(productSubmissions);

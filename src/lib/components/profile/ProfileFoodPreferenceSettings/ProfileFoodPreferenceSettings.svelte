@@ -43,13 +43,13 @@
 		allergens: {
 			title: "Allergens",
 			description:
-				"Reviewed matches add warnings when food details conflict. New terms stay saved while their match is reviewed.",
+				"Applies to search ranking, warning edges, Nutrition details, and Mix checks. New wording stays saved while its match is reviewed.",
 			customEntryLabel: "Add a specific allergen",
 		},
 		dietaryRestrictions: {
 			title: "Dietary restrictions",
 			description:
-				"Reviewed matches warn on possible conflicts without preventing an item from being added.",
+				"Applies to search ranking, warning edges, Nutrition details, and Mix checks without blocking a food from being added.",
 			customEntryLabel: "Add a specific restriction",
 		},
 	};
@@ -88,15 +88,14 @@
 			<CollapsibleSection
 				title="Package-label region"
 				titleId="profile-package-label-region-title"
-				badge={preferenceFormState.selectedRegion?.regionCode ??
-					(preferenceFormState.form.regulatoryRegionCode || undefined)}
+				badge={preferenceFormState.regionSummary}
 				surface="accent"
 				open={preferenceFormState.openSections.region}
 				onOpenChange={(open) =>
 					preferenceFormState.setSectionOpen("region", open)}
 			>
 				<p class="profile-food-preference-settings__description">
-					Use the label rules for a region when they are known. Personal allergen and dietary warnings always remain in effect.
+					Adds the selected authority's package-label context to Nutrition details and warning explanations. Personal warnings always remain active.
 				</p>
 				<ProfileRegulatoryRegionSettings
 					regulatoryRegionCode={preferenceFormState.form.regulatoryRegionCode}
@@ -118,7 +117,7 @@
 					preferenceFormState.setSectionOpen("measurements", open)}
 			>
 				<p class="profile-food-preference-settings__description">
-					Choose how amounts appear and the serving size Mix starts with.
+					Choose display units separately from the amount a newly selected Mix ingredient starts with when no exact serving exists.
 				</p>
 				<ProfileMeasurementDefaults
 					unitSystem={preferenceFormState.form.unitSystem}
@@ -131,6 +130,7 @@
 						(preferenceFormState.form.defaultServingSize = value)}
 					onDefaultServingUnitChange={(value) =>
 						(preferenceFormState.form.defaultServingUnit = value)}
+					onRestoreDefaults={preferenceFormState.restoreMeasurementDefaults}
 				/>
 			</CollapsibleSection>
 
@@ -147,7 +147,7 @@
 				<CollapsibleSection
 					title={groupPresentation[groupKey].title}
 					titleId={`profile-${groupKey}-title`}
-					badge={selectedValues.length ? `${selectedValues.length}` : undefined}
+					badge={preferenceFormState.getGroupSummary(groupKey)}
 					surface="accent"
 					open={preferenceFormState.openSections[groupKey]}
 					onOpenChange={(open) =>
@@ -166,12 +166,16 @@
 							? foodPreferenceOptions.allergens
 							: foodPreferenceOptions.dietaryRestrictions}
 						disabled={isDisabled}
+						clearLabel={groupKey === "allergens"
+							? "Clear allergens"
+							: "Clear restrictions"}
 						referenceDataUnavailable={foodPreferenceOptionsUnavailable}
 						emptyLabel={groupKey === "allergens" ? "No allergens saved." : "No restrictions saved."}
 						unresolvedValues={groupKey === "allergens"
 							? preferenceFormState.unresolvedAllergens
 							: preferenceFormState.unresolvedDietaryRestrictions}
 						onAdd={(value) => preferenceFormState.addPreference(groupKey, value)}
+						onClear={() => preferenceFormState.clearPreferenceGroup(groupKey)}
 						onRemove={(value) => preferenceFormState.removePreference(groupKey, value)}
 					/>
 				</CollapsibleSection>
@@ -181,15 +185,15 @@
 				title="Nutrient priorities"
 				titleId="profile-nutrient-priorities-title"
 				badge={preferenceFormState.form.prioritizedNutrientIds.length
-					? `${preferenceFormState.form.prioritizedNutrientIds.length}`
-					: undefined}
+					? `${preferenceFormState.form.prioritizedNutrientIds.length} ordered`
+					: "App defaults"}
 				surface="accent"
 				open={preferenceFormState.openSections.priorityNutrients}
 				onOpenChange={(open) =>
 					preferenceFormState.setSectionOpen("priorityNutrients", open)}
 			>
 				<p class="profile-food-preference-settings__description">
-					Choose the nutrients you want emphasized while building a Mix and reviewing food details.
+					Sets the default display order for tracked Mix nutrients. It does not create or change nutrition goals.
 				</p>
 				<ProfileNutrientPrioritySettings
 					options={priorityNutrientOptions}

@@ -14,18 +14,18 @@ export type DelightMessageSelection = {
 };
 
 export type DelightMessageResolutionOptions = {
-	allowCheekyMessages?: boolean;
+	allowPlayfulMessages?: boolean;
 	catalog?: ReturnType<typeof getConfiguredAppReferenceCatalog>;
 };
 
-const CHEEKY_MESSAGE_TRIGGER_KEYS = new Set([
+const PLAYFUL_MESSAGE_TRIGGER_KEYS = new Set([
 	"ingredients:food-added",
 	"mix:goal-progress",
 	"saved:recipe-saved",
 ]);
 
-const isEligibleCheekyMessage = (entry: AppDelightMessage) =>
-	CHEEKY_MESSAGE_TRIGGER_KEYS.has(`${entry.contextKey}:${entry.triggerKey}`);
+const isEligiblePlayfulMessage = (entry: AppDelightMessage) =>
+	PLAYFUL_MESSAGE_TRIGGER_KEYS.has(`${entry.contextKey}:${entry.triggerKey}`);
 
 const matchesSelection = (
 	entry: AppDelightMessage,
@@ -67,14 +67,14 @@ const matchesSelection = (
 export const resolveDelightMessage = (
 	selections: readonly DelightMessageSelection[],
 	{
-		allowCheekyMessages = false,
+		allowPlayfulMessages = true,
 		catalog = getConfiguredAppReferenceCatalog(),
 	}: DelightMessageResolutionOptions = {},
 ) => {
 	const matchingEntries = catalog.delightMessages.filter(
 		(entry) =>
 			(entry.tone === "standard" ||
-				(allowCheekyMessages && isEligibleCheekyMessage(entry))) &&
+				(allowPlayfulMessages && isEligiblePlayfulMessage(entry))) &&
 			selections.some((selection) => matchesSelection(entry, selection)),
 	);
 	matchingEntries.sort(
@@ -86,7 +86,7 @@ export const resolveDelightMessage = (
 
 export const resolveFoodAddedDelightMessage = (
 	food: FoodItem,
-	allowCheekyMessages = false,
+	allowPlayfulMessages = true,
 ) =>
 	resolveDelightMessage([
 		{
@@ -94,7 +94,7 @@ export const resolveFoodAddedDelightMessage = (
 			triggerKey: "food-added",
 			matchKeys: [resolveFoodSymbolKey(food)],
 		},
-	], { allowCheekyMessages });
+	], { allowPlayfulMessages });
 
 const isFoodNamedOnly = (foods: FoodItem[], expectedName: string) =>
 	foods.length > 0 &&
@@ -149,13 +149,13 @@ export const resolveMixDelightMessage = ({
 	servingGrams,
 	goalDifferences,
 	hasDangerWarning,
-	allowCheekyMessages = false,
+	allowPlayfulMessages = true,
 }: {
 	foods: FoodItem[];
 	servingGrams: Record<number, number>;
 	goalDifferences: SaveGoalDiff[];
 	hasDangerWarning: boolean;
-	allowCheekyMessages?: boolean;
+	allowPlayfulMessages?: boolean;
 }) => {
 	if (foods.length === 0 || hasDangerWarning) return null;
 	const recipeCompositionMatchKeys = [
@@ -185,5 +185,5 @@ export const resolveMixDelightMessage = ({
 			triggerKey: "total-serving-grams",
 			numericValue: totalServingGrams,
 		},
-	], { allowCheekyMessages });
+	], { allowPlayfulMessages });
 };

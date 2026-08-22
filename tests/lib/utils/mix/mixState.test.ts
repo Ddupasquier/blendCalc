@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
 	MIX_STATE_STORAGE_VERSION,
+	getDefaultMixState,
 	getStateWithServingAmount,
 	getStateWithToggledFood,
 	readStoredMixState,
 	writeStoredMixState,
 } from "$lib/utils/mix/state/mixState";
+import { getDefaultMixFields } from "$lib/utils/food/reference/appReferenceCatalog";
 import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
 import type { FoodItem } from "$lib/utils/food/types";
 
@@ -33,6 +35,15 @@ describe("mix serving state", () => {
 		expect(getStateWithServingAmount(state, food, "", "g")).toBe(state);
 	});
 
+	it("uses account nutrient priorities as the default Mix display order", () => {
+		const defaultFields = getDefaultMixFields();
+		const prioritizedIds = defaultFields.slice(0, 2).map((field) => field.id).reverse();
+
+		expect(getDefaultMixState(prioritizedIds).selected.slice(0, 2)).toEqual(
+			prioritizedIds,
+		);
+	});
+
 	it("does not save a volume amount without measured conversion data", () => {
 		expect(getStateWithServingAmount(state, food, "1", "cup")).toBe(state);
 	});
@@ -57,7 +68,13 @@ describe("mix serving state", () => {
 			}],
 		};
 		const defaultState = getStateWithToggledFood(
-			{ ...state, selectedFoodIds: [] },
+			{
+				...state,
+				selectedFoodIds: [],
+				servingGrams: {},
+				servingQuantities: {},
+				servingUnits: {},
+			},
 			banana.fdcId,
 			[banana],
 		);
@@ -77,6 +94,28 @@ describe("mix serving state", () => {
 			servingQuantities: { [banana.fdcId]: 2 },
 			servingGrams: { [banana.fdcId]: 236 },
 		});
+	});
+
+	it("uses account Mix defaults for foods without an exact serving", () => {
+		const defaultState = getStateWithToggledFood(
+			{
+				...state,
+				selectedFoodIds: [],
+				servingGrams: {},
+				servingQuantities: {},
+				servingUnits: {},
+			},
+			food.fdcId,
+			[food],
+			{
+				preferredServingGrams: 56.69904625,
+				preferredWeightUnit: "oz",
+			},
+		);
+
+		expect(defaultState.servingQuantities[food.fdcId]).toBeCloseTo(2);
+		expect(defaultState.servingUnits[food.fdcId]).toBe("oz");
+		expect(defaultState.servingGrams[food.fdcId]).toBeCloseTo(56.69904625);
 	});
 
 	it("stores the current Mix state contract version", () => {

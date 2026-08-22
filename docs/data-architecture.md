@@ -40,10 +40,10 @@ rendered cards cannot drift into separate symbol policies.
 
 The server-loaded application reference catalog also owns optional delight copy from
 `app_delight_messages`. Client resolvers provide reviewed semantic trigger keys and may
-render at most one matching line as secondary presentation. Standard copy is available
-to every signed-in account. Cheeky copy is delivered only when the authenticated
-profile has explicitly opted in, and the resolver independently restricts it to
-approved non-safety success triggers. This catalog never owns or replaces
+render at most one matching line as secondary presentation. Standard and reviewed
+playful copy are available by default to signed-in accounts, and the account can turn
+playful messages off. The resolver independently restricts playful rows to approved
+non-safety success triggers. This catalog never owns or replaces
 authentication, safety, validation, warning, or failure instructions; those remain
 stable code-based messages backed by server and database evidence.
 

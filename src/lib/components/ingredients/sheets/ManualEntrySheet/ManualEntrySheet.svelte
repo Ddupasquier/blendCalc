@@ -18,7 +18,7 @@
 		initialFood,
 		submissionIntent = "catalog_share",
 		catalogSubmissionOnly = false,
-		allowCheekyMessages = false,
+		allowPlayfulMessages = true,
 	}: ManualEntrySheetProps = $props();
 	let closingAfterSuccessfulCreate = $state(false);
 
@@ -69,6 +69,6 @@
 		{initialFood}
 		{submissionIntent}
 		{catalogSubmissionOnly}
-		{allowCheekyMessages}
+		{allowPlayfulMessages}
 	/>
 </BottomSheet>

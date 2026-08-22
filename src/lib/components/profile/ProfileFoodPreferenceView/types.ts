@@ -3,4 +3,5 @@ import type { ProfileFoodPreferenceSettingsProps } from "$lib/components/profile
 export type ProfileFoodPreferenceViewProps =
 	ProfileFoodPreferenceSettingsProps & {
 		onClose: () => void;
+		onSaveSuccess: () => void;
 	};

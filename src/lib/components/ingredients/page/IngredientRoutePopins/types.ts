@@ -38,7 +38,7 @@ export type IngredientRoutePopinsProps = {
 	correctionFood: FoodItem | null;
 	sortOptions: readonly IngredientSortOption[];
 	canAdjustImagePlacement: boolean;
-	allowCheekyMessages?: boolean;
+	allowPlayfulMessages?: boolean;
 	onAddSearchResult: (food: FoodItem) => void | Promise<void>;
 	onApplyFilters: (filters: IngredientFilterApplyPayload) => void;
 	onCloseActionSheet: () => void;

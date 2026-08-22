@@ -2,8 +2,51 @@
 
 .profile-nutrient-priority-settings {
 	display: grid;
-	gap: $app-gap-xs;
+	gap: $app-gap-sm;
 	min-width: 0;
 	padding: 0;
 	border: 0;
+}
+
+.profile-nutrient-priority-settings__selected {
+	display: grid;
+	gap: $app-gap-xs;
+	min-width: 0;
+}
+
+.profile-nutrient-priority-settings__add {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: end;
+	gap: $app-gap-xs;
+	min-width: 0;
+}
+
+.profile-nutrient-priority-settings__empty {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+}
+
+.profile-nutrient-priority-settings__actions {
+	display: flex;
+	justify-content: flex-start;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.profile-nutrient-priority-settings {
+		gap: $app-gap-xs;
+	}
+
+	.profile-nutrient-priority-settings__add {
+		grid-template-columns: 1fr;
+	}
+
+	.profile-nutrient-priority-settings__add > :global(.rounded-action-button) {
+		width: 100%;
+	}
+
+	.profile-nutrient-priority-settings__empty {
+		font-size: $app-font-size-xs;
+	}
 }

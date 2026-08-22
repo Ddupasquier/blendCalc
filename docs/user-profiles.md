@@ -31,15 +31,16 @@ This document owns profile behavior and privacy. Auth configuration belongs in
 - The app-wide semantic theme properties live in `src/styles/_themes.scss`; individual
   views must not maintain separate dark-mode overrides.
 
-## Optional Message Tone
+## Playful Messages
 
-- `cheeky_messages_enabled` is an account-level opt-in and defaults off.
-- Enabling it permits occasional PG-13 secondary food copy after eligible successful
+- `cheeky_messages_enabled` is the retained database field behind the user-facing
+  `Playful messages` setting. It defaults on and remains user-disableable.
+- Allowing it permits occasional playful secondary food copy after eligible successful
   actions. It does not replace factual outcomes or primary actions.
 - The message text and tone are reviewed database reference data. The server filters
   the reference catalog for the authenticated account, and the resolver separately
   enforces eligible trigger contexts.
-- Cheeky copy never appears in allergen, recall, alcohol-safety, medical,
+- Playful copy never appears in allergen, recall, alcohol-safety, medical,
   authentication, validation, warning, error, body-weight, or minor-related contexts.
 - Disabling the preference takes effect across devices after the account setting is
   saved.
@@ -59,6 +60,8 @@ This document owns profile behavior and privacy. Auth configuration belongs in
 - Regional policy adds authority, terminology, declaration, and coverage context. It
   never removes or lowers a warning for an allergen or dietary restriction the user
   selected.
+- The selected region shows the DB-provided regulatory authority and active policy
+  version so the account setting is understandable rather than a bare region code.
 - If a stored region is not supported by the active policy version, evaluation reports
   that no regional profile was checked and continues applying personal settings.
 - The account keeps the user's exact allergen and dietary wording. Automated checks use
@@ -73,13 +76,24 @@ This document owns profile behavior and privacy. Auth configuration belongs in
 - Activating a reviewed mapping re-resolves existing account settings without changing
   the wording the user entered.
 - The Food preferences route presents each configurable setting family in an independent
-  animated disclosure. Header counts and short values summarize the live form state;
+  animated disclosure. Header summaries distinguish active and pending safety choices
+  and show short live values;
   the app does not duplicate the same settings in a second saved-summary block. The
   sensitive-data acknowledgement remains visible as a compact footer above Save because
   it is consent for the form rather than another configurable preference family.
-- Larger reviewed allergen and dietary catalogs can be filtered locally after their
-  database-backed options load. A filter never changes durable selections, and exact
-  custom wording remains separate from reviewed choices.
+- Reviewed allergen and dietary catalogs use searchable add controls after their
+  database-backed options load. Selected values remain visible in removable rows marked
+  `Active` or `Waiting for review`; searching never changes durable selections, and
+  exact custom wording remains separate from reviewed choices. Each group has a scoped
+  clear action.
+- Display-unit preference and default Mix starting amount remain separate. The starting
+  amount is used only when a food has no exact source serving, and its gram/ounce preview
+  is an exact weight conversion rather than an estimated food conversion.
+- Nutrient priorities preserve user order. A DB-provided default target includes its
+  unit; nutrients without one are identified as display emphasis only. Priorities order
+  the default Mix presentation and do not create or rewrite nutrition goals.
+- Each disclosure states where it applies: search ranking, warning edges, Nutrition
+  details, or Mix. These explanations do not duplicate saved values.
 
 ## Profile Images
 

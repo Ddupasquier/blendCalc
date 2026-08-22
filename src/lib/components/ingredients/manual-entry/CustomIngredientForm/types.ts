@@ -20,7 +20,7 @@ export type CustomIngredientFormProps = {
 	initialFood?: FoodItem;
 	submissionIntent?: CatalogSubmissionIntent;
 	catalogSubmissionOnly?: boolean;
-	allowCheekyMessages?: boolean;
+	allowPlayfulMessages?: boolean;
 };
 
 export type ManualEntryDraftData = Omit<

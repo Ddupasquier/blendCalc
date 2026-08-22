@@ -11,8 +11,8 @@ const resolver = readFileSync(
 	"utf8",
 );
 
-describe("cheeky delight message preferences migration", () => {
-	it("adds a default-off account preference and a constrained DB-owned tone", () => {
+describe("original playful message preference migration", () => {
+	it("records the original rollout default and constrained DB-owned tone", () => {
 		expect(migration).toContain(
 			"add column cheeky_messages_enabled boolean not null default false",
 		);
@@ -32,9 +32,9 @@ describe("cheeky delight message preferences migration", () => {
 		}
 	});
 
-	it("filters server-delivered reference data for accounts that did not opt in", () => {
-		expect(layoutServer).toContain("profile?.cheeky_messages_enabled ?? false");
+	it("filters server-delivered reference data for accounts that turn messages off", () => {
+		expect(layoutServer).toContain("profile?.cheeky_messages_enabled ?? true");
 		expect(layoutServer).toContain('message.tone === "standard"');
-		expect(resolver).toContain("CHEEKY_MESSAGE_TRIGGER_KEYS");
+		expect(resolver).toContain("PLAYFUL_MESSAGE_TRIGGER_KEYS");
 	});
 });

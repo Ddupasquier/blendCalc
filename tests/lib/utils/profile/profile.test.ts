@@ -50,7 +50,7 @@ describe("profile request efficiency", () => {
 		} as unknown as SupabaseClient<Database>;
 
 		await expect(getUserProfile(supabase, "user-1")).resolves.toMatchObject({
-			cheeky_messages_enabled: false,
+			cheeky_messages_enabled: true,
 		});
 		expect(select).toHaveBeenCalledTimes(2);
 	});

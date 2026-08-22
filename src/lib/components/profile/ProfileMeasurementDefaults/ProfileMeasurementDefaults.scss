@@ -2,15 +2,18 @@
 
 .profile-measurement-defaults {
 	display: grid;
-	grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
 	gap: $app-gap-sm;
 	min-width: 0;
 }
 
-.profile-measurement-defaults__serving {
+.profile-measurement-defaults__group {
 	display: grid;
 	gap: $app-gap-xs;
 	min-width: 0;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-control;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
 }
 
 .profile-measurement-defaults__serving > span {
@@ -20,6 +23,19 @@
 	letter-spacing: $app-letter-spacing-label;
 	line-height: $app-line-height-ui;
 	text-transform: uppercase;
+}
+
+.profile-measurement-defaults__group > p,
+.profile-measurement-defaults__group > output {
+	margin: 0;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-xs;
+	line-height: $app-line-height-body;
+}
+
+.profile-measurement-defaults__group > output {
+	color: $app-shell-accent-primary;
+	font-weight: $app-font-weight-bold;
 }
 
 .profile-measurement-defaults__serving > div {
@@ -47,11 +63,12 @@
 	outline-offset: $app-focus-outline-offset;
 }
 
-@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.profile-measurement-defaults {
-		grid-template-columns: 1fr;
-	}
+.profile-measurement-defaults__actions {
+	display: flex;
+	justify-content: flex-start;
+}
 
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.profile-measurement-defaults__serving :global(input) {
 		min-height: $app-shell-control-height-narrow;
 		padding-inline: $app-shell-control-padding-x-compact;

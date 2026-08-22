@@ -1,4 +1,4 @@
-export type ProfileCheekyMessageSettingsProps = {
+export type ProfilePlayfulMessageSettingsProps = {
 	initiallyEnabled: boolean;
 	errorMessage?: string | null;
 	successMessage?: string | null;

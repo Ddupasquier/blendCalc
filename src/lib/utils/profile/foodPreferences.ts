@@ -90,6 +90,24 @@ export const getServingSizeDisplayValue = (
 	return Number(displayValue.toFixed(2)).toString();
 };
 
+const formatExactServingConversionAmount = (value: number) =>
+	new Intl.NumberFormat("en-US", {
+		maximumFractionDigits: 4,
+	}).format(value);
+
+export const getExactServingSizeConversionPreview = (
+	quantity: string,
+	unit: DefaultServingUnit,
+) => {
+	const parsedQuantity = Number(quantity);
+	const grams = getServingSizeGrams(quantity, unit);
+	if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0 || !grams) return null;
+
+	const convertedUnit: DefaultServingUnit = unit === "g" ? "oz" : "g";
+	const convertedAmount = unit === "g" ? grams / OUNCE_TO_GRAMS : grams;
+	return `${formatExactServingConversionAmount(parsedQuantity)} ${unit} = ${formatExactServingConversionAmount(convertedAmount)} ${convertedUnit} · Exact unit conversion`;
+};
+
 export const hasFoodPreferenceValues = (values: FoodPreferenceFormValues) =>
 	Boolean(
 		values.unitSystem ||

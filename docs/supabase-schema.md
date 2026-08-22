@@ -74,8 +74,8 @@ Notes:
   the user has not chosen one.
 - `appearance_theme` is constrained to `system`, `light`, or `dark` and defaults to
   `system`.
-- `cheeky_messages_enabled` is an explicit account opt-in for occasional PG-13
-  secondary copy and defaults to `false`.
+- `cheeky_messages_enabled` backs the user-facing `Playful messages` preference for
+  occasional secondary copy, defaults to `true`, and remains user-disableable.
 - Avatar files live in the private `profile-avatars` storage bucket under the user id
   folder.
 - Profile and avatar-policy writes are server-owned so browser clients cannot bypass
@@ -1347,9 +1347,10 @@ Notes:
   humor. Niche developer references are deliberately excluded from the initial set.
 - Application code supplies reviewed context, trigger, semantic match, and optional
   numeric values. The lowest-priority matching enabled row supplies at most one line.
-- `tone` is `standard` or `cheeky`. Cheeky rows are limited by database constraint to
-  eligible food-add, goal-success, and recipe-save triggers and are delivered only to
-  accounts that opted in.
+- `tone` is `standard` or the retained internal key `cheeky`. The user-facing name for
+  the latter is `Playful messages`. These rows are limited by database constraint to
+  eligible food-add, goal-success, and recipe-save triggers and are excluded when the
+  account turns playful messages off.
 - Delight copy is secondary presentation only. It never replaces or appears inside
   allergen, recall, alcohol-safety, medical, authentication, validation, warning, or
   failure instructions.

@@ -9,6 +9,7 @@
 
 	let {
 		onClose,
+		onSaveSuccess,
 		...foodPreferenceSettingsProps
 	}: ProfileFoodPreferenceViewProps = $props();
 </script>
@@ -34,7 +35,7 @@
 	<ViewBody className="profile-food-preference-view__body" scroll>
 		<ProfileFoodPreferenceSettings
 			{...foodPreferenceSettingsProps}
-			onSaveSuccess={onClose}
+			{onSaveSuccess}
 		/>
 	</ViewBody>
 </ViewFrame>

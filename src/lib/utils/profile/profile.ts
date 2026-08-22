@@ -56,7 +56,7 @@ export const getUserProfile = async (
 		.maybeSingle();
 	if (legacyResult.error) throw legacyResult.error;
 	return legacyResult.data
-		? { ...legacyResult.data, cheeky_messages_enabled: false }
+		? { ...legacyResult.data, cheeky_messages_enabled: true }
 		: null;
 };
 

@@ -54,31 +54,61 @@ test("appearance choices use native radios and preview the selected theme", asyn
 	await expect(page).toHaveTitle("Profile · blendCalc");
 });
 
-test("cheeky messages require an explicit saved account preference", async ({
+test("playful messages persist the exact saved account preference", async ({
 	page,
 }) => {
 	await page.goto("/profile");
 	await waitForAppReady(page);
-	await page.getByRole("button", { name: /Cheeky messages/ }).click();
-	await expect(page).toHaveURL(/\/profile\/cheeky-messages$/);
+	await page.getByRole("button", { name: /Playful messages/ }).click();
+	await expect(page).toHaveURL(/\/profile\/playful-messages$/);
 
-	let sheet = page.getByRole("dialog", { name: "Cheeky messages" });
+	let sheet = page.getByRole("dialog", { name: "Playful messages" });
 	let preference = sheet.getByRole("switch", {
-		name: "Allow cheeky messages",
+		name: "Allow playful messages",
 	});
 	const initiallyEnabled = await preference.isChecked();
-	await preference.click();
-	await sheet.getByRole("button", { name: "Save message preference" }).click();
-	await expect(page).toHaveURL(/\/profile$/);
 
-	await page.getByRole("button", { name: /Cheeky messages/ }).click();
-	sheet = page.getByRole("dialog", { name: "Cheeky messages" });
-	preference = sheet.getByRole("switch", { name: "Allow cheeky messages" });
-	await expect(preference).toBeChecked({ checked: !initiallyEnabled });
+	if (initiallyEnabled) {
+		await preference.click();
+		await sheet.getByRole("button", { name: "Save playful messages" }).click();
+		await expect(page).toHaveURL(/\/profile$/);
+		await expect(
+			page.getByRole("button", { name: /Playful messages/ }),
+		).toContainText("Off");
+		await page.getByRole("button", { name: /Playful messages/ }).click();
+		sheet = page.getByRole("dialog", { name: "Playful messages" });
+		preference = sheet.getByRole("switch", { name: "Allow playful messages" });
+	}
 
+	await expect(preference).not.toBeChecked();
 	await preference.click();
-	await sheet.getByRole("button", { name: "Save message preference" }).click();
+	await sheet.getByRole("button", { name: "Save playful messages" }).click();
 	await expect(page).toHaveURL(/\/profile$/);
+	await expect(page.getByRole("button", { name: /Playful messages/ })).toContainText(
+		"On",
+	);
+
+	await page.reload();
+	await waitForAppReady(page);
+	await expect(page.getByRole("button", { name: /Playful messages/ })).toContainText(
+		"On",
+	);
+	await page.getByRole("button", { name: /Playful messages/ }).click();
+	sheet = page.getByRole("dialog", { name: "Playful messages" });
+	preference = sheet.getByRole("switch", { name: "Allow playful messages" });
+	await expect(preference).toBeChecked();
+
+	if (initiallyEnabled) {
+		await page.keyboard.press("Escape");
+		await expect(page).toHaveURL(/\/profile$/);
+	} else {
+		await preference.click();
+		await sheet.getByRole("button", { name: "Save playful messages" }).click();
+		await expect(page).toHaveURL(/\/profile$/);
+		await expect(
+			page.getByRole("button", { name: /Playful messages/ }),
+		).toContainText("Off");
+	}
 });
 
 test("profile photo selection uses the shared accessible upload control", async ({
@@ -128,6 +158,59 @@ test("profile selects support keyboard dismissal without changing the value", as
 	await expect(region).toContainText(originalLabel);
 });
 
+test("food preference details explain policy, exact measurements, and ordered priorities", async ({
+	page,
+}) => {
+	await page.goto("/profile/food-preferences");
+	await waitForAppReady(page);
+	const foodPreferencesView = page.getByRole("dialog", {
+		name: "Food preferences",
+	});
+
+	const regionSection = await openFoodPreferenceDisclosure(
+		foodPreferencesView,
+		"Package-label region",
+	);
+	await expect(regionSection.getByText("U.S. Food and Drug Administration"))
+		.toBeVisible();
+	await expect(regionSection.getByText(/Food-safety policy version \d+/))
+		.toBeVisible();
+
+	const measurementSection = await openFoodPreferenceDisclosure(
+		foodPreferencesView,
+		"Measurements",
+	);
+	const servingUnit = measurementSection.getByRole("combobox", {
+		name: "Default serving unit",
+	});
+	await servingUnit.click();
+	await measurementSection.getByRole("option", { name: "g", exact: true }).click();
+	await measurementSection.getByRole("spinbutton", {
+		name: "Default Mix starting amount",
+	}).fill("28.349523125");
+	await expect(
+		measurementSection.getByText("28.3495 g = 1 oz · Exact unit conversion"),
+	).toBeVisible();
+
+	const nutrientSection = await openFoodPreferenceDisclosure(
+		foodPreferencesView,
+		"Nutrient priorities",
+	);
+	if (await nutrientSection.getByRole("button", { name: "Remove Protein" }).count() === 0) {
+		const nutrientSelect = nutrientSection.getByRole("combobox", {
+			name: "Add a nutrient priority",
+		});
+		await nutrientSelect.click();
+		await nutrientSection.getByRole("option", { name: "Protein (g)" }).click();
+		await nutrientSection.getByRole("button", { name: "Add priority" }).click();
+	}
+	await expect(nutrientSection.getByText("Default Mix target: 25 g"))
+		.toBeVisible();
+	await expect(
+		nutrientSection.getByRole("button", { name: "Move Protein down" }),
+	).toBeVisible();
+});
+
 test("food preferences use database choices and preserve exact custom wording", async ({
 	page,
 }) => {
@@ -167,42 +250,36 @@ test("food preferences use database choices and preserve exact custom wording", 
 		"Dietary restrictions",
 	);
 
-	for (const allergenName of ["Peanut", "Shellfish", "Sesame"]) {
-		await expect(
-			allergenSection.getByRole("checkbox", { name: allergenName }),
-		).toBeVisible();
-	}
-	for (const restrictionName of ["Vegan", "Gluten-free"]) {
-		await expect(
-			dietarySection.getByRole("checkbox", { name: restrictionName }),
-		).toBeVisible();
-	}
 	const reviewedAllergenSearch = allergenSection.getByLabel(
 		"Find reviewed allergens",
 	);
 	await reviewedAllergenSearch.fill("sesame");
 	await expect(
-		allergenSection.getByRole("checkbox", { name: "Sesame" }),
+		allergenSection.getByRole("button", { name: /Sesame/ }),
 	).toBeVisible();
 	await expect(
-		allergenSection.getByRole("checkbox", { name: "Peanut" }),
+		allergenSection.getByRole("button", { name: /Peanut/ }),
 	).toHaveCount(0);
-	await reviewedAllergenSearch.fill("");
-
-	await allergenSection.getByRole("checkbox", { name: "Peanut" }).check();
+	await reviewedAllergenSearch.fill("peanut");
+	await allergenSection.getByRole("button", { name: /Peanut/ }).click();
 	await allergenSection.getByLabel("Add a specific allergen").fill(customAllergen);
 	await allergenSection.getByRole("button", { name: "Add", exact: true }).click();
-	await dietarySection.getByRole("checkbox", { name: "Vegan" }).check();
+	await dietarySection.getByLabel("Find reviewed dietary restrictions").fill("vegan");
+	await dietarySection.getByRole("button", { name: /Vegan/ }).click();
+	await expect(allergenSection.locator("summary")).toContainText(
+		"1 active · 1 pending",
+	);
 	await allergenSection.locator("summary").click();
 	await expect(
-		allergenSection.getByRole("checkbox", { name: "Peanut" }),
+		allergenSection.getByRole("button", { name: "Remove Peanut" }),
 	).not.toBeVisible();
 	await allergenSection.locator("summary").click();
 	await expect(
-		allergenSection.getByRole("checkbox", { name: "Peanut" }),
-	).toBeChecked();
+		allergenSection.getByRole("button", { name: "Remove Peanut" }),
+	).toBeVisible();
 	await expect(allergenSection.getByText(customAllergen, { exact: true }))
 		.toBeVisible();
+	await expect(allergenSection.getByText("Waiting for review")).toBeVisible();
 	await foodPreferencesView
 		.getByRole("checkbox", { name: /I understand and want to save/ })
 		.check();
@@ -217,6 +294,8 @@ test("food preferences use database choices and preserve exact custom wording", 
 		.getByRole("button", { name: "Save food preferences" })
 		.click();
 	await expect(page).toHaveURL(/\/profile$/);
+	await expect(page.getByRole("button", { name: /Food preferences/ }))
+		.toContainText("2 active · 1 pending");
 
 	await page.getByRole("button", { name: /Food preferences/ }).click();
 	await expect(page).toHaveURL(/\/profile\/food-preferences$/);
@@ -226,17 +305,17 @@ test("food preferences use database choices and preserve exact custom wording", 
 	await expect(foodPreferencesView.getByText(customAllergen, { exact: true }))
 		.toBeVisible();
 	await expect(
-		foodPreferencesView.getByRole("checkbox", { name: "Peanut" }),
-	).toBeChecked();
+		foodPreferencesView.getByRole("button", { name: "Remove Peanut" }),
+	).toBeVisible();
 	await expect(
-		foodPreferencesView.getByRole("checkbox", { name: "Vegan" }),
-	).toBeChecked();
+		foodPreferencesView.getByRole("button", { name: "Remove Vegan" }),
+	).toBeVisible();
 
-	await foodPreferencesView
-		.getByRole("button", { name: `Remove ${customAllergen}` })
-		.click();
-	await foodPreferencesView.getByRole("checkbox", { name: "Peanut" }).uncheck();
-	await foodPreferencesView.getByRole("checkbox", { name: "Vegan" }).uncheck();
+	await foodPreferencesView.getByRole("button", { name: "Clear allergens" }).click();
+	await expect(
+		foodPreferencesView.getByRole("button", { name: `Remove ${customAllergen}` }),
+	).toHaveCount(0);
+	await foodPreferencesView.getByRole("button", { name: "Remove Vegan" }).click();
 	await foodPreferencesView
 		.getByRole("button", { name: "Save food preferences" })
 		.click();
@@ -523,7 +602,9 @@ test("moderator actions stay hidden from regular accounts and use the shared she
 	await moderatorActionsSheet
 		.getByRole("button", { name: /Product submissions/ })
 		.click();
-	await expect(page).toHaveURL(/\/auth\/mfa\/enroll\?next=%2Fmoderation$/);
+	await expect(page).toHaveURL(
+		/\/auth\/mfa\/enroll\?next=%2Fprofile%2Fmoderator-actions%2Fproduct-submissions$/,
+	);
 	await expect(
 		page.getByRole("heading", { name: "Set up your authenticator." }),
 	).toBeVisible();

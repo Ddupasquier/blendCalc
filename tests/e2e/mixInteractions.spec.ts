@@ -6,6 +6,8 @@ import {
 } from "./support/browserTest";
 import {
 	captureLocalQaMixGoalConfiguration,
+	deleteLocalQaSavedRecipesByNamePrefix,
+	readLocalQaSavedRecipesByNamePrefix,
 	restoreLocalQaMixGoalConfiguration,
 	saveLocalQaMixGoalConfiguration,
 	saveLocalQaMixState,
@@ -51,6 +53,106 @@ const openMixSection = async (
 		.poll(() => details.evaluate((element) => element.getAnimations().length))
 		.toBe(0);
 	return section;
+};
+
+const openSavedRecipeCard = async (
+	page: import("@playwright/test").Page,
+	recipeName: string,
+) => {
+	const card = page
+		.locator(".saved-recipe-card")
+		.filter({ has: page.getByText(recipeName, { exact: true }) });
+	await expect(card).toHaveCount(1);
+	const details = card.locator(":scope > details");
+	if ((await details.getAttribute("open")) === null) {
+		await details.locator(":scope > summary").click();
+	}
+	await expect(details).toHaveAttribute("open", "");
+	return card;
+};
+
+const persistenceNutrientOptions = [
+	{ id: 1008, label: "Calories" },
+	{ id: 1003, label: "Protein" },
+];
+
+const persistenceGoals = [
+	{
+		goal_type: "exact",
+		importance_weight: 1,
+		nutrient_id: 1008,
+		sort_order: 1,
+		target_amount: 400,
+		tolerance_ratio: 0.05,
+		upper_amount: null,
+	},
+	{
+		goal_type: "minimum",
+		importance_weight: 1,
+		nutrient_id: 1003,
+		sort_order: 2,
+		target_amount: 31,
+		tolerance_ratio: 0.05,
+		upper_amount: null,
+	},
+];
+
+const persistenceMixState = {
+	version: 1,
+	selected: persistenceNutrientOptions.map((nutrient) => nutrient.id),
+	options: persistenceNutrientOptions,
+	selectedFoodIds: [9200001, 9200002, 9200003, 9200004],
+	servingGrams: {
+		9200001: 30,
+		9200002: 118,
+		9200003: 170,
+		9200004: 28,
+	},
+	servingQuantities: {
+		9200001: 30,
+		9200002: 118,
+		9200003: 170,
+		9200004: 28,
+	},
+	servingUnits: {
+		9200001: "g",
+		9200002: "g",
+		9200003: "g",
+		9200004: "g",
+	},
+};
+
+const saveCurrentMixAsNew = async (
+	page: import("@playwright/test").Page,
+	recipeName: string,
+) => {
+	await page.getByRole("button", { name: "Save mix" }).click();
+	await expect(page).toHaveURL(/\/mix\/save$/);
+	const dialog = page.getByRole("dialog", { name: "Review & Save Mix" });
+	await dialog.getByLabel("Mix name").fill(recipeName);
+	await dialog.getByRole("button", { name: "Save Recipe", exact: true }).click();
+	await expect(dialog).toBeHidden();
+	await expect(page).toHaveURL(/\/mix$/);
+};
+
+const loadSavedRecipe = async (
+	page: import("@playwright/test").Page,
+	recipeName: string,
+) => {
+	await page.goto("/saved");
+	await waitForAppReady(page);
+	const savedCard = await openSavedRecipeCard(page, recipeName);
+	await savedCard.getByRole("button", { name: `Load ${recipeName}` }).click();
+	await expect(page).toHaveURL(/\/mix$/);
+	await expect(page.locator(".mix-header")).toContainText(recipeName);
+};
+
+const openMixOptions = async (page: import("@playwright/test").Page) => {
+	await page.getByRole("button", { name: "Open mix options" }).click();
+	await expect(page).toHaveURL(/\/mix\/options$/);
+	const dialog = page.getByRole("dialog", { name: "Mix options" });
+	await expect(dialog).toBeVisible();
+	return dialog;
 };
 
 const signInAsLocalQaPersona = async (
@@ -1665,4 +1767,349 @@ test("the Mix save dialog accepts text and cancels without saving", async ({ pag
 	await expect(nameInput).toHaveValue("Playwright draft recipe");
 	await dialog.getByRole("button", { name: "Cancel" }).click();
 	await expect(dialog).toBeHidden();
+});
+
+test("Mix recipes save once, reject duplicate names, and preserve overwrite and save-as-new snapshots", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated browser worker owns this saved-recipe persistence lifecycle.",
+	);
+
+	const recipePrefix = "QA Goal Persistence Mix";
+	const originalGoalConfiguration =
+		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	try {
+		await deleteLocalQaSavedRecipesByNamePrefix(
+			testInfo.parallelIndex,
+			recipePrefix,
+		);
+		await saveLocalQaMixState(testInfo.parallelIndex, persistenceMixState);
+		await saveLocalQaMixGoalConfiguration(
+			testInfo.parallelIndex,
+			persistenceGoals,
+		);
+
+		await page.goto("/mix");
+		await waitForAppReady(page);
+		let selectedSection = await openMixSection(
+			page,
+			".selected-ingredients-panel",
+		);
+		const spinachQuantity = selectedSection.getByRole("spinbutton", {
+			name: "Quantity for Spinach, Raw",
+		});
+		await spinachQuantity.fill("45");
+		await expect(spinachQuantity).toHaveValue("45");
+
+		let { goalsSection } = await openMixGoals(page);
+		const proteinGoal = goalsSection.getByRole("spinbutton", {
+			name: "Goal value for Protein in g",
+		});
+		await proteinGoal.fill("32");
+		await proteinGoal.blur();
+		await expect(page.getByText("Unsaved changes", { exact: true })).toBeVisible();
+
+		await page.getByRole("button", { name: "Save mix" }).click();
+		await expect(page).toHaveURL(/\/mix\/save$/);
+		let dialog = page.getByRole("dialog", { name: "Review & Save Mix" });
+		await expect(dialog.locator(".save-goal-review__row")).toHaveCount(2);
+		await expect(
+			dialog.locator('.save-goal-review__row[data-nutrient-label="Protein"]'),
+		).toContainText("Goal ≥32 g");
+		await dialog.getByLabel("Mix name").fill(recipePrefix);
+		await dialog.getByRole("button", { name: "Cancel" }).click();
+		await expect(page).toHaveURL(/\/mix$/);
+		await expect
+			.poll(async () =>
+				(await readLocalQaSavedRecipesByNamePrefix(
+					testInfo.parallelIndex,
+					recipePrefix,
+				)).length)
+			.toBe(0);
+
+		await saveCurrentMixAsNew(page, recipePrefix);
+		await expect(page.locator(".mix-header")).toContainText(recipePrefix);
+		await expect(page.getByRole("button", { name: "Save mix" })).toBeDisabled();
+		await expect(page.getByText("Unsaved changes", { exact: true })).toHaveCount(0);
+		await expect
+			.poll(async () =>
+				(await readLocalQaSavedRecipesByNamePrefix(
+					testInfo.parallelIndex,
+					recipePrefix,
+				)).length)
+			.toBe(1);
+
+		await page.reload();
+		await waitForAppReady(page);
+		await expect(page.locator(".mix-header")).toContainText(recipePrefix);
+		await expect(page.getByRole("button", { name: "Save mix" })).toBeDisabled();
+		selectedSection = await openMixSection(page, ".selected-ingredients-panel");
+		await expect(
+			selectedSection.getByRole("spinbutton", {
+				name: "Quantity for Spinach, Raw",
+			}),
+		).toHaveValue("45");
+		({ goalsSection } = await openMixGoals(page));
+		await expect(
+			goalsSection.getByRole("spinbutton", {
+				name: "Goal value for Protein in g",
+			}),
+		).toHaveValue("32");
+
+		await selectedSection
+			.getByRole("spinbutton", { name: "Quantity for Spinach, Raw" })
+			.fill("46");
+		await page.getByRole("button", { name: "Save mix" }).click();
+		dialog = page.getByRole("dialog", { name: "Review & Save Mix" });
+		await expect(dialog.getByLabel("Mix name")).toHaveValue(recipePrefix);
+		await dialog.getByRole("button", { name: "Save as New" }).click();
+		await expect(dialog.getByRole("alert")).toContainText(
+			"You already have a saved recipe with this name.",
+		);
+		await expect
+			.poll(async () =>
+				(await readLocalQaSavedRecipesByNamePrefix(
+					testInfo.parallelIndex,
+					recipePrefix,
+				)).length)
+			.toBe(1);
+		await dialog.getByRole("button", { name: "Cancel" }).click();
+
+		await page.goto("/saved");
+		await waitForAppReady(page);
+		let savedCard = await openSavedRecipeCard(page, recipePrefix);
+		await savedCard.getByRole("button", { name: `Load ${recipePrefix}` }).click();
+		await expect(page).toHaveURL(/\/mix$/);
+		await expect(page.locator(".mix-header")).toContainText(recipePrefix);
+		await expect(page.getByRole("button", { name: "Save mix" })).toBeDisabled();
+
+		selectedSection = await openMixSection(page, ".selected-ingredients-panel");
+		await selectedSection
+			.getByRole("spinbutton", { name: "Quantity for Spinach, Raw" })
+			.fill("52");
+		await page.getByRole("button", { name: "Save mix" }).click();
+		dialog = page.getByRole("dialog", { name: "Review & Save Mix" });
+		await dialog.getByRole("button", { name: "Overwrite Existing" }).click();
+		await expect(dialog).toBeHidden();
+		await expect(page.getByRole("button", { name: "Save mix" })).toBeDisabled();
+
+		await page.reload();
+		await waitForAppReady(page);
+		selectedSection = await openMixSection(page, ".selected-ingredients-panel");
+		await expect(
+			selectedSection.getByRole("spinbutton", {
+				name: "Quantity for Spinach, Raw",
+			}),
+		).toHaveValue("52");
+
+		const copiedRecipeName = `${recipePrefix} Copy`;
+		await selectedSection
+			.getByRole("spinbutton", { name: "Quantity for Spinach, Raw" })
+			.fill("60");
+		await page.getByRole("button", { name: "Save mix" }).click();
+		dialog = page.getByRole("dialog", { name: "Review & Save Mix" });
+		await dialog.getByLabel("Mix name").fill(copiedRecipeName);
+		await dialog.getByRole("button", { name: "Save as New" }).click();
+		await expect(dialog).toBeHidden();
+		await expect(page.locator(".mix-header")).toContainText(copiedRecipeName);
+		await expect
+			.poll(async () =>
+				(await readLocalQaSavedRecipesByNamePrefix(
+					testInfo.parallelIndex,
+					recipePrefix,
+				)).map((recipe) => recipe.name))
+			.toEqual([recipePrefix, copiedRecipeName]);
+
+		await page.reload();
+		await waitForAppReady(page);
+		selectedSection = await openMixSection(page, ".selected-ingredients-panel");
+		await expect(
+			selectedSection.getByRole("spinbutton", {
+				name: "Quantity for Spinach, Raw",
+			}),
+		).toHaveValue("60");
+		await page.goto("/saved");
+		await waitForAppReady(page);
+		savedCard = await openSavedRecipeCard(page, recipePrefix);
+		await expect(savedCard).toBeVisible();
+		await expect(await openSavedRecipeCard(page, copiedRecipeName)).toBeVisible();
+	} finally {
+		await deleteLocalQaSavedRecipesByNamePrefix(
+			testInfo.parallelIndex,
+			recipePrefix,
+		);
+		await restoreLocalQaMixGoalConfiguration(
+			testInfo.parallelIndex,
+			originalGoalConfiguration,
+		);
+	}
+});
+
+test("Mix reset actions cancel safely, preserve their intended state, detach saved identity, and survive reload", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name !== "desktop-chromium",
+		"One isolated browser worker owns this Mix reset persistence lifecycle.",
+	);
+
+	const recipeName = "QA Reset Persistence Mix";
+	const originalGoalConfiguration =
+		await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex);
+	const persistenceGoalSignature = JSON.stringify(persistenceGoals);
+	const currentGoalSignature = async () =>
+		JSON.stringify(
+			(await captureLocalQaMixGoalConfiguration(testInfo.parallelIndex)).goals,
+		);
+	const expectSelectedIngredientCount = async (count: number) => {
+		const selectedSection = await openMixSection(
+			page,
+			".selected-ingredients-panel",
+		);
+		await expect(
+			selectedSection.getByRole("spinbutton", { name: /^Quantity for / }),
+		).toHaveCount(count);
+	};
+	const cancelReset = async (
+		actionLabel: string,
+		dialogName: string,
+		expectedPath: RegExp,
+	) => {
+		const options = await openMixOptions(page);
+		await options.getByRole("button", { name: actionLabel, exact: true }).click();
+		await expect(page).toHaveURL(expectedPath);
+		const confirmation = page.getByRole("alertdialog", { name: dialogName });
+		await expect(confirmation).toBeVisible();
+		await confirmation.getByRole("button", { name: "Cancel", exact: true }).click();
+		await expect(page).toHaveURL(/\/mix$/);
+	};
+	const confirmReset = async (
+		actionLabel: string,
+		dialogName: string,
+		confirmLabel: string,
+	) => {
+		const options = await openMixOptions(page);
+		await options.getByRole("button", { name: actionLabel, exact: true }).click();
+		const confirmation = page.getByRole("alertdialog", { name: dialogName });
+		await confirmation
+			.getByRole("button", { name: confirmLabel, exact: true })
+			.click();
+		await expect(page).toHaveURL(/\/mix$/);
+	};
+
+	try {
+		await deleteLocalQaSavedRecipesByNamePrefix(
+			testInfo.parallelIndex,
+			recipeName,
+		);
+		await saveLocalQaMixState(testInfo.parallelIndex, persistenceMixState);
+		await saveLocalQaMixGoalConfiguration(
+			testInfo.parallelIndex,
+			persistenceGoals,
+		);
+		await page.goto("/mix");
+		await waitForAppReady(page);
+		await saveCurrentMixAsNew(page, recipeName);
+
+		const options = await openMixOptions(page);
+		await options
+			.getByRole("button", { name: "Reset goals to default", exact: true })
+			.click();
+		await expect(page).toHaveURL(/\/mix\/reset-goals$/);
+		await expect(
+			page.getByRole("alertdialog", { name: "Reset nutrition goals?" }),
+		).toBeVisible();
+		await page.goBack();
+		await expect(page).toHaveURL(/\/mix\/options$/);
+		await expect(page.getByRole("dialog", { name: "Mix options" })).toBeVisible();
+		await page.goForward();
+		await expect(page).toHaveURL(/\/mix\/reset-goals$/);
+		await page.reload();
+		await waitForAppReady(page);
+		const resetGoalsConfirmation = page.getByRole("alertdialog", {
+			name: "Reset nutrition goals?",
+		});
+		await expect(resetGoalsConfirmation).toBeVisible();
+		await resetGoalsConfirmation
+			.getByRole("button", { name: "Cancel", exact: true })
+			.click();
+		await expect(page.locator(".mix-header")).toContainText(recipeName);
+		await expect.poll(currentGoalSignature).toBe(persistenceGoalSignature);
+		await expectSelectedIngredientCount(4);
+
+		await cancelReset(
+			"Clear all ingredients",
+			"Clear selected ingredients?",
+			/\/mix\/clear-ingredients$/,
+		);
+		await cancelReset(
+			"Reset everything",
+			"Reset the entire mix?",
+			/\/mix\/reset-all$/,
+		);
+		await expect(page.locator(".mix-header")).toContainText(recipeName);
+		await expectSelectedIngredientCount(4);
+
+		await confirmReset(
+			"Reset goals to default",
+			"Reset nutrition goals?",
+			"Reset goals",
+		);
+		await expect(page.locator(".mix-header")).not.toContainText(recipeName);
+		await expectSelectedIngredientCount(4);
+		await expect.poll(currentGoalSignature).not.toBe(persistenceGoalSignature);
+		await page.reload();
+		await waitForAppReady(page);
+		await expect(page.locator(".mix-header")).not.toContainText(recipeName);
+		await expectSelectedIngredientCount(4);
+
+		await loadSavedRecipe(page, recipeName);
+		await confirmReset(
+			"Clear all ingredients",
+			"Clear selected ingredients?",
+			"Clear ingredients",
+		);
+		await expect(page.locator(".mix-header")).not.toContainText(recipeName);
+		await expectSelectedIngredientCount(0);
+		await expect.poll(currentGoalSignature).toBe(persistenceGoalSignature);
+		await page.reload();
+		await waitForAppReady(page);
+		await expectSelectedIngredientCount(0);
+		await expect.poll(currentGoalSignature).toBe(persistenceGoalSignature);
+
+		await loadSavedRecipe(page, recipeName);
+		await confirmReset(
+			"Reset everything",
+			"Reset the entire mix?",
+			"Reset all",
+		);
+		await expect(page.locator(".mix-header")).not.toContainText(recipeName);
+		await expectSelectedIngredientCount(0);
+		await expect.poll(currentGoalSignature).not.toBe(persistenceGoalSignature);
+		const resetGoalSignature = await currentGoalSignature();
+		await page.goBack();
+		await expect(page).toHaveURL(/\/mix\/options$/);
+		await expect(page.getByRole("dialog", { name: "Mix options" })).toBeVisible();
+		await expectSelectedIngredientCount(0);
+		await expect.poll(currentGoalSignature).toBe(resetGoalSignature);
+		await page.goForward();
+		await expect(page).toHaveURL(/\/mix$/);
+		await expectSelectedIngredientCount(0);
+		await expect.poll(currentGoalSignature).toBe(resetGoalSignature);
+		await page.reload();
+		await waitForAppReady(page);
+		await expectSelectedIngredientCount(0);
+		await expect.poll(currentGoalSignature).toBe(resetGoalSignature);
+	} finally {
+		await deleteLocalQaSavedRecipesByNamePrefix(
+			testInfo.parallelIndex,
+			recipeName,
+		);
+		await restoreLocalQaMixGoalConfiguration(
+			testInfo.parallelIndex,
+			originalGoalConfiguration,
+		);
+	}
 });

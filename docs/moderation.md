@@ -287,7 +287,8 @@ details to other users.
 
 ## Catalog Data Health
 
-`/moderation/data-health` is a privileged catalog health summary available to
+`/profile/moderator-actions/catalog-data-health` is the primary privileged catalog
+health summary available to
 moderators, admins, and developers. Its server
 load calls `get_moderator_data_health` through the signed-in user's Supabase client. The
 RPC requires both a signed AAL2 permission and a current database role assignment. The
@@ -324,6 +325,19 @@ new approved catalog revision; a monitor result cannot overwrite a canonical pro
 Probable recall matches can be confirmed or dismissed only by an elevated AAL2 session.
 Exact GTIN matches are visible immediately, while title-only similarity never enters
 the queue.
+
+Profile is the moderator navigation gateway. `/profile/moderator-actions` opens the
+compact action list, while the following direct routes own focused right sheets:
+
+- `/profile/moderator-actions/product-submissions`;
+- `/profile/moderator-actions/food-warning-reports`;
+- `/profile/moderator-actions/profile-images`;
+- `/profile/moderator-actions/account-access`; and
+- `/profile/moderator-actions/catalog-data-health`.
+
+Every direct route repeats the current role and AAL2 checks on the server. Legacy
+`/moderation` routes remain compatibility entry points while links and Profile flows use
+the focused routes.
 
 ## Enable Future-Signup Blocking
 

@@ -11,7 +11,7 @@
 	let {
 		activeList,
 		hasItems,
-		allowCheekyMessages = false,
+		allowPlayfulMessages = true,
 	}: IngredientEmptyStateProps = $props();
 
 	const title = $derived(
@@ -36,7 +36,7 @@
 						triggerKey: "empty-list",
 						matchKeys: ["fridge"],
 					},
-			], { allowCheekyMessages })
+			], { allowPlayfulMessages })
 			: null,
 	);
 </script>

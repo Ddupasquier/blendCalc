@@ -39,6 +39,8 @@ export const getRegulatoryRegionOptions = (
 	regionCode: profile.regionCode,
 	displayName: profile.displayName,
 	authority: profile.authority,
+	policyVersion: policy.version,
+	policyReviewedAt: policy.reviewedAt,
 }));
 
 export const loadProfilePageData = async ({

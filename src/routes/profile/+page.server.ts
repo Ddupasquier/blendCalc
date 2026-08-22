@@ -102,34 +102,38 @@ const getFoodPreferenceFormValues = (
 };
 
 export const actions: Actions = {
-	saveCheekyMessages: async ({ locals, request }) => {
+	savePlayfulMessages: async ({ locals, request }) => {
 		const user = await getAuthenticatedUser(locals);
 		const formData = await readLimitedFormData(request, PROFILE_TEXT_FORM_MAX_BYTES);
-		const cheekyMessagesEnabled =
-			formData.get("cheekyMessagesEnabled") === "on";
+		const playfulMessagesEnabled =
+			formData.get("playfulMessagesEnabled") === "true";
 		const existingProfile = await getUserProfile(locals.supabase, user.id);
-		const { error } = await getSupabaseAdminClient().from("profiles").upsert(
-			{
-				user_id: user.id,
-				display_name:
-					existingProfile?.display_name ?? getDefaultDisplayName(user.id),
-				cheeky_messages_enabled: cheekyMessagesEnabled,
-			},
-			{ onConflict: "user_id" },
-		);
+		const { data: savedPreference, error } = await getSupabaseAdminClient()
+			.from("profiles")
+			.upsert(
+				{
+					user_id: user.id,
+					display_name:
+						existingProfile?.display_name ?? getDefaultDisplayName(user.id),
+					cheeky_messages_enabled: playfulMessagesEnabled,
+				},
+				{ onConflict: "user_id" },
+			)
+			.select("cheeky_messages_enabled")
+			.single();
 
 		if (error) {
 			return fail(isMissingCheekyMessagesPreferenceColumn(error) ? 503 : 500, {
-				cheekyMessagesError: isMissingCheekyMessagesPreferenceColumn(error)
+				playfulMessagesError: isMissingCheekyMessagesPreferenceColumn(error)
 					? "This preference is still being prepared. Try again shortly."
 					: "Your message preference could not be saved. Try again.",
-				cheekyMessagesEnabled,
+				playfulMessagesEnabled,
 			});
 		}
 
 		return {
-			cheekyMessagesSuccess: "Message preference saved.",
-			cheekyMessagesEnabled,
+			playfulMessagesSuccess: "Playful messages saved.",
+			playfulMessagesEnabled: savedPreference.cheeky_messages_enabled,
 		};
 	},
 	saveAppearance: async ({ locals, request, cookies }) => {

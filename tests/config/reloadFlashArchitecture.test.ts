@@ -15,7 +15,9 @@ describe("reload-flash architecture", () => {
 	});
 
 	it("uses client navigation for moderation search instead of a document reload", () => {
-		const moderation = readSource("src/routes/moderation/+page.svelte");
+		const moderation = readSource(
+			"src/lib/components/moderation/ModerationWorkspace/ModerationWorkspace.svelte",
+		);
 
 		expect(moderation).toContain('import { goto } from "$app/navigation"');
 		expect(moderation).toContain("onsubmit={submitAccountSearch}");

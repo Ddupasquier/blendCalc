@@ -31,6 +31,7 @@ export const loadMixPageData = async (
 				foodSafetyContext,
 			),
 			preferences,
+			foodPreferences: foodSafetyContext.profile,
 			loadError: "",
 		};
 	} catch (error) {
@@ -39,6 +40,7 @@ export const loadMixPageData = async (
 			fridge: [],
 			shoppingList: [],
 			preferences: {},
+			foodPreferences: null,
 			loadError: "Your saved ingredient lists could not be loaded. Try again.",
 		};
 	}
