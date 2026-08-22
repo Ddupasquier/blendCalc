@@ -15,7 +15,8 @@ the baseline for other views.
   title and search/entry controls. A short upward scroll reveals them before the list
   reaches the top.
 - At the compact tier, manual entry is a pencil-only rounded icon control in the same
-  row as Search, Barcode, and Filters. Its accessible name remains complete.
+  row as Search, Barcode, and Filters. The visual and keyboard order is Search, Barcode,
+  Manual Entry, then Filters, and its accessible name remains complete.
 - The toolbar manual-entry control is the only page-level manual-entry action. Do not
   duplicate it with a floating add button.
 - Keep Fridge/Shopping List tabs available. Compact visual pills still provide at least
@@ -115,8 +116,11 @@ imported generic-food sources through the server-owned search flow.
   without turning a provider name into blanket trust.
 - Search real stored metadata as well as names. Direct product-name matches rank first,
   followed by brand or responsible organization, category, and supporting package or
-  ingredient metadata. Linked active official safety notices may supply an organization
-  match without rewriting the product's canonical brand.
+  ingredient metadata. Partial fragments follow the same field order across canonical
+  and alternate names, brands, categories, package and serving descriptions, structured
+  ingredients, explicit allergen and precautionary statements, labels, markets, and
+  retained source identifiers. Linked active official safety notices may supply an
+  organization match without rewriting the product's canonical brand.
 - Require every query word for the first result set. If that set is empty, use a wider
   partial-word fallback and keep those weaker matches below complete matches; never
   maintain hardcoded company or spelling correction lists.
@@ -125,6 +129,9 @@ imported generic-food sources through the server-owned search flow.
   than the card's nutrition/details action.
 - Use progressive `Load more` and `Return to top`; never auto-load merely because the
   user reached the end.
+- After a completed nonempty query returns no matches, show a quiet informational
+  notice that repeats the query and suggests other searchable food fields. Do not show
+  the notice before the request completes, while loading, or in place of an error.
 - Show names, useful category or brand context, image or category symbol, actionable
   verification state, completeness state, and warning edge when available.
 - Keep provider hierarchy badges off compact cards. Private custom classification may

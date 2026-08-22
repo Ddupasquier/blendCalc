@@ -10,6 +10,8 @@ export type RegulatoryRegionOption = {
 	regionCode: string;
 	displayName: string;
 	authority: string;
+	policyVersion?: number;
+	policyReviewedAt?: string;
 };
 
 export const normalizeRegulatoryRegionCode = (

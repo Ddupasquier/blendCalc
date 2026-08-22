@@ -8,13 +8,16 @@
 	let {
 		outcome,
 		action,
+		allowPlayfulMessages = true,
 		onMoveToShopping,
 		onMoveToFridge,
 		onUndo,
 	}: CustomIngredientOutcomeProps = $props();
 
 	const delightMessage = $derived(
-		outcome.addedToList ? resolveFoodAddedDelightMessage(outcome.food) : null,
+		outcome.addedToList
+			? resolveFoodAddedDelightMessage(outcome.food, allowPlayfulMessages)
+			: null,
 	);
 </script>
 

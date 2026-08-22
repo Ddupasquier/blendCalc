@@ -26,6 +26,7 @@
 			<IngredientSearchTrigger onOpen={onOpenSearch} />
 		</div>
 		<BarcodeScanButton scanning={barcodeLookupBusy} compact onclick={onScan} />
+		<ManualEntryLauncher onSelect={onOpenManualEntry} />
 		<IconControlButton
 			class="filter-button"
 			label="Sort saved ingredients"
@@ -36,7 +37,6 @@
 		>
 			<Sliders class="filter-button__icon" />
 		</IconControlButton>
-		<ManualEntryLauncher onSelect={onOpenManualEntry} />
 	</div>
 </section>
 

@@ -40,6 +40,7 @@
 		moving = false,
 		revealPaused = false,
 		resetKey = 0,
+		allowPlayfulMessages = true,
 		onSelectAll,
 		onEnterSelection,
 		onCancelSelection,
@@ -341,6 +342,7 @@
 			<IngredientEmptyState
 				{activeList}
 				hasItems={activeRawCount > 0}
+				{allowPlayfulMessages}
 			/>
 		{/if}
 	</div>

@@ -1,0 +1,77 @@
+@use "../../../../styles/variables" as *;
+
+.profile-image-report-review,
+.profile-image-report-review__heading,
+.profile-image-report-review__reasons,
+.profile-image-report-review__decision {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.profile-image-report-review__heading h2 {
+	font-size: $app-font-size-lg;
+}
+
+.profile-image-report-review__heading p,
+.profile-image-report-review__reasons p,
+.profile-image-report-review__reasons span {
+	margin: 0;
+	color: $app-shell-text-muted;
+}
+
+.profile-image-report-review__preview {
+	display: grid;
+	place-items: center;
+	width: min(100%, 18rem);
+	margin-inline: auto;
+	aspect-ratio: 4 / 3;
+	overflow: hidden;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+}
+
+.profile-image-report-review__preview img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.profile-image-report-review__preview span {
+	padding: $app-gap-sm;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	text-align: center;
+}
+
+.profile-image-report-review__reasons {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.profile-image-report-review__reasons li {
+	display: grid;
+	gap: $app-gap-2xs;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-panel;
+	border-radius: $app-shell-radius-control;
+}
+
+.profile-image-report-review__reasons span {
+	font-size: $app-font-size-xs;
+}
+
+.profile-image-report-review__decision {
+	padding-top: $app-gap-sm;
+	border-top: $app-border;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.profile-image-report-review,
+	.profile-image-report-review__heading,
+	.profile-image-report-review__reasons,
+	.profile-image-report-review__decision {
+		gap: $app-gap-xs;
+	}
+}

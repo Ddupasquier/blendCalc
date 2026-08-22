@@ -78,4 +78,21 @@ describe("NutrientAdjustmentSuggestions", () => {
 
 		expect(onApply).toHaveBeenCalledWith(milk.fdcId, 130);
 	});
+
+	it("keeps an immediate undo action available after an adjustment", async () => {
+		const onUndo = vi.fn();
+		render(NutrientAdjustmentSuggestions, {
+			props: {
+				suggestions: [],
+				lastAppliedFoodDescription: milk.description,
+				onApply: vi.fn(),
+				onUndo,
+				open: true,
+			},
+		});
+
+		expect(screen.getByText(`${milk.description} updated.`)).toBeInTheDocument();
+		await fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+		expect(onUndo).toHaveBeenCalledOnce();
+	});
 });

@@ -10,7 +10,12 @@ import {
 	getFoodNutrientAmount,
 	type NutrientMeta,
 } from "$lib/utils/mix/calculations";
-import type { ServingConversion } from "$lib/utils/serving/servingAmount";
+import {
+	convertServingQuantityToUnit,
+	getSourceServingMeasureOption,
+	getSourceServingMeasureOptions,
+	type ServingConversion,
+} from "$lib/utils/serving/servingAmount";
 import type { MixWarning } from "$lib/utils/mix/warnings/mixWarnings";
 import type { FoodItem } from "$lib/utils/food/types";
 import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
@@ -146,15 +151,25 @@ export const getFoodNutrientChips = (
 		}));
 };
 
-export const normalizeServingUnit = (value: unknown) => {
+export const normalizeServingUnit = (value: unknown, food?: FoodItem) => {
 	if (typeof value !== "string") return null;
+	const normalizedValue = value.trim();
+	if (getSourceServingMeasureOption(normalizedValue, food)) return normalizedValue;
 	return (
-		SERVING_MEASURE_ALIASES[value.trim().toLowerCase().replace(/\s+/g, "")] ??
+		SERVING_MEASURE_ALIASES[normalizedValue.toLowerCase().replace(/\s+/g, "")] ??
 		null
 	);
 };
 
-export const getDefaultServingAmount = (food?: FoodItem) => {
+export type MixDefaultServingPreferences = {
+	preferredServingGrams?: number | null;
+	preferredWeightUnit?: "g" | "oz";
+};
+
+export const getDefaultServingAmount = (
+	food?: FoodItem,
+	preferences: MixDefaultServingPreferences = {},
+) => {
 	const servingUnit = normalizeServingUnit(food?.servingSizeUnit);
 	if (food?.servingSize && servingUnit) {
 		return {
@@ -163,9 +178,34 @@ export const getDefaultServingAmount = (food?: FoodItem) => {
 		};
 	}
 
+	const sourceServingOptions = getSourceServingMeasureOptions(food);
+	const primarySourceServingOption = sourceServingOptions.find(
+		(option) => option.serving.isPrimary,
+	) ?? sourceServingOptions[0];
+	if (primarySourceServingOption) {
+		return {
+			quantity: 1,
+			unit: primarySourceServingOption.value,
+		};
+	}
+
+	const preferredServingGrams =
+		preferences.preferredServingGrams && preferences.preferredServingGrams > 0
+			? preferences.preferredServingGrams
+			: getMixRuntimeConfiguration().defaultServingGrams;
+	const preferredWeightUnit = preferences.preferredWeightUnit ?? "g";
+	const preferredQuantity =
+		preferredWeightUnit === "oz"
+			? convertServingQuantityToUnit(
+					preferredServingGrams,
+					"g",
+					"oz",
+				) ?? preferredServingGrams
+			: preferredServingGrams;
+
 	return {
-		quantity: getMixRuntimeConfiguration().defaultServingGrams,
-		unit: "g" as ServingMeasureUnit,
+		quantity: preferredQuantity,
+		unit: preferredWeightUnit as ServingMeasureUnit,
 	};
 };
 
@@ -177,9 +217,16 @@ export const getServingGramsLabel = (conversion: ServingConversion) => {
 
 export const getServingConversionBasis = (conversion: ServingConversion) => {
 	if (!conversion.available || !conversion.basis) return null;
-	return conversion.method === "calculated-conversion"
-		? `Calculated from ${conversion.basis}`
-		: `Exact unit conversion: ${conversion.basis}`;
+	if (conversion.method === "calculated-conversion") {
+		return `Calculated from ${conversion.basis}`;
+	}
+	if (
+		conversion.method === "source-reported" ||
+		conversion.method === "user-reported"
+	) {
+		return `Reported serving: ${conversion.basis}`;
+	}
+	return `Exact unit conversion: ${conversion.basis}`;
 };
 
 export const withOverageDetails = (
@@ -206,11 +253,14 @@ export const withOverageDetails = (
 			unit: overage.unit,
 			sign: "always",
 		})})`,
-		details: overage.contributors.map((contributor) => ({
-			label: contributor.label,
-			value: `${formatMixQuantity(contributor.amount, {
-				unit: overage.unit,
-			})} from ${formatMixQuantity(contributor.grams, { unit: "g" })}`,
-		})),
+		details: [
+			...(warning.details ?? []),
+			...overage.contributors.map((contributor) => ({
+				label: `From ${contributor.label}`,
+				value: `${formatMixQuantity(contributor.amount, {
+					unit: overage.unit,
+				})} from ${formatMixQuantity(contributor.grams, { unit: "g" })}`,
+			})),
+		],
 	};
 };

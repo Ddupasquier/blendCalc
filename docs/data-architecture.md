@@ -40,9 +40,12 @@ rendered cards cannot drift into separate symbol policies.
 
 The server-loaded application reference catalog also owns optional delight copy from
 `app_delight_messages`. Client resolvers provide reviewed semantic trigger keys and may
-render at most one matching line as secondary presentation. This catalog never owns or
-replaces authentication, safety, validation, warning, or failure instructions; those
-remain stable code-based messages backed by server and database evidence.
+render at most one matching line as secondary presentation. Standard and reviewed
+playful copy are available by default to signed-in accounts, and the account can turn
+playful messages off. The resolver independently restricts playful rows to approved
+non-safety success triggers. This catalog never owns or replaces
+authentication, safety, validation, warning, or failure instructions; those remain
+stable code-based messages backed by server and database evidence.
 
 ## Write Flow
 
@@ -72,6 +75,12 @@ The account appearance theme is profile-owned durable data. A validated
 correct theme before the page paints. The cookie is not a competing source of truth:
 authenticated layout loads reconcile it from `profiles.appearance_theme`, and invalid
 or missing values resolve to the device theme.
+
+Profile-image policy acceptances preserve upload consent, while
+`profile_image_reports` owns private, exact-image report and review history. Ordinary
+uploads remain active and outside the moderation queue. Future social report intake and
+current moderator reads/writes cross trusted server boundaries; browser clients receive
+neither the report table nor reporter identity.
 
 Mix section order and open/closed disclosure state are account-owned presentation
 preferences stored in `mix_preferences`. Authenticated RPCs validate the complete set

@@ -18,12 +18,19 @@ describe("DataHealthDashboard", () => {
 			.toBeInTheDocument();
 		expect(screen.getByText("16")).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: "Review product submissions" }))
-			.toHaveAttribute("href", "/moderation#product-review");
+			.toHaveAttribute(
+				"href",
+				"/profile/moderator-actions/product-submissions",
+			);
 
 		const sourceSummary = screen.getByText("Source activity").closest("summary");
 		expect(sourceSummary?.closest("details")).not.toHaveAttribute("open");
 		await fireEvent.click(sourceSummary as HTMLElement);
 		expect(screen.getByText("USDA FoodData Central")).toBeInTheDocument();
+		expect(screen.getByText(
+			"Most-used sources appear first, based on lookups during this 30-day window.",
+		)).toBeInTheDocument();
+		expect(screen.getByText("Lookups in window")).toBeInTheDocument();
 		expect(screen.queryByText("sourceEvaluation.details")).not.toBeInTheDocument();
 	});
 });

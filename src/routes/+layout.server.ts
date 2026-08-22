@@ -92,6 +92,15 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	configureServingMeasureCatalog(servingMeasureCatalog);
 	configureNutritionCompletenessCatalog(nutritionCompletenessCatalog);
 	configureAppReferenceCatalog(appReferenceCatalog);
+	const playfulMessagesEnabled = profile?.cheeky_messages_enabled ?? true;
+	const userAppReferenceCatalog = playfulMessagesEnabled
+		? appReferenceCatalog
+		: {
+			...appReferenceCatalog,
+			delightMessages: appReferenceCatalog.delightMessages.filter(
+				(message) => message.tone === "standard",
+			),
+		};
 	const themePreference = normalizeThemePreference(profile?.appearance_theme);
 	if (cookies.get(THEME_PREFERENCE_COOKIE) !== themePreference) {
 		cookies.set(
@@ -111,9 +120,10 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			role,
 			showTutorial: shouldAutomaticallyShowTutorial(tutorialPreference),
 			themePreference,
+			playfulMessagesEnabled,
 		},
 		servingMeasureCatalog,
 		nutritionCompletenessCatalog,
-		appReferenceCatalog,
+		appReferenceCatalog: userAppReferenceCatalog,
 	};
 };

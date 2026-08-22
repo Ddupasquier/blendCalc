@@ -90,6 +90,57 @@ describe("MixIngredientAmountCard", () => {
 		expect(screen.queryByText(/g equivalent/i)).not.toBeInTheDocument();
 	});
 
+	it("offers exact household servings and preserves grams when switching units", async () => {
+		configureServingMeasureCatalog({
+			options: [{
+				value: "g",
+				label: "grams",
+				shortLabel: "g",
+				dimension: "weight",
+				conversionToBase: 1,
+				isDefault: true,
+			}],
+			aliases: { g: "g" },
+			aliasEntries: [{ alias: "g", unit: "g" }],
+		});
+		const onServingChange = vi.fn();
+		render(MixIngredientAmountCard, {
+			props: {
+				food: {
+					fdcId: 5,
+					description: "Banana, Raw",
+					foodNutrients: [],
+					foodServings: [{
+						label: "1 medium banana (118 g)",
+						gramWeight: 118,
+						isPrimary: true,
+						gramWeightMethod: "source-reported",
+					}],
+				},
+				sourceListLabel: "Fridge",
+				servingQuantity: 118,
+				servingUnit: "g",
+				convertedWeightLabel: null,
+				onOpenConversionDetails: vi.fn(),
+				onCloseConversionDetails: vi.fn(),
+				onRemove: vi.fn(),
+				onServingChange,
+			},
+		});
+
+		await fireEvent.click(
+			screen.getByRole("combobox", { name: "Measure for Banana, Raw" }),
+		);
+		await fireEvent.click(screen.getByRole("option", { name: "medium banana" }));
+
+		expect(onServingChange).toHaveBeenCalledWith(
+			expect.objectContaining({ fdcId: 5 }),
+			"1",
+			expect.stringMatching(/^source-serving:/),
+		);
+		expect(screen.queryByRole("option", { name: "cup" })).not.toBeInTheDocument();
+	});
+
 	it("does not label private foods with a compact custom badge", () => {
 		configureServingMeasureCatalog({
 			options: [{

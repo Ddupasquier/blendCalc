@@ -84,7 +84,7 @@ describe("app-wide responsive architecture", () => {
 			"src/routes/mix/page.scss",
 			"src/routes/saved/page.scss",
 			"src/routes/profile/page.scss",
-			"src/routes/moderation/page.scss",
+			"src/lib/components/moderation/ModerationWorkspace/ModerationWorkspace.scss",
 		];
 
 		for (const file of files) {

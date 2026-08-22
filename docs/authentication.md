@@ -10,6 +10,10 @@ Every server request establishes identity from verified JWT claims through
 cookie-backed session object. Operations that require the current Auth record, such as
 test-fixture identity checks or Auth-account mutations, call `auth.getUser()` instead.
 
+Server-side MFA status follows the same boundary: trusted factor records come from
+`auth.getUser()`, and the current authenticator assurance level comes from verified JWT
+claims. It never derives identity or factor state from `getSession()`.
+
 This document owns Auth and deployment-origin configuration. General server/database
 boundaries live in [`data-architecture.md`](data-architecture.md), and table policies
 live in [`supabase-schema.md`](supabase-schema.md). Production network restrictions,

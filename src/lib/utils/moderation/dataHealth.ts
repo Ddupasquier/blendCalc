@@ -238,6 +238,16 @@ const parseSource = (value: unknown, index: number): ModeratorSourceHealth => {
 	};
 };
 
+const compareModeratorSourcesByDescendingLookupUsage = (
+	firstSource: ModeratorSourceHealth,
+	secondSource: ModeratorSourceHealth,
+) =>
+	secondSource.metrics.lookups - firstSource.metrics.lookups ||
+	firstSource.displayName.localeCompare(secondSource.displayName, "en", {
+		sensitivity: "base",
+	}) ||
+	firstSource.key.localeCompare(secondSource.key, "en");
+
 const parseDataset = (value: unknown, index: number): ModeratorDatasetHealth => {
 	const path = `datasets[${index}]`;
 	const row = readRecord(value, path);
@@ -333,7 +343,9 @@ export const parseModeratorDataHealth = (value: unknown): ModeratorDataHealth =>
 		metricWindowDays: readNumber(row.metricWindowDays, "metricWindowDays"),
 		issueLimit: readNumber(row.issueLimit, "issueLimit"),
 		overview: parseOverview(row.overview),
-		sources: readArray(row.sources, "sources").map(parseSource),
+		sources: readArray(row.sources, "sources")
+			.map(parseSource)
+			.sort(compareModeratorSourcesByDescendingLookupUsage),
 		datasets: readArray(row.datasets, "datasets").map(parseDataset),
 		policy: parsePolicy(row.policy),
 		issues: parseIssues(row.issues),

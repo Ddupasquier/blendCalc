@@ -17,21 +17,23 @@ const activeQueues = [
 	},
 ] as const;
 
-const taskPattern = /^\s*- \[(?<state>[ x])\] \*\*(?<id>QA-\d{3}-\d{3}):\*\*$/;
+const taskPattern =
+	/^\s*- \[(?<state>[ x])\] \*\*(?<id>QA-\d{3}-\d{3})(?: — (?<title>[^*]+))?:\*\*$/;
 
 const readTasks = (file: string) => {
 	const lines = readFileSync(file, "utf8").split("\n");
-	const tasks: Array<{ body: string; id: string; state: string }> = [];
+	const tasks: Array<{ body: string; id: string; state: string; title: string }> = [];
 	for (let index = 0; index < lines.length; index += 1) {
 		const match = lines[index].match(taskPattern);
 		if (!match?.groups) continue;
 		let end = index + 1;
 		while (end < lines.length && !taskPattern.test(lines[end])) end += 1;
-		tasks.push({
-			body: lines.slice(index + 1, end).join("\n"),
-			id: match.groups.id,
-			state: match.groups.state,
-		});
+			tasks.push({
+				body: lines.slice(index + 1, end).join("\n"),
+				id: match.groups.id,
+				state: match.groups.state,
+				title: match.groups.title?.trim() ?? "",
+			});
 		index = end - 1;
 	}
 	return tasks;
@@ -67,11 +69,20 @@ describe.runIf(localTrackersAvailable)("QA task structure", () => {
 
 	it("keeps active tasks complete and uniquely owned by one queue", () => {
 		const seen = new Set<string>();
+		const seenTitles = new Set<string>();
 		for (const queue of activeQueues) {
 			for (const task of readTasks(queue.file)) {
 				expect(task.state, `${task.id} is checked inside an active queue`).toBe(" ");
 				expect(seen.has(task.id), `${task.id} is duplicated across active queues`).toBe(false);
 				seen.add(task.id);
+				expect(task.title, `${task.id} is missing a descriptive title`).not.toBe("");
+				expect(task.title.length, `${task.id} has an overlong title`).toBeLessThanOrEqual(100);
+				const normalizedTitle = task.title.toLocaleLowerCase();
+				expect(
+					seenTitles.has(normalizedTitle),
+					`${task.id} duplicates the title ${task.title}`,
+				).toBe(false);
+				seenTitles.add(normalizedTitle);
 				expect(task.body, `${task.id} is missing numbered repro steps`).toMatch(
 					/- Repro:\n\s+1\./,
 				);

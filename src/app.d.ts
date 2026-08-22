@@ -20,6 +20,7 @@ type AuthUser = {
 	avatarAltText: string | null;
 	role: AppRole | null;
 	themePreference: ThemePreference;
+	playfulMessagesEnabled: boolean;
 };
 
 declare global {

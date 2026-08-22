@@ -16,6 +16,26 @@ const readCount = (
 	return result.count ?? 0;
 };
 
+type DatabaseError = {
+	code?: string | null;
+	message?: string | null;
+};
+
+const readPendingProfileImageReviewCount = (result: {
+	data: number | null;
+	error: DatabaseError | null;
+}) => {
+	if (
+		result.error &&
+		(result.error.code === "42883" || result.error.code === "PGRST202") &&
+		result.error.message?.includes("get_pending_profile_image_review_count")
+	) {
+		return 0;
+	}
+	if (result.error) throw result.error;
+	return result.data ?? 0;
+};
+
 export const readModeratorActionSummary = async (): Promise<ModeratorActionSummary> => {
 	const admin = getSupabaseAdminClient();
 	const [productSubmissions, foodWarningReports, profileImageReviews] =
@@ -28,16 +48,13 @@ export const readModeratorActionSummary = async (): Promise<ModeratorActionSumma
 				.from("food_compatibility_feedback")
 				.select("id", { count: "exact", head: true })
 				.eq("status", "pending"),
-			admin
-				.from("profiles")
-				.select("user_id", { count: "exact", head: true })
-				.not("avatar_path", "is", null)
-				.eq("avatar_moderation_status", "pending"),
+			admin.rpc("get_pending_profile_image_review_count"),
 		]);
 
 	const pendingProductSubmissions = readCount(productSubmissions);
 	const pendingFoodWarningReports = readCount(foodWarningReports);
-	const pendingProfileImageReviews = readCount(profileImageReviews);
+	const pendingProfileImageReviews =
+		readPendingProfileImageReviewCount(profileImageReviews);
 
 	return {
 		pendingProductSubmissions,

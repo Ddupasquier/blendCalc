@@ -1,9 +1,15 @@
 export const PROFILE_SETTINGS_ROUTES = {
 	appearance: "appearance",
+	playfulMessages: "playful-messages",
 	details: "details",
 	image: "image",
 	foodPreferences: "food-preferences",
 	moderatorActions: "moderator-actions",
+	moderatorProductSubmissions: "moderator-actions/product-submissions",
+	moderatorFoodWarningReports: "moderator-actions/food-warning-reports",
+	moderatorProfileImages: "moderator-actions/profile-images",
+	moderatorAccountAccess: "moderator-actions/account-access",
+	moderatorCatalogDataHealth: "moderator-actions/catalog-data-health",
 } as const;
 
 export type ProfileSettingsRoute =
@@ -13,16 +19,22 @@ const PROFILE_BASE_PATH = "/profile";
 
 const PROFILE_SETTINGS_ROUTE_TITLES: Record<ProfileSettingsRoute, string> = {
 	[PROFILE_SETTINGS_ROUTES.appearance]: "Light/Dark Mode",
+	[PROFILE_SETTINGS_ROUTES.playfulMessages]: "Playful Messages",
 	[PROFILE_SETTINGS_ROUTES.details]: "Profile Details",
 	[PROFILE_SETTINGS_ROUTES.image]: "Profile Image",
 	[PROFILE_SETTINGS_ROUTES.foodPreferences]: "Food Preferences",
 	[PROFILE_SETTINGS_ROUTES.moderatorActions]: "Moderator Actions",
+	[PROFILE_SETTINGS_ROUTES.moderatorProductSubmissions]: "Product Submissions",
+	[PROFILE_SETTINGS_ROUTES.moderatorFoodWarningReports]: "Food Warning Reports",
+	[PROFILE_SETTINGS_ROUTES.moderatorProfileImages]: "Profile Image Reviews",
+	[PROFILE_SETTINGS_ROUTES.moderatorAccountAccess]: "Account Access",
+	[PROFILE_SETTINGS_ROUTES.moderatorCatalogDataHealth]: "Catalog Data Health",
 };
 
 export const getProfileSettingsRoute = (
 	pathname: string,
 ): ProfileSettingsRoute | null => {
-	const routeSegment = pathname.split("/").filter(Boolean)[1];
+	const routeSegment = pathname.split("/").filter(Boolean).slice(1).join("/");
 	return Object.values(PROFILE_SETTINGS_ROUTES).includes(
 		routeSegment as ProfileSettingsRoute,
 	)

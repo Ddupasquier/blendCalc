@@ -16,20 +16,48 @@ const pendingSignedAvatarReads = new Map<string, Promise<string | null>>();
 
 export type UserProfile = Tables<"profiles">;
 
+type ProfileReadError = {
+	code?: string;
+	message?: string;
+};
+
+export const isMissingCheekyMessagesPreferenceColumn = (
+	error: ProfileReadError | null | undefined,
+) =>
+	Boolean(
+		error?.code &&
+			["42703", "PGRST204"].includes(error.code) &&
+			error.message?.toLowerCase().includes("cheeky_messages_enabled"),
+	);
+
 export const getUserProfile = async (
 	supabase: SupabaseClient<Database>,
 	userId: string,
 ) => {
-	const { data, error } = await supabase
+	const currentResult = await supabase
+		.from("profiles")
+		.select(
+			"user_id, display_name, bio, appearance_theme, cheeky_messages_enabled, avatar_path, avatar_alt_text, avatar_moderation_status, avatar_policy_acknowledged_at, created_at, updated_at",
+		)
+		.eq("user_id", userId)
+		.maybeSingle();
+
+	if (!currentResult.error) return currentResult.data;
+	if (!isMissingCheekyMessagesPreferenceColumn(currentResult.error)) {
+		throw currentResult.error;
+	}
+
+	const legacyResult = await supabase
 		.from("profiles")
 		.select(
 			"user_id, display_name, bio, appearance_theme, avatar_path, avatar_alt_text, avatar_moderation_status, avatar_policy_acknowledged_at, created_at, updated_at",
 		)
 		.eq("user_id", userId)
 		.maybeSingle();
-
-	if (error) throw error;
-	return data;
+	if (legacyResult.error) throw legacyResult.error;
+	return legacyResult.data
+		? { ...legacyResult.data, cheeky_messages_enabled: true }
+		: null;
 };
 
 export const getSignedAvatarUrl = async (

@@ -78,6 +78,7 @@ export type AppDelightMessage = {
 	minimumValue: number | null;
 	maximumValue: number | null;
 	priority: number;
+	tone: "standard" | "cheeky";
 };
 
 export type AppReferenceCatalog = {

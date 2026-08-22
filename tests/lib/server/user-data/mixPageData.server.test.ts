@@ -79,6 +79,7 @@ describe("loadMixPageData", () => {
 			fridge: [],
 			shoppingList: [],
 			preferences: {},
+			foodPreferences: null,
 			loadError: "Your saved ingredient lists could not be loaded. Try again.",
 		});
 	});

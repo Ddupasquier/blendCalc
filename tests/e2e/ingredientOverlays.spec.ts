@@ -762,6 +762,10 @@ test("partial ingredient words combine every eligible source and remain selectab
 		["tomatoes green", /^Tomatoes, Green, Raw,/],
 		["spin", /^Spinach, Raw,/],
 		["strawb", /^Strawberries, Raw,/],
+		["rookshir", /^100% Juice Lemon Juice,/],
+		["hellfis", /^Shrimp, Cooked,/],
+		["bisulf", /^100% Juice Lemon Juice,/],
+		["aylor far", /^Marketside Iceberg Salad, 12 Ounce,/],
 	] as const) {
 		const results = await search(query);
 		expect(results.total).toBeGreaterThan(0);
@@ -775,9 +779,13 @@ test("partial ingredient words combine every eligible source and remain selectab
 		expect(results).toMatchObject({ foods: [], total: 0 });
 		await expect(searchDialog.getByRole("row")).toHaveCount(0);
 		await expect(searchInput).toHaveAttribute("aria-expanded", "false");
+		const emptySearchNotice = searchDialog.getByRole("status");
+		await expect(emptySearchNotice).toContainText("Nothing found");
+		await expect(emptySearchNotice).toContainText(query);
 	}
 
 	await search("green tomat");
+	await expect(searchDialog.getByText("Nothing found")).toHaveCount(0);
 	const sharedCatalogResult = searchResults.getByRole("row", {
 		name: /^Tomatoes, Green, Raw,/,
 	});

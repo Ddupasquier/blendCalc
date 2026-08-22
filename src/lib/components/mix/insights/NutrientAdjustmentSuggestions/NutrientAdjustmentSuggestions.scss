@@ -5,6 +5,24 @@
 	gap: $app-gap-sm;
 }
 
+.nutrient-adjustments__undo {
+	display: flex;
+	gap: $app-gap-sm;
+	align-items: center;
+	justify-content: space-between;
+	padding: $app-gap-sm;
+	background: $app-shell-accent-soft;
+	border-radius: $app-shell-radius-control;
+	color: $app-shell-text-primary;
+}
+
+.nutrient-adjustments__undo p {
+	display: grid;
+	gap: $app-gap-2xs;
+	font-size: $app-font-size-xs;
+	line-height: $app-line-height-compact;
+}
+
 .nutrient-adjustments__intro,
 .nutrient-adjustment__action,
 .nutrient-adjustment__basis {
@@ -73,6 +91,10 @@
 	.nutrient-adjustment {
 		grid-template-columns: auto minmax(0, 1fr);
 		gap: $app-gap-xs;
+		padding: $app-gap-xs;
+	}
+
+	.nutrient-adjustments__undo {
 		padding: $app-gap-xs;
 	}
 

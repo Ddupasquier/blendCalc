@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	isUsableIngredientSearchResult,
 	mergeIngredientSearchResults,
+	sortIngredientSearchResults,
 } from "$lib/utils/ingredients/ingredientSearchResults";
 import type { FoodItem } from "$lib/utils/food/types";
 
@@ -19,6 +20,27 @@ const food = (overrides: Partial<FoodItem> = {}): FoodItem => ({
 });
 
 describe("ingredient search result merging", () => {
+	it("downranks equal-relevance foods with preference conflicts", () => {
+		const safeFood = food({ fdcId: 1, description: "Apple" });
+		const conflictingFood = food({
+			fdcId: 2,
+			description: "Apple",
+			preferenceWarnings: [{
+				id: "restriction-conflict",
+				level: "warning",
+				category: "restriction",
+				label: "Vegan",
+				code: "FOOD_RESTRICTION_CONFLICT",
+				params: { preference: "Vegan", fact: "Meat" },
+			}],
+		});
+
+		expect(
+			sortIngredientSearchResults([conflictingFood, safeFood], "apple")
+				.map((result) => result.fdcId),
+		).toEqual([1, 2]);
+	});
+
 	it("merges exact legacy records per field instead of choosing one whole record", () => {
 		const usda = food({
 			fdcId: 171032,

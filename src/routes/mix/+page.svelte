@@ -3,7 +3,10 @@
 	import ConfirmationDialog from "$lib/components/common/dialogs/ConfirmationDialog/ConfirmationDialog.svelte";
 	import TextInputDialog from "$lib/components/common/dialogs/TextInputDialog/TextInputDialog.svelte";
 	import StatusMessage from "$lib/components/common/feedback/StatusMessage/StatusMessage.svelte";
-	import { resolveMixDelightMessage } from "$lib/utils/delight/delightMessages";
+	import {
+		resolveDelightMessage,
+		resolveMixDelightMessage,
+	} from "$lib/utils/delight/delightMessages";
 	import ViewBody from "$lib/components/common/view/ViewBody/ViewBody.svelte";
 	import ViewFrame from "$lib/components/common/view/ViewFrame/ViewFrame.svelte";
 	import ViewTop from "$lib/components/common/view/ViewTop/ViewTop.svelte";
@@ -70,10 +73,12 @@
 		type MixStateSnapshot,
 	} from "$lib/utils/mix/state/mixState";
 	import {
-		getDefaultNutrientOptions,
 		getNutrientMeta,
 		type NutrientOption,
 	} from "$lib/utils/mix/ui/mixUi";
+	import {
+		getMixSectionOrderForIngredientAvailability,
+	} from "$lib/utils/mix/ui/mixSectionOrder";
 	import type { ServingMeasureUnit } from "$lib/utils/serving/servingMeasureCatalog";
 	import type { SavedRecipeInput } from "$lib/utils/storage/client/savedRecipes";
 	import {
@@ -89,8 +94,13 @@
 		saveCloudUserMixGoalTemplate,
 	} from "$lib/utils/storage/supabase";
 	import { MIX_STORAGE_KEYS } from "$lib/utils/storage/storageKeys";
+
 	import { onMount } from "svelte";
 	import type { MixResetAction } from "./types";
+
+	const allowPlayfulMessages = $derived(
+		page.data.authUser?.playfulMessagesEnabled ?? true,
+	);
 
 	const defaultMixFields = getDefaultMixFields();
 	const nutrientCatalog = getNutrientCatalog();
@@ -99,6 +109,11 @@
 	const systemGoalTemplates = getMixGoalTemplates();
 	const initialMixData = page.data.mixData;
 	const initialCloudPreferences = initialMixData?.preferences;
+	const initialFoodPreferences = initialMixData?.foodPreferences;
+	const prioritizedNutrientIds = initialFoodPreferences?.prioritizedNutrientIds ?? [];
+	const preferredServingGrams = initialFoodPreferences?.defaultMixServingGrams;
+	const preferredWeightUnit = initialFoodPreferences?.unitSystem === "us" ? "oz" : "g";
+	const initialDefaultMixState = getDefaultMixState(prioritizedNutrientIds);
 	const initialCloudGoals = initialCloudPreferences?.nutrientGoals ?? {};
 	const hasInitialGoalConfiguration =
 		initialCloudPreferences?.hasGoalConfiguration ?? false;
@@ -115,8 +130,8 @@
 					? ""
 					: (defaultGoalTemplate?.selectionId ?? "");
 
-	let selected = $state<(string | number)[]>(defaultMixFields.map((n) => n.id));
-	let options = $state<NutrientOption[]>(getDefaultNutrientOptions());
+	let selected = $state<(string | number)[]>(initialDefaultMixState.selected);
+	let options = $state<NutrientOption[]>(initialDefaultMixState.options);
 	let fridgeItems = $state<FoodItem[]>(initialMixData?.fridge ?? []);
 	let shoppingItems = $state<FoodItem[]>(initialMixData?.shoppingList ?? []);
 	let selectedFoodIds = $state<number[]>([]);
@@ -155,6 +170,10 @@
 	let goalPresetError = $state("");
 	let goalPresetDialogError = $state("");
 	let goalPresetDialogBusy = $state(false);
+	let suggestedAdjustmentUndo = $state<{
+		foodDescription: string;
+		previousMixState: MixStateSnapshot;
+	} | null>(null);
 	let nutrientGoalSaveRequestId = 0;
 	let nutrientGoalSaveQueue: Promise<void> = Promise.resolve();
 	const goalTemplates = $derived([
@@ -289,9 +308,28 @@
 		}),
 	);
 	const allIngredientItems = $derived([...fridgeItems, ...shoppingItems]);
+	const hasAvailableIngredients = $derived(allIngredientItems.length > 0);
+	const displayedSectionOrder = $derived(
+		getMixSectionOrderForIngredientAvailability(
+			sectionPreferences.state.order,
+			hasAvailableIngredients,
+		),
+	);
 	const selectedFoods = $derived(
 		allIngredientItems.filter((item) => selectedFoodIds.includes(item.fdcId)),
 	);
+	let recipeSavedDelightMessage = $state<string | null>(null);
+	const handleRecipeSaved = () => {
+		recipeSavedDelightMessage = mixAnalysis.warnings.length === 0
+			? resolveDelightMessage([
+				{
+					contextKey: "saved",
+					triggerKey: "recipe-saved",
+				},
+			], { allowPlayfulMessages })
+			: null;
+		closeMixOverlay();
+	};
 	const savedRecipeController = createSavedRecipeController({
 		buildSavedRecipeInput: (name): SavedRecipeInput => ({
 			name,
@@ -304,11 +342,17 @@
 			servingQuantities,
 			servingUnits,
 		}),
-		onRecipeSaved: closeMixOverlay,
+		onRecipeSaved: handleRecipeSaved,
 	});
 	const loadedSavedRecipe = $derived(savedRecipeController.state.loaded);
-	const markLoadedSavedRecipeDirty = savedRecipeController.markDirty;
-	const detachLoadedSavedRecipe = savedRecipeController.detach;
+	const markLoadedSavedRecipeDirty = () => {
+		recipeSavedDelightMessage = null;
+		savedRecipeController.markDirty();
+	};
+	const detachLoadedSavedRecipe = () => {
+		recipeSavedDelightMessage = null;
+		savedRecipeController.detach();
+	};
 	const canSaveCurrentMix = $derived(
 		selectedFoods.length > 0 && (!loadedSavedRecipe || loadedSavedRecipe.isDirty),
 	);
@@ -338,10 +382,11 @@
 			foods: selectedFoods,
 			servingGrams,
 			goalDifferences: mixAnalysis.diffs,
-			hasDangerWarning: mixAnalysis.warnings.some(
-				(warning) => warning.severity === "danger",
-			),
-		}),
+				hasDangerWarning: mixAnalysis.warnings.some(
+					(warning) => warning.severity === "danger",
+				),
+				allowPlayfulMessages,
+			}),
 	);
 
 	const getNutrientTotal = (nutrientId: number) => {
@@ -422,6 +467,7 @@
 	};
 
 	const loadMixState = () => {
+		suggestedAdjustmentUndo = null;
 		assignMixState(
 			readStoredMixState(getCurrentMixState(), allIngredientItems),
 		);
@@ -520,6 +566,7 @@
 	};
 
 	const clearIngredients = () => {
+		suggestedAdjustmentUndo = null;
 		detachLoadedSavedRecipe();
 		selectedFoodIds = [];
 		const emptyServingState = getEmptyServingState();
@@ -530,8 +577,9 @@
 	};
 
 	const resetMix = async () => {
+		suggestedAdjustmentUndo = null;
 		detachLoadedSavedRecipe();
-		assignMixState(getDefaultMixState());
+		assignMixState(getDefaultMixState(prioritizedNutrientIds));
 		await resetGoals();
 		saveMixState();
 	};
@@ -803,8 +851,17 @@
 	};
 
 	const toggleFood = (foodId: number) => {
+		suggestedAdjustmentUndo = null;
 		assignMixState(
-			getStateWithToggledFood(getCurrentMixState(), foodId, allIngredientItems),
+			getStateWithToggledFood(
+				getCurrentMixState(),
+				foodId,
+				allIngredientItems,
+				{
+					preferredServingGrams,
+					preferredWeightUnit,
+				},
+			),
 		);
 		markLoadedSavedRecipeDirty();
 		saveMixState();
@@ -814,19 +871,35 @@
 		foodId: number,
 		nextServingGrams: number,
 	) => {
+		const previousMixState = getCurrentMixState();
+		const foodDescription = allIngredientItems.find(
+			(food) => food.fdcId === foodId,
+		)?.description;
 		assignMixState(
 			nextServingGrams <= 0
 				? getStateWithToggledFood(
-						getCurrentMixState(),
+						previousMixState,
 						foodId,
 						allIngredientItems,
 					)
 				: getStateWithGramServing(
-						getCurrentMixState(),
+						previousMixState,
 						foodId,
 						nextServingGrams,
 					),
 		);
+		suggestedAdjustmentUndo = foodDescription
+			? { foodDescription, previousMixState }
+			: null;
+		markLoadedSavedRecipeDirty();
+		saveMixState();
+	};
+
+	const undoSuggestedAdjustment = () => {
+		if (!suggestedAdjustmentUndo) return;
+		const previousMixState = suggestedAdjustmentUndo.previousMixState;
+		suggestedAdjustmentUndo = null;
+		assignMixState(previousMixState);
 		markLoadedSavedRecipeDirty();
 		saveMixState();
 	};
@@ -851,6 +924,7 @@
 		quantityValue: string,
 		unit: ServingMeasureUnit,
 	) => {
+		suggestedAdjustmentUndo = null;
 		assignMixState(
 			getStateWithServingAmount(
 				getCurrentMixState(),
@@ -932,6 +1006,7 @@
 	<ViewTop compactHidden={headerVisibility.state.hidden}>
 		<MixHeader
 			loadedName={loadedSavedRecipe?.name}
+			delightMessage={recipeSavedDelightMessage}
 			isDirty={loadedSavedRecipe?.isDirty ?? selectedFoodIds.length > 0}
 			canSave={canSaveCurrentMix}
 			optionsOpen={optionsSheetOpen}
@@ -1033,7 +1108,7 @@
 			{:else}
 				<section class="mix-panel" aria-label="Mix builder">
 					<div class="mix-builder">
-						{#each sectionPreferences.state.order as sectionId (sectionId)}
+						{#each displayedSectionOrder as sectionId (sectionId)}
 							{#if sectionId === "nutrient-shape"}
 							<NutrientShapePanel
 								nutrientAxisCount={mixAnalysis.nutrientLabels.length}
@@ -1109,7 +1184,9 @@
 											overlay: MIX_ROUTE_OVERLAYS.ingredientFilters,
 										})}
 									onCloseFilters={closeMixOverlay}
-									open={sectionPreferences.state.disclosureState[sectionId]}
+									open={hasAvailableIngredients
+										? sectionPreferences.state.disclosureState[sectionId]
+										: true}
 									onOpenChange={(open) =>
 										sectionPreferences.setDisclosure(sectionId, open)}
 								/>
@@ -1126,7 +1203,9 @@
 							{:else if sectionId === "suggested-adjustments"}
 								<NutrientAdjustmentSuggestions
 									suggestions={mixAnalysis.adjustmentSuggestions}
+									lastAppliedFoodDescription={suggestedAdjustmentUndo?.foodDescription}
 									onApply={applySuggestedAdjustment}
+									onUndo={undoSuggestedAdjustment}
 									open={sectionPreferences.state.disclosureState[sectionId]}
 									onOpenChange={(open) =>
 										sectionPreferences.setDisclosure(sectionId, open)}

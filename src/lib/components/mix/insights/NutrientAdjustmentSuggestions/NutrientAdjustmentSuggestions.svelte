@@ -9,7 +9,9 @@
 
 	let {
 		suggestions = [],
+		lastAppliedFoodDescription = null,
 		onApply,
+		onUndo,
 		open = false,
 		onOpenChange,
 	}: NutrientAdjustmentSuggestionsProps = $props();
@@ -38,16 +40,31 @@
 	};
 </script>
 
-{#if suggestions.length > 0}
+{#if suggestions.length > 0 || lastAppliedFoodDescription}
 	<MixPanelSection
 		class="nutrient-adjustments"
 		ariaLabel="Suggested ingredient adjustments"
 		title="Suggested adjustments"
-		badge={String(suggestions.length)}
+		badge={suggestions.length > 0 ? String(suggestions.length) : undefined}
 		{open}
 		{onOpenChange}
 	>
 		<div class="nutrient-adjustments__content">
+			{#if lastAppliedFoodDescription && onUndo}
+				<div class="nutrient-adjustments__undo" role="status">
+					<p>
+						<strong>{lastAppliedFoodDescription} updated.</strong>
+						You can undo that change now.
+					</p>
+					<ActionButton
+						size="small"
+						variant="secondary"
+						onclick={onUndo}
+					>
+						Undo
+					</ActionButton>
+				</div>
+			{/if}
 			<p class="nutrient-adjustments__intro">
 				Small, goal-safe changes to ingredients already in this mix.
 			</p>

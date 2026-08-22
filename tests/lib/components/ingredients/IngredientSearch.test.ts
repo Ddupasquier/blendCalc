@@ -64,6 +64,71 @@ describe("IngredientSearch", () => {
 		expect(onSearchFocus).toHaveBeenCalledTimes(2);
 	});
 
+	it("explains a completed search with no matches and clears the notice for new results", async () => {
+		vi.mocked(searchFoodPage)
+			.mockResolvedValueOnce(makePage([]))
+			.mockResolvedValueOnce(makePage([makeFood(100, "Spinach, raw")]));
+
+		render(IngredientSearch, {
+			props: {
+				onSelect: vi.fn(),
+				onSearchFocus: vi.fn(),
+			},
+		});
+
+		const searchInput = screen.getByRole("combobox", {
+			name: /search ingredients/i,
+		});
+		await fireEvent.input(searchInput, {
+			target: { value: "not-a-real-ingredient" },
+		});
+
+		expect(screen.queryByText("Nothing found")).not.toBeInTheDocument();
+		await waitFor(
+			() => {
+				expect(screen.getByRole("status")).toHaveTextContent("Nothing found");
+				expect(screen.getByRole("status")).toHaveTextContent(
+					"not-a-real-ingredient",
+				);
+			},
+			{ timeout: 2000 },
+		);
+
+		await fireEvent.input(searchInput, { target: { value: "spinach" } });
+		expect(screen.queryByText("Nothing found")).not.toBeInTheDocument();
+		await waitFor(
+			() => expect(screen.getByText("Spinach, raw")).toBeInTheDocument(),
+			{ timeout: 2000 },
+		);
+		expect(screen.queryByText("Nothing found")).not.toBeInTheDocument();
+	});
+
+	it("keeps a failed search distinct from a completed search with no matches", async () => {
+		const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+		vi.mocked(searchFoodPage).mockRejectedValueOnce(new Error("provider failed"));
+
+		render(IngredientSearch, {
+			props: {
+				onSelect: vi.fn(),
+				onSearchFocus: vi.fn(),
+			},
+		});
+
+		await fireEvent.input(
+			screen.getByRole("combobox", { name: /search ingredients/i }),
+			{ target: { value: "spinach" } },
+		);
+
+		await waitFor(
+			() => expect(screen.getByRole("alert")).toHaveTextContent(
+				"We couldn't search foods right now",
+			),
+			{ timeout: 2000 },
+		);
+		expect(screen.queryByText("Nothing found")).not.toBeInTheDocument();
+		consoleError.mockRestore();
+	});
+
 	it("uses arrow keys and Enter to select a visible result", async () => {
 		const onSelect = vi.fn();
 		vi.mocked(searchFoodPage).mockResolvedValueOnce(makePage([

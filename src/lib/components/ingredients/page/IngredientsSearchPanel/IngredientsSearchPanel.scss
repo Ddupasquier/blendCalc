@@ -14,26 +14,32 @@
 
 .search-toolbar {
   display: grid;
-  grid-template-columns: minmax(
-      0,
-      1fr
-    ) $app-shell-control-height $app-shell-control-height;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) $app-shell-control-height;
+  grid-template-areas:
+    "search search barcode"
+    "manual manual filter";
   align-items: center;
   gap: $app-gap-md;
 }
 
 .search-toolbar__input {
+  grid-area: search;
   min-width: 0;
 }
 
 .search-toolbar :global(.manual-entry-launcher) {
-  grid-column: 1 / -1;
+  grid-area: manual;
 }
 
 .search-toolbar :global(.barcode-scan-button--compact) {
+  grid-area: barcode;
   width: $app-shell-control-height;
   height: $app-shell-control-height;
   min-height: $app-shell-control-height;
+}
+
+.search-toolbar :global(.filter-button) {
+  grid-area: filter;
 }
 
 :global(.filter-button__icon) {
@@ -53,6 +59,7 @@
       $app-shell-control-height-narrow
       $app-shell-control-height-narrow
       $app-shell-control-height-narrow;
+    grid-template-areas: "search barcode manual filter";
     gap: $app-gap-sm;
   }
 
@@ -62,9 +69,5 @@
     width: $app-shell-control-height-narrow;
     height: $app-shell-control-height-narrow;
     min-height: $app-shell-control-height-narrow;
-  }
-
-  .search-toolbar :global(.manual-entry-launcher) {
-    grid-column: auto;
   }
 }

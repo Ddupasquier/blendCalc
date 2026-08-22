@@ -1,8 +1,16 @@
 import type { FoodItem } from "$lib/utils/food/types";
-import { getFoodPreferenceWarningMessage } from "$lib/utils/profile/foodPreferenceWarnings";
+import {
+	getFoodPreferenceWarningEvidenceMessage,
+	getFoodPreferenceWarningEvidenceReviewMessage,
+	getFoodPreferenceWarningMessage,
+} from "$lib/utils/profile/foodPreferenceWarnings";
 import type { MixNutrientGoal } from "$lib/utils/mix/goals/types";
 import { evaluateMixGoal } from "$lib/utils/mix/goals/goalEvaluation";
 import { formatMixQuantity } from "$lib/utils/mix/formatting/mixQuantity";
+import {
+	formatMixGoalTarget,
+	formatMixGoalValueComparison,
+} from "$lib/utils/mix/formatting/mixGoalPresentation";
 
 export type MixWarningSeverity = "danger" | "warning" | "info";
 
@@ -38,6 +46,17 @@ export const getNutrientGoalWarnings = (
 		const total = Math.max(0, nutrient.total);
 		const evaluation = evaluateMixGoal(nutrient.goal, total);
 		const difference = evaluation.difference;
+		const differenceLabel = formatMixQuantity(Math.abs(difference), { unit });
+		const warningDetails: MixWarningDetail[] = [
+			{
+				label: "Current Mix",
+				value: formatMixQuantity(total, { unit }),
+			},
+			{
+				label: "Goal",
+				value: formatMixGoalTarget(nutrient.goal, unit),
+			},
+		];
 
 		if (evaluation.status === "over") {
 			return [
@@ -50,6 +69,15 @@ export const getNutrientGoalWarnings = (
 						difference,
 						{ unit },
 					)}.`,
+					detailSummary: formatMixGoalValueComparison(
+						total,
+						nutrient.goal,
+						unit,
+					),
+					details: [
+						...warningDetails,
+						{ label: "Overage", value: differenceLabel },
+					],
 				},
 			];
 		}
@@ -65,6 +93,15 @@ export const getNutrientGoalWarnings = (
 						Math.abs(difference),
 						{ unit },
 					)}.`,
+					detailSummary: formatMixGoalValueComparison(
+						total,
+						nutrient.goal,
+						unit,
+					),
+					details: [
+						...warningDetails,
+						{ label: "Shortfall", value: differenceLabel },
+					],
 				},
 			];
 		}
@@ -78,17 +115,34 @@ export const getFoodPreferenceWarningsForMix = (
 ): MixWarning[] => {
 	return foods.flatMap((food) => {
 		const warnings = food.preferenceWarnings ?? [];
-		if (warnings.length === 0) return [];
+		return warnings.map((warning) => {
+			const evidenceMessage = getFoodPreferenceWarningEvidenceMessage(warning);
+			const evidenceReviewMessage =
+				getFoodPreferenceWarningEvidenceReviewMessage(warning);
+			const details: MixWarningDetail[] = [
+				{
+					label: warning.category === "allergen" ? "Selected allergen" : "Selected preference",
+					value: warning.label,
+				},
+			];
+			if (evidenceMessage) {
+				details.push({ label: "Evidence", value: evidenceMessage });
+			}
+			if (evidenceReviewMessage) {
+				details.push({ label: "Evidence review", value: evidenceReviewMessage });
+			}
 
-		const hasWarning = warnings.some((warning) => warning.level === "warning");
-		return [
-			{
-				id: `food-preference-${food.fdcId}`,
-				severity: hasWarning ? "warning" : "info",
-				symbol: hasWarning ? "!" : "?",
+			return {
+				id: `food-preference-${food.fdcId}-${warning.id}`,
+				severity: warning.level === "warning" ? "warning" : "info",
+				symbol: warning.level === "warning" ? "!" : "?",
 				title: food.description,
-				message: warnings.map(getFoodPreferenceWarningMessage).join(" "),
-			},
-		];
+				message: getFoodPreferenceWarningMessage(warning),
+				detailSummary: warning.category === "allergen"
+					? `Selected allergen: ${warning.label}`
+					: `Selected preference: ${warning.label}`,
+				details,
+			};
+		});
 	});
 };

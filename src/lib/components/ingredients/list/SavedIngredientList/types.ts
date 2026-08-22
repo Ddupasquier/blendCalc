@@ -19,6 +19,7 @@ export type SavedIngredientListProps = {
 	moving?: boolean;
 	revealPaused?: boolean;
 	resetKey?: number;
+	allowPlayfulMessages?: boolean;
 	onSelectAll: () => void;
 	onEnterSelection: (foodId?: number) => void;
 	onCancelSelection: () => void;

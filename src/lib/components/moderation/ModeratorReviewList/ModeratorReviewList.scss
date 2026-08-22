@@ -1,0 +1,39 @@
+@use "../../../../styles/variables" as *;
+
+.moderator-review-list,
+.moderator-review-list__items,
+.moderator-review-list__empty {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+}
+
+.moderator-review-list__count {
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-semibold;
+}
+
+.moderator-review-list__empty {
+	padding: $app-gap-md;
+	background: $app-shell-surface-soft;
+	border-radius: $app-shell-radius-card;
+	text-align: center;
+}
+
+.moderator-review-list__empty p {
+	margin: 0;
+	color: $app-shell-text-muted;
+}
+
+@media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
+	.moderator-review-list,
+	.moderator-review-list__items,
+	.moderator-review-list__empty {
+		gap: $app-gap-xs;
+	}
+
+	.moderator-review-list__empty {
+		padding: $app-gap-sm;
+	}
+}

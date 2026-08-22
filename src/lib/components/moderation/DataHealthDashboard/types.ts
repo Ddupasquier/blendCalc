@@ -6,4 +6,5 @@ export type DataHealthDashboardProps = {
   dashboard: ModeratorDataHealth;
   catalogMonitor: CatalogMonitorModerationSummary;
   viewerRole: AppRole;
+	showHeader?: boolean;
 };

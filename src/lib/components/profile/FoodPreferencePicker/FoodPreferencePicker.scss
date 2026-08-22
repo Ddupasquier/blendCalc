@@ -6,23 +6,10 @@
 	min-width: 0;
 }
 
-.preference-editor-card__heading h3 {
-	margin: 0;
-	color: $app-shell-text-primary;
-	font-size: $app-font-size-md;
-	font-weight: $app-font-weight-bold;
-}
-
-.preference-editor-card__heading p {
-	margin: $app-gap-2xs 0 0;
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-sm;
-	line-height: $app-line-height-body;
-}
-
 .preference-reviewed-options,
 .preference-custom-entry,
-.preference-custom-values {
+.preference-selections,
+.preference-reviewed-results {
 	display: grid;
 	gap: $app-gap-xs;
 	min-width: 0;
@@ -34,13 +21,7 @@
 	font-size: $app-font-size-sm;
 }
 
-.preference-reviewed-options {
-	padding: 0;
-	border: 0;
-}
-
-.preference-reviewed-options legend,
-.preference-custom-values > strong {
+.preference-reviewed-results > strong {
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-bold;
@@ -57,8 +38,9 @@
 	min-width: 0;
 }
 
-.preference-custom-values :global(.pill-row) {
-	margin: 0;
+.preference-editor-card__actions {
+	display: flex;
+	justify-content: flex-start;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
@@ -70,8 +52,6 @@
 		width: 100%;
 	}
 
-	.preference-editor-card__heading h3,
-	.preference-editor-card__heading p,
 	.preference-empty {
 		font-size: $app-font-size-xs;
 	}

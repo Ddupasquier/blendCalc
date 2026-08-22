@@ -50,7 +50,7 @@ policies, or core data ownership changes.
 
 | Table                       | Primary Key | Owner Scope             | Purpose                                                                                                    | Key Relationships                                                    |
 | --------------------------- | ----------- | ----------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `profiles`                  | `user_id`   | One row per auth user   | Display/profile data, appearance preference, avatar metadata, and avatar policy state                       | `user_id → auth.users.id`                                            |
+| `profiles`                  | `user_id`   | One row per auth user   | Display/profile data, appearance and delight preferences, avatar metadata, and avatar policy state           | `user_id → auth.users.id`                                            |
 | `user_tutorial_preferences` | `user_id`   | One row per auth user   | Tracks tutorial version and completion state; the legacy reminder field is retained only for backward compatibility and no longer schedules onboarding | `user_id → auth.users.id`                                            |
 | `user_food_preferences`     | `user_id`   | One row per auth user   | Optional unit system, allergens, dietary restrictions, nutrient priorities, and default serving preference | `user_id → auth.users.id`                                            |
 | `user_compatibility_rules`  | `id`        | Many rows per auth user | Server-derived exact resolution state for saved allergen and dietary preferences                            | User, active policy version, optional canonical tag/term/alias/mapping |
@@ -62,7 +62,7 @@ Stores app-facing profile information. Email should not be copied here.
 
 | Table | Documented columns |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `profiles` | `user_id`, `display_name`, `bio`, `appearance_theme`, `avatar_path`, `avatar_alt_text`, `avatar_moderation_status`, `avatar_policy_acknowledged_at`, `created_at`, `updated_at` |
+| `profiles` | `user_id`, `display_name`, `bio`, `appearance_theme`, `cheeky_messages_enabled`, `avatar_path`, `avatar_alt_text`, `avatar_moderation_status`, `avatar_policy_acknowledged_at`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -74,6 +74,8 @@ Notes:
   the user has not chosen one.
 - `appearance_theme` is constrained to `system`, `light`, or `dark` and defaults to
   `system`.
+- `cheeky_messages_enabled` backs the user-facing `Playful messages` preference for
+  occasional secondary copy, defaults to `true`, and remains user-disableable.
 - Avatar files live in the private `profile-avatars` storage bucket under the user id
   folder.
 - Profile and avatar-policy writes are server-owned so browser clients cannot bypass
@@ -260,6 +262,12 @@ Notes:
 
 - Unique safeguards prevent duplicate custom names and duplicate user barcodes.
 - `search_text` is trigger-maintained and trigram-indexed for partial server search.
+  It includes the private food's canonical and alternate names, brand, categories,
+  package and household-serving descriptions, structured and list ingredients,
+  ingredient-analysis tags, additives, explicit allergen disclosures, precautionary
+  statements, labels, market/language metadata, barcode, and retained source identifier
+  values. Internal JSON property names, nutrient values, provenance internals, URLs,
+  and quality diagnostics are deliberately excluded.
 - Normalized nutrients for a custom food live in `food_nutrients`.
 - The `food` JSON stores `nameProvenance`. Valid-barcode and autofilled names are
   normalized before saving, including standalone `and` → `&`; barcode-free private names
@@ -733,12 +741,15 @@ product authorities.
 Notes:
 
 - Search uses indexed `search_text` assembled from the product name, canonical
-  brand/owner value, barcode, categories, alternate identity, package context,
-  ingredients, allergens, labels, and other retained source metadata. Server ranking
-  keeps direct names ahead of brand or responsible organization, then category and
-  supporting metadata. Active official safety-alert relationships are searched
-  separately so a recalling supplier can find affected products without becoming the
-  product's canonical brand.
+  brand/owner value, barcode, canonical and alternate identity, categories, package and
+  household-serving descriptions, source identifier values, structured and list
+  ingredients, ingredient-analysis tags, additives, explicit allergen disclosures,
+  precautionary statements, labels, and market/language metadata. It supports partial
+  fragments across those fields without indexing arbitrary JSON or nutrition values.
+  Server and API ranking keep direct names ahead of brand or responsible organization,
+  then category and supporting metadata. Active official safety-alert relationships are
+  searched separately so a recalling supplier can find affected products without
+  becoming the product's canonical brand.
 - Barcode lookup reads the active canonical row before source caches or external APIs.
   Complete rows make no external product request. A legally reusable exact-source value
   may fill only a field that is still missing through
@@ -1328,7 +1339,7 @@ Notes:
 
 | Table | Documented columns |
 | --- | --- |
-| `app_delight_messages` | `key`, `context_key`, `trigger_key`, `match_key`, `message`, `minimum_value`, `maximum_value`, `priority`, `enabled`, `created_at`, `updated_at` |
+| `app_delight_messages` | `key`, `context_key`, `trigger_key`, `match_key`, `message`, `minimum_value`, `maximum_value`, `priority`, `tone`, `enabled`, `created_at`, `updated_at` |
 
 Notes:
 
@@ -1336,8 +1347,13 @@ Notes:
   humor. Niche developer references are deliberately excluded from the initial set.
 - Application code supplies reviewed context, trigger, semantic match, and optional
   numeric values. The lowest-priority matching enabled row supplies at most one line.
+- `tone` is `standard` or the retained internal key `cheeky`. The user-facing name for
+  the latter is `Playful messages`. These rows are limited by database constraint to
+  eligible food-add, goal-success, and recipe-save triggers and are excluded when the
+  account turns playful messages off.
 - Delight copy is secondary presentation only. It never replaces or appears inside
-  allergen, medical, authentication, validation, warning, or failure instructions.
+  allergen, recall, alcohol-safety, medical, authentication, validation, warning, or
+  failure instructions.
 - Authenticated users may read enabled rows. Writes remain service-only so ordinary
   clients cannot change copy or trigger behavior.
 
@@ -1442,11 +1458,20 @@ have passed an authenticated dry run.
 | `moderation_email_deliveries`      | `id`         | Audit log                  | Tracks moderation email delivery status                   | `moderation_action_id → moderation_actions.id`     |
 | `blocked_signup_emails`            | `email_hash` | Blocklist                  | Prevents signup by hashed email                           | Optional source/blocking users                     |
 | `profile_image_policy_acceptances` | `id`         | Many rows per auth user    | Records profile image policy acceptance per avatar upload | `user_id → auth.users.id`                          |
+| `profile_image_reports`            | `id`         | Private moderation history | Tracks reports and review outcomes for exact profile images | Target profile and reporting/reviewing auth users |
 
 Notes:
 
 - Moderation/admin writes are intentionally not available to normal authenticated
   clients.
+- `profile_image_reports` is forced-RLS and service-role-only. Each row retains the
+  exact current private avatar path, bounded reason/details, reporter, lifecycle, and
+  review evidence. Ordinary uploads create no row. Replacing an image supersedes its
+  pending reports; a moderator decision dismisses or removes all pending reports for
+  the exact reviewed path without affecting a replacement image.
+- `get_pending_profile_image_review_count()` returns the number of distinct exact images
+  requiring action rather than loading private report rows or counting duplicate reports
+  as separate moderator tasks. Only the service role can execute it.
 - `app_role_assignments` is the authority for application roles. The `app_role` enum
   contains `user`, `moderator`, `admin`, and `developer`, while assignments store only
   elevated roles. `app_role_permissions` maps those roles to database-owned
@@ -1657,8 +1682,9 @@ category, or serving fields.
 | `blendcalc_api_v1_product_readiness_reasons`    | Applies the enabled DB-backed profile and returns the service-only reasons an active shared product is withheld from API v1 |
 | `get_blendcalc_product_v1`                      | Service-role-only raw reader for one active, publication-ready shared product and its latest revision by GTIN-14 |
 | `get_blendcalc_product_revision_history_v1`     | Service-role-only raw reader for bounded immutable revision metadata and evidence-backed field changes for one publication-ready GTIN-14 |
-| `search_blendcalc_products_v1`                  | Service-role-only raw search for active, publication-ready shared products with bounded pagination and stable relevance |
+| `search_blendcalc_products_v1`                  | Service-role-only partial metadata search for active, publication-ready shared products with bounded pagination and name → brand → category → supporting-metadata relevance |
 | `get_moderator_data_health`                     | Returns bounded moderator/admin/developer catalog, source, dataset, policy, mapping, revision, conflict, and publication-readiness summaries after verifying an AAL2 permission and the caller's current role assignment |
+| `get_pending_profile_image_review_count`        | Service-role-only count of distinct exact profile images with one or more pending reports |
 | `claim_catalog_revalidation_jobs`               | Service-only bounded claim of due product/provider jobs using expiring claim tokens |
 | `complete_catalog_revalidation_job`             | Service-only completion and retry scheduling for one claimed product check |
 | `record_catalog_provider_snapshot`              | Service-only immutable observation/snapshot write that creates a review for material changes |

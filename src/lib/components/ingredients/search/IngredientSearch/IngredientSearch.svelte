@@ -38,6 +38,7 @@
 	let hasMoreResults = $state(false);
 	let nextOffset = $state<number | null>(null);
 	let error = $state("");
+	let completedSearchQuery = $state("");
 	let searchReady = $state(false);
 	let activeResultIndex = $state(-1);
 	let searchWrapElement = $state<HTMLDivElement | null>(null);
@@ -68,6 +69,7 @@
 		hasMoreResults = false;
 		nextOffset = null;
 		const searchString = query.trim();
+		completedSearchQuery = "";
 		if (!searchString) {
 			results = [];
 			activeResultIndex = -1;
@@ -89,6 +91,7 @@
 				results = page.foods;
 				hasMoreResults = page.hasMore;
 				nextOffset = page.nextOffset;
+				completedSearchQuery = searchString;
 				activeResultIndex = -1;
 				dispatch("results", { results, query: searchString });
 			} catch (searchError) {
@@ -191,6 +194,7 @@
 		query = "";
 		results = [];
 		error = "";
+		completedSearchQuery = "";
 		loading = false;
 		loadingMore = false;
 		hasMoreResults = false;
@@ -201,6 +205,13 @@
 
 	const hasActiveSearch = $derived(
 		query.trim().length > 0 || results.length > 0,
+	);
+	const showEmptySearchMessage = $derived(
+		completedSearchQuery.length > 0 &&
+		completedSearchQuery === query.trim() &&
+		results.length === 0 &&
+		!loading &&
+		!error,
 	);
 
 	$effect(() => {
@@ -229,6 +240,7 @@
 		onSelect(food);
 		query = "";
 		results = [];
+		completedSearchQuery = "";
 		loading = false;
 		loadingMore = false;
 		hasMoreResults = false;
@@ -407,6 +419,12 @@
 	{/if}
 	{#if error}
 		<StatusMessage tone="danger" message={error} />
+	{:else if showEmptySearchMessage}
+		<StatusMessage
+			tone="info"
+			title="Nothing found"
+			message={`We couldn't find a match for “${completedSearchQuery}”. Try another name, brand, category, ingredient, or barcode.`}
+		/>
 	{/if}
 	<SearchDropdown
 		results={sortedResults()}
