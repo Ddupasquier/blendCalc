@@ -8,12 +8,22 @@
 		checked = false,
 		required = false,
 		disabled = false,
+		onchange,
 		children,
 	}: CheckboxFieldProps = $props();
 </script>
 
 <label class="checkbox-field" for={id}>
-	<input {id} {name} {value} type="checkbox" {checked} {required} {disabled} />
+	<input
+		{id}
+		{name}
+		{value}
+		type="checkbox"
+		{checked}
+		{required}
+		{disabled}
+		{onchange}
+	/>
 	<span>{@render children()}</span>
 </label>
 

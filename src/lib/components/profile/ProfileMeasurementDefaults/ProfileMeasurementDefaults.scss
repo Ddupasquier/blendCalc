@@ -1,22 +1,19 @@
 @use "../../../../styles/variables" as *;
 
-.profile-food-preference-basics {
+.profile-measurement-defaults {
 	display: grid;
 	grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
 	gap: $app-gap-sm;
+	min-width: 0;
 }
 
-.profile-food-preference-basics__serving {
+.profile-measurement-defaults__serving {
 	display: grid;
 	gap: $app-gap-xs;
 	min-width: 0;
 }
 
-:global(.profile-food-preference-basics__region) {
-	grid-column: 1 / -1;
-}
-
-.profile-food-preference-basics__serving > span {
+.profile-measurement-defaults__serving > span {
 	color: $app-shell-text-muted;
 	font-size: $app-font-size-xs;
 	font-weight: $app-font-weight-bold;
@@ -25,13 +22,13 @@
 	text-transform: uppercase;
 }
 
-.profile-food-preference-basics__serving > div {
+.profile-measurement-defaults__serving > div {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) 6rem;
 	gap: $app-gap-xs;
 }
 
-.profile-food-preference-basics__serving :global(input) {
+.profile-measurement-defaults__serving :global(input) {
 	width: 100%;
 	min-width: 0;
 	min-height: $app-shell-control-height;
@@ -44,18 +41,18 @@
 	font-size: $app-font-size-sm;
 }
 
-.profile-food-preference-basics__serving :global(input:focus-visible) {
+.profile-measurement-defaults__serving :global(input:focus-visible) {
 	border-color: $app-shell-accent-primary;
 	outline: $app-focus-outline;
 	outline-offset: $app-focus-outline-offset;
 }
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
-	.profile-food-preference-basics {
+	.profile-measurement-defaults {
 		grid-template-columns: 1fr;
 	}
 
-	.profile-food-preference-basics__serving :global(input) {
+	.profile-measurement-defaults__serving :global(input) {
 		min-height: $app-shell-control-height-narrow;
 		padding-inline: $app-shell-control-padding-x-compact;
 	}

@@ -5,12 +5,12 @@ export type FoodPreferencePickerProps = {
 	options: FoodPreferenceOption[];
 	disabled?: boolean;
 	emptyLabel: string;
-	helper: string;
 	onAdd: (value: string) => void;
 	onRemove: (value: string) => void;
 	customEntryLabel: string;
 	selectedValues: string[];
 	title: string;
+	labelledBy: string;
 	unresolvedValues?: string[];
 	referenceDataUnavailable?: boolean;
 };

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import FoodPreferencePicker from "$lib/components/profile/FoodPreferencePicker/FoodPreferencePicker.svelte";
 
@@ -13,12 +13,12 @@ const baseProps = {
 		tagId: "milk-tag",
 	}],
 	emptyLabel: "No allergens saved.",
-	helper: "Reviewed matches add warnings.",
 	onAdd: vi.fn(),
 	onRemove: vi.fn(),
 	customEntryLabel: "Add a specific allergen",
 	selectedValues: ["Banana sensitivity"],
 	title: "Allergens",
+	labelledBy: "allergen-heading",
 };
 
 describe("FoodPreferencePicker", () => {
@@ -53,5 +53,29 @@ describe("FoodPreferencePicker", () => {
 			screen.getByRole("button", { name: "Remove Banana sensitivity" }),
 		).toBeDisabled();
 		expect(screen.getByLabelText("Add a specific allergen")).toBeDisabled();
+	});
+
+	it("filters larger database-provided choice sets without discarding selections", async () => {
+		const options = Array.from({ length: 13 }, (_, index) => ({
+			label: index === 12 ? "Sesame" : `Allergen ${index + 1}`,
+			normalizedValue: index === 12 ? "sesame" : `allergen-${index + 1}`,
+			category: "allergen" as const,
+			usageCount: index,
+			sourceValues: index === 12 ? ["sesame seed"] : [],
+			tagId: `tag-${index + 1}`,
+		}));
+
+		render(FoodPreferencePicker, {
+			props: { ...baseProps, options },
+		});
+
+		await fireEvent.input(
+			screen.getByLabelText("Find reviewed allergens"),
+			{ target: { value: "sesame" } },
+		);
+
+		expect(screen.getByRole("checkbox", { name: "Sesame" })).toBeInTheDocument();
+		expect(screen.queryByRole("checkbox", { name: "Allergen 1" }))
+			.not.toBeInTheDocument();
 	});
 });

@@ -1,4 +1,5 @@
 import type { Snippet } from "svelte";
+import type { ChangeEventHandler } from "svelte/elements";
 
 export type CheckboxFieldProps = {
 	id?: string;
@@ -7,5 +8,6 @@ export type CheckboxFieldProps = {
 	checked?: boolean;
 	required?: boolean;
 	disabled?: boolean;
+	onchange?: ChangeEventHandler<HTMLInputElement>;
 	children: Snippet;
 };

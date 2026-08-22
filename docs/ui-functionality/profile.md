@@ -84,6 +84,16 @@ Food preferences are optional and sensitive. Preserve:
 - acknowledgement and explicit save action;
 - a clear summary of saved values.
 
+Present package-label region, measurements, allergens, dietary restrictions, and
+nutrient priorities as separate shared disclosures. Each disclosure keeps its form state
+mounted while closed and summarizes its current saved or edited state in the header
+without repeating a separate full-page saved-values panel. Keep the privacy
+acknowledgement visible as a compact footer above the save action rather than hiding it
+in a disclosure. Validation failures open every configurable preference disclosure so
+the entered values and required correction remain reachable. Long DB-provided allergen
+and dietary lists include an in-section filter. Filtering changes only what is visible
+and never removes a selected value.
+
 A device locale may suggest a supported region only when it contains an explicit region
 represented by the active policy. The suggestion is not stored until Save. Region adds
 labeling context and never removes a personal warning.

@@ -12,17 +12,18 @@
 		options,
 		disabled = false,
 		emptyLabel,
-		helper,
 		onAdd,
 		onRemove,
 		customEntryLabel,
 		selectedValues,
 		title,
+		labelledBy,
 		unresolvedValues = [],
 		referenceDataUnavailable = false,
 	}: FoodPreferencePickerProps = $props();
 
 	let customEntry = $state("");
+	let reviewedChoiceSearch = $state("");
 	const normalizeValue = (value: string) =>
 		value.toLocaleLowerCase().trim().replace(/\s+/g, " ");
 	const optionValueSet = $derived(
@@ -32,6 +33,17 @@
 		selectedValues
 			.map(normalizeValue)
 			.filter((value) => optionValueSet.has(value)),
+	);
+	const filteredOptions = $derived(
+		options.filter((option) => {
+			const search = normalizeValue(reviewedChoiceSearch);
+			if (!search) return true;
+			return [
+				option.label,
+				option.normalizedValue,
+				...option.sourceValues,
+			].some((value) => normalizeValue(value).includes(search));
+		}),
 	);
 	const customValues = $derived(
 		selectedValues.filter(
@@ -73,14 +85,7 @@
 	};
 </script>
 
-<section class="preference-editor-card">
-	<div class="preference-editor-card__heading">
-		<div>
-			<h3>{title}</h3>
-			<p>{helper}</p>
-		</div>
-	</div>
-
+<section class="preference-editor-card" aria-labelledby={labelledBy}>
 	{#if referenceDataUnavailable}
 		<StatusMessage
 			tone="warning"
@@ -90,16 +95,31 @@
 	{:else if options.length}
 		<fieldset class="preference-reviewed-options">
 			<legend>Reviewed choices</legend>
-			<CheckboxGroup
-				id={`${id}-reviewed-option`}
-				options={options.map((option) => ({
-					id: option.normalizedValue,
-					label: option.label,
-				}))}
-				selected={selectedOptionValues}
-				{disabled}
-				onChange={updateReviewedSelections}
-			/>
+			{#if options.length > 12}
+				<TextField
+					id={`${id}-reviewed-search`}
+					label={`Find reviewed ${title.toLocaleLowerCase()}`}
+					value={reviewedChoiceSearch}
+					placeholder="Search reviewed choices"
+					disabled={disabled}
+					oninput={(event) =>
+						(reviewedChoiceSearch = (event.currentTarget as HTMLInputElement).value)}
+				/>
+			{/if}
+			{#if filteredOptions.length}
+				<CheckboxGroup
+					id={`${id}-reviewed-option`}
+					options={filteredOptions.map((option) => ({
+						id: option.normalizedValue,
+						label: option.label,
+					}))}
+					selected={selectedOptionValues}
+					{disabled}
+					onChange={updateReviewedSelections}
+				/>
+			{:else}
+				<p class="preference-empty">No reviewed choices match that search.</p>
+			{/if}
 		</fieldset>
 	{:else}
 		<StatusMessage

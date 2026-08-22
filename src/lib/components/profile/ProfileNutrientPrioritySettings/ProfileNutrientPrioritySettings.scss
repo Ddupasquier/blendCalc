@@ -7,19 +7,3 @@
 	padding: 0;
 	border: 0;
 }
-
-legend {
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-xs;
-	font-weight: $app-font-weight-bold;
-	letter-spacing: $app-letter-spacing-label;
-	line-height: $app-line-height-ui;
-	text-transform: uppercase;
-}
-
-p {
-	margin: 0;
-	color: $app-shell-text-muted;
-	font-size: $app-font-size-xs;
-	line-height: $app-line-height-body;
-}

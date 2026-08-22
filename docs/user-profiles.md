@@ -72,6 +72,14 @@ This document owns profile behavior and privacy. Auth configuration belongs in
   and activated.
 - Activating a reviewed mapping re-resolves existing account settings without changing
   the wording the user entered.
+- The Food preferences route presents each configurable setting family in an independent
+  animated disclosure. Header counts and short values summarize the live form state;
+  the app does not duplicate the same settings in a second saved-summary block. The
+  sensitive-data acknowledgement remains visible as a compact footer above Save because
+  it is consent for the form rather than another configurable preference family.
+- Larger reviewed allergen and dietary catalogs can be filtered locally after their
+  database-backed options load. A filter never changes durable selections, and exact
+  custom wording remains separate from reviewed choices.
 
 ## Profile Images
 

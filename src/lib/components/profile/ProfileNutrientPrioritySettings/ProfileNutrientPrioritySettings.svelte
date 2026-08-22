@@ -11,8 +11,7 @@
 </script>
 
 <fieldset class="profile-nutrient-priority-settings">
-	<legend>Highlight these nutrients</legend>
-	<p>Choose the nutrients you want to notice first in Mix and food details.</p>
+	<legend class="sr-only">Nutrients to prioritize</legend>
 	<CheckboxGroup
 		id="profile-priority-nutrient"
 		name="prioritizedNutrientIds"

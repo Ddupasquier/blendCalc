@@ -6,14 +6,40 @@ form {
 	gap: $app-gap-md;
 }
 
-.food-preference-editors {
+.profile-food-preference-settings__sections {
 	display: grid;
-	gap: $app-gap-md;
+	gap: $app-gap-sm;
+	min-width: 0;
 }
 
-.food-preference-editors > :global(.preference-editor-card + .preference-editor-card) {
-	padding-top: $app-gap-md;
-	border-top: 1px solid $app-shell-border-subtle;
+.profile-food-preference-settings__description {
+	margin: 0 0 $app-gap-sm;
+	color: $app-shell-text-muted;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-medium;
+	line-height: $app-line-height-body;
+}
+
+.profile-food-preference-settings__privacy {
+	display: grid;
+	gap: $app-gap-sm;
+	min-width: 0;
+	padding: $app-gap-sm;
+	background: $app-shell-surface-soft;
+	border: 1px solid $app-shell-border-subtle;
+	border-radius: $app-shell-radius-control;
+}
+
+.profile-food-preference-settings__privacy h2 {
+	margin: 0;
+	color: $app-shell-text-primary;
+	font-size: $app-font-size-sm;
+	font-weight: $app-font-weight-bold;
+	line-height: $app-line-height-body;
+}
+
+.profile-food-preference-settings__privacy .profile-food-preference-settings__description {
+	margin: 0;
 }
 
 .profile-food-preference-settings__actions > :global(.rounded-action-button) {
@@ -22,12 +48,25 @@ form {
 
 @media (max-width: $app-breakpoint-xs), (max-height: $app-breakpoint-height-compact) {
 	.profile-food-preference-settings,
-	form,
-	.food-preference-editors {
+	form {
 		gap: $app-gap-sm;
 	}
 
-	.food-preference-editors > :global(.preference-editor-card + .preference-editor-card) {
-		padding-top: $app-gap-sm;
+	.profile-food-preference-settings__sections {
+		gap: $app-gap-xs;
+	}
+
+	.profile-food-preference-settings__description {
+		margin-bottom: $app-gap-xs;
+		font-size: $app-font-size-xs;
+	}
+
+	.profile-food-preference-settings__privacy {
+		gap: $app-gap-xs;
+		padding: $app-gap-xs;
+	}
+
+	.profile-food-preference-settings__privacy h2 {
+		font-size: $app-font-size-xs;
 	}
 }

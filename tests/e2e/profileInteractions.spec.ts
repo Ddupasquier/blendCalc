@@ -5,12 +5,26 @@ import {
 	test,
 	waitForAppReady,
 } from "./support/browserTest";
+import type { Locator } from "@playwright/test";
 import { getLocalQaAccountForWorker } from "./support/localQaAccounts";
 
 const tinyPng = Buffer.from(
 	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
 	"base64",
 );
+
+const openFoodPreferenceDisclosure = async (
+	foodPreferencesView: Locator,
+	title: string,
+) => {
+	const summary = foodPreferencesView.locator("summary").filter({ hasText: title });
+	const disclosure = summary.locator("xpath=..");
+	if (!await disclosure.evaluate((element) =>
+		(element as HTMLDetailsElement).open)) {
+		await summary.click();
+	}
+	return disclosure;
+};
 
 test("appearance choices use native radios and preview the selected theme", async ({
 	page,
@@ -97,6 +111,10 @@ test("profile selects support keyboard dismissal without changing the value", as
 	await expect(page).toHaveURL(/\/profile\/food-preferences$/);
 
 	const foodPreferencesView = page.getByRole("dialog", { name: "Food preferences" });
+	await openFoodPreferenceDisclosure(
+		foodPreferencesView,
+		"Package-label region",
+	);
 	const region = foodPreferencesView.getByRole("combobox", {
 		name: "Package-label region",
 	});
@@ -120,12 +138,34 @@ test("food preferences use database choices and preserve exact custom wording", 
 	let foodPreferencesView = page.getByRole("dialog", {
 		name: "Food preferences",
 	});
-	const allergenSection = foodPreferencesView
-		.locator(".preference-editor-card")
-		.filter({ has: page.getByRole("heading", { name: "Allergens" }) });
-	const dietarySection = foodPreferencesView
-		.locator(".preference-editor-card")
-		.filter({ has: page.getByRole("heading", { name: "Dietary restrictions" }) });
+	for (const sectionTitle of [
+		"Package-label region",
+		"Measurements",
+		"Allergens",
+		"Dietary restrictions",
+		"Nutrient priorities",
+	]) {
+		await expect(
+			foodPreferencesView.locator("summary").filter({ hasText: sectionTitle }),
+		).toHaveCount(1);
+	}
+	await expect(
+		foodPreferencesView.locator("summary").filter({ hasText: "Saved preferences" }),
+	).toHaveCount(0);
+	await expect(
+		foodPreferencesView.locator("summary").filter({ hasText: "Privacy" }),
+	).toHaveCount(0);
+	await expect(
+		foodPreferencesView.getByRole("heading", { name: "Private account settings" }),
+	).toBeVisible();
+	const allergenSection = await openFoodPreferenceDisclosure(
+		foodPreferencesView,
+		"Allergens",
+	);
+	const dietarySection = await openFoodPreferenceDisclosure(
+		foodPreferencesView,
+		"Dietary restrictions",
+	);
 
 	for (const allergenName of ["Peanut", "Shellfish", "Sesame"]) {
 		await expect(
@@ -137,14 +177,42 @@ test("food preferences use database choices and preserve exact custom wording", 
 			dietarySection.getByRole("checkbox", { name: restrictionName }),
 		).toBeVisible();
 	}
+	const reviewedAllergenSearch = allergenSection.getByLabel(
+		"Find reviewed allergens",
+	);
+	await reviewedAllergenSearch.fill("sesame");
+	await expect(
+		allergenSection.getByRole("checkbox", { name: "Sesame" }),
+	).toBeVisible();
+	await expect(
+		allergenSection.getByRole("checkbox", { name: "Peanut" }),
+	).toHaveCount(0);
+	await reviewedAllergenSearch.fill("");
 
 	await allergenSection.getByRole("checkbox", { name: "Peanut" }).check();
 	await allergenSection.getByLabel("Add a specific allergen").fill(customAllergen);
 	await allergenSection.getByRole("button", { name: "Add", exact: true }).click();
 	await dietarySection.getByRole("checkbox", { name: "Vegan" }).check();
+	await allergenSection.locator("summary").click();
+	await expect(
+		allergenSection.getByRole("checkbox", { name: "Peanut" }),
+	).not.toBeVisible();
+	await allergenSection.locator("summary").click();
+	await expect(
+		allergenSection.getByRole("checkbox", { name: "Peanut" }),
+	).toBeChecked();
+	await expect(allergenSection.getByText(customAllergen, { exact: true }))
+		.toBeVisible();
 	await foodPreferencesView
-		.getByRole("checkbox", { name: /I understand these optional preferences/ })
+		.getByRole("checkbox", { name: /I understand and want to save/ })
 		.check();
+	const preferenceViewWidth = await foodPreferencesView.evaluate((element) => ({
+		clientWidth: element.clientWidth,
+		scrollWidth: element.scrollWidth,
+	}));
+	expect(preferenceViewWidth.scrollWidth).toBeLessThanOrEqual(
+		preferenceViewWidth.clientWidth + 1,
+	);
 	await foodPreferencesView
 		.getByRole("button", { name: "Save food preferences" })
 		.click();
@@ -153,10 +221,8 @@ test("food preferences use database choices and preserve exact custom wording", 
 	await page.getByRole("button", { name: /Food preferences/ }).click();
 	await expect(page).toHaveURL(/\/profile\/food-preferences$/);
 	foodPreferencesView = page.getByRole("dialog", { name: "Food preferences" });
-	await foodPreferencesView
-		.locator("summary")
-		.filter({ hasText: "Saved preferences" })
-		.click();
+	await openFoodPreferenceDisclosure(foodPreferencesView, "Allergens");
+	await openFoodPreferenceDisclosure(foodPreferencesView, "Dietary restrictions");
 	await expect(foodPreferencesView.getByText(customAllergen, { exact: true }))
 		.toBeVisible();
 	await expect(
@@ -202,6 +268,9 @@ test("compact Profile header leaves and returns with main-page scroll direction"
 	const foodPreferencesBody = page.locator(
 		".profile-food-preference-view__body",
 	);
+	for (const sectionTitle of ["Allergens", "Dietary restrictions", "Nutrient priorities"]) {
+		await openFoodPreferenceDisclosure(foodPreferencesBody, sectionTitle);
+	}
 	const sheetMaximumScrollTop = await foodPreferencesBody.evaluate((element) => {
 		const nextScrollTop = element.scrollHeight - element.clientHeight;
 		element.scrollTo({ top: nextScrollTop });

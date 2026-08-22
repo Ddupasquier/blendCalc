@@ -7,6 +7,11 @@ const stableViewSnapshots = [
 		snapshotName: "saved-recipes.png",
 		rootSelector: ".view-frame",
 	},
+	{
+		route: "/profile/food-preferences",
+		snapshotName: "profile-food-preferences.png",
+		rootSelector: ".profile-food-preference-view",
+	},
 ] as const;
 
 for (const view of stableViewSnapshots) {
