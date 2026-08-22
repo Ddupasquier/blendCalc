@@ -128,6 +128,9 @@ imported generic-food sources through the server-owned search flow.
   than the card's nutrition/details action.
 - Use progressive `Load more` and `Return to top`; never auto-load merely because the
   user reached the end.
+- After a completed nonempty query returns no matches, show a quiet informational
+  notice that repeats the query and suggests other searchable food fields. Do not show
+  the notice before the request completes, while loading, or in place of an error.
 - Show names, useful category or brand context, image or category symbol, actionable
   verification state, completeness state, and warning edge when available.
 - Keep provider hierarchy badges off compact cards. Private custom classification may
